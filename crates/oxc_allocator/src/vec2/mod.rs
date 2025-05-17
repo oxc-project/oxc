@@ -689,6 +689,118 @@ impl<'bump, T: 'bump> Vec<'bump, T> {
         Vec { buf: RawVec::from_raw_parts_in(ptr, bump, capacity, length) }
     }
 
+    /// Returns the number of elements in the vector, also referred to as its 'length'.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use bumpalo::{Bump, collections::Vec};
+    ///
+    /// let b = Bump::new();
+    ///
+    /// let a = bumpalo::vec![in &b; 1, 2, 3];
+    /// assert_eq!(a.len(), 3);
+    /// ```
+    #[inline]
+    pub fn len(&self) -> usize {
+        self.buf.len_usize()
+    }
+
+    /// Returns the number of elements the vector can hold without reallocating.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use bumpalo::{Bump, collections::Vec};
+    ///
+    /// let b = Bump::new();
+    /// let vec: Vec<i32> = Vec::with_capacity_in(10, &b);
+    /// assert_eq!(vec.capacity(), 10);
+    /// ```
+    #[inline]
+    pub fn capacity(&self) -> usize {
+        self.buf.cap_usize()
+    }
+
+    /// Sets the length of a vector.
+    ///
+    /// This will explicitly set the size of the vector, without actually modifying its buffers,
+    /// so it is up to the caller to ensure that the vector is actually the specified size.
+    ///
+    /// # Safety
+    ///
+    /// * `new_len` must be less than or equal to `u32::MAX`.
+    /// * `new_len` must be less than or equal to [`capacity()`].
+    /// * The elements at `old_len..new_len` must be initialized.
+    ///
+    /// [`capacity()`]: Vec::capacity
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use bumpalo::{Bump, collections::Vec};
+    ///
+    /// use std::ptr;
+    ///
+    /// let b = Bump::new();
+    ///
+    /// let mut vec = bumpalo::vec![in &b; 'r', 'u', 's', 't'];
+    ///
+    /// unsafe {
+    ///     ptr::drop_in_place(&mut vec[3]);
+    ///     vec.set_len(3);
+    /// }
+    /// assert_eq!(vec, ['r', 'u', 's']);
+    /// ```
+    ///
+    /// In this example, there is a memory leak since the memory locations
+    /// owned by the inner vectors were not freed prior to the `set_len` call:
+    ///
+    /// ```
+    /// use bumpalo::{Bump, collections::Vec};
+    ///
+    /// let b = Bump::new();
+    ///
+    /// let mut vec = bumpalo::vec![in &b;
+    ///                             bumpalo::vec![in &b; 1, 0, 0],
+    ///                             bumpalo::vec![in &b; 0, 1, 0],
+    ///                             bumpalo::vec![in &b; 0, 0, 1]];
+    /// unsafe {
+    ///     vec.set_len(0);
+    /// }
+    /// ```
+    ///
+    /// In this example, the vector gets expanded from zero to four items
+    /// but we directly initialize uninitialized memory:
+    ///
+    // TODO: rely upon `spare_capacity_mut`
+    /// ```
+    /// use bumpalo::{Bump, collections::Vec};
+    ///
+    /// let len = 4;
+    /// let b = Bump::new();
+    ///
+    /// let mut vec: Vec<u8> = Vec::with_capacity_in(len, &b);
+    ///
+    /// for i in 0..len {
+    ///     // SAFETY: we initialize memory via `pointer::write`
+    ///     unsafe { vec.as_mut_ptr().add(i).write(b'a') }
+    /// }
+    ///
+    /// unsafe {
+    ///     vec.set_len(len);
+    /// }
+    ///
+    /// assert_eq!(b"aaaa", &*vec);
+    /// ```
+    #[inline]
+    pub unsafe fn set_len(&mut self, new_len: usize) {
+        // Caller guarantees `new_len <= u32::MAX`, so `new_len as u32` cannot truncate `new_len`
+        #[expect(clippy::cast_possible_truncation)]
+        let new_len = new_len as u32;
+        self.buf.len = new_len;
+    }
+
     /// Returns a shared reference to the allocator backing this `Vec`.
     ///
     /// # Examples
@@ -707,23 +819,6 @@ impl<'bump, T: 'bump> Vec<'bump, T> {
     #[must_use]
     pub fn bump(&self) -> &'bump Bump {
         self.buf.bump()
-    }
-
-    /// Returns the number of elements the vector can hold without
-    /// reallocating.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use bumpalo::{Bump, collections::Vec};
-    ///
-    /// let b = Bump::new();
-    /// let vec: Vec<i32> = Vec::with_capacity_in(10, &b);
-    /// assert_eq!(vec.capacity(), 10);
-    /// ```
-    #[inline]
-    pub fn capacity(&self) -> usize {
-        self.buf.cap_usize()
     }
 
     /// Reserves capacity for at least `additional` more elements to be inserted
@@ -1085,86 +1180,6 @@ impl<'bump, T: 'bump> Vec<'bump, T> {
             }
         }
         ptr
-    }
-
-    /// Sets the length of a vector.
-    ///
-    /// This will explicitly set the size of the vector, without actually
-    /// modifying its buffers, so it is up to the caller to ensure that the
-    /// vector is actually the specified size.
-    ///
-    /// # Safety
-    ///
-    /// - `new_len` must be less than or equal to `u32::MAX`.
-    /// - `new_len` must be less than or equal to [`capacity()`].
-    /// - The elements at `old_len..new_len` must be initialized.
-    ///
-    /// [`capacity()`]: struct.Vec.html#method.capacity
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use bumpalo::{Bump, collections::Vec};
-    ///
-    /// use std::ptr;
-    ///
-    /// let b = Bump::new();
-    ///
-    /// let mut vec = bumpalo::vec![in &b; 'r', 'u', 's', 't'];
-    ///
-    /// unsafe {
-    ///     ptr::drop_in_place(&mut vec[3]);
-    ///     vec.set_len(3);
-    /// }
-    /// assert_eq!(vec, ['r', 'u', 's']);
-    /// ```
-    ///
-    /// In this example, there is a memory leak since the memory locations
-    /// owned by the inner vectors were not freed prior to the `set_len` call:
-    ///
-    /// ```
-    /// use bumpalo::{Bump, collections::Vec};
-    ///
-    /// let b = Bump::new();
-    ///
-    /// let mut vec = bumpalo::vec![in &b;
-    ///                             bumpalo::vec![in &b; 1, 0, 0],
-    ///                             bumpalo::vec![in &b; 0, 1, 0],
-    ///                             bumpalo::vec![in &b; 0, 0, 1]];
-    /// unsafe {
-    ///     vec.set_len(0);
-    /// }
-    /// ```
-    ///
-    /// In this example, the vector gets expanded from zero to four items
-    /// but we directly initialize uninitialized memory:
-    ///
-    // TODO: rely upon `spare_capacity_mut`
-    /// ```
-    /// use bumpalo::{Bump, collections::Vec};
-    ///
-    /// let len = 4;
-    /// let b = Bump::new();
-    ///
-    /// let mut vec: Vec<u8> = Vec::with_capacity_in(len, &b);
-    ///
-    /// for i in 0..len {
-    ///     // SAFETY: we initialize memory via `pointer::write`
-    ///     unsafe { vec.as_mut_ptr().add(i).write(b'a') }
-    /// }
-    ///
-    /// unsafe {
-    ///     vec.set_len(len);
-    /// }
-    ///
-    /// assert_eq!(b"aaaa", &*vec);
-    /// ```
-    #[inline]
-    pub unsafe fn set_len(&mut self, new_len: usize) {
-        // Caller guarantees `new_len <= u32::MAX`, so `new_len as u32` cannot truncate `new_len`
-        #[expect(clippy::cast_possible_truncation)]
-        let new_len = new_len as u32;
-        self.buf.len = new_len;
     }
 
     /// Removes an element from the vector and returns it.
@@ -1747,24 +1762,6 @@ impl<'bump, T: 'bump> Vec<'bump, T> {
     #[inline]
     pub fn clear(&mut self) {
         self.truncate(0)
-    }
-
-    /// Returns the number of elements in the vector, also referred to
-    /// as its 'length'.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use bumpalo::{Bump, collections::Vec};
-    ///
-    /// let b = Bump::new();
-    ///
-    /// let a = bumpalo::vec![in &b; 1, 2, 3];
-    /// assert_eq!(a.len(), 3);
-    /// ```
-    #[inline]
-    pub fn len(&self) -> usize {
-        self.buf.len_usize()
     }
 
     /// Returns `true` if the vector contains no elements.

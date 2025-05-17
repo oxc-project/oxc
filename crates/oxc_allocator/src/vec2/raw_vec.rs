@@ -120,9 +120,7 @@ impl<'a, T> RawVec<'a, T> {
             RawVec { ptr, a, cap, len: 0 }
         }
     }
-}
 
-impl<'a, T> RawVec<'a, T> {
     /// Reconstitutes a RawVec from a pointer, capacity, and allocator.
     ///
     /// # SAFETY
@@ -147,14 +145,19 @@ impl<'a, T> RawVec<'a, T> {
 
         RawVec { ptr, len, cap, a }
     }
-}
 
-impl<'a, T> RawVec<'a, T> {
     /// Gets a raw pointer to the start of the allocation. Note that this is
     /// Unique::empty() if `cap = 0` or T is zero-sized. In the former case, you must
     /// be careful.
     pub fn ptr(&self) -> *mut T {
         self.ptr.as_ptr()
+    }
+
+    /// Gets the usize number of elements.
+    pub fn len_usize(&self) -> usize {
+        // `self.len as usize` is safe because it's is `u32` so it must be
+        // less than `usize::MAX`.
+        self.len as usize
     }
 
     /// Gets the capacity of the allocation.
@@ -173,13 +176,6 @@ impl<'a, T> RawVec<'a, T> {
         // `self.cap as usize` is safe because it's is `u32` so it must be
         // less than `usize::MAX`.
         if mem::size_of::<T>() == 0 { !0 } else { self.cap as usize }
-    }
-
-    /// Gets the usize number of elements.
-    pub fn len_usize(&self) -> usize {
-        // `self.len as usize` is safe because it's is `u32` so it must be
-        // less than `usize::MAX`.
-        self.len as usize
     }
 
     /// Returns a shared reference to the allocator backing this RawVec.
