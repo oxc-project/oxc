@@ -2298,8 +2298,8 @@ impl<'bump, T: 'bump> Vec<'bump, T> {
         //      for item in iterator {
         //          self.push(item);
         //      }
+        let mut len = self.len_usize();
         while let Some(element) = iterator.next() {
-            let len = self.len_usize();
             if len == self.capacity_usize() {
                 // This reallocation path is rarely taken, especially with prior reservation,
                 // so mark it `#[cold]` and `#[inline(never)]` helps the compiler optimize the
@@ -2307,21 +2307,35 @@ impl<'bump, T: 'bump> Vec<'bump, T> {
                 // which increases the execution instructions and hits the performance.
                 #[cold]
                 #[inline(never)]
-                fn reserve_slow<T>(v: &mut Vec<T>, iterator: &impl Iterator) {
+                fn reserve_slow<T>(v: &mut Vec<T>, iterator: &impl Iterator, len: usize) {
+                    // `len` is always `<= u32::MAX`. If attempted to grow the `Vec` beyond this
+                    // on a previous turn, `RawVec::reserve` would have panicked.
+                    #[expect(clippy::cast_possible_truncation)]
+                    let len = len as u32;
+
                     let (lower, _) = iterator.size_hint();
-                    v.reserve(lower.saturating_add(1));
+                    v.buf.reserve(len, lower.saturating_add(1));
                 }
 
-                reserve_slow(self, &iterator);
+                reserve_slow(self, &iterator, len);
             }
             unsafe {
                 ptr::write(self.as_mut_ptr().add(len), element);
-                // Since next() executes user code which can panic we have to bump the length
-                // after each step.
-                // NB can't overflow since we would have had to alloc the address space
-                self.set_len(len + 1);
+                // Can't overflow since we would have had to alloc the address space
+                len += 1;
             }
         }
+
+        // Update `len` to reflect the extra elements we've pushed.
+        //
+        // std library version of this method updates `len` after writing each element,
+        // because `iterator.next()` could panic.
+        // If that happens, `len` needs to contain all the elements written so far,
+        // so they get dropped when the `Vec` is dropped.
+        // But our `Vec` requires that `T` is not `Drop`, so we don't need to worry about that.
+        //
+        // SAFETY: `len` cannot be `> u32::MAX` because `reserve` would have already panicked if it was.
+        unsafe { self.set_len(len) };
     }
 }
 
