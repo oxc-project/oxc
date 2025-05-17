@@ -1169,10 +1169,11 @@ impl<'bump, T: 'bump> Vec<'bump, T> {
     /// assert_eq!(b"aaaa", &*vec);
     /// ```
     #[inline]
-    #[expect(clippy::cast_possible_truncation)]
     pub unsafe fn set_len(&mut self, new_len: usize) {
         // Caller guarantees `new_len <= u32::MAX`, so `new_len as u32` cannot truncate `new_len`
-        self.buf.len = new_len as u32;
+        #[expect(clippy::cast_possible_truncation)]
+        let new_len = new_len as u32;
+        self.buf.len = new_len;
     }
 
     /// Removes an element from the vector and returns it.
@@ -1641,7 +1642,6 @@ impl<'bump, T: 'bump> Vec<'bump, T> {
     /// Caller must ensure either that `T` is `Copy`, or the elements of `other` are not accessible
     /// except by the pointer `other`, and that they are not read after this call.
     #[inline]
-    #[expect(clippy::cast_possible_truncation)]
     unsafe fn append_elements(&mut self, other: *const [T]) {
         let count = (*other).len();
         self.reserve(count);
@@ -1651,7 +1651,9 @@ impl<'bump, T: 'bump> Vec<'bump, T> {
         // `self.buf.len + count` cannot be `> u32::MAX`.
         // If either of these conditions was violated, `self.reserve(count)` above would have panicked.
         // So this addition cannot wrap around.
-        self.buf.len += count as u32;
+        #[expect(clippy::cast_possible_truncation)]
+        let count = count as u32;
+        self.buf.len += count;
     }
 
     /// Creates a draining iterator that removes the specified range in the vector
@@ -2834,14 +2836,15 @@ impl<T> Drain<'_, '_, T> {
     }
 
     /// Make room for inserting more elements before the tail.
-    #[expect(clippy::cast_possible_truncation)]
     unsafe fn move_tail(&mut self, extra_capacity: usize) {
         let vec = self.vec.as_mut();
         let used_capacity = self.tail_start + self.tail_len;
         // `used_capacity as u32` is safe because the [`Vec::drain`] method has ensured that
         // `self.tail_start` is less than or equal to `self.len()`, and `self.tail_len` calculated
         // from `self.len() - self.tail_start`, and `self.len()` is `u32`.
-        vec.buf.reserve(used_capacity as u32, extra_capacity);
+        #[expect(clippy::cast_possible_truncation)]
+        let used_capacity = used_capacity as u32;
+        vec.buf.reserve(used_capacity, extra_capacity);
 
         let new_tail_start = self.tail_start + extra_capacity;
         let src = vec.as_ptr().add(self.tail_start);

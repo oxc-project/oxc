@@ -93,7 +93,6 @@ impl<'a, T> RawVec<'a, T> {
         RawVec::allocate_in(cap, true, a)
     }
 
-    #[expect(clippy::cast_possible_truncation)]
     fn allocate_in(cap: usize, zeroed: bool, mut a: &'a Bump) -> Self {
         unsafe {
             let elem_size = mem::size_of::<T>();
@@ -116,7 +115,9 @@ impl<'a, T> RawVec<'a, T> {
 
             // `cap as u32` is safe because `alloc_guard` ensures that `cap`
             // cannot exceed `u32::MAX`.
-            RawVec { ptr, a, cap: cap as u32, len: 0 }
+            #[expect(clippy::cast_possible_truncation)]
+            let cap = cap as u32;
+            RawVec { ptr, a, cap, len: 0 }
         }
     }
 }
@@ -134,10 +135,17 @@ impl<'a, T> RawVec<'a, T> {
     ///
     /// If all these values came from a `Vec` created in allocator `a`, then these requirements
     /// are guaranteed to be fulfilled.
-    #[expect(clippy::cast_possible_truncation)]
     pub unsafe fn from_raw_parts_in(ptr: *mut T, a: &'a Bump, cap: usize, len: usize) -> Self {
+        // SAFETY: Caller guarantees `ptr` was allocated, which implies it's not null
+        let ptr = unsafe { NonNull::new_unchecked(ptr) };
+
         // Caller guarantees `cap` and `len` are `<= u32::MAX`, so `as u32` cannot truncate them
-        RawVec { ptr: NonNull::new_unchecked(ptr), a, cap: cap as u32, len: len as u32 }
+        #[expect(clippy::cast_possible_truncation)]
+        let len = len as u32;
+        #[expect(clippy::cast_possible_truncation)]
+        let cap = cap as u32;
+
+        RawVec { ptr, len, cap, a }
     }
 }
 
@@ -630,7 +638,6 @@ impl<T> RawVec<'_, T> {
 
     /// Helper method to reserve additional space, reallocating the backing memory.
     /// The caller is responsible for confirming that there is not already enough space available.
-    #[expect(clippy::cast_possible_truncation)]
     fn grow_exact(&mut self, len: u32, additional: usize) -> Result<(), CollectionAllocErr> {
         unsafe {
             // NOTE: we don't early branch on ZSTs here because we want this
@@ -647,7 +654,9 @@ impl<T> RawVec<'_, T> {
 
             // `cap as u32` is safe because `finish_grow` called `alloc_guard`, and
             // `alloc_guard` ensures that `cap` cannot exceed `u32::MAX`.
-            self.cap = new_cap as u32;
+            #[expect(clippy::cast_possible_truncation)]
+            let new_cap = new_cap as u32;
+            self.cap = new_cap;
 
             Ok(())
         }
@@ -655,7 +664,6 @@ impl<T> RawVec<'_, T> {
 
     /// Helper method to reserve additional space, reallocating the backing memory.
     /// The caller is responsible for confirming that there is not already enough space available.
-    #[expect(clippy::cast_possible_truncation)]
     fn grow_amortized(&mut self, len: u32, additional: usize) -> Result<(), CollectionAllocErr> {
         unsafe {
             // NOTE: we don't early branch on ZSTs here because we want this
@@ -706,7 +714,9 @@ impl<T> RawVec<'_, T> {
 
             // `cap as u32` is safe because `finish_grow` called `alloc_guard`, and
             // `alloc_guard` ensures that `cap` cannot exceed `u32::MAX`.
-            self.cap = cap as u32;
+            #[expect(clippy::cast_possible_truncation)]
+            let cap = cap as u32;
+            self.cap = cap;
 
             Ok(())
         }
