@@ -10,6 +10,7 @@ use crate::{AstBuilder, ast::*};
 
 /// Type that can be used in any AST builder method call which requires an `IntoIn<'a, Anything<'a>>`.
 /// Pass `NONE` instead of `None::<Anything<'a>>`.
+#[expect(clippy::upper_case_acronyms)]
 pub struct NONE;
 
 impl<'a, T> FromIn<'a, NONE> for Option<Box<'a, T>> {

@@ -344,7 +344,7 @@ impl<'a> ReplaceGlobalDefines<'a> {
     fn replace_define_with_assignment_expr(
         &self,
         node: &mut AssignmentExpression<'a>,
-        ctx: &mut TraverseCtx<'a>,
+        ctx: &TraverseCtx<'a>,
     ) -> bool {
         let new_left = node
             .left
@@ -369,7 +369,7 @@ impl<'a> ReplaceGlobalDefines<'a> {
         false
     }
 
-    fn replace_dot_defines(&self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) -> bool {
+    fn replace_dot_defines(&self, expr: &mut Expression<'a>, ctx: &TraverseCtx<'a>) -> bool {
         match expr {
             Expression::ChainExpression(chain) => {
                 let Some(new_expr) =
@@ -417,7 +417,7 @@ impl<'a> ReplaceGlobalDefines<'a> {
 
     fn replace_dot_computed_member_expr(
         &self,
-        ctx: &mut TraverseCtx<'a>,
+        ctx: &TraverseCtx<'a>,
         member: &ComputedMemberExpression<'a>,
     ) -> Option<Expression<'a>> {
         for dot_define in &self.config.0.dot {
@@ -436,7 +436,7 @@ impl<'a> ReplaceGlobalDefines<'a> {
 
     fn replace_dot_static_member_expr(
         &self,
-        ctx: &mut TraverseCtx<'a>,
+        ctx: &TraverseCtx<'a>,
         member: &StaticMemberExpression<'a>,
     ) -> Option<Expression<'a>> {
         for dot_define in &self.config.0.dot {
@@ -536,7 +536,7 @@ impl<'a> ReplaceGlobalDefines<'a> {
     }
 
     pub fn is_dot_define<'b>(
-        ctx: &mut TraverseCtx<'a>,
+        ctx: &TraverseCtx<'a>,
         dot_define: &DotDefine,
         member: DotDefineMemberExpression<'b, 'a>,
     ) -> bool {

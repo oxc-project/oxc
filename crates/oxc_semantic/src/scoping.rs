@@ -451,6 +451,7 @@ impl Scoping {
     /// Get the root [`Program`] scope id.
     ///
     /// [`Program`]: oxc_ast::ast::Program
+    #[expect(clippy::unused_self)]
     #[inline]
     pub const fn root_scope_id(&self) -> ScopeId {
         Self::ROOT_SCOPE_ID

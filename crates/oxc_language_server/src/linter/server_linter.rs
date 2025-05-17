@@ -61,7 +61,7 @@ impl ServerLinter {
             config_builder.plugins().has_import()
         };
 
-        let base_config = config_builder.build().expect("Failed to build config store");
+        let base_config = config_builder.build();
 
         let lint_options = LintOptions { fix: options.fix_kind(), ..Default::default() };
 
@@ -123,10 +123,7 @@ impl ServerLinter {
                 warn!("Skipping config (builder failed): {}", file_path.display());
                 continue;
             };
-            let Ok(config_store) = config_store_builder.build() else {
-                warn!("Skipping config (builder failed): {}", file_path.display());
-                continue;
-            };
+            let config_store = config_store_builder.build();
 
             nested_configs.pin().insert(dir_path.to_path_buf(), config_store);
         }

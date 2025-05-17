@@ -172,118 +172,118 @@ bitflags! {
 
 impl SymbolFlags {
     #[inline]
-    pub fn is_variable(&self) -> bool {
+    pub fn is_variable(self) -> bool {
         self.intersects(Self::Variable)
     }
 
     #[inline]
-    pub fn is_type_parameter(&self) -> bool {
+    pub fn is_type_parameter(self) -> bool {
         self.contains(Self::TypeParameter)
     }
 
     /// If true, then the symbol is a type, such as a TypeAlias, Interface, or Enum
     #[inline]
-    pub fn is_type(&self) -> bool {
+    pub fn is_type(self) -> bool {
         self.intersects((Self::TypeImport | Self::Type) - Self::Value)
     }
 
     /// If true, then the symbol is a value, such as a Variable, Function, or Class
     #[inline]
-    pub fn is_value(&self) -> bool {
+    pub fn is_value(self) -> bool {
         self.intersects(Self::Value | Self::Import)
     }
 
     #[inline]
-    pub fn is_const_variable(&self) -> bool {
+    pub fn is_const_variable(self) -> bool {
         self.contains(Self::ConstVariable)
     }
 
     /// Returns `true` if this symbol is a function declaration or expression.
     #[inline]
-    pub fn is_function(&self) -> bool {
+    pub fn is_function(self) -> bool {
         self.contains(Self::Function)
     }
 
     #[inline]
-    pub fn is_class(&self) -> bool {
+    pub fn is_class(self) -> bool {
         self.contains(Self::Class)
     }
 
     #[inline]
-    pub fn is_interface(&self) -> bool {
+    pub fn is_interface(self) -> bool {
         self.contains(Self::Interface)
     }
 
     #[inline]
-    pub fn is_type_alias(&self) -> bool {
+    pub fn is_type_alias(self) -> bool {
         self.contains(Self::TypeAlias)
     }
 
     #[inline]
-    pub fn is_enum(&self) -> bool {
+    pub fn is_enum(self) -> bool {
         self.intersects(Self::Enum)
     }
 
     #[inline]
-    pub fn is_const_enum(&self) -> bool {
+    pub fn is_const_enum(self) -> bool {
         self.intersects(Self::ConstEnum)
     }
 
     #[inline]
-    pub fn is_enum_member(&self) -> bool {
+    pub fn is_enum_member(self) -> bool {
         self.contains(Self::EnumMember)
     }
 
     #[inline]
-    pub fn is_catch_variable(&self) -> bool {
+    pub fn is_catch_variable(self) -> bool {
         self.contains(Self::CatchVariable)
     }
 
     #[inline]
-    pub fn is_function_scoped_declaration(&self) -> bool {
+    pub fn is_function_scoped_declaration(self) -> bool {
         self.contains(Self::FunctionScopedVariable)
     }
 
     #[inline]
-    pub fn is_import(&self) -> bool {
+    pub fn is_import(self) -> bool {
         self.intersects(Self::Import | Self::TypeImport)
     }
 
     #[inline]
-    pub fn is_type_import(&self) -> bool {
+    pub fn is_type_import(self) -> bool {
         self.contains(Self::TypeImport)
     }
 
     #[inline]
-    pub fn is_ambient(&self) -> bool {
+    pub fn is_ambient(self) -> bool {
         self.contains(Self::Ambient)
     }
 
     #[inline]
-    pub fn is_namespace_module(&self) -> bool {
+    pub fn is_namespace_module(self) -> bool {
         self.contains(Self::NamespaceModule)
     }
 
     #[inline]
-    pub fn is_value_module(&self) -> bool {
+    pub fn is_value_module(self) -> bool {
         self.contains(Self::ValueModule)
     }
 
     /// If true, then the symbol can be referenced by a type reference
     #[inline]
-    pub fn can_be_referenced_by_type(&self) -> bool {
+    pub fn can_be_referenced_by_type(self) -> bool {
         self.intersects(Self::Type | Self::TypeImport | Self::Import | Self::Namespace)
     }
 
     /// If true, then the symbol can be referenced by a value reference
     #[inline]
-    pub fn can_be_referenced_by_value(&self) -> bool {
+    pub fn can_be_referenced_by_value(self) -> bool {
         self.is_value()
     }
 
     /// If true, then the symbol can be referenced by a value_as_type reference
     #[inline]
-    pub fn can_be_referenced_by_value_as_type(&self) -> bool {
+    pub fn can_be_referenced_by_value_as_type(self) -> bool {
         self.intersects(Self::Value | Self::Import | Self::Function | Self::TypeImport)
     }
 }

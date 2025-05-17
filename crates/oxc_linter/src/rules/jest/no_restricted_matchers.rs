@@ -82,7 +82,7 @@ impl Rule for NoRestrictedMatchers {
         let restricted_matchers = &value
             .get(0)
             .and_then(serde_json::Value::as_object)
-            .and_then(Self::compile_restricted_matchers)
+            .map(Self::compile_restricted_matchers)
             .unwrap_or_default();
 
         Self(Box::new(NoRestrictedMatchersConfig {
@@ -152,15 +152,13 @@ impl NoRestrictedMatchers {
 
     pub fn compile_restricted_matchers(
         matchers: &serde_json::Map<String, serde_json::Value>,
-    ) -> Option<FxHashMap<String, String>> {
-        Some(
-            matchers
-                .iter()
-                .map(|(key, value)| {
-                    (String::from(key), String::from(value.as_str().unwrap_or_default()))
-                })
-                .collect(),
-        )
+    ) -> FxHashMap<String, String> {
+        matchers
+            .iter()
+            .map(|(key, value)| {
+                (String::from(key), String::from(value.as_str().unwrap_or_default()))
+            })
+            .collect()
     }
 }
 

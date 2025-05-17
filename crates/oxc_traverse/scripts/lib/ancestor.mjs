@@ -116,6 +116,7 @@ export default function generateAncestorsCode(types) {
       clippy::cast_ptr_alignment,
       clippy::elidable_lifetime_names,
       clippy::ptr_as_ptr,
+      clippy::ref_option,
       clippy::undocumented_unsafe_blocks,
     )]
 

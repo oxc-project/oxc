@@ -69,7 +69,11 @@ impl Generator for AstBuilderGenerator {
             //! AST node factories
 
             //!@@line_break
-            #![expect(clippy::default_trait_access, clippy::inconsistent_struct_constructor)]
+            #![expect(
+                clippy::default_trait_access,
+                clippy::inconsistent_struct_constructor,
+                clippy::unused_self,
+            )]
 
             ///@@line_break
             use std::cell::Cell;

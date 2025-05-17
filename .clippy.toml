@@ -1,3 +1,5 @@
+avoid-breaking-exported-api = false
+
 ignore-interior-mutability = ["oxc_linter::rules::RuleEnum"]
 
 disallowed-methods = [

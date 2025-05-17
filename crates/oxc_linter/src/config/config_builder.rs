@@ -6,7 +6,6 @@ use std::{
 use itertools::Itertools;
 use rustc_hash::FxHashMap;
 
-use oxc_diagnostics::OxcDiagnostic;
 use oxc_span::{CompactStr, format_compact_str};
 
 use crate::{
@@ -293,8 +292,7 @@ impl ConfigStoreBuilder {
         }
     }
 
-    /// # Errors
-    pub fn build(self) -> Result<Config, OxcDiagnostic> {
+    pub fn build(self) -> Config {
         // When a plugin gets disabled before build(), rules for that plugin aren't removed until
         // with_filters() gets called. If the user never calls it, those now-undesired rules need
         // to be taken out.
@@ -308,8 +306,7 @@ impl ConfigStoreBuilder {
             self.rules.into_iter().collect::<Vec<_>>()
         };
         rules.sort_unstable_by_key(|(r, _)| r.id());
-
-        Ok(Config::new(rules, self.config, self.overrides))
+        Config::new(rules, self.config, self.overrides)
     }
 
     /// Warn for all correctness rules in the given set of plugins.
@@ -652,7 +649,7 @@ mod test {
         let mut desired_plugins = LintPlugins::default();
         desired_plugins.set(LintPlugins::TYPESCRIPT, false);
 
-        let linter = ConfigStoreBuilder::default().with_plugins(desired_plugins).build().unwrap();
+        let linter = ConfigStoreBuilder::default().with_plugins(desired_plugins).build();
         for (rule, _) in linter.base.rules.iter() {
             let name = rule.name();
             let plugin = rule.plugin_name();
@@ -1029,13 +1026,9 @@ mod test {
         ConfigStoreBuilder::from_oxlintrc(true, Oxlintrc::from_file(&PathBuf::from(path)).unwrap())
             .unwrap()
             .build()
-            .unwrap()
     }
 
     fn config_store_from_str(s: &str) -> Config {
-        ConfigStoreBuilder::from_oxlintrc(true, serde_json::from_str(s).unwrap())
-            .unwrap()
-            .build()
-            .unwrap()
+        ConfigStoreBuilder::from_oxlintrc(true, serde_json::from_str(s).unwrap()).unwrap().build()
     }
 }

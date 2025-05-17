@@ -7,20 +7,20 @@ pub enum Quote {
 }
 
 impl Quote {
-    pub fn as_char(&self) -> char {
+    pub fn as_char(self) -> char {
         match self {
             Quote::Double => '"',
             Quote::Single => '\'',
         }
     }
 
-    pub fn as_byte(&self) -> u8 {
+    pub fn as_byte(self) -> u8 {
         self.as_char() as u8
     }
 
     /// Given the current quote, it returns the other one
     #[must_use]
-    pub fn other(&self) -> Self {
+    pub fn other(self) -> Self {
         match self {
             Quote::Double => Quote::Single,
             Quote::Single => Quote::Double,

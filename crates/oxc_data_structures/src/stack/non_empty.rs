@@ -354,6 +354,7 @@ impl<T> NonEmptyStack<T> {
     }
 
     /// Get if stack is empty. Always returns `false`.
+    #[expect(clippy::unused_self)]
     #[inline]
     pub fn is_empty(&self) -> bool {
         // This method is pointless, as the stack is never empty. But provide it to override

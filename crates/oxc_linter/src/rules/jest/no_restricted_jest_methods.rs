@@ -66,7 +66,7 @@ impl Rule for NoRestrictedJestMethods {
         let restricted_jest_methods = &value
             .get(0)
             .and_then(serde_json::Value::as_object)
-            .and_then(Self::compile_restricted_jest_methods)
+            .map(Self::compile_restricted_jest_methods)
             .unwrap_or_default();
 
         Self(Box::new(NoRestrictedJestMethodsConfig {
@@ -138,15 +138,13 @@ impl NoRestrictedJestMethods {
 
     pub fn compile_restricted_jest_methods(
         matchers: &serde_json::Map<String, serde_json::Value>,
-    ) -> Option<FxHashMap<String, String>> {
-        Some(
-            matchers
-                .iter()
-                .map(|(key, value)| {
-                    (String::from(key), String::from(value.as_str().unwrap_or_default()))
-                })
-                .collect(),
-        )
+    ) -> FxHashMap<String, String> {
+        matchers
+            .iter()
+            .map(|(key, value)| {
+                (String::from(key), String::from(value.as_str().unwrap_or_default()))
+            })
+            .collect()
     }
 }
 

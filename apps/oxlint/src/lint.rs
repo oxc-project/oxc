@@ -248,20 +248,7 @@ impl Runner for LintRunner {
         let mut options =
             LintServiceOptions::new(self.cwd, paths).with_cross_module(use_cross_module);
 
-        let lint_config = match config_builder.build() {
-            Ok(config) => config,
-            Err(diagnostic) => {
-                print_and_flush_stdout(
-                    stdout,
-                    &format!(
-                        "Failed to parse configuration file.\n{}\n",
-                        render_report(&handler, &diagnostic)
-                    ),
-                );
-
-                return CliRunResult::InvalidOptionConfig;
-            }
-        };
+        let lint_config = config_builder.build();
 
         let report_unused_directives = match inline_config_options.report_unused_directives {
             ReportUnusedDirectives::WithoutSeverity(true) => Some(AllowWarnDeny::Warn),
@@ -439,20 +426,8 @@ impl LintRunner {
             }
             .with_filters(filters);
 
-            match builder.build() {
-                Ok(config) => nested_configs.insert(dir.to_path_buf(), config),
-                Err(diagnostic) => {
-                    print_and_flush_stdout(
-                        stdout,
-                        &format!(
-                            "Failed to parse configuration file.\n{}\n",
-                            render_report(handler, &diagnostic)
-                        ),
-                    );
-
-                    return Err(CliRunResult::InvalidOptionConfig);
-                }
-            };
+            let config = builder.build();
+            nested_configs.insert(dir.to_path_buf(), config);
         }
 
         Ok(nested_configs)

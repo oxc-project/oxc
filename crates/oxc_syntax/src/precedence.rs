@@ -43,11 +43,11 @@ pub enum Precedence {
 }
 
 impl Precedence {
-    pub fn is_right_associative(&self) -> bool {
+    pub fn is_right_associative(self) -> bool {
         matches!(self, Self::Exponentiation | Self::Conditional | Self::Assign)
     }
 
-    pub fn is_left_associative(&self) -> bool {
+    pub fn is_left_associative(self) -> bool {
         matches!(
             self,
             Self::Lowest

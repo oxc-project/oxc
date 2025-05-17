@@ -58,7 +58,7 @@ impl<'a> Atom<'a> {
 
     /// Convert this [`Atom`] into a [`CompactStr`] without consuming `self`.
     #[inline]
-    pub fn to_compact_str(&self) -> CompactStr {
+    pub fn to_compact_str(self) -> CompactStr {
         CompactStr::new(self.as_str())
     }
 }

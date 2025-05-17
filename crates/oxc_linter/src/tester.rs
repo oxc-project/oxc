@@ -493,8 +493,7 @@ impl Tester {
                     })
                     .with_plugins(self.plugins)
                     .with_rule(rule, AllowWarnDeny::Warn)
-                    .build()
-                    .unwrap(),
+                    .build(),
                 FxHashMap::default(),
             ),
         )

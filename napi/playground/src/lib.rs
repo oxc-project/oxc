@@ -285,8 +285,7 @@ impl Oxc {
         if run_options.lint.unwrap_or_default() && self.diagnostics.is_empty() {
             let semantic_ret = SemanticBuilder::new().with_cfg(true).build(program);
             let semantic = Rc::new(semantic_ret.semantic);
-            let lint_config =
-                ConfigStoreBuilder::default().build().expect("Failed to build config store");
+            let lint_config = ConfigStoreBuilder::default().build();
             let linter_ret = Linter::new(
                 LintOptions::default(),
                 ConfigStore::new(lint_config, FxHashMap::default()),

@@ -41,8 +41,7 @@ fn bench_linter(criterion: &mut Criterion) {
             let semantic = semantic_ret.semantic;
             let module_record = Arc::new(ModuleRecord::new(path, &ret.module_record, &semantic));
             let semantic = Rc::new(semantic);
-            let lint_config =
-                ConfigStoreBuilder::all().build().expect("Failed to build config store");
+            let lint_config = ConfigStoreBuilder::all().build();
             let linter = Linter::new(
                 LintOptions::default(),
                 ConfigStore::new(lint_config, FxHashMap::default()),

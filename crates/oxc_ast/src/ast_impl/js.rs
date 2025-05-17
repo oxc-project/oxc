@@ -1328,7 +1328,7 @@ impl<'a> Function<'a> {
 
 impl FunctionType {
     /// Returns `true` if it is a [`FunctionType::TSDeclareFunction`] or [`FunctionType::TSEmptyBodyFunctionExpression`].
-    pub fn is_typescript_syntax(&self) -> bool {
+    pub fn is_typescript_syntax(self) -> bool {
         matches!(self, Self::TSDeclareFunction | Self::TSEmptyBodyFunctionExpression)
     }
 }
