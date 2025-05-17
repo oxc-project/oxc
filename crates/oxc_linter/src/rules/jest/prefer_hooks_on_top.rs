@@ -83,7 +83,7 @@ declare_oxc_lint!(
     ///     });
     /// });
     /// ```
-    /// 
+    ///
     /// Examples of **correct** code for this rule:
     /// ```javascript
     /// describe('foo', () => {

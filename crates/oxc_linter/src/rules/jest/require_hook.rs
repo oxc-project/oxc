@@ -96,7 +96,7 @@ declare_oxc_lint!(
     /// });
     /// clearCityDatabase();
     /// ```
-    /// 
+    ///
     /// Examples of **correct** code for this rule:
     /// ```javascript
     /// import { database, isCity } from '../database';

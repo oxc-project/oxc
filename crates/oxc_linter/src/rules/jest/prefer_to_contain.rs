@@ -43,7 +43,7 @@ declare_oxc_lint!(
     /// expect(a.includes(b)).toEqual(true);
     /// expect(a.includes(b)).toStrictEqual(true);
     /// ```
-    /// 
+    ///
     /// Examples of **correct** code for this rule:
     /// ```javascript
     /// expect(a).toContain(b);

@@ -57,7 +57,7 @@ declare_oxc_lint!(
     /// expect(getMessage()).toStrictEqual('hello world');
     /// expect(loadMessage()).resolves.toEqual('hello world');
     /// ```
-    /// 
+    ///
     /// Examples of **correct** code for this rule:
     /// ```javascript
     /// expect(value).not.toBe(5);

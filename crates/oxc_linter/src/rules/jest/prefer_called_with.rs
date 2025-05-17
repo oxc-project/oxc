@@ -36,7 +36,7 @@ declare_oxc_lint!(
     /// expect(someFunction).toBeCalled();
     /// expect(someFunction).toHaveBeenCalled();
     /// ```
-    /// 
+    ///
     /// Examples of **correct** code for this rule:
     /// ```javascript
     /// expect(noArgsFunction).toBeCalledWith();

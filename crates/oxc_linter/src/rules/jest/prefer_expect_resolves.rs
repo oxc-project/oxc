@@ -51,7 +51,7 @@ declare_oxc_lint!(
     ///     expect(await myPromise).toBe(true);
     /// });
     /// ```
-    /// 
+    ///
     /// Examples of **correct** code for this rule:
     /// ```javascript
     /// it('passes', async () => {

@@ -39,7 +39,7 @@ declare_oxc_lint!(
     /// expect(files["length"]).toBe(1,);
     /// expect(files["length"])["not"].toBe(1)
     /// ```
-    /// 
+    ///
     /// Examples of **correct** code for this rule:
     /// ```javascript
     /// expect(files).toHaveLength(1);

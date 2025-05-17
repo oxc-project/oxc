@@ -36,7 +36,7 @@ declare_oxc_lint!(
     /// expect(name === 'Carl').not.toEqual(true);
     /// expect(myObj !== thatObj).toStrictEqual(true);
     /// ```
-    /// 
+    ///
     /// Examples of **correct** code for this rule:
     /// ```javascript
     /// expect(x).toBe(5);

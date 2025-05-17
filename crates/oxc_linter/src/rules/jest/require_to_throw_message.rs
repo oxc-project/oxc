@@ -34,7 +34,7 @@ declare_oxc_lint!(
     ///     await expect(a()).rejects.toThrowError();
     /// });
     /// ```
-    /// 
+    ///
     /// Examples of **correct** code for this rule:
     /// ```javascript
     /// test('all the things', async () => {

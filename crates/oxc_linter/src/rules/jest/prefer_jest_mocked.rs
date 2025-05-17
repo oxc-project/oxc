@@ -40,7 +40,7 @@ declare_oxc_lint!(
     /// (Obj.foo as jest.Mock).mockReturnValue(1);
     /// ([].foo as jest.Mock).mockReturnValue(1);
     /// ```
-    /// 
+    ///
     /// Examples of **correct** code for this rule:
     /// ```typescript
     /// jest.mocked(foo).mockReturnValue(1);
