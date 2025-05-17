@@ -823,7 +823,7 @@ fn format_signature<'a, 'b>(
 
         let format_return_type = format_with(|f| {
             if let Some(return_type) = &arrow.return_type {
-                write!(f, [":", space(), return_type])?;
+                write!(f, return_type)?;
             }
             Ok(())
         });
