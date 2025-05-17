@@ -124,17 +124,19 @@ impl<'a, T> RawVec<'a, T> {
 impl<'a, T> RawVec<'a, T> {
     /// Reconstitutes a RawVec from a pointer, capacity, and allocator.
     ///
-    /// # Undefined Behavior
+    /// # SAFETY
     ///
-    /// The ptr must be allocated (via the given allocator `a`), and with the given capacity. The
-    /// capacity cannot exceed `isize::MAX` (only a concern on 32-bit systems) and also
-    /// cannot exceed `u32::MAX` as capacity is stored as `u32`.
-    /// If the ptr and capacity come from a RawVec created via `a`, then this is guaranteed.
+    /// * `ptr` must be allocated (via the given allocator `a`), and with the given capacity.
+    /// * `cap` cannot exceed `u32::MAX`, as capacity is stored as `u32`.
+    /// * The capacity in bytes (`cap * size_of::<T>()`) cannot exceed `isize::MAX`
+    ///   (only a concern on 32-bit systems).
+    /// * `len` must be `<= cap`. `len` is also therefore subject to same restrictions as `cap`.
+    ///
+    /// If all these values came from a `Vec` created in allocator `a`, then these requirements
+    /// are guaranteed to be fulfilled.
     #[expect(clippy::cast_possible_truncation)]
     pub unsafe fn from_raw_parts_in(ptr: *mut T, a: &'a Bump, cap: usize, len: usize) -> Self {
-        alloc_guard(cap).unwrap_or_else(|_| capacity_overflow());
-        // `cap as u32` and `len as u32` are safe because `alloc_guard` ensures that
-        // `cap` and `len` cannot exceed `u32::MAX`.
+        // Caller guarantees `cap` and `len` are `<= u32::MAX`, so `as u32` cannot truncate them
         RawVec { ptr: NonNull::new_unchecked(ptr), a, cap: cap as u32, len: len as u32 }
     }
 }
