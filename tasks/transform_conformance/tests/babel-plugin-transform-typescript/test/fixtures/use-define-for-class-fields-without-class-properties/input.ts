@@ -4,6 +4,11 @@ class Cls {
 	@dce
 	z;
 
+	#x: number;
+	#y = 1;
+	@dce
+	#z;
+
 	[x]: number;
 	[y] = 1;
 	@dce

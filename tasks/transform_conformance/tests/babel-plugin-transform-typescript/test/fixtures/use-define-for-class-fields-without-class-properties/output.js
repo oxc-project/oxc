@@ -9,6 +9,9 @@ class Cls {
   static {
     x, _y = y, z;
   }
+  #x;
+  #y = 1;
+  @dce #z;
 }
 
 class ClsWithConstructor extends Cls {
