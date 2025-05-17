@@ -401,6 +401,14 @@ export interface TransformOptions {
    * @see [esbuild#target](https://esbuild.github.io/api/#target)
    */
   target?: string | Array<string>
+  /**
+   * Enable transformation of ES module syntax to another module type.
+   *
+   * Setting this to `false` will preserve ES modules.
+   *
+   * @default: `false`
+   */
+  modules?: false | 'esm' | 'cjs'
   /** Behaviour for runtime helpers. */
   helpers?: Helpers
   /** Define Plugin */
