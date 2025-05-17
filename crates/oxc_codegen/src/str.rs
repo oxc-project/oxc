@@ -1,7 +1,7 @@
 use std::slice;
 
 use oxc_ast::ast::StringLiteral;
-use oxc_data_structures::assert_unchecked;
+use oxc_data_structures::{assert_unchecked, pointer_ext::PointerExt};
 use oxc_syntax::identifier::{LS, NBSP, PS};
 
 use crate::Codegen;
@@ -197,8 +197,7 @@ impl PrintStringState<'_> {
         // and the iterator only advances, so current position of `bytes` must be on or after `chunk_start`
         let len = unsafe {
             let bytes_ptr = self.bytes.as_slice().as_ptr();
-            let offset = bytes_ptr.offset_from(self.chunk_start);
-            usize::try_from(offset).unwrap_unchecked()
+            bytes_ptr.offset_from_usize(self.chunk_start)
         };
 
         // SAFETY: `chunk_start` is within bounds of original `&str`.
