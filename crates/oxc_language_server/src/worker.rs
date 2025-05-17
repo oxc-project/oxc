@@ -5,7 +5,10 @@ use rustc_hash::FxBuildHasher;
 use tokio::sync::{Mutex, RwLock};
 use tower_lsp_server::{
     UriExt,
-    lsp_types::{CodeActionOrCommand, Diagnostic, FileEvent, Range, TextEdit, Uri},
+    lsp_types::{
+        CodeActionOrCommand, Diagnostic, FileEvent, FileSystemWatcher, GlobPattern, OneOf, Range,
+        RelativePattern, TextEdit, Uri, WatchKind,
+    },
 };
 
 use crate::{
@@ -48,6 +51,27 @@ impl WorkspaceWorker {
     pub async fn init_linter(&self, options: &Options) {
         *self.options.lock().await = options.clone();
         *self.server_linter.write().await = Some(ServerLinter::new(&self.root_uri, options));
+    }
+
+    pub async fn init_watchers(&self) -> FileSystemWatcher {
+        // ToDo: check with ServerLinter for `extends` files (oxc-project/oxc@10373)
+
+        if let Some(config_path) = &self.options.lock().await.config_path {
+            return FileSystemWatcher {
+                glob_pattern: GlobPattern::Relative(RelativePattern {
+                    base_uri: OneOf::Right(self.root_uri.clone()),
+                    pattern: config_path.to_string(),
+                }),
+                kind: Some(WatchKind::all()), // created, deleted, changed
+            };
+        }
+        FileSystemWatcher {
+            glob_pattern: GlobPattern::Relative(RelativePattern {
+                base_uri: OneOf::Right(self.root_uri.clone()),
+                pattern: "**/.oxlintrc.json".to_string(),
+            }),
+            kind: Some(WatchKind::all()), // created, deleted, changed
+        }
     }
 
     pub async fn needs_init_linter(&self) -> bool {

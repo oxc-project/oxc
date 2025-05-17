@@ -1,7 +1,7 @@
 import { ConfigurationChangeEvent, Uri, workspace, WorkspaceFolder } from 'vscode';
 import { IDisposable } from './types';
 import { VSCodeConfig } from './VSCodeConfig';
-import { oxlintConfigFileName, WorkspaceConfig, WorkspaceConfigInterface } from './WorkspaceConfig';
+import { WorkspaceConfig, WorkspaceConfigInterface } from './WorkspaceConfig';
 
 export class ConfigService implements IDisposable {
   public static readonly namespace = 'oxc';
@@ -68,16 +68,6 @@ export class ConfigService implements IDisposable {
       }
     }
     return false;
-  }
-
-  public getOxlintCustomConfigs(): string[] {
-    const customConfigs: string[] = [];
-    for (const [path, config] of this.workspaceConfigs.entries()) {
-      if (config.configPath && config.configPath !== oxlintConfigFileName) {
-        customConfigs.push(`${path}/${config.configPath}`);
-      }
-    }
-    return customConfigs;
   }
 
   private async onVscodeConfigChange(event: ConfigurationChangeEvent): Promise<void> {
