@@ -89,7 +89,8 @@ impl<'a> TypeScript<'a, '_> {
         let mut computed_key_assignments = Vec::new();
         for element in &mut class.body.body {
             match element {
-                ClassElement::PropertyDefinition(prop) => {
+                // `set_public_class_fields: true` only needs to transform non-private class fields.
+                ClassElement::PropertyDefinition(prop) if !prop.key.is_private_identifier() => {
                     if let Some(value) = prop.value.take() {
                         let assignment = self.convert_property_definition(
                             &mut prop.key,
@@ -277,8 +278,7 @@ impl<'a> TypeScript<'a, '_> {
                 create_this_property_access(SPAN, ident.name, ctx)
             }
             PropertyKey::PrivateIdentifier(_) => {
-                // Handled in `convert_instance_property` and `convert_static_property`
-                unreachable!();
+                unreachable!("PrivateIdentifier is skipped in transform_class_fields");
             }
             key @ match_expression!(PropertyKey) => {
                 let key = key.to_expression_mut();
