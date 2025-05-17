@@ -40,8 +40,9 @@ declare_oxc_lint!(
     /// statements. However, it can be difficult to tell whether a specific
     /// assignment was intentional.
     ///
-    /// ### Example
+    /// ### Examples
     ///
+    /// Examples of **incorrect** code for this rule:
     /// ```js
     /// // Check the user's job title
     /// if (user.jobTitle = "manager") {

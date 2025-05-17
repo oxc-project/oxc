@@ -105,8 +105,9 @@ declare_oxc_lint!(
     ///
     /// It's a good practice to be consistent in your test suite, so that all tests are written in the same way.
     ///
-    /// ### Example
+    /// ### Examples
     ///
+    /// Examples of **incorrect** code for this rule:
     /// ```javascript
     /// /*eslint jest/consistent-test-it: ["error", {"fn": "test"}]*/
     /// test('foo'); // valid

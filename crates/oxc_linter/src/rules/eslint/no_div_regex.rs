@@ -25,7 +25,9 @@ declare_oxc_lint!(
     /// Characters /= at the beginning of a regular expression literal can be confused with a
     /// division assignment operator.
     ///
-    /// ### Example
+    /// ### Examples
+    ///
+    /// Examples of **incorrect** code for this rule:
     /// ```javascript
     /// function bar() { return /=foo/; }
     /// ```

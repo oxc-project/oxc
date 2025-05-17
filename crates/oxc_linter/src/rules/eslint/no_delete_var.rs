@@ -24,7 +24,7 @@ declare_oxc_lint!(
     /// Using the `delete` operator on a variable might lead to unexpected
     /// behavior.
     ///
-    /// ### Example
+    /// ### Examples
     ///
     /// Examples of **incorrect** code for this rule:
     /// ```javascript

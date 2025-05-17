@@ -30,7 +30,7 @@ declare_oxc_lint!(
     /// The `Math.min(Math.max(x, y), z)` function is used to clamp a value between two other values.
     /// If the arguments are in the wrong order, the function will always evaluate to a constant result.
     ///
-    /// ### Example
+    /// ### Examples
     ///
     /// Examples of **incorrect** code for this rule:
     /// ```javascript
@@ -39,12 +39,10 @@ declare_oxc_lint!(
     /// ```
     ///
     /// Examples of **correct** code for this rule:
-    ///
     /// ```javascript
     /// Math.max(0, Math.min(100, x));
     /// Math.min(1000, Math.max(0, z));
     /// ```
-    ///
     BadMinMaxFunc,
     oxc,
     correctness

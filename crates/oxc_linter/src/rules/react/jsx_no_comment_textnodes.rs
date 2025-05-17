@@ -26,7 +26,9 @@ declare_oxc_lint!(
     ///
     /// In JSX, any text node that is not wrapped in curly braces is considered a literal string to be rendered. This can lead to unexpected behavior when the text contains a comment.
     ///
-    /// ### Example
+    /// ### Examples
+    ///
+    /// Examples of **incorrect** code for this rule:
     /// ```jsx
     /// // Incorrect:
     ///

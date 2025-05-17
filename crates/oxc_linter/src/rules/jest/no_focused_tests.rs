@@ -23,6 +23,7 @@ pub struct NoFocusedTests;
 
 declare_oxc_lint!(
     /// ### What it does
+    ///
     /// This rule reminds you to remove `.only` from your tests by raising a warning
     /// whenever you are using the exclusivity feature.
     ///
@@ -34,8 +35,9 @@ declare_oxc_lint!(
     /// have fixed your test and before committing the changes you have to remove
     /// `.only` to ensure all tests are executed on your build system.
     ///
-    /// ### Example
+    /// ### Examples
     ///
+    /// Examples of **incorrect** code for this rule:
     /// ```javascript
     /// describe.only('foo', () => {});
     /// it.only('foo', () => {});

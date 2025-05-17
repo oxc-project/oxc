@@ -61,12 +61,16 @@ pub struct NoUnknownPropertyConfig {
 
 declare_oxc_lint!(
     /// ### What it does
+    ///
     /// Disallow usage of unknown DOM property.
     ///
     /// ### Why is this bad?
+    ///
     /// You can use unknown property name that has no effect.
     ///
-    /// ### Example
+    /// ### Examples
+    ///
+    /// Examples of **incorrect** code for this rule:
     /// ```jsx
     ///  // Unknown properties
     ///  const Hello = <div class="hello">Hello World</div>;

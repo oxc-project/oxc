@@ -29,9 +29,11 @@ enum TypeOptions {
 
 declare_oxc_lint!(
     /// ### What it does
+    ///
     /// Prefer negative index over `.length` - index when possible
     ///
     /// ### Why is this bad?
+    ///
     /// Conciseness and readability
     ///
     /// ### Examples

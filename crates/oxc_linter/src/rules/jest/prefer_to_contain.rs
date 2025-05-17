@@ -33,21 +33,22 @@ declare_oxc_lint!(
     /// TThis rule triggers a warning if `toBe()`, `toEqual()` or `toStrictEqual()` is
     /// used to assert object inclusion in an array
     ///
-    /// ### Example
+    /// ### Examples
     ///
+    /// Examples of **incorrect** code for this rule:
     /// ```javascript
-    /// // valid
-    /// expect(a).toContain(b);
-    /// expect(a).not.toContain(b);
-    ///
-    /// // invalid
     /// expect(a.includes(b)).toBe(true);
     /// expect(a.includes(b)).not.toBe(true);
     /// expect(a.includes(b)).toBe(false);
     /// expect(a.includes(b)).toEqual(true);
     /// expect(a.includes(b)).toStrictEqual(true);
     /// ```
-    ///
+    /// 
+    /// Examples of **correct** code for this rule:
+    /// ```javascript
+    /// expect(a).toContain(b);
+    /// expect(a).not.toContain(b);
+    /// ```
     PreferToContain,
     jest,
     style,

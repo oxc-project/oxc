@@ -26,7 +26,9 @@ declare_oxc_lint!(
     /// standard Math.pow function. Infix notation is considered to be more readable and thus more
     /// preferable than the function notation.
     ///
-    /// ### Example
+    /// ### Examples
+    ///
+    /// Examples of **incorrect** code for this rule:
     /// ```javascript
     /// Math.pow(a, b)
     /// ```

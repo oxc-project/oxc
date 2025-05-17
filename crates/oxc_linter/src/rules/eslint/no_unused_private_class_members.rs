@@ -82,7 +82,6 @@ declare_oxc_lint!(
     ///					this.#usedAccessor = 42;
     ///			}
     ///	}
-    ///
     /// ```
     NoUnusedPrivateClassMembers,
     eslint,

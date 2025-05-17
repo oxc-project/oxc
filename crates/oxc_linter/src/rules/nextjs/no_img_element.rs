@@ -34,7 +34,7 @@ declare_oxc_lint!(
     /// from `next/image` will automatically optimize images and serve them as
     /// static assets.
     ///
-    /// ### Example
+    /// ### Examples
     ///
     /// Examples of **incorrect** code for this rule:
     /// ```javascript

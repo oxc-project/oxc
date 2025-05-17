@@ -52,7 +52,7 @@ declare_oxc_lint!(
     /// `"submit"` which is often not the desired behavior and may lead to
     /// unexpected page reloads.
     ///
-    /// ### Example
+    /// ### Examples
     ///
     /// Examples of **incorrect** code for this rule:
     /// ```jsx

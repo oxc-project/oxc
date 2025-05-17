@@ -19,7 +19,7 @@ declare_oxc_lint!(
     /// `meta`, `html`, `script`, `style`. This rule enforces that these DOM
     /// elements do not contain the `role` and/or `aria-*` props.
     ///
-    /// ### Example
+    /// ### Examples
     ///
     /// Examples of **incorrect** code for this rule:
     /// ```jsx
@@ -30,7 +30,6 @@ declare_oxc_lint!(
     /// ```jsx
     ///	<meta charset="UTF-8" />
     /// ```
-    ///
     AriaUnsupportedElements,
     jsx_a11y,
     correctness,

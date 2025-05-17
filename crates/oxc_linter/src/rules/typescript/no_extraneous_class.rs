@@ -49,7 +49,9 @@ declare_oxc_lint!(
     /// fields. Those classes can generally be replaced with a standalone
     /// function.
     ///
-    /// ### Example
+    /// ### Examples
+    ///
+    /// Examples of **incorrect** code for this rule:
     /// ```ts
     /// class StaticConstants {
     /// 	static readonly version = 42;

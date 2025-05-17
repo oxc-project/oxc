@@ -39,14 +39,16 @@ impl Default for MediaHasCaptionConfig {
 
 declare_oxc_lint!(
     /// ### What it does
+    ///
     /// Checks if `<audio>` and `<video>` elements have a `<track>` element for captions.
     /// This ensures media content is accessible to all users, including those with hearing impairments.
     ///
     /// ### Why is this bad?
+    ///
     /// Without captions, audio and video content is not accessible to users who are deaf or hard of hearing.
     /// Captions are also useful for users in noisy environments or where audio is not available.
     ///
-    /// ### Example
+    /// ### Examples
     ///
     /// Examples of **incorrect** code for this rule:
     /// ```jsx

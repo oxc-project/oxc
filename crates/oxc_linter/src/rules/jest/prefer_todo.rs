@@ -26,6 +26,7 @@ pub struct PreferTodo;
 
 declare_oxc_lint!(
     /// ### What it does
+    ///
     /// When test cases are empty then it is better to mark them as `test.todo` as it
     /// will be highlighted in the summary output.
     ///
@@ -33,8 +34,9 @@ declare_oxc_lint!(
     ///
     /// This rule triggers a warning if empty test cases are used without 'test.todo'.
     ///
-    /// ### Example
+    /// ### Examples
     ///
+    /// Examples of **incorrect** code for this rule:
     /// ```javascript
     /// test('i need to write this test'); // invalid
     /// test('i need to write this test', () => {}); // invalid

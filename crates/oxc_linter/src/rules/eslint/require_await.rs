@@ -55,10 +55,9 @@ declare_oxc_lint!(
     /// yield all the values of another async generator without ever actually
     /// needing to use await.
     ///
-    /// ### Example
+    /// ### Examples
     ///
     /// Examples of **incorrect** code for this rule:
-    ///
     /// ```js
     /// async function foo() {
     ///     doSomething();
@@ -66,7 +65,6 @@ declare_oxc_lint!(
     /// ```
     ///
     /// Examples of **correct** code for this rule:
-    ///
     /// ```js
     /// async function foo() {
     ///    await doSomething();

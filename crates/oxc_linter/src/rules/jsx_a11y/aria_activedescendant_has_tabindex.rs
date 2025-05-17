@@ -28,7 +28,9 @@ declare_oxc_lint!(
     ///
     /// Enforce elements with aria-activedescendant are tabbable.
     ///
-    /// ### Example
+    /// ### Examples
+    ///
+    /// Examples of **incorrect** code for this rule:
     /// ```jsx
     /// const Good = <>
     ///     <CustomComponent />

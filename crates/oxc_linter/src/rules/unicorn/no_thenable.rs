@@ -35,14 +35,17 @@ pub struct NoThenable;
 
 declare_oxc_lint!(
     /// ### What it does
-    /// disallow `then` property
+    ///
+    /// Disallow `then` property
     ///
     /// ### Why is this bad?
+    ///
     /// If an object is defined as "thenable", once it's accidentally
     /// used in an await expression, it may cause problems:
     ///
+    /// ### Examples
     ///
-    /// ### Example
+    /// Examples of **incorrect** code for this rule:
     /// ```javascript
     ///     async function example() {
     ///     const foo = {

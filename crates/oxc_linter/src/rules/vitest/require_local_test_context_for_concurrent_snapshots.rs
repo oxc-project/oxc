@@ -71,7 +71,6 @@ declare_oxc_lint!(
     ///         expect(true).toMatchInlineSnapshot();
     ///     })
     /// })
-    ///
     /// ```
     ///
     /// Examples of **correct** code for this rule:

@@ -26,10 +26,9 @@ declare_oxc_lint!(
     /// ### Why is this bad?
     ///
     ///
-    /// ### Example
+    /// ### Examples
     ///
     /// Examples of **incorrect** code for this rule:
-    ///
     /// ```javascript
     /// /*eslint no-useless-escape: "error"*/
     ///
@@ -47,7 +46,6 @@ declare_oxc_lint!(
     /// ```
     ///
     /// Examples of **correct** code for this rule:
-    ///
     /// ```javascript
     /// /*eslint no-useless-escape: "error"*/
     ///

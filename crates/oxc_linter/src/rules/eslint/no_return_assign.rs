@@ -19,9 +19,11 @@ pub struct NoReturnAssign {
 
 declare_oxc_lint!(
     /// ### What it does
+    ///
     /// Disallows assignment operators in return statements
     ///
     /// ### Why is this bad?
+    ///
     /// Assignment is allowed by js in return expressions, but usually, an expression with only one equal sign is intended to be a comparison.
     /// However, because of the missing equal sign, this turns to assignment, which is valid js code
     /// Because of this ambiguity, it’s considered a best practice to not use assignment in return statements.

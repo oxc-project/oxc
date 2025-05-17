@@ -25,10 +25,9 @@ declare_oxc_lint!(
     /// Even if there is no “fall through” logic, it’s still unexpected to see the default clause before or between the case clauses. By convention, it is expected to be the last clause.
     /// If a switch statement should have a default clause, it’s considered a best practice to define it as the last clause.
     ///
-    /// ### Example
+    /// ### Examples
     ///
     /// Examples of **incorrect** code for this rule:
-    ///
     /// ```javascript
     /// switch (foo) {
     ///     default:
@@ -53,7 +52,6 @@ declare_oxc_lint!(
     /// ```
     ///
     /// Examples of **correct** code for this rule:
-    ///
     /// ```javascript
     /// switch (foo) {
     ///     case 1:

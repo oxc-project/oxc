@@ -46,8 +46,9 @@ declare_oxc_lint!(
     /// * `afterAll`
     /// * `afterEach`
     ///
-    /// ### Example
+    /// ### Examples
     ///
+    /// Examples of **incorrect** code for this rule:
     /// ```javascript
     /// function setupFoo(options) { /* ... */ }
     /// function setupBar(options) { /* ... */ }

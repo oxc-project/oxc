@@ -55,10 +55,9 @@ declare_oxc_lint!(
     /// If you don’t want to use a return or don’t need the returned results,
     /// consider using .forEach instead.
     ///
-    /// ### Example
+    /// ### Examples
     ///
     /// Examples of **incorrect** code for this rule:
-    ///
     /// ```javascript
     /// let foo = [1, 2, 3, 4];
     /// foo.map((a) => {
@@ -67,7 +66,6 @@ declare_oxc_lint!(
     /// ```
     ///
     /// Examples of **correct** code for this rule:
-    ///
     /// ```javascript
     /// let foo = [1, 2, 3, 4];
     /// foo.map((a) => {

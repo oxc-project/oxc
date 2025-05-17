@@ -21,12 +21,16 @@ pub struct JsxNoUndef;
 
 declare_oxc_lint!(
     /// ### What it does
+    ///
     /// Disallow undeclared variables in JSX
     ///
     /// ### Why is this bad?
+    ///
     /// It is most likely a potential ReferenceError caused by a misspelling of a variable or parameter name.
     ///
-    /// ### Example
+    /// ### Examples
+    ///
+    /// Examples of **incorrect** code for this rule:
     /// ```jsx
     /// const A = () => <App />
     /// const C = <B />

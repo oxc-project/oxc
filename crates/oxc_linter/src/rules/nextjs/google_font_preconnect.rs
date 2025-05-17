@@ -26,7 +26,9 @@ declare_oxc_lint!(
     /// ### Why is this bad?
     ///
     ///
-    /// ### Example
+    /// ### Examples
+    ///
+    /// Examples of **incorrect** code for this rule:
     /// ```javascript
     /// ```
     GoogleFontPreconnect,

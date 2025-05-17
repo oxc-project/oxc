@@ -18,13 +18,17 @@ pub struct NoEmpty {
 
 declare_oxc_lint!(
     /// ### What it does
+    ///
     /// Disallows empty block statements
     ///
     /// ### Why is this bad?
+    ///
     /// Empty block statements, while not technically errors, usually occur due to refactoring that wasn’t completed.
     /// They can cause confusion when reading code.
     ///
-    /// ### Example
+    /// ### Examples
+    ///
+    /// Examples of **incorrect** code for this rule:
     /// ```javascript
     /// if (condition) {
     ///

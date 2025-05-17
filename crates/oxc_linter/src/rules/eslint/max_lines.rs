@@ -37,6 +37,7 @@ impl Default for MaxLinesConfig {
 
 declare_oxc_lint!(
     /// ### What it does
+    ///
     /// Enforce a maximum number of lines per file.
     ///
     /// ### Why is this bad?

@@ -49,7 +49,7 @@ declare_oxc_lint!(
     /// - Appending multiple nodes at once.
     /// - Both `DOMString` and DOM node objects can be manipulated.
     ///
-    /// ### Example
+    /// ### Examples
     ///
     /// Examples of **incorrect** code for this rule:
     /// ```javascript

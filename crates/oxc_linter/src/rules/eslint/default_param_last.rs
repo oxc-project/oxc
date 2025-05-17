@@ -23,10 +23,9 @@ declare_oxc_lint!(
     ///
     /// Putting default parameter at last allows function calls to omit optional tail arguments.
     ///
-    /// ### Example
+    /// ### Examples
     ///
     /// Examples of **incorrect** code for this rule:
-    ///
     /// ```javascript
     /// // Incorrect: optional argument can **not** be omitted
     /// function createUser(isAdmin = false, id) {}
@@ -34,7 +33,6 @@ declare_oxc_lint!(
     /// ```
     ///
     /// Examples of **correct** code for this rule:
-    ///
     /// ```javascript
     /// function createUser(id, isAdmin = false) {}
     /// createUser("tabby")

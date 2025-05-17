@@ -46,7 +46,9 @@ declare_oxc_lint!(
     /// Files containing multiple classes can often result in a less navigable and poorly
     /// structured codebase. Best practice is to keep each file limited to a single responsibility.
     ///
-    /// ### Example
+    /// ### Examples
+    ///
+    /// Examples of **incorrect** code for this rule:
     /// ```javascript
     /// class Foo {}
     /// class Bar {}

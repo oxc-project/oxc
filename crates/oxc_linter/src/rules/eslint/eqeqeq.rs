@@ -35,7 +35,6 @@ declare_oxc_lint!(
     /// ### Examples
     ///
     /// Examples of **incorrect** code for this rule:
-    ///
     /// ```js
     /// const a = [];
     /// const b = true;
@@ -44,7 +43,6 @@ declare_oxc_lint!(
     /// The above will evaluate to `true`, but that is almost surely not what you want.
     ///
     /// Examples of **correct** code for this rule:
-    ///
     /// ```js
     /// const a = [];
     /// const b = true;

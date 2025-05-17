@@ -33,9 +33,9 @@ declare_oxc_lint!(
     /// strict type. Requiring a type makes it easier to use TypeScript to catch changes
     /// needed in test mocks when the source module changes.
     ///
-    /// ### Example
+    /// ### Examples
     ///
-    /// // invalid
+    /// Examples of **incorrect** code for this rule:
     /// ```typescript
     /// jest.mock('../moduleName', () => {
     ///     return jest.fn(() => 42);
@@ -51,9 +51,8 @@ declare_oxc_lint!(
     /// });
     /// ```
     ///
-    /// // valid
+    /// Examples of **correct** code for this rule:
     /// ```typescript
-    ///
     /// // Uses typeof import()
     /// jest.mock<typeof import('../moduleName')>('../moduleName', () => {
     ///     return jest.fn(() => 42);
@@ -81,7 +80,6 @@ declare_oxc_lint!(
     ///     { virtual: true },
     /// );
     /// ```
-    ///
     NoUntypedMockFactory,
     jest,
     style,

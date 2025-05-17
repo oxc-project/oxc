@@ -26,7 +26,7 @@ declare_oxc_lint!(
     ///
     /// Excessive backslashes can make string values less readable which can be avoided by using `String.raw`.
     ///
-    /// ### Example
+    /// ### Examples
     ///
     /// Examples of **incorrect** code for this rule:
     /// ```javascript

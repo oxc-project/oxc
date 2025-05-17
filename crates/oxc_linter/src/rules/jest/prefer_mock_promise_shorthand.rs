@@ -24,10 +24,10 @@ declare_oxc_lint!(
     /// API sugar functions to reduce the amount of boilerplate you have to write.
     /// These methods should be preferred when possible.
     ///
-    /// ### Example
+    /// ### Examples
     ///
+    /// Examples of **incorrect** code for this rule:
     /// ```javascript
-    /// // invalid
     /// jest.fn().mockImplementation(() => Promise.resolve(123));
     /// jest
     ///   .spyOn(fs.promises, 'readFile')
@@ -39,7 +39,7 @@ declare_oxc_lint!(
     ///   .mockReturnValue(Promise.reject(new Error('too many calls!')));
     /// ```
     ///
-    /// // valid
+    /// Examples of **correct** code for this rule:
     /// ```javascript
     /// jest.fn().mockResolvedValue(123);
     /// jest.spyOn(fs.promises, 'readFile').mockRejectedValue(new Error('oh noes!'));
@@ -49,7 +49,6 @@ declare_oxc_lint!(
     ///   .mockResolvedValueOnce(42)
     ///   .mockRejectedValue(new Error('too many calls!'));
     /// ```
-    ///
     PreferMockPromiseShorthand,
     jest,
     style,

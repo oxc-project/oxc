@@ -37,13 +37,17 @@ pub struct NoExtraBooleanCast {
 
 declare_oxc_lint!(
     /// ### What it does
+    ///
     /// This rule disallows unnecessary boolean casts.
     ///
     /// ### Why is this bad?
+    ///
     /// In contexts such as an if statement's test where the result of the expression will already be coerced to a Boolean,
     /// casting to a Boolean via double negation (!!) or a Boolean call is unnecessary.
     ///
-    /// ### Example
+    /// ### Examples
+    ///
+    /// Examples of **incorrect** code for this rule:
     /// ```javascript
     /// var foo = !!!bar;
     /// var foo = Boolean(!!bar);

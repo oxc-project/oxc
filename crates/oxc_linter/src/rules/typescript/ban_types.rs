@@ -46,7 +46,9 @@ declare_oxc_lint!(
     ///
     /// Some built-in types have aliases, while some types are considered dangerous or harmful. It's often a good idea to ban certain types to help with consistency and safety.
     ///
-    /// ### Example
+    /// ### Examples
+    ///
+    /// Examples of **incorrect** code for this rule:
     /// ```typescript
     /// let foo: String = 'foo';
     ///

@@ -26,12 +26,16 @@ pub struct PreferEnumInitializers;
 
 declare_oxc_lint!(
     /// ### What it does
+    ///
     /// Require each enum member value to be explicitly initialized.
     ///
     /// ### Why is this bad?
+    ///
     /// In projects where the value of `enum` members are important, allowing implicit values for enums can cause bugs if enums are modified over time.
     ///
-    /// ### Example
+    /// ### Examples
+    ///
+    /// Examples of **incorrect** code for this rule:
     /// ```typescript
     /// // wrong, the value of `Close` is not constant
     /// enum Status {

@@ -22,12 +22,16 @@ pub struct NoEmptyCharacterClass;
 
 declare_oxc_lint!(
     /// ### What it does
+    ///
     /// Disallow empty character classes in regular expressions
     ///
     /// ### Why is this bad?
+    ///
     /// Because empty character classes in regular expressions do not match anything, they might be typing mistakes.
     ///
-    /// ### Example
+    /// ### Examples
+    ///
+    /// Examples of **incorrect** code for this rule:
     /// ```javascript
     /// var foo = /^abc[]/;
     /// ```
