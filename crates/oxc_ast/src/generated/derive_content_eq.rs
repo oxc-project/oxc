@@ -2482,12 +2482,6 @@ impl ContentEq for CommentAnnotation {
     }
 }
 
-impl ContentEq for CommentNewlines {
-    fn content_eq(&self, other: &Self) -> bool {
-        self == other
-    }
-}
-
 impl ContentEq for Comment {
     fn content_eq(&self, other: &Self) -> bool {
         ContentEq::content_eq(&self.attached_to, &other.attached_to)
