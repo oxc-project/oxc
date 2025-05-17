@@ -7866,20 +7866,6 @@ impl<'new_alloc> CloneIn<'new_alloc> for CommentAnnotation {
     }
 }
 
-impl<'new_alloc> CloneIn<'new_alloc> for CommentNewlines {
-    type Cloned = CommentNewlines;
-
-    #[inline(always)]
-    fn clone_in(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {
-        *self
-    }
-
-    #[inline(always)]
-    fn clone_in_with_semantic_ids(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {
-        *self
-    }
-}
-
 impl<'new_alloc> CloneIn<'new_alloc> for Comment {
     type Cloned = Comment;
 

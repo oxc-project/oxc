@@ -1581,6 +1581,7 @@ const _: () = {
     assert!(size_of::<CommentAnnotation>() == 1);
     assert!(align_of::<CommentAnnotation>() == 1);
 
+    // Padding: 0 bytes
     assert!(size_of::<CommentNewlines>() == 1);
     assert!(align_of::<CommentNewlines>() == 1);
 
@@ -3169,6 +3170,7 @@ const _: () = {
     assert!(size_of::<CommentAnnotation>() == 1);
     assert!(align_of::<CommentAnnotation>() == 1);
 
+    // Padding: 0 bytes
     assert!(size_of::<CommentNewlines>() == 1);
     assert!(align_of::<CommentNewlines>() == 1);
 

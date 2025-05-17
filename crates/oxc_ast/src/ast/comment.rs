@@ -1,5 +1,7 @@
 #![warn(missing_docs)]
-use oxc_allocator::CloneIn;
+use bitflags::bitflags;
+
+use oxc_allocator::{Allocator, CloneIn};
 use oxc_ast_macros::ast;
 use oxc_estree::ESTree;
 use oxc_span::{ContentEq, Span};
@@ -81,20 +83,38 @@ pub enum CommentAnnotation {
     CoverageIgnore = 7,
 }
 
-/// State of newlines around a comment.
-#[ast]
-#[generate_derive(CloneIn, ContentEq)]
-#[derive(Debug, Default, Clone, Copy, Eq, PartialEq)]
-pub enum CommentNewlines {
-    /// No newlines before or after
-    #[default]
-    None = 0,
-    /// Preceded by a newline
-    Leading = 1,
-    /// Followed by a newline
-    Trailing = 2,
-    /// Preceded and followed by a newline
-    LeadingAndTrailing = 3,
+bitflags! {
+    #[derive(Default, Debug, Clone, Copy, Eq, PartialEq)]
+    /// State of newlines around a comment.
+    pub struct CommentNewlines: u8 {
+        /// No newlines before or after
+        const NONE = 0;
+        /// Preceded by a newline
+        const LEADING = 1 << 0;
+        /// Followed by a newline
+        const TRAILING = 1 << 1;
+        /// Preceded and followed by a newline
+        const LEADING_AND_TRAILING = Self::LEADING.bits() | Self::TRAILING.bits();
+    }
+}
+
+/// Dummy type to communicate the content of `CommentFlags` to `oxc_ast_tools`.
+#[ast(foreign = CommentNewlines)]
+#[expect(dead_code)]
+struct CommentNewlinesAlias(u8);
+
+impl ContentEq for CommentNewlines {
+    fn content_eq(&self, other: &Self) -> bool {
+        self == other
+    }
+}
+
+impl<'alloc> CloneIn<'alloc> for CommentNewlines {
+    type Cloned = Self;
+
+    fn clone_in(&self, _: &'alloc Allocator) -> Self::Cloned {
+        *self
+    }
 }
 
 /// A comment in source code.
@@ -141,7 +161,7 @@ impl Comment {
             attached_to: 0,
             kind,
             position: CommentPosition::Trailing,
-            newlines: CommentNewlines::None,
+            newlines: CommentNewlines::NONE,
             annotation: CommentAnnotation::None,
         }
     }
@@ -234,46 +254,30 @@ impl Comment {
     /// Sets the state of `newlines` to include/exclude a newline after the comment.
     pub fn set_followed_by_newline(&mut self, followed_by_newline: bool) {
         if followed_by_newline {
-            self.newlines = match self.newlines {
-                CommentNewlines::None => CommentNewlines::Trailing,
-                CommentNewlines::Leading => CommentNewlines::LeadingAndTrailing,
-                _ => self.newlines,
-            }
+            self.newlines.insert(CommentNewlines::TRAILING);
         } else {
-            self.newlines = match self.newlines {
-                CommentNewlines::Trailing => CommentNewlines::None,
-                CommentNewlines::LeadingAndTrailing => CommentNewlines::Leading,
-                _ => self.newlines,
-            }
+            self.newlines.remove(CommentNewlines::TRAILING);
         }
     }
 
     /// Sets the state of `newlines` to include/exclude a newline before the comment.
     pub fn set_preceded_by_newline(&mut self, preceded_by_newline: bool) {
         if preceded_by_newline {
-            self.newlines = match self.newlines {
-                CommentNewlines::None => CommentNewlines::Leading,
-                CommentNewlines::Trailing => CommentNewlines::LeadingAndTrailing,
-                _ => self.newlines,
-            }
+            self.newlines.insert(CommentNewlines::LEADING);
         } else {
-            self.newlines = match self.newlines {
-                CommentNewlines::Leading => CommentNewlines::None,
-                CommentNewlines::LeadingAndTrailing => CommentNewlines::Trailing,
-                _ => self.newlines,
-            }
+            self.newlines.remove(CommentNewlines::LEADING);
         }
     }
 
     /// Returns `true` if this comment is preceded by a newline.
     #[inline]
     pub fn preceded_by_newline(self) -> bool {
-        matches!(self.newlines, CommentNewlines::Leading | CommentNewlines::LeadingAndTrailing)
+        self.newlines.contains(CommentNewlines::LEADING)
     }
 
     /// Returns `true` if this comment is followed by a newline.
     #[inline]
     pub fn followed_by_newline(self) -> bool {
-        matches!(self.newlines, CommentNewlines::Trailing | CommentNewlines::LeadingAndTrailing)
+        self.newlines.contains(CommentNewlines::TRAILING)
     }
 }
