@@ -78,99 +78,70 @@ impl ConfigStoreBuilder {
         start_empty: bool,
         oxlintrc: Oxlintrc,
     ) -> Result<Self, ConfigBuilderError> {
-        // TODO(refactor); can we make this function infallible, and move all the error handling to
-        // the `build` method?
-        let Oxlintrc {
-            plugins,
-            settings,
-            env,
-            globals,
-            categories,
-            rules: oxlintrc_rules,
-            overrides,
-            path,
-            ignore_patterns: _,
-            extends,
-        } = oxlintrc;
+        // TODO: this can be cached to avoid re-computing the same oxlintrc
+        fn resolve_oxlintrc_config(config: Oxlintrc) -> Result<Oxlintrc, ConfigBuilderError> {
+            let path = config.path.clone();
+            let root_path = path.parent();
+            let extends = config.extends.clone();
 
-        let config = LintConfig { plugins, settings, env, globals, path: Some(path) };
-        let rules =
-            if start_empty { FxHashMap::default() } else { Self::warn_correctness(plugins) };
+            let mut oxlintrc = config;
+
+            for path in extends.iter().rev() {
+                if path.starts_with("eslint:") || path.starts_with("plugin:") {
+                    // `eslint:` and `plugin:` named configs are not supported
+                    continue;
+                }
+                // if path does not include a ".", then we will heuristically skip it since it
+                // kind of looks like it might be a named config
+                if !path.to_string_lossy().contains('.') {
+                    continue;
+                }
+
+                let path = match root_path {
+                    Some(p) => &p.join(path),
+                    None => path,
+                };
+
+                let extends_oxlintrc = Oxlintrc::from_file(path).map_err(|e| {
+                    ConfigBuilderError::InvalidConfigFile {
+                        file: path.display().to_string(),
+                        reason: e.to_string(),
+                    }
+                })?;
+
+                let extends = resolve_oxlintrc_config(extends_oxlintrc)?;
+
+                oxlintrc = oxlintrc.merge(extends);
+            }
+            Ok(oxlintrc)
+        }
+
+        let oxlintrc = resolve_oxlintrc_config(oxlintrc)?;
+
+        let rules = if start_empty {
+            FxHashMap::default()
+        } else {
+            Self::warn_correctness(oxlintrc.plugins.unwrap_or_default())
+        };
+
+        let config = LintConfig {
+            plugins: oxlintrc.plugins.unwrap_or_default(),
+            settings: oxlintrc.settings,
+            env: oxlintrc.env,
+            globals: oxlintrc.globals,
+            path: Some(oxlintrc.path),
+        };
         let cache = RulesCache::new(config.plugins);
-        let mut builder = Self { rules, config, overrides, cache };
+        let mut builder = Self { rules, config, overrides: oxlintrc.overrides, cache };
 
-        for filter in categories.filters() {
+        for filter in oxlintrc.categories.filters() {
             builder = builder.with_filter(&filter);
         }
 
         {
-            if !extends.is_empty() {
-                let config_path = builder.config.path.clone();
-                let config_path_parent = config_path.as_ref().and_then(|p| p.parent());
-
-                for path in &extends {
-                    if path.starts_with("eslint:") || path.starts_with("plugin:") {
-                        // eslint: and plugin: named configs are not supported
-                        continue;
-                    }
-                    // if path does not include a ".", then we will heuristically skip it since it
-                    // kind of looks like it might be a named config
-                    if !path.to_string_lossy().contains('.') {
-                        continue;
-                    }
-
-                    // resolve path relative to config path
-                    let path = match config_path_parent {
-                        Some(config_file_path) => &config_file_path.join(path),
-                        None => path,
-                    };
-                    // TODO: throw an error if this is a self-referential extend
-                    // TODO(perf): use a global config cache to avoid re-parsing the same file multiple times
-                    match Oxlintrc::from_file(path) {
-                        Ok(extended_config) => {
-                            // TODO(refactor): can we merge this together? seems redundant to use `override_rules` and then
-                            // use `ConfigStoreBuilder`, but we don't have a better way of loading rules from config files other than that.
-                            // Use `override_rules` to apply rule configurations and add/remove rules as needed
-                            extended_config
-                                .rules
-                                .override_rules(&mut builder.rules, &builder.cache.borrow());
-                            // Use `ConfigStoreBuilder` to load extended config files and then apply rules from those
-                            let mut extended_config_store =
-                                ConfigStoreBuilder::from_oxlintrc(true, extended_config)?;
-                            let rules = std::mem::take(&mut extended_config_store.rules);
-                            builder = builder.with_rules(rules);
-
-                            // Handle plugin inheritance
-                            let parent_plugins = extended_config_store.plugins();
-                            let child_plugins = builder.plugins();
-
-                            if child_plugins == LintPlugins::default() {
-                                // If child has default plugins, inherit from parent
-                                builder = builder.with_plugins(parent_plugins);
-                            } else if child_plugins != LintPlugins::empty() {
-                                // If child specifies plugins, combine with parent's plugins
-                                builder = builder.with_plugins(child_plugins.union(parent_plugins));
-                            }
-
-                            if !extended_config_store.overrides.is_empty() {
-                                let overrides =
-                                    std::mem::take(&mut extended_config_store.overrides);
-                                builder = builder.with_overrides(overrides);
-                            }
-                        }
-                        Err(err) => {
-                            return Err(ConfigBuilderError::InvalidConfigFile {
-                                file: path.display().to_string(),
-                                reason: err.to_string(),
-                            });
-                        }
-                    }
-                }
-            }
-
             let all_rules = builder.cache.borrow();
 
-            oxlintrc_rules.override_rules(&mut builder.rules, all_rules.as_slice());
+            oxlintrc.rules.override_rules(&mut builder.rules, all_rules.as_slice());
         }
 
         Ok(builder)
@@ -215,14 +186,6 @@ impl ConfigStoreBuilder {
     #[cfg(test)]
     pub(crate) fn with_rule(mut self, rule: RuleEnum, severity: AllowWarnDeny) -> Self {
         self.rules.insert(rule, severity);
-        self
-    }
-
-    pub(crate) fn with_rules<R: IntoIterator<Item = (RuleEnum, AllowWarnDeny)>>(
-        mut self,
-        rules: R,
-    ) -> Self {
-        self.rules.extend(rules);
         self
     }
 
