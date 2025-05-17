@@ -14,7 +14,7 @@ use tower_lsp_server::{
         DidChangeWatchedFilesRegistrationOptions, DidChangeWorkspaceFoldersParams,
         DidCloseTextDocumentParams, DidOpenTextDocumentParams, DidSaveTextDocumentParams,
         ExecuteCommandParams, InitializeParams, InitializeResult, InitializedParams, Registration,
-        ServerInfo, Uri, WorkspaceEdit,
+        ServerInfo, Unregistration, Uri, WorkspaceEdit,
     },
 };
 // #
@@ -336,6 +336,8 @@ impl LanguageServer for Backend {
     async fn did_change_workspace_folders(&self, params: DidChangeWorkspaceFoldersParams) {
         let mut workers = self.workspace_workers.lock().await;
         let mut cleared_diagnostics = vec![];
+        let mut added_registrations = vec![];
+        let mut removed_registrations = vec![];
 
         for folder in params.event.removed {
             let Some((index, worker)) = workers
@@ -346,6 +348,10 @@ impl LanguageServer for Backend {
                 continue;
             };
             cleared_diagnostics.extend(worker.get_clear_diagnostics());
+            removed_registrations.push(Unregistration {
+                id: format!("watcher-{}", worker.get_root_uri().as_str()),
+                method: "workspace/didChangeWatchedFiles".to_string(),
+            });
             workers.remove(index);
         }
 
@@ -365,6 +371,13 @@ impl LanguageServer for Backend {
                 // get the configuration from the response and init the linter
                 let options = configurations.get(index).unwrap_or(&None);
                 worker.init_linter(options.as_ref().unwrap_or(&Options::default())).await;
+                added_registrations.push(Registration {
+                    id: format!("watcher-{}", worker.get_root_uri().as_str()),
+                    method: "workspace/didChangeWatchedFiles".to_string(),
+                    register_options: Some(json!(DidChangeWatchedFilesRegistrationOptions {
+                        watchers: vec![worker.init_watchers().await]
+                    })),
+                });
                 workers.push(worker);
             }
         // client does not support the request
@@ -374,6 +387,21 @@ impl LanguageServer for Backend {
                 // use default options
                 worker.init_linter(&Options::default()).await;
                 workers.push(worker);
+            }
+        }
+
+        // tell client to stop / start watching for files
+        if self.capabilities.get().is_some_and(|capabilities| capabilities.dynamic_watchers) {
+            if !added_registrations.is_empty() {
+                if let Err(err) = self.client.register_capability(added_registrations).await {
+                    warn!("sending registerCapability.didChangeWatchedFiles failed: {err}");
+                }
+            }
+
+            if !removed_registrations.is_empty() {
+                if let Err(err) = self.client.unregister_capability(removed_registrations).await {
+                    warn!("sending unregisterCapability.didChangeWatchedFiles failed: {err}");
+                }
             }
         }
     }
