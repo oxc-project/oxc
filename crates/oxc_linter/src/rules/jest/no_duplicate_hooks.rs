@@ -32,7 +32,7 @@ declare_oxc_lint!(
     ///
     /// Having duplicate hooks in a describe block can lead to confusion and unexpected behavior.
     ///
-    /// ### Example
+    /// ### Examples
     ///
     /// Examples of **incorrect** code for this rule:
     /// ```javascript

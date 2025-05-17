@@ -38,17 +38,22 @@ pub struct Radix {
 
 declare_oxc_lint!(
     /// ### What it does
+    ///
     /// Enforce the consistent use of the radix argument when using `parseInt()`.
     ///
     /// ### Why is this bad?
+    ///
     /// Using the `parseInt()` function without specifying the radix can lead to unexpected results.
     ///
-    /// ### Example
-    /// ```javascript
-    /// // error
-    /// var num = parseInt("071");      // 57
+    /// ### Examples
     ///
-    /// // success
+    /// Examples of **incorrect** code for this rule:
+    /// ```javascript
+    /// var num = parseInt("071");      // 57
+    /// ```
+    ///
+    /// Examples of **correct** code for this rule:
+    /// ```javascript
     /// var num = parseInt("071", 10);  // 71
     /// ```
     Radix,

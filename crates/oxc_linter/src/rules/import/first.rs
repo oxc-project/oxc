@@ -86,7 +86,6 @@ declare_oxc_lint!(
     /// import { y } from 'bar';
     /// import { x } from './foo'
     /// ```
-    ///
     First,
     import,
     style,

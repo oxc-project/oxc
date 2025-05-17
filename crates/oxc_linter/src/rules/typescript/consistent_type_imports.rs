@@ -94,12 +94,19 @@ declare_oxc_lint!(
     ///
     /// inconsistent usage of type imports can make the code harder to read and understand.
     ///
-    /// ### Example
+    /// ### Examples
+    ///
+    /// Examples of **incorrect** code for this rule:
     /// ```ts
     /// import { Foo } from 'Foo';
     /// type T = Foo;
     ///
     /// type S = import("Foo");
+    /// ```
+    ///
+    /// Examples of **correct** code for this rule:
+    /// ```ts
+    /// import type { Foo } from 'Foo';
     /// ```
     ConsistentTypeImports,
     typescript,

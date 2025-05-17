@@ -30,10 +30,10 @@ declare_oxc_lint!(
     /// specific order, which means it can be confusing if they're intermixed with test
     /// cases.
     ///
-    /// ### Example
+    /// ### Examples
     ///
+    /// Examples of **incorrect** code for this rule:
     /// ```javascript
-    /// // invalid
     /// describe('foo', () => {
     ///     beforeEach(() => {
     ///         seedMyDatabase();
@@ -82,8 +82,10 @@ declare_oxc_lint!(
     ///         removeMyDatabase();
     ///     });
     /// });
+    /// ```
     ///
-    /// // valid
+    /// Examples of **correct** code for this rule:
+    /// ```javascript
     /// describe('foo', () => {
     ///     beforeAll(() => {
     ///         createMyDatabase();

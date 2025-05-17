@@ -24,7 +24,7 @@ declare_oxc_lint!(
     ///
     /// Using a logical operator is shorter and simpler than a ternary expression.
     ///
-    /// ### Example
+    /// ### Examples
     ///
     /// Examples of **incorrect** code for this rule:
     /// ```javascript
@@ -36,7 +36,6 @@ declare_oxc_lint!(
     //  ```javascript
     /// const foo = bar || baz;
     /// console.log(foo ?? bar);
-    ///
     /// ```
     PreferLogicalOperatorOverTernary,
     unicorn,

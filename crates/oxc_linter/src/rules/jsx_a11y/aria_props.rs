@@ -26,16 +26,19 @@ pub struct AriaProps;
 
 declare_oxc_lint!(
     /// ### What it does
+    ///
     /// Enforces that elements do not use invalid ARIA attributes.
     ///
     /// ### Why is this bad?
+    ///
     /// Using invalid ARIA attributes can mislead screen readers and other assistive technologies.
     /// It may cause the accessibility features of the website to fail, making it difficult
     /// for users with disabilities to use the site effectively.
     ///
     /// This rule includes fixes for some common typos.
     ///
-    /// ### Example
+    /// ### Examples
+    ///
     /// Examples of **incorrect** code for this rule:
     /// ```jsx
     /// <input aria-labeledby="address_label" />

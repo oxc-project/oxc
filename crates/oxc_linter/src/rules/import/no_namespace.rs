@@ -75,7 +75,6 @@ declare_oxc_lint!(
     /// import user from 'user-lib';
     /// import defaultExport, { isUser } from './user';
     /// ```
-    ///
     NoNamespace,
     import,
     style,

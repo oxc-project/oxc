@@ -39,7 +39,9 @@ declare_oxc_lint!(
     ///
     /// Restrict the use of specific `jest` and `vi` methods.
     ///
-    /// ### Example
+    /// ### Examples
+    ///
+    /// Examples of **incorrect** code for this rule:
     /// ```javascript
     /// jest.useFakeTimers();
     /// it('calls the callback after 1 second via advanceTimersByTime', () => {

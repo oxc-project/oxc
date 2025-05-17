@@ -85,7 +85,7 @@ declare_oxc_lint!(
     /// - Only one of the comparisons has any effect on the result, suggesting that the programmer might have made a mistake, such as flipping one of the comparison operators or using the wrong variable.
     /// - Comparisons like a < a or a >= a are always false or true respectively, making the logic redundant and potentially misleading.
     ///
-    /// ### Example
+    /// ### Examples
     ///
     /// Examples of **incorrect** code for this rule:
     /// ```javascript

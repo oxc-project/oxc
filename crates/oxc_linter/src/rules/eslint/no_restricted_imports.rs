@@ -231,10 +231,12 @@ enum GlobResult {
 
 declare_oxc_lint!(
     /// ### What it does
+    ///
     /// This rule allows you to specify imports that you don’t want to use in your application.
     /// It applies to static imports only, not dynamic ones.
     ///
     /// ### Why is this bad?
+    ///
     /// Some imports might not make sense in a particular environment.
     /// For example, Node.js’ fs module would not make sense in an environment that didn’t have a file system.
     ///

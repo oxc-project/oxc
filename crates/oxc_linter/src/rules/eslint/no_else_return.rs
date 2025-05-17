@@ -13,9 +13,11 @@ pub struct NoElseReturn {
 
 declare_oxc_lint!(
     /// ### What it does
+    ///
     /// Disallow `else` blocks after `return` statements in `if` statements
     ///
     /// ### Why is this bad?
+    ///
     /// If an `if` block contains a `return` statement, the `else` block becomes
     /// unnecessary. Its contents can be placed outside of the block.
     ///

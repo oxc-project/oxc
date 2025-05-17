@@ -42,7 +42,9 @@ declare_oxc_lint!(
     /// Therefore, treating an evaluated optional chaining expression as a function, object, number, etc.,
     /// can cause TypeError or unexpected results. For example:
     ///
-    /// ### Example
+    /// ### Examples
+    ///
+    /// Examples of **incorrect** code for this rule:
     /// ```javascript
     /// var obj = undefined;
     /// 1 in obj?.foo;  // TypeError

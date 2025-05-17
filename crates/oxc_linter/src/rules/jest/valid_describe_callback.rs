@@ -38,8 +38,9 @@ declare_oxc_lint!(
     /// Using an improper `describe()` callback function can lead to unexpected test
     /// errors.
     ///
-    /// ### Example
+    /// ### Examples
     ///
+    /// Examples of **incorrect** code for this rule:
     /// ```javascript
     /// // Async callback functions are not allowed
     /// describe('myFunction()', async () => {

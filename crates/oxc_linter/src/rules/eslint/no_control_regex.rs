@@ -97,10 +97,9 @@ declare_oxc_lint!(
     /// regular expression containing elements that explicitly match these
     /// characters is most likely a mistake.
     ///
-    /// ### Example
+    /// ### Examples
     ///
     /// Examples of **incorrect** code for this rule:
-    ///
     /// ```javascript
     /// var pattern1 = /\x00/;
     /// var pattern2 = /\x0C/;
@@ -112,7 +111,6 @@ declare_oxc_lint!(
     /// ```
     ///
     /// Examples of **correct** code for this rule:
-    ///
     /// ```javascript
     /// var pattern1 = /\x20/;
     /// var pattern2 = /\u0020/;

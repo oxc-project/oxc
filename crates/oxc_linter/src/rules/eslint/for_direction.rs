@@ -26,9 +26,11 @@ pub struct ForDirection;
 
 declare_oxc_lint!(
     /// ### What it does
+    ///
     /// Disallow `for` loop update causing the counter to move in the wrong direction.
     ///
     /// ### Why is this bad?
+    ///
     /// A `for` loop with a stop condition that can never be reached, such as one
     /// with a counter that moves in the wrong direction, will run infinitely.
     /// While there are occasions when an infinite loop is intended, the
@@ -41,7 +43,7 @@ declare_oxc_lint!(
     /// that the counter is greater than zero (`i >= 0`) then the loop will never
     /// exit.
     ///
-    /// ### Example
+    /// ### Examples
     ///
     /// Examples of **incorrect** code for this rule:
     /// ```js

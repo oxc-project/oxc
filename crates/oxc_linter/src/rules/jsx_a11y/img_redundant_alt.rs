@@ -80,7 +80,7 @@ declare_oxc_lint!(
     /// This rule checks for alternative text on the following elements:
     /// `<img>` and the components which you define in options.components with the exception of components which is hidden from screen reader.
     ///
-    /// ### Example
+    /// ### Examples
     ///
     /// Examples of **incorrect** code for this rule:
     /// ```jsx

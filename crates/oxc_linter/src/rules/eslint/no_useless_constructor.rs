@@ -53,8 +53,7 @@ declare_oxc_lint!(
     /// such, it is unnecessary to provide an empty constructor or one that
     /// simply delegates into its parent class, as in the following examples:
     ///
-    ///
-    /// ### Example
+    /// ### Examples
     ///
     /// Examples of **incorrect** code for this rule:
     /// ```javascript

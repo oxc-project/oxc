@@ -25,7 +25,7 @@ declare_oxc_lint!(
     /// It potentially indicates that the async operations are not being effectively parallelized.
     /// Instead, they are being run in series, which can lead to poorer performance.
     ///
-    /// ### Example
+    /// ### Examples
     ///
     /// Examples of **incorrect** code for this rule:
     /// ```javascript

@@ -16,6 +16,7 @@ pub struct NoFuncAssign;
 
 declare_oxc_lint!(
     /// ### What it does
+    ///
     /// Disallow reassigning `function` declarations
     ///
     /// ### Why is this bad?

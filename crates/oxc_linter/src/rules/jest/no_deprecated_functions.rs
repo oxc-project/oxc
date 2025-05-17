@@ -36,6 +36,7 @@ impl std::ops::Deref for NoDeprecatedFunctions {
 
 declare_oxc_lint!(
     /// ### What it does
+    ///
     /// Over the years Jest has accrued some debt in the form of functions that have
     /// either been renamed for clarity, or replaced with more powerful APIs.
     ///
@@ -67,7 +68,9 @@ declare_oxc_lint!(
     /// While typically these deprecated functions are kept in the codebase for a number
     /// of majors, eventually they are removed completely.
     ///
-    /// ### Example
+    /// ### Examples
+    ///
+    /// Examples of **incorrect** code for this rule:
     /// ```javascript
     /// jest.resetModuleRegistry // since Jest 15
     /// jest.addMatchers // since Jest 17

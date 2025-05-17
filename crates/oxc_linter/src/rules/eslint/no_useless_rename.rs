@@ -43,7 +43,7 @@ declare_oxc_lint!(
     ///
     /// It is unnecessary to rename a variable to the same name.
     ///
-    /// ### Example
+    /// ### Examples
     ///
     /// Examples of **incorrect** code for this rule:
     /// ```javascript

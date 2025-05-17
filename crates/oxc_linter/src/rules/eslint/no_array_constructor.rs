@@ -20,6 +20,7 @@ pub struct NoArrayConstructor;
 
 declare_oxc_lint!(
     /// ### What it does
+    ///
     /// Disallows creating arrays with the `Array` constructor.
     ///
     /// ### Why is this bad?

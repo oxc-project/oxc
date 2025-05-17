@@ -58,6 +58,7 @@ pub struct ExplicitLengthCheck {
 
 declare_oxc_lint!(
     /// ### What it does
+    ///
     /// Enforce explicitly comparing the length or size property of a value.
     ///
     /// The non-zero option can be configured with one of the following:

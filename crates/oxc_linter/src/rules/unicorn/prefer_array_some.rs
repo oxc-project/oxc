@@ -43,7 +43,7 @@ declare_oxc_lint!(
     ///
     /// Using `.some()` is more idiomatic and easier to read.
     ///
-    /// ### Example
+    /// ### Examples
     ///
     /// Examples of **incorrect** code for this rule:
     /// ```javascript

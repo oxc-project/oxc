@@ -23,7 +23,7 @@ declare_oxc_lint!(
     /// functions and not classes.  It is easy to make this mistake by assuming
     /// the uppercase letters indicate classes.
     ///
-    /// ### Example
+    /// ### Examples
     ///
     /// Examples of **incorrect** code for this rule:
     /// ```js

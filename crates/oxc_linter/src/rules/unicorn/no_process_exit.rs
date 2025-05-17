@@ -16,12 +16,14 @@ pub struct NoProcessExit;
 
 declare_oxc_lint!(
     /// ### What it does
+    ///
     /// Disallow `process.exit()`.
     ///
     /// ### Why is this bad?
+    ///
     /// Only use `process.exit()` in CLI apps. Throw an error instead.
     ///
-    /// ### Example
+    /// ### Examples
     ///
     /// Examples of **incorrect** code for this rule:
     /// ```javascript

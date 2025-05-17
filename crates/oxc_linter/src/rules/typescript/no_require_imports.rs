@@ -112,7 +112,6 @@ declare_oxc_lint!(
     /// import foo = require('foo');
     /// import foo from 'foo';
     /// ```
-    ///
     NoRequireImports,
     typescript,
     restriction,

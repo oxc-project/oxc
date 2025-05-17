@@ -36,7 +36,7 @@ declare_oxc_lint!(
     ///
     /// This rule checks for title property on iframe element.
     ///
-    /// ### Example
+    /// ### Examples
     ///
     /// Examples of **incorrect** code for this rule:
     /// ```jsx

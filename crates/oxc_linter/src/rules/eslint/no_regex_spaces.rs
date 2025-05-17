@@ -25,6 +25,7 @@ pub struct NoRegexSpaces;
 
 declare_oxc_lint!(
     /// ### What it does
+    ///
     /// Disallow 2+ consecutive spaces in regular expressions.
     ///
     /// ### Why is this bad?
@@ -37,7 +38,9 @@ declare_oxc_lint!(
     /// var re = /foo {3}bar/;
     /// ```
     ///
-    /// ### Example
+    /// ### Examples
+    ///
+    /// Examples of **incorrect** code for this rule:
     /// ```javascript
     /// var re = /foo   bar/;
     /// ```

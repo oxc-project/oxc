@@ -24,12 +24,17 @@ declare_oxc_lint!(
     /// When accessing a member from an `await` expression,
     /// the `await` expression has to be parenthesized, which is not readable.
     ///
-    /// ### Example
+    /// ### Examples
+    ///
+    /// Examples of **incorrect** code for this rule:
     /// ```javascript
     /// async function bad() {
     ///     const secondElement = (await getArray())[1];
     /// }
+    /// ```
     ///
+    /// Examples of **correct** code for this rule:
+    /// ```javascript
     /// async function good() {
     ///     const [, secondElement] = await getArray();
     /// }

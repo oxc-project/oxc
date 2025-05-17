@@ -16,9 +16,11 @@ pub struct NoPromiseInCallback;
 
 declare_oxc_lint!(
     /// ### What it does
+    ///
     /// Disallows the use of Promises within error-first callback functions.
     ///
     /// ### Why is this bad?
+    ///
     /// Mixing Promises and callbacks can lead to unclear and inconsistent code.
     /// Promises and callbacks are different patterns for handling asynchronous code.
     /// Mixing them makes the logic flow harder to follow and complicates error handling,

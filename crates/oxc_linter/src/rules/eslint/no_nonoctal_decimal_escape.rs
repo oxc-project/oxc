@@ -23,26 +23,22 @@ pub struct NoNonoctalDecimalEscape;
 
 declare_oxc_lint!(
     /// ### What it does
+    ///
     /// This rule disallows \8 and \9 escape sequences in string literals
     ///
     /// ### Why is this bad?
+    ///
     /// ECMAScript specification treats \8 and \9 in string literals as a legacy feature
     ///
-    /// ### Example
+    /// ### Examples
     ///
     /// Examples of **incorrect** code for this rule:
-    ///
-    /// <!-- prettier-ignore-start -->
-    ///
     /// ```javascript
     /// let x = "\8"
     /// let y = "\9"
     /// ```
     ///
-    /// <!-- prettier-ignore-end -->
-    ///
     /// Examples of **correct** code for this rule:
-    ///
     /// ```javascript
     /// let x = "8"
     /// let y = "\\9"

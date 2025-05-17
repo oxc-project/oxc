@@ -130,7 +130,6 @@ declare_oxc_lint!(
     /// line 4
     /// `;
     /// ```
-    ///
     NoLargeSnapshots,
     jest,
     style,

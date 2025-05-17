@@ -57,12 +57,16 @@ impl std::ops::Deref for TripleSlashReference {
 
 declare_oxc_lint!(
     /// ### What it does
+    ///
     /// Disallow certain triple slash directives in favor of ES6-style import declarations.
     ///
     /// ### Why is this bad?
+    ///
     /// Use of triple-slash reference type directives is generally discouraged in favor of ECMAScript Module imports.
     ///
-    /// ### Example
+    /// ### Examples
+    ///
+    /// Examples of **incorrect** code for this rule:
     /// ```ts
     /// /// <reference lib="code" />
     /// globalThis.value;

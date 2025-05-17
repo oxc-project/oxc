@@ -56,9 +56,11 @@ impl std::ops::Deref for JsxFilenameExtension {
 
 declare_oxc_lint!(
     /// ### What it does
+    ///
     /// Enforces consistent use of the JSX file extension.
     ///
     /// ### Why is this bad?
+    ///
     /// Some bundlers or parsers need to know by the file extension that it contains JSX
     ///
     /// ### Examples

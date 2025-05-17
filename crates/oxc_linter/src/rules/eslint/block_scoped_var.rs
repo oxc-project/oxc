@@ -47,7 +47,6 @@ declare_oxc_lint!(
     ///    }
     ///     console.log(build);
     /// }
-    ///
     /// ```
     BlockScopedVar,
     eslint,

@@ -41,6 +41,7 @@ impl Default for NoNoninteractiveTabindex {
 
 declare_oxc_lint!(
     /// ### What it does
+    ///
     /// This rule checks that non-interactive elements don't have a tabIndex which would make them interactive via keyboard navigation.
     ///
     /// ### Why is this bad?

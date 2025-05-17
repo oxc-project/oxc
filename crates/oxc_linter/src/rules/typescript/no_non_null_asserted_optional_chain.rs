@@ -44,14 +44,12 @@ declare_oxc_lint!(
     /// ### Examples
     ///
     /// Examples of **incorrect** code for this rule:
-    ///
     /// ```ts
     /// foo?.bar!;
     /// foo?.bar()!;
     /// ```
     ///
     /// Examples of **correct** code for this rule:
-    ///
     /// ```ts
     /// foo?.bar;
     /// foo.bar!;

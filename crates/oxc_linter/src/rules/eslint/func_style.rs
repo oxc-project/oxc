@@ -64,9 +64,11 @@ pub struct FuncStyle {
 
 declare_oxc_lint!(
     /// ### What it does
+    ///
     /// Enforce the consistent use of either function declarations or expressions assigned to variables
     ///
     /// ### Why is this bad?
+    ///
     /// This rule enforces a particular type of function style, either function declarations or expressions assigned to variables.
     /// You can specify which you prefer in the configuration.
     ///

@@ -49,7 +49,9 @@ declare_oxc_lint!(
     ///
     /// Ban specific matchers & modifiers from being used, and can suggest alternatives.
     ///
-    /// ### Example
+    /// ### Examples
+    ///
+    /// Examples of **incorrect** code for this rule:
     /// ```javascript
     ///
     /// it('is false', () => {
@@ -69,7 +71,6 @@ declare_oxc_lint!(
     ///   });
     /// });
     /// ```
-    ///
     NoRestrictedMatchers,
     jest,
     style,

@@ -43,7 +43,7 @@ declare_oxc_lint!(
     ///
     /// https://eslint.org/docs/latest/rules/no-new-wrappers
     ///
-    /// ### Example
+    /// ### Examples
     ///
     /// Examples of **incorrect** code for this rule:
     /// ```js

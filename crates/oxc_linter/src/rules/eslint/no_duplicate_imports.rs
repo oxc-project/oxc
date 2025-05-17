@@ -39,6 +39,7 @@ declare_oxc_lint!(
     /// Disallow duplicate module imports.
     ///
     /// ### Why is this bad?
+    ///
     /// Using a single import statement per module will make the code clearer because you can see
     /// everything being imported from that module on one line.
     ///

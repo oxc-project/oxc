@@ -53,6 +53,7 @@ impl Deref for AnchorIsValid {
 
 declare_oxc_lint!(
     /// ### What it does
+    ///
     /// The HTML `<a>` element, with a valid href attribute, is formally defined as representing a **hyperlink**.
     /// That is, a link between one HTML document and another, or between one location inside an HTML document and another location inside the same document.
     ///
@@ -83,6 +84,7 @@ declare_oxc_lint!(
     /// ```
     ///
     /// ### Why is this bad?
+    ///
     /// There are **many reasons** why an anchor should not have a logic and have a correct `href` attribute:
     /// - it can disrupt the correct flow of the user navigation e.g. a user that wants to open the link
     /// in another tab, but the default "click" behaviour is prevented
