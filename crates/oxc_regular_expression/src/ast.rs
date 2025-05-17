@@ -176,7 +176,7 @@ pub struct UnicodePropertyEscape<'a> {
 #[derive(Debug, Clone, Copy)]
 #[generate_derive(CloneIn, ContentEq)]
 pub struct Dot {
-    pub span: Span,
+    pub start: u32, // Only store start since dot is only a single character
 }
 
 /// Character class wrapped by `[]`.

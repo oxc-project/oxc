@@ -50,7 +50,7 @@ impl GetSpan for RegExpAstKind<'_> {
             Self::IgnoreGroup(it) => it.span,
             Self::BoundaryAssertion(it) => it.span,
             Self::Character(it) => it.span,
-            Self::Dot(it) => it.span,
+            Self::Dot(it) => Span::sized(it.start, 1),
             Self::CharacterClassEscape(it) => it.span,
             Self::UnicodePropertyEscape(it) => it.span,
             Self::CharacterClass(it) => it.span,

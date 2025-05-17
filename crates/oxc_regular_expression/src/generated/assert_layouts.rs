@@ -87,9 +87,9 @@ const _: () = {
     assert!(offset_of!(UnicodePropertyEscape, value) == 24);
 
     // Padding: 0 bytes
-    assert!(size_of::<Dot>() == 8);
-    assert!(align_of::<Dot>() == 8);
-    assert!(offset_of!(Dot, span) == 0);
+    assert!(size_of::<Dot>() == 4);
+    assert!(align_of::<Dot>() == 4);
+    assert!(offset_of!(Dot, start) == 0);
 
     // Padding: 5 bytes
     assert!(size_of::<CharacterClass>() == 40);
@@ -188,7 +188,7 @@ const _: () = {
     assert!(offset_of!(Alternative, span) == 0);
     assert!(offset_of!(Alternative, body) == 8);
 
-    assert!(size_of::<Term>() == 12);
+    assert!(size_of::<Term>() == 8);
     assert!(align_of::<Term>() == 4);
 
     // Padding: 3 bytes
@@ -210,13 +210,13 @@ const _: () = {
     assert!(size_of::<LookAroundAssertionKind>() == 1);
     assert!(align_of::<LookAroundAssertionKind>() == 1);
 
-    // Padding: 3 bytes
+    // Padding: 7 bytes
     assert!(size_of::<Quantifier>() == 48);
     assert!(align_of::<Quantifier>() == 8);
     assert!(offset_of!(Quantifier, span) == 0);
     assert!(offset_of!(Quantifier, min) == 8);
     assert!(offset_of!(Quantifier, max) == 16);
-    assert!(offset_of!(Quantifier, greedy) == 44);
+    assert!(offset_of!(Quantifier, greedy) == 40);
     assert!(offset_of!(Quantifier, body) == 32);
 
     // Padding: 3 bytes
@@ -248,9 +248,9 @@ const _: () = {
     assert!(offset_of!(UnicodePropertyEscape, value) == 16);
 
     // Padding: 0 bytes
-    assert!(size_of::<Dot>() == 8);
+    assert!(size_of::<Dot>() == 4);
     assert!(align_of::<Dot>() == 4);
-    assert!(offset_of!(Dot, span) == 0);
+    assert!(offset_of!(Dot, start) == 0);
 
     // Padding: 1 bytes
     assert!(size_of::<CharacterClass>() == 28);

@@ -13,7 +13,7 @@ impl GetSpan for Term<'_> {
             Term::LookAroundAssertion(it) => it.span,
             Term::Quantifier(it) => it.span,
             Term::Character(it) => it.span,
-            Term::Dot(it) => it.span,
+            Term::Dot(it) => Span::sized(it.start, 1),
             Term::CharacterClassEscape(it) => it.span,
             Term::UnicodePropertyEscape(it) => it.span,
             Term::CharacterClass(it) => it.span,

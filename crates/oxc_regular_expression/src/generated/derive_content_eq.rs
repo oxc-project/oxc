@@ -114,8 +114,8 @@ impl ContentEq for UnicodePropertyEscape<'_> {
 }
 
 impl ContentEq for Dot {
-    fn content_eq(&self, _: &Self) -> bool {
-        true
+    fn content_eq(&self, other: &Self) -> bool {
+        ContentEq::content_eq(&self.start, &other.start)
     }
 }
 

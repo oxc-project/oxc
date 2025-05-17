@@ -326,9 +326,7 @@ impl<'a> PatternParser<'a> {
 
         // .
         if self.reader.eat('.') {
-            return Ok(Some(ast::Term::Dot(ast::Dot {
-                span: self.span_factory.create(span_start, self.reader.offset()),
-            })));
+            return Ok(Some(ast::Term::Dot(ast::Dot { start: span_start })));
         }
 
         // \ AtomEscape[?UnicodeMode, ?NamedCaptureGroups]
@@ -382,9 +380,7 @@ impl<'a> PatternParser<'a> {
 
         // .
         if self.reader.eat('.') {
-            return Ok(Some(ast::Term::Dot(ast::Dot {
-                span: self.span_factory.create(span_start, self.reader.offset()),
-            })));
+            return Ok(Some(ast::Term::Dot(ast::Dot { start: span_start })));
         }
 
         if self.reader.eat('\\') {

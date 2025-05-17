@@ -313,11 +313,11 @@ impl<'new_alloc> CloneIn<'new_alloc> for Dot {
     type Cloned = Dot;
 
     fn clone_in(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {
-        Dot { span: CloneIn::clone_in(&self.span, allocator) }
+        Dot { start: CloneIn::clone_in(&self.start, allocator) }
     }
 
     fn clone_in_with_semantic_ids(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {
-        Dot { span: CloneIn::clone_in_with_semantic_ids(&self.span, allocator) }
+        Dot { start: CloneIn::clone_in_with_semantic_ids(&self.start, allocator) }
     }
 }
 
