@@ -955,20 +955,11 @@ impl<'bump, T: 'bump> Vec<'bump, T> {
     /// [`drain`]: #method.drain
     pub fn truncate(&mut self, len: usize) {
         let current_len = self.buf.len_usize();
-        unsafe {
-            let mut ptr = self.as_mut_ptr().add(current_len);
-            // Set the final length at the end, keeping in mind that
-            // dropping an element might panic. Works around a missed
-            // optimization, as seen in the following issue:
-            // https://github.com/rust-lang/rust/issues/51802
-            let mut local_len = SetLenOnDrop::new(&mut self.buf.len);
-
-            // drop any extra elements
-            for _ in len..current_len {
-                local_len.decrement_len(1);
-                ptr = ptr.offset(-1);
-                ptr::drop_in_place(ptr);
-            }
+        if len < current_len {
+            // SAFETY: `len` is less than current len, so cannot be greater than `u32::MAX`,
+            // and cannot be greater than `self.capacity()`.
+            // We are shrinking `len`, so there are no concerns about initialized elements.
+            unsafe { self.set_len(len) };
         }
     }
 
@@ -2084,63 +2075,31 @@ impl<'bump, T: 'bump> Vec<'bump, T> {
     fn extend_with<E: ExtendWith<T>>(&mut self, n: usize, mut value: E) {
         self.reserve(n);
 
+        // std library version of this method updates `len` after writing each element,
+        // because `value.next()` or `value.last()` could panic.
+        // If that happens, `len` needs to contain all the elements written so far,
+        // so they get dropped when the `Vec` is dropped.
+        // But our `Vec` requires that `T` is not `Drop`, so we don't need to worry about that.
         unsafe {
             let mut ptr = self.as_mut_ptr().add(self.len());
-            // Use SetLenOnDrop to work around bug where compiler
-            // may not realize the store through `ptr` through self.set_len()
-            // don't alias.
-            let mut local_len = SetLenOnDrop::new(&mut self.buf.len);
 
             // Write all elements except the last one
             for _ in 1..n {
                 ptr::write(ptr, value.next());
                 ptr = ptr.offset(1);
-                // Increment the length in every step in case next() panics
-                local_len.increment_len(1);
             }
 
             if n > 0 {
                 // We can write the last element directly without cloning needlessly
                 ptr::write(ptr, value.last());
-                local_len.increment_len(1);
             }
 
-            // len set by scope guard
+            // `n` and `self.len() + n` must both be `<= u32::MAX`, otherwise `self.reserve(n)` above
+            // would have panicked. So `n as u32` cannot truncate `n`, and `len + n` cannot wrap.
+            #[expect(clippy::cast_possible_truncation)]
+            let n = n as u32;
+            self.buf.len += n;
         }
-    }
-}
-
-// Set the length of the vec when the `SetLenOnDrop` value goes out of scope.
-//
-// The idea is: The length field in SetLenOnDrop is a local variable
-// that the optimizer will see does not alias with any stores through the Vec's data
-// pointer. This is a workaround for alias analysis issue #32155
-struct SetLenOnDrop<'a> {
-    len: &'a mut u32,
-    local_len: u32,
-}
-
-impl<'a> SetLenOnDrop<'a> {
-    #[inline]
-    fn new(len: &'a mut u32) -> Self {
-        SetLenOnDrop { local_len: *len, len }
-    }
-
-    #[inline]
-    fn increment_len(&mut self, increment: u32) {
-        self.local_len += increment;
-    }
-
-    #[inline]
-    fn decrement_len(&mut self, decrement: u32) {
-        self.local_len -= decrement;
-    }
-}
-
-impl Drop for SetLenOnDrop<'_> {
-    #[inline]
-    fn drop(&mut self) {
-        *self.len = self.local_len;
     }
 }
 
