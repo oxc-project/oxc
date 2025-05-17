@@ -33,7 +33,7 @@ working directory:
    `----
   help: Replace var with let or const
 
-  ! ]8;;https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-console.html\eslint(no-console)]8;;\: eslint(no-console): Unexpected console statement.
+  ! ]8;;https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-console.html\eslint(no-console)]8;;\: Unexpected console statement.
    ,-[fixtures/overrides/test.ts:2:1]
  1 | var msg = "hello";
  2 | console.log(msg);
