@@ -1171,9 +1171,7 @@ impl<'bump, T: 'bump> Vec<'bump, T> {
     #[inline]
     #[expect(clippy::cast_possible_truncation)]
     pub unsafe fn set_len(&mut self, new_len: usize) {
-        // `new_len as u32` is safe because caller must ensure that
-        // `new_len` is less than or equal to `u32::MAX`, otherwise
-        // it is UB.
+        // Caller guarantees `new_len <= u32::MAX`, so `new_len as u32` cannot truncate `new_len`
         self.buf.len = new_len as u32;
     }
 
