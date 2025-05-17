@@ -142,13 +142,12 @@ impl NoUntypedMockFactory {
                     property_span,
                 ),
                 |fixer| {
-                    let mut content = fixer.codegen();
-                    content.print_str("<typeof import('");
-                    content.print_str(string_literal.value.as_str());
-                    content.print_str("')>(");
-                    let span = Span::sized(string_literal.span.start - 1, 1);
+                    let mut code = String::with_capacity(string_literal.value.len() + 20);
+                    code.push_str("<typeof import('");
+                    code.push_str(string_literal.value.as_str());
+                    code.push_str("')>(");
 
-                    fixer.replace(span, content)
+                    fixer.replace(Span::sized(string_literal.span.start - 1, 1), code)
                 },
             );
         } else if let Expression::Identifier(ident) = expr {
