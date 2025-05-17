@@ -33,6 +33,13 @@ declare_oxc_lint!(
     ///    a !== b; // not equals test(`!==`)
     ///    a! === b; // a non-null assertions(`!`) and an triple equals test(`===`)
     /// ```
+    ///
+    /// Examples of **correct** code for this rule:
+    /// ```ts
+    /// a == b;
+    /// a !== b;
+    /// a === b;
+    /// ```
     NoConfusingNonNullAssertion,
     typescript,
     suspicious,

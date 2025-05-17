@@ -35,6 +35,10 @@ declare_oxc_lint!(
     /// Examples of **incorrect** code for this rule:
     /// ```javascript
     /// ```
+    ///
+    /// Examples of **correct** code for this rule:
+    /// ```javascript
+    /// ```
     NoBeforeInteractiveScriptOutsideDocument,
     nextjs,
     correctness

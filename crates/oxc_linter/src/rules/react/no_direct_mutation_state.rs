@@ -36,8 +36,6 @@ declare_oxc_lint!(
     /// calling setState() afterwards may replace the mutation you made
     ///
     /// ### Examples
-    ///
-    /// Examples of **incorrect** code for this rule:
     /// ```jsx
     ///  // error
     ///  var Hello = createReactClass({

@@ -32,6 +32,11 @@ declare_oxc_lint!(
     /// ```javascript
     /// Math.pow(a, b)
     /// ```
+    ///
+    /// Examples of **correct** code for this rule:
+    /// ```javascript
+    /// a ** b
+    /// ```
     PreferExponentiationOperator,
     eslint,
     style,

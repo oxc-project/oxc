@@ -34,6 +34,7 @@ declare_oxc_lint!(
     ///     return (
     ///       <Html>
     ///         <Head />
+    ///         <Head />
     ///         <body>
     ///           <Main />
     ///           <NextScript />
@@ -42,7 +43,28 @@ declare_oxc_lint!(
     ///    )
     ///  }
     ///}
-    ///export default MyDocument
+    /// export default MyDocument
+    /// ```
+    ///
+    /// Examples of **correct** code for this rule:
+    /// ```jsx
+    /// import Document, { Html, Head, Main, NextScript } from 'next/document'
+    /// class MyDocument extends Document {
+    ///   static async getInitialProps(ctx) {
+    ///   }
+    ///   render() {
+    ///     return (
+    ///       <Html>
+    ///         <Head />
+    ///         <body>
+    ///           <Main />
+    ///           <NextScript />
+    ///         </body>
+    ///       </Html>
+    ///    )
+    ///  }
+    ///}
+    /// export default MyDocument
     /// ```
     NoDuplicateHead,
     nextjs,

@@ -71,6 +71,10 @@ declare_oxc_lint!(
     ///   0o1_0_44_21,
     ///   1_294_28771_2n,
     /// ];
+    /// ```
+    ///
+    /// Examples of **correct** code for this rule:
+    /// ```javascript
     /// const valid = [
     ///   1_234_567,
     ///   1_234.567_89,

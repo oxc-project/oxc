@@ -58,6 +58,18 @@ declare_oxc_lint!(
     /// // with "enforceForLogicalOperands" option enabled
     /// if (!!foo || bar) {}
     /// ```
+    ///
+    /// Examples of **correct** code for this rule:
+    /// ```javascript
+    /// var foo = !bar;
+    /// var foo = Boolean(bar);
+    ///
+    /// if (foo) {}
+    /// if (foo) {}
+    ///
+    /// // with "enforceForLogicalOperands" option enabled
+    /// if (foo || bar) {}
+    /// ```
     NoExtraBooleanCast,
     eslint,
     correctness,

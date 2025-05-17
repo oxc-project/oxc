@@ -38,6 +38,14 @@ declare_oxc_lint!(
     /// }
     /// export async function getServurSideProps(){};
     /// ```
+    ///
+    /// Examples of **correct** code for this rule:
+    /// ```javascript
+    /// export default function Page() {
+    ///   return <div></div>;
+    /// }
+    /// export async function getServerSideProps(){};
+    /// ```
     NoTypos,
     nextjs,
     correctness,

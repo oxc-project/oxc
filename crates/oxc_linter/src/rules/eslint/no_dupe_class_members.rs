@@ -42,6 +42,15 @@ declare_oxc_lint!(
     /// let a = new A();
     /// a.foo() // Uncaught TypeError: a.foo is not a function
     /// ```
+    ///
+    /// Examples of **correct** code for this rule:
+    /// ```javascript
+    /// class A {
+    ///   foo() { console.log("foo") }
+    /// }
+    /// let a = new A();
+    /// a.foo();
+    /// ```
     NoDupeClassMembers,
     eslint,
     correctness

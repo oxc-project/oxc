@@ -43,6 +43,11 @@ declare_oxc_lint!(
     ///   throw e;
     /// }
     /// ```
+    ///
+    /// Examples of **correct** code for this rule:
+    /// ```javascript
+    /// doSomethingThatMightThrow();
+    /// ```
     NoUselessCatch,
     eslint,
     correctness

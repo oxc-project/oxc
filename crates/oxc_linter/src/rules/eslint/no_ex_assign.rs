@@ -35,6 +35,15 @@ declare_oxc_lint!(
     ///     e = 10;
     /// }
     /// ```
+    ///
+    /// Examples of **correct** code for this rule:
+    /// ```javascript
+    /// try {
+    ///     // code
+    /// } catch (e) {
+    ///     let val = 10;
+    /// }
+    /// ```
     NoExAssign,
     eslint,
     correctness

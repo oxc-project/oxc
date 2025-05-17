@@ -49,10 +49,11 @@ declare_oxc_lint!(
     ///
     /// Examples of **incorrect** code for this rule:
     /// ```javascript
-    /// // error
     /// var num = parseInt("071");      // 57
+    /// ```
     ///
-    /// // success
+    /// Examples of **correct** code for this rule:
+    /// ```javascript
     /// var num = parseInt("071", 10);  // 71
     /// ```
     Radix,

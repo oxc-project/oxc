@@ -29,6 +29,13 @@ declare_oxc_lint!(
     /// x!.y;
     /// x.y!;
     /// ```
+    ///
+    /// Examples of **correct** code for this rule:
+    /// ```ts
+    /// x;
+    /// x?.y;
+    /// x.y;
+    /// ```
     NoNonNullAssertion,
     typescript,
     restriction,

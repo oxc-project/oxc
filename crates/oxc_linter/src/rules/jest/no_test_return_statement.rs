@@ -40,6 +40,13 @@ declare_oxc_lint!(
     ///    return expect(1).toBe(1);
     /// });
     /// ```
+    ///
+    /// Examples of **correct** code for this rule:
+    /// ```javascript
+    /// test('one', () => {
+    ///    expect(1).toBe(1);
+    /// });
+    /// ```
     NoTestReturnStatement,
     jest,
     style,

@@ -47,6 +47,13 @@ declare_oxc_lint!(
     ///
     /// // However, this will always result in `isEmpty` being `false`.
     /// ```
+    ///
+    /// Examples of **correct** code for this rule:
+    /// ```javascript
+    /// const x = a + (b ?? c);
+    ///
+    /// const isEmpty = x.length === 0;
+    /// ```
     NoConstantBinaryExpression,
     eslint,
     correctness

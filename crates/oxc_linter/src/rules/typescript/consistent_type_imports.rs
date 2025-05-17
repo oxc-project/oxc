@@ -103,6 +103,11 @@ declare_oxc_lint!(
     ///
     /// type S = import("Foo");
     /// ```
+    ///
+    /// Examples of **correct** code for this rule:
+    /// ```ts
+    /// import type { Foo } from 'Foo';
+    /// ```
     ConsistentTypeImports,
     typescript,
     style,

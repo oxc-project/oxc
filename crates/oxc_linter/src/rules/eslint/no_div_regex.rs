@@ -31,6 +31,11 @@ declare_oxc_lint!(
     /// ```javascript
     /// function bar() { return /=foo/; }
     /// ```
+    ///
+    /// Examples of **correct** code for this rule:
+    /// ```javascript
+    /// function bar() { return /[=]foo/; }
+    /// ```
     NoDivRegex,
     eslint,
     restriction,

@@ -29,6 +29,11 @@ declare_oxc_lint!(
     /// // tslint:disable-next-line
     /// someCode();
     /// ```
+    ///
+    /// Examples of **correct** code for this rule:
+    /// ```ts
+    /// someCode();
+    /// ```
     BanTslintComment,
     typescript,
     style,

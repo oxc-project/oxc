@@ -44,6 +44,14 @@ declare_oxc_lint!(
     ///     function doSomethingElse () { }
     /// }
     /// ```
+    ///
+    /// Examples of **correct** code for this rule:
+    /// ```javascript
+    /// function doSomethingElse () { }
+    /// if (test) {
+    ///   // your code here
+    /// }
+    /// ```
     NoInnerDeclarations,
     eslint,
     pedantic

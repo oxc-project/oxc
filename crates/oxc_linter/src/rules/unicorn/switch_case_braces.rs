@@ -55,6 +55,19 @@ declare_oxc_lint!(
     ///         break;
     /// }
     /// ```
+    ///
+    /// Examples of **correct** code for this rule:
+    /// ```javascript
+    /// switch (num) {
+    ///     case 1: {
+    ///
+    ///     }
+    ///     case 2: {
+    ///         console.log('Case 2');
+    ///         break;
+    ///     }
+    /// }
+    /// ```
     SwitchCaseBraces,
     unicorn,
     style,

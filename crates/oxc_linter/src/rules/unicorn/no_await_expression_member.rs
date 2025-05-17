@@ -31,7 +31,10 @@ declare_oxc_lint!(
     /// async function bad() {
     ///     const secondElement = (await getArray())[1];
     /// }
+    /// ```
     ///
+    /// Examples of **correct** code for this rule:
+    /// ```javascript
     /// async function good() {
     ///     const [, secondElement] = await getArray();
     /// }

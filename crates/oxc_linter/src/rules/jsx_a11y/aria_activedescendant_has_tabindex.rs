@@ -32,6 +32,11 @@ declare_oxc_lint!(
     ///
     /// Examples of **incorrect** code for this rule:
     /// ```jsx
+    /// const Bad = <div aria-activedescendant={someID} />
+    /// ```
+    ///
+    /// Examples of **correct** code for this rule:
+    /// ```jsx
     /// const Good = <>
     ///     <CustomComponent />
     ///     <CustomComponent aria-activedescendant={someID} />
@@ -49,8 +54,6 @@ declare_oxc_lint!(
     ///     <input aria-activedescendant={someID} tabIndex={0} />
     ///     <input aria-activedescendant={someID} tabIndex={-1} />
     /// </>
-    ///
-    /// const Bad = <div aria-activedescendant={someID} />
     /// ```
     AriaActivedescendantHasTabindex,
     jsx_a11y,

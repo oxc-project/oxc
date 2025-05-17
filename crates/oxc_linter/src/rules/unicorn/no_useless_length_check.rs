@@ -51,6 +51,13 @@ declare_oxc_lint!(
     ///    // do something!
     /// }
     /// ```
+    ///
+    /// Examples of **correct** code for this rule:
+    /// ```javascript
+    /// if (array.every(Boolean)) {
+    ///    // do something!
+    /// }
+    /// ```
     NoUselessLengthCheck,
     unicorn,
     correctness,

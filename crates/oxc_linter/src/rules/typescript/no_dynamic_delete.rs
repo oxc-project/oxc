@@ -27,6 +27,12 @@ declare_oxc_lint!(
     /// const container: { [i: string]: 0 } = {};
     /// delete container['aa' + 'b'];
     /// ```
+    ///
+    /// Examples of **correct** code for this rule:
+    /// ```ts
+    /// const container: { [i: string]: 0 } = {};
+    /// delete container.aab;
+    /// ```
     NoDynamicDelete,
     typescript,
     restriction,

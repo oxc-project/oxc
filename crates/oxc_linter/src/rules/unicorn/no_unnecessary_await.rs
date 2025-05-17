@@ -31,6 +31,13 @@ declare_oxc_lint!(
     ///     await await promise;
     /// }
     /// ```
+    ///
+    /// Examples of **correct** code for this rule:
+    /// ```javascript
+    /// async function bad() {
+    ///     await promise;
+    /// }
+    /// ```
     NoUnnecessaryAwait,
     unicorn,
     correctness,

@@ -53,6 +53,16 @@ declare_oxc_lint!(
     /// class Foo {}
     /// class Bar {}
     /// ```
+    ///
+    /// Examples of **correct** code for this rule:
+    /// ```js
+    ///
+    /// function foo() {
+    ///     var bar = 1;
+    ///     let baz = 2;
+    ///     const qux = 3;
+    /// }
+    /// ```
     MaxClassesPerFile,
     eslint,
     pedantic,

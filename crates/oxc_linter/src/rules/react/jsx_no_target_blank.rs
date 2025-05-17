@@ -110,6 +110,12 @@ declare_oxc_lint!(
     ///
     /// Examples of **incorrect** code for this rule:
     /// ```jsx
+    /// var Hello = <a target='_blank' href="https://example.com/"></a>
+    /// var Hello = <a target='_blank' href={dynamicLink}></a>
+    /// ```
+    ///
+    /// Examples of **correct** code for this rule:
+    /// ```jsx
     /// /// correct
     /// var Hello = <p target="_blank"></p>
     /// var Hello = <a target="_blank" rel="noreferrer" href="https://example.com"></a>
@@ -117,9 +123,6 @@ declare_oxc_lint!(
     /// var Hello = <a target="_blank" href="relative/path/in/the/host"></a>
     /// var Hello = <a target="_blank" href="/absolute/path/in/the/host"></a>
     /// var Hello = <a></a>
-    /// /// incorrect
-    /// var Hello = <a target='_blank' href="https://example.com/"></a>
-    /// var Hello = <a target='_blank' href={dynamicLink}></a>
     /// ```
     ///
     /// [`noreferrer` docs]: https://html.spec.whatwg.org/multipage/links.html#link-type-noreferrer

@@ -37,11 +37,12 @@ declare_oxc_lint!(
     ///
     /// Examples of **incorrect** code for this rule:
     /// ```javascript
-    /// // error
     /// var x = "y";
     /// var CONFIG = {};
+    /// ```
     ///
-    /// // success
+    /// Examples of **correct** code for this rule:
+    /// ```javascript
     /// let x = "y";
     /// const CONFIG = {};
     /// ```

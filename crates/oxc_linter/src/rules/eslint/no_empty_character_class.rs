@@ -35,6 +35,12 @@ declare_oxc_lint!(
     /// ```javascript
     /// var foo = /^abc[]/;
     /// ```
+    ///
+    /// Examples of **correct** code for this rule:
+    /// ```javascript
+    /// var foo = /^abc/;
+    /// var foo2 = /^abc[123]/;
+    /// ```
     NoEmptyCharacterClass,
     eslint,
     correctness

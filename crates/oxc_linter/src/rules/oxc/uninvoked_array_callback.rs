@@ -38,6 +38,11 @@ declare_oxc_lint!(
     /// ```javascript
     ///   const list = new Array(5).map(_ => createElement());
     /// ```
+    ///
+    /// Examples of **correct** code for this rule:
+    /// ```javascript
+    ///   const list = new Array(5).fill().map(_ => createElement());
+    /// ```
     UninvokedArrayCallback,
     oxc,
     correctness

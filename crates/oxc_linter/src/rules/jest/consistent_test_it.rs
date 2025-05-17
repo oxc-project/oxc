@@ -107,7 +107,6 @@ declare_oxc_lint!(
     ///
     /// ### Examples
     ///
-    /// Examples of **incorrect** code for this rule:
     /// ```javascript
     /// /*eslint jest/consistent-test-it: ["error", {"fn": "test"}]*/
     /// test('foo'); // valid

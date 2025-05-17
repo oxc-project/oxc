@@ -49,6 +49,14 @@ declare_oxc_lint!(
     ///     // user.jobTitle is now incorrect
     /// }
     /// ```
+    ///
+    /// Examples of **correct** code for this rule:
+    /// ```js
+    /// // Check the user's job title
+    /// if (user.jobTitle === "manager") {
+    ///     // correctly compared `jobTitle`
+    /// }
+    /// ```
     NoCondAssign,
     eslint,
     correctness

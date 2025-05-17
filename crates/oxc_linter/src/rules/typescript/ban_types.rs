@@ -54,6 +54,13 @@ declare_oxc_lint!(
     ///
     /// let bar: Boolean = true;
     /// ```
+    ///
+    /// Examples of **correct** code for this rule:
+    /// ```typescript
+    /// let foo: string = 'foo';
+    ///
+    /// let bar: boolean = true;
+    /// ```
     BanTypes,
     typescript,
     pedantic,

@@ -44,6 +44,27 @@ declare_oxc_lint!(
     ///       class C {}
     /// }
     /// ```
+    ///
+    /// Examples of **correct** code for this rule:
+    /// ```javascript
+    /// switch (foo) {
+    ///   case 1: {
+    ///       let x = 1;
+    ///       break;
+    ///   }
+    ///   case 2: {
+    ///       const y = 2;
+    ///       break;
+    ///   }
+    ///   case 3: {
+    ///       function f() {}
+    ///       break;
+    ///   }
+    ///   default: {
+    ///       class C {}
+    ///   }
+    /// }
+    /// ```
     NoCaseDeclarations,
     eslint,
     pedantic

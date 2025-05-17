@@ -34,6 +34,16 @@ declare_oxc_lint!(
     ///     doSomething(student);
     /// }
     /// ```
+    ///
+    /// Examples of **correct** code for this rule:
+    /// ```javascript
+    /// for (const student of students) {
+    ///     if (checkScores(student.scores)) {
+    ///         continue;
+    ///     }
+    ///     doSomething(student);
+    /// }
+    /// ```
     NoUnusedLabels,
     eslint,
     correctness,

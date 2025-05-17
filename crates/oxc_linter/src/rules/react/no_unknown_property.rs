@@ -79,6 +79,16 @@ declare_oxc_lint!(
     ///  // Invalid aria-* attribute
     ///  const IconButton = <div aria-foo="bar" />;
     /// ```
+    ///
+    /// Examples of **correct** code for this rule:
+    /// ```jsx
+    ///  // Unknown properties
+    ///  const Hello = <div className="hello">Hello World</div>;
+    ///  const Alphabet = <div>Alphabet</div>;
+    ///
+    ///  // Invalid aria-* attribute
+    ///  const IconButton = <div aria-label="bar" />;
+    /// ```
     NoUnknownProperty,
     react,
     restriction,

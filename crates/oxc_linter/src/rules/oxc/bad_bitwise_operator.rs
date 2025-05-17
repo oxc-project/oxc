@@ -57,6 +57,15 @@ declare_oxc_lint!(
     /// options = options | {};
     /// input |= '';
     /// ```
+    ///
+    /// Examples of **correct** code for this rule:
+    /// ```javascript
+    /// if (obj && obj.prop) {
+    ///  console.log(obj.prop);
+    /// }
+    /// options = options || {};
+    /// input ||= '';
+    /// ```
     BadBitwiseOperator,
     oxc,
     restriction // Restricted because there are false positives for enum bitflags in TypeScript,

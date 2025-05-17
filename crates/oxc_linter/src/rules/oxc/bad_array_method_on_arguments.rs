@@ -40,6 +40,16 @@ declare_oxc_lint!(
     ///   return arguments.reduce(add, 0);
     /// }
     /// ```
+    ///
+    /// Examples of **correct** code for this rule:
+    /// ```javascript
+    /// function add(x, y) {
+    ///   return x + y;
+    /// }
+    /// function sum(...args) {
+    ///   return args.reduce(add, 0);
+    /// }
+    /// ```
     BadArrayMethodOnArguments,
     oxc,
     correctness,

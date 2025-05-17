@@ -33,6 +33,13 @@ declare_oxc_lint!(
     ///  console.log("a, b, and c are the same");
     /// }
     /// ```
+    ///
+    /// Examples of **correct** code for this rule:
+    /// ```javascript
+    /// if (a == b && b == c) {
+    ///  console.log("a, b, and c are the same");
+    /// }
+    /// ```
     BadComparisonSequence,
     oxc,
     correctness

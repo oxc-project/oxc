@@ -34,6 +34,13 @@ declare_oxc_lint!(
     ///
     /// }
     /// ```
+    ///
+    /// Examples of **correct** code for this rule:
+    /// ```javascript
+    /// if (condition) {
+    ///   throw new Error("condition should be false")
+    /// }
+    /// ```
     NoEmpty,
     eslint,
     restriction,

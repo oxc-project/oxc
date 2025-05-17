@@ -44,6 +44,15 @@ declare_oxc_lint!(
     /// * @ts-ignore */
     /// const multiLine: number = 'value';
     /// ```
+    ///
+    /// Examples of **incorrect** code for this rule:
+    /// ```ts
+    /// /**
+    /// * Explaining comment
+    /// *
+    /// * @ts-expect-error */
+    /// const multiLine: number = 'value';
+    /// ```
     PreferTsExpectError,
     typescript,
     pedantic,

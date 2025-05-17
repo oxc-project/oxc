@@ -31,6 +31,14 @@ declare_oxc_lint!(
     /// var x;
     /// delete x;
     /// ```
+    ///
+    /// Examples of **correct** code for this rule:
+    /// ```javascript
+    /// var x;
+    ///
+    /// var y;
+    /// delete y.prop;
+    /// ```
     NoDeleteVar,
     eslint,
     correctness

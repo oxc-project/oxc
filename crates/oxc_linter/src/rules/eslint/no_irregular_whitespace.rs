@@ -30,6 +30,12 @@ declare_oxc_lint!(
     ///     return  42;
     /// }
     /// ```
+    /// Examples of **incorrect** code for this rule:
+    /// ```javascript
+    /// function invalidExample () {
+    ///     return 42;
+    /// }
+    /// ```
     NoIrregularWhitespace,
     eslint,
     correctness

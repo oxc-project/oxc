@@ -58,6 +58,20 @@ declare_oxc_lint!(
     ///     console.log('after'); //<- This will never execute
     /// }
     /// ```
+    ///
+    /// Examples of **correct** code for this rule:
+    /// ```javascript
+    ///     async function example() {
+    ///     const foo = {
+    ///         unicorn: 1,
+    ///         bar() {},
+    ///     };
+    ///
+    ///     const { unicorn } = await foo;
+    ///
+    ///     console.log('after');
+    /// }
+    /// ```
     NoThenable,
     unicorn,
     correctness

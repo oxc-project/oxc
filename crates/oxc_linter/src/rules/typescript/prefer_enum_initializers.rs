@@ -43,6 +43,14 @@ declare_oxc_lint!(
     ///  Close,
     /// }
     /// ```
+    ///
+    /// Examples of **correct** code for this rule:
+    /// ```typescript
+    /// enum Status {
+    ///  Open = 1,
+    ///  Close = 2,
+    /// }
+    /// ```
     PreferEnumInitializers,
     typescript,
     pedantic,

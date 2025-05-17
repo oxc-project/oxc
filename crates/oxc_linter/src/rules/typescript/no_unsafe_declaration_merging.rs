@@ -36,6 +36,12 @@ declare_oxc_lint!(
     /// interface Foo {}
     /// class Foo {}
     /// ```
+    ///
+    /// Examples of **correct** code for this rule:
+    /// ```ts
+    /// interface Foo {}
+    /// class Bar {}
+    /// ```
     NoUnsafeDeclarationMerging,
     typescript,
     correctness

@@ -41,7 +41,10 @@ declare_oxc_lint!(
     /// test('i need to write this test'); // invalid
     /// test('i need to write this test', () => {}); // invalid
     /// test.skip('i need to write this test', () => {}); // invalid
+    /// ```
     ///
+    /// Examples of **correct** code for this rule:
+    /// ```javascript
     /// test.todo('i need to write this test');
     /// ```
     PreferTodo,

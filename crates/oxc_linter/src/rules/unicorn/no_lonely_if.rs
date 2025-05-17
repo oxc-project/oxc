@@ -28,7 +28,7 @@ declare_oxc_lint!(
     /// Examples of **incorrect** code for this rule:
     /// ```javascript
     /// if (foo) {
-    ///         if (bar) {
+    ///     if (bar) {
     ///     }
     /// }
     /// if (foo) if (bar) baz();

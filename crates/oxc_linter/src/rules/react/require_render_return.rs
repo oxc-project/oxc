@@ -48,6 +48,21 @@ declare_oxc_lint!(
     ///   }
     /// }
     /// ```
+    ///
+    /// Examples of **correct** code for this rule:
+    /// ```jsx
+    /// var Hello = createReactClass({
+    ///   render() {
+    ///     return <div>Hello</div>;
+    ///   }
+    /// });
+    ///
+    /// class Hello extends React.Component {
+    ///   render() {
+    ///     return <div>Hello</div>;
+    ///   }
+    /// }
+    /// ```
     RequireRenderReturn,
     react,
     nursery

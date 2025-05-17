@@ -42,6 +42,16 @@ declare_oxc_lint!(
     /// interface Foo {}
     /// interface Bar extends Foo {}
     /// ```
+    ///
+    /// Examples of **correct** code for this rule:
+    /// ```ts
+    /// interface Foo {
+    ///     member: string;
+    /// }
+    /// interface Bar extends Foo {
+    ///     member: string;
+    /// }
+    /// ```
     NoEmptyInterface,
     typescript,
     style

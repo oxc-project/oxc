@@ -37,6 +37,11 @@ declare_oxc_lint!(
     /// ```typescript
     /// module Example {}
     /// ```
+    ///
+    /// Examples of **correct** code for this rule:
+    /// ```typescript
+    /// namespace Example {}
+    /// ```
     PreferNamespaceKeyword,
     typescript,
     style,

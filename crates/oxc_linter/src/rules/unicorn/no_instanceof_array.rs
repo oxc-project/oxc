@@ -31,6 +31,12 @@ declare_oxc_lint!(
     /// array instanceof Array;
     /// [1,2,3] instanceof Array;
     /// ```
+    ///
+    /// Examples of **correct** code for this rule:
+    /// ```javascript
+    /// Array.isArray(array);
+    /// Array.isArray([1,2,3]);
+    /// ```
     NoInstanceofArray,
     unicorn,
     pedantic,
