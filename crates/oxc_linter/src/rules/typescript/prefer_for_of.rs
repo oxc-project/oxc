@@ -55,16 +55,6 @@ declare_oxc_lint!(
     pending
 );
 
-trait SpanExt {
-    fn contains(&self, other: Self) -> bool;
-}
-
-impl SpanExt for Span {
-    fn contains(&self, other: Self) -> bool {
-        self.start <= other.start && self.end >= other.end
-    }
-}
-
 trait ExpressionExt {
     fn is_increment_of(&self, var_name: &str) -> bool;
 }
@@ -190,7 +180,7 @@ impl Rule for PreferForOf {
             let ref_id = reference.node_id();
 
             let symbol_span = nodes.get_node(ref_id).kind().span();
-            if !body_span.contains(symbol_span) {
+            if !body_span.contains_inclusive(symbol_span) {
                 return false;
             }
 
