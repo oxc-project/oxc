@@ -180,10 +180,13 @@ impl DiagnosticService {
     /// which does some more things. This is the reason why we are returning it.
     /// Let's check at first it we can easily change for the default output before removing this return.
     pub fn run(&mut self, writer: &mut dyn Write) -> DiagnosticResult {
+        let mut output = String::new();
         let mut warnings_count: usize = 0;
         let mut errors_count: usize = 0;
 
         while let Ok(Some((path, diagnostics))) = self.receiver.recv() {
+            let mut is_minified_file = false;
+
             for diagnostic in diagnostics {
                 let severity = diagnostic.severity();
                 let is_warning = severity == Some(Severity::Warning);
@@ -202,7 +205,7 @@ impl DiagnosticService {
                     }
                 }
 
-                if self.silent {
+                if self.silent || is_minified_file {
                     continue;
                 }
 
@@ -210,6 +213,7 @@ impl DiagnosticService {
                     // Skip large output and print only once.
                     // Setting to 1200 because graphical output may contain ansi escape codes and other decorations.
                     if err_str.lines().any(|line| line.len() >= 1200) {
+                        is_minified_file = true;
                         let minified_diagnostic = Error::new(
                             OxcDiagnostic::warn("File is too long to fit on the screen").with_help(
                                 format!("{} seems like a minified file", path.display()),
@@ -217,18 +221,12 @@ impl DiagnosticService {
                         );
 
                         if let Some(err_str) = self.reporter.render_error(minified_diagnostic) {
-                            writer
-                                .write_all(err_str.as_bytes())
-                                .or_else(Self::check_for_writer_error)
-                                .unwrap();
+                            output = err_str;
                         }
-                        break;
+                        continue;
                     }
 
-                    writer
-                        .write_all(err_str.as_bytes())
-                        .or_else(Self::check_for_writer_error)
-                        .unwrap();
+                    output.push_str(&err_str);
                 }
             }
         }
@@ -238,6 +236,8 @@ impl DiagnosticService {
             errors_count,
             self.max_warnings_exceeded(warnings_count),
         );
+
+        writer.write_all(output.as_bytes()).or_else(Self::check_for_writer_error).unwrap();
 
         if let Some(finish_output) = self.reporter.finish(&result) {
             writer
