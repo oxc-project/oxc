@@ -148,29 +148,7 @@ export async function activate(context: ExtensionContext) {
         outputChannel.error(`Invalid bin path: ${bin}`, e);
       }
     }
-
-    const workspaceFolders = workspace.workspaceFolders;
-    const isWindows = process.platform === 'win32';
-
-    if (workspaceFolders?.length && !isWindows) {
-      try {
-        return await Promise.any(
-          workspaceFolders.map(async (folder) => {
-            const binPath = join(
-              folder.uri.fsPath,
-              'node_modules',
-              '.bin',
-              'oxc_language_server',
-            );
-
-            await fsPromises.access(binPath);
-            return binPath;
-          }),
-        );
-      } catch {}
-    }
-
-    const ext = isWindows ? '.exe' : '';
+    const ext = process.platform === 'win32' ? '.exe' : '';
     // NOTE: The `./target/release` path is aligned with the path defined in .github/workflows/release_vscode.yml
     return (
       process.env.SERVER_PATH_DEV ??
