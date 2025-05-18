@@ -733,7 +733,7 @@ mod test {
     #[test]
     fn char_lengths() {
         macro_rules! assert_utf8_bytes_eq {
-            ($c:expr_2021, $bytes:expr_2021) => {{
+            ($c:expr, $bytes:expr) => {{
                 let mut buffer = [0; 4];
                 let bytes = $c.encode_utf8(&mut buffer).as_bytes();
                 assert!($bytes == bytes);

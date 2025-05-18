@@ -66,10 +66,10 @@ where
 /// Return if the expression is a break value, execute the provided statement
 /// if it is a prune value.
 macro_rules! try_control {
-    ($e:expr_2021, $p:stmt) => {
+    ($e:expr, $p:stmt) => {
         try_control!($e, $p, ());
     };
-    ($e:expr_2021, $p:stmt, $q:stmt) => {
+    ($e:expr, $p:stmt, $q:stmt) => {
         match $e {
             x => {
                 #[allow(clippy::redundant_else, clippy::allow_attributes)]

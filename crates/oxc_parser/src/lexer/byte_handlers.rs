@@ -65,7 +65,7 @@ static BYTE_HANDLERS: [ByteHandler; 256] = [
 /// };
 /// ```
 macro_rules! byte_handler {
-    ($id:ident($lex:ident) $body:expr_2021) => {
+    ($id:ident($lex:ident) $body:expr) => {
         const $id: ByteHandler = {
             #[expect(non_snake_case)]
             fn $id($lex: &mut Lexer) -> Kind {
@@ -121,7 +121,7 @@ macro_rules! byte_handler {
 /// };
 /// ```
 macro_rules! ascii_byte_handler {
-    ($id:ident($lex:ident) $body:expr_2021) => {
+    ($id:ident($lex:ident) $body:expr) => {
         byte_handler!($id($lex) {
             // SAFETY: This macro is only used for ASCII characters
             unsafe {
@@ -172,7 +172,7 @@ macro_rules! ascii_byte_handler {
 /// };
 /// ```
 macro_rules! ascii_identifier_handler {
-    ($id:ident($str:ident) $body:expr_2021) => {
+    ($id:ident($str:ident) $body:expr) => {
         byte_handler!($id(lexer) {
             // SAFETY: This macro is only used for ASCII characters
             let $str = unsafe { lexer.identifier_name_handler() };

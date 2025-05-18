@@ -110,7 +110,7 @@ impl HtmlWriter {
 
 /// Implements a tag factory on [`HtmlWriter`] with optional documentation.
 macro_rules! make_tag {
-    ($name:ident, $($docs:expr_2021),+) => {
+    ($name:ident, $($docs:expr),+) => {
         impl HtmlWriter {
             // create a #[doc = $doc] for each item in $docs
             $(

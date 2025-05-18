@@ -189,7 +189,7 @@ impl ModuleGraphVisitor {
         leave: &mut LeaveMod,
     ) -> VisitFoldWhile<T> {
         macro_rules! accumulate {
-            ($acc:expr_2021) => {
+            ($acc:expr) => {
                 accumulator = $acc;
 
                 if accumulator.is_done() {

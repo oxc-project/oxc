@@ -94,7 +94,7 @@ impl ByteMatchTable {
 /// ```
 #[expect(unused_macros)]
 macro_rules! byte_match_table {
-    (|$byte:ident| $res:expr_2021) => {{
+    (|$byte:ident| $res:expr) => {{
         use crate::lexer::search::ByteMatchTable;
         // Clippy creates warnings because e.g. `byte_match_table!(|b| b == 0)`
         // is expanded to `ByteMatchTable([(0 == 0), ... ])`
@@ -234,7 +234,7 @@ impl SafeByteMatchTable {
 /// }
 /// ```
 macro_rules! safe_byte_match_table {
-    (|$byte:ident| $res:expr_2021) => {{
+    (|$byte:ident| $res:expr) => {{
         use crate::lexer::search::SafeByteMatchTable;
         // Clippy creates warnings because e.g. `safe_byte_match_table!(|b| b == 0)`
         // is expanded to `SafeByteMatchTable([0 == 0, ... ])`
@@ -368,7 +368,7 @@ macro_rules! byte_search {
     (
         lexer: $lexer:ident,
         table: $table:ident,
-        handle_eof: $eof_handler:expr_2021,
+        handle_eof: $eof_handler:expr,
     ) => {{
         let start = $lexer.source.position();
         byte_search! {
@@ -385,8 +385,8 @@ macro_rules! byte_search {
     (
         lexer: $lexer:ident,
         table: $table:ident,
-        continue_if: ($byte:ident, $pos:ident) $should_continue:expr_2021,
-        handle_eof: $eof_handler:expr_2021,
+        continue_if: ($byte:ident, $pos:ident) $should_continue:expr,
+        handle_eof: $eof_handler:expr,
     ) => {{
         let start = $lexer.source.position();
         byte_search! {
@@ -403,7 +403,7 @@ macro_rules! byte_search {
         lexer: $lexer:ident,
         table: $table:ident,
         start: $start:ident,
-        handle_eof: $eof_handler:expr_2021,
+        handle_eof: $eof_handler:expr,
     ) => {
         byte_search! {
             lexer: $lexer,
@@ -419,8 +419,8 @@ macro_rules! byte_search {
         lexer: $lexer:ident,
         table: $table:ident,
         start: $start:ident,
-        continue_if: ($byte:ident, $pos:ident) $should_continue:expr_2021,
-        handle_eof: $eof_handler:expr_2021,
+        continue_if: ($byte:ident, $pos:ident) $should_continue:expr,
+        handle_eof: $eof_handler:expr,
     ) => {{
         // SAFETY:
         // If `$table` is a `SafeByteMatchTable`, it's guaranteed that `lexer.source`
