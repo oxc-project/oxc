@@ -5,9 +5,9 @@ import { parseSync } from './index.js';
 
 // Same fixtures as used in Rust parser benchmarks
 let fixtureUrls = [
-  'https://raw.githubusercontent.com/microsoft/TypeScript/v5.3.3/src/compiler/checker.ts',
-  'https://raw.githubusercontent.com/oxc-project/benchmark-files/main/cal.com.tsx',
-  'https://raw.githubusercontent.com/oxc-project/benchmark-files/main/RadixUIAdoptionSection.jsx',
+  'https://cdn.jsdelivr.net/gh/microsoft/TypeScript@v5.3.3/src/compiler/checker.ts',
+  'https://cdn.jsdelivr.net/gh/oxc-project/benchmark-files@main/cal.com.tsx',
+  'https://cdn.jsdelivr.net/gh/oxc-project/benchmark-files@main/RadixUIAdoptionSection.jsx',
   'https://cdn.jsdelivr.net/npm/pdfjs-dist@4.0.269/build/pdf.mjs',
   'https://cdn.jsdelivr.net/npm/antd@5.12.5/dist/antd.js',
 ];

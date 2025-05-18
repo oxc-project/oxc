@@ -8,9 +8,8 @@ use oxc_tasks_common::TestFile;
 fn bench_isolated_declarations(criterion: &mut Criterion) {
     let mut group = criterion.benchmark_group("isolated-declarations");
 
-    let file = TestFile::new(
-        "https://raw.githubusercontent.com/oxc-project/benchmark-files/main/vue-id.ts",
-    );
+    let file =
+        TestFile::new("https://cdn.jsdelivr.net/gh/oxc-project/benchmark-files@main/vue-id.ts");
 
     let id = BenchmarkId::from_parameter(&file.file_name);
     let source_text = file.source_text.as_str();
