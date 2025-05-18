@@ -138,11 +138,9 @@ impl LanguageServer for Backend {
 
     async fn initialized(&self, _params: InitializedParams) {
         debug!("oxc initialized.");
-
-        if !self.capabilities.get().unwrap().workspace_configuration {
-            // every worker should be initialized already in `initialize` request
+        let Some(capabilities) = self.capabilities.get() else {
             return;
-        }
+        };
 
         let workers = &*self.workspace_workers.lock().await;
         let needed_configurations =
@@ -158,8 +156,13 @@ impl LanguageServer for Backend {
             return;
         }
 
-        let configurations =
-            self.request_workspace_configuration(needed_configurations.keys().collect()).await;
+        let configurations = if capabilities.workspace_configuration {
+            self.request_workspace_configuration(needed_configurations.keys().collect()).await
+        } else {
+            // every worker should be initialized already in `initialize` request
+            vec![Some(Options::default()); needed_configurations.len()]
+        };
+
         for (index, worker) in needed_configurations.values().enumerate() {
             worker
                 .init_linter(
