@@ -2,6 +2,7 @@ use futures::future::join_all;
 use log::{debug, info, warn};
 use options::{Options, Run, WorkspaceOption};
 use rustc_hash::FxBuildHasher;
+use serde_json::json;
 use std::str::FromStr;
 use tokio::sync::{Mutex, OnceCell, SetError};
 use tower_lsp_server::{
@@ -10,9 +11,10 @@ use tower_lsp_server::{
     lsp_types::{
         CodeActionParams, CodeActionResponse, ConfigurationItem, Diagnostic,
         DidChangeConfigurationParams, DidChangeTextDocumentParams, DidChangeWatchedFilesParams,
-        DidChangeWorkspaceFoldersParams, DidCloseTextDocumentParams, DidOpenTextDocumentParams,
-        DidSaveTextDocumentParams, ExecuteCommandParams, InitializeParams, InitializeResult,
-        InitializedParams, ServerInfo, Uri, WorkspaceEdit,
+        DidChangeWatchedFilesRegistrationOptions, DidChangeWorkspaceFoldersParams,
+        DidCloseTextDocumentParams, DidOpenTextDocumentParams, DidSaveTextDocumentParams,
+        ExecuteCommandParams, InitializeParams, InitializeResult, InitializedParams, Registration,
+        ServerInfo, Uri, WorkspaceEdit,
     },
 };
 // #
@@ -152,27 +154,43 @@ impl LanguageServer for Backend {
             }
         }
 
-        if needed_configurations.is_empty() {
-            return;
+        if !needed_configurations.is_empty() {
+            let configurations = if capabilities.workspace_configuration {
+                self.request_workspace_configuration(needed_configurations.keys().collect()).await
+            } else {
+                // every worker should be initialized already in `initialize` request
+                vec![Some(Options::default()); needed_configurations.len()]
+            };
+
+            for (index, worker) in needed_configurations.values().enumerate() {
+                worker
+                    .init_linter(
+                        configurations
+                            .get(index)
+                            .unwrap_or(&None)
+                            .as_ref()
+                            .unwrap_or(&Options::default()),
+                    )
+                    .await;
+            }
         }
 
-        let configurations = if capabilities.workspace_configuration {
-            self.request_workspace_configuration(needed_configurations.keys().collect()).await
-        } else {
-            // every worker should be initialized already in `initialize` request
-            vec![Some(Options::default()); needed_configurations.len()]
-        };
+        // init all file watchers
+        if capabilities.dynamic_watchers {
+            let mut registrations = vec![];
+            for worker in workers {
+                registrations.push(Registration {
+                    id: format!("watcher-{}", worker.get_root_uri().as_str()),
+                    method: "workspace/didChangeWatchedFiles".to_string(),
+                    register_options: Some(json!(DidChangeWatchedFilesRegistrationOptions {
+                        watchers: vec![worker.init_watchers().await]
+                    })),
+                });
+            }
 
-        for (index, worker) in needed_configurations.values().enumerate() {
-            worker
-                .init_linter(
-                    configurations
-                        .get(index)
-                        .unwrap_or(&None)
-                        .as_ref()
-                        .unwrap_or(&Options::default()),
-                )
-                .await;
+            if let Err(err) = self.client.register_capability(registrations).await {
+                warn!("sending registerCapability.didChangeWatchedFiles failed: {err}");
+            }
         }
     }
 
