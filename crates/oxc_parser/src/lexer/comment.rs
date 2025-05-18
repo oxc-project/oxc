@@ -94,7 +94,7 @@ impl<'a> Lexer<'a> {
                 if next_byte == b'*' {
                     // SAFETY: Next byte is `*` (ASCII) so after it is UTF-8 char boundary
                     let after_star = unsafe { pos.add(1) };
-                    if after_star.addr() < self.source.end_addr() {
+                    if after_star.is_not_end_of(&self.source) {
                         // If next byte isn't `/`, continue
                         // SAFETY: Have checked there's at least 1 further byte to read
                         if unsafe { after_star.read() } == b'/' {

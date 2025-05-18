@@ -437,7 +437,7 @@ macro_rules! byte_search {
         // Silence warnings if macro called in unsafe code
         #[allow(unused_unsafe, clippy::unnecessary_safety_comment, clippy::allow_attributes)]
         'outer: loop {
-            let $byte = if $pos.addr() <= $lexer.source.end_for_batch_search_addr() {
+            let $byte = if $pos.can_read_batch_from(&$lexer.source) {
                 // Search a batch of `SEARCH_BATCH_SIZE` bytes.
                 //
                 // `'inner: loop {}` is not a real loop - it always exits on first turn.
@@ -447,8 +447,8 @@ macro_rules! byte_search {
                 // compiler to unroll it.
                 //
                 // SAFETY:
-                // `$pos.addr() <= lexer.source.end_for_batch_search_addr()` check above ensures
-                // there are at least `SEARCH_BATCH_SIZE` bytes remaining in `lexer.source`.
+                // `$pos.can_read_batch_from(&$lexer.source)` check above ensures there are
+                // at least `SEARCH_BATCH_SIZE` bytes remaining in `lexer.source`.
                 // So calls to `$pos.read()` and `$pos.add(1)` in this loop cannot go out of bounds.
                 'inner: loop {
                     for _i in 0..crate::lexer::search::SEARCH_BATCH_SIZE {
@@ -469,9 +469,8 @@ macro_rules! byte_search {
             } else {
                 // Not enough bytes remaining for a batch. Process byte-by-byte.
                 // Same as above, `'inner: loop {}` is not a real loop here - always exits on first turn.
-                let end_addr = $lexer.source.end_addr();
                 'inner: loop {
-                    while $pos.addr() < end_addr {
+                    while $pos.is_not_end_of(&$lexer.source) {
                         // SAFETY: `pos` is not at end of source, so safe to read a byte
                         let byte = unsafe { $pos.read() };
                         if $table.matches(byte) {

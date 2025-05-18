@@ -215,7 +215,7 @@ impl<'a> Lexer<'a> {
     pub fn private_identifier(&mut self) -> Kind {
         // Handle EOF directly after `#`
         let start_pos = self.source.position();
-        if start_pos.addr() == self.source.end_addr() {
+        if start_pos.is_end_of(&self.source) {
             return cold_branch(|| {
                 let start = self.offset();
                 self.error(diagnostics::unexpected_end(Span::new(start, start)));
