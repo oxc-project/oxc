@@ -69,9 +69,9 @@ declare_oxc_lint!(
     ///
     /// ### Options
     ///
-    /// ### allow
+    /// #### allow
     ///
-    /// `{ "allow": string[] }`
+    /// `{ type: string[], default: [] }`
     ///
     /// The`allow` option permits the given list of bitwise operators to be used
     /// as exceptions to this rule.
@@ -83,9 +83,9 @@ declare_oxc_lint!(
     /// ~[1,2,3].indexOf(1) === -1;
     /// ```
     ///
-    /// ### int32Hint
+    /// #### int32Hint
     ///
-    /// `{ "int32Hint": boolean }`
+    /// `{ type: boolean, default: false }`
     ///
     /// When set to true the `int32Hint` option allows the use of bitwise OR in |0
     /// pattern for type casting.
