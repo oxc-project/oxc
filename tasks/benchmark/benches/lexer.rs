@@ -46,8 +46,11 @@ fn bench_lexer(criterion: &mut Criterion) {
             // so we do the same here.
             let mut allocator = Allocator::default();
             b.iter(|| {
-                let mut lexer = Lexer::new_for_benchmarks(&allocator, source_text, source_type);
-                while lexer.next_token().kind() != Kind::Eof {}
+                {
+                    let mut lexer = Lexer::new_for_benchmarks(&allocator, source_text, source_type);
+                    while lexer.next_token().kind() != Kind::Eof {}
+                }
+
                 allocator.reset();
             });
         });

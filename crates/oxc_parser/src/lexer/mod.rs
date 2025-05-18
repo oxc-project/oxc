@@ -5,8 +5,6 @@
 //!     * [rustc](https://github.com/rust-lang/rust/blob/1.82.0/compiler/rustc_lexer/src)
 //!     * [v8](https://v8.dev/blog/scanner)
 
-use std::collections::VecDeque;
-
 use rustc_hash::FxHashMap;
 
 use oxc_allocator::Allocator;
@@ -21,6 +19,7 @@ mod comment;
 mod identifier;
 mod jsx;
 mod kind;
+mod lookahead;
 mod number;
 mod numeric;
 mod punctuation;
@@ -39,6 +38,7 @@ pub use kind::Kind;
 pub use number::{parse_big_int, parse_float, parse_int};
 pub use token::Token;
 
+use lookahead::LookaheadBuffer;
 use source::{Source, SourcePosition};
 use trivia_builder::TriviaBuilder;
 
@@ -77,8 +77,7 @@ pub struct Lexer<'a> {
 
     pub(crate) errors: Vec<OxcDiagnostic>,
 
-    lookahead: VecDeque<Lookahead<'a>>,
-
+    lookahead: LookaheadBuffer<'a>,
     context: LexerContext,
 
     pub(crate) trivia_builder: TriviaBuilder,
@@ -115,7 +114,7 @@ impl<'a> Lexer<'a> {
             source_type,
             token,
             errors: vec![],
-            lookahead: VecDeque::with_capacity(4), // 4 is the maximum lookahead for TypeScript
+            lookahead: LookaheadBuffer::new(),
             context: LexerContext::Regular,
             trivia_builder: TriviaBuilder::default(),
             escaped_strings: FxHashMap::default(),
@@ -196,7 +195,7 @@ impl<'a> Lexer<'a> {
 
         self.source.set_position(position);
 
-        self.lookahead[n - 1].token
+        self.lookahead.get(n - 1).unwrap().token
     }
 
     /// Set context
