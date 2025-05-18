@@ -2,7 +2,6 @@ use oxc_allocator::Allocator;
 use oxc_benchmark::{BenchmarkId, Criterion, criterion_group, criterion_main};
 use oxc_formatter::{FormatOptions, Formatter};
 use oxc_parser::Parser;
-use oxc_span::SourceType;
 use oxc_tasks_common::TestFiles;
 
 fn bench_formatter(criterion: &mut Criterion) {
@@ -10,8 +9,8 @@ fn bench_formatter(criterion: &mut Criterion) {
 
     for file in TestFiles::minimal().files() {
         let id = BenchmarkId::from_parameter(&file.file_name);
-        let source_text = file.source_text.as_str();
-        let source_type = SourceType::from_path(&file.file_name).unwrap();
+        let source_text = &file.source_text;
+        let source_type = file.source_type;
         let mut allocator = Allocator::default();
         group.bench_function(id, |b| {
             b.iter_with_setup_wrapper(|runner| {
