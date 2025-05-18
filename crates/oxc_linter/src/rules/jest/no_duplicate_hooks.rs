@@ -15,7 +15,7 @@ use crate::{
 };
 
 fn no_duplicate_hooks_diagnostic(hook_name: &str, span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn(format!("Duplicate {hook_name} in describe block."))
+    OxcDiagnostic::warn(format!("Duplicate {hook_name:?} in describe block."))
         .with_help("Describe blocks can only have one of each hook. Consider consolidating the duplicate hooks into a single call.")
         .with_label(span)
 }

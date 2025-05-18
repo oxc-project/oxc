@@ -12,7 +12,7 @@ use crate::{
 
 fn type_diagnostic(banned_type: &str, suggested_type: &str, span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!(
-        "Do not use {banned_type} as a type. Use \"{suggested_type}\" instead"
+        "Do not use {banned_type:?} as a type. Use \"{suggested_type}\" instead"
     ))
     .with_label(span)
 }

@@ -10,8 +10,8 @@ use crate::{
 };
 
 fn no_alias_methods_diagnostic(name: &str, canonical_name: &str, span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn(format!("Unexpected alias {name}"))
-        .with_help(format!("Replace {name} with its canonical name of {canonical_name}"))
+    OxcDiagnostic::warn(format!("Unexpected alias {name:?}"))
+        .with_help(format!("Replace {name:?} with its canonical name of {canonical_name:?}"))
         .with_label(span)
 }
 

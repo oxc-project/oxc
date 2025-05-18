@@ -10,8 +10,8 @@ use crate::{
 };
 
 fn require_to_throw_message_diagnostic(matcher_name: &str, span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn(format!("Require a message for {matcher_name}."))
-        .with_help(format!("Add an error message to {matcher_name}"))
+    OxcDiagnostic::warn(format!("Require a message for {matcher_name:?}."))
+        .with_help(format!("Add an error message to {matcher_name:?}"))
         .with_label(span)
 }
 

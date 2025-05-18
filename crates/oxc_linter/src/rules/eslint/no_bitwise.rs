@@ -7,7 +7,7 @@ use oxc_syntax::operator::BinaryOperator;
 use crate::{AstNode, context::LintContext, rule::Rule};
 
 fn no_bitwise_diagnostic(operator: &str, span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn(format!("Unexpected use of {operator}"))
+    OxcDiagnostic::warn(format!("Unexpected use of {operator:?}"))
         .with_help("bitwise operators are not allowed, maybe you mistyped `&&` or `||`")
         .with_label(span)
 }
