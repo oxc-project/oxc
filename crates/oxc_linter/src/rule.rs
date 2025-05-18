@@ -1,13 +1,16 @@
-#[cfg(feature = "ruledocs")]
 use std::borrow::Cow;
 use std::{fmt, hash::Hash};
 
 use oxc_semantic::SymbolId;
+use schemars::schema::{ArrayValidation, InstanceType, SchemaObject, SingleOrVec};
 use schemars::{JsonSchema, SchemaGenerator, schema::Schema};
+
+use serde::de::{self, Deserializer, IntoDeserializer, SeqAccess, Visitor};
 use serde::{Deserialize, Serialize};
+use serde_json::Value;
 
 use crate::{
-    AstNode, FixKind,
+    AllowWarnDeny, AstNode, FixKind,
     context::{ContextHost, LintContext},
     utils::PossibleJestNode,
 };
@@ -82,6 +85,120 @@ pub trait RuleMeta {
     #[expect(unused_variables)]
     fn config_schema(generator: &mut SchemaGenerator) -> Option<Schema> {
         None
+    }
+}
+
+#[derive(Debug, Eq, PartialEq)]
+pub struct RuleConfig {
+    pub severity: AllowWarnDeny,
+    pub config: Option<serde_json::Value>,
+}
+
+impl schemars::JsonSchema for RuleConfig {
+    fn schema_name() -> std::string::String {
+        "RuleConfig".to_string()
+    }
+
+    fn schema_id() -> Cow<'static, str> {
+        Cow::Borrowed("RuleConfig")
+    }
+
+    fn json_schema(g: &mut schemars::r#gen::SchemaGenerator) -> schemars::schema::Schema {
+        let allow_warn_deny_schema = g.subschema_for::<AllowWarnDeny>();
+
+        let array_with_severity_only = SchemaObject {
+            instance_type: Some(SingleOrVec::Single(Box::new(InstanceType::Array))),
+            array: Some(Box::new(ArrayValidation {
+                items: Some(SingleOrVec::Single(Box::new(allow_warn_deny_schema.clone()))),
+                max_items: Some(1),
+                min_items: Some(1),
+                ..Default::default()
+            })),
+            ..Default::default()
+        };
+
+        let array_with_config = SchemaObject {
+            instance_type: Some(SingleOrVec::Single(Box::new(InstanceType::Array))),
+            array: Some(Box::new(ArrayValidation {
+                items: Some(SingleOrVec::Vec(vec![
+                    (allow_warn_deny_schema.clone()),
+                    (g.subschema_for::<Value>()),
+                ])),
+                min_items: Some(2),
+                max_items: Some(2),
+                ..Default::default()
+            })),
+            ..Default::default()
+        };
+
+        let string_or_arrays = vec![
+            allow_warn_deny_schema,
+            Schema::Object(array_with_severity_only),
+            Schema::Object(array_with_config),
+        ];
+
+        Schema::Object(SchemaObject {
+            subschemas: Some(Box::new(schemars::schema::SubschemaValidation {
+                any_of: Some(string_or_arrays),
+                ..Default::default()
+            })),
+            ..Default::default()
+        })
+    }
+}
+
+impl<'de> Deserialize<'de> for RuleConfig {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        struct RuleConfigVisitor;
+
+        impl<'de> Visitor<'de> for RuleConfigVisitor {
+            type Value = RuleConfig;
+
+            fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
+                formatter.write_str("a string or an array")
+            }
+
+            fn visit_str<E>(self, v: &str) -> Result<Self::Value, E>
+            where
+                E: de::Error,
+            {
+                let severity: AllowWarnDeny = Deserialize::deserialize(v.into_deserializer())?;
+                Ok(RuleConfig { severity, config: None })
+            }
+
+            fn visit_u64<E>(self, v: u64) -> Result<Self::Value, E>
+            where
+                E: de::Error,
+            {
+                let severity: AllowWarnDeny = Deserialize::deserialize(v.into_deserializer())?;
+                Ok(RuleConfig { severity, config: None })
+            }
+
+            fn visit_seq<A>(self, mut seq: A) -> Result<Self::Value, A::Error>
+            where
+                A: SeqAccess<'de>,
+            {
+                let severity: AllowWarnDeny = match seq.next_element()? {
+                    Some(val) => val,
+                    None => return Err(de::Error::invalid_length(0, &self)),
+                };
+
+                let mut config = vec![];
+                while let Some(el) = seq.next_element()? {
+                    config.push(el);
+                }
+
+                let config =
+                    if config.is_empty() { None } else { Some(serde_json::Value::Array(config)) };
+
+                Ok(RuleConfig { severity, config })
+            }
+        }
+
+        deserializer.deserialize_any(RuleConfigVisitor)
     }
 }
 
