@@ -136,6 +136,7 @@ impl<'a> ParserImpl<'a> {
 
     /// Advance and return true if we are at `Kind`, return false otherwise
     #[inline]
+    #[must_use = "Use `bump` instead of `eat` if you are ignoring the return value"]
     pub(crate) fn eat(&mut self, kind: Kind) -> bool {
         if self.at(kind) {
             self.advance(kind);
@@ -144,7 +145,7 @@ impl<'a> ParserImpl<'a> {
         false
     }
 
-    /// Advance and return true if we are at `Kind`
+    /// Advance if we are at `Kind`
     #[inline]
     pub(crate) fn bump(&mut self, kind: Kind) {
         if self.at(kind) {
