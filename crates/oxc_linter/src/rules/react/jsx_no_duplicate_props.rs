@@ -13,10 +13,12 @@ use crate::{
     rule::Rule,
 };
 
-fn jsx_no_duplicate_props_diagnostic(x0: &str, span1: Span, span2: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn(format!("No duplicate props allowed. The prop \"{x0}\" is duplicated."))
-        .with_help("Remove one of the props, or rename them so each prop is distinct.")
-        .with_labels([span1, span2])
+fn jsx_no_duplicate_props_diagnostic(prop_name: &str, span1: Span, span2: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn(format!(
+        "No duplicate props allowed. The prop \"{prop_name}\" is duplicated."
+    ))
+    .with_help("Remove one of the props, or rename them so each prop is distinct.")
+    .with_labels([span1, span2])
 }
 
 #[derive(Debug, Default, Clone)]

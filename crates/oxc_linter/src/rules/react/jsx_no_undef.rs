@@ -12,8 +12,8 @@ use crate::{
     rule::Rule,
 };
 
-fn jsx_no_undef_diagnostic(ident_name: &str, span1: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn(format!("'{ident_name}' is not defined.")).with_label(span1)
+fn jsx_no_undef_diagnostic(ident_name: &str, span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn(format!("'{ident_name}' is not defined.")).with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]

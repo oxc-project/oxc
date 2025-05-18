@@ -5,10 +5,10 @@ use oxc_span::Span;
 
 use crate::{AstNode, context::LintContext, rule::Rule};
 
-fn no_lonely_if_diagnostic(span: Span, span1: Span) -> OxcDiagnostic {
+fn no_lonely_if_diagnostic(if_stmt_span: Span, parent_if_stmt_span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Unexpected `if` as the only statement in a `if` block without `else`.")
         .with_help("Move the inner `if` test to the outer `if` test.")
-        .with_labels([span, span1])
+        .with_labels([if_stmt_span, parent_if_stmt_span])
 }
 
 #[derive(Debug, Default, Clone)]

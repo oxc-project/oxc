@@ -12,21 +12,21 @@ use oxc_syntax::operator::{BinaryOperator, LogicalOperator};
 
 use crate::{AstNode, context::LintContext, rule::Rule, utils::is_same_expression};
 
-fn redundant_left_hand_side(span: Span, span1: Span, help: String) -> OxcDiagnostic {
+fn redundant_left_hand_side(left_span: Span, right_span: Span, help: String) -> OxcDiagnostic {
     OxcDiagnostic::warn("Left-hand side of `&&` operator has no effect.")
         .with_help(help)
         .with_labels([
-            span.label("If this evaluates to `true`"),
-            span1.label("This will always evaluate to true."),
+            left_span.label("If this evaluates to `true`"),
+            right_span.label("This will always evaluate to true."),
         ])
 }
 
-fn redundant_right_hand_side(span: Span, span1: Span, help: String) -> OxcDiagnostic {
+fn redundant_right_hand_side(right_span: Span, left_span: Span, help: String) -> OxcDiagnostic {
     OxcDiagnostic::warn("Right-hand side of `&&` operator has no effect.")
         .with_help(help)
         .with_labels([
-            span.label("If this evaluates to `true`"),
-            span1.label("This will always evaluate to true."),
+            right_span.label("If this evaluates to `true`"),
+            left_span.label("This will always evaluate to true."),
         ])
 }
 

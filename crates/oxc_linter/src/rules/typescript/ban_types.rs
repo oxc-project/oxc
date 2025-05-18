@@ -10,11 +10,11 @@ use crate::{
     rule::Rule,
 };
 
-fn type_diagnostic(banned_type: &str, suggested_type: &str, span2: Span) -> OxcDiagnostic {
+fn type_diagnostic(banned_type: &str, suggested_type: &str, span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!(
         "Do not use {banned_type:?} as a type. Use \"{suggested_type}\" instead"
     ))
-    .with_label(span2)
+    .with_label(span)
 }
 
 fn type_literal(span: Span) -> OxcDiagnostic {
