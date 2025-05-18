@@ -137,7 +137,7 @@ impl<'a> Source<'a> {
 
     /// Get [`SourcePosition`] for end of source.
     #[inline]
-    fn end(&self) -> SourcePosition<'a> {
+    pub(super) fn end(&self) -> SourcePosition<'a> {
         // SAFETY: `end` is the end of source, so in bounds and on a UTF-8 char boundary
         unsafe { SourcePosition::new(self.end) }
     }
@@ -721,6 +721,15 @@ impl<'a> SourcePosition<'a> {
             let p = self.ptr as *const [u8; 2];
             *p.as_ref().unwrap_unchecked()
         }
+    }
+
+    /// Get slice of bytes starting from this [`SourcePosition`], with length `len`.
+    ///
+    /// # SAFETY
+    /// Caller must ensure `SourcePosition` is no later than `len` bytes before end of source text.
+    pub(super) unsafe fn slice(self, len: usize) -> &'a [u8] {
+        // SAFETY: Caller guarantees there are at least `len` bytes after this position
+        unsafe { slice::from_raw_parts(self.ptr, len) }
     }
 }
 

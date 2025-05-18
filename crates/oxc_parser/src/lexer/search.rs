@@ -449,43 +449,44 @@ macro_rules! byte_search {
                 // SAFETY:
                 // `$pos.can_read_batch_from(&$lexer.source)` check above ensures there are
                 // at least `SEARCH_BATCH_SIZE` bytes remaining in `lexer.source`.
-                // So calls to `$pos.read()` and `$pos.add(1)` in this loop cannot go out of bounds.
+                // So `$pos.add()` in this loop cannot go out of bounds.
+                let batch = unsafe { $pos.slice(crate::lexer::search::SEARCH_BATCH_SIZE) };
                 'inner: loop {
-                    for _i in 0..crate::lexer::search::SEARCH_BATCH_SIZE {
-                        // SAFETY: `$pos` cannot go out of bounds in this loop (see above)
-                        let byte = unsafe { $pos.read() };
+                    for (i, &byte) in batch.iter().enumerate() {
                         if $table.matches(byte) {
+                            // SAFETY: Cannot go out of bounds (see above).
+                            // Also see above about UTF-8 character boundaries invariant.
+                            $pos = unsafe { $pos.add(i) };
                             break 'inner byte;
                         }
-
-                        // No match - continue searching batch.
-                        // SAFETY: `$pos` cannot go out of bounds in this loop (see above).
-                        // Also see above about UTF-8 character boundaries invariant.
-                        $pos = unsafe { $pos.add(1) };
                     }
-                    // No match in batch - search next batch
+                    // No match in batch - search next batch.
+                    // SAFETY: Cannot go out of bounds (see above).
+                    // Also see above about UTF-8 character boundaries invariant.
+                    $pos = unsafe { $pos.add(crate::lexer::search::SEARCH_BATCH_SIZE) };
                     continue 'outer;
                 }
             } else {
                 // Not enough bytes remaining for a batch. Process byte-by-byte.
                 // Same as above, `'inner: loop {}` is not a real loop here - always exits on first turn.
                 'inner: loop {
-                    while $pos.is_not_end_of(&$lexer.source) {
-                        // SAFETY: `pos` is not at end of source, so safe to read a byte
-                        let byte = unsafe { $pos.read() };
+                    // SAFETY: `$pos` is before or equal to end of source
+                    let remaining = unsafe {
+                        let remaining_len = $lexer.source.end().offset_from($pos);
+                        $pos.slice(remaining_len)
+                    };
+                    for (i, &byte) in remaining.iter().enumerate() {
                         if $table.matches(byte) {
+                            // SAFETY: `i` is less than number of bytes remaining after `$pos`,
+                            // so `$pos + i` cannot be out of bounds
+                            $pos = unsafe { $pos.add(i) };
                             break 'inner byte;
                         }
-
-                        // No match - continue searching
-                        // SAFETY: `pos` is not at end of source, so safe to advance 1 byte.
-                        // See above about UTF-8 character boundaries invariant.
-                        $pos = unsafe { $pos.add(1) };
                     }
 
                     // EOF.
                     // Advance `lexer.source`'s position to end of file.
-                    $lexer.source.set_position($pos);
+                    $lexer.source.advance_to_end();
 
                     // Avoid lint errors if `$eof_handler` contains `return` statement
                     #[allow(
