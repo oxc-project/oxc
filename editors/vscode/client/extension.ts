@@ -238,29 +238,11 @@ export async function activate(context: ExtensionContext) {
   context.subscriptions.push(onDeleteFilesDispose);
 
   const onDidChangeWorkspaceFoldersDispose = workspace.onDidChangeWorkspaceFolders(async (event) => {
-    let needRestart = false;
     for (const folder of event.added) {
-      const workspaceConfig = configService.addWorkspaceConfig(folder);
-
-      if (workspaceConfig.isCustomConfigPath) {
-        needRestart = true;
-      }
+      configService.addWorkspaceConfig(folder);
     }
     for (const folder of event.removed) {
-      const workspaceConfig = configService.getWorkspaceConfig(folder.uri);
-      if (workspaceConfig?.isCustomConfigPath) {
-        needRestart = true;
-      }
       configService.removeWorkspaceConfig(folder);
-    }
-
-    if (client === undefined) {
-      return;
-    }
-
-    // Server does not support currently adding/removing watchers on the fly
-    if (needRestart && client.isRunning()) {
-      await client.restart();
     }
   });
 

@@ -38,10 +38,8 @@ export class ConfigService implements IDisposable {
     }));
   }
 
-  public addWorkspaceConfig(workspace: WorkspaceFolder): WorkspaceConfig {
-    let workspaceConfig = new WorkspaceConfig(workspace);
-    this.workspaceConfigs.set(workspace.uri.path, workspaceConfig);
-    return workspaceConfig;
+  public addWorkspaceConfig(workspace: WorkspaceFolder): void {
+    this.workspaceConfigs.set(workspace.uri.path, new WorkspaceConfig(workspace));
   }
 
   public removeWorkspaceConfig(workspace: WorkspaceFolder): void {
