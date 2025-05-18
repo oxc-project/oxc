@@ -44,16 +44,12 @@ impl TestFiles {
 
     pub fn minimal() -> Self {
         Self {
-            files: vec![
-                TestFile::new(
-                    "https://cdn.jsdelivr.net/gh/oxc-project/benchmark-files@main/RadixUIAdoptionSection.jsx",
-                ),
-                TestFile::new("https://cdn.jsdelivr.net/npm/react@17.0.2/cjs/react.development.js"),
-                TestFile::new("https://cdn.jsdelivr.net/npm/antd@4.16.1/dist/antd.js"),
-                TestFile::new(
-                    "https://cdn.jsdelivr.net/gh/microsoft/TypeScript@v5.3.3/src/compiler/binder.ts",
-                ),
-            ],
+            files: [
+                "https://cdn.jsdelivr.net/gh/oxc-project/benchmark-files@main/RadixUIAdoptionSection.jsx",
+                "https://cdn.jsdelivr.net/npm/react@17.0.2/cjs/react.development.js",
+                "https://cdn.jsdelivr.net/gh/oxc-project/benchmark-files@main/cal.com.tsx",
+                "https://cdn.jsdelivr.net/gh/microsoft/TypeScript@v5.3.3/src/compiler/binder.ts",
+            ].into_iter().map(TestFile::new).collect(),
         }
     }
 
