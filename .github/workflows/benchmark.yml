@@ -57,7 +57,7 @@ jobs:
           - minifier
           - codegen
           - formatter
-          - linter
+          # - linter
 
     name: Bench ${{ matrix.component }}
     steps:
