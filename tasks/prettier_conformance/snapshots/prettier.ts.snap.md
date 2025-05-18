@@ -1,4 +1,4 @@
-ts compatibility: 180/573 (31.41%)
+ts compatibility: 181/573 (31.59%)
 
 # Failed
 
@@ -97,7 +97,7 @@ ts compatibility: 180/573 (31.41%)
 | typescript/chain-expression/member-expression.ts | 💥 | 25.95% |
 | typescript/chain-expression/test.ts | 💥 | 0.00% |
 | typescript/chain-expression/test2.ts | 💥 | 30.77% |
-| typescript/class/constructor.ts | 💥 | 92.31% |
+| typescript/class/constructor.ts | 💥 | 96.15% |
 | typescript/class/empty-method-body.ts | 💥 | 80.00% |
 | typescript/class/extends_implements.ts | 💥 | 49.60% |
 | typescript/class/generics.ts | 💥 | 60.00% |
@@ -319,7 +319,6 @@ ts compatibility: 180/573 (31.41%)
 | typescript/optional-variance/basic.ts | 💥 | 57.38% |
 | typescript/optional-variance/with-jsx.tsx | 💥 | 57.38% |
 | typescript/override-modifiers/override-modifier.ts | 💥 | 25.00% |
-| typescript/override-modifiers/parameter-property.ts | 💥 | 80.00% |
 | typescript/predicate-types/predicate-types.ts | 💥 | 50.00% |
 | typescript/prettier-ignore/issue-14238.ts | 💥 | 50.00% |
 | typescript/prettier-ignore/mapped-types.ts | 💥 | 43.96% |
