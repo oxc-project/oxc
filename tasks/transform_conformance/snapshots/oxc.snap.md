@@ -462,9 +462,9 @@ rebuilt        : ScopeId(19): Some(ScopeId(15))
 Scope parent mismatch:
 after transform: ScopeId(20): Some(ScopeId(0))
 rebuilt        : ScopeId(20): Some(ScopeId(15))
-Unresolved references mismatch:
-after transform: ["a", "b", "c", "console", "dce", "e", "x", "y", "z"]
-rebuilt        : ["a", "b", "c", "console", "e", "x", "y", "z"]
+Unresolved reference IDs mismatch for "dce":
+after transform: [ReferenceId(0), ReferenceId(1), ReferenceId(4), ReferenceId(9), ReferenceId(12), ReferenceId(14), ReferenceId(17)]
+rebuilt        : [ReferenceId(5)]
 
 
 # babel-plugin-transform-react-jsx (42/45)
