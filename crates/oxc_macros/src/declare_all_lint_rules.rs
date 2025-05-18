@@ -57,9 +57,11 @@ pub fn declare_all_lint_rules(metadata: AllLintRulesMeta) -> TokenStream {
     let mut struct_rule_names = Vec::with_capacity(rules.len());
     let mut plugin_names = Vec::with_capacity(rules.len());
     let mut ids = Vec::with_capacity(rules.len());
+    let mut rules_map_fields = Vec::with_capacity(rules.len());
 
     for (i, rule) in rules.iter().enumerate() {
         use_stmts.push(&rule.path);
+
         struct_names.push(&rule.enum_name);
         struct_rule_names.push(&rule.rule_name);
         plugin_names.push(
@@ -71,6 +73,23 @@ pub fn declare_all_lint_rules(metadata: AllLintRulesMeta) -> TokenStream {
                 .join("/"),
         );
         ids.push(i);
+
+        let rename_str =
+            format!("{}/{}", &plugin_names[i], rule.rule_name.to_string().to_case(Case::Kebab));
+        let struct_name = &struct_names[i];
+
+        if plugin_names[i] == "eslint" {
+            let alias_str = rule.rule_name.to_string().to_case(Case::Kebab);
+            rules_map_fields.push(quote! {
+                #[serde(rename = #rename_str, alias = #alias_str)]
+                #struct_name: Option<RuleConfig>,
+            });
+        } else {
+            rules_map_fields.push(quote! {
+                #[serde(rename = #rename_str)]
+                #struct_name: Option<RuleConfig>,
+            });
+        }
     }
 
     let expanded = quote! {
@@ -78,7 +97,7 @@ pub fn declare_all_lint_rules(metadata: AllLintRulesMeta) -> TokenStream {
 
         use crate::{
             context::{ContextHost, LintContext},
-            rule::{Rule, RuleCategory, RuleFixMeta, RuleMeta},
+            rule::{Rule, RuleCategory, RuleFixMeta, RuleMeta, RuleConfig},
             utils::PossibleJestNode,
             AstNode
         };
@@ -126,7 +145,7 @@ pub fn declare_all_lint_rules(metadata: AllLintRulesMeta) -> TokenStream {
             #[cfg(feature = "ruledocs")]
             pub fn schema(&self, generator: &mut schemars::SchemaGenerator) -> Option<schemars::schema::Schema> {
                 match self {
-                    #(Self::#struct_names(_) => #struct_names::config_schema(generator).or_else(||#struct_names::schema(generator))),*
+                    #(Self::#struct_names(_) => #struct_names::config_schema(generator).or_else(|| #struct_names::schema(generator))),*
                 }
             }
 
@@ -138,9 +157,7 @@ pub fn declare_all_lint_rules(metadata: AllLintRulesMeta) -> TokenStream {
 
             pub fn read_json(&self, value: serde_json::Value) -> Self {
                 match self {
-                    #(Self::#struct_names(_) => Self::#struct_names(
-                        #struct_names::from_configuration(value),
-                    )),*
+                    #(Self::#struct_names(_) => Self::#struct_names(#struct_names::from_configuration(value))),*
                 }
             }
 
@@ -209,6 +226,12 @@ pub fn declare_all_lint_rules(metadata: AllLintRulesMeta) -> TokenStream {
             pub static ref RULES: Vec<RuleEnum> = vec![
                 #(RuleEnum::#struct_names(#struct_names::default())),*
             ];
+        }
+
+        #[derive(Debug, serde::Deserialize, schemars::JsonSchema)]
+        /// See [Oxlint Rules](https://oxc.rs/docs/guide/usage/linter/rules.html)
+        pub struct RulesMap {
+            #(#rules_map_fields)*
         }
     };
 
