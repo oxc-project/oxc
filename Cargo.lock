@@ -2125,6 +2125,7 @@ name = "oxc_tasks_common"
 version = "0.0.0"
 dependencies = [
  "console",
+ "oxc_span",
  "project-root",
  "similar",
  "ureq",
