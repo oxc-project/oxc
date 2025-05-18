@@ -19,10 +19,10 @@ use crate::{context::LintContext, rule::Rule};
 fn unexpected_syntax_order_diagnostic(
     curr_kind: &ImportKind,
     prev_kind: &ImportKind,
-    span2: Span,
+    span: Span,
 ) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!("Expected '{curr_kind}' syntax before '{prev_kind}' syntax."))
-        .with_label(span2)
+        .with_label(span)
 }
 
 fn sort_imports_alphabetically_diagnostic(span: Span) -> OxcDiagnostic {

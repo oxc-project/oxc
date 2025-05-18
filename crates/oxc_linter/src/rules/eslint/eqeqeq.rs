@@ -10,10 +10,10 @@ use schemars::JsonSchema;
 
 use crate::{AstNode, context::LintContext, rule::Rule};
 
-fn eqeqeq_diagnostic(x0: &str, x1: &str, span2: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn(format!("Expected {x1} and instead saw {x0}"))
-        .with_help(format!("Prefer {x1} operator"))
-        .with_label(span2)
+fn eqeqeq_diagnostic(actual: &str, expected: &str, span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn(format!("Expected {expected} and instead saw {actual}"))
+        .with_help(format!("Prefer {expected} operator"))
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone, JsonSchema)]

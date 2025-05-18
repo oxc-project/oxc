@@ -12,13 +12,13 @@ use crate::{AstNode, context::LintContext, rule::Rule};
 fn bad_bitwise_operator_diagnostic(
     bad_operator: &str,
     suggestion: &str,
-    span2: Span,
+    span: Span,
 ) -> OxcDiagnostic {
     OxcDiagnostic::warn("Bad bitwise operator")
         .with_help(format!(
             "Bitwise operator '{bad_operator}' seems unintended. Did you mean logical operator '{suggestion}'?"
         ))
-        .with_label(span2)
+        .with_label(span)
 }
 
 fn bad_bitwise_or_operator_diagnostic(span: Span) -> OxcDiagnostic {
