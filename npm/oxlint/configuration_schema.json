@@ -169,24 +169,6 @@
         }
       ]
     },
-    "DummyRule": {
-      "anyOf": [
-        {
-          "$ref": "#/definitions/AllowWarnDeny"
-        },
-        {
-          "type": "array",
-          "items": true
-        }
-      ]
-    },
-    "DummyRuleMap": {
-      "description": "See [Oxlint Rules](https://oxc.rs/docs/guide/usage/linter/rules.html)",
-      "type": "object",
-      "additionalProperties": {
-        "$ref": "#/definitions/DummyRule"
-      }
-    },
     "GlobSet": {
       "type": "array",
       "items": {
@@ -434,7 +416,7 @@
       }
     },
     "OxlintRules": {
-      "$ref": "#/definitions/DummyRuleMap"
+      "$ref": "#/definitions/RulesMap"
     },
     "OxlintSettings": {
       "title": "Oxlint Plugin Settings",
@@ -511,6 +493,5238 @@
           "items": {
             "$ref": "#/definitions/CustomComponent"
           }
+        }
+      }
+    },
+    "RuleConfig": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/AllowWarnDeny"
+        },
+        {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/AllowWarnDeny"
+          },
+          "maxItems": 1,
+          "minItems": 1
+        },
+        {
+          "type": "array",
+          "items": [
+            {
+              "$ref": "#/definitions/AllowWarnDeny"
+            },
+            true
+          ],
+          "maxItems": 2,
+          "minItems": 2
+        }
+      ]
+    },
+    "RulesMap": {
+      "description": "See [Oxlint Rules](https://oxc.rs/docs/guide/usage/linter/rules.html)",
+      "type": "object",
+      "properties": {
+        "eslint/array-callback-return": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "eslint/block-scoped-var": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "eslint/curly": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "eslint/default-case": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "eslint/default-case-last": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "eslint/default-param-last": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "eslint/eqeqeq": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "eslint/for-direction": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "eslint/func-names": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "eslint/func-style": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "eslint/getter-return": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "eslint/grouped-accessor-pairs": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "eslint/guard-for-in": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "eslint/init-declarations": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "eslint/max-classes-per-file": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "eslint/max-depth": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "eslint/max-lines": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "eslint/max-lines-per-function": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "eslint/max-nested-callbacks": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "eslint/max-params": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "eslint/new-cap": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "eslint/no-alert": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "eslint/no-array-constructor": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "eslint/no-async-promise-executor": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "eslint/no-await-in-loop": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "eslint/no-bitwise": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "eslint/no-caller": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "eslint/no-case-declarations": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "eslint/no-class-assign": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "eslint/no-compare-neg-zero": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "eslint/no-cond-assign": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "eslint/no-console": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "eslint/no-const-assign": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "eslint/no-constant-binary-expression": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "eslint/no-constant-condition": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "eslint/no-constructor-return": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "eslint/no-continue": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "eslint/no-control-regex": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "eslint/no-debugger": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "eslint/no-delete-var": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "eslint/no-div-regex": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "eslint/no-dupe-class-members": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "eslint/no-dupe-else-if": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "eslint/no-dupe-keys": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "eslint/no-duplicate-case": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "eslint/no-duplicate-imports": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "eslint/no-else-return": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "eslint/no-empty": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "eslint/no-empty-character-class": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "eslint/no-empty-function": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "eslint/no-empty-pattern": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "eslint/no-empty-static-block": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "eslint/no-eq-null": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "eslint/no-eval": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "eslint/no-ex-assign": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "eslint/no-extend-native": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "eslint/no-extra-boolean-cast": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "eslint/no-extra-label": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "eslint/no-fallthrough": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "eslint/no-func-assign": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "eslint/no-global-assign": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "eslint/no-import-assign": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "eslint/no-inner-declarations": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "eslint/no-invalid-regexp": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "eslint/no-irregular-whitespace": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "eslint/no-iterator": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "eslint/no-label-var": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "eslint/no-labels": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "eslint/no-lone-blocks": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "eslint/no-lonely-if": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "eslint/no-loss-of-precision": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "eslint/no-magic-numbers": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "eslint/no-multi-assign": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "eslint/no-multi-str": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "eslint/no-negated-condition": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "eslint/no-nested-ternary": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "eslint/no-new": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "eslint/no-new-func": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "eslint/no-new-native-nonconstructor": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "eslint/no-new-wrappers": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "eslint/no-nonoctal-decimal-escape": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "eslint/no-obj-calls": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "eslint/no-object-constructor": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "eslint/no-plusplus": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "eslint/no-proto": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "eslint/no-prototype-builtins": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "eslint/no-redeclare": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "eslint/no-regex-spaces": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "eslint/no-restricted-globals": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "eslint/no-restricted-imports": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "eslint/no-return-assign": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "eslint/no-script-url": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "eslint/no-self-assign": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "eslint/no-self-compare": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "eslint/no-setter-return": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "eslint/no-shadow-restricted-names": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "eslint/no-sparse-arrays": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "eslint/no-template-curly-in-string": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "eslint/no-ternary": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "eslint/no-this-before-super": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "eslint/no-throw-literal": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "eslint/no-undef": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "eslint/no-undefined": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "eslint/no-unexpected-multiline": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "eslint/no-unneeded-ternary": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "eslint/no-unreachable": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "eslint/no-unsafe-finally": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "eslint/no-unsafe-negation": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "eslint/no-unsafe-optional-chaining": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "eslint/no-unused-expressions": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "eslint/no-unused-labels": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "eslint/no-unused-private-class-members": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "eslint/no-unused-vars": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "eslint/no-useless-backreference": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "eslint/no-useless-call": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "eslint/no-useless-catch": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "eslint/no-useless-concat": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "eslint/no-useless-constructor": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "eslint/no-useless-escape": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "eslint/no-useless-rename": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "eslint/no-var": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "eslint/no-void": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "eslint/no-with": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "eslint/operator-assignment": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "eslint/prefer-exponentiation-operator": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "eslint/prefer-numeric-literals": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "eslint/prefer-object-has-own": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "eslint/prefer-object-spread": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "eslint/prefer-promise-reject-errors": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "eslint/prefer-rest-params": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "eslint/prefer-spread": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "eslint/radix": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "eslint/require-await": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "eslint/require-yield": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "eslint/sort-imports": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "eslint/sort-keys": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "eslint/sort-vars": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "eslint/symbol-description": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "eslint/unicode-bom": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "eslint/use-isnan": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "eslint/valid-typeof": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "eslint/vars-on-top": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "eslint/yoda": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "import/consistent-type-specifier-style": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "import/default": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "import/export": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "import/exports-last": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "import/first": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "import/group-exports": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "import/max-dependencies": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "import/named": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "import/namespace": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "import/no-absolute-path": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "import/no-amd": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "import/no-anonymous-default-export": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "import/no-commonjs": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "import/no-cycle": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "import/no-default-export": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "import/no-duplicates": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "import/no-dynamic-require": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "import/no-empty-named-blocks": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "import/no-mutable-exports": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "import/no-named-as-default": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "import/no-named-as-default-member": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "import/no-named-default": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "import/no-namespace": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "import/no-self-import": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "import/no-unassigned-import": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "import/no-webpack-loader-syntax": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "import/unambiguous": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "jest/consistent-test-it": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "jest/expect-expect": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "jest/max-expects": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "jest/max-nested-describe": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "jest/no-alias-methods": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "jest/no-commented-out-tests": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "jest/no-conditional-expect": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "jest/no-conditional-in-test": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "jest/no-confusing-set-timeout": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "jest/no-deprecated-functions": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "jest/no-disabled-tests": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "jest/no-done-callback": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "jest/no-duplicate-hooks": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "jest/no-export": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "jest/no-focused-tests": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "jest/no-hooks": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "jest/no-identical-title": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "jest/no-interpolation-in-snapshots": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "jest/no-jasmine-globals": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "jest/no-large-snapshots": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "jest/no-mocks-import": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "jest/no-restricted-jest-methods": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "jest/no-restricted-matchers": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "jest/no-standalone-expect": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "jest/no-test-prefixes": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "jest/no-test-return-statement": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "jest/no-untyped-mock-factory": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "jest/prefer-called-with": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "jest/prefer-comparison-matcher": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "jest/prefer-each": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "jest/prefer-equality-matcher": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "jest/prefer-expect-resolves": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "jest/prefer-hooks-in-order": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "jest/prefer-hooks-on-top": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "jest/prefer-jest-mocked": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "jest/prefer-lowercase-title": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "jest/prefer-mock-promise-shorthand": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "jest/prefer-spy-on": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "jest/prefer-strict-equal": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "jest/prefer-to-be": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "jest/prefer-to-contain": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "jest/prefer-to-have-length": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "jest/prefer-todo": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "jest/require-hook": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "jest/require-to-throw-message": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "jest/require-top-level-describe": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "jest/valid-describe-callback": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "jest/valid-expect": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "jest/valid-title": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "jsdoc/check-access": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "jsdoc/check-property-names": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "jsdoc/check-tag-names": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "jsdoc/empty-tags": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "jsdoc/implements-on-classes": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "jsdoc/no-defaults": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "jsdoc/require-param": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "jsdoc/require-param-description": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "jsdoc/require-param-name": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "jsdoc/require-param-type": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "jsdoc/require-property": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "jsdoc/require-property-description": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "jsdoc/require-property-name": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "jsdoc/require-property-type": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "jsdoc/require-returns": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "jsdoc/require-returns-description": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "jsdoc/require-returns-type": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "jsdoc/require-yields": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "jsx_a11y/alt-text": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "jsx_a11y/anchor-ambiguous-text": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "jsx_a11y/anchor-has-content": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "jsx_a11y/anchor-is-valid": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "jsx_a11y/aria-activedescendant-has-tabindex": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "jsx_a11y/aria-props": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "jsx_a11y/aria-role": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "jsx_a11y/aria-unsupported-elements": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "jsx_a11y/autocomplete-valid": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "jsx_a11y/click-events-have-key-events": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "jsx_a11y/heading-has-content": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "jsx_a11y/html-has-lang": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "jsx_a11y/iframe-has-title": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "jsx_a11y/img-redundant-alt": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "jsx_a11y/label-has-associated-control": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "jsx_a11y/lang": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "jsx_a11y/media-has-caption": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "jsx_a11y/mouse-events-have-key-events": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "jsx_a11y/no-access-key": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "jsx_a11y/no-aria-hidden-on-focusable": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "jsx_a11y/no-autofocus": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "jsx_a11y/no-distracting-elements": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "jsx_a11y/no-noninteractive-tabindex": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "jsx_a11y/no-redundant-roles": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "jsx_a11y/prefer-tag-over-role": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "jsx_a11y/role-has-required-aria-props": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "jsx_a11y/role-supports-aria-props": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "jsx_a11y/scope": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "jsx_a11y/tabindex-no-positive": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "nextjs/google-font-display": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "nextjs/google-font-preconnect": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "nextjs/inline-script-id": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "nextjs/next-script-for-ga": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "nextjs/no-assign-module-variable": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "nextjs/no-async-client-component": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "nextjs/no-before-interactive-script-outside-document": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "nextjs/no-css-tags": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "nextjs/no-document-import-in-page": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "nextjs/no-duplicate-head": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "nextjs/no-head-element": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "nextjs/no-head-import-in-document": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "nextjs/no-img-element": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "nextjs/no-page-custom-font": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "nextjs/no-script-component-in-head": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "nextjs/no-styled-jsx-in-document": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "nextjs/no-sync-scripts": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "nextjs/no-title-in-document-head": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "nextjs/no-typos": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "nextjs/no-unwanted-polyfillio": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "node/no-exports-assign": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "node/no-new-require": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "oxc/approx-constant": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "oxc/bad-array-method-on-arguments": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "oxc/bad-bitwise-operator": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "oxc/bad-char-at-comparison": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "oxc/bad-comparison-sequence": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "oxc/bad-min-max-func": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "oxc/bad-object-literal-comparison": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "oxc/bad-replace-all-arg": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "oxc/const-comparisons": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "oxc/double-comparisons": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "oxc/erasing-op": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "oxc/misrefactored-assign-op": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "oxc/missing-throw": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "oxc/no-accumulating-spread": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "oxc/no-async-await": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "oxc/no-async-endpoint-handlers": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "oxc/no-barrel-file": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "oxc/no-const-enum": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "oxc/no-map-spread": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "oxc/no-optional-chaining": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "oxc/no-rest-spread-properties": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "oxc/number-arg-out-of-range": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "oxc/only-used-in-recursion": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "oxc/uninvoked-array-callback": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "promise/avoid-new": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "promise/catch-or-return": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "promise/no-callback-in-promise": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "promise/no-nesting": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "promise/no-new-statics": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "promise/no-promise-in-callback": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "promise/no-return-in-finally": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "promise/no-return-wrap": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "promise/param-names": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "promise/prefer-await-to-callbacks": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "promise/prefer-await-to-then": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "promise/prefer-catch": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "promise/spec-only": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "promise/valid-params": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "react/button-has-type": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "react/checked-requires-onchange-or-readonly": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "react/exhaustive-deps": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "react/forbid-elements": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "react/forward-ref-uses-ref": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "react/iframe-missing-sandbox": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "react/jsx-boolean-value": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "react/jsx-curly-brace-presence": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "react/jsx-filename-extension": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "react/jsx-key": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "react/jsx-no-comment-textnodes": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "react/jsx-no-duplicate-props": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "react/jsx-no-script-url": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "react/jsx-no-target-blank": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "react/jsx-no-undef": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "react/jsx-no-useless-fragment": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "react/jsx-props-no-spread-multi": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "react/no-array-index-key": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "react/no-children-prop": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "react/no-danger": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "react/no-danger-with-children": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "react/no-direct-mutation-state": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "react/no-find-dom-node": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "react/no-is-mounted": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "react/no-namespace": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "react/no-render-return-value": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "react/no-set-state": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "react/no-string-refs": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "react/no-unescaped-entities": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "react/no-unknown-property": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "react/prefer-es-6-class": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "react/react-in-jsx-scope": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "react/require-render-return": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "react/rules-of-hooks": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "react/self-closing-comp": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "react/style-prop-object": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "react/void-dom-elements-no-children": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "react_perf/jsx-no-jsx-as-prop": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "react_perf/jsx-no-new-array-as-prop": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "react_perf/jsx-no-new-function-as-prop": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "react_perf/jsx-no-new-object-as-prop": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "typescript/adjacent-overload-signatures": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "typescript/array-type": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "typescript/ban-ts-comment": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "typescript/ban-tslint-comment": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "typescript/ban-types": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "typescript/consistent-generic-constructors": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "typescript/consistent-indexed-object-style": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "typescript/consistent-type-definitions": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "typescript/consistent-type-imports": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "typescript/explicit-function-return-type": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "typescript/no-confusing-non-null-assertion": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "typescript/no-duplicate-enum-values": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "typescript/no-dynamic-delete": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "typescript/no-empty-interface": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "typescript/no-empty-object-type": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "typescript/no-explicit-any": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "typescript/no-extra-non-null-assertion": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "typescript/no-extraneous-class": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "typescript/no-import-type-side-effects": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "typescript/no-inferrable-types": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "typescript/no-misused-new": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "typescript/no-namespace": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "typescript/no-non-null-asserted-nullish-coalescing": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "typescript/no-non-null-asserted-optional-chain": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "typescript/no-non-null-assertion": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "typescript/no-require-imports": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "typescript/no-this-alias": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "typescript/no-unnecessary-parameter-property-assignment": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "typescript/no-unnecessary-type-constraint": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "typescript/no-unsafe-declaration-merging": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "typescript/no-unsafe-function-type": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "typescript/no-useless-empty-export": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "typescript/no-var-requires": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "typescript/no-wrapper-object-types": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "typescript/prefer-as-const": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "typescript/prefer-enum-initializers": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "typescript/prefer-for-of": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "typescript/prefer-function-type": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "typescript/prefer-literal-enum-member": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "typescript/prefer-namespace-keyword": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "typescript/prefer-ts-expect-error": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "typescript/triple-slash-reference": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "unicorn/catch-error-name": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "unicorn/consistent-assert": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "unicorn/consistent-date-clone": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "unicorn/consistent-empty-array-spread": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "unicorn/consistent-existence-index-check": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "unicorn/consistent-function-scoping": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "unicorn/empty-brace-spaces": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "unicorn/error-message": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "unicorn/escape-case": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "unicorn/explicit-length-check": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "unicorn/filename-case": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "unicorn/new-for-builtins": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "unicorn/no-abusive-eslint-disable": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "unicorn/no-accessor-recursion": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "unicorn/no-anonymous-default-export": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "unicorn/no-array-for-each": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "unicorn/no-array-method-this-argument": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "unicorn/no-array-reduce": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "unicorn/no-await-expression-member": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "unicorn/no-await-in-promise-methods": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "unicorn/no-console-spaces": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "unicorn/no-document-cookie": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "unicorn/no-empty-file": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "unicorn/no-hex-escape": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "unicorn/no-instanceof-array": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "unicorn/no-instanceof-builtins": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "unicorn/no-invalid-fetch-options": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "unicorn/no-invalid-remove-event-listener": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "unicorn/no-length-as-slice-end": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "unicorn/no-lonely-if": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "unicorn/no-magic-array-flat-depth": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "unicorn/no-negation-in-equality-check": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "unicorn/no-nested-ternary": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "unicorn/no-new-array": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "unicorn/no-new-buffer": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "unicorn/no-null": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "unicorn/no-object-as-default-parameter": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "unicorn/no-process-exit": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "unicorn/no-single-promise-in-promise-methods": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "unicorn/no-static-only-class": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "unicorn/no-thenable": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "unicorn/no-this-assignment": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "unicorn/no-typeof-undefined": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "unicorn/no-unnecessary-array-flat-depth": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "unicorn/no-unnecessary-await": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "unicorn/no-unnecessary-slice-end": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "unicorn/no-unreadable-array-destructuring": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "unicorn/no-unreadable-iife": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "unicorn/no-useless-fallback-in-spread": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "unicorn/no-useless-length-check": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "unicorn/no-useless-promise-resolve-reject": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "unicorn/no-useless-spread": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "unicorn/no-useless-switch-case": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "unicorn/no-useless-undefined": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "unicorn/no-zero-fractions": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "unicorn/number-literal-case": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "unicorn/numeric-separators-style": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "unicorn/prefer-add-event-listener": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "unicorn/prefer-array-find": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "unicorn/prefer-array-flat": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "unicorn/prefer-array-flat-map": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "unicorn/prefer-array-index-of": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "unicorn/prefer-array-some": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "unicorn/prefer-blob-reading-methods": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "unicorn/prefer-code-point": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "unicorn/prefer-date-now": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "unicorn/prefer-dom-node-append": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "unicorn/prefer-dom-node-dataset": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "unicorn/prefer-dom-node-remove": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "unicorn/prefer-dom-node-text-content": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "unicorn/prefer-event-target": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "unicorn/prefer-global-this": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "unicorn/prefer-includes": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "unicorn/prefer-logical-operator-over-ternary": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "unicorn/prefer-math-min-max": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "unicorn/prefer-math-trunc": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "unicorn/prefer-modern-dom-apis": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "unicorn/prefer-modern-math-apis": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "unicorn/prefer-native-coercion-functions": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "unicorn/prefer-negative-index": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "unicorn/prefer-node-protocol": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "unicorn/prefer-number-properties": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "unicorn/prefer-object-from-entries": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "unicorn/prefer-optional-catch-binding": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "unicorn/prefer-prototype-methods": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "unicorn/prefer-query-selector": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "unicorn/prefer-reflect-apply": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "unicorn/prefer-regexp-test": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "unicorn/prefer-set-has": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "unicorn/prefer-set-size": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "unicorn/prefer-spread": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "unicorn/prefer-string-raw": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "unicorn/prefer-string-replace-all": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "unicorn/prefer-string-slice": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "unicorn/prefer-string-starts-ends-with": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "unicorn/prefer-string-trim-start-end": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "unicorn/prefer-structured-clone": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "unicorn/prefer-type-error": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "unicorn/require-array-join-separator": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "unicorn/require-number-to-fixed-digits-argument": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "unicorn/require-post-message-target-origin": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "unicorn/switch-case-braces": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "unicorn/text-encoding-identifier-case": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "unicorn/throw-new-error": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "vitest/no-conditional-tests": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "vitest/no-identical-title": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "vitest/no-import-node-test": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "vitest/prefer-to-be-falsy": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "vitest/prefer-to-be-object": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "vitest/prefer-to-be-truthy": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "vitest/require-local-test-context-for-concurrent-snapshots": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
         }
       }
     },

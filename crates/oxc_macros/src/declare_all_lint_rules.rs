@@ -1,6 +1,7 @@
 use convert_case::{Case, Casing};
 use itertools::Itertools as _;
 use proc_macro::TokenStream;
+use proc_macro::{Ident, Span, TokenStream};
 use quote::{format_ident, quote};
 use syn::{
     Result,
@@ -48,11 +49,16 @@ impl Parse for AllLintRulesMeta {
     }
 }
 
-#[expect(clippy::cognitive_complexity, clippy::too_many_lines)]
+//use heck::ToCase;
+//#[expect(clippy::cognitive_complexity, clippy::too_many_lines)]
+//use proc_macro::TokenStream;
+//use quote::{format_ident, quote};
+
 pub fn declare_all_lint_rules(metadata: AllLintRulesMeta) -> TokenStream {
     let AllLintRulesMeta { rules } = metadata;
 
     let mut use_stmts = Vec::new();
+    let mut rules_map_fields = Vec::new();
     let mut enum_variants = Vec::new();
     let mut enum_id_matches = Vec::new();
     let mut enum_name_matches = Vec::new();
@@ -100,6 +106,17 @@ pub fn declare_all_lint_rules(metadata: AllLintRulesMeta) -> TokenStream {
                 //let struct_type = quote! { #rule_enum_name<#framework_str> };
                 let id = id_counter;
                 id_counter += 1;
+
+                let rename_str = format!(
+                    "{}/{}",
+                    framework_str,
+                    rule.rule_name.to_string().to_case(Case::Kebab)
+                );
+
+                rules_map_fields.push(quote! {
+                    #[serde(rename = #rename_str)]
+                    #variant_name: Option<RuleConfig>,
+                });
 
                 // Add enum variant
                 enum_variants.push(quote! {
@@ -176,6 +193,22 @@ pub fn declare_all_lint_rules(metadata: AllLintRulesMeta) -> TokenStream {
                 pub use self::#rule_path::#rule_rule_name as #struct_name;
             });
 
+            let rename_str =
+                format!("{}/{}", &plugin_name, rule.rule_name.to_string().to_case(Case::Kebab));
+
+            if plugin_name == "eslint" {
+                let alias_str = rule.rule_name.to_string().to_case(Case::Kebab);
+                rules_map_fields.push(quote! {
+                    #[serde(rename = #rename_str, alias = #alias_str)]
+                    #struct_name: Option<RuleConfig>,
+                });
+            } else {
+                rules_map_fields.push(quote! {
+                    #[serde(rename = #rename_str)]
+                    #struct_name: Option<RuleConfig>,
+                });
+            }
+
             // Add enum variant
             enum_variants.push(quote! {
                 #struct_name(#struct_name)
@@ -246,7 +279,7 @@ pub fn declare_all_lint_rules(metadata: AllLintRulesMeta) -> TokenStream {
 
         use crate::{
             context::{ContextHost, LintContext},
-            rule::{Rule, RuleCategory, RuleFixMeta, RuleMeta},
+            rule::{Rule, RuleCategory, RuleFixMeta, RuleMeta, RuleConfig},
             utils::PossibleJestNode,
             AstNode
         };
@@ -375,6 +408,12 @@ pub fn declare_all_lint_rules(metadata: AllLintRulesMeta) -> TokenStream {
             pub static ref RULES: Vec<RuleEnum> = vec![
                 #(#static_rules),*
             ];
+        }
+
+        #[derive(Debug, serde::Deserialize, schemars::JsonSchema)]
+        /// See [Oxlint Rules](https://oxc.rs/docs/guide/usage/linter/rules.html)
+        pub struct RulesMap {
+            #(#rules_map_fields)*
         }
     };
 
