@@ -82,20 +82,20 @@ fn run<'a>(possible_jest_node: &PossibleJestNode<'a, '_>, ctx: &LintContext<'a>)
         }
 
         if counts == 1 && !filter_todo_case(call_expr) {
-            let span = call_expr
-                .callee
-                .as_member_expression()
-                .map_or(call_expr.callee.span(), GetSpan::span);
+            let span = call_expr.callee.span();
             ctx.diagnostic_with_fix(un_implemented_test_diagnostic(span), |fixer| {
                 if let Expression::Identifier(ident) = &call_expr.callee {
-                    return fixer.replace(Span::empty(ident.span.end), ".todo");
+                    return fixer.insert_text_after_range(ident.span, ".todo");
                 }
-                if let Some(mem_expr) = call_expr.callee.as_member_expression() {
-                    if let Some((span, _)) = mem_expr.static_property_info() {
-                        return fixer.replace(span, "todo");
+                match &call_expr.callee {
+                    Expression::StaticMemberExpression(mem_expr) => {
+                        fixer.replace(mem_expr.property.span, "todo")
                     }
+                    Expression::ComputedMemberExpression(mem_expr) => {
+                        fixer.replace(mem_expr.expression.span(), "'todo'")
+                    }
+                    _ => fixer.delete_range(call_expr.span),
                 }
-                fixer.delete_range(call_expr.span)
             });
         }
 
@@ -253,6 +253,11 @@ fn tests() {
         ),
         (
             "test['skip']('i need to write this test', () => {});",
+            "test['todo']('i need to write this test');",
+            None,
+        ),
+        (
+            "test['skip']('i need to write this test');",
             "test['todo']('i need to write this test');",
             None,
         ),
