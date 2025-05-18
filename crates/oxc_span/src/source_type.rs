@@ -302,21 +302,21 @@ impl SourceType {
         }
     }
 
-    /// Mark this source type as a [script].
+    /// Returns `true` if this [`SourceType`] is [script].
     ///
     /// [script]: ModuleKind::Script
     pub fn is_script(self) -> bool {
         self.module_kind == ModuleKind::Script
     }
 
-    /// Mark this source type as a [module].
+    /// Returns `true` if this [`SourceType`] is [module].
     ///
     /// [module]: ModuleKind::Module
     pub fn is_module(self) -> bool {
         self.module_kind == ModuleKind::Module
     }
 
-    /// `true` if this [`SourceType`] is [unambiguous].
+    /// Returns `true` if this [`SourceType`] is [unambiguous].
     ///
     /// [unambiguous]: ModuleKind::Unambiguous
     pub fn is_unambiguous(self) -> bool {
