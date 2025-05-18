@@ -766,6 +766,11 @@ impl Gen for FormalParameter<'_> {
             p.print_str(accessibility.as_str());
             p.print_soft_space();
         }
+        if self.r#override {
+            p.print_space_before_identifier();
+            p.print_str("override");
+            p.print_soft_space();
+        }
         if self.readonly {
             p.print_space_before_identifier();
             p.print_str("readonly");
