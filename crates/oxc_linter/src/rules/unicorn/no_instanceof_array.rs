@@ -55,14 +55,12 @@ impl Rule for NoInstanceofArray {
         match &expr.right.without_parentheses() {
             Expression::Identifier(identifier) if identifier.name == "Array" => {
                 ctx.diagnostic_with_fix(no_instanceof_array_diagnostic(expr.span), |fixer| {
-                    let modified_code = {
-                        let mut codegen = String::new();
-                        codegen.push_str("Array.isArray(");
-                        codegen.push_str(fixer.source_range(expr.left.span()));
-                        codegen.push(')');
-                        codegen
-                    };
-                    fixer.replace(expr.span, modified_code)
+                    let argument = fixer.source_range(expr.left.span());
+                    let mut code = String::with_capacity(15 + argument.len());
+                    code.push_str("Array.isArray(");
+                    code.push_str(argument);
+                    code.push(')');
+                    fixer.replace(expr.span, code)
                 });
             }
             _ => {}
