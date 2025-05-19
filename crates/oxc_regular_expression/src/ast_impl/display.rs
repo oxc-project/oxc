@@ -250,7 +250,7 @@ impl Display for CapturingGroup<'_> {
 
 impl Display for IgnoreGroup<'_> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        fn write_flags(f: &mut fmt::Formatter<'_>, flags: &Modifier) -> fmt::Result {
+        fn write_flags(f: &mut fmt::Formatter<'_>, flags: Modifier) -> fmt::Result {
             if flags.contains(Modifier::I) {
                 f.write_str("i")?;
             }
@@ -267,11 +267,11 @@ impl Display for IgnoreGroup<'_> {
 
         if let Some(modifiers) = &self.modifiers {
             if !modifiers.enabling.is_empty() {
-                write_flags(f, &modifiers.enabling)?;
+                write_flags(f, modifiers.enabling)?;
             }
             if !modifiers.disabling.is_empty() {
                 f.write_str("-")?;
-                write_flags(f, &modifiers.disabling)?;
+                write_flags(f, modifiers.disabling)?;
             }
         }
 
