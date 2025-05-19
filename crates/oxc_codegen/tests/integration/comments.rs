@@ -211,7 +211,8 @@ pub mod legal {
 
     #[test]
     fn legal_eof_comment() {
-        let options = CodegenOptions { legal_comments: LegalComment::Eof, ..Default::default() };
+        let options =
+            CodegenOptions { legal_comments: LegalComment::Eof, ..CodegenOptions::default() };
         snapshot_options("legal_eof_comments", &cases(), &options);
     }
 
@@ -220,7 +221,7 @@ pub mod legal {
         let options = CodegenOptions {
             minify: true,
             legal_comments: LegalComment::Eof,
-            ..Default::default()
+            ..CodegenOptions::default()
         };
         snapshot_options("legal_eof_minify_comments", &cases(), &options);
     }
@@ -229,7 +230,7 @@ pub mod legal {
     fn legal_linked_comment() {
         let options = CodegenOptions {
             legal_comments: LegalComment::Linked(String::from("test.js")),
-            ..Default::default()
+            ..CodegenOptions::default()
         };
         snapshot_options("legal_linked_comments", &cases(), &options);
     }
@@ -237,7 +238,7 @@ pub mod legal {
     #[test]
     fn legal_external_comment() {
         let options =
-            CodegenOptions { legal_comments: LegalComment::External, ..Default::default() };
+            CodegenOptions { legal_comments: LegalComment::External, ..CodegenOptions::default() };
         let code = "/* @license */\n/* @preserve */\nfoo;\n";
         let ret = codegen_options(code, &options);
         assert_eq!(ret.code, "foo;\n");

@@ -85,10 +85,10 @@ function foo() {
 ----------
 function foo() {
 	(() => {
-	/**
-	* @preserve
-	*/
-})();
+		/**
+		* @preserve
+		*/
+	})();
 	/**
 	* @preserve
 	*/
@@ -96,6 +96,7 @@ function foo() {
 /**
 * @preserve
 */
+/*! For license information please see test.js */
 ########## 8
 /**
 * @preserve
@@ -105,3 +106,5 @@ function foo() {
 /**
 * @preserve
 */
+
+/*! For license information please see test.js */

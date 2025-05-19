@@ -7852,8 +7852,8 @@ impl<'new_alloc> CloneIn<'new_alloc> for CommentPosition {
     }
 }
 
-impl<'new_alloc> CloneIn<'new_alloc> for CommentAnnotation {
-    type Cloned = CommentAnnotation;
+impl<'new_alloc> CloneIn<'new_alloc> for CommentContent {
+    type Cloned = CommentContent;
 
     #[inline(always)]
     fn clone_in(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {
@@ -7876,7 +7876,7 @@ impl<'new_alloc> CloneIn<'new_alloc> for Comment {
             kind: CloneIn::clone_in(&self.kind, allocator),
             position: CloneIn::clone_in(&self.position, allocator),
             newlines: CloneIn::clone_in(&self.newlines, allocator),
-            annotation: CloneIn::clone_in(&self.annotation, allocator),
+            content: CloneIn::clone_in(&self.content, allocator),
         }
     }
 
@@ -7887,7 +7887,7 @@ impl<'new_alloc> CloneIn<'new_alloc> for Comment {
             kind: CloneIn::clone_in_with_semantic_ids(&self.kind, allocator),
             position: CloneIn::clone_in_with_semantic_ids(&self.position, allocator),
             newlines: CloneIn::clone_in_with_semantic_ids(&self.newlines, allocator),
-            annotation: CloneIn::clone_in_with_semantic_ids(&self.annotation, allocator),
+            content: CloneIn::clone_in_with_semantic_ids(&self.content, allocator),
         }
     }
 }

@@ -99,10 +99,10 @@ function foo() {
 ----------
 function foo() {
 	(() => {
-	/**
-	* @preserve
-	*/
-})();
+		/**
+		* @preserve
+		*/
+	})();
 	/**
 	* @preserve
 	*/
@@ -110,12 +110,20 @@ function foo() {
 /**
 * @preserve
 */
+/**
+ * @preserve
+*/
+
 ########## 8
 /**
 * @preserve
 */
 
 ----------
+/**
+* @preserve
+*/
+
 /**
 * @preserve
 */

@@ -46,7 +46,7 @@ pub enum CommentPosition {
 #[ast]
 #[generate_derive(CloneIn, ContentEq)]
 #[derive(Debug, Default, Clone, Copy, Eq, PartialEq)]
-pub enum CommentAnnotation {
+pub enum CommentContent {
     /// No Annotation
     #[default]
     None = 0,
@@ -60,27 +60,31 @@ pub enum CommentAnnotation {
     /// <https://jsdoc.app>
     Jsdoc = 2,
 
+    /// A jsdoc containing legal annotation.
+    /// `/** @preserve */`
+    JsdocLegal = 3,
+
     /// `/* #__PURE__ */`
     /// <https://github.com/javascript-compiler-hints/compiler-notations-spec>
-    Pure = 3,
+    Pure = 4,
 
     /// `/* #__NO_SIDE_EFFECTS__ */`
-    NoSideEffects = 4,
+    NoSideEffects = 5,
 
     /// Webpack magic comment
     /// e.g. `/* webpackChunkName */`
     /// <https://webpack.js.org/api/module-methods/#magic-comments>
-    Webpack = 5,
+    Webpack = 6,
 
     /// Vite comment
     /// e.g. `/* @vite-ignore */`
     /// <https://github.com/search?q=repo%3Avitejs%2Fvite%20vite-ignore&type=code>
-    Vite = 6,
+    Vite = 7,
 
     /// Code Coverage Ignore
     /// `v8 ignore`, `c8 ignore`, `node:coverage`, `istanbul ignore`
     /// <https://github.com/oxc-project/oxc/issues/10091>
-    CoverageIgnore = 7,
+    CoverageIgnore = 8,
 }
 
 bitflags! {
@@ -144,9 +148,9 @@ pub struct Comment {
     #[estree(skip)]
     pub newlines: CommentNewlines,
 
-    /// Comment Annotation
+    /// Content of the comment
     #[estree(skip)]
-    pub annotation: CommentAnnotation,
+    pub content: CommentContent,
 }
 
 impl Comment {
@@ -160,7 +164,7 @@ impl Comment {
             kind,
             position: CommentPosition::Trailing,
             newlines: CommentNewlines::None,
-            annotation: CommentAnnotation::None,
+            content: CommentContent::None,
         }
     }
 
@@ -196,16 +200,23 @@ impl Comment {
         self.position == CommentPosition::Trailing
     }
 
+    /// Is comment without a special meaning.
+    #[inline]
+    pub fn is_normal(self) -> bool {
+        self.content == CommentContent::None
+    }
+
     /// Is comment with special meaning.
     #[inline]
     pub fn is_annotation(self) -> bool {
-        self.annotation != CommentAnnotation::None
+        self.content != CommentContent::None && self.content != CommentContent::Legal
     }
 
     /// Returns `true` if this comment is a JSDoc comment. Implies `is_leading` and `is_block`.
     #[inline]
     pub fn is_jsdoc(self) -> bool {
-        self.annotation == CommentAnnotation::Jsdoc && self.is_leading()
+        matches!(self.content, CommentContent::Jsdoc | CommentContent::JsdocLegal)
+            && self.is_leading()
     }
 
     /// Legal comments
@@ -216,37 +227,38 @@ impl Comment {
     /// <https://esbuild.github.io/api/#legal-comments>
     #[inline]
     pub fn is_legal(self) -> bool {
-        self.annotation == CommentAnnotation::Legal && self.is_leading()
+        matches!(self.content, CommentContent::Legal | CommentContent::JsdocLegal)
+            && self.is_leading()
     }
 
     /// Is `/* @__PURE__*/`.
     #[inline]
     pub fn is_pure(self) -> bool {
-        self.annotation == CommentAnnotation::Pure
+        self.content == CommentContent::Pure
     }
 
     /// Is `/* @__NO_SIDE_EFFECTS__*/`.
     #[inline]
     pub fn is_no_side_effects(self) -> bool {
-        self.annotation == CommentAnnotation::NoSideEffects
+        self.content == CommentContent::NoSideEffects
     }
 
     /// Is webpack magic comment.
     #[inline]
     pub fn is_webpack(self) -> bool {
-        self.annotation == CommentAnnotation::Webpack
+        self.content == CommentContent::Webpack
     }
 
     /// Is vite special comment.
     #[inline]
     pub fn is_vite(self) -> bool {
-        self.annotation == CommentAnnotation::Vite
+        self.content == CommentContent::Vite
     }
 
     /// Is coverage ignore comment.
     #[inline]
     pub fn is_coverage_ignore(self) -> bool {
-        self.annotation == CommentAnnotation::CoverageIgnore && self.is_leading()
+        self.content == CommentContent::CoverageIgnore && self.is_leading()
     }
 
     /// Returns `true` if this comment is preceded by a newline.

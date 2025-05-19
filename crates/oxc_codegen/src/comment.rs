@@ -22,16 +22,14 @@ impl Codegen<'_> {
                 continue;
             }
             let mut add = false;
-            if comment.is_legal() {
-                if self.options.print_legal_comment() {
+            if comment.is_leading() {
+                if comment.is_legal() && self.options.print_legal_comment() {
                     add = true;
                 }
-            } else if comment.is_leading() {
-                if comment.is_annotation() {
-                    if self.options.print_annotation_comment() {
-                        add = true;
-                    }
-                } else if self.options.print_normal_comment() {
+                if comment.is_annotation() && self.options.print_annotation_comment() {
+                    add = true;
+                }
+                if comment.is_normal() && self.options.print_normal_comment() {
                     add = true;
                 }
             }

@@ -1,5 +1,5 @@
 use memchr::memchr_iter;
-use oxc_ast::ast::{Comment, CommentAnnotation, CommentKind, CommentPosition};
+use oxc_ast::ast::{Comment, CommentContent, CommentKind, CommentPosition};
 use oxc_span::Span;
 
 use super::{Kind, Token};
@@ -149,14 +149,18 @@ impl TriviaBuilder {
         let mut s = comment.content_span().source_text(source_text);
 
         if s.starts_with('!') {
-            comment.annotation = CommentAnnotation::Legal;
+            comment.content = CommentContent::Legal;
             return;
         }
 
         if comment.is_block() && s.starts_with('*') {
             // Ignore webpack comment `/*****/`
             if !s.bytes().all(|c| c == b'*') {
-                comment.annotation = CommentAnnotation::Jsdoc;
+                if contains_license_or_preserve_comment(s) {
+                    comment.content = CommentContent::JsdocLegal;
+                } else {
+                    comment.content = CommentContent::Jsdoc;
+                }
                 return;
             }
         }
@@ -165,38 +169,38 @@ impl TriviaBuilder {
 
         if let Some(ss) = s.strip_prefix('@') {
             if ss.starts_with("vite") {
-                comment.annotation = CommentAnnotation::Vite;
+                comment.content = CommentContent::Vite;
                 return;
             }
             if ss.starts_with("license") || ss.starts_with("preserve") {
-                comment.annotation = CommentAnnotation::Legal;
+                comment.content = CommentContent::Legal;
                 return;
             }
             s = ss;
         } else if let Some(ss) = s.strip_prefix('#') {
             s = ss;
         } else if s.starts_with("webpack") {
-            comment.annotation = CommentAnnotation::Webpack;
+            comment.content = CommentContent::Webpack;
             return;
         } else if ["v8 ignore", "c8 ignore", "node:coverage", "istanbul ignore"]
             .iter()
             .any(|ss| s.starts_with(ss))
         {
-            comment.annotation = CommentAnnotation::CoverageIgnore;
+            comment.content = CommentContent::CoverageIgnore;
         } else {
             if contains_license_or_preserve_comment(s) {
-                comment.annotation = CommentAnnotation::Legal;
+                comment.content = CommentContent::Legal;
             }
             return;
         }
 
         let Some(s) = s.strip_prefix("__") else { return };
         if s.starts_with("PURE__") {
-            comment.annotation = CommentAnnotation::Pure;
+            comment.content = CommentContent::Pure;
             self.has_pure_comment = true;
         }
         if s.starts_with("NO_SIDE_EFFECTS__") {
-            comment.annotation = CommentAnnotation::NoSideEffects;
+            comment.content = CommentContent::NoSideEffects;
             self.has_no_side_effects_comment = true;
         }
     }
@@ -241,7 +245,7 @@ fn contains_license_or_preserve_comment(s: &str) -> bool {
 #[cfg(test)]
 mod test {
     use oxc_allocator::Allocator;
-    use oxc_ast::{Comment, CommentAnnotation, CommentKind, CommentPosition, ast::CommentNewlines};
+    use oxc_ast::{Comment, CommentContent, CommentKind, CommentPosition, ast::CommentNewlines};
     use oxc_span::{SourceType, Span};
 
     use crate::Parser;
@@ -269,7 +273,7 @@ mod test {
                 position: CommentPosition::Leading,
                 attached_to: 70,
                 newlines: CommentNewlines::Leading | CommentNewlines::Trailing,
-                annotation: CommentAnnotation::None,
+                content: CommentContent::None,
             },
             Comment {
                 span: Span::new(33, 45),
@@ -277,7 +281,7 @@ mod test {
                 position: CommentPosition::Leading,
                 attached_to: 70,
                 newlines: CommentNewlines::Leading | CommentNewlines::Trailing,
-                annotation: CommentAnnotation::None,
+                content: CommentContent::None,
             },
             Comment {
                 span: Span::new(54, 69),
@@ -285,7 +289,7 @@ mod test {
                 position: CommentPosition::Leading,
                 attached_to: 70,
                 newlines: CommentNewlines::Leading,
-                annotation: CommentAnnotation::None,
+                content: CommentContent::None,
             },
             Comment {
                 span: Span::new(76, 92),
@@ -293,7 +297,7 @@ mod test {
                 position: CommentPosition::Trailing,
                 attached_to: 0,
                 newlines: CommentNewlines::None,
-                annotation: CommentAnnotation::None,
+                content: CommentContent::None,
             },
             Comment {
                 span: Span::new(93, 106),
@@ -301,7 +305,7 @@ mod test {
                 position: CommentPosition::Trailing,
                 attached_to: 0,
                 newlines: CommentNewlines::Trailing,
-                annotation: CommentAnnotation::None,
+                content: CommentContent::None,
             },
             Comment {
                 span: Span::new(115, 138),
@@ -309,7 +313,7 @@ mod test {
                 position: CommentPosition::Leading,
                 attached_to: 147,
                 newlines: CommentNewlines::Leading | CommentNewlines::Trailing,
-                annotation: CommentAnnotation::None,
+                content: CommentContent::None,
             },
         ];
 
@@ -333,7 +337,7 @@ token /* Trailing 1 */
                 position: CommentPosition::Leading,
                 attached_to: 36,
                 newlines: CommentNewlines::Leading | CommentNewlines::Trailing,
-                annotation: CommentAnnotation::None,
+                content: CommentContent::None,
             },
             Comment {
                 span: Span::new(42, 58),
@@ -341,7 +345,7 @@ token /* Trailing 1 */
                 position: CommentPosition::Trailing,
                 attached_to: 0,
                 newlines: CommentNewlines::Trailing,
-                annotation: CommentAnnotation::None,
+                content: CommentContent::None,
             },
         ];
         assert_eq!(comments, expected);
@@ -366,7 +370,7 @@ token /* Trailing 1 */
                 position: CommentPosition::Leading,
                 attached_to: 28,
                 newlines: CommentNewlines::Leading | CommentNewlines::Trailing,
-                annotation: CommentAnnotation::None,
+                content: CommentContent::None,
             },
             Comment {
                 span: Span::new(14, 26),
@@ -374,7 +378,7 @@ token /* Trailing 1 */
                 position: CommentPosition::Leading,
                 attached_to: 28,
                 newlines: CommentNewlines::Leading | CommentNewlines::Trailing,
-                annotation: CommentAnnotation::None,
+                content: CommentContent::None,
             },
         ];
         assert_eq!(comments, expected);
@@ -397,7 +401,7 @@ token /* Trailing 1 */
                 position: CommentPosition::Leading,
                 attached_to: 57,
                 newlines: CommentNewlines::Trailing,
-                annotation: CommentAnnotation::None,
+                content: CommentContent::None,
             },
             Comment {
                 span: Span::new(96, 116),
@@ -405,7 +409,7 @@ token /* Trailing 1 */
                 position: CommentPosition::Leading,
                 attached_to: 129,
                 newlines: CommentNewlines::Trailing,
-                annotation: CommentAnnotation::None,
+                content: CommentContent::None,
             },
         ];
         assert_eq!(comments, expected);
@@ -427,7 +431,7 @@ token /* Trailing 1 */
                 position: CommentPosition::Leading,
                 attached_to: 55,
                 newlines: CommentNewlines::Trailing,
-                annotation: CommentAnnotation::None,
+                content: CommentContent::None,
             },
             Comment {
                 span: Span::new(79, 99),
@@ -435,7 +439,7 @@ token /* Trailing 1 */
                 position: CommentPosition::Leading,
                 attached_to: 116,
                 newlines: CommentNewlines::Trailing,
-                annotation: CommentAnnotation::None,
+                content: CommentContent::None,
             },
         ];
         assert_eq!(comments, expected);
@@ -444,32 +448,34 @@ token /* Trailing 1 */
     #[test]
     fn comment_parsing() {
         let data = [
-            ("/*! legal */", CommentAnnotation::Legal),
-            ("/* @preserve */", CommentAnnotation::Legal),
-            ("/* @license */", CommentAnnotation::Legal),
-            ("/* foo @preserve */", CommentAnnotation::Legal),
-            ("/* foo @license */", CommentAnnotation::Legal),
-            ("/** jsdoc */", CommentAnnotation::Jsdoc),
-            ("/**/", CommentAnnotation::None),
-            ("/***/", CommentAnnotation::None),
-            ("/*@*/", CommentAnnotation::None),
-            ("/*@xreserve*/", CommentAnnotation::None),
-            ("/*@preserve*/", CommentAnnotation::Legal),
-            ("/*@voidzeroignoreme*/", CommentAnnotation::None),
-            ("/****/", CommentAnnotation::None),
-            ("/* @vite-ignore */", CommentAnnotation::Vite),
-            ("/* @vite-xxx */", CommentAnnotation::Vite),
-            ("/* webpackChunkName: 'my-chunk-name' */", CommentAnnotation::Webpack),
-            ("/* @__PURE__ */", CommentAnnotation::Pure),
-            ("/* @__NO_SIDE_EFFECTS__ */", CommentAnnotation::NoSideEffects),
-            ("/* #__PURE__ */", CommentAnnotation::Pure),
-            ("/* #__NO_SIDE_EFFECTS__ */", CommentAnnotation::NoSideEffects),
+            ("/*! legal */", CommentContent::Legal),
+            ("/* @preserve */", CommentContent::Legal),
+            ("/* @license */", CommentContent::Legal),
+            ("/* foo @preserve */", CommentContent::Legal),
+            ("/* foo @license */", CommentContent::Legal),
+            ("/** foo @preserve */", CommentContent::JsdocLegal),
+            ("/** foo @license */", CommentContent::JsdocLegal),
+            ("/** jsdoc */", CommentContent::Jsdoc),
+            ("/**/", CommentContent::None),
+            ("/***/", CommentContent::None),
+            ("/*@*/", CommentContent::None),
+            ("/*@xreserve*/", CommentContent::None),
+            ("/*@preserve*/", CommentContent::Legal),
+            ("/*@voidzeroignoreme*/", CommentContent::None),
+            ("/****/", CommentContent::None),
+            ("/* @vite-ignore */", CommentContent::Vite),
+            ("/* @vite-xxx */", CommentContent::Vite),
+            ("/* webpackChunkName: 'my-chunk-name' */", CommentContent::Webpack),
+            ("/* @__PURE__ */", CommentContent::Pure),
+            ("/* @__NO_SIDE_EFFECTS__ */", CommentContent::NoSideEffects),
+            ("/* #__PURE__ */", CommentContent::Pure),
+            ("/* #__NO_SIDE_EFFECTS__ */", CommentContent::NoSideEffects),
         ];
 
         for (source_text, expected) in data {
             let comments = get_comments(source_text);
             assert_eq!(comments.len(), 1, "{source_text}");
-            assert_eq!(comments[0].annotation, expected, "{source_text}");
+            assert_eq!(comments[0].content, expected, "{source_text}");
         }
     }
 }

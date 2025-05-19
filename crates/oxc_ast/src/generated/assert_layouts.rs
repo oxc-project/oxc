@@ -1578,8 +1578,8 @@ const _: () = {
     assert!(size_of::<CommentPosition>() == 1);
     assert!(align_of::<CommentPosition>() == 1);
 
-    assert!(size_of::<CommentAnnotation>() == 1);
-    assert!(align_of::<CommentAnnotation>() == 1);
+    assert!(size_of::<CommentContent>() == 1);
+    assert!(align_of::<CommentContent>() == 1);
 
     // Padding: 0 bytes
     assert!(size_of::<CommentNewlines>() == 1);
@@ -1593,7 +1593,7 @@ const _: () = {
     assert!(offset_of!(Comment, kind) == 12);
     assert!(offset_of!(Comment, position) == 13);
     assert!(offset_of!(Comment, newlines) == 14);
-    assert!(offset_of!(Comment, annotation) == 15);
+    assert!(offset_of!(Comment, content) == 15);
 };
 
 #[cfg(target_pointer_width = "32")]
@@ -3167,8 +3167,8 @@ const _: () = {
     assert!(size_of::<CommentPosition>() == 1);
     assert!(align_of::<CommentPosition>() == 1);
 
-    assert!(size_of::<CommentAnnotation>() == 1);
-    assert!(align_of::<CommentAnnotation>() == 1);
+    assert!(size_of::<CommentContent>() == 1);
+    assert!(align_of::<CommentContent>() == 1);
 
     // Padding: 0 bytes
     assert!(size_of::<CommentNewlines>() == 1);
@@ -3182,7 +3182,7 @@ const _: () = {
     assert!(offset_of!(Comment, kind) == 12);
     assert!(offset_of!(Comment, position) == 13);
     assert!(offset_of!(Comment, newlines) == 14);
-    assert!(offset_of!(Comment, annotation) == 15);
+    assert!(offset_of!(Comment, content) == 15);
 };
 
 #[cfg(not(any(target_pointer_width = "64", target_pointer_width = "32")))]

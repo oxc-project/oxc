@@ -2476,7 +2476,7 @@ impl ContentEq for CommentPosition {
     }
 }
 
-impl ContentEq for CommentAnnotation {
+impl ContentEq for CommentContent {
     fn content_eq(&self, other: &Self) -> bool {
         self == other
     }
@@ -2488,6 +2488,6 @@ impl ContentEq for Comment {
             && ContentEq::content_eq(&self.kind, &other.kind)
             && ContentEq::content_eq(&self.position, &other.position)
             && ContentEq::content_eq(&self.newlines, &other.newlines)
-            && ContentEq::content_eq(&self.annotation, &other.annotation)
+            && ContentEq::content_eq(&self.content, &other.content)
     }
 }
