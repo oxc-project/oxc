@@ -17,7 +17,7 @@ importers:
         version: 3.14.9
       antd:
         specifier: ^5.23.1
-        version: 5.25.1(date-fns@4.1.0)(luxon@3.6.1)(moment@2.30.1)(react-dom@19.1.0(react@19.1.0))(react@19.1.0)
+        version: 5.25.2(date-fns@4.1.0)(luxon@3.6.1)(moment@2.30.1)(react-dom@19.1.0(react@19.1.0))(react@19.1.0)
       d3:
         specifier: ^7.9.0
         version: 7.9.0
@@ -698,8 +698,8 @@ packages:
   alpinejs@3.14.9:
     resolution: {integrity: sha512-gqSOhTEyryU9FhviNqiHBHzgjkvtukq9tevew29fTj+ofZtfsYriw4zPirHHOAy9bw8QoL3WGhyk7QqCh5AYlw==}
 
-  antd@5.25.1:
-    resolution: {integrity: sha512-4KC7KuPCjr0z3Vuw9DsF+ceqJaPLbuUI3lOX1sY8ix25ceamp+P8yxOmk3Y2JHCD2ZAhq+5IQ/DTJRN2adWYKQ==}
+  antd@5.25.2:
+    resolution: {integrity: sha512-7R2nUvlHhey7Trx64+hCtGXOiy+DTUs1Lv5bwbV1LzEIZIhWb0at1AM6V3K108a5lyoR9n7DX3ptlLF7uYV/DQ==}
     peerDependencies:
       react: '>=16.9.0'
       react-dom: '>=16.9.0'
@@ -2447,7 +2447,7 @@ snapshots:
     dependencies:
       '@vue/reactivity': 3.1.5
 
-  antd@5.25.1(date-fns@4.1.0)(luxon@3.6.1)(moment@2.30.1)(react-dom@19.1.0(react@19.1.0))(react@19.1.0):
+  antd@5.25.2(date-fns@4.1.0)(luxon@3.6.1)(moment@2.30.1)(react-dom@19.1.0(react@19.1.0))(react@19.1.0):
     dependencies:
       '@ant-design/colors': 7.2.0
       '@ant-design/cssinjs': 1.23.0(react-dom@19.1.0(react@19.1.0))(react@19.1.0)

@@ -56,7 +56,7 @@ importers:
         version: 2.5.2
       '@vscode/vsce':
         specifier: ^3.0.0
-        version: 3.4.0
+        version: 3.4.1
       cross-env:
         specifier: ^7.0.3
         version: 7.0.3
@@ -798,109 +798,109 @@ packages:
       '@napi-rs/cross-toolchain-x64-target-x86_64':
         optional: true
 
-  '@napi-rs/lzma-android-arm-eabi@1.4.2':
-    resolution: {integrity: sha512-VP6oUucQWxoMmPabUqJntzPGk/b/ggtZES0u5YCYHJXTBPRodtQ/vkoU4LFwuxCF8/ZATpAKA1ov9hcxgHLTcg==}
+  '@napi-rs/lzma-android-arm-eabi@1.4.3':
+    resolution: {integrity: sha512-XpjRUZ/EbWtVbMvW+ucon5Ykz7PjMoX65mIlUdAiVnaPGykzFAUrl8dl6Br5bfqnhQQfDjjUIgTAwWl3G++n1g==}
     engines: {node: '>= 10'}
     cpu: [arm]
     os: [android]
 
-  '@napi-rs/lzma-android-arm64@1.4.2':
-    resolution: {integrity: sha512-alFP9oGAZ9WtJXSJG4+FbkiI4EIZLkjqADgcjENWqpuXPur5t72kg/AmFNfd7WGvdIKkCXgM6P0YqREq7pOQmQ==}
+  '@napi-rs/lzma-android-arm64@1.4.3':
+    resolution: {integrity: sha512-Bve6BF/4pnlO6HotIgRWgmUT3rbbW/QH471RF/GBA29GfEeUOPEdfQWC7tlzrLYsVFNX2KCWKd+XlxQNz9sRaA==}
     engines: {node: '>= 10'}
     cpu: [arm64]
     os: [android]
 
-  '@napi-rs/lzma-darwin-arm64@1.4.2':
-    resolution: {integrity: sha512-BcnQJDEv0o7mYGx+OmLI6DfinQnut3+CPlLX5M7UTDfCV48UxaYg/PkxLdTa2p2QoHLXcREsLsn8Wjk2DoJvQg==}
+  '@napi-rs/lzma-darwin-arm64@1.4.3':
+    resolution: {integrity: sha512-UxTb56kL6pSVTsZ1ShibnqLSwJZLTWtPU5TNYuyIjVNQYAIG8JQ5Yxz35azjwBCK7AjD8pBdpWLYUSyJRGAVAw==}
     engines: {node: '>= 10'}
     cpu: [arm64]
     os: [darwin]
 
-  '@napi-rs/lzma-darwin-x64@1.4.2':
-    resolution: {integrity: sha512-UP+hZBgK3kRRIxxacGMdiTGw+wHsAMYZd8AI9nTKe+i+qhJJgKy2rO6ANa1peugf+nTFLCE67Y4C/j/3H5Vw0w==}
+  '@napi-rs/lzma-darwin-x64@1.4.3':
+    resolution: {integrity: sha512-ps6HiwGKS1P4ottyV2/hVboZ0ugdM1Z1qO9YFpcuKweORfxAkxwJ6S8jOt7G27LQiWiiQHVwsUCODTHDFhOUPQ==}
     engines: {node: '>= 10'}
     cpu: [x64]
     os: [darwin]
 
-  '@napi-rs/lzma-freebsd-x64@1.4.2':
-    resolution: {integrity: sha512-Gm6IOo1yehbGAujq+BrRRso8Bvl8F44BqOA5Oj5QoTJ8QEFBgNb2aJrPIjasHIBFFe6yltnjDODZSqBoSixXUw==}
+  '@napi-rs/lzma-freebsd-x64@1.4.3':
+    resolution: {integrity: sha512-W49h41U3+vLnbthbPzvJX1fQtTG+1jyUlfB+wX3oxILvIur06PjJRdMXrFtOZpWkFsihK9gO2DRkQYQJIIgTZw==}
     engines: {node: '>= 10'}
     cpu: [x64]
     os: [freebsd]
 
-  '@napi-rs/lzma-linux-arm-gnueabihf@1.4.2':
-    resolution: {integrity: sha512-zODKevVujFrhYiyylR9Geo9jCwXm6XRjeiGwZmvNH6HbtTF0mVL5uVUhkGdI2ESV1PQJDKKXUVdUomhguzZ+Lw==}
+  '@napi-rs/lzma-linux-arm-gnueabihf@1.4.3':
+    resolution: {integrity: sha512-11PNPiMGuwwxIxd9yPZY3Ek6RFGFRFQb/AtMStJIwlmJ6sM/djEknClLJVbVXbC/nqm7htVZEr+qmYgoDy0fAw==}
     engines: {node: '>= 10'}
     cpu: [arm]
     os: [linux]
 
-  '@napi-rs/lzma-linux-arm64-gnu@1.4.2':
-    resolution: {integrity: sha512-y6B/xX59L75qdevv5tc5G4lbbGy7cttdzY3PkomkOj+K2EdrVqapNuDzhYRjH9DVU3UzjYsOLr4QFHGHUnzH2w==}
+  '@napi-rs/lzma-linux-arm64-gnu@1.4.3':
+    resolution: {integrity: sha512-XzlxZjSXTcrWFHbvvv2xbV5+bSV5IJqCJ8CCksc7xV3uWEAso9yBPJ8VSRD3GPc7ZoBDRqJmgCb/HQzHpLBekw==}
     engines: {node: '>= 10'}
     cpu: [arm64]
     os: [linux]
 
-  '@napi-rs/lzma-linux-arm64-musl@1.4.2':
-    resolution: {integrity: sha512-n6wkmuogLqb8RVx6vsFJlx0rNNEG3KVXxw8Bpr3JDj6L16HRHcqZrJSLbjyw6lr1HUA+MyKuEHT4JIVeOerouQ==}
+  '@napi-rs/lzma-linux-arm64-musl@1.4.3':
+    resolution: {integrity: sha512-k4fWiI4Pm61Esj8hnm7NWIbpZueTtP2jlJqmMhTqJyjqW3NUxbTHjSErZOZKIFRF1B3if4v5Tyzo7JL2X+BaSQ==}
     engines: {node: '>= 10'}
     cpu: [arm64]
     os: [linux]
 
-  '@napi-rs/lzma-linux-ppc64-gnu@1.4.2':
-    resolution: {integrity: sha512-tby01kamxuk6nMkRTvOKJgnHPHDhvNRHq8HXWBDK2Ho6nOlLjyiBMwlgGHjH/q5JsckbNGEbmp/elScJiGcdOg==}
+  '@napi-rs/lzma-linux-ppc64-gnu@1.4.3':
+    resolution: {integrity: sha512-tTIfk+TYZYbFySxaCMuzp4Zz1T3I6OYVYNAm+IrCSkZDLmUKUzBK3+Su+mT+PjcTNsAiHBa5NVjARXC7b7jmgQ==}
     engines: {node: '>= 10'}
     cpu: [ppc64]
     os: [linux]
 
-  '@napi-rs/lzma-linux-riscv64-gnu@1.4.2':
-    resolution: {integrity: sha512-AmodiQF/A9itZqDsXcOfMLyOUFRsPc0Mnyc+cdvyiZuXboMIC4dJfJLpX3AtlmWXnQJHRXDFKIpoTeykTSXCCQ==}
+  '@napi-rs/lzma-linux-riscv64-gnu@1.4.3':
+    resolution: {integrity: sha512-HPyLYOYhkN7QYaWiKWhSnsLmx/l0pqgiiyaYeycgxCm9dwL8ummFWxveZqYjqdbUUvG7Mgi1jqgRe+55MVdyZQ==}
     engines: {node: '>= 10'}
     cpu: [riscv64]
     os: [linux]
 
-  '@napi-rs/lzma-linux-s390x-gnu@1.4.2':
-    resolution: {integrity: sha512-r98eJL42yypRjtuzhDa6VUKRejAE3dm6w4gFofKTKrJh7mS2VBzjzP53Z3l5XaTZQK2IuWJqWwnMrM6C0wmfGA==}
+  '@napi-rs/lzma-linux-s390x-gnu@1.4.3':
+    resolution: {integrity: sha512-YkcV+RSZZIMM3D5sPZqvo2Q7/tHXBhgJWBi+6ceo46pTlqgn/nH+pVz+CzsDmLWz5hqNSXyv5IAhOcg2CH6rAg==}
     engines: {node: '>= 10'}
     cpu: [s390x]
     os: [linux]
 
-  '@napi-rs/lzma-linux-x64-gnu@1.4.2':
-    resolution: {integrity: sha512-Ce3tIrJU7mfHK71F+5Vd/z6Utxbl8xI2m5qTouwucvgg0CkUy59F2Z1AtLcOkglaLOnRlpHtrzrMb2XDAgkvvA==}
+  '@napi-rs/lzma-linux-x64-gnu@1.4.3':
+    resolution: {integrity: sha512-ep6PLjN1+g4P12Hc7sLRmVpXXaHX22ykqxnOzjXUoj1KTph5XgM4+fUCyE5dsYI+lB4/tXqFuf9ZeFgHk5f00A==}
     engines: {node: '>= 10'}
     cpu: [x64]
     os: [linux]
 
-  '@napi-rs/lzma-linux-x64-musl@1.4.2':
-    resolution: {integrity: sha512-7xChspbM6xDWxclEZPnXO2eENAQiJLSihaqtbTMDu88o1iJHA0M63xkTEhTZIP2M8s/Ung+OBsZtKLJlCTC8GA==}
+  '@napi-rs/lzma-linux-x64-musl@1.4.3':
+    resolution: {integrity: sha512-QkCO6rVw0Z7eY0ziVc4aCFplbOTMpt0UBLPXWxsPd2lXtkAlRChzqaHOxdcL/HoLmBsqdCxmG0EZuHuAP/vKZQ==}
     engines: {node: '>= 10'}
     cpu: [x64]
     os: [linux]
 
-  '@napi-rs/lzma-wasm32-wasi@1.4.2':
-    resolution: {integrity: sha512-RMThQPmOxfDiQpOUMn49Y2QL2NHvEPPlIGe+VCNDjrMFZ9wsWlpVA2MguQjLyOWAmIPW3PuW+KfJacHKHh69Cg==}
+  '@napi-rs/lzma-wasm32-wasi@1.4.3':
+    resolution: {integrity: sha512-+rMamB0xaeDyVt4OP4cV888cnmso+m78iUebNhGcrL/WXIziwql50KQrmj7PBdBCza/W7XEcraZT8pO8gSDGcg==}
     engines: {node: '>=14.0.0'}
     cpu: [wasm32]
 
-  '@napi-rs/lzma-win32-arm64-msvc@1.4.2':
-    resolution: {integrity: sha512-cDLb+J+Odh+JsDLI1kpa5K6r7DiCtmkFLPmpkRbWqUk4P+yotnXUHIvPRWRCTNWLEHZKDsigvkU6s4zsfJrXcA==}
+  '@napi-rs/lzma-win32-arm64-msvc@1.4.3':
+    resolution: {integrity: sha512-6gQ+R6ztw11hswdsEu0jsOOXXnJPwhOA1yHRjqfuFemhf6esMd8l9b0uh3BfLBNe7qumtrH4KLrHu8yC9pSY3g==}
     engines: {node: '>= 10'}
     cpu: [arm64]
     os: [win32]
 
-  '@napi-rs/lzma-win32-ia32-msvc@1.4.2':
-    resolution: {integrity: sha512-dqmDGad07o2z1lpe+z2rDRiTyBLGF9hdo8V4/4albWea1xptKMLmBWWF1Rodgtza/Pt9DuoUM1a0GlkYkCrzHw==}
+  '@napi-rs/lzma-win32-ia32-msvc@1.4.3':
+    resolution: {integrity: sha512-+AJeJQoGE+QtZKlwM4VzDkfLmUa+6DsGOO5zdbIPlRCB6PEstRCXxp8lkMiQBNgk9f/IO0UEkRcJSZ+Hhqd8zw==}
     engines: {node: '>= 10'}
     cpu: [ia32]
     os: [win32]
 
-  '@napi-rs/lzma-win32-x64-msvc@1.4.2':
-    resolution: {integrity: sha512-Duh4UZ8hT9pFJKJt4jRvFuUMKDKsjfJEo5OuWMpX3IdHjUFH9iRKCYDvHPTlIlFHGXgQNah8dXddD8FAt94Wxg==}
+  '@napi-rs/lzma-win32-x64-msvc@1.4.3':
+    resolution: {integrity: sha512-66dFCX9ACpVUyTTom89nxhllc88yJyjxGFHO0M2olFcrSJArulfbE9kNIATgh04NDAe/l8VsDhnAxWuvJY1GuA==}
     engines: {node: '>= 10'}
     cpu: [x64]
     os: [win32]
 
-  '@napi-rs/lzma@1.4.2':
-    resolution: {integrity: sha512-c6xoopRe7J7SYitS9CnsiNb4+pATUT9O26s34HG3Bun/IWrzCAu2CGaUDN8Zm1nXNq49cTvRs976BMUtH3oxqw==}
+  '@napi-rs/lzma@1.4.3':
+    resolution: {integrity: sha512-uBjLLoUM9ll03jL/bP7XjyPg0vTU0vQ35N1vVqQHbzlK/fVZyuF2B1p/A6kqPsFFhaoBKgO6oaxsuerv091RtQ==}
     engines: {node: '>= 10'}
 
   '@napi-rs/tar-android-arm-eabi@0.1.5':
@@ -1509,8 +1509,8 @@ packages:
   '@vscode/vsce-sign@2.0.5':
     resolution: {integrity: sha512-GfYWrsT/vypTMDMgWDm75iDmAOMe7F71sZECJ+Ws6/xyIfmB3ELVnVN+LwMFAvmXY+e6eWhR2EzNGF/zAhWY3Q==}
 
-  '@vscode/vsce@3.4.0':
-    resolution: {integrity: sha512-vKyQxFSipqO4e1vUM3iDzOzMSXIKVhrJlWuGgYv/GF1ihAM/zzs2MVSGFC4CfdhF1ep+5AoLn1aRFn96CGhEWA==}
+  '@vscode/vsce@3.4.1':
+    resolution: {integrity: sha512-fDxgoGTQZ42+GdVWrOsxioXfS8VkDwjWNgaXqMNV2GCUmPmr45Rqs97PROqF7h+gKgrKOHmtQCBjeD4Wd/sRCQ==}
     engines: {node: '>= 20'}
     hasBin: true
 
@@ -3946,84 +3946,84 @@ snapshots:
 
   '@napi-rs/cross-toolchain@0.0.19':
     dependencies:
-      '@napi-rs/lzma': 1.4.2
+      '@napi-rs/lzma': 1.4.3
       '@napi-rs/tar': 0.1.5
       debug: 4.4.1(supports-color@8.1.1)
     transitivePeerDependencies:
       - supports-color
 
-  '@napi-rs/lzma-android-arm-eabi@1.4.2':
+  '@napi-rs/lzma-android-arm-eabi@1.4.3':
     optional: true
 
-  '@napi-rs/lzma-android-arm64@1.4.2':
+  '@napi-rs/lzma-android-arm64@1.4.3':
     optional: true
 
-  '@napi-rs/lzma-darwin-arm64@1.4.2':
+  '@napi-rs/lzma-darwin-arm64@1.4.3':
     optional: true
 
-  '@napi-rs/lzma-darwin-x64@1.4.2':
+  '@napi-rs/lzma-darwin-x64@1.4.3':
     optional: true
 
-  '@napi-rs/lzma-freebsd-x64@1.4.2':
+  '@napi-rs/lzma-freebsd-x64@1.4.3':
     optional: true
 
-  '@napi-rs/lzma-linux-arm-gnueabihf@1.4.2':
+  '@napi-rs/lzma-linux-arm-gnueabihf@1.4.3':
     optional: true
 
-  '@napi-rs/lzma-linux-arm64-gnu@1.4.2':
+  '@napi-rs/lzma-linux-arm64-gnu@1.4.3':
     optional: true
 
-  '@napi-rs/lzma-linux-arm64-musl@1.4.2':
+  '@napi-rs/lzma-linux-arm64-musl@1.4.3':
     optional: true
 
-  '@napi-rs/lzma-linux-ppc64-gnu@1.4.2':
+  '@napi-rs/lzma-linux-ppc64-gnu@1.4.3':
     optional: true
 
-  '@napi-rs/lzma-linux-riscv64-gnu@1.4.2':
+  '@napi-rs/lzma-linux-riscv64-gnu@1.4.3':
     optional: true
 
-  '@napi-rs/lzma-linux-s390x-gnu@1.4.2':
+  '@napi-rs/lzma-linux-s390x-gnu@1.4.3':
     optional: true
 
-  '@napi-rs/lzma-linux-x64-gnu@1.4.2':
+  '@napi-rs/lzma-linux-x64-gnu@1.4.3':
     optional: true
 
-  '@napi-rs/lzma-linux-x64-musl@1.4.2':
+  '@napi-rs/lzma-linux-x64-musl@1.4.3':
     optional: true
 
-  '@napi-rs/lzma-wasm32-wasi@1.4.2':
+  '@napi-rs/lzma-wasm32-wasi@1.4.3':
     dependencies:
       '@napi-rs/wasm-runtime': 0.2.10
     optional: true
 
-  '@napi-rs/lzma-win32-arm64-msvc@1.4.2':
+  '@napi-rs/lzma-win32-arm64-msvc@1.4.3':
     optional: true
 
-  '@napi-rs/lzma-win32-ia32-msvc@1.4.2':
+  '@napi-rs/lzma-win32-ia32-msvc@1.4.3':
     optional: true
 
-  '@napi-rs/lzma-win32-x64-msvc@1.4.2':
+  '@napi-rs/lzma-win32-x64-msvc@1.4.3':
     optional: true
 
-  '@napi-rs/lzma@1.4.2':
+  '@napi-rs/lzma@1.4.3':
     optionalDependencies:
-      '@napi-rs/lzma-android-arm-eabi': 1.4.2
-      '@napi-rs/lzma-android-arm64': 1.4.2
-      '@napi-rs/lzma-darwin-arm64': 1.4.2
-      '@napi-rs/lzma-darwin-x64': 1.4.2
-      '@napi-rs/lzma-freebsd-x64': 1.4.2
-      '@napi-rs/lzma-linux-arm-gnueabihf': 1.4.2
-      '@napi-rs/lzma-linux-arm64-gnu': 1.4.2
-      '@napi-rs/lzma-linux-arm64-musl': 1.4.2
-      '@napi-rs/lzma-linux-ppc64-gnu': 1.4.2
-      '@napi-rs/lzma-linux-riscv64-gnu': 1.4.2
-      '@napi-rs/lzma-linux-s390x-gnu': 1.4.2
-      '@napi-rs/lzma-linux-x64-gnu': 1.4.2
-      '@napi-rs/lzma-linux-x64-musl': 1.4.2
-      '@napi-rs/lzma-wasm32-wasi': 1.4.2
-      '@napi-rs/lzma-win32-arm64-msvc': 1.4.2
-      '@napi-rs/lzma-win32-ia32-msvc': 1.4.2
-      '@napi-rs/lzma-win32-x64-msvc': 1.4.2
+      '@napi-rs/lzma-android-arm-eabi': 1.4.3
+      '@napi-rs/lzma-android-arm64': 1.4.3
+      '@napi-rs/lzma-darwin-arm64': 1.4.3
+      '@napi-rs/lzma-darwin-x64': 1.4.3
+      '@napi-rs/lzma-freebsd-x64': 1.4.3
+      '@napi-rs/lzma-linux-arm-gnueabihf': 1.4.3
+      '@napi-rs/lzma-linux-arm64-gnu': 1.4.3
+      '@napi-rs/lzma-linux-arm64-musl': 1.4.3
+      '@napi-rs/lzma-linux-ppc64-gnu': 1.4.3
+      '@napi-rs/lzma-linux-riscv64-gnu': 1.4.3
+      '@napi-rs/lzma-linux-s390x-gnu': 1.4.3
+      '@napi-rs/lzma-linux-x64-gnu': 1.4.3
+      '@napi-rs/lzma-linux-x64-musl': 1.4.3
+      '@napi-rs/lzma-wasm32-wasi': 1.4.3
+      '@napi-rs/lzma-win32-arm64-msvc': 1.4.3
+      '@napi-rs/lzma-win32-ia32-msvc': 1.4.3
+      '@napi-rs/lzma-win32-x64-msvc': 1.4.3
 
   '@napi-rs/tar-android-arm-eabi@0.1.5':
     optional: true
@@ -4596,7 +4596,7 @@ snapshots:
       '@vscode/vsce-sign-win32-arm64': 2.0.2
       '@vscode/vsce-sign-win32-x64': 2.0.2
 
-  '@vscode/vsce@3.4.0':
+  '@vscode/vsce@3.4.1':
     dependencies:
       '@azure/identity': 4.10.0
       '@secretlint/node': 9.3.2
@@ -5697,7 +5697,7 @@ snapshots:
 
   ovsx@0.10.2:
     dependencies:
-      '@vscode/vsce': 3.4.0
+      '@vscode/vsce': 3.4.1
       commander: 6.2.1
       follow-redirects: 1.15.9
       is-ci: 2.0.0
