@@ -1,3 +1,5 @@
+use bitflags::bitflags;
+
 use oxc_allocator::{Box, CloneIn, GetAddress, Vec};
 use oxc_ast_macros::ast;
 use oxc_span::{Atom, ContentEq, Span};
@@ -283,19 +285,26 @@ pub struct IgnoreGroup<'a> {
 #[generate_derive(CloneIn, ContentEq)]
 pub struct Modifiers {
     pub span: Span,
-    pub enabling: Option<Modifier>,
-    pub disabling: Option<Modifier>,
+    pub enabling: Modifier,
+    pub disabling: Modifier,
 }
 
-/// Each part of modifier in [`Modifiers`].
-#[ast]
-#[derive(Debug)]
-#[generate_derive(CloneIn, ContentEq)]
-pub struct Modifier {
-    pub ignore_case: bool,
-    pub multiline: bool,
-    pub sticky: bool,
+bitflags! {
+    /// Each part of modifier in [`Modifiers`].
+    #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
+    pub struct Modifier: u8 {
+        /// Ignore case flag
+        const I = 1 << 0;
+        /// Multiline flag
+        const M = 1 << 1;
+        /// DotAll flag
+        const S = 1 << 2;
+    }
 }
+/// Dummy type to communicate the content of `Modifier` to `oxc_ast_tools`.
+#[ast(foreign = Modifier)]
+#[expect(dead_code)]
+struct ModifierAlias(u8);
 
 /// Backreference by index.
 /// e.g. `\1`, `\2`, `\3`

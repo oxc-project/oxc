@@ -25,6 +25,7 @@ oxc_ast_macros = { workspace = true }
 oxc_diagnostics = { workspace = true }
 oxc_span = { workspace = true }
 
+bitflags = { workspace = true }
 phf = { workspace = true, features = ["macros"] }
 rustc-hash = { workspace = true }
 unicode-id-start = { workspace = true }

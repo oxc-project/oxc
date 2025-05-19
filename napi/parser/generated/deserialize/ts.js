@@ -5541,13 +5541,8 @@ function deserializeVecCharacter(pos) {
 }
 
 function deserializeOptionModifiers(pos) {
-  if (uint8[pos + 8] === 3) return null;
-  return deserializeModifiers(pos);
-}
-
-function deserializeOptionModifier(pos) {
-  if (uint8[pos] === 2) return null;
-  return deserializeModifier(pos);
+  if (uint8[pos] === 0) return null;
+  return deserializeModifiers(pos + 8);
 }
 
 function deserializeVecError(pos) {

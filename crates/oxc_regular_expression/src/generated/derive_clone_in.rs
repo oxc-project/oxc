@@ -529,26 +529,6 @@ impl<'new_alloc> CloneIn<'new_alloc> for Modifiers {
     }
 }
 
-impl<'new_alloc> CloneIn<'new_alloc> for Modifier {
-    type Cloned = Modifier;
-
-    fn clone_in(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {
-        Modifier {
-            ignore_case: CloneIn::clone_in(&self.ignore_case, allocator),
-            multiline: CloneIn::clone_in(&self.multiline, allocator),
-            sticky: CloneIn::clone_in(&self.sticky, allocator),
-        }
-    }
-
-    fn clone_in_with_semantic_ids(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {
-        Modifier {
-            ignore_case: CloneIn::clone_in_with_semantic_ids(&self.ignore_case, allocator),
-            multiline: CloneIn::clone_in_with_semantic_ids(&self.multiline, allocator),
-            sticky: CloneIn::clone_in_with_semantic_ids(&self.sticky, allocator),
-        }
-    }
-}
-
 impl<'new_alloc> CloneIn<'new_alloc> for IndexedReference {
     type Cloned = IndexedReference;
 

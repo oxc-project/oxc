@@ -189,14 +189,6 @@ impl ContentEq for Modifiers {
     }
 }
 
-impl ContentEq for Modifier {
-    fn content_eq(&self, other: &Self) -> bool {
-        ContentEq::content_eq(&self.ignore_case, &other.ignore_case)
-            && ContentEq::content_eq(&self.multiline, &other.multiline)
-            && ContentEq::content_eq(&self.sticky, &other.sticky)
-    }
-}
-
 impl ContentEq for IndexedReference {
     fn content_eq(&self, other: &Self) -> bool {
         ContentEq::content_eq(&self.index, &other.index)

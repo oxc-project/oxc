@@ -2018,6 +2018,7 @@ dependencies = [
 name = "oxc_regular_expression"
 version = "0.70.0"
 dependencies = [
+ "bitflags 2.9.1",
  "oxc_allocator",
  "oxc_ast_macros",
  "oxc_diagnostics",
