@@ -249,26 +249,6 @@ impl Comment {
         self.annotation == CommentAnnotation::CoverageIgnore && self.is_leading()
     }
 
-    /// Sets the state of `newlines` to include/exclude a newline after the comment.
-    #[inline]
-    pub fn set_followed_by_newline(&mut self, followed_by_newline: bool) {
-        if followed_by_newline {
-            self.newlines.insert(CommentNewlines::Trailing);
-        } else {
-            self.newlines.remove(CommentNewlines::Trailing);
-        }
-    }
-
-    /// Sets the state of `newlines` to include/exclude a newline before the comment.
-    #[inline]
-    pub fn set_preceded_by_newline(&mut self, preceded_by_newline: bool) {
-        if preceded_by_newline {
-            self.newlines.insert(CommentNewlines::Leading);
-        } else {
-            self.newlines.remove(CommentNewlines::Leading);
-        }
-    }
-
     /// Returns `true` if this comment is preceded by a newline.
     #[inline]
     pub fn preceded_by_newline(self) -> bool {
@@ -279,5 +259,17 @@ impl Comment {
     #[inline]
     pub fn followed_by_newline(self) -> bool {
         self.newlines.contains(CommentNewlines::Trailing)
+    }
+
+    /// Sets the state of `newlines` to include/exclude a newline before the comment.
+    #[inline]
+    pub fn set_preceded_by_newline(&mut self, preceded_by_newline: bool) {
+        self.newlines.set(CommentNewlines::Leading, preceded_by_newline);
+    }
+
+    /// Sets the state of `newlines` to include/exclude a newline after the comment.
+    #[inline]
+    pub fn set_followed_by_newline(&mut self, followed_by_newline: bool) {
+        self.newlines.set(CommentNewlines::Trailing, followed_by_newline);
     }
 }
