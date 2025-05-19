@@ -252,6 +252,7 @@ impl Comment {
     }
 
     /// Sets the state of `newlines` to include/exclude a newline after the comment.
+    #[inline]
     pub fn set_followed_by_newline(&mut self, followed_by_newline: bool) {
         if followed_by_newline {
             self.newlines.insert(CommentNewlines::TRAILING);
@@ -261,6 +262,7 @@ impl Comment {
     }
 
     /// Sets the state of `newlines` to include/exclude a newline before the comment.
+    #[inline]
     pub fn set_preceded_by_newline(&mut self, preceded_by_newline: bool) {
         if preceded_by_newline {
             self.newlines.insert(CommentNewlines::LEADING);
