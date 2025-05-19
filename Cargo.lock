@@ -1558,6 +1558,7 @@ dependencies = [
  "oxc_data_structures",
  "oxc_estree",
  "rustc-hash",
+ "rustversion",
  "serde",
  "serde_json",
  "simdutf8",

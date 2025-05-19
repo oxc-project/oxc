@@ -77,7 +77,5 @@ serialize = [
   "oxc_syntax/serialize",
 ]
 
-allocator_api = ["oxc_allocator/allocator_api"]
-
 [package.metadata.docs.rs]
 all-features = true
