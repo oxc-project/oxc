@@ -135,25 +135,22 @@ const _: () = {
     assert!(offset_of!(CapturingGroup, body) == 24);
 
     // Padding: 0 bytes
-    assert!(size_of::<IgnoreGroup>() == 56);
+    assert!(size_of::<IgnoreGroup>() == 64);
     assert!(align_of::<IgnoreGroup>() == 8);
     assert!(offset_of!(IgnoreGroup, span) == 0);
     assert!(offset_of!(IgnoreGroup, modifiers) == 8);
-    assert!(offset_of!(IgnoreGroup, body) == 24);
+    assert!(offset_of!(IgnoreGroup, body) == 32);
 
-    // Padding: 2 bytes
+    // Padding: 6 bytes
     assert!(size_of::<Modifiers>() == 16);
     assert!(align_of::<Modifiers>() == 8);
     assert!(offset_of!(Modifiers, span) == 0);
     assert!(offset_of!(Modifiers, enabling) == 8);
-    assert!(offset_of!(Modifiers, disabling) == 11);
+    assert!(offset_of!(Modifiers, disabling) == 9);
 
     // Padding: 0 bytes
-    assert!(size_of::<Modifier>() == 3);
+    assert!(size_of::<Modifier>() == 1);
     assert!(align_of::<Modifier>() == 1);
-    assert!(offset_of!(Modifier, ignore_case) == 0);
-    assert!(offset_of!(Modifier, multiline) == 1);
-    assert!(offset_of!(Modifier, sticky) == 2);
 
     // Padding: 4 bytes
     assert!(size_of::<IndexedReference>() == 16);
@@ -303,18 +300,15 @@ const _: () = {
     assert!(offset_of!(IgnoreGroup, body) == 24);
 
     // Padding: 2 bytes
-    assert!(size_of::<Modifiers>() == 16);
+    assert!(size_of::<Modifiers>() == 12);
     assert!(align_of::<Modifiers>() == 4);
     assert!(offset_of!(Modifiers, span) == 0);
     assert!(offset_of!(Modifiers, enabling) == 8);
-    assert!(offset_of!(Modifiers, disabling) == 11);
+    assert!(offset_of!(Modifiers, disabling) == 9);
 
     // Padding: 0 bytes
-    assert!(size_of::<Modifier>() == 3);
+    assert!(size_of::<Modifier>() == 1);
     assert!(align_of::<Modifier>() == 1);
-    assert!(offset_of!(Modifier, ignore_case) == 0);
-    assert!(offset_of!(Modifier, multiline) == 1);
-    assert!(offset_of!(Modifier, sticky) == 2);
 
     // Padding: 0 bytes
     assert!(size_of::<IndexedReference>() == 12);
