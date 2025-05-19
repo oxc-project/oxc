@@ -268,7 +268,7 @@ mod test {
                 kind: CommentKind::Block,
                 position: CommentPosition::Leading,
                 attached_to: 70,
-                newlines: CommentNewlines::LEADING_AND_TRAILING,
+                newlines: CommentNewlines::Leading | CommentNewlines::Trailing,
                 annotation: CommentAnnotation::None,
             },
             Comment {
@@ -276,7 +276,7 @@ mod test {
                 kind: CommentKind::Line,
                 position: CommentPosition::Leading,
                 attached_to: 70,
-                newlines: CommentNewlines::LEADING_AND_TRAILING,
+                newlines: CommentNewlines::Leading | CommentNewlines::Trailing,
                 annotation: CommentAnnotation::None,
             },
             Comment {
@@ -284,7 +284,7 @@ mod test {
                 kind: CommentKind::Block,
                 position: CommentPosition::Leading,
                 attached_to: 70,
-                newlines: CommentNewlines::LEADING,
+                newlines: CommentNewlines::Leading,
                 annotation: CommentAnnotation::None,
             },
             Comment {
@@ -292,7 +292,7 @@ mod test {
                 kind: CommentKind::Block,
                 position: CommentPosition::Trailing,
                 attached_to: 0,
-                newlines: CommentNewlines::NONE,
+                newlines: CommentNewlines::None,
                 annotation: CommentAnnotation::None,
             },
             Comment {
@@ -300,7 +300,7 @@ mod test {
                 kind: CommentKind::Line,
                 position: CommentPosition::Trailing,
                 attached_to: 0,
-                newlines: CommentNewlines::TRAILING,
+                newlines: CommentNewlines::Trailing,
                 annotation: CommentAnnotation::None,
             },
             Comment {
@@ -308,7 +308,7 @@ mod test {
                 kind: CommentKind::Line,
                 position: CommentPosition::Leading,
                 attached_to: 147,
-                newlines: CommentNewlines::LEADING_AND_TRAILING,
+                newlines: CommentNewlines::Leading | CommentNewlines::Trailing,
                 annotation: CommentAnnotation::None,
             },
         ];
@@ -332,7 +332,7 @@ token /* Trailing 1 */
                 kind: CommentKind::Block,
                 position: CommentPosition::Leading,
                 attached_to: 36,
-                newlines: CommentNewlines::LEADING_AND_TRAILING,
+                newlines: CommentNewlines::Leading | CommentNewlines::Trailing,
                 annotation: CommentAnnotation::None,
             },
             Comment {
@@ -340,7 +340,7 @@ token /* Trailing 1 */
                 kind: CommentKind::Block,
                 position: CommentPosition::Trailing,
                 attached_to: 0,
-                newlines: CommentNewlines::TRAILING,
+                newlines: CommentNewlines::Trailing,
                 annotation: CommentAnnotation::None,
             },
         ];
@@ -365,7 +365,7 @@ token /* Trailing 1 */
                 kind: CommentKind::Block,
                 position: CommentPosition::Leading,
                 attached_to: 28,
-                newlines: CommentNewlines::LEADING_AND_TRAILING,
+                newlines: CommentNewlines::Leading | CommentNewlines::Trailing,
                 annotation: CommentAnnotation::None,
             },
             Comment {
@@ -373,7 +373,7 @@ token /* Trailing 1 */
                 kind: CommentKind::Block,
                 position: CommentPosition::Leading,
                 attached_to: 28,
-                newlines: CommentNewlines::LEADING_AND_TRAILING,
+                newlines: CommentNewlines::Leading | CommentNewlines::Trailing,
                 annotation: CommentAnnotation::None,
             },
         ];
@@ -396,7 +396,7 @@ token /* Trailing 1 */
                 kind: CommentKind::Line,
                 position: CommentPosition::Leading,
                 attached_to: 57,
-                newlines: CommentNewlines::TRAILING,
+                newlines: CommentNewlines::Trailing,
                 annotation: CommentAnnotation::None,
             },
             Comment {
@@ -404,7 +404,7 @@ token /* Trailing 1 */
                 kind: CommentKind::Line,
                 position: CommentPosition::Leading,
                 attached_to: 129,
-                newlines: CommentNewlines::TRAILING,
+                newlines: CommentNewlines::Trailing,
                 annotation: CommentAnnotation::None,
             },
         ];
@@ -426,7 +426,7 @@ token /* Trailing 1 */
                 kind: CommentKind::Line,
                 position: CommentPosition::Leading,
                 attached_to: 55,
-                newlines: CommentNewlines::TRAILING,
+                newlines: CommentNewlines::Trailing,
                 annotation: CommentAnnotation::None,
             },
             Comment {
@@ -434,7 +434,7 @@ token /* Trailing 1 */
                 kind: CommentKind::Line,
                 position: CommentPosition::Leading,
                 attached_to: 116,
-                newlines: CommentNewlines::TRAILING,
+                newlines: CommentNewlines::Trailing,
                 annotation: CommentAnnotation::None,
             },
         ];

@@ -87,14 +87,12 @@ bitflags! {
     #[derive(Default, Debug, Clone, Copy, Eq, PartialEq)]
     /// State of newlines around a comment.
     pub struct CommentNewlines: u8 {
-        /// No newlines before or after
-        const NONE = 0;
         /// Preceded by a newline
-        const LEADING = 1 << 0;
+        const Leading = 1 << 0;
         /// Followed by a newline
-        const TRAILING = 1 << 1;
-        /// Preceded and followed by a newline
-        const LEADING_AND_TRAILING = Self::LEADING.bits() | Self::TRAILING.bits();
+        const Trailing = 1 << 1;
+        /// No newlines before or after
+        const None = 0;
     }
 }
 
@@ -161,7 +159,7 @@ impl Comment {
             attached_to: 0,
             kind,
             position: CommentPosition::Trailing,
-            newlines: CommentNewlines::NONE,
+            newlines: CommentNewlines::None,
             annotation: CommentAnnotation::None,
         }
     }
@@ -255,9 +253,9 @@ impl Comment {
     #[inline]
     pub fn set_followed_by_newline(&mut self, followed_by_newline: bool) {
         if followed_by_newline {
-            self.newlines.insert(CommentNewlines::TRAILING);
+            self.newlines.insert(CommentNewlines::Trailing);
         } else {
-            self.newlines.remove(CommentNewlines::TRAILING);
+            self.newlines.remove(CommentNewlines::Trailing);
         }
     }
 
@@ -265,21 +263,21 @@ impl Comment {
     #[inline]
     pub fn set_preceded_by_newline(&mut self, preceded_by_newline: bool) {
         if preceded_by_newline {
-            self.newlines.insert(CommentNewlines::LEADING);
+            self.newlines.insert(CommentNewlines::Leading);
         } else {
-            self.newlines.remove(CommentNewlines::LEADING);
+            self.newlines.remove(CommentNewlines::Leading);
         }
     }
 
     /// Returns `true` if this comment is preceded by a newline.
     #[inline]
     pub fn preceded_by_newline(self) -> bool {
-        self.newlines.contains(CommentNewlines::LEADING)
+        self.newlines.contains(CommentNewlines::Leading)
     }
 
     /// Returns `true` if this comment is followed by a newline.
     #[inline]
     pub fn followed_by_newline(self) -> bool {
-        self.newlines.contains(CommentNewlines::TRAILING)
+        self.newlines.contains(CommentNewlines::Trailing)
     }
 }
