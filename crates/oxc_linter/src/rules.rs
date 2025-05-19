@@ -350,6 +350,7 @@ mod unicorn {
     pub mod no_console_spaces;
     pub mod no_document_cookie;
     pub mod no_empty_file;
+    pub mod no_for_loop;
     pub mod no_hex_escape;
     pub mod no_instanceof_array;
     pub mod no_invalid_fetch_options;
@@ -984,6 +985,7 @@ oxc_macros::declare_all_lint_rules! {
     unicorn::explicit_length_check,
     unicorn::filename_case,
     unicorn::new_for_builtins,
+    unicorn::no_for_loop,
     unicorn::no_unnecessary_slice_end,
     unicorn::no_accessor_recursion,
     unicorn::no_invalid_fetch_options,
