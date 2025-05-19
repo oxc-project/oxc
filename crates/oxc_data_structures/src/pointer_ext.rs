@@ -3,6 +3,7 @@
 // TODO: Once our MSRV reaches v1.87.0, remove this trait and just use `offset_from_unsigned` directly.
 // `#[expect(clippy::incompatible_msrv)]` below will trigger a warning when MSRV is bumped to 1.87.0.
 
+// All methods either delegate to Rust's methods, or boil down to a single instruction
 #![expect(clippy::inline_always)]
 
 use std::ptr::NonNull;
@@ -58,6 +59,7 @@ pub trait PointerExt: PointerExtImpl {
     ///
     /// See <https://doc.rust-lang.org/std/primitive.pointer.html#method.byte_offset_from_unsigned>
     /// for full details.
+    #[inline(always)]
     unsafe fn byte_offset_from_usize(self, origin: Self) -> usize {
         // SAFETY: Same constraints as this method
         unsafe { self.byte_offset_from_usize_impl(origin) }
