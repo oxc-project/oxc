@@ -1346,11 +1346,14 @@ impl<'a> FormatWrite<'a> for FormalParameters<'a> {
 
 impl<'a> FormatWrite<'a> for FormalParameter<'a> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        let Self { decorators, pattern, accessibility, readonly, .. } = self;
+        let Self { decorators, pattern, accessibility, readonly, r#override, .. } = self;
 
         let content = format_with(|f| {
             if let Some(accessibility) = accessibility {
                 write!(f, [accessibility.as_str(), space()])?;
+            }
+            if *r#override {
+                write!(f, ["override", space()])?;
             }
             if *readonly {
                 write!(f, ["readonly", space()])?;
