@@ -138,9 +138,9 @@ oxc_tasks_common = { path = "tasks/common" }
 oxc_tasks_transform_checker = { path = "tasks/transform_checker" }
 
 # Relaxed version so the user can decide which version to use.
-napi = "3.0.0-alpha"
+napi = "3.0.0-beta"
 napi-build = "2"
-napi-derive = "3.0.0-alpha"
+napi-derive = "3.0.0-beta"
 
 # Relaxed version so the user can decide which version to use.
 indexmap = "2"

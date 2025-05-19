@@ -87,8 +87,9 @@ pub unsafe fn parse_sync_raw(
         "Raw transfer is only supported on 64-bit little-endian platforms"
     );
 
+    // SAFETY: This is unsafe. Behavior is undefined. JS side may be modifying the underlying buffer, without synchronization.
+    let buffer = unsafe { buffer.as_mut() };
     // Check buffer has expected size and alignment
-    let buffer = &mut *buffer;
     assert_eq!(buffer.len(), BUFFER_SIZE);
     let buffer_ptr = ptr::from_mut(buffer).cast::<u8>();
     assert!(is_multiple_of(buffer_ptr as usize, BUFFER_ALIGN));
