@@ -386,6 +386,7 @@ mod unicorn {
     pub mod number_literal_case;
     pub mod numeric_separators_style;
     pub mod prefer_add_event_listener;
+    pub mod prefer_array_find;
     pub mod prefer_array_flat;
     pub mod prefer_array_flat_map;
     pub mod prefer_array_index_of;
@@ -1033,6 +1034,7 @@ oxc_macros::declare_all_lint_rules! {
     unicorn::no_zero_fractions,
     unicorn::number_literal_case,
     unicorn::numeric_separators_style,
+    unicorn::prefer_array_find,
     unicorn::prefer_array_index_of,
     unicorn::prefer_spread,
     unicorn::prefer_add_event_listener,
