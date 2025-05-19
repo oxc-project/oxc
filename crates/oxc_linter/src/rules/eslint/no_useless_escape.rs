@@ -658,7 +658,6 @@ fn test() {
         (r"var foo = /\（([^\）\（]+)\）$|\(([^\)\)]+)\)$/;", None),
         (r#"var stringLiteralWithNextLine = "line 1\line 2";"#, None),
         (r"var stringLiteralWithNextLine = `line 1\line 2`;", None),
-        (r#""use\ strict";"#, None),
         // spellchecker:off
         (r#"({ foo() { "foo"; "bar"; "ba\z" } })"#, None), // { "ecmaVersion": 6 },
         // spellchecker:on

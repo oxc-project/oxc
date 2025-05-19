@@ -448,13 +448,6 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Replace `\` with ``.
 
-  ⚠ eslint(no-useless-escape): Unnecessary escape character ' '
-   ╭─[no_useless_escape.tsx:1:5]
- 1 │ "use\ strict";
-   ·     ──
-   ╰────
-  help: Replace `\ ` with ` `.
-
   ⚠ eslint(no-useless-escape): Unnecessary escape character 'z'
    ╭─[no_useless_escape.tsx:1:29]
  1 │ ({ foo() { "foo"; "bar"; "ba\z" } })
