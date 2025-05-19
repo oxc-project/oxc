@@ -1,0 +1,30 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+  ⚠ eslint-plugin-unicorn(no-unnecessary-array-flat-depth): Passing `1` as the `depth` argument is unnecessary.
+   ╭─[no_unnecessary_array_flat_depth.tsx:1:5]
+ 1 │ foo.flat(1)
+   ·     ────
+   ╰────
+  help: Remove the argument
+
+  ⚠ eslint-plugin-unicorn(no-unnecessary-array-flat-depth): Passing `1` as the `depth` argument is unnecessary.
+   ╭─[no_unnecessary_array_flat_depth.tsx:1:5]
+ 1 │ foo.flat(1.0)
+   ·     ────
+   ╰────
+  help: Remove the argument
+
+  ⚠ eslint-plugin-unicorn(no-unnecessary-array-flat-depth): Passing `1` as the `depth` argument is unnecessary.
+   ╭─[no_unnecessary_array_flat_depth.tsx:1:5]
+ 1 │ foo.flat(0b01)
+   ·     ────
+   ╰────
+  help: Remove the argument
+
+  ⚠ eslint-plugin-unicorn(no-unnecessary-array-flat-depth): Passing `1` as the `depth` argument is unnecessary.
+   ╭─[no_unnecessary_array_flat_depth.tsx:1:6]
+ 1 │ foo?.flat(1)
+   ·      ────
+   ╰────
+  help: Remove the argument

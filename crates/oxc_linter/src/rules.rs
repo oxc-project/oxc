@@ -370,6 +370,7 @@ mod unicorn {
     pub mod no_thenable;
     pub mod no_this_assignment;
     pub mod no_typeof_undefined;
+    pub mod no_unnecessary_array_flat_depth;
     pub mod no_unnecessary_await;
     pub mod no_unnecessary_slice_end;
     pub mod no_unreadable_array_destructuring;
@@ -985,6 +986,7 @@ oxc_macros::declare_all_lint_rules! {
     unicorn::explicit_length_check,
     unicorn::filename_case,
     unicorn::new_for_builtins,
+    unicorn::no_unnecessary_array_flat_depth,
     unicorn::no_for_loop,
     unicorn::no_unnecessary_slice_end,
     unicorn::no_accessor_recursion,
