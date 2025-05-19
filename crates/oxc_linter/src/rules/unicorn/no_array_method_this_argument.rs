@@ -1,12 +1,15 @@
 use oxc_ast::{
     AstKind,
-    ast::{Argument, Expression, MemberExpression},
+    ast::{Argument, Expression},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 
-use crate::{AstNode, ast_util::is_method_call, context::LintContext, rule::Rule};
+use crate::{
+    AstNode, ast_util::is_method_call, context::LintContext, rule::Rule,
+    utils::does_expr_match_any_path,
+};
 
 fn no_array_method_this_argument_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Avoid using 'thisArg' with array iteration methods")
@@ -83,7 +86,7 @@ fn check_array_prototype_methods<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) 
         .first()
         .is_some_and(|arg| arg.as_expression().is_none_or(|expr| is_node_not_function(expr)))
         || call_expr.arguments.get(1).is_some_and(|arg| matches!(arg, Argument::SpreadElement(_)))
-        || is_ignored_expr(&call_expr.callee)
+        || does_expr_match_any_path(&call_expr.callee, IGNORED)
     {
         return;
     }
@@ -110,31 +113,6 @@ fn check_array_from<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) {
     ctx.diagnostic(no_array_method_this_argument_diagnostic(
         call_expr.arguments.get(2).map_or(call_expr.span, GetSpan::span),
     ));
-}
-
-fn is_ignored_expr(mut expr: &Expression) -> bool {
-    let mut path = Vec::new();
-
-    while let Some(member_expr) = expr.as_member_expression() {
-        let MemberExpression::StaticMemberExpression(static_mem_expr) = member_expr else {
-            return false;
-        };
-        path.push(static_mem_expr.property.name.as_str());
-
-        expr = member_expr.object().get_inner_expression();
-    }
-
-    let Expression::Identifier(ident) = expr else { return false };
-    path.push(ident.name.as_str());
-    let path = path.iter().rev();
-
-    for e in IGNORED {
-        if e.iter().zip(path.clone()).all(|(x, y)| x == y) {
-            return true;
-        }
-    }
-
-    false
 }
 
 fn is_node_not_function(expr: &Expression) -> bool {

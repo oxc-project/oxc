@@ -9,7 +9,10 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 
-use crate::{AstNode, ast_util::is_method_call, context::LintContext, rule::Rule};
+use crate::{
+    AstNode, ast_util::is_method_call, context::LintContext, rule::Rule,
+    utils::call_expr_member_expr_property_span,
+};
 
 fn prefer_array_find_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Prefer 'find' over filtering and accessing the first result")
@@ -258,14 +261,6 @@ fn is_left_hand_side<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) -> bool {
     }
 
     false
-}
-
-fn call_expr_member_expr_property_span(call_expr: &CallExpression) -> Span {
-    call_expr
-        .callee
-        .as_member_expression()
-        .and_then(oxc_ast::ast::MemberExpression::static_property_info)
-        .map_or(call_expr.span, |(span, _)| span)
 }
 
 #[test]

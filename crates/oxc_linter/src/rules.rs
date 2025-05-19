@@ -409,6 +409,7 @@ mod unicorn {
     pub mod prefer_negative_index;
     pub mod prefer_node_protocol;
     pub mod prefer_number_properties;
+    pub mod prefer_object_from_entries;
     pub mod prefer_optional_catch_binding;
     pub mod prefer_prototype_methods;
     pub mod prefer_query_selector;
@@ -1034,6 +1035,7 @@ oxc_macros::declare_all_lint_rules! {
     unicorn::no_zero_fractions,
     unicorn::number_literal_case,
     unicorn::numeric_separators_style,
+    unicorn::prefer_object_from_entries,
     unicorn::prefer_array_find,
     unicorn::prefer_array_index_of,
     unicorn::prefer_spread,
