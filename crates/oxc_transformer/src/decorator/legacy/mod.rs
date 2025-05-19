@@ -55,7 +55,10 @@ use oxc_span::SPAN;
 use oxc_syntax::operator::AssignmentOperator;
 use oxc_traverse::{Ancestor, BoundIdentifier, Traverse, TraverseCtx};
 
-use crate::{Helper, TransformCtx, utils::ast_builder::create_prototype_member};
+use crate::{
+    Helper, TransformCtx,
+    utils::ast_builder::{create_assignment, create_prototype_member},
+};
 use metadata::LegacyDecoratorMetadata;
 
 #[derive(Default)]
@@ -466,6 +469,37 @@ impl<'a> LegacyDecorator<'a, '_> {
         let mut decoration_stmts =
             self.transform_decorators_of_class_elements(class, &class_binding, ctx);
 
+        let class_alias_with_this_assignment = if self.ctx.is_class_properties_plugin_enabled {
+            None
+        } else {
+            // If we're emitting to ES2022 or later then we need to reassign the class alias before
+            // static initializers are evaluated.
+            // <https://github.com/microsoft/TypeScript/blob/b86ab7dbe0eb2f1c9a624486d72590d638495c97/src/compiler/transformers/legacyDecorators.ts#L345-L366>
+            class_alias_binding.as_ref().and_then(|class_alias_binding| {
+                let has_static_field_or_block = class.body.body.iter().any(|element| {
+                    matches!(element, ClassElement::StaticBlock(_))
+                        || matches!(element, ClassElement::PropertyDefinition(prop)
+                                if prop.r#static
+                        )
+                });
+
+                if has_static_field_or_block {
+                    // `_Class = this`;
+                    let class_alias_with_this_assignment = ctx.ast.statement_expression(
+                        SPAN,
+                        create_assignment(class_alias_binding, ctx.ast.expression_this(SPAN), ctx),
+                    );
+                    let body = ctx.ast.vec1(class_alias_with_this_assignment);
+                    let scope_id = ctx.create_child_scope_of_current(ScopeFlags::ClassStaticBlock);
+                    let element =
+                        ctx.ast.class_element_static_block_with_scope_id(SPAN, body, scope_id);
+                    Some(element)
+                } else {
+                    None
+                }
+            })
+        };
+
         if has_private_in_expression_in_decorator {
             let stmts = mem::replace(&mut decoration_stmts, ctx.ast.vec());
             Self::insert_decorations_into_class_static_block(class, stmts, ctx);
@@ -473,9 +507,13 @@ impl<'a> LegacyDecorator<'a, '_> {
             decoration_stmts.push(constructor_decoration);
             self.class_decorated_data = Some(ClassDecoratedData {
                 binding: class_binding,
-                alias_binding: class_alias_binding,
+                alias_binding: class_alias_binding.clone(),
                 decorations: decoration_stmts,
             });
+        }
+
+        if let Some(class_alias_with_this_assignment) = class_alias_with_this_assignment {
+            class.body.body.insert(0, class_alias_with_this_assignment);
         }
     }
 

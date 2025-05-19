@@ -1,6 +1,6 @@
 commit: 578ac4df
 
-Passed: 153/255
+Passed: 153/257
 
 # All Passed:
 * babel-plugin-transform-class-static-block
@@ -497,7 +497,7 @@ after transform: SymbolId(4): ScopeId(1)
 rebuilt        : SymbolId(5): ScopeId(4)
 
 
-# legacy-decorators (4/74)
+# legacy-decorators (4/76)
 * oxc/metadata/abstract-class/input.ts
 Symbol reference IDs mismatch for "Dependency":
 after transform: SymbolId(1): [ReferenceId(1), ReferenceId(2), ReferenceId(3)]
@@ -581,6 +581,46 @@ rebuilt        : SymbolId(2): Span { start: 0, end: 0 }
 Symbol span mismatch for "C":
 after transform: SymbolId(3): Span { start: 0, end: 0 }
 rebuilt        : SymbolId(3): Span { start: 106, end: 107 }
+
+* oxc/static-field/input.ts
+Scope children mismatch:
+after transform: ScopeId(0): [ScopeId(1), ScopeId(3), ScopeId(4)]
+rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(3)]
+Scope children mismatch:
+after transform: ScopeId(3): []
+rebuilt        : ScopeId(3): [ScopeId(4)]
+Scope flags mismatch:
+after transform: ScopeId(4): ScopeFlags(ClassStaticBlock)
+rebuilt        : ScopeId(4): ScopeFlags(StrictMode | ClassStaticBlock)
+Scope parent mismatch:
+after transform: ScopeId(4): Some(ScopeId(0))
+rebuilt        : ScopeId(4): Some(ScopeId(3))
+Symbol span mismatch for "Foo":
+after transform: SymbolId(2): Span { start: 103, end: 106 }
+rebuilt        : SymbolId(3): Span { start: 0, end: 0 }
+Symbol reference IDs mismatch for "Foo":
+after transform: SymbolId(2): [ReferenceId(4), ReferenceId(6), ReferenceId(8)]
+rebuilt        : SymbolId(3): [ReferenceId(5), ReferenceId(9)]
+Symbol span mismatch for "Foo":
+after transform: SymbolId(3): Span { start: 0, end: 0 }
+rebuilt        : SymbolId(4): Span { start: 103, end: 106 }
+Unresolved references mismatch:
+after transform: ["ClassDecorator", "babelHelpers", "console"]
+rebuilt        : ["babelHelpers", "console"]
+
+* oxc/static-field-with-class-properties/input.ts
+Symbol span mismatch for "Foo":
+after transform: SymbolId(2): Span { start: 103, end: 106 }
+rebuilt        : SymbolId(3): Span { start: 0, end: 0 }
+Symbol reference IDs mismatch for "Foo":
+after transform: SymbolId(2): [ReferenceId(4), ReferenceId(6), ReferenceId(8), ReferenceId(10)]
+rebuilt        : SymbolId(3): [ReferenceId(4), ReferenceId(6), ReferenceId(10)]
+Symbol span mismatch for "Foo":
+after transform: SymbolId(3): Span { start: 0, end: 0 }
+rebuilt        : SymbolId(4): Span { start: 103, end: 106 }
+Unresolved references mismatch:
+after transform: ["ClassDecorator", "babelHelpers", "console"]
+rebuilt        : ["babelHelpers", "console"]
 
 * oxc/with-class-private-properties/input.ts
 Symbol span mismatch for "C":

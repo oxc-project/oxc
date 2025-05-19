@@ -51,17 +51,10 @@ pub struct TypeScript<'a, 'ctx> {
     rewrite_extensions: Option<TypeScriptRewriteExtensions>,
     // Options
     remove_class_fields_without_initializer: bool,
-    // State
-    /// Whether class properties plugin is enabled
-    is_class_properties_enabled: bool,
 }
 
 impl<'a, 'ctx> TypeScript<'a, 'ctx> {
-    pub fn new(
-        options: &TypeScriptOptions,
-        is_class_properties_enabled: bool,
-        ctx: &'ctx TransformCtx<'a>,
-    ) -> Self {
+    pub fn new(options: &TypeScriptOptions, ctx: &'ctx TransformCtx<'a>) -> Self {
         Self {
             ctx,
             annotations: TypeScriptAnnotations::new(options, ctx),
@@ -71,7 +64,6 @@ impl<'a, 'ctx> TypeScript<'a, 'ctx> {
             rewrite_extensions: TypeScriptRewriteExtensions::new(options),
             remove_class_fields_without_initializer: !options.allow_declare_fields
                 || options.remove_class_fields_without_initializer,
-            is_class_properties_enabled,
         }
     }
 }
@@ -128,7 +120,9 @@ impl<'a> Traverse<'a> for TypeScript<'a, '_> {
 
         // Avoid converting class fields when class-properties plugin is enabled, that plugin has covered all
         // this transformation does.
-        if !self.is_class_properties_enabled && self.ctx.assumptions.set_public_class_fields {
+        if !self.ctx.is_class_properties_plugin_enabled
+            && self.ctx.assumptions.set_public_class_fields
+        {
             self.transform_class_fields(class, ctx);
         }
     }
@@ -187,7 +181,9 @@ impl<'a> Traverse<'a> for TypeScript<'a, '_> {
         ctx: &mut TraverseCtx<'a>,
     ) {
         self.annotations.enter_method_definition(def, ctx);
-        if self.is_class_properties_enabled || !self.ctx.assumptions.set_public_class_fields {
+        if self.ctx.is_class_properties_plugin_enabled
+            || !self.ctx.assumptions.set_public_class_fields
+        {
             Self::transform_class_constructor(def, ctx);
         }
     }
