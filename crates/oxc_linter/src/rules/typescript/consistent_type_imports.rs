@@ -56,7 +56,7 @@ pub struct ConsistentTypeImportsConfig {
 }
 
 // The default of `disallowTypeAnnotations` is `true`.
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Copy)]
 struct DisallowTypeAnnotations(bool);
 
 impl DisallowTypeAnnotations {
@@ -68,6 +68,20 @@ impl DisallowTypeAnnotations {
 impl Default for DisallowTypeAnnotations {
     fn default() -> Self {
         Self(true)
+    }
+}
+impl From<bool> for DisallowTypeAnnotations {
+    #[inline]
+    fn from(value: bool) -> Self {
+        Self(value)
+    }
+}
+
+impl Deref for DisallowTypeAnnotations {
+    type Target = bool;
+    #[inline]
+    fn deref(&self) -> &Self::Target {
+        &self.0
     }
 }
 
@@ -146,7 +160,7 @@ impl Rule for ConsistentTypeImports {
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        if self.disallow_type_annotations.0 {
+        if *self.disallow_type_annotations {
             //  `import()` type annotations are forbidden.
             // `type Foo = import('foo')`
             if let AstKind::TSImportType(import_type) = node.kind() {
@@ -216,8 +230,19 @@ impl Rule for ConsistentTypeImports {
                     ImportDeclarationSpecifier::ImportSpecifier(specifier) => {
                         specifier.import_kind.is_value()
                     }
-                    ImportDeclarationSpecifier::ImportDefaultSpecifier(_)
-                    | ImportDeclarationSpecifier::ImportNamespaceSpecifier(_) => true,
+                    // TODO: consume tsconfig and see if React is needed based on "jsx" field
+                    ImportDeclarationSpecifier::ImportDefaultSpecifier(specifier) => {
+                        if specifier.local.name == "React" {
+                            continue;
+                        }
+                        true
+                    }
+                    ImportDeclarationSpecifier::ImportNamespaceSpecifier(specifier) => {
+                        if specifier.local.name == "React" {
+                            continue;
+                        }
+                        true
+                    }
                 };
 
                 if no_type_qualifier && is_only_has_type_references(symbol_id, ctx) {
@@ -1245,17 +1270,19 @@ fn test() {
             Some(serde_json::json!([{ "prefer": "no-type-imports" }])),
         ),
         // TODO: https://github.com/typescript-eslint/typescript-eslint/issues/2455#issuecomment-685015542
+        // TODO: provide tsc compilerOptions to lint rules, use that to ignore
+        // jsx factories and `Fragment`s.
         // import React has side effect.
-        // (
-        //     "
-        //       import React from 'react';
+        (
+            "
+              import React from 'react';
 
-        //       export const ComponentFoo: React.FC = () => {
-        //         return <div>Foo Foo</div>;
-        //       };
-        //     ",
-        //     None,
-        // ),
+              export const ComponentFoo: React.FC = () => {
+                return <div>Foo Foo</div>;
+              };
+            ",
+            None,
+        ),
         // (
         //     "
         //       import { h } from 'some-other-jsx-lib';
