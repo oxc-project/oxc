@@ -125,6 +125,9 @@ describe('JSX', () => {
 // Test raw transfer output matches standard (via JSON) output for edge cases not covered by Test262
 describe('edge cases', () => {
   it.each([
+    // ECMA stage 3
+    'import defer * as ns from "x";',
+    'import source src from "x";',
     // `StringLiteral`s containing lone surrogates and/or lossy replacement characters
     ';"\\uD800\\uDBFF";',
     ';"�\\u{FFFD}";',

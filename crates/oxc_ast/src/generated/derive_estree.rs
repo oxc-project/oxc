@@ -1669,6 +1669,7 @@ impl ESTree for ImportDeclaration<'_> {
             "attributes",
             &crate::serialize::js::ImportDeclarationWithClause(self),
         );
+        state.serialize_field("phase", &self.phase);
         state.serialize_ts_field("importKind", &self.import_kind);
         state.end();
     }

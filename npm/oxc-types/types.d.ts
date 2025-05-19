@@ -749,6 +749,7 @@ export interface ImportDeclaration extends Span {
   specifiers: Array<ImportDeclarationSpecifier>;
   source: StringLiteral;
   attributes: Array<ImportAttribute>;
+  phase: ImportPhase | null;
   importKind?: ImportOrExportKind;
 }
 

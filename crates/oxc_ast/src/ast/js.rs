@@ -2396,13 +2396,13 @@ pub struct ImportExpression<'a> {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
+#[estree(field_order(span, specifiers, source, with_clause, phase, import_kind))]
 pub struct ImportDeclaration<'a> {
     pub span: Span,
     /// `None` for `import 'foo'`, `Some([])` for `import {} from 'foo'`
     #[estree(via = ImportDeclarationSpecifiers)]
     pub specifiers: Option<Vec<'a, ImportDeclarationSpecifier<'a>>>,
     pub source: StringLiteral<'a>,
-    #[estree(skip)]
     pub phase: Option<ImportPhase>,
     /// Some(vec![]) for empty assertion
     #[estree(rename = "attributes", via = ImportDeclarationWithClause)]

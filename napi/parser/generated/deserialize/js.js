@@ -924,6 +924,7 @@ function deserializeImportDeclaration(pos) {
     specifiers,
     source: deserializeStringLiteral(pos + 32),
     attributes: withClause === null ? [] : withClause.attributes,
+    phase: deserializeOptionImportPhase(pos + 88),
   };
 }
 
