@@ -46,6 +46,18 @@ impl<T> ESTree for False<T> {
     }
 }
 
+/// Serialized as `false`. Field only present in JS ESTree AST (not TS-ESTree).
+#[ast_meta]
+#[estree(ts_type = "false", raw_deser = "false")]
+#[js_only]
+pub struct JsFalse<T>(pub T);
+
+impl<T> ESTree for JsFalse<T> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        false.serialize(serializer);
+    }
+}
+
 /// Serialized as `false`. Field only present in TS-ESTree AST.
 #[ast_meta]
 #[estree(ts_type = "false", raw_deser = "false")]
@@ -111,6 +123,18 @@ pub struct EmptyArray<T>(pub T);
 impl<T> ESTree for EmptyArray<T> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         [(); 0].serialize(serializer);
+    }
+}
+
+/// Serialized as `[]`. Field only present in JS ESTree AST (not TS-ESTree).
+#[ast_meta]
+#[estree(ts_type = "[]", raw_deser = "[]")]
+#[js_only]
+pub struct JsEmptyArray<T>(pub T);
+
+impl<T> ESTree for JsEmptyArray<T> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        EmptyArray(()).serialize(serializer);
     }
 }
 

@@ -74,6 +74,7 @@ pub fn ast_meta(_args: TokenStream, input: TokenStream) -> TokenStream {
         content_eq,
         estree,
         generate_derive,
+        js_only,
         plural,
         scope,
         span,

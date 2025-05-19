@@ -1332,12 +1332,11 @@ function deserializeJSXFragment(pos) {
 }
 
 function deserializeJSXOpeningFragment(pos) {
-  const node = {
+  return {
     type: 'JSXOpeningFragment',
     start: deserializeU32(pos),
     end: deserializeU32(pos + 4),
   };
-  return node;
 }
 
 function deserializeJSXClosingFragment(pos) {

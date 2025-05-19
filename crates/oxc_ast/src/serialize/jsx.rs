@@ -3,8 +3,6 @@ use oxc_estree::{ESTree, JsonSafeString, Serializer, StructSerializer};
 
 use crate::ast::*;
 
-use super::EmptyArray;
-
 /// Serializer for `opening_element` field of `JSXElement`.
 ///
 /// `selfClosing` field of `JSXOpeningElement` depends on whether `JSXElement` has a `closing_element`.
@@ -86,44 +84,5 @@ pub struct JSXElementThisExpression<'b>(pub &'b ThisExpression);
 impl ESTree for JSXElementThisExpression<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         JSXIdentifier { span: self.0.span, name: Atom::from("this") }.serialize(serializer);
-    }
-}
-
-/// Converter for `JSXOpeningFragment`.
-///
-/// Add `attributes` and `selfClosing` fields in JS AST, but not in TS AST.
-/// Acorn-JSX has these fields, but TS-ESLint parser does not.
-///
-/// The extra fields are added to the type as `TsEmptyArray` and `TsFalse`,
-/// which are incorrect, as these fields appear only in the *JS* AST, not the TS one.
-/// But that results in the fields being optional in TS type definition.
-//
-// TODO: Find a better way to do this.
-#[ast_meta]
-#[estree(raw_deser = "
-    const node = {
-        type: 'JSXOpeningFragment',
-        start: DESER[u32](POS_OFFSET.span.start),
-        end: DESER[u32](POS_OFFSET.span.end),
-        /* IF_JS */
-        attributes: [],
-        selfClosing: false,
-        /* END_IF_JS */
-    };
-    node
-")]
-pub struct JSXOpeningFragmentConverter<'b>(pub &'b JSXOpeningFragment);
-
-impl ESTree for JSXOpeningFragmentConverter<'_> {
-    fn serialize<S: Serializer>(&self, serializer: S) {
-        let mut state = serializer.serialize_struct();
-        state.serialize_field("type", &JsonSafeString("JSXOpeningFragment"));
-        state.serialize_field("start", &self.0.span.start);
-        state.serialize_field("end", &self.0.span.end);
-        if !S::INCLUDE_TS_FIELDS {
-            state.serialize_field("attributes", &EmptyArray(()));
-            state.serialize_field("selfClosing", &false);
-        }
-        state.end();
     }
 }

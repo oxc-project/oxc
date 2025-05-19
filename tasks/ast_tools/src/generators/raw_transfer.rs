@@ -272,7 +272,7 @@ impl<'s> StructDeserializerGenerator<'s> {
         struct_def: &StructDef,
         struct_offset: u32,
     ) {
-        if !self.is_ts && field.estree.is_ts {
+        if (self.is_ts && field.estree.is_js) || (!self.is_ts && field.estree.is_ts) {
             return;
         }
 
@@ -372,7 +372,7 @@ impl<'s> StructDeserializerGenerator<'s> {
         struct_offset: u32,
     ) {
         let converter = self.schema.meta_by_name(converter_name);
-        if !self.is_ts && converter.estree.is_ts {
+        if (self.is_ts && converter.estree.is_js) || (!self.is_ts && converter.estree.is_ts) {
             return;
         }
 

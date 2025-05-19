@@ -130,7 +130,7 @@ pub struct JSXFragment<'a> {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
-#[estree(via = JSXOpeningFragmentConverter, add_fields(attributes = TsEmptyArray, selfClosing = TsFalse))]
+#[estree(add_fields(attributes = JsEmptyArray, selfClosing = JsFalse))]
 pub struct JSXOpeningFragment {
     /// Node location in source code
     pub span: Span,

@@ -37,7 +37,7 @@ impl Derive for DeriveESTree {
     /// Register that accept `#[estree]` attr on structs, enums, struct fields, enum variants,
     /// or meta types.
     /// Allow attr on structs and enums which don't derive this trait.
-    /// Also accept `#[ts]` attr on struct fields and enum variants.
+    /// Also accept `#[ts]` and `#[js_only]` attrs on struct fields and meta types.
     fn attrs(&self) -> &[(&'static str, AttrPositions)] {
         &[
             (
@@ -47,6 +47,7 @@ impl Derive for DeriveESTree {
                 ),
             ),
             ("ts", attr_positions!(StructField | Meta)),
+            ("js_only", attr_positions!(StructField | Meta)),
         ]
     }
 
@@ -55,6 +56,7 @@ impl Derive for DeriveESTree {
         match attr_name {
             "estree" => parse_estree_attr(location, part),
             "ts" => parse_ts_attr(location, &part),
+            "js_only" => parse_js_only_attr(location, &part),
             _ => unreachable!(),
         }
     }
@@ -221,6 +223,24 @@ fn parse_ts_attr(location: AttrLocation, part: &AttrPart) -> Result<()> {
             struct_def.fields[field_index].estree.is_ts = true;
         }
         AttrLocation::Meta(meta) => meta.estree.is_ts = true,
+        _ => unreachable!(),
+    }
+
+    Ok(())
+}
+
+/// Parse `#[js_only]` attr on struct field or meta type.
+fn parse_js_only_attr(location: AttrLocation, part: &AttrPart) -> Result<()> {
+    if !matches!(part, AttrPart::None) {
+        return Err(());
+    }
+
+    // Location can only be `StructField` or `Meta`
+    match location {
+        AttrLocation::StructField(struct_def, field_index) => {
+            struct_def.fields[field_index].estree.is_js = true;
+        }
+        AttrLocation::Meta(meta) => meta.estree.is_js = true,
         _ => unreachable!(),
     }
 
@@ -479,7 +499,9 @@ impl<'s> StructSerializerGenerator<'s> {
             quote!( #self_path.#field_name_ident )
         };
 
-        let serialize_method_ident = create_safe_ident(if field.estree.is_ts {
+        let serialize_method_ident = create_safe_ident(if field.estree.is_js {
+            "serialize_js_field"
+        } else if field.estree.is_ts {
             "serialize_ts_field"
         } else {
             "serialize_field"
@@ -498,7 +520,9 @@ impl<'s> StructSerializerGenerator<'s> {
     ) {
         let converter = self.schema.meta_by_name(converter_name);
         let converter_path = converter.import_path_from_crate(self.krate, self.schema);
-        let serialize_method_ident = create_safe_ident(if converter.estree.is_ts {
+        let serialize_method_ident = create_safe_ident(if converter.estree.is_js {
+            "serialize_js_field"
+        } else if converter.estree.is_ts {
             "serialize_ts_field"
         } else {
             "serialize_field"

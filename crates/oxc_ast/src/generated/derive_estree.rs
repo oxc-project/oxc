@@ -2049,7 +2049,13 @@ impl ESTree for JSXFragment<'_> {
 
 impl ESTree for JSXOpeningFragment {
     fn serialize<S: Serializer>(&self, serializer: S) {
-        crate::serialize::jsx::JSXOpeningFragmentConverter(self).serialize(serializer)
+        let mut state = serializer.serialize_struct();
+        state.serialize_field("type", &JsonSafeString("JSXOpeningFragment"));
+        state.serialize_field("start", &self.span.start);
+        state.serialize_field("end", &self.span.end);
+        state.serialize_js_field("attributes", &crate::serialize::basic::JsEmptyArray(self));
+        state.serialize_js_field("selfClosing", &crate::serialize::basic::JsFalse(self));
+        state.end();
     }
 }
 

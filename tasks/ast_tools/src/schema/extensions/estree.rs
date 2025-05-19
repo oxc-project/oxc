@@ -79,6 +79,8 @@ pub struct ESTreeStructField {
     pub no_flatten: bool,
     /// `true` for fields containing a `&str` or `Atom` which does not need escaping in JSON
     pub json_safe: bool,
+    /// `true` if field is only included in JS ESTree AST (not TS-ESTree AST).
+    pub is_js: bool,
     /// `true` if field is only included in TS-ESTree AST (not JS ESTree AST).
     pub is_ts: bool,
 }
@@ -103,6 +105,8 @@ pub struct ESTreeMeta {
     pub ts_type: Option<String>,
     /// JS code for raw transfer deserializer.
     pub raw_deser: Option<String>,
+    /// `true` if meta type is for a struct field which is present only in JS AST.
+    pub is_js: bool,
     /// `true` if meta type is for a struct field which is present only in TS AST.
     pub is_ts: bool,
 }
