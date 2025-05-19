@@ -8,6 +8,8 @@
 // They are purely markers for codegen used in `tasks/ast_tools` and `crates/oxc_traverse/scripts`. See docs in those crates.
 // Read [`macro@oxc_ast_macros::ast`] for more information.
 
+// Dummy comment to force CI to run.
+
 use std::cell::Cell;
 
 use oxc_allocator::{Box, CloneIn, Dummy, GetAddress, TakeIn, Vec};
