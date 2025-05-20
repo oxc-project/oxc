@@ -1,9 +1,9 @@
-commit: 15392346
+commit: 81c95189
 
 parser_typescript Summary:
-AST Parsed     : 6521/6528 (99.89%)
-Positive Passed: 6509/6528 (99.71%)
-Negative Passed: 1323/5757 (22.98%)
+AST Parsed     : 6530/6537 (99.89%)
+Positive Passed: 6518/6537 (99.71%)
+Negative Passed: 1324/5763 (22.97%)
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/ClassDeclaration24.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/ExportAssignment7.ts
@@ -1074,6 +1074,8 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/decoratorMet
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/decoratorMetadataWithImportDeclarationNameCollision7.ts
 
+Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/decoratorUsedBeforeDeclaration.ts
+
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/decoratorsOnComputedProperties.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/deduplicateImportsInSystem.ts
@@ -1561,6 +1563,8 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/experimental
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/exportAsNamespaceConflict.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/exportAsNamespace_augment.ts
+
+Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/exportAssignmentExpressionIsExpressionNode.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/exportAssignmentImportMergeNoCrash.ts
 
@@ -2618,6 +2622,8 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/largeControl
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/lastPropertyInLiteralWins.ts
 
+Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/lateBoundAssignmentCandidateJS3.ts
+
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/lateBoundConstraintTypeChecksCorrectly.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/lateBoundDestructuringImplicitAnyError.ts
@@ -2733,6 +2739,8 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/mismatchedEx
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/mismatchedGenericArguments1.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/missingCommaInTemplateStringsArray.ts
+
+Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/missingDomElement_UsingDomLib.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/missingDomElements.ts
 
@@ -6774,6 +6782,8 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/jsdoc/imp
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/jsdoc/importTag23.ts
 
+Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/jsdoc/importTag24.ts
+
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/jsdoc/importTag4.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/jsdoc/jsdocAccessibilityTags.ts
@@ -9667,6 +9677,62 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
  22 │   }
     ╰────
 
+  × 'arguments' is not allowed in class field initializer
+    ╭─[typescript/tests/cases/compiler/argumentsUsedInClassFieldInitializerOrStaticInitializationBlock.ts:33:16]
+ 32 │   return class T {
+ 33 │      a = () => arguments  // should error
+    ·                ─────────
+ 34 │   }
+    ╰────
+
+  × 'arguments' is not allowed in class field initializer
+    ╭─[typescript/tests/cases/compiler/argumentsUsedInClassFieldInitializerOrStaticInitializationBlock.ts:40:7]
+ 39 │     a = () => {
+ 40 │       arguments;    // should error
+    ·       ─────────
+ 41 │       const b = () => {
+    ╰────
+
+  × 'arguments' is not allowed in class field initializer
+    ╭─[typescript/tests/cases/compiler/argumentsUsedInClassFieldInitializerOrStaticInitializationBlock.ts:42:16]
+ 41 │       const b = () => {
+ 42 │         return arguments;     // should error
+    ·                ─────────
+ 43 │       }
+    ╰────
+
+  × 'arguments' is not allowed in static initialization block
+    ╭─[typescript/tests/cases/compiler/argumentsUsedInClassFieldInitializerOrStaticInitializationBlock.ts:75:7]
+ 74 │     static {
+ 75 │       arguments;  // should error
+    ·       ─────────
+ 76 │       while(1) {
+    ╰────
+
+  × 'arguments' is not allowed in static initialization block
+    ╭─[typescript/tests/cases/compiler/argumentsUsedInClassFieldInitializerOrStaticInitializationBlock.ts:77:9]
+ 76 │       while(1) {
+ 77 │         arguments // should error
+    ·         ─────────
+ 78 │       }
+    ╰────
+
+  × 'arguments' is not allowed in class field initializer
+    ╭─[typescript/tests/cases/compiler/argumentsUsedInClassFieldInitializerOrStaticInitializationBlock.ts:96:26]
+ 95 │   return class T {
+ 96 │      a = (() => { return arguments; })()  // should error
+    ·                          ─────────
+ 97 │   }
+    ╰────
+
+  × 'arguments' is not allowed in class field initializer
+     ╭─[typescript/tests/cases/compiler/argumentsUsedInClassFieldInitializerOrStaticInitializationBlock.ts:102:15]
+ 101 │   return class T {
+ 102 │      a = (x = arguments) => {}    // should error
+     ·               ─────────
+ 103 │   }
+     ╰────
+
   × Unexpected token
     ╭─[typescript/tests/cases/compiler/arraySigChecking.ts:11:28]
  10 │ 
@@ -12231,6 +12297,14 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
  3 │ }
    · ┬
    · ╰── `,` expected
+   ╰────
+
+  × Expected `>` but found `function`
+   ╭─[typescript/tests/cases/compiler/erasableSyntaxOnly2.ts:1:19]
+ 1 │ let a = (<unknown function foo() {});
+   ·                   ────┬───
+   ·                       ╰── `>` expected
+ 2 │ let b = <unknown 123;
    ╰────
 
   × Identifier `foo` has already been declared

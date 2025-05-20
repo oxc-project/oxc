@@ -1,6 +1,6 @@
-commit: 578ac4df
+commit: 1d4546bc
 
-Passed: 712/1190
+Passed: 711/1200
 
 # All Passed:
 * babel-plugin-transform-logical-assignment-operators
@@ -273,7 +273,7 @@ x Output mismatch
 x Output mismatch
 
 
-# babel-plugin-transform-class-properties (212/268)
+# babel-plugin-transform-class-properties (212/269)
 * assumption-constantSuper/complex-super-class/input.js
 x Output mismatch
 
@@ -308,6 +308,9 @@ x Output mismatch
 x Output mismatch
 
 * class-name-tdz/static-loose/input.js
+x Output mismatch
+
+* class-name-tdz/typescript-type/input.ts
 x Output mismatch
 
 * compile-to-class/constructor-collision-ignores-types/input.js
@@ -983,7 +986,7 @@ rebuilt        : ["o"]
 x Output mismatch
 
 
-# babel-plugin-transform-object-rest-spread (28/36)
+# babel-plugin-transform-object-rest-spread (28/39)
 * object-rest/for-x/input.js
 Bindings mismatch:
 after transform: ScopeId(0): ["_excluded", "_excluded2", "_excluded3", "_ref", "a", "b"]
@@ -1044,42 +1047,13 @@ after transform: ["babelHelpers"]
 rebuilt        : ["b", "babelHelpers"]
 
 * object-rest/for-x-array-pattern/input.js
-Bindings mismatch:
-after transform: ScopeId(0): ["_excluded", "_excluded2", "_excluded3", "a"]
-rebuilt        : ScopeId(0): ["_excluded", "_excluded2", "_excluded3", "_ref2", "_ref3", "_ref4", "a"]
-Bindings mismatch:
-after transform: ScopeId(3): ["_ref2"]
-rebuilt        : ScopeId(3): []
-Bindings mismatch:
-after transform: ScopeId(4): ["_ref3", "_ref4"]
-rebuilt        : ScopeId(4): []
-Bindings mismatch:
-after transform: ScopeId(5): []
-rebuilt        : ScopeId(5): ["_ref5", "_ref6", "_ref7"]
-Bindings mismatch:
-after transform: ScopeId(6): ["_ref5"]
-rebuilt        : ScopeId(6): []
-Bindings mismatch:
-after transform: ScopeId(7): ["_ref6", "_ref7"]
-rebuilt        : ScopeId(7): []
-Symbol scope ID mismatch for "_ref2":
-after transform: SymbolId(5): ScopeId(3)
-rebuilt        : SymbolId(6): ScopeId(0)
-Symbol scope ID mismatch for "_ref3":
-after transform: SymbolId(6): ScopeId(4)
-rebuilt        : SymbolId(7): ScopeId(0)
-Symbol scope ID mismatch for "_ref4":
-after transform: SymbolId(7): ScopeId(4)
-rebuilt        : SymbolId(8): ScopeId(0)
-Symbol scope ID mismatch for "_ref5":
-after transform: SymbolId(9): ScopeId(6)
-rebuilt        : SymbolId(10): ScopeId(5)
-Symbol scope ID mismatch for "_ref6":
-after transform: SymbolId(10): ScopeId(7)
-rebuilt        : SymbolId(11): ScopeId(5)
-Symbol scope ID mismatch for "_ref7":
-after transform: SymbolId(11): ScopeId(7)
-rebuilt        : SymbolId(12): ScopeId(5)
+x Output mismatch
+
+* object-rest/for-x-array-pattern-rest-only/input.js
+x Output mismatch
+
+* object-rest/for-x-assignment-shadowed-block-scoped-bindings/input.js
+x Output mismatch
 
 * object-rest/for-x-completion-record/input.js
 Bindings mismatch:
@@ -1097,6 +1071,9 @@ rebuilt        : SymbolId(1): ScopeId(0)
 Symbol scope ID mismatch for "_ref2":
 after transform: SymbolId(1): ScopeId(2)
 rebuilt        : SymbolId(2): ScopeId(0)
+
+* object-rest/for-x-declaration-shadowed-block-scoped-bindings/input.js
+x Output mismatch
 
 * object-rest/nested-computed-key/input.js
 Bindings mismatch:
@@ -1220,7 +1197,7 @@ rebuilt        : [ReferenceId(0), ReferenceId(7)]
 
 
 
-# babel-plugin-transform-async-to-generator (10/28)
+# babel-plugin-transform-async-to-generator (10/31)
 * assumption-ignoreFunctionLength-true/basic/input.mjs
 
   x Compiler assumption `ignoreFunctionLength` is not implemented for object-
@@ -1236,11 +1213,23 @@ rebuilt        : [ReferenceId(0), ReferenceId(7)]
 * assumption-noNewArrows-false/basic/input.js
 x Output mismatch
 
+* async-to-generator/async-complex-params/input.js
+x Output mismatch
+
 * async-to-generator/async-iife-with-regenerator/input.js
 x Output mismatch
 
 * async-to-generator/async-iife-with-regenerator-spec/input.js
 x Output mismatch
+
+* async-to-generator/class-method-arity/input.js
+x Output mismatch
+
+* async-to-generator/class-method-arity-ignore-length/input.js
+
+  x Compiler assumption `ignoreFunctionLength` is not implemented for object-
+  | rest-spread.
+
 
 * bluebird-coroutines/arrow-function/input.js
 x Output mismatch
@@ -2829,7 +2818,10 @@ transform-react-jsx: unknown field `autoImport`, expected one of `runtime`, `dev
 x Output mismatch
 
 
-# babel-plugin-proposal-explicit-resource-management (21/24)
+# babel-plugin-proposal-explicit-resource-management (20/27)
+* integration/commonjs-transform/input.js
+x Output mismatch
+
 * transform-sync/function-body/input.js
 Bindings mismatch:
 after transform: ScopeId(1): ["_usingCtx", "x"]
@@ -2852,9 +2844,16 @@ Symbol scope ID mismatch for "z":
 after transform: SymbolId(2): ScopeId(3)
 rebuilt        : SymbolId(5): ScopeId(4)
 
+* transform-sync/named-evaluation/input.js
+x Output mismatch
+
+* transform-top-level/hoisting/input.mjs
+x Output mismatch
+
 * transform-top-level/hoisting-default-class/input.mjs
-Symbol span mismatch for "C":
-after transform: SymbolId(1): Span { start: 37, end: 38 }
-rebuilt        : SymbolId(2): Span { start: 0, end: 0 }
+x Output mismatch
+
+* transform-top-level/hoisting-mutate-outer-class-binding/input.js
+x Output mismatch
 
 

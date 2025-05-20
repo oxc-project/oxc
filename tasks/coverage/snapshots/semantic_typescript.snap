@@ -1,8 +1,8 @@
-commit: 15392346
+commit: 81c95189
 
 semantic_typescript Summary:
-AST Parsed     : 6528/6528 (100.00%)
-Positive Passed: 2843/6528 (43.55%)
+AST Parsed     : 6537/6537 (100.00%)
+Positive Passed: 2848/6537 (43.57%)
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/2dArrays.ts
 Symbol reference IDs mismatch for "Cell":
 after transform: SymbolId(0): [ReferenceId(1)]
@@ -1002,6 +1002,14 @@ rebuilt        : SymbolId(6): [ReferenceId(17)]
 Symbol reference IDs mismatch for "B":
 after transform: SymbolId(9): [ReferenceId(6), ReferenceId(9), ReferenceId(14)]
 rebuilt        : SymbolId(7): [ReferenceId(19)]
+
+semantic Error: tasks/coverage/typescript/tests/cases/compiler/assignmentToConditionalBrandedStringTemplateOrMapping.ts
+Scope children mismatch:
+after transform: ScopeId(0): [ScopeId(1), ScopeId(3), ScopeId(5), ScopeId(7)]
+rebuilt        : ScopeId(0): []
+Unresolved references mismatch:
+after transform: ["Uppercase"]
+rebuilt        : []
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/asyncAwaitWithCapturedBlockScopeVar.ts
 Unresolved references mismatch:
@@ -7629,6 +7637,14 @@ Symbol redeclarations mismatch for "f":
 after transform: SymbolId(0): [Span { start: 9, end: 10 }, Span { start: 30, end: 31 }, Span { start: 51, end: 52 }]
 rebuilt        : SymbolId(0): []
 
+semantic Error: tasks/coverage/typescript/tests/cases/compiler/declarationEmitGenericTypeParamerSerialization2.ts
+Scope children mismatch:
+after transform: ScopeId(0): [ScopeId(1), ScopeId(3), ScopeId(12), ScopeId(13)]
+rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2)]
+Scope children mismatch:
+after transform: ScopeId(13): [ScopeId(14)]
+rebuilt        : ScopeId(2): []
+
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/declarationEmitGlobalThisPreserved.ts
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(4), ScopeId(5), ScopeId(6), ScopeId(7), ScopeId(8), ScopeId(9), ScopeId(10), ScopeId(11), ScopeId(12), ScopeId(13), ScopeId(14), ScopeId(15), ScopeId(16), ScopeId(17), ScopeId(18), ScopeId(19), ScopeId(20), ScopeId(21), ScopeId(22), ScopeId(23), ScopeId(24), ScopeId(25), ScopeId(26), ScopeId(27), ScopeId(28), ScopeId(29), ScopeId(30), ScopeId(31), ScopeId(34), ScopeId(37), ScopeId(40), ScopeId(43), ScopeId(44), ScopeId(49), ScopeId(51), ScopeId(52), ScopeId(53), ScopeId(54), ScopeId(55), ScopeId(56)]
@@ -7791,6 +7807,44 @@ rebuilt        : ScopeId(0): [ScopeId(1)]
 Unresolved references mismatch:
 after transform: ["Parameters", "Record"]
 rebuilt        : []
+
+semantic Error: tasks/coverage/typescript/tests/cases/compiler/declarationEmitMappedTypePreservesTypeParameterConstraint.ts
+Bindings mismatch:
+after transform: ScopeId(0): ["ZodLiteral", "ZodType", "buildSchema"]
+rebuilt        : ScopeId(0): ["buildSchema", "entriesOf"]
+Scope children mismatch:
+after transform: ScopeId(0): [ScopeId(1), ScopeId(4), ScopeId(5), ScopeId(6), ScopeId(8), ScopeId(9), ScopeId(10), ScopeId(11), ScopeId(13), ScopeId(14), ScopeId(15), ScopeId(16), ScopeId(18), ScopeId(21), ScopeId(22)]
+rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2)]
+Bindings mismatch:
+after transform: ScopeId(22): []
+rebuilt        : ScopeId(2): ["o"]
+Symbol flags mismatch for "entriesOf":
+after transform: SymbolId(31): SymbolFlags(BlockScopedVariable | ConstVariable | TypeAlias)
+rebuilt        : SymbolId(2): SymbolFlags(BlockScopedVariable | ConstVariable)
+Symbol span mismatch for "entriesOf":
+after transform: SymbolId(31): Span { start: 1339, end: 1348 }
+rebuilt        : SymbolId(2): Span { start: 1406, end: 1415 }
+Symbol reference IDs mismatch for "entriesOf":
+after transform: SymbolId(31): [ReferenceId(54)]
+rebuilt        : SymbolId(2): []
+Symbol redeclarations mismatch for "entriesOf":
+after transform: SymbolId(31): [Span { start: 1339, end: 1348 }, Span { start: 1406, end: 1415 }]
+rebuilt        : SymbolId(2): []
+Symbol flags mismatch for "o":
+after transform: SymbolId(33): SymbolFlags(FunctionScopedVariable | TypeParameter)
+rebuilt        : SymbolId(3): SymbolFlags(FunctionScopedVariable)
+Symbol span mismatch for "o":
+after transform: SymbolId(33): Span { start: 1419, end: 1420 }
+rebuilt        : SymbolId(3): Span { start: 1437, end: 1441 }
+Symbol reference IDs mismatch for "o":
+after transform: SymbolId(33): [ReferenceId(51), ReferenceId(53), ReferenceId(55)]
+rebuilt        : SymbolId(3): [ReferenceId(1)]
+Symbol redeclarations mismatch for "o":
+after transform: SymbolId(33): [Span { start: 1419, end: 1420 }, Span { start: 1437, end: 1441 }]
+rebuilt        : SymbolId(3): []
+Unresolved references mismatch:
+after transform: ["Object", "Partial", "Pick", "Required"]
+rebuilt        : ["Object"]
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/declarationEmitMappedTypePropertyFromNumericStringKey.ts
 Scope children mismatch:
@@ -8138,6 +8192,11 @@ semantic Error: tasks/coverage/typescript/tests/cases/compiler/declarationEmitSc
 Symbol reference IDs mismatch for "v":
 after transform: SymbolId(3): [ReferenceId(0)]
 rebuilt        : SymbolId(3): []
+
+semantic Error: tasks/coverage/typescript/tests/cases/compiler/declarationEmitShadowing.ts
+Scope children mismatch:
+after transform: ScopeId(3): [ScopeId(4), ScopeId(5)]
+rebuilt        : ScopeId(4): [ScopeId(5)]
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/declarationEmitShadowingInferNotRenamed.ts
 Scope children mismatch:
