@@ -29,9 +29,8 @@ pub struct EstreeTest262Case {
 
 impl Case for EstreeTest262Case {
     fn new(path: PathBuf, code: String) -> Self {
-        let acorn_json_path = Path::new("./tasks/coverage/acorn-test262")
-            .join(path.strip_prefix("test262").unwrap())
-            .with_extension("json");
+        let acorn_json_path =
+            workspace_root().join("acorn-test262/tests").join(&path).with_extension("json");
 
         Self { base: Test262Case::new(path, code), acorn_json_path }
     }
@@ -139,7 +138,7 @@ pub struct AcornJsxSuite<T: Case> {
 
 impl<T: Case> AcornJsxSuite<T> {
     pub fn new() -> Self {
-        Self { path: Path::new("acorn-test262/test-acorn-jsx").to_path_buf(), test_cases: vec![] }
+        Self { path: workspace_root().join("acorn-test262/tests/acorn-jsx"), test_cases: vec![] }
     }
 }
 
@@ -252,8 +251,8 @@ pub struct EstreeTypescriptCase {
 impl Case for EstreeTypescriptCase {
     fn new(path: PathBuf, code: String) -> Self {
         let estree_file_path = workspace_root()
-            .join("./acorn-test262/test-typescript")
-            .join(path.strip_prefix("typescript").unwrap())
+            .join("acorn-test262/tests")
+            .join(&path)
             .with_extension(format!("{}.md", path.extension().unwrap().to_str().unwrap()));
         Self { base: TypeScriptCase::new(path, code), estree_file_path }
     }
