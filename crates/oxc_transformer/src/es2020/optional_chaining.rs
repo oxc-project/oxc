@@ -340,7 +340,9 @@ impl<'a> OptionalChaining<'a, '_> {
         // If this chain expression is a callee of a CallExpression, we need to transform it to accept a proper context
         // `(Foo?.["m"])();` -> `(...  _Foo["m"].bind(_Foo))();`
         //                                       ^^^^^^^^^^^ Here we will handle the `right` part to bind a proper context
-        if matches!(ctx.ancestor(1), Ancestor::CallExpressionCallee(_)) {
+        if ctx.parent().is_parenthesized_expression()
+            && matches!(ctx.ancestor(1), Ancestor::CallExpressionCallee(_))
+        {
             chain_expr = self.transform_expression_to_bind_context(chain_expr, ctx);
         }
         // Clear states
