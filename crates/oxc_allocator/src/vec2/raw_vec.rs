@@ -68,32 +68,32 @@ pub struct RawVec<'a, T> {
     ptr: NonNull<T>,
     pub(super) len: u32,
     cap: u32,
-    a: &'a Bump,
+    alloc: &'a Bump,
 }
 
 impl<'a, T> RawVec<'a, T> {
     /// Like `new` but parameterized over the choice of allocator for
     /// the returned RawVec.
-    pub fn new_in(a: &'a Bump) -> Self {
+    pub fn new_in(alloc: &'a Bump) -> Self {
         // `cap: 0` means "unallocated". zero-sized types are ignored.
-        RawVec { ptr: NonNull::dangling(), a, cap: 0, len: 0 }
+        RawVec { ptr: NonNull::dangling(), alloc, cap: 0, len: 0 }
     }
 
     /// Like `with_capacity` but parameterized over the choice of
     /// allocator for the returned RawVec.
     #[inline]
-    pub fn with_capacity_in(cap: usize, a: &'a Bump) -> Self {
-        RawVec::allocate_in(cap, false, a)
+    pub fn with_capacity_in(cap: usize, alloc: &'a Bump) -> Self {
+        RawVec::allocate_in(cap, false, alloc)
     }
 
     /// Like `with_capacity_zeroed` but parameterized over the choice
     /// of allocator for the returned RawVec.
     #[inline]
-    pub fn with_capacity_zeroed_in(cap: usize, a: &'a Bump) -> Self {
-        RawVec::allocate_in(cap, true, a)
+    pub fn with_capacity_zeroed_in(cap: usize, alloc: &'a Bump) -> Self {
+        RawVec::allocate_in(cap, true, alloc)
     }
 
-    fn allocate_in(cap: usize, zeroed: bool, mut a: &'a Bump) -> Self {
+    fn allocate_in(cap: usize, zeroed: bool, alloc: &'a Bump) -> Self {
         unsafe {
             let elem_size = mem::size_of::<T>();
 
@@ -106,7 +106,8 @@ impl<'a, T> RawVec<'a, T> {
             } else {
                 let align = mem::align_of::<T>();
                 let layout = Layout::from_size_align(alloc_size, align).unwrap();
-                let result = if zeroed { a.allocate_zeroed(layout) } else { a.allocate(layout) };
+                let result =
+                    if zeroed { alloc.allocate_zeroed(layout) } else { alloc.allocate(layout) };
                 match result {
                     Ok(ptr) => ptr.cast(),
                     Err(_) => handle_alloc_error(layout),
@@ -117,7 +118,7 @@ impl<'a, T> RawVec<'a, T> {
             // cannot exceed `u32::MAX`.
             #[expect(clippy::cast_possible_truncation)]
             let cap = cap as u32;
-            RawVec { ptr, a, cap, len: 0 }
+            RawVec { ptr, alloc, cap, len: 0 }
         }
     }
 
@@ -133,7 +134,7 @@ impl<'a, T> RawVec<'a, T> {
     ///
     /// If all these values came from a `Vec` created in allocator `a`, then these requirements
     /// are guaranteed to be fulfilled.
-    pub unsafe fn from_raw_parts_in(ptr: *mut T, a: &'a Bump, cap: usize, len: usize) -> Self {
+    pub unsafe fn from_raw_parts_in(ptr: *mut T, alloc: &'a Bump, cap: usize, len: usize) -> Self {
         // SAFETY: Caller guarantees `ptr` was allocated, which implies it's not null
         let ptr = unsafe { NonNull::new_unchecked(ptr) };
 
@@ -143,7 +144,7 @@ impl<'a, T> RawVec<'a, T> {
         #[expect(clippy::cast_possible_truncation)]
         let cap = cap as u32;
 
-        RawVec { ptr, len, cap, a }
+        RawVec { ptr, len, cap, alloc }
     }
 
     /// Gets a raw pointer to the start of the allocation. Note that this is
@@ -180,7 +181,7 @@ impl<'a, T> RawVec<'a, T> {
 
     /// Returns a shared reference to the allocator backing this RawVec.
     pub fn bump(&self) -> &'a Bump {
-        self.a
+        self.alloc
     }
 
     fn current_layout(&self) -> Option<Layout> {
@@ -566,7 +567,7 @@ impl<'a, T> RawVec<'a, T> {
             // types that implement Drop.
 
             unsafe {
-                let a = self.a;
+                let a = self.alloc;
                 self.dealloc_buffer();
                 ptr::write(self, RawVec::new_in(a));
             }
@@ -588,7 +589,7 @@ impl<'a, T> RawVec<'a, T> {
                 let align = mem::align_of::<T>();
                 let old_layout = Layout::from_size_align_unchecked(old_size, align);
                 let new_layout = Layout::from_size_align_unchecked(new_size, align);
-                match self.a.shrink(self.ptr.cast(), old_layout, new_layout) {
+                match self.alloc.shrink(self.ptr.cast(), old_layout, new_layout) {
                     Ok(p) => self.ptr = p.cast(),
                     Err(_) => handle_alloc_error(new_layout),
                 }
@@ -730,17 +731,17 @@ impl<T> RawVec<'_, T> {
                 #[cold]
                 #[inline(never)]
                 unsafe fn grow<T>(
-                    a: &Bump,
+                    alloc: &Bump,
                     ptr: NonNull<T>,
                     old_layout: Layout,
                     new_layout: Layout,
                 ) -> Result<NonNull<[u8]>, AllocError> {
-                    a.grow(ptr.cast(), old_layout, new_layout)
+                    alloc.grow(ptr.cast(), old_layout, new_layout)
                 }
                 debug_assert!(new_layout.align() == layout.align());
-                grow(self.a, self.ptr, layout, new_layout)
+                grow(self.alloc, self.ptr, layout, new_layout)
             },
-            None => self.a.allocate(new_layout),
+            None => self.alloc.allocate(new_layout),
         };
 
         res.map_err(|_| AllocErr)
@@ -753,7 +754,7 @@ impl<T> RawVec<'_, T> {
         let elem_size = mem::size_of::<T>();
         if elem_size != 0 {
             if let Some(layout) = self.current_layout() {
-                self.a.deallocate(self.ptr.cast(), layout);
+                self.alloc.deallocate(self.ptr.cast(), layout);
             }
         }
     }
@@ -814,16 +815,16 @@ mod tests {
 
     #[test]
     fn reserve_does_not_overallocate() {
-        let bump = Bump::new();
+        let arena = Bump::new();
         {
-            let mut v: RawVec<u32> = RawVec::new_in(&bump);
+            let mut v: RawVec<u32> = RawVec::new_in(&arena);
             // First `reserve` allocates like `reserve_exact`
             v.reserve(0, 9);
             assert_eq!(9, v.cap());
         }
 
         {
-            let mut v: RawVec<u32> = RawVec::new_in(&bump);
+            let mut v: RawVec<u32> = RawVec::new_in(&arena);
             v.reserve(0, 7);
             assert_eq!(7, v.cap());
             // 97 if more than double of 7, so `reserve` should work
@@ -833,7 +834,7 @@ mod tests {
         }
 
         {
-            let mut v: RawVec<u32> = RawVec::new_in(&bump);
+            let mut v: RawVec<u32> = RawVec::new_in(&arena);
             v.reserve(0, 12);
             assert_eq!(12, v.cap());
             v.reserve(12, 3);
