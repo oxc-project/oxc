@@ -37,7 +37,7 @@ declare_oxc_lint!(
     /// Examples of **incorrect** code for this rule:
     /// ```javascript
     /// import Script from 'next/script';
-    /// 
+    ///
     /// export default function Page() {
     ///   return (
     ///     <Script>
@@ -45,7 +45,7 @@ declare_oxc_lint!(
     ///     </Script>
     ///   );
     /// }
-    /// 
+    ///
     /// // Also incorrect with dangerouslySetInnerHTML
     /// export default function Page() {
     ///   return (
@@ -61,7 +61,7 @@ declare_oxc_lint!(
     /// Examples of **correct** code for this rule:
     /// ```javascript
     /// import Script from 'next/script';
-    /// 
+    ///
     /// export default function Page() {
     ///   return (
     ///     <Script id="my-script">
@@ -69,7 +69,7 @@ declare_oxc_lint!(
     ///     </Script>
     ///   );
     /// }
-    /// 
+    ///
     /// // Correct with dangerouslySetInnerHTML
     /// export default function Page() {
     ///   return (
@@ -81,7 +81,7 @@ declare_oxc_lint!(
     ///     />
     ///   );
     /// }
-    /// 
+    ///
     /// // No id required for external scripts
     /// export default function Page() {
     ///   return (
