@@ -134,7 +134,7 @@ impl<'a, T> RawVec<'a, T> {
     ///
     /// If all these values came from a `Vec` created in allocator `a`, then these requirements
     /// are guaranteed to be fulfilled.
-    pub unsafe fn from_raw_parts_in(ptr: *mut T, alloc: &'a Bump, cap: usize, len: usize) -> Self {
+    pub unsafe fn from_raw_parts_in(ptr: *mut T, len: usize, cap: usize, alloc: &'a Bump) -> Self {
         // SAFETY: Caller guarantees `ptr` was allocated, which implies it's not null
         let ptr = unsafe { NonNull::new_unchecked(ptr) };
 

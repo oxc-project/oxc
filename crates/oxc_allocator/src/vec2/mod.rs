@@ -686,7 +686,7 @@ impl<'a, T: 'a> Vec<'a, T> {
         capacity: usize,
         alloc: &'a Bump,
     ) -> Vec<'a, T> {
-        Vec { buf: RawVec::from_raw_parts_in(ptr, alloc, capacity, length) }
+        Vec { buf: RawVec::from_raw_parts_in(ptr, length, capacity, alloc) }
     }
 
     /// Returns the number of elements in the vector, also referred to as its 'length'.
