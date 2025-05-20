@@ -360,6 +360,11 @@ fn test() {
             "a || (b ?? 2)",
             Some(serde_json::json!([{ "defaultAssignment": false }])),
         ),
+        (
+            "let a = {} satisfies User ? true : false",
+            "let a = !!({} satisfies User)",
+            None,
+         )
     ];
     Tester::new(NoUnneededTernary::NAME, NoUnneededTernary::PLUGIN, pass, fail)
         .expect_fix(fix)
