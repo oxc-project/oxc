@@ -76,8 +76,6 @@ struct ClassDecoratedData<'a> {
     binding: BoundIdentifier<'a>,
     // Alias binding exist when the class body contains a reference that refers to class itself.
     alias_binding: Option<BoundIdentifier<'a>>,
-    // Decorators that have been transformed.
-    decorations: ArenaVec<'a, Statement<'a>>,
 }
 
 pub struct LegacyDecorator<'a, 'ctx> {
@@ -199,8 +197,7 @@ impl<'a> LegacyDecorator<'a, '_> {
     fn transform_class_statement(&mut self, stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
         let Statement::ClassDeclaration(class) = stmt else { unreachable!() };
 
-        let Some(ClassDecoratedData { binding, alias_binding, decorations: decorator_stmts }) =
-            self.class_decorated_data.take()
+        let Some(ClassDecoratedData { binding, alias_binding }) = self.class_decorated_data.take()
         else {
             return;
         };
@@ -209,7 +206,6 @@ impl<'a> LegacyDecorator<'a, '_> {
             Self::transform_class_decorated(class, &binding, alias_binding.as_ref(), ctx);
 
         self.ctx.statement_injector.move_insertions(stmt, &new_stmt);
-        self.ctx.statement_injector.insert_many_after(&new_stmt, decorator_stmts);
         *stmt = new_stmt;
     }
 
@@ -250,8 +246,7 @@ impl<'a> LegacyDecorator<'a, '_> {
         let ExportDefaultDeclarationKind::ClassDeclaration(class) = &mut export.declaration else {
             return;
         };
-        let Some(ClassDecoratedData { binding, alias_binding, decorations }) =
-            self.class_decorated_data.take()
+        let Some(ClassDecoratedData { binding, alias_binding }) = self.class_decorated_data.take()
         else {
             return;
         };
@@ -263,10 +258,7 @@ impl<'a> LegacyDecorator<'a, '_> {
         let export_default_class_reference =
             Self::create_export_default_class_reference(&binding, ctx);
         self.ctx.statement_injector.move_insertions(stmt, &new_stmt);
-        self.ctx.statement_injector.insert_many_after(
-            &new_stmt,
-            decorations.into_iter().chain([export_default_class_reference]),
-        );
+        self.ctx.statement_injector.insert_after(&new_stmt, export_default_class_reference);
         *stmt = new_stmt;
     }
 
@@ -306,8 +298,7 @@ impl<'a> LegacyDecorator<'a, '_> {
         let Statement::ExportNamedDeclaration(export) = stmt else { unreachable!() };
         let Some(Declaration::ClassDeclaration(class)) = &mut export.declaration else { return };
 
-        let Some(ClassDecoratedData { binding, alias_binding, decorations }) =
-            self.class_decorated_data.take()
+        let Some(ClassDecoratedData { binding, alias_binding }) = self.class_decorated_data.take()
         else {
             return;
         };
@@ -318,9 +309,7 @@ impl<'a> LegacyDecorator<'a, '_> {
         // `export { Class }`
         let export_class_reference = Self::create_export_named_class_reference(&binding, ctx);
         self.ctx.statement_injector.move_insertions(stmt, &new_stmt);
-        self.ctx
-            .statement_injector
-            .insert_many_after(&new_stmt, decorations.into_iter().chain([export_class_reference]));
+        self.ctx.statement_injector.insert_after(&new_stmt, export_class_reference);
         *stmt = new_stmt;
     }
 
@@ -504,11 +493,29 @@ impl<'a> LegacyDecorator<'a, '_> {
             let stmts = mem::replace(&mut decoration_stmts, ctx.ast.vec());
             Self::insert_decorations_into_class_static_block(class, stmts, ctx);
         } else {
+            let address = match ctx.parent() {
+                Ancestor::ExportDefaultDeclarationDeclaration(_)
+                | Ancestor::ExportNamedDeclarationDeclaration(_) => ctx.parent().address(),
+                // `Class` is always stored in a `Box`, so has a stable memory location
+                _ => Address::from_ptr(class),
+            };
+
             decoration_stmts.push(constructor_decoration);
+            self.ctx.statement_injector.insert_many_after(&address, decoration_stmts);
             self.class_decorated_data = Some(ClassDecoratedData {
                 binding: class_binding,
-                alias_binding: class_alias_binding.clone(),
-                decorations: decoration_stmts,
+                // If the class alias has reassigned to `this` in the static block, then
+                // don't assign `class` to the class alias again.
+                //
+                // * class_alias_with_this_assignment is `None`:
+                //   `Class = _Class = class Class {}`
+                // * class_alias_with_this_assignment is `Some`:
+                //   `Class = class Class { static { _Class = this; } }`
+                alias_binding: if class_alias_with_this_assignment.is_none() {
+                    class_alias_binding
+                } else {
+                    None
+                },
             });
         }
 

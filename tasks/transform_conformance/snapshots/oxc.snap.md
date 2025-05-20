@@ -600,7 +600,7 @@ after transform: SymbolId(2): Span { start: 103, end: 106 }
 rebuilt        : SymbolId(3): Span { start: 0, end: 0 }
 Symbol reference IDs mismatch for "Foo":
 after transform: SymbolId(2): [ReferenceId(4), ReferenceId(6), ReferenceId(8)]
-rebuilt        : SymbolId(3): [ReferenceId(5), ReferenceId(9)]
+rebuilt        : SymbolId(3): [ReferenceId(4), ReferenceId(8)]
 Symbol span mismatch for "Foo":
 after transform: SymbolId(3): Span { start: 0, end: 0 }
 rebuilt        : SymbolId(4): Span { start: 103, end: 106 }
@@ -614,7 +614,7 @@ after transform: SymbolId(2): Span { start: 103, end: 106 }
 rebuilt        : SymbolId(3): Span { start: 0, end: 0 }
 Symbol reference IDs mismatch for "Foo":
 after transform: SymbolId(2): [ReferenceId(4), ReferenceId(6), ReferenceId(8), ReferenceId(10)]
-rebuilt        : SymbolId(3): [ReferenceId(4), ReferenceId(6), ReferenceId(10)]
+rebuilt        : SymbolId(3): [ReferenceId(3), ReferenceId(7), ReferenceId(9)]
 Symbol span mismatch for "Foo":
 after transform: SymbolId(3): Span { start: 0, end: 0 }
 rebuilt        : SymbolId(4): Span { start: 103, end: 106 }

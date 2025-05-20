@@ -4,7 +4,7 @@ function Bar() {
     console.log(Bar.name);
   };
 }
-let Foo = _Foo = class Foo {
+let Foo = class Foo {
   static {
     _Foo = this;
   }
