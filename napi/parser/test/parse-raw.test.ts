@@ -128,6 +128,8 @@ describe('edge cases', () => {
     // ECMA stage 3
     'import defer * as ns from "x";',
     'import source src from "x";',
+    'import.defer("x");',
+    'import.source("x");',
     // `StringLiteral`s containing lone surrogates and/or lossy replacement characters
     ';"\\uD800\\uDBFF";',
     ';"�\\u{FFFD}";',

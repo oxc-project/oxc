@@ -910,6 +910,7 @@ function deserializeImportExpression(pos) {
     end: deserializeU32(pos + 4),
     source: deserializeExpression(pos + 8),
     options: deserializeOptionExpression(pos + 24),
+    phase: deserializeOptionImportPhase(pos + 40),
   };
 }
 

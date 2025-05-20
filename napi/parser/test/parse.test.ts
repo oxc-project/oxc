@@ -456,6 +456,62 @@ describe('parse', () => {
           });
         });
       });
+
+      describe('`ImportExpression`', () => {
+        describe('import.defer()', () => {
+          it('ESTree', () => {
+            const ret = parseSync('test.js', 'import.defer("x");');
+            expect(ret.errors.length).toBe(0);
+            expect(ret.program.body.length).toBe(1);
+            // @ts-ignore
+            expect(ret.program.body[0].expression).toEqual({
+              type: 'ImportExpression',
+              start: 0,
+              end: 17,
+              source: { type: 'Literal', start: 13, end: 16, value: 'x', raw: '"x"' },
+              options: null,
+              phase: 'defer',
+            });
+          });
+
+          it.skip('TS-ESTree', () => {
+            const ret = parseSync('test.ts', 'import.defer("x");');
+            expect(ret.errors.length).toBe(0);
+            expect(ret.program.body.length).toBe(1);
+            // @ts-ignore
+            expect(ret.program.body[0].expression).toEqual({
+              // TODO
+            });
+          });
+        });
+
+        describe('import.source()', () => {
+          it('ESTree', () => {
+            const ret = parseSync('test.js', 'import.source("x");');
+            expect(ret.errors.length).toBe(0);
+            expect(ret.program.body.length).toBe(1);
+            // @ts-ignore
+            expect(ret.program.body[0].expression).toEqual({
+              type: 'ImportExpression',
+              start: 0,
+              end: 18,
+              source: { type: 'Literal', start: 14, end: 17, value: 'x', raw: '"x"' },
+              options: null,
+              phase: 'source',
+            });
+          });
+
+          it.skip('TS-ESTree', () => {
+            const ret = parseSync('test.ts', 'import.source("x");');
+            expect(ret.errors.length).toBe(0);
+            expect(ret.program.body.length).toBe(1);
+            // @ts-ignore
+            expect(ret.program.body[0].expression).toEqual({
+              // TODO
+            });
+          });
+        });
+      });
     });
 
     it('lossy replacement character', () => {

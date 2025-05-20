@@ -2389,7 +2389,7 @@ pub struct ImportExpression<'a> {
     pub span: Span,
     pub source: Expression<'a>,
     pub options: Option<Expression<'a>>,
-    #[estree(skip)]
+    #[js_only]
     pub phase: Option<ImportPhase>,
 }
 

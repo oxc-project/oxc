@@ -19,8 +19,7 @@ If you need all ASTs in the same with-TS-properties format, use the `astType: 't
 The only differences between Oxc's AST and ESTree / TS-ESTree are:
 
 - Support for Stage 3 ECMA features [`import defer`](https://github.com/tc39/proposal-defer-import-eval)
-  and [`import source`](https://github.com/tc39/proposal-source-phase-imports) on `ImportDeclaration`
-  (not supported on `ImportExpression` yet).
+  and [`import source`](https://github.com/tc39/proposal-source-phase-imports).
 - Addition of a non-standard `hashbang` field to `Program`.
 
 That aside, the AST should completely align with Acorn's ESTree AST or TS-ESLint's TS-ESTree.
