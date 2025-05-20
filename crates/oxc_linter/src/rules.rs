@@ -354,6 +354,7 @@ mod unicorn {
     pub mod no_for_loop;
     pub mod no_hex_escape;
     pub mod no_instanceof_array;
+    pub mod no_instanceof_builtins;
     pub mod no_invalid_fetch_options;
     pub mod no_invalid_remove_event_listener;
     pub mod no_length_as_slice_end;
@@ -990,6 +991,7 @@ oxc_macros::declare_all_lint_rules! {
     unicorn::explicit_length_check,
     unicorn::filename_case,
     unicorn::new_for_builtins,
+    unicorn::no_instanceof_builtins,
     unicorn::no_array_method_this_argument,
     unicorn::no_unnecessary_array_flat_depth,
     unicorn::no_for_loop,
