@@ -93,7 +93,7 @@ impl Rule for Complexity {
 
         let nodes = ctx.semantic().nodes();
         let complexity = compute_complexity(node, nodes, self.variant);
-        if complexity > self.max {
+        if self.max == 0 || complexity > self.max {
             let name = get_function_name(node);
             ctx.diagnostic(complexity_diagnostic(&name, complexity, self.max, node.span()));
         }
@@ -303,6 +303,7 @@ mod tests {
             ("function nullishAssign(obj) { obj.val ??= 'default'; return obj; }", 1),
             ("function tryCatch() { try { return true; } catch(e) { return false; } }", 1),
             ("function defaultAssignment(b) { const [ c = '' ] = b; }", 0),
+            ("function defaultParameterValue(b = '') { }", 0),
             ("function switchWithCases(val) { switch(val) { case 1: return 'one'; case 2: return 'two'; } }", 1),
             ("function switchWithDefault(val) { switch(val) { case 1: return 'one'; case 2: return 'two'; default: return 'other'; } }", 2),
             ("function logicalAssignment(obj) { obj.val ||= 'default'; return obj; }", 1),
