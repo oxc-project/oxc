@@ -400,6 +400,7 @@ mod unicorn {
     pub mod prefer_dom_node_remove;
     pub mod prefer_dom_node_text_content;
     pub mod prefer_event_target;
+    pub mod prefer_global_this;
     pub mod prefer_includes;
     pub mod prefer_logical_operator_over_ternary;
     pub mod prefer_math_min_max;
@@ -1037,6 +1038,7 @@ oxc_macros::declare_all_lint_rules! {
     unicorn::no_zero_fractions,
     unicorn::number_literal_case,
     unicorn::numeric_separators_style,
+    unicorn::prefer_global_this,
     unicorn::prefer_object_from_entries,
     unicorn::prefer_array_find,
     unicorn::prefer_array_index_of,
