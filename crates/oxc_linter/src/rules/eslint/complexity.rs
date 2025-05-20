@@ -248,7 +248,6 @@ fn is_decision_point(node: &AstNode, _variant: ComplexityVariant) -> bool {
         AstKind::DoWhileStatement(_) => true,
         AstKind::ConditionalExpression(_) => true,
         AstKind::CatchClause(_) => true,
-        AstKind::AssignmentPattern(_) => true,
         AstKind::SwitchStatement(_) => true,
         AstKind::AssignmentExpression(assign_expr) => {
             // If the assignment operator has short-circuiting behavior,
@@ -292,56 +291,25 @@ mod tests {
     fn test_compute_complexity_directly() {
         // Test cases with expected complexity values
         let test_cases = vec![
-            // Basic function
-            ("function simple() { return true; }", 0), 
-            
-            // optional chaining on member expressions (obj?.prop)
-            ("function optChain(obj) { return obj?.prop; }", 0),
-
-            // optional chaining on call expressions (func?.())
-            ("function optionalCall(func) { return func?.(); }", 0),
-            
-            // Function with one if
+            ("function basic() { return true; }", 0),
+            ("function letAssign() { let r = 0.07; }", 0),
+            ("function optChainingOnMemberExpr(obj) { return obj?.prop; }", 0),
+            ("function optionalChaininOnCallExpr(func) { return func?.(); }", 0),
             ("function oneIf(a) { if (a) { return true; } return false; }", 1),
-
-            // Function with one if-else
-            ("function oneIf(a) { if (a) { return true; } else { return false; } }", 2), 
-            
-            // Function with if-else if
-            ("function ifElseIf(a, b) { if (a) { return 1; } else if (b) { return 2; } return 0; }", 2),
-        
-            // Function with ternary
+            ("function oneIfElse(a) { if (a) { return true; } else { return false; } }", 2),
+            ("function oneIfElseIf(a, b) { if (a) { return 1; } else if (b) { return 2; } return 0; }", 2),
             ("function ternary(val) { return val ? 'yes' : 'no'; }", 1),
-
-            // Function with nullish coalescing
             ("function nullishCoalescing(val) { return val ?? 'default'; }", 1),
-
-            // Function with nullish coalescing assignment
             ("function nullishAssign(obj) { obj.val ??= 'default'; return obj; }", 1),
-            
-            // Function with try-catch
             ("function tryCatch() { try { return true; } catch(e) { return false; } }", 1),
-
-            // switch statement
-            ("function switchTest(val) { switch(val) { case 1: return 'one'; case 2: return 'two'; } }", 1),
-
-            // switch statement with default vase
-            ("function switchTest(val) { switch(val) { case 1: return 'one'; case 2: return 'two'; default: return 'other'; } }", 2),                
-            
-            // Function with logical assignment
-            ("function logAssign(obj) { obj.val ||= 'default'; return obj; }", 1),
-
-            // Function with same logical && expression sequence: +1 for if; +1 for all &&
-            ("function logicalTest(a, b, c){ if(a && b && c) {}}", 2),
-
-            // Function with same logical || expression sequence: +1 for if; +1 for all ||
-            ("function logicalTest(a, b, c){ if(a || b || c) {}}", 2),
-
-            // Function with two continuous logical sequences: +1 for if; +1 for all &&; +1 for all ||
-            ("function logicalTest(a, b, c, d, e){ if(a && b && c || d || e) {}}", 3),
-
-            // Function with two mixed logical sequences: +1 for if; +1 for &&; +1 for ||; +1 for && (new)
-            ("function logicalTest(a, b, c, d, e){ if(a && b || c && d) {}}", 4),            
+            ("function defaultAssignment(b) { const [ c = '' ] = b; }", 0),
+            ("function switchWithCases(val) { switch(val) { case 1: return 'one'; case 2: return 'two'; } }", 1),
+            ("function switchWithDefault(val) { switch(val) { case 1: return 'one'; case 2: return 'two'; default: return 'other'; } }", 2),
+            ("function logicalAssignment(obj) { obj.val ||= 'default'; return obj; }", 1),
+            ("function sameLogicalAndSequence(a, b, c){ if(a && b && c) {}}", 2), // +1 for if; +1 for all &&
+            ("function sameLogicalOrSequence(a, b, c){ if(a || b || c) {}}", 2), // +1 for if; +1 for all ||
+            ("function twoRepeatingLogicalSequences(a, b, c, d, e){ if(a && b && c || d || e) {}}", 3), // +1 for if; +1 for all &&; +1 for all ||
+            ("function twoMixedLogicalSequences(a, b, c, d, e){ if(a && b || c && d) {}}", 4), // +1 for if; +1 for &&; +1 for ||; +1 for && (new)
         ];
         
         for (js, expected) in &test_cases {
