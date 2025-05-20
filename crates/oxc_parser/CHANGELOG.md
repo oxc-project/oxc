@@ -4,6 +4,28 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.71.0] - 2025-05-20
+
+- 1a4fec0 codegen: [**BREAKING**] A legal comment can also be a jsdoc comment (#11158) (Boshen)
+
+### Bug Fixes
+
+- 83e4f9b parser: Fix reading `Token` flags on big-endian systems (#11153) (overlookmotel)
+- ef72143 parser: Parse index signature with multiple parameter (#11068) (Boshen)
+
+### Performance
+
+- 6571b9b ast: Use bitflags for storing comment newline state (#11096) (camchenry)
+- b9e51e2 ast: Reduce size of `Comment` to 16 bytes (#11062) (camchenry)
+- 0f9b43e lexer: Tighten search loops (#11118) (overlookmotel)
+- 261e78b lexer: Use `offset_from` and `offset_from_unsigned` for pointer comparisons (#11116) (overlookmotel)
+
+### Refactor
+
+- 58c7de6 ast: Rename `CommentNewlines` fields (#11151) (overlookmotel)
+- 7b9ab22 parser: Use bump instead of eat if ignoring return value (#11137) (Ulrich Stark)
+- bb8bde3 various: Update macros to use `expr` fragment specifier (#11113) (overlookmotel)
+
 ## [0.70.0] - 2025-05-15
 
 ### Bug Fixes

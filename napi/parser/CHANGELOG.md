@@ -4,6 +4,64 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.71.0] - 2025-05-20
+
+### Features
+
+- c60382d allocator/vec2: Change `len` and `cap` fields from `usize` to `u32` (#10884) (Dunqing)
+- d47b305 ast/estree: Add `phase` field to `ImportExpression` in ESTree AST (#11165) (overlookmotel)
+- 1bc8d29 ast/estree: Add `phase` field to `ImportDeclaration` in ESTree AST (#11157) (overlookmotel)
+- 9e90e00 ast_tools: Introduce `#[js_only]` attr for struct fields and converters (#11160) (overlookmotel)
+- d67c9e5 napi: Bump napi to beta (#11159) (Boshen)
+
+### Bug Fixes
+
+- 3795eb6 ci: Use jsdelivr for all benchmark files (#11108) (Boshen)
+- 963167d napi: Fix cfg feature on global_allocator (Boshen)
+
+### Performance
+
+- 5dcd0f1 allocator/vec2: Reorder `RawVec` fields (#11050) (Dunqing)
+- 2b0a69f ast: Re-order struct fields to reduce padding (#11056) (overlookmotel)
+- b9e51e2 ast: Reduce size of `Comment` to 16 bytes (#11062) (camchenry)
+
+### Documentation
+
+- e92bf1f napi: Update docs for `oxc-parser` (#11156) (overlookmotel)
+
+### Refactor
+
+- 9775585 regular_expression: Refactor `regexp-modifiers` support (#11142) (Yuji Sugiura)
+
+## [0.71.0] - 2025-05-20
+
+### Features
+
+- c60382d allocator/vec2: Change `len` and `cap` fields from `usize` to `u32` (#10884) (Dunqing)
+- d47b305 ast/estree: Add `phase` field to `ImportExpression` in ESTree AST (#11165) (overlookmotel)
+- 1bc8d29 ast/estree: Add `phase` field to `ImportDeclaration` in ESTree AST (#11157) (overlookmotel)
+- 9e90e00 ast_tools: Introduce `#[js_only]` attr for struct fields and converters (#11160) (overlookmotel)
+- d67c9e5 napi: Bump napi to beta (#11159) (Boshen)
+
+### Bug Fixes
+
+- 3795eb6 ci: Use jsdelivr for all benchmark files (#11108) (Boshen)
+- 963167d napi: Fix cfg feature on global_allocator (Boshen)
+
+### Performance
+
+- 5dcd0f1 allocator/vec2: Reorder `RawVec` fields (#11050) (Dunqing)
+- 2b0a69f ast: Re-order struct fields to reduce padding (#11056) (overlookmotel)
+- b9e51e2 ast: Reduce size of `Comment` to 16 bytes (#11062) (camchenry)
+
+### Documentation
+
+- e92bf1f napi: Update docs for `oxc-parser` (#11156) (overlookmotel)
+
+### Refactor
+
+- 9775585 regular_expression: Refactor `regexp-modifiers` support (#11142) (Yuji Sugiura)
+
 ## [0.70.0] - 2025-05-15
 
 ### Features

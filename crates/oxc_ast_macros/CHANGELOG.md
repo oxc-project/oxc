@@ -4,6 +4,21 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.71.0] - 2025-05-20
+
+### Features
+
+- 9e90e00 ast_tools: Introduce `#[js_only]` attr for struct fields and converters (#11160) (overlookmotel)
+
+### Bug Fixes
+
+- ec96e76 ast_macros: Fix missing `syn` feature "clone-impls" (#11181) (Boshen)
+
+### Performance
+
+- 6571b9b ast: Use bitflags for storing comment newline state (#11096) (camchenry)
+- 2b0a69f ast: Re-order struct fields to reduce padding (#11056) (overlookmotel)
+
 ## [0.70.0] - 2025-05-15
 
 ### Refactor
