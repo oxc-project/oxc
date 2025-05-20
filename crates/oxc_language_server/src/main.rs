@@ -203,6 +203,8 @@ impl LanguageServer for Backend {
         let workers = self.workspace_workers.lock().await;
         let new_diagnostics: papaya::HashMap<String, Vec<Diagnostic>, FxBuildHasher> =
             ConcurrentHashMap::default();
+        let mut removing_registrations = vec![];
+        let mut adding_registrations = vec![];
 
         // new valid configuration is passed
         let options = serde_json::from_value::<Vec<WorkspaceOption>>(params.settings.clone())
@@ -233,16 +235,31 @@ impl LanguageServer for Backend {
                     continue;
                 };
 
-                let Some(diagnostics) = worker.did_change_configuration(&option.options).await
-                else {
-                    continue;
-                };
+                let (diagnostics, watcher) = worker.did_change_configuration(&option.options).await;
 
-                for (uri, reports) in &diagnostics.pin() {
-                    new_diagnostics.pin().insert(
-                        uri.clone(),
-                        reports.iter().map(|d| d.diagnostic.clone()).collect(),
-                    );
+                if let Some(diagnostics) = diagnostics {
+                    for (uri, reports) in &diagnostics.pin() {
+                        new_diagnostics.pin().insert(
+                            uri.clone(),
+                            reports.iter().map(|d| d.diagnostic.clone()).collect(),
+                        );
+                    }
+                }
+
+                if let Some(watcher) = watcher {
+                    // remove the old watcher
+                    removing_registrations.push(Unregistration {
+                        id: format!("watcher-{}", worker.get_root_uri().as_str()),
+                        method: "workspace/didChangeWatchedFiles".to_string(),
+                    });
+                    // add the new watcher
+                    adding_registrations.push(Registration {
+                        id: format!("watcher-{}", worker.get_root_uri().as_str()),
+                        method: "workspace/didChangeWatchedFiles".to_string(),
+                        register_options: Some(json!(DidChangeWatchedFilesRegistrationOptions {
+                            watchers: vec![watcher]
+                        })),
+                    });
                 }
             }
         // else check if the client support workspace configuration requests
@@ -263,15 +280,32 @@ impl LanguageServer for Backend {
                 let Some(config) = &configs[index] else {
                     continue;
                 };
-                let Some(diagnostics) = worker.did_change_configuration(config).await else {
-                    continue;
-                };
 
-                for (uri, reports) in &diagnostics.pin() {
-                    new_diagnostics.pin().insert(
-                        uri.clone(),
-                        reports.iter().map(|d| d.diagnostic.clone()).collect(),
-                    );
+                let (diagnostics, watcher) = worker.did_change_configuration(config).await;
+
+                if let Some(diagnostics) = diagnostics {
+                    for (uri, reports) in &diagnostics.pin() {
+                        new_diagnostics.pin().insert(
+                            uri.clone(),
+                            reports.iter().map(|d| d.diagnostic.clone()).collect(),
+                        );
+                    }
+                }
+
+                if let Some(watcher) = watcher {
+                    // remove the old watcher
+                    removing_registrations.push(Unregistration {
+                        id: format!("watcher-{}", worker.get_root_uri().as_str()),
+                        method: "workspace/didChangeWatchedFiles".to_string(),
+                    });
+                    // add the new watcher
+                    adding_registrations.push(Registration {
+                        id: format!("watcher-{}", worker.get_root_uri().as_str()),
+                        method: "workspace/didChangeWatchedFiles".to_string(),
+                        register_options: Some(json!(DidChangeWatchedFilesRegistrationOptions {
+                            watchers: vec![watcher]
+                        })),
+                    });
                 }
             }
         } else {
@@ -281,17 +315,28 @@ impl LanguageServer for Backend {
             return;
         }
 
-        if new_diagnostics.is_empty() {
-            return;
+        if !new_diagnostics.is_empty() {
+            let x = &new_diagnostics
+                .pin()
+                .into_iter()
+                .map(|(key, value)| (key.clone(), value.clone()))
+                .collect::<Vec<_>>();
+
+            self.publish_all_diagnostics(x).await;
         }
 
-        let x = &new_diagnostics
-            .pin()
-            .into_iter()
-            .map(|(key, value)| (key.clone(), value.clone()))
-            .collect::<Vec<_>>();
-
-        self.publish_all_diagnostics(x).await;
+        if self.capabilities.get().is_some_and(|capabilities| capabilities.dynamic_watchers) {
+            if !removing_registrations.is_empty() {
+                if let Err(err) = self.client.unregister_capability(removing_registrations).await {
+                    warn!("sending unregisterCapability.didChangeWatchedFiles failed: {err}");
+                }
+            }
+            if !adding_registrations.is_empty() {
+                if let Err(err) = self.client.register_capability(adding_registrations).await {
+                    warn!("sending registerCapability.didChangeWatchedFiles failed: {err}");
+                }
+            }
+        }
     }
 
     async fn did_change_watched_files(&self, params: DidChangeWatchedFilesParams) {

@@ -258,12 +258,7 @@ export async function activate(context: ExtensionContext) {
     // update the initializationOptions for a possible restart
     client.clientOptions.initializationOptions = this.languageServerConfig;
 
-    if (configService.effectsWorkspaceConfigPathChange(event)) {
-      // Server does not support currently adding/removing watchers on the fly
-      if (client.isRunning()) {
-        await client.restart();
-      }
-    } else if (configService.effectsWorkspaceConfigChange(event) && client.isRunning()) {
+    if (configService.effectsWorkspaceConfigChange(event) && client.isRunning()) {
       await client.sendNotification(
         'workspace/didChangeConfiguration',
         {

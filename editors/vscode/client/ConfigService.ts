@@ -59,15 +59,6 @@ export class ConfigService implements IDisposable {
     return false;
   }
 
-  public effectsWorkspaceConfigPathChange(event: ConfigurationChangeEvent): boolean {
-    for (const workspaceConfig of this.workspaceConfigs.values()) {
-      if (workspaceConfig.effectsConfigPathChange(event)) {
-        return true;
-      }
-    }
-    return false;
-  }
-
   private async onVscodeConfigChange(event: ConfigurationChangeEvent): Promise<void> {
     let isConfigChanged = false;
 

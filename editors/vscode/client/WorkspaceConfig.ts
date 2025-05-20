@@ -69,10 +69,6 @@ export class WorkspaceConfig {
     return false;
   }
 
-  public effectsConfigPathChange(event: ConfigurationChangeEvent): boolean {
-    return event.affectsConfiguration(`${ConfigService.namespace}.configPath`, this.workspace);
-  }
-
   public get isCustomConfigPath(): boolean {
     return this.configPath !== null && this.configPath !== oxlintConfigFileName;
   }

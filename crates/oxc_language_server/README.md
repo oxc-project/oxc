@@ -52,7 +52,8 @@ The client can pass the workspace options like following:
 
 ### [initialized](https://microsoft.github.io/language-server-protocol/specification#initialized)
 
-When the client did not pass the workspace configuration in [initialize](#initialize), the server will request the configuration for every workspace with [workspace/configuration](#workspace/configuration).
+When the client did not pass the workspace configuration in [initialize](#initialize), the server will request the configuration for every workspace with [workspace/configuration](#workspaceconfiguration).
+The server will tell the client with [client/registerCapability](#clientregistercapability) to watch for `.oxlintrc.json` files or a custom `oxc.configPath`.
 
 ### [shutdown](https://microsoft.github.io/language-server-protocol/specification#shutdown)
 
@@ -80,6 +81,10 @@ The client can pass the workspace options like following:
 When the client does not pass workspace options, the server will request them with [workspace/configuration](#workspace/configuration).
 The server will revalidate or reset the diagnostics for all open files and send one or more [textDocument/publishDiagnostics](#textdocumentpublishdiagnostics) requests to the client.
 
+When changing the `oxc.configPath` settings:
+The server will tell clients with [client/registerCapability](#clientregistercapability) to watch for `.oxlintrc.json` files or a custom `oxc.configPath`.
+The server will tell clients with [client/unregisterCapability](#clientunregistercapability) to stop watching for `.oxlintrc.json` files or a custom `oxc.configPath`.
+
 #### [workspace/didChangeWatchedFiles](https://microsoft.github.io/language-server-protocol/specification#workspace_didChangeWatchedFiles)
 
 The server expects this request when one oxlint configuration is changed, added or deleted.
@@ -91,6 +96,8 @@ Note: When nested configuration is active, the client should send all `.oxlintrc
 
 The server expects this request when adding or removing workspace folders.
 The server will request the specific workspace configuration, if the client supports it.
+The server will tell clients with [client/registerCapability](#clientregistercapability) to watch for `.oxlintrc.json` files or a custom `oxc.configPath`.
+The server will tell clients with [client/unregisterCapability](#clientunregistercapability) to stop watching for `.oxlintrc.json` files or a custom `oxc.configPath`.
 
 #### [workspace/executeCommand](https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#workspace_executeCommand)
 
@@ -126,7 +133,17 @@ Returns a list of [CodeAction](https://microsoft.github.io/language-server-proto
 
 Returns a [PublishDiagnostic object](https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#publishDiagnosticsParams)
 
-# Optional LSP Specifications from Client
+## Optional LSP Specifications from Client
+
+### Client
+
+#### [client/registerCapability](https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#client_registerCapability)
+
+The server will send this request to watch for specific files. The method `workspace/didChangeWatchedFiles` will be used with custom `registerOptions`.
+
+#### [client/unregisterCapability](https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#client_unregisterCapability)
+
+The server will send this request to stop watching for specific files. The `id` will match from [client/registerCapability](#clientregistercapability).
 
 ### Workspace
 

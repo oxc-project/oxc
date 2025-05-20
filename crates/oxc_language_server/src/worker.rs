@@ -246,7 +246,7 @@ impl WorkspaceWorker {
     pub async fn did_change_configuration(
         &self,
         changed_options: &Options,
-    ) -> Option<ConcurrentHashMap<String, Vec<DiagnosticReport>>> {
+    ) -> (Option<ConcurrentHashMap<String, Vec<DiagnosticReport>>>, Option<FileSystemWatcher>) {
         let current_option = &self.options.lock().await.clone();
 
         debug!(
@@ -261,10 +261,28 @@ impl WorkspaceWorker {
 
         if Self::needs_linter_restart(current_option, changed_options) {
             self.refresh_server_linter().await;
-            return Some(self.revalidate_diagnostics().await);
+
+            if current_option.config_path != changed_options.config_path {
+                return (
+                    Some(self.revalidate_diagnostics().await),
+                    Some(FileSystemWatcher {
+                        glob_pattern: GlobPattern::Relative(RelativePattern {
+                            base_uri: OneOf::Right(self.root_uri.clone()),
+                            pattern: changed_options
+                                .config_path
+                                .as_ref()
+                                .unwrap_or(&"**/.oxlintrc.json".to_string())
+                                .to_owned(),
+                        }),
+                        kind: Some(WatchKind::all()), // created, deleted, changed
+                    }),
+                );
+            }
+
+            return (Some(self.revalidate_diagnostics().await), None);
         }
 
-        None
+        (None, None)
     }
 }
 
