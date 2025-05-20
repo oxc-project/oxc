@@ -2363,14 +2363,15 @@ impl<'a, T: 'a + Copy> Extend<&'a T> for Vec<'_, T> {
     }
 }
 
+////////////////////////////////////////////////////////////////////////////////
+// Comparison
+////////////////////////////////////////////////////////////////////////////////
+
 macro_rules! __impl_slice_eq1 {
-    ($Lhs: ty, $Rhs: ty) => {
-        __impl_slice_eq1! { $Lhs, $Rhs, Sized }
-    };
-    ($Lhs: ty, $Rhs: ty, $Bound: ident) => {
-        impl<'a, 'b, A: $Bound, B> PartialEq<$Rhs> for $Lhs
+    ($Rhs: ty) => {
+        impl<T, U> PartialEq<$Rhs> for Vec<'_, T>
         where
-            A: PartialEq<B>,
+            T: PartialEq<U>,
         {
             #[inline]
             fn eq(&self, other: &$Rhs) -> bool {
@@ -2380,16 +2381,15 @@ macro_rules! __impl_slice_eq1 {
     };
 }
 
-__impl_slice_eq1! { Vec<'a, A>, Vec<'b, B> }
-__impl_slice_eq1! { Vec<'a, A>, &'b [B] }
-__impl_slice_eq1! { Vec<'a, A>, &'b mut [B] }
-// __impl_slice_eq1! { Cow<'a, [A]>, Vec<'b, B>, Clone }
+__impl_slice_eq1! { Vec<'_, U> }
+__impl_slice_eq1! { &[U] }
+__impl_slice_eq1! { &mut [U] }
 
 macro_rules! __impl_slice_eq1_array {
-    ($Lhs: ty, $Rhs: ty) => {
-        impl<'a, 'b, A, B, const N: usize> PartialEq<$Rhs> for $Lhs
+    ($Rhs: ty) => {
+        impl<T, U, const N: usize> PartialEq<$Rhs> for Vec<'_, T>
         where
-            A: PartialEq<B>,
+            T: PartialEq<U>,
         {
             #[inline]
             fn eq(&self, other: &$Rhs) -> bool {
@@ -2399,9 +2399,9 @@ macro_rules! __impl_slice_eq1_array {
     };
 }
 
-__impl_slice_eq1_array! { Vec<'a, A>, [B; N] }
-__impl_slice_eq1_array! { Vec<'a, A>, &'b [B; N] }
-__impl_slice_eq1_array! { Vec<'a, A>, &'b mut [B; N] }
+__impl_slice_eq1_array! { [U; N] }
+__impl_slice_eq1_array! { &[U; N] }
+__impl_slice_eq1_array! { &mut [U; N] }
 
 /// Implements comparison of vectors, lexicographically.
 impl<'a, T: 'a + PartialOrd> PartialOrd for Vec<'a, T> {
@@ -2420,6 +2420,10 @@ impl<'a, T: 'a + Ord> Ord for Vec<'a, T> {
         Ord::cmp(&**self, &**other)
     }
 }
+
+////////////////////////////////////////////////////////////////////////////////
+// Misc
+////////////////////////////////////////////////////////////////////////////////
 
 impl<'a, T: 'a + fmt::Debug> fmt::Debug for Vec<'a, T> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
