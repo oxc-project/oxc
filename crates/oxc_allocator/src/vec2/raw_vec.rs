@@ -66,7 +66,7 @@ use bumpalo::collections::CollectionAllocErr::{self, AllocErr, CapacityOverflow}
 #[repr(C)]
 pub struct RawVec<'a, T> {
     ptr: NonNull<T>,
-    pub(super) len: u32,
+    len: u32,
     cap: u32,
     alloc: &'a Bump,
 }
@@ -142,28 +142,49 @@ impl<'a, T> RawVec<'a, T> {
         self.ptr.as_ptr()
     }
 
-    /// Gets the usize number of elements.
+    /// Gets the number of elements as `u32`.
+    #[inline(always)]
+    pub fn len_u32(&self) -> u32 {
+        self.len
+    }
+
+    /// Gets the number of elements as `usize`.
+    #[inline(always)]
     pub fn len_usize(&self) -> usize {
-        // `self.len as usize` is safe because it's is `u32` so it must be
-        // less than `usize::MAX`.
         self.len as usize
     }
 
-    /// Gets the capacity of the allocation.
+    /// Set the number of elements.
+    #[inline(always)]
+    pub fn set_len(&mut self, new_len: u32) {
+        self.len = new_len;
+    }
+
+    /// Increase the number of elements by `increment`.
+    #[inline(always)]
+    pub fn increase_len(&mut self, increment: u32) {
+        self.len += increment;
+    }
+
+    /// Decrease the number of elements by `decrement`.
+    #[inline(always)]
+    pub fn decrease_len(&mut self, decrement: u32) {
+        self.len -= decrement;
+    }
+
+    /// Gets the capacity of the allocation as `u32`.
     ///
     /// This will always be `u32::MAX` if `T` is zero-sized.
     #[inline(always)]
-    pub fn cap(&self) -> u32 {
+    pub fn capacity_u32(&self) -> u32 {
         if mem::size_of::<T>() == 0 { !0 } else { self.cap }
     }
 
-    /// Gets the usize capacity of the allocation.
+    /// Gets the capacity of the allocation as `usize`.
     ///
     /// This will always be `usize::MAX` if `T` is zero-sized.
     #[inline(always)]
-    pub fn cap_usize(&self) -> usize {
-        // `self.cap as usize` is safe because it's is `u32` so it must be
-        // less than `usize::MAX`.
+    pub fn capacity_usize(&self) -> usize {
         if mem::size_of::<T>() == 0 { !0 } else { self.cap as usize }
     }
 
@@ -618,7 +639,7 @@ impl<T> RawVec<'_, T> {
         // `self.cap().wrapping_sub(len) as usize` is safe because
         // `self.cap()` is `u32` and `len` is `u32`, so the result
         // is guaranteed to be less than `usize::MAX`.
-        additional > self.cap().wrapping_sub(len) as usize
+        additional > self.capacity_u32().wrapping_sub(len) as usize
     }
 
     /// Helper method to reserve additional space, reallocating the backing memory.
@@ -663,7 +684,7 @@ impl<T> RawVec<'_, T> {
 
             // This guarantees exponential growth. The doubling cannot overflow
             // because `cap <= isize::MAX` and the type of `cap` is `u32`.
-            let cap = cmp::max((self.cap() as usize) * 2, required_cap);
+            let cap = cmp::max((self.capacity_u32() as usize) * 2, required_cap);
 
             // The following commented-out code is copied from the standard library.
             // We don't use it because this would cause notable performance regression
@@ -808,29 +829,29 @@ mod tests {
             let mut v: RawVec<u32> = RawVec::new_in(&arena);
             // First `reserve` allocates like `reserve_exact`
             v.reserve(0, 9);
-            assert_eq!(9, v.cap());
+            assert_eq!(9, v.capacity_u32());
         }
 
         {
             let mut v: RawVec<u32> = RawVec::new_in(&arena);
             v.reserve(0, 7);
-            assert_eq!(7, v.cap());
+            assert_eq!(7, v.capacity_u32());
             // 97 if more than double of 7, so `reserve` should work
             // like `reserve_exact`.
             v.reserve(7, 90);
-            assert_eq!(97, v.cap());
+            assert_eq!(97, v.capacity_u32());
         }
 
         {
             let mut v: RawVec<u32> = RawVec::new_in(&arena);
             v.reserve(0, 12);
-            assert_eq!(12, v.cap());
+            assert_eq!(12, v.capacity_u32());
             v.reserve(12, 3);
             // 3 is less than half of 12, so `reserve` must grow
             // exponentially. At the time of writing this test grow
             // factor is 2, so new capacity is 24, however, grow factor
             // of 1.5 is OK too. Hence `>= 18` in assert.
-            assert!(v.cap() >= 12 + 12 / 2);
+            assert!(v.capacity_u32() >= 12 + 12 / 2);
         }
     }
 }

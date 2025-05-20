@@ -706,6 +706,18 @@ impl<'a, T: 'a> Vec<'a, T> {
         self.buf.len_usize()
     }
 
+    /// Get number of elements in the vector as a `usize`.
+    #[inline]
+    fn len_usize(&self) -> usize {
+        self.buf.len_usize()
+    }
+
+    /// Get number of elements in the vector as a `u32`.
+    #[inline]
+    fn len_u32(&self) -> u32 {
+        self.buf.len_u32()
+    }
+
     /// Returns the number of elements the vector can hold without reallocating.
     ///
     /// # Examples
@@ -719,7 +731,19 @@ impl<'a, T: 'a> Vec<'a, T> {
     /// ```
     #[inline]
     pub fn capacity(&self) -> usize {
-        self.buf.cap_usize()
+        self.buf.capacity_usize()
+    }
+
+    /// Get capacity of the vector as a `usize`.
+    #[inline]
+    fn capacity_usize(&self) -> usize {
+        self.buf.capacity_usize()
+    }
+
+    /// Get capacity of the vector as a `u32`.
+    #[inline]
+    fn capacity_u32(&self) -> u32 {
+        self.buf.capacity_u32()
     }
 
     /// Sets the length of a vector.
@@ -798,7 +822,7 @@ impl<'a, T: 'a> Vec<'a, T> {
         // Caller guarantees `new_len <= u32::MAX`, so `new_len as u32` cannot truncate `new_len`
         #[expect(clippy::cast_possible_truncation)]
         let new_len = new_len as u32;
-        self.buf.len = new_len;
+        self.buf.set_len(new_len);
     }
 
     /// Returns a shared reference to the allocator backing this `Vec`.
@@ -842,7 +866,7 @@ impl<'a, T: 'a> Vec<'a, T> {
     /// assert!(vec.capacity() >= 11);
     /// ```
     pub fn reserve(&mut self, additional: usize) {
-        self.buf.reserve(self.buf.len, additional);
+        self.buf.reserve(self.len_u32(), additional);
     }
 
     /// Reserves the minimum capacity for exactly `additional` more elements to
@@ -869,7 +893,7 @@ impl<'a, T: 'a> Vec<'a, T> {
     /// assert!(vec.capacity() >= 11);
     /// ```
     pub fn reserve_exact(&mut self, additional: usize) {
-        self.buf.reserve_exact(self.buf.len, additional);
+        self.buf.reserve_exact(self.len_u32(), additional);
     }
 
     /// Attempts to reserve capacity for at least `additional` more elements to be inserted
@@ -893,7 +917,7 @@ impl<'a, T: 'a> Vec<'a, T> {
     /// assert!(vec.capacity() >= 11);
     /// ```
     pub fn try_reserve(&mut self, additional: usize) -> Result<(), CollectionAllocErr> {
-        self.buf.try_reserve(self.buf.len, additional)
+        self.buf.try_reserve(self.len_u32(), additional)
     }
 
     /// Attempts to reserve the minimum capacity for exactly `additional` more elements to
@@ -920,7 +944,7 @@ impl<'a, T: 'a> Vec<'a, T> {
     /// assert!(vec.capacity() >= 11);
     /// ```
     pub fn try_reserve_exact(&mut self, additional: usize) -> Result<(), CollectionAllocErr> {
-        self.buf.try_reserve_exact(self.buf.len, additional)
+        self.buf.try_reserve_exact(self.len_u32(), additional)
     }
 
     /// Shrinks the capacity of the vector as much as possible.
@@ -942,8 +966,8 @@ impl<'a, T: 'a> Vec<'a, T> {
     /// assert!(vec.capacity() >= 3);
     /// ```
     pub fn shrink_to_fit(&mut self) {
-        if self.buf.cap() != self.buf.len {
-            self.buf.shrink_to_fit(self.buf.len);
+        if self.len_u32() != self.capacity_u32() {
+            self.buf.shrink_to_fit(self.len_u32());
         }
     }
 
@@ -963,7 +987,7 @@ impl<'a, T: 'a> Vec<'a, T> {
     pub fn into_bump_slice(self) -> &'a [T] {
         unsafe {
             let ptr = self.as_ptr();
-            let len = self.len();
+            let len = self.len_usize();
             // Don't need `mem::forget(self)` here, because `Vec` does not implement `Drop`.
             slice::from_raw_parts(ptr, len)
         }
@@ -988,7 +1012,7 @@ impl<'a, T: 'a> Vec<'a, T> {
     /// ```
     pub fn into_bump_slice_mut(mut self) -> &'a mut [T] {
         let ptr = self.as_mut_ptr();
-        let len = self.len();
+        let len = self.len_usize();
         // Don't need `mem::forget(self)` here, because `Vec` does not implement `Drop`.
 
         unsafe { slice::from_raw_parts_mut(ptr, len) }
@@ -1049,7 +1073,7 @@ impl<'a, T: 'a> Vec<'a, T> {
     /// [`clear`]: #method.clear
     /// [`drain`]: #method.drain
     pub fn truncate(&mut self, len: usize) {
-        let current_len = self.buf.len_usize();
+        let current_len = self.len_usize();
         if len < current_len {
             // SAFETY: `len` is less than current len, so cannot be greater than `u32::MAX`,
             // and cannot be greater than `self.capacity()`.
@@ -1214,8 +1238,8 @@ impl<'a, T: 'a> Vec<'a, T> {
             // bounds check on hole succeeds there must be a last element (which
             // can be self[index] itself).
             let hole: *mut T = &mut self[index];
-            let last = ptr::read(self.get_unchecked(self.buf.len_usize() - 1));
-            self.buf.len -= 1;
+            let last = ptr::read(self.get_unchecked(self.len_usize() - 1));
+            self.buf.decrease_len(1);
             ptr::replace(hole, last)
         }
     }
@@ -1241,11 +1265,11 @@ impl<'a, T: 'a> Vec<'a, T> {
     /// assert_eq!(vec, [1, 4, 2, 3, 5]);
     /// ```
     pub fn insert(&mut self, index: usize, element: T) {
-        let len = self.buf.len_usize();
+        let len = self.len_usize();
         assert!(index <= len);
 
         // space for the new element
-        if self.buf.len == self.buf.cap() {
+        if self.len_u32() == self.capacity_u32() {
             self.buf.grow_one();
         }
 
@@ -1261,7 +1285,7 @@ impl<'a, T: 'a> Vec<'a, T> {
                 // element.
                 ptr::write(p, element);
             }
-            self.buf.len += 1;
+            self.buf.increase_len(1);
         }
     }
 
@@ -1284,7 +1308,7 @@ impl<'a, T: 'a> Vec<'a, T> {
     /// assert_eq!(v, [1, 3]);
     /// ```
     pub fn remove(&mut self, index: usize) -> T {
-        let len = self.len();
+        let len = self.len_usize();
         assert!(index < len);
         unsafe {
             // infallible
@@ -1365,7 +1389,7 @@ impl<'a, T: 'a> Vec<'a, T> {
     where
         F: FnMut(&mut T) -> bool,
     {
-        let original_len = self.len();
+        let original_len = self.len_usize();
 
         if original_len == 0 {
             // Empty case: explicit return allows better optimization, vs letting compiler infer it
@@ -1482,7 +1506,7 @@ impl<'a, T: 'a> Vec<'a, T> {
     where
         F: FnMut(&mut T) -> bool,
     {
-        let old_len = self.len();
+        let old_len = self.len_usize();
 
         // Guard against us getting leaked (leak amplification)
         unsafe {
@@ -1573,13 +1597,13 @@ impl<'a, T: 'a> Vec<'a, T> {
     pub fn push(&mut self, value: T) {
         // This will panic or abort if we would allocate > isize::MAX bytes
         // or if the length increment would overflow for zero-sized types.
-        if self.buf.len == self.buf.cap() {
+        if self.len_u32() == self.capacity_u32() {
             self.buf.grow_one();
         }
         unsafe {
-            let end = self.buf.ptr().add(self.buf.len_usize());
+            let end = self.buf.ptr().add(self.len_usize());
             ptr::write(end, value);
-            self.buf.len += 1;
+            self.buf.increase_len(1);
         }
     }
 
@@ -1601,12 +1625,12 @@ impl<'a, T: 'a> Vec<'a, T> {
     /// ```
     #[inline]
     pub fn pop(&mut self) -> Option<T> {
-        if self.buf.len == 0 {
+        if self.len_u32() == 0 {
             None
         } else {
             unsafe {
-                self.buf.len -= 1;
-                Some(ptr::read(self.as_ptr().add(self.len())))
+                self.buf.decrease_len(1);
+                Some(ptr::read(self.as_ptr().add(self.len_usize())))
             }
         }
     }
@@ -1654,7 +1678,7 @@ impl<'a, T: 'a> Vec<'a, T> {
         #[allow(clippy::needless_borrow, clippy::allow_attributes)]
         let count = (&*other).len();
         self.reserve(count);
-        let len = self.len();
+        let len = self.len_usize();
         ptr::copy_nonoverlapping(other as *const T, self.as_mut_ptr().add(len), count);
         // `count` cannot be `> u32::MAX`, so `count as u32` cannot truncate `count`.
         // `self.buf.len + count` cannot be `> u32::MAX`.
@@ -1662,7 +1686,7 @@ impl<'a, T: 'a> Vec<'a, T> {
         // So this addition cannot wrap around.
         #[expect(clippy::cast_possible_truncation)]
         let count = count as u32;
-        self.buf.len += count;
+        self.buf.increase_len(count);
     }
 
     /// Creates a draining iterator that removes the specified range in the vector
@@ -1712,7 +1736,7 @@ impl<'a, T: 'a> Vec<'a, T> {
         // When finished, remaining tail of the vec is copied back to cover
         // the hole, and the vector length is restored to the new length.
         //
-        let len = self.len();
+        let len = self.len_usize();
         let start = match range.start_bound() {
             Included(&n) => n,
             Excluded(&n) => n + 1,
@@ -1780,7 +1804,7 @@ impl<'a, T: 'a> Vec<'a, T> {
     /// assert!(!v.is_empty());
     /// ```
     pub fn is_empty(&self) -> bool {
-        self.len() == 0
+        self.len_u32() == 0
     }
 
     /// Splits the collection into two at the given index.
@@ -1808,9 +1832,9 @@ impl<'a, T: 'a> Vec<'a, T> {
     /// ```
     #[inline]
     pub fn split_off(&mut self, at: usize) -> Self {
-        assert!(at <= self.len(), "`at` out of bounds");
+        assert!(at <= self.len_usize(), "`at` out of bounds");
 
-        let other_len = self.buf.len_usize() - at;
+        let other_len = self.len_usize() - at;
         let mut other = Vec::with_capacity_in(other_len, self.buf.bump());
 
         // Unsafely `set_len` and copy items to `other`.
@@ -1818,7 +1842,7 @@ impl<'a, T: 'a> Vec<'a, T> {
             self.set_len(at);
             other.set_len(other_len);
 
-            ptr::copy_nonoverlapping(self.as_ptr().add(at), other.as_mut_ptr(), other.len());
+            ptr::copy_nonoverlapping(self.as_ptr().add(at), other.as_mut_ptr(), other.len_usize());
         }
         other
     }
@@ -1889,7 +1913,7 @@ impl<'a, T: 'a + Clone> Vec<'a, T> {
     /// [`Default`]: https://doc.rust-lang.org/std/default/trait.Default.html
     /// [`resize_with`]: #method.resize_with
     pub fn resize(&mut self, new_len: usize, value: T) {
-        let len = self.len();
+        let len = self.len_usize();
 
         if new_len > len {
             self.extend_with(new_len - len, ExtendElement(value))
@@ -1935,8 +1959,8 @@ impl<'a, T: 'a + Copy> Vec<'a, T> {
     ///         capacity to store `other.len()` more items.
     ///       * guaranteeing that `self` and `other` do not overlap.
     unsafe fn extend_from_slice_copy_unchecked(&mut self, other: &[T]) {
-        let old_len = self.len();
-        debug_assert!(old_len + other.len() <= self.capacity());
+        let old_len = self.len_usize();
+        debug_assert!(old_len + other.len() <= self.capacity_usize());
 
         // SAFETY:
         // * `src` is valid for reads of `other.len()` values by virtue of being a `&[T]`.
@@ -2078,7 +2102,7 @@ impl<'a, T: 'a> Vec<'a, T> {
         // so they get dropped when the `Vec` is dropped.
         // But our `Vec` requires that `T` is not `Drop`, so we don't need to worry about that.
         unsafe {
-            let mut ptr = self.as_mut_ptr().add(self.len());
+            let mut ptr = self.as_mut_ptr().add(self.len_usize());
 
             // Write all elements except the last one
             for _ in 1..n {
@@ -2095,7 +2119,7 @@ impl<'a, T: 'a> Vec<'a, T> {
             // would have panicked. So `n as u32` cannot truncate `n`, and `len + n` cannot wrap.
             #[expect(clippy::cast_possible_truncation)]
             let n = n as u32;
-            self.buf.len += n;
+            self.buf.increase_len(n);
         }
     }
 }
@@ -2132,7 +2156,7 @@ impl<'a, T: 'a + PartialEq> Vec<'a, T> {
 impl<'a, T: 'a + Clone> Clone for Vec<'a, T> {
     #[cfg(not(test))]
     fn clone(&self) -> Vec<'a, T> {
-        let mut v = Vec::with_capacity_in(self.len(), self.buf.bump());
+        let mut v = Vec::with_capacity_in(self.len_usize(), self.buf.bump());
         v.extend(self.iter().cloned());
         v
     }
@@ -2185,7 +2209,7 @@ impl<'a, T: 'a> ops::Deref for Vec<'a, T> {
         unsafe {
             let p = self.buf.ptr();
             // assume(!p.is_null());
-            slice::from_raw_parts(p, self.buf.len_usize())
+            slice::from_raw_parts(p, self.len_usize())
         }
     }
 }
@@ -2195,7 +2219,7 @@ impl<'a, T: 'a> ops::DerefMut for Vec<'a, T> {
         unsafe {
             let ptr = self.buf.ptr();
             // assume(!ptr.is_null());
-            slice::from_raw_parts_mut(ptr, self.buf.len_usize())
+            slice::from_raw_parts_mut(ptr, self.len_usize())
         }
     }
 }
@@ -2227,9 +2251,9 @@ impl<'a, T: 'a> IntoIterator for Vec<'a, T> {
             let begin = self.as_mut_ptr();
             // assume(!begin.is_null());
             let end = if mem::size_of::<T>() == 0 {
-                arith_offset(begin as *const i8, self.len() as isize) as *const T
+                arith_offset(begin as *const i8, self.len_u32() as isize) as *const T
             } else {
-                begin.add(self.len()) as *const T
+                begin.add(self.len_usize()) as *const T
             };
             IntoIter { phantom: PhantomData, ptr: begin, end }
         }
@@ -2275,8 +2299,8 @@ impl<'a, T: 'a> Vec<'a, T> {
         //          self.push(item);
         //      }
         while let Some(element) = iterator.next() {
-            let len = self.len();
-            if len == self.capacity() {
+            let len = self.len_usize();
+            if len == self.capacity_usize() {
                 // This reallocation path is rarely taken, especially with prior reservation,
                 // so mark it `#[cold]` and `#[inline(never)]` helps the compiler optimize the
                 // common case, and prevents this cold path from being inlined to the `while` loop,
@@ -2685,7 +2709,7 @@ impl<T> Drop for Drain<'_, '_, T> {
             unsafe {
                 let source_vec = self.vec.as_mut();
                 // memmove back untouched tail, update to new length
-                let start = source_vec.len();
+                let start = source_vec.len_usize();
                 let tail = self.tail_start;
                 if tail != start {
                     let src = source_vec.as_ptr().add(tail);
@@ -2782,7 +2806,7 @@ impl<T> Drain<'_, '_, T> {
     /// Return whether we filled the entire range. (`replace_with.next()` didn’t return `None`.)
     unsafe fn fill<I: Iterator<Item = T>>(&mut self, replace_with: &mut I) -> bool {
         let vec = self.vec.as_mut();
-        let range_start = vec.buf.len_usize();
+        let range_start = vec.len_usize();
         let range_end = self.tail_start;
         let range_slice =
             slice::from_raw_parts_mut(vec.as_mut_ptr().add(range_start), range_end - range_start);
@@ -2790,7 +2814,7 @@ impl<T> Drain<'_, '_, T> {
         for place in range_slice {
             if let Some(new_item) = replace_with.next() {
                 ptr::write(place, new_item);
-                vec.buf.len += 1;
+                vec.buf.increase_len(1);
             } else {
                 return false;
             }
