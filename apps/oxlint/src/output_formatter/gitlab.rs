@@ -121,9 +121,19 @@ mod test {
         let second_result = reporter.finish(&DiagnosticResult::default());
 
         assert!(second_result.is_some());
-        assert_eq!(
-            second_result.unwrap(),
-            "[\n  {\n    \"description\": \"error message\",\n    \"check_name\": \"\",\n    \"fingerprint\": \"8b23bd85b148d3\",\n    \"severity\": \"major\",\n    \"location\": {\n      \"path\": \"file://test.ts\",\n      \"lines\": {\n        \"begin\": 1,\n        \"end\": 1\n      }\n    }\n  }\n]"
-        );
+        let json: serde_json::Value = serde_json::from_str(&second_result.unwrap()).unwrap();
+        let array = json.as_array().unwrap();
+        assert_eq!(array.len(), 1);
+        let value = array[0].as_object().unwrap();
+        assert_eq!(value.keys().len(), 5);
+        assert_eq!(value["description"], "error message");
+        assert_eq!(value["check_name"], "");
+        assert!(value["fingerprint"].is_string()); // value is different on different architectures
+        assert_eq!(value["severity"], "major");
+        let location = value["location"].as_object().unwrap();
+        assert_eq!(location["path"], "file://test.ts");
+        let lines = location["lines"].as_object().unwrap();
+        assert_eq!(lines["begin"], 1);
+        assert_eq!(lines["end"], 1);
     }
 }
