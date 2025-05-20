@@ -83,17 +83,6 @@ impl<'a, T> RawVec<'a, T> {
     /// allocator for the returned RawVec.
     #[inline]
     pub fn with_capacity_in(cap: usize, alloc: &'a Bump) -> Self {
-        RawVec::allocate_in(cap, false, alloc)
-    }
-
-    /// Like `with_capacity_zeroed` but parameterized over the choice
-    /// of allocator for the returned RawVec.
-    #[inline]
-    pub fn with_capacity_zeroed_in(cap: usize, alloc: &'a Bump) -> Self {
-        RawVec::allocate_in(cap, true, alloc)
-    }
-
-    fn allocate_in(cap: usize, zeroed: bool, alloc: &'a Bump) -> Self {
         unsafe {
             let elem_size = mem::size_of::<T>();
 
@@ -106,8 +95,7 @@ impl<'a, T> RawVec<'a, T> {
             } else {
                 let align = mem::align_of::<T>();
                 let layout = Layout::from_size_align(alloc_size, align).unwrap();
-                let result =
-                    if zeroed { alloc.allocate_zeroed(layout) } else { alloc.allocate(layout) };
+                let result = alloc.allocate(layout);
                 match result {
                     Ok(ptr) => ptr.cast(),
                     Err(_) => handle_alloc_error(layout),
