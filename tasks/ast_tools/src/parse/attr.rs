@@ -19,8 +19,8 @@ impl AttrProcessor {
     /// Get name of this [`AttrProcessor`].
     pub fn name(self) -> &'static str {
         match self {
-            Self::Derive(id) => DERIVES[id].trait_name(),
-            Self::Generator(id) => GENERATORS[id].name(),
+            Self::Derive(id) => DERIVES[id.to_usize()].trait_name(),
+            Self::Generator(id) => GENERATORS[id.to_usize()].name(),
         }
     }
 }

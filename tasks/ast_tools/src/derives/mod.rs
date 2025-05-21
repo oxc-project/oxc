@@ -7,10 +7,11 @@ use rustc_hash::{FxHashMap, FxHashSet};
 use syn::{Path, parse_str};
 
 use crate::{
-    Codegen, Result, Runner,
+    Result, Runner,
+    codegen::{Codegen, Derives},
     output::{Output, output_path},
     parse::attr::{AttrLocation, AttrPart, AttrPositions, attr_positions},
-    schema::{Def, Derives, EnumDef, FileId, Schema, StructDef, TypeDef, TypeId},
+    schema::{Def, EnumDef, FileId, Schema, StructDef, TypeDef, TypeId},
     utils::format_cow,
 };
 

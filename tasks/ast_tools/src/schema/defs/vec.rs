@@ -56,7 +56,7 @@ impl Def for VecDef {
     ///
     /// `Vec`s never have any generated derives.
     fn generated_derives(&self) -> Derives {
-        Derives::none()
+        Derives::empty()
     }
 
     /// Get if type has a lifetime.

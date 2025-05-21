@@ -21,6 +21,7 @@ cow-utils = { workspace = true }
 indexmap = { workspace = true }
 itertools = { workspace = true }
 lazy-regex = { workspace = true }
+oxc_data_structures = { workspace = true, features = ["bitset"] }
 oxc_index = { workspace = true }
 phf = { workspace = true, features = ["macros"] }
 phf_codegen = { workspace = true }

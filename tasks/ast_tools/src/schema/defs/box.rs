@@ -51,7 +51,7 @@ impl Def for BoxDef {
     ///
     /// `Box`es never have any generated derives.
     fn generated_derives(&self) -> Derives {
-        Derives::none()
+        Derives::empty()
     }
 
     /// Get if type has a lifetime.

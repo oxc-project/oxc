@@ -5,11 +5,9 @@ use rustc_hash::FxHashMap;
 use serde::Serialize;
 
 mod defs;
-mod derives;
 mod file;
 mod meta;
 pub use defs::*;
-pub use derives::Derives;
 pub use file::File;
 pub use meta::MetaType;
 

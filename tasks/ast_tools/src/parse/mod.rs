@@ -50,8 +50,9 @@
 use oxc_index::IndexVec;
 
 use crate::{
-    Codegen, log, log_success,
-    schema::{Derives, File, FileId, Schema},
+    codegen::{Codegen, Derives},
+    log, log_success,
+    schema::{File, FileId, Schema},
     utils::FxIndexMap,
 };
 

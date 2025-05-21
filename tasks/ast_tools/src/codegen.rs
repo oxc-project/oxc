@@ -1,12 +1,43 @@
+use std::fmt::{self, Debug};
+
 use rustc_hash::FxHashMap;
+
+use oxc_data_structures::bitset::bitset;
 
 use crate::{
     DERIVES, Derive, GENERATORS, Generator, Output, RawOutput, Result, Schema, logln,
     parse::attr::{AttrPositions, AttrProcessor},
 };
 
-pub type DeriveId = usize;
-pub type GeneratorId = usize;
+// Bit set with a bit for each [`DeriveId`].
+bitset! {
+    #[derive(Copy)]
+    pub bitset Derives<DeriveId>(DERIVES.len());
+}
+
+impl Debug for DeriveId {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        DERIVES[self.to_usize()].trait_name().fmt(f)
+    }
+}
+
+impl Debug for Derives {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_list().entries(self.true_bits_iter()).finish()
+    }
+}
+
+// Bit set with a bit for each [`GeneratorId`].
+// We don't actually use the `Generators` bitset, but it's useful to have typed `GeneratorId`s.
+bitset! {
+    pub bitset Generators<GeneratorId>(GENERATORS.len());
+}
+
+impl Debug for GeneratorId {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        GENERATORS[self.to_usize()].name().fmt(f)
+    }
+}
 
 /// [`Codegen`] contains all data relating to the running of the codegen overall.
 ///
@@ -27,7 +58,7 @@ impl Codegen {
 
         let mut attr_processors = FxHashMap::default();
 
-        for (id, &derive) in DERIVES.iter().enumerate() {
+        for (id, &derive) in Derives::indices().zip(DERIVES) {
             derive_name_to_id.insert(derive.trait_name(), id);
 
             let processor = AttrProcessor::Derive(id);
@@ -43,7 +74,7 @@ impl Codegen {
             }
         }
 
-        for (id, &generator) in GENERATORS.iter().enumerate() {
+        for (id, &generator) in Generators::indices().zip(GENERATORS) {
             let processor = AttrProcessor::Generator(id);
 
             for &(name, positions) in generator.attrs() {

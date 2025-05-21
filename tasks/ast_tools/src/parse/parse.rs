@@ -725,7 +725,7 @@ impl<'c> Parser<'c> {
         attrs: &[Attribute],
         type_name: &str,
     ) -> (Derives, Option<String>) {
-        let mut derives = Derives::none();
+        let mut derives = Derives::empty();
         let mut plural_name = None;
         for attr in attrs {
             if attr.path().is_ident("generate_derive") {
@@ -935,10 +935,10 @@ fn process_attr_part(
 ) -> Result<()> {
     match processor {
         AttrProcessor::Derive(derive_id) => {
-            DERIVES[derive_id].parse_attr(attr_name, location, part)
+            DERIVES[derive_id.to_usize()].parse_attr(attr_name, location, part)
         }
         AttrProcessor::Generator(generator_id) => {
-            GENERATORS[generator_id].parse_attr(attr_name, location, part)
+            GENERATORS[generator_id.to_usize()].parse_attr(attr_name, location, part)
         }
     }
 }
@@ -955,7 +955,7 @@ fn check_attr_is_derived(
         return;
     }
 
-    let trait_name = DERIVES[derive_id].trait_name();
+    let trait_name = DERIVES[derive_id.to_usize()].trait_name();
     panic!(
         "`{type_name}` type has `#[{attr_name}]` attribute, but `{trait_name}` trait \
         that handles `#[{attr_name}]` is not derived on `{type_name}`.\n\

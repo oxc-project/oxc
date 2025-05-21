@@ -4,12 +4,12 @@ use quote::quote;
 use syn::Ident;
 
 use crate::{
-    codegen::DeriveId,
+    codegen::{DeriveId, Derives},
     schema::{File, Schema},
     utils::create_ident,
 };
 
-use super::{Derives, FileId, TypeId, extensions};
+use super::{FileId, TypeId, extensions};
 
 mod r#box;
 mod cell;
