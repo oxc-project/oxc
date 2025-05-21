@@ -146,6 +146,13 @@ fn compute_complexity<'a>(
             if is_decision_point(node, variant) {
                 complexity += 1;
             }
+
+            // Check for recursive calls
+            if let AstKind::CallExpression(_) = node.kind() {
+                if is_recursive_call(function_node, node) {
+                    complexity += 1;
+                }
+            }
             
             // Special handling for if statements with else branches
             if let AstKind::IfStatement(if_stmt) = node.kind() {
@@ -279,6 +286,22 @@ fn get_function_name(node: &AstNode) -> String {
     }
 }
 
+/// Returns true if the call expression is a recursive call to the current function.
+fn is_recursive_call<'a>(
+    function_node: &AstNode<'a>,
+    call_node: &AstNode<'a>,
+) -> bool {
+    if let AstKind::CallExpression(call_expr) = call_node.kind() {
+        if let oxc_ast::ast::Expression::Identifier(callee_ident) = &call_expr.callee {
+            let function_name = get_function_name(function_node);
+            return function_name != "anonymous function" && 
+                   function_name != "function" && 
+                   function_name == callee_ident.name.to_string();
+        }
+    }
+    false
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -311,6 +334,9 @@ mod tests {
             ("function sameLogicalOrSequence(a, b, c){ if(a || b || c) {}}", 2), // +1 for if; +1 for all ||
             ("function twoRepeatingLogicalSequences(a, b, c, d, e){ if(a && b && c || d || e) {}}", 3), // +1 for if; +1 for all &&; +1 for all ||
             ("function twoMixedLogicalSequences(a, b, c, d, e){ if(a && b || c && d) {}}", 4), // +1 for if; +1 for &&; +1 for ||; +1 for && (new)
+            ("function recursionSample(n) { return n * recursionSample(n - 1); }", 1),
+            ("function multipleRecursions(n) { return multipleRecursions(n - 1) + multipleRecursions(n - 2); }", 2),
+            ("function noRecursion(n) { return a(n - 1) + b(n - 2); }", 0),
         ];
         
         for (js, expected) in &test_cases {
