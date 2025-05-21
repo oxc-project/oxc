@@ -111,7 +111,7 @@ impl<'a> ParserImpl<'a> {
     /// whose code point sequence is the same as a `ReservedWord`.
     #[inline]
     fn test_escaped_keyword(&mut self, kind: Kind) {
-        if self.cur_token().escaped() && kind.is_all_keyword() {
+        if self.cur_token().escaped() && kind.is_any_keyword() {
             let span = self.cur_token().span();
             self.error(diagnostics::escaped_keyword(span));
         }

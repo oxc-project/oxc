@@ -246,7 +246,7 @@ impl<'a> ParserImpl<'a> {
                 Some(JSXChild::Fragment(self.parse_jsx_fragment(true)))
             }
             // <ident open element
-            Kind::LAngle if self.peek_at(Kind::Ident) || self.peek_kind().is_all_keyword() => {
+            Kind::LAngle if self.peek_at(Kind::Ident) || self.peek_kind().is_any_keyword() => {
                 Some(JSXChild::Element(self.parse_jsx_element(true)))
             }
             // {...expr}
@@ -404,7 +404,7 @@ impl<'a> ParserImpl<'a> {
     ///   `JSXIdentifier` [no `WhiteSpace` or Comment here] -
     fn parse_jsx_identifier(&mut self) -> JSXIdentifier<'a> {
         let span = self.start_span();
-        if !self.at(Kind::Ident) && !self.cur_kind().is_all_keyword() {
+        if !self.at(Kind::Ident) && !self.cur_kind().is_any_keyword() {
             return self.unexpected();
         }
         // Currently at a valid normal Ident or Keyword, keep on lexing for `-` in `<component-name />`
