@@ -215,7 +215,7 @@ ropey = "1.6.1"
 rust-lapper = "1.1.0"
 ryu-js = "1.0.2"
 saphyr = "0.0.4"
-schemars = "0.8.22"
+schemars = { package = "oxc-schemars", version = "0.8.25" }
 self_cell = "1.2.0"
 seq-macro = "0.3.6"
 sha1 = "0.10.6"
