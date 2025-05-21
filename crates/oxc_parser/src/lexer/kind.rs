@@ -305,9 +305,7 @@ impl Kind {
 
     #[inline]
     pub fn is_identifier_or_keyword(self) -> bool {
-        self.is_literal_property_name()
-            || matches!(self, Self::PrivateIdentifier)
-            || self.is_all_keyword()
+        self.is_literal_property_name() || matches!(self, Self::PrivateIdentifier)
     }
 
     #[inline]

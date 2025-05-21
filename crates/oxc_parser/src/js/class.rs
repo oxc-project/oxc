@@ -239,11 +239,7 @@ impl<'a> ParserImpl<'a> {
         }
 
         let kind = self.cur_kind();
-        if kind.is_identifier_or_keyword()
-            || kind.is_number()
-            || kind == Kind::Star
-            || kind == Kind::LBrack
-        {
+        if kind.is_identifier_or_keyword() || kind == Kind::Star || kind == Kind::LBrack {
             let is_ambient = modifiers.contains(ModifierKind::Declare);
             return if is_ambient {
                 self.context(Context::Ambient, Context::empty(), |p| {
