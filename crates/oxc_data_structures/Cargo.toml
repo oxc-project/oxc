@@ -22,13 +22,15 @@ test = true
 doctest = true
 
 [dependencies]
+paste = { workspace = true, optional = true }
 ropey = { workspace = true, optional = true }
 rustversion = { workspace = true, optional = true }
 
 [features]
-default = []
-all = ["assert_unchecked", "code_buffer", "inline_string", "pointer_ext", "rope", "stack"]
+default = ["all"]
+all = ["assert_unchecked", "bitset", "code_buffer", "inline_string", "pointer_ext", "rope", "stack"]
 assert_unchecked = []
+bitset = ["assert_unchecked", "dep:paste"]
 code_buffer = ["assert_unchecked"]
 inline_string = ["assert_unchecked"]
 pointer_ext = ["dep:rustversion"]

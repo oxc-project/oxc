@@ -5,6 +5,9 @@
 #[cfg(feature = "assert_unchecked")]
 mod assert_unchecked;
 
+#[cfg(feature = "bitset")]
+pub mod bitset;
+
 #[cfg(feature = "code_buffer")]
 pub mod code_buffer;
 
