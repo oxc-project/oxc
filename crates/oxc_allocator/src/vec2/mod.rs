@@ -107,7 +107,6 @@
     clippy::undocumented_unsafe_blocks
 )]
 
-use bumpalo::{Bump, collections::CollectionAllocErr};
 use core::borrow::{Borrow, BorrowMut};
 use core::cmp::Ordering;
 use core::fmt;
@@ -124,6 +123,10 @@ use core::slice;
 
 // #[cfg(feature = "std")]
 // use std::io;
+
+use bumpalo::collections::CollectionAllocErr;
+
+use crate::alloc::Alloc;
 
 mod raw_vec;
 use raw_vec::RawVec;
@@ -295,7 +298,7 @@ macro_rules! vec {
     (in $alloc:expr; $($x:expr,)*) => (bumpalo::vec![in $alloc; $($x),*])
 }
 
-/// A contiguous growable array type, written `Vec<'a, T>` but pronounced 'vector'.
+/// A contiguous growable array type, written `Vec<'a, T, A>` but pronounced 'vector'.
 ///
 /// # Examples
 ///
@@ -471,7 +474,7 @@ macro_rules! vec {
 /// `from_raw_parts` to recover the `Vec` and then dropping it.
 ///
 /// If a `Vec` *has* allocated memory, then the memory it points to is
-/// in the [`Bump`] arena used to construct it, and its
+/// in the arena used to construct it, and its
 /// pointer points to [`len`] initialized, contiguous elements in order (what
 /// you would see if you coerced it to a slice), followed by <code>[`capacity`] -
 /// [`len`]</code> logically uninitialized, contiguous elements.
@@ -541,15 +544,15 @@ macro_rules! vec {
 /// [`reserve`]: struct.Vec.html#method.reserve
 /// [owned slice]: https://doc.rust-lang.org/std/boxed/struct.Box.html
 #[repr(transparent)]
-pub struct Vec<'a, T: 'a> {
-    buf: RawVec<'a, T>,
+pub struct Vec<'a, T: 'a, A: Alloc> {
+    buf: RawVec<'a, T, A>,
 }
 
 ////////////////////////////////////////////////////////////////////////////////
 // Inherent methods
 ////////////////////////////////////////////////////////////////////////////////
 
-impl<'a, T: 'a> Vec<'a, T> {
+impl<'a, T: 'a, A: Alloc> Vec<'a, T, A> {
     /// Constructs a new, empty `Vec<'a, T>`.
     ///
     /// The vector will not allocate until elements are pushed onto it.
@@ -564,7 +567,7 @@ impl<'a, T: 'a> Vec<'a, T> {
     /// let mut vec: Vec<i32> = Vec::new_in(&b);
     /// ```
     #[inline]
-    pub fn new_in(alloc: &'a Bump) -> Vec<'a, T> {
+    pub fn new_in(alloc: &'a A) -> Vec<'a, T, A> {
         Vec { buf: RawVec::new_in(alloc) }
     }
 
@@ -601,7 +604,7 @@ impl<'a, T: 'a> Vec<'a, T> {
     /// vec.push(11);
     /// ```
     #[inline]
-    pub fn with_capacity_in(capacity: usize, alloc: &'a Bump) -> Vec<'a, T> {
+    pub fn with_capacity_in(capacity: usize, alloc: &'a A) -> Vec<'a, T, A> {
         Vec { buf: RawVec::with_capacity_in(capacity, alloc) }
     }
 
@@ -617,7 +620,7 @@ impl<'a, T: 'a> Vec<'a, T> {
     /// let v = Vec::from_iter_in(iter::repeat(7).take(3), &b);
     /// assert_eq!(v, [7, 7, 7]);
     /// ```
-    pub fn from_iter_in<I: IntoIterator<Item = T>>(iter: I, alloc: &'a Bump) -> Vec<'a, T> {
+    pub fn from_iter_in<I: IntoIterator<Item = T>>(iter: I, alloc: &'a A) -> Vec<'a, T, A> {
         let mut v = Vec::new_in(alloc);
         v.extend(iter);
         v
@@ -684,8 +687,8 @@ impl<'a, T: 'a> Vec<'a, T> {
         ptr: *mut T,
         length: usize,
         capacity: usize,
-        alloc: &'a Bump,
-    ) -> Vec<'a, T> {
+        alloc: &'a A,
+    ) -> Vec<'a, T, A> {
         Vec { buf: RawVec::from_raw_parts_in(ptr, length, capacity, alloc) }
     }
 
@@ -841,7 +844,7 @@ impl<'a, T: 'a> Vec<'a, T> {
     /// ```
     #[inline]
     #[must_use]
-    pub fn bump(&self) -> &'a Bump {
+    pub fn bump(&self) -> &'a A {
         self.buf.bump()
     }
 
@@ -1411,14 +1414,14 @@ impl<'a, T: 'a> Vec<'a, T> {
         // This drop guard will be invoked when predicate or `drop` of element panicked.
         // It shifts unchecked elements to cover holes and `set_len` to the correct length.
         // In cases when predicate and `drop` never panick, it will be optimized out.
-        struct BackshiftOnDrop<'a, 'v, T> {
-            v: &'v mut Vec<'a, T>,
+        struct BackshiftOnDrop<'a, 'v, T, A: Alloc> {
+            v: &'v mut Vec<'a, T, A>,
             processed_len: usize,
             deleted_cnt: usize,
             original_len: usize,
         }
 
-        impl<T> Drop for BackshiftOnDrop<'_, '_, T> {
+        impl<T, A: Alloc> Drop for BackshiftOnDrop<'_, '_, T, A> {
             fn drop(&mut self) {
                 if self.deleted_cnt > 0 {
                     // SAFETY: Trailing unchecked items must be valid since we never touch them.
@@ -1439,10 +1442,10 @@ impl<'a, T: 'a> Vec<'a, T> {
 
         let mut g = BackshiftOnDrop { v: self, processed_len: 0, deleted_cnt: 0, original_len };
 
-        fn process_loop<F, T, const DELETED: bool>(
+        fn process_loop<F, T, A: Alloc, const DELETED: bool>(
             original_len: usize,
             f: &mut F,
-            g: &mut BackshiftOnDrop<'_, '_, T>,
+            g: &mut BackshiftOnDrop<'_, '_, T, A>,
         ) where
             F: FnMut(&mut T) -> bool,
         {
@@ -1475,10 +1478,10 @@ impl<'a, T: 'a> Vec<'a, T> {
         }
 
         // Stage 1: Nothing was deleted.
-        process_loop::<F, T, false>(original_len, &mut f, &mut g);
+        process_loop::<F, T, A, false>(original_len, &mut f, &mut g);
 
         // Stage 2: Some elements were deleted.
-        process_loop::<F, T, true>(original_len, &mut f, &mut g);
+        process_loop::<F, T, A, true>(original_len, &mut f, &mut g);
 
         // All item are processed. This can be optimized to `set_len` by LLVM.
         drop(g);
@@ -1502,7 +1505,7 @@ impl<'a, T: 'a> Vec<'a, T> {
     /// assert_eq!(numbers, &[1, 3, 5]);
     /// assert_eq!(evens, &[2, 4]);
     /// ```
-    pub fn drain_filter<'v, F>(&'v mut self, filter: F) -> DrainFilter<'a, 'v, T, F>
+    pub fn drain_filter<'v, F>(&'v mut self, filter: F) -> DrainFilter<'a, 'v, T, A, F>
     where
         F: FnMut(&mut T) -> bool,
     {
@@ -1722,7 +1725,7 @@ impl<'a, T: 'a> Vec<'a, T> {
     /// v.drain(..);
     /// assert_eq!(v, &[]);
     /// ```
-    pub fn drain<R>(&mut self, range: R) -> Drain<T>
+    pub fn drain<R>(&mut self, range: R) -> Drain<T, A>
     where
         R: RangeBounds<usize>,
     {
@@ -1882,7 +1885,7 @@ impl<'a, T> Vec<'a, T> {
 }
 */
 
-impl<'a, T: 'a + Clone> Vec<'a, T> {
+impl<'a, T: 'a + Clone, A: Alloc> Vec<'a, T, A> {
     /// Resizes the `Vec` in-place so that `len` is equal to `new_len`.
     ///
     /// If `new_len` is greater than `len`, the `Vec` is extended by the
@@ -1950,7 +1953,7 @@ impl<'a, T: 'a + Clone> Vec<'a, T> {
     }
 }
 
-impl<'a, T: 'a + Copy> Vec<'a, T> {
+impl<'a, T: 'a + Copy, A: Alloc> Vec<'a, T, A> {
     /// Helper method to copy all of the items in `other` and append them to the end of `self`.
     ///
     /// SAFETY:
@@ -2091,7 +2094,7 @@ impl<T: Clone> ExtendWith<T> for ExtendElement<T> {
     }
 }
 
-impl<'a, T: 'a> Vec<'a, T> {
+impl<'a, T: 'a, A: Alloc> Vec<'a, T, A> {
     /// Extend the vector by `n` values, using the given generator.
     fn extend_with<E: ExtendWith<T>>(&mut self, n: usize, mut value: E) {
         self.reserve(n);
@@ -2124,7 +2127,7 @@ impl<'a, T: 'a> Vec<'a, T> {
     }
 }
 
-impl<'a, T: 'a + PartialEq> Vec<'a, T> {
+impl<'a, T: 'a + PartialEq, A: Alloc> Vec<'a, T, A> {
     /// Removes consecutive repeated elements in the vector according to the
     /// [`PartialEq`] trait implementation.
     ///
@@ -2153,9 +2156,9 @@ impl<'a, T: 'a + PartialEq> Vec<'a, T> {
 // Common trait implementations for Vec
 ////////////////////////////////////////////////////////////////////////////////
 
-impl<'a, T: 'a + Clone> Clone for Vec<'a, T> {
+impl<'a, T: 'a + Clone, A: Alloc> Clone for Vec<'a, T, A> {
     #[cfg(not(test))]
-    fn clone(&self) -> Vec<'a, T> {
+    fn clone(&self) -> Vec<'a, T, A> {
         let mut v = Vec::with_capacity_in(self.len_usize(), self.buf.bump());
         v.extend(self.iter().cloned());
         v
@@ -2166,21 +2169,21 @@ impl<'a, T: 'a + Clone> Clone for Vec<'a, T> {
     // `slice::to_vec`  function which is only available with cfg(test)
     // NB see the slice::hack module in slice.rs for more information
     #[cfg(test)]
-    fn clone(&self) -> Vec<'a, T> {
+    fn clone(&self) -> Vec<'a, T, A> {
         let mut v = Vec::new_in(self.buf.bump());
         v.extend(self.iter().cloned());
         v
     }
 }
 
-impl<'a, T: 'a + Hash> Hash for Vec<'a, T> {
+impl<'a, T: 'a + Hash, A: Alloc> Hash for Vec<'a, T, A> {
     #[inline]
     fn hash<H: hash::Hasher>(&self, state: &mut H) {
         Hash::hash(&**self, state)
     }
 }
 
-impl<T, I> Index<I> for Vec<'_, T>
+impl<T, A: Alloc, I> Index<I> for Vec<'_, T, A>
 where
     I: ::core::slice::SliceIndex<[T]>,
 {
@@ -2192,7 +2195,7 @@ where
     }
 }
 
-impl<T, I> IndexMut<I> for Vec<'_, T>
+impl<T, A: Alloc, I> IndexMut<I> for Vec<'_, T, A>
 where
     I: ::core::slice::SliceIndex<[T]>,
 {
@@ -2202,7 +2205,7 @@ where
     }
 }
 
-impl<'a, T: 'a> ops::Deref for Vec<'a, T> {
+impl<'a, T: 'a, A: Alloc> ops::Deref for Vec<'a, T, A> {
     type Target = [T];
 
     fn deref(&self) -> &[T] {
@@ -2214,7 +2217,7 @@ impl<'a, T: 'a> ops::Deref for Vec<'a, T> {
     }
 }
 
-impl<'a, T: 'a> ops::DerefMut for Vec<'a, T> {
+impl<'a, T: 'a, A: Alloc> ops::DerefMut for Vec<'a, T, A> {
     fn deref_mut(&mut self) -> &mut [T] {
         unsafe {
             let ptr = self.buf.ptr();
@@ -2224,7 +2227,7 @@ impl<'a, T: 'a> ops::DerefMut for Vec<'a, T> {
     }
 }
 
-impl<'a, T: 'a> IntoIterator for Vec<'a, T> {
+impl<'a, T: 'a, A: Alloc> IntoIterator for Vec<'a, T, A> {
     type Item = T;
     type IntoIter = IntoIter<'a, T>;
 
@@ -2260,7 +2263,7 @@ impl<'a, T: 'a> IntoIterator for Vec<'a, T> {
     }
 }
 
-impl<'a, T> IntoIterator for &'a Vec<'_, T> {
+impl<'a, T, A: Alloc> IntoIterator for &'a Vec<'_, T, A> {
     type Item = &'a T;
     type IntoIter = slice::Iter<'a, T>;
 
@@ -2269,7 +2272,7 @@ impl<'a, T> IntoIterator for &'a Vec<'_, T> {
     }
 }
 
-impl<'a, T> IntoIterator for &'a mut Vec<'_, T> {
+impl<'a, T, A: Alloc> IntoIterator for &'a mut Vec<'_, T, A> {
     type Item = &'a mut T;
     type IntoIter = slice::IterMut<'a, T>;
 
@@ -2278,7 +2281,7 @@ impl<'a, T> IntoIterator for &'a mut Vec<'_, T> {
     }
 }
 
-impl<'a, T: 'a> Extend<T> for Vec<'a, T> {
+impl<'a, T: 'a, A: Alloc> Extend<T> for Vec<'a, T, A> {
     #[inline]
     fn extend<I: IntoIterator<Item = T>>(&mut self, iter: I) {
         let iterator = iter.into_iter();
@@ -2286,7 +2289,7 @@ impl<'a, T: 'a> Extend<T> for Vec<'a, T> {
     }
 }
 
-impl<'a, T: 'a> Vec<'a, T> {
+impl<'a, T: 'a, A: Alloc> Vec<'a, T, A> {
     // leaf method to which various SpecFrom/SpecExtend implementations delegate when
     // they have no further optimizations to apply
     #[track_caller]
@@ -2307,7 +2310,7 @@ impl<'a, T: 'a> Vec<'a, T> {
                 // which increases the execution instructions and hits the performance.
                 #[cold]
                 #[inline(never)]
-                fn reserve_slow<T>(v: &mut Vec<T>, iterator: &impl Iterator) {
+                fn reserve_slow<T, A: Alloc>(v: &mut Vec<T, A>, iterator: &impl Iterator) {
                     let (lower, _) = iterator.size_hint();
                     v.reserve(lower.saturating_add(1));
                 }
@@ -2325,7 +2328,7 @@ impl<'a, T: 'a> Vec<'a, T> {
     }
 }
 
-impl<'a, T: 'a> Vec<'a, T> {
+impl<'a, T: 'a, A: Alloc> Vec<'a, T, A> {
     /// Creates a splicing iterator that replaces the specified range in the vector
     /// with the given `replace_with` iterator and yields the removed items.
     /// `replace_with` does not need to be the same length as `range`.
@@ -2366,7 +2369,7 @@ impl<'a, T: 'a> Vec<'a, T> {
     /// assert_eq!(u, &[1, 2]);
     /// ```
     #[inline]
-    pub fn splice<R, I>(&mut self, range: R, replace_with: I) -> Splice<I::IntoIter>
+    pub fn splice<R, I>(&mut self, range: R, replace_with: I) -> Splice<I::IntoIter, A>
     where
         R: RangeBounds<usize>,
         I: IntoIterator<Item = T>,
@@ -2381,7 +2384,7 @@ impl<'a, T: 'a> Vec<'a, T> {
 /// append the entire slice at once.
 ///
 /// [`copy_from_slice`]: https://doc.rust-lang.org/std/primitive.slice.html#method.copy_from_slice
-impl<'a, T: 'a + Copy> Extend<&'a T> for Vec<'_, T> {
+impl<'a, T: 'a + Copy, A: Alloc> Extend<&'a T> for Vec<'_, T, A> {
     fn extend<I: IntoIterator<Item = &'a T>>(&mut self, iter: I) {
         self.extend(iter.into_iter().cloned())
     }
@@ -2393,9 +2396,13 @@ impl<'a, T: 'a + Copy> Extend<&'a T> for Vec<'_, T> {
 
 macro_rules! __impl_slice_eq1 {
     ($Rhs: ty) => {
-        impl<T, U> PartialEq<$Rhs> for Vec<'_, T>
+        __impl_slice_eq1! { $Rhs, }
+    };
+    ($Rhs: ty, $($bounds:tt)*) => {
+        impl<T, U, A, $($bounds)*> PartialEq<$Rhs> for Vec<'_, T, A>
         where
             T: PartialEq<U>,
+            A: Alloc,
         {
             #[inline]
             fn eq(&self, other: &$Rhs) -> bool {
@@ -2405,15 +2412,16 @@ macro_rules! __impl_slice_eq1 {
     };
 }
 
-__impl_slice_eq1! { Vec<'_, U> }
+__impl_slice_eq1! { Vec<'_, U, A2>, A2: Alloc }
 __impl_slice_eq1! { &[U] }
 __impl_slice_eq1! { &mut [U] }
 
 macro_rules! __impl_slice_eq1_array {
     ($Rhs: ty) => {
-        impl<T, U, const N: usize> PartialEq<$Rhs> for Vec<'_, T>
+        impl<T, U, A, const N: usize> PartialEq<$Rhs> for Vec<'_, T, A>
         where
             T: PartialEq<U>,
+            A: Alloc,
         {
             #[inline]
             fn eq(&self, other: &$Rhs) -> bool {
@@ -2428,19 +2436,19 @@ __impl_slice_eq1_array! { &[U; N] }
 __impl_slice_eq1_array! { &mut [U; N] }
 
 /// Implements comparison of vectors, lexicographically.
-impl<'a, T: 'a + PartialOrd> PartialOrd for Vec<'a, T> {
+impl<'a, T: 'a + PartialOrd, A: Alloc, A2: Alloc> PartialOrd<Vec<'a, T, A2>> for Vec<'a, T, A> {
     #[inline]
-    fn partial_cmp(&self, other: &Vec<'a, T>) -> Option<Ordering> {
+    fn partial_cmp(&self, other: &Vec<'a, T, A2>) -> Option<Ordering> {
         PartialOrd::partial_cmp(&**self, &**other)
     }
 }
 
-impl<'a, T: 'a + Eq> Eq for Vec<'a, T> {}
+impl<'a, T: 'a + Eq, A: Alloc> Eq for Vec<'a, T, A> {}
 
 /// Implements ordering of vectors, lexicographically.
-impl<'a, T: 'a + Ord> Ord for Vec<'a, T> {
+impl<'a, T: 'a + Ord, A: Alloc> Ord for Vec<'a, T, A> {
     #[inline]
-    fn cmp(&self, other: &Vec<'a, T>) -> Ordering {
+    fn cmp(&self, other: &Vec<'a, T, A>) -> Ordering {
         Ord::cmp(&**self, &**other)
     }
 }
@@ -2449,31 +2457,31 @@ impl<'a, T: 'a + Ord> Ord for Vec<'a, T> {
 // Misc
 ////////////////////////////////////////////////////////////////////////////////
 
-impl<'a, T: 'a + fmt::Debug> fmt::Debug for Vec<'a, T> {
+impl<'a, T: 'a + fmt::Debug, A: Alloc> fmt::Debug for Vec<'a, T, A> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         fmt::Debug::fmt(&**self, f)
     }
 }
 
-impl<'a, T: 'a> AsRef<Vec<'a, T>> for Vec<'a, T> {
-    fn as_ref(&self) -> &Vec<'a, T> {
+impl<'a, T: 'a, A: Alloc> AsRef<Vec<'a, T, A>> for Vec<'a, T, A> {
+    fn as_ref(&self) -> &Vec<'a, T, A> {
         self
     }
 }
 
-impl<'a, T: 'a> AsMut<Vec<'a, T>> for Vec<'a, T> {
-    fn as_mut(&mut self) -> &mut Vec<'a, T> {
+impl<'a, T: 'a, A: Alloc> AsMut<Vec<'a, T, A>> for Vec<'a, T, A> {
+    fn as_mut(&mut self) -> &mut Vec<'a, T, A> {
         self
     }
 }
 
-impl<'a, T: 'a> AsRef<[T]> for Vec<'a, T> {
+impl<'a, T: 'a, A: Alloc> AsRef<[T]> for Vec<'a, T, A> {
     fn as_ref(&self) -> &[T] {
         self
     }
 }
 
-impl<'a, T: 'a> AsMut<[T]> for Vec<'a, T> {
+impl<'a, T: 'a, A: Alloc> AsMut<[T]> for Vec<'a, T, A> {
     fn as_mut(&mut self) -> &mut [T] {
         self
     }
@@ -2481,21 +2489,21 @@ impl<'a, T: 'a> AsMut<[T]> for Vec<'a, T> {
 
 /*
 #[cfg(feature = "boxed")]
-impl<'a, T: 'a> From<Vec<'a, T>> for crate::boxed::Box<'a, [T]> {
-    fn from(v: Vec<'a, T>) -> crate::boxed::Box<'a, [T]> {
+impl<'a, T: 'a, A: Alloc> From<Vec<'a, T, A>> for crate::boxed::Box<'a, [T]> {
+    fn from(v: Vec<'a, T, A>) -> crate::boxed::Box<'a, [T]> {
         v.into_boxed_slice()
     }
 }
 */
 
-impl<'a, T: 'a> Borrow<[T]> for Vec<'a, T> {
+impl<'a, T: 'a, A: Alloc> Borrow<[T]> for Vec<'a, T, A> {
     #[inline]
     fn borrow(&self) -> &[T] {
         &self[..]
     }
 }
 
-impl<'a, T: 'a> BorrowMut<[T]> for Vec<'a, T> {
+impl<'a, T: 'a, A: Alloc> BorrowMut<[T]> for Vec<'a, T, A> {
     #[inline]
     fn borrow_mut(&mut self) -> &mut [T] {
         &mut self[..]
@@ -2506,14 +2514,14 @@ impl<'a, T: 'a> BorrowMut<[T]> for Vec<'a, T> {
 // Clone-on-write
 ////////////////////////////////////////////////////////////////////////////////
 
-// impl<'a, 'v, T: Clone> From<Vec<'a, T>> for Cow<'v, [T]> {
-//     fn from(v: Vec<'a, T>) -> Cow<'v, [T]> {
+// impl<'a, 'v, T: Clone, A: Alloc> From<Vec<'a, T, A>> for Cow<'v, [T]> {
+//     fn from(v: Vec<'a, T, A>) -> Cow<'v, [T]> {
 //         Cow::Owned(v)
 //     }
 // }
 
-// impl<'a, 'v, T: Clone> From<&'v Vec<'a, T>> for Cow<'v, [T]> {
-//     fn from(v: &'v Vec<'a, T>) -> Cow<'v, [T]> {
+// impl<'a, 'v, T: Clone, A: Alloc> From<&'v Vec<'a, T, A>> for Cow<'v, [T]> {
+//     fn from(v: &'v Vec<'a, T, A>) -> Cow<'v, [T]> {
 //         Cow::Borrowed(v.as_slice())
 //     }
 // }
@@ -2661,26 +2669,27 @@ impl<T> Drop for IntoIter<'_, T> {
 /// A draining iterator for `Vec<'a, T>`.
 ///
 /// This `struct` is created by the [`Vec::drain`] method.
-pub struct Drain<'a, 's, T: 'a + 's> {
+pub struct Drain<'a, 's, T: 'a + 's, A: Alloc> {
     /// Index of tail to preserve
     tail_start: usize,
     /// Length of tail
     tail_len: usize,
     /// Current remaining range to remove
     iter: slice::Iter<'s, T>,
-    vec: NonNull<Vec<'a, T>>,
+    vec: NonNull<Vec<'a, T, A>>,
 }
 
-impl<'a, 's, T: 'a + 's + fmt::Debug> fmt::Debug for Drain<'a, 's, T> {
+impl<'a, 's, T: 'a + 's + fmt::Debug, A: Alloc> fmt::Debug for Drain<'a, 's, T, A> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         f.debug_tuple("Drain").field(&self.iter.as_slice()).finish()
     }
 }
 
-unsafe impl<T: Sync> Sync for Drain<'_, '_, T> {}
-unsafe impl<T: Send> Send for Drain<'_, '_, T> {}
+// TODO: Should these also require `A: Send` / `A: Sync` bounds?
+unsafe impl<T: Sync, A: Alloc> Sync for Drain<'_, '_, T, A> {}
+unsafe impl<T: Send, A: Alloc> Send for Drain<'_, '_, T, A> {}
 
-impl<T> Iterator for Drain<'_, '_, T> {
+impl<T, A: Alloc> Iterator for Drain<'_, '_, T, A> {
     type Item = T;
 
     #[inline]
@@ -2693,14 +2702,14 @@ impl<T> Iterator for Drain<'_, '_, T> {
     }
 }
 
-impl<T> DoubleEndedIterator for Drain<'_, '_, T> {
+impl<T, A: Alloc> DoubleEndedIterator for Drain<'_, '_, T, A> {
     #[inline]
     fn next_back(&mut self) -> Option<T> {
         self.iter.next_back().map(|elt| unsafe { ptr::read(elt as *const _) })
     }
 }
 
-impl<T> Drop for Drain<'_, '_, T> {
+impl<T, A: Alloc> Drop for Drain<'_, '_, T, A> {
     fn drop(&mut self) {
         // exhaust self first
         self.for_each(drop);
@@ -2722,21 +2731,21 @@ impl<T> Drop for Drain<'_, '_, T> {
     }
 }
 
-impl<T> ExactSizeIterator for Drain<'_, '_, T> {}
+impl<T, A: Alloc> ExactSizeIterator for Drain<'_, '_, T, A> {}
 
-impl<T> FusedIterator for Drain<'_, '_, T> {}
+impl<T, A: Alloc> FusedIterator for Drain<'_, '_, T, A> {}
 
 /// A splicing iterator for `Vec`.
 ///
 /// This struct is created by the [`Vec::splice`] method. See its
 /// documentation for more information.
 #[derive(Debug)]
-pub struct Splice<'a, 'd, I: Iterator + 'a + 'd> {
-    drain: Drain<'a, 'd, I::Item>,
+pub struct Splice<'a, 'd, I: Iterator + 'a + 'd, A: Alloc> {
+    drain: Drain<'a, 'd, I::Item, A>,
     replace_with: I,
 }
 
-impl<I: Iterator> Iterator for Splice<'_, '_, I> {
+impl<I: Iterator, A: Alloc> Iterator for Splice<'_, '_, I, A> {
     type Item = I::Item;
 
     fn next(&mut self) -> Option<Self::Item> {
@@ -2748,15 +2757,15 @@ impl<I: Iterator> Iterator for Splice<'_, '_, I> {
     }
 }
 
-impl<I: Iterator> DoubleEndedIterator for Splice<'_, '_, I> {
+impl<I: Iterator, A: Alloc> DoubleEndedIterator for Splice<'_, '_, I, A> {
     fn next_back(&mut self) -> Option<Self::Item> {
         self.drain.next_back()
     }
 }
 
-impl<I: Iterator> ExactSizeIterator for Splice<'_, '_, I> {}
+impl<I: Iterator, A: Alloc> ExactSizeIterator for Splice<'_, '_, I, A> {}
 
-impl<I: Iterator> Drop for Splice<'_, '_, I> {
+impl<I: Iterator, A: Alloc> Drop for Splice<'_, '_, I, A> {
     fn drop(&mut self) {
         self.drain.by_ref().for_each(drop);
 
@@ -2799,7 +2808,7 @@ impl<I: Iterator> Drop for Splice<'_, '_, I> {
 }
 
 /// Private helper methods for `Splice::drop`
-impl<T> Drain<'_, '_, T> {
+impl<T, A: Alloc> Drain<'_, '_, T, A> {
     /// The range from `self.vec.len` to `self.tail_start` contains elements
     /// that have been moved out.
     /// Fill that range as much as possible with new elements from the `replace_with` iterator.
@@ -2843,18 +2852,18 @@ impl<T> Drain<'_, '_, T> {
 
 /// An iterator produced by calling [`Vec::drain_filter`].
 #[derive(Debug)]
-pub struct DrainFilter<'a: 'v, 'v, T: 'a + 'v, F>
+pub struct DrainFilter<'a: 'v, 'v, T: 'a + 'v, A: Alloc, F>
 where
     F: FnMut(&mut T) -> bool,
 {
-    vec: &'v mut Vec<'a, T>,
+    vec: &'v mut Vec<'a, T, A>,
     idx: usize,
     del: usize,
     old_len: usize,
     pred: F,
 }
 
-impl<T, F> Iterator for DrainFilter<'_, '_, T, F>
+impl<T, A: Alloc, F> Iterator for DrainFilter<'_, '_, T, A, F>
 where
     F: FnMut(&mut T) -> bool,
 {
@@ -2888,7 +2897,7 @@ where
     }
 }
 
-impl<T, F> Drop for DrainFilter<'_, '_, T, F>
+impl<T, A: Alloc, F> Drop for DrainFilter<'_, '_, T, A, F>
 where
     F: FnMut(&mut T) -> bool,
 {

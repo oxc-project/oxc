@@ -27,7 +27,6 @@ pub trait Alloc {
     /// # Panics
     ///
     /// Panics if reserving space for `layout` fails.
-    #[expect(dead_code)]
     fn alloc(&self, layout: Layout) -> NonNull<u8>;
 
     /// Deallocate the memory referenced by `ptr`.
@@ -36,7 +35,6 @@ pub trait Alloc {
     ///
     /// * `ptr` must denote a block of memory currently allocated via this allocator.
     /// * `layout` must be the same [`Layout`] that block was originally allocated with.
-    #[expect(dead_code)]
     unsafe fn dealloc(&self, ptr: NonNull<u8>, layout: Layout);
 
     /// Grow an existing allocation to new [`Layout`].
@@ -56,7 +54,6 @@ pub trait Alloc {
     /// * `ptr` must denote a block of memory currently allocated via this allocator.
     /// * `old_layout` must be the same [`Layout`] that block was originally allocated with.
     /// * `new_layout.size()` must be greater than or equal to `old_layout.size()`.
-    #[expect(dead_code)]
     unsafe fn grow(&self, ptr: NonNull<u8>, old_layout: Layout, new_layout: Layout) -> NonNull<u8>;
 
     /// Shrink an existing allocation to new [`Layout`].
@@ -76,7 +73,6 @@ pub trait Alloc {
     /// * `ptr` must denote a block of memory currently allocated via this allocator.
     /// * `old_layout` must be the same [`Layout`] that block was originally allocated with.
     /// * `new_layout.size()` must be smaller than or equal to `old_layout.size()`.
-    #[expect(dead_code)]
     unsafe fn shrink(
         &self,
         ptr: NonNull<u8>,
