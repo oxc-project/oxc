@@ -1,4 +1,3 @@
-use oxc_ast::AstKind;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
@@ -79,12 +78,9 @@ fn run<'a>(possible_jest_node: &PossibleJestNode<'a, '_>, ctx: &LintContext<'a>)
             JestFnKind::General(JestGeneralFnKind::Test),
         ],
     ) {
-        let if_statement_node = ctx
-            .nodes()
-            .ancestors(node.id())
-            .find(|node| matches!(node.kind(), AstKind::IfStatement(_)))?;
+        let if_statement =
+            ctx.nodes().ancestors(node.id()).find_map(|node| node.kind().as_if_statement())?;
 
-        let if_statement = if_statement_node.kind().as_if_statement()?;
         ctx.diagnostic(no_conditional_tests(if_statement.span));
     }
 
