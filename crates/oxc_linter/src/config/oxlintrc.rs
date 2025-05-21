@@ -3,6 +3,7 @@ use std::{
     path::{Path, PathBuf},
 };
 
+use rustc_hash::FxHashMap;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
@@ -62,7 +63,7 @@ use super::{
 #[serde(default)]
 #[non_exhaustive]
 pub struct Oxlintrc {
-    pub plugins: LintPlugins,
+    pub plugins: Option<LintPlugins>,
     pub categories: OxlintCategories,
     /// Example
     ///
@@ -147,6 +148,53 @@ impl Oxlintrc {
 
         Ok(config)
     }
+
+    /// Merges two [Oxlintrc] files together
+    /// [Self] takes priority over `other`
+    #[must_use]
+    pub fn merge(&self, other: Oxlintrc) -> Oxlintrc {
+        let mut categories = other.categories.clone();
+        categories.extend(self.categories.iter());
+
+        let rules = self
+            .rules
+            .rules
+            .iter()
+            .chain(&other.rules.rules)
+            .fold(FxHashMap::default(), |mut rules_set, rule| {
+                if rules_set.contains_key(&(&rule.plugin_name, &rule.rule_name)) {
+                    return rules_set;
+                }
+                rules_set.insert((&rule.plugin_name, &rule.rule_name), rule);
+                rules_set
+            })
+            .values()
+            .map(|rule| (**rule).clone())
+            .collect::<Vec<_>>();
+
+        let settings = self.settings.clone();
+        let env = self.env.clone();
+        let globals = self.globals.clone();
+
+        let mut overrides = self.overrides.clone();
+        overrides.extend(other.overrides);
+
+        Oxlintrc {
+            plugins: self.plugins.map_or_else(
+                || other.plugins,
+                |p| Some(other.plugins.map_or_else(|| p, |p2| p2.union(p))),
+            ),
+            categories,
+            rules: OxlintRules::new(rules),
+            settings,
+            env,
+            globals,
+            overrides,
+            path: self.path.clone(),
+            ignore_patterns: self.ignore_patterns.clone(),
+            extends: self.extends.clone(),
+        }
+    }
 }
 
 fn is_json_ext(ext: &str) -> bool {
@@ -162,7 +210,7 @@ mod test {
     #[test]
     fn test_oxlintrc_de_empty() {
         let config: Oxlintrc = serde_json::from_value(json!({})).unwrap();
-        assert_eq!(config.plugins, LintPlugins::default());
+        assert_eq!(config.plugins, None);
         assert_eq!(config.rules, OxlintRules::default());
         assert!(config.rules.is_empty());
         assert_eq!(config.settings, OxlintSettings::default());
@@ -174,29 +222,29 @@ mod test {
     #[test]
     fn test_oxlintrc_de_plugins_empty_array() {
         let config: Oxlintrc = serde_json::from_value(json!({ "plugins": [] })).unwrap();
-        assert_eq!(config.plugins, LintPlugins::empty());
+        assert_eq!(config.plugins, Some(LintPlugins::empty()));
     }
 
     #[test]
     fn test_oxlintrc_empty_config_plugins() {
         let config: Oxlintrc = serde_json::from_str(r"{}").unwrap();
-        assert_eq!(config.plugins, LintPlugins::default());
+        assert_eq!(config.plugins, None);
     }
 
     #[test]
     fn test_oxlintrc_specifying_plugins_will_override() {
         let config: Oxlintrc = serde_json::from_str(r#"{ "plugins": ["react", "oxc"] }"#).unwrap();
-        assert_eq!(config.plugins, LintPlugins::REACT.union(LintPlugins::OXC));
+        assert_eq!(config.plugins, Some(LintPlugins::REACT.union(LintPlugins::OXC)));
         let config: Oxlintrc =
             serde_json::from_str(r#"{ "plugins": ["typescript", "unicorn"] }"#).unwrap();
-        assert_eq!(config.plugins, LintPlugins::TYPESCRIPT.union(LintPlugins::UNICORN));
+        assert_eq!(config.plugins, Some(LintPlugins::TYPESCRIPT.union(LintPlugins::UNICORN)));
         let config: Oxlintrc =
             serde_json::from_str(r#"{ "plugins": ["typescript", "unicorn", "react", "oxc", "import", "jsdoc", "jest", "vitest", "jsx-a11y", "nextjs", "react-perf", "promise", "node"] }"#).unwrap();
-        assert_eq!(config.plugins, LintPlugins::all());
+        assert_eq!(config.plugins, Some(LintPlugins::all()));
 
         let config: Oxlintrc =
             serde_json::from_str(r#"{ "plugins": ["typescript", "@typescript-eslint"] }"#).unwrap();
-        assert_eq!(config.plugins, LintPlugins::TYPESCRIPT);
+        assert_eq!(config.plugins, Some(LintPlugins::TYPESCRIPT));
     }
 
     #[test]

@@ -92,7 +92,7 @@ pub struct OxlintOverride {
 ///
 /// Thin wrapper around [`globset::GlobSet`] because that struct doesn't implement Serialize or schemars
 /// traits.
-#[derive(Clone, Debug, Default)]
+#[derive(Clone, Default)]
 pub struct GlobSet {
     /// Raw patterns from the config. Inefficient, but required for [serialization](Serialize),
     /// which in turn is required for `--print-config`.
@@ -123,6 +123,12 @@ impl GlobSet {
 
     pub fn is_match<P: AsRef<Path>>(&self, path: P) -> bool {
         self.globs.is_match(path)
+    }
+}
+
+impl std::fmt::Debug for GlobSet {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_tuple("GlobSet").field(&self.raw).finish()
     }
 }
 

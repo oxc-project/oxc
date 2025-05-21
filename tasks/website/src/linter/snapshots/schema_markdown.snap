@@ -225,15 +225,6 @@ type: `object`
 See [Oxlint Rules](https://oxc.rs/docs/guide/usage/linter/rules.html)
 
 
-## plugins
-
-type: `string[]`
-
-default: `["react", "unicorn", "typescript", "oxc"]`
-
-
-
-
 ## rules
 
 type: `object`

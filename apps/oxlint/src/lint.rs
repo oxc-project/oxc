@@ -180,7 +180,11 @@ impl Runner for LintRunner {
             FxHashMap::default()
         };
 
-        enable_plugins.apply_overrides(&mut oxlintrc.plugins);
+        {
+            let mut plugins = oxlintrc.plugins.unwrap_or_default();
+            enable_plugins.apply_overrides(&mut plugins);
+            oxlintrc.plugins = Some(plugins);
+        }
 
         let oxlintrc_for_print = if misc_options.print_config || basic_options.init {
             Some(oxlintrc.clone())
