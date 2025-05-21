@@ -116,9 +116,6 @@ impl Lexer<'_> {
         }
         self.consume_char();
 
-        // Clear the current lookahead `Minus` Token
-        self.lookahead.clear();
-
         // Consume bytes which are part of identifier tail
         let next_byte = byte_search! {
             lexer: self,

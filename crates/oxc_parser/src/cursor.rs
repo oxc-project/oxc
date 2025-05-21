@@ -64,7 +64,7 @@ impl<'a> ParserImpl<'a> {
     /// Peek next token, returns EOF for final peek
     #[inline]
     pub(crate) fn peek_token(&mut self) -> Token {
-        self.lexer.lookahead(1)
+        self.nth(1)
     }
 
     /// Peek next kind, returns EOF for final peek
@@ -76,7 +76,7 @@ impl<'a> ParserImpl<'a> {
     /// Peek at kind
     #[inline]
     pub(crate) fn peek_at(&mut self, kind: Kind) -> bool {
-        self.peek_token().kind() == kind
+        self.peek_kind() == kind
     }
 
     /// Peek nth token
@@ -85,7 +85,13 @@ impl<'a> ParserImpl<'a> {
         if n == 0 {
             return self.cur_token();
         }
-        self.lexer.lookahead(n)
+        self.lookahead(|p| {
+            // Advance n times then get the token
+            for _ in 0..n {
+                p.bump_any();
+            }
+            p.cur_token()
+        })
     }
 
     /// Peek at nth kind

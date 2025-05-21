@@ -389,7 +389,6 @@ impl<'a> Lexer<'a> {
     pub(crate) fn next_template_substitution_tail(&mut self) -> Token {
         self.token.set_start(self.offset() - 1);
         let kind = self.read_template_literal(Kind::TemplateMiddle, Kind::TemplateTail);
-        self.lookahead.clear();
         self.finish_next(kind)
     }
 
