@@ -126,6 +126,8 @@ use core::slice;
 
 use bumpalo::collections::CollectionAllocErr;
 
+use oxc_data_structures::assert_unchecked;
+
 use crate::alloc::Alloc;
 
 mod raw_vec;
@@ -2059,14 +2061,24 @@ impl<'a, T: 'a + Copy, A: Alloc> Vec<'a, T, A> {
     ///
     /// [`extend_from_slice_copy`]: #method.extend_from_slice_copy
     pub fn extend_from_slices_copy(&mut self, slices: &[&[T]]) {
-        // Reserve the total amount of capacity we'll need to safely append the aggregated contents
-        // of each slice in `slices`.
-        let capacity_to_reserve: usize = slices.iter().map(|slice| slice.len()).sum();
-        self.reserve(capacity_to_reserve);
+        // Reserve the total amount we need to append the aggregated contents of all slices in `slices`.
+        // We have to use checked addition here to guard against overflow if the total length would
+        // exceed `usize::MAX`. Otherwise, we could reserve too little, and write out of bounds.
+        let total_len = slices.iter().fold(0usize, |total_len, slice| {
+            let len = slice.len();
+            // Tell compiler that slices have maximum length of `isize::MAX`,
+            // to help it remove checks on addition in some cases.
+            // Strangely the compiler is unaware of this invariant.
+            // SAFETY: Slices have maximum length of `isize::MAX`.
+            unsafe { assert_unchecked!(len <= (isize::MAX as usize)) };
+            total_len.checked_add(len).unwrap()
+        });
+
+        self.reserve(total_len);
 
         // SAFETY:
-        // * `dst` is valid for writes of `capacity_to_reserve` items as
-        //   `self.reserve(capacity_to_reserve)` above guarantees that.
+        // * `dst` is valid for writes of `total_len` items as `self.reserve(total_len)` above
+        //   guarantees that.
         // * Source and destination ranges cannot overlap as we just reserved the destination
         //   range from the allocator.
         unsafe {
