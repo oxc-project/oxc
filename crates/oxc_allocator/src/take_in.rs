@@ -14,7 +14,8 @@ pub trait TakeIn<'a>: Dummy<'a> {
 
     /// Replace node with a boxed dummy.
     #[must_use]
-    fn take_in_box(&mut self, allocator: &'a Allocator) -> Box<'a, Self> {
+    fn take_in_box<A: AllocatorAccessor<'a>>(&mut self, allocator_accessor: A) -> Box<'a, Self> {
+        let allocator = allocator_accessor.allocator();
         let dummy = Dummy::dummy(allocator);
         Box::new_in(mem::replace(self, dummy), allocator)
     }

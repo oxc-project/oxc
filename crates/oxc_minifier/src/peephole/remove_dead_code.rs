@@ -281,7 +281,7 @@ impl<'a, 'b> PeepholeOptimizations {
                                 .declarations
                                 .splice(0..0, var_init.declarations.take_in(ctx.ast));
                         } else {
-                            var_decl = Some(var_init.take_in_box(ctx.ast.allocator));
+                            var_decl = Some(var_init.take_in_box(ctx.ast));
                         }
                     }
                     Some(var_decl.map_or_else(

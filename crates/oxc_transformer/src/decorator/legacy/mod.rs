@@ -537,7 +537,7 @@ impl<'a> LegacyDecorator<'a, '_> {
         let span = class.span;
         class.r#type = ClassType::ClassExpression;
         let initializer = Self::get_class_initializer(
-            Expression::ClassExpression(class.take_in_box(ctx.ast.allocator)),
+            Expression::ClassExpression(class.take_in_box(ctx.ast)),
             alias_binding,
             ctx,
         );

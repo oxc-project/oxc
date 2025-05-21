@@ -298,7 +298,7 @@ impl<'a, 'ctx> AsyncGeneratorExecutor<'a, 'ctx> {
         ctx: &mut TraverseCtx<'a>,
     ) -> Expression<'a> {
         let body = wrapper_function.body.take().unwrap();
-        let params = wrapper_function.params.take_in_box(ctx.ast.allocator);
+        let params = wrapper_function.params.take_in_box(ctx.ast);
         let id = wrapper_function.id.take();
         let has_function_id = id.is_some();
 
@@ -385,8 +385,7 @@ impl<'a, 'ctx> AsyncGeneratorExecutor<'a, 'ctx> {
         }
 
         // Construct the IIFE
-        let callee =
-            Expression::FunctionExpression(wrapper_function.take_in_box(ctx.ast.allocator));
+        let callee = Expression::FunctionExpression(wrapper_function.take_in_box(ctx.ast));
         ctx.ast.expression_call_with_pure(SPAN, callee, NONE, ctx.ast.vec(), false, true)
     }
 
@@ -461,7 +460,7 @@ impl<'a, 'ctx> AsyncGeneratorExecutor<'a, 'ctx> {
         arrow: &mut ArrowFunctionExpression<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) -> Expression<'a> {
-        let mut body = arrow.body.take_in_box(ctx.ast.allocator);
+        let mut body = arrow.body.take_in_box(ctx.ast);
 
         // If the arrow's expression is true, we need to wrap the only one expression with return statement.
         if arrow.expression {
@@ -473,7 +472,7 @@ impl<'a, 'ctx> AsyncGeneratorExecutor<'a, 'ctx> {
             *statement = ctx.ast.statement_return(expression.span(), Some(expression));
         }
 
-        let params = arrow.params.take_in_box(ctx.ast.allocator);
+        let params = arrow.params.take_in_box(ctx.ast);
         let generator_function_id = arrow.scope_id();
         ctx.scoping_mut().scope_flags_mut(generator_function_id).remove(ScopeFlags::Arrow);
         let function_name = Self::infer_function_name_from_parent_node(ctx);
