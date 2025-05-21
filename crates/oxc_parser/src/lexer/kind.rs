@@ -248,7 +248,10 @@ impl Kind {
     /// `IdentifierName` but not `ReservedWord`
     #[inline]
     pub fn is_identifier(self) -> bool {
-        self.is_identifier_name() && !self.is_reserved_keyword()
+        matches!(self, Ident)
+            || self.is_contextual_keyword()
+            || self.is_strict_mode_contextual_keyword()
+            || self.is_future_reserved_keyword()
     }
 
     /// TypeScript Identifier
@@ -305,9 +308,7 @@ impl Kind {
 
     #[inline]
     pub fn is_identifier_or_keyword(self) -> bool {
-        self.is_literal_property_name()
-            || matches!(self, Self::PrivateIdentifier)
-            || self.is_all_keyword()
+        self.is_literal_property_name() || matches!(self, Self::PrivateIdentifier)
     }
 
     #[inline]
