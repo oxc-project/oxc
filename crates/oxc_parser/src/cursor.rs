@@ -237,13 +237,14 @@ impl<'a> ParserImpl<'a> {
         }
     }
 
+    #[inline]
     pub(crate) fn re_lex_right_angle(&mut self) -> Kind {
         if self.fatal_error.is_some() {
             return Kind::Eof;
         }
         let kind = self.cur_kind();
         if kind == Kind::RAngle {
-            self.token = self.lexer.next_right_angle();
+            self.token = self.lexer.re_lex_right_angle();
             self.token.kind()
         } else {
             kind
