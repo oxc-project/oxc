@@ -16,49 +16,66 @@ fn no_instanceof_builtins_diagnostic(span: Span) -> OxcDiagnostic {
         .with_label(span)
 }
 
-/// ECMAScript built-ins (2024-05 edition).
-const DEFAULT_BUILTINS: &[&str] = &[
-    "Array",
-    "ArrayBuffer",
-    "Boolean",
-    "DataView",
-    "Date",
+const PRIMITIVE_WRAPPERS: &[&str] = &["String", "Number", "Boolean", "BigInt", "Symbol"];
+
+const STRICT_STRATEGY_CONSTRUCTORS: &[&str] = &[
+    // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Error
     "Error",
     "EvalError",
-    "FinalizationRegistry",
-    "Float32Array",
-    "Float64Array",
-    "Function",
-    "Int8Array",
-    "Int16Array",
-    "Int32Array",
-    "Map",
-    "Number",
-    "Object",
-    "Promise",
     "RangeError",
     "ReferenceError",
-    "RegExp",
-    "Set",
-    "SharedArrayBuffer",
-    "String",
-    "Symbol",
     "SyntaxError",
     "TypeError",
-    "Uint8Array",
-    "Uint8ClampedArray",
-    "Uint16Array",
-    "Uint32Array",
     "URIError",
+    "InternalError",
+    "AggregateError",
+    // Collection types
+    "Map",
+    "Set",
     "WeakMap",
     "WeakRef",
     "WeakSet",
+    // Arrays and Typed Arrays
+    "ArrayBuffer",
+    "Int8Array",
+    "Uint8Array",
+    "Uint8ClampedArray",
+    "Int16Array",
+    "Uint16Array",
+    "Int32Array",
+    "Uint32Array",
+    "Float16Array",
+    "Float32Array",
+    "Float64Array",
+    "BigInt64Array",
+    "BigUint64Array",
+    // Data types
+    "Object",
+    // Regular Expressions
+    "RegExp",
+    // Async and functions
+    "Promise",
+    "Proxy",
+    // Other
+    "DataView",
+    "Date",
+    "SharedArrayBuffer",
+    "FinalizationRegistry",
 ];
 
 #[derive(Debug, Clone, Default)]
 pub struct NoInstanceofBuiltinsConfig {
     include: Vec<String>,
     exclude: Vec<String>,
+    use_error_is_error: bool,
+    strategy: Strategy,
+}
+
+#[derive(Debug, Clone, Default, PartialEq, Eq)]
+enum Strategy {
+    Strict,
+    #[default]
+    Loose,
 }
 
 #[derive(Debug, Default, Clone)]
@@ -109,16 +126,28 @@ impl Rule for NoInstanceofBuiltins {
         let Expression::Identifier(ident) = ctor_expr else { return };
         let ctor_name = ident.name.as_str();
 
-        let cfg = &self.0;
-
-        if cfg.exclude.iter().any(|s| s == ctor_name) {
+        if self.0.exclude.iter().any(|s| s == ctor_name) {
             return;
         }
 
-        let is_forbidden_default = DEFAULT_BUILTINS.contains(&ctor_name);
-        let is_forbidden_extra = cfg.include.iter().any(|s| s == ctor_name);
+        if ctor_name == "Array" || (ctor_name == "Error" && self.0.use_error_is_error) {
+            ctx.diagnostic(no_instanceof_builtins_diagnostic(bin.span));
+            return;
+        }
+        if ctor_name == "Function" {
+            ctx.diagnostic(no_instanceof_builtins_diagnostic(bin.span));
+            return;
+        }
 
-        if is_forbidden_default || is_forbidden_extra {
+        if PRIMITIVE_WRAPPERS.contains(&ctor_name) {
+            ctx.diagnostic(no_instanceof_builtins_diagnostic(bin.span));
+            return;
+        }
+
+        if self.0.include.iter().any(|s| s == ctor_name)
+            || (self.0.strategy == Strategy::Strict
+                && STRICT_STRATEGY_CONSTRUCTORS.contains(&ctor_name))
+        {
             ctx.diagnostic(no_instanceof_builtins_diagnostic(bin.span));
         }
     }
@@ -126,29 +155,44 @@ impl Rule for NoInstanceofBuiltins {
     fn from_configuration(value: Value) -> Self {
         let mut include = Vec::<String>::new();
         let mut exclude = Vec::<String>::new();
+        let mut use_error_is_error = false;
+        let mut strategy = Strategy::Loose;
 
         if let Value::Array(arr) = value {
-            for item in arr {
-                if let Value::Object(map) = item {
-                    if let Some(Value::Array(inc)) = map.get("include") {
-                        for v in inc {
-                            if let Value::String(s) = v {
-                                include.push(s.clone());
-                            }
+            if let Some(Value::Object(map)) = arr.first() {
+                if let Some(Value::Array(inc)) = map.get("include") {
+                    for v in inc {
+                        if let Value::String(s) = v {
+                            include.push(s.clone());
                         }
                     }
-                    if let Some(Value::Array(exc)) = map.get("exclude") {
-                        for v in exc {
-                            if let Value::String(s) = v {
-                                exclude.push(s.clone());
-                            }
+                }
+                if let Some(Value::Array(exc)) = map.get("exclude") {
+                    for v in exc {
+                        if let Value::String(s) = v {
+                            exclude.push(s.clone());
                         }
+                    }
+                }
+                if let Some(Value::Bool(b)) = map.get("useErrorIsError") {
+                    use_error_is_error = *b;
+                }
+                if let Some(Value::String(b)) = map.get("strategy") {
+                    match b.as_str() {
+                        "strict" => strategy = Strategy::Strict,
+                        "loose" => strategy = Strategy::Loose,
+                        _ => {}
                     }
                 }
             }
         }
 
-        Self(Box::new(NoInstanceofBuiltinsConfig { include, exclude }))
+        Self(Box::new(NoInstanceofBuiltinsConfig {
+            include,
+            exclude,
+            use_error_is_error,
+            strategy,
+        }))
     }
 }
 
@@ -167,9 +211,103 @@ fn test() {
         ("a.x[2] instanceof foo()", None),
         ("Array.isArray([1,2,3]) === true", None),
         (r#""arr instanceof Array""#, None),
+        ("foo instanceof WebWorker", None),
+        // Error types
+        ("foo instanceof Error", None),
+        ("foo instanceof EvalError", None),
+        ("foo instanceof RangeError", None),
+        ("foo instanceof ReferenceError", None),
+        ("foo instanceof SyntaxError", None),
+        ("foo instanceof TypeError", None),
+        ("foo instanceof URIError", None),
+        ("foo instanceof InternalError", None),
+        ("foo instanceof AggregateError", None),
+        // Collection types
+        ("foo instanceof Map", None),
+        ("foo instanceof Set", None),
+        ("foo instanceof WeakMap", None),
+        ("foo instanceof WeakRef", None),
+        ("foo instanceof WeakSet", None),
+        // Arrays and Typed Arrays
+        ("foo instanceof ArrayBuffer", None),
+        ("foo instanceof Int8Array", None),
+        ("foo instanceof Uint8Array", None),
+        ("foo instanceof Uint8ClampedArray", None),
+        ("foo instanceof Int16Array", None),
+        ("foo instanceof Uint16Array", None),
+        ("foo instanceof Int32Array", None),
+        ("foo instanceof Uint32Array", None),
+        ("foo instanceof Float16Array", None),
+        ("foo instanceof Float32Array", None),
+        ("foo instanceof Float64Array", None),
+        ("foo instanceof BigInt64Array", None),
+        ("foo instanceof BigUint64Array", None),
+        // Data types
+        ("foo instanceof Object", None),
+        // Regular Expressions
+        ("foo instanceof RegExp", None),
+        // Async and functions
+        ("foo instanceof Promise", None),
+        ("foo instanceof Proxy", None),
+        // Other
+        ("foo instanceof DataView", None),
+        ("foo instanceof Date", None),
+        ("foo instanceof SharedArrayBuffer", None),
+        ("foo instanceof FinalizationRegistry", None),
     ];
 
     let fail = vec![
+        ("foo instanceof String", None),
+        ("foo instanceof Number", None),
+        ("foo instanceof Boolean", None),
+        ("foo instanceof BigInt", None),
+        ("foo instanceof Symbol", None),
+        ("foo instanceof Function", None),
+        ("foo instanceof Array", None),
+        (
+            "fooErr instanceof Error",
+            Some(serde_json::json!([{"useErrorIsError": true, "strategy": "loose"}])),
+        ),
+        (
+            "(fooErr) instanceof (Error)",
+            Some(serde_json::json!([{"useErrorIsError": true, "strategy": "strict"}])),
+        ),
+        (
+            "err instanceof Error",
+            Some(serde_json::json!([{"useErrorIsError": true, "strategy": "strict"}])),
+        ),
+        (
+            "err instanceof EvalError",
+            Some(serde_json::json!([{"useErrorIsError": true, "strategy": "strict"}])),
+        ),
+        (
+            "err instanceof RangeError",
+            Some(serde_json::json!([{"useErrorIsError": true, "strategy": "strict"}])),
+        ),
+        (
+            "err instanceof ReferenceError",
+            Some(serde_json::json!([{"useErrorIsError": true, "strategy": "strict"}])),
+        ),
+        (
+            "err instanceof SyntaxError",
+            Some(serde_json::json!([{"useErrorIsError": true, "strategy": "strict"}])),
+        ),
+        (
+            "err instanceof TypeError",
+            Some(serde_json::json!([{"useErrorIsError": true, "strategy": "strict"}])),
+        ),
+        (
+            "err instanceof URIError",
+            Some(serde_json::json!([{"useErrorIsError": true, "strategy": "strict"}])),
+        ),
+        (
+            "err instanceof InternalError",
+            Some(serde_json::json!([{"useErrorIsError": true, "strategy": "strict"}])),
+        ),
+        (
+            "err instanceof AggregateError",
+            Some(serde_json::json!([{"useErrorIsError": true, "strategy": "strict"}])),
+        ),
         ("fooInclude instanceof WebWorker", Some(serde_json::json!([{"include": ["WebWorker"]}]))),
         (
             "fooInclude instanceof HTMLElement",
