@@ -43,6 +43,7 @@ src:
   - 'crates/oxc_span/src/generated/derive_estree.rs'
   - 'crates/oxc_span/src/source_type.rs'
   - 'crates/oxc_span/src/span.rs'
+  - 'crates/oxc_syntax/src/comment_node.rs'
   - 'crates/oxc_syntax/src/generated/assert_layouts.rs'
   - 'crates/oxc_syntax/src/generated/derive_clone_in.rs'
   - 'crates/oxc_syntax/src/generated/derive_content_eq.rs'

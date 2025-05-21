@@ -4,7 +4,9 @@ use std::borrow::Cow;
 
 use oxc_allocator::{Allocator, AllocatorAccessor, Box, FromIn, IntoIn, String, Vec};
 use oxc_span::{Atom, SPAN, Span};
-use oxc_syntax::{number::NumberBase, operator::UnaryOperator, scope::ScopeId};
+use oxc_syntax::{
+    comment_node::CommentNodeId, number::NumberBase, operator::UnaryOperator, scope::ScopeId,
+};
 
 use crate::{AstBuilder, ast::*};
 
@@ -31,6 +33,13 @@ impl<'a> AstBuilder<'a> {
     #[inline]
     pub fn new(allocator: &'a Allocator) -> Self {
         Self { allocator }
+    }
+
+    /// Create [`CommentNodeId`] for an AST node.
+    #[expect(dead_code, clippy::unused_self, clippy::trivially_copy_pass_by_ref)]
+    pub(crate) fn get_comment_node_id(&self) -> CommentNodeId {
+        // TODO: Generate a real ID
+        CommentNodeId::DUMMY
     }
 
     /// Move a value into the memory arena.

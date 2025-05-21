@@ -620,7 +620,7 @@ fn template(krate: &str, assertions_64: &TokenStream, assertions_32: &TokenStrea
             use nonmax::NonMaxU32;
 
             ///@@line_break
-            use crate::{module_record::*, number::*, operator::*, reference::*, scope::*, symbol::*};
+            use crate::{comment_node::*, module_record::*, number::*, operator::*, reference::*, scope::*, symbol::*};
         },
         "napi/parser" => quote! {
             use crate::raw_transfer_types::*;

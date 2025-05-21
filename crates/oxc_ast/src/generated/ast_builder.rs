@@ -3,6 +3,7 @@
 
 //! AST node factories
 
+#![allow(unused_imports)]
 #![expect(
     clippy::default_trait_access,
     clippy::inconsistent_struct_constructor,
@@ -12,7 +13,9 @@
 use std::cell::Cell;
 
 use oxc_allocator::{Allocator, Box, IntoIn, Vec};
-use oxc_syntax::{reference::ReferenceId, scope::ScopeId, symbol::SymbolId};
+use oxc_syntax::{
+    comment_node::CommentNodeId, reference::ReferenceId, scope::ScopeId, symbol::SymbolId,
+};
 
 use crate::ast::*;
 
