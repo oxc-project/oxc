@@ -22,6 +22,7 @@
 #![warn(missing_docs)]
 
 mod address;
+mod alloc;
 mod allocator;
 mod allocator_api2;
 mod boxed;
