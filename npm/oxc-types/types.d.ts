@@ -742,7 +742,7 @@ export interface ImportExpression extends Span {
   type: 'ImportExpression';
   source: Expression;
   options: Expression | null;
-  phase?: ImportPhase | null;
+  phase: ImportPhase | null;
 }
 
 export interface ImportDeclaration extends Span {

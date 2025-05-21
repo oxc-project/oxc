@@ -1650,7 +1650,7 @@ impl ESTree for ImportExpression<'_> {
         state.serialize_field("end", &self.span.end);
         state.serialize_field("source", &self.source);
         state.serialize_field("options", &self.options);
-        state.serialize_js_field("phase", &self.phase);
+        state.serialize_field("phase", &self.phase);
         state.end();
     }
 }

@@ -20,6 +20,9 @@ The only differences between Oxc's AST and ESTree / TS-ESTree are:
 
 - Support for Stage 3 ECMA features [`import defer`](https://github.com/tc39/proposal-defer-import-eval)
   and [`import source`](https://github.com/tc39/proposal-source-phase-imports).
+- In TS-ESTree AST, `import.defer(...)` and `import.source(...)` are represented as an `ImportExpression`
+  with `'defer'` or `'source'` in `phase` field (as in ESTree spec), where TS-ESLint represents these
+  as a `CallExpression` with `MetaProperty` as its `callee`.
 - Addition of a non-standard `hashbang` field to `Program`.
 
 That aside, the AST should completely align with Acorn's ESTree AST or TS-ESLint's TS-ESTree.
