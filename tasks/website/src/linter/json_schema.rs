@@ -266,6 +266,7 @@ impl Renderer {
                 .metadata
                 .as_ref()
                 .and_then(|m| m.description.clone())
+                .or_else(|| ref_schema.metadata.as_ref().and_then(|m| m.description.clone()))
                 .unwrap_or_default(),
             sections,
         }
