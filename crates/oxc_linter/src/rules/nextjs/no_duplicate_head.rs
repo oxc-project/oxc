@@ -40,9 +40,9 @@ declare_oxc_lint!(
     ///           <NextScript />
     ///         </body>
     ///       </Html>
-    ///    )
-    ///  }
-    ///}
+    ///     )
+    ///   }
+    /// }
     /// export default MyDocument
     /// ```
     ///
@@ -61,9 +61,9 @@ declare_oxc_lint!(
     ///           <NextScript />
     ///         </body>
     ///       </Html>
-    ///    )
-    ///  }
-    ///}
+    ///     )
+    ///   }
+    /// }
     /// export default MyDocument
     /// ```
     NoDuplicateHead,

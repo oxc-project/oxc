@@ -29,7 +29,7 @@ declare_oxc_lint!(
     ///
     /// ### Example
     ///
-    ///```js
+    /// ```js
     /// describe.skip('foo', () => {});
     /// it.skip('foo', () => {});
     /// test.skip('foo', () => {});
