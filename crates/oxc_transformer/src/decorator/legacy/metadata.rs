@@ -393,7 +393,7 @@ impl<'a> LegacyDecoratorMetadata<'a, '_> {
                     let binding =
                         self.ctx.var_declarations.create_uid_var_based_on_node(&left, ctx);
                     let Expression::LogicalExpression(logical) = &mut left else { unreachable!() };
-                    let right = logical.right.take_in(ctx.ast.allocator);
+                    let right = logical.right.take_in(ctx.ast);
                     // `(_a = A.B)`
                     let right = ctx.ast.expression_assignment(
                         SPAN,

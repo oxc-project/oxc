@@ -132,7 +132,7 @@ impl<'a> PeepholeOptimizations {
             // (TRUE || x) => TRUE (also, (3 || x) => 3)
             // (FALSE && x) => FALSE
             if if lval { op.is_or() } else { op.is_and() } {
-                return Some(logical_expr.left.take_in(ctx.ast.allocator));
+                return Some(logical_expr.left.take_in(ctx.ast));
             } else if !left.may_have_side_effects(&ctx) {
                 let should_keep_indirect_access =
                     Self::should_keep_indirect_access(&logical_expr.right, ctx);
@@ -147,19 +147,19 @@ impl<'a> PeepholeOptimizations {
                                 None,
                                 NumberBase::Decimal,
                             ),
-                            logical_expr.right.take_in(ctx.ast.allocator),
+                            logical_expr.right.take_in(ctx.ast),
                         ]),
                     ));
                 }
                 // (FALSE || x) => x
                 // (TRUE && x) => x
-                return Some(logical_expr.right.take_in(ctx.ast.allocator));
+                return Some(logical_expr.right.take_in(ctx.ast));
             }
             // Left side may have side effects, but we know its boolean value.
             // e.g. true_with_sideeffects || foo() => true_with_sideeffects, foo()
             // or: false_with_sideeffects && foo() => false_with_sideeffects, foo()
-            let left = logical_expr.left.take_in(ctx.ast.allocator);
-            let right = logical_expr.right.take_in(ctx.ast.allocator);
+            let left = logical_expr.left.take_in(ctx.ast);
+            let right = logical_expr.right.take_in(ctx.ast);
             let vec = ctx.ast.vec_from_array([left, right]);
             let sequence_expr = ctx.ast.expression_sequence(logical_expr.span, vec);
             return Some(sequence_expr);
@@ -174,8 +174,8 @@ impl<'a> PeepholeOptimizations {
                         if !right_boolean && left_child_op.is_or()
                             || right_boolean && left_child_op.is_and()
                         {
-                            let left = left_child.left.take_in(ctx.ast.allocator);
-                            let right = logical_expr.right.take_in(ctx.ast.allocator);
+                            let left = left_child.left.take_in(ctx.ast);
+                            let right = logical_expr.right.take_in(ctx.ast);
                             let logic_expr = ctx.ast.expression_logical(
                                 logical_expr.span,
                                 left,
@@ -204,8 +204,8 @@ impl<'a> PeepholeOptimizations {
                 Some(if left.may_have_side_effects(&ctx) {
                     // e.g. `(a(), null) ?? 1` => `(a(), null, 1)`
                     let expressions = ctx.ast.vec_from_array([
-                        logical_expr.left.take_in(ctx.ast.allocator),
-                        logical_expr.right.take_in(ctx.ast.allocator),
+                        logical_expr.left.take_in(ctx.ast),
+                        logical_expr.right.take_in(ctx.ast),
                     ]);
                     ctx.ast.expression_sequence(logical_expr.span, expressions)
                 } else {
@@ -222,12 +222,12 @@ impl<'a> PeepholeOptimizations {
                                     None,
                                     NumberBase::Decimal,
                                 ),
-                                logical_expr.right.take_in(ctx.ast.allocator),
+                                logical_expr.right.take_in(ctx.ast),
                             ]),
                         ));
                     }
                     // nullish condition => this expression evaluates to the right side.
-                    logical_expr.right.take_in(ctx.ast.allocator)
+                    logical_expr.right.take_in(ctx.ast)
                 })
             }
             ValueType::Number
@@ -248,12 +248,12 @@ impl<'a> PeepholeOptimizations {
                                 None,
                                 NumberBase::Decimal,
                             ),
-                            logical_expr.left.take_in(ctx.ast.allocator),
+                            logical_expr.left.take_in(ctx.ast),
                         ]),
                     ));
                 }
                 // non-nullish condition => this expression evaluates to the left side.
-                Some(logical_expr.left.take_in(ctx.ast.allocator))
+                Some(logical_expr.left.take_in(ctx.ast))
             }
             ValueType::Undetermined => None,
         }
@@ -391,14 +391,14 @@ impl<'a> PeepholeOptimizations {
                     let span = Span::new(left_binary_expr.right.span().start, e.right.span().end);
                     let value = ctx.ast.atom_from_strs_array([&left_str, &right_str]);
                     let right = ctx.ast.expression_string_literal(span, value, None);
-                    let left = left_binary_expr.left.take_in(ctx.ast.allocator);
+                    let left = left_binary_expr.left.take_in(ctx.ast);
                     return Some(ctx.ast.expression_binary(e.span, left, e.operator, right));
                 }
 
                 if let Some(new_right) =
                     Self::try_fold_add_op(&mut left_binary_expr.right, &mut e.right, ctx)
                 {
-                    let left = left_binary_expr.left.take_in(ctx.ast.allocator);
+                    let left = left_binary_expr.left.take_in(ctx.ast);
                     return Some(ctx.ast.expression_binary(e.span, left, e.operator, new_right));
                 }
             }
@@ -437,7 +437,7 @@ impl<'a> PeepholeOptimizations {
                 }
                 left.quasis.extend(right.quasis.drain(1..)); // first quasi is already handled
                 left.expressions.extend(right.expressions.drain(..));
-                return Some(left_expr.take_in(ctx.ast.allocator));
+                return Some(left_expr.take_in(ctx.ast));
             }
 
             // "`${x}y` + 'z'" => "`${x}yz`"
@@ -453,7 +453,7 @@ impl<'a> PeepholeOptimizations {
                     .cooked
                     .map(|cooked| ctx.ast.atom(&(cooked.as_str().to_string() + &right_str)));
                 last_quasi.value.cooked = new_cooked;
-                return Some(left_expr.take_in(ctx.ast.allocator));
+                return Some(left_expr.take_in(ctx.ast));
             }
         } else if let Expression::TemplateLiteral(right) = right_expr {
             // "'x' + `y${z}`" => "`xy${z}`"
@@ -471,17 +471,17 @@ impl<'a> PeepholeOptimizations {
                     .cooked
                     .map(|cooked| ctx.ast.atom(&(left_str.into_owned() + cooked.as_str())));
                 first_quasi.value.cooked = new_cooked;
-                return Some(right_expr.take_in(ctx.ast.allocator));
+                return Some(right_expr.take_in(ctx.ast));
             }
         }
 
         // remove useless `+ ""` (e.g. `typeof foo + ""` -> `typeof foo`)
         if Self::evaluates_to_empty_string(left_expr) && right_expr.value_type(&ctx).is_string() {
-            return Some(right_expr.take_in(ctx.ast.allocator));
+            return Some(right_expr.take_in(ctx.ast));
         } else if Self::evaluates_to_empty_string(right_expr)
             && left_expr.value_type(&ctx).is_string()
         {
-            return Some(left_expr.take_in(ctx.ast.allocator));
+            return Some(left_expr.take_in(ctx.ast));
         }
 
         None
@@ -523,7 +523,7 @@ impl<'a> PeepholeOptimizations {
 
         Some(ctx.ast.expression_binary(
             e.span,
-            expr_to_move.take_in(ctx.ast.allocator),
+            expr_to_move.take_in(ctx.ast),
             op,
             ctx.value_to_expr(Span::new(left.right.span().start, e.right.span().end), v),
         ))

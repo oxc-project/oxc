@@ -65,7 +65,7 @@ impl<'a> PeepholeOptimizations {
         .map(|new_expr| {
             ctx.ast.expression_logical(
                 expr.span,
-                left.left.take_in(ctx.ast.allocator),
+                left.left.take_in(ctx.ast),
                 expr.operator,
                 new_expr,
             )
@@ -142,7 +142,7 @@ impl<'a> PeepholeOptimizations {
         };
         Some(ctx.ast.expression_binary(
             span,
-            left_non_value_expr.take_in(ctx.ast.allocator),
+            left_non_value_expr.take_in(ctx.ast),
             replace_op,
             ctx.ast.expression_null_literal(null_expr_span),
         ))
@@ -226,6 +226,6 @@ impl<'a> PeepholeOptimizations {
         }
         assignment_expr.span = expr.span;
         assignment_expr.operator = new_op;
-        Some(expr.right.take_in(ctx.ast.allocator))
+        Some(expr.right.take_in(ctx.ast))
     }
 }

@@ -528,7 +528,7 @@ impl<'a> Traverse<'a> for TransformerImpl<'a, '_> {
                 let Statement::ExpressionStatement(expr_stmt) = stmt else {
                     continue;
                 };
-                let expression = Some(expr_stmt.expression.take_in(ctx.ast.allocator));
+                let expression = Some(expr_stmt.expression.take_in(ctx.ast));
                 *stmt = ctx.ast.statement_return(SPAN, expression);
                 return;
             }

@@ -705,7 +705,7 @@ impl<'a> ClassProperties<'a, '_> {
             }
 
             // `_Class = class {}`
-            let class_expr = expr.take_in(ctx.ast.allocator);
+            let class_expr = expr.take_in(ctx.ast);
             let assignment = create_assignment(binding, class_expr, ctx);
 
             if exprs.is_empty() && self.insert_after_exprs.is_empty() {
@@ -734,7 +734,7 @@ impl<'a> ClassProperties<'a, '_> {
                 return;
             }
 
-            let class_expr = expr.take_in(ctx.ast.allocator);
+            let class_expr = expr.take_in(ctx.ast);
             exprs.push(class_expr);
         }
 

@@ -334,7 +334,7 @@ impl<'a> ParserImpl<'a> {
     }
 
     pub(crate) fn consume_decorators(&mut self) -> Vec<'a, Decorator<'a>> {
-        self.state.decorators.take_in(self.ast.allocator)
+        self.state.decorators.take_in(self.ast)
     }
 
     pub(crate) fn parse_normal_list<F, T>(&mut self, open: Kind, close: Kind, f: F) -> Vec<'a, T>

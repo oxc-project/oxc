@@ -250,7 +250,7 @@ impl<'a> ModuleRunnerTransform<'a> {
     /// Transform `import(source, ...arguments)` to `__vite_ssr_dynamic_import__(source, ...arguments)`.
     #[inline]
     fn transform_dynamic_import(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
-        let Expression::ImportExpression(import_expr) = expr.take_in(ctx.ast.allocator) else {
+        let Expression::ImportExpression(import_expr) = expr.take_in(ctx.ast) else {
             unreachable!();
         };
 

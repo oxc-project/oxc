@@ -983,7 +983,7 @@ impl<'a> LegacyDecorator<'a, '_> {
                 let binding = self.ctx.var_declarations.create_uid_var_based_on_node(key, ctx);
                 let operator = AssignmentOperator::Assign;
                 let left = binding.create_read_write_target(ctx);
-                let right = key.to_expression_mut().take_in(ctx.ast.allocator);
+                let right = key.to_expression_mut().take_in(ctx.ast);
                 let key_expr = ctx.ast.expression_assignment(SPAN, operator, left, right);
                 *key = PropertyKey::from(key_expr);
                 binding.create_read_expression(ctx)

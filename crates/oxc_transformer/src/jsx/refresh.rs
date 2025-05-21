@@ -139,7 +139,7 @@ impl<'a, 'ctx> ReactRefresh<'a, 'ctx> {
 impl<'a> Traverse<'a> for ReactRefresh<'a, '_> {
     fn enter_program(&mut self, program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
         let mut new_statements = ctx.ast.vec_with_capacity(program.body.len() * 2);
-        for mut statement in program.body.take_in(ctx.ast.allocator) {
+        for mut statement in program.body.take_in(ctx.ast) {
             let next_statement = self.process_statement(&mut statement, ctx);
             new_statements.push(statement);
             if let Some(assignment_expression) = next_statement {
@@ -252,7 +252,7 @@ impl<'a> Traverse<'a> for ReactRefresh<'a, '_> {
                 Some((binding_identifier.clone(), arguments.clone_in(ctx.ast.allocator)));
         }
 
-        arguments.insert(0, Argument::from(expr.take_in(ctx.ast.allocator)));
+        arguments.insert(0, Argument::from(expr.take_in(ctx.ast)));
         *expr = ctx.ast.expression_call(
             SPAN,
             binding.create_read_expression(ctx),
@@ -505,7 +505,7 @@ impl<'a> ReactRefresh<'a, '_> {
                 SPAN,
                 AssignmentOperator::Assign,
                 self.create_registration(ctx.ast.atom(inferred_name), ctx),
-                expr.take_in(ctx.ast.allocator),
+                expr.take_in(ctx.ast),
             );
         }
 

@@ -660,10 +660,8 @@ impl<'a> ParserImpl<'a> {
         }
         // Add `ChainExpression` to `a?.c?.b<c>`;
         if let Expression::TSInstantiationExpression(mut expr) = lhs {
-            expr.expression = self.map_to_chain_expression(
-                expr.expression.span(),
-                expr.expression.take_in(self.ast.allocator),
-            );
+            expr.expression = self
+                .map_to_chain_expression(expr.expression.span(), expr.expression.take_in(self.ast));
             Expression::TSInstantiationExpression(expr)
         } else {
             let span = self.end_span(span);

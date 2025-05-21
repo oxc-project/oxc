@@ -91,9 +91,9 @@ impl<'a> PeepholeOptimizations {
         loop {
             if let Expression::LogicalExpression(logical_expr) = &mut b {
                 if logical_expr.operator == op {
-                    let right = logical_expr.left.take_in(ctx.ast.allocator);
+                    let right = logical_expr.left.take_in(ctx.ast);
                     a = self.join_with_left_associative_op(span, op, a, right, ctx);
-                    b = logical_expr.right.take_in(ctx.ast.allocator);
+                    b = logical_expr.right.take_in(ctx.ast);
                     continue;
                 }
             }
@@ -150,9 +150,9 @@ impl<'a> PeepholeOptimizations {
                     _ => return None,
                 }
                 Some(if b.value {
-                    e.left.take_in(ctx.ast.allocator)
+                    e.left.take_in(ctx.ast)
                 } else {
-                    let argument = e.left.take_in(ctx.ast.allocator);
+                    let argument = e.left.take_in(ctx.ast);
                     ctx.ast.expression_unary(e.span, UnaryOperator::LogicalNot, argument)
                 })
             }
@@ -247,7 +247,7 @@ impl<'a> PeepholeOptimizations {
 
         let new_op = logical_expr.operator.to_assignment_operator();
         expr.operator = new_op;
-        expr.right = logical_expr.right.take_in(ctx.ast.allocator);
+        expr.right = logical_expr.right.take_in(ctx.ast);
         true
     }
 
@@ -269,7 +269,7 @@ impl<'a> PeepholeOptimizations {
         }
 
         expr.operator = new_op;
-        expr.right = binary_expr.right.take_in(ctx.ast.allocator);
+        expr.right = binary_expr.right.take_in(ctx.ast);
         true
     }
 
@@ -293,7 +293,7 @@ impl<'a> PeepholeOptimizations {
         } else {
             return None;
         };
-        let target = target.take_in(ctx.ast.allocator);
+        let target = target.take_in(ctx.ast);
         Some(ctx.ast.expression_update(expr.span, operator, true, target))
     }
 }

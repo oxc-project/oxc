@@ -42,7 +42,7 @@ impl<'a> Traverse<'a> for TypeScriptNamespace<'a, '_> {
         // every time a namespace declaration is encountered.
         let mut new_stmts = ctx.ast.vec();
 
-        for stmt in program.body.take_in(ctx.ast.allocator) {
+        for stmt in program.body.take_in(ctx.ast) {
             match stmt {
                 Statement::TSModuleDeclaration(decl) => {
                     if !self.allow_namespaces {
@@ -448,7 +448,7 @@ impl<'a> TypeScriptNamespace<'a, '_> {
                                 false,
                             ))
                             .into(),
-                            init.take_in(ctx.ast.allocator),
+                            init.take_in(ctx.ast),
                         ),
                     );
                 }

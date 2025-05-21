@@ -230,7 +230,7 @@ impl<'a> TypeScriptEnum<'a> {
                 match constant_value {
                     None => {
                         prev_constant_value = None;
-                        let mut new_initializer = initializer.take_in(ast.allocator);
+                        let mut new_initializer = initializer.take_in(ast);
 
                         IdentifierReferenceRename::new(
                             param_binding.name,

@@ -2,7 +2,7 @@
 
 use std::borrow::Cow;
 
-use oxc_allocator::{Allocator, Box, FromIn, IntoIn, String, Vec};
+use oxc_allocator::{Allocator, AllocatorAccessor, Box, FromIn, IntoIn, String, Vec};
 use oxc_span::{Atom, SPAN, Span};
 use oxc_syntax::{number::NumberBase, operator::UnaryOperator, scope::ScopeId};
 
@@ -16,6 +16,13 @@ pub struct NONE;
 impl<'a, T> FromIn<'a, NONE> for Option<Box<'a, T>> {
     fn from_in(_: NONE, _: &'a Allocator) -> Self {
         None
+    }
+}
+
+impl<'a> AllocatorAccessor<'a> for AstBuilder<'a> {
+    #[inline]
+    fn allocator(self) -> &'a Allocator {
+        self.allocator
     }
 }
 

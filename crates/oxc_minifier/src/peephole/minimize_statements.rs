@@ -39,9 +39,9 @@ impl<'a> PeepholeOptimizations {
         let mut result: Vec<'a, Statement<'a>> = ctx.ast.vec_with_capacity(stmts.len());
         let mut is_control_flow_dead = false;
         let mut keep_var = KeepVar::new(ctx.ast);
-        let mut new_stmts = stmts.take_in(ctx.ast.allocator);
+        let mut new_stmts = stmts.take_in(ctx.ast);
         for i in 0..new_stmts.len() {
-            let stmt = new_stmts[i].take_in(ctx.ast.allocator);
+            let stmt = new_stmts[i].take_in(ctx.ast);
             if is_control_flow_dead
                 && !stmt.is_module_declaration()
                 && !matches!(stmt.as_declaration(), Some(Declaration::FunctionDeclaration(_)))
@@ -158,7 +158,7 @@ impl<'a> PeepholeOptimizations {
                             // "if (!a) return b; return c;" => "return a ? c : b;"
                             if let Expression::UnaryExpression(unary_expr) = &mut prev_if.test {
                                 if unary_expr.operator.is_not() {
-                                    prev_if.test = unary_expr.argument.take_in(ctx.ast.allocator);
+                                    prev_if.test = unary_expr.argument.take_in(ctx.ast);
                                     std::mem::swap(&mut left, &mut right);
                                 }
                             }
@@ -175,7 +175,7 @@ impl<'a> PeepholeOptimizations {
                                 // "if (a) return b; return c;" => "return a ? b : c;"
                                 let mut expr = self.minimize_conditional(
                                     prev_if.span,
-                                    prev_if.test.take_in(ctx.ast.allocator),
+                                    prev_if.test.take_in(ctx.ast),
                                     left,
                                     right,
                                     ctx,
@@ -245,7 +245,7 @@ impl<'a> PeepholeOptimizations {
                             // "if (!a) throw b; throw c;" => "throw a ? c : b;"
                             if let Expression::UnaryExpression(unary_expr) = &mut prev_if.test {
                                 if unary_expr.operator.is_not() {
-                                    prev_if.test = unary_expr.argument.take_in(ctx.ast.allocator);
+                                    prev_if.test = unary_expr.argument.take_in(ctx.ast);
                                     std::mem::swap(&mut left, &mut right);
                                 }
                             }
@@ -262,7 +262,7 @@ impl<'a> PeepholeOptimizations {
                                 // "if (a) throw b; throw c;" => "throw a ? b : c;"
                                 let mut expr = self.minimize_conditional(
                                     prev_if.span,
-                                    prev_if.test.take_in(ctx.ast.allocator),
+                                    prev_if.test.take_in(ctx.ast),
                                     left,
                                     right,
                                     ctx,
@@ -342,8 +342,8 @@ impl<'a> PeepholeOptimizations {
         b: &mut Expression<'a>,
         ctx: Ctx<'a, '_>,
     ) -> Expression<'a> {
-        let a = a.take_in(ctx.ast.allocator);
-        let b = b.take_in(ctx.ast.allocator);
+        let a = a.take_in(ctx.ast);
+        let b = b.take_in(ctx.ast);
         if let Expression::SequenceExpression(mut sequence_expr) = a {
             // `(a, b); c`
             sequence_expr.expressions.push(b);
@@ -449,8 +449,8 @@ impl<'a> PeepholeOptimizations {
                     if_stmt.test = self.join_with_left_associative_op(
                         if_stmt.test.span(),
                         LogicalOperator::Or,
-                        prev_if_stmt.test.take_in(ctx.ast.allocator),
-                        if_stmt.test.take_in(ctx.ast.allocator),
+                        prev_if_stmt.test.take_in(ctx.ast),
+                        if_stmt.test.take_in(ctx.ast),
                         ctx,
                     );
                     result.pop();
@@ -518,7 +518,7 @@ impl<'a> PeepholeOptimizations {
                     self.minimize_statements(&mut body, state, ctx);
                     let span =
                         if body.is_empty() { if_stmt.consequent.span() } else { body[0].span() };
-                    let test = if_stmt.test.take_in(ctx.ast.allocator);
+                    let test = if_stmt.test.take_in(ctx.ast);
                     let mut test = self.minimize_not(test.span(), test, ctx);
                     self.try_fold_expr_in_boolean_context(&mut test, ctx);
                     let consequent = if body.len() == 1 {
@@ -622,9 +622,8 @@ impl<'a> PeepholeOptimizations {
                         state.changed = true;
                     }
                 } else {
-                    for_stmt.init = Some(ForStatementInit::from(
-                        prev_expr_stmt.expression.take_in(ctx.ast.allocator),
-                    ));
+                    for_stmt.init =
+                        Some(ForStatementInit::from(prev_expr_stmt.expression.take_in(ctx.ast)));
                     result.pop();
                     state.changed = true;
                 }

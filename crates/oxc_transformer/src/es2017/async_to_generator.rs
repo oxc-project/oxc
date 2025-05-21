@@ -173,11 +173,7 @@ impl<'a> AsyncToGenerator<'a, '_> {
     ) -> Option<Expression<'a>> {
         // We don't need to handle top-level await.
         if Self::is_inside_async_function(ctx) {
-            Some(ctx.ast.expression_yield(
-                SPAN,
-                false,
-                Some(expr.argument.take_in(ctx.ast.allocator)),
-            ))
+            Some(ctx.ast.expression_yield(SPAN, false, Some(expr.argument.take_in(ctx.ast))))
         } else {
             None
         }
@@ -471,7 +467,7 @@ impl<'a, 'ctx> AsyncGeneratorExecutor<'a, 'ctx> {
         if arrow.expression {
             let statement = body.statements.first_mut().unwrap();
             let expression = match statement {
-                Statement::ExpressionStatement(es) => es.expression.take_in(ctx.ast.allocator),
+                Statement::ExpressionStatement(es) => es.expression.take_in(ctx.ast),
                 _ => unreachable!(),
             };
             *statement = ctx.ast.statement_return(expression.span(), Some(expression));
