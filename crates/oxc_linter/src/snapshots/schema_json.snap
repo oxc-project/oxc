@@ -273,10 +273,29 @@ expression: json
         }
       }
     },
+    "LintPluginOptionsSchema": {
+      "type": "string",
+      "enum": [
+        "eslint",
+        "react",
+        "unicorn",
+        "typescript",
+        "oxc",
+        "import",
+        "jsdoc",
+        "jest",
+        "vitest",
+        "jsx-a11y",
+        "nextjs",
+        "react-perf",
+        "promise",
+        "node"
+      ]
+    },
     "LintPlugins": {
       "type": "array",
       "items": {
-        "type": "string"
+        "$ref": "#/definitions/LintPluginOptionsSchema"
       }
     },
     "NextPluginSettings": {
