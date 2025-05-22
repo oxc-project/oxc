@@ -92,10 +92,14 @@ impl<'a> ParserImpl<'a> {
             self.error(diagnostics::rest_element_property_name(ty.span));
         }
         if self.at(Kind::Comma) {
-            if matches!(self.peek_kind(), Kind::RCurly | Kind::RBrack) {
-                let span = self.cur_token().span();
+            let comma_span = self.cur_token().span();
+            let checkpoint = self.checkpoint();
+            self.bump(Kind::Comma);
+            let next = self.cur_kind();
+            self.rewind(checkpoint);
+            if matches!(next, Kind::RCurly | Kind::RBrack) {
                 self.bump_any();
-                self.error(diagnostics::binding_rest_element_trailing_comma(span));
+                self.error(diagnostics::binding_rest_element_trailing_comma(comma_span));
             }
             if !self.ctx.has_ambient() {
                 self.error(diagnostics::binding_rest_element_last(elem.span));
