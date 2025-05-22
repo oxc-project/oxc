@@ -82,33 +82,29 @@ impl Rule for MaxLines {
 
     #[expect(clippy::cast_possible_truncation)]
     fn run_once(&self, ctx: &LintContext) {
+        let source_text = ctx.source_text();
+
         let comment_lines = if self.skip_comments {
             ctx.semantic()
                 .comments()
                 .iter()
-                .map(|comment| count_comment_lines(comment, ctx.source_text()))
+                .map(|comment| count_comment_lines(comment, source_text))
                 .sum()
         } else {
             0
         };
 
-        let lines_in_file =
-            if ctx.source_text().is_empty() { 1 } else { ctx.source_text().lines().count() };
-
-        let blank_lines = if self.skip_blank_lines {
-            ctx.source_text().lines().filter(|&line| line.trim().is_empty()).count()
+        let lines_in_file = if self.skip_blank_lines {
+            source_text.lines().filter(|&line| !line.trim().is_empty()).count()
         } else {
-            0
+            source_text.lines().count()
         };
 
-        if lines_in_file.saturating_sub(blank_lines).saturating_sub(comment_lines) > self.max {
+        let final_lines = lines_in_file.max(1).saturating_sub(comment_lines);
+        if final_lines > self.max {
             // Point to end of the file for `eslint-disable max-lines` to work.
-            let end = ctx.source_text().len().saturating_sub(1) as u32;
-            ctx.diagnostic(max_lines_diagnostic(
-                lines_in_file.saturating_sub(blank_lines).saturating_sub(comment_lines),
-                self.max,
-                Span::new(end, end),
-            ));
+            let end = source_text.len().saturating_sub(1) as u32;
+            ctx.diagnostic(max_lines_diagnostic(final_lines, self.max, Span::new(end, end)));
         }
     }
 }
