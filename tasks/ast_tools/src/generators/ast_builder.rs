@@ -91,15 +91,7 @@ impl Generator for AstBuilderGenerator {
             };
 
             ///@@line_break
-            use crate::ast::*;
-
-            ///@@line_break
-            /// AST builder for creating AST nodes
-            #[derive(Clone, Copy)]
-            pub struct AstBuilder<'a> {
-                /// The memory allocator used to allocate AST nodes in the arena.
-                pub allocator: &'a Allocator,
-            }
+            use crate::{AstBuilder, ast::*};
 
             ///@@line_break
             impl<'a> AstBuilder<'a> {

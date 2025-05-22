@@ -8,7 +8,7 @@ use oxc_syntax::{
     comment_node::CommentNodeId, number::NumberBase, operator::UnaryOperator, scope::ScopeId,
 };
 
-use crate::{AstBuilder, ast::*};
+use crate::ast::*;
 
 /// Type that can be used in any AST builder method call which requires an `IntoIn<'a, Anything<'a>>`.
 /// Pass `NONE` instead of `None::<Anything<'a>>`.
@@ -26,6 +26,13 @@ impl<'a> AllocatorAccessor<'a> for AstBuilder<'a> {
     fn allocator(self) -> &'a Allocator {
         self.allocator
     }
+}
+
+/// AST builder for creating AST nodes.
+#[derive(Clone, Copy)]
+pub struct AstBuilder<'a> {
+    /// The memory allocator used to allocate AST nodes in the arena.
+    pub allocator: &'a Allocator,
 }
 
 impl<'a> AstBuilder<'a> {
