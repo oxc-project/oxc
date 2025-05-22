@@ -15527,10 +15527,10 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
    ╰────
 
   × Unexpected token
-   ╭─[typescript/tests/cases/compiler/parseUnaryExpressionNoTypeAssertionInJsx4.ts:5:13]
+   ╭─[typescript/tests/cases/compiler/parseUnaryExpressionNoTypeAssertionInJsx4.ts:5:14]
  4 │ const b = + <> x;
  5 │ const c = + <1234> x;
-   ·             ─
+   ·              ────
    ╰────
 
   × Unexpected token
@@ -25457,11 +25457,11 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
     ╰────
 
   × Unexpected token
-    ╭─[typescript/tests/cases/conformance/jsx/jsxUnclosedParserRecovery.ts:11:5]
- 10 │ var donkey = <div>
+    ╭─[typescript/tests/cases/conformance/jsx/jsxUnclosedParserRecovery.ts:12:1]
  11 │     <
-    ·     ─
  12 │ </div>;
+    · ─
+ 13 │ function noName() { }
     ╰────
 
   × Invalid characters after number

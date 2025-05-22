@@ -8,7 +8,10 @@ use crate::{Context, ParserImpl, diagnostics, lexer::Kind};
 
 impl<'a> ParserImpl<'a> {
     pub(crate) fn parse_jsx_expression(&mut self) -> Expression<'a> {
-        if self.peek_at(Kind::RAngle) {
+        if self.lookahead(|s| {
+            s.bump_any();
+            s.at(Kind::RAngle)
+        }) {
             Expression::JSXFragment(self.parse_jsx_fragment(false))
         } else {
             Expression::JSXElement(self.parse_jsx_element(false))
@@ -239,24 +242,40 @@ impl<'a> ParserImpl<'a> {
     ///   { `JSXChildExpression_opt` }
     fn parse_jsx_child(&mut self) -> Option<JSXChild<'a>> {
         match self.cur_kind() {
-            // </ close fragment
-            Kind::LAngle if self.peek_at(Kind::Slash) => None,
-            // <> open fragment
-            Kind::LAngle if self.peek_at(Kind::RAngle) => {
-                Some(JSXChild::Fragment(self.parse_jsx_fragment(true)))
+            Kind::LAngle => {
+                let checkpoint = self.checkpoint();
+                self.bump_any();
+
+                // </ close fragment
+                if self.at(Kind::Slash) {
+                    self.rewind(checkpoint);
+                    return None;
+                }
+                // <> open fragment
+                if self.at(Kind::RAngle) {
+                    self.rewind(checkpoint);
+                    return Some(JSXChild::Fragment(self.parse_jsx_fragment(true)));
+                }
+                // <ident open element
+                if self.at(Kind::Ident) || self.cur_kind().is_any_keyword() {
+                    self.rewind(checkpoint);
+                    return Some(JSXChild::Element(self.parse_jsx_element(true)));
+                }
+                self.unexpected()
             }
-            // <ident open element
-            Kind::LAngle if self.peek_at(Kind::Ident) || self.peek_kind().is_any_keyword() => {
-                Some(JSXChild::Element(self.parse_jsx_element(true)))
-            }
-            // {...expr}
-            Kind::LCurly if self.peek_at(Kind::Dot3) => {
-                Some(JSXChild::Spread(self.parse_jsx_spread_child()))
-            }
-            // {expr}
             Kind::LCurly => {
+                let checkpoint = self.checkpoint();
+                self.bump_any();
+
+                // {...expr}
+                if self.at(Kind::Dot3) {
+                    self.rewind(checkpoint);
+                    return Some(JSXChild::Spread(self.parse_jsx_spread_child()));
+                }
+                // {expr}
+                self.rewind(checkpoint);
                 Some(JSXChild::ExpressionContainer(
-                    self.parse_jsx_expression_container(/* is_jsx_child */ true),
+                    self.parse_jsx_expression_container(/* in_jsx_child */ true),
                 ))
             }
             // text
@@ -384,11 +403,14 @@ impl<'a> ParserImpl<'a> {
                 JSXAttributeValue::StringLiteral(self.alloc(str_lit))
             }
             Kind::LCurly => {
-                let expr = self.parse_jsx_expression_container(/* is_jsx_child */ false);
+                let expr = self.parse_jsx_expression_container(/* in_jsx_child */ false);
                 JSXAttributeValue::ExpressionContainer(expr)
             }
             Kind::LAngle => {
-                if self.peek_at(Kind::RAngle) {
+                if self.lookahead(|s| {
+                    s.bump_any();
+                    s.at(Kind::RAngle)
+                }) {
                     JSXAttributeValue::Fragment(self.parse_jsx_fragment(false))
                 } else {
                     JSXAttributeValue::Element(self.parse_jsx_element(false))
