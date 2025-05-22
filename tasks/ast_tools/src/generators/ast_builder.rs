@@ -267,7 +267,7 @@ fn generate_builder_methods_for_struct_impl(
         #fn_docs
         #params_docs
         #[inline]
-        pub fn #fn_name #generic_params (self, #fn_params) -> #struct_ty #where_clause {
+        pub fn #fn_name #generic_params (&self, #fn_params) -> #struct_ty #where_clause {
             #struct_ident { #fields }
         }
     };
@@ -291,7 +291,7 @@ fn generate_builder_methods_for_struct_impl(
         #[doc = #alloc_doc2]
         #params_docs
         #[inline]
-        pub fn #alloc_fn_name #generic_params (self, #fn_params) -> Box<'a, #struct_ty> #where_clause {
+        pub fn #alloc_fn_name #generic_params (&self, #fn_params) -> Box<'a, #struct_ty> #where_clause {
             Box::new_in(self.#fn_name(#(#args),*), self.allocator)
         }
     }
@@ -591,7 +591,7 @@ fn generate_builder_method_for_enum_variant_impl(
         #fn_docs
         #params_docs
         #[inline]
-        pub fn #fn_name #generic_params(self, #(#fn_params),*) -> #enum_ty #where_clause {
+        pub fn #fn_name #generic_params(&self, #(#fn_params),*) -> #enum_ty #where_clause {
             #enum_ident::#variant_ident(self.#inner_builder_name(#(#args),*))
         }
     }

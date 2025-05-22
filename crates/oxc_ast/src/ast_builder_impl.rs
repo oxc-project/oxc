@@ -23,13 +23,12 @@ impl<'a, T> FromIn<'a, NONE> for Option<Box<'a, T>> {
 
 impl<'a> AllocatorAccessor<'a> for AstBuilder<'a> {
     #[inline]
-    fn allocator(self) -> &'a Allocator {
+    fn allocator(&self) -> &'a Allocator {
         self.allocator
     }
 }
 
 /// AST builder for creating AST nodes.
-#[derive(Clone, Copy)]
 pub struct AstBuilder<'a> {
     /// The memory allocator used to allocate AST nodes in the arena.
     pub allocator: &'a Allocator,
@@ -43,7 +42,7 @@ impl<'a> AstBuilder<'a> {
     }
 
     /// Create [`CommentNodeId`] for an AST node.
-    #[expect(dead_code, clippy::unused_self, clippy::trivially_copy_pass_by_ref)]
+    #[expect(dead_code, clippy::unused_self)]
     pub(crate) fn get_comment_node_id(&self) -> CommentNodeId {
         // TODO: Generate a real ID
         CommentNodeId::DUMMY
@@ -51,13 +50,13 @@ impl<'a> AstBuilder<'a> {
 
     /// Move a value into the memory arena.
     #[inline]
-    pub fn alloc<T>(self, value: T) -> Box<'a, T> {
+    pub fn alloc<T>(&self, value: T) -> Box<'a, T> {
         Box::new_in(value, self.allocator)
     }
 
     /// Create a new empty [`Vec`] that stores its elements in the memory arena.
     #[inline]
-    pub fn vec<T>(self) -> Vec<'a, T> {
+    pub fn vec<T>(&self) -> Vec<'a, T> {
         Vec::new_in(self.allocator)
     }
 
@@ -65,19 +64,19 @@ impl<'a> AstBuilder<'a> {
     /// Enough memory will be pre-allocated to store at least `capacity`
     /// elements.
     #[inline]
-    pub fn vec_with_capacity<T>(self, capacity: usize) -> Vec<'a, T> {
+    pub fn vec_with_capacity<T>(&self, capacity: usize) -> Vec<'a, T> {
         Vec::with_capacity_in(capacity, self.allocator)
     }
 
     /// Create a new arena-allocated [`Vec`] initialized with a single element.
     #[inline]
-    pub fn vec1<T>(self, value: T) -> Vec<'a, T> {
+    pub fn vec1<T>(&self, value: T) -> Vec<'a, T> {
         self.vec_from_array([value])
     }
 
     /// Collect an iterator into a new arena-allocated [`Vec`].
     #[inline]
-    pub fn vec_from_iter<T, I: IntoIterator<Item = T>>(self, iter: I) -> Vec<'a, T> {
+    pub fn vec_from_iter<T, I: IntoIterator<Item = T>>(&self, iter: I) -> Vec<'a, T> {
         Vec::from_iter_in(iter, self.allocator)
     }
 
@@ -87,26 +86,26 @@ impl<'a> AstBuilder<'a> {
     /// and compiler is more likely to construct the values directly in arena, rather than constructing
     /// on stack and then copying to arena.
     #[inline]
-    pub fn vec_from_array<T, const N: usize>(self, array: [T; N]) -> Vec<'a, T> {
+    pub fn vec_from_array<T, const N: usize>(&self, array: [T; N]) -> Vec<'a, T> {
         Vec::from_array_in(array, self.allocator)
     }
 
     /// Move a string slice into the memory arena, returning a reference to the slice
     /// in the heap.
     #[inline]
-    pub fn str(self, value: &str) -> &'a str {
+    pub fn str(&self, value: &str) -> &'a str {
         self.allocator.alloc_str(value)
     }
 
     /// Allocate an [`Atom`] from a string slice.
     #[inline]
-    pub fn atom(self, value: &str) -> Atom<'a> {
+    pub fn atom(&self, value: &str) -> Atom<'a> {
         Atom::from_in(value, self.allocator)
     }
 
     /// Allocate an [`Atom`] from an array of string slices.
     #[inline]
-    pub fn atom_from_strs_array<const N: usize>(self, array: [&str; N]) -> Atom<'a> {
+    pub fn atom_from_strs_array<const N: usize>(&self, array: [&str; N]) -> Atom<'a> {
         let string = String::from_strs_array_in(array, self.allocator);
         Atom::from(string)
     }
@@ -118,7 +117,7 @@ impl<'a> AstBuilder<'a> {
     ///
     /// If the `Cow` is owned, allocates the string into arena to generate a new `Atom`.
     #[inline]
-    pub fn atom_from_cow(self, value: &Cow<'a, str>) -> Atom<'a> {
+    pub fn atom_from_cow(&self, value: &Cow<'a, str>) -> Atom<'a> {
         match value {
             Cow::Borrowed(s) => Atom::from(*s),
             Cow::Owned(s) => self.atom(s),
@@ -127,13 +126,13 @@ impl<'a> AstBuilder<'a> {
 
     /// `0`
     #[inline]
-    pub fn number_0(self) -> Expression<'a> {
+    pub fn number_0(&self) -> Expression<'a> {
         self.expression_numeric_literal(SPAN, 0.0, None, NumberBase::Decimal)
     }
 
     /// `void 0`
     #[inline]
-    pub fn void_0(self, span: Span) -> Expression<'a> {
+    pub fn void_0(&self, span: Span) -> Expression<'a> {
         let num = self.number_0();
         Expression::UnaryExpression(self.alloc(self.unary_expression(
             span,
@@ -144,7 +143,7 @@ impl<'a> AstBuilder<'a> {
 
     /// `"use strict"` directive
     #[inline]
-    pub fn use_strict_directive(self) -> Directive<'a> {
+    pub fn use_strict_directive(&self) -> Directive<'a> {
         let use_strict = Atom::from("use strict");
         self.directive(SPAN, self.string_literal(SPAN, use_strict, None), use_strict)
     }
@@ -155,7 +154,7 @@ impl<'a> AstBuilder<'a> {
     /// decorators, or initializer.
     #[inline]
     pub fn plain_formal_parameter(
-        self,
+        &self,
         span: Span,
         pattern: BindingPattern<'a>,
     ) -> FormalParameter<'a> {
@@ -166,7 +165,7 @@ impl<'a> AstBuilder<'a> {
     /// i.e. no decorators, type annotations, accessibility modifiers, etc.
     #[inline]
     pub fn alloc_plain_function_with_scope_id(
-        self,
+        &self,
         r#type: FunctionType,
         span: Span,
         id: Option<BindingIdentifier<'a>>,
@@ -194,7 +193,7 @@ impl<'a> AstBuilder<'a> {
     /// Build a [`Function`] with `scope_id`.
     #[inline]
     pub fn alloc_function_with_scope_id<T1, T2, T3, T4, T5>(
-        self,
+        &self,
         span: Span,
         r#type: FunctionType,
         id: Option<BindingIdentifier<'a>>,
@@ -237,7 +236,7 @@ impl<'a> AstBuilder<'a> {
     /// Create an empty [`ExportNamedDeclaration`] with no modifiers
     #[inline]
     pub fn plain_export_named_declaration_declaration(
-        self,
+        &self,
         span: Span,
         declaration: Declaration<'a>,
     ) -> Box<'a, ExportNamedDeclaration<'a>> {
@@ -255,7 +254,7 @@ impl<'a> AstBuilder<'a> {
     /// set of [exported symbol names](ExportSpecifier).
     #[inline]
     pub fn plain_export_named_declaration(
-        self,
+        &self,
         span: Span,
         specifiers: Vec<'a, ExportSpecifier<'a>>,
         source: Option<StringLiteral<'a>>,
@@ -276,7 +275,7 @@ impl<'a> AstBuilder<'a> {
     /// other interfaces.
     #[inline]
     pub fn ts_interface_heritages(
-        self,
+        &self,
         extends: Vec<'a, (Expression<'a>, Option<Box<'a, TSTypeParameterInstantiation<'a>>>, Span)>,
     ) -> Vec<'a, TSInterfaceHeritage<'a>> {
         self.vec_from_iter(extends.into_iter().map(|(expression, type_parameters, span)| {
