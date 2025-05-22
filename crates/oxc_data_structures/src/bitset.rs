@@ -2,7 +2,7 @@
 
 use std::{
     iter::FusedIterator,
-    ops::{Index, Range},
+    ops::{BitAnd, BitAndAssign, BitOr, BitOrAssign, Index, Mul, Not, Range, Shl},
     ptr,
 };
 
@@ -342,21 +342,27 @@ pub mod __private {
 /// [`bitset!` macro]: self::bitset
 #[derive(Clone, Copy, PartialEq, Eq, Hash)]
 #[repr(C)]
-pub struct Bitset<const BITS: usize, const UNITS: usize> {
-    units: [usize; UNITS],
+pub struct Bitset<const BITS: usize, const BYTES: usize, const UNITS: usize, Unit: UnsignedInt> {
+    units: [Unit; UNITS],
 }
 
-impl<const BITS: usize, const UNITS: usize> Bitset<BITS, UNITS> {
+impl<const BITS: usize, const BYTES: usize, const UNITS: usize, Unit: UnsignedInt>
+    Bitset<BITS, BYTES, UNITS, Unit>
+{
     /// Create an empty [`Bitset`] with no bits set.
     #[inline]
     pub const fn empty() -> Self {
         // Assert `BITS` and `UNITS` correspond to each other.
         // This invariant is required to ensure soundness of other methods.
         const {
-            assert!(UNITS == BITS.div_ceil(usize::BITS as usize), "`UNITS` does not match `BITS`");
+            assert!(UNITS == BITS.div_ceil(Unit::BITS), "`BITS` does not match `UNITS` and `Unit`");
+            assert!(
+                BYTES == BITS.div_ceil(Unit::BYTES),
+                "`BYTES` does not match `UNITS` and `Unit`"
+            );
         }
 
-        Self { units: [0; UNITS] }
+        Self { units: [Unit::ZERO; UNITS] }
     }
 
     /// Create a [`Bitset`] with all bits set.
@@ -376,8 +382,12 @@ impl<const BITS: usize, const UNITS: usize> Bitset<BITS, UNITS> {
     #[inline]
     pub const fn is_empty(&self) -> bool {
         let mut i = 0;
-        while i < UNITS {
-            if self.units[i] != 0 {
+        while i < BYTES {
+            // SAFETY: TODO
+            let byte = unsafe {
+                *ptr::from_ref(&self.units).cast::<u8>().add(i).as_ref().unwrap_unchecked()
+            };
+            if byte != 0 {
                 return false;
             }
             i += 1;
@@ -397,9 +407,9 @@ impl<const BITS: usize, const UNITS: usize> Bitset<BITS, UNITS> {
         // SAFETY: `unit_index_and_mask` always returns `unit_index` which is less than `UNITS`
         // so in bounds of `self.units`.
         let unit = unsafe {
-            *ptr::from_ref(&self.units).cast::<usize>().add(unit_index).as_ref().unwrap_unchecked()
+            *ptr::from_ref(&self.units).cast::<Unit>().add(unit_index).as_ref().unwrap_unchecked()
         };
-        (unit & mask) != 0
+        (unit & mask) != Unit::ZERO
     }
 
     /// Get value of the bit at `index`.
@@ -429,13 +439,13 @@ impl<const BITS: usize, const UNITS: usize> Bitset<BITS, UNITS> {
         // so in bounds of `self.units`.
         let unit_mut = unsafe {
             ptr::from_mut(&mut self.units)
-                .cast::<usize>()
+                .cast::<Unit>()
                 .add(unit_index)
                 .as_mut()
                 .unwrap_unchecked()
         };
         *unit_mut &= !mask;
-        *unit_mut |= mask * (value as usize);
+        *unit_mut |= if value { mask } else { Unit::ZERO };
     }
 
     /// Get unit index and mask for a bit (internal method).
@@ -447,17 +457,15 @@ impl<const BITS: usize, const UNITS: usize> Bitset<BITS, UNITS> {
     #[inline(always)]
     const unsafe fn unit_index_and_mask(
         index: usize,
-    ) -> (/* unit index */ usize, /* bit mask */ usize) {
-        const USIZE_BITS: usize = usize::BITS as usize;
-
+    ) -> (/* unit index */ usize, /* bit mask */ Unit) {
         // Inform compiler of upper bound on `index`.
-        // If `BITS <= usize::BITS` (i.e. bitset is a single usize), it can deduce that `unit_index`
+        // If `BITS <= Unit::BITS` (i.e. bitset is a single `Unit`), it can deduce that `unit_index`
         // is always 0. https://godbolt.org/z/3sesq9hW3
         // SAFETY: Caller guarantees `index` must be less than `BITS`.
         unsafe { assert_unchecked!(index < BITS) };
 
-        let unit_index = index / USIZE_BITS;
-        let mask = 1usize << (index % USIZE_BITS);
+        let unit_index = index / Unit::BITS;
+        let mask = Unit::ONE << (index & (Unit::BITS - 1));
         (unit_index, mask)
     }
 
@@ -509,24 +517,28 @@ impl<const BITS: usize, const UNITS: usize> Bitset<BITS, UNITS> {
     }
 
     /// Returns an iterator over the indices of bits in the [`Bitset`], and their values.
-    pub fn iter(&self) -> BitsIter<'_, BITS, UNITS> {
+    pub fn iter(&self) -> BitsIter<'_, BITS, BYTES, UNITS, Unit> {
         BitsIter::new(self)
     }
 
     /// Returns an iterator over the indices of bits in the [`Bitset`] which are `true`.
-    pub fn true_bits_iter(&self) -> TrueBitsIter<'_, BITS, UNITS> {
+    pub fn true_bits_iter(&self) -> TrueBitsIter<'_, BITS, BYTES, UNITS, Unit> {
         TrueBitsIter::new(self)
     }
 }
 
-impl<const BITS: usize, const UNITS: usize> Default for Bitset<BITS, UNITS> {
+impl<const BITS: usize, const BYTES: usize, const UNITS: usize, Unit: UnsignedInt> Default
+    for Bitset<BITS, BYTES, UNITS, Unit>
+{
     #[inline]
     fn default() -> Self {
         Self::empty()
     }
 }
 
-impl<const BITS: usize, const UNITS: usize> Index<usize> for Bitset<BITS, UNITS> {
+impl<const BITS: usize, const BYTES: usize, const UNITS: usize, Unit: UnsignedInt> Index<usize>
+    for Bitset<BITS, BYTES, UNITS, Unit>
+{
     type Output = bool;
 
     /// # Panics
@@ -540,19 +552,29 @@ impl<const BITS: usize, const UNITS: usize> Index<usize> for Bitset<BITS, UNITS>
 }
 
 /// Iterator over the bits in a [`Bitset`].
-pub struct BitsIter<'b, const BITS: usize, const UNITS: usize> {
-    bitset: &'b Bitset<BITS, UNITS>,
+pub struct BitsIter<
+    'b,
+    const BITS: usize,
+    const BYTES: usize,
+    const UNITS: usize,
+    Unit: UnsignedInt,
+> {
+    bitset: &'b Bitset<BITS, BYTES, UNITS, Unit>,
     next_index: usize,
 }
 
-impl<'b, const BITS: usize, const UNITS: usize> BitsIter<'b, BITS, UNITS> {
+impl<'b, const BITS: usize, const BYTES: usize, const UNITS: usize, Unit: UnsignedInt>
+    BitsIter<'b, BITS, BYTES, UNITS, Unit>
+{
     /// Create new [`BitsIter`] from a [`Bitset`].
-    fn new(bitset: &'b Bitset<BITS, UNITS>) -> Self {
+    fn new(bitset: &'b Bitset<BITS, BYTES, UNITS, Unit>) -> Self {
         Self { bitset, next_index: 0 }
     }
 }
 
-impl<const BITS: usize, const UNITS: usize> Iterator for BitsIter<'_, BITS, UNITS> {
+impl<const BITS: usize, const BYTES: usize, const UNITS: usize, Unit: UnsignedInt> Iterator
+    for BitsIter<'_, BITS, BYTES, UNITS, Unit>
+{
     type Item = (usize, bool);
 
     fn next(&mut self) -> Option<(usize, bool)> {
@@ -578,34 +600,52 @@ impl<const BITS: usize, const UNITS: usize> Iterator for BitsIter<'_, BITS, UNIT
     }
 }
 
-impl<const BITS: usize, const UNITS: usize> ExactSizeIterator for BitsIter<'_, BITS, UNITS> {}
+impl<const BITS: usize, const BYTES: usize, const UNITS: usize, Unit: UnsignedInt> ExactSizeIterator
+    for BitsIter<'_, BITS, BYTES, UNITS, Unit>
+{
+}
 
-impl<const BITS: usize, const UNITS: usize> FusedIterator for BitsIter<'_, BITS, UNITS> {}
+impl<const BITS: usize, const BYTES: usize, const UNITS: usize, Unit: UnsignedInt> FusedIterator
+    for BitsIter<'_, BITS, BYTES, UNITS, Unit>
+{
+}
 
-impl<'b, const BITS: usize, const UNITS: usize> IntoIterator for &'b Bitset<BITS, UNITS> {
+impl<'b, const BITS: usize, const BYTES: usize, const UNITS: usize, Unit: UnsignedInt> IntoIterator
+    for &'b Bitset<BITS, BYTES, UNITS, Unit>
+{
     type Item = (usize, bool);
-    type IntoIter = BitsIter<'b, BITS, UNITS>;
+    type IntoIter = BitsIter<'b, BITS, BYTES, UNITS, Unit>;
 
     #[inline]
-    fn into_iter(self) -> BitsIter<'b, BITS, UNITS> {
+    fn into_iter(self) -> Self::IntoIter {
         BitsIter::new(self)
     }
 }
 
 /// Iterator over the bits which are `true` in a [`Bitset`].
-pub struct TrueBitsIter<'b, const BITS: usize, const UNITS: usize> {
-    bitset: &'b Bitset<BITS, UNITS>,
+pub struct TrueBitsIter<
+    'b,
+    const BITS: usize,
+    const BYTES: usize,
+    const UNITS: usize,
+    Unit: UnsignedInt,
+> {
+    bitset: &'b Bitset<BITS, BYTES, UNITS, Unit>,
     next_index: usize,
 }
 
-impl<'b, const BITS: usize, const UNITS: usize> TrueBitsIter<'b, BITS, UNITS> {
+impl<'b, const BITS: usize, const BYTES: usize, const UNITS: usize, Unit: UnsignedInt>
+    TrueBitsIter<'b, BITS, BYTES, UNITS, Unit>
+{
     /// Create new [`TrueBitsIter`] from a [`Bitset`].
-    fn new(bitset: &'b Bitset<BITS, UNITS>) -> Self {
+    fn new(bitset: &'b Bitset<BITS, BYTES, UNITS, Unit>) -> Self {
         Self { bitset, next_index: 0 }
     }
 }
 
-impl<const BITS: usize, const UNITS: usize> Iterator for TrueBitsIter<'_, BITS, UNITS> {
+impl<const BITS: usize, const BYTES: usize, const UNITS: usize, Unit: UnsignedInt> Iterator
+    for TrueBitsIter<'_, BITS, BYTES, UNITS, Unit>
+{
     type Item = usize;
 
     fn next(&mut self) -> Option<usize> {
@@ -633,4 +673,80 @@ impl<const BITS: usize, const UNITS: usize> Iterator for TrueBitsIter<'_, BITS, 
     }
 }
 
-impl<const BITS: usize, const UNITS: usize> FusedIterator for TrueBitsIter<'_, BITS, UNITS> {}
+impl<const BITS: usize, const BYTES: usize, const UNITS: usize, Unit: UnsignedInt> FusedIterator
+    for TrueBitsIter<'_, BITS, BYTES, UNITS, Unit>
+{
+}
+
+struct Unit<const BYTES: usize>;
+
+trait ValidUnit {
+    type Uint: Copy
+        + Eq
+        + PartialEq
+        + BitAnd
+        + BitAndAssign
+        + BitOr
+        + BitOrAssign
+        + Not<Output = Self::Uint>
+        + Shl<usize>
+        + Sealed;
+}
+
+macro_rules! impl_valid_unit {
+    ($ty:ident, $bits:literal) => {
+        impl ValidUnit for Unit<$bits> {
+            type Uint = $ty;
+        }
+    };
+}
+
+impl_valid_unit!(u8, 1);
+impl_valid_unit!(u16, 2);
+impl_valid_unit!(u32, 3);
+impl_valid_unit!(u64, 4);
+impl_valid_unit!(u128, 5);
+
+/// TODO: Docs
+#[expect(private_bounds)]
+pub trait UnsignedInt:
+    Copy
+    + Eq
+    + PartialEq
+    + BitAnd
+    + BitAndAssign
+    + BitOr
+    + BitOrAssign
+    + Not<Output = Self>
+    + Shl<usize>
+    + Sealed
+{
+    /// Number of bits in this integer type
+    const BITS: usize;
+    /// Number of bytes in this integer type
+    const BYTES: usize;
+    /// Zero value for this integer type
+    const ZERO: Self;
+    /// One value for this integer type
+    const ONE: Self;
+}
+
+trait Sealed {}
+
+macro_rules! impl_unsigned_int {
+    ($ty:ident) => {
+        impl UnsignedInt for $ty {
+            const BITS: usize = size_of::<Self>() * 8;
+            const BYTES: usize = size_of::<Self>();
+            const ZERO: Self = 0;
+            const ONE: Self = 1;
+        }
+        impl Sealed for $ty {}
+    };
+}
+
+impl_unsigned_int!(u8);
+impl_unsigned_int!(u16);
+impl_unsigned_int!(u32);
+impl_unsigned_int!(u64);
+impl_unsigned_int!(u128);
