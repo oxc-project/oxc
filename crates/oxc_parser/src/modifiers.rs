@@ -318,7 +318,10 @@ impl<'a> ParserImpl<'a> {
         }
 
         match self.cur_kind() {
-            Kind::Const => self.peek_kind() == Kind::Enum,
+            Kind::Const => {
+                self.bump_any();
+                self.at(Kind::Enum)
+            }
             Kind::Export => {
                 self.bump_any();
                 match self.cur_kind() {
@@ -454,7 +457,10 @@ impl<'a> ParserImpl<'a> {
 
     pub(crate) fn next_token_can_follow_modifier(&mut self) {
         let b = match self.cur_kind() {
-            Kind::Const => self.peek_at(Kind::Enum),
+            Kind::Const => {
+                self.bump_any();
+                self.at(Kind::Enum)
+            }
             Kind::Export => {
                 self.bump_any();
                 match self.cur_kind() {
