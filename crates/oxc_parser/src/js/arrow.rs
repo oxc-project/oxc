@@ -190,20 +190,24 @@ impl<'a> ParserImpl<'a> {
 
     fn is_un_parenthesized_async_arrow_function_worker(&mut self) -> Tristate {
         if self.at(Kind::Async) {
-            let first_token = self.peek_token();
-            let first = first_token.kind();
+            let checkpoint = self.checkpoint();
+            self.bump(Kind::Async);
             // If the "async" is followed by "=>" token then it is not a beginning of an async arrow-function
             // but instead a simple arrow-function which will be parsed inside "parseAssignmentExpressionOrHigher"
-            if first_token.is_on_new_line() || first == Kind::Arrow {
+            if self.cur_token().is_on_new_line() || self.at(Kind::Arrow) {
+                self.rewind(checkpoint);
                 return Tristate::False;
             }
             // Check for un-parenthesized AsyncArrowFunction
-            if first.is_binding_identifier() {
+            if self.cur_kind().is_binding_identifier() {
                 // Arrow before newline is checked in `parse_simple_arrow_function_expression`
-                if self.nth_at(2, Kind::Arrow) {
+                self.bump_any();
+                if self.at(Kind::Arrow) {
+                    self.rewind(checkpoint);
                     return Tristate::True;
                 }
             }
+            self.rewind(checkpoint);
         }
         Tristate::False
     }
