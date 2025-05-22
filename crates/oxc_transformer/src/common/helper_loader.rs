@@ -103,6 +103,16 @@ pub enum HelperLoaderMode {
     /// babelHelpers.helperName(...arguments);
     /// ```
     External,
+    /// Namespace mode: Helper functions are accessed via a default import namespace object.
+    ///
+    /// This is mainly used for rolldown.
+    ///
+    /// Example output:
+    /// ```js
+    /// import helpers from "rolldown/oxc-runtime"
+    /// helpers.helperName(...arguments);
+    /// ```
+    Namespace,
     /// Runtime mode: Helper functions are imported from a runtime package.
     ///
     /// This mode is similar to how @babel/plugin-transform-runtime works.
@@ -138,6 +148,7 @@ fn default_as_module_name() -> Cow<'static, str> {
 }
 
 /// Available helpers.
+/// Note: Must also be exported in `runtime/helpers/esm/index.js`.
 #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Debug)]
 pub enum Helper {
     AwaitAsyncGenerator,
@@ -270,6 +281,9 @@ impl<'a> TransformCtx<'a> {
             HelperLoaderMode::External => {
                 HelperLoaderStore::transform_for_external_helper(helper, ctx)
             }
+            HelperLoaderMode::Namespace => {
+                helper_loader.transform_for_namespace_helper(helper, self, ctx)
+            }
             HelperLoaderMode::Inline => {
                 unreachable!("Inline helpers are not supported yet");
             }
@@ -324,6 +338,32 @@ impl<'a> HelperLoaderStore<'a> {
         let symbol_id = ctx.scoping().find_binding(ctx.current_scope_id(), HELPER_VAR);
         let object =
             ctx.create_ident_expr(SPAN, Atom::from(HELPER_VAR), symbol_id, ReferenceFlags::Read);
+        let property = ctx.ast.identifier_name(SPAN, Atom::from(helper.name()));
+        Expression::from(ctx.ast.member_expression_static(SPAN, object, property, false))
+    }
+
+    fn transform_for_namespace_helper(
+        &self,
+        helper: Helper,
+        transform_ctx: &TransformCtx<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) -> Expression<'a> {
+        static HELPER_VAR: &str = "helpers";
+
+        let flag = if transform_ctx.source_type.is_module() {
+            SymbolFlags::Import
+        } else {
+            SymbolFlags::FunctionScopedVariable
+        };
+        let binding = ctx.generate_uid_in_root_scope(HELPER_VAR, flag);
+
+        transform_ctx.module_imports.add_default_import(
+            ctx.ast.atom(&self.module_name),
+            binding.clone(),
+            false,
+        );
+
+        let object = binding.create_expression(ReferenceFlags::Read, ctx);
         let property = ctx.ast.identifier_name(SPAN, Atom::from(helper.name()));
         Expression::from(ctx.ast.member_expression_static(SPAN, object, property, false))
     }

@@ -10,6 +10,7 @@
   },
   "homepage": "https://oxc.rs",
   "exports": {
+    "./helpers/esm": "./src/helpers/esm/index.js",
     "./helpers/OverloadYield": [
       {
         "node": "./src/helpers/OverloadYield.js",
@@ -315,6 +316,7 @@
       },
       "./src/helpers/decorateParam.js"
     ],
+    "./helpers/esm/decorateParam": "./src/helpers/esm/decorateParam.js",
     "./helpers/defaults": [
       {
         "node": "./src/helpers/defaults.js",
