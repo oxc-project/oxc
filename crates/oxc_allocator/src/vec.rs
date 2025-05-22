@@ -20,7 +20,9 @@ use serde::{Serialize, Serializer as SerdeSerializer};
 #[cfg(any(feature = "serialize", test))]
 use oxc_estree::{ConcatElement, ESTree, SequenceSerializer, Serializer as ESTreeSerializer};
 
-use crate::{Allocator, Box, vec2::Vec as InnerVec};
+use crate::{Allocator, Box, vec2::Vec as InnerVecGeneric};
+
+type InnerVec<'a, T> = InnerVecGeneric<'a, T, Bump>;
 
 /// A `Vec` without [`Drop`], which stores its data in the arena allocator.
 ///
@@ -35,7 +37,7 @@ use crate::{Allocator, Box, vec2::Vec as InnerVec};
 /// Static checks make this impossible to do. [`Vec::new_in`] and all other methods which create
 /// a [`Vec`] will refuse to compile if called with a [`Drop`] type.
 #[derive(PartialEq, Eq)]
-pub struct Vec<'alloc, T>(InnerVec<'alloc, T, Bump>);
+pub struct Vec<'alloc, T>(InnerVec<'alloc, T>);
 
 /// SAFETY: Not actually safe, but for enabling `Send` for downstream crates.
 unsafe impl<T> Send for Vec<'_, T> {}
@@ -168,7 +170,7 @@ impl<'alloc, T> Vec<'alloc, T> {
 }
 
 impl<'alloc, T> ops::Deref for Vec<'alloc, T> {
-    type Target = InnerVec<'alloc, T, Bump>;
+    type Target = InnerVec<'alloc, T>;
 
     #[inline]
     fn deref(&self) -> &Self::Target {
@@ -178,13 +180,13 @@ impl<'alloc, T> ops::Deref for Vec<'alloc, T> {
 
 impl<'alloc, T> ops::DerefMut for Vec<'alloc, T> {
     #[inline]
-    fn deref_mut(&mut self) -> &mut InnerVec<'alloc, T, Bump> {
+    fn deref_mut(&mut self) -> &mut InnerVec<'alloc, T> {
         &mut self.0
     }
 }
 
 impl<'alloc, T> IntoIterator for Vec<'alloc, T> {
-    type IntoIter = <InnerVec<'alloc, T, Bump> as IntoIterator>::IntoIter;
+    type IntoIter = <InnerVec<'alloc, T> as IntoIterator>::IntoIter;
     type Item = T;
 
     #[inline(always)]
