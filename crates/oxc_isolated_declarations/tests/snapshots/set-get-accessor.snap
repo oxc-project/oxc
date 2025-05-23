@@ -22,6 +22,26 @@ declare class ClsBad {
 	get a();
 	set a(v);
 }
+/// Infer type from the function body of the getter
+declare class GlobalSymbol1 {
+	set [Symbol.toStringTag](v: string);
+	get [Symbol.toStringTag](): string;
+}
+// Infer type from the parameter type of the setter
+declare class GlobalSymbol2 {
+	set [Symbol.toStringTag](v: number);
+	get [Symbol.toStringTag](): number;
+}
+// Infer type from the parameter type of the setter
+declare class GlobalSymbol3 {
+	set [Symbol.toStringTag](v: number);
+	get [Symbol.toStringTag](): number;
+}
+// Cannot infer type from the function body of the getter
+declare class GlobalSymbol4 {
+	set [Symbol.toStringTag](v);
+	get [Symbol.toStringTag]();
+}
 
 
 ==================== Errors ====================
@@ -33,6 +53,15 @@ declare class ClsBad {
  25 |   get a() {
     :       ^
  26 |     return;
+    `----
+
+  x TS9009: At least one accessor must have an explicit return type annotation
+  | with --isolatedDeclarations.
+    ,-[64:8]
+ 63 |   }
+ 64 |   get [Symbol.toStringTag]() {
+    :        ^^^^^^^^^^^^^^^^^^
+ 65 |     return GlobalSymbol4;
     `----
 
 
