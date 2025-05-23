@@ -8,7 +8,7 @@ use oxc_ast::ast::{
 use oxc_ast_visit::VisitMut;
 use oxc_formatter::{
     ArrowParentheses, BracketSpacing, FormatOptions, IndentWidth, LineEnding, LineWidth,
-    QuoteProperties, QuoteStyle, Semicolons, TrailingCommas,
+    OperatorPosition, QuoteProperties, QuoteStyle, Semicolons, TrailingCommas,
 };
 use oxc_parser::Parser;
 use oxc_span::{GetSpan, SourceType};
@@ -170,6 +170,11 @@ impl VisitMut<'_> for SpecParser {
                                         // TODO: change `unwrap_or_default` to `unwrap`
                                         options.arrow_parentheses =
                                             ArrowParentheses::from_str(s).unwrap_or_default();
+                                    }
+                                    "experimentalOperatorPosition" => {
+                                        // TODO: change `unwrap_or_default` to `unwrap`
+                                        options.experimental_operator_position =
+                                            OperatorPosition::from_str(s).unwrap_or_default();
                                     }
                                     _ => {}
                                 }

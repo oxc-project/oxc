@@ -15,6 +15,7 @@ mod generated {
 mod formatter;
 mod options;
 mod parentheses;
+mod utils;
 mod write;
 
 use oxc_allocator::Allocator;

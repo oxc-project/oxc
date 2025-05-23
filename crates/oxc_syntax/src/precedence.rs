@@ -72,4 +72,16 @@ impl Precedence {
                 | Self::Member
         )
     }
+
+    pub fn is_bitwise(self) -> bool {
+        matches!(self, Self::BitwiseOr | Self::BitwiseXor | Self::BitwiseAnd)
+    }
+
+    pub fn is_shift(self) -> bool {
+        matches!(self, Self::Shift)
+    }
+
+    pub fn is_additive(self) -> bool {
+        matches!(self, Self::Add)
+    }
 }

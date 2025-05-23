@@ -2,6 +2,7 @@ mod array_element_list;
 mod array_expression;
 mod arrow_function_expression;
 mod assignment_pattern_property_list;
+mod binary_like_expression;
 mod binding_property_list;
 mod block_statement;
 mod class;
@@ -13,6 +14,7 @@ mod semicolon;
 mod type_parameters;
 mod utils;
 mod variable_declaration;
+pub use binary_like_expression::{BinaryLikeExpression, BinaryLikeOperator, should_flatten};
 
 use cow_utils::CowUtils;
 
@@ -33,6 +35,7 @@ use crate::{
     },
     options::{FormatTrailingCommas, QuoteProperties, TrailingSeparator},
     parentheses::NeedsParentheses,
+    utils::write_arguments_multi_line,
     write,
 };
 
@@ -431,14 +434,29 @@ impl<'a> FormatWrite<'a> for CallExpression<'a> {
 
 impl<'a> Format<'a> for Vec<'a, Argument<'a>> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        write!(f, "(")?;
-        for (i, arg) in self.iter().enumerate() {
-            if i != 0 {
-                write!(f, ", ")?;
-            }
-            write!(f, arg)?;
+        if self.is_empty() {
+            return write!(
+                f,
+                [
+                    "(",
+                    // format_dangling_comments(node.syntax()).with_soft_block_indent(),
+                    ")"
+                ]
+            );
         }
-        write!(f, ")")
+
+        write!(
+            f,
+            [
+                "(",
+                &group(&soft_block_indent(&format_with(|f| {
+                    let separated = FormatSeparatedIter::new(self.iter(), ",")
+                        .with_trailing_separator(TrailingSeparator::Omit);
+                    write_arguments_multi_line(separated, f)
+                }))),
+                ")"
+            ]
+        )
     }
 }
 
@@ -495,7 +513,7 @@ impl<'a> FormatWrite<'a> for UnaryExpression<'a> {
 
 impl<'a> FormatWrite<'a> for BinaryExpression<'a> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        write!(f, [self.left, space(), self.operator.as_str(), space(), self.right])
+        BinaryLikeExpression::BinaryExpression(self).fmt(f)
     }
 }
 
@@ -507,7 +525,7 @@ impl<'a> FormatWrite<'a> for PrivateInExpression<'a> {
 
 impl<'a> FormatWrite<'a> for LogicalExpression<'a> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        write!(f, [self.left, space(), self.operator.as_str(), space(), self.right])
+        BinaryLikeExpression::LogicalExpression(self).fmt(f)
     }
 }
 

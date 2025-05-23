@@ -56,6 +56,12 @@ pub struct FormatOptions {
 
     /// Whether to expand object and array literals to multiple lines. Defaults to "auto".
     pub expand: Expand,
+
+    /// Controls the position of operators in binary expressions.
+    /// Accepted values are:
+    /// - `"start"`: Places the operator at the beginning of the next line.
+    /// - `"end"`: Places the operator at the end of the current line (default).
+    pub experimental_operator_position: OperatorPosition,
 }
 
 impl FormatOptions {
@@ -75,6 +81,7 @@ impl FormatOptions {
             bracket_same_line: BracketSameLine::default(),
             attribute_position: AttributePosition::default(),
             expand: Expand::default(),
+            experimental_operator_position: OperatorPosition::default(),
         }
     }
 
@@ -98,7 +105,8 @@ impl fmt::Display for FormatOptions {
         writeln!(f, "Bracket spacing: {}", self.bracket_spacing.value())?;
         writeln!(f, "Bracket same line: {}", self.bracket_same_line.value())?;
         writeln!(f, "Attribute Position: {}", self.attribute_position)?;
-        writeln!(f, "Expand lists: {}", self.expand)
+        writeln!(f, "Expand lists: {}", self.expand)?;
+        writeln!(f, "Experimental operator position: {}", self.experimental_operator_position)
     }
 }
 
@@ -853,6 +861,48 @@ impl fmt::Display for Expand {
             Expand::Auto => "Auto",
             Expand::Always => "Always",
             Expand::Never => "Never",
+        };
+        f.write_str(s)
+    }
+}
+
+#[derive(Clone, Copy, Debug, Default, Eq, Hash, PartialEq)]
+pub enum OperatorPosition {
+    /// When binary expressions wrap lines, print operators at the start of new lines.
+    Start,
+
+    // Default behavior; when binary expressions wrap lines, print operators at the end of previous lines.
+    #[default]
+    End,
+}
+
+impl OperatorPosition {
+    pub const fn is_start(self) -> bool {
+        matches!(self, Self::Start)
+    }
+
+    pub const fn is_end(self) -> bool {
+        matches!(self, Self::End)
+    }
+}
+
+impl FromStr for OperatorPosition {
+    type Err = &'static str;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s {
+            "start" => Ok(Self::Start),
+            "end" => Ok(Self::End),
+            _ => Err("Value not supported for OperatorPosition"),
+        }
+    }
+}
+
+impl fmt::Display for OperatorPosition {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        let s = match self {
+            OperatorPosition::Start => "Start",
+            OperatorPosition::End => "End",
         };
         f.write_str(s)
     }

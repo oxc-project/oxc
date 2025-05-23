@@ -6,7 +6,10 @@ use oxc_syntax::{
     precedence::{GetPrecedence, Precedence},
 };
 
-use crate::formatter::parent_stack::ParentStack;
+use crate::{
+    formatter::parent_stack::ParentStack,
+    write::{BinaryLikeExpression, should_flatten},
+};
 
 use super::NeedsParentheses;
 
@@ -177,7 +180,7 @@ impl<'a> NeedsParentheses<'a> for UnaryExpression<'a> {
 
 impl<'a> NeedsParentheses<'a> for BinaryExpression<'a> {
     fn needs_parentheses(&self, stack: &ParentStack<'a>) -> bool {
-        binary_like_needs_parens(BinaryLike::BinaryExpression(self), stack)
+        binary_like_needs_parens(BinaryLikeExpression::BinaryExpression(self), stack)
     }
 }
 
@@ -196,7 +199,7 @@ impl<'a> NeedsParentheses<'a> for LogicalExpression<'a> {
         {
             true
         } else {
-            binary_like_needs_parens(BinaryLike::LogicalExpression(self), stack)
+            binary_like_needs_parens(BinaryLikeExpression::LogicalExpression(self), stack)
         }
     }
 }
@@ -391,23 +394,11 @@ impl<'a> NeedsParentheses<'a> for TSInstantiationExpression<'a> {
     }
 }
 
-#[derive(Clone, Copy)]
-enum BinaryLike<'a, 'b> {
-    BinaryExpression(&'b BinaryExpression<'a>),
-    LogicalExpression(&'b LogicalExpression<'a>),
-}
-
-impl BinaryLike<'_, '_> {
-    fn precedence(self) -> Precedence {
-        match self {
-            Self::BinaryExpression(e) => e.precedence(),
-            Self::LogicalExpression(e) => e.precedence(),
-        }
-    }
-}
-
-fn binary_like_needs_parens<'a>(current: BinaryLike<'a, '_>, stack: &ParentStack<'a>) -> bool {
-    match stack.parent() {
+fn binary_like_needs_parens<'a>(
+    current: BinaryLikeExpression<'a, '_>,
+    stack: &ParentStack<'a>,
+) -> bool {
+    let parent = match stack.parent() {
         AstKind::TSAsExpression(_)
         | AstKind::TSSatisfiesExpression(_)
         | AstKind::TSTypeAssertion(_)
@@ -417,15 +408,43 @@ fn binary_like_needs_parens<'a>(current: BinaryLike<'a, '_>, stack: &ParentStack
         | AstKind::SpreadElement(_)
         | AstKind::CallExpression(_)
         | AstKind::NewExpression(_)
-        | AstKind::TaggedTemplateExpression(_) => true,
-        AstKind::BinaryExpression(parent) => {
-            if parent.precedence() > current.precedence() {
-                return true;
-            }
-            false
-        }
-        _ => false,
+        | AstKind::MemberExpression(_)
+        | AstKind::TaggedTemplateExpression(_) => return true,
+        AstKind::BinaryExpression(binary) => BinaryLikeExpression::BinaryExpression(binary),
+        AstKind::LogicalExpression(logical) => BinaryLikeExpression::LogicalExpression(logical),
+        _ => return false,
+    };
+
+    let parent_operator = parent.operator();
+    let operator = current.operator();
+    let parent_precedence = parent_operator.precedence();
+    let precedence = operator.precedence();
+
+    // If the parent has a higher precedence than parentheses are necessary to not change the semantic meaning
+    // when re-parsing.
+    if parent_precedence > precedence {
+        return true;
     }
+
+    let is_right = parent.right().span() == current.span();
+
+    // `a ** b ** c`
+    if is_right && parent_precedence == precedence {
+        return true;
+    }
+
+    // Add parentheses around bitwise and bit shift operators
+    // `a * 3 >> 5` -> `(a * 3) >> 5`
+    if parent_precedence.is_bitwise() || parent_precedence.is_shift() {
+        return true;
+    }
+
+    // `a % 4 + 4` -> `(a % 4) + 4)`
+    if parent_precedence < precedence && operator.is_remainder() {
+        return parent_precedence.is_additive();
+    }
+
+    parent_precedence == precedence && !should_flatten(parent_operator, operator)
 }
 
 fn member_chain_callee_needs_parens(e: &Expression) -> bool {
