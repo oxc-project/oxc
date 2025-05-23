@@ -83,7 +83,7 @@ lint:
 
 # Format all files
 fmt:
-  cargo shear --fix # remove all unused dependencies
+  cargo shear --fix || true # remove all unused dependencies
   cargo fmt --all
   dprint fmt
 
