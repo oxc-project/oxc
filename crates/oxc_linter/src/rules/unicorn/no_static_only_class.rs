@@ -321,7 +321,7 @@ fn test() {
         (
             "class A { static foo = 2; static bar = 3; static baz() { return 2; } }",
             "const A = { foo: 2, bar: 3, baz() { return 2; }, }",
-        )
+        ),
     ];
 
     Tester::new(NoStaticOnlyClass::NAME, NoStaticOnlyClass::PLUGIN, pass, fail)
