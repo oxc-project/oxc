@@ -849,6 +849,7 @@ impl<'a> ParserImpl<'a> {
         }
 
         let rhs_span = self.start_span();
+        let is_import = self.at(Kind::Import); // Syntax Error for `new import('mod')` but not `new (import('mod'))`.
         let mut optional = false;
         let mut callee = {
             let lhs = self.parse_primary_expression();
@@ -890,7 +891,7 @@ impl<'a> ParserImpl<'a> {
             self.ast.vec()
         };
 
-        if matches!(callee, Expression::ImportExpression(_)) {
+        if is_import && matches!(callee, Expression::ImportExpression(_)) {
             self.error(diagnostics::new_dynamic_import(self.end_span(rhs_span)));
         }
 
