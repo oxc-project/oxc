@@ -1,6 +1,7 @@
 use std::{
     cell::{Ref, RefCell},
     fmt::{self, Debug, Display},
+    path::PathBuf,
 };
 
 use itertools::Itertools;
@@ -22,6 +23,10 @@ pub struct ConfigStoreBuilder {
     config: LintConfig,
     overrides: OxlintOverrides,
     cache: RulesCache,
+
+    // Collect all `extends` file paths for the language server.
+    // The server will tell the clients to watch for the extends files.
+    pub extended_paths: Vec<PathBuf>,
 }
 
 impl Default for ConfigStoreBuilder {
@@ -40,8 +45,9 @@ impl ConfigStoreBuilder {
         let rules = FxHashMap::default();
         let overrides = OxlintOverrides::default();
         let cache = RulesCache::new(config.plugins);
+        let extended_paths = Vec::new();
 
-        Self { rules, config, overrides, cache }
+        Self { rules, config, overrides, cache, extended_paths }
     }
 
     /// Warn on all rules in all plugins and categories, including those in `nursery`.
@@ -53,7 +59,8 @@ impl ConfigStoreBuilder {
         let overrides = OxlintOverrides::default();
         let cache = RulesCache::new(config.plugins);
         let rules = RULES.iter().map(|rule| (rule.clone(), AllowWarnDeny::Warn)).collect();
-        Self { rules, config, overrides, cache }
+        let extended_paths = Vec::new();
+        Self { rules, config, overrides, cache, extended_paths }
     }
 
     /// Create a [`ConfigStoreBuilder`] from a loaded or manually built [`Oxlintrc`].
@@ -79,10 +86,13 @@ impl ConfigStoreBuilder {
         oxlintrc: Oxlintrc,
     ) -> Result<Self, ConfigBuilderError> {
         // TODO: this can be cached to avoid re-computing the same oxlintrc
-        fn resolve_oxlintrc_config(config: Oxlintrc) -> Result<Oxlintrc, ConfigBuilderError> {
+        fn resolve_oxlintrc_config(
+            config: Oxlintrc,
+        ) -> Result<(Oxlintrc, Vec<PathBuf>), ConfigBuilderError> {
             let path = config.path.clone();
             let root_path = path.parent();
             let extends = config.extends.clone();
+            let mut extended_paths = Vec::new();
 
             let mut oxlintrc = config;
 
@@ -109,14 +119,18 @@ impl ConfigStoreBuilder {
                     }
                 })?;
 
-                let extends = resolve_oxlintrc_config(extends_oxlintrc)?;
+                extended_paths.push(path.clone());
+
+                let (extends, extends_paths) = resolve_oxlintrc_config(extends_oxlintrc)?;
 
                 oxlintrc = oxlintrc.merge(extends);
+                extended_paths.extend(extends_paths);
             }
-            Ok(oxlintrc)
+
+            Ok((oxlintrc, extended_paths))
         }
 
-        let oxlintrc = resolve_oxlintrc_config(oxlintrc)?;
+        let (oxlintrc, extended_paths) = resolve_oxlintrc_config(oxlintrc)?;
 
         let rules = if start_empty {
             FxHashMap::default()
@@ -132,7 +146,9 @@ impl ConfigStoreBuilder {
             path: Some(oxlintrc.path),
         };
         let cache = RulesCache::new(config.plugins);
-        let mut builder = Self { rules, config, overrides: oxlintrc.overrides, cache };
+
+        let mut builder =
+            Self { rules, config, overrides: oxlintrc.overrides, cache, extended_paths };
 
         for filter in oxlintrc.categories.filters() {
             builder = builder.with_filter(&filter);
