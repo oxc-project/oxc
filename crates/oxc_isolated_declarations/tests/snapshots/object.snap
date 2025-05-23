@@ -18,6 +18,11 @@ declare const D: {
 	state: number
 };
 declare const E: {};
+declare const ObjectMethods: {
+	a(): number
+	b(): number
+	c()
+};
 
 
 ==================== Errors ====================
@@ -36,6 +41,15 @@ declare const E: {};
  35 |     set state(v) {
     :              ^^^
  36 |         // do something
+    `----
+
+  x TS9008: Method must have an explicit return type annotation with
+  | --isolatedDeclarations.
+    ,-[45:2]
+ 44 |     b(): number {},
+ 45 |     c() {},
+    :     ^
+ 46 | };
     `----
 
 

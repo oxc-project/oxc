@@ -13,7 +13,8 @@ use crate::{
     IsolatedDeclarations,
     diagnostics::{
         arrays_with_spread_elements, function_must_have_explicit_return_type,
-        inferred_type_of_expression, object_with_spread_assignments, shorthand_property,
+        inferred_type_of_expression, method_must_have_explicit_return_type,
+        object_with_spread_assignments, shorthand_property,
     },
     function::get_function_span,
 };
@@ -102,22 +103,28 @@ impl<'a> IsolatedDeclarations<'a> {
 
                     let key = &object.key;
 
-                    if let Expression::FunctionExpression(function) = &object.value {
-                        if !is_const && object.method {
-                            let return_type = self.infer_function_return_type(function);
-                            let params = self.transform_formal_parameters(&function.params);
-                            return Some(self.ast.ts_signature_method_signature(
-                                object.span,
-                                key.clone_in(self.ast.allocator),
-                                object.computed,
-                                false,
-                                TSMethodSignatureKind::Method,
-                                function.type_parameters.clone_in(self.ast.allocator),
-                                function.this_param.clone_in(self.ast.allocator),
-                                params,
-                                return_type,
-                            ));
+                    if !is_const && object.method {
+                        let Expression::FunctionExpression(function) = &object.value else {
+                            unreachable!(
+                                "`object.kind` being `Method` guarantees that it is a function"
+                            );
+                        };
+                        let return_type = self.infer_function_return_type(function);
+                        if return_type.is_none() {
+                            self.error(method_must_have_explicit_return_type(object.key.span()));
                         }
+                        let params = self.transform_formal_parameters(&function.params);
+                        return Some(self.ast.ts_signature_method_signature(
+                            object.span,
+                            key.clone_in(self.ast.allocator),
+                            object.computed,
+                            false,
+                            TSMethodSignatureKind::Method,
+                            function.type_parameters.clone_in(self.ast.allocator),
+                            function.this_param.clone_in(self.ast.allocator),
+                            params,
+                            return_type,
+                        ));
                     }
 
                     let type_annotation = match object.kind {

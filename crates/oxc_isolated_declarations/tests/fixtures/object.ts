@@ -36,3 +36,11 @@ const E = {
 		// do something
 	},
 };
+
+const ObjectMethods = {
+	a() {
+		return 0;
+	},
+	b(): number {},
+	c() {},
+};
