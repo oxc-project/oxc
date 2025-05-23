@@ -21,11 +21,13 @@ use super::config_walker::ConfigWalker;
 pub struct ServerLinter {
     isolated_linter: Arc<IsolatedLintHandler>,
     gitignore_glob: Vec<Gitignore>,
+    #[expect(dead_code)]
+    extended_paths: Vec<PathBuf>,
 }
 
 impl ServerLinter {
     pub fn new(root_uri: &Uri, options: &Options) -> Self {
-        let nested_configs = Self::create_nested_configs(root_uri, options);
+        let (nested_configs, mut extended_paths) = Self::create_nested_configs(root_uri, options);
         let root_path = root_uri.to_file_path().unwrap();
         let relative_config_path = options.config_path.clone();
         let oxlintrc = if let Some(relative_config_path) = relative_config_path {
@@ -61,6 +63,7 @@ impl ServerLinter {
             config_builder.plugins().has_import()
         };
 
+        extended_paths.extend(config_builder.extended_paths.clone());
         let base_config = config_builder.build();
 
         let lint_options = LintOptions { fix: options.fix_kind(), ..Default::default() };
@@ -88,6 +91,7 @@ impl ServerLinter {
         Self {
             isolated_linter: Arc::new(isolated_linter),
             gitignore_glob: Self::create_ignore_glob(root_uri, &oxlintrc),
+            extended_paths,
         }
     }
 
@@ -96,10 +100,11 @@ impl ServerLinter {
     fn create_nested_configs(
         root_uri: &Uri,
         options: &Options,
-    ) -> ConcurrentHashMap<PathBuf, Config> {
+    ) -> (ConcurrentHashMap<PathBuf, Config>, Vec<PathBuf>) {
+        let mut extended_paths = Vec::new();
         // nested config is disabled, no need to search for configs
         if !options.use_nested_configs() {
-            return ConcurrentHashMap::default();
+            return (ConcurrentHashMap::default(), extended_paths);
         }
 
         let root_path = root_uri.to_file_path().expect("Failed to convert URI to file path");
@@ -123,12 +128,11 @@ impl ServerLinter {
                 warn!("Skipping config (builder failed): {}", file_path.display());
                 continue;
             };
-            let config_store = config_store_builder.build();
-
-            nested_configs.pin().insert(dir_path.to_path_buf(), config_store);
+            extended_paths.extend(config_store_builder.extended_paths.clone());
+            nested_configs.pin().insert(dir_path.to_path_buf(), config_store_builder.build());
         }
 
-        nested_configs
+        (nested_configs, extended_paths)
     }
 
     fn create_ignore_glob(root_uri: &Uri, oxlintrc: &Oxlintrc) -> Vec<Gitignore> {
@@ -257,7 +261,7 @@ mod test {
         let mut flags = FxHashMap::default();
         flags.insert("disable_nested_configs".to_string(), "true".to_string());
 
-        let configs = ServerLinter::create_nested_configs(
+        let (configs, _) = ServerLinter::create_nested_configs(
             &Uri::from_str("file:///root/").unwrap(),
             &Options { flags, ..Options::default() },
         );
@@ -267,7 +271,7 @@ mod test {
 
     #[test]
     fn test_create_nested_configs() {
-        let configs = ServerLinter::create_nested_configs(
+        let (configs, _) = ServerLinter::create_nested_configs(
             &get_file_uri("fixtures/linter/init_nested_configs"),
             &Options::default(),
         );

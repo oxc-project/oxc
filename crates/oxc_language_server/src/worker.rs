@@ -53,6 +53,8 @@ impl WorkspaceWorker {
         *self.server_linter.write().await = Some(ServerLinter::new(&self.root_uri, options));
     }
 
+    // WARNING: start all programs (linter, formatter) before calling this function
+    // each program can tell us customized file watcher patterns
     pub async fn init_watchers(&self) -> FileSystemWatcher {
         // ToDo: check with ServerLinter for `extends` files (oxc-project/oxc@10373)
 
