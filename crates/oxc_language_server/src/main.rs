@@ -183,7 +183,7 @@ impl LanguageServer for Backend {
                     id: format!("watcher-{}", worker.get_root_uri().as_str()),
                     method: "workspace/didChangeWatchedFiles".to_string(),
                     register_options: Some(json!(DidChangeWatchedFilesRegistrationOptions {
-                        watchers: vec![worker.init_watchers().await]
+                        watchers: worker.init_watchers().await
                     })),
                 });
             }
@@ -420,7 +420,7 @@ impl LanguageServer for Backend {
                     id: format!("watcher-{}", worker.get_root_uri().as_str()),
                     method: "workspace/didChangeWatchedFiles".to_string(),
                     register_options: Some(json!(DidChangeWatchedFilesRegistrationOptions {
-                        watchers: vec![worker.init_watchers().await]
+                        watchers: worker.init_watchers().await
                     })),
                 });
                 workers.push(worker);

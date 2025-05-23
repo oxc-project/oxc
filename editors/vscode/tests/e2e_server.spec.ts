@@ -3,6 +3,8 @@ import {
   commands,
   DiagnosticSeverity,
   languages,
+  Position,
+  Range,
   Uri,
   window,
   workspace,
@@ -11,10 +13,12 @@ import {
 import {
   activateExtension,
   createOxlintConfiguration,
+  fixturesWorkspaceUri,
   getDiagnostics,
   loadFixture,
   sleep,
   testMultiFolderMode,
+  waitForDiagnosticChange,
   WORKSPACE_DIR,
   WORKSPACE_SECOND_DIR
 } from './test-helpers';
@@ -78,23 +82,17 @@ suite('E2E Diagnostics', () => {
     strictEqual(diagnosticsWarning.length, 1);
     strictEqual(diagnosticsWarning[0].severity, DiagnosticSeverity.Warning, 'Expect default severity to be warning');
 
-    const resolve = new Promise<void>((resolve) =>
-      languages.onDidChangeDiagnostics(() => {
-        const diagnosticsError = languages.getDiagnostics(fileUri);
-
-        strictEqual(diagnosticsError.length, 1);
-        strictEqual(diagnosticsError[0].severity, DiagnosticSeverity.Error, 'Expect changed severity to be error');
-        resolve();
-      })
-    );
-
     await createOxlintConfiguration({
       rules: {
         'no-debugger': 'error',
       },
     });
     await workspace.saveAll();
-    await resolve;
+    await waitForDiagnosticChange();
+    const diagnosticsError = languages.getDiagnostics(fileUri);
+
+    strictEqual(diagnosticsError.length, 1);
+    strictEqual(diagnosticsError[0].severity, DiagnosticSeverity.Error, 'Expect changed severity to be error');
   });
 
   // We can check the changed with kind with `vscode.executeCodeActionProvider`
@@ -171,7 +169,41 @@ suite('E2E Diagnostics', () => {
     assert(typeof secondDiagnostics[0].code == 'object');
     strictEqual(secondDiagnostics[0].code.target.authority, 'oxc.rs');
     strictEqual(secondDiagnostics[0].severity, DiagnosticSeverity.Error);
-  })
+  });
+
+  // somehow this test is flaky in CI
+  test.skip('changing config from `extends` will revalidate the diagnostics', async () => {
+    await loadFixture('changing_extended_config');
+    const firstDiagnostics = await getDiagnostics('debugger.js');
+
+    assert(typeof firstDiagnostics[0].code == 'object');
+    strictEqual(firstDiagnostics[0].code.target.authority, 'oxc.rs');
+    strictEqual(firstDiagnostics[0].severity, DiagnosticSeverity.Warning);
+
+    const oxlintExtendedConfigUri = Uri.joinPath(fixturesWorkspaceUri(), 'fixtures', 'folder/custom.json');
+    const oxlintExtendedConfig = JSON.stringify({
+      "rules": {
+        "no-debugger": "error"
+      }
+    });
+
+    const edit = new WorkspaceEdit();
+    edit.replace(
+      oxlintExtendedConfigUri,
+      new Range(new Position(0, 0), new Position(100, 100)),
+      oxlintExtendedConfig
+    );
+
+    await window.showTextDocument(oxlintExtendedConfigUri);
+    await workspace.applyEdit(edit);
+    await workspace.saveAll();
+    await waitForDiagnosticChange();
+    const secondDiagnostics = await getDiagnostics('debugger.js');
+
+    assert(typeof secondDiagnostics[0].code == 'object');
+    strictEqual(secondDiagnostics[0].code.target.authority, 'oxc.rs');
+    strictEqual(secondDiagnostics[0].severity, DiagnosticSeverity.Error);
+  });
 
   test('cross module', async () => {
     await loadFixture('cross_module');

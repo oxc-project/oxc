@@ -17,7 +17,10 @@ use crate::{
         apply_all_fix_code_action, apply_fix_code_action, ignore_this_line_code_action,
         ignore_this_rule_code_action,
     },
-    linter::{error_with_position::DiagnosticReport, server_linter::ServerLinter},
+    linter::{
+        error_with_position::DiagnosticReport,
+        server_linter::{ServerLinter, normalize_path},
+    },
 };
 
 pub struct WorkspaceWorker {
@@ -55,25 +58,54 @@ impl WorkspaceWorker {
 
     // WARNING: start all programs (linter, formatter) before calling this function
     // each program can tell us customized file watcher patterns
-    pub async fn init_watchers(&self) -> FileSystemWatcher {
-        // ToDo: check with ServerLinter for `extends` files (oxc-project/oxc@10373)
+    pub async fn init_watchers(&self) -> Vec<FileSystemWatcher> {
+        let mut watchers = Vec::new();
 
-        if let Some(config_path) = &self.options.lock().await.config_path {
-            return FileSystemWatcher {
-                glob_pattern: GlobPattern::Relative(RelativePattern {
-                    base_uri: OneOf::Right(self.root_uri.clone()),
-                    pattern: config_path.to_string(),
-                }),
-                kind: Some(WatchKind::all()), // created, deleted, changed
-            };
-        }
-        FileSystemWatcher {
+        // clone the options to avoid locking the mutex
+        let options = self.options.lock().await;
+        let use_nested_configs = options.use_nested_configs();
+
+        // append the base watcher
+        watchers.push(FileSystemWatcher {
             glob_pattern: GlobPattern::Relative(RelativePattern {
                 base_uri: OneOf::Right(self.root_uri.clone()),
-                pattern: "**/.oxlintrc.json".to_string(),
+                pattern: options
+                    .config_path
+                    .as_ref()
+                    .unwrap_or(&"**/.oxlintrc.json".to_owned())
+                    .to_owned(),
             }),
             kind: Some(WatchKind::all()), // created, deleted, changed
+        });
+
+        let Some(root_path) = &self.root_uri.to_file_path() else {
+            return watchers;
+        };
+
+        let Some(extended_paths) =
+            self.server_linter.read().await.as_ref().map(|linter| linter.extended_paths.clone())
+        else {
+            return watchers;
+        };
+
+        for path in &extended_paths {
+            // ignore .oxlintrc.json files when using nested configs
+            if path.ends_with(".oxlintrc.json") && use_nested_configs {
+                continue;
+            }
+
+            let pattern = path.strip_prefix(root_path).unwrap_or(path);
+
+            watchers.push(FileSystemWatcher {
+                glob_pattern: GlobPattern::Relative(RelativePattern {
+                    base_uri: OneOf::Right(self.root_uri.clone()),
+                    pattern: normalize_path(pattern).to_string_lossy().to_string(),
+                }),
+                kind: Some(WatchKind::all()), // created, deleted, changed
+            });
         }
+
+        watchers
     }
 
     pub async fn needs_init_linter(&self) -> bool {
@@ -249,6 +281,7 @@ impl WorkspaceWorker {
         &self,
         changed_options: &Options,
     ) -> (Option<ConcurrentHashMap<String, Vec<DiagnosticReport>>>, Option<FileSystemWatcher>) {
+        // clone the current options to avoid locking the mutex
         let current_option = &self.options.lock().await.clone();
 
         debug!(

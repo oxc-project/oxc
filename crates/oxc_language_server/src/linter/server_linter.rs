@@ -21,8 +21,7 @@ use super::config_walker::ConfigWalker;
 pub struct ServerLinter {
     isolated_linter: Arc<IsolatedLintHandler>,
     gitignore_glob: Vec<Gitignore>,
-    #[expect(dead_code)]
-    extended_paths: Vec<PathBuf>,
+    pub extended_paths: Vec<PathBuf>,
 }
 
 impl ServerLinter {

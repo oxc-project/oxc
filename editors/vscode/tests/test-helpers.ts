@@ -108,3 +108,11 @@ export async function getDiagnostics(file: string, workspaceDir: Uri = fixturesW
   await commands.executeCommand('workbench.action.closeActiveEditor');
   return diagnostics;
 }
+
+export async function waitForDiagnosticChange(): Promise<void> {
+    return new Promise<void>((resolve) =>
+      languages.onDidChangeDiagnostics(() => {
+        resolve();
+      })
+    );
+}
