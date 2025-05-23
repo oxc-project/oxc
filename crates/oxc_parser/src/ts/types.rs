@@ -87,7 +87,13 @@ impl<'a> ParserImpl<'a> {
         if self.at(Kind::LParen) && self.lookahead(Self::is_unambiguously_start_of_function_type) {
             return true;
         }
-        self.at(Kind::New) || (self.at(Kind::Abstract) && self.peek_at(Kind::New))
+        self.at(Kind::New)
+            || (self.at(Kind::Abstract) && self.lookahead(Self::is_next_token_new_keyword))
+    }
+
+    fn is_next_token_new_keyword(&mut self) -> bool {
+        self.bump_any();
+        self.at(Kind::New)
     }
 
     fn is_unambiguously_start_of_function_type(&mut self) -> bool {
@@ -363,7 +369,7 @@ impl<'a> ParserImpl<'a> {
                 self.parse_literal_type_node(/* negative */ false)
             }
             Kind::Minus => {
-                if self.peek_kind().is_number() {
+                if self.lookahead(Self::is_next_token_number) {
                     self.parse_literal_type_node(/* negative */ true)
                 } else {
                     self.parse_type_reference()
@@ -378,10 +384,17 @@ impl<'a> ParserImpl<'a> {
                 let span = self.start_span();
                 self.bump_any(); // bump `this`
                 let this_type = self.ast.ts_this_type(self.end_span(span));
-                if self.peek_at(Kind::Is) && !self.peek_token().is_on_new_line() {
-                    return self.parse_this_type_predicate(this_type);
+                // TODO: rewind should not be necessary here, but it causes a regression in the
+                // conformance test suite otherwise
+                let checkpoint = self.checkpoint();
+                self.bump_any();
+                let kind = self.cur_kind();
+                self.rewind(checkpoint);
+                if kind == Kind::Is && !self.cur_token().is_on_new_line() {
+                    self.parse_this_type_predicate(this_type)
+                } else {
+                    TSType::TSThisType(self.alloc(this_type))
                 }
-                TSType::TSThisType(self.alloc(this_type))
             }
             Kind::Typeof => {
                 self.parse_type_query()
@@ -397,8 +410,7 @@ impl<'a> ParserImpl<'a> {
             Kind::LParen => self.parse_parenthesized_type(),
             Kind::Import => TSType::TSImportType(self.parse_ts_import_type()),
             Kind::Asserts => {
-                let peek_token = self.peek_token();
-                if peek_token.kind().is_identifier_name() && !peek_token.is_on_new_line() {
+                if self.lookahead(Self::is_next_token_identifier_or_keyword_on_same_line) {
                     self.parse_asserts_type_predicate()
                 } else {
                     self.parse_type_reference()
@@ -407,6 +419,16 @@ impl<'a> ParserImpl<'a> {
             Kind::TemplateHead => self.parse_template_type(false),
             _ => self.parse_type_reference(),
         }
+    }
+
+    fn is_next_token_identifier_or_keyword_on_same_line(&mut self) -> bool {
+        self.bump_any();
+        self.cur_kind().is_identifier_name() && !self.cur_token().is_on_new_line()
+    }
+
+    fn is_next_token_number(&mut self) -> bool {
+        self.bump_any();
+        self.cur_kind().is_number()
     }
 
     fn parse_keyword_and_no_dot(&mut self) -> TSType<'a> {
@@ -502,7 +524,7 @@ impl<'a> ParserImpl<'a> {
             | Kind::NoSubstitutionTemplate
             | Kind::TemplateHead => true,
             Kind::Function => !in_start_of_parameter,
-            Kind::Minus => !in_start_of_parameter && self.peek_kind().is_number(),
+            Kind::Minus => !in_start_of_parameter && self.lookahead(Self::is_next_token_number),
             Kind::LParen => {
                 !in_start_of_parameter
                     && self.lookahead(Self::is_start_of_parenthesized_or_function_type)
@@ -512,23 +534,20 @@ impl<'a> ParserImpl<'a> {
     }
 
     fn is_start_of_mapped_type(&mut self) -> bool {
-        if !self.at(Kind::LCurly) {
+        self.bump_any();
+        if self.at(Kind::Plus) || self.at(Kind::Minus) {
+            self.bump_any();
+            return self.at(Kind::Readonly);
+        }
+
+        self.bump(Kind::Readonly);
+
+        if !self.eat(Kind::LBrack) && self.cur_kind().is_identifier_name() {
             return false;
         }
 
-        if self.peek_at(Kind::Plus) || self.peek_at(Kind::Minus) {
-            return self.nth_at(2, Kind::Readonly);
-        }
-
-        let mut offset = 1;
-
-        if self.nth_at(offset, Kind::Readonly) {
-            offset += 1;
-        }
-
-        self.nth_at(offset, Kind::LBrack)
-            && self.nth_kind(offset + 1).is_identifier_name()
-            && self.nth_at(offset + 2, Kind::In)
+        self.bump_any();
+        self.at(Kind::In)
     }
 
     fn next_token_is_start_of_type(&mut self) -> bool {
@@ -903,7 +922,7 @@ impl<'a> ParserImpl<'a> {
         if self.at(Kind::Colon) {
             return true;
         }
-        self.at(Kind::Question) && self.peek_at(Kind::Colon)
+        self.eat(Kind::Question) && self.at(Kind::Colon)
     }
 
     fn parse_tuple_element_type(&mut self) -> TSTupleElement<'a> {
@@ -1078,7 +1097,12 @@ impl<'a> ParserImpl<'a> {
     }
 
     pub(crate) fn is_next_at_type_member_name(&mut self) -> bool {
-        self.peek_kind().is_literal_property_name() || self.peek_at(Kind::LBrack)
+        self.lookahead(Self::is_next_at_type_member_name_worker)
+    }
+
+    fn is_next_at_type_member_name_worker(&mut self) -> bool {
+        self.bump_any();
+        self.cur_kind().is_literal_property_name() || self.at(Kind::LBrack)
     }
 
     pub(crate) fn parse_ts_call_signature_member(&mut self) -> TSSignature<'a> {
@@ -1356,10 +1380,13 @@ impl<'a> ParserImpl<'a> {
             | Kind::New
             | Kind::Slash
             | Kind::SlashEq => true,
-            Kind::Import => {
-                matches!(self.peek_kind(), Kind::LParen | Kind::LAngle | Kind::Dot)
-            }
+            Kind::Import => self.lookahead(Self::is_next_token_paren_less_than_or_dot),
             _ => false,
         }
+    }
+
+    fn is_next_token_paren_less_than_or_dot(&mut self) -> bool {
+        self.bump_any();
+        matches!(self.cur_kind(), Kind::LParen | Kind::LAngle | Kind::Dot)
     }
 }
