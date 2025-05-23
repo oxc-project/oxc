@@ -445,7 +445,7 @@ impl<'a> ParserImpl<'a> {
         Some(self.modifier(kind, self.end_span(span)))
     }
 
-    fn next_token_is_open_brace(&mut self) -> bool {
+    pub(crate) fn next_token_is_open_brace(&mut self) -> bool {
         self.bump_any();
         self.at(Kind::LCurly)
     }
