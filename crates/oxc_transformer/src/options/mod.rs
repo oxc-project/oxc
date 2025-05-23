@@ -203,6 +203,8 @@ impl TryFrom<&BabelOptions> for TransformOptions {
 
         let es2015 = ES2015Options {
             arrow_function: options.plugins.arrow_function.or(env.es2015.arrow_function),
+            shorthand_properties: options.plugins.shorthand_properties
+                || env.es2015.shorthand_properties,
         };
 
         let es2016 = ES2016Options {

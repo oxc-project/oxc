@@ -7,4 +7,7 @@ use super::ArrowFunctionsOptions;
 pub struct ES2015Options {
     #[serde(skip)]
     pub arrow_function: Option<ArrowFunctionsOptions>,
+
+    #[serde(skip)]
+    pub shorthand_properties: bool,
 }
