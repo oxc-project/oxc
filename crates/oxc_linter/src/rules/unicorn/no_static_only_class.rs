@@ -278,6 +278,7 @@ fn test() {
     let fix = vec![
         ("class A { static a() {}; }", "const A = { a() {}, }"),
         ("class A { static a() {} }", "const A = { a() {}, }"),
+        ("const a = class { static bar = 2; static baz() {} }", "const a =  { bar: 2, baz() {}, }"),
         ("const A = class A { static a() {}; }", "const A = class A { static a() {}; }"),
         ("class A { static constructor() {}; }", "const A = { constructor() {}, }"),
         ("export default class A { static a() {}; }", "export default class A { static a() {}; }"),
@@ -317,6 +318,10 @@ fn test() {
         ),
         ("(class { static A = 2 })", "( { A: 2, })"),
         ("(class A { static B = 2 })", "(class A { static B = 2 })"),
+        (
+            "class A { static foo = 2; static bar = 3; static baz() { return 2; } }",
+            "const A = { foo: 2, bar: 3, baz() { return 2; }, }",
+        )
     ];
 
     Tester::new(NoStaticOnlyClass::NAME, NoStaticOnlyClass::PLUGIN, pass, fail)
