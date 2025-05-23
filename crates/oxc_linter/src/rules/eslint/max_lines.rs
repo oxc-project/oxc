@@ -95,7 +95,9 @@ impl Rule for MaxLines {
         let lines_in_file = if self.skip_blank_lines {
             ctx.source_text().lines().filter(|&line| !line.trim().is_empty()).count()
         } else {
-            ctx.source_text().lines().count()
+            // Intentionally counting newline bytes instead of using .lines() for performance (see PR 11242)
+            let newlines = ctx.source_text().bytes().filter(|ch| *ch == b'\n').count();
+            if ctx.source_text().ends_with('\n') { newlines } else { newlines + 1 }
         };
 
         let final_lines = lines_in_file.max(1).saturating_sub(comment_lines);

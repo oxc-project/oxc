@@ -196,7 +196,9 @@ impl Rule for MaxLinesPerFunction {
         let lines_in_function = if self.skip_blank_lines {
             code.lines().filter(|&line| !line.trim().is_empty()).count()
         } else {
-            code.lines().count()
+            // Intentionally counting newline bytes instead of using .lines() for performance (see PR 11242)
+            let newlines = code.bytes().filter(|ch| *ch == b'\n').count();
+            if code.ends_with('\n') { newlines } else { newlines + 1 }
         };
 
         let final_lines = lines_in_function.saturating_sub(comment_lines);
