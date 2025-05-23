@@ -423,6 +423,7 @@ impl<'a> AstBuilder<'a> {
     /// * `operator`
     /// * `left`
     /// * `right`
+    /// * `left_parenthesized`
     #[inline]
     pub fn expression_assignment(
         self,
@@ -430,10 +431,15 @@ impl<'a> AstBuilder<'a> {
         operator: AssignmentOperator,
         left: AssignmentTarget<'a>,
         right: Expression<'a>,
+        left_parenthesized: Option<Span>,
     ) -> Expression<'a> {
-        Expression::AssignmentExpression(
-            self.alloc_assignment_expression(span, operator, left, right),
-        )
+        Expression::AssignmentExpression(self.alloc_assignment_expression(
+            span,
+            operator,
+            left,
+            right,
+            left_parenthesized,
+        ))
     }
 
     /// Build an [`Expression::AwaitExpression`].
@@ -997,6 +1003,7 @@ impl<'a> AstBuilder<'a> {
     /// * `operator`
     /// * `prefix`
     /// * `argument`
+    /// * `argument_parenthesized`
     #[inline]
     pub fn expression_update(
         self,
@@ -1004,8 +1011,15 @@ impl<'a> AstBuilder<'a> {
         operator: UpdateOperator,
         prefix: bool,
         argument: SimpleAssignmentTarget<'a>,
+        argument_parenthesized: Option<Span>,
     ) -> Expression<'a> {
-        Expression::UpdateExpression(self.alloc_update_expression(span, operator, prefix, argument))
+        Expression::UpdateExpression(self.alloc_update_expression(
+            span,
+            operator,
+            prefix,
+            argument,
+            argument_parenthesized,
+        ))
     }
 
     /// Build an [`Expression::YieldExpression`].
@@ -2334,6 +2348,7 @@ impl<'a> AstBuilder<'a> {
     /// * `operator`
     /// * `prefix`
     /// * `argument`
+    /// * `argument_parenthesized`
     #[inline]
     pub fn update_expression(
         self,
@@ -2341,8 +2356,9 @@ impl<'a> AstBuilder<'a> {
         operator: UpdateOperator,
         prefix: bool,
         argument: SimpleAssignmentTarget<'a>,
+        argument_parenthesized: Option<Span>,
     ) -> UpdateExpression<'a> {
-        UpdateExpression { span, operator, prefix, argument }
+        UpdateExpression { span, operator, prefix, argument, argument_parenthesized }
     }
 
     /// Build an [`UpdateExpression`], and store it in the memory arena.
@@ -2355,6 +2371,7 @@ impl<'a> AstBuilder<'a> {
     /// * `operator`
     /// * `prefix`
     /// * `argument`
+    /// * `argument_parenthesized`
     #[inline]
     pub fn alloc_update_expression(
         self,
@@ -2362,8 +2379,12 @@ impl<'a> AstBuilder<'a> {
         operator: UpdateOperator,
         prefix: bool,
         argument: SimpleAssignmentTarget<'a>,
+        argument_parenthesized: Option<Span>,
     ) -> Box<'a, UpdateExpression<'a>> {
-        Box::new_in(self.update_expression(span, operator, prefix, argument), self.allocator)
+        Box::new_in(
+            self.update_expression(span, operator, prefix, argument, argument_parenthesized),
+            self.allocator,
+        )
     }
 
     /// Build an [`UnaryExpression`].
@@ -2578,6 +2599,7 @@ impl<'a> AstBuilder<'a> {
     /// * `operator`
     /// * `left`
     /// * `right`
+    /// * `left_parenthesized`
     #[inline]
     pub fn assignment_expression(
         self,
@@ -2585,8 +2607,9 @@ impl<'a> AstBuilder<'a> {
         operator: AssignmentOperator,
         left: AssignmentTarget<'a>,
         right: Expression<'a>,
+        left_parenthesized: Option<Span>,
     ) -> AssignmentExpression<'a> {
-        AssignmentExpression { span, operator, left, right }
+        AssignmentExpression { span, operator, left, right, left_parenthesized }
     }
 
     /// Build an [`AssignmentExpression`], and store it in the memory arena.
@@ -2599,6 +2622,7 @@ impl<'a> AstBuilder<'a> {
     /// * `operator`
     /// * `left`
     /// * `right`
+    /// * `left_parenthesized`
     #[inline]
     pub fn alloc_assignment_expression(
         self,
@@ -2606,8 +2630,12 @@ impl<'a> AstBuilder<'a> {
         operator: AssignmentOperator,
         left: AssignmentTarget<'a>,
         right: Expression<'a>,
+        left_parenthesized: Option<Span>,
     ) -> Box<'a, AssignmentExpression<'a>> {
-        Box::new_in(self.assignment_expression(span, operator, left, right), self.allocator)
+        Box::new_in(
+            self.assignment_expression(span, operator, left, right, left_parenthesized),
+            self.allocator,
+        )
     }
 
     /// Build a [`SimpleAssignmentTarget::AssignmentTargetIdentifier`].

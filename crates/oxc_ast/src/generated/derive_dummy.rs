@@ -344,6 +344,7 @@ impl<'a> Dummy<'a> for UpdateExpression<'a> {
             operator: Dummy::dummy(allocator),
             prefix: Dummy::dummy(allocator),
             argument: Dummy::dummy(allocator),
+            argument_parenthesized: Dummy::dummy(allocator),
         }
     }
 }
@@ -426,6 +427,7 @@ impl<'a> Dummy<'a> for AssignmentExpression<'a> {
             operator: Dummy::dummy(allocator),
             left: Dummy::dummy(allocator),
             right: Dummy::dummy(allocator),
+            left_parenthesized: Dummy::dummy(allocator),
         }
     }
 }

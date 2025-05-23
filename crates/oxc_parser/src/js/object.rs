@@ -135,6 +135,7 @@ impl<'a> ParserImpl<'a> {
                 AssignmentOperator::Assign,
                 left,
                 right,
+                None,
             );
             self.state.cover_initialized_name.insert(span, expr);
         }

@@ -252,8 +252,8 @@ function deserializeUpdateExpression(pos) {
     type: 'UpdateExpression',
     start: deserializeU32(pos),
     end: deserializeU32(pos + 4),
-    operator: deserializeUpdateOperator(pos + 24),
-    prefix: deserializeBool(pos + 25),
+    operator: deserializeUpdateOperator(pos + 40),
+    prefix: deserializeBool(pos + 41),
     argument: deserializeSimpleAssignmentTarget(pos + 8),
   };
 }
@@ -318,7 +318,7 @@ function deserializeAssignmentExpression(pos) {
     type: 'AssignmentExpression',
     start: deserializeU32(pos),
     end: deserializeU32(pos + 4),
-    operator: deserializeAssignmentOperator(pos + 40),
+    operator: deserializeAssignmentOperator(pos + 56),
     left: deserializeAssignmentTarget(pos + 8),
     right: deserializeExpression(pos + 24),
   };
@@ -4369,6 +4369,11 @@ function deserializeVecArgument(pos) {
     pos += 16;
   }
   return arr;
+}
+
+function deserializeOptionSpan(pos) {
+  if (uint8[pos] === 0) return null;
+  return deserializeSpan(pos + 8);
 }
 
 function deserializeBoxArrayAssignmentTarget(pos) {

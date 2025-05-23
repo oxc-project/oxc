@@ -3643,6 +3643,8 @@ pub(crate) const OFFSET_UPDATE_EXPRESSION_SPAN: usize = offset_of!(UpdateExpress
 pub(crate) const OFFSET_UPDATE_EXPRESSION_OPERATOR: usize = offset_of!(UpdateExpression, operator);
 pub(crate) const OFFSET_UPDATE_EXPRESSION_PREFIX: usize = offset_of!(UpdateExpression, prefix);
 pub(crate) const OFFSET_UPDATE_EXPRESSION_ARGUMENT: usize = offset_of!(UpdateExpression, argument);
+pub(crate) const OFFSET_UPDATE_EXPRESSION_ARGUMENT_PARENTHESIZED: usize =
+    offset_of!(UpdateExpression, argument_parenthesized);
 
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
@@ -3668,6 +3670,14 @@ impl<'a, 't> UpdateExpressionWithoutArgument<'a, 't> {
     #[inline]
     pub fn prefix(self) -> &'t bool {
         unsafe { &*((self.0 as *const u8).add(OFFSET_UPDATE_EXPRESSION_PREFIX) as *const bool) }
+    }
+
+    #[inline]
+    pub fn argument_parenthesized(self) -> &'t Option<Span> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_UPDATE_EXPRESSION_ARGUMENT_PARENTHESIZED)
+                as *const Option<Span>)
+        }
     }
 }
 
@@ -4053,6 +4063,8 @@ pub(crate) const OFFSET_ASSIGNMENT_EXPRESSION_OPERATOR: usize =
 pub(crate) const OFFSET_ASSIGNMENT_EXPRESSION_LEFT: usize = offset_of!(AssignmentExpression, left);
 pub(crate) const OFFSET_ASSIGNMENT_EXPRESSION_RIGHT: usize =
     offset_of!(AssignmentExpression, right);
+pub(crate) const OFFSET_ASSIGNMENT_EXPRESSION_LEFT_PARENTHESIZED: usize =
+    offset_of!(AssignmentExpression, left_parenthesized);
 
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
@@ -4080,6 +4092,14 @@ impl<'a, 't> AssignmentExpressionWithoutLeft<'a, 't> {
         unsafe {
             &*((self.0 as *const u8).add(OFFSET_ASSIGNMENT_EXPRESSION_RIGHT)
                 as *const Expression<'a>)
+        }
+    }
+
+    #[inline]
+    pub fn left_parenthesized(self) -> &'t Option<Span> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_ASSIGNMENT_EXPRESSION_LEFT_PARENTHESIZED)
+                as *const Option<Span>)
         }
     }
 }
@@ -4117,6 +4137,14 @@ impl<'a, 't> AssignmentExpressionWithoutRight<'a, 't> {
         unsafe {
             &*((self.0 as *const u8).add(OFFSET_ASSIGNMENT_EXPRESSION_LEFT)
                 as *const AssignmentTarget<'a>)
+        }
+    }
+
+    #[inline]
+    pub fn left_parenthesized(self) -> &'t Option<Span> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_ASSIGNMENT_EXPRESSION_LEFT_PARENTHESIZED)
+                as *const Option<Span>)
         }
     }
 }

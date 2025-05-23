@@ -150,7 +150,7 @@ pub static STRUCTS: phf::Map<&'static str, StructDetails> = ::phf::Map {
         ("JSXElement", StructDetails { field_order: None }),
         ("FunctionBody", StructDetails { field_order: None }),
         ("RegExpFlags", StructDetails { field_order: None }),
-        ("UpdateExpression", StructDetails { field_order: Some(&[0, 2, 3, 1]) }),
+        ("UpdateExpression", StructDetails { field_order: Some(&[0, 3, 4, 1, 2]) }),
         (
             "PropertyDefinition",
             StructDetails { field_order: Some(&[0, 5, 1, 2, 3, 4, 6, 7, 8, 9, 10, 11, 12, 13]) },
@@ -165,7 +165,7 @@ pub static STRUCTS: phf::Map<&'static str, StructDetails> = ::phf::Map {
         ("BindingRestElement", StructDetails { field_order: None }),
         ("IdentifierName", StructDetails { field_order: None }),
         ("Disjunction", StructDetails { field_order: None }),
-        ("AssignmentExpression", StructDetails { field_order: Some(&[0, 3, 1, 2]) }),
+        ("AssignmentExpression", StructDetails { field_order: Some(&[0, 4, 1, 2, 3]) }),
         ("AssignmentTargetRest", StructDetails { field_order: None }),
         ("TSTypeQuery", StructDetails { field_order: None }),
         ("WithClause", StructDetails { field_order: None }),
