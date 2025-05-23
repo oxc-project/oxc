@@ -8,6 +8,7 @@ use oxc_ast::{
     },
 };
 use oxc_span::{ContentEq, GetSpan, SPAN, Span};
+use oxc_syntax::number::ToJsString;
 
 use crate::{
     IsolatedDeclarations,
@@ -65,6 +66,26 @@ impl<'a> IsolatedDeclarations<'a> {
         })
     }
 
+    /// Convert a a computed property key to a static property key when possible
+    fn transform_property_key(&self, key: &PropertyKey<'a>) -> PropertyKey<'a> {
+        match key {
+            // [100] -> 100
+            PropertyKey::NumericLiteral(literal) => self.ast.property_key_static_identifier(
+                literal.span,
+                self.ast.atom(&literal.value.to_js_string()),
+            ),
+            // `["string"] -> string`
+            PropertyKey::StringLiteral(literal) => {
+                self.ast.property_key_static_identifier(literal.span, literal.value.as_str())
+            }
+            // `[`string`] -> string
+            PropertyKey::TemplateLiteral(literal) => {
+                self.ast.property_key_static_identifier(literal.span, literal.quasis[0].value.raw)
+            }
+            _ => key.clone_in(self.ast.allocator),
+        }
+    }
+
     /// Transform object expression to TypeScript type
     /// ```ts
     /// export const obj = {
@@ -114,10 +135,13 @@ impl<'a> IsolatedDeclarations<'a> {
                             self.error(method_must_have_explicit_return_type(object.key.span()));
                         }
                         let params = self.transform_formal_parameters(&function.params);
+                        let key = self.transform_property_key(key);
+                        let computed = key.is_expression();
+
                         return Some(self.ast.ts_signature_method_signature(
                             object.span,
-                            key.clone_in(self.ast.allocator),
-                            object.computed,
+                            key,
+                            computed,
                             false,
                             TSMethodSignatureKind::Method,
                             function.type_parameters.clone_in(self.ast.allocator),
@@ -187,12 +211,13 @@ impl<'a> IsolatedDeclarations<'a> {
                         }
                     };
 
+                    let key = self.transform_property_key(key);
                     let property_signature = self.ast.ts_signature_property_signature(
                         object.span,
-                        false,
+                        key.is_expression(),
                         false,
                         is_const,
-                        key.clone_in(self.ast.allocator),
+                        key,
                         type_annotation,
                     );
                     Some(property_signature)

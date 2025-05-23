@@ -44,3 +44,12 @@ const ObjectMethods = {
 	b(): number {},
 	c() {},
 };
+
+const ObjectKeys = {
+	a: 0,
+	["b"]: 1,
+	[`c`]: 2,
+	[3]: 3,
+	[-3]: 4,
+	[4n]: 5,
+};

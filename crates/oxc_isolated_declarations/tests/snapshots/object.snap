@@ -23,6 +23,13 @@ declare const ObjectMethods: {
 	b(): number
 	c()
 };
+declare const ObjectKeys: {
+	a: number
+	b: number
+	c: number
+	3: number
+	[-3]: number
+};
 
 
 ==================== Errors ====================
@@ -50,6 +57,15 @@ declare const ObjectMethods: {
  45 |     c() {},
     :     ^
  46 | };
+    `----
+
+  x TS9038: Computed property names on class or object literals cannot be
+  | inferred with --isolatedDeclarations.
+    ,-[54:3]
+ 53 |     [-3]: 4,
+ 54 |     [4n]: 5,
+    :      ^^
+ 55 | };
     `----
 
 

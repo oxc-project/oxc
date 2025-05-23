@@ -16,9 +16,7 @@ use crate::{
 impl<'a> IsolatedDeclarations<'a> {
     pub(crate) fn is_literal_key(key: &PropertyKey<'a>) -> bool {
         match key {
-            PropertyKey::StringLiteral(_)
-            | PropertyKey::NumericLiteral(_)
-            | PropertyKey::BigIntLiteral(_) => true,
+            PropertyKey::StringLiteral(_) | PropertyKey::NumericLiteral(_) => true,
             PropertyKey::TemplateLiteral(l) => l.expressions.is_empty(),
             PropertyKey::UnaryExpression(expr) => {
                 expr.operator.is_arithmetic()
