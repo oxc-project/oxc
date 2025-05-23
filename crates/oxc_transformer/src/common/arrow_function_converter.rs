@@ -420,7 +420,7 @@ impl<'a> Traverse<'a> for ArrowFunctionConverter<'a> {
                     //   prop = (() => { return async () => {} })();
                     // }
                     // ```
-                    Some(wrap_expression_in_arrow_function_iife(expr.take_in(ctx.ast), ctx))
+                    Some(wrap_expression_in_arrow_function_iife(expr.take_in(&ctx.ast), ctx))
                 } else {
                     return;
                 }
@@ -445,7 +445,7 @@ impl<'a> Traverse<'a> for ArrowFunctionConverter<'a> {
                 return;
             }
 
-            let Expression::ArrowFunctionExpression(arrow_function_expr) = expr.take_in(ctx.ast)
+            let Expression::ArrowFunctionExpression(arrow_function_expr) = expr.take_in(&ctx.ast)
             else {
                 unreachable!()
             };
@@ -527,7 +527,8 @@ impl<'a> ArrowFunctionConverter<'a> {
         // TODO: Add `BoundIdentifier::create_spanned_read_reference_boxed` method (and friends)
         // for this use case, so we can avoid `alloc()` call here.
         // I (@overlookmotel) doubt it'd make a perf difference, but it'd be cleaner code.
-        Some(ctx.ast.alloc(this_var.create_spanned_read_reference(span, ctx)))
+        let ident = this_var.create_spanned_read_reference(span, ctx);
+        Some(ctx.ast.alloc(ident))
     }
 
     /// Traverses upward through ancestor nodes to find the `ScopeId` of the block
@@ -745,8 +746,8 @@ impl<'a> ArrowFunctionConverter<'a> {
 
                 // The property will as a parameter to pass to the new arrow function.
                 // `super[property]` to `_superprop_get(property)`
-                argument = Some(computed_member.expression.take_in(ctx.ast));
-                computed_member.object.take_in(ctx.ast)
+                argument = Some(computed_member.expression.take_in(&ctx.ast));
+                computed_member.object.take_in(&ctx.ast)
             }
             MemberExpression::StaticMemberExpression(static_member) => {
                 if !static_member.object.is_super() {
@@ -755,7 +756,7 @@ impl<'a> ArrowFunctionConverter<'a> {
 
                 // Used to generate the name of the arrow function.
                 property = static_member.property.name.as_str();
-                expr.take_in(ctx.ast)
+                expr.take_in(&ctx.ast)
             }
             MemberExpression::PrivateFieldExpression(_) => {
                 // Private fields can't be accessed by `super`.
@@ -782,7 +783,7 @@ impl<'a> ArrowFunctionConverter<'a> {
         }
         // _value
         if let Some(assign_value) = assign_value {
-            arguments.push(Argument::from(assign_value.take_in(ctx.ast)));
+            arguments.push(Argument::from(assign_value.take_in(&ctx.ast)));
         }
         let call = ctx.ast.expression_call(SPAN, callee, NONE, arguments, false);
         Some(call)
@@ -819,7 +820,7 @@ impl<'a> ArrowFunctionConverter<'a> {
         // Add `this` as the first argument and original arguments as the rest.
         let mut arguments = ctx.ast.vec_with_capacity(call.arguments.len() + 1);
         arguments.push(Argument::from(ctx.ast.expression_this(SPAN)));
-        arguments.extend(call.arguments.take_in(ctx.ast));
+        arguments.extend(call.arguments.take_in(&ctx.ast));
 
         let property = ctx.ast.identifier_name(SPAN, "call");
         let callee = ctx.ast.member_expression_static(SPAN, object, property, false);
@@ -856,7 +857,7 @@ impl<'a> ArrowFunctionConverter<'a> {
             return None;
         }
 
-        let assignment_target = assignment.left.take_in(ctx.ast);
+        let assignment_target = assignment.left.take_in(&ctx.ast);
         let mut assignment_expr = Expression::from(assignment_target.into_member_expression());
         self.transform_member_expression_for_super(
             &mut assignment_expr,
@@ -914,12 +915,8 @@ impl<'a> ArrowFunctionConverter<'a> {
             items.push(param);
 
             // `super` -> `super[prop]`
-            init = Expression::from(ctx.ast.member_expression_computed(
-                SPAN,
-                init,
-                param_binding.create_read_expression(ctx),
-                false,
-            ));
+            let prop = param_binding.create_read_expression(ctx);
+            init = Expression::from(ctx.ast.member_expression_computed(SPAN, init, prop, false));
         }
 
         // Create a parameter for the value if it's an assignment.
@@ -1315,16 +1312,17 @@ impl<'a> ConstructorBodyThisAfterSuperInserter<'a, '_> {
     fn transform_super_call_expression(&mut self, expr: &mut Expression<'a>) {
         let assignment = self.create_assignment_to_this_temp_var();
         let span = expr.span();
-        let exprs = self.ctx.ast.vec_from_array([expr.take_in(self.ctx.ast), assignment]);
+        let exprs = self.ctx.ast.vec_from_array([expr.take_in(&self.ctx.ast), assignment]);
         *expr = self.ctx.ast.expression_sequence(span, exprs);
     }
 
     /// `_this = this`
     fn create_assignment_to_this_temp_var(&mut self) -> Expression<'a> {
+        let left = self.this_var_binding.create_write_target(self.ctx);
         self.ctx.ast.expression_assignment(
             SPAN,
             AssignmentOperator::Assign,
-            self.this_var_binding.create_write_target(self.ctx),
+            left,
             self.ctx.ast.expression_this(SPAN),
         )
     }

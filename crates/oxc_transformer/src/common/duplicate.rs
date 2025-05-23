@@ -140,12 +140,9 @@ impl<'a> TransformCtx<'a> {
             _ => self.var_declarations.create_uid_var_based_on_node(&expr, ctx),
         };
 
-        let assignment = ctx.ast.expression_assignment(
-            SPAN,
-            AssignmentOperator::Assign,
-            temp_var_binding.create_target(ReferenceFlags::Write, ctx),
-            expr,
-        );
+        let left = temp_var_binding.create_target(ReferenceFlags::Write, ctx);
+        let assignment =
+            ctx.ast.expression_assignment(SPAN, AssignmentOperator::Assign, left, expr);
 
         let references = create_array(|| temp_var_binding.create_read_expression(ctx));
 
