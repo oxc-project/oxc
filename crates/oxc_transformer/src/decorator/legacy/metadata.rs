@@ -147,7 +147,7 @@ impl<'a> Traverse<'a> for LegacyDecoratorMetadata<'a, '_> {
             return;
         }
 
-        let metadata_decorators = ctx.ast.vec_from_array([
+        let metadata_decorators = [
             self.create_metadata_decorate("design:type", Self::global_function(ctx), ctx),
             {
                 let serialized_type =
@@ -158,7 +158,8 @@ impl<'a> Traverse<'a> for LegacyDecoratorMetadata<'a, '_> {
                 let serialized_type = self.serialize_return_type_of_node(&method.value, ctx);
                 self.create_metadata_decorate("design:returntype", serialized_type, ctx)
             },
-        ]);
+        ];
+        let metadata_decorators = ctx.ast.vec_from_array(metadata_decorators);
 
         method.decorators.extend(metadata_decorators);
     }
@@ -393,12 +394,13 @@ impl<'a> LegacyDecoratorMetadata<'a, '_> {
                     let binding =
                         self.ctx.var_declarations.create_uid_var_based_on_node(&left, ctx);
                     let Expression::LogicalExpression(logical) = &mut left else { unreachable!() };
-                    let right = logical.right.take_in(ctx.ast);
+                    let right = logical.right.take_in(&ctx.ast);
                     // `(_a = A.B)`
+                    let temp_var_ident = binding.create_write_target(ctx);
                     let right = ctx.ast.expression_assignment(
                         SPAN,
                         AssignmentOperator::Assign,
-                        binding.create_write_target(ctx),
+                        temp_var_ident,
                         right,
                     );
                     // `(_a = A.B) !== void 0`

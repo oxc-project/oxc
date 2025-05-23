@@ -312,10 +312,11 @@ impl<'a> ParserImpl<'a> {
                 | ModifierFlags::OVERRIDE,
             diagnostics::accessor_modifier,
         );
+        let decorators = self.consume_decorators();
         self.ast.class_element_accessor_property(
             self.end_span(span),
             r#type,
-            self.consume_decorators(),
+            decorators,
             key,
             type_annotation,
             value,
