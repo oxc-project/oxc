@@ -61,22 +61,19 @@ impl<'a> ParserImpl<'a> {
     }
 
     fn is_parenthesized_arrow_function_expression_worker(&mut self) -> Tristate {
-        let mut offset = 0;
-
         if self.at(Kind::Async) {
-            let second_token = self.peek_token();
-            let second = second_token.kind();
-            if second_token.is_on_new_line() {
+            self.bump(Kind::Async);
+            if self.cur_token().is_on_new_line() {
                 return Tristate::False;
             }
-            if second != Kind::LParen && second != Kind::LAngle {
+            if !self.at(Kind::LParen) && !self.at(Kind::LAngle) {
                 return Tristate::False;
             }
-            offset = 1;
         }
 
-        let first = self.nth_kind(offset);
-        let second = self.nth_kind(offset + 1);
+        let first = self.cur_kind();
+        self.bump_any();
+        let second = self.cur_kind();
 
         match first {
             Kind::LParen => {
@@ -86,12 +83,13 @@ impl<'a> ParserImpl<'a> {
                     // The last one is not actually an arrow function,
                     // but this is probably what the user intended.
                     Kind::RParen => {
-                        let third = self.nth_kind(offset + 2);
-                        return match third {
+                        self.bump_any();
+                        let third = self.cur_kind();
+                        match third {
                             Kind::Colon if self.is_ts => Tristate::Maybe,
                             Kind::Arrow | Kind::LCurly => Tristate::True,
                             _ => Tristate::False,
-                        };
+                        }
                     }
                     // If encounter "([" or "({", this could be the start of a binding pattern.
                     // Examples:
@@ -99,60 +97,66 @@ impl<'a> ParserImpl<'a> {
                     //      ({ x }) => { }
                     //      ([ x ])
                     //      ({ x })
-                    Kind::LBrack | Kind::LCurly => {
-                        return Tristate::Maybe;
-                    }
+                    Kind::LBrack | Kind::LCurly => Tristate::Maybe,
                     // Simple case: "(..."
                     // This is an arrow function with a rest parameter.
                     Kind::Dot3 => {
-                        return match self.nth_kind(offset + 1) {
+                        self.bump_any();
+                        let third = self.cur_kind();
+                        match third {
                             // '(...ident' is a lambda
                             Kind::Ident => Tristate::True,
                             // '(...null' is not a lambda
                             kind if kind.is_literal() => Tristate::False,
                             _ => Tristate::Maybe,
-                        };
+                        }
                     }
-                    _ => {}
-                }
-                let third = self.nth_kind(offset + 2);
+                    _ => {
+                        self.bump_any();
+                        let third = self.cur_kind();
 
-                // Check for "(xxx yyy", where xxx is a modifier and yyy is an identifier. This
-                // isn't actually allowed, but we want to treat it as a lambda so we can provide
-                // a good error message.
-                if second.is_modifier_kind()
-                    && second != Kind::Async
-                    && third.is_binding_identifier()
-                {
-                    if third == Kind::As {
-                        return Tristate::False; // https://github.com/microsoft/TypeScript/issues/44466
-                    }
-                    return Tristate::True;
-                }
-
-                // If we had "(" followed by something that's not an identifier,
-                // then this definitely doesn't look like a lambda.  "this" is not
-                // valid, but we want to parse it and then give a semantic error.
-                if !second.is_binding_identifier() && second != Kind::This {
-                    return Tristate::False;
-                }
-
-                match third {
-                    // If we have something like "(a:", then we must have a
-                    // type-annotated parameter in an arrow function expression.
-                    Kind::Colon => Tristate::True,
-                    // If we have "(a?:" or "(a?," or "(a?=" or "(a?)" then it is definitely a lambda.
-                    Kind::Question => {
-                        let fourth = self.nth_kind(offset + 3);
-                        if matches!(fourth, Kind::Colon | Kind::Comma | Kind::Eq | Kind::RParen) {
+                        // Check for "(xxx yyy", where xxx is a modifier and yyy is an identifier. This
+                        // isn't actually allowed, but we want to treat it as a lambda so we can provide
+                        // a good error message.
+                        if second.is_modifier_kind()
+                            && second != Kind::Async
+                            && third.is_binding_identifier()
+                        {
+                            if third == Kind::As {
+                                return Tristate::False; // https://github.com/microsoft/TypeScript/issues/44466
+                            }
                             return Tristate::True;
                         }
-                        Tristate::False
+
+                        // If we had "(" followed by something that's not an identifier,
+                        // then this definitely doesn't look like a lambda.  "this" is not
+                        // valid, but we want to parse it and then give a semantic error.
+                        if !second.is_binding_identifier() && second != Kind::This {
+                            return Tristate::False;
+                        }
+
+                        match third {
+                            // If we have something like "(a:", then we must have a
+                            // type-annotated parameter in an arrow function expression.
+                            Kind::Colon => Tristate::True,
+                            // If we have "(a?:" or "(a?," or "(a?=" or "(a?)" then it is definitely a lambda.
+                            Kind::Question => {
+                                self.bump_any();
+                                let fourth = self.cur_kind();
+                                if matches!(
+                                    fourth,
+                                    Kind::Colon | Kind::Comma | Kind::Eq | Kind::RParen
+                                ) {
+                                    return Tristate::True;
+                                }
+                                Tristate::False
+                            }
+                            // If we have "(a," or "(a=" or "(a)" this *could* be an arrow function
+                            Kind::Comma | Kind::Eq | Kind::RParen => Tristate::Maybe,
+                            // It is definitely not an arrow function
+                            _ => Tristate::False,
+                        }
                     }
-                    // If we have "(a," or "(a=" or "(a)" this *could* be an arrow function
-                    Kind::Comma | Kind::Eq | Kind::RParen => Tristate::Maybe,
-                    // It is definitely not an arrow function
-                    _ => Tristate::False,
                 }
             }
             Kind::LAngle => {
@@ -166,13 +170,16 @@ impl<'a> ParserImpl<'a> {
                 if self.source_type.is_jsx() {
                     // <const Ident extends Ident>
                     //  ^^^^^ Optional
-                    offset += if second == Kind::Const { 3 } else { 2 };
-                    return match self.nth_kind(offset) {
+                    self.bump(Kind::Const);
+                    self.bump_any();
+                    let third = self.cur_kind();
+                    return match third {
                         Kind::Extends => {
-                            let third = self.nth_kind(offset + 1);
-                            if matches!(third, Kind::Eq | Kind::RAngle | Kind::Slash) {
+                            self.bump_any();
+                            let fourth = self.cur_kind();
+                            if matches!(fourth, Kind::Eq | Kind::RAngle | Kind::Slash) {
                                 Tristate::False
-                            } else if third.is_binding_identifier() {
+                            } else if fourth.is_binding_identifier() {
                                 Tristate::Maybe
                             } else {
                                 Tristate::True
@@ -190,20 +197,24 @@ impl<'a> ParserImpl<'a> {
 
     fn is_un_parenthesized_async_arrow_function_worker(&mut self) -> Tristate {
         if self.at(Kind::Async) {
-            let first_token = self.peek_token();
-            let first = first_token.kind();
+            let checkpoint = self.checkpoint();
+            self.bump(Kind::Async);
             // If the "async" is followed by "=>" token then it is not a beginning of an async arrow-function
             // but instead a simple arrow-function which will be parsed inside "parseAssignmentExpressionOrHigher"
-            if first_token.is_on_new_line() || first == Kind::Arrow {
+            if self.cur_token().is_on_new_line() || self.at(Kind::Arrow) {
+                self.rewind(checkpoint);
                 return Tristate::False;
             }
             // Check for un-parenthesized AsyncArrowFunction
-            if first.is_binding_identifier() {
+            if self.cur_kind().is_binding_identifier() {
                 // Arrow before newline is checked in `parse_simple_arrow_function_expression`
-                if self.nth_at(2, Kind::Arrow) {
+                self.bump_any();
+                if self.at(Kind::Arrow) {
+                    self.rewind(checkpoint);
                     return Tristate::True;
                 }
             }
+            self.rewind(checkpoint);
         }
         Tristate::False
     }

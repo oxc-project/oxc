@@ -1,4 +1,5 @@
 use std::{
+    borrow::Cow,
     convert::From,
     fmt::{self, Display},
 };
@@ -116,45 +117,32 @@ impl<'de> Deserialize<'de> for AllowWarnDeny {
     where
         D: de::Deserializer<'de>,
     {
-        struct AllowWarnDenyVisitor;
-
-        impl de::Visitor<'_> for AllowWarnDenyVisitor {
-            type Value = AllowWarnDeny;
-
-            fn expecting(&self, f: &mut fmt::Formatter) -> fmt::Result {
-                "an int between 0 and 2 or a string".fmt(f)
-            }
-
-            fn visit_i64<E>(self, v: i64) -> Result<Self::Value, E>
-            where
-                E: de::Error,
-            {
-                Self::Value::try_from(v).map_err(de::Error::custom)
-            }
-
-            fn visit_u64<E>(self, v: u64) -> Result<Self::Value, E>
-            where
-                E: de::Error,
-            {
-                Self::Value::try_from(v).map_err(de::Error::custom)
-            }
-
-            fn visit_str<E>(self, v: &str) -> Result<Self::Value, E>
-            where
-                E: de::Error,
-            {
-                Self::Value::try_from(v).map_err(de::Error::custom)
-            }
-
-            fn visit_string<E>(self, v: String) -> Result<Self::Value, E>
-            where
-                E: de::Error,
-            {
-                Self::Value::try_from(v.as_str()).map_err(de::Error::custom)
-            }
+        #[derive(Deserialize)]
+        #[serde(untagged)]
+        enum Repr<'a> {
+            Int(u8),
+            Str(Cow<'a, str>),
         }
 
-        deserializer.deserialize_any(AllowWarnDenyVisitor)
+        match Repr::deserialize(deserializer)? {
+            Repr::Int(0) => Ok(Self::Allow),
+            Repr::Int(1) => Ok(Self::Warn),
+            Repr::Int(2) => Ok(Self::Deny),
+            #[expect(clippy::cast_lossless)]
+            Repr::Int(other) => Err(de::Error::invalid_value(
+                de::Unexpected::Unsigned(other as u64),
+                &"`0`, `1` or `2`",
+            )),
+            Repr::Str(s) => match &*s {
+                "allow" | "off" => Ok(Self::Allow),
+                "warn" => Ok(Self::Warn),
+                "deny" | "error" => Ok(Self::Deny),
+                _ => Err(de::Error::invalid_value(
+                    de::Unexpected::Str(&s),
+                    &"`allow`, `off`, `warn`, `deny` or `error`",
+                )),
+            },
+        }
     }
 }
 
@@ -225,7 +213,7 @@ mod test {
 
     #[test]
     fn test_deserialize() {
-        let tests = [
+        let pass = [
             // allow
             (r#""allow""#, AllowWarnDeny::Allow),
             (r#""off""#, AllowWarnDeny::Allow),
@@ -239,10 +227,15 @@ mod test {
             ("2", AllowWarnDeny::Deny),
         ];
 
-        for (input, expected) in tests {
+        for (input, expected) in pass {
             let msg = format!("input: {input}");
             let actual: AllowWarnDeny = serde_json::from_str(input).expect(&msg);
             assert_eq!(actual, expected);
+        }
+
+        let fail = [r#""foo""#, "-1", "3"];
+        for input in fail {
+            assert!(serde_json::from_str::<AllowWarnDeny>(input).is_err());
         }
     }
 }

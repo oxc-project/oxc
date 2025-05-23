@@ -94,7 +94,7 @@ impl<'a> Lexer<'a> {
                 if next_byte == b'*' {
                     // SAFETY: Next byte is `*` (ASCII) so after it is UTF-8 char boundary
                     let after_star = unsafe { pos.add(1) };
-                    if after_star.addr() < self.source.end_addr() {
+                    if after_star.is_not_end_of(&self.source) {
                         // If next byte isn't `/`, continue
                         // SAFETY: Have checked there's at least 1 further byte to read
                         if unsafe { after_star.read() } == b'/' {
@@ -161,10 +161,7 @@ impl<'a> Lexer<'a> {
         // has a cost each time it's deref-ed. Creating `Finder` unconditionally in `Lexer::new`
         // would be efficient for files containing multi-line comments, but would impose pointless
         // cost on files which don't. So this is the fastest solution.
-        if self.multi_line_comment_end_finder.is_none() {
-            self.multi_line_comment_end_finder = Some(Finder::new("*/"));
-        }
-        let finder = self.multi_line_comment_end_finder.as_ref().unwrap();
+        let finder = self.multi_line_comment_end_finder.get_or_insert_with(|| Finder::new("*/"));
 
         let remaining = self.source.str_from_pos_to_end(pos).as_bytes();
         if let Some(index) = finder.find(remaining) {

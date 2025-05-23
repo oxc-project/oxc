@@ -68,6 +68,8 @@ impl CompilerInterface for Driver {
                 self.errors.extend(errors);
             }
         }
+        // Clear comments to avoid pure annotation comments that cause mismatch.
+        program.comments.clear();
         ControlFlow::Continue(())
     }
 }

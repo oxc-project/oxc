@@ -74,25 +74,25 @@ bitflags! {
 impl NodeFlags {
     /// Returns `true` if this node has a JSDoc comment attached to it.
     #[inline]
-    pub fn has_jsdoc(&self) -> bool {
+    pub fn has_jsdoc(self) -> bool {
         self.contains(Self::JSDoc)
     }
 
     /// Returns `true` if this node is inside a class.
     #[inline]
-    pub fn has_class(&self) -> bool {
+    pub fn has_class(self) -> bool {
         self.contains(Self::Class)
     }
 
     /// Returns `true` if this function has a yield statement.
     #[inline]
-    pub fn has_yield(&self) -> bool {
+    pub fn has_yield(self) -> bool {
         self.contains(Self::HasYield)
     }
 
     /// Returns `true` if this function has an export specifier.
     #[inline]
-    pub fn has_export_specifier(&self) -> bool {
+    pub fn has_export_specifier(self) -> bool {
         self.contains(Self::ExportSpecifier)
     }
 }

@@ -2,6 +2,7 @@ use futures::future::join_all;
 use log::{debug, info, warn};
 use options::{Options, Run, WorkspaceOption};
 use rustc_hash::FxBuildHasher;
+use serde_json::json;
 use std::str::FromStr;
 use tokio::sync::{Mutex, OnceCell, SetError};
 use tower_lsp_server::{
@@ -10,9 +11,10 @@ use tower_lsp_server::{
     lsp_types::{
         CodeActionParams, CodeActionResponse, ConfigurationItem, Diagnostic,
         DidChangeConfigurationParams, DidChangeTextDocumentParams, DidChangeWatchedFilesParams,
-        DidChangeWorkspaceFoldersParams, DidCloseTextDocumentParams, DidOpenTextDocumentParams,
-        DidSaveTextDocumentParams, ExecuteCommandParams, InitializeParams, InitializeResult,
-        InitializedParams, ServerInfo, Uri, WorkspaceEdit,
+        DidChangeWatchedFilesRegistrationOptions, DidChangeWorkspaceFoldersParams,
+        DidCloseTextDocumentParams, DidOpenTextDocumentParams, DidSaveTextDocumentParams,
+        ExecuteCommandParams, InitializeParams, InitializeResult, InitializedParams, Registration,
+        ServerInfo, Unregistration, Uri, WorkspaceEdit,
     },
 };
 // #
@@ -138,11 +140,9 @@ impl LanguageServer for Backend {
 
     async fn initialized(&self, _params: InitializedParams) {
         debug!("oxc initialized.");
-
-        if !self.capabilities.get().unwrap().workspace_configuration {
-            // every worker should be initialized already in `initialize` request
+        let Some(capabilities) = self.capabilities.get() else {
             return;
-        }
+        };
 
         let workers = &*self.workspace_workers.lock().await;
         let needed_configurations =
@@ -154,22 +154,43 @@ impl LanguageServer for Backend {
             }
         }
 
-        if needed_configurations.is_empty() {
-            return;
+        if !needed_configurations.is_empty() {
+            let configurations = if capabilities.workspace_configuration {
+                self.request_workspace_configuration(needed_configurations.keys().collect()).await
+            } else {
+                // every worker should be initialized already in `initialize` request
+                vec![Some(Options::default()); needed_configurations.len()]
+            };
+
+            for (index, worker) in needed_configurations.values().enumerate() {
+                worker
+                    .init_linter(
+                        configurations
+                            .get(index)
+                            .unwrap_or(&None)
+                            .as_ref()
+                            .unwrap_or(&Options::default()),
+                    )
+                    .await;
+            }
         }
 
-        let configurations =
-            self.request_workspace_configuration(needed_configurations.keys().collect()).await;
-        for (index, worker) in needed_configurations.values().enumerate() {
-            worker
-                .init_linter(
-                    configurations
-                        .get(index)
-                        .unwrap_or(&None)
-                        .as_ref()
-                        .unwrap_or(&Options::default()),
-                )
-                .await;
+        // init all file watchers
+        if capabilities.dynamic_watchers {
+            let mut registrations = vec![];
+            for worker in workers {
+                registrations.push(Registration {
+                    id: format!("watcher-{}", worker.get_root_uri().as_str()),
+                    method: "workspace/didChangeWatchedFiles".to_string(),
+                    register_options: Some(json!(DidChangeWatchedFilesRegistrationOptions {
+                        watchers: vec![worker.init_watchers().await]
+                    })),
+                });
+            }
+
+            if let Err(err) = self.client.register_capability(registrations).await {
+                warn!("sending registerCapability.didChangeWatchedFiles failed: {err}");
+            }
         }
     }
 
@@ -182,6 +203,8 @@ impl LanguageServer for Backend {
         let workers = self.workspace_workers.lock().await;
         let new_diagnostics: papaya::HashMap<String, Vec<Diagnostic>, FxBuildHasher> =
             ConcurrentHashMap::default();
+        let mut removing_registrations = vec![];
+        let mut adding_registrations = vec![];
 
         // new valid configuration is passed
         let options = serde_json::from_value::<Vec<WorkspaceOption>>(params.settings.clone())
@@ -212,16 +235,31 @@ impl LanguageServer for Backend {
                     continue;
                 };
 
-                let Some(diagnostics) = worker.did_change_configuration(&option.options).await
-                else {
-                    continue;
-                };
+                let (diagnostics, watcher) = worker.did_change_configuration(&option.options).await;
 
-                for (uri, reports) in &diagnostics.pin() {
-                    new_diagnostics.pin().insert(
-                        uri.clone(),
-                        reports.iter().map(|d| d.diagnostic.clone()).collect(),
-                    );
+                if let Some(diagnostics) = diagnostics {
+                    for (uri, reports) in &diagnostics.pin() {
+                        new_diagnostics.pin().insert(
+                            uri.clone(),
+                            reports.iter().map(|d| d.diagnostic.clone()).collect(),
+                        );
+                    }
+                }
+
+                if let Some(watcher) = watcher {
+                    // remove the old watcher
+                    removing_registrations.push(Unregistration {
+                        id: format!("watcher-{}", worker.get_root_uri().as_str()),
+                        method: "workspace/didChangeWatchedFiles".to_string(),
+                    });
+                    // add the new watcher
+                    adding_registrations.push(Registration {
+                        id: format!("watcher-{}", worker.get_root_uri().as_str()),
+                        method: "workspace/didChangeWatchedFiles".to_string(),
+                        register_options: Some(json!(DidChangeWatchedFilesRegistrationOptions {
+                            watchers: vec![watcher]
+                        })),
+                    });
                 }
             }
         // else check if the client support workspace configuration requests
@@ -242,15 +280,32 @@ impl LanguageServer for Backend {
                 let Some(config) = &configs[index] else {
                     continue;
                 };
-                let Some(diagnostics) = worker.did_change_configuration(config).await else {
-                    continue;
-                };
 
-                for (uri, reports) in &diagnostics.pin() {
-                    new_diagnostics.pin().insert(
-                        uri.clone(),
-                        reports.iter().map(|d| d.diagnostic.clone()).collect(),
-                    );
+                let (diagnostics, watcher) = worker.did_change_configuration(config).await;
+
+                if let Some(diagnostics) = diagnostics {
+                    for (uri, reports) in &diagnostics.pin() {
+                        new_diagnostics.pin().insert(
+                            uri.clone(),
+                            reports.iter().map(|d| d.diagnostic.clone()).collect(),
+                        );
+                    }
+                }
+
+                if let Some(watcher) = watcher {
+                    // remove the old watcher
+                    removing_registrations.push(Unregistration {
+                        id: format!("watcher-{}", worker.get_root_uri().as_str()),
+                        method: "workspace/didChangeWatchedFiles".to_string(),
+                    });
+                    // add the new watcher
+                    adding_registrations.push(Registration {
+                        id: format!("watcher-{}", worker.get_root_uri().as_str()),
+                        method: "workspace/didChangeWatchedFiles".to_string(),
+                        register_options: Some(json!(DidChangeWatchedFilesRegistrationOptions {
+                            watchers: vec![watcher]
+                        })),
+                    });
                 }
             }
         } else {
@@ -260,17 +315,28 @@ impl LanguageServer for Backend {
             return;
         }
 
-        if new_diagnostics.is_empty() {
-            return;
+        if !new_diagnostics.is_empty() {
+            let x = &new_diagnostics
+                .pin()
+                .into_iter()
+                .map(|(key, value)| (key.clone(), value.clone()))
+                .collect::<Vec<_>>();
+
+            self.publish_all_diagnostics(x).await;
         }
 
-        let x = &new_diagnostics
-            .pin()
-            .into_iter()
-            .map(|(key, value)| (key.clone(), value.clone()))
-            .collect::<Vec<_>>();
-
-        self.publish_all_diagnostics(x).await;
+        if self.capabilities.get().is_some_and(|capabilities| capabilities.dynamic_watchers) {
+            if !removing_registrations.is_empty() {
+                if let Err(err) = self.client.unregister_capability(removing_registrations).await {
+                    warn!("sending unregisterCapability.didChangeWatchedFiles failed: {err}");
+                }
+            }
+            if !adding_registrations.is_empty() {
+                if let Err(err) = self.client.register_capability(adding_registrations).await {
+                    warn!("sending registerCapability.didChangeWatchedFiles failed: {err}");
+                }
+            }
+        }
     }
 
     async fn did_change_watched_files(&self, params: DidChangeWatchedFilesParams) {
@@ -315,6 +381,8 @@ impl LanguageServer for Backend {
     async fn did_change_workspace_folders(&self, params: DidChangeWorkspaceFoldersParams) {
         let mut workers = self.workspace_workers.lock().await;
         let mut cleared_diagnostics = vec![];
+        let mut added_registrations = vec![];
+        let mut removed_registrations = vec![];
 
         for folder in params.event.removed {
             let Some((index, worker)) = workers
@@ -325,6 +393,10 @@ impl LanguageServer for Backend {
                 continue;
             };
             cleared_diagnostics.extend(worker.get_clear_diagnostics());
+            removed_registrations.push(Unregistration {
+                id: format!("watcher-{}", worker.get_root_uri().as_str()),
+                method: "workspace/didChangeWatchedFiles".to_string(),
+            });
             workers.remove(index);
         }
 
@@ -344,6 +416,13 @@ impl LanguageServer for Backend {
                 // get the configuration from the response and init the linter
                 let options = configurations.get(index).unwrap_or(&None);
                 worker.init_linter(options.as_ref().unwrap_or(&Options::default())).await;
+                added_registrations.push(Registration {
+                    id: format!("watcher-{}", worker.get_root_uri().as_str()),
+                    method: "workspace/didChangeWatchedFiles".to_string(),
+                    register_options: Some(json!(DidChangeWatchedFilesRegistrationOptions {
+                        watchers: vec![worker.init_watchers().await]
+                    })),
+                });
                 workers.push(worker);
             }
         // client does not support the request
@@ -353,6 +432,21 @@ impl LanguageServer for Backend {
                 // use default options
                 worker.init_linter(&Options::default()).await;
                 workers.push(worker);
+            }
+        }
+
+        // tell client to stop / start watching for files
+        if self.capabilities.get().is_some_and(|capabilities| capabilities.dynamic_watchers) {
+            if !added_registrations.is_empty() {
+                if let Err(err) = self.client.register_capability(added_registrations).await {
+                    warn!("sending registerCapability.didChangeWatchedFiles failed: {err}");
+                }
+            }
+
+            if !removed_registrations.is_empty() {
+                if let Err(err) = self.client.unregister_capability(removed_registrations).await {
+                    warn!("sending unregisterCapability.didChangeWatchedFiles failed: {err}");
+                }
             }
         }
     }

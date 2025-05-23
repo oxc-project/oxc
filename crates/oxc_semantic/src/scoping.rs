@@ -451,6 +451,7 @@ impl Scoping {
     /// Get the root [`Program`] scope id.
     ///
     /// [`Program`]: oxc_ast::ast::Program
+    #[expect(clippy::unused_self)]
     #[inline]
     pub const fn root_scope_id(&self) -> ScopeId {
         Self::ROOT_SCOPE_ID
@@ -740,8 +741,6 @@ impl Scoping {
     }
 
     /// Add a binding to a scope.
-    ///
-    /// [`binding`]: Bindings
     pub fn add_binding(&mut self, scope_id: ScopeId, name: &str, symbol_id: SymbolId) {
         self.cell.with_dependent_mut(|allocator, cell| {
             let name = allocator.alloc_str(name);

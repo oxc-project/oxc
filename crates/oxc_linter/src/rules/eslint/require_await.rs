@@ -55,10 +55,9 @@ declare_oxc_lint!(
     /// yield all the values of another async generator without ever actually
     /// needing to use await.
     ///
-    /// ### Example
+    /// ### Examples
     ///
     /// Examples of **incorrect** code for this rule:
-    ///
     /// ```js
     /// async function foo() {
     ///     doSomething();
@@ -66,7 +65,6 @@ declare_oxc_lint!(
     /// ```
     ///
     /// Examples of **correct** code for this rule:
-    ///
     /// ```js
     /// async function foo() {
     ///    await doSomething();
@@ -153,6 +151,7 @@ impl Rule for RequireAwait {
     }
 }
 
+#[expect(clippy::cast_possible_truncation)]
 fn get_delete_span(ctx: &LintContext, start: u32) -> Span {
     let end = start + 5;
     let async_key_span = Span::new(start, end);
@@ -161,7 +160,7 @@ fn get_delete_span(ctx: &LintContext, start: u32) -> Span {
         if !c.is_whitespace() {
             break;
         }
-        offset += 1;
+        offset += c.len_utf8() as u32;
     }
     async_key_span.expand_right(offset)
 }
@@ -286,6 +285,7 @@ fn test() {
             "let a = { c: async () => { let c }, t:async()=>{ let r } }",
             "let a = { c: () => { let c }, t:()=>{ let r } }",
         ),
+        ("async function O(){r}", "function O(){r}"),
     ];
 
     Tester::new(RequireAwait::NAME, RequireAwait::PLUGIN, pass, fail)

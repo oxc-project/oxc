@@ -15,7 +15,7 @@ use serde_json::Value;
 
 use crate::{
     AllowWarnDeny, ConfigStore, ConfigStoreBuilder, LintPlugins, LintService, LintServiceOptions,
-    Linter, Oxlintrc, RuleEnum, RuleWithSeverity,
+    Linter, Oxlintrc, RuleEnum,
     fixer::{FixKind, Fixer},
     options::LintOptions,
     read_to_string,
@@ -492,9 +492,8 @@ impl Tester {
                             .unwrap()
                     })
                     .with_plugins(self.plugins)
-                    .with_rule(RuleWithSeverity::new(rule, AllowWarnDeny::Warn))
-                    .build()
-                    .unwrap(),
+                    .with_rule(rule, AllowWarnDeny::Warn)
+                    .build(),
                 FxHashMap::default(),
             ),
         )

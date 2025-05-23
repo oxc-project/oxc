@@ -368,7 +368,7 @@ impl<'a, 'b> ArrowFunctionLayout<'a, 'b> {
         let mut current = arrow;
         let mut should_break = false;
 
-        let result = loop {
+        loop {
             if current.expression {
                 if let Some(Statement::ExpressionStatement(expr_stmt)) =
                     current.body.statements.first()
@@ -405,9 +405,7 @@ impl<'a, 'b> ArrowFunctionLayout<'a, 'b> {
                     options,
                 }),
             };
-        };
-
-        result
+        }
     }
 
     /// Returns a `true` result if the arrow function contains any elements which
@@ -825,7 +823,7 @@ fn format_signature<'a, 'b>(
 
         let format_return_type = format_with(|f| {
             if let Some(return_type) = &arrow.return_type {
-                write!(f, [":", space(), return_type])?;
+                write!(f, return_type)?;
             }
             Ok(())
         });

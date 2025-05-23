@@ -1,16 +1,13 @@
-use std::{
-    borrow::{Borrow, Cow},
-    fmt,
-    hash::{Hash, Hasher},
-    ops::Deref,
-};
+#[cfg(feature = "ruledocs")]
+use std::borrow::Cow;
+use std::{fmt, hash::Hash};
 
 use oxc_semantic::SymbolId;
-use schemars::JsonSchema;
+use schemars::{JsonSchema, SchemaGenerator, schema::Schema};
 use serde::{Deserialize, Serialize};
 
 use crate::{
-    AllowWarnDeny, AstNode, FixKind, RuleEnum,
+    AstNode, FixKind,
     context::{ContextHost, LintContext},
     utils::PossibleJestNode,
 };
@@ -19,6 +16,12 @@ pub trait Rule: Sized + Default + fmt::Debug {
     /// Initialize from eslint json configuration
     fn from_configuration(_value: serde_json::Value) -> Self {
         Self::default()
+    }
+
+    #[expect(unused_variables)]
+    #[cfg(feature = "ruledocs")]
+    fn schema(generator: &mut SchemaGenerator) -> Option<Schema> {
+        None
     }
 
     /// Visit each AST Node
@@ -73,6 +76,11 @@ pub trait RuleMeta {
     const FIX: RuleFixMeta = RuleFixMeta::None;
 
     fn documentation() -> Option<&'static str> {
+        None
+    }
+
+    #[expect(unused_variables)]
+    fn config_schema(generator: &mut SchemaGenerator) -> Option<Schema> {
         None
     }
 }
@@ -214,6 +222,7 @@ impl RuleFixMeta {
         matches!(self, Self::Fixable(fix_kind) | Self::Conditional(fix_kind) if fix_kind.can_apply(kind))
     }
 
+    #[cfg(feature = "ruledocs")]
     pub fn description(self) -> Cow<'static, str> {
         match self {
             Self::None => Cow::Borrowed("No auto-fix is available for this rule."),
@@ -262,46 +271,6 @@ impl RuleFixMeta {
 impl From<RuleFixMeta> for FixKind {
     fn from(value: RuleFixMeta) -> Self {
         value.fix_kind()
-    }
-}
-
-#[derive(Debug, Clone)]
-pub struct RuleWithSeverity {
-    pub rule: RuleEnum,
-    pub severity: AllowWarnDeny,
-}
-
-impl Hash for RuleWithSeverity {
-    fn hash<H: Hasher>(&self, state: &mut H) {
-        self.rule.hash(state);
-    }
-}
-
-impl PartialEq for RuleWithSeverity {
-    fn eq(&self, other: &Self) -> bool {
-        self.rule == other.rule
-    }
-}
-
-impl Eq for RuleWithSeverity {}
-
-impl Deref for RuleWithSeverity {
-    type Target = RuleEnum;
-
-    fn deref(&self) -> &Self::Target {
-        &self.rule
-    }
-}
-
-impl Borrow<RuleEnum> for RuleWithSeverity {
-    fn borrow(&self) -> &RuleEnum {
-        &self.rule
-    }
-}
-
-impl RuleWithSeverity {
-    pub fn new(rule: RuleEnum, severity: AllowWarnDeny) -> Self {
-        Self { rule, severity }
     }
 }
 

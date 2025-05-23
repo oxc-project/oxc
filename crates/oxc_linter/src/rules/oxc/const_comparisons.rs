@@ -12,21 +12,21 @@ use oxc_syntax::operator::{BinaryOperator, LogicalOperator};
 
 use crate::{AstNode, context::LintContext, rule::Rule, utils::is_same_expression};
 
-fn redundant_left_hand_side(span: Span, span1: Span, help: String) -> OxcDiagnostic {
+fn redundant_left_hand_side(left_span: Span, right_span: Span, help: String) -> OxcDiagnostic {
     OxcDiagnostic::warn("Left-hand side of `&&` operator has no effect.")
         .with_help(help)
         .with_labels([
-            span.label("If this evaluates to `true`"),
-            span1.label("This will always evaluate to true."),
+            left_span.label("If this evaluates to `true`"),
+            right_span.label("This will always evaluate to true."),
         ])
 }
 
-fn redundant_right_hand_side(span: Span, span1: Span, help: String) -> OxcDiagnostic {
+fn redundant_right_hand_side(right_span: Span, left_span: Span, help: String) -> OxcDiagnostic {
     OxcDiagnostic::warn("Right-hand side of `&&` operator has no effect.")
         .with_help(help)
         .with_labels([
-            span.label("If this evaluates to `true`"),
-            span1.label("This will always evaluate to true."),
+            right_span.label("If this evaluates to `true`"),
+            left_span.label("This will always evaluate to true."),
         ])
 }
 
@@ -85,7 +85,7 @@ declare_oxc_lint!(
     /// - Only one of the comparisons has any effect on the result, suggesting that the programmer might have made a mistake, such as flipping one of the comparison operators or using the wrong variable.
     /// - Comparisons like a < a or a >= a are always false or true respectively, making the logic redundant and potentially misleading.
     ///
-    /// ### Example
+    /// ### Examples
     ///
     /// Examples of **incorrect** code for this rule:
     /// ```javascript

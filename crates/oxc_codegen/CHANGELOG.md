@@ -4,6 +4,36 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.71.0] - 2025-05-20
+
+- 1a4fec0 codegen: [**BREAKING**] A legal comment can also be a jsdoc comment (#11158) (Boshen)
+
+### Features
+
+- fa06d7f codegen: Print override modifier of FormalParameter (#11134) (Ulrich Stark)
+- c29b1b8 codegen: Deduplicate repeated legal comments (#11069) (Boshen)
+- c79a7d0 data_structures: Introduce `PointerExt` trait (#11095) (overlookmotel)
+
+### Bug Fixes
+
+- ef72143 parser: Parse index signature with multiple parameter (#11068) (Boshen)
+
+### Performance
+
+- b9e51e2 ast: Reduce size of `Comment` to 16 bytes (#11062) (camchenry)
+
+## [0.70.0] - 2025-05-15
+
+### Features
+
+- 4a72b58 codegen: Print comments inside `JSXEmptyExpression` (#11022) (Boshen)
+- 1673ffb codegen: Rework printing normal / legal / annotation comments (#10997) (Boshen)
+
+### Refactor
+
+- 9225bde codegen: Make `Statement::Gen` code more compact (#10937) (Boshen)
+- 751876b parser: Rewrite parse class element (#11035) (Boshen)
+
 ## [0.69.0] - 2025-05-09
 
 - ad4fbf4 ast: [**BREAKING**] Simplify `RegExpPattern` (#10834) (overlookmotel)

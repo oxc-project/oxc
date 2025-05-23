@@ -221,11 +221,17 @@ impl<'l> Runtime<'l> {
         if not_supported_yet {
             return None;
         }
-        let source_type = source_type.unwrap_or_default();
+
+        let mut source_type = source_type.unwrap_or_default();
+        // Treat JS and JSX files to maximize chance of parsing files.
+        if source_type.is_javascript() {
+            source_type = source_type.with_jsx(true);
+        }
 
         let file_result = self.file_system.read_to_string(path).map_err(|e| {
             Error::new(OxcDiagnostic::error(format!(
-                "Failed to open file {path:?} with error \"{e}\""
+                "Failed to open file {} with error \"{e}\"",
+                path.display()
             )))
         });
         Some(match file_result {

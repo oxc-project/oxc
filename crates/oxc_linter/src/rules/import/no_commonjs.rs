@@ -44,7 +44,6 @@ declare_oxc_lint!(
     /// ### Examples
     ///
     /// Examples of **incorrect** code for this rule:
-    ///
     /// ```js
     /// var mod = require("fs");
     ///
@@ -58,7 +57,6 @@ declare_oxc_lint!(
     /// ```
     ///
     /// Examples of **correct** code for this rule:
-    ///
     /// ```js
     /// var a = b && require("c");
     ///
@@ -103,7 +101,6 @@ declare_oxc_lint!(
     /// module.exports = { x: "y" };
     /// exports.z = function bark() { /* ... */ };
     /// ```
-    ///
     NoCommonjs,
     import,
     restriction

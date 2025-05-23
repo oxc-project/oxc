@@ -1,25 +1,86 @@
+use std::fmt::Write;
+
 use itertools::Itertools as _;
+
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_regular_expression::{
-    ast::{CapturingGroup, Character, Pattern},
+    ast::{CapturingGroup, Character, CharacterKind, Pattern},
     visit::{Visit, walk},
 };
 use oxc_span::Span;
 
 use crate::{AstNode, context::LintContext, rule::Rule, utils::run_on_regex_node};
 
-fn no_control_regex_diagnostic(count: usize, regex: &str, span: Span) -> OxcDiagnostic {
+fn no_control_regex_diagnostic(control_chars: &[Character], span: Span) -> OxcDiagnostic {
+    let count = control_chars.len();
     debug_assert!(count > 0);
-    let (message, help) = if count == 1 {
-        ("Unexpected control character", format!("'{regex}' is not a valid control character."))
+
+    let mut octal_chars = Vec::new();
+    let mut null_chars = Vec::new();
+    let mut other_chars = Vec::new();
+
+    for ch in control_chars {
+        match ch.kind {
+            CharacterKind::Octal1 | CharacterKind::Octal2 | CharacterKind::Octal3 => {
+                octal_chars.push(ch);
+            }
+            CharacterKind::Null => {
+                null_chars.push(ch);
+            }
+            _ => {
+                other_chars.push(ch);
+            }
+        }
+    }
+
+    let mut help = String::new();
+
+    if !other_chars.is_empty() {
+        let regexes = other_chars.iter().join(", ");
+        writeln!(
+            help,
+            "'{regexes}' {} {}control character{}.",
+            if other_chars.len() > 1 { "are" } else { "is" },
+            if other_chars.len() > 1 { "" } else { "a " },
+            if other_chars.len() > 1 { "s" } else { "" },
+        )
+        .unwrap();
+    }
+
+    if !octal_chars.is_empty() {
+        let regexes = octal_chars.iter().join(", ");
+        writeln!(
+            help,
+            "'{regexes}' {} {}control character{}. They look like backreferences, but there {} no corresponding capture group{}.",
+            if octal_chars.len() > 1 { "are" } else { "is" },
+            if octal_chars.len() > 1 { "" } else { "a " },
+            if octal_chars.len() > 1 { "s" } else { "" },
+            if octal_chars.len() > 1 { "are" } else { "is" },
+            if octal_chars.len() > 1 { "s" } else { "" }
+        ).unwrap();
+    }
+
+    if !null_chars.is_empty() {
+        writeln!(help, "'\\0' matches the null character (U+0000), which is a control character.")
+            .unwrap();
+    }
+
+    debug_assert!(!help.is_empty());
+    debug_assert!(help.chars().last().is_some_and(|char| char == '\n'));
+
+    if !help.is_empty() {
+        help.truncate(help.len() - 1);
+    }
+
+    OxcDiagnostic::warn(if count > 1 {
+        "Unexpected control characters"
     } else {
-        ("Unexpected control characters", format!("'{regex}' are not valid control characters."))
-    };
-
-    OxcDiagnostic::warn(message).with_help(help).with_label(span)
+        "Unexpected control character"
+    })
+    .with_help(help)
+    .with_label(span)
 }
-
 #[derive(Debug, Default, Clone)]
 pub struct NoControlRegex;
 
@@ -36,10 +97,9 @@ declare_oxc_lint!(
     /// regular expression containing elements that explicitly match these
     /// characters is most likely a mistake.
     ///
-    /// ### Example
+    /// ### Examples
     ///
     /// Examples of **incorrect** code for this rule:
-    ///
     /// ```javascript
     /// var pattern1 = /\x00/;
     /// var pattern2 = /\x0C/;
@@ -51,7 +111,6 @@ declare_oxc_lint!(
     /// ```
     ///
     /// Examples of **correct** code for this rule:
-    ///
     /// ```javascript
     /// var pattern1 = /\x20/;
     /// var pattern2 = /\u0020/;
@@ -84,9 +143,7 @@ fn check_pattern(context: &LintContext, pattern: &Pattern, span: Span) {
     finder.visit_pattern(pattern);
 
     if !finder.control_chars.is_empty() {
-        let num_control_chars = finder.control_chars.len();
-        let violations = finder.control_chars.into_iter().map(|c| c.to_string()).join(", ");
-        context.diagnostic(no_control_regex_diagnostic(num_control_chars, &violations, span));
+        context.diagnostic(no_control_regex_diagnostic(&finder.control_chars, span));
     }
 }
 
@@ -152,7 +209,7 @@ mod tests {
     use super::*;
     use crate::tester::Tester;
 
-    #[test]
+    #[test] //
     fn test_hex_literals() {
         Tester::new(
             NoControlRegex::NAME,
@@ -298,6 +355,10 @@ mod tests {
                 r"/\x0d/u",
                 r"/\u{09}/u",
                 r"/\x09/u",
+                r"/\0\1\2/",
+                r"/\x1f\2/",
+                r"/\x1f\0/",
+                r"/\x1f\0\2/",
             ],
         )
         .test_and_snapshot();

@@ -50,7 +50,7 @@ impl<'a> Lexer<'a> {
                     b'$' => {
                         // SAFETY: Next byte is `$` which is ASCII, so after it is a UTF-8 char boundary
                         let after_dollar = unsafe { pos.add(1) };
-                        if after_dollar.addr() < self.source.end_addr() {
+                        if after_dollar.is_not_end_of(&self.source) {
                             // If `${`, exit.
                             // SAFETY: Have checked there's at least 1 further byte to read.
                             if unsafe { after_dollar.read() } == b'{' {
@@ -118,7 +118,7 @@ impl<'a> Lexer<'a> {
         pos = unsafe { pos.add(1) };
 
         // If at EOF, exit. This illegal in valid JS, so cold branch.
-        if pos.addr() == self.source.end_addr() {
+        if pos.is_end_of(&self.source) {
             return cold_branch(|| {
                 self.source.advance_to_end();
                 self.error(diagnostics::unterminated_string(self.unterminated_range()));
@@ -229,7 +229,7 @@ impl<'a> Lexer<'a> {
                 if next_byte == b'$' {
                     // SAFETY: Next byte is `$` which is ASCII, so after it is a UTF-8 char boundary
                     let after_dollar = unsafe {pos.add(1)};
-                    if after_dollar.addr() < self.source.end_addr() {
+                    if after_dollar.is_not_end_of(&self.source) {
                         // If `${`, exit.
                         // SAFETY: Have checked there's at least 1 further byte to read.
                         if unsafe {after_dollar.read()} == b'{' {
@@ -280,7 +280,7 @@ impl<'a> Lexer<'a> {
                             // brought up to `chunk_start` again.
                             chunk_start = unsafe {pos.add(1)};
 
-                            if chunk_start.addr() < self.source.end_addr() {
+                            if chunk_start.is_not_end_of(&self.source) {
                                 // Either `\r` alone or `\r\n` needs to be converted to `\n`.
                                 // SAFETY: Have checked not at EOF.
                                 if unsafe {chunk_start.read()} == b'\n' {
@@ -321,7 +321,7 @@ impl<'a> Lexer<'a> {
 
                             // Start next chunk after escape sequence
                             chunk_start = self.source.position();
-                            assert!(chunk_start.addr() >= after_backslash.addr());
+                            assert!(chunk_start >= after_backslash);
 
                             // Continue search after escape sequence.
                             // NB: `byte_search!` macro increments `pos` when return `true`,

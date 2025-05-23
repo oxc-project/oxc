@@ -1,4 +1,8 @@
-#![expect(missing_docs)] // FIXME
+#![expect(
+    missing_docs, // FIXME
+    clippy::enum_variant_names,
+    clippy::struct_field_names,
+)]
 
 // NB: `#[span]`, `#[scope(...)]`,`#[visit(...)]` and `#[generate_derive(...)]` do NOT do anything to the code.
 // They are purely markers for codegen used in `tasks/ast_tools` and `crates/oxc_traverse/scripts`. See docs in those crates.
@@ -334,11 +338,10 @@ pub enum ArrayExpressionElement<'a> {
 /// empty slot in `const array = [1, , 2];`
 ///
 /// Array Expression Elision Element
-/// Serialized as `null` in JSON AST. See `serialize.rs`.
 #[ast(visit)]
 #[derive(Debug, Clone)]
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
-#[estree(via = ElisionConverter)]
+#[estree(via = Null)]
 pub struct Elision {
     pub span: Span,
 }
@@ -963,7 +966,7 @@ pub struct AssignmentTargetPropertyIdentifier<'a> {
     pub span: Span,
     #[estree(rename = "key")]
     pub binding: IdentifierReference<'a>,
-    #[estree(rename = "value", via = AssignmentTargetPropertyIdentifierValue)]
+    #[estree(rename = "value", via = AssignmentTargetPropertyIdentifierInit)]
     pub init: Option<Expression<'a>>,
 }
 
@@ -1727,7 +1730,7 @@ pub struct Function<'a> {
     /// Function parameters.
     ///
     /// Does not include `this` parameters used by some TypeScript functions.
-    #[estree(via = FunctionFormalParameters)]
+    #[estree(via = FunctionParams)]
     pub params: Box<'a, FormalParameters<'a>>,
     /// The TypeScript return type annotation.
     #[ts]
@@ -1774,8 +1777,10 @@ pub enum FunctionType {
         interface FormalParameterRest extends Span {
             type: 'RestElement';
             argument: BindingPatternKind;
-            typeAnnotation: TSTypeAnnotation | null;
-            optional: boolean;
+            decorators?: [],
+            optional?: boolean;
+            typeAnnotation?: TSTypeAnnotation | null;
+            value?: null;
         }
     "
 )]
@@ -2384,20 +2389,19 @@ pub struct ImportExpression<'a> {
     pub span: Span,
     pub source: Expression<'a>,
     pub options: Option<Expression<'a>>,
-    #[estree(skip)]
     pub phase: Option<ImportPhase>,
 }
 
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
+#[estree(field_order(span, specifiers, source, with_clause, phase, import_kind))]
 pub struct ImportDeclaration<'a> {
     pub span: Span,
     /// `None` for `import 'foo'`, `Some([])` for `import {} from 'foo'`
     #[estree(via = ImportDeclarationSpecifiers)]
     pub specifiers: Option<Vec<'a, ImportDeclarationSpecifier<'a>>>,
     pub source: StringLiteral<'a>,
-    #[estree(skip)]
     pub phase: Option<ImportPhase>,
     /// Some(vec![]) for empty assertion
     #[estree(rename = "attributes", via = ImportDeclarationWithClause)]
@@ -2490,10 +2494,13 @@ pub struct ImportNamespaceSpecifier<'a> {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
-#[estree(no_ts_def)]
+#[estree(no_type, no_ts_def)]
 pub struct WithClause<'a> {
+    #[estree(skip)]
     pub span: Span,
+    #[estree(skip)]
     pub attributes_keyword: IdentifierName<'a>, // `with` or `assert`
+    #[estree(rename = "attributes")]
     pub with_entries: Vec<'a, ImportAttribute<'a>>,
 }
 
@@ -2589,12 +2596,16 @@ pub struct ExportAllDeclaration<'a> {
 ///
 /// Each [`ExportSpecifier`] is one of the named exports in an [`ExportNamedDeclaration`].
 ///
+/// Note: `export_kind` relates to whether this specific `ExportSpecifier` is preceded by `type` keyword.
+/// If the whole `ExportNamedDeclaration` has a `type` prefix, its `ExportSpecifier`s will still have
+/// `export_kind: ImportOrExportKind::Value`. e.g. in this case: `export type { Foo, Bar }`.
+///
 /// ## Example
 ///
 /// ```ts
 /// //       ____ export_kind
-/// import { type Foo as Bar } from './foo';
-/// //   exported ^^^    ^^^ local
+/// export { type Foo as Bar };
+/// //      local ^^^    ^^^ exported
 /// ```
 #[ast(visit)]
 #[derive(Debug)]
@@ -2604,7 +2615,7 @@ pub struct ExportSpecifier<'a> {
     pub local: ModuleExportName<'a>,
     pub exported: ModuleExportName<'a>,
     #[ts]
-    pub export_kind: ImportOrExportKind, // `export type *`
+    pub export_kind: ImportOrExportKind, // `export { type Foo as Bar };`
 }
 
 inherit_variants! {

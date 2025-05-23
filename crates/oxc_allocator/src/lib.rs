@@ -21,7 +21,9 @@
 
 #![warn(missing_docs)]
 
+mod accessor;
 mod address;
+mod alloc;
 mod allocator;
 mod allocator_api2;
 mod boxed;
@@ -35,6 +37,7 @@ mod take_in;
 mod vec;
 mod vec2;
 
+pub use accessor::AllocatorAccessor;
 pub use address::{Address, GetAddress};
 pub use allocator::Allocator;
 pub use boxed::Box;

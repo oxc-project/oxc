@@ -5,7 +5,7 @@ use oxc_ast::{
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::IsGlobalReference;
-use oxc_span::Span;
+use oxc_span::{GetSpan, Span};
 
 use crate::{AstNode, context::LintContext, rule::Rule};
 
@@ -20,6 +20,7 @@ pub struct NoArrayConstructor;
 
 declare_oxc_lint!(
     /// ### What it does
+    ///
     /// Disallows creating arrays with the `Array` constructor.
     ///
     /// ### Why is this bad?
@@ -47,7 +48,7 @@ declare_oxc_lint!(
     NoArrayConstructor,
     eslint,
     pedantic,
-    pending
+    fix
 );
 
 impl Rule for NoArrayConstructor {
@@ -78,13 +79,24 @@ impl Rule for NoArrayConstructor {
 
         // Checks if last argument is a spread element such as `Array(...args)` or `Array(1, 2, ...args)`.
         let last_arg_is_spread = arguments.last().is_some_and(Argument::is_spread);
+        let arg_len = arguments.len();
 
         if ident.is_global_reference_name("Array", ctx.scoping())
-            && (arguments.len() != 1 || last_arg_is_spread)
+            && (arg_len != 1 || last_arg_is_spread)
             && type_parameters.is_none()
             && !optional
         {
-            ctx.diagnostic(no_array_constructor_diagnostic(span));
+            ctx.diagnostic_with_fix(no_array_constructor_diagnostic(span), |fixer| {
+                if arg_len <= 2 && last_arg_is_spread {
+                    return fixer.noop();
+                }
+                let replacement = if arg_len == 0 {
+                    ""
+                } else {
+                    ctx.source_range(Span::new(arguments[0].span().start, span.end - 1))
+                };
+                fixer.replace(span, format!("[{replacement}]"))
+            });
         }
     }
 }
@@ -134,6 +146,23 @@ fn test() {
         ("Array(1, 2, ...args);", None),
     ];
 
+    let fix = vec![
+        ("new Array()", "[]", None),
+        ("new Array", "[]", None),
+        ("Array()", "[]", None),
+        ("new Array(x, y)", "[x, y]", None),
+        ("new Array(0, 1, 2)", "[0, 1, 2]", None),
+        ("Array(x, y)", "[x, y]", None),
+        ("Array(0, 1, 2)", "[0, 1, 2]", None),
+        ("Array(1, 2, ...args)", "[1, 2, ...args]", None),
+        ("new Array(...args)", "new Array(...args)", None),
+        ("Array(...args)", "Array(...args)", None),
+        ("Array(1, /** comment */ 2, 3)", "[1, /** comment */ 2, 3]", None),
+        ("Array(1,  2, 3      )", "[1,  2, 3      ]", None),
+        ("Array        (1,  2, 3      )", "[1,  2, 3      ]", None),
+    ];
+
     Tester::new(NoArrayConstructor::NAME, NoArrayConstructor::PLUGIN, pass, fail)
+        .expect_fix(fix)
         .test_and_snapshot();
 }

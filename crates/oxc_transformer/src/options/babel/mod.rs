@@ -137,7 +137,7 @@ impl BabelOptions {
             }
 
             let new_options: Self = serde_json::from_value::<BabelOptions>(new_value)
-                .unwrap_or_else(|err| panic!("{err:?}\n{file:?}\n{content}"));
+                .unwrap_or_else(|err| panic!("{err:?}\n{}\n{content}", file.display()));
 
             if let Some(existing_options) = babel_options.as_mut() {
                 if existing_options.source_type.is_none() {
@@ -158,17 +158,20 @@ impl BabelOptions {
         let mut options = babel_options.unwrap_or_default();
         if let Some(plugins_json) = plugins_json {
             options.plugins = serde_json::from_value::<BabelPlugins>(plugins_json)
-                .unwrap_or_else(|err| panic!("{err:?}\n{path:?}"));
+                .unwrap_or_else(|err| panic!("{err:?}\n{}", path.display()));
         }
         if let Some(presets_json) = presets_json {
             options.presets = serde_json::from_value::<BabelPresets>(presets_json)
-                .unwrap_or_else(|err| panic!("{err:?}\n{path:?}"));
+                .unwrap_or_else(|err| panic!("{err:?}\n{}", path.display()));
         }
         options
     }
 
     pub fn is_jsx(&self) -> bool {
         self.plugins.syntax_jsx
+            || self.presets.jsx.is_some()
+            || self.plugins.react_jsx.is_some()
+            || self.plugins.react_jsx_dev.is_some()
     }
 
     pub fn is_typescript(&self) -> bool {

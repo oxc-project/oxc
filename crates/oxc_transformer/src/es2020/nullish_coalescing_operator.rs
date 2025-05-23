@@ -56,7 +56,7 @@ impl<'a> Traverse<'a> for NullishCoalescingOperator<'a, '_> {
         }
 
         // Take ownership of the `LogicalExpression`
-        let Expression::LogicalExpression(logical_expr) = expr.take_in(ctx.ast.allocator) else {
+        let Expression::LogicalExpression(logical_expr) = expr.take_in(ctx.ast) else {
             unreachable!()
         };
 

@@ -1,0 +1,310 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+  ⚠ eslint-plugin-unicorn(no-array-method-this-argument): Avoid using 'thisArg' with array iteration methods
+   ╭─[no_array_method_this_argument.tsx:1:13]
+ 1 │ array.every(() => {}, thisArgument)
+   ·             ────────
+   ╰────
+  help: Use arrow functions or lexical scoping instead of passing 'thisArg' as a second argument to array methods like map, filter, etc.
+
+  ⚠ eslint-plugin-unicorn(no-array-method-this-argument): Avoid using 'thisArg' with array iteration methods
+   ╭─[no_array_method_this_argument.tsx:1:14]
+ 1 │ array.filter(() => {}, thisArgument)
+   ·              ────────
+   ╰────
+  help: Use arrow functions or lexical scoping instead of passing 'thisArg' as a second argument to array methods like map, filter, etc.
+
+  ⚠ eslint-plugin-unicorn(no-array-method-this-argument): Avoid using 'thisArg' with array iteration methods
+   ╭─[no_array_method_this_argument.tsx:1:12]
+ 1 │ array.find(() => {}, thisArgument)
+   ·            ────────
+   ╰────
+  help: Use arrow functions or lexical scoping instead of passing 'thisArg' as a second argument to array methods like map, filter, etc.
+
+  ⚠ eslint-plugin-unicorn(no-array-method-this-argument): Avoid using 'thisArg' with array iteration methods
+   ╭─[no_array_method_this_argument.tsx:1:17]
+ 1 │ array.findIndex(() => {}, thisArgument)
+   ·                 ────────
+   ╰────
+  help: Use arrow functions or lexical scoping instead of passing 'thisArg' as a second argument to array methods like map, filter, etc.
+
+  ⚠ eslint-plugin-unicorn(no-array-method-this-argument): Avoid using 'thisArg' with array iteration methods
+   ╭─[no_array_method_this_argument.tsx:1:16]
+ 1 │ array.findLast(() => {}, thisArgument)
+   ·                ────────
+   ╰────
+  help: Use arrow functions or lexical scoping instead of passing 'thisArg' as a second argument to array methods like map, filter, etc.
+
+  ⚠ eslint-plugin-unicorn(no-array-method-this-argument): Avoid using 'thisArg' with array iteration methods
+   ╭─[no_array_method_this_argument.tsx:1:21]
+ 1 │ array.findLastIndex(() => {}, thisArgument)
+   ·                     ────────
+   ╰────
+  help: Use arrow functions or lexical scoping instead of passing 'thisArg' as a second argument to array methods like map, filter, etc.
+
+  ⚠ eslint-plugin-unicorn(no-array-method-this-argument): Avoid using 'thisArg' with array iteration methods
+   ╭─[no_array_method_this_argument.tsx:1:15]
+ 1 │ array.flatMap(() => {}, thisArgument)
+   ·               ────────
+   ╰────
+  help: Use arrow functions or lexical scoping instead of passing 'thisArg' as a second argument to array methods like map, filter, etc.
+
+  ⚠ eslint-plugin-unicorn(no-array-method-this-argument): Avoid using 'thisArg' with array iteration methods
+   ╭─[no_array_method_this_argument.tsx:1:15]
+ 1 │ array.forEach(() => {}, thisArgument)
+   ·               ────────
+   ╰────
+  help: Use arrow functions or lexical scoping instead of passing 'thisArg' as a second argument to array methods like map, filter, etc.
+
+  ⚠ eslint-plugin-unicorn(no-array-method-this-argument): Avoid using 'thisArg' with array iteration methods
+   ╭─[no_array_method_this_argument.tsx:1:11]
+ 1 │ array.map(() => {}, thisArgument)
+   ·           ────────
+   ╰────
+  help: Use arrow functions or lexical scoping instead of passing 'thisArg' as a second argument to array methods like map, filter, etc.
+
+  ⚠ eslint-plugin-unicorn(no-array-method-this-argument): Avoid using 'thisArg' with array iteration methods
+   ╭─[no_array_method_this_argument.tsx:1:43]
+ 1 │ Array.from(iterableOrArrayLike, () => {}, thisArgument)
+   ·                                           ────────────
+   ╰────
+  help: Use arrow functions or lexical scoping instead of passing 'thisArg' as a second argument to array methods like map, filter, etc.
+
+  ⚠ eslint-plugin-unicorn(no-array-method-this-argument): Avoid using 'thisArg' with array iteration methods
+   ╭─[no_array_method_this_argument.tsx:1:48]
+ 1 │ Array.fromAsync(iterableOrArrayLike, () => {}, thisArgument)
+   ·                                                ────────────
+   ╰────
+  help: Use arrow functions or lexical scoping instead of passing 'thisArg' as a second argument to array methods like map, filter, etc.
+
+  ⚠ eslint-plugin-unicorn(no-array-method-this-argument): Avoid using 'thisArg' with array iteration methods
+   ╭─[no_array_method_this_argument.tsx:1:11]
+ 1 │ array.map(() => {}, thisArgument,)
+   ·           ────────
+   ╰────
+  help: Use arrow functions or lexical scoping instead of passing 'thisArg' as a second argument to array methods like map, filter, etc.
+
+  ⚠ eslint-plugin-unicorn(no-array-method-this-argument): Avoid using 'thisArg' with array iteration methods
+   ╭─[no_array_method_this_argument.tsx:1:11]
+ 1 │ array.map(() => {}, (0, thisArgument),)
+   ·           ────────
+   ╰────
+  help: Use arrow functions or lexical scoping instead of passing 'thisArg' as a second argument to array methods like map, filter, etc.
+
+  ⚠ eslint-plugin-unicorn(no-array-method-this-argument): Avoid using 'thisArg' with array iteration methods
+   ╭─[no_array_method_this_argument.tsx:1:43]
+ 1 │ Array.from(iterableOrArrayLike, () => {}, thisArgument,)
+   ·                                           ────────────
+   ╰────
+  help: Use arrow functions or lexical scoping instead of passing 'thisArg' as a second argument to array methods like map, filter, etc.
+
+  ⚠ eslint-plugin-unicorn(no-array-method-this-argument): Avoid using 'thisArg' with array iteration methods
+   ╭─[no_array_method_this_argument.tsx:1:48]
+ 1 │ Array.fromAsync(iterableOrArrayLike, () => {}, thisArgument,)
+   ·                                                ────────────
+   ╰────
+  help: Use arrow functions or lexical scoping instead of passing 'thisArg' as a second argument to array methods like map, filter, etc.
+
+  ⚠ eslint-plugin-unicorn(no-array-method-this-argument): Avoid using 'thisArg' with array iteration methods
+   ╭─[no_array_method_this_argument.tsx:1:11]
+ 1 │ array.map(() => {}, thisArgumentHasSideEffect())
+   ·           ────────
+   ╰────
+  help: Use arrow functions or lexical scoping instead of passing 'thisArg' as a second argument to array methods like map, filter, etc.
+
+  ⚠ eslint-plugin-unicorn(no-array-method-this-argument): Avoid using 'thisArg' with array iteration methods
+   ╭─[no_array_method_this_argument.tsx:1:43]
+ 1 │ Array.from(iterableOrArrayLike, () => {}, thisArgumentHasSideEffect())
+   ·                                           ───────────────────────────
+   ╰────
+  help: Use arrow functions or lexical scoping instead of passing 'thisArg' as a second argument to array methods like map, filter, etc.
+
+  ⚠ eslint-plugin-unicorn(no-array-method-this-argument): Avoid using 'thisArg' with array iteration methods
+   ╭─[no_array_method_this_argument.tsx:1:48]
+ 1 │ Array.fromAsync(iterableOrArrayLike, () => {}, thisArgumentHasSideEffect())
+   ·                                                ───────────────────────────
+   ╰────
+  help: Use arrow functions or lexical scoping instead of passing 'thisArg' as a second argument to array methods like map, filter, etc.
+
+  ⚠ eslint-plugin-unicorn(no-array-method-this-argument): Avoid using 'thisArg' with array iteration methods
+   ╭─[no_array_method_this_argument.tsx:1:11]
+ 1 │ array.map(callback, thisArgument)
+   ·           ────────
+   ╰────
+  help: Use arrow functions or lexical scoping instead of passing 'thisArg' as a second argument to array methods like map, filter, etc.
+
+  ⚠ eslint-plugin-unicorn(no-array-method-this-argument): Avoid using 'thisArg' with array iteration methods
+   ╭─[no_array_method_this_argument.tsx:1:43]
+ 1 │ Array.from(iterableOrArrayLike, callback, thisArgument)
+   ·                                           ────────────
+   ╰────
+  help: Use arrow functions or lexical scoping instead of passing 'thisArg' as a second argument to array methods like map, filter, etc.
+
+  ⚠ eslint-plugin-unicorn(no-array-method-this-argument): Avoid using 'thisArg' with array iteration methods
+   ╭─[no_array_method_this_argument.tsx:1:48]
+ 1 │ Array.fromAsync(iterableOrArrayLike, callback, thisArgument)
+   ·                                                ────────────
+   ╰────
+  help: Use arrow functions or lexical scoping instead of passing 'thisArg' as a second argument to array methods like map, filter, etc.
+
+  ⚠ eslint-plugin-unicorn(no-array-method-this-argument): Avoid using 'thisArg' with array iteration methods
+   ╭─[no_array_method_this_argument.tsx:1:11]
+ 1 │ array.map(callback, (0, thisArgument))
+   ·           ────────
+   ╰────
+  help: Use arrow functions or lexical scoping instead of passing 'thisArg' as a second argument to array methods like map, filter, etc.
+
+  ⚠ eslint-plugin-unicorn(no-array-method-this-argument): Avoid using 'thisArg' with array iteration methods
+   ╭─[no_array_method_this_argument.tsx:1:43]
+ 1 │ Array.from(iterableOrArrayLike, callback, (0, thisArgument))
+   ·                                           ─────────────────
+   ╰────
+  help: Use arrow functions or lexical scoping instead of passing 'thisArg' as a second argument to array methods like map, filter, etc.
+
+  ⚠ eslint-plugin-unicorn(no-array-method-this-argument): Avoid using 'thisArg' with array iteration methods
+   ╭─[no_array_method_this_argument.tsx:1:48]
+ 1 │ Array.fromAsync(iterableOrArrayLike, callback, (0, thisArgument))
+   ·                                                ─────────────────
+   ╰────
+  help: Use arrow functions or lexical scoping instead of passing 'thisArg' as a second argument to array methods like map, filter, etc.
+
+  ⚠ eslint-plugin-unicorn(no-array-method-this-argument): Avoid using 'thisArg' with array iteration methods
+   ╭─[no_array_method_this_argument.tsx:1:11]
+ 1 │ array.map(function () {}, thisArgument)
+   ·           ──────────────
+   ╰────
+  help: Use arrow functions or lexical scoping instead of passing 'thisArg' as a second argument to array methods like map, filter, etc.
+
+  ⚠ eslint-plugin-unicorn(no-array-method-this-argument): Avoid using 'thisArg' with array iteration methods
+   ╭─[no_array_method_this_argument.tsx:1:49]
+ 1 │ Array.from(iterableOrArrayLike, function () {}, thisArgument)
+   ·                                                 ────────────
+   ╰────
+  help: Use arrow functions or lexical scoping instead of passing 'thisArg' as a second argument to array methods like map, filter, etc.
+
+  ⚠ eslint-plugin-unicorn(no-array-method-this-argument): Avoid using 'thisArg' with array iteration methods
+   ╭─[no_array_method_this_argument.tsx:1:11]
+ 1 │ array.map(function callback () {}, thisArgument)
+   ·           ───────────────────────
+   ╰────
+  help: Use arrow functions or lexical scoping instead of passing 'thisArg' as a second argument to array methods like map, filter, etc.
+
+  ⚠ eslint-plugin-unicorn(no-array-method-this-argument): Avoid using 'thisArg' with array iteration methods
+   ╭─[no_array_method_this_argument.tsx:1:58]
+ 1 │ Array.from(iterableOrArrayLike, function callback () {}, thisArgument)
+   ·                                                          ────────────
+   ╰────
+  help: Use arrow functions or lexical scoping instead of passing 'thisArg' as a second argument to array methods like map, filter, etc.
+
+  ⚠ eslint-plugin-unicorn(no-array-method-this-argument): Avoid using 'thisArg' with array iteration methods
+   ╭─[no_array_method_this_argument.tsx:1:63]
+ 1 │ Array.fromAsync(iterableOrArrayLike, function callback () {}, thisArgument)
+   ·                                                               ────────────
+   ╰────
+  help: Use arrow functions or lexical scoping instead of passing 'thisArg' as a second argument to array methods like map, filter, etc.
+
+  ⚠ eslint-plugin-unicorn(no-array-method-this-argument): Avoid using 'thisArg' with array iteration methods
+   ╭─[no_array_method_this_argument.tsx:1:12]
+ 1 │ array.map( foo as bar, (( thisArgument )),)
+   ·            ──────────
+   ╰────
+  help: Use arrow functions or lexical scoping instead of passing 'thisArg' as a second argument to array methods like map, filter, etc.
+
+  ⚠ eslint-plugin-unicorn(no-array-method-this-argument): Avoid using 'thisArg' with array iteration methods
+   ╭─[no_array_method_this_argument.tsx:1:45]
+ 1 │ Array.from(iterableOrArrayLike, foo as bar, (( thisArgument )),)
+   ·                                             ──────────────────
+   ╰────
+  help: Use arrow functions or lexical scoping instead of passing 'thisArg' as a second argument to array methods like map, filter, etc.
+
+  ⚠ eslint-plugin-unicorn(no-array-method-this-argument): Avoid using 'thisArg' with array iteration methods
+   ╭─[no_array_method_this_argument.tsx:1:50]
+ 1 │ Array.fromAsync(iterableOrArrayLike, foo as bar, (( thisArgument )),)
+   ·                                                  ──────────────────
+   ╰────
+  help: Use arrow functions or lexical scoping instead of passing 'thisArg' as a second argument to array methods like map, filter, etc.
+
+  ⚠ eslint-plugin-unicorn(no-array-method-this-argument): Avoid using 'thisArg' with array iteration methods
+   ╭─[no_array_method_this_argument.tsx:1:12]
+ 1 │ array.map( (( foo as bar )), (( thisArgument )),)
+   ·            ────────────────
+   ╰────
+  help: Use arrow functions or lexical scoping instead of passing 'thisArg' as a second argument to array methods like map, filter, etc.
+
+  ⚠ eslint-plugin-unicorn(no-array-method-this-argument): Avoid using 'thisArg' with array iteration methods
+   ╭─[no_array_method_this_argument.tsx:1:51]
+ 1 │ Array.from(iterableOrArrayLike, (( foo as bar )), (( thisArgument )),)
+   ·                                                   ──────────────────
+   ╰────
+  help: Use arrow functions or lexical scoping instead of passing 'thisArg' as a second argument to array methods like map, filter, etc.
+
+  ⚠ eslint-plugin-unicorn(no-array-method-this-argument): Avoid using 'thisArg' with array iteration methods
+   ╭─[no_array_method_this_argument.tsx:1:56]
+ 1 │ Array.fromAsync(iterableOrArrayLike, (( foo as bar )), (( thisArgument )),)
+   ·                                                        ──────────────────
+   ╰────
+  help: Use arrow functions or lexical scoping instead of passing 'thisArg' as a second argument to array methods like map, filter, etc.
+
+  ⚠ eslint-plugin-unicorn(no-array-method-this-argument): Avoid using 'thisArg' with array iteration methods
+   ╭─[no_array_method_this_argument.tsx:1:12]
+ 1 │ array.map( (( 0, callback )), (( thisArgument )),)
+   ·            ─────────────────
+   ╰────
+  help: Use arrow functions or lexical scoping instead of passing 'thisArg' as a second argument to array methods like map, filter, etc.
+
+  ⚠ eslint-plugin-unicorn(no-array-method-this-argument): Avoid using 'thisArg' with array iteration methods
+   ╭─[no_array_method_this_argument.tsx:1:52]
+ 1 │ Array.from(iterableOrArrayLike, (( 0, callback )), (( thisArgument )),)
+   ·                                                    ──────────────────
+   ╰────
+  help: Use arrow functions or lexical scoping instead of passing 'thisArg' as a second argument to array methods like map, filter, etc.
+
+  ⚠ eslint-plugin-unicorn(no-array-method-this-argument): Avoid using 'thisArg' with array iteration methods
+   ╭─[no_array_method_this_argument.tsx:1:57]
+ 1 │ Array.fromAsync(iterableOrArrayLike, (( 0, callback )), (( thisArgument )),)
+   ·                                                         ──────────────────
+   ╰────
+  help: Use arrow functions or lexical scoping instead of passing 'thisArg' as a second argument to array methods like map, filter, etc.
+
+  ⚠ eslint-plugin-unicorn(no-array-method-this-argument): Avoid using 'thisArg' with array iteration methods
+   ╭─[no_array_method_this_argument.tsx:1:11]
+ 1 │ array.map((0, () => {}), thisArgument)
+   ·           ─────────────
+   ╰────
+  help: Use arrow functions or lexical scoping instead of passing 'thisArg' as a second argument to array methods like map, filter, etc.
+
+  ⚠ eslint-plugin-unicorn(no-array-method-this-argument): Avoid using 'thisArg' with array iteration methods
+   ╭─[no_array_method_this_argument.tsx:1:48]
+ 1 │ Array.from(iterableOrArrayLike, (0, () => {}), thisArgument)
+   ·                                                ────────────
+   ╰────
+  help: Use arrow functions or lexical scoping instead of passing 'thisArg' as a second argument to array methods like map, filter, etc.
+
+  ⚠ eslint-plugin-unicorn(no-array-method-this-argument): Avoid using 'thisArg' with array iteration methods
+   ╭─[no_array_method_this_argument.tsx:1:53]
+ 1 │ Array.fromAsync(iterableOrArrayLike, (0, () => {}), thisArgument)
+   ·                                                     ────────────
+   ╰────
+  help: Use arrow functions or lexical scoping instead of passing 'thisArg' as a second argument to array methods like map, filter, etc.
+
+  ⚠ eslint-plugin-unicorn(no-array-method-this-argument): Avoid using 'thisArg' with array iteration methods
+   ╭─[no_array_method_this_argument.tsx:1:11]
+ 1 │ array.map(callback.bind(foo), thisArgument)
+   ·           ──────────────────
+   ╰────
+  help: Use arrow functions or lexical scoping instead of passing 'thisArg' as a second argument to array methods like map, filter, etc.
+
+  ⚠ eslint-plugin-unicorn(no-array-method-this-argument): Avoid using 'thisArg' with array iteration methods
+   ╭─[no_array_method_this_argument.tsx:1:53]
+ 1 │ Array.from(iterableOrArrayLike, callback.bind(foo), thisArgument)
+   ·                                                     ────────────
+   ╰────
+  help: Use arrow functions or lexical scoping instead of passing 'thisArg' as a second argument to array methods like map, filter, etc.
+
+  ⚠ eslint-plugin-unicorn(no-array-method-this-argument): Avoid using 'thisArg' with array iteration methods
+   ╭─[no_array_method_this_argument.tsx:1:58]
+ 1 │ Array.fromAsync(iterableOrArrayLike, callback.bind(foo), thisArgument)
+   ·                                                          ────────────
+   ╰────
+  help: Use arrow functions or lexical scoping instead of passing 'thisArg' as a second argument to array methods like map, filter, etc.

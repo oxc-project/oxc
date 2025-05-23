@@ -62,7 +62,6 @@ declare_oxc_lint!(
     /// /(?<name>a)\k<name>/;        // named group used properly
     /// /(?:a|(b))\1/;               // backreference only used when group matches
     /// ```
-    ///
     NoUselessBackreference,
     eslint,
     correctness
@@ -196,7 +195,7 @@ impl<'ast> Visit<'ast> for RegexCollector<'ast> {
 
 /// Determines if a backreference is useless — meaning it references a capturing
 /// group that hasn't (and cannot) participate at the time it's evaluated.
-//////
+///
 /// Returns the reason as a `Problem` if one is found; otherwise returns `None`.
 ///
 /// # Problem types and examples:

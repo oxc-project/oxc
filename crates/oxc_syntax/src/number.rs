@@ -16,7 +16,7 @@ pub enum NumberBase {
 }
 
 impl NumberBase {
-    pub fn is_base_10(&self) -> bool {
+    pub fn is_base_10(self) -> bool {
         matches!(self, Self::Float | Self::Decimal)
     }
 }
@@ -32,8 +32,8 @@ pub enum BigintBase {
 }
 
 impl BigintBase {
-    pub fn is_base_10(&self) -> bool {
-        self == &Self::Decimal
+    pub fn is_base_10(self) -> bool {
+        self == Self::Decimal
     }
 }
 

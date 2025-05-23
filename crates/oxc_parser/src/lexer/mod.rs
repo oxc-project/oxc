@@ -217,7 +217,6 @@ impl<'a> Lexer<'a> {
     fn finish_next(&mut self, kind: Kind) -> Token {
         self.token.set_kind(kind);
         self.token.set_end(self.offset());
-        debug_assert!(self.token.start() <= self.token.end());
         let token = self.token;
         self.trivia_builder.handle_token(token);
         self.token = Token::default();

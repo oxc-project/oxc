@@ -27,7 +27,7 @@ declare_oxc_lint!(
     ///
     /// Redundant comparisons can be confusing and make code harder to understand.
     ///
-    /// ### Example
+    /// ### Examples
     ///
     /// Examples of **incorrect** code for this rule:
     /// ```javascript

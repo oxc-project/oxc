@@ -36,7 +36,7 @@ pub struct LintConfig {
 impl From<Oxlintrc> for LintConfig {
     fn from(config: Oxlintrc) -> Self {
         Self {
-            plugins: config.plugins,
+            plugins: config.plugins.unwrap_or_default(),
             settings: config.settings,
             env: config.env,
             globals: config.globals,
@@ -50,7 +50,7 @@ mod test {
     use std::env;
 
     use oxc_span::CompactStr;
-    use rustc_hash::FxHashSet;
+    use rustc_hash::FxHashMap;
     use serde::Deserialize;
 
     use super::Oxlintrc;
@@ -111,10 +111,10 @@ mod test {
         let fixture_path: std::path::PathBuf =
             env::current_dir().unwrap().join("fixtures/eslint_config_vitest_replace.json");
         let config = Oxlintrc::from_file(&fixture_path).unwrap();
-        let mut set = FxHashSet::default();
+        let mut set = FxHashMap::default();
         config.rules.override_rules(&mut set, &RULES);
 
-        let rule = set.into_iter().next().unwrap();
+        let (rule, _) = set.into_iter().next().unwrap();
         assert_eq!(rule.name(), "no-disabled-tests");
         assert_eq!(rule.plugin_name(), "jest");
     }

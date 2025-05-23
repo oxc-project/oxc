@@ -29,9 +29,8 @@ pub struct EstreeTest262Case {
 
 impl Case for EstreeTest262Case {
     fn new(path: PathBuf, code: String) -> Self {
-        let acorn_json_path = Path::new("./tasks/coverage/acorn-test262")
-            .join(path.strip_prefix("test262").unwrap())
-            .with_extension("json");
+        let acorn_json_path =
+            workspace_root().join("acorn-test262/tests").join(&path).with_extension("json");
 
         Self { base: Test262Case::new(path, code), acorn_json_path }
     }
@@ -106,7 +105,7 @@ impl Case for EstreeTest262Case {
         }
 
         // Convert spans to UTF16
-        Utf8ToUtf16::new(source_text).convert_program(&mut program);
+        Utf8ToUtf16::new(source_text).convert_program_with_ascending_order_checks(&mut program);
 
         let acorn_json = match fs::read_to_string(&self.acorn_json_path) {
             Ok(acorn_json) => acorn_json,
@@ -139,7 +138,7 @@ pub struct AcornJsxSuite<T: Case> {
 
 impl<T: Case> AcornJsxSuite<T> {
     pub fn new() -> Self {
-        Self { path: Path::new("acorn-test262/test-acorn-jsx").to_path_buf(), test_cases: vec![] }
+        Self { path: workspace_root().join("acorn-test262/tests/acorn-jsx"), test_cases: vec![] }
     }
 }
 
@@ -166,13 +165,13 @@ impl<T: Case> Suite<T> for AcornJsxSuite<T> {
     }
 }
 
-pub struct AcornJsxCase {
+pub struct EstreeJsxCase {
     path: PathBuf,
     code: String,
     result: TestResult,
 }
 
-impl Case for AcornJsxCase {
+impl Case for EstreeJsxCase {
     fn new(path: PathBuf, code: String) -> Self {
         Self { path, code, result: TestResult::ToBeRun }
     }
@@ -218,7 +217,7 @@ impl Case for AcornJsxCase {
         }
 
         // Convert spans to UTF16
-        Utf8ToUtf16::new(source_text).convert_program(&mut program);
+        Utf8ToUtf16::new(source_text).convert_program_with_ascending_order_checks(&mut program);
 
         let acorn_json_path = workspace_root().join(self.path.with_extension("json"));
         let acorn_json = match fs::read_to_string(&acorn_json_path) {
@@ -252,8 +251,8 @@ pub struct EstreeTypescriptCase {
 impl Case for EstreeTypescriptCase {
     fn new(path: PathBuf, code: String) -> Self {
         let estree_file_path = workspace_root()
-            .join("./acorn-test262/test-typescript")
-            .join(path.strip_prefix("typescript").unwrap())
+            .join("acorn-test262/tests")
+            .join(&path)
             .with_extension(format!("{}.md", path.extension().unwrap().to_str().unwrap()));
         Self { base: TypeScriptCase::new(path, code), estree_file_path }
     }
@@ -373,7 +372,7 @@ impl Case for EstreeTypescriptCase {
             }
 
             let mut program = ret.program;
-            Utf8ToUtf16::new(source_text).convert_program(&mut program);
+            Utf8ToUtf16::new(source_text).convert_program_with_ascending_order_checks(&mut program);
 
             let oxc_json = program.to_pretty_estree_ts_json();
 

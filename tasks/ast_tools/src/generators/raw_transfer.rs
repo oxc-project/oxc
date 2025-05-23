@@ -25,10 +25,9 @@ use crate::{
 use super::define_generator;
 
 // Offsets of `Vec`'s fields.
-// These are based on observation, and are not stable.
-// They will be fully reliable once we implement our own `Vec` type and make it `#[repr(C)]`.
+// `Vec` is `#[repr(transparent)]` and `RawVec` is `#[repr(C)]`, so these offsets are fixed.
 const VEC_PTR_FIELD_OFFSET: usize = 0;
-const VEC_LEN_FIELD_OFFSET: usize = 24;
+const VEC_LEN_FIELD_OFFSET: usize = 8;
 
 /// Generator for raw transfer deserializer.
 pub struct RawTransferGenerator;
@@ -273,7 +272,7 @@ impl<'s> StructDeserializerGenerator<'s> {
         struct_def: &StructDef,
         struct_offset: u32,
     ) {
-        if !self.is_ts && field.estree.is_ts {
+        if (self.is_ts && field.estree.is_js) || (!self.is_ts && field.estree.is_ts) {
             return;
         }
 
@@ -373,7 +372,7 @@ impl<'s> StructDeserializerGenerator<'s> {
         struct_offset: u32,
     ) {
         let converter = self.schema.meta_by_name(converter_name);
-        if !self.is_ts && converter.estree.is_ts {
+        if (self.is_ts && converter.estree.is_js) || (!self.is_ts && converter.estree.is_ts) {
             return;
         }
 

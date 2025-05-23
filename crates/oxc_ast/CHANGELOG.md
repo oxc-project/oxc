@@ -4,6 +4,78 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.71.0] - 2025-05-20
+
+- 1a4fec0 codegen: [**BREAKING**] A legal comment can also be a jsdoc comment (#11158) (Boshen)
+
+- 5d9344f rust: [**BREAKING**] Clippy avoid-breaking-exported-api = false (#11088) (Boshen)
+
+### Features
+
+- c60382d allocator/vec2: Change `len` and `cap` fields from `usize` to `u32` (#10884) (Dunqing)
+- d47b305 ast/estree: Add `phase` field to `ImportExpression` in ESTree AST (#11165) (overlookmotel)
+- 1bc8d29 ast/estree: Add `phase` field to `ImportDeclaration` in ESTree AST (#11157) (overlookmotel)
+- 9e90e00 ast_tools: Introduce `#[js_only]` attr for struct fields and converters (#11160) (overlookmotel)
+
+### Bug Fixes
+
+
+### Performance
+
+- 6571b9b ast: Use bitflags for storing comment newline state (#11096) (camchenry)
+- 2b0a69f ast: Re-order struct fields to reduce padding (#11056) (overlookmotel)
+- b9e51e2 ast: Reduce size of `Comment` to 16 bytes (#11062) (camchenry)
+
+### Documentation
+
+- e92bf1f napi: Update docs for `oxc-parser` (#11156) (overlookmotel)
+
+### Refactor
+
+- 20a4a8c ast: Shorten `CommentNewlines` methods (#11152) (overlookmotel)
+- 58c7de6 ast: Rename `CommentNewlines` fields (#11151) (overlookmotel)
+- e5438dc ast: Inline `Comment` newline flags setters (#11150) (overlookmotel)
+
+### Styling
+
+- b3519ca ast: Remove dummy comment (#11162) (overlookmotel)
+
+## [0.70.0] - 2025-05-15
+
+### Features
+
+- 1673ffb codegen: Rework printing normal / legal / annotation comments (#10997) (Boshen)
+
+### Bug Fixes
+
+- 6f3f9d7 ast/estree: Fix `raw_deser` for `TSMappedTypeOptional` serializer (#10971) (overlookmotel)
+- 53329f8 ast/estree: Fix field order for `FormalParameter` (#10962) (overlookmotel)
+- 8b8f78f ast/estree: Fix field order and type def for `RestElement` in `FormalParameters` (#10961) (overlookmotel)
+- 2b76ab5 ast/estree: Fix `TSModuleDeclaration` raw deserializer (#10924) (overlookmotel)
+- d036cf5 estree: Ensure the same key order for `AssignmentPattern` (#10953) (Yuji Sugiura)
+
+### Performance
+
+- a4b5716 ast/estree: Streamline raw deserializer for `WithClause` (#10974) (overlookmotel)
+
+### Documentation
+
+- 206e07d ast: Fix docs for `ExportSpecifier` (#10891) (overlookmotel)
+- b23fef7 ast/estree: Standardize doc comments for ESTree serializers (#10968) (overlookmotel)
+
+### Refactor
+
+- 6cc74ff ast/estree: Add semi-colon (#10973) (overlookmotel)
+- 2958ff7 ast/estree: Rename serializers (#10969) (overlookmotel)
+- b8018b9 ast/estree: Split custom serializers into multiple files (#10967) (overlookmotel)
+- 08f1f3f ast/estree: Remove custom serializer for `Elision` (#10965) (overlookmotel)
+- d01a47b ast/estree: Simplify custom serializers for `FormalParameters` (#10964) (overlookmotel)
+- bfc6b9a ast/estree: Rename custom serializers for fields containing `FormalParameters` (#10963) (overlookmotel)
+
+### Styling
+
+- 6d4936f ast/estree: Reformat `raw_deser` code (#10972) (overlookmotel)
+
 ## [0.69.0] - 2025-05-09
 
 - 2b5d826 ast: [**BREAKING**] Fix field order for `TSTypeAssertion` (#10906) (overlookmotel)

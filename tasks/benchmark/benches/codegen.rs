@@ -5,29 +5,20 @@ use oxc_benchmark::{BenchmarkId, Criterion, criterion_group, criterion_main};
 use oxc_codegen::{Codegen, CodegenOptions};
 use oxc_parser::Parser;
 use oxc_semantic::SemanticBuilder;
-use oxc_span::SourceType;
 use oxc_tasks_common::TestFiles;
 use oxc_transformer::{TransformOptions, Transformer};
 
 fn bench_codegen(criterion: &mut Criterion) {
-    for file in TestFiles::complicated_one(0).files() {
+    for file in TestFiles::minimal().files() {
         let id = BenchmarkId::from_parameter(&file.file_name);
-        let source_type = SourceType::from_path(&file.file_name).unwrap();
-        let allocator = Allocator::default();
         let source_text = &file.source_text;
+        let source_type = file.source_type;
+        let allocator = Allocator::default();
 
-        // Codegen
         let parser_ret = Parser::new(&allocator, source_text, source_type).parse();
         assert!(parser_ret.errors.is_empty());
         let mut program = parser_ret.program;
 
-        let mut group = criterion.benchmark_group("codegen");
-        group.bench_function(id.clone(), |b| {
-            b.iter_with_large_drop(|| Codegen::new().build(&program).map);
-        });
-        group.finish();
-
-        // Codegen sourcemap
         let scoping = SemanticBuilder::new().build(&program).semantic.into_scoping();
 
         let transform_options = TransformOptions::enable_all();
@@ -36,7 +27,7 @@ fn bench_codegen(criterion: &mut Criterion) {
                 .build_with_scoping(scoping, &mut program);
         assert!(transformer_ret.errors.is_empty());
 
-        let mut group = criterion.benchmark_group("codegen_sourcemap");
+        let mut group = criterion.benchmark_group("codegen");
         group.bench_function(id, |b| {
             b.iter_with_large_drop(|| {
                 Codegen::new()

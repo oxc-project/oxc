@@ -110,7 +110,6 @@ declare_oxc_lint!(
     ///
     /// ### Options
     ///
-    ///
     /// #### allowReject
     ///
     /// `{ type: boolean, default: false }`
@@ -130,7 +129,6 @@ declare_oxc_lint!(
     /// ```js
     /// myPromise().then().catch(() => Promise.reject("err"))
     /// ```
-    ///
     NoReturnWrap,
     promise,
     style,

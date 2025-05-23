@@ -89,7 +89,8 @@ impl<'a> TypeScript<'a, '_> {
         let mut computed_key_assignments = Vec::new();
         for element in &mut class.body.body {
             match element {
-                ClassElement::PropertyDefinition(prop) => {
+                // `set_public_class_fields: true` only needs to transform non-private class fields.
+                ClassElement::PropertyDefinition(prop) if !prop.key.is_private_identifier() => {
                     if let Some(value) = prop.value.take() {
                         let assignment = self.convert_property_definition(
                             &mut prop.key,
@@ -116,7 +117,7 @@ impl<'a> TypeScript<'a, '_> {
                                 // When `remove_class_fields_without_initializer` is true, the property without initializer
                                 // would be removed in the `transform_class_on_exit`. We need to make sure the computed key
                                 // keeps and is evaluated in the same order as the original class field in static block.
-                                computed_key_assignments.push(key.take_in(ctx.ast.allocator));
+                                computed_key_assignments.push(key.take_in(ctx.ast));
                             }
                         }
                     }
@@ -277,8 +278,7 @@ impl<'a> TypeScript<'a, '_> {
                 create_this_property_access(SPAN, ident.name, ctx)
             }
             PropertyKey::PrivateIdentifier(_) => {
-                // Handled in `convert_instance_property` and `convert_static_property`
-                unreachable!();
+                unreachable!("PrivateIdentifier is skipped in transform_class_fields");
             }
             key @ match_expression!(PropertyKey) => {
                 let key = key.to_expression_mut();
@@ -287,11 +287,11 @@ impl<'a> TypeScript<'a, '_> {
                 // No temp var is created for these.
                 let new_key = if self.ctx.key_needs_temp_var(key, ctx) {
                     let (assignment, ident) =
-                        self.ctx.create_computed_key_temp_var(key.take_in(ctx.ast.allocator), ctx);
+                        self.ctx.create_computed_key_temp_var(key.take_in(ctx.ast), ctx);
                     computed_key_assignments.push(assignment);
                     ident
                 } else {
-                    key.take_in(ctx.ast.allocator)
+                    key.take_in(ctx.ast)
                 };
 
                 ctx.ast.member_expression_computed(
@@ -360,7 +360,7 @@ impl<'a> TypeScript<'a, '_> {
         if let Some(key) = key.as_expression_mut() {
             // If the key is already an expression, we need to create a new expression sequence
             // to insert the assignments into.
-            let original_key = key.take_in(ctx.ast.allocator);
+            let original_key = key.take_in(ctx.ast);
             let new_key = ctx.ast.expression_sequence(
                 SPAN,
                 ctx.ast.vec_from_iter(
@@ -409,11 +409,11 @@ impl<'a> TypeScript<'a, '_> {
             &body,
             ScopeFlags::StrictMode | ScopeFlags::ClassStaticBlock,
         );
-        let static_block = ctx.ast.class_element_static_block_with_scope_id(
+
+        ctx.ast.class_element_static_block_with_scope_id(
             SPAN,
             ctx.ast.vec_from_iter(body),
             scope_id,
-        );
-        static_block
+        )
     }
 }

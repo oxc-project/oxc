@@ -40,7 +40,7 @@ declare_oxc_lint!(
     ///
     /// This rule aims to standardize the use of `Array#flat()` over legacy techniques to flatten arrays.
     ///
-    /// ### Example
+    /// ### Examples
     ///
     /// Examples of **incorrect** code for this rule:
     /// ```javascript

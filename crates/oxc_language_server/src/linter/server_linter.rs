@@ -1,4 +1,4 @@
-use std::path::{Path, PathBuf};
+use std::path::{Component, Path, PathBuf};
 use std::sync::Arc;
 
 use globset::Glob;
@@ -28,8 +28,8 @@ impl ServerLinter {
         let nested_configs = Self::create_nested_configs(root_uri, options);
         let root_path = root_uri.to_file_path().unwrap();
         let relative_config_path = options.config_path.clone();
-        let oxlintrc = if relative_config_path.is_some() {
-            let config = root_path.join(relative_config_path.unwrap());
+        let oxlintrc = if let Some(relative_config_path) = relative_config_path {
+            let config = normalize_path(root_path.join(relative_config_path));
             if config.try_exists().is_ok_and(|exists| exists) {
                 if let Ok(oxlintrc) = Oxlintrc::from_file(&config) {
                     oxlintrc
@@ -61,7 +61,7 @@ impl ServerLinter {
             config_builder.plugins().has_import()
         };
 
-        let base_config = config_builder.build().expect("Failed to build config store");
+        let base_config = config_builder.build();
 
         let lint_options = LintOptions { fix: options.fix_kind(), ..Default::default() };
 
@@ -123,10 +123,7 @@ impl ServerLinter {
                 warn!("Skipping config (builder failed): {}", file_path.display());
                 continue;
             };
-            let Ok(config_store) = config_store_builder.build() else {
-                warn!("Skipping config (builder failed): {}", file_path.display());
-                continue;
-            };
+            let config_store = config_store_builder.build();
 
             nested_configs.pin().insert(dir_path.to_path_buf(), config_store);
         }
@@ -206,18 +203,54 @@ impl ServerLinter {
     }
 }
 
+/// Normalize a path by removing `.` and resolving `..` components,
+/// without touching the filesystem.
+pub fn normalize_path<P: AsRef<Path>>(path: P) -> PathBuf {
+    let mut result = PathBuf::new();
+
+    for component in path.as_ref().components() {
+        match component {
+            Component::ParentDir => {
+                result.pop();
+            }
+            Component::CurDir => {
+                // Skip current directory component
+            }
+            Component::Normal(c) => {
+                result.push(c);
+            }
+            Component::RootDir | Component::Prefix(_) => {
+                result.push(component.as_os_str());
+            }
+        }
+    }
+
+    result
+}
+
 #[cfg(test)]
 mod test {
-    use std::{path::PathBuf, str::FromStr};
+    use std::{
+        path::{Path, PathBuf},
+        str::FromStr,
+    };
 
     use rustc_hash::FxHashMap;
     use tower_lsp_server::lsp_types::Uri;
 
     use crate::{
         Options,
-        linter::server_linter::ServerLinter,
+        linter::server_linter::{ServerLinter, normalize_path},
         tester::{Tester, get_file_uri},
     };
+
+    #[test]
+    fn test_normalize_path() {
+        assert_eq!(
+            normalize_path(Path::new("/root/directory/./.oxlintrc.json")),
+            Path::new("/root/directory/.oxlintrc.json")
+        );
+    }
 
     #[test]
     fn test_create_nested_configs_with_disabled_nested_configs() {

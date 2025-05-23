@@ -21,33 +21,6 @@ impl Loader {
                 .and_then(std::ffi::OsStr::to_str)
                 .is_some_and(|ext| LINT_PARTIAL_LOADER_EXTENSIONS.contains(&ext))
     }
-
-    /// # Errors
-    /// - If the file is too large (> 4GB, or u32::MAX)
-    /// - If the file has no extension
-    /// - If the file extension is not supported
-    pub fn load_str<'a, P: AsRef<Path>>(
-        &self,
-        path: P,
-        source_text: &'a str,
-    ) -> Result<Vec<JavaScriptSource<'a>>, LoadError> {
-        if source_text.len() > u32::MAX as usize {
-            return Err(LoadError::TooLarge);
-        }
-
-        let path = path.as_ref();
-        let ext = path.extension().ok_or(LoadError::NoExtension)?;
-        // file extension is not unicode, we definitely don't support it.
-        let ext = ext.to_str().ok_or_else(|| LoadError::unsupported(ext))?;
-
-        // let source_type = SourceType::from_path(path);
-        if let Ok(source_type) = SourceType::from_path(path) {
-            Ok(vec![JavaScriptSource::new(source_text, source_type)])
-        } else {
-            let partial = PartialLoader::parse(ext, source_text);
-            partial.ok_or_else(|| LoadError::UnsupportedFileType(ext.to_string()))
-        }
-    }
 }
 
 #[derive(Debug, Clone)]
@@ -55,12 +28,6 @@ pub enum LoadError {
     TooLarge,
     NoExtension,
     UnsupportedFileType(String),
-}
-
-impl LoadError {
-    pub(super) fn unsupported(ext: &std::ffi::OsStr) -> Self {
-        Self::UnsupportedFileType(ext.to_string_lossy().to_string())
-    }
 }
 
 impl fmt::Display for LoadError {

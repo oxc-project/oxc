@@ -2,12 +2,12 @@ mod boolean;
 use oxc_ast::{
     AstKind,
     ast::{
-        BindingPatternKind, Expression, FormalParameters, FunctionBody, LogicalExpression,
-        MemberExpression, Statement,
+        BindingPatternKind, CallExpression, Expression, FormalParameters, FunctionBody,
+        LogicalExpression, MemberExpression, Statement,
     },
 };
 use oxc_semantic::AstNode;
-use oxc_span::ContentEq;
+use oxc_span::{ContentEq, Span};
 use oxc_syntax::operator::LogicalOperator;
 
 pub use self::boolean::*;
@@ -327,4 +327,41 @@ pub fn is_same_member_expression(
         right.object().get_inner_expression(),
         ctx,
     )
+}
+
+pub fn call_expr_member_expr_property_span(call_expr: &CallExpression) -> Span {
+    call_expr
+        .callee
+        .as_member_expression()
+        .and_then(oxc_ast::ast::MemberExpression::static_property_info)
+        .map_or(call_expr.span, |(span, _)| span)
+}
+
+pub fn does_expr_match_any_path<'a, P, S>(mut expr: &Expression, paths: P) -> bool
+where
+    P: IntoIterator<Item = S>,
+    S: AsRef<[&'a str]>,
+{
+    let mut path = Vec::new();
+
+    while let Some(member_expr) = expr.as_member_expression() {
+        let MemberExpression::StaticMemberExpression(static_mem_expr) = member_expr else {
+            return false;
+        };
+        path.push(static_mem_expr.property.name.as_str());
+
+        expr = member_expr.object().get_inner_expression();
+    }
+
+    let Expression::Identifier(ident) = expr else { return false };
+    path.push(ident.name.as_str());
+    let path = path.iter().rev();
+
+    for e in paths {
+        if e.as_ref().iter().zip(path.clone()).all(|(x, y)| x == y) {
+            return true;
+        }
+    }
+
+    false
 }

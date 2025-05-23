@@ -4,6 +4,19 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.71.0] - 2025-05-20
+
+- 65a6419 mangler: [**BREAKING**] `Mangler::build_with_semantic` take mut ref to `Semantic` (#11132) (overlookmotel)
+
+### Performance
+
+
+## [0.70.0] - 2025-05-15
+
+### Refactor
+
+- 751876b parser: Rewrite parse class element (#11035) (Boshen)
+
 ## [0.68.1] - 2025-05-04
 
 ### Features

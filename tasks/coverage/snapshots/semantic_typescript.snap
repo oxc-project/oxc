@@ -1,8 +1,8 @@
-commit: 15392346
+commit: 81c95189
 
 semantic_typescript Summary:
-AST Parsed     : 6528/6528 (100.00%)
-Positive Passed: 2843/6528 (43.55%)
+AST Parsed     : 6537/6537 (100.00%)
+Positive Passed: 2848/6537 (43.57%)
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/2dArrays.ts
 Symbol reference IDs mismatch for "Cell":
 after transform: SymbolId(0): [ReferenceId(1)]
@@ -1002,6 +1002,14 @@ rebuilt        : SymbolId(6): [ReferenceId(17)]
 Symbol reference IDs mismatch for "B":
 after transform: SymbolId(9): [ReferenceId(6), ReferenceId(9), ReferenceId(14)]
 rebuilt        : SymbolId(7): [ReferenceId(19)]
+
+semantic Error: tasks/coverage/typescript/tests/cases/compiler/assignmentToConditionalBrandedStringTemplateOrMapping.ts
+Scope children mismatch:
+after transform: ScopeId(0): [ScopeId(1), ScopeId(3), ScopeId(5), ScopeId(7)]
+rebuilt        : ScopeId(0): []
+Unresolved references mismatch:
+after transform: ["Uppercase"]
+rebuilt        : []
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/asyncAwaitWithCapturedBlockScopeVar.ts
 Unresolved references mismatch:
@@ -7629,6 +7637,14 @@ Symbol redeclarations mismatch for "f":
 after transform: SymbolId(0): [Span { start: 9, end: 10 }, Span { start: 30, end: 31 }, Span { start: 51, end: 52 }]
 rebuilt        : SymbolId(0): []
 
+semantic Error: tasks/coverage/typescript/tests/cases/compiler/declarationEmitGenericTypeParamerSerialization2.ts
+Scope children mismatch:
+after transform: ScopeId(0): [ScopeId(1), ScopeId(3), ScopeId(12), ScopeId(13)]
+rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2)]
+Scope children mismatch:
+after transform: ScopeId(13): [ScopeId(14)]
+rebuilt        : ScopeId(2): []
+
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/declarationEmitGlobalThisPreserved.ts
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(4), ScopeId(5), ScopeId(6), ScopeId(7), ScopeId(8), ScopeId(9), ScopeId(10), ScopeId(11), ScopeId(12), ScopeId(13), ScopeId(14), ScopeId(15), ScopeId(16), ScopeId(17), ScopeId(18), ScopeId(19), ScopeId(20), ScopeId(21), ScopeId(22), ScopeId(23), ScopeId(24), ScopeId(25), ScopeId(26), ScopeId(27), ScopeId(28), ScopeId(29), ScopeId(30), ScopeId(31), ScopeId(34), ScopeId(37), ScopeId(40), ScopeId(43), ScopeId(44), ScopeId(49), ScopeId(51), ScopeId(52), ScopeId(53), ScopeId(54), ScopeId(55), ScopeId(56)]
@@ -7791,6 +7807,44 @@ rebuilt        : ScopeId(0): [ScopeId(1)]
 Unresolved references mismatch:
 after transform: ["Parameters", "Record"]
 rebuilt        : []
+
+semantic Error: tasks/coverage/typescript/tests/cases/compiler/declarationEmitMappedTypePreservesTypeParameterConstraint.ts
+Bindings mismatch:
+after transform: ScopeId(0): ["ZodLiteral", "ZodType", "buildSchema"]
+rebuilt        : ScopeId(0): ["buildSchema", "entriesOf"]
+Scope children mismatch:
+after transform: ScopeId(0): [ScopeId(1), ScopeId(4), ScopeId(5), ScopeId(6), ScopeId(8), ScopeId(9), ScopeId(10), ScopeId(11), ScopeId(13), ScopeId(14), ScopeId(15), ScopeId(16), ScopeId(18), ScopeId(21), ScopeId(22)]
+rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2)]
+Bindings mismatch:
+after transform: ScopeId(22): []
+rebuilt        : ScopeId(2): ["o"]
+Symbol flags mismatch for "entriesOf":
+after transform: SymbolId(31): SymbolFlags(BlockScopedVariable | ConstVariable | TypeAlias)
+rebuilt        : SymbolId(2): SymbolFlags(BlockScopedVariable | ConstVariable)
+Symbol span mismatch for "entriesOf":
+after transform: SymbolId(31): Span { start: 1339, end: 1348 }
+rebuilt        : SymbolId(2): Span { start: 1406, end: 1415 }
+Symbol reference IDs mismatch for "entriesOf":
+after transform: SymbolId(31): [ReferenceId(54)]
+rebuilt        : SymbolId(2): []
+Symbol redeclarations mismatch for "entriesOf":
+after transform: SymbolId(31): [Span { start: 1339, end: 1348 }, Span { start: 1406, end: 1415 }]
+rebuilt        : SymbolId(2): []
+Symbol flags mismatch for "o":
+after transform: SymbolId(33): SymbolFlags(FunctionScopedVariable | TypeParameter)
+rebuilt        : SymbolId(3): SymbolFlags(FunctionScopedVariable)
+Symbol span mismatch for "o":
+after transform: SymbolId(33): Span { start: 1419, end: 1420 }
+rebuilt        : SymbolId(3): Span { start: 1437, end: 1441 }
+Symbol reference IDs mismatch for "o":
+after transform: SymbolId(33): [ReferenceId(51), ReferenceId(53), ReferenceId(55)]
+rebuilt        : SymbolId(3): [ReferenceId(1)]
+Symbol redeclarations mismatch for "o":
+after transform: SymbolId(33): [Span { start: 1419, end: 1420 }, Span { start: 1437, end: 1441 }]
+rebuilt        : SymbolId(3): []
+Unresolved references mismatch:
+after transform: ["Object", "Partial", "Pick", "Required"]
+rebuilt        : ["Object"]
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/declarationEmitMappedTypePropertyFromNumericStringKey.ts
 Scope children mismatch:
@@ -8138,6 +8192,11 @@ semantic Error: tasks/coverage/typescript/tests/cases/compiler/declarationEmitSc
 Symbol reference IDs mismatch for "v":
 after transform: SymbolId(3): [ReferenceId(0)]
 rebuilt        : SymbolId(3): []
+
+semantic Error: tasks/coverage/typescript/tests/cases/compiler/declarationEmitShadowing.ts
+Scope children mismatch:
+after transform: ScopeId(3): [ScopeId(4), ScopeId(5)]
+rebuilt        : ScopeId(4): [ScopeId(5)]
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/declarationEmitShadowingInferNotRenamed.ts
 Scope children mismatch:
@@ -29093,7 +29152,7 @@ after transform: SymbolId(1): Span { start: 90, end: 92 }
 rebuilt        : SymbolId(4): Span { start: 0, end: 0 }
 Symbol reference IDs mismatch for "C1":
 after transform: SymbolId(1): [ReferenceId(1), ReferenceId(5), ReferenceId(7), ReferenceId(9)]
-rebuilt        : SymbolId(4): [ReferenceId(4), ReferenceId(6), ReferenceId(10)]
+rebuilt        : SymbolId(4): [ReferenceId(3), ReferenceId(7), ReferenceId(9)]
 Symbol span mismatch for "C1":
 after transform: SymbolId(3): Span { start: 0, end: 0 }
 rebuilt        : SymbolId(5): Span { start: 90, end: 92 }
@@ -29102,7 +29161,7 @@ after transform: SymbolId(2): Span { start: 141, end: 143 }
 rebuilt        : SymbolId(6): Span { start: 0, end: 0 }
 Symbol reference IDs mismatch for "C2":
 after transform: SymbolId(2): [ReferenceId(3), ReferenceId(13), ReferenceId(15)]
-rebuilt        : SymbolId(6): [ReferenceId(13), ReferenceId(17)]
+rebuilt        : SymbolId(6): [ReferenceId(12), ReferenceId(16)]
 Symbol span mismatch for "C2":
 after transform: SymbolId(7): Span { start: 0, end: 0 }
 rebuilt        : SymbolId(7): Span { start: 141, end: 143 }
@@ -35726,7 +35785,7 @@ after transform: SymbolId(1): Span { start: 106, end: 129 }
 rebuilt        : SymbolId(5): Span { start: 0, end: 0 }
 Symbol reference IDs mismatch for "BulkEditPreviewProvider":
 after transform: SymbolId(1): [ReferenceId(0), ReferenceId(8), ReferenceId(10), ReferenceId(12), ReferenceId(14)]
-rebuilt        : SymbolId(5): [ReferenceId(7), ReferenceId(9), ReferenceId(11), ReferenceId(18)]
+rebuilt        : SymbolId(5): [ReferenceId(6), ReferenceId(13), ReferenceId(15), ReferenceId(17)]
 Symbol span mismatch for "BulkEditPreviewProvider":
 after transform: SymbolId(4): Span { start: 0, end: 0 }
 rebuilt        : SymbolId(6): Span { start: 106, end: 129 }
@@ -35791,7 +35850,7 @@ after transform: SymbolId(3): Span { start: 119, end: 129 }
 rebuilt        : SymbolId(3): Span { start: 0, end: 0 }
 Symbol reference IDs mismatch for "Testing123":
 after transform: SymbolId(3): [ReferenceId(1), ReferenceId(2), ReferenceId(4), ReferenceId(6), ReferenceId(8), ReferenceId(10), ReferenceId(13)]
-rebuilt        : SymbolId(3): [ReferenceId(2), ReferenceId(4), ReferenceId(6), ReferenceId(10), ReferenceId(11), ReferenceId(12)]
+rebuilt        : SymbolId(3): [ReferenceId(1), ReferenceId(5), ReferenceId(6), ReferenceId(8), ReferenceId(10), ReferenceId(12)]
 Symbol span mismatch for "Testing123":
 after transform: SymbolId(4): Span { start: 0, end: 0 }
 rebuilt        : SymbolId(4): Span { start: 119, end: 129 }
@@ -35834,7 +35893,7 @@ after transform: SymbolId(3): Span { start: 119, end: 129 }
 rebuilt        : SymbolId(3): Span { start: 0, end: 0 }
 Symbol reference IDs mismatch for "Testing123":
 after transform: SymbolId(3): [ReferenceId(1), ReferenceId(2), ReferenceId(4), ReferenceId(6), ReferenceId(8), ReferenceId(10), ReferenceId(13)]
-rebuilt        : SymbolId(3): [ReferenceId(2), ReferenceId(4), ReferenceId(6), ReferenceId(10), ReferenceId(11), ReferenceId(12)]
+rebuilt        : SymbolId(3): [ReferenceId(1), ReferenceId(5), ReferenceId(6), ReferenceId(8), ReferenceId(10), ReferenceId(12)]
 Symbol span mismatch for "Testing123":
 after transform: SymbolId(4): Span { start: 0, end: 0 }
 rebuilt        : SymbolId(4): Span { start: 119, end: 129 }
@@ -35993,7 +36052,7 @@ after transform: SymbolId(2): Span { start: 102, end: 103 }
 rebuilt        : SymbolId(4): Span { start: 0, end: 0 }
 Symbol reference IDs mismatch for "B":
 after transform: SymbolId(2): [ReferenceId(2), ReferenceId(3), ReferenceId(6), ReferenceId(8), ReferenceId(10), ReferenceId(12)]
-rebuilt        : SymbolId(4): [ReferenceId(6), ReferenceId(8), ReferenceId(10), ReferenceId(14)]
+rebuilt        : SymbolId(4): [ReferenceId(5), ReferenceId(9), ReferenceId(11), ReferenceId(13)]
 Symbol span mismatch for "B":
 after transform: SymbolId(3): Span { start: 0, end: 0 }
 rebuilt        : SymbolId(5): Span { start: 102, end: 103 }
@@ -38237,7 +38296,7 @@ after transform: SymbolId(3): Span { start: 51, end: 52 }
 rebuilt        : SymbolId(3): Span { start: 0, end: 0 }
 Symbol reference IDs mismatch for "C":
 after transform: SymbolId(3): [ReferenceId(3), ReferenceId(4), ReferenceId(6), ReferenceId(8), ReferenceId(10)]
-rebuilt        : SymbolId(3): [ReferenceId(5), ReferenceId(6), ReferenceId(10), ReferenceId(11)]
+rebuilt        : SymbolId(3): [ReferenceId(4), ReferenceId(8), ReferenceId(10), ReferenceId(11)]
 Symbol span mismatch for "C":
 after transform: SymbolId(5): Span { start: 0, end: 0 }
 rebuilt        : SymbolId(4): Span { start: 51, end: 52 }
@@ -38260,7 +38319,7 @@ after transform: SymbolId(3): Span { start: 58, end: 59 }
 rebuilt        : SymbolId(3): Span { start: 0, end: 0 }
 Symbol reference IDs mismatch for "C":
 after transform: SymbolId(3): [ReferenceId(3), ReferenceId(4), ReferenceId(6), ReferenceId(8), ReferenceId(10), ReferenceId(13)]
-rebuilt        : SymbolId(3): [ReferenceId(3), ReferenceId(4), ReferenceId(8), ReferenceId(9), ReferenceId(10)]
+rebuilt        : SymbolId(3): [ReferenceId(2), ReferenceId(6), ReferenceId(8), ReferenceId(9), ReferenceId(10)]
 Symbol span mismatch for "C":
 after transform: SymbolId(5): Span { start: 0, end: 0 }
 rebuilt        : SymbolId(4): Span { start: 58, end: 59 }
@@ -38283,7 +38342,7 @@ after transform: SymbolId(3): Span { start: 66, end: 67 }
 rebuilt        : SymbolId(3): Span { start: 0, end: 0 }
 Symbol reference IDs mismatch for "C":
 after transform: SymbolId(3): [ReferenceId(3), ReferenceId(4), ReferenceId(6), ReferenceId(8), ReferenceId(10), ReferenceId(13)]
-rebuilt        : SymbolId(3): [ReferenceId(3), ReferenceId(4), ReferenceId(8), ReferenceId(9), ReferenceId(10)]
+rebuilt        : SymbolId(3): [ReferenceId(2), ReferenceId(6), ReferenceId(8), ReferenceId(9), ReferenceId(10)]
 Symbol span mismatch for "C":
 after transform: SymbolId(5): Span { start: 0, end: 0 }
 rebuilt        : SymbolId(4): Span { start: 66, end: 67 }
@@ -38313,11 +38372,11 @@ rebuilt        : SymbolId(3): ScopeId(1)
 Symbol reference IDs mismatch for "_Class":
 after transform: SymbolId(3): [ReferenceId(6)]
 rebuilt        : SymbolId(3): []
-Reference symbol mismatch for "_Class":
-after transform: SymbolId(3) "_Class"
-rebuilt        : <None>
 Reference symbol mismatch for "dec":
 after transform: SymbolId(0) "dec"
+rebuilt        : <None>
+Reference symbol mismatch for "_Class":
+after transform: SymbolId(3) "_Class"
 rebuilt        : <None>
 Unresolved references mismatch:
 after transform: []
@@ -39030,7 +39089,7 @@ after transform: SymbolId(3): Span { start: 137, end: 138 }
 rebuilt        : SymbolId(9): Span { start: 0, end: 0 }
 Symbol reference IDs mismatch for "D":
 after transform: SymbolId(3): [ReferenceId(23), ReferenceId(25)]
-rebuilt        : SymbolId(9): [ReferenceId(20), ReferenceId(30), ReferenceId(33)]
+rebuilt        : SymbolId(9): [ReferenceId(19), ReferenceId(22), ReferenceId(24)]
 Symbol span mismatch for "D":
 after transform: SymbolId(14): Span { start: 0, end: 0 }
 rebuilt        : SymbolId(10): Span { start: 137, end: 138 }
@@ -39043,12 +39102,12 @@ rebuilt        : <None>
 Reference symbol mismatch for "dec":
 after transform: SymbolId(0) "dec"
 rebuilt        : <None>
-Reference symbol mismatch for "D":
-after transform: SymbolId(14) "D"
-rebuilt        : SymbolId(9) "D"
 Reference symbol mismatch for "dec":
 after transform: SymbolId(0) "dec"
 rebuilt        : <None>
+Reference symbol mismatch for "D":
+after transform: SymbolId(14) "D"
+rebuilt        : SymbolId(9) "D"
 Unresolved references mismatch:
 after transform: ["Function", "Object", "require"]
 rebuilt        : ["Function", "Object", "dec", "require"]
@@ -39065,7 +39124,7 @@ after transform: SymbolId(4): Span { start: 125, end: 126 }
 rebuilt        : SymbolId(4): Span { start: 0, end: 0 }
 Symbol reference IDs mismatch for "C":
 after transform: SymbolId(4): [ReferenceId(4), ReferenceId(6)]
-rebuilt        : SymbolId(4): [ReferenceId(4), ReferenceId(25), ReferenceId(28)]
+rebuilt        : SymbolId(4): [ReferenceId(3), ReferenceId(6), ReferenceId(8)]
 Symbol span mismatch for "C":
 after transform: SymbolId(5): Span { start: 0, end: 0 }
 rebuilt        : SymbolId(5): Span { start: 125, end: 126 }
@@ -39075,12 +39134,12 @@ rebuilt        : SymbolId(5): []
 Reference symbol mismatch for "Base":
 after transform: SymbolId(1) "Base"
 rebuilt        : <None>
-Reference symbol mismatch for "C":
-after transform: SymbolId(5) "C"
-rebuilt        : SymbolId(4) "C"
 Reference symbol mismatch for "dec":
 after transform: SymbolId(0) "dec"
 rebuilt        : <None>
+Reference symbol mismatch for "C":
+after transform: SymbolId(5) "C"
+rebuilt        : SymbolId(4) "C"
 Unresolved references mismatch:
 after transform: ["require"]
 rebuilt        : ["Base", "dec", "require"]
@@ -39094,7 +39153,7 @@ after transform: SymbolId(1): Span { start: 97, end: 99 }
 rebuilt        : SymbolId(5): Span { start: 0, end: 0 }
 Symbol reference IDs mismatch for "C1":
 after transform: SymbolId(1): [ReferenceId(3), ReferenceId(5)]
-rebuilt        : SymbolId(5): [ReferenceId(3), ReferenceId(7), ReferenceId(10)]
+rebuilt        : SymbolId(5): [ReferenceId(2), ReferenceId(5), ReferenceId(7)]
 Symbol span mismatch for "C1":
 after transform: SymbolId(4): Span { start: 0, end: 0 }
 rebuilt        : SymbolId(6): Span { start: 97, end: 99 }
@@ -39106,7 +39165,7 @@ after transform: SymbolId(2): Span { start: 239, end: 241 }
 rebuilt        : SymbolId(7): Span { start: 0, end: 0 }
 Symbol reference IDs mismatch for "C2":
 after transform: SymbolId(2): [ReferenceId(11), ReferenceId(13)]
-rebuilt        : SymbolId(7): [ReferenceId(12), ReferenceId(16), ReferenceId(19)]
+rebuilt        : SymbolId(7): [ReferenceId(11), ReferenceId(14), ReferenceId(16)]
 Symbol span mismatch for "C2":
 after transform: SymbolId(8): Span { start: 0, end: 0 }
 rebuilt        : SymbolId(8): Span { start: 239, end: 241 }
@@ -39118,13 +39177,16 @@ after transform: SymbolId(3): Span { start: 389, end: 391 }
 rebuilt        : SymbolId(9): Span { start: 0, end: 0 }
 Symbol reference IDs mismatch for "C3":
 after transform: SymbolId(3): [ReferenceId(19), ReferenceId(21)]
-rebuilt        : SymbolId(9): [ReferenceId(21), ReferenceId(25), ReferenceId(28)]
+rebuilt        : SymbolId(9): [ReferenceId(20), ReferenceId(23), ReferenceId(25)]
 Symbol span mismatch for "C3":
 after transform: SymbolId(10): Span { start: 0, end: 0 }
 rebuilt        : SymbolId(10): Span { start: 389, end: 391 }
 Symbol reference IDs mismatch for "C3":
 after transform: SymbolId(10): [ReferenceId(25)]
 rebuilt        : SymbolId(10): []
+Reference symbol mismatch for "dec":
+after transform: SymbolId(0) "dec"
+rebuilt        : <None>
 Reference symbol mismatch for "C1":
 after transform: SymbolId(4) "C1"
 rebuilt        : SymbolId(5) "C1"
@@ -39140,9 +39202,6 @@ rebuilt        : <None>
 Reference symbol mismatch for "C3":
 after transform: SymbolId(10) "C3"
 rebuilt        : SymbolId(9) "C3"
-Reference symbol mismatch for "dec":
-after transform: SymbolId(0) "dec"
-rebuilt        : <None>
 Unresolved references mismatch:
 after transform: ["require"]
 rebuilt        : ["dec", "require"]
@@ -39159,7 +39218,7 @@ after transform: SymbolId(3): Span { start: 96, end: 97 }
 rebuilt        : SymbolId(23): Span { start: 0, end: 0 }
 Symbol reference IDs mismatch for "C":
 after transform: SymbolId(3): [ReferenceId(11), ReferenceId(13)]
-rebuilt        : SymbolId(23): [ReferenceId(5), ReferenceId(170), ReferenceId(173)]
+rebuilt        : SymbolId(23): [ReferenceId(4), ReferenceId(7), ReferenceId(9)]
 Symbol span mismatch for "C":
 after transform: SymbolId(4): Span { start: 0, end: 0 }
 rebuilt        : SymbolId(24): Span { start: 96, end: 97 }
@@ -39169,12 +39228,12 @@ rebuilt        : SymbolId(24): []
 Reference symbol mismatch for "Base":
 after transform: SymbolId(1) "Base"
 rebuilt        : <None>
-Reference symbol mismatch for "C":
-after transform: SymbolId(4) "C"
-rebuilt        : SymbolId(23) "C"
 Reference symbol mismatch for "dec":
 after transform: SymbolId(0) "dec"
 rebuilt        : <None>
+Reference symbol mismatch for "C":
+after transform: SymbolId(4) "C"
+rebuilt        : SymbolId(23) "C"
 Unresolved references mismatch:
 after transform: ["require"]
 rebuilt        : ["Base", "dec", "require"]
@@ -39191,7 +39250,7 @@ after transform: SymbolId(4): Span { start: 127, end: 128 }
 rebuilt        : SymbolId(5): Span { start: 0, end: 0 }
 Symbol reference IDs mismatch for "C":
 after transform: SymbolId(4): [ReferenceId(4), ReferenceId(6), ReferenceId(10), ReferenceId(15), ReferenceId(20), ReferenceId(25), ReferenceId(30), ReferenceId(35)]
-rebuilt        : SymbolId(5): [ReferenceId(5), ReferenceId(7), ReferenceId(12), ReferenceId(17), ReferenceId(23), ReferenceId(28), ReferenceId(33), ReferenceId(38), ReferenceId(41)]
+rebuilt        : SymbolId(5): [ReferenceId(4), ReferenceId(7), ReferenceId(9), ReferenceId(11), ReferenceId(16), ReferenceId(21), ReferenceId(27), ReferenceId(32), ReferenceId(37)]
 Symbol span mismatch for "C":
 after transform: SymbolId(5): Span { start: 0, end: 0 }
 rebuilt        : SymbolId(6): Span { start: 127, end: 128 }
@@ -39201,12 +39260,12 @@ rebuilt        : SymbolId(6): []
 Reference symbol mismatch for "Base":
 after transform: SymbolId(1) "Base"
 rebuilt        : <None>
-Reference symbol mismatch for "C":
-after transform: SymbolId(5) "C"
-rebuilt        : SymbolId(5) "C"
 Reference symbol mismatch for "dec":
 after transform: SymbolId(0) "dec"
 rebuilt        : <None>
+Reference symbol mismatch for "C":
+after transform: SymbolId(5) "C"
+rebuilt        : SymbolId(5) "C"
 Unresolved references mismatch:
 after transform: ["require"]
 rebuilt        : ["Base", "dec", "require"]
@@ -39223,7 +39282,7 @@ after transform: SymbolId(3): Span { start: 96, end: 98 }
 rebuilt        : SymbolId(26): Span { start: 0, end: 0 }
 Symbol reference IDs mismatch for "C1":
 after transform: SymbolId(3): [ReferenceId(15), ReferenceId(17), ReferenceId(21), ReferenceId(26), ReferenceId(34), ReferenceId(47), ReferenceId(60), ReferenceId(70), ReferenceId(80), ReferenceId(82), ReferenceId(84)]
-rebuilt        : SymbolId(26): [ReferenceId(6), ReferenceId(8), ReferenceId(13), ReferenceId(18), ReferenceId(26), ReferenceId(39), ReferenceId(52), ReferenceId(62), ReferenceId(72), ReferenceId(74), ReferenceId(75), ReferenceId(78)]
+rebuilt        : SymbolId(26): [ReferenceId(5), ReferenceId(8), ReferenceId(10), ReferenceId(12), ReferenceId(17), ReferenceId(22), ReferenceId(30), ReferenceId(43), ReferenceId(56), ReferenceId(66), ReferenceId(76), ReferenceId(78)]
 Symbol span mismatch for "C1":
 after transform: SymbolId(6): Span { start: 0, end: 0 }
 rebuilt        : SymbolId(27): Span { start: 96, end: 98 }
@@ -39235,7 +39294,7 @@ after transform: SymbolId(4): Span { start: 389, end: 391 }
 rebuilt        : SymbolId(28): Span { start: 0, end: 0 }
 Symbol reference IDs mismatch for "C2":
 after transform: SymbolId(4): [ReferenceId(88), ReferenceId(90), ReferenceId(94), ReferenceId(99), ReferenceId(107), ReferenceId(120), ReferenceId(133), ReferenceId(143), ReferenceId(153), ReferenceId(155), ReferenceId(157)]
-rebuilt        : SymbolId(28): [ReferenceId(81), ReferenceId(83), ReferenceId(88), ReferenceId(93), ReferenceId(101), ReferenceId(114), ReferenceId(127), ReferenceId(137), ReferenceId(147), ReferenceId(149), ReferenceId(150), ReferenceId(153)]
+rebuilt        : SymbolId(28): [ReferenceId(80), ReferenceId(83), ReferenceId(85), ReferenceId(87), ReferenceId(92), ReferenceId(97), ReferenceId(105), ReferenceId(118), ReferenceId(131), ReferenceId(141), ReferenceId(151), ReferenceId(153)]
 Symbol span mismatch for "C2":
 after transform: SymbolId(18): Span { start: 0, end: 0 }
 rebuilt        : SymbolId(29): Span { start: 389, end: 391 }
@@ -39247,7 +39306,7 @@ after transform: SymbolId(5): Span { start: 709, end: 711 }
 rebuilt        : SymbolId(30): Span { start: 0, end: 0 }
 Symbol reference IDs mismatch for "C3":
 after transform: SymbolId(5): [ReferenceId(161), ReferenceId(163), ReferenceId(167), ReferenceId(172), ReferenceId(181), ReferenceId(195), ReferenceId(209), ReferenceId(220), ReferenceId(231), ReferenceId(233), ReferenceId(235)]
-rebuilt        : SymbolId(30): [ReferenceId(156), ReferenceId(158), ReferenceId(164), ReferenceId(170), ReferenceId(180), ReferenceId(195), ReferenceId(210), ReferenceId(222), ReferenceId(234), ReferenceId(237), ReferenceId(239), ReferenceId(242)]
+rebuilt        : SymbolId(30): [ReferenceId(155), ReferenceId(158), ReferenceId(160), ReferenceId(162), ReferenceId(168), ReferenceId(174), ReferenceId(184), ReferenceId(199), ReferenceId(214), ReferenceId(226), ReferenceId(238), ReferenceId(241)]
 Symbol span mismatch for "C3":
 after transform: SymbolId(26): Span { start: 0, end: 0 }
 rebuilt        : SymbolId(31): Span { start: 709, end: 711 }
@@ -39257,30 +39316,30 @@ rebuilt        : SymbolId(31): []
 Reference symbol mismatch for "Base":
 after transform: SymbolId(1) "Base"
 rebuilt        : <None>
-Reference symbol mismatch for "C1":
-after transform: SymbolId(6) "C1"
-rebuilt        : SymbolId(26) "C1"
 Reference symbol mismatch for "dec":
 after transform: SymbolId(0) "dec"
 rebuilt        : <None>
+Reference symbol mismatch for "C1":
+after transform: SymbolId(6) "C1"
+rebuilt        : SymbolId(26) "C1"
 Reference symbol mismatch for "Base":
 after transform: SymbolId(1) "Base"
+rebuilt        : <None>
+Reference symbol mismatch for "dec":
+after transform: SymbolId(0) "dec"
 rebuilt        : <None>
 Reference symbol mismatch for "C2":
 after transform: SymbolId(18) "C2"
 rebuilt        : SymbolId(28) "C2"
-Reference symbol mismatch for "dec":
-after transform: SymbolId(0) "dec"
-rebuilt        : <None>
 Reference symbol mismatch for "Base":
 after transform: SymbolId(1) "Base"
+rebuilt        : <None>
+Reference symbol mismatch for "dec":
+after transform: SymbolId(0) "dec"
 rebuilt        : <None>
 Reference symbol mismatch for "C3":
 after transform: SymbolId(26) "C3"
 rebuilt        : SymbolId(30) "C3"
-Reference symbol mismatch for "dec":
-after transform: SymbolId(0) "dec"
-rebuilt        : <None>
 Unresolved references mismatch:
 after transform: ["require"]
 rebuilt        : ["Base", "dec", "require"]
@@ -39317,19 +39376,19 @@ after transform: SymbolId(1): Span { start: 34, end: 35 }
 rebuilt        : SymbolId(3): Span { start: 0, end: 0 }
 Symbol reference IDs mismatch for "C":
 after transform: SymbolId(1): [ReferenceId(1), ReferenceId(3), ReferenceId(6)]
-rebuilt        : SymbolId(3): [ReferenceId(3), ReferenceId(6), ReferenceId(8), ReferenceId(11)]
+rebuilt        : SymbolId(3): [ReferenceId(2), ReferenceId(5), ReferenceId(7), ReferenceId(10)]
 Symbol span mismatch for "C":
 after transform: SymbolId(2): Span { start: 0, end: 0 }
 rebuilt        : SymbolId(4): Span { start: 34, end: 35 }
 Symbol reference IDs mismatch for "C":
 after transform: SymbolId(2): [ReferenceId(8)]
 rebuilt        : SymbolId(4): []
-Reference symbol mismatch for "C":
-after transform: SymbolId(2) "C"
-rebuilt        : SymbolId(3) "C"
 Reference symbol mismatch for "dec":
 after transform: SymbolId(0) "dec"
 rebuilt        : <None>
+Reference symbol mismatch for "C":
+after transform: SymbolId(2) "C"
+rebuilt        : SymbolId(3) "C"
 Unresolved references mismatch:
 after transform: ["require"]
 rebuilt        : ["dec", "require"]
@@ -39343,19 +39402,19 @@ after transform: SymbolId(1): Span { start: 34, end: 35 }
 rebuilt        : SymbolId(3): Span { start: 0, end: 0 }
 Symbol reference IDs mismatch for "C":
 after transform: SymbolId(1): [ReferenceId(1), ReferenceId(3), ReferenceId(4), ReferenceId(8)]
-rebuilt        : SymbolId(3): [ReferenceId(3), ReferenceId(6), ReferenceId(9), ReferenceId(10), ReferenceId(13)]
+rebuilt        : SymbolId(3): [ReferenceId(3), ReferenceId(4), ReferenceId(7), ReferenceId(9), ReferenceId(12)]
 Symbol span mismatch for "C":
 after transform: SymbolId(2): Span { start: 0, end: 0 }
 rebuilt        : SymbolId(4): Span { start: 34, end: 35 }
 Symbol reference IDs mismatch for "C":
 after transform: SymbolId(2): [ReferenceId(10)]
 rebuilt        : SymbolId(4): []
-Reference symbol mismatch for "C":
-after transform: SymbolId(2) "C"
-rebuilt        : SymbolId(3) "C"
 Reference symbol mismatch for "dec":
 after transform: SymbolId(0) "dec"
 rebuilt        : <None>
+Reference symbol mismatch for "C":
+after transform: SymbolId(2) "C"
+rebuilt        : SymbolId(3) "C"
 Unresolved references mismatch:
 after transform: ["require"]
 rebuilt        : ["dec", "require"]
@@ -39775,7 +39834,7 @@ after transform: SymbolId(3): Span { start: 199, end: 200 }
 rebuilt        : SymbolId(6): Span { start: 0, end: 0 }
 Symbol reference IDs mismatch for "D":
 after transform: SymbolId(3): [ReferenceId(19), ReferenceId(21), ReferenceId(22)]
-rebuilt        : SymbolId(6): [ReferenceId(21), ReferenceId(25), ReferenceId(26), ReferenceId(29)]
+rebuilt        : SymbolId(6): [ReferenceId(21), ReferenceId(22), ReferenceId(25), ReferenceId(27)]
 Symbol span mismatch for "D":
 after transform: SymbolId(7): Span { start: 0, end: 0 }
 rebuilt        : SymbolId(7): Span { start: 199, end: 200 }
@@ -39794,12 +39853,12 @@ rebuilt        : <None>
 Reference symbol mismatch for "dec":
 after transform: SymbolId(0) "dec"
 rebuilt        : <None>
-Reference symbol mismatch for "D":
-after transform: SymbolId(7) "D"
-rebuilt        : SymbolId(6) "D"
 Reference symbol mismatch for "dec":
 after transform: SymbolId(0) "dec"
 rebuilt        : <None>
+Reference symbol mismatch for "D":
+after transform: SymbolId(7) "D"
+rebuilt        : SymbolId(6) "D"
 Unresolved references mismatch:
 after transform: ["Object", "require"]
 rebuilt        : ["Object", "dec", "require"]
@@ -39813,7 +39872,7 @@ after transform: SymbolId(2): Span { start: 76, end: 77 }
 rebuilt        : SymbolId(6): Span { start: 0, end: 0 }
 Symbol reference IDs mismatch for "D":
 after transform: SymbolId(2): [ReferenceId(12), ReferenceId(14)]
-rebuilt        : SymbolId(6): [ReferenceId(9), ReferenceId(18), ReferenceId(21)]
+rebuilt        : SymbolId(6): [ReferenceId(8), ReferenceId(11), ReferenceId(13)]
 Symbol span mismatch for "D":
 after transform: SymbolId(9): Span { start: 0, end: 0 }
 rebuilt        : SymbolId(7): Span { start: 76, end: 77 }
@@ -39823,12 +39882,12 @@ rebuilt        : SymbolId(7): []
 Reference symbol mismatch for "dec":
 after transform: SymbolId(0) "dec"
 rebuilt        : <None>
-Reference symbol mismatch for "D":
-after transform: SymbolId(9) "D"
-rebuilt        : SymbolId(6) "D"
 Reference symbol mismatch for "dec":
 after transform: SymbolId(0) "dec"
 rebuilt        : <None>
+Reference symbol mismatch for "D":
+after transform: SymbolId(9) "D"
+rebuilt        : SymbolId(6) "D"
 Unresolved references mismatch:
 after transform: ["Object", "require"]
 rebuilt        : ["Object", "dec", "require"]
@@ -39842,13 +39901,16 @@ after transform: SymbolId(2): Span { start: 85, end: 86 }
 rebuilt        : SymbolId(5): Span { start: 0, end: 0 }
 Symbol reference IDs mismatch for "D":
 after transform: SymbolId(2): [ReferenceId(12), ReferenceId(14), ReferenceId(15)]
-rebuilt        : SymbolId(5): [ReferenceId(9), ReferenceId(19), ReferenceId(20), ReferenceId(23)]
+rebuilt        : SymbolId(5): [ReferenceId(9), ReferenceId(10), ReferenceId(13), ReferenceId(15)]
 Symbol span mismatch for "D":
 after transform: SymbolId(7): Span { start: 0, end: 0 }
 rebuilt        : SymbolId(6): Span { start: 85, end: 86 }
 Symbol reference IDs mismatch for "D":
 after transform: SymbolId(7): [ReferenceId(19)]
 rebuilt        : SymbolId(6): []
+Reference symbol mismatch for "dec":
+after transform: SymbolId(0) "dec"
+rebuilt        : <None>
 Reference symbol mismatch for "dec":
 after transform: SymbolId(0) "dec"
 rebuilt        : <None>
@@ -39859,9 +39921,6 @@ Reference symbol mismatch for "":
 after transform: SymbolId(0) "dec"
 rebuilt        : <None>
 Reference symbol mismatch for "":
-after transform: SymbolId(0) "dec"
-rebuilt        : <None>
-Reference symbol mismatch for "dec":
 after transform: SymbolId(0) "dec"
 rebuilt        : <None>
 Unresolved references mismatch:
@@ -40415,124 +40474,124 @@ after transform: ScopeId(2): [ScopeId(3), ScopeId(4), ScopeId(5), ScopeId(7), Sc
 rebuilt        : ScopeId(1): [ScopeId(2), ScopeId(3), ScopeId(4), ScopeId(5), ScopeId(6), ScopeId(7), ScopeId(8)]
 Scope flags mismatch:
 after transform: ScopeId(3): ScopeFlags(StrictMode | Function | Arrow)
-rebuilt        : ScopeId(15): ScopeFlags(Function | Arrow)
+rebuilt        : ScopeId(9): ScopeFlags(Function | Arrow)
 Scope parent mismatch:
 after transform: ScopeId(3): Some(ScopeId(2))
-rebuilt        : ScopeId(15): Some(ScopeId(0))
+rebuilt        : ScopeId(9): Some(ScopeId(0))
 Scope flags mismatch:
 after transform: ScopeId(5): ScopeFlags(StrictMode | Function | Arrow)
-rebuilt        : ScopeId(16): ScopeFlags(Function | Arrow)
+rebuilt        : ScopeId(10): ScopeFlags(Function | Arrow)
 Scope parent mismatch:
 after transform: ScopeId(5): Some(ScopeId(2))
-rebuilt        : ScopeId(16): Some(ScopeId(0))
+rebuilt        : ScopeId(10): Some(ScopeId(0))
 Scope flags mismatch:
 after transform: ScopeId(7): ScopeFlags(StrictMode | Function | Arrow)
-rebuilt        : ScopeId(17): ScopeFlags(Function | Arrow)
+rebuilt        : ScopeId(11): ScopeFlags(Function | Arrow)
 Scope parent mismatch:
 after transform: ScopeId(7): Some(ScopeId(2))
-rebuilt        : ScopeId(17): Some(ScopeId(0))
+rebuilt        : ScopeId(11): Some(ScopeId(0))
 Scope flags mismatch:
 after transform: ScopeId(9): ScopeFlags(StrictMode | Function | Arrow)
-rebuilt        : ScopeId(18): ScopeFlags(Function | Arrow)
+rebuilt        : ScopeId(12): ScopeFlags(Function | Arrow)
 Scope parent mismatch:
 after transform: ScopeId(9): Some(ScopeId(2))
-rebuilt        : ScopeId(18): Some(ScopeId(0))
+rebuilt        : ScopeId(12): Some(ScopeId(0))
 Scope flags mismatch:
 after transform: ScopeId(11): ScopeFlags(StrictMode | Function | Arrow)
-rebuilt        : ScopeId(19): ScopeFlags(Function | Arrow)
+rebuilt        : ScopeId(13): ScopeFlags(Function | Arrow)
 Scope parent mismatch:
 after transform: ScopeId(11): Some(ScopeId(2))
-rebuilt        : ScopeId(19): Some(ScopeId(0))
+rebuilt        : ScopeId(13): Some(ScopeId(0))
 Scope flags mismatch:
 after transform: ScopeId(13): ScopeFlags(StrictMode | Function | Arrow)
-rebuilt        : ScopeId(20): ScopeFlags(Function | Arrow)
+rebuilt        : ScopeId(14): ScopeFlags(Function | Arrow)
 Scope parent mismatch:
 after transform: ScopeId(13): Some(ScopeId(2))
-rebuilt        : ScopeId(20): Some(ScopeId(0))
+rebuilt        : ScopeId(14): Some(ScopeId(0))
 Scope flags mismatch:
 after transform: ScopeId(15): ScopeFlags(StrictMode | Function | Arrow)
-rebuilt        : ScopeId(21): ScopeFlags(Function | Arrow)
+rebuilt        : ScopeId(15): ScopeFlags(Function | Arrow)
 Scope parent mismatch:
 after transform: ScopeId(15): Some(ScopeId(2))
-rebuilt        : ScopeId(21): Some(ScopeId(0))
+rebuilt        : ScopeId(15): Some(ScopeId(0))
 Scope flags mismatch:
 after transform: ScopeId(16): ScopeFlags(StrictMode | Function | Arrow)
-rebuilt        : ScopeId(22): ScopeFlags(Function | Arrow)
+rebuilt        : ScopeId(16): ScopeFlags(Function | Arrow)
 Scope parent mismatch:
 after transform: ScopeId(16): Some(ScopeId(2))
-rebuilt        : ScopeId(22): Some(ScopeId(0))
+rebuilt        : ScopeId(16): Some(ScopeId(0))
 Scope flags mismatch:
 after transform: ScopeId(17): ScopeFlags(StrictMode | Function | Arrow)
-rebuilt        : ScopeId(23): ScopeFlags(Function | Arrow)
+rebuilt        : ScopeId(17): ScopeFlags(Function | Arrow)
 Scope parent mismatch:
 after transform: ScopeId(17): Some(ScopeId(2))
-rebuilt        : ScopeId(23): Some(ScopeId(0))
+rebuilt        : ScopeId(17): Some(ScopeId(0))
 Scope flags mismatch:
 after transform: ScopeId(18): ScopeFlags(StrictMode | Function | Arrow)
-rebuilt        : ScopeId(24): ScopeFlags(Function | Arrow)
+rebuilt        : ScopeId(18): ScopeFlags(Function | Arrow)
 Scope parent mismatch:
 after transform: ScopeId(18): Some(ScopeId(2))
-rebuilt        : ScopeId(24): Some(ScopeId(0))
+rebuilt        : ScopeId(18): Some(ScopeId(0))
 Scope flags mismatch:
 after transform: ScopeId(19): ScopeFlags(StrictMode | Function | Arrow)
-rebuilt        : ScopeId(25): ScopeFlags(Function | Arrow)
+rebuilt        : ScopeId(19): ScopeFlags(Function | Arrow)
 Scope parent mismatch:
 after transform: ScopeId(19): Some(ScopeId(2))
-rebuilt        : ScopeId(25): Some(ScopeId(0))
+rebuilt        : ScopeId(19): Some(ScopeId(0))
 Scope flags mismatch:
 after transform: ScopeId(21): ScopeFlags(StrictMode | Function | Arrow)
-rebuilt        : ScopeId(26): ScopeFlags(Function | Arrow)
+rebuilt        : ScopeId(20): ScopeFlags(Function | Arrow)
 Scope parent mismatch:
 after transform: ScopeId(21): Some(ScopeId(2))
-rebuilt        : ScopeId(26): Some(ScopeId(0))
+rebuilt        : ScopeId(20): Some(ScopeId(0))
 Scope flags mismatch:
 after transform: ScopeId(23): ScopeFlags(StrictMode | Function | Arrow)
-rebuilt        : ScopeId(27): ScopeFlags(Function | Arrow)
+rebuilt        : ScopeId(21): ScopeFlags(Function | Arrow)
 Scope parent mismatch:
 after transform: ScopeId(23): Some(ScopeId(2))
-rebuilt        : ScopeId(27): Some(ScopeId(0))
+rebuilt        : ScopeId(21): Some(ScopeId(0))
 Scope flags mismatch:
 after transform: ScopeId(25): ScopeFlags(StrictMode | Function | Arrow)
-rebuilt        : ScopeId(28): ScopeFlags(Function | Arrow)
+rebuilt        : ScopeId(22): ScopeFlags(Function | Arrow)
 Scope parent mismatch:
 after transform: ScopeId(25): Some(ScopeId(2))
-rebuilt        : ScopeId(28): Some(ScopeId(0))
+rebuilt        : ScopeId(22): Some(ScopeId(0))
 Scope flags mismatch:
 after transform: ScopeId(27): ScopeFlags(StrictMode | Function | Arrow)
-rebuilt        : ScopeId(29): ScopeFlags(Function | Arrow)
+rebuilt        : ScopeId(23): ScopeFlags(Function | Arrow)
 Scope parent mismatch:
 after transform: ScopeId(27): Some(ScopeId(2))
-rebuilt        : ScopeId(29): Some(ScopeId(0))
+rebuilt        : ScopeId(23): Some(ScopeId(0))
 Scope flags mismatch:
 after transform: ScopeId(29): ScopeFlags(StrictMode | Function | Arrow)
-rebuilt        : ScopeId(30): ScopeFlags(Function | Arrow)
+rebuilt        : ScopeId(24): ScopeFlags(Function | Arrow)
 Scope parent mismatch:
 after transform: ScopeId(29): Some(ScopeId(2))
-rebuilt        : ScopeId(30): Some(ScopeId(0))
+rebuilt        : ScopeId(24): Some(ScopeId(0))
 Scope flags mismatch:
 after transform: ScopeId(31): ScopeFlags(StrictMode | Function | Arrow)
-rebuilt        : ScopeId(31): ScopeFlags(Function | Arrow)
+rebuilt        : ScopeId(25): ScopeFlags(Function | Arrow)
 Scope parent mismatch:
 after transform: ScopeId(31): Some(ScopeId(2))
-rebuilt        : ScopeId(31): Some(ScopeId(0))
+rebuilt        : ScopeId(25): Some(ScopeId(0))
 Scope flags mismatch:
 after transform: ScopeId(32): ScopeFlags(StrictMode | Function | Arrow)
-rebuilt        : ScopeId(32): ScopeFlags(Function | Arrow)
+rebuilt        : ScopeId(26): ScopeFlags(Function | Arrow)
 Scope parent mismatch:
 after transform: ScopeId(32): Some(ScopeId(2))
-rebuilt        : ScopeId(32): Some(ScopeId(0))
+rebuilt        : ScopeId(26): Some(ScopeId(0))
 Scope flags mismatch:
 after transform: ScopeId(33): ScopeFlags(StrictMode | Function | Arrow)
-rebuilt        : ScopeId(33): ScopeFlags(Function | Arrow)
+rebuilt        : ScopeId(27): ScopeFlags(Function | Arrow)
 Scope parent mismatch:
 after transform: ScopeId(33): Some(ScopeId(2))
-rebuilt        : ScopeId(33): Some(ScopeId(0))
+rebuilt        : ScopeId(27): Some(ScopeId(0))
 Scope flags mismatch:
 after transform: ScopeId(34): ScopeFlags(StrictMode | Function | Arrow)
-rebuilt        : ScopeId(34): ScopeFlags(Function | Arrow)
+rebuilt        : ScopeId(28): ScopeFlags(Function | Arrow)
 Scope parent mismatch:
 after transform: ScopeId(34): Some(ScopeId(2))
-rebuilt        : ScopeId(34): Some(ScopeId(0))
+rebuilt        : ScopeId(28): Some(ScopeId(0))
 Symbol span mismatch for "C":
 after transform: SymbolId(0): Span { start: 23, end: 24 }
 rebuilt        : SymbolId(7): Span { start: 0, end: 0 }
@@ -44229,7 +44288,7 @@ after transform: SymbolId(2): Span { start: 69, end: 70 }
 rebuilt        : SymbolId(3): Span { start: 0, end: 0 }
 Symbol reference IDs mismatch for "C":
 after transform: SymbolId(2): [ReferenceId(1), ReferenceId(4), ReferenceId(6), ReferenceId(8), ReferenceId(11)]
-rebuilt        : SymbolId(3): [ReferenceId(4), ReferenceId(5), ReferenceId(9), ReferenceId(10)]
+rebuilt        : SymbolId(3): [ReferenceId(3), ReferenceId(7), ReferenceId(9), ReferenceId(10)]
 Symbol span mismatch for "C":
 after transform: SymbolId(4): Span { start: 0, end: 0 }
 rebuilt        : SymbolId(4): Span { start: 69, end: 70 }
@@ -44370,7 +44429,7 @@ after transform: SymbolId(2): Span { start: 69, end: 70 }
 rebuilt        : SymbolId(3): Span { start: 0, end: 0 }
 Symbol reference IDs mismatch for "C":
 after transform: SymbolId(2): [ReferenceId(1), ReferenceId(4), ReferenceId(6), ReferenceId(8), ReferenceId(11)]
-rebuilt        : SymbolId(3): [ReferenceId(4), ReferenceId(5), ReferenceId(9), ReferenceId(10)]
+rebuilt        : SymbolId(3): [ReferenceId(3), ReferenceId(7), ReferenceId(9), ReferenceId(10)]
 Symbol span mismatch for "C":
 after transform: SymbolId(4): Span { start: 0, end: 0 }
 rebuilt        : SymbolId(4): Span { start: 69, end: 70 }

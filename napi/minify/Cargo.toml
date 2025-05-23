@@ -33,11 +33,14 @@ oxc_syntax = { workspace = true }
 napi = { workspace = true }
 napi-derive = { workspace = true }
 
-[target.'cfg(all(not(target_os = "linux"), not(target_os = "freebsd"), not(target_arch = "arm"), not(target_family = "wasm")))'.dependencies]
-mimalloc-safe = { workspace = true, features = ["skip_collect_on_exit"], optional = true }
+[target.'cfg(not(any(target_os = "linux", target_os = "freebsd", target_arch = "arm", target_family = "wasm")))'.dependencies]
+mimalloc-safe = { workspace = true, optional = true, features = ["skip_collect_on_exit"] }
 
-[target.'cfg(any(all(target_os = "linux", not(target_arch = "arm")), target_os = "freebsd"))'.dependencies]
-mimalloc-safe = { workspace = true, features = ["skip_collect_on_exit", "local_dynamic_tls"], optional = true }
+[target.'cfg(all(target_os = "linux", not(target_arch = "arm"), not(target_arch = "aarch64")))'.dependencies]
+mimalloc-safe = { workspace = true, optional = true, features = ["skip_collect_on_exit", "local_dynamic_tls"] }
+
+[target.'cfg(all(target_os = "linux", target_arch = "aarch64"))'.dependencies]
+mimalloc-safe = { workspace = true, optional = true, features = ["skip_collect_on_exit", "local_dynamic_tls", "no_opt_arch"] }
 
 [build-dependencies]
 napi-build = { workspace = true }

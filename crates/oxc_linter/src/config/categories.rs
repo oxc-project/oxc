@@ -1,4 +1,7 @@
-use std::{borrow::Cow, ops::Deref};
+use std::{
+    borrow::Cow,
+    ops::{Deref, DerefMut},
+};
 
 use rustc_hash::FxHashMap;
 use schemars::JsonSchema;
@@ -15,6 +18,12 @@ impl Deref for OxlintCategories {
 
     fn deref(&self) -> &Self::Target {
         &self.0
+    }
+}
+
+impl DerefMut for OxlintCategories {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.0
     }
 }
 

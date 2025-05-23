@@ -9,9 +9,9 @@ use std::fmt::{self, Display};
 #[repr(u8)]
 #[non_exhaustive]
 pub enum Kind {
-    Undetermined,
     #[default]
-    Eof,
+    Eof = 0,
+    Undetermined,
     Skip, // Whitespace, line breaks, comments
     // 12.5 Hashbang Comments
     HashbangComment,
@@ -228,8 +228,10 @@ impl Kind {
     /// [Identifiers](https://tc39.es/ecma262/#sec-identifiers)
     /// `IdentifierReference`
     #[inline]
-    pub fn is_identifier_reference(self, r#yield: bool, r#await: bool) -> bool {
-        self.is_identifier() || (!r#yield && self == Yield) || (!r#await && self == Await)
+    pub fn is_identifier_reference(self, is_yield_context: bool, is_await_context: bool) -> bool {
+        self.is_identifier()
+            || (!is_yield_context && self == Yield)
+            || (!is_await_context && self == Await)
     }
 
     /// `BindingIdentifier`
@@ -240,8 +242,10 @@ impl Kind {
 
     /// `LabelIdentifier`
     #[inline]
-    pub fn is_label_identifier(self, r#yield: bool, r#await: bool) -> bool {
-        self.is_identifier() || (!r#yield && self == Yield) || (!r#await && self == Await)
+    pub fn is_label_identifier(self, is_yield_context: bool, is_await_context: bool) -> bool {
+        self.is_identifier()
+            || (!is_yield_context && self == Yield)
+            || (!is_await_context && self == Await)
     }
 
     /// Identifier
@@ -255,8 +259,8 @@ impl Kind {
     ///
     /// <https://github.com/microsoft/TypeScript/blob/15392346d05045742e653eab5c87538ff2a3c863/src/compiler/parser.ts#L2316-L2335>
     #[inline]
-    pub fn is_ts_identifier(self, r#yield: bool, r#await: bool) -> bool {
-        self.is_identifier_reference(r#yield, r#await)
+    pub fn is_ts_identifier(self, is_yield_context: bool, is_await_context: bool) -> bool {
+        self.is_identifier_reference(is_yield_context, is_await_context)
             && !self.is_strict_mode_contextual_keyword()
             && !self.is_contextual_keyword()
     }
@@ -264,7 +268,7 @@ impl Kind {
     /// `IdentifierName`
     #[inline]
     pub fn is_identifier_name(self) -> bool {
-        matches!(self, Ident) || self.is_all_keyword()
+        matches!(self, Ident) || self.is_any_keyword()
     }
 
     /// Check the succeeding token of a `let` keyword.
@@ -274,7 +278,7 @@ impl Kind {
     /// ```
     #[inline]
     pub fn is_after_let(self) -> bool {
-        self != Self::In && (matches!(self, LCurly | LBrack | Ident) || self.is_all_keyword())
+        self != Self::In && (matches!(self, LCurly | LBrack | Ident) || self.is_any_keyword())
     }
 
     /// Section 13.2.4 Literals
@@ -305,9 +309,7 @@ impl Kind {
 
     #[inline]
     pub fn is_identifier_or_keyword(self) -> bool {
-        self.is_literal_property_name()
-            || matches!(self, Self::PrivateIdentifier)
-            || self.is_all_keyword()
+        self.is_literal_property_name() || matches!(self, Self::PrivateIdentifier)
     }
 
     #[inline]
@@ -360,7 +362,7 @@ impl Kind {
 
     /// [Keywords and Reserved Words](https://tc39.es/ecma262/#sec-keywords-and-reserved-words)
     #[inline]
-    pub fn is_all_keyword(self) -> bool {
+    pub fn is_any_keyword(self) -> bool {
         self.is_reserved_keyword()
             || self.is_contextual_keyword()
             || self.is_strict_mode_contextual_keyword()

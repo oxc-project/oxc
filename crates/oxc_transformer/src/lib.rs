@@ -120,12 +120,7 @@ impl<'a> Transformer<'a> {
         self.ctx.source_type = program.source_type;
         self.ctx.source_text = program.source_text;
 
-        // Update options from comments when source type is JSX or TypeScript which has enabled `only_remove_type_imports`.
-        // Because if `only_remove_type_imports` is enabled, no imports will be removed, so that we don't care about
-        // TypeScript's `jsx_pragma` and `jsx_pragma_frag` options.
-        if program.source_type.is_jsx()
-            && (!program.source_type.is_typescript() || !self.typescript.only_remove_type_imports)
-        {
+        if program.source_type.is_jsx() {
             jsx::update_options_with_comments(
                 &program.comments,
                 &mut self.typescript,
@@ -141,13 +136,10 @@ impl<'a> Transformer<'a> {
                 .proposals
                 .explicit_resource_management
                 .then(|| ExplicitResourceManagement::new(&self.ctx)),
-            x0_typescript: program.source_type.is_typescript().then(|| {
-                TypeScript::new(
-                    &self.typescript,
-                    self.env.es2022.class_properties.is_some(),
-                    &self.ctx,
-                )
-            }),
+            x0_typescript: program
+                .source_type
+                .is_typescript()
+                .then(|| TypeScript::new(&self.typescript, &self.ctx)),
             x1_jsx: Jsx::new(self.jsx, self.env.es2018.object_rest_spread, ast_builder, &self.ctx),
             x2_es2022: ES2022::new(
                 self.env.es2022,
@@ -536,7 +528,7 @@ impl<'a> Traverse<'a> for TransformerImpl<'a, '_> {
                 let Statement::ExpressionStatement(expr_stmt) = stmt else {
                     continue;
                 };
-                let expression = Some(expr_stmt.expression.take_in(ctx.ast.allocator));
+                let expression = Some(expr_stmt.expression.take_in(ctx.ast));
                 *stmt = ctx.ast.statement_return(SPAN, expression);
                 return;
             }

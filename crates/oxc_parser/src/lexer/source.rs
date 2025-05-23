@@ -1,4 +1,6 @@
-use std::{marker::PhantomData, slice, str};
+use std::{cmp::Ordering, marker::PhantomData, slice, str};
+
+use oxc_data_structures::pointer_ext::PointerExt;
 
 use crate::{MAX_LEN, UniquePromise};
 
@@ -107,12 +109,7 @@ impl<'a> Source<'a> {
         // SAFETY:
         // `start` and `end` are created from a `&str` in `Source::new`, so `start` cannot be after `end`.
         // `start` and `end` are by definition on UTF-8 char boundaries.
-        unsafe {
-            self.str_between_positions_unchecked(
-                SourcePosition::new(self.start),
-                SourcePosition::new(self.end),
-            )
-        }
+        unsafe { self.str_between_positions_unchecked(self.start(), self.end()) }
     }
 
     /// Get remaining source text as `&str`.
@@ -121,31 +118,35 @@ impl<'a> Source<'a> {
         // SAFETY:
         // Invariant of `Source` is that `ptr` is always <= `end`, and is on a UTF-8 char boundary.
         // `end` is pointer to end of original `&str`, so by definition on a UTF-8 char boundary.
-        unsafe {
-            self.str_between_positions_unchecked(
-                SourcePosition::new(self.ptr),
-                SourcePosition::new(self.end),
-            )
-        }
+        unsafe { self.str_between_positions_unchecked(self.position(), self.end()) }
+    }
+
+    /// Get number of bytes of source text remaining.
+    #[inline]
+    fn remaining_bytes(&self) -> usize {
+        // SAFETY: Invariant of `Source` is that `ptr` is always <= `end`
+        unsafe { self.end().offset_from(self.position()) }
+    }
+
+    /// Get [`SourcePosition`] for start of source.
+    #[inline]
+    fn start(&self) -> SourcePosition<'a> {
+        // SAFETY: `start` is the start of source, so in bounds and on a UTF-8 char boundary
+        unsafe { SourcePosition::new(self.start) }
+    }
+
+    /// Get [`SourcePosition`] for end of source.
+    #[inline]
+    pub(super) fn end(&self) -> SourcePosition<'a> {
+        // SAFETY: `end` is the end of source, so in bounds and on a UTF-8 char boundary
+        unsafe { SourcePosition::new(self.end) }
     }
 
     /// Return whether at end of source.
     #[inline]
     pub(super) fn is_eof(&self) -> bool {
+        // TODO: Use `self.remaining_bytes() == 0` instead?
         self.ptr == self.end
-    }
-
-    /// Get end address.
-    #[inline]
-    pub(super) fn end_addr(&self) -> usize {
-        self.end as usize
-    }
-
-    /// Get last memory address at which a batch of `Lexer::search::SEARCH_BATCH_SIZE` bytes
-    /// can be read without going out of bounds.
-    #[inline]
-    pub(super) fn end_for_batch_search_addr(&self) -> usize {
-        self.end_for_batch_search_addr
     }
 
     /// Get current position.
@@ -205,16 +206,16 @@ impl<'a> Source<'a> {
         debug_assert!(ascii_byte.is_ascii());
         let matched = self.peek_byte() == Some(ascii_byte);
         if matched {
-            // SAFETY: next byte exists and is a valid ASCII char (and thus UTF-8
-            // char boundary).
+            // SAFETY: next byte exists and is a valid ASCII char (and thus UTF-8 char boundary).
             self.ptr = unsafe { self.ptr.add(1) };
         }
         matched
     }
 
     /// Get string slice from a `SourcePosition` up to the current position of `Source`.
+    #[inline]
     pub(super) fn str_from_pos_to_current(&self, pos: SourcePosition<'a>) -> &'a str {
-        assert!(pos.ptr <= self.ptr);
+        assert!(pos <= self.position());
         // SAFETY: The above assertion satisfies `str_from_pos_to_current_unchecked`'s requirements
         unsafe { self.str_from_pos_to_current_unchecked(pos) }
     }
@@ -231,9 +232,8 @@ impl<'a> Source<'a> {
         &self,
         pos: SourcePosition<'a>,
     ) -> &'a str {
-        // SAFETY: Caller guarantees `pos` is not after current position of `Source`.
-        // `self.ptr` is always a valid `SourcePosition` due to invariants of `Source`.
-        unsafe { self.str_between_positions_unchecked(pos, SourcePosition::new(self.ptr)) }
+        // SAFETY: Caller guarantees `pos` is not after current position of `Source`
+        unsafe { self.str_between_positions_unchecked(pos, self.position()) }
     }
 
     /// Get string slice from current position of `Source` up to a `SourcePosition`, without checks.
@@ -248,18 +248,16 @@ impl<'a> Source<'a> {
         &self,
         pos: SourcePosition<'a>,
     ) -> &'a str {
-        // SAFETY: Caller guarantees `pos` is not before current position of `Source`.
-        // `self.ptr` is always a valid `SourcePosition` due to invariants of `Source`.
-        unsafe { self.str_between_positions_unchecked(SourcePosition::new(self.ptr), pos) }
+        // SAFETY: Caller guarantees `pos` is not before current position of `Source`
+        unsafe { self.str_between_positions_unchecked(self.position(), pos) }
     }
 
     /// Get string slice from a `SourcePosition` up to the end of `Source`.
     #[inline]
     pub(super) fn str_from_pos_to_end(&self, pos: SourcePosition<'a>) -> &'a str {
         // SAFETY: Invariants of `SourcePosition` is that it cannot be after end of `Source`,
-        // and always on a UTF-8 character boundary.
-        // `self.end` is always a valid `SourcePosition` due to invariants of `Source`.
-        unsafe { self.str_between_positions_unchecked(pos, SourcePosition::new(self.end)) }
+        // and always on a UTF-8 character boundary
+        unsafe { self.str_between_positions_unchecked(pos, self.end()) }
     }
 
     /// Get string slice of source between 2 `SourcePosition`s, without checks.
@@ -296,24 +294,36 @@ impl<'a> Source<'a> {
         // on UTF-8 character boundaries. So slicing source text between these 2 points will always
         // yield a valid UTF-8 string.
         unsafe {
-            let len = end.addr() - start.addr();
+            let len = end.offset_from(start);
             let slice = slice::from_raw_parts(start.ptr, len);
             std::str::from_utf8_unchecked(slice)
         }
     }
 
-    /// Get current position in source, relative to start of source.
+    /// Get current position in source, relative to start of source, as `u32`.
     #[inline]
     pub(super) fn offset(&self) -> u32 {
         self.offset_of(self.position())
     }
 
-    /// Get offset of `pos`.
-    #[expect(clippy::cast_possible_truncation)]
+    /// Get current position in source, relative to start of source, as `usize`.
+    #[inline]
+    pub(super) fn offset_usize(&self) -> usize {
+        self.offset_of_usize(self.position())
+    }
+
+    /// Get offset of `pos` as `u32`.
     #[inline]
     pub(super) fn offset_of(&self, pos: SourcePosition<'a>) -> u32 {
-        // Cannot overflow `u32` because of `MAX_LEN` check in `Source::new`
-        (pos.addr() - self.start as usize) as u32
+        // SAFETY: All `SourcePosition`s are always in bounds of the source text, which starts at `start`
+        unsafe { pos.offset_from_u32(self.start()) }
+    }
+
+    /// Get offset of `pos` as `usize`.
+    #[inline]
+    pub(super) fn offset_of_usize(&self, pos: SourcePosition<'a>) -> usize {
+        // SAFETY: All `SourcePosition`s are always in bounds of the source text, which starts at `start`
+        unsafe { pos.offset_from(self.start()) }
     }
 
     /// Move current position back by `n` bytes.
@@ -333,7 +343,7 @@ impl<'a> Source<'a> {
         assert!(n > 0, "Cannot call `Source::back` with 0");
 
         // Ensure not attempting to go back to before start of source
-        let offset = self.ptr as usize - self.start as usize;
+        let offset = self.offset_usize();
         assert!(n <= offset, "Cannot go back {n} bytes - only {offset} bytes consumed");
 
         // SAFETY: We have checked that `n` is less than distance between `start` and `ptr`,
@@ -525,11 +535,9 @@ impl<'a> Source<'a> {
     /// Peek next two bytes of source without consuming them.
     #[inline]
     pub(super) fn peek_2_bytes(&self) -> Option<[u8; 2]> {
-        // `end` is always >= `ptr` so `end - ptr` cannot wrap around.
-        // No need to use checked/saturating subtraction here.
-        if (self.end as usize) - (self.ptr as usize) >= 2 {
+        if self.remaining_bytes() >= 2 {
             // SAFETY: The check above ensures that there are at least 2 bytes to
-            // read from `self.ptr` without reading past `self.end`
+            // read from current position without reading past end
             let bytes = unsafe { self.position().read2() };
             Some(bytes)
         } else {
@@ -559,13 +567,13 @@ impl<'a> Source<'a> {
 /// # SAFETY
 /// `SourcePosition` must always be on a UTF-8 character boundary,
 /// and within bounds of the `Source` that created it.
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct SourcePosition<'a> {
     ptr: *const u8,
     _marker: PhantomData<&'a u8>,
 }
 
-impl SourcePosition<'_> {
+impl<'a> SourcePosition<'a> {
     /// Create a new `SourcePosition` from a pointer.
     ///
     /// # SAFETY
@@ -577,12 +585,6 @@ impl SourcePosition<'_> {
     #[inline]
     pub(super) unsafe fn new(ptr: *const u8) -> Self {
         Self { ptr, _marker: PhantomData }
-    }
-
-    /// Get memory address of `SourcePosition` as a `usize`.
-    #[inline]
-    pub(super) fn addr(self) -> usize {
-        self.ptr as usize
     }
 
     /// Create new `SourcePosition` which is `n` bytes after this one.
@@ -609,6 +611,64 @@ impl SourcePosition<'_> {
     pub(super) unsafe fn sub(self, n: usize) -> Self {
         // SAFETY: Caller guarantees that `sub` will not go out of bounds
         unsafe { Self::new(self.ptr.sub(n)) }
+    }
+
+    /// Get the distance between this [`SourcePosition`] and another [`SourcePosition`] as `usize`.
+    ///
+    /// # SAFETY
+    /// `self` must be equal to or after `origin`.
+    #[inline]
+    pub(super) unsafe fn offset_from(self, origin: Self) -> usize {
+        // SAFETY: Caller guarantees `self` is not before `origin`.
+        // All `SourcePosition<'a>`s are within bounds of same source text.
+        unsafe { self.ptr.offset_from_usize(origin.ptr) }
+    }
+
+    /// Get the distance between this [`SourcePosition`] and another [`SourcePosition`] as `u32`.
+    ///
+    /// # SAFETY
+    /// `self` must be equal to or after `origin`.
+    #[inline]
+    pub(super) unsafe fn offset_from_u32(self, origin: Self) -> u32 {
+        // SAFETY: Caller guarantees `self` is not before `origin`.
+        let offset = unsafe { self.offset_from(origin) };
+        // Cannot overflow `u32` because of `MAX_LEN` check in `Source::new`
+        #[expect(clippy::cast_possible_truncation)]
+        let offset = offset as u32;
+        offset
+    }
+
+    /// Get the distance between this [`SourcePosition`] and another [`SourcePosition`] as `isize`.
+    ///
+    /// Return value will be positive if `self` is after `other`,
+    /// negative if `self` is before `other`, or 0 if they're the same.
+    #[inline]
+    fn offset_from_signed(self, other: Self) -> isize {
+        // SAFETY: All `SourcePosition<'a>`s are within bounds of same source text
+        unsafe { self.ptr.offset_from(other.ptr) }
+    }
+
+    /// Returns `true` if this [`SourcePosition`] is at end of `source`.
+    #[inline]
+    pub(super) fn is_end_of(self, source: &Source<'a>) -> bool {
+        // TODO: Use `source.end().offset_from(self) == 0` instead?
+        self.ptr == source.end
+    }
+
+    /// Returns `true` if this [`SourcePosition`] is not at end of `source`.
+    #[inline]
+    pub(super) fn is_not_end_of(self, source: &Source<'a>) -> bool {
+        !self.is_end_of(source)
+    }
+
+    /// Check if this [`SourcePosition`] is valid for reading `Lexer::search::SEARCH_BATCH_SIZE` bytes
+    /// from `source`.
+    /// i.e. is position at least `Lexer::search::SEARCH_BATCH_SIZE` bytes from the end of `source`?
+    ///
+    /// Returns `true` if safe to read `Lexer::search::SEARCH_BATCH_SIZE` from this position.
+    #[inline]
+    pub(super) fn can_read_batch_from(&self, source: &Source<'a>) -> bool {
+        self.ptr as usize <= source.end_for_batch_search_addr
     }
 
     /// Read byte from this `SourcePosition`.
@@ -661,6 +721,59 @@ impl SourcePosition<'_> {
             let p = self.ptr as *const [u8; 2];
             *p.as_ref().unwrap_unchecked()
         }
+    }
+
+    /// Get slice of bytes starting from this [`SourcePosition`], with length `len`.
+    ///
+    /// # SAFETY
+    /// Caller must ensure `SourcePosition` is no later than `len` bytes before end of source text.
+    pub(super) unsafe fn slice(self, len: usize) -> &'a [u8] {
+        // SAFETY: Caller guarantees there are at least `len` bytes after this position
+        unsafe { slice::from_raw_parts(self.ptr, len) }
+    }
+}
+
+// Implement `Ord` and `PartialOrd` using `(*const u8)::offset_from` to utilize the invariant
+// that `SourcePosition`s are always within the same allocation.
+impl Ord for SourcePosition<'_> {
+    #[inline]
+    fn cmp(&self, other: &Self) -> Ordering {
+        let offset = self.offset_from_signed(*other);
+        #[expect(clippy::comparison_chain)]
+        if offset < 0 {
+            Ordering::Less
+        } else if offset == 0 {
+            Ordering::Equal
+        } else {
+            Ordering::Greater
+        }
+    }
+}
+
+impl PartialOrd for SourcePosition<'_> {
+    #[inline]
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        Some(self.cmp(other))
+    }
+
+    #[inline]
+    fn lt(&self, other: &Self) -> bool {
+        self.offset_from_signed(*other) < 0
+    }
+
+    #[inline]
+    fn le(&self, other: &Self) -> bool {
+        self.offset_from_signed(*other) <= 0
+    }
+
+    #[inline]
+    fn gt(&self, other: &Self) -> bool {
+        self.offset_from_signed(*other) > 0
+    }
+
+    #[inline]
+    fn ge(&self, other: &Self) -> bool {
+        self.offset_from_signed(*other) >= 0
     }
 }
 

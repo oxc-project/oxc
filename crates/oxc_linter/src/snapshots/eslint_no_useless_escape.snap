@@ -331,34 +331,34 @@ source: crates/oxc_linter/src/tester.rs
   help: Replace `\^` with `^`.
 
   ⚠ eslint(no-useless-escape): Unnecessary escape character 'e'
-   ╭─[no_useless_escape.tsx:2:22]
+   ╭─[no_useless_escape.tsx:2:25]
  1 │ `multiline template
- 2 │ literal with useless \escape`
-   ·                      ──
+ 2 │             literal with useless \escape`
+   ·                                  ──
    ╰────
   help: Replace `\e` with `e`.
 
   ⚠ eslint(no-useless-escape): Unnecessary escape character 'e'
-   ╭─[no_useless_escape.tsx:2:22]
+   ╭─[no_useless_escape.tsx:2:25]
  1 │ `multiline template
- 2 │ literal with useless \escape`
-   ·                      ──
+ 2 │             literal with useless \escape`
+   ·                                  ──
    ╰────
   help: Replace `\e` with `e`.
 
   ⚠ eslint(no-useless-escape): Unnecessary escape character 'e'
-   ╭─[no_useless_escape.tsx:2:13]
+   ╭─[no_useless_escape.tsx:2:16]
  1 │ `template literal with line continuation \
- 2 │ and useless \escape`
-   ·             ──
+ 2 │             and useless \escape`
+   ·                         ──
    ╰────
   help: Replace `\e` with `e`.
 
   ⚠ eslint(no-useless-escape): Unnecessary escape character 'e'
-   ╭─[no_useless_escape.tsx:2:13]
+   ╭─[no_useless_escape.tsx:2:16]
  1 │ `template literal with line continuation \
- 2 │ and useless \escape`
-   ·             ──
+ 2 │             and useless \escape`
+   ·                         ──
    ╰────
   help: Replace `\e` with `e`.
 
@@ -384,6 +384,13 @@ source: crates/oxc_linter/src/tester.rs
    ·  ──
    ╰────
   help: Replace `\a` with `a`.
+
+  ⚠ eslint(no-useless-escape): Unnecessary escape character ' '
+   ╭─[no_useless_escape.tsx:1:5]
+ 1 │ "use\ strict";
+   ·     ──
+   ╰────
+  help: Replace `\ ` with ` `.
 
   ⚠ eslint(no-useless-escape): Unnecessary escape character '（'
    ╭─[no_useless_escape.tsx:1:12]
@@ -440,13 +447,6 @@ source: crates/oxc_linter/src/tester.rs
    ·                                        ─
    ╰────
   help: Replace `\` with ``.
-
-  ⚠ eslint(no-useless-escape): Unnecessary escape character ' '
-   ╭─[no_useless_escape.tsx:1:5]
- 1 │ "use\ strict";
-   ·     ──
-   ╰────
-  help: Replace `\ ` with ` `.
 
   ⚠ eslint(no-useless-escape): Unnecessary escape character 'z'
    ╭─[no_useless_escape.tsx:1:29]
@@ -713,3 +713,31 @@ source: crates/oxc_linter/src/tester.rs
    ·           ──
    ╰────
   help: Replace `\.` with `.`.
+
+  ⚠ eslint(no-useless-escape): Unnecessary escape character '#'
+   ╭─[no_useless_escape.tsx:1:12]
+ 1 │ var foo = "\#/";
+   ·            ──
+   ╰────
+  help: Replace `\#` with `#`.
+
+  ⚠ eslint(no-useless-escape): Unnecessary escape character '@'
+   ╭─[no_useless_escape.tsx:1:14]
+ 1 │ var foo = /\#\@/;
+   ·              ──
+   ╰────
+  help: Replace `\@` with `@`.
+
+  ⚠ eslint(no-useless-escape): Unnecessary escape character '@'
+   ╭─[no_useless_escape.tsx:1:14]
+ 1 │ var foo = /[a\@b]/
+   ·              ──
+   ╰────
+  help: Replace `\@` with `@`.
+
+  ⚠ eslint(no-useless-escape): Unnecessary escape character '@'
+   ╭─[no_useless_escape.tsx:1:3]
+ 1 │ /[\@\@]/v
+   ·   ──
+   ╰────
+  help: Replace `\@` with `@`.

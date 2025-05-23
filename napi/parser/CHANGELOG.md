@@ -4,6 +4,104 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.71.0] - 2025-05-20
+
+### Features
+
+- c60382d allocator/vec2: Change `len` and `cap` fields from `usize` to `u32` (#10884) (Dunqing)
+- d47b305 ast/estree: Add `phase` field to `ImportExpression` in ESTree AST (#11165) (overlookmotel)
+- 1bc8d29 ast/estree: Add `phase` field to `ImportDeclaration` in ESTree AST (#11157) (overlookmotel)
+- 9e90e00 ast_tools: Introduce `#[js_only]` attr for struct fields and converters (#11160) (overlookmotel)
+- d67c9e5 napi: Bump napi to beta (#11159) (Boshen)
+
+### Bug Fixes
+
+- 3795eb6 ci: Use jsdelivr for all benchmark files (#11108) (Boshen)
+- 963167d napi: Fix cfg feature on global_allocator (Boshen)
+
+### Performance
+
+- 5dcd0f1 allocator/vec2: Reorder `RawVec` fields (#11050) (Dunqing)
+- 2b0a69f ast: Re-order struct fields to reduce padding (#11056) (overlookmotel)
+- b9e51e2 ast: Reduce size of `Comment` to 16 bytes (#11062) (camchenry)
+
+### Documentation
+
+- e92bf1f napi: Update docs for `oxc-parser` (#11156) (overlookmotel)
+
+### Refactor
+
+- 9775585 regular_expression: Refactor `regexp-modifiers` support (#11142) (Yuji Sugiura)
+
+## [0.71.0] - 2025-05-20
+
+### Features
+
+- c60382d allocator/vec2: Change `len` and `cap` fields from `usize` to `u32` (#10884) (Dunqing)
+- d47b305 ast/estree: Add `phase` field to `ImportExpression` in ESTree AST (#11165) (overlookmotel)
+- 1bc8d29 ast/estree: Add `phase` field to `ImportDeclaration` in ESTree AST (#11157) (overlookmotel)
+- 9e90e00 ast_tools: Introduce `#[js_only]` attr for struct fields and converters (#11160) (overlookmotel)
+- d67c9e5 napi: Bump napi to beta (#11159) (Boshen)
+
+### Bug Fixes
+
+- 3795eb6 ci: Use jsdelivr for all benchmark files (#11108) (Boshen)
+- 963167d napi: Fix cfg feature on global_allocator (Boshen)
+
+### Performance
+
+- 5dcd0f1 allocator/vec2: Reorder `RawVec` fields (#11050) (Dunqing)
+- 2b0a69f ast: Re-order struct fields to reduce padding (#11056) (overlookmotel)
+- b9e51e2 ast: Reduce size of `Comment` to 16 bytes (#11062) (camchenry)
+
+### Documentation
+
+- e92bf1f napi: Update docs for `oxc-parser` (#11156) (overlookmotel)
+
+### Refactor
+
+- 9775585 regular_expression: Refactor `regexp-modifiers` support (#11142) (Yuji Sugiura)
+
+## [0.70.0] - 2025-05-15
+
+### Features
+
+- 647b6f3 napi: Add arm musl (#10958) (Bernd Storath)
+
+### Bug Fixes
+
+- 6f3f9d7 ast/estree: Fix `raw_deser` for `TSMappedTypeOptional` serializer (#10971) (overlookmotel)
+- 53329f8 ast/estree: Fix field order for `FormalParameter` (#10962) (overlookmotel)
+- 8b8f78f ast/estree: Fix field order and type def for `RestElement` in `FormalParameters` (#10961) (overlookmotel)
+- 2b76ab5 ast/estree: Fix `TSModuleDeclaration` raw deserializer (#10924) (overlookmotel)
+- d036cf5 estree: Ensure the same key order for `AssignmentPattern` (#10953) (Yuji Sugiura)
+- 635aa96 napi: Computed final source type from `lang` then `sourceType` (#11060) (Boshen)
+- 584d8b9 napi: Enable mimalloc `no_opt_arch` feature on linux aarch64 (#11053) (Boshen)
+
+### Performance
+
+- a4b5716 ast/estree: Streamline raw deserializer for `WithClause` (#10974) (overlookmotel)
+
+## [0.70.0] - 2025-05-15
+
+### Features
+
+- 647b6f3 napi: Add arm musl (#10958) (Bernd Storath)
+
+### Bug Fixes
+
+- 6f3f9d7 ast/estree: Fix `raw_deser` for `TSMappedTypeOptional` serializer (#10971) (overlookmotel)
+- 53329f8 ast/estree: Fix field order for `FormalParameter` (#10962) (overlookmotel)
+- 8b8f78f ast/estree: Fix field order and type def for `RestElement` in `FormalParameters` (#10961) (overlookmotel)
+- 2b76ab5 ast/estree: Fix `TSModuleDeclaration` raw deserializer (#10924) (overlookmotel)
+- d036cf5 estree: Ensure the same key order for `AssignmentPattern` (#10953) (Yuji Sugiura)
+- 635aa96 napi: Computed final source type from `lang` then `sourceType` (#11060) (Boshen)
+- 584d8b9 napi: Enable mimalloc `no_opt_arch` feature on linux aarch64 (#11053) (Boshen)
+
+### Performance
+
+- a4b5716 ast/estree: Streamline raw deserializer for `WithClause` (#10974) (overlookmotel)
+
 ## [0.69.0] - 2025-05-09
 
 - 2b5d826 ast: [**BREAKING**] Fix field order for `TSTypeAssertion` (#10906) (overlookmotel)

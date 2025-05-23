@@ -33,13 +33,20 @@ declare_oxc_lint!(
     /// These redundant clauses can be a source of confusion and code bloat,
     /// so it’s better to disallow these unnecessary catch clauses.
     ///
-    /// ### Example
+    /// ### Examples
+    ///
+    /// Examples of **incorrect** code for this rule:
     /// ```javascript
     /// try {
     ///   doSomethingThatMightThrow();
     /// } catch (e) {
     ///   throw e;
     /// }
+    /// ```
+    ///
+    /// Examples of **correct** code for this rule:
+    /// ```javascript
+    /// doSomethingThatMightThrow();
     /// ```
     NoUselessCatch,
     eslint,

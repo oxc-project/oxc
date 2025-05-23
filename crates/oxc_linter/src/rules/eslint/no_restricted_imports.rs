@@ -1,4 +1,6 @@
-use ignore::gitignore::GitignoreBuilder;
+use std::borrow::Cow;
+
+use globset::GlobBuilder;
 use lazy_regex::Regex;
 use oxc_ast::{
     AstKind,
@@ -10,7 +12,6 @@ use oxc_span::{CompactStr, Span};
 use rustc_hash::FxHashMap;
 use serde::{Deserialize, Deserializer, de::Error};
 use serde_json::Value;
-use std::borrow::Cow;
 
 use crate::{
     ModuleRecord,
@@ -230,10 +231,12 @@ enum GlobResult {
 
 declare_oxc_lint!(
     /// ### What it does
+    ///
     /// This rule allows you to specify imports that you don’t want to use in your application.
     /// It applies to static imports only, not dynamic ones.
     ///
     /// ### Why is this bad?
+    ///
     /// Some imports might not make sense in a particular environment.
     /// For example, Node.js’ fs module would not make sense in an environment that didn’t have a file system.
     ///
@@ -856,30 +859,37 @@ impl RestrictedPattern {
             return GlobResult::None;
         };
 
-        let mut builder = GitignoreBuilder::new("");
-        // returns always OK, will be fixed in the next version
-        let _ = builder.case_insensitive(!self.case_sensitive.unwrap_or(false));
+        let case_insensitive = !self.case_sensitive.unwrap_or(false);
 
-        for group in groups {
-            // returns always OK
-            let _ = builder.add_line(None, group.as_str());
+        let mut decision = GlobResult::None;
+
+        for raw_pat in groups {
+            let (negated, pat) = match raw_pat.strip_prefix('!') {
+                Some(rest) => (true, rest),
+                None => (false, raw_pat.as_str()),
+            };
+
+            // roughly based on https://github.com/BurntSushi/ripgrep/blob/6dfaec03e830892e787686917509c17860456db1/crates/ignore/src/gitignore.rs#L436-L516
+            let mut pat = pat.to_string();
+
+            if !pat.starts_with('/') && !pat.chars().any(|c| c == '/') && (!pat.starts_with("**")) {
+                pat = format!("**/{pat}");
+            }
+
+            let Ok(glob) = GlobBuilder::new(&pat)
+                .case_insensitive(case_insensitive)
+                .build()
+                .map(|g| g.compile_matcher())
+            else {
+                continue;
+            };
+
+            if glob.is_match(name) {
+                decision = if negated { GlobResult::Whitelist } else { GlobResult::Found };
+            }
         }
 
-        let Ok(gitignore) = builder.build() else {
-            return GlobResult::None;
-        };
-
-        let matched = gitignore.matched(name, false);
-
-        if matched.is_whitelist() {
-            return GlobResult::Whitelist;
-        }
-
-        if matched.is_none() {
-            return GlobResult::None;
-        }
-
-        GlobResult::Found
+        decision
     }
 
     fn get_regex_result(&self, name: &str) -> bool {
@@ -985,7 +995,13 @@ impl NoRestrictedImports {
 
         for (source, requests) in &module_record.requested_modules {
             for request in requests {
-                if request.is_import && module_record.import_entries.is_empty() {
+                if request.is_import
+                    && (module_record.import_entries.is_empty()
+                        || module_record
+                            .import_entries
+                            .iter()
+                            .all(|entry| entry.statement_span != request.statement_span))
+                {
                     side_effect_import_map.entry(source).or_default().push(request.statement_span);
                 }
             }
@@ -994,9 +1010,40 @@ impl NoRestrictedImports {
         for path in &self.paths {
             for (source, spans) in &side_effect_import_map {
                 if source.as_str() == path.name.as_str() && path.import_names.is_none() {
-                    if let Some(span) = spans.iter().next() {
+                    debug_assert!(
+                        !spans.is_empty(),
+                        "all import entries must have at least one import entry"
+                    );
+                    if let Some(span) = spans.first() {
                         ctx.diagnostic(diagnostic_path(*span, path.message.clone(), source));
                     }
+                }
+            }
+        }
+
+        for (source, spans) in &side_effect_import_map {
+            let mut whitelist_found = false;
+            let mut err = None;
+            for pattern in &self.patterns {
+                match pattern.get_group_glob_result(source) {
+                    GlobResult::Whitelist => {
+                        whitelist_found = true;
+                        break;
+                    }
+                    GlobResult::Found => {
+                        err = Some(get_diagnostic_from_import_name_result_pattern(
+                            spans[0],
+                            source,
+                            &ImportNameResult::GeneralDisallowed,
+                            pattern,
+                        ));
+                    }
+                    GlobResult::None => {}
+                }
+            }
+            if !whitelist_found {
+                if let Some(err) = err {
+                    ctx.diagnostic(err);
                 }
             }
         }
@@ -1276,47 +1323,43 @@ fn get_diagnostic_from_import_name_result_pattern(
             diagnostic_pattern(span, pattern.message.clone(), source)
         }
         ImportNameResult::DefaultDisallowed => {
-            let diagnostic = match &pattern.import_names {
-                Some(import_names) => diagnostic_pattern_and_everything(
+            if let Some(import_names) = &pattern.import_names {
+                return diagnostic_pattern_and_everything(
                     span,
                     pattern.message.clone(),
                     import_names.join(", ").as_str(),
                     source,
-                ),
-                _ => match &pattern.import_name_pattern {
-                    Some(import_name_patterns) => {
-                        diagnostic_pattern_and_everything_with_regex_import_name(
-                            span,
-                            pattern.message.clone(),
-                            import_name_patterns,
-                            source,
-                        )
-                    }
-                    _ => match &pattern.allow_import_name_pattern {
-                        Some(allow_import_name_pattern) => {
-                            diagnostic_everything_with_allowed_import_name_pattern(
-                                span,
-                                pattern.message.clone(),
-                                source,
-                                allow_import_name_pattern.as_str(),
-                            )
-                        }
-                        _ => match &pattern.allow_import_names {
-                            Some(allowed_import_names) => {
-                                diagnostic_everything_with_allowed_import_name(
-                                    span,
-                                    pattern.message.clone(),
-                                    source,
-                                    allowed_import_names.join(", ").as_str(),
-                                )
-                            }
-                            _ => diagnostic_pattern(span, pattern.message.clone(), source),
-                        },
-                    },
-                },
-            };
+                );
+            }
 
-            diagnostic
+            if let Some(import_name_patterns) = &pattern.import_name_pattern {
+                return diagnostic_pattern_and_everything_with_regex_import_name(
+                    span,
+                    pattern.message.clone(),
+                    import_name_patterns,
+                    source,
+                );
+            }
+
+            if let Some(allow_import_name_pattern) = &pattern.allow_import_name_pattern {
+                return diagnostic_everything_with_allowed_import_name_pattern(
+                    span,
+                    pattern.message.clone(),
+                    source,
+                    allow_import_name_pattern.as_str(),
+                );
+            }
+
+            if let Some(allowed_import_names) = &pattern.allow_import_names {
+                return diagnostic_everything_with_allowed_import_name(
+                    span,
+                    pattern.message.clone(),
+                    source,
+                    allowed_import_names.join(", ").as_str(),
+                );
+            }
+
+            diagnostic_pattern(span, pattern.message.clone(), source)
         }
         ImportNameResult::NameDisallowed(name_span) => match &pattern.allow_import_names {
             Some(allow_import_names) => diagnostic_allowed_import_name(
@@ -1765,6 +1808,12 @@ fn test() {
                     "importNamePattern": "^Foo"
                 }]
             }])),
+        ),
+        (
+            r#"import a from "./index.mjs";"#,
+            Some(
+                serde_json::json!([{ "patterns": [{ "group": ["[@a-z]*", "!.*/**"], "message": "foo is forbidden, use bar instead" }] }]),
+            ),
         ),
     ];
 
@@ -2988,6 +3037,12 @@ fn test() {
                 }]
             }])),
         ),
+        (
+            r#"import {x} from "foo"; import {x2} from "./index.mjs"; import {x3} from "index";"#,
+            Some(
+                serde_json::json!([{ "patterns": [{ "group": ["[@a-z]*", "!.*/**","./index.mjs"], "message": "foo is forbidden, use bar instead" }] }]),
+            ),
+        ),
         // (
         //     "
         // 	        // error
@@ -3006,6 +3061,19 @@ fn test() {
         //         }]
         //     }])),
         // ),
+        (
+            r"import 'foo'; import {a} from 'b'",
+            Some(
+                serde_json::json!([{ "paths": [{ "name": "foo", "message": "foo is forbidden, use bar instead" }] }]),
+            ),
+        ),
+        // https://github.com/oxc-project/oxc/issues/10984
+        (
+            r"import 'foo'",
+            Some(
+                serde_json::json!([{ "patterns": [{ "group": ["foo"], "message": "foo is forbidden, use bar instead" }] }]),
+            ),
+        ),
     ];
 
     let fail_typescript = vec![

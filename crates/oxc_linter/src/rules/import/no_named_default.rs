@@ -15,9 +15,11 @@ pub struct NoNamedDefault;
 
 declare_oxc_lint!(
     /// ### What it does
+    ///
     /// Reports use of a default export as a locally named import.
     ///
     /// ### Why is this bad?
+    ///
     /// Rationale: the syntax exists to import default exports expressively, let's use it.
     ///
     /// ### Examples

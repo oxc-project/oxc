@@ -2,7 +2,10 @@
 //!
 //! - [AST Spec](https://github.com/typescript-eslint/typescript-eslint/tree/v8.9.0/packages/ast-spec)
 //! - [Archived TypeScript spec](https://github.com/microsoft/TypeScript/blob/3c99d50da5a579d9fa92d02664b1b66d4ff55944/doc/spec-ARCHIVED.md)
-#![expect(missing_docs)] // FIXME
+#![expect(
+    missing_docs, // FIXME
+    clippy::enum_variant_names,
+)]
 
 // NB: `#[span]`, `#[scope(...)]`,`#[visit(...)]` and `#[generate_derive(...)]` do NOT do anything to the code.
 // They are purely markers for codegen used in `tasks/ast_tools` and `crates/oxc_traverse/scripts`. See docs in those crates.
@@ -1020,7 +1023,7 @@ pub struct TSCallSignatureDeclaration<'a> {
     pub type_parameters: Option<Box<'a, TSTypeParameterDeclaration<'a>>>,
     #[estree(skip)]
     pub this_param: Option<Box<'a, TSThisParameter<'a>>>,
-    #[estree(via = TSCallSignatureDeclarationFormalParameters)]
+    #[estree(via = TSCallSignatureDeclarationParams)]
     pub params: Box<'a, FormalParameters<'a>>,
     pub return_type: Option<Box<'a, TSTypeAnnotation<'a>>>,
 }
@@ -1059,7 +1062,7 @@ pub struct TSMethodSignature<'a> {
     pub type_parameters: Option<Box<'a, TSTypeParameterDeclaration<'a>>>,
     #[estree(skip)]
     pub this_param: Option<Box<'a, TSThisParameter<'a>>>,
-    #[estree(via = TSMethodSignatureFormalParameters)]
+    #[estree(via = TSMethodSignatureParams)]
     pub params: Box<'a, FormalParameters<'a>>,
     pub return_type: Option<Box<'a, TSTypeAnnotation<'a>>>,
     pub scope_id: Cell<Option<ScopeId>>,
@@ -1388,7 +1391,7 @@ pub struct TSFunctionType<'a> {
     #[estree(skip)]
     pub this_param: Option<Box<'a, TSThisParameter<'a>>>,
     /// Function parameters. Akin to [`Function::params`].
-    #[estree(via = TSFunctionTypeFormalParameters)]
+    #[estree(via = TSFunctionTypeParams)]
     pub params: Box<'a, FormalParameters<'a>>,
     /// Return type of the function.
     /// ```ts

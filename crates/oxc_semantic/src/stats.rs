@@ -14,7 +14,7 @@ use oxc_syntax::scope::{ScopeFlags, ScopeId};
 
 /// Macro to assert that `left >= right`
 macro_rules! assert_ge {
-    ($left:expr_2021, $right:expr_2021, $($msg_args:tt)+) => {
+    ($left:expr, $right:expr, $($msg_args:tt)+) => {
         match (&$left, &$right) {
             (left, right) => if !(left >= right) {
                 panic!(
@@ -26,7 +26,7 @@ macro_rules! assert_ge {
         }
     };
 
-    ($left:expr_2021, $right:expr_2021) => {
+    ($left:expr, $right:expr) => {
         match (&$left, &$right) {
             (left, right) => if !(left >= right) {
                 panic!(
@@ -37,7 +37,7 @@ macro_rules! assert_ge {
         }
     };
 
-    ($lhs:expr_2021, $rhs:expr_2021,) => {
+    ($lhs:expr, $rhs:expr,) => {
         assert_le!($lhs, $rhs);
     };
 }

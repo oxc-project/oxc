@@ -5,6 +5,7 @@ input_file: crates/oxc_isolated_declarations/tests/fixtures/set-get-accessor.ts
 ```
 ==================== .D.TS ====================
 
+// Correct
 declare class Cls {
 	get a(): number;
 	set a(value);
@@ -16,6 +17,7 @@ declare class Cls {
 	private accessor e;
 	private static accessor f;
 }
+// Incorrect
 declare class ClsBad {
 	get a();
 	set a(v);

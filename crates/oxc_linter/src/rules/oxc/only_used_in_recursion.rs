@@ -236,18 +236,13 @@ fn create_diagnostic_jsx(
 
             // search for references to the function and remove the property
             for reference in ctx.semantic().symbol_references(property_symbol_id) {
-                let mut ancestor_ids = ctx.nodes().ancestor_ids(reference.node_id());
-
-                let Some(attr) =
-                    ancestor_ids.find_map(|node| match ctx.nodes().get_node(node).kind() {
-                        AstKind::JSXAttributeItem(attr) => Some(attr),
-                        _ => None,
-                    })
-                else {
-                    continue;
-                };
-
-                fix.push(Fix::delete(attr.span()));
+                if let Some(attr) = ctx
+                    .nodes()
+                    .ancestors(reference.node_id())
+                    .find_map(|node| node.kind().as_jsx_attribute_item())
+                {
+                    fix.push(Fix::delete(attr.span()));
+                }
             }
 
             fix.with_message("Remove unused property")
@@ -334,9 +329,11 @@ fn is_property_only_used_in_recursion_jsx(
             return false;
         };
 
-        let Some(attr) = ctx.nodes().ancestors(may_jsx_expr_container.id()).find_map(|node| {
-            if let AstKind::JSXAttributeItem(attr) = node.kind() { Some(attr) } else { None }
-        }) else {
+        let Some(attr) = ctx
+            .nodes()
+            .ancestors(may_jsx_expr_container.id())
+            .find_map(|node| node.kind().as_jsx_attribute_item())
+        else {
             return false;
         };
 
@@ -350,14 +347,10 @@ fn is_property_only_used_in_recursion_jsx(
             return false;
         }
 
-        let Some(opening_element) =
-            ctx.nodes().ancestor_ids(reference.node_id()).find_map(|node| {
-                if let AstKind::JSXOpeningElement(elem) = ctx.nodes().get_node(node).kind() {
-                    Some(elem)
-                } else {
-                    None
-                }
-            })
+        let Some(opening_element) = ctx
+            .nodes()
+            .ancestors(reference.node_id())
+            .find_map(|node| node.kind().as_jsx_opening_element())
         else {
             return false;
         };

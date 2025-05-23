@@ -96,9 +96,11 @@ impl TryFrom<&str> for Allowed {
 
 declare_oxc_lint!(
     /// ### What it does
+    ///
     /// Disallows the usages of empty functions
     ///
     /// ### Why is this bad?
+    ///
     /// Empty functions can reduce readability because readers need to guess whether it's
     /// intentional or not. So writing a clear comment for empty functions is a good practice.
     ///
@@ -130,7 +132,7 @@ declare_oxc_lint!(
     /// - `"decoratedFunctions"`
     /// - `"overrideMethods"`
     ///
-    /// ### Example
+    /// ### Examples
     ///
     /// Examples of **incorrect** code for this rule:
     /// ```typescript

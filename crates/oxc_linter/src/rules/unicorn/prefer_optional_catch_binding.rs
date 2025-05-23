@@ -25,7 +25,7 @@ declare_oxc_lint!(
     ///
     /// It is unnecessary to bind the error to a variable if it is not used.
     ///
-    /// ### Example
+    /// ### Examples
     ///
     /// Examples of **incorrect** code for this rule:
     /// ```javascript

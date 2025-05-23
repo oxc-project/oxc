@@ -3,7 +3,6 @@ import { promises as fsPromises } from 'node:fs';
 import {
   commands,
   ExtensionContext,
-  FileSystemWatcher,
   StatusBarAlignment,
   StatusBarItem,
   ThemeColor,
@@ -23,7 +22,6 @@ import { Executable, LanguageClient, LanguageClientOptions, ServerOptions } from
 
 import { join } from 'node:path';
 import { ConfigService } from './ConfigService';
-import { oxlintConfigFileName } from './WorkspaceConfig';
 
 const languageClientName = 'oxc';
 const outputChannelName = 'Oxc';
@@ -43,8 +41,6 @@ const enum LspCommands {
 let client: LanguageClient | undefined;
 
 let myStatusBarItem: StatusBarItem;
-
-const globalWatchers: FileSystemWatcher[] = [];
 
 export async function activate(context: ExtensionContext) {
   const configService = new ConfigService();
@@ -122,7 +118,6 @@ export async function activate(context: ExtensionContext) {
   );
 
   const outputChannel = window.createOutputChannel(outputChannelName, { log: true });
-  const fileWatchers = createFileEventWatchers(configService.getOxlintCustomConfigs());
 
   context.subscriptions.push(
     applyAllFixesFile,
@@ -131,11 +126,6 @@ export async function activate(context: ExtensionContext) {
     toggleEnable,
     configService,
     outputChannel,
-    {
-      dispose: () => {
-        globalWatchers.forEach((watcher) => watcher.dispose());
-      },
-    },
   );
 
   async function findBinary(): Promise<string> {
@@ -148,29 +138,7 @@ export async function activate(context: ExtensionContext) {
         outputChannel.error(`Invalid bin path: ${bin}`, e);
       }
     }
-
-    const workspaceFolders = workspace.workspaceFolders;
-    const isWindows = process.platform === 'win32';
-
-    if (workspaceFolders?.length && !isWindows) {
-      try {
-        return await Promise.any(
-          workspaceFolders.map(async (folder) => {
-            const binPath = join(
-              folder.uri.fsPath,
-              'node_modules',
-              '.bin',
-              'oxc_language_server',
-            );
-
-            await fsPromises.access(binPath);
-            return binPath;
-          }),
-        );
-      } catch {}
-    }
-
-    const ext = isWindows ? '.exe' : '';
+    const ext = process.platform === 'win32' ? '.exe' : '';
     // NOTE: The `./target/release` path is aligned with the path defined in .github/workflows/release_vscode.yml
     return (
       process.env.SERVER_PATH_DEV ??
@@ -209,10 +177,6 @@ export async function activate(context: ExtensionContext) {
       language: lang,
       scheme: 'file',
     })),
-    synchronize: {
-      // Notify the server about file config changes in the workspace
-      fileEvents: fileWatchers,
-    },
     initializationOptions: configService.languageServerConfig,
     outputChannel,
     traceOutputChannel: outputChannel,
@@ -274,33 +238,11 @@ export async function activate(context: ExtensionContext) {
   context.subscriptions.push(onDeleteFilesDispose);
 
   const onDidChangeWorkspaceFoldersDispose = workspace.onDidChangeWorkspaceFolders(async (event) => {
-    let needRestart = false;
     for (const folder of event.added) {
-      const workspaceConfig = configService.addWorkspaceConfig(folder);
-
-      if (workspaceConfig.isCustomConfigPath) {
-        needRestart = true;
-      }
+      configService.addWorkspaceConfig(folder);
     }
     for (const folder of event.removed) {
-      const workspaceConfig = configService.getWorkspaceConfig(folder.uri);
-      if (workspaceConfig?.isCustomConfigPath) {
-        needRestart = true;
-      }
       configService.removeWorkspaceConfig(folder);
-    }
-
-    if (client === undefined) {
-      return;
-    }
-
-    if (needRestart) {
-      client.clientOptions.synchronize = client.clientOptions.synchronize ?? {};
-      client.clientOptions.synchronize.fileEvents = createFileEventWatchers(configService.getOxlintCustomConfigs());
-
-      if (client.isRunning()) {
-        await client.restart();
-      }
     }
   });
 
@@ -316,14 +258,7 @@ export async function activate(context: ExtensionContext) {
     // update the initializationOptions for a possible restart
     client.clientOptions.initializationOptions = this.languageServerConfig;
 
-    if (event.affectsConfiguration('oxc.configPath')) {
-      client.clientOptions.synchronize = client.clientOptions.synchronize ?? {};
-      client.clientOptions.synchronize.fileEvents = createFileEventWatchers(this.getOxlintCustomConfigs());
-
-      if (client.isRunning()) {
-        await client.restart();
-      }
-    } else if (client.isRunning()) {
+    if (configService.effectsWorkspaceConfigChange(event) && client.isRunning()) {
       await client.sendNotification(
         'workspace/didChangeConfiguration',
         {
@@ -365,24 +300,4 @@ export async function deactivate(): Promise<void> {
   }
   await client.stop();
   client = undefined;
-}
-
-// FileSystemWatcher are not ready on the start and can take some seconds on bigger repositories
-function createFileEventWatchers(configAbsolutePaths: string[]): FileSystemWatcher[] {
-  // cleanup old watchers
-  globalWatchers.forEach((watcher) => watcher.dispose());
-  globalWatchers.length = 0;
-
-  // create new watchers
-  let localWatchers: FileSystemWatcher[] = [];
-  if (configAbsolutePaths.length) {
-    localWatchers = configAbsolutePaths.map((path) => workspace.createFileSystemWatcher(path));
-  }
-
-  localWatchers.push(workspace.createFileSystemWatcher(`**/${oxlintConfigFileName}`));
-
-  // assign watchers to global variable, so we can cleanup them on next call
-  globalWatchers.push(...localWatchers);
-
-  return localWatchers;
 }

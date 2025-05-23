@@ -12,9 +12,10 @@ use oxc::{
     ast_visit::utf8_to_utf16::Utf8ToUtf16,
     semantic::SemanticBuilder,
 };
+use oxc_napi::get_source_type;
 
 use crate::{
-    AstType, ParserOptions, get_source_and_ast_type, parse,
+    AstType, ParserOptions, get_ast_type, parse,
     raw_transfer_types::{EcmaScriptModule, Error, RawTransferData},
 };
 
@@ -86,8 +87,9 @@ pub unsafe fn parse_sync_raw(
         "Raw transfer is only supported on 64-bit little-endian platforms"
     );
 
+    // SAFETY: This is unsafe. Behavior is undefined. JS side may be modifying the underlying buffer, without synchronization.
+    let buffer = unsafe { buffer.as_mut() };
     // Check buffer has expected size and alignment
-    let buffer = &mut *buffer;
     assert_eq!(buffer.len(), BUFFER_SIZE);
     let buffer_ptr = ptr::from_mut(buffer).cast::<u8>();
     assert!(is_multiple_of(buffer_ptr as usize, BUFFER_ALIGN));
@@ -124,7 +126,9 @@ pub unsafe fn parse_sync_raw(
     // Enclose parsing logic in a scope to make 100% sure no references to within `Allocator`
     // exist after this.
     let options = options.unwrap_or_default();
-    let (source_type, ast_type) = get_source_and_ast_type(&filename, &options);
+    let source_type =
+        get_source_type(&filename, options.lang.as_deref(), options.source_type.as_deref());
+    let ast_type = get_ast_type(source_type, &options);
 
     let data_ptr = {
         // SAFETY: We checked above that `source_len` does not exceed length of buffer

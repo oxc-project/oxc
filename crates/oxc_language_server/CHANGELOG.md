@@ -4,6 +4,24 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.16.11] - 2025-05-16
+
+### Features
+
+- 078bf0b language_server: Better fallback handling when passing invalid `Options` values (#10930) (Sysix)
+- be7f7e1 language_server/editor: Support multi workspace folders (#10875) (Sysix)
+
+### Bug Fixes
+
+- 89cc21b language_server: Normalize oxlintrc config path (#10982) (Sysix)
+- 39063ce linter: Reword diagnostic message for no-control-regex (#10993) (camc314)
+
+### Refactor
+
+- 3cc1466 language_server: New configuration structure for `initialize` and `workspace/didChangeConfiguration` (#10890) (Sysix)
+- bd2ef7d language_server: Use `Arc` for `diagnostic_report_map` (#10940) (Sysix)
+- bb999a3 language_server: Avoid cloning linter by taking reference in LintService (#10907) (Ulrich Stark)
+
 ## [0.16.10] - 2025-05-09
 
 ### Features

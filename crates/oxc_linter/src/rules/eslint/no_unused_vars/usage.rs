@@ -1,6 +1,7 @@
 //! This module contains logic for checking if any [`Reference`]s to a
 //! [`Symbol`] are considered a usage.
 
+use itertools::Itertools;
 use oxc_ast::{AstKind, ast::*};
 use oxc_semantic::{AstNode, NodeId, Reference, ScopeId, SymbolFlags, SymbolId};
 use oxc_span::{GetSpan, Span};
@@ -137,8 +138,22 @@ impl<'a> Symbol<'_, 'a> {
                     continue;
                 }
 
-                if !self.flags().intersects(SymbolFlags::TypeImport.union(SymbolFlags::Import))
+                // ```ts
+                // const foo = 123;
+                // export type Foo = typeof foo
+                // ```
+                if options.report_vars_only_used_as_types
+                    && !self.flags().intersects(SymbolFlags::TypeImport.union(SymbolFlags::Import))
                     && self.reference_contains_type_query(reference)
+                {
+                    continue;
+                }
+                // ```
+                // function foo(): foo { }
+                // ```
+                if self
+                    .get_ref_relevant_node(reference)
+                    .is_some_and(|node| self.declaration().span().contains_inclusive(node.span()))
                 {
                     continue;
                 }
@@ -413,9 +428,31 @@ impl<'a> Symbol<'_, 'a> {
                     match left {
                         AssignmentTarget::AssignmentTargetIdentifier(id) => {
                             if id.name == name {
+                                // Compare *variable scopes* (the nearest function / TS module / class‑static block).
+                                //
+                                // If the variable scope is the same, the the variable is still unused
+                                // ```ts
+                                // let cancel = () => {};
+                                // {                      // plain block
+                                //   cancel = cancel?.(); // `cancel` is unused
+                                // }
+                                // ```
+                                //
+                                // If the variable scope is different, the read can be observed later, so it counts as a real usage:
+                                // ```ts
+                                // let cancel = () => {};
+                                // function foo() {        // new var‑scope
+                                //   cancel = cancel?.();  // `cancel` is used
+                                // }
+                                // ```
+                                if self.get_parent_variable_scope(self.get_ref_scope(reference))
+                                    != self.get_parent_variable_scope(self.scope_id())
+                                {
+                                    return false;
+                                }
                                 is_used_by_others = false;
                             } else {
-                                return false; // we can short-circuit
+                                return false;
                             }
                         }
                         AssignmentTarget::TSAsExpression(v)
@@ -817,5 +854,19 @@ impl<'a> Symbol<'_, 'a> {
                 _ => return false,
             };
         }
+    }
+
+    /// Return the **variable scope** for the given `scope_id`.
+    ///
+    /// A variable scope is the closest ancestor scope (including `scope_id`
+    /// itself) whose kind can *outlive* the current execution slice:
+    ///   * function‑like scopes  
+    ///   * class static blocks  
+    ///   * TypeScript namespace/module blocks
+    fn get_parent_variable_scope(&self, scope_id: ScopeId) -> ScopeId {
+        self.scoping()
+            .scope_ancestors(scope_id)
+            .find_or_last(|scope_id| self.scoping().scope_flags(*scope_id).is_var())
+            .expect("scope iterator will always contain at least one element")
     }
 }

@@ -16,6 +16,10 @@ pub struct LintRuleMeta {
     #[cfg(feature = "ruledocs")]
     documentation: String,
     pub used_in_test: bool,
+    /// Rule configuration
+    /// This is the name of a struct/enum/whatever implementing
+    /// schemars::JsonSchema
+    config: Option<Ident>,
 }
 
 impl Parse for LintRuleMeta {
@@ -34,6 +38,10 @@ impl Parse for LintRuleMeta {
                         documentation.push_str(line);
                         documentation.push('\n');
                     }
+                    #[cfg(not(feature = "ruledocs"))]
+                    {
+                        let _ = lit;
+                    }
                 }
                 _ => {
                     return Err(Error::new_spanned(attr, "unexpected attribute"));
@@ -50,12 +58,43 @@ impl Parse for LintRuleMeta {
         // Parse FixMeta if it's specified. It will otherwise be excluded from
         // the RuleMeta impl, falling back on default set by RuleMeta itself.
         // Do not provide a default value here so that it can be set there instead.
-        let fix: Option<Ident> = if input.peek(Token!(,)) {
+        let mut fix: Option<Ident> = None;
+        let mut config: Option<Ident> = None;
+
+        // remaining options are `key = value` pairs, with the exception of
+        // fix kinds. Those can be short-handed to just the fix kind
+        while input.peek(Token!(,)) {
             input.parse::<Token!(,)>()?;
-            input.parse()?
-        } else {
-            None
-        };
+            if input.is_empty() {
+                break;
+            }
+            let key: Ident = input.parse()?;
+            match key.to_string().as_str() {
+                "fix" => {
+                    if input.peek(Token!(=)) {
+                        // `fix = some-fix-kind`
+                        input.parse::<Token!(=)>()?;
+                        fix.replace(input.parse()?);
+                    } else {
+                        // `fix` by itself is the same as `fix = fix`
+                        fix.replace(key);
+                    }
+                }
+                // config = StructImplementingJsonSchemaTrait
+                "config" => {
+                    input.parse::<Token!(=)>()?;
+                    config.replace(input.parse()?);
+                }
+                _ => {
+                    if input.peek(Token!(=)) || fix.is_some() {
+                        panic!("invalid key: {key}");
+                    } else {
+                        // fix kind shorthand, e.g. `dangerous-suggestion``
+                        fix.replace(key);
+                    }
+                }
+            }
+        }
 
         // Ignore the rest
         input.parse::<proc_macro2::TokenStream>()?;
@@ -68,6 +107,7 @@ impl Parse for LintRuleMeta {
             #[cfg(feature = "ruledocs")]
             documentation,
             used_in_test: false,
+            config,
         })
     }
 }
@@ -85,6 +125,7 @@ pub fn declare_oxc_lint(metadata: LintRuleMeta) -> TokenStream {
         #[cfg(feature = "ruledocs")]
         documentation,
         used_in_test,
+        config,
     } = metadata;
 
     let canonical_name = rule_name_converter().convert(name.to_string());
@@ -123,6 +164,25 @@ pub fn declare_oxc_lint(metadata: LintRuleMeta) -> TokenStream {
         }
     });
 
+    #[cfg(not(feature = "ruledocs"))]
+    let config_schema: Option<proc_macro2::TokenStream> = {
+        let _ = config;
+        None
+    };
+    #[cfg(feature = "ruledocs")]
+    let config_schema = match config {
+        Some(config) => Some(quote! {
+            fn config_schema(generator: &mut schemars::SchemaGenerator) -> Option<schemars::schema::Schema> {
+                Some(generator.subschema_for::<#config>())
+            }
+        }),
+        None => Some(quote! {
+            fn config_schema(_generator: &mut schemars::SchemaGenerator) -> Option<schemars::schema::Schema> {
+                None
+            }
+        }),
+    };
+
     let output = quote! {
         #import_statement
 
@@ -136,6 +196,8 @@ pub fn declare_oxc_lint(metadata: LintRuleMeta) -> TokenStream {
             #fix
 
             #docs
+
+            #config_schema
         }
     };
 

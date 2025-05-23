@@ -25,9 +25,11 @@ pub struct PreferObjectSpread;
 
 declare_oxc_lint!(
     /// ### What it does
+    ///
     /// Disallow using `Object.assign` with an object literal as the first argument and prefer the use of object spread instead
     ///
     /// ### Why is this bad?
+    ///
     /// When `Object.assign` is called using an object literal as the first argument, this rule requires using the object spread syntax instead. This rule also warns on cases where an `Object.assign` call is made using a single argument that is an object literal, in this case, the `Object.assign` call is not needed.
     ///
     /// ### Examples

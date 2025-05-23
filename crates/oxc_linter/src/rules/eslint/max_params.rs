@@ -130,10 +130,7 @@ impl Rule for MaxParams {
                             self.max
                         );
                         let span = function.params.span;
-                        ctx.diagnostic(max_params_diagnostic(
-                            &error_msg,
-                            Span::new(span.start, span.end),
-                        ));
+                        ctx.diagnostic(max_params_diagnostic(&error_msg, span));
                     } else {
                         let error_msg = format!(
                             "Function has too many parameters ({}). Maximum allowed is {}.",
@@ -141,10 +138,7 @@ impl Rule for MaxParams {
                             self.max
                         );
                         let span = function.params.span;
-                        ctx.diagnostic(max_params_diagnostic(
-                            &error_msg,
-                            Span::new(span.start, span.end),
-                        ));
+                        ctx.diagnostic(max_params_diagnostic(&error_msg, span));
                     }
                 }
             }
@@ -156,10 +150,7 @@ impl Rule for MaxParams {
                         self.max
                     );
                     let span = function.params.span;
-                    ctx.diagnostic(max_params_diagnostic(
-                        &error_msg,
-                        Span::new(span.start, span.end),
-                    ));
+                    ctx.diagnostic(max_params_diagnostic(&error_msg, span));
                 }
             }
             _ => {}

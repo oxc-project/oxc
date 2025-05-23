@@ -39,6 +39,11 @@ impl HtmlWriter {
         Self { inner: RefCell::new(String::with_capacity(capacity)) }
     }
 
+    /// Reserve capacity in this writer's buffer for at least `additional` bytes.
+    pub fn reserve(&self, additional: usize) {
+        self.inner.borrow_mut().reserve(additional);
+    }
+
     /// Similar to [`Write::write_str`], but doesn't require a mutable borrow.
     ///
     /// Useful when nesting [`HtmlWriter::html`] calls.
@@ -49,6 +54,12 @@ impl HtmlWriter {
     /// Finalize this writer's internal buffer and return it as a [`String`].
     pub fn into_inner(self) -> String {
         self.inner.into_inner()
+    }
+
+    /// Finalize this writer's internal buffer and return it as a [`String`].
+    /// An empty string will be left in its place.
+    pub fn take(&self) -> String {
+        self.inner.take()
     }
 
     /// Render an HTML tag with some children.
@@ -99,7 +110,7 @@ impl HtmlWriter {
 
 /// Implements a tag factory on [`HtmlWriter`] with optional documentation.
 macro_rules! make_tag {
-    ($name:ident, $($docs:expr_2021),+) => {
+    ($name:ident, $($docs:expr),+) => {
         impl HtmlWriter {
             // create a #[doc = $doc] for each item in $docs
             $(
@@ -140,5 +151,15 @@ Hello, world!
 </div>
 "
         );
+    }
+
+    #[test]
+    fn test_stringification() {
+        let w = HtmlWriter::default();
+        w.html("span", "class=\"foo\"", |html| html.writeln("Hello, world!")).unwrap();
+        let html = w.take();
+        assert_eq!(html, "<span class=\"foo\">\nHello, world!\n</span>\n");
+        let html = w.take();
+        assert_eq!(html, "");
     }
 }

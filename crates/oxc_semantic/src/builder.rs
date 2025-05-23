@@ -39,7 +39,7 @@ use crate::{
 };
 
 macro_rules! control_flow {
-    ($self:ident, |$cfg:tt| $body:expr_2021) => {
+    ($self:ident, |$cfg:tt| $body:expr) => {
         if let Some($cfg) = &mut $self.cfg { $body } else { Default::default() }
     };
 }

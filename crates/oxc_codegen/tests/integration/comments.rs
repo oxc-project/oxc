@@ -1,3 +1,10 @@
+use crate::tester::test_same;
+
+#[test]
+fn unit() {
+    test_same("<div>{/* Hello */}</div>;\n");
+}
+
 pub mod jsdoc {
     use crate::snapshot;
 
@@ -204,7 +211,8 @@ pub mod legal {
 
     #[test]
     fn legal_eof_comment() {
-        let options = CodegenOptions { legal_comments: LegalComment::Eof, ..Default::default() };
+        let options =
+            CodegenOptions { legal_comments: LegalComment::Eof, ..CodegenOptions::default() };
         snapshot_options("legal_eof_comments", &cases(), &options);
     }
 
@@ -213,7 +221,7 @@ pub mod legal {
         let options = CodegenOptions {
             minify: true,
             legal_comments: LegalComment::Eof,
-            ..Default::default()
+            ..CodegenOptions::default()
         };
         snapshot_options("legal_eof_minify_comments", &cases(), &options);
     }
@@ -222,7 +230,7 @@ pub mod legal {
     fn legal_linked_comment() {
         let options = CodegenOptions {
             legal_comments: LegalComment::Linked(String::from("test.js")),
-            ..Default::default()
+            ..CodegenOptions::default()
         };
         snapshot_options("legal_linked_comments", &cases(), &options);
     }
@@ -230,7 +238,7 @@ pub mod legal {
     #[test]
     fn legal_external_comment() {
         let options =
-            CodegenOptions { legal_comments: LegalComment::External, ..Default::default() };
+            CodegenOptions { legal_comments: LegalComment::External, ..CodegenOptions::default() };
         let code = "/* @license */\n/* @preserve */\nfoo;\n";
         let ret = codegen_options(code, &options);
         assert_eq!(ret.code, "foo;\n");
@@ -455,5 +463,66 @@ delete /* @__PURE__ */ (() => {})();",
         ];
 
         snapshot("pure_comments", &cases);
+    }
+}
+
+pub mod options {
+    use oxc_codegen::{CodegenOptions, LegalComment};
+
+    use crate::codegen_options;
+
+    #[test]
+    fn test() {
+        let code = "
+//! Top Legal Comment
+function foo() {
+    /** JSDoc Comment */
+    function bar() {
+        /* #__PURE__ */ x();
+    }
+    function baz() {
+        //! Function Legal Comment
+    }
+    x(/* Normal Comment */);
+    x(/** Call Expression Annotation Comment */ token);
+}";
+
+        for comments in [true, false] {
+            for annotation in [true, false] {
+                for legal in [LegalComment::Inline, LegalComment::Eof, LegalComment::None] {
+                    let options = CodegenOptions {
+                        comments,
+                        annotation_comments: annotation,
+                        legal_comments: legal.clone(),
+                        ..CodegenOptions::default()
+                    };
+                    let printed = codegen_options(code, &options).code;
+
+                    if comments {
+                        assert!(printed.contains("Normal Comment"));
+                    } else {
+                        assert!(!printed.contains("Normal Comment"));
+                    }
+
+                    if annotation {
+                        assert!(printed.contains("JSDoc Comment"));
+                        assert!(printed.contains("__PURE__"));
+                        assert!(printed.contains("Call Expression Annotation Comment"));
+                    } else {
+                        assert!(!printed.contains("JSDoc Comment"));
+                        assert!(!printed.contains("__PURE__"));
+                        assert!(!printed.contains("Call Expression Annotation Comment"));
+                    }
+
+                    if legal.is_none() {
+                        assert!(!printed.contains("Top Legal Comment"));
+                        assert!(!printed.contains("Function Legal Comment"));
+                    } else {
+                        assert!(printed.contains("Top Legal Comment"));
+                        assert!(printed.contains("Function Legal Comment"));
+                    }
+                }
+            }
+        }
     }
 }

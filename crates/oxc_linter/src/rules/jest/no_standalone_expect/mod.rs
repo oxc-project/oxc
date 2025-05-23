@@ -49,7 +49,9 @@ declare_oxc_lint!(
     /// Statements like `expect.hasAssertions()` will NOT trigger this rule since these
     /// calls will execute if they are not in a test block.
     ///
-    /// ### Example
+    /// ### Examples
+    ///
+    /// Examples of **incorrect** code for this rule:
     /// ```javascript
     /// describe('a test', () => {
     ///     expect(1).toBe(1);
@@ -212,7 +214,7 @@ fn is_var_declarator_or_test_block<'a>(
             }
 
             let node_name = get_node_name(&call_expr.callee);
-            if additional_test_block_functions.iter().any(|fn_name| node_name == fn_name) {
+            if additional_test_block_functions.contains(&node_name) {
                 return true;
             }
         }

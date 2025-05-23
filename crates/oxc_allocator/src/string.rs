@@ -63,7 +63,6 @@ impl<'alloc> String<'alloc> {
     /// If the given capacity is `0`, no allocation will occur, and this method
     /// is identical to the [`new_in`] method.
     ///
-    /// [`capacity`]: String::capacity
     /// [`new_in`]: String::new_in
     #[inline(always)]
     pub fn with_capacity_in(capacity: usize, allocator: &'alloc Allocator) -> String<'alloc> {

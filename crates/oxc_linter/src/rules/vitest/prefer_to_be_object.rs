@@ -129,30 +129,38 @@ impl PreferToBeObject {
 
             if id.name == "Object" {
                 ctx.diagnostic_with_fix(prefer_to_be_object(matcher.span), |fixer| {
-                    let mut formatter = fixer.codegen();
-                    formatter.print_str(fixer.source_range(Span::new(
-                        call_expr.span.start,
-                        binary_expr.left.span().end,
-                    )));
-                    formatter.print_str(
-                        fixer.source_range(Span::new(
+                    let code = {
+                        let not_modifier = parsed_expect_call
+                            .modifiers()
+                            .iter()
+                            .any(|node| node.name().as_deref() == Some("not"));
+                        let is_not_modifier =
+                            (matcher.name().as_deref() == Some("toBeFalsy")) != not_modifier;
+
+                        let left = fixer.source_range(Span::new(
+                            call_expr.span.start,
+                            binary_expr.left.span().end,
+                        ));
+                        let right = fixer.source_range(Span::new(
                             binary_expr.span.end,
                             parent_call_expr.span.end,
-                        )),
-                    );
+                        ));
 
-                    let not_modifier = parsed_expect_call
-                        .modifiers()
-                        .iter()
-                        .any(|node| node.name().as_deref() == Some("not"));
+                        let mut code = String::with_capacity(
+                            left.len() + right.len() + if is_not_modifier { 4 } else { 0 } + 13,
+                        );
 
-                    if (matcher.name().as_deref() == Some("toBeFalsy")) != not_modifier {
-                        formatter.print_str(".not");
-                    }
+                        code.push_str(left);
+                        code.push_str(right);
 
-                    formatter.print_str(".toBeObject()");
+                        if is_not_modifier {
+                            code.push_str(".not");
+                        }
 
-                    fixer.replace(call_expr.span, formatter)
+                        code.push_str(".toBeObject()");
+                        code
+                    };
+                    fixer.replace(call_expr.span, code)
                 });
             }
         }

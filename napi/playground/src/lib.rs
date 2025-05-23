@@ -129,6 +129,7 @@ impl Oxc {
             Parser::new(&allocator, &source_text, source_type)
                 .with_options(oxc_parser_options)
                 .parse();
+        self.diagnostics.extend(errors);
 
         let mut semantic_builder = SemanticBuilder::new();
         if run_options.transform.unwrap_or_default() {
@@ -146,7 +147,7 @@ impl Oxc {
             ))
         });
         if run_options.syntax.unwrap_or_default() {
-            self.diagnostics.extend(errors.into_iter().chain(semantic_ret.errors));
+            self.diagnostics.extend(semantic_ret.errors);
         }
 
         let linter_module_record = Arc::new(ModuleRecord::new(&path, &module_record, &semantic));
@@ -284,8 +285,7 @@ impl Oxc {
         if run_options.lint.unwrap_or_default() && self.diagnostics.is_empty() {
             let semantic_ret = SemanticBuilder::new().with_cfg(true).build(program);
             let semantic = Rc::new(semantic_ret.semantic);
-            let lint_config =
-                ConfigStoreBuilder::default().build().expect("Failed to build config store");
+            let lint_config = ConfigStoreBuilder::default().build();
             let linter_ret = Linter::new(
                 LintOptions::default(),
                 ConfigStore::new(lint_config, FxHashMap::default()),

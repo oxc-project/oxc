@@ -29,7 +29,6 @@ declare_oxc_lint!(
     /// Two identical test conditions in the same chain are almost always a mistake in the code. Unless there are side effects in the expressions,
     /// a duplicate will evaluate to the same true or false value as the identical expression earlier in the chain, meaning that its branch can never execute.
     ///
-    ///
     /// ### Examples
     ///
     /// Examples of **incorrect** code for this rule:

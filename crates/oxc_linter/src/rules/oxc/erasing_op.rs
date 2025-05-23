@@ -30,7 +30,7 @@ declare_oxc_lint!(
     ///
     /// The whole expression can be replaced by zero. This is most likely not the intended outcome and should probably be corrected.
     ///
-    /// ### Example
+    /// ### Examples
     ///
     /// Examples of **incorrect** code for this rule:
     /// ```javascript

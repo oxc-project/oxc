@@ -4,6 +4,22 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.71.0] - 2025-05-20
+
+- 5d9344f rust: [**BREAKING**] Clippy avoid-breaking-exported-api = false (#11088) (Boshen)
+
+### Features
+
+- c79a7d0 data_structures: Introduce `PointerExt` trait (#11095) (overlookmotel)
+
+### Performance
+
+- f8fac4e data_structures: Inline all methods in `PointerExt` (#11149) (overlookmotel)
+
+### Refactor
+
+- bb8bde3 various: Update macros to use `expr` fragment specifier (#11113) (overlookmotel)
+
 ## [0.69.0] - 2025-05-09
 
 ### Features

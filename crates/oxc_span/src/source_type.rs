@@ -1,13 +1,16 @@
-use std::{hash::Hash, path::Path};
+use std::{
+    borrow::Cow,
+    error::Error,
+    fmt::{self, Display},
+    ops::Deref,
+    path::Path,
+};
 
 use oxc_allocator::{Allocator, CloneIn, Dummy};
 use oxc_ast_macros::ast;
 use oxc_estree::ESTree;
 
 use crate::ContentEq;
-
-mod error;
-pub use error::UnknownExtension;
 
 /// Source Type for JavaScript vs TypeScript / Script vs Module / JSX
 #[ast]
@@ -97,8 +100,62 @@ impl ContentEq for SourceType {
     }
 }
 
-/// Valid file extensions
+/// Valid file extensions.
 pub const VALID_EXTENSIONS: &[&str] = &["js", "mjs", "cjs", "jsx", "ts", "mts", "cts", "tsx"];
+
+/// Valid file extension.
+#[derive(Clone, Copy, PartialEq, Eq)]
+enum FileExtension {
+    Js,
+    Mjs,
+    Cjs,
+    Jsx,
+    Ts,
+    Mts,
+    Cts,
+    Tsx,
+}
+
+impl FileExtension {
+    fn from_str(extension: &str) -> Option<Self> {
+        let file_ext = match extension {
+            "js" => Self::Js,
+            "mjs" => Self::Mjs,
+            "cjs" => Self::Cjs,
+            "jsx" => Self::Jsx,
+            "ts" => Self::Ts,
+            "mts" => Self::Mts,
+            "cts" => Self::Cts,
+            "tsx" => Self::Tsx,
+            _ => return None,
+        };
+        Some(file_ext)
+    }
+}
+
+impl From<FileExtension> for SourceType {
+    fn from(file_ext: FileExtension) -> SourceType {
+        #[allow(clippy::enum_glob_use, clippy::allow_attributes)]
+        use FileExtension::*;
+
+        let language = match file_ext {
+            Js | Cjs | Mjs | Jsx => Language::JavaScript,
+            Ts | Tsx | Mts | Cts => Language::TypeScript,
+        };
+
+        let module_kind = match file_ext {
+            Js | Tsx | Ts | Jsx | Mts | Mjs => ModuleKind::Module,
+            Cjs | Cts => ModuleKind::Script,
+        };
+
+        let variant = match file_ext {
+            Jsx | Tsx => LanguageVariant::Jsx,
+            Js | Mjs | Cjs | Ts | Mts | Cts => LanguageVariant::Standard,
+        };
+
+        SourceType { language, module_kind, variant }
+    }
+}
 
 impl SourceType {
     /// Creates a [`SourceType`] representing a regular [`JavaScript`] file.
@@ -245,21 +302,21 @@ impl SourceType {
         }
     }
 
-    /// Mark this source type as a [script].
+    /// Returns `true` if this [`SourceType`] is [script].
     ///
     /// [script]: ModuleKind::Script
     pub fn is_script(self) -> bool {
         self.module_kind == ModuleKind::Script
     }
 
-    /// Mark this source type as a [module].
+    /// Returns `true` if this [`SourceType`] is [module].
     ///
     /// [module]: ModuleKind::Module
     pub fn is_module(self) -> bool {
         self.module_kind == ModuleKind::Module
     }
 
-    /// `true` if this [`SourceType`] is [unambiguous].
+    /// Returns `true` if this [`SourceType`] is [unambiguous].
     ///
     /// [unambiguous]: ModuleKind::Unambiguous
     pub fn is_unambiguous(self) -> bool {
@@ -450,28 +507,31 @@ impl SourceType {
             .and_then(std::ffi::OsStr::to_str)
             .ok_or_else(|| UnknownExtension::new("Please provide a valid file name."))?;
 
-        let extension = path
-            .as_ref()
-            .extension()
-            .and_then(std::ffi::OsStr::to_str)
-            .filter(|s| VALID_EXTENSIONS.contains(s))
-            .ok_or_else(|| {
+        let file_ext =
+            path.as_ref().extension().and_then(std::ffi::OsStr::to_str).and_then(FileExtension::from_str).ok_or_else(|| {
                 let path = path.as_ref().to_string_lossy();
                 UnknownExtension::new(
                     format!("Please provide a valid file extension for {path}: .js, .mjs, .jsx or .cjs for JavaScript, or .ts, .d.ts, .mts, .cts or .tsx for TypeScript"),
                 )
             })?;
 
-        let mut source_type = Self::from_extension(extension)?;
+        let mut source_type = SourceType::from(file_ext);
 
-        #[expect(clippy::case_sensitive_file_extension_comparisons)]
-        if match extension {
-            "ts" if file_name[..file_name.len() - 3].split('.').rev().take(2).any(|c| c == "d") => {
-                true
+        let is_dts = match file_ext {
+            // https://www.typescriptlang.org/tsconfig/#allowArbitraryExtensions
+            // `{file basename}.d.{extension}.ts`
+            // https://github.com/microsoft/TypeScript/issues/50133
+            FileExtension::Ts => {
+                file_name[..file_name.len() - 3].split('.').rev().take(2).any(|c| c == "d")
             }
-            "mts" | "cts" if file_name[..file_name.len() - 4].ends_with(".d") => true,
+            FileExtension::Mts | FileExtension::Cts =>
+            {
+                #[expect(clippy::case_sensitive_file_extension_comparisons)]
+                file_name[..file_name.len() - 4].ends_with(".d")
+            }
             _ => false,
-        } {
+        };
+        if is_dts {
             source_type.language = Language::TypeScriptDefinition;
         }
 
@@ -487,29 +547,39 @@ impl SourceType {
     ///     "mts", "cts", "tsx". See [`VALID_EXTENSIONS`] for the list of valid
     ///     extensions.
     pub fn from_extension(extension: &str) -> Result<Self, UnknownExtension> {
-        let module_kind = match extension {
-            "js" | "tsx" | "ts" | "jsx" | "mts" | "mjs" => ModuleKind::Module,
-            "cjs" | "cts" => ModuleKind::Script,
-            _ => return Err(UnknownExtension::new("Unknown extension.")),
-        };
-
-        let language = match extension {
-            // https://www.typescriptlang.org/tsconfig/#allowArbitraryExtensions
-            // `{file basename}.d.{extension}.ts`
-            // https://github.com/microsoft/TypeScript/issues/50133
-            "js" | "cjs" | "mjs" | "jsx" => Language::JavaScript,
-            "ts" | "tsx" | "mts" | "cts" => Language::TypeScript,
-            _ => return Err(UnknownExtension::new("Unknown extension.")),
-        };
-
-        let variant = match extension {
-            "js" | "mjs" | "cjs" | "jsx" | "tsx" => LanguageVariant::Jsx,
-            _ => LanguageVariant::Standard,
-        };
-
-        Ok(Self { language, module_kind, variant })
+        match FileExtension::from_str(extension) {
+            Some(file_ext) => Ok(SourceType::from(file_ext)),
+            None => Err(UnknownExtension::new("Unknown extension.")),
+        }
     }
 }
+
+/// Error returned by [`SourceType::from_path`] and [`SourceType::from_extension`] when
+/// the file extension is not found or recognized.
+#[derive(Debug)]
+pub struct UnknownExtension(Cow<'static, str>);
+
+impl UnknownExtension {
+    fn new<S: Into<Cow<'static, str>>>(ext: S) -> Self {
+        Self(ext.into())
+    }
+}
+
+impl Deref for UnknownExtension {
+    type Target = str;
+
+    fn deref(&self) -> &str {
+        &self.0
+    }
+}
+
+impl Display for UnknownExtension {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "Unknown file extension: {}", self.0)
+    }
+}
+
+impl Error for UnknownExtension {}
 
 #[cfg(test)]
 mod tests {
@@ -603,7 +673,7 @@ mod tests {
             assert!(!ty.is_typescript(), "{ty:?}");
         }
 
-        assert_eq!(SourceType::jsx(), js);
+        assert_eq!(SourceType::mjs(), js);
         assert_eq!(SourceType::jsx().with_module(true), jsx);
 
         assert!(js.is_module());
@@ -616,9 +686,9 @@ mod tests {
         assert!(!cjs.is_strict());
         assert!(jsx.is_strict());
 
-        assert!(js.is_jsx());
-        assert!(mjs.is_jsx());
-        assert!(cjs.is_jsx());
+        assert!(js.is_javascript());
+        assert!(mjs.is_javascript());
+        assert!(cjs.is_javascript());
         assert!(jsx.is_jsx());
     }
 }

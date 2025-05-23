@@ -62,8 +62,13 @@ impl CompilerInterface for Driver {
     }
 
     fn codegen_options(&self) -> Option<CodegenOptions> {
-        self.codegen
-            .then(|| CodegenOptions { minify: self.remove_whitespace, ..CodegenOptions::default() })
+        self.codegen.then(|| {
+            if self.remove_whitespace {
+                CodegenOptions::minify()
+            } else {
+                CodegenOptions::default()
+            }
+        })
     }
 
     fn handle_errors(&mut self, errors: Vec<OxcDiagnostic>) {

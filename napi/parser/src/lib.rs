@@ -1,7 +1,10 @@
 // Napi value need to be passed as value
 #![expect(clippy::needless_pass_by_value)]
 
-#[cfg(all(feature = "allocator", not(target_arch = "arm"), not(target_family = "wasm")))]
+#[cfg(all(
+    feature = "allocator",
+    not(any(target_arch = "arm", target_os = "freebsd", target_family = "wasm"))
+))]
 #[global_allocator]
 static ALLOC: mimalloc_safe::MiMalloc = mimalloc_safe::MiMalloc;
 
@@ -16,7 +19,7 @@ use oxc::{
     semantic::SemanticBuilder,
     span::SourceType,
 };
-use oxc_napi::{Comment, OxcError, convert_utf8_to_utf16};
+use oxc_napi::{Comment, OxcError, convert_utf8_to_utf16, get_source_type};
 
 mod convert;
 mod raw_transfer;
@@ -37,25 +40,8 @@ enum AstType {
     TypeScript,
 }
 
-fn get_source_and_ast_type(filename: &str, options: &ParserOptions) -> (SourceType, AstType) {
-    let source_type = match options.lang.as_deref() {
-        Some("js") => SourceType::mjs(),
-        Some("jsx") => SourceType::jsx(),
-        Some("ts") => SourceType::ts(),
-        Some("tsx") => SourceType::tsx(),
-        _ => {
-            let mut source_type = SourceType::from_path(filename).unwrap_or_default();
-            // Force `script` or `module`
-            match options.source_type.as_deref() {
-                Some("script") => source_type = source_type.with_script(true),
-                Some("module") => source_type = source_type.with_module(true),
-                _ => {}
-            }
-            source_type
-        }
-    };
-
-    let ast_type = match options.ast_type.as_deref() {
+fn get_ast_type(source_type: SourceType, options: &ParserOptions) -> AstType {
+    match options.ast_type.as_deref() {
         Some("js") => AstType::JavaScript,
         Some("ts") => AstType::TypeScript,
         _ => {
@@ -65,9 +51,7 @@ fn get_source_and_ast_type(filename: &str, options: &ParserOptions) -> (SourceTy
                 AstType::TypeScript
             }
         }
-    };
-
-    (source_type, ast_type)
+    }
 }
 
 fn parse<'a>(
@@ -86,7 +70,9 @@ fn parse<'a>(
 
 fn parse_with_return(filename: &str, source_text: String, options: &ParserOptions) -> ParseResult {
     let allocator = Allocator::default();
-    let (source_type, ast_type) = get_source_and_ast_type(filename, options);
+    let source_type =
+        get_source_type(filename, options.lang.as_deref(), options.source_type.as_deref());
+    let ast_type = get_ast_type(source_type, options);
     let ret = parse(&allocator, source_type, &source_text, options);
 
     let mut program = ret.program;

@@ -16,20 +16,26 @@ pub struct DefaultParamLast;
 
 declare_oxc_lint!(
     /// ### What it does
+    ///
     /// Enforce default parameters to be last
     ///
     /// ### Why is this bad?
+    ///
     /// Putting default parameter at last allows function calls to omit optional tail arguments.
     ///
-    /// ### Example
-    /// ```javascript
-    /// // Correct: optional argument can be omitted
-    /// function createUser(id, isAdmin = false) {}
-    /// createUser("tabby")
+    /// ### Examples
     ///
+    /// Examples of **incorrect** code for this rule:
+    /// ```javascript
     /// // Incorrect: optional argument can **not** be omitted
     /// function createUser(isAdmin = false, id) {}
     /// createUser(undefined, "tabby")
+    /// ```
+    ///
+    /// Examples of **correct** code for this rule:
+    /// ```javascript
+    /// function createUser(id, isAdmin = false) {}
+    /// createUser("tabby")
     /// ```
     DefaultParamLast,
     eslint,

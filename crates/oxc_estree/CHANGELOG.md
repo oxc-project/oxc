@@ -4,6 +4,17 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.71.0] - 2025-05-20
+
+### Features
+
+- 9e90e00 ast_tools: Introduce `#[js_only]` attr for struct fields and converters (#11160) (overlookmotel)
+- c79a7d0 data_structures: Introduce `PointerExt` trait (#11095) (overlookmotel)
+
+### Performance
+
+- 8f8d823 ast/estree: Optimize serializing strings to JSON (#11070) (overlookmotel)
+
 ## [0.69.0] - 2025-05-09
 
 ### Features

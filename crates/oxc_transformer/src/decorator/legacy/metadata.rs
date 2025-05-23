@@ -107,7 +107,7 @@ impl<'a, 'ctx> LegacyDecoratorMetadata<'a, 'ctx> {
 
 impl<'a> Traverse<'a> for LegacyDecoratorMetadata<'a, '_> {
     fn enter_class(&mut self, class: &mut Class<'a>, ctx: &mut TraverseCtx<'a>) {
-        if class.is_expression() || class.is_typescript_syntax() {
+        if class.is_expression() || class.declare {
             return;
         }
 
@@ -393,7 +393,7 @@ impl<'a> LegacyDecoratorMetadata<'a, '_> {
                     let binding =
                         self.ctx.var_declarations.create_uid_var_based_on_node(&left, ctx);
                     let Expression::LogicalExpression(logical) = &mut left else { unreachable!() };
-                    let right = logical.right.take_in(ctx.ast.allocator);
+                    let right = logical.right.take_in(ctx.ast);
                     // `(_a = A.B)`
                     let right = ctx.ast.expression_assignment(
                         SPAN,

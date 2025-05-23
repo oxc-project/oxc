@@ -1,8 +1,8 @@
-commit: 578ac4df
+commit: 1d4546bc
 
 semantic_babel Summary:
-AST Parsed     : 2322/2322 (100.00%)
-Positive Passed: 1905/2322 (82.04%)
+AST Parsed     : 2362/2362 (100.00%)
+Positive Passed: 1945/2362 (82.35%)
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/annex-b/enabled/3.3-function-in-if-body/input.js
 Symbol scope ID mismatch for "f":
 after transform: SymbolId(0): ScopeId(4294967294)
@@ -205,6 +205,16 @@ Unresolved references mismatch:
 after transform: ["Y", "foo"]
 rebuilt        : []
 
+semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/estree/typescript/instantiation-expression-optional-chain/input.ts
+Unresolved references mismatch:
+after transform: ["a", "c"]
+rebuilt        : ["a"]
+
+semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/estree/typescript/instantiation-expression-optional-chain-babel-7/input.ts
+Unresolved references mismatch:
+after transform: ["a", "c"]
+rebuilt        : ["a"]
+
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/estree/typescript/literals/input.js
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(4), ScopeId(5), ScopeId(6), ScopeId(7)]
@@ -236,11 +246,10 @@ Unresolved references mismatch:
 after transform: ["T", "foo"]
 rebuilt        : ["foo"]
 
-semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/jsx/errors/_no-plugin-ts-type-param-no-flow/input.js
-Unexpected token. Did you mean `{'>'}` or `&gt;`?
-
-semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/jsx/errors/_no-plugin-ts-type-param-no-flow-babel-7/input.js
-Unexpected token. Did you mean `{'>'}` or `&gt;`?
+semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/estree/typescript/shorthand-ambient-module/input.ts
+Scope children mismatch:
+after transform: ScopeId(0): [ScopeId(1)]
+rebuilt        : ScopeId(0): []
 
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/arrow-function/arrow-function-with-newline/input.ts
 Unresolved references mismatch:
@@ -853,10 +862,8 @@ Symbol flags mismatch for "E":
 after transform: SymbolId(0): SymbolFlags(RegularEnum)
 rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
 
-semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/estree-compat/shorthand-ambient-module/input.ts
-Scope children mismatch:
-after transform: ScopeId(0): [ScopeId(1)]
-rebuilt        : ScopeId(0): []
+semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/explicit-resource-management/valid-for-using-declaration-binding-of/input.js
+Unexpected token
 
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/export/declare/input.ts
 Bindings mismatch:
@@ -1168,9 +1175,6 @@ semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescr
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1)]
 rebuilt        : ScopeId(0): []
-
-semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/interface/get-set-properties/input.ts
-Expected `(` but found `:`
 
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/interface/index-signature/input.ts
 Scope children mismatch:

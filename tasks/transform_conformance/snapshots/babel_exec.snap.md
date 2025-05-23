@@ -1,14 +1,23 @@
-commit: 578ac4df
+commit: 1d4546bc
 
 node: v22.14.0
 
-Passed: 320 of 406 (78.82%)
+Passed: 322 of 412 (78.16%)
 
 Failures:
+
+./fixtures/babel/babel-plugin-proposal-explicit-resource-management-test-fixtures-transform-top-level-hoisting-mutate-outer-class-binding-exec.test.js
+Parse failure: 'import', and 'export' cannot be used outside of module code
+At file: ./tasks/transform_conformance/fixtures/babel/babel-plugin-proposal-explicit-resource-management-test-fixtures-transform-top-level-hoisting-mutate-outer-class-binding-exec.test.js:4:2
 
 ./fixtures/babel/babel-plugin-transform-arrow-functions-test-fixtures-arrow-functions-implicit-var-arguments-exec.test.js
 Parse failure: 'eval' and 'arguments' cannot be used as a binding identifier in strict mode
 At file: ./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-arrow-functions-test-fixtures-arrow-functions-implicit-var-arguments-exec.test.js:4:6
+
+./fixtures/babel/babel-plugin-transform-async-to-generator-test-fixtures-async-to-generator-async-complex-params-exec.test.js
+TypeError: Cannot destructure property 'b' of 'undefined' as it is undefined.
+    at Object.foo (./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-async-to-generator-test-fixtures-async-to-generator-async-complex-params-exec.test.js:7:12)
+    at ./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-async-to-generator-test-fixtures-async-to-generator-async-complex-params-exec.test.js:10:6
 
 ./fixtures/babel/babel-plugin-transform-class-properties-test-fixtures-assumption-setPublicClassFields-static-infer-name-exec.test.js
 AssertionError: expected '_Class' to be 'Foo' // Object.is equality
@@ -71,6 +80,14 @@ TypeError: attempted to use private field on non-instance
 ./fixtures/babel/babel-plugin-transform-class-static-block-test-fixtures-integration-new-target-exec.test.js
 AssertionError: expected [Function Base] to be undefined // Object.is equality
     at ./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-class-static-block-test-fixtures-integration-new-target-exec.test.js:10:29
+
+./fixtures/babel/babel-plugin-transform-object-rest-spread-test-fixtures-object-rest-for-x-assignment-shadowed-block-scoped-bindings-exec.test.js
+ReferenceError: Cannot access 'a' before initialization
+    at ./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-object-rest-spread-test-fixtures-object-rest-for-x-assignment-shadowed-block-scoped-bindings-exec.test.js:8:19
+
+./fixtures/babel/babel-plugin-transform-object-rest-spread-test-fixtures-object-rest-for-x-declaration-shadowed-block-scoped-bindings-exec.test.js
+ReferenceError: Cannot access 'a' before initialization
+    at ./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-object-rest-spread-test-fixtures-object-rest-for-x-declaration-shadowed-block-scoped-bindings-exec.test.js:8:12
 
 ./fixtures/babel/babel-plugin-transform-optional-chaining-test-fixtures-assumption-noDocumentAll-parenthesized-expression-member-call-exec.test.js
 TypeError: Cannot read properties of undefined (reading 'x')

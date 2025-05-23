@@ -271,7 +271,7 @@ fn generate_ts_type_def_for_struct_field_impl<'s>(
     }
 
     let field_camel_name = get_struct_field_name(field);
-    let question_mark = if field.estree.is_ts { "?" } else { "" };
+    let question_mark = if field.estree.is_js || field.estree.is_ts { "?" } else { "" };
     write_it!(fields_str, "\n\t{field_camel_name}{question_mark}: {field_type_name};");
 }
 
@@ -287,7 +287,7 @@ fn generate_ts_type_def_for_added_struct_field(
     let Some(ts_type) = converter.estree.ts_type.as_deref() else {
         panic!("No `ts_type` provided for ESTree converter `{converter_name}`");
     };
-    let question_mark = if converter.estree.is_ts { "?" } else { "" };
+    let question_mark = if converter.estree.is_js || converter.estree.is_ts { "?" } else { "" };
     write_it!(fields_str, "\n\t{field_name}{question_mark}: {ts_type};");
 }
 

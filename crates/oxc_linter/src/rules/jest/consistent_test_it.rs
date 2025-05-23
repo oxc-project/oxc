@@ -105,7 +105,7 @@ declare_oxc_lint!(
     ///
     /// It's a good practice to be consistent in your test suite, so that all tests are written in the same way.
     ///
-    /// ### Example
+    /// ### Examples
     ///
     /// ```javascript
     /// /*eslint jest/consistent-test-it: ["error", {"fn": "test"}]*/

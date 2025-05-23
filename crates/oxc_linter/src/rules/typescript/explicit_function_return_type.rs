@@ -58,10 +58,9 @@ declare_oxc_lint!(
     /// Another benefit of explicit return types is the potential for a speed up of type
     /// checking in large codebases with many large functions.
     ///
-    /// ### Example
+    /// ### Examples
     ///
     /// Examples of **incorrect** code for this rule:
-    ///
     /// ```ts
     /// // Should indicate that no value is returned (void)
     /// function test() {
@@ -85,7 +84,6 @@ declare_oxc_lint!(
     /// ```
     ///
     /// Examples of **correct** code for this rule:
-    ///
     /// ```ts
     /// // No return value should be expected (void)
     /// function test(): void {

@@ -3,7 +3,11 @@
 
 //! AST node factories
 
-#![expect(clippy::default_trait_access)]
+#![expect(
+    clippy::default_trait_access,
+    clippy::inconsistent_struct_constructor,
+    clippy::unused_self
+)]
 
 use std::cell::Cell;
 

@@ -4,6 +4,25 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.71.0] - 2025-05-20
+
+- 65a6419 mangler: [**BREAKING**] `Mangler::build_with_semantic` take mut ref to `Semantic` (#11132) (overlookmotel)
+
+- 5d9344f rust: [**BREAKING**] Clippy avoid-breaking-exported-api = false (#11088) (Boshen)
+
+### Performance
+
+
+### Refactor
+
+- bb8bde3 various: Update macros to use `expr` fragment specifier (#11113) (overlookmotel)
+
+## [0.70.0] - 2025-05-15
+
+### Bug Fixes
+
+- 126ae75 semantic: Distinguish class private elements (#11044) (magic-akari)
+
 ## [0.69.0] - 2025-05-09
 
 - 2b5d826 ast: [**BREAKING**] Fix field order for `TSTypeAssertion` (#10906) (overlookmotel)

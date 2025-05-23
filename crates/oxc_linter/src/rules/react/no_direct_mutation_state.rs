@@ -28,12 +28,14 @@ pub struct NoDirectMutationState;
 
 declare_oxc_lint!(
     /// ### What it does
+    ///
     /// The restriction coder cannot directly change the value of this.state
     ///
     /// ### Why is this bad?
+    ///
     /// calling setState() afterwards may replace the mutation you made
     ///
-    /// ### Example
+    /// ### Examples
     /// ```jsx
     ///  // error
     ///  var Hello = createReactClass({

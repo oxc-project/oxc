@@ -25,14 +25,16 @@ pub struct PreferForOf;
 
 declare_oxc_lint!(
     /// ### What it does
+    ///
     /// Enforces the use of for-of loop instead of a for loop with a simple iteration.
     ///
     /// ### Why is this bad?
+    ///
     /// Using a for loop with a simple iteration over an array can be replaced with a more concise
     /// and readable for-of loop. For-of loops are easier to read and less error-prone, as they
     /// eliminate the need for an index variable and manual array access.
     ///
-    /// ### Example
+    /// ### Examples
     ///
     /// Examples of **incorrect** code for this rule:
     /// ```typescript
@@ -52,16 +54,6 @@ declare_oxc_lint!(
     style,
     pending
 );
-
-trait SpanExt {
-    fn contains(&self, other: Self) -> bool;
-}
-
-impl SpanExt for Span {
-    fn contains(&self, other: Self) -> bool {
-        self.start <= other.start && self.end >= other.end
-    }
-}
 
 trait ExpressionExt {
     fn is_increment_of(&self, var_name: &str) -> bool;
@@ -188,7 +180,7 @@ impl Rule for PreferForOf {
             let ref_id = reference.node_id();
 
             let symbol_span = nodes.get_node(ref_id).kind().span();
-            if !body_span.contains(symbol_span) {
+            if !body_span.contains_inclusive(symbol_span) {
                 return false;
             }
 

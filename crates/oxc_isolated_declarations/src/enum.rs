@@ -18,10 +18,7 @@ enum ConstantValue {
 }
 
 impl<'a> IsolatedDeclarations<'a> {
-    pub fn transform_ts_enum_declaration(
-        &mut self,
-        decl: &TSEnumDeclaration<'a>,
-    ) -> Option<Declaration<'a>> {
+    pub fn transform_ts_enum_declaration(&self, decl: &TSEnumDeclaration<'a>) -> Declaration<'a> {
         let mut members = self.ast.vec();
         let mut prev_initializer_value = Some(ConstantValue::Number(-1.0));
         let mut prev_members = FxHashMap::default();
@@ -83,13 +80,13 @@ impl<'a> IsolatedDeclarations<'a> {
             members.push(member);
         }
 
-        Some(self.ast.declaration_ts_enum(
+        self.ast.declaration_ts_enum(
             decl.span,
             decl.id.clone_in(self.ast.allocator),
             self.ast.ts_enum_body(decl.body.span, members),
             decl.r#const,
             self.is_declare(),
-        ))
+        )
     }
 
     /// Evaluate the expression to a constant value.

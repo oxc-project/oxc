@@ -8,8 +8,8 @@ const ROOT_DIR = pathJoin(import.meta.dirname, '../../..');
 const TARGET_DIR_PATH = pathJoin(ROOT_DIR, 'target');
 const TEST262_SHORT_DIR_PATH = 'tasks/coverage/test262/test';
 const TEST262_DIR_PATH = pathJoin(ROOT_DIR, TEST262_SHORT_DIR_PATH);
-const ACORN_TEST262_DIR_PATH = pathJoin(ROOT_DIR, 'tasks/coverage/acorn-test262/test');
-const JSX_SHORT_DIR_PATH = 'tasks/coverage/acorn-test262/test-acorn-jsx/pass';
+const ACORN_TEST262_DIR_PATH = pathJoin(ROOT_DIR, 'tasks/coverage/acorn-test262/tests/test262/test');
+const JSX_SHORT_DIR_PATH = 'tasks/coverage/acorn-test262/tests/acorn-jsx/pass';
 const JSX_DIR_PATH = pathJoin(ROOT_DIR, JSX_SHORT_DIR_PATH);
 const TEST262_SNAPSHOT_PATH = pathJoin(ROOT_DIR, 'tasks/coverage/snapshots/estree_test262.snap');
 const JSX_SNAPSHOT_PATH = pathJoin(ROOT_DIR, 'tasks/coverage/snapshots/estree_acorn_jsx.snap');
@@ -25,11 +25,11 @@ const INFINITY_REGEXP = new RegExp(`"${INFINITY_PLACEHOLDER}"`, 'g');
 // TODO: Enable them again once that work is complete.
 const benchFixtureUrls = [
   // TypeScript syntax (2.81MB)
-  // 'https://raw.githubusercontent.com/microsoft/TypeScript/v5.3.3/src/compiler/checker.ts',
+  // 'https://cdn.jsdelivr.net/gh/microsoft/TypeScript@v5.3.3/src/compiler/checker.ts',
   // Real world app tsx (1.0M)
-  // 'https://raw.githubusercontent.com/oxc-project/benchmark-files/main/cal.com.tsx',
+  // 'https://cdn.jsdelivr.net/gh/oxc-project/benchmark-files@main/cal.com.tsx',
   // Real world content-heavy app jsx (3K)
-  'https://raw.githubusercontent.com/oxc-project/benchmark-files/main/RadixUIAdoptionSection.jsx',
+  'https://cdn.jsdelivr.net/gh/oxc-project/benchmark-files@main/RadixUIAdoptionSection.jsx',
   // Heavy with classes (554K)
   'https://cdn.jsdelivr.net/npm/pdfjs-dist@4.0.269/build/pdf.mjs',
   // ES5 (3.9M)
@@ -125,6 +125,11 @@ describe('JSX', () => {
 // Test raw transfer output matches standard (via JSON) output for edge cases not covered by Test262
 describe('edge cases', () => {
   it.each([
+    // ECMA stage 3
+    'import defer * as ns from "x";',
+    'import source src from "x";',
+    'import.defer("x");',
+    'import.source("x");',
     // `StringLiteral`s containing lone surrogates and/or lossy replacement characters
     ';"\\uD800\\uDBFF";',
     ';"�\\u{FFFD}";',

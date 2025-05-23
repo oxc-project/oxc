@@ -251,7 +251,7 @@ impl<'a> InjectGlobalVariables<'a> {
         }
     }
 
-    fn replace_dot_defines(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
+    fn replace_dot_defines(&mut self, expr: &mut Expression<'a>, ctx: &TraverseCtx<'a>) {
         if let Expression::StaticMemberExpression(member) = expr {
             for DotDefineState { dot_define, value_atom } in &mut self.dot_defines {
                 if ReplaceGlobalDefines::is_dot_define(

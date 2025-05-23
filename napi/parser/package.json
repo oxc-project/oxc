@@ -1,16 +1,16 @@
 {
   "name": "oxc-parser",
-  "version": "0.69.0",
+  "version": "0.71.0",
   "main": "index.js",
   "browser": "wasm.mjs",
   "scripts": {
-    "build-dev": "napi build --no-dts-cache --platform --js bindings.js",
+    "build-dev": "napi build --platform --js bindings.js",
     "build": "pnpm run build-dev --features allocator --release",
     "postbuild-dev": "node patch.mjs",
     "build-wasi": "pnpm run build-dev --release --target wasm32-wasip1-threads",
     "build-npm-dir": "rm -rf npm-dir && napi create-npm-dirs --npm-dir npm-dir && pnpm napi artifacts --npm-dir npm-dir --output-dir .",
     "build-browser-bundle": "node build-browser-bundle.mjs",
-    "test": "pnpm run test-node run && tsc",
+    "test": "tsc && pnpm run test-node run",
     "test-node": "vitest --dir ./test",
     "test-browser": "vitest -c vitest.config.browser.mts",
     "bench": "vitest bench --run ./bench.bench.mjs"
@@ -59,7 +59,8 @@
     "@vitest/browser": "3.1.3",
     "esbuild": "^0.25.0",
     "playwright": "^1.51.0",
-    "vitest": "catalog:"
+    "vitest": "catalog:",
+    "typescript": "catalog:"
   },
   "napi": {
     "binaryName": "parser",
@@ -73,6 +74,7 @@
       "aarch64-unknown-linux-gnu",
       "aarch64-unknown-linux-musl",
       "armv7-unknown-linux-gnueabihf",
+      "armv7-unknown-linux-musleabihf",
       "s390x-unknown-linux-gnu",
       "riscv64gc-unknown-linux-gnu",
       "x86_64-apple-darwin",

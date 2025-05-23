@@ -207,7 +207,7 @@ impl RegExpFlags {
     /// Convert [`RegExpFlags`] to an [`InlineString`].
     ///
     /// This performs the same role as `RegExpFlags::to_string`, but does not allocate.
-    pub fn to_inline_string(&self) -> InlineString<8, usize> {
+    pub fn to_inline_string(self) -> InlineString<8, usize> {
         let mut str = InlineString::new();
 
         // In alphabetical order.

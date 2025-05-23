@@ -405,7 +405,7 @@ mod tests {
     use super::*;
 
     macro_rules! assert_len_cap_last {
-        ($stack:ident, $len:expr_2021, $capacity:expr_2021, $last:expr_2021) => {
+        ($stack:ident, $len:expr, $capacity:expr, $last:expr) => {
             assert_eq!($stack.len(), $len);
             assert_eq!($stack.capacity(), $capacity);
             assert_eq!($stack.last(), $last);

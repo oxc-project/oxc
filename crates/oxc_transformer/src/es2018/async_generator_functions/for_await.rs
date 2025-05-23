@@ -118,7 +118,7 @@ impl<'a> AsyncGeneratorFunctions<'a, '_> {
             }
             left @ match_assignment_target!(ForStatementLeft) => {
                 // for await (i of test), for await ({ i } of test)
-                let target = left.to_assignment_target_mut().take_in(ctx.ast.allocator);
+                let target = left.to_assignment_target_mut().take_in(ctx.ast);
                 let expression = ctx.ast.expression_assignment(
                     SPAN,
                     AssignmentOperator::Assign,
@@ -139,13 +139,13 @@ impl<'a> AsyncGeneratorFunctions<'a, '_> {
                     // instead, we need to remove the useless scope.
                     ctx.scoping_mut().delete_scope(block.scope_id());
                 } else {
-                    statements.push(stmt_body.take_in(ctx.ast.allocator));
+                    statements.push(stmt_body.take_in(ctx.ast));
                 }
             }
             statements
         };
 
-        let iterator = stmt.right.take_in(ctx.ast.allocator);
+        let iterator = stmt.right.take_in(ctx.ast);
         let iterator = self.ctx.helper_call_expr(
             Helper::AsyncIterator,
             SPAN,

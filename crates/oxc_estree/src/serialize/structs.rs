@@ -15,6 +15,17 @@ pub trait StructSerializer {
     /// `key` must not contain any characters which require escaping in JSON.
     fn serialize_field<T: ESTree + ?Sized>(&mut self, key: &'static str, value: &T);
 
+    /// Serialize struct field which is JS syntax only (not in TS AST).
+    ///
+    /// This method behaves differently, depending on the serializer's `Config`:
+    /// * `INCLUDE_TS_FIELDS == false`: Behaves same as `serialize_field`
+    ///   i.e. the field is included in JSON.
+    /// * `INCLUDE_TS_FIELDS == true`: Do nothing.
+    ///   i.e. the field is skipped.
+    ///
+    /// `key` must not contain any characters which require escaping in JSON.
+    fn serialize_js_field<T: ESTree + ?Sized>(&mut self, key: &'static str, value: &T);
+
     /// Serialize struct field which is TypeScript syntax.
     ///
     /// This method behaves differently, depending on the serializer's `Config`:
@@ -83,6 +94,22 @@ impl<C: Config, F: Formatter> StructSerializer for ESTreeStructSerializer<'_, C,
         buffer.print_str("\":");
         formatter.before_field_value(buffer);
         value.serialize(&mut *self.serializer);
+    }
+
+    /// Serialize struct field which is JS syntax only (not in TS AST).
+    ///
+    /// This method behaves differently, depending on the serializer's `Config`:
+    /// * `INCLUDE_TS_FIELDS == false`: Behaves same as `serialize_field`
+    ///   i.e. the field is included in JSON.
+    /// * `INCLUDE_TS_FIELDS == true`: Do nothing.
+    ///   i.e. the field is skipped.
+    ///
+    /// `key` must not contain any characters which require escaping in JSON.
+    #[inline(always)]
+    fn serialize_js_field<T: ESTree + ?Sized>(&mut self, key: &'static str, value: &T) {
+        if !C::INCLUDE_TS_FIELDS {
+            self.serialize_field(key, value);
+        }
     }
 
     /// Serialize struct field which is TypeScript syntax.
@@ -217,6 +244,21 @@ impl<P: StructSerializer> StructSerializer for FlatStructSerializer<'_, P> {
     fn serialize_field<T: ESTree + ?Sized>(&mut self, key: &'static str, value: &T) {
         // Delegate to parent `StructSerializer`
         self.0.serialize_field(key, value);
+    }
+
+    /// Serialize struct field which is JS syntax only (not in TS AST).
+    ///
+    /// This method behaves differently, depending on the serializer's `Config`:
+    /// * `INCLUDE_TS_FIELDS == false`: Behaves same as `serialize_field`
+    ///   i.e. the field is included in JSON.
+    /// * `INCLUDE_TS_FIELDS == true`: Do nothing.
+    ///   i.e. the field is skipped.
+    ///
+    /// `key` must not contain any characters which require escaping in JSON.
+    #[inline(always)]
+    fn serialize_js_field<T: ESTree + ?Sized>(&mut self, key: &'static str, value: &T) {
+        // Delegate to parent `StructSerializer`
+        self.0.serialize_js_field(key, value);
     }
 
     /// Serialize struct field which is TypeScript syntax.
@@ -425,7 +467,7 @@ mod tests {
         struct Foo {
             js: u32,
             ts: u32,
-            more_ts: u32,
+            js_only: u32,
             more_js: u32,
         }
 
@@ -434,18 +476,18 @@ mod tests {
                 let mut state = serializer.serialize_struct();
                 state.serialize_field("js", &self.js);
                 state.serialize_ts_field("ts", &self.ts);
-                state.serialize_ts_field("moreTs", &self.more_ts);
+                state.serialize_js_field("jsOnly", &self.js_only);
                 state.serialize_field("moreJs", &self.more_js);
                 state.end();
             }
         }
 
-        let foo = Foo { js: 1, ts: 2, more_ts: 3, more_js: 4 };
+        let foo = Foo { js: 1, ts: 2, js_only: 3, more_js: 4 };
 
         let mut serializer = CompactTSSerializer::new();
         foo.serialize(&mut serializer);
         let s = serializer.into_string();
-        assert_eq!(&s, r#"{"js":1,"ts":2,"moreTs":3,"moreJs":4}"#);
+        assert_eq!(&s, r#"{"js":1,"ts":2,"moreJs":4}"#);
 
         let mut serializer = PrettyTSSerializer::new();
         foo.serialize(&mut serializer);
@@ -455,7 +497,6 @@ mod tests {
             r#"{
   "js": 1,
   "ts": 2,
-  "moreTs": 3,
   "moreJs": 4
 }"#
         );
@@ -463,7 +504,7 @@ mod tests {
         let mut serializer = CompactJSSerializer::new();
         foo.serialize(&mut serializer);
         let s = serializer.into_string();
-        assert_eq!(&s, r#"{"js":1,"moreJs":4}"#);
+        assert_eq!(&s, r#"{"js":1,"jsOnly":3,"moreJs":4}"#);
 
         let mut serializer = PrettyJSSerializer::new();
         foo.serialize(&mut serializer);
@@ -472,6 +513,7 @@ mod tests {
             &s,
             r#"{
   "js": 1,
+  "jsOnly": 3,
   "moreJs": 4
 }"#
         );

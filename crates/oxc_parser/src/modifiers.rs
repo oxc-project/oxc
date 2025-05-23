@@ -102,12 +102,14 @@ pub struct Modifier {
     pub span: Span,
     pub kind: ModifierKind,
 }
+
 impl Modifier {
     #[inline]
     pub fn is_static(&self) -> bool {
         matches!(self.kind, ModifierKind::Static)
     }
 }
+
 impl TryFrom<Token> for Modifier {
     type Error = <ModifierKind as TryFrom<Kind>>::Error;
 
@@ -316,7 +318,10 @@ impl<'a> ParserImpl<'a> {
         }
 
         match self.cur_kind() {
-            Kind::Const => self.peek_kind() == Kind::Enum,
+            Kind::Const => {
+                self.bump_any();
+                self.at(Kind::Enum)
+            }
             Kind::Export => {
                 self.bump_any();
                 match self.cur_kind() {
@@ -440,7 +445,7 @@ impl<'a> ParserImpl<'a> {
         Some(self.modifier(kind, self.end_span(span)))
     }
 
-    fn next_token_is_open_brace(&mut self) -> bool {
+    pub(crate) fn next_token_is_open_brace(&mut self) -> bool {
         self.bump_any();
         self.at(Kind::LCurly)
     }
@@ -450,9 +455,12 @@ impl<'a> ParserImpl<'a> {
             && self.try_parse(Self::next_token_can_follow_modifier).is_some()
     }
 
-    fn next_token_can_follow_modifier(&mut self) {
+    pub(crate) fn next_token_can_follow_modifier(&mut self) {
         let b = match self.cur_kind() {
-            Kind::Const => self.peek_at(Kind::Enum),
+            Kind::Const => {
+                self.bump_any();
+                self.at(Kind::Enum)
+            }
             Kind::Export => {
                 self.bump_any();
                 match self.cur_kind() {
@@ -462,9 +470,13 @@ impl<'a> ParserImpl<'a> {
                 }
             }
             Kind::Default => self.next_token_can_follow_default_keyword(),
-            Kind::Static | Kind::Get | Kind::Set => {
+            Kind::Static => {
                 self.bump_any();
                 self.can_follow_modifier()
+            }
+            Kind::Get | Kind::Set => {
+                self.bump_any();
+                self.can_follow_get_or_set_keyword()
             }
             _ => self.next_token_is_on_same_line_and_can_follow_modifier(),
         };
@@ -520,6 +532,11 @@ impl<'a> ParserImpl<'a> {
             Kind::PrivateIdentifier | Kind::LBrack | Kind::LCurly | Kind::Star | Kind::Dot3 => true,
             kind => kind.is_identifier_or_keyword(),
         }
+    }
+
+    fn can_follow_get_or_set_keyword(&self) -> bool {
+        let kind = self.cur_kind();
+        kind == Kind::LBrack || kind == Kind::PrivateIdentifier || kind.is_literal_property_name()
     }
 
     fn next_token_is_class_keyword_on_same_line(&mut self) -> bool {

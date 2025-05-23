@@ -180,7 +180,11 @@ impl Runner for LintRunner {
             FxHashMap::default()
         };
 
-        enable_plugins.apply_overrides(&mut oxlintrc.plugins);
+        {
+            let mut plugins = oxlintrc.plugins.unwrap_or_default();
+            enable_plugins.apply_overrides(&mut plugins);
+            oxlintrc.plugins = Some(plugins);
+        }
 
         let oxlintrc_for_print = if misc_options.print_config || basic_options.init {
             Some(oxlintrc.clone())
@@ -248,20 +252,7 @@ impl Runner for LintRunner {
         let mut options =
             LintServiceOptions::new(self.cwd, paths).with_cross_module(use_cross_module);
 
-        let lint_config = match config_builder.build() {
-            Ok(config) => config,
-            Err(diagnostic) => {
-                print_and_flush_stdout(
-                    stdout,
-                    &format!(
-                        "Failed to parse configuration file.\n{}\n",
-                        render_report(&handler, &diagnostic)
-                    ),
-                );
-
-                return CliRunResult::InvalidOptionConfig;
-            }
-        };
+        let lint_config = config_builder.build();
 
         let report_unused_directives = match inline_config_options.report_unused_directives {
             ReportUnusedDirectives::WithoutSeverity(true) => Some(AllowWarnDeny::Warn),
@@ -439,20 +430,8 @@ impl LintRunner {
             }
             .with_filters(filters);
 
-            match builder.build() {
-                Ok(config) => nested_configs.insert(dir.to_path_buf(), config),
-                Err(diagnostic) => {
-                    print_and_flush_stdout(
-                        stdout,
-                        &format!(
-                            "Failed to parse configuration file.\n{}\n",
-                            render_report(handler, &diagnostic)
-                        ),
-                    );
-
-                    return Err(CliRunResult::InvalidOptionConfig);
-                }
-            };
+            let config = builder.build();
+            nested_configs.insert(dir.to_path_buf(), config);
         }
 
         Ok(nested_configs)
@@ -775,6 +754,12 @@ mod test {
             "--disable-typescript-plugin",
             "fixtures/typescript_eslint/test.ts",
         ];
+        Tester::new().test_and_snapshot(args);
+    }
+
+    #[test]
+    fn js_and_jsx() {
+        let args = &["fixtures/linter/js_as_jsx.js"];
         Tester::new().test_and_snapshot(args);
     }
 
@@ -1152,5 +1137,17 @@ mod test {
         // https://github.com/oxc-project/oxc/pull/10597
         let args = &["--import-plugin", "-D", "import/no-cycle"];
         Tester::new().with_cwd("fixtures/import-cycle".into()).test_and_snapshot(args);
+    }
+
+    #[test]
+    fn test_rule_config_being_enabled_correctly() {
+        let args = &["-c", ".oxlintrc.json"];
+        Tester::new().with_cwd("fixtures/issue_11054".into()).test_and_snapshot(args);
+    }
+
+    #[test]
+    fn test_plugins_in_overrides_enabled_correctly() {
+        let args = &["-c", ".oxlintrc.json"];
+        Tester::new().with_cwd("fixtures/overrides_with_plugin".into()).test_and_snapshot(args);
     }
 }

@@ -23,17 +23,28 @@ pub struct NoTypos;
 
 declare_oxc_lint!(
     /// ### What it does
+    ///
     /// Prevent common typos in Next.js's data fetching functions
     ///
     /// ### Why is this bad?
     ///
     ///
-    /// ### Example
+    /// ### Examples
+    ///
+    /// Examples of **incorrect** code for this rule:
     /// ```javascript
     /// export default function Page() {
     ///   return <div></div>;
     /// }
     /// export async function getServurSideProps(){};
+    /// ```
+    ///
+    /// Examples of **correct** code for this rule:
+    /// ```javascript
+    /// export default function Page() {
+    ///   return <div></div>;
+    /// }
+    /// export async function getServerSideProps(){};
     /// ```
     NoTypos,
     nextjs,

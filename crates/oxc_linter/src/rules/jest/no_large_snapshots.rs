@@ -130,7 +130,6 @@ declare_oxc_lint!(
     /// line 4
     /// `;
     /// ```
-    ///
     NoLargeSnapshots,
     jest,
     style,
@@ -155,7 +154,7 @@ impl Rule for NoLargeSnapshots {
         let allowed_snapshots = config
             .and_then(|c| c.get("allowedSnapshots"))
             .and_then(serde_json::Value::as_object)
-            .and_then(Self::compile_allowed_snapshots)
+            .map(Self::compile_allowed_snapshots)
             .unwrap_or_default();
 
         Self(Box::new(NoLargeSnapshotsConfig { max_size, inline_max_size, allowed_snapshots }))
@@ -286,22 +285,20 @@ impl NoLargeSnapshots {
 
     pub fn compile_allowed_snapshots(
         matchers: &serde_json::Map<String, serde_json::Value>,
-    ) -> Option<FxHashMap<CompactStr, Vec<CompactStr>>> {
-        Some(
-            matchers
-                .iter()
-                .map(|(key, value)| {
-                    let serde_json::Value::Array(configs) = value else {
-                        return (CompactStr::from(key.as_str()), vec![]);
-                    };
+    ) -> FxHashMap<CompactStr, Vec<CompactStr>> {
+        matchers
+            .iter()
+            .map(|(key, value)| {
+                let serde_json::Value::Array(configs) = value else {
+                    return (CompactStr::from(key.as_str()), vec![]);
+                };
 
-                    let configs =
-                        configs.iter().filter_map(|c| c.as_str().map(CompactStr::from)).collect();
+                let configs =
+                    configs.iter().filter_map(|c| c.as_str().map(CompactStr::from)).collect();
 
-                    (CompactStr::from(key.as_str()), configs)
-                })
-                .collect(),
-        )
+                (CompactStr::from(key.as_str()), configs)
+            })
+            .collect()
     }
 }
 

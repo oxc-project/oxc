@@ -4,6 +4,54 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.16.11] - 2025-05-16
+
+- 4e5c73b span: [**BREAKING**] `SourceType::from_path(".js")` return js instead of jsx (#11038) (Boshen)
+
+### Features
+
+- eef93b4 linter: Add import/no-unassigned-import (#10970) (yefan)
+- cc0112f linter: No-unused-vars add setting for `reportVarsOnlyUsedAsTypes` (#11009) (camc314)
+- 17e49c3 linter: Implement configuration and checking loops for `eslint/no_constant_condition` (#10949) (Ulrich Stark)
+- 21117ac linter: Implement react/forbid-elements (#10928) (Thomas BOCQUEZ)
+- a064082 linter: Add import/consistent-type-specifier-style rule (#10858) (yefan)
+- 4733b52 linter/no-extraneous-class: Add conditional fixer (#10798) (DonIsaac)
+
+### Bug Fixes
+
+- c52a9ba linter: Fix plugins inside overrides not being applied (#11057) (camc314)
+- b12bd48 linter: Fix rule config not being correctly applied (#11055) (camc314)
+- 9a368be linter: False negative in no-restriced-imports with `patterns` and side effects (#11027) (camc314)
+- 8c2cfbc linter: False negative in no-restricted-imports (#11026) (camc314)
+- 8956870 linter: False positive in no-unused-vars (#11002) (camc314)
+- 33a60d2 linter: Skip eslint/no-redeclare when running on modules (#11004) (camc314)
+- 39063ce linter: Reword diagnostic message for no-control-regex (#10993) (camc314)
+- 9eedb58 linter: False positive with negative matches in no-restricted-imports (#10976) (camc314)
+- 10e77d7 linter: Improve diagnostics for no-control-regex (#10959) (camc314)
+- 82889ae linter/no-extraneous-class: Improve docs, reporting and code refactor (#10797) (DonIsaac)
+- 11c34e7 linter/no-img-element: Improve diagnostic and docs (#10908) (DonIsaac)
+- 126ae75 semantic: Distinguish class private elements (#11044) (magic-akari)
+- 773d0de semantic: Correctly handle nested brackets in jsdoc parsing (#10922) (camc314)
+- b215b6c semantic: Dont parse `@` as jsdoc tags inside `[`/`]` (#10919) (camc314)
+
+### Documentation
+
+- db6afb9 linter: Improve docs of no-debugger (#11033) (camc314)
+- 16541de linter: Improve docs of default-param-last (#11032) (camc314)
+- 2c2f3c4 linter: Improve docs of default-case-last (#11031) (camc314)
+- 56bb9ce linter: Improve docs of array-callback-return (#11030) (camc314)
+- 13dbcc6 linter: Correct docs for default config for no-redeclare (#10995) (camc314)
+- a86cbb3 linter: Fix incorrect backticks of fenced code blocks (#10947) (Ulrich Stark)
+
+### Refactor
+
+- bb999a3 language_server: Avoid cloning linter by taking reference in LintService (#10907) (Ulrich Stark)
+- d1b0c83 linter: Remove overrides index vec (#11058) (camc314)
+- 7ad6cf8 linter: Store severity separately, remove `RuleWithSeverity` (#11051) (camchenry)
+- e31c361 linter: Remove nested match statements in no-restricted-imports (#10975) (camc314)
+- 6ad9d4f linter: Tidy `eslint/func-names` (#10923) (camc314)
+- faf0a95 syntax: Rename `NameSpaceModule` to `NamespaceModule` (#10917) (Dunqing)
+
 ## [0.16.10] - 2025-05-09
 
 - ad4fbf4 ast: [**BREAKING**] Simplify `RegExpPattern` (#10834) (overlookmotel)

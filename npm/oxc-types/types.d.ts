@@ -600,8 +600,10 @@ export type FunctionType =
 export interface FormalParameterRest extends Span {
   type: 'RestElement';
   argument: BindingPatternKind;
-  typeAnnotation: TSTypeAnnotation | null;
-  optional: boolean;
+  decorators?: [];
+  optional?: boolean;
+  typeAnnotation?: TSTypeAnnotation | null;
+  value?: null;
 }
 
 export type FormalParameter =
@@ -740,6 +742,7 @@ export interface ImportExpression extends Span {
   type: 'ImportExpression';
   source: Expression;
   options: Expression | null;
+  phase: ImportPhase | null;
 }
 
 export interface ImportDeclaration extends Span {
@@ -747,6 +750,7 @@ export interface ImportDeclaration extends Span {
   specifiers: Array<ImportDeclarationSpecifier>;
   source: StringLiteral;
   attributes: Array<ImportAttribute>;
+  phase: ImportPhase | null;
   importKind?: ImportOrExportKind;
 }
 

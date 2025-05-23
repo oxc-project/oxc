@@ -4,36 +4,17 @@ use std::{
     path::Path,
 };
 
-use nonmax::NonMaxU32;
 use schemars::{JsonSchema, r#gen, schema::Schema};
 use serde::{Deserialize, Deserializer, Serialize, Serializer, de};
 
-use oxc_index::{Idx, IndexVec};
-
 use crate::{LintPlugins, OxlintEnv, OxlintGlobals, config::OxlintRules};
-
-#[derive(Debug, Clone, Copy, Eq, PartialEq, Ord, PartialOrd, Hash)]
-pub struct OverrideId(NonMaxU32);
-
-impl Idx for OverrideId {
-    #[expect(clippy::cast_possible_truncation)]
-    fn from_usize(idx: usize) -> Self {
-        assert!(idx < u32::MAX as usize);
-        // SAFETY: We just checked `idx` is a legal value for `NonMaxU32`
-        Self(unsafe { NonMaxU32::new_unchecked(idx as u32) })
-    }
-
-    fn index(self) -> usize {
-        self.0.get() as usize
-    }
-}
 
 // nominal wrapper required to add JsonSchema impl
 #[derive(Debug, Default, Clone, Deserialize, Serialize)]
-pub struct OxlintOverrides(IndexVec<OverrideId, OxlintOverride>);
+pub struct OxlintOverrides(Vec<OxlintOverride>);
 
 impl Deref for OxlintOverrides {
-    type Target = IndexVec<OverrideId, OxlintOverride>;
+    type Target = Vec<OxlintOverride>;
 
     fn deref(&self) -> &Self::Target {
         &self.0
@@ -48,7 +29,7 @@ impl DerefMut for OxlintOverrides {
 
 impl IntoIterator for OxlintOverrides {
     type Item = OxlintOverride;
-    type IntoIter = <IndexVec<OverrideId, OxlintOverride> as IntoIterator>::IntoIter;
+    type IntoIter = <Vec<OxlintOverride> as IntoIterator>::IntoIter;
 
     fn into_iter(self) -> Self::IntoIter {
         self.0.into_iter()
@@ -58,7 +39,7 @@ impl IntoIterator for OxlintOverrides {
 impl OxlintOverrides {
     #[inline]
     pub fn empty() -> Self {
-        Self(IndexVec::new())
+        Self(Vec::new())
     }
 
     // must be explicitly defined to make serde happy
@@ -111,7 +92,7 @@ pub struct OxlintOverride {
 ///
 /// Thin wrapper around [`globset::GlobSet`] because that struct doesn't implement Serialize or schemars
 /// traits.
-#[derive(Clone, Debug, Default)]
+#[derive(Clone, Default)]
 pub struct GlobSet {
     /// Raw patterns from the config. Inefficient, but required for [serialization](Serialize),
     /// which in turn is required for `--print-config`.
@@ -142,6 +123,12 @@ impl GlobSet {
 
     pub fn is_match<P: AsRef<Path>>(&self, path: P) -> bool {
         self.globs.is_match(path)
+    }
+}
+
+impl std::fmt::Debug for GlobSet {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_tuple("GlobSet").field(&self.raw).finish()
     }
 }
 

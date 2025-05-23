@@ -88,12 +88,7 @@ impl<'a> ClassProperties<'a, '_> {
         let outer_scope_id = ctx.current_scope_id();
         ctx.scoping_mut().change_scope_parent_id(scope_id, Some(outer_scope_id));
 
-        wrap_statements_in_arrow_function_iife(
-            stmts.take_in(ctx.ast.allocator),
-            scope_id,
-            block.span,
-            ctx,
-        )
+        wrap_statements_in_arrow_function_iife(stmts.take_in(ctx.ast), scope_id, block.span, ctx)
     }
 
     fn convert_static_block_with_single_expression_to_expression(
@@ -110,7 +105,7 @@ impl<'a> ClassProperties<'a, '_> {
         // Delete scope for static block
         ctx.scoping_mut().delete_scope(scope_id);
 
-        expr.take_in(ctx.ast.allocator)
+        expr.take_in(ctx.ast)
     }
 
     /// Replace reference to class name with reference to temp var for class.

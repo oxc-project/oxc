@@ -91,7 +91,7 @@ declare_oxc_lint!(
     /// For the `ignoreNonDOM` option, this determines if developer created
     /// components are checked.
     ///
-    /// ### Example
+    /// ### Examples
     ///
     /// Examples of **incorrect** code for this rule:
     ///

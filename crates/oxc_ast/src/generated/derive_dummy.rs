@@ -451,7 +451,7 @@ impl<'a> Dummy<'a> for SimpleAssignmentTarget<'a> {
 impl<'a> Dummy<'a> for AssignmentTargetPattern<'a> {
     /// Create a dummy [`AssignmentTargetPattern`].
     ///
-    /// Has cost of making 1 allocation (64 bytes).
+    /// Has cost of making 1 allocation (56 bytes).
     fn dummy(allocator: &'a Allocator) -> Self {
         Self::ArrayAssignmentTarget(Dummy::dummy(allocator))
     }
@@ -651,7 +651,7 @@ impl<'a> Dummy<'a> for BlockStatement<'a> {
 impl<'a> Dummy<'a> for Declaration<'a> {
     /// Create a dummy [`Declaration`].
     ///
-    /// Has cost of making 1 allocation (56 bytes).
+    /// Has cost of making 1 allocation (40 bytes).
     fn dummy(allocator: &'a Allocator) -> Self {
         Self::VariableDeclaration(Dummy::dummy(allocator))
     }
@@ -911,7 +911,7 @@ impl<'a> Dummy<'a> for ThrowStatement<'a> {
 impl<'a> Dummy<'a> for TryStatement<'a> {
     /// Create a dummy [`TryStatement`].
     ///
-    /// Has cost of making 1 allocation (48 bytes).
+    /// Has cost of making 1 allocation (40 bytes).
     fn dummy(allocator: &'a Allocator) -> Self {
         Self {
             span: Dummy::dummy(allocator),
@@ -925,7 +925,7 @@ impl<'a> Dummy<'a> for TryStatement<'a> {
 impl<'a> Dummy<'a> for CatchClause<'a> {
     /// Create a dummy [`CatchClause`].
     ///
-    /// Has cost of making 1 allocation (48 bytes).
+    /// Has cost of making 1 allocation (40 bytes).
     fn dummy(allocator: &'a Allocator) -> Self {
         Self {
             span: Dummy::dummy(allocator),
@@ -1042,7 +1042,7 @@ impl<'a> Dummy<'a> for BindingRestElement<'a> {
 impl<'a> Dummy<'a> for Function<'a> {
     /// Create a dummy [`Function`].
     ///
-    /// Has cost of making 1 allocation (56 bytes).
+    /// Has cost of making 1 allocation (48 bytes).
     fn dummy(allocator: &'a Allocator) -> Self {
         Self {
             span: Dummy::dummy(allocator),
@@ -1128,7 +1128,7 @@ impl<'a> Dummy<'a> for FunctionBody<'a> {
 impl<'a> Dummy<'a> for ArrowFunctionExpression<'a> {
     /// Create a dummy [`ArrowFunctionExpression`].
     ///
-    /// Has cost of making 2 allocations (128 bytes).
+    /// Has cost of making 2 allocations (104 bytes).
     fn dummy(allocator: &'a Allocator) -> Self {
         Self {
             span: Dummy::dummy(allocator),
@@ -1160,7 +1160,7 @@ impl<'a> Dummy<'a> for YieldExpression<'a> {
 impl<'a> Dummy<'a> for Class<'a> {
     /// Create a dummy [`Class`].
     ///
-    /// Has cost of making 1 allocation (40 bytes).
+    /// Has cost of making 1 allocation (32 bytes).
     fn dummy(allocator: &'a Allocator) -> Self {
         Self {
             span: Dummy::dummy(allocator),
@@ -1201,7 +1201,7 @@ impl<'a> Dummy<'a> for ClassBody<'a> {
 impl<'a> Dummy<'a> for ClassElement<'a> {
     /// Create a dummy [`ClassElement`].
     ///
-    /// Has cost of making 1 allocation (48 bytes).
+    /// Has cost of making 1 allocation (40 bytes).
     fn dummy(allocator: &'a Allocator) -> Self {
         Self::StaticBlock(Dummy::dummy(allocator))
     }
@@ -1210,7 +1210,7 @@ impl<'a> Dummy<'a> for ClassElement<'a> {
 impl<'a> Dummy<'a> for MethodDefinition<'a> {
     /// Create a dummy [`MethodDefinition`].
     ///
-    /// Has cost of making 3 allocations (168 bytes).
+    /// Has cost of making 3 allocations (152 bytes).
     fn dummy(allocator: &'a Allocator) -> Self {
         Self {
             span: Dummy::dummy(allocator),
@@ -1642,7 +1642,7 @@ impl<'a> Dummy<'a> for RegExpPattern<'a> {
 impl<'a> Dummy<'a> for JSXElement<'a> {
     /// Create a dummy [`JSXElement`].
     ///
-    /// Has cost of making 2 allocations (72 bytes).
+    /// Has cost of making 2 allocations (64 bytes).
     fn dummy(allocator: &'a Allocator) -> Self {
         Self {
             span: Dummy::dummy(allocator),
@@ -2340,7 +2340,7 @@ impl<'a> Dummy<'a> for TSClassImplements<'a> {
 impl<'a> Dummy<'a> for TSInterfaceDeclaration<'a> {
     /// Create a dummy [`TSInterfaceDeclaration`].
     ///
-    /// Has cost of making 1 allocation (40 bytes).
+    /// Has cost of making 1 allocation (32 bytes).
     fn dummy(allocator: &'a Allocator) -> Self {
         Self {
             span: Dummy::dummy(allocator),
@@ -2406,7 +2406,7 @@ impl<'a> Dummy<'a> for TSIndexSignature<'a> {
 impl<'a> Dummy<'a> for TSCallSignatureDeclaration<'a> {
     /// Create a dummy [`TSCallSignatureDeclaration`].
     ///
-    /// Has cost of making 1 allocation (56 bytes).
+    /// Has cost of making 1 allocation (48 bytes).
     fn dummy(allocator: &'a Allocator) -> Self {
         Self {
             span: Dummy::dummy(allocator),
@@ -2431,7 +2431,7 @@ impl<'a> Dummy<'a> for TSMethodSignatureKind {
 impl<'a> Dummy<'a> for TSMethodSignature<'a> {
     /// Create a dummy [`TSMethodSignature`].
     ///
-    /// Has cost of making 2 allocations (64 bytes).
+    /// Has cost of making 2 allocations (56 bytes).
     fn dummy(allocator: &'a Allocator) -> Self {
         Self {
             span: Dummy::dummy(allocator),
@@ -2451,7 +2451,7 @@ impl<'a> Dummy<'a> for TSMethodSignature<'a> {
 impl<'a> Dummy<'a> for TSConstructSignatureDeclaration<'a> {
     /// Create a dummy [`TSConstructSignatureDeclaration`].
     ///
-    /// Has cost of making 1 allocation (56 bytes).
+    /// Has cost of making 1 allocation (48 bytes).
     fn dummy(allocator: &'a Allocator) -> Self {
         Self {
             span: Dummy::dummy(allocator),
@@ -2550,7 +2550,7 @@ impl<'a> Dummy<'a> for TSModuleDeclarationName<'a> {
 impl<'a> Dummy<'a> for TSModuleDeclarationBody<'a> {
     /// Create a dummy [`TSModuleDeclarationBody`].
     ///
-    /// Has cost of making 1 allocation (72 bytes).
+    /// Has cost of making 1 allocation (56 bytes).
     fn dummy(allocator: &'a Allocator) -> Self {
         Self::TSModuleBlock(Dummy::dummy(allocator))
     }
@@ -2627,7 +2627,7 @@ impl<'a> Dummy<'a> for TSImportType<'a> {
 impl<'a> Dummy<'a> for TSFunctionType<'a> {
     /// Create a dummy [`TSFunctionType`].
     ///
-    /// Has cost of making 3 allocations (88 bytes).
+    /// Has cost of making 3 allocations (80 bytes).
     fn dummy(allocator: &'a Allocator) -> Self {
         Self {
             span: Dummy::dummy(allocator),
@@ -2643,7 +2643,7 @@ impl<'a> Dummy<'a> for TSFunctionType<'a> {
 impl<'a> Dummy<'a> for TSConstructorType<'a> {
     /// Create a dummy [`TSConstructorType`].
     ///
-    /// Has cost of making 3 allocations (88 bytes).
+    /// Has cost of making 3 allocations (80 bytes).
     fn dummy(allocator: &'a Allocator) -> Self {
         Self {
             span: Dummy::dummy(allocator),
@@ -2805,7 +2805,7 @@ impl<'a> Dummy<'a> for TSNamespaceExportDeclaration<'a> {
 impl<'a> Dummy<'a> for TSInstantiationExpression<'a> {
     /// Create a dummy [`TSInstantiationExpression`].
     ///
-    /// Has cost of making 2 allocations (48 bytes).
+    /// Has cost of making 2 allocations (40 bytes).
     fn dummy(allocator: &'a Allocator) -> Self {
         Self {
             span: Dummy::dummy(allocator),

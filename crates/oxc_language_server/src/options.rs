@@ -23,7 +23,7 @@ pub struct Options {
 
 impl Options {
     pub fn use_nested_configs(&self) -> bool {
-        !self.flags.contains_key("disable_nested_config") || self.config_path.is_some()
+        !self.flags.contains_key("disable_nested_config") && self.config_path.is_none()
     }
 
     pub fn fix_kind(&self) -> FixKind {
@@ -96,6 +96,7 @@ pub struct WorkspaceOption {
 
 #[cfg(test)]
 mod test {
+    use rustc_hash::FxHashMap;
     use serde_json::json;
 
     use super::{Options, Run, WorkspaceOption};
@@ -177,5 +178,21 @@ mod test {
         assert_eq!(options.run, Run::OnType); // fallback
         assert_eq!(options.config_path, Some("./custom.json".into()));
         assert!(options.flags.is_empty());
+    }
+
+    #[test]
+    fn test_use_nested_configs() {
+        let options = Options::default();
+        assert!(options.use_nested_configs());
+
+        let options =
+            Options { config_path: Some("config.json".to_string()), ..Default::default() };
+        assert!(!options.use_nested_configs());
+
+        let mut flags = FxHashMap::default();
+        flags.insert("disable_nested_config".to_string(), "true".to_string());
+
+        let options = Options { flags, ..Default::default() };
+        assert!(!options.use_nested_configs());
     }
 }

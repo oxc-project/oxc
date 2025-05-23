@@ -6,7 +6,7 @@ use crate::util::{Expect, SemanticTester};
 #[test]
 fn test_only_program() {
     let tester = SemanticTester::js("let x = 1;");
-    tester.has_root_symbol("x").is_in_scope(ScopeFlags::Top).test();
+    tester.has_root_symbol("x").in_scope(ScopeFlags::Top).test();
 
     let semantic = tester.build();
     let scopes = semantic.scoping();
@@ -38,7 +38,7 @@ fn test_top_level_strict() {
     "#,
     )
     .has_root_symbol("foo")
-    .is_in_scope(ScopeFlags::Top | ScopeFlags::StrictMode)
+    .in_scope(ScopeFlags::Top | ScopeFlags::StrictMode)
     // .expect(expect_strict)
     .test();
 
@@ -51,7 +51,7 @@ fn test_top_level_strict() {
     ",
     )
     .has_root_symbol("foo")
-    .is_in_scope(ScopeFlags::Top | ScopeFlags::StrictMode)
+    .in_scope(ScopeFlags::Top | ScopeFlags::StrictMode)
     .test();
 
     // Script with top-level "use strict"
@@ -65,7 +65,7 @@ fn test_top_level_strict() {
     )
     .with_module(false)
     .has_root_symbol("foo")
-    .is_in_scope(ScopeFlags::Top | ScopeFlags::StrictMode)
+    .in_scope(ScopeFlags::Top | ScopeFlags::StrictMode)
     .test();
 
     // Script without top-level "use strict"
@@ -78,8 +78,8 @@ fn test_top_level_strict() {
     )
     .with_module(false)
     .has_root_symbol("foo")
-    .is_in_scope(ScopeFlags::Top)
-    .is_not_in_scope(ScopeFlags::StrictMode)
+    .in_scope(ScopeFlags::Top)
+    .not_in_scope(ScopeFlags::StrictMode)
     .test();
 }
 
@@ -98,7 +98,7 @@ fn test_function_level_strict() {
 
     tester
         .has_some_symbol("x")
-        .is_in_scope(ScopeFlags::StrictMode | ScopeFlags::Function)
+        .in_scope(ScopeFlags::StrictMode | ScopeFlags::Function)
         .expect(|(semantic, symbol_id)| -> Result<(), &'static str> {
             let scope_id = semantic.symbol_scope(symbol_id);
             let Some(parent_scope_id) = semantic.scoping().scope_parent_id(scope_id) else {
@@ -112,7 +112,7 @@ fn test_function_level_strict() {
             }
         })
         .test();
-    tester.has_some_symbol("foo").is_not_in_scope(ScopeFlags::StrictMode).test();
+    tester.has_some_symbol("foo").not_in_scope(ScopeFlags::StrictMode).test();
 }
 
 #[test]
@@ -219,7 +219,7 @@ fn var_hoisting() {
     )
     .has_root_symbol("e")
     // `e` was hoisted to the top scope so the symbol's scope is also the top scope
-    .is_in_scope(ScopeFlags::Top)
+    .in_scope(ScopeFlags::Top)
     .test();
 }
 

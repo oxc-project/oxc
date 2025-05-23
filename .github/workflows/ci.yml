@@ -95,6 +95,19 @@ jobs:
         working-directory: ${{ env.DEV_DRIVE_WORKSPACE }}
         shell: bash
 
+  test-big-endian:
+    name: Test big-endian # s390x-unknown-linux-gnu is a big-endian
+    if: ${{ github.ref_name == 'main' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: taiki-e/checkout-action@b13d20b7cda4e2f325ef19895128f7ff735c0b3d # v1.3.1
+      - uses: oxc-project/setup-rust@cd82e1efec7fef815e2c23d296756f31c7cdc03d # v1.0.0
+        with:
+          save-cache: ${{ github.ref_name == 'main' }}
+          cache-key: s390x-unknown-linux-gnu
+          tools: cross
+      - run: cross test --target s390x-unknown-linux-gnu
+
   test-wasm32-wasip1-threads:
     name: Test wasm32-wasip1-threads
     runs-on: ubuntu-latest

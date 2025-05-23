@@ -8,7 +8,6 @@ foo;bar;
 ----------
 foo;bar;
 /* @license */
-/* @license */
 
 ########## 1
 /* @license */
@@ -93,12 +92,20 @@ function foo(){(()=>{
 /**
 * @preserve
 */
+/**
+* @preserve
+*/
+
 ########## 8
 /**
 * @preserve
 */
 
 ----------
+/**
+* @preserve
+*/
+
 /**
 * @preserve
 */

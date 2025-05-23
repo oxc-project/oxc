@@ -6,10 +6,10 @@ use oxc_syntax::operator::BinaryOperator;
 
 use crate::{AstNode, context::LintContext, rule::Rule};
 
-fn no_bitwise_diagnostic(x0: &str, span1: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn(format!("Unexpected use of {x0:?}"))
+fn no_bitwise_diagnostic(operator: &str, span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn(format!("Unexpected use of {operator:?}"))
         .with_help("bitwise operators are not allowed, maybe you mistyped `&&` or `||`")
-        .with_label(span1)
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -69,9 +69,9 @@ declare_oxc_lint!(
     ///
     /// ### Options
     ///
-    /// ### allow
+    /// #### allow
     ///
-    /// `{ "allow": string[] }`
+    /// `{ type: string[], default: [] }`
     ///
     /// The`allow` option permits the given list of bitwise operators to be used
     /// as exceptions to this rule.
@@ -83,9 +83,9 @@ declare_oxc_lint!(
     /// ~[1,2,3].indexOf(1) === -1;
     /// ```
     ///
-    /// ### int32Hint
+    /// #### int32Hint
     ///
-    /// `{ "int32Hint": boolean }`
+    /// `{ type: boolean, default: false }`
     ///
     /// When set to true the `int32Hint` option allows the use of bitwise OR in |0
     /// pattern for type casting.

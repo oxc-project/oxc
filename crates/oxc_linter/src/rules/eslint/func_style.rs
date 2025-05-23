@@ -1,12 +1,13 @@
+use crate::{ast_util::nth_outermost_paren_parent, context::LintContext, rule::Rule};
 use oxc_ast::{AstKind, ast::FunctionType};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::{AstNode, NodeId};
 use oxc_span::Span;
 use rustc_hash::FxHashSet;
+use schemars::JsonSchema;
+use serde::{Deserialize, Serialize};
 use serde_json::Value;
-
-use crate::{ast_util::nth_outermost_paren_parent, context::LintContext, rule::Rule};
 
 fn func_style_diagnostic(span: Span, style: Style) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!("Expected a function {}.", style.as_str()))
@@ -14,18 +15,19 @@ fn func_style_diagnostic(span: Span, style: Style) -> OxcDiagnostic {
         .with_label(span)
 }
 
-#[derive(Debug, Default, PartialEq, Clone, Copy)]
+#[derive(Debug, Default, PartialEq, Clone, Copy, Deserialize, Serialize, JsonSchema)]
+#[serde(rename_all = "camelCase")]
 enum Style {
     #[default]
     Expression,
     Declaration,
 }
-
-impl Style {
-    pub fn from(raw: &str) -> Self {
+impl From<&str> for Style {
+    fn from(raw: &str) -> Self {
         if raw == "declaration" { Self::Declaration } else { Self::Expression }
     }
-
+}
+impl Style {
     pub fn as_str(&self) -> &str {
         match self {
             Style::Expression => "expression",
@@ -34,16 +36,16 @@ impl Style {
     }
 }
 
-#[derive(Debug, Default, PartialEq, Clone)]
+#[derive(Debug, Default, PartialEq, Clone, Deserialize, Serialize, JsonSchema)]
+#[serde(rename_all = "camelCase")]
 enum NamedExports {
     #[default]
     Ignore,
     Expression,
     Declaration,
 }
-
-impl NamedExports {
-    pub fn from(raw: &str) -> Self {
+impl From<&str> for NamedExports {
+    fn from(raw: &str) -> Self {
         match raw {
             "expression" => Self::Expression,
             "declaration" => Self::Declaration,
@@ -52,7 +54,8 @@ impl NamedExports {
     }
 }
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default, Clone, Deserialize, Serialize, JsonSchema)]
+#[serde(rename_all = "camelCase", default)]
 pub struct FuncStyle {
     style: Style,
     allow_arrow_functions: bool,
@@ -61,9 +64,11 @@ pub struct FuncStyle {
 
 declare_oxc_lint!(
     /// ### What it does
+    ///
     /// Enforce the consistent use of either function declarations or expressions assigned to variables
     ///
     /// ### Why is this bad?
+    ///
     /// This rule enforces a particular type of function style, either function declarations or expressions assigned to variables.
     /// You can specify which you prefer in the configuration.
     ///
@@ -177,7 +182,8 @@ declare_oxc_lint!(
     FuncStyle,
     eslint,
     style,
-    pending
+    fix = pending,
+    config = FuncStyle
 );
 
 fn is_ancestor_export_name_decl<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) -> bool {

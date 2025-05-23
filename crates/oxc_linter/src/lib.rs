@@ -38,7 +38,7 @@ pub use crate::{
     module_record::ModuleRecord,
     options::LintOptions,
     options::{AllowWarnDeny, InvalidFilterKind, LintFilter, LintFilterKind},
-    rule::{RuleCategory, RuleFixMeta, RuleMeta, RuleWithSeverity},
+    rule::{RuleCategory, RuleFixMeta, RuleMeta},
     service::{LintService, LintServiceOptions, RuntimeFileSystem},
     utils::read_to_string,
 };
@@ -64,7 +64,6 @@ fn size_asserts() {
 
 #[derive(Debug, Clone)]
 pub struct Linter {
-    // rules: Vec<RuleWithSeverity>,
     options: LintOptions,
     // config: Arc<LintConfig>,
     config: ConfigStore,
@@ -112,8 +111,8 @@ impl Linter {
 
         let rules = rules
             .iter()
-            .filter(|rule| rule.should_run(&ctx_host))
-            .map(|rule| (rule, Rc::clone(&ctx_host).spawn(rule)));
+            .filter(|(rule, _)| rule.should_run(&ctx_host))
+            .map(|(rule, severity)| (rule, Rc::clone(&ctx_host).spawn(rule, *severity)));
 
         let semantic = ctx_host.semantic();
 

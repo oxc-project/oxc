@@ -208,6 +208,14 @@ impl TestRunner {
             spec_path.to_string_lossy()
         );
 
+        let spec_calls = parse_spec(spec_path)
+            .into_iter()
+            .filter(|call| {
+                // Don't support experimental operator position yet
+                call.0.experimental_operator_position.is_end()
+            })
+            .collect::<Vec<_>>();
+
         let snapshots =
             std::fs::read_to_string(dir.join(SNAPSHOT_DIR_NAME).join(SNAPSHOT_FILE_NAME)).unwrap();
 
@@ -411,6 +419,7 @@ impl TestRunner {
         formatter_options: FormatOptions,
     ) -> String {
         let allocator = Allocator::default();
+        let source_type = source_type.with_jsx(source_type.is_javascript());
         let ret = Parser::new(&allocator, source_text, source_type)
             .with_options(ParseOptions {
                 preserve_parens: false,

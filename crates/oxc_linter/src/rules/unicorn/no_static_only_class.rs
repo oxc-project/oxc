@@ -22,7 +22,7 @@ declare_oxc_lint!(
     ///
     /// A class with only static members could just be an object instead.
     ///
-    /// ### Example
+    /// ### Examples
     ///
     /// Examples of **incorrect** code for this rule:
     /// ```javascript
