@@ -2,7 +2,7 @@ commit: 81c95189
 
 parser_typescript Summary:
 AST Parsed     : 6530/6537 (99.89%)
-Positive Passed: 6518/6537 (99.71%)
+Positive Passed: 6519/6537 (99.72%)
 Negative Passed: 1324/5763 (22.97%)
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/ClassDeclaration24.ts
 
@@ -9118,16 +9118,6 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/classes/prope
      ·                ─────────
  291 │         prototype() {} // ok
      ╰────
-
-Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/constEnums/constEnum1.ts
-
-  × Enum member must have initializer.
-    ╭─[typescript/tests/cases/conformance/constEnums/constEnum1.ts:9:5]
-  8 │     c = (a+1),
-  9 │     e,
-    ·     ─
- 10 │     d = ~e,
-    ╰────
 
 Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/dynamicImport/importCallExpressionInScriptContext1.ts
 
