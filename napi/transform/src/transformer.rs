@@ -544,11 +544,16 @@ impl From<ArrowFunctionsOptions> for oxc::transformer::ArrowFunctionsOptions {
 pub struct Es2015Options {
     /// Transform arrow functions into function expressions.
     pub arrow_function: Option<ArrowFunctionsOptions>,
+    // TODO: support it
+    // pub shorthand_properties: bool,
 }
 
 impl From<Es2015Options> for oxc::transformer::ES2015Options {
     fn from(options: Es2015Options) -> Self {
-        oxc::transformer::ES2015Options { arrow_function: options.arrow_function.map(Into::into) }
+        oxc::transformer::ES2015Options {
+            arrow_function: options.arrow_function.map(Into::into),
+            shorthand_properties: false,
+        }
     }
 }
 

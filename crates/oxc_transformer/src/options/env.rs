@@ -67,6 +67,7 @@ impl EnvOptions {
                 } else {
                     None
                 },
+                shorthand_properties: true,
             },
             es2016: ES2016Options { exponentiation_operator: true },
             es2017: ES2017Options { async_to_generator: true },
@@ -164,6 +165,7 @@ impl From<EngineTargets> for EnvOptions {
             },
             es2015: ES2015Options {
                 arrow_function: o.has_feature(ES2015ArrowFunctions).then(Default::default),
+                shorthand_properties: o.has_feature(ES2015ShorthandProperties),
             },
             es2016: ES2016Options {
                 exponentiation_operator: o.has_feature(ES2016ExponentiationOperator),

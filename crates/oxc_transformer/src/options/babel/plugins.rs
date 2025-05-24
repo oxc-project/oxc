@@ -52,6 +52,7 @@ pub struct BabelPlugins {
     pub set_notation: bool,
     // ES2015
     pub arrow_function: Option<ArrowFunctionsOptions>,
+    pub shorthand_properties: bool,
     // ES2016
     pub exponentiation_operator: bool,
     // ES2017
@@ -135,6 +136,7 @@ impl TryFrom<PluginPresetEntries> for BabelPlugins {
                         .map_err(|err| p.errors.push(err))
                         .ok();
                 }
+                "transform-shorthand-properties" => p.shorthand_properties = true,
                 "transform-exponentiation-operator" => p.exponentiation_operator = true,
                 "transform-async-to-generator" => p.async_to_generator = true,
                 "transform-object-rest-spread" => {
