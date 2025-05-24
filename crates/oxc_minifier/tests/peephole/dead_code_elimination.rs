@@ -175,6 +175,14 @@ fn dce_var_hoisting() {
     );
 }
 
+#[test]
+fn pure_comment_for_pure_global_constructors() {
+    test("var x = new WeakSet", "var x = /* @__PURE__ */ new WeakSet();\n");
+    test("var x = new WeakSet(null)", "var x = /* @__PURE__ */ new WeakSet(null);\n");
+    test("var x = new WeakSet(undefined)", "var x = /* @__PURE__ */ new WeakSet(void 0);\n");
+    test("var x = new WeakSet([])", "var x = /* @__PURE__ */ new WeakSet([]);\n");
+}
+
 // https://github.com/terser/terser/blob/v5.9.0/test/compress/dead-code.js
 #[test]
 fn dce_from_terser() {

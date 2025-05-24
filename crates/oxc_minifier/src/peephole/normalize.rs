@@ -1,5 +1,9 @@
 use oxc_allocator::{TakeIn, Vec};
 use oxc_ast::ast::*;
+use oxc_ecmascript::{
+    constant_evaluation::{DetermineValueType, ValueType},
+    side_effects::MayHaveSideEffects,
+};
 use oxc_semantic::IsGlobalReference;
 use oxc_span::GetSpan;
 use oxc_syntax::scope::ScopeFlags;
@@ -25,6 +29,7 @@ pub struct NormalizeOptions {
 /// * convert `NaN` to `f64::NaN`
 /// * convert `var x; void x` to `void 0`
 /// * convert `undefined` to `void 0`
+/// * apply `pure` to side-effect free global constructors (e.g. `new WeakMap()`)
 ///
 /// Also
 ///
@@ -94,11 +99,11 @@ impl<'a> Traverse<'a> for Normalize {
     }
 
     fn exit_call_expression(&mut self, e: &mut CallExpression<'a>, ctx: &mut TraverseCtx<'a>) {
-        Self::set_no_side_effects(&mut e.pure, &e.callee, ctx);
+        Self::set_no_side_effects_to_call_expr(e, ctx);
     }
 
     fn exit_new_expression(&mut self, e: &mut NewExpression<'a>, ctx: &mut TraverseCtx<'a>) {
-        Self::set_no_side_effects(&mut e.pure, &e.callee, ctx);
+        Self::set_pure_or_no_side_effects_to_new_expr(e, ctx);
     }
 }
 
@@ -243,17 +248,80 @@ impl<'a> Normalize {
         e.argument = ctx.ast.expression_numeric_literal(ident.span, 0.0, None, NumberBase::Decimal);
     }
 
-    fn set_no_side_effects(pure: &mut bool, callee: &Expression<'a>, ctx: &TraverseCtx<'a>) {
-        if !*pure {
-            if let Some(ident) = callee.get_identifier_reference() {
-                if let Some(symbol_id) =
-                    ctx.scoping().get_reference(ident.reference_id()).symbol_id()
-                {
-                    if ctx.scoping().no_side_effects().contains(&symbol_id) {
-                        *pure = true;
-                    }
-                }
+    fn set_no_side_effects_to_call_expr(call_expr: &mut CallExpression<'a>, ctx: &TraverseCtx<'a>) {
+        if call_expr.pure {
+            return;
+        }
+        let Some(ident) = call_expr.callee.get_identifier_reference() else {
+            return;
+        };
+        if let Some(symbol_id) = ctx.scoping().get_reference(ident.reference_id()).symbol_id() {
+            // Apply `/* #__NO_SIDE_EFFECTS__ */`
+            if ctx.scoping().no_side_effects().contains(&symbol_id) {
+                call_expr.pure = true;
             }
+        }
+    }
+
+    fn set_pure_or_no_side_effects_to_new_expr(
+        new_expr: &mut NewExpression<'a>,
+        ctx: &TraverseCtx<'a>,
+    ) {
+        if new_expr.pure {
+            return;
+        }
+        let Some(ident) = new_expr.callee.get_identifier_reference() else {
+            return;
+        };
+        if let Some(symbol_id) = ctx.scoping().get_reference(ident.reference_id()).symbol_id() {
+            // Apply `/* #__NO_SIDE_EFFECTS__ */`
+            if ctx.scoping().no_side_effects().contains(&symbol_id) {
+                new_expr.pure = true;
+            }
+            return;
+        }
+        // callee is a global reference.
+        let ctx = Ctx(ctx);
+        let len = new_expr.arguments.len();
+        if match ident.name.as_str() {
+            "WeakSet" | "WeakMap" if ctx.is_global_reference(ident) => match len {
+                0 => true,
+                1 => match new_expr.arguments[0].as_expression() {
+                    Some(Expression::NullLiteral(_)) => true,
+                    Some(Expression::ArrayExpression(e)) => e.elements.is_empty(),
+                    Some(e) if ctx.is_expression_undefined(e) => true,
+                    _ => false,
+                },
+                _ => false,
+            },
+            "Date" if ctx.is_global_reference(ident) => match len {
+                0 => true,
+                1 => {
+                    let Some(arg) = new_expr.arguments[0].as_expression() else { return };
+                    let ty = arg.value_type(&ctx);
+                    matches!(
+                        ty,
+                        ValueType::Null
+                            | ValueType::Undefined
+                            | ValueType::Boolean
+                            | ValueType::Number
+                            | ValueType::String
+                    ) && !arg.may_have_side_effects(&ctx)
+                }
+                _ => false,
+            },
+            "Set" | "Map" if ctx.is_global_reference(ident) => match len {
+                0 => true,
+                1 => match new_expr.arguments[0].as_expression() {
+                    Some(Expression::NullLiteral(_)) => true,
+                    Some(e) if ctx.is_expression_undefined(e) => true,
+                    _ => false,
+                },
+                _ => false,
+            },
+            _ => false,
+        } {
+            new_expr.pure = true;
         }
     }
 }

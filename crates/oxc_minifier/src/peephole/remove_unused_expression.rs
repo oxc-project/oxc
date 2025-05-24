@@ -2,11 +2,7 @@ use std::iter;
 
 use oxc_allocator::{TakeIn, Vec};
 use oxc_ast::ast::*;
-use oxc_ecmascript::{
-    ToPrimitive,
-    constant_evaluation::{DetermineValueType, ValueType},
-    side_effects::MayHaveSideEffects,
-};
+use oxc_ecmascript::{ToPrimitive, side_effects::MayHaveSideEffects};
 use oxc_span::GetSpan;
 use oxc_syntax::es_target::ESTarget;
 
@@ -247,64 +243,20 @@ impl<'a> PeepholeOptimizations {
         ctx: Ctx<'a, '_>,
     ) -> bool {
         let Expression::NewExpression(new_expr) = e else { return false };
-
-        if new_expr.pure {
-            let mut exprs =
-                self.fold_arguments_into_needed_expressions(&mut new_expr.arguments, state, ctx);
-            if exprs.is_empty() {
-                return true;
-            } else if exprs.len() == 1 {
-                *e = exprs.pop().unwrap();
-                state.changed = true;
-                return false;
-            }
-            *e = ctx.ast.expression_sequence(new_expr.span, exprs);
+        if !new_expr.pure {
+            return false;
+        }
+        let mut exprs =
+            self.fold_arguments_into_needed_expressions(&mut new_expr.arguments, state, ctx);
+        if exprs.is_empty() {
+            return true;
+        } else if exprs.len() == 1 {
+            *e = exprs.pop().unwrap();
             state.changed = true;
             return false;
         }
-
-        let Expression::Identifier(ident) = &new_expr.callee else { return false };
-        let len = new_expr.arguments.len();
-        if match ident.name.as_str() {
-            "WeakSet" | "WeakMap" if ctx.is_global_reference(ident) => match len {
-                0 => true,
-                1 => match new_expr.arguments[0].as_expression() {
-                    Some(Expression::NullLiteral(_)) => true,
-                    Some(Expression::ArrayExpression(e)) => e.elements.is_empty(),
-                    Some(e) if ctx.is_expression_undefined(e) => true,
-                    _ => false,
-                },
-                _ => false,
-            },
-            "Date" if ctx.is_global_reference(ident) => match len {
-                0 => true,
-                1 => {
-                    let Some(arg) = new_expr.arguments[0].as_expression() else { return false };
-                    let ty = arg.value_type(&ctx);
-                    matches!(
-                        ty,
-                        ValueType::Null
-                            | ValueType::Undefined
-                            | ValueType::Boolean
-                            | ValueType::Number
-                            | ValueType::String
-                    ) && !arg.may_have_side_effects(&ctx)
-                }
-                _ => false,
-            },
-            "Set" | "Map" if ctx.is_global_reference(ident) => match len {
-                0 => true,
-                1 => match new_expr.arguments[0].as_expression() {
-                    Some(Expression::NullLiteral(_)) => true,
-                    Some(e) if ctx.is_expression_undefined(e) => true,
-                    _ => false,
-                },
-                _ => false,
-            },
-            _ => false,
-        } {
-            return true;
-        }
+        *e = ctx.ast.expression_sequence(new_expr.span, exprs);
+        state.changed = true;
         false
     }
 
