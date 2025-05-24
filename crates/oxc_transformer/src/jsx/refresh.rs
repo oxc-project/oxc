@@ -559,7 +559,9 @@ impl<'a> ReactRefresh<'a, '_> {
             let mut hashed_key = ArenaVec::from_array_in([0; ENCODED_LEN], ctx.ast.allocator);
             let encoded_bytes = BASE64_STANDARD.encode_slice(hash, &mut hashed_key).unwrap();
             debug_assert_eq!(encoded_bytes, ENCODED_LEN);
-            let hashed_key = ArenaString::from_utf8(hashed_key).unwrap();
+            // SAFETY: Base64 encoding only produces ASCII bytes. Even if our assumptions are incorrect,
+            // and Base64 bytes do not fill `hashed_key` completely, the remaining bytes are 0, so also ASCII
+            let hashed_key = unsafe { ArenaString::from_utf8_unchecked(hashed_key) };
             Atom::from(hashed_key)
         };
 
