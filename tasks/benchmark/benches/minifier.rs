@@ -4,7 +4,7 @@ use oxc_allocator::Allocator;
 use oxc_benchmark::{BenchmarkId, Criterion, criterion_group, criterion_main};
 use oxc_mangler::Mangler;
 use oxc_minifier::{CompressOptions, Compressor};
-use oxc_parser::Parser;
+use oxc_parser::{ParseOptions, Parser};
 use oxc_semantic::SemanticBuilder;
 use oxc_span::SourceType;
 use oxc_tasks_common::TestFiles;
@@ -28,7 +28,13 @@ fn bench_minifier(criterion: &mut Criterion) {
                 allocator.reset();
 
                 // Create fresh AST + semantic data for each iteration
-                let mut program = Parser::new(&allocator, source_text, source_type).parse().program;
+                let mut program = Parser::new(&allocator, source_text, source_type)
+                    .with_options(ParseOptions {
+                        preserve_parens: false,
+                        ..ParseOptions::default()
+                    })
+                    .parse()
+                    .program;
                 let scoping = SemanticBuilder::new().build(&program).semantic.into_scoping();
 
                 // Minifier only works on esnext.

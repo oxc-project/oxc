@@ -17,7 +17,7 @@ use napi_derive::napi;
 use oxc_allocator::Allocator;
 use oxc_codegen::{Codegen, CodegenOptions};
 use oxc_minifier::Minifier;
-use oxc_parser::Parser;
+use oxc_parser::{ParseOptions, Parser};
 use oxc_span::SourceType;
 
 use crate::options::{MinifyOptions, MinifyResult};
@@ -40,7 +40,10 @@ pub fn minify(
 
     let source_type = SourceType::from_path(&filename).unwrap_or_default();
 
-    let mut program = Parser::new(&allocator, &source_text, source_type).parse().program;
+    let mut program = Parser::new(&allocator, &source_text, source_type)
+        .with_options(ParseOptions { preserve_parens: false, ..ParseOptions::default() })
+        .parse()
+        .program;
 
     let scoping = Minifier::new(minifier_options).build(&allocator, &mut program).scoping;
 
