@@ -1,9 +1,9 @@
-use std::{iter, str};
+use std::str;
 
 use itoa::Buffer as ItoaBuffer;
 use rustc_hash::FxHashMap;
 
-use oxc_allocator::{Allocator, String as ArenaString};
+use oxc_allocator::{Allocator, StringBuilder as ArenaStringBuilder};
 use oxc_semantic::Scoping;
 use oxc_span::Atom;
 
@@ -288,11 +288,11 @@ impl<'a> UidGenerator<'a> {
             if uid_name.underscore_count == 1 {
                 Atom::from_strs_array_in(["_", base, digits], self.allocator)
             } else {
-                let mut uid = ArenaString::with_capacity_in(
+                let mut uid = ArenaStringBuilder::with_capacity_in(
                     uid_name.underscore_count as usize + base.len() + digits.len(),
                     self.allocator,
                 );
-                uid.extend(iter::repeat_n("_", uid_name.underscore_count as usize));
+                uid.push_ascii_byte_repeat(b'_', uid_name.underscore_count as usize);
                 uid.push_str(base);
                 uid.push_str(digits);
                 Atom::from(uid)

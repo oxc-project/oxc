@@ -53,7 +53,7 @@
 
 use std::{borrow::Cow, mem};
 
-use oxc_allocator::{Box as ArenaBox, String as ArenaString, TakeIn};
+use oxc_allocator::{Box as ArenaBox, StringBuilder as ArenaStringBuilder, TakeIn};
 use oxc_ast::{NONE, ast::*};
 use oxc_ast_visit::Visit;
 use oxc_semantic::{ReferenceFlags, ScopeFlags, ScopeId, SymbolFlags};
@@ -571,7 +571,7 @@ impl<'a, 'ctx> AsyncGeneratorExecutor<'a, 'ctx> {
             return ctx.ast.atom_from_cow(input);
         }
 
-        let mut name = ArenaString::with_capacity_in(input_str.len() + 1, ctx.ast.allocator);
+        let mut name = ArenaStringBuilder::with_capacity_in(input_str.len() + 1, ctx.ast.allocator);
         let mut capitalize_next = false;
 
         let mut chars = input_str.chars();
@@ -599,7 +599,7 @@ impl<'a, 'ctx> AsyncGeneratorExecutor<'a, 'ctx> {
         }
 
         if is_reserved_keyword(name.as_str()) {
-            name.insert(0, '_');
+            name.push_ascii_byte_start(b'_');
         }
 
         Atom::from(name)

@@ -88,7 +88,9 @@
 //!
 //! * Babel plugin implementation: <https://github.com/babel/babel/tree/v7.26.2/packages/babel-helper-builder-react-jsx>
 
-use oxc_allocator::{Box as ArenaBox, String as ArenaString, TakeIn, Vec as ArenaVec};
+use oxc_allocator::{
+    Box as ArenaBox, StringBuilder as ArenaStringBuilder, TakeIn, Vec as ArenaVec,
+};
 use oxc_ast::{AstBuilder, NONE, ast::*};
 use oxc_ecmascript::PropName;
 use oxc_span::{Atom, SPAN, Span};
@@ -1018,7 +1020,7 @@ impl<'a> JsxImpl<'a, '_> {
         //   didn't contain any HTML entities which needed decoding.
         //   So we can just return the `Atom` that's in `only_line` (without any copying).
 
-        let mut acc: Option<ArenaString> = None;
+        let mut acc: Option<ArenaStringBuilder> = None;
         let mut only_line: Option<Atom<'a>> = None;
         let mut first_non_whitespace: Option<usize> = Some(0);
         let mut last_non_whitespace: Option<usize> = None;
@@ -1057,7 +1059,7 @@ impl<'a> JsxImpl<'a, '_> {
 
     fn add_line_of_jsx_text(
         trimmed_line: Atom<'a>,
-        acc: &mut Option<ArenaString<'a>>,
+        acc: &mut Option<ArenaStringBuilder<'a>>,
         only_line: &mut Option<Atom<'a>>,
         text_len: usize,
         ctx: &TraverseCtx<'a>,
@@ -1069,7 +1071,7 @@ impl<'a> JsxImpl<'a, '_> {
             // This is the 2nd line containing text. Previous line did not contain any HTML entities.
             // Generate an accumulator containing previous line and a trailing space.
             // Current line will be added to the accumulator after it.
-            let mut buffer = ArenaString::with_capacity_in(text_len, ctx.ast.allocator);
+            let mut buffer = ArenaStringBuilder::with_capacity_in(text_len, ctx.ast.allocator);
             buffer.push_str(only_line.as_str());
             buffer.push(' ');
             *acc = Some(buffer);
@@ -1100,7 +1102,7 @@ impl<'a> JsxImpl<'a, '_> {
     /// Caller can use a slice of the original text, rather than making any copies.
     fn decode_entities(
         s: &str,
-        acc: &mut Option<ArenaString<'a>>,
+        acc: &mut Option<ArenaStringBuilder<'a>>,
         text_len: usize,
         ctx: &TraverseCtx<'a>,
     ) {
@@ -1118,7 +1120,7 @@ impl<'a> JsxImpl<'a, '_> {
                 }
                 if let Some(end) = end {
                     let buffer = acc.get_or_insert_with(|| {
-                        ArenaString::with_capacity_in(text_len, ctx.ast.allocator)
+                        ArenaStringBuilder::with_capacity_in(text_len, ctx.ast.allocator)
                     });
 
                     buffer.push_str(&s[prev..start]);

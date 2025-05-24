@@ -1,4 +1,4 @@
-use std::{collections::hash_map::Entry, iter};
+use std::{collections::hash_map::Entry, iter, str};
 
 use base64::{
     encoded_len as base64_encoded_len,
@@ -7,7 +7,9 @@ use base64::{
 use rustc_hash::FxHashMap;
 use sha1::{Digest, Sha1};
 
-use oxc_allocator::{Address, CloneIn, GetAddress, String as ArenaString, TakeIn, Vec as ArenaVec};
+use oxc_allocator::{
+    Address, CloneIn, GetAddress, StringBuilder as ArenaStringBuilder, TakeIn, Vec as ArenaVec,
+};
 use oxc_ast::{AstBuilder, NONE, ast::*, match_expression};
 use oxc_semantic::{Reference, ReferenceFlags, ScopeFlags, ScopeId, SymbolFlags};
 use oxc_span::{Atom, GetSpan, SPAN};
@@ -556,12 +558,21 @@ impl<'a> ReactRefresh<'a, '_> {
             debug_assert_eq!(hash.len(), SHA1_HASH_LEN);
 
             // Encode to base64 string directly in arena, without an intermediate string allocation
-            let mut hashed_key = ArenaVec::from_array_in([0; ENCODED_LEN], ctx.ast.allocator);
-            let encoded_bytes = BASE64_STANDARD.encode_slice(hash, &mut hashed_key).unwrap();
-            debug_assert_eq!(encoded_bytes, ENCODED_LEN);
+            #[expect(clippy::items_after_statements)]
+            const ZEROS_STR: &str = {
+                const ZEROS_BYTES: [u8; ENCODED_LEN] = [0; ENCODED_LEN];
+                match str::from_utf8(&ZEROS_BYTES) {
+                    Ok(s) => s,
+                    Err(_) => unreachable!(),
+                }
+            };
+
+            let mut hashed_key = ArenaStringBuilder::from_str_in(ZEROS_STR, ctx.ast.allocator);
             // SAFETY: Base64 encoding only produces ASCII bytes. Even if our assumptions are incorrect,
-            // and Base64 bytes do not fill `hashed_key` completely, the remaining bytes are 0, so also ASCII
-            let hashed_key = unsafe { ArenaString::from_utf8_unchecked(hashed_key) };
+            // and Base64 bytes do not fill `hashed_key` completely, the remaining bytes are 0, so also ASCII.
+            let hashed_key_bytes = unsafe { hashed_key.as_mut_str().as_bytes_mut() };
+            let encoded_bytes = BASE64_STANDARD.encode_slice(hash, hashed_key_bytes).unwrap();
+            debug_assert_eq!(encoded_bytes, ENCODED_LEN);
             Atom::from(hashed_key)
         };
 
