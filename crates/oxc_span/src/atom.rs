@@ -4,7 +4,9 @@ use std::{
     ops::Deref,
 };
 
-use oxc_allocator::{Allocator, CloneIn, Dummy, FromIn};
+use oxc_allocator::{
+    Allocator, CloneIn, Dummy, FromIn, String as ArenaString, StringBuilder as ArenaStringBuilder,
+};
 #[cfg(feature = "serialize")]
 use oxc_estree::{ESTree, Serializer as ESTreeSerializer};
 #[cfg(feature = "serialize")]
@@ -143,9 +145,15 @@ impl<'a> From<&'a str> for Atom<'a> {
     }
 }
 
-impl<'alloc> From<oxc_allocator::String<'alloc>> for Atom<'alloc> {
-    fn from(s: oxc_allocator::String<'alloc>) -> Self {
+impl<'alloc> From<ArenaString<'alloc>> for Atom<'alloc> {
+    fn from(s: ArenaString<'alloc>) -> Self {
         Self::from(s.into_bump_str())
+    }
+}
+
+impl<'alloc> From<ArenaStringBuilder<'alloc>> for Atom<'alloc> {
+    fn from(s: ArenaStringBuilder<'alloc>) -> Self {
+        Self::from(s.into_str())
     }
 }
 
@@ -287,9 +295,9 @@ impl ESTree for Atom<'_> {
 macro_rules! format_atom {
     ($alloc:expr, $($arg:tt)*) => {{
         use ::std::{write, fmt::Write};
-        use $crate::{Atom, __internal::ArenaString};
+        use $crate::{Atom, __internal::ArenaStringBuilder};
 
-        let mut s = ArenaString::new_in($alloc);
+        let mut s = ArenaStringBuilder::new_in($alloc);
         write!(s, $($arg)*).unwrap();
         Atom::from(s)
     }}
