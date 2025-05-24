@@ -4,6 +4,19 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.72.0] - 2025-05-24
+
+### Features
+
+- 03390ad allocator: `TakeIn` trait with `AllocatorAccessor` (#11201) (Boshen)
+- 123e63c isolated-declarations: Report an error for object methods whose return type cannot be inferred (#11230) (Dunqing)
+
+### Bug Fixes
+
+- 7126adb isolated-declarations: Type of class setter/getter cannot be inferred when the key is a global `Symbol.xxx` expression (#11236) (Dunqing)
+- ac9638e isolated-declarations: Object property key was generated incorrectly (#11231) (Dunqing)
+- 9ec8500 isolated-declarations: Incorrect type of object property accessor (#11229) (Dunqing)
+
 ## [0.71.0] - 2025-05-20
 
 - 5d9344f rust: [**BREAKING**] Clippy avoid-breaking-exported-api = false (#11088) (Boshen)

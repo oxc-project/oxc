@@ -4,6 +4,37 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.72.0] - 2025-05-24
+
+### Features
+
+- 03390ad allocator: `TakeIn` trait with `AllocatorAccessor` (#11201) (Boshen)
+- 2398906 parser: Check mixed coalesce and new exponential with `preserveParens:false` (#11264) (Boshen)
+
+### Bug Fixes
+
+- aa510cf parser: Produce syntax error for `({}) = x` when `preserveParens:false` (#11263) (Boshen)
+- dcdcf12 parser: Parse `new (import("x"))` with `preserveParens: false` (#11251) (Boshen)
+- 8e8dea5 parser: Fix incorrect token start in `re_lex_right_angle` (#11204) (Boshen)
+
+### Performance
+
+- 254048d lexer: Remove string allocation (#11255) (overlookmotel)
+- 14fcf89 parser: Remove redundant checks (#11207) (Ulrich Stark)
+
+### Refactor
+
+- 02d3bb7 parser: Use `StringBuilder` instead of `String` (#11259) (overlookmotel)
+- b99749c parser: Remove lexer lookahead in parsing TS statements (#11253) (camchenry)
+- 4e12796 parser: Remove Lexer peeking for js/class (#11243) (leaysgur)
+- 6ddf7a8 parser: Remove token lookahead in type parsing (#11241) (camchenry)
+- 86e753d parser: Remove Lexer peeking for jsx (#11232) (leaysgur)
+- 07e6ae0 parser: Remove Lexer peeking for modifiers (#11228) (leaysgur)
+- 62f7184 parser: Replace peek in `parse_rest_binding` with checkpoint (#11225) (camchenry)
+- def05bc parser: Remove lookahead usage in parsing arrow function expressions (#11220) (camchenry)
+- a9dbf0a parser: Use checkpoints instead of `peek_at` in `is_un_parenthesized_async_arrow_function_worker` (#11218) (camchenry)
+- a4e2eb1 parser: Make lexer code slightly more readable (#11212) (Ulrich Stark)
+
 ## [0.71.0] - 2025-05-20
 
 - 1a4fec0 codegen: [**BREAKING**] A legal comment can also be a jsdoc comment (#11158) (Boshen)
