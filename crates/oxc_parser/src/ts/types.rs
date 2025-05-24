@@ -1299,7 +1299,7 @@ impl<'a> ParserImpl<'a> {
         let mut modifiers: Vec<Modifier> = self.ast.vec();
 
         loop {
-            if !self.is_nth_at_modifier(0, is_constructor_parameter) {
+            if !self.is_at_modifier(is_constructor_parameter) {
                 break;
             }
 
@@ -1320,6 +1320,56 @@ impl<'a> ParserImpl<'a> {
         }
 
         Modifiers::new(modifiers, flags)
+    }
+
+    fn is_at_modifier(&mut self, is_constructor_parameter: bool) -> bool {
+        if !matches!(
+            self.cur_kind(),
+            Kind::Public
+                | Kind::Protected
+                | Kind::Private
+                | Kind::Static
+                | Kind::Abstract
+                | Kind::Readonly
+                | Kind::Declare
+                | Kind::Override
+                | Kind::Export
+        ) {
+            return false;
+        }
+
+        let checkpoint = self.checkpoint();
+        self.bump_any();
+        let next = self.cur_token();
+
+        if next.is_on_new_line() {
+            self.rewind(checkpoint);
+            return false;
+        }
+
+        let followed_by_any_member = matches!(next.kind(), Kind::PrivateIdentifier | Kind::LBrack)
+            || next.kind().is_literal_property_name();
+        if followed_by_any_member {
+            self.rewind(checkpoint);
+            return true;
+        }
+
+        let followed_by_class_member = !is_constructor_parameter && next.kind() == Kind::Star;
+        if followed_by_class_member {
+            self.rewind(checkpoint);
+            return true;
+        }
+
+        // allow `...` for error recovery
+        let followed_by_parameter = is_constructor_parameter
+            && matches!(next.kind(), Kind::LCurly | Kind::LBrack | Kind::Dot3);
+        if followed_by_parameter {
+            self.rewind(checkpoint);
+            return true;
+        }
+
+        self.rewind(checkpoint);
+        false
     }
 
     fn parse_js_doc_unknown_or_nullable_type(&mut self) -> TSType<'a> {

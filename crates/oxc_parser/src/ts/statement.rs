@@ -124,7 +124,7 @@ impl<'a> ParserImpl<'a> {
         let params = self.parse_ts_type_parameters();
         self.expect(Kind::Eq);
 
-        let annotation = if self.at(Kind::Intrinsic) && !self.peek_at(Kind::Dot) {
+        let ty = if self.at(Kind::Intrinsic) && !self.lookahead(Self::is_next_token_dot) {
             let span = self.start_span();
             self.bump_any();
             self.ast.ts_type_intrinsic_keyword(self.end_span(span))
@@ -141,13 +141,12 @@ impl<'a> ParserImpl<'a> {
             diagnostics::modifier_cannot_be_used_here,
         );
 
-        self.ast.declaration_ts_type_alias(
-            span,
-            id,
-            params,
-            annotation,
-            modifiers.contains_declare(),
-        )
+        self.ast.declaration_ts_type_alias(span, id, params, ty, modifiers.contains_declare())
+    }
+
+    fn is_next_token_dot(&mut self) -> bool {
+        self.bump_any();
+        self.at(Kind::Dot)
     }
 
     /* ---------------------  Interface  ------------------------ */
@@ -189,16 +188,8 @@ impl<'a> ParserImpl<'a> {
         self.ast.alloc_ts_interface_body(self.end_span(span), body_list)
     }
 
-    pub(crate) fn is_at_interface_declaration(&mut self) -> bool {
-        if !self.at(Kind::Interface) || self.peek_token().is_on_new_line() {
-            false
-        } else {
-            self.peek_token().kind().is_binding_identifier() || self.peek_at(Kind::LCurly)
-        }
-    }
-
     pub(crate) fn parse_ts_type_signature(&mut self) -> TSSignature<'a> {
-        if self.is_at_ts_index_signature_member() {
+        if self.lookahead(Self::is_at_ts_index_signature_member) {
             let span = self.start_span();
             let modifiers = self.parse_modifiers(false, false, false);
             let sig = self.parse_index_signature_declaration(span, &modifiers);
@@ -207,7 +198,7 @@ impl<'a> ParserImpl<'a> {
 
         match self.cur_kind() {
             Kind::LParen | Kind::LAngle => self.parse_ts_call_signature_member(),
-            Kind::New if self.peek_at(Kind::LParen) || self.peek_at(Kind::LAngle) => {
+            Kind::New if self.lookahead(Self::is_next_token_open_paren_or_angle_bracket) => {
                 self.parse_ts_constructor_signature_member()
             }
             Kind::Get if self.is_next_at_type_member_name() => {
@@ -220,28 +211,15 @@ impl<'a> ParserImpl<'a> {
         }
     }
 
-    /// Must be at `[ident:` or `<modifiers> [ident:`
-    pub(crate) fn is_at_ts_index_signature_member(&mut self) -> bool {
-        let mut offset = 0;
-        while self.is_nth_at_modifier(offset, false) {
-            offset += 1;
-        }
-
-        if !self.nth_at(offset, Kind::LBrack) {
-            return false;
-        }
-
-        if !self.nth_kind(offset + 1).is_identifier() {
-            return false;
-        }
-
-        self.nth_at(offset + 2, Kind::Colon)
+    fn is_next_token_open_paren_or_angle_bracket(&mut self) -> bool {
+        self.bump_any();
+        matches!(self.cur_kind(), Kind::LParen | Kind::LAngle)
     }
 
-    pub(crate) fn is_nth_at_modifier(&mut self, n: u8, is_constructor_parameter: bool) -> bool {
-        let nth = self.nth(n);
-        if !(matches!(
-            nth.kind(),
+    /// Must be at `[ident:` or `<modifiers> [ident:`
+    fn is_at_ts_index_signature_member(&mut self) -> bool {
+        if matches!(
+            self.cur_kind(),
             Kind::Public
                 | Kind::Protected
                 | Kind::Private
@@ -251,25 +229,22 @@ impl<'a> ParserImpl<'a> {
                 | Kind::Declare
                 | Kind::Override
                 | Kind::Export
-        )) {
+        ) {
+            self.bump_any();
+        }
+
+        if !self.at(Kind::LBrack) {
             return false;
         }
 
-        let next = self.nth(n + 1);
+        self.bump_any();
 
-        if next.is_on_new_line() {
-            false
-        } else {
-            let followed_by_any_member =
-                matches!(next.kind(), Kind::PrivateIdentifier | Kind::LBrack)
-                    || next.kind().is_literal_property_name();
-            let followed_by_class_member = !is_constructor_parameter && next.kind() == Kind::Star;
-            // allow `...` for error recovery
-            let followed_by_parameter = is_constructor_parameter
-                && matches!(next.kind(), Kind::LCurly | Kind::LBrack | Kind::Dot3);
-
-            followed_by_any_member || followed_by_class_member || followed_by_parameter
+        if !self.cur_kind().is_identifier() {
+            return false;
         }
+
+        self.bump_any();
+        self.at(Kind::Colon)
     }
 
     /* ----------------------- Namespace & Module ----------------------- */
@@ -370,9 +345,7 @@ impl<'a> ParserImpl<'a> {
             }
             Kind::Type => self.parse_ts_type_alias_declaration(start_span, modifiers),
             Kind::Enum => self.parse_ts_enum_declaration(start_span, modifiers),
-            Kind::Interface if self.is_at_interface_declaration() => {
-                self.parse_ts_interface_declaration(start_span, modifiers)
-            }
+            Kind::Interface => self.parse_ts_interface_declaration(start_span, modifiers),
             Kind::Class => {
                 let decl = self.parse_class_declaration(start_span, modifiers);
                 Declaration::ClassDeclaration(decl)
@@ -441,7 +414,7 @@ impl<'a> ParserImpl<'a> {
     }
 
     pub(crate) fn parse_ts_import_equals_declaration(&mut self, span: u32) -> Declaration<'a> {
-        let import_kind = if !self.peek_at(Kind::Eq) && self.eat(Kind::Type) {
+        let import_kind = if !self.lookahead(Self::is_next_token_equals) && self.eat(Kind::Type) {
             ImportOrExportKind::Type
         } else {
             ImportOrExportKind::Value
@@ -473,6 +446,11 @@ impl<'a> ParserImpl<'a> {
             module_reference,
             import_kind,
         )
+    }
+
+    fn is_next_token_equals(&mut self) -> bool {
+        self.bump_any();
+        self.at(Kind::Eq)
     }
 
     pub(crate) fn parse_ts_this_parameter(&mut self) -> TSThisParameter<'a> {
@@ -548,16 +526,12 @@ impl<'a> ParserImpl<'a> {
                 }
                 Kind::Export => {
                     self.bump_any();
-                    let kind = if self.cur_kind() == Kind::Type {
-                        self.peek_kind()
-                    } else {
-                        self.cur_kind()
-                    };
+                    self.bump(Kind::Type); // optional `type` after `export`
                     // This allows constructs like
                     // `export *`, `export default`, `export {}`, `export = {}` along with all
                     // export [declaration]
                     if matches!(
-                        kind,
+                        self.cur_kind(),
                         Kind::Eq | Kind::Star | Kind::Default | Kind::LCurly | Kind::At | Kind::As
                     ) {
                         return true;
