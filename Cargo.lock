@@ -1092,9 +1092,9 @@ checksum = "4a5f13b858c8d314ee3e8f639011f7ccefe71f97f96e50151fb991f267928e2c"
 
 [[package]]
 name = "javascript-globals"
-version = "1.1.0"
+version = "1.1.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0d354e7ed074ff87cc305457421b6fd6388ea445f5a4e8b300e0f3a2cd96df8b"
+checksum = "9d5e967f6e140025cb154b0d19d54e3deff272923f7349f7cfbda5afc1fd32d9"
 dependencies = [
  "phf",
 ]
