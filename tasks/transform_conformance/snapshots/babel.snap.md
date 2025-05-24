@@ -1012,9 +1012,6 @@ rebuilt        : ScopeId(7): []
 Symbol flags mismatch for "a":
 after transform: SymbolId(0): SymbolFlags(BlockScopedVariable)
 rebuilt        : SymbolId(8): SymbolFlags(Function)
-Symbol span mismatch for "a":
-after transform: SymbolId(0): Span { start: 27, end: 28 }
-rebuilt        : SymbolId(8): Span { start: 86, end: 87 }
 Symbol scope ID mismatch for "a":
 after transform: SymbolId(0): ScopeId(2)
 rebuilt        : SymbolId(8): ScopeId(0)

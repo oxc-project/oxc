@@ -384,6 +384,37 @@ impl<'a> SemanticBuilder<'a> {
         excludes: SymbolFlags,
     ) -> SymbolId {
         if let Some(symbol_id) = self.check_redeclaration(scope_id, span, name, excludes, true) {
+            // While cases such as:
+            // ```javascript
+            // var x;
+            // function x() {}
+            // ```
+            // are illegal in TypeScript, they are legal in JavaScript.
+            // Since, in JavaScript, the `function` declaration is hoisted first, we need to make sure that
+            // if we find a `function` declaration after a `var` declaration, we need to update the
+            // `symbol_declarations` to point to the `function` declaration.
+            // ```javascript
+            // var x;
+            // function x() {}
+            // ```
+            if !self.source_type.is_typescript()
+                && includes.contains(SymbolFlags::Function)
+                && self.scoping.symbol_flags(symbol_id) == SymbolFlags::FunctionScopedVariable
+                && !self.scoping.symbol_flags(symbol_id).contains(SymbolFlags::Function)
+            {
+                let old_span = self.scoping.symbol_spans[symbol_id];
+                let old_flags = self.scoping.symbol_flags(symbol_id);
+                let old_node_id = self.scoping.symbol_declaration(symbol_id);
+                self.scoping.symbol_spans[symbol_id] = span;
+                self.scoping.symbol_flags[symbol_id] = includes;
+                self.scoping.symbol_scope_ids[symbol_id] = scope_id;
+                self.scoping.symbol_declarations[symbol_id] = self.current_node_id;
+
+                self.scoping.add_symbol_redeclaration(symbol_id, old_flags, old_node_id, old_span);
+                self.scoping.union_symbol_flag(symbol_id, includes);
+                return symbol_id;
+            }
+
             self.add_redeclare_variable(symbol_id, includes, span);
             self.scoping.union_symbol_flag(symbol_id, includes);
             return symbol_id;

@@ -1292,6 +1292,19 @@ fn test_report_vars_only_used_as_types() {
         .test();
 }
 
+#[test]
+fn test_js() {
+    let pass = vec![
+        // https://github.com/oxc-project/oxc/issues/11215
+        "export function promisify() { var fn; function fn() {}; return fn; }",
+    ];
+
+    Tester::new(NoUnusedVars::NAME, NoUnusedVars::PLUGIN, pass, vec![])
+        .change_rule_path_extension("js")
+        .intentionally_allow_no_fix_tests()
+        .test();
+}
+
 // #[test]
 // fn test_template() {
 //     let pass = vec![];
