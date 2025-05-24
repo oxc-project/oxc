@@ -32,6 +32,20 @@ impl<'a> ParserImpl<'a> {
         }
     }
 
+    pub(crate) fn is_using_statement(&mut self) -> bool {
+        self.lookahead(Self::is_next_token_using_keyword_then_binding_identifier)
+    }
+
+    fn is_next_token_using_keyword_then_binding_identifier(&mut self) -> bool {
+        self.bump_any();
+        if self.at(Kind::Using) && !self.cur_token().is_on_new_line() {
+            self.bump_any();
+            self.cur_kind().is_binding_identifier() && !self.cur_token().is_on_new_line()
+        } else {
+            false
+        }
+    }
+
     pub(crate) fn parse_using_statement(&mut self) -> Statement<'a> {
         let mut decl = self.parse_using_declaration(StatementContext::StatementList);
         self.asi();
