@@ -17,14 +17,7 @@ use oxc_syntax::{
     comment_node::CommentNodeId, reference::ReferenceId, scope::ScopeId, symbol::SymbolId,
 };
 
-use crate::ast::*;
-
-/// AST builder for creating AST nodes
-#[derive(Clone, Copy)]
-pub struct AstBuilder<'a> {
-    /// The memory allocator used to allocate AST nodes in the arena.
-    pub allocator: &'a Allocator,
-}
+use crate::{AstBuilder, ast::*};
 
 impl<'a> AstBuilder<'a> {
     /// Build a [`Program`].
