@@ -686,6 +686,8 @@ pub struct UpdateExpression<'a> {
     pub operator: UpdateOperator,
     pub prefix: bool,
     pub argument: SimpleAssignmentTarget<'a>,
+    #[estree(skip)]
+    pub argument_parenthesized: Option<Span>,
 }
 
 /// `typeof` in `typeof a === "string"`
@@ -768,6 +770,8 @@ pub struct AssignmentExpression<'a> {
     pub operator: AssignmentOperator,
     pub left: AssignmentTarget<'a>,
     pub right: Expression<'a>,
+    #[estree(skip)]
+    pub left_parenthesized: Option<Span>,
 }
 
 inherit_variants! {

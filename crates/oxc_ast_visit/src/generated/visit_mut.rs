@@ -1700,6 +1700,9 @@ pub mod walk_mut {
         visitor.enter_node(kind);
         visitor.visit_span(&mut it.span);
         visitor.visit_simple_assignment_target(&mut it.argument);
+        if let Some(argument_parenthesized) = &mut it.argument_parenthesized {
+            visitor.visit_span(argument_parenthesized);
+        }
         visitor.leave_node(kind);
     }
 
@@ -1778,6 +1781,9 @@ pub mod walk_mut {
         visitor.visit_span(&mut it.span);
         visitor.visit_assignment_target(&mut it.left);
         visitor.visit_expression(&mut it.right);
+        if let Some(left_parenthesized) = &mut it.left_parenthesized {
+            visitor.visit_span(left_parenthesized);
+        }
         visitor.leave_node(kind);
     }
 

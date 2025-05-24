@@ -1564,6 +1564,7 @@ impl<'new_alloc> CloneIn<'new_alloc> for UpdateExpression<'_> {
             operator: CloneIn::clone_in(&self.operator, allocator),
             prefix: CloneIn::clone_in(&self.prefix, allocator),
             argument: CloneIn::clone_in(&self.argument, allocator),
+            argument_parenthesized: CloneIn::clone_in(&self.argument_parenthesized, allocator),
         }
     }
 
@@ -1573,6 +1574,10 @@ impl<'new_alloc> CloneIn<'new_alloc> for UpdateExpression<'_> {
             operator: CloneIn::clone_in_with_semantic_ids(&self.operator, allocator),
             prefix: CloneIn::clone_in_with_semantic_ids(&self.prefix, allocator),
             argument: CloneIn::clone_in_with_semantic_ids(&self.argument, allocator),
+            argument_parenthesized: CloneIn::clone_in_with_semantic_ids(
+                &self.argument_parenthesized,
+                allocator,
+            ),
         }
     }
 }
@@ -1692,6 +1697,7 @@ impl<'new_alloc> CloneIn<'new_alloc> for AssignmentExpression<'_> {
             operator: CloneIn::clone_in(&self.operator, allocator),
             left: CloneIn::clone_in(&self.left, allocator),
             right: CloneIn::clone_in(&self.right, allocator),
+            left_parenthesized: CloneIn::clone_in(&self.left_parenthesized, allocator),
         }
     }
 
@@ -1701,6 +1707,10 @@ impl<'new_alloc> CloneIn<'new_alloc> for AssignmentExpression<'_> {
             operator: CloneIn::clone_in_with_semantic_ids(&self.operator, allocator),
             left: CloneIn::clone_in_with_semantic_ids(&self.left, allocator),
             right: CloneIn::clone_in_with_semantic_ids(&self.right, allocator),
+            left_parenthesized: CloneIn::clone_in_with_semantic_ids(
+                &self.left_parenthesized,
+                allocator,
+            ),
         }
     }
 }

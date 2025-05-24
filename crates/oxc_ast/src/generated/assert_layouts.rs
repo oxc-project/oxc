@@ -187,12 +187,13 @@ const _: () = {
     assert!(align_of::<Argument>() == 8);
 
     // Padding: 6 bytes
-    assert!(size_of::<UpdateExpression>() == 32);
+    assert!(size_of::<UpdateExpression>() == 48);
     assert!(align_of::<UpdateExpression>() == 8);
     assert!(offset_of!(UpdateExpression, span) == 0);
-    assert!(offset_of!(UpdateExpression, operator) == 24);
-    assert!(offset_of!(UpdateExpression, prefix) == 25);
+    assert!(offset_of!(UpdateExpression, operator) == 40);
+    assert!(offset_of!(UpdateExpression, prefix) == 41);
     assert!(offset_of!(UpdateExpression, argument) == 8);
+    assert!(offset_of!(UpdateExpression, argument_parenthesized) == 24);
 
     // Padding: 7 bytes
     assert!(size_of::<UnaryExpression>() == 32);
@@ -233,12 +234,13 @@ const _: () = {
     assert!(offset_of!(ConditionalExpression, alternate) == 40);
 
     // Padding: 7 bytes
-    assert!(size_of::<AssignmentExpression>() == 48);
+    assert!(size_of::<AssignmentExpression>() == 64);
     assert!(align_of::<AssignmentExpression>() == 8);
     assert!(offset_of!(AssignmentExpression, span) == 0);
-    assert!(offset_of!(AssignmentExpression, operator) == 40);
+    assert!(offset_of!(AssignmentExpression, operator) == 56);
     assert!(offset_of!(AssignmentExpression, left) == 8);
     assert!(offset_of!(AssignmentExpression, right) == 24);
+    assert!(offset_of!(AssignmentExpression, left_parenthesized) == 40);
 
     assert!(size_of::<AssignmentTarget>() == 16);
     assert!(align_of::<AssignmentTarget>() == 8);
@@ -1776,12 +1778,13 @@ const _: () = {
     assert!(align_of::<Argument>() == 4);
 
     // Padding: 2 bytes
-    assert!(size_of::<UpdateExpression>() == 20);
+    assert!(size_of::<UpdateExpression>() == 32);
     assert!(align_of::<UpdateExpression>() == 4);
     assert!(offset_of!(UpdateExpression, span) == 0);
-    assert!(offset_of!(UpdateExpression, operator) == 16);
-    assert!(offset_of!(UpdateExpression, prefix) == 17);
+    assert!(offset_of!(UpdateExpression, operator) == 28);
+    assert!(offset_of!(UpdateExpression, prefix) == 29);
     assert!(offset_of!(UpdateExpression, argument) == 8);
+    assert!(offset_of!(UpdateExpression, argument_parenthesized) == 16);
 
     // Padding: 3 bytes
     assert!(size_of::<UnaryExpression>() == 20);
@@ -1822,12 +1825,13 @@ const _: () = {
     assert!(offset_of!(ConditionalExpression, alternate) == 24);
 
     // Padding: 3 bytes
-    assert!(size_of::<AssignmentExpression>() == 28);
+    assert!(size_of::<AssignmentExpression>() == 40);
     assert!(align_of::<AssignmentExpression>() == 4);
     assert!(offset_of!(AssignmentExpression, span) == 0);
-    assert!(offset_of!(AssignmentExpression, operator) == 24);
+    assert!(offset_of!(AssignmentExpression, operator) == 36);
     assert!(offset_of!(AssignmentExpression, left) == 8);
     assert!(offset_of!(AssignmentExpression, right) == 16);
+    assert!(offset_of!(AssignmentExpression, left_parenthesized) == 24);
 
     assert!(size_of::<AssignmentTarget>() == 8);
     assert!(align_of::<AssignmentTarget>() == 4);

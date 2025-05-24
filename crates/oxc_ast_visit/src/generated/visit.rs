@@ -1681,6 +1681,9 @@ pub mod walk {
         visitor.enter_node(kind);
         visitor.visit_span(&it.span);
         visitor.visit_simple_assignment_target(&it.argument);
+        if let Some(argument_parenthesized) = &it.argument_parenthesized {
+            visitor.visit_span(argument_parenthesized);
+        }
         visitor.leave_node(kind);
     }
 
@@ -1750,6 +1753,9 @@ pub mod walk {
         visitor.visit_span(&it.span);
         visitor.visit_assignment_target(&it.left);
         visitor.visit_expression(&it.right);
+        if let Some(left_parenthesized) = &it.left_parenthesized {
+            visitor.visit_span(left_parenthesized);
+        }
         visitor.leave_node(kind);
     }
 
