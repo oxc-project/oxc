@@ -285,8 +285,8 @@ impl<'a> UidGenerator<'a> {
             let mut buffer = ItoaBuffer::new();
             let digits = buffer.format(uid_name.postfix);
 
-            let uid = if uid_name.underscore_count == 1 {
-                ArenaString::from_strs_array_in(["_", base, digits], self.allocator)
+            if uid_name.underscore_count == 1 {
+                Atom::from_strs_array_in(["_", base, digits], self.allocator)
             } else {
                 let mut uid = ArenaString::with_capacity_in(
                     uid_name.underscore_count as usize + base.len() + digits.len(),
@@ -295,12 +295,10 @@ impl<'a> UidGenerator<'a> {
                 uid.extend(iter::repeat_n("_", uid_name.underscore_count as usize));
                 uid.push_str(base);
                 uid.push_str(digits);
-                uid
-            };
-
-            Atom::from(uid)
+                Atom::from(uid)
+            }
         } else {
-            let uid = Atom::from(ArenaString::from_strs_array_in(["_", base], self.allocator));
+            let uid = Atom::from_strs_array_in(["_", base], self.allocator);
             // SAFETY: String starts with `_`, so trimming off that byte leaves a valid UTF-8 string
             let base = unsafe { uid.as_str().get_unchecked(1..) };
             self.names.insert(base, UidName { underscore_count: 1, postfix: 1 });

@@ -5,7 +5,6 @@
 //!
 //! Based on Babel's [plugin-rewrite-ts-imports](https://github.com/babel/babel/blob/3bcfee232506a4cebe410f02042fb0f0adeeb0b1/packages/babel-preset-typescript/src/plugin-rewrite-ts-imports.ts)
 
-use oxc_allocator::String as ArenaString;
 use oxc_ast::ast::{
     ExportAllDeclaration, ExportNamedDeclaration, ImportDeclaration, StringLiteral,
 };
@@ -43,9 +42,7 @@ impl TypeScriptRewriteExtensions {
         source.value = if self.mode.is_remove() {
             Atom::from(without_extension)
         } else {
-            let new_value =
-                ArenaString::from_strs_array_in([without_extension, replace], ctx.ast.allocator);
-            Atom::from(new_value)
+            ctx.ast.atom_from_strs_array([without_extension, replace])
         };
         source.raw = None;
     }

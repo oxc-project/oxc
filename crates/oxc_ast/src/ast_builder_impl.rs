@@ -2,7 +2,7 @@
 
 use std::borrow::Cow;
 
-use oxc_allocator::{Allocator, AllocatorAccessor, Box, FromIn, IntoIn, String, Vec};
+use oxc_allocator::{Allocator, AllocatorAccessor, Box, FromIn, IntoIn, Vec};
 use oxc_span::{Atom, SPAN, Span};
 use oxc_syntax::{number::NumberBase, operator::UnaryOperator, scope::ScopeId};
 
@@ -90,9 +90,8 @@ impl<'a> AstBuilder<'a> {
 
     /// Allocate an [`Atom`] from an array of string slices.
     #[inline]
-    pub fn atom_from_strs_array<const N: usize>(self, array: [&str; N]) -> Atom<'a> {
-        let string = String::from_strs_array_in(array, self.allocator);
-        Atom::from(string)
+    pub fn atom_from_strs_array<const N: usize>(self, strings: [&str; N]) -> Atom<'a> {
+        Atom::from_strs_array_in(strings, self.allocator)
     }
 
     /// Convert a [`Cow<'a, str>`] to an [`Atom<'a>`].

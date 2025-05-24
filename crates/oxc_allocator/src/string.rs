@@ -130,6 +130,9 @@ impl<'alloc> String<'alloc> {
     /// Create a new [`String`] from a fixed-size array of `&str`s concatenated together,
     /// allocated in the given `allocator`.
     ///
+    /// If you're not altering the `String` after this call, and just converting it to an `Atom`,
+    /// `Atom::from_strs_array_in` may be slightly more efficient.
+    ///
     /// # Examples
     /// ```
     /// use oxc_allocator::{Allocator, String};
