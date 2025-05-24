@@ -112,6 +112,7 @@ export default function generateAncestorsCode(types) {
   }
 
   return `
+    #![allow(unused_imports)]
     #![expect(
       clippy::cast_ptr_alignment,
       clippy::elidable_lifetime_names,
@@ -124,7 +125,7 @@ export default function generateAncestorsCode(types) {
 
     use oxc_allocator::{Address, Box, GetAddress, Vec};
     use oxc_ast::ast::*;
-    use oxc_syntax::scope::ScopeId;
+    use oxc_syntax::{comment_node::CommentNodeId, scope::ScopeId};
 
     /// Type of [\`Ancestor\`].
     /// Used in [\`crate::TraverseCtx::retag_stack\`].

@@ -8,7 +8,7 @@ use syn::Ident;
 use crate::{
     AST_CRATE_PATH, Codegen, Generator, Result,
     output::{Output, output_path},
-    schema::{Def, EnumDef, FieldDef, Schema, StructDef, TypeDef, VariantDef},
+    schema::{Def, EnumDef, FieldDef, Schema, StructDef, TypeDef, TypeId, VariantDef},
     utils::{create_safe_ident, is_reserved_name},
 };
 
@@ -52,6 +52,8 @@ impl Generator for AstBuilderGenerator {
 
     /// Generate `AstBuilder`.
     fn generate(&self, schema: &Schema, _codegen: &Codegen) -> Output {
+        let comment_node_id_type_id = schema.type_names["CommentNodeId"];
+
         let fns = schema
             .types
             .iter()
@@ -62,13 +64,14 @@ impl Generator for AstBuilderGenerator {
                 TypeDef::Enum(enum_def) => !enum_def.builder.skip && enum_def.visit.has_visitor(),
                 _ => false,
             })
-            .map(|type_def| generate_builder_methods(type_def, schema))
+            .map(|type_def| generate_builder_methods(type_def, comment_node_id_type_id, schema))
             .collect::<TokenStream>();
 
         let output = quote! {
             //! AST node factories
 
             //!@@line_break
+            #![allow(unused_imports)]
             #![expect(
                 clippy::default_trait_access,
                 clippy::inconsistent_struct_constructor,
@@ -80,7 +83,12 @@ impl Generator for AstBuilderGenerator {
 
             ///@@line_break
             use oxc_allocator::{Allocator, Box, IntoIn, Vec};
-            use oxc_syntax::{scope::ScopeId, symbol::SymbolId, reference::ReferenceId};
+            use oxc_syntax::{
+                comment_node::CommentNodeId,
+                scope::ScopeId,
+                symbol::SymbolId,
+                reference::ReferenceId
+            };
 
             ///@@line_break
             use crate::ast::*;
@@ -116,6 +124,8 @@ struct Param<'d> {
     fn_param: TokenStream,
     /// `true` if is a default param (semantic ID)
     is_default: bool,
+    /// `true` if is `CommentNodeId` field
+    is_comment_node_id: bool,
     /// * `None` if param is not generic.
     /// * `Some(GenericType::Into)` if is generic and uses `Into`
     ///   e.g. `name: A where A: Into<Atom<'a>>`.
@@ -132,10 +142,18 @@ enum GenericType {
 }
 
 /// Generate builder methods for a type.
-fn generate_builder_methods(type_def: &TypeDef, schema: &Schema) -> TokenStream {
+fn generate_builder_methods(
+    type_def: &TypeDef,
+    comment_node_id_type_id: TypeId,
+    schema: &Schema,
+) -> TokenStream {
     match type_def {
-        TypeDef::Struct(struct_def) => generate_builder_methods_for_struct(struct_def, schema),
-        TypeDef::Enum(enum_def) => generate_builder_methods_for_enum(enum_def, schema),
+        TypeDef::Struct(struct_def) => {
+            generate_builder_methods_for_struct(struct_def, comment_node_id_type_id, schema)
+        }
+        TypeDef::Enum(enum_def) => {
+            generate_builder_methods_for_enum(enum_def, comment_node_id_type_id, schema)
+        }
         _ => unreachable!(),
     }
 }
@@ -145,9 +163,13 @@ fn generate_builder_methods(type_def: &TypeDef, schema: &Schema) -> TokenStream 
 /// Generates two builder methods:
 /// 1. To build an owned type e.g. `boolean_literal`.
 /// 2. To build a boxed type e.g. `alloc_boolean_literal`.
-fn generate_builder_methods_for_struct(struct_def: &StructDef, schema: &Schema) -> TokenStream {
+fn generate_builder_methods_for_struct(
+    struct_def: &StructDef,
+    comment_node_id_type_id: TypeId,
+    schema: &Schema,
+) -> TokenStream {
     let (mut params, generic_params, where_clause, has_default_fields) =
-        get_struct_params(struct_def, schema);
+        get_struct_params(struct_def, comment_node_id_type_id, schema);
     let (fn_params, fields) = get_struct_fn_params_and_fields(&params, true, schema);
 
     let (fn_name_postfix, doc_postfix) = if has_default_fields {
@@ -217,7 +239,7 @@ fn generate_builder_methods_for_struct_impl(
     let struct_ident = struct_def.ident();
     let struct_ty = struct_def.ty(schema);
 
-    let args = params.iter().map(|param| &param.ident);
+    let args = params.iter().filter(|param| !param.is_comment_node_id).map(|param| &param.ident);
 
     let mut fn_name_base = struct_def.snake_name();
     if !fn_name_postfix.is_empty() {
@@ -295,6 +317,7 @@ fn generate_builder_methods_for_struct_impl(
 /// ```
 fn get_struct_params<'s>(
     struct_def: &'s StructDef,
+    comment_node_id_type_id: TypeId,
     schema: &'s Schema,
 ) -> (
     Vec<Param<'s>>, // Params
@@ -364,7 +387,15 @@ fn get_struct_params<'s>(
             let field_ident = field.ident();
             let fn_param = quote!( #field_ident: #fn_param_ty );
 
-            Param { field, ident: field_ident, fn_param, is_default, generic_type }
+            let is_comment_node_id = field.type_id == comment_node_id_type_id;
+            Param {
+                field,
+                ident: field_ident,
+                fn_param,
+                is_default,
+                is_comment_node_id,
+                generic_type,
+            }
         })
         .collect();
 
@@ -414,6 +445,9 @@ fn get_struct_fn_params_and_fields(
 
             fields.push(quote!( #param_ident: Default::default() ));
             return None;
+        } else if param.is_comment_node_id {
+            fields.push(quote!( #param_ident: self.get_comment_node_id() ));
+            return None;
         }
 
         let field = match param.generic_type {
@@ -437,11 +471,22 @@ fn get_struct_fn_params_and_fields(
 /// Generate builder methods for an enum.
 ///
 /// Generates a builder method for every variant of the enum (not including inherited variants).
-fn generate_builder_methods_for_enum(enum_def: &EnumDef, schema: &Schema) -> TokenStream {
+fn generate_builder_methods_for_enum(
+    enum_def: &EnumDef,
+    comment_node_id_type_id: TypeId,
+    schema: &Schema,
+) -> TokenStream {
     enum_def
         .variants
         .iter()
-        .map(|variant| generate_builder_method_for_enum_variant(enum_def, variant, schema))
+        .map(|variant| {
+            generate_builder_method_for_enum_variant(
+                enum_def,
+                variant,
+                comment_node_id_type_id,
+                schema,
+            )
+        })
         .collect()
 }
 
@@ -449,6 +494,7 @@ fn generate_builder_methods_for_enum(enum_def: &EnumDef, schema: &Schema) -> Tok
 fn generate_builder_method_for_enum_variant(
     enum_def: &EnumDef,
     variant: &VariantDef,
+    comment_node_id_type_id: TypeId,
     schema: &Schema,
 ) -> TokenStream {
     let mut variant_type = variant.field_type(schema).unwrap();
@@ -460,7 +506,7 @@ fn generate_builder_method_for_enum_variant(
     let TypeDef::Struct(struct_def) = variant_type else { panic!("Unsupported!") };
 
     let (mut params, generic_params, where_clause, has_default_fields) =
-        get_struct_params(struct_def, schema);
+        get_struct_params(struct_def, comment_node_id_type_id, schema);
 
     let fn_name = enum_variant_builder_name(enum_def, variant);
     let variant_ident = variant.ident();
@@ -524,8 +570,9 @@ fn generate_builder_method_for_enum_variant_impl(
     is_boxed: bool,
 ) -> TokenStream {
     let fn_name = format_ident!("{}{}", fn_name, fn_name_postfix);
-    let fn_params = params.iter().map(|param| &param.fn_param);
-    let args = params.iter().map(|param| &param.ident);
+    let fn_params =
+        params.iter().filter(|param| !param.is_comment_node_id).map(|param| &param.fn_param);
+    let args = params.iter().filter(|param| !param.is_comment_node_id).map(|param| &param.ident);
 
     let enum_ident = enum_def.ident();
     let enum_ty = enum_def.ty(schema);
@@ -621,7 +668,7 @@ fn generate_doc_comment_for_params(params: &[Param]) -> TokenStream {
         return quote!();
     }
 
-    let lines = params.iter().map(|param| {
+    let lines = params.iter().filter(|param| !param.is_comment_node_id).map(|param| {
         let field = param.field;
         let field_name = field.name();
         let field_comment = if let Some(field_comment) = field.doc_comment.as_deref() {

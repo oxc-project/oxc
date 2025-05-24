@@ -5,8 +5,21 @@
 
 use oxc_allocator::{Allocator, CloneIn};
 
+use crate::comment_node::*;
 use crate::number::*;
 use crate::operator::*;
+
+impl<'new_alloc> CloneIn<'new_alloc> for CommentNodeId {
+    type Cloned = CommentNodeId;
+
+    fn clone_in(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {
+        Default::default()
+    }
+
+    fn clone_in_with_semantic_ids(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {
+        Default::default()
+    }
+}
 
 impl<'new_alloc> CloneIn<'new_alloc> for NumberBase {
     type Cloned = NumberBase;

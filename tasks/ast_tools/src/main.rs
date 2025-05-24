@@ -219,6 +219,7 @@ static SOURCE_PATHS: &[&str] = &[
     "crates/oxc_ast/src/serialize/jsx.rs",
     "crates/oxc_ast/src/serialize/ts.rs",
     "crates/oxc_syntax/src/lib.rs",
+    "crates/oxc_syntax/src/comment_node.rs",
     "crates/oxc_syntax/src/module_record.rs",
     "crates/oxc_syntax/src/number.rs",
     "crates/oxc_syntax/src/operator.rs",
