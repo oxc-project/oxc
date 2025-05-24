@@ -35088,7 +35088,15 @@ after transform: ["const"]
 rebuilt        : []
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/constEnums/constEnum1.ts
-Enum member must have initializer.
+Bindings mismatch:
+after transform: ScopeId(1): ["E", "a", "b", "c", "d", "e", "f", "g", "h"]
+rebuilt        : ScopeId(1): ["E"]
+Scope flags mismatch:
+after transform: ScopeId(1): ScopeFlags(0x0)
+rebuilt        : ScopeId(1): ScopeFlags(Function)
+Symbol flags mismatch for "E":
+after transform: SymbolId(0): SymbolFlags(ConstEnum)
+rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/constEnums/constEnum3.ts
 Scope children mismatch:

@@ -286,7 +286,7 @@ pub fn check_ts_enum_declaration<'a>(decl: &TSEnumDeclaration<'a>, ctx: &Semanti
         #[expect(clippy::unnested_or_patterns)]
         if let Some(initializer) = &member.initializer {
             need_initializer = !matches!(
-                initializer,
+                initializer.without_parentheses(),
                 // A = 1
                 Expression::NumericLiteral(_)
                     // B = A
