@@ -22383,7 +22383,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
    ╭─[typescript/tests/cases/conformance/es7/exponentiationOperator/exponentiationOperatorInTemplateStringWithSyntaxError1.ts:7:8]
  6 │ // TempateHead & TemplateTail are empty
  7 │ `${1 + typeof t1 ** t2 ** t1}`;
-   ·        ─────────────────────
+   ·        ─────────
  8 │ `${-t1 ** t2 - t1}`;
    ╰────
   help: Wrap unary expression in parentheses to enforce operator precedence
@@ -22392,7 +22392,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
    ╭─[typescript/tests/cases/conformance/es7/exponentiationOperator/exponentiationOperatorInTemplateStringWithSyntaxError1.ts:8:4]
  7 │ `${1 + typeof t1 ** t2 ** t1}`;
  8 │ `${-t1 ** t2 - t1}`;
-   ·    ─────────
+   ·    ───
  9 │ `${-++t1 ** t2 - t1}`;
    ╰────
   help: Wrap unary expression in parentheses to enforce operator precedence
@@ -22401,7 +22401,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
     ╭─[typescript/tests/cases/conformance/es7/exponentiationOperator/exponentiationOperatorInTemplateStringWithSyntaxError1.ts:9:4]
   8 │ `${-t1 ** t2 - t1}`;
   9 │ `${-++t1 ** t2 - t1}`;
-    ·    ───────────
+    ·    ─────
  10 │ `${-t1++ ** t2 - t1}`;
     ╰────
   help: Wrap unary expression in parentheses to enforce operator precedence
@@ -22410,7 +22410,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
     ╭─[typescript/tests/cases/conformance/es7/exponentiationOperator/exponentiationOperatorInTemplateStringWithSyntaxError1.ts:10:4]
   9 │ `${-++t1 ** t2 - t1}`;
  10 │ `${-t1++ ** t2 - t1}`;
-    ·    ───────────
+    ·    ─────
  11 │ `${!t1 ** t2 ** --t1 }`;
     ╰────
   help: Wrap unary expression in parentheses to enforce operator precedence
@@ -22419,7 +22419,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
     ╭─[typescript/tests/cases/conformance/es7/exponentiationOperator/exponentiationOperatorInTemplateStringWithSyntaxError1.ts:11:4]
  10 │ `${-t1++ ** t2 - t1}`;
  11 │ `${!t1 ** t2 ** --t1 }`;
-    ·    ─────────────────
+    ·    ───
  12 │ `${typeof t1 ** t2 ** t1}`;
     ╰────
   help: Wrap unary expression in parentheses to enforce operator precedence
@@ -22428,7 +22428,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
     ╭─[typescript/tests/cases/conformance/es7/exponentiationOperator/exponentiationOperatorInTemplateStringWithSyntaxError1.ts:12:4]
  11 │ `${!t1 ** t2 ** --t1 }`;
  12 │ `${typeof t1 ** t2 ** t1}`;
-    ·    ─────────────────────
+    ·    ─────────
  13 │ 
     ╰────
   help: Wrap unary expression in parentheses to enforce operator precedence
@@ -22437,7 +22437,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
     ╭─[typescript/tests/cases/conformance/es7/exponentiationOperator/exponentiationOperatorInTemplateStringWithSyntaxError1.ts:14:4]
  13 │ 
  14 │ `${-t1 ** t2 - t1}${-t1 ** t2 - t1}`;
-    ·    ─────────
+    ·    ───
  15 │ `${-++t1 ** t2 - t1}${-++t1 ** t2 - t1}`;
     ╰────
   help: Wrap unary expression in parentheses to enforce operator precedence
@@ -22446,7 +22446,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
     ╭─[typescript/tests/cases/conformance/es7/exponentiationOperator/exponentiationOperatorInTemplateStringWithSyntaxError1.ts:14:21]
  13 │ 
  14 │ `${-t1 ** t2 - t1}${-t1 ** t2 - t1}`;
-    ·                     ─────────
+    ·                     ───
  15 │ `${-++t1 ** t2 - t1}${-++t1 ** t2 - t1}`;
     ╰────
   help: Wrap unary expression in parentheses to enforce operator precedence
@@ -22455,7 +22455,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
     ╭─[typescript/tests/cases/conformance/es7/exponentiationOperator/exponentiationOperatorInTemplateStringWithSyntaxError1.ts:15:4]
  14 │ `${-t1 ** t2 - t1}${-t1 ** t2 - t1}`;
  15 │ `${-++t1 ** t2 - t1}${-++t1 ** t2 - t1}`;
-    ·    ───────────
+    ·    ─────
  16 │ `${-t1++ ** t2 - t1}${-t1++ ** t2 - t1}`;
     ╰────
   help: Wrap unary expression in parentheses to enforce operator precedence
@@ -22464,7 +22464,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
     ╭─[typescript/tests/cases/conformance/es7/exponentiationOperator/exponentiationOperatorInTemplateStringWithSyntaxError1.ts:15:23]
  14 │ `${-t1 ** t2 - t1}${-t1 ** t2 - t1}`;
  15 │ `${-++t1 ** t2 - t1}${-++t1 ** t2 - t1}`;
-    ·                       ───────────
+    ·                       ─────
  16 │ `${-t1++ ** t2 - t1}${-t1++ ** t2 - t1}`;
     ╰────
   help: Wrap unary expression in parentheses to enforce operator precedence
@@ -22473,7 +22473,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
     ╭─[typescript/tests/cases/conformance/es7/exponentiationOperator/exponentiationOperatorInTemplateStringWithSyntaxError1.ts:16:4]
  15 │ `${-++t1 ** t2 - t1}${-++t1 ** t2 - t1}`;
  16 │ `${-t1++ ** t2 - t1}${-t1++ ** t2 - t1}`;
-    ·    ───────────
+    ·    ─────
  17 │ `${!t1 ** t2 ** --t1 }${!t1 ** t2 ** --t1 }`;
     ╰────
   help: Wrap unary expression in parentheses to enforce operator precedence
@@ -22482,7 +22482,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
     ╭─[typescript/tests/cases/conformance/es7/exponentiationOperator/exponentiationOperatorInTemplateStringWithSyntaxError1.ts:16:23]
  15 │ `${-++t1 ** t2 - t1}${-++t1 ** t2 - t1}`;
  16 │ `${-t1++ ** t2 - t1}${-t1++ ** t2 - t1}`;
-    ·                       ───────────
+    ·                       ─────
  17 │ `${!t1 ** t2 ** --t1 }${!t1 ** t2 ** --t1 }`;
     ╰────
   help: Wrap unary expression in parentheses to enforce operator precedence
@@ -22491,7 +22491,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
     ╭─[typescript/tests/cases/conformance/es7/exponentiationOperator/exponentiationOperatorInTemplateStringWithSyntaxError1.ts:17:4]
  16 │ `${-t1++ ** t2 - t1}${-t1++ ** t2 - t1}`;
  17 │ `${!t1 ** t2 ** --t1 }${!t1 ** t2 ** --t1 }`;
-    ·    ─────────────────
+    ·    ───
  18 │ `${typeof t1 ** t2 ** t1}${typeof t1 ** t2 ** t1}`;
     ╰────
   help: Wrap unary expression in parentheses to enforce operator precedence
@@ -22500,7 +22500,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
     ╭─[typescript/tests/cases/conformance/es7/exponentiationOperator/exponentiationOperatorInTemplateStringWithSyntaxError1.ts:17:25]
  16 │ `${-t1++ ** t2 - t1}${-t1++ ** t2 - t1}`;
  17 │ `${!t1 ** t2 ** --t1 }${!t1 ** t2 ** --t1 }`;
-    ·                         ─────────────────
+    ·                         ───
  18 │ `${typeof t1 ** t2 ** t1}${typeof t1 ** t2 ** t1}`;
     ╰────
   help: Wrap unary expression in parentheses to enforce operator precedence
@@ -22509,7 +22509,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
     ╭─[typescript/tests/cases/conformance/es7/exponentiationOperator/exponentiationOperatorInTemplateStringWithSyntaxError1.ts:18:4]
  17 │ `${!t1 ** t2 ** --t1 }${!t1 ** t2 ** --t1 }`;
  18 │ `${typeof t1 ** t2 ** t1}${typeof t1 ** t2 ** t1}`;
-    ·    ─────────────────────
+    ·    ─────────
  19 │ `${1 + typeof t1 ** t2 ** t1}${1 + typeof t1 ** t2 ** t1}`;
     ╰────
   help: Wrap unary expression in parentheses to enforce operator precedence
@@ -22518,7 +22518,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
     ╭─[typescript/tests/cases/conformance/es7/exponentiationOperator/exponentiationOperatorInTemplateStringWithSyntaxError1.ts:18:28]
  17 │ `${!t1 ** t2 ** --t1 }${!t1 ** t2 ** --t1 }`;
  18 │ `${typeof t1 ** t2 ** t1}${typeof t1 ** t2 ** t1}`;
-    ·                            ─────────────────────
+    ·                            ─────────
  19 │ `${1 + typeof t1 ** t2 ** t1}${1 + typeof t1 ** t2 ** t1}`;
     ╰────
   help: Wrap unary expression in parentheses to enforce operator precedence
@@ -22527,7 +22527,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
     ╭─[typescript/tests/cases/conformance/es7/exponentiationOperator/exponentiationOperatorInTemplateStringWithSyntaxError1.ts:19:8]
  18 │ `${typeof t1 ** t2 ** t1}${typeof t1 ** t2 ** t1}`;
  19 │ `${1 + typeof t1 ** t2 ** t1}${1 + typeof t1 ** t2 ** t1}`;
-    ·        ─────────────────────
+    ·        ─────────
  20 │ 
     ╰────
   help: Wrap unary expression in parentheses to enforce operator precedence
@@ -22536,7 +22536,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
     ╭─[typescript/tests/cases/conformance/es7/exponentiationOperator/exponentiationOperatorInTemplateStringWithSyntaxError1.ts:19:36]
  18 │ `${typeof t1 ** t2 ** t1}${typeof t1 ** t2 ** t1}`;
  19 │ `${1 + typeof t1 ** t2 ** t1}${1 + typeof t1 ** t2 ** t1}`;
-    ·                                    ─────────────────────
+    ·                                    ─────────
  20 │ 
     ╰────
   help: Wrap unary expression in parentheses to enforce operator precedence
@@ -22545,7 +22545,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
     ╭─[typescript/tests/cases/conformance/es7/exponentiationOperator/exponentiationOperatorInTemplateStringWithSyntaxError1.ts:21:4]
  20 │ 
  21 │ `${-t1 ** t2 - t1} hello world ${-t1 ** t2 - t1}`;
-    ·    ─────────
+    ·    ───
  22 │ `${-++t1 ** t2 - t1} hello world ${-++t1 ** t2 - t1}`;
     ╰────
   help: Wrap unary expression in parentheses to enforce operator precedence
@@ -22554,7 +22554,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
     ╭─[typescript/tests/cases/conformance/es7/exponentiationOperator/exponentiationOperatorInTemplateStringWithSyntaxError1.ts:21:34]
  20 │ 
  21 │ `${-t1 ** t2 - t1} hello world ${-t1 ** t2 - t1}`;
-    ·                                  ─────────
+    ·                                  ───
  22 │ `${-++t1 ** t2 - t1} hello world ${-++t1 ** t2 - t1}`;
     ╰────
   help: Wrap unary expression in parentheses to enforce operator precedence
@@ -22563,7 +22563,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
     ╭─[typescript/tests/cases/conformance/es7/exponentiationOperator/exponentiationOperatorInTemplateStringWithSyntaxError1.ts:22:4]
  21 │ `${-t1 ** t2 - t1} hello world ${-t1 ** t2 - t1}`;
  22 │ `${-++t1 ** t2 - t1} hello world ${-++t1 ** t2 - t1}`;
-    ·    ───────────
+    ·    ─────
  23 │ `${-t1++ ** t2 - t1} hello world ${-t1++ ** t2 - t1}`;
     ╰────
   help: Wrap unary expression in parentheses to enforce operator precedence
@@ -22572,7 +22572,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
     ╭─[typescript/tests/cases/conformance/es7/exponentiationOperator/exponentiationOperatorInTemplateStringWithSyntaxError1.ts:22:36]
  21 │ `${-t1 ** t2 - t1} hello world ${-t1 ** t2 - t1}`;
  22 │ `${-++t1 ** t2 - t1} hello world ${-++t1 ** t2 - t1}`;
-    ·                                    ───────────
+    ·                                    ─────
  23 │ `${-t1++ ** t2 - t1} hello world ${-t1++ ** t2 - t1}`;
     ╰────
   help: Wrap unary expression in parentheses to enforce operator precedence
@@ -22581,7 +22581,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
     ╭─[typescript/tests/cases/conformance/es7/exponentiationOperator/exponentiationOperatorInTemplateStringWithSyntaxError1.ts:23:4]
  22 │ `${-++t1 ** t2 - t1} hello world ${-++t1 ** t2 - t1}`;
  23 │ `${-t1++ ** t2 - t1} hello world ${-t1++ ** t2 - t1}`;
-    ·    ───────────
+    ·    ─────
  24 │ `${!t1 ** t2 ** --t1 } hello world ${!t1 ** t2 ** --t1 }`;
     ╰────
   help: Wrap unary expression in parentheses to enforce operator precedence
@@ -22590,7 +22590,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
     ╭─[typescript/tests/cases/conformance/es7/exponentiationOperator/exponentiationOperatorInTemplateStringWithSyntaxError1.ts:23:36]
  22 │ `${-++t1 ** t2 - t1} hello world ${-++t1 ** t2 - t1}`;
  23 │ `${-t1++ ** t2 - t1} hello world ${-t1++ ** t2 - t1}`;
-    ·                                    ───────────
+    ·                                    ─────
  24 │ `${!t1 ** t2 ** --t1 } hello world ${!t1 ** t2 ** --t1 }`;
     ╰────
   help: Wrap unary expression in parentheses to enforce operator precedence
@@ -22599,7 +22599,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
     ╭─[typescript/tests/cases/conformance/es7/exponentiationOperator/exponentiationOperatorInTemplateStringWithSyntaxError1.ts:24:4]
  23 │ `${-t1++ ** t2 - t1} hello world ${-t1++ ** t2 - t1}`;
  24 │ `${!t1 ** t2 ** --t1 } hello world ${!t1 ** t2 ** --t1 }`;
-    ·    ─────────────────
+    ·    ───
  25 │ `${typeof t1 ** t2 ** t1} hello world ${typeof t1 ** t2 ** t1}`;
     ╰────
   help: Wrap unary expression in parentheses to enforce operator precedence
@@ -22608,7 +22608,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
     ╭─[typescript/tests/cases/conformance/es7/exponentiationOperator/exponentiationOperatorInTemplateStringWithSyntaxError1.ts:24:38]
  23 │ `${-t1++ ** t2 - t1} hello world ${-t1++ ** t2 - t1}`;
  24 │ `${!t1 ** t2 ** --t1 } hello world ${!t1 ** t2 ** --t1 }`;
-    ·                                      ─────────────────
+    ·                                      ───
  25 │ `${typeof t1 ** t2 ** t1} hello world ${typeof t1 ** t2 ** t1}`;
     ╰────
   help: Wrap unary expression in parentheses to enforce operator precedence
@@ -22617,7 +22617,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
     ╭─[typescript/tests/cases/conformance/es7/exponentiationOperator/exponentiationOperatorInTemplateStringWithSyntaxError1.ts:25:4]
  24 │ `${!t1 ** t2 ** --t1 } hello world ${!t1 ** t2 ** --t1 }`;
  25 │ `${typeof t1 ** t2 ** t1} hello world ${typeof t1 ** t2 ** t1}`;
-    ·    ─────────────────────
+    ·    ─────────
  26 │ `${1 + typeof t1 ** t2 ** t1} hello world ${1 + typeof t1 ** t2 ** t1}`;
     ╰────
   help: Wrap unary expression in parentheses to enforce operator precedence
@@ -22626,7 +22626,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
     ╭─[typescript/tests/cases/conformance/es7/exponentiationOperator/exponentiationOperatorInTemplateStringWithSyntaxError1.ts:25:41]
  24 │ `${!t1 ** t2 ** --t1 } hello world ${!t1 ** t2 ** --t1 }`;
  25 │ `${typeof t1 ** t2 ** t1} hello world ${typeof t1 ** t2 ** t1}`;
-    ·                                         ─────────────────────
+    ·                                         ─────────
  26 │ `${1 + typeof t1 ** t2 ** t1} hello world ${1 + typeof t1 ** t2 ** t1}`;
     ╰────
   help: Wrap unary expression in parentheses to enforce operator precedence
@@ -22635,7 +22635,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
     ╭─[typescript/tests/cases/conformance/es7/exponentiationOperator/exponentiationOperatorInTemplateStringWithSyntaxError1.ts:26:8]
  25 │ `${typeof t1 ** t2 ** t1} hello world ${typeof t1 ** t2 ** t1}`;
  26 │ `${1 + typeof t1 ** t2 ** t1} hello world ${1 + typeof t1 ** t2 ** t1}`;
-    ·        ─────────────────────
+    ·        ─────────
     ╰────
   help: Wrap unary expression in parentheses to enforce operator precedence
 
@@ -22643,7 +22643,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
     ╭─[typescript/tests/cases/conformance/es7/exponentiationOperator/exponentiationOperatorInTemplateStringWithSyntaxError1.ts:26:49]
  25 │ `${typeof t1 ** t2 ** t1} hello world ${typeof t1 ** t2 ** t1}`;
  26 │ `${1 + typeof t1 ** t2 ** t1} hello world ${1 + typeof t1 ** t2 ** t1}`;
-    ·                                                 ─────────────────────
+    ·                                                 ─────────
     ╰────
   help: Wrap unary expression in parentheses to enforce operator precedence
 
@@ -22651,7 +22651,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
    ╭─[typescript/tests/cases/conformance/es7/exponentiationOperator/exponentiationOperatorInTemplateStringWithSyntaxError2.ts:7:10]
  6 │ // With templateHead
  7 │ `hello ${-t1 ** t2 - t1}`;
-   ·          ─────────
+   ·          ───
  8 │ `hello ${-++t1 ** t2 - t1}`;
    ╰────
   help: Wrap unary expression in parentheses to enforce operator precedence
@@ -22660,7 +22660,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
    ╭─[typescript/tests/cases/conformance/es7/exponentiationOperator/exponentiationOperatorInTemplateStringWithSyntaxError2.ts:8:10]
  7 │ `hello ${-t1 ** t2 - t1}`;
  8 │ `hello ${-++t1 ** t2 - t1}`;
-   ·          ───────────
+   ·          ─────
  9 │ `hello ${-t1++ ** t2 - t1}`;
    ╰────
   help: Wrap unary expression in parentheses to enforce operator precedence
@@ -22669,7 +22669,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
     ╭─[typescript/tests/cases/conformance/es7/exponentiationOperator/exponentiationOperatorInTemplateStringWithSyntaxError2.ts:9:10]
   8 │ `hello ${-++t1 ** t2 - t1}`;
   9 │ `hello ${-t1++ ** t2 - t1}`;
-    ·          ───────────
+    ·          ─────
  10 │ `hello ${!t1 ** t2 ** --t1 }`;
     ╰────
   help: Wrap unary expression in parentheses to enforce operator precedence
@@ -22678,7 +22678,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
     ╭─[typescript/tests/cases/conformance/es7/exponentiationOperator/exponentiationOperatorInTemplateStringWithSyntaxError2.ts:10:10]
   9 │ `hello ${-t1++ ** t2 - t1}`;
  10 │ `hello ${!t1 ** t2 ** --t1 }`;
-    ·          ─────────────────
+    ·          ───
  11 │ `hello ${typeof t1 ** t2 ** t1}`;
     ╰────
   help: Wrap unary expression in parentheses to enforce operator precedence
@@ -22687,7 +22687,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
     ╭─[typescript/tests/cases/conformance/es7/exponentiationOperator/exponentiationOperatorInTemplateStringWithSyntaxError2.ts:11:10]
  10 │ `hello ${!t1 ** t2 ** --t1 }`;
  11 │ `hello ${typeof t1 ** t2 ** t1}`;
-    ·          ─────────────────────
+    ·          ─────────
  12 │ `hello ${1 + typeof t1 ** t2 ** t1}`;
     ╰────
   help: Wrap unary expression in parentheses to enforce operator precedence
@@ -22696,7 +22696,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
     ╭─[typescript/tests/cases/conformance/es7/exponentiationOperator/exponentiationOperatorInTemplateStringWithSyntaxError2.ts:12:14]
  11 │ `hello ${typeof t1 ** t2 ** t1}`;
  12 │ `hello ${1 + typeof t1 ** t2 ** t1}`;
-    ·              ─────────────────────
+    ·              ─────────
  13 │ 
     ╰────
   help: Wrap unary expression in parentheses to enforce operator precedence
@@ -22705,7 +22705,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
     ╭─[typescript/tests/cases/conformance/es7/exponentiationOperator/exponentiationOperatorInTemplateStringWithSyntaxError2.ts:14:10]
  13 │ 
  14 │ `hello ${-t1 ** t2 - t1}${-t1 ** t2 - t1}`;
-    ·          ─────────
+    ·          ───
  15 │ `hello ${-++t1 ** t2 - t1}${-++t1 ** t2 - t1}`;
     ╰────
   help: Wrap unary expression in parentheses to enforce operator precedence
@@ -22714,7 +22714,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
     ╭─[typescript/tests/cases/conformance/es7/exponentiationOperator/exponentiationOperatorInTemplateStringWithSyntaxError2.ts:14:27]
  13 │ 
  14 │ `hello ${-t1 ** t2 - t1}${-t1 ** t2 - t1}`;
-    ·                           ─────────
+    ·                           ───
  15 │ `hello ${-++t1 ** t2 - t1}${-++t1 ** t2 - t1}`;
     ╰────
   help: Wrap unary expression in parentheses to enforce operator precedence
@@ -22723,7 +22723,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
     ╭─[typescript/tests/cases/conformance/es7/exponentiationOperator/exponentiationOperatorInTemplateStringWithSyntaxError2.ts:15:10]
  14 │ `hello ${-t1 ** t2 - t1}${-t1 ** t2 - t1}`;
  15 │ `hello ${-++t1 ** t2 - t1}${-++t1 ** t2 - t1}`;
-    ·          ───────────
+    ·          ─────
  16 │ `hello ${-t1++ ** t2 - t1}${-t1++ ** t2 - t1}`;
     ╰────
   help: Wrap unary expression in parentheses to enforce operator precedence
@@ -22732,7 +22732,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
     ╭─[typescript/tests/cases/conformance/es7/exponentiationOperator/exponentiationOperatorInTemplateStringWithSyntaxError2.ts:15:29]
  14 │ `hello ${-t1 ** t2 - t1}${-t1 ** t2 - t1}`;
  15 │ `hello ${-++t1 ** t2 - t1}${-++t1 ** t2 - t1}`;
-    ·                             ───────────
+    ·                             ─────
  16 │ `hello ${-t1++ ** t2 - t1}${-t1++ ** t2 - t1}`;
     ╰────
   help: Wrap unary expression in parentheses to enforce operator precedence
@@ -22741,7 +22741,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
     ╭─[typescript/tests/cases/conformance/es7/exponentiationOperator/exponentiationOperatorInTemplateStringWithSyntaxError2.ts:16:10]
  15 │ `hello ${-++t1 ** t2 - t1}${-++t1 ** t2 - t1}`;
  16 │ `hello ${-t1++ ** t2 - t1}${-t1++ ** t2 - t1}`;
-    ·          ───────────
+    ·          ─────
  17 │ `hello ${!t1 ** t2 ** --t1 }${!t1 ** t2 ** --t1 }`;
     ╰────
   help: Wrap unary expression in parentheses to enforce operator precedence
@@ -22750,7 +22750,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
     ╭─[typescript/tests/cases/conformance/es7/exponentiationOperator/exponentiationOperatorInTemplateStringWithSyntaxError2.ts:16:29]
  15 │ `hello ${-++t1 ** t2 - t1}${-++t1 ** t2 - t1}`;
  16 │ `hello ${-t1++ ** t2 - t1}${-t1++ ** t2 - t1}`;
-    ·                             ───────────
+    ·                             ─────
  17 │ `hello ${!t1 ** t2 ** --t1 }${!t1 ** t2 ** --t1 }`;
     ╰────
   help: Wrap unary expression in parentheses to enforce operator precedence
@@ -22759,7 +22759,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
     ╭─[typescript/tests/cases/conformance/es7/exponentiationOperator/exponentiationOperatorInTemplateStringWithSyntaxError2.ts:17:10]
  16 │ `hello ${-t1++ ** t2 - t1}${-t1++ ** t2 - t1}`;
  17 │ `hello ${!t1 ** t2 ** --t1 }${!t1 ** t2 ** --t1 }`;
-    ·          ─────────────────
+    ·          ───
  18 │ `hello ${typeof t1 ** t2 ** t1}${typeof t1 ** t2 ** t1}`;
     ╰────
   help: Wrap unary expression in parentheses to enforce operator precedence
@@ -22768,7 +22768,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
     ╭─[typescript/tests/cases/conformance/es7/exponentiationOperator/exponentiationOperatorInTemplateStringWithSyntaxError2.ts:17:31]
  16 │ `hello ${-t1++ ** t2 - t1}${-t1++ ** t2 - t1}`;
  17 │ `hello ${!t1 ** t2 ** --t1 }${!t1 ** t2 ** --t1 }`;
-    ·                               ─────────────────
+    ·                               ───
  18 │ `hello ${typeof t1 ** t2 ** t1}${typeof t1 ** t2 ** t1}`;
     ╰────
   help: Wrap unary expression in parentheses to enforce operator precedence
@@ -22777,7 +22777,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
     ╭─[typescript/tests/cases/conformance/es7/exponentiationOperator/exponentiationOperatorInTemplateStringWithSyntaxError2.ts:18:10]
  17 │ `hello ${!t1 ** t2 ** --t1 }${!t1 ** t2 ** --t1 }`;
  18 │ `hello ${typeof t1 ** t2 ** t1}${typeof t1 ** t2 ** t1}`;
-    ·          ─────────────────────
+    ·          ─────────
  19 │ `hello ${1 + typeof t1 ** t2 ** t1}${1 + typeof t1 ** t2 ** t1}`;
     ╰────
   help: Wrap unary expression in parentheses to enforce operator precedence
@@ -22786,7 +22786,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
     ╭─[typescript/tests/cases/conformance/es7/exponentiationOperator/exponentiationOperatorInTemplateStringWithSyntaxError2.ts:18:34]
  17 │ `hello ${!t1 ** t2 ** --t1 }${!t1 ** t2 ** --t1 }`;
  18 │ `hello ${typeof t1 ** t2 ** t1}${typeof t1 ** t2 ** t1}`;
-    ·                                  ─────────────────────
+    ·                                  ─────────
  19 │ `hello ${1 + typeof t1 ** t2 ** t1}${1 + typeof t1 ** t2 ** t1}`;
     ╰────
   help: Wrap unary expression in parentheses to enforce operator precedence
@@ -22795,7 +22795,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
     ╭─[typescript/tests/cases/conformance/es7/exponentiationOperator/exponentiationOperatorInTemplateStringWithSyntaxError2.ts:19:14]
  18 │ `hello ${typeof t1 ** t2 ** t1}${typeof t1 ** t2 ** t1}`;
  19 │ `hello ${1 + typeof t1 ** t2 ** t1}${1 + typeof t1 ** t2 ** t1}`;
-    ·              ─────────────────────
+    ·              ─────────
  20 │ 
     ╰────
   help: Wrap unary expression in parentheses to enforce operator precedence
@@ -22804,7 +22804,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
     ╭─[typescript/tests/cases/conformance/es7/exponentiationOperator/exponentiationOperatorInTemplateStringWithSyntaxError2.ts:19:42]
  18 │ `hello ${typeof t1 ** t2 ** t1}${typeof t1 ** t2 ** t1}`;
  19 │ `hello ${1 + typeof t1 ** t2 ** t1}${1 + typeof t1 ** t2 ** t1}`;
-    ·                                          ─────────────────────
+    ·                                          ─────────
  20 │ 
     ╰────
   help: Wrap unary expression in parentheses to enforce operator precedence
@@ -22813,7 +22813,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
     ╭─[typescript/tests/cases/conformance/es7/exponentiationOperator/exponentiationOperatorInTemplateStringWithSyntaxError2.ts:21:10]
  20 │ 
  21 │ `hello ${-t1 ** t2 - t1} hello world ${-t1 ** t2 - t1}`;
-    ·          ─────────
+    ·          ───
  22 │ `hello ${-++t1 ** t2 - t1} hello world ${-++t1 ** t2 - t1}`;
     ╰────
   help: Wrap unary expression in parentheses to enforce operator precedence
@@ -22822,7 +22822,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
     ╭─[typescript/tests/cases/conformance/es7/exponentiationOperator/exponentiationOperatorInTemplateStringWithSyntaxError2.ts:21:40]
  20 │ 
  21 │ `hello ${-t1 ** t2 - t1} hello world ${-t1 ** t2 - t1}`;
-    ·                                        ─────────
+    ·                                        ───
  22 │ `hello ${-++t1 ** t2 - t1} hello world ${-++t1 ** t2 - t1}`;
     ╰────
   help: Wrap unary expression in parentheses to enforce operator precedence
@@ -22831,7 +22831,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
     ╭─[typescript/tests/cases/conformance/es7/exponentiationOperator/exponentiationOperatorInTemplateStringWithSyntaxError2.ts:22:10]
  21 │ `hello ${-t1 ** t2 - t1} hello world ${-t1 ** t2 - t1}`;
  22 │ `hello ${-++t1 ** t2 - t1} hello world ${-++t1 ** t2 - t1}`;
-    ·          ───────────
+    ·          ─────
  23 │ `hello ${-t1++ ** t2 - t1} hello world ${-t1++ ** t2 - t1}`;
     ╰────
   help: Wrap unary expression in parentheses to enforce operator precedence
@@ -22840,7 +22840,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
     ╭─[typescript/tests/cases/conformance/es7/exponentiationOperator/exponentiationOperatorInTemplateStringWithSyntaxError2.ts:22:42]
  21 │ `hello ${-t1 ** t2 - t1} hello world ${-t1 ** t2 - t1}`;
  22 │ `hello ${-++t1 ** t2 - t1} hello world ${-++t1 ** t2 - t1}`;
-    ·                                          ───────────
+    ·                                          ─────
  23 │ `hello ${-t1++ ** t2 - t1} hello world ${-t1++ ** t2 - t1}`;
     ╰────
   help: Wrap unary expression in parentheses to enforce operator precedence
@@ -22849,7 +22849,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
     ╭─[typescript/tests/cases/conformance/es7/exponentiationOperator/exponentiationOperatorInTemplateStringWithSyntaxError2.ts:23:10]
  22 │ `hello ${-++t1 ** t2 - t1} hello world ${-++t1 ** t2 - t1}`;
  23 │ `hello ${-t1++ ** t2 - t1} hello world ${-t1++ ** t2 - t1}`;
-    ·          ───────────
+    ·          ─────
  24 │ `hello ${!t1 ** t2 ** --t1 } hello world ${!t1 ** t2 ** --t1 }`;
     ╰────
   help: Wrap unary expression in parentheses to enforce operator precedence
@@ -22858,7 +22858,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
     ╭─[typescript/tests/cases/conformance/es7/exponentiationOperator/exponentiationOperatorInTemplateStringWithSyntaxError2.ts:23:42]
  22 │ `hello ${-++t1 ** t2 - t1} hello world ${-++t1 ** t2 - t1}`;
  23 │ `hello ${-t1++ ** t2 - t1} hello world ${-t1++ ** t2 - t1}`;
-    ·                                          ───────────
+    ·                                          ─────
  24 │ `hello ${!t1 ** t2 ** --t1 } hello world ${!t1 ** t2 ** --t1 }`;
     ╰────
   help: Wrap unary expression in parentheses to enforce operator precedence
@@ -22867,7 +22867,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
     ╭─[typescript/tests/cases/conformance/es7/exponentiationOperator/exponentiationOperatorInTemplateStringWithSyntaxError2.ts:24:10]
  23 │ `hello ${-t1++ ** t2 - t1} hello world ${-t1++ ** t2 - t1}`;
  24 │ `hello ${!t1 ** t2 ** --t1 } hello world ${!t1 ** t2 ** --t1 }`;
-    ·          ─────────────────
+    ·          ───
  25 │ `hello ${typeof t1 ** t2 ** t1} hello world ${typeof t1 ** t2 ** t1}`;
     ╰────
   help: Wrap unary expression in parentheses to enforce operator precedence
@@ -22876,7 +22876,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
     ╭─[typescript/tests/cases/conformance/es7/exponentiationOperator/exponentiationOperatorInTemplateStringWithSyntaxError2.ts:24:44]
  23 │ `hello ${-t1++ ** t2 - t1} hello world ${-t1++ ** t2 - t1}`;
  24 │ `hello ${!t1 ** t2 ** --t1 } hello world ${!t1 ** t2 ** --t1 }`;
-    ·                                            ─────────────────
+    ·                                            ───
  25 │ `hello ${typeof t1 ** t2 ** t1} hello world ${typeof t1 ** t2 ** t1}`;
     ╰────
   help: Wrap unary expression in parentheses to enforce operator precedence
@@ -22885,7 +22885,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
     ╭─[typescript/tests/cases/conformance/es7/exponentiationOperator/exponentiationOperatorInTemplateStringWithSyntaxError2.ts:25:10]
  24 │ `hello ${!t1 ** t2 ** --t1 } hello world ${!t1 ** t2 ** --t1 }`;
  25 │ `hello ${typeof t1 ** t2 ** t1} hello world ${typeof t1 ** t2 ** t1}`;
-    ·          ─────────────────────
+    ·          ─────────
  26 │ `hello ${1 + typeof t1 ** t2 ** t1} hello world ${1 + typeof t1 ** t2 ** t1}`;
     ╰────
   help: Wrap unary expression in parentheses to enforce operator precedence
@@ -22894,7 +22894,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
     ╭─[typescript/tests/cases/conformance/es7/exponentiationOperator/exponentiationOperatorInTemplateStringWithSyntaxError2.ts:25:47]
  24 │ `hello ${!t1 ** t2 ** --t1 } hello world ${!t1 ** t2 ** --t1 }`;
  25 │ `hello ${typeof t1 ** t2 ** t1} hello world ${typeof t1 ** t2 ** t1}`;
-    ·                                               ─────────────────────
+    ·                                               ─────────
  26 │ `hello ${1 + typeof t1 ** t2 ** t1} hello world ${1 + typeof t1 ** t2 ** t1}`;
     ╰────
   help: Wrap unary expression in parentheses to enforce operator precedence
@@ -22903,7 +22903,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
     ╭─[typescript/tests/cases/conformance/es7/exponentiationOperator/exponentiationOperatorInTemplateStringWithSyntaxError2.ts:26:14]
  25 │ `hello ${typeof t1 ** t2 ** t1} hello world ${typeof t1 ** t2 ** t1}`;
  26 │ `hello ${1 + typeof t1 ** t2 ** t1} hello world ${1 + typeof t1 ** t2 ** t1}`;
-    ·              ─────────────────────
+    ·              ─────────
     ╰────
   help: Wrap unary expression in parentheses to enforce operator precedence
 
@@ -22911,7 +22911,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
     ╭─[typescript/tests/cases/conformance/es7/exponentiationOperator/exponentiationOperatorInTemplateStringWithSyntaxError2.ts:26:55]
  25 │ `hello ${typeof t1 ** t2 ** t1} hello world ${typeof t1 ** t2 ** t1}`;
  26 │ `hello ${1 + typeof t1 ** t2 ** t1} hello world ${1 + typeof t1 ** t2 ** t1}`;
-    ·                                                       ─────────────────────
+    ·                                                       ─────────
     ╰────
   help: Wrap unary expression in parentheses to enforce operator precedence
 
@@ -22919,7 +22919,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
    ╭─[typescript/tests/cases/conformance/es7/exponentiationOperator/exponentiationOperatorInTemplateStringWithSyntaxError3.ts:7:4]
  6 │ // With TemplateTail
  7 │ `${-t1 ** t2 - t1} world`;
-   ·    ─────────
+   ·    ───
  8 │ `${-++t1 ** t2 - t1} world`;
    ╰────
   help: Wrap unary expression in parentheses to enforce operator precedence
@@ -22928,7 +22928,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
    ╭─[typescript/tests/cases/conformance/es7/exponentiationOperator/exponentiationOperatorInTemplateStringWithSyntaxError3.ts:8:4]
  7 │ `${-t1 ** t2 - t1} world`;
  8 │ `${-++t1 ** t2 - t1} world`;
-   ·    ───────────
+   ·    ─────
  9 │ `${-t1++ ** t2 - t1} world`;
    ╰────
   help: Wrap unary expression in parentheses to enforce operator precedence
@@ -22937,7 +22937,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
     ╭─[typescript/tests/cases/conformance/es7/exponentiationOperator/exponentiationOperatorInTemplateStringWithSyntaxError3.ts:9:4]
   8 │ `${-++t1 ** t2 - t1} world`;
   9 │ `${-t1++ ** t2 - t1} world`;
-    ·    ───────────
+    ·    ─────
  10 │ `${!t1 ** t2 ** --t1 } world`;
     ╰────
   help: Wrap unary expression in parentheses to enforce operator precedence
@@ -22946,7 +22946,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
     ╭─[typescript/tests/cases/conformance/es7/exponentiationOperator/exponentiationOperatorInTemplateStringWithSyntaxError3.ts:10:4]
   9 │ `${-t1++ ** t2 - t1} world`;
  10 │ `${!t1 ** t2 ** --t1 } world`;
-    ·    ─────────────────
+    ·    ───
  11 │ `${typeof t1 ** t2 ** t1} world`;
     ╰────
   help: Wrap unary expression in parentheses to enforce operator precedence
@@ -22955,7 +22955,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
     ╭─[typescript/tests/cases/conformance/es7/exponentiationOperator/exponentiationOperatorInTemplateStringWithSyntaxError3.ts:11:4]
  10 │ `${!t1 ** t2 ** --t1 } world`;
  11 │ `${typeof t1 ** t2 ** t1} world`;
-    ·    ─────────────────────
+    ·    ─────────
  12 │ `${1 + typeof t1 ** t2 ** t1} world`;
     ╰────
   help: Wrap unary expression in parentheses to enforce operator precedence
@@ -22964,7 +22964,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
     ╭─[typescript/tests/cases/conformance/es7/exponentiationOperator/exponentiationOperatorInTemplateStringWithSyntaxError3.ts:12:8]
  11 │ `${typeof t1 ** t2 ** t1} world`;
  12 │ `${1 + typeof t1 ** t2 ** t1} world`;
-    ·        ─────────────────────
+    ·        ─────────
  13 │ 
     ╰────
   help: Wrap unary expression in parentheses to enforce operator precedence
@@ -22973,7 +22973,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
     ╭─[typescript/tests/cases/conformance/es7/exponentiationOperator/exponentiationOperatorInTemplateStringWithSyntaxError3.ts:14:4]
  13 │ 
  14 │ `${-t1 ** t2 - t1}${-t1 ** t2 - t1} world`;
-    ·    ─────────
+    ·    ───
  15 │ `${-++t1 ** t2 - t1}${-++t1 ** t2 - t1} world`;
     ╰────
   help: Wrap unary expression in parentheses to enforce operator precedence
@@ -22982,7 +22982,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
     ╭─[typescript/tests/cases/conformance/es7/exponentiationOperator/exponentiationOperatorInTemplateStringWithSyntaxError3.ts:14:21]
  13 │ 
  14 │ `${-t1 ** t2 - t1}${-t1 ** t2 - t1} world`;
-    ·                     ─────────
+    ·                     ───
  15 │ `${-++t1 ** t2 - t1}${-++t1 ** t2 - t1} world`;
     ╰────
   help: Wrap unary expression in parentheses to enforce operator precedence
@@ -22991,7 +22991,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
     ╭─[typescript/tests/cases/conformance/es7/exponentiationOperator/exponentiationOperatorInTemplateStringWithSyntaxError3.ts:15:4]
  14 │ `${-t1 ** t2 - t1}${-t1 ** t2 - t1} world`;
  15 │ `${-++t1 ** t2 - t1}${-++t1 ** t2 - t1} world`;
-    ·    ───────────
+    ·    ─────
  16 │ `${-t1++ ** t2 - t1}${-t1++ ** t2 - t1} world`;
     ╰────
   help: Wrap unary expression in parentheses to enforce operator precedence
@@ -23000,7 +23000,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
     ╭─[typescript/tests/cases/conformance/es7/exponentiationOperator/exponentiationOperatorInTemplateStringWithSyntaxError3.ts:15:23]
  14 │ `${-t1 ** t2 - t1}${-t1 ** t2 - t1} world`;
  15 │ `${-++t1 ** t2 - t1}${-++t1 ** t2 - t1} world`;
-    ·                       ───────────
+    ·                       ─────
  16 │ `${-t1++ ** t2 - t1}${-t1++ ** t2 - t1} world`;
     ╰────
   help: Wrap unary expression in parentheses to enforce operator precedence
@@ -23009,7 +23009,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
     ╭─[typescript/tests/cases/conformance/es7/exponentiationOperator/exponentiationOperatorInTemplateStringWithSyntaxError3.ts:16:4]
  15 │ `${-++t1 ** t2 - t1}${-++t1 ** t2 - t1} world`;
  16 │ `${-t1++ ** t2 - t1}${-t1++ ** t2 - t1} world`;
-    ·    ───────────
+    ·    ─────
  17 │ `${!t1 ** t2 ** --t1 }${!t1 ** t2 ** --t1 } world`;
     ╰────
   help: Wrap unary expression in parentheses to enforce operator precedence
@@ -23018,7 +23018,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
     ╭─[typescript/tests/cases/conformance/es7/exponentiationOperator/exponentiationOperatorInTemplateStringWithSyntaxError3.ts:16:23]
  15 │ `${-++t1 ** t2 - t1}${-++t1 ** t2 - t1} world`;
  16 │ `${-t1++ ** t2 - t1}${-t1++ ** t2 - t1} world`;
-    ·                       ───────────
+    ·                       ─────
  17 │ `${!t1 ** t2 ** --t1 }${!t1 ** t2 ** --t1 } world`;
     ╰────
   help: Wrap unary expression in parentheses to enforce operator precedence
@@ -23027,7 +23027,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
     ╭─[typescript/tests/cases/conformance/es7/exponentiationOperator/exponentiationOperatorInTemplateStringWithSyntaxError3.ts:17:4]
  16 │ `${-t1++ ** t2 - t1}${-t1++ ** t2 - t1} world`;
  17 │ `${!t1 ** t2 ** --t1 }${!t1 ** t2 ** --t1 } world`;
-    ·    ─────────────────
+    ·    ───
  18 │ `${typeof t1 ** t2 ** t1}${typeof t1 ** t2 ** t1} world`;
     ╰────
   help: Wrap unary expression in parentheses to enforce operator precedence
@@ -23036,7 +23036,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
     ╭─[typescript/tests/cases/conformance/es7/exponentiationOperator/exponentiationOperatorInTemplateStringWithSyntaxError3.ts:17:25]
  16 │ `${-t1++ ** t2 - t1}${-t1++ ** t2 - t1} world`;
  17 │ `${!t1 ** t2 ** --t1 }${!t1 ** t2 ** --t1 } world`;
-    ·                         ─────────────────
+    ·                         ───
  18 │ `${typeof t1 ** t2 ** t1}${typeof t1 ** t2 ** t1} world`;
     ╰────
   help: Wrap unary expression in parentheses to enforce operator precedence
@@ -23045,7 +23045,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
     ╭─[typescript/tests/cases/conformance/es7/exponentiationOperator/exponentiationOperatorInTemplateStringWithSyntaxError3.ts:18:4]
  17 │ `${!t1 ** t2 ** --t1 }${!t1 ** t2 ** --t1 } world`;
  18 │ `${typeof t1 ** t2 ** t1}${typeof t1 ** t2 ** t1} world`;
-    ·    ─────────────────────
+    ·    ─────────
  19 │ `${1 + typeof t1 ** t2 ** t1}${1 + typeof t1 ** t2 ** t1} world`;
     ╰────
   help: Wrap unary expression in parentheses to enforce operator precedence
@@ -23054,7 +23054,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
     ╭─[typescript/tests/cases/conformance/es7/exponentiationOperator/exponentiationOperatorInTemplateStringWithSyntaxError3.ts:18:28]
  17 │ `${!t1 ** t2 ** --t1 }${!t1 ** t2 ** --t1 } world`;
  18 │ `${typeof t1 ** t2 ** t1}${typeof t1 ** t2 ** t1} world`;
-    ·                            ─────────────────────
+    ·                            ─────────
  19 │ `${1 + typeof t1 ** t2 ** t1}${1 + typeof t1 ** t2 ** t1} world`;
     ╰────
   help: Wrap unary expression in parentheses to enforce operator precedence
@@ -23063,7 +23063,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
     ╭─[typescript/tests/cases/conformance/es7/exponentiationOperator/exponentiationOperatorInTemplateStringWithSyntaxError3.ts:19:8]
  18 │ `${typeof t1 ** t2 ** t1}${typeof t1 ** t2 ** t1} world`;
  19 │ `${1 + typeof t1 ** t2 ** t1}${1 + typeof t1 ** t2 ** t1} world`;
-    ·        ─────────────────────
+    ·        ─────────
  20 │ 
     ╰────
   help: Wrap unary expression in parentheses to enforce operator precedence
@@ -23072,7 +23072,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
     ╭─[typescript/tests/cases/conformance/es7/exponentiationOperator/exponentiationOperatorInTemplateStringWithSyntaxError3.ts:19:36]
  18 │ `${typeof t1 ** t2 ** t1}${typeof t1 ** t2 ** t1} world`;
  19 │ `${1 + typeof t1 ** t2 ** t1}${1 + typeof t1 ** t2 ** t1} world`;
-    ·                                    ─────────────────────
+    ·                                    ─────────
  20 │ 
     ╰────
   help: Wrap unary expression in parentheses to enforce operator precedence
@@ -23081,7 +23081,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
     ╭─[typescript/tests/cases/conformance/es7/exponentiationOperator/exponentiationOperatorInTemplateStringWithSyntaxError3.ts:21:4]
  20 │ 
  21 │ `${-t1 ** t2 - t1} hello world ${-t1 ** t2 - t1} !!`;
-    ·    ─────────
+    ·    ───
  22 │ `${-++t1 ** t2 - t1} hello world ${-++t1 ** t2 - t1} !!`;
     ╰────
   help: Wrap unary expression in parentheses to enforce operator precedence
@@ -23090,7 +23090,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
     ╭─[typescript/tests/cases/conformance/es7/exponentiationOperator/exponentiationOperatorInTemplateStringWithSyntaxError3.ts:21:34]
  20 │ 
  21 │ `${-t1 ** t2 - t1} hello world ${-t1 ** t2 - t1} !!`;
-    ·                                  ─────────
+    ·                                  ───
  22 │ `${-++t1 ** t2 - t1} hello world ${-++t1 ** t2 - t1} !!`;
     ╰────
   help: Wrap unary expression in parentheses to enforce operator precedence
@@ -23099,7 +23099,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
     ╭─[typescript/tests/cases/conformance/es7/exponentiationOperator/exponentiationOperatorInTemplateStringWithSyntaxError3.ts:22:4]
  21 │ `${-t1 ** t2 - t1} hello world ${-t1 ** t2 - t1} !!`;
  22 │ `${-++t1 ** t2 - t1} hello world ${-++t1 ** t2 - t1} !!`;
-    ·    ───────────
+    ·    ─────
  23 │ `${-t1++ ** t2 - t1} hello world ${-t1++ ** t2 - t1} !!`;
     ╰────
   help: Wrap unary expression in parentheses to enforce operator precedence
@@ -23108,7 +23108,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
     ╭─[typescript/tests/cases/conformance/es7/exponentiationOperator/exponentiationOperatorInTemplateStringWithSyntaxError3.ts:22:36]
  21 │ `${-t1 ** t2 - t1} hello world ${-t1 ** t2 - t1} !!`;
  22 │ `${-++t1 ** t2 - t1} hello world ${-++t1 ** t2 - t1} !!`;
-    ·                                    ───────────
+    ·                                    ─────
  23 │ `${-t1++ ** t2 - t1} hello world ${-t1++ ** t2 - t1} !!`;
     ╰────
   help: Wrap unary expression in parentheses to enforce operator precedence
@@ -23117,7 +23117,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
     ╭─[typescript/tests/cases/conformance/es7/exponentiationOperator/exponentiationOperatorInTemplateStringWithSyntaxError3.ts:23:4]
  22 │ `${-++t1 ** t2 - t1} hello world ${-++t1 ** t2 - t1} !!`;
  23 │ `${-t1++ ** t2 - t1} hello world ${-t1++ ** t2 - t1} !!`;
-    ·    ───────────
+    ·    ─────
  24 │ `${!t1 ** t2 ** --t1 } hello world ${!t1 ** t2 ** --t1 } !!`;
     ╰────
   help: Wrap unary expression in parentheses to enforce operator precedence
@@ -23126,7 +23126,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
     ╭─[typescript/tests/cases/conformance/es7/exponentiationOperator/exponentiationOperatorInTemplateStringWithSyntaxError3.ts:23:36]
  22 │ `${-++t1 ** t2 - t1} hello world ${-++t1 ** t2 - t1} !!`;
  23 │ `${-t1++ ** t2 - t1} hello world ${-t1++ ** t2 - t1} !!`;
-    ·                                    ───────────
+    ·                                    ─────
  24 │ `${!t1 ** t2 ** --t1 } hello world ${!t1 ** t2 ** --t1 } !!`;
     ╰────
   help: Wrap unary expression in parentheses to enforce operator precedence
@@ -23135,7 +23135,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
     ╭─[typescript/tests/cases/conformance/es7/exponentiationOperator/exponentiationOperatorInTemplateStringWithSyntaxError3.ts:24:4]
  23 │ `${-t1++ ** t2 - t1} hello world ${-t1++ ** t2 - t1} !!`;
  24 │ `${!t1 ** t2 ** --t1 } hello world ${!t1 ** t2 ** --t1 } !!`;
-    ·    ─────────────────
+    ·    ───
  25 │ `${typeof t1 ** t2 ** t1} hello world ${typeof t1 ** t2 ** t1} !!`;
     ╰────
   help: Wrap unary expression in parentheses to enforce operator precedence
@@ -23144,7 +23144,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
     ╭─[typescript/tests/cases/conformance/es7/exponentiationOperator/exponentiationOperatorInTemplateStringWithSyntaxError3.ts:24:38]
  23 │ `${-t1++ ** t2 - t1} hello world ${-t1++ ** t2 - t1} !!`;
  24 │ `${!t1 ** t2 ** --t1 } hello world ${!t1 ** t2 ** --t1 } !!`;
-    ·                                      ─────────────────
+    ·                                      ───
  25 │ `${typeof t1 ** t2 ** t1} hello world ${typeof t1 ** t2 ** t1} !!`;
     ╰────
   help: Wrap unary expression in parentheses to enforce operator precedence
@@ -23153,7 +23153,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
     ╭─[typescript/tests/cases/conformance/es7/exponentiationOperator/exponentiationOperatorInTemplateStringWithSyntaxError3.ts:25:4]
  24 │ `${!t1 ** t2 ** --t1 } hello world ${!t1 ** t2 ** --t1 } !!`;
  25 │ `${typeof t1 ** t2 ** t1} hello world ${typeof t1 ** t2 ** t1} !!`;
-    ·    ─────────────────────
+    ·    ─────────
  26 │ `${1 + typeof t1 ** t2 ** t1} hello world ${1 + typeof t1 ** t2 ** t1} !!`;
     ╰────
   help: Wrap unary expression in parentheses to enforce operator precedence
@@ -23162,7 +23162,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
     ╭─[typescript/tests/cases/conformance/es7/exponentiationOperator/exponentiationOperatorInTemplateStringWithSyntaxError3.ts:25:41]
  24 │ `${!t1 ** t2 ** --t1 } hello world ${!t1 ** t2 ** --t1 } !!`;
  25 │ `${typeof t1 ** t2 ** t1} hello world ${typeof t1 ** t2 ** t1} !!`;
-    ·                                         ─────────────────────
+    ·                                         ─────────
  26 │ `${1 + typeof t1 ** t2 ** t1} hello world ${1 + typeof t1 ** t2 ** t1} !!`;
     ╰────
   help: Wrap unary expression in parentheses to enforce operator precedence
@@ -23171,7 +23171,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
     ╭─[typescript/tests/cases/conformance/es7/exponentiationOperator/exponentiationOperatorInTemplateStringWithSyntaxError3.ts:26:8]
  25 │ `${typeof t1 ** t2 ** t1} hello world ${typeof t1 ** t2 ** t1} !!`;
  26 │ `${1 + typeof t1 ** t2 ** t1} hello world ${1 + typeof t1 ** t2 ** t1} !!`;
-    ·        ─────────────────────
+    ·        ─────────
     ╰────
   help: Wrap unary expression in parentheses to enforce operator precedence
 
@@ -23179,7 +23179,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
     ╭─[typescript/tests/cases/conformance/es7/exponentiationOperator/exponentiationOperatorInTemplateStringWithSyntaxError3.ts:26:49]
  25 │ `${typeof t1 ** t2 ** t1} hello world ${typeof t1 ** t2 ** t1} !!`;
  26 │ `${1 + typeof t1 ** t2 ** t1} hello world ${1 + typeof t1 ** t2 ** t1} !!`;
-    ·                                                 ─────────────────────
+    ·                                                 ─────────
     ╰────
   help: Wrap unary expression in parentheses to enforce operator precedence
 
@@ -23187,7 +23187,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
    ╭─[typescript/tests/cases/conformance/es7/exponentiationOperator/exponentiationOperatorSyntaxError1.ts:2:1]
  1 │ // Error: early syntax error using ES7 SimpleUnaryExpression on left-hand side without ()
  2 │ -1 ** 2;
-   · ───────
+   · ──
  3 │ +1 ** 2
    ╰────
   help: Wrap unary expression in parentheses to enforce operator precedence
@@ -23196,7 +23196,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
    ╭─[typescript/tests/cases/conformance/es7/exponentiationOperator/exponentiationOperatorSyntaxError1.ts:3:1]
  2 │ -1 ** 2;
  3 │ +1 ** 2
-   · ───────
+   · ──
  4 │ 1 ** -2 ** 3;
    ╰────
   help: Wrap unary expression in parentheses to enforce operator precedence
@@ -23205,7 +23205,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
    ╭─[typescript/tests/cases/conformance/es7/exponentiationOperator/exponentiationOperatorSyntaxError1.ts:4:6]
  3 │ +1 ** 2
  4 │ 1 ** -2 ** 3;
-   ·      ───────
+   ·      ──
  5 │ 1 ** -2 ** -3;
    ╰────
   help: Wrap unary expression in parentheses to enforce operator precedence
@@ -23214,7 +23214,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
    ╭─[typescript/tests/cases/conformance/es7/exponentiationOperator/exponentiationOperatorSyntaxError1.ts:5:6]
  4 │ 1 ** -2 ** 3;
  5 │ 1 ** -2 ** -3;
-   ·      ────────
+   ·      ──
  6 │ -1 ** -2 ** -3;
    ╰────
   help: Wrap unary expression in parentheses to enforce operator precedence
@@ -23223,7 +23223,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
    ╭─[typescript/tests/cases/conformance/es7/exponentiationOperator/exponentiationOperatorSyntaxError1.ts:6:7]
  5 │ 1 ** -2 ** -3;
  6 │ -1 ** -2 ** -3;
-   ·       ────────
+   ·       ──
  7 │ -(1 ** 2) ** 3;
    ╰────
   help: Wrap unary expression in parentheses to enforce operator precedence
@@ -23232,7 +23232,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
    ╭─[typescript/tests/cases/conformance/es7/exponentiationOperator/exponentiationOperatorSyntaxError1.ts:6:1]
  5 │ 1 ** -2 ** -3;
  6 │ -1 ** -2 ** -3;
-   · ──────────────
+   · ──
  7 │ -(1 ** 2) ** 3;
    ╰────
   help: Wrap unary expression in parentheses to enforce operator precedence
@@ -23241,7 +23241,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
    ╭─[typescript/tests/cases/conformance/es7/exponentiationOperator/exponentiationOperatorSyntaxError1.ts:7:1]
  6 │ -1 ** -2 ** -3;
  7 │ -(1 ** 2) ** 3;
-   · ──────────────
+   · ─────────
  8 │ 
    ╰────
   help: Wrap unary expression in parentheses to enforce operator precedence
@@ -23250,7 +23250,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
     ╭─[typescript/tests/cases/conformance/es7/exponentiationOperator/exponentiationOperatorSyntaxError1.ts:11:1]
  10 │ 
  11 │ -++temp ** 3;
-    · ────────────
+    · ───────
  12 │ +--temp ** 3;
     ╰────
   help: Wrap unary expression in parentheses to enforce operator precedence
@@ -23259,7 +23259,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
     ╭─[typescript/tests/cases/conformance/es7/exponentiationOperator/exponentiationOperatorSyntaxError1.ts:12:1]
  11 │ -++temp ** 3;
  12 │ +--temp ** 3;
-    · ────────────
+    · ───────
  13 │ -temp++ ** 3;
     ╰────
   help: Wrap unary expression in parentheses to enforce operator precedence
@@ -23268,7 +23268,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
     ╭─[typescript/tests/cases/conformance/es7/exponentiationOperator/exponentiationOperatorSyntaxError1.ts:13:1]
  12 │ +--temp ** 3;
  13 │ -temp++ ** 3;
-    · ────────────
+    · ───────
  14 │ +temp-- ** 3;
     ╰────
   help: Wrap unary expression in parentheses to enforce operator precedence
@@ -23277,7 +23277,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
     ╭─[typescript/tests/cases/conformance/es7/exponentiationOperator/exponentiationOperatorSyntaxError1.ts:14:1]
  13 │ -temp++ ** 3;
  14 │ +temp-- ** 3;
-    · ────────────
+    · ───────
  15 │ 1 ** -++temp ** 3;
     ╰────
   help: Wrap unary expression in parentheses to enforce operator precedence
@@ -23286,7 +23286,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
     ╭─[typescript/tests/cases/conformance/es7/exponentiationOperator/exponentiationOperatorSyntaxError1.ts:15:6]
  14 │ +temp-- ** 3;
  15 │ 1 ** -++temp ** 3;
-    ·      ────────────
+    ·      ───────
  16 │ 1 ** +--temp ** 3;
     ╰────
   help: Wrap unary expression in parentheses to enforce operator precedence
@@ -23295,7 +23295,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
     ╭─[typescript/tests/cases/conformance/es7/exponentiationOperator/exponentiationOperatorSyntaxError1.ts:16:6]
  15 │ 1 ** -++temp ** 3;
  16 │ 1 ** +--temp ** 3;
-    ·      ────────────
+    ·      ───────
  17 │ 1 ** -temp++ ** 3;
     ╰────
   help: Wrap unary expression in parentheses to enforce operator precedence
@@ -23304,7 +23304,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
     ╭─[typescript/tests/cases/conformance/es7/exponentiationOperator/exponentiationOperatorSyntaxError1.ts:17:6]
  16 │ 1 ** +--temp ** 3;
  17 │ 1 ** -temp++ ** 3;
-    ·      ────────────
+    ·      ───────
  18 │ 1 ** +temp-- ** 3;
     ╰────
   help: Wrap unary expression in parentheses to enforce operator precedence
@@ -23313,7 +23313,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
     ╭─[typescript/tests/cases/conformance/es7/exponentiationOperator/exponentiationOperatorSyntaxError1.ts:18:6]
  17 │ 1 ** -temp++ ** 3;
  18 │ 1 ** +temp-- ** 3;
-    ·      ────────────
+    ·      ───────
  19 │ 
     ╰────
   help: Wrap unary expression in parentheses to enforce operator precedence
@@ -23322,7 +23322,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
     ╭─[typescript/tests/cases/conformance/es7/exponentiationOperator/exponentiationOperatorSyntaxError1.ts:20:1]
  19 │ 
  20 │ -3 ** temp++;
-    · ────────────
+    · ──
  21 │ -3 ** temp--;
     ╰────
   help: Wrap unary expression in parentheses to enforce operator precedence
@@ -23331,7 +23331,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
     ╭─[typescript/tests/cases/conformance/es7/exponentiationOperator/exponentiationOperatorSyntaxError1.ts:21:1]
  20 │ -3 ** temp++;
  21 │ -3 ** temp--;
-    · ────────────
+    · ──
  22 │ -3 ** ++temp;
     ╰────
   help: Wrap unary expression in parentheses to enforce operator precedence
@@ -23340,7 +23340,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
     ╭─[typescript/tests/cases/conformance/es7/exponentiationOperator/exponentiationOperatorSyntaxError1.ts:22:1]
  21 │ -3 ** temp--;
  22 │ -3 ** ++temp;
-    · ────────────
+    · ──
  23 │ -3 ** --temp;
     ╰────
   help: Wrap unary expression in parentheses to enforce operator precedence
@@ -23349,7 +23349,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
     ╭─[typescript/tests/cases/conformance/es7/exponentiationOperator/exponentiationOperatorSyntaxError1.ts:23:1]
  22 │ -3 ** ++temp;
  23 │ -3 ** --temp;
-    · ────────────
+    · ──
  24 │ +3 ** temp++;
     ╰────
   help: Wrap unary expression in parentheses to enforce operator precedence
@@ -23358,7 +23358,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
     ╭─[typescript/tests/cases/conformance/es7/exponentiationOperator/exponentiationOperatorSyntaxError1.ts:24:1]
  23 │ -3 ** --temp;
  24 │ +3 ** temp++;
-    · ────────────
+    · ──
  25 │ +3 ** temp--;
     ╰────
   help: Wrap unary expression in parentheses to enforce operator precedence
@@ -23367,7 +23367,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
     ╭─[typescript/tests/cases/conformance/es7/exponentiationOperator/exponentiationOperatorSyntaxError1.ts:25:1]
  24 │ +3 ** temp++;
  25 │ +3 ** temp--;
-    · ────────────
+    · ──
  26 │ +3 ** ++temp;
     ╰────
   help: Wrap unary expression in parentheses to enforce operator precedence
@@ -23376,7 +23376,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
     ╭─[typescript/tests/cases/conformance/es7/exponentiationOperator/exponentiationOperatorSyntaxError1.ts:26:1]
  25 │ +3 ** temp--;
  26 │ +3 ** ++temp;
-    · ────────────
+    · ──
  27 │ +3 ** --temp;
     ╰────
   help: Wrap unary expression in parentheses to enforce operator precedence
@@ -23385,7 +23385,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
     ╭─[typescript/tests/cases/conformance/es7/exponentiationOperator/exponentiationOperatorSyntaxError1.ts:27:1]
  26 │ +3 ** ++temp;
  27 │ +3 ** --temp;
-    · ────────────
+    · ──
  28 │ -3 ** temp++ ** 2;
     ╰────
   help: Wrap unary expression in parentheses to enforce operator precedence
@@ -23394,7 +23394,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
     ╭─[typescript/tests/cases/conformance/es7/exponentiationOperator/exponentiationOperatorSyntaxError1.ts:28:1]
  27 │ +3 ** --temp;
  28 │ -3 ** temp++ ** 2;
-    · ─────────────────
+    · ──
  29 │ -3 ** temp-- ** 2;
     ╰────
   help: Wrap unary expression in parentheses to enforce operator precedence
@@ -23403,7 +23403,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
     ╭─[typescript/tests/cases/conformance/es7/exponentiationOperator/exponentiationOperatorSyntaxError1.ts:29:1]
  28 │ -3 ** temp++ ** 2;
  29 │ -3 ** temp-- ** 2;
-    · ─────────────────
+    · ──
  30 │ -3 ** ++temp ** 2;
     ╰────
   help: Wrap unary expression in parentheses to enforce operator precedence
@@ -23412,7 +23412,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
     ╭─[typescript/tests/cases/conformance/es7/exponentiationOperator/exponentiationOperatorSyntaxError1.ts:30:1]
  29 │ -3 ** temp-- ** 2;
  30 │ -3 ** ++temp ** 2;
-    · ─────────────────
+    · ──
  31 │ -3 ** --temp ** 2;
     ╰────
   help: Wrap unary expression in parentheses to enforce operator precedence
@@ -23421,7 +23421,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
     ╭─[typescript/tests/cases/conformance/es7/exponentiationOperator/exponentiationOperatorSyntaxError1.ts:31:1]
  30 │ -3 ** ++temp ** 2;
  31 │ -3 ** --temp ** 2;
-    · ─────────────────
+    · ──
  32 │ +3 ** temp++ ** 2;
     ╰────
   help: Wrap unary expression in parentheses to enforce operator precedence
@@ -23430,7 +23430,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
     ╭─[typescript/tests/cases/conformance/es7/exponentiationOperator/exponentiationOperatorSyntaxError1.ts:32:1]
  31 │ -3 ** --temp ** 2;
  32 │ +3 ** temp++ ** 2;
-    · ─────────────────
+    · ──
  33 │ +3 ** temp-- ** 2;
     ╰────
   help: Wrap unary expression in parentheses to enforce operator precedence
@@ -23439,7 +23439,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
     ╭─[typescript/tests/cases/conformance/es7/exponentiationOperator/exponentiationOperatorSyntaxError1.ts:33:1]
  32 │ +3 ** temp++ ** 2;
  33 │ +3 ** temp-- ** 2;
-    · ─────────────────
+    · ──
  34 │ +3 ** ++temp ** 2;
     ╰────
   help: Wrap unary expression in parentheses to enforce operator precedence
@@ -23448,7 +23448,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
     ╭─[typescript/tests/cases/conformance/es7/exponentiationOperator/exponentiationOperatorSyntaxError1.ts:34:1]
  33 │ +3 ** temp-- ** 2;
  34 │ +3 ** ++temp ** 2;
-    · ─────────────────
+    · ──
  35 │ +3 ** --temp ** 2;
     ╰────
   help: Wrap unary expression in parentheses to enforce operator precedence
@@ -23457,7 +23457,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
     ╭─[typescript/tests/cases/conformance/es7/exponentiationOperator/exponentiationOperatorSyntaxError1.ts:35:1]
  34 │ +3 ** ++temp ** 2;
  35 │ +3 ** --temp ** 2;
-    · ─────────────────
+    · ──
  36 │ 
     ╰────
   help: Wrap unary expression in parentheses to enforce operator precedence
@@ -23466,7 +23466,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
    ╭─[typescript/tests/cases/conformance/es7/exponentiationOperator/exponentiationOperatorSyntaxError2.ts:4:1]
  3 │ 
  4 │ delete --temp ** 3;
-   · ──────────────────
+   · ─────────────
  5 │ delete ++temp ** 3;
    ╰────
   help: Wrap unary expression in parentheses to enforce operator precedence
@@ -23475,7 +23475,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
    ╭─[typescript/tests/cases/conformance/es7/exponentiationOperator/exponentiationOperatorSyntaxError2.ts:5:1]
  4 │ delete --temp ** 3;
  5 │ delete ++temp ** 3;
-   · ──────────────────
+   · ─────────────
  6 │ delete temp-- ** 3;
    ╰────
   help: Wrap unary expression in parentheses to enforce operator precedence
@@ -23484,7 +23484,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
    ╭─[typescript/tests/cases/conformance/es7/exponentiationOperator/exponentiationOperatorSyntaxError2.ts:6:1]
  5 │ delete ++temp ** 3;
  6 │ delete temp-- ** 3;
-   · ──────────────────
+   · ─────────────
  7 │ delete temp++ ** 3;
    ╰────
   help: Wrap unary expression in parentheses to enforce operator precedence
@@ -23493,7 +23493,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
    ╭─[typescript/tests/cases/conformance/es7/exponentiationOperator/exponentiationOperatorSyntaxError2.ts:7:1]
  6 │ delete temp-- ** 3;
  7 │ delete temp++ ** 3;
-   · ──────────────────
+   · ─────────────
  8 │ 
    ╰────
   help: Wrap unary expression in parentheses to enforce operator precedence
@@ -23502,7 +23502,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
     ╭─[typescript/tests/cases/conformance/es7/exponentiationOperator/exponentiationOperatorSyntaxError2.ts:10:6]
   9 │ 
  10 │ 1 ** delete --temp ** 3;
-    ·      ──────────────────
+    ·      ─────────────
  11 │ 1 ** delete ++temp ** 3;
     ╰────
   help: Wrap unary expression in parentheses to enforce operator precedence
@@ -23511,7 +23511,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
     ╭─[typescript/tests/cases/conformance/es7/exponentiationOperator/exponentiationOperatorSyntaxError2.ts:11:6]
  10 │ 1 ** delete --temp ** 3;
  11 │ 1 ** delete ++temp ** 3;
-    ·      ──────────────────
+    ·      ─────────────
  12 │ 1 ** delete temp-- ** 3;
     ╰────
   help: Wrap unary expression in parentheses to enforce operator precedence
@@ -23520,7 +23520,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
     ╭─[typescript/tests/cases/conformance/es7/exponentiationOperator/exponentiationOperatorSyntaxError2.ts:12:6]
  11 │ 1 ** delete ++temp ** 3;
  12 │ 1 ** delete temp-- ** 3;
-    ·      ──────────────────
+    ·      ─────────────
  13 │ 1 ** delete temp++ ** 3;
     ╰────
   help: Wrap unary expression in parentheses to enforce operator precedence
@@ -23529,7 +23529,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
     ╭─[typescript/tests/cases/conformance/es7/exponentiationOperator/exponentiationOperatorSyntaxError2.ts:13:6]
  12 │ 1 ** delete temp-- ** 3;
  13 │ 1 ** delete temp++ ** 3;
-    ·      ──────────────────
+    ·      ─────────────
  14 │ 
     ╰────
   help: Wrap unary expression in parentheses to enforce operator precedence
@@ -23538,7 +23538,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
     ╭─[typescript/tests/cases/conformance/es7/exponentiationOperator/exponentiationOperatorSyntaxError2.ts:15:1]
  14 │ 
  15 │ typeof --temp ** 3;
-    · ──────────────────
+    · ─────────────
  16 │ typeof temp-- ** 3;
     ╰────
   help: Wrap unary expression in parentheses to enforce operator precedence
@@ -23547,7 +23547,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
     ╭─[typescript/tests/cases/conformance/es7/exponentiationOperator/exponentiationOperatorSyntaxError2.ts:16:1]
  15 │ typeof --temp ** 3;
  16 │ typeof temp-- ** 3;
-    · ──────────────────
+    · ─────────────
  17 │ typeof 3 ** 4;
     ╰────
   help: Wrap unary expression in parentheses to enforce operator precedence
@@ -23556,7 +23556,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
     ╭─[typescript/tests/cases/conformance/es7/exponentiationOperator/exponentiationOperatorSyntaxError2.ts:17:1]
  16 │ typeof temp-- ** 3;
  17 │ typeof 3 ** 4;
-    · ─────────────
+    · ────────
  18 │ typeof temp++ ** 4;
     ╰────
   help: Wrap unary expression in parentheses to enforce operator precedence
@@ -23565,7 +23565,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
     ╭─[typescript/tests/cases/conformance/es7/exponentiationOperator/exponentiationOperatorSyntaxError2.ts:18:1]
  17 │ typeof 3 ** 4;
  18 │ typeof temp++ ** 4;
-    · ──────────────────
+    · ─────────────
  19 │ typeof temp-- ** 4;
     ╰────
   help: Wrap unary expression in parentheses to enforce operator precedence
@@ -23574,7 +23574,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
     ╭─[typescript/tests/cases/conformance/es7/exponentiationOperator/exponentiationOperatorSyntaxError2.ts:19:1]
  18 │ typeof temp++ ** 4;
  19 │ typeof temp-- ** 4;
-    · ──────────────────
+    · ─────────────
  20 │ 
     ╰────
   help: Wrap unary expression in parentheses to enforce operator precedence
@@ -23583,7 +23583,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
     ╭─[typescript/tests/cases/conformance/es7/exponentiationOperator/exponentiationOperatorSyntaxError2.ts:21:6]
  20 │ 
  21 │ 1 ** typeof --temp ** 3;
-    ·      ──────────────────
+    ·      ─────────────
  22 │ 1 ** typeof temp-- ** 3;
     ╰────
   help: Wrap unary expression in parentheses to enforce operator precedence
@@ -23592,7 +23592,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
     ╭─[typescript/tests/cases/conformance/es7/exponentiationOperator/exponentiationOperatorSyntaxError2.ts:22:6]
  21 │ 1 ** typeof --temp ** 3;
  22 │ 1 ** typeof temp-- ** 3;
-    ·      ──────────────────
+    ·      ─────────────
  23 │ 1 ** typeof 3 ** 4;
     ╰────
   help: Wrap unary expression in parentheses to enforce operator precedence
@@ -23601,7 +23601,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
     ╭─[typescript/tests/cases/conformance/es7/exponentiationOperator/exponentiationOperatorSyntaxError2.ts:23:6]
  22 │ 1 ** typeof temp-- ** 3;
  23 │ 1 ** typeof 3 ** 4;
-    ·      ─────────────
+    ·      ────────
  24 │ 1 ** typeof temp++ ** 4;
     ╰────
   help: Wrap unary expression in parentheses to enforce operator precedence
@@ -23610,7 +23610,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
     ╭─[typescript/tests/cases/conformance/es7/exponentiationOperator/exponentiationOperatorSyntaxError2.ts:24:6]
  23 │ 1 ** typeof 3 ** 4;
  24 │ 1 ** typeof temp++ ** 4;
-    ·      ──────────────────
+    ·      ─────────────
  25 │ 1 ** typeof temp-- ** 4;
     ╰────
   help: Wrap unary expression in parentheses to enforce operator precedence
@@ -23619,7 +23619,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
     ╭─[typescript/tests/cases/conformance/es7/exponentiationOperator/exponentiationOperatorSyntaxError2.ts:25:6]
  24 │ 1 ** typeof temp++ ** 4;
  25 │ 1 ** typeof temp-- ** 4;
-    ·      ──────────────────
+    ·      ─────────────
  26 │ 
     ╰────
   help: Wrap unary expression in parentheses to enforce operator precedence
@@ -23628,7 +23628,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
     ╭─[typescript/tests/cases/conformance/es7/exponentiationOperator/exponentiationOperatorSyntaxError2.ts:27:1]
  26 │ 
  27 │ void --temp ** 3;
-    · ────────────────
+    · ───────────
  28 │ void temp-- ** 3;
     ╰────
   help: Wrap unary expression in parentheses to enforce operator precedence
@@ -23637,7 +23637,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
     ╭─[typescript/tests/cases/conformance/es7/exponentiationOperator/exponentiationOperatorSyntaxError2.ts:28:1]
  27 │ void --temp ** 3;
  28 │ void temp-- ** 3;
-    · ────────────────
+    · ───────────
  29 │ void 3 ** 4;
     ╰────
   help: Wrap unary expression in parentheses to enforce operator precedence
@@ -23646,7 +23646,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
     ╭─[typescript/tests/cases/conformance/es7/exponentiationOperator/exponentiationOperatorSyntaxError2.ts:29:1]
  28 │ void temp-- ** 3;
  29 │ void 3 ** 4;
-    · ───────────
+    · ──────
  30 │ void temp++ ** 4;
     ╰────
   help: Wrap unary expression in parentheses to enforce operator precedence
@@ -23655,7 +23655,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
     ╭─[typescript/tests/cases/conformance/es7/exponentiationOperator/exponentiationOperatorSyntaxError2.ts:30:1]
  29 │ void 3 ** 4;
  30 │ void temp++ ** 4;
-    · ────────────────
+    · ───────────
  31 │ void temp-- ** 4;
     ╰────
   help: Wrap unary expression in parentheses to enforce operator precedence
@@ -23664,7 +23664,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
     ╭─[typescript/tests/cases/conformance/es7/exponentiationOperator/exponentiationOperatorSyntaxError2.ts:31:1]
  30 │ void temp++ ** 4;
  31 │ void temp-- ** 4;
-    · ────────────────
+    · ───────────
  32 │ 
     ╰────
   help: Wrap unary expression in parentheses to enforce operator precedence
@@ -23673,7 +23673,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
     ╭─[typescript/tests/cases/conformance/es7/exponentiationOperator/exponentiationOperatorSyntaxError2.ts:33:6]
  32 │ 
  33 │ 1 ** void --temp ** 3;
-    ·      ────────────────
+    ·      ───────────
  34 │ 1 ** void temp-- ** 3;
     ╰────
   help: Wrap unary expression in parentheses to enforce operator precedence
@@ -23682,7 +23682,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
     ╭─[typescript/tests/cases/conformance/es7/exponentiationOperator/exponentiationOperatorSyntaxError2.ts:34:6]
  33 │ 1 ** void --temp ** 3;
  34 │ 1 ** void temp-- ** 3;
-    ·      ────────────────
+    ·      ───────────
  35 │ 1 ** void 3 ** 4;
     ╰────
   help: Wrap unary expression in parentheses to enforce operator precedence
@@ -23691,7 +23691,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
     ╭─[typescript/tests/cases/conformance/es7/exponentiationOperator/exponentiationOperatorSyntaxError2.ts:35:6]
  34 │ 1 ** void temp-- ** 3;
  35 │ 1 ** void 3 ** 4;
-    ·      ───────────
+    ·      ──────
  36 │ 1 ** void temp++ ** 4;
     ╰────
   help: Wrap unary expression in parentheses to enforce operator precedence
@@ -23700,7 +23700,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
     ╭─[typescript/tests/cases/conformance/es7/exponentiationOperator/exponentiationOperatorSyntaxError2.ts:36:6]
  35 │ 1 ** void 3 ** 4;
  36 │ 1 ** void temp++ ** 4;
-    ·      ────────────────
+    ·      ───────────
  37 │ 1 ** void temp-- ** 4 ;
     ╰────
   help: Wrap unary expression in parentheses to enforce operator precedence
@@ -23709,7 +23709,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
     ╭─[typescript/tests/cases/conformance/es7/exponentiationOperator/exponentiationOperatorSyntaxError2.ts:37:6]
  36 │ 1 ** void temp++ ** 4;
  37 │ 1 ** void temp-- ** 4 ;
-    ·      ────────────────
+    ·      ───────────
  38 │ 
     ╰────
   help: Wrap unary expression in parentheses to enforce operator precedence
@@ -23718,7 +23718,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
     ╭─[typescript/tests/cases/conformance/es7/exponentiationOperator/exponentiationOperatorSyntaxError2.ts:39:1]
  38 │ 
  39 │ ~ --temp ** 3;
-    · ─────────────
+    · ────────
  40 │ ~temp-- ** 3;
     ╰────
   help: Wrap unary expression in parentheses to enforce operator precedence
@@ -23727,7 +23727,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
     ╭─[typescript/tests/cases/conformance/es7/exponentiationOperator/exponentiationOperatorSyntaxError2.ts:40:1]
  39 │ ~ --temp ** 3;
  40 │ ~temp-- ** 3;
-    · ────────────
+    · ───────
  41 │ ~3 ** 4;
     ╰────
   help: Wrap unary expression in parentheses to enforce operator precedence
@@ -23736,7 +23736,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
     ╭─[typescript/tests/cases/conformance/es7/exponentiationOperator/exponentiationOperatorSyntaxError2.ts:41:1]
  40 │ ~temp-- ** 3;
  41 │ ~3 ** 4;
-    · ───────
+    · ──
  42 │ ~temp++ ** 4;
     ╰────
   help: Wrap unary expression in parentheses to enforce operator precedence
@@ -23745,7 +23745,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
     ╭─[typescript/tests/cases/conformance/es7/exponentiationOperator/exponentiationOperatorSyntaxError2.ts:42:1]
  41 │ ~3 ** 4;
  42 │ ~temp++ ** 4;
-    · ────────────
+    · ───────
  43 │ ~temp-- ** 4;
     ╰────
   help: Wrap unary expression in parentheses to enforce operator precedence
@@ -23754,7 +23754,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
     ╭─[typescript/tests/cases/conformance/es7/exponentiationOperator/exponentiationOperatorSyntaxError2.ts:43:1]
  42 │ ~temp++ ** 4;
  43 │ ~temp-- ** 4;
-    · ────────────
+    · ───────
  44 │ 
     ╰────
   help: Wrap unary expression in parentheses to enforce operator precedence
@@ -23763,7 +23763,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
     ╭─[typescript/tests/cases/conformance/es7/exponentiationOperator/exponentiationOperatorSyntaxError2.ts:45:6]
  44 │ 
  45 │ 1 ** ~ --temp ** 3;
-    ·      ─────────────
+    ·      ────────
  46 │ 1 ** ~temp-- ** 3;
     ╰────
   help: Wrap unary expression in parentheses to enforce operator precedence
@@ -23772,7 +23772,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
     ╭─[typescript/tests/cases/conformance/es7/exponentiationOperator/exponentiationOperatorSyntaxError2.ts:46:6]
  45 │ 1 ** ~ --temp ** 3;
  46 │ 1 ** ~temp-- ** 3;
-    ·      ────────────
+    ·      ───────
  47 │ 1 ** ~3 ** 4;
     ╰────
   help: Wrap unary expression in parentheses to enforce operator precedence
@@ -23781,7 +23781,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
     ╭─[typescript/tests/cases/conformance/es7/exponentiationOperator/exponentiationOperatorSyntaxError2.ts:47:6]
  46 │ 1 ** ~temp-- ** 3;
  47 │ 1 ** ~3 ** 4;
-    ·      ───────
+    ·      ──
  48 │ 1 ** ~temp++ ** 4;
     ╰────
   help: Wrap unary expression in parentheses to enforce operator precedence
@@ -23790,7 +23790,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
     ╭─[typescript/tests/cases/conformance/es7/exponentiationOperator/exponentiationOperatorSyntaxError2.ts:48:6]
  47 │ 1 ** ~3 ** 4;
  48 │ 1 ** ~temp++ ** 4;
-    ·      ────────────
+    ·      ───────
  49 │ 1 ** ~temp-- ** 4;
     ╰────
   help: Wrap unary expression in parentheses to enforce operator precedence
@@ -23799,7 +23799,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
     ╭─[typescript/tests/cases/conformance/es7/exponentiationOperator/exponentiationOperatorSyntaxError2.ts:49:6]
  48 │ 1 ** ~temp++ ** 4;
  49 │ 1 ** ~temp-- ** 4;
-    ·      ────────────
+    ·      ───────
  50 │ 
     ╰────
   help: Wrap unary expression in parentheses to enforce operator precedence
@@ -23808,7 +23808,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
     ╭─[typescript/tests/cases/conformance/es7/exponentiationOperator/exponentiationOperatorSyntaxError2.ts:51:1]
  50 │ 
  51 │ ! --temp ** 3;
-    · ─────────────
+    · ────────
  52 │ !temp-- ** 3;
     ╰────
   help: Wrap unary expression in parentheses to enforce operator precedence
@@ -23817,7 +23817,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
     ╭─[typescript/tests/cases/conformance/es7/exponentiationOperator/exponentiationOperatorSyntaxError2.ts:52:1]
  51 │ ! --temp ** 3;
  52 │ !temp-- ** 3;
-    · ────────────
+    · ───────
  53 │ !3 ** 4;
     ╰────
   help: Wrap unary expression in parentheses to enforce operator precedence
@@ -23826,7 +23826,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
     ╭─[typescript/tests/cases/conformance/es7/exponentiationOperator/exponentiationOperatorSyntaxError2.ts:53:1]
  52 │ !temp-- ** 3;
  53 │ !3 ** 4;
-    · ───────
+    · ──
  54 │ !temp++ ** 4;
     ╰────
   help: Wrap unary expression in parentheses to enforce operator precedence
@@ -23835,7 +23835,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
     ╭─[typescript/tests/cases/conformance/es7/exponentiationOperator/exponentiationOperatorSyntaxError2.ts:54:1]
  53 │ !3 ** 4;
  54 │ !temp++ ** 4;
-    · ────────────
+    · ───────
  55 │ !temp-- ** 4;
     ╰────
   help: Wrap unary expression in parentheses to enforce operator precedence
@@ -23844,7 +23844,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
     ╭─[typescript/tests/cases/conformance/es7/exponentiationOperator/exponentiationOperatorSyntaxError2.ts:55:1]
  54 │ !temp++ ** 4;
  55 │ !temp-- ** 4;
-    · ────────────
+    · ───────
  56 │ 
     ╰────
   help: Wrap unary expression in parentheses to enforce operator precedence
@@ -23853,7 +23853,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
     ╭─[typescript/tests/cases/conformance/es7/exponentiationOperator/exponentiationOperatorSyntaxError2.ts:57:6]
  56 │ 
  57 │ 1 ** ! --temp ** 3;
-    ·      ─────────────
+    ·      ────────
  58 │ 1 ** !temp-- ** 3;
     ╰────
   help: Wrap unary expression in parentheses to enforce operator precedence
@@ -23862,7 +23862,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
     ╭─[typescript/tests/cases/conformance/es7/exponentiationOperator/exponentiationOperatorSyntaxError2.ts:58:6]
  57 │ 1 ** ! --temp ** 3;
  58 │ 1 ** !temp-- ** 3;
-    ·      ────────────
+    ·      ───────
  59 │ 1 ** !3 ** 4;
     ╰────
   help: Wrap unary expression in parentheses to enforce operator precedence
@@ -23871,7 +23871,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
     ╭─[typescript/tests/cases/conformance/es7/exponentiationOperator/exponentiationOperatorSyntaxError2.ts:59:6]
  58 │ 1 ** !temp-- ** 3;
  59 │ 1 ** !3 ** 4;
-    ·      ───────
+    ·      ──
  60 │ 1 ** !temp++ ** 4;
     ╰────
   help: Wrap unary expression in parentheses to enforce operator precedence
@@ -23880,7 +23880,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
     ╭─[typescript/tests/cases/conformance/es7/exponentiationOperator/exponentiationOperatorSyntaxError2.ts:60:6]
  59 │ 1 ** !3 ** 4;
  60 │ 1 ** !temp++ ** 4;
-    ·      ────────────
+    ·      ───────
  61 │ 1 ** !temp-- ** 4;
     ╰────
   help: Wrap unary expression in parentheses to enforce operator precedence
@@ -23889,7 +23889,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
     ╭─[typescript/tests/cases/conformance/es7/exponentiationOperator/exponentiationOperatorSyntaxError2.ts:61:6]
  60 │ 1 ** !temp++ ** 4;
  61 │ 1 ** !temp-- ** 4;
-    ·      ────────────
+    ·      ───────
  62 │ 
     ╰────
   help: Wrap unary expression in parentheses to enforce operator precedence

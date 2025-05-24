@@ -16717,7 +16717,7 @@ Negative Passed: 4519/4519 (100.00%)
     ╭─[test262/test/language/expressions/exponentiation/exp-operator-syntax-error-bitnot-unary-expression-base.js:26:1]
  25 │ $DONOTEVALUATE();
  26 │ ~3 ** 2;
-    · ───────
+    · ──
     ╰────
   help: Wrap unary expression in parentheses to enforce operator precedence
 
@@ -16725,7 +16725,7 @@ Negative Passed: 4519/4519 (100.00%)
     ╭─[test262/test/language/expressions/exponentiation/exp-operator-syntax-error-delete-unary-expression-base.js:26:1]
  25 │ $DONOTEVALUATE();
  26 │ delete o.p ** 2;
-    · ───────────────
+    · ──────────
     ╰────
   help: Wrap unary expression in parentheses to enforce operator precedence
 
@@ -16733,7 +16733,7 @@ Negative Passed: 4519/4519 (100.00%)
     ╭─[test262/test/language/expressions/exponentiation/exp-operator-syntax-error-logical-not-unary-expression-base.js:26:1]
  25 │ $DONOTEVALUATE();
  26 │ !1 ** 2;
-    · ───────
+    · ──
     ╰────
   help: Wrap unary expression in parentheses to enforce operator precedence
 
@@ -16741,7 +16741,7 @@ Negative Passed: 4519/4519 (100.00%)
     ╭─[test262/test/language/expressions/exponentiation/exp-operator-syntax-error-negate-unary-expression-base.js:26:1]
  25 │ $DONOTEVALUATE();
  26 │ -3 ** 2;
-    · ───────
+    · ──
     ╰────
   help: Wrap unary expression in parentheses to enforce operator precedence
 
@@ -16749,7 +16749,7 @@ Negative Passed: 4519/4519 (100.00%)
     ╭─[test262/test/language/expressions/exponentiation/exp-operator-syntax-error-plus-unary-expression-base.js:26:1]
  25 │ $DONOTEVALUATE();
  26 │ +1 ** 2;
-    · ───────
+    · ──
     ╰────
   help: Wrap unary expression in parentheses to enforce operator precedence
 
@@ -16757,7 +16757,7 @@ Negative Passed: 4519/4519 (100.00%)
     ╭─[test262/test/language/expressions/exponentiation/exp-operator-syntax-error-typeof-unary-expression-base.js:26:1]
  25 │ $DONOTEVALUATE();
  26 │ typeof 1 ** 2;
-    · ─────────────
+    · ────────
     ╰────
   help: Wrap unary expression in parentheses to enforce operator precedence
 
@@ -16765,7 +16765,7 @@ Negative Passed: 4519/4519 (100.00%)
     ╭─[test262/test/language/expressions/exponentiation/exp-operator-syntax-error-void-unary-expression-base.js:26:1]
  25 │ $DONOTEVALUATE();
  26 │ void 1 ** 2;
-    · ───────────
+    · ──────
     ╰────
   help: Wrap unary expression in parentheses to enforce operator precedence
 

@@ -5128,21 +5128,21 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
   × Unexpected exponentiation expression
    ╭─[babel/packages/babel-parser/test/fixtures/es2016/exponentiation-operator/10/input.js:1:1]
  1 │ -5 ** 6;
-   · ───────
+   · ──
    ╰────
   help: Wrap unary expression in parentheses to enforce operator precedence
 
   × Unexpected exponentiation expression
    ╭─[babel/packages/babel-parser/test/fixtures/es2016/exponentiation-operator/11/input.js:1:1]
  1 │ -(5) ** 6;
-   · ─────────
+   · ────
    ╰────
   help: Wrap unary expression in parentheses to enforce operator precedence
 
   × Unexpected exponentiation expression
    ╭─[babel/packages/babel-parser/test/fixtures/es2016/exponentiation-operator/12/input.js:1:2]
  1 │ (-5 ** 6);
-   ·  ───────
+   ·  ──
    ╰────
   help: Wrap unary expression in parentheses to enforce operator precedence
 
@@ -5161,35 +5161,35 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
   × Unexpected exponentiation expression
    ╭─[babel/packages/babel-parser/test/fixtures/es2016/exponentiation-operator/15/input.js:1:1]
  1 │ -(5) ** 6;
-   · ─────────
+   · ────
    ╰────
   help: Wrap unary expression in parentheses to enforce operator precedence
 
   × Unexpected exponentiation expression
    ╭─[babel/packages/babel-parser/test/fixtures/es2016/exponentiation-operator/16/input.js:1:2]
  1 │ (-5 ** 6);
-   ·  ───────
+   ·  ──
    ╰────
   help: Wrap unary expression in parentheses to enforce operator precedence
 
   × Unexpected exponentiation expression
    ╭─[babel/packages/babel-parser/test/fixtures/es2016/exponentiation-operator/await-before-exponential/input.js:1:13]
  1 │ async () => await 5 ** 6;
-   ·             ────────────
+   ·             ───────
    ╰────
   help: Wrap await expression in parentheses to enforce operator precedence
 
   × Unexpected exponentiation expression
    ╭─[babel/packages/babel-parser/test/fixtures/es2016/exponentiation-operator/await-unary-before-exponential/input.js:1:13]
  1 │ async () => await -5 ** 6;
-   ·             ─────────────
+   ·             ────────
    ╰────
   help: Wrap await expression in parentheses to enforce operator precedence
 
   × Unexpected exponentiation expression
    ╭─[babel/packages/babel-parser/test/fixtures/es2016/exponentiation-operator/nested-unary-before-exponential/input.js:1:2]
  1 │ (-+5 ** 6);
-   ·  ────────
+   ·  ───
    ╰────
   help: Wrap unary expression in parentheses to enforce operator precedence
 
@@ -12441,14 +12441,14 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
   × Unexpected exponentiation expression
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/exponentiation/await-non-null-before-exponential/input.ts:1:14]
  1 │ async (a) => await a! ** 6;
-   ·              ─────────────
+   ·              ────────
    ╰────
   help: Wrap await expression in parentheses to enforce operator precedence
 
   × Unexpected exponentiation expression
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/exponentiation/unary-non-null-before-exponential/input.ts:1:8]
  1 │ (a) => +a! ** 6;
-   ·        ────────
+   ·        ───
    ╰────
   help: Wrap unary expression in parentheses to enforce operator precedence
 

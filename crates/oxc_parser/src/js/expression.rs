@@ -1073,6 +1073,7 @@ impl<'a> ParserImpl<'a> {
     ) -> Expression<'a> {
         let lhs_span = self.start_span();
 
+        let lhs_parenthesized = self.at(Kind::LParen);
         // [+In] PrivateIdentifier in ShiftExpression[?Yield, ?Await]
         let lhs = if self.ctx.has_in() && self.at(Kind::PrivateIdentifier) {
             let left = self.parse_private_identifier();
@@ -1092,7 +1093,7 @@ impl<'a> ParserImpl<'a> {
             expr
         };
 
-        self.parse_binary_expression_rest(lhs_span, lhs, lhs_precedence)
+        self.parse_binary_expression_rest(lhs_span, lhs, lhs_parenthesized, lhs_precedence)
     }
 
     /// Section 13.6 - 13.13 Binary Expression
@@ -1100,6 +1101,7 @@ impl<'a> ParserImpl<'a> {
         &mut self,
         lhs_span: u32,
         lhs: Expression<'a>,
+        lhs_parenthesized: bool,
         min_precedence: Precedence,
     ) -> Expression<'a> {
         // Pratt Parsing Algorithm
@@ -1145,22 +1147,44 @@ impl<'a> ParserImpl<'a> {
             }
 
             self.bump_any(); // bump operator
+            let rhs_parenthesized = self.at(Kind::LParen);
             let rhs = self.parse_binary_expression_or_higher(left_precedence);
 
             lhs = if kind.is_logical_operator() {
-                self.ast.expression_logical(
-                    self.end_span(lhs_span),
-                    lhs,
-                    map_logical_operator(kind),
-                    rhs,
-                )
+                let span = self.end_span(lhs_span);
+                let op = map_logical_operator(kind);
+                // check mixed coalesce
+                if op == LogicalOperator::Coalesce {
+                    let mut maybe_mixed_coalesce_expr = None;
+                    if let Expression::LogicalExpression(rhs) = &rhs {
+                        if !rhs_parenthesized {
+                            maybe_mixed_coalesce_expr = Some(rhs);
+                        }
+                    } else if let Expression::LogicalExpression(lhs) = &lhs {
+                        if !lhs_parenthesized {
+                            maybe_mixed_coalesce_expr = Some(lhs);
+                        }
+                    }
+                    if let Some(expr) = maybe_mixed_coalesce_expr {
+                        if matches!(expr.operator, LogicalOperator::And | LogicalOperator::Or) {
+                            self.error(diagnostics::mixed_coalesce(span));
+                        }
+                    }
+                }
+                self.ast.expression_logical(span, lhs, op, rhs)
             } else if kind.is_binary_operator() {
-                self.ast.expression_binary(
-                    self.end_span(lhs_span),
-                    lhs,
-                    map_binary_operator(kind),
-                    rhs,
-                )
+                let span = self.end_span(lhs_span);
+                let op = map_binary_operator(kind);
+                if op == BinaryOperator::Exponential && !lhs_parenthesized {
+                    if let Some(key) = match lhs {
+                        Expression::AwaitExpression(_) => Some("await"),
+                        Expression::UnaryExpression(_) => Some("unary"),
+                        _ => None,
+                    } {
+                        self.error(diagnostics::unexpected_exponential(key, lhs.span()));
+                    }
+                }
+                self.ast.expression_binary(span, lhs, op, rhs)
             } else {
                 break;
             };

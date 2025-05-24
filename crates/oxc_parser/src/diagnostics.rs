@@ -601,3 +601,17 @@ pub fn enum_member_cannot_have_numeric_name(span: Span) -> OxcDiagnostic {
 pub fn index_signature_one_parameter(span: Span) -> OxcDiagnostic {
     ts_error("1096", "An index signature must have exactly one parameter.").with_label(span)
 }
+
+#[cold]
+pub fn mixed_coalesce(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::error("Logical expressions and coalesce expressions cannot be mixed")
+        .with_help("Wrap either expression by parentheses")
+        .with_label(span)
+}
+
+#[cold]
+pub fn unexpected_exponential(x0: &str, span1: Span) -> OxcDiagnostic {
+    OxcDiagnostic::error("Unexpected exponentiation expression")
+        .with_help(format!("Wrap {x0} expression in parentheses to enforce operator precedence"))
+        .with_label(span1)
+}
