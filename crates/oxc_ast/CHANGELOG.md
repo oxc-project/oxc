@@ -4,6 +4,19 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.72.0] - 2025-05-24
+
+### Features
+
+- 03390ad allocator: `TakeIn` trait with `AllocatorAccessor` (#11201) (Boshen)
+- 23182b8 ast/estree: Add `phase` field to `ImportExpression` in TS-ESTree AST (#11193) (overlookmotel)
+- 4feeeee span: Add `Atom::from_strs_array_in` method (#11261) (overlookmotel)
+- c2c0268 syntax: Introduce `CommentNodeId` (#11214) (overlookmotel)
+
+### Refactor
+
+- f05c506 ast: Move `AstBuilder` type definition (#11238) (overlookmotel)
+
 ## [0.71.0] - 2025-05-20
 
 - 1a4fec0 codegen: [**BREAKING**] A legal comment can also be a jsdoc comment (#11158) (Boshen)

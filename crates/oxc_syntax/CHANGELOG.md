@@ -4,6 +4,13 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.72.0] - 2025-05-24
+
+### Features
+
+- 3eb027b formatter: Support printing binary like expression (#11185) (Dunqing)
+- c2c0268 syntax: Introduce `CommentNodeId` (#11214) (overlookmotel)
+
 ## [0.71.0] - 2025-05-20
 
 - 5d9344f rust: [**BREAKING**] Clippy avoid-breaking-exported-api = false (#11088) (Boshen)
