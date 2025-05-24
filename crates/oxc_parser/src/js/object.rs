@@ -35,8 +35,12 @@ impl<'a> ParserImpl<'a> {
 
     /// `PropertyDefinition`[Yield, Await]
     pub(crate) fn parse_property_definition(&mut self) -> Box<'a, ObjectProperty<'a>> {
-        let peek_kind = self.peek_kind();
+        let checkpoint = self.checkpoint();
+        self.bump_any();
+        let peek_kind = self.cur_kind();
+        let peek_token = self.cur_token();
         let class_element_name = peek_kind.is_class_element_name_start();
+        self.rewind(checkpoint);
         match self.cur_kind() {
             // get ClassElementName
             Kind::Get if class_element_name => self.parse_method_getter(),
@@ -46,7 +50,7 @@ impl<'a> ParserImpl<'a> {
             // AsyncGeneratorMethod
             Kind::Async
                 if (class_element_name || peek_kind == Kind::Star)
-                    && !self.peek_token().is_on_new_line() =>
+                    && !peek_token.is_on_new_line() =>
             {
                 self.parse_property_definition_method()
             }
