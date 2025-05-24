@@ -2,7 +2,7 @@ use std::{borrow::Cow, fmt::Write};
 
 use cow_utils::CowUtils;
 
-use oxc_allocator::String;
+use oxc_allocator::StringBuilder;
 use oxc_syntax::identifier::{
     CR, FF, LF, LS, PS, TAB, VT, is_identifier_part, is_identifier_start,
     is_identifier_start_unicode, is_irregular_line_terminator, is_irregular_whitespace,
@@ -61,7 +61,7 @@ impl<'a> Lexer<'a> {
     ///   \u{ `CodePoint` }
     pub(super) fn identifier_unicode_escape_sequence(
         &mut self,
-        str: &mut String<'a>,
+        str: &mut StringBuilder<'a>,
         check_identifier_start: bool,
     ) {
         let start = self.offset();
@@ -115,7 +115,7 @@ impl<'a> Lexer<'a> {
     ///   \u{ `CodePoint` }
     fn string_unicode_escape_sequence(
         &mut self,
-        text: &mut String<'a>,
+        text: &mut StringBuilder<'a>,
         is_valid_escape_sequence: &mut bool,
     ) {
         let value = match self.peek_byte() {
@@ -153,7 +153,7 @@ impl<'a> Lexer<'a> {
     }
 
     /// Lone surrogate found in string.
-    fn string_lone_surrogate(&mut self, code_point: u32, text: &mut String<'a>) {
+    fn string_lone_surrogate(&mut self, code_point: u32, text: &mut StringBuilder<'a>) {
         debug_assert!(code_point <= 0xFFFF);
 
         if !self.token.lone_surrogates() {
@@ -167,7 +167,7 @@ impl<'a> Lexer<'a> {
             // But strings containing both lone surrogates and lossy replacement characters
             // should be vanishingly rare, so don't bother.
             if let Cow::Owned(replaced) = text.cow_replace("\u{FFFD}", "\u{FFFD}fffd") {
-                *text = String::from_str_in(&replaced, self.allocator);
+                *text = StringBuilder::from_str_in(&replaced, self.allocator);
             }
         }
 
@@ -307,7 +307,7 @@ impl<'a> Lexer<'a> {
     // EscapeSequence ::
     pub(super) fn read_string_escape_sequence(
         &mut self,
-        text: &mut String<'a>,
+        text: &mut StringBuilder<'a>,
         in_template: bool,
         is_valid_escape_sequence: &mut bool,
     ) {
@@ -380,14 +380,14 @@ impl<'a> Lexer<'a> {
                                 // 192-255: `0xC3`, followed by code point value - 64.
                                 let bytes = [0xC0 + first_digit, value & 0b1011_1111];
                                 // SAFETY: `bytes` is a valid 2-byte UTF-8 sequence
-                                unsafe { text.as_mut_vec().extend_from_slice(&bytes) };
+                                unsafe { text.push_bytes_unchecked(&bytes) };
                                 return;
                             }
                         }
                     }
 
                     // SAFETY: `value` is in range 0 to `((1 * 8) + 7) * 8 + 7` (127) i.e. ASCII
-                    unsafe { text.as_mut_vec().push(value) };
+                    unsafe { text.push_byte_unchecked(value) };
                 }
                 '0' if in_template && self.peek_byte().is_some_and(|b| b.is_ascii_digit()) => {
                     self.consume_char();

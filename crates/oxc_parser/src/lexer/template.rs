@@ -1,6 +1,6 @@
 use std::{cmp::max, str};
 
-use oxc_allocator::String;
+use oxc_allocator::StringBuilder;
 
 use crate::diagnostics;
 
@@ -194,14 +194,14 @@ impl<'a> Lexer<'a> {
     ///
     /// # SAFETY
     /// `pos` must not be before `self.source.position()`
-    unsafe fn template_literal_create_string(&self, pos: SourcePosition<'a>) -> String<'a> {
+    unsafe fn template_literal_create_string(&self, pos: SourcePosition<'a>) -> StringBuilder<'a> {
         // Create arena string to hold modified template literal.
         // We don't know how long template literal will end up being. Take a guess that total length
         // will be double what we've seen so far, or `MIN_ESCAPED_TEMPLATE_LIT_LEN` minimum.
         // SAFETY: Caller guarantees `pos` is not before `self.source.position()`.
         let so_far = unsafe { self.source.str_from_current_to_pos_unchecked(pos) };
         let capacity = max(so_far.len() * 2, MIN_ESCAPED_TEMPLATE_LIT_LEN);
-        let mut str = String::with_capacity_in(capacity, self.allocator);
+        let mut str = StringBuilder::with_capacity_in(capacity, self.allocator);
         str.push_str(so_far);
         str
     }
@@ -212,7 +212,7 @@ impl<'a> Lexer<'a> {
     /// `chunk_start` must not be after `pos`.
     unsafe fn template_literal_escaped(
         &mut self,
-        mut str: String<'a>,
+        mut str: StringBuilder<'a>,
         pos: SourcePosition<'a>,
         mut chunk_start: SourcePosition<'a>,
         mut is_valid_escape_sequence: bool,
@@ -379,7 +379,7 @@ impl<'a> Lexer<'a> {
             },
         };
 
-        self.save_template_string(is_valid_escape_sequence, str.into_bump_str());
+        self.save_template_string(is_valid_escape_sequence, str.into_str());
 
         ret
     }

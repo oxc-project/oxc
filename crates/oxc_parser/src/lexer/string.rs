@@ -1,6 +1,6 @@
 use std::cmp::max;
 
-use oxc_allocator::String;
+use oxc_allocator::StringBuilder;
 
 use crate::diagnostics;
 
@@ -107,7 +107,7 @@ macro_rules! handle_string_literal_escape {
         // will be double what we've seen so far, or `MIN_ESCAPED_STR_LEN` minimum.
         let so_far = $lexer.source.str_from_pos_to_current($after_opening_quote);
         let capacity = max(so_far.len() * 2, MIN_ESCAPED_STR_LEN);
-        let mut str = String::with_capacity_in(capacity, $lexer.allocator);
+        let mut str = StringBuilder::with_capacity_in(capacity, $lexer.allocator);
 
         // Push chunk before `\` into `str`.
         str.push_str(so_far);
@@ -193,7 +193,7 @@ macro_rules! handle_string_literal_escape {
         }
 
         // Convert `str` to arena slice and save to `escaped_strings`
-        $lexer.save_string(true, str.into_bump_str());
+        $lexer.save_string(true, str.into_str());
 
         Kind::Str
     }};
