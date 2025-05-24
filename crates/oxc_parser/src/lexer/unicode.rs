@@ -363,32 +363,31 @@ impl<'a> Lexer<'a> {
                 // Section 12.9.4 String Literals
                 // LegacyOctalEscapeSequence
                 // NonOctalDecimalEscapeSequence
-                a @ '0'..='7' if !in_template => {
-                    let mut num = String::new_in(self.allocator);
-                    num.push(a);
-                    match a {
-                        '4'..='7' => {
-                            if matches!(self.peek_byte(), Some(b'0'..=b'7')) {
-                                let b = self.consume_char();
-                                num.push(b);
+                c @ '0'..='7' if !in_template => {
+                    let first_digit = c as u8 - b'0';
+                    let mut value = first_digit;
+
+                    if matches!(self.peek_byte(), Some(b'0'..=b'7')) {
+                        let digit = self.consume_char() as u8 - b'0';
+                        value = value * 8 + digit;
+                        if first_digit < 4 && matches!(self.peek_byte(), Some(b'0'..=b'7')) {
+                            let digit = self.consume_char() as u8 - b'0';
+                            value = value * 8 + digit;
+
+                            if value >= 128 {
+                                // `value` is between 128 and 255. UTF-8 representation is:
+                                // 128-191: `0xC2`, followed by code point value.
+                                // 192-255: `0xC3`, followed by code point value - 64.
+                                let bytes = [0xC0 + first_digit, value & 0b1011_1111];
+                                // SAFETY: `bytes` is a valid 2-byte UTF-8 sequence
+                                unsafe { text.as_mut_vec().extend_from_slice(&bytes) };
+                                return;
                             }
                         }
-                        '0'..='3' => {
-                            if matches!(self.peek_byte(), Some(b'0'..=b'7')) {
-                                let b = self.consume_char();
-                                num.push(b);
-                                if matches!(self.peek_byte(), Some(b'0'..=b'7')) {
-                                    let c = self.consume_char();
-                                    num.push(c);
-                                }
-                            }
-                        }
-                        _ => {}
                     }
 
-                    let value =
-                        char::from_u32(u32::from_str_radix(num.as_str(), 8).unwrap()).unwrap();
-                    text.push(value);
+                    // SAFETY: `value` is in range 0 to `((1 * 8) + 7) * 8 + 7` (127) i.e. ASCII
+                    unsafe { text.as_mut_vec().push(value) };
                 }
                 '0' if in_template && self.peek_byte().is_some_and(|b| b.is_ascii_digit()) => {
                     self.consume_char();
