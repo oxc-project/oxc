@@ -1235,7 +1235,9 @@ impl<'a> ParserImpl<'a> {
         }
 
         let span = self.start_span();
+        let lhs_parenthesized = self.at(Kind::LParen);
         let lhs = self.parse_binary_expression_or_higher(Precedence::Comma);
+        let lhs_parenthesized_span = lhs_parenthesized.then(|| self.end_span(span));
         let kind = self.cur_kind();
 
         // `x => {}`
@@ -1258,6 +1260,7 @@ impl<'a> ParserImpl<'a> {
             return self.parse_assignment_expression_recursive(
                 span,
                 lhs,
+                lhs_parenthesized_span,
                 allow_return_type_in_arrow_function,
             );
         }
@@ -1318,6 +1321,7 @@ impl<'a> ParserImpl<'a> {
         &mut self,
         span: u32,
         lhs: Expression<'a>,
+        left_parenthesized_span: Option<Span>,
         allow_return_type_in_arrow_function: bool,
     ) -> Expression<'a> {
         let operator = map_assignment_operator(self.cur_kind());
@@ -1327,6 +1331,12 @@ impl<'a> ParserImpl<'a> {
         // AssignmentPattern[Yield, Await] :
         //    ObjectAssignmentPattern
         //    ArrayAssignmentPattern
+        if let Some(span) = left_parenthesized_span {
+            //  `({}) = x;`, `([]) = x;`
+            if matches!(lhs, Expression::ObjectExpression(_) | Expression::ArrayExpression(_)) {
+                self.error(diagnostics::invalid_assignment(span));
+            }
+        }
         let left = AssignmentTarget::cover(lhs, self);
         self.bump_any();
         let right =
