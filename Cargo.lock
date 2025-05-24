@@ -1543,7 +1543,6 @@ dependencies = [
  "rustc-hash",
  "serde",
  "serde_json",
- "simdutf8",
 ]
 
 [[package]]

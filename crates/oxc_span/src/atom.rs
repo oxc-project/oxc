@@ -4,9 +4,7 @@ use std::{
     ops::Deref,
 };
 
-use oxc_allocator::{
-    Allocator, CloneIn, Dummy, FromIn, String as ArenaString, StringBuilder as ArenaStringBuilder,
-};
+use oxc_allocator::{Allocator, CloneIn, Dummy, FromIn, StringBuilder as ArenaStringBuilder};
 #[cfg(feature = "serialize")]
 use oxc_estree::{ESTree, Serializer as ESTreeSerializer};
 #[cfg(feature = "serialize")]
@@ -142,12 +140,6 @@ impl<'alloc> FromIn<'alloc, Cow<'_, str>> for Atom<'alloc> {
 impl<'a> From<&'a str> for Atom<'a> {
     fn from(s: &'a str) -> Self {
         Self(s)
-    }
-}
-
-impl<'alloc> From<ArenaString<'alloc>> for Atom<'alloc> {
-    fn from(s: ArenaString<'alloc>) -> Self {
-        Self::from(s.into_bump_str())
     }
 }
 

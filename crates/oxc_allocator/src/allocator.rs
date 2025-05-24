@@ -470,13 +470,13 @@ impl Allocator {
     ///
     /// 1. Padding bytes between objects which have been allocated to preserve alignment of types
     ///    where they have different alignments or have larger-than-typical alignment.
-    /// 2. Excess capacity in [`Vec`]s, [`String`]s and [`HashMap`]s.
+    /// 2. Excess capacity in [`Vec`]s, [`StringBuilder`]s and [`HashMap`]s.
     /// 3. Objects which were allocated but later dropped. [`Allocator`] does not re-use allocations,
     ///    so anything which is allocated into arena continues to take up "dead space", even after it's
     ///    no longer referenced anywhere.
-    /// 4. "Dead space" left over where a [`Vec`], [`String`] or [`HashMap`] has grown and had to make
-    ///    a new allocation to accommodate its new larger size. Its old allocation continues to take up
-    ///    "dead" space in the allocator, unless it was the most recent allocation.
+    /// 4. "Dead space" left over where a [`Vec`], [`StringBuilder`] or [`HashMap`] has grown and had to
+    ///    make a new allocation to accommodate its new larger size. Its old allocation continues to
+    ///    take up "dead" space in the allocator, unless it was the most recent allocation.
     ///
     /// In practice, this almost always means that the result returned from this function will be an
     /// over-estimate vs the amount of "live" data in the arena.
@@ -519,7 +519,7 @@ impl Allocator {
     ///
     /// [`capacity`]: Allocator::capacity
     /// [`Vec`]: crate::Vec
-    /// [`String`]: crate::String
+    /// [`StringBuilder`]: crate::StringBuilder
     /// [`HashMap`]: crate::HashMap
     pub fn used_bytes(&self) -> usize {
         let mut bytes = 0;
