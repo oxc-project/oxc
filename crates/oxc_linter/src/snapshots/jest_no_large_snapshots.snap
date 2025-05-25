@@ -7,7 +7,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                   ─────────────────────
  2 │ line
    ╰────
-  help: Expected Jest snapshot to not be longer than 50 lines but was 51 lines long
+  help: Expected Jest snapshot to be no longer than 50 lines but it was 51 lines long
 
   ⚠ eslint-plugin-jest(no-large-snapshots): Snapshot is too long.
    ╭─[no_large_snapshots.tsx:1:19]
@@ -15,7 +15,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                   ──────────────────────────────────
  2 │ line
    ╰────
-  help: Expected Jest snapshot to not be longer than 50 lines but was 51 lines long
+  help: Expected Jest snapshot to be no longer than 50 lines but it was 51 lines long
 
   ⚠ eslint-plugin-jest(no-large-snapshots): Snapshot is too long.
    ╭─[no_large_snapshots.tsx:1:19]
@@ -23,7 +23,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                   ──────────────────────────────────
  2 │ line
    ╰────
-  help: Expected Jest snapshot to not be longer than 50 lines but was 51 lines long
+  help: Expected Jest snapshot to be no longer than 50 lines but it was 51 lines long
 
   ⚠ eslint-plugin-jest(no-large-snapshots): Snapshot is too long.
    ╭─[no_large_snapshots.tsx:1:19]

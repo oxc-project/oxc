@@ -27,7 +27,7 @@ fn no_snapshot(line_count: usize, span: Span) -> OxcDiagnostic {
 fn too_long_snapshot(line_limit: usize, line_count: usize, span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Snapshot is too long.")
         .with_help(format!(
-            "Expected Jest snapshot to not be longer than {line_limit} lines but was {line_count} lines long"
+            "Expected Jest snapshot to be no longer than {line_limit} lines but it was {line_count} lines long"
         ))
         .with_label(span)
 }
