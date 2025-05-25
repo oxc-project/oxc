@@ -27,7 +27,7 @@ fn no_snapshot(line_count: usize, span: Span) -> OxcDiagnostic {
 fn too_long_snapshot(line_limit: usize, line_count: usize, span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Snapshot is too long.")
         .with_help(format!(
-            "Expected Jest snapshot to be smaller than {line_limit} lines but was {line_count} lines long"
+            "Expected Jest snapshot to be no longer than {line_limit} lines but it was {line_count} lines long"
         ))
         .with_label(span)
 }
@@ -193,12 +193,13 @@ impl NoLargeSnapshots {
             return;
         };
 
-        if !jest_fn_call.args.is_empty()
-            && jest_fn_call.members.iter().any(|member| {
+        if !jest_fn_call.args.is_empty() {
+            let Some(snapshot_matcher) = jest_fn_call.members.iter().find(|member| {
                 member.is_name_equal("toMatchInlineSnapshot")
                     || member.is_name_equal("toThrowErrorMatchingInlineSnapshot")
-            })
-        {
+            }) else {
+                return;
+            };
             let Some(first_arg) = jest_fn_call.args.first() else {
                 return;
             };
@@ -206,8 +207,7 @@ impl NoLargeSnapshots {
                 return;
             };
 
-            let span = first_arg_expr.span();
-            self.report_in_span(span, ctx);
+            self.report_in_span(snapshot_matcher.span, first_arg_expr.span(), ctx);
         }
     }
 
@@ -244,14 +244,18 @@ impl NoLargeSnapshots {
         }
     }
 
-    fn report_in_span(&self, span: Span, ctx: &LintContext) {
-        let line_count = Self::get_line_count(span, ctx);
+    fn report_in_span(&self, snapshot_matcher_span: Span, first_arg_span: Span, ctx: &LintContext) {
+        let line_count = Self::get_line_count(first_arg_span, ctx);
 
         if line_count > self.inline_max_size {
             if self.inline_max_size == 0 {
-                ctx.diagnostic(no_snapshot(line_count, span));
+                ctx.diagnostic(no_snapshot(line_count, snapshot_matcher_span));
             } else {
-                ctx.diagnostic(too_long_snapshot(self.inline_max_size, line_count, span));
+                ctx.diagnostic(too_long_snapshot(
+                    self.inline_max_size,
+                    line_count,
+                    snapshot_matcher_span,
+                ));
             }
         }
     }
