@@ -742,46 +742,41 @@ impl<'a> Symbol<'_, 'a> {
         false
     }
 
+    /// Checks if a reference is within a function or class declaration
+    /// and refers to that same function or class itself.
+    ///
+    /// ```js
+    /// // Function
+    /// function foo() {
+    ///    foo(); // Refers to the function itself, treated as a self-call
+    /// }
+    ///
+    /// foo(); // This call expression is outside the function, not a self-call
+    ///
+    /// // Class
+    /// class Foo {
+    ///   constructor() { }
+    ///   bar() {
+    ///    new Foo(); // Refers to the class itself, treated as a self-call
+    ///   }
+    /// }
+    ///
+    /// new Foo(); // This new expression is outside the class, not a self-call
+    /// ```
     fn is_self_call_simple(&self, reference: &Reference) -> bool {
-        let decl_scope_id = self.scope_id();
-        let call_scope_id = self.get_ref_scope(reference);
         let redeclarations = self.scoping().symbol_redeclarations(self.id());
-        let container_id = if redeclarations.is_empty() {
-            self.declaration().kind().get_container_scope_id()
+        if redeclarations.is_empty() {
+            self.declaration().span().contains_inclusive(self.get_ref_span(reference))
         } else {
-            // Syntax like `var a = 0; function a() { a() }` is legal. We need to
-            // check the redeclarations to find the one that is a function and use
-            // its scope id as the container id.
-            let declaration = redeclarations.iter().find(|decl| decl.flags.is_function()).unwrap();
-            self.nodes().get_node(declaration.declaration).kind().get_container_scope_id()
-        };
-
-        let Some(container_id) = container_id else {
-            debug_assert!(
-                false,
-                "Found a function call or or new expr reference on a node flagged as a function or class, but the symbol's declaration node has no scope id. It should always be a container."
-            );
-            return false;
-        };
-
-        // scope ids are created in ascending order in an "E" shape
-        // (depth-first, from top to bottom). if call < decl, then it will never
-        // be within a scope contained by the declaration, and therefore never
-        // be a self-call. Similarly, if the call is within the same scope as
-        // the declaration, it will never be inside the declaration.
-        if call_scope_id <= decl_scope_id {
-            return false;
+            // Syntax like `var a = 0; function a() { a() }` is legal. We need
+            // to check the redeclarations to find the one that is a function
+            // and use its span to check if the reference is within it.
+            let span = self.get_ref_span(reference);
+            redeclarations.iter().any(|decl| {
+                decl.flags.intersects(SymbolFlags::Function)
+                    && self.nodes().kind(decl.declaration).span().contains_inclusive(span)
+            })
         }
-
-        for scope_id in self.scoping().scope_ancestors(call_scope_id) {
-            if scope_id == container_id {
-                return true;
-            } else if scope_id == decl_scope_id {
-                return false;
-            }
-        }
-
-        unreachable!();
     }
 
     /// Get the [`ScopeId`] where a [`Reference`] is located.
