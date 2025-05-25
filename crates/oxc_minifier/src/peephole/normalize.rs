@@ -26,7 +26,7 @@ pub struct NormalizeOptions {
 /// * convert whiles to fors
 /// * convert `const` to `let` for non-exported variables
 /// * convert `Infinity` to `f64::INFINITY`
-/// * convert `NaN` to `f64::NaN`
+/// * convert `NaN` and `Number.NaN` to `f64::NaN`
 /// * convert `var x; void x` to `void 0`
 /// * convert `undefined` to `void 0`
 /// * apply `pure` to side-effect free global constructors (e.g. `new WeakMap()`)
@@ -82,7 +82,7 @@ impl<'a> Traverse<'a> for Normalize {
         if let Some(e) = match expr {
             Expression::Identifier(ident) => Self::try_compress_identifier(ident, ctx),
             Expression::UnaryExpression(e) if e.operator.is_void() => {
-                Self::convert_void_ident(e, ctx);
+                Self::fold_void_ident(e, ctx);
                 None
             }
             Expression::ArrowFunctionExpression(e) => {
@@ -92,6 +92,7 @@ impl<'a> Traverse<'a> for Normalize {
             Expression::CallExpression(_) if self.compress_options.drop_console => {
                 self.compress_console(expr, ctx)
             }
+            Expression::StaticMemberExpression(e) => Self::fold_number_nan_to_nan(e, ctx),
             _ => None,
         } {
             *expr = e;
@@ -214,12 +215,7 @@ impl<'a> Normalize {
                 if Self::is_unary_delete_ancestor(ctx.ancestors()) {
                     return None;
                 }
-                Some(ctx.ast.expression_numeric_literal(
-                    ident.span,
-                    f64::NAN,
-                    None,
-                    NumberBase::Decimal,
-                ))
+                Some(ctx.ast.nan(ident.span))
             }
             _ => None,
         }
@@ -239,13 +235,30 @@ impl<'a> Normalize {
         false
     }
 
-    fn convert_void_ident(e: &mut UnaryExpression<'a>, ctx: &TraverseCtx<'a>) {
+    fn fold_void_ident(e: &mut UnaryExpression<'a>, ctx: &TraverseCtx<'a>) {
         debug_assert!(e.operator.is_void());
         let Expression::Identifier(ident) = &e.argument else { return };
         if Ctx(ctx).is_global_reference(ident) {
             return;
         }
         e.argument = ctx.ast.expression_numeric_literal(ident.span, 0.0, None, NumberBase::Decimal);
+    }
+
+    fn fold_number_nan_to_nan(
+        e: &StaticMemberExpression<'a>,
+        ctx: &TraverseCtx<'a>,
+    ) -> Option<Expression<'a>> {
+        let Expression::Identifier(ident) = &e.object else { return None };
+        if ident.name != "Number" {
+            return None;
+        }
+        if e.property.name != "NaN" {
+            return None;
+        }
+        if !Ctx(ctx).is_global_reference(ident) {
+            return None;
+        }
+        Some(ctx.ast.nan(ident.span))
     }
 
     fn set_no_side_effects_to_call_expr(call_expr: &mut CallExpression<'a>, ctx: &TraverseCtx<'a>) {
@@ -378,5 +391,11 @@ mod test {
     #[test]
     fn drop_debugger() {
         test("debugger", "");
+    }
+
+    #[test]
+    fn fold_number_nan() {
+        test("foo(Number.NaN)", "foo(NaN)");
+        test_same("let Number; foo(Number.NaN)");
     }
 }

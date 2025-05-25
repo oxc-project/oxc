@@ -2,6 +2,4 @@ commit: 4b5d36ab
 
 minifier_test262 Summary:
 AST Parsed     : 42013/42013 (100.00%)
-Positive Passed: 42012/42013 (100.00%)
-Compress: tasks/coverage/test262/test/built-ins/Date/prototype/valueOf/S9.4_A3_T2.js
-
+Positive Passed: 42013/42013 (100.00%)

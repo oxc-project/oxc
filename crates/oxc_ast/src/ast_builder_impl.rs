@@ -140,6 +140,11 @@ impl<'a> AstBuilder<'a> {
             num,
         )))
     }
+    /// `NaN`
+    #[inline]
+    pub fn nan(self, span: Span) -> Expression<'a> {
+        self.expression_numeric_literal(span, f64::NAN, None, NumberBase::Decimal)
+    }
 
     /// `"use strict"` directive
     #[inline]

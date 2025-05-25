@@ -183,6 +183,12 @@ fn pure_comment_for_pure_global_constructors() {
     test("var x = new WeakSet([])", "var x = /* @__PURE__ */ new WeakSet([]);\n");
 }
 
+#[test]
+fn fold_number_nan() {
+    test("foo(Number.NaN)", "foo(NaN)");
+    test_same("let Number; foo(Number.NaN)");
+}
+
 // https://github.com/terser/terser/blob/v5.9.0/test/compress/dead-code.js
 #[test]
 fn dce_from_terser() {
