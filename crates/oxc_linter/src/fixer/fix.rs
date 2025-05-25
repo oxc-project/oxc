@@ -476,30 +476,6 @@ impl<'a> CompositeFix<'a> {
         }
     }
 
-    // TODO: do we want this?
-    // pub fn extend(&mut self, fix: CompositeFix<'a>) {
-    //     match self {
-    //         Self::None => *self = fix,
-    //         Self::Single(fix1) => {
-    //             match fix {
-    //                 Self::None => {},
-    //                 Self::Single(fix2) => *self = Self::Multiple(vec![fix1.clone(), fix2]),
-    //                 Self::Multiple(mut fixes) => {
-    //                     fixes.insert(0, fix1.clone());
-    //                     *self = Self::Multiple(fixes);
-    //                 }
-    //             }
-    //         }
-    //         Self::Multiple(fixes) => {
-    //             match fix {
-    //                 Self::None => {},
-    //                 Self::Single(fix2) => fixes.push(fix2),
-    //                 Self::Multiple(fixes2) => fixes.extend(fixes2),
-    //             }
-    //         }
-    //     }
-    // }
-
     /// Gets one fix from the fixes. If we retrieve multiple fixes, this merges those into one.
     /// <https://github.com/eslint/eslint/blob/v9.9.1/lib/linter/report-translator.js#L181-L203>
     pub fn normalize_fixes(self, source_text: &str) -> Fix<'a> {
