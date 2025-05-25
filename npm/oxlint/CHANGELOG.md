@@ -4,6 +4,16 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.16.12] - 2025-05-25
+
+### Features
+
+- 6a7018e linter: Generate stricter json schema for lint plugins (#11219) (camc314)
+
+### Bug Fixes
+
+- e8470d9 linter: Delay merging of oxlintrc configs (#10835) (camc314)
+
 ## [0.15.14] - 2025-03-11
 
 ### Features

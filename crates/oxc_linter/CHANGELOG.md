@@ -4,6 +4,74 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.16.12] - 2025-05-25
+
+- 5d9344f rust: [**BREAKING**] Clippy avoid-breaking-exported-api = false (#11088) (Boshen)
+
+### Features
+
+- 691416a linter: Add auto-fix to unicorn/no-static-only-class (#11249) (yefan)
+- 6a7018e linter: Generate stricter json schema for lint plugins (#11219) (camc314)
+- 66e0b1f linter: Implement unicorn/prefer-global-this (#11197) (camc314)
+- b26554b linter: Implement unicorn/no-instanceof-builtins (#11196) (camc314)
+- 699ec64 linter: Add autofix to eslint/no-unneeded-ternary (#11184) (yefan)
+- b3bbdda linter: Implement unicorn/prefer-object-from-entries (#11174) (camc314)
+- 20f9458 linter: Implement unicorn/prefer-array-find (#11170) (camc314)
+- f294c42 linter: Implement unicorn/no-array-method-this-argument (#11169) (camc314)
+- 07dac71 linter: Implement unicorn/prefer-array-index-of (#11168) (camc314)
+- cd920d3 linter: Implement unicorn/no-unnecessary-array-flat-depth (#11167) (camc314)
+- 385b84d linter: Unicorn/no-for-loop (#11154) (camc314)
+- a762038 linter: Add auto-fix to eslint/no-array-constructor (#11148) (yefan)
+- 12b0917 linter: Auto-generate docs for rule configs (#10629) (DonIsaac)
+
+### Bug Fixes
+
+- e8470d9 linter: Delay merging of oxlintrc configs (#10835) (camc314)
+- 6e9de84 linter: False positives in no-instanceof-builtins (#11210) (camc314)
+- 8e7fe03 linter: Fix panic in eslint/require-await (#11211) (camc314)
+- 4104b01 linter: Fix false positive on React in `consistent-type-imports` (#11171) (DonIsaac)
+- 25c6266 linter: Remove duplicate test case from no-useless-escape (#11146) (camc314)
+- 6a5911a linter: Add `allow_regex_characters` option to `no-useless-escape` (#11139) (camc314)
+- 7283f00 linter/prefer-todo: False fix for `test['skip']` (#11128) (shulaoda)
+
+### Performance
+
+- 0c7aae4 linter: Speed up counting lines in `eslint/max-lines` and `eslint/max-lines-per-function` (#11242) (Ulrich Stark)
+- 1846b03 linter: Avoid iterating lines twice if blank lines are skipped (#11235) (Ulrich Stark)
+- e8479bf linter: Remove unnecessary `codegen` in `jest/no-untyped-mock-factory` (#11097) (shulaoda)
+- dd33e57 linter: Remove unnecessary `codegen` in `eslint/prefer-numeric-literals` (#11099) (shulaoda)
+- 49d677c linter: Remove unnecessary `codegen` in `jest/prefer-to-have-length` (#11100) (shulaoda)
+- c294447 linter: Remove unnecessary `codegen` in `vitest/prefer-to-be-object` (#11086) (shulaoda)
+- 8faf518 linter: Remove unnecessary `codegen` in `unicorn/require-number-to-fixed-digits-argument` (#11085) (shulaoda)
+- e1bbdab linter/prefer-expect-resolves: Remove unnecessary `codegen` (#11127) (shulaoda)
+- 6e3e37b unicorn/no-instanceof-array: Reduce memory allocations in fixer (#11109) (shulaoda)
+
+### Documentation
+
+- f2e3e79 linter: Fix formatting inconsistencies in rule docs (#11227) (Ulrich Stark)
+- df4cc8d linter: Update missing linter rule documentation (#11190) (Aman Desai)
+- b70c51e linter: Google_font_preconnect: linter rules (#11189) (Aman Desai)
+- 67c0b4d linter: Explanation for rule `nextjs/no_sync_script` (#11166) (Aman Desai)
+- c974f32 linter: Improve rule docs for `eslint/no-bitwise` (#11126) (Ulrich Stark)
+- cbb8e0b linter: Improve rule docs for `eslint/default-case` (#11125) (Ulrich Stark)
+- bcc923c linter: Normalize rule docs format (#11104) (Ulrich Stark)
+- 69a14ab linter: Improve docs for `eslint/no-debugger` (#11103) (Ulrich Stark)
+- 2f7346b linter: Improve docs for `eslint/no-constructor-return` (#11102) (Ulrich Stark)
+
+### Refactor
+
+- c64f800 linter: Introduce `ConfigStoreBuilder.extended_paths` property (#11222) (Sysix)
+- e4c7614 linter: Cleanup `eslint/no-useless-constructor` (#11221) (Ulrich Stark)
+- a695472 linter: Simplify finding ancestor of specific kind (#11224) (Ulrich Stark)
+- b822ac8 linter: Simplify deserialization for `AllowWarnDeny` (#11195) (camc314)
+- 1210621 linter: Remove functions in favor of `Span::contains_inclusive` (#11133) (Ulrich Stark)
+- 73b3f42 linter: Better names for parameters of diagnostic functions (#11129) (Ulrich Stark)
+- 24fe879 linter: Remove unnecessary span construction (#11131) (Ulrich Stark)
+- f079338 linter: Remove unnecessary macro (#11114) (overlookmotel)
+- 9f3a14a linter: Cleanup diagnostic and docs for `eslint/no-console` (#11101) (Ulrich Stark)
+- 18cdabf linter/prefer-todo: Remove unnecessary `codegen` (#11130) (shulaoda)
+- bb8bde3 various: Update macros to use `expr` fragment specifier (#11113) (overlookmotel)
+
 ## [0.16.11] - 2025-05-16
 
 - 4e5c73b span: [**BREAKING**] `SourceType::from_path(".js")` return js instead of jsx (#11038) (Boshen)
