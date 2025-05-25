@@ -4,6 +4,19 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.16.12] - 2025-05-25
+
+### Features
+
+- 0c1f382 language_server: Watch for files inside `.oxlintrc.json` extends (#11226) (Sysix)
+- 1675b2c language_server: Tell clients to watch for .oxlintrc.json files (#11078) (Sysix)
+
+### Refactor
+
+- a28fe1e editor: Use always the provided language server (#11115) (Sysix)
+- 35761ae language_server/editor: Refresh file watchers without restarting the server (didChangeConfiguration) (#11112) (Sysix)
+- d5fdf17 language_server/editor: Refresh file watchers without restarting the server (didChangeWorkspaceFolders) (#11094) (Sysix)
+
 ## [0.16.11] - 2025-05-16
 
 ### Features
