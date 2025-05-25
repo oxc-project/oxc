@@ -1,6 +1,5 @@
 #![expect(missing_docs)] // FIXME
 use oxc_span::Atom;
-use oxc_syntax::scope::ScopeId;
 
 use super::{AstKind, ast::*};
 
@@ -92,34 +91,6 @@ impl<'a> AstKind<'a> {
         match self {
             Self::IdentifierReference(ident) => ident.name == name,
             _ => false,
-        }
-    }
-
-    /// If this node is a container, get the [`ScopeId`] it creates.
-    ///
-    /// Will always be none if semantic analysis has not been run.
-    pub fn get_container_scope_id(self) -> Option<ScopeId> {
-        match self {
-            Self::Program(p) => Some(p.scope_id()),
-            Self::BlockStatement(b) => Some(b.scope_id()),
-            Self::ForStatement(f) => Some(f.scope_id()),
-            Self::ForInStatement(f) => Some(f.scope_id()),
-            Self::ForOfStatement(f) => Some(f.scope_id()),
-            Self::SwitchStatement(switch) => Some(switch.scope_id()),
-            Self::CatchClause(catch) => Some(catch.scope_id()),
-            Self::Function(f) => Some(f.scope_id()),
-            Self::ArrowFunctionExpression(f) => Some(f.scope_id()),
-            Self::Class(class) => Some(class.scope_id()),
-            Self::StaticBlock(b) => Some(b.scope_id()),
-            Self::TSEnumDeclaration(e) => Some(e.scope_id()),
-            Self::TSConditionalType(e) => Some(e.scope_id()),
-            Self::TSTypeAliasDeclaration(e) => Some(e.scope_id()),
-            Self::TSInterfaceDeclaration(e) => Some(e.scope_id()),
-            Self::TSMethodSignature(e) => Some(e.scope_id()),
-            Self::TSConstructSignatureDeclaration(e) => Some(e.scope_id()),
-            Self::TSModuleDeclaration(e) => Some(e.scope_id()),
-            Self::TSMappedType(e) => Some(e.scope_id()),
-            _ => None,
         }
     }
 
