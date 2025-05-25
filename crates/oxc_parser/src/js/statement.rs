@@ -115,41 +115,34 @@ impl<'a> ParserImpl<'a> {
             Kind::Let if !self.cur_token().escaped() => self.parse_let(stmt_ctx),
             // Peek tokens
             Kind::Async
-                if {
-                    let peek_token = self.peek_token();
-                    peek_token.kind() == Kind::Function && !peek_token.is_on_new_line()
-                } =>
+                // Check if we are at `async function`
+                if self.lookahead(|p| {
+                    p.bump_any();
+                    p.at(Kind::Function) && !p.cur_token().is_on_new_line()
+                }) =>
             {
                 self.parse_function_declaration(stmt_ctx)
             }
-            Kind::Import if !matches!(self.peek_kind(), Kind::Dot | Kind::LParen) => {
+            Kind::Import if {
+                // Check we are not at `import(` or `import.`
+                self.lookahead(|p| {
+                    p.bump_any();
+                    !p.at(Kind::Dot) && !p.at(Kind::LParen)
+                })
+            } => {
                 self.parse_import_declaration()
             }
-            Kind::Const if !(self.is_ts && self.peek_at(Kind::Enum)) => {
+            // Check we are not at a `const enum` in TypeScript
+            Kind::Const if !(self.is_ts && self.lookahead(|p| {
+                p.bump_any();
+                p.at(Kind::Enum)
+            })) =>
+            {
                 self.parse_variable_statement(stmt_ctx)
             }
-            Kind::Using
-                if {
-                    let peek_token = self.peek_token();
-                    peek_token.kind().is_binding_identifier() && !peek_token.is_on_new_line()
-                } =>
-            {
-                self.parse_using_statement()
-            }
+            Kind::Using if self.is_using_declaration() => self.parse_using_statement(),
             // Peek 2 tokens
-            Kind::Await
-                if {
-                    let peek_token = self.peek_token();
-                    if peek_token.kind() == Kind::Using && !peek_token.is_on_new_line() {
-                        let peek2_token = self.nth(2);
-                        peek2_token.kind().is_binding_identifier() && !peek2_token.is_on_new_line()
-                    } else {
-                        false
-                    }
-                } =>
-            {
-                self.parse_using_statement()
-            }
+            Kind::Await if self.is_using_statement() => self.parse_using_statement(),
             Kind::Async
             | Kind::Interface
             | Kind::Type
@@ -337,40 +330,60 @@ impl<'a> ParserImpl<'a> {
             return self.parse_for_loop(span, None, r#await);
         }
 
-        // for (let | for (const | for (var
+        // `for (let` | `for (const` | `for (var`
         // disallow for (let in ..)
         if self.at(Kind::Const)
             || self.at(Kind::Var)
-            || (self.at(Kind::Let) && self.peek_kind().is_after_let())
+            || (self.at(Kind::Let)
+                && self.lookahead(|p| {
+                    p.bump_any();
+                    p.cur_kind().is_after_let()
+                }))
         {
             return self.parse_variable_declaration_for_statement(span, r#await);
         }
         // [+Using, +Await] await [no LineTerminator here] using [no LineTerminator here]
-        if self.cur_kind() == Kind::Await
-            && !self.peek_token().is_on_new_line()
-            && self.peek_kind() == Kind::Using
-            && !self.nth(2).is_on_new_line()
+        if self.at(Kind::Await)
+            && self.lookahead(|p| {
+                p.bump_any();
+                if !p.at(Kind::Using) || p.cur_token().is_on_new_line() {
+                    return false;
+                }
+                p.bump_any();
+                !p.cur_token().is_on_new_line()
+            })
         {
             return self.parse_using_declaration_for_statement(span, r#await);
         }
 
         // [+Using] using [no LineTerminator here] ForBinding[?Yield, ?Await, ~Pattern]
-        if self.cur_kind() == Kind::Using
-            && !self.peek_token().is_on_new_line()
-            && self.peek_kind() != Kind::Of
-            && self.peek_kind().is_binding_identifier()
+        if self.at(Kind::Using)
+            && self.lookahead(|p| {
+                p.bump_any();
+                !p.cur_token().is_on_new_line()
+                    && !p.at(Kind::Of)
+                    && p.cur_kind().is_binding_identifier()
+            })
         {
             return self.parse_using_declaration_for_statement(span, r#await);
         }
 
-        let is_let_of = self.at(Kind::Let) && self.peek_at(Kind::Of);
-        let is_async_of =
-            self.at(Kind::Async) && !self.cur_token().escaped() && self.peek_at(Kind::Of);
-        let expr_span = self.start_span();
-
         if self.at(Kind::RParen) {
             return self.parse_for_loop(span, None, r#await);
         }
+
+        let is_let_of = self.at(Kind::Let)
+            && self.lookahead(|p| {
+                p.bump_any();
+                p.at(Kind::Of)
+            });
+        let is_async_of = self.at(Kind::Async)
+            && !self.cur_token().escaped()
+            && self.lookahead(|p| {
+                p.bump_any();
+                p.at(Kind::Of)
+            });
+        let expr_span = self.start_span();
 
         let init_expression = self.context(Context::empty(), Context::In, ParserImpl::parse_expr);
 
@@ -409,6 +422,24 @@ impl<'a> ParserImpl<'a> {
 
         let init = Some(ForStatementInit::VariableDeclaration(init_declaration));
         self.parse_for_loop(span, init, r#await)
+    }
+
+    fn is_using_declaration(&mut self) -> bool {
+        self.lookahead(|p| {
+            p.is_next_token_binding_identifier_or_start_of_object_destructuring_on_same_line(false)
+        })
+    }
+
+    fn is_next_token_binding_identifier_or_start_of_object_destructuring_on_same_line(
+        &mut self,
+        disallow_of: bool,
+    ) -> bool {
+        self.bump_any();
+        if disallow_of && self.at(Kind::Of) {
+            return false;
+        }
+        (self.cur_kind().is_binding_identifier() || self.at(Kind::LParen))
+            && !self.cur_token().is_on_new_line()
     }
 
     fn parse_using_declaration_for_statement(&mut self, span: u32, r#await: bool) -> Statement<'a> {
