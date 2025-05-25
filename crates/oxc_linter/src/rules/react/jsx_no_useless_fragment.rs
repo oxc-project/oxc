@@ -1,3 +1,10 @@
+use crate::{
+    AstNode,
+    context::{ContextHost, LintContext},
+    fixer::{RuleFix, RuleFixer},
+    rule::Rule,
+};
+use oxc_allocator::Vec as ArenaVec;
 use oxc_ast::{
     AstKind,
     ast::{
@@ -8,13 +15,7 @@ use oxc_ast::{
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::NodeId;
-use oxc_span::Span;
-
-use crate::{
-    AstNode,
-    context::{ContextHost, LintContext},
-    rule::Rule,
-};
+use oxc_span::{GetSpan, Span};
 
 fn needs_more_children(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Fragments should contain more than one child.").with_label(span)
@@ -100,12 +101,26 @@ impl JsxNoUselessFragment {
             && !(self.allow_expressions && is_fragment_with_single_expression(&elem.children))
         {
             let span = elem.opening_element.span;
-            ctx.diagnostic(needs_more_children(span));
+            let diagnostic = needs_more_children(span);
+            if can_fix(node, &elem.children, ctx) {
+                ctx.diagnostic_with_suggestion(diagnostic, |fixer| {
+                    fix_fragment_element(elem, ctx, fixer)
+                });
+            } else {
+                ctx.diagnostic(diagnostic);
+            }
         }
 
         if is_child_of_html_element(node, ctx) {
             let span = elem.opening_element.span;
-            ctx.diagnostic(child_of_html_element(span));
+            let diagnostic = child_of_html_element(span);
+            if can_fix(node, &elem.children, ctx) {
+                ctx.diagnostic_with_suggestion(diagnostic, |fixer| {
+                    fix_fragment_element(elem, ctx, fixer)
+                });
+            } else {
+                ctx.diagnostic(diagnostic);
+            }
         }
     }
 
@@ -115,13 +130,150 @@ impl JsxNoUselessFragment {
             && !(self.allow_expressions && is_fragment_with_single_expression(&elem.children))
         {
             let span = elem.opening_fragment.span;
-            ctx.diagnostic(needs_more_children(span));
+            let diagnostic = needs_more_children(span);
+            if can_fix(node, &elem.children, ctx) {
+                ctx.diagnostic_with_suggestion(diagnostic, |fixer| {
+                    fix_jsx_fragment(elem, ctx, fixer)
+                });
+            } else {
+                ctx.diagnostic(diagnostic);
+            }
         }
 
         if is_child_of_html_element(node, ctx) {
             let span = elem.opening_fragment.span;
-            ctx.diagnostic(child_of_html_element(span));
+            let diagnostic = child_of_html_element(span);
+            if can_fix(node, &elem.children, ctx) {
+                ctx.diagnostic_with_suggestion(diagnostic, |fixer| {
+                    fix_jsx_fragment(elem, ctx, fixer)
+                });
+            } else {
+                ctx.diagnostic(diagnostic);
+            }
         }
+    }
+}
+
+fn fix_fragment_element<'a>(
+    elem: &JSXElement,
+    ctx: &LintContext<'a>,
+    fixer: RuleFixer<'_, 'a>,
+) -> RuleFix<'a> {
+    let replacement = if let Some(closing_elem) = &elem.closing_element {
+        trim_like_react(
+            Span::new(elem.opening_element.span.end, closing_elem.span.start)
+                .source_text(ctx.source_text()),
+        )
+    } else {
+        ""
+    };
+
+    fixer.replace(elem.span(), trim_like_react(replacement))
+}
+
+fn fix_jsx_fragment<'a>(
+    elem: &JSXFragment,
+    ctx: &LintContext<'a>,
+    fixer: RuleFixer<'_, 'a>,
+) -> RuleFix<'a> {
+    fixer.replace(
+        elem.span(),
+        trim_like_react(
+            Span::new(elem.opening_fragment.span.end, elem.closing_fragment.span.start)
+                .source_text(ctx.source_text()),
+        ),
+    )
+}
+
+fn trim_like_react(text: &str) -> &str {
+    let bytes = text.as_bytes();
+    let len = bytes.len();
+
+    if len == 0 {
+        return text;
+    }
+
+    // Find leading whitespace
+    let mut leading_end = 0;
+    let mut has_leading_newline = false;
+
+    for &byte in bytes {
+        if byte.is_ascii_whitespace() {
+            if byte == b'\n' {
+                has_leading_newline = true;
+            }
+            leading_end += 1;
+        } else {
+            break;
+        }
+    }
+
+    // Find trailing whitespace
+    let mut trailing_start = len;
+    let mut has_trailing_newline = false;
+
+    for &byte in bytes.iter().rev() {
+        if byte.is_ascii_whitespace() {
+            if byte == b'\n' {
+                has_trailing_newline = true;
+            }
+            trailing_start -= 1;
+        } else {
+            break;
+        }
+    }
+
+    // Apply React-like trimming rules
+    let start = if has_leading_newline { leading_end } else { 0 };
+    let end = if has_trailing_newline { trailing_start } else { len };
+
+    // Handle edge cases
+    if start >= end {
+        return "";
+    }
+
+    &text[start..end]
+}
+
+fn can_fix(node: &AstNode, children: &ArenaVec<JSXChild<'_>>, ctx: &LintContext) -> bool {
+    let Some(parent) = ctx.nodes().parent_kind(node.id()) else {
+        return false;
+    };
+
+    if !matches!(parent, AstKind::JSXElement(_) | AstKind::JSXFragment(_)) {
+        // const a = <></>
+        if children.is_empty() {
+            return false;
+        }
+
+        // const a = <>cat {meow}</>
+        if children.iter().all(|child| {
+            is_whitespace_only_text(child) || matches!(child, JSXChild::ExpressionContainer(_))
+        }) {
+            return false;
+        }
+    }
+
+    // Not safe to fix `<Eeee><>foo</></Eeee>` because `Eeee` might require its children be a ReactElement.
+    if let AstKind::JSXElement(el) = parent {
+        if !el
+            .opening_element
+            .name
+            .get_identifier_name()
+            .is_some_and(|ident| ident.chars().all(char::is_lowercase))
+            && !is_jsx_fragment(&el.opening_element)
+        {
+            return false;
+        }
+    }
+
+    true
+}
+
+fn is_whitespace_only_text(child: &JSXChild) -> bool {
+    match child {
+        JSXChild::Text(text) => text.value.trim().is_empty(),
+        _ => false,
     }
 }
 
@@ -327,21 +479,17 @@ fn test() {
         (r"<p><>{meow}</></p>", r"<p>{meow}</p>", None),
         (r"<><div/></>", r"<div/>", None),
         (
-            r"
-            <>
+            r"<>
               <div/>
-            </>
-            ",
+            </>",
             r"<div/>",
             None,
         ),
         (r"<Fragment />", r"<Fragment />", None),
         (
-            r"
-                <React.Fragment>
+            r"<React.Fragment>
                   <Foo />
-                </React.Fragment>
-            ",
+                </React.Fragment>",
             r"<Foo />",
             None,
         ),
@@ -395,7 +543,7 @@ fn test() {
             r"
             const Comp = () => (
               <html>
-                <React.Fragment />
+                
               </html>
             );
             ",
