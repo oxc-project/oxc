@@ -227,4 +227,4 @@ source: crates/oxc_linter/src/tester.rs
  51 │ │   line
  52 │ ╰─▶ `);
     ╰────
-  help: Expected to not encounter a Jest snapshot but was found with 51 lines long
+  help: Expected to not encounter a Jest snapshot but one was found that is 51 lines long

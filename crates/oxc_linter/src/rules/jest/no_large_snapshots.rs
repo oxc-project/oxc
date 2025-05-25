@@ -19,7 +19,7 @@ use crate::{
 fn no_snapshot(line_count: usize, span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Snapshot is too long.")
         .with_help(format!(
-            "Expected to not encounter a Jest snapshot but was found with {line_count} lines long"
+            "Expected to not encounter a Jest snapshot but one was found that is {line_count} lines long"
         ))
         .with_label(span)
 }
