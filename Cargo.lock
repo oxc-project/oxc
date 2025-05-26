@@ -1828,6 +1828,7 @@ dependencies = [
  "indexmap",
  "insta",
  "itertools",
+ "itoa",
  "javascript-globals",
  "json-strip-comments",
  "language-tags",

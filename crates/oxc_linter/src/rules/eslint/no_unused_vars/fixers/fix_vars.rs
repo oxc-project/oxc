@@ -1,3 +1,4 @@
+use itoa::Buffer as ItoaBuffer;
 use oxc_ast::{
     AstKind,
     ast::{Expression, ForInStatement, ForOfStatement, VariableDeclarator},
@@ -129,27 +130,28 @@ impl NoUnusedVars {
     }
 
     fn get_unused_var_name(&self, symbol: &Symbol<'_, '_>) -> Option<CompactStr> {
-        let ignored_name: String = match self.vars_ignore_pattern.as_ref() {
+        let symbol_name = match self.vars_ignore_pattern.as_ref() {
             // TODO: support more patterns
-            IgnorePattern::Default => {
-                format!("_{}", symbol.name())
-            }
-            IgnorePattern::Some(re) if re.as_str() == "^_" => {
-                format!("_{}", symbol.name())
-            }
+            IgnorePattern::Default => symbol.name(),
+            IgnorePattern::Some(re) if re.as_str() == "^_" => symbol.name(),
             _ => return None,
         };
+        let mut i = 0;
+        let mut buffer = ItoaBuffer::new();
+        let mut new_name = String::with_capacity(symbol_name.len() + 2);
+
+        new_name.push('_');
+        new_name.push_str(symbol_name);
 
         // adjust name to avoid conflicts
         let scopes = symbol.scoping();
         let scope_id = symbol.scope_id();
-        let mut i = 0;
-        let mut new_name = ignored_name.clone();
+        let first_new_name_len = new_name.len();
         while scopes.scope_has_binding(scope_id, &new_name) {
-            new_name = format!("{ignored_name}{i}");
+            new_name.truncate(first_new_name_len);
+            new_name.push_str(buffer.format(i));
             i += 1;
         }
-
         Some(new_name.into())
     }
 }
