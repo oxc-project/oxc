@@ -58,7 +58,7 @@ impl From<Capabilities> for ServerCapabilities {
                     change: Some(TextDocumentSyncKind::FULL),
                     open_close: Some(true),
                     save: Some(TextDocumentSyncSaveOptions::SaveOptions(SaveOptions {
-                        include_text: Some(true),
+                        include_text: Some(false),
                     })),
                     ..Default::default()
                 },
