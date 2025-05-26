@@ -1,3 +1,4 @@
+use itoa::Buffer as ItoaBuffer;
 use oxc_ast::AstKind;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -126,16 +127,16 @@ impl Rule for MaxParams {
                         let error_msg = format!(
                             "Function '{}' has too many parameters ({}). Maximum allowed is {}.",
                             function_name,
-                            function.params.items.len(),
-                            self.max
+                            ItoaBuffer::new().format(function.params.items.len()),
+                            ItoaBuffer::new().format(self.max)
                         );
                         let span = function.params.span;
                         ctx.diagnostic(max_params_diagnostic(&error_msg, span));
                     } else {
                         let error_msg = format!(
                             "Function has too many parameters ({}). Maximum allowed is {}.",
-                            function.params.items.len(),
-                            self.max
+                            ItoaBuffer::new().format(function.params.items.len()),
+                            ItoaBuffer::new().format(self.max)
                         );
                         let span = function.params.span;
                         ctx.diagnostic(max_params_diagnostic(&error_msg, span));
@@ -146,8 +147,8 @@ impl Rule for MaxParams {
                 if function.params.items.len() > self.max {
                     let error_msg = format!(
                         "Arrow function has too many parameters ({}). Maximum allowed is {}.",
-                        function.params.items.len(),
-                        self.max
+                        ItoaBuffer::new().format(function.params.items.len()),
+                        ItoaBuffer::new().format(self.max)
                     );
                     let span = function.params.span;
                     ctx.diagnostic(max_params_diagnostic(&error_msg, span));

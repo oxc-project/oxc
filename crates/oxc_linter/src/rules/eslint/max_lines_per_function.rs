@@ -1,5 +1,6 @@
 use std::ops::Deref;
 
+use itoa::Buffer as ItoaBuffer;
 use oxc_ast::AstKind;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -22,7 +23,9 @@ fn max_lines_per_function_diagnostic(
     span: Span,
 ) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!(
-        "The {name} has too many lines ({count}). Maximum allowed is {max}."
+        "The {name} has too many lines ({}). Maximum allowed is {}.",
+        ItoaBuffer::new().format(count),
+        ItoaBuffer::new().format(max),
     ))
     .with_help("Consider splitting it into smaller functions.")
     .with_label(span)

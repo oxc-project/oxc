@@ -1,3 +1,4 @@
+use itoa::Buffer as ItoaBuffer;
 use oxc_ast::AstKind;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -10,9 +11,13 @@ use serde_json::Value;
 use crate::{AstNode, ast_util::is_function_node, context::LintContext, rule::Rule};
 
 fn max_depth_diagnostic(num: usize, max: usize, span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn(format!("Blocks are nested too deeply ({num}). Maximum allowed is {max}."))
-        .with_help("Consider refactoring your code.")
-        .with_label(span)
+    OxcDiagnostic::warn(format!(
+        "Blocks are nested too deeply ({}). Maximum allowed is {}.",
+        ItoaBuffer::new().format(num),
+        ItoaBuffer::new().format(max)
+    ))
+    .with_help("Consider refactoring your code.")
+    .with_label(span)
 }
 
 #[derive(Debug, Default, Clone, JsonSchema)]

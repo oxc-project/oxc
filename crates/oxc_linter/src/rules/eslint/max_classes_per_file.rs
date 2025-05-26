@@ -1,3 +1,4 @@
+use itoa::Buffer as ItoaBuffer;
 use oxc_ast::AstKind;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -8,9 +9,13 @@ use serde_json::Value;
 use crate::{context::LintContext, rule::Rule};
 
 fn max_classes_per_file_diagnostic(total: usize, max: usize, span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn(format!("File has too many classes ({total}). Maximum allowed is {max}",))
-        .with_help("Reduce the number of classes in this file")
-        .with_label(span)
+    OxcDiagnostic::warn(format!(
+        "File has too many classes ({}). Maximum allowed is {}",
+        ItoaBuffer::new().format(total),
+        ItoaBuffer::new().format(max)
+    ))
+    .with_help("Reduce the number of classes in this file")
+    .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]

@@ -1,3 +1,4 @@
+use itoa::Buffer as ItoaBuffer;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
@@ -6,8 +7,8 @@ use serde_json::Value;
 use crate::{context::LintContext, rule::Rule, utils::count_comment_lines};
 
 fn max_lines_diagnostic(count: usize, max: usize, span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn(format!("File has too many lines ({count})."))
-        .with_help(format!("Maximum allowed is {max}."))
+    OxcDiagnostic::warn(format!("File has too many lines ({}).", ItoaBuffer::new().format(count)))
+        .with_help(format!("Maximum allowed is {}.", ItoaBuffer::new().format(max)))
         .with_label(span)
 }
 

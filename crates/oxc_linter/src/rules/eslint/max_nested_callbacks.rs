@@ -1,3 +1,4 @@
+use itoa::Buffer as ItoaBuffer;
 use oxc_ast::AstKind;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -13,9 +14,13 @@ use crate::{
 };
 
 fn max_nested_callbacks_diagnostic(num: usize, max: usize, span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn(format!("Too many nested callbacks ({num}). Maximum allowed is {max}."))
-        .with_help("Reduce nesting with promises or refactoring your code.")
-        .with_label(span)
+    OxcDiagnostic::warn(format!(
+        "Too many nested callbacks ({}). Maximum allowed is {}.",
+        ItoaBuffer::new().format(num),
+        ItoaBuffer::new().format(max)
+    ))
+    .with_help("Reduce nesting with promises or refactoring your code.")
+    .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]

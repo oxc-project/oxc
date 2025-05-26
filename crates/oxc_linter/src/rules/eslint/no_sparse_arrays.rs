@@ -1,3 +1,4 @@
+use itoa::Buffer as ItoaBuffer;
 use oxc_ast::{AstKind, ast::ArrayExpressionElement};
 use oxc_diagnostics::{LabeledSpan, OxcDiagnostic};
 use oxc_macros::declare_oxc_lint;
@@ -93,7 +94,7 @@ impl Rule for NoSparseArrays {
                     ctx.diagnostic(
                         OxcDiagnostic::warn(format!(
                             "{} unexpected commas in middle of array",
-                            violations.len()
+                            ItoaBuffer::new().format(violations.len())
                         ))
                         .with_help("remove the comma or insert `undefined`")
                         .with_label(span),

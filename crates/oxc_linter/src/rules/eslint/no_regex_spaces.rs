@@ -1,3 +1,4 @@
+use itoa::Buffer as ItoaBuffer;
 use oxc_allocator::{Allocator, Vec};
 use oxc_ast::{
     AstKind,
@@ -16,7 +17,7 @@ use crate::{AstNode, context::LintContext, rule::Rule};
 
 fn no_regex_spaces_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Multiple consecutive spaces are hard to count.")
-        .with_help(format!("Use a quantifier: ` {{{size}}}`", size = span.size()))
+        .with_help(format!("Use a quantifier: ` {{{}}}`", ItoaBuffer::new().format(span.size())))
         .with_label(span)
 }
 
