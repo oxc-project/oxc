@@ -12,7 +12,10 @@ use crate::{
 impl<'a> ParserImpl<'a> {
     pub(crate) fn parse_let(&mut self, stmt_ctx: StatementContext) -> Statement<'a> {
         let span = self.start_span();
-        let peeked = self.peek_kind();
+        let checkpoint = self.checkpoint();
+        self.bump_any();
+        let peeked = self.cur_kind();
+        self.rewind(checkpoint);
         // let = foo, let instanceof x, let + 1
         if peeked.is_assignment_operator() || peeked.is_binary_operator() {
             let expr = self.parse_assignment_expression_or_higher();
