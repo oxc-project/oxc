@@ -138,9 +138,9 @@ oxc_tasks_common = { path = "tasks/common" }
 oxc_tasks_transform_checker = { path = "tasks/transform_checker" }
 
 # Relaxed version so the user can decide which version to use.
-napi = "3.0.0-beta"
+napi = "3.0.0-beta.2"
 napi-build = "2"
-napi-derive = "3.0.0-beta"
+napi-derive = "3.0.0-beta.2"
 
 # Relaxed version so the user can decide which version to use.
 indexmap = "2"
@@ -160,10 +160,10 @@ oxc_resolver = "10"
 oxc_sourcemap = "3"
 
 #
-allocator-api2 = "=0.3.0"
+allocator-api2 = "=0.2.21"
 base64 = "0.22.1"
-bitflags = "2.9.0"
-bpaf = "0.9.19"
+bitflags = "2.9.1"
+bpaf = "0.9.20"
 # `bumpalo` must be pinned to exactly this version.
 # `Allocator::from_raw_parts` (used in raw transfer) depends on internal implementation details
 # of `bumpalo` which may change in a future version.
@@ -171,7 +171,7 @@ bpaf = "0.9.19"
 bumpalo = "=3.17.0"
 compact_str = "0.9.0"
 console = "0.15.11"
-constcat = "0.6.0"
+constcat = "0.6.1"
 convert_case = "0.8.0"
 cow-utils = "0.1.3"
 criterion2 = { version = "3.0.0", default-features = false }
@@ -198,7 +198,7 @@ lazy_static = "1.5.0"
 log = "0.4.27"
 markdown = "1.0.0"
 memchr = "2.7.4"
-miette = { package = "oxc-miette", version = "2.2.1", features = ["fancy-no-syscall"] }
+miette = { package = "oxc-miette", version = "2.3.0", features = ["fancy-no-syscall"] }
 mimalloc-safe = "0.1.52"
 nonmax = "0.5.5"
 num-bigint = "0.4.6"
@@ -224,7 +224,7 @@ similar = "2.7.0"
 similar-asserts = "1.7.0"
 smallvec = "1.15.0"
 tempfile = "3.20.0"
-tokio = { version = "1.45.0", default-features = false }
+tokio = { version = "1.45.1", default-features = false }
 tower-lsp-server = "0.21.1"
 tracing-subscriber = "0.3.19"
 ureq = { version = "3.0.11", default-features = false }
