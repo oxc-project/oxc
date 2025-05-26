@@ -3474,11 +3474,11 @@ Negative Passed: 4519/4519 (100.00%)
  56 │   
     ╰────
 
-  × Cannot use `await` as an identifier in an async context
-    ╭─[test262/test/language/expressions/arrow-function/static-init-await-binding.js:17:6]
+  × Unexpected token
+    ╭─[test262/test/language/expressions/arrow-function/static-init-await-binding.js:17:12]
  16 │   static {
  17 │     (await => 0);
-    ·      ─────
+    ·            ──
  18 │   }
     ╰────
 
@@ -6599,12 +6599,13 @@ Negative Passed: 4519/4519 (100.00%)
  35 │ }
     ╰────
 
-  × Cannot use `await` as an identifier in an async context
-    ╭─[test262/test/language/expressions/async-arrow-function/await-as-param-ident-nested-arrow-parameter-position.js:17:11]
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
+    ╭─[test262/test/language/expressions/async-arrow-function/await-as-param-ident-nested-arrow-parameter-position.js:17:23]
  16 │ 
  17 │ async(a = await => {}) => {};
-    ·           ─────
+    ·                       ▲
     ╰────
+  help: Try insert a semicolon here
 
   × await expression not allowed in formal parameter
     ╭─[test262/test/language/expressions/async-arrow-function/await-as-param-nested-arrow-body-position.js:17:19]

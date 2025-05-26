@@ -734,12 +734,15 @@ impl<'a> ParserImpl<'a> {
             }
 
             let mut question_dot = false;
-            let is_property_access = if allow_optional_chain && self.at(Kind::QuestionDot) && {
-                let peek_kind = self.peek_kind();
-                peek_kind == Kind::LBrack
-                    || peek_kind.is_identifier_or_keyword()
-                    || peek_kind.is_template_start_of_tagged_template()
-            } {
+            let is_property_access = if allow_optional_chain
+                && self.at(Kind::QuestionDot)
+                && self.lookahead(|p| {
+                    p.bump_any();
+                    let kind = p.cur_kind();
+                    kind == Kind::LBrack
+                        || kind.is_identifier_or_keyword()
+                        || kind.is_template_start_of_tagged_template()
+                }) {
                 self.bump_any();
                 *in_optional_chain = true;
                 question_dot = true;
@@ -1012,7 +1015,10 @@ impl<'a> ParserImpl<'a> {
 
         if self.source_type.is_jsx()
             && kind == Kind::LAngle
-            && self.peek_kind().is_identifier_name()
+            && self.lookahead(|p| {
+                p.bump_any();
+                p.cur_kind().is_identifier_or_keyword()
+            })
         {
             return self.parse_jsx_expression();
         }
@@ -1427,40 +1433,44 @@ impl<'a> ParserImpl<'a> {
 
     fn is_await_expression(&mut self) -> bool {
         if self.at(Kind::Await) {
-            let peek_token = self.peek_token();
-            // Allow arrow expression `await => {}`
-            if peek_token.kind() == Kind::Arrow {
-                return false;
-            }
             if self.ctx.has_await() {
                 return true;
             }
-            // The following expressions are ambiguous
-            // await + 0, await - 0, await ( 0 ), await [ 0 ], await / 0 /u, await ``, await of []
-            if matches!(
-                peek_token.kind(),
-                Kind::Of | Kind::LParen | Kind::LBrack | Kind::Slash | Kind::RegExp
-            ) {
-                return false;
-            }
-
-            return !peek_token.is_on_new_line() && peek_token.kind().is_after_await_or_yield();
+            return self.lookahead(|p| {
+                Self::next_token_is_identifier_or_keyword_or_literal_on_same_line(p, true)
+            });
         }
         false
     }
 
     fn is_yield_expression(&mut self) -> bool {
         if self.at(Kind::Yield) {
-            let peek_token = self.peek_token();
-            // Allow arrow expression `yield => {}`
-            if peek_token.kind() == Kind::Arrow {
-                return false;
-            }
             if self.ctx.has_yield() {
                 return true;
             }
-            return !peek_token.is_on_new_line() && peek_token.kind().is_after_await_or_yield();
+            return self.lookahead(|p| {
+                Self::next_token_is_identifier_or_keyword_or_literal_on_same_line(p, false)
+            });
         }
         false
+    }
+
+    fn next_token_is_identifier_or_keyword_or_literal_on_same_line(
+        &mut self,
+        is_await: bool,
+    ) -> bool {
+        self.bump_any();
+
+        // NOTE: This check implementation is based on TypeScript parser.
+        // But TS does not have this exception.
+        // This is needed to pass parser_babel test to parse:
+        // `for (await of [])` with `sourceType: script`
+        if !self.is_ts && is_await && self.at(Kind::Of) {
+            return false;
+        }
+
+        let token = self.cur_token();
+        let kind = token.kind();
+        !token.is_on_new_line() && kind.is_after_await_or_yield()
     }
 }

@@ -18323,12 +18323,13 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
  3 │ }
    ╰────
 
-  × Cannot use `await` as an identifier in an async context
-   ╭─[typescript/tests/cases/conformance/async/es2017/asyncArrowFunction/asyncArrowFunction9_es2017.ts:1:22]
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
+   ╭─[typescript/tests/cases/conformance/async/es2017/asyncArrowFunction/asyncArrowFunction9_es2017.ts:1:37]
  1 │ var foo = async (a = await => await): Promise<void> => {
-   ·                      ─────
+   ·                                     ▲
  2 │ }
    ╰────
+  help: Try insert a semicolon here
 
   × Cannot assign to this expression
    ╭─[typescript/tests/cases/conformance/async/es2017/await_unaryExpression_es2017_3.ts:2:7]
@@ -18338,10 +18339,10 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
  3 │ }
    ╰────
 
-  × Cannot use `await` as an identifier in an async context
-   ╭─[typescript/tests/cases/conformance/async/es2017/functionDeclarations/asyncFunctionDeclaration10_es2017.ts:1:24]
+  × Unexpected token
+   ╭─[typescript/tests/cases/conformance/async/es2017/functionDeclarations/asyncFunctionDeclaration10_es2017.ts:1:30]
  1 │ async function foo(a = await => await): Promise<void> {
-   ·                        ─────
+   ·                              ──
  2 │ }
    ╰────
 
@@ -18412,12 +18413,13 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
  3 │ }
    ╰────
 
-  × Cannot use `await` as an identifier in an async context
-   ╭─[typescript/tests/cases/conformance/async/es5/asyncArrowFunction/asyncArrowFunction9_es5.ts:1:22]
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
+   ╭─[typescript/tests/cases/conformance/async/es5/asyncArrowFunction/asyncArrowFunction9_es5.ts:1:37]
  1 │ var foo = async (a = await => await): Promise<void> => {
-   ·                      ─────
+   ·                                     ▲
  2 │ }
    ╰────
+  help: Try insert a semicolon here
 
   × 'async' modifier cannot be used here.
    ╭─[typescript/tests/cases/conformance/async/es5/asyncClass_es5.ts:1:1]
@@ -18478,10 +18480,10 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
  3 │   }
    ╰────
 
-  × Cannot use `await` as an identifier in an async context
-   ╭─[typescript/tests/cases/conformance/async/es5/functionDeclarations/asyncFunctionDeclaration10_es5.ts:1:24]
+  × Unexpected token
+   ╭─[typescript/tests/cases/conformance/async/es5/functionDeclarations/asyncFunctionDeclaration10_es5.ts:1:30]
  1 │ async function foo(a = await => await): Promise<void> {
-   ·                        ─────
+   ·                              ──
  2 │ }
    ╰────
 
@@ -18552,12 +18554,13 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
  3 │ }
    ╰────
 
-  × Cannot use `await` as an identifier in an async context
-   ╭─[typescript/tests/cases/conformance/async/es6/asyncArrowFunction/asyncArrowFunction9_es6.ts:1:22]
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
+   ╭─[typescript/tests/cases/conformance/async/es6/asyncArrowFunction/asyncArrowFunction9_es6.ts:1:37]
  1 │ var foo = async (a = await => await): Promise<void> => {
-   ·                      ─────
+   ·                                     ▲
  2 │ }
    ╰────
+  help: Try insert a semicolon here
 
   × 'async' modifier cannot be used here.
    ╭─[typescript/tests/cases/conformance/async/es6/asyncClass_es6.ts:1:1]
@@ -18626,10 +18629,10 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
  3 │ }
    ╰────
 
-  × Cannot use `await` as an identifier in an async context
-   ╭─[typescript/tests/cases/conformance/async/es6/functionDeclarations/asyncFunctionDeclaration10_es6.ts:1:24]
+  × Unexpected token
+   ╭─[typescript/tests/cases/conformance/async/es6/functionDeclarations/asyncFunctionDeclaration10_es6.ts:1:30]
  1 │ async function foo(a = await => await): Promise<void> {
-   ·                        ─────
+   ·                              ──
  2 │ }
    ╰────
 
@@ -21647,10 +21650,10 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
  3 │ }
    ╰────
 
-  × Cannot use `yield` as an identifier in a generator context
-   ╭─[typescript/tests/cases/conformance/es6/functionDeclarations/FunctionDeclaration10_es6.ts:1:20]
+  × Unexpected token
+   ╭─[typescript/tests/cases/conformance/es6/functionDeclarations/FunctionDeclaration10_es6.ts:1:26]
  1 │ function * foo(a = yield => yield) {
-   ·                    ─────
+   ·                          ──
  2 │ }
    ╰────
 
