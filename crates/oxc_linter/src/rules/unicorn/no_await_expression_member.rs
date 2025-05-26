@@ -63,6 +63,9 @@ impl Rule for NoAwaitExpressionMember {
             ctx.diagnostic_with_dangerous_fix(
                 no_await_expression_member_diagnostic(node_span),
                 |fixer| {
+                    if member_expr.optional() {
+                        return fixer.noop();
+                    }
                     let Some(AstKind::VariableDeclarator(parent)) =
                         ctx.nodes().parent_kind(node.id())
                     else {
@@ -186,6 +189,8 @@ fn test() {
             "const [, a] = /** comments */await b() /** comments */",
         ),
         ("const foo: Type = (await promise)[0]", "const foo: Type = (await promise)[0]"),
+        ("const a = (await b())?.a", "const a = (await b())?.a"),
+        ("const a = (await b())?.[0]", "const a = (await b())?.[0]"),
     ];
 
     Tester::new(NoAwaitExpressionMember::NAME, NoAwaitExpressionMember::PLUGIN, pass, fail)
