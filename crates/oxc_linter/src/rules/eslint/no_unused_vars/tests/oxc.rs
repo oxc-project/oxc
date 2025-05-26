@@ -1,5 +1,7 @@
 //! Test cases created by oxc maintainers
 
+use std::path::PathBuf;
+
 use serde_json::json;
 
 use super::NoUnusedVars;
@@ -1306,6 +1308,43 @@ fn test_report_vars_only_used_as_types() {
     ];
 
     Tester::new(NoUnusedVars::NAME, NoUnusedVars::PLUGIN, pass, fail)
+        .intentionally_allow_no_fix_tests()
+        .test();
+}
+
+#[test]
+fn test_should_run() {
+    let pass = vec![
+        (
+            r#"<script setup lang="ts"> import * as vue from 'vue' </script>"#,
+            None,
+            None,
+            Some(PathBuf::from("src/foo/bar.vue")),
+        ),
+        (
+            r"---
+import Welcome from '../components/Welcome.astro';
+import Layout from '../layouts/Layout.astro';
+---
+<Layout>
+	<Welcome />
+</Layout>",
+            None,
+            None,
+            Some(PathBuf::from("src/foo/bar.astro")),
+        ),
+        (
+            r"<script>
+	            import Nested from './Nested.svelte';
+            </script>
+            <Nested answer={42} />",
+            None,
+            None,
+            Some(PathBuf::from("src/foo/bar.svelte")),
+        ),
+    ];
+
+    Tester::new(NoUnusedVars::NAME, NoUnusedVars::PLUGIN, pass, vec![])
         .intentionally_allow_no_fix_tests()
         .test();
 }
