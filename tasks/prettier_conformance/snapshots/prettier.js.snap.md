@@ -1,4 +1,4 @@
-js compatibility: 281/699 (40.20%)
+js compatibility: 283/699 (40.49%)
 
 # Failed
 
@@ -28,7 +28,7 @@ js compatibility: 281/699 (40.20%)
 | js/arrows/issue-1389-curry.js | 💥💥 | 37.21% |
 | js/arrows/issue-4166-curry.js | 💥✨ | 0.00% |
 | js/arrows/long-contents.js | 💥💥 | 22.22% |
-| js/arrows/parens.js | 💥💥 | 56.14% |
+| js/arrows/parens.js | 💥💥 | 63.33% |
 | js/arrows/semi/semi.js | 💥💥 | 0.00% |
 | js/assignment/binaryish.js | 💥 | 46.15% |
 | js/assignment/call-with-template.js | 💥 | 16.67% |
@@ -212,8 +212,6 @@ js compatibility: 281/699 (40.20%)
 | js/function-single-destructuring/object.js | 💥 | 45.00% |
 | js/functional-composition/functional_compose.js | 💥 | 41.03% |
 | js/functional-composition/gobject_connect.js | 💥 | 15.38% |
-| js/functional-composition/lodash_flow.js | 💥 | 60.00% |
-| js/functional-composition/lodash_flow_right.js | 💥 | 60.00% |
 | js/functional-composition/mongo_connect.js | 💥 | 0.00% |
 | js/functional-composition/pipe-function-calls-with-comments.js | 💥 | 91.84% |
 | js/functional-composition/pipe-function-calls.js | 💥 | 78.95% |

@@ -1,4 +1,4 @@
-ts compatibility: 181/573 (31.59%)
+ts compatibility: 180/573 (31.41%)
 
 # Failed
 
@@ -61,7 +61,7 @@ ts compatibility: 181/573 (31.59%)
 | typescript/argument-expansion/arrow-with-return-type.ts | 💥 | 80.49% |
 | typescript/array/comment.ts | 💥 | 87.50% |
 | typescript/arrow/16067.ts | 💥💥 | 32.10% |
-| typescript/arrow/arrow_regression.ts | 💥💥 | 38.46% |
+| typescript/arrow/arrow_regression.ts | 💥💥 | 70.97% |
 | typescript/arrow/comments.ts | 💥💥 | 75.00% |
 | typescript/arrow/issue-6107-curry.ts | 💥💥 | 12.50% |
 | typescript/as/array-pattern.ts | 💥 | 0.00% |
@@ -239,6 +239,7 @@ ts compatibility: 181/573 (31.59%)
 | typescript/decorators-ts/multiple.ts | 💥 | 66.67% |
 | typescript/decorators-ts/parameter-decorator.ts | 💥 | 75.00% |
 | typescript/decorators-ts/property-decorator.ts | 💥 | 86.96% |
+| typescript/decorators-ts/typeorm.ts | 💥 | 88.37% |
 | typescript/definite/definite.ts | 💥 | 57.14% |
 | typescript/definite/without-annotation.ts | 💥 | 25.00% |
 | typescript/destructuring/destructuring.ts | 💥 | 50.00% |
