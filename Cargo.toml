@@ -160,7 +160,7 @@ oxc_resolver = "10"
 oxc_sourcemap = "3"
 
 #
-allocator-api2 = "=0.2.21"
+allocator-api2 = "=0.3.0"
 base64 = "0.22.1"
 bitflags = "2.9.0"
 bpaf = "0.9.19"
