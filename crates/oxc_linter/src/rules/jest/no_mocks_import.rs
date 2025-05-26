@@ -51,7 +51,7 @@ impl Rule for NoMocksImport {
         for import_entry in &module_records.import_entries {
             let module_specifier = import_entry.module_request.name();
             if contains_mocks_dir(module_specifier) {
-                ctx.diagnostic(no_mocks_import_diagnostic(import_entry.module_request.span()));
+                ctx.diagnostic(no_mocks_import_diagnostic(import_entry.module_request.span));
             }
         }
 

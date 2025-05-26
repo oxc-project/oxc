@@ -105,7 +105,7 @@ impl Rule for Named {
             if !remote_module_record.has_module_syntax {
                 continue;
             }
-            let import_span = import_name.span();
+            let import_span = import_name.span;
             let name = import_name.name();
             // Check `import { default as foo } from 'bar'`
             if name == "default" && remote_module_record.export_default.is_some() {
@@ -152,7 +152,7 @@ impl Rule for Named {
             if remote_module_record.exported_bindings.contains_key(name) {
                 continue;
             }
-            ctx.diagnostic(named_diagnostic(name, specifier, import_name.span()));
+            ctx.diagnostic(named_diagnostic(name, specifier, import_name.span));
         }
     }
 }

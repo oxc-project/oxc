@@ -1295,14 +1295,14 @@ fn get_diagnostic_from_import_name_result_path(
         },
         ImportNameResult::NameDisallowed(name_span) => match &path.allow_import_names {
             Some(allow_import_names) => diagnostic_allowed_import_name(
-                name_span.clone().span(),
+                name_span.span,
                 path.message.clone(),
                 name_span.name(),
                 source,
                 allow_import_names.join(", ").as_str(),
             ),
             _ => diagnostic_import_name(
-                name_span.clone().span(),
+                name_span.span,
                 path.message.clone(),
                 name_span.name(),
                 source,
@@ -1363,7 +1363,7 @@ fn get_diagnostic_from_import_name_result_pattern(
         }
         ImportNameResult::NameDisallowed(name_span) => match &pattern.allow_import_names {
             Some(allow_import_names) => diagnostic_allowed_import_name(
-                name_span.clone().span(),
+                name_span.span,
                 pattern.message.clone(),
                 name_span.name(),
                 source,
@@ -1371,14 +1371,14 @@ fn get_diagnostic_from_import_name_result_pattern(
             ),
             _ => match &pattern.allow_import_name_pattern {
                 Some(allow_import_name_pattern) => diagnostic_allowed_import_name_pattern(
-                    name_span.clone().span(),
+                    name_span.span,
                     pattern.message.clone(),
                     name_span.name(),
                     source,
                     allow_import_name_pattern.as_str(),
                 ),
                 _ => diagnostic_pattern_and_import_name(
-                    name_span.clone().span(),
+                    name_span.span,
                     pattern.message.clone(),
                     name_span.name(),
                     source,

@@ -108,7 +108,7 @@ impl Rule for NoNamespace {
                 let source = entry.module_request.name();
 
                 if self.ignore.is_empty() {
-                    ctx.diagnostic(no_namespace_diagnostic(entry.local_name.span()));
+                    ctx.diagnostic(no_namespace_diagnostic(entry.local_name.span));
                 } else {
                     if !source.contains('.') {
                         return;
@@ -120,7 +120,7 @@ impl Rule for NoNamespace {
                         return;
                     }
 
-                    ctx.diagnostic(no_namespace_diagnostic(entry.local_name.span()));
+                    ctx.diagnostic(no_namespace_diagnostic(entry.local_name.span));
                 }
             }
             ImportImportName::Name(_) | ImportImportName::Default(_) => {}

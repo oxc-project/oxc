@@ -116,7 +116,7 @@ impl fmt::Debug for ModuleRecord {
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct NameSpan {
     pub name: CompactStr,
-    span: Span,
+    pub span: Span,
 }
 
 impl NameSpan {
@@ -126,10 +126,6 @@ impl NameSpan {
 
     pub fn name(&self) -> &str {
         self.name.as_str()
-    }
-
-    pub fn span(&self) -> Span {
-        self.span
     }
 }
 
@@ -392,7 +388,7 @@ impl ExportExportName {
     /// Attempt to get the [`Span`] of this export name.
     pub fn span(&self) -> Option<Span> {
         match self {
-            Self::Name(name) => Some(name.span()),
+            Self::Name(name) => Some(name.span),
             Self::Default(span) => Some(*span),
             Self::Null => None,
         }

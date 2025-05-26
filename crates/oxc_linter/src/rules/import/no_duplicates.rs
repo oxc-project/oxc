@@ -118,7 +118,7 @@ impl Rule for NoDuplicates {
                 let imports = module_record
                     .import_entries
                     .iter()
-                    .filter(|entry| entry.module_request.span() == requested_module.span)
+                    .filter(|entry| entry.module_request.span == requested_module.span)
                     .collect::<Vec<_>>();
                 if imports.is_empty() {
                     import_entries_maps.entry(0).or_default().push(requested_module);
