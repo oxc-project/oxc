@@ -23,8 +23,10 @@ impl<'a> ParserImpl<'a> {
     pub(crate) fn at_function_with_async(&mut self) -> bool {
         self.at(Kind::Function)
             || self.at(Kind::Async)
-                && self.peek_at(Kind::Function)
-                && !self.peek_token().is_on_new_line()
+                && self.lookahead(|p| {
+                    p.bump_any();
+                    p.at(Kind::Function) && !p.token.is_on_new_line()
+                })
     }
 
     pub(crate) fn parse_function_body(&mut self) -> Box<'a, FunctionBody<'a>> {
@@ -96,7 +98,11 @@ impl<'a> ParserImpl<'a> {
     fn parse_rest_parameter(&mut self) -> BindingRestElement<'a> {
         let element = self.parse_rest_element();
         if self.at(Kind::Comma) {
-            if matches!(self.peek_kind(), Kind::RCurly | Kind::RBrack) {
+            let checkpoint = self.checkpoint();
+            self.bump_any();
+            let peek_kind = self.cur_kind();
+            self.rewind(checkpoint);
+            if matches!(peek_kind, Kind::RCurly | Kind::RBrack) {
                 let span = self.cur_token().span();
                 self.bump_any();
                 self.error(diagnostics::binding_rest_element_trailing_comma(span));
