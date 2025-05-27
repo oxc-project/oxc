@@ -53,3 +53,16 @@ const ObjectKeys = {
 	[-3]: 4,
 	[4n]: 5,
 };
+
+type family =
+  '-apple-system, BlinkMacSystemFont, San Francisco, Segoe UI, Roboto, Helvetica Neue, sans-serif'
+const family: family =
+  '-apple-system, BlinkMacSystemFont, San Francisco, Segoe UI, Roboto, Helvetica Neue, sans-serif'
+const theme = {
+  'font-family': family as family
+} as const
+
+const X = {
+  'async': 1,
+  'await': 2,
+}

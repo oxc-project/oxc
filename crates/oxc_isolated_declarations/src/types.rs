@@ -8,7 +8,7 @@ use oxc_ast::{
     },
 };
 use oxc_span::{ContentEq, GetSpan, SPAN, Span};
-use oxc_syntax::number::ToJsString;
+use oxc_syntax::{identifier::is_identifier_name, number::ToJsString};
 
 use crate::{
     IsolatedDeclarations,
@@ -75,11 +75,13 @@ impl<'a> IsolatedDeclarations<'a> {
                 self.ast.atom(&literal.value.to_js_string()),
             ),
             // `["string"] -> string`
-            PropertyKey::StringLiteral(literal) => {
+            PropertyKey::StringLiteral(literal) if is_identifier_name(&literal.value) => {
                 self.ast.property_key_static_identifier(literal.span, literal.value.as_str())
             }
             // `[`string`] -> string
-            PropertyKey::TemplateLiteral(literal) => {
+            PropertyKey::TemplateLiteral(literal)
+                if is_identifier_name(&literal.quasis[0].value.raw) =>
+            {
                 self.ast.property_key_static_identifier(literal.span, literal.quasis[0].value.raw)
             }
             _ => key.clone_in(self.ast.allocator),

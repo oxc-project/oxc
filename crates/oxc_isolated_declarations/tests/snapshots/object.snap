@@ -30,6 +30,15 @@ declare const ObjectKeys: {
 	3: number
 	[-3]: number
 };
+type family = "-apple-system, BlinkMacSystemFont, San Francisco, Segoe UI, Roboto, Helvetica Neue, sans-serif";
+declare const family: family;
+declare const theme: {
+	readonly ["font-family"]: family
+};
+declare const X: {
+	async: number
+	await: number
+};
 
 
 ==================== Errors ====================
