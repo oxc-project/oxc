@@ -92,13 +92,13 @@ impl Rule for NoDuplicates {
         let module_record = ctx.module_record();
 
         let loaded_modules = module_record.loaded_modules.read().unwrap();
-        let mut groups = FxHashMap::<String, Vec<&RequestedModule>>::default();
+        let mut requested_modules_by_path = FxHashMap::<String, Vec<&RequestedModule>>::default();
         for (source, requested_modules) in &module_record.requested_modules {
             let resolved_absolute_path = loaded_modules.get(source).map_or_else(
                 || source.to_string(),
                 |module| module.resolved_absolute_path.to_string_lossy().to_string(),
             );
-            let entry = groups.entry(resolved_absolute_path).or_default();
+            let entry = requested_modules_by_path.entry(resolved_absolute_path).or_default();
 
             for requested_module in requested_modules {
                 if requested_module.is_import {
@@ -107,30 +107,30 @@ impl Rule for NoDuplicates {
             }
         }
 
-        for group in groups.values() {
+        for requested_modules in requested_modules_by_path.values() {
             // When prefer_inline is false, 0 is value, 1 is type named, 2 is type namespace and 3 is type default
             // When prefer_inline is true, 0 is value and type named, 2 is type // namespace and 3 is type default
-            let mut import_entries_map: [Vec<&RequestedModule>; 4] = Default::default();
-            for requested_module in group {
+            let mut requested_modules_map: [Vec<&RequestedModule>; 4] = Default::default();
+            for requested_module in requested_modules {
                 let imports = module_record
                     .import_entries
                     .iter()
                     .filter(|entry| entry.module_request.span == requested_module.span)
                     .collect::<Vec<_>>();
                 if imports.is_empty() {
-                    import_entries_map[0].push(requested_module);
+                    requested_modules_map[0].push(requested_module);
                     continue;
                 }
                 let mut flags = [true; 4];
-                for imports in imports {
-                    let index: usize = if imports.is_type {
-                        match imports.import_name {
+                for import in imports {
+                    let index: usize = if import.is_type {
+                        match import.import_name {
                             ImportImportName::Name(_) => usize::from(!self.prefer_inline),
                             ImportImportName::NamespaceObject => 2,
                             ImportImportName::Default(_) => 3,
                         }
                     } else {
-                        match imports.import_name {
+                        match import.import_name {
                             ImportImportName::NamespaceObject => 2,
                             _ => 0,
                         }
@@ -138,24 +138,20 @@ impl Rule for NoDuplicates {
 
                     if flags[index] {
                         flags[index] = false;
-                        import_entries_map[index].push(requested_module);
+                        requested_modules_map[index].push(requested_module);
                     }
                 }
             }
 
-            for import_entries in &import_entries_map {
-                check_duplicates(ctx, import_entries);
+            for requested_modules in &requested_modules_map {
+                if requested_modules.len() > 1 {
+                    let mut labels = requested_modules.iter().map(|m| m.span);
+                    let first = labels.next().unwrap(); // we know there is at least one
+                    let module_name = ctx.source_range(first).trim_matches('\'').trim_matches('"');
+                    ctx.diagnostic(no_duplicates_diagnostic(module_name, first, labels));
+                }
             }
         }
-    }
-}
-
-fn check_duplicates(ctx: &LintContext, requested_modules: &Vec<&RequestedModule>) {
-    if requested_modules.len() > 1 {
-        let mut labels = requested_modules.iter().map(|m| m.span);
-        let first = labels.next().unwrap(); // we know there is at least one
-        let module_name = ctx.source_range(first).trim_matches('\'').trim_matches('"');
-        ctx.diagnostic(no_duplicates_diagnostic(module_name, first, labels));
     }
 }
 
