@@ -76,6 +76,7 @@ impl<'a> ParserImpl<'a> {
 
     /// Peek at kind
     #[inline]
+    #[expect(dead_code)]
     pub(crate) fn peek_at(&mut self, kind: Kind) -> bool {
         self.peek_token().kind() == kind
     }
