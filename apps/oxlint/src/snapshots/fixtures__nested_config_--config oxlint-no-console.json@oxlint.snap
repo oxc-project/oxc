@@ -37,7 +37,7 @@ working directory: fixtures/nested_config
   help: Delete this console statement.
 
 Found 0 warnings and 4 errors.
-Finished in <variable>ms on 7 files with 101 rules using 1 threads.
+Finished in <variable>ms on 7 files with 1 rules using 1 threads.
 ----------
 CLI result: LintFoundErrors
 ----------
