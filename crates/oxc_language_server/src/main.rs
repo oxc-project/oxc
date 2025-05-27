@@ -3,8 +3,8 @@ use log::{debug, info, warn};
 use options::{Options, Run, WorkspaceOption};
 use rustc_hash::FxBuildHasher;
 use serde_json::json;
-use std::str::FromStr;
-use tokio::sync::{Mutex, OnceCell, SetError};
+use std::{str::FromStr, sync::Arc};
+use tokio::sync::{OnceCell, RwLock, SetError};
 use tower_lsp_server::{
     Client, LanguageServer, LspService, Server,
     jsonrpc::{Error, ErrorCode, Result},
@@ -42,7 +42,10 @@ struct Backend {
     // We must respect each program inside with its own root folder
     // and can not use shared programmes across multiple workspaces.
     // Each Workspace can have its own server configuration and program root configuration.
-    workspace_workers: Mutex<Vec<WorkspaceWorker>>,
+    // WorkspaceWorkers are only written on 2 occasions:
+    // 1. `initialize` request with workspace folders
+    // 2. `workspace/didChangeWorkspaceFolders` request
+    workspace_workers: Arc<RwLock<Vec<WorkspaceWorker>>>,
     capabilities: OnceCell<Capabilities>,
 }
 
@@ -115,7 +118,7 @@ impl LanguageServer for Backend {
             }
         }
 
-        *self.workspace_workers.lock().await = workers;
+        *self.workspace_workers.write().await = workers;
 
         self.capabilities.set(capabilities.clone()).map_err(|err| {
             let message = match err {
@@ -144,7 +147,7 @@ impl LanguageServer for Backend {
             return;
         };
 
-        let workers = &*self.workspace_workers.lock().await;
+        let workers = &*self.workspace_workers.read().await;
         let needed_configurations =
             ConcurrentHashMap::with_capacity_and_hasher(workers.len(), FxBuildHasher);
         let needed_configurations = needed_configurations.pin_owned();
@@ -200,7 +203,7 @@ impl LanguageServer for Backend {
     }
 
     async fn did_change_configuration(&self, params: DidChangeConfigurationParams) {
-        let workers = self.workspace_workers.lock().await;
+        let workers = self.workspace_workers.read().await;
         let new_diagnostics: papaya::HashMap<String, Vec<Diagnostic>, FxBuildHasher> =
             ConcurrentHashMap::default();
         let mut removing_registrations = vec![];
@@ -340,7 +343,7 @@ impl LanguageServer for Backend {
     }
 
     async fn did_change_watched_files(&self, params: DidChangeWatchedFilesParams) {
-        let workers = self.workspace_workers.lock().await;
+        let workers = self.workspace_workers.read().await;
         // ToDo: what if an empty changes flag is passed?
         debug!("watched file did change");
         let all_diagnostics: papaya::HashMap<String, Vec<Diagnostic>, FxBuildHasher> =
@@ -379,7 +382,7 @@ impl LanguageServer for Backend {
     }
 
     async fn did_change_workspace_folders(&self, params: DidChangeWorkspaceFoldersParams) {
-        let mut workers = self.workspace_workers.lock().await;
+        let mut workers = self.workspace_workers.write().await;
         let mut cleared_diagnostics = vec![];
         let mut added_registrations = vec![];
         let mut removed_registrations = vec![];
@@ -454,7 +457,7 @@ impl LanguageServer for Backend {
     async fn did_save(&self, params: DidSaveTextDocumentParams) {
         debug!("oxc server did save");
         let uri = &params.text_document.uri;
-        let workers = self.workspace_workers.lock().await;
+        let workers = self.workspace_workers.read().await;
         let Some(worker) = workers.iter().find(|worker| worker.is_responsible_for_uri(uri)) else {
             return;
         };
@@ -476,7 +479,7 @@ impl LanguageServer for Backend {
     /// get the file context from the language client
     async fn did_change(&self, params: DidChangeTextDocumentParams) {
         let uri = &params.text_document.uri;
-        let workers = self.workspace_workers.lock().await;
+        let workers = self.workspace_workers.read().await;
         let Some(worker) = workers.iter().find(|worker| worker.is_responsible_for_uri(uri)) else {
             return;
         };
@@ -497,7 +500,7 @@ impl LanguageServer for Backend {
 
     async fn did_open(&self, params: DidOpenTextDocumentParams) {
         let uri = &params.text_document.uri;
-        let workers = self.workspace_workers.lock().await;
+        let workers = self.workspace_workers.read().await;
         let Some(worker) = workers.iter().find(|worker| worker.is_responsible_for_uri(uri)) else {
             return;
         };
@@ -516,7 +519,7 @@ impl LanguageServer for Backend {
 
     async fn did_close(&self, params: DidCloseTextDocumentParams) {
         let uri = &params.text_document.uri;
-        let workers = self.workspace_workers.lock().await;
+        let workers = self.workspace_workers.read().await;
         let Some(worker) = workers.iter().find(|worker| worker.is_responsible_for_uri(uri)) else {
             return;
         };
@@ -525,7 +528,7 @@ impl LanguageServer for Backend {
 
     async fn code_action(&self, params: CodeActionParams) -> Result<Option<CodeActionResponse>> {
         let uri = &params.text_document.uri;
-        let workers = self.workspace_workers.lock().await;
+        let workers = self.workspace_workers.read().await;
         let Some(worker) = workers.iter().find(|worker| worker.is_responsible_for_uri(uri)) else {
             return Ok(None);
         };
@@ -558,7 +561,7 @@ impl LanguageServer for Backend {
                 FixAllCommandArgs::try_from(params.arguments).map_err(Error::invalid_params)?;
 
             let uri = &Uri::from_str(&args.uri).unwrap();
-            let workers = self.workspace_workers.lock().await;
+            let workers = self.workspace_workers.read().await;
             let Some(worker) = workers.iter().find(|worker| worker.is_responsible_for_uri(uri))
             else {
                 return Ok(None);
@@ -618,7 +621,7 @@ impl Backend {
     // clears all diagnostics for workspace folders
     async fn clear_all_diagnostics(&self) {
         let mut cleared_diagnostics = vec![];
-        for worker in self.workspace_workers.lock().await.iter() {
+        for worker in self.workspace_workers.read().await.iter() {
             cleared_diagnostics.extend(worker.get_clear_diagnostics());
         }
         self.publish_all_diagnostics(&cleared_diagnostics).await;
@@ -641,7 +644,7 @@ async fn main() {
 
     let (service, socket) = LspService::build(|client| Backend {
         client,
-        workspace_workers: Mutex::new(vec![]),
+        workspace_workers: Arc::new(RwLock::new(vec![])),
         capabilities: OnceCell::new(),
     })
     .finish();
