@@ -125,15 +125,15 @@ impl Rule for NoDuplicates {
                     continue;
                 }
                 let mut flags = [true; 4];
-                for imports in imports {
-                    let key = if imports.is_type {
-                        match imports.import_name {
+                for import in imports {
+                    let key = if import.is_type {
+                        match import.import_name {
                             ImportImportName::Name(_) => u8::from(!self.prefer_inline),
                             ImportImportName::NamespaceObject => 2,
                             ImportImportName::Default(_) => 3,
                         }
                     } else {
-                        match imports.import_name {
+                        match import.import_name {
                             ImportImportName::NamespaceObject => 2,
                             _ => 0,
                         }
