@@ -4,7 +4,6 @@ use itertools::Itertools;
 use oxc_diagnostics::{LabeledSpan, OxcDiagnostic};
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
-use rustc_hash::FxHashMap;
 
 use crate::{
     context::LintContext,
@@ -112,8 +111,7 @@ impl Rule for NoDuplicates {
                 .filter(|requested_module| requested_module.is_import);
             // When prefer_inline is false, 0 is value, 1 is type named, 2 is type namespace and 3 is type default
             // When prefer_inline is true, 0 is value and type named, 2 is type // namespace and 3 is type default
-            let mut import_entries_maps: FxHashMap<u8, Vec<&RequestedModule>> =
-                FxHashMap::default();
+            let mut import_entries_map: [Vec<&RequestedModule>; 4] = Default::default();
             for requested_module in requested_modules {
                 let imports = module_record
                     .import_entries
@@ -121,14 +119,14 @@ impl Rule for NoDuplicates {
                     .filter(|entry| entry.module_request.span == requested_module.span)
                     .collect::<Vec<_>>();
                 if imports.is_empty() {
-                    import_entries_maps.entry(0).or_default().push(requested_module);
+                    import_entries_map[0].push(requested_module);
                     continue;
                 }
                 let mut flags = [true; 4];
                 for import in imports {
-                    let key = if import.is_type {
+                    let index: usize = if import.is_type {
                         match import.import_name {
-                            ImportImportName::Name(_) => u8::from(!self.prefer_inline),
+                            ImportImportName::Name(_) => usize::from(!self.prefer_inline),
                             ImportImportName::NamespaceObject => 2,
                             ImportImportName::Default(_) => 3,
                         }
@@ -139,28 +137,26 @@ impl Rule for NoDuplicates {
                         }
                     };
 
-                    if flags[key as usize] {
-                        flags[key as usize] = false;
-                        import_entries_maps.entry(key).or_default().push(requested_module);
+                    if flags[index] {
+                        flags[index] = false;
+                        import_entries_map[index].push(requested_module);
                     }
                 }
             }
 
-            for i in 0..4 {
-                check_duplicates(ctx, import_entries_maps.get(&i));
+            for import_entries in &import_entries_map {
+                check_duplicates(ctx, import_entries);
             }
         }
     }
 }
 
-fn check_duplicates(ctx: &LintContext, requested_modules: Option<&Vec<&RequestedModule>>) {
-    if let Some(requested_modules) = requested_modules {
-        if requested_modules.len() > 1 {
-            let mut labels = requested_modules.iter().map(|m| m.span);
-            let first = labels.next().unwrap(); // we know there is at least one
-            let module_name = ctx.source_range(first).trim_matches('\'').trim_matches('"');
-            ctx.diagnostic(no_duplicates_diagnostic(module_name, first, labels));
-        }
+fn check_duplicates(ctx: &LintContext, requested_modules: &Vec<&RequestedModule>) {
+    if requested_modules.len() > 1 {
+        let mut labels = requested_modules.iter().map(|m| m.span);
+        let first = labels.next().unwrap(); // we know there is at least one
+        let module_name = ctx.source_range(first).trim_matches('\'').trim_matches('"');
+        ctx.diagnostic(no_duplicates_diagnostic(module_name, first, labels));
     }
 }
 
