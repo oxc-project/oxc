@@ -66,6 +66,10 @@ impl<'a> IsolatedDeclarations<'a> {
         })
     }
 
+    fn is_static_property_key(key: &str) -> bool {
+        is_identifier_name(key) || key.chars().all(|c| c.is_ascii_digit())
+    }
+
     /// Convert a a computed property key to a static property key when possible
     fn transform_property_key(&self, key: &PropertyKey<'a>) -> PropertyKey<'a> {
         match key {
@@ -75,12 +79,12 @@ impl<'a> IsolatedDeclarations<'a> {
                 self.ast.atom(&literal.value.to_js_string()),
             ),
             // `["string"] -> string`
-            PropertyKey::StringLiteral(literal) if is_identifier_name(&literal.value) => {
+            PropertyKey::StringLiteral(literal) if Self::is_static_property_key(&literal.value) => {
                 self.ast.property_key_static_identifier(literal.span, literal.value.as_str())
             }
             // `[`string`] -> string
             PropertyKey::TemplateLiteral(literal)
-                if is_identifier_name(&literal.quasis[0].value.raw) =>
+                if Self::is_static_property_key(&literal.quasis[0].value.raw) =>
             {
                 self.ast.property_key_static_identifier(literal.span, literal.quasis[0].value.raw)
             }
