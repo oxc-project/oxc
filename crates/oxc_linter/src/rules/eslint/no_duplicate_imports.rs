@@ -137,7 +137,7 @@ impl Rule for NoDuplicateImports {
 
         for entry in &module_record.import_entries {
             let source = &entry.module_request.name;
-            let span = entry.module_request.span();
+            let span = entry.module_request.span;
 
             let same_statement = if let Some(curr_span) = current_span {
                 curr_span == span

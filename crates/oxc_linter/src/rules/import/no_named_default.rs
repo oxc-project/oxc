@@ -48,7 +48,7 @@ impl Rule for NoNamedDefault {
                 return;
             };
             if import_name.name() == "default" && !entry.is_type {
-                ctx.diagnostic(no_named_default_diagnostic(import_name.span()));
+                ctx.diagnostic(no_named_default_diagnostic(import_name.span));
             }
         });
     }
