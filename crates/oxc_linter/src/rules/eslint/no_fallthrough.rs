@@ -87,11 +87,11 @@ declare_oxc_lint!(
     ///
     /// ```js
     /// switch(foo) {
-    ///     case 1:
-    ///     doSomething();
+    ///   case 1:
+    ///   doSomething();
     ///
     /// case 2:
-    ///     doSomethingElse();
+    ///   doSomethingElse();
     /// }
     /// ```
     ///
@@ -101,12 +101,12 @@ declare_oxc_lint!(
     ///
     /// ```js
     /// switch(foo) {
-    ///     case 1:
-    ///         doSomething();
-    ///         break;
+    ///   case 1:
+    ///     doSomething();
+    ///     break;
     ///
-    ///     case 2:
-    ///         doSomethingElse();
+    ///   case 2:
+    ///     doSomethingElse();
     /// }
     /// ```
     ///
@@ -118,41 +118,41 @@ declare_oxc_lint!(
     ///
     /// ```js
     /// switch(foo) {
-    ///     case 1:
-    ///         doSomething();
-    ///         // falls through
+    ///   case 1:
+    ///     doSomething();
+    ///     // falls through
     ///
-    ///     case 2:
-    ///         doSomethingElse();
+    ///   case 2:
+    ///     doSomethingElse();
     /// }
     ///
     /// switch(foo) {
-    ///     case 1:
-    ///         doSomething();
-    ///         // fall through
+    ///   case 1:
+    ///     doSomething();
+    ///     // fall through
     ///
-    ///     case 2:
-    ///         doSomethingElse();
+    ///   case 2:
+    ///     doSomethingElse();
     /// }
     ///
     /// switch(foo) {
-    ///     case 1:
-    ///         doSomething();
-    ///         // fallsthrough
+    ///   case 1:
+    ///     doSomething();
+    ///     // fallsthrough
     ///
-    ///     case 2:
-    ///         doSomethingElse();
+    ///   case 2:
+    ///     doSomethingElse();
     /// }
     ///
     /// switch(foo) {
-    ///     case 1: {
-    ///         doSomething();
-    ///         // falls through
-    ///     }
+    ///   case 1: {
+    ///     doSomething();
+    ///     // falls through
+    ///   }
     ///
-    ///     case 2: {
-    ///         doSomethingElse();
-    ///     }
+    ///   case 2: {
+    ///     doSomethingElse();
+    ///   }
     /// }
     /// ```
     ///
@@ -164,79 +164,75 @@ declare_oxc_lint!(
     ///
     /// Examples of **incorrect** code for this rule:
     /// ```js
-    /// /*oxlint no-fallthrough: "error"*/
-    ///
     /// switch(foo) {
-    ///     case 1:
-    ///         doSomething();
+    ///   case 1:
+    ///     doSomething();
     ///
-    ///     case 2:
-    ///         doSomething();
+    ///   case 2:
+    ///     doSomething();
     /// }
     /// ```
     ///
     /// Examples of **correct** code for this rule:
     /// ```js
-    /// /*oxlint no-fallthrough: "error"*/
-    ///
     /// switch(foo) {
-    ///     case 1:
-    ///         doSomething();
-    ///         break;
+    ///   case 1:
+    ///     doSomething();
+    ///     break;
     ///
-    ///     case 2:
-    ///         doSomething();
+    ///   case 2:
+    ///     doSomething();
     /// }
     ///
     /// function bar(foo) {
-    ///     switch(foo) {
-    ///         case 1:
-    ///             doSomething();
-    ///             return;
-    ///
-    ///         case 2:
-    ///             doSomething();
-    ///     }
-    /// }
-    ///
-    /// switch(foo) {
+    ///   switch(foo) {
     ///     case 1:
-    ///         doSomething();
-    ///         throw new Error("Boo!");
+    ///       doSomething();
+    ///       return;
     ///
     ///     case 2:
-    ///         doSomething();
+    ///       doSomething();
+    ///   }
     /// }
     ///
     /// switch(foo) {
-    ///     case 1:
-    ///     case 2:
-    ///         doSomething();
+    ///   case 1:
+    ///     doSomething();
+    ///     throw new Error("Boo!");
+    ///
+    ///   case 2:
+    ///     doSomething();
     /// }
     ///
     /// switch(foo) {
-    ///     case 1: case 2:
-    ///         doSomething();
+    ///   case 1:
+    ///   case 2:
+    ///     doSomething();
     /// }
     ///
     /// switch(foo) {
-    ///     case 1:
-    ///         doSomething();
-    ///         // falls through
-    ///
-    ///     case 2:
-    ///         doSomething();
+    ///   case 1: case 2:
+    ///     doSomething();
     /// }
     ///
     /// switch(foo) {
-    ///     case 1: {
-    ///         doSomething();
-    ///         // falls through
-    ///     }
+    ///   case 1:
+    ///     doSomething();
+    ///     // falls through
     ///
-    ///     case 2: {
-    ///         doSomethingElse();
-    ///     }
+    ///   case 2:
+    ///     doSomething();
+    /// }
+    ///
+    /// switch(foo) {
+    ///   case 1: {
+    ///     doSomething();
+    ///     // falls through
+    ///   }
+    ///
+    ///   case 2: {
+    ///     doSomethingElse();
+    ///   }
     /// }
     /// ```
     ///
@@ -278,42 +274,29 @@ impl Rule for NoFallthrough {
         let fallthroughs: FxHashSet<BlockNodeId> = neighbors_filtered_by_edge_weight(
             graph,
             switch_id,
-            &|e| match e {
+            &|edge_type| match edge_type {
                 EdgeType::Normal | EdgeType::Jump | EdgeType::Error(ErrorEdgeKind::Explicit) => {
                     None
                 }
                 _ => Some(None),
             },
-            &mut |node, last_cond: Option<BlockNodeId>| {
-                let node = *node;
-
+            &mut |&node, last_cond: Option<BlockNodeId>| {
                 if node == switch_id {
-                    return (last_cond, true);
-                }
-                if node == default_or_exit {
-                    return (last_cond, false);
-                }
-                if tests.contains_key(&node) {
-                    return (last_cond, true);
-                }
-                if cfg.basic_block(node).is_unreachable() {
-                    return (None, false);
-                }
+                    (last_cond, true)
+                } else if node == default_or_exit {
+                    (last_cond, false)
+                } else if tests.contains_key(&node) {
+                    (last_cond, true)
+                } else if cfg.basic_block(node).is_unreachable() {
+                    (None, false)
+                } else {
+                    let fallthrough = graph
+                        .edges_directed(node, Direction::Outgoing)
+                        .map(|edge| edge.target())
+                        .find(|target| Some(*target) == default || tests.contains_key(target));
 
-                let fallthrough = graph
-                    .edges_directed(node, Direction::Outgoing)
-                    .find(|it| {
-                        let target = it.target();
-                        if let Some(default) = default {
-                            if default == target {
-                                return true;
-                            }
-                        }
-                        tests.contains_key(&target)
-                    })
-                    .map(|e| e.target());
-
-                (fallthrough, fallthrough.is_none())
+                    (fallthrough, fallthrough.is_none())
+                }
             },
         )
         .into_iter()
