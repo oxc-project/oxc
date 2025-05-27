@@ -162,6 +162,13 @@ impl<'a, 'b> FormatJsArrowFunctionExpression<'a, 'b> {
     pub fn new(arrow: &'b ArrowFunctionExpression<'a>) -> Self {
         Self { arrow, options: FormatJsArrowFunctionExpressionOptions::default() }
     }
+
+    pub fn new_with_options(
+        arrow: &'b ArrowFunctionExpression<'a>,
+        options: FormatJsArrowFunctionExpressionOptions,
+    ) -> Self {
+        Self { arrow, options }
+    }
 }
 
 impl<'a> Format<'a> for FormatJsArrowFunctionExpression<'a, '_> {
