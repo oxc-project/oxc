@@ -25412,10 +25412,10 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
     ╰────
 
   × Unexpected token
-   ╭─[typescript/tests/cases/conformance/jsx/jsxInvalidEsprimaTestSuite.tsx:3:2]
+   ╭─[typescript/tests/cases/conformance/jsx/jsxInvalidEsprimaTestSuite.tsx:3:1]
  2 │ 
  3 │ </>;
-   ·  ─
+   · ─
    ╰────
 
   × TS(18007): JSX expressions may not use the comma operator
@@ -25466,25 +25466,25 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
     ╰────
 
   × Unexpected token
-   ╭─[typescript/tests/cases/conformance/jsx/tsxErrorRecovery1.tsx:4:20]
+   ╭─[typescript/tests/cases/conformance/jsx/tsxErrorRecovery1.tsx:4:19]
  3 │ function foo() {
  4 │     var x = <div>  { </div>
-   ·                       ─
+   ·                      ─
  5 │ }
    ╰────
 
   × Unexpected token
-   ╭─[typescript/tests/cases/conformance/jsx/tsxErrorRecovery2.tsx:4:7]
+   ╭─[typescript/tests/cases/conformance/jsx/tsxErrorRecovery2.tsx:4:6]
  3 │ <div></div>
  4 │ <div></div>
-   ·       ─
+   ·      ─
    ╰────
 
   × Unexpected token
-   ╭─[typescript/tests/cases/conformance/jsx/tsxErrorRecovery3.tsx:4:7]
+   ╭─[typescript/tests/cases/conformance/jsx/tsxErrorRecovery3.tsx:4:6]
  3 │ <div></div>
  4 │ <div></div>
-   ·       ─
+   ·      ─
    ╰────
 
   × Expected `>` but found `Identifier`

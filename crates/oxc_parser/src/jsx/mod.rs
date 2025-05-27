@@ -406,16 +406,11 @@ impl<'a> ParserImpl<'a> {
                 let expr = self.parse_jsx_expression_container(/* in_jsx_child */ false);
                 JSXAttributeValue::ExpressionContainer(expr)
             }
-            Kind::LAngle => {
-                if self.lookahead(|s| {
-                    s.bump_any();
-                    s.at(Kind::RAngle)
-                }) {
-                    JSXAttributeValue::Fragment(self.parse_jsx_fragment(false))
-                } else {
-                    JSXAttributeValue::Element(self.parse_jsx_element(false))
-                }
-            }
+            Kind::LAngle => match self.parse_jsx_expression() {
+                Expression::JSXFragment(fragment) => JSXAttributeValue::Fragment(fragment),
+                Expression::JSXElement(element) => JSXAttributeValue::Element(element),
+                _ => unreachable!(),
+            },
             _ => self.unexpected(),
         }
     }

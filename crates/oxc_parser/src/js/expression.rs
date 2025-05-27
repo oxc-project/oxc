@@ -192,8 +192,6 @@ impl<'a> ParserImpl<'a> {
             }
             // Literal, RegularExpressionLiteral
             kind if kind.is_literal() => self.parse_literal_expression(),
-            // JSXElement, JSXFragment
-            Kind::LAngle if self.source_type.is_jsx() => self.parse_jsx_expression(),
             _ => self.parse_identifier_expression(),
         }
     }
@@ -1017,7 +1015,7 @@ impl<'a> ParserImpl<'a> {
             && kind == Kind::LAngle
             && self.lookahead(|p| {
                 p.bump_any();
-                p.cur_kind().is_identifier_or_keyword()
+                p.at(Kind::RAngle) || p.cur_kind().is_identifier_or_keyword()
             })
         {
             return self.parse_jsx_expression();
