@@ -332,9 +332,20 @@ impl Rule for NoFallthrough {
                 continue;
             }
             let is_illegal_fallthrough = {
-                let is_fallthrough = !case.consequent.is_empty()
-                    || (!self.0.allow_empty_case
-                        && Self::has_blanks_between(ctx, case.span.start..next_case.span.start));
+                let is_case_empty = case.consequent.is_empty();
+                let is_fallthrough = if is_case_empty {
+                    // For empty cases, check allowEmptyCase option
+                    if self.0.allow_empty_case {
+                        // If allowEmptyCase is true, empty cases are always allowed to fall through
+                        false
+                    } else {
+                        // If allowEmptyCase is false (default), only allow if cases are on same/consecutive lines
+                        Self::has_blanks_between(ctx, case.span.start..next_case.span.start)
+                    }
+                } else {
+                    // Non-empty cases always need explicit fallthrough handling
+                    true
+                };
                 is_fallthrough
                     && self.maybe_allow_fallthrough_trivia(ctx, case, next_case).is_none()
             };
@@ -603,6 +614,23 @@ fn test() {
             Some(serde_json::json!([{
                 "reportUnusedFallthroughComment": false
             }])),
+        ),
+        // Additional allowEmptyCase tests
+        (
+            "switch(foo) { case 0: case 1: b(); }",
+            Some(serde_json::json!([{ "allowEmptyCase": true }])),
+        ),
+        (
+            "switch(foo) { case 0:\ncase 1: b(); }",
+            Some(serde_json::json!([{ "allowEmptyCase": true }])),
+        ),
+        (
+            "switch(foo) { case 0:\n\ncase 1: b(); }",
+            Some(serde_json::json!([{ "allowEmptyCase": true }])),
+        ),
+        (
+            "switch(foo) { case 0:\n\n\ncase 1: b(); }",
+            Some(serde_json::json!([{ "allowEmptyCase": true }])),
         ),
     ];
 
