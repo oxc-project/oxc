@@ -123,15 +123,15 @@ impl Rule for NoDuplicates {
                     continue;
                 }
                 let mut flags = [true; 4];
-                for import in imports {
-                    let index: usize = if import.is_type {
-                        match import.import_name {
+                for imports in imports {
+                    let index: usize = if imports.is_type {
+                        match imports.import_name {
                             ImportImportName::Name(_) => usize::from(!self.prefer_inline),
                             ImportImportName::NamespaceObject => 2,
                             ImportImportName::Default(_) => 3,
                         }
                     } else {
-                        match import.import_name {
+                        match imports.import_name {
                             ImportImportName::NamespaceObject => 2,
                             _ => 0,
                         }
