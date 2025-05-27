@@ -487,6 +487,13 @@ fn test() {
         export * from "os";"#,
             Some(serde_json::json!([{ "includeExports": true }])),
         ),
+        (
+            // Verifies that the error for the second line appears only once in the test snapshot.
+            // https://github.com/oxc-project/oxc/pull/11320#issuecomment-2912286528
+            r#"import type { PriorityDialogCustomClassNames, WeightDialogCustomClassNames } from "./HostEditDialogs";
+            import { PriorityDialog, WeightDialog } from "./HostEditDialogs";"#,
+            None,
+        ),
     ];
 
     Tester::new(NoDuplicateImports::NAME, NoDuplicateImports::PLUGIN, pass, fail)
