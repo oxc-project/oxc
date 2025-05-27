@@ -76,6 +76,7 @@ impl<'a> ParserImpl<'a> {
 
     /// Peek at kind
     #[inline]
+    #[expect(dead_code)]
     pub(crate) fn peek_at(&mut self, kind: Kind) -> bool {
         self.peek_token().kind() == kind
     }
@@ -384,7 +385,13 @@ impl<'a> ParserImpl<'a> {
             if first {
                 first = false;
             } else {
-                if !trailing_separator && self.at(separator) && self.peek_at(close) {
+                if !trailing_separator
+                    && self.at(separator)
+                    && self.lookahead(|p| {
+                        p.bump_any();
+                        p.at(close)
+                    })
+                {
                     break;
                 }
                 self.expect(separator);
