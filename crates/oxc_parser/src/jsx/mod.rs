@@ -433,15 +433,10 @@ impl<'a> ParserImpl<'a> {
     }
 
     fn parse_jsx_text(&mut self) -> Box<'a, JSXText<'a>> {
-        let span = self.start_span();
+        let span = self.cur_token().span();
+        let raw = Atom::from(self.cur_src());
         let value = Atom::from(self.cur_string());
         self.bump_any();
-        let span = self.end_span(span);
-        // SAFETY:
-        // range comes from the lexer, which are ensured to meeting the criteria of `get_unchecked`.
-        let raw = Atom::from(unsafe {
-            self.source_text.get_unchecked(span.start as usize..span.end as usize)
-        });
         self.ast.alloc_jsx_text(span, value, Some(raw))
     }
 

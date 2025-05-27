@@ -112,10 +112,10 @@ impl<'a> ParserImpl<'a> {
 
     #[inline]
     pub(crate) fn parse_identifier_kind(&mut self, kind: Kind) -> (Span, Atom<'a>) {
-        let span = self.start_span();
+        let span = self.cur_token().span();
         let name = self.cur_string();
         self.bump_remap(kind);
-        (self.end_span(span), Atom::from(name))
+        (span, Atom::from(name))
     }
 
     pub(crate) fn check_identifier(&mut self, kind: Kind, ctx: Context) {
@@ -134,10 +134,10 @@ impl<'a> ParserImpl<'a> {
     ///     # `IdentifierName`
     /// # Panics
     pub(crate) fn parse_private_identifier(&mut self) -> PrivateIdentifier<'a> {
-        let span = self.start_span();
+        let span = self.cur_token().span();
         let name = Atom::from(self.cur_string());
         self.bump_any();
-        self.ast.private_identifier(self.end_span(span), name)
+        self.ast.private_identifier(span, name)
     }
 
     /// Section [Primary Expression](https://tc39.es/ecma262/#sec-primary-expression)
@@ -281,14 +281,14 @@ impl<'a> ParserImpl<'a> {
     }
 
     pub(crate) fn parse_literal_null(&mut self) -> NullLiteral {
-        let span = self.start_span();
+        let span = self.cur_token().span();
         self.bump_any(); // bump `null`
-        self.ast.null_literal(self.end_span(span))
+        self.ast.null_literal(span)
     }
 
     pub(crate) fn parse_literal_number(&mut self) -> NumericLiteral<'a> {
-        let span = self.start_span();
         let token = self.cur_token();
+        let span = token.span();
         let src = self.cur_src();
         let value = match token.kind() {
             Kind::Decimal | Kind::Binary | Kind::Octal | Kind::Hex => {
@@ -300,7 +300,7 @@ impl<'a> ParserImpl<'a> {
             _ => unreachable!(),
         };
         let value = value.unwrap_or_else(|err| {
-            self.set_fatal_error(diagnostics::invalid_number(err, token.span()));
+            self.set_fatal_error(diagnostics::invalid_number(err, span));
             0.0 // Dummy value
         });
         let base = match token.kind() {
@@ -319,11 +319,10 @@ impl<'a> ParserImpl<'a> {
             _ => return self.unexpected(),
         };
         self.bump_any();
-        self.ast.numeric_literal(self.end_span(span), value, Some(Atom::from(src)), base)
+        self.ast.numeric_literal(span, value, Some(Atom::from(src)), base)
     }
 
     pub(crate) fn parse_literal_bigint(&mut self) -> BigIntLiteral<'a> {
-        let span = self.start_span();
         let base = match self.cur_kind() {
             Kind::Decimal => BigintBase::Decimal,
             Kind::Binary => BigintBase::Binary,
@@ -332,24 +331,25 @@ impl<'a> ParserImpl<'a> {
             _ => return self.unexpected(),
         };
         let token = self.cur_token();
+        let span = token.span();
         let raw = self.cur_src();
         let src = raw.strip_suffix('n').unwrap();
         let _value = parse_big_int(src, token.kind(), token.has_separator())
-            .map_err(|err| diagnostics::invalid_number(err, token.span()));
+            .map_err(|err| diagnostics::invalid_number(err, span));
         self.bump_any();
-        self.ast.big_int_literal(self.end_span(span), raw, base)
+        self.ast.big_int_literal(span, raw, base)
     }
 
     pub(crate) fn parse_literal_regexp(&mut self) -> RegExpLiteral<'a> {
-        let span = self.start_span();
         let (pattern_end, flags, flags_error) = self.read_regex();
         if !self.lexer.errors.is_empty() {
             return self.unexpected();
         }
-        let pattern_start = self.cur_token().start() + 1; // +1 to exclude left `/`
+        let span = self.cur_token().span();
+        let pattern_start = span.start + 1; // +1 to exclude left `/`
         let pattern_text = &self.source_text[pattern_start as usize..pattern_end as usize];
         let flags_start = pattern_end + 1; // +1 to include right `/`
-        let flags_text = &self.source_text[flags_start as usize..self.cur_token().end() as usize];
+        let flags_text = &self.source_text[flags_start as usize..span.end as usize];
         let raw = self.cur_src();
         self.bump_any();
 
@@ -368,11 +368,7 @@ impl<'a> ParserImpl<'a> {
 
         let pattern = RegExpPattern { text: Atom::from(pattern_text), pattern };
 
-        self.ast.reg_exp_literal(
-            self.end_span(span),
-            RegExp { pattern, flags },
-            Some(Atom::from(raw)),
-        )
+        self.ast.reg_exp_literal(span, RegExp { pattern, flags }, Some(Atom::from(raw)))
     }
 
     #[cfg(feature = "regular_expression")]
@@ -404,16 +400,11 @@ impl<'a> ParserImpl<'a> {
         if !self.at(Kind::Str) {
             return self.unexpected();
         }
+        let span = self.cur_token().span();
+        let raw = Atom::from(self.cur_src());
         let value = self.cur_string();
-        let span = self.start_span();
         let lone_surrogates = self.cur_token().lone_surrogates();
         self.bump_any();
-        let span = self.end_span(span);
-        // SAFETY:
-        // range comes from the lexer, which are ensured to meeting the criteria of `get_unchecked`.
-        let raw = Atom::from(unsafe {
-            self.source_text.get_unchecked(span.start as usize..span.end as usize)
-        });
         self.ast.string_literal_with_lone_surrogates(span, value, Some(raw), lone_surrogates)
     }
 
