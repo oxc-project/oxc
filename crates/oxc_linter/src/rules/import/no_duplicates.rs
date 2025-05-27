@@ -110,7 +110,7 @@ impl Rule for NoDuplicates {
         for requested_modules in requested_modules_by_path.values() {
             // When prefer_inline is false, 0 is value, 1 is type named, 2 is type namespace and 3 is type default
             // When prefer_inline is true, 0 is value and type named, 2 is type // namespace and 3 is type default
-            let mut requested_modules_map: [Vec<&RequestedModule>; 4] = Default::default();
+            let mut requested_module_spans_map = FxHashMap::<u8, Vec<Span>>::default();
             for requested_module in requested_modules {
                 let mut seen_indices = 0u8; // bitset to track seen indices
 
@@ -119,9 +119,9 @@ impl Rule for NoDuplicates {
                         continue;
                     }
 
-                    let index: usize = if import.is_type {
+                    let index = if import.is_type {
                         match import.import_name {
-                            ImportImportName::Name(_) => usize::from(!self.prefer_inline),
+                            ImportImportName::Name(_) => u8::from(!self.prefer_inline),
                             ImportImportName::NamespaceObject => 2,
                             ImportImportName::Default(_) => 3,
                         }
@@ -136,18 +136,21 @@ impl Rule for NoDuplicates {
                     let not_yet_seen = seen_indices & index_mask == 0;
                     if not_yet_seen {
                         seen_indices |= index_mask; // set bit to mark index as seen
-                        requested_modules_map[index].push(requested_module);
+                        requested_module_spans_map
+                            .entry(index)
+                            .or_default()
+                            .push(requested_module.span);
                     }
                 }
 
                 if seen_indices == 0 {
-                    requested_modules_map[0].push(requested_module);
+                    requested_module_spans_map.entry(0).or_default().push(requested_module.span);
                 }
             }
 
-            for requested_modules in &requested_modules_map {
-                if requested_modules.len() > 1 {
-                    let mut spans = requested_modules.iter().map(|m| m.span);
+            for requested_module_spans in requested_module_spans_map.values() {
+                if requested_module_spans.len() > 1 {
+                    let mut spans = requested_module_spans.iter().copied();
                     let first_span = spans.next().unwrap(); // we know there is at least one
                     let module_name = ctx.source_range(first_span).trim_matches(['\'', '"']);
                     ctx.diagnostic(no_duplicates_diagnostic(module_name, first_span, spans));
