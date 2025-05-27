@@ -292,11 +292,8 @@ impl Rule for NoFallthrough {
                 } else {
                     let fallthrough = graph
                         .edges_directed(node, Direction::Outgoing)
-                        .find(|it| {
-                            let target = it.target();
-                            Some(target) == default || tests.contains_key(&target)
-                        })
-                        .map(|e| e.target());
+                        .map(|edge| edge.target())
+                        .find(|target| Some(*target) == default || tests.contains_key(target));
 
                     (fallthrough, fallthrough.is_none())
                 }
