@@ -92,17 +92,17 @@ impl Rule for NoDuplicates {
         let module_record = ctx.module_record();
 
         let loaded_modules = module_record.loaded_modules.read().unwrap();
-        let mut requested_modules_by_path = FxHashMap::<String, Vec<&RequestedModule>>::default();
+        let mut requested_modules_by_path = FxHashMap::<&str, Vec<&RequestedModule>>::default();
         for (source, requested_modules) in &module_record.requested_modules {
-            let resolved_absolute_path = loaded_modules.get(source).map_or_else(
-                || source.to_string(),
-                |module| module.resolved_absolute_path.to_string_lossy().to_string(),
-            );
-            let entry = requested_modules_by_path.entry(resolved_absolute_path).or_default();
+            let resolved_absolute_path = loaded_modules
+                .get(source)
+                .and_then(|module| module.resolved_absolute_path.to_str())
+                .unwrap_or_else(|| source.as_str());
 
             for requested_module in requested_modules {
                 if requested_module.is_import {
-                    entry.push(requested_module);
+                    let entry = requested_modules_by_path.entry(resolved_absolute_path);
+                    entry.or_default().push(requested_module);
                 }
             }
         }
@@ -112,17 +112,13 @@ impl Rule for NoDuplicates {
             // When prefer_inline is true, 0 is value and type named, 2 is type // namespace and 3 is type default
             let mut requested_modules_map: [Vec<&RequestedModule>; 4] = Default::default();
             for requested_module in requested_modules {
-                let imports = module_record
-                    .import_entries
-                    .iter()
-                    .filter(|entry| entry.module_request.span == requested_module.span)
-                    .collect::<Vec<_>>();
-                if imports.is_empty() {
-                    requested_modules_map[0].push(requested_module);
-                    continue;
-                }
-                let mut flags = [true; 4];
-                for import in imports {
+                let mut seen_indices = 0u8; // bitset to track seen indices
+
+                for import in &module_record.import_entries {
+                    if import.module_request.span != requested_module.span {
+                        continue;
+                    }
+
                     let index: usize = if import.is_type {
                         match import.import_name {
                             ImportImportName::Name(_) => usize::from(!self.prefer_inline),
@@ -136,19 +132,25 @@ impl Rule for NoDuplicates {
                         }
                     };
 
-                    if flags[index] {
-                        flags[index] = false;
+                    let index_mask = 1 << index;
+                    let not_yet_seen = seen_indices & index_mask == 0;
+                    if not_yet_seen {
+                        seen_indices |= index_mask; // set bit to mark index as seen
                         requested_modules_map[index].push(requested_module);
                     }
+                }
+
+                if seen_indices == 0 {
+                    requested_modules_map[0].push(requested_module);
                 }
             }
 
             for requested_modules in &requested_modules_map {
                 if requested_modules.len() > 1 {
-                    let mut labels = requested_modules.iter().map(|m| m.span);
-                    let first = labels.next().unwrap(); // we know there is at least one
-                    let module_name = ctx.source_range(first).trim_matches('\'').trim_matches('"');
-                    ctx.diagnostic(no_duplicates_diagnostic(module_name, first, labels));
+                    let mut spans = requested_modules.iter().map(|m| m.span);
+                    let first_span = spans.next().unwrap(); // we know there is at least one
+                    let module_name = ctx.source_range(first_span).trim_matches(['\'', '"']);
+                    ctx.diagnostic(no_duplicates_diagnostic(module_name, first_span, spans));
                 }
             }
         }
