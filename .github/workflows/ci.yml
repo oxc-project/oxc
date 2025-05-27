@@ -122,7 +122,7 @@ jobs:
       - uses: oxc-project/setup-rust@cd82e1efec7fef815e2c23d296756f31c7cdc03d # v1.0.0
         if: steps.filter.outputs.src == 'true'
         with:
-          cache-key: wasi
+          cache-key: warm
           save-cache: ${{ github.ref_name == 'main' }}
       - uses: ./.github/actions/pnpm
         if: steps.filter.outputs.src == 'true'
