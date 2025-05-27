@@ -1,7 +1,11 @@
+use oxc_allocator::Vec;
+use oxc_ast::{ast::*, match_expression};
+use oxc_span::GetSpan;
+
 use crate::{
     Buffer, Format, FormatResult, FormatTrailingCommas, TrailingSeparator, format_args,
     formatter::{
-        Argument, BufferExtensions, Comments, FormatElement, FormatError, Formatter, VecBuffer,
+        BufferExtensions, Comments, FormatElement, FormatError, Formatter, VecBuffer,
         format_element,
         prelude::{
             FormatElements, Tag, empty_line, expand_parent, format_once, format_with,
@@ -13,15 +17,6 @@ use crate::{
     utils::{is_long_curried_call, write_arguments_multi_line},
     write,
 };
-use oxc_allocator::Vec;
-use oxc_ast::{
-    ast::{
-        Argument as OxcArgument, Expression, FormalParameter, FormalParameters, FunctionBody,
-        Statement, TSType,
-    },
-    match_expression,
-};
-use oxc_span::GetSpan;
 
 use super::{
     array_element_list::can_concisely_print_array_list,
@@ -31,7 +26,7 @@ use super::{
     },
 };
 
-impl<'a> Format<'a> for Vec<'a, OxcArgument<'a>> {
+impl<'a> Format<'a> for Vec<'a, Argument<'a>> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         let l_paren_token = "(";
         let r_paren_token = ")";
@@ -52,13 +47,13 @@ impl<'a> Format<'a> for Vec<'a, OxcArgument<'a>> {
         //     });
         let (is_commonjs_or_amd_call, is_test_call) = (false, false);
 
-        let is_first_arg_string_literal_or_template = if self.len() != 2 {
-            true
-        } else {
+        let is_first_arg_string_literal_or_template = if self.len() == 2 {
             matches!(
                 self.iter().next(),
-                Some(OxcArgument::StringLiteral(_) | OxcArgument::TemplateLiteral(_))
+                Some(Argument::StringLiteral(_) | Argument::TemplateLiteral(_))
             )
+        } else {
+            true
         };
 
         if is_commonjs_or_amd_call
@@ -127,7 +122,7 @@ impl<'a> Format<'a> for Vec<'a, OxcArgument<'a>> {
 pub enum FormatCallArgument<'a, 'b> {
     /// Argument that has not been inspected if its formatted content breaks.
     Default {
-        element: &'b OxcArgument<'a>,
+        element: &'b Argument<'a>,
 
         /// Whether this is the last element.
         is_last: bool,
@@ -144,14 +139,14 @@ pub enum FormatCallArgument<'a, 'b> {
         content: FormatResult<Option<FormatElement>>,
 
         /// The separated element
-        element: &'b OxcArgument<'a>,
+        element: &'b Argument<'a>,
 
         /// The lines before this element
         leading_lines: usize,
     },
 }
 
-impl<'a, 'b> FormatCallArgument<'a, 'b> {
+impl<'a> FormatCallArgument<'a, '_> {
     /// Returns `true` if this argument contains any content that forces a group to [`break`](FormatElements::will_break).
     fn will_break(&mut self, f: &mut Formatter<'_, 'a>) -> bool {
         match &self {
@@ -210,7 +205,7 @@ impl<'a, 'b> FormatCallArgument<'a, 'b> {
             Self::Default { element, is_last, .. } => {
                 match element {
                     // TODO: finish this first
-                    OxcArgument::FunctionExpression(function) => {
+                    Argument::FunctionExpression(function) => {
                         write!(
                             f,
                             // [function.format().with_options(FormatFunctionOptions {
@@ -220,7 +215,7 @@ impl<'a, 'b> FormatCallArgument<'a, 'b> {
                             function
                         )?;
                     }
-                    OxcArgument::ArrowFunctionExpression(arrow) => write!(
+                    Argument::ArrowFunctionExpression(arrow) => write!(
                         f,
                         FormatJsArrowFunctionExpression::new_with_options(
                             arrow,
@@ -244,7 +239,7 @@ impl<'a, 'b> FormatCallArgument<'a, 'b> {
                 // } else {
                 //     Ok(())
                 // }
-                if !*is_last { write!(f, [",", soft_line_break_or_space()]) } else { Ok(()) }
+                if *is_last { Ok(()) } else { write!(f, [",", soft_line_break_or_space()]) }
             }
         }
     }
@@ -258,7 +253,7 @@ impl<'a, 'b> FormatCallArgument<'a, 'b> {
     }
 
     /// Returns the [`separated element`](AstSeparatedElement) of this argument.
-    fn element(&self) -> &OxcArgument<'a> {
+    fn element(&self) -> &Argument<'a> {
         match self {
             Self::Default { element, .. } => element,
             Self::Inspected { element, .. } => element,
@@ -266,7 +261,7 @@ impl<'a, 'b> FormatCallArgument<'a, 'b> {
     }
 }
 
-impl<'a, 'b> Format<'a> for FormatCallArgument<'a, 'b> {
+impl<'a> Format<'a> for FormatCallArgument<'a, '_> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         self.fmt_with_cache_mode(FunctionBodyCacheMode::default(), f)
     }
@@ -279,7 +274,7 @@ impl<'a, 'b> Format<'a> for FormatCallArgument<'a, 'b> {
 /// ```javascript
 /// compose(sortBy(x => x), flatten, map(x => [x, x*2]));
 /// ```
-pub fn is_function_composition_args(args: &[OxcArgument<'_>]) -> bool {
+pub fn is_function_composition_args(args: &[Argument<'_>]) -> bool {
     if args.len() <= 1 {
         return false;
     }
@@ -289,19 +284,18 @@ pub fn is_function_composition_args(args: &[OxcArgument<'_>]) -> bool {
     // for arg in args.iter().flatten() {
     for arg in args {
         match arg {
-            OxcArgument::FunctionExpression(_) | OxcArgument::ArrowFunctionExpression(_) => {
+            Argument::FunctionExpression(_) | Argument::ArrowFunctionExpression(_) => {
                 if has_seen_function_like {
                     return true;
                 }
                 has_seen_function_like = true;
             }
-            OxcArgument::CallExpression(call) => {
+            Argument::CallExpression(call) => {
                 // TODO: flatten
                 call.arguments.iter().any(|arg| {
                     matches!(
                         arg,
-                        OxcArgument::FunctionExpression(_)
-                            | OxcArgument::ArrowFunctionExpression(_)
+                        Argument::FunctionExpression(_) | Argument::ArrowFunctionExpression(_)
                     )
                 });
             }
@@ -315,17 +309,17 @@ pub fn is_function_composition_args(args: &[OxcArgument<'_>]) -> bool {
 pub struct FormatAllArgsBrokenOut<'a, 'b> {
     pub args: &'b [FormatCallArgument<'a, 'b>],
     pub expand: bool,
-    pub node: &'b [OxcArgument<'a>],
+    pub node: &'b [Argument<'a>],
 }
 
-impl<'a, 'b> Format<'a> for FormatAllArgsBrokenOut<'a, 'b> {
+impl<'a> Format<'a> for FormatAllArgsBrokenOut<'a, '_> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         // let is_inside_import = self.node.parent::<JsImportCallExpression>().is_some();
         let is_inside_import = false;
 
         write!(
             f,
-            [group(&format_args![
+            [group(&format_args!(
                 "(",
                 soft_block_indent(&format_with(|f| {
                     for (index, entry) in self.args.iter().enumerate() {
@@ -345,14 +339,14 @@ impl<'a, 'b> Format<'a> for FormatAllArgsBrokenOut<'a, 'b> {
                     Ok(())
                 })),
                 ")",
-            ])
+            ))
             .should_expand(self.expand)]
         )
     }
 }
 
 pub fn arguments_grouped_layout(
-    args: &[OxcArgument<'_>],
+    args: &[Argument<'_>],
     comments: &Comments,
 ) -> Option<GroupedCallArgumentLayout> {
     if should_group_first_argument(args, comments) {
@@ -365,7 +359,7 @@ pub fn arguments_grouped_layout(
 }
 
 /// Checks if the first argument requires grouping
-fn should_group_first_argument(list: &[OxcArgument<'_>], comments: &Comments) -> bool {
+fn should_group_first_argument(list: &[Argument<'_>], comments: &Comments) -> bool {
     let mut iter = list.iter();
     match (iter.next().and_then(|a| a.as_expression()), iter.next().and_then(|a| a.as_expression()))
     {
@@ -382,7 +376,7 @@ fn should_group_first_argument(list: &[OxcArgument<'_>], comments: &Comments) ->
                     }
                 }
                 _ => return false,
-            };
+            }
 
             if matches!(
                 second,
@@ -394,7 +388,7 @@ fn should_group_first_argument(list: &[OxcArgument<'_>], comments: &Comments) ->
             }
 
             !comments.has_comments(first.span())
-                && !can_group_expression_argument(&second, false, comments)
+                && !can_group_expression_argument(second, false, comments)
                 && is_relatively_short_argument(second)
         }
         _ => false,
@@ -402,7 +396,7 @@ fn should_group_first_argument(list: &[OxcArgument<'_>], comments: &Comments) ->
 }
 
 /// Checks if the last argument should be grouped.
-fn should_group_last_argument(list: &[OxcArgument<'_>], comments: &Comments) -> bool {
+fn should_group_last_argument(list: &[Argument<'_>], comments: &Comments) -> bool {
     let mut iter = list.iter();
     let last = iter.next_back();
 
@@ -414,7 +408,7 @@ fn should_group_last_argument(list: &[OxcArgument<'_>], comments: &Comments) -> 
             //     return Ok(false);
             // }
 
-            if !can_group_expression_argument(&last, false, comments) {
+            if !can_group_expression_argument(last, false, comments) {
                 return false;
             }
 
@@ -430,7 +424,7 @@ fn should_group_last_argument(list: &[OxcArgument<'_>], comments: &Comments) -> 
                 Expression::ArrayExpression(array) if list.len() > 1 => {
                     // Not for `useEffect`
                     if list.len() == 2
-                        && matches!(penultimate, Some(OxcArgument::ArrowFunctionExpression(_)))
+                        && matches!(penultimate, Some(Argument::ArrowFunctionExpression(_)))
                     {
                         return false;
                     }
@@ -525,7 +519,7 @@ fn can_group_expression_argument(
     is_arrow_recursion: bool,
     comments: &Comments,
 ) -> bool {
-    let result = match argument {
+    match argument {
         Expression::ObjectExpression(object_expression) => {
             !object_expression.properties.is_empty()
                 || comments.has_comments(object_expression.span)
@@ -585,13 +579,13 @@ fn can_group_expression_argument(
                 }
             });
 
-            let can_group_body = arrow_function.get_expression().map_or(true, |expr| match expr {
+            let can_group_body = arrow_function.get_expression().is_none_or(|expr| match expr {
                 Expression::ObjectExpression(_)
                 | Expression::ArrayExpression(_)
                 | Expression::JSXElement(_)
                 | Expression::JSXFragment(_) => true,
                 Expression::ArrowFunctionExpression(_) => {
-                    can_group_expression_argument(&expr, true, comments)
+                    can_group_expression_argument(expr, true, comments)
                 }
                 Expression::CallExpression(_) | Expression::NewExpression(_) => !is_arrow_recursion,
                 _ => false,
@@ -602,13 +596,11 @@ fn can_group_expression_argument(
 
         Expression::FunctionExpression(_) => true,
         _ => false,
-    };
-
-    result
+    }
 }
 
 fn write_grouped_arguments<'a>(
-    call_arguments: &[OxcArgument<'a>],
+    call_arguments: &[Argument<'a>],
     mut arguments: std::vec::Vec<FormatCallArgument<'a, '_>>,
     group_layout: GroupedCallArgumentLayout,
     f: &mut Formatter<'_, 'a>,
@@ -641,10 +633,10 @@ fn write_grouped_arguments<'a>(
         }
 
         match grouped_arg.element() {
-            OxcArgument::ArrowFunctionExpression(_) => {
+            Argument::ArrowFunctionExpression(_) => {
                 grouped_arg.cache_function_body(f);
             }
-            OxcArgument::FunctionExpression(function)
+            Argument::FunctionExpression(function)
                 if !other_args.is_empty()
                     || function_has_only_simple_parameters(&function.params) =>
             {
@@ -805,7 +797,7 @@ struct FormatGroupedArgument<'a, 'b> {
     layout: Option<GroupedCallArgumentLayout>,
 }
 
-impl<'a, 'b> Format<'a> for FormatGroupedArgument<'a, 'b> {
+impl<'a> Format<'a> for FormatGroupedArgument<'a, '_> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         match self.layout {
             Some(GroupedCallArgumentLayout::GroupedFirstArgument) => FormatGroupedFirstArgument {
@@ -831,14 +823,14 @@ struct FormatGroupedFirstArgument<'a, 'b> {
     is_only: bool,
 }
 
-impl<'a, 'b> Format<'a> for FormatGroupedFirstArgument<'a, 'b> {
+impl<'a> Format<'a> for FormatGroupedFirstArgument<'a, '_> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         let element = self.argument.element();
 
         match element {
             // Call the arrow function formatting but explicitly passes the call argument layout down
             // so that the arrow function formatting removes any soft line breaks between parameters and the return type.
-            OxcArgument::ArrowFunctionExpression(arrow) => {
+            Argument::ArrowFunctionExpression(arrow) => {
                 with_token_tracking_disabled(f, |f| {
                     write!(
                         f,
@@ -887,7 +879,7 @@ struct FormatGroupedLastArgument<'a, 'b> {
     is_only: bool,
 }
 
-impl<'a, 'b> Format<'a> for FormatGroupedLastArgument<'a, 'b> {
+impl<'a> Format<'a> for FormatGroupedLastArgument<'a, '_> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         let element = self.argument.element();
 
@@ -895,7 +887,7 @@ impl<'a, 'b> Format<'a> for FormatGroupedLastArgument<'a, 'b> {
         // last grouped argument. This changes the formatting of parameters, type parameters, and return types
         // to remove any soft line breaks.
         match element {
-            OxcArgument::FunctionExpression(function)
+            Argument::FunctionExpression(function)
                 if !self.is_only || function_has_only_simple_parameters(&function.params) =>
             {
                 with_token_tracking_disabled(f, |f| {
@@ -918,7 +910,7 @@ impl<'a, 'b> Format<'a> for FormatGroupedLastArgument<'a, 'b> {
                 })
             }
 
-            OxcArgument::ArrowFunctionExpression(arrow) => with_token_tracking_disabled(f, |f| {
+            Argument::ArrowFunctionExpression(arrow) => with_token_tracking_disabled(f, |f| {
                 write!(
                     f,
                     FormatJsArrowFunctionExpression::new_with_options(
@@ -953,11 +945,9 @@ fn with_token_tracking_disabled<'a, F: FnOnce(&mut Formatter<'_, 'a>) -> R, R>(
     // let was_disabled = f.state().is_token_tracking_disabled();
     // f.state_mut().set_token_tracking_disabled(true);
 
-    let result = callback(f);
-
     // f.state_mut().set_token_tracking_disabled(was_disabled);
 
-    result
+    callback(f)
 }
 
 fn function_has_only_simple_parameters(params: &FormalParameters<'_>) -> bool {
@@ -966,12 +956,12 @@ fn function_has_only_simple_parameters(params: &FormalParameters<'_>) -> bool {
 
 /// Tests if all of the parameters of `expression` are simple enough to allow
 /// a function to group.
-pub(crate) fn has_only_simple_parameters(
+fn has_only_simple_parameters(
     parameters: &FormalParameters<'_>,
     allow_type_annotations: bool,
 ) -> bool {
     // TODO: flatten
-    parameters.items.iter().all(|parameter| is_simple_parameter(&parameter, allow_type_annotations))
+    parameters.items.iter().all(|parameter| is_simple_parameter(parameter, allow_type_annotations))
 }
 
 /// Tests if the single parameter is "simple", as in a plain identifier with no
@@ -986,10 +976,7 @@ pub(crate) fn has_only_simple_parameters(
 /// {a, b} = {}     => false
 /// [a, b]          => false
 ///
-pub(crate) fn is_simple_parameter(
-    parameter: &FormalParameter<'_>,
-    allow_type_annotations: bool,
-) -> bool {
+fn is_simple_parameter(parameter: &FormalParameter<'_>, allow_type_annotations: bool) -> bool {
     parameter.pattern.get_binding_identifier().is_some()
         && (allow_type_annotations || parameter.pattern.type_annotation.is_none())
 }

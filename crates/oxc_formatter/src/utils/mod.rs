@@ -34,7 +34,7 @@ where
 /// ```javascript
 /// `connect(a, b, c)(d)`
 /// ```
-pub fn is_long_curried_call<'a>(parent_stack: &ParentStack<'a>) -> bool {
+pub fn is_long_curried_call(parent_stack: &ParentStack<'_>) -> bool {
     // if let Some(expression) = expression {
     //     if let Some(parent_call) = expression.parent::<JsCallExpression>() {
     //         if let (Ok(arguments), Ok(parent_arguments)) =
