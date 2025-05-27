@@ -69,6 +69,7 @@ impl<'a> ParserImpl<'a> {
 
     /// Peek next kind, returns EOF for final peek
     #[inline]
+    #[expect(dead_code)]
     pub(crate) fn peek_kind(&mut self) -> Kind {
         self.peek_token().kind()
     }
@@ -90,12 +91,14 @@ impl<'a> ParserImpl<'a> {
 
     /// Peek at nth kind
     #[inline]
+    #[expect(dead_code)]
     pub(crate) fn nth_at(&mut self, n: u8, kind: Kind) -> bool {
         self.nth(n).kind() == kind
     }
 
     /// Peek nth kind
     #[inline]
+    #[expect(dead_code)]
     pub(crate) fn nth_kind(&mut self, n: u8) -> Kind {
         self.nth(n).kind()
     }

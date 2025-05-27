@@ -448,7 +448,7 @@ impl<'a> ParserImpl<'a> {
         )
     }
 
-    fn is_next_token_equals(&mut self) -> bool {
+    pub(crate) fn is_next_token_equals(&mut self) -> bool {
         self.bump_any();
         self.at(Kind::Eq)
     }
