@@ -204,7 +204,6 @@ impl<'a> FormatCallArgument<'a, '_> {
             },
             Self::Default { element, is_last, .. } => {
                 match element {
-                    // TODO: finish this first
                     Argument::FunctionExpression(function) => {
                         write!(
                             f,
@@ -228,17 +227,6 @@ impl<'a> FormatCallArgument<'a, '_> {
                     node => write!(f, node)?,
                 }
 
-                // if let Some(separator) = element.trailing_separator()? {
-                //     if *is_last {
-                //         write!(f, [format_removed(separator)])
-                //     } else {
-                //         write!(f, [separator.format()])
-                //     }
-                // } else if !is_last {
-                //     Err(FormatError::SyntaxError)
-                // } else {
-                //     Ok(())
-                // }
                 if *is_last { Ok(()) } else { write!(f, [",", soft_line_break_or_space()]) }
             }
         }
@@ -281,6 +269,7 @@ pub fn is_function_composition_args(args: &[Argument<'_>]) -> bool {
 
     let mut has_seen_function_like = false;
 
+    // TODO: flatten
     // for arg in args.iter().flatten() {
     for arg in args {
         match arg {
@@ -402,11 +391,12 @@ fn should_group_last_argument(list: &[Argument<'_>], comments: &Comments) -> boo
 
     match last.and_then(|arg| arg.as_expression()) {
         Some(last) => {
-            // if comments.has_leading_comments(last.syntax())
-            //     || comments.has_trailing_comments(last.syntax())
-            // {
-            //     return Ok(false);
-            // }
+            let span = last.span();
+            if comments.has_leading_comments(span.start)
+                || comments.has_trailing_comments(span.start)
+            {
+                return false;
+            }
 
             if !can_group_expression_argument(last, false, comments) {
                 return false;
@@ -414,11 +404,12 @@ fn should_group_last_argument(list: &[Argument<'_>], comments: &Comments) -> boo
 
             let penultimate = iter.next_back();
 
-            // if let Some(Ok(penultimate)) = &penultimate {
-            //     if penultimate.syntax().kind() == last.syntax().kind() {
-            //         return Ok(false);
-            //     }
-            // }
+            if let Some(penultimate) = &penultimate {
+                // TODO: maybe address check would be better
+                if penultimate.span() == last.span() {
+                    return false;
+                }
+            }
 
             match last {
                 Expression::ArrayExpression(array) if list.len() > 1 => {
@@ -830,41 +821,21 @@ impl<'a> Format<'a> for FormatGroupedFirstArgument<'a, '_> {
         match element {
             // Call the arrow function formatting but explicitly passes the call argument layout down
             // so that the arrow function formatting removes any soft line breaks between parameters and the return type.
-            Argument::ArrowFunctionExpression(arrow) => {
-                with_token_tracking_disabled(f, |f| {
-                    write!(
-                        f,
-                        FormatJsArrowFunctionExpression::new_with_options(
-                            arrow,
-                            FormatJsArrowFunctionExpressionOptions {
-                                body_cache_mode: FunctionBodyCacheMode::Cached,
-                                call_arg_layout: Some(
-                                    GroupedCallArgumentLayout::GroupedFirstArgument
-                                ),
-                                ..FormatJsArrowFunctionExpressionOptions::default()
-                            },
-                        )
-                    )?;
+            Argument::ArrowFunctionExpression(arrow) => with_token_tracking_disabled(f, |f| {
+                write!(
+                    f,
+                    FormatJsArrowFunctionExpression::new_with_options(
+                        arrow,
+                        FormatJsArrowFunctionExpressionOptions {
+                            body_cache_mode: FunctionBodyCacheMode::Cached,
+                            call_arg_layout: Some(GroupedCallArgumentLayout::GroupedFirstArgument),
+                            ..FormatJsArrowFunctionExpressionOptions::default()
+                        },
+                    )
+                )?;
 
-                    // match element.trailing_separator()? {
-                    //     None => {
-                    //         if !self.is_only {
-                    //             return Err(FormatError::SyntaxError);
-                    //         }
-                    //     }
-                    //     // The separator is added inside of the arrow function formatting
-                    //     Some(separator) => {
-                    //         if self.is_only {
-                    //             write!(f, [format_removed(separator)])?;
-                    //         } else {
-                    //             write!(f, [separator.format()])?;
-                    //         }
-                    //     }
-                    // }
-
-                    Ok(())
-                })
-            }
+                write!(f, [",", soft_line_break_or_space()])
+            }),
 
             // For all other nodes, use the normal formatting (which already has been cached)
             _ => self.argument.fmt(f),
@@ -902,10 +873,6 @@ impl<'a> Format<'a> for FormatGroupedLastArgument<'a, '_> {
                         function
                     )?;
 
-                    // if let Some(separator) = element.trailing_separator()? {
-                    //     write!(f, [format_removed(separator)])?;
-                    // }
-
                     Ok(())
                 })
             }
@@ -925,9 +892,6 @@ impl<'a> Format<'a> for FormatGroupedLastArgument<'a, '_> {
 
                 // if let Some(separator) = element.trailing_separator()? {
                 //     write!(f, [format_removed(separator)])?;
-                // }
-                // if !self.is_only {
-                //     write!(f, [",", soft_line_break_or_space()])?;
                 // }
 
                 Ok(())

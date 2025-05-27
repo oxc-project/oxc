@@ -240,7 +240,7 @@ js compatibility: 285/699 (40.77%)
 | js/last-argument-expansion/break-parent.js | 💥 | 57.14% |
 | js/last-argument-expansion/dangling-comment-in-arrow-function.js | 💥 | 0.00% |
 | js/last-argument-expansion/edge_case.js | 💥 | 41.74% |
-| js/last-argument-expansion/empty-object.js | 💥 | 61.22% |
+| js/last-argument-expansion/empty-object.js | 💥 | 74.51% |
 | js/last-argument-expansion/function-body-in-mode-break.js | 💥 | 86.67% |
 | js/last-argument-expansion/function-expression-issue-2239.js | 💥 | 66.67% |
 | js/last-argument-expansion/function-expression.js | 💥 | 26.32% |
@@ -298,7 +298,7 @@ js compatibility: 285/699 (40.77%)
 | js/optional-chaining/comments.js | 💥 | 14.46% |
 | js/performance/nested-real.js | 💥 | 98.81% |
 | js/performance/nested.js | 💥 | 3.45% |
-| js/preserve-line/argument-list.js | 💥 | 68.44% |
+| js/preserve-line/argument-list.js | 💥 | 76.92% |
 | js/preserve-line/comments.js | 💥 | 85.71% |
 | js/preserve-line/member-chain.js | 💥 | 18.90% |
 | js/preserve-line/parameter-list.js | 💥 | 76.60% |
@@ -328,7 +328,7 @@ js compatibility: 285/699 (40.77%)
 | js/template/call.js | 💥 | 57.14% |
 | js/template/comment.js | 💥 | 24.00% |
 | js/template/faulty-locations.js | 💥 | 74.07% |
-| js/template/graphql.js | 💥 | 38.71% |
+| js/template/graphql.js | 💥 | 72.73% |
 | js/template/indent.js | 💥 | 85.71% |
 | js/template/inline.js | 💥 | 84.21% |
 | js/template/parenthesis.js | 💥 | 81.48% |
