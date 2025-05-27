@@ -1,9 +1,9 @@
 use std::borrow::Cow;
 
-use itertools::Itertools;
 use oxc_diagnostics::{LabeledSpan, OxcDiagnostic};
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
+use rustc_hash::FxHashMap;
 
 use crate::{
     context::LintContext,
@@ -92,27 +92,26 @@ impl Rule for NoDuplicates {
         let module_record = ctx.module_record();
 
         let loaded_modules = module_record.loaded_modules.read().unwrap();
-        let groups = module_record
-            .requested_modules
-            .iter()
-            .map(|(source, requested_modules)| {
-                let resolved_absolute_path = loaded_modules.get(source).map_or_else(
-                    || source.to_string(),
-                    |module| module.resolved_absolute_path.to_string_lossy().to_string(),
-                );
-                (resolved_absolute_path, requested_modules)
-            })
-            .chunk_by(|r| r.0.clone());
+        let mut groups = FxHashMap::<String, Vec<&RequestedModule>>::default();
+        for (source, requested_modules) in &module_record.requested_modules {
+            let resolved_absolute_path = loaded_modules.get(source).map_or_else(
+                || source.to_string(),
+                |module| module.resolved_absolute_path.to_string_lossy().to_string(),
+            );
+            let entry = groups.entry(resolved_absolute_path).or_default();
 
-        for (_path, group) in &groups {
-            let requested_modules = group
-                .into_iter()
-                .flat_map(|(_path, requested_modules)| requested_modules)
-                .filter(|requested_module| requested_module.is_import);
+            for requested_module in requested_modules {
+                if requested_module.is_import {
+                    entry.push(requested_module);
+                }
+            }
+        }
+
+        for group in groups.values() {
             // When prefer_inline is false, 0 is value, 1 is type named, 2 is type namespace and 3 is type default
             // When prefer_inline is true, 0 is value and type named, 2 is type // namespace and 3 is type default
             let mut import_entries_map: [Vec<&RequestedModule>; 4] = Default::default();
-            for requested_module in requested_modules {
+            for requested_module in group {
                 let imports = module_record
                     .import_entries
                     .iter()
