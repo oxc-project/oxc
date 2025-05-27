@@ -10,57 +10,57 @@ pub const RESERVED_HTML_TAG: [&str; 16] = [
     "picture", "script", "source", "style", "title", "track",
 ];
 
-const ARIA_ACTIVEDESCENDANT: &str = "aria-activedescendant";
-const ARIA_ATOMIC: &str = "aria-atomic";
-const ARIA_AUTOCOMPLETE: &str = "aria-autocomplete";
-const ARIA_BUSY: &str = "aria-busy";
-const ARIA_BRAILLELABEL: &str = "aria-braillelabel";
-const ARIA_BRAILLEROLEDESCRIPTION: &str = "aria-brailleroledescription";
-const ARIA_CHECKED: &str = "aria-checked";
-const ARIA_COLCOUNT: &str = "aria-colcount";
-const ARIA_COLINDEX: &str = "aria-colindex";
-const ARIA_COLSPAN: &str = "aria-colspan";
-const ARIA_CONTROLS: &str = "aria-controls";
-const ARIA_CURRENT: &str = "aria-current";
-const ARIA_DESCRIBEDBY: &str = "aria-describedby";
-const ARIA_DESCRIPTION: &str = "aria-description";
-const ARIA_DETAILS: &str = "aria-details";
-const ARIA_DISABLED: &str = "aria-disabled";
-const ARIA_DROPEFFECT: &str = "aria-dropeffect";
-const ARIA_ERRORMESSAGE: &str = "aria-errormessage";
-const ARIA_EXPANDED: &str = "aria-expanded";
-const ARIA_FLOWTO: &str = "aria-flowto";
-const ARIA_GRABBED: &str = "aria-grabbed";
-const ARIA_HASPOPUP: &str = "aria-haspopup";
-const ARIA_HIDDEN: &str = "aria-hidden";
-const ARIA_INVALID: &str = "aria-invalid";
-const ARIA_KEYSHORTCUTS: &str = "aria-keyshortcuts";
-const ARIA_LABEL: &str = "aria-label";
-const ARIA_LABELLEDBY: &str = "aria-labelledby";
-const ARIA_LEVEL: &str = "aria-level";
-const ARIA_LIVE: &str = "aria-live";
-const ARIA_MODAL: &str = "aria-modal";
-const ARIA_MULTILINE: &str = "aria-multiline";
-const ARIA_MULTISELECTABLE: &str = "aria-multiselectable";
-const ARIA_ORIENTATION: &str = "aria-orientation";
-const ARIA_OWNS: &str = "aria-owns";
-const ARIA_PLACEHOLDER: &str = "aria-placeholder";
-const ARIA_POSINSET: &str = "aria-posinset";
-const ARIA_PRESSED: &str = "aria-pressed";
-const ARIA_READONLY: &str = "aria-readonly";
-const ARIA_RELEVANT: &str = "aria-relevant";
-const ARIA_REQUIRED: &str = "aria-required";
-const ARIA_ROLEDESCRIPTION: &str = "aria-roledescription";
-const ARIA_ROWCOUNT: &str = "aria-rowcount";
-const ARIA_ROWINDEX: &str = "aria-rowindex";
-const ARIA_ROWSPAN: &str = "aria-rowspan";
-const ARIA_SELECTED: &str = "aria-selected";
-const ARIA_SETSIZE: &str = "aria-setsize";
-const ARIA_SORT: &str = "aria-sort";
-const ARIA_VALUEMAX: &str = "aria-valuemax";
-const ARIA_VALUEMIN: &str = "aria-valuemin";
-const ARIA_VALUENOW: &str = "aria-valuenow";
-const ARIA_VALUETEXT: &str = "aria-valuetext";
+const ARIA_ACTIVEDESCENDANT: &str = "activedescendant";
+const ARIA_ATOMIC: &str = "atomic";
+const ARIA_AUTOCOMPLETE: &str = "autocomplete";
+const ARIA_BUSY: &str = "busy";
+const ARIA_BRAILLELABEL: &str = "braillelabel";
+const ARIA_BRAILLEROLEDESCRIPTION: &str = "brailleroledescription";
+const ARIA_CHECKED: &str = "checked";
+const ARIA_COLCOUNT: &str = "colcount";
+const ARIA_COLINDEX: &str = "colindex";
+const ARIA_COLSPAN: &str = "colspan";
+const ARIA_CONTROLS: &str = "controls";
+const ARIA_CURRENT: &str = "current";
+const ARIA_DESCRIBEDBY: &str = "describedby";
+const ARIA_DESCRIPTION: &str = "description";
+const ARIA_DETAILS: &str = "details";
+const ARIA_DISABLED: &str = "disabled";
+const ARIA_DROPEFFECT: &str = "dropeffect";
+const ARIA_ERRORMESSAGE: &str = "errormessage";
+const ARIA_EXPANDED: &str = "expanded";
+const ARIA_FLOWTO: &str = "flowto";
+const ARIA_GRABBED: &str = "grabbed";
+const ARIA_HASPOPUP: &str = "haspopup";
+const ARIA_HIDDEN: &str = "hidden";
+const ARIA_INVALID: &str = "invalid";
+const ARIA_KEYSHORTCUTS: &str = "keyshortcuts";
+const ARIA_LABEL: &str = "label";
+const ARIA_LABELLEDBY: &str = "labelledby";
+const ARIA_LEVEL: &str = "level";
+const ARIA_LIVE: &str = "live";
+const ARIA_MODAL: &str = "modal";
+const ARIA_MULTILINE: &str = "multiline";
+const ARIA_MULTISELECTABLE: &str = "multiselectable";
+const ARIA_ORIENTATION: &str = "orientation";
+const ARIA_OWNS: &str = "owns";
+const ARIA_PLACEHOLDER: &str = "placeholder";
+const ARIA_POSINSET: &str = "posinset";
+const ARIA_PRESSED: &str = "pressed";
+const ARIA_READONLY: &str = "readonly";
+const ARIA_RELEVANT: &str = "relevant";
+const ARIA_REQUIRED: &str = "required";
+const ARIA_ROLEDESCRIPTION: &str = "roledescription";
+const ARIA_ROWCOUNT: &str = "rowcount";
+const ARIA_ROWINDEX: &str = "rowindex";
+const ARIA_ROWSPAN: &str = "rowspan";
+const ARIA_SELECTED: &str = "selected";
+const ARIA_SETSIZE: &str = "setsize";
+const ARIA_SORT: &str = "sort";
+const ARIA_VALUEMAX: &str = "valuemax";
+const ARIA_VALUEMIN: &str = "valuemin";
+const ARIA_VALUENOW: &str = "valuenow";
+const ARIA_VALUETEXT: &str = "valuetext";
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum AriaProperty {
@@ -121,7 +121,10 @@ impl TryFrom<&str> for AriaProperty {
     type Error = ();
 
     fn try_from(value: &str) -> Result<Self, Self::Error> {
-        match value {
+        if value.len() < 9 || &value[..5] != "aria-" {
+            return Err(());
+        }
+        match &value[5..] {
             ARIA_ACTIVEDESCENDANT => Ok(AriaProperty::ActiveDescendant),
             ARIA_ATOMIC => Ok(AriaProperty::Atomic),
             ARIA_AUTOCOMPLETE => Ok(AriaProperty::AutoComplete),
