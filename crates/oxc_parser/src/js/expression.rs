@@ -60,11 +60,12 @@ impl<'a> ParserImpl<'a> {
 
     pub(crate) fn parse_identifier_reference(&mut self) -> IdentifierReference<'a> {
         // allow `await` and `yield`, let semantic analysis report error
-        if !self.cur_kind().is_identifier_reference(false, false) {
+        let kind = self.cur_kind();
+        if !kind.is_identifier_reference(false, false) {
             return self.unexpected();
         }
+        self.check_identifier(kind, self.ctx);
         let (span, name) = self.parse_identifier_kind(Kind::Ident);
-        self.check_identifier(span, &name);
         self.ast.identifier_reference(span, name)
     }
 
@@ -80,17 +81,18 @@ impl<'a> ParserImpl<'a> {
                 self.unexpected()
             };
         }
+        self.check_identifier(cur, self.ctx);
         let (span, name) = self.parse_identifier_kind(Kind::Ident);
-        self.check_identifier(span, &name);
         self.ast.binding_identifier(span, name)
     }
 
     pub(crate) fn parse_label_identifier(&mut self) -> LabelIdentifier<'a> {
-        if !self.cur_kind().is_label_identifier(self.ctx.has_yield(), self.ctx.has_await()) {
+        let kind = self.cur_kind();
+        if !kind.is_label_identifier(self.ctx.has_yield(), self.ctx.has_await()) {
             return self.unexpected();
         }
+        self.check_identifier(kind, self.ctx);
         let (span, name) = self.parse_identifier_kind(Kind::Ident);
-        self.check_identifier(span, &name);
         self.ast.label_identifier(span, name)
     }
 
@@ -116,14 +118,14 @@ impl<'a> ParserImpl<'a> {
         (self.end_span(span), Atom::from(name))
     }
 
-    pub(crate) fn check_identifier(&mut self, span: Span, name: &str) {
+    pub(crate) fn check_identifier(&mut self, kind: Kind, ctx: Context) {
         // It is a Syntax Error if this production has an [Await] parameter.
-        if self.ctx.has_await() && name == "await" {
-            self.error(diagnostics::identifier_async("await", span));
+        if ctx.has_await() && kind == Kind::Await {
+            self.error(diagnostics::identifier_async("await", self.cur_token().span()));
         }
         // It is a Syntax Error if this production has a [Yield] parameter.
-        if self.ctx.has_yield() && name == "yield" {
-            self.error(diagnostics::identifier_generator("yield", span));
+        if ctx.has_yield() && kind == Kind::Yield {
+            self.error(diagnostics::identifier_generator("yield", self.cur_token().span()));
         }
     }
 

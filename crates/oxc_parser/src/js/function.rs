@@ -338,17 +338,15 @@ impl<'a> ParserImpl<'a> {
         r#async: bool,
         generator: bool,
     ) -> Option<BindingIdentifier<'a>> {
-        if self.cur_kind().is_binding_identifier() {
-            let ctx = self.ctx;
+        let kind = self.cur_kind();
+        if kind.is_binding_identifier() {
+            let mut ctx = self.ctx;
             if func_kind.is_expression() {
-                self.ctx = self.ctx.and_await(r#async).and_yield(generator);
+                ctx = ctx.and_await(r#async).and_yield(generator);
             }
+            self.check_identifier(kind, ctx);
 
             let (span, name) = self.parse_identifier_kind(Kind::Ident);
-            self.check_identifier(span, &name);
-
-            self.ctx = ctx;
-
             Some(self.ast.binding_identifier(span, name))
         } else {
             if func_kind.is_id_required() {
