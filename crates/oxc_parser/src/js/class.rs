@@ -178,12 +178,12 @@ impl<'a> ParserImpl<'a> {
     fn parse_class_body(&mut self) -> Box<'a, ClassBody<'a>> {
         let span = self.start_span();
         let class_elements = self.parse_normal_list(Kind::LCurly, Kind::RCurly, |p| {
-            // skip empty class element `;`
-            while p.at(Kind::Semicolon) {
-                p.bump_any();
-            }
-            if p.at(Kind::RCurly) {
-                return None;
+            // Skip empty class element `;`
+            if p.eat(Kind::Semicolon) {
+                while p.eat(Kind::Semicolon) {}
+                if p.at(Kind::RCurly) {
+                    return None;
+                }
             }
             Some(Self::parse_class_element(p))
         });
