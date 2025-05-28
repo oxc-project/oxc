@@ -75,8 +75,8 @@ impl ESTree for IdentifierName<'_> {
         state.serialize_field("type", &JsonSafeString("Identifier"));
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
-        state.serialize_field("name", &JsonSafeString(self.name.as_str()));
         state.serialize_ts_field("decorators", &crate::serialize::basic::TsEmptyArray(self));
+        state.serialize_field("name", &JsonSafeString(self.name.as_str()));
         state.serialize_ts_field("optional", &crate::serialize::basic::TsFalse(self));
         state.serialize_ts_field("typeAnnotation", &crate::serialize::basic::TsNull(self));
         state.end();
@@ -89,8 +89,8 @@ impl ESTree for IdentifierReference<'_> {
         state.serialize_field("type", &JsonSafeString("Identifier"));
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
-        state.serialize_field("name", &JsonSafeString(self.name.as_str()));
         state.serialize_ts_field("decorators", &crate::serialize::basic::TsEmptyArray(self));
+        state.serialize_field("name", &JsonSafeString(self.name.as_str()));
         state.serialize_ts_field("optional", &crate::serialize::basic::TsFalse(self));
         state.serialize_ts_field("typeAnnotation", &crate::serialize::basic::TsNull(self));
         state.end();
@@ -103,8 +103,8 @@ impl ESTree for BindingIdentifier<'_> {
         state.serialize_field("type", &JsonSafeString("Identifier"));
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
-        state.serialize_field("name", &JsonSafeString(self.name.as_str()));
         state.serialize_ts_field("decorators", &crate::serialize::basic::TsEmptyArray(self));
+        state.serialize_field("name", &JsonSafeString(self.name.as_str()));
         state.serialize_ts_field("optional", &crate::serialize::basic::TsFalse(self));
         state.serialize_ts_field("typeAnnotation", &crate::serialize::basic::TsNull(self));
         state.end();
@@ -117,8 +117,8 @@ impl ESTree for LabelIdentifier<'_> {
         state.serialize_field("type", &JsonSafeString("Identifier"));
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
-        state.serialize_field("name", &JsonSafeString(self.name.as_str()));
         state.serialize_ts_field("decorators", &crate::serialize::basic::TsEmptyArray(self));
+        state.serialize_field("name", &JsonSafeString(self.name.as_str()));
         state.serialize_ts_field("optional", &crate::serialize::basic::TsFalse(self));
         state.serialize_ts_field("typeAnnotation", &crate::serialize::basic::TsNull(self));
         state.end();
@@ -230,12 +230,12 @@ impl ESTree for ObjectProperty<'_> {
         state.serialize_field("type", &JsonSafeString("Property"));
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
+        state.serialize_field("kind", &self.kind);
+        state.serialize_field("key", &self.key);
+        state.serialize_field("value", &self.value);
         state.serialize_field("method", &self.method);
         state.serialize_field("shorthand", &self.shorthand);
         state.serialize_field("computed", &self.computed);
-        state.serialize_field("key", &self.key);
-        state.serialize_field("value", &self.value);
-        state.serialize_field("kind", &self.kind);
         state.serialize_ts_field("optional", &crate::serialize::basic::TsFalse(self));
         state.end();
     }
@@ -309,8 +309,8 @@ impl ESTree for TemplateLiteral<'_> {
         state.serialize_field("type", &JsonSafeString("TemplateLiteral"));
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
-        state.serialize_field("expressions", &self.expressions);
         state.serialize_field("quasis", &self.quasis);
+        state.serialize_field("expressions", &self.expressions);
         state.end();
     }
 }
@@ -361,8 +361,8 @@ impl ESTree for ComputedMemberExpression<'_> {
         state.serialize_field("end", &self.span.end);
         state.serialize_field("object", &self.object);
         state.serialize_field("property", &self.expression);
-        state.serialize_field("computed", &crate::serialize::basic::True(self));
         state.serialize_field("optional", &self.optional);
+        state.serialize_field("computed", &crate::serialize::basic::True(self));
         state.end();
     }
 }
@@ -375,8 +375,8 @@ impl ESTree for StaticMemberExpression<'_> {
         state.serialize_field("end", &self.span.end);
         state.serialize_field("object", &self.object);
         state.serialize_field("property", &self.property);
-        state.serialize_field("computed", &crate::serialize::basic::False(self));
         state.serialize_field("optional", &self.optional);
+        state.serialize_field("computed", &crate::serialize::basic::False(self));
         state.end();
     }
 }
@@ -389,8 +389,8 @@ impl ESTree for PrivateFieldExpression<'_> {
         state.serialize_field("end", &self.span.end);
         state.serialize_field("object", &self.object);
         state.serialize_field("property", &self.field);
-        state.serialize_field("computed", &crate::serialize::basic::False(self));
         state.serialize_field("optional", &self.optional);
+        state.serialize_field("computed", &crate::serialize::basic::False(self));
         state.end();
     }
 }
@@ -516,8 +516,8 @@ impl ESTree for UnaryExpression<'_> {
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
         state.serialize_field("operator", &self.operator);
-        state.serialize_field("prefix", &crate::serialize::basic::True(self));
         state.serialize_field("argument", &self.argument);
+        state.serialize_field("prefix", &crate::serialize::basic::True(self));
         state.end();
     }
 }
@@ -634,8 +634,8 @@ impl ESTree for ArrayAssignmentTarget<'_> {
         state.serialize_field("type", &JsonSafeString("ArrayPattern"));
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
-        state.serialize_field("elements", &Concat2(&self.elements, &self.rest));
         state.serialize_ts_field("decorators", &crate::serialize::basic::TsEmptyArray(self));
+        state.serialize_field("elements", &Concat2(&self.elements, &self.rest));
         state.serialize_ts_field("optional", &crate::serialize::basic::TsFalse(self));
         state.serialize_ts_field("typeAnnotation", &crate::serialize::basic::TsNull(self));
         state.end();
@@ -648,8 +648,8 @@ impl ESTree for ObjectAssignmentTarget<'_> {
         state.serialize_field("type", &JsonSafeString("ObjectPattern"));
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
-        state.serialize_field("properties", &Concat2(&self.properties, &self.rest));
         state.serialize_ts_field("decorators", &crate::serialize::basic::TsEmptyArray(self));
+        state.serialize_field("properties", &Concat2(&self.properties, &self.rest));
         state.serialize_ts_field("optional", &crate::serialize::basic::TsFalse(self));
         state.serialize_ts_field("typeAnnotation", &crate::serialize::basic::TsNull(self));
         state.end();
@@ -662,8 +662,8 @@ impl ESTree for AssignmentTargetRest<'_> {
         state.serialize_field("type", &JsonSafeString("RestElement"));
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
-        state.serialize_field("argument", &self.target);
         state.serialize_ts_field("decorators", &crate::serialize::basic::TsEmptyArray(self));
+        state.serialize_field("argument", &self.target);
         state.serialize_ts_field("optional", &crate::serialize::basic::TsFalse(self));
         state.serialize_ts_field("typeAnnotation", &crate::serialize::basic::TsNull(self));
         state.serialize_ts_field("value", &crate::serialize::basic::TsNull(self));
@@ -695,9 +695,9 @@ impl ESTree for AssignmentTargetWithDefault<'_> {
         state.serialize_field("type", &JsonSafeString("AssignmentPattern"));
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
+        state.serialize_ts_field("decorators", &crate::serialize::basic::TsEmptyArray(self));
         state.serialize_field("left", &self.binding);
         state.serialize_field("right", &self.init);
-        state.serialize_ts_field("decorators", &crate::serialize::basic::TsEmptyArray(self));
         state.serialize_ts_field("optional", &crate::serialize::basic::TsFalse(self));
         state.serialize_ts_field("typeAnnotation", &crate::serialize::basic::TsNull(self));
         state.end();
@@ -719,15 +719,15 @@ impl ESTree for AssignmentTargetPropertyIdentifier<'_> {
         state.serialize_field("type", &JsonSafeString("Property"));
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
-        state.serialize_field("method", &crate::serialize::basic::False(self));
-        state.serialize_field("shorthand", &crate::serialize::basic::True(self));
-        state.serialize_field("computed", &crate::serialize::basic::False(self));
+        state.serialize_field("kind", &crate::serialize::basic::Init(self));
         state.serialize_field("key", &self.binding);
         state.serialize_field(
             "value",
             &crate::serialize::js::AssignmentTargetPropertyIdentifierInit(self),
         );
-        state.serialize_field("kind", &crate::serialize::basic::Init(self));
+        state.serialize_field("method", &crate::serialize::basic::False(self));
+        state.serialize_field("shorthand", &crate::serialize::basic::True(self));
+        state.serialize_field("computed", &crate::serialize::basic::False(self));
         state.serialize_ts_field("optional", &crate::serialize::basic::TsFalse(self));
         state.end();
     }
@@ -739,12 +739,12 @@ impl ESTree for AssignmentTargetPropertyProperty<'_> {
         state.serialize_field("type", &JsonSafeString("Property"));
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
+        state.serialize_field("kind", &crate::serialize::basic::Init(self));
+        state.serialize_field("key", &self.name);
+        state.serialize_field("value", &self.binding);
         state.serialize_field("method", &crate::serialize::basic::False(self));
         state.serialize_field("shorthand", &crate::serialize::basic::False(self));
         state.serialize_field("computed", &self.computed);
-        state.serialize_field("key", &self.name);
-        state.serialize_field("value", &self.binding);
-        state.serialize_field("kind", &crate::serialize::basic::Init(self));
         state.serialize_ts_field("optional", &crate::serialize::basic::TsFalse(self));
         state.end();
     }
@@ -910,8 +910,8 @@ impl ESTree for VariableDeclaration<'_> {
         state.serialize_field("type", &JsonSafeString("VariableDeclaration"));
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
-        state.serialize_field("declarations", &self.declarations);
         state.serialize_field("kind", &self.kind);
+        state.serialize_field("declarations", &self.declarations);
         state.serialize_ts_field("declare", &self.declare);
         state.end();
     }
@@ -1177,8 +1177,8 @@ impl ESTree for SwitchCase<'_> {
         state.serialize_field("type", &JsonSafeString("SwitchCase"));
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
-        state.serialize_field("consequent", &self.consequent);
         state.serialize_field("test", &self.test);
+        state.serialize_field("consequent", &self.consequent);
         state.end();
     }
 }
@@ -1189,8 +1189,8 @@ impl ESTree for LabeledStatement<'_> {
         state.serialize_field("type", &JsonSafeString("LabeledStatement"));
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
-        state.serialize_field("body", &self.body);
         state.serialize_field("label", &self.label);
+        state.serialize_field("body", &self.body);
         state.end();
     }
 }
@@ -1278,9 +1278,9 @@ impl ESTree for AssignmentPattern<'_> {
         state.serialize_field("type", &JsonSafeString("AssignmentPattern"));
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
+        state.serialize_ts_field("decorators", &crate::serialize::basic::TsEmptyArray(self));
         state.serialize_field("left", &self.left);
         state.serialize_field("right", &self.right);
-        state.serialize_ts_field("decorators", &crate::serialize::basic::TsEmptyArray(self));
         state.serialize_ts_field("optional", &crate::serialize::basic::TsFalse(self));
         state.serialize_ts_field("typeAnnotation", &crate::serialize::basic::TsNull(self));
         state.end();
@@ -1293,8 +1293,8 @@ impl ESTree for ObjectPattern<'_> {
         state.serialize_field("type", &JsonSafeString("ObjectPattern"));
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
-        state.serialize_field("properties", &Concat2(&self.properties, &self.rest));
         state.serialize_ts_field("decorators", &crate::serialize::basic::TsEmptyArray(self));
+        state.serialize_field("properties", &Concat2(&self.properties, &self.rest));
         state.serialize_ts_field("optional", &crate::serialize::basic::TsFalse(self));
         state.serialize_ts_field("typeAnnotation", &crate::serialize::basic::TsNull(self));
         state.end();
@@ -1307,12 +1307,12 @@ impl ESTree for BindingProperty<'_> {
         state.serialize_field("type", &JsonSafeString("Property"));
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
+        state.serialize_field("kind", &crate::serialize::basic::Init(self));
+        state.serialize_field("key", &self.key);
+        state.serialize_field("value", &self.value);
         state.serialize_field("method", &crate::serialize::basic::False(self));
         state.serialize_field("shorthand", &self.shorthand);
         state.serialize_field("computed", &self.computed);
-        state.serialize_field("key", &self.key);
-        state.serialize_field("value", &self.value);
-        state.serialize_field("kind", &crate::serialize::basic::Init(self));
         state.serialize_ts_field("optional", &crate::serialize::basic::TsFalse(self));
         state.end();
     }
@@ -1324,8 +1324,8 @@ impl ESTree for ArrayPattern<'_> {
         state.serialize_field("type", &JsonSafeString("ArrayPattern"));
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
-        state.serialize_field("elements", &Concat2(&self.elements, &self.rest));
         state.serialize_ts_field("decorators", &crate::serialize::basic::TsEmptyArray(self));
+        state.serialize_field("elements", &Concat2(&self.elements, &self.rest));
         state.serialize_ts_field("optional", &crate::serialize::basic::TsFalse(self));
         state.serialize_ts_field("typeAnnotation", &crate::serialize::basic::TsNull(self));
         state.end();
@@ -1338,8 +1338,8 @@ impl ESTree for BindingRestElement<'_> {
         state.serialize_field("type", &JsonSafeString("RestElement"));
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
-        state.serialize_field("argument", &self.argument);
         state.serialize_ts_field("decorators", &crate::serialize::basic::TsEmptyArray(self));
+        state.serialize_field("argument", &self.argument);
         state.serialize_ts_field("optional", &crate::serialize::basic::TsFalse(self));
         state.serialize_ts_field("typeAnnotation", &crate::serialize::basic::TsNull(self));
         state.serialize_ts_field("value", &crate::serialize::basic::TsNull(self));
@@ -1354,14 +1354,14 @@ impl ESTree for Function<'_> {
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
         state.serialize_field("id", &self.id);
-        state.serialize_field("expression", &crate::serialize::basic::False(self));
         state.serialize_field("generator", &self.generator);
         state.serialize_field("async", &self.r#async);
-        state.serialize_field("params", &crate::serialize::js::FunctionParams(self));
-        state.serialize_field("body", &self.body);
         state.serialize_ts_field("declare", &self.declare);
         state.serialize_ts_field("typeParameters", &self.type_parameters);
+        state.serialize_field("params", &crate::serialize::js::FunctionParams(self));
         state.serialize_ts_field("returnType", &self.return_type);
+        state.serialize_field("body", &self.body);
+        state.serialize_field("expression", &crate::serialize::basic::False(self));
         state.end();
     }
 }
@@ -1425,14 +1425,14 @@ impl ESTree for ArrowFunctionExpression<'_> {
         state.serialize_field("type", &JsonSafeString("ArrowFunctionExpression"));
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
-        state.serialize_field("id", &crate::serialize::basic::Null(self));
         state.serialize_field("expression", &self.expression);
-        state.serialize_field("generator", &crate::serialize::basic::False(self));
         state.serialize_field("async", &self.r#async);
-        state.serialize_field("params", &self.params);
-        state.serialize_field("body", &crate::serialize::js::ArrowFunctionExpressionBody(self));
         state.serialize_ts_field("typeParameters", &self.type_parameters);
+        state.serialize_field("params", &self.params);
         state.serialize_ts_field("returnType", &self.return_type);
+        state.serialize_field("body", &crate::serialize::js::ArrowFunctionExpressionBody(self));
+        state.serialize_field("id", &crate::serialize::basic::Null(self));
+        state.serialize_field("generator", &crate::serialize::basic::False(self));
         state.end();
     }
 }
@@ -1455,13 +1455,13 @@ impl ESTree for Class<'_> {
         state.serialize_field("type", &self.r#type);
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
-        state.serialize_field("id", &self.id);
-        state.serialize_field("superClass", &self.super_class);
-        state.serialize_field("body", &self.body);
         state.serialize_ts_field("decorators", &self.decorators);
+        state.serialize_field("id", &self.id);
         state.serialize_ts_field("typeParameters", &self.type_parameters);
+        state.serialize_field("superClass", &self.super_class);
         state.serialize_ts_field("superTypeArguments", &self.super_type_arguments);
         state.serialize_ts_field("implements", &self.implements);
+        state.serialize_field("body", &self.body);
         state.serialize_ts_field("abstract", &self.r#abstract);
         state.serialize_ts_field("declare", &self.declare);
         state.end();
@@ -1506,12 +1506,12 @@ impl ESTree for MethodDefinition<'_> {
         state.serialize_field("type", &self.r#type);
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
-        state.serialize_field("static", &self.r#static);
-        state.serialize_field("computed", &self.computed);
-        state.serialize_field("key", &crate::serialize::js::MethodDefinitionKey(self));
-        state.serialize_field("kind", &self.kind);
-        state.serialize_field("value", &self.value);
         state.serialize_ts_field("decorators", &self.decorators);
+        state.serialize_field("key", &crate::serialize::js::MethodDefinitionKey(self));
+        state.serialize_field("value", &self.value);
+        state.serialize_field("kind", &self.kind);
+        state.serialize_field("computed", &self.computed);
+        state.serialize_field("static", &self.r#static);
         state.serialize_ts_field("override", &self.r#override);
         state.serialize_ts_field("optional", &self.optional);
         state.serialize_ts_field("accessibility", &self.accessibility);
@@ -1536,17 +1536,17 @@ impl ESTree for PropertyDefinition<'_> {
         state.serialize_field("type", &self.r#type);
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
-        state.serialize_field("static", &self.r#static);
-        state.serialize_field("computed", &self.computed);
-        state.serialize_field("key", &self.key);
-        state.serialize_field("value", &self.value);
         state.serialize_ts_field("decorators", &self.decorators);
+        state.serialize_field("key", &self.key);
+        state.serialize_ts_field("typeAnnotation", &self.type_annotation);
+        state.serialize_field("value", &self.value);
+        state.serialize_field("computed", &self.computed);
+        state.serialize_field("static", &self.r#static);
         state.serialize_ts_field("declare", &self.declare);
         state.serialize_ts_field("override", &self.r#override);
         state.serialize_ts_field("optional", &self.optional);
         state.serialize_ts_field("definite", &self.definite);
         state.serialize_ts_field("readonly", &self.readonly);
-        state.serialize_ts_field("typeAnnotation", &self.type_annotation);
         state.serialize_ts_field("accessibility", &self.accessibility);
         state.end();
     }
@@ -1626,18 +1626,18 @@ impl ESTree for AccessorProperty<'_> {
         state.serialize_field("type", &self.r#type);
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
+        state.serialize_ts_field("decorators", &self.decorators);
         state.serialize_field("key", &self.key);
         state.serialize_ts_field("typeAnnotation", &self.type_annotation);
         state.serialize_field("value", &self.value);
         state.serialize_field("computed", &self.computed);
         state.serialize_field("static", &self.r#static);
-        state.serialize_ts_field("decorators", &self.decorators);
+        state.serialize_ts_field("override", &self.r#override);
         state.serialize_ts_field("definite", &self.definite);
         state.serialize_ts_field("accessibility", &self.accessibility);
-        state.serialize_ts_field("optional", &crate::serialize::basic::TsFalse(self));
-        state.serialize_ts_field("override", &self.r#override);
-        state.serialize_ts_field("readonly", &crate::serialize::basic::TsFalse(self));
         state.serialize_ts_field("declare", &crate::serialize::basic::TsFalse(self));
+        state.serialize_ts_field("optional", &crate::serialize::basic::TsFalse(self));
+        state.serialize_ts_field("readonly", &crate::serialize::basic::TsFalse(self));
         state.end();
     }
 }
@@ -1666,11 +1666,11 @@ impl ESTree for ImportDeclaration<'_> {
             &crate::serialize::js::ImportDeclarationSpecifiers(self),
         );
         state.serialize_field("source", &self.source);
+        state.serialize_field("phase", &self.phase);
         state.serialize_field(
             "attributes",
             &crate::serialize::js::ImportDeclarationWithClause(self),
         );
-        state.serialize_field("phase", &self.phase);
         state.serialize_ts_field("importKind", &self.import_kind);
         state.end();
     }
@@ -2001,8 +2001,8 @@ impl ESTree for JSXElement<'_> {
             "openingElement",
             &crate::serialize::jsx::JSXElementOpeningElement(self),
         );
-        state.serialize_field("closingElement", &self.closing_element);
         state.serialize_field("children", &self.children);
+        state.serialize_field("closingElement", &self.closing_element);
         state.end();
     }
 }
@@ -2013,13 +2013,13 @@ impl ESTree for JSXOpeningElement<'_> {
         state.serialize_field("type", &JsonSafeString("JSXOpeningElement"));
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
-        state.serialize_field("attributes", &self.attributes);
         state.serialize_field("name", &self.name);
+        state.serialize_ts_field("typeArguments", &self.type_arguments);
+        state.serialize_field("attributes", &self.attributes);
         state.serialize_field(
             "selfClosing",
             &crate::serialize::jsx::JSXOpeningElementSelfClosing(self),
         );
-        state.serialize_ts_field("typeArguments", &self.type_arguments);
         state.end();
     }
 }
@@ -2042,8 +2042,8 @@ impl ESTree for JSXFragment<'_> {
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
         state.serialize_field("openingFragment", &self.opening_fragment);
-        state.serialize_field("closingFragment", &self.closing_fragment);
         state.serialize_field("children", &self.children);
+        state.serialize_field("closingFragment", &self.closing_fragment);
         state.end();
     }
 }
@@ -2300,8 +2300,8 @@ impl ESTree for TSThisParameter<'_> {
         state.serialize_field("type", &JsonSafeString("Identifier"));
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
-        state.serialize_field("name", &crate::serialize::basic::This(self));
         state.serialize_field("decorators", &crate::serialize::basic::EmptyArray(self));
+        state.serialize_field("name", &crate::serialize::basic::This(self));
         state.serialize_field("optional", &crate::serialize::basic::False(self));
         state.serialize_field("typeAnnotation", &self.type_annotation);
         state.end();
@@ -2340,8 +2340,8 @@ impl ESTree for TSEnumMember<'_> {
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
         state.serialize_field("id", &self.id);
-        state.serialize_field("computed", &crate::serialize::ts::TSEnumMemberComputed(self));
         state.serialize_field("initializer", &self.initializer);
+        state.serialize_field("computed", &crate::serialize::ts::TSEnumMemberComputed(self));
         state.end();
     }
 }
@@ -3007,8 +3007,8 @@ impl ESTree for TSIndexSignatureName<'_> {
         state.serialize_field("type", &JsonSafeString("Identifier"));
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
-        state.serialize_field("name", &JsonSafeString(self.name.as_str()));
         state.serialize_field("decorators", &crate::serialize::basic::EmptyArray(self));
+        state.serialize_field("name", &JsonSafeString(self.name.as_str()));
         state.serialize_field("optional", &crate::serialize::basic::False(self));
         state.serialize_field("typeAnnotation", &self.type_annotation);
         state.end();
@@ -3187,12 +3187,12 @@ impl ESTree for TSMappedType<'_> {
         state.serialize_field("type", &JsonSafeString("TSMappedType"));
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
+        state.serialize_field("key", &crate::serialize::ts::TSMappedTypeKey(self));
+        state.serialize_field("constraint", &crate::serialize::ts::TSMappedTypeConstraint(self));
         state.serialize_field("nameType", &self.name_type);
         state.serialize_field("typeAnnotation", &self.type_annotation);
         state.serialize_field("optional", &crate::serialize::ts::TSMappedTypeOptional(self));
         state.serialize_field("readonly", &self.readonly);
-        state.serialize_field("key", &crate::serialize::ts::TSMappedTypeKey(self));
-        state.serialize_field("constraint", &crate::serialize::ts::TSMappedTypeConstraint(self));
         state.end();
     }
 }

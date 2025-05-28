@@ -123,12 +123,12 @@ function deserializeObjectProperty(pos) {
     type: 'Property',
     start: deserializeU32(pos),
     end: deserializeU32(pos + 4),
+    kind: deserializePropertyKind(pos + 40),
+    key: deserializePropertyKey(pos + 8),
+    value: deserializeExpression(pos + 24),
     method: deserializeBool(pos + 41),
     shorthand: deserializeBool(pos + 42),
     computed: deserializeBool(pos + 43),
-    key: deserializePropertyKey(pos + 8),
-    value: deserializeExpression(pos + 24),
-    kind: deserializePropertyKind(pos + 40),
   };
 }
 
@@ -137,8 +137,8 @@ function deserializeTemplateLiteral(pos) {
     type: 'TemplateLiteral',
     start: deserializeU32(pos),
     end: deserializeU32(pos + 4),
-    expressions: deserializeVecExpression(pos + 32),
     quasis: deserializeVecTemplateElement(pos + 8),
+    expressions: deserializeVecExpression(pos + 32),
   };
 }
 
@@ -178,8 +178,8 @@ function deserializeComputedMemberExpression(pos) {
     end: deserializeU32(pos + 4),
     object: deserializeExpression(pos + 8),
     property: deserializeExpression(pos + 24),
-    computed: true,
     optional: deserializeBool(pos + 40),
+    computed: true,
   };
 }
 
@@ -190,8 +190,8 @@ function deserializeStaticMemberExpression(pos) {
     end: deserializeU32(pos + 4),
     object: deserializeExpression(pos + 8),
     property: deserializeIdentifierName(pos + 24),
-    computed: false,
     optional: deserializeBool(pos + 48),
+    computed: false,
   };
 }
 
@@ -202,8 +202,8 @@ function deserializePrivateFieldExpression(pos) {
     end: deserializeU32(pos + 4),
     object: deserializeExpression(pos + 8),
     property: deserializePrivateIdentifier(pos + 24),
-    computed: false,
     optional: deserializeBool(pos + 48),
+    computed: false,
   };
 }
 
@@ -264,8 +264,8 @@ function deserializeUnaryExpression(pos) {
     start: deserializeU32(pos),
     end: deserializeU32(pos + 4),
     operator: deserializeUnaryOperator(pos + 24),
-    prefix: true,
     argument: deserializeExpression(pos + 8),
+    prefix: true,
   };
 }
 
@@ -386,12 +386,12 @@ function deserializeAssignmentTargetPropertyIdentifier(pos) {
     type: 'Property',
     start,
     end,
+    kind: 'init',
+    key,
+    value,
     method: false,
     shorthand: true,
     computed: false,
-    key,
-    value,
-    kind: 'init',
   };
 }
 
@@ -400,12 +400,12 @@ function deserializeAssignmentTargetPropertyProperty(pos) {
     type: 'Property',
     start: deserializeU32(pos),
     end: deserializeU32(pos + 4),
+    kind: 'init',
+    key: deserializePropertyKey(pos + 8),
+    value: deserializeAssignmentTargetMaybeDefault(pos + 24),
     method: false,
     shorthand: false,
     computed: deserializeBool(pos + 40),
-    key: deserializePropertyKey(pos + 8),
-    value: deserializeAssignmentTargetMaybeDefault(pos + 24),
-    kind: 'init',
   };
 }
 
@@ -486,8 +486,8 @@ function deserializeVariableDeclaration(pos) {
     type: 'VariableDeclaration',
     start: deserializeU32(pos),
     end: deserializeU32(pos + 4),
-    declarations: deserializeVecVariableDeclarator(pos + 8),
     kind: deserializeVariableDeclarationKind(pos + 32),
+    declarations: deserializeVecVariableDeclarator(pos + 8),
   };
 }
 
@@ -636,8 +636,8 @@ function deserializeSwitchCase(pos) {
     type: 'SwitchCase',
     start: deserializeU32(pos),
     end: deserializeU32(pos + 4),
-    consequent: deserializeVecStatement(pos + 24),
     test: deserializeOptionExpression(pos + 8),
+    consequent: deserializeVecStatement(pos + 24),
   };
 }
 
@@ -646,8 +646,8 @@ function deserializeLabeledStatement(pos) {
     type: 'LabeledStatement',
     start: deserializeU32(pos),
     end: deserializeU32(pos + 4),
-    body: deserializeStatement(pos + 32),
     label: deserializeLabelIdentifier(pos + 8),
+    body: deserializeStatement(pos + 32),
   };
 }
 
@@ -728,12 +728,12 @@ function deserializeBindingProperty(pos) {
     type: 'Property',
     start: deserializeU32(pos),
     end: deserializeU32(pos + 4),
+    kind: 'init',
+    key: deserializePropertyKey(pos + 8),
+    value: deserializeBindingPattern(pos + 24),
     method: false,
     shorthand: deserializeBool(pos + 56),
     computed: deserializeBool(pos + 57),
-    key: deserializePropertyKey(pos + 8),
-    value: deserializeBindingPattern(pos + 24),
-    kind: 'init',
   };
 }
 
@@ -765,11 +765,11 @@ function deserializeFunction(pos) {
     start: deserializeU32(pos),
     end: deserializeU32(pos + 4),
     id: deserializeOptionBindingIdentifier(pos + 8),
-    expression: false,
     generator: deserializeBool(pos + 85),
     async: deserializeBool(pos + 86),
     params,
     body: deserializeOptionBoxFunctionBody(pos + 72),
+    expression: false,
   };
 }
 
@@ -809,12 +809,12 @@ function deserializeArrowFunctionExpression(pos) {
     type: 'ArrowFunctionExpression',
     start: deserializeU32(pos),
     end: deserializeU32(pos + 4),
-    id: null,
     expression,
-    generator: false,
     async: deserializeBool(pos + 45),
     params: deserializeBoxFormalParameters(pos + 16),
     body: expression ? body.body[0].expression : body,
+    id: null,
+    generator: false,
   };
 }
 
@@ -853,11 +853,11 @@ function deserializeMethodDefinition(pos) {
     type: deserializeMethodDefinitionType(pos + 56),
     start: deserializeU32(pos),
     end: deserializeU32(pos + 4),
-    static: deserializeBool(pos + 59),
-    computed: deserializeBool(pos + 58),
     key: deserializePropertyKey(pos + 32),
-    kind: deserializeMethodDefinitionKind(pos + 57),
     value: deserializeBoxFunction(pos + 48),
+    kind: deserializeMethodDefinitionKind(pos + 57),
+    computed: deserializeBool(pos + 58),
+    static: deserializeBool(pos + 59),
   };
 }
 
@@ -866,10 +866,10 @@ function deserializePropertyDefinition(pos) {
     type: deserializePropertyDefinitionType(pos + 72),
     start: deserializeU32(pos),
     end: deserializeU32(pos + 4),
-    static: deserializeBool(pos + 74),
-    computed: deserializeBool(pos + 73),
     key: deserializePropertyKey(pos + 32),
     value: deserializeOptionExpression(pos + 56),
+    computed: deserializeBool(pos + 73),
+    static: deserializeBool(pos + 74),
   };
 }
 
@@ -924,8 +924,8 @@ function deserializeImportDeclaration(pos) {
     end: deserializeU32(pos + 4),
     specifiers,
     source: deserializeStringLiteral(pos + 32),
-    attributes: withClause === null ? [] : withClause.attributes,
     phase: deserializeOptionImportPhase(pos + 88),
+    attributes: withClause === null ? [] : withClause.attributes,
   };
 }
 
@@ -1142,8 +1142,8 @@ function deserializeJSXElement(pos) {
     start: deserializeU32(pos),
     end: deserializeU32(pos + 4),
     openingElement,
-    closingElement,
     children: deserializeVecJSXChild(pos + 16),
+    closingElement,
   };
 }
 
@@ -1152,8 +1152,8 @@ function deserializeJSXOpeningElement(pos) {
     type: 'JSXOpeningElement',
     start: deserializeU32(pos),
     end: deserializeU32(pos + 4),
-    attributes: deserializeVecJSXAttributeItem(pos + 32),
     name: deserializeJSXElementName(pos + 8),
+    attributes: deserializeVecJSXAttributeItem(pos + 32),
     selfClosing: false,
   };
 }
@@ -1173,8 +1173,8 @@ function deserializeJSXFragment(pos) {
     start: deserializeU32(pos),
     end: deserializeU32(pos + 4),
     openingFragment: deserializeJSXOpeningFragment(pos + 8),
-    closingFragment: deserializeJSXClosingFragment(pos + 40),
     children: deserializeVecJSXChild(pos + 16),
+    closingFragment: deserializeJSXClosingFragment(pos + 40),
   };
 }
 
@@ -1285,8 +1285,8 @@ function deserializeTSThisParameter(pos) {
     type: 'Identifier',
     start: deserializeU32(pos),
     end: deserializeU32(pos + 4),
-    name: 'this',
     decorators: [],
+    name: 'this',
     optional: false,
     typeAnnotation: deserializeOptionBoxTSTypeAnnotation(pos + 16),
   };
@@ -1319,8 +1319,8 @@ function deserializeTSEnumMember(pos) {
     start: deserializeU32(pos),
     end: deserializeU32(pos + 4),
     id: deserializeTSEnumMemberName(pos + 8),
-    computed: deserializeU8(pos + 8) > 1,
     initializer: deserializeOptionExpression(pos + 24),
+    computed: deserializeU8(pos + 8) > 1,
   };
 }
 
@@ -1760,8 +1760,8 @@ function deserializeTSIndexSignatureName(pos) {
     type: 'Identifier',
     start: deserializeU32(pos),
     end: deserializeU32(pos + 4),
-    name: deserializeStr(pos + 8),
     decorators: [],
+    name: deserializeStr(pos + 8),
     optional: false,
     typeAnnotation: deserializeBoxTSTypeAnnotation(pos + 24),
   };
@@ -1913,19 +1913,19 @@ function deserializeTSConstructorType(pos) {
 }
 
 function deserializeTSMappedType(pos) {
+  const typeParameter = deserializeBoxTSTypeParameter(pos + 8);
   let optional = deserializeOptionTSMappedTypeModifierOperator(pos + 52);
   if (optional === null) optional = false;
-  const typeParameter = deserializeBoxTSTypeParameter(pos + 8);
   return {
     type: 'TSMappedType',
     start: deserializeU32(pos),
     end: deserializeU32(pos + 4),
+    key: typeParameter.name,
+    constraint: typeParameter.constraint,
     nameType: deserializeOptionTSType(pos + 16),
     typeAnnotation: deserializeOptionTSType(pos + 32),
     optional,
     readonly: deserializeOptionTSMappedTypeModifierOperator(pos + 53),
-    key: typeParameter.name,
-    constraint: typeParameter.constraint,
   };
 }
 
