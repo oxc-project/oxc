@@ -15,12 +15,13 @@ use crate::{
     rules::RULES,
 };
 
-use super::Config;
+use super::{Config, categories::OxlintCategories};
 
 #[must_use = "You dropped your builder without building a Linter! Did you mean to call .build()?"]
 pub struct ConfigStoreBuilder {
     pub(super) rules: FxHashMap<RuleEnum, AllowWarnDeny>,
     config: LintConfig,
+    categories: OxlintCategories,
     overrides: OxlintOverrides,
     cache: RulesCache,
 
@@ -43,11 +44,12 @@ impl ConfigStoreBuilder {
     pub fn empty() -> Self {
         let config = LintConfig::default();
         let rules = FxHashMap::default();
+        let categories: OxlintCategories = OxlintCategories::default();
         let overrides = OxlintOverrides::default();
         let cache = RulesCache::new(config.plugins);
         let extended_paths = Vec::new();
 
-        Self { rules, config, overrides, cache, extended_paths }
+        Self { rules, config, categories, overrides, cache, extended_paths }
     }
 
     /// Warn on all rules in all plugins and categories, including those in `nursery`.
@@ -57,10 +59,11 @@ impl ConfigStoreBuilder {
     pub fn all() -> Self {
         let config = LintConfig { plugins: LintPlugins::all(), ..LintConfig::default() };
         let overrides = OxlintOverrides::default();
+        let categories: OxlintCategories = OxlintCategories::default();
         let cache = RulesCache::new(config.plugins);
         let rules = RULES.iter().map(|rule| (rule.clone(), AllowWarnDeny::Warn)).collect();
         let extended_paths = Vec::new();
-        Self { rules, config, overrides, cache, extended_paths }
+        Self { rules, config, categories, overrides, cache, extended_paths }
     }
 
     /// Create a [`ConfigStoreBuilder`] from a loaded or manually built [`Oxlintrc`].
@@ -138,6 +141,12 @@ impl ConfigStoreBuilder {
             Self::warn_correctness(oxlintrc.plugins.unwrap_or_default())
         };
 
+        let mut categories = oxlintrc.categories.clone();
+
+        if !start_empty {
+            categories.insert(RuleCategory::Correctness, AllowWarnDeny::Warn);
+        }
+
         let config = LintConfig {
             plugins: oxlintrc.plugins.unwrap_or_default(),
             settings: oxlintrc.settings,
@@ -147,8 +156,14 @@ impl ConfigStoreBuilder {
         };
         let cache = RulesCache::new(config.plugins);
 
-        let mut builder =
-            Self { rules, config, overrides: oxlintrc.overrides, cache, extended_paths };
+        let mut builder = Self {
+            rules,
+            config,
+            categories,
+            overrides: oxlintrc.overrides,
+            cache,
+            extended_paths,
+        };
 
         for filter in oxlintrc.categories.filters() {
             builder = builder.with_filter(&filter);
@@ -180,6 +195,11 @@ impl ConfigStoreBuilder {
     pub fn with_plugins(mut self, plugins: LintPlugins) -> Self {
         self.config.plugins = plugins;
         self.cache.set_plugins(plugins);
+        self
+    }
+
+    pub fn with_categories(mut self, categories: OxlintCategories) -> Self {
+        self.categories = categories;
         self
     }
 
@@ -285,7 +305,7 @@ impl ConfigStoreBuilder {
             self.rules.into_iter().collect::<Vec<_>>()
         };
         rules.sort_unstable_by_key(|(r, _)| r.id());
-        Config::new(rules, self.config, self.overrides)
+        Config::new(rules, self.categories, self.config, self.overrides)
     }
 
     /// Warn for all correctness rules in the given set of plugins.

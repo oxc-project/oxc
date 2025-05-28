@@ -61,7 +61,6 @@ impl OxlintRules {
     pub(crate) fn override_rules(&self, rules_for_override: &mut RuleSet, all_rules: &[RuleEnum]) {
         use itertools::Itertools;
         let mut rules_to_replace: Vec<(RuleEnum, AllowWarnDeny)> = vec![];
-        let mut rules_to_remove: Vec<RuleEnum> = vec![];
 
         // Rules can have the same name but different plugin names
         let lookup = self.rules.iter().into_group_map_by(|r| r.rule_name.as_str());
@@ -91,7 +90,9 @@ impl OxlintRules {
                             if let Some((rule, _)) = rules_for_override.iter().find(|(r, _)| {
                                 r.name() == rule_name && r.plugin_name() == plugin_name
                             }) {
-                                rules_to_remove.push(rule.clone());
+                                let config = rule_config.config.clone().unwrap_or_default();
+                                let rule = rule.read_json(config);
+                                rules_to_replace.push((rule, AllowWarnDeny::Allow));
                             }
                             // If the given rule is not found in the rule list (for example, if all rules are disabled),
                             // then look it up in the entire rules list and add it.
@@ -101,7 +102,7 @@ impl OxlintRules {
                             {
                                 let config = rule_config.config.clone().unwrap_or_default();
                                 let rule = rule.read_json(config);
-                                rules_to_remove.push(rule);
+                                rules_to_replace.push((rule, AllowWarnDeny::Allow));
                             }
                         }
                     }
@@ -136,16 +137,25 @@ impl OxlintRules {
                                     .push((rule.read_json(config), rule_config.severity));
                             }
                         } else if let Some(&rule) = rules.get(&plugin_name) {
-                            rules_to_remove.push(rule.clone());
+                            let config = rule_config.config.clone().unwrap_or_default();
+                            let rule = rule.read_json(config);
+                            rules_to_replace.push((rule, AllowWarnDeny::Allow));
+                        }
+                        // If the given rule is not found in the rule list (for example, if all rules are disabled),
+                        // then look it up in the entire rules list and add it with Allow severity.
+                        else if let Some(rule) = all_rules
+                            .iter()
+                            .find(|r| r.name() == rule_name && r.plugin_name() == plugin_name)
+                        {
+                            let config = rule_config.config.clone().unwrap_or_default();
+                            let rule = rule.read_json(config);
+                            rules_to_replace.push((rule, AllowWarnDeny::Allow));
                         }
                     }
                 }
             }
         }
 
-        for rule in rules_to_remove {
-            rules_for_override.remove(&rule);
-        }
         for (rule, severity) in rules_to_replace {
             let _ = rules_for_override.remove(&rule);
             rules_for_override.insert(rule, severity);
@@ -454,7 +464,7 @@ mod test {
         rules.insert(RuleEnum::EslintNoConsole(Default::default()), AllowWarnDeny::Deny);
         r#override(&mut rules, &json!({ "eslint/no-console": "off" }));
 
-        assert!(rules.is_empty());
+        assert!(!rules.iter().any(|(_, severity)| severity.is_warn_deny()));
     }
 
     #[test]
