@@ -30,6 +30,43 @@ declare const ObjectKeys: {
 	3: number
 	[-3]: number
 };
+type family = "-apple-system, BlinkMacSystemFont, San Francisco, Segoe UI, Roboto, Helvetica Neue, sans-serif";
+declare const family: family;
+declare const theme: {
+	readonly "font-family": family
+};
+declare const X: {
+	async: number
+	await: number
+};
+declare const Y: {
+	0: number
+	1: number
+	"2": number
+	3: number
+	4: number
+	"5": number
+};
+declare const exoticKeys: {
+	// --- WORKING KEYS ---
+	a: string
+	é: string
+	ø: string
+	Ж: string
+	你: string
+	あ: string
+	한: string
+	á: string
+	// --- NON-WORKING KEYS ---
+	"😃": string
+	"👍🏻": string
+	"👨‍👩‍👧‍👦": string
+	"±": string
+	"€": string
+	"“": string
+	"\0": string
+	"\\": string
+};
 
 
 ==================== Errors ====================
