@@ -81,6 +81,9 @@ impl<'a> ParserImpl<'a> {
     }
 
     fn is_start_of_function_type_or_constructor_type(&mut self) -> bool {
+        if !self.is_ts {
+            return false;
+        }
         if self.at(Kind::LAngle) {
             return true;
         }
@@ -483,6 +486,10 @@ impl<'a> ParserImpl<'a> {
     }
 
     fn is_start_of_type(&mut self, in_start_of_parameter: bool) -> bool {
+        if !self.is_ts {
+            return false;
+        }
+
         match self.cur_kind() {
             kind if kind.is_number() => true,
             Kind::Any
@@ -530,6 +537,10 @@ impl<'a> ParserImpl<'a> {
     }
 
     fn is_start_of_mapped_type(&mut self) -> bool {
+        if !self.is_ts {
+            return false;
+        }
+
         self.bump_any();
         if self.at(Kind::Plus) || self.at(Kind::Minus) {
             self.bump_any();
@@ -552,6 +563,10 @@ impl<'a> ParserImpl<'a> {
     }
 
     fn is_start_of_parenthesized_or_function_type(&mut self) -> bool {
+        if !self.is_ts {
+            return false;
+        }
+
         self.bump_any();
         self.at(Kind::RParen)
             || self.is_start_of_parameter(/* is_js_doc_parameter */ false)
