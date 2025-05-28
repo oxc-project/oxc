@@ -964,8 +964,8 @@ pub struct TSInterfaceBody<'a> {
 /// //  ___ key
 ///     bar: number
 /// //     ^^^^^^^^ type_annotation
-///     baz?: string          // <- optional
-///     readony bang: boolean // <- readonly
+///     baz?: string           // <- optional
+///     readonly bang: boolean // <- readonly
 /// }
 /// ```
 #[ast(visit)]
