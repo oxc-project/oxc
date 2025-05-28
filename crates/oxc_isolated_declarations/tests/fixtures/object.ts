@@ -66,3 +66,12 @@ const X = {
   'async': 1,
   'await': 2,
 }
+
+const Y = {
+  0: 0,
+  [1]: 1,
+  ["2"]: 2,
+  set 3(v: number) {},
+  set [4](v: number) {},
+  set ["5"](v: number) {},
+};
