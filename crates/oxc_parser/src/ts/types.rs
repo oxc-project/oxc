@@ -88,12 +88,8 @@ impl<'a> ParserImpl<'a> {
             return true;
         }
         self.at(Kind::New)
-            || (self.at(Kind::Abstract) && self.lookahead(Self::is_next_token_new_keyword))
-    }
-
-    fn is_next_token_new_keyword(&mut self) -> bool {
-        self.bump_any();
-        self.at(Kind::New)
+            || (self.at(Kind::Abstract)
+                && self.lexer.lookahead_token(|token| token.kind() == Kind::New))
     }
 
     fn is_unambiguously_start_of_function_type(&mut self) -> bool {
@@ -365,7 +361,7 @@ impl<'a> ParserImpl<'a> {
                 self.parse_literal_type_node(/* negative */ false)
             }
             Kind::Minus => {
-                if self.lookahead(Self::is_next_token_number) {
+                if self.lexer.lookahead_token(|token| token.kind().is_number()) {
                     self.parse_literal_type_node(/* negative */ true)
                 } else {
                     self.parse_type_reference()
@@ -406,7 +402,7 @@ impl<'a> ParserImpl<'a> {
             Kind::LParen => self.parse_parenthesized_type(),
             Kind::Import => TSType::TSImportType(self.parse_ts_import_type()),
             Kind::Asserts => {
-                if self.lookahead(Self::is_next_token_identifier_or_keyword_on_same_line) {
+                if self.lexer.lookahead_token(|token| token.kind().is_identifier_name() && !token.is_on_new_line()) {
                     self.parse_asserts_type_predicate()
                 } else {
                     self.parse_type_reference()
@@ -415,16 +411,6 @@ impl<'a> ParserImpl<'a> {
             Kind::TemplateHead => self.parse_template_type(false),
             _ => self.parse_type_reference(),
         }
-    }
-
-    fn is_next_token_identifier_or_keyword_on_same_line(&mut self) -> bool {
-        self.bump_any();
-        self.cur_kind().is_identifier_name() && !self.cur_token().is_on_new_line()
-    }
-
-    fn is_next_token_number(&mut self) -> bool {
-        self.bump_any();
-        self.cur_kind().is_number()
     }
 
     fn parse_keyword_and_no_dot(&mut self) -> TSType<'a> {
@@ -520,7 +506,10 @@ impl<'a> ParserImpl<'a> {
             | Kind::NoSubstitutionTemplate
             | Kind::TemplateHead => true,
             Kind::Function => !in_start_of_parameter,
-            Kind::Minus => !in_start_of_parameter && self.lookahead(Self::is_next_token_number),
+            Kind::Minus => {
+                !in_start_of_parameter
+                    && self.lexer.lookahead_token(|token| token.kind().is_number())
+            }
             Kind::LParen => {
                 !in_start_of_parameter
                     && self.lookahead(Self::is_start_of_parenthesized_or_function_type)
@@ -1079,12 +1068,10 @@ impl<'a> ParserImpl<'a> {
     }
 
     pub(crate) fn is_next_at_type_member_name(&mut self) -> bool {
-        self.lookahead(Self::is_next_at_type_member_name_worker)
-    }
-
-    fn is_next_at_type_member_name_worker(&mut self) -> bool {
-        self.bump_any();
-        self.cur_kind().is_literal_property_name() || self.at(Kind::LBrack)
+        self.lexer.lookahead_token(|token| {
+            let kind = token.kind();
+            kind.is_literal_property_name() || kind == Kind::LBrack
+        })
     }
 
     pub(crate) fn parse_ts_call_signature_member(&mut self) -> TSSignature<'a> {
@@ -1413,13 +1400,10 @@ impl<'a> ParserImpl<'a> {
             | Kind::New
             | Kind::Slash
             | Kind::SlashEq => true,
-            Kind::Import => self.lookahead(Self::is_next_token_paren_less_than_or_dot),
+            Kind::Import => self.lexer.lookahead_token(|token| {
+                matches!(token.kind(), Kind::LParen | Kind::LAngle | Kind::Dot)
+            }),
             _ => false,
         }
-    }
-
-    fn is_next_token_paren_less_than_or_dot(&mut self) -> bool {
-        self.bump_any();
-        matches!(self.cur_kind(), Kind::LParen | Kind::LAngle | Kind::Dot)
     }
 }

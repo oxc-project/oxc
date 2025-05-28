@@ -23,9 +23,8 @@ impl<'a> ParserImpl<'a> {
     pub(crate) fn at_function_with_async(&mut self) -> bool {
         self.at(Kind::Function)
             || self.at(Kind::Async)
-                && self.lookahead(|p| {
-                    p.bump_any();
-                    p.at(Kind::Function) && !p.token.is_on_new_line()
+                && self.lexer.lookahead_token(|token| {
+                    token.kind() == Kind::Function && !token.is_on_new_line()
                 })
     }
 
