@@ -11,7 +11,6 @@ impl Lexer<'_> {
         self.token.set_start(self.offset() - offset);
         self.source.back(offset as usize - 1);
         let kind = Kind::LAngle;
-        self.lookahead.clear();
         self.finish_next(kind)
     }
 
@@ -25,7 +24,6 @@ impl Lexer<'_> {
         self.token.set_start(self.offset() - offset);
         self.source.back(offset as usize - 1);
         let kind = Kind::RAngle;
-        self.lookahead.clear();
         self.finish_next(kind)
     }
 }
