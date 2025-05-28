@@ -156,7 +156,7 @@ unicode-id-start = "1"
 #
 oxc-browserslist = "2"
 oxc_index = "3"
-oxc_resolver = "10"
+oxc_resolver = "11"
 oxc_sourcemap = "3"
 
 #
