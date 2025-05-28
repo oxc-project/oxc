@@ -178,6 +178,9 @@ impl TryFrom<&BabelOptions> for TransformOptions {
             jsx_options.display_name_plugin = options.plugins.react_display_name;
             jsx_options.jsx_self_plugin = options.plugins.react_jsx_self;
             jsx_options.jsx_source_plugin = options.plugins.react_jsx_source;
+            if options.plugins.react_pure_annotations {
+                jsx_options.pure = options.plugins.react_pure_annotations;
+            }
             jsx_options
         };
 

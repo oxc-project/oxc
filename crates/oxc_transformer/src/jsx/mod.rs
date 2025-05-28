@@ -1,5 +1,6 @@
 use oxc_ast::{AstBuilder, ast::*};
 use oxc_traverse::{Traverse, TraverseCtx};
+use pure::ReactPureAnnotations;
 
 use crate::{TransformCtx, es2018::ObjectRestSpreadOptions};
 
@@ -10,6 +11,7 @@ mod jsx_impl;
 mod jsx_self;
 mod jsx_source;
 mod options;
+mod pure;
 mod refresh;
 pub use comments::update_options_with_comments;
 use display_name::ReactDisplayName;
@@ -30,11 +32,13 @@ pub struct Jsx<'a, 'ctx> {
     implementation: JsxImpl<'a, 'ctx>,
     display_name: ReactDisplayName<'a, 'ctx>,
     refresh: ReactRefresh<'a, 'ctx>,
+    pure_annotations: ReactPureAnnotations<'a, 'ctx>,
     enable_jsx_plugin: bool,
     display_name_plugin: bool,
     self_plugin: bool,
     source_plugin: bool,
     refresh_plugin: bool,
+    pure: bool,
 }
 
 // Constructors
@@ -49,18 +53,25 @@ impl<'a, 'ctx> Jsx<'a, 'ctx> {
             options.conform();
         }
         let JsxOptions {
-            jsx_plugin, display_name_plugin, jsx_self_plugin, jsx_source_plugin, ..
+            jsx_plugin,
+            display_name_plugin,
+            jsx_self_plugin,
+            jsx_source_plugin,
+            pure,
+            ..
         } = options;
         let refresh = options.refresh.clone();
         Self {
             implementation: JsxImpl::new(options, object_rest_spread_options, ast, ctx),
             display_name: ReactDisplayName::new(ctx),
+            pure_annotations: ReactPureAnnotations::new(ctx),
             enable_jsx_plugin: jsx_plugin,
             display_name_plugin,
             self_plugin: jsx_self_plugin,
             source_plugin: jsx_source_plugin,
             refresh_plugin: refresh.is_some(),
             refresh: ReactRefresh::new(&refresh.unwrap_or_default(), ast, ctx),
+            pure,
         }
     }
 }
@@ -97,6 +108,10 @@ impl<'a> Traverse<'a> for Jsx<'a, '_> {
 
         if self.refresh_plugin {
             self.refresh.enter_call_expression(call_expr, ctx);
+        }
+
+        if self.pure {
+            self.pure_annotations.enter_call_expression(call_expr, ctx);
         }
     }
 
