@@ -75,3 +75,26 @@ const Y = {
   set [4](v: number) {},
   set ["5"](v: number) {},
 };
+
+
+const exoticKeys = {
+  // --- WORKING KEYS ---
+  "a": "latin",                          // latin
+  "é": "latin-1 supplement",             // latin-1 supplement
+  "ø": "extended latin",                 // extended latin
+  "Ж": "cyrillic",                       // cyrillic
+  "你": "chinese",                        // chinese
+  "あ": "japanese",                       // japanese
+  "한": "korean",                         // korean
+  "a\u0301": "zalgo/combining",          // zalgo (a + combining acute accent)
+
+  // --- NON-WORKING KEYS ---
+  "😃": "emoji",                         // emoji
+  "👍🏻": "emoji with skin tone",          // emoji + skin tone
+  "👨‍👩‍👧‍👦": "emoji sequence",                // emoji sequence (family)
+  "±": "math symbol",                    // math symbol
+  "€": "currency",                       // currency
+  "“": "curly quote",                    // curly quote
+  "\u0000": "null byte",                 // null byte (not expected to work)
+  "\\": "backslash",                     // backslash (unique error)
+};
