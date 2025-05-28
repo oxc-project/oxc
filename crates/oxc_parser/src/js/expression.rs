@@ -164,12 +164,14 @@ impl<'a> ParserImpl<'a> {
 
         // FunctionExpression, GeneratorExpression
         // AsyncFunctionExpression, AsyncGeneratorExpression
-        let b = self.at(Kind::Function)
-            || self.at(Kind::Async)
-                && self.lookahead(|p| {
-                    p.bump_any();
-                    p.at(Kind::Function) && !p.token.is_on_new_line()
-                });
+        if self.at(Kind::Function) {
+            return self.parse_function_expression(span, false);
+        }
+        let b = self.at(Kind::Async)
+            && self.lookahead(|p| {
+                p.bump_any();
+                p.at(Kind::Function) && !p.token.is_on_new_line()
+            });
         if b {
             let r#async = self.eat(Kind::Async);
             return self.parse_function_expression(span, r#async);
