@@ -125,8 +125,8 @@ export interface TemplateLiteral extends Span {
 export interface TaggedTemplateExpression extends Span {
   type: 'TaggedTemplateExpression';
   tag: Expression;
-  quasi: TemplateLiteral;
   typeArguments?: TSTypeParameterInstantiation | null;
+  quasi: TemplateLiteral;
 }
 
 export interface TemplateElement extends Span {
@@ -169,16 +169,16 @@ export interface PrivateFieldExpression extends Span {
 export interface CallExpression extends Span {
   type: 'CallExpression';
   callee: Expression;
+  typeArguments?: TSTypeParameterInstantiation | null;
   arguments: Array<Argument>;
   optional: boolean;
-  typeArguments?: TSTypeParameterInstantiation | null;
 }
 
 export interface NewExpression extends Span {
   type: 'NewExpression';
   callee: Expression;
-  arguments: Array<Argument>;
   typeArguments?: TSTypeParameterInstantiation | null;
+  arguments: Array<Argument>;
 }
 
 export interface MetaProperty extends Span {
@@ -788,8 +788,8 @@ export interface ExportNamedDeclaration extends Span {
   declaration: Declaration | null;
   specifiers: Array<ExportSpecifier>;
   source: StringLiteral | null;
-  attributes: Array<ImportAttribute>;
   exportKind?: ImportOrExportKind;
+  attributes: Array<ImportAttribute>;
 }
 
 export interface ExportDefaultDeclaration extends Span {

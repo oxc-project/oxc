@@ -177,8 +177,8 @@ function deserializeTaggedTemplateExpression(pos) {
     start: deserializeU32(pos),
     end: deserializeU32(pos + 4),
     tag: deserializeExpression(pos + 8),
-    quasi: deserializeTemplateLiteral(pos + 32),
     typeArguments: deserializeOptionBoxTSTypeParameterInstantiation(pos + 24),
+    quasi: deserializeTemplateLiteral(pos + 32),
   };
 }
 
@@ -243,9 +243,9 @@ function deserializeCallExpression(pos) {
     start: deserializeU32(pos),
     end: deserializeU32(pos + 4),
     callee: deserializeExpression(pos + 8),
+    typeArguments: deserializeOptionBoxTSTypeParameterInstantiation(pos + 24),
     arguments: deserializeVecArgument(pos + 32),
     optional: deserializeBool(pos + 56),
-    typeArguments: deserializeOptionBoxTSTypeParameterInstantiation(pos + 24),
   };
 }
 
@@ -255,8 +255,8 @@ function deserializeNewExpression(pos) {
     start: deserializeU32(pos),
     end: deserializeU32(pos + 4),
     callee: deserializeExpression(pos + 8),
-    arguments: deserializeVecArgument(pos + 32),
     typeArguments: deserializeOptionBoxTSTypeParameterInstantiation(pos + 24),
+    arguments: deserializeVecArgument(pos + 32),
   };
 }
 
@@ -1131,8 +1131,8 @@ function deserializeExportNamedDeclaration(pos) {
     declaration: deserializeOptionDeclaration(pos + 8),
     specifiers: deserializeVecExportSpecifier(pos + 24),
     source: deserializeOptionStringLiteral(pos + 48),
-    attributes: withClause === null ? [] : withClause.attributes,
     exportKind: deserializeImportOrExportKind(pos + 104),
+    attributes: withClause === null ? [] : withClause.attributes,
   };
 }
 

@@ -251,7 +251,7 @@ fn parse_js_only_attr(location: AttrLocation, part: &AttrPart) -> Result<()> {
 fn prepare_field_orders(schema: &mut Schema, estree_derive_id: DeriveId) {
     // Note: Outside the loop to avoid allocating temporary `Vec`s on each turn of the loop.
     // Instead, reuse this `Vec` over and over.
-    let mut field_indices_temp = vec![];
+    let mut unskipped_field_indices = vec![];
 
     for type_id in schema.types.indices() {
         let Some(struct_def) = schema.types[type_id].as_struct() else { continue };
@@ -261,44 +261,29 @@ fn prepare_field_orders(schema: &mut Schema, estree_derive_id: DeriveId) {
 
         if struct_def.estree.field_indices.is_empty() {
             // No field order specified with `#[estree(field_order(...))]`.
-            // Set default order:
-            // 1. Fields without `#[ts]` attr.
-            // 2. Fields with `#[ts]` attr.
-            // 3. Added fields `#[estree(add_fields(...)]`.
-            // 4. Added fields `#[estree(add_fields(...)]`, where converter meta type has `#[ts]` attr.
-            // Within the above groups, ordered in definition order.
+            // Default field order is definition order, with `#[estree(add_fields(...)]` extra fields
+            // added on end in order.
             let mut field_indices = vec![];
-            let ts_field_indices = &mut field_indices_temp;
             for (field_index, field) in struct_def.fields.iter().enumerate() {
                 if !should_skip_field(field, schema) {
                     let field_index = u8::try_from(field_index).unwrap();
-                    if field.estree.is_ts {
-                        ts_field_indices.push(field_index);
-                    } else {
-                        field_indices.push(field_index);
-                    }
-                }
-            }
-
-            let fields_len = struct_def.fields.len();
-            for (index, (_, converter_name)) in struct_def.estree.add_fields.iter().enumerate() {
-                let field_index = u8::try_from(fields_len + index).unwrap();
-                let converter = schema.meta_by_name(converter_name);
-                if converter.estree.is_ts {
-                    ts_field_indices.push(field_index);
-                } else {
                     field_indices.push(field_index);
                 }
             }
 
-            field_indices.append(ts_field_indices);
+            if !struct_def.estree.add_fields.is_empty() {
+                let first_index = u8::try_from(struct_def.fields.len()).unwrap();
+                let last_index =
+                    u8::try_from(struct_def.fields.len() + struct_def.estree.add_fields.len() - 1)
+                        .unwrap();
+                field_indices.extend(first_index..=last_index);
+            }
 
             let struct_def = schema.struct_def_mut(type_id);
             struct_def.estree.field_indices = field_indices;
         } else {
             // Custom field order specified with `#[estree(field_order(...))]`.
             // Verify does not miss any fields, no fields marked `#[estree(skip)]` are included.
-            let unskipped_field_indices = &mut field_indices_temp;
             for (field_index, field) in struct_def.fields.iter().enumerate() {
                 if !should_skip_field(field, schema) {
                     let field_index = u8::try_from(field_index).unwrap();
