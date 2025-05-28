@@ -44,13 +44,22 @@ impl<'a> ParserImpl<'a> {
     pub(crate) fn parse_import_declaration(&mut self) -> Statement<'a> {
         let span = self.start_span();
 
-        self.bump_any(); // advance `import`
+        self.expect(Kind::Import);
 
+        // `import something = ...`
+        // `import type something = ...`
         if self.is_ts
-            && ((self.cur_kind().is_binding_identifier() && self.peek_at(Kind::Eq))
+            && ((self.cur_kind().is_binding_identifier()
+                && self.lookahead(Self::is_next_token_equals))
                 || (self.at(Kind::Type)
-                    && self.peek_kind().is_binding_identifier()
-                    && self.nth_at(2, Kind::Eq)))
+                    && self.lookahead(|p| {
+                        p.bump_any();
+                        if !p.cur_kind().is_binding_identifier() {
+                            return false;
+                        }
+                        p.bump_any();
+                        p.at(Kind::Eq)
+                    })))
         {
             let decl = self.parse_ts_import_equals_declaration(span);
             return Statement::from(decl);
@@ -63,12 +72,26 @@ impl<'a> ParserImpl<'a> {
         let mut phase = None;
         match self.cur_kind() {
             Kind::Source => {
-                if self.peek_kind().is_binding_identifier() && self.nth_kind(2) == Kind::From {
+                // `import source something from ...`
+                if self.lookahead(|p| {
+                    p.bump_any();
+                    if !p.cur_kind().is_binding_identifier() {
+                        return false;
+                    }
+                    p.bump_any();
+                    p.at(Kind::From)
+                }) {
                     self.bump_any();
                     phase = Some(ImportPhase::Source);
                 }
             }
-            Kind::Defer if self.peek_at(Kind::Star) => {
+            Kind::Defer
+                if self.lookahead(|p| {
+                    p.bump_any();
+                    p.at(Kind::Star)
+                }) =>
+            {
+                // `import defer * ...`
                 self.bump_any();
                 phase = Some(ImportPhase::Defer);
             }
@@ -237,13 +260,20 @@ impl<'a> ParserImpl<'a> {
     /// [Exports](https://tc39.es/ecma262/#sec-exports)
     pub(crate) fn parse_export_declaration(&mut self) -> Statement<'a> {
         let span = self.start_span();
-        self.bump_any(); // advance `export`
+        self.expect(Kind::Export);
 
         let decl = match self.cur_kind() {
             Kind::Eq if self.is_ts => ModuleDeclaration::TSExportAssignment(
                 self.parse_ts_export_assignment_declaration(span),
             ),
-            Kind::As if self.peek_at(Kind::Namespace) && self.is_ts => {
+            Kind::As
+                if self.is_ts
+                    && self.lookahead(|p| {
+                        p.bump_any();
+                        p.at(Kind::Namespace)
+                    }) =>
+            {
+                // `export as namespace ...`
                 ModuleDeclaration::TSNamespaceExportDeclaration(
                     self.parse_ts_export_namespace(span),
                 )
@@ -257,10 +287,23 @@ impl<'a> ParserImpl<'a> {
             Kind::LCurly => {
                 ModuleDeclaration::ExportNamedDeclaration(self.parse_export_named_specifiers(span))
             }
-            Kind::Type if self.peek_at(Kind::LCurly) && self.is_ts => {
+            Kind::Type
+                if self.is_ts
+                    && self.lookahead(|p| {
+                        p.bump_any();
+                        p.at(Kind::LCurly)
+                    }) =>
+            {
+                // `export type { ...`
                 ModuleDeclaration::ExportNamedDeclaration(self.parse_export_named_specifiers(span))
             }
-            Kind::Type if self.peek_at(Kind::Star) => {
+            Kind::Type
+                if self.lookahead(|p| {
+                    p.bump_any();
+                    p.at(Kind::Star)
+                }) =>
+            {
+                // `export type * as ...`
                 ModuleDeclaration::ExportAllDeclaration(self.parse_export_all_declaration(span))
             }
             _ => {
@@ -396,14 +439,28 @@ impl<'a> ParserImpl<'a> {
             Kind::Class => ExportDefaultDeclarationKind::ClassDeclaration(
                 self.parse_class_declaration(decl_span, /* modifiers */ &Modifiers::empty()),
             ),
-            _ if self.at(Kind::Abstract) && self.peek_at(Kind::Class) && self.is_ts => {
+            _ if self.is_ts
+                && self.at(Kind::Abstract)
+                && self.lookahead(|p| {
+                    p.bump_any();
+                    p.at(Kind::Class)
+                }) =>
+            {
+                // `export default abstract class ...`
                 // eat the abstract modifier
                 let modifiers = self.eat_modifiers_before_declaration();
                 ExportDefaultDeclarationKind::ClassDeclaration(
                     self.parse_class_declaration(decl_span, &modifiers),
                 )
             }
-            _ if self.at(Kind::Interface) && !self.peek_token().is_on_new_line() && self.is_ts => {
+            _ if self.is_ts
+                && self.at(Kind::Interface)
+                && self.lookahead(|p| {
+                    p.bump_any();
+                    !p.cur_token().is_on_new_line()
+                }) =>
+            {
+                // `export default interface [no line break here] ...`
                 let decl = self.parse_ts_interface_declaration(decl_span, &Modifiers::empty());
                 match decl {
                     Declaration::TSInterfaceDeclaration(decl) => {
@@ -457,21 +514,31 @@ impl<'a> ParserImpl<'a> {
         parent_import_kind: ImportOrExportKind,
     ) -> ImportDeclarationSpecifier<'a> {
         let specifier_span = self.start_span();
-        let peek_kind = self.peek_kind();
         let mut import_kind = ImportOrExportKind::Value;
+        let checkpoint = self.checkpoint();
         if self.is_ts && self.at(Kind::Type) {
-            if self.peek_at(Kind::As) {
-                if self.nth_at(2, Kind::As) {
-                    if self.nth_kind(3).is_identifier_name() {
+            self.bump_any();
+            if self.at(Kind::As) {
+                // { type as ...? }
+                self.bump_any();
+                if self.at(Kind::As) {
+                    // { type as as ...? }
+                    self.bump_any();
+                    if self.can_parse_module_export_name() {
+                        // { type as as something }
+                        // { type as as "something" }
                         import_kind = ImportOrExportKind::Type;
                     }
-                } else if !self.nth_kind(2).is_identifier_name() {
+                } else if !self.can_parse_module_export_name() {
+                    // { type as }
                     import_kind = ImportOrExportKind::Type;
                 }
-            } else if peek_kind.is_identifier_name() || matches!(peek_kind, Kind::Str) {
+            } else if self.can_parse_module_export_name() {
+                // { type something }
                 import_kind = ImportOrExportKind::Type;
             }
         }
+        self.rewind(checkpoint);
 
         // `import type { type bar } from 'foo';`
         if parent_import_kind == ImportOrExportKind::Type && import_kind == ImportOrExportKind::Type
@@ -481,7 +548,11 @@ impl<'a> ParserImpl<'a> {
         if import_kind == ImportOrExportKind::Type {
             self.bump_any();
         }
-        let (imported, local) = if self.peek_at(Kind::As) {
+        let is_next_token_as = self.lookahead(|p| {
+            p.bump_any();
+            p.at(Kind::As)
+        });
+        let (imported, local) = if is_next_token_as {
             let imported = self.parse_module_export_name();
             self.bump(Kind::As);
             let local = self.parse_binding_identifier();
@@ -535,16 +606,30 @@ impl<'a> ParserImpl<'a> {
             return ImportOrExportKind::Value;
         }
 
-        if matches!(self.peek_kind(), Kind::LCurly | Kind::Star) {
+        let next_token = {
+            let checkpoint = self.checkpoint();
+            self.bump_any();
+            let next_token = self.cur_token();
+            self.rewind(checkpoint);
+            next_token
+        };
+
+        if matches!(next_token.kind(), Kind::LCurly | Kind::Star) {
             self.bump_any();
             return ImportOrExportKind::Type;
         }
 
-        if !self.peek_at(Kind::Ident) && !self.peek_kind().is_contextual_keyword() {
+        if !(next_token.kind() == Kind::Ident) && !next_token.kind().is_contextual_keyword() {
             return ImportOrExportKind::Value;
         }
 
-        if !self.peek_at(Kind::From) || self.nth_at(2, Kind::From) {
+        if next_token.kind() != Kind::From
+            || self.lookahead(|p| {
+                p.bump_any();
+                p.bump_any();
+                p.at(Kind::From)
+            })
+        {
             self.bump_any();
             return ImportOrExportKind::Type;
         }
@@ -557,7 +642,7 @@ impl<'a> ParserImpl<'a> {
         parent_export_kind: ImportOrExportKind,
     ) -> ExportSpecifier<'a> {
         let specifier_span = self.start_span();
-        let peek_kind = self.peek_kind();
+        let checkpoint = self.checkpoint();
         // export { type}              // name: `type`
         // export { type type }        // name: `type`    type-export: `true`
         // export { type as }          // name: `as`      type-export: `true`
@@ -565,24 +650,34 @@ impl<'a> ParserImpl<'a> {
         // export { type as as as }    // name: `as`      type-export: `true`, aliased to `as`
         let mut export_kind = ImportOrExportKind::Value;
         if self.is_ts && self.at(Kind::Type) {
-            if self.peek_at(Kind::As) {
-                if self.nth_at(2, Kind::As) {
-                    if self.nth_at(3, Kind::Str) || self.nth_kind(3).is_identifier_name() {
+            self.bump_any();
+            if self.at(Kind::As) {
+                // { type as ...? }
+                self.bump_any();
+                if self.at(Kind::As) {
+                    // { type as as ...? }
+                    self.bump_any();
+                    if self.can_parse_module_export_name() {
+                        // { type as as something }
+                        // { type as as "something" }
                         export_kind = ImportOrExportKind::Type;
                     }
-                } else if !(self.nth_at(2, Kind::Str) || self.nth_kind(2).is_identifier_name()) {
+                } else if !self.can_parse_module_export_name() {
                     export_kind = ImportOrExportKind::Type;
                 }
-            } else if (matches!(peek_kind, Kind::Str) || peek_kind.is_identifier_name()) {
+            } else if self.can_parse_module_export_name() {
+                // { type something }
                 export_kind = ImportOrExportKind::Type;
             }
         }
+        self.rewind(checkpoint);
 
         // `export type { type bar } from 'foo';`
         if parent_export_kind == ImportOrExportKind::Type && export_kind == ImportOrExportKind::Type
         {
             self.error(diagnostics::type_modifier_on_named_type_export(self.cur_token().span()));
         }
+
         if export_kind == ImportOrExportKind::Type {
             self.bump_any();
         }
@@ -591,5 +686,9 @@ impl<'a> ParserImpl<'a> {
         let exported =
             if self.eat(Kind::As) { self.parse_module_export_name() } else { local.clone() };
         self.ast.export_specifier(self.end_span(specifier_span), local, exported, export_kind)
+    }
+
+    fn can_parse_module_export_name(&self) -> bool {
+        self.cur_kind().is_identifier_name() || self.at(Kind::Str)
     }
 }
