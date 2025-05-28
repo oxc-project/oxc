@@ -138,7 +138,7 @@ impl<'a> IsolatedDeclarations<'a> {
                         }
                         let params = self.transform_formal_parameters(&function.params);
                         let key = self.transform_property_key(key);
-                        let computed = key.is_expression();
+                        let computed = key.as_expression().is_some_and(|k| !k.is_string_literal());
 
                         return Some(self.ast.ts_signature_method_signature(
                             object.span,
