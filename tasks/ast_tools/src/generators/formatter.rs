@@ -129,7 +129,7 @@ fn implementation(type_def: &TypeDef, schema: &Schema) -> TokenStream {
         type_def_name.ends_with("Expression") || NEEDS_PARENTHESES.contains(&type_def_name);
     let needs_parentheses_before = if needs_parentheses {
         quote! {
-            let needs_parentheses = self.needs_parentheses(&f.state().stack);
+            let needs_parentheses = self.needs_parentheses(f);
             if needs_parentheses {
                 "(".fmt(f)?;
             }

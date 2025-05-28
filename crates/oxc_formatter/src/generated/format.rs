@@ -83,7 +83,7 @@ impl<'a> Format<'a> for ThisExpression {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         f.state_mut().stack.push(AstKind::ThisExpression(hack(self)));
         format_leading_comments(self.span.start).fmt(f)?;
-        let needs_parentheses = self.needs_parentheses(&f.state().stack);
+        let needs_parentheses = self.needs_parentheses(f);
         if needs_parentheses {
             "(".fmt(f)?;
         }
@@ -101,7 +101,7 @@ impl<'a> Format<'a> for ArrayExpression<'a> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         f.state_mut().stack.push(AstKind::ArrayExpression(hack(self)));
         format_leading_comments(self.span.start).fmt(f)?;
-        let needs_parentheses = self.needs_parentheses(&f.state().stack);
+        let needs_parentheses = self.needs_parentheses(f);
         if needs_parentheses {
             "(".fmt(f)?;
         }
@@ -139,7 +139,7 @@ impl<'a> Format<'a> for ObjectExpression<'a> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         f.state_mut().stack.push(AstKind::ObjectExpression(hack(self)));
         format_leading_comments(self.span.start).fmt(f)?;
-        let needs_parentheses = self.needs_parentheses(&f.state().stack);
+        let needs_parentheses = self.needs_parentheses(f);
         if needs_parentheses {
             "(".fmt(f)?;
         }
@@ -194,7 +194,7 @@ impl<'a> Format<'a> for TaggedTemplateExpression<'a> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         f.state_mut().stack.push(AstKind::TaggedTemplateExpression(hack(self)));
         format_leading_comments(self.span.start).fmt(f)?;
-        let needs_parentheses = self.needs_parentheses(&f.state().stack);
+        let needs_parentheses = self.needs_parentheses(f);
         if needs_parentheses {
             "(".fmt(f)?;
         }
@@ -217,7 +217,7 @@ impl<'a> Format<'a> for TemplateElement<'a> {
 impl<'a> Format<'a> for MemberExpression<'a> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         f.state_mut().stack.push(AstKind::MemberExpression(hack(self)));
-        let needs_parentheses = self.needs_parentheses(&f.state().stack);
+        let needs_parentheses = self.needs_parentheses(f);
         if needs_parentheses {
             "(".fmt(f)?;
         }
@@ -252,7 +252,7 @@ impl<'a> Format<'a> for CallExpression<'a> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         f.state_mut().stack.push(AstKind::CallExpression(hack(self)));
         format_leading_comments(self.span.start).fmt(f)?;
-        let needs_parentheses = self.needs_parentheses(&f.state().stack);
+        let needs_parentheses = self.needs_parentheses(f);
         if needs_parentheses {
             "(".fmt(f)?;
         }
@@ -270,7 +270,7 @@ impl<'a> Format<'a> for NewExpression<'a> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         f.state_mut().stack.push(AstKind::NewExpression(hack(self)));
         format_leading_comments(self.span.start).fmt(f)?;
-        let needs_parentheses = self.needs_parentheses(&f.state().stack);
+        let needs_parentheses = self.needs_parentheses(f);
         if needs_parentheses {
             "(".fmt(f)?;
         }
@@ -319,7 +319,7 @@ impl<'a> Format<'a> for UpdateExpression<'a> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         f.state_mut().stack.push(AstKind::UpdateExpression(hack(self)));
         format_leading_comments(self.span.start).fmt(f)?;
-        let needs_parentheses = self.needs_parentheses(&f.state().stack);
+        let needs_parentheses = self.needs_parentheses(f);
         if needs_parentheses {
             "(".fmt(f)?;
         }
@@ -337,7 +337,7 @@ impl<'a> Format<'a> for UnaryExpression<'a> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         f.state_mut().stack.push(AstKind::UnaryExpression(hack(self)));
         format_leading_comments(self.span.start).fmt(f)?;
-        let needs_parentheses = self.needs_parentheses(&f.state().stack);
+        let needs_parentheses = self.needs_parentheses(f);
         if needs_parentheses {
             "(".fmt(f)?;
         }
@@ -355,7 +355,7 @@ impl<'a> Format<'a> for BinaryExpression<'a> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         f.state_mut().stack.push(AstKind::BinaryExpression(hack(self)));
         format_leading_comments(self.span.start).fmt(f)?;
-        let needs_parentheses = self.needs_parentheses(&f.state().stack);
+        let needs_parentheses = self.needs_parentheses(f);
         if needs_parentheses {
             "(".fmt(f)?;
         }
@@ -373,7 +373,7 @@ impl<'a> Format<'a> for PrivateInExpression<'a> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         f.state_mut().stack.push(AstKind::PrivateInExpression(hack(self)));
         format_leading_comments(self.span.start).fmt(f)?;
-        let needs_parentheses = self.needs_parentheses(&f.state().stack);
+        let needs_parentheses = self.needs_parentheses(f);
         if needs_parentheses {
             "(".fmt(f)?;
         }
@@ -391,7 +391,7 @@ impl<'a> Format<'a> for LogicalExpression<'a> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         f.state_mut().stack.push(AstKind::LogicalExpression(hack(self)));
         format_leading_comments(self.span.start).fmt(f)?;
-        let needs_parentheses = self.needs_parentheses(&f.state().stack);
+        let needs_parentheses = self.needs_parentheses(f);
         if needs_parentheses {
             "(".fmt(f)?;
         }
@@ -409,7 +409,7 @@ impl<'a> Format<'a> for ConditionalExpression<'a> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         f.state_mut().stack.push(AstKind::ConditionalExpression(hack(self)));
         format_leading_comments(self.span.start).fmt(f)?;
-        let needs_parentheses = self.needs_parentheses(&f.state().stack);
+        let needs_parentheses = self.needs_parentheses(f);
         if needs_parentheses {
             "(".fmt(f)?;
         }
@@ -427,7 +427,7 @@ impl<'a> Format<'a> for AssignmentExpression<'a> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         f.state_mut().stack.push(AstKind::AssignmentExpression(hack(self)));
         format_leading_comments(self.span.start).fmt(f)?;
-        let needs_parentheses = self.needs_parentheses(&f.state().stack);
+        let needs_parentheses = self.needs_parentheses(f);
         if needs_parentheses {
             "(".fmt(f)?;
         }
@@ -453,7 +453,7 @@ impl<'a> Format<'a> for AssignmentTarget<'a> {
 impl<'a> Format<'a> for SimpleAssignmentTarget<'a> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         f.state_mut().stack.push(AstKind::SimpleAssignmentTarget(hack(self)));
-        let needs_parentheses = self.needs_parentheses(&f.state().stack);
+        let needs_parentheses = self.needs_parentheses(f);
         if needs_parentheses {
             "(".fmt(f)?;
         }
@@ -542,7 +542,7 @@ impl<'a> Format<'a> for SequenceExpression<'a> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         f.state_mut().stack.push(AstKind::SequenceExpression(hack(self)));
         format_leading_comments(self.span.start).fmt(f)?;
-        let needs_parentheses = self.needs_parentheses(&f.state().stack);
+        let needs_parentheses = self.needs_parentheses(f);
         if needs_parentheses {
             "(".fmt(f)?;
         }
@@ -571,7 +571,7 @@ impl<'a> Format<'a> for AwaitExpression<'a> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         f.state_mut().stack.push(AstKind::AwaitExpression(hack(self)));
         format_leading_comments(self.span.start).fmt(f)?;
-        let needs_parentheses = self.needs_parentheses(&f.state().stack);
+        let needs_parentheses = self.needs_parentheses(f);
         if needs_parentheses {
             "(".fmt(f)?;
         }
@@ -589,7 +589,7 @@ impl<'a> Format<'a> for ChainExpression<'a> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         f.state_mut().stack.push(AstKind::ChainExpression(hack(self)));
         format_leading_comments(self.span.start).fmt(f)?;
-        let needs_parentheses = self.needs_parentheses(&f.state().stack);
+        let needs_parentheses = self.needs_parentheses(f);
         if needs_parentheses {
             "(".fmt(f)?;
         }
@@ -612,7 +612,7 @@ impl<'a> Format<'a> for ChainElement<'a> {
 impl<'a> Format<'a> for ParenthesizedExpression<'a> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         format_leading_comments(self.span.start).fmt(f)?;
-        let needs_parentheses = self.needs_parentheses(&f.state().stack);
+        let needs_parentheses = self.needs_parentheses(f);
         if needs_parentheses {
             "(".fmt(f)?;
         }
@@ -993,7 +993,7 @@ impl<'a> Format<'a> for Function<'a> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         f.state_mut().stack.push(AstKind::Function(hack(self)));
         format_leading_comments(self.span.start).fmt(f)?;
-        let needs_parentheses = self.needs_parentheses(&f.state().stack);
+        let needs_parentheses = self.needs_parentheses(f);
         if needs_parentheses {
             "(".fmt(f)?;
         }
@@ -1044,7 +1044,7 @@ impl<'a> Format<'a> for ArrowFunctionExpression<'a> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         f.state_mut().stack.push(AstKind::ArrowFunctionExpression(hack(self)));
         format_leading_comments(self.span.start).fmt(f)?;
-        let needs_parentheses = self.needs_parentheses(&f.state().stack);
+        let needs_parentheses = self.needs_parentheses(f);
         if needs_parentheses {
             "(".fmt(f)?;
         }
@@ -1062,7 +1062,7 @@ impl<'a> Format<'a> for YieldExpression<'a> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         f.state_mut().stack.push(AstKind::YieldExpression(hack(self)));
         format_leading_comments(self.span.start).fmt(f)?;
-        let needs_parentheses = self.needs_parentheses(&f.state().stack);
+        let needs_parentheses = self.needs_parentheses(f);
         if needs_parentheses {
             "(".fmt(f)?;
         }
@@ -1080,7 +1080,7 @@ impl<'a> Format<'a> for Class<'a> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         f.state_mut().stack.push(AstKind::Class(hack(self)));
         format_leading_comments(self.span.start).fmt(f)?;
-        let needs_parentheses = self.needs_parentheses(&f.state().stack);
+        let needs_parentheses = self.needs_parentheses(f);
         if needs_parentheses {
             "(".fmt(f)?;
         }
@@ -1174,7 +1174,7 @@ impl<'a> Format<'a> for ImportExpression<'a> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         f.state_mut().stack.push(AstKind::ImportExpression(hack(self)));
         format_leading_comments(self.span.start).fmt(f)?;
-        let needs_parentheses = self.needs_parentheses(&f.state().stack);
+        let needs_parentheses = self.needs_parentheses(f);
         if needs_parentheses {
             "(".fmt(f)?;
         }
@@ -1316,7 +1316,7 @@ impl<'a> Format<'a> for V8IntrinsicExpression<'a> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         f.state_mut().stack.push(AstKind::V8IntrinsicExpression(hack(self)));
         format_leading_comments(self.span.start).fmt(f)?;
-        let needs_parentheses = self.needs_parentheses(&f.state().stack);
+        let needs_parentheses = self.needs_parentheses(f);
         if needs_parentheses {
             "(".fmt(f)?;
         }
@@ -1356,7 +1356,7 @@ impl<'a> Format<'a> for NumericLiteral<'a> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         f.state_mut().stack.push(AstKind::NumericLiteral(hack(self)));
         format_leading_comments(self.span.start).fmt(f)?;
-        let needs_parentheses = self.needs_parentheses(&f.state().stack);
+        let needs_parentheses = self.needs_parentheses(f);
         if needs_parentheses {
             "(".fmt(f)?;
         }
@@ -1374,7 +1374,7 @@ impl<'a> Format<'a> for StringLiteral<'a> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         f.state_mut().stack.push(AstKind::StringLiteral(hack(self)));
         format_leading_comments(self.span.start).fmt(f)?;
-        let needs_parentheses = self.needs_parentheses(&f.state().stack);
+        let needs_parentheses = self.needs_parentheses(f);
         if needs_parentheses {
             "(".fmt(f)?;
         }
@@ -1490,7 +1490,7 @@ impl<'a> Format<'a> for JSXMemberExpression<'a> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         f.state_mut().stack.push(AstKind::JSXMemberExpression(hack(self)));
         format_leading_comments(self.span.start).fmt(f)?;
-        let needs_parentheses = self.needs_parentheses(&f.state().stack);
+        let needs_parentheses = self.needs_parentheses(f);
         if needs_parentheses {
             "(".fmt(f)?;
         }
@@ -2253,7 +2253,7 @@ impl<'a> Format<'a> for TSAsExpression<'a> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         f.state_mut().stack.push(AstKind::TSAsExpression(hack(self)));
         format_leading_comments(self.span.start).fmt(f)?;
-        let needs_parentheses = self.needs_parentheses(&f.state().stack);
+        let needs_parentheses = self.needs_parentheses(f);
         if needs_parentheses {
             "(".fmt(f)?;
         }
@@ -2271,7 +2271,7 @@ impl<'a> Format<'a> for TSSatisfiesExpression<'a> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         f.state_mut().stack.push(AstKind::TSSatisfiesExpression(hack(self)));
         format_leading_comments(self.span.start).fmt(f)?;
-        let needs_parentheses = self.needs_parentheses(&f.state().stack);
+        let needs_parentheses = self.needs_parentheses(f);
         if needs_parentheses {
             "(".fmt(f)?;
         }
@@ -2289,7 +2289,7 @@ impl<'a> Format<'a> for TSTypeAssertion<'a> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         f.state_mut().stack.push(AstKind::TSTypeAssertion(hack(self)));
         format_leading_comments(self.span.start).fmt(f)?;
-        let needs_parentheses = self.needs_parentheses(&f.state().stack);
+        let needs_parentheses = self.needs_parentheses(f);
         if needs_parentheses {
             "(".fmt(f)?;
         }
@@ -2338,7 +2338,7 @@ impl<'a> Format<'a> for TSNonNullExpression<'a> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         f.state_mut().stack.push(AstKind::TSNonNullExpression(hack(self)));
         format_leading_comments(self.span.start).fmt(f)?;
-        let needs_parentheses = self.needs_parentheses(&f.state().stack);
+        let needs_parentheses = self.needs_parentheses(f);
         if needs_parentheses {
             "(".fmt(f)?;
         }
@@ -2384,7 +2384,7 @@ impl<'a> Format<'a> for TSInstantiationExpression<'a> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         f.state_mut().stack.push(AstKind::TSInstantiationExpression(hack(self)));
         format_leading_comments(self.span.start).fmt(f)?;
-        let needs_parentheses = self.needs_parentheses(&f.state().stack);
+        let needs_parentheses = self.needs_parentheses(f);
         if needs_parentheses {
             "(".fmt(f)?;
         }
