@@ -4,6 +4,13 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.72.1] - 2025-05-28
+
+### Features
+
+- f88f666 minifier: Normalize `Number.NaN` as `NaN` (#11275) (Boshen)
+- d6fc750 minifier: Add `pure` to side-effect free global constructor during DCE (#11270) (Boshen)
+
 ## [0.72.0] - 2025-05-24
 
 ### Features

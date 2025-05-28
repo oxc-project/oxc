@@ -4,6 +4,26 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.72.1] - 2025-05-28
+
+### Performance
+
+- 14cb3c7 parser: Simplify getting span of identifiers and literals (#11323) (overlookmotel)
+- 2372f00 parser: `check_identifier` match on `Kind` not `&str` (#11322) (overlookmotel)
+- 552a977 parser: Avoid work in `parse_function_id` (#11321) (overlookmotel)
+- 6eda38a parser: Remove branch parsing class elements (#11319) (overlookmotel)
+
+### Refactor
+
+- 069b843 parser: Avoid peek in parse_delimited_list (#11343) (leaysgur)
+- 99e6490 parser: Remove lexer lookahead in module parsing (#11330) (camchenry)
+- 08eb1eb parser: Align jsx parsing to tsc (#11314) (leaysgur)
+- 54dfbd3 parser: Remove Lexer lookahead from JS function parsing (#11307) (therewillbecode)
+- 44bb9fb parser: Remove lexer lookahead in JS let declaration parsing (#11308) (therewillbecode)
+- 2e43b6f parser: Remove Lexer peeking for js/expression (#11298) (leaysgur)
+- 7f2d660 parser: Remove lexer lookahead in object parsing (#11274) (camchenry)
+- 8a062b5 parser: Remove lexer lookahead in JS statement parsing (#11273) (camchenry)
+
 ## [0.72.0] - 2025-05-24
 
 ### Features
