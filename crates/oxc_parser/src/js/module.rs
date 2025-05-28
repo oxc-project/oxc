@@ -279,24 +279,25 @@ impl<'a> ParserImpl<'a> {
             Kind::LCurly => {
                 ModuleDeclaration::ExportNamedDeclaration(self.parse_export_named_specifiers(span))
             }
-            Kind::Type
-                if self.is_ts
-                    && self.lookahead(|p| {
-                        p.bump_any();
-                        p.at(Kind::LCurly)
-                    }) =>
-            {
-                // `export type { ...`
-                ModuleDeclaration::ExportNamedDeclaration(self.parse_export_named_specifiers(span))
-            }
-            Kind::Type
-                if self.lookahead(|p| {
-                    p.bump_any();
-                    p.at(Kind::Star)
-                }) =>
-            {
-                // `export type * as ...`
-                ModuleDeclaration::ExportAllDeclaration(self.parse_export_all_declaration(span))
+            Kind::Type if self.is_ts => {
+                let checkpoint = self.checkpoint();
+                self.bump_any();
+                let next_kind = self.cur_kind();
+                self.rewind(checkpoint);
+
+                match next_kind {
+                    // `export type { ...`
+                    Kind::LCurly => ModuleDeclaration::ExportNamedDeclaration(
+                        self.parse_export_named_specifiers(span),
+                    ),
+                    // `export type * as ...`
+                    Kind::Star => ModuleDeclaration::ExportAllDeclaration(
+                        self.parse_export_all_declaration(span),
+                    ),
+                    _ => ModuleDeclaration::ExportNamedDeclaration(
+                        self.parse_export_named_declaration(span),
+                    ),
+                }
             }
             _ => {
                 ModuleDeclaration::ExportNamedDeclaration(self.parse_export_named_declaration(span))
@@ -595,24 +596,21 @@ impl<'a> ParserImpl<'a> {
             return ImportOrExportKind::Value;
         }
 
-        let next_token = {
-            let checkpoint = self.checkpoint();
-            self.bump_any();
-            let next_token = self.cur_token();
-            self.rewind(checkpoint);
-            next_token
-        };
+        let checkpoint = self.checkpoint();
+        self.bump_any();
+        let next_kind = self.cur_kind();
+        self.rewind(checkpoint);
 
-        if matches!(next_token.kind(), Kind::LCurly | Kind::Star) {
+        if matches!(next_kind, Kind::LCurly | Kind::Star) {
             self.bump_any();
             return ImportOrExportKind::Type;
         }
 
-        if !(next_token.kind() == Kind::Ident) && !next_token.kind().is_contextual_keyword() {
+        if !(next_kind == Kind::Ident) && !next_kind.is_contextual_keyword() {
             return ImportOrExportKind::Value;
         }
 
-        if next_token.kind() != Kind::From
+        if next_kind != Kind::From
             || self.lookahead(|p| {
                 p.bump_any();
                 p.bump_any();
