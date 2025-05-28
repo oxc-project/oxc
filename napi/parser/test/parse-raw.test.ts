@@ -2,7 +2,7 @@ import { readdir, readFile, writeFile } from 'node:fs/promises';
 import { basename, join as pathJoin } from 'node:path';
 import { describe, expect, it } from 'vitest';
 
-import { parseSync } from '../index.js';
+import { parseAsync, parseSync } from '../index.js';
 
 const ROOT_DIR = pathJoin(import.meta.dirname, '../../..');
 const TARGET_DIR_PATH = pathJoin(ROOT_DIR, 'target');
@@ -225,6 +225,43 @@ function stringifyAcornTest262Style(obj) {
 function clean(obj) {
   return JSON.parse(JSON.stringify(obj, (_key, value) => value === null ? undefined : value));
 }
+
+describe('`parseAsync`', () => {
+  it('matches `parseSync`', async () => {
+    const [filename, sourceText] = benchFixtures[0];
+    const programStandard = parseSync(filename, sourceText).program;
+    // @ts-ignore
+    const programRaw = (await parseAsync(filename, sourceText, { experimentalRawTransfer: true })).program;
+    expect(programRaw).toEqual(programStandard);
+  });
+
+  it('processes multiple files', async () => {
+    testMultiple(4);
+  });
+
+  // This is primarily testing the queuing mechanism.
+  // At least on Mac OS, this test does not cause out-of-memory without the queue implemented,
+  // but the test doesn't complete in a reasonable time (I gave up waiting after 20 minutes).
+  it('does not exhaust memory when called huge number of times in succession', async () => {
+    testMultiple(100_000);
+  });
+
+  async function testMultiple(iterations) {
+    const promises = [];
+    for (let i = 0; i < iterations; i++) {
+      const code = `let x = ${i}`;
+      // @ts-ignore
+      promises.push(parseAsync('test.js', code, { experimentalRawTransfer: true }));
+    }
+    const results = await Promise.all(promises);
+
+    for (let i = 0; i < iterations; i++) {
+      const { program } = results[i];
+      expect(program.body.length).toBe(1);
+      expect(program.body[0].declarations[0].init.value).toBe(i);
+    }
+  }
+});
 
 it('checks semantic', async () => {
   const code = 'let x; let x;';

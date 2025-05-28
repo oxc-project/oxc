@@ -4,7 +4,10 @@ use std::{
     str,
 };
 
-use napi::bindgen_prelude::Uint8Array;
+use napi::{
+    Task,
+    bindgen_prelude::{AsyncTask, Uint8Array},
+};
 use napi_derive::napi;
 
 use oxc::{
@@ -50,7 +53,7 @@ pub fn get_buffer_offset(buffer: Uint8Array) -> u32 {
     0u32.wrapping_sub(buffer_addr32)
 }
 
-/// Parses AST into provided `Uint8Array` buffer.
+/// Parse AST into provided `Uint8Array` buffer, synchronously.
 ///
 /// Source text must be written into the start of the buffer, and its length (in UTF-8 bytes)
 /// provided as `source_len`.
@@ -74,11 +77,101 @@ pub fn get_buffer_offset(buffer: Uint8Array) -> u32 {
 /// # Panics
 ///
 /// Panics if source text is too long, or AST takes more memory than is available in the buffer.
-#[allow(clippy::items_after_statements, clippy::allow_attributes)]
 #[napi]
 pub unsafe fn parse_sync_raw(
     filename: String,
     mut buffer: Uint8Array,
+    source_len: u32,
+    options: Option<ParserOptions>,
+) {
+    // SAFETY: This function is called synchronously, so buffer cannot be mutated outside this function
+    // during the time this `&mut [u8]` exists
+    let buffer = unsafe { buffer.as_mut() };
+
+    // SAFETY: `parse_raw_impl` has same safety requirements as this function
+    unsafe { parse_raw_impl(&filename, buffer, source_len, options) };
+}
+
+/// Parse AST into provided `Uint8Array` buffer, asynchronously.
+///
+/// Note: This function can be slower than `parseSyncRaw` due to the overhead of spawning a thread.
+///
+/// Source text must be written into the start of the buffer, and its length (in UTF-8 bytes)
+/// provided as `source_len`.
+///
+/// This function will parse the source, and write the AST into the buffer, starting at the end.
+///
+/// It also writes to the very end of the buffer the offset of `Program` within the buffer.
+///
+/// Caller can deserialize data from the buffer on JS side.
+///
+/// # SAFETY
+///
+/// Caller must ensure:
+/// * Source text is written into start of the buffer.
+/// * Source text's UTF-8 byte length is `source_len`.
+/// * The 1st `source_len` bytes of the buffer comprises a valid UTF-8 string.
+/// * Contents of buffer must not be mutated by caller until the `AsyncTask` returned by this
+///   function resolves.
+///
+/// If source text is originally a JS string on JS side, and converted to a buffer with
+/// `Buffer.from(str)` or `new TextEncoder().encode(str)`, this guarantees it's valid UTF-8.
+///
+/// # Panics
+///
+/// Panics if source text is too long, or AST takes more memory than is available in the buffer.
+#[napi]
+pub fn parse_async_raw(
+    filename: String,
+    buffer: Uint8Array,
+    source_len: u32,
+    options: Option<ParserOptions>,
+) -> AsyncTask<ResolveTask> {
+    AsyncTask::new(ResolveTask { filename, buffer, source_len, options })
+}
+
+pub struct ResolveTask {
+    filename: String,
+    buffer: Uint8Array,
+    source_len: u32,
+    options: Option<ParserOptions>,
+}
+
+#[napi]
+impl Task for ResolveTask {
+    type JsValue = ();
+    type Output = ();
+
+    fn compute(&mut self) -> napi::Result<()> {
+        // SAFETY: Caller of `parse_async` guarantees not to mutate the contents of buffer
+        // between calling `parse_async` and the `AsyncTask` it returns resolving.
+        // Therefore, this is a valid exclusive `&mut [u8]`.
+        let buffer = unsafe { self.buffer.as_mut() };
+        // SAFETY: Caller of `parse_async` guarantees to uphold invariants of `parse_raw_impl`
+        unsafe { parse_raw_impl(&self.filename, buffer, self.source_len, self.options.take()) };
+        Ok(())
+    }
+
+    fn resolve(&mut self, _: napi::Env, _result: ()) -> napi::Result<()> {
+        Ok(())
+    }
+}
+
+/// Parse AST into buffer.
+///
+/// # SAFETY
+///
+/// Caller must ensure:
+/// * Source text is written into start of the buffer.
+/// * Source text's UTF-8 byte length is `source_len`.
+/// * The 1st `source_len` bytes of the buffer comprises a valid UTF-8 string.
+///
+/// If source text is originally a JS string on JS side, and converted to a buffer with
+/// `Buffer.from(str)` or `new TextEncoder().encode(str)`, this guarantees it's valid UTF-8.
+#[allow(clippy::items_after_statements, clippy::allow_attributes)]
+unsafe fn parse_raw_impl(
+    filename: &str,
+    buffer: &mut [u8],
     source_len: u32,
     options: Option<ParserOptions>,
 ) {
@@ -87,8 +180,6 @@ pub unsafe fn parse_sync_raw(
         "Raw transfer is only supported on 64-bit little-endian platforms"
     );
 
-    // SAFETY: This is unsafe. Behavior is undefined. JS side may be modifying the underlying buffer, without synchronization.
-    let buffer = unsafe { buffer.as_mut() };
     // Check buffer has expected size and alignment
     assert_eq!(buffer.len(), BUFFER_SIZE);
     let buffer_ptr = ptr::from_mut(buffer).cast::<u8>();
@@ -96,7 +187,7 @@ pub unsafe fn parse_sync_raw(
 
     // Get offsets and size of data region to be managed by arena allocator.
     // Leave space for source before it, and 16 bytes for metadata after it.
-    // Metadata actually only takes 4 bytes, but round everything up to multiple of 16,
+    // Metadata actually only takes 5 bytes, but round everything up to multiple of 16,
     // as `bumpalo` requires that alignment.
     const METADATA_SIZE: usize = 16;
     const {
@@ -127,7 +218,7 @@ pub unsafe fn parse_sync_raw(
     // exist after this.
     let options = options.unwrap_or_default();
     let source_type =
-        get_source_type(&filename, options.lang.as_deref(), options.source_type.as_deref());
+        get_source_type(filename, options.lang.as_deref(), options.source_type.as_deref());
     let ast_type = get_ast_type(source_type, &options);
 
     let data_ptr = {

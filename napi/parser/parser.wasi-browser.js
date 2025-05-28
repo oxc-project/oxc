@@ -61,6 +61,7 @@ export const ExportLocalNameKind = __napiModule.exports.ExportLocalNameKind
 export const getBufferOffset = __napiModule.exports.getBufferOffset
 export const ImportNameKind = __napiModule.exports.ImportNameKind
 export const parseAsync = __napiModule.exports.parseAsync
+export const parseAsyncRaw = __napiModule.exports.parseAsyncRaw
 export const parseSync = __napiModule.exports.parseSync
 export const parseSyncRaw = __napiModule.exports.parseSyncRaw
 export const rawTransferSupported = __napiModule.exports.rawTransferSupported

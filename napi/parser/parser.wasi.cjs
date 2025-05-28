@@ -92,6 +92,7 @@ module.exports.ExportLocalNameKind = __napiModule.exports.ExportLocalNameKind
 module.exports.getBufferOffset = __napiModule.exports.getBufferOffset
 module.exports.ImportNameKind = __napiModule.exports.ImportNameKind
 module.exports.parseAsync = __napiModule.exports.parseAsync
+module.exports.parseAsyncRaw = __napiModule.exports.parseAsyncRaw
 module.exports.parseSync = __napiModule.exports.parseSync
 module.exports.parseSyncRaw = __napiModule.exports.parseSyncRaw
 module.exports.rawTransferSupported = __napiModule.exports.rawTransferSupported
