@@ -180,13 +180,10 @@ impl<'a> ParserImpl<'a> {
         import_kind: ImportOrExportKind,
     ) -> Vec<'a, ImportDeclarationSpecifier<'a>> {
         self.expect(Kind::LCurly);
-        let list = self.context(Context::empty(), self.ctx, |p| {
-            p.parse_delimited_list(
-                Kind::RCurly,
-                Kind::Comma,
-                /* trailing_separator */ true,
-                |parser| parser.parse_import_specifier(import_kind),
-            )
+        let (list, _) = self.context(Context::empty(), self.ctx, |p| {
+            p.parse_delimited_list(Kind::RCurly, Kind::Comma, |parser| {
+                parser.parse_import_specifier(import_kind)
+            })
         });
         self.expect(Kind::RCurly);
         list
@@ -203,13 +200,8 @@ impl<'a> ParserImpl<'a> {
         };
         let span = self.start_span();
         self.expect(Kind::LCurly);
-        let with_entries = self.context(Context::empty(), self.ctx, |p| {
-            p.parse_delimited_list(
-                Kind::RCurly,
-                Kind::Comma,
-                /*trailing_separator*/ true,
-                Self::parse_import_attribute,
-            )
+        let (with_entries, _) = self.context(Context::empty(), self.ctx, |p| {
+            p.parse_delimited_list(Kind::RCurly, Kind::Comma, Self::parse_import_attribute)
         });
         self.expect(Kind::RCurly);
 
@@ -327,13 +319,10 @@ impl<'a> ParserImpl<'a> {
     fn parse_export_named_specifiers(&mut self, span: u32) -> Box<'a, ExportNamedDeclaration<'a>> {
         let export_kind = self.parse_import_or_export_kind();
         self.expect(Kind::LCurly);
-        let mut specifiers = self.context(Context::empty(), self.ctx, |p| {
-            p.parse_delimited_list(
-                Kind::RCurly,
-                Kind::Comma,
-                /* trailing_separator */ true,
-                |parser| parser.parse_export_named_specifier(export_kind),
-            )
+        let (mut specifiers, _) = self.context(Context::empty(), self.ctx, |p| {
+            p.parse_delimited_list(Kind::RCurly, Kind::Comma, |parser| {
+                parser.parse_export_named_specifier(export_kind)
+            })
         });
         self.expect(Kind::RCurly);
         let (source, with_clause) = if self.eat(Kind::From) && self.cur_kind().is_literal() {

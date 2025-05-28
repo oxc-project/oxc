@@ -76,6 +76,7 @@ impl<'a> ParserImpl<'a> {
 
     /// Peek at kind
     #[inline]
+    #[expect(dead_code)]
     pub(crate) fn peek_at(&mut self, kind: Kind) -> bool {
         self.peek_token().kind() == kind
     }
@@ -369,14 +370,14 @@ impl<'a> ParserImpl<'a> {
         &mut self,
         close: Kind,
         separator: Kind,
-        trailing_separator: bool,
         f: F,
-    ) -> Vec<'a, T>
+    ) -> (Vec<'a, T>, Option<u32>)
     where
         F: Fn(&mut Self) -> T,
     {
         let mut list = self.ast.vec();
         let mut first = true;
+        let mut trailing_separator = None;
         loop {
             if self.cur_kind() == close || self.has_fatal_error() {
                 break;
@@ -384,17 +385,16 @@ impl<'a> ParserImpl<'a> {
             if first {
                 first = false;
             } else {
-                if !trailing_separator && self.at(separator) && self.peek_at(close) {
-                    break;
-                }
+                let separator_span = self.start_span();
                 self.expect(separator);
                 if self.at(close) {
+                    trailing_separator = Some(separator_span);
                     break;
                 }
             }
             list.push(f(self));
         }
-        list
+        (list, trailing_separator)
     }
 
     pub(crate) fn parse_delimited_list_with_rest<E, R, A, B>(

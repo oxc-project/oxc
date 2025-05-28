@@ -13042,6 +13042,24 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
  3 │ };
    ╰────
 
+  × Expected `]` but found `,`
+   ╭─[typescript/tests/cases/compiler/indexSignatureWithTrailingComma.ts:6:17]
+ 5 │ interface B {
+ 6 │     [key: string,]: string;
+   ·                 ┬
+   ·                 ╰── `]` expected
+ 7 │ }
+   ╰────
+
+  × Expected `]` but found `,`
+    ╭─[typescript/tests/cases/compiler/indexSignatureWithTrailingComma.ts:10:17]
+  9 │ class C {
+ 10 │     [key: string,]: null;
+    ·                 ┬
+    ·                 ╰── `]` expected
+ 11 │ }
+    ╰────
+
   × Unexpected token
    ╭─[typescript/tests/cases/compiler/indexSignatureWithoutTypeAnnotation1.ts:2:14]
  1 │ class C {

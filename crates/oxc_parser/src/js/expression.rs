@@ -201,14 +201,18 @@ impl<'a> ParserImpl<'a> {
     fn parse_parenthesized_expression(&mut self, span: u32) -> Expression<'a> {
         self.expect(Kind::LParen);
         let expr_span = self.start_span();
-        let mut expressions = self.context(Context::In, Context::Decorator, |p| {
+        let (mut expressions, comma_span) = self.context(Context::In, Context::Decorator, |p| {
             p.parse_delimited_list(
                 Kind::RParen,
                 Kind::Comma,
-                /* trailing_separator */ false,
                 Self::parse_assignment_expression_or_higher,
             )
         });
+
+        if let Some(comma_span) = comma_span {
+            let error = diagnostics::expect_token(")", ",", self.end_span(comma_span));
+            return self.fatal_error(error);
+        }
 
         if expressions.is_empty() {
             self.expect(Kind::RParen);
@@ -416,17 +420,10 @@ impl<'a> ParserImpl<'a> {
     pub(crate) fn parse_array_expression(&mut self) -> Expression<'a> {
         let span = self.start_span();
         self.expect(Kind::LBrack);
-        let elements = self.context(Context::In, Context::empty(), |p| {
-            p.parse_delimited_list(
-                Kind::RBrack,
-                Kind::Comma,
-                /* trailing_separator */ false,
-                Self::parse_array_expression_element,
-            )
+        let (elements, comma_span) = self.context(Context::In, Context::empty(), |p| {
+            p.parse_delimited_list(Kind::RBrack, Kind::Comma, Self::parse_array_expression_element)
         });
-        if self.at(Kind::Comma) {
-            let comma_span = self.start_span();
-            self.bump_any();
+        if let Some(comma_span) = comma_span {
             self.state.trailing_commas.insert(span, self.end_span(comma_span));
         }
         self.expect(Kind::RBrack);
@@ -616,13 +613,8 @@ impl<'a> ParserImpl<'a> {
         let name = self.parse_identifier_name();
 
         self.expect(Kind::LParen);
-        let arguments = self.context(Context::In, Context::Decorator, |p| {
-            p.parse_delimited_list(
-                Kind::RParen,
-                Kind::Comma,
-                /* trailing_separator */ true,
-                Self::parse_v8_intrinsic_argument,
-            )
+        let (arguments, _) = self.context(Context::In, Context::Decorator, |p| {
+            p.parse_delimited_list(Kind::RParen, Kind::Comma, Self::parse_v8_intrinsic_argument)
         });
         self.expect(Kind::RParen);
         self.ast.expression_v_8_intrinsic(self.end_span(span), name, arguments)
@@ -871,13 +863,8 @@ impl<'a> ParserImpl<'a> {
         let arguments = if self.eat(Kind::LParen) {
             // ArgumentList[Yield, Await] :
             //   AssignmentExpression[+In, ?Yield, ?Await]
-            let call_arguments = self.context(Context::In, Context::empty(), |p| {
-                p.parse_delimited_list(
-                    Kind::RParen,
-                    Kind::Comma,
-                    /* trailing_separator */ true,
-                    Self::parse_call_argument,
-                )
+            let (call_arguments, _) = self.context(Context::In, Context::empty(), |p| {
+                p.parse_delimited_list(Kind::RParen, Kind::Comma, Self::parse_call_argument)
             });
             self.expect(Kind::RParen);
             call_arguments
@@ -966,13 +953,8 @@ impl<'a> ParserImpl<'a> {
         // ArgumentList[Yield, Await] :
         //   AssignmentExpression[+In, ?Yield, ?Await]
         self.expect(Kind::LParen);
-        let call_arguments = self.context(Context::In, Context::Decorator, |p| {
-            p.parse_delimited_list(
-                Kind::RParen,
-                Kind::Comma,
-                /* trailing_separator */ true,
-                Self::parse_call_argument,
-            )
+        let (call_arguments, _) = self.context(Context::In, Context::Decorator, |p| {
+            p.parse_delimited_list(Kind::RParen, Kind::Comma, Self::parse_call_argument)
         });
         self.expect(Kind::RParen);
         self.ast.expression_call(
