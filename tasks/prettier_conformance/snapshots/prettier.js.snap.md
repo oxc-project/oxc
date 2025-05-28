@@ -1,4 +1,4 @@
-js compatibility: 293/699 (41.92%)
+js compatibility: 274/699 (39.20%)
 
 # Failed
 
@@ -39,8 +39,9 @@ js compatibility: 293/699 (41.92%)
 | js/assignment/issue-1419.js | 💥 | 0.00% |
 | js/assignment/issue-15534.js | 💥 | 30.77% |
 | js/assignment/issue-1966.js | 💥 | 30.77% |
+| js/assignment/issue-2184.js | 💥 | 0.00% |
 | js/assignment/issue-2482-1.js | 💥 | 33.33% |
-| js/assignment/issue-2482-2.js | 💥 | 50.00% |
+| js/assignment/issue-2482-2.js | 💥 | 53.33% |
 | js/assignment/issue-3819.js | 💥 | 0.00% |
 | js/assignment/issue-7091.js | 💥 | 0.00% |
 | js/assignment/issue-7572.js | 💥 | 72.73% |
@@ -58,6 +59,7 @@ js compatibility: 293/699 (41.92%)
 | js/async/inline-await.js | 💥 | 22.22% |
 | js/async/nested.js | 💥 | 16.67% |
 | js/binary-expressions/arrow.js | 💥 | 66.67% |
+| js/binary-expressions/call.js | 💥 | 75.51% |
 | js/binary-expressions/comment.js | 💥 | 49.52% |
 | js/binary-expressions/inline-jsx.js | 💥 | 28.57% |
 | js/binary-expressions/inline-object-array.js | 💥 | 67.78% |
@@ -65,6 +67,7 @@ js compatibility: 293/699 (41.92%)
 | js/binary-expressions/return.js | 💥 | 58.82% |
 | js/binary-expressions/short-right.js | 💥 | 70.97% |
 | js/binary-expressions/test.js | 💥 | 59.26% |
+| js/binary-expressions/unary.js | 💥 | 0.00% |
 | js/binary_math/parens.js | 💥 | 80.95% |
 | js/break-calls/break.js | 💥 | 97.87% |
 | js/break-calls/parent.js | 💥 | 66.67% |
@@ -98,7 +101,7 @@ js compatibility: 293/699 (41.92%)
 | js/classes/property.js | 💥 | 66.67% |
 | js/classes/ternary.js | 💥 | 0.00% |
 | js/classes-private-fields/with_comments.js | 💥💥 | 61.54% |
-| js/comments/15661.js | 💥💥 | 53.24% |
+| js/comments/15661.js | 💥💥 | 20.17% |
 | js/comments/16398.js | 💥💥 | 80.00% |
 | js/comments/arrow.js | 💥💥 | 33.33% |
 | js/comments/assignment-pattern.js | 💥💥 | 71.43% |
@@ -110,7 +113,7 @@ js compatibility: 293/699 (41.92%)
 | js/comments/class.js | 💥💥 | 80.00% |
 | js/comments/dangling.js | 💥💥 | 0.00% |
 | js/comments/dangling_array.js | 💥💥 | 25.00% |
-| js/comments/dangling_for.js | 💥💥 | 75.00% |
+| js/comments/dangling_for.js | 💥💥 | 25.00% |
 | js/comments/dynamic_imports.js | 💥💥 | 44.44% |
 | js/comments/emoji.js | 💥💥 | 66.67% |
 | js/comments/empty-statements.js | 💥💥 | 41.38% |
@@ -139,7 +142,7 @@ js compatibility: 293/699 (41.92%)
 | js/comments/trailing_space.js | 💥💥 | 60.00% |
 | js/comments/try.js | 💥💥 | 30.00% |
 | js/comments/variable_declarator.js | 💥💥 | 50.38% |
-| js/comments/while.js | 💥💥 | 62.22% |
+| js/comments/while.js | 💥💥 | 54.90% |
 | js/comments/flow-types/inline.js | 💥 | 66.67% |
 | js/comments/function/between-parentheses-and-function-body.js | 💥 | 55.17% |
 | js/comments/html-like/comment.js | 💥 | 0.00% |
@@ -162,44 +165,56 @@ js compatibility: 293/699 (41.92%)
 | js/comments-closure-typecast/ways-to-specify-type.js | 💥 | 15.38% |
 | js/conditional/comments.js | 💥💥 | 24.10% |
 | js/conditional/new-ternary-examples.js | 💥💥 | 19.62% |
-| js/conditional/new-ternary-spec.js | 💥💥 | 38.59% |
+| js/conditional/new-ternary-spec.js | 💥💥 | 39.27% |
 | js/conditional/no-confusing-arrow.js | 💥💥 | 66.67% |
 | js/conditional/postfix-ternary-regressions.js | 💥💥 | 36.11% |
 | js/decorator-auto-accessors/comments.js | 💥💥 | 88.89% |
-| js/decorators/classes.js | 💥 | 50.00% |
-| js/decorators/comments.js | 💥 | 83.87% |
+| js/decorators/classes.js | 💥 | 35.29% |
+| js/decorators/comments.js | 💥 | 72.73% |
 | js/decorators/member-expression.js | 💥 | 80.60% |
+| js/decorators/mixed.js | 💥 | 80.00% |
 | js/decorators/mobx.js | 💥 | 70.45% |
 | js/decorators/multiline.js | 💥 | 44.44% |
 | js/decorators/multiple.js | 💥 | 61.54% |
 | js/decorators/parens.js | 💥 | 75.00% |
-| js/decorators/redux.js | 💥 | 54.55% |
+| js/decorators/redux.js | 💥 | 13.33% |
 | js/decorators/class-expression/class-expression.js | 💥💥 | 34.62% |
 | js/decorators/class-expression/member-expression.js | 💥💥 | 0.00% |
 | js/decorators/class-expression/super-class.js | 💥💥 | 14.29% |
-| js/decorators-export/after_export.js | 💥 | 50.00% |
-| js/decorators-export/before_export.js | 💥 | 88.89% |
-| js/destructuring/destructuring.js | 💥 | 59.05% |
+| js/decorators-export/after_export.js | 💥 | 71.43% |
+| js/decorators-export/before_export.js | 💥 | 36.36% |
+| js/destructuring/destructuring.js | 💥 | 63.55% |
 | js/destructuring/issue-5988.js | 💥 | 0.00% |
 | js/destructuring-ignore/ignore.js | 💥💥💥 | 76.54% |
 | js/empty-paren-comment/class-property.js | 💥 | 33.33% |
 | js/empty-paren-comment/empty_paren_comment.js | 💥 | 44.44% |
+| js/empty-statement/body.js | 💥 | 10.00% |
 | js/empty-statement/no-newline.js | 💥 | 85.71% |
 | js/es6modules/export_default_call_expression.js | 💥 | 0.00% |
 | js/explicit-resource-management/for-await-using-of-comments.js | 💥 | 0.00% |
+| js/explicit-resource-management/using-declarations.js | 💥 | 60.00% |
+| js/explicit-resource-management/valid-await-using-binding-using.js | 💥 | 75.00% |
 | js/explicit-resource-management/valid-await-using-comments.js | 💥 | 60.61% |
+| js/explicit-resource-management/valid-for-using-binding-of-of.js | 💥 | 50.00% |
+| js/explicit-resource-management/valid-for-using-declaration.js | 💥 | 66.67% |
+| js/explicit-resource-management/valid-using-as-identifier-computed-member.js | 💥 | 50.00% |
+| js/explicit-resource-management/valid-using-as-identifier-for-await-of.js | 💥 | 0.00% |
+| js/explicit-resource-management/valid-using-as-identifier-for-in.js | 💥 | 0.00% |
 | js/explicit-resource-management/valid-using-as-identifier-for-init.js | 💥 | 0.00% |
+| js/explicit-resource-management/valid-using-as-identifier-for-of.js | 💥 | 0.00% |
+| js/explicit-resource-management/valid-using-binding-using.js | 💥 | 75.00% |
 | js/export/blank-line-between-specifiers.js | 💥💥 | 95.00% |
 | js/export-default/function_in_template.js | 💥 | 0.00% |
 | js/export-default/iife.js | 💥 | 0.00% |
-| js/for/comment.js | 💥 | 47.83% |
+| js/for/comment.js | 💥 | 39.13% |
 | js/for/continue-and-break-comment-1.js | 💥 | 78.95% |
 | js/for/continue-and-break-comment-2.js | 💥 | 88.79% |
 | js/for/continue-and-break-comment-without-blocks.js | 💥 | 41.10% |
 | js/for/for-in-with-initializer.js | 💥 | 31.25% |
-| js/for/in.js | 💥 | 50.00% |
-| js/for/parentheses.js | 💥 | 50.00% |
-| js/for-of/async-identifier.js | 💥 | 90.00% |
+| js/for/for.js | 💥 | 50.00% |
+| js/for/in.js | 💥 | 38.46% |
+| js/for/parentheses.js | 💥 | 26.00% |
+| js/for-of/async-identifier.js | 💥 | 50.00% |
 | js/function/function_expression.js | 💥 | 63.64% |
 | js/function/issue-10277.js | 💥 | 36.36% |
 | js/function-comments/params-trail-comments.js | 💥 | 24.24% |
@@ -215,9 +230,9 @@ js compatibility: 293/699 (41.92%)
 | js/functional-composition/rxjs_pipe.js | 💥 | 38.46% |
 | js/generator/anonymous.js | 💥 | 91.43% |
 | js/identifier/for-of/await.js | 💥 | 33.33% |
-| js/identifier/for-of/let.js | 💥 | 61.54% |
+| js/identifier/for-of/let.js | 💥 | 15.38% |
 | js/identifier/parentheses/const.js | 💥💥 | 0.00% |
-| js/identifier/parentheses/let.js | 💥💥 | 63.64% |
+| js/identifier/parentheses/let.js | 💥💥 | 63.35% |
 | js/if/comment_before_else.js | 💥 | 69.57% |
 | js/if/expr_and_same_line_comments.js | 💥 | 88.89% |
 | js/if/if_comments.js | 💥 | 55.32% |
@@ -229,7 +244,7 @@ js compatibility: 293/699 (41.92%)
 | js/import-assertions/keyword-detect.js | 💥 | 33.33% |
 | js/import-attributes/keyword-detect.js | 💥 | 33.33% |
 | js/import-attributes/long-sources.js | 💥 | 48.48% |
-| js/label/comment.js | 💥 | 66.67% |
+| js/label/comment.js | 💥 | 47.06% |
 | js/last-argument-expansion/arrow.js | 💥 | 20.51% |
 | js/last-argument-expansion/assignment-pattern.js | 💥 | 28.57% |
 | js/last-argument-expansion/break-parent.js | 💥 | 57.14% |
@@ -247,7 +262,8 @@ js compatibility: 293/699 (41.92%)
 | js/logical-assignment/logical-assignment.js | 💥 | 81.48% |
 | js/logical_expressions/issue-7024.js | 💥 | 0.00% |
 | js/member/conditional.js | 💥 | 0.00% |
-| js/member/expand.js | 💥 | 49.41% |
+| js/member/expand.js | 💥 | 50.00% |
+| js/member/logical.js | 💥 | 50.00% |
 | js/method-chain/assignment-lhs.js | 💥 | 16.67% |
 | js/method-chain/bracket_0-1.js | 💥 | 0.00% |
 | js/method-chain/break-last-member.js | 💥 | 80.56% |
@@ -262,7 +278,7 @@ js compatibility: 293/699 (41.92%)
 | js/method-chain/issue-11298.js | 💥 | 20.00% |
 | js/method-chain/issue-3594.js | 💥 | 33.33% |
 | js/method-chain/issue-4125.js | 💥 | 59.33% |
-| js/method-chain/logical.js | 💥 | 56.67% |
+| js/method-chain/logical.js | 💥 | 28.07% |
 | js/method-chain/multiple-members.js | 💥 | 45.65% |
 | js/method-chain/object-literal.js | 💥 | 7.69% |
 | js/method-chain/pr-7889.js | 💥 | 23.08% |
@@ -277,7 +293,7 @@ js compatibility: 293/699 (41.92%)
 | js/no-semi/class.js | 💥✨ | 46.55% |
 | js/no-semi/comments.js | 💥✨ | 36.36% |
 | js/no-semi/issue2006.js | 💥💥 | 75.00% |
-| js/no-semi/no-semi.js | 💥💥 | 87.43% |
+| js/no-semi/no-semi.js | 💥💥 | 85.25% |
 | js/object-colon-bug/bug.js | 💥 | 60.00% |
 | js/object-multiline/multiline.js | 💥✨ | 22.22% |
 | js/object-prop-break-in/short-keys.js | 💥 | 63.41% |
@@ -288,11 +304,11 @@ js compatibility: 293/699 (41.92%)
 | js/objects/right-break.js | 💥 | 50.00% |
 | js/objects/assignment-expression/object-property.js | 💥 | 66.67% |
 | js/objects/assignment-expression/object-value.js | 💥 | 37.50% |
-| js/optional-chaining/chaining.js | 💥 | 59.77% |
+| js/optional-chaining/chaining.js | 💥 | 55.81% |
 | js/optional-chaining/comments.js | 💥 | 14.46% |
 | js/preserve-line/argument-list.js | 💥 | 78.21% |
 | js/preserve-line/comments.js | 💥 | 85.71% |
-| js/preserve-line/member-chain.js | 💥 | 18.90% |
+| js/preserve-line/member-chain.js | 💥 | 14.40% |
 | js/preserve-line/parameter-list.js | 💥 | 76.60% |
 | js/quote-props/classes.js | 💥💥✨✨ | 47.06% |
 | js/quote-props/numeric-separator.js | 💥💥💥💥 | 60.00% |
@@ -307,7 +323,7 @@ js compatibility: 293/699 (41.92%)
 | js/return/binaryish.js | 💥 | 25.00% |
 | js/return/comment.js | 💥 | 58.82% |
 | js/return-outside-function/return-outside-function.js | 💥 | 0.00% |
-| js/sequence-break/break.js | 💥 | 31.37% |
+| js/sequence-break/break.js | 💥 | 29.13% |
 | js/sequence-expression/ignore.js | 💥 | 0.00% |
 | js/sequence-expression/parenthesized.js | 💥 | 0.00% |
 | js/spread/spread.js | 💥 | 80.00% |
@@ -332,7 +348,7 @@ js compatibility: 293/699 (41.92%)
 | js/template-literals/indention.js | 💥 | 51.16% |
 | js/template-literals/logical-expressions.js | 💥 | 0.00% |
 | js/template-literals/sequence-expressions.js | 💥 | 0.00% |
-| js/ternaries/binary.js | 💥💥💥💥💥💥💥💥 | 17.20% |
+| js/ternaries/binary.js | 💥💥💥💥💥💥💥💥 | 18.71% |
 | js/ternaries/func-call.js | 💥💥💥💥💥💥💥💥 | 28.43% |
 | js/ternaries/indent-after-paren.js | 💥💥💥💥💥💥💥💥 | 34.72% |
 | js/ternaries/indent.js | 💥💥💥💥💥💥💥💥 | 3.97% |
@@ -354,12 +370,15 @@ js compatibility: 293/699 (41.92%)
 | js/trailing-comma/dynamic-import.js | 💥💥💥 | 0.00% |
 | js/trailing-comma/jsx.js | 💥💥💥 | 0.00% |
 | js/trailing-comma/trailing_whitespace.js | 💥💥💥 | 72.97% |
-| js/try/catch.js | 💥 | 54.05% |
+| js/try/catch.js | 💥 | 42.86% |
+| js/try/empty.js | 💥 | 80.00% |
 | js/try/try.js | 💥 | 50.00% |
-| js/unary-expression/comments.js | 💥 | 18.51% |
+| js/unary-expression/comments.js | 💥 | 16.86% |
 | js/unicode/combining-characters.js | 💥 | 28.57% |
 | js/unicode/nbsp-jsx.js | 💥 | 25.00% |
+| js/variable_declarator/multiple.js | 💥 | 85.71% |
 | js/variable_declarator/string.js | 💥 | 0.00% |
+| js/while/indent.js | 💥 | 88.46% |
 | js/yield/jsx-without-parenthesis.js | 💥 | 50.00% |
 | js/yield/jsx.js | 💥 | 50.00% |
 | jsx/attr-element/attr-element.js | 💥 | 0.00% |
