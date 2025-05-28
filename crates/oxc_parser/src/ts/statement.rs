@@ -477,11 +477,18 @@ impl<'a> ParserImpl<'a> {
     }
 
     pub(crate) fn at_start_of_ts_declaration(&mut self) -> bool {
+        if !self.is_ts {
+            return false;
+        }
         self.lookahead(Self::at_start_of_ts_declaration_worker)
     }
 
     /// Check if the parser is at a start of a ts declaration
     fn at_start_of_ts_declaration_worker(&mut self) -> bool {
+        if !self.is_ts {
+            return false;
+        }
+
         loop {
             match self.cur_kind() {
                 Kind::Var | Kind::Let | Kind::Const | Kind::Function | Kind::Class | Kind::Enum => {

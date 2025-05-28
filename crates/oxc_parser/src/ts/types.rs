@@ -1094,6 +1094,9 @@ impl<'a> ParserImpl<'a> {
     }
 
     pub(crate) fn is_next_at_type_member_name(&mut self) -> bool {
+        if !self.is_ts {
+            return false;
+        }
         self.lookahead(Self::is_next_at_type_member_name_worker)
     }
 
@@ -1321,6 +1324,10 @@ impl<'a> ParserImpl<'a> {
     }
 
     fn is_at_modifier(&mut self, is_constructor_parameter: bool) -> bool {
+        if !self.is_ts {
+            return false;
+        }
+
         if !matches!(
             self.cur_kind(),
             Kind::Public
@@ -1415,6 +1422,10 @@ impl<'a> ParserImpl<'a> {
     }
 
     fn is_start_of_left_hand_side_expression(&mut self) -> bool {
+        if !self.is_ts {
+            return false;
+        }
+
         match self.cur_kind() {
             kind if kind.is_literal() => true,
             kind if kind.is_template_start_of_tagged_template() => true,
