@@ -41,11 +41,15 @@ impl<'a> Format<'a> for Vec<'a, Argument<'a>> {
             );
         }
 
-        // let (is_commonjs_or_amd_call, is_test_call) =
-        //     call_expression.as_ref().map_or((Ok(false), Ok(false)), |call| {
-        //         (is_commonjs_or_amd_call(node, call), call.is_test_call_expression())
-        //     });
-        let (is_commonjs_or_amd_call, is_test_call) = (false, false);
+        let call_expression = f.parent_kind().as_call_expression();
+
+        let (is_commonjs_or_amd_call, is_test_call) =
+            call_expression.as_ref().map_or((false, false), |call| {
+                (
+                    is_commonjs_or_amd_call(self.as_slice(), call, &f.parent_stack()),
+                    false, /*  call.is_test_call_expression() */
+                )
+            });
 
         let is_first_arg_string_literal_or_template = if self.len() == 2 {
             matches!(
@@ -943,4 +947,63 @@ fn has_only_simple_parameters(
 fn is_simple_parameter(parameter: &FormalParameter<'_>, allow_type_annotations: bool) -> bool {
     parameter.pattern.get_binding_identifier().is_some()
         && (allow_type_annotations || parameter.pattern.type_annotation.is_none())
+}
+
+/// Tests if this is a call to commonjs [`require`](https://nodejs.org/api/modules.html#requireid)
+/// or amd's [`define`](https://github.com/amdjs/amdjs-api/wiki/AMD#define-function-) function.
+fn is_commonjs_or_amd_call(
+    arguments: &[Argument<'_>],
+    call: &CallExpression,
+    parent_stack: &ParentStack<'_>,
+) -> bool {
+    let Expression::Identifier(ident) = &call.callee else {
+        return false;
+    };
+
+    match ident.name.as_str() {
+        "require" => {
+            match arguments.len() {
+                0 => false,
+                // `require` can be called with any expression that resolves to a
+                // string. This check is only an escape hatch to allow a complex
+                // expression to break rather than group onto the previous line.
+                //
+                // EX: `require(path.join(__dirname, 'relative/path'))`
+                // Without condition:
+                //   require(path.join(
+                //     __dirname,
+                //     'relative/path'));
+                // With condition:
+                //   require(
+                //     path.join(__dirname, 'relative/path')
+                //   );
+                1 => matches!(arguments.first(), Some(Argument::StringLiteral(_))),
+                _ => true,
+            }
+        }
+        "define" => {
+            let in_statement = parent_stack
+                .parent2()
+                .is_some_and(|parent| parent.as_expression_statement().is_some());
+            if in_statement {
+                match arguments.len() {
+                    1 => true,
+                    2 => matches!(arguments.first(), Some(Argument::ArrayExpression(_))),
+                    3 => {
+                        let mut iter = arguments.iter();
+                        let first = iter.next();
+                        let second = iter.next();
+                        matches!(
+                            (first, second),
+                            (Some(Argument::StringLiteral(_)), Some(Argument::ArrayExpression(_)))
+                        )
+                    }
+                    _ => false,
+                }
+            } else {
+                false
+            }
+        }
+        _ => false,
+    }
 }
