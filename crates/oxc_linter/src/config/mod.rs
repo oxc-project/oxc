@@ -10,6 +10,8 @@ mod oxlintrc;
 mod plugins;
 mod rules;
 mod settings;
+#[cfg(test)]
+pub use categories::OxlintCategories;
 pub use config_builder::{ConfigBuilderError, ConfigStoreBuilder};
 pub use config_store::ResolvedLinterState;
 pub use config_store::{Config, ConfigStore};

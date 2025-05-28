@@ -11,7 +11,7 @@ use oxc_allocator::Allocator;
 use oxc_diagnostics::{GraphicalReportHandler, GraphicalTheme, NamedSource};
 use rustc_hash::FxHashMap;
 use serde::Deserialize;
-use serde_json::Value;
+use serde_json::{Value, json};
 
 use crate::{
     AllowWarnDeny, ConfigStore, ConfigStoreBuilder, LintPlugins, LintService, LintServiceOptions,
@@ -404,7 +404,7 @@ impl Tester {
     fn test_pass(&mut self) {
         for TestCase { source, rule_config, eslint_config, path } in self.expect_pass.clone() {
             let result =
-                self.run(&source, rule_config.clone(), &eslint_config, path, ExpectFixKind::None);
+                self.run(&source, rule_config.clone(), eslint_config, path, ExpectFixKind::None);
             let passed = result == TestResult::Passed;
             let config = rule_config.map_or_else(
                 || "\n\n------------------------\n".to_string(),
@@ -426,7 +426,7 @@ impl Tester {
     fn test_fail(&mut self) {
         for TestCase { source, rule_config, eslint_config, path } in self.expect_fail.clone() {
             let result =
-                self.run(&source, rule_config.clone(), &eslint_config, path, ExpectFixKind::None);
+                self.run(&source, rule_config.clone(), eslint_config, path, ExpectFixKind::None);
             let failed = result == TestResult::Failed;
             let config = rule_config.map_or_else(
                 || "\n\n------------------------".to_string(),
@@ -459,7 +459,7 @@ impl Tester {
 
         for fix in fix_test_cases {
             let ExpectFix { source, expected, kind, rule_config: config } = fix;
-            let result = self.run(&source, config, &None, None, kind);
+            let result = self.run(&source, config, None, None, kind);
             match result {
                 TestResult::Fixed(fixed_str) => assert_eq!(
                     expected, fixed_str,
@@ -476,7 +476,7 @@ impl Tester {
         &mut self,
         source_text: &str,
         rule_config: Option<Value>,
-        eslint_config: &Option<Value>,
+        eslint_config: Option<Value>,
         path: Option<PathBuf>,
         fix: ExpectFixKind,
     ) -> TestResult {
@@ -486,11 +486,13 @@ impl Tester {
             self.lint_options,
             ConfigStore::new(
                 eslint_config
-                    .as_ref()
-                    .map_or_else(ConfigStoreBuilder::empty, |v| {
+                    //.as_ref()
+                    .map_or_else(ConfigStoreBuilder::empty, |mut v| {
+                        v.as_object_mut().unwrap().insert("categories".into(), json!({}));
                         ConfigStoreBuilder::from_oxlintrc(true, Oxlintrc::deserialize(v).unwrap())
                             .unwrap()
                     })
+                    //.with_categories(OxlintCategories::default())
                     .with_plugins(self.plugins)
                     .with_rule(rule, AllowWarnDeny::Warn)
                     .build(),
