@@ -170,7 +170,7 @@ impl<'a> ParserImpl<'a> {
                     p.bump_any();
                     p.at(Kind::Function) && !p.token.is_on_new_line()
                 });
-        if self.at_function_with_async() {
+        if b {
             let r#async = self.eat(Kind::Async);
             return self.parse_function_expression(span, r#async);
         }
