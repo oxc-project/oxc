@@ -1,5 +1,8 @@
 use crate::{ContextHost, FrameworkFlags};
-use oxc_ast::{AstKind, ast::Expression};
+use oxc_ast::{
+    AstKind,
+    ast::{CallExpression, Expression},
+};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
@@ -57,28 +60,21 @@ declare_oxc_lint!(
     ForwardRefUsesRef,
     react,
     correctness,
-    pending
-    // TODO: two ways to fix it: add `ref` param or remove `forwardRef` call
+    fix
 );
 
-fn check_forward_ref_inner(exp: &Expression, ctx: &LintContext) {
-    match exp {
-        Expression::ArrowFunctionExpression(f) => {
-            if f.params.parameters_count() >= 2 || f.params.rest.is_some() {
-                return;
-            }
-            ctx.diagnostic(forward_ref_uses_ref_diagnostic(f.span));
-        }
-        Expression::FunctionExpression(f) => {
-            if f.params.parameters_count() >= 2 || f.params.rest.is_some() {
-                return;
-            }
-            ctx.diagnostic(forward_ref_uses_ref_diagnostic(f.span));
-        }
-        // NOTE: Not sure whether to warn in `forwardRef(((props, ref) => null))` (with parentheses)
-        // Expression::ParenthesizedExpression(p) => check_forward_ref_inner(&p.expression),
-        _ => {}
+fn check_forward_ref_inner(exp: &Expression, call_expr: &CallExpression, ctx: &LintContext) {
+    let (params, span) = match exp {
+        Expression::ArrowFunctionExpression(f) => (&f.params, f.span),
+        Expression::FunctionExpression(f) => (&f.params, f.span),
+        _ => return,
+    };
+    if params.parameters_count() != 1 || params.rest.is_some() {
+        return;
     }
+    ctx.diagnostic_with_fix(forward_ref_uses_ref_diagnostic(span), |fixer| {
+        fixer.replace_with(call_expr, exp)
+    });
 }
 
 impl Rule for ForwardRefUsesRef {
@@ -97,7 +93,7 @@ impl Rule for ForwardRefUsesRef {
             return; // SpreadElement like forwardRef(...x)
         };
 
-        check_forward_ref_inner(first_arg_as_exp, ctx);
+        check_forward_ref_inner(first_arg_as_exp, call_expr, ctx);
     }
 
     fn should_run(&self, ctx: &ContextHost) -> bool {
@@ -165,6 +161,9 @@ fn test() {
 			        import * as React from 'react'
 			        (props) => null;
 			      ",
+        "forwardRef(() => {})",
+        "forwardRef(function () {})",
+        "forwardRef(function (a, b, c) {})",
     ];
 
     let fail = vec![
@@ -198,10 +197,19 @@ fn test() {
 			      ",
     ];
 
+    let fix = vec![
+        ("forwardRef((a) => {})", "(a) => {}"),
+        ("forwardRef(a => {})", "a => {}"),
+        ("forwardRef(function (a) {})", "function (a) {}"),
+        ("forwardRef(function(a,) {})", "function(a,) {}"),
+        ("React.forwardRef(function(a) {})", "function(a) {}"),
+    ];
+
     Tester::new(ForwardRefUsesRef::NAME, ForwardRefUsesRef::PLUGIN, pass, fail)
         .with_lint_options(LintOptions {
             framework_hints: FrameworkFlags::React,
             ..LintOptions::default()
         })
+        .expect_fix(fix)
         .test_and_snapshot();
 }
