@@ -757,6 +757,7 @@ fn test() {
 			      "#,
             None,
         ),
+        ("<t onChñnge/>", None),
     ];
 
     Tester::new(NoUnknownProperty::NAME, NoUnknownProperty::PLUGIN, pass, fail).test_and_snapshot();
