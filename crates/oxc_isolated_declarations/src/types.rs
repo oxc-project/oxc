@@ -216,7 +216,7 @@ impl<'a> IsolatedDeclarations<'a> {
                     let key = self.transform_property_key(key);
                     let property_signature = self.ast.ts_signature_property_signature(
                         object.span,
-                        key.is_expression(),
+                        key.as_expression().is_some_and(|k| !k.is_string_literal()),
                         false,
                         is_const,
                         key,
