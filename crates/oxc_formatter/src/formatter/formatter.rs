@@ -1,5 +1,6 @@
 #![allow(clippy::module_inception)]
 
+use oxc_allocator::Address;
 use oxc_ast::AstKind;
 
 use crate::options::FormatOptions;
@@ -9,7 +10,6 @@ use super::{
     VecBuffer,
     buffer::BufferSnapshot,
     builders::{FillBuilder, JoinBuilder, JoinNodesBuilder, Line},
-    parent_stack::ParentStack,
     prelude::*,
 };
 
@@ -58,23 +58,24 @@ impl<'buf, 'ast> Formatter<'buf, 'ast> {
     }
 
     #[inline]
-    pub fn parent_stack(&self) -> &ParentStack<'ast> {
-        &self.state().stack
-    }
-
-    #[inline]
     pub fn current_kind(&self) -> AstKind<'ast> {
         self.state().stack.current()
     }
 
     #[inline]
-    pub fn parent_kind(&self) -> AstKind<'ast> {
-        self.state().stack.parent()
+    pub fn parent_kind_of(&self, address: Address) -> AstKind<'ast> {
+        let parent_address = &self.state().parents[&address];
+        self.state().kinds.get(parent_address).copied().unwrap()
     }
 
     #[inline]
-    pub fn parent_parent_kind(&self) -> Option<AstKind<'ast>> {
-        self.state().stack.parent2()
+    pub fn parent_parent_kind_of(&self, address: Address) -> Option<AstKind<'ast>> {
+        let parent_address = &self.state().parents[&address];
+        self.state()
+            .parents
+            .get(parent_address)
+            .and_then(|parent_parent_address| self.state().kinds.get(parent_parent_address))
+            .copied()
     }
 
     /// Creates a new group id that is unique to this document. The passed debug name is used in the

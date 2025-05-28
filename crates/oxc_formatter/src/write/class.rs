@@ -1,3 +1,4 @@
+use oxc_allocator::Address;
 use oxc_ast::{AstKind, ast::*};
 use oxc_span::GetSpan;
 
@@ -21,7 +22,7 @@ impl<'a> FormatWrite<'a> for Class<'a> {
         let group_mode = should_group(self, f);
 
         if !matches!(
-            f.parent_kind(),
+            f.parent_kind_of(Address::from_ptr(self)),
             AstKind::ExportNamedDeclaration(_) | AstKind::ExportDefaultDeclaration(_)
         ) {
             write!(f, decorators)?;

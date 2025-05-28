@@ -1,4 +1,4 @@
-use oxc_allocator::Vec;
+use oxc_allocator::{Address, Vec};
 use oxc_ast::{AstKind, ast::*};
 
 use crate::{
@@ -21,7 +21,9 @@ impl<'a> Format<'a> for Vec<'a, TSTypeParameter<'a>> {
         let trailing_separator = if self.len() == 1
         // This only concern sources that allow JSX or a restricted standard variant.
         && f.context().source_type().is_jsx()
-        && matches!(f.parent_stack().parent2(), Some(AstKind::ArrowFunctionExpression(_)))
+        && matches!(f.parent_parent_kind_of(
+            Address::from_ptr(self.first().unwrap())
+        ), Some(AstKind::ArrowFunctionExpression(_)))
         // Ignore Type parameter with an `extends` clause or a default type.
         && !self.first().is_some_and(|t| t.constraint.is_some() || t.default.is_some())
         {

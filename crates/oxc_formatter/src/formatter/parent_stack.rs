@@ -27,10 +27,10 @@ impl<'ast> ParentStack<'ast> {
     }
 
     pub fn parent(&self) -> AstKind<'ast> {
-        self.inner.as_slice().get(self.inner.len() - 2).copied().unwrap()
+        self.inner.as_slice().get(self.inner.len().saturating_sub(2)).copied().unwrap()
     }
 
     pub fn parent2(&self) -> Option<AstKind<'ast>> {
-        self.inner.as_slice().get(self.inner.len() - 3).copied()
+        self.inner.as_slice().get(self.inner.len().saturating_sub(3)).copied()
     }
 }

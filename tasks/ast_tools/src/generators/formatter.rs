@@ -72,7 +72,6 @@ impl Generator for FormatterFormatGenerator {
 }
 
 fn implementation(type_def: &TypeDef, schema: &Schema) -> TokenStream {
-    let type_ident = type_def.ident();
     let type_ty = type_def.ty(schema);
 
     let has_kind = match type_def {
@@ -91,22 +90,6 @@ fn implementation(type_def: &TypeDef, schema: &Schema) -> TokenStream {
             }
         };
     }
-
-    let stack_before = if type_def.name() == "ParenthesizedExpression" {
-        quote! {}
-    } else {
-        quote! {
-            f.state_mut().stack.push(AstKind::#type_ident(hack(self)));
-        }
-    };
-
-    let stack_after = if type_def.name() == "ParenthesizedExpression" {
-        quote! {}
-    } else {
-        quote! {
-            f.state_mut().stack.pop();
-        }
-    };
 
     let leading_comments = if type_def.is_enum() {
         quote! {}
@@ -129,7 +112,7 @@ fn implementation(type_def: &TypeDef, schema: &Schema) -> TokenStream {
         type_def_name.ends_with("Expression") || NEEDS_PARENTHESES.contains(&type_def_name);
     let needs_parentheses_before = if needs_parentheses {
         quote! {
-            let needs_parentheses = self.needs_parentheses(&f.state().stack);
+            let needs_parentheses = self.needs_parentheses(f);
             if needs_parentheses {
                 "(".fmt(f)?;
             }
@@ -150,18 +133,26 @@ fn implementation(type_def: &TypeDef, schema: &Schema) -> TokenStream {
         quote! {}
     };
 
+    let implementation = if needs_parentheses_before.is_empty() && trailing_comments.is_empty() {
+        quote! {
+            self.write(f)
+        }
+    } else {
+        quote! {
+            #leading_comments
+            #needs_parentheses_before
+            let result = self.write(f);
+            #needs_parentheses_after
+            #trailing_comments
+            result
+        }
+    };
+
     quote! {
         ///@@line_break
         impl<'a> Format<'a> for #type_ty {
             fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-                #stack_before
-                #leading_comments
-                #needs_parentheses_before
-                let result = self.write(f);
-                #needs_parentheses_after
-                #trailing_comments
-                #stack_after
-                result
+                #implementation
             }
         }
     }

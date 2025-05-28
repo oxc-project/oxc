@@ -1,13 +1,13 @@
 use std::mem::transmute_copy;
 
-use oxc_allocator::CloneIn;
+use oxc_allocator::{Address, CloneIn, GetAddress};
 use oxc_ast::{AstKind, ast::*, precedence};
 use oxc_span::GetSpan;
 use oxc_syntax::precedence::{GetPrecedence, Precedence};
 
 use crate::{
     Format,
-    formatter::{FormatResult, Formatter, parent_stack::ParentStack},
+    formatter::{FormatResult, Formatter},
 };
 
 use crate::{format_args, formatter::prelude::*, write};
@@ -131,7 +131,7 @@ impl<'a, 'b> BinaryLikeExpression<'a, 'b> {
     pub fn should_not_indent_if_parent_indents(
         &self,
         parent: &AstKind<'_>,
-        parent_stack: &ParentStack<'_>,
+        f: &Formatter<'_, 'a>,
     ) -> bool {
         match parent {
             AstKind::ReturnStatement(_)
@@ -141,17 +141,15 @@ impl<'a, 'b> BinaryLikeExpression<'a, 'b> {
             // JsSyntaxKind::JSX_EXPRESSION_ATTRIBUTE_VALUE => true,
             AstKind::ArrowFunctionExpression(arrow) => arrow.body.span == self.span(),
             AstKind::ConditionalExpression(conditional) => {
-                parent_stack.parent2().is_some_and(|grand_parent| {
-                    matches!(
-                        grand_parent,
-                        AstKind::ReturnStatement(_)
-                            | AstKind::ThrowStatement(_)
-                            | AstKind::CallExpression(_)
-                            | AstKind::ImportExpression(_)
-                            | AstKind::Argument(_)
-                            | AstKind::MetaProperty(_)
-                    )
-                })
+                matches!(
+                    f.parent_kind_of(parent.address()),
+                    AstKind::ReturnStatement(_)
+                        | AstKind::ThrowStatement(_)
+                        | AstKind::CallExpression(_)
+                        | AstKind::ImportExpression(_)
+                        | AstKind::Argument(_)
+                        | AstKind::MetaProperty(_)
+                )
             }
             _ => false,
         }
@@ -163,6 +161,15 @@ impl GetSpan for BinaryLikeExpression<'_, '_> {
         match self {
             Self::LogicalExpression(expr) => expr.span,
             Self::BinaryExpression(expr) => expr.span,
+        }
+    }
+}
+
+impl GetAddress for BinaryLikeExpression<'_, '_> {
+    fn address(&self) -> Address {
+        match self {
+            Self::LogicalExpression(expr) => Address::from_ptr(*expr),
+            Self::BinaryExpression(expr) => Address::from_ptr(*expr),
         }
     }
 }
@@ -181,7 +188,7 @@ impl<'a, 'b> TryFrom<&'b Expression<'a>> for BinaryLikeExpression<'a, 'b> {
 
 impl<'a> Format<'a> for BinaryLikeExpression<'a, '_> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        let parent = f.parent_kind();
+        let parent = f.parent_kind_of(self.address());
 
         let is_inside_condition = self.is_inside_condition(&parent);
         let parts = split_into_left_and_right_sides(*self, is_inside_condition);
@@ -193,7 +200,7 @@ impl<'a> Format<'a> for BinaryLikeExpression<'a, '_> {
 
         // Add a group with a soft block indent in cases where it is necessary to parenthesize the binary expression.
         // For example, `(a+b)(call)`, `!(a + b)`, `(a + b).test`.
-        let is_inside_parenthesis = match f.parent_kind() {
+        let is_inside_parenthesis = match parent {
             AstKind::MemberExpression(_) | AstKind::UnaryExpression(_) => true,
             AstKind::CallExpression(call) => {
                 call.callee.without_parentheses().span() == self.span()
@@ -210,8 +217,8 @@ impl<'a> Format<'a> for BinaryLikeExpression<'a, '_> {
         }
 
         let inline_logical_expression = self.should_inline_logical_expression();
-        let should_indent_if_inlines = should_indent_if_parent_inlines(&parent, f.parent_stack());
-        let should_not_indent = self.should_not_indent_if_parent_indents(&parent, f.parent_stack());
+        let should_indent_if_inlines = should_indent_if_parent_inlines(&parent, f);
+        let should_not_indent = self.should_not_indent_if_parent_indents(&parent, f);
 
         let flattened = parts.len() > 2;
 
@@ -429,12 +436,12 @@ fn split_into_left_and_right_sides<'a, 'b>(
 /// these cases the decide to actually break on a new line and indent it.
 ///
 /// This function checks what the parents adheres to this behaviour
-fn should_indent_if_parent_inlines(parent: &AstKind<'_>, parent_stack: &ParentStack<'_>) -> bool {
+fn should_indent_if_parent_inlines(parent: &AstKind<'_>, f: &mut Formatter<'_, '_>) -> bool {
     if matches!(parent, AstKind::AssignmentExpression(_) | AstKind::ObjectProperty(_)) {
         return true;
     }
 
-    parent_stack.parent2().is_some_and(|kind| match kind {
+    match f.parent_kind_of(parent.address()) {
         AstKind::VariableDeclarator(decl) => {
             decl.init.as_ref().is_some_and(|init| init.span() == parent.span())
         }
@@ -442,7 +449,7 @@ fn should_indent_if_parent_inlines(parent: &AstKind<'_>, parent_stack: &ParentSt
             decl.value.as_ref().is_some_and(|value| value.span() == parent.span())
         }
         _ => false,
-    })
+    }
 }
 
 fn is_same_binary_expression_kind(

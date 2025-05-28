@@ -134,6 +134,7 @@ impl Generator for AstKindGenerator {
         let mut type_variants = quote!();
         let mut kind_variants = quote!();
         let mut span_match_arms = quote!();
+        let mut address_match_arms = quote!();
         let mut as_methods = quote!();
 
         let mut next_index = 0u16;
@@ -156,6 +157,7 @@ impl Generator for AstKindGenerator {
             kind_variants.extend(quote!( #type_ident(&'a #type_ty) = AstType::#type_ident as u8, ));
 
             span_match_arms.extend(quote!( Self::#type_ident(it) => it.span(), ));
+            address_match_arms.extend(quote! { Self::#type_ident(it) => Address::from_ptr(*it), });
 
             let as_method_name = format_ident!("as_{}", type_def.snake_name());
             as_methods.extend(quote! {
@@ -181,6 +183,7 @@ impl Generator for AstKindGenerator {
 
             ///@@line_break
             use oxc_span::{GetSpan, Span};
+            use oxc_allocator::{Address, GetAddress};
 
             ///@@line_break
             use crate::ast::*;
@@ -218,6 +221,15 @@ impl Generator for AstKindGenerator {
                 fn span(&self) -> Span {
                     match self {
                         #span_match_arms
+                    }
+                }
+            }
+
+            ///@@line_break
+            impl GetAddress for AstKind<'_> {
+                fn address(&self) -> Address {
+                    match self {
+                        #address_match_arms
                     }
                 }
             }

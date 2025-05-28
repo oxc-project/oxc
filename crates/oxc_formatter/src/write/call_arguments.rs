@@ -1,4 +1,4 @@
-use oxc_allocator::Vec;
+use oxc_allocator::{Address, Vec};
 use oxc_ast::{ast::*, match_expression};
 use oxc_span::GetSpan;
 
@@ -45,15 +45,14 @@ impl<'a> Format<'a> for Vec<'a, Argument<'a>> {
             );
         }
 
-        // We don't have a `AstKind` like `Vec<'a, Argument<'a>>`, so the `current_kind` is the parent.
-        let call_expression = f.current_kind().as_call_expression();
+        // `self.get(0).unwrap` is safe here because the above check ensures that `self` is not empty.
+        // Using ``
+        let call_expression =
+            f.parent_kind_of(Address::from_ptr(self.first().unwrap())).as_call_expression();
 
         let (is_commonjs_or_amd_call, is_test_call) =
             call_expression.as_ref().map_or((false, false), |call| {
-                (
-                    is_commonjs_or_amd_call(self.as_slice(), call, f.parent_stack()),
-                    is_test_call_expression(call),
-                )
+                (is_commonjs_or_amd_call(self.as_slice(), call, f), is_test_call_expression(call))
             });
 
         let is_first_arg_string_literal_or_template = if self.len() == 2 {
@@ -110,7 +109,10 @@ impl<'a> Format<'a> for Vec<'a, Argument<'a>> {
 
         if let Some(group_layout) = arguments_grouped_layout(self, f.comments()) {
             write_grouped_arguments(self, arguments, group_layout, f)
-        } else if is_long_curried_call(f.parent_stack()) {
+        } else if is_long_curried_call(
+            f.parent_kind_of(Address::from_ptr(self.first().unwrap())),
+            f,
+        ) {
             write!(
                 f,
                 [
@@ -994,7 +996,7 @@ fn is_simple_parameter(parameter: &FormalParameter<'_>, allow_type_annotations: 
 fn is_commonjs_or_amd_call(
     arguments: &[Argument<'_>],
     call: &CallExpression,
-    parent_stack: &ParentStack<'_>,
+    f: &mut Formatter<'_, '_>,
 ) -> bool {
     let Expression::Identifier(ident) = &call.callee else {
         return false;
@@ -1022,7 +1024,8 @@ fn is_commonjs_or_amd_call(
             }
         }
         "define" => {
-            let in_statement = parent_stack.parent().as_expression_statement().is_some();
+            let in_statement =
+                f.parent_kind_of(Address::from_ptr(call)).as_expression_statement().is_some();
             if in_statement {
                 match arguments.len() {
                     1 => true,

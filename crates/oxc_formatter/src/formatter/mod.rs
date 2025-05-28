@@ -55,7 +55,10 @@ use std::{
 pub use buffer::{Buffer, BufferExtensions, VecBuffer};
 pub use format_element::FormatElement;
 pub use group_id::GroupId;
-use oxc_ast::ast::Program;
+use oxc_allocator::{Address, GetAddress};
+use oxc_ast::{AstKind, ast::Program};
+use oxc_ast_visit::Visit;
+use rustc_hash::FxHashMap;
 
 pub use self::comments::{Comments, SourceComment};
 use self::printer::Printer;
@@ -363,7 +366,8 @@ pub fn format<'ast>(
     context: FormatContext<'ast>,
     arguments: Arguments<'_, 'ast>,
 ) -> FormatResult<Formatted<'ast>> {
-    let mut state = FormatState::new(program, context);
+    let (parents, kinds) = build_parents_and_kinds(program);
+    let mut state = FormatState::new(program, parents, kinds, context);
     let mut buffer = VecBuffer::with_capacity(arguments.items().len(), &mut state);
 
     buffer.write_fmt(arguments)?;
@@ -372,4 +376,59 @@ pub fn format<'ast>(
     document.propagate_expand();
 
     Ok(Formatted::new(document, state.into_context()))
+}
+
+fn build_parents_and_kinds<'a>(
+    program: &'a Program<'a>,
+) -> (FxHashMap<Address, Address>, FxHashMap<Address, AstKind<'a>>) {
+    struct Starter<'a> {
+        program: &'a Program<'a>,
+        parents: FxHashMap<Address, Address>,
+        kinds: FxHashMap<Address, AstKind<'a>>,
+        current_address: Address,
+    };
+    impl<'a> Visit<'a> for Starter<'a> {
+        #[inline]
+        fn enter_node(&mut self, kind: AstKind<'a>) {
+            if matches!(kind, AstKind::ParenthesizedExpression(_)) {
+                // Don't need to call `Expression::without_parentheses` if we never have parentheses
+                return;
+            }
+
+            let address = kind.address();
+            // Avoid overwriting the parent if it already exists. For example `member.property = 0;`
+            if !self.parents.contains_key(&address) {
+                self.parents.insert(address, self.current_address);
+            }
+
+            self.kinds.insert(address, kind);
+            self.current_address = address;
+        }
+
+        fn leave_node(&mut self, kind: AstKind<'a>) {
+            if matches!(kind, AstKind::ParenthesizedExpression(_)) {
+                // Don't need to call `Expression::without_parentheses` if we never have parentheses
+                return;
+            }
+
+            let address = kind.address();
+            self.current_address = self.parents.get(&address).copied().unwrap();
+        }
+    }
+
+    impl<'a> Starter<'a> {
+        fn new(program: &'a Program<'a>) -> Self {
+            Self {
+                program,
+                parents: FxHashMap::default(),
+                kinds: FxHashMap::default(),
+                current_address: Address::DUMMY,
+            }
+        }
+    }
+
+    let mut starter = Starter::new(program);
+    starter.visit_program(program);
+
+    (starter.parents, starter.kinds)
 }

@@ -1,3 +1,4 @@
+use oxc_allocator::Address;
 use oxc_ast::{AstKind, ast::*};
 use oxc_data_structures::stack;
 use oxc_span::GetSpan;
@@ -7,57 +8,58 @@ use oxc_syntax::{
 };
 
 use crate::{
-    formatter::parent_stack::ParentStack,
+    Format,
+    formatter::{Formatter, parent_stack::ParentStack},
     write::{BinaryLikeExpression, should_flatten},
 };
 
 use super::NeedsParentheses;
 
 impl<'a> NeedsParentheses<'a> for Expression<'a> {
-    fn needs_parentheses(&self, stack: &ParentStack<'a>) -> bool {
+    fn needs_parentheses(&self, f: &Formatter<'_, 'a>) -> bool {
         match self {
-            // Expression::BooleanLiteral(it) => it.needs_parentheses(stack),
-            // Expression::NullLiteral(it) => it.needs_parentheses(stack),
-            Expression::NumericLiteral(it) => it.needs_parentheses(stack),
-            // Expression::BigIntLiteral(it) => it.needs_parentheses(stack),
-            // Expression::RegExpLiteral(it) => it.needs_parentheses(stack),
-            Expression::StringLiteral(it) => it.needs_parentheses(stack),
-            // Expression::TemplateLiteral(it) => it.needs_parentheses(stack),
-            // Expression::Identifier(it) => it.needs_parentheses(stack),
-            // Expression::MetaProperty(it) => it.needs_parentheses(stack),
-            // Expression::Super(it) => it.needs_parentheses(stack),
-            Expression::ArrayExpression(it) => it.needs_parentheses(stack),
-            Expression::ArrowFunctionExpression(it) => it.needs_parentheses(stack),
-            Expression::AssignmentExpression(it) => it.needs_parentheses(stack),
-            Expression::AwaitExpression(it) => it.needs_parentheses(stack),
-            Expression::BinaryExpression(it) => it.needs_parentheses(stack),
-            Expression::CallExpression(it) => it.needs_parentheses(stack),
-            Expression::ChainExpression(it) => it.needs_parentheses(stack),
-            Expression::ClassExpression(it) => it.needs_parentheses(stack),
-            Expression::ConditionalExpression(it) => it.needs_parentheses(stack),
-            Expression::FunctionExpression(it) => it.needs_parentheses(stack),
-            Expression::ImportExpression(it) => it.needs_parentheses(stack),
-            Expression::LogicalExpression(it) => it.needs_parentheses(stack),
-            Expression::NewExpression(it) => it.needs_parentheses(stack),
-            Expression::ObjectExpression(it) => it.needs_parentheses(stack),
-            Expression::ParenthesizedExpression(it) => it.needs_parentheses(stack),
-            Expression::SequenceExpression(it) => it.needs_parentheses(stack),
-            Expression::TaggedTemplateExpression(it) => it.needs_parentheses(stack),
-            Expression::ThisExpression(it) => it.needs_parentheses(stack),
-            Expression::UnaryExpression(it) => it.needs_parentheses(stack),
-            Expression::UpdateExpression(it) => it.needs_parentheses(stack),
-            Expression::YieldExpression(it) => it.needs_parentheses(stack),
-            Expression::PrivateInExpression(it) => it.needs_parentheses(stack),
-            // Expression::JSXElement(it) => it.needs_parentheses(stack),
-            // Expression::JSXFragment(it) => it.needs_parentheses(stack),
-            Expression::TSAsExpression(it) => it.needs_parentheses(stack),
-            Expression::TSSatisfiesExpression(it) => it.needs_parentheses(stack),
-            Expression::TSTypeAssertion(it) => it.needs_parentheses(stack),
-            Expression::TSNonNullExpression(it) => it.needs_parentheses(stack),
-            Expression::TSInstantiationExpression(it) => it.needs_parentheses(stack),
-            Expression::V8IntrinsicExpression(it) => it.needs_parentheses(stack),
+            // Expression::BooleanLiteral(it) => it.needs_parentheses(f),
+            // Expression::NullLiteral(it) => it.needs_parentheses(f),
+            Expression::NumericLiteral(it) => it.needs_parentheses(f),
+            // Expression::BigIntLiteral(it) => it.needs_parentheses(f),
+            // Expression::RegExpLiteral(it) => it.needs_parentheses(f),
+            Expression::StringLiteral(it) => it.needs_parentheses(f),
+            // Expression::TemplateLiteral(it) => it.needs_parentheses(f),
+            // Expression::Identifier(it) => it.needs_parentheses(f),
+            // Expression::MetaProperty(it) => it.needs_parentheses(f),
+            // Expression::Super(it) => it.needs_parentheses(f),
+            Expression::ArrayExpression(it) => it.needs_parentheses(f),
+            Expression::ArrowFunctionExpression(it) => it.needs_parentheses(f),
+            Expression::AssignmentExpression(it) => it.needs_parentheses(f),
+            Expression::AwaitExpression(it) => it.needs_parentheses(f),
+            Expression::BinaryExpression(it) => it.needs_parentheses(f),
+            Expression::CallExpression(it) => it.needs_parentheses(f),
+            Expression::ChainExpression(it) => it.needs_parentheses(f),
+            Expression::ClassExpression(it) => it.needs_parentheses(f),
+            Expression::ConditionalExpression(it) => it.needs_parentheses(f),
+            Expression::FunctionExpression(it) => it.needs_parentheses(f),
+            Expression::ImportExpression(it) => it.needs_parentheses(f),
+            Expression::LogicalExpression(it) => it.needs_parentheses(f),
+            Expression::NewExpression(it) => it.needs_parentheses(f),
+            Expression::ObjectExpression(it) => it.needs_parentheses(f),
+            Expression::ParenthesizedExpression(it) => it.needs_parentheses(f),
+            Expression::SequenceExpression(it) => it.needs_parentheses(f),
+            Expression::TaggedTemplateExpression(it) => it.needs_parentheses(f),
+            Expression::ThisExpression(it) => it.needs_parentheses(f),
+            Expression::UnaryExpression(it) => it.needs_parentheses(f),
+            Expression::UpdateExpression(it) => it.needs_parentheses(f),
+            Expression::YieldExpression(it) => it.needs_parentheses(f),
+            Expression::PrivateInExpression(it) => it.needs_parentheses(f),
+            // Expression::JSXElement(it) => it.needs_parentheses(f),
+            // Expression::JSXFragment(it) => it.needs_parentheses(f),
+            Expression::TSAsExpression(it) => it.needs_parentheses(f),
+            Expression::TSSatisfiesExpression(it) => it.needs_parentheses(f),
+            Expression::TSTypeAssertion(it) => it.needs_parentheses(f),
+            Expression::TSNonNullExpression(it) => it.needs_parentheses(f),
+            Expression::TSInstantiationExpression(it) => it.needs_parentheses(f),
+            Expression::V8IntrinsicExpression(it) => it.needs_parentheses(f),
             match_member_expression!(Expression) => {
-                self.to_member_expression().needs_parentheses(stack)
+                self.to_member_expression().needs_parentheses(f)
             }
             _ => todo!(),
         }
@@ -65,9 +67,9 @@ impl<'a> NeedsParentheses<'a> for Expression<'a> {
 }
 
 impl<'a> NeedsParentheses<'a> for NumericLiteral<'a> {
-    fn needs_parentheses(&self, stack: &ParentStack<'a>) -> bool {
+    fn needs_parentheses(&self, f: &Formatter<'_, 'a>) -> bool {
         if let AstKind::MemberExpression(MemberExpression::StaticMemberExpression(e)) =
-            stack.parent()
+            f.parent_kind_of(Address::from_ptr(self))
         {
             return e.object.without_parentheses().span() == self.span;
         }
@@ -76,77 +78,86 @@ impl<'a> NeedsParentheses<'a> for NumericLiteral<'a> {
 }
 
 impl<'a> NeedsParentheses<'a> for StringLiteral<'a> {
-    fn needs_parentheses(&self, stack: &ParentStack<'a>) -> bool {
-        matches!(stack.parent(), AstKind::ExpressionStatement(_))
+    fn needs_parentheses(&self, f: &Formatter<'_, 'a>) -> bool {
+        matches!(f.parent_kind_of(Address::from_ptr(self)), AstKind::ExpressionStatement(_))
     }
 }
 
 impl<'a> NeedsParentheses<'a> for ThisExpression {
-    fn needs_parentheses(&self, stack: &ParentStack<'a>) -> bool {
+    fn needs_parentheses(&self, f: &Formatter<'_, 'a>) -> bool {
         false
     }
 }
 
 impl<'a> NeedsParentheses<'a> for ArrayExpression<'a> {
-    fn needs_parentheses(&self, stack: &ParentStack<'a>) -> bool {
+    fn needs_parentheses(&self, f: &Formatter<'_, 'a>) -> bool {
         false
     }
 }
 
 impl<'a> NeedsParentheses<'a> for ObjectExpression<'a> {
-    fn needs_parentheses(&self, stack: &ParentStack<'a>) -> bool {
-        is_class_extends(stack.parent(), self.span)
-            || is_first_in_statement(stack, FirstInStatementMode::ExpressionStatementOrArrow)
+    fn needs_parentheses(&self, f: &Formatter<'_, 'a>) -> bool {
+        let parent_kind = f.parent_kind_of(Address::from_ptr(self));
+        is_class_extends(parent_kind, self.span)
+            || is_first_in_statement(
+                parent_kind,
+                f,
+                FirstInStatementMode::ExpressionStatementOrArrow,
+            )
     }
 }
 
 impl<'a> NeedsParentheses<'a> for TaggedTemplateExpression<'a> {
-    fn needs_parentheses(&self, stack: &ParentStack<'a>) -> bool {
+    fn needs_parentheses(&self, f: &Formatter<'_, 'a>) -> bool {
         false
     }
 }
 
 impl<'a> NeedsParentheses<'a> for MemberExpression<'a> {
-    fn needs_parentheses(&self, stack: &ParentStack<'a>) -> bool {
+    fn needs_parentheses(&self, f: &Formatter<'_, 'a>) -> bool {
         false
     }
 }
 
 impl<'a> NeedsParentheses<'a> for ComputedMemberExpression<'a> {
-    fn needs_parentheses(&self, stack: &ParentStack<'a>) -> bool {
+    fn needs_parentheses(&self, f: &Formatter<'_, 'a>) -> bool {
         false
     }
 }
 
 impl<'a> NeedsParentheses<'a> for StaticMemberExpression<'a> {
-    fn needs_parentheses(&self, stack: &ParentStack<'a>) -> bool {
+    fn needs_parentheses(&self, f: &Formatter<'_, 'a>) -> bool {
         false
     }
 }
 
 impl<'a> NeedsParentheses<'a> for PrivateFieldExpression<'a> {
-    fn needs_parentheses(&self, stack: &ParentStack<'a>) -> bool {
+    fn needs_parentheses(&self, f: &Formatter<'_, 'a>) -> bool {
         false
     }
 }
 
 impl<'a> NeedsParentheses<'a> for CallExpression<'a> {
-    fn needs_parentheses(&self, stack: &ParentStack<'a>) -> bool {
+    fn needs_parentheses(&self, f: &Formatter<'_, 'a>) -> bool {
         // TODO
-        matches!(stack.parent(), AstKind::NewExpression(_) | AstKind::ExportDefaultDeclaration(_))
+        matches!(
+            f.parent_kind_of(Address::from_ptr(self)),
+            AstKind::NewExpression(_) | AstKind::ExportDefaultDeclaration(_)
+        )
     }
 }
 
 impl<'a> NeedsParentheses<'a> for NewExpression<'a> {
-    fn needs_parentheses(&self, stack: &ParentStack<'a>) -> bool {
-        is_class_extends(stack.parent(), self.span)
+    fn needs_parentheses(&self, f: &Formatter<'_, 'a>) -> bool {
+        is_class_extends(f.parent_kind_of(Address::from_ptr(self)), self.span)
     }
 }
 
 impl<'a> NeedsParentheses<'a> for UpdateExpression<'a> {
-    fn needs_parentheses(&self, stack: &ParentStack<'a>) -> bool {
+    fn needs_parentheses(&self, f: &Formatter<'_, 'a>) -> bool {
+        let parent_kind = f.parent_kind_of(Address::from_ptr(self));
         if self.prefix {
-            if let AstKind::UnaryExpression(unary) = stack.parent() {
+            if let AstKind::UnaryExpression(unary) = parent_kind {
                 let parent_operator = unary.operator;
                 let operator = self.operator;
                 return (parent_operator == UnaryOperator::UnaryPlus
@@ -155,13 +166,14 @@ impl<'a> NeedsParentheses<'a> for UpdateExpression<'a> {
                         && operator == UpdateOperator::Decrement);
             }
         }
-        unary_like_expression_needs_parens(UnaryLike::UpdateExpression(self), stack)
+        unary_like_expression_needs_parens(UnaryLike::UpdateExpression(self), parent_kind)
     }
 }
 
 impl<'a> NeedsParentheses<'a> for UnaryExpression<'a> {
-    fn needs_parentheses(&self, stack: &ParentStack<'a>) -> bool {
-        match stack.parent() {
+    fn needs_parentheses(&self, f: &Formatter<'_, 'a>) -> bool {
+        let parent_kind = f.parent_kind_of(Address::from_ptr(self));
+        match parent_kind {
             AstKind::UnaryExpression(parent_unary) => {
                 let parent_operator = parent_unary.operator;
                 let operator = self.operator;
@@ -173,40 +185,42 @@ impl<'a> NeedsParentheses<'a> for UnaryExpression<'a> {
             // A user typing `!foo in bar` probably intended `!(foo instanceof Bar)`,
             // so format to `(!foo) in bar` to what is really happening
             AstKind::BinaryExpression(e) if e.operator.is_relational() => true,
-            _ => unary_like_expression_needs_parens(UnaryLike::UnaryExpression(self), stack),
+            _ => unary_like_expression_needs_parens(UnaryLike::UnaryExpression(self), parent_kind),
         }
     }
 }
 
 impl<'a> NeedsParentheses<'a> for BinaryExpression<'a> {
-    fn needs_parentheses(&self, stack: &ParentStack<'a>) -> bool {
-        binary_like_needs_parens(BinaryLikeExpression::BinaryExpression(self), stack)
+    fn needs_parentheses(&self, f: &Formatter<'_, 'a>) -> bool {
+        let parent_kind = f.parent_kind_of(Address::from_ptr(self));
+        binary_like_needs_parens(BinaryLikeExpression::BinaryExpression(self), parent_kind)
     }
 }
 
 impl<'a> NeedsParentheses<'a> for PrivateInExpression<'a> {
-    fn needs_parentheses(&self, stack: &ParentStack<'a>) -> bool {
+    fn needs_parentheses(&self, f: &Formatter<'_, 'a>) -> bool {
         false
     }
 }
 
 impl<'a> NeedsParentheses<'a> for LogicalExpression<'a> {
-    fn needs_parentheses(&self, stack: &ParentStack<'a>) -> bool {
-        let parent = stack.parent();
-        if let AstKind::LogicalExpression(parent) = parent {
+    fn needs_parentheses(&self, f: &Formatter<'_, 'a>) -> bool {
+        let parent_kind = f.parent_kind_of(Address::from_ptr(self));
+        if let AstKind::LogicalExpression(parent) = parent_kind {
             parent.operator != self.operator
-        } else if self.operator.is_coalesce() && matches!(parent, AstKind::ConditionalExpression(_))
+        } else if self.operator.is_coalesce()
+            && matches!(parent_kind, AstKind::ConditionalExpression(_))
         {
             true
         } else {
-            binary_like_needs_parens(BinaryLikeExpression::LogicalExpression(self), stack)
+            binary_like_needs_parens(BinaryLikeExpression::LogicalExpression(self), parent_kind)
         }
     }
 }
 
 impl<'a> NeedsParentheses<'a> for ConditionalExpression<'a> {
-    fn needs_parentheses(&self, stack: &ParentStack<'a>) -> bool {
-        let parent = stack.parent();
+    fn needs_parentheses(&self, f: &Formatter<'_, 'a>) -> bool {
+        let parent = f.parent_kind_of(Address::from_ptr(self));
         if matches!(
             parent,
             AstKind::UnaryExpression(_)
@@ -229,22 +243,30 @@ impl<'a> NeedsParentheses<'a> for ConditionalExpression<'a> {
 }
 
 impl<'a> NeedsParentheses<'a> for Function<'a> {
-    fn needs_parentheses(&self, stack: &ParentStack<'a>) -> bool {
+    fn needs_parentheses(&self, f: &Formatter<'_, 'a>) -> bool {
         if self.r#type != FunctionType::FunctionExpression {
             return false;
         }
+        let parent_kind = f.parent_kind_of(Address::from_ptr(self));
         matches!(
-            stack.parent(),
+            parent_kind,
             AstKind::CallExpression(_) | AstKind::NewExpression(_) | AstKind::TemplateLiteral(_)
-        ) || is_first_in_statement(stack, FirstInStatementMode::ExpressionOrExportDefault)
+        ) || is_first_in_statement(parent_kind, f, FirstInStatementMode::ExpressionOrExportDefault)
     }
 }
 
 impl<'a> NeedsParentheses<'a> for AssignmentExpression<'a> {
-    fn needs_parentheses(&self, stack: &ParentStack<'a>) -> bool {
+    fn needs_parentheses(&self, f: &Formatter<'_, 'a>) -> bool {
         // TODO
-        match stack.parent() {
-            AstKind::ArrowFunctionExpression(arrow) => arrow.body.span == self.span,
+        match f.parent_kind_of(Address::from_ptr(self)) {
+            AstKind::ExpressionStatement(parent) => {
+                let parent_parent = f.parent_kind_of(Address::from_ptr(parent));
+                if let Some(body) = parent_parent.as_function_body() {
+                    let parent_parent_parent = f.parent_kind_of(Address::from_ptr(body));
+                    return matches!(parent_parent_parent, AstKind::ArrowFunctionExpression(arrow) if arrow.expression);
+                }
+                false
+            }
             AstKind::ExportDefaultDeclaration(_) => true,
             _ => false,
         }
@@ -252,9 +274,9 @@ impl<'a> NeedsParentheses<'a> for AssignmentExpression<'a> {
 }
 
 impl<'a> NeedsParentheses<'a> for SequenceExpression<'a> {
-    fn needs_parentheses(&self, stack: &ParentStack<'a>) -> bool {
+    fn needs_parentheses(&self, f: &Formatter<'_, 'a>) -> bool {
         !matches!(
-            stack.parent(),
+            f.parent_kind_of(Address::from_ptr(self)),
             AstKind::ReturnStatement(_)
                 | AstKind::ForStatement(_)
                 | AstKind::ExpressionStatement(_)
@@ -264,42 +286,47 @@ impl<'a> NeedsParentheses<'a> for SequenceExpression<'a> {
 }
 
 impl<'a> NeedsParentheses<'a> for AwaitExpression<'a> {
-    fn needs_parentheses(&self, stack: &ParentStack<'a>) -> bool {
-        let parent = stack.parent();
+    fn needs_parentheses(&self, f: &Formatter<'_, 'a>) -> bool {
+        let parent = f.parent_kind_of(Address::from_ptr(self));
         await_or_yield_needs_parens(self.span, parent)
     }
 }
 
 impl<'a> NeedsParentheses<'a> for ChainExpression<'a> {
-    fn needs_parentheses(&self, stack: &ParentStack<'a>) -> bool {
+    fn needs_parentheses(&self, f: &Formatter<'_, 'a>) -> bool {
         false
     }
 }
 
 impl<'a> NeedsParentheses<'a> for Class<'a> {
-    fn needs_parentheses(&self, stack: &ParentStack<'a>) -> bool {
+    fn needs_parentheses(&self, f: &Formatter<'_, 'a>) -> bool {
         if self.r#type != ClassType::ClassExpression {
             return false;
         }
-        match stack.parent() {
+        let parent_kind = f.parent_kind_of(Address::from_ptr(self));
+        match parent_kind {
             AstKind::CallExpression(_)
             | AstKind::NewExpression(_)
             | AstKind::ExportDefaultDeclaration(_) => true,
             parent if is_class_extends(parent, self.span) => true,
-            _ => is_first_in_statement(stack, FirstInStatementMode::ExpressionOrExportDefault),
+            _ => is_first_in_statement(
+                parent_kind,
+                f,
+                FirstInStatementMode::ExpressionOrExportDefault,
+            ),
         }
     }
 }
 
 impl<'a> NeedsParentheses<'a> for ParenthesizedExpression<'a> {
-    fn needs_parentheses(&self, stack: &ParentStack<'a>) -> bool {
+    fn needs_parentheses(&self, f: &Formatter<'_, 'a>) -> bool {
         false
     }
 }
 
 impl<'a> NeedsParentheses<'a> for ArrowFunctionExpression<'a> {
-    fn needs_parentheses(&self, stack: &ParentStack<'a>) -> bool {
-        let parent = stack.parent();
+    fn needs_parentheses(&self, f: &Formatter<'_, 'a>) -> bool {
+        let parent = f.parent_kind_of(Address::from_ptr(self));
         if matches!(
             parent,
             AstKind::TSAsExpression(_)
@@ -321,64 +348,66 @@ impl<'a> NeedsParentheses<'a> for ArrowFunctionExpression<'a> {
 }
 
 impl<'a> NeedsParentheses<'a> for YieldExpression<'a> {
-    fn needs_parentheses(&self, stack: &ParentStack<'a>) -> bool {
-        let parent = stack.parent();
+    fn needs_parentheses(&self, f: &Formatter<'_, 'a>) -> bool {
+        let parent = f.parent_kind_of(Address::from_ptr(self));
         matches!(parent, AstKind::AwaitExpression(_) | AstKind::TSTypeAssertion(_))
             || await_or_yield_needs_parens(self.span, parent)
     }
 }
 
 impl<'a> NeedsParentheses<'a> for ImportExpression<'a> {
-    fn needs_parentheses(&self, stack: &ParentStack<'a>) -> bool {
-        matches!(stack.parent(), AstKind::NewExpression(_))
+    fn needs_parentheses(&self, f: &Formatter<'_, 'a>) -> bool {
+        matches!(f.parent_kind_of(Address::from_ptr(self)), AstKind::NewExpression(_))
     }
 }
 
 impl<'a> NeedsParentheses<'a> for V8IntrinsicExpression<'a> {
-    fn needs_parentheses(&self, stack: &ParentStack<'a>) -> bool {
+    fn needs_parentheses(&self, f: &Formatter<'_, 'a>) -> bool {
         false
     }
 }
 
 impl<'a> NeedsParentheses<'a> for JSXMemberExpression<'a> {
-    fn needs_parentheses(&self, stack: &ParentStack<'a>) -> bool {
+    fn needs_parentheses(&self, f: &Formatter<'_, 'a>) -> bool {
         false
     }
 }
 
 impl<'a> NeedsParentheses<'a> for JSXExpression<'a> {
-    fn needs_parentheses(&self, stack: &ParentStack<'a>) -> bool {
+    fn needs_parentheses(&self, f: &Formatter<'_, 'a>) -> bool {
         false
     }
 }
 
 impl<'a> NeedsParentheses<'a> for JSXEmptyExpression {
-    fn needs_parentheses(&self, stack: &ParentStack<'a>) -> bool {
+    fn needs_parentheses(&self, f: &Formatter<'_, 'a>) -> bool {
         false
     }
 }
 
 impl<'a> NeedsParentheses<'a> for TSAsExpression<'a> {
-    fn needs_parentheses(&self, stack: &ParentStack<'a>) -> bool {
-        ts_as_or_satisfies_needs_parens(stack)
+    fn needs_parentheses(&self, f: &Formatter<'_, 'a>) -> bool {
+        let parent_kind = f.parent_kind_of(Address::from_ptr(self));
+        ts_as_or_satisfies_needs_parens(parent_kind)
     }
 }
 
 impl<'a> NeedsParentheses<'a> for TSSatisfiesExpression<'a> {
-    fn needs_parentheses(&self, stack: &ParentStack<'a>) -> bool {
-        ts_as_or_satisfies_needs_parens(stack)
+    fn needs_parentheses(&self, f: &Formatter<'_, 'a>) -> bool {
+        let parent_kind = f.parent_kind_of(Address::from_ptr(self));
+        ts_as_or_satisfies_needs_parens(parent_kind)
     }
 }
 
 impl<'a> NeedsParentheses<'a> for TSTypeAssertion<'a> {
-    fn needs_parentheses(&self, stack: &ParentStack<'a>) -> bool {
-        matches!(stack.parent(), AstKind::SimpleAssignmentTarget(_))
+    fn needs_parentheses(&self, f: &Formatter<'_, 'a>) -> bool {
+        matches!(f.parent_kind_of(Address::from_ptr(self)), AstKind::SimpleAssignmentTarget(_))
     }
 }
 
 impl<'a> NeedsParentheses<'a> for TSNonNullExpression<'a> {
-    fn needs_parentheses(&self, stack: &ParentStack<'a>) -> bool {
-        let parent = stack.parent();
+    fn needs_parentheses(&self, f: &Formatter<'_, 'a>) -> bool {
+        let parent = f.parent_kind_of(Address::from_ptr(self));
         is_class_extends(parent, self.span)
             || (matches!(parent, AstKind::NewExpression(_))
                 && member_chain_callee_needs_parens(&self.expression))
@@ -386,19 +415,19 @@ impl<'a> NeedsParentheses<'a> for TSNonNullExpression<'a> {
 }
 
 impl<'a> NeedsParentheses<'a> for TSInstantiationExpression<'a> {
-    fn needs_parentheses(&self, stack: &ParentStack<'a>) -> bool {
-        if let AstKind::MemberExpression(e) = stack.parent() {
+    fn needs_parentheses(&self, f: &Formatter<'_, 'a>) -> bool {
+        if let AstKind::MemberExpression(e) = f.parent_kind_of(Address::from_ptr(self)) {
             return e.object().without_parentheses().span() == self.span;
         }
         false
     }
 }
 
-fn binary_like_needs_parens<'a>(
-    current: BinaryLikeExpression<'a, '_>,
-    stack: &ParentStack<'a>,
+fn binary_like_needs_parens(
+    current: BinaryLikeExpression<'_, '_>,
+    parent_kind: AstKind<'_>,
 ) -> bool {
-    let parent = match stack.parent() {
+    let parent = match parent_kind {
         AstKind::TSAsExpression(_)
         | AstKind::TSSatisfiesExpression(_)
         | AstKind::TSTypeAssertion(_)
@@ -472,11 +501,11 @@ impl GetSpan for UnaryLike<'_, '_> {
     }
 }
 
-fn unary_like_expression_needs_parens<'a>(
-    current: UnaryLike<'a, '_>,
-    stack: &ParentStack<'a>,
+fn unary_like_expression_needs_parens(
+    current: UnaryLike<'_, '_>,
+    parent_kind: AstKind<'_>,
 ) -> bool {
-    match stack.parent() {
+    match parent_kind {
         AstKind::BinaryExpression(e) => {
             e.operator == BinaryOperator::Exponential && e.left.span() == current.span()
         }
@@ -514,8 +543,23 @@ pub enum FirstInStatementMode {
 ///
 /// Traverses upwards the tree for as long as the `node` is the left most expression until the node isn't
 /// the left most node or reached a statement.
-fn is_first_in_statement(stack: &ParentStack, mode: FirstInStatementMode) -> bool {
-    matches!(stack.parent(), AstKind::ExpressionStatement(_) | AstKind::ExportDefaultDeclaration(_))
+fn is_first_in_statement(
+    parent_kind: AstKind<'_>,
+    f: &Formatter<'_, '_>,
+    mode: FirstInStatementMode,
+) -> bool {
+    // TODO: incomplete
+    // https://github.com/biomejs/biome/blob/4a5ef84930344ae54f3877da36888a954711f4a6/crates/biome_js_syntax/src/parentheses/expression.rs#L979-L1105
+
+    if let AstKind::ExpressionStatement(parent) = parent_kind {
+        let parent_parent = f.parent_kind_of(Address::from_ptr(parent));
+        if let Some(body) = parent_parent.as_function_body() {
+            let parent_parent_parent = f.parent_kind_of(Address::from_ptr(body));
+            return !matches!(parent_parent_parent, AstKind::ArrowFunctionExpression(arrow) if arrow.expression);
+        }
+        return true;
+    }
+    matches!(parent_kind, AstKind::ExportDefaultDeclaration(_))
 }
 
 fn await_or_yield_needs_parens(span: Span, parent: AstKind<'_>) -> bool {
@@ -537,8 +581,8 @@ fn await_or_yield_needs_parens(span: Span, parent: AstKind<'_>) -> bool {
     }
 }
 
-fn ts_as_or_satisfies_needs_parens(stack: &ParentStack<'_>) -> bool {
-    matches!(stack.parent(), AstKind::SimpleAssignmentTarget(_))
+fn ts_as_or_satisfies_needs_parens(parent_kind: AstKind<'_>) -> bool {
+    matches!(parent_kind, AstKind::SimpleAssignmentTarget(_))
 }
 
 fn is_class_extends(parent: AstKind, span: Span) -> bool {

@@ -1,4 +1,4 @@
-use oxc_allocator::Vec;
+use oxc_allocator::{Address, Vec};
 use oxc_ast::{AstKind, ast::*};
 
 use crate::{
@@ -24,10 +24,9 @@ impl<'a> Format<'a> for Vec<'a, VariableDeclarator<'a>> {
         let length = self.len();
 
         let is_parent_for_loop = matches!(
-            f.parent_parent_kind(),
-            Some(
-                AstKind::ForStatement(_) | AstKind::ForInStatement(_) | AstKind::ForOfStatement(_)
-            )
+            // `self.first().unwrap()` is safe because must be at least one declarator
+            f.parent_kind_of(Address::from_ptr(self.first().unwrap())),
+            AstKind::ForStatement(_) | AstKind::ForInStatement(_) | AstKind::ForOfStatement(_)
         );
 
         let has_any_initializer = self.iter().any(|declarator| declarator.init.is_some());
