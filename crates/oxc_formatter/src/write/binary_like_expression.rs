@@ -1,6 +1,6 @@
 use std::mem::transmute_copy;
 
-use oxc_allocator::CloneIn;
+use oxc_allocator::{Address, CloneIn, GetAddress};
 use oxc_ast::{AstKind, ast::*, precedence};
 use oxc_span::GetSpan;
 use oxc_syntax::precedence::{GetPrecedence, Precedence};
@@ -131,7 +131,7 @@ impl<'a, 'b> BinaryLikeExpression<'a, 'b> {
     pub fn should_not_indent_if_parent_indents(
         &self,
         parent: &AstKind<'_>,
-        parent_stack: &ParentStack<'_>,
+        f: &Formatter<'_, 'a>,
     ) -> bool {
         match parent {
             AstKind::ReturnStatement(_)
@@ -141,17 +141,18 @@ impl<'a, 'b> BinaryLikeExpression<'a, 'b> {
             // JsSyntaxKind::JSX_EXPRESSION_ATTRIBUTE_VALUE => true,
             AstKind::ArrowFunctionExpression(arrow) => arrow.body.span == self.span(),
             AstKind::ConditionalExpression(conditional) => {
-                parent_stack.parent2().is_some_and(|grand_parent| {
-                    matches!(
-                        grand_parent,
-                        AstKind::ReturnStatement(_)
-                            | AstKind::ThrowStatement(_)
-                            | AstKind::CallExpression(_)
-                            | AstKind::ImportExpression(_)
-                            | AstKind::Argument(_)
-                            | AstKind::MetaProperty(_)
-                    )
-                })
+                false
+                // parent_stack.parent2().is_some_and(|grand_parent| {
+                //     matches!(
+                //         grand_parent,
+                //         AstKind::ReturnStatement(_)
+                //             | AstKind::ThrowStatement(_)
+                //             | AstKind::CallExpression(_)
+                //             | AstKind::ImportExpression(_)
+                //             | AstKind::Argument(_)
+                //             | AstKind::MetaProperty(_)
+                //     )
+                // })
             }
             _ => false,
         }
@@ -163,6 +164,17 @@ impl GetSpan for BinaryLikeExpression<'_, '_> {
         match self {
             Self::LogicalExpression(expr) => expr.span,
             Self::BinaryExpression(expr) => expr.span,
+        }
+    }
+}
+
+impl GetAddress for BinaryLikeExpression<'_, '_> {
+    fn address(&self) -> Address {
+        // SAFETY: `self` is guaranteed to be a valid binary like expression.
+        // The address is used for debugging purposes only.
+        match self {
+            Self::LogicalExpression(expr) => Address::from_ptr(*expr),
+            Self::BinaryExpression(expr) => Address::from_ptr(*expr),
         }
     }
 }
@@ -181,7 +193,7 @@ impl<'a, 'b> TryFrom<&'b Expression<'a>> for BinaryLikeExpression<'a, 'b> {
 
 impl<'a> Format<'a> for BinaryLikeExpression<'a, '_> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        let parent = f.parent_kind();
+        let parent = f.parent_kind_of(self.address());
 
         let is_inside_condition = self.is_inside_condition(&parent);
         let parts = split_into_left_and_right_sides(*self, is_inside_condition);
@@ -211,7 +223,7 @@ impl<'a> Format<'a> for BinaryLikeExpression<'a, '_> {
 
         let inline_logical_expression = self.should_inline_logical_expression();
         let should_indent_if_inlines = should_indent_if_parent_inlines(&parent, f.parent_stack());
-        let should_not_indent = self.should_not_indent_if_parent_indents(&parent, f.parent_stack());
+        let should_not_indent = self.should_not_indent_if_parent_indents(&parent, f);
 
         let flattened = parts.len() > 2;
 

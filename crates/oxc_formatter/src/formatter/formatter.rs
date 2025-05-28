@@ -1,5 +1,6 @@
 #![allow(clippy::module_inception)]
 
+use oxc_allocator::Address;
 use oxc_ast::AstKind;
 
 use crate::options::FormatOptions;
@@ -65,6 +66,12 @@ impl<'buf, 'ast> Formatter<'buf, 'ast> {
     #[inline]
     pub fn parent_kind(&self) -> AstKind<'ast> {
         self.state().stack.parent()
+    }
+
+    #[inline]
+    pub fn parent_kind_of(&self, address: Address) -> AstKind<'ast> {
+        let parent_address = self.state().parents.get(&address).unwrap();
+        self.state().kinds.get(parent_address).copied().unwrap()
     }
 
     #[inline]
