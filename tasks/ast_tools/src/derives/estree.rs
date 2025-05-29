@@ -261,14 +261,30 @@ fn prepare_field_orders(schema: &mut Schema, estree_derive_id: DeriveId) {
 
         if struct_def.estree.field_indices.is_empty() {
             // No field order specified with `#[estree(field_order(...))]`.
-            // Default field order is definition order, with `#[estree(add_fields(...)]` extra fields
-            // added on end in order.
+            // Default field order is:
+            // 1. `type` field (if present)
+            // 2. `span` field (if present)
+            // 3. Struct fields, in definition order.
+            // 4. Extra fields (`#[estree(add_fields(...)]`), in order.
             let mut field_indices = vec![];
+            let mut type_field_index = None;
+            let mut span_field_index = None;
             for (field_index, field) in struct_def.fields.iter().enumerate() {
                 if !should_skip_field(field, schema) {
                     let field_index = u8::try_from(field_index).unwrap();
-                    field_indices.push(field_index);
+                    match field.name() {
+                        "type" => type_field_index = Some(field_index),
+                        "span" => span_field_index = Some(field_index),
+                        _ => field_indices.push(field_index),
+                    }
                 }
+            }
+
+            if let Some(span_field_index) = span_field_index {
+                field_indices.insert(0, span_field_index);
+            }
+            if let Some(type_field_index) = type_field_index {
+                field_indices.insert(0, type_field_index);
             }
 
             if !struct_def.estree.add_fields.is_empty() {
