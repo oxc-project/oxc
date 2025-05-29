@@ -18,7 +18,7 @@ use oxc_linter::{
 };
 
 use super::error_with_position::{
-    DiagnosticReport, message_with_position_to_lsp_diagnostic_report,
+    DiagnosticReport, PossibleFixContent, message_with_position_to_lsp_diagnostic_report,
 };
 
 /// smaller subset of LintServiceOptions, which is used by IsolatedLintHandler
@@ -109,7 +109,7 @@ impl IsolatedLintHandler {
                             tags: None,
                             data: None,
                         },
-                        fixed_content: None,
+                        fixed_content: PossibleFixContent::None,
                     });
                 }
             }

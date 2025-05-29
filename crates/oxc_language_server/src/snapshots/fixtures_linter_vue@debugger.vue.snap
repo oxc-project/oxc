@@ -12,7 +12,7 @@ related_information[0].location.range: Range { start: Position { line: 5, charac
 severity: Some(Warning)
 source: Some("oxc")
 tags: None
-fixed: Some(FixedContent { message: Some("Remove the debugger statement"), code: "", range: Range { start: Position { line: 5, character: 4 }, end: Position { line: 5, character: 12 } } })
+fixed: Single(FixedContent { message: Some("Remove the debugger statement"), code: "", range: Range { start: Position { line: 5, character: 4 }, end: Position { line: 5, character: 12 } } })
 
 
 code: "eslint(no-debugger)"
@@ -25,4 +25,4 @@ related_information[0].location.range: Range { start: Position { line: 10, chara
 severity: Some(Warning)
 source: Some("oxc")
 tags: None
-fixed: Some(FixedContent { message: Some("Remove the debugger statement"), code: "", range: Range { start: Position { line: 10, character: 4 }, end: Position { line: 10, character: 13 } } })
+fixed: Single(FixedContent { message: Some("Remove the debugger statement"), code: "", range: Range { start: Position { line: 10, character: 4 }, end: Position { line: 10, character: 13 } } })

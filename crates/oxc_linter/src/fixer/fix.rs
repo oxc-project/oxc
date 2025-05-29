@@ -343,6 +343,62 @@ impl<'a> Fix<'a> {
     }
 }
 
+#[derive(Clone)]
+pub enum PossibleFixes<'a> {
+    None,
+    Single(Fix<'a>),
+    Multiple(Vec<Fix<'a>>),
+}
+
+impl<'new> CloneIn<'new> for PossibleFixes<'_> {
+    type Cloned = PossibleFixes<'new>;
+
+    fn clone_in(&self, allocator: &'new Allocator) -> Self::Cloned {
+        match self {
+            Self::None => PossibleFixes::None,
+            Self::Single(fix) => PossibleFixes::Single(fix.clone_in(allocator)),
+            Self::Multiple(fixes) => {
+                //ToDo: what about the vec?
+                PossibleFixes::Multiple(fixes.iter().map(|fix| fix.clone_in(allocator)).collect())
+            }
+        }
+    }
+}
+
+impl PossibleFixes<'_> {
+    /// Gets the number of [`Fix`]es contained in this [`PossibleFixes`].
+    pub fn len(&self) -> usize {
+        match self {
+            PossibleFixes::None => 0,
+            PossibleFixes::Single(_) => 1,
+            PossibleFixes::Multiple(fixes) => fixes.len(),
+        }
+    }
+
+    /// Returns `true` if this [`PossibleFixes`] contains no [`Fix`]es
+    pub fn is_empty(&self) -> bool {
+        self.len() == 0
+    }
+
+    pub fn span(&self) -> Span {
+        match self {
+            PossibleFixes::None => SPAN,
+            PossibleFixes::Single(fix) => fix.span,
+            PossibleFixes::Multiple(fixes) => {
+                fixes.iter().map(|fix| fix.span).reduce(Span::merge).unwrap_or(SPAN)
+            }
+        }
+    }
+}
+
+#[cfg(feature = "language_server")]
+#[derive(Debug)]
+pub enum PossibleFixesWithPosition<'a> {
+    None,
+    Single(FixWithPosition<'a>),
+    Multiple(Vec<FixWithPosition<'a>>),
+}
+
 // NOTE (@DonIsaac): having these variants is effectively the same as interning
 // single or 0-element Vecs. I experimented with using smallvec here, but the
 // resulting struct size was larger (40 bytes vs 32). So, we're sticking with

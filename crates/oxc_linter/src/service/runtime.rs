@@ -22,21 +22,17 @@ use oxc_resolver::Resolver;
 use oxc_semantic::{Semantic, SemanticBuilder};
 use oxc_span::{CompactStr, SourceType, VALID_EXTENSIONS};
 
-#[cfg(feature = "language_server")]
-use oxc_allocator::CloneIn;
-
 use super::LintServiceOptions;
 use crate::{
     Fixer, Linter, Message,
+    fixer::PossibleFixes,
     loader::{JavaScriptSource, LINT_PARTIAL_LOADER_EXTENSIONS, PartialLoader},
     module_record::ModuleRecord,
     utils::read_to_string,
 };
 
 #[cfg(feature = "language_server")]
-use crate::fixer::{FixWithPosition, MessageWithPosition};
-#[cfg(feature = "language_server")]
-use crate::service::offset_to_position::{SpanPositionMessage, offset_to_position};
+use crate::fixer::MessageWithPosition;
 
 pub struct Runtime<'l> {
     cwd: Box<Path>,
@@ -556,7 +552,28 @@ impl<'l> Runtime<'l> {
         &mut self,
         allocator: &'a oxc_allocator::Allocator,
     ) -> Vec<MessageWithPosition<'a>> {
+        use oxc_allocator::CloneIn;
         use std::sync::Mutex;
+
+        use crate::{
+            FixWithPosition,
+            fixer::{Fix, PossibleFixesWithPosition},
+            service::offset_to_position::{SpanPositionMessage, offset_to_position},
+        };
+
+        fn fix_to_fix_with_position<'a>(
+            fix: &Fix<'a>,
+            offset: u32,
+            source_text: &str,
+        ) -> FixWithPosition<'a> {
+            let start_position = offset_to_position(offset + fix.span.start, source_text);
+            let end_position = offset_to_position(offset + fix.span.end, source_text);
+            FixWithPosition {
+                content: fix.content.clone(),
+                span: SpanPositionMessage::new(start_position, end_position)
+                    .with_message(fix.message.as_ref().map(|label| Cow::Owned(label.to_string()))),
+            }
+        }
 
         let messages = Mutex::new(Vec::<MessageWithPosition<'a>>::new());
         let (sender, _receiver) = mpsc::channel();
@@ -621,24 +638,34 @@ impl<'l> Runtime<'l> {
                                             url: message.error.url.clone(),
                                             code: message.error.code.clone(),
                                             labels: labels.clone(),
-                                            fix: message.fix.map(|fix| FixWithPosition {
-                                                content: fix.content,
-                                                span: SpanPositionMessage::new(
-                                                    offset_to_position(
-                                                        section.source.start + fix.span.start,
-                                                        &owner.source_text,
-                                                    ),
-                                                    offset_to_position(
-                                                        section.source.start + fix.span.end,
-                                                        &owner.source_text,
-                                                    ),
-                                                )
-                                                .with_message(
-                                                    fix.message
-                                                        .as_ref()
-                                                        .map(|label| Cow::Owned(label.to_string())),
-                                                ),
-                                            }),
+                                            fixes: match &message.fixes {
+                                                PossibleFixes::None => {
+                                                    PossibleFixesWithPosition::None
+                                                }
+                                                PossibleFixes::Single(fix) => {
+                                                    PossibleFixesWithPosition::Single(
+                                                        fix_to_fix_with_position(
+                                                            fix,
+                                                            section.source.start,
+                                                            &owner.source_text,
+                                                        ),
+                                                    )
+                                                }
+                                                PossibleFixes::Multiple(fixes) => {
+                                                    PossibleFixesWithPosition::Multiple(
+                                                        fixes
+                                                            .iter()
+                                                            .map(|fix| {
+                                                                fix_to_fix_with_position(
+                                                                    fix,
+                                                                    section.source.start,
+                                                                    &owner.source_text,
+                                                                )
+                                                            })
+                                                            .collect(),
+                                                    )
+                                                }
+                                            },
                                         }
                                     },
                                 ));

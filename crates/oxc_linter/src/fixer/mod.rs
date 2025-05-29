@@ -9,12 +9,12 @@ use crate::LintContext;
 #[cfg(feature = "language_server")]
 use crate::service::offset_to_position::SpanPositionMessage;
 #[cfg(feature = "language_server")]
-pub use fix::FixWithPosition;
+pub use fix::{FixWithPosition, PossibleFixesWithPosition};
 #[cfg(feature = "language_server")]
 use oxc_diagnostics::{OxcCode, Severity};
 
 mod fix;
-pub use fix::{CompositeFix, Fix, FixKind, RuleFix};
+pub use fix::{CompositeFix, Fix, FixKind, PossibleFixes, RuleFix};
 use oxc_allocator::{Allocator, CloneIn};
 
 /// Produces [`RuleFix`] instances. Inspired by ESLint's [`RuleFixer`].
@@ -227,7 +227,7 @@ pub struct FixResult<'a> {
 #[derive(Clone)]
 pub struct Message<'a> {
     pub error: OxcDiagnostic,
-    pub fix: Option<Fix<'a>>,
+    pub fixes: PossibleFixes<'a>,
     span: Span,
     fixed: bool,
 }
@@ -241,7 +241,7 @@ pub struct MessageWithPosition<'a> {
     pub severity: Severity,
     pub code: OxcCode,
     pub url: Option<Cow<'a, str>>,
-    pub fix: Option<FixWithPosition<'a>>,
+    pub fixes: PossibleFixesWithPosition<'a>,
 }
 
 #[cfg(feature = "language_server")]
@@ -254,7 +254,7 @@ impl From<OxcDiagnostic> for MessageWithPosition<'_> {
             severity: from.severity,
             code: from.code.clone(),
             url: from.url.clone(),
-            fix: None,
+            fixes: PossibleFixesWithPosition::None,
         }
     }
 }
@@ -265,7 +265,7 @@ impl<'new> CloneIn<'new> for Message<'_> {
     fn clone_in(&self, allocator: &'new Allocator) -> Self::Cloned {
         Message {
             error: self.error.clone(),
-            fix: self.fix.clone_in(allocator),
+            fixes: self.fixes.clone_in(allocator),
             span: self.span,
             fixed: self.fixed,
         }
@@ -288,7 +288,9 @@ impl<'a> Message<'a> {
         } else {
             (0, 0)
         };
-        Self { error, span: Span::new(start, end), fix, fixed: false }
+        // ToDo support multiple fixes
+        let fixes = fix.map_or(PossibleFixes::None, PossibleFixes::Single);
+        Self { error, span: Span::new(start, end), fixes, fixed: false }
     }
 }
 
@@ -321,7 +323,7 @@ impl<'a> Fixer<'a> {
     /// # Panics
     pub fn fix(mut self) -> FixResult<'a> {
         let source_text = self.source_text;
-        if self.messages.iter().all(|m| m.fix.is_none()) {
+        if self.messages.iter().all(|m| m.fixes.is_empty()) {
             return FixResult {
                 fixed: false,
                 fixed_code: Cow::Borrowed(source_text),
@@ -329,7 +331,7 @@ impl<'a> Fixer<'a> {
             };
         }
 
-        self.messages.sort_unstable_by_key(|m| m.fix.as_ref().unwrap_or(&Fix::default()).span);
+        self.messages.sort_unstable_by_key(|m| m.fixes.span());
         let mut fixed = false;
         let mut output = String::with_capacity(source_text.len());
         let mut last_pos: i64 = -1;
@@ -338,7 +340,14 @@ impl<'a> Fixer<'a> {
         let mut filtered_messages = Vec::with_capacity(self.messages.len());
 
         for mut m in self.messages {
-            let Some(Fix { content, span, .. }) = m.fix.as_ref() else {
+            let fix = match &m.fixes {
+                PossibleFixes::None => None,
+                PossibleFixes::Single(fix) => Some(fix),
+                // For multiple fixes, we take the first one as a representative fix.
+                // Applying all possible fixes at once is not possible in this context.
+                PossibleFixes::Multiple(multiple) => multiple.first(),
+            };
+            let Some(Fix { content, span, .. }) = fix else {
                 filtered_messages.push(m);
                 continue;
             };
