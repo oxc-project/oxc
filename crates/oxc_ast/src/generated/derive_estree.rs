@@ -322,8 +322,8 @@ impl ESTree for TaggedTemplateExpression<'_> {
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
         state.serialize_field("tag", &self.tag);
-        state.serialize_field("quasi", &self.quasi);
         state.serialize_ts_field("typeArguments", &self.type_arguments);
+        state.serialize_field("quasi", &self.quasi);
         state.end();
     }
 }
@@ -402,9 +402,9 @@ impl ESTree for CallExpression<'_> {
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
         state.serialize_field("callee", &self.callee);
+        state.serialize_ts_field("typeArguments", &self.type_arguments);
         state.serialize_field("arguments", &self.arguments);
         state.serialize_field("optional", &self.optional);
-        state.serialize_ts_field("typeArguments", &self.type_arguments);
         state.end();
     }
 }
@@ -416,8 +416,8 @@ impl ESTree for NewExpression<'_> {
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
         state.serialize_field("callee", &self.callee);
-        state.serialize_field("arguments", &self.arguments);
         state.serialize_ts_field("typeArguments", &self.type_arguments);
+        state.serialize_field("arguments", &self.arguments);
         state.end();
     }
 }
@@ -1768,11 +1768,11 @@ impl ESTree for ExportNamedDeclaration<'_> {
         state.serialize_field("declaration", &self.declaration);
         state.serialize_field("specifiers", &self.specifiers);
         state.serialize_field("source", &self.source);
+        state.serialize_ts_field("exportKind", &self.export_kind);
         state.serialize_field(
             "attributes",
             &crate::serialize::js::ExportNamedDeclarationWithClause(self),
         );
-        state.serialize_ts_field("exportKind", &self.export_kind);
         state.end();
     }
 }
