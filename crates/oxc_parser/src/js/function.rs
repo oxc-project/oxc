@@ -19,7 +19,7 @@ impl FunctionKind {
     }
 }
 
-impl<'a> ParserImpl<'a> {
+impl<'a, const IS_TS: bool> ParserImpl<'a, IS_TS> {
     pub(crate) fn at_function_with_async(&mut self) -> bool {
         self.at(Kind::Function)
             || self.at(Kind::Async)
@@ -47,7 +47,7 @@ impl<'a> ParserImpl<'a> {
     ) -> (Option<TSThisParameter<'a>>, Box<'a, FormalParameters<'a>>) {
         let span = self.start_span();
         self.expect(Kind::LParen);
-        let this_param = if self.is_ts && self.at(Kind::This) {
+        let this_param = if IS_TS && self.at(Kind::This) {
             let param = self.parse_ts_this_parameter();
             if !self.at(Kind::RParen) {
                 self.expect(Kind::Comma);
@@ -139,7 +139,7 @@ impl<'a> ParserImpl<'a> {
         self.ctx =
             self.ctx.and_in(ctx.has_in()).and_await(ctx.has_await()).and_yield(ctx.has_yield());
 
-        if !self.is_ts && body.is_none() {
+        if !IS_TS && body.is_none() {
             return self.unexpected();
         }
 

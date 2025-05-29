@@ -9,7 +9,7 @@ use crate::{
     modifiers::{ModifierFlags, ModifierKind, Modifiers},
 };
 
-impl<'a> ParserImpl<'a> {
+impl<'a, const IS_TS: bool> ParserImpl<'a, IS_TS> {
     /* ------------------- Enum ------------------ */
     /// `https://www.typescriptlang.org/docs/handbook/enums.html`
     pub(crate) fn parse_ts_enum_declaration(
@@ -97,7 +97,7 @@ impl<'a> ParserImpl<'a> {
     /* ------------------- Annotation ----------------- */
 
     pub(crate) fn parse_ts_type_annotation(&mut self) -> Option<Box<'a, TSTypeAnnotation<'a>>> {
-        if !self.is_ts {
+        if !IS_TS {
             return None;
         }
         if !self.at(Kind::Colon) {
@@ -363,7 +363,7 @@ impl<'a> ParserImpl<'a> {
                 if declare {
                     let decl = self.parse_ts_declare_function(start_span, modifiers);
                     Declaration::FunctionDeclaration(decl)
-                } else if self.is_ts {
+                } else if IS_TS {
                     let decl = self.parse_ts_function_impl(
                         start_span,
                         FunctionKind::Declaration,

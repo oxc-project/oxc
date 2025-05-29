@@ -14,7 +14,7 @@ pub struct FatalError {
     pub errors_len: usize,
 }
 
-impl<'a> ParserImpl<'a> {
+impl<'a, const IS_TS: bool> ParserImpl<'a, IS_TS> {
     pub(crate) fn set_unexpected(&mut self) {
         // The lexer should have reported a more meaningful diagnostic
         // when it is a undetermined kind.

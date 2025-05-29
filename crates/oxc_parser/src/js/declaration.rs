@@ -9,7 +9,7 @@ use crate::{
     modifiers::{ModifierFlags, Modifiers},
 };
 
-impl<'a> ParserImpl<'a> {
+impl<'a, const IS_TS: bool> ParserImpl<'a, IS_TS> {
     pub(crate) fn parse_let(&mut self, stmt_ctx: StatementContext) -> Statement<'a> {
         let span = self.start_span();
         let checkpoint = self.checkpoint();
@@ -106,7 +106,7 @@ impl<'a> ParserImpl<'a> {
 
         let mut binding_kind = self.parse_binding_pattern_kind();
 
-        let (id, definite) = if self.is_ts {
+        let (id, definite) = if IS_TS {
             // const x!: number = 1
             //        ^ definite
             let mut definite = false;
