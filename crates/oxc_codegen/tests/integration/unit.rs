@@ -74,6 +74,10 @@ fn class() {
         "export default class Foo { @x @y accessor #aDef = 1 }",
         "export default class Foo {\n\t@x @y accessor #aDef = 1;\n}\n",
     );
+    test(
+        "export class Test2 {\n@decorator\nproperty: ((arg: any) => any) | undefined;\n}",
+        "export class Test2 {\n\t@decorator property: ((arg: any) => any) | undefined;\n}\n",
+    );
     test_minify("class { static [computed] }", "class{static[computed]}");
 }
 
