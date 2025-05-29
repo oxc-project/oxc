@@ -63,7 +63,7 @@ declare_oxc_lint!(
     PreferArrayFlat,
     unicorn,
     pedantic,
-    conditional_fix
+    conditional_dangerous_fix
 );
 
 impl Rule for PreferArrayFlat {

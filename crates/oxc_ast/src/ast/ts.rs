@@ -37,7 +37,7 @@ use super::{inherit_variants, js::*, literal::*};
 #[estree(
     rename = "Identifier",
     add_fields(name = This, decorators = EmptyArray, optional = False),
-    field_order(span, name, decorators, optional, type_annotation),
+    field_order(span, decorators, name, optional, type_annotation),
 )]
 pub struct TSThisParameter<'a> {
     pub span: Span,
@@ -122,10 +122,7 @@ pub struct TSEnumBody<'a> {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
-#[estree(
-    add_fields(computed = TSEnumMemberComputed),
-    field_order(span, id, computed, initializer),
-)]
+#[estree(add_fields(computed = TSEnumMemberComputed))]
 pub struct TSEnumMember<'a> {
     pub span: Span,
     pub id: TSEnumMemberName<'a>,
@@ -964,8 +961,8 @@ pub struct TSInterfaceBody<'a> {
 /// //  ___ key
 ///     bar: number
 /// //     ^^^^^^^^ type_annotation
-///     baz?: string          // <- optional
-///     readony bang: boolean // <- readonly
+///     baz?: string           // <- optional
+///     readonly bang: boolean // <- readonly
 /// }
 /// ```
 #[ast(visit)]
@@ -1087,7 +1084,7 @@ pub struct TSConstructSignatureDeclaration<'a> {
 #[estree(
     rename = "Identifier",
     add_fields(decorators = EmptyArray, optional = False),
-    field_order(span, name, decorators, optional, type_annotation),
+    field_order(span, decorators, name, optional, type_annotation),
 )]
 pub struct TSIndexSignatureName<'a> {
     pub span: Span,
@@ -1439,7 +1436,10 @@ pub struct TSConstructorType<'a> {
 #[scope]
 #[derive(Debug)]
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
-#[estree(add_fields(key = TSMappedTypeKey, constraint = TSMappedTypeConstraint))]
+#[estree(
+    add_fields(key = TSMappedTypeKey, constraint = TSMappedTypeConstraint),
+    field_order(span, key, constraint, name_type, type_annotation, optional, readonly),
+)]
 pub struct TSMappedType<'a> {
     pub span: Span,
     /// Key type parameter, e.g. `P` in `[P in keyof T]`.

@@ -83,7 +83,7 @@ impl From<Severity> for ErrorSeverity {
 
 #[ast]
 #[generate_derive(ESTree)]
-#[estree(no_type, no_ts_def)]
+#[estree(no_type, no_ts_def, field_order(message, span))]
 pub struct ErrorLabel<'a> {
     pub message: Option<Atom<'a>>,
     pub span: Span,

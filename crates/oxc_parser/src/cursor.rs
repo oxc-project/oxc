@@ -61,48 +61,6 @@ impl<'a> ParserImpl<'a> {
         self.lexer.get_template_string(self.token.start())
     }
 
-    /// Peek next token, returns EOF for final peek
-    #[inline]
-    pub(crate) fn peek_token(&mut self) -> Token {
-        self.lexer.lookahead(1)
-    }
-
-    /// Peek next kind, returns EOF for final peek
-    #[inline]
-    #[expect(dead_code)]
-    pub(crate) fn peek_kind(&mut self) -> Kind {
-        self.peek_token().kind()
-    }
-
-    /// Peek at kind
-    #[inline]
-    pub(crate) fn peek_at(&mut self, kind: Kind) -> bool {
-        self.peek_token().kind() == kind
-    }
-
-    /// Peek nth token
-    #[inline]
-    pub(crate) fn nth(&mut self, n: u8) -> Token {
-        if n == 0 {
-            return self.cur_token();
-        }
-        self.lexer.lookahead(n)
-    }
-
-    /// Peek at nth kind
-    #[inline]
-    #[expect(dead_code)]
-    pub(crate) fn nth_at(&mut self, n: u8, kind: Kind) -> bool {
-        self.nth(n).kind() == kind
-    }
-
-    /// Peek nth kind
-    #[inline]
-    #[expect(dead_code)]
-    pub(crate) fn nth_kind(&mut self, n: u8) -> Kind {
-        self.nth(n).kind()
-    }
-
     /// Checks if the current index has token `Kind`
     #[inline]
     pub(crate) fn at(&self, kind: Kind) -> bool {
@@ -369,14 +327,14 @@ impl<'a> ParserImpl<'a> {
         &mut self,
         close: Kind,
         separator: Kind,
-        trailing_separator: bool,
         f: F,
-    ) -> Vec<'a, T>
+    ) -> (Vec<'a, T>, Option<u32>)
     where
         F: Fn(&mut Self) -> T,
     {
         let mut list = self.ast.vec();
         let mut first = true;
+        let mut trailing_separator = None;
         loop {
             if self.cur_kind() == close || self.has_fatal_error() {
                 break;
@@ -384,17 +342,16 @@ impl<'a> ParserImpl<'a> {
             if first {
                 first = false;
             } else {
-                if !trailing_separator && self.at(separator) && self.peek_at(close) {
-                    break;
-                }
+                let separator_span = self.start_span();
                 self.expect(separator);
                 if self.at(close) {
+                    trailing_separator = Some(separator_span);
                     break;
                 }
             }
             list.push(f(self));
         }
-        list
+        (list, trailing_separator)
     }
 
     pub(crate) fn parse_delimited_list_with_rest<E, R, A, B>(

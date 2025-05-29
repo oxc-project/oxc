@@ -13,11 +13,10 @@ impl<'a> ParserImpl<'a> {
     pub(crate) fn parse_object_expression(&mut self) -> Box<'a, ObjectExpression<'a>> {
         let span = self.start_span();
         self.expect(Kind::LCurly);
-        let object_expression_properties = self.context(Context::In, Context::empty(), |p| {
+        let (object_expression_properties, _) = self.context(Context::In, Context::empty(), |p| {
             p.parse_delimited_list(
                 Kind::RCurly,
                 Kind::Comma,
-                /* trailing_separator */ false,
                 Self::parse_object_expression_property,
             )
         });

@@ -1874,6 +1874,16 @@ impl<'a> ModuleExportName<'a> {
             Self::StringLiteral(_) => None,
         }
     }
+
+    /// Returns `true` if this module export name is an identifier, and not a string literal.
+    ///
+    /// ## Example
+    ///
+    /// - `export { foo }` => `true`
+    /// - `export { "foo" }` => `false`
+    pub fn is_identifier(&self) -> bool {
+        matches!(self, Self::IdentifierName(_) | Self::IdentifierReference(_))
+    }
 }
 
 impl ImportPhase {

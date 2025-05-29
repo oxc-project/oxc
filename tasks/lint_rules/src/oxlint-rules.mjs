@@ -56,6 +56,7 @@ const NOT_SUPPORTED_RULE_NAMES = new Set([
   'react/jsx-indent', // stylistic rule
   'react/jsx-indent-props', // stylistic rule
   'react/jsx-props-no-multi-spaces', // stylistic rule
+  'unicorn/no-for-loop', // this rule suggest using `Array.prototype.entries` which is slow https://github.com/oxc-project/oxc/issues/11311, furthermore, `typescript/prefer-for-of` covers most cases
 ]);
 
 /**
@@ -164,7 +165,10 @@ export const overrideTypeScriptPluginStatusWithEslintPluginStatus = async (
     'crates/oxc_linter/src/utils/mod.rs',
     'utf8',
   );
-  const rules = getArrayEntries('TYPESCRIPT_COMPATIBLE_ESLINT_RULES', typescriptCompatibleRulesFile);
+  const rules = getArrayEntries(
+    'TYPESCRIPT_COMPATIBLE_ESLINT_RULES',
+    typescriptCompatibleRulesFile,
+  );
 
   for (const rule of rules) {
     const typescriptRuleEntry = ruleEntries.get(`typescript/${rule}`);
@@ -183,12 +187,17 @@ export const overrideTypeScriptPluginStatusWithEslintPluginStatus = async (
  * override the status of the Vitest rules to match the Jest rules.
  * @param {RuleEntries} ruleEntries
  */
-export const syncVitestPluginStatusWithJestPluginStatus = async (ruleEntries) => {
+export const syncVitestPluginStatusWithJestPluginStatus = async (
+  ruleEntries,
+) => {
   const vitestCompatibleRulesFile = await readFile(
     'crates/oxc_linter/src/utils/mod.rs',
     'utf8',
   );
-  const rules = getArrayEntries('VITEST_COMPATIBLE_JEST_RULES', vitestCompatibleRulesFile);
+  const rules = getArrayEntries(
+    'VITEST_COMPATIBLE_JEST_RULES',
+    vitestCompatibleRulesFile,
+  );
 
   for (const rule of rules) {
     const vitestRuleEntry = ruleEntries.get(`vitest/${rule}`);

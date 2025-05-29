@@ -8515,7 +8515,7 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
  3 │ export { bar as "\udbff\udfff" } // should not throw
    ╰────
 
-  × Unexpected token
+  × Identifier expected.
    ╭─[babel/packages/babel-parser/test/fixtures/es2022/module-string-names/import-local-is-string/input.js:1:10]
  1 │ import { "foo" } from "foo";
    ·          ─────
@@ -13268,7 +13268,7 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ·                     ──
    ╰────
 
-  × Unexpected token
+  × Identifier expected.
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/type-only-import-export-specifiers/import-invalid-type-only-as-string/input.ts:1:22]
  1 │ import { type foo as "bar" } from "mod";
    ·                      ─────

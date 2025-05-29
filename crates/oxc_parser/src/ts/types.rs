@@ -149,12 +149,8 @@ impl<'a> ParserImpl<'a> {
         }
         let span = self.start_span();
         self.expect(Kind::LAngle);
-        let params = self.parse_delimited_list(
-            Kind::RAngle,
-            Kind::Comma,
-            /* trailing_separator */ true,
-            Self::parse_ts_type_parameter,
-        );
+        let (params, _) =
+            self.parse_delimited_list(Kind::RAngle, Kind::Comma, Self::parse_ts_type_parameter);
         self.expect(Kind::RAngle);
         Some(self.ast.alloc_ts_type_parameter_declaration(self.end_span(span), params))
     }
@@ -788,12 +784,8 @@ impl<'a> ParserImpl<'a> {
         if self.at(Kind::LAngle) {
             let span = self.start_span();
             self.expect(Kind::LAngle);
-            let params = self.parse_delimited_list(
-                Kind::RAngle,
-                Kind::Comma,
-                /* trailing_separator */ true,
-                Self::parse_ts_type,
-            );
+            let (params, _) =
+                self.parse_delimited_list(Kind::RAngle, Kind::Comma, Self::parse_ts_type);
             self.expect(Kind::RAngle);
             return Some(
                 self.ast.alloc_ts_type_parameter_instantiation(self.end_span(span), params),
@@ -808,12 +800,8 @@ impl<'a> ParserImpl<'a> {
         if !self.cur_token().is_on_new_line() && self.re_lex_l_angle() == Kind::LAngle {
             let span = self.start_span();
             self.expect(Kind::LAngle);
-            let params = self.parse_delimited_list(
-                Kind::RAngle,
-                Kind::Comma,
-                /* trailing_separator */ true,
-                Self::parse_ts_type,
-            );
+            let (params, _) =
+                self.parse_delimited_list(Kind::RAngle, Kind::Comma, Self::parse_ts_type);
             self.expect(Kind::RAngle);
             return Some(
                 self.ast.alloc_ts_type_parameter_instantiation(self.end_span(span), params),
@@ -833,12 +821,7 @@ impl<'a> ParserImpl<'a> {
             return None;
         }
         self.expect(Kind::LAngle);
-        let params = self.parse_delimited_list(
-            Kind::RAngle,
-            Kind::Comma,
-            /* trailing_separator */ true,
-            Self::parse_ts_type,
-        );
+        let (params, _) = self.parse_delimited_list(Kind::RAngle, Kind::Comma, Self::parse_ts_type);
         // `a < b> = c`` is valid but `a < b >= c` is BinaryExpression
         if matches!(self.re_lex_right_angle(), Kind::GtEq) {
             return self.unexpected();
@@ -867,10 +850,9 @@ impl<'a> ParserImpl<'a> {
     fn parse_tuple_type(&mut self) -> TSType<'a> {
         let span = self.start_span();
         self.expect(Kind::LBrack);
-        let elements = self.parse_delimited_list(
+        let (elements, _) = self.parse_delimited_list(
             Kind::RBrack,
             Kind::Comma,
-            /* trailing_separator */ true,
             Self::parse_tuple_element_name_or_tuple_element_type,
         );
         self.expect(Kind::RBrack);
@@ -1243,13 +1225,14 @@ impl<'a> ParserImpl<'a> {
             diagnostics::cannot_appear_on_an_index_signature,
         );
         self.expect(Kind::LBrack);
-        let params = self.parse_delimited_list(
+        let (params, comma_span) = self.parse_delimited_list(
             Kind::RBrack,
             Kind::Comma,
-            /* trailing_separator */
-            false, //  An index signature cannot have a trailing comma.
             Self::parse_ts_index_signature_name,
         );
+        if let Some(comma_span) = comma_span {
+            self.error(diagnostics::expect_token("]", ",", self.end_span(comma_span)));
+        }
         self.expect(Kind::RBrack);
         if params.len() != 1 {
             self.error(diagnostics::index_signature_one_parameter(self.end_span(span)));

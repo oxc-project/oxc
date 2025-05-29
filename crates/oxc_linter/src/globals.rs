@@ -121,7 +121,7 @@ impl TryFrom<&str> for AriaProperty {
     type Error = ();
 
     fn try_from(value: &str) -> Result<Self, Self::Error> {
-        if value.len() < 9 || &value[..5] != "aria-" {
+        if value.len() < 9 || &value.as_bytes()[..5] != b"aria-" {
             return Err(());
         }
         match &value[5..] {

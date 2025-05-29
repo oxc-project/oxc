@@ -303,3 +303,10 @@ source: crates/oxc_linter/src/tester.rs
  3 │                       Hello, world!
    ╰────
   help: Remove unknown property
+
+  ⚠ eslint-plugin-react(no-unknown-property): Unknown property found
+   ╭─[no_unknown_property.tsx:1:4]
+ 1 │ <t onChñnge/>
+   ·    ────────
+   ╰────
+  help: Remove unknown property
