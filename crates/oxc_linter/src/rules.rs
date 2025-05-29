@@ -138,6 +138,7 @@ mod eslint {
     pub mod no_ternary;
     pub mod no_this_before_super;
     pub mod no_throw_literal;
+    pub mod no_unassigned_vars;
     pub mod no_undef;
     pub mod no_undefined;
     pub mod no_unexpected_multiline;
@@ -592,6 +593,7 @@ oxc_macros::declare_all_lint_rules! {
     eslint::max_nested_callbacks,
     eslint::max_params,
     eslint::new_cap,
+    eslint::no_unassigned_vars,
     eslint::no_alert,
     eslint::no_array_constructor,
     eslint::no_async_promise_executor,
