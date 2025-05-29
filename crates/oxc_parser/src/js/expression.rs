@@ -168,8 +168,6 @@ impl<'a> ParserImpl<'a> {
             return self.parse_function_expression(span, false);
         }
         if self.eat(Kind::Async) {
-            //  self.bump_any();
-
             if self.at(Kind::Function) && !self.cur_token().is_on_new_line() {
                 return self.parse_function_expression(span, true);
             }
