@@ -16,7 +16,7 @@ use crate::{
     AllowWarnDeny, FrameworkFlags, ModuleRecord, OxlintEnv, OxlintGlobals, OxlintSettings,
     config::GlobalValue,
     disable_directives::DisableDirectives,
-    fixer::{FixKind, Message, RuleFix, RuleFixer},
+    fixer::{FixKind, Message, PossibleFixes, RuleFix, RuleFixer},
 };
 
 mod host;
@@ -246,7 +246,7 @@ impl<'a> LintContext<'a> {
     /// Use [`LintContext::diagnostic_with_fix`] to provide an automatic fix.
     #[inline]
     pub fn diagnostic(&self, diagnostic: OxcDiagnostic) {
-        self.add_diagnostic(Message::new(diagnostic, None));
+        self.add_diagnostic(Message::new(diagnostic, PossibleFixes::None));
     }
 
     /// Report a lint rule violation and provide an automatic fix.
@@ -366,7 +366,7 @@ impl<'a> LintContext<'a> {
                     );
                 }
             }
-            self.add_diagnostic(Message::new(diagnostic, Some(fix)));
+            self.add_diagnostic(Message::new(diagnostic, PossibleFixes::Single(fix)));
         } else {
             self.diagnostic(diagnostic);
         }

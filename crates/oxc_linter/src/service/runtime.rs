@@ -495,9 +495,10 @@ impl<'l> Runtime<'l> {
                                 Rc::new(section.semantic.unwrap()),
                                 Arc::clone(&module_record),
                             ),
-                            Err(errors) => {
-                                errors.into_iter().map(|err| Message::new(err, None)).collect()
-                            }
+                            Err(errors) => errors
+                                .into_iter()
+                                .map(|err| Message::new(err, PossibleFixes::None))
+                                .collect(),
                         };
 
                         let source_text = section.source.source_text;
@@ -716,9 +717,10 @@ impl<'l> Runtime<'l> {
                                     Rc::new(section.semantic.unwrap()),
                                     Arc::clone(&module_record),
                                 ),
-                                Err(errors) => {
-                                    errors.into_iter().map(|err| Message::new(err, None)).collect()
-                                }
+                                Err(errors) => errors
+                                    .into_iter()
+                                    .map(|err| Message::new(err, PossibleFixes::None))
+                                    .collect(),
                             }
                             .into_iter()
                             .map(|message| message.clone_in(allocator)),
