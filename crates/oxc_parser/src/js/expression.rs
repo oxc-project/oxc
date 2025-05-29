@@ -167,22 +167,12 @@ impl<'a> ParserImpl<'a> {
         if self.at(Kind::Function) {
             return self.parse_function_expression(span, false);
         }
-        //let b = self.at(Kind::Async)
-        //    && self.lookahead(|p| {
-        //        p.bump_any();
-        //        p.at(Kind::Function) && !p.token.is_on_new_line()
-        //    });
-        if self.at(Kind::Async) {
-            // if self.lookahead(|p| {
-            //     p.bump_any();
-            //     p.at(Kind::Function) && !p.token.is_on_new_line()
-            // }) {
-            self.bump_any();
+        if self.eat(Kind::Async) {
+            //  self.bump_any();
+
             if self.at(Kind::Function) && !self.cur_token().is_on_new_line() {
-                let r#async = self.eat(Kind::Async);
-                return self.parse_function_expression(span, r#async);
+                return self.parse_function_expression(span, true);
             }
-            // }
         }
 
         match self.cur_kind() {
