@@ -60,7 +60,7 @@ declare_oxc_lint!(
     ForwardRefUsesRef,
     react,
     correctness,
-    fix
+    suggestion
 );
 
 fn check_forward_ref_inner(exp: &Expression, call_expr: &CallExpression, ctx: &LintContext) {
@@ -72,7 +72,7 @@ fn check_forward_ref_inner(exp: &Expression, call_expr: &CallExpression, ctx: &L
     if params.parameters_count() != 1 || params.rest.is_some() {
         return;
     }
-    ctx.diagnostic_with_fix(forward_ref_uses_ref_diagnostic(span), |fixer| {
+    ctx.diagnostic_with_suggestion(forward_ref_uses_ref_diagnostic(span), |fixer| {
         fixer.replace_with(call_expr, exp)
     });
 }
