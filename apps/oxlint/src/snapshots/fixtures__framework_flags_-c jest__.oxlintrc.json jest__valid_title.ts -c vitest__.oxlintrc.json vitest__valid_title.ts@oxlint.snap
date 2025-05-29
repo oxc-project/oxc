@@ -1,0 +1,22 @@
+---
+source: apps/oxlint/src/tester.rs
+---
+########## 
+arguments: -c jest/.oxlintrc.json jest/valid_title.ts
+working directory: fixtures/framework_flags
+----------
+Found 0 warnings and 0 errors.
+Finished in <variable>ms on 1 file with 1 rules using 1 threads.
+----------
+CLI result: LintSucceeded
+----------
+
+########## 
+arguments: -c vitest/.oxlintrc.json vitest/valid_title.ts
+working directory: fixtures/framework_flags
+----------
+Found 0 warnings and 0 errors.
+Finished in <variable>ms on 1 file with 0 rules using 1 threads.
+----------
+CLI result: LintSucceeded
+----------

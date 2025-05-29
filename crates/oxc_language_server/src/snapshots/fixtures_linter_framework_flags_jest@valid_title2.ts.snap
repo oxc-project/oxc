@@ -1,0 +1,5 @@
+---
+source: crates/oxc_language_server/src/tester.rs
+input_file: crates/oxc_language_server/fixtures/linter/framework_flags/jest/valid_title2.ts
+---
+No diagnostic reports
