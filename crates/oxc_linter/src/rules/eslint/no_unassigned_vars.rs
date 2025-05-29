@@ -94,6 +94,7 @@ fn test() {
     let pass = vec![
         "let x;",
         "var x;",
+        "const x = 2",
         "const x = undefined; console.log(x);",
         "let y = undefined; console.log(y);",
         "var y = undefined; console.log(y);",
