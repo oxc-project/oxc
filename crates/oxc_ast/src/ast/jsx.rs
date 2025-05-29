@@ -33,7 +33,6 @@ use super::{inherit_variants, js::*, literal::*, ts::*};
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
-#[estree(field_order(span, opening_element, closing_element, children))]
 pub struct JSXElement<'a> {
     /// Node location in source code
     pub span: Span,
@@ -66,10 +65,7 @@ pub struct JSXElement<'a> {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
-#[estree(
-    add_fields(selfClosing = JSXOpeningElementSelfClosing),
-    field_order(span, attributes, name, selfClosing, type_arguments),
-)]
+#[estree(add_fields(selfClosing = JSXOpeningElementSelfClosing))]
 pub struct JSXOpeningElement<'a> {
     /// Node location in source code
     pub span: Span,
@@ -114,7 +110,6 @@ pub struct JSXClosingElement<'a> {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
-#[estree(field_order(span, opening_fragment, closing_fragment, children))]
 pub struct JSXFragment<'a> {
     /// Node location in source code
     pub span: Span,
