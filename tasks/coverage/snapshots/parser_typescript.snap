@@ -12408,12 +12408,95 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
  2 │ function foo() {}
    ╰────
 
+  × Identifier expected. 'yield' is a reserved word that cannot be used here.
+   ╭─[typescript/tests/cases/compiler/es6ImportNamedImportIdentifiersParsing.ts:1:10]
+ 1 │ import { yield } from "somemodule"; // Allowed
+   ·          ─────
+ 2 │ import { default } from "somemodule"; // Error - as this is keyword that is not allowed as identifier
+   ╰────
+
   × Identifier expected. 'default' is a reserved word that cannot be used here.
    ╭─[typescript/tests/cases/compiler/es6ImportNamedImportIdentifiersParsing.ts:2:10]
  1 │ import { yield } from "somemodule"; // Allowed
  2 │ import { default } from "somemodule"; // Error - as this is keyword that is not allowed as identifier
    ·          ───────
  3 │ import { yield as default } from "somemodule"; // error to use default as binding name
+   ╰────
+
+  × Identifier expected. 'default' is a reserved word that cannot be used here.
+   ╭─[typescript/tests/cases/compiler/es6ImportNamedImportIdentifiersParsing.ts:3:19]
+ 2 │ import { default } from "somemodule"; // Error - as this is keyword that is not allowed as identifier
+ 3 │ import { yield as default } from "somemodule"; // error to use default as binding name
+   ·                   ───────
+ 4 │ import { default as yield } from "somemodule"; // no error 
+   ╰────
+
+  × Identifier expected. 'yield' is a reserved word that cannot be used here.
+   ╭─[typescript/tests/cases/compiler/es6ImportNamedImportIdentifiersParsing.ts:4:21]
+ 3 │ import { yield as default } from "somemodule"; // error to use default as binding name
+ 4 │ import { default as yield } from "somemodule"; // no error 
+   ·                     ─────
+ 5 │ import { default as default } from "somemodule"; // default as is ok, error of default binding name
+   ╰────
+
+  × Identifier expected. 'default' is a reserved word that cannot be used here.
+   ╭─[typescript/tests/cases/compiler/es6ImportNamedImportIdentifiersParsing.ts:5:21]
+ 4 │ import { default as yield } from "somemodule"; // no error 
+ 5 │ import { default as default } from "somemodule"; // default as is ok, error of default binding name
+   ·                     ───────
+   ╰────
+
+  × The keyword 'yield' is reserved
+   ╭─[typescript/tests/cases/compiler/es6ImportNamedImportIdentifiersParsing.ts:1:10]
+ 1 │ import { yield } from "somemodule"; // Allowed
+   ·          ─────
+ 2 │ import { default } from "somemodule"; // Error - as this is keyword that is not allowed as identifier
+   ╰────
+
+  × Identifier `default` has already been declared
+   ╭─[typescript/tests/cases/compiler/es6ImportNamedImportIdentifiersParsing.ts:2:10]
+ 1 │ import { yield } from "somemodule"; // Allowed
+ 2 │ import { default } from "somemodule"; // Error - as this is keyword that is not allowed as identifier
+   ·          ───┬───
+   ·             ╰── `default` has already been declared here
+ 3 │ import { yield as default } from "somemodule"; // error to use default as binding name
+   ·                   ───┬───
+   ·                      ╰── It can not be redeclared here
+ 4 │ import { default as yield } from "somemodule"; // no error 
+   ╰────
+
+  × Identifier `yield` has already been declared
+   ╭─[typescript/tests/cases/compiler/es6ImportNamedImportIdentifiersParsing.ts:1:10]
+ 1 │ import { yield } from "somemodule"; // Allowed
+   ·          ──┬──
+   ·            ╰── `yield` has already been declared here
+ 2 │ import { default } from "somemodule"; // Error - as this is keyword that is not allowed as identifier
+ 3 │ import { yield as default } from "somemodule"; // error to use default as binding name
+ 4 │ import { default as yield } from "somemodule"; // no error 
+   ·                     ──┬──
+   ·                       ╰── It can not be redeclared here
+ 5 │ import { default as default } from "somemodule"; // default as is ok, error of default binding name
+   ╰────
+
+  × The keyword 'yield' is reserved
+   ╭─[typescript/tests/cases/compiler/es6ImportNamedImportIdentifiersParsing.ts:4:21]
+ 3 │ import { yield as default } from "somemodule"; // error to use default as binding name
+ 4 │ import { default as yield } from "somemodule"; // no error 
+   ·                     ─────
+ 5 │ import { default as default } from "somemodule"; // default as is ok, error of default binding name
+   ╰────
+
+  × Identifier `default` has already been declared
+   ╭─[typescript/tests/cases/compiler/es6ImportNamedImportIdentifiersParsing.ts:2:10]
+ 1 │ import { yield } from "somemodule"; // Allowed
+ 2 │ import { default } from "somemodule"; // Error - as this is keyword that is not allowed as identifier
+   ·          ───┬───
+   ·             ╰── `default` has already been declared here
+ 3 │ import { yield as default } from "somemodule"; // error to use default as binding name
+ 4 │ import { default as yield } from "somemodule"; // no error 
+ 5 │ import { default as default } from "somemodule"; // default as is ok, error of default binding name
+   ·                     ───┬───
+   ·                        ╰── It can not be redeclared here
    ╰────
 
   × Expected `from` but found `decimal`
@@ -24756,6 +24839,13 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
  43 │ }
     ╰────
 
+  × Identifier expected. 'await' is a reserved word that cannot be used here.
+   ╭─[typescript/tests/cases/conformance/externalModules/topLevelAwaitErrors.10.ts:2:19]
+ 1 │ // await disallowed in alias of named import
+ 2 │ import { await as await } from "./other";
+   ·                   ─────
+   ╰────
+
   × The keyword 'await' is reserved
    ╭─[typescript/tests/cases/conformance/externalModules/topLevelAwaitErrors.10.ts:2:19]
  1 │ // await disallowed in alias of named import
@@ -24847,6 +24937,13 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
  1 │ // await disallowed in default import
  2 │ import await from "./other";
    ·        ─────
+   ╰────
+
+  × Identifier expected. 'await' is a reserved word that cannot be used here.
+   ╭─[typescript/tests/cases/conformance/externalModules/topLevelAwaitErrors.9.ts:2:10]
+ 1 │ // await disallowed in un-alised named import
+ 2 │ import { await } from "./other";
+   ·          ─────
    ╰────
 
   × The keyword 'await' is reserved

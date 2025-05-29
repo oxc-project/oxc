@@ -326,6 +326,11 @@ pub fn identifier_generator(x0: &str, span1: Span) -> OxcDiagnostic {
 }
 
 #[cold]
+pub fn identifier_expected(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::error("Identifier expected.").with_label(span)
+}
+
+#[cold]
 pub fn identifier_reserved_word(span: Span, reserved: &str) -> OxcDiagnostic {
     OxcDiagnostic::error(format!(
         "Identifier expected. '{reserved}' is a reserved word that cannot be used here."
