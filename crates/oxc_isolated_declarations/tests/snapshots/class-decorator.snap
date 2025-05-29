@@ -17,3 +17,8 @@ export declare class Test2 {
 	*/
 	property: ((arg: any) => any) | undefined;
 }
+export declare class Test3 {
+	property?: {
+		property?: (arg: any) => any
+	};
+}

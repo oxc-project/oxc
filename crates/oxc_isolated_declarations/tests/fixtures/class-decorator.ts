@@ -15,3 +15,10 @@ export class Test2 {
   @decorator
   property: ((arg: any) => any) | undefined;
 }
+
+export class Test3 {
+  @decorator
+  property?: {
+    property?: (arg: any) => any;
+  };
+}
