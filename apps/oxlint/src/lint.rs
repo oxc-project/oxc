@@ -1150,4 +1150,13 @@ mod test {
         let args = &["-c", ".oxlintrc.json"];
         Tester::new().with_cwd("fixtures/overrides_with_plugin".into()).test_and_snapshot(args);
     }
+
+    #[test]
+    fn test_framework_flags() {
+        let args1 = &["-c", "jest/.oxlintrc.json", "jest/valid_title.ts"];
+        let args2 = &["-c", "vitest/.oxlintrc.json", "vitest/valid_title.ts"];
+        Tester::new()
+            .with_cwd("fixtures/framework_flags".into())
+            .test_and_snapshot_multiple(&[args1, args2]);
+    }
 }
