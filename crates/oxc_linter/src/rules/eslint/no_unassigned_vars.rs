@@ -14,6 +14,7 @@ fn no_unassigned_vars_diagnostic(span: Span, msg: String) -> OxcDiagnostic {
 #[derive(Debug, Default, Clone)]
 pub struct NoUnassignedVars;
 
+// See <https://github.com/oxc-project/oxc/issues/6050> for documentation details.
 declare_oxc_lint!(
     /// ### What it does
     ///
@@ -94,55 +95,49 @@ fn test() {
     let pass = vec![
         "let x;",
         "var x;",
-        "const x = 2",
-        "const x = undefined; console.log(x);",
-        "let y = undefined; console.log(y);",
-        "var y = undefined; console.log(y);",
-        "let a = x, b = y; console.log(a, b);",
-        "var a = x, b = y; console.log(a, b);",
+        "const x = undefined; log(x);",
+        "let y = undefined; log(y);",
+        "var y = undefined; log(y);",
+        "let a = x, b = y; log(a, b);",
+        "var a = x, b = y; log(a, b);",
         "const foo = (two) => { let one; if (one !== two) one = two; }",
-        // typescript
         "let z: number | undefined = undefined; log(z);",
         "declare let c: string | undefined; log(c);",
+        // "
+        // 				const foo = (two: string): void => {
+        // 					let one: string | undefined;
+        // 					if (one !== two) {
+        // 						one = two;
+        // 					}
+        // 				}
+        // 			",
+        // "
+        // 				declare module 'module' {
+        // 					import type { T } from 'module';
+        // 					let x: T;
+        // 					export = x;
+        // 				}
+        // 			",
     ];
 
     let fail = vec![
-        r"
-            let status;
-            if (status === 'ready') {
-                console.log('Ready!');
-            }
-
-            let user;
-            greet(user);
-
-            function test() {
-                let error;
-                return error || 'Unknown error';
-            }
-
-            let options;
-            const { debug } = options || {};
-
-            let flag;
-            while (!flag) {
-                // Do something...
-            }
-
-            let config;
-            function init() {
-                return config?.enabled;
-            }
-        ",
-        "let x; let a = x, b; console.log(x, a, b);",
+        "let x; let a = x, b; log(x, a, b);",
         "const foo = (two) => { let one; if (one === two) {} }",
+        "let user; greet(user);",
         "function test() { let error; return error || 'Unknown error'; }",
         "let options; const { debug } = options || {};",
         "let flag; while (!flag) { }",
         "let config; function init() { return config?.enabled; }",
-        // typescript
-        "let z: number | undefined; console.log(z);",
+        "let x: number; log(x);",
+        "let x: number | undefined; log(x);",
         "const foo = (two: string): void => { let one: string | undefined; if (one === two) {} }",
+        "
+							declare module 'module' {
+								let x: string;
+							}
+							let y: string;
+							console.log(y);
+						",
     ];
 
     Tester::new(NoUnassignedVars::NAME, NoUnassignedVars::PLUGIN, pass, fail).test_and_snapshot();
