@@ -7,6 +7,7 @@ use crate::{
     formatter::{
         BufferExtensions, Comments, FormatElement, FormatError, Formatter, VecBuffer,
         format_element,
+        parent_stack::ParentStack,
         prelude::{
             FormatElements, Tag, empty_line, expand_parent, format_once, format_with,
             get_lines_before, group, soft_block_indent, soft_line_break_or_space, space,
@@ -41,13 +42,14 @@ impl<'a> Format<'a> for Vec<'a, Argument<'a>> {
             );
         }
 
-        let call_expression = f.parent_kind().as_call_expression();
+        // We don't have a `AstKind` like `Vec<'a, Argument<'a>>`, so the `current_kind` is the parent.
+        let call_expression = f.current_kind().as_call_expression();
 
         let (is_commonjs_or_amd_call, is_test_call) =
             call_expression.as_ref().map_or((false, false), |call| {
                 (
                     is_commonjs_or_amd_call(self.as_slice(), call, &f.parent_stack()),
-                    false, /*  call.is_test_call_expression() */
+                    is_test_call_expression(call),
                 )
             });
 
@@ -982,9 +984,7 @@ fn is_commonjs_or_amd_call(
             }
         }
         "define" => {
-            let in_statement = parent_stack
-                .parent2()
-                .is_some_and(|parent| parent.as_expression_statement().is_some());
+            let in_statement = parent_stack.parent().as_expression_statement().is_some();
             if in_statement {
                 match arguments.len() {
                     1 => true,
@@ -1004,6 +1004,192 @@ fn is_commonjs_or_amd_call(
                 false
             }
         }
+        _ => false,
+    }
+}
+
+/// This is a specialized function that checks if the current [call expression]
+/// resembles a call expression usually used by a testing frameworks.
+///
+/// If the [call expression] matches the criteria, a different formatting is applied.
+///
+/// To evaluate the eligibility of a  [call expression] to be a test framework like,
+/// we need to check its [callee] and its [arguments].
+///
+/// 1. The [callee] must contain a name or a chain of names that belongs to the
+///    test frameworks, for example: `test()`, `test.only()`, etc.
+/// 2. The [arguments] should be at the least 2
+/// 3. The first argument has to be a string literal
+/// 4. The third argument, if present, has to be a number literal
+/// 5. The second argument has to be an [arrow function expression] or [function expression]
+/// 6. Both function must have zero or one parameters
+///
+/// [call expression]: crate::JsCallExpression
+/// [callee]: crate::AnyJsExpression
+/// [arguments]: crate::JsCallArgumentList
+/// [arrow function expression]: crate::JsArrowFunctionExpression
+/// [function expression]: crate::JsCallArgumentList
+pub fn is_test_call_expression(call: &CallExpression<'_>) -> bool {
+    let callee = &call.callee;
+    let arguments = &call.arguments;
+
+    let mut args = arguments.iter();
+
+    match (args.next(), args.next(), args.next()) {
+        (Some(argument), None, None) if arguments.len() == 1 => {
+            if is_angular_test_wrapper(&call)
+            // && self
+            //     .parent::<JsCallArgumentList>()
+            //     .and_then(|arguments_list| arguments_list.parent::<JsCallArguments>())
+            //     .and_then(|arguments| arguments.parent::<Self>())
+            //     .is_some_and(|parent| parent.is_test_call_expression().unwrap_or(false))
+            {
+                return matches!(
+                    argument,
+                    Argument::ArrowFunctionExpression(_) | Argument::FunctionExpression(_)
+                );
+            }
+
+            if is_unit_test_set_up_callee(&callee) {
+                return argument.as_expression().is_some_and(is_angular_test_wrapper_expression);
+            }
+
+            false
+        }
+
+        // it("description", ..)
+        // it(Test.name, ..)
+        (Some(match_expression!(Argument)), Some(second), third)
+            if arguments.len() <= 3 && contains_a_test_pattern(callee) =>
+        {
+            // it('name', callback, duration)
+            if !matches!(third, None | Some(Argument::NumericLiteral(_))) {
+                return false;
+            }
+
+            if second.as_expression().is_some_and(is_angular_test_wrapper_expression) {
+                return true;
+            }
+
+            let (parameter_count, has_block_body) = match second {
+                Argument::FunctionExpression(function) => {
+                    (function.params.parameters_count(), true)
+                }
+                Argument::ArrowFunctionExpression(arrow) => {
+                    (arrow.params.parameters_count(), !arrow.expression)
+                }
+                _ => return false,
+            };
+
+            parameter_count == 2 || (parameter_count <= 1 && has_block_body)
+        }
+        _ => false,
+    }
+}
+
+/// Note: `inject` is used in AngularJS 1.x, `async` and `fakeAsync` in
+/// Angular 2+, although `async` is deprecated and replaced by `waitForAsync`
+/// since Angular 12.
+///
+/// example: https://docs.angularjs.org/guide/unit-testing#using-beforeall-
+///
+/// @param {CallExpression} node
+/// @returns {boolean}
+///
+fn is_angular_test_wrapper_expression(expression: &Expression) -> bool {
+    matches!(expression, Expression::CallExpression(call) if is_angular_test_wrapper(call))
+}
+
+fn is_angular_test_wrapper(call: &CallExpression) -> bool {
+    matches!(&call.callee,
+        Expression::Identifier(ident) if
+        matches!(ident.name.as_str(), "async" | "inject" | "fakeAsync" | "waitForAsync")
+    )
+}
+
+/// Tests if the callee is a `beforeEach`, `beforeAll`, `afterEach` or `afterAll` identifier
+/// that is commonly used in test frameworks.
+fn is_unit_test_set_up_callee(callee: &Expression) -> bool {
+    matches!(callee, Expression::Identifier(ident) if {
+        matches!(ident.name.as_str(), "beforeEach" | "beforeAll" | "afterEach" | "afterAll")
+    })
+}
+
+/// Iterator that returns the callee names in "top down order".
+///
+/// # Examples
+///
+/// ```javascript
+/// it.only() -> [`only`, `it`]
+/// ```
+///
+/// Same as https://github.com/biomejs/biome/blob/4a5ef84930344ae54f3877da36888a954711f4a6/crates/biome_js_syntax/src/expr_ext.rs#L1402-L1438 does
+pub fn callee_name_iterator<'a, 'b>(expr: &'b Expression<'a>) -> impl Iterator<Item = &'b str> {
+    let mut current = expr;
+    std::iter::from_fn(move || match current {
+        Expression::Identifier(ident) => Some(ident.name.as_str()),
+        Expression::StaticMemberExpression(static_member) => {
+            current = &static_member.object;
+            Some(static_member.property.name.as_str())
+        }
+        _ => None,
+    })
+}
+
+/// This function checks if a call expressions has one of the following members:
+/// - `it`
+/// - `it.only`
+/// - `it.skip`
+/// - `describe`
+/// - `describe.only`
+/// - `describe.skip`
+/// - `test`
+/// - `test.only`
+/// - `test.skip`
+/// - `test.step`
+/// - `test.describe`
+/// - `test.describe.only`
+/// - `test.describe.parallel`
+/// - `test.describe.parallel.only`
+/// - `test.describe.serial`
+/// - `test.describe.serial.only`
+/// - `skip`
+/// - `xit`
+/// - `xdescribe`
+/// - `xtest`
+/// - `fit`
+/// - `fdescribe`
+/// - `ftest`
+/// - `Deno.test`
+///
+/// Based on this [article]
+///
+/// [article]: https://craftinginterpreters.com/scanning-on-demand.html#tries-and-state-machines
+pub fn contains_a_test_pattern<'a>(expr: &Expression<'a>) -> bool {
+    let mut names = callee_name_iterator(expr);
+
+    match names.next() {
+        Some("it" | "describe" | "Deno") => match names.next() {
+            None => true,
+            Some("only" | "skip" | "test") => names.next().is_none(),
+            _ => false,
+        },
+        Some("test") => match names.next() {
+            None => true,
+            Some("only" | "skip" | "step") => names.next().is_none(),
+            Some("describe") => match names.next() {
+                None => true,
+                Some("only") => names.next().is_none(),
+                Some("parallel" | "serial") => match names.next() {
+                    None => true,
+                    Some("only") => names.next().is_none(),
+                    _ => false,
+                },
+                _ => false,
+            },
+            _ => false,
+        },
+        Some("skip" | "xit" | "xdescribe" | "xtest" | "fit" | "fdescribe" | "ftest") => true,
         _ => false,
     }
 }

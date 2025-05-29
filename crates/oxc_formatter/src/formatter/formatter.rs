@@ -63,6 +63,11 @@ impl<'buf, 'ast> Formatter<'buf, 'ast> {
     }
 
     #[inline]
+    pub fn current_kind(&self) -> AstKind<'ast> {
+        self.state().stack.current()
+    }
+
+    #[inline]
     pub fn parent_kind(&self) -> AstKind<'ast> {
         self.state().stack.parent()
     }

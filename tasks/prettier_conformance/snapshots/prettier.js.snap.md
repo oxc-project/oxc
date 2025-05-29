@@ -1,4 +1,4 @@
-js compatibility: 285/699 (40.77%)
+js compatibility: 287/699 (41.06%)
 
 # Failed
 
@@ -67,7 +67,7 @@ js compatibility: 285/699 (40.77%)
 | js/binary-expressions/test.js | 💥 | 59.26% |
 | js/binary_math/parens.js | 💥 | 80.95% |
 | js/break-calls/parent.js | 💥 | 66.67% |
-| js/break-calls/react.js | 💥 | 66.01% |
+| js/break-calls/react.js | 💥 | 62.86% |
 | js/break-calls/reduce.js | 💥 | 77.78% |
 | js/call/first-argument-expansion/expression-2nd-arg.js | 💥 | 50.00% |
 | js/call/first-argument-expansion/issue-13237.js | 💥 | 27.78% |
@@ -162,7 +162,7 @@ js compatibility: 285/699 (40.77%)
 | js/comments-closure-typecast/satisfies.js | 💥 | 33.33% |
 | js/comments-closure-typecast/superclass.js | 💥 | 0.00% |
 | js/comments-closure-typecast/ways-to-specify-type.js | 💥 | 15.38% |
-| js/conditional/comments.js | 💥💥 | 24.10% |
+| js/conditional/comments.js | 💥💥 | 24.24% |
 | js/conditional/new-ternary-examples.js | 💥💥 | 19.62% |
 | js/conditional/new-ternary-spec.js | 💥💥 | 38.59% |
 | js/conditional/no-confusing-arrow.js | 💥💥 | 66.67% |
@@ -214,8 +214,7 @@ js compatibility: 285/699 (40.77%)
 | js/functional-composition/lodash_flow_right.js | 💥 | 68.42% |
 | js/functional-composition/pipe-function-calls-with-comments.js | 💥 | 77.08% |
 | js/functional-composition/pipe-function-calls.js | 💥 | 61.11% |
-| js/functional-composition/ramda_compose.js | 💥 | 78.79% |
-| js/functional-composition/redux_connect.js | 💥 | 0.00% |
+| js/functional-composition/ramda_compose.js | 💥 | 86.00% |
 | js/functional-composition/reselect_createselector.js | 💥 | 63.64% |
 | js/functional-composition/rxjs_pipe.js | 💥 | 38.46% |
 | js/generator/anonymous.js | 💥 | 91.43% |
@@ -307,9 +306,8 @@ js compatibility: 285/699 (40.77%)
 | js/quote-props/objects.js | 💥💥💥💥 | 84.31% |
 | js/quote-props/with_numbers.js | 💥💥✨✨ | 46.43% |
 | js/quotes/objects.js | 💥💥 | 80.00% |
-| js/require/require.js | 💥 | 61.76% |
+| js/require/require.js | 💥 | 90.67% |
 | js/require-amd/named-amd-module.js | 💥 | 0.00% |
-| js/require-amd/require.js | 💥 | 2.17% |
 | js/rest/trailing-commas.js | 💥 | 86.21% |
 | js/return/binaryish.js | 💥 | 25.00% |
 | js/return/comment.js | 💥 | 52.94% |
@@ -348,14 +346,14 @@ js compatibility: 285/699 (40.77%)
 | js/ternaries/parenthesis.js | 💥💥💥💥💥💥💥💥 | 21.29% |
 | js/ternaries/test.js | 💥💥💥💥💥💥💥💥 | 15.11% |
 | js/ternaries/parenthesis/await-expression.js | 💥💥 | 0.00% |
-| js/test-declarations/angular_async.js | 💥💥 | 44.44% |
-| js/test-declarations/angular_fakeAsync.js | 💥💥 | 44.07% |
-| js/test-declarations/angular_waitForAsync.js | 💥💥 | 44.07% |
-| js/test-declarations/angularjs_inject.js | 💥💥 | 44.07% |
+| js/test-declarations/angular_async.js | 💥💥 | 55.74% |
+| js/test-declarations/angular_fakeAsync.js | 💥💥 | 59.26% |
+| js/test-declarations/angular_waitForAsync.js | 💥💥 | 59.26% |
+| js/test-declarations/angularjs_inject.js | 💥💥 | 56.14% |
 | js/test-declarations/jest-each-template-string.js | 💥💥 | 27.78% |
 | js/test-declarations/jest-each.js | 💥💥 | 63.91% |
 | js/test-declarations/optional.js | 💥✨ | 37.50% |
-| js/test-declarations/test_declarations.js | 💥💥 | 40.38% |
+| js/test-declarations/test_declarations.js | 💥💥 | 47.64% |
 | js/throw_statement/binaryish.js | 💥 | 25.00% |
 | js/throw_statement/comment.js | 💥 | 25.00% |
 | js/trailing-comma/dynamic-import.js | 💥💥💥 | 0.00% |
