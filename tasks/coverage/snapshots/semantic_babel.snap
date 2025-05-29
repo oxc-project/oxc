@@ -2,7 +2,7 @@ commit: 1d4546bc
 
 semantic_babel Summary:
 AST Parsed     : 2362/2362 (100.00%)
-Positive Passed: 1945/2362 (82.35%)
+Positive Passed: 1946/2362 (82.39%)
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/annex-b/enabled/3.3-function-in-if-body/input.js
 Symbol scope ID mismatch for "f":
 after transform: SymbolId(0): ScopeId(4294967294)
@@ -1015,11 +1015,6 @@ rebuilt        : ScopeId(0): []
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/import/import-default-and-named-id-type/input.ts
 Bindings mismatch:
 after transform: ScopeId(0): ["bar", "type"]
-rebuilt        : ScopeId(0): []
-
-semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/import/import-default-id-type/input.ts
-Bindings mismatch:
-after transform: ScopeId(0): ["type"]
 rebuilt        : ScopeId(0): []
 
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/import/import-named/input.ts
