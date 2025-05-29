@@ -516,8 +516,8 @@ impl<'a> ParserImpl<'a> {
         definite: bool,
         modifiers: &Modifiers,
     ) -> ClassElement<'a> {
-        let type_annotation = if self.is_ts { self.parse_ts_type_annotation() } else { None };
         let decorators = self.consume_decorators();
+        let type_annotation = if self.is_ts { self.parse_ts_type_annotation() } else { None };
         // Initializer[+In, ?Yield, ?Await]opt
         let initializer = self
             .eat(Kind::Eq)
