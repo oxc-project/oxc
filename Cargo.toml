@@ -238,6 +238,11 @@ ignored = ["napi", "oxc_transform_napi", "oxc_parser_napi", "prettyplease", "laz
 # and we don't rely on it for debugging that much.
 debug = false
 
+[profile.test]
+# Disabling debug info speeds up local and CI builds,
+# and we don't rely on it for debugging that much.
+debug = false
+
 [profile.dev.package]
 # Compile macros with some optimizations to make consuming crates build faster
 oxc_macros.opt-level = 1
