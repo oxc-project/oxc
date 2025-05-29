@@ -14,11 +14,11 @@ use tower_lsp_server::{
 use crate::{
     ConcurrentHashMap, Options, Run,
     code_actions::{
-        apply_all_fix_code_action, apply_fix_code_action, ignore_this_line_code_action,
+        apply_all_fix_code_action, apply_fix_code_actions, ignore_this_line_code_action,
         ignore_this_rule_code_action,
     },
     linter::{
-        error_with_position::DiagnosticReport,
+        error_with_position::{DiagnosticReport, PossibleFixContent},
         server_linter::{ServerLinter, normalize_path},
     },
 };
@@ -228,8 +228,9 @@ impl WorkspaceWorker {
         let mut code_actions_vec: Vec<CodeActionOrCommand> = vec![];
 
         for report in reports {
-            if let Some(fix_action) = apply_fix_code_action(report, uri) {
-                code_actions_vec.push(CodeActionOrCommand::CodeAction(fix_action));
+            if let Some(fix_actions) = apply_fix_code_actions(report, uri) {
+                code_actions_vec
+                    .extend(fix_actions.into_iter().map(CodeActionOrCommand::CodeAction));
             }
 
             code_actions_vec
@@ -242,6 +243,7 @@ impl WorkspaceWorker {
         code_actions_vec
     }
 
+    /// This function is used for executing the `oxc.fixAll` command
     pub async fn get_diagnostic_text_edits(&self, uri: &Uri) -> Vec<TextEdit> {
         let report_map_ref = self.diagnostics_report_map.pin_owned();
         let value = match report_map_ref.get(&uri.to_string()) {
@@ -258,7 +260,15 @@ impl WorkspaceWorker {
         let mut text_edits = vec![];
 
         for report in value {
-            if let Some(fixed_content) = &report.fixed_content {
+            let fix = match &report.fixed_content {
+                PossibleFixContent::None => None,
+                PossibleFixContent::Single(fixed_content) => Some(fixed_content),
+                // For multiple fixes, we take the first one as a representative fix.
+                // Applying all possible fixes at once is not possible in this context.
+                PossibleFixContent::Multiple(multi) => multi.first(),
+            };
+
+            if let Some(fixed_content) = &fix {
                 text_edits.push(TextEdit {
                     range: fixed_content.range,
                     new_text: fixed_content.code.clone(),

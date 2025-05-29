@@ -25,4 +25,4 @@ related_information[0].location.range: Range { start: Position { line: 0, charac
 severity: Some(Error)
 source: Some("oxc")
 tags: None
-fixed: Some(FixedContent { message: Some("Replace `\\/` with `/`."), code: "/", range: Range { start: Position { line: 0, character: 16 }, end: Position { line: 0, character: 18 } } })
+fixed: Single(FixedContent { message: Some("Replace `\\/` with `/`."), code: "/", range: Range { start: Position { line: 0, character: 16 }, end: Position { line: 0, character: 18 } } })

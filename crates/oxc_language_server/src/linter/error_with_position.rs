@@ -1,6 +1,6 @@
 use std::{borrow::Cow, str::FromStr};
 
-use oxc_linter::MessageWithPosition;
+use oxc_linter::{FixWithPosition, MessageWithPosition, PossibleFixesWithPosition};
 use tower_lsp_server::lsp_types::{
     self, CodeDescription, DiagnosticRelatedInformation, NumberOrString, Position, Range, Uri,
 };
@@ -14,7 +14,7 @@ const LSP_MAX_INT: u32 = 2u32.pow(31) - 1;
 #[derive(Debug, Clone)]
 pub struct DiagnosticReport {
     pub diagnostic: lsp_types::Diagnostic,
-    pub fixed_content: Option<FixedContent>,
+    pub fixed_content: PossibleFixContent,
 }
 
 #[derive(Debug, Clone)]
@@ -22,6 +22,13 @@ pub struct FixedContent {
     pub message: Option<String>,
     pub code: String,
     pub range: Range,
+}
+
+#[derive(Debug, Clone)]
+pub enum PossibleFixContent {
+    None,
+    Single(FixedContent),
+    Multiple(Vec<FixedContent>),
 }
 
 fn cmp_range(first: &Range, other: &Range) -> std::cmp::Ordering {
@@ -101,25 +108,31 @@ fn message_with_position_to_lsp_diagnostic(
     }
 }
 
+fn fix_with_position_to_fix_content(fix: &FixWithPosition<'_>) -> FixedContent {
+    FixedContent {
+        message: fix.span.message().map(std::string::ToString::to_string),
+        code: fix.content.to_string(),
+        range: Range {
+            start: Position { line: fix.span.start().line, character: fix.span.start().character },
+            end: Position { line: fix.span.end().line, character: fix.span.end().character },
+        },
+    }
+}
+
 pub fn message_with_position_to_lsp_diagnostic_report(
     message: &MessageWithPosition<'_>,
     uri: &Uri,
 ) -> DiagnosticReport {
     DiagnosticReport {
         diagnostic: message_with_position_to_lsp_diagnostic(message, uri),
-        fixed_content: message.fix.as_ref().map(|infos| FixedContent {
-            message: infos.span.message().map(std::string::ToString::to_string),
-            code: infos.content.to_string(),
-            range: Range {
-                start: Position {
-                    line: infos.span.start().line,
-                    character: infos.span.start().character,
-                },
-                end: Position {
-                    line: infos.span.end().line,
-                    character: infos.span.end().character,
-                },
-            },
-        }),
+        fixed_content: match &message.fixes {
+            PossibleFixesWithPosition::None => PossibleFixContent::None,
+            PossibleFixesWithPosition::Single(fix) => {
+                PossibleFixContent::Single(fix_with_position_to_fix_content(fix))
+            }
+            PossibleFixesWithPosition::Multiple(fixes) => PossibleFixContent::Multiple(
+                fixes.iter().map(fix_with_position_to_fix_content).collect(),
+            ),
+        },
     }
 }
