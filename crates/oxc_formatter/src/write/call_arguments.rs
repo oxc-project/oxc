@@ -48,7 +48,7 @@ impl<'a> Format<'a> for Vec<'a, Argument<'a>> {
         let (is_commonjs_or_amd_call, is_test_call) =
             call_expression.as_ref().map_or((false, false), |call| {
                 (
-                    is_commonjs_or_amd_call(self.as_slice(), call, &f.parent_stack()),
+                    is_commonjs_or_amd_call(self.as_slice(), call, f.parent_stack()),
                     is_test_call_expression(call),
                 )
             });
@@ -241,16 +241,16 @@ impl<'a> FormatCallArgument<'a, '_> {
     /// Returns the number of leading lines before the argument's node
     fn leading_lines(&self) -> usize {
         match self {
-            Self::Default { leading_lines, .. } => *leading_lines,
-            Self::Inspected { leading_lines, .. } => *leading_lines,
+            Self::Inspected { leading_lines, .. } | Self::Default { leading_lines, .. } => {
+                *leading_lines
+            }
         }
     }
 
     /// Returns the [`separated element`](AstSeparatedElement) of this argument.
     fn element(&self) -> &Argument<'a> {
         match self {
-            Self::Default { element, .. } => element,
-            Self::Inspected { element, .. } => element,
+            Self::Inspected { element, .. } | Self::Default { element, .. } => element,
         }
     }
 }
@@ -1037,7 +1037,7 @@ pub fn is_test_call_expression(call: &CallExpression<'_>) -> bool {
 
     match (args.next(), args.next(), args.next()) {
         (Some(argument), None, None) if arguments.len() == 1 => {
-            if is_angular_test_wrapper(&call)
+            if is_angular_test_wrapper(call)
             // && self
             //     .parent::<JsCallArgumentList>()
             //     .and_then(|arguments_list| arguments_list.parent::<JsCallArguments>())
@@ -1050,7 +1050,7 @@ pub fn is_test_call_expression(call: &CallExpression<'_>) -> bool {
                 );
             }
 
-            if is_unit_test_set_up_callee(&callee) {
+            if is_unit_test_set_up_callee(callee) {
                 return argument.as_expression().is_some_and(is_angular_test_wrapper_expression);
             }
 
@@ -1124,7 +1124,7 @@ fn is_unit_test_set_up_callee(callee: &Expression) -> bool {
 /// ```
 ///
 /// Same as https://github.com/biomejs/biome/blob/4a5ef84930344ae54f3877da36888a954711f4a6/crates/biome_js_syntax/src/expr_ext.rs#L1402-L1438 does
-pub fn callee_name_iterator<'a, 'b>(expr: &'b Expression<'a>) -> impl Iterator<Item = &'b str> {
+pub fn callee_name_iterator<'b>(expr: &'b Expression<'_>) -> impl Iterator<Item = &'b str> {
     let mut current = expr;
     std::iter::from_fn(move || match current {
         Expression::Identifier(ident) => Some(ident.name.as_str()),
@@ -1165,7 +1165,7 @@ pub fn callee_name_iterator<'a, 'b>(expr: &'b Expression<'a>) -> impl Iterator<I
 /// Based on this [article]
 ///
 /// [article]: https://craftinginterpreters.com/scanning-on-demand.html#tries-and-state-machines
-pub fn contains_a_test_pattern<'a>(expr: &Expression<'a>) -> bool {
+pub fn contains_a_test_pattern(expr: &Expression<'_>) -> bool {
     let mut names = callee_name_iterator(expr);
 
     match names.next() {
