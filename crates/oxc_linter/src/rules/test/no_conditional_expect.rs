@@ -1,3 +1,5 @@
+use std::marker::PhantomData;
+
 use oxc_ast::AstKind;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -8,6 +10,7 @@ use rustc_hash::FxHashSet;
 use crate::{
     context::LintContext,
     rule::Rule,
+    rules::TestFramework,
     utils::{
         JestFnKind, JestGeneralFnKind, PossibleJestNode, is_type_of_jest_fn_call,
         parse_expect_jest_fn_call,
@@ -20,8 +23,15 @@ fn no_conditional_expect_diagnostic(span: Span) -> OxcDiagnostic {
         .with_label(span)
 }
 
-#[derive(Debug, Default, Clone)]
-pub struct NoConditionalExpect;
+#[derive(Debug, Clone)]
+
+pub struct NoConditionalExpect<F: TestFramework>(PhantomData<F>);
+
+impl<F: TestFramework> Default for NoConditionalExpect<F> {
+    fn default() -> Self {
+        Self(PhantomData)
+    }
+}
 
 declare_oxc_lint!(
     /// ### What it does
@@ -94,7 +104,7 @@ declare_oxc_lint!(
     /// });
     /// ```
     NoConditionalExpect,
-    jest,
+    test,
     correctness
 );
 
@@ -102,7 +112,7 @@ declare_oxc_lint!(
 #[derive(Debug, Clone, Copy)]
 struct InConditional(bool);
 
-impl Rule for NoConditionalExpect {
+impl<F: TestFramework> Rule for NoConditionalExpect<F> {
     fn run_on_jest_node<'a, 'c>(
         &self,
         possible_jest_node: &PossibleJestNode<'a, 'c>,
@@ -201,9 +211,11 @@ fn check_parents<'a>(
 
 #[test]
 fn test() {
+    use crate::rules::{TestFrameworkJest, TestFrameworkVitest};
+
     use crate::tester::Tester;
 
-    let mut pass = vec![
+    let pass = vec![
         (
             "
                 it('foo', () => {
@@ -477,7 +489,7 @@ fn test() {
         ),
     ];
 
-    let mut fail = vec![
+    let fail = vec![
         (
             "
                 it('foo', () => {
@@ -1030,11 +1042,21 @@ fn test() {
         ",
     ];
 
-    pass.extend(pass_vitest.into_iter().map(|x| (x, None)));
-    fail.extend(fail_vitest.into_iter().map(|x| (x, None)));
+    Tester::new(
+        NoConditionalExpect::<TestFrameworkJest>::NAME,
+        NoConditionalExpect::<TestFrameworkJest>::PLUGIN,
+        pass,
+        fail,
+    )
+    .with_jest_plugin(true)
+    .test_and_snapshot();
 
-    Tester::new(NoConditionalExpect::NAME, NoConditionalExpect::PLUGIN, pass, fail)
-        .with_jest_plugin(true)
-        .with_vitest_plugin(true)
-        .test_and_snapshot();
+    Tester::new(
+        NoConditionalExpect::<TestFrameworkVitest>::NAME,
+        NoConditionalExpect::<TestFrameworkVitest>::PLUGIN,
+        pass_vitest,
+        fail_vitest,
+    )
+    .with_vitest_plugin(true)
+    .test_and_snapshot();
 }

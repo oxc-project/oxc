@@ -1,7 +1,7 @@
 use convert_case::{Case, Casing};
 use itertools::Itertools as _;
 use proc_macro::TokenStream;
-use quote::quote;
+use quote::{format_ident, quote};
 use syn::{
     Result,
     parse::{Parse, ParseStream},
@@ -52,29 +52,197 @@ impl Parse for AllLintRulesMeta {
 pub fn declare_all_lint_rules(metadata: AllLintRulesMeta) -> TokenStream {
     let AllLintRulesMeta { rules } = metadata;
 
-    let mut use_stmts = Vec::with_capacity(rules.len());
-    let mut struct_names = Vec::with_capacity(rules.len());
-    let mut struct_rule_names = Vec::with_capacity(rules.len());
-    let mut plugin_names = Vec::with_capacity(rules.len());
-    let mut ids = Vec::with_capacity(rules.len());
+    let mut use_stmts = Vec::new();
+    let mut enum_variants = Vec::new();
+    let mut enum_id_matches = Vec::new();
+    let mut enum_name_matches = Vec::new();
+    let mut enum_category_matches = Vec::new();
+    let mut enum_fix_matches = Vec::new();
+    let mut enum_doc_matches = Vec::new();
+    let mut enum_schema_matches = Vec::new();
+    let mut enum_plugin_matches = Vec::new();
+    let mut enum_read_json_matches = Vec::new();
+    let mut enum_run_matches = Vec::new();
+    let mut enum_run_symbol_matches = Vec::new();
+    let mut enum_run_once_matches = Vec::new();
+    let mut enum_run_jest_matches = Vec::new();
+    let mut enum_should_run_matches = Vec::new();
+    let mut static_rules = Vec::new();
 
-    for (i, rule) in rules.iter().enumerate() {
-        use_stmts.push(&rule.path);
-        struct_names.push(&rule.enum_name);
-        struct_rule_names.push(&rule.rule_name);
-        plugin_names.push(
-            rule.path
-                .segments
-                .iter()
-                .take(rule.path.segments.len() - 1)
-                .map(|s| format!("{}", s.ident))
-                .join("/"),
-        );
-        ids.push(i);
+    let mut id_counter: usize = 0;
+
+    for rule in &rules {
+        let plugin_name = rule
+            .path
+            .segments
+            .iter()
+            .take(rule.path.segments.len() - 1)
+            .map(|s| format!("{}", s.ident))
+            .join("/");
+
+        if plugin_name == "test" {
+            // Handle test rules with const generics
+            let rule_path = &rule.path;
+            let rule_rule_name = &rule.rule_name;
+            let rule_enum_name = &rule.enum_name;
+
+            // Add use statement for the base rule
+            let struct_name = &rule.enum_name;
+            use_stmts.push(quote! {
+                pub use self::#rule_path::#rule_rule_name as #struct_name;
+            });
+
+            // Create variants for both Jest and Vitest
+            for (framework, framework_str) in [("Jest", "jest"), ("Vitest", "vitest")] {
+                let variant_name = format_ident!("{}{}", framework, rule_enum_name);
+                let framework_type = format_ident!("TestFramework{}", framework); // "Jest" -> Jest
+                let struct_type = quote! { #rule_enum_name<#framework_type> };
+                //let struct_type = quote! { #rule_enum_name<#framework_str> };
+                let id = id_counter;
+                id_counter += 1;
+
+                // Add enum variant
+                enum_variants.push(quote! {
+                    #variant_name(#struct_type)
+                });
+
+                // Add match arms for all methods
+                enum_id_matches.push(quote! {
+                    Self::#variant_name(_) => #id
+                });
+
+                enum_name_matches.push(quote! {
+                    Self::#variant_name(_) => <#struct_type>::NAME
+                });
+
+                enum_category_matches.push(quote! {
+                    Self::#variant_name(_) => <#struct_type>::CATEGORY
+                });
+
+                enum_fix_matches.push(quote! {
+                    Self::#variant_name(_) => <#struct_type>::FIX
+                });
+
+                enum_doc_matches.push(quote! {
+                    Self::#variant_name(_) => <#struct_type>::documentation()
+                });
+
+                enum_schema_matches.push(quote! {
+                    Self::#variant_name(_) => <#struct_type>::config_schema(generator).or_else(|| <#struct_type>::schema(generator))
+                });
+
+                enum_plugin_matches.push(quote! {
+                    Self::#variant_name(_) => #framework_str
+                });
+
+                enum_read_json_matches.push(quote! {
+                    Self::#variant_name(_) => Self::#variant_name(<#struct_type>::from_configuration(value))
+                });
+
+                enum_run_matches.push(quote! {
+                    Self::#variant_name(rule) => rule.run(node, ctx)
+                });
+
+                enum_run_symbol_matches.push(quote! {
+                    Self::#variant_name(rule) => rule.run_on_symbol(symbol_id, ctx)
+                });
+
+                enum_run_once_matches.push(quote! {
+                    Self::#variant_name(rule) => rule.run_once(ctx)
+                });
+
+                enum_run_jest_matches.push(quote! {
+                    Self::#variant_name(rule) => rule.run_on_jest_node(jest_node, ctx)
+                });
+
+                enum_should_run_matches.push(quote! {
+                    Self::#variant_name(rule) => rule.should_run(ctx)
+                });
+
+                // Add to static RULES
+                static_rules.push(quote! {
+                    RuleEnum::#variant_name(<#struct_type>::default())
+                });
+            }
+        } else {
+            // Handle regular rules
+            let rule_path = &rule.path;
+            let rule_rule_name = &rule.rule_name;
+            let struct_name = &rule.enum_name;
+            let id = id_counter;
+            id_counter += 1;
+
+            use_stmts.push(quote! {
+                pub use self::#rule_path::#rule_rule_name as #struct_name;
+            });
+
+            // Add enum variant
+            enum_variants.push(quote! {
+                #struct_name(#struct_name)
+            });
+
+            // Add match arms
+            enum_id_matches.push(quote! {
+                Self::#struct_name(_) => #id
+            });
+
+            enum_name_matches.push(quote! {
+                Self::#struct_name(_) => #struct_name::NAME
+            });
+
+            enum_category_matches.push(quote! {
+                Self::#struct_name(_) => #struct_name::CATEGORY
+            });
+
+            enum_fix_matches.push(quote! {
+                Self::#struct_name(_) => #struct_name::FIX
+            });
+
+            enum_doc_matches.push(quote! {
+                Self::#struct_name(_) => #struct_name::documentation()
+            });
+
+            enum_schema_matches.push(quote! {
+                Self::#struct_name(_) => #struct_name::config_schema(generator).or_else(|| #struct_name::schema(generator))
+            });
+
+            enum_plugin_matches.push(quote! {
+                Self::#struct_name(_) => #plugin_name
+            });
+
+            enum_read_json_matches.push(quote! {
+                Self::#struct_name(_) => Self::#struct_name(#struct_name::from_configuration(value))
+            });
+
+            enum_run_matches.push(quote! {
+                Self::#struct_name(rule) => rule.run(node, ctx)
+            });
+
+            enum_run_symbol_matches.push(quote! {
+                Self::#struct_name(rule) => rule.run_on_symbol(symbol_id, ctx)
+            });
+
+            enum_run_once_matches.push(quote! {
+                Self::#struct_name(rule) => rule.run_once(ctx)
+            });
+
+            enum_run_jest_matches.push(quote! {
+                Self::#struct_name(rule) => rule.run_on_jest_node(jest_node, ctx)
+            });
+
+            enum_should_run_matches.push(quote! {
+                Self::#struct_name(rule) => rule.should_run(ctx)
+            });
+
+            // Add to static RULES
+            static_rules.push(quote! {
+                RuleEnum::#struct_name(#struct_name::default())
+            });
+        }
     }
 
     let expanded = quote! {
-        #(pub use self::#use_stmts::#struct_rule_names as #struct_names;)*
+        #(#use_stmts)*
 
         use crate::{
             context::{ContextHost, LintContext},
@@ -87,78 +255,76 @@ pub fn declare_all_lint_rules(metadata: AllLintRulesMeta) -> TokenStream {
         #[derive(Debug, Clone)]
         #[expect(clippy::enum_variant_names)]
         pub enum RuleEnum {
-            #(#struct_names(#struct_names)),*
+            #(#enum_variants),*
         }
 
         impl RuleEnum {
             pub fn id(&self) -> usize {
                 match self {
-                    #(Self::#struct_names(_) => #ids),*
+                    #(#enum_id_matches),*
                 }
             }
 
             pub fn name(&self) -> &'static str {
                 match self {
-                    #(Self::#struct_names(_) => #struct_names::NAME),*
+                    #(#enum_name_matches),*
                 }
             }
 
             pub fn category(&self) -> RuleCategory {
                 match self {
-                    #(Self::#struct_names(_) => #struct_names::CATEGORY),*
+                    #(#enum_category_matches),*
                 }
             }
 
             /// This [`Rule`]'s auto-fix capabilities.
             pub fn fix(&self) -> RuleFixMeta {
                 match self {
-                    #(Self::#struct_names(_) => #struct_names::FIX),*
+                    #(#enum_fix_matches),*
                 }
             }
 
             #[cfg(feature = "ruledocs")]
             pub fn documentation(&self) -> Option<&'static str> {
                 match self {
-                    #(Self::#struct_names(_) => #struct_names::documentation()),*
+                    #(#enum_doc_matches),*
                 }
             }
 
             #[cfg(feature = "ruledocs")]
             pub fn schema(&self, generator: &mut schemars::SchemaGenerator) -> Option<schemars::schema::Schema> {
                 match self {
-                    #(Self::#struct_names(_) => #struct_names::config_schema(generator).or_else(||#struct_names::schema(generator))),*
+                    #(#enum_schema_matches),*
                 }
             }
 
             pub fn plugin_name(&self) -> &'static str {
                 match self {
-                    #(Self::#struct_names(_) => #plugin_names),*
+                    #(#enum_plugin_matches),*
                 }
             }
 
             pub fn read_json(&self, value: serde_json::Value) -> Self {
                 match self {
-                    #(Self::#struct_names(_) => Self::#struct_names(
-                        #struct_names::from_configuration(value),
-                    )),*
+                    #(#enum_read_json_matches),*
                 }
             }
 
             pub(super) fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
                 match self {
-                    #(Self::#struct_names(rule) => rule.run(node, ctx)),*
+                    #(#enum_run_matches),*
                 }
             }
 
             pub(super) fn run_on_symbol<'a>(&self, symbol_id: SymbolId, ctx: &LintContext<'a>) {
                 match self {
-                    #(Self::#struct_names(rule) => rule.run_on_symbol(symbol_id, ctx)),*
+                    #(#enum_run_symbol_matches),*
                 }
             }
 
             pub(super) fn run_once<'a>(&self, ctx: &LintContext<'a>) {
                 match self {
-                    #(Self::#struct_names(rule) => rule.run_once(ctx)),*
+                    #(#enum_run_once_matches),*
                 }
             }
 
@@ -168,13 +334,13 @@ pub fn declare_all_lint_rules(metadata: AllLintRulesMeta) -> TokenStream {
                 ctx: &'c LintContext<'a>,
             ) {
                 match self {
-                    #(Self::#struct_names(rule) => rule.run_on_jest_node(jest_node, ctx)),*
+                    #(#enum_run_jest_matches),*
                 }
             }
 
             pub(super) fn should_run(&self, ctx: &ContextHost) -> bool {
                 match self {
-                    #(Self::#struct_names(rule) => rule.should_run(ctx)),*
+                    #(#enum_should_run_matches),*
                 }
             }
         }
@@ -207,7 +373,7 @@ pub fn declare_all_lint_rules(metadata: AllLintRulesMeta) -> TokenStream {
 
         lazy_static::lazy_static! {
             pub static ref RULES: Vec<RuleEnum> = vec![
-                #(RuleEnum::#struct_names(#struct_names::default())),*
+                #(#static_rules),*
             ];
         }
     };

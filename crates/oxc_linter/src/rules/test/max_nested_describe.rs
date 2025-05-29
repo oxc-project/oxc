@@ -1,3 +1,5 @@
+use std::marker::PhantomData;
+
 use oxc_ast::AstKind;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -7,6 +9,7 @@ use oxc_span::Span;
 use crate::{
     context::LintContext,
     rule::Rule,
+    rules::TestFramework,
     utils::{
         JestFnKind, JestGeneralFnKind, PossibleJestNode, collect_possible_jest_call_node,
         is_type_of_jest_fn_call,
@@ -20,13 +23,14 @@ fn exceeded_max_depth(current: usize, max: usize, span: Span) -> OxcDiagnostic {
 }
 
 #[derive(Debug, Clone)]
-pub struct MaxNestedDescribe {
+pub struct MaxNestedDescribe<F: TestFramework> {
+    framework: PhantomData<F>,
     pub max: usize,
 }
 
-impl Default for MaxNestedDescribe {
+impl<F: TestFramework> Default for MaxNestedDescribe<F> {
     fn default() -> Self {
-        Self { max: 5 }
+        Self { framework: PhantomData, max: 5 }
     }
 }
 
@@ -116,11 +120,11 @@ declare_oxc_lint!(
     /// });
     /// ```
     MaxNestedDescribe,
-    jest,
+    test,
     style,
 );
 
-impl Rule for MaxNestedDescribe {
+impl<F: TestFramework> Rule for MaxNestedDescribe<F> {
     fn from_configuration(value: serde_json::Value) -> Self {
         let max = value
             .get(0)
@@ -129,7 +133,7 @@ impl Rule for MaxNestedDescribe {
             .and_then(serde_json::Number::as_u64)
             .map_or(5, |v| usize::try_from(v).unwrap_or(5));
 
-        Self { max }
+        Self { framework: PhantomData, max }
     }
 
     fn run_once(&self, ctx: &LintContext) {
@@ -138,49 +142,44 @@ impl Rule for MaxNestedDescribe {
         possibles_jest_nodes.sort_by_key(|n| n.node.id());
 
         for possible_jest_node in &possibles_jest_nodes {
-            self.run(possible_jest_node, &mut describes_hooks_depth, ctx);
+            run(self.max, possible_jest_node, &mut describes_hooks_depth, ctx);
         }
     }
 }
 
-impl MaxNestedDescribe {
-    fn run<'a>(
-        &self,
-        possible_jest_node: &PossibleJestNode<'a, '_>,
-        describes_hooks_depth: &mut Vec<ScopeId>,
-        ctx: &LintContext<'a>,
-    ) {
-        let node = possible_jest_node.node;
-        let scope_id = node.scope_id();
-        let AstKind::CallExpression(call_expr) = node.kind() else {
-            return;
-        };
-        let is_describe_call = is_type_of_jest_fn_call(
-            call_expr,
-            possible_jest_node,
-            ctx,
-            &[JestFnKind::General(JestGeneralFnKind::Describe)],
-        );
+fn run<'a>(
+    max: usize,
+    possible_jest_node: &PossibleJestNode<'a, '_>,
+    describes_hooks_depth: &mut Vec<ScopeId>,
+    ctx: &LintContext<'a>,
+) {
+    let node = possible_jest_node.node;
+    let scope_id = node.scope_id();
+    let AstKind::CallExpression(call_expr) = node.kind() else {
+        return;
+    };
+    let is_describe_call = is_type_of_jest_fn_call(
+        call_expr,
+        possible_jest_node,
+        ctx,
+        &[JestFnKind::General(JestGeneralFnKind::Describe)],
+    );
 
-        if is_describe_call && !describes_hooks_depth.contains(&scope_id) {
-            describes_hooks_depth.push(scope_id);
-        }
+    if is_describe_call && !describes_hooks_depth.contains(&scope_id) {
+        describes_hooks_depth.push(scope_id);
+    }
 
-        if is_describe_call && describes_hooks_depth.len() > self.max {
-            ctx.diagnostic(exceeded_max_depth(
-                describes_hooks_depth.len(),
-                self.max,
-                call_expr.span,
-            ));
-        }
+    if is_describe_call && describes_hooks_depth.len() > max {
+        ctx.diagnostic(exceeded_max_depth(describes_hooks_depth.len(), max, call_expr.span));
     }
 }
 
 #[test]
 fn test() {
+    use crate::rules::{TestFrameworkJest, TestFrameworkVitest};
     use crate::tester::Tester;
 
-    let mut pass = vec![
+    let pass = vec![
         (
             "
                 describe('foo', function() {
@@ -286,7 +285,7 @@ fn test() {
         ),
     ];
 
-    let mut fail = vec![
+    let fail = vec![
         (
             "
                 describe('foo', function() {
@@ -478,10 +477,21 @@ fn test() {
         ),
     ];
 
-    pass.extend(pass_vitest);
-    fail.extend(fail_vitest);
+    Tester::new(
+        MaxNestedDescribe::<TestFrameworkJest>::NAME,
+        MaxNestedDescribe::<TestFrameworkJest>::PLUGIN,
+        pass,
+        fail,
+    )
+    .with_jest_plugin(true)
+    .test_and_snapshot();
 
-    Tester::new(MaxNestedDescribe::NAME, MaxNestedDescribe::PLUGIN, pass, fail)
-        .with_jest_plugin(true)
-        .test_and_snapshot();
+    Tester::new(
+        MaxNestedDescribe::<TestFrameworkVitest>::NAME,
+        MaxNestedDescribe::<TestFrameworkVitest>::PLUGIN,
+        pass_vitest,
+        fail_vitest,
+    )
+    .with_vitest_plugin(true)
+    .test_and_snapshot();
 }

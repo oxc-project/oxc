@@ -1,0 +1,40 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+  ⚠ eslint-plugin-vitest(no-hooks): Do not use setup or teardown hooks
+   ╭─[no_hooks.tsx:1:1]
+ 1 │ beforeAll(() => {})
+   · ─────────
+   ╰────
+
+  ⚠ eslint-plugin-vitest(no-hooks): Do not use setup or teardown hooks
+   ╭─[no_hooks.tsx:1:1]
+ 1 │ beforeEach(() => {})
+   · ──────────
+   ╰────
+
+  ⚠ eslint-plugin-vitest(no-hooks): Do not use setup or teardown hooks
+   ╭─[no_hooks.tsx:1:1]
+ 1 │ afterAll(() => {})
+   · ────────
+   ╰────
+
+  ⚠ eslint-plugin-vitest(no-hooks): Do not use setup or teardown hooks
+   ╭─[no_hooks.tsx:1:1]
+ 1 │ afterEach(() => {})
+   · ─────────
+   ╰────
+
+  ⚠ eslint-plugin-vitest(no-hooks): Do not use setup or teardown hooks
+   ╭─[no_hooks.tsx:1:1]
+ 1 │ beforeEach(() => {}); afterEach(() => { vi.resetModules() });
+   · ──────────
+   ╰────
+
+  ⚠ eslint-plugin-vitest(no-hooks): Do not use setup or teardown hooks
+   ╭─[no_hooks.tsx:4:8]
+ 3 │                 afterEach(() => {});
+ 4 │                 beforeEach(() => { vi.resetModules() });
+   ·                 ──────────
+ 5 │             
+   ╰────

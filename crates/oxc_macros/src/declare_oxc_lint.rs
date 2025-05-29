@@ -183,6 +183,31 @@ pub fn declare_oxc_lint(metadata: LintRuleMeta) -> TokenStream {
         }),
     };
 
+    if plugin == "test" {
+        let output = quote! {
+            #import_statement
+
+            macro_rules! impl_test_rule_meta {
+                ($framework:ty, $plugin_name:literal) => {
+                    impl RuleMeta for #name<$framework> {
+                        const NAME: &'static str = #canonical_name;
+                        const PLUGIN: &'static str = $plugin_name;
+                        const CATEGORY: RuleCategory = #category;
+
+                        #fix
+                        #docs
+                        #config_schema
+                    }
+                };
+            }
+
+            impl_test_rule_meta!(crate::rules::TestFrameworkJest, "jest");
+            impl_test_rule_meta!(crate::rules::TestFrameworkVitest, "vitest");
+        };
+
+        return TokenStream::from(output);
+    }
+
     let output = quote! {
         #import_statement
 

@@ -1,0 +1,30 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+  ⚠ eslint-plugin-vitest(max-nested-describe): Enforces a maximum depth to nested describe calls.
+    ╭─[max_nested_describe.tsx:7:37]
+  6 │                                     describe('another suite', () => {
+  7 │ ╭─▶                                     describe('another suite', () => {
+  8 │ │                                   
+  9 │ ╰─▶                                     })
+ 10 │                                     })
+    ╰────
+  help: Too many nested describe calls (6) - maximum allowed is 5
+
+  ⚠ eslint-plugin-vitest(max-nested-describe): Enforces a maximum depth to nested describe calls.
+    ╭─[max_nested_describe.tsx:7:37]
+  6 │                                     describe('another suite', () => {
+  7 │ ╭─▶                                     describe('another suite', () => {
+  8 │ │                                           it('skipped test', () => {
+  9 │ │                                               // Test skipped, as tests are running in Only mode
+ 10 │ │                                               assert.equal(Math.sqrt(4), 3)
+ 11 │ │                                           })
+ 12 │ │   
+ 13 │ │                                           it.only('test', () => {
+ 14 │ │                                               // Only this test (and others marked with only) are run
+ 15 │ │                                               assert.equal(Math.sqrt(4), 2)
+ 16 │ │                                           })
+ 17 │ ╰─▶                                     })
+ 18 │                                     })
+    ╰────
+  help: Too many nested describe calls (6) - maximum allowed is 5

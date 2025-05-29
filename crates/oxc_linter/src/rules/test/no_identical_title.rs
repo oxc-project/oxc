@@ -1,3 +1,5 @@
+use std::marker::PhantomData;
+
 use oxc_ast::{
     AstKind,
     ast::{Argument, CallExpression},
@@ -12,6 +14,7 @@ use crate::{
     AstNode,
     context::LintContext,
     rule::Rule,
+    rules::TestFramework,
     utils::{
         JestFnKind, JestGeneralFnKind, PossibleJestNode, collect_possible_jest_call_node,
         parse_general_jest_fn_call,
@@ -30,8 +33,14 @@ fn test_repeat(span: Span) -> OxcDiagnostic {
         .with_label(span)
 }
 
-#[derive(Debug, Default, Clone)]
-pub struct NoIdenticalTitle;
+#[derive(Debug, Clone)]
+pub struct NoIdenticalTitle<F: TestFramework>(PhantomData<F>);
+
+impl<F: TestFramework> Default for NoIdenticalTitle<F> {
+    fn default() -> Self {
+        Self(PhantomData)
+    }
+}
 
 declare_oxc_lint!(
     /// ### What it does
@@ -69,11 +78,11 @@ declare_oxc_lint!(
     /// }
     /// ```
     NoIdenticalTitle,
-    jest,
+    test,
     style
 );
 
-impl Rule for NoIdenticalTitle {
+impl<F: TestFramework> Rule for NoIdenticalTitle<F> {
     fn run_once(&self, ctx: &LintContext) {
         let possible_jest_nodes = collect_possible_jest_call_node(ctx);
         let mut title_to_span_mapping = FxHashMap::default();
@@ -170,9 +179,10 @@ fn get_closest_block(node: &AstNode, ctx: &LintContext) -> Option<NodeId> {
 
 #[test]
 fn test() {
+    use crate::rules::{TestFrameworkJest, TestFrameworkVitest};
     use crate::tester::Tester;
 
-    let mut pass = vec![
+    let pass = vec![
         ("it(); it();", None),
         ("describe(); describe();", None),
         ("describe('foo', () => {}); it('foo', () => {});", None),
@@ -374,7 +384,7 @@ fn test() {
         ),
     ];
 
-    let mut fail = vec![
+    let fail = vec![
         (
             "
               describe('foo', () => {
@@ -528,11 +538,21 @@ fn test() {
         ",
     ];
 
-    pass.extend(pass_vitest.into_iter().map(|x| (x, None)));
-    fail.extend(fail_vitest.into_iter().map(|x| (x, None)));
+    Tester::new(
+        NoIdenticalTitle::<TestFrameworkJest>::NAME,
+        NoIdenticalTitle::<TestFrameworkJest>::PLUGIN,
+        pass,
+        fail,
+    )
+    .with_jest_plugin(true)
+    .test_and_snapshot();
 
-    Tester::new(NoIdenticalTitle::NAME, NoIdenticalTitle::PLUGIN, pass, fail)
-        .with_jest_plugin(true)
-        .with_vitest_plugin(true)
-        .test_and_snapshot();
+    Tester::new(
+        NoIdenticalTitle::<TestFrameworkVitest>::NAME,
+        NoIdenticalTitle::<TestFrameworkVitest>::PLUGIN,
+        pass_vitest,
+        fail_vitest,
+    )
+    .with_vitest_plugin(true)
+    .test_and_snapshot();
 }

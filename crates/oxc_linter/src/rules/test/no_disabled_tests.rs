@@ -1,3 +1,5 @@
+use std::marker::PhantomData;
+
 use oxc_ast::{AstKind, ast::Expression};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -6,14 +8,21 @@ use oxc_span::{GetSpan, Span};
 use crate::{
     context::LintContext,
     rule::Rule,
+    rules::TestFramework,
     utils::{
         JestFnKind, JestGeneralFnKind, ParsedGeneralJestFnCall, PossibleJestNode,
         parse_general_jest_fn_call,
     },
 };
 
-#[derive(Debug, Default, Clone)]
-pub struct NoDisabledTests;
+#[derive(Debug, Clone)]
+pub struct NoDisabledTests<F: TestFramework>(PhantomData<F>);
+
+impl<F: TestFramework> Default for NoDisabledTests<F> {
+    fn default() -> Self {
+        Self(PhantomData)
+    }
+}
 
 declare_oxc_lint!(
     /// ### What it does
@@ -61,7 +70,7 @@ declare_oxc_lint!(
     /// }
     /// ```
     NoDisabledTests,
-    jest,
+    test,
     correctness
 );
 
@@ -91,7 +100,7 @@ impl Message {
     }
 }
 
-impl Rule for NoDisabledTests {
+impl<F: TestFramework> Rule for NoDisabledTests<F> {
     fn run_on_jest_node<'a, 'c>(
         &self,
         jest_node: &PossibleJestNode<'a, 'c>,
@@ -154,9 +163,10 @@ fn run<'a>(possible_jest_node: &PossibleJestNode<'a, '_>, ctx: &LintContext<'a>)
 
 #[test]
 fn test() {
+    use crate::rules::{TestFrameworkJest, TestFrameworkVitest};
     use crate::tester::Tester;
 
-    let mut pass = vec![
+    let pass = vec![
         ("describe('foo', function () {})", None),
         ("it('foo', function () {})", None),
         ("describe.only('foo', function () {})", None),
@@ -195,7 +205,7 @@ fn test() {
         ("import { test } from './test-utils'; test('something');", None),
     ];
 
-    let mut fail = vec![
+    let fail = vec![
         ("describe.skip('foo', function () {})", None),
         ("describe.skip.each([1, 2, 3])('%s', (a, b) => {});", None),
         ("xdescribe.each([1, 2, 3])('%s', (a, b) => {});", None),
@@ -272,11 +282,21 @@ fn test() {
         "#,
     ];
 
-    pass.extend(pass_vitest.into_iter().map(|x| (x, None)));
-    fail.extend(fail_vitest.into_iter().map(|x| (x, None)));
+    Tester::new(
+        NoDisabledTests::<TestFrameworkJest>::NAME,
+        NoDisabledTests::<TestFrameworkJest>::PLUGIN,
+        pass,
+        fail,
+    )
+    .with_jest_plugin(true)
+    .test_and_snapshot();
 
-    Tester::new(NoDisabledTests::NAME, NoDisabledTests::PLUGIN, pass, fail)
-        .with_jest_plugin(true)
-        .with_vitest_plugin(true)
-        .test_and_snapshot();
+    Tester::new(
+        NoDisabledTests::<TestFrameworkVitest>::NAME,
+        NoDisabledTests::<TestFrameworkVitest>::PLUGIN,
+        pass_vitest,
+        fail_vitest,
+    )
+    .with_vitest_plugin(true)
+    .test_and_snapshot();
 }

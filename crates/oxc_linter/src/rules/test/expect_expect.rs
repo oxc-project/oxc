@@ -1,3 +1,5 @@
+use std::marker::PhantomData;
+
 use cow_utils::CowUtils;
 use lazy_regex::Regex;
 use oxc_ast::{
@@ -13,6 +15,7 @@ use crate::{
     ast_util::get_declaration_of_variable,
     context::LintContext,
     rule::Rule,
+    rules::TestFramework,
     utils::{
         JestFnKind, JestGeneralFnKind, PossibleJestNode, get_node_name, is_type_of_jest_fn_call,
     },
@@ -24,8 +27,14 @@ fn expect_expect_diagnostic(span: Span) -> OxcDiagnostic {
         .with_label(span)
 }
 
-#[derive(Debug, Default, Clone)]
-pub struct ExpectExpect(Box<ExpectExpectConfig>);
+#[derive(Debug, Clone)]
+pub struct ExpectExpect<F: TestFramework>(PhantomData<F>, Box<ExpectExpectConfig>);
+
+impl<F: TestFramework> Default for ExpectExpect<F> {
+    fn default() -> Self {
+        Self(PhantomData, Box::default())
+    }
+}
 
 #[derive(Debug, Clone)]
 pub struct ExpectExpectConfig {
@@ -34,11 +43,11 @@ pub struct ExpectExpectConfig {
     additional_test_block_functions: Vec<CompactStr>,
 }
 
-impl std::ops::Deref for ExpectExpect {
+impl<F: TestFramework> std::ops::Deref for ExpectExpect<F> {
     type Target = ExpectExpectConfig;
 
     fn deref(&self) -> &Self::Target {
-        &self.0
+        &self.1
     }
 }
 
@@ -87,11 +96,11 @@ declare_oxc_lint!(
     /// }
     /// ```
     ExpectExpect,
-    jest,
+    test,
     correctness
 );
 
-impl Rule for ExpectExpect {
+impl<F: TestFramework> Rule for ExpectExpect<F> {
     fn from_configuration(value: serde_json::Value) -> Self {
         let default_assert_function_names_jest = vec!["expect".into()];
         let default_assert_function_names_vitest =
@@ -119,11 +128,14 @@ impl Rule for ExpectExpect {
             .map(|v| v.iter().filter_map(serde_json::Value::as_str).map(CompactStr::from).collect())
             .unwrap_or_default();
 
-        Self(Box::new(ExpectExpectConfig {
-            assert_function_names_jest,
-            assert_function_names_vitest,
-            additional_test_block_functions,
-        }))
+        Self(
+            PhantomData,
+            Box::new(ExpectExpectConfig {
+                assert_function_names_jest,
+                assert_function_names_vitest,
+                additional_test_block_functions,
+            }),
+        )
     }
 
     fn run_on_jest_node<'a, 'c>(
@@ -136,7 +148,7 @@ impl Rule for ExpectExpect {
 }
 
 fn run<'a>(
-    rule: &ExpectExpect,
+    rule: &ExpectExpectConfig,
     possible_jest_node: &PossibleJestNode<'a, '_>,
     ctx: &LintContext<'a>,
 ) {
@@ -317,9 +329,10 @@ fn convert_pattern(pattern: &str) -> CompactStr {
 
 #[test]
 fn test() {
+    use crate::rules::{TestFrameworkJest, TestFrameworkVitest};
     use crate::tester::Tester;
 
-    let mut pass = vec![
+    let pass = vec![
         ("it.todo('will test something eventually')", None),
         ("test.todo('will test something eventually')", None),
         ("['x']();", None),
@@ -468,7 +481,7 @@ fn test() {
         ),
     ];
 
-    let mut fail = vec![
+    let fail = vec![
         ("it(\"should fail\", () => {});", None),
         ("it(\"should fail\", myTest); function myTest() {}", None),
         ("test(\"should fail\", () => {});", None),
@@ -839,11 +852,21 @@ fn test() {
         // ),
     ];
 
-    pass.extend(pass_vitest);
-    fail.extend(fail_vitest);
+    Tester::new(
+        ExpectExpect::<TestFrameworkJest>::NAME,
+        ExpectExpect::<TestFrameworkJest>::PLUGIN,
+        pass,
+        fail,
+    )
+    .with_jest_plugin(true)
+    .test_and_snapshot();
 
-    Tester::new(ExpectExpect::NAME, ExpectExpect::PLUGIN, pass, fail)
-        .with_jest_plugin(true)
-        .with_vitest_plugin(true)
-        .test_and_snapshot();
+    Tester::new(
+        ExpectExpect::<TestFrameworkVitest>::NAME,
+        ExpectExpect::<TestFrameworkVitest>::PLUGIN,
+        pass_vitest,
+        fail_vitest,
+    )
+    .with_vitest_plugin(true)
+    .test_and_snapshot();
 }

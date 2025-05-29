@@ -1,3 +1,5 @@
+use std::marker::PhantomData;
+
 use oxc_ast::AstKind;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -6,6 +8,7 @@ use oxc_span::Span;
 use crate::{
     context::LintContext,
     rule::Rule,
+    rules::TestFramework,
     utils::{JestFnKind, PossibleJestNode, is_type_of_jest_fn_call},
 };
 
@@ -13,8 +16,14 @@ fn no_conditional_in_test(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Avoid having conditionals in tests.").with_label(span)
 }
 
-#[derive(Debug, Default, Clone)]
-pub struct NoConditionalInTest;
+#[derive(Debug, Clone)]
+pub struct NoConditionalInTest<F: TestFramework>(PhantomData<F>);
+
+impl<F: TestFramework> Default for NoConditionalInTest<F> {
+    fn default() -> Self {
+        Self(PhantomData)
+    }
+}
 
 declare_oxc_lint!(
     /// ### What it does
@@ -93,11 +102,11 @@ declare_oxc_lint!(
     /// });
     /// ```
     NoConditionalInTest,
-    jest,
+    test,
     pedantic,
 );
 
-impl Rule for NoConditionalInTest {
+impl<F: TestFramework> Rule for NoConditionalInTest<F> {
     fn run<'a>(&self, node: &oxc_semantic::AstNode<'a>, ctx: &LintContext<'a>) {
         if matches!(
             node.kind(),
@@ -135,6 +144,7 @@ impl Rule for NoConditionalInTest {
 
 #[test]
 fn test() {
+    use crate::rules::{TestFrameworkJest, TestFrameworkVitest};
     use crate::tester::Tester;
 
     let pass = vec![
@@ -645,8 +655,83 @@ fn test() {
 			      "#,
     ];
 
-    Tester::new(NoConditionalInTest::NAME, NoConditionalInTest::PLUGIN, pass, fail)
-        .with_jest_plugin(true)
-        .with_vitest_plugin(true)
-        .test_and_snapshot();
+    let pass_vitest = vec![
+        "const x = y ? 1 : 0",
+        "const foo = function (bar) {
+			     return foo ? bar : null;
+			      };
+			      it('foo', () => {
+			     foo();
+			      });",
+        // "it.concurrent('foo', () => {
+        // 	     switch('bar') {}
+        // 	      })",
+        "if (foo) {}",
+        "it('foo', () => {})",
+        r#"it("foo", function () {})"#,
+        "it('foo', () => {}); function myTest() { if ('bar') {} }",
+        "describe.each``('foo', () => {
+			     afterEach(() => {
+			       if ('bar') {}
+			     });
+			      })",
+        "const values = something.map((thing) => {
+			     if (thing.isFoo) {
+			       return thing.foo
+			     } else {
+			       return thing.bar;
+			     }
+			      });
+			   
+			      describe('valid', () => {
+			     it('still valid', () => {
+			       expect(values).toStrictEqual(['foo']);
+			     });
+			      });",
+    ];
+
+    let fail_vitest = vec![
+        "it('foo', function () {
+			      if('bar') {}
+			     });",
+        " describe('foo', () => {
+			      it('bar', () => {
+			        if ('bar') {}
+			      })
+			      it('baz', () => {
+			        if ('qux') {}
+			        if ('quux') {}
+			      })
+			       })",
+        r#"test("shows error", () => {
+			      if (1 === 2) {
+			        expect(true).toBe(false);
+			      }
+			       });
+			     
+			       test("does not show error", () => {
+			      setTimeout(() => console.log("noop"));
+			      if (1 === 2) {
+			        expect(true).toBe(false);
+			      }
+			       });"#,
+    ];
+
+    Tester::new(
+        NoConditionalInTest::<TestFrameworkJest>::NAME,
+        NoConditionalInTest::<TestFrameworkJest>::PLUGIN,
+        pass,
+        fail,
+    )
+    .with_jest_plugin(true)
+    .test_and_snapshot();
+
+    Tester::new(
+        NoConditionalInTest::<TestFrameworkVitest>::NAME,
+        NoConditionalInTest::<TestFrameworkVitest>::PLUGIN,
+        pass_vitest,
+        fail_vitest,
+    )
+    .with_vitest_plugin(true)
+    .test_and_snapshot();
 }

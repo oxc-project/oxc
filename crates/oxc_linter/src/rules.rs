@@ -5,6 +5,22 @@
 //! These modules are declared manually because `cargo fmt` stops formatting these files with they
 //! are inside a proc macro.
 
+pub trait TestFramework: std::fmt::Debug {
+    const NAME: &'static str;
+}
+
+#[derive(Debug, Clone)]
+pub struct TestFrameworkJest;
+impl TestFramework for TestFrameworkJest {
+    const NAME: &'static str = "jest";
+}
+
+#[derive(Debug, Clone)]
+pub struct TestFrameworkVitest;
+impl TestFramework for TestFrameworkVitest {
+    const NAME: &'static str = "vitest";
+}
+
 /// <https://github.com/import-js/eslint-plugin-import>
 mod import {
     pub mod consistent_type_specifier_style;
@@ -228,7 +244,7 @@ mod typescript {
     pub mod triple_slash_reference;
 }
 
-mod jest {
+mod test {
     pub mod consistent_test_it;
     pub mod expect_expect;
     pub mod max_expects;
@@ -237,15 +253,18 @@ mod jest {
     pub mod no_commented_out_tests;
     pub mod no_conditional_expect;
     pub mod no_conditional_in_test;
+    pub mod no_disabled_tests;
+    pub mod no_hooks;
+    pub mod no_identical_title;
+}
+
+mod jest {
     pub mod no_confusing_set_timeout;
     pub mod no_deprecated_functions;
-    pub mod no_disabled_tests;
     pub mod no_done_callback;
     pub mod no_duplicate_hooks;
     pub mod no_export;
     pub mod no_focused_tests;
-    pub mod no_hooks;
-    pub mod no_identical_title;
     pub mod no_interpolation_in_snapshots;
     pub mod no_jasmine_globals;
     pub mod no_large_snapshots;
@@ -740,23 +759,23 @@ oxc_macros::declare_all_lint_rules! {
     import::no_self_import,
     import::no_webpack_loader_syntax,
     import::unambiguous,
-    jest::consistent_test_it,
-    jest::expect_expect,
-    jest::max_expects,
-    jest::max_nested_describe,
-    jest::no_alias_methods,
-    jest::no_commented_out_tests,
-    jest::no_conditional_expect,
-    jest::no_conditional_in_test,
+    test::no_identical_title,
+    test::no_hooks,
+    test::consistent_test_it,
+    test::expect_expect,
+    test::max_expects,
+    test::max_nested_describe,
+    test::no_alias_methods,
+    test::no_commented_out_tests,
+    test::no_conditional_expect,
+    test::no_conditional_in_test,
+    test::no_disabled_tests,
     jest::no_confusing_set_timeout,
     jest::no_deprecated_functions,
-    jest::no_disabled_tests,
     jest::no_done_callback,
     jest::no_duplicate_hooks,
     jest::no_export,
     jest::no_focused_tests,
-    jest::no_hooks,
-    jest::no_identical_title,
     jest::no_interpolation_in_snapshots,
     jest::no_jasmine_globals,
     jest::no_large_snapshots,
