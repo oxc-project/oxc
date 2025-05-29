@@ -1,4 +1,4 @@
-use oxc_ast::ast::CallExpression;
+use oxc_ast::{AstKind, ast::CallExpression};
 
 use crate::{
     Format, FormatResult, FormatTrailingCommas, format_args,
@@ -35,21 +35,12 @@ where
 /// `connect(a, b, c)(d)`
 /// ```
 pub fn is_long_curried_call(parent_stack: &ParentStack<'_>) -> bool {
-    // if let Some(expression) = expression {
-    //     if let Some(parent_call) = expression.parent::<JsCallExpression>() {
-    //         if let (Ok(arguments), Ok(parent_arguments)) =
-    //             (expression.arguments(), parent_call.arguments())
-    //         {
-    //             let is_callee = matches!(
-    //                 parent_call.syntax().kind(),
-    //                 JsSyntaxKind::JS_CALL_EXPRESSION | JsSyntaxKind::JS_NEW_EXPRESSION
-    //             );
-    //             return is_callee
-    //                 && arguments.args().len() > parent_arguments.args().len()
-    //                 && !parent_arguments.args().is_empty();
-    //         }
-    //     }
-    // }
+    if let AstKind::CallExpression(call) = parent_stack.current() {
+        if let AstKind::CallExpression(parent_call) = parent_stack.parent() {
+            return &call.arguments.len() > &parent_call.arguments.len()
+                && !parent_call.arguments.is_empty();
+        }
+    }
 
     false
 }
