@@ -1,6 +1,10 @@
+pub mod member_chain;
+
+use oxc_ast::{AstKind, ast::CallExpression};
+
 use crate::{
     Format, FormatResult, FormatTrailingCommas, format_args,
-    formatter::{Formatter, prelude::soft_line_break_or_space},
+    formatter::{Formatter, parent_stack::ParentStack, prelude::soft_line_break_or_space},
 };
 
 /// This function is in charge to format the call arguments.
@@ -25,4 +29,20 @@ where
     }
 
     join_with.finish()
+}
+
+/// Tests if expression is a long curried call
+///
+/// ```javascript
+/// `connect(a, b, c)(d)`
+/// ```
+pub fn is_long_curried_call(parent_stack: &ParentStack<'_>) -> bool {
+    if let AstKind::CallExpression(call) = parent_stack.current() {
+        if let AstKind::CallExpression(parent_call) = parent_stack.parent() {
+            return call.arguments.len() > parent_call.arguments.len()
+                && !parent_call.arguments.is_empty();
+        }
+    }
+
+    false
 }

@@ -5,6 +5,7 @@ mod assignment_pattern_property_list;
 mod binary_like_expression;
 mod binding_property_list;
 mod block_statement;
+mod call_arguments;
 mod class;
 mod function;
 mod object_like;
@@ -16,6 +17,7 @@ mod utils;
 mod variable_declaration;
 pub use binary_like_expression::{BinaryLikeExpression, BinaryLikeOperator, should_flatten};
 
+use call_arguments::{FormatAllArgsBrokenOut, FormatCallArgument, is_function_composition_args};
 use cow_utils::CowUtils;
 
 use oxc_allocator::{Box, Vec};
@@ -429,34 +431,6 @@ impl<'a> FormatWrite<'a> for CallExpression<'a> {
                 write!(f, [format_inner])
             }
         }
-    }
-}
-
-impl<'a> Format<'a> for Vec<'a, Argument<'a>> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        if self.is_empty() {
-            return write!(
-                f,
-                [
-                    "(",
-                    // format_dangling_comments(node.syntax()).with_soft_block_indent(),
-                    ")"
-                ]
-            );
-        }
-
-        write!(
-            f,
-            [
-                "(",
-                &group(&soft_block_indent(&format_with(|f| {
-                    let separated = FormatSeparatedIter::new(self.iter(), ",")
-                        .with_trailing_separator(TrailingSeparator::Omit);
-                    write_arguments_multi_line(separated, f)
-                }))),
-                ")"
-            ]
-        )
     }
 }
 

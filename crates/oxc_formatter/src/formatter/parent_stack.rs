@@ -22,6 +22,10 @@ impl<'ast> ParentStack<'ast> {
         }
     }
 
+    pub fn current(&self) -> AstKind<'ast> {
+        self.inner.as_slice().last().copied().unwrap()
+    }
+
     pub fn parent(&self) -> AstKind<'ast> {
         self.inner.as_slice().get(self.inner.len() - 2).copied().unwrap()
     }
