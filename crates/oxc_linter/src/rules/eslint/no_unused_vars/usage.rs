@@ -497,9 +497,7 @@ impl<'a> Symbol<'_, 'a> {
                 // loops?
                 AstKind::ForInStatement(_)
                 | AstKind::ForOfStatement(_)
-                | AstKind::WhileStatement(_) => {
-                    break;
-                }
+                | AstKind::WhileStatement(_) => break,
                 // this is needed to handle `return () => foo++`
                 AstKind::ExpressionStatement(_) => {
                     if self.is_in_return_statement(node.id()) {
@@ -507,9 +505,7 @@ impl<'a> Symbol<'_, 'a> {
                     }
                     break;
                 }
-                AstKind::Function(f) if f.is_declaration() => {
-                    break;
-                }
+                AstKind::Function(f) if f.is_declaration() => break,
                 // implicit return in an arrow function
                 AstKind::ArrowFunctionExpression(f)
                     if f.body.statements.len() == 1

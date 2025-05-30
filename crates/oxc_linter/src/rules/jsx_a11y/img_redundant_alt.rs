@@ -147,9 +147,7 @@ impl Rule for ImgRedundantAlt {
 
         let alt_attribute_name = match alt_prop {
             JSXAttributeItem::Attribute(attr) => &attr.name,
-            JSXAttributeItem::SpreadAttribute(_) => {
-                return;
-            }
+            JSXAttributeItem::SpreadAttribute(_) => return,
         };
 
         let alt_attribute_name_span = match alt_attribute_name {

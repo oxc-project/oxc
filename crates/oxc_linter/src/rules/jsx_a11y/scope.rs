@@ -55,16 +55,10 @@ impl Rule for Scope {
             return;
         };
 
-        let scope_attribute = match has_jsx_prop_ignore_case(jsx_el, "scope") {
-            Some(v) => match v {
-                JSXAttributeItem::Attribute(attr) => attr,
-                JSXAttributeItem::SpreadAttribute(_) => {
-                    return;
-                }
-            },
-            None => {
-                return;
-            }
+        let Some(JSXAttributeItem::Attribute(scope_attribute)) =
+            has_jsx_prop_ignore_case(jsx_el, "scope")
+        else {
+            return;
         };
 
         let element_type = get_element_type(ctx, jsx_el);
