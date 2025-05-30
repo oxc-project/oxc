@@ -19,7 +19,7 @@ pub struct ParserCheckpoint<'a> {
     fatal_error: Option<FatalError>,
 }
 
-impl<'a> ParserImpl<'a> {
+impl<'a, const IS_TS: bool> ParserImpl<'a, IS_TS> {
     #[inline]
     pub(crate) fn start_span(&self) -> u32 {
         self.token.start()
@@ -261,7 +261,7 @@ impl<'a> ParserImpl<'a> {
 
     pub(crate) fn try_parse<T>(
         &mut self,
-        func: impl FnOnce(&mut ParserImpl<'a>) -> T,
+        func: impl FnOnce(&mut ParserImpl<'a, IS_TS>) -> T,
     ) -> Option<T> {
         let checkpoint = self.checkpoint();
         let ctx = self.ctx;
@@ -275,7 +275,10 @@ impl<'a> ParserImpl<'a> {
         }
     }
 
-    pub(crate) fn lookahead<U>(&mut self, predicate: impl Fn(&mut ParserImpl<'a>) -> U) -> U {
+    pub(crate) fn lookahead<U>(
+        &mut self,
+        predicate: impl Fn(&mut ParserImpl<'a, IS_TS>) -> U,
+    ) -> U {
         let checkpoint = self.checkpoint();
         let answer = predicate(self);
         self.rewind(checkpoint);

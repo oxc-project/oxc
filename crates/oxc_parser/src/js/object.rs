@@ -4,7 +4,7 @@ use oxc_syntax::operator::AssignmentOperator;
 
 use crate::{Context, ParserImpl, diagnostics, lexer::Kind, modifiers::Modifier};
 
-impl<'a> ParserImpl<'a> {
+impl<'a, const IS_TS: bool> ParserImpl<'a, IS_TS> {
     /// [Object Expression](https://tc39.es/ecma262/#sec-object-initializer)
     /// `ObjectLiteral`[Yield, Await] :
     ///     { }
@@ -58,7 +58,7 @@ impl<'a> ParserImpl<'a> {
             // Report and handle illegal modifiers
             // e.g. const x = { public foo() {} }
             modifier_kind
-                if self.is_ts
+                if IS_TS
                     && modifier_kind.is_modifier_kind()
                     && peek_kind.is_identifier_or_keyword() =>
             {

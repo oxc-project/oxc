@@ -9,7 +9,7 @@ use crate::{
     modifiers::{Modifier, ModifierFlags, ModifierKind, Modifiers},
 };
 
-impl<'a> ParserImpl<'a> {
+impl<'a, const IS_TS: bool> ParserImpl<'a, IS_TS> {
     pub(crate) fn parse_ts_type(&mut self) -> TSType<'a> {
         if self.is_start_of_function_type_or_constructor_type() {
             return self.parse_function_or_constructor_type();
@@ -141,7 +141,7 @@ impl<'a> ParserImpl<'a> {
     pub(crate) fn parse_ts_type_parameters(
         &mut self,
     ) -> Option<Box<'a, TSTypeParameterDeclaration<'a>>> {
-        if !self.is_ts {
+        if !IS_TS {
             return None;
         }
         if !self.at(Kind::LAngle) {
@@ -813,7 +813,7 @@ impl<'a> ParserImpl<'a> {
     pub(crate) fn parse_type_arguments_in_expression(
         &mut self,
     ) -> Option<Box<'a, TSTypeParameterInstantiation<'a>>> {
-        if !self.is_ts {
+        if !IS_TS {
             return None;
         }
         let span = self.start_span();
@@ -1007,7 +1007,7 @@ impl<'a> ParserImpl<'a> {
         kind: Kind,
         is_type: bool,
     ) -> Option<Box<'a, TSTypeAnnotation<'a>>> {
-        if !self.is_ts {
+        if !IS_TS {
             return None;
         }
         if !self.at(Kind::Colon) {
@@ -1274,7 +1274,7 @@ impl<'a> ParserImpl<'a> {
         &mut self,
         is_constructor_parameter: bool,
     ) -> Modifiers<'a> {
-        if !self.is_ts {
+        if !IS_TS {
             return Modifiers::empty();
         }
 

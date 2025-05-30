@@ -13,7 +13,7 @@ type Extends<'a> =
     Vec<'a, (Expression<'a>, Option<Box<'a, TSTypeParameterInstantiation<'a>>>, Span)>;
 
 /// Section 15.7 Class Definitions
-impl<'a> ParserImpl<'a> {
+impl<'a, const IS_TS: bool> ParserImpl<'a, IS_TS> {
     // `start_span` points at the start of all decoractors and `class` keyword.
     pub(crate) fn parse_class_statement(
         &mut self,
@@ -78,7 +78,7 @@ impl<'a> ParserImpl<'a> {
             None
         };
 
-        let type_parameters = if self.is_ts { self.parse_ts_type_parameters() } else { None };
+        let type_parameters = if IS_TS { self.parse_ts_type_parameters() } else { None };
         let (extends, implements) = self.parse_heritage_clause();
         let mut super_class = None;
         let mut super_type_parameters = None;
@@ -261,7 +261,7 @@ impl<'a> ParserImpl<'a> {
             Kind::PrivateIdentifier => {
                 let private_ident = self.parse_private_identifier();
                 // `private #foo`, etc. is illegal
-                if self.is_ts {
+                if IS_TS {
                     self.verify_modifiers(
                         modifiers,
                         ModifierFlags::all() - ModifierFlags::ACCESSIBILITY,
@@ -295,7 +295,7 @@ impl<'a> ParserImpl<'a> {
         definite: bool,
         modifiers: &Modifiers<'a>,
     ) -> ClassElement<'a> {
-        let type_annotation = if self.is_ts { self.parse_ts_type_annotation() } else { None };
+        let type_annotation = if IS_TS { self.parse_ts_type_annotation() } else { None };
         let value = self.eat(Kind::Eq).then(|| self.parse_assignment_expression_or_higher());
         self.asi();
         let r#type = if modifiers.contains(ModifierKind::Abstract) {
@@ -517,7 +517,7 @@ impl<'a> ParserImpl<'a> {
         modifiers: &Modifiers,
     ) -> ClassElement<'a> {
         let decorators = self.consume_decorators();
-        let type_annotation = if self.is_ts { self.parse_ts_type_annotation() } else { None };
+        let type_annotation = if IS_TS { self.parse_ts_type_annotation() } else { None };
         // Initializer[+In, ?Yield, ?Await]opt
         let initializer = self
             .eat(Kind::Eq)

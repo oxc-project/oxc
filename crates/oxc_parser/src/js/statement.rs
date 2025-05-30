@@ -7,7 +7,7 @@ use crate::{
     Context, ParserImpl, StatementContext, diagnostics, lexer::Kind, modifiers::Modifiers,
 };
 
-impl<'a> ParserImpl<'a> {
+impl<'a, const IS_TS: bool> ParserImpl<'a, IS_TS> {
     // Section 12
     // The InputElementHashbangOrRegExp goal is used at the start of a Script
     // or Module.
@@ -133,7 +133,7 @@ impl<'a> ParserImpl<'a> {
                 self.parse_import_declaration()
             }
             // Check we are not at a `const enum` in TypeScript
-            Kind::Const if !(self.is_ts && self.lookahead(|p| {
+            Kind::Const if !(IS_TS && self.lookahead(|p| {
                 p.bump_any();
                 p.at(Kind::Enum)
             })) =>
@@ -160,7 +160,7 @@ impl<'a> ParserImpl<'a> {
             | Kind::Static
             | Kind::Readonly
             | Kind::Global
-                if self.is_ts && self.at_start_of_ts_declaration() =>
+                if IS_TS && self.at_start_of_ts_declaration() =>
             {
                 self.parse_ts_declaration_statement(start_span)
             }

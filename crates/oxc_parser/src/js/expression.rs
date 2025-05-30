@@ -21,7 +21,7 @@ use crate::{
     lexer::{Kind, parse_big_int, parse_float, parse_int},
 };
 
-impl<'a> ParserImpl<'a> {
+impl<'a, const IS_TS: bool> ParserImpl<'a, IS_TS> {
     pub(crate) fn parse_paren_expression(&mut self) -> Expression<'a> {
         self.expect(Kind::LParen);
         let expression = self.parse_expr();
@@ -758,7 +758,7 @@ impl<'a> ParserImpl<'a> {
             }
 
             if !question_dot {
-                if self.at(Kind::Bang) && !self.cur_token().is_on_new_line() && self.is_ts {
+                if self.at(Kind::Bang) && !self.cur_token().is_on_new_line() && IS_TS {
                     self.bump_any();
                     lhs = self.ast.expression_ts_non_null(self.end_span(lhs_span), lhs);
                     continue;
@@ -1024,7 +1024,7 @@ impl<'a> ParserImpl<'a> {
                 if self.source_type.is_jsx() {
                     return self.parse_jsx_expression();
                 }
-                if self.is_ts {
+                if IS_TS {
                     return self.parse_ts_type_assertion();
                 }
                 self.unexpected()
@@ -1091,7 +1091,7 @@ impl<'a> ParserImpl<'a> {
             // This is need for jsx `<div>=</div>` case
             let kind = self.re_lex_right_angle();
 
-            let Some(left_precedence) = kind_to_precedence(kind, self.is_ts) else { break };
+            let Some(left_precedence) = kind_to_precedence(kind, IS_TS) else { break };
 
             let stop = if left_precedence.is_right_associative() {
                 left_precedence < min_precedence
@@ -1110,7 +1110,7 @@ impl<'a> ParserImpl<'a> {
                 break;
             }
 
-            if self.is_ts && matches!(kind, Kind::As | Kind::Satisfies) {
+            if IS_TS && matches!(kind, Kind::As | Kind::Satisfies) {
                 if self.cur_token().is_on_new_line() {
                     break;
                 }
@@ -1438,7 +1438,7 @@ impl<'a> ParserImpl<'a> {
         // But TS does not have this exception.
         // This is needed to pass parser_babel test to parse:
         // `for (await of [])` with `sourceType: script`
-        if !self.is_ts && is_await && self.at(Kind::Of) {
+        if !IS_TS && is_await && self.at(Kind::Of) {
             return false;
         }
 

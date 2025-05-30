@@ -22,7 +22,7 @@ enum ImportOrExportSpecifier<'a> {
     Export(ExportSpecifier<'a>),
 }
 
-impl<'a> ParserImpl<'a> {
+impl<'a, const IS_TS: bool> ParserImpl<'a, IS_TS> {
     /// [Import Call](https://tc39.es/ecma262/#sec-import-calls)
     /// `ImportCall` : import ( `AssignmentExpression` )
     pub(crate) fn parse_import_expression(
@@ -64,7 +64,7 @@ impl<'a> ParserImpl<'a> {
 
         // `import something = ...`
         // `import type something = ...`
-        if self.is_ts
+        if IS_TS
             && ((self.cur_kind().is_binding_identifier()
                 && self.lookahead(Self::is_next_token_equals))
                 || (self.at(Kind::Type)
@@ -111,7 +111,7 @@ impl<'a> ParserImpl<'a> {
                 self.bump_any();
                 phase = Some(ImportPhase::Defer);
             }
-            Kind::Type if self.is_ts => import_kind = self.parse_import_or_export_kind(),
+            Kind::Type if IS_TS => import_kind = self.parse_import_or_export_kind(),
             _ => {}
         }
 
@@ -271,11 +271,11 @@ impl<'a> ParserImpl<'a> {
         self.expect(Kind::Export);
 
         let decl = match self.cur_kind() {
-            Kind::Eq if self.is_ts => ModuleDeclaration::TSExportAssignment(
+            Kind::Eq if IS_TS => ModuleDeclaration::TSExportAssignment(
                 self.parse_ts_export_assignment_declaration(span),
             ),
             Kind::As
-                if self.is_ts
+                if IS_TS
                     && self.lookahead(|p| {
                         p.bump_any();
                         p.at(Kind::Namespace)
@@ -295,7 +295,7 @@ impl<'a> ParserImpl<'a> {
             Kind::LCurly => {
                 ModuleDeclaration::ExportNamedDeclaration(self.parse_export_named_specifiers(span))
             }
-            Kind::Type if self.is_ts => {
+            Kind::Type if IS_TS => {
                 let checkpoint = self.checkpoint();
                 self.bump_any();
                 let next_kind = self.cur_kind();
@@ -407,7 +407,7 @@ impl<'a> ParserImpl<'a> {
         self.eat_decorators();
         let reserved_ctx = self.ctx;
         let modifiers =
-            if self.is_ts { self.eat_modifiers_before_declaration() } else { Modifiers::empty() };
+            if IS_TS { self.eat_modifiers_before_declaration() } else { Modifiers::empty() };
         self.ctx = self.ctx.union_ambient_if(modifiers.contains_declare());
 
         let declaration = self.parse_declaration(decl_span, &modifiers);
@@ -445,7 +445,7 @@ impl<'a> ParserImpl<'a> {
             Kind::Class => ExportDefaultDeclarationKind::ClassDeclaration(
                 self.parse_class_declaration(decl_span, /* modifiers */ &Modifiers::empty()),
             ),
-            _ if self.is_ts
+            _ if IS_TS
                 && self.at(Kind::Abstract)
                 && self.lookahead(|p| {
                     p.bump_any();
@@ -459,7 +459,7 @@ impl<'a> ParserImpl<'a> {
                     self.parse_class_declaration(decl_span, &modifiers),
                 )
             }
-            _ if self.is_ts
+            _ if IS_TS
                 && self.at(Kind::Interface)
                 && self.lookahead(|p| {
                     p.bump_any();
@@ -549,7 +549,7 @@ impl<'a> ParserImpl<'a> {
         let mut property_name: Option<ModuleExportName<'a>> = None;
         let mut name = self.parse_module_export_name();
 
-        if self.is_ts && name.is_identifier() && type_or_name_token_kind == Kind::Type {
+        if IS_TS && name.is_identifier() && type_or_name_token_kind == Kind::Type {
             // If the first token of an import/export specifier is 'type', there are a lot of possibilities,
             // especially if we see 'as' afterwards:
             //
@@ -622,7 +622,7 @@ impl<'a> ParserImpl<'a> {
             name = self.parse_module_export_name();
         }
 
-        if self.is_ts && type_or_name_token_kind == Kind::Type && type_or_name_token.escaped() {
+        if IS_TS && type_or_name_token_kind == Kind::Type && type_or_name_token.escaped() {
             self.error(diagnostics::escaped_keyword(type_or_name_token.span()));
         }
 
@@ -696,7 +696,7 @@ impl<'a> ParserImpl<'a> {
     }
 
     fn parse_import_or_export_kind(&mut self) -> ImportOrExportKind {
-        if !self.is_ts {
+        if !IS_TS {
             return ImportOrExportKind::Value;
         }
         // OK

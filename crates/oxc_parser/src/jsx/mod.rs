@@ -6,7 +6,7 @@ use oxc_span::{Atom, GetSpan, Span};
 
 use crate::{Context, ParserImpl, diagnostics, lexer::Kind};
 
-impl<'a> ParserImpl<'a> {
+impl<'a, const IS_TS: bool> ParserImpl<'a, IS_TS> {
     pub(crate) fn parse_jsx_expression(&mut self) -> Expression<'a> {
         if self.lookahead(|s| {
             s.bump_any();
@@ -92,7 +92,7 @@ impl<'a> ParserImpl<'a> {
         self.expect(Kind::LAngle);
         let name = self.parse_jsx_element_name();
         // <Component<TsType> for tsx
-        let type_arguments = if self.is_ts { self.try_parse_type_arguments() } else { None };
+        let type_arguments = if IS_TS { self.try_parse_type_arguments() } else { None };
         let attributes = self.parse_jsx_attributes();
         let self_closing = self.eat(Kind::Slash);
         if !self_closing || in_jsx_child {

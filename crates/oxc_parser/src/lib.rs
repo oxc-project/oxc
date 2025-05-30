@@ -308,14 +308,25 @@ mod parser_parse {
         /// See the [module-level documentation](crate) for examples and more information.
         pub fn parse(self) -> ParserReturn<'a> {
             let unique = UniquePromise::new();
-            let parser = ParserImpl::new(
-                self.allocator,
-                self.source_text,
-                self.source_type,
-                self.options,
-                unique,
-            );
-            parser.parse()
+            if self.source_type.is_typescript() {
+                let parser = ParserImpl::<true>::new(
+                    self.allocator,
+                    self.source_text,
+                    self.source_type,
+                    self.options,
+                    unique,
+                );
+                parser.parse()
+            } else {
+                let parser = ParserImpl::<false>::new(
+                    self.allocator,
+                    self.source_text,
+                    self.source_type,
+                    self.options,
+                    unique,
+                );
+                parser.parse()
+            }
         }
 
         /// Parse a single [`Expression`].
@@ -339,14 +350,25 @@ mod parser_parse {
         /// If the source code being parsed has syntax errors.
         pub fn parse_expression(self) -> Result<Expression<'a>, Vec<OxcDiagnostic>> {
             let unique = UniquePromise::new();
-            let parser = ParserImpl::new(
-                self.allocator,
-                self.source_text,
-                self.source_type,
-                self.options,
-                unique,
-            );
-            parser.parse_expression()
+            if self.source_type.is_typescript() {
+                let parser = ParserImpl::<true>::new(
+                    self.allocator,
+                    self.source_text,
+                    self.source_type,
+                    self.options,
+                    unique,
+                );
+                parser.parse_expression()
+            } else {
+                let parser = ParserImpl::<false>::new(
+                    self.allocator,
+                    self.source_text,
+                    self.source_type,
+                    self.options,
+                    unique,
+                );
+                parser.parse_expression()
+            }
         }
     }
 }
@@ -354,7 +376,7 @@ use parser_parse::UniquePromise;
 
 /// Implementation of parser.
 /// `Parser` is just a public wrapper, the guts of the implementation is in this type.
-struct ParserImpl<'a> {
+struct ParserImpl<'a, const IS_TS: bool> {
     options: ParseOptions,
 
     pub(crate) lexer: Lexer<'a>,
@@ -388,12 +410,9 @@ struct ParserImpl<'a> {
 
     /// Module Record Builder
     module_record_builder: ModuleRecordBuilder<'a>,
-
-    /// Precomputed typescript detection
-    is_ts: bool,
 }
 
-impl<'a> ParserImpl<'a> {
+impl<'a, const IS_TS: bool> ParserImpl<'a, IS_TS> {
     /// Create a new `ParserImpl`.
     ///
     /// Requiring a `UniquePromise` to be provided guarantees only 1 `ParserImpl` can exist
@@ -419,7 +438,6 @@ impl<'a> ParserImpl<'a> {
             ctx: Self::default_context(source_type, options),
             ast: AstBuilder::new(allocator),
             module_record_builder: ModuleRecordBuilder::new(allocator),
-            is_ts: source_type.is_typescript(),
         }
     }
 

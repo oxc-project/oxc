@@ -291,7 +291,7 @@ impl std::fmt::Display for ModifierKind {
     }
 }
 
-impl<'a> ParserImpl<'a> {
+impl<'a, const IS_TS: bool> ParserImpl<'a, IS_TS> {
     pub(crate) fn eat_modifiers_before_declaration(&mut self) -> Modifiers<'a> {
         let mut flags = ModifierFlags::empty();
         let mut modifiers = self.ast.vec();

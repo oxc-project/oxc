@@ -15,7 +15,7 @@ struct ArrowFunctionHead<'a> {
     has_return_colon: bool,
 }
 
-impl<'a> ParserImpl<'a> {
+impl<'a, const IS_TS: bool> ParserImpl<'a, IS_TS> {
     pub(super) fn try_parse_parenthesized_arrow_function_expression(
         &mut self,
         allow_return_type_in_arrow_function: bool,
@@ -86,7 +86,7 @@ impl<'a> ParserImpl<'a> {
                         self.bump_any();
                         let third = self.cur_kind();
                         match third {
-                            Kind::Colon if self.is_ts => Tristate::Maybe,
+                            Kind::Colon if IS_TS => Tristate::Maybe,
                             Kind::Arrow | Kind::LCurly => Tristate::True,
                             _ => Tristate::False,
                         }
@@ -287,7 +287,7 @@ impl<'a> ParserImpl<'a> {
             self.error(diagnostics::ts_arrow_function_this_parameter(this_param.span));
         }
 
-        let has_return_colon = self.is_ts && self.at(Kind::Colon);
+        let has_return_colon = IS_TS && self.at(Kind::Colon);
         let return_type = self.parse_ts_return_type_annotation(Kind::Arrow, false);
 
         self.ctx = self.ctx.and_await(has_await);
