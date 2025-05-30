@@ -70,7 +70,7 @@ declare_oxc_lint!(
     /// ```
     /// :::
     /// 
-    /// Examples of correct code for the is rule with the above configuration, adding the `customTagName` tag :
+    /// Examples of correct code for this rule with the above configuration, adding the `customTagName` tag :
     /// 
     /// ```js
     /// /**
