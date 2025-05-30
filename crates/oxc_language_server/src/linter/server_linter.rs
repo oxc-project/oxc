@@ -350,4 +350,19 @@ mod test {
         Tester::new("fixtures/linter/cross_module_extended_config", None)
             .test_and_snapshot_single_file("dep-a.ts");
     }
+
+    #[test]
+    fn test_multiple_suggestions() {
+        Tester::new(
+            "fixtures/linter/multiple_suggestions",
+            Some(Options {
+                flags: FxHashMap::from_iter([(
+                    "fix_kind".to_string(),
+                    "safe_fix_or_suggestion".to_string(),
+                )]),
+                ..Options::default()
+            }),
+        )
+        .test_and_snapshot_single_file("forward_ref.ts");
+    }
 }

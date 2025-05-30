@@ -6,7 +6,7 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
-use crate::{AstNode, context::LintContext, rule::Rule};
+use crate::{AstNode, context::LintContext, fixer::RuleFixer, rule::Rule};
 
 fn forward_ref_uses_ref_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Components wrapped with `forwardRef` must have a `ref` parameter")
@@ -60,9 +60,14 @@ declare_oxc_lint!(
     react,
     correctness,
     suggestion
+    suggestion
 );
 
-fn check_forward_ref_inner(exp: &Expression, call_expr: &CallExpression, ctx: &LintContext) {
+fn check_forward_ref_inner<'a>(
+    exp: &Expression,
+    call_expr: &CallExpression,
+    ctx: &LintContext<'a>,
+) {
     let (params, span) = match exp {
         Expression::ArrowFunctionExpression(f) => (&f.params, f.span),
         Expression::FunctionExpression(f) => (&f.params, f.span),
@@ -71,9 +76,26 @@ fn check_forward_ref_inner(exp: &Expression, call_expr: &CallExpression, ctx: &L
     if params.parameters_count() != 1 || params.rest.is_some() {
         return;
     }
-    ctx.diagnostic_with_suggestion(forward_ref_uses_ref_diagnostic(span), |fixer| {
-        fixer.replace_with(call_expr, exp)
-    });
+
+    ctx.diagnostics_with_multiple_fixes(
+        forward_ref_uses_ref_diagnostic(span),
+        (FixKind::Suggestion, |fixer: RuleFixer<'_, 'a>| {
+            fixer.replace_with(call_expr, exp).with_message("remove `forwardRef` wrapper")
+        }),
+        (FixKind::Suggestion, |fixer: RuleFixer<'_, 'a>| {
+            let fixed = ctx.source_range(params.span);
+            // remove the trailing `)`, `` and `,` if they exist
+            let fixed = fixed.strip_suffix(')').unwrap_or(fixed).trim_end();
+            let mut fixed = fixed.strip_suffix(',').unwrap_or(fixed).to_string();
+
+            if !fixed.starts_with('(') {
+                fixed.insert(0, '(');
+            }
+            fixed.push_str(", ref)");
+
+            fixer.replace(params.span, fixed).with_message("add `ref` parameter")
+        }),
+    );
 }
 
 impl Rule for ForwardRefUsesRef {
@@ -192,11 +214,15 @@ fn test() {
     ];
 
     let fix = vec![
-        ("forwardRef((a) => {})", "(a) => {}"),
-        ("forwardRef(a => {})", "a => {}"),
-        ("forwardRef(function (a) {})", "function (a) {}"),
-        ("forwardRef(function(a,) {})", "function(a,) {}"),
-        ("React.forwardRef(function(a) {})", "function(a) {}"),
+        ("forwardRef((a) => {})", ("(a) => {}", "forwardRef((a, ref) => {})")),
+        ("forwardRef(a => {})", ("a => {}", "forwardRef((a, ref) => {})")),
+        ("forwardRef(function (a) {})", ("function (a) {}", "forwardRef(function (a, ref) {})")),
+        ("forwardRef(function(a,) {})", ("function(a,) {}", "forwardRef(function(a, ref) {})")),
+        ("forwardRef(function(a, ) {})", ("function(a, ) {}", "forwardRef(function(a, ref) {})")),
+        (
+            "React.forwardRef(function(a) {})",
+            ("function(a) {}", "React.forwardRef(function(a, ref) {})"),
+        ),
     ];
 
     Tester::new(ForwardRefUsesRef::NAME, ForwardRefUsesRef::PLUGIN, pass, fail)

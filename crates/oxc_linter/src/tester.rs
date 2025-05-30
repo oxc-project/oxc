@@ -123,37 +123,54 @@ impl From<Option<FixKind>> for ExpectFixKind {
 }
 
 #[derive(Debug, Clone)]
-pub struct ExpectFix {
+pub struct ExpectFixTestCase {
     /// Source code being tested
     source: String,
-    /// Expected source code after fix has been applied
-    expected: String,
-    kind: ExpectFixKind,
+    expected: Vec<ExpectFix>,
     rule_config: Option<Value>,
 }
 
-impl<S: Into<String>> From<(S, S, Option<Value>)> for ExpectFix {
+#[derive(Debug, Clone)]
+struct ExpectFix {
+    /// Expected source code after fix has been applied
+    expected: String,
+    kind: ExpectFixKind,
+}
+
+impl<S: Into<String>> From<(S, S, Option<Value>)> for ExpectFixTestCase {
     fn from(value: (S, S, Option<Value>)) -> Self {
         Self {
             source: value.0.into(),
-            expected: value.1.into(),
-            kind: ExpectFixKind::Any,
+            expected: vec![ExpectFix { expected: value.1.into(), kind: ExpectFixKind::Any }],
             rule_config: value.2,
         }
     }
 }
 
-impl<S: Into<String>> From<(S, S)> for ExpectFix {
+impl<S: Into<String>> From<(S, S)> for ExpectFixTestCase {
     fn from(value: (S, S)) -> Self {
         Self {
             source: value.0.into(),
-            expected: value.1.into(),
-            kind: ExpectFixKind::Any,
+            expected: vec![ExpectFix { expected: value.1.into(), kind: ExpectFixKind::Any }],
             rule_config: None,
         }
     }
 }
-impl<S, F> From<(S, S, Option<Value>, F)> for ExpectFix
+
+impl<S: Into<String>> From<(S, (S, S))> for ExpectFixTestCase {
+    fn from(value: (S, (S, S))) -> Self {
+        Self {
+            source: value.0.into(),
+            expected: vec![
+                ExpectFix { expected: value.1.0.into(), kind: ExpectFixKind::Any },
+                ExpectFix { expected: value.1.1.into(), kind: ExpectFixKind::Any },
+            ],
+            rule_config: None,
+        }
+    }
+}
+
+impl<S, F> From<(S, S, Option<Value>, F)> for ExpectFixTestCase
 where
     S: Into<String>,
     F: Into<ExpectFixKind>,
@@ -161,8 +178,7 @@ where
     fn from((source, expected, config, kind): (S, S, Option<Value>, F)) -> Self {
         Self {
             source: source.into(),
-            expected: expected.into(),
-            kind: kind.into(),
+            expected: vec![ExpectFix { expected: expected.into(), kind: kind.into() }],
             rule_config: config,
         }
     }
@@ -206,7 +222,7 @@ pub struct Tester {
     ///
     /// Note that disabling this check should be done as little as possible, and
     /// never in bad faith (e.g. no `#[test]` functions have fixer cases at all).
-    expect_fix: Option<Vec<ExpectFix>>,
+    expect_fix: Option<Vec<ExpectFixTestCase>>,
     snapshot: String,
     /// Suffix added to end of snapshot name.
     ///
@@ -345,7 +361,7 @@ impl Tester {
     /// Tester::new("no-undef", pass, fail).expect_fix(fix).test();
     /// ```
     #[must_use]
-    pub fn expect_fix<F: Into<ExpectFix>>(mut self, expect_fix: Vec<F>) -> Self {
+    pub fn expect_fix<F: Into<ExpectFixTestCase>>(mut self, expect_fix: Vec<F>) -> Self {
         // prevent `expect_fix` abuse
         assert!(
             !expect_fix.is_empty(),
@@ -398,8 +414,14 @@ impl Tester {
 
     fn test_pass(&mut self) {
         for TestCase { source, rule_config, eslint_config, path } in self.expect_pass.clone() {
-            let result =
-                self.run(&source, rule_config.clone(), &eslint_config, path, ExpectFixKind::None);
+            let result = self.run(
+                &source,
+                rule_config.clone(),
+                &eslint_config,
+                path,
+                ExpectFixKind::None,
+                0,
+            );
             let passed = result == TestResult::Passed;
             let config = rule_config.map_or_else(
                 || "\n\n------------------------\n".to_string(),
@@ -420,8 +442,14 @@ impl Tester {
 
     fn test_fail(&mut self) {
         for TestCase { source, rule_config, eslint_config, path } in self.expect_fail.clone() {
-            let result =
-                self.run(&source, rule_config.clone(), &eslint_config, path, ExpectFixKind::None);
+            let result = self.run(
+                &source,
+                rule_config.clone(),
+                &eslint_config,
+                path,
+                ExpectFixKind::None,
+                0,
+            );
             let failed = result == TestResult::Failed;
             let config = rule_config.map_or_else(
                 || "\n\n------------------------".to_string(),
@@ -439,6 +467,7 @@ impl Tester {
         }
     }
 
+    #[expect(clippy::cast_possible_truncation)] // there are no rules with over 255 different possible fixes
     fn test_fix(&mut self) {
         // If auto-fixes are reported, make sure some fix test cases are provided
         let rule = self.find_rule();
@@ -453,15 +482,19 @@ impl Tester {
         };
 
         for fix in fix_test_cases {
-            let ExpectFix { source, expected, kind, rule_config: config } = fix;
-            let result = self.run(&source, config, &None, None, kind);
-            match result {
-                TestResult::Fixed(fixed_str) => assert_eq!(
-                    expected, fixed_str,
-                    r#"Expected "{source}" to be fixed into "{expected}""#
-                ),
-                TestResult::Passed => panic!("Expected a fix, but test passed: {source}"),
-                TestResult::Failed => panic!("Expected a fix, but test failed: {source}"),
+            let ExpectFixTestCase { source, expected, rule_config: config } = fix;
+            for (index, expect) in expected.iter().enumerate() {
+                let result =
+                    self.run(&source, config.clone(), &None, None, expect.kind, index as u8);
+                match result {
+                    TestResult::Fixed(fixed_str) => assert_eq!(
+                        expect.expected, fixed_str,
+                        r#"Expected "{source}" to be fixed into "{}""#,
+                        expect.expected
+                    ),
+                    TestResult::Passed => panic!("Expected a fix, but test passed: {source}"),
+                    TestResult::Failed => panic!("Expected a fix, but test failed: {source}"),
+                }
             }
         }
     }
@@ -473,7 +506,8 @@ impl Tester {
         rule_config: Option<Value>,
         eslint_config: &Option<Value>,
         path: Option<PathBuf>,
-        fix: ExpectFixKind,
+        fix_kind: ExpectFixKind,
+        fix_index: u8,
     ) -> TestResult {
         let allocator = Allocator::default();
         let rule = self.find_rule().read_json(rule_config.unwrap_or_default());
@@ -492,7 +526,7 @@ impl Tester {
                 FxHashMap::default(),
             ),
         )
-        .with_fix(fix.into());
+        .with_fix(fix_kind.into());
 
         let path_to_lint = if self.plugins.has_import() {
             assert!(path.is_none(), "import plugin does not support path");
@@ -520,8 +554,8 @@ impl Tester {
             return TestResult::Passed;
         }
 
-        if fix.is_some() {
-            let fix_result = Fixer::new(source_text, result).fix();
+        if fix_kind.is_some() {
+            let fix_result = Fixer::new(source_text, result).with_fix_index(fix_index).fix();
             return TestResult::Fixed(fix_result.fixed_code.to_string());
         }
 

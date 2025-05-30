@@ -311,11 +311,21 @@ impl GetSpan for Message<'_> {
 pub struct Fixer<'a> {
     source_text: &'a str,
     messages: Vec<Message<'a>>,
+
+    // To test different fixes, we need to override the default behavior.
+    // The behavior is oriented by `oxlint` where only one PossibleFixes is applied.
+    fix_index: u8,
 }
 
 impl<'a> Fixer<'a> {
     pub fn new(source_text: &'a str, messages: Vec<Message<'a>>) -> Self {
-        Self { source_text, messages }
+        Self { source_text, messages, fix_index: 0 }
+    }
+
+    #[cfg(test)]
+    pub fn with_fix_index(mut self, fix_index: u8) -> Self {
+        self.fix_index = fix_index;
+        self
     }
 
     /// # Panics
@@ -343,7 +353,7 @@ impl<'a> Fixer<'a> {
                 PossibleFixes::Single(fix) => Some(fix),
                 // For multiple fixes, we take the first one as a representative fix.
                 // Applying all possible fixes at once is not possible in this context.
-                PossibleFixes::Multiple(multiple) => multiple.first(),
+                PossibleFixes::Multiple(multiple) => multiple.get(self.fix_index as usize),
             };
             let Some(Fix { content, span, .. }) = fix else {
                 filtered_messages.push(m);
