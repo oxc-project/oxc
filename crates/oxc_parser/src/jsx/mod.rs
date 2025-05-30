@@ -264,18 +264,16 @@ impl<'a> ParserImpl<'a> {
                 self.unexpected()
             }
             Kind::LCurly => {
-                let checkpoint = self.checkpoint();
-                self.bump_any();
+                let span_start = self.start_span();
+                self.bump_any(); // bump `{`
 
                 // {...expr}
-                if self.at(Kind::Dot3) {
-                    self.rewind(checkpoint);
-                    return Some(JSXChild::Spread(self.parse_jsx_spread_child()));
+                if self.eat(Kind::Dot3) {
+                    return Some(JSXChild::Spread(self.parse_jsx_spread_child(span_start)));
                 }
                 // {expr}
-                self.rewind(checkpoint);
                 Some(JSXChild::ExpressionContainer(
-                    self.parse_jsx_expression_container(/* in_jsx_child */ true),
+                    self.parse_jsx_expression_container(span_start, /* in_jsx_child */ true),
                 ))
             }
             // text
@@ -287,18 +285,16 @@ impl<'a> ParserImpl<'a> {
     ///   { `JSXChildExpression_opt` }
     fn parse_jsx_expression_container(
         &mut self,
+        span_start: u32,
         in_jsx_child: bool,
     ) -> Box<'a, JSXExpressionContainer<'a>> {
-        let span = self.start_span();
-        self.bump_any(); // bump `{`
-
         let expr = if self.at(Kind::RCurly) {
             if in_jsx_child {
                 self.expect_jsx_child(Kind::RCurly);
             } else {
                 self.expect(Kind::RCurly);
             }
-            let span = self.end_span(span);
+            let span = self.end_span(span_start);
             // Handle comment between curly braces (ex. `{/* comment */}`)
             //                                            ^^^^^^^^^^^^^ span
             let expr = self.ast.jsx_empty_expression(Span::new(span.start + 1, span.end - 1));
@@ -313,7 +309,7 @@ impl<'a> ParserImpl<'a> {
             expr
         };
 
-        self.ast.alloc_jsx_expression_container(self.end_span(span), expr)
+        self.ast.alloc_jsx_expression_container(self.end_span(span_start), expr)
     }
 
     fn parse_jsx_assignment_expression(&mut self) -> Expression<'a> {
@@ -324,13 +320,10 @@ impl<'a> ParserImpl<'a> {
 
     /// `JSXChildExpression` :
     ///   { ... `AssignmentExpression` }
-    fn parse_jsx_spread_child(&mut self) -> Box<'a, JSXSpreadChild<'a>> {
-        let span = self.start_span();
-        self.bump_any(); // bump `{`
-        self.expect(Kind::Dot3);
+    fn parse_jsx_spread_child(&mut self, span_start: u32) -> Box<'a, JSXSpreadChild<'a>> {
         let expr = self.parse_jsx_assignment_expression();
         self.expect_jsx_child(Kind::RCurly);
-        self.ast.alloc_jsx_spread_child(self.end_span(span), expr)
+        self.ast.alloc_jsx_spread_child(self.end_span(span_start), expr)
     }
 
     /// `JSXAttributes` :
@@ -403,7 +396,11 @@ impl<'a> ParserImpl<'a> {
                 JSXAttributeValue::StringLiteral(self.alloc(str_lit))
             }
             Kind::LCurly => {
-                let expr = self.parse_jsx_expression_container(/* in_jsx_child */ false);
+                let span_start = self.start_span();
+                self.bump_any(); // bump `{`
+
+                let expr =
+                    self.parse_jsx_expression_container(span_start, /* in_jsx_child */ false);
                 JSXAttributeValue::ExpressionContainer(expr)
             }
             Kind::LAngle => match self.parse_jsx_expression() {
