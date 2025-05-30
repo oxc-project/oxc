@@ -5,7 +5,7 @@ use tower_lsp_server::{
     lsp_types::{CodeDescription, NumberOrString, Uri},
 };
 
-use crate::{Options, worker::WorkspaceWorker};
+use crate::{Options, uri_ext::path_to_uri, worker::WorkspaceWorker};
 
 use super::linter::error_with_position::DiagnosticReport;
 
@@ -13,7 +13,7 @@ use super::linter::error_with_position::DiagnosticReport;
 pub fn get_file_uri(relative_file_path: &str) -> Uri {
     let absolute_file_path =
         std::env::current_dir().expect("could not get current dir").join(relative_file_path);
-    Uri::from_file_path(absolute_file_path).expect("failed to convert file path to URL")
+    path_to_uri(&absolute_file_path)
 }
 
 fn get_snapshot_from_report(report: &DiagnosticReport) -> String {

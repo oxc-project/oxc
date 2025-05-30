@@ -1798,6 +1798,7 @@ dependencies = [
 name = "oxc_language_server"
 version = "0.17.0"
 dependencies = [
+ "cow-utils",
  "env_logger",
  "futures",
  "globset",

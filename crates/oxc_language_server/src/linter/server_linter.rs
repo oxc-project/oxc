@@ -316,8 +316,8 @@ mod test {
         Tester::new("fixtures/linter/vue", None).test_and_snapshot_single_file("debugger.vue");
         Tester::new("fixtures/linter/svelte", None)
             .test_and_snapshot_single_file("debugger.svelte");
-        // ToDo: fix Tester to work only with Uris and do not access the file system
-        // Tester::new("fixtures/linter/nextjs").test_and_snapshot_single_file("%5B%5B..rest%5D%5D/debugger.ts");
+        Tester::new("fixtures/linter/nextjs", None)
+            .test_and_snapshot_single_file("[[...rest]]/debugger.ts");
     }
 
     #[test]
