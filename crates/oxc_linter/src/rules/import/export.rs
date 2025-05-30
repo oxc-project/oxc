@@ -44,7 +44,6 @@ declare_oxc_lint!(
     /// export * from "./export-all"; // No conflict if export-all.js also exports foo
     /// ```
     Export,
-
     import,
     nursery
 );
