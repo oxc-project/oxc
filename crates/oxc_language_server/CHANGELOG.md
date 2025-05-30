@@ -4,6 +4,24 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.17.0] - 2025-05-30
+
+### Features
+
+- 2083d33 linter/language_server: Add second editor suggestion for `react/forward-ref-uses-ref` (#11375) (Sysix)
+
+### Bug Fixes
+
+- 7af5bb1 oxc_language_server: Include save option for text document sync capability (#11297) (Nicholas Rayburn)
+
+### Performance
+
+- 0ed6c1a language_server: Use `Arc<RwLock>` instead of `Mutex` for workspace workers (#11328) (Sysix)
+
+### Refactor
+
+- 042a3f3 linter: Use `PossibleFixes` instead of `Option<Fix>` (#11284) (Sysix)
+
 ## [0.16.12] - 2025-05-25
 
 - 5d9344f rust: [**BREAKING**] Clippy avoid-breaking-exported-api = false (#11088) (Boshen)

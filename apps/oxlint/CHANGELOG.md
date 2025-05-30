@@ -4,6 +4,22 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.17.0] - 2025-05-30
+
+- ead5309 linter: [**BREAKING**] Remove react from default plugin set (#11382) (camc314)
+
+### Bug Fixes
+
+- f6424dd linter: Reflect react plugin is disabled by default in cli (#11397) (camc314)
+
+### Documentation
+
+- cd354d4 oxlint: Remove incorrect doc comment (#11326) (camc314)
+
+### Testing
+
+- c4f64aa linter: Explicitly disable correctness for clarity (#11327) (camc314)
+
 ## [0.16.12] - 2025-05-25
 
 - 5d9344f rust: [**BREAKING**] Clippy avoid-breaking-exported-api = false (#11088) (Boshen)

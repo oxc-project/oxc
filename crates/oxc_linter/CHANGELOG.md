@@ -4,6 +4,63 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.17.0] - 2025-05-30
+
+- ead5309 linter: [**BREAKING**] Remove react from default plugin set (#11382) (camc314)
+
+### Features
+
+- 2d25bd8 linter: Remove `unicorn/no-for-loop` over `typescript/prefer-for-of` (#11354) (camc314)
+- bbb7eb1 linter: Add auto-fix to react/forward-ref-uses-ref (#11342) (yefan)
+- 590c27b linter: Add auto-fix to unicorn/no-await-expression-member (#11306) (yefan)
+- 7824f01 linter: Implement suggestion for `jsx/no-useless-fragment` (#10800) (Cam McHenry)
+- 2083d33 linter/language_server: Add second editor suggestion for `react/forward-ref-uses-ref` (#11375) (Sysix)
+
+### Bug Fixes
+
+- 25ecbfe linter: Remove use of `FrameworkFlags::React` to decide whether rules should run (#11383) (camc314)
+- 0d240e4 linter: False positive in react/exhaustive-deps with default formal parameter (#11395) (camc314)
+- c91697e linter: Fix panic in multi byte char in `TryFrom` aria (#11350) (camc314)
+- 9798ef1 linter: Stack overflow in no-async-endpoint-handlers (#11317) (camc314)
+- 348ad97 linter: Skip no-unused-vars on astro files (#11303) (camc314)
+- 183d7f0 linter: Make `jest/no-large-snapshots` error easier to comprehend (#11294) (Ulrich Stark)
+- 4e606a5 linter: Improve `jest/no-large-snapshots` (#11291) (Ulrich Stark)
+- 14f790f linter: Improve `jest/no-restricted-matchers` (#11292) (Ulrich Stark)
+- a2c82be linter/block-scoped-var: Better diagnostic messages (#11290) (DonIsaac)
+- 19772e5 linter/no-unused-vars: Panic when variable is redeclared as function in same scope (#11280) (Dunqing)
+
+### Performance
+
+- a0ee946 linter: Reduce code size in `globals` (#11333) (shulaoda)
+- c90c5e9 linter/no-unused-vars: Simplify checking self call usage (#11281) (Dunqing)
+
+### Documentation
+
+- eae51ca linter: Clarify jsdoc/check-tag-names configuration (#11394) (Rägnar O'ock)
+
+### Refactor
+
+- 42738f0 linter: Shorten code of match arms (#11389) (Ulrich Stark)
+- 8a34447 linter: Improve `unicorn/text-encoding-identifier-case` (#11386) (shulaoda)
+- eaa605e linter: Avoid some `Arc::clone` in linter runtime (#11388) (Boshen)
+- 1cd8b9c linter: Fixes in `react/forward-ref-uses-ref` are suggestions (#11376) (Sysix)
+- 50ef691 linter: Add `diagnostics_with_multiple_fixes` to `LintContext` (#11357) (Sysix)
+- 606bb34 linter: Accept `PossibleFixes`  instead of `Fix` for `Messages` (#11295) (Sysix)
+- 042a3f3 linter: Use `PossibleFixes` instead of `Option<Fix>` (#11284) (Sysix)
+- ffcfb46 linter: Improve `unicorn/throw-new-error` (#11364) (shulaoda)
+- 8fb55c3 linter: Cleanup docs and simplify code of `eslint/no-fallthrough` (#11331) (Ulrich Stark)
+- e2f0f0a linter: Improve docs and simplify code of `eslint/no-duplicate-imports` (#11320) (Ulrich Stark)
+- b53b053 linter: Simplify accessing span of NameSpan (#11305) (Ulrich Stark)
+- 4bc2650 linter: Improve `eslint/no-void` (#11285) (shulaoda)
+
+### Styling
+
+- 49b664c linter: Remove needless newline in `declare_oxc_lint` (#11400) (camc314)
+
+### Testing
+
+- a404b2c linter: `eslint/no-duplicate-imports` shouldn't report the same span (#11324) (Ulrich Stark)
+
 ## [0.16.12] - 2025-05-25
 
 - 5d9344f rust: [**BREAKING**] Clippy avoid-breaking-exported-api = false (#11088) (Boshen)
