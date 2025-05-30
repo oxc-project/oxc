@@ -1,8 +1,6 @@
 use std::{
     env,
-    ffi::OsStr,
     path::{Path, PathBuf},
-    sync::Arc,
     sync::mpsc,
 };
 
@@ -511,7 +509,7 @@ impl Tester {
         };
 
         let cwd = self.current_working_directory.clone();
-        let paths = vec![Arc::<OsStr>::from(path_to_lint.as_os_str())];
+        let paths = vec![path_to_lint.as_os_str().into()];
         let options =
             LintServiceOptions::new(cwd, paths).with_cross_module(self.plugins.has_import());
         let mut lint_service = LintService::new(&linter, options).with_file_system(Box::new(

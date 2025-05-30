@@ -1,4 +1,4 @@
-use std::{ffi::OsStr, path::PathBuf, sync::Arc, sync::mpsc};
+use std::{ffi::OsStr, path::PathBuf, sync::mpsc};
 
 use ignore::{DirEntry, overrides::Override};
 use oxc_linter::LINTABLE_EXTENSIONS;
@@ -21,7 +21,7 @@ pub struct Walk {
 }
 
 struct WalkBuilder {
-    sender: mpsc::Sender<Vec<Arc<OsStr>>>,
+    sender: mpsc::Sender<Vec<Box<OsStr>>>,
     extensions: Extensions,
 }
 
@@ -36,8 +36,8 @@ impl<'s> ignore::ParallelVisitorBuilder<'s> for WalkBuilder {
 }
 
 struct WalkCollector {
-    paths: Vec<Arc<OsStr>>,
-    sender: mpsc::Sender<Vec<Arc<OsStr>>>,
+    paths: Vec<Box<OsStr>>,
+    sender: mpsc::Sender<Vec<Box<OsStr>>>,
     extensions: Extensions,
 }
 
@@ -100,8 +100,8 @@ impl Walk {
         Self { inner, extensions: Extensions::default() }
     }
 
-    pub fn paths(self) -> Vec<Arc<OsStr>> {
-        let (sender, receiver) = mpsc::channel::<Vec<Arc<OsStr>>>();
+    pub fn paths(self) -> Vec<Box<OsStr>> {
+        let (sender, receiver) = mpsc::channel::<Vec<Box<OsStr>>>();
         let mut builder = WalkBuilder { sender, extensions: self.extensions };
         self.inner.visit(&mut builder);
         drop(builder);

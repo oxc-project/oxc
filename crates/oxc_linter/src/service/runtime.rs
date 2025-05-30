@@ -37,7 +37,7 @@ use crate::fixer::MessageWithPosition;
 pub struct Runtime<'l> {
     cwd: Box<Path>,
     /// All paths to lint
-    paths: IndexSet<Arc<OsStr>, FxBuildHasher>,
+    paths: IndexSet<Box<OsStr>, FxBuildHasher>,
     pub(super) linter: &'l Linter,
     resolver: Option<Resolver>,
 
@@ -48,7 +48,7 @@ pub struct Runtime<'l> {
 struct ModuleProcessOutput {
     /// All paths in `Runtime` are stored as `OsStr`, because `OsStr` hash is faster
     /// than `Path` - go checkout their source code.
-    path: Arc<OsStr>,
+    path: Box<OsStr>,
     processed_module: ProcessedModule,
 }
 
@@ -74,7 +74,7 @@ struct ProcessedModule {
 
 struct ResolvedModuleRequest {
     specifier: CompactStr,
-    resolved_requested_path: Arc<OsStr>,
+    resolved_requested_path: Box<OsStr>,
 }
 
 /// ModuleRecord with all specifiers in import statements resolved to real paths.
@@ -112,12 +112,13 @@ struct SectionContent<'a> {
 /// A `ModuleWithContent` is generated for each path in `runtime.paths`. It's basically the same
 /// as `ProcessedModule`, except `content` is non-Option.
 struct ModuleToLint {
-    path: Arc<OsStr>,
+    path: Box<OsStr>,
     section_module_records: SmallVec<[Result<Arc<ModuleRecord>, Vec<OxcDiagnostic>>; 1]>,
     content: ModuleContent,
 }
+
 impl ModuleToLint {
-    fn from_processed_module(path: Arc<OsStr>, processed_module: ProcessedModule) -> Option<Self> {
+    fn from_processed_module(path: Box<OsStr>, processed_module: ProcessedModule) -> Option<Self> {
         processed_module.content.map(|content| Self {
             path,
             section_module_records: processed_module
@@ -166,7 +167,7 @@ impl<'l> Runtime<'l> {
         });
         Self {
             cwd: options.cwd,
-            paths: options.paths.iter().cloned().collect(),
+            paths: options.paths.iter().cloned().collect::<IndexSet<Box<OsStr>, FxBuildHasher>>(),
             linter,
             resolver,
             file_system: Box::new(OsFileSystem),
@@ -249,10 +250,11 @@ impl<'l> Runtime<'l> {
     ) {
         if self.resolver.is_none() {
             self.paths.par_iter().for_each(|path| {
-                let output = self.process_path(Arc::clone(path), check_syntax_errors, tx_error);
-                let Some(entry) =
-                    ModuleToLint::from_processed_module(output.path, output.processed_module)
-                else {
+                let output = self.process_path(path, check_syntax_errors, tx_error);
+                let Some(entry) = ModuleToLint::from_processed_module(
+                    output.path.clone(),
+                    output.processed_module,
+                ) else {
                     return;
                 };
                 on_module_to_lint(self, entry);
@@ -305,7 +307,7 @@ impl<'l> Runtime<'l> {
         // The values are module records of sections (check the docs of `ProcessedModule.section_module_records`)
         // Its entries are kept across groups because modules discovered in former groups could be referenced by modules in latter groups.
         let mut modules_by_path =
-            FxHashMap::<Arc<OsStr>, SmallVec<[Arc<ModuleRecord>; 1]>>::with_capacity_and_hasher(
+            FxHashMap::<Box<OsStr>, SmallVec<[Arc<ModuleRecord>; 1]>>::with_capacity_and_hasher(
                 me.paths.len(),
                 FxBuildHasher,
             );
@@ -313,12 +315,12 @@ impl<'l> Runtime<'l> {
         // `encountered_paths` prevents duplicated processing.
         // It is a superset of keys of `modules_by_path` as it also contains paths that are queued to process.
         let mut encountered_paths =
-            FxHashSet::<Arc<OsStr>>::with_capacity_and_hasher(me.paths.len(), FxBuildHasher);
+            FxHashSet::<Box<OsStr>>::with_capacity_and_hasher(me.paths.len(), FxBuildHasher);
 
         // Resolved module requests from modules in current group.
         // This is used to populate `loaded_modules` at the end of each group.
         let mut module_paths_and_resolved_requests =
-            Vec::<(Arc<OsStr>, SmallVec<[Vec<ResolvedModuleRequest>; 1]>)>::new();
+            Vec::<(Box<OsStr>, SmallVec<[Vec<ResolvedModuleRequest>; 1]>)>::new();
 
         // There are two sets of threads: threads for the graph and threads for the modules.
         // - The graph thread is the one thread that calls `resolve_modules`. It's the only thread that updates the module graph, so no need for locks.
@@ -342,9 +344,8 @@ impl<'l> Runtime<'l> {
                 group_start += 1;
 
                 // Check if this module to be linted is already processed as a dependency in former groups
-                if encountered_paths.insert(Arc::clone(path)) {
+                if encountered_paths.insert(path.clone()) {
                     pending_module_count += 1;
-                    let path = Arc::clone(path);
                     let tx_process_output = tx_process_output.clone();
                     scope.spawn(move |_| {
                         tx_process_output
@@ -375,15 +376,14 @@ impl<'l> Runtime<'l> {
                         continue;
                     };
                     for request in &record.resolved_module_requests {
-                        let dep_path = &request.resolved_requested_path;
-                        if encountered_paths.insert(Arc::clone(dep_path)) {
+                        let dep_path = request.resolved_requested_path.clone();
+                        if encountered_paths.insert(dep_path.clone()) {
                             scope.spawn({
                                 let tx_resolve_output = tx_process_output.clone();
-                                let dep_path = Arc::clone(dep_path);
                                 move |_| {
                                     tx_resolve_output
                                         .send(me.process_path(
-                                            dep_path,
+                                            &dep_path,
                                             check_syntax_errors,
                                             tx_error,
                                         ))
@@ -397,7 +397,7 @@ impl<'l> Runtime<'l> {
 
                 // Populate this module to `modules_by_path`
                 modules_by_path.insert(
-                    Arc::clone(&path),
+                    path.clone(),
                     processed_module
                         .section_module_records
                         .iter()
@@ -412,7 +412,7 @@ impl<'l> Runtime<'l> {
                 // and use it to populate `loaded_modules` after `pending_module_count` reaches 0. That's when all dependencies
                 // in this group are processed.
                 module_paths_and_resolved_requests.push((
-                    Arc::clone(&path),
+                    path.clone(),
                     processed_module
                         .section_module_records
                         .iter_mut()
@@ -425,7 +425,7 @@ impl<'l> Runtime<'l> {
                 // This module has `content` which means it's one of `self.paths`.
                 // Store it to `modules_to_lint`
                 if let Some(entry_module) =
-                    ModuleToLint::from_processed_module(path, processed_module)
+                    ModuleToLint::from_processed_module(path.clone(), processed_module)
                 {
                     modules_to_lint.push(entry_module);
                 }
@@ -449,7 +449,7 @@ impl<'l> Runtime<'l> {
                     for request in requested_module_paths {
                         // TODO: revise how to store multiple sections in loaded_modules
                         let Some(dep_module_record) =
-                            modules_by_path[&request.resolved_requested_path].last()
+                            modules_by_path[request.resolved_requested_path.as_ref()].last()
                         else {
                             continue;
                         };
@@ -734,29 +734,37 @@ impl<'l> Runtime<'l> {
 
     fn process_path(
         &self,
-        path: Arc<OsStr>,
+        path: &OsStr,
         check_syntax_errors: bool,
         tx_error: &DiagnosticSender,
     ) -> ModuleProcessOutput {
-        let Some(ext) = Path::new(&path).extension().and_then(OsStr::to_str) else {
-            return ModuleProcessOutput { path, processed_module: ProcessedModule::default() };
+        let Some(ext) = Path::new(path).extension().and_then(OsStr::to_str) else {
+            return ModuleProcessOutput {
+                path: path.into(),
+                processed_module: ProcessedModule::default(),
+            };
         };
-        let Some(source_type_and_text) = self.get_source_type_and_text(Path::new(&path), ext)
-        else {
-            return ModuleProcessOutput { path, processed_module: ProcessedModule::default() };
+        let Some(source_type_and_text) = self.get_source_type_and_text(Path::new(path), ext) else {
+            return ModuleProcessOutput {
+                path: path.into(),
+                processed_module: ProcessedModule::default(),
+            };
         };
 
         let (source_type, source_text) = match source_type_and_text {
             Ok(source_text) => source_text,
             Err(e) => {
-                tx_error.send(Some((Path::new(&path).to_path_buf(), vec![e]))).unwrap();
-                return ModuleProcessOutput { path, processed_module: ProcessedModule::default() };
+                tx_error.send(Some((PathBuf::from(path), vec![e]))).unwrap();
+                return ModuleProcessOutput {
+                    path: path.into(),
+                    processed_module: ProcessedModule::default(),
+                };
             }
         };
         let mut records = SmallVec::<[Result<ResolvedModuleRecord, Vec<OxcDiagnostic>>; 1]>::new();
         let mut module_content: Option<ModuleContent> = None;
         let allocator = Allocator::default();
-        if self.paths.contains(&path) {
+        if self.paths.contains(path) {
             module_content =
                 Some(ModuleContent::new(ModuleContentOwner { source_text, allocator }, |owner| {
                     let mut section_contents = SmallVec::new();
@@ -784,7 +792,7 @@ impl<'l> Runtime<'l> {
         }
 
         ModuleProcessOutput {
-            path,
+            path: path.into(),
             processed_module: ProcessedModule {
                 section_module_records: records,
                 content: module_content,
@@ -886,7 +894,7 @@ impl<'l> Runtime<'l> {
                     let resolution = resolver.resolve(dir, specifier).ok()?;
                     Some(ResolvedModuleRequest {
                         specifier: specifier.clone(),
-                        resolved_requested_path: Arc::<OsStr>::from(resolution.path().as_os_str()),
+                        resolved_requested_path: resolution.path().as_os_str().into(),
                     })
                 })
                 .collect();

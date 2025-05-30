@@ -4,7 +4,6 @@ use std::{
     fs,
     io::{ErrorKind, Write},
     path::{Path, PathBuf, absolute},
-    sync::Arc,
     time::Instant,
 };
 
@@ -383,7 +382,7 @@ impl LintRunner {
         stdout: &mut dyn Write,
         handler: &GraphicalReportHandler,
         filters: &Vec<LintFilter>,
-        paths: &Vec<Arc<OsStr>>,
+        paths: &Vec<Box<OsStr>>,
     ) -> Result<FxHashMap<PathBuf, Config>, CliRunResult> {
         // TODO(perf): benchmark whether or not it is worth it to store the configurations on a
         // per-file or per-directory basis, to avoid calling `.parent()` on every path.

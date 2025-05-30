@@ -1,7 +1,6 @@
 use std::{
     ffi::OsStr,
     path::{Path, PathBuf},
-    sync::Arc,
 };
 
 use oxc_diagnostics::DiagnosticSender;
@@ -20,7 +19,7 @@ pub struct LintServiceOptions {
     cwd: Box<Path>,
 
     /// All paths to lint
-    paths: Vec<Arc<OsStr>>,
+    paths: Vec<Box<OsStr>>,
 
     /// TypeScript `tsconfig.json` path for reading path alias and project references
     tsconfig: Option<PathBuf>,
@@ -30,7 +29,7 @@ pub struct LintServiceOptions {
 
 impl LintServiceOptions {
     #[must_use]
-    pub fn new<T>(cwd: T, paths: Vec<Arc<OsStr>>) -> Self
+    pub fn new<T>(cwd: T, paths: Vec<Box<OsStr>>) -> Self
     where
         T: Into<Box<Path>>,
     {
