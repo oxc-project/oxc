@@ -35,9 +35,7 @@ impl<'a> ParserImpl<'a> {
         &mut self,
         allow_return_type_in_arrow_function: bool,
     ) -> Option<Expression<'a>> {
-        if self.at(Kind::Async)
-            && self.is_un_parenthesized_async_arrow_function_worker() == Tristate::True
-        {
+        if self.at(Kind::Async) && self.is_un_parenthesized_async_arrow_function_worker() {
             let span = self.start_span();
             self.bump_any(); // bump `async`
             let expr = self.parse_binary_expression_or_higher(Precedence::Comma);
@@ -194,28 +192,21 @@ impl<'a> ParserImpl<'a> {
         }
     }
 
-    fn is_un_parenthesized_async_arrow_function_worker(&mut self) -> Tristate {
-        if self.at(Kind::Async) {
-            let checkpoint = self.checkpoint();
-            self.bump(Kind::Async);
-            // If the "async" is followed by "=>" token then it is not a beginning of an async arrow-function
-            // but instead a simple arrow-function which will be parsed inside "parseAssignmentExpressionOrHigher"
-            if self.cur_token().is_on_new_line() || self.at(Kind::Arrow) {
+    fn is_un_parenthesized_async_arrow_function_worker(&mut self) -> bool {
+        let checkpoint = self.checkpoint();
+        self.bump(Kind::Async);
+        // If the "async" is followed by "=>" token then it is not a beginning of an async arrow-function
+        // but instead a simple arrow-function which will be parsed inside "parseAssignmentExpressionOrHigher"
+        if !self.cur_token().is_on_new_line() && self.cur_kind().is_binding_identifier() {
+            // Arrow before newline is checked in `parse_simple_arrow_function_expression`
+            self.bump_any();
+            if self.at(Kind::Arrow) {
                 self.rewind(checkpoint);
-                return Tristate::False;
+                return true;
             }
-            // Check for un-parenthesized AsyncArrowFunction
-            if self.cur_kind().is_binding_identifier() {
-                // Arrow before newline is checked in `parse_simple_arrow_function_expression`
-                self.bump_any();
-                if self.at(Kind::Arrow) {
-                    self.rewind(checkpoint);
-                    return Tristate::True;
-                }
-            }
-            self.rewind(checkpoint);
         }
-        Tristate::False
+        self.rewind(checkpoint);
+        false
     }
 
     pub(crate) fn parse_simple_arrow_function_expression(
