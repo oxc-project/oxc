@@ -190,7 +190,7 @@ declare_oxc_lint!(
     /// ```
     ExhaustiveDeps,
     react,
-    nursery
+    correctness
 );
 
 const HOOKS_USELESS_WITHOUT_DEPENDENCIES: [&str; 2] = ["useCallback", "useMemo"];
