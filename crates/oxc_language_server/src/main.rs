@@ -30,6 +30,7 @@ mod linter;
 mod options;
 #[cfg(test)]
 mod tester;
+mod uri_ext;
 mod worker;
 
 type ConcurrentHashMap<K, V> = papaya::HashMap<K, V, FxBuildHasher>;

@@ -33,6 +33,7 @@ globset = { workspace = true }
 ignore = { workspace = true, features = ["simd-accel"] }
 log = { workspace = true }
 papaya = { workspace = true }
+percent-encoding = { workspace = true }
 rustc-hash = { workspace = true }
 serde = { workspace = true, features = ["derive"] }
 serde_json = { workspace = true }
