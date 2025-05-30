@@ -41,8 +41,7 @@ impl<'a> ParserImpl<'a> {
 
     fn is_next_token_using_keyword_then_binding_identifier(&mut self) -> bool {
         self.bump_any();
-        if self.at(Kind::Using) && !self.cur_token().is_on_new_line() {
-            self.bump_any();
+        if !self.cur_token().is_on_new_line() && self.eat(Kind::Using) {
             self.cur_kind().is_binding_identifier() && !self.cur_token().is_on_new_line()
         } else {
             false
@@ -111,10 +110,9 @@ impl<'a> ParserImpl<'a> {
             //        ^ definite
             let mut definite = false;
             if binding_kind.is_binding_identifier()
-                && self.at(Kind::Bang)
                 && !self.cur_token().is_on_new_line()
+                && self.eat(Kind::Bang)
             {
-                self.bump(Kind::Bang);
                 definite = true;
             }
             let optional = self.eat(Kind::Question); // not allowed, but checked in checker/typescript.rs
