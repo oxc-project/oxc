@@ -1,9 +1,12 @@
-use std::{ffi::OsStr, path::PathBuf, sync::Arc, sync::mpsc};
+use std::{
+    ffi::{OsStr, OsString},
+    path::PathBuf,
+    sync::{Arc, mpsc},
+};
 
 use ignore::{DirEntry, overrides::Override};
-use oxc_linter::LINTABLE_EXTENSIONS;
 
-use crate::cli::IgnoreOptions;
+use crate::LINTABLE_EXTENSIONS;
 
 #[derive(Clone)]
 pub struct Extensions(pub Vec<&'static str>);
@@ -14,7 +17,7 @@ impl Default for Extensions {
     }
 }
 
-pub struct Walk {
+pub struct FileWalker {
     inner: ignore::WalkParallel,
     /// The file extensions to include during the traversal.
     extensions: Extensions,
@@ -52,7 +55,7 @@ impl ignore::ParallelVisitor for WalkCollector {
     fn visit(&mut self, entry: Result<ignore::DirEntry, ignore::Error>) -> ignore::WalkState {
         match entry {
             Ok(entry) => {
-                if Walk::is_wanted_entry(&entry, &self.extensions) {
+                if FileWalker::is_wanted_entry(&entry, &self.extensions) {
                     self.paths.push(entry.path().as_os_str().into());
                 }
                 ignore::WalkState::Continue
@@ -61,22 +64,27 @@ impl ignore::ParallelVisitor for WalkCollector {
         }
     }
 }
-impl Walk {
+
+pub struct FileWalkerOptions {
+    pub no_ignore: bool,
+    pub symlinks: bool,
+    pub ignore_path: OsString,
+}
+
+impl FileWalker {
     /// Will not canonicalize paths.
     /// # Panics
     pub fn new(
         paths: &[PathBuf],
-        options: &IgnoreOptions,
+        options: &FileWalkerOptions,
         override_builder: Option<Override>,
     ) -> Self {
-        assert!(!paths.is_empty(), "At least one path must be provided to Walk::new");
+        assert!(!paths.is_empty(), "At least one path must be provided to FileWalker::new");
 
-        let mut inner = ignore::WalkBuilder::new(
-            paths
-                .iter()
-                .next()
-                .expect("Expected paths parameter to Walk::new() to contain at least one path."),
-        );
+        let mut inner =
+            ignore::WalkBuilder::new(paths.iter().next().expect(
+                "Expected paths parameter to FileWalker::new() to contain at least one path.",
+            ));
 
         if let Some(paths) = paths.get(1..) {
             for path in paths {
@@ -108,7 +116,8 @@ impl Walk {
         receiver.into_iter().flatten().collect()
     }
 
-    #[cfg_attr(not(test), expect(dead_code))]
+    #[cfg(test)]
+    #[must_use]
     pub fn with_extensions(mut self, extensions: Extensions) -> Self {
         self.extensions = extensions;
         self
@@ -133,25 +142,22 @@ impl Walk {
 mod test {
     use std::{env, ffi::OsString, path::Path};
 
+    use super::{Extensions, FileWalker, FileWalkerOptions};
     use ignore::overrides::OverrideBuilder;
-
-    use super::{Extensions, Walk};
-    use crate::cli::IgnoreOptions;
 
     #[test]
     fn test_walk_with_extensions() {
         let fixture = env::current_dir().unwrap().join("fixtures/walk_dir");
         let fixtures = vec![fixture.clone()];
-        let ignore_options = IgnoreOptions {
+        let ignore_options = FileWalkerOptions {
             no_ignore: false,
             ignore_path: OsString::from(".gitignore"),
-            ignore_pattern: vec![],
             symlinks: false,
         };
 
         let override_builder = OverrideBuilder::new("/").build().unwrap();
 
-        let mut paths = Walk::new(&fixtures, &ignore_options, Some(override_builder))
+        let mut paths = FileWalker::new(&fixtures, &ignore_options, Some(override_builder))
             .with_extensions(Extensions(["js", "vue"].to_vec()))
             .paths()
             .into_iter()

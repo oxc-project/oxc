@@ -12,8 +12,8 @@ use cow_utils::CowUtils;
 use ignore::{gitignore::Gitignore, overrides::OverrideBuilder};
 use oxc_diagnostics::{DiagnosticService, GraphicalReportHandler, OxcDiagnostic};
 use oxc_linter::{
-    AllowWarnDeny, Config, ConfigStore, ConfigStoreBuilder, InvalidFilterKind, LintFilter,
-    LintOptions, LintService, LintServiceOptions, Linter, Oxlintrc,
+    AllowWarnDeny, Config, ConfigStore, ConfigStoreBuilder, FileWalker, FileWalkerOptions,
+    InvalidFilterKind, LintFilter, LintOptions, LintService, LintServiceOptions, Linter, Oxlintrc,
 };
 use rustc_hash::{FxHashMap, FxHashSet};
 use serde_json::Value;
@@ -21,7 +21,6 @@ use serde_json::Value;
 use crate::{
     cli::{CliRunResult, LintCommand, MiscOptions, ReportUnusedDirectives, Runner, WarningOptions},
     output_formatter::{LintCommandInfo, OutputFormatter},
-    walk::Walk,
 };
 
 #[derive(Debug)]
@@ -165,7 +164,15 @@ impl Runner for LintRunner {
             paths.push(self.cwd.clone());
         }
 
-        let walker = Walk::new(&paths, &ignore_options, override_builder);
+        let walker = FileWalker::new(
+            &paths,
+            &FileWalkerOptions {
+                no_ignore: ignore_options.no_ignore,
+                ignore_path: ignore_options.ignore_path.clone(),
+                symlinks: ignore_options.symlinks,
+            },
+            override_builder,
+        );
         let paths = walker.paths();
         let number_of_files = paths.len();
 

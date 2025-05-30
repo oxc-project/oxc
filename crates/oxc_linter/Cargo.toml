@@ -49,6 +49,7 @@ convert_case = { workspace = true }
 cow-utils = { workspace = true }
 fast-glob = { workspace = true }
 globset = { workspace = true }
+ignore = { workspace = true, features = ["simd-accel"] }
 indexmap = { workspace = true, features = ["rayon"] }
 itertools = { workspace = true }
 javascript-globals = { workspace = true }
