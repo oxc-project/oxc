@@ -1,5 +1,6 @@
 ---
 source: crates/oxc_linter/src/lib.rs
+assertion_line: 214
 expression: json
 ---
 {
@@ -4780,6 +4781,16 @@ expression: json
             }
           ]
         },
+        "unicorn/no-array-method-this-argument": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
         "unicorn/no-array-reduce": {
           "anyOf": [
             {
@@ -4851,6 +4862,16 @@ expression: json
           ]
         },
         "unicorn/no-instanceof-array": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "unicorn/no-instanceof-builtins": {
           "anyOf": [
             {
               "$ref": "#/definitions/RuleConfig"
@@ -5030,6 +5051,16 @@ expression: json
             }
           ]
         },
+        "unicorn/no-unnecessary-array-flat-depth": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
         "unicorn/no-unnecessary-await": {
           "anyOf": [
             {
@@ -5170,6 +5201,16 @@ expression: json
             }
           ]
         },
+        "unicorn/prefer-array-find": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
         "unicorn/prefer-array-flat": {
           "anyOf": [
             {
@@ -5181,6 +5222,16 @@ expression: json
           ]
         },
         "unicorn/prefer-array-flat-map": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "unicorn/prefer-array-index-of": {
           "anyOf": [
             {
               "$ref": "#/definitions/RuleConfig"
@@ -5271,6 +5322,16 @@ expression: json
           ]
         },
         "unicorn/prefer-event-target": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "unicorn/prefer-global-this": {
           "anyOf": [
             {
               "$ref": "#/definitions/RuleConfig"
@@ -5371,6 +5432,16 @@ expression: json
           ]
         },
         "unicorn/prefer-number-properties": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "unicorn/prefer-object-from-entries": {
           "anyOf": [
             {
               "$ref": "#/definitions/RuleConfig"
@@ -5591,6 +5662,16 @@ expression: json
           ]
         },
         "vitest/no-conditional-tests": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleConfig"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "vitest/no-identical-title": {
           "anyOf": [
             {
               "$ref": "#/definitions/RuleConfig"
