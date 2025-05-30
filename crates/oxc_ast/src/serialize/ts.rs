@@ -301,8 +301,8 @@ impl ESTree for TSTypeNameIdentifierReference<'_, '_> {
                 end: expression.end,
                 object: expression.left,
                 property: expression.right,
-                computed: false,
                 optional: false,
+                computed: false,
             };
 
             while (parent.object.type === 'TSQualifiedName') {
@@ -313,8 +313,8 @@ impl ESTree for TSTypeNameIdentifierReference<'_, '_> {
                     end: object.end,
                     object: object.left,
                     property: object.right,
-                    computed: false,
                     optional: false,
+                    computed: false,
                 };
             }
         }
@@ -347,8 +347,8 @@ impl ESTree for TSTypeNameAsMemberExpression<'_, '_> {
                 state.serialize_field("end", &name.span.end);
                 state.serialize_field("object", &TSTypeNameAsMemberExpression(&name.left));
                 state.serialize_field("property", &name.right);
-                state.serialize_field("computed", &false);
                 state.serialize_field("optional", &false);
+                state.serialize_field("computed", &false);
                 state.end();
             }
         }
