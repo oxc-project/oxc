@@ -7,9 +7,9 @@ use oxc_ast::{
     AstKind, AstType,
     ast::{
         Argument, ArrayExpressionElement, ArrowFunctionExpression, BindingPatternKind,
-        CallExpression, ChainElement, Expression, Function, FunctionBody, IdentifierReference,
-        MemberExpression, StaticMemberExpression, TSTypeAnnotation, TSTypeParameter,
-        TSTypeReference, VariableDeclarationKind,
+        CallExpression, ChainElement, Expression, FormalParameters, Function, FunctionBody,
+        IdentifierReference, MemberExpression, StaticMemberExpression, TSTypeAnnotation,
+        TSTypeParameter, TSTypeReference, VariableDeclarationKind,
     },
     match_expression,
 };
@@ -373,6 +373,8 @@ impl Rule for ExhaustiveDeps {
         let (found_dependencies, refs_inside_cleanups) = {
             let mut found_dependencies = ExhaustiveDepsVisitor::new(ctx.semantic());
 
+            found_dependencies.visit_formal_parameters(callback_node.parameters());
+
             if let Some(function_body) = callback_node.body() {
                 found_dependencies.visit_function_body(function_body);
             }
@@ -628,6 +630,13 @@ impl<'a> CallbackNode<'a> {
         match self {
             CallbackNode::Function(func) => func.r#async,
             CallbackNode::ArrowFunction(func) => func.r#async,
+        }
+    }
+
+    fn parameters(&self) -> &FormalParameters<'a> {
+        match self {
+            CallbackNode::Function(func) => &func.params,
+            CallbackNode::ArrowFunction(func) => &func.params,
         }
     }
 
@@ -2139,6 +2148,17 @@ fn test() {
                };
            }, []);
         }",
+        r#"function X() {
+  const defaultParam1 = "";
+  const myFunction = useCallback(
+    (param1 = defaultParam1, param2) => {
+    },
+    [defaultParam1]
+  );
+
+  return null;
+}
+"#,
     ];
 
     let fail = vec![
