@@ -203,14 +203,6 @@ pub struct OutputOptions {
 #[expect(clippy::struct_field_names)]
 #[derive(Debug, Default, Clone, Bpaf)]
 pub struct EnablePlugins {
-    /// Disable react plugin, which is turned on by default
-    #[bpaf(
-        long("disable-react-plugin"),
-        flag(OverrideToggle::Disable, OverrideToggle::NotSet),
-        hide_usage
-    )]
-    pub react_plugin: OverrideToggle,
-
     /// Disable unicorn plugin, which is turned on by default
     #[bpaf(
         long("disable-unicorn-plugin"),
@@ -239,6 +231,10 @@ pub struct EnablePlugins {
     /// It is recommended to use along side with the `--tsconfig` option.
     #[bpaf(flag(OverrideToggle::Enable, OverrideToggle::NotSet), hide_usage)]
     pub import_plugin: OverrideToggle,
+
+    /// Enable react plugin, which is turned off by default
+    #[bpaf(flag(OverrideToggle::Enable, OverrideToggle::NotSet), hide_usage)]
+    pub react_plugin: OverrideToggle,
 
     /// Enable the experimental jsdoc plugin and detect JSDoc problems
     #[bpaf(flag(OverrideToggle::Enable, OverrideToggle::NotSet), hide_usage)]

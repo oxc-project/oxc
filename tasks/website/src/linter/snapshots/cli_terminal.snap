@@ -29,12 +29,12 @@ Allowing / Denying Multiple Lints
     -D, --deny=NAME           Deny the rule or category (emit an error)
 
 Enable Plugins
-        --disable-react-plugin  Disable react plugin, which is turned on by default
         --disable-unicorn-plugin  Disable unicorn plugin, which is turned on by default
         --disable-oxc-plugin  Disable oxc unique rules, which is turned on by default
         --disable-typescript-plugin  Disable TypeScript plugin, which is turned on by default
         --import-plugin       Enable the experimental import plugin and detect ESM problems. It is
                               recommended to use along side with the `--tsconfig` option.
+        --react-plugin        Enable react plugin, which is turned off by default
         --jsdoc-plugin        Enable the experimental jsdoc plugin and detect JSDoc problems
         --jest-plugin         Enable the Jest plugin and detect test problems
         --vitest-plugin       Enable the Vitest plugin and detect test problems
