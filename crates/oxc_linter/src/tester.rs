@@ -319,11 +319,6 @@ impl Tester {
         self
     }
 
-    pub fn with_lint_options(mut self, lint_options: LintOptions) -> Self {
-        self.lint_options = lint_options;
-        self
-    }
-
     /// Add cases that should fix problems found in the source code.
     ///
     /// These cases will fail if no fixes are produced or if the fixed source

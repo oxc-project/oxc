@@ -1,4 +1,3 @@
-use crate::{ContextHost, FrameworkFlags};
 use oxc_ast::{
     AstKind,
     ast::{CallExpression, Expression},
@@ -95,15 +94,10 @@ impl Rule for ForwardRefUsesRef {
 
         check_forward_ref_inner(first_arg_as_exp, call_expr, ctx);
     }
-
-    fn should_run(&self, ctx: &ContextHost) -> bool {
-        ctx.frameworks().contains(FrameworkFlags::React)
-    }
 }
 
 #[test]
 fn test() {
-    use crate::LintOptions;
     use crate::tester::Tester;
 
     let pass = vec![
@@ -206,10 +200,6 @@ fn test() {
     ];
 
     Tester::new(ForwardRefUsesRef::NAME, ForwardRefUsesRef::PLUGIN, pass, fail)
-        .with_lint_options(LintOptions {
-            framework_hints: FrameworkFlags::React,
-            ..LintOptions::default()
-        })
         .expect_fix(fix)
         .test_and_snapshot();
 }
