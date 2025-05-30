@@ -249,7 +249,7 @@ impl<'l> Runtime<'l> {
     ) {
         if self.resolver.is_none() {
             self.paths.par_iter().for_each(|path| {
-                let output = self.process_path(Arc::clone(path), check_syntax_errors, tx_error);
+                let output = self.process_path(path, check_syntax_errors, tx_error);
                 let Some(entry) =
                     ModuleToLint::from_processed_module(output.path, output.processed_module)
                 else {
@@ -348,7 +348,7 @@ impl<'l> Runtime<'l> {
                     let tx_process_output = tx_process_output.clone();
                     scope.spawn(move |_| {
                         tx_process_output
-                            .send(me.process_path(path, check_syntax_errors, tx_error))
+                            .send(me.process_path(&path, check_syntax_errors, tx_error))
                             .unwrap();
                     });
                 }
@@ -383,7 +383,7 @@ impl<'l> Runtime<'l> {
                                 move |_| {
                                     tx_resolve_output
                                         .send(me.process_path(
-                                            dep_path,
+                                            &dep_path,
                                             check_syntax_errors,
                                             tx_error,
                                         ))
@@ -734,34 +734,42 @@ impl<'l> Runtime<'l> {
 
     fn process_path(
         &self,
-        path: Arc<OsStr>,
+        path: &Arc<OsStr>,
         check_syntax_errors: bool,
         tx_error: &DiagnosticSender,
     ) -> ModuleProcessOutput {
-        let Some(ext) = Path::new(&path).extension().and_then(OsStr::to_str) else {
-            return ModuleProcessOutput { path, processed_module: ProcessedModule::default() };
+        let Some(ext) = Path::new(path).extension().and_then(OsStr::to_str) else {
+            return ModuleProcessOutput {
+                path: Arc::clone(path),
+                processed_module: ProcessedModule::default(),
+            };
         };
-        let Some(source_type_and_text) = self.get_source_type_and_text(Path::new(&path), ext)
-        else {
-            return ModuleProcessOutput { path, processed_module: ProcessedModule::default() };
+        let Some(source_type_and_text) = self.get_source_type_and_text(Path::new(path), ext) else {
+            return ModuleProcessOutput {
+                path: Arc::clone(path),
+                processed_module: ProcessedModule::default(),
+            };
         };
 
         let (source_type, source_text) = match source_type_and_text {
             Ok(source_text) => source_text,
             Err(e) => {
-                tx_error.send(Some((Path::new(&path).to_path_buf(), vec![e]))).unwrap();
-                return ModuleProcessOutput { path, processed_module: ProcessedModule::default() };
+                tx_error.send(Some((Path::new(path).to_path_buf(), vec![e]))).unwrap();
+                return ModuleProcessOutput {
+                    path: Arc::clone(path),
+                    processed_module: ProcessedModule::default(),
+                };
             }
         };
         let mut records = SmallVec::<[Result<ResolvedModuleRecord, Vec<OxcDiagnostic>>; 1]>::new();
         let mut module_content: Option<ModuleContent> = None;
         let allocator = Allocator::default();
-        if self.paths.contains(&path) {
+        if self.paths.contains(path) {
             module_content =
                 Some(ModuleContent::new(ModuleContentOwner { source_text, allocator }, |owner| {
                     let mut section_contents = SmallVec::new();
                     records = self.process_source(
-                        Path::new(&path),
+                        Path::new(path),
                         ext,
                         check_syntax_errors,
                         source_type,
@@ -773,7 +781,7 @@ impl<'l> Runtime<'l> {
                 }));
         } else {
             records = self.process_source(
-                Path::new(&path),
+                Path::new(path),
                 ext,
                 check_syntax_errors,
                 source_type,
@@ -784,7 +792,7 @@ impl<'l> Runtime<'l> {
         }
 
         ModuleProcessOutput {
-            path,
+            path: Arc::clone(path),
             processed_module: ProcessedModule {
                 section_module_records: records,
                 content: module_content,
