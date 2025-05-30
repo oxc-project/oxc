@@ -31,6 +31,12 @@ impl OxlintCategories {
     pub fn filters(&self) -> impl Iterator<Item = LintFilter> + '_ {
         self.iter().map(|(category, severity)| LintFilter::new(*severity, *category).unwrap())
     }
+
+    pub fn correctness() -> Self {
+        let mut map = FxHashMap::default();
+        map.insert(RuleCategory::Correctness, AllowWarnDeny::Warn);
+        OxlintCategories(map)
+    }
 }
 
 impl JsonSchema for OxlintCategories {
