@@ -268,7 +268,7 @@ impl<'a> ParserImpl<'a> {
                 self.bump_any(); // bump `{`
 
                 // {...expr}
-                if self.at(Kind::Dot3) {
+                if self.eat(Kind::Dot3) {
                     return Some(JSXChild::Spread(self.parse_jsx_spread_child(span_start)));
                 }
                 // {expr}
@@ -321,7 +321,6 @@ impl<'a> ParserImpl<'a> {
     /// `JSXChildExpression` :
     ///   { ... `AssignmentExpression` }
     fn parse_jsx_spread_child(&mut self, span_start: u32) -> Box<'a, JSXSpreadChild<'a>> {
-        self.bump_any(); // bump `...`
         let expr = self.parse_jsx_assignment_expression();
         self.expect_jsx_child(Kind::RCurly);
         self.ast.alloc_jsx_spread_child(self.end_span(span_start), expr)
