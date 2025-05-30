@@ -77,9 +77,7 @@ impl Rule for PreferStringRaw {
 
         if let Some(parent_node) = parent_node {
             match parent_node.kind() {
-                AstKind::Directive(_) => {
-                    return;
-                }
+                AstKind::Directive(_) => return,
                 AstKind::ImportDeclaration(decl) => {
                     if string_literal.span == decl.source.span {
                         return;

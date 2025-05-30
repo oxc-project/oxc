@@ -74,9 +74,7 @@ impl Rule for NoNegatedCondition {
             AstKind::ConditionalExpression(conditional_expr) => {
                 conditional_expr.test.without_parentheses()
             }
-            _ => {
-                return;
-            }
+            _ => return,
         };
 
         match stmt_test {
@@ -93,9 +91,7 @@ impl Rule for NoNegatedCondition {
                     return;
                 }
             }
-            _ => {
-                return;
-            }
+            _ => return,
         }
 
         ctx.diagnostic(no_negated_condition_diagnostic(stmt_test.span()));

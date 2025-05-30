@@ -130,12 +130,10 @@ impl Rule for Namespace {
             let (source, module) = match &entry.import_name {
                 ImportImportName::NamespaceObject => {
                     let source = entry.module_request.name();
-                    match loaded_modules.get(source) {
-                        Some(module) => (source.to_string(), Arc::clone(module)),
-                        _ => {
-                            return;
-                        }
-                    }
+                    let Some(module) = loaded_modules.get(source) else {
+                        return;
+                    };
+                    (source.to_string(), Arc::clone(module))
                 }
                 ImportImportName::Name(name) => {
                     let Some(loaded_module) = loaded_modules.get(entry.module_request.name())

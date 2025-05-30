@@ -137,14 +137,11 @@ fn is_correct_place_to_call_expect<'a>(
 
     // loop until find the closest function body
     loop {
-        match parent.kind() {
-            AstKind::FunctionBody(_) => {
-                break;
-            }
-            _ => {
-                parent = ctx.nodes().parent_node(parent.id())?;
-            }
+        if matches!(parent.kind(), AstKind::FunctionBody(_)) {
+            break;
         }
+
+        parent = ctx.nodes().parent_node(parent.id())?;
     }
 
     let node = parent;

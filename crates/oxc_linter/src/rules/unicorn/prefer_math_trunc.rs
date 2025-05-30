@@ -113,9 +113,7 @@ impl Rule for PreferMathTrunc {
 
                 assignment_expr.operator.as_str()
             }
-            _ => {
-                return;
-            }
+            _ => return,
         };
 
         ctx.diagnostic(prefer_math_trunc_diagnostic(node.kind().span(), operator));
