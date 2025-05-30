@@ -27,6 +27,7 @@ oxc_diagnostics = { workspace = true }
 oxc_linter = { workspace = true, features = ["language_server"] }
 
 #
+cow-utils = { workspace = true }
 env_logger = { workspace = true, features = ["humantime"] }
 futures = { workspace = true }
 globset = { workspace = true }
