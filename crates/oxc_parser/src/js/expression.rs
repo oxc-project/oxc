@@ -758,8 +758,7 @@ impl<'a> ParserImpl<'a> {
             }
 
             if !question_dot {
-                if self.at(Kind::Bang) && !self.cur_token().is_on_new_line() && self.is_ts {
-                    self.bump_any();
+                if self.is_ts && !self.cur_token().is_on_new_line() && self.eat(Kind::Bang) {
                     lhs = self.ast.expression_ts_non_null(self.end_span(lhs_span), lhs);
                     continue;
                 }

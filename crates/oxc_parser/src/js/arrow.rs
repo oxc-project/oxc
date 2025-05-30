@@ -61,8 +61,7 @@ impl<'a> ParserImpl<'a> {
     }
 
     fn is_parenthesized_arrow_function_expression_worker(&mut self) -> Tristate {
-        if self.at(Kind::Async) {
-            self.bump(Kind::Async);
+        if self.eat(Kind::Async) {
             if self.cur_token().is_on_new_line() {
                 return Tristate::False;
             }
