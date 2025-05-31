@@ -24,12 +24,14 @@ mod r#enum;
 mod formal_parameter_binding_pattern;
 mod function;
 mod inferrer;
+mod internal_annotations;
 mod literal;
 mod module;
 mod return_type;
 mod scope;
 mod signatures;
 mod types;
+use internal_annotations::InternalAnnotations;
 
 #[derive(Debug, Default, Clone, Copy)]
 pub struct IsolatedDeclarationsOptions {
@@ -61,7 +63,7 @@ pub struct IsolatedDeclarations<'a> {
     strip_internal: bool,
 
     /// Start position of `@internal` jsdoc annotations.
-    internal_annotations: FxHashSet<u32>,
+    internal_annotations: InternalAnnotations,
 }
 
 impl<'a> IsolatedDeclarations<'a> {
@@ -70,7 +72,7 @@ impl<'a> IsolatedDeclarations<'a> {
         Self {
             ast: AstBuilder::new(allocator),
             strip_internal,
-            internal_annotations: FxHashSet::default(),
+            internal_annotations: InternalAnnotations::new(),
             scope: ScopeTree::new(),
             errors: RefCell::new(vec![]),
         }
@@ -80,10 +82,9 @@ impl<'a> IsolatedDeclarations<'a> {
     ///
     /// Returns `Vec<Error>` if any errors were collected during the transformation.
     pub fn build(mut self, program: &Program<'a>) -> IsolatedDeclarationsReturn<'a> {
-        self.internal_annotations = self
-            .strip_internal
-            .then(|| Self::build_internal_annotations(program))
-            .unwrap_or_default();
+        if self.strip_internal {
+            self.internal_annotations.build(program);
+        }
         let source_type = SourceType::d_ts();
         let directives = self.ast.vec();
         let stmts = self.transform_program(program);
@@ -108,26 +109,10 @@ impl<'a> IsolatedDeclarations<'a> {
         self.errors.borrow_mut().push(error);
     }
 
-    /// Build the lookup table for jsdoc `@internal`.
-    fn build_internal_annotations(program: &Program<'a>) -> FxHashSet<u32> {
-        let mut set = FxHashSet::default();
-        for comment in &program.comments {
-            let has_internal =
-                comment.content_span().source_text(program.source_text).contains("@internal");
-            // Use the first jsdoc comment if there are multiple jsdoc comments for the same node.
-            if has_internal && !set.contains(&comment.attached_to) {
-                set.insert(comment.attached_to);
-            }
-        }
-        set
-    }
-
     /// Check if the node has an `@internal` annotation.
+    #[inline]
     fn has_internal_annotation(&self, span: Span) -> bool {
-        if !self.strip_internal {
-            return false;
-        }
-        self.internal_annotations.contains(&span.start)
+        self.internal_annotations.has_annotation(span)
     }
 }
 
@@ -155,6 +140,9 @@ impl<'a> IsolatedDeclarations<'a> {
 
         Self::remove_function_overloads_implementation(&mut stmts);
 
+        // Reset internal annotations cursor, before we loop through statements again
+        self.internal_annotations.reset_cursor();
+
         self.ast.vec_from_iter(stmts.iter().map(|stmt| {
             if let Some(new_decl) = self.transform_declaration(stmt.to_declaration(), false) {
                 Statement::from(new_decl)
@@ -178,6 +166,9 @@ impl<'a> IsolatedDeclarations<'a> {
             })
             .collect::<Vec<_>>();
         Self::remove_function_overloads_implementation(&mut stmts);
+
+        // Reset internal annotations cursor, before we loop through statements again
+        self.internal_annotations.reset_cursor();
 
         // https://github.com/microsoft/TypeScript/pull/58912
         let mut need_empty_export_marker = true;
@@ -294,6 +285,9 @@ impl<'a> IsolatedDeclarations<'a> {
         let last_transformed_len = transformed_spans.len() + transformed_variable_declarator.len();
         // 5. Transform statements until no more transformation can be done
         loop {
+            // Reset internal annotations cursor, before we loop through statements again
+            self.internal_annotations.reset_cursor();
+
             let cur_transformed_len =
                 transformed_spans.len() + transformed_variable_declarator.len();
             for stmt in &stmts {
