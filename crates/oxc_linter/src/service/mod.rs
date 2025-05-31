@@ -4,12 +4,13 @@ use std::{
     sync::Arc,
 };
 
+use crate::Linter;
+pub use file_walker::{FileWalker, FileWalkerOptions};
 use oxc_diagnostics::DiagnosticSender;
 use runtime::Runtime;
 pub use runtime::RuntimeFileSystem;
 
-use crate::Linter;
-
+mod file_walker;
 mod runtime;
 
 #[cfg(feature = "language_server")]
