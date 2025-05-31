@@ -1,7 +1,5 @@
 ---
 source: crates/oxc_linter/src/tester.rs
-assertion_line: 356
-snapshot_kind: text
 ---
   ⚠ eslint(prefer-object-spread): Disallow using `Object.assign` with an object literal as the first argument and prefer the use of object spread instead
    ╭─[prefer_object_spread.tsx:1:1]

@@ -1,6 +1,5 @@
 ---
 source: apps/oxlint/src/tester.rs
-assertion_line: 95
 ---
 ########## 
 arguments: --format=junit test.js
