@@ -552,9 +552,10 @@ impl<'l> Runtime<'l> {
     pub(super) fn run_source<'a>(
         &mut self,
         allocator: &'a oxc_allocator::Allocator,
-    ) -> Vec<MessageWithPosition<'a>> {
-        use oxc_allocator::CloneIn;
+    ) -> FxHashMap<PathBuf, Vec<MessageWithPosition<'a>>> {
         use std::sync::Mutex;
+
+        use oxc_allocator::CloneIn;
 
         use crate::{
             FixWithPosition,
@@ -576,21 +577,69 @@ impl<'l> Runtime<'l> {
             }
         }
 
-        let messages = Mutex::new(Vec::<MessageWithPosition<'a>>::new());
+        fn message_to_message_with_position<'a>(
+            message: &Message<'a>,
+            source_text: &str,
+            section_offset: u32,
+        ) -> MessageWithPosition<'a> {
+            let labels = &message.error.labels.clone().map(|labels| {
+                labels
+                    .into_iter()
+                    .map(|labeled_span| {
+                        let offset = labeled_span.offset() as u32;
+                        let start_position =
+                            offset_to_position(offset + section_offset, source_text);
+                        let end_position = offset_to_position(
+                            section_offset + offset + labeled_span.len() as u32,
+                            source_text,
+                        );
+                        let message =
+                            labeled_span.label().map(|label| Cow::Owned(label.to_string()));
+
+                        SpanPositionMessage::new(start_position, end_position).with_message(message)
+                    })
+                    .collect::<Vec<_>>()
+            });
+
+            MessageWithPosition {
+                message: message.error.message.clone(),
+                severity: message.error.severity,
+                help: message.error.help.clone(),
+                url: message.error.url.clone(),
+                code: message.error.code.clone(),
+                labels: labels.clone(),
+                fixes: match &message.fixes {
+                    PossibleFixes::None => PossibleFixesWithPosition::None,
+                    PossibleFixes::Single(fix) => PossibleFixesWithPosition::Single(
+                        fix_to_fix_with_position(fix, section_offset, source_text),
+                    ),
+                    PossibleFixes::Multiple(fixes) => PossibleFixesWithPosition::Multiple(
+                        fixes
+                            .iter()
+                            .map(|fix| fix_to_fix_with_position(fix, section_offset, source_text))
+                            .collect(),
+                    ),
+                },
+            }
+        }
+
+        let messages = Mutex::new(FxHashMap::<PathBuf, Vec<MessageWithPosition<'a>>>::with_hasher(
+            FxBuildHasher,
+        ));
         let (sender, _receiver) = mpsc::channel();
         rayon::scope(|scope| {
             self.resolve_modules(scope, true, &sender, |me, mut module| {
                 module.content.with_dependent_mut(|owner, dependent| {
                     assert_eq!(module.section_module_records.len(), dependent.len());
+                    let path = Path::new(&module.path);
+                    let mut all_module_messages = Vec::new();
 
                     for (record_result, section) in
                         module.section_module_records.into_iter().zip(dependent.drain(..))
                     {
                         match record_result {
                             Err(diagnostics) => {
-                                messages
-                                    .lock()
-                                    .unwrap()
+                                all_module_messages
                                     .extend(diagnostics.into_iter().map(std::convert::Into::into));
                             }
                             Ok(module_record) => {
@@ -600,79 +649,18 @@ impl<'l> Runtime<'l> {
                                     Arc::clone(&module_record),
                                 );
 
-                                messages.lock().unwrap().extend(section_message.iter().map(
-                                    |message| {
-                                        let message = message.clone_in(allocator);
-
-                                        let labels = &message.error.labels.clone().map(|labels| {
-                                            labels
-                                                .into_iter()
-                                                .map(|labeled_span| {
-                                                    let offset = labeled_span.offset() as u32;
-                                                    let start_position = offset_to_position(
-                                                        offset + section.source.start,
-                                                        &owner.source_text,
-                                                    );
-                                                    let end_position = offset_to_position(
-                                                        offset
-                                                            + section.source.start
-                                                            + labeled_span.len() as u32,
-                                                        &owner.source_text,
-                                                    );
-                                                    let message = labeled_span
-                                                        .label()
-                                                        .map(|label| Cow::Owned(label.to_string()));
-
-                                                    SpanPositionMessage::new(
-                                                        start_position,
-                                                        end_position,
-                                                    )
-                                                    .with_message(message)
-                                                })
-                                                .collect::<Vec<_>>()
-                                        });
-
-                                        MessageWithPosition {
-                                            message: message.error.message.clone(),
-                                            severity: message.error.severity,
-                                            help: message.error.help.clone(),
-                                            url: message.error.url.clone(),
-                                            code: message.error.code.clone(),
-                                            labels: labels.clone(),
-                                            fixes: match &message.fixes {
-                                                PossibleFixes::None => {
-                                                    PossibleFixesWithPosition::None
-                                                }
-                                                PossibleFixes::Single(fix) => {
-                                                    PossibleFixesWithPosition::Single(
-                                                        fix_to_fix_with_position(
-                                                            fix,
-                                                            section.source.start,
-                                                            &owner.source_text,
-                                                        ),
-                                                    )
-                                                }
-                                                PossibleFixes::Multiple(fixes) => {
-                                                    PossibleFixesWithPosition::Multiple(
-                                                        fixes
-                                                            .iter()
-                                                            .map(|fix| {
-                                                                fix_to_fix_with_position(
-                                                                    fix,
-                                                                    section.source.start,
-                                                                    &owner.source_text,
-                                                                )
-                                                            })
-                                                            .collect(),
-                                                    )
-                                                }
-                                            },
-                                        }
-                                    },
-                                ));
+                                all_module_messages.extend(section_message.iter().map(|message| {
+                                    message_to_message_with_position(
+                                        &message.clone_in(allocator),
+                                        &owner.source_text,
+                                        section.source.start,
+                                    )
+                                }));
                             }
                         }
                     }
+
+                    messages.lock().unwrap().insert(path.to_path_buf(), all_module_messages);
                 });
             });
         });
