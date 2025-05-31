@@ -5,6 +5,22 @@
 //! These modules are declared manually because `cargo fmt` stops formatting these files with they
 //! are inside a proc macro.
 
+pub trait TestFramework {
+    const NAME: &'static str;
+}
+
+#[derive(Debug, Clone)]
+pub struct TestFrameworkJest;
+impl TestFramework for TestFrameworkJest {
+    const NAME: &'static str = "jest";
+}
+
+#[derive(Debug, Clone)]
+pub struct TestFrameworkVitest;
+impl TestFramework for TestFrameworkVitest {
+    const NAME: &'static str = "vitest";
+}
+
 /// <https://github.com/import-js/eslint-plugin-import>
 mod import {
     pub mod consistent_type_specifier_style;
@@ -228,6 +244,11 @@ mod typescript {
     pub mod triple_slash_reference;
 }
 
+mod test {
+    pub mod no_hooks;
+    pub mod no_identical_title;
+}
+
 mod jest {
     pub mod consistent_test_it;
     pub mod expect_expect;
@@ -244,8 +265,6 @@ mod jest {
     pub mod no_duplicate_hooks;
     pub mod no_export;
     pub mod no_focused_tests;
-    pub mod no_hooks;
-    pub mod no_identical_title;
     pub mod no_interpolation_in_snapshots;
     pub mod no_jasmine_globals;
     pub mod no_large_snapshots;
@@ -740,6 +759,8 @@ oxc_macros::declare_all_lint_rules! {
     import::no_self_import,
     import::no_webpack_loader_syntax,
     import::unambiguous,
+    test::no_identical_title,
+    test::no_hooks,
     jest::consistent_test_it,
     jest::expect_expect,
     jest::max_expects,
@@ -755,8 +776,6 @@ oxc_macros::declare_all_lint_rules! {
     jest::no_duplicate_hooks,
     jest::no_export,
     jest::no_focused_tests,
-    jest::no_hooks,
-    jest::no_identical_title,
     jest::no_interpolation_in_snapshots,
     jest::no_jasmine_globals,
     jest::no_large_snapshots,
