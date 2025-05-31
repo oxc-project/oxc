@@ -155,15 +155,15 @@ type Slot = usize;
 /// - slot 1: `top_level_b`, `foo_a`, `bar_a`
 /// - slot 2: `foo`
 /// - slot 3: `bar`
-#[derive(Default)]
-pub struct Mangler {
+pub struct Mangler<'m> {
     options: MangleOptions,
+    allocator: &'m Allocator,
 }
 
-impl Mangler {
+impl<'m> Mangler<'m> {
     #[must_use]
-    pub fn new() -> Self {
-        Self::default()
+    pub fn new(allocator: &'m Allocator) -> Self {
+        Self { options: MangleOptions::default(), allocator }
     }
 
     #[must_use]
@@ -216,10 +216,8 @@ impl Mangler {
         let (keep_name_names, keep_name_symbols) =
             Mangler::collect_keep_name_symbols(self.options.keep_names, scoping, ast_nodes);
 
-        let allocator = Allocator::default();
-
         // All symbols with their assigned slots. Keyed by symbol id.
-        let mut slots = Vec::from_iter_in(iter::repeat_n(0, scoping.symbols_len()), &allocator);
+        let mut slots = Vec::from_iter_in(iter::repeat_n(0, scoping.symbols_len()), self.allocator);
 
         // Stores the lived scope ids for each slot. Keyed by slot number.
         let mut slot_liveness: std::vec::Vec<FixedBitSet> = vec![];
@@ -300,13 +298,13 @@ impl Mangler {
             &keep_name_symbols,
             total_number_of_slots,
             &slots,
-            &allocator,
+            self.allocator,
         );
 
         let root_unresolved_references = scoping.root_unresolved_references();
         let root_bindings = scoping.get_bindings(scoping.root_scope_id());
 
-        let mut reserved_names = Vec::with_capacity_in(total_number_of_slots, &allocator);
+        let mut reserved_names = Vec::with_capacity_in(total_number_of_slots, self.allocator);
 
         let mut count = 0;
         for _ in 0..total_number_of_slots {

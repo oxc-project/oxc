@@ -11,7 +11,7 @@ fn mangle(source_text: &str, options: MangleOptions) -> String {
     let source_type = SourceType::mjs();
     let ret = Parser::new(&allocator, source_text, source_type).parse();
     let program = ret.program;
-    let symbol_table = Mangler::new().with_options(options).build(&program);
+    let symbol_table = Mangler::new(&allocator).with_options(options).build(&program);
     Codegen::new().with_scoping(Some(symbol_table)).build(&program).code
 }
 

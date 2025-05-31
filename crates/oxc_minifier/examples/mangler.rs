@@ -24,16 +24,18 @@ fn main() -> std::io::Result<()> {
     let source_text = std::fs::read_to_string(path)?;
     let source_type = SourceType::from_path(path).unwrap();
 
+    let mut allocator = Allocator::default();
     let options = MangleOptions {
         top_level: source_type.is_module(),
         keep_names: MangleOptionsKeepNames { function: keep_names, class: keep_names },
         debug,
     };
-    let printed = mangler(&source_text, source_type, options);
+    let printed = mangler(&allocator, &source_text, source_type, options);
     println!("{printed}");
 
     if twice {
-        let printed2 = mangler(&printed, source_type, options);
+        allocator.reset();
+        let printed2 = mangler(&allocator, &printed, source_type, options);
         println!("{printed2}");
         println!("same = {}", printed == printed2);
     }
@@ -41,9 +43,13 @@ fn main() -> std::io::Result<()> {
     Ok(())
 }
 
-fn mangler(source_text: &str, source_type: SourceType, options: MangleOptions) -> String {
-    let allocator = Allocator::default();
-    let ret = Parser::new(&allocator, source_text, source_type).parse();
-    let symbol_table = Mangler::new().with_options(options).build(&ret.program);
+fn mangler(
+    allocator: &Allocator,
+    source_text: &str,
+    source_type: SourceType,
+    options: MangleOptions,
+) -> String {
+    let ret = Parser::new(allocator, source_text, source_type).parse();
+    let symbol_table = Mangler::new(allocator).with_options(options).build(&ret.program);
     Codegen::new().with_scoping(Some(symbol_table)).build(&ret.program).code
 }
