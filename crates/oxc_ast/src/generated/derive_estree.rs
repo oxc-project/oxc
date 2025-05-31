@@ -1455,7 +1455,7 @@ impl ESTree for Class<'_> {
         state.serialize_field("type", &self.r#type);
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
-        state.serialize_ts_field("decorators", &self.decorators);
+        state.serialize_field("decorators", &self.decorators);
         state.serialize_field("id", &self.id);
         state.serialize_ts_field("typeParameters", &self.type_parameters);
         state.serialize_field("superClass", &self.super_class);
@@ -1506,7 +1506,7 @@ impl ESTree for MethodDefinition<'_> {
         state.serialize_field("type", &self.r#type);
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
-        state.serialize_ts_field("decorators", &self.decorators);
+        state.serialize_field("decorators", &self.decorators);
         state.serialize_field("key", &crate::serialize::js::MethodDefinitionKey(self));
         state.serialize_field("value", &self.value);
         state.serialize_field("kind", &self.kind);
@@ -1536,7 +1536,7 @@ impl ESTree for PropertyDefinition<'_> {
         state.serialize_field("type", &self.r#type);
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
-        state.serialize_ts_field("decorators", &self.decorators);
+        state.serialize_field("decorators", &self.decorators);
         state.serialize_field("key", &self.key);
         state.serialize_ts_field("typeAnnotation", &self.type_annotation);
         state.serialize_field("value", &self.value);
@@ -1626,7 +1626,7 @@ impl ESTree for AccessorProperty<'_> {
         state.serialize_field("type", &self.r#type);
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
-        state.serialize_ts_field("decorators", &self.decorators);
+        state.serialize_field("decorators", &self.decorators);
         state.serialize_field("key", &self.key);
         state.serialize_ts_field("typeAnnotation", &self.type_annotation);
         state.serialize_field("value", &self.value);

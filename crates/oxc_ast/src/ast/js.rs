@@ -1913,7 +1913,6 @@ pub struct Class<'a> {
     /// @Bar() // <-- Decorator
     /// class Foo {}
     /// ```
-    #[ts]
     pub decorators: Vec<'a, Decorator<'a>>,
     /// Class identifier, AKA the name
     pub id: Option<BindingIdentifier<'a>>,
@@ -2045,7 +2044,6 @@ pub struct MethodDefinition<'a> {
     ///
     /// This will always be true when an `abstract` modifier is used on the method.
     pub r#type: MethodDefinitionType,
-    #[ts]
     pub decorators: Vec<'a, Decorator<'a>>,
     #[estree(via = MethodDefinitionKey)]
     pub key: PropertyKey<'a>,
@@ -2085,7 +2083,6 @@ pub struct PropertyDefinition<'a> {
     /// Decorators applied to the property.
     ///
     /// See [`Decorator`] for more information.
-    #[ts]
     pub decorators: Vec<'a, Decorator<'a>>,
     /// The expression used to declare the property.
     pub key: PropertyKey<'a>,
@@ -2308,7 +2305,6 @@ pub struct AccessorProperty<'a> {
     /// Decorators applied to the accessor property.
     ///
     /// See [`Decorator`] for more information.
-    #[ts]
     pub decorators: Vec<'a, Decorator<'a>>,
     /// The expression used to declare the property.
     pub key: PropertyKey<'a>,

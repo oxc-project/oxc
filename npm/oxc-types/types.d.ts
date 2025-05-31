@@ -647,7 +647,7 @@ export interface YieldExpression extends Span {
 
 export interface Class extends Span {
   type: ClassType;
-  decorators?: Array<Decorator>;
+  decorators: Array<Decorator>;
   id: BindingIdentifier | null;
   typeParameters?: TSTypeParameterDeclaration | null;
   superClass: Expression | null;
@@ -669,7 +669,7 @@ export type ClassElement = StaticBlock | MethodDefinition | PropertyDefinition |
 
 export interface MethodDefinition extends Span {
   type: MethodDefinitionType;
-  decorators?: Array<Decorator>;
+  decorators: Array<Decorator>;
   key: PropertyKey;
   value: Function;
   kind: MethodDefinitionKind;
@@ -684,7 +684,7 @@ export type MethodDefinitionType = 'MethodDefinition' | 'TSAbstractMethodDefinit
 
 export interface PropertyDefinition extends Span {
   type: PropertyDefinitionType;
-  decorators?: Array<Decorator>;
+  decorators: Array<Decorator>;
   key: PropertyKey;
   typeAnnotation?: TSTypeAnnotation | null;
   value: Expression | null;
@@ -724,7 +724,7 @@ export type AccessorPropertyType = 'AccessorProperty' | 'TSAbstractAccessorPrope
 
 export interface AccessorProperty extends Span {
   type: AccessorPropertyType;
-  decorators?: Array<Decorator>;
+  decorators: Array<Decorator>;
   key: PropertyKey;
   typeAnnotation?: TSTypeAnnotation | null;
   value: Expression | null;

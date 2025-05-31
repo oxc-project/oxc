@@ -18,6 +18,7 @@ If you need all ASTs in the same with-TS-properties format, use the `astType: 't
 
 The only differences between Oxc's AST and ESTree / TS-ESTree are:
 
+- Support for Stage 3 [decorators](https://github.com/tc39/proposal-decorators).
 - Support for Stage 3 ECMA features [`import defer`](https://github.com/tc39/proposal-defer-import-eval)
   and [`import source`](https://github.com/tc39/proposal-source-phase-imports).
 - In TS-ESTree AST, `import.defer(...)` and `import.source(...)` are represented as an `ImportExpression`
