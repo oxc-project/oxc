@@ -413,7 +413,7 @@ impl<'a> ParserImpl<'a> {
 
     fn parse_assertion_signature(&mut self) -> TSType<'a> {
         let token = self.cur_token();
-        self.bump_any();
+        self.bump_any(); // bump `asserts`
 
         if token.kind().is_identifier_name() && !token.is_on_new_line() {
             self.parse_asserts_type_predicate()
