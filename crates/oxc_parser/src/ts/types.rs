@@ -339,7 +339,8 @@ impl<'a> ParserImpl<'a> {
                 if let Some(ty) = self.try_parse(Self::parse_keyword_and_no_dot) {
                     ty
                 } else {
-                    self.parse_type_reference()
+                    let span = self.start_span();
+                    self.parse_type_reference(span)
                 }
             }
             // TODO: js doc types: `JSDocAllType`, `JSDocFunctionType`
@@ -368,7 +369,8 @@ impl<'a> ParserImpl<'a> {
                 if self.lookahead(Self::is_next_token_number) {
                     self.parse_literal_type_node(/* negative */ true)
                 } else {
-                    self.parse_type_reference()
+                    let span = self.start_span();
+                    self.parse_type_reference(span)
                 }
             }
             Kind::Void => {
@@ -405,21 +407,27 @@ impl<'a> ParserImpl<'a> {
             Kind::LBrack => self.parse_tuple_type(),
             Kind::LParen => self.parse_parenthesized_type(),
             Kind::Import => TSType::TSImportType(self.parse_ts_import_type()),
-            Kind::Asserts => {
-                if self.lookahead(Self::is_next_token_identifier_or_keyword_on_same_line) {
-                    self.parse_asserts_type_predicate()
-                } else {
-                    self.parse_type_reference()
-                }
-            }
+            Kind::Asserts => self.parse_assertion_signature(),
             Kind::TemplateHead => self.parse_template_type(false),
-            _ => self.parse_type_reference(),
+            _ => {
+                let span = self.start_span();
+                self.parse_type_reference(span)
+            },
         }
     }
 
-    fn is_next_token_identifier_or_keyword_on_same_line(&mut self) -> bool {
-        self.bump_any();
-        self.cur_kind().is_identifier_name() && !self.cur_token().is_on_new_line()
+    fn parse_assertion_signature(&mut self) -> TSType<'a> {
+        let checkpoint = self.checkpoint();
+        let asserts_start_span = self.start_span();
+
+        self.bump_any(); // bump `asserts`
+        let token = self.cur_token();
+        if token.kind().is_identifier_name() && !token.is_on_new_line() {
+            self.parse_asserts_type_predicate()
+        } else {
+            self.rewind(checkpoint);
+            self.parse_type_reference(asserts_start_span)
+        }
     }
 
     fn is_next_token_number(&mut self) -> bool {
@@ -731,7 +739,6 @@ impl<'a> ParserImpl<'a> {
 
     fn parse_asserts_type_predicate(&mut self) -> TSType<'a> {
         let span = self.start_span();
-        self.bump_any(); // bump `asserts`
         let parameter_name = if self.at(Kind::This) {
             TSTypePredicateName::This(self.parse_this_type_node())
         } else {
@@ -752,11 +759,10 @@ impl<'a> ParserImpl<'a> {
         )
     }
 
-    fn parse_type_reference(&mut self) -> TSType<'a> {
-        let span = self.start_span();
+    fn parse_type_reference(&mut self, start_span: u32) -> TSType<'a> {
         let type_name = self.parse_ts_type_name();
         let type_parameters = self.parse_type_arguments_of_type_reference();
-        self.ast.ts_type_type_reference(self.end_span(span), type_name, type_parameters)
+        self.ast.ts_type_type_reference(self.end_span(start_span), type_name, type_parameters)
     }
 
     fn parse_ts_implement_name(&mut self) -> TSClassImplements<'a> {
