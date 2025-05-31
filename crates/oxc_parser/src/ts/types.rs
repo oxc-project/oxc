@@ -406,7 +406,7 @@ impl<'a> ParserImpl<'a> {
             Kind::LParen => self.parse_parenthesized_type(),
             Kind::Import => TSType::TSImportType(self.parse_ts_import_type()),
             Kind::Asserts => 
-               self.parse_thing(),
+               self.parse_asserts(),
                // if self.lookahead(Self::is_next_token_identifier_or_keyword_on_same_line) {
                //     self.parse_asserts_type_predicate()
                // } else {
@@ -417,36 +417,19 @@ impl<'a> ParserImpl<'a> {
         }
     }
 
-    fn parse_thing(&mut self) -> TSType<'a> {
+    fn parse_asserts(&mut self) -> TSType<'a> {
     
     //self.checkpoint();
       // let checkpoint = self.checkpoint();
         let token = self.cur_token(); // these are the bits to remove now
         self.bump_any();
-       // self.rewind(checkpoint);  // these are the bits to remove now
-       let is_next_token_identifier_or_keyword_on_same_line =  token.kind().is_identifier_name() && !token.is_on_new_line();
-        if is_next_token_identifier_or_keyword_on_same_line {
+        // self.rewind(checkpoint);  // these are the bits to remove now
+       //let is_next_token_identifier_or_keyword_on_same_line =  token.kind().is_identifier_name() && !token.is_on_new_line();
+       //let is_cur_token_identifier_or_keyword_on_same_line = token.kind().is_identifier_name() && !token.is_on_new_line() ;
+
+       if token.kind().is_identifier_name() && !token.is_on_new_line() {
             //self.parse_asserts_type_predicate()
-            let span = self.start_span();
-        //    self.bump_any(); // bump `asserts`
-            let parameter_name = if self.at(Kind::This) {
-                TSTypePredicateName::This(self.parse_this_type_node())
-            } else {
-                let ident_name = self.parse_identifier_name();
-                TSTypePredicateName::Identifier(self.alloc(ident_name))
-            };
-            let mut type_annotation = None;
-            if self.eat(Kind::Is) {
-                let type_span = self.start_span();
-                let ty = self.parse_ts_type();
-                type_annotation = Some(self.ast.ts_type_annotation(self.end_span(type_span), ty));
-            }
-            self.ast.ts_type_type_predicate(
-                self.end_span(span),
-                parameter_name,
-                /* asserts */ true,
-                type_annotation,
-            )
+            self.parse_asserts_type_predicate()
         } else {
             // self.parse_type_reference()
             let span = self.start_span();
@@ -456,10 +439,9 @@ impl<'a> ParserImpl<'a> {
         }
     }
 
-    fn is_next_token_identifier_or_keyword_on_same_line(&mut self) -> bool {
-        self.bump_any();
-        self.cur_kind().is_identifier_name() && !self.cur_token().is_on_new_line()
-    }
+    //fn is_cur_token_identifier_or_keyword_on_same_line(&mut self) -> bool {
+    //    self.cur_kind().is_identifier_name() && !self.cur_token().is_on_new_line()
+    //}
 
     fn is_next_token_number(&mut self) -> bool {
         self.bump_any();
@@ -770,7 +752,6 @@ impl<'a> ParserImpl<'a> {
 
     fn parse_asserts_type_predicate(&mut self) -> TSType<'a> {
         let span = self.start_span();
-        self.bump_any(); // bump `asserts`
         let parameter_name = if self.at(Kind::This) {
             TSTypePredicateName::This(self.parse_this_type_node())
         } else {
