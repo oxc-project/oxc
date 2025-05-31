@@ -14,7 +14,8 @@ use tower_lsp_server::{
         DidChangeWatchedFilesRegistrationOptions, DidChangeWorkspaceFoldersParams,
         DidCloseTextDocumentParams, DidOpenTextDocumentParams, DidSaveTextDocumentParams,
         ExecuteCommandParams, InitializeParams, InitializeResult, InitializedParams, Registration,
-        ServerInfo, Unregistration, Uri, WorkspaceEdit,
+        ServerInfo, Unregistration, Uri, WorkspaceDiagnosticParams, WorkspaceDiagnosticReport,
+        WorkspaceDiagnosticReportResult, WorkspaceEdit,
     },
 };
 // #
@@ -30,7 +31,6 @@ mod linter;
 mod options;
 #[cfg(test)]
 mod tester;
-#[cfg(test)]
 mod uri_ext;
 mod worker;
 
@@ -584,6 +584,19 @@ impl LanguageServer for Backend {
         }
 
         Err(Error::invalid_request())
+    }
+
+    async fn workspace_diagnostic(
+        &self,
+        _params: WorkspaceDiagnosticParams,
+    ) -> Result<WorkspaceDiagnosticReportResult> {
+        let workers = self.workspace_workers.read().await;
+        for worker in workers.iter() {
+            worker.lint_workspace().await;
+        }
+
+        // Todo!
+        Ok(WorkspaceDiagnosticReportResult::Report(WorkspaceDiagnosticReport { items: vec![] }))
     }
 }
 
