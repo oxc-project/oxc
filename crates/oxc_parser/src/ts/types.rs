@@ -419,7 +419,7 @@ impl<'a> ParserImpl<'a> {
 
     fn parse_thing(&mut self) -> TSType<'a> {
     
-    self.checkpoint();
+    //self.checkpoint();
       // let checkpoint = self.checkpoint();
         let token = self.cur_token(); // these are the bits to remove now
         self.bump_any();
