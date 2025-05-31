@@ -418,7 +418,14 @@ impl<'a> ParserImpl<'a> {
     }
 
     fn parse_thing(&mut self) -> TSType<'a> {
-        if self.lookahead(Self::is_next_token_identifier_or_keyword_on_same_line) {
+    
+    self.checkpoint();
+        let checkpoint = self.checkpoint();
+        //let token = self.cur_token();
+        self.bump_any();
+        self.rewind(checkpoint);
+       let is_next_token_identifier_or_keyword_on_same_line =  self.cur_kind().is_identifier_name() && !self.cur_token().is_on_new_line();
+        if is_next_token_identifier_or_keyword_on_same_line {
             //self.parse_asserts_type_predicate()
             let span = self.start_span();
             self.bump_any(); // bump `asserts`
