@@ -404,7 +404,9 @@ impl<'a> ParserImpl<'a> {
         let decl_span = self.start_span();
         // For tc39/proposal-decorators
         // For more information, please refer to <https://babeljs.io/docs/babel-plugin-proposal-decorators#decoratorsbeforeexport>
-        self.eat_decorators();
+        if self.at(Kind::At) {
+            self.eat_decorators();
+        }
         let reserved_ctx = self.ctx;
         let modifiers =
             if self.is_ts { self.eat_modifiers_before_declaration() } else { Modifiers::empty() };
@@ -440,7 +442,9 @@ impl<'a> ParserImpl<'a> {
             self.lexer.trivia_builder.previous_token_has_no_side_effects_comment();
         // For tc39/proposal-decorators
         // For more information, please refer to <https://babeljs.io/docs/babel-plugin-proposal-decorators#decoratorsbeforeexport>
-        self.eat_decorators();
+        if self.at(Kind::At) {
+            self.eat_decorators();
+        }
         let declaration = match self.cur_kind() {
             Kind::Class => ExportDefaultDeclarationKind::ClassDeclaration(
                 self.parse_class_declaration(decl_span, /* modifiers */ &Modifiers::empty()),

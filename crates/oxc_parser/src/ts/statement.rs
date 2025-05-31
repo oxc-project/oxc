@@ -452,7 +452,9 @@ impl<'a> ParserImpl<'a> {
     pub(crate) fn parse_ts_this_parameter(&mut self) -> TSThisParameter<'a> {
         let span = self.start_span();
         self.parse_class_element_modifiers(true);
-        self.eat_decorators();
+        if self.at(Kind::At) {
+            self.eat_decorators();
+        }
 
         let this_span = self.start_span();
         self.bump_any();
@@ -463,10 +465,6 @@ impl<'a> ParserImpl<'a> {
     }
 
     pub(crate) fn eat_decorators(&mut self) {
-        if !self.at(Kind::At) {
-            return;
-        }
-
         let mut decorators = self.ast.vec();
         while self.at(Kind::At) {
             let decorator = self.parse_decorator();
