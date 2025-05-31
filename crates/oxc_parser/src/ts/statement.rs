@@ -120,7 +120,9 @@ impl<'a> ParserImpl<'a> {
         let params = self.parse_ts_type_parameters();
         self.expect(Kind::Eq);
 
-        let ty = if self.at(Kind::Intrinsic) && !self.lookahead(Self::is_next_token_dot) {
+        let ty = if self.at(Kind::Intrinsic)
+            && !self.lexer.lookahead_token(|token| token.kind() == Kind::Dot)
+        {
             let span = self.start_span();
             self.bump_any();
             self.ast.ts_type_intrinsic_keyword(self.end_span(span))
@@ -138,11 +140,6 @@ impl<'a> ParserImpl<'a> {
         );
 
         self.ast.declaration_ts_type_alias(span, id, params, ty, modifiers.contains_declare())
-    }
-
-    fn is_next_token_dot(&mut self) -> bool {
-        self.bump_any();
-        self.at(Kind::Dot)
     }
 
     /* ---------------------  Interface  ------------------------ */
@@ -194,7 +191,11 @@ impl<'a> ParserImpl<'a> {
 
         match self.cur_kind() {
             Kind::LParen | Kind::LAngle => self.parse_ts_call_signature_member(),
-            Kind::New if self.lookahead(Self::is_next_token_open_paren_or_angle_bracket) => {
+            Kind::New
+                if self.lexer.lookahead_token(|token| {
+                    matches!(token.kind(), Kind::LParen | Kind::LAngle)
+                }) =>
+            {
                 self.parse_ts_constructor_signature_member()
             }
             Kind::Get if self.is_next_at_type_member_name() => {
@@ -205,11 +206,6 @@ impl<'a> ParserImpl<'a> {
             }
             _ => self.parse_ts_property_or_method_signature_member(),
         }
-    }
-
-    fn is_next_token_open_paren_or_angle_bracket(&mut self) -> bool {
-        self.bump_any();
-        matches!(self.cur_kind(), Kind::LParen | Kind::LAngle)
     }
 
     /// Must be at `[ident:` or `<modifiers> [ident:`
@@ -410,7 +406,9 @@ impl<'a> ParserImpl<'a> {
     }
 
     pub(crate) fn parse_ts_import_equals_declaration(&mut self, span: u32) -> Declaration<'a> {
-        let import_kind = if !self.lookahead(Self::is_next_token_equals) && self.eat(Kind::Type) {
+        let import_kind = if !self.lexer.lookahead_token(|token| token.kind() == Kind::Eq)
+            && self.eat(Kind::Type)
+        {
             ImportOrExportKind::Type
         } else {
             ImportOrExportKind::Value
@@ -442,11 +440,6 @@ impl<'a> ParserImpl<'a> {
             module_reference,
             import_kind,
         )
-    }
-
-    pub(crate) fn is_next_token_equals(&mut self) -> bool {
-        self.bump_any();
-        self.at(Kind::Eq)
     }
 
     pub(crate) fn parse_ts_this_parameter(&mut self) -> TSThisParameter<'a> {

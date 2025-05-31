@@ -199,7 +199,8 @@ impl<'a> ParserImpl<'a> {
         );
 
         // static { block }
-        if self.at(Kind::Static) && self.lookahead(Self::next_token_is_open_brace) {
+        if self.at(Kind::Static) && self.lexer.lookahead_token(|token| token.kind() == Kind::LCurly)
+        {
             return self.parse_class_static_block(span);
         }
 
@@ -390,12 +391,7 @@ impl<'a> ParserImpl<'a> {
             let ident = self.parse_identifier_name();
             return Some(PropertyKey::StaticIdentifier(self.alloc(ident)));
         }
-        if self.at(Kind::Str)
-            && self.lookahead(|p| {
-                p.bump_any();
-                p.at(Kind::LParen)
-            })
-        {
+        if self.at(Kind::Str) && self.lexer.lookahead_token(|token| token.kind() == Kind::LParen) {
             return self.try_parse(|p| {
                 let string_literal = p.parse_literal_string();
                 if string_literal.value != "constructor" {

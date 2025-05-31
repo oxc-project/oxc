@@ -66,7 +66,7 @@ impl<'a> ParserImpl<'a> {
         // `import type something = ...`
         if self.is_ts
             && ((self.cur_kind().is_binding_identifier()
-                && self.lookahead(Self::is_next_token_equals))
+                && self.lexer.lookahead_token(|token| token.kind() == Kind::Eq))
                 || (self.at(Kind::Type)
                     && self.lookahead(|p| {
                         p.bump_any();
@@ -101,12 +101,7 @@ impl<'a> ParserImpl<'a> {
                     phase = Some(ImportPhase::Source);
                 }
             }
-            Kind::Defer
-                if self.lookahead(|p| {
-                    p.bump_any();
-                    p.at(Kind::Star)
-                }) =>
-            {
+            Kind::Defer if self.lexer.lookahead_token(|token| token.kind() == Kind::Star) => {
                 // `import defer * ...`
                 self.bump_any();
                 phase = Some(ImportPhase::Defer);
@@ -276,10 +271,7 @@ impl<'a> ParserImpl<'a> {
             ),
             Kind::As
                 if self.is_ts
-                    && self.lookahead(|p| {
-                        p.bump_any();
-                        p.at(Kind::Namespace)
-                    }) =>
+                    && self.lexer.lookahead_token(|token| token.kind() == Kind::Namespace) =>
             {
                 // `export as namespace ...`
                 ModuleDeclaration::TSNamespaceExportDeclaration(
@@ -447,10 +439,7 @@ impl<'a> ParserImpl<'a> {
             ),
             _ if self.is_ts
                 && self.at(Kind::Abstract)
-                && self.lookahead(|p| {
-                    p.bump_any();
-                    p.at(Kind::Class)
-                }) =>
+                && self.lexer.lookahead_token(|token| token.kind() == Kind::Class) =>
             {
                 // `export default abstract class ...`
                 // eat the abstract modifier
@@ -461,10 +450,7 @@ impl<'a> ParserImpl<'a> {
             }
             _ if self.is_ts
                 && self.at(Kind::Interface)
-                && self.lookahead(|p| {
-                    p.bump_any();
-                    !p.cur_token().is_on_new_line()
-                }) =>
+                && self.lexer.lookahead_token(|token| !token.is_on_new_line()) =>
             {
                 // `export default interface [no line break here] ...`
                 let decl = self.parse_ts_interface_declaration(decl_span, &Modifiers::empty());

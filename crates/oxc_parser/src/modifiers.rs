@@ -434,7 +434,7 @@ impl<'a> ParserImpl<'a> {
         // we're at the start of a static block
         (stop_on_start_of_class_static_block
             && matches!(self.cur_kind(), Kind::Static)
-            && self.lookahead(Self::next_token_is_open_brace))
+            && self.lexer.lookahead_token(|token| token.kind() == Kind::LCurly))
             // we may be at the start of a static block
             || (has_seen_static_modifier && matches!(self.cur_kind(), Kind::Static))
             // next token is not a modifier
@@ -443,11 +443,6 @@ impl<'a> ParserImpl<'a> {
             return None;
         }
         Some(self.modifier(kind, self.end_span(span)))
-    }
-
-    pub(crate) fn next_token_is_open_brace(&mut self) -> bool {
-        self.bump_any();
-        self.at(Kind::LCurly)
     }
 
     fn parse_any_contextual_modifier(&mut self) -> bool {

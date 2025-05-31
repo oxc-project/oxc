@@ -8,10 +8,7 @@ use crate::{Context, ParserImpl, diagnostics, lexer::Kind};
 
 impl<'a> ParserImpl<'a> {
     pub(crate) fn parse_jsx_expression(&mut self) -> Expression<'a> {
-        if self.lookahead(|s| {
-            s.bump_any();
-            s.at(Kind::RAngle)
-        }) {
+        if self.lexer.lookahead_token(|token| token.kind() == Kind::RAngle) {
             Expression::JSXFragment(self.parse_jsx_fragment(false))
         } else {
             Expression::JSXElement(self.parse_jsx_element(false))
