@@ -221,9 +221,9 @@ impl<'m> Mangler<'m> {
 
         // Stores the lived scope ids for each slot. Keyed by slot number.
         let mut slot_liveness: std::vec::Vec<FixedBitSet> = vec![];
-        let mut tmp_bindings = std::vec::Vec::with_capacity(100);
+        let mut tmp_bindings = Vec::with_capacity_in(100, self.allocator);
 
-        let mut reusable_slots = std::vec::Vec::new();
+        let mut reusable_slots = Vec::new_in(self.allocator);
         // Walk down the scope tree and assign a slot number for each symbol.
         // It is possible to do this in a loop over the symbol list,
         // but walking down the scope tree seems to generate a better code.
@@ -342,8 +342,8 @@ impl<'m> Mangler<'m> {
         //    function fa() { .. } function ga() { .. }
 
         let mut freq_iter = frequencies.iter();
-        let mut symbols_renamed_in_this_batch = std::vec::Vec::with_capacity(100);
-        let mut slice_of_same_len_strings = std::vec::Vec::with_capacity(100);
+        let mut symbols_renamed_in_this_batch = Vec::with_capacity_in(100, self.allocator);
+        let mut slice_of_same_len_strings = Vec::with_capacity_in(100, self.allocator);
         // 2. "N number of vars are going to be assigned names of the same length"
         for (_, slice_of_same_len_strings_group) in
             &reserved_names.into_iter().chunk_by(InlineString::len)
