@@ -424,9 +424,9 @@ function deserializeAssignmentTargetPropertyIdentifier(pos) {
         type: 'AssignmentPattern',
         start: start,
         end: end,
+        decorators: [],
         left: keyCopy,
         right: init,
-        decorators: [],
         optional: false,
         typeAnnotation: null,
       };
@@ -857,8 +857,8 @@ function deserializeFormalParameters(pos) {
       type: 'RestElement',
       start: deserializeU32(pos),
       end: deserializeU32(pos + 4),
-      argument: deserializeBindingPatternKind(pos + 8),
       decorators: [],
+      argument: deserializeBindingPatternKind(pos + 8),
       optional: deserializeBool(pos + 32),
       typeAnnotation: deserializeOptionBoxTSTypeAnnotation(
         pos + 24,
@@ -1785,8 +1785,8 @@ function deserializeTSClassImplements(pos) {
       end: expression.end,
       object: expression.left,
       property: expression.right,
-      computed: false,
       optional: false,
+      computed: false,
     };
 
     while (parent.object.type === 'TSQualifiedName') {
@@ -1797,8 +1797,8 @@ function deserializeTSClassImplements(pos) {
         end: object.end,
         object: object.left,
         property: object.right,
-        computed: false,
         optional: false,
+        computed: false,
       };
     }
   }

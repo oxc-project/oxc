@@ -27,9 +27,11 @@ use super::{EmptyArray, Null};
                 type: 'RestElement',
                 start: DESER[u32]( POS_OFFSET<BindingRestElement>.span.start ),
                 end: DESER[u32]( POS_OFFSET<BindingRestElement>.span.end ),
-                argument: DESER[BindingPatternKind]( POS_OFFSET<BindingRestElement>.argument.kind ),
                 /* IF_TS */
                 decorators: [],
+                /* END_IF_TS */
+                argument: DESER[BindingPatternKind]( POS_OFFSET<BindingRestElement>.argument.kind ),
+                /* IF_TS */
                 optional: DESER[bool]( POS_OFFSET<BindingRestElement>.argument.optional ),
                 typeAnnotation: DESER[Option<Box<TSTypeAnnotation>>](
                     POS_OFFSET<BindingRestElement>.argument.type_annotation
@@ -69,8 +71,8 @@ impl ESTree for FormalParametersRest<'_, '_> {
         state.serialize_field("type", &JsonSafeString("RestElement"));
         state.serialize_field("start", &rest.span.start);
         state.serialize_field("end", &rest.span.end);
-        state.serialize_field("argument", &rest.argument.kind);
         state.serialize_ts_field("decorators", &EmptyArray(()));
+        state.serialize_field("argument", &rest.argument.kind);
         state.serialize_ts_field("optional", &rest.argument.optional);
         state.serialize_ts_field("typeAnnotation", &rest.argument.type_annotation);
         state.serialize_ts_field("value", &Null(()));
@@ -364,10 +366,12 @@ impl ESTree for ArrowFunctionExpressionBody<'_> {
                     type: 'AssignmentPattern',
                     start: THIS.start,
                     end: THIS.end,
+                    /* IF_TS */
+                    decorators: [],
+                    /* END_IF_TS */
                     left: keyCopy,
                     right: init,
                     /* IF_TS */
-                    decorators: [],
                     optional: false,
                     typeAnnotation: null,
                     /* END_IF_TS */
@@ -386,9 +390,9 @@ impl ESTree for AssignmentTargetPropertyIdentifierInit<'_> {
             state.serialize_field("type", &JsonSafeString("AssignmentPattern"));
             state.serialize_field("start", &self.0.span.start);
             state.serialize_field("end", &self.0.span.end);
+            state.serialize_ts_field("decorators", &EmptyArray(()));
             state.serialize_field("left", &self.0.binding);
             state.serialize_field("right", init);
-            state.serialize_ts_field("decorators", &EmptyArray(()));
             state.serialize_ts_field("optional", &false);
             state.serialize_ts_field("typeAnnotation", &Null(()));
             state.end();
