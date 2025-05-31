@@ -405,43 +405,22 @@ impl<'a> ParserImpl<'a> {
             Kind::LBrack => self.parse_tuple_type(),
             Kind::LParen => self.parse_parenthesized_type(),
             Kind::Import => TSType::TSImportType(self.parse_ts_import_type()),
-            Kind::Asserts => 
-               self.parse_asserts(),
-               // if self.lookahead(Self::is_next_token_identifier_or_keyword_on_same_line) {
-               //     self.parse_asserts_type_predicate()
-               // } else {
-               //     self.parse_type_reference()
-               // }
+            Kind::Asserts => self.parse_assertion_signature(),
             Kind::TemplateHead => self.parse_template_type(false),
             _ => self.parse_type_reference(),
         }
     }
 
-    fn parse_asserts(&mut self) -> TSType<'a> {
-    
-    //self.checkpoint();
-      // let checkpoint = self.checkpoint();
-        let token = self.cur_token(); // these are the bits to remove now
+    fn parse_assertion_signature(&mut self) -> TSType<'a> {
+        let token = self.cur_token();
         self.bump_any();
-        // self.rewind(checkpoint);  // these are the bits to remove now
-       //let is_next_token_identifier_or_keyword_on_same_line =  token.kind().is_identifier_name() && !token.is_on_new_line();
-       //let is_cur_token_identifier_or_keyword_on_same_line = token.kind().is_identifier_name() && !token.is_on_new_line() ;
 
-       if token.kind().is_identifier_name() && !token.is_on_new_line() {
-            //self.parse_asserts_type_predicate()
+        if token.kind().is_identifier_name() && !token.is_on_new_line() {
             self.parse_asserts_type_predicate()
         } else {
-            // self.parse_type_reference()
-            let span = self.start_span();
-            let type_name = self.parse_ts_type_name();
-            let type_parameters = self.parse_type_arguments_of_type_reference();
-            self.ast.ts_type_type_reference(self.end_span(span), type_name, type_parameters)
+            self.parse_type_reference()
         }
     }
-
-    //fn is_cur_token_identifier_or_keyword_on_same_line(&mut self) -> bool {
-    //    self.cur_kind().is_identifier_name() && !self.cur_token().is_on_new_line()
-    //}
 
     fn is_next_token_number(&mut self) -> bool {
         self.bump_any();
