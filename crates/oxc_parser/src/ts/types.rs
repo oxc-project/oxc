@@ -339,7 +339,8 @@ impl<'a> ParserImpl<'a> {
                 if let Some(ty) = self.try_parse(Self::parse_keyword_and_no_dot) {
                     ty
                 } else {
-                    self.parse_type_reference()
+                    let span = self.start_span();
+                    self.parse_type_reference(span)
                 }
             }
             // TODO: js doc types: `JSDocAllType`, `JSDocFunctionType`
@@ -368,7 +369,8 @@ impl<'a> ParserImpl<'a> {
                 if self.lookahead(Self::is_next_token_number) {
                     self.parse_literal_type_node(/* negative */ true)
                 } else {
-                    self.parse_type_reference()
+                    let span = self.start_span();
+                    self.parse_type_reference(span)
                 }
             }
             Kind::Void => {
@@ -407,7 +409,10 @@ impl<'a> ParserImpl<'a> {
             Kind::Import => TSType::TSImportType(self.parse_ts_import_type()),
             Kind::Asserts => self.parse_assertion_signature(),
             Kind::TemplateHead => self.parse_template_type(false),
-            _ => self.parse_type_reference(),
+            _ => {
+                let span = self.start_span();
+                self.parse_type_reference(span)
+            },
         }
     }
 
