@@ -16,7 +16,9 @@ use tower_lsp_server::{
         DocumentDiagnosticParams, DocumentDiagnosticReport, DocumentDiagnosticReportResult,
         ExecuteCommandParams, FullDocumentDiagnosticReport, InitializeParams, InitializeResult,
         InitializedParams, Registration, RelatedFullDocumentDiagnosticReport, ServerInfo,
-        Unregistration, Uri, WorkspaceEdit,
+        Unregistration, Uri, WorkspaceDiagnosticParams, WorkspaceDiagnosticReport,
+        WorkspaceDiagnosticReportResult, WorkspaceDocumentDiagnosticReport, WorkspaceEdit,
+        WorkspaceFullDocumentDiagnosticReport,
     },
 };
 // #
@@ -32,7 +34,6 @@ mod linter;
 mod options;
 #[cfg(test)]
 mod tester;
-#[cfg(test)]
 mod uri_ext;
 mod worker;
 
@@ -647,6 +648,30 @@ impl LanguageServer for Backend {
         }
 
         Err(Error::invalid_request())
+    }
+
+    async fn workspace_diagnostic(
+        &self,
+        _params: WorkspaceDiagnosticParams,
+    ) -> Result<WorkspaceDiagnosticReportResult> {
+        let workers = self.workspace_workers.read().await;
+        let mut items = Vec::new();
+        for worker in workers.iter() {
+            for (uri, reports) in worker.lint_workspace().await {
+                items.push(WorkspaceDocumentDiagnosticReport::Full(
+                    WorkspaceFullDocumentDiagnosticReport {
+                        uri: uri.clone(),
+                        version: None,
+                        full_document_diagnostic_report: FullDocumentDiagnosticReport {
+                            result_id: None,
+                            items: reports.into_iter().map(|d| d.diagnostic).collect(),
+                        },
+                    },
+                ));
+            }
+        }
+
+        Ok(WorkspaceDiagnosticReportResult::Report(WorkspaceDiagnosticReport { items }))
     }
 }
 

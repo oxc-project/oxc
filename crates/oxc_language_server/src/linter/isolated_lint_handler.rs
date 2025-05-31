@@ -1,21 +1,24 @@
 use std::{
+    ffi::OsString,
     path::{Path, PathBuf},
     sync::{Arc, OnceLock},
 };
 
 use log::debug;
-use rustc_hash::FxHashSet;
+use rustc_hash::{FxHashMap, FxHashSet};
 use tower_lsp_server::{
     UriExt,
     lsp_types::{self, DiagnosticRelatedInformation, DiagnosticSeverity, Uri},
 };
 
 use oxc_allocator::Allocator;
-use oxc_linter::RuntimeFileSystem;
+use oxc_linter::{FileWalker, FileWalkerOptions, RuntimeFileSystem};
 use oxc_linter::{
     LINTABLE_EXTENSIONS, LintService, LintServiceOptions, Linter, MessageWithPosition,
     loader::Loader, read_to_string,
 };
+
+use crate::uri_ext::path_to_uri;
 
 use super::error_with_position::{
     DiagnosticReport, PossibleFixContent, message_with_position_to_lsp_diagnostic_report,
@@ -73,49 +76,71 @@ impl IsolatedLintHandler {
         let allocator = Allocator::default();
 
         Some(self.lint_path(&allocator, &path, content).map_or(vec![], |errors| {
-            let mut diagnostics: Vec<DiagnosticReport> = errors
-                .iter()
-                .map(|e| message_with_position_to_lsp_diagnostic_report(e, uri))
-                .collect();
-
-            // a diagnostics connected from related_info to original diagnostic
-            let mut inverted_diagnostics = vec![];
-            for d in &diagnostics {
-                let Some(related_info) = &d.diagnostic.related_information else {
-                    continue;
-                };
-                let related_information = Some(vec![DiagnosticRelatedInformation {
-                    location: lsp_types::Location { uri: uri.clone(), range: d.diagnostic.range },
-                    message: "original diagnostic".to_string(),
-                }]);
-                for r in related_info {
-                    if r.location.range == d.diagnostic.range {
-                        continue;
-                    }
-                    // If there is no message content for this span, then don't produce an additional diagnostic
-                    // which also has no content. This prevents issues where editors expect diagnostics to have messages.
-                    if r.message.is_empty() {
-                        continue;
-                    }
-                    inverted_diagnostics.push(DiagnosticReport {
-                        diagnostic: lsp_types::Diagnostic {
-                            range: r.location.range,
-                            severity: Some(DiagnosticSeverity::HINT),
-                            code: None,
-                            message: r.message.clone(),
-                            source: d.diagnostic.source.clone(),
-                            code_description: None,
-                            related_information: related_information.clone(),
-                            tags: None,
-                            data: None,
-                        },
-                        fixed_content: PossibleFixContent::None,
-                    });
-                }
-            }
-            diagnostics.append(&mut inverted_diagnostics);
-            diagnostics
+            Self::messages_with_position_to_diagnostics_report(&errors, uri)
         }))
+    }
+
+    pub fn run_all(&self) -> Vec<(Uri, Vec<DiagnosticReport>)> {
+        let allocator = Allocator::default();
+        let mut diagnostics = Vec::new();
+
+        for (path, messages) in self.lint_all_files(&allocator) {
+            let uri = path_to_uri(&path);
+            diagnostics.push((
+                uri.clone(),
+                Self::messages_with_position_to_diagnostics_report(&messages, &uri),
+            ));
+        }
+
+        diagnostics
+    }
+
+    fn messages_with_position_to_diagnostics_report(
+        messages: &[MessageWithPosition<'_>],
+        uri: &Uri,
+    ) -> Vec<DiagnosticReport> {
+        let mut diagnostics: Vec<DiagnosticReport> = messages
+            .iter()
+            .map(|e| message_with_position_to_lsp_diagnostic_report(e, uri))
+            .collect();
+
+        // a diagnostics connected from related_info to original diagnostic
+        let mut inverted_diagnostics = vec![];
+        for d in &diagnostics {
+            let Some(related_info) = &d.diagnostic.related_information else {
+                continue;
+            };
+            let related_information = Some(vec![DiagnosticRelatedInformation {
+                location: lsp_types::Location { uri: uri.clone(), range: d.diagnostic.range },
+                message: "original diagnostic".to_string(),
+            }]);
+            for r in related_info {
+                if r.location.range == d.diagnostic.range {
+                    continue;
+                }
+                // If there is no message content for this span, then don't produce an additional diagnostic
+                // which also has no content. This prevents issues where editors expect diagnostics to have messages.
+                if r.message.is_empty() {
+                    continue;
+                }
+                inverted_diagnostics.push(DiagnosticReport {
+                    diagnostic: lsp_types::Diagnostic {
+                        range: r.location.range,
+                        severity: Some(DiagnosticSeverity::HINT),
+                        code: None,
+                        message: r.message.clone(),
+                        source: d.diagnostic.source.clone(),
+                        code_description: None,
+                        related_information: related_information.clone(),
+                        tags: None,
+                        data: None,
+                    },
+                    fixed_content: PossibleFixContent::None,
+                });
+            }
+        }
+        diagnostics.append(&mut inverted_diagnostics);
+        diagnostics
     }
 
     fn lint_path<'a>(
@@ -144,6 +169,25 @@ impl IsolatedLintHandler {
             ));
         let mut result = lint_service.run_source(allocator);
         result.remove(path)
+    }
+
+    fn lint_all_files<'a>(
+        &self,
+        allocator: &'a Allocator,
+    ) -> FxHashMap<PathBuf, Vec<MessageWithPosition<'a>>> {
+        let walker = FileWalker::new(
+            &[self.options.root_path.clone()],
+            &FileWalkerOptions { no_ignore: false, symlinks: false, ignore_path: OsString::new() },
+            None,
+        );
+
+        let lint_service_options =
+            LintServiceOptions::new(self.options.root_path.clone(), walker.paths())
+                .with_cross_module(self.options.use_cross_module);
+
+        let mut lint_service = LintService::new(&self.linter, lint_service_options);
+
+        lint_service.run_source(allocator)
     }
 
     fn should_lint_path(path: &Path) -> bool {

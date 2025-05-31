@@ -101,7 +101,10 @@ impl From<Capabilities> for ServerCapabilities {
                 None
             },
             diagnostic_provider: if value.pull_diagnostics {
-                Some(DiagnosticServerCapabilities::Options(DiagnosticOptions::default()))
+                Some(DiagnosticServerCapabilities::Options(DiagnosticOptions {
+                    workspace_diagnostics: true,
+                    ..Default::default()
+                }))
             } else {
                 None
             },

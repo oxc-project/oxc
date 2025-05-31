@@ -155,6 +155,16 @@ impl WorkspaceWorker {
         diagnostics
     }
 
+    pub async fn lint_workspace(&self) -> Vec<(Uri, Vec<DiagnosticReport>)> {
+        let server_linter = self.server_linter.read().await;
+        let Some(server_linter) = &*server_linter else {
+            debug!("no server_linter initialized in the worker");
+            return vec![];
+        };
+
+        server_linter.run_all()
+    }
+
     async fn lint_file_internal(&self, uri: &Uri) -> Option<Vec<DiagnosticReport>> {
         let Some(server_linter) = &*self.server_linter.read().await else {
             return None;

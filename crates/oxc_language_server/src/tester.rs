@@ -1,5 +1,6 @@
 use std::fmt::Write;
 
+use cow_utils::CowUtils;
 use tower_lsp_server::{
     UriExt,
     lsp_types::{CodeDescription, NumberOrString, Uri},
@@ -109,7 +110,6 @@ impl Tester<'_> {
 
     /// Given a relative file path (relative to `oxc_language_server` crate root), run the linter
     /// and return the resulting diagnostics in a custom snapshot format.
-    #[expect(clippy::disallowed_methods)]
     pub fn test_and_snapshot_single_file(&self, relative_file_path: &str) {
         let uri = get_file_uri(&format!("{}/{}", self.relative_root_dir, relative_file_path));
         let reports = tokio::runtime::Runtime::new().unwrap().block_on(async {
@@ -125,16 +125,49 @@ impl Tester<'_> {
             reports.iter().map(get_snapshot_from_report).collect::<Vec<_>>().join("\n")
         };
 
-        let snapshot_name = self.relative_root_dir.replace('/', "_");
+        let snapshot_name = self.relative_root_dir.cow_replace('/', "_");
         let mut settings = insta::Settings::clone_current();
         settings.set_prepend_module_to_snapshot(false);
         settings.set_omit_expression(true);
         if let Some(path) = uri.to_file_path() {
             settings.set_input_file(path.as_ref());
         }
-        settings.set_snapshot_suffix(relative_file_path.replace('/', "_"));
+        settings.set_snapshot_suffix(relative_file_path.cow_replace('/', "_"));
         settings.bind(|| {
-            insta::assert_snapshot!(snapshot_name, snapshot);
+            insta::assert_snapshot!(snapshot_name.to_string(), snapshot);
+        });
+    }
+
+    pub fn test_and_snapshot(&self) {
+        let reports = tokio::runtime::Runtime::new()
+            .unwrap()
+            .block_on(async { self.create_workspace_worker().await.lint_workspace().await });
+        let snapshot = if reports.is_empty() {
+            "No diagnostic reports".to_string()
+        } else {
+            reports
+                .iter()
+                .map(|(uri, messages)| {
+                    format!(
+                        "{}:\n{}",
+                        uri.to_file_path().unwrap_or_default().display(),
+                        messages
+                            .iter()
+                            .map(get_snapshot_from_report)
+                            .collect::<Vec<_>>()
+                            .join("\n")
+                    )
+                })
+                .collect::<Vec<_>>()
+                .join("\n")
+        };
+        let snapshot_name = self.relative_root_dir.cow_replace('/', "_");
+        let mut settings = insta::Settings::clone_current();
+        settings.set_prepend_module_to_snapshot(false);
+        settings.set_omit_expression(true);
+        settings.set_snapshot_suffix("all");
+        settings.bind(|| {
+            insta::assert_snapshot!(snapshot_name.to_string(), snapshot);
         });
     }
 }

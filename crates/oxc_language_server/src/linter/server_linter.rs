@@ -204,6 +204,10 @@ impl ServerLinter {
 
         self.isolated_linter.run_single(uri, content)
     }
+
+    pub fn run_all(&self) -> Vec<(Uri, Vec<DiagnosticReport>)> {
+        self.isolated_linter.run_all()
+    }
 }
 
 /// Normalize a path by removing `.` and resolving `..` components,
@@ -364,5 +368,10 @@ mod test {
             }),
         )
         .test_and_snapshot_single_file("forward_ref.ts");
+    }
+
+    #[test]
+    fn test_multi_file_analyse() {
+        Tester::new("fixtures/linter/multi_file_analysis", None).test_and_snapshot();
     }
 }

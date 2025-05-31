@@ -1,0 +1,30 @@
+---
+source: crates/oxc_language_server/src/tester.rs
+---
+/home/sysix/dev/oxc/crates/oxc_language_server/fixtures/linter/multi_file_analysis/debugger.ts:
+
+code: "eslint(no-debugger)"
+code_description.href: "https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-debugger.html"
+message: "`debugger` statement is not allowed\nhelp: Remove the debugger statement"
+range: Range { start: Position { line: 1, character: 0 }, end: Position { line: 1, character: 9 } }
+related_information[0].message: ""
+related_information[0].location.uri: "file://<variable>/fixtures/linter/multi_file_analysis/debugger.ts"
+related_information[0].location.range: Range { start: Position { line: 1, character: 0 }, end: Position { line: 1, character: 9 } }
+severity: Some(Warning)
+source: Some("oxc")
+tags: None
+fixed: Single(FixedContent { message: Some("Remove the debugger statement"), code: "", range: Range { start: Position { line: 1, character: 0 }, end: Position { line: 1, character: 9 } } })
+
+/home/sysix/dev/oxc/crates/oxc_language_server/fixtures/linter/multi_file_analysis/console.js:
+
+code: "eslint(no-console)"
+code_description.href: "https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-console.html"
+message: "Unexpected console statement.\nhelp: Delete this console statement."
+range: Range { start: Position { line: 0, character: 0 }, end: Position { line: 0, character: 11 } }
+related_information[0].message: ""
+related_information[0].location.uri: "file://<variable>/fixtures/linter/multi_file_analysis/console.js"
+related_information[0].location.range: Range { start: Position { line: 0, character: 0 }, end: Position { line: 0, character: 11 } }
+severity: Some(Error)
+source: Some("oxc")
+tags: None
+fixed: None
