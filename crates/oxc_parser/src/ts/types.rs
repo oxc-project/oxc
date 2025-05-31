@@ -413,13 +413,15 @@ impl<'a> ParserImpl<'a> {
 
     fn parse_assertion_signature(&mut self) -> TSType<'a> {
         let checkpoint = self.checkpoint();
+        let asserts_start_span = self.start_span();
+
         self.bump_any(); // bump `asserts`
         let token = self.cur_token();
         if token.kind().is_identifier_name() && !token.is_on_new_line() {
             self.parse_asserts_type_predicate()
         } else {
             self.rewind(checkpoint);
-            self.parse_type_reference()
+            self.parse_type_reference(asserts_start_span)
         }
     }
 
@@ -752,11 +754,10 @@ impl<'a> ParserImpl<'a> {
         )
     }
 
-    fn parse_type_reference(&mut self) -> TSType<'a> {
-        let span = self.start_span();
+    fn parse_type_reference(&mut self, start_span: u32) -> TSType<'a> {
         let type_name = self.parse_ts_type_name();
         let type_parameters = self.parse_type_arguments_of_type_reference();
-        self.ast.ts_type_type_reference(self.end_span(span), type_name, type_parameters)
+        self.ast.ts_type_type_reference(self.end_span(start_span), type_name, type_parameters)
     }
 
     fn parse_ts_implement_name(&mut self) -> TSClassImplements<'a> {
