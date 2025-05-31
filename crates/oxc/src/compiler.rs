@@ -208,7 +208,8 @@ pub trait CompilerInterface {
 
         /* Mangler */
 
-        let mangler = self.mangle_options().map(|options| self.mangle(&mut program, options));
+        let mangler =
+            self.mangle_options().map(|options| self.mangle(&allocator, &mut program, options));
 
         /* Codegen */
 
@@ -279,8 +280,13 @@ pub trait CompilerInterface {
         Compressor::new(allocator, options).build(program);
     }
 
-    fn mangle(&self, program: &mut Program<'_>, options: MangleOptions) -> Scoping {
-        Mangler::new().with_options(options).build(program)
+    fn mangle(
+        &self,
+        allocator: &Allocator,
+        program: &mut Program<'_>,
+        options: MangleOptions,
+    ) -> Scoping {
+        Mangler::new(allocator).with_options(options).build(program)
     }
 
     fn codegen(
