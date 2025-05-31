@@ -1,7 +1,7 @@
 use std::{str::FromStr, sync::Arc, vec};
 
 use log::debug;
-use rustc_hash::FxBuildHasher;
+use rustc_hash::{FxBuildHasher, FxHashMap};
 use tokio::sync::{Mutex, RwLock};
 use tower_lsp_server::{
     UriExt,
@@ -147,6 +147,16 @@ impl WorkspaceWorker {
         }
 
         diagnostics
+    }
+
+    pub async fn lint_workspace(&self) -> FxHashMap<Uri, Vec<DiagnosticReport>> {
+        let server_linter = self.server_linter.read().await;
+        let Some(server_linter) = &*server_linter else {
+            debug!("no server_linter initialized in the worker");
+            return FxHashMap::default();
+        };
+
+        server_linter.run_all()
     }
 
     async fn lint_file_internal(

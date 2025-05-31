@@ -204,6 +204,10 @@ impl ServerLinter {
 
         self.isolated_linter.run_single(uri, content)
     }
+
+    pub fn run_all(&self) -> FxHashMap<Uri, Vec<DiagnosticReport>> {
+        self.isolated_linter.run_all()
+    }
 }
 
 /// Normalize a path by removing `.` and resolving `..` components,
