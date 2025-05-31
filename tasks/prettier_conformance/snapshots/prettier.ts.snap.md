@@ -258,7 +258,7 @@ ts compatibility: 186/573 (32.46%)
 | typescript/generic/object-method.ts | 💥 | 36.36% |
 | typescript/generic/ungrouped-parameters.ts | 💥 | 38.10% |
 | typescript/import-export/empty-import.ts | 💥 | 45.45% |
-| typescript/import-export/type-modifier.ts | 💥 | 66.67% |
+| typescript/import-export/type-modifier.ts | 💥 | 53.33% |
 | typescript/import-type/import-type.ts | 💥💥 | 93.33% |
 | typescript/index-signature/index-signature.ts | 💥 | 75.00% |
 | typescript/index-signature/static.ts | 💥 | 66.67% |
