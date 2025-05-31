@@ -415,7 +415,7 @@ impl<'a> ParserImpl<'a> {
         let token = self.cur_token();
         self.bump_any(); // bump `asserts`
 
-        if token.kind().is_identifier_name() && !token.is_on_new_line() {
+        if self.cur_kind().is_identifier_name() && !self.cur_token().is_on_new_line() {
             self.parse_asserts_type_predicate()
         } else {
             self.parse_type_reference()
