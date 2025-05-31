@@ -405,15 +405,23 @@ impl<'a> ParserImpl<'a> {
             Kind::LBrack => self.parse_tuple_type(),
             Kind::LParen => self.parse_parenthesized_type(),
             Kind::Import => TSType::TSImportType(self.parse_ts_import_type()),
-            Kind::Asserts => {
-                if self.lookahead(Self::is_next_token_identifier_or_keyword_on_same_line) {
-                    self.parse_asserts_type_predicate()
-                } else {
-                    self.parse_type_reference()
-                }
-            }
+            Kind::Asserts => 
+               self.parse_thing(),
+               // if self.lookahead(Self::is_next_token_identifier_or_keyword_on_same_line) {
+               //     self.parse_asserts_type_predicate()
+               // } else {
+               //     self.parse_type_reference()
+               // }
             Kind::TemplateHead => self.parse_template_type(false),
             _ => self.parse_type_reference(),
+        }
+    }
+
+    fn parse_thing(&mut self) -> TSType<'a> {
+        if self.lookahead(Self::is_next_token_identifier_or_keyword_on_same_line) {
+            self.parse_asserts_type_predicate()
+        } else {
+            self.parse_type_reference()
         }
     }
 
