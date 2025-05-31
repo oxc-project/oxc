@@ -419,9 +419,33 @@ impl<'a> ParserImpl<'a> {
 
     fn parse_thing(&mut self) -> TSType<'a> {
         if self.lookahead(Self::is_next_token_identifier_or_keyword_on_same_line) {
-            self.parse_asserts_type_predicate()
+            //self.parse_asserts_type_predicate()
+            let span = self.start_span();
+            self.bump_any(); // bump `asserts`
+            let parameter_name = if self.at(Kind::This) {
+                TSTypePredicateName::This(self.parse_this_type_node())
+            } else {
+                let ident_name = self.parse_identifier_name();
+                TSTypePredicateName::Identifier(self.alloc(ident_name))
+            };
+            let mut type_annotation = None;
+            if self.eat(Kind::Is) {
+                let type_span = self.start_span();
+                let ty = self.parse_ts_type();
+                type_annotation = Some(self.ast.ts_type_annotation(self.end_span(type_span), ty));
+            }
+            self.ast.ts_type_type_predicate(
+                self.end_span(span),
+                parameter_name,
+                /* asserts */ true,
+                type_annotation,
+            )
         } else {
-            self.parse_type_reference()
+            // self.parse_type_reference()
+            let span = self.start_span();
+            let type_name = self.parse_ts_type_name();
+            let type_parameters = self.parse_type_arguments_of_type_reference();
+            self.ast.ts_type_type_reference(self.end_span(span), type_name, type_parameters)
         }
     }
 
