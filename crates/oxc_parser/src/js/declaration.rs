@@ -12,9 +12,17 @@ use crate::{
 impl<'a> ParserImpl<'a> {
     pub(crate) fn parse_let(&mut self, stmt_ctx: StatementContext) -> Statement<'a> {
         let span = self.start_span();
+
         let checkpoint = self.checkpoint();
-        self.bump_any();
-        let peeked = self.cur_kind();
+        self.bump_any(); // bump `let`
+        let token = self.cur_token();
+        let peeked = token.kind();
+
+        // Fast path: avoid rewind.
+        if !stmt_ctx.is_single_statement() && peeked.is_after_let() {
+            return self.parse_variable_statement(span, VariableDeclarationKind::Let, stmt_ctx);
+        }
+
         self.rewind(checkpoint);
         // let = foo, let instanceof x, let + 1
         if peeked.is_assignment_operator() || peeked.is_binary_operator() {
@@ -31,7 +39,8 @@ impl<'a> ParserImpl<'a> {
             let expr = self.parse_identifier_expression();
             self.parse_expression_statement(span, expr)
         } else {
-            self.parse_variable_statement(stmt_ctx)
+            self.bump_any();
+            self.parse_variable_statement(span, VariableDeclarationKind::Let, stmt_ctx)
         }
     }
 
@@ -55,20 +64,22 @@ impl<'a> ParserImpl<'a> {
         Statement::VariableDeclaration(self.alloc(decl))
     }
 
-    pub(crate) fn parse_variable_declaration(
-        &mut self,
-        start_span: u32,
-        decl_parent: VariableDeclarationParent,
-        modifiers: &Modifiers<'a>,
-    ) -> Box<'a, VariableDeclaration<'a>> {
-        let kind = match self.cur_kind() {
+    pub(crate) fn get_variable_declaration_kind(&self) -> VariableDeclarationKind {
+        match self.cur_kind() {
             Kind::Var => VariableDeclarationKind::Var,
             Kind::Const => VariableDeclarationKind::Const,
             Kind::Let => VariableDeclarationKind::Let,
-            _ => return self.unexpected(),
-        };
-        self.bump_any();
+            _ => unreachable!(),
+        }
+    }
 
+    pub(crate) fn parse_variable_declaration(
+        &mut self,
+        start_span: u32,
+        kind: VariableDeclarationKind,
+        decl_parent: VariableDeclarationParent,
+        modifiers: &Modifiers<'a>,
+    ) -> Box<'a, VariableDeclaration<'a>> {
         let mut declarations = self.ast.vec();
         loop {
             let declaration = self.parse_variable_declarator(decl_parent, kind);

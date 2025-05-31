@@ -351,8 +351,11 @@ impl<'a> ParserImpl<'a> {
                 self.parse_ts_import_equals_declaration(start_span)
             }
             kind if kind.is_variable_declaration() => {
+                let kind = self.get_variable_declaration_kind();
+                self.bump_any();
                 let decl = self.parse_variable_declaration(
                     start_span,
+                    kind,
                     VariableDeclarationParent::Statement,
                     modifiers,
                 );

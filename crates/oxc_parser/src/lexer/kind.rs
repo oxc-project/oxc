@@ -278,7 +278,8 @@ impl Kind {
     /// ```
     #[inline]
     pub fn is_after_let(self) -> bool {
-        self != Self::In && (matches!(self, LCurly | LBrack | Ident) || self.is_any_keyword())
+        !matches!(self, In | Instanceof)
+            && (matches!(self, LCurly | LBrack | Ident) || self.is_any_keyword())
     }
 
     /// Section 13.2.4 Literals
