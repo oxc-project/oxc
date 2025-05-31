@@ -1,3 +1,4 @@
+use rustc_hash::FxHashMap;
 use std::{
     ffi::OsStr,
     path::{Path, PathBuf},
@@ -95,7 +96,7 @@ impl<'l> LintService<'l> {
     pub fn run_source<'a>(
         &mut self,
         allocator: &'a oxc_allocator::Allocator,
-    ) -> Vec<crate::MessageWithPosition<'a>> {
+    ) -> FxHashMap<PathBuf, Vec<crate::MessageWithPosition<'a>>> {
         self.runtime.run_source(allocator)
     }
 

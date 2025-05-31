@@ -142,9 +142,8 @@ impl IsolatedLintHandler {
             LintService::new(&self.linter, lint_service_options).with_file_system(Box::new(
                 IsolatedLintHandlerFileSystem::new(path.to_path_buf(), source_text),
             ));
-        let result = lint_service.run_source(allocator);
-
-        Some(result)
+        let mut result = lint_service.run_source(allocator);
+        result.remove(path)
     }
 
     fn should_lint_path(path: &Path) -> bool {
