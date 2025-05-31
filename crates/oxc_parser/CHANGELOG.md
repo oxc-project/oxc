@@ -4,6 +4,24 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.72.2] - 2025-05-31
+
+### Bug Fixes
+
+- daaa8f5 parser: Correctly parse decorators of property declaration (#11370) (magic-akari)
+
+### Performance
+
+- 24aba18 parser: Avoid checkpoint when parsing left curly in jsx (#11377) (Ulrich Stark)
+- 1bdeed2 parser: Remove lexer lookahead (#11349) (Boshen)
+
+### Refactor
+
+- 996194a parser: Remove unnecessary Tristate and checks (#11404) (Ulrich Stark)
+- cd3ed4d parser: Replace `at` and `bump` combinations with `eat` (#11390) (Ulrich Stark)
+- 4c49274 parser: Rewrite import/export specifier parsing (#11356) (camchenry)
+- bfaa443 parser: Consolidate export type `lookahead()` calls (#11341) (leaysgur)
+
 ## [0.72.1] - 2025-05-28
 
 ### Performance

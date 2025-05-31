@@ -4,6 +4,22 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.72.2] - 2025-05-31
+
+### Features
+
+- 1df6732 ast/estree: Add decorators to ESTree AST (#11393) (overlookmotel)
+
+### Documentation
+
+- a30cd3f ast: Fix typo in docs for `TSPropertySignature` (#11352) (overlookmotel)
+
+### Refactor
+
+- 12690a1 ast/estree: Re-order fields in visitation order (#11362) (overlookmotel)
+- 75ee3a5 ast/estree: Do not put TS struct fields last (#11360) (overlookmotel)
+- 4c49274 parser: Rewrite import/export specifier parsing (#11356) (camchenry)
+
 ## [0.72.1] - 2025-05-28
 
 ### Features
