@@ -757,14 +757,14 @@ impl<'a> ParserImpl<'a> {
                 continue;
             }
 
-            if !question_dot {
-                if self.is_ts && !self.cur_token().is_on_new_line() && self.eat(Kind::Bang) {
+            if !question_dot && self.is_ts {
+                if !self.cur_token().is_on_new_line() && self.eat(Kind::Bang) {
                     lhs = self.ast.expression_ts_non_null(self.end_span(lhs_span), lhs);
                     continue;
                 }
 
                 if matches!(self.cur_kind(), Kind::LAngle | Kind::ShiftLeft) {
-                    if let Some(Some(arguments)) =
+                    if let Some(arguments) =
                         self.try_parse(Self::parse_type_arguments_in_expression)
                     {
                         lhs = self.ast.expression_ts_instantiation(
@@ -908,8 +908,10 @@ impl<'a> ParserImpl<'a> {
 
             let mut type_arguments = None;
             if question_dot {
-                if let Some(Some(args)) = self.try_parse(Self::parse_type_arguments_in_expression) {
-                    type_arguments = Some(args);
+                if self.is_ts {
+                    if let Some(args) = self.try_parse(Self::parse_type_arguments_in_expression) {
+                        type_arguments = Some(args);
+                    }
                 }
                 if self.cur_kind().is_template_start_of_tagged_template() {
                     lhs = self.parse_tagged_template(lhs_span, lhs, question_dot, type_arguments);

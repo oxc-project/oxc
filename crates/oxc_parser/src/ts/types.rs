@@ -812,13 +812,10 @@ impl<'a> ParserImpl<'a> {
 
     pub(crate) fn parse_type_arguments_in_expression(
         &mut self,
-    ) -> Option<Box<'a, TSTypeParameterInstantiation<'a>>> {
-        if !self.is_ts {
-            return None;
-        }
+    ) -> Box<'a, TSTypeParameterInstantiation<'a>> {
         let span = self.start_span();
         if self.re_lex_l_angle() != Kind::LAngle {
-            return None;
+            return self.unexpected();
         }
         self.expect(Kind::LAngle);
         let (params, _) = self.parse_delimited_list(Kind::RAngle, Kind::Comma, Self::parse_ts_type);
@@ -828,11 +825,10 @@ impl<'a> ParserImpl<'a> {
         }
         self.re_lex_ts_r_angle();
         self.expect(Kind::RAngle);
-        if self.can_follow_type_arguments_in_expr() {
-            Some(self.ast.alloc_ts_type_parameter_instantiation(self.end_span(span), params))
-        } else {
-            self.unexpected()
+        if !self.can_follow_type_arguments_in_expr() {
+            return self.unexpected();
         }
+        self.ast.alloc_ts_type_parameter_instantiation(self.end_span(span), params)
     }
 
     fn can_follow_type_arguments_in_expr(&mut self) -> bool {
