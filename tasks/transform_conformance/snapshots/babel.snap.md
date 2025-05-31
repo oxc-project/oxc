@@ -1,6 +1,6 @@
 commit: 1d4546bc
 
-Passed: 711/1200
+Passed: 712/1211
 
 # All Passed:
 * babel-plugin-transform-logical-assignment-operators
@@ -2815,6 +2815,38 @@ transform-react-jsx: unknown field `autoImport`, expected one of `runtime`, `dev
 
 
 * cross-platform/within-ts-module-block/input.ts
+x Output mismatch
+
+
+# babel-plugin-transform-react-pure-annotations (1/11)
+* react/cloneElement/input.js
+x Output mismatch
+
+* react/createContext/input.js
+x Output mismatch
+
+* react/createElement/input.js
+x Output mismatch
+
+* react/createFactory/input.js
+x Output mismatch
+
+* react/createRef/input.js
+x Output mismatch
+
+* react/forwardRef/input.js
+x Output mismatch
+
+* react/isValidElement/input.js
+x Output mismatch
+
+* react/lazy/input.js
+x Output mismatch
+
+* react/memo/input.js
+x Output mismatch
+
+* react-dom/createPortal/input.js
 x Output mismatch
 
 
