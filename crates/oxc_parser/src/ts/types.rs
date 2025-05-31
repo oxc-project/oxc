@@ -412,12 +412,13 @@ impl<'a> ParserImpl<'a> {
     }
 
     fn parse_assertion_signature(&mut self) -> TSType<'a> {
+        let checkpoint = self.checkpoint();
         self.bump_any(); // bump `asserts`
         let token = self.cur_token();
-
         if token.kind().is_identifier_name() && !token.is_on_new_line() {
             self.parse_asserts_type_predicate()
         } else {
+            self.rewind(checkpoint);
             self.parse_type_reference()
         }
     }
