@@ -3,7 +3,11 @@ use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 use serde_json::Value;
 
-use crate::{context::LintContext, module_record::NameSpan, rule::Rule};
+use crate::{
+    context::LintContext,
+    module_record::{ExportEntry, ImportEntry, NameSpan},
+    rule::Rule,
+};
 
 fn extension_should_not_be_included_in_import_diagnostic(
     span: Span,
@@ -295,6 +299,103 @@ pub const BUILT_IN_NODE_MODULES: phf::Set<&'static str> = phf::phf_set![
     "zlib"
 ];
 
+fn process_import_record(
+    import: &ImportEntry,
+    config: &Box<ExtensionsConfig>,
+    ctx: &LintContext,
+    extensions: &Extensions,
+) {
+    let always_file_types = extensions.0.get_always_file_types();
+    let never_file_types = extensions.0.get_never_file_types();
+
+    if import.is_type && !config.check_type_imports {
+        return;
+    }
+
+    let import_name = import.module_request.name();
+
+    let is_builtin_node_module =
+        BUILT_IN_NODE_MODULES.contains(import_name) || ctx.globals().is_enabled(import_name);
+
+    let is_package = import_name.starts_with('@')
+        || (!import_name.starts_with(".") && !import_name[1..].contains('/'));
+
+    if is_builtin_node_module || (is_package && config.ignore_packages) {
+        return;
+    }
+
+    let file_extension = get_file_extension_from_module_request(&import.module_request);
+
+    let span = import.statement_span;
+    if file_extension.is_some()
+        && (never_file_types.contains(&file_extension.unwrap())
+            || (!always_file_types.is_empty()
+                && !always_file_types.contains(&file_extension.unwrap())))
+    {
+        // should not have file extension
+        ctx.diagnostic(extension_should_not_be_included_in_import_diagnostic(
+            span,
+            &file_extension.unwrap(),
+        ));
+    } else if (file_extension.is_none() || file_extension.unwrap() == "")
+        && config.require_extension == Some(FileExtensionConfig::Always)
+    {
+        ctx.diagnostic(extension_missing_from_import_diagnostic(span));
+    }
+}
+
+fn process_export_record(
+    export: &ExportEntry,
+    config: &Box<ExtensionsConfig>,
+    ctx: &LintContext,
+    extensions: &Extensions,
+) {
+    let always_file_types = extensions.0.get_always_file_types();
+    let never_file_types = extensions.0.get_never_file_types();
+
+    if export.module_request.is_none() {
+        return;
+    }
+
+    if export.is_type && !config.check_type_imports {
+        return;
+    }
+
+    let export_module_request = export.module_request.as_ref().unwrap();
+
+    let export_name = export_module_request.name();
+
+    let is_builtin_node_module =
+        BUILT_IN_NODE_MODULES.contains(export_name) || ctx.globals().is_enabled(export_name);
+
+    let is_package = export_name.starts_with('@')
+        || (!export_name.starts_with(".") && !export_name[1..].contains('/'));
+
+    if is_builtin_node_module || (is_package && config.ignore_packages) {
+        return;
+    }
+
+    let file_extension = get_file_extension_from_module_request(&export_module_request);
+
+    let span = export.statement_span;
+
+    // TODO: should these diagnostics be export - specific?
+    if file_extension.is_some()
+        && (never_file_types.contains(&file_extension.unwrap())
+            || (!always_file_types.is_empty()
+                && !always_file_types.contains(&file_extension.unwrap())))
+    {
+        ctx.diagnostic(extension_should_not_be_included_in_export_diagnostic(
+            span,
+            &file_extension.unwrap(),
+        ));
+    } else if (file_extension.is_none() || file_extension.unwrap() == "")
+        && config.require_extension == Some(FileExtensionConfig::Always)
+    {
+        ctx.diagnostic(extension_missing_from_export_diagnostic(span));
+    }
+}
+
 impl Rule for Extensions {
     fn from_configuration(value: serde_json::Value) -> Self {
         if let Some(always_or_never) =
@@ -407,135 +508,19 @@ impl Rule for Extensions {
 
     fn run_once<'a>(&self, ctx: &LintContext<'a>) {
         let module_record = ctx.module_record();
-        let always_file_types = self.0.get_always_file_types();
-        let never_file_types = self.0.get_never_file_types();
 
         let config = self.0.clone();
 
         for import in &module_record.import_entries {
-            if import.is_type && !config.check_type_imports {
-                continue;
-            }
-
-            let import_name = import.module_request.name();
-
-            let is_builtin_node_module = BUILT_IN_NODE_MODULES.contains(import_name)
-                || ctx.globals().is_enabled(import_name);
-
-            let is_package = import_name.starts_with('@')
-                || (!import_name.starts_with(".") && !import_name[1..].contains('/'));
-
-            if is_builtin_node_module || (is_package && config.ignore_packages) {
-                continue;
-            }
-
-            let file_extension = get_file_extension_from_module_request(&import.module_request);
-
-            let span = import.statement_span;
-            if file_extension.is_some()
-                && (never_file_types.contains(&file_extension.unwrap())
-                    || (!always_file_types.is_empty()
-                        && !always_file_types.contains(&file_extension.unwrap())))
-            {
-                // should not have file extension
-                ctx.diagnostic(extension_should_not_be_included_in_import_diagnostic(
-                    span,
-                    &file_extension.unwrap(),
-                ));
-            } else if (file_extension.is_none() || file_extension.unwrap() == "")
-                && config.require_extension == Some(FileExtensionConfig::Always)
-            {
-                ctx.diagnostic(extension_missing_from_import_diagnostic(span));
-            }
+            process_import_record(import, &config, ctx, self);
         }
 
         for export in &module_record.indirect_export_entries {
-            if export.module_request.is_none() {
-                continue;
-            }
-
-            if export.is_type && !config.check_type_imports {
-                continue;
-            }
-
-            let export_module_request = export.module_request.as_ref().unwrap();
-
-            let export_name = export_module_request.name();
-
-            let is_builtin_node_module = BUILT_IN_NODE_MODULES.contains(export_name)
-                || ctx.globals().is_enabled(export_name);
-
-            let is_package = export_name.starts_with('@')
-                || (!export_name.starts_with(".") && !export_name[1..].contains('/'));
-
-            if is_builtin_node_module || (is_package && config.ignore_packages) {
-                continue;
-            }
-
-            let file_extension = get_file_extension_from_module_request(&export_module_request);
-
-            let span = export.statement_span;
-
-            // TODO: should these diagnostics be export - specific?
-            if file_extension.is_some()
-                && (never_file_types.contains(&file_extension.unwrap())
-                    || (!always_file_types.is_empty()
-                        && !always_file_types.contains(&file_extension.unwrap())))
-            {
-                // should not have file extension
-                ctx.diagnostic(extension_should_not_be_included_in_export_diagnostic(
-                    span,
-                    &file_extension.unwrap(),
-                ));
-            } else if (file_extension.is_none() || file_extension.unwrap() == "")
-                && config.require_extension == Some(FileExtensionConfig::Always)
-            {
-                ctx.diagnostic(extension_missing_from_export_diagnostic(span));
-            }
+            process_export_record(export, &config, ctx, self);
         }
 
         for export in &module_record.star_export_entries {
-            if export.module_request.is_none() {
-                continue;
-            }
-
-            if export.is_type && !config.check_type_imports {
-                continue;
-            }
-
-            let export_module_request = export.module_request.as_ref().unwrap();
-
-            let export_name = export_module_request.name();
-
-            let is_builtin_node_module = BUILT_IN_NODE_MODULES.contains(export_name)
-                || ctx.globals().is_enabled(export_name);
-
-            let is_package = export_name.starts_with('@')
-                || (!export_name.starts_with(".") && !export_name[1..].contains('/'));
-
-            if is_builtin_node_module || (is_package && config.ignore_packages) {
-                continue;
-            }
-
-            let file_extension = get_file_extension_from_module_request(&export_module_request);
-
-            let span = export.statement_span;
-
-            // TODO: should these diagnostics be export - specific?
-            if file_extension.is_some()
-                && (never_file_types.contains(&file_extension.unwrap())
-                    || (!always_file_types.is_empty()
-                        && !always_file_types.contains(&file_extension.unwrap())))
-            {
-                ctx.diagnostic(extension_should_not_be_included_in_export_diagnostic(
-                    span,
-                    &file_extension.unwrap(),
-                ));
-            } else if (file_extension.is_none() || file_extension.unwrap() == "")
-                && config.require_extension == Some(FileExtensionConfig::Always)
-            {
-                ctx.diagnostic(extension_missing_from_export_diagnostic(span));
-            }
+            process_export_record(export, &config, ctx, self);
         }
     }
 }
