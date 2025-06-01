@@ -81,7 +81,9 @@ impl<'a> ParserImpl<'a> {
 
     fn parse_formal_parameter(&mut self) -> FormalParameter<'a> {
         let span = self.start_span();
-        self.eat_decorators();
+        if self.at(Kind::At) {
+            self.eat_decorators();
+        }
         let modifiers = self.parse_parameter_modifiers();
         let pattern = self.parse_binding_pattern_with_initializer();
         let decorators = self.consume_decorators();
