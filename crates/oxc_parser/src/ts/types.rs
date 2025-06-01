@@ -406,9 +406,18 @@ impl<'a> ParserImpl<'a> {
             Kind::LParen => self.parse_parenthesized_type(),
             Kind::Import => TSType::TSImportType(self.parse_ts_import_type()),
             Kind::Asserts => {
-                if self.lookahead(Self::is_next_token_identifier_or_keyword_on_same_line) {
+                let checkpoint = self.checkpoint();
+                self.bump_any(); // bump `asserts`
+
+                // Is token after the `asserts` an identifier or keyword that
+                // is on the same line?
+                let same_line_id_or_keyword= self.is_next_token_identifier_or_keyword_on_same_line();
+                if same_line_id_or_keyword {
+                    self.rewind(checkpoint);
+
                     self.parse_asserts_type_predicate()
                 } else {
+                    self.rewind(checkpoint);
                     self.parse_type_reference()
                 }
             }
@@ -418,7 +427,7 @@ impl<'a> ParserImpl<'a> {
     }
 
     fn is_next_token_identifier_or_keyword_on_same_line(&mut self) -> bool {
-        self.bump_any();
+        // self.bump_any();
         self.cur_kind().is_identifier_name() && !self.cur_token().is_on_new_line()
     }
 
