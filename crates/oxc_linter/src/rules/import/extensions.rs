@@ -344,7 +344,7 @@ fn process_import_record(
             }
         }
     } else if config.require_extension == Some(FileExtensionConfig::Always) {
-g        ctx.diagnostic(extension_missing_from_import_diagnostic(span));
+        ctx.diagnostic(extension_missing_from_import_diagnostic(span));
     }
 }
 
