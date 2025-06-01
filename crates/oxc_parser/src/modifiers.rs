@@ -104,6 +104,10 @@ pub struct Modifier {
 }
 
 impl Modifier {
+    pub fn new(span: Span, kind: ModifierKind) -> Self {
+        Self { span, kind }
+    }
+
     #[inline]
     pub fn is_static(&self) -> bool {
         matches!(self.kind, ModifierKind::Static)

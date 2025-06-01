@@ -4,7 +4,9 @@ use oxc_span::{Atom, GetSpan, Span};
 
 use super::{VariableDeclarationParent, grammar::CoverGrammar};
 use crate::{
-    Context, ParserImpl, StatementContext, diagnostics, lexer::Kind, modifiers::Modifiers,
+    Context, ParserImpl, StatementContext, diagnostics,
+    lexer::Kind,
+    modifiers::{Modifier, ModifierFlags, ModifierKind, Modifiers},
 };
 
 impl<'a> ParserImpl<'a> {
@@ -136,18 +138,8 @@ impl<'a> ParserImpl<'a> {
             } => {
                 self.parse_import_declaration()
             }
-            // Check we are not at a `const enum` in TypeScript
-            Kind::Const if !(self.is_ts && self.lookahead(|p| {
-                p.bump_any();
-                p.at(Kind::Enum)
-            })) =>
-            {
-                let span = self.start_span();
-                self.bump_any();
-                self.parse_variable_statement(span, VariableDeclarationKind::Const, stmt_ctx)
-            }
+            Kind::Const => self.parse_const_statement(stmt_ctx),
             Kind::Using if self.is_using_declaration() => self.parse_using_statement(),
-            // Peek 2 tokens
             Kind::Await if self.is_using_statement() => self.parse_using_statement(),
             Kind::Async
             | Kind::Interface
@@ -155,7 +147,6 @@ impl<'a> ParserImpl<'a> {
             | Kind::Module
             | Kind::Namespace
             | Kind::Declare
-            | Kind::Const
             | Kind::Enum
             | Kind::Import
             | Kind::Private
@@ -679,5 +670,18 @@ impl<'a> ParserImpl<'a> {
         self.bump_any();
         self.asi();
         self.ast.statement_debugger(self.end_span(span))
+    }
+
+    /// Parse const declaration or `const enum`.
+    fn parse_const_statement(&mut self, stmt_ctx: StatementContext) -> Statement<'a> {
+        let span = self.start_span();
+        self.bump_any();
+        if self.is_ts && self.at(Kind::Enum) {
+            let modifiers = self.ast.vec1(Modifier::new(self.end_span(span), ModifierKind::Const));
+            let modifiers = Modifiers::new(modifiers, ModifierFlags::CONST);
+            Statement::from(self.parse_ts_enum_declaration(span, &modifiers))
+        } else {
+            self.parse_variable_statement(span, VariableDeclarationKind::Const, stmt_ctx)
+        }
     }
 }
