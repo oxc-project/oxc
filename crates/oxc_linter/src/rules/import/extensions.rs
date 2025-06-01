@@ -75,7 +75,7 @@ pub struct ExtensionsConfig {
 }
 
 impl ExtensionsConfig {
-    pub fn get_always_file_types<'a>(&'a self) -> Vec<&'a str> {
+    pub fn get_always_file_types(&self) -> Vec<&str> {
         let mut result: Vec<&str> = vec![];
 
         if matches!(self.js, FileExtensionConfig::Always) {
@@ -100,7 +100,7 @@ impl ExtensionsConfig {
 
         result
     }
-    pub fn get_never_file_types<'a>(&'a self) -> Vec<&'a str> {
+    pub fn get_never_file_types(&self) -> Vec<&str> {
         let mut result: Vec<&str> = vec![];
 
         if matches!(self.js, FileExtensionConfig::Never) {
@@ -301,7 +301,7 @@ pub const BUILT_IN_NODE_MODULES: phf::Set<&'static str> = phf::phf_set![
 
 fn process_import_record(
     import: &ImportEntry,
-    config: &Box<ExtensionsConfig>,
+    config: &ExtensionsConfig,
     ctx: &LintContext,
     extensions: &Extensions,
 ) {
@@ -318,7 +318,7 @@ fn process_import_record(
         BUILT_IN_NODE_MODULES.contains(import_name) || ctx.globals().is_enabled(import_name);
 
     let is_package = import_name.starts_with('@')
-        || (!import_name.starts_with(".") && !import_name[1..].contains('/'));
+        || (!import_name.starts_with('.') && !import_name[1..].contains('/'));
 
     if is_builtin_node_module || (is_package && config.ignore_packages) {
         return;
@@ -335,7 +335,7 @@ fn process_import_record(
         // should not have file extension
         ctx.diagnostic(extension_should_not_be_included_in_import_diagnostic(
             span,
-            &file_extension.unwrap(),
+            file_extension.unwrap(),
         ));
     } else if (file_extension.is_none() || file_extension.unwrap() == "")
         && config.require_extension == Some(FileExtensionConfig::Always)
@@ -369,13 +369,13 @@ fn process_export_record(
         BUILT_IN_NODE_MODULES.contains(export_name) || ctx.globals().is_enabled(export_name);
 
     let is_package = export_name.starts_with('@')
-        || (!export_name.starts_with(".") && !export_name[1..].contains('/'));
+        || (!export_name.starts_with('.') && !export_name[1..].contains('/'));
 
     if is_builtin_node_module || (is_package && config.ignore_packages) {
         return;
     }
 
-    let file_extension = get_file_extension_from_module_request(&export_module_request);
+    let file_extension = get_file_extension_from_module_request(export_module_request);
 
     let span = export.statement_span;
 
@@ -440,7 +440,7 @@ impl Rule for Extensions {
                         .get("json")
                         .and_then(Value::as_str)
                         .map(FileExtensionConfig::from)
-                        .unwrap_or(default.clone()),
+                        .unwrap_or(default),
                 };
 
                 Self(Box::new(config))
@@ -459,7 +459,7 @@ impl Rule for Extensions {
                     ts: default.clone(),
                     tsx: default.clone(),
                     json: default.clone(),
-                    require_extension: Some(default.clone()),
+                    require_extension: Some(default),
                 };
 
                 Self(Box::new(config))
@@ -506,7 +506,7 @@ impl Rule for Extensions {
         }
     }
 
-    fn run_once<'a>(&self, ctx: &LintContext<'a>) {
+    fn run_once(&self, ctx: &LintContext) {
         let module_record = ctx.module_record();
 
         let config = self.0.clone();
