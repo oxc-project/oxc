@@ -627,7 +627,7 @@ fn test() {
 
         // Link to eslint-plugin-import extensions rule unit tests:
         // https://github.com/import-js/eslint-plugin-import/blob/main/tests/src/rules/extensions.js
-
+        // (
         //     r#"
         //         import bar from "./bar";
         //         import barjson from "./bar.json";
@@ -647,33 +647,33 @@ fn test() {
         (r#"import path from "path";"#, Some(json!(["always"]))),
         (r#"import thing from "./fake-file.js";"#, Some(json!(["always"]))),
         (r#"import thing from "non-package";"#, Some(json!(["never"]))),
-        // (
-        //     r#"
-        //         import foo from "./foo.js";
-        //         import bar from "./bar.json";
-        //         import Component from "./Component.jsx";
-        //         import express from "express";
-        //     "#,
-        //     Some(json!(["ignorePackages"])),
-        // ),
-        // (
-        //     r#"
-        //         import foo from "./foo.js";
-        //         import bar from "./bar.json";
-        //         import Component from "./Component.jsx";
-        //         import express from "express";
-        //     "#,
-        //     Some(json!(["always", { "ignorePackages": true}])),
-        // ),
-        // (
-        //     r#"
-        //         import foo from "./foo";
-        //         import bar from "./bar";
-        //         import Component from "./Component";
-        //         import express from "express";
-        //     "#,
-        //     Some(json!(["never", { "ignorePackages": true}])),
-        // ),
+        (
+            r#"
+                import foo from "./foo.js";
+                import bar from "./bar.json";
+                import Component from "./Component.jsx";
+                import express from "express";
+            "#,
+            Some(json!(["ignorePackages"])),
+        ),
+        (
+            r#"
+                import foo from "./foo.js";
+                import bar from "./bar.json";
+                import Component from "./Component.jsx";
+                import express from "express";
+            "#,
+            Some(json!(["always", { "ignorePackages": true}])),
+        ),
+        (
+            r#"
+                import foo from "./foo";
+                import bar from "./bar";
+                import Component from "./Component";
+                import express from "express";
+            "#,
+            Some(json!(["never", { "ignorePackages": true}])),
+        ),
         (
             r#"import exceljs from "exceljs""#,
             Some(json!(["always", { "js": "never", "jsx": "never"}])),
@@ -875,8 +875,6 @@ fn test() {
             Some(json!(["always", { "pattern": { "jsx": "never" } }])),
         ),
         // Exports
-
-        // TODO: fix this test
         (
             r#"
                 export { foo } from "./foo";
