@@ -399,7 +399,7 @@ fn process_export_record(
                 ctx.diagnostic(extension_missing_from_export_diagnostic(span));
             }
         }
-    } else {
+    } else if config.require_extension == Some(FileExtensionConfig::Always) {
         ctx.diagnostic(extension_missing_from_export_diagnostic(span));
     }
 }
