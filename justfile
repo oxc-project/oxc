@@ -75,8 +75,7 @@ check:
 
 # Run all the tests
 test:
-  cargo test -- --nocapture
-# cargo test --all-features
+  cargo test --all-features
 
 # Lint the whole project
 lint:

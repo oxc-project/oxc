@@ -236,9 +236,7 @@ ignored = ["napi", "oxc_transform_napi", "oxc_parser_napi", "prettyplease", "laz
 [profile.dev]
 # Disabling debug info speeds up local and CI builds,
 # and we don't rely on it for debugging that much.
-debug = true
-strip = false
-panic = "unwind"
+debug = false
 
 [profile.test]
 # Disabling debug info speeds up local and CI builds,
@@ -263,8 +261,8 @@ opt-level = 'z'
 opt-level = 3
 lto = "fat"
 codegen-units = 1
-strip = false # Set to `false` for debug information
-debug = true # Set to `true` for debug information
+strip = "symbols" # Set to `false` for debug information
+debug = false # Set to `true` for debug information
 panic = "abort" # Let it crash and force ourselves to write safe Rust
 
 # Profile used for release mode, but with debugging information for profiling
