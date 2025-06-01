@@ -343,8 +343,8 @@ fn process_import_record(
                 ctx.diagnostic(extension_missing_from_import_diagnostic(span));
             }
         }
-    } else {
-        ctx.diagnostic(extension_missing_from_import_diagnostic(span));
+    } else if config.require_extension == Some(FileExtensionConfig::Always) {
+g        ctx.diagnostic(extension_missing_from_import_diagnostic(span));
     }
 }
 
