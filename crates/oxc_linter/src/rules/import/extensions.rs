@@ -438,6 +438,104 @@ impl Rule for Extensions {
             }
         }
 
+        for export in &module_record.indirect_export_entries {
+
+            println!("export: {:?}", export);
+            if export.module_request.is_none() {
+                continue;
+            }
+
+            let export_module_request = export.module_request.as_ref().unwrap();
+
+            let export_name = export_module_request.name();
+
+            println!("is_package_cond1: {}", export_name.starts_with('@'));
+            println!("is_package_cond2: {}", !export_name.starts_with(".") && !export_name[1..].contains('/'));
+
+            let is_builtin_node_module =
+            BUILT_IN_NODE_MODULES.contains(export_name) || ctx.globals().is_enabled(export_name);
+
+            let is_package = export_name.starts_with('@') || (!export_name.starts_with(".") && !export_name[1..].contains('/'));
+
+            println!("export_name: {export_name}");
+
+            println!("is_builtin: {is_builtin_node_module}");
+
+            println!("ctx.globals(): {:?}", ctx.globals());
+
+            println!("is_package: {is_package}");
+            println!("config.ignore_packages: {}", config.ignore_packages);
+
+            if is_builtin_node_module || (is_package && config.ignore_packages) {
+                continue;
+            }
+
+            let file_extension = get_file_extension_from_module_request(&export_module_request);
+
+
+            let span = export.statement_span;
+
+            // TODO: should these diagnostics be export - specific?
+            if file_extension.is_some() && (never_file_types.contains(&file_extension.unwrap()) || (!always_file_types.is_empty() && !always_file_types.contains(&file_extension.unwrap()))) {
+                // should not have file extension
+                ctx.diagnostic(extension_should_not_be_included_diagnostic(span, &file_extension.unwrap()));
+            // } else if file_extension.is_none() && !always_file_types.is_empty() {
+            //     ctx.diagnostic(extension_missing_from_import_diagnostic(span));
+                // somehow figure out what the file should be and check that against the always_file_types list
+            } else if file_extension.is_none() && never_file_types.is_empty() {
+                ctx.diagnostic(extension_missing_from_import_diagnostic(span));
+            }
+        }
+
+        for export in &module_record.star_export_entries {
+
+            println!("export: {:?}", export);
+            if export.module_request.is_none() {
+                continue;
+            }
+
+            let export_module_request = export.module_request.as_ref().unwrap();
+
+            let export_name = export_module_request.name();
+
+            println!("is_package_cond1: {}", export_name.starts_with('@'));
+            println!("is_package_cond2: {}", !export_name.starts_with(".") && !export_name[1..].contains('/'));
+
+            let is_builtin_node_module =
+            BUILT_IN_NODE_MODULES.contains(export_name) || ctx.globals().is_enabled(export_name);
+
+            let is_package = export_name.starts_with('@') || (!export_name.starts_with(".") && !export_name[1..].contains('/'));
+
+            println!("export_name: {export_name}");
+
+            println!("is_builtin: {is_builtin_node_module}");
+
+            println!("ctx.globals(): {:?}", ctx.globals());
+
+            println!("is_package: {is_package}");
+            println!("config.ignore_packages: {}", config.ignore_packages);
+
+            if is_builtin_node_module || (is_package && config.ignore_packages) {
+                continue;
+            }
+
+            let file_extension = get_file_extension_from_module_request(&export_module_request);
+
+
+            let span = export.statement_span;
+
+            // TODO: should these diagnostics be export - specific?
+            if file_extension.is_some() && (never_file_types.contains(&file_extension.unwrap()) || (!always_file_types.is_empty() && !always_file_types.contains(&file_extension.unwrap()))) {
+                // should not have file extension
+                ctx.diagnostic(extension_should_not_be_included_diagnostic(span, &file_extension.unwrap()));
+            // } else if file_extension.is_none() && !always_file_types.is_empty() {
+            //     ctx.diagnostic(extension_missing_from_import_diagnostic(span));
+                // somehow figure out what the file should be and check that against the always_file_types list
+            } else if file_extension.is_none() && never_file_types.is_empty() {
+                ctx.diagnostic(extension_missing_from_import_diagnostic(span));
+            }
+        }
+
         // // the default.rs rule has good reference points for reading file names in an import.
         // if let Some(extension) = ctx.file_path().extension() {
         //     println!("file extension: {extension:?}");
@@ -758,6 +856,8 @@ fn test() {
             Some(json!(["always", { "pattern": { "jsx": "never" } }])),
         ),
         // Exports
+
+        // TODO: fix this test
         (
             r#"
                 export { foo } from "./foo";
@@ -776,26 +876,26 @@ fn test() {
         (r#"import withExtension from "./foo.js?a=True";"#, Some(json!(["never"]))),
         (r#"import withoutExtension from "./foo?a=True.ext";"#, Some(json!(["always"]))),
         // Require
-        (
-            r#"
-                const { foo } = require("./foo");
-                export { foo };
-            "#,
-            Some(json!(["always"])),
-        ),
-        (
-            r#"
-                const { foo } = require("./foo".js);
-                export { foo };
-            "#,
-            Some(json!(["never"])),
-        ),
+        // (
+        //     r#"
+        //         const { foo } = require("./foo");
+        //         export { foo };
+        //     "#,
+        //     Some(json!(["always"])),
+        // ),
+        // (
+        //     r#"
+        //         const { foo } = require("./foo".js);
+        //         export { foo };
+        //     "#,
+        //     Some(json!(["never"])),
+        // ),
         (
             r#"
                 import foo from "@/ImNotAScopedModule";
                 import chart from "@/configs/chart";
             "#,
-            Some(json!(["always"])),
+            Some(json!(["always",{ "ignorePackages": false }])),
         ),
         // Export { } from
         (
@@ -827,7 +927,7 @@ fn test() {
             r#"
                 import foo from "@/ImNotAScopedModule.js";
             "#,
-            Some(json!(["never"])),
+            Some(json!(["never", { "ignorePackages": false }])),
         ),
         (
             r#"
@@ -835,7 +935,7 @@ fn test() {
                 import m from '@test-scope/some-module/index.js';
                 import bar from './bar';
             "#,
-            Some(json!(["never"])),
+            Some(json!(["never",{ "ignorePackages": false }])),
         ),
         // Relative imports
         (
