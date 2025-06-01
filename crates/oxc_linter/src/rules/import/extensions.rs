@@ -1,47 +1,32 @@
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::Span;
+use oxc_span::{CompactStr, Span};
+use oxc_syntax::module_record::RequestedModule;
 use serde_json::Value;
 
-use crate::{
-    context::LintContext,
-    module_record::{ExportEntry, ImportEntry, NameSpan},
-    rule::Rule,
-};
+use crate::{context::LintContext, rule::Rule};
 
-fn extension_should_not_be_included_in_import_diagnostic(
+fn extension_should_not_be_included_in_diagnostic(
     span: Span,
     extension: &str,
+    is_import: bool,
 ) -> OxcDiagnostic {
+    let import_or_export = if is_import { "import" } else { "export" };
+
     // See <https://oxc.rs/docs/contribute/linter/adding-rules.html#diagnostics> for details
     OxcDiagnostic::warn(format!(
-        "File extension {extension} should not be included in the import declaration."
+        "File extension \"{extension}\" should not be included in the {import_or_export} declaration."
     ))
-    .with_help("Remove the file extension from this import.")
+    .with_help(format!("Remove the file extension from this {import_or_export}."))
     .with_label(span)
 }
 
-fn extension_missing_from_import_diagnostic(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Missing file extension in import declaration")
-        .with_help("Add a file extension to this import.")
-        .with_label(span)
-}
+fn extension_missing_diagnostic(span: Span, is_import: bool) -> OxcDiagnostic {
+    let import_or_export = if is_import { "import" } else { "export" };
 
-fn extension_should_not_be_included_in_export_diagnostic(
-    span: Span,
-    extension: &str,
-) -> OxcDiagnostic {
     // See <https://oxc.rs/docs/contribute/linter/adding-rules.html#diagnostics> for details
-    OxcDiagnostic::warn(format!(
-        "File extension {extension} should not be included in the export declaration."
-    ))
-    .with_help("Remove the file extension from this export.")
-    .with_label(span)
-}
-
-fn extension_missing_from_export_diagnostic(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Missing file extension in export declaration")
-        .with_help("Add a file extension to this export.")
+    OxcDiagnostic::warn(format!("Missing file extension in {import_or_export} declaration"))
+        .with_help(format!("Add a file extension to this {import_or_export}."))
         .with_label(span)
 }
 
@@ -299,108 +284,55 @@ pub const BUILT_IN_NODE_MODULES: phf::Set<&'static str> = phf::phf_set![
     "zlib"
 ];
 
-fn process_import_record(
-    import: &ImportEntry,
+fn process_module_record(
+    module_record: (CompactStr, &RequestedModule),
     config: &ExtensionsConfig,
     ctx: &LintContext,
     extensions: &Extensions,
+    is_import: bool,
 ) {
+    let (module_name, module) = module_record;
     let always_file_types = extensions.0.get_always_file_types();
     let never_file_types = extensions.0.get_never_file_types();
 
-    if import.is_type && !config.check_type_imports {
+    if module.is_type && !config.check_type_imports {
         return;
     }
 
-    let import_name = import.module_request.name();
+    let is_builtin_node_module = BUILT_IN_NODE_MODULES.contains(module_name.as_str())
+        || ctx.globals().is_enabled(module_name.as_str());
 
-    let is_builtin_node_module =
-        BUILT_IN_NODE_MODULES.contains(import_name) || ctx.globals().is_enabled(import_name);
-
-    let is_package = import_name.starts_with('@')
-        || (!import_name.starts_with('.') && !import_name[1..].contains('/'));
+    let is_package = module_name.as_str().starts_with('@')
+        || (!module_name.as_str().starts_with('.') && !module_name.as_str()[1..].contains('/'));
 
     if is_builtin_node_module || (is_package && config.ignore_packages) {
         return;
     }
 
-    let file_extension = get_file_extension_from_module_request(&import.module_request);
+    let file_extension = get_file_extension_from_module_name(&module_name);
 
-    let span = import.statement_span;
+    let span = module.statement_span;
+
     if let Some(file_extension) = file_extension {
-        if never_file_types.contains(&file_extension)
-            || (!always_file_types.is_empty() && !always_file_types.contains(&file_extension))
+        if never_file_types.contains(&file_extension.as_str())
+            || (!always_file_types.is_empty()
+                && !always_file_types.contains(&file_extension.as_str()))
         // should not have file extension
         {
-            ctx.diagnostic(extension_should_not_be_included_in_import_diagnostic(
+            ctx.diagnostic(extension_should_not_be_included_in_diagnostic(
                 span,
-                file_extension,
+                file_extension.as_str(),
+                is_import,
             ));
 
             if file_extension.is_empty()
                 && config.require_extension == Some(FileExtensionConfig::Always)
             {
-                ctx.diagnostic(extension_missing_from_import_diagnostic(span));
+                ctx.diagnostic(extension_missing_diagnostic(span, is_import));
             }
         }
     } else if config.require_extension == Some(FileExtensionConfig::Always) {
-        ctx.diagnostic(extension_missing_from_import_diagnostic(span));
-    }
-}
-
-fn process_export_record(
-    export: &ExportEntry,
-    config: &ExtensionsConfig,
-    ctx: &LintContext,
-    extensions: &Extensions,
-) {
-    let always_file_types = extensions.0.get_always_file_types();
-    let never_file_types = extensions.0.get_never_file_types();
-
-    if export.module_request.is_none() {
-        return;
-    }
-
-    if export.is_type && !config.check_type_imports {
-        return;
-    }
-
-    let export_module_request = export.module_request.as_ref().unwrap();
-
-    let export_name = export_module_request.name();
-
-    let is_builtin_node_module =
-        BUILT_IN_NODE_MODULES.contains(export_name) || ctx.globals().is_enabled(export_name);
-
-    let is_package = export_name.starts_with('@')
-        || (!export_name.starts_with('.') && !export_name[1..].contains('/'));
-
-    if is_builtin_node_module || (is_package && config.ignore_packages) {
-        return;
-    }
-
-    let file_extension = get_file_extension_from_module_request(export_module_request);
-
-    let span = export.statement_span;
-
-    if let Some(file_extension) = file_extension {
-        if never_file_types.contains(&file_extension)
-            || (!always_file_types.is_empty() && !always_file_types.contains(&file_extension))
-        // should not have file extension
-        {
-            ctx.diagnostic(extension_should_not_be_included_in_export_diagnostic(
-                span,
-                file_extension,
-            ));
-
-            if file_extension.is_empty()
-                && config.require_extension == Some(FileExtensionConfig::Always)
-            {
-                ctx.diagnostic(extension_missing_from_export_diagnostic(span));
-            }
-        }
-    } else if config.require_extension == Some(FileExtensionConfig::Always) {
-        ctx.diagnostic(extension_missing_from_export_diagnostic(span));
+        ctx.diagnostic(extension_missing_diagnostic(span, is_import));
     }
 }
 
@@ -519,24 +451,24 @@ impl Rule for Extensions {
 
         let config = self.0.clone();
 
-        for import in &module_record.import_entries {
-            process_import_record(import, &config, ctx, self);
-        }
-
-        for export in &module_record.indirect_export_entries {
-            process_export_record(export, &config, ctx, self);
-        }
-
-        for export in &module_record.star_export_entries {
-            process_export_record(export, &config, ctx, self);
+        for (module_name, module) in module_record.requested_modules.iter() {
+            for module_item in module {
+                process_module_record(
+                    (module_name.clone(), module_item),
+                    &config,
+                    ctx,
+                    self,
+                    module_item.is_import,
+                );
+            }
         }
     }
 }
 
-fn get_file_extension_from_module_request(module_request: &NameSpan) -> Option<&str> {
-    if let Some((_, extension)) = module_request.name().rsplit_once('.') {
+fn get_file_extension_from_module_name<'a>(module_name: &CompactStr) -> Option<CompactStr> {
+    if let Some((_, extension)) = module_name.rsplit_once('.') {
         if !extension.starts_with('/') {
-            return extension.split('?').next();
+            return extension.split('?').map(CompactStr::from).next();
         }
     }
 
@@ -731,7 +663,7 @@ fn test() {
             Some(json!([{ "json": "always", "js": "never", "jsx": "never" }])),
         ),
         // TODO: fix this test
-        // (r#"import "./bar.coffee""#, Some(json!(["never", { "js": "always", "jsx": "always" }]))),
+        (r#"import "./bar.coffee""#, Some(json!(["never", { "js": "always", "jsx": "always" }]))),
         (
             r#"
                 import barjs from "./bar.js";
