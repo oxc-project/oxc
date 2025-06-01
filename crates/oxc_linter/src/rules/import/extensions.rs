@@ -346,7 +346,7 @@ fn process_import_record(
 
 fn process_export_record(
     export: &ExportEntry,
-    config: &Box<ExtensionsConfig>,
+    config: &ExtensionsConfig,
     ctx: &LintContext,
     extensions: &Extensions,
 ) {
@@ -387,7 +387,7 @@ fn process_export_record(
     {
         ctx.diagnostic(extension_should_not_be_included_in_export_diagnostic(
             span,
-            &file_extension.unwrap(),
+            file_extension.unwrap(),
         ));
     } else if (file_extension.is_none() || file_extension.unwrap() == "")
         && config.require_extension == Some(FileExtensionConfig::Always)
@@ -772,7 +772,7 @@ fn test() {
             Some(json!(["never",{"ignorePackages": false}])),
         ),
         (
-            r#"
+            r"
                 import foo from './foo.js';
                 import bar from './bar.json';
                 import Component from './Component';
@@ -780,11 +780,11 @@ fn test() {
                 import baw from '@scoped/baw/import';
                 import chart from '@/configs/chart';
                 import express from 'express';
-            "#,
+            ",
             Some(json!(["always", { "ignorePackages": true }])),
         ),
         (
-            r#"
+            r"
                 import foo from './foo.js';
                 import bar from './bar.json';
                 import Component from './Component';
@@ -792,24 +792,24 @@ fn test() {
                 import baw from '@scoped/baw/import';
                 import chart from '@/configs/chart';
                 import express from 'express';
-            "#,
+            ",
             Some(json!(["ignorePackages"])),
         ),
         (
-            r#"
+            r"
                 import foo from './foo.js';
                 import bar from './bar.json';
                 import Component from './Component.jsx';
                 import express from 'express';
-            "#,
+            ",
             Some(json!(["never", { "ignorePackages": true }])),
         ),
         (
-            r#"
+            r"
                 import foo from './foo.js';
                 import bar from './bar.json';
                 import Component from './Component.jsx';
-            "#,
+            ",
             Some(json!(["always", { "pattern": { "jsx": "never" } }])),
         ),
         // Exports
@@ -885,11 +885,11 @@ fn test() {
             Some(json!(["never", { "ignorePackages": false }])),
         ),
         (
-            r#"
+            r"
                 import _ from 'lodash';
                 import m from '@test-scope/some-module/index.js';
                 import bar from './bar';
-            "#,
+            ",
             Some(json!(["never",{ "ignorePackages": false }])),
         ),
         // Relative imports
