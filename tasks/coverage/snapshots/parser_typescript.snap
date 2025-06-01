@@ -19496,12 +19496,12 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
  13 │ }
     ╰────
 
-  × Expected `,` but found `[`
-   ╭─[typescript/tests/cases/conformance/classes/indexMemberDeclarations/privateIndexer2.ts:4:13]
+  × Expected `]` but found `:`
+   ╭─[typescript/tests/cases/conformance/classes/indexMemberDeclarations/privateIndexer2.ts:4:15]
  3 │ var x = {
  4 │     private [x: string]: string;
-   ·             ┬
-   ·             ╰── `,` expected
+   ·               ┬
+   ·               ╰── `]` expected
  5 │ }
    ╰────
 
@@ -21789,27 +21789,27 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
    ╰────
 
   × Unexpected token
-   ╭─[typescript/tests/cases/conformance/es6/functionPropertyAssignments/FunctionPropertyAssignments2_es6.ts:1:11]
+   ╭─[typescript/tests/cases/conformance/es6/functionPropertyAssignments/FunctionPropertyAssignments2_es6.ts:1:12]
  1 │ var v = { *() { } }
-   ·           ─
+   ·            ─
    ╰────
 
   × Unexpected token
-   ╭─[typescript/tests/cases/conformance/es6/functionPropertyAssignments/FunctionPropertyAssignments3_es6.ts:1:11]
+   ╭─[typescript/tests/cases/conformance/es6/functionPropertyAssignments/FunctionPropertyAssignments3_es6.ts:1:12]
  1 │ var v = { *{ } }
-   ·           ─
+   ·            ─
    ╰────
 
   × Unexpected token
-   ╭─[typescript/tests/cases/conformance/es6/functionPropertyAssignments/FunctionPropertyAssignments4_es6.ts:1:11]
+   ╭─[typescript/tests/cases/conformance/es6/functionPropertyAssignments/FunctionPropertyAssignments4_es6.ts:1:13]
  1 │ var v = { * }
-   ·           ─
+   ·             ─
    ╰────
 
   × Unexpected token
-   ╭─[typescript/tests/cases/conformance/es6/functionPropertyAssignments/FunctionPropertyAssignments6_es6.ts:1:11]
+   ╭─[typescript/tests/cases/conformance/es6/functionPropertyAssignments/FunctionPropertyAssignments6_es6.ts:1:12]
  1 │ var v = { *<T>() { } }
-   ·           ─
+   ·            ─
    ╰────
 
   × Unexpected token
@@ -22007,19 +22007,21 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
     ╰────
   help: new.target is only allowed in constructors and functions invoked using thew `new` operator
 
-  × Unexpected token
+  × Expected `:` but found `,`
    ╭─[typescript/tests/cases/conformance/es6/shorthandPropertyAssignment/objectLiteralShorthandPropertiesErrorFromNotUsingIdentifier.ts:3:20]
  2 │ var y = {
  3 │     "stringLiteral",
-   ·                    ─
+   ·                    ┬
+   ·                    ╰── `:` expected
  4 │     42,
    ╰────
 
-  × Unexpected token
+  × Expected `,` but found `.`
     ╭─[typescript/tests/cases/conformance/es6/shorthandPropertyAssignment/objectLiteralShorthandPropertiesErrorWithModule.ts:10:10]
   9 │     export var y = {
  10 │         m.x  // error
-    ·          ─
+    ·          ┬
+    ·          ╰── `,` expected
  11 │     };
     ╰────
 
@@ -26437,11 +26439,12 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
    ·    ╰── `,` expected
    ╰────
 
-  × Unexpected token
+  × Expected `:` but found `;`
    ╭─[typescript/tests/cases/conformance/parser/ecmascript5/ErrorRecovery/ObjectLiterals/parserErrorRecovery_ObjectLiteral5.ts:2:7]
  1 │ var v = { a: 1,
  2 │ return;
-   ·       ─
+   ·       ┬
+   ·       ╰── `:` expected
    ╰────
 
   × Expected `,` but found `{`
@@ -28232,10 +28235,11 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
    ╰────
   help: Try insert a semicolon here
 
-  × Unexpected token
+  × Expected `:` but found `}`
    ╭─[typescript/tests/cases/conformance/parser/ecmascript6/ComputedPropertyNames/parserComputedPropertyName1.ts:1:15]
  1 │ var v = { [e] };
-   ·               ─
+   ·               ┬
+   ·               ╰── `:` expected
    ╰────
 
   × Function implementation is missing or not immediately following the declaration.
@@ -28416,22 +28420,25 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
    ·           ╰── `,` expected
    ╰────
 
-  × Unexpected token
+  × Expected `:` but found `}`
    ╭─[typescript/tests/cases/conformance/parser/ecmascript6/ShorthandPropertyAssignment/parserShorthandPropertyAssignment2.ts:1:17]
  1 │ var v = { class };
-   ·                 ─
+   ·                 ┬
+   ·                 ╰── `:` expected
    ╰────
 
-  × Unexpected token
+  × Expected `:` but found `}`
    ╭─[typescript/tests/cases/conformance/parser/ecmascript6/ShorthandPropertyAssignment/parserShorthandPropertyAssignment3.ts:1:14]
  1 │ var v = { "" };
-   ·              ─
+   ·              ┬
+   ·              ╰── `:` expected
    ╰────
 
-  × Unexpected token
+  × Expected `:` but found `}`
    ╭─[typescript/tests/cases/conformance/parser/ecmascript6/ShorthandPropertyAssignment/parserShorthandPropertyAssignment4.ts:1:13]
  1 │ var v = { 0 };
-   ·             ─
+   ·             ┬
+   ·             ╰── `:` expected
    ╰────
 
   × Expected `,` but found `?`

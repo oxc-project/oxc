@@ -194,7 +194,7 @@ impl<'a> ParserImpl<'a> {
         let span = self.start_span();
 
         let modifiers = self.parse_modifiers(
-            /* alloc_class_body */ true, /* permit_const_as_modifier */ true,
+            /* allow_decorators */ true, /* permit_const_as_modifier */ true,
             /* stop_on_start_of_class_static_block */ true,
         );
 

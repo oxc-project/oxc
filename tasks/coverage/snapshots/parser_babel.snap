@@ -976,11 +976,12 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ·  ─────
    ╰────
 
-  × Unexpected token
+  × Expected `:` but found `}`
    ╭─[babel/packages/babel-parser/test/fixtures/core/escape-keyword/invalid/input.js:3:1]
  2 │   br\u{65}ak
  3 │ };
-   · ─
+   · ┬
+   · ╰── `:` expected
    ╰────
 
   × '0'-prefixed octal literals and octal escape sequences are deprecated
@@ -3967,10 +3968,11 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    · ──────
    ╰────
 
-  × Unexpected token
+  × Expected `:` but found `,`
    ╭─[babel/packages/babel-parser/test/fixtures/es2015/shorthand/reserved-word/input.js:1:17]
  1 │ var x = ({ const, if, this });
-   ·                 ─
+   ·                 ┬
+   ·                 ╰── `:` expected
    ╰────
 
   × The keyword 'implements' is reserved
@@ -4075,10 +4077,11 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ·            ───────────
    ╰────
 
-  × Unexpected token
+  × Expected `:` but found `}`
    ╭─[babel/packages/babel-parser/test/fixtures/es2015/uncategorised/151/input.js:1:6]
  1 │ ({[x]})
-   ·      ─
+   ·      ┬
+   ·      ╰── `:` expected
    ╰────
 
   × Identifier `a` has already been declared
@@ -4476,16 +4479,18 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ·          ──
    ╰────
 
-  × Unexpected token
+  × Expected `:` but found `}`
    ╭─[babel/packages/babel-parser/test/fixtures/es2015/uncategorised/275/input.js:1:13]
  1 │ ({ "chance" }) = obj
-   ·             ─
+   ·             ┬
+   ·             ╰── `:` expected
    ╰────
 
-  × Unexpected token
+  × Expected `:` but found `}`
    ╭─[babel/packages/babel-parser/test/fixtures/es2015/uncategorised/276/input.js:1:7]
  1 │ ({ 42 }) = obj
-   ·       ─
+   ·       ┬
+   ·       ╰── `:` expected
    ╰────
 
   × A rest parameter must be last in a parameter list
@@ -4534,10 +4539,11 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ╰────
   help: Try insert a semicolon here
 
-  × Unexpected token
+  × Expected `:` but found `}`
    ╭─[babel/packages/babel-parser/test/fixtures/es2015/uncategorised/285/input.js:1:6]
  1 │ ({ 5 }) => {}
-   ·      ─
+   ·      ┬
+   ·      ╰── `:` expected
    ╰────
 
   × Unexpected token
@@ -5410,18 +5416,16 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ╰────
   help: Did you mean to use a ':'? An '=' can only follow a property name when the containing object literal is part of a destructuring pattern.
 
-  × Expected `(` but found `}`
-   ╭─[babel/packages/babel-parser/test/fixtures/es2017/async-functions/4/input.js:1:12]
+  × 'async' modifier cannot be used here.
+   ╭─[babel/packages/babel-parser/test/fixtures/es2017/async-functions/4/input.js:1:4]
  1 │ ({ async a });
-   ·            ┬
-   ·            ╰── `(` expected
+   ·    ─────
    ╰────
 
-  × Expected `(` but found `:`
-   ╭─[babel/packages/babel-parser/test/fixtures/es2017/async-functions/5/input.js:1:11]
+  × 'async' modifier cannot be used here.
+   ╭─[babel/packages/babel-parser/test/fixtures/es2017/async-functions/5/input.js:1:4]
  1 │ ({ async a: function () {} });
-   ·           ┬
-   ·           ╰── `(` expected
+   ·    ─────
    ╰────
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
@@ -9184,9 +9188,9 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ╰────
 
   × Unexpected token
-   ╭─[babel/packages/babel-parser/test/fixtures/esprima/es2015-generator/malformed-generator-method/input.js:1:4]
+   ╭─[babel/packages/babel-parser/test/fixtures/esprima/es2015-generator/malformed-generator-method/input.js:1:6]
  1 │ ({ * })
-   ·    ─
+   ·      ─
    ╰────
 
   × Unexpected token
@@ -10461,10 +10465,11 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ·        ╰── `,` expected
    ╰────
 
-  × Unexpected token
+  × Expected `:` but found `/`
    ╭─[babel/packages/babel-parser/test/fixtures/esprima/invalid-syntax/migrated_0103/input.js:1:10]
  1 │ p = { "q"/ }
-   ·          ─
+   ·          ┬
+   ·          ╰── `:` expected
    ╰────
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none

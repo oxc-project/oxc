@@ -128,10 +128,11 @@ Negative Passed: 34/34 (100.00%)
  39 │     & import("pkg", [ {"resolution-mode": "import"} ]).ImportInterface;
     ╰────
 
-  × Unexpected token
+  × Expected `:` but found `[`
    ╭─[misc/fail/oxc-3320.tsx:1:8]
  1 │ m< $<{3[   $<{3[  $<{3[ m< m$<{3[ m< mm< $<{3[   $<{3[  $<{3[ m< m$<{3[ m< m$<{3[  $<{3[ m< m$<{3[
-   ·        ─
+   ·        ┬
+   ·        ╰── `:` expected
    ╰────
 
   × Expected corresponding JSX closing tag for 'Apple'.
