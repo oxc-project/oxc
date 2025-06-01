@@ -18,7 +18,7 @@ fn extension_missing_from_import_diagnostic(span: Span) -> OxcDiagnostic {
         .with_label(span)
 }
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default, Clone, PartialEq)]
 enum FileExtensionConfig {
     Always,
     #[default]
@@ -28,7 +28,7 @@ enum FileExtensionConfig {
 impl FileExtensionConfig {
     pub fn from(str: &str) -> FileExtensionConfig {
         match str {
-            "always" => FileExtensionConfig::Always,
+            "always" |  "ignorePackages" => FileExtensionConfig::Always,
             "never" => FileExtensionConfig::Never,
             _ => FileExtensionConfig::default(),
         }
@@ -38,6 +38,7 @@ impl FileExtensionConfig {
 #[derive(Debug, Default, Clone)]
 pub struct ExtensionsConfig {
     ignore_packages: bool,
+    require_extension: Option<FileExtensionConfig>,
     check_type_imports: bool,
     js: FileExtensionConfig,
     jsx: FileExtensionConfig,
@@ -289,6 +290,7 @@ impl Rule for Extensions {
                     ignore_packages: root.get("ignorePackages")
                                 .and_then(Value::as_bool)
                                 .unwrap_or(true),
+                            require_extension: Some(default.clone()),
                             check_type_imports: root.get("checkTypeImports").and_then(Value::as_bool)
                                 .unwrap_or_default(),
                             js: root.get("js").and_then(Value::as_str)
@@ -301,17 +303,18 @@ impl Rule for Extensions {
 
                 Self(Box::new(config))
             } else {
+
                 let config: ExtensionsConfig = ExtensionsConfig{
                     ignore_packages: value.get("ignorePackages")
                                 .and_then(Value::as_bool)
                                 .unwrap_or(true),
                             check_type_imports: value.get("checkTypeImports").and_then(Value::as_bool)
-                                .unwrap_or_default(),
-                            js: default.clone(),
+.unwrap_or_default(),                            js: default.clone(),
                             jsx: default.clone(),
                             ts: default.clone(),
                             tsx: default.clone(),
                             json: default.clone(),
+                            require_extension: Some(default.clone()),
                 };
 
                 Self(Box::new(config))
@@ -359,13 +362,13 @@ impl Rule for Extensions {
                     .and_then(Value::as_bool)
                                 .unwrap_or(true),
                 check_type_imports: value.get("checkTypeImports").and_then(Value::as_bool)
-                    .unwrap_or_default(),
-                js: value.get("js").and_then(Value::as_str)
+.unwrap_or_default(),                js: value.get("js").and_then(Value::as_str)
                     .map(FileExtensionConfig::from).unwrap_or_default(),
                 jsx: value.get("jsx").and_then(Value::as_str).map(FileExtensionConfig::from).unwrap_or_default(),
                 ts: value.get("ts").and_then(Value::as_str).map(FileExtensionConfig::from).unwrap_or_default(),
                 tsx: value.get("tsx").and_then(Value::as_str).map(FileExtensionConfig::from).unwrap_or_default(),
                 json: value.get("json").and_then(Value::as_str).map(FileExtensionConfig::from).unwrap_or_default(),
+                require_extension: None,
             };
 
             println!("config_value: {value:#?}");
@@ -394,6 +397,10 @@ impl Rule for Extensions {
 
         for import in &module_record.import_entries {
             println!("module_request: {:#?}", import.module_request);
+
+            if import.is_type && !config.check_type_imports {
+                continue;
+            }
 
             let import_name = import.module_request.name();
 
@@ -424,6 +431,10 @@ impl Rule for Extensions {
 
             let span = import.statement_span;
 
+            println!("config.require_extension == Some(FileExtensionConfig::Always): {}",config.require_extension == Some(FileExtensionConfig::Always));
+
+            println!("config.require_extension: {:?}", config.require_extension);
+
             println!("file_extension: {file_extension:?}");
 
             // if file_extension.is_some() && (never_file_types.contains(&file_extension.unwrap()) || !always_file_types.contains(&file_extension.unwrap())) {
@@ -433,7 +444,7 @@ impl Rule for Extensions {
             // } else if file_extension.is_none() && !always_file_types.is_empty() {
             //     ctx.diagnostic(extension_missing_from_import_diagnostic(span));
                 // somehow figure out what the file should be and check that against the always_file_types list
-            } else if file_extension.is_none() && never_file_types.is_empty() {
+            } else if (file_extension.is_none() || file_extension.unwrap() == "") && config.require_extension == Some(FileExtensionConfig::Always) {
                 ctx.diagnostic(extension_missing_from_import_diagnostic(span));
             }
         }
@@ -445,6 +456,10 @@ impl Rule for Extensions {
                 continue;
             }
 
+                        if export.is_type && !config.check_type_imports {
+                continue;
+            }
+
             let export_module_request = export.module_request.as_ref().unwrap();
 
             let export_name = export_module_request.name();
@@ -482,7 +497,7 @@ impl Rule for Extensions {
             // } else if file_extension.is_none() && !always_file_types.is_empty() {
             //     ctx.diagnostic(extension_missing_from_import_diagnostic(span));
                 // somehow figure out what the file should be and check that against the always_file_types list
-            } else if file_extension.is_none() && never_file_types.is_empty() {
+            } else if (file_extension.is_none() || file_extension.unwrap() == "") && config.require_extension == Some(FileExtensionConfig::Always) {
                 ctx.diagnostic(extension_missing_from_import_diagnostic(span));
             }
         }
@@ -494,6 +509,10 @@ impl Rule for Extensions {
                 continue;
             }
 
+                        if exgport.is_type && !config.check_type_imports {
+                continue;
+            }
+
             let export_module_request = export.module_request.as_ref().unwrap();
 
             let export_name = export_module_request.name();
@@ -531,7 +550,7 @@ impl Rule for Extensions {
             // } else if file_extension.is_none() && !always_file_types.is_empty() {
             //     ctx.diagnostic(extension_missing_from_import_diagnostic(span));
                 // somehow figure out what the file should be and check that against the always_file_types list
-            } else if file_extension.is_none() && never_file_types.is_empty() {
+            } else if (file_extension.is_none() || file_extension.unwrap() == "") && config.require_extension == Some(FileExtensionConfig::Always) {
                 ctx.diagnostic(extension_missing_from_import_diagnostic(span));
             }
         }
