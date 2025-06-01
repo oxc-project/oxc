@@ -987,13 +987,7 @@ impl<'a> ParserImpl<'a> {
             return self.ast.expression_update(self.end_span(lhs_span), operator, true, argument);
         }
 
-        if self.source_type.is_jsx()
-            && kind == Kind::LAngle
-            && self.lookahead(|p| {
-                p.bump_any();
-                p.at(Kind::RAngle) || p.cur_kind().is_identifier_or_keyword()
-            })
-        {
+        if self.source_type.is_jsx() && self.at(Kind::LAngle) {
             return self.parse_jsx_expression();
         }
 

@@ -10,12 +10,15 @@ impl<'a> ParserImpl<'a> {
     pub(crate) fn parse_jsx_expression(&mut self) -> Expression<'a> {
         let span = self.start_span();
         self.bump_any(); // bump `<`
-        if self.at(Kind::RAngle) {
+        let kind = self.cur_kind();
+        if kind == Kind::RAngle {
             self.expect_jsx_child(Kind::RAngle);
             let opening_fragment = self.ast.jsx_opening_fragment(self.end_span(span));
             Expression::JSXFragment(self.parse_jsx_fragment(span, opening_fragment, false))
-        } else {
+        } else if kind.is_identifier_or_keyword() {
             Expression::JSXElement(self.parse_jsx_element(span, false))
+        } else {
+            self.unexpected()
         }
     }
 
@@ -405,7 +408,7 @@ impl<'a> ParserImpl<'a> {
             Kind::LAngle => match self.parse_jsx_expression() {
                 Expression::JSXFragment(fragment) => JSXAttributeValue::Fragment(fragment),
                 Expression::JSXElement(element) => JSXAttributeValue::Element(element),
-                _ => unreachable!(),
+                _ => self.unexpected(),
             },
             _ => self.unexpected(),
         }
