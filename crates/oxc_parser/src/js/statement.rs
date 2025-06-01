@@ -109,7 +109,11 @@ impl<'a> ParserImpl<'a> {
             Kind::Export => self.parse_export_declaration(),
             // [+Return] ReturnStatement[?Yield, ?Await]
             Kind::Return => self.parse_return_statement(),
-            Kind::Var => self.parse_variable_statement(stmt_ctx),
+            Kind::Var => {
+                let span = self.start_span();
+                self.bump_any();
+                self.parse_variable_statement(span, VariableDeclarationKind::Var, stmt_ctx)
+            },
             // Fast path
             Kind::Function => self.parse_function_declaration(stmt_ctx),
             Kind::Let if !self.cur_token().escaped() => self.parse_let(stmt_ctx),
@@ -138,7 +142,9 @@ impl<'a> ParserImpl<'a> {
                 p.at(Kind::Enum)
             })) =>
             {
-                self.parse_variable_statement(stmt_ctx)
+                let span = self.start_span();
+                self.bump_any();
+                self.parse_variable_statement(span, VariableDeclarationKind::Const, stmt_ctx)
             }
             Kind::Using if self.is_using_declaration() => self.parse_using_statement(),
             // Peek 2 tokens
@@ -244,10 +250,15 @@ impl<'a> ParserImpl<'a> {
     }
 
     /// Section 14.3.2 Variable Statement
-    pub(crate) fn parse_variable_statement(&mut self, stmt_ctx: StatementContext) -> Statement<'a> {
-        let start_span = self.start_span();
+    pub(crate) fn parse_variable_statement(
+        &mut self,
+        start_span: u32,
+        kind: VariableDeclarationKind,
+        stmt_ctx: StatementContext,
+    ) -> Statement<'a> {
         let decl = self.parse_variable_declaration(
             start_span,
+            kind,
             VariableDeclarationParent::Statement,
             &Modifiers::empty(),
         );
@@ -411,7 +422,9 @@ impl<'a> ParserImpl<'a> {
         let start_span = self.start_span();
         let init_declaration = self.context(Context::empty(), Context::In, |p| {
             let decl_ctx = VariableDeclarationParent::For;
-            p.parse_variable_declaration(start_span, decl_ctx, &Modifiers::empty())
+            let kind = p.get_variable_declaration_kind();
+            p.bump_any();
+            p.parse_variable_declaration(start_span, kind, decl_ctx, &Modifiers::empty())
         });
 
         // for (.. a in) for (.. a of)
