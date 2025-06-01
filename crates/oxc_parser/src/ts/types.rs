@@ -422,7 +422,7 @@ impl<'a> ParserImpl<'a> {
         }
     }
 
-    fn is_token_identifier_or_keyword_on_same_line(&mut self) -> bool {
+    fn is_token_identifier_or_keyword_on_same_line(&self) -> bool {
         self.cur_kind().is_identifier_name() && !self.cur_token().is_on_new_line()
     }
 
