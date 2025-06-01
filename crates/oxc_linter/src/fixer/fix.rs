@@ -4,6 +4,9 @@ use bitflags::bitflags;
 use oxc_allocator::{Allocator, CloneIn};
 use oxc_span::{GetSpan, SPAN, Span};
 
+#[cfg(feature = "language_server")]
+use crate::service::offset_to_position::SpanPositionMessage;
+
 bitflags! {
     /// Flags describing an automatic code fix.
     ///
@@ -237,8 +240,15 @@ impl<'a> RuleFix<'a> {
 
     #[inline]
     pub fn into_fix(self, source_text: &str) -> Fix<'a> {
+        // If there is only one fix, use the message from that fix.
+        let message = match &self.fix {
+            CompositeFix::Single(fix) if fix.message.as_ref().is_some_and(|m| !m.is_empty()) => {
+                fix.message.clone()
+            }
+            _ => self.message,
+        };
         let mut fix = self.fix.normalize_fixes(source_text);
-        fix.message = self.message;
+        fix.message = message;
         fix
     }
 
@@ -281,6 +291,13 @@ pub struct Fix<'a> {
     pub span: Span,
 }
 
+#[cfg(feature = "language_server")]
+#[derive(Debug)]
+pub struct FixWithPosition<'a> {
+    pub content: Cow<'a, str>,
+    pub span: SpanPositionMessage<'a>,
+}
+
 impl<'new> CloneIn<'new> for Fix<'_> {
     type Cloned = Fix<'new>;
 
@@ -319,6 +336,67 @@ impl<'a> Fix<'a> {
     pub const fn empty() -> Self {
         Self { content: Cow::Borrowed(""), message: None, span: SPAN }
     }
+
+    pub fn with_message(mut self, message: impl Into<Cow<'a, str>>) -> Self {
+        self.message = Some(message.into());
+        self
+    }
+}
+
+#[derive(Clone)]
+pub enum PossibleFixes<'a> {
+    None,
+    Single(Fix<'a>),
+    Multiple(Vec<Fix<'a>>),
+}
+
+impl<'new> CloneIn<'new> for PossibleFixes<'_> {
+    type Cloned = PossibleFixes<'new>;
+
+    fn clone_in(&self, allocator: &'new Allocator) -> Self::Cloned {
+        match self {
+            Self::None => PossibleFixes::None,
+            Self::Single(fix) => PossibleFixes::Single(fix.clone_in(allocator)),
+            Self::Multiple(fixes) => {
+                //ToDo: what about the vec?
+                PossibleFixes::Multiple(fixes.iter().map(|fix| fix.clone_in(allocator)).collect())
+            }
+        }
+    }
+}
+
+impl PossibleFixes<'_> {
+    /// Gets the number of [`Fix`]es contained in this [`PossibleFixes`].
+    pub fn len(&self) -> usize {
+        match self {
+            PossibleFixes::None => 0,
+            PossibleFixes::Single(_) => 1,
+            PossibleFixes::Multiple(fixes) => fixes.len(),
+        }
+    }
+
+    /// Returns `true` if this [`PossibleFixes`] contains no [`Fix`]es
+    pub fn is_empty(&self) -> bool {
+        self.len() == 0
+    }
+
+    pub fn span(&self) -> Span {
+        match self {
+            PossibleFixes::None => SPAN,
+            PossibleFixes::Single(fix) => fix.span,
+            PossibleFixes::Multiple(fixes) => {
+                fixes.iter().map(|fix| fix.span).reduce(Span::merge).unwrap_or(SPAN)
+            }
+        }
+    }
+}
+
+#[cfg(feature = "language_server")]
+#[derive(Debug)]
+pub enum PossibleFixesWithPosition<'a> {
+    None,
+    Single(FixWithPosition<'a>),
+    Multiple(Vec<FixWithPosition<'a>>),
 }
 
 // NOTE (@DonIsaac): having these variants is effectively the same as interning
@@ -453,30 +531,6 @@ impl<'a> CompositeFix<'a> {
             }
         }
     }
-
-    // TODO: do we want this?
-    // pub fn extend(&mut self, fix: CompositeFix<'a>) {
-    //     match self {
-    //         Self::None => *self = fix,
-    //         Self::Single(fix1) => {
-    //             match fix {
-    //                 Self::None => {},
-    //                 Self::Single(fix2) => *self = Self::Multiple(vec![fix1.clone(), fix2]),
-    //                 Self::Multiple(mut fixes) => {
-    //                     fixes.insert(0, fix1.clone());
-    //                     *self = Self::Multiple(fixes);
-    //                 }
-    //             }
-    //         }
-    //         Self::Multiple(fixes) => {
-    //             match fix {
-    //                 Self::None => {},
-    //                 Self::Single(fix2) => fixes.push(fix2),
-    //                 Self::Multiple(fixes2) => fixes.extend(fixes2),
-    //             }
-    //         }
-    //     }
-    // }
 
     /// Gets one fix from the fixes. If we retrieve multiple fixes, this merges those into one.
     /// <https://github.com/eslint/eslint/blob/v9.9.1/lib/linter/report-translator.js#L181-L203>

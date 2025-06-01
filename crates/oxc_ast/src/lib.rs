@@ -73,9 +73,8 @@ mod generated {
 pub use generated::{ast_builder, ast_kind};
 
 pub use crate::{
-    ast::comment::{Comment, CommentAnnotation, CommentKind, CommentPosition},
-    ast_builder::AstBuilder,
-    ast_builder_impl::NONE,
+    ast::comment::{Comment, CommentContent, CommentKind, CommentPosition},
+    ast_builder_impl::{AstBuilder, NONE},
     ast_kind::{AstKind, AstType},
     trivia::{CommentsRange, comments_range, has_comments_between},
 };

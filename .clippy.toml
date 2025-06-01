@@ -1,4 +1,6 @@
-ignore-interior-mutability = ["oxc_linter::rule::RuleWithSeverity"]
+avoid-breaking-exported-api = false
+
+ignore-interior-mutability = ["oxc_linter::rules::RuleEnum"]
 
 disallowed-methods = [
   { path = "str::to_ascii_lowercase", reason = "To avoid memory allocation, use `cow_utils::CowUtils::cow_to_ascii_lowercase` instead." },

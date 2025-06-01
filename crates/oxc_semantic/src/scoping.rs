@@ -180,15 +180,10 @@ impl Scoping {
     ///
     /// Returns the old name.
     #[inline]
-    pub fn set_symbol_name(&mut self, symbol_id: SymbolId, name: &str) -> &str {
-        self.cell
-            .with_dependent_mut(|allocator, cell| {
-                mem::replace(
-                    &mut cell.symbol_names[symbol_id.index()],
-                    Atom::from_in(name, allocator),
-                )
-            })
-            .as_str()
+    pub fn set_symbol_name(&mut self, symbol_id: SymbolId, name: &str) {
+        self.cell.with_dependent_mut(|allocator, cell| {
+            cell.symbol_names[symbol_id.index()] = Atom::from_in(name, allocator);
+        });
     }
 
     /// Get the [`SymbolFlags`] for a symbol, which describe how the symbol is declared.
@@ -456,6 +451,7 @@ impl Scoping {
     /// Get the root [`Program`] scope id.
     ///
     /// [`Program`]: oxc_ast::ast::Program
+    #[expect(clippy::unused_self)]
     #[inline]
     pub const fn root_scope_id(&self) -> ScopeId {
         Self::ROOT_SCOPE_ID
@@ -745,8 +741,6 @@ impl Scoping {
     }
 
     /// Add a binding to a scope.
-    ///
-    /// [`binding`]: Bindings
     pub fn add_binding(&mut self, scope_id: ScopeId, name: &str, symbol_id: SymbolId) {
         self.cell.with_dependent_mut(|allocator, cell| {
             let name = allocator.alloc_str(name);
@@ -792,6 +786,29 @@ impl Scoping {
             debug_assert_eq!(old_symbol_id, Some(symbol_id));
             let new_name = allocator.alloc_str(new_name);
             let existing_symbol_id = bindings.insert(new_name, symbol_id);
+            debug_assert!(existing_symbol_id.is_none());
+        });
+    }
+
+    /// Rename symbol.
+    ///
+    /// The following must be true for successful operation:
+    /// * Binding exists in specified scope for `symbol_id`.
+    /// * No binding already exists in scope for `new_name`.
+    ///
+    /// Panics in debug mode if either of the above are not satisfied.
+    pub fn rename_symbol(&mut self, symbol_id: SymbolId, scope_id: ScopeId, new_name: &str) {
+        self.cell.with_dependent_mut(|allocator, cell| {
+            // Rename symbol
+            let new_name = Atom::from_in(new_name, allocator);
+            let old_name = mem::replace(&mut cell.symbol_names[symbol_id.index()], new_name);
+
+            // Rename binding, same as `Self::rename_binding`, we cannot call it directly
+            // because the `old_name` borrowed `cell`.
+            let bindings = &mut cell.bindings[scope_id];
+            let old_symbol_id = bindings.remove(old_name.as_str());
+            debug_assert_eq!(old_symbol_id, Some(symbol_id));
+            let existing_symbol_id = bindings.insert(new_name.as_str(), symbol_id);
             debug_assert!(existing_symbol_id.is_none());
         });
     }

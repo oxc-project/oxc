@@ -2,7 +2,10 @@
 //!
 //! - [AST Spec](https://github.com/typescript-eslint/typescript-eslint/tree/v8.9.0/packages/ast-spec)
 //! - [Archived TypeScript spec](https://github.com/microsoft/TypeScript/blob/3c99d50da5a579d9fa92d02664b1b66d4ff55944/doc/spec-ARCHIVED.md)
-#![expect(missing_docs)] // FIXME
+#![expect(
+    missing_docs, // FIXME
+    clippy::enum_variant_names,
+)]
 
 // NB: `#[span]`, `#[scope(...)]`,`#[visit(...)]` and `#[generate_derive(...)]` do NOT do anything to the code.
 // They are purely markers for codegen used in `tasks/ast_tools` and `crates/oxc_traverse/scripts`. See docs in those crates.
@@ -34,7 +37,7 @@ use super::{inherit_variants, js::*, literal::*};
 #[estree(
     rename = "Identifier",
     add_fields(name = This, decorators = EmptyArray, optional = False),
-    field_order(span, name, type_annotation, decorators, optional),
+    field_order(span, decorators, name, optional, type_annotation),
 )]
 pub struct TSThisParameter<'a> {
     pub span: Span,
@@ -68,27 +71,40 @@ pub struct TSThisParameter<'a> {
 #[scope]
 #[derive(Debug)]
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
-#[estree(add_ts_def = "
-    interface TSEnumBody extends Span {
-        type: 'TSEnumBody';
-        members: TSEnumMember[];
-    }
-")]
 pub struct TSEnumDeclaration<'a> {
     pub span: Span,
     pub id: BindingIdentifier<'a>,
     #[scope(enter_before)]
-    #[estree(rename = "body", via = TSEnumDeclarationBody)]
-    pub members: Vec<'a, TSEnumMember<'a>>,
+    pub body: TSEnumBody<'a>,
     /// `true` for const enums
     pub r#const: bool,
     pub declare: bool,
     pub scope_id: Cell<Option<ScopeId>>,
 }
 
+/// Enum Body
+///
+/// The body of a [`TSEnumDeclaration`].
+///
+/// ## Example
+/// ```ts
+/// enum Foo { A }
+///          ^^^^^
+/// enum Bar
+///   { B }
+///   ^^^^^
+/// ```
+#[ast(visit)]
+#[derive(Debug)]
+#[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
+pub struct TSEnumBody<'a> {
+    pub span: Span,
+    pub members: Vec<'a, TSEnumMember<'a>>,
+}
+
 /// Enum Member
 ///
-/// A member property in a [`TSEnumDeclaration`].
+/// A member property in a [`TSEnumBody`].
 ///
 /// ## Example
 /// ```ts
@@ -106,6 +122,7 @@ pub struct TSEnumDeclaration<'a> {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
+#[estree(add_fields(computed = TSEnumMemberComputed))]
 pub struct TSEnumMember<'a> {
     pub span: Span,
     pub id: TSEnumMemberName<'a>,
@@ -113,12 +130,27 @@ pub struct TSEnumMember<'a> {
 }
 
 /// TS Enum Member Name
+///
+/// ## Example
+/// ```ts
+/// enum ValidEnum {
+///   identifier,
+///   'string',
+///   ['computed-string'],
+///   [`computed-template`],
+///   // These are invalid syntax
+///   // `template`,
+///   // [computedIdentifier],
+/// }
+/// ```
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, GetAddress, ContentEq, ESTree)]
 pub enum TSEnumMemberName<'a> {
     Identifier(Box<'a, IdentifierName<'a>>) = 0,
     String(Box<'a, StringLiteral<'a>>) = 1,
+    ComputedString(Box<'a, StringLiteral<'a>>) = 2,
+    ComputedTemplateString(Box<'a, TemplateLiteral<'a>>) = 3,
 }
 
 /// TypeScript Type Annotation
@@ -294,9 +326,7 @@ pub use match_ts_type;
 /// ## Reference
 /// * [TypeScript Handbook - Conditional Types](https://www.typescriptlang.org/docs/handbook/2/conditional-types.html)
 #[ast(visit)]
-#[scope(
-    flags = ScopeFlags::TsConditional,
-)]
+#[scope(flags = ScopeFlags::TsConditional)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct TSConditionalType<'a> {
@@ -460,7 +490,8 @@ pub struct TSTupleType<'a> {
 /// ## Example
 /// ```ts
 /// type Foo = [first: string, second: number];
-/// //          ^^^^^^^^^^^^^
+/// //          ^^^^^^^^^^^^^ TSNamedTupleMember
+/// //    label ^^^^^  ^^^^^^ element_type
 /// ```
 ///
 /// ## Reference
@@ -470,8 +501,8 @@ pub struct TSTupleType<'a> {
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct TSNamedTupleMember<'a> {
     pub span: Span,
-    pub element_type: TSTupleElement<'a>,
     pub label: IdentifierName<'a>,
+    pub element_type: TSTupleElement<'a>,
     pub optional: bool,
 }
 
@@ -740,6 +771,7 @@ pub struct TSTypeReference<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, GetAddress, ContentEq, ESTree)]
 pub enum TSTypeName<'a> {
+    #[estree(via = TSTypeNameIdentifierReference)]
     IdentifierReference(Box<'a, IdentifierReference<'a>>) = 0,
     QualifiedName(Box<'a, TSQualifiedName<'a>>) = 1,
 }
@@ -867,8 +899,10 @@ pub enum TSAccessibility {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
+#[plural(TSClassImplementsList)]
 pub struct TSClassImplements<'a> {
     pub span: Span,
+    #[estree(via = TSClassImplementsExpression)]
     pub expression: TSTypeName<'a>,
     pub type_arguments: Option<Box<'a, TSTypeParameterInstantiation<'a>>>,
 }
@@ -896,12 +930,11 @@ pub struct TSInterfaceDeclaration<'a> {
     pub span: Span,
     /// The identifier (name) of the interface.
     pub id: BindingIdentifier<'a>,
-    /// Other interfaces/types this interface extends.
-    #[scope(enter_before)]
-    #[estree(via = TSInterfaceDeclarationExtends)]
-    pub extends: Option<Vec<'a, TSInterfaceHeritage<'a>>>,
     /// Type parameters that get bound to the interface.
+    #[scope(enter_before)]
     pub type_parameters: Option<Box<'a, TSTypeParameterDeclaration<'a>>>,
+    /// Other interfaces/types this interface extends.
+    pub extends: Vec<'a, TSInterfaceHeritage<'a>>,
     pub body: Box<'a, TSInterfaceBody<'a>>,
     /// `true` for `declare interface Foo {}`
     pub declare: bool,
@@ -928,8 +961,8 @@ pub struct TSInterfaceBody<'a> {
 /// //  ___ key
 ///     bar: number
 /// //     ^^^^^^^^ type_annotation
-///     baz?: string          // <- optional
-///     readony bang: boolean // <- readonly
+///     baz?: string           // <- optional
+///     readonly bang: boolean // <- readonly
 /// }
 /// ```
 #[ast(visit)]
@@ -986,7 +1019,8 @@ pub struct TSCallSignatureDeclaration<'a> {
     pub span: Span,
     pub type_parameters: Option<Box<'a, TSTypeParameterDeclaration<'a>>>,
     #[estree(skip)]
-    pub this_param: Option<TSThisParameter<'a>>,
+    pub this_param: Option<Box<'a, TSThisParameter<'a>>>,
+    #[estree(via = TSCallSignatureDeclarationParams)]
     pub params: Box<'a, FormalParameters<'a>>,
     pub return_type: Option<Box<'a, TSTypeAnnotation<'a>>>,
 }
@@ -1025,6 +1059,7 @@ pub struct TSMethodSignature<'a> {
     pub type_parameters: Option<Box<'a, TSTypeParameterDeclaration<'a>>>,
     #[estree(skip)]
     pub this_param: Option<Box<'a, TSThisParameter<'a>>>,
+    #[estree(via = TSMethodSignatureParams)]
     pub params: Box<'a, FormalParameters<'a>>,
     pub return_type: Option<Box<'a, TSTypeAnnotation<'a>>>,
     pub scope_id: Cell<Option<ScopeId>>,
@@ -1046,7 +1081,11 @@ pub struct TSConstructSignatureDeclaration<'a> {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
-#[estree(rename = "Identifier", add_fields(decorators = EmptyArray, optional = False))]
+#[estree(
+    rename = "Identifier",
+    add_fields(decorators = EmptyArray, optional = False),
+    field_order(span, decorators, name, optional, type_annotation),
+)]
 pub struct TSIndexSignatureName<'a> {
     pub span: Span,
     #[estree(json_safe)]
@@ -1141,14 +1180,19 @@ pub enum TSTypePredicateName<'a> {
 )]
 #[derive(Debug)]
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
-#[estree(add_fields(global = TSModuleDeclarationGlobal))]
+#[estree(
+    via = TSModuleDeclarationConverter,
+    add_fields(global = TSModuleDeclarationGlobal),
+)]
 pub struct TSModuleDeclaration<'a> {
     pub span: Span,
     /// The name of the module/namespace being declared.
     ///
     /// Note that for `declare global {}`, no symbol will be created for the module name.
+    #[estree(ts_type = "BindingIdentifier | StringLiteral | TSQualifiedName")]
     pub id: TSModuleDeclarationName<'a>,
     #[scope(enter_before)]
+    #[estree(ts_type = "TSModuleBlock | null")]
     pub body: Option<TSModuleDeclarationBody<'a>>,
     /// The keyword used to define this module declaration.
     ///
@@ -1203,6 +1247,7 @@ pub enum TSModuleDeclarationKind {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
+#[estree(no_ts_def)]
 pub enum TSModuleDeclarationName<'a> {
     Identifier(BindingIdentifier<'a>) = 0,
     StringLiteral(StringLiteral<'a>) = 1,
@@ -1211,20 +1256,19 @@ pub enum TSModuleDeclarationName<'a> {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, GetAddress, ContentEq, ESTree)]
+#[estree(no_ts_def)]
 pub enum TSModuleDeclarationBody<'a> {
     TSModuleDeclaration(Box<'a, TSModuleDeclaration<'a>>) = 0,
     TSModuleBlock(Box<'a, TSModuleBlock<'a>>) = 1,
 }
 
-// See serializer in serialize.rs
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct TSModuleBlock<'a> {
     pub span: Span,
-    #[estree(rename = "body")]
+    #[estree(prepend_to = body)]
     pub directives: Vec<'a, Directive<'a>>,
-    #[estree(append_to = "directives")]
     pub body: Vec<'a, Statement<'a>>,
 }
 
@@ -1286,12 +1330,23 @@ inherit_variants! {
 #[derive(Debug)]
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, GetAddress, ContentEq, ESTree)]
 pub enum TSTypeQueryExprName<'a> {
+    /// `type foo = typeof import('foo')`
     TSImportType(Box<'a, TSImportType<'a>>) = 2,
     // `TSTypeName` variants added here by `inherit_variants!` macro
     @inherit TSTypeName
 }
 }
 
+/// `import('foo')` in `type Foo = import('foo');`
+///
+/// ```ts
+/// //                       ______________ options
+/// type Foo = import('foo', { assert: {} })<T>;
+/// //                ^^^^^ argument        ^^^ type_arguments
+///
+/// type Foo = import('foo').bar;
+/// //                       ^^^ qualifier
+/// ```
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
@@ -1301,9 +1356,6 @@ pub struct TSImportType<'a> {
     pub options: Option<Box<'a, ObjectExpression<'a>>>,
     pub qualifier: Option<TSTypeName<'a>>,
     pub type_arguments: Option<Box<'a, TSTypeParameterInstantiation<'a>>>,
-    /// `true` for `typeof import("foo")`
-    #[estree(skip)]
-    pub is_type_of: bool,
 }
 
 /// TypeScript Function Type
@@ -1336,6 +1388,7 @@ pub struct TSFunctionType<'a> {
     #[estree(skip)]
     pub this_param: Option<Box<'a, TSThisParameter<'a>>>,
     /// Function parameters. Akin to [`Function::params`].
+    #[estree(via = TSFunctionTypeParams)]
     pub params: Box<'a, FormalParameters<'a>>,
     /// Return type of the function.
     /// ```ts
@@ -1383,9 +1436,14 @@ pub struct TSConstructorType<'a> {
 #[scope]
 #[derive(Debug)]
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
+#[estree(
+    add_fields(key = TSMappedTypeKey, constraint = TSMappedTypeConstraint),
+    field_order(span, key, constraint, name_type, type_annotation, optional, readonly),
+)]
 pub struct TSMappedType<'a> {
     pub span: Span,
     /// Key type parameter, e.g. `P` in `[P in keyof T]`.
+    #[estree(skip)]
     pub type_parameter: Box<'a, TSTypeParameter<'a>>,
     pub name_type: Option<TSType<'a>>,
     pub type_annotation: Option<TSType<'a>>,
@@ -1394,25 +1452,26 @@ pub struct TSMappedType<'a> {
     /// ## Examples
     /// ```ts
     /// type Foo = { [P in keyof T]?: T[P] }
-    /// //                         ^^ True
+    /// //                         ^  Some(True)
     /// type Bar = { [P in keyof T]+?: T[P] }
-    /// //                         ^^ Plus
+    /// //                         ^^ Some(Plus)
     /// type Baz = { [P in keyof T]-?: T[P] }
-    /// //                         ^^ Minus
+    /// //                         ^^ Some(Minus)
     /// type Qux = { [P in keyof T]: T[P] }
-    /// //                         ^ None
+    /// //                         ^  None
     /// ```
-    pub optional: TSMappedTypeModifierOperator,
+    #[estree(via = TSMappedTypeOptional)]
+    pub optional: Option<TSMappedTypeModifierOperator>,
     /// Readonly modifier before keyed index signature
     ///
     /// ## Examples
     /// ```ts
-    /// type Foo = { readonly [P in keyof T]: T[P] }  // True
-    /// type Bar = { +readonly [P in keyof T]: T[P] } // Plus
-    /// type Baz = { -readonly [P in keyof T]: T[P] } // Minus
+    /// type Foo = { readonly [P in keyof T]: T[P] }  // Some(True)
+    /// type Bar = { +readonly [P in keyof T]: T[P] } // Some(Plus)
+    /// type Baz = { -readonly [P in keyof T]: T[P] } // Some(Minus)
     /// type Qux = { [P in keyof T]: T[P] }           // None
     /// ```
-    pub readonly: TSMappedTypeModifierOperator,
+    pub readonly: Option<TSMappedTypeModifierOperator>,
     pub scope_id: Cell<Option<ScopeId>>,
 }
 
@@ -1421,6 +1480,7 @@ pub struct TSMappedType<'a> {
 #[generate_derive(CloneIn, Dummy, ContentEq, ESTree)]
 pub enum TSMappedTypeModifierOperator {
     /// e.g. `?` in `{ [P in K]?: T }`
+    #[estree(via = True)]
     True = 0,
     /// e.g. `+?` in `{ [P in K]+?: T }`
     #[estree(rename = "+")]
@@ -1428,8 +1488,6 @@ pub enum TSMappedTypeModifierOperator {
     /// e.g. `-?` in `{ [P in K]-?: T }`
     #[estree(rename = "-")]
     Minus = 2,
-    /// No modifier present
-    None = 3,
 }
 
 /// TypeScript Template Literal Type
@@ -1486,13 +1544,21 @@ pub struct TSSatisfiesExpression<'a> {
     pub type_annotation: TSType<'a>,
 }
 
+/// TypeScript Type Assertion
+///
+/// ## Example
+/// ```ts
+/// //                ___ expression
+/// let foo = <number>bar;
+/// //        ^^^^^^^^ type_annotation
+/// ```
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct TSTypeAssertion<'a> {
     pub span: Span,
-    pub expression: Expression<'a>,
     pub type_annotation: TSType<'a>,
+    pub expression: Expression<'a>,
 }
 
 #[ast(visit)]
@@ -1597,7 +1663,7 @@ pub struct TSNamespaceExportDeclaration<'a> {
 pub struct TSInstantiationExpression<'a> {
     pub span: Span,
     pub expression: Expression<'a>,
-    pub type_parameters: Box<'a, TSTypeParameterInstantiation<'a>>,
+    pub type_arguments: Box<'a, TSTypeParameterInstantiation<'a>>,
 }
 
 /// See [TypeScript - Type-Only Imports and Exports](https://www.typescriptlang.org/docs/handbook/release-notes/typescript-3-8.html)
@@ -1617,6 +1683,7 @@ pub enum ImportOrExportKind {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
+#[estree(rename = "TSJSDocNullableType")]
 pub struct JSDocNullableType<'a> {
     pub span: Span,
     pub type_annotation: TSType<'a>,
@@ -1628,6 +1695,7 @@ pub struct JSDocNullableType<'a> {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
+#[estree(rename = "TSJSDocNonNullableType")]
 pub struct JSDocNonNullableType<'a> {
     pub span: Span,
     pub type_annotation: TSType<'a>,
@@ -1637,6 +1705,7 @@ pub struct JSDocNonNullableType<'a> {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
+#[estree(rename = "TSJSDocUnknownType")]
 pub struct JSDocUnknownType {
     pub span: Span,
 }

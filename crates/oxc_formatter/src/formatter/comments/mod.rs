@@ -77,23 +77,25 @@
 
 mod map;
 
-#[cfg(debug_assertions)]
-use std::cell::{Cell, RefCell};
 use std::{
+    cell::{Cell, RefCell},
     fmt::{self, Debug},
     marker::PhantomData,
     rc::Rc,
 };
 
-use oxc_ast::Comment;
+use oxc_ast::ast::Program;
 use oxc_span::Span;
 use rustc_hash::FxHashSet;
 
-use self::map::CommentsMap;
+use crate::{formatter::prelude::*, write};
+
 use super::{
     Format, FormatResult, Formatter, SyntaxNode, SyntaxToken, TextSize, buffer::Buffer,
     syntax_trivia_piece_comments::SyntaxTriviaPieceComments,
 };
+
+use self::map::CommentsMap;
 
 #[derive(Copy, Clone, Eq, PartialEq, Debug)]
 pub enum CommentKind {
@@ -176,7 +178,6 @@ pub struct SourceComment {
     pub(crate) kind: CommentKind,
 
     /// Whether the comment has been formatted or not.
-    #[cfg(debug_assertions)]
     pub(crate) formatted: Cell<bool>,
 }
 
@@ -242,20 +243,44 @@ impl SourceComment {
         self.kind
     }
 
-    #[cfg(not(debug_assertions))]
-    #[inline(always)]
-    pub fn mark_formatted(&self) {}
-
     /// Marks the comment as formatted
-    #[cfg(debug_assertions)]
     pub fn mark_formatted(&self) {
         self.formatted.set(true);
     }
 }
 
 impl<'a> Format<'a> for SourceComment {
+    #[expect(clippy::cast_possible_truncation)]
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        Ok(())
+        let source_text = self.span.source_text(f.source_text());
+        if is_alignable_comment(source_text) {
+            let mut source_offset = self.span.start;
+
+            let mut lines = source_text.lines();
+
+            // `is_alignable_comment` only returns `true` for multiline comments
+            let first_line = lines.next().unwrap();
+            write!(f, [dynamic_text(first_line.trim_end(), source_offset)])?;
+
+            source_offset += first_line.len() as u32;
+
+            // Indent the remaining lines by one space so that all `*` are aligned.
+            write!(
+                f,
+                [&format_once(|f| {
+                    for line in lines {
+                        write!(
+                            f,
+                            [hard_line_break(), " ", dynamic_text(line.trim(), source_offset)]
+                        )?;
+                        source_offset += line.len() as u32;
+                    }
+                    Ok(())
+                })]
+            )
+        } else {
+            write!(f, [dynamic_text(source_text, self.span.start)])
+        }
     }
 }
 
@@ -799,36 +824,49 @@ pub struct Comments {
     ///
     /// Using an `Rc` here allows to cheaply clone [Comments] for these use cases.
     data: Rc<CommentsData>,
-    // comments: &'a oxc_allocator::Vec<'a, Comment>,
 }
 
 impl Comments {
-    pub fn from_oxc_comments<'a>(comments: &'a oxc_allocator::Vec<'a, Comment>) -> Self {
+    #[expect(clippy::cast_possible_truncation)]
+    pub fn from_oxc_comments<'a>(program: &'a Program<'a>) -> Self {
         use oxc_ast::ast;
+        let comments = &program.comments;
+        let source_text = program.source_text;
         let mut map = CommentsMap::new();
         for comment in comments {
             // TODO: Converting to `SourceComment` is incomplete.
             let c = SourceComment {
                 span: comment.span,
-                // FIXME
-                lines_before: 0,
-                // FIXME
-                lines_after: 0,
+                lines_before: source_text[..comment.span.start as usize]
+                    .bytes()
+                    .rev()
+                    .take_while(|&b| b == b'\n')
+                    .count() as u32,
+                lines_after: source_text[comment.span.end as usize..]
+                    .bytes()
+                    .take_while(|&b| b == b'\n')
+                    .count() as u32,
                 // FIXME
                 piece: SyntaxTriviaPieceComments {},
                 kind: match comment.kind {
                     ast::CommentKind::Line => CommentKind::Line,
                     ast::CommentKind::Block => CommentKind::Block, // TODO: missing CommentKind::InlineBlock
                 },
-                #[cfg(debug_assertions)]
                 formatted: Cell::new(false),
             };
             match comment.position {
                 ast::CommentPosition::Leading => {
-                    map.push_leading(comment.span.start, c);
+                    map.push_leading(comment.attached_to, c);
                 }
                 ast::CommentPosition::Trailing => {
-                    map.push_trailing(comment.span.start, c);
+                    // Trailing comments are not attached to anything yet.
+                    let attached_to = comment.span.start
+                        - source_text[..comment.span.start as usize]
+                            .bytes()
+                            .rev()
+                            .take_while(|&b| b == b' ')
+                            .count() as u32;
+                    map.push_trailing(attached_to, c);
                 } // TODO:: missing Comment::Position::Dangling
             }
         }
@@ -849,21 +887,21 @@ impl Comments {
 
     /// Returns `true` if the given `node` has any [leading comments](self#leading-comments).
     #[inline]
-    pub fn has_leading_comments(&self, span: Span) -> bool {
-        !self.leading_comments(span).is_empty()
+    pub fn has_leading_comments(&self, start: u32) -> bool {
+        !self.leading_comments(start).is_empty()
     }
 
     /// Tests if the node has any [leading comments](self#leading-comments) that have a leading line break.
     ///
     /// Corresponds to [CommentTextPosition::OwnLine].
-    pub fn has_leading_own_line_comment(&self, span: Span) -> bool {
-        self.leading_comments(span).iter().any(|comment| comment.lines_after() > 0)
+    pub fn has_leading_own_line_comment(&self, start: u32) -> bool {
+        self.leading_comments(start).iter().any(|comment| comment.lines_after() > 0)
     }
 
     /// Returns the `node`'s [leading comments](self#leading-comments).
     #[inline]
-    pub fn leading_comments(&self, span: Span) -> &[SourceComment] {
-        self.data.comments.leading(&span.start)
+    pub fn leading_comments(&self, start: u32) -> &[SourceComment] {
+        self.data.comments.leading(&start)
     }
 
     /// Returns `true` if node has any [dangling comments](self#dangling-comments).
@@ -878,19 +916,19 @@ impl Comments {
 
     /// Returns the `node`'s [trailing comments](self#trailing-comments).
     #[inline]
-    pub fn trailing_comments(&self, span: Span) -> &[SourceComment] {
-        self.data.comments.trailing(&span.start)
+    pub fn trailing_comments(&self, end: u32) -> &[SourceComment] {
+        self.data.comments.trailing(&end)
     }
 
     /// Returns `true` if the node has any [trailing](self#trailing-comments) [line](CommentKind::Line) comment.
-    pub fn has_trailing_line_comment(&self, span: Span) -> bool {
-        self.trailing_comments(span).iter().any(|comment| comment.kind().is_line())
+    pub fn has_trailing_line_comment(&self, end: u32) -> bool {
+        self.trailing_comments(end).iter().any(|comment| comment.kind().is_line())
     }
 
     /// Returns `true` if the given `node` has any [trailing comments](self#trailing-comments).
     #[inline]
-    pub fn has_trailing_comments(&self, span: Span) -> bool {
-        !self.trailing_comments(span).is_empty()
+    pub fn has_trailing_comments(&self, end: u32) -> bool {
+        !self.trailing_comments(end).is_empty()
     }
 
     /// Returns an iterator over the [leading](self#leading-comments) and [trailing comments](self#trailing-comments) of `node`.
@@ -898,7 +936,7 @@ impl Comments {
         &self,
         span: Span,
     ) -> impl Iterator<Item = &SourceComment> + use<'_> {
-        self.leading_comments(span).iter().chain(self.trailing_comments(span).iter())
+        self.leading_comments(span.start).iter().chain(self.trailing_comments(span.end).iter())
     }
 
     /// Returns an iterator over the [leading](self#leading-comments), [dangling](self#dangling-comments), and [trailing](self#trailing) comments of `node`.
@@ -911,9 +949,10 @@ impl Comments {
 
     /// Returns `true` if that node has skipped token trivia attached.
     #[inline]
-    pub fn has_skipped(&self, token: &SyntaxToken) -> bool {
-        todo!()
+    pub fn has_skipped(&self, span: Span) -> bool {
+        // TODO
         // self.data.with_skipped.contains(&token.key())
+        false
     }
 
     /// Returns `true` if `node` has a [leading](self#leading-comments), [dangling](self#dangling-comments), or [trailing](self#trailing-comments) suppression comment.
@@ -927,8 +966,8 @@ impl Comments {
     ///
     /// Returns `true` for the expression statement but `false` for the call expression because the
     /// call expression is nested inside of the expression statement.
-    pub fn is_suppressed(&self, node: &SyntaxNode) -> bool {
-        todo!()
+    pub fn is_suppressed(&self, span: Span) -> bool {
+        false
         // self.mark_suppression_checked(node);
         // let is_suppression = self.data.is_suppression;
 
@@ -1146,17 +1185,13 @@ impl<C> Default for FormatPlainComment<C> {
 ///  */
 /// "#)));
 /// ```
-pub fn is_alignable_comment(comment: &SyntaxTriviaPieceComments) -> bool {
-    todo!()
-    // if !comment.has_newline() {
-    // return false;
-    // }
-
-    // let text = comment.text();
-
-    // text.lines().enumerate().all(|(index, line)| {
-    // if index == 0 { line.starts_with("/*") } else { line.trim_start().starts_with('*') }
-    // })
+pub fn is_alignable_comment(source_text: &str) -> bool {
+    if !source_text.contains('\n') {
+        return false;
+    }
+    source_text.lines().enumerate().all(|(index, line)| {
+        if index == 0 { line.starts_with("/*") } else { line.trim_start().starts_with('*') }
+    })
 }
 
 /// **TODO:** This is really JS-specific logic, both in syntax and semantics.

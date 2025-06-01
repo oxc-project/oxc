@@ -35,10 +35,22 @@ declare_oxc_lint!(
     /// Using an empty interface is often a sign of programmer error, such as misunderstanding the concept of {} or forgetting to fill in fields.
     /// This rule aims to ensure that only meaningful interfaces are declared in the code.
     ///
-    /// ### Example
+    /// ### Examples
+    ///
+    /// Examples of **incorrect** code for this rule:
     /// ```ts
     /// interface Foo {}
     /// interface Bar extends Foo {}
+    /// ```
+    ///
+    /// Examples of **correct** code for this rule:
+    /// ```ts
+    /// interface Foo {
+    ///     member: string;
+    /// }
+    /// interface Bar extends Foo {
+    ///     member: string;
+    /// }
     /// ```
     NoEmptyInterface,
     typescript,
@@ -58,17 +70,10 @@ impl Rule for NoEmptyInterface {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         if let AstKind::TSInterfaceDeclaration(interface) = node.kind() {
             if interface.body.body.is_empty() {
-                match &interface.extends {
-                    None => {
-                        ctx.diagnostic(no_empty_interface_diagnostic(interface.span));
-                    }
-
-                    Some(extends) if extends.len() == 1 => {
-                        if !self.allow_single_extends {
-                            ctx.diagnostic(no_empty_interface_extend_diagnostic(interface.span));
-                        }
-                    }
-                    _ => {}
+                if interface.extends.is_empty() {
+                    ctx.diagnostic(no_empty_interface_diagnostic(interface.span));
+                } else if interface.extends.len() == 1 && !self.allow_single_extends {
+                    ctx.diagnostic(no_empty_interface_extend_diagnostic(interface.span));
                 }
             }
         }

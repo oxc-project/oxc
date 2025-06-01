@@ -33,10 +33,9 @@ declare_oxc_lint!(
     /// component. This is dangerous because it can easily lead to XSS
     /// vulnerabilities.
     ///
-    /// ### Example
+    /// ### Examples
     ///
     /// Examples of **incorrect** code for this rule:
-    ///
     /// ```jsx
     /// import React from "react";
     ///
@@ -44,7 +43,6 @@ declare_oxc_lint!(
     /// ```
     ///
     /// Examples of **correct** code for this rule:
-    ///
     /// ```jsx
     /// import React from "react";
     ///

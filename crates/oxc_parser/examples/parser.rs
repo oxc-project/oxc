@@ -22,7 +22,7 @@ fn main() -> Result<(), String> {
 
     let path = Path::new(&name);
     let source_text = fs::read_to_string(path).map_err(|_| format!("Missing '{name}'"))?;
-    let source_type = SourceType::from_path(path).unwrap();
+    let source_type = SourceType::from_path(path).unwrap().with_script(true).with_jsx(true);
 
     let allocator = Allocator::default();
     let ret = Parser::new(&allocator, &source_text, source_type)
@@ -38,12 +38,20 @@ fn main() -> Result<(), String> {
         }
     }
 
-    if show_ast || show_estree {
+    if show_ast {
         println!("AST:");
-        if show_estree {
-            Utf8ToUtf16::new(&source_text).convert_program(&mut program);
+        println!("{program:#?}");
+    }
+
+    if show_estree {
+        Utf8ToUtf16::new(&source_text).convert_program(&mut program);
+        if source_type.is_javascript() {
+            println!("ESTree AST:");
+            println!("{}", program.to_pretty_estree_js_json());
+        } else {
+            println!("TS-ESTree AST:");
+            println!("{}", program.to_pretty_estree_ts_json());
         }
-        println!("{}", program.to_pretty_estree_ts_json());
     }
 
     if ret.errors.is_empty() {
@@ -52,8 +60,8 @@ fn main() -> Result<(), String> {
         for error in ret.errors {
             let error = error.with_source_code(source_text.clone());
             println!("{error:?}");
-            println!("Parsed with Errors.");
         }
+        println!("Parsed with Errors.");
     }
 
     Ok(())

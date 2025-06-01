@@ -1,7 +1,6 @@
 use oxc_allocator::Box;
 use oxc_ast::{NONE, ast::*};
-use oxc_diagnostics::Result;
-use oxc_span::{GetSpan, Span};
+use oxc_span::GetSpan;
 
 use super::VariableDeclarationParent;
 use crate::{
@@ -11,52 +10,79 @@ use crate::{
 };
 
 impl<'a> ParserImpl<'a> {
-    pub(crate) fn parse_let(&mut self, stmt_ctx: StatementContext) -> Result<Statement<'a>> {
+    pub(crate) fn parse_let(&mut self, stmt_ctx: StatementContext) -> Statement<'a> {
         let span = self.start_span();
-        let peeked = self.peek_kind();
+
+        let checkpoint = self.checkpoint();
+        self.bump_any(); // bump `let`
+        let token = self.cur_token();
+        let peeked = token.kind();
+
+        // Fast path: avoid rewind.
+        if !stmt_ctx.is_single_statement() && peeked.is_after_let() {
+            return self.parse_variable_statement(span, VariableDeclarationKind::Let, stmt_ctx);
+        }
+
+        self.rewind(checkpoint);
         // let = foo, let instanceof x, let + 1
         if peeked.is_assignment_operator() || peeked.is_binary_operator() {
-            let expr = self.parse_assignment_expression_or_higher()?;
+            let expr = self.parse_assignment_expression_or_higher();
             self.parse_expression_statement(span, expr)
         // let.a = 1, let()[a] = 1
         } else if matches!(peeked, Kind::Dot | Kind::LParen) {
-            let expr = self.parse_expr()?;
-            Ok(self.ast.statement_expression(self.end_span(span), expr))
+            let expr = self.parse_expr();
+            self.ast.statement_expression(self.end_span(span), expr)
         // single statement let declaration: while (0) let
         } else if (stmt_ctx.is_single_statement() && peeked != Kind::LBrack)
             || peeked == Kind::Semicolon
         {
-            let expr = self.parse_identifier_expression()?;
+            let expr = self.parse_identifier_expression();
             self.parse_expression_statement(span, expr)
         } else {
-            self.parse_variable_statement(stmt_ctx)
+            self.bump_any();
+            self.parse_variable_statement(span, VariableDeclarationKind::Let, stmt_ctx)
         }
     }
 
-    pub(crate) fn parse_using_statement(&mut self) -> Result<Statement<'a>> {
-        let mut decl = self.parse_using_declaration(StatementContext::StatementList)?;
-        self.asi()?;
-        decl.span = self.end_span(decl.span);
-        Ok(Statement::VariableDeclaration(self.alloc(decl)))
+    pub(crate) fn is_using_statement(&mut self) -> bool {
+        self.lookahead(Self::is_next_token_using_keyword_then_binding_identifier)
+    }
+
+    fn is_next_token_using_keyword_then_binding_identifier(&mut self) -> bool {
+        self.bump_any();
+        if !self.cur_token().is_on_new_line() && self.eat(Kind::Using) {
+            self.cur_kind().is_binding_identifier() && !self.cur_token().is_on_new_line()
+        } else {
+            false
+        }
+    }
+
+    pub(crate) fn parse_using_statement(&mut self) -> Statement<'a> {
+        let mut decl = self.parse_using_declaration(StatementContext::StatementList);
+        self.asi();
+        decl.span = self.end_span(decl.span.start);
+        Statement::VariableDeclaration(self.alloc(decl))
+    }
+
+    pub(crate) fn get_variable_declaration_kind(&self) -> VariableDeclarationKind {
+        match self.cur_kind() {
+            Kind::Var => VariableDeclarationKind::Var,
+            Kind::Const => VariableDeclarationKind::Const,
+            Kind::Let => VariableDeclarationKind::Let,
+            _ => unreachable!(),
+        }
     }
 
     pub(crate) fn parse_variable_declaration(
         &mut self,
-        start_span: Span,
+        start_span: u32,
+        kind: VariableDeclarationKind,
         decl_parent: VariableDeclarationParent,
         modifiers: &Modifiers<'a>,
-    ) -> Result<Box<'a, VariableDeclaration<'a>>> {
-        let kind = match self.cur_kind() {
-            Kind::Var => VariableDeclarationKind::Var,
-            Kind::Const => VariableDeclarationKind::Const,
-            Kind::Let => VariableDeclarationKind::Let,
-            _ => return Err(self.unexpected()),
-        };
-        self.bump_any();
-
+    ) -> Box<'a, VariableDeclaration<'a>> {
         let mut declarations = self.ast.vec();
         loop {
-            let declaration = self.parse_variable_declarator(decl_parent, kind)?;
+            let declaration = self.parse_variable_declarator(decl_parent, kind);
             declarations.push(declaration);
             if !self.eat(Kind::Comma) {
                 break;
@@ -64,7 +90,7 @@ impl<'a> ParserImpl<'a> {
         }
 
         if matches!(decl_parent, VariableDeclarationParent::Statement) {
-            self.asi()?;
+            self.asi();
         }
 
         self.verify_modifiers(
@@ -73,36 +99,35 @@ impl<'a> ParserImpl<'a> {
             diagnostics::modifier_cannot_be_used_here,
         );
 
-        Ok(self.ast.alloc_variable_declaration(
+        self.ast.alloc_variable_declaration(
             self.end_span(start_span),
             kind,
             declarations,
             modifiers.contains_declare(),
-        ))
+        )
     }
 
     fn parse_variable_declarator(
         &mut self,
         decl_parent: VariableDeclarationParent,
         kind: VariableDeclarationKind,
-    ) -> Result<VariableDeclarator<'a>> {
+    ) -> VariableDeclarator<'a> {
         let span = self.start_span();
 
-        let mut binding_kind = self.parse_binding_pattern_kind()?;
+        let mut binding_kind = self.parse_binding_pattern_kind();
 
         let (id, definite) = if self.is_ts {
             // const x!: number = 1
             //        ^ definite
             let mut definite = false;
             if binding_kind.is_binding_identifier()
-                && self.at(Kind::Bang)
-                && !self.cur_token().is_on_new_line
+                && !self.cur_token().is_on_new_line()
+                && self.eat(Kind::Bang)
             {
-                self.eat(Kind::Bang);
                 definite = true;
             }
             let optional = self.eat(Kind::Question); // not allowed, but checked in checker/typescript.rs
-            let type_annotation = self.parse_ts_type_annotation()?;
+            let type_annotation = self.parse_ts_type_annotation();
             if let Some(type_annotation) = &type_annotation {
                 Self::extend_binding_pattern_span_end(type_annotation.span.end, &mut binding_kind);
             }
@@ -110,13 +135,12 @@ impl<'a> ParserImpl<'a> {
         } else {
             (self.ast.binding_pattern(binding_kind, NONE, false), false)
         };
-        let init =
-            self.eat(Kind::Eq).then(|| self.parse_assignment_expression_or_higher()).transpose()?;
+        let init = self.eat(Kind::Eq).then(|| self.parse_assignment_expression_or_higher());
         let decl = self.ast.variable_declarator(self.end_span(span), kind, id, init, definite);
         if decl_parent == VariableDeclarationParent::Statement {
             self.check_missing_initializer(&decl);
         }
-        Ok(decl)
+        decl
     }
 
     pub(crate) fn check_missing_initializer(&mut self, decl: &VariableDeclarator<'a>) {
@@ -136,25 +160,12 @@ impl<'a> ParserImpl<'a> {
     pub(crate) fn parse_using_declaration(
         &mut self,
         statement_ctx: StatementContext,
-    ) -> Result<VariableDeclaration<'a>> {
+    ) -> VariableDeclaration<'a> {
         let span = self.start_span();
 
         let is_await = self.eat(Kind::Await);
 
-        self.expect(Kind::Using)?;
-
-        // `[no LineTerminator here]`
-        if self.cur_token().is_on_new_line {
-            self.error(diagnostics::line_terminator_before_using_declaration(
-                self.cur_token().span(),
-            ));
-        }
-
-        // [lookahead ≠ await]
-        if self.cur_kind() == Kind::Await {
-            self.error(diagnostics::await_in_using_declaration(self.cur_token().span()));
-            self.eat(Kind::Await);
-        }
+        self.expect(Kind::Using);
 
         // BindingList[?In, ?Yield, ?Await, ~Pattern]
         let mut declarations: oxc_allocator::Vec<'_, VariableDeclarator<'_>> = self.ast.vec();
@@ -166,7 +177,7 @@ impl<'a> ParserImpl<'a> {
                 } else {
                     VariableDeclarationKind::Using
                 },
-            )?;
+            );
 
             match declaration.id.kind {
                 BindingPatternKind::BindingIdentifier(_) => {}
@@ -195,6 +206,6 @@ impl<'a> ParserImpl<'a> {
         } else {
             VariableDeclarationKind::Using
         };
-        Ok(self.ast.variable_declaration(self.end_span(span), kind, declarations, false))
+        self.ast.variable_declaration(self.end_span(span), kind, declarations, false)
     }
 }

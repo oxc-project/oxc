@@ -1,6 +1,6 @@
 use std::{borrow::Cow, fmt};
 
-use rustc_hash::{FxHashMap, FxHashSet};
+use rustc_hash::FxHashMap;
 use schemars::{JsonSchema, r#gen::SchemaGenerator, schema::Schema};
 use serde::{
     Deserialize, Serialize, Serializer,
@@ -11,12 +11,12 @@ use serde::{
 use oxc_diagnostics::{Error, OxcDiagnostic};
 
 use crate::{
-    AllowWarnDeny, RuleWithSeverity,
+    AllowWarnDeny,
     rules::{RULES, RuleEnum},
     utils::{is_eslint_rule_adapted_to_typescript, is_jest_rule_adapted_to_vitest},
 };
 
-type RuleSet = FxHashSet<RuleWithSeverity>;
+type RuleSet = FxHashMap<RuleEnum, AllowWarnDeny>;
 
 // TS type is `Record<string, RuleConf>`
 //   - type SeverityConf = 0 | 1 | 2 | "off" | "warn" | "error";
@@ -60,8 +60,8 @@ pub struct ESLintRule {
 impl OxlintRules {
     pub(crate) fn override_rules(&self, rules_for_override: &mut RuleSet, all_rules: &[RuleEnum]) {
         use itertools::Itertools;
-        let mut rules_to_replace: Vec<RuleWithSeverity> = vec![];
-        let mut rules_to_remove: Vec<RuleWithSeverity> = vec![];
+        let mut rules_to_replace: Vec<(RuleEnum, AllowWarnDeny)> = vec![];
+        let mut rules_to_remove: Vec<RuleEnum> = vec![];
 
         // Rules can have the same name but different plugin names
         let lookup = self.rules.iter().into_group_map_by(|r| r.rule_name.as_str());
@@ -84,16 +84,14 @@ impl OxlintRules {
                             {
                                 let config = rule_config.config.clone().unwrap_or_default();
                                 let rule = rule.read_json(config);
-                                rules_to_replace.push(RuleWithSeverity::new(rule, severity));
+                                rules_to_replace.push((rule, severity));
                             }
                         }
                         AllowWarnDeny::Allow => {
-                            if let Some(rule) = rules_for_override
-                                .iter()
-                                .find(|r| r.name() == rule_name && r.plugin_name() == plugin_name)
-                            {
-                                let rule = rule.clone();
-                                rules_to_remove.push(rule);
+                            if let Some((rule, _)) = rules_for_override.iter().find(|(r, _)| {
+                                r.name() == rule_name && r.plugin_name() == plugin_name
+                            }) {
+                                rules_to_remove.push(rule.clone());
                             }
                             // If the given rule is not found in the rule list (for example, if all rules are disabled),
                             // then look it up in the entire rules list and add it.
@@ -103,7 +101,7 @@ impl OxlintRules {
                             {
                                 let config = rule_config.config.clone().unwrap_or_default();
                                 let rule = rule.read_json(config);
-                                rules_to_remove.push(RuleWithSeverity::new(rule, severity));
+                                rules_to_remove.push(rule);
                             }
                         }
                     }
@@ -111,7 +109,7 @@ impl OxlintRules {
                 _ => {
                     let rules = rules_for_override
                         .iter()
-                        .filter_map(|r| {
+                        .filter_map(|(r, _)| {
                             if r.name() == *name { Some((r.plugin_name(), r)) } else { None }
                         })
                         .collect::<FxHashMap<_, _>>();
@@ -125,10 +123,8 @@ impl OxlintRules {
                         if rule_config.severity.is_warn_deny() {
                             let config = rule_config.config.clone().unwrap_or_default();
                             if let Some(rule) = rules.get(&plugin_name) {
-                                rules_to_replace.push(RuleWithSeverity::new(
-                                    rule.read_json(config),
-                                    rule_config.severity,
-                                ));
+                                rules_to_replace
+                                    .push((rule.read_json(config), rule_config.severity));
                             }
                             // If the given rule is not found in the rule list (for example, if all rules are disabled),
                             // then look it up in the entire rules list and add it.
@@ -136,10 +132,8 @@ impl OxlintRules {
                                 .iter()
                                 .find(|r| r.name() == rule_name && r.plugin_name() == plugin_name)
                             {
-                                rules_to_replace.push(RuleWithSeverity::new(
-                                    rule.read_json(config),
-                                    rule_config.severity,
-                                ));
+                                rules_to_replace
+                                    .push((rule.read_json(config), rule_config.severity));
                             }
                         } else if let Some(&rule) = rules.get(&plugin_name) {
                             rules_to_remove.push(rule.clone());
@@ -152,8 +146,9 @@ impl OxlintRules {
         for rule in rules_to_remove {
             rules_for_override.remove(&rule);
         }
-        for rule in rules_to_replace {
-            rules_for_override.replace(rule);
+        for (rule, severity) in rules_to_replace {
+            let _ = rules_for_override.remove(&rule);
+            rules_for_override.insert(rule, severity);
         }
     }
 }
@@ -354,7 +349,7 @@ mod test {
     use serde_json::{Value, json};
 
     use crate::{
-        AllowWarnDeny, RuleWithSeverity,
+        AllowWarnDeny,
         rules::{RULES, RuleEnum},
     };
 
@@ -417,9 +412,9 @@ mod test {
             r#override(&mut rules, &config);
 
             assert_eq!(rules.len(), 1, "{config:?}");
-            let rule = rules.iter().next().unwrap();
+            let (rule, severity) = rules.iter().next().unwrap();
             assert_eq!(rule.name(), "no-console", "{config:?}");
-            assert_eq!(rule.severity, AllowWarnDeny::Deny, "{config:?}");
+            assert_eq!(severity, &AllowWarnDeny::Deny, "{config:?}");
         }
     }
 
@@ -440,15 +435,15 @@ mod test {
             1,
             "eslint rules should be configurable by their typescript-eslint reimplementations: {config:?}"
         );
-        let rule = rules.iter().next().unwrap();
+        let (rule, severity) = rules.iter().next().unwrap();
         assert_eq!(
             rule.name(),
             "no-console",
             "eslint rules should be configurable by their typescript-eslint reimplementations: {config:?}"
         );
         assert_eq!(
-            rule.severity,
-            AllowWarnDeny::Deny,
+            severity,
+            &AllowWarnDeny::Deny,
             "eslint rules should be configurable by their typescript-eslint reimplementations: {config:?}"
         );
     }
@@ -456,10 +451,7 @@ mod test {
     #[test]
     fn test_override_allow() {
         let mut rules = RuleSet::default();
-        rules.insert(RuleWithSeverity {
-            rule: RuleEnum::EslintNoConsole(Default::default()),
-            severity: AllowWarnDeny::Deny,
-        });
+        rules.insert(RuleEnum::EslintNoConsole(Default::default()), AllowWarnDeny::Deny);
         r#override(&mut rules, &json!({ "eslint/no-console": "off" }));
 
         assert!(rules.is_empty());
@@ -478,23 +470,20 @@ mod test {
             r#override(&mut rules, config);
 
             assert_eq!(rules.len(), 1, "{config:?}");
-            let rule = rules.iter().next().unwrap();
+            let (rule, severity) = rules.iter().next().unwrap();
             assert_eq!(rule.name(), "no-unused-vars", "{config:?}");
-            assert_eq!(rule.severity, AllowWarnDeny::Deny, "{config:?}");
+            assert_eq!(severity, &AllowWarnDeny::Deny, "{config:?}");
         }
 
         for config in &configs {
             let mut rules = RuleSet::default();
-            rules.insert(RuleWithSeverity {
-                rule: RuleEnum::EslintNoUnusedVars(Default::default()),
-                severity: AllowWarnDeny::Warn,
-            });
+            rules.insert(RuleEnum::EslintNoUnusedVars(Default::default()), AllowWarnDeny::Warn);
             r#override(&mut rules, config);
 
             assert_eq!(rules.len(), 1, "{config:?}");
-            let rule = rules.iter().next().unwrap();
+            let (rule, severity) = rules.iter().next().unwrap();
             assert_eq!(rule.name(), "no-unused-vars", "{config:?}");
-            assert_eq!(rule.severity, AllowWarnDeny::Deny, "{config:?}");
+            assert_eq!(severity, &AllowWarnDeny::Deny, "{config:?}");
         }
     }
 }

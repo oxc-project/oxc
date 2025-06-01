@@ -82,3 +82,23 @@ describe('hasModuleSyntax', () => {
     expect(ret.module.hasModuleSyntax).toBe(false);
   });
 });
+
+describe('export type', () => {
+  const inputs = [
+    ["export type * from 'mod'", true],
+    ["export type * as ns from 'mod'", true],
+    ['export type { foo }', true],
+    ['export { type foo }', true],
+    ["export type { foo } from 'mod'", true],
+    ['export type Foo = {}', true],
+    ['export interface Foo {}', true],
+    ['export default interface Foo {}', true],
+    ['export namespace Foo {}', false], // namespace isn't considered a typed export
+  ] as const;
+  test.each(inputs)('%s', (source, isType) => {
+    const ret = parseSync('test.ts', source);
+    expect(ret.module.staticExports.length).toBe(1);
+    expect(ret.module.staticExports[0].entries.length).toBe(1);
+    expect(ret.module.staticExports[0].entries[0].isType).toBe(isType);
+  });
+});

@@ -2,14 +2,14 @@ import { readdir, readFile, writeFile } from 'node:fs/promises';
 import { basename, join as pathJoin } from 'node:path';
 import { describe, expect, it } from 'vitest';
 
-import { parseSync } from '../index.js';
+import { parseAsync, parseSync } from '../index.js';
 
 const ROOT_DIR = pathJoin(import.meta.dirname, '../../..');
 const TARGET_DIR_PATH = pathJoin(ROOT_DIR, 'target');
 const TEST262_SHORT_DIR_PATH = 'tasks/coverage/test262/test';
 const TEST262_DIR_PATH = pathJoin(ROOT_DIR, TEST262_SHORT_DIR_PATH);
-const ACORN_TEST262_DIR_PATH = pathJoin(ROOT_DIR, 'tasks/coverage/acorn-test262/test');
-const JSX_SHORT_DIR_PATH = 'tasks/coverage/acorn-test262/test-acorn-jsx/pass';
+const ACORN_TEST262_DIR_PATH = pathJoin(ROOT_DIR, 'tasks/coverage/acorn-test262/tests/test262/test');
+const JSX_SHORT_DIR_PATH = 'tasks/coverage/acorn-test262/tests/acorn-jsx/pass';
 const JSX_DIR_PATH = pathJoin(ROOT_DIR, JSX_SHORT_DIR_PATH);
 const TEST262_SNAPSHOT_PATH = pathJoin(ROOT_DIR, 'tasks/coverage/snapshots/estree_test262.snap');
 const JSX_SNAPSHOT_PATH = pathJoin(ROOT_DIR, 'tasks/coverage/snapshots/estree_acorn_jsx.snap');
@@ -25,11 +25,11 @@ const INFINITY_REGEXP = new RegExp(`"${INFINITY_PLACEHOLDER}"`, 'g');
 // TODO: Enable them again once that work is complete.
 const benchFixtureUrls = [
   // TypeScript syntax (2.81MB)
-  // 'https://raw.githubusercontent.com/microsoft/TypeScript/v5.3.3/src/compiler/checker.ts',
+  // 'https://cdn.jsdelivr.net/gh/microsoft/TypeScript@v5.3.3/src/compiler/checker.ts',
   // Real world app tsx (1.0M)
-  // 'https://raw.githubusercontent.com/oxc-project/benchmark-files/main/cal.com.tsx',
+  // 'https://cdn.jsdelivr.net/gh/oxc-project/benchmark-files@main/cal.com.tsx',
   // Real world content-heavy app jsx (3K)
-  'https://raw.githubusercontent.com/oxc-project/benchmark-files/main/RadixUIAdoptionSection.jsx',
+  'https://cdn.jsdelivr.net/gh/oxc-project/benchmark-files@main/RadixUIAdoptionSection.jsx',
   // Heavy with classes (554K)
   'https://cdn.jsdelivr.net/npm/pdfjs-dist@4.0.269/build/pdf.mjs',
   // ES5 (3.9M)
@@ -125,6 +125,11 @@ describe('JSX', () => {
 // Test raw transfer output matches standard (via JSON) output for edge cases not covered by Test262
 describe('edge cases', () => {
   it.each([
+    // ECMA stage 3
+    'import defer * as ns from "x";',
+    'import source src from "x";',
+    'import.defer("x");',
+    'import.source("x");',
     // `StringLiteral`s containing lone surrogates and/or lossy replacement characters
     ';"\\uD800\\uDBFF";',
     ';"�\\u{FFFD}";',
@@ -133,6 +138,9 @@ describe('edge cases', () => {
     '`\\uD800\\uDBFF${x}\\uD800\\uDBFF`;',
     '`�\\u{FFFD}${x}�\\u{FFFD}`;',
     '`�\\u{FFFD}\\uD800${x}\\uDBFF�\\u{FFFD}`;',
+    // Hashbangs
+    '#!/usr/bin/env node\nlet x;',
+    '#!/usr/bin/env node\nlet x;\n// foo',
   ])('%s', (sourceText) => {
     assertRawAndStandardMatch('dummy.js', sourceText);
   });
@@ -193,6 +201,7 @@ function stringify(obj) {
     if (typeof value === 'bigint') return `__BIGINT__: ${value}`;
     if (typeof value === 'object' && value instanceof RegExp) return `__REGEXP__: ${value}`;
     if (value === Infinity) return `__INFINITY__`;
+    return value;
   });
 }
 
@@ -216,6 +225,43 @@ function stringifyAcornTest262Style(obj) {
 function clean(obj) {
   return JSON.parse(JSON.stringify(obj, (_key, value) => value === null ? undefined : value));
 }
+
+describe('`parseAsync`', () => {
+  it('matches `parseSync`', async () => {
+    const [filename, sourceText] = benchFixtures[0];
+    const programStandard = parseSync(filename, sourceText).program;
+    // @ts-ignore
+    const programRaw = (await parseAsync(filename, sourceText, { experimentalRawTransfer: true })).program;
+    expect(programRaw).toEqual(programStandard);
+  });
+
+  it('processes multiple files', async () => {
+    testMultiple(4);
+  });
+
+  // This is primarily testing the queuing mechanism.
+  // At least on Mac OS, this test does not cause out-of-memory without the queue implemented,
+  // but the test doesn't complete in a reasonable time (I gave up waiting after 20 minutes).
+  it('does not exhaust memory when called huge number of times in succession', async () => {
+    testMultiple(100_000);
+  });
+
+  async function testMultiple(iterations) {
+    const promises = [];
+    for (let i = 0; i < iterations; i++) {
+      const code = `let x = ${i}`;
+      // @ts-ignore
+      promises.push(parseAsync('test.js', code, { experimentalRawTransfer: true }));
+    }
+    const results = await Promise.all(promises);
+
+    for (let i = 0; i < iterations; i++) {
+      const { program } = results[i];
+      expect(program.body.length).toBe(1);
+      expect(program.body[0].declarations[0].init.value).toBe(i);
+    }
+  }
+});
 
 it('checks semantic', async () => {
   const code = 'let x; let x;';

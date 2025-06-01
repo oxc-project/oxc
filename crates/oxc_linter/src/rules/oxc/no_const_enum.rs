@@ -26,7 +26,9 @@ declare_oxc_lint!(
     /// Const enums are not supported by bundlers and are incompatible with the isolatedModules mode.
     /// Their use can lead to import nonexistent values (because const enums are erased).
     ///
-    /// ### Example
+    /// ### Examples
+    ///
+    /// Examples of **incorrect** code for this rule:
     /// ```ts
     /// const enum Color {
     ///     Red,

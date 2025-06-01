@@ -2,18 +2,40 @@
   "name": "e2e",
   "private": true,
   "scripts": {
-    "build": "pnpm -w run build-dev",
-    "test": "vitest run ./test"
+    "test": "vitest run --dir ./test && pnpm -r test run"
   },
   "devDependencies": {
-    "antd": "^5.23.1",
+    "alpinejs": "^3.14.9",
+    "antd": "^5.25.2",
+    "d3": "^7.9.0",
+    "date-fns": "^4.1.0",
+    "dayjs": "^1.11.13",
+    "es-toolkit": "^1.38.0",
     "fs-require": "^1.6.0",
-    "memfs": "^4.17.0",
-    "oxc-minify": "workspace:^",
-    "oxc-transform": "workspace:^",
-    "react": "^19.0.0",
-    "react-dom": "^19.0.0",
-    "terser": "^5.37.0",
-    "vue": "^3.5.13"
+    "happy-dom": "^17.4.7",
+    "immer": "^10.1.1",
+    "jquery": "^3.7.1",
+    "lit": "github:lit/dist#v3.3.0",
+    "lodash": "^4.17.21",
+    "luxon": "^3.6.1",
+    "memfs": "^4.17.2",
+    "moment": "^2.30.1",
+    "motion": "^12.12.2",
+    "oxc-minify": "link:../../napi/minify",
+    "oxc-transform": "link:../../napi/transform",
+    "preact": "^10.26.7",
+    "ramda": "^0.30.1",
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0",
+    "rxjs": "^7.8.2",
+    "solid-js": "^1.9.7",
+    "terser": "^5.39.2",
+    "vitest": "^3.1.4",
+    "vue": "^3.5.14",
+    "yup": "^1.6.1",
+    "zod": "=3.24.2"
+  },
+  "dependencies": {
+    "@types/supertest": "^6.0.3"
   }
 }

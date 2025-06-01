@@ -1,35 +1,34 @@
 //! Code related to navigating `Token`s from the lexer
 
-use oxc_allocator::Vec;
-use oxc_ast::ast::{Decorator, RegExpFlags};
-use oxc_diagnostics::Result;
+use oxc_allocator::{TakeIn, Vec};
+use oxc_ast::ast::{BindingRestElement, Decorator, RegExpFlags};
+use oxc_diagnostics::OxcDiagnostic;
 use oxc_span::{GetSpan, Span};
 
 use crate::{
     Context, ParserImpl, diagnostics,
+    error_handler::FatalError,
     lexer::{Kind, LexerCheckpoint, LexerContext, Token},
 };
 
-#[derive(Clone, Copy)]
+#[derive(Clone)]
 pub struct ParserCheckpoint<'a> {
     lexer: LexerCheckpoint<'a>,
     cur_token: Token,
     prev_span_end: u32,
     errors_pos: usize,
+    fatal_error: Option<FatalError>,
 }
 
 impl<'a> ParserImpl<'a> {
     #[inline]
-    pub(crate) fn start_span(&self) -> Span {
-        let token = self.cur_token();
-        Span::new(token.start, 0)
+    pub(crate) fn start_span(&self) -> u32 {
+        self.token.start()
     }
 
     #[inline]
-    pub(crate) fn end_span(&self, mut span: Span) -> Span {
-        span.end = self.prev_token_end;
-        debug_assert!(span.end >= span.start);
-        span
+    pub(crate) fn end_span(&self, start: u32) -> Span {
+        Span::new(start, self.prev_token_end)
     }
 
     /// Get current token
@@ -41,7 +40,7 @@ impl<'a> ParserImpl<'a> {
     /// Get current Kind
     #[inline]
     pub(crate) fn cur_kind(&self) -> Kind {
-        self.token.kind
+        self.token.kind()
     }
 
     /// Get current source text
@@ -60,46 +59,7 @@ impl<'a> ParserImpl<'a> {
 
     /// Get current template string
     pub(crate) fn cur_template_string(&self) -> Option<&'a str> {
-        self.lexer.get_template_string(self.token)
-    }
-
-    /// Peek next token, returns EOF for final peek
-    #[inline]
-    pub(crate) fn peek_token(&mut self) -> Token {
-        self.lexer.lookahead(1)
-    }
-
-    /// Peek next kind, returns EOF for final peek
-    #[inline]
-    pub(crate) fn peek_kind(&mut self) -> Kind {
-        self.peek_token().kind
-    }
-
-    /// Peek at kind
-    #[inline]
-    pub(crate) fn peek_at(&mut self, kind: Kind) -> bool {
-        self.peek_token().kind == kind
-    }
-
-    /// Peek nth token
-    #[inline]
-    pub(crate) fn nth(&mut self, n: u8) -> Token {
-        if n == 0 {
-            return self.cur_token();
-        }
-        self.lexer.lookahead(n)
-    }
-
-    /// Peek at nth kind
-    #[inline]
-    pub(crate) fn nth_at(&mut self, n: u8, kind: Kind) -> bool {
-        self.nth(n).kind == kind
-    }
-
-    /// Peek nth kind
-    #[inline]
-    pub(crate) fn nth_kind(&mut self, n: u8) -> Kind {
-        self.nth(n).kind
+        self.lexer.get_template_string(self.token.start())
     }
 
     /// Checks if the current index has token `Kind`
@@ -113,7 +73,7 @@ impl<'a> ParserImpl<'a> {
     /// whose code point sequence is the same as a `ReservedWord`.
     #[inline]
     fn test_escaped_keyword(&mut self, kind: Kind) {
-        if self.cur_token().escaped() && kind.is_all_keyword() {
+        if self.cur_token().escaped() && kind.is_any_keyword() {
             let span = self.cur_token().span();
             self.error(diagnostics::escaped_keyword(span));
         }
@@ -121,22 +81,23 @@ impl<'a> ParserImpl<'a> {
 
     /// Move to the next token
     /// Checks if the current token is escaped if it is a keyword
+    #[inline]
     fn advance(&mut self, kind: Kind) {
         self.test_escaped_keyword(kind);
-        self.prev_token_end = self.token.end;
+        self.prev_token_end = self.token.end();
         self.token = self.lexer.next_token();
     }
 
     /// Move to the next `JSXChild`
     /// Checks if the current token is escaped if it is a keyword
-    fn advance_for_jsx_child(&mut self, kind: Kind) {
-        self.test_escaped_keyword(kind);
-        self.prev_token_end = self.token.end;
+    pub(crate) fn advance_for_jsx_child(&mut self) {
+        self.prev_token_end = self.token.end();
         self.token = self.lexer.next_jsx_child();
     }
 
     /// Advance and return true if we are at `Kind`, return false otherwise
     #[inline]
+    #[must_use = "Use `bump` instead of `eat` if you are ignoring the return value"]
     pub(crate) fn eat(&mut self, kind: Kind) -> bool {
         if self.at(kind) {
             self.advance(kind);
@@ -145,7 +106,7 @@ impl<'a> ParserImpl<'a> {
         false
     }
 
-    /// Advance and return true if we are at `Kind`
+    /// Advance if we are at `Kind`
     #[inline]
     pub(crate) fn bump(&mut self, kind: Kind) {
         if self.at(kind) {
@@ -167,65 +128,60 @@ impl<'a> ParserImpl<'a> {
 
     /// [Automatic Semicolon Insertion](https://tc39.es/ecma262/#sec-automatic-semicolon-insertion)
     /// # Errors
-    pub(crate) fn asi(&mut self) -> Result<()> {
-        if !self.can_insert_semicolon() {
+    pub(crate) fn asi(&mut self) {
+        if self.eat(Kind::Semicolon) || self.can_insert_semicolon() {
+            /* no op */
+        } else {
             let span = Span::new(self.prev_token_end, self.prev_token_end);
-            return Err(diagnostics::auto_semicolon_insertion(span));
+            let error = diagnostics::auto_semicolon_insertion(span);
+            self.set_fatal_error(error);
         }
-        if self.at(Kind::Semicolon) {
-            self.advance(Kind::Semicolon);
-        }
-        Ok(())
     }
 
+    #[inline]
     pub(crate) fn can_insert_semicolon(&self) -> bool {
-        let kind = self.cur_kind();
-        if kind == Kind::Semicolon {
-            return true;
-        }
-        kind == Kind::RCurly || kind.is_eof() || self.cur_token().is_on_new_line
+        let token = self.cur_token();
+        let kind = token.kind();
+        kind == Kind::Semicolon || kind == Kind::RCurly || kind.is_eof() || token.is_on_new_line()
     }
 
     /// # Errors
-    pub(crate) fn expect_without_advance(&self, kind: Kind) -> Result<()> {
+    pub(crate) fn expect_without_advance(&mut self, kind: Kind) {
         if !self.at(kind) {
             let range = self.cur_token().span();
-            return Err(diagnostics::expect_token(kind.to_str(), self.cur_kind().to_str(), range));
+            let error = diagnostics::expect_token(kind.to_str(), self.cur_kind().to_str(), range);
+            self.set_fatal_error(error);
         }
-        Ok(())
     }
 
     /// Expect a `Kind` or return error
     /// # Errors
     #[inline]
-    pub(crate) fn expect(&mut self, kind: Kind) -> Result<()> {
-        self.expect_without_advance(kind)?;
+    pub(crate) fn expect(&mut self, kind: Kind) {
+        self.expect_without_advance(kind);
         self.advance(kind);
-        Ok(())
     }
 
     /// Expect the next next token to be a `JsxChild`, i.e. `<` or `{` or `JSXText`
     /// # Errors
-    pub(crate) fn expect_jsx_child(&mut self, kind: Kind) -> Result<()> {
-        self.expect_without_advance(kind)?;
-        self.advance_for_jsx_child(kind);
-        Ok(())
+    pub(crate) fn expect_jsx_child(&mut self, kind: Kind) {
+        self.expect_without_advance(kind);
+        self.advance_for_jsx_child();
     }
 
     /// Expect the next next token to be a `JsxString` or any other token
     /// # Errors
-    pub(crate) fn expect_jsx_attribute_value(&mut self, kind: Kind) -> Result<()> {
+    pub(crate) fn expect_jsx_attribute_value(&mut self, kind: Kind) {
         self.lexer.set_context(LexerContext::JsxAttributeValue);
-        self.expect(kind)?;
+        self.expect(kind);
         self.lexer.set_context(LexerContext::Regular);
-        Ok(())
     }
 
     /// Tell lexer to read a regex
-    pub(crate) fn read_regex(&mut self) -> Result<(u32, RegExpFlags, bool)> {
-        let (token, pattern_end, flags, flags_error) = self.lexer.next_regex(self.cur_kind())?;
+    pub(crate) fn read_regex(&mut self) -> (u32, RegExpFlags, bool) {
+        let (token, pattern_end, flags, flags_error) = self.lexer.next_regex(self.cur_kind());
         self.token = token;
-        Ok((pattern_end, flags, flags_error))
+        (pattern_end, flags, flags_error)
     }
 
     /// Tell lexer to read a template substitution tail
@@ -242,64 +198,76 @@ impl<'a> ParserImpl<'a> {
         }
     }
 
+    #[inline]
     pub(crate) fn re_lex_right_angle(&mut self) -> Kind {
+        if self.fatal_error.is_some() {
+            return Kind::Eof;
+        }
         let kind = self.cur_kind();
         if kind == Kind::RAngle {
-            self.token = self.lexer.next_right_angle();
-            self.token.kind
+            self.token = self.lexer.re_lex_right_angle();
+            self.token.kind()
         } else {
             kind
         }
     }
 
     pub(crate) fn re_lex_l_angle(&mut self) -> Kind {
+        if self.fatal_error.is_some() {
+            return Kind::Eof;
+        }
         let kind = self.cur_kind();
         if matches!(kind, Kind::ShiftLeft | Kind::ShiftLeftEq | Kind::LtEq) {
             self.token = self.lexer.re_lex_as_typescript_l_angle(kind);
-            self.token.kind
+            self.token.kind()
         } else {
             kind
         }
     }
 
     pub(crate) fn re_lex_ts_r_angle(&mut self) -> Kind {
+        if self.fatal_error.is_some() {
+            return Kind::Eof;
+        }
         let kind = self.cur_kind();
         if matches!(kind, Kind::ShiftRight | Kind::ShiftRight3) {
             self.token = self.lexer.re_lex_as_typescript_r_angle(kind);
-            self.token.kind
+            self.token.kind()
         } else {
             kind
         }
     }
 
-    pub(crate) fn checkpoint(&self) -> ParserCheckpoint<'a> {
+    pub(crate) fn checkpoint(&mut self) -> ParserCheckpoint<'a> {
         ParserCheckpoint {
             lexer: self.lexer.checkpoint(),
             cur_token: self.token,
             prev_span_end: self.prev_token_end,
             errors_pos: self.errors.len(),
+            fatal_error: self.fatal_error.take(),
         }
     }
 
     pub(crate) fn rewind(&mut self, checkpoint: ParserCheckpoint<'a>) {
-        let ParserCheckpoint { lexer, cur_token, prev_span_end, errors_pos } = checkpoint;
+        let ParserCheckpoint { lexer, cur_token, prev_span_end, errors_pos, fatal_error } =
+            checkpoint;
 
         self.lexer.rewind(lexer);
         self.token = cur_token;
         self.prev_token_end = prev_span_end;
         self.errors.truncate(errors_pos);
+        self.fatal_error = fatal_error;
     }
 
-    /// # Errors
     pub(crate) fn try_parse<T>(
         &mut self,
-        func: impl FnOnce(&mut ParserImpl<'a>) -> Result<T>,
+        func: impl FnOnce(&mut ParserImpl<'a>) -> T,
     ) -> Option<T> {
         let checkpoint = self.checkpoint();
         let ctx = self.ctx;
-        let result = func(self);
-        if let Ok(result) = result {
-            Some(result)
+        let node = func(self);
+        if self.fatal_error.is_none() {
+            Some(node)
         } else {
             self.ctx = ctx;
             self.rewind(checkpoint);
@@ -328,108 +296,119 @@ impl<'a> ParserImpl<'a> {
     }
 
     pub(crate) fn consume_decorators(&mut self) -> Vec<'a, Decorator<'a>> {
-        let decorators = std::mem::take(&mut self.state.decorators);
-        self.ast.vec_from_iter(decorators)
+        self.state.decorators.take_in(self.ast)
     }
 
-    pub(crate) fn parse_normal_list<F, T>(
-        &mut self,
-        open: Kind,
-        close: Kind,
-        f: F,
-    ) -> Result<Vec<'a, T>>
+    pub(crate) fn parse_normal_list<F, T>(&mut self, open: Kind, close: Kind, f: F) -> Vec<'a, T>
     where
-        F: Fn(&mut Self) -> Result<Option<T>>,
+        F: Fn(&mut Self) -> Option<T>,
     {
-        self.expect(open)?;
+        self.expect(open);
         let mut list = self.ast.vec();
         loop {
             let kind = self.cur_kind();
-            if kind == close || kind == Kind::Eof {
+            if kind == close || self.has_fatal_error() {
                 break;
             }
-            match f(self)? {
+            match f(self) {
                 Some(e) => {
                     list.push(e);
                 }
-                _ => {
+                None => {
                     break;
                 }
             }
         }
-        self.expect(close)?;
-        Ok(list)
+        self.expect(close);
+        list
     }
 
     pub(crate) fn parse_delimited_list<F, T>(
         &mut self,
         close: Kind,
         separator: Kind,
-        trailing_separator: bool,
         f: F,
-    ) -> Result<Vec<'a, T>>
+    ) -> (Vec<'a, T>, Option<u32>)
     where
-        F: Fn(&mut Self) -> Result<T>,
+        F: Fn(&mut Self) -> T,
     {
         let mut list = self.ast.vec();
         let mut first = true;
+        let mut trailing_separator = None;
         loop {
-            let kind = self.cur_kind();
-            if kind == close || kind == Kind::Eof {
+            if self.cur_kind() == close || self.has_fatal_error() {
                 break;
             }
             if first {
                 first = false;
             } else {
-                if !trailing_separator && self.at(separator) && self.peek_at(close) {
-                    break;
-                }
-                self.expect(separator)?;
+                let separator_span = self.start_span();
+                self.expect(separator);
                 if self.at(close) {
+                    trailing_separator = Some(separator_span);
                     break;
                 }
             }
-            list.push(f(self)?);
+            list.push(f(self));
         }
-        Ok(list)
+        (list, trailing_separator)
     }
 
-    pub(crate) fn parse_delimited_list_with_rest<E, R, A, B>(
+    pub(crate) fn parse_delimited_list_with_rest<E, A, D>(
         &mut self,
         close: Kind,
         parse_element: E,
-        parse_rest: R,
-    ) -> Result<(Vec<'a, A>, Option<B>)>
+        rest_last_diagnostic: D,
+    ) -> (Vec<'a, A>, Option<BindingRestElement<'a>>)
     where
-        E: Fn(&mut Self) -> Result<A>,
-        R: Fn(&mut Self) -> Result<B>,
-        B: GetSpan,
+        E: Fn(&mut Self) -> A,
+        D: Fn(Span) -> OxcDiagnostic,
     {
         let mut list = self.ast.vec();
         let mut rest = None;
         let mut first = true;
+        let mut rest_comma_span: Option<Span> = None;
         loop {
             let kind = self.cur_kind();
-            if kind == close || kind == Kind::Eof {
+            if self.has_fatal_error() {
                 break;
             }
+            if kind == close {
+                break;
+            }
+
             if first {
                 first = false;
             } else {
-                self.expect(Kind::Comma)?;
+                self.expect(Kind::Comma);
                 if self.at(close) {
                     break;
                 }
             }
 
             if self.at(Kind::Dot3) {
-                if let Some(r) = rest.replace(parse_rest(self)?) {
-                    self.error(diagnostics::binding_rest_element_last(r.span()));
+                let r = self.parse_rest_element();
+                if self.at(Kind::Comma) {
+                    rest_comma_span.replace(self.cur_token().span());
+                    if !self.ctx.has_ambient() {
+                        self.error(rest_last_diagnostic(r.span()));
+                    }
+                } else {
+                    rest_comma_span = None;
                 }
+                rest.replace(r);
             } else {
-                list.push(parse_element(self)?);
+                rest_comma_span = None;
+                list.push(parse_element(self));
             }
         }
-        Ok((list, rest))
+
+        if !self.ctx.has_ambient() {
+            if let Some(span) = rest_comma_span {
+                self.error(diagnostics::rest_element_trailing_comma(span));
+            }
+        }
+
+        (list, rest)
     }
 }

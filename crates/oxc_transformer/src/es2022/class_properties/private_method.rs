@@ -47,7 +47,7 @@ impl<'a> ClassProperties<'a, '_> {
             return None;
         };
 
-        let mut function = value.take_in_box(ctx.ast.allocator);
+        let mut function = value.take_in_box(ctx.ast);
 
         let resolved_private_prop = if *kind == MethodDefinitionKind::Set {
             self.classes_stack.find_writeable_private_prop(ident)

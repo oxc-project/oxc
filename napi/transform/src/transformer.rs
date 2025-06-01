@@ -13,18 +13,21 @@ use rustc_hash::FxHashMap;
 use oxc::{
     CompilerInterface,
     allocator::Allocator,
-    codegen::{CodeGenerator, CodegenOptions, CodegenReturn},
+    codegen::{Codegen, CodegenOptions, CodegenReturn},
     diagnostics::OxcDiagnostic,
     parser::Parser,
     semantic::{SemanticBuilder, SemanticBuilderReturn},
     span::SourceType,
     transformer::{
-        EnvOptions, HelperLoaderMode, HelperLoaderOptions, InjectGlobalVariablesConfig,
-        InjectImport, JsxRuntime, ModuleRunnerTransform, ProposalOptions,
-        ReplaceGlobalDefinesConfig, RewriteExtensionsMode,
+        EnvOptions, HelperLoaderMode, HelperLoaderOptions, JsxRuntime, ProposalOptions,
+        RewriteExtensionsMode,
+    },
+    transformer_plugins::{
+        InjectGlobalVariablesConfig, InjectImport, ModuleRunnerTransform,
+        ReplaceGlobalDefinesConfig,
     },
 };
-use oxc_napi::OxcError;
+use oxc_napi::{OxcError, get_source_type};
 use oxc_sourcemap::napi::SourceMap;
 
 use crate::IsolatedDeclarationsOptions;
@@ -83,12 +86,13 @@ pub struct TransformResult {
 #[napi(object)]
 #[derive(Default)]
 pub struct TransformOptions {
-    #[napi(ts_type = "'script' | 'module' | 'unambiguous' | undefined")]
-    pub source_type: Option<String>,
-
     /// Treat the source text as `js`, `jsx`, `ts`, or `tsx`.
     #[napi(ts_type = "'js' | 'jsx' | 'ts' | 'tsx'")]
     pub lang: Option<String>,
+
+    /// Treat the source text as `script` or `module` code.
+    #[napi(ts_type = "'script' | 'module' | 'unambiguous' | undefined")]
+    pub source_type: Option<String>,
 
     /// The current working directory. Used to resolve relative paths in other
     /// options.
@@ -174,7 +178,7 @@ impl TryFrom<TransformOptions> for oxc::transformer::TransformOptions {
                 None => oxc::transformer::JsxOptions::enable(),
             },
             env,
-            proposals: ProposalOptions { explicit_resource_management: false },
+            proposals: ProposalOptions::default(),
             helper_loader: options
                 .helpers
                 .map_or_else(HelperLoaderOptions::default, HelperLoaderOptions::from),
@@ -189,6 +193,45 @@ pub struct CompilerAssumptions {
     pub no_document_all: Option<bool>,
     pub object_rest_no_symbols: Option<bool>,
     pub pure_getters: Option<bool>,
+    /// When using public class fields, assume that they don't shadow any getter in the current class,
+    /// in its subclasses or in its superclass. Thus, it's safe to assign them rather than using
+    /// `Object.defineProperty`.
+    ///
+    /// For example:
+    ///
+    /// Input:
+    /// ```js
+    /// class Test {
+    ///  field = 2;
+    ///
+    ///  static staticField = 3;
+    /// }
+    /// ```
+    ///
+    /// When `set_public_class_fields` is `true`, the output will be:
+    /// ```js
+    /// class Test {
+    ///  constructor() {
+    ///    this.field = 2;
+    ///  }
+    /// }
+    /// Test.staticField = 3;
+    /// ```
+    ///
+    /// Otherwise, the output will be:
+    /// ```js
+    /// import _defineProperty from "@oxc-project/runtime/helpers/defineProperty";
+    /// class Test {
+    ///   constructor() {
+    ///     _defineProperty(this, "field", 2);
+    ///   }
+    /// }
+    /// _defineProperty(Test, "staticField", 3);
+    /// ```
+    ///
+    /// NOTE: For TypeScript, if you wanted behavior is equivalent to `useDefineForClassFields: false`, you should
+    /// set both `set_public_class_fields` and [`crate::TypeScriptOptions::remove_class_fields_without_initializer`]
+    /// to `true`.
     pub set_public_class_fields: Option<bool>,
 }
 
@@ -219,7 +262,46 @@ pub struct TypeScriptOptions {
     pub jsx_pragma_frag: Option<String>,
     pub only_remove_type_imports: Option<bool>,
     pub allow_namespaces: Option<bool>,
+    /// When enabled, type-only class fields are only removed if they are prefixed with the declare modifier:
+    ///
+    /// @deprecated
+    ///
+    /// Allowing `declare` fields is built-in support in Oxc without any option. If you want to remove class fields
+    /// without initializer, you can use `remove_class_fields_without_initializer: true` instead.
     pub allow_declare_fields: Option<bool>,
+    /// When enabled, class fields without initializers are removed.
+    ///
+    /// For example:
+    /// ```ts
+    /// class Foo {
+    ///    x: number;
+    ///    y: number = 0;
+    /// }
+    /// ```
+    /// // transform into
+    /// ```js
+    /// class Foo {
+    ///    x: number;
+    /// }
+    /// ```
+    ///
+    /// The option is used to align with the behavior of TypeScript's `useDefineForClassFields: false` option.
+    /// When you want to enable this, you also need to set [`crate::CompilerAssumptions::set_public_class_fields`]
+    /// to `true`. The `set_public_class_fields: true` + `remove_class_fields_without_initializer: true` is
+    /// equivalent to `useDefineForClassFields: false` in TypeScript.
+    ///
+    /// When `set_public_class_fields` is true and class-properties plugin is enabled, the above example transforms into:
+    ///
+    /// ```js
+    /// class Foo {
+    ///   constructor() {
+    ///     this.y = 0;
+    ///   }
+    /// }
+    /// ```
+    ///
+    /// Defaults to `false`.
+    pub remove_class_fields_without_initializer: Option<bool>,
     /// Also generate a `.d.ts` declaration file for TypeScript files.
     ///
     /// The source file must be compliant with all
@@ -252,6 +334,9 @@ impl From<TypeScriptOptions> for oxc::transformer::TypeScriptOptions {
             allow_namespaces: options.allow_namespaces.unwrap_or(ops.allow_namespaces),
             allow_declare_fields: options.allow_declare_fields.unwrap_or(ops.allow_declare_fields),
             optimize_const_enums: false,
+            remove_class_fields_without_initializer: options
+                .remove_class_fields_without_initializer
+                .unwrap_or(ops.remove_class_fields_without_initializer),
             rewrite_import_extensions: options.rewrite_import_extensions.and_then(|value| {
                 match value {
                     Either::A(v) => {
@@ -568,11 +653,11 @@ impl Compiler {
                                     "Inject plugin did not receive a tuple [string, string].",
                                 )]);
                             }
-                            let source = v[0].to_string();
+                            let source = &v[0];
                             Ok(if v[1] == "*" {
-                                InjectImport::namespace_specifier(&source, &local)
+                                InjectImport::namespace_specifier(source, &local)
                             } else {
-                                InjectImport::named_specifier(&source, Some(&v[1]), &local)
+                                InjectImport::named_specifier(source, Some(&v[1]), &local)
                             })
                         }
                     })
@@ -674,28 +759,11 @@ pub fn transform(
 ) -> TransformResult {
     let source_path = Path::new(&filename);
 
-    let source_type = match options.as_ref().and_then(|options| options.lang.as_deref()) {
-        Some("js") => SourceType::mjs(),
-        Some("jsx") => SourceType::jsx(),
-        Some("ts") => SourceType::ts(),
-        Some("tsx") => SourceType::tsx(),
-        Some(lang) => {
-            return TransformResult {
-                errors: vec![OxcError::new(format!("Incorrect lang '{lang}'"))],
-                ..Default::default()
-            };
-        }
-        None => {
-            let mut source_type = SourceType::from_path(source_path).unwrap_or_default();
-            // Force `script` or `module`
-            match options.as_ref().and_then(|options| options.source_type.as_deref()) {
-                Some("script") => source_type = source_type.with_script(true),
-                Some("module") => source_type = source_type.with_module(true),
-                _ => {}
-            }
-            source_type
-        }
-    };
+    let source_type = get_source_type(
+        &filename,
+        options.as_ref().and_then(|options| options.lang.as_deref()),
+        options.as_ref().and_then(|options| options.source_type.as_deref()),
+    );
 
     let mut compiler = match Compiler::new(options) {
         Ok(compiler) => compiler,
@@ -804,7 +872,7 @@ pub fn module_runner_transform(
     let (deps, dynamic_deps) =
         ModuleRunnerTransform::default().transform(&allocator, &mut program, scoping);
 
-    let CodegenReturn { code, map, .. } = CodeGenerator::new()
+    let CodegenReturn { code, map, .. } = Codegen::new()
         .with_options(CodegenOptions {
             source_map_path: options.and_then(|opts| {
                 opts.sourcemap.as_ref().and_then(|s| s.then(|| file_path.to_path_buf()))

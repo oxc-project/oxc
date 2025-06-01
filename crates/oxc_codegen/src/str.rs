@@ -1,7 +1,7 @@
 use std::slice;
 
 use oxc_ast::ast::StringLiteral;
-use oxc_data_structures::assert_unchecked;
+use oxc_data_structures::{assert_unchecked, pointer_ext::PointerExt};
 use oxc_syntax::identifier::{LS, NBSP, PS};
 
 use crate::Codegen;
@@ -118,10 +118,13 @@ impl PrintStringState<'_> {
     ///   before calling other methods e.g. `flush`.
     #[inline]
     unsafe fn consume_byte_unchecked(&mut self) {
-        debug_assert!(self.bytes.clone().next().is_some());
+        // `assert_unchecked!` produces less instructions than `self.bytes.next().unwrap_unchecked()`
+        // https://godbolt.org/z/TWzfK1eKj
+
         // SAFETY: Caller guarantees there is a byte to consume in `bytes` iterator,
         // and that consuming it leaves the iterator on a UTF-8 char boundary.
-        unsafe { self.bytes.next().unwrap_unchecked() };
+        unsafe { assert_unchecked!(!self.bytes.as_slice().is_empty()) };
+        self.bytes.next().unwrap();
     }
 
     /// Advance the `bytes` iterator by `N` bytes.
@@ -132,13 +135,16 @@ impl PrintStringState<'_> {
     /// * After this call, `bytes` iterator must be left on a UTF-8 character boundary.
     #[inline]
     unsafe fn consume_bytes_unchecked<const N: usize>(&mut self) {
-        debug_assert!(self.bytes.as_slice().len() >= N);
+        // `assert_unchecked!` produces many less instructions than
+        // `for _i in 0..N { self.bytes.next().unwrap_unchecked(); }`.
+        // The `unwrap` in loop below is required for compact assembly.
+        // https://godbolt.org/z/TWzfK1eKj
+
         // SAFETY: Caller guarantees there are `N` bytes to consume in `bytes` iterator,
         // and that consuming them leaves the iterator on a UTF-8 char boundary.
-        unsafe {
-            for _i in 0..N {
-                self.bytes.next().unwrap_unchecked();
-            }
+        unsafe { assert_unchecked!(self.bytes.as_slice().len() >= N) };
+        for _i in 0..N {
+            self.bytes.next().unwrap();
         }
     }
 
@@ -191,8 +197,7 @@ impl PrintStringState<'_> {
         // and the iterator only advances, so current position of `bytes` must be on or after `chunk_start`
         let len = unsafe {
             let bytes_ptr = self.bytes.as_slice().as_ptr();
-            let offset = bytes_ptr.offset_from(self.chunk_start);
-            usize::try_from(offset).unwrap_unchecked()
+            bytes_ptr.offset_from_usize(self.chunk_start)
         };
 
         // SAFETY: `chunk_start` is within bounds of original `&str`.

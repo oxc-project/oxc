@@ -4,6 +4,78 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.72.0] - 2025-05-24
+
+- c16ea02 allocator: [**BREAKING**] Remove `String` (#11262) (overlookmotel)
+
+### Features
+
+- 4feeeee span: Add `Atom::from_strs_array_in` method (#11261) (overlookmotel)
+
+### Refactor
+
+- f406202 ast, span: Use `StringBuilder` instead of `String` (#11258) (overlookmotel)
+
+## [0.71.0] - 2025-05-20
+
+- 5d9344f rust: [**BREAKING**] Clippy avoid-breaking-exported-api = false (#11088) (Boshen)
+
+### Documentation
+
+- 8570211 span: Fix incorrect comments for functions (#11138) (Ulrich Stark)
+
+### Refactor
+
+
+## [0.70.0] - 2025-05-15
+
+- 4e5c73b span: [**BREAKING**] `SourceType::from_path(".js")` return js instead of jsx (#11038) (Boshen)
+
+### Bug Fixes
+
+
+### Performance
+
+- c50b1a5 span: Faster conversion of path/extension to `SourceType` (#10996) (overlookmotel)
+
+### Refactor
+
+- 567368e span: Remove `source_type` module (#11024) (overlookmotel)
+
+### Styling
+
+- ff4d160 span: List exports individually (#11025) (overlookmotel)
+
+## [0.69.0] - 2025-05-09
+
+### Features
+
+- d066516 ast_tools: Support `#[estree(prepend_to)]` (#10849) (overlookmotel)
+
+### Refactor
+
+- b16331e ast/estree: Generalize concatenating fields with `Concat2` (#10848) (overlookmotel)
+
+### Styling
+
+- 62c3a4a ast_tools: Add full stop to end of generated comments (#10809) (overlookmotel)
+
+## [0.68.0] - 2025-05-03
+
+### Features
+
+- 0105253 span: Introduce `format_atom!` macro (#10722) (overlookmotel)
+
+### Bug Fixes
+
+- 48c542d linter: Skip linting vue <script> where `lang` is not js / ts (#10740) (Boshen)
+
+## [0.63.0] - 2025-04-08
+
+### Bug Fixes
+
+- 52f2a40 span/estree: Skip `ModuleKind::Unambiguous` varient for `estree` (#10146) (Dunqing)
+
 ## [0.62.0] - 2025-04-01
 
 ### Features

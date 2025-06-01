@@ -7,6 +7,7 @@ mod nextjs;
 mod promise;
 mod react;
 mod react_perf;
+mod regex;
 mod unicorn;
 mod url;
 mod vitest;
@@ -15,11 +16,11 @@ use std::{io, path::Path};
 
 pub use self::{
     comment::*, config::*, express::*, jest::*, jsdoc::*, nextjs::*, promise::*, react::*,
-    react_perf::*, unicorn::*, url::*, vitest::*,
+    react_perf::*, regex::*, unicorn::*, url::*, vitest::*,
 };
 
 /// List of Jest rules that have Vitest equivalents.
-const VITEST_COMPATIBLE_JEST_RULES: phf::Set<&'static str> = phf::phf_set! {
+const VITEST_COMPATIBLE_JEST_RULES: [&str; 34] = [
     "consistent-test-it",
     "expect-expect",
     "max-expects",
@@ -54,10 +55,10 @@ const VITEST_COMPATIBLE_JEST_RULES: phf::Set<&'static str> = phf::phf_set! {
     "require-top-level-describe",
     "valid-describe-callback",
     "valid-expect",
-};
+];
 
 // List of Eslint rules that have Typescript equivalents.
-const TYPESCRIPT_COMPATIBLE_ESLINT_RULES: phf::Set<&'static str> = phf::phf_set! {
+const TYPESCRIPT_COMPATIBLE_ESLINT_RULES: [&str; 18] = [
     "class-methods-use-this",
     "default-param-last",
     "init-declarations",
@@ -76,7 +77,6 @@ const TYPESCRIPT_COMPATIBLE_ESLINT_RULES: phf::Set<&'static str> = phf::phf_set!
     "no-unused-vars",
     "no-use-before-define",
     "no-useless-constructor",
-
     // these rules are equivalents, but not supported
     // "block-spacing",
     // "brace-style",
@@ -96,23 +96,28 @@ const TYPESCRIPT_COMPATIBLE_ESLINT_RULES: phf::Set<&'static str> = phf::phf_set!
     // "semi",
     // "space-before-blocks",
     // "space-before-function-paren",
-    // "space-infix-ops",
-};
+    // "space-infix-ops"
+];
 
 /// Check if the Jest rule is adapted to Vitest.
 /// Many Vitest rule are essentially ports of Jest plugin rules with minor modifications.
 /// For these rules, we use the corresponding jest rules with some adjustments for compatibility.
 pub fn is_jest_rule_adapted_to_vitest(rule_name: &str) -> bool {
-    VITEST_COMPATIBLE_JEST_RULES.contains(rule_name)
+    VITEST_COMPATIBLE_JEST_RULES.binary_search(&rule_name).is_ok()
 }
 
 /// Check if the Eslint rule is adapted to Typescript.
 /// Many Typescript rule are essentially ports of Eslint plugin rules with minor modifications.
 /// For these rules, we use the corresponding eslint rules with some adjustments for compatibility.
 pub fn is_eslint_rule_adapted_to_typescript(rule_name: &str) -> bool {
-    TYPESCRIPT_COMPATIBLE_ESLINT_RULES.contains(rule_name)
+    TYPESCRIPT_COMPATIBLE_ESLINT_RULES.binary_search(&rule_name).is_ok()
 }
 
+/// Reads the content of a path and returns it.
+/// This function is faster than native `fs:read_to_string`.
+///
+/// # Errors
+/// When the content of the path is not a valid UTF-8 bytes
 pub fn read_to_string(path: &Path) -> io::Result<String> {
     // `simdutf8` is faster than `std::str::from_utf8` which `fs::read_to_string` uses internally
     let bytes = std::fs::read(path)?;

@@ -8,7 +8,7 @@ use similar::TextDiff;
 
 use oxc::{
     allocator::Allocator,
-    codegen::{CodeGenerator, CodegenOptions},
+    codegen::{Codegen, CodegenOptions},
     diagnostics::{NamedSource, OxcDiagnostic},
     parser::{ParseOptions, Parser},
     span::{SourceType, VALID_EXTENSIONS},
@@ -90,10 +90,8 @@ impl TestCase {
     fn source_type(path: &Path, options: &BabelOptions) -> SourceType {
         // Some babel test cases have a js extension, but contain typescript code.
         // Therefore, if the typescript plugin exists, enable typescript.
-        let mut source_type = SourceType::from_path(path)
-            .unwrap()
-            .with_script(true)
-            .with_jsx(options.plugins.syntax_jsx);
+        let mut source_type =
+            SourceType::from_path(path).unwrap().with_script(true).with_jsx(options.is_jsx());
         source_type = match options.source_type.as_deref() {
             Some("unambiguous") => source_type.with_unambiguous(true),
             Some("script") => source_type.with_script(true),
@@ -231,7 +229,6 @@ impl TestCase {
         let project_root = project_root();
         let mut options = transform_options.clone();
         options.helper_loader.mode = mode;
-        options.proposals.explicit_resource_management = true;
         let cwd_path = self
             .options
             .cwd
@@ -285,7 +282,7 @@ impl TestCase {
         let input = fs::read_to_string(&self.path).unwrap();
 
         if filtered {
-            println!("input_path: {:?}", &self.path);
+            println!("input_path: {}", self.path.display());
             println!("output_path: {output_path:?}");
         }
 
@@ -326,7 +323,7 @@ impl TestCase {
                     // Clear comments to avoid pure annotation comments that cause mismatch.
                     ret.program.comments.clear();
 
-                    CodeGenerator::new()
+                    Codegen::new()
                         .with_options(CodegenOptions {
                             comments: false,
                             // Disable pure annotation comments for async_to_generator plugin,
@@ -407,7 +404,7 @@ impl TestCase {
 
     fn test_exec(&self, filtered: bool) {
         if filtered {
-            println!("input_path: {:?}", &self.path);
+            println!("input_path: {}", self.path.display());
             println!("Input:\n{}\n", fs::read_to_string(&self.path).unwrap());
         }
 

@@ -1,6 +1,5 @@
 ---
 source: crates/oxc_linter/src/tester.rs
-snapshot_kind: text
 ---
   ⚠ eslint(curly): Expected { after 'if' condition.
    ╭─[curly.tsx:1:10]

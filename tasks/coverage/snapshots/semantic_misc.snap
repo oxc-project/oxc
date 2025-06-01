@@ -1,54 +1,54 @@
 semantic_misc Summary:
-AST Parsed     : 34/34 (100.00%)
-Positive Passed: 19/34 (55.88%)
-tasks/coverage/misc/pass/oxc-1288.ts
-semantic error: Bindings mismatch:
+AST Parsed     : 36/36 (100.00%)
+Positive Passed: 21/36 (58.33%)
+semantic Error: tasks/coverage/misc/pass/oxc-1288.ts
+Bindings mismatch:
 after transform: ScopeId(0): ["from"]
 rebuilt        : ScopeId(0): []
 
-tasks/coverage/misc/pass/oxc-1289.ts
-semantic error: Bindings mismatch:
+semantic Error: tasks/coverage/misc/pass/oxc-1289.ts
+Bindings mismatch:
 after transform: ScopeId(0): ["infer", "target", "type"]
 rebuilt        : ScopeId(0): []
 
-tasks/coverage/misc/pass/oxc-2087.ts
-semantic error: Scope children mismatch:
+semantic Error: tasks/coverage/misc/pass/oxc-2087.ts
+Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1)]
 rebuilt        : ScopeId(0): []
 
-tasks/coverage/misc/pass/oxc-2394.ts
-semantic error: Scope children mismatch:
+semantic Error: tasks/coverage/misc/pass/oxc-2394.ts
+Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1)]
 rebuilt        : ScopeId(0): []
 
-tasks/coverage/misc/pass/oxc-2562.ts
-semantic error: Symbol span mismatch for "HooksController":
+semantic Error: tasks/coverage/misc/pass/oxc-2562.ts
+Symbol span mismatch for "HooksController":
 after transform: SymbolId(0): Span { start: 67, end: 82 }
 rebuilt        : SymbolId(1): Span { start: 0, end: 0 }
 Symbol span mismatch for "HooksController":
 after transform: SymbolId(1): Span { start: 0, end: 0 }
 rebuilt        : SymbolId(2): Span { start: 67, end: 82 }
 
-tasks/coverage/misc/pass/oxc-2592.ts
-semantic error: Scope children mismatch:
+semantic Error: tasks/coverage/misc/pass/oxc-2592.ts
+Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1)]
 rebuilt        : ScopeId(0): []
 
-tasks/coverage/misc/pass/oxc-3443.tsx
-semantic error: Unresolved references mismatch:
+semantic Error: tasks/coverage/misc/pass/oxc-3443.tsx
+Unresolved references mismatch:
 after transform: ["F"]
 rebuilt        : []
 
-tasks/coverage/misc/pass/oxc-3910.ts
-semantic error: Scope children mismatch:
+semantic Error: tasks/coverage/misc/pass/oxc-3910.ts
+Scope children mismatch:
 after transform: ScopeId(2): [ScopeId(3)]
 rebuilt        : ScopeId(2): []
 Unresolved references mismatch:
 after transform: ["ServicesAccessor"]
 rebuilt        : []
 
-tasks/coverage/misc/pass/oxc-3948-1.ts
-semantic error: Bindings mismatch:
+semantic Error: tasks/coverage/misc/pass/oxc-3948-1.ts
+Bindings mismatch:
 after transform: ScopeId(0): ["BrowserWorkingCopyBackupTracker", "CancellationToken", "DisposableStore", "EditorPart", "EditorService", "IEditorGroupsService", "IEditorService", "IFilesConfigurationService", "IInstantiationService", "ILifecycleService", "ILogService", "IUntitledTextResourceEditorInput", "IWorkingCopyBackup", "IWorkingCopyBackupService", "IWorkingCopyEditorHandler", "IWorkingCopyEditorService", "IWorkingCopyService", "InMemoryTestWorkingCopyBackupService", "LifecyclePhase", "Schemas", "TestServiceAccessor", "TestWorkingCopy", "URI", "UntitledTextEditorInput", "VSBuffer", "_asyncToGenerator", "_decorate", "_decorateMetadata", "_decorateParam", "_defineProperty", "assert", "bufferToReadable", "createEditorPart", "ensureNoDisposablesAreLeakedInTestSuite", "isWindows", "registerTestResourceEditor", "timeout", "toResource", "toTypedWorkingCopyId", "toUntypedWorkingCopyId", "workbenchInstantiationService", "workbenchTeardown"]
 rebuilt        : ScopeId(0): ["BrowserWorkingCopyBackupTracker", "DisposableStore", "EditorService", "IEditorGroupsService", "IEditorService", "IFilesConfigurationService", "ILifecycleService", "ILogService", "IWorkingCopyBackupService", "IWorkingCopyEditorService", "IWorkingCopyService", "InMemoryTestWorkingCopyBackupService", "LifecyclePhase", "Schemas", "TestServiceAccessor", "TestWorkingCopy", "URI", "UntitledTextEditorInput", "VSBuffer", "_asyncToGenerator", "_decorate", "_decorateMetadata", "_decorateParam", "_defineProperty", "assert", "bufferToReadable", "createEditorPart", "ensureNoDisposablesAreLeakedInTestSuite", "isWindows", "registerTestResourceEditor", "timeout", "toResource", "toTypedWorkingCopyId", "toUntypedWorkingCopyId", "workbenchInstantiationService", "workbenchTeardown"]
 Symbol reference IDs mismatch for "URI":
@@ -103,8 +103,8 @@ Unresolved reference IDs mismatch for "Promise":
 after transform: [ReferenceId(36), ReferenceId(39), ReferenceId(82), ReferenceId(114), ReferenceId(153), ReferenceId(282)]
 rebuilt        : [ReferenceId(343)]
 
-tasks/coverage/misc/pass/oxc-4449.ts
-semantic error: Bindings mismatch:
+semantic Error: tasks/coverage/misc/pass/oxc-4449.ts
+Bindings mismatch:
 after transform: ScopeId(1): ["A", "baz"]
 rebuilt        : ScopeId(1): ["A"]
 Scope flags mismatch:
@@ -177,31 +177,31 @@ Symbol flags mismatch for "H":
 after transform: SymbolId(14): SymbolFlags(RegularEnum)
 rebuilt        : SymbolId(14): SymbolFlags(FunctionScopedVariable)
 
-tasks/coverage/misc/pass/oxc-5177.ts
-semantic error: Scope children mismatch:
+semantic Error: tasks/coverage/misc/pass/oxc-5177.ts
+Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
 rebuilt        : ScopeId(0): [ScopeId(1)]
 
-tasks/coverage/misc/pass/oxc-5955.ts
-semantic error: Scope children mismatch:
+semantic Error: tasks/coverage/misc/pass/oxc-5955.ts
+Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3)]
 rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2)]
 
-tasks/coverage/misc/pass/oxc-8193.ts
-semantic error: Scope flags mismatch:
+semantic Error: tasks/coverage/misc/pass/oxc-8193.ts
+Scope flags mismatch:
 after transform: ScopeId(1): ScopeFlags(StrictMode)
 rebuilt        : ScopeId(1): ScopeFlags(StrictMode | Function)
 Symbol flags mismatch for "A":
 after transform: SymbolId(0): SymbolFlags(ConstEnum)
 rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
 
-tasks/coverage/misc/pass/oxc-9215.ts
-semantic error: Unresolved references mismatch:
+semantic Error: tasks/coverage/misc/pass/oxc-9215.ts
+Unresolved references mismatch:
 after transform: ["a", "b", "d", "e"]
 rebuilt        : ["a", "b", "e"]
 
-tasks/coverage/misc/pass/swc-7187.ts
-semantic error: Scope children mismatch:
+semantic Error: tasks/coverage/misc/pass/swc-7187.ts
+Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1)]
 rebuilt        : ScopeId(0): []
 

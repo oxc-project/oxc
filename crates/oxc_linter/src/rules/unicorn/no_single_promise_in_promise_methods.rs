@@ -30,8 +30,7 @@ declare_oxc_lint!(
     /// Passing a single-element array to `Promise.all()`, `Promise.any()`, or
     /// `Promise.race()` is likely a mistake.
     ///
-    ///
-    /// ### Example
+    /// ### Examples
     ///
     /// Examples of **incorrect** code for this rule:
     /// ```javascript
@@ -53,7 +52,6 @@ declare_oxc_lint!(
     ///     const [{ value: foo, reason: error }] = await Promise.allSettled([promise]);
     /// }
     /// ```
-    ///
     NoSinglePromiseInPromiseMethods,
     unicorn,
     correctness,
@@ -136,8 +134,8 @@ fn is_fixable(call_node_id: NodeId, ctx: &LintContext<'_>) -> bool {
             | AstKind::VariableDeclarator(_)
             | AstKind::AssignmentExpression(_)
             | AstKind::ReturnStatement(_) => return false,
-            AstKind::AwaitExpression(_) => continue,
-            kind if is_ignorable_kind(&kind) => continue,
+            AstKind::AwaitExpression(_) => {}
+            kind if is_ignorable_kind(&kind) => {}
             _ => return true,
         }
     }

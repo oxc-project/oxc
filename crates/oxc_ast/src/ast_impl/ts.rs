@@ -12,10 +12,15 @@ use crate::ast::*;
 
 impl<'a> TSEnumMemberName<'a> {
     /// Get the name of this enum member.
+    /// # Panics
+    /// Panics if `self` is a `TemplateString` with no quasi.
     pub fn static_name(&self) -> Atom<'a> {
         match self {
             Self::Identifier(ident) => ident.name,
-            Self::String(lit) => lit.value,
+            Self::String(lit) | Self::ComputedString(lit) => lit.value,
+            Self::ComputedTemplateString(template) => template
+                .quasi()
+                .expect("`TSEnumMemberName::TemplateString` should have no substitution and at least one quasi"),
         }
     }
 }
@@ -179,7 +184,7 @@ impl TSModuleDeclarationKind {
 
     /// Declaration keyword as a string, identical to how it would appear in the
     /// source code.
-    pub fn as_str(&self) -> &'static str {
+    pub fn as_str(self) -> &'static str {
         match self {
             Self::Global => "global",
             Self::Module => "module",
@@ -290,12 +295,12 @@ impl<'a> Decorator<'a> {
 
 impl ImportOrExportKind {
     /// Returns `true` for "regular" imports and exports.
-    pub fn is_value(&self) -> bool {
+    pub fn is_value(self) -> bool {
         matches!(self, Self::Value)
     }
 
     /// Returns `true` if this is an `import type` or `export type` statement.
-    pub fn is_type(&self) -> bool {
+    pub fn is_type(self) -> bool {
         matches!(self, Self::Type)
     }
 }

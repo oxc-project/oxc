@@ -29,7 +29,7 @@ declare_oxc_lint!(
     ///
     /// Throwing a `TypeError` instead of a generic `Error` after a type checking if-statement is more specific and helps to catch bugs.
     ///
-    /// ### Example
+    /// ### Examples
     ///
     /// Examples of **incorrect** code for this rule:
     /// ```javascript
@@ -129,7 +129,7 @@ fn is_typechecking_call_expr(call_expr: &CallExpression) -> bool {
 
     match &call_expr.callee {
         Expression::Identifier(ident) => {
-            TYPE_CHECKING_GLOBAL_IDENTIFIERS.contains(ident.name.as_str())
+            TYPE_CHECKING_GLOBAL_IDENTIFIERS.contains(&ident.name.as_str())
         }
         callee @ match_member_expression!(Expression) => {
             if let Some(ident) = callee.to_member_expression().static_property_name() {
@@ -149,7 +149,7 @@ fn is_type_checking_member_expr(member_expr: &MemberExpression) -> bool {
     false
 }
 
-const TYPE_CHECKING_IDENTIFIERS: phf::Set<&'static str> = phf::phf_set!(
+const TYPE_CHECKING_IDENTIFIERS: phf::Set<&'static str> = phf::phf_set![
     "isArray",
     "isArrayBuffer",
     "isArrayLike",
@@ -186,10 +186,9 @@ const TYPE_CHECKING_IDENTIFIERS: phf::Set<&'static str> = phf::phf_set!(
     "isWeakSet",
     "isWindow",
     "isXMLDoc",
-);
+];
 
-const TYPE_CHECKING_GLOBAL_IDENTIFIERS: phf::Set<&'static str> =
-    phf::phf_set!("isFinite", "isNaN",);
+const TYPE_CHECKING_GLOBAL_IDENTIFIERS: [&str; 2] = ["isFinite", "isNaN"];
 
 #[test]
 fn test() {
@@ -448,15 +447,16 @@ fn test() {
         //             throw new TypeError;
         //         }
         //         "#,
-        r#"
+        r"
             if (typeof foo == 'Foo' || 'Foo' === typeof foo) {
                 throw new Error();
             }
-        r#"
+        ",
+        r"
             if (Number.isFinite(foo) && Number.isSafeInteger(foo) && Number.isInteger(foo)) {
                 throw new Error();
             }
-        "#,
+        ",
         r"
             if (wrapper.n.isFinite(foo) && wrapper.n.isSafeInteger(foo) && wrapper.n.isInteger(foo)) {
                 throw new Error();

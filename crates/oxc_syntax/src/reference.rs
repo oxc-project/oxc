@@ -19,6 +19,19 @@ use oxc_ast_macros::ast;
 #[estree(skip)]
 pub struct ReferenceId(NonMaxU32);
 
+impl Idx for ReferenceId {
+    #[expect(clippy::cast_possible_truncation)]
+    fn from_usize(idx: usize) -> Self {
+        assert!(idx < u32::MAX as usize);
+        // SAFETY: We just checked `idx` is a legal value for `NonMaxU32`
+        Self(unsafe { NonMaxU32::new_unchecked(idx as u32) })
+    }
+
+    fn index(self) -> usize {
+        self.0.get() as usize
+    }
+}
+
 impl<'alloc> CloneIn<'alloc> for ReferenceId {
     type Cloned = Self;
 
@@ -31,19 +44,6 @@ impl<'alloc> CloneIn<'alloc> for ReferenceId {
     #[inline(always)]
     fn clone_in_with_semantic_ids(&self, _: &'alloc Allocator) -> Self {
         *self
-    }
-}
-
-impl Idx for ReferenceId {
-    #[expect(clippy::cast_possible_truncation)]
-    fn from_usize(idx: usize) -> Self {
-        assert!(idx < u32::MAX as usize);
-        // SAFETY: We just checked `idx` is a legal value for `NonMaxU32`
-        Self(unsafe { NonMaxU32::new_unchecked(idx as u32) })
-    }
-
-    fn index(self) -> usize {
-        self.0.get() as usize
     }
 }
 
@@ -159,43 +159,43 @@ impl ReferenceFlags {
 
     /// The identifier is read from. It may also be written to.
     #[inline]
-    pub const fn is_read(&self) -> bool {
+    pub const fn is_read(self) -> bool {
         self.intersects(Self::Read)
     }
 
     /// The identifier is only read from.
     #[inline]
-    pub const fn is_read_only(&self) -> bool {
+    pub const fn is_read_only(self) -> bool {
         !self.contains(Self::Write)
     }
 
     /// The identifier is written to. It may also be read from.
     #[inline]
-    pub const fn is_write(&self) -> bool {
+    pub const fn is_write(self) -> bool {
         self.intersects(Self::Write)
     }
 
     /// The identifier is only written to. It is not read from in this reference.
     #[inline]
-    pub const fn is_write_only(&self) -> bool {
+    pub const fn is_write_only(self) -> bool {
         !self.contains(Self::Read)
     }
 
     /// The identifier is both read from and written to, e.g `a += 1`.
     #[inline]
-    pub fn is_read_write(&self) -> bool {
+    pub fn is_read_write(self) -> bool {
         self.contains(Self::Read | Self::Write)
     }
 
     /// Checks if the reference is a value being used in a type context.
     #[inline]
-    pub fn is_value_as_type(&self) -> bool {
+    pub fn is_value_as_type(self) -> bool {
         self.contains(Self::ValueAsType)
     }
 
     /// The identifier is used in a type definition.
     #[inline]
-    pub const fn is_type(&self) -> bool {
+    pub const fn is_type(self) -> bool {
         self.contains(Self::Type)
     }
 
@@ -205,7 +205,7 @@ impl ReferenceFlags {
     }
 
     #[inline]
-    pub const fn is_value(&self) -> bool {
+    pub const fn is_value(self) -> bool {
         self.intersects(Self::Value)
     }
 }

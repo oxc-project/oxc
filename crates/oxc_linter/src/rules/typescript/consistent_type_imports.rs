@@ -32,8 +32,8 @@ fn type_over_value_diagnostic(span: Span) -> OxcDiagnostic {
         .with_label(span)
 }
 
-fn some_imports_are_only_types_diagnostic(span: Span, x1: &str) -> OxcDiagnostic {
-    OxcDiagnostic::warn(format!("Imports {x1} are only used as type.")).with_label(span)
+fn some_imports_are_only_types_diagnostic(span: Span, type_imports: &str) -> OxcDiagnostic {
+    OxcDiagnostic::warn(format!("Imports {type_imports} are only used as type.")).with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -56,7 +56,7 @@ pub struct ConsistentTypeImportsConfig {
 }
 
 // The default of `disallowTypeAnnotations` is `true`.
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Copy)]
 struct DisallowTypeAnnotations(bool);
 
 impl DisallowTypeAnnotations {
@@ -68,6 +68,20 @@ impl DisallowTypeAnnotations {
 impl Default for DisallowTypeAnnotations {
     fn default() -> Self {
         Self(true)
+    }
+}
+impl From<bool> for DisallowTypeAnnotations {
+    #[inline]
+    fn from(value: bool) -> Self {
+        Self(value)
+    }
+}
+
+impl Deref for DisallowTypeAnnotations {
+    type Target = bool;
+    #[inline]
+    fn deref(&self) -> &Self::Target {
+        &self.0
     }
 }
 
@@ -94,16 +108,23 @@ declare_oxc_lint!(
     ///
     /// inconsistent usage of type imports can make the code harder to read and understand.
     ///
-    /// ### Example
+    /// ### Examples
+    ///
+    /// Examples of **incorrect** code for this rule:
     /// ```ts
     /// import { Foo } from 'Foo';
     /// type T = Foo;
     ///
     /// type S = import("Foo");
     /// ```
+    ///
+    /// Examples of **correct** code for this rule:
+    /// ```ts
+    /// import type { Foo } from 'Foo';
+    /// ```
     ConsistentTypeImports,
     typescript,
-    nursery,
+    style,
     conditional_fix
 );
 
@@ -139,7 +160,7 @@ impl Rule for ConsistentTypeImports {
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        if self.disallow_type_annotations.0 {
+        if *self.disallow_type_annotations {
             //  `import()` type annotations are forbidden.
             // `type Foo = import('foo')`
             if let AstKind::TSImportType(import_type) = node.kind() {
@@ -209,8 +230,19 @@ impl Rule for ConsistentTypeImports {
                     ImportDeclarationSpecifier::ImportSpecifier(specifier) => {
                         specifier.import_kind.is_value()
                     }
-                    ImportDeclarationSpecifier::ImportDefaultSpecifier(_)
-                    | ImportDeclarationSpecifier::ImportNamespaceSpecifier(_) => true,
+                    // TODO: consume tsconfig and see if React is needed based on "jsx" field
+                    ImportDeclarationSpecifier::ImportDefaultSpecifier(specifier) => {
+                        if specifier.local.name == "React" {
+                            continue;
+                        }
+                        true
+                    }
+                    ImportDeclarationSpecifier::ImportNamespaceSpecifier(specifier) => {
+                        if specifier.local.name == "React" {
+                            continue;
+                        }
+                        true
+                    }
                 };
 
                 if no_type_qualifier && is_only_has_type_references(symbol_id, ctx) {
@@ -509,7 +541,8 @@ fn fix_to_type_import_declaration<'a>(options: &FixOptions<'a, '_>) -> FixerResu
     Ok(rule_fixes
         .extend(fixes_named_specifiers.remove_type_name_specifiers)
         .extend(fixes_remove_type_namespace_specifier)
-        .extend(after_fixes))
+        .extend(after_fixes)
+        .with_message("Mark all type-only imports with the type specifier"))
 }
 
 fn fix_insert_named_specifiers_in_named_specifier_list<'a>(
@@ -753,7 +786,7 @@ fn fix_inline_type_import_declaration<'a>(
         }
     }
 
-    Ok(rule_fixes)
+    Ok(rule_fixes.with_message("Add type specifier to imported types"))
 }
 
 fn fix_insert_type_specifier_for_import_declaration<'a>(
@@ -825,7 +858,7 @@ fn fix_insert_type_specifier_for_import_declaration<'a>(
         }
     }
 
-    Ok(rule_fixes)
+    Ok(rule_fixes.with_message("Add type specifier to this import declaration"))
 }
 
 struct GroupedSpecifiers<'a, 'b> {
@@ -1237,17 +1270,19 @@ fn test() {
             Some(serde_json::json!([{ "prefer": "no-type-imports" }])),
         ),
         // TODO: https://github.com/typescript-eslint/typescript-eslint/issues/2455#issuecomment-685015542
+        // TODO: provide tsc compilerOptions to lint rules, use that to ignore
+        // jsx factories and `Fragment`s.
         // import React has side effect.
-        // (
-        //     "
-        //       import React from 'react';
+        (
+            "
+              import React from 'react';
 
-        //       export const ComponentFoo: React.FC = () => {
-        //         return <div>Foo Foo</div>;
-        //       };
-        //     ",
-        //     None,
-        // ),
+              export const ComponentFoo: React.FC = () => {
+                return <div>Foo Foo</div>;
+              };
+            ",
+            None,
+        ),
         // (
         //     "
         //       import { h } from 'some-other-jsx-lib';

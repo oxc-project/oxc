@@ -1,5 +1,5 @@
 // Auto-generated code, DO NOT EDIT DIRECTLY!
-// To edit this generated file you have to edit `tasks/ast_tools/src/derives/content_eq.rs`
+// To edit this generated file you have to edit `tasks/ast_tools/src/derives/content_eq.rs`.
 
 #![allow(clippy::match_same_arms)]
 
@@ -186,14 +186,6 @@ impl ContentEq for Modifiers {
     fn content_eq(&self, other: &Self) -> bool {
         ContentEq::content_eq(&self.enabling, &other.enabling)
             && ContentEq::content_eq(&self.disabling, &other.disabling)
-    }
-}
-
-impl ContentEq for Modifier {
-    fn content_eq(&self, other: &Self) -> bool {
-        ContentEq::content_eq(&self.ignore_case, &other.ignore_case)
-            && ContentEq::content_eq(&self.multiline, &other.multiline)
-            && ContentEq::content_eq(&self.sticky, &other.sticky)
     }
 }
 

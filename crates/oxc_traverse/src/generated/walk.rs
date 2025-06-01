@@ -8,6 +8,7 @@
     clippy::ref_as_ptr,
     clippy::cast_ptr_alignment,
     clippy::borrow_as_ptr,
+    clippy::match_same_arms,
     unsafe_op_in_unsafe_fn
 )]
 
@@ -494,13 +495,6 @@ unsafe fn walk_tagged_template_expression<'a, Tr: Traverse<'a>>(
         (node as *mut u8).add(ancestor::OFFSET_TAGGED_TEMPLATE_EXPRESSION_TAG) as *mut Expression,
         ctx,
     );
-    ctx.retag_stack(AncestorType::TaggedTemplateExpressionQuasi);
-    walk_template_literal(
-        traverser,
-        (node as *mut u8).add(ancestor::OFFSET_TAGGED_TEMPLATE_EXPRESSION_QUASI)
-            as *mut TemplateLiteral,
-        ctx,
-    );
     if let Some(field) = &mut *((node as *mut u8)
         .add(ancestor::OFFSET_TAGGED_TEMPLATE_EXPRESSION_TYPE_ARGUMENTS)
         as *mut Option<Box<TSTypeParameterInstantiation>>)
@@ -508,6 +502,13 @@ unsafe fn walk_tagged_template_expression<'a, Tr: Traverse<'a>>(
         ctx.retag_stack(AncestorType::TaggedTemplateExpressionTypeArguments);
         walk_ts_type_parameter_instantiation(traverser, (&mut **field) as *mut _, ctx);
     }
+    ctx.retag_stack(AncestorType::TaggedTemplateExpressionQuasi);
+    walk_template_literal(
+        traverser,
+        (node as *mut u8).add(ancestor::OFFSET_TAGGED_TEMPLATE_EXPRESSION_QUASI)
+            as *mut TemplateLiteral,
+        ctx,
+    );
     ctx.pop_stack(pop_token);
     traverser.exit_tagged_template_expression(&mut *node, ctx);
 }
@@ -662,18 +663,18 @@ unsafe fn walk_new_expression<'a, Tr: Traverse<'a>>(
         (node as *mut u8).add(ancestor::OFFSET_NEW_EXPRESSION_CALLEE) as *mut Expression,
         ctx,
     );
-    ctx.retag_stack(AncestorType::NewExpressionArguments);
-    for item in &mut *((node as *mut u8).add(ancestor::OFFSET_NEW_EXPRESSION_ARGUMENTS)
-        as *mut Vec<Argument>)
-    {
-        walk_argument(traverser, item as *mut _, ctx);
-    }
     if let Some(field) = &mut *((node as *mut u8)
         .add(ancestor::OFFSET_NEW_EXPRESSION_TYPE_ARGUMENTS)
         as *mut Option<Box<TSTypeParameterInstantiation>>)
     {
         ctx.retag_stack(AncestorType::NewExpressionTypeArguments);
         walk_ts_type_parameter_instantiation(traverser, (&mut **field) as *mut _, ctx);
+    }
+    ctx.retag_stack(AncestorType::NewExpressionArguments);
+    for item in &mut *((node as *mut u8).add(ancestor::OFFSET_NEW_EXPRESSION_ARGUMENTS)
+        as *mut Vec<Argument>)
+    {
+        walk_argument(traverser, item as *mut _, ctx);
     }
     ctx.pop_stack(pop_token);
     traverser.exit_new_expression(&mut *node, ctx);
@@ -2508,13 +2509,11 @@ unsafe fn walk_class<'a, Tr: Traverse<'a>>(
         ctx.retag_stack(AncestorType::ClassSuperTypeArguments);
         walk_ts_type_parameter_instantiation(traverser, (&mut **field) as *mut _, ctx);
     }
-    if let Some(field) = &mut *((node as *mut u8).add(ancestor::OFFSET_CLASS_IMPLEMENTS)
-        as *mut Option<Vec<TSClassImplements>>)
+    ctx.retag_stack(AncestorType::ClassImplements);
+    for item in &mut *((node as *mut u8).add(ancestor::OFFSET_CLASS_IMPLEMENTS)
+        as *mut Vec<TSClassImplements>)
     {
-        ctx.retag_stack(AncestorType::ClassImplements);
-        for item in field.iter_mut() {
-            walk_ts_class_implements(traverser, item as *mut _, ctx);
-        }
+        walk_ts_class_implements(traverser, item as *mut _, ctx);
     }
     ctx.retag_stack(AncestorType::ClassBody);
     walk_class_body(
@@ -2622,18 +2621,18 @@ unsafe fn walk_property_definition<'a, Tr: Traverse<'a>>(
         (node as *mut u8).add(ancestor::OFFSET_PROPERTY_DEFINITION_KEY) as *mut PropertyKey,
         ctx,
     );
-    if let Some(field) = &mut *((node as *mut u8).add(ancestor::OFFSET_PROPERTY_DEFINITION_VALUE)
-        as *mut Option<Expression>)
-    {
-        ctx.retag_stack(AncestorType::PropertyDefinitionValue);
-        walk_expression(traverser, field as *mut _, ctx);
-    }
     if let Some(field) = &mut *((node as *mut u8)
         .add(ancestor::OFFSET_PROPERTY_DEFINITION_TYPE_ANNOTATION)
         as *mut Option<Box<TSTypeAnnotation>>)
     {
         ctx.retag_stack(AncestorType::PropertyDefinitionTypeAnnotation);
         walk_ts_type_annotation(traverser, (&mut **field) as *mut _, ctx);
+    }
+    if let Some(field) = &mut *((node as *mut u8).add(ancestor::OFFSET_PROPERTY_DEFINITION_VALUE)
+        as *mut Option<Expression>)
+    {
+        ctx.retag_stack(AncestorType::PropertyDefinitionValue);
+        walk_expression(traverser, field as *mut _, ctx);
     }
     ctx.pop_stack(pop_token);
     traverser.exit_property_definition(&mut *node, ctx);
@@ -2727,18 +2726,18 @@ unsafe fn walk_accessor_property<'a, Tr: Traverse<'a>>(
         (node as *mut u8).add(ancestor::OFFSET_ACCESSOR_PROPERTY_KEY) as *mut PropertyKey,
         ctx,
     );
-    if let Some(field) = &mut *((node as *mut u8).add(ancestor::OFFSET_ACCESSOR_PROPERTY_VALUE)
-        as *mut Option<Expression>)
-    {
-        ctx.retag_stack(AncestorType::AccessorPropertyValue);
-        walk_expression(traverser, field as *mut _, ctx);
-    }
     if let Some(field) = &mut *((node as *mut u8)
         .add(ancestor::OFFSET_ACCESSOR_PROPERTY_TYPE_ANNOTATION)
         as *mut Option<Box<TSTypeAnnotation>>)
     {
         ctx.retag_stack(AncestorType::AccessorPropertyTypeAnnotation);
         walk_ts_type_annotation(traverser, (&mut **field) as *mut _, ctx);
+    }
+    if let Some(field) = &mut *((node as *mut u8).add(ancestor::OFFSET_ACCESSOR_PROPERTY_VALUE)
+        as *mut Option<Expression>)
+    {
+        ctx.retag_stack(AncestorType::AccessorPropertyValue);
+        walk_expression(traverser, field as *mut _, ctx);
     }
     ctx.pop_stack(pop_token);
     traverser.exit_accessor_property(&mut *node, ctx);
@@ -2758,11 +2757,11 @@ unsafe fn walk_import_expression<'a, Tr: Traverse<'a>>(
         (node as *mut u8).add(ancestor::OFFSET_IMPORT_EXPRESSION_SOURCE) as *mut Expression,
         ctx,
     );
-    ctx.retag_stack(AncestorType::ImportExpressionOptions);
-    for item in &mut *((node as *mut u8).add(ancestor::OFFSET_IMPORT_EXPRESSION_OPTIONS)
-        as *mut Vec<Expression>)
+    if let Some(field) = &mut *((node as *mut u8).add(ancestor::OFFSET_IMPORT_EXPRESSION_OPTIONS)
+        as *mut Option<Expression>)
     {
-        walk_expression(traverser, item as *mut _, ctx);
+        ctx.retag_stack(AncestorType::ImportExpressionOptions);
+        walk_expression(traverser, field as *mut _, ctx);
     }
     ctx.pop_stack(pop_token);
     traverser.exit_import_expression(&mut *node, ctx);
@@ -3195,17 +3194,17 @@ unsafe fn walk_jsx_element<'a, Tr: Traverse<'a>>(
             as *mut Box<JSXOpeningElement>)) as *mut _,
         ctx,
     );
-    if let Some(field) = &mut *((node as *mut u8).add(ancestor::OFFSET_JSX_ELEMENT_CLOSING_ELEMENT)
-        as *mut Option<Box<JSXClosingElement>>)
-    {
-        ctx.retag_stack(AncestorType::JSXElementClosingElement);
-        walk_jsx_closing_element(traverser, (&mut **field) as *mut _, ctx);
-    }
     ctx.retag_stack(AncestorType::JSXElementChildren);
     for item in
         &mut *((node as *mut u8).add(ancestor::OFFSET_JSX_ELEMENT_CHILDREN) as *mut Vec<JSXChild>)
     {
         walk_jsx_child(traverser, item as *mut _, ctx);
+    }
+    if let Some(field) = &mut *((node as *mut u8).add(ancestor::OFFSET_JSX_ELEMENT_CLOSING_ELEMENT)
+        as *mut Option<Box<JSXClosingElement>>)
+    {
+        ctx.retag_stack(AncestorType::JSXElementClosingElement);
+        walk_jsx_closing_element(traverser, (&mut **field) as *mut _, ctx);
     }
     ctx.pop_stack(pop_token);
     traverser.exit_jsx_element(&mut *node, ctx);
@@ -3225,18 +3224,18 @@ unsafe fn walk_jsx_opening_element<'a, Tr: Traverse<'a>>(
         (node as *mut u8).add(ancestor::OFFSET_JSX_OPENING_ELEMENT_NAME) as *mut JSXElementName,
         ctx,
     );
-    ctx.retag_stack(AncestorType::JSXOpeningElementAttributes);
-    for item in &mut *((node as *mut u8).add(ancestor::OFFSET_JSX_OPENING_ELEMENT_ATTRIBUTES)
-        as *mut Vec<JSXAttributeItem>)
-    {
-        walk_jsx_attribute_item(traverser, item as *mut _, ctx);
-    }
     if let Some(field) = &mut *((node as *mut u8)
         .add(ancestor::OFFSET_JSX_OPENING_ELEMENT_TYPE_ARGUMENTS)
         as *mut Option<Box<TSTypeParameterInstantiation>>)
     {
         ctx.retag_stack(AncestorType::JSXOpeningElementTypeArguments);
         walk_ts_type_parameter_instantiation(traverser, (&mut **field) as *mut _, ctx);
+    }
+    ctx.retag_stack(AncestorType::JSXOpeningElementAttributes);
+    for item in &mut *((node as *mut u8).add(ancestor::OFFSET_JSX_OPENING_ELEMENT_ATTRIBUTES)
+        as *mut Vec<JSXAttributeItem>)
+    {
+        walk_jsx_attribute_item(traverser, item as *mut _, ctx);
     }
     ctx.pop_stack(pop_token);
     traverser.exit_jsx_opening_element(&mut *node, ctx);
@@ -3275,6 +3274,12 @@ unsafe fn walk_jsx_fragment<'a, Tr: Traverse<'a>>(
             as *mut JSXOpeningFragment,
         ctx,
     );
+    ctx.retag_stack(AncestorType::JSXFragmentChildren);
+    for item in
+        &mut *((node as *mut u8).add(ancestor::OFFSET_JSX_FRAGMENT_CHILDREN) as *mut Vec<JSXChild>)
+    {
+        walk_jsx_child(traverser, item as *mut _, ctx);
+    }
     ctx.retag_stack(AncestorType::JSXFragmentClosingFragment);
     walk_jsx_closing_fragment(
         traverser,
@@ -3282,12 +3287,6 @@ unsafe fn walk_jsx_fragment<'a, Tr: Traverse<'a>>(
             as *mut JSXClosingFragment,
         ctx,
     );
-    ctx.retag_stack(AncestorType::JSXFragmentChildren);
-    for item in
-        &mut *((node as *mut u8).add(ancestor::OFFSET_JSX_FRAGMENT_CHILDREN) as *mut Vec<JSXChild>)
-    {
-        walk_jsx_child(traverser, item as *mut _, ctx);
-    }
     ctx.pop_stack(pop_token);
     traverser.exit_jsx_fragment(&mut *node, ctx);
 }
@@ -3740,15 +3739,33 @@ unsafe fn walk_ts_enum_declaration<'a, Tr: Traverse<'a>>(
         .get()
         .unwrap();
     ctx.set_current_scope_id(current_scope_id);
-    ctx.retag_stack(AncestorType::TSEnumDeclarationMembers);
-    for item in &mut *((node as *mut u8).add(ancestor::OFFSET_TS_ENUM_DECLARATION_MEMBERS)
+    ctx.retag_stack(AncestorType::TSEnumDeclarationBody);
+    walk_ts_enum_body(
+        traverser,
+        (node as *mut u8).add(ancestor::OFFSET_TS_ENUM_DECLARATION_BODY) as *mut TSEnumBody,
+        ctx,
+    );
+    ctx.pop_stack(pop_token);
+    ctx.set_current_scope_id(previous_scope_id);
+    traverser.exit_ts_enum_declaration(&mut *node, ctx);
+}
+
+unsafe fn walk_ts_enum_body<'a, Tr: Traverse<'a>>(
+    traverser: &mut Tr,
+    node: *mut TSEnumBody<'a>,
+    ctx: &mut TraverseCtx<'a>,
+) {
+    traverser.enter_ts_enum_body(&mut *node, ctx);
+    let pop_token = ctx.push_stack(Ancestor::TSEnumBodyMembers(
+        ancestor::TSEnumBodyWithoutMembers(node, PhantomData),
+    ));
+    for item in &mut *((node as *mut u8).add(ancestor::OFFSET_TS_ENUM_BODY_MEMBERS)
         as *mut Vec<TSEnumMember>)
     {
         walk_ts_enum_member(traverser, item as *mut _, ctx);
     }
     ctx.pop_stack(pop_token);
-    ctx.set_current_scope_id(previous_scope_id);
-    traverser.exit_ts_enum_declaration(&mut *node, ctx);
+    traverser.exit_ts_enum_body(&mut *node, ctx);
 }
 
 unsafe fn walk_ts_enum_member<'a, Tr: Traverse<'a>>(
@@ -3786,6 +3803,12 @@ unsafe fn walk_ts_enum_member_name<'a, Tr: Traverse<'a>>(
         }
         TSEnumMemberName::String(node) => {
             walk_string_literal(traverser, (&mut **node) as *mut _, ctx)
+        }
+        TSEnumMemberName::ComputedString(node) => {
+            walk_string_literal(traverser, (&mut **node) as *mut _, ctx)
+        }
+        TSEnumMemberName::ComputedTemplateString(node) => {
+            walk_template_literal(traverser, (&mut **node) as *mut _, ctx)
         }
     }
     traverser.exit_ts_enum_member_name(&mut *node, ctx);
@@ -4143,19 +4166,19 @@ unsafe fn walk_ts_named_tuple_member<'a, Tr: Traverse<'a>>(
     ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_ts_named_tuple_member(&mut *node, ctx);
-    let pop_token = ctx.push_stack(Ancestor::TSNamedTupleMemberElementType(
-        ancestor::TSNamedTupleMemberWithoutElementType(node, PhantomData),
+    let pop_token = ctx.push_stack(Ancestor::TSNamedTupleMemberLabel(
+        ancestor::TSNamedTupleMemberWithoutLabel(node, PhantomData),
     ));
+    walk_identifier_name(
+        traverser,
+        (node as *mut u8).add(ancestor::OFFSET_TS_NAMED_TUPLE_MEMBER_LABEL) as *mut IdentifierName,
+        ctx,
+    );
+    ctx.retag_stack(AncestorType::TSNamedTupleMemberElementType);
     walk_ts_tuple_element(
         traverser,
         (node as *mut u8).add(ancestor::OFFSET_TS_NAMED_TUPLE_MEMBER_ELEMENT_TYPE)
             as *mut TSTupleElement,
-        ctx,
-    );
-    ctx.retag_stack(AncestorType::TSNamedTupleMemberLabel);
-    walk_identifier_name(
-        traverser,
-        (node as *mut u8).add(ancestor::OFFSET_TS_NAMED_TUPLE_MEMBER_LABEL) as *mut IdentifierName,
         ctx,
     );
     ctx.pop_stack(pop_token);
@@ -4600,20 +4623,17 @@ unsafe fn walk_ts_interface_declaration<'a, Tr: Traverse<'a>>(
         .unwrap();
     ctx.set_current_scope_id(current_scope_id);
     if let Some(field) = &mut *((node as *mut u8)
-        .add(ancestor::OFFSET_TS_INTERFACE_DECLARATION_EXTENDS)
-        as *mut Option<Vec<TSInterfaceHeritage>>)
-    {
-        ctx.retag_stack(AncestorType::TSInterfaceDeclarationExtends);
-        for item in field.iter_mut() {
-            walk_ts_interface_heritage(traverser, item as *mut _, ctx);
-        }
-    }
-    if let Some(field) = &mut *((node as *mut u8)
         .add(ancestor::OFFSET_TS_INTERFACE_DECLARATION_TYPE_PARAMETERS)
         as *mut Option<Box<TSTypeParameterDeclaration>>)
     {
         ctx.retag_stack(AncestorType::TSInterfaceDeclarationTypeParameters);
         walk_ts_type_parameter_declaration(traverser, (&mut **field) as *mut _, ctx);
+    }
+    ctx.retag_stack(AncestorType::TSInterfaceDeclarationExtends);
+    for item in &mut *((node as *mut u8).add(ancestor::OFFSET_TS_INTERFACE_DECLARATION_EXTENDS)
+        as *mut Vec<TSInterfaceHeritage>)
+    {
+        walk_ts_interface_heritage(traverser, item as *mut _, ctx);
     }
     ctx.retag_stack(AncestorType::TSInterfaceDeclarationBody);
     walk_ts_interface_body(
@@ -4738,10 +4758,10 @@ unsafe fn walk_ts_call_signature_declaration<'a, Tr: Traverse<'a>>(
     }
     if let Some(field) = &mut *((node as *mut u8)
         .add(ancestor::OFFSET_TS_CALL_SIGNATURE_DECLARATION_THIS_PARAM)
-        as *mut Option<TSThisParameter>)
+        as *mut Option<Box<TSThisParameter>>)
     {
         ctx.retag_stack(AncestorType::TSCallSignatureDeclarationThisParam);
-        walk_ts_this_parameter(traverser, field as *mut _, ctx);
+        walk_ts_this_parameter(traverser, (&mut **field) as *mut _, ctx);
     }
     ctx.retag_stack(AncestorType::TSCallSignatureDeclarationParams);
     walk_formal_parameters(
@@ -5350,18 +5370,18 @@ unsafe fn walk_ts_type_assertion<'a, Tr: Traverse<'a>>(
     ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_ts_type_assertion(&mut *node, ctx);
-    let pop_token = ctx.push_stack(Ancestor::TSTypeAssertionExpression(
-        ancestor::TSTypeAssertionWithoutExpression(node, PhantomData),
+    let pop_token = ctx.push_stack(Ancestor::TSTypeAssertionTypeAnnotation(
+        ancestor::TSTypeAssertionWithoutTypeAnnotation(node, PhantomData),
     ));
-    walk_expression(
-        traverser,
-        (node as *mut u8).add(ancestor::OFFSET_TS_TYPE_ASSERTION_EXPRESSION) as *mut Expression,
-        ctx,
-    );
-    ctx.retag_stack(AncestorType::TSTypeAssertionTypeAnnotation);
     walk_ts_type(
         traverser,
         (node as *mut u8).add(ancestor::OFFSET_TS_TYPE_ASSERTION_TYPE_ANNOTATION) as *mut TSType,
+        ctx,
+    );
+    ctx.retag_stack(AncestorType::TSTypeAssertionExpression);
+    walk_expression(
+        traverser,
+        (node as *mut u8).add(ancestor::OFFSET_TS_TYPE_ASSERTION_EXPRESSION) as *mut Expression,
         ctx,
     );
     ctx.pop_stack(pop_token);
@@ -5519,10 +5539,10 @@ unsafe fn walk_ts_instantiation_expression<'a, Tr: Traverse<'a>>(
             as *mut Expression,
         ctx,
     );
-    ctx.retag_stack(AncestorType::TSInstantiationExpressionTypeParameters);
+    ctx.retag_stack(AncestorType::TSInstantiationExpressionTypeArguments);
     walk_ts_type_parameter_instantiation(
         traverser,
-        (&mut **((node as *mut u8).add(ancestor::OFFSET_TS_INSTANTIATION_EXPRESSION_TYPE_PARAMETERS)
+        (&mut **((node as *mut u8).add(ancestor::OFFSET_TS_INSTANTIATION_EXPRESSION_TYPE_ARGUMENTS)
             as *mut Box<TSTypeParameterInstantiation>)) as *mut _,
         ctx,
     );

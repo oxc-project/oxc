@@ -1,5 +1,6 @@
 use std::ops::Deref;
 
+use oxc_allocator::{Address, GetAddress};
 use oxc_ast::{
     AstKind,
     ast::{Argument, ArrowFunctionExpression, Expression, Function},
@@ -7,6 +8,7 @@ use oxc_ast::{
 use oxc_diagnostics::{LabeledSpan, OxcDiagnostic};
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{CompactStr, Span};
+use rustc_hash::FxHashSet;
 use serde_json::Value;
 
 use crate::{AstNode, context::LintContext, rule::Rule, utils};
@@ -199,7 +201,8 @@ impl Rule for NoAsyncEndpointHandlers {
 
 impl NoAsyncEndpointHandlers {
     fn check_endpoint_arg<'a>(&self, ctx: &LintContext<'a>, arg: &Expression<'a>) {
-        self.check_endpoint_expr(ctx, None, None, arg);
+        let mut visited = FxHashSet::default();
+        self.check_endpoint_expr(ctx, None, None, arg, &mut visited);
     }
 
     fn check_endpoint_expr<'a>(
@@ -208,7 +211,13 @@ impl NoAsyncEndpointHandlers {
         id_name: Option<&str>,
         registered_at: Option<Span>,
         arg: &Expression<'a>,
+        visited: &mut FxHashSet<Address>,
     ) {
+        let expr_ptr = arg.address();
+        if !visited.insert(expr_ptr) {
+            return;
+        }
+
         match arg {
             Expression::Identifier(handler) => {
                 // Unresolved reference? Nothing we can do.
@@ -240,7 +249,7 @@ impl NoAsyncEndpointHandlers {
                                     return;
                                 }
                             }
-                            self.check_endpoint_expr(ctx, id_name, registered_at, init);
+                            self.check_endpoint_expr(ctx, id_name, registered_at, init, visited);
                         }
                     }
                     _ => {}
@@ -351,6 +360,7 @@ fn test() {
             ",
             None,
         ),
+        ("{const{r}=r;e.delete(r)}", None),
     ];
 
     let fail = vec![

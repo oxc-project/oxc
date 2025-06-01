@@ -110,7 +110,6 @@ declare_oxc_lint!(
     ///
     /// ### Options
     ///
-    ///
     /// #### allowReject
     ///
     /// `{ type: boolean, default: false }`
@@ -130,7 +129,6 @@ declare_oxc_lint!(
     /// ```js
     /// myPromise().then().catch(() => Promise.reject("err"))
     /// ```
-    ///
     NoReturnWrap,
     promise,
     style,
@@ -213,7 +211,7 @@ impl Rule for NoReturnWrap {
                         check_callback_fn(ctx, self.allow_reject, inner_obj);
                     }
                 }
-                _ => continue,
+                _ => {}
             }
         }
     }

@@ -10,11 +10,11 @@ use crate::{
     rule::Rule,
 };
 
-fn type_diagnostic(banned_type: &str, suggested_type: &str, span2: Span) -> OxcDiagnostic {
+fn type_diagnostic(banned_type: &str, suggested_type: &str, span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!(
         "Do not use {banned_type:?} as a type. Use \"{suggested_type}\" instead"
     ))
-    .with_label(span2)
+    .with_label(span)
 }
 
 fn type_literal(span: Span) -> OxcDiagnostic {
@@ -46,11 +46,20 @@ declare_oxc_lint!(
     ///
     /// Some built-in types have aliases, while some types are considered dangerous or harmful. It's often a good idea to ban certain types to help with consistency and safety.
     ///
-    /// ### Example
+    /// ### Examples
+    ///
+    /// Examples of **incorrect** code for this rule:
     /// ```typescript
     /// let foo: String = 'foo';
     ///
     /// let bar: Boolean = true;
+    /// ```
+    ///
+    /// Examples of **correct** code for this rule:
+    /// ```typescript
+    /// let foo: string = 'foo';
+    ///
+    /// let bar: boolean = true;
     /// ```
     BanTypes,
     typescript,

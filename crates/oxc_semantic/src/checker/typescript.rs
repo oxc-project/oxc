@@ -240,14 +240,12 @@ pub fn check_ts_interface_declaration<'a>(
     decl: &TSInterfaceDeclaration<'a>,
     ctx: &SemanticBuilder<'a>,
 ) {
-    if let Some(extends) = &decl.extends {
-        for extend in extends {
-            if !matches!(
-                &extend.expression,
-                Expression::Identifier(_) | Expression::StaticMemberExpression(_),
-            ) {
-                ctx.error(invalid_interface_extend(extend.span));
-            }
+    for extend in &decl.extends {
+        if !matches!(
+            &extend.expression,
+            Expression::Identifier(_) | Expression::StaticMemberExpression(_),
+        ) {
+            ctx.error(invalid_interface_extend(extend.span));
         }
     }
 }
@@ -284,11 +282,11 @@ fn enum_member_must_have_initializer(span: Span) -> OxcDiagnostic {
 pub fn check_ts_enum_declaration<'a>(decl: &TSEnumDeclaration<'a>, ctx: &SemanticBuilder<'a>) {
     let mut need_initializer = false;
 
-    decl.members.iter().for_each(|member| {
+    decl.body.members.iter().for_each(|member| {
         #[expect(clippy::unnested_or_patterns)]
         if let Some(initializer) = &member.initializer {
             need_initializer = !matches!(
-                initializer,
+                initializer.without_parentheses(),
                 // A = 1
                 Expression::NumericLiteral(_)
                     // B = A
@@ -547,6 +545,12 @@ fn invalid_jsx_attribute_value(span: Span) -> OxcDiagnostic {
         .with_label(span)
 }
 
+fn jsx_expressions_may_not_use_the_comma_operator(span: Span) -> OxcDiagnostic {
+    ts_error("18007", "JSX expressions may not use the comma operator")
+        .with_help("Did you mean to write an array?")
+        .with_label(span)
+}
+
 pub fn check_jsx_expression_container(
     container: &JSXExpressionContainer,
     ctx: &SemanticBuilder<'_>,
@@ -555,5 +559,9 @@ pub fn check_jsx_expression_container(
         && matches!(ctx.nodes.parent_kind(ctx.current_node_id), Some(AstKind::JSXAttributeItem(_)))
     {
         ctx.error(invalid_jsx_attribute_value(container.span()));
+    }
+
+    if matches!(container.expression, JSXExpression::SequenceExpression(_)) {
+        ctx.error(jsx_expressions_may_not_use_the_comma_operator(container.expression.span()));
     }
 }

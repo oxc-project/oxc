@@ -1,4 +1,3 @@
-use oxc_diagnostics::Result;
 use oxc_syntax::identifier::is_line_terminator;
 
 use crate::diagnostics;
@@ -12,31 +11,35 @@ impl Lexer<'_> {
     ///   where a `RegularExpressionLiteral` is permitted
     /// Which means the parser needs to re-tokenize on `PrimaryExpression`,
     /// `RegularExpressionLiteral` only appear on the right hand side of `PrimaryExpression`
-    pub(crate) fn next_regex(&mut self, kind: Kind) -> Result<(Token, u32, RegExpFlags, bool)> {
-        self.token.start = self.offset()
-            - match kind {
-                Kind::Slash => 1,
-                Kind::SlashEq => 2,
-                _ => unreachable!(),
-            };
-        let (pattern_end, flags, flags_error) = self.read_regex()?;
-        self.lookahead.clear();
+    pub(crate) fn next_regex(&mut self, kind: Kind) -> (Token, u32, RegExpFlags, bool) {
+        self.token.set_start(
+            self.offset()
+                - match kind {
+                    Kind::Slash => 1,
+                    Kind::SlashEq => 2,
+                    _ => unreachable!(),
+                },
+        );
+        let (pattern_end, flags, flags_error) = self.read_regex();
         let token = self.finish_next(Kind::RegExp);
-        Ok((token, pattern_end, flags, flags_error))
+        (token, pattern_end, flags, flags_error)
     }
 
     /// 12.9.5 Regular Expression Literals
-    fn read_regex(&mut self) -> Result<(u32, RegExpFlags, bool)> {
+    fn read_regex(&mut self) -> (u32, RegExpFlags, bool) {
         let mut in_escape = false;
         let mut in_character_class = false;
         loop {
             match self.next_char() {
                 None => {
-                    return Err(diagnostics::unterminated_reg_exp(self.unterminated_range()));
-                    // return (self.offset(), RegExpFlags::empty());
+                    self.error(diagnostics::unterminated_reg_exp(self.unterminated_range()));
+                    self.advance_to_end();
+                    break;
                 }
                 Some(c) if is_line_terminator(c) => {
-                    return Err(diagnostics::unterminated_reg_exp(self.unterminated_range()));
+                    self.error(diagnostics::unterminated_reg_exp(self.unterminated_range()));
+                    self.advance_to_end();
+                    break;
                 }
                 Some(c) => {
                     if in_escape {
@@ -82,6 +85,6 @@ impl Lexer<'_> {
             flags |= flag;
         }
 
-        Ok((pattern_end, flags, flags_error))
+        (pattern_end, flags, flags_error)
     }
 }

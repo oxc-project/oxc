@@ -18,7 +18,7 @@
 #![allow(rustdoc::broken_intra_doc_links)]
 
 mod arguments;
-mod buffer;
+pub mod buffer;
 mod builders;
 pub mod comments;
 mod context;
@@ -28,6 +28,7 @@ mod format_extensions;
 pub mod formatter;
 pub mod group_id;
 pub mod macros;
+pub mod parent_stack;
 pub mod prelude;
 #[cfg(debug_assertions)]
 pub mod printed_tokens;
@@ -46,30 +47,24 @@ mod token_text;
 pub mod trivia;
 mod verbatim;
 
-// use std::marker::PhantomData;
 use std::{
     fmt::{Debug, Display},
     marker::PhantomData,
 };
 
-// use self::trivia::{format_skipped_token_trivia, format_trimmed_token};
 pub use buffer::{Buffer, BufferExtensions, VecBuffer};
 pub use format_element::FormatElement;
 pub use group_id::GroupId;
 use oxc_ast::ast::Program;
 
-// use self::builders::syntax_token_cow_slice;
-pub use self::comments::{CommentStyle, Comments, SourceComment};
-// #[cfg(debug_assertions)]
-// use self::printed_tokens::PrintedTokens;
-use self::printer::{Printer, PrinterOptions};
+pub use self::comments::{Comments, SourceComment};
+use self::printer::Printer;
 pub use self::{
     arguments::{Argument, Arguments},
     context::FormatContext,
     diagnostics::{ActualStart, FormatError, InvalidDocumentError, PrintError},
     formatter::Formatter,
     state::{FormatState, FormatStateSnapshot},
-    syntax_element_key::SyntaxElementKey,
     syntax_node::SyntaxNode,
     syntax_token::SyntaxToken,
     syntax_trivia_piece_comments::SyntaxTriviaPieceComments,
@@ -79,15 +74,6 @@ pub use self::{
     token_text::TokenText,
 };
 use self::{format_element::document::Document, group_id::UniqueGroupIdBuilder, prelude::TagKind};
-
-/// Lightweight sourcemap marker between source and output tokens
-#[derive(Debug, Copy, Clone, Eq, PartialEq)]
-pub struct SourceMarker {
-    /// Position of the marker in the original source
-    pub source: TextSize,
-    /// Position of the marker in the output code
-    pub dest: TextSize,
-}
 
 #[derive(Debug, Clone)]
 pub struct Formatted<'a> {
@@ -276,6 +262,13 @@ impl Format<'_> for () {
     }
 }
 
+impl Format<'_> for &'static str {
+    #[inline]
+    fn fmt(&self, f: &mut Formatter) -> FormatResult<()> {
+        crate::write!(f, builders::text(self))
+    }
+}
+
 /// Default implementation for formatting a token
 pub struct FormatToken<C> {
     context: PhantomData<C>,
@@ -331,9 +324,7 @@ impl<C> Default for FormatToken<C> {
 ///
 #[inline(always)]
 pub fn write<'ast>(output: &mut dyn Buffer<'ast>, args: Arguments<'_, 'ast>) -> FormatResult<()> {
-    let mut f = Formatter::new(output);
-
-    f.write_fmt(args)
+    Formatter::new(output).write_fmt(args)
 }
 
 /// The `format` function takes an [`Arguments`] struct and returns the resulting formatting IR.

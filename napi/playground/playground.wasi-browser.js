@@ -1,8 +1,8 @@
 import {
-  instantiateNapiModule as __emnapiInstantiateNapiModule,
-  getDefaultContext as __emnapiGetDefaultContext,
-  WASI as __WASI,
   createOnMessage as __wasmCreateOnMessageForFsProxy,
+  getDefaultContext as __emnapiGetDefaultContext,
+  instantiateNapiModule as __emnapiInstantiateNapiModule,
+  WASI as __WASI,
 } from '@napi-rs/wasm-runtime'
 
 import __wasmUrl from './playground.wasm32-wasi.wasm?url'
@@ -53,6 +53,7 @@ const {
     }
   },
 })
+export default __napiModule.exports
 
 import { jsonParseAst } from "../parser/wrap.mjs"
 

@@ -7,7 +7,6 @@ working directory:
 ----------
 {
   "plugins": [
-    "react",
     "unicorn",
     "typescript",
     "oxc"

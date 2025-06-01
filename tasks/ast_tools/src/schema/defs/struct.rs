@@ -7,7 +7,7 @@ use quote::quote;
 use crate::utils::{create_ident_tokens, pluralize};
 
 use super::{
-    Def, Derives, File, FileId, Schema, TypeDef, TypeId, Visibility,
+    Containers, Def, Derives, File, FileId, Schema, TypeDef, TypeId, Visibility,
     extensions::{
         ast_builder::{AstBuilderStructField, AstBuilderType},
         clone_in::{CloneInStructField, CloneInType},
@@ -30,6 +30,7 @@ pub struct StructDef {
     pub has_lifetime: bool,
     pub is_foreign: bool,
     pub file_id: FileId,
+    pub containers: Containers,
     #[expect(unused)]
     pub visibility: Visibility,
     pub generated_derives: Derives,
@@ -65,6 +66,7 @@ impl StructDef {
             has_lifetime,
             is_foreign,
             file_id,
+            containers: Containers::default(),
             visibility,
             generated_derives,
             fields,

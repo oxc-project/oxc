@@ -49,20 +49,22 @@ declare_oxc_lint!(
     /// rule recommends using their specific `toBe` matchers, as they give better error
     /// messages as well.
     ///
-    /// ### Example
+    /// ### Examples
     ///
+    /// Examples of **incorrect** code for this rule:
     /// ```javascript
-    /// // valid
+    /// expect(value).not.toEqual(5);
+    /// expect(getMessage()).toStrictEqual('hello world');
+    /// expect(loadMessage()).resolves.toEqual('hello world');
+    /// ```
+    ///
+    /// Examples of **correct** code for this rule:
+    /// ```javascript
     /// expect(value).not.toBe(5);
     /// expect(getMessage()).toBe('hello world');
     /// expect(loadMessage()).resolves.toBe('hello world');
     /// expect(didError).not.toBe(true);
     /// expect(catchError()).toStrictEqual({ message: 'oh noes!' });
-    ///
-    /// // invalid
-    /// expect(value).not.toEqual(5);
-    /// expect(getMessage()).toStrictEqual('hello world');
-    /// expect(loadMessage()).resolves.toEqual('hello world');
     /// ```
     PreferToBe,
     jest,

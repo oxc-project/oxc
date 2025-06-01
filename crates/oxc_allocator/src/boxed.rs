@@ -4,7 +4,7 @@
 
 use std::{
     self,
-    fmt::{self, Debug, Formatter},
+    fmt::{self, Debug, Display, Formatter},
     hash::{Hash, Hasher},
     marker::PhantomData,
     ops::{self, Deref},
@@ -141,6 +141,13 @@ impl<T: ?Sized> AsMut<T> for Box<'_, T> {
     #[inline]
     fn as_mut(&mut self) -> &mut T {
         self
+    }
+}
+
+impl<T: ?Sized + Display> Display for Box<'_, T> {
+    #[inline]
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        self.deref().fmt(f)
     }
 }
 

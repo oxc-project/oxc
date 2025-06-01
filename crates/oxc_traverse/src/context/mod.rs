@@ -4,7 +4,7 @@ use oxc_ast::{
     ast::{Expression, IdentifierReference, Statement},
 };
 use oxc_semantic::Scoping;
-use oxc_span::{Atom, CompactStr, Span};
+use oxc_span::{Atom, Span};
 use oxc_syntax::{
     reference::{ReferenceFlags, ReferenceId},
     scope::{ScopeFlags, ScopeId},
@@ -21,6 +21,7 @@ mod bound_identifier;
 mod maybe_bound_identifier;
 mod reusable;
 mod scoping;
+mod uid;
 use ancestry::PopToken;
 pub use ancestry::TraverseAncestry;
 pub use bound_identifier::BoundIdentifier;
@@ -108,13 +109,12 @@ pub use scoping::TraverseScoping;
 /// [`ancestors`]: `TraverseCtx::ancestors`
 /// [`scoping`]: `TraverseCtx::scoping`
 /// [`scoping_mut`]: `TraverseCtx::scoping_mut`
-/// [`symbols_mut`]: `TraverseCtx::symbols_mut`
 /// [`ancestor_scopes`]: `TraverseCtx::ancestor_scopes`
 /// [`ast`]: `TraverseCtx::ast`
 /// [`alloc`]: `TraverseCtx::alloc`
 pub struct TraverseCtx<'a> {
     pub ancestry: TraverseAncestry<'a>,
-    pub scoping: TraverseScoping,
+    pub scoping: TraverseScoping<'a>,
     pub ast: AstBuilder<'a>,
 }
 
@@ -328,7 +328,7 @@ impl<'a> TraverseCtx<'a> {
     /// the resulting scopes will be:
     /// ```ts
     /// parentScope1: {
-    ///     newScope: {   
+    ///     newScope: {
     ///         childScope: { }
     ///     }
     ///     childScope2: { }
@@ -396,8 +396,8 @@ impl<'a> TraverseCtx<'a> {
     /// There are some potential "gotchas".
     ///
     /// This is a shortcut for `ctx.scoping.generate_uid_name`.
-    pub fn generate_uid_name(&mut self, name: &str) -> CompactStr {
-        self.scoping.generate_uid_name(name)
+    pub fn generate_uid_name(&mut self, name: &str) -> Atom<'a> {
+        self.scoping.generate_uid_name(name, self.ast.allocator)
     }
 
     /// Generate UID.
@@ -413,9 +413,8 @@ impl<'a> TraverseCtx<'a> {
     ) -> BoundIdentifier<'a> {
         // Get name for UID
         let name = self.generate_uid_name(name);
-        let name_atom = self.ast.atom(&name);
         let symbol_id = self.scoping.add_binding(&name, scope_id, flags);
-        BoundIdentifier::new(name_atom, symbol_id)
+        BoundIdentifier::new(name, symbol_id)
     }
 
     /// Generate UID in current scope.
@@ -640,21 +639,6 @@ impl<'a> TraverseCtx<'a> {
     /// This is a shortcut for `ctx.scoping.delete_reference_for_identifier`.
     pub fn delete_reference_for_identifier(&mut self, ident: &IdentifierReference) {
         self.scoping.delete_reference_for_identifier(ident);
-    }
-
-    /// Rename symbol.
-    ///
-    /// Preserves original order of bindings for scope.
-    ///
-    /// The following must be true for successful operation:
-    /// * Binding exists in specified scope for `symbol_id`.
-    /// * No binding already exists in scope for `new_name`.
-    ///
-    /// Panics in debug mode if either of the above are not satisfied.
-    ///
-    /// This is a shortcut for `ctx.scoping.rename_symbol`.
-    pub fn rename_symbol(&mut self, symbol_id: SymbolId, scope_id: ScopeId, new_name: CompactStr) {
-        self.scoping.rename_symbol(symbol_id, scope_id, new_name);
     }
 }
 

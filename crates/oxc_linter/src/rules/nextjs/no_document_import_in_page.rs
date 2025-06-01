@@ -14,12 +14,19 @@ pub struct NoDocumentImportInPage;
 
 declare_oxc_lint!(
     /// ### What it does
+    ///
     /// Prevent importing `next/document` outside of `pages/_document.js`.
     ///
     /// ### Why is this bad?
     ///
     ///
-    /// ### Example
+    /// ### Examples
+    ///
+    /// Examples of **incorrect** code for this rule:
+    /// ```javascript
+    /// ```
+    ///
+    /// Examples of **correct** code for this rule:
     /// ```javascript
     /// ```
     NoDocumentImportInPage,

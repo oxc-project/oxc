@@ -1,0 +1,3 @@
+{
+  "extends": ["./folder/custom.json"]
+}

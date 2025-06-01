@@ -1,5 +1,5 @@
 // Auto-generated code, DO NOT EDIT DIRECTLY!
-// To edit this generated file you have to edit `tasks/ast_tools/src/generators/visit.rs`
+// To edit this generated file you have to edit `tasks/ast_tools/src/generators/visit.rs`.
 
 //! Visitor Pattern
 //!
@@ -7,7 +7,8 @@
 //! * [visitor pattern](https://rust-unofficial.github.io/patterns/patterns/behavioural/visitor.html)
 //! * [rustc visitor](https://github.com/rust-lang/rust/blob/1.82.0/compiler/rustc_ast/src/visit.rs)
 
-#![expect(unused_variables, clippy::semicolon_if_nothing_returned)]
+#![expect(unused_variables, clippy::match_same_arms, clippy::semicolon_if_nothing_returned)]
+#![allow(clippy::needless_pass_by_ref_mut, clippy::trivially_copy_pass_by_ref)]
 
 use std::cell::Cell;
 
@@ -781,6 +782,11 @@ pub trait Visit<'a>: Sized {
     }
 
     #[inline]
+    fn visit_ts_enum_body(&mut self, it: &TSEnumBody<'a>) {
+        walk_ts_enum_body(self, it);
+    }
+
+    #[inline]
     fn visit_ts_enum_member(&mut self, it: &TSEnumMember<'a>) {
         walk_ts_enum_member(self, it);
     }
@@ -1249,8 +1255,8 @@ pub trait Visit<'a>: Sized {
     }
 
     #[inline]
-    fn visit_ts_class_implementses(&mut self, it: &Vec<'a, TSClassImplements<'a>>) {
-        walk_ts_class_implementses(self, it);
+    fn visit_ts_class_implements_list(&mut self, it: &Vec<'a, TSClassImplements<'a>>) {
+        walk_ts_class_implements_list(self, it);
     }
 
     #[inline]
@@ -1459,9 +1465,6 @@ pub mod walk {
         visitor.enter_node(kind);
         visitor.visit_span(&it.span);
         visitor.visit_array_expression_elements(&it.elements);
-        if let Some(trailing_comma) = &it.trailing_comma {
-            visitor.visit_span(trailing_comma);
-        }
         visitor.leave_node(kind);
     }
 
@@ -1496,9 +1499,6 @@ pub mod walk {
         visitor.enter_node(kind);
         visitor.visit_span(&it.span);
         visitor.visit_object_property_kinds(&it.properties);
-        if let Some(trailing_comma) = &it.trailing_comma {
-            visitor.visit_span(trailing_comma);
-        }
         visitor.leave_node(kind);
     }
 
@@ -1555,10 +1555,10 @@ pub mod walk {
         visitor.enter_node(kind);
         visitor.visit_span(&it.span);
         visitor.visit_expression(&it.tag);
-        visitor.visit_template_literal(&it.quasi);
         if let Some(type_arguments) = &it.type_arguments {
             visitor.visit_ts_type_parameter_instantiation(type_arguments);
         }
+        visitor.visit_template_literal(&it.quasi);
         visitor.leave_node(kind);
     }
 
@@ -1638,10 +1638,10 @@ pub mod walk {
         visitor.enter_node(kind);
         visitor.visit_span(&it.span);
         visitor.visit_expression(&it.callee);
-        visitor.visit_arguments(&it.arguments);
         if let Some(type_arguments) = &it.type_arguments {
             visitor.visit_ts_type_parameter_instantiation(type_arguments);
         }
+        visitor.visit_arguments(&it.arguments);
         visitor.leave_node(kind);
     }
 
@@ -1824,9 +1824,6 @@ pub mod walk {
         }
         if let Some(rest) = &it.rest {
             visitor.visit_assignment_target_rest(rest);
-        }
-        if let Some(trailing_comma) = &it.trailing_comma {
-            visitor.visit_span(trailing_comma);
         }
         visitor.leave_node(kind);
     }
@@ -2546,9 +2543,7 @@ pub mod walk {
         if let Some(super_type_arguments) = &it.super_type_arguments {
             visitor.visit_ts_type_parameter_instantiation(super_type_arguments);
         }
-        if let Some(implements) = &it.implements {
-            visitor.visit_ts_class_implementses(implements);
-        }
+        visitor.visit_ts_class_implements_list(&it.implements);
         visitor.visit_class_body(&it.body);
         visitor.leave_scope();
         visitor.leave_node(kind);
@@ -2604,11 +2599,11 @@ pub mod walk {
         visitor.visit_span(&it.span);
         visitor.visit_decorators(&it.decorators);
         visitor.visit_property_key(&it.key);
-        if let Some(value) = &it.value {
-            visitor.visit_expression(value);
-        }
         if let Some(type_annotation) = &it.type_annotation {
             visitor.visit_ts_type_annotation(type_annotation);
+        }
+        if let Some(value) = &it.value {
+            visitor.visit_expression(value);
         }
         visitor.leave_node(kind);
     }
@@ -2658,11 +2653,11 @@ pub mod walk {
         visitor.visit_span(&it.span);
         visitor.visit_decorators(&it.decorators);
         visitor.visit_property_key(&it.key);
-        if let Some(value) = &it.value {
-            visitor.visit_expression(value);
-        }
         if let Some(type_annotation) = &it.type_annotation {
             visitor.visit_ts_type_annotation(type_annotation);
+        }
+        if let Some(value) = &it.value {
+            visitor.visit_expression(value);
         }
     }
 
@@ -2672,7 +2667,9 @@ pub mod walk {
         visitor.enter_node(kind);
         visitor.visit_span(&it.span);
         visitor.visit_expression(&it.source);
-        visitor.visit_expressions(&it.options);
+        if let Some(options) = &it.options {
+            visitor.visit_expression(options);
+        }
         visitor.leave_node(kind);
     }
 
@@ -2930,10 +2927,10 @@ pub mod walk {
         visitor.enter_node(kind);
         visitor.visit_span(&it.span);
         visitor.visit_jsx_opening_element(&it.opening_element);
+        visitor.visit_jsx_children(&it.children);
         if let Some(closing_element) = &it.closing_element {
             visitor.visit_jsx_closing_element(closing_element);
         }
-        visitor.visit_jsx_children(&it.children);
         visitor.leave_node(kind);
     }
 
@@ -2943,10 +2940,10 @@ pub mod walk {
         visitor.enter_node(kind);
         visitor.visit_span(&it.span);
         visitor.visit_jsx_element_name(&it.name);
-        visitor.visit_jsx_attribute_items(&it.attributes);
         if let Some(type_arguments) = &it.type_arguments {
             visitor.visit_ts_type_parameter_instantiation(type_arguments);
         }
+        visitor.visit_jsx_attribute_items(&it.attributes);
         visitor.leave_node(kind);
     }
 
@@ -2965,8 +2962,8 @@ pub mod walk {
         visitor.enter_node(kind);
         visitor.visit_span(&it.span);
         visitor.visit_jsx_opening_fragment(&it.opening_fragment);
-        visitor.visit_jsx_closing_fragment(&it.closing_fragment);
         visitor.visit_jsx_children(&it.children);
+        visitor.visit_jsx_closing_fragment(&it.closing_fragment);
         visitor.leave_node(kind);
     }
 
@@ -3174,8 +3171,17 @@ pub mod walk {
         visitor.visit_span(&it.span);
         visitor.visit_binding_identifier(&it.id);
         visitor.enter_scope(ScopeFlags::empty(), &it.scope_id);
-        visitor.visit_ts_enum_members(&it.members);
+        visitor.visit_ts_enum_body(&it.body);
         visitor.leave_scope();
+        visitor.leave_node(kind);
+    }
+
+    #[inline]
+    pub fn walk_ts_enum_body<'a, V: Visit<'a>>(visitor: &mut V, it: &TSEnumBody<'a>) {
+        let kind = AstKind::TSEnumBody(visitor.alloc(it));
+        visitor.enter_node(kind);
+        visitor.visit_span(&it.span);
+        visitor.visit_ts_enum_members(&it.members);
         visitor.leave_node(kind);
     }
 
@@ -3197,6 +3203,8 @@ pub mod walk {
         match it {
             TSEnumMemberName::Identifier(it) => visitor.visit_identifier_name(it),
             TSEnumMemberName::String(it) => visitor.visit_string_literal(it),
+            TSEnumMemberName::ComputedString(it) => visitor.visit_string_literal(it),
+            TSEnumMemberName::ComputedTemplateString(it) => visitor.visit_template_literal(it),
         }
     }
 
@@ -3362,8 +3370,8 @@ pub mod walk {
         let kind = AstKind::TSNamedTupleMember(visitor.alloc(it));
         visitor.enter_node(kind);
         visitor.visit_span(&it.span);
-        visitor.visit_ts_tuple_element(&it.element_type);
         visitor.visit_identifier_name(&it.label);
+        visitor.visit_ts_tuple_element(&it.element_type);
         visitor.leave_node(kind);
     }
 
@@ -3615,12 +3623,10 @@ pub mod walk {
         visitor.visit_span(&it.span);
         visitor.visit_binding_identifier(&it.id);
         visitor.enter_scope(ScopeFlags::empty(), &it.scope_id);
-        if let Some(extends) = &it.extends {
-            visitor.visit_ts_interface_heritages(extends);
-        }
         if let Some(type_parameters) = &it.type_parameters {
             visitor.visit_ts_type_parameter_declaration(type_parameters);
         }
+        visitor.visit_ts_interface_heritages(&it.extends);
         visitor.visit_ts_interface_body(&it.body);
         visitor.leave_scope();
         visitor.leave_node(kind);
@@ -3987,8 +3993,8 @@ pub mod walk {
         let kind = AstKind::TSTypeAssertion(visitor.alloc(it));
         visitor.enter_node(kind);
         visitor.visit_span(&it.span);
-        visitor.visit_expression(&it.expression);
         visitor.visit_ts_type(&it.type_annotation);
+        visitor.visit_expression(&it.expression);
         visitor.leave_node(kind);
     }
 
@@ -4084,7 +4090,7 @@ pub mod walk {
         visitor.enter_node(kind);
         visitor.visit_span(&it.span);
         visitor.visit_expression(&it.expression);
-        visitor.visit_ts_type_parameter_instantiation(&it.type_parameters);
+        visitor.visit_ts_type_parameter_instantiation(&it.type_arguments);
         visitor.leave_node(kind);
     }
 
@@ -4232,7 +4238,7 @@ pub mod walk {
     }
 
     #[inline]
-    pub fn walk_ts_class_implementses<'a, V: Visit<'a>>(
+    pub fn walk_ts_class_implements_list<'a, V: Visit<'a>>(
         visitor: &mut V,
         it: &Vec<'a, TSClassImplements<'a>>,
     ) {

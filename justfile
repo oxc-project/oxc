@@ -36,11 +36,11 @@ ready:
 # Clone or update submodules
 # Make sure to update `.github/actions/clone-submodules/action.yml` too
 submodules:
-  just clone-submodule tasks/coverage/test262 https://github.com/tc39/test262.git bc5c14176e2b11a78859571eb693f028c8822458
-  just clone-submodule tasks/coverage/babel https://github.com/babel/babel.git 578ac4df1c8a05f01350553950dbfbbeaac013c2
-  just clone-submodule tasks/coverage/typescript https://github.com/microsoft/TypeScript.git 15392346d05045742e653eab5c87538ff2a3c863
+  just clone-submodule tasks/coverage/test262 https://github.com/tc39/test262.git 4b5d36ab6ef2f59d0a8902cd383762547a3a74c4
+  just clone-submodule tasks/coverage/babel https://github.com/babel/babel.git 1d4546bcb80009303aab386b59f4df1fd335c1d5
+  just clone-submodule tasks/coverage/typescript https://github.com/microsoft/TypeScript.git 81c951894e93bdc37c6916f18adcd80de76679bc
   just clone-submodule tasks/prettier_conformance/prettier https://github.com/prettier/prettier.git 7584432401a47a26943dd7a9ca9a8e032ead7285
-  just clone-submodule tasks/coverage/acorn-test262 https://github.com/oxc-project/acorn-test262 b4592303caa442d3592f5c1c361dc703cec841b2
+  just clone-submodule tasks/coverage/acorn-test262 https://github.com/oxc-project/acorn-test262 359faaadce848c92efcf19dcaf7446740f8e27f4
   just update-transformer-fixtures
 
 # Install git pre-commit to format files
@@ -75,6 +75,7 @@ check:
 
 # Run all the tests
 test:
+#   cargo test --all-features
   cargo test -- --nocapture
 
 # Lint the whole project
@@ -83,7 +84,7 @@ lint:
 
 # Format all files
 fmt:
-  cargo shear --fix # remove all unused dependencies
+  -cargo shear --fix # remove all unused dependencies
   cargo fmt --all
   dprint fmt
 
@@ -159,10 +160,6 @@ watch-playground:
 
 build-playground mode="release":
   pnpm --filter oxc-playground build
-
-# Generate the JavaScript global variables. See `tasks/javascript_globals`
-javascript-globals:
-  cargo run -p javascript_globals
 
 # Create a new lint rule by providing the ESLint name. See `tasks/rulegen`
 new-rule name:

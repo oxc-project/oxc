@@ -28,21 +28,44 @@ const transformOptions: any[] = [
   { target: 'es2015' },
 ].map((o) => ({ type: 'transform', ...o }));
 
-export function getModules(dir: string, fileName: string) {
+export async function getModules(
+  dir: string,
+  fileName: string,
+  format: 'cjs' | 'esm' | 'iife',
+  modifyCode?: (code: string) => string,
+) {
   const p = path.join(nodeModulesPath, dir + fileName);
-  const code = fs.readFileSync(p, 'utf8');
-  return minifyOptions.concat(transformOptions)
-    .map(({ type, ...options }) => {
-      const modifiedCode = {
-        minify: oxcMinify,
-        transform: oxcTransform,
-      }[type](fileName, code).code;
-      return { module: fsRequire(modifiedCode), type, options };
-    });
+  let code = fs.readFileSync(p, 'utf8');
+  code = modifyCode ? modifyCode(code) : code;
+  return Promise.all(
+    minifyOptions.concat(transformOptions)
+      .map(async ({ type, ...options }) => {
+        const modifiedCode = {
+          minify: oxcMinify,
+          transform: oxcTransform,
+        }[type](fileName, code).code;
+        return { module: await fsRequire(modifiedCode, format), type, options };
+      }),
+  );
 }
 
-function fsRequire(code: string) {
+async function fsRequire(code: string, format: 'cjs' | 'esm' | 'iife') {
+  if (format === 'esm') {
+    const url = `data:text/javascript;base64,${Buffer.from(code).toString('base64')}`;
+    return import(url);
+  }
+
   const vol = Volume.fromJSON({ '/index.js': code });
   const fsRequire = createFsRequire(vol);
+
+  if (format === 'iife') {
+    const mockedWindow = {};
+    // @ts-expect-error
+    globalThis.window = mockedWindow;
+    fsRequire('/index.js');
+    // @ts-expect-error
+    delete globalThis.window;
+    return mockedWindow;
+  }
   return fsRequire('/index.js');
 }

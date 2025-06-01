@@ -173,9 +173,7 @@ impl NoUnusedVars {
                             return status;
                         }
                         // target not found, keep looking
-                        Some(_) | None => {
-                            continue;
-                        }
+                        Some(_) | None => {}
                     }
                 }
 
@@ -201,9 +199,7 @@ impl NoUnusedVars {
                         }
                         // el is a simple pattern for a different symbol, or is
                         // a destructuring pattern that doesn't contain the target. Keep looking
-                        Some(_) | None => {
-                            continue;
-                        }
+                        Some(_) | None => {}
                     }
                 }
 

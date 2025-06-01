@@ -27,7 +27,7 @@ fn test() {
     let global_undefined_number =
         undefined.to_number(&GlobalReferenceInformation { is_undefined_shadowed: false });
 
-    let empty_object = ast.expression_object(SPAN, ast.vec(), None);
+    let empty_object = ast.expression_object(SPAN, ast.vec());
     let object_with_to_string = ast.expression_object(
         SPAN,
         ast.vec1(ast.object_property_kind_object_property(
@@ -39,7 +39,6 @@ fn test() {
             false,
             false,
         )),
-        None,
     );
     let empty_object_number = empty_object.to_number(&WithoutGlobalReferenceInformation {});
     let object_with_to_string_number =

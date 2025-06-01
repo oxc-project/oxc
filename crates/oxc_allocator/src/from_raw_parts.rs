@@ -54,15 +54,15 @@ impl Allocator {
     ///
     /// # Panics
     ///
-    /// Panics if cannot determine layout of Bumpalo's `Bump` type.
+    /// Panics if cannot determine layout of Bumpalo's `Bump` type, or on a big endian system.
     ///
     /// [`RAW_MIN_ALIGN`]: Self::RAW_MIN_ALIGN
     /// [`RAW_MIN_SIZE`]: Self::RAW_MIN_SIZE
     pub unsafe fn from_raw_parts(ptr: NonNull<u8>, size: usize) -> Self {
         // Only support little-endian systems.
         // Calculating offset of `current_chunk_footer` on big-endian systems would be difficult.
-        #[cfg(target_endian = "big")]
-        const {
+        #[expect(clippy::manual_assert)]
+        if cfg!(target_endian = "big") {
             panic!("`Allocator::from_raw_parts` is not supported on big-endian systems.");
         }
 

@@ -415,17 +415,17 @@ fn test_tagged_templates() {
 fn test_module_like_declarations() {
     SemanticTester::ts("namespace A { export const x = 1; }")
         .has_root_symbol("A")
-        .contains_flags(SymbolFlags::NameSpaceModule)
+        .contains_flags(SymbolFlags::ValueModule)
         .test();
 
     SemanticTester::ts("module A { export const x = 1; }")
         .has_root_symbol("A")
-        .contains_flags(SymbolFlags::NameSpaceModule)
+        .contains_flags(SymbolFlags::ValueModule)
         .test();
 
-    SemanticTester::ts(r#"module "A" { export const x = 1; }"#)
+    SemanticTester::ts("module A { export type x = 1; }")
         .has_root_symbol("A")
-        .contains_flags(SymbolFlags::NameSpaceModule)
+        .contains_flags(SymbolFlags::NamespaceModule)
         .test();
 
     let test = SemanticTester::ts("declare global { interface Window { x: number; } }");

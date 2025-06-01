@@ -66,8 +66,9 @@ declare_oxc_lint!(
     ///
     ///  People may forget to add assertions.
     ///
-    /// ### Example
+    /// ### Examples
     ///
+    /// Examples of **incorrect** code for this rule:
     /// ```javascript
     /// it('should be a test', () => {
     ///     console.log('no assertion');

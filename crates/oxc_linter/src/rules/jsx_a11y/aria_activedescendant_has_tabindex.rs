@@ -28,7 +28,14 @@ declare_oxc_lint!(
     ///
     /// Enforce elements with aria-activedescendant are tabbable.
     ///
-    /// ### Example
+    /// ### Examples
+    ///
+    /// Examples of **incorrect** code for this rule:
+    /// ```jsx
+    /// const Bad = <div aria-activedescendant={someID} />
+    /// ```
+    ///
+    /// Examples of **correct** code for this rule:
     /// ```jsx
     /// const Good = <>
     ///     <CustomComponent />
@@ -47,8 +54,6 @@ declare_oxc_lint!(
     ///     <input aria-activedescendant={someID} tabIndex={0} />
     ///     <input aria-activedescendant={someID} tabIndex={-1} />
     /// </>
-    ///
-    /// const Bad = <div aria-activedescendant={someID} />
     /// ```
     AriaActivedescendantHasTabindex,
     jsx_a11y,
@@ -67,7 +72,7 @@ impl Rule for AriaActivedescendantHasTabindex {
 
         let element_type = get_element_type(ctx, jsx_opening_el);
 
-        if !HTML_TAG.contains(&element_type) {
+        if !HTML_TAG.contains(element_type.as_ref()) {
             return;
         }
 

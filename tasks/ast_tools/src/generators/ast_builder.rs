@@ -8,7 +8,7 @@ use syn::Ident;
 use crate::{
     AST_CRATE_PATH, Codegen, Generator, Result,
     output::{Output, output_path},
-    schema::{Def, EnumDef, FieldDef, Schema, StructDef, TypeDef, VariantDef},
+    schema::{Def, EnumDef, FieldDef, Schema, StructDef, TypeDef, TypeId, VariantDef},
     utils::{create_safe_ident, is_reserved_name},
 };
 
@@ -52,6 +52,8 @@ impl Generator for AstBuilderGenerator {
 
     /// Generate `AstBuilder`.
     fn generate(&self, schema: &Schema, _codegen: &Codegen) -> Output {
+        let comment_node_id_type_id = schema.type_names["CommentNodeId"];
+
         let fns = schema
             .types
             .iter()
@@ -62,32 +64,34 @@ impl Generator for AstBuilderGenerator {
                 TypeDef::Enum(enum_def) => !enum_def.builder.skip && enum_def.visit.has_visitor(),
                 _ => false,
             })
-            .map(|type_def| generate_builder_methods(type_def, schema))
+            .map(|type_def| generate_builder_methods(type_def, comment_node_id_type_id, schema))
             .collect::<TokenStream>();
 
         let output = quote! {
             //! AST node factories
 
             //!@@line_break
-            #![expect(clippy::default_trait_access)]
+            #![allow(unused_imports)]
+            #![expect(
+                clippy::default_trait_access,
+                clippy::inconsistent_struct_constructor,
+                clippy::unused_self,
+            )]
 
             ///@@line_break
             use std::cell::Cell;
 
             ///@@line_break
             use oxc_allocator::{Allocator, Box, IntoIn, Vec};
-            use oxc_syntax::{scope::ScopeId, symbol::SymbolId, reference::ReferenceId};
+            use oxc_syntax::{
+                comment_node::CommentNodeId,
+                scope::ScopeId,
+                symbol::SymbolId,
+                reference::ReferenceId
+            };
 
             ///@@line_break
-            use crate::ast::*;
-
-            ///@@line_break
-            /// AST builder for creating AST nodes
-            #[derive(Clone, Copy)]
-            pub struct AstBuilder<'a> {
-                /// The memory allocator used to allocate AST nodes in the arena.
-                pub allocator: &'a Allocator,
-            }
+            use crate::{AstBuilder, ast::*};
 
             ///@@line_break
             impl<'a> AstBuilder<'a> {
@@ -112,15 +116,36 @@ struct Param<'d> {
     fn_param: TokenStream,
     /// `true` if is a default param (semantic ID)
     is_default: bool,
-    /// `true` if this param has a generic param e.g. `type_annotation: T1` (`T1` is generic)
-    has_generic_param: bool,
+    /// `true` if is `CommentNodeId` field
+    is_comment_node_id: bool,
+    /// * `None` if param is not generic.
+    /// * `Some(GenericType::Into)` if is generic and uses `Into`
+    ///   e.g. `name: A where A: Into<Atom<'a>>`.
+    /// * `Some(GenericType::IntoIn)` if is generic and uses `IntoIn`
+    ///   e.g. `type_annotation: T1 where T1: IntoIn<'a, Box<'a, TSTypeAnnotation<'a>>>`.
+    generic_type: Option<GenericType>,
+}
+
+/// Type of generic param.
+#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+enum GenericType {
+    Into,
+    IntoIn,
 }
 
 /// Generate builder methods for a type.
-fn generate_builder_methods(type_def: &TypeDef, schema: &Schema) -> TokenStream {
+fn generate_builder_methods(
+    type_def: &TypeDef,
+    comment_node_id_type_id: TypeId,
+    schema: &Schema,
+) -> TokenStream {
     match type_def {
-        TypeDef::Struct(struct_def) => generate_builder_methods_for_struct(struct_def, schema),
-        TypeDef::Enum(enum_def) => generate_builder_methods_for_enum(enum_def, schema),
+        TypeDef::Struct(struct_def) => {
+            generate_builder_methods_for_struct(struct_def, comment_node_id_type_id, schema)
+        }
+        TypeDef::Enum(enum_def) => {
+            generate_builder_methods_for_enum(enum_def, comment_node_id_type_id, schema)
+        }
         _ => unreachable!(),
     }
 }
@@ -130,9 +155,13 @@ fn generate_builder_methods(type_def: &TypeDef, schema: &Schema) -> TokenStream 
 /// Generates two builder methods:
 /// 1. To build an owned type e.g. `boolean_literal`.
 /// 2. To build a boxed type e.g. `alloc_boolean_literal`.
-fn generate_builder_methods_for_struct(struct_def: &StructDef, schema: &Schema) -> TokenStream {
+fn generate_builder_methods_for_struct(
+    struct_def: &StructDef,
+    comment_node_id_type_id: TypeId,
+    schema: &Schema,
+) -> TokenStream {
     let (mut params, generic_params, where_clause, has_default_fields) =
-        get_struct_params(struct_def, schema);
+        get_struct_params(struct_def, comment_node_id_type_id, schema);
     let (fn_params, fields) = get_struct_fn_params_and_fields(&params, true, schema);
 
     let (fn_name_postfix, doc_postfix) = if has_default_fields {
@@ -202,44 +231,63 @@ fn generate_builder_methods_for_struct_impl(
     let struct_ident = struct_def.ident();
     let struct_ty = struct_def.ty(schema);
 
-    let args = params.iter().map(|param| &param.ident);
+    let args = params.iter().filter(|param| !param.is_comment_node_id).map(|param| &param.ident);
 
     let mut fn_name_base = struct_def.snake_name();
     if !fn_name_postfix.is_empty() {
         fn_name_base.push_str(fn_name_postfix);
     }
     let fn_name = struct_builder_name(&fn_name_base, false);
-    let alloc_fn_name = struct_builder_name(&fn_name_base, true);
 
-    // Generate doc comments
+    // Only generate an `alloc_*` method if `Box<T>` exists in AST
+    let alloc_fn_name = if struct_def.containers.box_id.is_some() {
+        Some(struct_builder_name(&fn_name_base, true))
+    } else {
+        None
+    };
+
+    // Generate main builder method
     let struct_name = struct_def.name();
     let article = article_for(struct_name);
     let fn_doc1 = format!(" Build {article} [`{struct_name}`]{doc_postfix}.");
-    let fn_doc2 = format!(
-        " If you want the built node to be allocated in the memory arena, use [`AstBuilder::{alloc_fn_name}`] instead."
-    );
-    let alloc_doc1 = format!(
-        " Build {article} [`{struct_name}`]{doc_postfix}, and store it in the memory arena."
-    );
-    let alloc_doc2 = format!(
-        " Returns a [`Box`] containing the newly-allocated node. If you want a stack-allocated node, use [`AstBuilder::{fn_name}`] instead."
-    );
+    let mut fn_docs = quote!( #[doc = #fn_doc1] );
+    if let Some(alloc_fn_name) = &alloc_fn_name {
+        let fn_doc2 = format!(" use [`AstBuilder::{alloc_fn_name}`] instead.");
+        fn_docs.extend(quote! {
+            #[doc = ""]
+            #[doc = " If you want the built node to be allocated in the memory arena,"]
+            #[doc = #fn_doc2]
+        });
+    }
+
     let params_docs = generate_doc_comment_for_params(params);
 
-    quote! {
+    let method = quote! {
         ///@@line_break
-        #[doc = #fn_doc1]
-        #[doc = ""]
-        #[doc = #fn_doc2]
+        #fn_docs
         #params_docs
         #[inline]
         pub fn #fn_name #generic_params (self, #fn_params) -> #struct_ty #where_clause {
             #struct_ident { #fields }
         }
+    };
+
+    let Some(alloc_fn_name) = alloc_fn_name else { return method };
+
+    // Generate `alloc_*` builder method, if required
+    let alloc_doc1 = format!(
+        " Build {article} [`{struct_name}`]{doc_postfix}, and store it in the memory arena."
+    );
+    let alloc_doc2 =
+        format!(" If you want a stack-allocated node, use [`AstBuilder::{fn_name}`] instead.");
+
+    quote! {
+        #method
 
         ///@@line_break
         #[doc = #alloc_doc1]
         #[doc = ""]
+        #[doc = " Returns a [`Box`] containing the newly-allocated node."]
         #[doc = #alloc_doc2]
         #params_docs
         #[inline]
@@ -261,6 +309,7 @@ fn generate_builder_methods_for_struct_impl(
 /// ```
 fn get_struct_params<'s>(
     struct_def: &'s StructDef,
+    comment_node_id_type_id: TypeId,
     schema: &'s Schema,
 ) -> (
     Vec<Param<'s>>, // Params
@@ -268,10 +317,8 @@ fn get_struct_params<'s>(
     TokenStream,    // `where` clause
     bool,           // Has default fields
 ) {
-    // Only a single `Atom` or `&str` generic supported at present
-    let mut has_atom_generic = false;
-    let mut has_str_generic = false;
     let mut generic_count = 0u32;
+    let mut atom_generic_count = 0u32;
     let mut has_default_fields = false;
 
     let mut generics = vec![];
@@ -297,46 +344,50 @@ fn get_struct_params<'s>(
                 has_default_fields = true;
             }
 
-            let generic_ident = match type_def {
-                TypeDef::Primitive(primitive_def) => match primitive_def.name() {
-                    "Atom" if !has_atom_generic => {
-                        has_atom_generic = true;
-                        Some(create_safe_ident("A"))
-                    }
-                    "&str" if !has_str_generic => {
-                        has_str_generic = true;
-                        Some(create_safe_ident("S"))
-                    }
-                    _ => None,
-                },
+            let generic_details = match type_def {
+                TypeDef::Primitive(primitive_def) if primitive_def.name() == "Atom" => {
+                    atom_generic_count += 1;
+                    Some((format_ident!("A{atom_generic_count}"), GenericType::Into))
+                }
                 TypeDef::Box(_) => {
                     generic_count += 1;
-                    Some(format_ident!("T{generic_count}"))
+                    Some((format_ident!("T{generic_count}"), GenericType::IntoIn))
                 }
                 TypeDef::Option(option_def) if option_def.inner_type(schema).is_box() => {
                     generic_count += 1;
-                    Some(format_ident!("T{generic_count}"))
+                    Some((format_ident!("T{generic_count}"), GenericType::IntoIn))
                 }
                 _ => None,
             };
-            let has_generic_param = generic_ident.is_some();
 
-            let fn_param_ty = if is_default {
-                assert!(!has_generic_param);
-                type_def.innermost_type(schema).ty(schema)
-            } else if let Some(generic_ident) = generic_ident {
-                let where_clause_part = quote!( #generic_ident: IntoIn<'a, #ty> );
+            let (fn_param_ty, generic_type) = if is_default {
+                assert!(generic_details.is_none());
+                let ty = type_def.innermost_type(schema).ty(schema);
+                (ty, None)
+            } else if let Some((generic_ident, generic_type)) = generic_details {
+                let where_clause_part = match generic_type {
+                    GenericType::Into => quote!( #generic_ident: Into<#ty> ),
+                    GenericType::IntoIn => quote!( #generic_ident: IntoIn<'a, #ty> ),
+                };
                 let generic_ty = quote!( #generic_ident );
                 generics.push((generic_ident, where_clause_part));
-                generic_ty
+                (generic_ty, Some(generic_type))
             } else {
-                ty
+                (ty, None)
             };
 
             let field_ident = field.ident();
             let fn_param = quote!( #field_ident: #fn_param_ty );
 
-            Param { field, ident: field_ident, fn_param, is_default, has_generic_param }
+            let is_comment_node_id = field.type_id == comment_node_id_type_id;
+            Param {
+                field,
+                ident: field_ident,
+                fn_param,
+                is_default,
+                is_comment_node_id,
+                generic_type,
+            }
         })
         .collect();
 
@@ -386,12 +437,17 @@ fn get_struct_fn_params_and_fields(
 
             fields.push(quote!( #param_ident: Default::default() ));
             return None;
+        } else if param.is_comment_node_id {
+            fields.push(quote!( #param_ident: self.get_comment_node_id() ));
+            return None;
         }
 
-        let field = if param.has_generic_param {
-            quote!( #param_ident: #param_ident.into_in(self.allocator) )
-        } else {
-            quote!( #param_ident )
+        let field = match param.generic_type {
+            Some(GenericType::Into) => quote!( #param_ident: #param_ident.into() ),
+            Some(GenericType::IntoIn) => {
+                quote!( #param_ident: #param_ident.into_in(self.allocator) )
+            }
+            None => quote!( #param_ident ),
         };
 
         fields.push(field);
@@ -407,11 +463,22 @@ fn get_struct_fn_params_and_fields(
 /// Generate builder methods for an enum.
 ///
 /// Generates a builder method for every variant of the enum (not including inherited variants).
-fn generate_builder_methods_for_enum(enum_def: &EnumDef, schema: &Schema) -> TokenStream {
+fn generate_builder_methods_for_enum(
+    enum_def: &EnumDef,
+    comment_node_id_type_id: TypeId,
+    schema: &Schema,
+) -> TokenStream {
     enum_def
         .variants
         .iter()
-        .map(|variant| generate_builder_method_for_enum_variant(enum_def, variant, schema))
+        .map(|variant| {
+            generate_builder_method_for_enum_variant(
+                enum_def,
+                variant,
+                comment_node_id_type_id,
+                schema,
+            )
+        })
         .collect()
 }
 
@@ -419,6 +486,7 @@ fn generate_builder_methods_for_enum(enum_def: &EnumDef, schema: &Schema) -> Tok
 fn generate_builder_method_for_enum_variant(
     enum_def: &EnumDef,
     variant: &VariantDef,
+    comment_node_id_type_id: TypeId,
     schema: &Schema,
 ) -> TokenStream {
     let mut variant_type = variant.field_type(schema).unwrap();
@@ -430,7 +498,7 @@ fn generate_builder_method_for_enum_variant(
     let TypeDef::Struct(struct_def) = variant_type else { panic!("Unsupported!") };
 
     let (mut params, generic_params, where_clause, has_default_fields) =
-        get_struct_params(struct_def, schema);
+        get_struct_params(struct_def, comment_node_id_type_id, schema);
 
     let fn_name = enum_variant_builder_name(enum_def, variant);
     let variant_ident = variant.ident();
@@ -494,8 +562,9 @@ fn generate_builder_method_for_enum_variant_impl(
     is_boxed: bool,
 ) -> TokenStream {
     let fn_name = format_ident!("{}{}", fn_name, fn_name_postfix);
-    let fn_params = params.iter().map(|param| &param.fn_param);
-    let args = params.iter().map(|param| &param.ident);
+    let fn_params =
+        params.iter().filter(|param| !param.is_comment_node_id).map(|param| &param.fn_param);
+    let args = params.iter().filter(|param| !param.is_comment_node_id).map(|param| &param.ident);
 
     let enum_ident = enum_def.ident();
     let enum_ty = enum_def.ty(schema);
@@ -591,7 +660,7 @@ fn generate_doc_comment_for_params(params: &[Param]) -> TokenStream {
         return quote!();
     }
 
-    let lines = params.iter().map(|param| {
+    let lines = params.iter().filter(|param| !param.is_comment_node_id).map(|param| {
         let field = param.field;
         let field_name = field.name();
         let field_comment = if let Some(field_comment) = field.doc_comment.as_deref() {

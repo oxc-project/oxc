@@ -29,10 +29,18 @@ declare_oxc_lint!(
     /// Declaration merging between classes and interfaces is unsafe.
     /// The TypeScript compiler doesn't check whether properties are initialized, which can cause lead to TypeScript not detecting code that will cause runtime errors.
     ///
-    /// ### Example
+    /// ### Examples
+    ///
+    /// Examples of **incorrect** code for this rule:
     /// ```ts
     /// interface Foo {}
     /// class Foo {}
+    /// ```
+    ///
+    /// Examples of **correct** code for this rule:
+    /// ```ts
+    /// interface Foo {}
+    /// class Bar {}
     /// ```
     NoUnsafeDeclarationMerging,
     typescript,

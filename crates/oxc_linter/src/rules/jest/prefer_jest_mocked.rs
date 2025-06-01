@@ -5,7 +5,6 @@ use oxc_ast::{
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
-use phf::{Set, phf_set};
 
 use crate::{AstNode, ast_util::outermost_paren_parent, context::LintContext, rule::Rule};
 
@@ -26,8 +25,6 @@ declare_oxc_lint!(
     /// enforces the use of `jest.mocked()` for better type safety and readability.
     ///
     /// Restricted types:
-    ///
-    ///
     /// - `jest.Mock`
     /// - `jest.MockedFunction`
     /// - `jest.MockedClass`
@@ -35,15 +32,17 @@ declare_oxc_lint!(
     ///
     /// ### Examples
     ///
+    /// Examples of **incorrect** code for this rule:
     /// ```typescript
-    /// // invalid
     /// (foo as jest.Mock).mockReturnValue(1);
     /// const mock = (foo as jest.Mock).mockReturnValue(1);
     /// (foo as unknown as jest.Mock).mockReturnValue(1);
     /// (Obj.foo as jest.Mock).mockReturnValue(1);
     /// ([].foo as jest.Mock).mockReturnValue(1);
+    /// ```
     ///
-    /// // valid
+    /// Examples of **correct** code for this rule:
+    /// ```typescript
     /// jest.mocked(foo).mockReturnValue(1);
     /// const mock = jest.mocked(foo).mockReturnValue(1);
     /// jest.mocked(Obj.foo).mockReturnValue(1);
@@ -67,12 +66,7 @@ impl Rule for PreferJestMocked {
     }
 }
 
-const MOCK_TYPES: Set<&'static str> = phf_set! {
-    "Mock",
-    "MockedFunction",
-    "MockedClass",
-    "MockedObject",
-};
+const MOCK_TYPES: [&str; 4] = ["Mock", "MockedFunction", "MockedClass", "MockedObject"];
 
 impl PreferJestMocked {
     fn check_ts_as_expression<'a>(
@@ -114,7 +108,7 @@ impl PreferJestMocked {
         };
 
         if !&ident.name.eq_ignore_ascii_case("jest")
-            || !MOCK_TYPES.contains(qualified_name.right.name.as_str())
+            || !MOCK_TYPES.contains(&qualified_name.right.name.as_str())
         {
             return;
         }

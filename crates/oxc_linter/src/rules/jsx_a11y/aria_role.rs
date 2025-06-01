@@ -91,7 +91,7 @@ declare_oxc_lint!(
     /// For the `ignoreNonDOM` option, this determines if developer created
     /// components are checked.
     ///
-    /// ### Example
+    /// ### Examples
     ///
     /// Examples of **incorrect** code for this rule:
     ///
@@ -146,7 +146,7 @@ impl Rule for AriaRole {
             if let Some(aria_role) = has_jsx_prop(&jsx_el.opening_element, "role") {
                 let element_type = get_element_type(ctx, &jsx_el.opening_element);
 
-                if self.ignore_non_dom && !HTML_TAG.contains(&element_type) {
+                if self.ignore_non_dom && !HTML_TAG.contains(element_type.as_ref()) {
                     return;
                 }
 

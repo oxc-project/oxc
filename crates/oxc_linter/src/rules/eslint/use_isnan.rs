@@ -51,9 +51,11 @@ impl Default for UseIsnan {
 
 declare_oxc_lint!(
     /// ### What it does
+    ///
     /// Disallows checking against NaN without using isNaN() call.
     ///
     /// ### Why is this bad?
+    ///
     /// In JavaScript, NaN is a special value of the Number type.
     /// It’s used to represent any of the “not-a-number” values represented
     /// by the double-precision 64-bit format as specified by the IEEE Standard
@@ -66,7 +68,9 @@ declare_oxc_lint!(
     ///
     /// Therefore, use Number.isNaN() or global isNaN() functions to test whether a value is NaN.
     ///
-    /// ### Example
+    /// ### Examples
+    ///
+    /// Examples of **incorrect** code for this rule:
     /// ```javascript
     /// foo == NaN;
     /// foo === NaN;
@@ -155,21 +159,21 @@ fn is_nan_identifier<'a>(expr: &'a Expression<'a>) -> bool {
 }
 
 /// If callee is calling the `indexOf` or `lastIndexOf` function.
-fn is_target_callee<'a>(callee: &'a Expression<'a>) -> Option<&'static str> {
+fn is_target_callee<'a>(callee: &'a Expression) -> Option<&'a str> {
     const TARGET_METHODS: [&str; 2] = ["indexOf", "lastIndexOf"];
     let callee = callee.get_inner_expression();
 
     if let Some(expr) = callee.as_member_expression() {
-        return expr.static_property_name().and_then(|property| {
-            TARGET_METHODS.iter().find(|method| **method == property).copied()
-        });
+        return expr
+            .static_property_name()
+            .and_then(|property| TARGET_METHODS.contains(&property).then_some(property));
     }
 
     if let Expression::ChainExpression(chain) = callee {
         let expr = chain.expression.as_member_expression()?;
-        return expr.static_property_name().and_then(|property| {
-            TARGET_METHODS.iter().find(|method| **method == property).copied()
-        });
+        return expr
+            .static_property_name()
+            .and_then(|property| TARGET_METHODS.contains(&property).then_some(property));
     }
 
     None

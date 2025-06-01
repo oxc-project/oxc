@@ -1,5 +1,5 @@
 // Auto-generated code, DO NOT EDIT DIRECTLY!
-// To edit this generated file you have to edit `tasks/ast_tools/src/derives/get_span.rs`
+// To edit this generated file you have to edit `tasks/ast_tools/src/derives/get_span.rs`.
 
 #![expect(clippy::match_same_arms)]
 
@@ -1488,6 +1488,13 @@ impl GetSpanMut for TSEnumDeclaration<'_> {
     }
 }
 
+impl GetSpanMut for TSEnumBody<'_> {
+    #[inline]
+    fn span_mut(&mut self) -> &mut Span {
+        &mut self.span
+    }
+}
+
 impl GetSpanMut for TSEnumMember<'_> {
     #[inline]
     fn span_mut(&mut self) -> &mut Span {
@@ -1500,6 +1507,8 @@ impl GetSpanMut for TSEnumMemberName<'_> {
         match self {
             Self::Identifier(it) => GetSpanMut::span_mut(&mut **it),
             Self::String(it) => GetSpanMut::span_mut(&mut **it),
+            Self::ComputedString(it) => GetSpanMut::span_mut(&mut **it),
+            Self::ComputedTemplateString(it) => GetSpanMut::span_mut(&mut **it),
         }
     }
 }

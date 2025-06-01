@@ -340,3 +340,63 @@ source: crates/oxc_linter/src/tester.rs
    ·        ╰── 'foo' is declared here
    ╰────
   help: Consider removing this declaration.
+
+  ⚠ eslint(no-unused-vars): Variable is declared but only used as a type. Unused variables should start with a '_'.
+   ╭─[no_unused_vars.ts:2:16]
+ 1 │ 
+ 2 │          const foo: number = 1;
+   ·                ─┬─
+   ·                 ╰── 'foo' is declared here
+ 3 │          export type Foo = typeof foo;
+   ╰────
+  help: Consider removing this declaration.
+
+  ⚠ eslint(no-unused-vars): Variable is declared but only used as a type. Unused variables should start with a '_'.
+   ╭─[no_unused_vars.ts:2:23]
+ 1 │ 
+ 2 │         declare const foo: number;
+   ·                       ─┬─
+   ·                        ╰── 'foo' is declared here
+ 3 │         export type Foo = typeof foo;
+   ╰────
+  help: Consider removing this declaration.
+
+  ⚠ eslint(no-unused-vars): Variable is declared but only used as a type. Unused variables should start with a '_'.
+   ╭─[no_unused_vars.ts:2:15]
+ 1 │ 
+ 2 │         const foo: number = 1;
+   ·               ─┬─
+   ·                ╰── 'foo' is declared here
+ 3 │         export type Foo = typeof foo | string;
+   ╰────
+  help: Consider removing this declaration.
+
+  ⚠ eslint(no-unused-vars): Variable is declared but only used as a type. Unused variables should start with a '_'.
+   ╭─[no_unused_vars.ts:2:15]
+ 1 │ 
+ 2 │         const foo: number = 1;
+   ·               ─┬─
+   ·                ╰── 'foo' is declared here
+ 3 │         export type Foo = (typeof foo | string) & { __brand: 'foo' };
+   ╰────
+  help: Consider removing this declaration.
+
+  ⚠ eslint(no-unused-vars): Variable is declared but only used as a type. Unused variables should start with a '_'.
+   ╭─[no_unused_vars.ts:2:15]
+ 1 │ 
+ 2 │         const foo = {
+   ·               ─┬─
+   ·                ╰── 'foo' is declared here
+ 3 │           bar: {
+   ╰────
+  help: Consider removing this declaration.
+
+  ⚠ eslint(no-unused-vars): Variable is declared but only used as a type. Unused variables should start with a '_'.
+   ╭─[no_unused_vars.ts:2:15]
+ 1 │ 
+ 2 │         const foo = {
+   ·               ─┬─
+   ·                ╰── 'foo' is declared here
+ 3 │           bar: {
+   ╰────
+  help: Consider removing this declaration.

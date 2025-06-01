@@ -23,7 +23,9 @@ declare_oxc_lint!(
     ///
     /// This rule reports on any usage of Jasmine globals, which is not ported to Jest, and suggests alternatives from Jest's own API.
     ///
-    /// ### Example
+    /// ### Examples
+    ///
+    /// Examples of **incorrect** code for this rule:
     /// ```javascript
     /// jasmine.DEFAULT_TIMEOUT_INTERVAL = 5000;
     /// test('my test', () => {

@@ -176,36 +176,36 @@ impl Mangler {
     /// Pass the symbol table to oxc_codegen to generate the mangled code.
     #[must_use]
     pub fn build(self, program: &Program<'_>) -> Scoping {
-        let semantic =
+        let mut semantic =
             SemanticBuilder::new().with_scope_tree_child_ids(true).build(program).semantic;
-        self.build_with_semantic(semantic, program)
+        self.build_with_semantic(&mut semantic, program);
+        semantic.into_scoping()
     }
 
     /// # Panics
     ///
     /// Panics if the child_ids does not exist in scope_tree.
-    #[must_use]
-    pub fn build_with_semantic(self, semantic: Semantic<'_>, program: &Program<'_>) -> Scoping {
+    pub fn build_with_semantic(self, semantic: &mut Semantic<'_>, program: &Program<'_>) {
         if self.options.debug {
-            self.build_with_semantic_impl(semantic, program, debug_name)
+            self.build_with_semantic_impl(semantic, program, debug_name);
         } else {
-            self.build_with_semantic_impl(semantic, program, base54)
+            self.build_with_semantic_impl(semantic, program, base54);
         }
     }
 
     fn build_with_semantic_impl<const CAPACITY: usize, G: Fn(u32) -> InlineString<CAPACITY, u8>>(
         self,
-        semantic: Semantic<'_>,
+        semantic: &mut Semantic<'_>,
         program: &Program<'_>,
         generate_name: G,
-    ) -> Scoping {
-        let (mut scoping, ast_nodes) = semantic.into_scoping_and_nodes();
+    ) {
+        let (scoping, ast_nodes) = semantic.scoping_mut_and_nodes();
 
         assert!(scoping.has_scope_child_ids(), "child_id needs to be generated");
 
         // TODO: implement opt-out of direct-eval in a branch of scopes.
         if scoping.root_scope_flags().contains_direct_eval() {
-            return scoping;
+            return;
         }
 
         let (exported_names, exported_symbols) = if self.options.top_level {
@@ -214,7 +214,7 @@ impl Mangler {
             Default::default()
         };
         let (keep_name_names, keep_name_symbols) =
-            Mangler::collect_keep_name_symbols(self.options.keep_names, &scoping, &ast_nodes);
+            Mangler::collect_keep_name_symbols(self.options.keep_names, scoping, ast_nodes);
 
         let allocator = Allocator::default();
 
@@ -295,7 +295,7 @@ impl Mangler {
         let total_number_of_slots = slot_liveness.len();
 
         let frequencies = self.tally_slot_frequencies(
-            &scoping,
+            scoping,
             &exported_symbols,
             &keep_name_symbols,
             total_number_of_slots,
@@ -378,8 +378,6 @@ impl Mangler {
                 }
             }
         }
-
-        scoping
     }
 
     fn tally_slot_frequencies<'a>(

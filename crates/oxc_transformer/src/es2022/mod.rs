@@ -19,13 +19,21 @@ pub struct ES2022<'a, 'ctx> {
 }
 
 impl<'a, 'ctx> ES2022<'a, 'ctx> {
-    pub fn new(options: ES2022Options, ctx: &'ctx TransformCtx<'a>) -> Self {
+    pub fn new(
+        options: ES2022Options,
+        remove_class_fields_without_initializer: bool,
+        ctx: &'ctx TransformCtx<'a>,
+    ) -> Self {
         // Class properties transform performs the static block transform differently.
         // So only enable static block transform if class properties transform is disabled.
         let (class_static_block, class_properties) =
             if let Some(properties_options) = options.class_properties {
-                let class_properties =
-                    ClassProperties::new(properties_options, options.class_static_block, ctx);
+                let class_properties = ClassProperties::new(
+                    properties_options,
+                    options.class_static_block,
+                    remove_class_fields_without_initializer,
+                    ctx,
+                );
                 (None, Some(class_properties))
             } else {
                 let class_static_block =
@@ -37,6 +45,13 @@ impl<'a, 'ctx> ES2022<'a, 'ctx> {
 }
 
 impl<'a> Traverse<'a> for ES2022<'a, '_> {
+    #[inline] // Because this is a no-op in release mode
+    fn exit_program(&mut self, program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
+        if let Some(class_properties) = &mut self.class_properties {
+            class_properties.exit_program(program, ctx);
+        }
+    }
+
     fn enter_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
         if let Some(class_properties) = &mut self.class_properties {
             class_properties.enter_expression(expr, ctx);

@@ -21,7 +21,7 @@ pub fn output_path(krate: &str, path: &str) -> String {
 fn add_header(code: &str, generator_path: &str, comment_start: &str) -> String {
     format!(
         "{comment_start} Auto-generated code, DO NOT EDIT DIRECTLY!\n\
-        {comment_start} To edit this generated file you have to edit `{generator_path}`\n\n\
+        {comment_start} To edit this generated file you have to edit `{generator_path}`.\n\n\
         {code}"
     )
 }

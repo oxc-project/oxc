@@ -17,20 +17,41 @@ pub fn parse_jsdoc(source_text: &str, jsdoc_span_start: u32) -> (JSDocCommentPar
     // - Both can be optional
     // - Each tag is also separated by whitespace + `@`
     let mut comment = None;
+
+    // This will collect all the @tags found in the JSDoc
     let mut tags = vec![];
 
-    // So, find `@` to split comment and each tag.
-    // But `@` can be found inside of `{}` (e.g. `{@see link}`), it should be distinguished.
-    let mut in_braces = false;
-    // Also, `@` is often found inside of backtick(` or ```), like markdown.
+    // Tracks how deeply nested we are inside curly braces `{}`.
+    // Used to ignore `@` characters inside objects or inline tag syntax like {@link ...}
+    let mut curly_brace_depth: i32 = 0;
+
+    let mut brace_depth: i32 = 0;
+
+    // Tracks nesting inside square brackets `[]`.
+    // Used to avoid interpreting `@` inside optional param syntax like `[param=@default]`
+    let mut square_brace_depth: i32 = 0;
+
+    // Tracks whether we're currently inside backticks `...`
+    // This includes inline code blocks or markdown-style code inside comments.
     let mut in_backticks = false;
+
+    // This flag tells us if we have already found the main comment block.
+    // The first part before any @tags is considered the comment. Everything after is a tag.
     let mut comment_found = false;
-    // Parser local offsets, not for global span
+
+    // These mark the current span of the "draft" being read (a comment or tag block)
     let (mut start, mut end) = (0, 0);
 
+    // Turn the source into a character iterator we can peek at
     let mut chars = source_text.chars().peekable();
+
+    // Iterate through every character in the input string
     while let Some(ch) = chars.next() {
-        let can_parse = !(in_braces || in_backticks);
+        // A `@` is only considered the start of a tag if we are not nested inside
+        // braces, square brackets, or backtick-quoted sections
+        let can_parse =
+            curly_brace_depth == 0 && square_brace_depth == 0 && brace_depth == 0 && !in_backticks;
+
         match ch {
             // NOTE: For now, only odd backtick(s) are handled.
             // - 1 backtick: inline code
@@ -43,8 +64,13 @@ pub fn parse_jsdoc(source_text: &str, jsdoc_span_start: u32) -> (JSDocCommentPar
                     in_backticks = !in_backticks;
                 }
             }
-            '{' => in_braces = true,
-            '}' => in_braces = false,
+            '{' => curly_brace_depth += 1,
+            '}' => curly_brace_depth = curly_brace_depth.saturating_sub(1),
+            '(' => brace_depth += 1,
+            ')' => brace_depth = brace_depth.saturating_sub(1),
+            '[' => square_brace_depth += 1,
+            ']' => square_brace_depth = square_brace_depth.saturating_sub(1),
+
             '@' if can_parse => {
                 let part = &source_text[start..end];
                 let span = Span::new(
@@ -53,22 +79,24 @@ pub fn parse_jsdoc(source_text: &str, jsdoc_span_start: u32) -> (JSDocCommentPar
                 );
 
                 if comment_found {
+                    // We've already seen the main comment — this is a tag
                     tags.push(parse_jsdoc_tag(part, span));
                 } else {
+                    // This is the first `@` we've encountered — treat what came before as the comment
                     comment = Some(JSDocCommentPart::new(part, span));
                     comment_found = true;
                 }
 
-                // Prepare for the next draft
                 start = end;
             }
             _ => {}
         }
-        // Update the current draft
+
+        // Move the `end` pointer forward by the character's length
         end += ch.len_utf8();
     }
 
-    // If `@` not found, flush the last draft
+    // After the loop ends, we may have one final segment left to capture
     if start != end {
         let part = &source_text[start..end];
         let span = Span::new(

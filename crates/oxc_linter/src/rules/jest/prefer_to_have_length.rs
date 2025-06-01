@@ -8,7 +8,6 @@ use oxc_span::{GetSpan, Span};
 
 use crate::{
     context::LintContext,
-    fixer::RuleFixer,
     rule::Rule,
     utils::{ParsedExpectFnCall, PossibleJestNode, is_equality_matcher, parse_expect_jest_fn_call},
 };
@@ -31,21 +30,19 @@ declare_oxc_lint!(
     /// This rule triggers a warning if `toBe()`, `toEqual()` or `toStrictEqual()` is
     /// used to assert objects length property.
     ///
-    /// ### Example
+    /// ### Examples
     ///
+    /// Examples of **incorrect** code for this rule:
     /// ```javascript
-    /// // valid
-    /// expect.hasAssertions;
-    /// expect.hasAssertions();
-    /// expect(files).toHaveLength(1);
-    /// expect(files.name).toBe('file');
-    ///
-    /// // invalid
     /// expect(files["length"]).toBe(1);
     /// expect(files["length"]).toBe(1,);
     /// expect(files["length"])["not"].toBe(1)
     /// ```
     ///
+    /// Examples of **correct** code for this rule:
+    /// ```javascript
+    /// expect(files).toHaveLength(1);
+    /// ```
     PreferToHaveLength,
     jest,
     style,
@@ -80,38 +77,22 @@ impl PreferToHaveLength {
         match static_expr.object() {
             expr @ match_member_expression!(Expression) => {
                 let mem_expr = expr.to_member_expression();
+                if let MemberExpression::PrivateFieldExpression(_) = mem_expr {
+                    return;
+                }
                 let Expression::CallExpression(expr_call_expr) = mem_expr.object() else {
                     return;
                 };
-                match mem_expr {
-                    MemberExpression::ComputedMemberExpression(_) => Self::check_and_fix(
-                        call_expr,
-                        expr_call_expr,
-                        &parsed_expect_call,
-                        Some("ComputedMember"),
-                        mem_expr.static_property_name(),
-                        ctx,
-                    ),
-                    MemberExpression::StaticMemberExpression(_) => Self::check_and_fix(
-                        call_expr,
-                        expr_call_expr,
-                        &parsed_expect_call,
-                        Some("StaticMember"),
-                        mem_expr.static_property_name(),
-                        ctx,
-                    ),
-                    MemberExpression::PrivateFieldExpression(_) => (),
-                }
-            }
-            Expression::CallExpression(expr_call_expr) => {
                 Self::check_and_fix(
                     call_expr,
                     expr_call_expr,
                     &parsed_expect_call,
-                    None,
-                    None,
+                    Some(mem_expr),
                     ctx,
                 );
+            }
+            Expression::CallExpression(expr_call_expr) => {
+                Self::check_and_fix(call_expr, expr_call_expr, &parsed_expect_call, None, ctx);
             }
             _ => (),
         }
@@ -121,8 +102,7 @@ impl PreferToHaveLength {
         call_expr: &CallExpression<'a>,
         expr_call_expr: &CallExpression<'a>,
         parsed_expect_call: &ParsedExpectFnCall<'a>,
-        kind: Option<&str>,
-        property_name: Option<&str>,
+        super_mem_expr: Option<&MemberExpression<'a>>,
         ctx: &LintContext<'a>,
     ) {
         let Some(argument) = expr_call_expr.arguments.first() else {
@@ -143,7 +123,7 @@ impl PreferToHaveLength {
         }
 
         ctx.diagnostic_with_fix(use_to_have_length(matcher.span), |fixer| {
-            let code = Self::build_code(fixer, static_mem_expr, kind, property_name);
+            let code = Self::build_code(fixer.source_text(), static_mem_expr, super_mem_expr);
             let offset = u32::try_from(
                 fixer
                     .source_range(Span::new(matcher.span.end, call_expr.span().end))
@@ -156,34 +136,24 @@ impl PreferToHaveLength {
     }
 
     fn build_code<'a>(
-        fixer: RuleFixer<'_, 'a>,
+        source: &str,
         mem_expr: &MemberExpression<'a>,
-        kind: Option<&str>,
-        property_name: Option<&str>,
+        super_mem_expr: Option<&MemberExpression<'a>>,
     ) -> String {
-        let mut formatter = fixer.codegen();
+        let l = Span::new(mem_expr.span().start, mem_expr.object().span().end).source_text(source);
+        let r = super_mem_expr.map(|mem_expr| {
+            Span::new(mem_expr.object().span().end, mem_expr.span().end).source_text(source)
+        });
 
-        formatter.print_str("expect(");
-        formatter.print_str(
-            fixer.source_range(Span::new(mem_expr.span().start, mem_expr.object().span().end)),
-        );
-        formatter.print_str(")");
-
-        if let Some(kind_val) = kind {
-            if kind_val == "ComputedMember" {
-                let property = property_name.unwrap();
-                formatter.print_str("[\"");
-                formatter.print_str(property);
-                formatter.print_str("\"]");
-            } else if kind_val == "StaticMember" {
-                formatter.print_str(".");
-                let property = property_name.unwrap();
-                formatter.print_str(property);
-            }
+        let mut code = String::with_capacity(8 + l.len() + r.map_or(0, str::len) + 13);
+        code.push_str("expect(");
+        code.push_str(l);
+        code.push(')');
+        if let Some(r) = r {
+            code.push_str(r);
         }
-
-        formatter.print_str(".toHaveLength");
-        formatter.into_source_text()
+        code.push_str(".toHaveLength");
+        code
     }
 }
 

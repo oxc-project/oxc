@@ -1,7 +1,7 @@
 use cow_utils::CowUtils;
 use std::borrow::Cow;
 
-use oxc_allocator::{IntoIn, TakeIn};
+use oxc_allocator::TakeIn;
 use oxc_ast::ast::*;
 use oxc_ecmascript::{
     StringCharAt, StringCharAtResult, StringCharCodeAt, StringIndexOf, StringLastIndexOf,
@@ -9,7 +9,7 @@ use oxc_ecmascript::{
     constant_evaluation::{ConstantEvaluation, DetermineValueType},
     side_effects::MayHaveSideEffects,
 };
-use oxc_span::SPAN;
+use oxc_span::{Atom, SPAN, format_atom};
 use oxc_syntax::es_target::ESTarget;
 use oxc_traverse::Ancestor;
 
@@ -54,7 +54,7 @@ impl<'a> PeepholeOptimizations {
             _ => return,
         };
         let replacement = match name {
-            "toLowerCase" | "toUpperCase" | "trim" => {
+            "toLowerCase" | "toUpperCase" | "trim" | "trimStart" | "trimEnd" => {
                 Self::try_fold_string_casing(*span, arguments, name, object, ctx)
             }
             "substring" | "slice" => {
@@ -97,10 +97,14 @@ impl<'a> PeepholeOptimizations {
             return None;
         }
         let Expression::StringLiteral(s) = object else { return None };
+
+        let value = s.value.as_str();
         let value = match name {
-            "toLowerCase" => s.value.cow_to_lowercase(),
-            "toUpperCase" => s.value.cow_to_uppercase(),
-            "trim" => Cow::Borrowed(s.value.trim()),
+            "toLowerCase" => ctx.ast.atom_from_cow(&value.cow_to_lowercase()),
+            "toUpperCase" => ctx.ast.atom_from_cow(&value.cow_to_uppercase()),
+            "trim" => Atom::from(value.trim()),
+            "trimStart" => Atom::from(value.trim_start()),
+            "trimEnd" => Atom::from(value.trim_end()),
             _ => return None,
         };
         Some(ctx.ast.expression_string_literal(span, value, None))
@@ -179,7 +183,7 @@ impl<'a> PeepholeOptimizations {
         }
         Some(ctx.ast.expression_string_literal(
             span,
-            s.value.as_str().substring(start_idx, end_idx),
+            ctx.ast.atom(&s.value.as_str().substring(start_idx, end_idx)),
             None,
         ))
     }
@@ -202,9 +206,9 @@ impl<'a> PeepholeOptimizations {
             None => None,
         };
         let result = match s.value.as_str().char_at(char_at_index) {
-            StringCharAtResult::Value(c) => &c.to_string(),
+            StringCharAtResult::Value(c) => format_atom!(ctx.ast.allocator, "{c}"),
             StringCharAtResult::InvalidChar(_) => return None,
-            StringCharAtResult::OutOfRange => "",
+            StringCharAtResult::OutOfRange => Atom::empty(),
         };
         Some(ctx.ast.expression_string_literal(span, result, None))
     }
@@ -265,7 +269,7 @@ impl<'a> PeepholeOptimizations {
             "replaceAll" => s.value.as_str().cow_replace(search_value.as_ref(), &replace_value),
             _ => unreachable!(),
         };
-        Some(ctx.ast.expression_string_literal(span, result, None))
+        Some(ctx.ast.expression_string_literal(span, ctx.ast.atom_from_cow(&result), None))
     }
 
     #[expect(clippy::cast_possible_truncation, clippy::cast_sign_loss, clippy::cast_lossless)]
@@ -287,7 +291,7 @@ impl<'a> PeepholeOptimizations {
             let c = char::try_from(v).ok()?;
             s.push(c);
         }
-        Some(ctx.ast.expression_string_literal(span, s, None))
+        Some(ctx.ast.expression_string_literal(span, ctx.ast.atom(&s), None))
     }
 
     #[expect(
@@ -321,7 +325,7 @@ impl<'a> PeepholeOptimizations {
                 if radix == 10 {
                     use oxc_syntax::number::ToJsString;
                     let s = lit.value.to_js_string();
-                    return Some(ctx.ast.expression_string_literal(span, s, None));
+                    return Some(ctx.ast.expression_string_literal(span, ctx.ast.atom(&s), None));
                 }
                 // Only convert integers for other radix values.
                 let value = lit.value;
@@ -339,7 +343,8 @@ impl<'a> PeepholeOptimizations {
                 if i as f64 != value {
                     return None;
                 }
-                Some(ctx.ast.expression_string_literal(span, Self::format_radix(i, radix), None))
+                let value = Self::format_radix(i, radix);
+                Some(ctx.ast.expression_string_literal(span, ctx.ast.atom(&value), None))
             }
             // `null` returns type errors
             Expression::BooleanLiteral(_)
@@ -350,7 +355,9 @@ impl<'a> PeepholeOptimizations {
                 if args.is_empty() =>
             {
                 use oxc_ecmascript::ToJsString;
-                object.to_js_string(&ctx).map(|s| ctx.ast.expression_string_literal(span, s, None))
+                object.to_js_string(&ctx).map(|s| {
+                    ctx.ast.expression_string_literal(span, ctx.ast.atom_from_cow(&s), None)
+                })
             }
             _ => None,
         }
@@ -403,20 +410,16 @@ impl<'a> PeepholeOptimizations {
 
         let wrap_with_unary_plus_if_needed = |expr: &mut Expression<'a>| {
             if expr.value_type(&ctx).is_number() {
-                expr.take_in(ctx.ast.allocator)
+                expr.take_in(ctx.ast)
             } else {
-                ctx.ast.expression_unary(
-                    SPAN,
-                    UnaryOperator::UnaryPlus,
-                    expr.take_in(ctx.ast.allocator),
-                )
+                ctx.ast.expression_unary(SPAN, UnaryOperator::UnaryPlus, expr.take_in(ctx.ast))
             }
         };
 
         Some(ctx.ast.expression_binary(
             span,
             // see [`PeepholeOptimizations::is_binary_operator_that_does_number_conversion`] why it does not require `wrap_with_unary_plus_if_needed` here
-            first_arg.take_in(ctx.ast.allocator),
+            first_arg.take_in(ctx.ast),
             BinaryOperator::Exponential,
             wrap_with_unary_plus_if_needed(second_arg),
         ))
@@ -626,13 +629,10 @@ impl<'a> PeepholeOptimizations {
 
         *node = ctx.ast.expression_call(
             original_span,
-            new_root_callee.take_in(ctx.ast.allocator),
+            new_root_callee.take_in(ctx.ast),
             Option::<TSTypeParameterInstantiation>::None,
             ctx.ast.vec_from_iter(
-                collected_arguments
-                    .into_iter()
-                    .rev()
-                    .flat_map(|arg| arg.take_in(ctx.ast.allocator)),
+                collected_arguments.into_iter().rev().flat_map(|arg| arg.take_in(ctx.ast)),
             ),
             false,
         );
@@ -694,13 +694,13 @@ impl<'a> PeepholeOptimizations {
                 }
 
                 if args.is_empty() {
-                    Some(object.take_in(ctx.ast.allocator))
+                    Some(object.take_in(ctx.ast))
                 } else if can_merge_until.is_some() {
                     Some(ctx.ast.expression_call(
                         span,
-                        callee.take_in(ctx.ast.allocator),
+                        callee.take_in(ctx.ast),
                         Option::<TSTypeParameterInstantiation>::None,
-                        args.take_in(ctx.ast.allocator),
+                        args.take_in(ctx.ast),
                         false,
                     ))
                 } else {
@@ -759,21 +759,17 @@ impl<'a> PeepholeOptimizations {
                     debug_assert_eq!(quasi_strs.len(), 1);
                     return Some(ctx.ast.expression_string_literal(
                         span,
-                        quasi_strs.pop().unwrap(),
+                        ctx.ast.atom_from_cow(&quasi_strs.pop().unwrap()),
                         None,
                     ));
                 }
 
                 let mut quasis = ctx.ast.vec_from_iter(quasi_strs.into_iter().map(|s| {
-                    let cooked = match &s {
-                        Cow::Owned(s) => ctx.ast.atom(s),
-                        Cow::Borrowed(s) => Atom::from(*s),
-                    };
+                    let cooked = ctx.ast.atom_from_cow(&s);
                     ctx.ast.template_element(
                         SPAN,
                         TemplateElementValue {
-                            raw: Self::escape_string_for_template_literal(&s)
-                                .into_in(ctx.ast.allocator),
+                            raw: ctx.ast.atom(&Self::escape_string_for_template_literal(&s)),
                             cooked: Some(cooked),
                         },
                         false,
@@ -954,7 +950,6 @@ impl<'a> PeepholeOptimizations {
         Some(ctx.ast.expression_array(
             span,
             ctx.ast.vec_from_iter(arguments.drain(..).map(ArrayExpressionElement::from)),
-            None,
         ))
     }
 
@@ -977,7 +972,7 @@ impl<'a> PeepholeOptimizations {
                     s.span = span;
                     s.value = ctx.ast.atom(&c.to_string());
                     s.raw = None;
-                    Some(object.take_in(ctx.ast.allocator))
+                    Some(object.take_in(ctx.ast))
                 } else {
                     None
                 }
@@ -1157,6 +1152,9 @@ mod test {
         test("x = 'ca'.replace('c','xxx')", "x = 'xxxa'");
         test_same("x = 'c'.replace((foo(), 'c'), 'b')");
 
+        test_same("x = '[object Object]'.replace({}, 'x')"); // can be folded to "x"
+        test_same("x = 'a'.replace({ [Symbol.replace]() { return 'x' } }, 'c')"); // can be folded to "x"
+
         // only one instance replaced
         test("x = 'acaca'.replace('c','x')", "x = 'axaca'");
         test("x = 'ab'.replace('','x')", "x = 'xab'");
@@ -1184,6 +1182,9 @@ mod test {
 
         test("x = 'c_c_c'.replaceAll('c','x')", "x = 'x_x_x'");
         test("x = 'acaca'.replaceAll('c',/x/)", "x = 'a/x/a/x/a'");
+
+        test_same("x = '[object Object]'.replaceAll({}, 'x')"); // can be folded to "x"
+        test_same("x = 'a'.replaceAll({ [Symbol.replace]() { return 'x' } }, 'c')"); // can be folded to "x"
 
         test_same("x = 'acaca'.replaceAll(/c/,'x')"); // this should throw
         test_same("x = 'acaca'.replaceAll(/c/g,'x')"); // this will affect the global RegExp props
@@ -1429,6 +1430,21 @@ mod test {
         test("x = 'SS'.toLowerCase()", "x = 'ss'");
         test("x = 'Σ'.toLowerCase()", "x = 'σ'");
         test("x = 'ΣΣ'.toLowerCase()", "x = 'σς'");
+    }
+
+    #[test]
+    fn test_fold_string_trim() {
+        test("x = '  abc  '.trim()", "x = 'abc'");
+        test("x = 'abc'.trim()", "x = 'abc'");
+        test_same("x = 'abc'.trim(1)");
+
+        test("x = '  abc  '.trimStart()", "x = 'abc  '");
+        test("x = 'abc'.trimStart()", "x = 'abc'");
+        test_same("x = 'abc'.trimStart(1)");
+
+        test("x = '  abc  '.trimEnd()", "x = '  abc'");
+        test("x = 'abc'.trimEnd()", "x = 'abc'");
+        test_same("x = 'abc'.trimEnd(1)");
     }
 
     #[test]

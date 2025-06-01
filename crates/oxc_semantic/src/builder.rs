@@ -5,6 +5,7 @@ use std::{
     mem,
 };
 
+use oxc_allocator::Address;
 use oxc_data_structures::stack::Stack;
 use rustc_hash::FxHashMap;
 
@@ -25,7 +26,7 @@ use oxc_syntax::{
 
 use crate::{
     JSDocFinder, Semantic,
-    binder::Binder,
+    binder::{Binder, ModuleInstanceState},
     checker,
     class::ClassTableBuilder,
     diagnostics::redeclaration,
@@ -38,7 +39,7 @@ use crate::{
 };
 
 macro_rules! control_flow {
-    ($self:ident, |$cfg:tt| $body:expr_2021) => {
+    ($self:ident, |$cfg:tt| $body:expr) => {
         if let Some($cfg) = &mut $self.cfg { $body } else { Default::default() }
     };
 }
@@ -67,11 +68,7 @@ pub struct SemanticBuilder<'a> {
     pub(crate) current_scope_id: ScopeId,
     /// Stores current `AstKind::Function` and `AstKind::ArrowFunctionExpression` during AST visit
     pub(crate) function_stack: Stack<NodeId>,
-    // To make a namespace/module value like
-    // we need the to know the modules we are inside
-    // and when we reach a value declaration we set it
-    // to value like
-    pub(crate) namespace_stack: Vec<Option<SymbolId>>,
+    pub(crate) module_instance_state_cache: FxHashMap<Address, ModuleInstanceState>,
     current_reference_flags: ReferenceFlags,
     pub(crate) hoisting_variables: FxHashMap<ScopeId, FxHashMap<Atom<'a>, SymbolId>>,
 
@@ -125,7 +122,7 @@ impl<'a> SemanticBuilder<'a> {
             current_reference_flags: ReferenceFlags::empty(),
             current_scope_id,
             function_stack: Stack::with_capacity(16),
-            namespace_stack: vec![],
+            module_instance_state_cache: FxHashMap::default(),
             nodes: AstNodes::default(),
             hoisting_variables: FxHashMap::default(),
             scoping,
@@ -710,9 +707,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         if let Some(super_type_parameters) = &class.super_type_arguments {
             self.visit_ts_type_parameter_instantiation(super_type_parameters);
         }
-        if let Some(implements) = &class.implements {
-            self.visit_ts_class_implementses(implements);
-        }
+        self.visit_ts_class_implements_list(&class.implements);
         self.visit_class_body(&class.body);
 
         self.leave_scope();
@@ -1964,25 +1959,21 @@ impl<'a> SemanticBuilder<'a> {
             }
             AstKind::VariableDeclarator(decl) => {
                 decl.bind(self);
-                self.make_all_namespaces_valuelike();
             }
             AstKind::Function(func) => {
                 self.function_stack.push(self.current_node_id);
                 if func.is_declaration() {
                     func.bind(self);
                 }
-                self.make_all_namespaces_valuelike();
             }
             AstKind::ArrowFunctionExpression(_) => {
                 self.function_stack.push(self.current_node_id);
-                self.make_all_namespaces_valuelike();
             }
             AstKind::Class(class) => {
                 self.current_node_flags |= NodeFlags::Class;
                 if class.is_declaration() {
                     class.bind(self);
                 }
-                self.make_all_namespaces_valuelike();
             }
             AstKind::ClassBody(body) => {
                 self.class_table_builder.declare_class_body(
@@ -2009,11 +2000,6 @@ impl<'a> SemanticBuilder<'a> {
             }
             AstKind::TSModuleDeclaration(module_declaration) => {
                 module_declaration.bind(self);
-                let symbol_id = match &module_declaration.id {
-                    TSModuleDeclarationName::Identifier(ident) => ident.symbol_id.get(),
-                    TSModuleDeclarationName::StringLiteral(_) => None,
-                };
-                self.namespace_stack.push(symbol_id);
             }
             AstKind::TSTypeAliasDeclaration(type_alias_declaration) => {
                 type_alias_declaration.bind(self);
@@ -2024,7 +2010,6 @@ impl<'a> SemanticBuilder<'a> {
             AstKind::TSEnumDeclaration(enum_declaration) => {
                 enum_declaration.bind(self);
                 // TODO: const enum?
-                self.make_all_namespaces_valuelike();
             }
             AstKind::TSEnumMember(enum_member) => {
                 enum_member.bind(self);
@@ -2111,9 +2096,6 @@ impl<'a> SemanticBuilder<'a> {
             AstKind::CatchParameter(_) => {
                 self.resolve_references_for_current_scope();
             }
-            AstKind::TSModuleDeclaration(_) => {
-                self.namespace_stack.pop();
-            }
             AstKind::TSTypeName(_) => {
                 self.current_reference_flags -= ReferenceFlags::Type;
             }
@@ -2124,20 +2106,6 @@ impl<'a> SemanticBuilder<'a> {
             }
             AstKind::LabeledStatement(_) => self.unused_labels.mark_unused(self.current_node_id),
             _ => {}
-        }
-    }
-
-    fn make_all_namespaces_valuelike(&mut self) {
-        for symbol_id in self.namespace_stack.iter().copied() {
-            let Some(symbol_id) = symbol_id else {
-                continue;
-            };
-
-            // Ambient modules cannot be value modules
-            if self.scoping.symbol_flags(symbol_id).intersects(SymbolFlags::Ambient) {
-                continue;
-            }
-            self.scoping.union_symbol_flag(symbol_id, SymbolFlags::ValueModule);
         }
     }
 

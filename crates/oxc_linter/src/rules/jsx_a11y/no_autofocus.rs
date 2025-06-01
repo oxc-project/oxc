@@ -46,10 +46,9 @@ declare_oxc_lint!(
     /// For the `ignoreNonDOM` option, this determines if developer created
     /// components are checked.
     ///
-    /// ### Example
+    /// ### Examples
     ///
     /// Examples of **incorrect** code for this rule:
-    ///
     /// ```jsx
     /// <div autoFocus />
     /// <div autoFocus="true" />
@@ -58,7 +57,6 @@ declare_oxc_lint!(
     /// ```
     ///
     /// Examples of **correct** code for this rule:
-    ///
     /// ```jsx
     /// <div />
     /// ```
@@ -105,7 +103,7 @@ impl Rule for NoAutofocus {
         let element_type = get_element_type(ctx, &jsx_el.opening_element);
 
         if self.ignore_non_dom {
-            if HTML_TAG.contains(&element_type) {
+            if HTML_TAG.contains(element_type.as_ref()) {
                 if let JSXAttributeItem::Attribute(attr) = autofocus {
                     ctx.diagnostic_with_fix(no_autofocus_diagnostic(attr.span), |fixer| {
                         fixer.delete(&attr.span)

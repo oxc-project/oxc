@@ -28,9 +28,11 @@ pub struct NoInvalidRegexp(Box<NoInvalidRegexpConfig>);
 
 declare_oxc_lint!(
     /// ### What it does
+    ///
     /// Disallow invalid regular expression strings in RegExp constructors.
     ///
     /// ### Why is this bad?
+    ///
     /// An invalid pattern in a regular expression literal is a SyntaxError when the code is parsed,
     /// but an invalid string in RegExp constructors throws a SyntaxError only when the code is executed.
     ///

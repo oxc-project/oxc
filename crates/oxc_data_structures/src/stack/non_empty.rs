@@ -354,6 +354,7 @@ impl<T> NonEmptyStack<T> {
     }
 
     /// Get if stack is empty. Always returns `false`.
+    #[expect(clippy::unused_self)]
     #[inline]
     pub fn is_empty(&self) -> bool {
         // This method is pointless, as the stack is never empty. But provide it to override
@@ -420,7 +421,7 @@ mod tests {
     use super::*;
 
     macro_rules! assert_len_cap_last {
-        ($stack:ident, $len:expr_2021, $capacity:expr_2021, $last:expr_2021) => {
+        ($stack:ident, $len:expr, $capacity:expr, $last:expr) => {
             assert_eq!($stack.len(), $len);
             assert_eq!($stack.capacity(), $capacity);
             assert_eq!($stack.last(), $last);

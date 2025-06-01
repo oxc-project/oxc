@@ -1,20 +1,19 @@
-use tower_lsp::lsp_types::{
+use tower_lsp_server::lsp_types::{
     ClientCapabilities, CodeActionKind, CodeActionOptions, CodeActionProviderCapability,
-    ExecuteCommandOptions, OneOf, ServerCapabilities, TextDocumentSyncCapability,
-    TextDocumentSyncKind, WorkDoneProgressOptions, WorkspaceFoldersServerCapabilities,
-    WorkspaceServerCapabilities,
+    ExecuteCommandOptions, OneOf, SaveOptions, ServerCapabilities, TextDocumentSyncCapability,
+    TextDocumentSyncKind, TextDocumentSyncOptions, TextDocumentSyncSaveOptions,
+    WorkDoneProgressOptions, WorkspaceFoldersServerCapabilities, WorkspaceServerCapabilities,
 };
 
-use crate::commands::LSP_COMMANDS;
+use crate::{code_actions::CODE_ACTION_KIND_SOURCE_FIX_ALL_OXC, commands::FIX_ALL_COMMAND_ID};
 
-pub const CODE_ACTION_KIND_SOURCE_FIX_ALL_OXC: CodeActionKind =
-    CodeActionKind::new("source.fixAll.oxc");
-
-#[derive(Clone)]
+#[derive(Clone, Default)]
 pub struct Capabilities {
     pub code_action_provider: bool,
     pub workspace_apply_edit: bool,
     pub workspace_execute_command: bool,
+    pub workspace_configuration: bool,
+    pub dynamic_watchers: bool,
 }
 
 impl From<ClientCapabilities> for Capabilities {
@@ -31,20 +30,39 @@ impl From<ClientCapabilities> for Capabilities {
             value.workspace.as_ref().is_some_and(|workspace| workspace.apply_edit.is_some());
         let workspace_execute_command =
             value.workspace.as_ref().is_some_and(|workspace| workspace.execute_command.is_some());
+        let workspace_configuration = value
+            .workspace
+            .as_ref()
+            .is_some_and(|workspace| workspace.configuration.is_some_and(|config| config));
+        let dynamic_watchers = value.workspace.is_some_and(|workspace| {
+            workspace.did_change_watched_files.is_some_and(|watched_files| {
+                watched_files.dynamic_registration.is_some_and(|dynamic| dynamic)
+            })
+        });
 
-        Self { code_action_provider, workspace_apply_edit, workspace_execute_command }
+        Self {
+            code_action_provider,
+            workspace_apply_edit,
+            workspace_execute_command,
+            workspace_configuration,
+            dynamic_watchers,
+        }
     }
 }
 
 impl From<Capabilities> for ServerCapabilities {
     fn from(value: Capabilities) -> Self {
-        let commands = LSP_COMMANDS
-            .iter()
-            .filter_map(|c| if c.available(value.clone()) { Some(c.command_id()) } else { None })
-            .collect();
-
         Self {
-            text_document_sync: Some(TextDocumentSyncCapability::Kind(TextDocumentSyncKind::FULL)),
+            text_document_sync: Some(TextDocumentSyncCapability::Options(
+                TextDocumentSyncOptions {
+                    change: Some(TextDocumentSyncKind::FULL),
+                    open_close: Some(true),
+                    save: Some(TextDocumentSyncSaveOptions::SaveOptions(SaveOptions {
+                        include_text: Some(false),
+                    })),
+                    ..Default::default()
+                },
+            )),
             workspace: Some(WorkspaceServerCapabilities {
                 workspace_folders: Some(WorkspaceFoldersServerCapabilities {
                     supported: Some(true),
@@ -67,7 +85,10 @@ impl From<Capabilities> for ServerCapabilities {
                 None
             },
             execute_command_provider: if value.workspace_execute_command {
-                Some(ExecuteCommandOptions { commands, ..Default::default() })
+                Some(ExecuteCommandOptions {
+                    commands: vec![FIX_ALL_COMMAND_ID.to_string()],
+                    ..Default::default()
+                })
             } else {
                 None
             },
@@ -78,10 +99,11 @@ impl From<Capabilities> for ServerCapabilities {
 
 #[cfg(test)]
 mod test {
-    use tower_lsp::lsp_types::{
+    use tower_lsp_server::lsp_types::{
         ClientCapabilities, CodeActionClientCapabilities, CodeActionKindLiteralSupport,
-        CodeActionLiteralSupport, DynamicRegistrationClientCapabilities,
-        TextDocumentClientCapabilities, WorkspaceClientCapabilities,
+        CodeActionLiteralSupport, DidChangeWatchedFilesClientCapabilities,
+        DynamicRegistrationClientCapabilities, TextDocumentClientCapabilities,
+        WorkspaceClientCapabilities,
     };
 
     use super::Capabilities;
@@ -216,5 +238,39 @@ mod test {
         let capabilities = Capabilities::from(client_capabilities);
 
         assert!(capabilities.workspace_apply_edit);
+    }
+
+    #[test]
+    fn test_dynamic_watchers_vscode() {
+        let client_capabilities = ClientCapabilities {
+            workspace: Some(WorkspaceClientCapabilities {
+                did_change_watched_files: Some(DidChangeWatchedFilesClientCapabilities {
+                    dynamic_registration: Some(true),
+                    ..Default::default()
+                }),
+                ..Default::default()
+            }),
+            ..Default::default()
+        };
+
+        let capabilities = Capabilities::from(client_capabilities);
+        assert!(capabilities.dynamic_watchers);
+    }
+
+    #[test]
+    fn test_dynamic_watchers_intellij() {
+        let client_capabilities = ClientCapabilities {
+            workspace: Some(WorkspaceClientCapabilities {
+                did_change_watched_files: Some(DidChangeWatchedFilesClientCapabilities {
+                    dynamic_registration: Some(true),
+                    ..Default::default()
+                }),
+                ..Default::default()
+            }),
+            ..Default::default()
+        };
+
+        let capabilities = Capabilities::from(client_capabilities);
+        assert!(capabilities.dynamic_watchers);
     }
 }

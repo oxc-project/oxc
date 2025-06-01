@@ -37,6 +37,7 @@ impl Default for MaxLinesConfig {
 
 declare_oxc_lint!(
     /// ### What it does
+    ///
     /// Enforce a maximum number of lines per file.
     ///
     /// ### Why is this bad?
@@ -91,23 +92,19 @@ impl Rule for MaxLines {
             0
         };
 
-        let lines_in_file =
-            if ctx.source_text().is_empty() { 1 } else { ctx.source_text().lines().count() };
-
-        let blank_lines = if self.skip_blank_lines {
-            ctx.source_text().lines().filter(|&line| line.trim().is_empty()).count()
+        let lines_in_file = if self.skip_blank_lines {
+            ctx.source_text().lines().filter(|&line| !line.trim().is_empty()).count()
         } else {
-            0
+            // Intentionally counting newline bytes instead of using .lines() for performance (see PR 11242)
+            let newlines = ctx.source_text().bytes().filter(|ch| *ch == b'\n').count();
+            if ctx.source_text().ends_with('\n') { newlines } else { newlines + 1 }
         };
 
-        if lines_in_file.saturating_sub(blank_lines).saturating_sub(comment_lines) > self.max {
+        let final_lines = lines_in_file.max(1).saturating_sub(comment_lines);
+        if final_lines > self.max {
             // Point to end of the file for `eslint-disable max-lines` to work.
             let end = ctx.source_text().len().saturating_sub(1) as u32;
-            ctx.diagnostic(max_lines_diagnostic(
-                lines_in_file.saturating_sub(blank_lines).saturating_sub(comment_lines),
-                self.max,
-                Span::new(end, end),
-            ));
+            ctx.diagnostic(max_lines_diagnostic(final_lines, self.max, Span::new(end, end)));
         }
     }
 }

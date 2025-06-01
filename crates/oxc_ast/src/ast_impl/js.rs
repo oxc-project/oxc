@@ -4,7 +4,6 @@ use std::{
     fmt::{self, Display},
 };
 
-use oxc_allocator::{Box, Vec};
 use oxc_span::{Atom, Span};
 use oxc_syntax::{operator::UnaryOperator, scope::ScopeFlags};
 
@@ -853,27 +852,7 @@ impl<'a> SimpleAssignmentTarget<'a> {
     }
 }
 
-impl<'a> ArrayAssignmentTarget<'a> {
-    /// Creates a new array assignment target (like `[a, b]` in the code `[a, b] = [1, 2]`)
-    /// using the given elements.
-    pub fn new_with_elements(
-        span: Span,
-        elements: Vec<'a, Option<AssignmentTargetMaybeDefault<'a>>>,
-    ) -> Self {
-        Self { span, elements, rest: None, trailing_comma: None }
-    }
-}
-
-impl<'a> ObjectAssignmentTarget<'a> {
-    /// Creates a new object assignment target (like `{a, b}` in the code `({a, b} = obj)`) using
-    /// the given properties.
-    pub fn new_with_properties(
-        span: Span,
-        properties: Vec<'a, AssignmentTargetProperty<'a>>,
-    ) -> Self {
-        Self { span, properties, rest: None }
-    }
-
+impl ObjectAssignmentTarget<'_> {
     /// Returns `true` if this object assignment target is empty.
     ///
     /// ## Example
@@ -899,14 +878,14 @@ impl<'a> ObjectAssignmentTarget<'a> {
     }
 }
 
-impl AssignmentTargetMaybeDefault<'_> {
+impl<'a> AssignmentTargetMaybeDefault<'a> {
     /// Returns the identifier bound by this assignment target.
     ///
     /// ## Example
     ///
     /// - returns `b` when called on `a: b = 1` in `({a: b = 1} = obj)`
     /// - returns `b` when called on `a: b` in `({a: b} = obj)`
-    pub fn identifier(&self) -> Option<&IdentifierReference<'_>> {
+    pub fn identifier(&self) -> Option<&IdentifierReference<'a>> {
         match self {
             AssignmentTargetMaybeDefault::AssignmentTargetIdentifier(id) => Some(id),
             Self::AssignmentTargetWithDefault(target) => {
@@ -1030,7 +1009,14 @@ impl<'a> Declaration<'a> {
             Declaration::TSInterfaceDeclaration(decl) => Some(&decl.id),
             Declaration::TSEnumDeclaration(decl) => Some(&decl.id),
             Declaration::TSImportEqualsDeclaration(decl) => Some(&decl.id),
-            _ => None,
+            Declaration::TSModuleDeclaration(decl) => {
+                if let TSModuleDeclarationName::Identifier(ident) = &decl.id {
+                    Some(ident)
+                } else {
+                    None
+                }
+            }
+            Declaration::VariableDeclaration(_) => None,
         }
     }
 
@@ -1342,7 +1328,7 @@ impl<'a> Function<'a> {
 
 impl FunctionType {
     /// Returns `true` if it is a [`FunctionType::TSDeclareFunction`] or [`FunctionType::TSEmptyBodyFunctionExpression`].
-    pub fn is_typescript_syntax(&self) -> bool {
+    pub fn is_typescript_syntax(self) -> bool {
         matches!(self, Self::TSDeclareFunction | Self::TSEmptyBodyFunctionExpression)
     }
 }
@@ -1760,11 +1746,11 @@ impl<'a> ModuleDeclaration<'a> {
     /// - `import thing from "lib" with { key: "data" }` => `Some(WithClause)`
     /// - `export * from "lib" with { key: "data" }` => `Some(WithClause)`
     /// - `export default thing` => `None`
-    pub fn with_clause(&self) -> Option<&Box<'a, WithClause<'a>>> {
+    pub fn with_clause(&self) -> Option<&WithClause<'a>> {
         match self {
-            Self::ImportDeclaration(decl) => decl.with_clause.as_ref(),
-            Self::ExportAllDeclaration(decl) => decl.with_clause.as_ref(),
-            Self::ExportNamedDeclaration(decl) => decl.with_clause.as_ref(),
+            Self::ImportDeclaration(decl) => decl.with_clause.as_deref(),
+            Self::ExportAllDeclaration(decl) => decl.with_clause.as_deref(),
+            Self::ExportNamedDeclaration(decl) => decl.with_clause.as_deref(),
             Self::ExportDefaultDeclaration(_)
             | Self::TSExportAssignment(_)
             | Self::TSNamespaceExportDeclaration(_) => None,
@@ -1887,6 +1873,16 @@ impl<'a> ModuleExportName<'a> {
             Self::IdentifierReference(identifier) => Some(identifier.name),
             Self::StringLiteral(_) => None,
         }
+    }
+
+    /// Returns `true` if this module export name is an identifier, and not a string literal.
+    ///
+    /// ## Example
+    ///
+    /// - `export { foo }` => `true`
+    /// - `export { "foo" }` => `false`
+    pub fn is_identifier(&self) -> bool {
+        matches!(self, Self::IdentifierName(_) | Self::IdentifierReference(_))
     }
 }
 

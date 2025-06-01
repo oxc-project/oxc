@@ -3,7 +3,6 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 use oxc_syntax::operator::BinaryOperator;
-use phf::phf_set;
 
 use crate::{AstNode, context::LintContext, globals::GLOBAL_OBJECT_NAMES, rule::Rule};
 
@@ -108,7 +107,7 @@ fn is_expr_global_builtin<'a, 'b>(
             return None;
         };
 
-        if !GLOBAL_OBJECT_NAMES.contains(&ident.name) {
+        if !GLOBAL_OBJECT_NAMES.contains(&ident.name.as_str()) {
             return None;
         }
 
@@ -116,36 +115,36 @@ fn is_expr_global_builtin<'a, 'b>(
     }
 }
 
-const ENFORCE_NEW_FOR_BUILTINS: phf::Set<&'static str> = phf_set! {
-    "Int8Array",
-    "Uint8Array",
-    "Uint8ClampedArray",
-    "Int16Array",
-    "Uint16Array",
-    "Int32Array",
-    "Uint32Array",
-    "Float32Array",
-    "Float64Array",
-    "BigInt64Array",
-    "BigUint64Array",
-    "Object",
+const ENFORCE_NEW_FOR_BUILTINS: phf::Set<&'static str> = phf::phf_set![
     "Array",
     "ArrayBuffer",
+    "BigInt64Array",
+    "BigUint64Array",
     "DataView",
     "Date",
     "Error",
-    "Function",
-    "Map",
-    "WeakMap",
-    "Set",
-    "WeakSet",
-    "Promise",
-    "RegExp",
-    "SharedArrayBuffer",
-    "Proxy",
-    "WeakRef",
     "FinalizationRegistry",
-};
+    "Float32Array",
+    "Float64Array",
+    "Function",
+    "Int16Array",
+    "Int32Array",
+    "Int8Array",
+    "Map",
+    "Object",
+    "Promise",
+    "Proxy",
+    "RegExp",
+    "Set",
+    "SharedArrayBuffer",
+    "Uint16Array",
+    "Uint32Array",
+    "Uint8Array",
+    "Uint8ClampedArray",
+    "WeakMap",
+    "WeakRef",
+    "WeakSet",
+];
 
 const DISALLOW_NEW_FOR_BUILTINS: [&str; 5] = ["BigInt", "Boolean", "Number", "Symbol", "String"];
 

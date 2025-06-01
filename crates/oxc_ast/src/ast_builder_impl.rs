@@ -2,14 +2,17 @@
 
 use std::borrow::Cow;
 
-use oxc_allocator::{Allocator, Box, FromIn, IntoIn, String, Vec};
+use oxc_allocator::{Allocator, AllocatorAccessor, Box, FromIn, IntoIn, Vec};
 use oxc_span::{Atom, SPAN, Span};
-use oxc_syntax::{number::NumberBase, operator::UnaryOperator, scope::ScopeId};
+use oxc_syntax::{
+    comment_node::CommentNodeId, number::NumberBase, operator::UnaryOperator, scope::ScopeId,
+};
 
-use crate::{AstBuilder, ast::*};
+use crate::ast::*;
 
 /// Type that can be used in any AST builder method call which requires an `IntoIn<'a, Anything<'a>>`.
 /// Pass `NONE` instead of `None::<Anything<'a>>`.
+#[expect(clippy::upper_case_acronyms)]
 pub struct NONE;
 
 impl<'a, T> FromIn<'a, NONE> for Option<Box<'a, T>> {
@@ -18,11 +21,32 @@ impl<'a, T> FromIn<'a, NONE> for Option<Box<'a, T>> {
     }
 }
 
+impl<'a> AllocatorAccessor<'a> for AstBuilder<'a> {
+    #[inline]
+    fn allocator(self) -> &'a Allocator {
+        self.allocator
+    }
+}
+
+/// AST builder for creating AST nodes.
+#[derive(Clone, Copy)]
+pub struct AstBuilder<'a> {
+    /// The memory allocator used to allocate AST nodes in the arena.
+    pub allocator: &'a Allocator,
+}
+
 impl<'a> AstBuilder<'a> {
     /// Create a new AST builder that will allocate nodes in the given allocator.
     #[inline]
     pub fn new(allocator: &'a Allocator) -> Self {
         Self { allocator }
+    }
+
+    /// Create [`CommentNodeId`] for an AST node.
+    #[expect(dead_code, clippy::unused_self, clippy::trivially_copy_pass_by_ref)]
+    pub(crate) fn get_comment_node_id(&self) -> CommentNodeId {
+        // TODO: Generate a real ID
+        CommentNodeId::DUMMY
     }
 
     /// Move a value into the memory arena.
@@ -82,9 +106,8 @@ impl<'a> AstBuilder<'a> {
 
     /// Allocate an [`Atom`] from an array of string slices.
     #[inline]
-    pub fn atom_from_strs_array<const N: usize>(self, array: [&str; N]) -> Atom<'a> {
-        let string = String::from_strs_array_in(array, self.allocator);
-        Atom::from(string)
+    pub fn atom_from_strs_array<const N: usize>(self, strings: [&str; N]) -> Atom<'a> {
+        Atom::from_strs_array_in(strings, self.allocator)
     }
 
     /// Convert a [`Cow<'a, str>`] to an [`Atom<'a>`].
@@ -116,6 +139,11 @@ impl<'a> AstBuilder<'a> {
             UnaryOperator::Void,
             num,
         )))
+    }
+    /// `NaN`
+    #[inline]
+    pub fn nan(self, span: Span) -> Expression<'a> {
+        self.expression_numeric_literal(span, f64::NAN, None, NumberBase::Decimal)
     }
 
     /// `"use strict"` directive

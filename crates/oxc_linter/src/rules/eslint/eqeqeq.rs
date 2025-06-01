@@ -6,16 +6,18 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 use oxc_syntax::operator::{BinaryOperator, UnaryOperator};
+use schemars::JsonSchema;
 
 use crate::{AstNode, context::LintContext, rule::Rule};
 
-fn eqeqeq_diagnostic(x0: &str, x1: &str, span2: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn(format!("Expected {x1} and instead saw {x0}"))
-        .with_help(format!("Prefer {x1} operator"))
-        .with_label(span2)
+fn eqeqeq_diagnostic(actual: &str, expected: &str, span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn(format!("Expected {expected} and instead saw {actual}"))
+        .with_help(format!("Prefer {expected} operator"))
+        .with_label(span)
 }
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default, Clone, JsonSchema)]
+#[serde(rename_all = "camelCase", default)]
 pub struct Eqeqeq {
     compare_type: CompareType,
     null_type: NullType,
@@ -33,16 +35,14 @@ declare_oxc_lint!(
     /// ### Examples
     ///
     /// Examples of **incorrect** code for this rule:
-    ///
     /// ```js
     /// const a = [];
     /// const b = true;
     /// a == b
     /// ```
-    /// The above will evaluate to `true`, but almost surely not want you want.
+    /// The above will evaluate to `true`, but that is almost surely not what you want.
     ///
     /// Examples of **correct** code for this rule:
-    ///
     /// ```js
     /// const a = [];
     /// const b = true;
@@ -88,7 +88,8 @@ declare_oxc_lint!(
     Eqeqeq,
     eslint,
     pedantic,
-    conditional_fix
+    fix = conditional_fix_dangerous,
+    config = Eqeqeq,
 );
 
 impl Rule for Eqeqeq {
@@ -166,24 +167,28 @@ impl Rule for Eqeqeq {
             Span::new(operator_start, operator_end)
         };
 
-        // If the comparison is a `typeof` comparison or both sides are literals with the same type, then it's safe to fix.
-        if is_type_of_binary_bool || are_literals_and_same_type_bool {
-            ctx.diagnostic_with_fix(
-                eqeqeq_diagnostic(operator, preferred_operator, operator_span),
-                |fixer| {
-                    let start = binary_expr.left.span().end;
-                    let end = binary_expr.right.span().start;
-                    let span = Span::new(start, end);
-                    fixer.replace(span, preferred_operator_with_padding)
-                },
-            );
+        let fix_kind = if is_type_of_binary_bool || are_literals_and_same_type_bool {
+            FixKind::SafeFix
         } else {
-            ctx.diagnostic(eqeqeq_diagnostic(operator, preferred_operator, operator_span));
-        }
+            FixKind::DangerousFix
+        };
+
+        ctx.diagnostic_with_fix_of_kind(
+            eqeqeq_diagnostic(operator, preferred_operator, operator_span),
+            fix_kind,
+            |fixer| {
+                let start = binary_expr.left.span().end;
+                let end = binary_expr.right.span().start;
+                let span = Span::new(start, end);
+
+                fixer.replace(span, preferred_operator_with_padding)
+            },
+        );
     }
 }
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default, Clone, JsonSchema)]
+#[serde(rename_all = "lowercase")]
 enum CompareType {
     #[default]
     Always,
@@ -199,7 +204,8 @@ impl CompareType {
     }
 }
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default, Clone, JsonSchema)]
+#[serde(rename_all = "lowercase")]
 enum NullType {
     #[default]
     Always,
@@ -300,9 +306,8 @@ fn test() {
         ("'foo'=='foo'", "'foo' === 'foo'", None),
         ("typeof a == b", "typeof a === b", None),
         ("1000  !=  1000", "1000 !== 1000", None),
-        // The following cases will not be fixed
-        ("(1000 + 1)  !=  1000", "(1000 + 1)  !=  1000", None),
-        ("a == b", "a == b", None),
+        ("(1000 + 1) != 1000", "(1000 + 1) !== 1000", None),
+        ("a == b", "a === b", None),
     ];
 
     Tester::new(Eqeqeq::NAME, Eqeqeq::PLUGIN, pass, fail).expect_fix(fix).test_and_snapshot();

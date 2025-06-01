@@ -1,7 +1,7 @@
 // Auto-generated code, DO NOT EDIT DIRECTLY!
-// To edit this generated file you have to edit `tasks/ast_tools/src/derives/take_in.rs`
+// To edit this generated file you have to edit `tasks/ast_tools/src/derives/take_in.rs`.
 
-#![allow(clippy::needless_lifetimes)]
+#![expect(clippy::elidable_lifetime_names)]
 
 use oxc_allocator::TakeIn;
 
@@ -309,6 +309,8 @@ impl<'a> TakeIn<'a> for JSXText<'a> {}
 impl<'a> TakeIn<'a> for TSThisParameter<'a> {}
 
 impl<'a> TakeIn<'a> for TSEnumDeclaration<'a> {}
+
+impl<'a> TakeIn<'a> for TSEnumBody<'a> {}
 
 impl<'a> TakeIn<'a> for TSEnumMember<'a> {}
 

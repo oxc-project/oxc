@@ -3,20 +3,24 @@ import { promises as fsPromises } from 'node:fs';
 import {
   commands,
   ExtensionContext,
-  RelativePattern,
   StatusBarAlignment,
   StatusBarItem,
   ThemeColor,
+  Uri,
   window,
   workspace,
 } from 'vscode';
 
-import { ExecuteCommandRequest, MessageType, ShowMessageNotification } from 'vscode-languageclient';
+import {
+  ConfigurationParams,
+  ExecuteCommandRequest,
+  MessageType,
+  ShowMessageNotification,
+} from 'vscode-languageclient';
 
 import { Executable, LanguageClient, LanguageClientOptions, ServerOptions } from 'vscode-languageclient/node';
 
 import { join } from 'node:path';
-import { oxlintConfigFileName } from './Config';
 import { ConfigService } from './ConfigService';
 
 const languageClientName = 'oxc';
@@ -71,18 +75,18 @@ export async function activate(context: ExtensionContext) {
   const toggleEnable = commands.registerCommand(
     OxcCommands.ToggleEnable,
     async () => {
-      await configService.config.updateEnable(!configService.config.enable);
+      await configService.vsCodeConfig.updateEnable(!configService.vsCodeConfig.enable);
 
       if (client === undefined) {
         return;
       }
 
       if (client.isRunning()) {
-        if (!configService.config.enable) {
+        if (!configService.vsCodeConfig.enable) {
           await client.stop();
         }
       } else {
-        if (configService.config.enable) {
+        if (configService.vsCodeConfig.enable) {
           await client.start();
         }
       }
@@ -113,47 +117,28 @@ export async function activate(context: ExtensionContext) {
     },
   );
 
+  const outputChannel = window.createOutputChannel(outputChannelName, { log: true });
+
   context.subscriptions.push(
     applyAllFixesFile,
     restartCommand,
     showOutputCommand,
     toggleEnable,
     configService,
+    outputChannel,
   );
 
-  const outputChannel = window.createOutputChannel(outputChannelName, { log: true });
-
   async function findBinary(): Promise<string> {
-    let bin = configService.config.binPath;
+    let bin = configService.vsCodeConfig.binPath;
     if (bin) {
       try {
         await fsPromises.access(bin);
         return bin;
-      } catch {}
+      } catch (e) {
+        outputChannel.error(`Invalid bin path: ${bin}`, e);
+      }
     }
-
-    const workspaceFolders = workspace.workspaceFolders;
-    const isWindows = process.platform === 'win32';
-
-    if (workspaceFolders?.length && !isWindows) {
-      try {
-        return await Promise.any(
-          workspaceFolders.map(async (folder) => {
-            const binPath = join(
-              folder.uri.fsPath,
-              'node_modules',
-              '.bin',
-              'oxc_language_server',
-            );
-
-            await fsPromises.access(binPath);
-            return binPath;
-          }),
-        );
-      } catch {}
-    }
-
-    const ext = isWindows ? '.exe' : '';
+    const ext = process.platform === 'win32' ? '.exe' : '';
     // NOTE: The `./target/release` path is aligned with the path defined in .github/workflows/release_vscode.yml
     return (
       process.env.SERVER_PATH_DEV ??
@@ -176,9 +161,6 @@ export async function activate(context: ExtensionContext) {
     debug: run,
   };
 
-  const fileWatchers = createFileEventWatchers(configService.config.configPath);
-  context.subscriptions.push(...fileWatchers);
-
   // If the extension is launched in debug mode then the debug server options are used
   // Otherwise the run options are used
   // Options to control the language client
@@ -195,15 +177,25 @@ export async function activate(context: ExtensionContext) {
       language: lang,
       scheme: 'file',
     })),
-    synchronize: {
-      // Notify the server about file config changes in the workspace
-      fileEvents: fileWatchers,
-    },
-    initializationOptions: {
-      settings: configService.config.toLanguageServerConfig(),
-    },
+    initializationOptions: configService.languageServerConfig,
     outputChannel,
     traceOutputChannel: outputChannel,
+    middleware: {
+      workspace: {
+        configuration: (params: ConfigurationParams) => {
+          return params.items.map(item => {
+            if (item.section !== 'oxc_language_server') {
+              return null;
+            }
+            if (item.scopeUri === undefined) {
+              return null;
+            }
+
+            return configService.getWorkspaceConfig(Uri.parse(item.scopeUri))?.toLanguageServerConfig() ?? null;
+          });
+        },
+      },
+    },
   };
 
   // Create the language client and start the client.
@@ -212,7 +204,8 @@ export async function activate(context: ExtensionContext) {
     serverOptions,
     clientOptions,
   );
-  client.onNotification(ShowMessageNotification.type, (params) => {
+
+  const onNotificationDispose = client.onNotification(ShowMessageNotification.type, (params) => {
     switch (params.type) {
       case MessageType.Debug:
         outputChannel.debug(params.message);
@@ -234,34 +227,44 @@ export async function activate(context: ExtensionContext) {
     }
   });
 
-  workspace.onDidDeleteFiles((event) => {
+  context.subscriptions.push(onNotificationDispose);
+
+  const onDeleteFilesDispose = workspace.onDidDeleteFiles((event) => {
     for (const fileUri of event.files) {
       client?.diagnostics?.delete(fileUri);
     }
   });
 
+  context.subscriptions.push(onDeleteFilesDispose);
+
+  const onDidChangeWorkspaceFoldersDispose = workspace.onDidChangeWorkspaceFolders(async (event) => {
+    for (const folder of event.added) {
+      configService.addWorkspaceConfig(folder);
+    }
+    for (const folder of event.removed) {
+      configService.removeWorkspaceConfig(folder);
+    }
+  });
+
+  context.subscriptions.push(onDidChangeWorkspaceFoldersDispose);
+
   configService.onConfigChange = async function onConfigChange(event) {
-    let settings = this.config.toLanguageServerConfig();
-    updateStatsBar(this.config.enable);
+    updateStatsBar(this.vsCodeConfig.enable);
 
     if (client === undefined) {
       return;
     }
 
     // update the initializationOptions for a possible restart
-    client.clientOptions.initializationOptions = { settings };
+    client.clientOptions.initializationOptions = this.languageServerConfig;
 
-    if (client.isRunning()) {
-      client.sendNotification('workspace/didChangeConfiguration', { settings });
-    }
-
-    if (event.affectsConfiguration('oxc.configPath')) {
-      client.clientOptions.synchronize = client.clientOptions.synchronize ?? {};
-      client.clientOptions.synchronize.fileEvents = createFileEventWatchers(configService.config.configPath);
-
-      if (client.isRunning()) {
-        await client.restart();
-      }
+    if (configService.effectsWorkspaceConfigChange(event) && client.isRunning()) {
+      await client.sendNotification(
+        'workspace/didChangeConfiguration',
+        {
+          settings: this.languageServerConfig,
+        },
+      );
     }
   };
 
@@ -284,9 +287,9 @@ export async function activate(context: ExtensionContext) {
 
     myStatusBarItem.backgroundColor = bgColor;
   }
-  updateStatsBar(configService.config.enable);
 
-  if (configService.config.enable) {
+  updateStatsBar(configService.vsCodeConfig.enable);
+  if (configService.vsCodeConfig.enable) {
     await client.start();
   }
 }
@@ -297,18 +300,4 @@ export async function deactivate(): Promise<void> {
   }
   await client.stop();
   client = undefined;
-}
-
-// FileSystemWatcher are not ready on the start and can take some seconds on bigger repositories
-// ToDo: create test to make sure this will never break
-function createFileEventWatchers(configRelativePath: string | null) {
-  if (configRelativePath !== null) {
-    return (workspace.workspaceFolders || []).map((workspaceFolder) =>
-      workspace.createFileSystemWatcher(new RelativePattern(workspaceFolder, configRelativePath))
-    );
-  }
-
-  return [
-    workspace.createFileSystemWatcher(`**/${oxlintConfigFileName}`),
-  ];
 }

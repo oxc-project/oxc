@@ -55,12 +55,14 @@ source: crates/oxc_linter/src/tester.rs
  1 │ try { } catch (_) { console.log(_) }
    ·                ─
    ╰────
+  help: Rename `_` to `error`
 
   ⚠ eslint-plugin-unicorn(catch-error-name): The catch parameter "err" should be named "error"
    ╭─[catch_error_name.tsx:1:16]
  1 │ try { } catch (err) { console.error(err) }
    ·                ───
    ╰────
+  help: Rename `err` to `error`
 
   ⚠ eslint-plugin-unicorn(catch-error-name): The catch parameter "notMatching" should be named "error"
    ╭─[catch_error_name.tsx:1:15]

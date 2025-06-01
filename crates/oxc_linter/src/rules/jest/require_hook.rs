@@ -41,6 +41,7 @@ impl std::ops::Deref for RequireHook {
 
 declare_oxc_lint!(
     /// ### What it does
+    ///
     /// This rule flags any expression that is either at the toplevel of a test file or
     /// directly within the body of a `describe`, _except_ for the following:
     ///
@@ -51,9 +52,10 @@ declare_oxc_lint!(
     /// - Types
     /// - Calls to the standard Jest globals
     ///
-    /// ### Example
+    /// ### Examples
+    ///
+    /// Examples of **incorrect** code for this rule:
     /// ```javascript
-    /// // invalid
     /// import { database, isCity } from '../database';
     /// import { Logger } from '../../../src/Logger';
     /// import { loadCities } from '../api';
@@ -93,8 +95,10 @@ declare_oxc_lint!(
     ///     });
     /// });
     /// clearCityDatabase();
+    /// ```
     ///
-    /// // valid
+    /// Examples of **correct** code for this rule:
+    /// ```javascript
     /// import { database, isCity } from '../database';
     /// import { Logger } from '../../../src/Logger';
     /// import { loadCities } from '../api';
@@ -142,7 +146,6 @@ declare_oxc_lint!(
     ///     clearCityDatabase();
     /// });
     /// ```
-    ///
     RequireHook,
     jest,
     style

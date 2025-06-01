@@ -365,9 +365,7 @@ impl Rule for NoMapSpread {
             }
             // Mapped class properties likely have their elements spread to
             // avoid side effects on the class instance.
-            Err(Expression::ThisExpression(_)) => {
-                return;
-            }
+            Err(Expression::ThisExpression(_)) => return,
             Err(_) => {}
         }
 
@@ -501,7 +499,7 @@ fn fix_spread_to_object_assign<'a>(
             ObjectPropertyKind::SpreadProperty(spread) => {
                 if !curr_obj_properties.is_empty() {
                     let properties = std::mem::replace(&mut curr_obj_properties, ast.vec());
-                    let obj_arg = ast.expression_object(SPAN, properties, None);
+                    let obj_arg = ast.expression_object(SPAN, properties);
                     if is_first {
                         is_first = false;
                     } else {
@@ -524,7 +522,7 @@ fn fix_spread_to_object_assign<'a>(
             codegen.print_str(", ");
         }
         let properties = std::mem::replace(&mut curr_obj_properties, ast.vec());
-        let obj_arg = ast.expression_object(SPAN, properties, None);
+        let obj_arg = ast.expression_object(SPAN, properties);
         codegen.print_expression(&obj_arg);
     }
     codegen.print_ascii_byte(b')');

@@ -22,14 +22,24 @@ pub struct NoEmptyCharacterClass;
 
 declare_oxc_lint!(
     /// ### What it does
+    ///
     /// Disallow empty character classes in regular expressions
     ///
     /// ### Why is this bad?
+    ///
     /// Because empty character classes in regular expressions do not match anything, they might be typing mistakes.
     ///
-    /// ### Example
+    /// ### Examples
+    ///
+    /// Examples of **incorrect** code for this rule:
     /// ```javascript
     /// var foo = /^abc[]/;
+    /// ```
+    ///
+    /// Examples of **correct** code for this rule:
+    /// ```javascript
+    /// var foo = /^abc/;
+    /// var foo2 = /^abc[123]/;
     /// ```
     NoEmptyCharacterClass,
     eslint,
@@ -39,14 +49,12 @@ declare_oxc_lint!(
 impl Rule for NoEmptyCharacterClass {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         if let AstKind::RegExpLiteral(lit) = node.kind() {
-            let Some(pattern) = lit.regex.pattern.as_pattern() else {
+            let Some(pattern) = &lit.regex.pattern.pattern else {
                 return;
             };
 
             // Skip if the pattern doesn't contain a `[` or `]` character
-            if memchr2(b'[', b']', lit.regex.pattern.source_text(ctx.source_text()).as_bytes())
-                .is_none()
-            {
+            if memchr2(b'[', b']', lit.regex.pattern.text.as_bytes()).is_none() {
                 return;
             }
 

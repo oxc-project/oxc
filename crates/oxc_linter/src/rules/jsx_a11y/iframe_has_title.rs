@@ -36,7 +36,7 @@ declare_oxc_lint!(
     ///
     /// This rule checks for title property on iframe element.
     ///
-    /// ### Example
+    /// ### Examples
     ///
     /// Examples of **incorrect** code for this rule:
     /// ```jsx
@@ -98,9 +98,7 @@ impl Rule for IframeHasTitle {
                             return;
                         }
                     }
-                    JSXExpression::CallExpression(_) => {
-                        return;
-                    }
+                    JSXExpression::CallExpression(_) => return,
                     expr @ JSXExpression::Identifier(_) => {
                         if !expr.is_undefined() {
                             return;

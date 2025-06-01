@@ -4,7 +4,7 @@ use std::{
     ops::Deref,
 };
 
-use oxc_allocator::{Allocator, CloneIn, Dummy, FromIn};
+use oxc_allocator::{Allocator, CloneIn, Dummy, FromIn, StringBuilder as ArenaStringBuilder};
 #[cfg(feature = "serialize")]
 use oxc_estree::{ESTree, Serializer as ESTreeSerializer};
 #[cfg(feature = "serialize")]
@@ -58,8 +58,35 @@ impl<'a> Atom<'a> {
 
     /// Convert this [`Atom`] into a [`CompactStr`] without consuming `self`.
     #[inline]
-    pub fn to_compact_str(&self) -> CompactStr {
+    pub fn to_compact_str(self) -> CompactStr {
         CompactStr::new(self.as_str())
+    }
+
+    /// Create new [`Atom`] from a fixed-size array of `&str`s concatenated together,
+    /// allocated in the given `allocator`.
+    ///
+    /// # Panics
+    ///
+    /// Panics if the sum of length of all strings exceeds `isize::MAX`.
+    ///
+    /// # Example
+    /// ```
+    /// use oxc_allocator::Allocator;
+    /// use oxc_span::Atom;
+    ///
+    /// let allocator = Allocator::new();
+    /// let s = Atom::from_strs_array_in(["hello", " ", "world", "!"], &allocator);
+    /// assert_eq!(s.as_str(), "hello world!");
+    /// ```
+    // `#[inline(always)]` because want compiler to be able to optimize where some of `strings`
+    // are statically known. See `Allocator::alloc_concat_strs_array`.
+    #[expect(clippy::inline_always)]
+    #[inline(always)]
+    pub fn from_strs_array_in<const N: usize>(
+        strings: [&str; N],
+        allocator: &'a Allocator,
+    ) -> Atom<'a> {
+        Self::from(allocator.alloc_concat_strs_array(strings))
     }
 }
 
@@ -88,7 +115,7 @@ impl<'alloc> FromIn<'alloc, &Atom<'alloc>> for Atom<'alloc> {
 
 impl<'alloc> FromIn<'alloc, &str> for Atom<'alloc> {
     fn from_in(s: &str, allocator: &'alloc Allocator) -> Self {
-        Self::from(&*allocator.alloc_str(s))
+        Self::from(allocator.alloc_str(s))
     }
 }
 
@@ -116,9 +143,9 @@ impl<'a> From<&'a str> for Atom<'a> {
     }
 }
 
-impl<'alloc> From<oxc_allocator::String<'alloc>> for Atom<'alloc> {
-    fn from(s: oxc_allocator::String<'alloc>) -> Self {
-        Self::from(s.into_bump_str())
+impl<'alloc> From<ArenaStringBuilder<'alloc>> for Atom<'alloc> {
+    fn from(s: ArenaStringBuilder<'alloc>) -> Self {
+        Self::from(s.into_str())
     }
 }
 
@@ -229,4 +256,41 @@ impl ESTree for Atom<'_> {
     fn serialize<S: ESTreeSerializer>(&self, serializer: S) {
         ESTree::serialize(self.as_str(), serializer);
     }
+}
+
+/// Creates an [`Atom`] using interpolation of runtime expressions.
+///
+/// Identical to [`std`'s `format!` macro](std::format), except:
+///
+/// * First argument is the allocator.
+/// * Produces an [`Atom`] instead of a [`String`].
+///
+/// The string is built in the arena, without allocating an intermediate `String`.
+///
+/// # Panics
+///
+/// Panics if a formatting trait implementation returns an error.
+///
+/// # Example
+///
+/// ```
+/// use oxc_allocator::Allocator;
+/// use oxc_span::format_atom;
+/// let allocator = Allocator::new();
+///
+/// let s1 = "foo";
+/// let s2 = "bar";
+/// let formatted = format_atom!(&allocator, "{s1}.{s2}");
+/// assert_eq!(formatted, "foo.bar");
+/// ```
+#[macro_export]
+macro_rules! format_atom {
+    ($alloc:expr, $($arg:tt)*) => {{
+        use ::std::{write, fmt::Write};
+        use $crate::{Atom, __internal::ArenaStringBuilder};
+
+        let mut s = ArenaStringBuilder::new_in($alloc);
+        write!(s, $($arg)*).unwrap();
+        Atom::from(s)
+    }}
 }

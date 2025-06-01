@@ -4,6 +4,168 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.72.2] - 2025-05-31
+
+### Bug Fixes
+
+- daaa8f5 parser: Correctly parse decorators of property declaration (#11370) (magic-akari)
+
+## [0.71.0] - 2025-05-20
+
+- 1a4fec0 codegen: [**BREAKING**] A legal comment can also be a jsdoc comment (#11158) (Boshen)
+
+### Features
+
+- fa06d7f codegen: Print override modifier of FormalParameter (#11134) (Ulrich Stark)
+- c29b1b8 codegen: Deduplicate repeated legal comments (#11069) (Boshen)
+- c79a7d0 data_structures: Introduce `PointerExt` trait (#11095) (overlookmotel)
+
+### Bug Fixes
+
+- ef72143 parser: Parse index signature with multiple parameter (#11068) (Boshen)
+
+### Performance
+
+- b9e51e2 ast: Reduce size of `Comment` to 16 bytes (#11062) (camchenry)
+
+## [0.70.0] - 2025-05-15
+
+### Features
+
+- 4a72b58 codegen: Print comments inside `JSXEmptyExpression` (#11022) (Boshen)
+- 1673ffb codegen: Rework printing normal / legal / annotation comments (#10997) (Boshen)
+
+### Refactor
+
+- 9225bde codegen: Make `Statement::Gen` code more compact (#10937) (Boshen)
+- 751876b parser: Rewrite parse class element (#11035) (Boshen)
+
+## [0.69.0] - 2025-05-09
+
+- ad4fbf4 ast: [**BREAKING**] Simplify `RegExpPattern` (#10834) (overlookmotel)
+
+### Bug Fixes
+
+- 2c05fa1 parser: Fix rhs precedence while parsing `PrivateInExpression` (#10866) (Boshen)
+- 087af52 parser: Set the correct context for class property definition (#10859) (Boshen)
+
+### Refactor
+
+
+## [0.68.1] - 2025-05-04
+
+### Bug Fixes
+
+- 368d05f codegen: Make `source_text` an option, avoid panic (#10790) (Cameron)
+
+## [0.68.0] - 2025-05-03
+
+- 28ceb90 ast: [**BREAKING**] Remove `TSMappedTypeModifierOperator::None` variant (#10749) (overlookmotel)
+
+- 315143a codegen: [**BREAKING**] Remove useless `CodeGenerator` type alias (#10702) (Boshen)
+
+### Features
+
+- 2d13b49 codegen: Expose `with_source_text` function (#10768) (camc314)
+- b01cb45 codegen: A way to keep legal comments after minification (#10689) (Boshen)
+
+### Bug Fixes
+
+- 4825eb5 codegen: Add missing `in` `out` from ts type parameter (#10696) (Boshen)
+- 06f796f codegen: Add missing return type from object methods (#10694) (Boshen)
+- 8c499c6 linter: Fix panic when doing code gen on regexp (#10769) (camc314)
+
+### Refactor
+
+
+## [0.66.0] - 2025-04-23
+
+- 10e1018 codegen: [**BREAKING**] Print `StringLiteral` `raw` if `minify` option disabled (#10553) (overlookmotel)
+
+### Features
+
+
+### Bug Fixes
+
+- 3ebf220 codegen: Generate missing `type` in `export type {} from 'mod'` (#10539) (Boshen)
+
+### Performance
+
+- 6a045c8 codegen: Speed up printing `Directive`s (#10551) (overlookmotel)
+
+### Testing
+
+- 14bb2be codegen: Add more tests for strings (#10552) (overlookmotel)
+
+## [0.65.0] - 2025-04-21
+
+- 7212803 ast: [**BREAKING**] Change `TSInterfaceDeclaration::extends` from `Option<Vec>` to `Vec` (#10472) (overlookmotel)
+
+### Features
+
+- 5ba02b0 parser: Set `pure` on typescript wrapped AST nodes (#10520) (Boshen)
+
+### Refactor
+
+
+## [0.64.0] - 2025-04-17
+
+- c538efa ast: [**BREAKING**] `ImportExpression` only allows one option argument (#10432) (Boshen)
+
+- 7284135 ast: [**BREAKING**] Remove `trailing_commas` from `ArrayExpression` and `ObjectExpression` (#10431) (Boshen)
+
+- 771d50f ast: [**BREAKING**] Change `Class::implements` to `Vec<TSClassImplements>` (#10430) (Boshen)
+
+- 521de23 ast: [**BREAKING**] Add `computed` property to `TSEnumMember` and `TSEnumMemberName::TemplateString` (#10092) (Yuji Sugiura)
+
+- 49732ff ast: [**BREAKING**] Re-introduce `TSEnumBody` AST node (#10284) (Yuji Sugiura)
+
+### Features
+
+- 4c246fb ast: Add `override` field in `AccessorProperty` (#10415) (Yuji Sugiura)
+- 2c66ac2 codegen: Preserve code coverage ignore comments (e.g. `v8 ignore`) (#10338) (Boshen)
+
+### Bug Fixes
+
+- 82ba30b codegen: Fix spaces before `AssignmentTargetRest` (#10443) (overlookmotel)
+- b54fb3e estree: Rename `TSInstantiationExpression`.`type_parameters` to `type_arguments` (#10327) (Yuji Sugiura)
+- 5850a0d parse: `type x = typeof import('')` -> ` TSTypeQuery(TSImportType)` (#10317) (Boshen)
+- 41d8e9d parser: `ExportNamedDeclaration.exportKind` should be `type` for `declare` declaration (#10389) (Yuji Sugiura)
+
+### Performance
+
+- 426f8cb codegen: Reduce checks printing strings (#10341) (overlookmotel)
+
+### Refactor
+
+- 6e6c777 ast: Add `TSEnumMemberName` variant to replace `computed` field (#10346) (Yuji Sugiura)
+
+## [0.63.0] - 2025-04-08
+
+- a26fd34 ast: [**BREAKING**] Remove `JSXOpeningElement::self_closing` field (#10275) (overlookmotel)
+
+### Bug Fixes
+
+- 38d2bea parser: Fix parsing lone surrogates in `StringLiteral`s (#10180) (overlookmotel)
+
+### Performance
+
+- 6c9b094 codegen: Optimize `Codegen::print_list` method (#10242) (Dunqing)
+- 775abac codegen: Speed up printing `StringLiteral`s (#10046) (overlookmotel)
+
+### Refactor
+
+- f7ff816 codegen: Improve code with `split_first` (#10285) (Boshen)
+- ca8f174 codegen: Do not print useless comma for TSEnumMember (#10213) (Yuji Sugiura)
+
+### Styling
+
+- 66a0001 all: Remove unnecessary semi-colons (#10198) (overlookmotel)
+
+### Testing
+
+- 7672620 parser: Tests for lone surrogates and lossy escape characters (#10175) (overlookmotel)
+
 ## [0.62.0] - 2025-04-01
 
 ### Bug Fixes

@@ -53,7 +53,7 @@
 
 use std::{borrow::Cow, mem};
 
-use oxc_allocator::{Box as ArenaBox, String as ArenaString, TakeIn};
+use oxc_allocator::{Box as ArenaBox, StringBuilder as ArenaStringBuilder, TakeIn};
 use oxc_ast::{NONE, ast::*};
 use oxc_ast_visit::Visit;
 use oxc_semantic::{ReferenceFlags, ScopeFlags, ScopeId, SymbolFlags};
@@ -173,11 +173,7 @@ impl<'a> AsyncToGenerator<'a, '_> {
     ) -> Option<Expression<'a>> {
         // We don't need to handle top-level await.
         if Self::is_inside_async_function(ctx) {
-            Some(ctx.ast.expression_yield(
-                SPAN,
-                false,
-                Some(expr.argument.take_in(ctx.ast.allocator)),
-            ))
+            Some(ctx.ast.expression_yield(SPAN, false, Some(expr.argument.take_in(ctx.ast))))
         } else {
             None
         }
@@ -302,7 +298,7 @@ impl<'a, 'ctx> AsyncGeneratorExecutor<'a, 'ctx> {
         ctx: &mut TraverseCtx<'a>,
     ) -> Expression<'a> {
         let body = wrapper_function.body.take().unwrap();
-        let params = wrapper_function.params.take_in_box(ctx.ast.allocator);
+        let params = wrapper_function.params.take_in_box(ctx.ast);
         let id = wrapper_function.id.take();
         let has_function_id = id.is_some();
 
@@ -389,8 +385,7 @@ impl<'a, 'ctx> AsyncGeneratorExecutor<'a, 'ctx> {
         }
 
         // Construct the IIFE
-        let callee =
-            Expression::FunctionExpression(wrapper_function.take_in_box(ctx.ast.allocator));
+        let callee = Expression::FunctionExpression(wrapper_function.take_in_box(ctx.ast));
         ctx.ast.expression_call_with_pure(SPAN, callee, NONE, ctx.ast.vec(), false, true)
     }
 
@@ -465,19 +460,19 @@ impl<'a, 'ctx> AsyncGeneratorExecutor<'a, 'ctx> {
         arrow: &mut ArrowFunctionExpression<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) -> Expression<'a> {
-        let mut body = arrow.body.take_in_box(ctx.ast.allocator);
+        let mut body = arrow.body.take_in_box(ctx.ast);
 
         // If the arrow's expression is true, we need to wrap the only one expression with return statement.
         if arrow.expression {
             let statement = body.statements.first_mut().unwrap();
             let expression = match statement {
-                Statement::ExpressionStatement(es) => es.expression.take_in(ctx.ast.allocator),
+                Statement::ExpressionStatement(es) => es.expression.take_in(ctx.ast),
                 _ => unreachable!(),
             };
             *statement = ctx.ast.statement_return(expression.span(), Some(expression));
         }
 
-        let params = arrow.params.take_in_box(ctx.ast.allocator);
+        let params = arrow.params.take_in_box(ctx.ast);
         let generator_function_id = arrow.scope_id();
         ctx.scoping_mut().scope_flags_mut(generator_function_id).remove(ScopeFlags::Arrow);
         let function_name = Self::infer_function_name_from_parent_node(ctx);
@@ -576,7 +571,7 @@ impl<'a, 'ctx> AsyncGeneratorExecutor<'a, 'ctx> {
             return ctx.ast.atom_from_cow(input);
         }
 
-        let mut name = ArenaString::with_capacity_in(input_str.len() + 1, ctx.ast.allocator);
+        let mut name = ArenaStringBuilder::with_capacity_in(input_str.len() + 1, ctx.ast.allocator);
         let mut capitalize_next = false;
 
         let mut chars = input_str.chars();
@@ -604,7 +599,7 @@ impl<'a, 'ctx> AsyncGeneratorExecutor<'a, 'ctx> {
         }
 
         if is_reserved_keyword(name.as_str()) {
-            name.insert(0, '_');
+            name.push_ascii_byte_start(b'_');
         }
 
         Atom::from(name)
@@ -771,14 +766,13 @@ impl<'a, 'ctx> AsyncGeneratorExecutor<'a, 'ctx> {
                 ctx.ast.plain_formal_parameter(param.span(), binding.create_binding_pattern(ctx)),
             );
         }
-        let parameters = ctx.ast.alloc_formal_parameters(
+
+        ctx.ast.alloc_formal_parameters(
             SPAN,
             FormalParameterKind::FormalParameter,
             parameters,
             NONE,
-        );
-
-        parameters
+        )
     }
 
     /// Creates an empty [FormalParameters] with [FormalParameterKind::FormalParameter].

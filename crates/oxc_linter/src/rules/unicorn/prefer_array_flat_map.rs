@@ -26,11 +26,16 @@ declare_oxc_lint!(
     ///
     /// It is slightly more efficient to use `.flatMap(…)` instead of `.map(…).flat()`.
     ///
-    /// ### Example
-    /// ```javascript
-    /// const bar = [1,2,3].map(i => [i]).flat(); // ✗ fail
+    /// ### Examples
     ///
-    /// const bar = [1,2,3].flatMap(i => [i]); // ✓ pass
+    /// Examples of **incorrect** code for this rule:
+    /// ```javascript
+    /// const bar = [1,2,3].map(i => [i]).flat();
+    /// ```
+    ///
+    /// Examples of **correct** code for this rule:
+    /// ```javascript
+    /// const bar = [1,2,3].flatMap(i => [i]);
     /// ```
     PreferArrayFlatMap,
     unicorn,
@@ -72,19 +77,19 @@ impl Rule for PreferArrayFlatMap {
             }
         }
 
-        ctx.diagnostic_with_fix(prefer_array_flat_map_diagnostic(flat_call_expr.span), |_fixer| {
-            let mut fixes = vec![];
+        ctx.diagnostic_with_fix(prefer_array_flat_map_diagnostic(flat_call_expr.span), |fixer| {
+            let mut fix = fixer.new_fix_with_capacity(2);
             // delete flat
             let delete_start = member_expr.object().span().end;
             let delete_end = flat_call_expr.span().end;
             let delete_span = Span::new(delete_start, delete_end);
-            fixes.push(Fix::delete(delete_span));
+            fix.push(Fix::delete(delete_span));
             // replace map with flatMap
             let replace_end = call_expr.callee.span().end;
             let replace_start = replace_end - 3;
             let replace_span = Span::new(replace_start, replace_end);
-            fixes.push(Fix::new("flatMap", replace_span));
-            fixes
+            fix.push(Fix::new("flatMap", replace_span));
+            fix.with_message("Replace `.map().flat()` with `.flatMap()`")
         });
     }
 }

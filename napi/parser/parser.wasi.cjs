@@ -9,9 +9,9 @@ const { WASI: __nodeWASI } = require('node:wasi')
 const { Worker } = require('node:worker_threads')
 
 const {
-  instantiateNapiModuleSync: __emnapiInstantiateNapiModuleSync,
-  getDefaultContext: __emnapiGetDefaultContext,
   createOnMessage: __wasmCreateOnMessageForFsProxy,
+  getDefaultContext: __emnapiGetDefaultContext,
+  instantiateNapiModuleSync: __emnapiInstantiateNapiModuleSync,
 } = require('@napi-rs/wasm-runtime')
 
 const __rootDir = __nodePath.parse(process.cwd()).root
@@ -84,7 +84,7 @@ const { instance: __napiInstance, module: __wasiModule, napiModule: __napiModule
     }
   },
 })
-
+module.exports = __napiModule.exports
 module.exports.ParseResult = __napiModule.exports.ParseResult
 module.exports.ExportExportNameKind = __napiModule.exports.ExportExportNameKind
 module.exports.ExportImportNameKind = __napiModule.exports.ExportImportNameKind
@@ -92,6 +92,7 @@ module.exports.ExportLocalNameKind = __napiModule.exports.ExportLocalNameKind
 module.exports.getBufferOffset = __napiModule.exports.getBufferOffset
 module.exports.ImportNameKind = __napiModule.exports.ImportNameKind
 module.exports.parseAsync = __napiModule.exports.parseAsync
+module.exports.parseAsyncRaw = __napiModule.exports.parseAsyncRaw
 module.exports.parseSync = __napiModule.exports.parseSync
 module.exports.parseSyncRaw = __napiModule.exports.parseSyncRaw
 module.exports.rawTransferSupported = __napiModule.exports.rawTransferSupported

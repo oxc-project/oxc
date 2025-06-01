@@ -1,7 +1,6 @@
 use oxc_allocator::{Box as ArenaBox, TakeIn, Vec as ArenaVec};
 use oxc_ast::{NONE, ast::*};
 use oxc_ecmascript::BoundNames;
-use oxc_semantic::Reference;
 use oxc_span::SPAN;
 use oxc_syntax::{
     operator::{AssignmentOperator, LogicalOperator},
@@ -22,16 +21,11 @@ pub struct TypeScriptNamespace<'a, 'ctx> {
 
     // Options
     allow_namespaces: bool,
-    only_remove_type_imports: bool,
 }
 
 impl<'a, 'ctx> TypeScriptNamespace<'a, 'ctx> {
     pub fn new(options: &TypeScriptOptions, ctx: &'ctx TransformCtx<'a>) -> Self {
-        Self {
-            ctx,
-            allow_namespaces: options.allow_namespaces,
-            only_remove_type_imports: options.only_remove_type_imports,
-        }
+        Self { ctx, allow_namespaces: options.allow_namespaces }
     }
 }
 
@@ -39,7 +33,6 @@ impl<'a> Traverse<'a> for TypeScriptNamespace<'a, '_> {
     // `namespace Foo { }` -> `let Foo; (function (_Foo) { })(Foo || (Foo = {}));`
     fn enter_program(&mut self, program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
         // namespace declaration is only allowed at the top level
-
         if !has_namespace(program.body.as_slice()) {
             return;
         }
@@ -49,7 +42,7 @@ impl<'a> Traverse<'a> for TypeScriptNamespace<'a, '_> {
         // every time a namespace declaration is encountered.
         let mut new_stmts = ctx.ast.vec();
 
-        for stmt in program.body.take_in(ctx.ast.allocator) {
+        for stmt in program.body.take_in(ctx.ast) {
             match stmt {
                 Statement::TSModuleDeclaration(decl) => {
                     if !self.allow_namespaces {
@@ -59,14 +52,12 @@ impl<'a> Traverse<'a> for TypeScriptNamespace<'a, '_> {
                     self.handle_nested(decl, /* is_export */ false, &mut new_stmts, None, ctx);
                     continue;
                 }
-                Statement::ExportNamedDeclaration(export_decl) => {
-                    if export_decl.declaration.as_ref().is_none_or(|decl| {
-                        decl.declare() || !matches!(decl, Declaration::TSModuleDeclaration(_))
-                    }) {
-                        new_stmts.push(Statement::ExportNamedDeclaration(export_decl));
-                        continue;
-                    }
-
+                Statement::ExportNamedDeclaration(export_decl)
+                    if export_decl.declaration.as_ref().is_some_and(|declaration| {
+                        !declaration.declare()
+                            && matches!(declaration, Declaration::TSModuleDeclaration(_))
+                    }) =>
+                {
                     let Some(Declaration::TSModuleDeclaration(decl)) =
                         export_decl.unbox().declaration
                     else {
@@ -111,6 +102,58 @@ impl<'a> TypeScriptNamespace<'a, '_> {
             return;
         };
 
+        // Check if this is an empty namespace or only contains type declarations
+        let symbol_id = ident.symbol_id();
+        let flags = ctx.scoping().symbol_flags(symbol_id);
+
+        // If it's a namespace, we need additional checks to determine if it can return early.
+        if flags.is_namespace_module() {
+            // Don't need further check because NO `ValueModule` namespace redeclaration
+            if !flags.is_value_module() {
+                return;
+            }
+
+            // Input:
+            // ```ts
+            // // SymbolFlags: NameSpaceModule
+            // export namespace Foo {
+            // 	 export type T = 0;
+            // }
+            // // SymbolFlags: ValueModule
+            // export namespace Foo {
+            // 	 export const Bar = 1;
+            // }
+            // ```
+            //
+            // Output:
+            // ```js
+            // // SymbolFlags: ValueModule
+            // export let Foo;
+            // (function(_Foo) {
+            //   const Bar = _Foo.Bar = 1;
+            // })(Foo || (Foo = {}));
+            // ```
+            //
+            // When both `NameSpaceModule` and `ValueModule` are present, we need to check the current
+            // declaration flags. If the current declaration is `NameSpaceModule`, we can return early
+            // because it's a type-only namespace and doesn't emit any JS code, otherwise we need to
+            // continue transforming it.
+
+            // Find the current declaration flag
+            let current_declaration_flags = ctx
+                .scoping()
+                .symbol_redeclarations(symbol_id)
+                .iter()
+                .find(|rd| rd.span == ident.span)
+                .unwrap()
+                .flags;
+
+            // Return if the current declaration is a namespace
+            if current_declaration_flags.is_namespace_module() {
+                return;
+            }
+        }
+
         let Some(body) = body else {
             return;
         };
@@ -151,7 +194,6 @@ impl<'a> TypeScriptNamespace<'a, '_> {
             match stmt {
                 Statement::TSModuleDeclaration(decl) => {
                     self.handle_nested(decl, /* is_export */ false, &mut new_stmts, None, ctx);
-                    continue;
                 }
                 Statement::ExportNamedDeclaration(export_decl) => {
                     // NB: `ExportNamedDeclaration` with no declaration (e.g. `export {x}`) is not
@@ -214,33 +256,9 @@ impl<'a> TypeScriptNamespace<'a, '_> {
                             _ => {}
                         }
                     }
-                    continue;
                 }
-                // Retain when `only_remove_type_imports` is true or there are value references
-                // The behavior is the same as `TypeScriptModule::transform_ts_import_equals`
-                Statement::TSImportEqualsDeclaration(decl)
-                    if !self.only_remove_type_imports
-                        && ctx
-                            .scoping()
-                            .get_resolved_references(decl.id.symbol_id())
-                            .all(Reference::is_type) =>
-                {
-                    continue;
-                }
-                Statement::TSTypeAliasDeclaration(_) | Statement::TSInterfaceDeclaration(_) => {
-                    continue;
-                }
-                _ => {}
+                _ => new_stmts.push(stmt),
             }
-            new_stmts.push(stmt);
-        }
-
-        if new_stmts.is_empty() {
-            // Delete the scope binding that `ctx.generate_uid` created above,
-            // as no binding is actually being created
-            ctx.scoping_mut().remove_binding(scope_id, uid_binding.name.as_str());
-
-            return;
         }
 
         if !Self::is_redeclaration_namespace(&ident, ctx) {
@@ -336,7 +354,7 @@ impl<'a> TypeScriptNamespace<'a, '_> {
                     binding.create_write_target(ctx)
                 };
 
-                let assign_right = ctx.ast.expression_object(SPAN, ctx.ast.vec(), None);
+                let assign_right = ctx.ast.expression_object(SPAN, ctx.ast.vec());
                 let op = AssignmentOperator::Assign;
                 let assign_expr =
                     ctx.ast.expression_assignment(SPAN, op, assign_left, assign_right);
@@ -430,7 +448,7 @@ impl<'a> TypeScriptNamespace<'a, '_> {
                                 false,
                             ))
                             .into(),
-                            init.take_in(ctx.ast.allocator),
+                            init.take_in(ctx.ast),
                         ),
                     );
                 }
@@ -459,7 +477,8 @@ impl<'a> TypeScriptNamespace<'a, '_> {
     fn is_redeclaration_namespace(id: &BindingIdentifier<'a>, ctx: &TraverseCtx<'a>) -> bool {
         let symbol_id = id.symbol_id();
         let redeclarations = ctx.scoping().symbol_redeclarations(symbol_id);
-        redeclarations.first().map_or_else(|| false, |rd| rd.span != id.span)
+        // Find first value declaration because only value declaration will emit JS code.
+        redeclarations.iter().find(|rd| rd.flags.is_value()).is_some_and(|rd| rd.span != id.span)
     }
 }
 

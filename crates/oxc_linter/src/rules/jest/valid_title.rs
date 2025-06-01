@@ -53,11 +53,11 @@ declare_oxc_lint!(
     /// - not prefixed with their block name,
     /// - have no leading or trailing spaces.
     ///
-    /// Why is this bad?
+    /// ### Why is this bad?
     ///
     /// Titles that are not valid can be misleading and make it harder to understand the purpose of the test.
     ///
-    /// ### Example
+    /// ### Examples
     ///
     /// Examples of **incorrect** code for this rule:
     /// ```javascript

@@ -41,6 +41,7 @@ declare_oxc_lint!(
     /// `undefined` is the default value for new variables, parameters, return statements, etc… so specifying it doesn't make any difference.
     ///
     /// ### Examples
+    ///
     /// Examples of **incorrect** code for this rule:
     /// ```javascript
     /// let foo = undefined;
@@ -57,48 +58,41 @@ declare_oxc_lint!(
 );
 
 // Create a static set for all function names
-static FUNCTION_NAMES: phf::Set<&'static str> = phf::phf_set! {
-    // Compare function names
-    "is",
+static FUNCTION_NAMES: [&str; 27] = [
+    "add",
+    // `React.createContext(undefined)`
+    "createContext",
     "equal",
-    "notEqual",
-    "strictEqual",
-    "notStrictEqual",
-    "propertyVal",
-    "notPropertyVal",
-    "not",
+    "has",
     "include",
+    "includes",
+    "is",
+    "not",
+    "notEqual",
+    "notPropertyVal",
+    "notSame",
+    "notStrictEqual",
     "property",
+    "propertyVal",
+    "push",
+    // https://vuejs.org/api/reactivity-core.html#ref
+    "ref",
+    "same",
+    "set",
+    "strictEqual",
+    "strictNotSame",
+    "strictSame",
     "toBe",
-    "toHaveBeenCalledWith",
     "toContain",
     "toContainEqual",
     "toEqual",
-    "same",
-    "notSame",
-    "strictSame",
-    "strictNotSame",
-    // `array.push(undefined)`
-    "push",
-    // `array.unshift(undefined)`
+    "toHaveBeenCalledWith",
     "unshift",
-    // `array.includes(undefined)`
-    "includes",
-    // `set.add(undefined)`
-    "add",
-    // `set.has(undefined)`
-    "has",
-    // `map.set(foo, undefined)`
-    "set",
-    // `React.createContext(undefined)`
-    "createContext",
-    // https://vuejs.org/api/reactivity-core.html#ref
-    "ref",
-};
+];
 
 fn is_match_ignore_func_name(name: &str) -> bool {
     // Check if the name is in the static set
-    FUNCTION_NAMES.contains(name)
+    FUNCTION_NAMES.contains(&name)
         // `setState(undefined)`
         || name.starts_with("set")
 }

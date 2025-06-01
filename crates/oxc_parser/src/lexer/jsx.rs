@@ -49,12 +49,12 @@ impl Lexer<'_> {
         } else {
             self.source.advance_to_end();
             self.error(diagnostics::unterminated_string(self.unterminated_range()));
-            Kind::Undetermined
+            Kind::Eof
         }
     }
 
     pub(crate) fn next_jsx_child(&mut self) -> Token {
-        self.token.start = self.offset();
+        self.token.set_start(self.offset());
         let kind = self.read_jsx_child();
         self.finish_next(kind)
     }
@@ -80,7 +80,7 @@ impl Lexer<'_> {
                     lexer: self,
                     table: JSX_CHILD_END_TABLE,
                     handle_eof: {
-                        return Kind::Undetermined;
+                        return Kind::Eof;
                     },
                 };
 
@@ -94,7 +94,7 @@ impl Lexer<'_> {
                             next_byte as char,
                             if next_byte == b'}' { "rbrace" } else { "gt" },
                         ));
-                        Kind::Undetermined
+                        Kind::Eof
                     })
                 }
             }
@@ -115,9 +115,6 @@ impl Lexer<'_> {
             return None;
         }
         self.consume_char();
-
-        // Clear the current lookahead `Minus` Token
-        self.lookahead.clear();
 
         // Consume bytes which are part of identifier tail
         let next_byte = byte_search! {

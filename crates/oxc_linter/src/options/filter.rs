@@ -1,6 +1,6 @@
 use std::{borrow::Cow, fmt};
 
-use crate::{LintPlugins, RuleCategory};
+use crate::RuleCategory;
 
 use super::AllowWarnDeny;
 
@@ -78,9 +78,11 @@ impl<'a> From<&'a LintFilter> for (AllowWarnDeny, &'a LintFilterKind) {
 
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub enum LintFilterKind {
+    All,
+    /// e.g. `no-const-assign`
     Generic(Cow<'static, str>),
-    /// e.g. `no-const-assign` or `eslint/no-const-assign`
-    Rule(LintPlugins, Cow<'static, str>),
+    /// e.g. `eslint/no-const-assign`
+    Rule(Cow<'static, str>, Cow<'static, str>),
     /// e.g. `correctness`
     Category(RuleCategory),
     // TODO: plugin + category? e.g `-A react:correctness`
@@ -117,7 +119,7 @@ impl LintFilterKind {
                         return Err(InvalidFilterKind::RuleMissing(Cow::Borrowed(filter)));
                     }
 
-                    (LintPlugins::from(plugin), Cow::Borrowed(rule))
+                    (Cow::Borrowed(plugin), Cow::Borrowed(rule))
                 }
                 Cow::Owned(filter) => {
                     let mut parts = filter.splitn(2, '/');
@@ -136,14 +138,20 @@ impl LintFilterKind {
                         return Err(InvalidFilterKind::RuleMissing(filter.into()));
                     }
 
-                    (LintPlugins::from(plugin), Cow::Owned(rule.to_string()))
+                    (Cow::Owned(plugin.to_string()), Cow::Owned(rule.to_string()))
                 }
             };
             Ok(LintFilterKind::Rule(plugin, rule))
         } else {
             match RuleCategory::try_from(filter.as_ref()) {
                 Ok(category) => Ok(LintFilterKind::Category(category)),
-                Err(()) => Ok(LintFilterKind::Generic(filter)),
+                Err(()) => {
+                    if filter == "all" {
+                        Ok(LintFilterKind::All)
+                    } else {
+                        Ok(LintFilterKind::Generic(filter))
+                    }
+                }
             }
         }
     }
@@ -220,11 +228,7 @@ mod test {
     fn test_from_category() {
         let correctness: LintFilter = LintFilter::new(AllowWarnDeny::Warn, "correctness").unwrap();
         assert_eq!(correctness.severity(), AllowWarnDeny::Warn);
-        assert!(
-            matches!(correctness.kind(), LintFilterKind::Category(RuleCategory::Correctness)),
-            "{:?}",
-            correctness.kind()
-        );
+        assert_eq!(correctness.kind(), &LintFilterKind::Category(RuleCategory::Correctness));
     }
 
     #[test]
@@ -235,28 +239,24 @@ mod test {
 
         let filter = LintFilter::deny(LintFilterKind::try_from("eslint/no-const-assign").unwrap());
         assert_eq!(filter.severity(), AllowWarnDeny::Deny);
-        assert_eq!(
-            filter.kind(),
-            &LintFilterKind::Rule(LintPlugins::from("eslint"), "no-const-assign".into())
-        );
-        assert!(matches!(filter.kind(), LintFilterKind::Rule(_, _)));
+        assert_eq!(filter.kind(), &LintFilterKind::Rule("eslint".into(), "no-const-assign".into()));
     }
 
     #[test]
     fn test_parse() {
         #[rustfmt::skip]
         let test_cases: Vec<(&'static str, LintFilterKind)> = vec![
-            ("no-const-assign", LintFilterKind::Generic("no-const-assign".into())),
-            ("eslint/no-const-assign", LintFilterKind::Rule(LintPlugins::ESLINT, "no-const-assign".into())),
-            ("import/namespace", LintFilterKind::Rule(LintPlugins::IMPORT, "namespace".into())),
-            ("react-hooks/exhaustive-deps", LintFilterKind::Rule(LintPlugins::REACT, "exhaustive-deps".into())),
+            ("eslint/no-const-assign", LintFilterKind::Rule("eslint".into(), "no-const-assign".into())),
+            ("import/namespace", LintFilterKind::Rule("import".into(), "namespace".into())),
+            ("react-hooks/exhaustive-deps", LintFilterKind::Rule("react-hooks".into(), "exhaustive-deps".into())),
             // categories
             ("correctness", LintFilterKind::Category(RuleCategory::Correctness)),
-            ("nursery", LintFilterKind::Category("nursery".try_into().unwrap())),
-            ("perf", LintFilterKind::Category("perf".try_into().unwrap())),
+            ("nursery", LintFilterKind::Category(RuleCategory::Nursery)),
+            ("perf", LintFilterKind::Category(RuleCategory::Perf)),
             // misc
+            ("no-const-assign", LintFilterKind::Generic("no-const-assign".into())),
             ("not-a-valid-filter", LintFilterKind::Generic("not-a-valid-filter".into())),
-            ("all", LintFilterKind::Generic("all".into())),
+            ("all", LintFilterKind::All),
         ];
 
         for (input, expected) in test_cases {

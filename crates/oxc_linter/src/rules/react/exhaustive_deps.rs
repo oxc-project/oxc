@@ -1,16 +1,15 @@
 use std::hash::Hash;
 
 use itertools::Itertools;
-use phf::phf_set;
 use rustc_hash::FxHashSet;
 
 use oxc_ast::{
     AstKind, AstType,
     ast::{
         Argument, ArrayExpressionElement, ArrowFunctionExpression, BindingPatternKind,
-        CallExpression, ChainElement, Expression, Function, FunctionBody, IdentifierReference,
-        MemberExpression, StaticMemberExpression, TSTypeAnnotation, TSTypeParameter,
-        TSTypeReference, VariableDeclarationKind,
+        CallExpression, ChainElement, Expression, FormalParameters, Function, FunctionBody,
+        IdentifierReference, MemberExpression, StaticMemberExpression, TSTypeAnnotation,
+        TSTypeParameter, TSTypeReference, VariableDeclarationKind,
     },
     match_expression,
 };
@@ -191,11 +190,10 @@ declare_oxc_lint!(
     /// ```
     ExhaustiveDeps,
     react,
-    nursery
+    correctness
 );
 
-const HOOKS_USELESS_WITHOUT_DEPENDENCIES: phf::Set<&'static str> =
-    phf_set!("useCallback", "useMemo");
+const HOOKS_USELESS_WITHOUT_DEPENDENCIES: [&str; 2] = ["useCallback", "useMemo"];
 
 impl Rule for ExhaustiveDeps {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
@@ -227,7 +225,7 @@ impl Rule for ExhaustiveDeps {
         let is_effect = hook_name.as_str().contains("Effect");
 
         if dependencies_node.is_none() && !is_effect {
-            if HOOKS_USELESS_WITHOUT_DEPENDENCIES.contains(hook_name.as_str()) {
+            if HOOKS_USELESS_WITHOUT_DEPENDENCIES.contains(&hook_name.as_str()) {
                 ctx.diagnostic(dependency_array_required_diagnostic(
                     hook_name.as_str(),
                     call_expr.span(),
@@ -374,6 +372,8 @@ impl Rule for ExhaustiveDeps {
 
         let (found_dependencies, refs_inside_cleanups) = {
             let mut found_dependencies = ExhaustiveDepsVisitor::new(ctx.semantic());
+
+            found_dependencies.visit_formal_parameters(callback_node.parameters());
 
             if let Some(function_body) = callback_node.body() {
                 found_dependencies.visit_function_body(function_body);
@@ -633,6 +633,13 @@ impl<'a> CallbackNode<'a> {
         }
     }
 
+    fn parameters(&self) -> &FormalParameters<'a> {
+        match self {
+            CallbackNode::Function(func) => &func.params,
+            CallbackNode::ArrowFunction(func) => &func.params,
+        }
+    }
+
     fn body(&self) -> Option<&FunctionBody<'a>> {
         match self {
             CallbackNode::Function(func) => func.body.as_deref(),
@@ -855,14 +862,21 @@ fn is_stable_value<'a, 'b>(
 
             {
                 // if the variables is a function, check whether the function is stable
-                let function_body: Option<&oxc_allocator::Box<'_, FunctionBody<'_>>> =
-                    match init.get_inner_expression() {
-                        Expression::ArrowFunctionExpression(arrow_func) => Some(&arrow_func.body),
-                        Expression::FunctionExpression(func) => func.body.as_ref(),
-                        _ => None,
-                    };
+                let function_body = match init.get_inner_expression() {
+                    Expression::ArrowFunctionExpression(arrow_func) => Some(&arrow_func.body),
+                    Expression::FunctionExpression(func) => func.body.as_ref(),
+                    _ => None,
+                };
                 if let Some(function_body) = function_body {
-                    return is_function_stable(function_body, ctx, component_scope_id);
+                    return is_function_stable(
+                        function_body,
+                        declaration
+                            .id
+                            .get_binding_identifier()
+                            .map(oxc_ast::ast::BindingIdentifier::symbol_id),
+                        ctx,
+                        component_scope_id,
+                    );
                 }
             }
 
@@ -888,7 +902,7 @@ fn is_stable_value<'a, 'b>(
                 return false;
             };
 
-            if init_name == "useRef" || init_name == "useCallback" {
+            if init_name == "useRef" {
                 return true;
             }
 
@@ -935,7 +949,7 @@ fn is_stable_value<'a, 'b>(
 
             let Some(function_body) = function_body else { return false };
 
-            is_function_stable(function_body, ctx, component_scope_id)
+            is_function_stable(function_body, None, ctx, component_scope_id)
         }
         _ => false,
     }
@@ -943,6 +957,7 @@ fn is_stable_value<'a, 'b>(
 
 fn is_function_stable<'a, 'b>(
     function_body: &'b FunctionBody<'a>,
+    function_symbol_id: Option<SymbolId>,
     ctx: &'b LintContext<'a>,
     component_scope_id: ScopeId,
 ) -> bool {
@@ -952,8 +967,10 @@ fn is_function_stable<'a, 'b>(
         collector.found_dependencies
     };
 
-    deps.iter()
-        .all(|dep| !is_identifier_a_dependency(dep.name, dep.reference_id, ctx, component_scope_id))
+    deps.iter().all(|dep| {
+        dep.symbol_id.zip(function_symbol_id).is_none_or(|(l, r)| l != r)
+            && !is_identifier_a_dependency(dep.name, dep.reference_id, ctx, component_scope_id)
+    })
 }
 
 // https://github.com/facebook/react/blob/fee786a057774ab687aff765345dd86fce534ab2/packages/eslint-plugin-react-hooks/src/ExhaustiveDeps.js#L1742
@@ -2001,18 +2018,20 @@ fn test() {
             </>
           );
         }",
-        r"function Example() {
-          const foo = useCallback(() => {
-            foo();
-          }, []);
-        }",
-        r"function Example({ prop }) {
-          const foo = useCallback(() => {
-            if (prop) {
-              foo();
-            }
-          }, [prop]);
-        }",
+        // we don't support the following two cases as they would both cause an infinite loop at runtime
+        //  r"function Example() {
+        //    const foo = useCallback(() => {
+        //      foo();
+        //    }, []);
+        //  }",
+        //
+        //  r"function Example({ prop }) {
+        //    const foo = useCallback(() => {
+        //      if (prop) {
+        //        foo();
+        //      }
+        //    }, [prop]);
+        //  }",
         r"function Hello() {
           const [state, setState] = useState(0);
           useEffect(() => {
@@ -2129,6 +2148,17 @@ fn test() {
                };
            }, []);
         }",
+        r#"function X() {
+  const defaultParam1 = "";
+  const myFunction = useCallback(
+    (param1 = defaultParam1, param2) => {
+    },
+    [defaultParam1]
+  );
+
+  return null;
+}
+"#,
     ];
 
     let fail = vec![
@@ -3316,21 +3346,20 @@ fn test() {
         r"function Thing() {
           useEffect(async () => {});
         }",
-        // TODO: not supported yet
+        // NOTE: intentionally not supported, as `foo` would be referenced before it's declaration
         // r"function Example() {
         //   const foo = useCallback(() => {
         //     foo();
         //     }, [foo]);
         //     }",
-        // TODO: not supported yet
-        // r"function Example({ prop }) {
-        //   const foo = useCallback(() => {
-        //     prop.hello(foo);
-        //   }, [foo]);
-        //   const bar = useCallback(() => {
-        //     foo();
-        //   }, [foo]);
-        // }",
+        r"function Example({ prop }) {
+          const foo = useCallback(() => {
+            prop.hello(foo);
+          }, [foo]);
+          const bar = useCallback(() => {
+            foo();
+          }, [foo]);
+        }",
         r"function MyComponent() {
           const local = {};
           function myEffect() {
@@ -3539,6 +3568,33 @@ fn test() {
             console.log(foo);
           }, [foo]);
         }",
+        // https://github.com/oxc-project/oxc/issues/10319
+        r"import { useEffect } from 'react'
+
+        export const Test = () => {
+          const handleFrame = () => {
+            setTimeout(handleFrame)
+          }
+
+          useEffect(() => {
+            setTimeout(handleFrame)
+          }, [])
+
+          return (
+            <></>
+          )
+        }",
+        // https://github.com/oxc-project/oxc/issues/9788
+        r#"import { useCallback, useEffect } from "react";
+
+        function Component({ foo }) {
+          const log = useCallback(() => {
+          console.log(foo);
+        }, [foo]);
+        useEffect(() => {
+          log();
+        }, []);
+        }"#,
     ];
 
     Tester::new(ExhaustiveDeps::NAME, ExhaustiveDeps::PLUGIN, pass, fail).test_and_snapshot();

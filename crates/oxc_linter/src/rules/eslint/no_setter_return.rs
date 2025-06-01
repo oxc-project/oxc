@@ -23,8 +23,9 @@ declare_oxc_lint!(
     /// being ignored. Therefore, returning a value from a setter is either unnecessary or a
     /// possible error, since the returned value cannot be used.
     ///
-    /// ### Example
+    /// ### Examples
     ///
+    /// Examples of **incorrect** code for this rule:
     /// ```javascript
     /// class URL {
     ///   set origin() {
@@ -52,8 +53,6 @@ impl Rule for NoSetterReturn {
                 ctx.diagnostic(no_setter_return_diagnostic(stmt.span));
             } else if flags.is_function() {
                 break;
-            } else {
-                continue;
             }
         }
     }

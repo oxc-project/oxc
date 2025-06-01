@@ -1,6 +1,6 @@
 [package]
 name = "oxc_ast"
-version = "0.62.0"
+version = "0.72.2"
 authors.workspace = true
 categories.workspace = true
 edition.workspace = true
@@ -34,7 +34,6 @@ cow-utils = { workspace = true }
 default = []
 serialize = [
   "oxc_allocator/serialize",
-  "oxc_regular_expression/serialize",
   "oxc_span/serialize",
   "oxc_syntax/serialize",
   "oxc_estree/serialize",

@@ -26,6 +26,13 @@ fn module_decl() {
 }
 
 #[test]
+fn export_type() {
+    test_same("export type {} from \"mod\";\n");
+    test_same("export type { Foo } from \"mod\";\n");
+    test_same("export { type Foo, type Bar } from \"mod\";\n");
+}
+
+#[test]
 fn expr() {
     test("new (foo()).bar();", "new (foo()).bar();\n");
     test_minify("x in new Error()", "x in new Error;");
@@ -66,6 +73,10 @@ fn class() {
     test(
         "export default class Foo { @x @y accessor #aDef = 1 }",
         "export default class Foo {\n\t@x @y accessor #aDef = 1;\n}\n",
+    );
+    test(
+        "export class Test2 {\n@decorator\nproperty: ((arg: any) => any) | undefined;\n}",
+        "export class Test2 {\n\t@decorator property: ((arg: any) => any) | undefined;\n}\n",
     );
     test_minify("class { static [computed] }", "class{static[computed]}");
 }
@@ -188,6 +199,10 @@ fn comma() {
 #[test]
 fn assignment() {
     test("(let[0] = 100);", "(let)[0] = 100;\n");
+    test("[a, ...rest] = arr;", "[a, ...rest] = arr;\n");
+    test("[...rest] = arr;", "[...rest] = arr;\n");
+    test("({a, ...rest} = obj);", "({a, ...rest} = obj);\n");
+    test("({...rest} = obj);", "({...rest} = obj);\n");
     test_minify("a = b ? c : d", "a=b?c:d;");
     test_minify("[a,b] = (1, 2)", "[a,b]=(1,2);");
     // `{a,b}` is a block, must wrap the whole expression to be an assignment expression

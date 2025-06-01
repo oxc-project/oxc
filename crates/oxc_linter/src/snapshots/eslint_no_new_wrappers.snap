@@ -39,3 +39,12 @@ source: crates/oxc_linter/src/tester.rs
  6 │             }
    ╰────
   help: Remove the `new` operator.
+
+  ⚠ eslint(no-new-wrappers): Do not use `String` as a constructor
+   ╭─[no_new_wrappers.tsx:2:21]
+ 1 │ 
+ 2 │             var a = new String('wow look at me im a really long string, ' +
+   ·                     ──────────
+ 3 │                                'it sure would be annoying if this whole thing ' +
+   ╰────
+  help: Remove the `new` operator.

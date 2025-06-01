@@ -1,6 +1,7 @@
 {
   "rules": {
     "no-useless-escape": "error",
-    "no-control-regex": "error"
+    "no-control-regex": "error",
+    "no-unused-vars": "off"
   }
 }

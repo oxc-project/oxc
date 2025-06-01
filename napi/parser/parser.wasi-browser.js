@@ -1,8 +1,8 @@
 import {
-  instantiateNapiModuleSync as __emnapiInstantiateNapiModuleSync,
-  getDefaultContext as __emnapiGetDefaultContext,
-  WASI as __WASI,
   createOnMessage as __wasmCreateOnMessageForFsProxy,
+  getDefaultContext as __emnapiGetDefaultContext,
+  instantiateNapiModuleSync as __emnapiInstantiateNapiModuleSync,
+  WASI as __WASI,
 } from '@napi-rs/wasm-runtime'
 
 import __wasmUrl from './parser.wasm32-wasi.wasm?url'
@@ -53,6 +53,7 @@ const {
     }
   },
 })
+export default __napiModule.exports
 export const ParseResult = __napiModule.exports.ParseResult
 export const ExportExportNameKind = __napiModule.exports.ExportExportNameKind
 export const ExportImportNameKind = __napiModule.exports.ExportImportNameKind
@@ -60,6 +61,7 @@ export const ExportLocalNameKind = __napiModule.exports.ExportLocalNameKind
 export const getBufferOffset = __napiModule.exports.getBufferOffset
 export const ImportNameKind = __napiModule.exports.ImportNameKind
 export const parseAsync = __napiModule.exports.parseAsync
+export const parseAsyncRaw = __napiModule.exports.parseAsyncRaw
 export const parseSync = __napiModule.exports.parseSync
 export const parseSyncRaw = __napiModule.exports.parseSyncRaw
 export const rawTransferSupported = __napiModule.exports.rawTransferSupported

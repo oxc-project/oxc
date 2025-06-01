@@ -5,7 +5,6 @@ use oxc_ast::{
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{CompactStr, Span};
-use phf::phf_set;
 
 use crate::{
     AstNode,
@@ -42,6 +41,7 @@ impl Default for NoNoninteractiveTabindex {
 
 declare_oxc_lint!(
     /// ### What it does
+    ///
     /// This rule checks that non-interactive elements don't have a tabIndex which would make them interactive via keyboard navigation.
     ///
     /// ### Why is this bad?
@@ -82,15 +82,34 @@ declare_oxc_lint!(
 );
 
 // https://html.spec.whatwg.org/multipage/dom.html#interactive-content
-const INTERACTIVE_HTML_ELEMENTS: phf::set::Set<&'static str> = phf_set! {
-    "a", "audio", "button", "details", "embed", "iframe", "img", "input", "label", "select", "textarea", "video"
-};
+const INTERACTIVE_HTML_ELEMENTS: [&str; 12] = [
+    "a", "audio", "button", "details", "embed", "iframe", "img", "input", "label", "select",
+    "textarea", "video",
+];
 
 // https://www.w3.org/TR/wai-aria/#widget_roles
 // NOTE: "tabpanel" is not included here because it's technically a section role. It can optionally be considered interactive within the context of a tablist, because its visibility is dynamically controlled by an element with the "tab" aria role. It's included in the recommended jsx-a11y config for this reason.
-const INTERACTIVE_HTML_ROLES: phf::set::Set<&'static str> = phf_set! {
-    "button", "checkbox", "gridcell", "link", "menuitem", "menuitemcheckbox", "menuitemradio", "option", "progressbar", "radio", "scrollbar", "searchbox", "separator", "slider", "spinbutton", "switch", "tab", "textbox", "treeitem"
-};
+const INTERACTIVE_HTML_ROLES: [&str; 19] = [
+    "button",
+    "checkbox",
+    "gridcell",
+    "link",
+    "menuitem",
+    "menuitemcheckbox",
+    "menuitemradio",
+    "option",
+    "progressbar",
+    "radio",
+    "scrollbar",
+    "searchbox",
+    "separator",
+    "slider",
+    "spinbutton",
+    "switch",
+    "tab",
+    "textbox",
+    "treeitem",
+];
 
 impl Rule for NoNoninteractiveTabindex {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
@@ -114,7 +133,7 @@ impl Rule for NoNoninteractiveTabindex {
 
         let component = &get_element_type(ctx, jsx_el);
 
-        if INTERACTIVE_HTML_ELEMENTS.contains(component) {
+        if INTERACTIVE_HTML_ELEMENTS.contains(&component.as_ref()) {
             return;
         }
 
@@ -134,7 +153,7 @@ impl Rule for NoNoninteractiveTabindex {
             return;
         };
 
-        if !INTERACTIVE_HTML_ROLES.contains(role.value.as_str())
+        if !INTERACTIVE_HTML_ROLES.contains(&role.value.as_str())
             && !self.0.roles.contains(&CompactStr::new(role.value.as_str()))
         {
             ctx.diagnostic(no_noninteractive_tabindex_diagnostic(tabindex_attr.span));

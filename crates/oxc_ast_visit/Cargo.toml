@@ -1,6 +1,6 @@
 [package]
 name = "oxc_ast_visit"
-version = "0.62.0"
+version = "0.72.2"
 authors.workspace = true
 categories.workspace = true
 edition.workspace = true
@@ -21,6 +21,7 @@ doctest = false
 [dependencies]
 oxc_allocator = { workspace = true }
 oxc_ast = { workspace = true }
+oxc_data_structures = { workspace = true, features = ["pointer_ext"], optional = true }
 oxc_span = { workspace = true }
 oxc_syntax = { workspace = true }
 
@@ -29,6 +30,9 @@ default = []
 serialize = [
   "oxc_allocator/serialize",
   "oxc_ast/serialize",
+  "oxc_data_structures",
   "oxc_span/serialize",
   "oxc_syntax/serialize",
 ]
+# Only for conformance tests
+conformance = []

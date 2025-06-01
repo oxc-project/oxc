@@ -1,5 +1,5 @@
 // Auto-generated code, DO NOT EDIT DIRECTLY!
-// To edit this generated file you have to edit `tasks/ast_tools/src/derives/get_address.rs`
+// To edit this generated file you have to edit `tasks/ast_tools/src/derives/get_address.rs`.
 
 #![expect(clippy::match_same_arms)]
 
@@ -605,6 +605,8 @@ impl GetAddress for TSEnumMemberName<'_> {
         match self {
             Self::Identifier(it) => GetAddress::address(it),
             Self::String(it) => GetAddress::address(it),
+            Self::ComputedString(it) => GetAddress::address(it),
+            Self::ComputedTemplateString(it) => GetAddress::address(it),
         }
     }
 }

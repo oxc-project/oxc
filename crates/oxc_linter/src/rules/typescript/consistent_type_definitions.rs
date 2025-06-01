@@ -1,3 +1,5 @@
+use std::fmt::Write;
+
 use oxc_ast::{
     AstKind,
     ast::{ExportDefaultDeclarationKind, TSType},
@@ -172,27 +174,10 @@ impl Rule for ConsistentTypeDefinitions {
                     let body_span = &decl.body.span;
                     let body = &ctx.source_text()[body_span.start as usize..body_span.end as usize];
 
-                    let extends_vec = {
-                        let mut concatenated_names: Vec<&str> = Vec::new();
-
-                        if let Some(extends) = decl.extends.as_deref() {
-                            for exp in extends {
-                                concatenated_names.push(
-                                    &ctx.source_text()
-                                        [exp.span.start as usize..exp.span.end as usize],
-                                );
-                            }
-                        }
-
-                        concatenated_names
-                    };
-
-                    let extends = if extends_vec.is_empty() {
-                        String::new()
-                    } else {
-                        let joined_extends = extends_vec.join(" & ");
-                        format!(" & {joined_extends}")
-                    };
+                    let mut extends = String::new();
+                    for exp in &decl.extends {
+                        write!(extends, " & {}", exp.span.source_text(ctx.source_text())).unwrap();
+                    }
 
                     ctx.diagnostic_with_fix(
                         consistent_type_definitions_diagnostic(
@@ -235,25 +220,10 @@ impl Rule for ConsistentTypeDefinitions {
                 let body_span = &decl.body.span;
                 let body = &ctx.source_text()[body_span.start as usize..body_span.end as usize];
 
-                let extends_vec = {
-                    let mut concatenated_names: Vec<&str> = Vec::new();
-
-                    if let Some(extends) = decl.extends.as_deref() {
-                        for exp in extends {
-                            concatenated_names.push(
-                                &ctx.source_text()[exp.span.start as usize..exp.span.end as usize],
-                            );
-                        }
-                    }
-
-                    concatenated_names
-                };
-                let extends = if extends_vec.is_empty() {
-                    String::new()
-                } else {
-                    let joined_extends = extends_vec.join(" & ");
-                    format!(" & {joined_extends}")
-                };
+                let mut extends = String::new();
+                for exp in &decl.extends {
+                    write!(extends, " & {}", exp.span.source_text(ctx.source_text())).unwrap();
+                }
 
                 ctx.diagnostic_with_fix(
                     consistent_type_definitions_diagnostic(

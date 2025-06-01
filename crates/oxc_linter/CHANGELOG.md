@@ -4,6 +4,405 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.17.0] - 2025-05-30
+
+- ead5309 linter: [**BREAKING**] Remove react from default plugin set (#11382) (camc314)
+
+### Features
+
+- 2d25bd8 linter: Remove `unicorn/no-for-loop` over `typescript/prefer-for-of` (#11354) (camc314)
+- bbb7eb1 linter: Add auto-fix to react/forward-ref-uses-ref (#11342) (yefan)
+- 590c27b linter: Add auto-fix to unicorn/no-await-expression-member (#11306) (yefan)
+- 7824f01 linter: Implement suggestion for `jsx/no-useless-fragment` (#10800) (Cam McHenry)
+- 2083d33 linter/language_server: Add second editor suggestion for `react/forward-ref-uses-ref` (#11375) (Sysix)
+
+### Bug Fixes
+
+- 25ecbfe linter: Remove use of `FrameworkFlags::React` to decide whether rules should run (#11383) (camc314)
+- 0d240e4 linter: False positive in react/exhaustive-deps with default formal parameter (#11395) (camc314)
+- c91697e linter: Fix panic in multi byte char in `TryFrom` aria (#11350) (camc314)
+- 9798ef1 linter: Stack overflow in no-async-endpoint-handlers (#11317) (camc314)
+- 348ad97 linter: Skip no-unused-vars on astro files (#11303) (camc314)
+- 183d7f0 linter: Make `jest/no-large-snapshots` error easier to comprehend (#11294) (Ulrich Stark)
+- 4e606a5 linter: Improve `jest/no-large-snapshots` (#11291) (Ulrich Stark)
+- 14f790f linter: Improve `jest/no-restricted-matchers` (#11292) (Ulrich Stark)
+- a2c82be linter/block-scoped-var: Better diagnostic messages (#11290) (DonIsaac)
+- 19772e5 linter/no-unused-vars: Panic when variable is redeclared as function in same scope (#11280) (Dunqing)
+
+### Performance
+
+- a0ee946 linter: Reduce code size in `globals` (#11333) (shulaoda)
+- c90c5e9 linter/no-unused-vars: Simplify checking self call usage (#11281) (Dunqing)
+
+### Documentation
+
+- eae51ca linter: Clarify jsdoc/check-tag-names configuration (#11394) (Rägnar O'ock)
+
+### Refactor
+
+- 42738f0 linter: Shorten code of match arms (#11389) (Ulrich Stark)
+- 8a34447 linter: Improve `unicorn/text-encoding-identifier-case` (#11386) (shulaoda)
+- eaa605e linter: Avoid some `Arc::clone` in linter runtime (#11388) (Boshen)
+- 1cd8b9c linter: Fixes in `react/forward-ref-uses-ref` are suggestions (#11376) (Sysix)
+- 50ef691 linter: Add `diagnostics_with_multiple_fixes` to `LintContext` (#11357) (Sysix)
+- 606bb34 linter: Accept `PossibleFixes`  instead of `Fix` for `Messages` (#11295) (Sysix)
+- 042a3f3 linter: Use `PossibleFixes` instead of `Option<Fix>` (#11284) (Sysix)
+- ffcfb46 linter: Improve `unicorn/throw-new-error` (#11364) (shulaoda)
+- 8fb55c3 linter: Cleanup docs and simplify code of `eslint/no-fallthrough` (#11331) (Ulrich Stark)
+- e2f0f0a linter: Improve docs and simplify code of `eslint/no-duplicate-imports` (#11320) (Ulrich Stark)
+- b53b053 linter: Simplify accessing span of NameSpan (#11305) (Ulrich Stark)
+- 4bc2650 linter: Improve `eslint/no-void` (#11285) (shulaoda)
+
+### Styling
+
+- 49b664c linter: Remove needless newline in `declare_oxc_lint` (#11400) (camc314)
+
+### Testing
+
+- a404b2c linter: `eslint/no-duplicate-imports` shouldn't report the same span (#11324) (Ulrich Stark)
+
+## [0.16.12] - 2025-05-25
+
+- 5d9344f rust: [**BREAKING**] Clippy avoid-breaking-exported-api = false (#11088) (Boshen)
+
+### Features
+
+- 691416a linter: Add auto-fix to unicorn/no-static-only-class (#11249) (yefan)
+- 6a7018e linter: Generate stricter json schema for lint plugins (#11219) (camc314)
+- 66e0b1f linter: Implement unicorn/prefer-global-this (#11197) (camc314)
+- b26554b linter: Implement unicorn/no-instanceof-builtins (#11196) (camc314)
+- 699ec64 linter: Add autofix to eslint/no-unneeded-ternary (#11184) (yefan)
+- b3bbdda linter: Implement unicorn/prefer-object-from-entries (#11174) (camc314)
+- 20f9458 linter: Implement unicorn/prefer-array-find (#11170) (camc314)
+- f294c42 linter: Implement unicorn/no-array-method-this-argument (#11169) (camc314)
+- 07dac71 linter: Implement unicorn/prefer-array-index-of (#11168) (camc314)
+- cd920d3 linter: Implement unicorn/no-unnecessary-array-flat-depth (#11167) (camc314)
+- 385b84d linter: Unicorn/no-for-loop (#11154) (camc314)
+- a762038 linter: Add auto-fix to eslint/no-array-constructor (#11148) (yefan)
+- 12b0917 linter: Auto-generate docs for rule configs (#10629) (DonIsaac)
+
+### Bug Fixes
+
+- e8470d9 linter: Delay merging of oxlintrc configs (#10835) (camc314)
+- 6e9de84 linter: False positives in no-instanceof-builtins (#11210) (camc314)
+- 8e7fe03 linter: Fix panic in eslint/require-await (#11211) (camc314)
+- 4104b01 linter: Fix false positive on React in `consistent-type-imports` (#11171) (DonIsaac)
+- 25c6266 linter: Remove duplicate test case from no-useless-escape (#11146) (camc314)
+- 6a5911a linter: Add `allow_regex_characters` option to `no-useless-escape` (#11139) (camc314)
+- 7283f00 linter/prefer-todo: False fix for `test['skip']` (#11128) (shulaoda)
+
+### Performance
+
+- 0c7aae4 linter: Speed up counting lines in `eslint/max-lines` and `eslint/max-lines-per-function` (#11242) (Ulrich Stark)
+- 1846b03 linter: Avoid iterating lines twice if blank lines are skipped (#11235) (Ulrich Stark)
+- e8479bf linter: Remove unnecessary `codegen` in `jest/no-untyped-mock-factory` (#11097) (shulaoda)
+- dd33e57 linter: Remove unnecessary `codegen` in `eslint/prefer-numeric-literals` (#11099) (shulaoda)
+- 49d677c linter: Remove unnecessary `codegen` in `jest/prefer-to-have-length` (#11100) (shulaoda)
+- c294447 linter: Remove unnecessary `codegen` in `vitest/prefer-to-be-object` (#11086) (shulaoda)
+- 8faf518 linter: Remove unnecessary `codegen` in `unicorn/require-number-to-fixed-digits-argument` (#11085) (shulaoda)
+- e1bbdab linter/prefer-expect-resolves: Remove unnecessary `codegen` (#11127) (shulaoda)
+- 6e3e37b unicorn/no-instanceof-array: Reduce memory allocations in fixer (#11109) (shulaoda)
+
+### Documentation
+
+- f2e3e79 linter: Fix formatting inconsistencies in rule docs (#11227) (Ulrich Stark)
+- df4cc8d linter: Update missing linter rule documentation (#11190) (Aman Desai)
+- b70c51e linter: Google_font_preconnect: linter rules (#11189) (Aman Desai)
+- 67c0b4d linter: Explanation for rule `nextjs/no_sync_script` (#11166) (Aman Desai)
+- c974f32 linter: Improve rule docs for `eslint/no-bitwise` (#11126) (Ulrich Stark)
+- cbb8e0b linter: Improve rule docs for `eslint/default-case` (#11125) (Ulrich Stark)
+- bcc923c linter: Normalize rule docs format (#11104) (Ulrich Stark)
+- 69a14ab linter: Improve docs for `eslint/no-debugger` (#11103) (Ulrich Stark)
+- 2f7346b linter: Improve docs for `eslint/no-constructor-return` (#11102) (Ulrich Stark)
+
+### Refactor
+
+- c64f800 linter: Introduce `ConfigStoreBuilder.extended_paths` property (#11222) (Sysix)
+- e4c7614 linter: Cleanup `eslint/no-useless-constructor` (#11221) (Ulrich Stark)
+- a695472 linter: Simplify finding ancestor of specific kind (#11224) (Ulrich Stark)
+- b822ac8 linter: Simplify deserialization for `AllowWarnDeny` (#11195) (camc314)
+- 1210621 linter: Remove functions in favor of `Span::contains_inclusive` (#11133) (Ulrich Stark)
+- 73b3f42 linter: Better names for parameters of diagnostic functions (#11129) (Ulrich Stark)
+- 24fe879 linter: Remove unnecessary span construction (#11131) (Ulrich Stark)
+- f079338 linter: Remove unnecessary macro (#11114) (overlookmotel)
+- 9f3a14a linter: Cleanup diagnostic and docs for `eslint/no-console` (#11101) (Ulrich Stark)
+- 18cdabf linter/prefer-todo: Remove unnecessary `codegen` (#11130) (shulaoda)
+- bb8bde3 various: Update macros to use `expr` fragment specifier (#11113) (overlookmotel)
+
+## [0.16.11] - 2025-05-16
+
+- 4e5c73b span: [**BREAKING**] `SourceType::from_path(".js")` return js instead of jsx (#11038) (Boshen)
+
+### Features
+
+- eef93b4 linter: Add import/no-unassigned-import (#10970) (yefan)
+- cc0112f linter: No-unused-vars add setting for `reportVarsOnlyUsedAsTypes` (#11009) (camc314)
+- 17e49c3 linter: Implement configuration and checking loops for `eslint/no_constant_condition` (#10949) (Ulrich Stark)
+- 21117ac linter: Implement react/forbid-elements (#10928) (Thomas BOCQUEZ)
+- a064082 linter: Add import/consistent-type-specifier-style rule (#10858) (yefan)
+- 4733b52 linter/no-extraneous-class: Add conditional fixer (#10798) (DonIsaac)
+
+### Bug Fixes
+
+- c52a9ba linter: Fix plugins inside overrides not being applied (#11057) (camc314)
+- b12bd48 linter: Fix rule config not being correctly applied (#11055) (camc314)
+- 9a368be linter: False negative in no-restriced-imports with `patterns` and side effects (#11027) (camc314)
+- 8c2cfbc linter: False negative in no-restricted-imports (#11026) (camc314)
+- 8956870 linter: False positive in no-unused-vars (#11002) (camc314)
+- 33a60d2 linter: Skip eslint/no-redeclare when running on modules (#11004) (camc314)
+- 39063ce linter: Reword diagnostic message for no-control-regex (#10993) (camc314)
+- 9eedb58 linter: False positive with negative matches in no-restricted-imports (#10976) (camc314)
+- 10e77d7 linter: Improve diagnostics for no-control-regex (#10959) (camc314)
+- 82889ae linter/no-extraneous-class: Improve docs, reporting and code refactor (#10797) (DonIsaac)
+- 11c34e7 linter/no-img-element: Improve diagnostic and docs (#10908) (DonIsaac)
+- 126ae75 semantic: Distinguish class private elements (#11044) (magic-akari)
+- 773d0de semantic: Correctly handle nested brackets in jsdoc parsing (#10922) (camc314)
+- b215b6c semantic: Dont parse `@` as jsdoc tags inside `[`/`]` (#10919) (camc314)
+
+### Documentation
+
+- db6afb9 linter: Improve docs of no-debugger (#11033) (camc314)
+- 16541de linter: Improve docs of default-param-last (#11032) (camc314)
+- 2c2f3c4 linter: Improve docs of default-case-last (#11031) (camc314)
+- 56bb9ce linter: Improve docs of array-callback-return (#11030) (camc314)
+- 13dbcc6 linter: Correct docs for default config for no-redeclare (#10995) (camc314)
+- a86cbb3 linter: Fix incorrect backticks of fenced code blocks (#10947) (Ulrich Stark)
+
+### Refactor
+
+- bb999a3 language_server: Avoid cloning linter by taking reference in LintService (#10907) (Ulrich Stark)
+- d1b0c83 linter: Remove overrides index vec (#11058) (camc314)
+- 7ad6cf8 linter: Store severity separately, remove `RuleWithSeverity` (#11051) (camchenry)
+- e31c361 linter: Remove nested match statements in no-restricted-imports (#10975) (camc314)
+- 6ad9d4f linter: Tidy `eslint/func-names` (#10923) (camc314)
+- faf0a95 syntax: Rename `NameSpaceModule` to `NamespaceModule` (#10917) (Dunqing)
+
+## [0.16.10] - 2025-05-09
+
+- ad4fbf4 ast: [**BREAKING**] Simplify `RegExpPattern` (#10834) (overlookmotel)
+
+### Features
+
+- 4c62348 linter: Regex/no-useless-backreference (#10773) (camc314)
+- d7ebdd7 linter: Add unicorn/no-unnecessary-slice-end rule (#10826) (yefan)
+
+### Bug Fixes
+
+- 7d09973 linter: False positive with `withResolvers` in prefer-await-to-then (#10896) (camc314)
+- 9b94300 linter: Mark fixer as dangerous for erasing-op (#10868) (camc314)
+- ae70cc1 linter: Add missing option to `no-shadow-restricted-names` (#10827) (camc314)
+- b2c287f linter/no-unused-vars: Fixer cannot delete usused for in/of iterators (#10824) (DonIsaac)
+- 5ce0a68 linter/no-unused-vars: Recognize parameters used in await/yield expressions within comma expressions (#10808) (magic-akari)
+
+### Performance
+
+- 96cca22 language_server: Use `simdutf8` when reading files from file system (#10814) (Sysix)
+
+### Documentation
+
+- efaadd3 linter: Fix a few incorrect backticks in `no_restricted_imports` (#10914) (Boshen)
+- ccda8f0 linter: Improve no-plusplus docs (#10885) (Peter Cardenas)
+- 5f15809 linter: Improve docs for jsdoc/require-property (#10705) (camc314)
+
+### Refactor
+
+- 3d47159 language_server: Use `IsolatedLintHandlerFileSystem` (#10830) (Sysix)
+- 79819cc linter: Move around some config store logic (#10861) (camc314)
+- 243c247 linter: Able to use custom file system in runtime (#10828) (Sysix)
+
+### Testing
+
+- 47b946d linter: Use `TesterFileSystem` for `Runtime`s filesystem (#10829) (Sysix)
+
+## [0.16.9] - 2025-05-02
+
+- a0a37e0 ast: [**BREAKING**] `AstBuilder` methods require an `Atom` with correct lifetime (#10735) (overlookmotel)
+
+- 315143a codegen: [**BREAKING**] Remove useless `CodeGenerator` type alias (#10702) (Boshen)
+
+### Features
+
+- 63f02a8 linter: Add react/forward_ref_uses_ref (#10506) (x6eull)
+- a3ada34 linter: Implement fixer for unicorn/prefer-number-properties (#10693) (camc314)
+- e97a4e0 linter: Add fixer to unicorn/prefer-spread (#10691) (camc314)
+- a69a0ee linter: Add eslint/block-scoped-var (#10237) (yefan)
+- 387af3a linter: Report vars only used as types (#10664) (camc314)
+- eac205f linter: Add unicorn/consistent-assert rule (#10653) (Shota Kitahara)
+- 0e6a727 linter: Add autofixer for eslint/radix (#10652) (yefan)
+- fb070c4 linter/no-extra-boolean-cast: Implement auto-fixer (#10682) (DonIsaac)
+- 432cd77 linter/no-new-wrapper: Implement auto-fixer (#10680) (DonIsaac)
+
+### Bug Fixes
+
+- b38338a linter: Make require post message target origin a fixer a suggestion (#10754) (camc314)
+- 48c542d linter: Skip linting vue <script> where `lang` is not js / ts (#10740) (Boshen)
+- c9575f6 linter: Fix false positive in react/exhaustive deps (#10727) (camc314)
+- d8d8f64 linter: Shorten span of promise/prefer-await-to-then (#10717) (camc314)
+- a88e349 linter: Mark `isNan` and `isFinite` as dangerous fixes in `unicorn/prefer-number-properties` (#10706) (Sysix)
+- f4ab05f linter: Panic in unicorn/no-useless-spread (#10715) (camc314)
+- 06f1717 linter: False positive in no unused vars when importing value used as type (#10690) (camc314)
+- 746b318 linter: False positive in typescript/explicit-function-return-type with `satisfies` (#10668) (camc314)
+- cce1043 linter: False positive in typescript/explicit-function-return-type (#10667) (camc314)
+- c89da93 linter: False positive in eslint/curly on windows (#10671) (camc314)
+- 374e19e linter: False positive in react/jsx-curly-brace-presence (#10663) (camc314)
+- e7c2b32 linter: Move `consistent-assert` to `pedantic` (#10665) (camc314)
+- 344ef88 linter: False positive in `eslint/no-unused-vars` when calling inside sequence expression (#10646) (Ulrich Stark)
+- 98bcd5f lsp: Incorrect quick fix offset in vue files (#10742) (camc314)
+
+### Performance
+
+- c753f75 transformer, linter: Use `format_compact_str!` (#10753) (overlookmotel)
+
+### Refactor
+
+
+## [0.16.8] - 2025-04-27
+
+### Features
+
+- 53394a7 linter: Add auto-fix for eslint/require-await (#10624) (yefan)
+- 6908bc3 linter: Add autofix for react/self-closing-comp (#10512) (x6eull)
+- e228840 parser: Fast forward lexer to EOF if errors are encountered (#10579) (Boshen)
+
+### Bug Fixes
+
+- 39adefe linter: Handle re-exporting of type correctly in `import/no-cycle` (#10606) (Ulrich Stark)
+- e67901b linter: Incorrect fix for prefer start ends with (#10533) (camc314)
+- 7c85ae7 linter/no-empty-function: Support 'allow' option (#10605) (Don Isaac)
+- a9785e3 parser,linter: Consider typescript declarations for named exports (#10532) (Ulrich Stark)
+
+### Testing
+
+- 8a2b250 linter: Fix incorrect test fixture for prefer-each (#10587) (Boshen)
+
+## [0.16.7] - 2025-04-21
+
+- 7212803 ast: [**BREAKING**] Change `TSInterfaceDeclaration::extends` from `Option<Vec>` to `Vec` (#10472) (overlookmotel)
+
+- 7284135 ast: [**BREAKING**] Remove `trailing_commas` from `ArrayExpression` and `ObjectExpression` (#10431) (Boshen)
+
+### Features
+
+- bb8a078 language_server: Use linter runtime (#10268) (Sysix)
+- c94e6b8 linter: Allow `eqeqeq` to always be dangerously fixable (#10499) (camchenry)
+
+### Bug Fixes
+
+- 2fc083c linter: Incorrect fix for prefer start ends with (#10525) (camc314)
+- 020d8f8 linter: Fix auto-fix issue for eslint/no-else-return (#10494) (yefan)
+- f0c1eff linter: False positve in no-unused-vars (#10470) (camc314)
+- d690060 linter: Fix the auto-fix issue of the eslint/no-plusplus rule (#10469) (yefan)
+- 72d5074 linter: False positive in `eslint/no-redeclare` (#10402) (shulaoda)
+- c1f5623 linter: Add check for plugin_name when applying LintFilterKind::Rule (#10339) (Ulrich Stark)
+- 58ab8ff parser: Adjust class start position when decorators are involved (#10438) (Boshen)
+
+### Performance
+
+- 62178c2 linter: Replace `phf_set` with `array` for `DOM_PROPERTIES_NAMES` (#10501) (shulaoda)
+- 9280707 linter: Replace `phf_set` with `array` for `DOM_ATTRIBUTES_TO_CAMEL` (#10500) (shulaoda)
+- 0a4f9d9 linter: Replace `phf_set` with `array` for `ATTRIBUTE_TAGS_MAP` (#10498) (shulaoda)
+- 09f7358 linter: Replace `phf_set` with `array` in `jsdoc/check-tag-names` (#10485) (shulaoda)
+- da87390 linter: Replace `phf_set` with `array` in `jsx-a11y/autocomplete-valid` (#10484) (shulaoda)
+- d4033bc linter: Replace `phf_set` with `array` in `globals.rs` (#10483) (shulaoda)
+- 7e08618 linter: Replace `phf_set` with `array` in `unicorn/prefer-add-event-listener` (#10451) (dalaoshu)
+- e2af873 linter: Replace `phf_set` with `array` in `unicorn/no-useless-undefined` (#10450) (dalaoshu)
+- af635fb linter: Replace `phf_set` with `array` in `nextjs/no-unwanted-polyfillio` (#10452) (shulaoda)
+- c0f0369 linter: Replace `phf_set` with `array` in `utils/vitest` (#10427) (shulaoda)
+- 17c7bda linter: Replace `phf_set` with `array` in `unicorn/prefer-type-error` (#10426) (shulaoda)
+- 5cde29b linter: Replace `phf_set` with `array` in `react/void-dom-elements-no-children` (#10425) (shulaoda)
+- 7ef1e0d linter: Replace `phf_set` with `array` in `unicorn/new-for-builtins` (#10424) (shulaoda)
+- 50fd839 linter: Replace `phf_set` with `array` in `utils/mod.rs` (#10405) (shulaoda)
+- a7ac137 linter: Replace `phf_set` with `array` in `unicorn/prefer-set-has` (#10398) (shulaoda)
+
+### Documentation
+
+- 5d1dfb5 linter: Fix wording in the eqeqeq docs (#10401) (Connor Pearson)
+
+### Refactor
+
+
+## [0.16.6] - 2025-04-14
+
+- 49732ff ast: [**BREAKING**] Re-introduce `TSEnumBody` AST node (#10284) (Yuji Sugiura)
+
+- a26fd34 ast: [**BREAKING**] Remove `JSXOpeningElement::self_closing` field (#10275) (overlookmotel)
+
+### Features
+
+- d48e886 linter: Add `import/group-exports` rule (#10330) (yefan)
+
+### Bug Fixes
+
+- 04e2fd4 linter: Fix false positives for `no-control-regex` (#10345) (Cam McHenry)
+- e000f60 linter: Make extended configs properly inherit plugins (#10174) (Sub)
+- 81867c4 linter: Fix stack overflow in react/exhaustive deps (#10322) (camc314)
+
+### Performance
+
+- 1bb61c6 linter: Replace `phf_set` with `array` in `unicorn/prefer-native-coercion-functions` (#10384) (shulaoda)
+- e1e7a19 linter: Replace `phf_set` with `array` in `unicorn/no-array-for-each` (#10377) (dalaoshu)
+- 5f0e66c linter: Replace `phf_set` with `array` in `unicorn/prefer-spread` (#10376) (dalaoshu)
+- 8d9559d linter: Replace `phf_set` with `array` in `react/jsx-key` (#10375) (dalaoshu)
+- fbd4f92 linter: Replace `phf_set` with `array` in `utils::jest` (#10369) (shulaoda)
+- 8d0eb33 linter: Replace `phf_set` with `array` in `utils::express` (#10370) (shulaoda)
+- ba538ff linter: Use `binary_search` for arrays with more than `7` elements (#10357) (shulaoda)
+- 283e4c7 linter: Replace `phf_set` with `array` in `react/exhaustive-deps` (#10337) (shulaoda)
+- 8b8d708 linter: Replace `phf_set` with `array` in `nextjs/no-typos` (#10336) (shulaoda)
+- 0fd93d6 linter: Replace `phf_set` with `array` in `utils::promise` (#10335) (shulaoda)
+- 485ba19 linter: Replace `phf_set` with `array` in `jest/prefer-jest-mocked` (#10302) (shulaoda)
+- 83931ec linter: Replace `phf_set` with `array` in `jsdoc/check-access` (#10303) (shulaoda)
+- 651b56f linter: Replace `phf_set` with `array` in `jsdoc/empty-tags` (#10304) (shulaoda)
+- 7ffb7aa linter: Replace `phf_set` with `array` in `jsdoc/require-returns` (#10305) (shulaoda)
+- d7399c4 linter: Replace `phf_set` with `array` in `jsx-a11y/no-noninteractive-tabindex` (#10306) (shulaoda)
+- afe663b linter: Replace `phf_set` with `array` in `jest/no-restricted-matchers` (#10297) (shulaoda)
+- bd27959 linter: Replace `phf_set` with `array` in `eslint/array-callback-return` (#10296) (shulaoda)
+- 1aa0d71 linter: Replace `phf_set` with `array` in `react/no-array-index-key` (#10294) (shulaoda)
+- d9c4891 linter: Replace `phf_set` with `array` in `eslint/valid-typeof` (#10293) (shulaoda)
+
+### Refactor
+
+- 2e1ef4c linter: Extract common logic from `jsdoc/require-yields` and `jsdoc/require-returns` (#10383) (shulaoda)
+- 9533d09 linter: Remove duplicate ARIA property lists (#10326) (camchenry)
+- 67bd7aa linter: Add `AriaProperty` enum (#10325) (camchenry)
+- 52ea978 linter: Update comments, improve tests, add variant All to LintFilterKind (#10259) (Ulrich Stark)
+
+## [0.16.5] - 2025-04-07
+
+### Features
+
+- 2f6810a editor: Add named fixes for code actions (#10203) (camchenry)
+- 794b180 linter: Add messages for complex fixes (#10279) (camchenry)
+- bde73b5 linter: Add unicorn/no-accessor-recursion rule (#9971) (yefan)
+
+### Bug Fixes
+
+- 03ba760 linter: `jsdoc/require-param`: skip rule if any doc has `@type` tag (#10282) (Cam McHenry)
+- 7c54ea1 linter: Rule `no-restricted-imports` allow combination of `paths` and `patterns` (#10224) (Sysix)
+- 6174129 linter: Run `react/no-children-props` only when react framework is found (#10225) (Sysix)
+- cc1267e linter: Fix `Display` impl for `ConfigBuilderError` (#10239) (overlookmotel)
+- d691701 various: Unwrap `Result` of `write!` macro (#10228) (overlookmotel)
+
+### Performance
+
+- 5d40676 linter: Replace `phf_set` with `array` in `react/iframe-missing-sandbox` (#10281) (shulaoda)
+- 0b2f22d linter: Replace `phf_set` with `array` in `globals` (#10274) (shulaoda)
+- 3dfa876 linter: Replace `phf_set` with `array` in `eslint/no-import-assign` (#10271) (shulaoda)
+- b34e876 linter: Avoid cloning filters by refactoring functions to take references (#10247) (Ulrich Stark)
+- be048d2 linter: Remove `write!` macro where unnecessary (#10232) (overlookmotel)
+
+### Documentation
+
+- 3d4ed3e linter: Rule `eslint/eqeqeq` add "null" & "smart" options (#10258) (Jacob Smith)
+- ec34ef3 rules/react: Adding missing code block ending (#10218) (Cannonbark)
+
+### Styling
+
+- fba11d2 linter: Remove unnecessary semi-colons (#10207) (camc314)
+
+### Testing
+
+- 72238fc linter: Ensure complex fixes have messages (#10280) (camchenry)
+
 ## [0.16.4] - 2025-04-01
 
 - cd1f035 semantic: [**BREAKING**] Store symbol information as the first entry in `symbol_declarations` when it is redeclared (#10062) (Dunqing)

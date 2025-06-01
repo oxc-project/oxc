@@ -7,37 +7,39 @@
 
 /// <https://github.com/import-js/eslint-plugin-import>
 mod import {
-    pub mod exports_last;
-    pub mod no_absolute_path;
-    pub mod no_anonymous_default_export;
-    pub mod no_empty_named_blocks;
-    pub mod no_mutable_exports;
-    // pub mod no_deprecated;
-    // pub mod no_unused_modules;
+    pub mod consistent_type_specifier_style;
     pub mod default;
     pub mod export;
+    pub mod exports_last;
     pub mod extensions;
     pub mod first;
+    pub mod group_exports;
     pub mod max_dependencies;
     pub mod named;
     pub mod namespace;
+    pub mod no_absolute_path;
     pub mod no_amd;
+    pub mod no_anonymous_default_export;
     pub mod no_commonjs;
     pub mod no_cycle;
     pub mod no_default_export;
     pub mod no_duplicates;
     pub mod no_dynamic_require;
+    pub mod no_empty_named_blocks;
+    pub mod no_mutable_exports;
     pub mod no_named_as_default;
     pub mod no_named_as_default_member;
     pub mod no_named_default;
     pub mod no_namespace;
     pub mod no_self_import;
+    pub mod no_unassigned_import;
     pub mod no_webpack_loader_syntax;
     pub mod unambiguous;
 }
 
 mod eslint {
     pub mod array_callback_return;
+    pub mod block_scoped_var;
     pub mod curly;
     pub mod default_case;
     pub mod default_case_last;
@@ -149,6 +151,7 @@ mod eslint {
     pub mod no_unused_labels;
     pub mod no_unused_private_class_members;
     pub mod no_unused_vars;
+    pub mod no_useless_backreference;
     pub mod no_useless_call;
     pub mod no_useless_catch;
     pub mod no_useless_concat;
@@ -282,6 +285,8 @@ mod react {
     pub mod button_has_type;
     pub mod checked_requires_onchange_or_readonly;
     pub mod exhaustive_deps;
+    pub mod forbid_elements;
+    pub mod forward_ref_uses_ref;
     pub mod iframe_missing_sandbox;
     pub mod jsx_boolean_value;
     pub mod jsx_curly_brace_presence;
@@ -325,6 +330,7 @@ mod react_perf {
 
 mod unicorn {
     pub mod catch_error_name;
+    pub mod consistent_assert;
     pub mod consistent_date_clone;
     pub mod consistent_empty_array_spread;
     pub mod consistent_existence_index_check;
@@ -339,6 +345,7 @@ mod unicorn {
     pub mod no_accessor_recursion;
     pub mod no_anonymous_default_export;
     pub mod no_array_for_each;
+    pub mod no_array_method_this_argument;
     pub mod no_array_reduce;
     pub mod no_await_expression_member;
     pub mod no_await_in_promise_methods;
@@ -347,6 +354,7 @@ mod unicorn {
     pub mod no_empty_file;
     pub mod no_hex_escape;
     pub mod no_instanceof_array;
+    pub mod no_instanceof_builtins;
     pub mod no_invalid_fetch_options;
     pub mod no_invalid_remove_event_listener;
     pub mod no_length_as_slice_end;
@@ -364,7 +372,9 @@ mod unicorn {
     pub mod no_thenable;
     pub mod no_this_assignment;
     pub mod no_typeof_undefined;
+    pub mod no_unnecessary_array_flat_depth;
     pub mod no_unnecessary_await;
+    pub mod no_unnecessary_slice_end;
     pub mod no_unreadable_array_destructuring;
     pub mod no_unreadable_iife;
     pub mod no_useless_fallback_in_spread;
@@ -377,8 +387,10 @@ mod unicorn {
     pub mod number_literal_case;
     pub mod numeric_separators_style;
     pub mod prefer_add_event_listener;
+    pub mod prefer_array_find;
     pub mod prefer_array_flat;
     pub mod prefer_array_flat_map;
+    pub mod prefer_array_index_of;
     pub mod prefer_array_some;
     pub mod prefer_blob_reading_methods;
     pub mod prefer_code_point;
@@ -388,6 +400,7 @@ mod unicorn {
     pub mod prefer_dom_node_remove;
     pub mod prefer_dom_node_text_content;
     pub mod prefer_event_target;
+    pub mod prefer_global_this;
     pub mod prefer_includes;
     pub mod prefer_logical_operator_over_ternary;
     pub mod prefer_math_min_max;
@@ -398,6 +411,7 @@ mod unicorn {
     pub mod prefer_negative_index;
     pub mod prefer_node_protocol;
     pub mod prefer_number_properties;
+    pub mod prefer_object_from_entries;
     pub mod prefer_optional_catch_binding;
     pub mod prefer_prototype_methods;
     pub mod prefer_query_selector;
@@ -557,9 +571,8 @@ mod node {
 }
 
 oxc_macros::declare_all_lint_rules! {
-    // import::no_deprecated,
-    // import::no_unused_modules,
     eslint::array_callback_return,
+    eslint::block_scoped_var,
     eslint::curly,
     eslint::default_case,
     eslint::default_case_last,
@@ -572,24 +585,13 @@ oxc_macros::declare_all_lint_rules! {
     eslint::grouped_accessor_pairs,
     eslint::guard_for_in,
     eslint::init_declarations,
-    eslint::max_nested_callbacks,
-    eslint::max_lines_per_function,
     eslint::max_classes_per_file,
     eslint::max_depth,
+    eslint::max_lines_per_function,
     eslint::max_lines,
+    eslint::max_nested_callbacks,
     eslint::max_params,
     eslint::new_cap,
-    eslint::no_lonely_if,
-    eslint::no_useless_call,
-    eslint::no_unneeded_ternary,
-    eslint::no_extra_label,
-    eslint::no_multi_assign,
-    eslint::no_nested_ternary,
-    eslint::no_labels,
-    eslint::no_lone_blocks,
-    eslint::no_restricted_imports,
-    eslint::no_object_constructor,
-    eslint::no_duplicate_imports,
     eslint::no_alert,
     eslint::no_array_constructor,
     eslint::no_async_promise_executor,
@@ -598,6 +600,18 @@ oxc_macros::declare_all_lint_rules! {
     eslint::no_caller,
     eslint::no_case_declarations,
     eslint::no_class_assign,
+    eslint::no_duplicate_imports,
+    eslint::no_extra_label,
+    eslint::no_labels,
+    eslint::no_lone_blocks,
+    eslint::no_lonely_if,
+    eslint::no_multi_assign,
+    eslint::no_nested_ternary,
+    eslint::no_object_constructor,
+    eslint::no_restricted_imports,
+    eslint::no_unneeded_ternary,
+    eslint::no_useless_backreference,
+    eslint::no_useless_call,
     eslint::no_compare_neg_zero,
     eslint::no_cond_assign,
     eslint::no_console,
@@ -700,11 +714,14 @@ oxc_macros::declare_all_lint_rules! {
     eslint::valid_typeof,
     eslint::vars_on_top,
     eslint::yoda,
+    import::consistent_type_specifier_style,
     import::default,
     import::export,
     import::extensions,
     import::exports_last,
     import::first,
+    import::group_exports,
+    import::no_unassigned_import,
     import::no_empty_named_blocks,
     import::no_anonymous_default_export,
     import::no_absolute_path,
@@ -884,6 +901,8 @@ oxc_macros::declare_all_lint_rules! {
     react::button_has_type,
     react::checked_requires_onchange_or_readonly,
     react::exhaustive_deps,
+    react::forbid_elements,
+    react::forward_ref_uses_ref,
     react::iframe_missing_sandbox,
     react::jsx_filename_extension,
     react::jsx_boolean_value,
@@ -963,6 +982,7 @@ oxc_macros::declare_all_lint_rules! {
     typescript::prefer_ts_expect_error,
     typescript::triple_slash_reference,
     unicorn::catch_error_name,
+    unicorn::consistent_assert,
     unicorn::consistent_date_clone,
     unicorn::consistent_empty_array_spread,
     unicorn::consistent_existence_index_check,
@@ -973,6 +993,10 @@ oxc_macros::declare_all_lint_rules! {
     unicorn::explicit_length_check,
     unicorn::filename_case,
     unicorn::new_for_builtins,
+    unicorn::no_instanceof_builtins,
+    unicorn::no_array_method_this_argument,
+    unicorn::no_unnecessary_array_flat_depth,
+    unicorn::no_unnecessary_slice_end,
     unicorn::no_accessor_recursion,
     unicorn::no_invalid_fetch_options,
     unicorn::no_abusive_eslint_disable,
@@ -1014,6 +1038,10 @@ oxc_macros::declare_all_lint_rules! {
     unicorn::no_zero_fractions,
     unicorn::number_literal_case,
     unicorn::numeric_separators_style,
+    unicorn::prefer_global_this,
+    unicorn::prefer_object_from_entries,
+    unicorn::prefer_array_find,
+    unicorn::prefer_array_index_of,
     unicorn::prefer_spread,
     unicorn::prefer_add_event_listener,
     unicorn::prefer_array_flat,

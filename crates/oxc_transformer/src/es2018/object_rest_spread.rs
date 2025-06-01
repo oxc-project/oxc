@@ -31,7 +31,7 @@ use std::mem;
 
 use serde::Deserialize;
 
-use oxc_allocator::{GetAddress, TakeIn, Vec as ArenaVec};
+use oxc_allocator::{Box as ArenaBox, GetAddress, TakeIn, Vec as ArenaVec};
 use oxc_ast::{NONE, ast::*};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_ecmascript::{
@@ -255,7 +255,7 @@ impl<'a> ObjectRestSpread<'a, '_> {
         expressions.push(ctx.ast.expression_assignment(
             SPAN,
             op,
-            assign_expr.left.take_in(ctx.ast.allocator),
+            assign_expr.left.take_in(ctx.ast),
             reference_builder.create_read_expression(ctx),
         ));
 
@@ -403,7 +403,7 @@ impl<'a> ObjectRestSpread<'a, '_> {
                 break;
             }
         }
-        let mut expressions = ctx.ast.vec1(expr.take_in(ctx.ast.allocator));
+        let mut expressions = ctx.ast.vec1(expr.take_in(ctx.ast));
         expressions.extend(exprs);
         *expr = ctx.ast.expression_sequence(SPAN, expressions);
     }
@@ -443,7 +443,7 @@ impl<'a> ObjectRestSpread<'a, '_> {
                 exprs.push(ctx.ast.expression_assignment(
                     SPAN,
                     AssignmentOperator::Assign,
-                    pat.take_in(ctx.ast.allocator),
+                    pat.take_in(ctx.ast),
                     bound_identifier.create_read_expression(ctx),
                 ));
                 *pat = bound_identifier.create_spanned_write_target(SPAN, ctx);
@@ -487,13 +487,13 @@ impl<'a, 'ctx> ObjectRestSpread<'a, 'ctx> {
             return;
         }
 
-        let mut call_expr: Option<CallExpression<'a>> = None;
-        let mut props = vec![];
+        let mut call_expr: Option<ArenaBox<'a, CallExpression<'a>>> = None;
+        let mut props = ctx.ast.vec_with_capacity(obj_expr.properties.len());
 
         for prop in obj_expr.properties.drain(..) {
-            if let ObjectPropertyKind::SpreadProperty(spread_prop) = prop {
+            if let ObjectPropertyKind::SpreadProperty(mut spread_prop) = prop {
                 Self::make_object_spread(&mut call_expr, &mut props, transform_ctx, ctx);
-                let arg = spread_prop.unbox().argument.take_in(ctx.ast.allocator);
+                let arg = spread_prop.argument.take_in(ctx.ast);
                 call_expr.as_mut().unwrap().arguments.push(Argument::from(arg));
             } else {
                 props.push(prop);
@@ -504,22 +504,26 @@ impl<'a, 'ctx> ObjectRestSpread<'a, 'ctx> {
             Self::make_object_spread(&mut call_expr, &mut props, transform_ctx, ctx);
         }
 
-        *expr = Expression::CallExpression(ctx.ast.alloc(call_expr.unwrap()));
+        *expr = Expression::CallExpression(call_expr.unwrap());
     }
 
     fn make_object_spread(
-        expr: &mut Option<CallExpression<'a>>,
-        props: &mut Vec<ObjectPropertyKind<'a>>,
+        expr: &mut Option<ArenaBox<'a, CallExpression<'a>>>,
+        props: &mut ArenaVec<'a, ObjectPropertyKind<'a>>,
         transform_ctx: &'ctx TransformCtx<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) {
         let had_props = !props.is_empty();
-        let obj = ctx.ast.expression_object(SPAN, ctx.ast.vec_from_iter(props.drain(..)), None);
+        let obj = ctx.ast.expression_object(
+            SPAN,
+            // Reserve maximize might be used space for new vec
+            mem::replace(props, ctx.ast.vec_with_capacity(props.capacity() - props.len())),
+        );
         let arguments = if let Some(call_expr) = expr.take() {
-            let arg = Expression::CallExpression(ctx.ast.alloc(call_expr));
+            let arg = Expression::CallExpression(call_expr);
             let arg = Argument::from(arg);
             if had_props {
-                let empty_object = ctx.ast.expression_object(SPAN, ctx.ast.vec(), None);
+                let empty_object = ctx.ast.expression_object(SPAN, ctx.ast.vec());
                 ctx.ast.vec_from_array([arg, Argument::from(empty_object), Argument::from(obj)])
             } else {
                 ctx.ast.vec1(arg)
@@ -528,7 +532,7 @@ impl<'a, 'ctx> ObjectRestSpread<'a, 'ctx> {
             ctx.ast.vec1(Argument::from(obj))
         };
         let new_expr = transform_ctx.helper_call(Helper::ObjectSpread2, SPAN, arguments, ctx);
-        expr.replace(new_expr);
+        expr.replace(ctx.ast.alloc(new_expr));
     }
 }
 
@@ -637,7 +641,7 @@ impl<'a> ObjectRestSpread<'a, '_> {
             return;
         }
         let target = left.to_assignment_target_mut();
-        let assign_left = target.take_in(ctx.ast.allocator);
+        let assign_left = target.take_in(ctx.ast);
         let flags = SymbolFlags::FunctionScopedVariable;
         let bound_identifier = ctx.generate_uid("ref", scope_id, flags);
         let id = bound_identifier.create_binding_pattern(ctx);
@@ -669,7 +673,7 @@ impl<'a> ObjectRestSpread<'a, '_> {
             (empty_stmt.span, ctx.ast.vec())
         } else {
             let span = stmt.span();
-            (span, ctx.ast.vec1(stmt.take_in(ctx.ast.allocator)))
+            (span, ctx.ast.vec1(stmt.take_in(ctx.ast)))
         };
         *stmt = ctx.ast.statement_block_with_scope_id(span, stmts, scope_id);
         scope_id
@@ -994,6 +998,7 @@ impl<'a> ObjectRestSpread<'a, '_> {
                 if expr.is_literal() {
                     let span = expr.span();
                     let s = expr.to_js_string(&WithoutGlobalReferenceInformation {}).unwrap();
+                    let s = ctx.ast.atom_from_cow(&s);
                     let expr = ctx.ast.expression_string_literal(span, s, None);
                     return Some(ArrayExpressionElement::from(expr));
                 }
@@ -1069,11 +1074,9 @@ impl<'a> SpreadPair<'a> {
             // `function _objectDestructuringEmpty(t) { if (null == t) throw new TypeError("Cannot destructure " + t); }`
             let mut arguments = ctx.ast.vec();
             // Add `{}`.
-            arguments.push(Argument::ObjectExpression(ctx.ast.alloc_object_expression(
-                SPAN,
-                ctx.ast.vec(),
-                None,
-            )));
+            arguments.push(Argument::ObjectExpression(
+                ctx.ast.alloc_object_expression(SPAN, ctx.ast.vec()),
+            ));
             // Add `(_objectDestructuringEmpty(b), b);`
             arguments.push(Argument::SequenceExpression(ctx.ast.alloc_sequence_expression(
                 SPAN,
@@ -1095,7 +1098,7 @@ impl<'a> SpreadPair<'a> {
             // / `_objectWithoutProperties(_z, ["a", "b"])`
             let mut arguments =
                 ctx.ast.vec1(Argument::from(reference_builder.create_read_expression(ctx)));
-            let key_expression = ctx.ast.expression_array(SPAN, self.keys, None);
+            let key_expression = ctx.ast.expression_array(SPAN, self.keys);
 
             let key_expression = if self.all_primitives
                 && ctx.scoping.current_scope_id() != ctx.scoping().root_scope_id()
@@ -1151,7 +1154,7 @@ impl<'a> ReferenceBuilder<'a> {
         force_create_binding: bool,
         ctx: &mut TraverseCtx<'a>,
     ) -> Self {
-        let expr = expr.take_in(ctx.ast.allocator);
+        let expr = expr.take_in(ctx.ast);
         let binding;
         let maybe_bound_identifier;
         match &expr {

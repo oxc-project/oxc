@@ -114,10 +114,11 @@ use oxc_syntax::{
 };
 use oxc_traverse::{BoundIdentifier, TraverseCtx};
 
-use super::{
-    ClassProperties,
-    utils::{create_assignment, exprs_into_stmts},
+use crate::utils::ast_builder::{
+    create_assignment, create_class_constructor_with_params, create_super_call,
 };
+
+use super::{ClassProperties, utils::exprs_into_stmts};
 
 /// Location to insert instance property initializers
 pub(super) enum InstanceInitsInsertLocation<'a> {
@@ -215,10 +216,10 @@ impl<'a> ClassProperties<'a, '_> {
 
     /// Add a constructor to class containing property initializers.
     pub(super) fn insert_constructor(
-        &self,
         body: &mut ClassBody<'a>,
         inits: Vec<Expression<'a>>,
         has_super_class: bool,
+        constructor_scope_id: ScopeId,
         ctx: &mut TraverseCtx<'a>,
     ) {
         // Create statements to go in function body
@@ -226,7 +227,6 @@ impl<'a> ClassProperties<'a, '_> {
 
         // Add `super(..._args);` statement and `..._args` param if class has a super class.
         // `constructor(..._args) { super(..._args); /* prop initialization */ }`
-        let constructor_scope_id = self.instance_inits_scope_id;
         let mut params_rest = None;
         if has_super_class {
             let args_binding =
@@ -239,39 +239,14 @@ impl<'a> ClassProperties<'a, '_> {
         // TODO: Should these have the span of the original `PropertyDefinition`s?
         stmts.extend(exprs_into_stmts(inits, ctx));
 
-        let ctor = ClassElement::MethodDefinition(ctx.ast.alloc_method_definition(
+        let params = ctx.ast.alloc_formal_parameters(
             SPAN,
-            MethodDefinitionType::MethodDefinition,
+            FormalParameterKind::FormalParameter,
             ctx.ast.vec(),
-            PropertyKey::StaticIdentifier(
-                ctx.ast.alloc_identifier_name(SPAN, Atom::from("constructor")),
-            ),
-            ctx.ast.alloc_function_with_scope_id(
-                SPAN,
-                FunctionType::FunctionExpression,
-                None,
-                false,
-                false,
-                false,
-                NONE,
-                NONE,
-                ctx.ast.alloc_formal_parameters(
-                    SPAN,
-                    FormalParameterKind::FormalParameter,
-                    ctx.ast.vec(),
-                    params_rest,
-                ),
-                NONE,
-                Some(ctx.ast.alloc_function_body(SPAN, ctx.ast.vec(), stmts)),
-                constructor_scope_id,
-            ),
-            MethodDefinitionKind::Constructor,
-            false,
-            false,
-            false,
-            false,
-            None,
-        ));
+            params_rest,
+        );
+
+        let ctor = create_class_constructor_with_params(stmts, params, constructor_scope_id, ctx);
 
         // TODO(improve-on-babel): Could push constructor onto end of elements, instead of inserting as first
         body.body.insert(0, ctor);
@@ -301,6 +276,7 @@ impl<'a> ClassProperties<'a, '_> {
         constructor: &mut Function<'a>,
         inits: Vec<Expression<'a>>,
         super_binding: &BoundIdentifier<'a>,
+        super_func_scope_id: ScopeId,
         ctx: &mut TraverseCtx<'a>,
     ) {
         // Rename any symbols in constructor which clash with references in inits
@@ -313,7 +289,6 @@ impl<'a> ClassProperties<'a, '_> {
         // rather than an additional `return this` statement.
         // Actually this wouldn't work at present, as `_classPrivateFieldInitSpec(this, _prop, value)`
         // does not return `this`. We could alter it so it does when we have our own helper package.
-        let super_func_scope_id = self.instance_inits_scope_id;
         let args_binding =
             ctx.generate_uid("args", super_func_scope_id, SymbolFlags::FunctionScopedVariable);
         let super_call = create_super_call(&args_binding, ctx);
@@ -371,6 +346,7 @@ impl<'a> ClassProperties<'a, '_> {
         &mut self,
         inits: Vec<Expression<'a>>,
         super_binding: &BoundIdentifier<'a>,
+        super_func_scope_id: ScopeId,
         ctx: &mut TraverseCtx<'a>,
     ) {
         // Add `"use strict"` directive if outer scope is not strict mode
@@ -387,7 +363,6 @@ impl<'a> ClassProperties<'a, '_> {
         // `<inits>; return this;`
         let body_stmts = ctx.ast.vec_from_iter(exprs_into_stmts(inits, ctx).chain([return_stmt]));
         // `function() { <inits>; return this; }`
-        let super_func_scope_id = self.instance_inits_scope_id;
         let super_func = ctx.ast.expression_function_with_scope_id_and_pure(
             SPAN,
             FunctionType::FunctionExpression,
@@ -445,9 +420,9 @@ impl<'a> ClassProperties<'a, '_> {
             // Generate replacement UID name
             let new_name = ctx.generate_uid_name(name);
             // Save replacement name in `clashing_symbols`
-            *name = ctx.ast.atom(&new_name);
+            *name = new_name;
             // Rename symbol and binding
-            ctx.rename_symbol(symbol_id, constructor_scope_id, new_name);
+            ctx.scoping_mut().rename_symbol(symbol_id, constructor_scope_id, new_name.as_str());
         }
 
         // Rename identifiers for clashing symbols in constructor params and body
@@ -590,7 +565,7 @@ impl<'a> ConstructorParamsSuperReplacer<'a, '_> {
         });
 
         let ctx = &mut *self.ctx;
-        let super_call = expr.take_in(ctx.ast.allocator);
+        let super_call = expr.take_in(ctx.ast);
         *expr = ctx.ast.expression_call(
             span,
             Expression::from(ctx.ast.member_expression_static(
@@ -814,19 +789,4 @@ impl<'a> VisitMut<'a> for ConstructorSymbolRenamer<'a, '_> {
             }
         }
     }
-}
-
-/// `super(...args);`
-fn create_super_call<'a>(
-    args_binding: &BoundIdentifier<'a>,
-    ctx: &mut TraverseCtx<'a>,
-) -> Expression<'a> {
-    ctx.ast.expression_call(
-        SPAN,
-        ctx.ast.expression_super(SPAN),
-        NONE,
-        ctx.ast
-            .vec1(ctx.ast.argument_spread_element(SPAN, args_binding.create_read_expression(ctx))),
-        false,
-    )
 }

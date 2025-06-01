@@ -4,6 +4,9 @@ use std::{
     path::{Path, PathBuf},
 };
 
+use constcat::concat_slices;
+use similar::TextDiff;
+
 use oxc::{
     allocator::Allocator,
     ast_visit::utf8_to_utf16::Utf8ToUtf16,
@@ -26,9 +29,8 @@ pub struct EstreeTest262Case {
 
 impl Case for EstreeTest262Case {
     fn new(path: PathBuf, code: String) -> Self {
-        let acorn_json_path = Path::new("./tasks/coverage/acorn-test262")
-            .join(path.strip_prefix("test262").unwrap())
-            .with_extension("json");
+        let acorn_json_path =
+            workspace_root().join("acorn-test262/tests").join(&path).with_extension("json");
 
         Self { base: Test262Case::new(path, code), acorn_json_path }
     }
@@ -77,8 +79,7 @@ impl Case for EstreeTest262Case {
             "test262/test/language/statements/for-of/head-lhs-cover.js",
         ];
 
-        let path = &*self.path().to_string_lossy();
-        if IGNORE_PATHS.contains(&path) {
+        if self.path().to_str().is_some_and(|path| IGNORE_PATHS.contains(&path)) {
             return true;
         }
         */
@@ -104,7 +105,7 @@ impl Case for EstreeTest262Case {
         }
 
         // Convert spans to UTF16
-        Utf8ToUtf16::new(source_text).convert_program(&mut program);
+        Utf8ToUtf16::new(source_text).convert_program_with_ascending_order_checks(&mut program);
 
         let acorn_json = match fs::read_to_string(&self.acorn_json_path) {
             Ok(acorn_json) => acorn_json,
@@ -124,32 +125,9 @@ impl Case for EstreeTest262Case {
             return;
         }
 
-        // Mismatch found.
-        // Write diff to `acorn-test262-diff` directory, unless running on CI.
-        let is_ci = std::option_env!("CI") == Some("true");
-        if !is_ci {
-            self.write_diff(&oxc_json, &acorn_json);
-        }
-
+        // Mismatch found
+        write_diff(self.path(), &oxc_json, &acorn_json);
         self.base.set_result(TestResult::Mismatch("Mismatch", oxc_json, acorn_json));
-    }
-}
-
-impl EstreeTest262Case {
-    /// Write diff to `acorn-test262-diff` directory.
-    fn write_diff(&self, oxc_json: &str, acorn_json: &str) {
-        let diff_path = Path::new("./tasks/coverage/acorn-test262-diff")
-            .join(self.path().strip_prefix("test262").unwrap())
-            .with_extension("diff");
-        std::fs::create_dir_all(diff_path.parent().unwrap()).unwrap();
-        write!(
-            std::fs::File::create(diff_path).unwrap(),
-            "{}",
-            similar::TextDiff::from_lines(acorn_json, oxc_json)
-                .unified_diff()
-                .missing_newline_hint(false)
-        )
-        .unwrap();
     }
 }
 
@@ -160,7 +138,7 @@ pub struct AcornJsxSuite<T: Case> {
 
 impl<T: Case> AcornJsxSuite<T> {
     pub fn new() -> Self {
-        Self { path: Path::new("acorn-test262/test-acorn-jsx").to_path_buf(), test_cases: vec![] }
+        Self { path: workspace_root().join("acorn-test262/tests/acorn-jsx"), test_cases: vec![] }
     }
 }
 
@@ -187,13 +165,13 @@ impl<T: Case> Suite<T> for AcornJsxSuite<T> {
     }
 }
 
-pub struct AcornJsxCase {
+pub struct EstreeJsxCase {
     path: PathBuf,
     code: String,
     result: TestResult,
 }
 
-impl Case for AcornJsxCase {
+impl Case for EstreeJsxCase {
     fn new(path: PathBuf, code: String) -> Self {
         Self { path, code, result: TestResult::ToBeRun }
     }
@@ -239,7 +217,7 @@ impl Case for AcornJsxCase {
         }
 
         // Convert spans to UTF16
-        Utf8ToUtf16::new(source_text).convert_program(&mut program);
+        Utf8ToUtf16::new(source_text).convert_program_with_ascending_order_checks(&mut program);
 
         let acorn_json_path = workspace_root().join(self.path.with_extension("json"));
         let acorn_json = match fs::read_to_string(&acorn_json_path) {
@@ -257,30 +235,15 @@ impl Case for AcornJsxCase {
             return;
         }
 
-        // Mismatch found.
-        // Write diff to `acorn-test262-diff` directory, unless running on CI.
-        let is_ci = std::option_env!("CI") == Some("true");
-        if !is_ci {
-            let diff_path = Path::new("./tasks/coverage/acorn-test262-diff/acorn-jsx")
-                .join(self.path.file_name().unwrap())
-                .with_extension("diff");
-            std::fs::create_dir_all(diff_path.parent().unwrap()).unwrap();
-            write!(
-                std::fs::File::create(diff_path).unwrap(),
-                "{}",
-                similar::TextDiff::from_lines(&acorn_json, &oxc_json)
-                    .unified_diff()
-                    .missing_newline_hint(false)
-            )
-            .unwrap();
-        }
+        // Mismatch found
+        let diff_path = Path::new("acorn-jsx").join(self.path.file_name().unwrap());
+        write_diff(&diff_path, &oxc_json, &acorn_json);
 
         self.result = TestResult::Mismatch("Mismatch", oxc_json, acorn_json);
     }
 }
 
 pub struct EstreeTypescriptCase {
-    path: PathBuf,
     base: TypeScriptCase,
     estree_file_path: PathBuf,
 }
@@ -288,10 +251,10 @@ pub struct EstreeTypescriptCase {
 impl Case for EstreeTypescriptCase {
     fn new(path: PathBuf, code: String) -> Self {
         let estree_file_path = workspace_root()
-            .join("./acorn-test262/test-typescript")
-            .join(path.strip_prefix("typescript").unwrap())
+            .join("acorn-test262/tests")
+            .join(&path)
             .with_extension(format!("{}.md", path.extension().unwrap().to_str().unwrap()));
-        Self { path: path.clone(), base: TypeScriptCase::new(path, code), estree_file_path }
+        Self { base: TypeScriptCase::new(path, code), estree_file_path }
     }
 
     fn code(&self) -> &str {
@@ -306,22 +269,81 @@ impl Case for EstreeTypescriptCase {
         self.base.test_result()
     }
 
+    fn always_strict(&self) -> bool {
+        self.base.always_strict()
+    }
+
     fn skip_test_case(&self) -> bool {
+        // Skip cases which are failing in parser conformance tests.
+        // Some of these should parse correctly, but the cause is not related to ESTree serialization,
+        // so they're not relevant here. If we fix them, that'll register in the parser snapshot.
+        // TODO: If we fix any of these in parser, remove them from the list below.
+        const PARSE_ERROR_PATHS: &[&str] = &[
+            // Fails because fixture is not loaded as an ESM module (bug in tester)
+            "typescript/tests/cases/compiler/arrayFromAsync.ts",
+            // Differences between TS's recoverable parser and Oxc's non-recoverable parser
+            "typescript/tests/cases/conformance/classes/propertyMemberDeclarations/staticPropertyNameConflicts.ts",
+            "typescript/tests/cases/conformance/es2019/importMeta/importMeta.ts",
+            // Decorators - probably should be parsed correctly (bug in parser)
+            "typescript/tests/cases/compiler/sourceMapValidationDecorators.ts",
+            "typescript/tests/cases/conformance/esDecorators/esDecorators-decoratorExpression.1.ts",
+        ];
+
+        // Skip tests where `@typescript-eslint/parser` is incorrect, and we can't massage the AST
+        // to align with it
+        const INCORRECT_PATHS: &[&str] = &[
+            // TS-ESLint includes `\r` in `raw` field of `TemplateElement`.
+            // This is incorrect - `\r` should be converted to `\n`, as both Acorn and Espree do.
+            // This matches the `raw` value that you get at runtime in a tagged template in JS.
+            // We perform the `\r` -> `\n` conversion in parser, so we can't match TS-ESTree without
+            // breaking plain JS ESTree.
+            "typescript/tests/cases/conformance/es6/templates/templateStringMultiline3.ts",
+        ];
+
+        // Skip tests where fixture starts with a hashbang.
+        // We intentionally diverge from TS-ESTree, by including an extra `hashbang` field on `Program`.
+        // `acorn-test262` adapts TS-ESLint's AST to add a `hashbang: null` field to `Program`,
+        // in order to match Oxc's output.
+        // But these fixtures *do* include hashbangs, so there's a mismatch, because `hashbang`
+        // field is (correctly) not `null` in these cases.
+        // `napi/parser` contains tests for correct parsing of hashbangs.
+        const HASHBANG_PATHS: &[&str] = &[
+            "typescript/tests/cases/compiler/emitBundleWithShebang1.ts",
+            "typescript/tests/cases/compiler/emitBundleWithShebang2.ts",
+            "typescript/tests/cases/compiler/emitBundleWithShebangAndPrologueDirectives1.ts",
+            "typescript/tests/cases/compiler/emitBundleWithShebangAndPrologueDirectives2.ts",
+            "typescript/tests/cases/compiler/shebang.ts",
+            "typescript/tests/cases/compiler/shebangBeforeReferences.ts",
+        ];
+
+        static IGNORE_PATHS: &[&str] =
+            concat_slices!([&str]: PARSE_ERROR_PATHS, INCORRECT_PATHS, HASHBANG_PATHS);
+
+        // Skip cases where expected to fail to parse
+        if self.base.should_fail() {
+            return true;
+        }
+
+        // Skip ignored cases
+        if self.path().to_str().is_some_and(|path| IGNORE_PATHS.contains(&path)) {
+            return true;
+        }
+
+        // Skip cases where no JSON file for case in `acorn-test262`
         matches!(fs::exists(&self.estree_file_path), Ok(false))
     }
 
     fn run(&mut self) {
         let estree_file_content = fs::read_to_string(&self.estree_file_path).unwrap();
 
-        let estree_units: Vec<String> = estree_file_content
+        let estree_units = estree_file_content
             .split("__ESTREE_TEST__")
             .skip(1)
             .map(|s| {
                 let s = s.strip_prefix(":PASS:\n```json\n").unwrap();
-                let s = s.strip_suffix("\n```\n").unwrap();
-                s.to_string()
+                s.strip_suffix("\n```\n").unwrap()
             })
-            .collect();
+            .collect::<Vec<_>>();
 
         if estree_units.len() != self.base.units.len() {
             // likely a bug in acorn-test262 script
@@ -350,15 +372,19 @@ impl Case for EstreeTypescriptCase {
             }
 
             let mut program = ret.program;
-            Utf8ToUtf16::new(source_text).convert_program(&mut program);
+            Utf8ToUtf16::new(source_text).convert_program_with_ascending_order_checks(&mut program);
 
             let oxc_json = program.to_pretty_estree_ts_json();
 
-            if oxc_json == estree_json {
+            // Compare as objects to ignore field order differences for now.
+            //
+            // Also ignore failure to parse ESTree JSON. These failures are just due to `serde` being
+            // unable to handle lone surrogates in strings and numbers which are to big to fit in an `f64`.
+            // These should match once we switch to comparing ASTs as JSON strings.
+            let Ok(estree_json_value) = serde_json::from_str::<serde_json::Value>(estree_json)
+            else {
                 continue;
-            }
-
-            // compare as object to ignore order difference for now
+            };
             let mut oxc_json_value = match serde_json::from_str::<serde_json::Value>(&oxc_json) {
                 Ok(v) => v,
                 Err(e) => {
@@ -367,40 +393,16 @@ impl Case for EstreeTypescriptCase {
                     return;
                 }
             };
-            let estree_json_value = match serde_json::from_str::<serde_json::Value>(&estree_json) {
-                Ok(v) => v,
-                Err(e) => {
-                    self.base.result = TestResult::GenericError(
-                        "serde_json::from_str(estree_json)",
-                        e.to_string(),
-                    );
-                    return;
-                }
-            };
             if oxc_json_value == estree_json_value {
                 continue;
             }
+
+            // Mismatch found
             convert_to_typescript_eslint_order(&mut oxc_json_value);
             let oxc_json = serde_json::to_string_pretty(&oxc_json_value).unwrap();
             let estree_json = serde_json::to_string_pretty(&estree_json_value).unwrap();
 
-            // Mismatch found.
-            // Write diff to `acorn-test262-diff` directory only when SAVE_DIFF=true since it's slow
-            if std::option_env!("SAVE_DIFF") == Some("true") {
-                let diff_path = Path::new("./tasks/coverage/acorn-test262-diff")
-                    .join(&self.path)
-                    .with_extension("diff");
-                std::fs::create_dir_all(diff_path.parent().unwrap()).unwrap();
-                write!(
-                    std::fs::File::create(diff_path).unwrap(),
-                    "{}",
-                    similar::TextDiff::from_lines(&estree_json, &oxc_json)
-                        .unified_diff()
-                        .missing_newline_hint(false)
-                )
-                .unwrap();
-            }
-
+            write_diff(self.path(), &oxc_json, &estree_json);
             self.base.result = TestResult::Mismatch("Mismatch", oxc_json, estree_json);
             return;
         }
@@ -438,4 +440,23 @@ fn convert_to_typescript_eslint_order(ast: &mut serde_json::Value) {
         }
         _ => {}
     }
+}
+
+/// Write diff to `acorn-test262-diff` directory, unless running on CI.
+fn write_diff(path: &Path, oxc_json: &str, expected_json: &str) {
+    let is_ci = std::option_env!("CI") == Some("true");
+    if is_ci {
+        return;
+    }
+
+    let diff_path =
+        Path::new("./tasks/coverage/acorn-test262-diff").join(path).with_extension("diff");
+    fs::create_dir_all(diff_path.parent().unwrap()).unwrap();
+
+    write!(
+        fs::File::create(diff_path).unwrap(),
+        "{}",
+        TextDiff::from_lines(expected_json, oxc_json).unified_diff().missing_newline_hint(false)
+    )
+    .unwrap();
 }

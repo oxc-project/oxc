@@ -4,6 +4,111 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.72.2] - 2025-05-31
+
+### Bug Fixes
+
+- e93caa4 isolated-declarations: Omit empty variable declarations (#11372) (magic-akari)
+- daaa8f5 parser: Correctly parse decorators of property declaration (#11370) (magic-akari)
+
+### Testing
+
+- 03e8aa9 isolated-declarations: Fix multiline comment mismatch in windows (#11373) (Dunqing)
+
+## [0.72.1] - 2025-05-28
+
+### Bug Fixes
+
+- 3249ab6 isolated-declarations: Correctly emit string property keys for non-identifiable name (#11329) (magic-akari)
+
+## [0.72.0] - 2025-05-24
+
+### Features
+
+- 03390ad allocator: `TakeIn` trait with `AllocatorAccessor` (#11201) (Boshen)
+- 123e63c isolated-declarations: Report an error for object methods whose return type cannot be inferred (#11230) (Dunqing)
+
+### Bug Fixes
+
+- 7126adb isolated-declarations: Type of class setter/getter cannot be inferred when the key is a global `Symbol.xxx` expression (#11236) (Dunqing)
+- ac9638e isolated-declarations: Object property key was generated incorrectly (#11231) (Dunqing)
+- 9ec8500 isolated-declarations: Incorrect type of object property accessor (#11229) (Dunqing)
+
+## [0.71.0] - 2025-05-20
+
+- 5d9344f rust: [**BREAKING**] Clippy avoid-breaking-exported-api = false (#11088) (Boshen)
+
+### Refactor
+
+
+## [0.70.0] - 2025-05-15
+
+### Features
+
+- 1673ffb codegen: Rework printing normal / legal / annotation comments (#10997) (Boshen)
+
+### Bug Fixes
+
+- 9a4b135 isolated-declarations: Lost leading comments of `export default` function/class/interface (#10990) (Dunqing)
+
+## [0.69.0] - 2025-05-09
+
+- 8a3bba8 ast: [**BREAKING**] Fix field order for `PropertyDefinition` (#10902) (overlookmotel)
+
+### Bug Fixes
+
+- 2c09243 ast: Fix field order for `AccessorProperty` (#10878) (overlookmotel)
+
+## [0.68.0] - 2025-05-03
+
+- a0a37e0 ast: [**BREAKING**] `AstBuilder` methods require an `Atom` with correct lifetime (#10735) (overlookmotel)
+
+- 315143a codegen: [**BREAKING**] Remove useless `CodeGenerator` type alias (#10702) (Boshen)
+
+### Performance
+
+- 44f1952 isolated_declaration: Avoid copying string data (#10732) (overlookmotel)
+
+### Refactor
+
+- 40896d4 isolated_declarations: Shorten code (#10774) (overlookmotel)
+
+## [0.66.0] - 2025-04-23
+
+### Bug Fixes
+
+- 7284f16 isolated-declarations: Leading comments of `ExportDefaultDeclaration` and `TSExportAssignment` appear in incorrect places (#10559) (Dunqing)
+- 4c316a5 isolated_declarations: Fix broken snapshot files (#10561) (Boshen)
+
+## [0.64.0] - 2025-04-17
+
+- 521de23 ast: [**BREAKING**] Add `computed` property to `TSEnumMember` and `TSEnumMemberName::TemplateString` (#10092) (Yuji Sugiura)
+
+- 49732ff ast: [**BREAKING**] Re-introduce `TSEnumBody` AST node (#10284) (Yuji Sugiura)
+
+### Features
+
+- 4c246fb ast: Add `override` field in `AccessorProperty` (#10415) (Yuji Sugiura)
+
+### Refactor
+
+- 6e6c777 ast: Add `TSEnumMemberName` variant to replace `computed` field (#10346) (Yuji Sugiura)
+
+## [0.63.0] - 2025-04-08
+
+### Bug Fixes
+
+- d691701 various: Unwrap `Result` of `write!` macro (#10228) (overlookmotel)
+
+### Refactor
+
+- ca8f174 codegen: Do not print useless comma for TSEnumMember (#10213) (Yuji Sugiura)
+- bcdbd38 transformer, minifier: Replace `AstBuilder::move_xxxx` methods with `TakeIn` trait (#10170) (Dunqing)
+
+### Styling
+
+- 66a0001 all: Remove unnecessary semi-colons (#10198) (overlookmotel)
+
 ## [0.62.0] - 2025-04-01
 
 ### Refactor

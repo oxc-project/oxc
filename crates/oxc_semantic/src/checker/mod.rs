@@ -96,18 +96,14 @@ pub fn check<'a>(node: &AstNode<'a>, ctx: &SemanticBuilder<'a>) {
         AstKind::Super(sup) => js::check_super(sup, node, ctx),
 
         AstKind::FormalParameters(params) => {
-            js::check_formal_parameters(params, ctx);
             ts::check_formal_parameters(params, ctx);
         }
         AstKind::ArrayPattern(pat) => {
-            js::check_array_pattern(pat, ctx);
             ts::check_array_pattern(pat, ctx);
         }
 
         AstKind::AssignmentExpression(expr) => js::check_assignment_expression(expr, ctx),
         AstKind::AwaitExpression(expr) => js::check_await_expression(expr, node, ctx),
-        AstKind::BinaryExpression(expr) => js::check_binary_expression(expr, ctx),
-        AstKind::LogicalExpression(expr) => js::check_logical_expression(expr, ctx),
         AstKind::MemberExpression(expr) => js::check_member_expression(expr, ctx),
         AstKind::ObjectExpression(expr) => js::check_object_expression(expr, ctx),
         AstKind::UnaryExpression(expr) => js::check_unary_expression(expr, ctx),

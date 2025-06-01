@@ -13,6 +13,7 @@ target/
 /tasks/transform_conformance/node_modules/
 /tasks/compat_data/node_modules/
 /tasks/e2e/node_modules/
+/tasks/e2e/tests/nestjs/node_modules/
 /npm/*/node_modules
 /napi/*/npm-dir
 
@@ -23,6 +24,8 @@ target/
 /editors/vscode/out/
 /editors/vscode/*.vsix
 /editors/vscode/test_workspace/
+/editors/vscode/test_workspace_second/
+/editors/vscode/*.test.code-workspace
 
 # Cloned conformance repos
 tasks/coverage/babel/

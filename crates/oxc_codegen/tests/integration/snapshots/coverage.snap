@@ -1,0 +1,111 @@
+---
+source: crates/oxc_codegen/tests/integration/main.rs
+---
+########## 0
+/* v8 ignore next */ x
+----------
+/* v8 ignore next */ x;
+
+########## 1
+/* v8 ignore next 2 */ x
+----------
+/* v8 ignore next 2 */ x;
+
+########## 2
+/* v8 ignore start */ x
+----------
+/* v8 ignore start */ x;
+
+########## 3
+/* v8 ignore stop */ x
+----------
+/* v8 ignore stop */ x;
+
+########## 4
+/* v8 ignore if */ x
+----------
+/* v8 ignore if */ x;
+
+########## 5
+/* v8 ignore else */ x
+----------
+/* v8 ignore else */ x;
+
+########## 6
+/* v8 ignore file */ x
+----------
+/* v8 ignore file */ x;
+
+########## 7
+/* c8 ignore next */ x
+----------
+/* c8 ignore next */ x;
+
+########## 8
+/* c8 ignore next 2 */x 
+----------
+/* c8 ignore next 2 */ x;
+
+########## 9
+/* c8 ignore start */ x
+----------
+/* c8 ignore start */ x;
+
+########## 10
+/* c8 ignore stop */ x
+----------
+/* c8 ignore stop */ x;
+
+########## 11
+/* node:coverage disable */ x
+----------
+/* node:coverage disable */ x;
+
+########## 12
+/* node:coverage enable */ x
+----------
+/* node:coverage enable */ x;
+
+########## 13
+/* node:coverage ignore next */ x
+----------
+/* node:coverage ignore next */ x;
+
+########## 14
+/* node:coverage ignore next 2 */ x
+----------
+/* node:coverage ignore next 2 */ x;
+
+########## 15
+/* istanbul ignore if */ x
+----------
+/* istanbul ignore if */ x;
+
+########## 16
+/* istanbul ignore else */ x
+----------
+/* istanbul ignore else */ x;
+
+########## 17
+/* istanbul ignore next */ x
+----------
+/* istanbul ignore next */ x;
+
+########## 18
+/* istanbul ignore file */ x
+----------
+/* istanbul ignore file */ x;
+
+########## 19
+try { something(); }
+/* istanbul ignore next */
+catch(e) {
+  // should never happen
+}
+
+----------
+try {
+	something();
+} 
+/* istanbul ignore next */
+catch (e) {}

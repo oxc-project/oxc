@@ -276,7 +276,6 @@ impl<'a> DisableDirectivesBuilder<'a> {
                         }
                     });
                 }
-                continue;
             }
         }
 

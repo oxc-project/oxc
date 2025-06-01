@@ -1,30 +1,32 @@
 use std::{
     cell::{Ref, RefCell},
     fmt::{self, Debug, Display},
+    path::PathBuf,
 };
 
 use itertools::Itertools;
-use rustc_hash::FxHashSet;
+use rustc_hash::FxHashMap;
 
-use oxc_diagnostics::OxcDiagnostic;
-use oxc_span::CompactStr;
+use oxc_span::{CompactStr, format_compact_str};
 
 use crate::{
     AllowWarnDeny, LintConfig, LintFilter, LintFilterKind, Oxlintrc, RuleCategory, RuleEnum,
-    RuleWithSeverity,
-    config::{
-        ConfigStore, ESLintRule, LintPlugins, OxlintOverrides, OxlintRules,
-        overrides::OxlintOverride,
-    },
+    config::{ESLintRule, LintPlugins, OxlintOverrides, OxlintRules, overrides::OxlintOverride},
     rules::RULES,
 };
 
+use super::Config;
+
 #[must_use = "You dropped your builder without building a Linter! Did you mean to call .build()?"]
 pub struct ConfigStoreBuilder {
-    pub(super) rules: FxHashSet<RuleWithSeverity>,
+    pub(super) rules: FxHashMap<RuleEnum, AllowWarnDeny>,
     config: LintConfig,
     overrides: OxlintOverrides,
     cache: RulesCache,
+
+    // Collect all `extends` file paths for the language server.
+    // The server will tell the clients to watch for the extends files.
+    pub extended_paths: Vec<PathBuf>,
 }
 
 impl Default for ConfigStoreBuilder {
@@ -40,11 +42,12 @@ impl ConfigStoreBuilder {
     /// You can think of this as `oxlint -A all`.
     pub fn empty() -> Self {
         let config = LintConfig::default();
-        let rules = FxHashSet::default();
+        let rules = FxHashMap::default();
         let overrides = OxlintOverrides::default();
         let cache = RulesCache::new(config.plugins);
+        let extended_paths = Vec::new();
 
-        Self { rules, config, overrides, cache }
+        Self { rules, config, overrides, cache, extended_paths }
     }
 
     /// Warn on all rules in all plugins and categories, including those in `nursery`.
@@ -55,15 +58,9 @@ impl ConfigStoreBuilder {
         let config = LintConfig { plugins: LintPlugins::all(), ..LintConfig::default() };
         let overrides = OxlintOverrides::default();
         let cache = RulesCache::new(config.plugins);
-        Self {
-            rules: RULES
-                .iter()
-                .map(|rule| RuleWithSeverity { rule: rule.clone(), severity: AllowWarnDeny::Warn })
-                .collect(),
-            config,
-            overrides,
-            cache,
-        }
+        let rules = RULES.iter().map(|rule| (rule.clone(), AllowWarnDeny::Warn)).collect();
+        let extended_paths = Vec::new();
+        Self { rules, config, overrides, cache, extended_paths }
     }
 
     /// Create a [`ConfigStoreBuilder`] from a loaded or manually built [`Oxlintrc`].
@@ -72,7 +69,7 @@ impl ConfigStoreBuilder {
     /// will be applied on top of a default [`Oxlintrc`].
     ///
     /// # Example
-    /// Here's how to create a [`ConfigStore`] from a `.oxlintrc.json` file.
+    /// Here's how to create a [`Config`] from a `.oxlintrc.json` file.
     /// ```ignore
     /// use oxc_linter::{ConfigBuilder, Oxlintrc};
     /// let oxlintrc = Oxlintrc::from_file("path/to/.oxlintrc.json").unwrap();
@@ -88,87 +85,79 @@ impl ConfigStoreBuilder {
         start_empty: bool,
         oxlintrc: Oxlintrc,
     ) -> Result<Self, ConfigBuilderError> {
-        // TODO(refactor); can we make this function infallible, and move all the error handling to
-        // the `build` method?
-        let Oxlintrc {
-            plugins,
-            settings,
-            env,
-            globals,
-            categories,
-            rules: oxlintrc_rules,
-            overrides,
-            path,
-            ignore_patterns: _,
-            extends,
-        } = oxlintrc;
+        // TODO: this can be cached to avoid re-computing the same oxlintrc
+        fn resolve_oxlintrc_config(
+            config: Oxlintrc,
+        ) -> Result<(Oxlintrc, Vec<PathBuf>), ConfigBuilderError> {
+            let path = config.path.clone();
+            let root_path = path.parent();
+            let extends = config.extends.clone();
+            let mut extended_paths = Vec::new();
 
-        let config = LintConfig { plugins, settings, env, globals, path: Some(path) };
-        let rules =
-            if start_empty { FxHashSet::default() } else { Self::warn_correctness(plugins) };
+            let mut oxlintrc = config;
+
+            for path in extends.iter().rev() {
+                if path.starts_with("eslint:") || path.starts_with("plugin:") {
+                    // `eslint:` and `plugin:` named configs are not supported
+                    continue;
+                }
+                // if path does not include a ".", then we will heuristically skip it since it
+                // kind of looks like it might be a named config
+                if !path.to_string_lossy().contains('.') {
+                    continue;
+                }
+
+                let path = match root_path {
+                    Some(p) => &p.join(path),
+                    None => path,
+                };
+
+                let extends_oxlintrc = Oxlintrc::from_file(path).map_err(|e| {
+                    ConfigBuilderError::InvalidConfigFile {
+                        file: path.display().to_string(),
+                        reason: e.to_string(),
+                    }
+                })?;
+
+                extended_paths.push(path.clone());
+
+                let (extends, extends_paths) = resolve_oxlintrc_config(extends_oxlintrc)?;
+
+                oxlintrc = oxlintrc.merge(extends);
+                extended_paths.extend(extends_paths);
+            }
+
+            Ok((oxlintrc, extended_paths))
+        }
+
+        let (oxlintrc, extended_paths) = resolve_oxlintrc_config(oxlintrc)?;
+
+        let rules = if start_empty {
+            FxHashMap::default()
+        } else {
+            Self::warn_correctness(oxlintrc.plugins.unwrap_or_default())
+        };
+
+        let config = LintConfig {
+            plugins: oxlintrc.plugins.unwrap_or_default(),
+            settings: oxlintrc.settings,
+            env: oxlintrc.env,
+            globals: oxlintrc.globals,
+            path: Some(oxlintrc.path),
+        };
         let cache = RulesCache::new(config.plugins);
-        let mut builder = Self { rules, config, overrides, cache };
 
-        for filter in categories.filters() {
+        let mut builder =
+            Self { rules, config, overrides: oxlintrc.overrides, cache, extended_paths };
+
+        for filter in oxlintrc.categories.filters() {
             builder = builder.with_filter(&filter);
         }
 
         {
-            if !extends.is_empty() {
-                let config_path = builder.config.path.clone();
-                let config_path_parent = config_path.as_ref().and_then(|p| p.parent());
-
-                for path in &extends {
-                    if path.starts_with("eslint:") || path.starts_with("plugin:") {
-                        // eslint: and plugin: named configs are not supported
-                        continue;
-                    }
-                    // if path does not include a ".", then we will heuristically skip it since it
-                    // kind of looks like it might be a named config
-                    if !path.to_string_lossy().contains('.') {
-                        continue;
-                    }
-
-                    // resolve path relative to config path
-                    let path = match config_path_parent {
-                        Some(config_file_path) => &config_file_path.join(path),
-                        None => path,
-                    };
-                    // TODO: throw an error if this is a self-referential extend
-                    // TODO(perf): use a global config cache to avoid re-parsing the same file multiple times
-                    match Oxlintrc::from_file(path) {
-                        Ok(extended_config) => {
-                            // TODO(refactor): can we merge this together? seems redundant to use `override_rules` and then
-                            // use `ConfigStoreBuilder`, but we don't have a better way of loading rules from config files other than that.
-                            // Use `override_rules` to apply rule configurations and add/remove rules as needed
-                            extended_config
-                                .rules
-                                .override_rules(&mut builder.rules, &builder.cache.borrow());
-                            // Use `ConfigStoreBuilder` to load extended config files and then apply rules from those
-                            let mut extended_config_store =
-                                ConfigStoreBuilder::from_oxlintrc(true, extended_config)?;
-                            let rules = std::mem::take(&mut extended_config_store.rules);
-                            builder = builder.with_rules(rules);
-                            builder = builder.and_plugins(extended_config_store.plugins(), true);
-                            if !extended_config_store.overrides.is_empty() {
-                                let overrides =
-                                    std::mem::take(&mut extended_config_store.overrides);
-                                builder = builder.with_overrides(overrides);
-                            }
-                        }
-                        Err(err) => {
-                            return Err(ConfigBuilderError::InvalidConfigFile {
-                                file: path.display().to_string(),
-                                reason: err.to_string(),
-                            });
-                        }
-                    }
-                }
-            }
-
             let all_rules = builder.cache.borrow();
 
-            oxlintrc_rules.override_rules(&mut builder.rules, all_rules.as_slice());
+            oxlintrc.rules.override_rules(&mut builder.rules, all_rules.as_slice());
         }
 
         Ok(builder)
@@ -211,13 +200,8 @@ impl ConfigStoreBuilder {
     }
 
     #[cfg(test)]
-    pub(crate) fn with_rule(mut self, rule: RuleWithSeverity) -> Self {
-        self.rules.insert(rule);
-        self
-    }
-
-    pub(crate) fn with_rules<R: IntoIterator<Item = RuleWithSeverity>>(mut self, rules: R) -> Self {
-        self.rules.extend(rules);
+    pub(crate) fn with_rule(mut self, rule: RuleEnum, severity: AllowWarnDeny) -> Self {
+        self.rules.insert(rule, severity);
         self
     }
 
@@ -242,29 +226,23 @@ impl ConfigStoreBuilder {
                 LintFilterKind::Category(category) => {
                     self.upsert_where(severity, |r| r.category() == *category);
                 }
-                LintFilterKind::Rule(_, name) => self.upsert_where(severity, |r| r.name() == name),
-                LintFilterKind::Generic(name_or_category) => {
-                    if name_or_category == "all" {
-                        self.upsert_where(severity, |r| r.category() != RuleCategory::Nursery);
-                    } else {
-                        self.upsert_where(severity, |r| r.name() == name_or_category);
-                    }
+                LintFilterKind::Rule(plugin, rule) => {
+                    self.upsert_where(severity, |r| r.plugin_name() == plugin && r.name() == rule);
+                }
+                LintFilterKind::Generic(name) => self.upsert_where(severity, |r| r.name() == name),
+                LintFilterKind::All => {
+                    self.upsert_where(severity, |r| r.category() != RuleCategory::Nursery);
                 }
             },
             AllowWarnDeny::Allow => match filter {
                 LintFilterKind::Category(category) => {
-                    self.rules.retain(|rule| rule.category() != *category);
+                    self.rules.retain(|rule, _| rule.category() != *category);
                 }
-                LintFilterKind::Rule(_, name) => {
-                    self.rules.retain(|rule| rule.name() != name);
+                LintFilterKind::Rule(plugin, rule) => {
+                    self.rules.retain(|r, _| r.plugin_name() != plugin || r.name() != rule);
                 }
-                LintFilterKind::Generic(name_or_category) => {
-                    if name_or_category == "all" {
-                        self.rules.clear();
-                    } else {
-                        self.rules.retain(|rule| rule.name() != name_or_category);
-                    }
-                }
+                LintFilterKind::Generic(name) => self.rules.retain(|rule, _| rule.name() != name),
+                LintFilterKind::All => self.rules.clear(),
             },
         }
 
@@ -282,35 +260,36 @@ impl ConfigStoreBuilder {
         // NOTE: we may want to warn users if they're configuring a rule that does not exist.
         let rules_to_configure = all_rules.iter().filter(query);
         for rule in rules_to_configure {
-            match self.rules.take(rule) {
-                Some(mut existing_rule) => {
-                    existing_rule.severity = severity;
-                    self.rules.insert(existing_rule);
-                }
-                _ => {
-                    self.rules.insert(RuleWithSeverity::new(rule.clone(), severity));
-                }
+            // If the rule is already in the list, just update its severity.
+            // Otherwise, add it to the map.
+
+            if let Some(existing_rule) = self.rules.get_mut(rule) {
+                *existing_rule = severity;
+            } else {
+                self.rules.insert(rule.clone(), severity);
             }
         }
     }
 
-    /// # Errors
-    pub fn build(self) -> Result<ConfigStore, OxcDiagnostic> {
+    pub fn build(self) -> Config {
         // When a plugin gets disabled before build(), rules for that plugin aren't removed until
         // with_filters() gets called. If the user never calls it, those now-undesired rules need
         // to be taken out.
         let plugins = self.plugins();
         let mut rules = if self.cache.is_stale() {
-            self.rules.into_iter().filter(|r| plugins.contains(r.plugin_name().into())).collect()
+            self.rules
+                .into_iter()
+                .filter(|(r, _)| plugins.contains(r.plugin_name().into()))
+                .collect()
         } else {
             self.rules.into_iter().collect::<Vec<_>>()
         };
-        rules.sort_unstable_by_key(|r| r.id());
-        Ok(ConfigStore::new(rules, self.config, self.overrides))
+        rules.sort_unstable_by_key(|(r, _)| r.id());
+        Config::new(rules, self.config, self.overrides)
     }
 
     /// Warn for all correctness rules in the given set of plugins.
-    fn warn_correctness(plugins: LintPlugins) -> FxHashSet<RuleWithSeverity> {
+    fn warn_correctness(plugins: LintPlugins) -> FxHashMap<RuleEnum, AllowWarnDeny> {
         RULES
             .iter()
             .filter(|rule| {
@@ -319,7 +298,7 @@ impl ConfigStoreBuilder {
                 rule.category() == RuleCategory::Correctness
                     && plugins.contains(LintPlugins::from(rule.plugin_name()))
             })
-            .map(|rule| RuleWithSeverity { rule: rule.clone(), severity: AllowWarnDeny::Warn })
+            .map(|rule| (rule.clone(), AllowWarnDeny::Warn))
             .collect()
     }
 
@@ -338,13 +317,13 @@ impl ConfigStoreBuilder {
         let new_rules = self
             .rules
             .iter()
-            .sorted_by_key(|x| (x.plugin_name(), x.name()))
-            .map(|r: &RuleWithSeverity| ESLintRule {
+            .sorted_by_key(|(r, _)| (r.plugin_name(), r.name()))
+            .map(|(r, severity)| ESLintRule {
                 plugin_name: r.plugin_name().to_string(),
-                rule_name: r.rule.name().to_string(),
-                severity: r.severity,
+                rule_name: r.name().to_string(),
+                severity: *severity,
                 config: rule_name_to_rule
-                    .get(&get_name(r.plugin_name(), r.rule.name()))
+                    .get(&get_name(r.plugin_name(), r.name()))
                     .and_then(|r| r.config.clone()),
             })
             .collect();
@@ -358,7 +337,7 @@ fn get_name(plugin_name: &str, rule_name: &str) -> CompactStr {
     if plugin_name == "eslint" {
         CompactStr::from(rule_name)
     } else {
-        CompactStr::from(format!("{plugin_name}/{rule_name}"))
+        format_compact_str!("{plugin_name}/{rule_name}")
     }
 }
 
@@ -380,7 +359,7 @@ impl Debug for ConfigStoreBuilder {
     }
 }
 
-/// An error that can occur while building a [`ConfigStore`] from an [`Oxlintrc`].
+/// An error that can occur while building a [`Config`] from an [`Oxlintrc`].
 #[derive(Eq, PartialEq, Debug, Clone)]
 pub enum ConfigBuilderError {
     /// There were unknown rules that could not be matched to any known plugins/rules.
@@ -513,10 +492,10 @@ mod test {
 
         // populated with all correctness-level ESLint rules at a "warn" severity
         assert!(!builder.rules.is_empty());
-        for rule in &builder.rules {
+        for (rule, severity) in &builder.rules {
             assert_eq!(rule.category(), RuleCategory::Correctness);
-            assert_eq!(rule.severity, AllowWarnDeny::Warn);
-            let plugin = rule.rule.plugin_name();
+            assert_eq!(*severity, AllowWarnDeny::Warn);
+            let plugin = rule.plugin_name();
             let name = rule.name();
             assert!(
                 builder.plugins().contains(plugin.into()),
@@ -545,9 +524,9 @@ mod test {
         assert!(!builder.rules.is_empty());
         assert_eq!(initial_rule_count, rule_count_after_deny);
 
-        for rule in &builder.rules {
+        for (rule, severity) in &builder.rules {
             assert_eq!(rule.category(), RuleCategory::Correctness);
-            assert_eq!(rule.severity, AllowWarnDeny::Deny);
+            assert_eq!(*severity, AllowWarnDeny::Deny);
 
             let plugin = rule.plugin_name();
             let name = rule.name();
@@ -573,12 +552,12 @@ mod test {
                 "Changing a single rule from warn to deny should not add a new one, just modify what's already there."
             );
 
-            let no_const_assign = builder
+            let (_, severity) = builder
                 .rules
                 .iter()
-                .find(|r| r.plugin_name() == "eslint" && r.name() == "no-const-assign")
+                .find(|(r, _)| r.plugin_name() == "eslint" && r.name() == "no-const-assign")
                 .expect("Could not find eslint/no-const-assign after configuring it to 'deny'");
-            assert_eq!(no_const_assign.severity, AllowWarnDeny::Deny);
+            assert_eq!(*severity, AllowWarnDeny::Deny);
         }
     }
     // turn on a rule that isn't configured yet and set it to "warn"
@@ -589,15 +568,15 @@ mod test {
             let filter = LintFilter::new(AllowWarnDeny::Warn, filter_string).unwrap();
             let builder = ConfigStoreBuilder::default();
             // sanity check: not already turned on
-            assert!(!builder.rules.iter().any(|r| r.name() == "no-console"));
+            assert!(!builder.rules.iter().any(|(r, _)| r.name() == "no-console"));
             let builder = builder.with_filter(&filter);
-            let no_console = builder
+            let (_, severity) = builder
                 .rules
                 .iter()
-                .find(|r| r.plugin_name() == "eslint" && r.name() == "no-console")
+                .find(|(r, _)| r.plugin_name() == "eslint" && r.name() == "no-console")
                 .expect("Could not find eslint/no-console after configuring it to 'warn'");
 
-            assert_eq!(no_console.severity, AllowWarnDeny::Warn);
+            assert_eq!(*severity, AllowWarnDeny::Warn);
         }
     }
 
@@ -612,11 +591,11 @@ mod test {
             !builder.rules.is_empty(),
             "warning on categories after allowing all rules should populate the rules set"
         );
-        for rule in &builder.rules {
+        for (rule, severity) in &builder.rules {
             let plugin = rule.plugin_name();
             let name = rule.name();
             assert_eq!(
-                rule.severity,
+                *severity,
                 AllowWarnDeny::Warn,
                 "{plugin}/{name} should have a warning severity"
             );
@@ -649,8 +628,8 @@ mod test {
         let mut desired_plugins = LintPlugins::default();
         desired_plugins.set(LintPlugins::TYPESCRIPT, false);
 
-        let linter = ConfigStoreBuilder::default().with_plugins(desired_plugins).build().unwrap();
-        for rule in linter.rules().iter() {
+        let linter = ConfigStoreBuilder::default().with_plugins(desired_plugins).build();
+        for (rule, _) in linter.base.rules.iter() {
             let name = rule.name();
             let plugin = rule.plugin_name();
             assert_ne!(
@@ -721,7 +700,7 @@ mod test {
         )
         .unwrap();
         let builder = ConfigStoreBuilder::from_oxlintrc(false, oxlintrc).unwrap();
-        for rule in &builder.rules {
+        for (rule, severity) in &builder.rules {
             let name = rule.name();
             let plugin = rule.plugin_name();
             let category = rule.category();
@@ -729,24 +708,20 @@ mod test {
                 RuleCategory::Correctness => {
                     if name == "no-const-assign" {
                         assert_eq!(
-                            rule.severity,
+                            *severity,
                             AllowWarnDeny::Deny,
                             "no-const-assign should be denied",
                         );
                     } else {
                         assert_eq!(
-                            rule.severity,
+                            *severity,
                             AllowWarnDeny::Warn,
                             "{plugin}/{name} should be a warning"
                         );
                     }
                 }
                 RuleCategory::Suspicious => {
-                    assert_eq!(
-                        rule.severity,
-                        AllowWarnDeny::Deny,
-                        "{plugin}/{name} should be denied"
-                    );
+                    assert_eq!(*severity, AllowWarnDeny::Deny, "{plugin}/{name} should be denied");
                 }
                 invalid => {
                     panic!("Found rule {plugin}/{name} with an unexpected category {invalid:?}");
@@ -790,25 +765,26 @@ mod test {
             update_rules_config
                 .rules()
                 .iter()
-                .any(|r| r.name() == "no-debugger" && r.severity == AllowWarnDeny::Warn)
+                .any(|(r, severity)| r.name() == "no-debugger" && *severity == AllowWarnDeny::Warn)
         );
         assert!(
             update_rules_config
                 .rules()
                 .iter()
-                .any(|r| r.name() == "no-console" && r.severity == AllowWarnDeny::Warn)
+                .any(|(r, severity)| r.name() == "no-console" && *severity == AllowWarnDeny::Warn)
         );
         assert!(
             !update_rules_config
                 .rules()
                 .iter()
-                .any(|r| r.name() == "no-null" && r.severity == AllowWarnDeny::Allow)
+                .any(|(r, severity)| r.name() == "no-null" && *severity == AllowWarnDeny::Allow)
         );
         assert!(
             update_rules_config
                 .rules()
                 .iter()
-                .any(|r| r.name() == "prefer-as-const" && r.severity == AllowWarnDeny::Warn)
+                .any(|(r, severity)| r.name() == "prefer-as-const"
+                    && *severity == AllowWarnDeny::Warn)
         );
     }
 
@@ -825,7 +801,7 @@ mod test {
         }
         "#,
         );
-        assert!(warn_all.rules().iter().all(|r| r.severity == AllowWarnDeny::Warn));
+        assert!(warn_all.rules().iter().all(|(_, severity)| *severity == AllowWarnDeny::Warn));
 
         let deny_all = config_store_from_str(
             r#"
@@ -838,7 +814,7 @@ mod test {
         }
         "#,
         );
-        assert!(deny_all.rules().iter().all(|r| r.severity == AllowWarnDeny::Deny));
+        assert!(deny_all.rules().iter().all(|(_, severity)| *severity == AllowWarnDeny::Deny));
 
         let allow_all = config_store_from_str(
             r#"
@@ -851,7 +827,7 @@ mod test {
         }
         "#,
         );
-        assert!(allow_all.rules().iter().all(|r| r.severity == AllowWarnDeny::Allow));
+        assert!(allow_all.rules().iter().all(|(_, severity)| *severity == AllowWarnDeny::Allow));
         assert_eq!(allow_all.number_of_rules(), 0);
 
         let allow_and_override_config = config_store_from_str(
@@ -873,19 +849,20 @@ mod test {
             allow_and_override_config
                 .rules()
                 .iter()
-                .any(|r| r.name() == "no-var" && r.severity == AllowWarnDeny::Warn)
+                .any(|(r, severity)| r.name() == "no-var" && *severity == AllowWarnDeny::Warn)
         );
         assert!(
             allow_and_override_config
                 .rules()
                 .iter()
-                .any(|r| r.name() == "approx-constant" && r.severity == AllowWarnDeny::Deny)
+                .any(|(r, severity)| r.name() == "approx-constant"
+                    && *severity == AllowWarnDeny::Deny)
         );
         assert!(
             allow_and_override_config
                 .rules()
                 .iter()
-                .any(|r| r.name() == "no-null" && r.severity == AllowWarnDeny::Deny)
+                .any(|(r, severity)| r.name() == "no-null" && *severity == AllowWarnDeny::Deny)
         );
     }
 
@@ -908,49 +885,94 @@ mod test {
 
     #[test]
     fn test_extends_plugins() {
+        // Test 1: Default plugins when none are specified
+        let default_config = config_store_from_str(
+            r#"
+            {
+                "rules": {}
+            }
+            "#,
+        );
+        // Check that default plugins are correctly set
+        assert_eq!(default_config.plugins(), LintPlugins::default());
+
+        // Test 2: Parent config with explicitly specified plugins
+        let parent_config = config_store_from_str(
+            r#"
+            {
+                "plugins": ["react", "typescript"]
+            }
+            "#,
+        );
+        assert_eq!(parent_config.plugins(), LintPlugins::REACT | LintPlugins::TYPESCRIPT);
+
+        // Test 3: Child config that extends parent without specifying plugins
+        // Should inherit parent's plugins
+        let child_no_plugins_config =
+            config_store_from_path("fixtures/extends_config/plugins/child_no_plugins.json");
+        assert_eq!(child_no_plugins_config.plugins(), LintPlugins::REACT | LintPlugins::TYPESCRIPT);
+
+        // Test 4: Child config that extends parent and specifies additional plugins
+        // Should have parent's plugins plus its own
+        let child_with_plugins_config =
+            config_store_from_path("fixtures/extends_config/plugins/child_with_plugins.json");
+        assert_eq!(
+            child_with_plugins_config.plugins(),
+            LintPlugins::REACT | LintPlugins::TYPESCRIPT | LintPlugins::JEST
+        );
+
+        // Test 5: Empty plugins array should result in empty plugins
+        let empty_plugins_config = config_store_from_str(
+            r#"
+            {
+                "plugins": []
+            }
+            "#,
+        );
+        assert_eq!(empty_plugins_config.plugins(), LintPlugins::empty());
+
+        // Test 6: Extending multiple config files with plugins
         let config = config_store_from_str(
             r#"
-        {
-            "extends": [
-                "fixtures/extends_config/plugins/jest.json",
-                "fixtures/extends_config/plugins/react.json"
-            ]
-        }
-        "#,
+            {
+                "extends": [
+                    "fixtures/extends_config/plugins/jest.json",
+                    "fixtures/extends_config/plugins/react.json"
+                ]
+            }
+            "#,
         );
-        assert!(config.plugins().contains(LintPlugins::default()));
         assert!(config.plugins().contains(LintPlugins::JEST));
         assert!(config.plugins().contains(LintPlugins::REACT));
 
-        // Test adding more plugins
+        // Test 7: Adding more plugins to extended configs
         let config = config_store_from_str(
             r#"
-        {
-            "extends": [
-                "fixtures/extends_config/plugins/jest.json",
-                "fixtures/extends_config/plugins/react.json"
-            ],
-            "plugins": ["typescript"]
-        }
-        "#,
+            {
+                "extends": [
+                    "fixtures/extends_config/plugins/jest.json",
+                    "fixtures/extends_config/plugins/react.json"
+                ],
+                "plugins": ["typescript"]
+            }
+            "#,
         );
         assert_eq!(
             config.plugins(),
             LintPlugins::JEST | LintPlugins::REACT | LintPlugins::TYPESCRIPT
         );
 
-        // Test that extended a config with a plugin is the same as adding it directly
+        // Test 8: Extending a config with a plugin is the same as adding it directly
         let plugin_config = config_store_from_str(r#"{ "plugins": ["jest", "react"] }"#);
         let extends_plugin_config = config_store_from_str(
             r#"
-        {
-            "extends": [
-                "fixtures/extends_config/plugins/jest.json",
-                "fixtures/extends_config/plugins/react.json"
-            ],
-            "plugins": []
-        }
-        "#,
+            {
+                "extends": [
+                    "fixtures/extends_config/plugins/jest.json",
+                    "fixtures/extends_config/plugins/react.json"
+                ]
+            }
+            "#,
         );
         assert_eq!(
             plugin_config.plugins(),
@@ -979,17 +1001,13 @@ mod test {
         assert!(config.rules().is_empty());
     }
 
-    fn config_store_from_path(path: &str) -> ConfigStore {
+    fn config_store_from_path(path: &str) -> Config {
         ConfigStoreBuilder::from_oxlintrc(true, Oxlintrc::from_file(&PathBuf::from(path)).unwrap())
             .unwrap()
             .build()
-            .unwrap()
     }
 
-    fn config_store_from_str(s: &str) -> ConfigStore {
-        ConfigStoreBuilder::from_oxlintrc(true, serde_json::from_str(s).unwrap())
-            .unwrap()
-            .build()
-            .unwrap()
+    fn config_store_from_str(s: &str) -> Config {
+        ConfigStoreBuilder::from_oxlintrc(true, serde_json::from_str(s).unwrap()).unwrap().build()
     }
 }

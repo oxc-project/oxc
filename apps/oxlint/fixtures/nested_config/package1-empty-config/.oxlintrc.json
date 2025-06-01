@@ -1,5 +1,4 @@
 {
-  // this is a nested config file, but it should use the default config which
-  // is implicitly merged with this
+  "categories": { "correctness": "off"},
   "rules": {}
 }

@@ -1,8 +1,8 @@
-commit: bc5c1417
+commit: 4b5d36ab
 
 parser_test262 Summary:
-AST Parsed     : 44293/44293 (100.00%)
-Positive Passed: 44293/44293 (100.00%)
+AST Parsed     : 44422/44422 (100.00%)
+Positive Passed: 44422/44422 (100.00%)
 Negative Passed: 4519/4519 (100.00%)
 
   × '0'-prefixed octal literals and octal escape sequences are deprecated
@@ -13,7 +13,7 @@ Negative Passed: 4519/4519 (100.00%)
     ╰────
   help: for octal literals use the '0o' prefix instead
 
-  × Unexpected token
+  × Cannot assign to this expression
     ╭─[test262/test/annexB/language/statements/for-in/bare-initializer.js:16:6]
  15 │ 
  16 │ for (a = 0 in {});
@@ -2663,6 +2663,13 @@ Negative Passed: 4519/4519 (100.00%)
     ·   ──
     ╰────
 
+  × Unexpected token
+    ╭─[test262/test/language/comments/S7.4_A4_T1.js:19:3]
+ 18 │ /* var*/
+ 19 │ x*/
+    ·   ──
+    ╰────
+
   × Unterminated regular expression
     ╭─[test262/test/language/comments/S7.4_A4_T4.js:19:3]
  18 │ // var /*
@@ -2670,12 +2677,12 @@ Negative Passed: 4519/4519 (100.00%)
     ·   ──
     ╰────
 
-  × Invalid Unicode escape sequence
-   ╭─[test262/test/language/comments/hashbang/escaped-bang-041.js:1:3]
- 1 │ #\041
-   ·   ─
- 2 │ 
-   ╰────
+  × Unexpected token
+    ╭─[test262/test/language/comments/S7.4_A4_T4.js:19:3]
+ 18 │ // var /*
+ 19 │ x*/
+    ·   ──
+    ╰────
 
   × Expected `in` but found `throw`
     ╭─[test262/test/language/comments/hashbang/escaped-bang-041.js:20:1]
@@ -2685,13 +2692,6 @@ Negative Passed: 4519/4519 (100.00%)
     ·   ╰── `in` expected
     ╰────
 
-  × Invalid Character `!`
-   ╭─[test262/test/language/comments/hashbang/escaped-bang-u0021.js:1:8]
- 1 │ #\u0021
-   ·        ▲
- 2 │ 
-   ╰────
-
   × Expected `in` but found `throw`
     ╭─[test262/test/language/comments/hashbang/escaped-bang-u0021.js:20:1]
  19 │ 
@@ -2700,13 +2700,6 @@ Negative Passed: 4519/4519 (100.00%)
     ·   ╰── `in` expected
     ╰────
 
-  × Invalid Character `!`
-   ╭─[test262/test/language/comments/hashbang/escaped-bang-u21.js:1:8]
- 1 │ #\u{21}
-   ·        ▲
- 2 │ 
-   ╰────
-
   × Expected `in` but found `throw`
     ╭─[test262/test/language/comments/hashbang/escaped-bang-u21.js:20:1]
  19 │ 
@@ -2714,13 +2707,6 @@ Negative Passed: 4519/4519 (100.00%)
     · ──┬──
     ·   ╰── `in` expected
     ╰────
-
-  × Invalid Unicode escape sequence
-   ╭─[test262/test/language/comments/hashbang/escaped-bang-x21.js:1:3]
- 1 │ #\x21
-   ·   ─
- 2 │ 
-   ╰────
 
   × Expected `in` but found `throw`
     ╭─[test262/test/language/comments/hashbang/escaped-bang-x21.js:20:1]
@@ -3020,7 +3006,7 @@ Negative Passed: 4519/4519 (100.00%)
  60 │   
     ╰────
 
-  × A rest parameter cannot have an initializer
+  × A rest element cannot have an initializer.
     ╭─[test262/test/language/expressions/arrow-function/dflt-params-rest.js:63:8]
  62 │ 
  63 │ 0, (...x = []) => {
@@ -3028,7 +3014,7 @@ Negative Passed: 4519/4519 (100.00%)
  64 │   
     ╰────
 
-  × A rest parameter cannot have an initializer
+  × A rest element cannot have an initializer.
     ╭─[test262/test/language/expressions/arrow-function/dstr/ary-ptrn-rest-init-ary.js:53:10]
  52 │ var f;
  53 │ f = ([...[ x ] = []]) => {
@@ -3036,7 +3022,7 @@ Negative Passed: 4519/4519 (100.00%)
  54 │   
     ╰────
 
-  × A rest parameter cannot have an initializer
+  × A rest element cannot have an initializer.
     ╭─[test262/test/language/expressions/arrow-function/dstr/ary-ptrn-rest-init-id.js:53:10]
  52 │ var f;
  53 │ f = ([...x = []]) => {
@@ -3044,7 +3030,7 @@ Negative Passed: 4519/4519 (100.00%)
  54 │   
     ╰────
 
-  × A rest parameter cannot have an initializer
+  × A rest element cannot have an initializer.
     ╭─[test262/test/language/expressions/arrow-function/dstr/ary-ptrn-rest-init-obj.js:53:10]
  52 │ var f;
  53 │ f = ([...{ x } = []]) => {
@@ -3076,7 +3062,7 @@ Negative Passed: 4519/4519 (100.00%)
  54 │   
     ╰────
 
-  × A rest parameter cannot have an initializer
+  × A rest element cannot have an initializer.
     ╭─[test262/test/language/expressions/arrow-function/dstr/dflt-ary-ptrn-rest-init-ary.js:53:10]
  52 │ var f;
  53 │ f = ([...[ x ] = []] = []) => {
@@ -3084,7 +3070,7 @@ Negative Passed: 4519/4519 (100.00%)
  54 │   
     ╰────
 
-  × A rest parameter cannot have an initializer
+  × A rest element cannot have an initializer.
     ╭─[test262/test/language/expressions/arrow-function/dstr/dflt-ary-ptrn-rest-init-id.js:53:10]
  52 │ var f;
  53 │ f = ([...x = []] = []) => {
@@ -3092,7 +3078,7 @@ Negative Passed: 4519/4519 (100.00%)
  54 │   
     ╰────
 
-  × A rest parameter cannot have an initializer
+  × A rest element cannot have an initializer.
     ╭─[test262/test/language/expressions/arrow-function/dstr/dflt-ary-ptrn-rest-init-obj.js:53:10]
  52 │ var f;
  53 │ f = ([...{ x } = []] = []) => {
@@ -3488,11 +3474,19 @@ Negative Passed: 4519/4519 (100.00%)
  56 │   
     ╰────
 
-  × Cannot use `await` as an identifier in an async context
-    ╭─[test262/test/language/expressions/arrow-function/static-init-await-binding.js:17:6]
+  × A rest parameter or binding pattern may not have a trailing comma.
+    ╭─[test262/test/language/expressions/arrow-function/rest-params-trailing-comma-early-error.js:55:9]
+ 54 │ 
+ 55 │ 0, (...a,) => {
+    ·         ─
+ 56 │   
+    ╰────
+
+  × Unexpected token
+    ╭─[test262/test/language/expressions/arrow-function/static-init-await-binding.js:17:12]
  16 │   static {
  17 │     (await => 0);
-    ·      ─────
+    ·            ──
  18 │   }
     ╰────
 
@@ -3775,7 +3769,7 @@ Negative Passed: 4519/4519 (100.00%)
     ·     ────
     ╰────
 
-  × Unexpected trailing comma after rest element
+  × A rest parameter or binding pattern may not have a trailing comma.
     ╭─[test262/test/language/expressions/assignment/dstr/array-rest-before-elision.js:24:9]
  23 │ 
  24 │ 0, [...x,] = [];
@@ -3789,7 +3783,7 @@ Negative Passed: 4519/4519 (100.00%)
     ·     ────
     ╰────
 
-  × Unexpected trailing comma after rest element
+  × A rest parameter or binding pattern may not have a trailing comma.
     ╭─[test262/test/language/expressions/assignment/dstr/array-rest-elision-invalid.js:24:9]
  23 │ 
  24 │ 0, [...x,] = [];
@@ -6613,12 +6607,13 @@ Negative Passed: 4519/4519 (100.00%)
  35 │ }
     ╰────
 
-  × Cannot use `await` as an identifier in an async context
-    ╭─[test262/test/language/expressions/async-arrow-function/await-as-param-ident-nested-arrow-parameter-position.js:17:11]
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
+    ╭─[test262/test/language/expressions/async-arrow-function/await-as-param-ident-nested-arrow-parameter-position.js:17:23]
  16 │ 
  17 │ async(a = await => {}) => {};
-    ·           ─────
+    ·                       ▲
     ╰────
+  help: Try insert a semicolon here
 
   × await expression not allowed in formal parameter
     ╭─[test262/test/language/expressions/async-arrow-function/await-as-param-nested-arrow-body-position.js:17:19]
@@ -6652,7 +6647,7 @@ Negative Passed: 4519/4519 (100.00%)
  52 │   
     ╰────
 
-  × A rest parameter cannot have an initializer
+  × A rest element cannot have an initializer.
     ╭─[test262/test/language/expressions/async-arrow-function/dflt-params-rest.js:55:12]
  54 │ 
  55 │ (async (...x = []) => {
@@ -6675,12 +6670,13 @@ Negative Passed: 4519/4519 (100.00%)
  18 │ 
     ╰────
 
-  × Unexpected token
-    ╭─[test262/test/language/expressions/async-arrow-function/early-errors-arrow-await-in-formals-default.js:15:16]
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
+    ╭─[test262/test/language/expressions/async-arrow-function/early-errors-arrow-await-in-formals-default.js:15:17]
  14 │ $DONOTEVALUATE();
  15 │ async(x = await) => {  }
-    ·                ─
+    ·                 ▲
     ╰────
+  help: Try insert a semicolon here
 
   × Cannot use `await` as an identifier in an async context
     ╭─[test262/test/language/expressions/async-arrow-function/early-errors-arrow-await-in-formals.js:15:7]
@@ -6778,6 +6774,14 @@ Negative Passed: 4519/4519 (100.00%)
  46 │ 
  47 │ (async (...a,) => {
     ·         ────
+ 48 │   
+    ╰────
+
+  × A rest parameter or binding pattern may not have a trailing comma.
+    ╭─[test262/test/language/expressions/async-arrow-function/rest-params-trailing-comma-early-error.js:47:13]
+ 46 │ 
+ 47 │ (async (...a,) => {
+    ·             ─
  48 │   
     ╰────
 
@@ -7008,7 +7012,7 @@ Negative Passed: 4519/4519 (100.00%)
  38 │   
     ╰────
 
-  × A rest parameter cannot have an initializer
+  × A rest element cannot have an initializer.
     ╭─[test262/test/language/expressions/async-function/named-dflt-params-rest.js:41:22]
  40 │ 
  41 │ (async function f(...x = []) {
@@ -7040,6 +7044,14 @@ Negative Passed: 4519/4519 (100.00%)
  35 │   
     ╰────
 
+  × A rest parameter or binding pattern may not have a trailing comma.
+    ╭─[test262/test/language/expressions/async-function/named-rest-params-trailing-comma-early-error.js:34:23]
+ 33 │ 
+ 34 │ (async function f(...a,) {
+    ·                       ─
+ 35 │   
+    ╰────
+
   × Illegal 'use strict' directive in function with non-simple parameter list
      ╭─[test262/test/language/expressions/async-function/nameless-array-destructuring-param-strict-body.js:109:3]
  108 │ (async function([element]) {
@@ -7058,7 +7070,7 @@ Negative Passed: 4519/4519 (100.00%)
  38 │   
     ╰────
 
-  × A rest parameter cannot have an initializer
+  × A rest element cannot have an initializer.
     ╭─[test262/test/language/expressions/async-function/nameless-dflt-params-rest.js:41:20]
  40 │ 
  41 │ (async function(...x = []) {
@@ -7087,6 +7099,14 @@ Negative Passed: 4519/4519 (100.00%)
  33 │ 
  34 │ (async function(...a,) {
     ·                 ────
+ 35 │   
+    ╰────
+
+  × A rest parameter or binding pattern may not have a trailing comma.
+    ╭─[test262/test/language/expressions/async-function/nameless-rest-params-trailing-comma-early-error.js:34:21]
+ 33 │ 
+ 34 │ (async function(...a,) {
+    ·                     ─
  35 │   
     ╰────
 
@@ -7172,7 +7192,7 @@ Negative Passed: 4519/4519 (100.00%)
  41 │   
     ╰────
 
-  × A rest parameter cannot have an initializer
+  × A rest element cannot have an initializer.
     ╭─[test262/test/language/expressions/async-generator/dflt-params-rest.js:44:23]
  43 │ 
  44 │ 0, async function*(...x = []) {
@@ -7180,7 +7200,7 @@ Negative Passed: 4519/4519 (100.00%)
  45 │   
     ╰────
 
-  × A rest parameter cannot have an initializer
+  × A rest element cannot have an initializer.
     ╭─[test262/test/language/expressions/async-generator/dstr/ary-ptrn-rest-init-ary.js:34:25]
  33 │ var f;
  34 │ f = async function*([...[ x ] = []]) {
@@ -7188,7 +7208,7 @@ Negative Passed: 4519/4519 (100.00%)
  35 │   
     ╰────
 
-  × A rest parameter cannot have an initializer
+  × A rest element cannot have an initializer.
     ╭─[test262/test/language/expressions/async-generator/dstr/ary-ptrn-rest-init-id.js:34:25]
  33 │ var f;
  34 │ f = async function*([...x = []]) {
@@ -7196,7 +7216,7 @@ Negative Passed: 4519/4519 (100.00%)
  35 │   
     ╰────
 
-  × A rest parameter cannot have an initializer
+  × A rest element cannot have an initializer.
     ╭─[test262/test/language/expressions/async-generator/dstr/ary-ptrn-rest-init-obj.js:34:25]
  33 │ var f;
  34 │ f = async function*([...{ x } = []]) {
@@ -7228,7 +7248,7 @@ Negative Passed: 4519/4519 (100.00%)
  35 │   
     ╰────
 
-  × A rest parameter cannot have an initializer
+  × A rest element cannot have an initializer.
     ╭─[test262/test/language/expressions/async-generator/dstr/dflt-ary-ptrn-rest-init-ary.js:34:25]
  33 │ var f;
  34 │ f = async function*([...[ x ] = []] = []) {
@@ -7236,7 +7256,7 @@ Negative Passed: 4519/4519 (100.00%)
  35 │   
     ╰────
 
-  × A rest parameter cannot have an initializer
+  × A rest element cannot have an initializer.
     ╭─[test262/test/language/expressions/async-generator/dstr/dflt-ary-ptrn-rest-init-id.js:34:25]
  33 │ var f;
  34 │ f = async function*([...x = []] = []) {
@@ -7244,7 +7264,7 @@ Negative Passed: 4519/4519 (100.00%)
  35 │   
     ╰────
 
-  × A rest parameter cannot have an initializer
+  × A rest element cannot have an initializer.
     ╭─[test262/test/language/expressions/async-generator/dstr/dflt-ary-ptrn-rest-init-obj.js:34:25]
  33 │ var f;
  34 │ f = async function*([...{ x } = []] = []) {
@@ -7276,7 +7296,7 @@ Negative Passed: 4519/4519 (100.00%)
  35 │   
     ╰────
 
-  × A rest parameter cannot have an initializer
+  × A rest element cannot have an initializer.
     ╭─[test262/test/language/expressions/async-generator/dstr/named-ary-ptrn-rest-init-ary.js:34:27]
  33 │ var f;
  34 │ f = async function* h([...[ x ] = []]) {
@@ -7284,7 +7304,7 @@ Negative Passed: 4519/4519 (100.00%)
  35 │   
     ╰────
 
-  × A rest parameter cannot have an initializer
+  × A rest element cannot have an initializer.
     ╭─[test262/test/language/expressions/async-generator/dstr/named-ary-ptrn-rest-init-id.js:34:27]
  33 │ var f;
  34 │ f = async function* h([...x = []]) {
@@ -7292,7 +7312,7 @@ Negative Passed: 4519/4519 (100.00%)
  35 │   
     ╰────
 
-  × A rest parameter cannot have an initializer
+  × A rest element cannot have an initializer.
     ╭─[test262/test/language/expressions/async-generator/dstr/named-ary-ptrn-rest-init-obj.js:34:27]
  33 │ var f;
  34 │ f = async function* h([...{ x } = []]) {
@@ -7324,7 +7344,7 @@ Negative Passed: 4519/4519 (100.00%)
  35 │   
     ╰────
 
-  × A rest parameter cannot have an initializer
+  × A rest element cannot have an initializer.
     ╭─[test262/test/language/expressions/async-generator/dstr/named-dflt-ary-ptrn-rest-init-ary.js:34:27]
  33 │ var f;
  34 │ f = async function* h([...[ x ] = []] = []) {
@@ -7332,7 +7352,7 @@ Negative Passed: 4519/4519 (100.00%)
  35 │   
     ╰────
 
-  × A rest parameter cannot have an initializer
+  × A rest element cannot have an initializer.
     ╭─[test262/test/language/expressions/async-generator/dstr/named-dflt-ary-ptrn-rest-init-id.js:34:27]
  33 │ var f;
  34 │ f = async function* h([...x = []] = []) {
@@ -7340,7 +7360,7 @@ Negative Passed: 4519/4519 (100.00%)
  35 │   
     ╰────
 
-  × A rest parameter cannot have an initializer
+  × A rest element cannot have an initializer.
     ╭─[test262/test/language/expressions/async-generator/dstr/named-dflt-ary-ptrn-rest-init-obj.js:34:27]
  33 │ var f;
  34 │ f = async function* h([...{ x } = []] = []) {
@@ -7632,7 +7652,7 @@ Negative Passed: 4519/4519 (100.00%)
  41 │   
     ╰────
 
-  × A rest parameter cannot have an initializer
+  × A rest element cannot have an initializer.
     ╭─[test262/test/language/expressions/async-generator/named-dflt-params-rest.js:44:25]
  43 │ 
  44 │ 0, async function* g(...x = []) {
@@ -7661,6 +7681,14 @@ Negative Passed: 4519/4519 (100.00%)
  36 │ 
  37 │ 0, async function* g(...a,) {
     ·                      ────
+ 38 │   
+    ╰────
+
+  × A rest parameter or binding pattern may not have a trailing comma.
+    ╭─[test262/test/language/expressions/async-generator/named-rest-params-trailing-comma-early-error.js:37:26]
+ 36 │ 
+ 37 │ 0, async function* g(...a,) {
+    ·                          ─
  38 │   
     ╰────
 
@@ -7791,6 +7819,14 @@ Negative Passed: 4519/4519 (100.00%)
  36 │ 
  37 │ 0, async function*(...a,) {
     ·                    ────
+ 38 │   
+    ╰────
+
+  × A rest parameter or binding pattern may not have a trailing comma.
+    ╭─[test262/test/language/expressions/async-generator/rest-params-trailing-comma-early-error.js:37:24]
+ 36 │ 
+ 37 │ 0, async function*(...a,) {
+    ·                        ─
  38 │   
     ╰────
 
@@ -8013,7 +8049,7 @@ Negative Passed: 4519/4519 (100.00%)
  65 │     
     ╰────
 
-  × A rest parameter cannot have an initializer
+  × A rest element cannot have an initializer.
     ╭─[test262/test/language/expressions/class/async-gen-method/dflt-params-rest.js:68:20]
  67 │ 0, class {
  68 │   async *method(...x = []) {
@@ -8042,6 +8078,14 @@ Negative Passed: 4519/4519 (100.00%)
  60 │ 0, class {
  61 │   async *method(...a,) {
     ·                 ────
+ 62 │     
+    ╰────
+
+  × A rest parameter or binding pattern may not have a trailing comma.
+    ╭─[test262/test/language/expressions/class/async-gen-method/rest-params-trailing-comma-early-error.js:61:21]
+ 60 │ 0, class {
+ 61 │   async *method(...a,) {
+    ·                     ─
  62 │     
     ╰────
 
@@ -8233,7 +8277,7 @@ Negative Passed: 4519/4519 (100.00%)
  65 │     
     ╰────
 
-  × A rest parameter cannot have an initializer
+  × A rest element cannot have an initializer.
     ╭─[test262/test/language/expressions/class/async-gen-method-static/dflt-params-rest.js:68:27]
  67 │ 0, class {
  68 │   static async *method(...x = []) {
@@ -8262,6 +8306,14 @@ Negative Passed: 4519/4519 (100.00%)
  60 │ 0, class {
  61 │   static async *method(...a,) {
     ·                        ────
+ 62 │     
+    ╰────
+
+  × A rest parameter or binding pattern may not have a trailing comma.
+    ╭─[test262/test/language/expressions/class/async-gen-method-static/rest-params-trailing-comma-early-error.js:61:28]
+ 60 │ 0, class {
+ 61 │   static async *method(...a,) {
+    ·                            ─
  62 │     
     ╰────
 
@@ -8453,7 +8505,7 @@ Negative Passed: 4519/4519 (100.00%)
  63 │     
     ╰────
 
-  × A rest parameter cannot have an initializer
+  × A rest element cannot have an initializer.
     ╭─[test262/test/language/expressions/class/async-method/dflt-params-rest.js:66:26]
  65 │ var C = class {
  66 │   static async method(...x = []) {
@@ -8482,6 +8534,14 @@ Negative Passed: 4519/4519 (100.00%)
  57 │ var C = class {
  58 │   static async method(...a,) {
     ·                       ────
+ 59 │     
+    ╰────
+
+  × A rest parameter or binding pattern may not have a trailing comma.
+    ╭─[test262/test/language/expressions/class/async-method/rest-params-trailing-comma-early-error.js:58:27]
+ 57 │ var C = class {
+ 58 │   static async method(...a,) {
+    ·                           ─
  59 │     
     ╰────
 
@@ -8567,7 +8627,7 @@ Negative Passed: 4519/4519 (100.00%)
  63 │     
     ╰────
 
-  × A rest parameter cannot have an initializer
+  × A rest element cannot have an initializer.
     ╭─[test262/test/language/expressions/class/async-method-static/dflt-params-rest.js:66:26]
  65 │ var C = class {
  66 │   static async method(...x = []) {
@@ -8596,6 +8656,14 @@ Negative Passed: 4519/4519 (100.00%)
  57 │ var C = class {
  58 │   static async method(...a,) {
     ·                       ────
+ 59 │     
+    ╰────
+
+  × A rest parameter or binding pattern may not have a trailing comma.
+    ╭─[test262/test/language/expressions/class/async-method-static/rest-params-trailing-comma-early-error.js:58:27]
+ 57 │ var C = class {
+ 58 │   static async method(...a,) {
+    ·                           ─
  59 │     
     ╰────
 
@@ -8669,7 +8737,7 @@ Negative Passed: 4519/4519 (100.00%)
     ·               ─────
     ╰────
 
-  × A rest parameter cannot have an initializer
+  × A rest element cannot have an initializer.
     ╭─[test262/test/language/expressions/class/dstr/async-gen-meth-ary-ptrn-rest-init-ary.js:58:21]
  57 │ var C = class {
  58 │   async *method([...[ x ] = []]) {
@@ -8677,7 +8745,7 @@ Negative Passed: 4519/4519 (100.00%)
  59 │     
     ╰────
 
-  × A rest parameter cannot have an initializer
+  × A rest element cannot have an initializer.
     ╭─[test262/test/language/expressions/class/dstr/async-gen-meth-ary-ptrn-rest-init-id.js:58:21]
  57 │ var C = class {
  58 │   async *method([...x = []]) {
@@ -8685,7 +8753,7 @@ Negative Passed: 4519/4519 (100.00%)
  59 │     
     ╰────
 
-  × A rest parameter cannot have an initializer
+  × A rest element cannot have an initializer.
     ╭─[test262/test/language/expressions/class/dstr/async-gen-meth-ary-ptrn-rest-init-obj.js:58:21]
  57 │ var C = class {
  58 │   async *method([...{ x } = []]) {
@@ -8717,7 +8785,7 @@ Negative Passed: 4519/4519 (100.00%)
  59 │     
     ╰────
 
-  × A rest parameter cannot have an initializer
+  × A rest element cannot have an initializer.
     ╭─[test262/test/language/expressions/class/dstr/async-gen-meth-dflt-ary-ptrn-rest-init-ary.js:58:21]
  57 │ var C = class {
  58 │   async *method([...[ x ] = []] = []) {
@@ -8725,7 +8793,7 @@ Negative Passed: 4519/4519 (100.00%)
  59 │     
     ╰────
 
-  × A rest parameter cannot have an initializer
+  × A rest element cannot have an initializer.
     ╭─[test262/test/language/expressions/class/dstr/async-gen-meth-dflt-ary-ptrn-rest-init-id.js:58:21]
  57 │ var C = class {
  58 │   async *method([...x = []] = []) {
@@ -8733,7 +8801,7 @@ Negative Passed: 4519/4519 (100.00%)
  59 │     
     ╰────
 
-  × A rest parameter cannot have an initializer
+  × A rest element cannot have an initializer.
     ╭─[test262/test/language/expressions/class/dstr/async-gen-meth-dflt-ary-ptrn-rest-init-obj.js:58:21]
  57 │ var C = class {
  58 │   async *method([...{ x } = []] = []) {
@@ -8765,7 +8833,7 @@ Negative Passed: 4519/4519 (100.00%)
  59 │     
     ╰────
 
-  × A rest parameter cannot have an initializer
+  × A rest element cannot have an initializer.
     ╭─[test262/test/language/expressions/class/dstr/async-gen-meth-static-ary-ptrn-rest-init-ary.js:58:28]
  57 │ var C = class {
  58 │   static async *method([...[ x ] = []]) {
@@ -8773,7 +8841,7 @@ Negative Passed: 4519/4519 (100.00%)
  59 │     
     ╰────
 
-  × A rest parameter cannot have an initializer
+  × A rest element cannot have an initializer.
     ╭─[test262/test/language/expressions/class/dstr/async-gen-meth-static-ary-ptrn-rest-init-id.js:58:28]
  57 │ var C = class {
  58 │   static async *method([...x = []]) {
@@ -8781,7 +8849,7 @@ Negative Passed: 4519/4519 (100.00%)
  59 │     
     ╰────
 
-  × A rest parameter cannot have an initializer
+  × A rest element cannot have an initializer.
     ╭─[test262/test/language/expressions/class/dstr/async-gen-meth-static-ary-ptrn-rest-init-obj.js:58:28]
  57 │ var C = class {
  58 │   static async *method([...{ x } = []]) {
@@ -8813,7 +8881,7 @@ Negative Passed: 4519/4519 (100.00%)
  59 │     
     ╰────
 
-  × A rest parameter cannot have an initializer
+  × A rest element cannot have an initializer.
     ╭─[test262/test/language/expressions/class/dstr/async-gen-meth-static-dflt-ary-ptrn-rest-init-ary.js:58:28]
  57 │ var C = class {
  58 │   static async *method([...[ x ] = []] = []) {
@@ -8821,7 +8889,7 @@ Negative Passed: 4519/4519 (100.00%)
  59 │     
     ╰────
 
-  × A rest parameter cannot have an initializer
+  × A rest element cannot have an initializer.
     ╭─[test262/test/language/expressions/class/dstr/async-gen-meth-static-dflt-ary-ptrn-rest-init-id.js:58:28]
  57 │ var C = class {
  58 │   static async *method([...x = []] = []) {
@@ -8829,7 +8897,7 @@ Negative Passed: 4519/4519 (100.00%)
  59 │     
     ╰────
 
-  × A rest parameter cannot have an initializer
+  × A rest element cannot have an initializer.
     ╭─[test262/test/language/expressions/class/dstr/async-gen-meth-static-dflt-ary-ptrn-rest-init-obj.js:58:28]
  57 │ var C = class {
  58 │   static async *method([...{ x } = []] = []) {
@@ -8861,7 +8929,7 @@ Negative Passed: 4519/4519 (100.00%)
  59 │     
     ╰────
 
-  × A rest parameter cannot have an initializer
+  × A rest element cannot have an initializer.
     ╭─[test262/test/language/expressions/class/dstr/async-private-gen-meth-ary-ptrn-rest-init-ary.js:58:23]
  57 │ var C = class {
  58 │   async * #method([...[ x ] = []]) {
@@ -8869,7 +8937,7 @@ Negative Passed: 4519/4519 (100.00%)
  59 │     
     ╰────
 
-  × A rest parameter cannot have an initializer
+  × A rest element cannot have an initializer.
     ╭─[test262/test/language/expressions/class/dstr/async-private-gen-meth-ary-ptrn-rest-init-id.js:58:23]
  57 │ var C = class {
  58 │   async * #method([...x = []]) {
@@ -8877,7 +8945,7 @@ Negative Passed: 4519/4519 (100.00%)
  59 │     
     ╰────
 
-  × A rest parameter cannot have an initializer
+  × A rest element cannot have an initializer.
     ╭─[test262/test/language/expressions/class/dstr/async-private-gen-meth-ary-ptrn-rest-init-obj.js:58:23]
  57 │ var C = class {
  58 │   async * #method([...{ x } = []]) {
@@ -8909,7 +8977,7 @@ Negative Passed: 4519/4519 (100.00%)
  59 │     
     ╰────
 
-  × A rest parameter cannot have an initializer
+  × A rest element cannot have an initializer.
     ╭─[test262/test/language/expressions/class/dstr/async-private-gen-meth-dflt-ary-ptrn-rest-init-ary.js:58:23]
  57 │ var C = class {
  58 │   async * #method([...[ x ] = []] = []) {
@@ -8917,7 +8985,7 @@ Negative Passed: 4519/4519 (100.00%)
  59 │     
     ╰────
 
-  × A rest parameter cannot have an initializer
+  × A rest element cannot have an initializer.
     ╭─[test262/test/language/expressions/class/dstr/async-private-gen-meth-dflt-ary-ptrn-rest-init-id.js:58:23]
  57 │ var C = class {
  58 │   async * #method([...x = []] = []) {
@@ -8925,7 +8993,7 @@ Negative Passed: 4519/4519 (100.00%)
  59 │     
     ╰────
 
-  × A rest parameter cannot have an initializer
+  × A rest element cannot have an initializer.
     ╭─[test262/test/language/expressions/class/dstr/async-private-gen-meth-dflt-ary-ptrn-rest-init-obj.js:58:23]
  57 │ var C = class {
  58 │   async * #method([...{ x } = []] = []) {
@@ -8957,7 +9025,7 @@ Negative Passed: 4519/4519 (100.00%)
  59 │     
     ╰────
 
-  × A rest parameter cannot have an initializer
+  × A rest element cannot have an initializer.
     ╭─[test262/test/language/expressions/class/dstr/async-private-gen-meth-static-ary-ptrn-rest-init-ary.js:58:30]
  57 │ var C = class {
  58 │   static async * #method([...[ x ] = []]) {
@@ -8965,7 +9033,7 @@ Negative Passed: 4519/4519 (100.00%)
  59 │     
     ╰────
 
-  × A rest parameter cannot have an initializer
+  × A rest element cannot have an initializer.
     ╭─[test262/test/language/expressions/class/dstr/async-private-gen-meth-static-ary-ptrn-rest-init-id.js:58:30]
  57 │ var C = class {
  58 │   static async * #method([...x = []]) {
@@ -8973,7 +9041,7 @@ Negative Passed: 4519/4519 (100.00%)
  59 │     
     ╰────
 
-  × A rest parameter cannot have an initializer
+  × A rest element cannot have an initializer.
     ╭─[test262/test/language/expressions/class/dstr/async-private-gen-meth-static-ary-ptrn-rest-init-obj.js:58:30]
  57 │ var C = class {
  58 │   static async * #method([...{ x } = []]) {
@@ -9005,7 +9073,7 @@ Negative Passed: 4519/4519 (100.00%)
  59 │     
     ╰────
 
-  × A rest parameter cannot have an initializer
+  × A rest element cannot have an initializer.
     ╭─[test262/test/language/expressions/class/dstr/async-private-gen-meth-static-dflt-ary-ptrn-rest-init-ary.js:58:30]
  57 │ var C = class {
  58 │   static async * #method([...[ x ] = []] = []) {
@@ -9013,7 +9081,7 @@ Negative Passed: 4519/4519 (100.00%)
  59 │     
     ╰────
 
-  × A rest parameter cannot have an initializer
+  × A rest element cannot have an initializer.
     ╭─[test262/test/language/expressions/class/dstr/async-private-gen-meth-static-dflt-ary-ptrn-rest-init-id.js:58:30]
  57 │ var C = class {
  58 │   static async * #method([...x = []] = []) {
@@ -9021,7 +9089,7 @@ Negative Passed: 4519/4519 (100.00%)
  59 │     
     ╰────
 
-  × A rest parameter cannot have an initializer
+  × A rest element cannot have an initializer.
     ╭─[test262/test/language/expressions/class/dstr/async-private-gen-meth-static-dflt-ary-ptrn-rest-init-obj.js:58:30]
  57 │ var C = class {
  58 │   static async * #method([...{ x } = []] = []) {
@@ -9053,7 +9121,7 @@ Negative Passed: 4519/4519 (100.00%)
  59 │     
     ╰────
 
-  × A rest parameter cannot have an initializer
+  × A rest element cannot have an initializer.
     ╭─[test262/test/language/expressions/class/dstr/gen-meth-ary-ptrn-rest-init-ary.js:77:15]
  76 │ var C = class {
  77 │   *method([...[ x ] = []]) {
@@ -9061,7 +9129,7 @@ Negative Passed: 4519/4519 (100.00%)
  78 │     
     ╰────
 
-  × A rest parameter cannot have an initializer
+  × A rest element cannot have an initializer.
     ╭─[test262/test/language/expressions/class/dstr/gen-meth-ary-ptrn-rest-init-id.js:77:15]
  76 │ var C = class {
  77 │   *method([...x = []]) {
@@ -9069,7 +9137,7 @@ Negative Passed: 4519/4519 (100.00%)
  78 │     
     ╰────
 
-  × A rest parameter cannot have an initializer
+  × A rest element cannot have an initializer.
     ╭─[test262/test/language/expressions/class/dstr/gen-meth-ary-ptrn-rest-init-obj.js:77:15]
  76 │ var C = class {
  77 │   *method([...{ x } = []]) {
@@ -9101,7 +9169,7 @@ Negative Passed: 4519/4519 (100.00%)
  78 │     
     ╰────
 
-  × A rest parameter cannot have an initializer
+  × A rest element cannot have an initializer.
     ╭─[test262/test/language/expressions/class/dstr/gen-meth-dflt-ary-ptrn-rest-init-ary.js:77:15]
  76 │ var C = class {
  77 │   *method([...[ x ] = []] = []) {
@@ -9109,7 +9177,7 @@ Negative Passed: 4519/4519 (100.00%)
  78 │     
     ╰────
 
-  × A rest parameter cannot have an initializer
+  × A rest element cannot have an initializer.
     ╭─[test262/test/language/expressions/class/dstr/gen-meth-dflt-ary-ptrn-rest-init-id.js:77:15]
  76 │ var C = class {
  77 │   *method([...x = []] = []) {
@@ -9117,7 +9185,7 @@ Negative Passed: 4519/4519 (100.00%)
  78 │     
     ╰────
 
-  × A rest parameter cannot have an initializer
+  × A rest element cannot have an initializer.
     ╭─[test262/test/language/expressions/class/dstr/gen-meth-dflt-ary-ptrn-rest-init-obj.js:77:15]
  76 │ var C = class {
  77 │   *method([...{ x } = []] = []) {
@@ -9149,7 +9217,7 @@ Negative Passed: 4519/4519 (100.00%)
  78 │     
     ╰────
 
-  × A rest parameter cannot have an initializer
+  × A rest element cannot have an initializer.
     ╭─[test262/test/language/expressions/class/dstr/gen-meth-static-ary-ptrn-rest-init-ary.js:77:22]
  76 │ var C = class {
  77 │   static *method([...[ x ] = []]) {
@@ -9157,7 +9225,7 @@ Negative Passed: 4519/4519 (100.00%)
  78 │     
     ╰────
 
-  × A rest parameter cannot have an initializer
+  × A rest element cannot have an initializer.
     ╭─[test262/test/language/expressions/class/dstr/gen-meth-static-ary-ptrn-rest-init-id.js:77:22]
  76 │ var C = class {
  77 │   static *method([...x = []]) {
@@ -9165,7 +9233,7 @@ Negative Passed: 4519/4519 (100.00%)
  78 │     
     ╰────
 
-  × A rest parameter cannot have an initializer
+  × A rest element cannot have an initializer.
     ╭─[test262/test/language/expressions/class/dstr/gen-meth-static-ary-ptrn-rest-init-obj.js:77:22]
  76 │ var C = class {
  77 │   static *method([...{ x } = []]) {
@@ -9197,7 +9265,7 @@ Negative Passed: 4519/4519 (100.00%)
  78 │     
     ╰────
 
-  × A rest parameter cannot have an initializer
+  × A rest element cannot have an initializer.
     ╭─[test262/test/language/expressions/class/dstr/gen-meth-static-dflt-ary-ptrn-rest-init-ary.js:77:22]
  76 │ var C = class {
  77 │   static *method([...[ x ] = []] = []) {
@@ -9205,7 +9273,7 @@ Negative Passed: 4519/4519 (100.00%)
  78 │     
     ╰────
 
-  × A rest parameter cannot have an initializer
+  × A rest element cannot have an initializer.
     ╭─[test262/test/language/expressions/class/dstr/gen-meth-static-dflt-ary-ptrn-rest-init-id.js:77:22]
  76 │ var C = class {
  77 │   static *method([...x = []] = []) {
@@ -9213,7 +9281,7 @@ Negative Passed: 4519/4519 (100.00%)
  78 │     
     ╰────
 
-  × A rest parameter cannot have an initializer
+  × A rest element cannot have an initializer.
     ╭─[test262/test/language/expressions/class/dstr/gen-meth-static-dflt-ary-ptrn-rest-init-obj.js:77:22]
  76 │ var C = class {
  77 │   static *method([...{ x } = []] = []) {
@@ -9245,7 +9313,7 @@ Negative Passed: 4519/4519 (100.00%)
  78 │     
     ╰────
 
-  × A rest parameter cannot have an initializer
+  × A rest element cannot have an initializer.
     ╭─[test262/test/language/expressions/class/dstr/meth-ary-ptrn-rest-init-ary.js:74:14]
  73 │ var C = class {
  74 │   method([...[ x ] = []]) {
@@ -9253,7 +9321,7 @@ Negative Passed: 4519/4519 (100.00%)
  75 │     
     ╰────
 
-  × A rest parameter cannot have an initializer
+  × A rest element cannot have an initializer.
     ╭─[test262/test/language/expressions/class/dstr/meth-ary-ptrn-rest-init-id.js:74:14]
  73 │ var C = class {
  74 │   method([...x = []]) {
@@ -9261,7 +9329,7 @@ Negative Passed: 4519/4519 (100.00%)
  75 │     
     ╰────
 
-  × A rest parameter cannot have an initializer
+  × A rest element cannot have an initializer.
     ╭─[test262/test/language/expressions/class/dstr/meth-ary-ptrn-rest-init-obj.js:74:14]
  73 │ var C = class {
  74 │   method([...{ x } = []]) {
@@ -9293,7 +9361,7 @@ Negative Passed: 4519/4519 (100.00%)
  75 │     
     ╰────
 
-  × A rest parameter cannot have an initializer
+  × A rest element cannot have an initializer.
     ╭─[test262/test/language/expressions/class/dstr/meth-dflt-ary-ptrn-rest-init-ary.js:74:14]
  73 │ var C = class {
  74 │   method([...[ x ] = []] = []) {
@@ -9301,7 +9369,7 @@ Negative Passed: 4519/4519 (100.00%)
  75 │     
     ╰────
 
-  × A rest parameter cannot have an initializer
+  × A rest element cannot have an initializer.
     ╭─[test262/test/language/expressions/class/dstr/meth-dflt-ary-ptrn-rest-init-id.js:74:14]
  73 │ var C = class {
  74 │   method([...x = []] = []) {
@@ -9309,7 +9377,7 @@ Negative Passed: 4519/4519 (100.00%)
  75 │     
     ╰────
 
-  × A rest parameter cannot have an initializer
+  × A rest element cannot have an initializer.
     ╭─[test262/test/language/expressions/class/dstr/meth-dflt-ary-ptrn-rest-init-obj.js:74:14]
  73 │ var C = class {
  74 │   method([...{ x } = []] = []) {
@@ -9341,7 +9409,7 @@ Negative Passed: 4519/4519 (100.00%)
  75 │     
     ╰────
 
-  × A rest parameter cannot have an initializer
+  × A rest element cannot have an initializer.
     ╭─[test262/test/language/expressions/class/dstr/meth-static-ary-ptrn-rest-init-ary.js:74:21]
  73 │ var C = class {
  74 │   static method([...[ x ] = []]) {
@@ -9349,7 +9417,7 @@ Negative Passed: 4519/4519 (100.00%)
  75 │     
     ╰────
 
-  × A rest parameter cannot have an initializer
+  × A rest element cannot have an initializer.
     ╭─[test262/test/language/expressions/class/dstr/meth-static-ary-ptrn-rest-init-id.js:74:21]
  73 │ var C = class {
  74 │   static method([...x = []]) {
@@ -9357,7 +9425,7 @@ Negative Passed: 4519/4519 (100.00%)
  75 │     
     ╰────
 
-  × A rest parameter cannot have an initializer
+  × A rest element cannot have an initializer.
     ╭─[test262/test/language/expressions/class/dstr/meth-static-ary-ptrn-rest-init-obj.js:74:21]
  73 │ var C = class {
  74 │   static method([...{ x } = []]) {
@@ -9389,7 +9457,7 @@ Negative Passed: 4519/4519 (100.00%)
  75 │     
     ╰────
 
-  × A rest parameter cannot have an initializer
+  × A rest element cannot have an initializer.
     ╭─[test262/test/language/expressions/class/dstr/meth-static-dflt-ary-ptrn-rest-init-ary.js:74:21]
  73 │ var C = class {
  74 │   static method([...[ x ] = []] = []) {
@@ -9397,7 +9465,7 @@ Negative Passed: 4519/4519 (100.00%)
  75 │     
     ╰────
 
-  × A rest parameter cannot have an initializer
+  × A rest element cannot have an initializer.
     ╭─[test262/test/language/expressions/class/dstr/meth-static-dflt-ary-ptrn-rest-init-id.js:74:21]
  73 │ var C = class {
  74 │   static method([...x = []] = []) {
@@ -9405,7 +9473,7 @@ Negative Passed: 4519/4519 (100.00%)
  75 │     
     ╰────
 
-  × A rest parameter cannot have an initializer
+  × A rest element cannot have an initializer.
     ╭─[test262/test/language/expressions/class/dstr/meth-static-dflt-ary-ptrn-rest-init-obj.js:74:21]
  73 │ var C = class {
  74 │   static method([...{ x } = []] = []) {
@@ -9437,7 +9505,7 @@ Negative Passed: 4519/4519 (100.00%)
  75 │     
     ╰────
 
-  × A rest parameter cannot have an initializer
+  × A rest element cannot have an initializer.
     ╭─[test262/test/language/expressions/class/dstr/private-gen-meth-ary-ptrn-rest-init-ary.js:77:17]
  76 │ var C = class {
  77 │   * #method([...[ x ] = []]) {
@@ -9445,7 +9513,7 @@ Negative Passed: 4519/4519 (100.00%)
  78 │     
     ╰────
 
-  × A rest parameter cannot have an initializer
+  × A rest element cannot have an initializer.
     ╭─[test262/test/language/expressions/class/dstr/private-gen-meth-ary-ptrn-rest-init-id.js:77:17]
  76 │ var C = class {
  77 │   * #method([...x = []]) {
@@ -9453,7 +9521,7 @@ Negative Passed: 4519/4519 (100.00%)
  78 │     
     ╰────
 
-  × A rest parameter cannot have an initializer
+  × A rest element cannot have an initializer.
     ╭─[test262/test/language/expressions/class/dstr/private-gen-meth-ary-ptrn-rest-init-obj.js:77:17]
  76 │ var C = class {
  77 │   * #method([...{ x } = []]) {
@@ -9485,7 +9553,7 @@ Negative Passed: 4519/4519 (100.00%)
  78 │     
     ╰────
 
-  × A rest parameter cannot have an initializer
+  × A rest element cannot have an initializer.
     ╭─[test262/test/language/expressions/class/dstr/private-gen-meth-dflt-ary-ptrn-rest-init-ary.js:77:17]
  76 │ var C = class {
  77 │   * #method([...[ x ] = []] = []) {
@@ -9493,7 +9561,7 @@ Negative Passed: 4519/4519 (100.00%)
  78 │     
     ╰────
 
-  × A rest parameter cannot have an initializer
+  × A rest element cannot have an initializer.
     ╭─[test262/test/language/expressions/class/dstr/private-gen-meth-dflt-ary-ptrn-rest-init-id.js:77:17]
  76 │ var C = class {
  77 │   * #method([...x = []] = []) {
@@ -9501,7 +9569,7 @@ Negative Passed: 4519/4519 (100.00%)
  78 │     
     ╰────
 
-  × A rest parameter cannot have an initializer
+  × A rest element cannot have an initializer.
     ╭─[test262/test/language/expressions/class/dstr/private-gen-meth-dflt-ary-ptrn-rest-init-obj.js:77:17]
  76 │ var C = class {
  77 │   * #method([...{ x } = []] = []) {
@@ -9533,7 +9601,7 @@ Negative Passed: 4519/4519 (100.00%)
  78 │     
     ╰────
 
-  × A rest parameter cannot have an initializer
+  × A rest element cannot have an initializer.
     ╭─[test262/test/language/expressions/class/dstr/private-gen-meth-static-ary-ptrn-rest-init-ary.js:77:24]
  76 │ var C = class {
  77 │   static * #method([...[ x ] = []]) {
@@ -9541,7 +9609,7 @@ Negative Passed: 4519/4519 (100.00%)
  78 │     
     ╰────
 
-  × A rest parameter cannot have an initializer
+  × A rest element cannot have an initializer.
     ╭─[test262/test/language/expressions/class/dstr/private-gen-meth-static-ary-ptrn-rest-init-id.js:77:24]
  76 │ var C = class {
  77 │   static * #method([...x = []]) {
@@ -9549,7 +9617,7 @@ Negative Passed: 4519/4519 (100.00%)
  78 │     
     ╰────
 
-  × A rest parameter cannot have an initializer
+  × A rest element cannot have an initializer.
     ╭─[test262/test/language/expressions/class/dstr/private-gen-meth-static-ary-ptrn-rest-init-obj.js:77:24]
  76 │ var C = class {
  77 │   static * #method([...{ x } = []]) {
@@ -9581,7 +9649,7 @@ Negative Passed: 4519/4519 (100.00%)
  78 │     
     ╰────
 
-  × A rest parameter cannot have an initializer
+  × A rest element cannot have an initializer.
     ╭─[test262/test/language/expressions/class/dstr/private-gen-meth-static-dflt-ary-ptrn-rest-init-ary.js:77:24]
  76 │ var C = class {
  77 │   static * #method([...[ x ] = []] = []) {
@@ -9589,7 +9657,7 @@ Negative Passed: 4519/4519 (100.00%)
  78 │     
     ╰────
 
-  × A rest parameter cannot have an initializer
+  × A rest element cannot have an initializer.
     ╭─[test262/test/language/expressions/class/dstr/private-gen-meth-static-dflt-ary-ptrn-rest-init-id.js:77:24]
  76 │ var C = class {
  77 │   static * #method([...x = []] = []) {
@@ -9597,7 +9665,7 @@ Negative Passed: 4519/4519 (100.00%)
  78 │     
     ╰────
 
-  × A rest parameter cannot have an initializer
+  × A rest element cannot have an initializer.
     ╭─[test262/test/language/expressions/class/dstr/private-gen-meth-static-dflt-ary-ptrn-rest-init-obj.js:77:24]
  76 │ var C = class {
  77 │   static * #method([...{ x } = []] = []) {
@@ -9629,7 +9697,7 @@ Negative Passed: 4519/4519 (100.00%)
  78 │     
     ╰────
 
-  × A rest parameter cannot have an initializer
+  × A rest element cannot have an initializer.
     ╭─[test262/test/language/expressions/class/dstr/private-meth-ary-ptrn-rest-init-ary.js:74:15]
  73 │ var C = class {
  74 │   #method([...[ x ] = []]) {
@@ -9637,7 +9705,7 @@ Negative Passed: 4519/4519 (100.00%)
  75 │     
     ╰────
 
-  × A rest parameter cannot have an initializer
+  × A rest element cannot have an initializer.
     ╭─[test262/test/language/expressions/class/dstr/private-meth-ary-ptrn-rest-init-id.js:74:15]
  73 │ var C = class {
  74 │   #method([...x = []]) {
@@ -9645,7 +9713,7 @@ Negative Passed: 4519/4519 (100.00%)
  75 │     
     ╰────
 
-  × A rest parameter cannot have an initializer
+  × A rest element cannot have an initializer.
     ╭─[test262/test/language/expressions/class/dstr/private-meth-ary-ptrn-rest-init-obj.js:74:15]
  73 │ var C = class {
  74 │   #method([...{ x } = []]) {
@@ -9677,7 +9745,7 @@ Negative Passed: 4519/4519 (100.00%)
  75 │     
     ╰────
 
-  × A rest parameter cannot have an initializer
+  × A rest element cannot have an initializer.
     ╭─[test262/test/language/expressions/class/dstr/private-meth-dflt-ary-ptrn-rest-init-ary.js:74:15]
  73 │ var C = class {
  74 │   #method([...[ x ] = []] = []) {
@@ -9685,7 +9753,7 @@ Negative Passed: 4519/4519 (100.00%)
  75 │     
     ╰────
 
-  × A rest parameter cannot have an initializer
+  × A rest element cannot have an initializer.
     ╭─[test262/test/language/expressions/class/dstr/private-meth-dflt-ary-ptrn-rest-init-id.js:74:15]
  73 │ var C = class {
  74 │   #method([...x = []] = []) {
@@ -9693,7 +9761,7 @@ Negative Passed: 4519/4519 (100.00%)
  75 │     
     ╰────
 
-  × A rest parameter cannot have an initializer
+  × A rest element cannot have an initializer.
     ╭─[test262/test/language/expressions/class/dstr/private-meth-dflt-ary-ptrn-rest-init-obj.js:74:15]
  73 │ var C = class {
  74 │   #method([...{ x } = []] = []) {
@@ -9725,7 +9793,7 @@ Negative Passed: 4519/4519 (100.00%)
  75 │     
     ╰────
 
-  × A rest parameter cannot have an initializer
+  × A rest element cannot have an initializer.
     ╭─[test262/test/language/expressions/class/dstr/private-meth-static-ary-ptrn-rest-init-ary.js:74:22]
  73 │ var C = class {
  74 │   static #method([...[ x ] = []]) {
@@ -9733,7 +9801,7 @@ Negative Passed: 4519/4519 (100.00%)
  75 │     
     ╰────
 
-  × A rest parameter cannot have an initializer
+  × A rest element cannot have an initializer.
     ╭─[test262/test/language/expressions/class/dstr/private-meth-static-ary-ptrn-rest-init-id.js:74:22]
  73 │ var C = class {
  74 │   static #method([...x = []]) {
@@ -9741,7 +9809,7 @@ Negative Passed: 4519/4519 (100.00%)
  75 │     
     ╰────
 
-  × A rest parameter cannot have an initializer
+  × A rest element cannot have an initializer.
     ╭─[test262/test/language/expressions/class/dstr/private-meth-static-ary-ptrn-rest-init-obj.js:74:22]
  73 │ var C = class {
  74 │   static #method([...{ x } = []]) {
@@ -9773,7 +9841,7 @@ Negative Passed: 4519/4519 (100.00%)
  75 │     
     ╰────
 
-  × A rest parameter cannot have an initializer
+  × A rest element cannot have an initializer.
     ╭─[test262/test/language/expressions/class/dstr/private-meth-static-dflt-ary-ptrn-rest-init-ary.js:74:22]
  73 │ var C = class {
  74 │   static #method([...[ x ] = []] = []) {
@@ -9781,7 +9849,7 @@ Negative Passed: 4519/4519 (100.00%)
  75 │     
     ╰────
 
-  × A rest parameter cannot have an initializer
+  × A rest element cannot have an initializer.
     ╭─[test262/test/language/expressions/class/dstr/private-meth-static-dflt-ary-ptrn-rest-init-id.js:74:22]
  73 │ var C = class {
  74 │   static #method([...x = []] = []) {
@@ -9789,7 +9857,7 @@ Negative Passed: 4519/4519 (100.00%)
  75 │     
     ╰────
 
-  × A rest parameter cannot have an initializer
+  × A rest element cannot have an initializer.
     ╭─[test262/test/language/expressions/class/dstr/private-meth-static-dflt-ary-ptrn-rest-init-obj.js:74:22]
  73 │ var C = class {
  74 │   static #method([...{ x } = []] = []) {
@@ -10337,41 +10405,41 @@ Negative Passed: 4519/4519 (100.00%)
  28 │ }
     ╰────
 
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-    ╭─[test262/test/language/expressions/class/elements/fields-asi-3.js:18:8]
+  × Expected `;` but found `{`
+    ╭─[test262/test/language/expressions/class/elements/fields-asi-3.js:18:9]
  17 │   x = "string"
  18 │   [0]() {}
-    ·        ▲
+    ·         ┬
+    ·         ╰── `;` expected
  19 │ }
     ╰────
-  help: Try insert a semicolon here
 
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-    ╭─[test262/test/language/expressions/class/elements/fields-asi-4.js:18:9]
+  × Expected `;` but found `{`
+    ╭─[test262/test/language/expressions/class/elements/fields-asi-4.js:18:10]
  17 │   x = 42
  18 │   *gen() {}
-    ·         ▲
+    ·          ┬
+    ·          ╰── `;` expected
  19 │ }
     ╰────
-  help: Try insert a semicolon here
 
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-    ╭─[test262/test/language/expressions/class/elements/fields-asi-same-line-1.js:17:8]
+  × Expected `;` but found `Identifier`
+    ╭─[test262/test/language/expressions/class/elements/fields-asi-same-line-1.js:17:27]
  16 │ var C = class {
  17 │   field /* no ASI here */ method(){}
-    ·        ▲
+    ·                           ───┬──
+    ·                              ╰── `;` expected
  18 │ }
     ╰────
-  help: Try insert a semicolon here
 
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-    ╭─[test262/test/language/expressions/class/elements/fields-asi-same-line-2.js:17:12]
+  × Expected `;` but found `Identifier`
+    ╭─[test262/test/language/expressions/class/elements/fields-asi-same-line-2.js:17:31]
  16 │ var C = class {
  17 │   field = 1 /* no ASI here */ method(){}
-    ·            ▲
+    ·                               ───┬──
+    ·                                  ╰── `;` expected
  18 │ }
     ╰────
-  help: Try insert a semicolon here
 
   × Identifier `x` has already been declared
     ╭─[test262/test/language/expressions/class/elements/fields-duplicate-privatenames.js:23:3]
@@ -10385,11 +10453,12 @@ Negative Passed: 4519/4519 (100.00%)
  25 │ }
     ╰────
 
-  × Classes can't have a field named 'constructor'
-    ╭─[test262/test/language/expressions/class/elements/fields-literal-name-propname-constructor.js:29:3]
+  × Expected `(` but found `;`
+    ╭─[test262/test/language/expressions/class/elements/fields-literal-name-propname-constructor.js:29:14]
  28 │ var C = class {
  29 │   constructor;
-    ·   ───────────
+    ·              ┬
+    ·              ╰── `(` expected
  30 │ };
     ╰────
 
@@ -10693,23 +10762,23 @@ Negative Passed: 4519/4519 (100.00%)
  28 │ }
     ╰────
 
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-    ╭─[test262/test/language/expressions/class/elements/nested-equality-init-err-contains-arguments.js:33:15]
+  × Expected `;` but found `==`
+    ╭─[test262/test/language/expressions/class/elements/nested-equality-init-err-contains-arguments.js:33:16]
  32 │ var C = class {
  33 │   x = () => {} == arguments;
-    ·               ▲
+    ·                ─┬
+    ·                 ╰── `;` expected
  34 │ }
     ╰────
-  help: Try insert a semicolon here
 
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-    ╭─[test262/test/language/expressions/class/elements/nested-equality-init-err-contains-super.js:26:15]
+  × Expected `;` but found `==`
+    ╭─[test262/test/language/expressions/class/elements/nested-equality-init-err-contains-super.js:26:16]
  25 │ var C = class {
  26 │   x = () => {} == super();
-    ·               ▲
+    ·                ─┬
+    ·                 ╰── `;` expected
  27 │ }
     ╰────
-  help: Try insert a semicolon here
 
   × 'arguments' is not allowed in class field initializer
     ╭─[test262/test/language/expressions/class/elements/nested-literal-name-init-err-contains-arguments.js:33:13]
@@ -12409,14 +12478,14 @@ Negative Passed: 4519/4519 (100.00%)
  71 │ };
     ╰────
 
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-    ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/grammar-fields-same-line-error.js:33:4]
+  × Expected `;` but found `Identifier`
+    ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/grammar-fields-same-line-error.js:33:5]
  32 │ var C = class {
  33 │   x y
-    ·    ▲
+    ·     ┬
+    ·     ╰── `;` expected
  34 │ };
     ╰────
-  help: Try insert a semicolon here
 
   × Expected `{` but found `=>`
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/grammar-private-environment-on-class-heritage-array-literal.js:37:27]
@@ -12720,15 +12789,6 @@ Negative Passed: 4519/4519 (100.00%)
  30 │ };
     ╰────
 
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-    ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/grammar-privatename-whitespace-error-accessor-get-meth.js:29:6]
- 28 │ var C = class {
- 29 │   get # m() {}
-    ·      ▲
- 30 │ };
-    ╰────
-  help: Try insert a semicolon here
-
   × Invalid Character ` `
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/grammar-privatename-whitespace-error-accessor-set-meth.js:29:8]
  28 │ var C = class {
@@ -12736,15 +12796,6 @@ Negative Passed: 4519/4519 (100.00%)
     ·        ─
  30 │ };
     ╰────
-
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-    ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/grammar-privatename-whitespace-error-accessor-set-meth.js:29:6]
- 28 │ var C = class {
- 29 │   set # m(_) {}
-    ·      ▲
- 30 │ };
-    ╰────
-  help: Try insert a semicolon here
 
   × Invalid Character ` `
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/grammar-privatename-whitespace-error-async-gen-meth.js:29:12]
@@ -12761,15 +12812,6 @@ Negative Passed: 4519/4519 (100.00%)
     ·          ─
  30 │ };
     ╰────
-
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-    ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/grammar-privatename-whitespace-error-async-meth.js:29:8]
- 28 │ var C = class {
- 29 │   async # m() {}
-    ·        ▲
- 30 │ };
-    ╰────
-  help: Try insert a semicolon here
 
   × Invalid Character ` `
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/grammar-privatename-whitespace-error-call-expr.js:38:15]
@@ -12827,15 +12869,6 @@ Negative Passed: 4519/4519 (100.00%)
  30 │ };
     ╰────
 
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-    ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/grammar-privatename-whitespace-error-static-accessor-get-meth.js:29:13]
- 28 │ var C = class {
- 29 │   static get # m() {}
-    ·             ▲
- 30 │ };
-    ╰────
-  help: Try insert a semicolon here
-
   × Invalid Character ` `
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/grammar-privatename-whitespace-error-static-accessor-set-meth.js:29:15]
  28 │ var C = class {
@@ -12843,15 +12876,6 @@ Negative Passed: 4519/4519 (100.00%)
     ·               ─
  30 │ };
     ╰────
-
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-    ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/grammar-privatename-whitespace-error-static-accessor-set-meth.js:29:13]
- 28 │ var C = class {
- 29 │   static set # m(_) {}
-    ·             ▲
- 30 │ };
-    ╰────
-  help: Try insert a semicolon here
 
   × Invalid Character ` `
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/grammar-privatename-whitespace-error-static-async-gen-meth.js:29:19]
@@ -12869,15 +12893,6 @@ Negative Passed: 4519/4519 (100.00%)
  30 │ };
     ╰────
 
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-    ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/grammar-privatename-whitespace-error-static-async-meth.js:29:15]
- 28 │ var C = class {
- 29 │   static async # m() {}
-    ·               ▲
- 30 │ };
-    ╰────
-  help: Try insert a semicolon here
-
   × Invalid Character ` `
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/grammar-privatename-whitespace-error-static-field-init.js:29:11]
  28 │ var C = class {
@@ -12886,15 +12901,6 @@ Negative Passed: 4519/4519 (100.00%)
  30 │ };
     ╰────
 
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-    ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/grammar-privatename-whitespace-error-static-field-init.js:29:9]
- 28 │ var C = class {
- 29 │   static # x = 1;
-    ·         ▲
- 30 │ };
-    ╰────
-  help: Try insert a semicolon here
-
   × Invalid Character ` `
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/grammar-privatename-whitespace-error-static-field.js:29:11]
  28 │ var C = class {
@@ -12902,15 +12908,6 @@ Negative Passed: 4519/4519 (100.00%)
     ·           ─
  30 │ };
     ╰────
-
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-    ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/grammar-privatename-whitespace-error-static-field.js:29:9]
- 28 │ var C = class {
- 29 │   static # x;
-    ·         ▲
- 30 │ };
-    ╰────
-  help: Try insert a semicolon here
 
   × Invalid Character ` `
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/grammar-privatename-whitespace-error-static-gen-meth.js:29:13]
@@ -12928,23 +12925,14 @@ Negative Passed: 4519/4519 (100.00%)
  30 │ };
     ╰────
 
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-    ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/grammar-privatename-whitespace-error-static-meth.js:29:9]
- 28 │ var C = class {
- 29 │   static # m() {}
-    ·         ▲
- 30 │ };
-    ╰────
-  help: Try insert a semicolon here
-
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-    ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/grammar-privatenames-same-line-error.js:36:5]
+  × Expected `;` but found `#identifier`
+    ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/grammar-privatenames-same-line-error.js:36:6]
  35 │ var C = class {
  36 │   #x #y
-    ·     ▲
+    ·      ─┬
+    ·       ╰── `;` expected
  37 │ };
     ╰────
-  help: Try insert a semicolon here
 
   × Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/grammar-special-meth-contains-super-async-gen.js:26:7]
@@ -13580,7 +13568,7 @@ Negative Passed: 4519/4519 (100.00%)
  86 │     
     ╰────
 
-  × A rest parameter cannot have an initializer
+  × A rest element cannot have an initializer.
     ╭─[test262/test/language/expressions/class/gen-method/dflt-params-rest.js:89:14]
  88 │ 0, class {
  89 │   *method(...x = []) {
@@ -13609,6 +13597,14 @@ Negative Passed: 4519/4519 (100.00%)
  81 │ 0, class {
  82 │   *method(...a,) {
     ·           ────
+ 83 │     
+    ╰────
+
+  × A rest parameter or binding pattern may not have a trailing comma.
+    ╭─[test262/test/language/expressions/class/gen-method/rest-params-trailing-comma-early-error.js:82:15]
+ 81 │ 0, class {
+ 82 │   *method(...a,) {
+    ·               ─
  83 │     
     ╰────
 
@@ -13745,7 +13741,7 @@ Negative Passed: 4519/4519 (100.00%)
  86 │     
     ╰────
 
-  × A rest parameter cannot have an initializer
+  × A rest element cannot have an initializer.
     ╭─[test262/test/language/expressions/class/gen-method-static/dflt-params-rest.js:89:21]
  88 │ 0, class {
  89 │   static *method(...x = []) {
@@ -13774,6 +13770,14 @@ Negative Passed: 4519/4519 (100.00%)
  81 │ 0, class {
  82 │   static *method(...a,) {
     ·                  ────
+ 83 │     
+    ╰────
+
+  × A rest parameter or binding pattern may not have a trailing comma.
+    ╭─[test262/test/language/expressions/class/gen-method-static/rest-params-trailing-comma-early-error.js:82:22]
+ 81 │ 0, class {
+ 82 │   static *method(...a,) {
+    ·                      ─
  83 │     
     ╰────
 
@@ -13908,7 +13912,7 @@ Negative Passed: 4519/4519 (100.00%)
  82 │     
     ╰────
 
-  × A rest parameter cannot have an initializer
+  × A rest element cannot have an initializer.
     ╭─[test262/test/language/expressions/class/method/dflt-params-rest.js:85:13]
  84 │ 0, class {
  85 │   method(...x = []) {
@@ -13940,6 +13944,14 @@ Negative Passed: 4519/4519 (100.00%)
  78 │     
     ╰────
 
+  × A rest parameter or binding pattern may not have a trailing comma.
+    ╭─[test262/test/language/expressions/class/method/rest-params-trailing-comma-early-error.js:77:14]
+ 76 │ 0, class {
+ 77 │   method(...a,) {
+    ·              ─
+ 78 │     
+    ╰────
+
   × The keyword 'yield' is reserved
     ╭─[test262/test/language/expressions/class/method-param-dflt-yield.js:22:9]
  21 │ 0, class {
@@ -13966,7 +13978,7 @@ Negative Passed: 4519/4519 (100.00%)
  82 │     
     ╰────
 
-  × A rest parameter cannot have an initializer
+  × A rest element cannot have an initializer.
     ╭─[test262/test/language/expressions/class/method-static/dflt-params-rest.js:85:20]
  84 │ 0, class {
  85 │   static method(...x = []) {
@@ -13995,6 +14007,14 @@ Negative Passed: 4519/4519 (100.00%)
  76 │ 0, class {
  77 │   static method(...a,) {
     ·                 ────
+ 78 │     
+    ╰────
+
+  × A rest parameter or binding pattern may not have a trailing comma.
+    ╭─[test262/test/language/expressions/class/method-static/rest-params-trailing-comma-early-error.js:77:21]
+ 76 │ 0, class {
+ 77 │   static method(...a,) {
+    ·                     ─
  78 │     
     ╰────
 
@@ -14293,14 +14313,14 @@ Negative Passed: 4519/4519 (100.00%)
     · ────
     ╰────
 
-  × Unexpected token
+  × Cannot assign to this expression
     ╭─[test262/test/language/expressions/conditional/in-branch-2.js:23:6]
  22 │ 
  23 │ for (true ? 0 : 0 in {}; false; ) ;
     ·      ────────────
     ╰────
 
-  × Unexpected token
+  × Cannot assign to this expression
     ╭─[test262/test/language/expressions/conditional/in-condition.js:23:6]
  22 │ 
  23 │ for ('' in {} ? 0 : 0; false; ) ;
@@ -14536,12 +14556,11 @@ Negative Passed: 4519/4519 (100.00%)
     ·                      ───
     ╰────
 
-  × Expected `)` but found `string`
-    ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-arrow-assignment-expression-not-extensible-args.js:39:48]
+  × Dynamic imports can only accept a module specifier and an optional set of attributes as arguments
+    ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-arrow-assignment-expression-not-extensible-args.js:39:15]
  38 │ 
  39 │ let f = () => import('./empty_FIXTURE.js', {}, '');
-    ·                                                ─┬
-    ·                                                 ╰── `)` expected
+    ·               ────────────────────────────────
     ╰────
 
   × Expected `(` but found `.`
@@ -14642,12 +14661,11 @@ Negative Passed: 4519/4519 (100.00%)
  44 │ };
     ╰────
 
-  × Expected `)` but found `string`
-    ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-arrow-not-extensible-args.js:40:36]
+  × Dynamic imports can only accept a module specifier and an optional set of attributes as arguments
+    ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-arrow-not-extensible-args.js:40:3]
  39 │ let f = () => {
  40 │   import('./empty_FIXTURE.js', {}, '');
-    ·                                    ─┬
-    ·                                     ╰── `)` expected
+    ·   ────────────────────────────────
  41 │ };
     ╰────
 
@@ -14757,12 +14775,11 @@ Negative Passed: 4519/4519 (100.00%)
  44 │ });
     ╰────
 
-  × Expected `)` but found `string`
-    ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-async-arrow-function-await-not-extensible-args.js:40:42]
+  × Dynamic imports can only accept a module specifier and an optional set of attributes as arguments
+    ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-async-arrow-function-await-not-extensible-args.js:40:9]
  39 │ (async () => {
  40 │   await import('./empty_FIXTURE.js', {}, '')
-    ·                                          ─┬
-    ·                                           ╰── `)` expected
+    ·         ────────────────────────────────
  41 │ });
     ╰────
 
@@ -14866,12 +14883,11 @@ Negative Passed: 4519/4519 (100.00%)
     ·                           ───
     ╰────
 
-  × Expected `)` but found `string`
-    ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-async-arrow-function-return-await-not-extensible-args.js:39:53]
+  × Dynamic imports can only accept a module specifier and an optional set of attributes as arguments
+    ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-async-arrow-function-return-await-not-extensible-args.js:39:20]
  38 │ 
  39 │ (async () => await import('./empty_FIXTURE.js', {}, ''))
-    ·                                                     ─┬
-    ·                                                      ╰── `)` expected
+    ·                    ────────────────────────────────
     ╰────
 
   × Expected `(` but found `.`
@@ -14988,12 +15004,11 @@ Negative Passed: 4519/4519 (100.00%)
  44 │ }
     ╰────
 
-  × Expected `)` but found `string`
-    ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-async-function-await-not-extensible-args.js:40:42]
+  × Dynamic imports can only accept a module specifier and an optional set of attributes as arguments
+    ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-async-function-await-not-extensible-args.js:40:9]
  39 │ async function f() {
  40 │   await import('./empty_FIXTURE.js', {}, '');
-    ·                                          ─┬
-    ·                                           ╰── `)` expected
+    ·         ────────────────────────────────
  41 │ }
     ╰────
 
@@ -15095,12 +15110,11 @@ Negative Passed: 4519/4519 (100.00%)
  44 │ }
     ╰────
 
-  × Expected `)` but found `string`
-    ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-async-function-not-extensible-args.js:40:36]
+  × Dynamic imports can only accept a module specifier and an optional set of attributes as arguments
+    ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-async-function-not-extensible-args.js:40:3]
  39 │ async function f() {
  40 │   import('./empty_FIXTURE.js', {}, '');
-    ·                                    ─┬
-    ·                                     ╰── `)` expected
+    ·   ────────────────────────────────
  41 │ }
     ╰────
 
@@ -15184,12 +15198,11 @@ Negative Passed: 4519/4519 (100.00%)
  44 │ }
     ╰────
 
-  × Expected `)` but found `string`
-    ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-async-function-return-await-not-extensible-args.js:40:49]
+  × Dynamic imports can only accept a module specifier and an optional set of attributes as arguments
+    ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-async-function-return-await-not-extensible-args.js:40:16]
  39 │ async function f() {
  40 │   return await import('./empty_FIXTURE.js', {}, '');
-    ·                                                 ─┬
-    ·                                                  ╰── `)` expected
+    ·                ────────────────────────────────
  41 │ }
     ╰────
 
@@ -15325,12 +15338,11 @@ Negative Passed: 4519/4519 (100.00%)
  44 │ }
     ╰────
 
-  × Expected `)` but found `string`
-    ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-async-gen-await-not-extensible-args.js:40:42]
+  × Dynamic imports can only accept a module specifier and an optional set of attributes as arguments
+    ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-async-gen-await-not-extensible-args.js:40:9]
  39 │ async function * f() {
  40 │   await import('./empty_FIXTURE.js', {}, '')
-    ·                                          ─┬
-    ·                                           ╰── `)` expected
+    ·         ────────────────────────────────
  41 │ }
     ╰────
 
@@ -15504,12 +15516,11 @@ Negative Passed: 4519/4519 (100.00%)
  44 │ };
     ╰────
 
-  × Expected `)` but found `string`
-    ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-block-labeled-not-extensible-args.js:40:36]
+  × Dynamic imports can only accept a module specifier and an optional set of attributes as arguments
+    ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-block-labeled-not-extensible-args.js:40:3]
  39 │ label: {
  40 │   import('./empty_FIXTURE.js', {}, '');
-    ·                                    ─┬
-    ·                                     ╰── `)` expected
+    ·   ────────────────────────────────
  41 │ };
     ╰────
 
@@ -15555,12 +15566,11 @@ Negative Passed: 4519/4519 (100.00%)
  44 │ };
     ╰────
 
-  × Expected `)` but found `string`
-    ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-block-not-extensible-args.js:40:36]
+  × Dynamic imports can only accept a module specifier and an optional set of attributes as arguments
+    ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-block-not-extensible-args.js:40:3]
  39 │ {
  40 │   import('./empty_FIXTURE.js', {}, '');
-    ·                                    ─┬
-    ·                                     ╰── `)` expected
+    ·   ────────────────────────────────
  41 │ };
     ╰────
 
@@ -15670,12 +15680,11 @@ Negative Passed: 4519/4519 (100.00%)
  44 │ } while (false);
     ╰────
 
-  × Expected `)` but found `string`
-    ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-do-while-not-extensible-args.js:40:36]
+  × Dynamic imports can only accept a module specifier and an optional set of attributes as arguments
+    ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-do-while-not-extensible-args.js:40:3]
  39 │ do {
  40 │   import('./empty_FIXTURE.js', {}, '');
-    ·                                    ─┬
-    ·                                     ╰── `)` expected
+    ·   ────────────────────────────────
  41 │ } while (false);
     ╰────
 
@@ -15787,12 +15796,11 @@ Negative Passed: 4519/4519 (100.00%)
     ·               ───
     ╰────
 
-  × Expected `)` but found `string`
-    ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-else-braceless-not-extensible-args.js:41:41]
+  × Dynamic imports can only accept a module specifier and an optional set of attributes as arguments
+    ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-else-braceless-not-extensible-args.js:41:8]
  40 │ 
  41 │ } else import('./empty_FIXTURE.js', {}, '');
-    ·                                         ─┬
-    ·                                          ╰── `)` expected
+    ·        ────────────────────────────────
     ╰────
 
   × Expected `(` but found `.`
@@ -15893,12 +15901,11 @@ Negative Passed: 4519/4519 (100.00%)
  46 │ }
     ╰────
 
-  × Expected `)` but found `string`
-    ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-else-not-extensible-args.js:42:36]
+  × Dynamic imports can only accept a module specifier and an optional set of attributes as arguments
+    ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-else-not-extensible-args.js:42:3]
  41 │ } else {
  42 │   import('./empty_FIXTURE.js', {}, '');
-    ·                                    ─┬
-    ·                                     ╰── `)` expected
+    ·   ────────────────────────────────
  43 │ }
     ╰────
 
@@ -16008,12 +16015,11 @@ Negative Passed: 4519/4519 (100.00%)
  44 │ }
     ╰────
 
-  × Expected `)` but found `string`
-    ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-function-not-extensible-args.js:40:36]
+  × Dynamic imports can only accept a module specifier and an optional set of attributes as arguments
+    ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-function-not-extensible-args.js:40:3]
  39 │ function fn() {
  40 │   import('./empty_FIXTURE.js', {}, '');
-    ·                                    ─┬
-    ·                                     ╰── `)` expected
+    ·   ────────────────────────────────
  41 │ }
     ╰────
 
@@ -16097,12 +16103,11 @@ Negative Passed: 4519/4519 (100.00%)
  44 │ }
     ╰────
 
-  × Expected `)` but found `string`
-    ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-function-return-not-extensible-args.js:40:43]
+  × Dynamic imports can only accept a module specifier and an optional set of attributes as arguments
+    ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-function-return-not-extensible-args.js:40:10]
  39 │ function fn() {
  40 │   return import('./empty_FIXTURE.js', {}, '');
-    ·                                           ─┬
-    ·                                            ╰── `)` expected
+    ·          ────────────────────────────────
  41 │ }
     ╰────
 
@@ -16240,12 +16245,11 @@ Negative Passed: 4519/4519 (100.00%)
     ·                  ───
     ╰────
 
-  × Expected `)` but found `string`
-    ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-if-braceless-not-extensible-args.js:39:44]
+  × Dynamic imports can only accept a module specifier and an optional set of attributes as arguments
+    ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-if-braceless-not-extensible-args.js:39:11]
  38 │ 
  39 │ if (true) import('./empty_FIXTURE.js', {}, '');
-    ·                                            ─┬
-    ·                                             ╰── `)` expected
+    ·           ────────────────────────────────
     ╰────
 
   × Expected `(` but found `.`
@@ -16346,12 +16350,11 @@ Negative Passed: 4519/4519 (100.00%)
  44 │ }
     ╰────
 
-  × Expected `)` but found `string`
-    ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-if-not-extensible-args.js:40:36]
+  × Dynamic imports can only accept a module specifier and an optional set of attributes as arguments
+    ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-if-not-extensible-args.js:40:3]
  39 │ if (true) {
  40 │   import('./empty_FIXTURE.js', {}, '');
-    ·                                    ─┬
-    ·                                     ╰── `)` expected
+    ·   ────────────────────────────────
  41 │ }
     ╰────
 
@@ -16461,12 +16464,11 @@ Negative Passed: 4519/4519 (100.00%)
  46 │ };
     ╰────
 
-  × Expected `)` but found `string`
-    ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-while-not-extensible-args.js:42:36]
+  × Dynamic imports can only accept a module specifier and an optional set of attributes as arguments
+    ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-while-not-extensible-args.js:42:3]
  41 │   x++;
  42 │   import('./empty_FIXTURE.js', {}, '');
-    ·                                    ─┬
-    ·                                     ╰── `)` expected
+    ·   ────────────────────────────────
  43 │ };
     ╰────
 
@@ -16578,12 +16580,11 @@ Negative Passed: 4519/4519 (100.00%)
     ·              ───
     ╰────
 
-  × Expected `)` but found `string`
-    ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-with-expression-not-extensible-args.js:38:40]
+  × Dynamic imports can only accept a module specifier and an optional set of attributes as arguments
+    ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-with-expression-not-extensible-args.js:38:7]
  37 │ 
  38 │ with (import('./empty_FIXTURE.js', {}, '')) {}
-    ·                                        ─┬
-    ·                                         ╰── `)` expected
+    ·       ────────────────────────────────
     ╰────
 
   × Expected `(` but found `.`
@@ -16684,12 +16685,11 @@ Negative Passed: 4519/4519 (100.00%)
  43 │ }
     ╰────
 
-  × Expected `)` but found `string`
-    ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-with-not-extensible-args.js:39:36]
+  × Dynamic imports can only accept a module specifier and an optional set of attributes as arguments
+    ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-with-not-extensible-args.js:39:3]
  38 │ with ({}) {
  39 │   import('./empty_FIXTURE.js', {}, '');
-    ·                                    ─┬
-    ·                                     ╰── `)` expected
+    ·   ────────────────────────────────
  40 │ }
     ╰────
 
@@ -16793,12 +16793,11 @@ Negative Passed: 4519/4519 (100.00%)
     ·        ───
     ╰────
 
-  × Expected `)` but found `string`
-    ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/top-level-not-extensible-args.js:29:34]
+  × Dynamic imports can only accept a module specifier and an optional set of attributes as arguments
+    ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/top-level-not-extensible-args.js:29:1]
  28 │ 
  29 │ import('./empty_FIXTURE.js', {}, '');
-    ·                                  ─┬
-    ·                                   ╰── `)` expected
+    · ────────────────────────────────
     ╰────
 
   × Expected `(` but found `.`
@@ -16831,7 +16830,7 @@ Negative Passed: 4519/4519 (100.00%)
     ╭─[test262/test/language/expressions/exponentiation/exp-operator-syntax-error-bitnot-unary-expression-base.js:26:1]
  25 │ $DONOTEVALUATE();
  26 │ ~3 ** 2;
-    · ───────
+    · ──
     ╰────
   help: Wrap unary expression in parentheses to enforce operator precedence
 
@@ -16839,7 +16838,7 @@ Negative Passed: 4519/4519 (100.00%)
     ╭─[test262/test/language/expressions/exponentiation/exp-operator-syntax-error-delete-unary-expression-base.js:26:1]
  25 │ $DONOTEVALUATE();
  26 │ delete o.p ** 2;
-    · ───────────────
+    · ──────────
     ╰────
   help: Wrap unary expression in parentheses to enforce operator precedence
 
@@ -16847,7 +16846,7 @@ Negative Passed: 4519/4519 (100.00%)
     ╭─[test262/test/language/expressions/exponentiation/exp-operator-syntax-error-logical-not-unary-expression-base.js:26:1]
  25 │ $DONOTEVALUATE();
  26 │ !1 ** 2;
-    · ───────
+    · ──
     ╰────
   help: Wrap unary expression in parentheses to enforce operator precedence
 
@@ -16855,7 +16854,7 @@ Negative Passed: 4519/4519 (100.00%)
     ╭─[test262/test/language/expressions/exponentiation/exp-operator-syntax-error-negate-unary-expression-base.js:26:1]
  25 │ $DONOTEVALUATE();
  26 │ -3 ** 2;
-    · ───────
+    · ──
     ╰────
   help: Wrap unary expression in parentheses to enforce operator precedence
 
@@ -16863,7 +16862,7 @@ Negative Passed: 4519/4519 (100.00%)
     ╭─[test262/test/language/expressions/exponentiation/exp-operator-syntax-error-plus-unary-expression-base.js:26:1]
  25 │ $DONOTEVALUATE();
  26 │ +1 ** 2;
-    · ───────
+    · ──
     ╰────
   help: Wrap unary expression in parentheses to enforce operator precedence
 
@@ -16871,7 +16870,7 @@ Negative Passed: 4519/4519 (100.00%)
     ╭─[test262/test/language/expressions/exponentiation/exp-operator-syntax-error-typeof-unary-expression-base.js:26:1]
  25 │ $DONOTEVALUATE();
  26 │ typeof 1 ** 2;
-    · ─────────────
+    · ────────
     ╰────
   help: Wrap unary expression in parentheses to enforce operator precedence
 
@@ -16879,7 +16878,7 @@ Negative Passed: 4519/4519 (100.00%)
     ╭─[test262/test/language/expressions/exponentiation/exp-operator-syntax-error-void-unary-expression-base.js:26:1]
  25 │ $DONOTEVALUATE();
  26 │ void 1 ** 2;
-    · ───────────
+    · ──────
     ╰────
   help: Wrap unary expression in parentheses to enforce operator precedence
 
@@ -16901,7 +16900,7 @@ Negative Passed: 4519/4519 (100.00%)
  61 │   
     ╰────
 
-  × A rest parameter cannot have an initializer
+  × A rest element cannot have an initializer.
     ╭─[test262/test/language/expressions/function/dflt-params-rest.js:64:16]
  63 │ 
  64 │ 0, function(...x = []) {
@@ -16909,7 +16908,7 @@ Negative Passed: 4519/4519 (100.00%)
  65 │   
     ╰────
 
-  × A rest parameter cannot have an initializer
+  × A rest element cannot have an initializer.
     ╭─[test262/test/language/expressions/function/dstr/ary-ptrn-rest-init-ary.js:54:18]
  53 │ var f;
  54 │ f = function([...[ x ] = []]) {
@@ -16917,7 +16916,7 @@ Negative Passed: 4519/4519 (100.00%)
  55 │   
     ╰────
 
-  × A rest parameter cannot have an initializer
+  × A rest element cannot have an initializer.
     ╭─[test262/test/language/expressions/function/dstr/ary-ptrn-rest-init-id.js:54:18]
  53 │ var f;
  54 │ f = function([...x = []]) {
@@ -16925,7 +16924,7 @@ Negative Passed: 4519/4519 (100.00%)
  55 │   
     ╰────
 
-  × A rest parameter cannot have an initializer
+  × A rest element cannot have an initializer.
     ╭─[test262/test/language/expressions/function/dstr/ary-ptrn-rest-init-obj.js:54:18]
  53 │ var f;
  54 │ f = function([...{ x } = []]) {
@@ -16957,7 +16956,7 @@ Negative Passed: 4519/4519 (100.00%)
  55 │   
     ╰────
 
-  × A rest parameter cannot have an initializer
+  × A rest element cannot have an initializer.
     ╭─[test262/test/language/expressions/function/dstr/dflt-ary-ptrn-rest-init-ary.js:54:18]
  53 │ var f;
  54 │ f = function([...[ x ] = []] = []) {
@@ -16965,7 +16964,7 @@ Negative Passed: 4519/4519 (100.00%)
  55 │   
     ╰────
 
-  × A rest parameter cannot have an initializer
+  × A rest element cannot have an initializer.
     ╭─[test262/test/language/expressions/function/dstr/dflt-ary-ptrn-rest-init-id.js:54:18]
  53 │ var f;
  54 │ f = function([...x = []] = []) {
@@ -16973,7 +16972,7 @@ Negative Passed: 4519/4519 (100.00%)
  55 │   
     ╰────
 
-  × A rest parameter cannot have an initializer
+  × A rest element cannot have an initializer.
     ╭─[test262/test/language/expressions/function/dstr/dflt-ary-ptrn-rest-init-obj.js:54:18]
  53 │ var f;
  54 │ f = function([...{ x } = []] = []) {
@@ -17202,6 +17201,14 @@ Negative Passed: 4519/4519 (100.00%)
  57 │   
     ╰────
 
+  × A rest parameter or binding pattern may not have a trailing comma.
+    ╭─[test262/test/language/expressions/function/rest-params-trailing-comma-early-error.js:56:17]
+ 55 │ 
+ 56 │ 0, function(...a,) {
+    ·                 ─
+ 57 │   
+    ╰────
+
   × Illegal 'use strict' directive in function with non-simple parameter list
     ╭─[test262/test/language/expressions/function/use-strict-with-non-simple-param.js:21:3]
  20 │ var f = function(a = 0) {
@@ -17228,7 +17235,7 @@ Negative Passed: 4519/4519 (100.00%)
  62 │   
     ╰────
 
-  × A rest parameter cannot have an initializer
+  × A rest element cannot have an initializer.
     ╭─[test262/test/language/expressions/generators/dflt-params-rest.js:65:17]
  64 │ 
  65 │ 0, function*(...x = []) {
@@ -17236,7 +17243,7 @@ Negative Passed: 4519/4519 (100.00%)
  66 │   
     ╰────
 
-  × A rest parameter cannot have an initializer
+  × A rest element cannot have an initializer.
     ╭─[test262/test/language/expressions/generators/dstr/ary-ptrn-rest-init-ary.js:54:19]
  53 │ var f;
  54 │ f = function*([...[ x ] = []]) {
@@ -17244,7 +17251,7 @@ Negative Passed: 4519/4519 (100.00%)
  55 │   
     ╰────
 
-  × A rest parameter cannot have an initializer
+  × A rest element cannot have an initializer.
     ╭─[test262/test/language/expressions/generators/dstr/ary-ptrn-rest-init-id.js:54:19]
  53 │ var f;
  54 │ f = function*([...x = []]) {
@@ -17252,7 +17259,7 @@ Negative Passed: 4519/4519 (100.00%)
  55 │   
     ╰────
 
-  × A rest parameter cannot have an initializer
+  × A rest element cannot have an initializer.
     ╭─[test262/test/language/expressions/generators/dstr/ary-ptrn-rest-init-obj.js:54:19]
  53 │ var f;
  54 │ f = function*([...{ x } = []]) {
@@ -17284,7 +17291,7 @@ Negative Passed: 4519/4519 (100.00%)
  55 │   
     ╰────
 
-  × A rest parameter cannot have an initializer
+  × A rest element cannot have an initializer.
     ╭─[test262/test/language/expressions/generators/dstr/dflt-ary-ptrn-rest-init-ary.js:54:19]
  53 │ var f;
  54 │ f = function*([...[ x ] = []] = []) {
@@ -17292,7 +17299,7 @@ Negative Passed: 4519/4519 (100.00%)
  55 │   
     ╰────
 
-  × A rest parameter cannot have an initializer
+  × A rest element cannot have an initializer.
     ╭─[test262/test/language/expressions/generators/dstr/dflt-ary-ptrn-rest-init-id.js:54:19]
  53 │ var f;
  54 │ f = function*([...x = []] = []) {
@@ -17300,7 +17307,7 @@ Negative Passed: 4519/4519 (100.00%)
  55 │   
     ╰────
 
-  × A rest parameter cannot have an initializer
+  × A rest element cannot have an initializer.
     ╭─[test262/test/language/expressions/generators/dstr/dflt-ary-ptrn-rest-init-obj.js:54:19]
  53 │ var f;
  54 │ f = function*([...{ x } = []] = []) {
@@ -17467,6 +17474,14 @@ Negative Passed: 4519/4519 (100.00%)
  57 │ 
  58 │ 0, function*(...a,) {
     ·              ────
+ 59 │   
+    ╰────
+
+  × A rest parameter or binding pattern may not have a trailing comma.
+    ╭─[test262/test/language/expressions/generators/rest-params-trailing-comma-early-error.js:58:18]
+ 57 │ 
+ 58 │ 0, function*(...a,) {
+    ·                  ─
  59 │   
     ╰────
 
@@ -17679,7 +17694,7 @@ Negative Passed: 4519/4519 (100.00%)
     · ───────────
     ╰────
 
-  × Unexpected token
+  × Cannot assign to this expression
     ╭─[test262/test/language/expressions/import.meta/syntax/invalid-assignment-target-for-await-of-loop.js:31:16]
  30 │ async function* f() {
  31 │     for await (import.meta of null) ;
@@ -17687,14 +17702,14 @@ Negative Passed: 4519/4519 (100.00%)
  32 │ }
     ╰────
 
-  × Unexpected token
+  × Cannot assign to this expression
     ╭─[test262/test/language/expressions/import.meta/syntax/invalid-assignment-target-for-in-loop.js:30:6]
  29 │ 
  30 │ for (import.meta in null) ;
     ·      ───────────
     ╰────
 
-  × Unexpected token
+  × Cannot assign to this expression
     ╭─[test262/test/language/expressions/import.meta/syntax/invalid-assignment-target-for-of-loop.js:30:6]
  29 │ 
  30 │ for (import.meta of null) ;
@@ -17920,7 +17935,7 @@ Negative Passed: 4519/4519 (100.00%)
     ╰────
   help: Did you mean to use a ':'? An '=' can only follow a property name when the containing object literal is part of a destructuring pattern.
 
-  × A rest parameter cannot have an initializer
+  × A rest element cannot have an initializer.
     ╭─[test262/test/language/expressions/object/dstr/async-gen-meth-ary-ptrn-rest-init-ary.js:39:21]
  38 │ var obj = {
  39 │   async *method([...[ x ] = []]) {
@@ -17928,7 +17943,7 @@ Negative Passed: 4519/4519 (100.00%)
  40 │     
     ╰────
 
-  × A rest parameter cannot have an initializer
+  × A rest element cannot have an initializer.
     ╭─[test262/test/language/expressions/object/dstr/async-gen-meth-ary-ptrn-rest-init-id.js:39:21]
  38 │ var obj = {
  39 │   async *method([...x = []]) {
@@ -17936,7 +17951,7 @@ Negative Passed: 4519/4519 (100.00%)
  40 │     
     ╰────
 
-  × A rest parameter cannot have an initializer
+  × A rest element cannot have an initializer.
     ╭─[test262/test/language/expressions/object/dstr/async-gen-meth-ary-ptrn-rest-init-obj.js:39:21]
  38 │ var obj = {
  39 │   async *method([...{ x } = []]) {
@@ -17968,7 +17983,7 @@ Negative Passed: 4519/4519 (100.00%)
  40 │     
     ╰────
 
-  × A rest parameter cannot have an initializer
+  × A rest element cannot have an initializer.
     ╭─[test262/test/language/expressions/object/dstr/async-gen-meth-dflt-ary-ptrn-rest-init-ary.js:39:21]
  38 │ var obj = {
  39 │   async *method([...[ x ] = []] = []) {
@@ -17976,7 +17991,7 @@ Negative Passed: 4519/4519 (100.00%)
  40 │     
     ╰────
 
-  × A rest parameter cannot have an initializer
+  × A rest element cannot have an initializer.
     ╭─[test262/test/language/expressions/object/dstr/async-gen-meth-dflt-ary-ptrn-rest-init-id.js:39:21]
  38 │ var obj = {
  39 │   async *method([...x = []] = []) {
@@ -17984,7 +17999,7 @@ Negative Passed: 4519/4519 (100.00%)
  40 │     
     ╰────
 
-  × A rest parameter cannot have an initializer
+  × A rest element cannot have an initializer.
     ╭─[test262/test/language/expressions/object/dstr/async-gen-meth-dflt-ary-ptrn-rest-init-obj.js:39:21]
  38 │ var obj = {
  39 │   async *method([...{ x } = []] = []) {
@@ -18016,7 +18031,7 @@ Negative Passed: 4519/4519 (100.00%)
  40 │     
     ╰────
 
-  × A rest parameter cannot have an initializer
+  × A rest element cannot have an initializer.
     ╭─[test262/test/language/expressions/object/dstr/gen-meth-ary-ptrn-rest-init-ary.js:59:15]
  58 │ var obj = {
  59 │   *method([...[ x ] = []]) {
@@ -18024,7 +18039,7 @@ Negative Passed: 4519/4519 (100.00%)
  60 │     
     ╰────
 
-  × A rest parameter cannot have an initializer
+  × A rest element cannot have an initializer.
     ╭─[test262/test/language/expressions/object/dstr/gen-meth-ary-ptrn-rest-init-id.js:59:15]
  58 │ var obj = {
  59 │   *method([...x = []]) {
@@ -18032,7 +18047,7 @@ Negative Passed: 4519/4519 (100.00%)
  60 │     
     ╰────
 
-  × A rest parameter cannot have an initializer
+  × A rest element cannot have an initializer.
     ╭─[test262/test/language/expressions/object/dstr/gen-meth-ary-ptrn-rest-init-obj.js:59:15]
  58 │ var obj = {
  59 │   *method([...{ x } = []]) {
@@ -18064,7 +18079,7 @@ Negative Passed: 4519/4519 (100.00%)
  60 │     
     ╰────
 
-  × A rest parameter cannot have an initializer
+  × A rest element cannot have an initializer.
     ╭─[test262/test/language/expressions/object/dstr/gen-meth-dflt-ary-ptrn-rest-init-ary.js:59:15]
  58 │ var obj = {
  59 │   *method([...[ x ] = []] = []) {
@@ -18072,7 +18087,7 @@ Negative Passed: 4519/4519 (100.00%)
  60 │     
     ╰────
 
-  × A rest parameter cannot have an initializer
+  × A rest element cannot have an initializer.
     ╭─[test262/test/language/expressions/object/dstr/gen-meth-dflt-ary-ptrn-rest-init-id.js:59:15]
  58 │ var obj = {
  59 │   *method([...x = []] = []) {
@@ -18080,7 +18095,7 @@ Negative Passed: 4519/4519 (100.00%)
  60 │     
     ╰────
 
-  × A rest parameter cannot have an initializer
+  × A rest element cannot have an initializer.
     ╭─[test262/test/language/expressions/object/dstr/gen-meth-dflt-ary-ptrn-rest-init-obj.js:59:15]
  58 │ var obj = {
  59 │   *method([...{ x } = []] = []) {
@@ -18112,7 +18127,7 @@ Negative Passed: 4519/4519 (100.00%)
  60 │     
     ╰────
 
-  × A rest parameter cannot have an initializer
+  × A rest element cannot have an initializer.
     ╭─[test262/test/language/expressions/object/dstr/meth-ary-ptrn-rest-init-ary.js:56:14]
  55 │ var obj = {
  56 │   method([...[ x ] = []]) {
@@ -18120,7 +18135,7 @@ Negative Passed: 4519/4519 (100.00%)
  57 │     
     ╰────
 
-  × A rest parameter cannot have an initializer
+  × A rest element cannot have an initializer.
     ╭─[test262/test/language/expressions/object/dstr/meth-ary-ptrn-rest-init-id.js:56:14]
  55 │ var obj = {
  56 │   method([...x = []]) {
@@ -18128,7 +18143,7 @@ Negative Passed: 4519/4519 (100.00%)
  57 │     
     ╰────
 
-  × A rest parameter cannot have an initializer
+  × A rest element cannot have an initializer.
     ╭─[test262/test/language/expressions/object/dstr/meth-ary-ptrn-rest-init-obj.js:56:14]
  55 │ var obj = {
  56 │   method([...{ x } = []]) {
@@ -18160,7 +18175,7 @@ Negative Passed: 4519/4519 (100.00%)
  57 │     
     ╰────
 
-  × A rest parameter cannot have an initializer
+  × A rest element cannot have an initializer.
     ╭─[test262/test/language/expressions/object/dstr/meth-dflt-ary-ptrn-rest-init-ary.js:56:14]
  55 │ var obj = {
  56 │   method([...[ x ] = []] = []) {
@@ -18168,7 +18183,7 @@ Negative Passed: 4519/4519 (100.00%)
  57 │     
     ╰────
 
-  × A rest parameter cannot have an initializer
+  × A rest element cannot have an initializer.
     ╭─[test262/test/language/expressions/object/dstr/meth-dflt-ary-ptrn-rest-init-id.js:56:14]
  55 │ var obj = {
  56 │   method([...x = []] = []) {
@@ -18176,7 +18191,7 @@ Negative Passed: 4519/4519 (100.00%)
  57 │     
     ╰────
 
-  × A rest parameter cannot have an initializer
+  × A rest element cannot have an initializer.
     ╭─[test262/test/language/expressions/object/dstr/meth-dflt-ary-ptrn-rest-init-obj.js:56:14]
  55 │ var obj = {
  56 │   method([...{ x } = []] = []) {
@@ -18479,7 +18494,7 @@ Negative Passed: 4519/4519 (100.00%)
  46 │     
     ╰────
 
-  × A rest parameter cannot have an initializer
+  × A rest element cannot have an initializer.
     ╭─[test262/test/language/expressions/object/method-definition/async-gen-meth-dflt-params-rest.js:49:20]
  48 │ 0, {
  49 │   async *method(...x = []) {
@@ -18516,6 +18531,14 @@ Negative Passed: 4519/4519 (100.00%)
  41 │ 0, {
  42 │   async *method(...a,) {
     ·                 ────
+ 43 │     
+    ╰────
+
+  × A rest parameter or binding pattern may not have a trailing comma.
+    ╭─[test262/test/language/expressions/object/method-definition/async-gen-meth-rest-params-trailing-comma-early-error.js:42:21]
+ 41 │ 0, {
+ 42 │   async *method(...a,) {
+    ·                     ─
  43 │     
     ╰────
 
@@ -18643,7 +18666,7 @@ Negative Passed: 4519/4519 (100.00%)
  39 │     
     ╰────
 
-  × A rest parameter cannot have an initializer
+  × A rest element cannot have an initializer.
     ╭─[test262/test/language/expressions/object/method-definition/async-meth-dflt-params-rest.js:42:20]
  41 │ ({
  42 │   async *method(...x = []) {
@@ -18680,6 +18703,14 @@ Negative Passed: 4519/4519 (100.00%)
  34 │ ({
  35 │   async *method(...a,) {
     ·                 ────
+ 36 │     
+    ╰────
+
+  × A rest parameter or binding pattern may not have a trailing comma.
+    ╭─[test262/test/language/expressions/object/method-definition/async-meth-rest-params-trailing-comma-early-error.js:35:21]
+ 34 │ ({
+ 35 │   async *method(...a,) {
+    ·                     ─
  36 │     
     ╰────
 
@@ -18859,7 +18890,7 @@ Negative Passed: 4519/4519 (100.00%)
  68 │     
     ╰────
 
-  × A rest parameter cannot have an initializer
+  × A rest element cannot have an initializer.
     ╭─[test262/test/language/expressions/object/method-definition/gen-meth-dflt-params-rest.js:71:14]
  70 │ 0, {
  71 │   *method(...x = []) {
@@ -18888,6 +18919,14 @@ Negative Passed: 4519/4519 (100.00%)
  63 │ 0, {
  64 │   *method(...a,) {
     ·           ────
+ 65 │     
+    ╰────
+
+  × A rest parameter or binding pattern may not have a trailing comma.
+    ╭─[test262/test/language/expressions/object/method-definition/gen-meth-rest-params-trailing-comma-early-error.js:64:15]
+ 63 │ 0, {
+ 64 │   *method(...a,) {
+    ·               ─
  65 │     
     ╰────
 
@@ -19080,7 +19119,7 @@ Negative Passed: 4519/4519 (100.00%)
  64 │     
     ╰────
 
-  × A rest parameter cannot have an initializer
+  × A rest element cannot have an initializer.
     ╭─[test262/test/language/expressions/object/method-definition/meth-dflt-params-rest.js:67:13]
  66 │ 0, {
  67 │   method(...x = []) {
@@ -19109,6 +19148,14 @@ Negative Passed: 4519/4519 (100.00%)
  58 │ 0, {
  59 │   method(...a,) {
     ·          ────
+ 60 │     
+    ╰────
+
+  × A rest parameter or binding pattern may not have a trailing comma.
+    ╭─[test262/test/language/expressions/object/method-definition/meth-rest-params-trailing-comma-early-error.js:59:14]
+ 58 │ 0, {
+ 59 │   method(...a,) {
+    ·              ─
  60 │     
     ╰────
 
@@ -19837,7 +19884,7 @@ Negative Passed: 4519/4519 (100.00%)
     · ────
     ╰────
 
-  × Unexpected token
+  × Cannot assign to this expression
     ╭─[test262/test/language/expressions/yield/in-iteration-stmt.js:23:8]
  22 │ function* g() {
  23 │   for (yield '' in {}; ; ) ;
@@ -19853,7 +19900,7 @@ Negative Passed: 4519/4519 (100.00%)
  29 │ }
     ╰────
 
-  × Unexpected token
+  × Cannot assign to this expression
     ╭─[test262/test/language/expressions/yield/star-in-iteration-stmt.js:23:8]
  22 │ function* g() {
  23 │   for (yield * '' in {}; ; ) ;
@@ -21329,12 +21376,26 @@ Negative Passed: 4519/4519 (100.00%)
     · ─
     ╰────
 
+  × Unexpected token
+    ╭─[test262/test/language/line-terminators/invalid-regexp-cr.js:18:1]
+ 17 │ 
+ 18 │ //
+    · ───
+    ╰────
+
   × Unterminated regular expression
     ╭─[test262/test/language/line-terminators/invalid-regexp-lf.js:18:1]
  17 │ 
  18 │ /
     · ──
  19 │ /
+    ╰────
+
+  × Unexpected token
+    ╭─[test262/test/language/line-terminators/invalid-regexp-lf.js:18:1]
+ 17 │     
+ 18 │ ╭─▶ /
+ 19 │ ╰─▶ /
     ╰────
 
   × Unterminated regular expression
@@ -21344,11 +21405,25 @@ Negative Passed: 4519/4519 (100.00%)
     · ──
     ╰────
 
+  × Unexpected token
+    ╭─[test262/test/language/line-terminators/invalid-regexp-ls.js:18:1]
+ 17 │ 
+ 18 │ / /
+    · ────
+    ╰────
+
   × Unterminated regular expression
     ╭─[test262/test/language/line-terminators/invalid-regexp-ps.js:18:1]
  17 │ 
  18 │ / /
     · ──
+    ╰────
+
+  × Unexpected token
+    ╭─[test262/test/language/line-terminators/invalid-regexp-ps.js:18:1]
+ 17 │ 
+ 18 │ / /
+    · ────
     ╰────
 
   × Unterminated string
@@ -22117,6 +22192,13 @@ Negative Passed: 4519/4519 (100.00%)
     ╰────
 
   × Unexpected token
+    ╭─[test262/test/language/literals/regexp/S7.8.5_A1.2_T2.js:27:1]
+ 26 │ 
+ 27 │ /\/
+    · ────
+    ╰────
+
+  × Unexpected token
     ╭─[test262/test/language/literals/regexp/S7.8.5_A1.2_T3.js:28:1]
  27 │ ///
  28 │ .source;
@@ -22138,12 +22220,26 @@ Negative Passed: 4519/4519 (100.00%)
  31 │ /
     ╰────
 
+  × Unexpected token
+    ╭─[test262/test/language/literals/regexp/S7.8.5_A1.3_T1.js:30:1]
+ 29 │     
+ 30 │ ╭─▶ /
+ 31 │ ╰─▶ /
+    ╰────
+
   × Unterminated regular expression
     ╭─[test262/test/language/literals/regexp/S7.8.5_A1.3_T3.js:30:1]
  29 │ 
  30 │ /
     · ──
  31 │ /
+    ╰────
+
+  × Unexpected token
+    ╭─[test262/test/language/literals/regexp/S7.8.5_A1.3_T3.js:30:1]
+ 29 │     
+ 30 │ ╭─▶ /
+ 31 │ ╰─▶ /
     ╰────
 
   × Unterminated regular expression
@@ -22154,6 +22250,13 @@ Negative Passed: 4519/4519 (100.00%)
  25 │ /
     ╰────
 
+  × Unexpected token
+    ╭─[test262/test/language/literals/regexp/S7.8.5_A1.5_T1.js:24:1]
+ 23 │     
+ 24 │ ╭─▶ /\
+ 25 │ ╰─▶ /
+    ╰────
+
   × Unterminated regular expression
     ╭─[test262/test/language/literals/regexp/S7.8.5_A1.5_T3.js:23:1]
  22 │ 
@@ -22162,7 +22265,21 @@ Negative Passed: 4519/4519 (100.00%)
  24 │ /
     ╰────
 
+  × Unexpected token
+    ╭─[test262/test/language/literals/regexp/S7.8.5_A1.5_T3.js:23:1]
+ 22 │     
+ 23 │ ╭─▶ /\
+ 24 │ ╰─▶ /
+    ╰────
+
   × Unterminated regular expression
+    ╭─[test262/test/language/literals/regexp/S7.8.5_A2.2_T1.js:24:1]
+ 23 │ 
+ 24 │ /a\/
+    · ─────
+    ╰────
+
+  × Unexpected token
     ╭─[test262/test/language/literals/regexp/S7.8.5_A2.2_T1.js:24:1]
  23 │ 
  24 │ /a\/
@@ -22184,12 +22301,26 @@ Negative Passed: 4519/4519 (100.00%)
  34 │ /
     ╰────
 
+  × Unexpected token
+    ╭─[test262/test/language/literals/regexp/S7.8.5_A2.3_T1.js:33:1]
+ 32 │     
+ 33 │ ╭─▶ /a
+ 34 │ ╰─▶ /
+    ╰────
+
   × Unterminated regular expression
     ╭─[test262/test/language/literals/regexp/S7.8.5_A2.3_T3.js:34:1]
  33 │ 
  34 │ /a
     · ───
  35 │ /
+    ╰────
+
+  × Unexpected token
+    ╭─[test262/test/language/literals/regexp/S7.8.5_A2.3_T3.js:34:1]
+ 33 │     
+ 34 │ ╭─▶ /a
+ 35 │ ╰─▶ /
     ╰────
 
   × Unterminated regular expression
@@ -22200,12 +22331,26 @@ Negative Passed: 4519/4519 (100.00%)
  30 │ /
     ╰────
 
+  × Unexpected token
+    ╭─[test262/test/language/literals/regexp/S7.8.5_A2.5_T1.js:29:1]
+ 28 │     
+ 29 │ ╭─▶ /a\
+ 30 │ ╰─▶ /
+    ╰────
+
   × Unterminated regular expression
     ╭─[test262/test/language/literals/regexp/S7.8.5_A2.5_T3.js:29:1]
  28 │ 
  29 │ /a\
     · ────
  30 │ /
+    ╰────
+
+  × Unexpected token
+    ╭─[test262/test/language/literals/regexp/S7.8.5_A2.5_T3.js:29:1]
+ 28 │     
+ 29 │ ╭─▶ /a\
+ 30 │ ╰─▶ /
     ╰────
 
   × Invalid regular expression: Invalid modifiers
@@ -22621,11 +22766,25 @@ Negative Passed: 4519/4519 (100.00%)
     ·    ─
     ╰────
 
+  × Unexpected token
+    ╭─[test262/test/language/literals/regexp/early-err-bad-flag.js:19:1]
+ 18 │ 
+ 19 │ /./G;
+    · ────
+    ╰────
+
   × Flag g is mentioned twice in regular expression literal
     ╭─[test262/test/language/literals/regexp/early-err-dup-flag.js:19:6]
  18 │ 
  19 │ /./gig;
     ·      ─
+    ╰────
+
+  × Unexpected token
+    ╭─[test262/test/language/literals/regexp/early-err-dup-flag.js:19:1]
+ 18 │ 
+ 19 │ /./gig;
+    · ──────
     ╰────
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
@@ -23253,12 +23412,32 @@ Negative Passed: 4519/4519 (100.00%)
  31 │ 
     ╰────
 
+  × Unexpected token
+    ╭─[test262/test/language/literals/regexp/regexp-first-char-no-line-separator.js:30:1]
+ 29 │     
+ 30 │ ╭─▶ / /
+ 31 │ │   
+ 32 │ │   /*
+ 33 │ │   There is a <LS> between the two / characters
+ 34 │ ╰─▶ */
+    ╰────
+
   × Unterminated regular expression
     ╭─[test262/test/language/literals/regexp/regexp-first-char-no-paragraph-separator.js:30:1]
  29 │ 
  30 │ / /
     · ──
  31 │ 
+    ╰────
+
+  × Unexpected token
+    ╭─[test262/test/language/literals/regexp/regexp-first-char-no-paragraph-separator.js:30:1]
+ 29 │     
+ 30 │ ╭─▶ / /
+ 31 │ │   
+ 32 │ │   /*
+ 33 │ │   There is a <PS> between the two / characters
+ 34 │ ╰─▶ */
     ╰────
 
   × Unterminated regular expression
@@ -23269,12 +23448,32 @@ Negative Passed: 4519/4519 (100.00%)
  30 │ 
     ╰────
 
+  × Unexpected token
+    ╭─[test262/test/language/literals/regexp/regexp-source-char-no-line-separator.js:29:1]
+ 28 │     
+ 29 │ ╭─▶ /a\\ /
+ 30 │ │   
+ 31 │ │   /*
+ 32 │ │   There is a <LS> between "a\\ " and "/"
+ 33 │ ╰─▶ */
+    ╰────
+
   × Unterminated regular expression
     ╭─[test262/test/language/literals/regexp/regexp-source-char-no-paragraph-separator.js:30:1]
  29 │ 
  30 │ /a\\  /
     · ─────
  31 │ 
+    ╰────
+
+  × Unexpected token
+    ╭─[test262/test/language/literals/regexp/regexp-source-char-no-paragraph-separator.js:30:1]
+ 29 │     
+ 30 │ ╭─▶ /a\\  /
+ 31 │ │   
+ 32 │ │   /*
+ 33 │ │   There is a <PS> between "a\\ " and "/"
+ 34 │ ╰─▶ */
     ╰────
 
   × Invalid regular expression: Could not parse the entire pattern
@@ -25417,7 +25616,7 @@ Negative Passed: 4519/4519 (100.00%)
  38 │   
     ╰────
 
-  × A rest parameter cannot have an initializer
+  × A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/async-function/dflt-params-rest.js:41:21]
  40 │ 
  41 │ async function f(...x = []) {
@@ -25570,6 +25769,14 @@ Negative Passed: 4519/4519 (100.00%)
  35 │   
     ╰────
 
+  × A rest parameter or binding pattern may not have a trailing comma.
+    ╭─[test262/test/language/statements/async-function/rest-params-trailing-comma-early-error.js:34:22]
+ 33 │ 
+ 34 │ async function f(...a,) {
+    ·                      ─
+ 35 │   
+    ╰────
+
   × Illegal 'use strict' directive in function with non-simple parameter list
      ╭─[test262/test/language/statements/async-generator/array-destructuring-param-strict-body.js:112:3]
  111 │ async function* f([element]) {
@@ -25652,7 +25859,7 @@ Negative Passed: 4519/4519 (100.00%)
  41 │   
     ╰────
 
-  × A rest parameter cannot have an initializer
+  × A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/async-generator/dflt-params-rest.js:44:22]
  43 │ 
  44 │ async function* f(...x = []) {
@@ -25660,7 +25867,7 @@ Negative Passed: 4519/4519 (100.00%)
  45 │   
     ╰────
 
-  × A rest parameter cannot have an initializer
+  × A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/async-generator/dstr/ary-ptrn-rest-init-ary.js:33:23]
  32 │ var callCount = 0;
  33 │ async function* f([...[ x ] = []]) {
@@ -25668,7 +25875,7 @@ Negative Passed: 4519/4519 (100.00%)
  34 │   
     ╰────
 
-  × A rest parameter cannot have an initializer
+  × A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/async-generator/dstr/ary-ptrn-rest-init-id.js:33:23]
  32 │ var callCount = 0;
  33 │ async function* f([...x = []]) {
@@ -25676,7 +25883,7 @@ Negative Passed: 4519/4519 (100.00%)
  34 │   
     ╰────
 
-  × A rest parameter cannot have an initializer
+  × A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/async-generator/dstr/ary-ptrn-rest-init-obj.js:33:23]
  32 │ var callCount = 0;
  33 │ async function* f([...{ x } = []]) {
@@ -25708,7 +25915,7 @@ Negative Passed: 4519/4519 (100.00%)
  34 │   
     ╰────
 
-  × A rest parameter cannot have an initializer
+  × A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/async-generator/dstr/dflt-ary-ptrn-rest-init-ary.js:33:23]
  32 │ var callCount = 0;
  33 │ async function* f([...[ x ] = []] = []) {
@@ -25716,7 +25923,7 @@ Negative Passed: 4519/4519 (100.00%)
  34 │   
     ╰────
 
-  × A rest parameter cannot have an initializer
+  × A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/async-generator/dstr/dflt-ary-ptrn-rest-init-id.js:33:23]
  32 │ var callCount = 0;
  33 │ async function* f([...x = []] = []) {
@@ -25724,7 +25931,7 @@ Negative Passed: 4519/4519 (100.00%)
  34 │   
     ╰────
 
-  × A rest parameter cannot have an initializer
+  × A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/async-generator/dstr/dflt-ary-ptrn-rest-init-obj.js:33:23]
  32 │ var callCount = 0;
  33 │ async function* f([...{ x } = []] = []) {
@@ -25784,6 +25991,14 @@ Negative Passed: 4519/4519 (100.00%)
  36 │ 
  37 │ async function* f(...a,) {
     ·                   ────
+ 38 │   
+    ╰────
+
+  × A rest parameter or binding pattern may not have a trailing comma.
+    ╭─[test262/test/language/statements/async-generator/rest-params-trailing-comma-early-error.js:37:23]
+ 36 │ 
+ 37 │ async function* f(...a,) {
+    ·                       ─
  38 │   
     ╰────
 
@@ -26208,7 +26423,7 @@ Negative Passed: 4519/4519 (100.00%)
  64 │     
     ╰────
 
-  × A rest parameter cannot have an initializer
+  × A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/class/async-gen-method/dflt-params-rest.js:67:20]
  66 │ class C {
  67 │   async *method(...x = []) {
@@ -26237,6 +26452,14 @@ Negative Passed: 4519/4519 (100.00%)
  59 │ class C {
  60 │   async *method(...a,) {
     ·                 ────
+ 61 │     
+    ╰────
+
+  × A rest parameter or binding pattern may not have a trailing comma.
+    ╭─[test262/test/language/statements/class/async-gen-method/rest-params-trailing-comma-early-error.js:60:21]
+ 59 │ class C {
+ 60 │   async *method(...a,) {
+    ·                     ─
  61 │     
     ╰────
 
@@ -26428,7 +26651,7 @@ Negative Passed: 4519/4519 (100.00%)
  65 │     
     ╰────
 
-  × A rest parameter cannot have an initializer
+  × A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/class/async-gen-method-static/dflt-params-rest.js:68:27]
  67 │ class C {
  68 │   static async *method(...x = []) {
@@ -26457,6 +26680,14 @@ Negative Passed: 4519/4519 (100.00%)
  60 │ class C {
  61 │   static async *method(...a,) {
     ·                        ────
+ 62 │     
+    ╰────
+
+  × A rest parameter or binding pattern may not have a trailing comma.
+    ╭─[test262/test/language/statements/class/async-gen-method-static/rest-params-trailing-comma-early-error.js:61:28]
+ 60 │ class C {
+ 61 │   static async *method(...a,) {
+    ·                            ─
  62 │     
     ╰────
 
@@ -26656,7 +26887,7 @@ Negative Passed: 4519/4519 (100.00%)
  63 │     
     ╰────
 
-  × A rest parameter cannot have an initializer
+  × A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/class/async-method/dflt-params-rest.js:66:19]
  65 │ class C {
  66 │   async method(...x = []) {
@@ -26685,6 +26916,14 @@ Negative Passed: 4519/4519 (100.00%)
  57 │ class C {
  58 │   async method(...a,) {
     ·                ────
+ 59 │     
+    ╰────
+
+  × A rest parameter or binding pattern may not have a trailing comma.
+    ╭─[test262/test/language/statements/class/async-method/rest-params-trailing-comma-early-error.js:58:20]
+ 57 │ class C {
+ 58 │   async method(...a,) {
+    ·                    ─
  59 │     
     ╰────
 
@@ -26770,7 +27009,7 @@ Negative Passed: 4519/4519 (100.00%)
  62 │     
     ╰────
 
-  × A rest parameter cannot have an initializer
+  × A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/class/async-method-static/dflt-params-rest.js:65:26]
  64 │ class C {
  65 │   static async method(...x = []) {
@@ -26799,6 +27038,14 @@ Negative Passed: 4519/4519 (100.00%)
  56 │ class C {
  57 │   static async method(...a,) {
     ·                       ────
+ 58 │     
+    ╰────
+
+  × A rest parameter or binding pattern may not have a trailing comma.
+    ╭─[test262/test/language/statements/class/async-method-static/rest-params-trailing-comma-early-error.js:57:27]
+ 56 │ class C {
+ 57 │   static async method(...a,) {
+    ·                           ─
  58 │     
     ╰────
 
@@ -26940,12 +27187,12 @@ Negative Passed: 4519/4519 (100.00%)
  17 │ }
     ╰────
 
-  × Expected `(` but found `Identifier`
+  × Expected `;` but found `Identifier`
     ╭─[test262/test/language/statements/class/definition/early-errors-class-method-formals-body-duplicate.js:18:18]
  17 │ class Foo {
  18 │   async function foo(bar) { let bar; }
     ·                  ─┬─
-    ·                   ╰── `(` expected
+    ·                   ╰── `;` expected
  19 │ }
     ╰────
 
@@ -27022,7 +27269,7 @@ Negative Passed: 4519/4519 (100.00%)
     ╰────
   help: Try insert a semicolon here
 
-  × A rest parameter cannot have an initializer
+  × A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/class/dstr/async-gen-meth-ary-ptrn-rest-init-ary.js:57:21]
  56 │ class C {
  57 │   async *method([...[ x ] = []]) {
@@ -27030,7 +27277,7 @@ Negative Passed: 4519/4519 (100.00%)
  58 │     
     ╰────
 
-  × A rest parameter cannot have an initializer
+  × A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/class/dstr/async-gen-meth-ary-ptrn-rest-init-id.js:57:21]
  56 │ class C {
  57 │   async *method([...x = []]) {
@@ -27038,7 +27285,7 @@ Negative Passed: 4519/4519 (100.00%)
  58 │     
     ╰────
 
-  × A rest parameter cannot have an initializer
+  × A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/class/dstr/async-gen-meth-ary-ptrn-rest-init-obj.js:57:21]
  56 │ class C {
  57 │   async *method([...{ x } = []]) {
@@ -27070,7 +27317,7 @@ Negative Passed: 4519/4519 (100.00%)
  58 │     
     ╰────
 
-  × A rest parameter cannot have an initializer
+  × A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/class/dstr/async-gen-meth-dflt-ary-ptrn-rest-init-ary.js:57:21]
  56 │ class C {
  57 │   async *method([...[ x ] = []] = []) {
@@ -27078,7 +27325,7 @@ Negative Passed: 4519/4519 (100.00%)
  58 │     
     ╰────
 
-  × A rest parameter cannot have an initializer
+  × A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/class/dstr/async-gen-meth-dflt-ary-ptrn-rest-init-id.js:57:21]
  56 │ class C {
  57 │   async *method([...x = []] = []) {
@@ -27086,7 +27333,7 @@ Negative Passed: 4519/4519 (100.00%)
  58 │     
     ╰────
 
-  × A rest parameter cannot have an initializer
+  × A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/class/dstr/async-gen-meth-dflt-ary-ptrn-rest-init-obj.js:57:21]
  56 │ class C {
  57 │   async *method([...{ x } = []] = []) {
@@ -27118,7 +27365,7 @@ Negative Passed: 4519/4519 (100.00%)
  58 │     
     ╰────
 
-  × A rest parameter cannot have an initializer
+  × A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/class/dstr/async-gen-meth-static-ary-ptrn-rest-init-ary.js:57:28]
  56 │ class C {
  57 │   static async *method([...[ x ] = []]) {
@@ -27126,7 +27373,7 @@ Negative Passed: 4519/4519 (100.00%)
  58 │     
     ╰────
 
-  × A rest parameter cannot have an initializer
+  × A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/class/dstr/async-gen-meth-static-ary-ptrn-rest-init-id.js:57:28]
  56 │ class C {
  57 │   static async *method([...x = []]) {
@@ -27134,7 +27381,7 @@ Negative Passed: 4519/4519 (100.00%)
  58 │     
     ╰────
 
-  × A rest parameter cannot have an initializer
+  × A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/class/dstr/async-gen-meth-static-ary-ptrn-rest-init-obj.js:57:28]
  56 │ class C {
  57 │   static async *method([...{ x } = []]) {
@@ -27166,7 +27413,7 @@ Negative Passed: 4519/4519 (100.00%)
  58 │     
     ╰────
 
-  × A rest parameter cannot have an initializer
+  × A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/class/dstr/async-gen-meth-static-dflt-ary-ptrn-rest-init-ary.js:57:28]
  56 │ class C {
  57 │   static async *method([...[ x ] = []] = []) {
@@ -27174,7 +27421,7 @@ Negative Passed: 4519/4519 (100.00%)
  58 │     
     ╰────
 
-  × A rest parameter cannot have an initializer
+  × A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/class/dstr/async-gen-meth-static-dflt-ary-ptrn-rest-init-id.js:57:28]
  56 │ class C {
  57 │   static async *method([...x = []] = []) {
@@ -27182,7 +27429,7 @@ Negative Passed: 4519/4519 (100.00%)
  58 │     
     ╰────
 
-  × A rest parameter cannot have an initializer
+  × A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/class/dstr/async-gen-meth-static-dflt-ary-ptrn-rest-init-obj.js:57:28]
  56 │ class C {
  57 │   static async *method([...{ x } = []] = []) {
@@ -27214,7 +27461,7 @@ Negative Passed: 4519/4519 (100.00%)
  58 │     
     ╰────
 
-  × A rest parameter cannot have an initializer
+  × A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/class/dstr/async-private-gen-meth-ary-ptrn-rest-init-ary.js:57:23]
  56 │ class C {
  57 │   async * #method([...[ x ] = []]) {
@@ -27222,7 +27469,7 @@ Negative Passed: 4519/4519 (100.00%)
  58 │     
     ╰────
 
-  × A rest parameter cannot have an initializer
+  × A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/class/dstr/async-private-gen-meth-ary-ptrn-rest-init-id.js:57:23]
  56 │ class C {
  57 │   async * #method([...x = []]) {
@@ -27230,7 +27477,7 @@ Negative Passed: 4519/4519 (100.00%)
  58 │     
     ╰────
 
-  × A rest parameter cannot have an initializer
+  × A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/class/dstr/async-private-gen-meth-ary-ptrn-rest-init-obj.js:57:23]
  56 │ class C {
  57 │   async * #method([...{ x } = []]) {
@@ -27262,7 +27509,7 @@ Negative Passed: 4519/4519 (100.00%)
  58 │     
     ╰────
 
-  × A rest parameter cannot have an initializer
+  × A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/class/dstr/async-private-gen-meth-dflt-ary-ptrn-rest-init-ary.js:57:23]
  56 │ class C {
  57 │   async * #method([...[ x ] = []] = []) {
@@ -27270,7 +27517,7 @@ Negative Passed: 4519/4519 (100.00%)
  58 │     
     ╰────
 
-  × A rest parameter cannot have an initializer
+  × A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/class/dstr/async-private-gen-meth-dflt-ary-ptrn-rest-init-id.js:57:23]
  56 │ class C {
  57 │   async * #method([...x = []] = []) {
@@ -27278,7 +27525,7 @@ Negative Passed: 4519/4519 (100.00%)
  58 │     
     ╰────
 
-  × A rest parameter cannot have an initializer
+  × A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/class/dstr/async-private-gen-meth-dflt-ary-ptrn-rest-init-obj.js:57:23]
  56 │ class C {
  57 │   async * #method([...{ x } = []] = []) {
@@ -27310,7 +27557,7 @@ Negative Passed: 4519/4519 (100.00%)
  58 │     
     ╰────
 
-  × A rest parameter cannot have an initializer
+  × A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/class/dstr/async-private-gen-meth-static-ary-ptrn-rest-init-ary.js:57:30]
  56 │ class C {
  57 │   static async * #method([...[ x ] = []]) {
@@ -27318,7 +27565,7 @@ Negative Passed: 4519/4519 (100.00%)
  58 │     
     ╰────
 
-  × A rest parameter cannot have an initializer
+  × A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/class/dstr/async-private-gen-meth-static-ary-ptrn-rest-init-id.js:57:30]
  56 │ class C {
  57 │   static async * #method([...x = []]) {
@@ -27326,7 +27573,7 @@ Negative Passed: 4519/4519 (100.00%)
  58 │     
     ╰────
 
-  × A rest parameter cannot have an initializer
+  × A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/class/dstr/async-private-gen-meth-static-ary-ptrn-rest-init-obj.js:57:30]
  56 │ class C {
  57 │   static async * #method([...{ x } = []]) {
@@ -27358,7 +27605,7 @@ Negative Passed: 4519/4519 (100.00%)
  58 │     
     ╰────
 
-  × A rest parameter cannot have an initializer
+  × A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/class/dstr/async-private-gen-meth-static-dflt-ary-ptrn-rest-init-ary.js:57:30]
  56 │ class C {
  57 │   static async * #method([...[ x ] = []] = []) {
@@ -27366,7 +27613,7 @@ Negative Passed: 4519/4519 (100.00%)
  58 │     
     ╰────
 
-  × A rest parameter cannot have an initializer
+  × A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/class/dstr/async-private-gen-meth-static-dflt-ary-ptrn-rest-init-id.js:57:30]
  56 │ class C {
  57 │   static async * #method([...x = []] = []) {
@@ -27374,7 +27621,7 @@ Negative Passed: 4519/4519 (100.00%)
  58 │     
     ╰────
 
-  × A rest parameter cannot have an initializer
+  × A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/class/dstr/async-private-gen-meth-static-dflt-ary-ptrn-rest-init-obj.js:57:30]
  56 │ class C {
  57 │   static async * #method([...{ x } = []] = []) {
@@ -27406,7 +27653,7 @@ Negative Passed: 4519/4519 (100.00%)
  58 │     
     ╰────
 
-  × A rest parameter cannot have an initializer
+  × A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/class/dstr/gen-meth-ary-ptrn-rest-init-ary.js:75:15]
  74 │ class C {
  75 │   *method([...[ x ] = []]) {
@@ -27414,7 +27661,7 @@ Negative Passed: 4519/4519 (100.00%)
  76 │     
     ╰────
 
-  × A rest parameter cannot have an initializer
+  × A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/class/dstr/gen-meth-ary-ptrn-rest-init-id.js:75:15]
  74 │ class C {
  75 │   *method([...x = []]) {
@@ -27422,7 +27669,7 @@ Negative Passed: 4519/4519 (100.00%)
  76 │     
     ╰────
 
-  × A rest parameter cannot have an initializer
+  × A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/class/dstr/gen-meth-ary-ptrn-rest-init-obj.js:75:15]
  74 │ class C {
  75 │   *method([...{ x } = []]) {
@@ -27454,7 +27701,7 @@ Negative Passed: 4519/4519 (100.00%)
  76 │     
     ╰────
 
-  × A rest parameter cannot have an initializer
+  × A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/class/dstr/gen-meth-dflt-ary-ptrn-rest-init-ary.js:75:15]
  74 │ class C {
  75 │   *method([...[ x ] = []] = []) {
@@ -27462,7 +27709,7 @@ Negative Passed: 4519/4519 (100.00%)
  76 │     
     ╰────
 
-  × A rest parameter cannot have an initializer
+  × A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/class/dstr/gen-meth-dflt-ary-ptrn-rest-init-id.js:75:15]
  74 │ class C {
  75 │   *method([...x = []] = []) {
@@ -27470,7 +27717,7 @@ Negative Passed: 4519/4519 (100.00%)
  76 │     
     ╰────
 
-  × A rest parameter cannot have an initializer
+  × A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/class/dstr/gen-meth-dflt-ary-ptrn-rest-init-obj.js:75:15]
  74 │ class C {
  75 │   *method([...{ x } = []] = []) {
@@ -27502,7 +27749,7 @@ Negative Passed: 4519/4519 (100.00%)
  76 │     
     ╰────
 
-  × A rest parameter cannot have an initializer
+  × A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/class/dstr/gen-meth-static-ary-ptrn-rest-init-ary.js:75:22]
  74 │ class C {
  75 │   static *method([...[ x ] = []]) {
@@ -27510,7 +27757,7 @@ Negative Passed: 4519/4519 (100.00%)
  76 │     
     ╰────
 
-  × A rest parameter cannot have an initializer
+  × A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/class/dstr/gen-meth-static-ary-ptrn-rest-init-id.js:75:22]
  74 │ class C {
  75 │   static *method([...x = []]) {
@@ -27518,7 +27765,7 @@ Negative Passed: 4519/4519 (100.00%)
  76 │     
     ╰────
 
-  × A rest parameter cannot have an initializer
+  × A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/class/dstr/gen-meth-static-ary-ptrn-rest-init-obj.js:75:22]
  74 │ class C {
  75 │   static *method([...{ x } = []]) {
@@ -27550,7 +27797,7 @@ Negative Passed: 4519/4519 (100.00%)
  76 │     
     ╰────
 
-  × A rest parameter cannot have an initializer
+  × A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/class/dstr/gen-meth-static-dflt-ary-ptrn-rest-init-ary.js:75:22]
  74 │ class C {
  75 │   static *method([...[ x ] = []] = []) {
@@ -27558,7 +27805,7 @@ Negative Passed: 4519/4519 (100.00%)
  76 │     
     ╰────
 
-  × A rest parameter cannot have an initializer
+  × A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/class/dstr/gen-meth-static-dflt-ary-ptrn-rest-init-id.js:75:22]
  74 │ class C {
  75 │   static *method([...x = []] = []) {
@@ -27566,7 +27813,7 @@ Negative Passed: 4519/4519 (100.00%)
  76 │     
     ╰────
 
-  × A rest parameter cannot have an initializer
+  × A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/class/dstr/gen-meth-static-dflt-ary-ptrn-rest-init-obj.js:75:22]
  74 │ class C {
  75 │   static *method([...{ x } = []] = []) {
@@ -27598,7 +27845,7 @@ Negative Passed: 4519/4519 (100.00%)
  76 │     
     ╰────
 
-  × A rest parameter cannot have an initializer
+  × A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/class/dstr/meth-ary-ptrn-rest-init-ary.js:73:14]
  72 │ class C {
  73 │   method([...[ x ] = []]) {
@@ -27606,7 +27853,7 @@ Negative Passed: 4519/4519 (100.00%)
  74 │     
     ╰────
 
-  × A rest parameter cannot have an initializer
+  × A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/class/dstr/meth-ary-ptrn-rest-init-id.js:73:14]
  72 │ class C {
  73 │   method([...x = []]) {
@@ -27614,7 +27861,7 @@ Negative Passed: 4519/4519 (100.00%)
  74 │     
     ╰────
 
-  × A rest parameter cannot have an initializer
+  × A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/class/dstr/meth-ary-ptrn-rest-init-obj.js:73:14]
  72 │ class C {
  73 │   method([...{ x } = []]) {
@@ -27646,7 +27893,7 @@ Negative Passed: 4519/4519 (100.00%)
  74 │     
     ╰────
 
-  × A rest parameter cannot have an initializer
+  × A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/class/dstr/meth-dflt-ary-ptrn-rest-init-ary.js:73:14]
  72 │ class C {
  73 │   method([...[ x ] = []] = []) {
@@ -27654,7 +27901,7 @@ Negative Passed: 4519/4519 (100.00%)
  74 │     
     ╰────
 
-  × A rest parameter cannot have an initializer
+  × A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/class/dstr/meth-dflt-ary-ptrn-rest-init-id.js:73:14]
  72 │ class C {
  73 │   method([...x = []] = []) {
@@ -27662,7 +27909,7 @@ Negative Passed: 4519/4519 (100.00%)
  74 │     
     ╰────
 
-  × A rest parameter cannot have an initializer
+  × A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/class/dstr/meth-dflt-ary-ptrn-rest-init-obj.js:73:14]
  72 │ class C {
  73 │   method([...{ x } = []] = []) {
@@ -27694,7 +27941,7 @@ Negative Passed: 4519/4519 (100.00%)
  74 │     
     ╰────
 
-  × A rest parameter cannot have an initializer
+  × A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/class/dstr/meth-static-ary-ptrn-rest-init-ary.js:73:21]
  72 │ class C {
  73 │   static method([...[ x ] = []]) {
@@ -27702,7 +27949,7 @@ Negative Passed: 4519/4519 (100.00%)
  74 │     
     ╰────
 
-  × A rest parameter cannot have an initializer
+  × A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/class/dstr/meth-static-ary-ptrn-rest-init-id.js:73:21]
  72 │ class C {
  73 │   static method([...x = []]) {
@@ -27710,7 +27957,7 @@ Negative Passed: 4519/4519 (100.00%)
  74 │     
     ╰────
 
-  × A rest parameter cannot have an initializer
+  × A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/class/dstr/meth-static-ary-ptrn-rest-init-obj.js:73:21]
  72 │ class C {
  73 │   static method([...{ x } = []]) {
@@ -27742,7 +27989,7 @@ Negative Passed: 4519/4519 (100.00%)
  74 │     
     ╰────
 
-  × A rest parameter cannot have an initializer
+  × A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/class/dstr/meth-static-dflt-ary-ptrn-rest-init-ary.js:73:21]
  72 │ class C {
  73 │   static method([...[ x ] = []] = []) {
@@ -27750,7 +27997,7 @@ Negative Passed: 4519/4519 (100.00%)
  74 │     
     ╰────
 
-  × A rest parameter cannot have an initializer
+  × A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/class/dstr/meth-static-dflt-ary-ptrn-rest-init-id.js:73:21]
  72 │ class C {
  73 │   static method([...x = []] = []) {
@@ -27758,7 +28005,7 @@ Negative Passed: 4519/4519 (100.00%)
  74 │     
     ╰────
 
-  × A rest parameter cannot have an initializer
+  × A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/class/dstr/meth-static-dflt-ary-ptrn-rest-init-obj.js:73:21]
  72 │ class C {
  73 │   static method([...{ x } = []] = []) {
@@ -27790,7 +28037,7 @@ Negative Passed: 4519/4519 (100.00%)
  74 │     
     ╰────
 
-  × A rest parameter cannot have an initializer
+  × A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/class/dstr/private-gen-meth-ary-ptrn-rest-init-ary.js:75:17]
  74 │ class C {
  75 │   * #method([...[ x ] = []]) {
@@ -27798,7 +28045,7 @@ Negative Passed: 4519/4519 (100.00%)
  76 │     
     ╰────
 
-  × A rest parameter cannot have an initializer
+  × A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/class/dstr/private-gen-meth-ary-ptrn-rest-init-id.js:75:17]
  74 │ class C {
  75 │   * #method([...x = []]) {
@@ -27806,7 +28053,7 @@ Negative Passed: 4519/4519 (100.00%)
  76 │     
     ╰────
 
-  × A rest parameter cannot have an initializer
+  × A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/class/dstr/private-gen-meth-ary-ptrn-rest-init-obj.js:75:17]
  74 │ class C {
  75 │   * #method([...{ x } = []]) {
@@ -27838,7 +28085,7 @@ Negative Passed: 4519/4519 (100.00%)
  76 │     
     ╰────
 
-  × A rest parameter cannot have an initializer
+  × A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/class/dstr/private-gen-meth-dflt-ary-ptrn-rest-init-ary.js:75:17]
  74 │ class C {
  75 │   * #method([...[ x ] = []] = []) {
@@ -27846,7 +28093,7 @@ Negative Passed: 4519/4519 (100.00%)
  76 │     
     ╰────
 
-  × A rest parameter cannot have an initializer
+  × A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/class/dstr/private-gen-meth-dflt-ary-ptrn-rest-init-id.js:75:17]
  74 │ class C {
  75 │   * #method([...x = []] = []) {
@@ -27854,7 +28101,7 @@ Negative Passed: 4519/4519 (100.00%)
  76 │     
     ╰────
 
-  × A rest parameter cannot have an initializer
+  × A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/class/dstr/private-gen-meth-dflt-ary-ptrn-rest-init-obj.js:75:17]
  74 │ class C {
  75 │   * #method([...{ x } = []] = []) {
@@ -27886,7 +28133,7 @@ Negative Passed: 4519/4519 (100.00%)
  76 │     
     ╰────
 
-  × A rest parameter cannot have an initializer
+  × A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/class/dstr/private-gen-meth-static-ary-ptrn-rest-init-ary.js:75:24]
  74 │ class C {
  75 │   static * #method([...[ x ] = []]) {
@@ -27894,7 +28141,7 @@ Negative Passed: 4519/4519 (100.00%)
  76 │     
     ╰────
 
-  × A rest parameter cannot have an initializer
+  × A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/class/dstr/private-gen-meth-static-ary-ptrn-rest-init-id.js:75:24]
  74 │ class C {
  75 │   static * #method([...x = []]) {
@@ -27902,7 +28149,7 @@ Negative Passed: 4519/4519 (100.00%)
  76 │     
     ╰────
 
-  × A rest parameter cannot have an initializer
+  × A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/class/dstr/private-gen-meth-static-ary-ptrn-rest-init-obj.js:75:24]
  74 │ class C {
  75 │   static * #method([...{ x } = []]) {
@@ -27934,7 +28181,7 @@ Negative Passed: 4519/4519 (100.00%)
  76 │     
     ╰────
 
-  × A rest parameter cannot have an initializer
+  × A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/class/dstr/private-gen-meth-static-dflt-ary-ptrn-rest-init-ary.js:75:24]
  74 │ class C {
  75 │   static * #method([...[ x ] = []] = []) {
@@ -27942,7 +28189,7 @@ Negative Passed: 4519/4519 (100.00%)
  76 │     
     ╰────
 
-  × A rest parameter cannot have an initializer
+  × A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/class/dstr/private-gen-meth-static-dflt-ary-ptrn-rest-init-id.js:75:24]
  74 │ class C {
  75 │   static * #method([...x = []] = []) {
@@ -27950,7 +28197,7 @@ Negative Passed: 4519/4519 (100.00%)
  76 │     
     ╰────
 
-  × A rest parameter cannot have an initializer
+  × A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/class/dstr/private-gen-meth-static-dflt-ary-ptrn-rest-init-obj.js:75:24]
  74 │ class C {
  75 │   static * #method([...{ x } = []] = []) {
@@ -27982,7 +28229,7 @@ Negative Passed: 4519/4519 (100.00%)
  76 │     
     ╰────
 
-  × A rest parameter cannot have an initializer
+  × A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/class/dstr/private-meth-ary-ptrn-rest-init-ary.js:73:15]
  72 │ class C {
  73 │   #method([...[ x ] = []]) {
@@ -27990,7 +28237,7 @@ Negative Passed: 4519/4519 (100.00%)
  74 │     
     ╰────
 
-  × A rest parameter cannot have an initializer
+  × A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/class/dstr/private-meth-ary-ptrn-rest-init-id.js:73:15]
  72 │ class C {
  73 │   #method([...x = []]) {
@@ -27998,7 +28245,7 @@ Negative Passed: 4519/4519 (100.00%)
  74 │     
     ╰────
 
-  × A rest parameter cannot have an initializer
+  × A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/class/dstr/private-meth-ary-ptrn-rest-init-obj.js:73:15]
  72 │ class C {
  73 │   #method([...{ x } = []]) {
@@ -28030,7 +28277,7 @@ Negative Passed: 4519/4519 (100.00%)
  74 │     
     ╰────
 
-  × A rest parameter cannot have an initializer
+  × A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/class/dstr/private-meth-dflt-ary-ptrn-rest-init-ary.js:73:15]
  72 │ class C {
  73 │   #method([...[ x ] = []] = []) {
@@ -28038,7 +28285,7 @@ Negative Passed: 4519/4519 (100.00%)
  74 │     
     ╰────
 
-  × A rest parameter cannot have an initializer
+  × A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/class/dstr/private-meth-dflt-ary-ptrn-rest-init-id.js:73:15]
  72 │ class C {
  73 │   #method([...x = []] = []) {
@@ -28046,7 +28293,7 @@ Negative Passed: 4519/4519 (100.00%)
  74 │     
     ╰────
 
-  × A rest parameter cannot have an initializer
+  × A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/class/dstr/private-meth-dflt-ary-ptrn-rest-init-obj.js:73:15]
  72 │ class C {
  73 │   #method([...{ x } = []] = []) {
@@ -28078,7 +28325,7 @@ Negative Passed: 4519/4519 (100.00%)
  74 │     
     ╰────
 
-  × A rest parameter cannot have an initializer
+  × A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/class/dstr/private-meth-static-ary-ptrn-rest-init-ary.js:73:22]
  72 │ class C {
  73 │   static #method([...[ x ] = []]) {
@@ -28086,7 +28333,7 @@ Negative Passed: 4519/4519 (100.00%)
  74 │     
     ╰────
 
-  × A rest parameter cannot have an initializer
+  × A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/class/dstr/private-meth-static-ary-ptrn-rest-init-id.js:73:22]
  72 │ class C {
  73 │   static #method([...x = []]) {
@@ -28094,7 +28341,7 @@ Negative Passed: 4519/4519 (100.00%)
  74 │     
     ╰────
 
-  × A rest parameter cannot have an initializer
+  × A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/class/dstr/private-meth-static-ary-ptrn-rest-init-obj.js:73:22]
  72 │ class C {
  73 │   static #method([...{ x } = []]) {
@@ -28126,7 +28373,7 @@ Negative Passed: 4519/4519 (100.00%)
  74 │     
     ╰────
 
-  × A rest parameter cannot have an initializer
+  × A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/class/dstr/private-meth-static-dflt-ary-ptrn-rest-init-ary.js:73:22]
  72 │ class C {
  73 │   static #method([...[ x ] = []] = []) {
@@ -28134,7 +28381,7 @@ Negative Passed: 4519/4519 (100.00%)
  74 │     
     ╰────
 
-  × A rest parameter cannot have an initializer
+  × A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/class/dstr/private-meth-static-dflt-ary-ptrn-rest-init-id.js:73:22]
  72 │ class C {
  73 │   static #method([...x = []] = []) {
@@ -28142,7 +28389,7 @@ Negative Passed: 4519/4519 (100.00%)
  74 │     
     ╰────
 
-  × A rest parameter cannot have an initializer
+  × A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/class/dstr/private-meth-static-dflt-ary-ptrn-rest-init-obj.js:73:22]
  72 │ class C {
  73 │   static #method([...{ x } = []] = []) {
@@ -28690,41 +28937,41 @@ Negative Passed: 4519/4519 (100.00%)
  28 │ }
     ╰────
 
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-    ╭─[test262/test/language/statements/class/elements/fields-asi-3.js:18:8]
+  × Expected `;` but found `{`
+    ╭─[test262/test/language/statements/class/elements/fields-asi-3.js:18:9]
  17 │   x = "string"
  18 │   [0]() {}
-    ·        ▲
+    ·         ┬
+    ·         ╰── `;` expected
  19 │ }
     ╰────
-  help: Try insert a semicolon here
 
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-    ╭─[test262/test/language/statements/class/elements/fields-asi-4.js:18:9]
+  × Expected `;` but found `{`
+    ╭─[test262/test/language/statements/class/elements/fields-asi-4.js:18:10]
  17 │   x = 42
  18 │   *gen() {}
-    ·         ▲
+    ·          ┬
+    ·          ╰── `;` expected
  19 │ }
     ╰────
-  help: Try insert a semicolon here
 
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-    ╭─[test262/test/language/statements/class/elements/fields-asi-same-line-1.js:17:8]
+  × Expected `;` but found `Identifier`
+    ╭─[test262/test/language/statements/class/elements/fields-asi-same-line-1.js:17:27]
  16 │ class C {
  17 │   field /* no ASI here */ method(){}
-    ·        ▲
+    ·                           ───┬──
+    ·                              ╰── `;` expected
  18 │ }
     ╰────
-  help: Try insert a semicolon here
 
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-    ╭─[test262/test/language/statements/class/elements/fields-asi-same-line-2.js:17:12]
+  × Expected `;` but found `Identifier`
+    ╭─[test262/test/language/statements/class/elements/fields-asi-same-line-2.js:17:31]
  16 │ class C {
  17 │   field = 1 /* no ASI here */ method(){}
-    ·            ▲
+    ·                               ───┬──
+    ·                                  ╰── `;` expected
  18 │ }
     ╰────
-  help: Try insert a semicolon here
 
   × Identifier `x` has already been declared
     ╭─[test262/test/language/statements/class/elements/fields-duplicate-privatenames.js:23:3]
@@ -28738,11 +28985,12 @@ Negative Passed: 4519/4519 (100.00%)
  25 │ }
     ╰────
 
-  × Classes can't have a field named 'constructor'
-    ╭─[test262/test/language/statements/class/elements/fields-literal-name-propname-constructor.js:29:3]
+  × Expected `(` but found `;`
+    ╭─[test262/test/language/statements/class/elements/fields-literal-name-propname-constructor.js:29:14]
  28 │ class C {
  29 │   constructor;
-    ·   ───────────
+    ·              ┬
+    ·              ╰── `(` expected
  30 │ }
     ╰────
 
@@ -29046,23 +29294,23 @@ Negative Passed: 4519/4519 (100.00%)
  28 │ }
     ╰────
 
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-    ╭─[test262/test/language/statements/class/elements/nested-equality-init-err-contains-arguments.js:33:15]
+  × Expected `;` but found `==`
+    ╭─[test262/test/language/statements/class/elements/nested-equality-init-err-contains-arguments.js:33:16]
  32 │ class C {
  33 │   x = () => {} == arguments;
-    ·               ▲
+    ·                ─┬
+    ·                 ╰── `;` expected
  34 │ }
     ╰────
-  help: Try insert a semicolon here
 
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-    ╭─[test262/test/language/statements/class/elements/nested-equality-init-err-contains-super.js:26:15]
+  × Expected `;` but found `==`
+    ╭─[test262/test/language/statements/class/elements/nested-equality-init-err-contains-super.js:26:16]
  25 │ class C {
  26 │   x = () => {} == super();
-    ·               ▲
+    ·                ─┬
+    ·                 ╰── `;` expected
  27 │ }
     ╰────
-  help: Try insert a semicolon here
 
   × 'arguments' is not allowed in class field initializer
     ╭─[test262/test/language/statements/class/elements/nested-literal-name-init-err-contains-arguments.js:33:13]
@@ -30823,14 +31071,14 @@ Negative Passed: 4519/4519 (100.00%)
  71 │ }
     ╰────
 
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-    ╭─[test262/test/language/statements/class/elements/syntax/early-errors/grammar-fields-same-line-error.js:33:4]
+  × Expected `;` but found `Identifier`
+    ╭─[test262/test/language/statements/class/elements/syntax/early-errors/grammar-fields-same-line-error.js:33:5]
  32 │ class C {
  33 │   x y
-    ·    ▲
+    ·     ┬
+    ·     ╰── `;` expected
  34 │ }
     ╰────
-  help: Try insert a semicolon here
 
   × Expected `{` but found `=>`
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/grammar-private-environment-on-class-heritage-array-literal.js:37:21]
@@ -31134,15 +31382,6 @@ Negative Passed: 4519/4519 (100.00%)
  30 │ }
     ╰────
 
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-    ╭─[test262/test/language/statements/class/elements/syntax/early-errors/grammar-privatename-whitespace-error-accessor-get-meth.js:29:6]
- 28 │ class C {
- 29 │   get # m() {}
-    ·      ▲
- 30 │ }
-    ╰────
-  help: Try insert a semicolon here
-
   × Invalid Character ` `
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/grammar-privatename-whitespace-error-accessor-set-meth.js:29:8]
  28 │ class C {
@@ -31150,15 +31389,6 @@ Negative Passed: 4519/4519 (100.00%)
     ·        ─
  30 │ }
     ╰────
-
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-    ╭─[test262/test/language/statements/class/elements/syntax/early-errors/grammar-privatename-whitespace-error-accessor-set-meth.js:29:6]
- 28 │ class C {
- 29 │   set # m(_) {}
-    ·      ▲
- 30 │ }
-    ╰────
-  help: Try insert a semicolon here
 
   × Invalid Character ` `
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/grammar-privatename-whitespace-error-async-gen-meth.js:29:12]
@@ -31175,15 +31405,6 @@ Negative Passed: 4519/4519 (100.00%)
     ·          ─
  30 │ }
     ╰────
-
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-    ╭─[test262/test/language/statements/class/elements/syntax/early-errors/grammar-privatename-whitespace-error-async-meth.js:29:8]
- 28 │ class C {
- 29 │   async # m() {}
-    ·        ▲
- 30 │ }
-    ╰────
-  help: Try insert a semicolon here
 
   × Invalid Character ` `
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/grammar-privatename-whitespace-error-call-expr.js:38:15]
@@ -31241,15 +31462,6 @@ Negative Passed: 4519/4519 (100.00%)
  30 │ }
     ╰────
 
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-    ╭─[test262/test/language/statements/class/elements/syntax/early-errors/grammar-privatename-whitespace-error-static-accessor-get-meth.js:29:13]
- 28 │ class C {
- 29 │   static get # m() {}
-    ·             ▲
- 30 │ }
-    ╰────
-  help: Try insert a semicolon here
-
   × Invalid Character ` `
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/grammar-privatename-whitespace-error-static-accessor-set-meth.js:29:15]
  28 │ class C {
@@ -31257,15 +31469,6 @@ Negative Passed: 4519/4519 (100.00%)
     ·               ─
  30 │ }
     ╰────
-
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-    ╭─[test262/test/language/statements/class/elements/syntax/early-errors/grammar-privatename-whitespace-error-static-accessor-set-meth.js:29:13]
- 28 │ class C {
- 29 │   static set # m(_) {}
-    ·             ▲
- 30 │ }
-    ╰────
-  help: Try insert a semicolon here
 
   × Invalid Character ` `
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/grammar-privatename-whitespace-error-static-async-gen-meth.js:29:19]
@@ -31283,15 +31486,6 @@ Negative Passed: 4519/4519 (100.00%)
  30 │ }
     ╰────
 
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-    ╭─[test262/test/language/statements/class/elements/syntax/early-errors/grammar-privatename-whitespace-error-static-async-meth.js:29:15]
- 28 │ class C {
- 29 │   static async # m() {}
-    ·               ▲
- 30 │ }
-    ╰────
-  help: Try insert a semicolon here
-
   × Invalid Character ` `
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/grammar-privatename-whitespace-error-static-field-init.js:29:11]
  28 │ class C {
@@ -31300,15 +31494,6 @@ Negative Passed: 4519/4519 (100.00%)
  30 │ }
     ╰────
 
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-    ╭─[test262/test/language/statements/class/elements/syntax/early-errors/grammar-privatename-whitespace-error-static-field-init.js:29:9]
- 28 │ class C {
- 29 │   static # x = 1;
-    ·         ▲
- 30 │ }
-    ╰────
-  help: Try insert a semicolon here
-
   × Invalid Character ` `
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/grammar-privatename-whitespace-error-static-field.js:29:11]
  28 │ class C {
@@ -31316,15 +31501,6 @@ Negative Passed: 4519/4519 (100.00%)
     ·           ─
  30 │ }
     ╰────
-
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-    ╭─[test262/test/language/statements/class/elements/syntax/early-errors/grammar-privatename-whitespace-error-static-field.js:29:9]
- 28 │ class C {
- 29 │   static # x;
-    ·         ▲
- 30 │ }
-    ╰────
-  help: Try insert a semicolon here
 
   × Invalid Character ` `
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/grammar-privatename-whitespace-error-static-gen-meth.js:29:13]
@@ -31342,23 +31518,14 @@ Negative Passed: 4519/4519 (100.00%)
  30 │ }
     ╰────
 
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-    ╭─[test262/test/language/statements/class/elements/syntax/early-errors/grammar-privatename-whitespace-error-static-meth.js:29:9]
- 28 │ class C {
- 29 │   static # m() {}
-    ·         ▲
- 30 │ }
-    ╰────
-  help: Try insert a semicolon here
-
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-    ╭─[test262/test/language/statements/class/elements/syntax/early-errors/grammar-privatenames-same-line-error.js:36:5]
+  × Expected `;` but found `#identifier`
+    ╭─[test262/test/language/statements/class/elements/syntax/early-errors/grammar-privatenames-same-line-error.js:36:6]
  35 │ class C {
  36 │   #x #y
-    ·     ▲
+    ·      ─┬
+    ·       ╰── `;` expected
  37 │ }
     ╰────
-  help: Try insert a semicolon here
 
   × Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/grammar-special-meth-contains-super-async-gen.js:26:7]
@@ -31994,7 +32161,7 @@ Negative Passed: 4519/4519 (100.00%)
  84 │     
     ╰────
 
-  × A rest parameter cannot have an initializer
+  × A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/class/gen-method/dflt-params-rest.js:87:14]
  86 │ class C {
  87 │   *method(...x = []) {
@@ -32023,6 +32190,14 @@ Negative Passed: 4519/4519 (100.00%)
  79 │ class C {
  80 │   *method(...a,) {
     ·           ────
+ 81 │     
+    ╰────
+
+  × A rest parameter or binding pattern may not have a trailing comma.
+    ╭─[test262/test/language/statements/class/gen-method/rest-params-trailing-comma-early-error.js:80:15]
+ 79 │ class C {
+ 80 │   *method(...a,) {
+    ·               ─
  81 │     
     ╰────
 
@@ -32159,7 +32334,7 @@ Negative Passed: 4519/4519 (100.00%)
  84 │     
     ╰────
 
-  × A rest parameter cannot have an initializer
+  × A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/class/gen-method-static/dflt-params-rest.js:87:21]
  86 │ class C {
  87 │   static *method(...x = []) {
@@ -32188,6 +32363,14 @@ Negative Passed: 4519/4519 (100.00%)
  79 │ class C {
  80 │   static *method(...a,) {
     ·                  ────
+ 81 │     
+    ╰────
+
+  × A rest parameter or binding pattern may not have a trailing comma.
+    ╭─[test262/test/language/statements/class/gen-method-static/rest-params-trailing-comma-early-error.js:80:22]
+ 79 │ class C {
+ 80 │   static *method(...a,) {
+    ·                      ─
  81 │     
     ╰────
 
@@ -32322,7 +32505,7 @@ Negative Passed: 4519/4519 (100.00%)
  81 │     
     ╰────
 
-  × A rest parameter cannot have an initializer
+  × A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/class/method/dflt-params-rest.js:84:13]
  83 │ class C {
  84 │   method(...x = []) {
@@ -32354,6 +32537,14 @@ Negative Passed: 4519/4519 (100.00%)
  77 │     
     ╰────
 
+  × A rest parameter or binding pattern may not have a trailing comma.
+    ╭─[test262/test/language/statements/class/method/rest-params-trailing-comma-early-error.js:76:14]
+ 75 │ class C {
+ 76 │   method(...a,) {
+    ·              ─
+ 77 │     
+    ╰────
+
   × The keyword 'yield' is reserved
     ╭─[test262/test/language/statements/class/method-param-yield.js:22:9]
  21 │ class C {
@@ -32380,7 +32571,7 @@ Negative Passed: 4519/4519 (100.00%)
  81 │     
     ╰────
 
-  × A rest parameter cannot have an initializer
+  × A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/class/method-static/dflt-params-rest.js:84:20]
  83 │ class C {
  84 │   static method(...x = []) {
@@ -32409,6 +32600,14 @@ Negative Passed: 4519/4519 (100.00%)
  75 │ class C {
  76 │   static method(...a,) {
     ·                 ────
+ 77 │     
+    ╰────
+
+  × A rest parameter or binding pattern may not have a trailing comma.
+    ╭─[test262/test/language/statements/class/method-static/rest-params-trailing-comma-early-error.js:76:21]
+ 75 │ class C {
+ 76 │   static method(...a,) {
+    ·                     ─
  77 │     
     ╰────
 
@@ -32614,7 +32813,7 @@ Negative Passed: 4519/4519 (100.00%)
  26 │ }
     ╰────
 
-  × A rest parameter cannot have an initializer
+  × A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/const/dstr/ary-ptrn-rest-init-ary.js:31:11]
  30 │ 
  31 │ const [...[ x ] = []] = [];
@@ -32622,7 +32821,7 @@ Negative Passed: 4519/4519 (100.00%)
  32 │ 
     ╰────
 
-  × A rest parameter cannot have an initializer
+  × A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/const/dstr/ary-ptrn-rest-init-id.js:31:11]
  30 │ 
  31 │ const [...x = []] = [];
@@ -32630,7 +32829,7 @@ Negative Passed: 4519/4519 (100.00%)
  32 │ 
     ╰────
 
-  × A rest parameter cannot have an initializer
+  × A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/const/dstr/ary-ptrn-rest-init-obj.js:31:11]
  30 │ 
  31 │ const [...{ x } = []] = [];
@@ -33210,7 +33409,7 @@ Negative Passed: 4519/4519 (100.00%)
  24 │     break;
     ╰────
 
-  × Unexpected token
+  × Cannot assign to this expression
     ╭─[test262/test/language/statements/for/S12.6.3_A4_T2.js:23:5]
  22 │ //CHECK#1
  23 │ for(1 in arr;1;) {
@@ -33393,7 +33592,7 @@ Negative Passed: 4519/4519 (100.00%)
     ╰────
   help: Try insert a semicolon here
 
-  × A rest parameter cannot have an initializer
+  × A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/for/dstr/const-ary-ptrn-rest-init-ary.js:52:16]
  51 │ 
  52 │ for (const [...[ x ] = []] = []; iterCount < 1; ) {
@@ -33401,7 +33600,7 @@ Negative Passed: 4519/4519 (100.00%)
  53 │   
     ╰────
 
-  × A rest parameter cannot have an initializer
+  × A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/for/dstr/const-ary-ptrn-rest-init-id.js:52:16]
  51 │ 
  52 │ for (const [...x = []] = []; iterCount < 1; ) {
@@ -33409,7 +33608,7 @@ Negative Passed: 4519/4519 (100.00%)
  53 │   
     ╰────
 
-  × A rest parameter cannot have an initializer
+  × A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/for/dstr/const-ary-ptrn-rest-init-obj.js:52:16]
  51 │ 
  52 │ for (const [...{ x } = []] = []; iterCount < 1; ) {
@@ -33441,7 +33640,7 @@ Negative Passed: 4519/4519 (100.00%)
  53 │   
     ╰────
 
-  × A rest parameter cannot have an initializer
+  × A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/for/dstr/let-ary-ptrn-rest-init-ary.js:52:14]
  51 │ 
  52 │ for (let [...[ x ] = []] = []; iterCount < 1; ) {
@@ -33449,7 +33648,7 @@ Negative Passed: 4519/4519 (100.00%)
  53 │   
     ╰────
 
-  × A rest parameter cannot have an initializer
+  × A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/for/dstr/let-ary-ptrn-rest-init-id.js:52:14]
  51 │ 
  52 │ for (let [...x = []] = []; iterCount < 1; ) {
@@ -33457,7 +33656,7 @@ Negative Passed: 4519/4519 (100.00%)
  53 │   
     ╰────
 
-  × A rest parameter cannot have an initializer
+  × A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/for/dstr/let-ary-ptrn-rest-init-obj.js:52:14]
  51 │ 
  52 │ for (let [...{ x } = []] = []; iterCount < 1; ) {
@@ -33489,7 +33688,7 @@ Negative Passed: 4519/4519 (100.00%)
  53 │   
     ╰────
 
-  × A rest parameter cannot have an initializer
+  × A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/for/dstr/var-ary-ptrn-rest-init-ary.js:46:14]
  45 │ 
  46 │ for (var [...[ x ] = []] = []; iterCount < 1; ) {
@@ -33497,7 +33696,7 @@ Negative Passed: 4519/4519 (100.00%)
  47 │   
     ╰────
 
-  × A rest parameter cannot have an initializer
+  × A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/for/dstr/var-ary-ptrn-rest-init-id.js:46:14]
  45 │ 
  46 │ for (var [...x = []] = []; iterCount < 1; ) {
@@ -33505,7 +33704,7 @@ Negative Passed: 4519/4519 (100.00%)
  47 │   
     ╰────
 
-  × A rest parameter cannot have an initializer
+  × A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/for/dstr/var-ary-ptrn-rest-init-obj.js:46:14]
  45 │ 
  46 │ for (var [...{ x } = []] = []; iterCount < 1; ) {
@@ -33609,11 +33808,11 @@ Negative Passed: 4519/4519 (100.00%)
  35 │ }
     ╰────
 
-  × Unexpected token
-    ╭─[test262/test/language/statements/for-await-of/async-func-decl-dstr-array-elem-nested-array-invalid.js:34:14]
+  × Cannot assign to this expression
+    ╭─[test262/test/language/statements/for-await-of/async-func-decl-dstr-array-elem-nested-array-invalid.js:34:17]
  33 │ async function fn() {
  34 │   for await ([[(x, y)]] of [[[]]]) {}
-    ·              ──────────
+    ·                 ────
  35 │ }
     ╰────
 
@@ -33625,11 +33824,11 @@ Negative Passed: 4519/4519 (100.00%)
  35 │ }
     ╰────
 
-  × Unexpected token
-    ╭─[test262/test/language/statements/for-await-of/async-func-decl-dstr-array-elem-nested-obj-invalid.js:34:14]
+  × Cannot assign to this expression
+    ╭─[test262/test/language/statements/for-await-of/async-func-decl-dstr-array-elem-nested-obj-invalid.js:34:22]
  33 │ async function fn() {
  34 │   for await ([{ get x() {} }] of [[{}]]) {}
-    ·              ────────────────
+    ·                      ─────
  35 │ }
     ╰────
 
@@ -33657,7 +33856,7 @@ Negative Passed: 4519/4519 (100.00%)
  35 │ }
     ╰────
 
-  × A rest parameter cannot have an initializer
+  × A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/for-await-of/async-func-dstr-const-ary-ptrn-rest-init-ary.js:53:24]
  52 │ async function fn() {
  53 │   for await (const [...[ x ] = []] of [[]]) {
@@ -33665,7 +33864,7 @@ Negative Passed: 4519/4519 (100.00%)
  54 │     
     ╰────
 
-  × A rest parameter cannot have an initializer
+  × A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/for-await-of/async-func-dstr-const-ary-ptrn-rest-init-id.js:53:24]
  52 │ async function fn() {
  53 │   for await (const [...x = []] of [[]]) {
@@ -33673,7 +33872,7 @@ Negative Passed: 4519/4519 (100.00%)
  54 │     
     ╰────
 
-  × A rest parameter cannot have an initializer
+  × A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/for-await-of/async-func-dstr-const-ary-ptrn-rest-init-obj.js:53:24]
  52 │ async function fn() {
  53 │   for await (const [...{ x } = []] of [[]]) {
@@ -33705,7 +33904,7 @@ Negative Passed: 4519/4519 (100.00%)
  54 │     
     ╰────
 
-  × A rest parameter cannot have an initializer
+  × A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/for-await-of/async-func-dstr-const-async-ary-ptrn-rest-init-ary.js:56:24]
  55 │ async function fn() {
  56 │   for await (const [...[ x ] = []] of asyncIter) {
@@ -33713,7 +33912,7 @@ Negative Passed: 4519/4519 (100.00%)
  57 │     
     ╰────
 
-  × A rest parameter cannot have an initializer
+  × A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/for-await-of/async-func-dstr-const-async-ary-ptrn-rest-init-id.js:56:24]
  55 │ async function fn() {
  56 │   for await (const [...x = []] of asyncIter) {
@@ -33721,7 +33920,7 @@ Negative Passed: 4519/4519 (100.00%)
  57 │     
     ╰────
 
-  × A rest parameter cannot have an initializer
+  × A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/for-await-of/async-func-dstr-const-async-ary-ptrn-rest-init-obj.js:56:24]
  55 │ async function fn() {
  56 │   for await (const [...{ x } = []] of asyncIter) {
@@ -33753,7 +33952,7 @@ Negative Passed: 4519/4519 (100.00%)
  57 │     
     ╰────
 
-  × A rest parameter cannot have an initializer
+  × A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/for-await-of/async-func-dstr-let-ary-ptrn-rest-init-ary.js:53:22]
  52 │ async function fn() {
  53 │   for await (let [...[ x ] = []] of [[]]) {
@@ -33761,7 +33960,7 @@ Negative Passed: 4519/4519 (100.00%)
  54 │     
     ╰────
 
-  × A rest parameter cannot have an initializer
+  × A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/for-await-of/async-func-dstr-let-ary-ptrn-rest-init-id.js:53:22]
  52 │ async function fn() {
  53 │   for await (let [...x = []] of [[]]) {
@@ -33769,7 +33968,7 @@ Negative Passed: 4519/4519 (100.00%)
  54 │     
     ╰────
 
-  × A rest parameter cannot have an initializer
+  × A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/for-await-of/async-func-dstr-let-ary-ptrn-rest-init-obj.js:53:22]
  52 │ async function fn() {
  53 │   for await (let [...{ x } = []] of [[]]) {
@@ -33801,7 +34000,7 @@ Negative Passed: 4519/4519 (100.00%)
  54 │     
     ╰────
 
-  × A rest parameter cannot have an initializer
+  × A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/for-await-of/async-func-dstr-let-async-ary-ptrn-rest-init-ary.js:56:22]
  55 │ async function fn() {
  56 │   for await (let [...[ x ] = []] of asyncIter) {
@@ -33809,7 +34008,7 @@ Negative Passed: 4519/4519 (100.00%)
  57 │     
     ╰────
 
-  × A rest parameter cannot have an initializer
+  × A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/for-await-of/async-func-dstr-let-async-ary-ptrn-rest-init-id.js:56:22]
  55 │ async function fn() {
  56 │   for await (let [...x = []] of asyncIter) {
@@ -33817,7 +34016,7 @@ Negative Passed: 4519/4519 (100.00%)
  57 │     
     ╰────
 
-  × A rest parameter cannot have an initializer
+  × A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/for-await-of/async-func-dstr-let-async-ary-ptrn-rest-init-obj.js:56:22]
  55 │ async function fn() {
  56 │   for await (let [...{ x } = []] of asyncIter) {
@@ -33849,7 +34048,7 @@ Negative Passed: 4519/4519 (100.00%)
  57 │     
     ╰────
 
-  × A rest parameter cannot have an initializer
+  × A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/for-await-of/async-func-dstr-var-ary-ptrn-rest-init-ary.js:50:22]
  49 │ async function fn() {
  50 │   for await (var [...[ x ] = []] of [[]]) {
@@ -33857,7 +34056,7 @@ Negative Passed: 4519/4519 (100.00%)
  51 │     
     ╰────
 
-  × A rest parameter cannot have an initializer
+  × A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/for-await-of/async-func-dstr-var-ary-ptrn-rest-init-id.js:50:22]
  49 │ async function fn() {
  50 │   for await (var [...x = []] of [[]]) {
@@ -33865,7 +34064,7 @@ Negative Passed: 4519/4519 (100.00%)
  51 │     
     ╰────
 
-  × A rest parameter cannot have an initializer
+  × A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/for-await-of/async-func-dstr-var-ary-ptrn-rest-init-obj.js:50:22]
  49 │ async function fn() {
  50 │   for await (var [...{ x } = []] of [[]]) {
@@ -33897,7 +34096,7 @@ Negative Passed: 4519/4519 (100.00%)
  51 │     
     ╰────
 
-  × A rest parameter cannot have an initializer
+  × A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/for-await-of/async-func-dstr-var-async-ary-ptrn-rest-init-ary.js:56:22]
  55 │ async function fn() {
  56 │   for await (var [...[ x ] = []] of asyncIter) {
@@ -33905,7 +34104,7 @@ Negative Passed: 4519/4519 (100.00%)
  57 │     
     ╰────
 
-  × A rest parameter cannot have an initializer
+  × A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/for-await-of/async-func-dstr-var-async-ary-ptrn-rest-init-id.js:56:22]
  55 │ async function fn() {
  56 │   for await (var [...x = []] of asyncIter) {
@@ -33913,7 +34112,7 @@ Negative Passed: 4519/4519 (100.00%)
  57 │     
     ╰────
 
-  × A rest parameter cannot have an initializer
+  × A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/for-await-of/async-func-dstr-var-async-ary-ptrn-rest-init-obj.js:56:22]
  55 │ async function fn() {
  56 │   for await (var [...{ x } = []] of asyncIter) {
@@ -33953,7 +34152,7 @@ Negative Passed: 4519/4519 (100.00%)
  21 │ }
     ╰────
 
-  × A rest parameter cannot have an initializer
+  × A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/for-await-of/async-gen-dstr-const-ary-ptrn-rest-init-ary.js:53:24]
  52 │ async function *fn() {
  53 │   for await (const [...[ x ] = []] of [[]]) {
@@ -33961,7 +34160,7 @@ Negative Passed: 4519/4519 (100.00%)
  54 │     
     ╰────
 
-  × A rest parameter cannot have an initializer
+  × A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/for-await-of/async-gen-dstr-const-ary-ptrn-rest-init-id.js:53:24]
  52 │ async function *fn() {
  53 │   for await (const [...x = []] of [[]]) {
@@ -33969,7 +34168,7 @@ Negative Passed: 4519/4519 (100.00%)
  54 │     
     ╰────
 
-  × A rest parameter cannot have an initializer
+  × A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/for-await-of/async-gen-dstr-const-ary-ptrn-rest-init-obj.js:53:24]
  52 │ async function *fn() {
  53 │   for await (const [...{ x } = []] of [[]]) {
@@ -34001,7 +34200,7 @@ Negative Passed: 4519/4519 (100.00%)
  54 │     
     ╰────
 
-  × A rest parameter cannot have an initializer
+  × A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/for-await-of/async-gen-dstr-const-async-ary-ptrn-rest-init-ary.js:56:24]
  55 │ async function *fn() {
  56 │   for await (const [...[ x ] = []] of asyncIter) {
@@ -34009,7 +34208,7 @@ Negative Passed: 4519/4519 (100.00%)
  57 │     
     ╰────
 
-  × A rest parameter cannot have an initializer
+  × A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/for-await-of/async-gen-dstr-const-async-ary-ptrn-rest-init-id.js:56:24]
  55 │ async function *fn() {
  56 │   for await (const [...x = []] of asyncIter) {
@@ -34017,7 +34216,7 @@ Negative Passed: 4519/4519 (100.00%)
  57 │     
     ╰────
 
-  × A rest parameter cannot have an initializer
+  × A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/for-await-of/async-gen-dstr-const-async-ary-ptrn-rest-init-obj.js:56:24]
  55 │ async function *fn() {
  56 │   for await (const [...{ x } = []] of asyncIter) {
@@ -34065,7 +34264,7 @@ Negative Passed: 4519/4519 (100.00%)
  21 │ }
     ╰────
 
-  × A rest parameter cannot have an initializer
+  × A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/for-await-of/async-gen-dstr-let-ary-ptrn-rest-init-ary.js:53:22]
  52 │ async function *fn() {
  53 │   for await (let [...[ x ] = []] of [[]]) {
@@ -34073,7 +34272,7 @@ Negative Passed: 4519/4519 (100.00%)
  54 │     
     ╰────
 
-  × A rest parameter cannot have an initializer
+  × A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/for-await-of/async-gen-dstr-let-ary-ptrn-rest-init-id.js:53:22]
  52 │ async function *fn() {
  53 │   for await (let [...x = []] of [[]]) {
@@ -34081,7 +34280,7 @@ Negative Passed: 4519/4519 (100.00%)
  54 │     
     ╰────
 
-  × A rest parameter cannot have an initializer
+  × A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/for-await-of/async-gen-dstr-let-ary-ptrn-rest-init-obj.js:53:22]
  52 │ async function *fn() {
  53 │   for await (let [...{ x } = []] of [[]]) {
@@ -34113,7 +34312,7 @@ Negative Passed: 4519/4519 (100.00%)
  54 │     
     ╰────
 
-  × A rest parameter cannot have an initializer
+  × A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/for-await-of/async-gen-dstr-let-async-ary-ptrn-rest-init-ary.js:56:22]
  55 │ async function *fn() {
  56 │   for await (let [...[ x ] = []] of asyncIter) {
@@ -34121,7 +34320,7 @@ Negative Passed: 4519/4519 (100.00%)
  57 │     
     ╰────
 
-  × A rest parameter cannot have an initializer
+  × A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/for-await-of/async-gen-dstr-let-async-ary-ptrn-rest-init-id.js:56:22]
  55 │ async function *fn() {
  56 │   for await (let [...x = []] of asyncIter) {
@@ -34129,7 +34328,7 @@ Negative Passed: 4519/4519 (100.00%)
  57 │     
     ╰────
 
-  × A rest parameter cannot have an initializer
+  × A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/for-await-of/async-gen-dstr-let-async-ary-ptrn-rest-init-obj.js:56:22]
  55 │ async function *fn() {
  56 │   for await (let [...{ x } = []] of asyncIter) {
@@ -34177,7 +34376,7 @@ Negative Passed: 4519/4519 (100.00%)
  21 │ }
     ╰────
 
-  × A rest parameter cannot have an initializer
+  × A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/for-await-of/async-gen-dstr-var-ary-ptrn-rest-init-ary.js:50:22]
  49 │ async function *fn() {
  50 │   for await (var [...[ x ] = []] of [[]]) {
@@ -34185,7 +34384,7 @@ Negative Passed: 4519/4519 (100.00%)
  51 │     
     ╰────
 
-  × A rest parameter cannot have an initializer
+  × A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/for-await-of/async-gen-dstr-var-ary-ptrn-rest-init-id.js:50:22]
  49 │ async function *fn() {
  50 │   for await (var [...x = []] of [[]]) {
@@ -34193,7 +34392,7 @@ Negative Passed: 4519/4519 (100.00%)
  51 │     
     ╰────
 
-  × A rest parameter cannot have an initializer
+  × A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/for-await-of/async-gen-dstr-var-ary-ptrn-rest-init-obj.js:50:22]
  49 │ async function *fn() {
  50 │   for await (var [...{ x } = []] of [[]]) {
@@ -34225,7 +34424,7 @@ Negative Passed: 4519/4519 (100.00%)
  51 │     
     ╰────
 
-  × A rest parameter cannot have an initializer
+  × A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/for-await-of/async-gen-dstr-var-async-ary-ptrn-rest-init-ary.js:56:22]
  55 │ async function *fn() {
  56 │   for await (var [...[ x ] = []] of asyncIter) {
@@ -34233,7 +34432,7 @@ Negative Passed: 4519/4519 (100.00%)
  57 │     
     ╰────
 
-  × A rest parameter cannot have an initializer
+  × A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/for-await-of/async-gen-dstr-var-async-ary-ptrn-rest-init-id.js:56:22]
  55 │ async function *fn() {
  56 │   for await (var [...x = []] of asyncIter) {
@@ -34241,7 +34440,7 @@ Negative Passed: 4519/4519 (100.00%)
  57 │     
     ╰────
 
-  × A rest parameter cannot have an initializer
+  × A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/for-await-of/async-gen-dstr-var-async-ary-ptrn-rest-init-obj.js:56:22]
  55 │ async function *fn() {
  56 │   for await (var [...{ x } = []] of asyncIter) {
@@ -34415,11 +34614,11 @@ Negative Passed: 4519/4519 (100.00%)
     ·            ─────
     ╰────
 
-  × Unexpected token
-    ╭─[test262/test/language/statements/for-in/dstr/array-elem-nested-array-invalid.js:33:6]
+  × Cannot assign to this expression
+    ╭─[test262/test/language/statements/for-in/dstr/array-elem-nested-array-invalid.js:33:9]
  32 │ 
  33 │ for ([[(x, y)]] in [[[]]]) ;
-    ·      ──────────
+    ·         ────
     ╰────
 
   × The keyword 'yield' is reserved
@@ -34436,11 +34635,11 @@ Negative Passed: 4519/4519 (100.00%)
     ·       ────
     ╰────
 
-  × Unexpected token
-    ╭─[test262/test/language/statements/for-in/dstr/array-elem-nested-obj-invalid.js:33:6]
+  × Cannot assign to this expression
+    ╭─[test262/test/language/statements/for-in/dstr/array-elem-nested-obj-invalid.js:33:14]
  32 │ 
  33 │ for ([{ get x() {} }] in [[{}]]) ;
-    ·      ────────────────
+    ·              ─────
     ╰────
 
   × The keyword 'yield' is reserved
@@ -34474,46 +34673,46 @@ Negative Passed: 4519/4519 (100.00%)
     ·          ─────
     ╰────
 
-  × Unexpected token
-    ╭─[test262/test/language/statements/for-in/dstr/array-rest-before-element.js:33:6]
+  × Spread must be last element
+    ╭─[test262/test/language/statements/for-in/dstr/array-rest-before-element.js:33:7]
  32 │ 
  33 │ for ([...x, y] in [[]]) ;
-    ·      ─────────
+    ·       ────
     ╰────
 
-  × Unexpected trailing comma after rest element
+  × A rest parameter or binding pattern may not have a trailing comma.
     ╭─[test262/test/language/statements/for-in/dstr/array-rest-before-elision.js:33:11]
  32 │ 
  33 │ for ([...x,] in [[]]) ;
     ·           ─
     ╰────
 
-  × Unexpected token
-    ╭─[test262/test/language/statements/for-in/dstr/array-rest-before-rest.js:33:6]
+  × Spread must be last element
+    ╭─[test262/test/language/statements/for-in/dstr/array-rest-before-rest.js:33:7]
  32 │ 
  33 │ for ([...x, ...y] in [[]]) ;
-    ·      ────────────
+    ·       ────
     ╰────
 
-  × Unexpected trailing comma after rest element
+  × A rest parameter or binding pattern may not have a trailing comma.
     ╭─[test262/test/language/statements/for-in/dstr/array-rest-elision-invalid.js:33:11]
  32 │ 
  33 │ for ([...x,] in [[]]) ;
     ·           ─
     ╰────
 
-  × Unexpected token
-    ╭─[test262/test/language/statements/for-in/dstr/array-rest-init.js:34:6]
+  × Cannot assign to this expression
+    ╭─[test262/test/language/statements/for-in/dstr/array-rest-init.js:34:10]
  33 │ 
  34 │ for ([...x = 1] in [[]]) ;
-    ·      ──────────
+    ·          ─────
     ╰────
 
-  × Unexpected token
-    ╭─[test262/test/language/statements/for-in/dstr/array-rest-nested-array-invalid.js:33:6]
+  × Cannot assign to this expression
+    ╭─[test262/test/language/statements/for-in/dstr/array-rest-nested-array-invalid.js:33:12]
  32 │ 
  33 │ for ([...[(x, y)]] in [[[]]]) ;
-    ·      ─────────────
+    ·            ────
     ╰────
 
   × The keyword 'yield' is reserved
@@ -34523,11 +34722,11 @@ Negative Passed: 4519/4519 (100.00%)
     ·             ─────
     ╰────
 
-  × Unexpected token
-    ╭─[test262/test/language/statements/for-in/dstr/array-rest-nested-obj-invalid.js:33:6]
+  × Cannot assign to this expression
+    ╭─[test262/test/language/statements/for-in/dstr/array-rest-nested-obj-invalid.js:33:17]
  32 │ 
  33 │ for ([...{ get x() {} }] in [[[]]]) ;
-    ·      ───────────────────
+    ·                 ─────
     ╰────
 
   × The keyword 'yield' is reserved
@@ -34611,11 +34810,11 @@ Negative Passed: 4519/4519 (100.00%)
     ·             ─────
     ╰────
 
-  × Unexpected token
-    ╭─[test262/test/language/statements/for-in/dstr/obj-prop-nested-array-invalid.js:33:6]
+  × Cannot assign to this expression
+    ╭─[test262/test/language/statements/for-in/dstr/obj-prop-nested-array-invalid.js:33:13]
  32 │ 
  33 │ for ({ x: [(x, y)] } in [{ x: [] }]) ;
-    ·      ───────────────
+    ·             ────
     ╰────
 
   × The keyword 'yield' is reserved
@@ -34625,11 +34824,11 @@ Negative Passed: 4519/4519 (100.00%)
     ·                ─────
     ╰────
 
-  × Unexpected token
-    ╭─[test262/test/language/statements/for-in/dstr/obj-prop-nested-obj-invalid.js:33:6]
+  × Cannot assign to this expression
+    ╭─[test262/test/language/statements/for-in/dstr/obj-prop-nested-obj-invalid.js:33:18]
  32 │ 
  33 │ for ({ x: { get x() {} } } in [{ x: {} }]) ;
-    ·      ─────────────────────
+    ·                  ─────
     ╰────
 
   × The keyword 'yield' is reserved
@@ -34639,11 +34838,11 @@ Negative Passed: 4519/4519 (100.00%)
     ·                 ─────
     ╰────
 
-  × Unexpected token
-    ╭─[test262/test/language/statements/for-in/dstr/obj-rest-not-last-element-invalid.js:34:6]
+  × Spread must be last element
+    ╭─[test262/test/language/statements/for-in/dstr/obj-rest-not-last-element-invalid.js:34:7]
  33 │ 
  34 │ for ({...rest, b} in [{}
-    ·      ────────────
+    ·       ───────
  35 │ ]) ;
     ╰────
 
@@ -34703,28 +34902,28 @@ Negative Passed: 4519/4519 (100.00%)
     ·          ───
     ╰────
 
-  × Unexpected token
-    ╭─[test262/test/language/statements/for-in/head-lhs-cover-non-asnmt-trgt.js:25:6]
+  × Cannot assign to this expression
+    ╭─[test262/test/language/statements/for-in/head-lhs-cover-non-asnmt-trgt.js:25:7]
  24 │ 
  25 │ for ((this) in {}) {}
-    ·      ──────
+    ·       ────
     ╰────
 
-  × Unexpected token
-    ╭─[test262/test/language/statements/for-in/head-lhs-invalid-asnmt-ptrn-ary.js:21:6]
+  × Cannot assign to this expression
+    ╭─[test262/test/language/statements/for-in/head-lhs-invalid-asnmt-ptrn-ary.js:21:8]
  20 │ 
  21 │ for ([(x, y)] in {}) {}
-    ·      ────────
+    ·        ────
     ╰────
 
-  × Unexpected token
-    ╭─[test262/test/language/statements/for-in/head-lhs-invalid-asnmt-ptrn-obj.js:21:6]
+  × Cannot assign to this expression
+    ╭─[test262/test/language/statements/for-in/head-lhs-invalid-asnmt-ptrn-obj.js:21:9]
  20 │ 
  21 │ for ({ m() {} } in {}) {}
-    ·      ──────────
+    ·         ─────
     ╰────
 
-  × Unexpected token
+  × Cannot assign to this expression
     ╭─[test262/test/language/statements/for-in/head-lhs-non-asnmt-trgt.js:19:6]
  18 │ 
  19 │ for (this in {}) {}
@@ -34921,11 +35120,11 @@ Negative Passed: 4519/4519 (100.00%)
     ·            ─────
     ╰────
 
-  × Unexpected token
-    ╭─[test262/test/language/statements/for-of/dstr/array-elem-nested-array-invalid.js:33:6]
+  × Cannot assign to this expression
+    ╭─[test262/test/language/statements/for-of/dstr/array-elem-nested-array-invalid.js:33:9]
  32 │ 
  33 │ for ([[(x, y)]] of [[[]]]) ;
-    ·      ──────────
+    ·         ────
     ╰────
 
   × The keyword 'yield' is reserved
@@ -34942,11 +35141,11 @@ Negative Passed: 4519/4519 (100.00%)
     ·       ────
     ╰────
 
-  × Unexpected token
-    ╭─[test262/test/language/statements/for-of/dstr/array-elem-nested-obj-invalid.js:33:6]
+  × Cannot assign to this expression
+    ╭─[test262/test/language/statements/for-of/dstr/array-elem-nested-obj-invalid.js:33:14]
  32 │ 
  33 │ for ([{ get x() {} }] of [[{}]]) ;
-    ·      ────────────────
+    ·              ─────
     ╰────
 
   × The keyword 'yield' is reserved
@@ -34980,46 +35179,46 @@ Negative Passed: 4519/4519 (100.00%)
     ·          ─────
     ╰────
 
-  × Unexpected token
-    ╭─[test262/test/language/statements/for-of/dstr/array-rest-before-element.js:33:6]
+  × Spread must be last element
+    ╭─[test262/test/language/statements/for-of/dstr/array-rest-before-element.js:33:7]
  32 │ 
  33 │ for ([...x, y] of [[]]) ;
-    ·      ─────────
+    ·       ────
     ╰────
 
-  × Unexpected trailing comma after rest element
+  × A rest parameter or binding pattern may not have a trailing comma.
     ╭─[test262/test/language/statements/for-of/dstr/array-rest-before-elision.js:33:11]
  32 │ 
  33 │ for ([...x,] of [[]]) ;
     ·           ─
     ╰────
 
-  × Unexpected token
-    ╭─[test262/test/language/statements/for-of/dstr/array-rest-before-rest.js:33:6]
+  × Spread must be last element
+    ╭─[test262/test/language/statements/for-of/dstr/array-rest-before-rest.js:33:7]
  32 │ 
  33 │ for ([...x, ...y] of [[]]) ;
-    ·      ────────────
+    ·       ────
     ╰────
 
-  × Unexpected trailing comma after rest element
+  × A rest parameter or binding pattern may not have a trailing comma.
     ╭─[test262/test/language/statements/for-of/dstr/array-rest-elision-invalid.js:33:11]
  32 │ 
  33 │ for ([...x,] of [[]]) ;
     ·           ─
     ╰────
 
-  × Unexpected token
-    ╭─[test262/test/language/statements/for-of/dstr/array-rest-init.js:34:6]
+  × Cannot assign to this expression
+    ╭─[test262/test/language/statements/for-of/dstr/array-rest-init.js:34:10]
  33 │ 
  34 │ for ([...x = 1] of [[]]) ;
-    ·      ──────────
+    ·          ─────
     ╰────
 
-  × Unexpected token
-    ╭─[test262/test/language/statements/for-of/dstr/array-rest-nested-array-invalid.js:33:6]
+  × Cannot assign to this expression
+    ╭─[test262/test/language/statements/for-of/dstr/array-rest-nested-array-invalid.js:33:12]
  32 │ 
  33 │ for ([...[(x, y)]] of [[[]]]) ;
-    ·      ─────────────
+    ·            ────
     ╰────
 
   × The keyword 'yield' is reserved
@@ -35029,11 +35228,11 @@ Negative Passed: 4519/4519 (100.00%)
     ·             ─────
     ╰────
 
-  × Unexpected token
-    ╭─[test262/test/language/statements/for-of/dstr/array-rest-nested-obj-invalid.js:33:6]
+  × Cannot assign to this expression
+    ╭─[test262/test/language/statements/for-of/dstr/array-rest-nested-obj-invalid.js:33:17]
  32 │ 
  33 │ for ([...{ get x() {} }] of [[[]]]) ;
-    ·      ───────────────────
+    ·                 ─────
     ╰────
 
   × The keyword 'yield' is reserved
@@ -35057,7 +35256,7 @@ Negative Passed: 4519/4519 (100.00%)
     ·      ─────────────
     ╰────
 
-  × A rest parameter cannot have an initializer
+  × A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/for-of/dstr/const-ary-ptrn-rest-init-ary.js:52:16]
  51 │ 
  52 │ for (const [...[ x ] = []] of [[]]) {
@@ -35065,7 +35264,7 @@ Negative Passed: 4519/4519 (100.00%)
  53 │   
     ╰────
 
-  × A rest parameter cannot have an initializer
+  × A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/for-of/dstr/const-ary-ptrn-rest-init-id.js:52:16]
  51 │ 
  52 │ for (const [...x = []] of [[]]) {
@@ -35073,7 +35272,7 @@ Negative Passed: 4519/4519 (100.00%)
  53 │   
     ╰────
 
-  × A rest parameter cannot have an initializer
+  × A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/for-of/dstr/const-ary-ptrn-rest-init-obj.js:52:16]
  51 │ 
  52 │ for (const [...{ x } = []] of [[]]) {
@@ -35119,7 +35318,7 @@ Negative Passed: 4519/4519 (100.00%)
     ·      ───────────
     ╰────
 
-  × A rest parameter cannot have an initializer
+  × A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/for-of/dstr/let-ary-ptrn-rest-init-ary.js:52:14]
  51 │ 
  52 │ for (let [...[ x ] = []] of [[]]) {
@@ -35127,7 +35326,7 @@ Negative Passed: 4519/4519 (100.00%)
  53 │   
     ╰────
 
-  × A rest parameter cannot have an initializer
+  × A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/for-of/dstr/let-ary-ptrn-rest-init-id.js:52:14]
  51 │ 
  52 │ for (let [...x = []] of [[]]) {
@@ -35135,7 +35334,7 @@ Negative Passed: 4519/4519 (100.00%)
  53 │   
     ╰────
 
-  × A rest parameter cannot have an initializer
+  × A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/for-of/dstr/let-ary-ptrn-rest-init-obj.js:52:14]
  51 │ 
  52 │ for (let [...{ x } = []] of [[]]) {
@@ -35241,11 +35440,11 @@ Negative Passed: 4519/4519 (100.00%)
     ·             ─────
     ╰────
 
-  × Unexpected token
-    ╭─[test262/test/language/statements/for-of/dstr/obj-prop-nested-array-invalid.js:33:6]
+  × Cannot assign to this expression
+    ╭─[test262/test/language/statements/for-of/dstr/obj-prop-nested-array-invalid.js:33:13]
  32 │ 
  33 │ for ({ x: [(x, y)] } of [{ x: [] }]) ;
-    ·      ───────────────
+    ·             ────
     ╰────
 
   × The keyword 'yield' is reserved
@@ -35255,11 +35454,11 @@ Negative Passed: 4519/4519 (100.00%)
     ·                ─────
     ╰────
 
-  × Unexpected token
-    ╭─[test262/test/language/statements/for-of/dstr/obj-prop-nested-obj-invalid.js:33:6]
+  × Cannot assign to this expression
+    ╭─[test262/test/language/statements/for-of/dstr/obj-prop-nested-obj-invalid.js:33:18]
  32 │ 
  33 │ for ({ x: { get x() {} } } of [{ x: {} }]) ;
-    ·      ─────────────────────
+    ·                  ─────
     ╰────
 
   × The keyword 'yield' is reserved
@@ -35269,11 +35468,11 @@ Negative Passed: 4519/4519 (100.00%)
     ·                 ─────
     ╰────
 
-  × Unexpected token
-    ╭─[test262/test/language/statements/for-of/dstr/obj-rest-not-last-element-invalid.js:34:6]
+  × Spread must be last element
+    ╭─[test262/test/language/statements/for-of/dstr/obj-rest-not-last-element-invalid.js:34:7]
  33 │ 
  34 │ for ({...rest, b} of [{}
-    ·      ────────────
+    ·       ───────
  35 │ ]) ;
     ╰────
 
@@ -35284,7 +35483,7 @@ Negative Passed: 4519/4519 (100.00%)
     ·      ───────────
     ╰────
 
-  × A rest parameter cannot have an initializer
+  × A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/for-of/dstr/var-ary-ptrn-rest-init-ary.js:49:14]
  48 │ 
  49 │ for (var [...[ x ] = []] of [[]]) {
@@ -35292,7 +35491,7 @@ Negative Passed: 4519/4519 (100.00%)
  50 │   
     ╰────
 
-  × A rest parameter cannot have an initializer
+  × A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/for-of/dstr/var-ary-ptrn-rest-init-id.js:49:14]
  48 │ 
  49 │ for (var [...x = []] of [[]]) {
@@ -35300,7 +35499,7 @@ Negative Passed: 4519/4519 (100.00%)
  50 │   
     ╰────
 
-  × A rest parameter cannot have an initializer
+  × A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/for-of/dstr/var-ary-ptrn-rest-init-obj.js:49:14]
  48 │ 
  49 │ for (var [...{ x } = []] of [[]]) {
@@ -35439,25 +35638,25 @@ Negative Passed: 4519/4519 (100.00%)
     ·      ─────
     ╰────
 
-  × Unexpected token
-    ╭─[test262/test/language/statements/for-of/head-lhs-cover-non-asnmt-trgt.js:25:6]
+  × Cannot assign to this expression
+    ╭─[test262/test/language/statements/for-of/head-lhs-cover-non-asnmt-trgt.js:25:7]
  24 │ 
  25 │ for ((this) of []) {}
-    ·      ──────
+    ·       ────
     ╰────
 
-  × Unexpected token
-    ╭─[test262/test/language/statements/for-of/head-lhs-invalid-asnmt-ptrn-ary.js:21:6]
+  × Cannot assign to this expression
+    ╭─[test262/test/language/statements/for-of/head-lhs-invalid-asnmt-ptrn-ary.js:21:8]
  20 │ 
  21 │ for ([(x, y)] of []) {}
-    ·      ────────
+    ·        ────
     ╰────
 
-  × Unexpected token
-    ╭─[test262/test/language/statements/for-of/head-lhs-invalid-asnmt-ptrn-obj.js:21:6]
+  × Cannot assign to this expression
+    ╭─[test262/test/language/statements/for-of/head-lhs-invalid-asnmt-ptrn-obj.js:21:9]
  20 │ 
  21 │ for ({ m() {} } of []) {}
-    ·      ──────────
+    ·         ─────
     ╰────
 
   × Expected `;` but found `[`
@@ -35468,7 +35667,7 @@ Negative Passed: 4519/4519 (100.00%)
     ·              ╰── `;` expected
     ╰────
 
-  × Unexpected token
+  × Cannot assign to this expression
     ╭─[test262/test/language/statements/for-of/head-lhs-non-asnmt-trgt.js:19:6]
  18 │ 
  19 │ for (this of []) {}
@@ -35615,7 +35814,7 @@ Negative Passed: 4519/4519 (100.00%)
  62 │   
     ╰────
 
-  × A rest parameter cannot have an initializer
+  × A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/function/dflt-params-rest.js:65:15]
  64 │ 
  65 │ function f(...x = []) {
@@ -35623,7 +35822,7 @@ Negative Passed: 4519/4519 (100.00%)
  66 │   
     ╰────
 
-  × A rest parameter cannot have an initializer
+  × A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/function/dstr/ary-ptrn-rest-init-ary.js:54:16]
  53 │ var callCount = 0;
  54 │ function f([...[ x ] = []]) {
@@ -35631,7 +35830,7 @@ Negative Passed: 4519/4519 (100.00%)
  55 │   
     ╰────
 
-  × A rest parameter cannot have an initializer
+  × A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/function/dstr/ary-ptrn-rest-init-id.js:54:16]
  53 │ var callCount = 0;
  54 │ function f([...x = []]) {
@@ -35639,7 +35838,7 @@ Negative Passed: 4519/4519 (100.00%)
  55 │   
     ╰────
 
-  × A rest parameter cannot have an initializer
+  × A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/function/dstr/ary-ptrn-rest-init-obj.js:54:16]
  53 │ var callCount = 0;
  54 │ function f([...{ x } = []]) {
@@ -35671,7 +35870,7 @@ Negative Passed: 4519/4519 (100.00%)
  55 │   
     ╰────
 
-  × A rest parameter cannot have an initializer
+  × A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/function/dstr/dflt-ary-ptrn-rest-init-ary.js:54:16]
  53 │ var callCount = 0;
  54 │ function f([...[ x ] = []] = []) {
@@ -35679,7 +35878,7 @@ Negative Passed: 4519/4519 (100.00%)
  55 │   
     ╰────
 
-  × A rest parameter cannot have an initializer
+  × A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/function/dstr/dflt-ary-ptrn-rest-init-id.js:54:16]
  53 │ var callCount = 0;
  54 │ function f([...x = []] = []) {
@@ -35687,7 +35886,7 @@ Negative Passed: 4519/4519 (100.00%)
  55 │   
     ╰────
 
-  × A rest parameter cannot have an initializer
+  × A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/function/dstr/dflt-ary-ptrn-rest-init-obj.js:54:16]
  53 │ var callCount = 0;
  54 │ function f([...{ x } = []] = []) {
@@ -36014,6 +36213,14 @@ Negative Passed: 4519/4519 (100.00%)
  58 │   
     ╰────
 
+  × A rest parameter or binding pattern may not have a trailing comma.
+    ╭─[test262/test/language/statements/function/rest-params-trailing-comma-early-error.js:57:16]
+ 56 │ 
+ 57 │ function f(...a,) {
+    ·                ─
+ 58 │   
+    ╰────
+
   × Cannot use `await` as an identifier in an async context
     ╭─[test262/test/language/statements/function/static-init-await-binding-invalid.js:25:14]
  24 │   static {
@@ -36048,7 +36255,7 @@ Negative Passed: 4519/4519 (100.00%)
  62 │   
     ╰────
 
-  × A rest parameter cannot have an initializer
+  × A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/generators/dflt-params-rest.js:65:16]
  64 │ 
  65 │ function* f(...x = []) {
@@ -36056,7 +36263,7 @@ Negative Passed: 4519/4519 (100.00%)
  66 │   
     ╰────
 
-  × A rest parameter cannot have an initializer
+  × A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/generators/dstr/ary-ptrn-rest-init-ary.js:53:17]
  52 │ var callCount = 0;
  53 │ function* f([...[ x ] = []]) {
@@ -36064,7 +36271,7 @@ Negative Passed: 4519/4519 (100.00%)
  54 │   
     ╰────
 
-  × A rest parameter cannot have an initializer
+  × A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/generators/dstr/ary-ptrn-rest-init-id.js:53:17]
  52 │ var callCount = 0;
  53 │ function* f([...x = []]) {
@@ -36072,7 +36279,7 @@ Negative Passed: 4519/4519 (100.00%)
  54 │   
     ╰────
 
-  × A rest parameter cannot have an initializer
+  × A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/generators/dstr/ary-ptrn-rest-init-obj.js:53:17]
  52 │ var callCount = 0;
  53 │ function* f([...{ x } = []]) {
@@ -36104,7 +36311,7 @@ Negative Passed: 4519/4519 (100.00%)
  54 │   
     ╰────
 
-  × A rest parameter cannot have an initializer
+  × A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/generators/dstr/dflt-ary-ptrn-rest-init-ary.js:53:17]
  52 │ var callCount = 0;
  53 │ function* f([...[ x ] = []] = []) {
@@ -36112,7 +36319,7 @@ Negative Passed: 4519/4519 (100.00%)
  54 │   
     ╰────
 
-  × A rest parameter cannot have an initializer
+  × A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/generators/dstr/dflt-ary-ptrn-rest-init-id.js:53:17]
  52 │ var callCount = 0;
  53 │ function* f([...x = []] = []) {
@@ -36120,7 +36327,7 @@ Negative Passed: 4519/4519 (100.00%)
  54 │   
     ╰────
 
-  × A rest parameter cannot have an initializer
+  × A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/generators/dstr/dflt-ary-ptrn-rest-init-obj.js:53:17]
  52 │ var callCount = 0;
  53 │ function* f([...{ x } = []] = []) {
@@ -36181,6 +36388,14 @@ Negative Passed: 4519/4519 (100.00%)
  57 │ 
  58 │ function* f(...a,) {
     ·             ────
+ 59 │   
+    ╰────
+
+  × A rest parameter or binding pattern may not have a trailing comma.
+    ╭─[test262/test/language/statements/generators/rest-params-trailing-comma-early-error.js:58:17]
+ 57 │ 
+ 58 │ function* f(...a,) {
+    ·                 ─
  59 │   
     ╰────
 
@@ -36967,7 +37182,7 @@ Negative Passed: 4519/4519 (100.00%)
     · ─────
     ╰────
 
-  × A rest parameter cannot have an initializer
+  × A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/let/dstr/ary-ptrn-rest-init-ary.js:31:9]
  30 │ 
  31 │ let [...[ x ] = []] = [];
@@ -36975,7 +37190,7 @@ Negative Passed: 4519/4519 (100.00%)
  32 │ 
     ╰────
 
-  × A rest parameter cannot have an initializer
+  × A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/let/dstr/ary-ptrn-rest-init-id.js:31:9]
  30 │ 
  31 │ let [...x = []] = [];
@@ -36983,7 +37198,7 @@ Negative Passed: 4519/4519 (100.00%)
  32 │ 
     ╰────
 
-  × A rest parameter cannot have an initializer
+  × A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/let/dstr/ary-ptrn-rest-init-obj.js:31:9]
  30 │ 
  31 │ let [...{ x } = []] = [];
@@ -38038,7 +38253,7 @@ Negative Passed: 4519/4519 (100.00%)
     ·                ────
     ╰────
 
-  × A rest parameter cannot have an initializer
+  × A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/try/dstr/ary-ptrn-rest-init-ary.js:33:14]
  32 │   throw [];
  33 │ } catch ([...[ x ] = []]) {
@@ -38046,7 +38261,7 @@ Negative Passed: 4519/4519 (100.00%)
  34 │   
     ╰────
 
-  × A rest parameter cannot have an initializer
+  × A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/try/dstr/ary-ptrn-rest-init-id.js:33:14]
  32 │   throw [];
  33 │ } catch ([...x = []]) {
@@ -38054,7 +38269,7 @@ Negative Passed: 4519/4519 (100.00%)
  34 │   
     ╰────
 
-  × A rest parameter cannot have an initializer
+  × A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/try/dstr/ary-ptrn-rest-init-obj.js:33:14]
  32 │   throw [];
  33 │ } catch ([...{ x } = []]) {
@@ -38383,7 +38598,7 @@ Negative Passed: 4519/4519 (100.00%)
  26 │   }
     ╰────
 
-  × A rest parameter cannot have an initializer
+  × A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/variable/dstr/ary-ptrn-rest-init-ary.js:30:9]
  29 │ 
  30 │ var [...[ x ] = []] = [];
@@ -38391,7 +38606,7 @@ Negative Passed: 4519/4519 (100.00%)
  31 │ 
     ╰────
 
-  × A rest parameter cannot have an initializer
+  × A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/variable/dstr/ary-ptrn-rest-init-id.js:30:9]
  29 │ 
  30 │ var [...x = []] = [];
@@ -38399,7 +38614,7 @@ Negative Passed: 4519/4519 (100.00%)
  31 │ 
     ╰────
 
-  × A rest parameter cannot have an initializer
+  × A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/variable/dstr/ary-ptrn-rest-init-obj.js:30:9]
  29 │ 
  30 │ var [...{ x } = []] = [];

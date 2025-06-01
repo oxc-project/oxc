@@ -2,7 +2,7 @@ use std::{mem, ops::ControlFlow, path::Path};
 
 use oxc_allocator::Allocator;
 use oxc_ast::ast::Program;
-use oxc_codegen::{CodeGenerator, CodegenOptions, CodegenReturn};
+use oxc_codegen::{Codegen, CodegenOptions, CodegenReturn};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_isolated_declarations::{IsolatedDeclarations, IsolatedDeclarationsOptions};
 use oxc_mangler::{MangleOptions, Mangler};
@@ -10,9 +10,10 @@ use oxc_minifier::{CompressOptions, Compressor};
 use oxc_parser::{ParseOptions, Parser, ParserReturn};
 use oxc_semantic::{Scoping, SemanticBuilder, SemanticBuilderReturn};
 use oxc_span::SourceType;
-use oxc_transformer::{
+use oxc_transformer::{TransformOptions, Transformer, TransformerReturn};
+use oxc_transformer_plugins::{
     InjectGlobalVariables, InjectGlobalVariablesConfig, ReplaceGlobalDefines,
-    ReplaceGlobalDefinesConfig, TransformOptions, Transformer, TransformerReturn,
+    ReplaceGlobalDefinesConfig,
 };
 
 #[derive(Default)]
@@ -184,11 +185,19 @@ pub trait CompilerInterface {
         }
 
         if let Some(options) = define_options {
-            let ret = ReplaceGlobalDefines::new(&allocator, options).build(scoping, &mut program);
-            Compressor::new(&allocator, CompressOptions::default())
-                .dead_code_elimination_with_scoping(ret.scoping, &mut program);
-            // symbols = ret.symbols;
-            // scopes = ret.scopes;
+            let _ret = ReplaceGlobalDefines::new(&allocator, options).build(scoping, &mut program);
+            // Run DCE if minification is disabled.
+            if self.compress_options().is_none() {
+                // Rebuild semantic because define plugin changed the AST.
+                // DCE assumes semantic data to be correct, it will crash otherwise.
+                scoping = SemanticBuilder::new()
+                    .with_stats(stats)
+                    .build(&program)
+                    .semantic
+                    .into_scoping();
+                Compressor::new(&allocator, CompressOptions::default())
+                    .dead_code_elimination_with_scoping(scoping, &mut program);
+            }
         }
 
         /* Compress */
@@ -285,6 +294,6 @@ pub trait CompilerInterface {
         if self.enable_sourcemap() {
             options.source_map_path = Some(source_path.to_path_buf());
         }
-        CodeGenerator::new().with_options(options).with_scoping(scoping).build(program)
+        Codegen::new().with_options(options).with_scoping(scoping).build(program)
     }
 }

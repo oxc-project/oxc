@@ -50,7 +50,13 @@ const NOT_SUPPORTED_RULE_NAMES = new Set([
   'eslint/no-with', // superseded by strict mode
   'eslint/no-new-symbol', // Deprecated as of ESLint v9, but for a while disable manually
   'eslint/no-undef-init', // #6456 unicorn/no-useless-undefined covers this case
-  'import/no-unresolved', // Will always contain false positives due to module resolution complexity
+  'import/no-unresolved', // Will always contain false positives due to module resolution complexity,
+  'react/jsx-equals-spacing', // stylistic rule
+  'react/jsx-curly-spacing', // stylistic rule
+  'react/jsx-indent', // stylistic rule
+  'react/jsx-indent-props', // stylistic rule
+  'react/jsx-props-no-multi-spaces', // stylistic rule
+  'unicorn/no-for-loop', // this rule suggest using `Array.prototype.entries` which is slow https://github.com/oxc-project/oxc/issues/11311, furthermore, `typescript/prefer-for-of` covers most cases
 ]);
 
 /**
@@ -113,16 +119,16 @@ export const updateNotSupportedStatus = (ruleEntries) => {
  * @param {string} constName
  * @param {string} fileContent
  */
-const getPhfSetEntries = (constName, fileContent) => {
+const getArrayEntries = (constName, fileContent) => {
   // Find the start of the list
   // ```
-  // const VITEST_COMPATIBLE_JEST_RULES: phf::Set<&'static str> = phf::phf_set! {
+  // const VITEST_COMPATIBLE_JEST_RULES: [&str; 34] = [
   //   "consistent-test-it",
   //   "expect-expect",
   //   ...
-  // };
+  // ];
   // ```
-  const regSearch = new RegExp(`const ${constName}[^.]+phf_set! {([^}]+)`, 's');
+  const regSearch = new RegExp(`const ${constName}[^=]+= \\[([^\\]]+)`, 's');
 
   const vitestCompatibleRules = fileContent.match(regSearch)?.[1];
   if (!vitestCompatibleRules) {
@@ -159,7 +165,10 @@ export const overrideTypeScriptPluginStatusWithEslintPluginStatus = async (
     'crates/oxc_linter/src/utils/mod.rs',
     'utf8',
   );
-  const rules = getPhfSetEntries('TYPESCRIPT_COMPATIBLE_ESLINT_RULES', typescriptCompatibleRulesFile);
+  const rules = getArrayEntries(
+    'TYPESCRIPT_COMPATIBLE_ESLINT_RULES',
+    typescriptCompatibleRulesFile,
+  );
 
   for (const rule of rules) {
     const typescriptRuleEntry = ruleEntries.get(`typescript/${rule}`);
@@ -178,12 +187,17 @@ export const overrideTypeScriptPluginStatusWithEslintPluginStatus = async (
  * override the status of the Vitest rules to match the Jest rules.
  * @param {RuleEntries} ruleEntries
  */
-export const syncVitestPluginStatusWithJestPluginStatus = async (ruleEntries) => {
+export const syncVitestPluginStatusWithJestPluginStatus = async (
+  ruleEntries,
+) => {
   const vitestCompatibleRulesFile = await readFile(
     'crates/oxc_linter/src/utils/mod.rs',
     'utf8',
   );
-  const rules = getPhfSetEntries('VITEST_COMPATIBLE_JEST_RULES', vitestCompatibleRulesFile);
+  const rules = getArrayEntries(
+    'VITEST_COMPATIBLE_JEST_RULES',
+    vitestCompatibleRulesFile,
+  );
 
   for (const rule of rules) {
     const vitestRuleEntry = ruleEntries.get(`vitest/${rule}`);

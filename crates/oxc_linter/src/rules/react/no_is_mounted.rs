@@ -28,7 +28,9 @@ declare_oxc_lint!(
     /// isMounted is an anti-pattern, is not available when using ES6 classes,
     /// and it is on its way to being officially deprecated.///
     ///
-    /// ### Example
+    /// ### Examples
+    ///
+    /// Examples of **incorrect** code for this rule:
     /// ```jsx
     /// class Hello extends React.Component {
     ///     someMethod() {

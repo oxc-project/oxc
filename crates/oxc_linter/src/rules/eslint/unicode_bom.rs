@@ -34,7 +34,9 @@ declare_oxc_lint!(
     /// single byte. Since UTF-8 is the dominant encoding of the web, we make "never" the default
     /// option.
     ///
-    /// ### Example
+    /// ### Examples
+    ///
+    /// Examples of **incorrect** code for this rule:
     /// ```javascript
     /// ﻿var a = 123;
     /// ```

@@ -1,10 +1,11 @@
+// Note: This code is repeated in `wrap.cjs`.
+// Any changes should be applied in that file too.
+
 export function wrap(result) {
   let program, module, comments, errors;
   return {
     get program() {
-      if (!program) {
-        program = jsonParseAst(result.program);
-      }
+      if (!program) program = jsonParseAst(result.program);
       return program;
     },
     get module() {
@@ -22,24 +23,38 @@ export function wrap(result) {
   };
 }
 
-// Used by napi/playground/patch.mjs
-export function jsonParseAst(ast) {
-  return JSON.parse(ast, function(key, value) {
-    // Set `value` field of `Literal`s for `BigInt`s and `RegExp`s.
-    // This is not possible to do on Rust side, as neither can be represented correctly in JSON.
-    if (value === null && key === 'value' && Object.hasOwn(this, 'type') && this.type === 'Literal') {
-      if (Object.hasOwn(this, 'bigint')) {
-        return BigInt(this.bigint);
-      }
-      if (Object.hasOwn(this, 'regex')) {
-        const { regex } = this;
-        try {
-          return RegExp(regex.pattern, regex.flags);
-        } catch (_err) {
-          // Invalid regexp, or valid regexp using syntax not supported by this version of NodeJS
-        }
-      }
+// Used by `napi/playground/patch.mjs`.
+//
+// Set `value` field of `Literal`s which are `BigInt`s or `RegExp`s.
+//
+// Returned JSON contains an array `fixes` with paths to these nodes
+// e.g. for `123n; foo(/xyz/)`, `fixes` will be
+// `[["body", 0, "expression"], ["body", 1, "expression", "arguments", 2]]`.
+//
+// Walk down the AST to these nodes and alter them.
+// Compiling the list of fixes on Rust side avoids having to do a full AST traversal on JS side
+// to locate the likely very few `Literal`s which need fixing.
+export function jsonParseAst(programJson) {
+  const { node: program, fixes } = JSON.parse(programJson);
+  for (const fixPath of fixes) {
+    applyFix(program, fixPath);
+  }
+  return program;
+}
+
+function applyFix(program, fixPath) {
+  let node = program;
+  for (const key of fixPath) {
+    node = node[key];
+  }
+
+  if (node.bigint) {
+    node.value = BigInt(node.bigint);
+  } else {
+    try {
+      node.value = RegExp(node.regex.pattern, node.regex.flags);
+    } catch (_err) {
+      // Invalid regexp, or valid regexp using syntax not supported by this version of NodeJS
     }
-    return value;
-  });
+  }
 }

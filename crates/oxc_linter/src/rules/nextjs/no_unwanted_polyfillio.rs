@@ -7,7 +7,6 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::AstNode;
 use oxc_span::Span;
-use phf::{Set, phf_set};
 
 use crate::{
     context::LintContext,
@@ -28,12 +27,16 @@ pub struct NoUnwantedPolyfillio;
 
 declare_oxc_lint!(
     /// ### What it does
+    ///
     /// Prevent duplicate polyfills from Polyfill.io.
     ///
     /// ### Why is this bad?
+    ///
     /// You are using polyfills from Polyfill.io and including polyfills already shipped with Next.js. This unnecessarily increases page weight which can affect loading performance.
     ///
-    /// ### Example
+    /// ### Examples
+    ///
+    /// Examples of **incorrect** code for this rule:
     /// ```javascript
     /// <script src='https://polyfill.io/v3/polyfill.min.js?features=Array.prototype.copyWithin'></script>
     ///
@@ -45,29 +48,28 @@ declare_oxc_lint!(
 );
 
 // Keep in sync with next.js polyfills file : https://github.com/vercel/next.js/blob/v15.0.2/packages/next-polyfill-nomodule/src/index.js
-const NEXT_POLYFILLED_FEATURES: Set<&'static str> = phf_set! {
+const NEXT_POLYFILLED_FEATURES: phf::Set<&'static str> = phf::phf_set![
+    "Array.from",
+    "Array.of",
     "Array.prototype.@@iterator",
     "Array.prototype.at",
     "Array.prototype.copyWithin",
     "Array.prototype.fill",
     "Array.prototype.find",
     "Array.prototype.findIndex",
-    "Array.prototype.flatMap",
     "Array.prototype.flat",
-    "Array.from",
+    "Array.prototype.flatMap",
     "Array.prototype.includes",
-    "Array.of",
     "Function.prototype.name",
-    "fetch",
     "Map",
     "Number.EPSILON",
     "Number.Epsilon",
-    "Number.isFinite",
-    "Number.isNaN",
-    "Number.isInteger",
-    "Number.isSafeInteger",
     "Number.MAX_SAFE_INTEGER",
     "Number.MIN_SAFE_INTEGER",
+    "Number.isFinite",
+    "Number.isInteger",
+    "Number.isNaN",
+    "Number.isSafeInteger",
     "Number.parseFloat",
     "Number.parseInt",
     "Object.assign",
@@ -78,38 +80,39 @@ const NEXT_POLYFILLED_FEATURES: Set<&'static str> = phf_set! {
     "Object.is",
     "Object.keys",
     "Object.values",
+    "Promise",
+    "Promise.prototype.finally",
     "Reflect",
     "Set",
-    "Symbol",
-    "Symbol.asyncIterator",
+    "String.fromCodePoint",
+    "String.prototype.@@iterator",
     "String.prototype.codePointAt",
     "String.prototype.endsWith",
-    "String.fromCodePoint",
     "String.prototype.includes",
-    "String.prototype.@@iterator",
     "String.prototype.padEnd",
     "String.prototype.padStart",
     "String.prototype.repeat",
-    "String.raw",
     "String.prototype.startsWith",
     "String.prototype.trimEnd",
     "String.prototype.trimStart",
+    "String.raw",
+    "Symbol",
+    "Symbol.asyncIterator",
     "URL",
     "URL.prototype.toJSON",
     "URLSearchParams",
     "WeakMap",
     "WeakSet",
-    "Promise",
-    "Promise.prototype.finally",
     "es2015", // Should be covered by babel-preset-env instead.
     "es2016", // contains polyfilled 'Array.prototype.includes', 'String.prototype.padEnd' and 'String.prototype.padStart'
     "es2017", // contains polyfilled 'Object.entries', 'Object.getOwnPropertyDescriptors', 'Object.values', 'String.prototype.padEnd' and 'String.prototype.padStart'
     "es2018", // contains polyfilled 'Promise.prototype.finally' and ''Symbol.asyncIterator'
     "es2019", // Contains polyfilled 'Object.fromEntries' and polyfilled 'Array.prototype.flat', 'Array.prototype.flatMap', 'String.prototype.trimEnd' and 'String.prototype.trimStart'
-    "es5", // Should be covered by babel-preset-env instead.
-    "es6", // Should be covered by babel-preset-env instead.
-    "es7", // contains polyfilled 'Array.prototype.includes', 'String.prototype.padEnd' and 'String.prototype.padStart'
-};
+    "es5",    // Should be covered by babel-preset-env instead.
+    "es6",    // Should be covered by babel-preset-env instead.
+    "es7", // contains polyfilled 'Array.prototype.includes', 'String.prototype.padEnd' and 'String.prototype.padStart'];
+    "fetch",
+];
 
 impl Rule for NoUnwantedPolyfillio {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {

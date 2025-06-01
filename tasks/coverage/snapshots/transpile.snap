@@ -1,11 +1,12 @@
-commit: 15392346
+commit: 81c95189
 
 transpile Summary:
 AST Parsed     : 20/20 (100.00%)
 Positive Passed: 19/20 (95.00%)
 Mismatch: tasks/coverage/typescript/tests/cases/transpile/declarationBasicSyntax.ts
 
-#### "typescript/tests/cases/transpile/declarationComputedPropertyNames.ts" ####
+
+#### typescript/tests/cases/transpile/declarationComputedPropertyNames.ts ####
 //// [declarationComputedPropertyNames.ts] ////
 export namespace presentNs {
 	export const a = Symbol();
@@ -102,8 +103,8 @@ export declare class C {
 	["2"]: number;
 }
 export declare const D: {
-	Symbol.iterator: number
-	globalThis.Symbol.toStringTag: number
+	[Symbol.iterator]: number
+	[globalThis.Symbol.toStringTag]: number
 	1: number
 	"2": number
 };
@@ -307,7 +308,7 @@ export {};
  6 | 
    `----
 
-#### "typescript/tests/cases/transpile/declarationFunctionDeclarations.ts" ####
+#### typescript/tests/cases/transpile/declarationFunctionDeclarations.ts ####
 //// [fnDecl.ts] ////
 type T = number[];
 export function fnDeclBasic1(p: number[] | string[] | [T] = [], rParam: string): void {}
@@ -346,9 +347,9 @@ export const inObjectLiteralFnExprBad = { o: function(array: T = [], rParam: str
 export const inObjectLiteralArrowOk1 = { o: (array: number[] = [], rParam: string): void => {} };
 export const inObjectLiteralArrowOk2 = { o: (array: T | undefined = [], rParam: string): void => {} };
 export const inObjectLiteralArrowBad = { o: (array: T = [], rParam: string): void => {} };
-export const inObjectLiteralMethodOk1 = { o(array: number[] = [], rParam: string) {} };
-export const inObjectLiteralMethodOk2 = { o(array: T | undefined = [], rParam: string) {} };
-export const inObjectLiteralMethodBad = { o(array: T = [], rParam: string) {} };
+export const inObjectLiteralMethodOk1 = { o(array: number[] = [], rParam: string): void {} };
+export const inObjectLiteralMethodOk2 = { o(array: T | undefined = [], rParam: string): void {} };
+export const inObjectLiteralMethodBad = { o(array: T = [], rParam: string): void {} };
 export class InClassFnExprOk1 {
 	o = function(array: number[] = [], rParam: string): void {};
 }
@@ -385,6 +386,7 @@ export class InClassMethodBad {
 	o(array: T = [], rParam: string): void {}
 }
 ;
+// https://github.com/microsoft/TypeScript/issues/60976
 class Bar {}
 export class ClsWithRequiredInitializedParameter {
 	constructor(private arr: Bar = new Bar(), private bool: boolean) {}

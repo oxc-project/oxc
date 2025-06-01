@@ -1,7 +1,6 @@
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
-use phf::phf_set;
 use serde::Deserialize;
 
 use crate::{
@@ -44,6 +43,40 @@ declare_oxc_lint!(
     /// ```javascript
     /// /** @param */
     /// ```
+    ///
+    /// ### Options
+    ///
+    /// Configuration for allowed tags is done via [`settings.jsdoc.tagNamePreference`](/docs/guide/usage/linter/config-file-reference.html#settings-jsdoc-tagnamepreference).
+    /// There is no CLI-only parameter for this rule.
+    ///
+    /// You can add custom tags by adding a key-value pair where both match the name of the tag you want to add, like so:
+    ///
+    /// ::: code-group
+    ///
+    /// ```json [Config (.oxlintrc.json)]
+    /// {
+    ///   "plugins": ["jsdoc"],
+    ///   "rules": {
+    ///     "jsdoc/check-tag-names": "error"
+    ///   },
+    ///   "settings": { // [!code highlight:7]
+    ///     "jsdoc": {
+    ///       "tagNamePreference": {
+    ///         "customTagName": "customTagName"
+    ///       }
+    ///     }
+    ///   }
+    /// }
+    /// ```
+    /// :::
+    ///
+    /// Examples of correct code for this rule with the above configuration, adding the `customTagName` tag:
+    ///
+    /// ```js
+    /// /**
+    ///  * @customTagName
+    ///  */
+    /// ```
     CheckTagNames,
     jsdoc,
     correctness
@@ -59,7 +92,7 @@ struct CheckTagnamesConfig {
     typed: bool,
 }
 
-const VALID_BLOCK_TAGS: phf::Set<&'static str> = phf_set! {
+const VALID_BLOCK_TAGS: phf::Set<&'static str> = phf::phf_set![
     "abstract",
     "access",
     "alias",
@@ -137,16 +170,11 @@ const VALID_BLOCK_TAGS: phf::Set<&'static str> = phf_set! {
     "overload",
     "satisfies",
     "template",
-};
+];
 
-const JSX_TAGS: phf::Set<&'static str> = phf_set! {
-    "jsx",
-    "jsxFrag",
-    "jsxImportSource",
-    "jsxRuntime",
-};
+const JSX_TAGS: [&str; 4] = ["jsx", "jsxFrag", "jsxImportSource", "jsxRuntime"];
 
-const ALWAYS_INVALID_TAGS_IF_TYPED: phf::Set<&'static str> = phf_set! {
+const ALWAYS_INVALID_TAGS_IF_TYPED: [&str; 13] = [
     "augments",
     "callback",
     "class",
@@ -160,8 +188,9 @@ const ALWAYS_INVALID_TAGS_IF_TYPED: phf::Set<&'static str> = phf_set! {
     "this",
     "type",
     "typedef",
-};
-const OUTSIDE_AMBIENT_INVALID_TAGS_IF_TYPED: phf::Set<&'static str> = phf_set! {
+];
+
+const OUTSIDE_AMBIENT_INVALID_TAGS_IF_TYPED: [&str; 27] = [
     "abstract",
     "access",
     "class",
@@ -179,8 +208,8 @@ const OUTSIDE_AMBIENT_INVALID_TAGS_IF_TYPED: phf::Set<&'static str> = phf_set! {
     "instance",
     "interface",
     "member",
-    "memberof",
     "memberOf",
+    "memberof",
     "method",
     "mixes",
     "mixin",
@@ -192,7 +221,7 @@ const OUTSIDE_AMBIENT_INVALID_TAGS_IF_TYPED: phf::Set<&'static str> = phf_set! {
     "requires",
     "static",
     "this",
-};
+];
 
 impl Rule for CheckTagNames {
     fn from_configuration(value: serde_json::Value) -> Self {
@@ -248,7 +277,7 @@ impl Rule for CheckTagNames {
 
                 // Additional check for `typed` mode
                 if config.typed {
-                    if ALWAYS_INVALID_TAGS_IF_TYPED.contains(tag_name) {
+                    if ALWAYS_INVALID_TAGS_IF_TYPED.contains(&tag_name) {
                         ctx.diagnostic(check_tag_names_diagnostic(
                             tag.kind.span,
                             &format!("`@{tag_name}` is redundant when using a type system."),
@@ -261,21 +290,20 @@ impl Rule for CheckTagNames {
                         continue;
                     }
 
-                    if !is_ambient && OUTSIDE_AMBIENT_INVALID_TAGS_IF_TYPED.contains(tag_name) {
+                    if !is_ambient && OUTSIDE_AMBIENT_INVALID_TAGS_IF_TYPED.contains(&tag_name) {
                         ctx.diagnostic(check_tag_names_diagnostic(tag.kind.span, &format!("`@{tag_name}` is redundant outside of ambient(`declare` or `.d.ts`) contexts when using a type system.")));
                         continue;
                     }
                 }
 
                 // If invalid or unknown, report
-                let is_valid = (config.jsx_tags && JSX_TAGS.contains(tag_name))
+                let is_valid = (config.jsx_tags && JSX_TAGS.contains(&tag_name))
                     || VALID_BLOCK_TAGS.contains(tag_name);
                 if !is_valid {
                     ctx.diagnostic(check_tag_names_diagnostic(
                         tag.kind.span,
                         &format!("`@{tag_name}` is invalid tag name."),
                     ));
-                    continue;
                 }
             }
         }
@@ -568,6 +596,27 @@ fn test() {
             ])),
             None,
         ),
+        // https://github.com/oxc-project/oxc/issues/10910
+        (
+          "
+          /**
+           * @see [@parcel/watcher](https://github.com/parcel-bundler/watcher)
+           */
+          function quux (foo) { }
+      ",
+          Some(serde_json::json!([ { "definedTags": [] } ])),
+          None,
+      ),
+        (
+          "
+          /**
+           * @see [[[[]@foo]
+           */
+          function quux (foo) { }
+      ",
+          None,
+          None,
+      ),
     ];
 
     let fail = vec![

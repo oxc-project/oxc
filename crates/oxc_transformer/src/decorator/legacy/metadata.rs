@@ -107,7 +107,7 @@ impl<'a, 'ctx> LegacyDecoratorMetadata<'a, 'ctx> {
 
 impl<'a> Traverse<'a> for LegacyDecoratorMetadata<'a, '_> {
     fn enter_class(&mut self, class: &mut Class<'a>, ctx: &mut TraverseCtx<'a>) {
-        if class.is_expression() || class.is_typescript_syntax() {
+        if class.is_expression() || class.declare {
             return;
         }
 
@@ -308,7 +308,7 @@ impl<'a> LegacyDecoratorMetadata<'a, '_> {
                 self.serialize_type_annotation(rest.argument.type_annotation.as_ref(), ctx),
             ));
         }
-        ctx.ast.expression_array(SPAN, elements, None)
+        ctx.ast.expression_array(SPAN, elements)
     }
 
     /// Serializes the return type of a node for use with decorator type metadata.
@@ -334,7 +334,11 @@ impl<'a> LegacyDecoratorMetadata<'a, '_> {
         name: &TSTypeName<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) -> Expression<'a> {
-        let serialized_type = self.serialize_entity_name_as_expression_fallback(name, ctx);
+        let Some(serialized_type) = self.serialize_entity_name_as_expression_fallback(name, ctx)
+        else {
+            // Reach here means the referent is a type symbol, so use `Object` as fallback.
+            return Self::global_object(ctx);
+        };
         let binding = self.ctx.var_declarations.create_uid_var_based_on_node(&serialized_type, ctx);
         let target = binding.create_write_target(ctx);
         let assignment = ctx.ast.expression_assignment(
@@ -357,31 +361,39 @@ impl<'a> LegacyDecoratorMetadata<'a, '_> {
         &mut self,
         name: &TSTypeName<'a>,
         ctx: &mut TraverseCtx<'a>,
-    ) -> Expression<'a> {
+    ) -> Option<Expression<'a>> {
         match name {
             // `A` -> `typeof A !== "undefined" && A`
             TSTypeName::IdentifierReference(ident) => {
                 let binding = MaybeBoundIdentifier::from_identifier_reference(ident, ctx);
-                let ident1 = binding.create_read_expression(ctx);
-                let ident2 = binding.create_read_expression(ctx);
-                Self::create_checked_value(ident1, ident2, ctx)
+                if Self::is_type_symbol(binding.symbol_id, ctx) {
+                    return None;
+                }
+                let flags = Self::get_reference_flags(&binding, ctx);
+                let ident1 = binding.create_expression(flags, ctx);
+                let ident2 = binding.create_expression(flags, ctx);
+                Some(Self::create_checked_value(ident1, ident2, ctx))
             }
             TSTypeName::QualifiedName(qualified) => {
                 if let TSTypeName::IdentifierReference(ident) = &qualified.left {
                     // `A.B` -> `typeof A !== "undefined" && A.B`
                     let binding = MaybeBoundIdentifier::from_identifier_reference(ident, ctx);
-                    let ident1 = binding.create_read_expression(ctx);
-                    let ident2 = binding.create_read_expression(ctx);
+                    if Self::is_type_symbol(binding.symbol_id, ctx) {
+                        return None;
+                    }
+                    let flags = Self::get_reference_flags(&binding, ctx);
+                    let ident1 = binding.create_expression(flags, ctx);
+                    let ident2 = binding.create_expression(flags, ctx);
                     let member = create_property_access(SPAN, ident1, &qualified.right.name, ctx);
-                    Self::create_checked_value(ident2, member, ctx)
+                    Some(Self::create_checked_value(ident2, member, ctx))
                 } else {
                     // `A.B.C` -> `typeof A !== "undefined" && (_a = A.B) !== void 0 && _a.C`
                     let mut left =
-                        self.serialize_entity_name_as_expression_fallback(&qualified.left, ctx);
+                        self.serialize_entity_name_as_expression_fallback(&qualified.left, ctx)?;
                     let binding =
                         self.ctx.var_declarations.create_uid_var_based_on_node(&left, ctx);
                     let Expression::LogicalExpression(logical) = &mut left else { unreachable!() };
-                    let right = logical.right.take_in(ctx.ast.allocator);
+                    let right = logical.right.take_in(ctx.ast);
                     // `(_a = A.B)`
                     let right = ctx.ast.expression_assignment(
                         SPAN,
@@ -399,7 +411,7 @@ impl<'a> LegacyDecoratorMetadata<'a, '_> {
 
                     let object = binding.create_read_expression(ctx);
                     let member = create_property_access(SPAN, object, &qualified.right.name, ctx);
-                    ctx.ast.expression_logical(SPAN, left, LogicalOperator::And, member)
+                    Some(ctx.ast.expression_logical(SPAN, left, LogicalOperator::And, member))
                 }
             }
         }
@@ -456,6 +468,10 @@ impl<'a> LegacyDecoratorMetadata<'a, '_> {
                 TSType::TSAnyKeyword(_) => {
                     return Self::global_object(ctx);
                 }
+                // Unlike TypeScript, we don't have a way to determine what the referent is,
+                // so return `Object` early, because once have a type reference, the final
+                // type is `Object` anyway.
+                TSType::TSTypeReference(_) => return Self::global_object(ctx),
                 _ => {}
             }
 
@@ -492,6 +508,27 @@ impl<'a> LegacyDecoratorMetadata<'a, '_> {
     #[inline]
     fn equate_serialized_type_nodes(a: &Expression<'a>, b: &Expression<'a>) -> bool {
         a.content_eq(b)
+    }
+
+    #[inline]
+    fn is_type_symbol(symbol_id: Option<oxc_semantic::SymbolId>, ctx: &TraverseCtx<'a>) -> bool {
+        symbol_id.is_some_and(|symbol_id| ctx.scoping().symbol_flags(symbol_id).is_type())
+    }
+
+    fn get_reference_flags(
+        binding: &MaybeBoundIdentifier<'a>,
+        ctx: &TraverseCtx<'a>,
+    ) -> ReferenceFlags {
+        if let Some(symbol_id) = binding.symbol_id {
+            // Type symbols have filtered out in [`serialize_entity_name_as_expression_fallback`].
+            debug_assert!(ctx.scoping().symbol_flags(symbol_id).is_value());
+            // `design::*type` would be called by `reflect-metadata` APIs, use `Read` flag
+            // to avoid TypeScript remove it because only used as types.
+            ReferenceFlags::Read
+        } else {
+            // Unresolved reference
+            ReferenceFlags::Type | ReferenceFlags::Read
+        }
     }
 
     #[inline]
@@ -568,7 +605,7 @@ impl<'a> LegacyDecoratorMetadata<'a, '_> {
     // `_metadata(key, value)
     fn create_metadata_decorate(
         &self,
-        key: &str,
+        key: &'a str,
         value: Expression<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) -> Decorator<'a> {

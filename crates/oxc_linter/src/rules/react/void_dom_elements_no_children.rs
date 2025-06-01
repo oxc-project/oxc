@@ -8,7 +8,6 @@ use oxc_ast::{
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
-use phf::phf_set;
 
 use crate::{
     AstNode,
@@ -29,13 +28,15 @@ pub struct VoidDomElementsNoChildren;
 
 declare_oxc_lint!(
     /// ### What it does
+    ///
     /// Disallow void DOM elements (e.g. `<img />`, `<br />`) from receiving children.
     ///
     /// ### Why is this bad?
+    ///
     /// There are some HTML elements that are only self-closing (e.g. img, br, hr). These are collectively known as void DOM elements.
     /// This rule checks that children are not passed to void DOM elements.
     ///
-    /// ### Example
+    /// ### Examples
     ///
     /// Examples of **incorrect** code for this rule:
     /// ```jsx
@@ -61,13 +62,13 @@ declare_oxc_lint!(
     correctness
 );
 
-const VOID_DOM_ELEMENTS: phf::Set<&'static str> = phf_set![
+const VOID_DOM_ELEMENTS: [&str; 16] = [
     "area", "base", "br", "col", "embed", "hr", "img", "input", "keygen", "link", "menuitem",
     "meta", "param", "source", "track", "wbr",
 ];
 
 pub fn is_void_dom_element(element_name: &str) -> bool {
-    VOID_DOM_ELEMENTS.contains(element_name)
+    VOID_DOM_ELEMENTS.contains(&element_name)
 }
 
 impl Rule for VoidDomElementsNoChildren {

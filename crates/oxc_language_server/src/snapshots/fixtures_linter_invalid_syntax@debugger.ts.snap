@@ -1,0 +1,13 @@
+---
+source: crates/oxc_language_server/src/tester.rs
+input_file: crates/oxc_language_server/fixtures/linter/invalid_syntax/debugger.ts
+---
+code: ""
+code_description.href: "None"
+message: "Unexpected token"
+range: Range { start: Position { line: 2147483647, character: 2147483647 }, end: Position { line: 2147483647, character: 2147483647 } }
+related_information: None
+severity: Some(Error)
+source: Some("oxc")
+tags: None
+fixed: None

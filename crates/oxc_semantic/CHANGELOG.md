@@ -4,6 +4,120 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.72.0] - 2025-05-24
+
+### Features
+
+- 2398906 parser: Check mixed coalesce and new exponential with `preserveParens:false` (#11264) (Boshen)
+
+### Bug Fixes
+
+- c4f8690 parser: Fix "Enum member must have initializer." false positive (#11265) (Boshen)
+
+## [0.71.0] - 2025-05-20
+
+- 65a6419 mangler: [**BREAKING**] `Mangler::build_with_semantic` take mut ref to `Semantic` (#11132) (overlookmotel)
+
+- 5d9344f rust: [**BREAKING**] Clippy avoid-breaking-exported-api = false (#11088) (Boshen)
+
+### Performance
+
+
+### Refactor
+
+- bb8bde3 various: Update macros to use `expr` fragment specifier (#11113) (overlookmotel)
+
+## [0.70.0] - 2025-05-15
+
+### Bug Fixes
+
+- 126ae75 semantic: Distinguish class private elements (#11044) (magic-akari)
+
+## [0.69.0] - 2025-05-09
+
+- 2b5d826 ast: [**BREAKING**] Fix field order for `TSTypeAssertion` (#10906) (overlookmotel)
+
+- 1f35910 ast: [**BREAKING**] Fix field order for `TSNamedTupleMember` (#10905) (overlookmotel)
+
+- 0139793 ast: [**BREAKING**] Re-order fields of `TaggedTemplateExpression` (#10889) (overlookmotel)
+
+- cc2ed21 ast: [**BREAKING**] Fix field order for `JSXElement` and `JSXFragment` (#10881) (overlookmotel)
+
+### Bug Fixes
+
+- 773d0de semantic: Correctly handle nested brackets in jsdoc parsing (#10922) (camc314)
+- b215b6c semantic: Dont parse `@` as jsdoc tags inside `[`/`]` (#10919) (camc314)
+- 6e47699 semantic, syntax: TS value module cannot be referenced as type (#10918) (Dunqing)
+
+### Refactor
+
+- faf0a95 syntax: Rename `NameSpaceModule` to `NamespaceModule` (#10917) (Dunqing)
+
+## [0.68.0] - 2025-05-03
+
+### Bug Fixes
+
+- d1d05d3 parser: Check comma in JSX expr lazily (#10739) (Yuji Sugiura)
+
+### Performance
+
+- 3de1b31 semantic: Reuse `Atom` (#10771) (overlookmotel)
+
+## [0.67.0] - 2025-04-27
+
+- a2b7e9d semantic: [**BREAKING**] Do not need to return old name in `Scoping::set_symbol_name` (#10613) (Dunqing)
+
+### Features
+
+
+### Performance
+
+- 075d4b5 semantic: Optimize `Scoping::rename_symbol` method (#10612) (Dunqing)
+
+### Refactor
+
+- f35efd3 traverse, semantic: Move `rename_symbol` from `TraverseScoping` to `Scoping` (#10611) (Dunqing)
+
+## [0.65.0] - 2025-04-21
+
+- 99d82db ast: [**BREAKING**] Move `type_parameters` field to before `extends` in `TSInterfaceDeclaration` (#10476) (overlookmotel)
+
+- 7212803 ast: [**BREAKING**] Change `TSInterfaceDeclaration::extends` from `Option<Vec>` to `Vec` (#10472) (overlookmotel)
+
+- d6b7982 ast: [**BREAKING**] Improve pluralization of `TSClassImplements` (#10489) (overlookmotel)
+
+### Features
+
+- 588da69 parser: A rest parameter cannot have an initializer (#10467) (Boshen)
+
+### Refactor
+
+
+## [0.64.0] - 2025-04-17
+
+- 771d50f ast: [**BREAKING**] Change `Class::implements` to `Vec<TSClassImplements>` (#10430) (Boshen)
+
+- 49732ff ast: [**BREAKING**] Re-introduce `TSEnumBody` AST node (#10284) (Yuji Sugiura)
+
+### Features
+
+- 1a37e3f semantic: Add `SymbolFlags::Ambient` for declaration with `declare` modifier (#10355) (Dunqing)
+
+### Bug Fixes
+
+- dd2aef0 semantic: Incorrect `SymbolFlags` of `TSModuleDeclaration` (#10350) (Dunqing)
+- c37f048 semantic: Do not declare a `Symbol` for an `ModuleDeclaration` where the `id` is not a `BindingIdentifier` (#10343) (Dunqing)
+
+## [0.63.0] - 2025-04-08
+
+### Bug Fixes
+
+- f48f895 transfomer/using: Remove use of child ids (#9961) (camc314)
+
+### Styling
+
+- 66a0001 all: Remove unnecessary semi-colons (#10198) (overlookmotel)
+
 ## [0.62.0] - 2025-04-01
 
 - cd1f035 semantic: [**BREAKING**] Store symbol information as the first entry in `symbol_declarations` when it is redeclared (#10062) (Dunqing)

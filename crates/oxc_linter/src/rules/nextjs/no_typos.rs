@@ -5,7 +5,6 @@ use oxc_ast::{
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
-use phf::phf_set;
 
 use crate::{
     AstNode,
@@ -24,17 +23,28 @@ pub struct NoTypos;
 
 declare_oxc_lint!(
     /// ### What it does
+    ///
     /// Prevent common typos in Next.js's data fetching functions
     ///
     /// ### Why is this bad?
     ///
     ///
-    /// ### Example
+    /// ### Examples
+    ///
+    /// Examples of **incorrect** code for this rule:
     /// ```javascript
     /// export default function Page() {
     ///   return <div></div>;
     /// }
     /// export async function getServurSideProps(){};
+    /// ```
+    ///
+    /// Examples of **correct** code for this rule:
+    /// ```javascript
+    /// export default function Page() {
+    ///   return <div></div>;
+    /// }
+    /// export async function getServerSideProps(){};
     /// ```
     NoTypos,
     nextjs,
@@ -42,11 +52,8 @@ declare_oxc_lint!(
     pending
 );
 
-const NEXTJS_DATA_FETCHING_FUNCTIONS: phf::Set<&'static str> = phf_set! {
-    "getStaticProps",
-    "getStaticPaths",
-    "getServerSideProps",
-};
+const NEXTJS_DATA_FETCHING_FUNCTIONS: [&str; 3] =
+    ["getStaticProps", "getStaticPaths", "getServerSideProps"];
 
 // 0 is the exact match
 const THRESHOLD: i32 = 1;

@@ -3,7 +3,6 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::{JSDoc, JSDocTag};
 use oxc_span::Span;
-use phf::phf_set;
 use serde::Deserialize;
 
 use crate::{
@@ -11,7 +10,8 @@ use crate::{
     context::LintContext,
     rule::Rule,
     utils::{
-        get_function_nearest_jsdoc_node, should_ignore_as_avoid, should_ignore_as_internal,
+        get_function_nearest_jsdoc_node, is_duplicated_special_tag, is_missing_special_tag,
+        should_ignore_as_avoid, should_ignore_as_custom_skip, should_ignore_as_internal,
         should_ignore_as_private,
     },
 };
@@ -149,7 +149,7 @@ impl Rule for RequireYields {
                 // Without this option, need to check `yield` value.
                 // Check will be performed in `YieldExpression` branch.
                 if config.force_require_yields
-                    && is_missing_yields_tag(&jsdoc_tags, resolved_yields_tag_name)
+                    && is_missing_special_tag(&jsdoc_tags, resolved_yields_tag_name)
                 {
                     ctx.diagnostic(missing_yields(func.span));
                     return;
@@ -157,7 +157,7 @@ impl Rule for RequireYields {
 
                 // Other checks are always performed
 
-                if let Some(span) = is_duplicated_yields_tag(&jsdoc_tags, resolved_yields_tag_name)
+                if let Some(span) = is_duplicated_special_tag(&jsdoc_tags, resolved_yields_tag_name)
                 {
                     ctx.diagnostic(duplicate_yields(span));
                     return;
@@ -236,42 +236,13 @@ impl Rule for RequireYields {
                 let jsdoc_tags = jsdocs.iter().flat_map(JSDoc::tags).collect::<Vec<_>>();
                 let resolved_yields_tag_name = settings.resolve_tag_name("yields");
 
-                if is_missing_yields_tag(&jsdoc_tags, resolved_yields_tag_name) {
+                if is_missing_special_tag(&jsdoc_tags, resolved_yields_tag_name) {
                     ctx.diagnostic(missing_yields(generator_func.span));
                 }
             }
             _ => {}
         }
     }
-}
-
-const CUSTOM_SKIP_TAG_NAMES: phf::Set<&'static str> = phf_set! {
-    "abstract", "virtual", "class", "constructor", "type", "interface"
-};
-fn should_ignore_as_custom_skip(jsdoc: &JSDoc) -> bool {
-    jsdoc.tags().iter().any(|tag| CUSTOM_SKIP_TAG_NAMES.contains(tag.kind.parsed()))
-}
-
-fn is_missing_yields_tag(jsdoc_tags: &[&JSDocTag], resolved_yields_tag_name: &str) -> bool {
-    jsdoc_tags.iter().all(|tag| tag.kind.parsed() != resolved_yields_tag_name)
-}
-
-fn is_duplicated_yields_tag(
-    jsdoc_tags: &Vec<&JSDocTag>,
-    resolved_yields_tag_name: &str,
-) -> Option<Span> {
-    let mut yields_found = false;
-    for tag in jsdoc_tags {
-        if tag.kind.parsed() == resolved_yields_tag_name {
-            if yields_found {
-                return Some(tag.kind.span);
-            }
-
-            yields_found = true;
-        }
-    }
-
-    None
 }
 
 fn is_missing_yields_tag_with_generator_tag(

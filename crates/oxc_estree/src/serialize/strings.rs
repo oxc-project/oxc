@@ -1,16 +1,18 @@
-use oxc_data_structures::code_buffer::CodeBuffer;
+use std::slice;
+
+use oxc_data_structures::{code_buffer::CodeBuffer, pointer_ext::PointerExt};
 
 use super::{ESTree, Serializer};
 
 /// Convert `char` to UTF-8 bytes array.
-const fn to_bytes<const N: usize>(ch: char) -> [u8; N] {
+const fn char_to_bytes<const N: usize>(ch: char) -> [u8; N] {
     let mut bytes = [0u8; N];
     ch.encode_utf8(&mut bytes);
     bytes
 }
 
 /// Lossy replacement character (U+FFFD) as UTF-8 bytes.
-const LOSSY_REPLACEMENT_CHAR_BYTES: [u8; 3] = to_bytes('\u{FFFD}');
+const LOSSY_REPLACEMENT_CHAR_BYTES: [u8; 3] = char_to_bytes('\u{FFFD}');
 const LOSSY_REPLACEMENT_CHAR_FIRST_BYTE: u8 = LOSSY_REPLACEMENT_CHAR_BYTES[0]; // 0xEF
 
 /// A string which does not need any escaping in JSON.
@@ -121,87 +123,186 @@ fn write_str(s: &str, table: &[Escape; 256], buffer: &mut CodeBuffer) {
     buffer.print_ascii_byte(b'"');
 
     let bytes = s.as_bytes();
+    let mut chunk_start_ptr = bytes.as_ptr();
+    let mut iter = bytes.iter();
 
-    let mut start = 0;
-    let mut iter = bytes.iter().enumerate();
-    while let Some((index, &byte)) = iter.next() {
-        let escape = table[byte as usize];
-        if escape == Escape::__ {
-            continue;
-        }
+    'outer: loop {
+        // Consume bytes which require no unescaping.
+        // Search in batches of 16 bytes for speed with longer strings.
+        const BATCH_SIZE: usize = 16;
 
-        // Handle lone surrogates
-        if table == &ESCAPE_LONE_SURROGATES && escape == Escape::LO {
-            let (_, &next1) = iter.next().unwrap();
-            let (_, &next2) = iter.next().unwrap();
-            if [next1, next2] == [LOSSY_REPLACEMENT_CHAR_BYTES[1], LOSSY_REPLACEMENT_CHAR_BYTES[2]]
-            {
-                // Lossy replacement character (U+FFFD) is used as an escape before lone surrogates,
-                // with the code point as 4 x hex characters after it.
-                let (_, &hex1) = iter.next().unwrap();
-                let (_, &hex2) = iter.next().unwrap();
-                let (_, &hex3) = iter.next().unwrap();
-                let (_, &hex4) = iter.next().unwrap();
-                let hex = [hex1, hex2, hex3, hex4];
-
-                // Print the chunk upto before the lossy replacement character.
-                // SAFETY: 0xEF is always the start of a 3-byte unicode character.
-                // Therefore `index` must be on a UTF-8 character boundary.
-                unsafe { buffer.print_bytes_unchecked(&bytes[start..index]) };
-
-                if hex == *b"fffd" {
-                    // This is an actual lossy replacement character (not an escaped lone surrogate)
-                    buffer.print_str("\u{FFFD}");
-                } else {
-                    // This is an escaped lone surrogate.
-                    // Print `\uXXXX` where `XXXX` is hex characters. e.g. `\ud800`.
-                    buffer.print_str("\\u");
-                    // Check all 4 hex bytes are ASCII
-                    assert_eq!(u32::from_ne_bytes(hex) & 0x8080_8080, 0);
-                    // SAFETY: Just checked all 4 bytes are ASCII
-                    unsafe { buffer.print_bytes_unchecked(&hex) };
+        let mut byte;
+        let mut escape;
+        'inner: loop {
+            if let Some(batch) = iter.as_slice().get(..BATCH_SIZE) {
+                // Enough bytes remaining to process as a batch. Compiler unrolls this loop.
+                for (i, &next_byte) in batch.iter().enumerate() {
+                    byte = next_byte;
+                    escape = table[byte as usize];
+                    if escape != Escape::__ {
+                        // Consume bytes before this one.
+                        // SAFETY: `i < BATCH_SIZE` and there are at least `BATCH_SIZE` bytes remaining in `iter`
+                        unsafe { advance_unchecked(&mut iter, i) };
+                        break 'inner;
+                    }
                 }
 
-                // Skip the 3 bytes of the lossy replacement character + 4 hex bytes.
-                // We checked that all 4 hex bytes are ASCII, so `start` is definitely left on
-                // a UTF-8 character boundary.
-                start = index + 7;
+                // Consume the whole batch.
+                // SAFETY: There are at least `BATCH_SIZE` bytes remaining in `iter`.
+                unsafe { advance_unchecked(&mut iter, BATCH_SIZE) };
+
+                // Go round `'inner` loop again to continue searching
             } else {
-                // Some other unicode character starting with 0xEF. Just continue the loop.
+                // Not enough bytes remaining for a batch. Search byte-by-byte.
+                for (i, &next_byte) in iter.clone().enumerate() {
+                    byte = next_byte;
+                    escape = table[byte as usize];
+                    if escape != Escape::__ {
+                        // Consume bytes before this one.
+                        // SAFETY: `i` is an index of `iter`, so cannot be out of bounds.
+                        unsafe { advance_unchecked(&mut iter, i) };
+                        break 'inner;
+                    }
+                }
+
+                // Got to end of string with no further characters requiring escaping found.
+                // No need to advance `iter`, as we don't use it's current pointer again.
+                break 'outer;
+            }
+        }
+
+        // Found a character that needs escaping
+
+        // Handle lone surrogates.
+        // `table == &ESCAPE_LONE_SURROGATES` is statically knowable when this function is inlined.
+        // That condition is included to remove this whole block when not converting lone surrogates
+        // in `impl ESTree for str`.
+        if table == &ESCAPE_LONE_SURROGATES && escape == Escape::LO {
+            // SAFETY: `0xEF` is always 1st byte in a 3-byte UTF-8 character,
+            // so reading next 2 bytes cannot be out of bounds
+            let next_2_bytes = unsafe { iter.as_slice().get_unchecked(1..3) };
+            if next_2_bytes == &LOSSY_REPLACEMENT_CHAR_BYTES[1..] {
+                // Lossy replacement character (U+FFFD) is used as an escape before lone surrogates,
+                // with the code point as 4 x hex characters after it e.g. `\u{FFFD}d800`.
+
+                // Print the chunk up to before the lossy replacement character.
+                // SAFETY: 0xEF is always the start of a 3-byte unicode character.
+                // Therefore `current_ptr` must be on a UTF-8 character boundary.
+                // `chunk_start_ptr` is start of string originally, and is only updated to be after
+                // an ASCII character, so must also be on a UTF-8 character boundary, and in bounds.
+                // `chunk_start_ptr` is after a previous byte so must be `<= current_ptr`.
+                unsafe {
+                    let current_ptr = iter.as_slice().as_ptr();
+                    let len = current_ptr.offset_from_usize(chunk_start_ptr);
+                    let chunk = slice::from_raw_parts(chunk_start_ptr, len);
+                    buffer.print_bytes_unchecked(chunk);
+                }
+
+                // Consume the lossy replacement character.
+                // SAFETY: Lossy replacement character is 3 bytes.
+                unsafe { advance_unchecked(&mut iter, 3) };
+
+                let hex = iter.as_slice().get(..4).unwrap();
+                if hex == b"fffd" {
+                    // This is an actual lossy replacement character (not an escaped lone surrogate)
+                    buffer.print_str("\u{FFFD}");
+
+                    // Consume `fffd`.
+                    // SAFETY: We know next 4 bytes are `fffd`.
+                    unsafe { advance_unchecked(&mut iter, 4) };
+
+                    // Set `chunk_start_ptr` to after `\u{FFFD}fffd`.
+                    // That's a complete UTF-8 sequence, so `chunk_start_ptr` is definitely
+                    // left on a UTF-8 character boundary.
+                    chunk_start_ptr = iter.as_slice().as_ptr();
+                } else {
+                    // This is an escaped lone surrogate.
+                    // Next 4 bytes should be code point encoded as 4 x hex bytes.
+                    #[cfg(debug_assertions)]
+                    for &b in hex {
+                        assert!(matches!(b, b'0'..=b'9' | b'a'..=b'f'));
+                    }
+
+                    // Print `\u`. Leave the hex bytes to be printed in next batch.
+                    // After lossy replacement character is definitely a UTF-8 boundary.
+                    buffer.print_str("\\u");
+                    chunk_start_ptr = iter.as_slice().as_ptr();
+
+                    // SAFETY: `iter.as_slice().get(..4).unwrap()` above would have panicked
+                    // if there weren't at least 4 bytes remaining in `iter`.
+                    // We haven't checked that the 4 following bytes are ASCII, but it doesn't matter
+                    // whether `iter` is left on a UTF-8 char boundary or not.
+                    unsafe { advance_unchecked(&mut iter, 4) }
+                }
+            } else {
+                // Some other unicode character starting with 0xEF.
+                // Consume it and continue the loop.
+                // SAFETY: `0xEF` is always 1st byte in a 3-byte UTF-8 character.
+                unsafe { advance_unchecked(&mut iter, 3) };
             }
             continue;
         }
 
-        if start < index {
-            // SAFETY: `bytes` is derived from a `&str`.
-            // `escape` is only non-zero for ASCII bytes, except `Escape::LO` which is handled above.
-            // Therefore current `index` must mark the end of a valid UTF8 character sequence.
-            // `start` is either the start of string, or after an ASCII character,
-            // therefore always the start of a valid UTF8 character sequence.
-            unsafe { buffer.print_bytes_unchecked(&bytes[start..index]) };
+        // Print the chunk up to before the character which requires escaping.
+        let current_ptr = iter.as_slice().as_ptr();
+        // SAFETY: `escape` is only non-zero for ASCII bytes, except `Escape::LO` which is handled above.
+        // Therefore `current_ptr` must be on an ASCII byte.
+        // `chunk_start_ptr` is start of string originally, and is only updated to be after
+        // an ASCII character, so must also be on a UTF-8 character boundary, and in bounds.
+        // `chunk_start_ptr` is after a previous byte so must be `<= current_ptr`.
+        unsafe {
+            let len = current_ptr.offset_from_usize(chunk_start_ptr);
+            let chunk = slice::from_raw_parts(chunk_start_ptr, len);
+            buffer.print_bytes_unchecked(chunk);
         }
 
         write_char_escape(escape, byte, buffer);
 
-        start = index + 1;
+        // SAFETY: `'inner` loop above ensures `iter` is not at end of string
+        unsafe { advance_unchecked(&mut iter, 1) };
+
+        // Set `chunk_start_ptr` to be after this character.
+        // `escape` is only non-zero for ASCII bytes, except `Escape::LO` which is handled above.
+        // We just consumed that ASCII byte, so `chunk_start_ptr` must be on a UTF-8 char boundary.
+        chunk_start_ptr = iter.as_slice().as_ptr();
     }
 
-    if start < bytes.len() {
-        // SAFETY: `bytes` is derived from a `&str`.
-        // `start` is either the start of string, or after an ASCII character,
-        // therefore always the start of a valid UTF8 character sequence.
-        unsafe { buffer.print_bytes_unchecked(&bytes[start..]) };
+    // Print last chunk.
+    // SAFETY: Adding `len` to `ptr` cannot be out of bounds.
+    let end_ptr = unsafe { iter.as_slice().as_ptr().add(iter.as_slice().len()) };
+    // SAFETY: `chunk_start_ptr` is start of string originally, and is only updated to be after
+    // an ASCII character, so must be on a UTF-8 character boundary, and in bounds.
+    // `chunk_start_ptr` is after a previous byte so must be `<= end_ptr`.
+    unsafe {
+        let len = end_ptr.offset_from_usize(chunk_start_ptr);
+        let chunk = slice::from_raw_parts(chunk_start_ptr, len);
+        buffer.print_bytes_unchecked(chunk);
     }
 
     buffer.print_ascii_byte(b'"');
 }
 
+/// Advance bytes iterator by `count` bytes.
+///
+/// # SAFETY
+/// Caller must ensure there are at least `count` bytes remaining in `iter`.
+#[inline]
+unsafe fn advance_unchecked(iter: &mut slice::Iter<u8>, count: usize) {
+    // Compiler boils this down to just adding `count` to `iter`'s pointer.
+    // SAFETY: Caller guarantees there are at least `count` bytes remaining in `iter`.
+    unsafe {
+        let new_ptr = iter.as_slice().as_ptr().add(count);
+        let new_len = iter.as_slice().len() - count;
+        let slice = slice::from_raw_parts(new_ptr, new_len);
+        *iter = slice.iter();
+    };
+}
+
 fn write_char_escape(escape: Escape, byte: u8, buffer: &mut CodeBuffer) {
     #[expect(clippy::if_not_else)]
     if escape != Escape::UU {
-        buffer.print_ascii_byte(b'\\');
         // SAFETY: All values of `Escape` are ASCII
-        unsafe { buffer.print_byte_unchecked(escape as u8) };
+        unsafe { buffer.print_bytes_unchecked(&[b'\\', escape as u8]) };
     } else {
         static HEX_DIGITS: [u8; 16] = *b"0123456789abcdef";
         let bytes = [

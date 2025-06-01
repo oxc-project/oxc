@@ -14,8 +14,8 @@ use crate::{
     },
 };
 
-fn no_duplicate_hooks_diagnostic(x0: &str, span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn(format!("Duplicate {x0:?} in describe block."))
+fn no_duplicate_hooks_diagnostic(hook_name: &str, span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn(format!("Duplicate {hook_name:?} in describe block."))
         .with_help("Describe blocks can only have one of each hook. Consider consolidating the duplicate hooks into a single call.")
         .with_label(span)
 }
@@ -32,7 +32,7 @@ declare_oxc_lint!(
     ///
     /// Having duplicate hooks in a describe block can lead to confusion and unexpected behavior.
     ///
-    /// ### Example
+    /// ### Examples
     ///
     /// Examples of **incorrect** code for this rule:
     /// ```javascript

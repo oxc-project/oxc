@@ -118,7 +118,7 @@ declare_oxc_lint!(
     /// Ensure that the `alt` attribute is present and contains meaningful
     /// text that describes the element's content or purpose.
     ///
-    /// ### Example
+    /// ### Examples
     ///
     /// Examples of **incorrect** code for this rule:
     /// ```jsx

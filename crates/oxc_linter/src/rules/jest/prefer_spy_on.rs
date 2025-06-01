@@ -40,14 +40,16 @@ declare_oxc_lint!(
     /// `mockFn.mockImplementation()` or by some of the
     /// [other mock functions](https://jestjs.io/docs/en/mock-function-api).
     ///
-    /// ### Example
+    /// ### Examples
     ///
+    /// Examples of **incorrect** code for this rule:
     /// ```javascript
-    /// // invalid
     /// Date.now = jest.fn();
     /// Date.now = jest.fn(() => 10);
+    /// ```
     ///
-    /// // valid
+    /// Examples of **correct** code for this rule:
+    /// ```javascript
     /// jest.spyOn(Date, 'now');
     /// jest.spyOn(Date, 'now').mockImplementation(() => 10);
     /// ```

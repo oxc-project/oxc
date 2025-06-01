@@ -4,6 +4,7 @@ use oxc_macros::declare_oxc_lint;
 use oxc_semantic::AstNodes;
 use oxc_span::GetSpan;
 use oxc_span::Span;
+use schemars::JsonSchema;
 use serde_json::Value;
 
 use crate::{AstNode, ast_util::is_function_node, context::LintContext, rule::Rule};
@@ -14,7 +15,7 @@ fn max_depth_diagnostic(num: usize, max: usize, span: Span) -> OxcDiagnostic {
         .with_label(span)
 }
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default, Clone, JsonSchema)]
 pub struct MaxDepth {
     max: usize,
 }
@@ -100,7 +101,7 @@ declare_oxc_lint!(
     MaxDepth,
     eslint,
     pedantic
-
+    config = MaxDepth,
 );
 
 impl Rule for MaxDepth {

@@ -51,7 +51,7 @@ declare_oxc_lint!(
     /// Coding for the keyboard is important for users with physical disabilities who cannot use a mouse,
     /// AT compatibility, and screenreader users.
     ///
-    /// ### Example
+    /// ### Examples
     ///
     /// Examples of **incorrect** code for this rule:
     /// ```jsx
@@ -105,7 +105,7 @@ impl Rule for MouseEventsHaveKeyEvents {
 
         let el_type = get_element_type(ctx, jsx_opening_el);
 
-        if !HTML_TAG.contains(&el_type) {
+        if !HTML_TAG.contains(el_type.as_ref()) {
             return;
         }
 

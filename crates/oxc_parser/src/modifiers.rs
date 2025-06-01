@@ -1,7 +1,7 @@
 use bitflags::bitflags;
 use oxc_allocator::Vec;
 use oxc_ast::ast::TSAccessibility;
-use oxc_diagnostics::{OxcDiagnostic, Result};
+use oxc_diagnostics::OxcDiagnostic;
 use oxc_span::{GetSpan, SPAN, Span};
 
 use crate::{
@@ -102,17 +102,23 @@ pub struct Modifier {
     pub span: Span,
     pub kind: ModifierKind,
 }
+
 impl Modifier {
+    pub fn new(span: Span, kind: ModifierKind) -> Self {
+        Self { span, kind }
+    }
+
     #[inline]
     pub fn is_static(&self) -> bool {
         matches!(self.kind, ModifierKind::Static)
     }
 }
+
 impl TryFrom<Token> for Modifier {
     type Error = <ModifierKind as TryFrom<Kind>>::Error;
 
-    fn try_from(tok: Token) -> std::result::Result<Self, Self::Error> {
-        ModifierKind::try_from(tok.kind).map(|kind| Self { span: tok.span(), kind })
+    fn try_from(tok: Token) -> Result<Self, Self::Error> {
+        ModifierKind::try_from(tok.kind()).map(|kind| Self { span: tok.span(), kind })
     }
 }
 
@@ -261,7 +267,7 @@ impl ModifierKind {
 impl TryFrom<Kind> for ModifierKind {
     type Error = ();
 
-    fn try_from(kind: Kind) -> std::result::Result<Self, Self::Error> {
+    fn try_from(kind: Kind) -> Result<Self, Self::Error> {
         match kind {
             Kind::Abstract => Ok(Self::Abstract),
             Kind::Declare => Ok(Self::Declare),
@@ -290,7 +296,7 @@ impl std::fmt::Display for ModifierKind {
 }
 
 impl<'a> ParserImpl<'a> {
-    pub(crate) fn eat_modifiers_before_declaration(&mut self) -> Result<Modifiers<'a>> {
+    pub(crate) fn eat_modifiers_before_declaration(&mut self) -> Modifiers<'a> {
         let mut flags = ModifierFlags::empty();
         let mut modifiers = self.ast.vec();
         while self.at_modifier() {
@@ -298,12 +304,12 @@ impl<'a> ParserImpl<'a> {
             let modifier_flags = self.cur_kind().into();
             let kind = self.cur_kind();
             self.bump_any();
-            let modifier = self.modifier(kind, self.end_span(span))?;
+            let modifier = self.modifier(kind, self.end_span(span));
             self.check_for_duplicate_modifiers(flags, &modifier);
             flags.set(modifier_flags, true);
             modifiers.push(modifier);
         }
-        Ok(Modifiers::new(modifiers, flags))
+        Modifiers::new(modifiers, flags)
     }
 
     fn at_modifier(&mut self) -> bool {
@@ -316,7 +322,10 @@ impl<'a> ParserImpl<'a> {
         }
 
         match self.cur_kind() {
-            Kind::Const => self.peek_kind() == Kind::Enum,
+            Kind::Const => {
+                self.bump_any();
+                self.at(Kind::Enum)
+            }
             Kind::Export => {
                 self.bump_any();
                 match self.cur_kind() {
@@ -337,13 +346,17 @@ impl<'a> ParserImpl<'a> {
             // Rest modifiers cannot cross line
             _ => {
                 self.bump_any();
-                self.can_follow_modifier() && !self.cur_token().is_on_new_line
+                self.can_follow_modifier() && !self.cur_token().is_on_new_line()
             }
         }
     }
 
-    fn modifier(&mut self, kind: Kind, span: Span) -> Result<Modifier> {
-        Ok(Modifier { span, kind: kind.try_into().map_err(|()| self.unexpected())? })
+    fn modifier(&mut self, kind: Kind, span: Span) -> Modifier {
+        let modifier_kind = ModifierKind::try_from(kind).unwrap_or_else(|()| {
+            self.set_unexpected();
+            ModifierKind::Abstract // Dummy value
+        });
+        Modifier { span, kind: modifier_kind }
     }
 
     pub(crate) fn parse_modifiers(
@@ -354,14 +367,13 @@ impl<'a> ParserImpl<'a> {
     ) -> Modifiers<'a> {
         let mut has_seen_static_modifier = false;
         let mut has_leading_modifier = false;
-        let mut has_trailing_decorator = false;
 
         let mut modifiers = self.ast.vec();
         let mut modifier_flags = ModifierFlags::empty();
 
         // parse leading decorators
-        if allow_decorators && matches!(self.cur_kind(), Kind::At) {
-            self.try_parse(Self::eat_decorators);
+        if allow_decorators && self.at(Kind::At) {
+            self.eat_decorators();
         }
 
         // parse leading modifiers
@@ -380,12 +392,12 @@ impl<'a> ParserImpl<'a> {
         }
 
         // parse trailing decorators, but only if we parsed any leading modifiers
-        if allow_decorators && has_leading_modifier && matches!(self.cur_kind(), Kind::At) {
-            has_trailing_decorator = self.try_parse(Self::eat_decorators).is_some();
+        if allow_decorators && has_leading_modifier && self.at(Kind::At) {
+            self.eat_decorators();
         }
 
         // parse trailing modifiers, but only if we parsed any trailing decorators
-        if has_trailing_decorator {
+        if !self.state.decorators.is_empty() {
             while let Some(modifier) = self.try_parse_modifier(
                 has_seen_static_modifier,
                 permit_const_as_modifier,
@@ -433,10 +445,10 @@ impl<'a> ParserImpl<'a> {
         {
             return None;
         }
-        self.modifier(kind, self.end_span(span)).ok()
+        Some(self.modifier(kind, self.end_span(span)))
     }
 
-    fn next_token_is_open_brace(&mut self) -> bool {
+    pub(crate) fn next_token_is_open_brace(&mut self) -> bool {
         self.bump_any();
         self.at(Kind::LCurly)
     }
@@ -446,9 +458,12 @@ impl<'a> ParserImpl<'a> {
             && self.try_parse(Self::next_token_can_follow_modifier).is_some()
     }
 
-    fn next_token_can_follow_modifier(&mut self) -> Result<()> {
+    pub(crate) fn next_token_can_follow_modifier(&mut self) {
         let b = match self.cur_kind() {
-            Kind::Const => self.peek_at(Kind::Enum),
+            Kind::Const => {
+                self.bump_any();
+                self.at(Kind::Enum)
+            }
             Kind::Export => {
                 self.bump_any();
                 match self.cur_kind() {
@@ -458,26 +473,30 @@ impl<'a> ParserImpl<'a> {
                 }
             }
             Kind::Default => self.next_token_can_follow_default_keyword(),
-            Kind::Static | Kind::Get | Kind::Set => {
+            Kind::Static => {
                 self.bump_any();
                 self.can_follow_modifier()
             }
+            Kind::Get | Kind::Set => {
+                self.bump_any();
+                self.can_follow_get_or_set_keyword()
+            }
             _ => self.next_token_is_on_same_line_and_can_follow_modifier(),
         };
-        if b { Ok(()) } else { Err(self.unexpected()) }
+        if !b {
+            self.set_unexpected();
+        }
     }
 
-    fn try_next_token_is_on_same_line_and_can_follow_modifier(&mut self) -> Result<()> {
-        if self.next_token_is_on_same_line_and_can_follow_modifier() {
-            Ok(())
-        } else {
-            Err(self.unexpected())
+    fn try_next_token_is_on_same_line_and_can_follow_modifier(&mut self) {
+        if !self.next_token_is_on_same_line_and_can_follow_modifier() {
+            self.set_unexpected();
         }
     }
 
     fn next_token_is_on_same_line_and_can_follow_modifier(&mut self) -> bool {
         self.bump_any();
-        if self.cur_token().is_on_new_line {
+        if self.cur_token().is_on_new_line() {
             return false;
         }
         self.can_follow_modifier()
@@ -518,14 +537,19 @@ impl<'a> ParserImpl<'a> {
         }
     }
 
+    fn can_follow_get_or_set_keyword(&self) -> bool {
+        let kind = self.cur_kind();
+        kind == Kind::LBrack || kind == Kind::PrivateIdentifier || kind.is_literal_property_name()
+    }
+
     fn next_token_is_class_keyword_on_same_line(&mut self) -> bool {
         self.bump_any();
-        self.cur_kind() == Kind::Class && !self.cur_token().is_on_new_line
+        self.cur_kind() == Kind::Class && !self.cur_token().is_on_new_line()
     }
 
     fn next_token_is_function_keyword_on_same_line(&mut self) -> bool {
         self.bump_any();
-        self.cur_kind() == Kind::Function && !self.cur_token().is_on_new_line
+        self.cur_kind() == Kind::Function && !self.cur_token().is_on_new_line()
     }
 
     fn check_for_duplicate_modifiers(&mut self, seen_flags: ModifierFlags, modifier: &Modifier) {

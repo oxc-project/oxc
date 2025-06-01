@@ -91,7 +91,7 @@ declare_oxc_lint!(
     /// and should not be considered unused. Since ES6 modules are now a TC39
     /// standard, Oxlint does not support this feature.
     ///
-    /// ### Example
+    /// ### Examples
     ///
     /// Examples of **incorrect** code for this rule:
     ///
@@ -215,12 +215,15 @@ impl Rule for NoUnusedVars {
     }
 
     fn should_run(&self, ctx: &ContextHost) -> bool {
-        // ignore .d.ts and vue/svelte files.
+        // ignore .d.ts and vue/svelte/astro files.
         // 1. declarations have side effects (they get merged together)
-        // 2. vue/svelte scripts declare variables that get used in the template, which
+        // 2. vue/svelte/astro scripts declare variables that get used in the template, which
         //    we can't detect
         !ctx.source_type().is_typescript_definition()
-            && !ctx.file_path().extension().is_some_and(|ext| ext == "vue" || ext == "svelte")
+            && !ctx
+                .file_path()
+                .extension()
+                .is_some_and(|ext| ext == "vue" || ext == "svelte" || ext == "astro")
     }
 }
 
@@ -281,11 +284,14 @@ impl NoUnusedVars {
                 }
                 let report = match symbol.references().rev().find(|r| r.is_write()) {
                     Some(last_write) => {
-                        // ahg
                         let span = ctx.nodes().get_node(last_write.node_id()).kind().span();
                         diagnostic::assign(symbol, span, &self.vars_ignore_pattern)
                     }
-                    _ => diagnostic::declared(symbol, &self.vars_ignore_pattern),
+                    _ => diagnostic::declared(
+                        symbol,
+                        &self.vars_ignore_pattern,
+                        symbol.has_reference_used_as_type_query(),
+                    ),
                 };
 
                 ctx.diagnostic_with_suggestion(report, |fixer| {
@@ -309,41 +315,44 @@ impl NoUnusedVars {
                 if NoUnusedVars::is_allowed_binding_rest_element(symbol) {
                     return;
                 }
-                ctx.diagnostic(diagnostic::declared(symbol, &self.vars_ignore_pattern));
+                ctx.diagnostic(diagnostic::declared(symbol, &self.vars_ignore_pattern, false));
             }
             AstKind::TSModuleDeclaration(namespace) => {
                 if self.is_allowed_ts_namespace(symbol, namespace) {
                     return;
                 }
-                ctx.diagnostic(diagnostic::declared(symbol, &IgnorePattern::<&str>::None));
+                ctx.diagnostic(diagnostic::declared(symbol, &IgnorePattern::<&str>::None, false));
             }
             AstKind::TSInterfaceDeclaration(_) => {
                 if symbol.is_in_declared_module() {
                     return;
                 }
-                ctx.diagnostic(diagnostic::declared(symbol, &IgnorePattern::<&str>::None));
+                ctx.diagnostic(diagnostic::declared(symbol, &IgnorePattern::<&str>::None, false));
             }
             AstKind::TSTypeParameter(_) => {
                 if self.is_allowed_type_parameter(symbol, declaration.id()) {
                     return;
                 }
-                ctx.diagnostic(diagnostic::declared(symbol, &self.vars_ignore_pattern));
+                ctx.diagnostic(diagnostic::declared(symbol, &self.vars_ignore_pattern, false));
             }
             AstKind::CatchParameter(_) => {
-                ctx.diagnostic(diagnostic::declared(symbol, &self.caught_errors_ignore_pattern));
+                ctx.diagnostic(diagnostic::declared(
+                    symbol,
+                    &self.caught_errors_ignore_pattern,
+                    false,
+                ));
             }
-            _ => ctx.diagnostic(diagnostic::declared(symbol, &IgnorePattern::<&str>::None)),
+            _ => ctx.diagnostic(diagnostic::declared(symbol, &IgnorePattern::<&str>::None, false)),
         }
     }
 
     fn should_skip_symbol(symbol: &Symbol<'_, '_>) -> bool {
         const AMBIENT_NAMESPACE_FLAGS: SymbolFlags =
-            SymbolFlags::NameSpaceModule.union(SymbolFlags::Ambient);
+            SymbolFlags::NamespaceModule.union(SymbolFlags::Ambient);
         let flags = symbol.flags();
 
         // 1. ignore enum members. Only enums get checked
-        // 2. ignore all ambient TS declarations, e.g. `declare class Foo {}`
-        if flags.intersects(SymbolFlags::EnumMember.union(SymbolFlags::Ambient))
+        if flags.intersects(SymbolFlags::EnumMember)
             // ambient namespaces
             || flags == AMBIENT_NAMESPACE_FLAGS
             || (symbol.is_in_ts() && symbol.is_in_declare_global())

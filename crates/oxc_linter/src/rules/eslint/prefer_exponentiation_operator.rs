@@ -26,9 +26,16 @@ declare_oxc_lint!(
     /// standard Math.pow function. Infix notation is considered to be more readable and thus more
     /// preferable than the function notation.
     ///
-    /// ### Example
+    /// ### Examples
+    ///
+    /// Examples of **incorrect** code for this rule:
     /// ```javascript
     /// Math.pow(a, b)
+    /// ```
+    ///
+    /// Examples of **correct** code for this rule:
+    /// ```javascript
+    /// a ** b
     /// ```
     PreferExponentiationOperator,
     eslint,
@@ -67,7 +74,7 @@ impl Rule for PreferExponentiationOperator {
                 }
 
                 if let Expression::Identifier(ident) = member_expr.object().without_parentheses() {
-                    if GLOBAL_OBJECT_NAMES.contains(ident.name.as_str())
+                    if GLOBAL_OBJECT_NAMES.contains(&ident.name.as_str())
                         && ctx.is_reference_to_global_variable(ident)
                     {
                         ctx.diagnostic(prefer_exponentian_operator_diagnostic(call_expr.span));

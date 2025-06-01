@@ -7,12 +7,11 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::ScopeId;
 use oxc_span::Span;
-use phf::phf_set;
 
 use crate::{AstNode, ast_util::is_method_call, context::LintContext, rule::Rule};
 
-const ARRAY_METHODS_RETURNS_ARRAY: phf::Set<&'static str> = phf_set! {
-   "concat",
+const ARRAY_METHODS_RETURNS_ARRAY: [&str; 15] = [
+    "concat",
     "copyWithin",
     "fill",
     "filter",
@@ -27,7 +26,7 @@ const ARRAY_METHODS_RETURNS_ARRAY: phf::Set<&'static str> = phf_set! {
     "toSorted",
     "toSpliced",
     "with",
-};
+];
 
 fn prefer_set_has_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("should be a `Set`, and use `.has()` to check existence or non-existence.")
@@ -91,7 +90,7 @@ fn is_kind_of_array_expr(expr: &Expression) -> bool {
 
             let Some(name) = callee.static_property_name() else { return false };
 
-            is_array_of_or_from(callee) || ARRAY_METHODS_RETURNS_ARRAY.contains(name)
+            is_array_of_or_from(callee) || ARRAY_METHODS_RETURNS_ARRAY.contains(&name)
         }
         Expression::ArrayExpression(_) => true,
         _ => false,
@@ -283,7 +282,9 @@ impl Rule for PreferSetHas {
                 };
                 references_fix.push(fixer.replace(property_info.0, "has"));
             }
-            declaration_fix.extend(references_fix)
+            declaration_fix
+                .extend(references_fix)
+                .with_message("Switch expression to Set and update call to Set.has")
         });
     }
 }

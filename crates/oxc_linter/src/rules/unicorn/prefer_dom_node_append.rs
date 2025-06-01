@@ -24,6 +24,7 @@ declare_oxc_lint!(
     /// There are [some advantages of using `Node#append()`](https://developer.mozilla.org/en-US/docs/Web/API/ParentNode/append), like the ability to append multiple nodes and to append both [`DOMString`](https://developer.mozilla.org/en-US/docs/Web/API/DOMString) and DOM node objects.
     ///
     /// ### Examples
+    ///
     /// Examples of **incorrect** code for this rule:
     /// ```javascript
     /// foo.appendChild(bar);

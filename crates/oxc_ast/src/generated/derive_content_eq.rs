@@ -1,5 +1,5 @@
 // Auto-generated code, DO NOT EDIT DIRECTLY!
-// To edit this generated file you have to edit `tasks/ast_tools/src/derives/content_eq.rs`
+// To edit this generated file you have to edit `tasks/ast_tools/src/derives/content_eq.rs`.
 
 #![allow(clippy::match_same_arms)]
 
@@ -282,8 +282,8 @@ impl ContentEq for TemplateLiteral<'_> {
 impl ContentEq for TaggedTemplateExpression<'_> {
     fn content_eq(&self, other: &Self) -> bool {
         ContentEq::content_eq(&self.tag, &other.tag)
-            && ContentEq::content_eq(&self.quasi, &other.quasi)
             && ContentEq::content_eq(&self.type_arguments, &other.type_arguments)
+            && ContentEq::content_eq(&self.quasi, &other.quasi)
     }
 }
 
@@ -352,8 +352,8 @@ impl ContentEq for CallExpression<'_> {
 impl ContentEq for NewExpression<'_> {
     fn content_eq(&self, other: &Self) -> bool {
         ContentEq::content_eq(&self.callee, &other.callee)
-            && ContentEq::content_eq(&self.arguments, &other.arguments)
             && ContentEq::content_eq(&self.type_arguments, &other.type_arguments)
+            && ContentEq::content_eq(&self.arguments, &other.arguments)
             && ContentEq::content_eq(&self.pure, &other.pure)
     }
 }
@@ -1183,6 +1183,7 @@ impl ContentEq for PropertyDefinition<'_> {
         ContentEq::content_eq(&self.r#type, &other.r#type)
             && ContentEq::content_eq(&self.decorators, &other.decorators)
             && ContentEq::content_eq(&self.key, &other.key)
+            && ContentEq::content_eq(&self.type_annotation, &other.type_annotation)
             && ContentEq::content_eq(&self.value, &other.value)
             && ContentEq::content_eq(&self.computed, &other.computed)
             && ContentEq::content_eq(&self.r#static, &other.r#static)
@@ -1191,7 +1192,6 @@ impl ContentEq for PropertyDefinition<'_> {
             && ContentEq::content_eq(&self.optional, &other.optional)
             && ContentEq::content_eq(&self.definite, &other.definite)
             && ContentEq::content_eq(&self.readonly, &other.readonly)
-            && ContentEq::content_eq(&self.type_annotation, &other.type_annotation)
             && ContentEq::content_eq(&self.accessibility, &other.accessibility)
     }
 }
@@ -1249,11 +1249,12 @@ impl ContentEq for AccessorProperty<'_> {
         ContentEq::content_eq(&self.r#type, &other.r#type)
             && ContentEq::content_eq(&self.decorators, &other.decorators)
             && ContentEq::content_eq(&self.key, &other.key)
+            && ContentEq::content_eq(&self.type_annotation, &other.type_annotation)
             && ContentEq::content_eq(&self.value, &other.value)
             && ContentEq::content_eq(&self.computed, &other.computed)
             && ContentEq::content_eq(&self.r#static, &other.r#static)
+            && ContentEq::content_eq(&self.r#override, &other.r#override)
             && ContentEq::content_eq(&self.definite, &other.definite)
-            && ContentEq::content_eq(&self.type_annotation, &other.type_annotation)
             && ContentEq::content_eq(&self.accessibility, &other.accessibility)
     }
 }
@@ -1495,20 +1496,25 @@ impl ContentEq for RegExp<'_> {
     }
 }
 
+impl ContentEq for RegExpPattern<'_> {
+    fn content_eq(&self, other: &Self) -> bool {
+        ContentEq::content_eq(&self.text, &other.text)
+    }
+}
+
 impl ContentEq for JSXElement<'_> {
     fn content_eq(&self, other: &Self) -> bool {
         ContentEq::content_eq(&self.opening_element, &other.opening_element)
-            && ContentEq::content_eq(&self.closing_element, &other.closing_element)
             && ContentEq::content_eq(&self.children, &other.children)
+            && ContentEq::content_eq(&self.closing_element, &other.closing_element)
     }
 }
 
 impl ContentEq for JSXOpeningElement<'_> {
     fn content_eq(&self, other: &Self) -> bool {
-        ContentEq::content_eq(&self.self_closing, &other.self_closing)
-            && ContentEq::content_eq(&self.name, &other.name)
-            && ContentEq::content_eq(&self.attributes, &other.attributes)
+        ContentEq::content_eq(&self.name, &other.name)
             && ContentEq::content_eq(&self.type_arguments, &other.type_arguments)
+            && ContentEq::content_eq(&self.attributes, &other.attributes)
     }
 }
 
@@ -1521,8 +1527,8 @@ impl ContentEq for JSXClosingElement<'_> {
 impl ContentEq for JSXFragment<'_> {
     fn content_eq(&self, other: &Self) -> bool {
         ContentEq::content_eq(&self.opening_fragment, &other.opening_fragment)
-            && ContentEq::content_eq(&self.closing_fragment, &other.closing_fragment)
             && ContentEq::content_eq(&self.children, &other.children)
+            && ContentEq::content_eq(&self.closing_fragment, &other.closing_fragment)
     }
 }
 
@@ -1731,9 +1737,15 @@ impl ContentEq for TSThisParameter<'_> {
 impl ContentEq for TSEnumDeclaration<'_> {
     fn content_eq(&self, other: &Self) -> bool {
         ContentEq::content_eq(&self.id, &other.id)
-            && ContentEq::content_eq(&self.members, &other.members)
+            && ContentEq::content_eq(&self.body, &other.body)
             && ContentEq::content_eq(&self.r#const, &other.r#const)
             && ContentEq::content_eq(&self.declare, &other.declare)
+    }
+}
+
+impl ContentEq for TSEnumBody<'_> {
+    fn content_eq(&self, other: &Self) -> bool {
+        ContentEq::content_eq(&self.members, &other.members)
     }
 }
 
@@ -1749,6 +1761,8 @@ impl ContentEq for TSEnumMemberName<'_> {
         match (self, other) {
             (Self::Identifier(a), Self::Identifier(b)) => a.content_eq(b),
             (Self::String(a), Self::String(b)) => a.content_eq(b),
+            (Self::ComputedString(a), Self::ComputedString(b)) => a.content_eq(b),
+            (Self::ComputedTemplateString(a), Self::ComputedTemplateString(b)) => a.content_eq(b),
             _ => false,
         }
     }
@@ -1886,8 +1900,8 @@ impl ContentEq for TSTupleType<'_> {
 
 impl ContentEq for TSNamedTupleMember<'_> {
     fn content_eq(&self, other: &Self) -> bool {
-        ContentEq::content_eq(&self.element_type, &other.element_type)
-            && ContentEq::content_eq(&self.label, &other.label)
+        ContentEq::content_eq(&self.label, &other.label)
+            && ContentEq::content_eq(&self.element_type, &other.element_type)
             && ContentEq::content_eq(&self.optional, &other.optional)
     }
 }
@@ -2107,8 +2121,8 @@ impl ContentEq for TSClassImplements<'_> {
 impl ContentEq for TSInterfaceDeclaration<'_> {
     fn content_eq(&self, other: &Self) -> bool {
         ContentEq::content_eq(&self.id, &other.id)
-            && ContentEq::content_eq(&self.extends, &other.extends)
             && ContentEq::content_eq(&self.type_parameters, &other.type_parameters)
+            && ContentEq::content_eq(&self.extends, &other.extends)
             && ContentEq::content_eq(&self.body, &other.body)
             && ContentEq::content_eq(&self.declare, &other.declare)
     }
@@ -2303,7 +2317,6 @@ impl ContentEq for TSImportType<'_> {
             && ContentEq::content_eq(&self.options, &other.options)
             && ContentEq::content_eq(&self.qualifier, &other.qualifier)
             && ContentEq::content_eq(&self.type_arguments, &other.type_arguments)
-            && ContentEq::content_eq(&self.is_type_of, &other.is_type_of)
     }
 }
 
@@ -2364,8 +2377,8 @@ impl ContentEq for TSSatisfiesExpression<'_> {
 
 impl ContentEq for TSTypeAssertion<'_> {
     fn content_eq(&self, other: &Self) -> bool {
-        ContentEq::content_eq(&self.expression, &other.expression)
-            && ContentEq::content_eq(&self.type_annotation, &other.type_annotation)
+        ContentEq::content_eq(&self.type_annotation, &other.type_annotation)
+            && ContentEq::content_eq(&self.expression, &other.expression)
     }
 }
 
@@ -2421,7 +2434,7 @@ impl ContentEq for TSNamespaceExportDeclaration<'_> {
 impl ContentEq for TSInstantiationExpression<'_> {
     fn content_eq(&self, other: &Self) -> bool {
         ContentEq::content_eq(&self.expression, &other.expression)
-            && ContentEq::content_eq(&self.type_parameters, &other.type_parameters)
+            && ContentEq::content_eq(&self.type_arguments, &other.type_arguments)
     }
 }
 
@@ -2463,7 +2476,7 @@ impl ContentEq for CommentPosition {
     }
 }
 
-impl ContentEq for CommentAnnotation {
+impl ContentEq for CommentContent {
     fn content_eq(&self, other: &Self) -> bool {
         self == other
     }
@@ -2474,8 +2487,7 @@ impl ContentEq for Comment {
         ContentEq::content_eq(&self.attached_to, &other.attached_to)
             && ContentEq::content_eq(&self.kind, &other.kind)
             && ContentEq::content_eq(&self.position, &other.position)
-            && ContentEq::content_eq(&self.preceded_by_newline, &other.preceded_by_newline)
-            && ContentEq::content_eq(&self.followed_by_newline, &other.followed_by_newline)
-            && ContentEq::content_eq(&self.annotation, &other.annotation)
+            && ContentEq::content_eq(&self.newlines, &other.newlines)
+            && ContentEq::content_eq(&self.content, &other.content)
     }
 }

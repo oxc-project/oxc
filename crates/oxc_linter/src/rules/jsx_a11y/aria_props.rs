@@ -5,7 +5,7 @@ use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 
 use crate::{
-    AstNode, context::LintContext, globals::VALID_ARIA_PROPS, rule::Rule,
+    AstNode, context::LintContext, globals::is_valid_aria_property, rule::Rule,
     utils::get_jsx_attribute_name,
 };
 
@@ -26,16 +26,19 @@ pub struct AriaProps;
 
 declare_oxc_lint!(
     /// ### What it does
+    ///
     /// Enforces that elements do not use invalid ARIA attributes.
     ///
     /// ### Why is this bad?
+    ///
     /// Using invalid ARIA attributes can mislead screen readers and other assistive technologies.
     /// It may cause the accessibility features of the website to fail, making it difficult
     /// for users with disabilities to use the site effectively.
     ///
     /// This rule includes fixes for some common typos.
     ///
-    /// ### Example
+    /// ### Examples
+    ///
     /// Examples of **incorrect** code for this rule:
     /// ```jsx
     /// <input aria-labeledby="address_label" />
@@ -56,7 +59,7 @@ impl Rule for AriaProps {
         if let AstKind::JSXAttributeItem(JSXAttributeItem::Attribute(attr)) = node.kind() {
             let name = get_jsx_attribute_name(&attr.name);
             let name = name.cow_to_ascii_lowercase();
-            if name.starts_with("aria-") && !VALID_ARIA_PROPS.contains(&name) {
+            if name.starts_with("aria-") && !is_valid_aria_property(&name) {
                 let suggestion = COMMON_TYPOS.get(&name).copied();
                 let diagnostic = aria_props_diagnostic(attr.span, &name, suggestion);
 

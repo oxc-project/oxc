@@ -174,7 +174,7 @@ impl<'a> JsxSource<'a, '_> {
         };
 
         let properties = ctx.ast.vec_from_array([filename, line_number, column_number]);
-        ctx.ast.expression_object(SPAN, properties, None)
+        ctx.ast.expression_object(SPAN, properties)
     }
 
     pub fn get_filename_var_statement(&self, ctx: &TraverseCtx<'a>) -> Option<Statement<'a>> {
@@ -196,8 +196,8 @@ impl<'a> JsxSource<'a, '_> {
         let filename_var = self.filename_var.as_ref()?;
 
         let id = filename_var.create_binding_pattern(ctx);
-        let init =
-            ctx.ast.expression_string_literal(SPAN, self.ctx.source_path.to_string_lossy(), None);
+        let source_path = ctx.ast.atom(&self.ctx.source_path.to_string_lossy());
+        let init = ctx.ast.expression_string_literal(SPAN, source_path, None);
         let decl =
             ctx.ast.variable_declarator(SPAN, VariableDeclarationKind::Var, id, Some(init), false);
         Some(decl)

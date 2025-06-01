@@ -30,7 +30,7 @@ declare_oxc_lint!(
     ///
     /// The whole expression can be replaced by zero. This is most likely not the intended outcome and should probably be corrected.
     ///
-    /// ### Example
+    /// ### Examples
     ///
     /// Examples of **incorrect** code for this rule:
     /// ```javascript
@@ -46,7 +46,7 @@ declare_oxc_lint!(
     ErasingOp,
     oxc,
     correctness,
-    suggestion
+    dangerous_fix
 );
 
 impl Rule for ErasingOp {
@@ -85,7 +85,7 @@ fn check_op<'a, 'b>(
     ctx: &LintContext<'a>,
 ) {
     if is_number_value(op, 0.0) {
-        ctx.diagnostic_with_suggestion(erasing_op_diagnostic(binary_expression.span), |fixer| {
+        ctx.diagnostic_with_dangerous_fix(erasing_op_diagnostic(binary_expression.span), |fixer| {
             fixer.replace(binary_expression.span, "0")
         });
     }

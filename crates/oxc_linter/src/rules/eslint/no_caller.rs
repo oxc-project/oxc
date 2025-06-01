@@ -36,7 +36,7 @@ declare_oxc_lint!(
     /// code by disallowing the use of `arguments.caller` and `arguments.callee`. As
     /// such, it will warn when `arguments.caller` and `arguments.callee` are used.
     ///
-    /// ### Example
+    /// ### Examples
     ///
     /// Examples of **incorrect** code for this rule:
     /// ```js

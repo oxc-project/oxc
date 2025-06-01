@@ -1,5 +1,5 @@
 // Auto-generated code, DO NOT EDIT DIRECTLY!
-// To edit this generated file you have to edit `tasks/ast_tools/src/derives/get_span.rs`
+// To edit this generated file you have to edit `tasks/ast_tools/src/derives/get_span.rs`.
 
 #![expect(clippy::match_same_arms)]
 
@@ -1488,6 +1488,13 @@ impl GetSpan for TSEnumDeclaration<'_> {
     }
 }
 
+impl GetSpan for TSEnumBody<'_> {
+    #[inline]
+    fn span(&self) -> Span {
+        self.span
+    }
+}
+
 impl GetSpan for TSEnumMember<'_> {
     #[inline]
     fn span(&self) -> Span {
@@ -1500,6 +1507,8 @@ impl GetSpan for TSEnumMemberName<'_> {
         match self {
             Self::Identifier(it) => GetSpan::span(&**it),
             Self::String(it) => GetSpan::span(&**it),
+            Self::ComputedString(it) => GetSpan::span(&**it),
+            Self::ComputedTemplateString(it) => GetSpan::span(&**it),
         }
     }
 }

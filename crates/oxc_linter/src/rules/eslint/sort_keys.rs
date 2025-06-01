@@ -50,8 +50,8 @@ impl std::ops::Deref for SortKeys {
     }
 }
 
-fn sort_properties_diagnostic(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Object keys should be sorted").with_label(span0)
+fn sort_properties_diagnostic(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Object keys should be sorted").with_label(span)
 }
 
 declare_oxc_lint!(
@@ -208,12 +208,12 @@ fn natural_sort(arr: &mut [String]) {
 
         loop {
             match (a_chars.next(), b_chars.next()) {
-                (Some(a_char), Some(b_char)) if a_char == b_char => continue,
+                (Some(a_char), Some(b_char)) if a_char == b_char => {}
                 (Some(a_char), Some(b_char)) if a_char.is_numeric() && b_char.is_numeric() => {
                     let n1 = take_numeric(&mut a_chars, a_char);
                     let n2 = take_numeric(&mut b_chars, b_char);
                     match n1.cmp(&n2) {
-                        Ordering::Equal => continue,
+                        Ordering::Equal => {}
                         ord => return ord,
                     }
                 }

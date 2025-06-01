@@ -1,14 +1,13 @@
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
-use phf::phf_set;
 use serde::Deserialize;
 
 use crate::{context::LintContext, rule::Rule, utils::should_ignore_as_private};
 
-fn empty_tags_diagnostic(span: Span, x1: &str) -> OxcDiagnostic {
+fn empty_tags_diagnostic(span: Span, tag_name: &str) -> OxcDiagnostic {
     OxcDiagnostic::warn("Expects the void tags to be empty of any content.")
-        .with_help(format!("`@{x1}` tag should not have body."))
+        .with_help(format!("`@{tag_name}` tag should not have body."))
         .with_label(span)
 }
 
@@ -62,26 +61,26 @@ declare_oxc_lint!(
     restriction
 );
 
-const EMPTY_TAGS: phf::Set<&'static str> = phf_set! {
+const EMPTY_TAGS: [&str; 18] = [
     "abstract",
     "async",
     "generator",
     "global",
     "hideconstructor",
     "ignore",
+    "inheritDoc",
     "inner",
     "instance",
-    "override",
-    "readonly",
-    "inheritDoc",
     "internal",
+    "override",
     "overload",
     "package",
     "private",
     "protected",
     "public",
+    "readonly",
     "static",
-};
+];
 
 #[derive(Debug, Default, Clone, Deserialize)]
 struct EmptyTagsConfig {
@@ -102,7 +101,7 @@ impl Rule for EmptyTags {
         let settings = &ctx.settings().jsdoc;
 
         let is_empty_tag_kind = |tag_name: &str| {
-            if EMPTY_TAGS.contains(tag_name) {
+            if EMPTY_TAGS.contains(&tag_name) {
                 return true;
             }
             if !self.0.tags.is_empty() && self.0.tags.contains(&tag_name.to_string()) {

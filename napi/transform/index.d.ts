@@ -24,6 +24,47 @@ export interface CompilerAssumptions {
   noDocumentAll?: boolean
   objectRestNoSymbols?: boolean
   pureGetters?: boolean
+  /**
+   * When using public class fields, assume that they don't shadow any getter in the current class,
+   * in its subclasses or in its superclass. Thus, it's safe to assign them rather than using
+   * `Object.defineProperty`.
+   *
+   * For example:
+   *
+   * Input:
+   * ```js
+   * class Test {
+   *  field = 2;
+   *
+   *  static staticField = 3;
+   * }
+   * ```
+   *
+   * When `set_public_class_fields` is `true`, the output will be:
+   * ```js
+   * class Test {
+   *  constructor() {
+   *    this.field = 2;
+   *  }
+   * }
+   * Test.staticField = 3;
+   * ```
+   *
+   * Otherwise, the output will be:
+   * ```js
+   * import _defineProperty from "@oxc-project/runtime/helpers/defineProperty";
+   * class Test {
+   *   constructor() {
+   *     _defineProperty(this, "field", 2);
+   *   }
+   * }
+   * _defineProperty(Test, "staticField", 3);
+   * ```
+   *
+   * NOTE: For TypeScript, if you wanted behavior is equivalent to `useDefineForClassFields: false`, you should
+   * set both `set_public_class_fields` and [`crate::TypeScriptOptions::remove_class_fields_without_initializer`]
+   * to `true`.
+   */
   setPublicClassFields?: boolean
 }
 
@@ -320,9 +361,10 @@ export declare function transform(filename: string, sourceText: string, options?
  * @see {@link transform}
  */
 export interface TransformOptions {
-  sourceType?: 'script' | 'module' | 'unambiguous' | undefined
   /** Treat the source text as `js`, `jsx`, `ts`, or `tsx`. */
   lang?: 'js' | 'jsx' | 'ts' | 'tsx'
+  /** Treat the source text as `script` or `module` code. */
+  sourceType?: 'script' | 'module' | 'unambiguous' | undefined
   /**
    * The current working directory. Used to resolve relative paths in other
    * options.
@@ -426,7 +468,50 @@ export interface TypeScriptOptions {
   jsxPragmaFrag?: string
   onlyRemoveTypeImports?: boolean
   allowNamespaces?: boolean
+  /**
+   * When enabled, type-only class fields are only removed if they are prefixed with the declare modifier:
+   *
+   * @deprecated
+   *
+   * Allowing `declare` fields is built-in support in Oxc without any option. If you want to remove class fields
+   * without initializer, you can use `remove_class_fields_without_initializer: true` instead.
+   */
   allowDeclareFields?: boolean
+  /**
+   * When enabled, class fields without initializers are removed.
+   *
+   * For example:
+   * ```ts
+   * class Foo {
+   *    x: number;
+   *    y: number = 0;
+   * }
+   * ```
+   * // transform into
+   * ```js
+   * class Foo {
+   *    x: number;
+   * }
+   * ```
+   *
+   * The option is used to align with the behavior of TypeScript's `useDefineForClassFields: false` option.
+   * When you want to enable this, you also need to set [`crate::CompilerAssumptions::set_public_class_fields`]
+   * to `true`. The `set_public_class_fields: true` + `remove_class_fields_without_initializer: true` is
+   * equivalent to `useDefineForClassFields: false` in TypeScript.
+   *
+   * When `set_public_class_fields` is true and class-properties plugin is enabled, the above example transforms into:
+   *
+   * ```js
+   * class Foo {
+   *   constructor() {
+   *     this.y = 0;
+   *   }
+   * }
+   * ```
+   *
+   * Defaults to `false`.
+   */
+  removeClassFieldsWithoutInitializer?: boolean
   /**
    * Also generate a `.d.ts` declaration file for TypeScript files.
    *

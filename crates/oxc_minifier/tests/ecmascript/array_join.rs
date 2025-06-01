@@ -26,11 +26,11 @@ fn test() {
         "42n",
         BigintBase::Decimal,
     ))));
-    let array = ast.array_expression(SPAN, elements.clone_in(&allocator), None);
+    let array = ast.array_expression(SPAN, elements.clone_in(&allocator));
     let mut array2 = array.clone_in(&allocator);
     array2.elements.push(ArrayExpressionElement::ArrayExpression(ast.alloc(array)));
     array2.elements.push(ArrayExpressionElement::ObjectExpression(
-        ast.alloc(ast.object_expression(SPAN, ast.vec(), None)),
+        ast.alloc(ast.object_expression(SPAN, ast.vec())),
     ));
     let joined = array2.array_join(&WithoutGlobalReferenceInformation {}, Some("_"));
     assert_eq!(joined, Some("__42_foo_true_42_,,42,foo,true,42_[object Object]".to_string()));

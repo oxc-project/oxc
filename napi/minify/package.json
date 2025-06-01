@@ -1,12 +1,12 @@
 {
   "name": "oxc-minify",
-  "version": "0.62.0",
+  "version": "0.72.2",
   "main": "index.js",
   "browser": "browser.js",
   "scripts": {
-    "build-dev": "napi build --no-dts-cache --platform",
+    "build-dev": "napi build --platform",
     "build": "pnpm run build-dev --features allocator --release",
-    "test": "vitest run --dir ./test && tsc"
+    "test": "tsc && vitest run --dir ./test"
   },
   "engines": {
     "node": ">=14.0.0"
@@ -38,7 +38,8 @@
     "access": "public"
   },
   "devDependencies": {
-    "vitest": "catalog:"
+    "vitest": "catalog:",
+    "typescript": "catalog:"
   },
   "napi": {
     "binaryName": "minify",
@@ -48,9 +49,13 @@
       "aarch64-pc-windows-msvc",
       "x86_64-unknown-linux-gnu",
       "x86_64-unknown-linux-musl",
+      "x86_64-unknown-freebsd",
       "aarch64-unknown-linux-gnu",
       "aarch64-unknown-linux-musl",
       "armv7-unknown-linux-gnueabihf",
+      "armv7-unknown-linux-musleabihf",
+      "s390x-unknown-linux-gnu",
+      "riscv64gc-unknown-linux-gnu",
       "x86_64-apple-darwin",
       "aarch64-apple-darwin",
       "wasm32-wasip1-threads"

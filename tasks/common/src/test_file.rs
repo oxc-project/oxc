@@ -1,5 +1,7 @@
 use std::fmt;
 
+use oxc_span::SourceType;
+
 use crate::{project_root, request::agent};
 
 pub struct TestFiles {
@@ -42,11 +44,12 @@ impl TestFiles {
 
     pub fn minimal() -> Self {
         Self {
-            files: vec![
-                TestFile::new("https://cdn.jsdelivr.net/npm/react@17.0.2/cjs/react.development.js"),
-                TestFile::new("https://cdn.jsdelivr.net/npm/antd@4.16.1/dist/antd.js"),
-                TestFile::new("https://cdn.jsdelivr.net/npm/typescript@4.9.5/lib/typescript.js"),
-            ],
+            files: [
+                "https://cdn.jsdelivr.net/gh/oxc-project/benchmark-files@main/RadixUIAdoptionSection.jsx",
+                "https://cdn.jsdelivr.net/npm/react@17.0.2/cjs/react.development.js",
+                "https://cdn.jsdelivr.net/gh/oxc-project/benchmark-files@main/cal.com.tsx",
+                "https://cdn.jsdelivr.net/gh/microsoft/TypeScript@v5.3.3/src/compiler/binder.ts",
+            ].into_iter().map(TestFile::new).collect(),
         }
     }
 
@@ -55,24 +58,20 @@ impl TestFiles {
         Self { files }
     }
 
-    pub fn complicated_one(index: usize) -> Self {
-        let url = Self::complicated_urls()[index];
-        let file = TestFile::new(url);
-        Self { files: vec![file] }
-    }
-
-    fn complicated_urls() -> [&'static str; 5] {
+    fn complicated_urls() -> [&'static str; 6] {
         [
             // TypeScript syntax (2.81MB)
-            "https://raw.githubusercontent.com/microsoft/TypeScript/v5.3.3/src/compiler/checker.ts",
+            "https://cdn.jsdelivr.net/gh/microsoft/TypeScript@v5.3.3/src/compiler/checker.ts",
             // Real world app tsx (1.0M)
-            "https://raw.githubusercontent.com/oxc-project/benchmark-files/main/cal.com.tsx",
+            "https://cdn.jsdelivr.net/gh/oxc-project/benchmark-files@main/cal.com.tsx",
             // Real world content-heavy app jsx (3K)
-            "https://raw.githubusercontent.com/oxc-project/benchmark-files/main/RadixUIAdoptionSection.jsx",
+            "https://cdn.jsdelivr.net/gh/oxc-project/benchmark-files@main/RadixUIAdoptionSection.jsx",
             // Heavy with classes (554K)
             "https://cdn.jsdelivr.net/npm/pdfjs-dist@4.0.269/build/pdf.mjs",
             // ES5 (3.9M)
             "https://cdn.jsdelivr.net/npm/antd@5.12.5/dist/antd.js",
+            // TypeScript syntax (189K)
+            "https://cdn.jsdelivr.net/gh/microsoft/TypeScript@v5.3.3/src/compiler/binder.ts",
         ]
     }
 }
@@ -81,6 +80,7 @@ pub struct TestFile {
     pub url: String,
     pub file_name: String,
     pub source_text: String,
+    pub source_type: SourceType,
 }
 
 impl TestFile {
@@ -88,7 +88,8 @@ impl TestFile {
     /// # Panics
     pub fn new(url: &str) -> Self {
         let (file_name, source_text) = Self::get_source_text(url).unwrap();
-        Self { url: url.to_string(), file_name, source_text }
+        let source_type = SourceType::from_path(&file_name).unwrap();
+        Self { url: url.to_string(), file_name, source_text, source_type }
     }
 
     /// # Errors

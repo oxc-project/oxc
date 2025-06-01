@@ -6,6 +6,7 @@ use oxc_ecmascript::constant_evaluation::{
 };
 use oxc_ecmascript::side_effects::{MayHaveSideEffects, PropertyReadSideEffects};
 use oxc_semantic::{IsGlobalReference, Scoping};
+use oxc_span::format_atom;
 use oxc_traverse::TraverseCtx;
 
 #[derive(Clone, Copy)]
@@ -86,10 +87,13 @@ impl<'a> Ctx<'a, '_> {
                     if is_exact_int64(n) { NumberBase::Decimal } else { NumberBase::Float };
                 self.ast.expression_numeric_literal(span, n, None, number_base)
             }
-            ConstantValue::BigInt(n) => {
-                self.ast.expression_big_int_literal(span, n.to_string() + "n", BigintBase::Decimal)
+            ConstantValue::BigInt(bigint) => {
+                let raw = format_atom!(self.ast.allocator, "{bigint}n");
+                self.ast.expression_big_int_literal(span, raw, BigintBase::Decimal)
             }
-            ConstantValue::String(s) => self.ast.expression_string_literal(span, s, None),
+            ConstantValue::String(s) => {
+                self.ast.expression_string_literal(span, self.ast.atom_from_cow(&s), None)
+            }
             ConstantValue::Boolean(b) => self.ast.expression_boolean_literal(span, b),
             ConstantValue::Undefined => self.ast.void_0(span),
             ConstantValue::Null => self.ast.expression_null_literal(span),

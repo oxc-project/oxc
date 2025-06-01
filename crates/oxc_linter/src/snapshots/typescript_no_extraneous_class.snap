@@ -6,6 +6,7 @@ source: crates/oxc_linter/src/tester.rs
  1 │ class Foo {}
    · ────────────
    ╰────
+  help: Delete this class
 
   ⚠ typescript-eslint(no-extraneous-class): Unexpected class with only static properties.
    ╭─[no_extraneous_class.tsx:5:14]
@@ -14,6 +15,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                       ───
  6 │                   static PROP = 2;
    ╰────
+  help: Try using standalone functions instead of static methods
 
   ⚠ typescript-eslint(no-extraneous-class): Unexpected class with only static properties.
     ╭─[no_extraneous_class.tsx:10:17]
@@ -22,14 +24,14 @@ source: crates/oxc_linter/src/tester.rs
     ·                          ───
  11 │               public static helper(): void {}
     ╰────
+  help: Try using standalone functions instead of static methods
 
   ⚠ typescript-eslint(no-extraneous-class): Unexpected class with only a constructor.
-   ╭─[no_extraneous_class.tsx:2:10]
- 1 │ 
- 2 │             class Foo {
-   ·                   ───
- 3 │               constructor() {}
+   ╭─[no_extraneous_class.tsx:1:7]
+ 1 │ class Foo { constructor() {} }
+   ·       ───
    ╰────
+  help: Try replacing this class with a standalone function or deleting it entirely
 
   ⚠ typescript-eslint(no-extraneous-class): Unexpected empty class.
    ╭─[no_extraneous_class.tsx:8:8]
@@ -38,23 +40,32 @@ source: crates/oxc_linter/src/tester.rs
    ·                 ────────────────────
  9 │               }
    ╰────
+  help: Delete this class
 
   ⚠ typescript-eslint(no-extraneous-class): Unexpected class with only static properties.
-   ╭─[no_extraneous_class.tsx:2:19]
- 1 │     
- 2 │ ╭─▶             export default class {
- 3 │ │                 static hello() {}
- 4 │ ╰─▶             }
- 5 │                       
+   ╭─[no_extraneous_class.tsx:1:16]
+ 1 │ export default class { static hello() {} }
+   ·                ───────────────────────────
    ╰────
+  help: Try using standalone functions instead of static methods
 
   ⚠ typescript-eslint(no-extraneous-class): Unexpected empty class.
-   ╭─[no_extraneous_class.tsx:2:4]
- 1 │     
- 2 │ ╭─▶             @FooDecorator
- 3 │ ╰─▶             class Foo {}
- 4 │                       
+   ╭─[no_extraneous_class.tsx:3:4]
+ 2 │             @FooDecorator
+ 3 │             class Foo {}
+   ·             ────────────
+ 4 │             
    ╰────
+  help: Set "allowWithDecorator": true in your config to allow empty decorated classes
+
+  ⚠ typescript-eslint(no-extraneous-class): Unexpected empty class.
+   ╭─[no_extraneous_class.tsx:6:4]
+ 5 │             })
+ 6 │             class Foo {}
+   ·             ────────────
+ 7 │             
+   ╰────
+  help: Set "allowWithDecorator": true in your config to allow empty decorated classes
 
   ⚠ typescript-eslint(no-extraneous-class): Unexpected class with only a constructor.
    ╭─[no_extraneous_class.tsx:3:10]
@@ -63,27 +74,25 @@ source: crates/oxc_linter/src/tester.rs
    ·                   ───
  4 │               constructor(foo: Foo) {
    ╰────
+  help: Try replacing this class with a standalone function or deleting it entirely
 
   ⚠ typescript-eslint(no-extraneous-class): Unexpected empty class.
-   ╭─[no_extraneous_class.tsx:2:4]
- 1 │ 
- 2 │             abstract class Foo {}
-   ·             ─────────────────────
- 3 │                   
+   ╭─[no_extraneous_class.tsx:1:1]
+ 1 │ abstract class Foo {}
+   · ─────────────────────
    ╰────
+  help: Delete this class
 
   ⚠ typescript-eslint(no-extraneous-class): Unexpected class with only static properties.
-   ╭─[no_extraneous_class.tsx:2:19]
- 1 │ 
- 2 │             abstract class Foo {
-   ·                            ───
- 3 │               static property: string;
+   ╭─[no_extraneous_class.tsx:1:16]
+ 1 │ abstract class Foo { static property: string; }
+   ·                ───
    ╰────
+  help: Try using standalone functions instead of static methods
 
   ⚠ typescript-eslint(no-extraneous-class): Unexpected class with only a constructor.
-   ╭─[no_extraneous_class.tsx:2:19]
- 1 │ 
- 2 │             abstract class Foo {
-   ·                            ───
- 3 │               constructor() {}
+   ╭─[no_extraneous_class.tsx:1:16]
+ 1 │ abstract class Foo { constructor() {} }
+   ·                ───
    ╰────
+  help: Try replacing this class with a standalone function or deleting it entirely

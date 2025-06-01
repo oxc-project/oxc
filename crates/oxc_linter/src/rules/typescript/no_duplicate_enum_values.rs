@@ -36,9 +36,11 @@ pub struct NoDuplicateEnumValues;
 
 declare_oxc_lint!(
     /// ### What it does
+    ///
     /// Disallow duplicate enum member values.
     ///
     /// ### Why is this bad?
+    ///
     /// Although TypeScript supports duplicate enum member values, people
     /// usually expect members to have unique values within the same enum.
     /// Duplicate values can lead to bugs that are hard to track down.
@@ -89,7 +91,7 @@ declare_oxc_lint!(
 impl Rule for NoDuplicateEnumValues {
     #[expect(clippy::float_cmp)]
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        let AstKind::TSEnumDeclaration(enum_body) = node.kind() else {
+        let AstKind::TSEnumBody(enum_body) = node.kind() else {
             return;
         };
         let mut seen_number_values: Vec<(f64, Span)> = vec![];

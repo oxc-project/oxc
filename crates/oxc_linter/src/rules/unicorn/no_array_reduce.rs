@@ -41,7 +41,9 @@ declare_oxc_lint!(
     ///
     /// It's only somewhat useful in the rare case of summing up numbers, which is allowed by default.
     ///
-    /// ### Example
+    /// ### Examples
+    ///
+    /// Examples of **incorrect** code for this rule:
     /// ```javascript
     /// array.reduce(reducer, initialValue);
     /// array.reduceRight(reducer, initialValue);
