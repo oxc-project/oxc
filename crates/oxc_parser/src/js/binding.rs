@@ -45,9 +45,12 @@ impl<'a> ParserImpl<'a> {
         let (list, rest) = self.parse_delimited_list_with_rest(
             Kind::RCurly,
             Self::parse_binding_property,
-            Self::parse_rest_binding,
+            diagnostics::binding_rest_element_last,
         );
         if let Some(rest) = &rest {
+            if let Some(ty) = &rest.argument.type_annotation {
+                self.error(diagnostics::rest_element_property_name(ty.span));
+            }
             if !matches!(&rest.argument.kind, BindingPatternKind::BindingIdentifier(_)) {
                 let error = diagnostics::invalid_binding_rest_element(rest.argument.span());
                 return self.fatal_error(error);
@@ -68,8 +71,13 @@ impl<'a> ParserImpl<'a> {
         let (list, rest) = self.parse_delimited_list_with_rest(
             Kind::RBrack,
             Self::parse_array_binding_element,
-            Self::parse_rest_binding,
+            diagnostics::binding_rest_element_last,
         );
+        if let Some(rest) = &rest {
+            if let Some(ty) = &rest.argument.type_annotation {
+                self.error(diagnostics::rest_element_property_name(ty.span));
+            }
+        }
         self.expect(Kind::RBrack);
         self.ast.binding_pattern_kind_array_pattern(
             self.end_span(span),
@@ -86,30 +94,8 @@ impl<'a> ParserImpl<'a> {
         }
     }
 
-    fn parse_rest_binding(&mut self) -> BindingRestElement<'a> {
-        let elem = self.parse_rest_element();
-        if let Some(ty) = &elem.argument.type_annotation {
-            self.error(diagnostics::rest_element_property_name(ty.span));
-        }
-        if self.at(Kind::Comma) {
-            let comma_span = self.cur_token().span();
-            let checkpoint = self.checkpoint();
-            self.bump(Kind::Comma);
-            let next = self.cur_kind();
-            self.rewind(checkpoint);
-            if matches!(next, Kind::RCurly | Kind::RBrack) {
-                self.bump_any();
-                self.error(diagnostics::binding_rest_element_trailing_comma(comma_span));
-            }
-            if !self.ctx.has_ambient() {
-                self.error(diagnostics::binding_rest_element_last(elem.span));
-            }
-        }
-        elem
-    }
-
     /// Section 14.3.3 Binding Rest Property
-    pub(super) fn parse_rest_element(&mut self) -> BindingRestElement<'a> {
+    pub(crate) fn parse_rest_element(&mut self) -> BindingRestElement<'a> {
         let span = self.start_span();
         self.bump_any(); // advance `...`
         let init_span = self.start_span();

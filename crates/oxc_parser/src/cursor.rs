@@ -1,7 +1,8 @@
 //! Code related to navigating `Token`s from the lexer
 
 use oxc_allocator::{TakeIn, Vec};
-use oxc_ast::ast::{Decorator, RegExpFlags};
+use oxc_ast::ast::{BindingRestElement, Decorator, RegExpFlags};
+use oxc_diagnostics::OxcDiagnostic;
 use oxc_span::{GetSpan, Span};
 
 use crate::{
@@ -353,25 +354,29 @@ impl<'a> ParserImpl<'a> {
         (list, trailing_separator)
     }
 
-    pub(crate) fn parse_delimited_list_with_rest<E, R, A, B>(
+    pub(crate) fn parse_delimited_list_with_rest<E, A, D>(
         &mut self,
         close: Kind,
         parse_element: E,
-        parse_rest: R,
-    ) -> (Vec<'a, A>, Option<B>)
+        rest_last_diagnostic: D,
+    ) -> (Vec<'a, A>, Option<BindingRestElement<'a>>)
     where
         E: Fn(&mut Self) -> A,
-        R: Fn(&mut Self) -> B,
-        B: GetSpan,
+        D: Fn(Span) -> OxcDiagnostic,
     {
         let mut list = self.ast.vec();
         let mut rest = None;
         let mut first = true;
+        let mut rest_comma_span: Option<Span> = None;
         loop {
             let kind = self.cur_kind();
-            if kind == close || self.has_fatal_error() {
+            if self.has_fatal_error() {
                 break;
             }
+            if kind == close {
+                break;
+            }
+
             if first {
                 first = false;
             } else {
@@ -382,13 +387,28 @@ impl<'a> ParserImpl<'a> {
             }
 
             if self.at(Kind::Dot3) {
-                if let Some(r) = rest.replace(parse_rest(self)) {
-                    self.error(diagnostics::binding_rest_element_last(r.span()));
+                let r = self.parse_rest_element();
+                if self.at(Kind::Comma) {
+                    rest_comma_span.replace(self.cur_token().span());
+                    if !self.ctx.has_ambient() {
+                        self.error(rest_last_diagnostic(r.span()));
+                    }
+                } else {
+                    rest_comma_span = None;
                 }
+                rest.replace(r);
             } else {
+                rest_comma_span = None;
                 list.push(parse_element(self));
             }
         }
+
+        if !self.ctx.has_ambient() {
+            if let Some(span) = rest_comma_span {
+                self.error(diagnostics::rest_element_trailing_comma(span));
+            }
+        }
+
         (list, rest)
     }
 }

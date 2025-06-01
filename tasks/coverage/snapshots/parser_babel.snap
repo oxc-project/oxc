@@ -2783,19 +2783,19 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
  4 │     third,
    ╰────
 
-  × Unexpected trailing comma after rest element
+  × A rest parameter or binding pattern may not have a trailing comma.
    ╭─[babel/packages/babel-parser/test/fixtures/es2015/array-rest-spread/comma-after-rest/input.js:1:6]
  1 │ [...a,] = [];
    ·      ─
    ╰────
 
-  × Unexpected trailing comma after rest element
+  × A rest parameter or binding pattern may not have a trailing comma.
    ╭─[babel/packages/babel-parser/test/fixtures/es2015/array-rest-spread/comma-after-spread-for-in/input.js:1:11]
  1 │ for ([...a,] in []);
    ·           ─
    ╰────
 
-  × Unexpected trailing comma after rest element
+  × A rest parameter or binding pattern may not have a trailing comma.
    ╭─[babel/packages/babel-parser/test/fixtures/es2015/array-rest-spread/comma-after-spread-nested/input.js:1:7]
  1 │ [[...a,]] = [];
    ·       ─
@@ -2811,6 +2811,12 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ╭─[babel/packages/babel-parser/test/fixtures/es2015/arrow-functions/comma-after-rest-param/input.js:1:2]
  1 │ (...rest,) => {}
    ·  ───────
+   ╰────
+
+  × A rest parameter or binding pattern may not have a trailing comma.
+   ╭─[babel/packages/babel-parser/test/fixtures/es2015/arrow-functions/comma-after-rest-param/input.js:1:9]
+ 1 │ (...rest,) => {}
+   ·         ─
    ╰────
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
@@ -5721,6 +5727,12 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ·        ────
    ╰────
 
+  × A rest parameter or binding pattern may not have a trailing comma.
+   ╭─[babel/packages/babel-parser/test/fixtures/es2017/async-functions/params-invalid-rest-trailing-comma/input.js:1:12]
+ 1 │ async (...a,) => {};
+   ·            ─
+   ╰────
+
   × Unexpected token
    ╭─[babel/packages/babel-parser/test/fixtures/es2017/trailing-function-commas/5/input.js:1:5]
  1 │ log(,);
@@ -5976,22 +5988,16 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ·       ────
    ╰────
 
-  × Unexpected trailing comma after rest element
-   ╭─[babel/packages/babel-parser/test/fixtures/es2018/object-rest-spread/8/input.js:1:17]
- 1 │ let { x, y, ...z, } = obj;
-   ·                 ─
-   ╰────
-
   × A rest element must be last in a destructuring pattern
    ╭─[babel/packages/babel-parser/test/fixtures/es2018/object-rest-spread/8/input.js:1:13]
  1 │ let { x, y, ...z, } = obj;
    ·             ────
    ╰────
 
-  × A rest element must be last in a destructuring pattern
-   ╭─[babel/packages/babel-parser/test/fixtures/es2018/object-rest-spread/9/input.js:1:10]
- 1 │ let { x, ...y, ...z } = obj;
-   ·          ────
+  × A rest parameter or binding pattern may not have a trailing comma.
+   ╭─[babel/packages/babel-parser/test/fixtures/es2018/object-rest-spread/8/input.js:1:17]
+ 1 │ let { x, y, ...z, } = obj;
+   ·                 ─
    ╰────
 
   × A rest element must be last in a destructuring pattern
@@ -8771,16 +8777,16 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ·      ╰── `b` has already been declared here
    ╰────
 
-  × Unexpected trailing comma after rest element
-   ╭─[babel/packages/babel-parser/test/fixtures/esprima/es2015-array-binding-pattern/invalid-elision-after-rest/input.js:1:9]
- 1 │ ([a,...b,])=>0;
-   ·         ─
-   ╰────
-
   × A rest element must be last in a destructuring pattern
    ╭─[babel/packages/babel-parser/test/fixtures/esprima/es2015-array-binding-pattern/invalid-elision-after-rest/input.js:1:5]
  1 │ ([a,...b,])=>0;
    ·     ────
+   ╰────
+
+  × A rest parameter or binding pattern may not have a trailing comma.
+   ╭─[babel/packages/babel-parser/test/fixtures/esprima/es2015-array-binding-pattern/invalid-elision-after-rest/input.js:1:9]
+ 1 │ ([a,...b,])=>0;
+   ·         ─
    ╰────
 
   × Identifier `a` has already been declared
@@ -8825,12 +8831,6 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ╰────
 
   × A rest parameter must be last in a parameter list
-   ╭─[babel/packages/babel-parser/test/fixtures/esprima/es2015-arrow-function/arrow-with-multiple-rest/input.js:1:2]
- 1 │ (...a, ...b) => 0
-   ·  ────
-   ╰────
-
-  × A rest element must be last in a destructuring pattern
    ╭─[babel/packages/babel-parser/test/fixtures/esprima/es2015-arrow-function/arrow-with-multiple-rest/input.js:1:2]
  1 │ (...a, ...b) => 0
    ·  ────

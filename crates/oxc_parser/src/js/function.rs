@@ -59,7 +59,7 @@ impl<'a> ParserImpl<'a> {
         let (list, rest) = self.parse_delimited_list_with_rest(
             Kind::RParen,
             Self::parse_formal_parameter,
-            Self::parse_rest_parameter,
+            diagnostics::rest_parameter_last,
         );
         self.expect(Kind::RParen);
         let formal_parameters =
@@ -95,25 +95,6 @@ impl<'a> ParserImpl<'a> {
             modifiers.contains_readonly(),
             modifiers.contains_override(),
         )
-    }
-
-    fn parse_rest_parameter(&mut self) -> BindingRestElement<'a> {
-        let element = self.parse_rest_element();
-        if self.at(Kind::Comma) {
-            let checkpoint = self.checkpoint();
-            self.bump_any();
-            let peek_kind = self.cur_kind();
-            self.rewind(checkpoint);
-            if matches!(peek_kind, Kind::RCurly | Kind::RBrack) {
-                let span = self.cur_token().span();
-                self.bump_any();
-                self.error(diagnostics::binding_rest_element_trailing_comma(span));
-            }
-            if !self.ctx.has_ambient() {
-                self.error(diagnostics::rest_parameter_last(element.span));
-            }
-        }
-        element
     }
 
     pub(crate) fn parse_function(

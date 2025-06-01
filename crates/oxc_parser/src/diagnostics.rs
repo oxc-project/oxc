@@ -217,8 +217,9 @@ pub fn spread_last_element(span: Span) -> OxcDiagnostic {
 }
 
 #[cold]
-pub fn binding_rest_element_trailing_comma(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::error("Unexpected trailing comma after rest element").with_label(span)
+pub fn rest_element_trailing_comma(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::error("A rest parameter or binding pattern may not have a trailing comma.")
+        .with_label(span)
 }
 
 #[cold]

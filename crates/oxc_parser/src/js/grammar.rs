@@ -80,7 +80,7 @@ impl<'a> CoverGrammar<'a, ArrayExpression<'a>> for ArrayAssignmentTarget<'a> {
                             AssignmentTarget::cover(elem.unbox().argument, p),
                         ));
                         if let Some(span) = p.state.trailing_commas.get(&expr.span.start) {
-                            p.error(diagnostics::binding_rest_element_trailing_comma(*span));
+                            p.error(diagnostics::rest_element_trailing_comma(*span));
                         }
                     } else {
                         let error = diagnostics::spread_last_element(elem.span);

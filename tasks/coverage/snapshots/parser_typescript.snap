@@ -23988,13 +23988,6 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
     ╰────
   help: Wrap unary expression in parentheses to enforce operator precedence
 
-  × Unexpected trailing comma after rest element
-   ╭─[typescript/tests/cases/conformance/es7/trailingCommasInBindingPatterns.ts:1:12]
- 1 │ const [...a,] = [];
-   ·            ─
- 2 │ const {...b,} = {};
-   ╰────
-
   × A rest element must be last in a destructuring pattern
    ╭─[typescript/tests/cases/conformance/es7/trailingCommasInBindingPatterns.ts:1:8]
  1 │ const [...a,] = [];
@@ -24002,12 +23995,11 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
  2 │ const {...b,} = {};
    ╰────
 
-  × Unexpected trailing comma after rest element
-   ╭─[typescript/tests/cases/conformance/es7/trailingCommasInBindingPatterns.ts:2:12]
+  × A rest parameter or binding pattern may not have a trailing comma.
+   ╭─[typescript/tests/cases/conformance/es7/trailingCommasInBindingPatterns.ts:1:12]
  1 │ const [...a,] = [];
- 2 │ const {...b,} = {};
    ·            ─
- 3 │ let c, d;
+ 2 │ const {...b,} = {};
    ╰────
 
   × A rest element must be last in a destructuring pattern
@@ -24018,7 +24010,15 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
  3 │ let c, d;
    ╰────
 
-  × Unexpected trailing comma after rest element
+  × A rest parameter or binding pattern may not have a trailing comma.
+   ╭─[typescript/tests/cases/conformance/es7/trailingCommasInBindingPatterns.ts:2:12]
+ 1 │ const [...a,] = [];
+ 2 │ const {...b,} = {};
+   ·            ─
+ 3 │ let c, d;
+   ╰────
+
+  × A rest parameter or binding pattern may not have a trailing comma.
    ╭─[typescript/tests/cases/conformance/es7/trailingCommasInBindingPatterns.ts:4:7]
  3 │ let c, d;
  4 │ ([...c,] = []);
@@ -24031,6 +24031,14 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
  4 │ 
  5 │ function f2(...args,) {}
    ·             ───────
+ 6 │ 
+   ╰────
+
+  × A rest parameter or binding pattern may not have a trailing comma.
+   ╭─[typescript/tests/cases/conformance/es7/trailingCommasInFunctionParametersAndArguments.ts:5:20]
+ 4 │ 
+ 5 │ function f2(...args,) {}
+   ·                    ─
  6 │ 
    ╰────
 
@@ -30221,23 +30229,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
  6 │ 
    ╰────
 
-  × A rest element must be last in a destructuring pattern
-   ╭─[typescript/tests/cases/conformance/types/objectTypeLiteral/callSignatures/restParameterWithoutAnnotationIsAnyArray.ts:5:11]
- 4 │ var f = function foo(...x) { }
- 5 │ var f2 = (...x, ...y) => { }
-   ·           ────
- 6 │ 
-   ╰────
-
   × A rest parameter must be last in a parameter list
-    ╭─[typescript/tests/cases/conformance/types/objectTypeLiteral/callSignatures/restParameterWithoutAnnotationIsAnyArray.ts:13:9]
- 12 │     (...x);
- 13 │     foo(...x, ...y);
-    ·         ────
- 14 │ }
-    ╰────
-
-  × A rest element must be last in a destructuring pattern
     ╭─[typescript/tests/cases/conformance/types/objectTypeLiteral/callSignatures/restParameterWithoutAnnotationIsAnyArray.ts:13:9]
  12 │     (...x);
  13 │     foo(...x, ...y);
@@ -30253,23 +30245,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
  24 │     b: (...x) => { }
     ╰────
 
-  × A rest element must be last in a destructuring pattern
-    ╭─[typescript/tests/cases/conformance/types/objectTypeLiteral/callSignatures/restParameterWithoutAnnotationIsAnyArray.ts:23:21]
- 22 │     foo(...x) { },
- 23 │     a: function foo(...x, ...y) { },
-    ·                     ────
- 24 │     b: (...x) => { }
-    ╰────
-
   × A rest parameter must be last in a parameter list
-   ╭─[typescript/tests/cases/conformance/types/objectTypeLiteral/callSignatures/restParametersOfNonArrayTypes.ts:5:11]
- 4 │ var f = function foo(...x: number) { }
- 5 │ var f2 = (...x: Date, ...y: boolean) => { }
-   ·           ──────────
- 6 │ 
-   ╰────
-
-  × A rest element must be last in a destructuring pattern
    ╭─[typescript/tests/cases/conformance/types/objectTypeLiteral/callSignatures/restParametersOfNonArrayTypes.ts:5:11]
  4 │ var f = function foo(...x: number) { }
  5 │ var f2 = (...x: Date, ...y: boolean) => { }
@@ -30285,23 +30261,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
  14 │ }
     ╰────
 
-  × A rest element must be last in a destructuring pattern
-    ╭─[typescript/tests/cases/conformance/types/objectTypeLiteral/callSignatures/restParametersOfNonArrayTypes.ts:13:9]
- 12 │     (...x: string);
- 13 │     foo(...x: number, ...y: number);
-    ·         ────────────
- 14 │ }
-    ╰────
-
   × A rest parameter must be last in a parameter list
-    ╭─[typescript/tests/cases/conformance/types/objectTypeLiteral/callSignatures/restParametersOfNonArrayTypes.ts:23:21]
- 22 │     foo(...x: string) { },
- 23 │     a: function foo(...x: number, ...y: Date) { },
-    ·                     ────────────
- 24 │     b: (...x: string) => { }
-    ╰────
-
-  × A rest element must be last in a destructuring pattern
     ╭─[typescript/tests/cases/conformance/types/objectTypeLiteral/callSignatures/restParametersOfNonArrayTypes.ts:23:21]
  22 │     foo(...x: string) { },
  23 │     a: function foo(...x: number, ...y: Date) { },
@@ -30317,23 +30277,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
  10 │ 
     ╰────
 
-  × A rest element must be last in a destructuring pattern
-    ╭─[typescript/tests/cases/conformance/types/objectTypeLiteral/callSignatures/restParametersOfNonArrayTypes2.ts:9:11]
-  8 │ var f = function foo(...x: MyThing) { }
-  9 │ var f2 = (...x: MyThing, ...y: MyThing) => { }
-    ·           ─────────────
- 10 │ 
-    ╰────
-
   × A rest parameter must be last in a parameter list
-    ╭─[typescript/tests/cases/conformance/types/objectTypeLiteral/callSignatures/restParametersOfNonArrayTypes2.ts:17:9]
- 16 │     (...x: MyThing);
- 17 │     foo(...x: MyThing, ...y: MyThing);
-    ·         ─────────────
- 18 │ }
-    ╰────
-
-  × A rest element must be last in a destructuring pattern
     ╭─[typescript/tests/cases/conformance/types/objectTypeLiteral/callSignatures/restParametersOfNonArrayTypes2.ts:17:9]
  16 │     (...x: MyThing);
  17 │     foo(...x: MyThing, ...y: MyThing);
@@ -30349,23 +30293,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
  28 │     b: (...x: MyThing) => { }
     ╰────
 
-  × A rest element must be last in a destructuring pattern
-    ╭─[typescript/tests/cases/conformance/types/objectTypeLiteral/callSignatures/restParametersOfNonArrayTypes2.ts:27:21]
- 26 │     foo(...x: MyThing) { },
- 27 │     a: function foo(...x: MyThing, ...y: MyThing) { },
-    ·                     ─────────────
- 28 │     b: (...x: MyThing) => { }
-    ╰────
-
   × A rest parameter must be last in a parameter list
-    ╭─[typescript/tests/cases/conformance/types/objectTypeLiteral/callSignatures/restParametersOfNonArrayTypes2.ts:36:11]
- 35 │ var f3 = function foo(...x: MyThing2<string>) { }
- 36 │ var f4 = (...x: MyThing2<string>, ...y: MyThing2<string>) => { }
-    ·           ──────────────────────
- 37 │ 
-    ╰────
-
-  × A rest element must be last in a destructuring pattern
     ╭─[typescript/tests/cases/conformance/types/objectTypeLiteral/callSignatures/restParametersOfNonArrayTypes2.ts:36:11]
  35 │ var f3 = function foo(...x: MyThing2<string>) { }
  36 │ var f4 = (...x: MyThing2<string>, ...y: MyThing2<string>) => { }
@@ -30381,23 +30309,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
  45 │ }
     ╰────
 
-  × A rest element must be last in a destructuring pattern
-    ╭─[typescript/tests/cases/conformance/types/objectTypeLiteral/callSignatures/restParametersOfNonArrayTypes2.ts:44:9]
- 43 │     (...x: MyThing2<string>);
- 44 │     foo(...x: MyThing2<string>, ...y: MyThing2<string>);
-    ·         ──────────────────────
- 45 │ }
-    ╰────
-
   × A rest parameter must be last in a parameter list
-    ╭─[typescript/tests/cases/conformance/types/objectTypeLiteral/callSignatures/restParametersOfNonArrayTypes2.ts:54:21]
- 53 │     foo(...x: MyThing2<string>) { },
- 54 │     a: function foo(...x: MyThing2<string>, ...y: MyThing2<string>) { },
-    ·                     ──────────────────────
- 55 │     b: (...x: MyThing2<string>) => { }
-    ╰────
-
-  × A rest element must be last in a destructuring pattern
     ╭─[typescript/tests/cases/conformance/types/objectTypeLiteral/callSignatures/restParametersOfNonArrayTypes2.ts:54:21]
  53 │     foo(...x: MyThing2<string>) { },
  54 │     a: function foo(...x: MyThing2<string>, ...y: MyThing2<string>) { },
@@ -30413,23 +30325,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
  6 │ 
    ╰────
 
-  × A rest element must be last in a destructuring pattern
-   ╭─[typescript/tests/cases/conformance/types/objectTypeLiteral/callSignatures/restParametersWithArrayTypeAnnotations.ts:5:11]
- 4 │ var f = function foo(...x: number[]) { }
- 5 │ var f2 = (...x: number[], ...y: number[]) => { }
-   ·           ──────────────
- 6 │ 
-   ╰────
-
   × A rest parameter must be last in a parameter list
-    ╭─[typescript/tests/cases/conformance/types/objectTypeLiteral/callSignatures/restParametersWithArrayTypeAnnotations.ts:13:9]
- 12 │     (...x: number[]);
- 13 │     foo(...x: number[], ...y: number[]);
-    ·         ──────────────
- 14 │ }
-    ╰────
-
-  × A rest element must be last in a destructuring pattern
     ╭─[typescript/tests/cases/conformance/types/objectTypeLiteral/callSignatures/restParametersWithArrayTypeAnnotations.ts:13:9]
  12 │     (...x: number[]);
  13 │     foo(...x: number[], ...y: number[]);
@@ -30445,23 +30341,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
  24 │     b: (...x: number[]) => { }
     ╰────
 
-  × A rest element must be last in a destructuring pattern
-    ╭─[typescript/tests/cases/conformance/types/objectTypeLiteral/callSignatures/restParametersWithArrayTypeAnnotations.ts:23:21]
- 22 │     foo(...x: number[]) { },
- 23 │     a: function foo(...x: number[], ...y: number[]) { },
-    ·                     ──────────────
- 24 │     b: (...x: number[]) => { }
-    ╰────
-
   × A rest parameter must be last in a parameter list
-    ╭─[typescript/tests/cases/conformance/types/objectTypeLiteral/callSignatures/restParametersWithArrayTypeAnnotations.ts:32:11]
- 31 │ var f3 = function foo(...x: Array<string>) { }
- 32 │ var f4 = (...x: Array<string>, ...y: Array<string>) => { }
-    ·           ───────────────────
- 33 │ 
-    ╰────
-
-  × A rest element must be last in a destructuring pattern
     ╭─[typescript/tests/cases/conformance/types/objectTypeLiteral/callSignatures/restParametersWithArrayTypeAnnotations.ts:32:11]
  31 │ var f3 = function foo(...x: Array<string>) { }
  32 │ var f4 = (...x: Array<string>, ...y: Array<string>) => { }
@@ -30477,23 +30357,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
  41 │ }
     ╰────
 
-  × A rest element must be last in a destructuring pattern
-    ╭─[typescript/tests/cases/conformance/types/objectTypeLiteral/callSignatures/restParametersWithArrayTypeAnnotations.ts:40:9]
- 39 │     (...x: Array<string>);
- 40 │     foo(...x: Array<string>, ...y: Array<string>);
-    ·         ───────────────────
- 41 │ }
-    ╰────
-
   × A rest parameter must be last in a parameter list
-    ╭─[typescript/tests/cases/conformance/types/objectTypeLiteral/callSignatures/restParametersWithArrayTypeAnnotations.ts:50:21]
- 49 │     foo(...x: Array<string>) { },
- 50 │     a: function foo(...x: Array<string>, ...y: Array<string>) { },
-    ·                     ───────────────────
- 51 │     b: (...x: Array<string>) => { }
-    ╰────
-
-  × A rest element must be last in a destructuring pattern
     ╭─[typescript/tests/cases/conformance/types/objectTypeLiteral/callSignatures/restParametersWithArrayTypeAnnotations.ts:50:21]
  49 │     foo(...x: Array<string>) { },
  50 │     a: function foo(...x: Array<string>, ...y: Array<string>) { },

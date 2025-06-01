@@ -3474,6 +3474,14 @@ Negative Passed: 4519/4519 (100.00%)
  56 │   
     ╰────
 
+  × A rest parameter or binding pattern may not have a trailing comma.
+    ╭─[test262/test/language/expressions/arrow-function/rest-params-trailing-comma-early-error.js:55:9]
+ 54 │ 
+ 55 │ 0, (...a,) => {
+    ·         ─
+ 56 │   
+    ╰────
+
   × Unexpected token
     ╭─[test262/test/language/expressions/arrow-function/static-init-await-binding.js:17:12]
  16 │   static {
@@ -3761,7 +3769,7 @@ Negative Passed: 4519/4519 (100.00%)
     ·     ────
     ╰────
 
-  × Unexpected trailing comma after rest element
+  × A rest parameter or binding pattern may not have a trailing comma.
     ╭─[test262/test/language/expressions/assignment/dstr/array-rest-before-elision.js:24:9]
  23 │ 
  24 │ 0, [...x,] = [];
@@ -3775,7 +3783,7 @@ Negative Passed: 4519/4519 (100.00%)
     ·     ────
     ╰────
 
-  × Unexpected trailing comma after rest element
+  × A rest parameter or binding pattern may not have a trailing comma.
     ╭─[test262/test/language/expressions/assignment/dstr/array-rest-elision-invalid.js:24:9]
  23 │ 
  24 │ 0, [...x,] = [];
@@ -6769,6 +6777,14 @@ Negative Passed: 4519/4519 (100.00%)
  48 │   
     ╰────
 
+  × A rest parameter or binding pattern may not have a trailing comma.
+    ╭─[test262/test/language/expressions/async-arrow-function/rest-params-trailing-comma-early-error.js:47:13]
+ 46 │ 
+ 47 │ (async (...a,) => {
+    ·             ─
+ 48 │   
+    ╰────
+
   × Cannot use `await` as an identifier in an async context
     ╭─[test262/test/language/expressions/async-function/await-as-binding-identifier-escaped.js:30:7]
  29 │ var asyncFn = async function () {
@@ -7028,6 +7044,14 @@ Negative Passed: 4519/4519 (100.00%)
  35 │   
     ╰────
 
+  × A rest parameter or binding pattern may not have a trailing comma.
+    ╭─[test262/test/language/expressions/async-function/named-rest-params-trailing-comma-early-error.js:34:23]
+ 33 │ 
+ 34 │ (async function f(...a,) {
+    ·                       ─
+ 35 │   
+    ╰────
+
   × Illegal 'use strict' directive in function with non-simple parameter list
      ╭─[test262/test/language/expressions/async-function/nameless-array-destructuring-param-strict-body.js:109:3]
  108 │ (async function([element]) {
@@ -7075,6 +7099,14 @@ Negative Passed: 4519/4519 (100.00%)
  33 │ 
  34 │ (async function(...a,) {
     ·                 ────
+ 35 │   
+    ╰────
+
+  × A rest parameter or binding pattern may not have a trailing comma.
+    ╭─[test262/test/language/expressions/async-function/nameless-rest-params-trailing-comma-early-error.js:34:21]
+ 33 │ 
+ 34 │ (async function(...a,) {
+    ·                     ─
  35 │   
     ╰────
 
@@ -7652,6 +7684,14 @@ Negative Passed: 4519/4519 (100.00%)
  38 │   
     ╰────
 
+  × A rest parameter or binding pattern may not have a trailing comma.
+    ╭─[test262/test/language/expressions/async-generator/named-rest-params-trailing-comma-early-error.js:37:26]
+ 36 │ 
+ 37 │ 0, async function* g(...a,) {
+    ·                          ─
+ 38 │   
+    ╰────
+
   × Cannot use `yield` as an identifier in a generator context
     ╭─[test262/test/language/expressions/async-generator/named-yield-as-binding-identifier-escaped.js:31:7]
  30 │ var gen = async function *g() {
@@ -7779,6 +7819,14 @@ Negative Passed: 4519/4519 (100.00%)
  36 │ 
  37 │ 0, async function*(...a,) {
     ·                    ────
+ 38 │   
+    ╰────
+
+  × A rest parameter or binding pattern may not have a trailing comma.
+    ╭─[test262/test/language/expressions/async-generator/rest-params-trailing-comma-early-error.js:37:24]
+ 36 │ 
+ 37 │ 0, async function*(...a,) {
+    ·                        ─
  38 │   
     ╰────
 
@@ -8033,6 +8081,14 @@ Negative Passed: 4519/4519 (100.00%)
  62 │     
     ╰────
 
+  × A rest parameter or binding pattern may not have a trailing comma.
+    ╭─[test262/test/language/expressions/class/async-gen-method/rest-params-trailing-comma-early-error.js:61:21]
+ 60 │ 0, class {
+ 61 │   async *method(...a,) {
+    ·                     ─
+ 62 │     
+    ╰────
+
   × Cannot use `yield` as an identifier in a generator context
     ╭─[test262/test/language/expressions/class/async-gen-method/yield-as-binding-identifier-escaped.js:36:9]
  35 │ var C = class { async *gen() {
@@ -8250,6 +8306,14 @@ Negative Passed: 4519/4519 (100.00%)
  60 │ 0, class {
  61 │   static async *method(...a,) {
     ·                        ────
+ 62 │     
+    ╰────
+
+  × A rest parameter or binding pattern may not have a trailing comma.
+    ╭─[test262/test/language/expressions/class/async-gen-method-static/rest-params-trailing-comma-early-error.js:61:28]
+ 60 │ 0, class {
+ 61 │   static async *method(...a,) {
+    ·                            ─
  62 │     
     ╰────
 
@@ -8473,6 +8537,14 @@ Negative Passed: 4519/4519 (100.00%)
  59 │     
     ╰────
 
+  × A rest parameter or binding pattern may not have a trailing comma.
+    ╭─[test262/test/language/expressions/class/async-method/rest-params-trailing-comma-early-error.js:58:27]
+ 57 │ var C = class {
+ 58 │   static async method(...a,) {
+    ·                           ─
+ 59 │     
+    ╰────
+
   × Illegal 'use strict' directive in function with non-simple parameter list
      ╭─[test262/test/language/expressions/class/async-method-static/array-destructuring-param-strict-body.js:134:5]
  133 │   static async method([element]) {
@@ -8584,6 +8656,14 @@ Negative Passed: 4519/4519 (100.00%)
  57 │ var C = class {
  58 │   static async method(...a,) {
     ·                       ────
+ 59 │     
+    ╰────
+
+  × A rest parameter or binding pattern may not have a trailing comma.
+    ╭─[test262/test/language/expressions/class/async-method-static/rest-params-trailing-comma-early-error.js:58:27]
+ 57 │ var C = class {
+ 58 │   static async method(...a,) {
+    ·                           ─
  59 │     
     ╰────
 
@@ -13520,6 +13600,14 @@ Negative Passed: 4519/4519 (100.00%)
  83 │     
     ╰────
 
+  × A rest parameter or binding pattern may not have a trailing comma.
+    ╭─[test262/test/language/expressions/class/gen-method/rest-params-trailing-comma-early-error.js:82:15]
+ 81 │ 0, class {
+ 82 │   *method(...a,) {
+    ·               ─
+ 83 │     
+    ╰────
+
   × Cannot use `yield` as an identifier in a generator context
     ╭─[test262/test/language/expressions/class/gen-method/yield-as-binding-identifier-escaped.js:35:9]
  34 │ var C = class {*gen() {
@@ -13682,6 +13770,14 @@ Negative Passed: 4519/4519 (100.00%)
  81 │ 0, class {
  82 │   static *method(...a,) {
     ·                  ────
+ 83 │     
+    ╰────
+
+  × A rest parameter or binding pattern may not have a trailing comma.
+    ╭─[test262/test/language/expressions/class/gen-method-static/rest-params-trailing-comma-early-error.js:82:22]
+ 81 │ 0, class {
+ 82 │   static *method(...a,) {
+    ·                      ─
  83 │     
     ╰────
 
@@ -13848,6 +13944,14 @@ Negative Passed: 4519/4519 (100.00%)
  78 │     
     ╰────
 
+  × A rest parameter or binding pattern may not have a trailing comma.
+    ╭─[test262/test/language/expressions/class/method/rest-params-trailing-comma-early-error.js:77:14]
+ 76 │ 0, class {
+ 77 │   method(...a,) {
+    ·              ─
+ 78 │     
+    ╰────
+
   × The keyword 'yield' is reserved
     ╭─[test262/test/language/expressions/class/method-param-dflt-yield.js:22:9]
  21 │ 0, class {
@@ -13903,6 +14007,14 @@ Negative Passed: 4519/4519 (100.00%)
  76 │ 0, class {
  77 │   static method(...a,) {
     ·                 ────
+ 78 │     
+    ╰────
+
+  × A rest parameter or binding pattern may not have a trailing comma.
+    ╭─[test262/test/language/expressions/class/method-static/rest-params-trailing-comma-early-error.js:77:21]
+ 76 │ 0, class {
+ 77 │   static method(...a,) {
+    ·                     ─
  78 │     
     ╰────
 
@@ -17089,6 +17201,14 @@ Negative Passed: 4519/4519 (100.00%)
  57 │   
     ╰────
 
+  × A rest parameter or binding pattern may not have a trailing comma.
+    ╭─[test262/test/language/expressions/function/rest-params-trailing-comma-early-error.js:56:17]
+ 55 │ 
+ 56 │ 0, function(...a,) {
+    ·                 ─
+ 57 │   
+    ╰────
+
   × Illegal 'use strict' directive in function with non-simple parameter list
     ╭─[test262/test/language/expressions/function/use-strict-with-non-simple-param.js:21:3]
  20 │ var f = function(a = 0) {
@@ -17354,6 +17474,14 @@ Negative Passed: 4519/4519 (100.00%)
  57 │ 
  58 │ 0, function*(...a,) {
     ·              ────
+ 59 │   
+    ╰────
+
+  × A rest parameter or binding pattern may not have a trailing comma.
+    ╭─[test262/test/language/expressions/generators/rest-params-trailing-comma-early-error.js:58:18]
+ 57 │ 
+ 58 │ 0, function*(...a,) {
+    ·                  ─
  59 │   
     ╰────
 
@@ -18406,6 +18534,14 @@ Negative Passed: 4519/4519 (100.00%)
  43 │     
     ╰────
 
+  × A rest parameter or binding pattern may not have a trailing comma.
+    ╭─[test262/test/language/expressions/object/method-definition/async-gen-meth-rest-params-trailing-comma-early-error.js:42:21]
+ 41 │ 0, {
+ 42 │   async *method(...a,) {
+    ·                     ─
+ 43 │     
+    ╰────
+
   × Cannot use `yield` as an identifier in a generator context
     ╭─[test262/test/language/expressions/object/method-definition/async-gen-yield-as-binding-identifier-escaped.js:30:9]
  29 │   async *method() {
@@ -18567,6 +18703,14 @@ Negative Passed: 4519/4519 (100.00%)
  34 │ ({
  35 │   async *method(...a,) {
     ·                 ────
+ 36 │     
+    ╰────
+
+  × A rest parameter or binding pattern may not have a trailing comma.
+    ╭─[test262/test/language/expressions/object/method-definition/async-meth-rest-params-trailing-comma-early-error.js:35:21]
+ 34 │ ({
+ 35 │   async *method(...a,) {
+    ·                     ─
  36 │     
     ╰────
 
@@ -18775,6 +18919,14 @@ Negative Passed: 4519/4519 (100.00%)
  63 │ 0, {
  64 │   *method(...a,) {
     ·           ────
+ 65 │     
+    ╰────
+
+  × A rest parameter or binding pattern may not have a trailing comma.
+    ╭─[test262/test/language/expressions/object/method-definition/gen-meth-rest-params-trailing-comma-early-error.js:64:15]
+ 63 │ 0, {
+ 64 │   *method(...a,) {
+    ·               ─
  65 │     
     ╰────
 
@@ -18996,6 +19148,14 @@ Negative Passed: 4519/4519 (100.00%)
  58 │ 0, {
  59 │   method(...a,) {
     ·          ────
+ 60 │     
+    ╰────
+
+  × A rest parameter or binding pattern may not have a trailing comma.
+    ╭─[test262/test/language/expressions/object/method-definition/meth-rest-params-trailing-comma-early-error.js:59:14]
+ 58 │ 0, {
+ 59 │   method(...a,) {
+    ·              ─
  60 │     
     ╰────
 
@@ -25609,6 +25769,14 @@ Negative Passed: 4519/4519 (100.00%)
  35 │   
     ╰────
 
+  × A rest parameter or binding pattern may not have a trailing comma.
+    ╭─[test262/test/language/statements/async-function/rest-params-trailing-comma-early-error.js:34:22]
+ 33 │ 
+ 34 │ async function f(...a,) {
+    ·                      ─
+ 35 │   
+    ╰────
+
   × Illegal 'use strict' directive in function with non-simple parameter list
      ╭─[test262/test/language/statements/async-generator/array-destructuring-param-strict-body.js:112:3]
  111 │ async function* f([element]) {
@@ -25823,6 +25991,14 @@ Negative Passed: 4519/4519 (100.00%)
  36 │ 
  37 │ async function* f(...a,) {
     ·                   ────
+ 38 │   
+    ╰────
+
+  × A rest parameter or binding pattern may not have a trailing comma.
+    ╭─[test262/test/language/statements/async-generator/rest-params-trailing-comma-early-error.js:37:23]
+ 36 │ 
+ 37 │ async function* f(...a,) {
+    ·                       ─
  38 │   
     ╰────
 
@@ -26279,6 +26455,14 @@ Negative Passed: 4519/4519 (100.00%)
  61 │     
     ╰────
 
+  × A rest parameter or binding pattern may not have a trailing comma.
+    ╭─[test262/test/language/statements/class/async-gen-method/rest-params-trailing-comma-early-error.js:60:21]
+ 59 │ class C {
+ 60 │   async *method(...a,) {
+    ·                     ─
+ 61 │     
+    ╰────
+
   × Cannot use `yield` as an identifier in a generator context
     ╭─[test262/test/language/statements/class/async-gen-method/yield-as-binding-identifier-escaped.js:36:9]
  35 │ class C { async *gen() {
@@ -26496,6 +26680,14 @@ Negative Passed: 4519/4519 (100.00%)
  60 │ class C {
  61 │   static async *method(...a,) {
     ·                        ────
+ 62 │     
+    ╰────
+
+  × A rest parameter or binding pattern may not have a trailing comma.
+    ╭─[test262/test/language/statements/class/async-gen-method-static/rest-params-trailing-comma-early-error.js:61:28]
+ 60 │ class C {
+ 61 │   static async *method(...a,) {
+    ·                            ─
  62 │     
     ╰────
 
@@ -26727,6 +26919,14 @@ Negative Passed: 4519/4519 (100.00%)
  59 │     
     ╰────
 
+  × A rest parameter or binding pattern may not have a trailing comma.
+    ╭─[test262/test/language/statements/class/async-method/rest-params-trailing-comma-early-error.js:58:20]
+ 57 │ class C {
+ 58 │   async method(...a,) {
+    ·                    ─
+ 59 │     
+    ╰────
+
   × Illegal 'use strict' directive in function with non-simple parameter list
      ╭─[test262/test/language/statements/class/async-method-static/array-destructuring-param-strict-body.js:133:5]
  132 │   static async method([element]) {
@@ -26838,6 +27038,14 @@ Negative Passed: 4519/4519 (100.00%)
  56 │ class C {
  57 │   static async method(...a,) {
     ·                       ────
+ 58 │     
+    ╰────
+
+  × A rest parameter or binding pattern may not have a trailing comma.
+    ╭─[test262/test/language/statements/class/async-method-static/rest-params-trailing-comma-early-error.js:57:27]
+ 56 │ class C {
+ 57 │   static async method(...a,) {
+    ·                           ─
  58 │     
     ╰────
 
@@ -31985,6 +32193,14 @@ Negative Passed: 4519/4519 (100.00%)
  81 │     
     ╰────
 
+  × A rest parameter or binding pattern may not have a trailing comma.
+    ╭─[test262/test/language/statements/class/gen-method/rest-params-trailing-comma-early-error.js:80:15]
+ 79 │ class C {
+ 80 │   *method(...a,) {
+    ·               ─
+ 81 │     
+    ╰────
+
   × Cannot use `yield` as an identifier in a generator context
     ╭─[test262/test/language/statements/class/gen-method/yield-as-binding-identifier-escaped.js:35:9]
  34 │ class C { *gen() {
@@ -32147,6 +32363,14 @@ Negative Passed: 4519/4519 (100.00%)
  79 │ class C {
  80 │   static *method(...a,) {
     ·                  ────
+ 81 │     
+    ╰────
+
+  × A rest parameter or binding pattern may not have a trailing comma.
+    ╭─[test262/test/language/statements/class/gen-method-static/rest-params-trailing-comma-early-error.js:80:22]
+ 79 │ class C {
+ 80 │   static *method(...a,) {
+    ·                      ─
  81 │     
     ╰────
 
@@ -32313,6 +32537,14 @@ Negative Passed: 4519/4519 (100.00%)
  77 │     
     ╰────
 
+  × A rest parameter or binding pattern may not have a trailing comma.
+    ╭─[test262/test/language/statements/class/method/rest-params-trailing-comma-early-error.js:76:14]
+ 75 │ class C {
+ 76 │   method(...a,) {
+    ·              ─
+ 77 │     
+    ╰────
+
   × The keyword 'yield' is reserved
     ╭─[test262/test/language/statements/class/method-param-yield.js:22:9]
  21 │ class C {
@@ -32368,6 +32600,14 @@ Negative Passed: 4519/4519 (100.00%)
  75 │ class C {
  76 │   static method(...a,) {
     ·                 ────
+ 77 │     
+    ╰────
+
+  × A rest parameter or binding pattern may not have a trailing comma.
+    ╭─[test262/test/language/statements/class/method-static/rest-params-trailing-comma-early-error.js:76:21]
+ 75 │ class C {
+ 76 │   static method(...a,) {
+    ·                     ─
  77 │     
     ╰────
 
@@ -34440,7 +34680,7 @@ Negative Passed: 4519/4519 (100.00%)
     ·       ────
     ╰────
 
-  × Unexpected trailing comma after rest element
+  × A rest parameter or binding pattern may not have a trailing comma.
     ╭─[test262/test/language/statements/for-in/dstr/array-rest-before-elision.js:33:11]
  32 │ 
  33 │ for ([...x,] in [[]]) ;
@@ -34454,7 +34694,7 @@ Negative Passed: 4519/4519 (100.00%)
     ·       ────
     ╰────
 
-  × Unexpected trailing comma after rest element
+  × A rest parameter or binding pattern may not have a trailing comma.
     ╭─[test262/test/language/statements/for-in/dstr/array-rest-elision-invalid.js:33:11]
  32 │ 
  33 │ for ([...x,] in [[]]) ;
@@ -34946,7 +35186,7 @@ Negative Passed: 4519/4519 (100.00%)
     ·       ────
     ╰────
 
-  × Unexpected trailing comma after rest element
+  × A rest parameter or binding pattern may not have a trailing comma.
     ╭─[test262/test/language/statements/for-of/dstr/array-rest-before-elision.js:33:11]
  32 │ 
  33 │ for ([...x,] of [[]]) ;
@@ -34960,7 +35200,7 @@ Negative Passed: 4519/4519 (100.00%)
     ·       ────
     ╰────
 
-  × Unexpected trailing comma after rest element
+  × A rest parameter or binding pattern may not have a trailing comma.
     ╭─[test262/test/language/statements/for-of/dstr/array-rest-elision-invalid.js:33:11]
  32 │ 
  33 │ for ([...x,] of [[]]) ;
@@ -35973,6 +36213,14 @@ Negative Passed: 4519/4519 (100.00%)
  58 │   
     ╰────
 
+  × A rest parameter or binding pattern may not have a trailing comma.
+    ╭─[test262/test/language/statements/function/rest-params-trailing-comma-early-error.js:57:16]
+ 56 │ 
+ 57 │ function f(...a,) {
+    ·                ─
+ 58 │   
+    ╰────
+
   × Cannot use `await` as an identifier in an async context
     ╭─[test262/test/language/statements/function/static-init-await-binding-invalid.js:25:14]
  24 │   static {
@@ -36140,6 +36388,14 @@ Negative Passed: 4519/4519 (100.00%)
  57 │ 
  58 │ function* f(...a,) {
     ·             ────
+ 59 │   
+    ╰────
+
+  × A rest parameter or binding pattern may not have a trailing comma.
+    ╭─[test262/test/language/statements/generators/rest-params-trailing-comma-early-error.js:58:17]
+ 57 │ 
+ 58 │ function* f(...a,) {
+    ·                 ─
  59 │   
     ╰────
 
