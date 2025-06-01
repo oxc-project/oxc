@@ -89,8 +89,7 @@ impl<'a> ParserImpl<'a> {
 
     /// Move to the next `JSXChild`
     /// Checks if the current token is escaped if it is a keyword
-    fn advance_for_jsx_child(&mut self, kind: Kind) {
-        self.test_escaped_keyword(kind);
+    pub(crate) fn advance_for_jsx_child(&mut self) {
         self.prev_token_end = self.token.end();
         self.token = self.lexer.next_jsx_child();
     }
@@ -166,7 +165,7 @@ impl<'a> ParserImpl<'a> {
     /// # Errors
     pub(crate) fn expect_jsx_child(&mut self, kind: Kind) {
         self.expect_without_advance(kind);
-        self.advance_for_jsx_child(kind);
+        self.advance_for_jsx_child();
     }
 
     /// Expect the next next token to be a `JsxString` or any other token
