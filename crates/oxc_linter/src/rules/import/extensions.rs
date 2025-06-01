@@ -337,7 +337,8 @@ fn process_import_record(
                 file_extension,
             ));
 
-            if file_extension.is_empty() && config.require_extension == Some(FileExtensionConfig::Always)
+            if file_extension.is_empty()
+                && config.require_extension == Some(FileExtensionConfig::Always)
             {
                 ctx.diagnostic(extension_missing_from_import_diagnostic(span));
             }
@@ -392,7 +393,8 @@ fn process_export_record(
                 file_extension,
             ));
 
-            if file_extension.is_empty() && config.require_extension == Some(FileExtensionConfig::Always)
+            if file_extension.is_empty()
+                && config.require_extension == Some(FileExtensionConfig::Always)
             {
                 ctx.diagnostic(extension_missing_from_export_diagnostic(span));
             }
