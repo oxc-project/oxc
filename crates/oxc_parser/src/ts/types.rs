@@ -339,7 +339,8 @@ impl<'a> ParserImpl<'a> {
                 if let Some(ty) = self.try_parse(Self::parse_keyword_and_no_dot) {
                     ty
                 } else {
-                    self.parse_type_reference()
+                    let span = self.start_span();
+                    self.parse_type_reference(span)
                 }
             }
             // TODO: js doc types: `JSDocAllType`, `JSDocFunctionType`
@@ -368,7 +369,8 @@ impl<'a> ParserImpl<'a> {
                 if self.lookahead(Self::is_next_token_number) {
                     self.parse_literal_type_node(/* negative */ true)
                 } else {
-                    self.parse_type_reference()
+                    let span = self.start_span();
+                    self.parse_type_reference(span)
                 }
             }
             Kind::Void => {
@@ -414,11 +416,15 @@ impl<'a> ParserImpl<'a> {
                     self.parse_asserts_type_predicate(asserts_start_span)
                 } else {
                     self.rewind(checkpoint);
-                    self.parse_type_reference()
+                    let span = self.start_span();
+                    self.parse_type_reference(span)
                 }
             }
             Kind::TemplateHead => self.parse_template_type(false),
-            _ => self.parse_type_reference(),
+            _ => {
+                let span = self.start_span();
+                self.parse_type_reference(span)
+            },
         }
     }
 
@@ -754,8 +760,7 @@ impl<'a> ParserImpl<'a> {
         )
     }
 
-    fn parse_type_reference(&mut self) -> TSType<'a> {
-        let span = self.start_span();
+    fn parse_type_reference(&mut self, span: u32) -> TSType<'a> {
         let type_name = self.parse_ts_type_name();
         let type_parameters = self.parse_type_arguments_of_type_reference();
         self.ast.ts_type_type_reference(self.end_span(span), type_name, type_parameters)
