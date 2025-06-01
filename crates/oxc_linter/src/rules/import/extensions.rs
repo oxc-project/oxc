@@ -337,7 +337,7 @@ fn process_import_record(
                 file_extension,
             ));
 
-            if file_extension == "" && config.require_extension == Some(FileExtensionConfig::Always)
+            if file_extension.is_empty() && config.require_extension == Some(FileExtensionConfig::Always)
             {
                 ctx.diagnostic(extension_missing_from_import_diagnostic(span));
             }
@@ -382,19 +382,22 @@ fn process_export_record(
 
     let span = export.statement_span;
 
-    // TODO: should these diagnostics be export - specific?
-    if file_extension.is_some()
-        && (never_file_types.contains(&file_extension.unwrap())
-            || (!always_file_types.is_empty()
-                && !always_file_types.contains(&file_extension.unwrap())))
-    {
-        ctx.diagnostic(extension_should_not_be_included_in_export_diagnostic(
-            span,
-            file_extension.unwrap(),
-        ));
-    } else if (file_extension.is_none() || file_extension.unwrap() == "")
-        && config.require_extension == Some(FileExtensionConfig::Always)
-    {
+    if let Some(file_extension) = file_extension {
+        if never_file_types.contains(&file_extension)
+            || (!always_file_types.is_empty() && !always_file_types.contains(&file_extension))
+        // should not have file extension
+        {
+            ctx.diagnostic(extension_should_not_be_included_in_export_diagnostic(
+                span,
+                file_extension,
+            ));
+
+            if file_extension.is_empty() && config.require_extension == Some(FileExtensionConfig::Always)
+            {
+                ctx.diagnostic(extension_missing_from_export_diagnostic(span));
+            }
+        }
+    } else {
         ctx.diagnostic(extension_missing_from_export_diagnostic(span));
     }
 }
