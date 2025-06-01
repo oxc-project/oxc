@@ -407,15 +407,11 @@ impl<'a> ParserImpl<'a> {
             Kind::Import => TSType::TSImportType(self.parse_ts_import_type()),
             Kind::Asserts => {
                 let checkpoint = self.checkpoint();
+                let asserts_start_span = self.start_span();
                 self.bump_any(); // bump `asserts`
 
-                // Is token after the `asserts` an identifier or keyword that
-                // is on the same line?
-                let same_line_id_or_keyword= self.is_next_token_identifier_or_keyword_on_same_line();
-                if same_line_id_or_keyword {
-                    self.rewind(checkpoint);
-
-                    self.parse_asserts_type_predicate()
+                if self.is_token_identifier_or_keyword_on_same_line() {
+                    self.parse_asserts_type_predicate(asserts_start_span)
                 } else {
                     self.rewind(checkpoint);
                     self.parse_type_reference()
@@ -426,8 +422,7 @@ impl<'a> ParserImpl<'a> {
         }
     }
 
-    fn is_next_token_identifier_or_keyword_on_same_line(&mut self) -> bool {
-        // self.bump_any();
+    fn is_token_identifier_or_keyword_on_same_line(&mut self) -> bool {
         self.cur_kind().is_identifier_name() && !self.cur_token().is_on_new_line()
     }
 
@@ -738,9 +733,7 @@ impl<'a> ParserImpl<'a> {
         self.ast.ts_type_template_literal_type(self.end_span(span), quasis, types)
     }
 
-    fn parse_asserts_type_predicate(&mut self) -> TSType<'a> {
-        let span = self.start_span();
-        self.bump_any(); // bump `asserts`
+    fn parse_asserts_type_predicate(&mut self, asserts_start_span: u32) -> TSType<'a> {
         let parameter_name = if self.at(Kind::This) {
             TSTypePredicateName::This(self.parse_this_type_node())
         } else {
@@ -754,7 +747,7 @@ impl<'a> ParserImpl<'a> {
             type_annotation = Some(self.ast.ts_type_annotation(self.end_span(type_span), ty));
         }
         self.ast.ts_type_type_predicate(
-            self.end_span(span),
+            self.end_span(asserts_start_span),
             parameter_name,
             /* asserts */ true,
             type_annotation,
