@@ -318,18 +318,6 @@ impl Kind {
         matches!(self, Var | Let | Const)
     }
 
-    /// Section 15.4 Method Definitions
-    /// `ClassElementName`[Yield, Await] :
-    ///   `PropertyName`[?Yield, ?Await]
-    ///   `PrivateIdentifier`
-    /// `PropertyName`[Yield, Await] :
-    ///   `LiteralPropertyName`
-    ///   `ComputedPropertyName`[?Yield, ?Await]
-    #[inline]
-    pub fn is_class_element_name_start(self) -> bool {
-        self.is_literal_property_name() || matches!(self, LBrack | PrivateIdentifier)
-    }
-
     #[rustfmt::skip]
     #[inline]
     pub fn is_assignment_operator(self) -> bool {
