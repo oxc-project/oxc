@@ -509,7 +509,7 @@ impl Rule for Extensions {
                 continue;
             }
 
-                        if exgport.is_type && !config.check_type_imports {
+                        if export.is_type && !config.check_type_imports {
                 continue;
             }
 
