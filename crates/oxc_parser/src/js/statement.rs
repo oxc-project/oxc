@@ -129,15 +129,7 @@ impl<'a> ParserImpl<'a> {
             {
                 self.parse_function_declaration(stmt_ctx)
             }
-            Kind::Import if {
-                // Check we are not at `import(` or `import.`
-                self.lookahead(|p| {
-                    p.bump_any();
-                    !p.at(Kind::Dot) && !p.at(Kind::LParen)
-                })
-            } => {
-                self.parse_import_declaration()
-            }
+            Kind::Import => self.parse_import_statement(),
             Kind::Const => self.parse_const_statement(stmt_ctx),
             Kind::Using if self.is_using_declaration() => self.parse_using_statement(),
             Kind::Await if self.is_using_statement() => self.parse_using_statement(),
@@ -148,7 +140,6 @@ impl<'a> ParserImpl<'a> {
             | Kind::Namespace
             | Kind::Declare
             | Kind::Enum
-            | Kind::Import
             | Kind::Private
             | Kind::Protected
             | Kind::Public
@@ -682,6 +673,20 @@ impl<'a> ParserImpl<'a> {
             Statement::from(self.parse_ts_enum_declaration(span, &modifiers))
         } else {
             self.parse_variable_statement(span, VariableDeclarationKind::Const, stmt_ctx)
+        }
+    }
+
+    /// Parse import statement or import expression.
+    fn parse_import_statement(&mut self) -> Statement<'a> {
+        let checkpoint = self.checkpoint();
+        let span = self.start_span();
+        self.bump_any();
+        if matches!(self.cur_kind(), Kind::Dot | Kind::LParen) {
+            // Parse the whole expression `import.meta.url` so a rewind is required.
+            self.rewind(checkpoint);
+            self.parse_expression_or_labeled_statement()
+        } else {
+            self.parse_import_declaration(span)
         }
     }
 }

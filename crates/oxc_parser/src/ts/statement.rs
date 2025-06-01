@@ -518,8 +518,9 @@ impl<'a> ParserImpl<'a> {
                 }
                 Kind::Import => {
                     self.bump_any();
-                    return matches!(self.cur_kind(), Kind::Str | Kind::Star | Kind::LCurly)
-                        || self.cur_kind().is_identifier();
+                    let kind = self.cur_kind();
+                    return matches!(kind, Kind::Str | Kind::Star | Kind::LCurly)
+                        || kind.is_identifier();
                 }
                 Kind::Export => {
                     self.bump_any();

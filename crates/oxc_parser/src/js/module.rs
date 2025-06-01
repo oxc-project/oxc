@@ -57,11 +57,7 @@ impl<'a> ParserImpl<'a> {
     }
 
     /// Section 16.2.2 Import Declaration
-    pub(crate) fn parse_import_declaration(&mut self) -> Statement<'a> {
-        let span = self.start_span();
-
-        self.expect(Kind::Import);
-
+    pub(crate) fn parse_import_declaration(&mut self, span: u32) -> Statement<'a> {
         // `import something = ...`
         // `import type something = ...`
         if self.is_ts
@@ -271,6 +267,20 @@ impl<'a> ParserImpl<'a> {
         self.expect(Kind::Export);
 
         let decl = match self.cur_kind() {
+            // `export import A = B`
+            Kind::Import => {
+                let import_span = self.start_span();
+                self.bump_any();
+                let decl = self.parse_import_declaration(import_span).into_declaration();
+                self.ast.module_declaration_export_named_declaration(
+                    self.end_span(span),
+                    Some(decl),
+                    self.ast.vec(),
+                    None,
+                    ImportOrExportKind::Value,
+                    NONE,
+                )
+            }
             Kind::Eq if self.is_ts => ModuleDeclaration::TSExportAssignment(
                 self.parse_ts_export_assignment_declaration(span),
             ),
