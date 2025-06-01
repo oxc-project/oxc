@@ -5,11 +5,16 @@ use serde_json::Value;
 
 use crate::{context::LintContext, module_record::NameSpan, rule::Rule};
 
-fn extension_should_not_be_included_in_import_diagnostic(span: Span, extension: &str) -> OxcDiagnostic {
+fn extension_should_not_be_included_in_import_diagnostic(
+    span: Span,
+    extension: &str,
+) -> OxcDiagnostic {
     // See <https://oxc.rs/docs/contribute/linter/adding-rules.html#diagnostics> for details
-    OxcDiagnostic::warn(format!("File extension {extension} should not be included in the import declaration."))
-        .with_help("Remove the file extension from this import.")
-        .with_label(span)
+    OxcDiagnostic::warn(format!(
+        "File extension {extension} should not be included in the import declaration."
+    ))
+    .with_help("Remove the file extension from this import.")
+    .with_label(span)
 }
 
 fn extension_missing_from_import_diagnostic(span: Span) -> OxcDiagnostic {
@@ -18,11 +23,16 @@ fn extension_missing_from_import_diagnostic(span: Span) -> OxcDiagnostic {
         .with_label(span)
 }
 
-fn extension_should_not_be_included_in_export_diagnostic(span: Span, extension: &str) -> OxcDiagnostic {
+fn extension_should_not_be_included_in_export_diagnostic(
+    span: Span,
+    extension: &str,
+) -> OxcDiagnostic {
     // See <https://oxc.rs/docs/contribute/linter/adding-rules.html#diagnostics> for details
-    OxcDiagnostic::warn(format!("File extension {extension} should not be included in the export declaration."))
-        .with_help("Remove the file extension from this export.")
-        .with_label(span)
+    OxcDiagnostic::warn(format!(
+        "File extension {extension} should not be included in the export declaration."
+    ))
+    .with_help("Remove the file extension from this export.")
+    .with_label(span)
 }
 
 fn extension_missing_from_export_diagnostic(span: Span) -> OxcDiagnostic {
@@ -41,7 +51,7 @@ enum FileExtensionConfig {
 impl FileExtensionConfig {
     pub fn from(str: &str) -> FileExtensionConfig {
         match str {
-            "always" |  "ignorePackages" => FileExtensionConfig::Always,
+            "always" | "ignorePackages" => FileExtensionConfig::Always,
             "never" => FileExtensionConfig::Never,
             _ => FileExtensionConfig::default(),
         }
@@ -113,7 +123,6 @@ impl ExtensionsConfig {
     }
 }
 
-
 #[derive(Debug, Default, Clone)]
 pub struct Extensions(Box<ExtensionsConfig>);
 
@@ -174,169 +183,221 @@ declare_oxc_lint!(
     perf,
 );
 
-pub const BUILT_IN_NODE_MODULES: phf::Set<&'static str> = phf::phf_set!["node:assert",
-	"assert",
-	"node:assert/strict",
-	"assert/strict",
-	"node:async_hooks",
-	"async_hooks",
-	"node:buffer",
-	"buffer",
-	"node:child_process",
-	"child_process",
-	"node:cluster",
-	"cluster",
-	"node:console",
-	"console",
-	"node:constants",
-	"constants",
-	"node:crypto",
-	"crypto",
-	"node:dgram",
-	"dgram",
-	"node:diagnostics_channel",
-	"diagnostics_channel",
-	"node:dns",
-	"dns",
-	"node:dns/promises",
-	"dns/promises",
-	"node:domain",
-	"domain",
-	"node:events",
-	"events",
-	"node:fs",
-	"fs",
-	"node:fs/promises",
-	"fs/promises",
-	"node:http",
-	"http",
-	"node:http2",
-	"http2",
-	"node:https",
-	"https",
-	"node:inspector",
-	"inspector",
-	"node:inspector/promises",
-	"inspector/promises",
-	"node:module",
-	"module",
-	"node:net",
-	"net",
-	"node:os",
-	"os",
-	"node:path",
-	"path",
-	"node:path/posix",
-	"path/posix",
-	"node:path/win32",
-	"path/win32",
-	"node:perf_hooks",
-	"perf_hooks",
-	"node:process",
-	"process",
-	"node:querystring",
-	"querystring",
-	"node:quic",
-	"node:readline",
-	"readline",
-	"node:readline/promises",
-	"readline/promises",
-	"node:repl",
-	"repl",
-	"node:sea",
-	"node:sqlite",
-	"node:stream",
-	"stream",
-	"node:stream/consumers",
-	"stream/consumers",
-	"node:stream/promises",
-	"stream/promises",
-	"node:stream/web",
-	"stream/web",
-	"node:string_decoder",
-	"string_decoder",
-	"node:test",
-	"node:test/reporters",
-	"node:timers",
-	"timers",
-	"node:timers/promises",
-	"timers/promises",
-	"node:tls",
-	"tls",
-	"node:trace_events",
-	"trace_events",
-	"node:tty",
-	"tty",
-	"node:url",
-	"url",
-	"node:util",
-	"util",
-	"node:util/types",
-	"util/types",
-	"node:v8",
-	"v8",
-	"node:vm",
-	"vm",
-	"node:wasi",
-	"wasi",
-	"node:worker_threads",
-	"worker_threads",
-	"node:zlib",
-	"zlib"];
+pub const BUILT_IN_NODE_MODULES: phf::Set<&'static str> = phf::phf_set![
+    "node:assert",
+    "assert",
+    "node:assert/strict",
+    "assert/strict",
+    "node:async_hooks",
+    "async_hooks",
+    "node:buffer",
+    "buffer",
+    "node:child_process",
+    "child_process",
+    "node:cluster",
+    "cluster",
+    "node:console",
+    "console",
+    "node:constants",
+    "constants",
+    "node:crypto",
+    "crypto",
+    "node:dgram",
+    "dgram",
+    "node:diagnostics_channel",
+    "diagnostics_channel",
+    "node:dns",
+    "dns",
+    "node:dns/promises",
+    "dns/promises",
+    "node:domain",
+    "domain",
+    "node:events",
+    "events",
+    "node:fs",
+    "fs",
+    "node:fs/promises",
+    "fs/promises",
+    "node:http",
+    "http",
+    "node:http2",
+    "http2",
+    "node:https",
+    "https",
+    "node:inspector",
+    "inspector",
+    "node:inspector/promises",
+    "inspector/promises",
+    "node:module",
+    "module",
+    "node:net",
+    "net",
+    "node:os",
+    "os",
+    "node:path",
+    "path",
+    "node:path/posix",
+    "path/posix",
+    "node:path/win32",
+    "path/win32",
+    "node:perf_hooks",
+    "perf_hooks",
+    "node:process",
+    "process",
+    "node:querystring",
+    "querystring",
+    "node:quic",
+    "node:readline",
+    "readline",
+    "node:readline/promises",
+    "readline/promises",
+    "node:repl",
+    "repl",
+    "node:sea",
+    "node:sqlite",
+    "node:stream",
+    "stream",
+    "node:stream/consumers",
+    "stream/consumers",
+    "node:stream/promises",
+    "stream/promises",
+    "node:stream/web",
+    "stream/web",
+    "node:string_decoder",
+    "string_decoder",
+    "node:test",
+    "node:test/reporters",
+    "node:timers",
+    "timers",
+    "node:timers/promises",
+    "timers/promises",
+    "node:tls",
+    "tls",
+    "node:trace_events",
+    "trace_events",
+    "node:tty",
+    "tty",
+    "node:url",
+    "url",
+    "node:util",
+    "util",
+    "node:util/types",
+    "util/types",
+    "node:v8",
+    "v8",
+    "node:vm",
+    "vm",
+    "node:wasi",
+    "wasi",
+    "node:worker_threads",
+    "worker_threads",
+    "node:zlib",
+    "zlib"
+];
 
 impl Rule for Extensions {
     fn from_configuration(value: serde_json::Value) -> Self {
-
-        if let Some(always_or_never)  = value.get(0).and_then(Value::as_str).map(FileExtensionConfig::from) {
+        if let Some(always_or_never) =
+            value.get(0).and_then(Value::as_str).map(FileExtensionConfig::from)
+        {
             let default = always_or_never;
 
             if let Some(val) = value.get(1) {
                 let root = val.get("pattern").unwrap_or(val);
 
-                let config: ExtensionsConfig = ExtensionsConfig{
-                    ignore_packages: root.get("ignorePackages")
-                                .and_then(Value::as_bool)
-                                .unwrap_or(true),
-                            require_extension: Some(default.clone()),
-                            check_type_imports: root.get("checkTypeImports").and_then(Value::as_bool)
-                                .unwrap_or_default(),
-                            js: root.get("js").and_then(Value::as_str)
-                                .map(FileExtensionConfig::from).unwrap_or(default.clone()),
-                            jsx: root.get("jsx").and_then(Value::as_str).map(FileExtensionConfig::from).unwrap_or(default.clone()),
-                            ts: root.get("ts").and_then(Value::as_str).map(FileExtensionConfig::from).unwrap_or(default.clone()),
-                            tsx: root.get("tsx").and_then(Value::as_str).map(FileExtensionConfig::from).unwrap_or(default.clone()),
-                            json: root.get("json").and_then(Value::as_str).map(FileExtensionConfig::from).unwrap_or(default.clone()),
+                let config: ExtensionsConfig = ExtensionsConfig {
+                    ignore_packages: root
+                        .get("ignorePackages")
+                        .and_then(Value::as_bool)
+                        .unwrap_or(true),
+                    require_extension: Some(default.clone()),
+                    check_type_imports: root
+                        .get("checkTypeImports")
+                        .and_then(Value::as_bool)
+                        .unwrap_or_default(),
+                    js: root
+                        .get("js")
+                        .and_then(Value::as_str)
+                        .map(FileExtensionConfig::from)
+                        .unwrap_or(default.clone()),
+                    jsx: root
+                        .get("jsx")
+                        .and_then(Value::as_str)
+                        .map(FileExtensionConfig::from)
+                        .unwrap_or(default.clone()),
+                    ts: root
+                        .get("ts")
+                        .and_then(Value::as_str)
+                        .map(FileExtensionConfig::from)
+                        .unwrap_or(default.clone()),
+                    tsx: root
+                        .get("tsx")
+                        .and_then(Value::as_str)
+                        .map(FileExtensionConfig::from)
+                        .unwrap_or(default.clone()),
+                    json: root
+                        .get("json")
+                        .and_then(Value::as_str)
+                        .map(FileExtensionConfig::from)
+                        .unwrap_or(default.clone()),
                 };
 
                 Self(Box::new(config))
             } else {
-                let config: ExtensionsConfig = ExtensionsConfig{
-                    ignore_packages: value.get("ignorePackages")
-                                .and_then(Value::as_bool)
-                                .unwrap_or(true),
-                            check_type_imports: value.get("checkTypeImports").and_then(Value::as_bool)
-.unwrap_or_default(),                            js: default.clone(),
-                            jsx: default.clone(),
-                            ts: default.clone(),
-                            tsx: default.clone(),
-                            json: default.clone(),
-                            require_extension: Some(default.clone()),
+                let config: ExtensionsConfig = ExtensionsConfig {
+                    ignore_packages: value
+                        .get("ignorePackages")
+                        .and_then(Value::as_bool)
+                        .unwrap_or(true),
+                    check_type_imports: value
+                        .get("checkTypeImports")
+                        .and_then(Value::as_bool)
+                        .unwrap_or_default(),
+                    js: default.clone(),
+                    jsx: default.clone(),
+                    ts: default.clone(),
+                    tsx: default.clone(),
+                    json: default.clone(),
+                    require_extension: Some(default.clone()),
                 };
 
                 Self(Box::new(config))
             }
         } else {
             let config = ExtensionsConfig {
-                ignore_packages: value.get("ignorePackages")
+                ignore_packages: value
+                    .get("ignorePackages")
                     .and_then(Value::as_bool)
-                                .unwrap_or(true),
-                check_type_imports: value.get("checkTypeImports").and_then(Value::as_bool)
-.unwrap_or_default(),                js: value.get("js").and_then(Value::as_str)
-                    .map(FileExtensionConfig::from).unwrap_or_default(),
-                jsx: value.get("jsx").and_then(Value::as_str).map(FileExtensionConfig::from).unwrap_or_default(),
-                ts: value.get("ts").and_then(Value::as_str).map(FileExtensionConfig::from).unwrap_or_default(),
-                tsx: value.get("tsx").and_then(Value::as_str).map(FileExtensionConfig::from).unwrap_or_default(),
-                json: value.get("json").and_then(Value::as_str).map(FileExtensionConfig::from).unwrap_or_default(),
+                    .unwrap_or(true),
+                check_type_imports: value
+                    .get("checkTypeImports")
+                    .and_then(Value::as_bool)
+                    .unwrap_or_default(),
+                js: value
+                    .get("js")
+                    .and_then(Value::as_str)
+                    .map(FileExtensionConfig::from)
+                    .unwrap_or_default(),
+                jsx: value
+                    .get("jsx")
+                    .and_then(Value::as_str)
+                    .map(FileExtensionConfig::from)
+                    .unwrap_or_default(),
+                ts: value
+                    .get("ts")
+                    .and_then(Value::as_str)
+                    .map(FileExtensionConfig::from)
+                    .unwrap_or_default(),
+                tsx: value
+                    .get("tsx")
+                    .and_then(Value::as_str)
+                    .map(FileExtensionConfig::from)
+                    .unwrap_or_default(),
+                json: value
+                    .get("json")
+                    .and_then(Value::as_str)
+                    .map(FileExtensionConfig::from)
+                    .unwrap_or_default(),
                 require_extension: None,
             };
 
@@ -358,10 +419,11 @@ impl Rule for Extensions {
 
             let import_name = import.module_request.name();
 
-            let is_builtin_node_module =
-            BUILT_IN_NODE_MODULES.contains(import_name) || ctx.globals().is_enabled(import_name);
+            let is_builtin_node_module = BUILT_IN_NODE_MODULES.contains(import_name)
+                || ctx.globals().is_enabled(import_name);
 
-            let is_package = import_name.starts_with('@') || (!import_name.starts_with(".") && !import_name[1..].contains('/'));
+            let is_package = import_name.starts_with('@')
+                || (!import_name.starts_with(".") && !import_name[1..].contains('/'));
 
             if is_builtin_node_module || (is_package && config.ignore_packages) {
                 continue;
@@ -369,13 +431,20 @@ impl Rule for Extensions {
 
             let file_extension = get_file_extension_from_module_request(&import.module_request);
 
-
-
             let span = import.statement_span;
-             if file_extension.is_some() && (never_file_types.contains(&file_extension.unwrap()) || (!always_file_types.is_empty() && !always_file_types.contains(&file_extension.unwrap()))) {
+            if file_extension.is_some()
+                && (never_file_types.contains(&file_extension.unwrap())
+                    || (!always_file_types.is_empty()
+                        && !always_file_types.contains(&file_extension.unwrap())))
+            {
                 // should not have file extension
-                ctx.diagnostic(extension_should_not_be_included_in_import_diagnostic(span, &file_extension.unwrap()));
-            } else if (file_extension.is_none() || file_extension.unwrap() == "") && config.require_extension == Some(FileExtensionConfig::Always) {
+                ctx.diagnostic(extension_should_not_be_included_in_import_diagnostic(
+                    span,
+                    &file_extension.unwrap(),
+                ));
+            } else if (file_extension.is_none() || file_extension.unwrap() == "")
+                && config.require_extension == Some(FileExtensionConfig::Always)
+            {
                 ctx.diagnostic(extension_missing_from_import_diagnostic(span));
             }
         }
@@ -393,10 +462,11 @@ impl Rule for Extensions {
 
             let export_name = export_module_request.name();
 
-            let is_builtin_node_module =
-            BUILT_IN_NODE_MODULES.contains(export_name) || ctx.globals().is_enabled(export_name);
+            let is_builtin_node_module = BUILT_IN_NODE_MODULES.contains(export_name)
+                || ctx.globals().is_enabled(export_name);
 
-            let is_package = export_name.starts_with('@') || (!export_name.starts_with(".") && !export_name[1..].contains('/'));
+            let is_package = export_name.starts_with('@')
+                || (!export_name.starts_with(".") && !export_name[1..].contains('/'));
 
             if is_builtin_node_module || (is_package && config.ignore_packages) {
                 continue;
@@ -404,14 +474,22 @@ impl Rule for Extensions {
 
             let file_extension = get_file_extension_from_module_request(&export_module_request);
 
-
             let span = export.statement_span;
 
             // TODO: should these diagnostics be export - specific?
-            if file_extension.is_some() && (never_file_types.contains(&file_extension.unwrap()) || (!always_file_types.is_empty() && !always_file_types.contains(&file_extension.unwrap()))) {
+            if file_extension.is_some()
+                && (never_file_types.contains(&file_extension.unwrap())
+                    || (!always_file_types.is_empty()
+                        && !always_file_types.contains(&file_extension.unwrap())))
+            {
                 // should not have file extension
-                ctx.diagnostic(extension_should_not_be_included_in_export_diagnostic(span, &file_extension.unwrap()));
-            } else if (file_extension.is_none() || file_extension.unwrap() == "") && config.require_extension == Some(FileExtensionConfig::Always) {
+                ctx.diagnostic(extension_should_not_be_included_in_export_diagnostic(
+                    span,
+                    &file_extension.unwrap(),
+                ));
+            } else if (file_extension.is_none() || file_extension.unwrap() == "")
+                && config.require_extension == Some(FileExtensionConfig::Always)
+            {
                 ctx.diagnostic(extension_missing_from_export_diagnostic(span));
             }
         }
@@ -429,10 +507,11 @@ impl Rule for Extensions {
 
             let export_name = export_module_request.name();
 
-            let is_builtin_node_module =
-            BUILT_IN_NODE_MODULES.contains(export_name) || ctx.globals().is_enabled(export_name);
+            let is_builtin_node_module = BUILT_IN_NODE_MODULES.contains(export_name)
+                || ctx.globals().is_enabled(export_name);
 
-            let is_package = export_name.starts_with('@') || (!export_name.starts_with(".") && !export_name[1..].contains('/'));
+            let is_package = export_name.starts_with('@')
+                || (!export_name.starts_with(".") && !export_name[1..].contains('/'));
 
             if is_builtin_node_module || (is_package && config.ignore_packages) {
                 continue;
@@ -440,23 +519,31 @@ impl Rule for Extensions {
 
             let file_extension = get_file_extension_from_module_request(&export_module_request);
 
-
             let span = export.statement_span;
 
             // TODO: should these diagnostics be export - specific?
-            if file_extension.is_some() && (never_file_types.contains(&file_extension.unwrap()) || (!always_file_types.is_empty() && !always_file_types.contains(&file_extension.unwrap()))) {
-                ctx.diagnostic(extension_should_not_be_included_in_export_diagnostic(span, &file_extension.unwrap()));
-            } else if (file_extension.is_none() || file_extension.unwrap() == "") && config.require_extension == Some(FileExtensionConfig::Always) {
+            if file_extension.is_some()
+                && (never_file_types.contains(&file_extension.unwrap())
+                    || (!always_file_types.is_empty()
+                        && !always_file_types.contains(&file_extension.unwrap())))
+            {
+                ctx.diagnostic(extension_should_not_be_included_in_export_diagnostic(
+                    span,
+                    &file_extension.unwrap(),
+                ));
+            } else if (file_extension.is_none() || file_extension.unwrap() == "")
+                && config.require_extension == Some(FileExtensionConfig::Always)
+            {
                 ctx.diagnostic(extension_missing_from_export_diagnostic(span));
             }
         }
     }
 }
 
-fn get_file_extension_from_module_request(module_request: &NameSpan) -> Option<&str>  {
+fn get_file_extension_from_module_request(module_request: &NameSpan) -> Option<&str> {
     if let Some((_, extension)) = module_request.name().rsplit_once('.') {
         if !extension.starts_with('/') {
-            return extension.split('?').next()
+            return extension.split('?').next();
         }
     }
 
@@ -466,7 +553,7 @@ fn get_file_extension_from_module_request(module_request: &NameSpan) -> Option<&
 #[test]
 fn test() {
     use crate::tester::Tester;
-    use serde_json::{json, Value};
+    use serde_json::{Value, json};
 
     // let pass: Vec<(&str, Option<Value>)> = vec![];
 
