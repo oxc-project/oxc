@@ -365,9 +365,15 @@ impl<'a> ParserImpl<'a> {
                 self.parse_literal_type_node(/* negative */ false)
             }
             Kind::Minus => {
-                if self.lookahead(Self::is_next_token_number) {
-                    self.parse_literal_type_node(/* negative */ true)
+                let checkpoint = self.checkpoint();
+                let minus_start_span = self.start_span();
+
+                self.bump_any(); // bump `-`
+
+                if self.cur_kind().is_number() {
+                    self.parse_rest_of_literal_type_node(minus_start_span, /* negative */ true)
                 } else {
+                    self.rewind(checkpoint);
                     self.parse_type_reference()
                 }
             }
@@ -941,6 +947,10 @@ impl<'a> ParserImpl<'a> {
             self.bump_any(); // bump `-`
         }
 
+        self.parse_rest_of_literal_type_node(span, negative)
+    }
+
+    fn parse_rest_of_literal_type_node(&mut self, span: u32, negative: bool) -> TSType<'a> {
         let expression = if self.at(Kind::NoSubstitutionTemplate) {
             self.parse_template_literal_expression(false)
         } else {
