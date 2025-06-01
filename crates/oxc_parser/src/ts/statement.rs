@@ -374,7 +374,9 @@ impl<'a> ParserImpl<'a> {
                     );
                     Declaration::FunctionDeclaration(decl)
                 } else {
-                    let decl = self.parse_function_impl(FunctionKind::Declaration);
+                    let span = self.start_span();
+                    let r#async = self.eat(Kind::Async);
+                    let decl = self.parse_function_impl(span, r#async, FunctionKind::Declaration);
                     Declaration::FunctionDeclaration(decl)
                 }
             }

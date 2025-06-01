@@ -490,7 +490,9 @@ impl<'a> ParserImpl<'a> {
                 }
             }
             _ if self.at_function_with_async() => {
-                let mut func = self.parse_function_impl(FunctionKind::DefaultExport);
+                let span = self.start_span();
+                let r#async = self.eat(Kind::Async);
+                let mut func = self.parse_function_impl(span, r#async, FunctionKind::DefaultExport);
                 if has_no_side_effects_comment {
                     func.pure = true;
                 }

@@ -90,10 +90,6 @@ impl<'a> ParserImpl<'a> {
             self.eat_decorators();
         }
 
-        // For performance reasons, match orders are:
-        // 1. plain if check
-        // 2. check current token
-        // 3. peek token
         let mut stmt = match self.cur_kind() {
             Kind::LCurly => self.parse_block_statement(),
             Kind::Semicolon => self.parse_empty_statement(),
@@ -115,26 +111,18 @@ impl<'a> ParserImpl<'a> {
                 let span = self.start_span();
                 self.bump_any();
                 self.parse_variable_statement(span, VariableDeclarationKind::Var, stmt_ctx)
-            },
-            // Fast path
-            Kind::Function => self.parse_function_declaration(stmt_ctx),
-            Kind::Let if !self.cur_token().escaped() => self.parse_let(stmt_ctx),
-            // Peek tokens
-            Kind::Async
-                // Check if we are at `async function`
-                if self.lookahead(|p| {
-                    p.bump_any();
-                    p.at(Kind::Function) && !p.cur_token().is_on_new_line()
-                }) =>
-            {
-                self.parse_function_declaration(stmt_ctx)
             }
+            // Fast path
+            Kind::Function => {
+                self.parse_function_declaration(start_span, /* async */ false, stmt_ctx)
+            }
+            Kind::Let if !self.cur_token().escaped() => self.parse_let(stmt_ctx),
+            Kind::Async => self.parse_async_statement(start_span, stmt_ctx),
             Kind::Import => self.parse_import_statement(),
             Kind::Const => self.parse_const_statement(stmt_ctx),
             Kind::Using if self.is_using_declaration() => self.parse_using_statement(),
             Kind::Await if self.is_using_statement() => self.parse_using_statement(),
-            Kind::Async
-            | Kind::Interface
+            Kind::Interface
             | Kind::Type
             | Kind::Module
             | Kind::Namespace
@@ -688,5 +676,20 @@ impl<'a> ParserImpl<'a> {
         } else {
             self.parse_import_declaration(span)
         }
+    }
+
+    /// Parse statements that start with `sync`.
+    fn parse_async_statement(&mut self, span: u32, stmt_ctx: StatementContext) -> Statement<'a> {
+        let checkpoint = self.checkpoint();
+        self.bump_any(); // bump `async`
+        let token = self.cur_token();
+        if token.kind() == Kind::Function && !token.is_on_new_line() {
+            return self.parse_function_declaration(span, /* async */ true, stmt_ctx);
+        }
+        self.rewind(checkpoint);
+        if self.is_ts && self.at_start_of_ts_declaration() {
+            return self.parse_ts_declaration_statement(span);
+        }
+        self.parse_expression_or_labeled_statement()
     }
 }

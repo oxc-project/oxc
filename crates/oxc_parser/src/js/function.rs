@@ -174,10 +174,12 @@ impl<'a> ParserImpl<'a> {
     /// [Function Declaration](https://tc39.es/ecma262/#prod-FunctionDeclaration)
     pub(crate) fn parse_function_declaration(
         &mut self,
+        span: u32,
+        r#async: bool,
         stmt_ctx: StatementContext,
     ) -> Statement<'a> {
         let func_kind = FunctionKind::Declaration;
-        let decl = self.parse_function_impl(func_kind);
+        let decl = self.parse_function_impl(span, r#async, func_kind);
         if stmt_ctx.is_single_statement() {
             if decl.r#async {
                 self.error(diagnostics::async_function_declaration(Span::new(
@@ -196,9 +198,12 @@ impl<'a> ParserImpl<'a> {
 
     /// Parse function implementation in Javascript, cursor
     /// at `function` or `async function`
-    pub(crate) fn parse_function_impl(&mut self, func_kind: FunctionKind) -> Box<'a, Function<'a>> {
-        let span = self.start_span();
-        let r#async = self.eat(Kind::Async);
+    pub(crate) fn parse_function_impl(
+        &mut self,
+        span: u32,
+        r#async: bool,
+        func_kind: FunctionKind,
+    ) -> Box<'a, Function<'a>> {
         self.expect(Kind::Function);
         let generator = self.eat(Kind::Star);
         let id = self.parse_function_id(func_kind, r#async, generator);
