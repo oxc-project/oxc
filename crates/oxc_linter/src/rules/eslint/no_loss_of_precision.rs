@@ -258,6 +258,8 @@ impl NoLossOfPrecision {
 ///
 /// This function traverses a string representing a number,
 /// returning the floored log10 of this number.
+#[expect(clippy::cast_possible_truncation)]
+#[expect(clippy::cast_possible_wrap)]
 fn flt_str_to_exp(flt: &str) -> i32 {
     let mut non_zero_encountered = false;
     let mut dot_encountered = false;
@@ -349,12 +351,12 @@ fn round_to_precision(digits: &mut String, precision: usize) -> bool {
 ///
 /// [spec]: https://tc39.es/ecma262/#sec-number.prototype.toprecision
 /// [mdn]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Number/toPrecision
-#[allow(clippy::cast_possible_truncation)]
-#[allow(clippy::cast_sign_loss)]
-#[allow(clippy::wrong_self_convention)]
+#[expect(clippy::cast_possible_truncation)]
+#[expect(clippy::cast_possible_wrap)]
+#[expect(clippy::cast_sign_loss)]
 pub fn to_precision(mut num: f64, precision: usize) -> String {
     // Validate precision range (1-100)
-    debug_assert!(precision >= 1 && precision <= 100, "Precision must be between 1 and 100");
+    debug_assert!((1..=100).contains(&precision), "Precision must be between 1 and 100");
 
     // Handle non-finite numbers
     if !num.is_finite() {
