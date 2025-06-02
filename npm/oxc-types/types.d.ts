@@ -1700,4 +1700,4 @@ export type Node =
   | JSDocNullableType
   | JSDocNonNullableType
   | JSDocUnknownType
-  | FormalParameterRest;
+  | ParamPattern;
