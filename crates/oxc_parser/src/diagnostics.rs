@@ -621,3 +621,8 @@ pub fn unexpected_exponential(x0: &str, span1: Span) -> OxcDiagnostic {
         .with_help(format!("Wrap {x0} expression in parentheses to enforce operator precedence"))
         .with_label(span1)
 }
+
+#[cold]
+pub fn import_equals_can_only_be_used_in_typescript_files(span: Span) -> OxcDiagnostic {
+    ts_error("8002", "'import ... =' can only be used in TypeScript files.").with_label(span)
+}

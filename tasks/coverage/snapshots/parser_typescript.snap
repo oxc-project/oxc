@@ -13433,11 +13433,10 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
    ·               ─
    ╰────
 
-  × Expected `from` but found `=`
-   ╭─[typescript/tests/cases/compiler/jsFileCompilationImportEqualsSyntax.ts:1:10]
+  × TS(8002): 'import ... =' can only be used in TypeScript files.
+   ╭─[typescript/tests/cases/compiler/jsFileCompilationImportEqualsSyntax.ts:1:1]
  1 │ import a = b;
-   ·          ┬
-   ·          ╰── `from` expected
+   · ─────────────
    ╰────
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
@@ -25722,22 +25721,35 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
    ·        ─
    ╰────
 
-  × Expected `from` but found `=`
-   ╭─[typescript/tests/cases/conformance/node/allowJs/nodeModulesAllowJsImportAssignment.ts:2:11]
+  × TS(8002): 'import ... =' can only be used in TypeScript files.
+   ╭─[typescript/tests/cases/conformance/node/allowJs/nodeModulesAllowJsImportAssignment.ts:2:1]
  1 │ // cjs format file
  2 │ import fs = require("fs");
-   ·           ┬
-   ·           ╰── `from` expected
+   · ──────────────────────────
  3 │ fs.readFile;
    ╰────
 
-  × Expected `from` but found `=`
-   ╭─[typescript/tests/cases/conformance/node/allowJs/nodeModulesAllowJsSynchronousCallErrors.ts:3:12]
+  × TS(8002): 'import ... =' can only be used in TypeScript files.
+   ╭─[typescript/tests/cases/conformance/node/allowJs/nodeModulesAllowJsImportAssignment.ts:4:8]
+ 3 │ fs.readFile;
+ 4 │ export import fs2 = require("fs");
+   ·        ───────────────────────────
+   ╰────
+
+  × TS(8002): 'import ... =' can only be used in TypeScript files.
+   ╭─[typescript/tests/cases/conformance/node/allowJs/nodeModulesAllowJsSynchronousCallErrors.ts:3:1]
  2 │ import {h} from "../index.js";
  3 │ import mod = require("../index.js");
-   ·            ┬
-   ·            ╰── `from` expected
+   · ────────────────────────────────────
  4 │ import {f as _f} from "./index.js";
+   ╰────
+
+  × TS(8002): 'import ... =' can only be used in TypeScript files.
+   ╭─[typescript/tests/cases/conformance/node/allowJs/nodeModulesAllowJsSynchronousCallErrors.ts:5:1]
+ 4 │ import {f as _f} from "./index.js";
+ 5 │ import mod2 = require("./index.js");
+   · ────────────────────────────────────
+ 6 │ export async function f() {
    ╰────
 
   × TS(1030): override' modifier already seen.

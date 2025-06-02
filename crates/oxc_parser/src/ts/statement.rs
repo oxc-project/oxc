@@ -348,7 +348,21 @@ impl<'a> ParserImpl<'a> {
             }
             Kind::Import => {
                 self.bump_any();
-                self.parse_ts_import_equals_declaration(start_span)
+                let token = self.cur_token();
+                let mut import_kind = ImportOrExportKind::Value;
+                let mut identifier = self.parse_binding_identifier();
+                if self.is_ts && token.kind() == Kind::Type {
+                    // `import type ...`
+                    if self.cur_kind().is_binding_identifier() {
+                        // `import type something ...`
+                        identifier = self.parse_binding_identifier();
+                        import_kind = ImportOrExportKind::Type;
+                    } else {
+                        // `import type = ...`
+                        import_kind = ImportOrExportKind::Value;
+                    }
+                }
+                self.parse_ts_import_equals_declaration(import_kind, identifier, start_span)
             }
             kind if kind.is_variable_declaration() => {
                 let kind = self.get_variable_declaration_kind();
@@ -414,15 +428,12 @@ impl<'a> ParserImpl<'a> {
         self.ast.expression_ts_type_assertion(self.end_span(span), type_annotation, expression)
     }
 
-    pub(crate) fn parse_ts_import_equals_declaration(&mut self, span: u32) -> Declaration<'a> {
-        let import_kind = if !self.lookahead(Self::is_next_token_equals) && self.eat(Kind::Type) {
-            ImportOrExportKind::Type
-        } else {
-            ImportOrExportKind::Value
-        };
-
-        let id = self.parse_binding_identifier();
-
+    pub(crate) fn parse_ts_import_equals_declaration(
+        &mut self,
+        import_kind: ImportOrExportKind,
+        identifier: BindingIdentifier<'a>,
+        span: u32,
+    ) -> Declaration<'a> {
         self.expect(Kind::Eq);
 
         let reference_span = self.start_span();
@@ -441,17 +452,13 @@ impl<'a> ParserImpl<'a> {
 
         self.asi();
 
-        self.ast.declaration_ts_import_equals(
-            self.end_span(span),
-            id,
-            module_reference,
-            import_kind,
-        )
-    }
+        let span = self.end_span(span);
 
-    pub(crate) fn is_next_token_equals(&mut self) -> bool {
-        self.bump_any();
-        self.at(Kind::Eq)
+        if !self.is_ts {
+            self.error(diagnostics::import_equals_can_only_be_used_in_typescript_files(span));
+        }
+
+        self.ast.declaration_ts_import_equals(span, identifier, module_reference, import_kind)
     }
 
     pub(crate) fn parse_ts_this_parameter(&mut self) -> TSThisParameter<'a> {
