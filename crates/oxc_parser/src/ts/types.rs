@@ -290,11 +290,15 @@ impl<'a> ParserImpl<'a> {
                     );
                 }
                 Kind::Question => {
+                    let checkpoint = self.checkpoint();
+                    self.bump_any();
                     // If next token is start of a type we have a conditional type
-                    if self.lookahead(Self::next_token_is_start_of_type) {
+                    if self.is_start_of_type(false) {
+                        self.rewind(checkpoint);
+
                         return ty;
                     }
-                    self.bump_any();
+
                     ty = self.ast.ts_type_js_doc_nullable_type(
                         self.end_span(span),
                         ty,
@@ -554,11 +558,6 @@ impl<'a> ParserImpl<'a> {
 
         self.bump_any();
         self.at(Kind::In)
-    }
-
-    fn next_token_is_start_of_type(&mut self) -> bool {
-        self.bump_any();
-        self.is_start_of_type(false)
     }
 
     fn is_start_of_parenthesized_or_function_type(&mut self) -> bool {
