@@ -24,7 +24,9 @@
 
       // Handle different operation types
       switch (op) {
-          case 'add': {if (path.match(/^\/references\/\d+$/)) {
+          case 'add': {
+              // Special handling for references
+              if (path.match(/^\/references\/\d+$/)) {
                   if (value && typeof value === 'object' && 'key' in value) {
                       summaryItems.push({
                           label: 'References.' + value.key,
@@ -48,7 +50,10 @@
               break;
           }
 
-          case 'replace': {if (path === '/version') return;
+          case 'replace': {
+              // Skip version changes as we display them separately
+              if (path === '/version') return;
+
               summaryItems.push({
                   label: displayPath,
                   displayValue: <span className='text-blue-600 font-medium'>Updated</span>
