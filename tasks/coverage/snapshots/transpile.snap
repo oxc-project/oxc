@@ -13,17 +13,17 @@ export namespace presentNs {
 }
 const aliasing = Symbol;
 export type A = {
-	[missing]: number
-	[ns.missing]: number
-	[presentNs.a]: number
-	[Symbol.iterator]: number
-	[globalThis.Symbol.toStringTag]: number
-	[globalThis.Symbol.unscopables]: number
-	[aliasing.isConcatSpreadable]: number
-	[1]: number
-	["2"]: number
-	[missing2]: number
-	[Math.random() > .5 ? "f1" : "f2"]: number
+	[missing]: number;
+	[ns.missing]: number;
+	[presentNs.a]: number;
+	[Symbol.iterator]: number;
+	[globalThis.Symbol.toStringTag]: number;
+	[globalThis.Symbol.unscopables]: number;
+	[aliasing.isConcatSpreadable]: number;
+	[1]: number;
+	["2"]: number;
+	[missing2]: number;
+	[Math.random() > .5 ? "f1" : "f2"]: number;
 };
 export interface B {
 	[missing]: number;
@@ -71,17 +71,17 @@ export declare namespace presentNs {
 }
 declare const aliasing: unknown;
 export type A = {
-	[missing]: number
-	[ns.missing]: number
-	[presentNs.a]: number
-	[Symbol.iterator]: number
-	[globalThis.Symbol.toStringTag]: number
-	[globalThis.Symbol.unscopables]: number
-	[aliasing.isConcatSpreadable]: number
-	[1]: number
-	["2"]: number
-	[missing2]: number
-	[Math.random() > .5 ? "f1" : "f2"]: number
+	[missing]: number;
+	[ns.missing]: number;
+	[presentNs.a]: number;
+	[Symbol.iterator]: number;
+	[globalThis.Symbol.toStringTag]: number;
+	[globalThis.Symbol.unscopables]: number;
+	[aliasing.isConcatSpreadable]: number;
+	[1]: number;
+	["2"]: number;
+	[missing2]: number;
+	[Math.random() > .5 ? "f1" : "f2"]: number;
 };
 export interface B {
 	[missing]: number;
@@ -103,10 +103,10 @@ export declare class C {
 	["2"]: number;
 }
 export declare const D: {
-	[Symbol.iterator]: number
-	[globalThis.Symbol.toStringTag]: number
-	1: number
-	"2": number
+	[Symbol.iterator]: number;
+	[globalThis.Symbol.toStringTag]: number;
+	1: number;
+	"2": number;
 };
 export {};
 
@@ -320,13 +320,13 @@ export function fnDeclBasic3(p: new () => any = class {}, rParam: string): void 
 export function fnDeclBasic4(p: [T] = [[]], rParam: string): void {}
 ;
 export function fnDeclBasic5(p: {
-	a: T
+	a: T;
 } = { a: [] }, rParam: string): void {}
 ;
 export function fnDeclBasic6(p: `_${string}` = "_", rParam: string): void {}
 ;
 export function fnDeclBasic7(p: {
-	a?: string
+	a?: string;
 } & number[] = [], rParam: string): void {}
 ;
 export function fnDeclBasic8(p: (number[] | string[]) | number = [], rParam: string): void {}
@@ -399,11 +399,11 @@ export declare function fnDeclBasic2(p: (n: T) => T | undefined, rParam: string)
 export declare function fnDeclBasic3(p: new () => any | undefined, rParam: string): void;
 export declare function fnDeclBasic4(p: [T] | undefined, rParam: string): void;
 export declare function fnDeclBasic5(p: {
-	a: T
+	a: T;
 } | undefined, rParam: string): void;
 export declare function fnDeclBasic6(p: `_${string}` | undefined, rParam: string): void;
 export declare function fnDeclBasic7(p: {
-	a?: string
+	a?: string;
 } & number[] | undefined, rParam: string): void;
 export declare function fnDeclBasic8(p: (number[] | string[]) | number | undefined, rParam: string): void;
 export declare function fnDeclHasUndefined(p: T | undefined, rParam: string): void;
@@ -415,31 +415,31 @@ export declare const arrowOk1: (array: number[] | undefined, rParam: string) => 
 export declare const arrowOk2: (array: T | undefined, rParam: string) => void;
 export declare const arrowBad: (array: T, rParam: string) => void;
 export declare const inObjectLiteralFnExprOk1: {
-	o: (array: number[] | undefined, rParam: string) => void
+	o: (array: number[] | undefined, rParam: string) => void;
 };
 export declare const inObjectLiteralFnExprOk2: {
-	o: (array: T | undefined, rParam: string) => void
+	o: (array: T | undefined, rParam: string) => void;
 };
 export declare const inObjectLiteralFnExprBad: {
-	o: (array: T, rParam: string) => void
+	o: (array: T, rParam: string) => void;
 };
 export declare const inObjectLiteralArrowOk1: {
-	o: (array: number[] | undefined, rParam: string) => void
+	o: (array: number[] | undefined, rParam: string) => void;
 };
 export declare const inObjectLiteralArrowOk2: {
-	o: (array: T | undefined, rParam: string) => void
+	o: (array: T | undefined, rParam: string) => void;
 };
 export declare const inObjectLiteralArrowBad: {
-	o: (array: T, rParam: string) => void
+	o: (array: T, rParam: string) => void;
 };
 export declare const inObjectLiteralMethodOk1: {
-	o(array: number[] | undefined, rParam: string): void
+	o(array: number[] | undefined, rParam: string): void;
 };
 export declare const inObjectLiteralMethodOk2: {
-	o(array: T | undefined, rParam: string): void
+	o(array: T | undefined, rParam: string): void;
 };
 export declare const inObjectLiteralMethodBad: {
-	o(array: T, rParam: string): void
+	o(array: T, rParam: string): void;
 };
 export declare class InClassFnExprOk1 {
 	o: (array: number[] | undefined, rParam: string) => void;

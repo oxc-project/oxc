@@ -287,11 +287,11 @@ Negative Passed: 34/34 (100.00%)
  4 │ }
    ╰────
 
-  × Unexpected token
-   ╭─[misc/fail/oxc-5955-3.ts:2:18]
+  × TS(1021): An index signature must have a type annotation.
+   ╭─[misc/fail/oxc-5955-3.ts:2:5]
  1 │ class A {
  2 │     [key: string]?: number;
-   ·                  ─
+   ·     ─────────────
  3 │ }
    ╰────
 

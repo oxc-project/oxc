@@ -9723,11 +9723,11 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
  103 │   }
      ╰────
 
-  × Unexpected token
-    ╭─[typescript/tests/cases/compiler/arraySigChecking.ts:11:28]
+  × TS(1021): An index signature must have a type annotation.
+    ╭─[typescript/tests/cases/compiler/arraySigChecking.ts:11:16]
  10 │ 
  11 │     var foo: { [index: any]; }; // expect an error here
-    ·                            ─
+    ·                ────────────
  12 │ }
     ╰────
 
@@ -12963,11 +12963,11 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
  6 │     public get Goo(v:string):string {return null;} // error - getters must not have a parameter
    ╰────
 
-  × Unexpected token
-    ╭─[typescript/tests/cases/compiler/giant.ts:62:17]
+  × TS(1021): An index signature must have a type annotation.
+    ╭─[typescript/tests/cases/compiler/giant.ts:62:5]
  61 │     [p];
  62 │     [p1: string];
-    ·                 ─
+    ·     ────────────
  63 │     [p2: string, p3: number];
     ╰────
 
@@ -13074,36 +13074,51 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
  4 │     x = 1;
    ╰────
 
-  × Unexpected token
-   ╭─[typescript/tests/cases/compiler/indexSignatureMustHaveTypeAnnotation.ts:4:16]
+  × TS(1021): An index signature must have a type annotation.
+   ╭─[typescript/tests/cases/compiler/indexSignatureMustHaveTypeAnnotation.ts:4:5]
  3 │     [x]: string;
  4 │     [x: string];
-   ·                ─
+   ·     ───────────
  5 │ }
    ╰────
 
-  × Unexpected token
-    ╭─[typescript/tests/cases/compiler/indexSignatureTypeCheck.ts:14:9]
+  × TS(1019): An index signature parameter cannot have a question mark.
+    ╭─[typescript/tests/cases/compiler/indexSignatureTypeCheck.ts:14:8]
  13 │ interface indexErrors {
  14 │     [p2?: string];
-    ·         ─
+    ·        ─
  15 │     [...p3: any[]];
     ╰────
 
-  × Unexpected token
-    ╭─[typescript/tests/cases/compiler/indexSignatureTypeCheck2.ts:10:9]
+  × TS(1021): An index signature must have a type annotation.
+    ╭─[typescript/tests/cases/compiler/indexSignatureTypeCheck.ts:14:5]
+ 13 │ interface indexErrors {
+ 14 │     [p2?: string];
+    ·     ─────────────
+ 15 │     [...p3: any[]];
+    ╰────
+
+  × TS(1019): An index signature parameter cannot have a question mark.
+    ╭─[typescript/tests/cases/compiler/indexSignatureTypeCheck2.ts:10:8]
   9 │ interface indexErrors {
  10 │     [p2?: string];
-    ·         ─
+    ·        ─
  11 │     [...p3: any[]];
     ╰────
 
-  × Expected `]` but found `Identifier`
+  × TS(1021): An index signature must have a type annotation.
+    ╭─[typescript/tests/cases/compiler/indexSignatureTypeCheck2.ts:10:5]
+  9 │ interface indexErrors {
+ 10 │     [p2?: string];
+    ·     ─────────────
+ 11 │     [...p3: any[]];
+    ╰────
+
+  × Unexpected token
    ╭─[typescript/tests/cases/compiler/indexSignatureWithAccessibilityModifier.ts:2:13]
  1 │ interface I {
  2 │     [public x: string]: string;
-   ·             ┬
-   ·             ╰── `]` expected
+   ·             ─
  3 │ }
    ╰────
 
@@ -13143,19 +13158,19 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
  11 │ }
     ╰────
 
-  × Unexpected token
-   ╭─[typescript/tests/cases/compiler/indexSignatureWithoutTypeAnnotation1.ts:2:14]
+  × TS(1021): An index signature must have a type annotation.
+   ╭─[typescript/tests/cases/compiler/indexSignatureWithoutTypeAnnotation1.ts:2:3]
  1 │ class C {
  2 │   [a: number];
-   ·              ─
+   ·   ───────────
  3 │ }
    ╰────
 
-  × Unexpected token
-   ╭─[typescript/tests/cases/compiler/indexTypeCheck.ts:2:12]
+  × TS(1021): An index signature must have a type annotation.
+   ╭─[typescript/tests/cases/compiler/indexTypeCheck.ts:2:2]
  1 │ interface Red {
  2 │     [n:number]; // ok
-   ·               ─
+   ·     ──────────
  3 │     [s:string]; // ok
    ╰────
 
@@ -13173,19 +13188,28 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
  5 │     [objectId: number]: IHeapObjectProperty[]
    ╰────
 
-  × Unexpected token
-   ╭─[typescript/tests/cases/compiler/indexerAsOptional.ts:3:10]
+  × TS(1019): An index signature parameter cannot have a question mark.
+   ╭─[typescript/tests/cases/compiler/indexerAsOptional.ts:3:9]
  2 │     //Index signatures can't be optional
  3 │     [idx?: number]: any; //err
-   ·          ─
+   ·         ─
  4 │ }
    ╰────
 
-  × Unexpected token
-    ╭─[typescript/tests/cases/compiler/indexerConstraints2.ts:80:1]
+  × TS(1019): An index signature parameter cannot have a question mark.
+   ╭─[typescript/tests/cases/compiler/indexerAsOptional.ts:8:9]
+ 7 │     //Index signatures can't be optional
+ 8 │     [idx?: number]: any //err
+   ·         ─
+ 9 │ }
+   ╰────
+
+  × TS(1021): An index signature must have a type annotation.
+    ╭─[typescript/tests/cases/compiler/indexerConstraints2.ts:79:5]
+ 78 │ interface T {
  79 │     [key: Key]
+    ·     ──────────
  80 │ }
-    · ─
     ╰────
 
   × Unexpected token
@@ -13214,11 +13238,11 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
    ╰────
   help: Try insert a semicolon here
 
-  × Unexpected token
-    ╭─[typescript/tests/cases/compiler/intTypeCheck.ts:37:17]
+  × TS(1021): An index signature must have a type annotation.
+    ╭─[typescript/tests/cases/compiler/intTypeCheck.ts:37:5]
  36 │     //Index Signatures
  37 │     [p1: string];
-    ·                 ─
+    ·     ────────────
  38 │     [p2: string, p3: number];
     ╰────
 
@@ -26897,29 +26921,35 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
  3 │ }
    ╰────
 
-  × Expected `]` but found `,`
+  × Unexpected token
    ╭─[typescript/tests/cases/conformance/parser/ecmascript5/IndexSignatures/parserIndexSignature10.ts:2:6]
  1 │ interface I {
  2 │    [a, b]: number
-   ·      ┬
-   ·      ╰── `]` expected
+   ·      ─
  3 │ }
    ╰────
 
-  × Unexpected token
-   ╭─[typescript/tests/cases/conformance/parser/ecmascript5/IndexSignatures/parserIndexSignature11.ts:3:21]
+  × TS(1021): An index signature must have a type annotation.
+   ╭─[typescript/tests/cases/conformance/parser/ecmascript5/IndexSignatures/parserIndexSignature11.ts:3:9]
  2 │         [p]; // Used to be indexer, now it is a computed property
  3 │         [p1: string];
-   ·                     ─
+   ·         ────────────
  4 │         [p2: string, p3: number];
    ╰────
 
-  × Expected `]` but found `Identifier`
+  × Unexpected token
    ╭─[typescript/tests/cases/conformance/parser/ecmascript5/IndexSignatures/parserIndexSignature2.ts:2:11]
  1 │ interface I {
  2 │   [public a]
-   ·           ┬
-   ·           ╰── `]` expected
+   ·           ─
+ 3 │ }
+   ╰────
+
+  × TS(1019): An index signature parameter cannot have a question mark.
+   ╭─[typescript/tests/cases/conformance/parser/ecmascript5/IndexSignatures/parserIndexSignature3.ts:2:5]
+ 1 │ interface I {
+ 2 │   [a?]
+   ·     ─
  3 │ }
    ╰────
 
@@ -26931,24 +26961,26 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
  3 │ }
    ╰────
 
-  × Unexpected token
-   ╭─[typescript/tests/cases/conformance/parser/ecmascript5/IndexSignatures/parserIndexSignature6.ts:3:1]
+  × TS(1021): An index signature must have a type annotation.
+   ╭─[typescript/tests/cases/conformance/parser/ecmascript5/IndexSignatures/parserIndexSignature6.ts:2:3]
+ 1 │ interface I {
  2 │   [a:boolean]
+   ·   ───────────
  3 │ }
-   · ─
    ╰────
 
-  × Unexpected token
-   ╭─[typescript/tests/cases/conformance/parser/ecmascript5/IndexSignatures/parserIndexSignature7.ts:3:1]
+  × TS(1021): An index signature must have a type annotation.
+   ╭─[typescript/tests/cases/conformance/parser/ecmascript5/IndexSignatures/parserIndexSignature7.ts:2:3]
+ 1 │ interface I {
  2 │   [a:string]
+   ·   ──────────
  3 │ }
-   · ─
    ╰────
 
-  × Unexpected token
-   ╭─[typescript/tests/cases/conformance/parser/ecmascript5/IndexSignatures/parserIndexSignature8.ts:1:24]
+  × TS(1021): An index signature must have a type annotation.
+   ╭─[typescript/tests/cases/conformance/parser/ecmascript5/IndexSignatures/parserIndexSignature8.ts:1:12]
  1 │ var foo: { [index: any]; }; // expect an error here
-   ·                        ─
+   ·            ────────────
  2 │ var foo2: { [index: RegExp]; }; // expect an error here
    ╰────
 

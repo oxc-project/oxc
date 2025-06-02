@@ -626,3 +626,13 @@ pub fn unexpected_exponential(x0: &str, span1: Span) -> OxcDiagnostic {
 pub fn import_equals_can_only_be_used_in_typescript_files(span: Span) -> OxcDiagnostic {
     ts_error("8002", "'import ... =' can only be used in TypeScript files.").with_label(span)
 }
+
+#[cold]
+pub fn index_signature_question_mark(span: Span) -> OxcDiagnostic {
+    ts_error("1019", "An index signature parameter cannot have a question mark.").with_label(span)
+}
+
+#[cold]
+pub fn index_signature_type_annotation(span: Span) -> OxcDiagnostic {
+    ts_error("1021", "An index signature must have a type annotation.").with_label(span)
+}

@@ -453,6 +453,10 @@ impl<'a> ParserImpl<'a> {
         self.at(Kind::LCurly)
     }
 
+    pub(crate) fn parse_contextual_modifier(&mut self, kind: Kind) -> bool {
+        self.at(kind) && self.try_parse(Self::next_token_can_follow_modifier).is_some()
+    }
+
     fn parse_any_contextual_modifier(&mut self) -> bool {
         self.cur_kind().is_modifier_kind()
             && self.try_parse(Self::next_token_can_follow_modifier).is_some()
