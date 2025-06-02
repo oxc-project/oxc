@@ -13,8 +13,10 @@ use tower_lsp_server::{
         DidChangeConfigurationParams, DidChangeTextDocumentParams, DidChangeWatchedFilesParams,
         DidChangeWatchedFilesRegistrationOptions, DidChangeWorkspaceFoldersParams,
         DidCloseTextDocumentParams, DidOpenTextDocumentParams, DidSaveTextDocumentParams,
-        ExecuteCommandParams, InitializeParams, InitializeResult, InitializedParams, Registration,
-        ServerInfo, Unregistration, Uri, WorkspaceEdit,
+        DocumentDiagnosticParams, DocumentDiagnosticReport, DocumentDiagnosticReportResult,
+        ExecuteCommandParams, FullDocumentDiagnosticReport, InitializeParams, InitializeResult,
+        InitializedParams, Registration, RelatedFullDocumentDiagnosticReport, ServerInfo,
+        Unregistration, Uri, WorkspaceEdit,
     },
 };
 // #
@@ -77,10 +79,14 @@ impl LanguageServer for Backend {
             None
         });
 
+        let capabilities = Capabilities::from(&params.capabilities);
+
         info!("initialize: {options:?}");
         info!("language server version: {server_version}");
-
-        let capabilities = Capabilities::from(params.capabilities);
+        info!(
+            "diagnostic model: {}",
+            if capabilities.use_push_diagnostics() { "push" } else { "pull" }
+        );
 
         // client sent workspace folders
         let workers = if let Some(workspace_folders) = &params.workspace_folders {
@@ -198,16 +204,15 @@ impl LanguageServer for Backend {
     }
 
     async fn shutdown(&self) -> Result<()> {
-        self.clear_all_diagnostics().await;
+        if self.capabilities.get().is_some_and(Capabilities::use_push_diagnostics) {
+            // if the client supports push diagnostics, we should clear all diagnostics
+            self.clear_all_diagnostics().await;
+        }
         Ok(())
     }
 
     async fn did_change_configuration(&self, params: DidChangeConfigurationParams) {
         let workers = self.workspace_workers.read().await;
-        let new_diagnostics: papaya::HashMap<String, Vec<Diagnostic>, FxBuildHasher> =
-            ConcurrentHashMap::default();
-        let mut removing_registrations = vec![];
-        let mut adding_registrations = vec![];
 
         // new valid configuration is passed
         let options = serde_json::from_value::<Vec<WorkspaceOption>>(params.settings.clone())
@@ -262,6 +267,14 @@ impl LanguageServer for Backend {
             return;
         };
 
+        let new_diagnostics: papaya::HashMap<String, Vec<Diagnostic>, FxBuildHasher> =
+            ConcurrentHashMap::default();
+        let mut removing_registrations = vec![];
+        let mut adding_registrations = vec![];
+        let mut needs_global_diagnostics_refresh = false;
+        let use_push_diagnostics =
+            self.capabilities.get().is_some_and(Capabilities::use_push_diagnostics);
+
         for option in resolved_options {
             let Some(worker) =
                 workers.iter().find(|worker| worker.is_responsible_for_uri(&option.workspace_uri))
@@ -269,14 +282,21 @@ impl LanguageServer for Backend {
                 continue;
             };
 
-            let (diagnostics, watcher) = worker.did_change_configuration(&option.options).await;
+            let (needs_refreshed_diagnostics, watcher) =
+                worker.did_change_configuration(&option.options).await;
 
-            if let Some(diagnostics) = diagnostics {
-                for (uri, reports) in &diagnostics.pin() {
-                    new_diagnostics.pin().insert(
-                        uri.clone(),
-                        reports.iter().map(|d| d.diagnostic.clone()).collect(),
-                    );
+            if needs_refreshed_diagnostics {
+                needs_global_diagnostics_refresh = true;
+
+                // if the client does not support pull diagnostics,
+                // we should lint the file immediately and publish the diagnostics
+                if use_push_diagnostics {
+                    for (uri, reports) in &worker.revalidate_diagnostics().await.pin() {
+                        new_diagnostics.pin().insert(
+                            uri.clone(),
+                            reports.iter().map(|d| d.diagnostic.clone()).collect(),
+                        );
+                    }
                 }
             }
 
@@ -297,6 +317,8 @@ impl LanguageServer for Backend {
             }
         }
 
+        // new diagnostics collected and are not empty
+        // if the client supports pull diagnostics, this vec is always empty
         if !new_diagnostics.is_empty() {
             let x = &new_diagnostics
                 .pin()
@@ -305,6 +327,13 @@ impl LanguageServer for Backend {
                 .collect::<Vec<_>>();
 
             self.publish_all_diagnostics(x).await;
+
+        // the diagnostics should be refreshed and the client supports pull diagnostics.
+        // tell the client to refresh the diagnostics
+        } else if needs_global_diagnostics_refresh && !use_push_diagnostics {
+            // tell the client to pull for new diagnostics
+            // the result does not matter, the client told us he supports it.
+            let _ = self.client.workspace_diagnostic_refresh().await;
         }
 
         if self.capabilities.get().is_some_and(|capabilities| capabilities.dynamic_watchers) {
@@ -323,6 +352,9 @@ impl LanguageServer for Backend {
 
     async fn did_change_watched_files(&self, params: DidChangeWatchedFilesParams) {
         let workers = self.workspace_workers.read().await;
+        let use_push_diagnostics =
+            self.capabilities.get().is_some_and(Capabilities::use_push_diagnostics);
+
         // ToDo: what if an empty changes flag is passed?
         debug!("watched file did change");
         let all_diagnostics: papaya::HashMap<String, Vec<Diagnostic>, FxBuildHasher> =
@@ -336,28 +368,31 @@ impl LanguageServer for Backend {
             else {
                 continue;
             };
-            let Some(diagnostics) = worker.did_change_watched_files(file_event).await else {
-                continue;
-            };
 
-            for (key, value) in &diagnostics.pin() {
-                all_diagnostics
-                    .pin()
-                    .insert(key.clone(), value.iter().map(|d| d.diagnostic.clone()).collect());
+            worker.did_change_watched_files(file_event).await;
+
+            if use_push_diagnostics {
+                for (key, value) in &worker.revalidate_diagnostics().await.pin() {
+                    all_diagnostics
+                        .pin()
+                        .insert(key.clone(), value.iter().map(|d| d.diagnostic.clone()).collect());
+                }
             }
         }
 
-        if all_diagnostics.is_empty() {
-            return;
+        if !all_diagnostics.is_empty() {
+            let x = &all_diagnostics
+                .pin()
+                .into_iter()
+                .map(|(key, value)| (key.clone(), value.clone()))
+                .collect::<Vec<_>>();
+
+            self.publish_all_diagnostics(x).await;
+        } else if !use_push_diagnostics {
+            // tell the client to pull for new diagnostics
+            // the result does not matter, the client told us he supports it.
+            let _ = self.client.workspace_diagnostic_refresh().await;
         }
-
-        let x = &all_diagnostics
-            .pin()
-            .into_iter()
-            .map(|(key, value)| (key.clone(), value.clone()))
-            .collect::<Vec<_>>();
-
-        self.publish_all_diagnostics(x).await;
     }
 
     async fn did_change_workspace_folders(&self, params: DidChangeWorkspaceFoldersParams) {
@@ -365,6 +400,8 @@ impl LanguageServer for Backend {
         let mut cleared_diagnostics = vec![];
         let mut added_registrations = vec![];
         let mut removed_registrations = vec![];
+        let use_push_diagnostics =
+            self.capabilities.get().is_some_and(Capabilities::use_push_diagnostics);
 
         for folder in params.event.removed {
             let Some((index, worker)) = workers
@@ -374,7 +411,11 @@ impl LanguageServer for Backend {
             else {
                 continue;
             };
-            cleared_diagnostics.extend(worker.get_clear_diagnostics());
+
+            if use_push_diagnostics {
+                cleared_diagnostics.extend(worker.get_clear_diagnostics());
+            }
+
             removed_registrations.push(Unregistration {
                 id: format!("watcher-{}", worker.get_root_uri().as_str()),
                 method: "workspace/didChangeWatchedFiles".to_string(),
@@ -382,7 +423,9 @@ impl LanguageServer for Backend {
             workers.remove(index);
         }
 
-        self.publish_all_diagnostics(&cleared_diagnostics).await;
+        if use_push_diagnostics {
+            self.publish_all_diagnostics(&cleared_diagnostics).await;
+        }
 
         // client support `workspace/configuration` request
         if self.capabilities.get().is_some_and(|capabilities| capabilities.workspace_configuration)
@@ -440,17 +483,26 @@ impl LanguageServer for Backend {
         let Some(worker) = workers.iter().find(|worker| worker.is_responsible_for_uri(uri)) else {
             return;
         };
-        if !worker.should_lint_on_run_type(Run::OnSave).await {
-            return;
-        }
-        if let Some(diagnostics) = worker.lint_file(uri, None).await {
-            self.client
-                .publish_diagnostics(
-                    uri.clone(),
-                    diagnostics.clone().into_iter().map(|d| d.diagnostic).collect(),
-                    None,
-                )
-                .await;
+
+        // we no longer need the cached document, as it is saved to disk
+        worker.remove_cached_document(uri);
+
+        // if the client supports pull diagnostics, we should not lint the file immediately,
+        // instead wait for the client to request diagnostics
+        if self.capabilities.get().is_some_and(Capabilities::use_push_diagnostics) {
+            if !worker.should_lint_on_run_type(Run::OnSave).await {
+                return;
+            }
+
+            if let Some(diagnostics) = worker.lint_file(uri).await {
+                self.client
+                    .publish_diagnostics(
+                        uri.clone(),
+                        diagnostics.clone().into_iter().map(|d| d.diagnostic).collect(),
+                        None,
+                    )
+                    .await;
+            }
         }
     }
 
@@ -462,18 +514,29 @@ impl LanguageServer for Backend {
         let Some(worker) = workers.iter().find(|worker| worker.is_responsible_for_uri(uri)) else {
             return;
         };
-        if !worker.should_lint_on_run_type(Run::OnType).await {
-            return;
-        }
         let content = params.content_changes.first().map(|c| c.text.clone());
-        if let Some(diagnostics) = worker.lint_file(uri, content).await {
-            self.client
-                .publish_diagnostics(
-                    uri.clone(),
-                    diagnostics.clone().into_iter().map(|d| d.diagnostic).collect(),
-                    Some(params.text_document.version),
-                )
-                .await;
+
+        if let Some(content) = content {
+            // cache the document content for later use
+            worker.cache_document(uri, content);
+        }
+
+        // if the client supports pull diagnostics, we should not lint the file immediately,
+        // instead wait for the client to request diagnostics
+        if self.capabilities.get().is_some_and(Capabilities::use_push_diagnostics) {
+            if !worker.should_lint_on_run_type(Run::OnType).await {
+                return;
+            }
+
+            if let Some(diagnostics) = worker.lint_file(uri).await {
+                self.client
+                    .publish_diagnostics(
+                        uri.clone(),
+                        diagnostics.clone().into_iter().map(|d| d.diagnostic).collect(),
+                        Some(params.text_document.version),
+                    )
+                    .await;
+            }
         }
     }
 
@@ -484,15 +547,21 @@ impl LanguageServer for Backend {
             return;
         };
 
-        let content = params.text_document.text;
-        if let Some(diagnostics) = worker.lint_file(uri, Some(content)).await {
-            self.client
-                .publish_diagnostics(
-                    uri.clone(),
-                    diagnostics.clone().into_iter().map(|d| d.diagnostic).collect(),
-                    Some(params.text_document.version),
-                )
-                .await;
+        // cache the document content for later use
+        worker.cache_document(uri, params.text_document.text);
+
+        // if the client supports pull diagnostics, we should not lint the file immediately,
+        // instead wait for the client to request diagnostics
+        if self.capabilities.get().is_some_and(Capabilities::use_push_diagnostics) {
+            if let Some(diagnostics) = worker.lint_file(uri).await {
+                self.client
+                    .publish_diagnostics(
+                        uri.clone(),
+                        diagnostics.clone().into_iter().map(|d| d.diagnostic).collect(),
+                        Some(params.text_document.version),
+                    )
+                    .await;
+            }
         }
     }
 
@@ -502,7 +571,38 @@ impl LanguageServer for Backend {
         let Some(worker) = workers.iter().find(|worker| worker.is_responsible_for_uri(uri)) else {
             return;
         };
-        worker.remove_diagnostics(&params.text_document.uri);
+        worker.remove_cached_document(uri);
+        worker.remove_diagnostics(uri);
+    }
+
+    async fn diagnostic(
+        &self,
+        params: DocumentDiagnosticParams,
+    ) -> Result<DocumentDiagnosticReportResult> {
+        let uri = &params.text_document.uri;
+        let workers = self.workspace_workers.read().await;
+        let Some(worker) = workers.iter().find(|worker| worker.is_responsible_for_uri(uri)) else {
+            return Ok(DocumentDiagnosticReportResult::Report(DocumentDiagnosticReport::Full(
+                RelatedFullDocumentDiagnosticReport::default(),
+            )));
+        };
+        let diagnostics = worker.lint_file(uri).await;
+
+        if let Some(diagnostics) = diagnostics {
+            Ok(DocumentDiagnosticReportResult::Report(DocumentDiagnosticReport::Full(
+                RelatedFullDocumentDiagnosticReport {
+                    full_document_diagnostic_report: FullDocumentDiagnosticReport {
+                        items: diagnostics.into_iter().map(|d| d.diagnostic).collect(),
+                        ..Default::default()
+                    },
+                    ..Default::default()
+                },
+            )))
+        } else {
+            Ok(DocumentDiagnosticReportResult::Report(DocumentDiagnosticReport::Full(
+                RelatedFullDocumentDiagnosticReport::default(),
+            )))
+        }
     }
 
     async fn code_action(&self, params: CodeActionParams) -> Result<Option<CodeActionResponse>> {
