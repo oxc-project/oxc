@@ -263,7 +263,7 @@ impl NoLossOfPrecision {
 fn flt_str_to_exp(flt: &str) -> i32 {
     let mut non_zero_encountered = false;
     let mut dot_encountered = false;
-    for (i, c) in flt.chars().enumerate() {
+    for (i, c) in flt.char_indices() {
         if c == '.' {
             if non_zero_encountered {
                 return (i as i32) - 1;
