@@ -287,3 +287,8 @@ overflow-checks = true # Catch arithmetic overflow errors
 [profile.dev-no-debug-assertions]
 inherits = "dev"
 debug-assertions = false
+
+[patch.crates-io]
+# this patch has the fix for `WorkspaceClientCapabilities`, see tower-lsp-community/tower-lsp-server#50
+lsp-types = { git = "https://github.com/tower-lsp-community/lsp-types", rev = "7332122ee5572c3f2c247b37cd1af77289b2e1c8" }
+tower-lsp-server = { git = "https://github.com/tower-lsp-community/tower-lsp-server", rev = "27cbe421c6cdc6e9cd607abaf1ece8c060e5cd4e" }

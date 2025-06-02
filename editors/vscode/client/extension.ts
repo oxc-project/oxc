@@ -176,6 +176,12 @@ export async function activate(context: ExtensionContext) {
     initializationOptions: configService.languageServerConfig,
     outputChannel,
     traceOutputChannel: outputChannel,
+    diagnosticPullOptions: {
+      onChange: true,
+      onSave: true,
+      onTabs: false,
+      filter: (document, mode) => !configService.shouldRequestDiagnostics(document.uri, mode),
+    },
     middleware: {
       workspace: {
         configuration: (params: ConfigurationParams) => {

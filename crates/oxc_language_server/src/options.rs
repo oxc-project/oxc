@@ -25,10 +25,11 @@ pub enum UnusedDisableDirectives {
 #[derive(Debug, Default, Serialize, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct Options {
-    pub run: Run,
     pub config_path: Option<String>,
     pub unused_disable_directives: UnusedDisableDirectives,
     pub flags: FxHashMap<String, String>,
+    // can only be used when the server is pushing diagnostics
+    pub run: Run,
 }
 
 impl Options {

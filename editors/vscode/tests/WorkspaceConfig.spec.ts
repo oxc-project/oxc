@@ -1,5 +1,6 @@
 import { deepStrictEqual, strictEqual } from 'assert';
 import { ConfigurationTarget, workspace } from 'vscode';
+import { DiagnosticPullMode } from 'vscode-languageclient';
 import { WorkspaceConfig } from '../client/WorkspaceConfig.js';
 import { WORKSPACE_FOLDER } from './test-helpers.js';
 
@@ -60,7 +61,7 @@ suite('WorkspaceConfig', () => {
     const config = new WorkspaceConfig(WORKSPACE_FOLDER);
 
     await Promise.all([
-      config.updateRunTrigger('onSave'),
+      config.updateRunTrigger(DiagnosticPullMode.onSave),
       config.updateConfigPath('./somewhere'),
       config.updateUnusedDisableDirectives('deny'),
       config.updateFlags({ test: 'value' }),
