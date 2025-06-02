@@ -115,7 +115,7 @@ impl Tester<'_> {
         let reports = tokio::runtime::Runtime::new().unwrap().block_on(async {
             self.create_workspace_worker()
                 .await
-                .lint_file(&uri, None)
+                .lint_file(&uri)
                 .await
                 .expect("lint file is ignored")
         });

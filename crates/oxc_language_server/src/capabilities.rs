@@ -1,8 +1,9 @@
 use tower_lsp_server::lsp_types::{
     ClientCapabilities, CodeActionKind, CodeActionOptions, CodeActionProviderCapability,
-    ExecuteCommandOptions, OneOf, SaveOptions, ServerCapabilities, TextDocumentSyncCapability,
-    TextDocumentSyncKind, TextDocumentSyncOptions, TextDocumentSyncSaveOptions,
-    WorkDoneProgressOptions, WorkspaceFoldersServerCapabilities, WorkspaceServerCapabilities,
+    DiagnosticOptions, DiagnosticServerCapabilities, ExecuteCommandOptions, OneOf, SaveOptions,
+    ServerCapabilities, TextDocumentSyncCapability, TextDocumentSyncKind, TextDocumentSyncOptions,
+    TextDocumentSyncSaveOptions, WorkDoneProgressOptions, WorkspaceFoldersServerCapabilities,
+    WorkspaceServerCapabilities,
 };
 
 use crate::{code_actions::CODE_ACTION_KIND_SOURCE_FIX_ALL_OXC, commands::FIX_ALL_COMMAND_ID};
@@ -14,6 +15,7 @@ pub struct Capabilities {
     pub workspace_execute_command: bool,
     pub workspace_configuration: bool,
     pub dynamic_watchers: bool,
+    pub pull_diagnostics: bool,
 }
 
 impl From<ClientCapabilities> for Capabilities {
@@ -40,12 +42,18 @@ impl From<ClientCapabilities> for Capabilities {
             })
         });
 
+        let pull_diagnostics = value
+            .text_document
+            .as_ref()
+            .is_some_and(|text_document| text_document.diagnostic.is_some());
+
         Self {
             code_action_provider,
             workspace_apply_edit,
             workspace_execute_command,
             workspace_configuration,
             dynamic_watchers,
+            pull_diagnostics,
         }
     }
 }
@@ -89,6 +97,11 @@ impl From<Capabilities> for ServerCapabilities {
                     commands: vec![FIX_ALL_COMMAND_ID.to_string()],
                     ..Default::default()
                 })
+            } else {
+                None
+            },
+            diagnostic_provider: if value.pull_diagnostics {
+                Some(DiagnosticServerCapabilities::Options(DiagnosticOptions::default()))
             } else {
                 None
             },

@@ -13,8 +13,10 @@ use tower_lsp_server::{
         DidChangeConfigurationParams, DidChangeTextDocumentParams, DidChangeWatchedFilesParams,
         DidChangeWatchedFilesRegistrationOptions, DidChangeWorkspaceFoldersParams,
         DidCloseTextDocumentParams, DidOpenTextDocumentParams, DidSaveTextDocumentParams,
-        ExecuteCommandParams, InitializeParams, InitializeResult, InitializedParams, Registration,
-        ServerInfo, Unregistration, Uri, WorkspaceEdit,
+        DocumentDiagnosticParams, DocumentDiagnosticReport, DocumentDiagnosticReportResult,
+        ExecuteCommandParams, FullDocumentDiagnosticReport, InitializeParams, InitializeResult,
+        InitializedParams, Registration, RelatedFullDocumentDiagnosticReport, ServerInfo,
+        Unregistration, Uri, WorkspaceEdit,
     },
 };
 // #
@@ -466,7 +468,17 @@ impl LanguageServer for Backend {
         if !worker.should_lint_on_run_type(Run::OnSave).await {
             return;
         }
-        if let Some(diagnostics) = worker.lint_file(uri, None).await {
+
+        // we no longer need the cached document, as it is saved to disk
+        worker.remove_cached_document(uri);
+
+        if self.capabilities.get().is_some_and(|cap| cap.pull_diagnostics) {
+            // if the client supports pull diagnostics, we should not lint the file immediately
+            // but wait for the client to request diagnostics
+            return;
+        }
+
+        if let Some(diagnostics) = worker.lint_file(uri).await {
             self.client
                 .publish_diagnostics(
                     uri.clone(),
@@ -489,7 +501,19 @@ impl LanguageServer for Backend {
             return;
         }
         let content = params.content_changes.first().map(|c| c.text.clone());
-        if let Some(diagnostics) = worker.lint_file(uri, content).await {
+
+        if let Some(content) = content {
+            // cache the document content for later use
+            worker.cache_document(uri, content);
+        }
+
+        if self.capabilities.get().is_some_and(|cap| cap.pull_diagnostics) {
+            // if the client supports pull diagnostics, we should not lint the file immediately
+            // but wait for the client to request diagnostics
+            return;
+        }
+
+        if let Some(diagnostics) = worker.lint_file(uri).await {
             self.client
                 .publish_diagnostics(
                     uri.clone(),
@@ -507,8 +531,16 @@ impl LanguageServer for Backend {
             return;
         };
 
-        let content = params.text_document.text;
-        if let Some(diagnostics) = worker.lint_file(uri, Some(content)).await {
+        // cache the document content for later use
+        worker.cache_document(uri, params.text_document.text);
+
+        if self.capabilities.get().is_some_and(|cap| cap.pull_diagnostics) {
+            // if the client supports pull diagnostics, we should not lint the file immediately
+            // but wait for the client to request diagnostics
+            return;
+        }
+
+        if let Some(diagnostics) = worker.lint_file(uri).await {
             self.client
                 .publish_diagnostics(
                     uri.clone(),
@@ -525,7 +557,38 @@ impl LanguageServer for Backend {
         let Some(worker) = workers.iter().find(|worker| worker.is_responsible_for_uri(uri)) else {
             return;
         };
-        worker.remove_diagnostics(&params.text_document.uri);
+        worker.remove_cached_document(uri);
+        worker.remove_diagnostics(uri);
+    }
+
+    async fn diagnostic(
+        &self,
+        params: DocumentDiagnosticParams,
+    ) -> Result<DocumentDiagnosticReportResult> {
+        let uri = &params.text_document.uri;
+        let workers = self.workspace_workers.read().await;
+        let Some(worker) = workers.iter().find(|worker| worker.is_responsible_for_uri(uri)) else {
+            return Ok(DocumentDiagnosticReportResult::Report(DocumentDiagnosticReport::Full(
+                RelatedFullDocumentDiagnosticReport::default(),
+            )));
+        };
+        let diagnostics = worker.lint_file(uri).await;
+
+        if let Some(diagnostics) = diagnostics {
+            Ok(DocumentDiagnosticReportResult::Report(DocumentDiagnosticReport::Full(
+                RelatedFullDocumentDiagnosticReport {
+                    full_document_diagnostic_report: FullDocumentDiagnosticReport {
+                        items: diagnostics.into_iter().map(|d| d.diagnostic).collect(),
+                        ..Default::default()
+                    },
+                    ..Default::default()
+                },
+            )))
+        } else {
+            Ok(DocumentDiagnosticReportResult::Report(DocumentDiagnosticReport::Full(
+                RelatedFullDocumentDiagnosticReport::default(),
+            )))
+        }
     }
 
     async fn code_action(&self, params: CodeActionParams) -> Result<Option<CodeActionResponse>> {

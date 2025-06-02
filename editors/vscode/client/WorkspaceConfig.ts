@@ -1,9 +1,8 @@
 import { ConfigurationChangeEvent, ConfigurationTarget, workspace, WorkspaceFolder } from 'vscode';
+import { DiagnosticPullMode } from 'vscode-languageclient';
 import { ConfigService } from './ConfigService';
 
 export const oxlintConfigFileName = '.oxlintrc.json';
-
-export type Trigger = 'onSave' | 'onType';
 
 /**
  * See `"contributes.configuration"` in `package.json`
@@ -23,7 +22,7 @@ export interface WorkspaceConfigInterface {
    *
    * @default 'onType'
    */
-  run: Trigger;
+  run: DiagnosticPullMode;
   /**
    * Additional flags to pass to the LSP binary
    * `oxc.flags`
@@ -35,7 +34,7 @@ export interface WorkspaceConfigInterface {
 
 export class WorkspaceConfig {
   private _configPath: string | null = null;
-  private _runTrigger: Trigger = 'onType';
+  private _runTrigger: DiagnosticPullMode = DiagnosticPullMode.onType;
   private _flags: Record<string, string> = {};
 
   constructor(private readonly workspace: WorkspaceFolder) {
@@ -50,7 +49,7 @@ export class WorkspaceConfig {
     const flags = this.configuration.get<Record<string, string>>('flags') ?? {};
     const useNestedConfigs = !('disable_nested_config' in flags);
 
-    this._runTrigger = this.configuration.get<Trigger>('lint.run') || 'onType';
+    this._runTrigger = this.configuration.get<DiagnosticPullMode>('lint.run') || DiagnosticPullMode.onType;
     this._configPath = this.configuration.get<string | null>('configPath') ||
       (useNestedConfigs ? null : oxlintConfigFileName);
     this._flags = flags;
@@ -73,11 +72,11 @@ export class WorkspaceConfig {
     return this.configPath !== null && this.configPath !== oxlintConfigFileName;
   }
 
-  get runTrigger(): Trigger {
+  get runTrigger(): DiagnosticPullMode {
     return this._runTrigger;
   }
 
-  updateRunTrigger(value: Trigger): PromiseLike<void> {
+  updateRunTrigger(value: DiagnosticPullMode): PromiseLike<void> {
     this._runTrigger = value;
     return this.configuration.update('lint.run', value, ConfigurationTarget.WorkspaceFolder);
   }
@@ -98,6 +97,10 @@ export class WorkspaceConfig {
   updateFlags(value: Record<string, string>): PromiseLike<void> {
     this._flags = value;
     return this.configuration.update('flags', value, ConfigurationTarget.WorkspaceFolder);
+  }
+
+  public shouldRequestDiagnostics(diagnosticPullMode: DiagnosticPullMode): boolean {
+    return diagnosticPullMode === this.runTrigger;
   }
 
   public toLanguageServerConfig(): WorkspaceConfigInterface {
