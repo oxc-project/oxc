@@ -203,6 +203,9 @@ new-promise-rule name:
 new-vitest-rule name:
     cargo run -p rulegen {{name}} vitest
 
+new-regexp-rule name:
+    cargo run -p rulegen {{name}} regexp
+
 [unix]
 clone-submodule dir url sha:
   cd {{dir}} || git init {{dir}}
