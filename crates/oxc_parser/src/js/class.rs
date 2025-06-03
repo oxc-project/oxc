@@ -302,6 +302,7 @@ impl<'a> ParserImpl<'a> {
         definite: bool,
         modifiers: &Modifiers<'a>,
     ) -> ClassElement<'a> {
+        let decorators = self.consume_decorators();
         let type_annotation = if self.is_ts { self.parse_ts_type_annotation() } else { None };
         let value = self.eat(Kind::Eq).then(|| self.parse_assignment_expression_or_higher());
         self.asi();
@@ -322,7 +323,7 @@ impl<'a> ParserImpl<'a> {
         self.ast.class_element_accessor_property(
             self.end_span(span),
             r#type,
-            self.consume_decorators(),
+            decorators,
             key,
             type_annotation,
             value,
@@ -341,8 +342,8 @@ impl<'a> ParserImpl<'a> {
         kind: MethodDefinitionKind,
         modifiers: &Modifiers<'a>,
     ) -> ClassElement<'a> {
-        let (name, computed) = self.parse_class_element_name(modifiers);
         let decorators = self.consume_decorators();
+        let (name, computed) = self.parse_class_element_name(modifiers);
         let value = self.parse_method(modifiers.contains(ModifierKind::Async), false);
         let method_definition = self.ast.alloc_method_definition(
             self.end_span(span),
@@ -372,8 +373,8 @@ impl<'a> ParserImpl<'a> {
         r#type: MethodDefinitionType,
         modifiers: &Modifiers<'a>,
     ) -> Option<ClassElement<'a>> {
-        let name = self.parse_constructor_name()?;
         let decorators = self.consume_decorators();
+        let name = self.parse_constructor_name()?;
         let value = self.parse_method(modifiers.contains(ModifierKind::Async), false);
         let method_definition = self.ast.alloc_method_definition(
             self.end_span(span),

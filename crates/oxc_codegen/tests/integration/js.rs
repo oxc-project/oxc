@@ -5,6 +5,12 @@ use crate::tester::{
 };
 
 #[test]
+fn cases() {
+    test_same("class C {\n\t@foo static accessor A = @bar class {};\n}\n");
+    test_same("function foo(@foo x = @bar class {}) {}\n");
+}
+
+#[test]
 fn decl() {
     test_minify("const [foo] = bar", "const[foo]=bar;");
     test_minify("const {foo} = bar", "const{foo}=bar;");

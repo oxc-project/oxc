@@ -84,9 +84,9 @@ impl<'a> ParserImpl<'a> {
         if self.at(Kind::At) {
             self.eat_decorators();
         }
+        let decorators = self.consume_decorators();
         let modifiers = self.parse_parameter_modifiers();
         let pattern = self.parse_binding_pattern_with_initializer();
-        let decorators = self.consume_decorators();
         self.ast.formal_parameter(
             self.end_span(span),
             decorators,
