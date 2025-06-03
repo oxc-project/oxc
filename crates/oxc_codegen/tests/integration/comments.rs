@@ -123,7 +123,7 @@ export type TSTypeLiteral = {
 ",
         ];
 
-        snapshot("jsodc", &cases);
+        snapshot("jsdoc", &cases);
     }
 }
 
