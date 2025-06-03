@@ -236,12 +236,16 @@ ignored = ["napi", "oxc_transform_napi", "oxc_parser_napi", "prettyplease", "laz
 [profile.dev]
 # Disabling debug info speeds up local and CI builds,
 # and we don't rely on it for debugging that much.
-debug = false
+debug = true
+strip = false
+panic = "unwind"
 
 [profile.test]
 # Disabling debug info speeds up local and CI builds,
 # and we don't rely on it for debugging that much.
-debug = false
+debug = true
+strip = false
+panic = "unwind"
 
 [profile.dev.package]
 # Compile macros with some optimizations to make consuming crates build faster
@@ -261,9 +265,9 @@ opt-level = 'z'
 opt-level = 3
 lto = "fat"
 codegen-units = 1
-strip = "symbols" # Set to `false` for debug information
-debug = false # Set to `true` for debug information
-panic = "abort" # Let it crash and force ourselves to write safe Rust
+strip = false # Set to `false` for debug information
+debug = true # Set to `true` for debug information
+panic = "unwind" # Let it crash and force ourselves to write safe Rust
 
 # Profile used for release mode, but with debugging information for profiling
 # and debugging. Use `cargo build --profile=release-with-debug` to build with this profile.
