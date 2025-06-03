@@ -970,8 +970,8 @@ function deserializeMethodDefinition(pos) {
       type: 'Identifier',
       start: key.start,
       end: key.end,
-      name: 'constructor',
       decorators: [],
+      name: 'constructor',
       optional: false,
       typeAnnotation: null,
     };

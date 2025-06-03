@@ -303,8 +303,8 @@ impl ESTree for ExportAllDeclarationWithClause<'_, '_> {
                 type: 'Identifier',
                 start: key.start,
                 end: key.end,
-                name: 'constructor',
                 decorators: [],
+                name: 'constructor',
                 optional: false,
                 typeAnnotation: null,
             };
