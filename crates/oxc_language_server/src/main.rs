@@ -229,43 +229,9 @@ impl LanguageServer for Backend {
             });
 
         // the client passed valid options.
-        if let Some(options) = options {
-            for option in options {
-                let Some(worker) = workers
-                    .iter()
-                    .find(|worker| worker.is_responsible_for_uri(&option.workspace_uri))
-                else {
-                    continue;
-                };
-
-                let (diagnostics, watcher) = worker.did_change_configuration(&option.options).await;
-
-                if let Some(diagnostics) = diagnostics {
-                    for (uri, reports) in &diagnostics.pin() {
-                        new_diagnostics.pin().insert(
-                            uri.clone(),
-                            reports.iter().map(|d| d.diagnostic.clone()).collect(),
-                        );
-                    }
-                }
-
-                if let Some(watcher) = watcher {
-                    // remove the old watcher
-                    removing_registrations.push(Unregistration {
-                        id: format!("watcher-{}", worker.get_root_uri().as_str()),
-                        method: "workspace/didChangeWatchedFiles".to_string(),
-                    });
-                    // add the new watcher
-                    adding_registrations.push(Registration {
-                        id: format!("watcher-{}", worker.get_root_uri().as_str()),
-                        method: "workspace/didChangeWatchedFiles".to_string(),
-                        register_options: Some(json!(DidChangeWatchedFilesRegistrationOptions {
-                            watchers: vec![watcher]
-                        })),
-                    });
-                }
-            }
-        // else check if the client support workspace configuration requests
+        let resolved_options = if let Some(options) = options {
+            options
+            // else check if the client support workspace configuration requests
         } else if self
             .capabilities
             .get()
@@ -277,45 +243,58 @@ impl LanguageServer for Backend {
                 )
                 .await;
 
-            // we expect that the client is sending all the configuration items in order and completed
-            // this is a LSP specification and errors should be reported on the client side
-            for (index, worker) in workers.iter().enumerate() {
-                let Some(config) = &configs[index] else {
-                    continue;
-                };
-
-                let (diagnostics, watcher) = worker.did_change_configuration(config).await;
-
-                if let Some(diagnostics) = diagnostics {
-                    for (uri, reports) in &diagnostics.pin() {
-                        new_diagnostics.pin().insert(
-                            uri.clone(),
-                            reports.iter().map(|d| d.diagnostic.clone()).collect(),
-                        );
-                    }
-                }
-
-                if let Some(watcher) = watcher {
-                    // remove the old watcher
-                    removing_registrations.push(Unregistration {
-                        id: format!("watcher-{}", worker.get_root_uri().as_str()),
-                        method: "workspace/didChangeWatchedFiles".to_string(),
-                    });
-                    // add the new watcher
-                    adding_registrations.push(Registration {
-                        id: format!("watcher-{}", worker.get_root_uri().as_str()),
-                        method: "workspace/didChangeWatchedFiles".to_string(),
-                        register_options: Some(json!(DidChangeWatchedFilesRegistrationOptions {
-                            watchers: vec![watcher]
-                        })),
-                    });
-                }
-            }
+            // Only create WorkspaceOption when the config is Some
+            configs
+                .iter()
+                .enumerate()
+                // filter out results where the client did not return a configuration
+                .filter_map(|(index, config)| {
+                    config.as_ref().map(|options| WorkspaceOption {
+                        workspace_uri: workers[index].get_root_uri().clone(),
+                        options: options.clone(),
+                    })
+                })
+                .collect::<Vec<_>>()
         } else {
             warn!(
                 "could not update the configuration for a worker. Send a custom configuration with `workspace/didChangeConfiguration` or support `workspace/configuration`."
             );
             return;
+        };
+
+        for option in resolved_options {
+            let Some(worker) =
+                workers.iter().find(|worker| worker.is_responsible_for_uri(&option.workspace_uri))
+            else {
+                continue;
+            };
+
+            let (diagnostics, watcher) = worker.did_change_configuration(&option.options).await;
+
+            if let Some(diagnostics) = diagnostics {
+                for (uri, reports) in &diagnostics.pin() {
+                    new_diagnostics.pin().insert(
+                        uri.clone(),
+                        reports.iter().map(|d| d.diagnostic.clone()).collect(),
+                    );
+                }
+            }
+
+            if let Some(watcher) = watcher {
+                // remove the old watcher
+                removing_registrations.push(Unregistration {
+                    id: format!("watcher-{}", worker.get_root_uri().as_str()),
+                    method: "workspace/didChangeWatchedFiles".to_string(),
+                });
+                // add the new watcher
+                adding_registrations.push(Registration {
+                    id: format!("watcher-{}", worker.get_root_uri().as_str()),
+                    method: "workspace/didChangeWatchedFiles".to_string(),
+                    register_options: Some(json!(DidChangeWatchedFilesRegistrationOptions {
+                        watchers: vec![watcher]
+                    })),
+                });
+            }
         }
 
         if !new_diagnostics.is_empty() {
