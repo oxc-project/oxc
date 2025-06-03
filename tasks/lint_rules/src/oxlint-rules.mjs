@@ -57,6 +57,12 @@ const NOT_SUPPORTED_RULE_NAMES = new Set([
   'react/jsx-indent-props', // stylistic rule
   'react/jsx-props-no-multi-spaces', // stylistic rule
   'unicorn/no-for-loop', // this rule suggest using `Array.prototype.entries` which is slow https://github.com/oxc-project/oxc/issues/11311, furthermore, `typescript/prefer-for-of` covers most cases
+
+  'regexp/no-invalid-regexp', // handled by eslint/no-invalid-regexp
+  'regexp/no-useless-escape', // handled by eslint/no-useless-escape
+  'regexp/no-useless-backreference', // handled by eslint/no-useless-backreference
+  'regexp/no-useless-character-class', // handled by eslint/no-useless-character-class`
+  'regexp/no-empty-character-class', // handled by eslint/no-empty-character-class
 ]);
 
 /**
