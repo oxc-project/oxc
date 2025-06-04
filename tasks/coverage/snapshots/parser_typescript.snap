@@ -3,7 +3,7 @@ commit: 81c95189
 parser_typescript Summary:
 AST Parsed     : 6530/6537 (99.89%)
 Positive Passed: 6519/6537 (99.72%)
-Negative Passed: 1324/5763 (22.97%)
+Negative Passed: 1386/5763 (24.05%)
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/ClassDeclaration24.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/ExportAssignment7.ts
@@ -352,11 +352,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/betterErrorF
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/bigIntWithTargetLessThanES2016.ts
 
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/bigintArbirtraryIdentifier.ts
-
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/bigintIndex.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/bigintPropertyName.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/bigintWithLib.ts
 
@@ -705,8 +701,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/commentOnImp
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/commentsOnObjectLiteral1.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/commentsOnObjectLiteral2.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/commonJsExportTypeDeclarationError.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/commonJsUnusedLocals.ts
 
@@ -1256,11 +1250,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/duplicateObj
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/duplicateObjectLiteralProperty_computedName3.ts
 
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/duplicatePackage.ts
-
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/duplicatePackage_globalMerge.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/duplicatePackage_withErrors.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/duplicatePropertiesInStrictMode.ts
 
@@ -1339,8 +1329,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/enumBasics2.
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/enumBasics3.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/enumLiteralAssignableToEnumInsideUnion.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/enumNoInitializerFollowsNonLiteralInitializer.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/enumPropertyAccess.ts
 
@@ -1450,33 +1438,21 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/es6ImportDef
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/es6ImportDefaultBindingFollowedWithNamedImport1InEs5.ts
 
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/es6ImportDefaultBindingFollowedWithNamedImport1WithExport.ts
-
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/es6ImportDefaultBindingFollowedWithNamedImportDts.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/es6ImportDefaultBindingFollowedWithNamedImportDts1.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/es6ImportDefaultBindingFollowedWithNamedImportInEs5.ts
 
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/es6ImportDefaultBindingFollowedWithNamedImportWithExport.ts
-
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/es6ImportDefaultBindingFollowedWithNamespaceBinding.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/es6ImportDefaultBindingFollowedWithNamespaceBinding1WithExport.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/es6ImportDefaultBindingFollowedWithNamespaceBindingDts.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/es6ImportDefaultBindingFollowedWithNamespaceBindingInEs5.ts
 
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/es6ImportDefaultBindingFollowedWithNamespaceBindingWithExport.ts
-
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/es6ImportDefaultBindingInEs5.ts
 
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/es6ImportDefaultBindingMergeErrors.ts
-
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/es6ImportDefaultBindingNoDefaultProperty.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/es6ImportDefaultBindingWithExport.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/es6ImportEqualsDeclaration.ts
 
@@ -1484,21 +1460,9 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/es6ImportEqu
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/es6ImportEqualsExportModuleEs2015Error.ts
 
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/es6ImportNameSpaceImportMergeErrors.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/es6ImportNameSpaceImportWithExport.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/es6ImportNamedImportMergeErrors.ts
-
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/es6ImportNamedImportNoExportMember.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/es6ImportNamedImportNoNamedExports.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/es6ImportNamedImportParsingError.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/es6ImportNamedImportWithExport.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/es6ImportWithoutFromClauseWithExport.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/es6MemberScoping.ts
 
@@ -1669,8 +1633,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/fallFromLast
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/fatarrowfunctionsOptionalArgsErrors4.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/filesEmittingIntoSameOutput.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/fillInMissingTypeArgsOnJSConstructCalls.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/findLast.ts
 
@@ -2832,8 +2794,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/moduleNoneEr
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/modulePreserve3.ts
 
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/modulePreserve4.ts
-
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/moduleProperty2.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/moduleResolutionAsTypeReferenceDirectiveScoped.ts
@@ -3288,13 +3248,9 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/paramterDest
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/parenthesizedJSDocCastDoesNotNarrow.ts
 
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/parseAssertEntriesError.ts
-
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/parseCommaSeparatedNewlineNumber.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/parseCommaSeparatedNewlineString.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/parseImportAttributesError.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/parseJsxExtends2.ts
 
@@ -4146,10 +4102,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/uncalledFunc
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/uncalledFunctionChecksInConditional2.ts
 
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/unclosedExportClause01.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/unclosedExportClause02.ts
-
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/undeclaredBase.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/undeclaredMethod.ts
@@ -4177,8 +4129,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/undefinedTyp
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/underscoreTest1.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/unicodeEscapesInNames01.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/unicodeEscapesInNames02.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/unionErrorMessageOnMatchingDiscriminant.ts
 
@@ -4231,8 +4181,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/unresolvedTy
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/unspecializedConstraints.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/untypedFunctionCallsWithTypeParameters1.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/untypedModuleImport_withAugmentation2.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/unusedClassesinModule1.ts
 
@@ -5116,12 +5064,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/dynamicIm
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/dynamicImport/importCallExpressionErrorInES2015.ts
 
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/dynamicImport/importCallExpressionInScriptContext2.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/dynamicImport/importCallExpressionIncorrect1.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/dynamicImport/importCallExpressionIncorrect2.ts
-
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/dynamicImport/importCallExpressionNestedES2015.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/dynamicImport/importCallExpressionNestedES20152.ts
@@ -5129,8 +5071,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/dynamicIm
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/dynamicImport/importCallExpressionNoModuleKindSpecified.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/dynamicImport/importCallExpressionSpecifierNotStringTypeError.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/dynamicImport/importCallExpressionWithTypeArgument.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/enums/enumConstantMemberWithString.ts
 
@@ -5203,8 +5143,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/es2021/lo
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/es2022/arbitraryModuleNamespaceIdentifiers/arbitraryModuleNamespaceIdentifiers_exportEmpty.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/es2022/arbitraryModuleNamespaceIdentifiers/arbitraryModuleNamespaceIdentifiers_importEmpty.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/es2022/arbitraryModuleNamespaceIdentifiers/arbitraryModuleNamespaceIdentifiers_syntax.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/es2022/es2024SharedMemory.ts
 
@@ -5668,8 +5606,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/es6/modul
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/es6/modules/exportStar.ts
 
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/es6/modules/exportsAndImportsWithContextualKeywordNames01.ts
-
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/es6/modules/importEmptyFromModuleNotExisted.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/es6/modules/multipleDefaultExports01.ts
@@ -5881,10 +5817,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/es7/expon
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/es7/exponentiationOperator/exponentiationOperatorWithUndefinedValueAndValidOperands.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/esDecorators/classDeclaration/accessors/esDecorators-classDeclaration-accessors-nonStaticAbstract.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/esDecorators/classDeclaration/esDecorators-classDeclaration-exportModifier.2.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/esDecorators/classDeclaration/esDecorators-classDeclaration-exportModifier.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/esDecorators/classDeclaration/esDecorators-classDeclaration-missingEmitHelpers-classDecorator.1.ts
 
@@ -6300,8 +6232,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/externalM
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/externalModules/esnext/esnextmodulekindWithES5Target9.ts
 
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/externalModules/exportAssignNonIdentifier.ts
-
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/externalModules/exportAssignmentAndDeclaration.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/externalModules/exportAssignmentConstrainedGenericType.ts
@@ -6325,12 +6255,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/externalM
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/externalModules/importsImplicitlyReadonly.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/externalModules/initializersInDeclarations.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/externalModules/invalidSyntaxNamespaceImportWithAMD.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/externalModules/invalidSyntaxNamespaceImportWithCommonjs.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/externalModules/invalidSyntaxNamespaceImportWithSystem.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/externalModules/moduleResolutionWithoutExtension1.ts
 
@@ -6420,17 +6344,11 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/externalM
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/externalModules/typeOnly/exportNamespace9.ts
 
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/externalModules/typeOnly/exportNamespace_js.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/externalModules/typeOnly/exportSpecifiers.ts
-
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/externalModules/typeOnly/extendsClause.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/externalModules/typeOnly/filterNamespace_import.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/externalModules/typeOnly/generic.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/externalModules/typeOnly/grammarErrors.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/externalModules/typeOnly/importClause_default.ts
 
@@ -6445,10 +6363,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/externalM
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/externalModules/typeOnly/importEquals3.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/externalModules/typeOnly/importEqualsDeclaration.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/externalModules/typeOnly/importSpecifiers1.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/externalModules/typeOnly/importSpecifiers_js.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/externalModules/typeOnly/importsNotUsedAsValues_error.ts
 
@@ -6475,8 +6389,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/externalM
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/externalModules/typeOnlyMerge3.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/externalModules/typesOnlyExternalModuleStillHasInstance.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/externalModules/umd-errors.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/externalModules/umd2.ts
 
@@ -6538,13 +6450,9 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/generator
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/generators/generatorReturnTypeInferenceNonStrict.ts
 
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/importAssertion/importAssertion1.ts
-
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/importAssertion/importAssertion2.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/importAssertion/importAssertion3.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/importAttributes/importAttributes1.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/importAttributes/importAttributes2.ts
 
@@ -6742,13 +6650,9 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/jsdoc/dec
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/jsdoc/declarations/jsDeclarationsExportAssignedConstructorFunctionWithSub.ts
 
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/jsdoc/declarations/jsDeclarationsExportFormsErr.ts
-
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/jsdoc/declarations/jsDeclarationsImportAliasExposedWithinNamespace.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/jsdoc/declarations/jsDeclarationsTypeReassignmentFromDeclaration2.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/jsdoc/declarations/jsDeclarationsTypeReferences4.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/jsdoc/enumTag.ts
 
@@ -6956,12 +6860,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/jsx/inlin
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/jsx/inline/inlineJsxFactoryWithFragmentIsError.tsx
 
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/jsx/jsxCheckJsxNoTypeArgumentsAllowed.tsx
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/jsx/jsxParsingError2.tsx
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/jsx/jsxParsingError3.tsx
-
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/jsx/jsxSpreadOverwritesAttributeStrict.tsx
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/jsx/jsxs/jsxJsxsCjsTransformCustomImport.tsx
@@ -7138,8 +7036,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/moduleRes
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/node/allowJs/nodeAllowJsPackageSelfName.ts
 
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/node/allowJs/nodeModulesAllowJs1.ts
-
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/node/allowJs/nodeModulesAllowJsConditionalPackageExports.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/node/allowJs/nodeModulesAllowJsGeneratedNameCollisions.ts
@@ -7210,8 +7106,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/node/node
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/node/nodeModulesImportAttributesModeDeclarationEmitErrors.ts
 
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/node/nodeModulesImportAttributesTypeModeDeclarationEmitErrors.ts
-
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/node/nodeModulesImportHelpersCollisions.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/node/nodeModulesImportHelpersCollisions2.ts
@@ -7227,8 +7121,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/node/node
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/node/nodeModulesImportModeDeclarationEmitErrors1.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/node/nodeModulesImportResolutionNoCycle.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/node/nodeModulesImportTypeModeDeclarationEmitErrors1.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/node/nodeModulesJson.ts
 
@@ -7301,18 +7193,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/override/
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/override/override_js3.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/override/override_js4.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript2018/asyncGenerators/parser.asyncGenerators.classMethods.es2018.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript2018/asyncGenerators/parser.asyncGenerators.functionDeclarations.es2018.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript2018/asyncGenerators/parser.asyncGenerators.functionExpressions.es2018.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript2018/asyncGenerators/parser.asyncGenerators.objectLiteralMethods.es2018.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript2018/forAwait/parser.forAwait.es2018.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript2021/numericSeparators/parser.numericSeparators.decmialNegative.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript3/Accessors/parserES3Accessors1.ts
 
@@ -7874,8 +7754,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/salsa/glo
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/salsa/importAliasModuleExports.ts
 
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/salsa/importingExportingTypes.ts
-
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/salsa/inferringClassMembersFromAssignments.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/salsa/jsContainerMergeTsDeclaration2.ts
@@ -7915,8 +7793,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/salsa/mod
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/salsa/namespaceAssignmentToRequireAlias.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/salsa/nestedDestructuringOfRequire.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/salsa/plainJSGrammarErrors3.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/salsa/plainJSTypeErrors.ts
 
@@ -10288,6 +10164,19 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
    ╰────
   help: Try insert a semicolon here
 
+  × Unexpected token
+   ╭─[typescript/tests/cases/compiler/bigintArbirtraryIdentifier.ts:1:10]
+ 1 │ import { 0n as foo } from "./foo";
+   ·          ──
+   ╰────
+
+  × Invalid characters after number
+    ╭─[typescript/tests/cases/compiler/bigintPropertyName.ts:35:4]
+ 34 │ 
+ 35 │ g.2n; // not valid JS
+    ·    ─
+    ╰────
+
   × Illegal break statement
    ╭─[typescript/tests/cases/compiler/breakNotInIterationOrSwitchStatement1.ts:1:1]
  1 │ break;
@@ -11001,6 +10890,11 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
     ·             ─────────
  47 │     }
     ╰────
+
+  × Expected `=` but found `EOF`
+   ╭─[typescript/tests/cases/compiler/commonJsExportTypeDeclarationError.ts:3:1]
+ 2 │ export type test
+   ╰────
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[typescript/tests/cases/compiler/commonMissingSemicolons.ts:2:6]
@@ -12214,6 +12108,20 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
  4 │   while (true) {
    ╰────
 
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
+   ╭─[typescript/tests/cases/compiler/duplicatePackage.ts:1:8]
+ 1 │ content not parsed
+   ·        ▲
+   ╰────
+  help: Try insert a semicolon here
+
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
+   ╭─[typescript/tests/cases/compiler/duplicatePackage_withErrors.ts:1:8]
+ 1 │ content not parsed
+   ·        ▲
+   ╰────
+  help: Try insert a semicolon here
+
   × 'super' can only be referenced in members of derived classes or object literal expressions.
     ╭─[typescript/tests/cases/compiler/emitThisInSuperMethodCall.ts:10:17]
   9 │             function inner() {
@@ -12280,6 +12188,14 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
  6 │ var z = Position2.IgnoreRulesSpecific; // no error
    ╰────
   help: Try insert a semicolon here
+
+  × Enum member must have initializer.
+   ╭─[typescript/tests/cases/compiler/enumNoInitializerFollowsNonLiteralInitializer.ts:7:5]
+ 6 │     d = (c)! satisfies number as any,
+ 7 │     e,
+   ·     ─
+ 8 │ }
+   ╰────
 
   × Expected `,` but found `}`
    ╭─[typescript/tests/cases/compiler/enumWithParenthesizedInitializer1.ts:3:1]
@@ -12408,6 +12324,71 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
  2 │ function foo() {}
    ╰────
 
+  × Unexpected export.
+   ╭─[typescript/tests/cases/compiler/es6ImportDefaultBindingFollowedWithNamedImport1WithExport.ts:1:8]
+ 1 │ export import defaultBinding1, { } from "./server";
+   ·        ────────────────────────────────────────────
+ 2 │ export var x1: number = defaultBinding1;
+   ╰────
+
+  × Unexpected export.
+   ╭─[typescript/tests/cases/compiler/es6ImportDefaultBindingFollowedWithNamedImportWithExport.ts:1:8]
+ 1 │ export import defaultBinding1, { } from "server";
+   ·        ──────────────────────────────────────────
+ 2 │ export import defaultBinding2, { a } from "server";
+   ╰────
+
+  × Unexpected export.
+   ╭─[typescript/tests/cases/compiler/es6ImportDefaultBindingFollowedWithNamespaceBinding1WithExport.ts:1:8]
+ 1 │ export import defaultBinding, * as nameSpaceBinding  from "server";
+   ·        ────────────────────────────────────────────────────────────
+ 2 │ export var x: number = defaultBinding;
+   ╰────
+
+  × Unexpected export.
+   ╭─[typescript/tests/cases/compiler/es6ImportDefaultBindingFollowedWithNamespaceBindingWithExport.ts:1:8]
+ 1 │ export import defaultBinding, * as nameSpaceBinding  from "./server";
+   ·        ──────────────────────────────────────────────────────────────
+ 2 │ export var x: number = nameSpaceBinding.a;
+   ╰────
+
+  × Identifier `defaultBinding3` has already been declared
+   ╭─[typescript/tests/cases/compiler/es6ImportDefaultBindingMergeErrors.ts:7:8]
+ 6 │ var defaultBinding2 = "hello world"; 
+ 7 │ import defaultBinding3 from "./es6ImportDefaultBindingMergeErrors_0"; // Should be error
+   ·        ───────┬───────
+   ·               ╰── `defaultBinding3` has already been declared here
+ 8 │ import defaultBinding3 from "./es6ImportDefaultBindingMergeErrors_0"; // SHould be error
+   ·        ───────┬───────
+   ·               ╰── It can not be redeclared here
+   ╰────
+
+  × Unexpected export.
+   ╭─[typescript/tests/cases/compiler/es6ImportDefaultBindingWithExport.ts:1:8]
+ 1 │ export import defaultBinding from "server";
+   ·        ────────────────────────────────────
+ 2 │ export var x = defaultBinding;
+   ╰────
+
+  × Identifier `nameSpaceBinding1` has already been declared
+   ╭─[typescript/tests/cases/compiler/es6ImportNameSpaceImportMergeErrors.ts:4:13]
+ 3 │ 
+ 4 │ import * as nameSpaceBinding1 from "./es6ImportNameSpaceImportMergeErrors_0"; // should be error
+   ·             ────────┬────────
+   ·                     ╰── `nameSpaceBinding1` has already been declared here
+ 5 │ import * as nameSpaceBinding1 from "./es6ImportNameSpaceImportMergeErrors_0"; // should be error
+   ·             ────────┬────────
+   ·                     ╰── It can not be redeclared here
+ 6 │ 
+   ╰────
+
+  × Unexpected export.
+   ╭─[typescript/tests/cases/compiler/es6ImportNameSpaceImportWithExport.ts:1:8]
+ 1 │ export import * as nameSpaceBinding from "server";
+   ·        ───────────────────────────────────────────
+ 2 │ export var x = nameSpaceBinding.a;
+   ╰────
+
   × Identifier expected. 'yield' is a reserved word that cannot be used here.
    ╭─[typescript/tests/cases/compiler/es6ImportNamedImportIdentifiersParsing.ts:1:10]
  1 │ import { yield } from "somemodule"; // Allowed
@@ -12499,11 +12480,42 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
    ·                        ╰── It can not be redeclared here
    ╰────
 
+  × Identifier `z` has already been declared
+    ╭─[typescript/tests/cases/compiler/es6ImportNamedImportMergeErrors.ts:9:10]
+  8 │ var x44 = 10; 
+  9 │ import { z } from "./es6ImportNamedImportMergeErrors_0"; // should be error
+    ·          ┬
+    ·          ╰── `z` has already been declared here
+ 10 │ import { z1 as z } from "./es6ImportNamedImportMergeErrors_0"; // should be error
+    ·                ┬
+    ·                ╰── It can not be redeclared here
+    ╰────
+
+  × Unexpected token
+   ╭─[typescript/tests/cases/compiler/es6ImportNamedImportParsingError.ts:1:10]
+ 1 │ import { * } from "es6ImportNamedImportParsingError_0";
+   ·          ─
+ 2 │ import defaultBinding, from "es6ImportNamedImportParsingError_0";
+   ╰────
+
+  × Unexpected export.
+   ╭─[typescript/tests/cases/compiler/es6ImportNamedImportWithExport.ts:1:8]
+ 1 │ export import { } from "./server";
+   ·        ───────────────────────────
+ 2 │ export import { a } from "./server";
+   ╰────
+
   × Expected `from` but found `decimal`
    ╭─[typescript/tests/cases/compiler/es6ImportParseErrors.ts:1:8]
  1 │ import 10;
    ·        ─┬
    ·         ╰── `from` expected
+   ╰────
+
+  × Unexpected export.
+   ╭─[typescript/tests/cases/compiler/es6ImportWithoutFromClauseWithExport.ts:1:8]
+ 1 │ export import "server";
+   ·        ────────────────
    ╰────
 
   × 'export' modifier cannot be used here.
@@ -12826,6 +12838,15 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
  2 │ // 0.  It should be counted as a space and should not trigger ASI
  3 │ return0; 
    · ──────
+   ╰────
+
+  × Expected `{` but found `<`
+   ╭─[typescript/tests/cases/compiler/fillInMissingTypeArgsOnJSConstructCalls.ts:2:23]
+ 1 │ import BaseA from './BaseA';
+ 2 │ export default class B<T: BaseA> {
+   ·                       ┬
+   ·                       ╰── `{` expected
+ 3 │     _AClass: Class<T>;
    ╰────
 
   × Expected `;` but found `)`
@@ -14520,6 +14541,14 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
    ╰────
   help: Try insert a semicolon here
 
+  × TS(8002): 'import ... =' can only be used in TypeScript files.
+   ╭─[typescript/tests/cases/compiler/modulePreserve4.ts:2:1]
+ 1 │ import { x, y } from "./a"; // No y
+ 2 │ import a1 = require("./a"); // Error in JS
+   · ───────────────────────────
+ 3 │ const a2 = require("./a"); // { x: 0 }
+   ╰────
+
   × `await` is only allowed within async functions and at the top levels of modules
    ╭─[typescript/tests/cases/compiler/modulePreserveTopLevelAwait1.ts:1:5]
  1 │ for await (const x of []) {}
@@ -15361,6 +15390,15 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
    · ─
    ╰────
 
+  × Expected `:` but found `,`
+   ╭─[typescript/tests/cases/compiler/parseAssertEntriesError.ts:2:36]
+ 1 │ export type LocalInterface =
+ 2 │     & import("pkg", { assert: {1234, "resolution-mode": "require"} }).RequireInterface
+   ·                                    ┬
+   ·                                    ╰── `:` expected
+ 3 │     & import("pkg", { assert: {1234, "resolution-mode": "import"} }).ImportInterface;
+   ╰────
+
   × Invalid characters after number
     ╭─[typescript/tests/cases/compiler/parseBigInt.ts:56:25]
  55 │ // In separate blocks because they each declare an "n" variable
@@ -15397,6 +15435,15 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
  2 │     (n: number) => string; // should be : not =>
    ·                 ──
  3 │ }
+   ╰────
+
+  × Expected `:` but found `,`
+   ╭─[typescript/tests/cases/compiler/parseImportAttributesError.ts:2:34]
+ 1 │ export type LocalInterface =
+ 2 │     & import("pkg", { with: {1234, "resolution-mode": "require"} }).RequireInterface
+   ·                                  ┬
+   ·                                  ╰── `:` expected
+ 3 │     & import("pkg", { with: {1234, "resolution-mode": "import"} }).ImportInterface;
    ╰────
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
@@ -18142,12 +18189,33 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
  3 │ }
    ╰────
 
+  × Expected `,` but found `string`
+   ╭─[typescript/tests/cases/compiler/unclosedExportClause01.ts:1:18]
+ 1 │ export { x, from "./t1"
+   ·                  ───┬──
+   ·                     ╰── `,` expected
+   ╰────
+
+  × Expected `,` but found `string`
+   ╭─[typescript/tests/cases/compiler/unclosedExportClause02.ts:2:5]
+ 1 │ export { x, from
+ 2 │     "./t1";
+   ·     ───┬──
+   ·        ╰── `,` expected
+   ╰────
+
   × Unexpected token
    ╭─[typescript/tests/cases/compiler/unexpectedStatementBlockTerminator.ts:4:1]
  3 │ class Bar {}
  4 │ case
    · ────
  5 │ 
+   ╰────
+
+  × Invalid Unicode escape sequence
+   ╭─[typescript/tests/cases/compiler/unicodeEscapesInNames02.ts:1:20]
+ 1 │ import { _𐊧 as \uD800\uDEA7 } from "./extendedEscapesForAstralsInVarsAndClasses.js";
+   ·                 ───────────
    ╰────
 
   × Invalid Character `₁`
@@ -18201,6 +18269,13 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
  1 │ "\
    · ──
    ╰────
+
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
+   ╭─[typescript/tests/cases/compiler/untypedModuleImport_withAugmentation2.ts:1:5]
+ 1 │ This file is not processed.
+   ·     ▲
+   ╰────
+  help: Try insert a semicolon here
 
   × Expected `;` but found `)`
     ╭─[typescript/tests/cases/compiler/unusedLocalsAndParameters.ts:83:14]
@@ -20987,6 +21062,35 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
  6 │ 
    ╰────
 
+  × Cannot assign to 'arguments' in strict mode
+   ╭─[typescript/tests/cases/conformance/dynamicImport/importCallExpressionInScriptContext2.ts:3:10]
+ 2 │ var p1 = import("./0");
+ 3 │ function arguments() { }
+   ·          ─────────
+   ╰────
+
+  × Expected `from` but found `import`
+   ╭─[typescript/tests/cases/conformance/dynamicImport/importCallExpressionIncorrect1.ts:2:1]
+ 1 │ import
+ 2 │ import { foo } from './0';
+   · ───┬──
+   ·    ╰── `from` expected
+   ╰────
+
+  × Unexpected token
+   ╭─[typescript/tests/cases/conformance/dynamicImport/importCallExpressionIncorrect2.ts:1:16]
+ 1 │ var x = import { foo } from './0';
+   ·                ─
+   ╰────
+
+  × Unexpected token
+   ╭─[typescript/tests/cases/conformance/dynamicImport/importCallExpressionWithTypeArgument.ts:2:16]
+ 1 │ "use strict"
+ 2 │ var p1 = import<Promise<any>>("./0");  // error
+   ·                ─
+ 3 │ var p2 = import<>("./0");  // error
+   ╰────
+
   × `await` is only allowed within async functions and at the top levels of modules
    ╭─[typescript/tests/cases/conformance/enums/awaitAndYield.ts:3:15]
  2 │     enum E {
@@ -21026,6 +21130,12 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
  8 │ const y = `\u{hello} ${ 100 } \xtraordinary ${ 200 } wonderful ${ 300 } \uworld`; // should error with NoSubstitutionTemplate
    ·                                                                        ────────
  9 │ const z = tag`\u{hello} \xtraordinary wonderful \uworld` // should work with Tagged NoSubstitutionTemplate
+   ╰────
+
+  × Identifier expected.
+   ╭─[typescript/tests/cases/conformance/es2022/arbitraryModuleNamespaceIdentifiers/arbitraryModuleNamespaceIdentifiers_syntax.ts:1:17]
+ 1 │ import { foo as "invalid 2" } from "./values-valid";
+   ·                 ───────────
    ╰────
 
   × Function implementation is missing or not immediately following the declaration.
@@ -21864,6 +21974,18 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
  4 │     if (a) ¬ * bar;
    ·            ─
  5 │     return bar;
+   ╰────
+
+  × Identifier expected. 'yield' is a reserved word that cannot be used here.
+   ╭─[typescript/tests/cases/conformance/es6/modules/exportsAndImportsWithContextualKeywordNames01.ts:1:17]
+ 1 │ import { set as yield } from "./t1";
+   ·                 ─────
+   ╰────
+
+  × The keyword 'yield' is reserved
+   ╭─[typescript/tests/cases/conformance/es6/modules/exportsAndImportsWithContextualKeywordNames01.ts:1:17]
+ 1 │ import { set as yield } from "./t1";
+   ·                 ─────
    ╰────
 
   × Expected `,` but found `string`
@@ -24075,6 +24197,20 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
  3 │ }
    ╰────
 
+  × 'default' modifier cannot be used here.
+   ╭─[typescript/tests/cases/conformance/esDecorators/classDeclaration/esDecorators-classDeclaration-exportModifier.2.ts:2:13]
+ 1 │ // error
+ 2 │ export @dec default class C3 {}
+   ·             ───────
+   ╰────
+
+  × Unexpected token
+   ╭─[typescript/tests/cases/conformance/esDecorators/classDeclaration/esDecorators-classDeclaration-exportModifier.ts:2:13]
+ 1 │ // error
+ 2 │ export @dec default class C3 {}
+   ·             ───────
+   ╰────
+
   × Expression must be enclosed in parentheses to be used as a decorator.
     ╭─[typescript/tests/cases/conformance/esDecorators/esDecorators-decoratorExpression.1.ts:9:4]
   8 │ 
@@ -24719,6 +24855,12 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
   help: Try insert a semicolon here
 
   × Unexpected token
+   ╭─[typescript/tests/cases/conformance/externalModules/exportAssignNonIdentifier.ts:1:14]
+ 1 │ export = void; // Error, void operator requires an argument
+   ·              ─
+   ╰────
+
+  × Unexpected token
    ╭─[typescript/tests/cases/conformance/externalModules/exportNonInitializedVariablesAMD.ts:1:4]
  1 │ var;
    ·    ─
@@ -24766,6 +24908,27 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
  1 │ var x = "filename";
  2 │ import foo = require(x); // invalid
    ·                      ─
+   ╰────
+
+  × Expected `as` but found `from`
+   ╭─[typescript/tests/cases/conformance/externalModules/invalidSyntaxNamespaceImportWithAMD.ts:1:10]
+ 1 │ import * from Zero from "./0"
+   ·          ──┬─
+   ·            ╰── `as` expected
+   ╰────
+
+  × Expected `as` but found `from`
+   ╭─[typescript/tests/cases/conformance/externalModules/invalidSyntaxNamespaceImportWithCommonjs.ts:1:10]
+ 1 │ import * from Zero from "./0"
+   ·          ──┬─
+   ·            ╰── `as` expected
+   ╰────
+
+  × Expected `as` but found `from`
+   ╭─[typescript/tests/cases/conformance/externalModules/invalidSyntaxNamespaceImportWithSystem.ts:1:10]
+ 1 │ import * from Zero from "./0"
+   ·          ──┬─
+   ·            ╰── `as` expected
    ╰────
 
   × The keyword 'await' is reserved
@@ -25010,12 +25173,54 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
  12 │ }
     ╰────
 
+  × Unexpected token
+   ╭─[typescript/tests/cases/conformance/externalModules/typeOnly/exportNamespace_js.ts:1:13]
+ 1 │ export type * from './a';
+   ·             ─
+   ╰────
+
+  × TS(2207): The 'type' modifier cannot be used on a named export when 'export type' is used on its export statement.
+   ╭─[typescript/tests/cases/conformance/externalModules/typeOnly/exportSpecifiers.ts:9:15]
+ 8 │ export { type as as bar };
+ 9 │ export type { type something as whatever }; // Error
+   ·               ────
+   ╰────
+
   × Expected `,` but found `Identifier`
    ╭─[typescript/tests/cases/conformance/externalModules/typeOnly/exportSpecifiers_js.ts:2:15]
  1 │ const foo = 0;
  2 │ export { type foo };
    ·               ─┬─
    ·                ╰── `,` expected
+   ╰────
+
+  × Unexpected token
+   ╭─[typescript/tests/cases/conformance/externalModules/typeOnly/grammarErrors.ts:1:13]
+ 1 │ import type A from './a';
+   ·             ─
+ 2 │ export type { A };
+   ╰────
+
+  × Expected `,` but found `as`
+   ╭─[typescript/tests/cases/conformance/externalModules/typeOnly/importSpecifiers1.ts:1:24]
+ 1 │ import { type as as as as } from "./mod.js"; // Error
+   ·                        ─┬
+   ·                         ╰── `,` expected
+   ╰────
+
+  × Expected `,` but found `Identifier`
+   ╭─[typescript/tests/cases/conformance/externalModules/typeOnly/importSpecifiers_js.ts:1:15]
+ 1 │ import { type A } from "./a";
+   ·               ┬
+   ·               ╰── `,` expected
+   ╰────
+
+  × Unexpected token
+   ╭─[typescript/tests/cases/conformance/externalModules/umd-errors.ts:3:15]
+ 2 │ export var p;
+ 3 │ static export as namespace oo1;
+   ·               ──
+ 4 │ declare export as namespace oo2;
    ╰────
 
   × Identifier `fn2` has already been declared
@@ -25130,6 +25335,14 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
  42 │ }
     ╰────
 
+  × import() requires a specifier.
+   ╭─[typescript/tests/cases/conformance/importAssertion/importAssertion1.ts:8:11]
+ 7 │ const e = import('./0', foo())
+ 8 │ const f = import()
+   ·           ────────
+ 9 │ const g = import('./0', {}, {})
+   ╰────
+
   × Expected `{` but found `EOF`
    ╭─[typescript/tests/cases/conformance/importAssertion/importAssertion4.ts:1:36]
  1 │ import * as f from "./first" assert
@@ -25138,6 +25351,14 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
   × Expected `}` but found `EOF`
    ╭─[typescript/tests/cases/conformance/importAssertion/importAssertion5.ts:1:38]
  1 │ import * as f from "./first" assert {
+   ╰────
+
+  × import() requires a specifier.
+   ╭─[typescript/tests/cases/conformance/importAttributes/importAttributes1.ts:8:11]
+ 7 │ const e = import('./0', foo())
+ 8 │ const f = import()
+   ·           ────────
+ 9 │ const g = import('./0', {}, {})
    ╰────
 
   × Expected `{` but found `EOF`
@@ -25472,12 +25693,42 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
  11 │ 
     ╰────
 
+  × TS(8002): 'import ... =' can only be used in TypeScript files.
+   ╭─[typescript/tests/cases/conformance/jsdoc/declarations/jsDeclarationsExportFormsErr.ts:1:1]
+ 1 │ import ns = require("./cls");
+   · ─────────────────────────────
+ 2 │ export = ns; // TS Only
+   ╰────
+
+  × Unexpected token
+   ╭─[typescript/tests/cases/conformance/jsdoc/declarations/jsDeclarationsExportFormsErr.ts:2:8]
+ 1 │ import ns = require("./cls");
+ 2 │ export = ns; // TS Only
+   ·        ─
+   ╰────
+
   × Unexpected token
    ╭─[typescript/tests/cases/conformance/jsdoc/declarations/jsDeclarationsInterfaces.ts:7:8]
  6 │ export interface B {
  7 │     cat: string;
    ·        ─
  8 │ }
+   ╰────
+
+  × 'export statement' declaration can only be used at the top level of a module
+    ╭─[typescript/tests/cases/conformance/jsdoc/declarations/jsDeclarationsTypeReferences4.ts:10:9]
+  9 │         // @ts-ignore
+ 10 │         export { thing };
+    ·         ──────
+ 11 │     }
+    ╰────
+
+  × 'export statement' declaration can only be used at the top level of a module
+   ╭─[typescript/tests/cases/conformance/jsdoc/declarations/jsDeclarationsTypeReferences4.ts:6:5]
+ 5 │     // @ts-ignore
+ 6 │     export namespace B {
+   ·     ──────
+ 7 │         const Something = require("fs").Something;
    ╰────
 
   × Identifier `err` has already been declared
@@ -25551,6 +25802,14 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
  8 │ </div>
    ╰────
 
+  × Expected `>` but found `<`
+   ╭─[typescript/tests/cases/conformance/jsx/jsxCheckJsxNoTypeArgumentsAllowed.tsx:4:16]
+ 3 │ 
+ 4 │ let x = <MyComp<Prop> a={10} b="hi" />; // error, no type arguments in js
+   ·                ┬
+   ·                ╰── `>` expected
+   ╰────
+
   × Unexpected token. Did you mean `{'>'}` or `&gt;`?
     ╭─[typescript/tests/cases/conformance/jsx/jsxEsprimaFbTestSuite.tsx:40:41]
  39 │ 
@@ -25573,6 +25832,26 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
     ·                              ──────────────
     ╰────
   help: Did you mean to write an array?
+
+  × Expected corresponding JSX closing tag for 'span'.
+   ╭─[typescript/tests/cases/conformance/jsx/jsxParsingError2.tsx:2:16]
+ 1 │ // Issue error about missing span closing tag, not missing div closing tag
+ 2 │ let x1 = <div><span></div>;
+   ·                ────   ───
+   ╰────
+
+  × Unexpected token
+   ╭─[typescript/tests/cases/conformance/jsx/jsxParsingError2.tsx:2:27]
+ 1 │ // Issue error about missing span closing tag, not missing div closing tag
+ 2 │ let x1 = <div><span></div>;
+   ·                           ──
+   ╰────
+
+  × Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+   ╭─[typescript/tests/cases/conformance/jsx/jsxParsingError3.tsx:1:15]
+ 1 │ let x1 = <div>}</div>;
+   ·               ▲
+   ╰────
 
   × Missing initializer in const declaration
    ╭─[typescript/tests/cases/conformance/jsx/jsxParsingErrorImmediateSpreadInAttributeValue.tsx:8:7]
@@ -25738,6 +26017,94 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
    ╰────
   help: Try insert a semicolon here
 
+  × TS(8002): 'import ... =' can only be used in TypeScript files.
+    ╭─[typescript/tests/cases/conformance/node/allowJs/nodeModulesAllowJs1.ts:50:1]
+ 49 │ // These should _mostly_ work - `import = require` always desugars to require calls, which do have extension and index resolution (but can't load anything that resolves to esm!)
+ 50 │ import m24 = require("./");
+    · ───────────────────────────
+ 51 │ import m25 = require("./index");
+    ╰────
+
+  × TS(8002): 'import ... =' can only be used in TypeScript files.
+    ╭─[typescript/tests/cases/conformance/node/allowJs/nodeModulesAllowJs1.ts:51:1]
+ 50 │ import m24 = require("./");
+ 51 │ import m25 = require("./index");
+    · ────────────────────────────────
+ 52 │ import m26 = require("./subfolder");
+    ╰────
+
+  × TS(8002): 'import ... =' can only be used in TypeScript files.
+    ╭─[typescript/tests/cases/conformance/node/allowJs/nodeModulesAllowJs1.ts:52:1]
+ 51 │ import m25 = require("./index");
+ 52 │ import m26 = require("./subfolder");
+    · ────────────────────────────────────
+ 53 │ import m27 = require("./subfolder/");
+    ╰────
+
+  × TS(8002): 'import ... =' can only be used in TypeScript files.
+    ╭─[typescript/tests/cases/conformance/node/allowJs/nodeModulesAllowJs1.ts:53:1]
+ 52 │ import m26 = require("./subfolder");
+ 53 │ import m27 = require("./subfolder/");
+    · ─────────────────────────────────────
+ 54 │ import m28 = require("./subfolder/index");
+    ╰────
+
+  × TS(8002): 'import ... =' can only be used in TypeScript files.
+    ╭─[typescript/tests/cases/conformance/node/allowJs/nodeModulesAllowJs1.ts:54:1]
+ 53 │ import m27 = require("./subfolder/");
+ 54 │ import m28 = require("./subfolder/index");
+    · ──────────────────────────────────────────
+ 55 │ import m29 = require("./subfolder2");
+    ╰────
+
+  × TS(8002): 'import ... =' can only be used in TypeScript files.
+    ╭─[typescript/tests/cases/conformance/node/allowJs/nodeModulesAllowJs1.ts:55:1]
+ 54 │ import m28 = require("./subfolder/index");
+ 55 │ import m29 = require("./subfolder2");
+    · ─────────────────────────────────────
+ 56 │ import m30 = require("./subfolder2/");
+    ╰────
+
+  × TS(8002): 'import ... =' can only be used in TypeScript files.
+    ╭─[typescript/tests/cases/conformance/node/allowJs/nodeModulesAllowJs1.ts:56:1]
+ 55 │ import m29 = require("./subfolder2");
+ 56 │ import m30 = require("./subfolder2/");
+    · ──────────────────────────────────────
+ 57 │ import m31 = require("./subfolder2/index");
+    ╰────
+
+  × TS(8002): 'import ... =' can only be used in TypeScript files.
+    ╭─[typescript/tests/cases/conformance/node/allowJs/nodeModulesAllowJs1.ts:57:1]
+ 56 │ import m30 = require("./subfolder2/");
+ 57 │ import m31 = require("./subfolder2/index");
+    · ───────────────────────────────────────────
+ 58 │ import m32 = require("./subfolder2/another");
+    ╰────
+
+  × TS(8002): 'import ... =' can only be used in TypeScript files.
+    ╭─[typescript/tests/cases/conformance/node/allowJs/nodeModulesAllowJs1.ts:58:1]
+ 57 │ import m31 = require("./subfolder2/index");
+ 58 │ import m32 = require("./subfolder2/another");
+    · ─────────────────────────────────────────────
+ 59 │ import m33 = require("./subfolder2/another/");
+    ╰────
+
+  × TS(8002): 'import ... =' can only be used in TypeScript files.
+    ╭─[typescript/tests/cases/conformance/node/allowJs/nodeModulesAllowJs1.ts:59:1]
+ 58 │ import m32 = require("./subfolder2/another");
+ 59 │ import m33 = require("./subfolder2/another/");
+    · ──────────────────────────────────────────────
+ 60 │ import m34 = require("./subfolder2/another/index");
+    ╰────
+
+  × TS(8002): 'import ... =' can only be used in TypeScript files.
+    ╭─[typescript/tests/cases/conformance/node/allowJs/nodeModulesAllowJs1.ts:60:1]
+ 59 │ import m33 = require("./subfolder2/another/");
+ 60 │ import m34 = require("./subfolder2/another/index");
+    · ───────────────────────────────────────────────────
+ 61 │ void m24;
+    ╰────
+
   × Unexpected token
    ╭─[typescript/tests/cases/conformance/node/allowJs/nodeModulesAllowJsExportAssignment.ts:3:8]
  2 │ const a = {};
@@ -25776,6 +26143,24 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
  6 │ export async function f() {
    ╰────
 
+  × Expected `{` but found `[`
+   ╭─[typescript/tests/cases/conformance/node/nodeModulesImportAttributesTypeModeDeclarationEmitErrors.ts:3:21]
+ 2 │ export type LocalInterface =
+ 3 │     & import("pkg", [ {"resolution-mode": "require"} ]).RequireInterface
+   ·                     ┬
+   ·                     ╰── `{` expected
+ 4 │     & import("pkg", [ {"resolution-mode": "import"} ]).ImportInterface;
+   ╰────
+
+  × Expected `{` but found `[`
+   ╭─[typescript/tests/cases/conformance/node/nodeModulesImportTypeModeDeclarationEmitErrors1.ts:3:21]
+ 2 │ export type LocalInterface =
+ 3 │     & import("pkg", [ {"resolution-mode": "require"} ]).RequireInterface
+   ·                     ┬
+   ·                     ╰── `{` expected
+ 4 │     & import("pkg", [ {"resolution-mode": "import"} ]).ImportInterface;
+   ╰────
+
   × TS(1030): override' modifier already seen.
     ╭─[typescript/tests/cases/conformance/override/override5.ts:22:14]
  21 │ 
@@ -25802,11 +26187,85 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
  26 │ }
     ╰────
 
+  × Cannot use `await` as an identifier in an async context
+   ╭─[typescript/tests/cases/conformance/parser/ecmascript2018/asyncGenerators/parser.asyncGenerators.classMethods.es2018.ts:2:15]
+ 1 │ class C4 {
+ 2 │     async * f(await) {
+   ·               ─────
+ 3 │     }
+   ╰────
+
+  × The keyword 'await' is reserved
+   ╭─[typescript/tests/cases/conformance/parser/ecmascript2018/asyncGenerators/parser.asyncGenerators.classMethods.es2018.ts:2:15]
+ 1 │ class C4 {
+ 2 │     async * f(await) {
+   ·               ─────
+ 3 │     }
+   ╰────
+
+  × Cannot use `await` as an identifier in an async context
+   ╭─[typescript/tests/cases/conformance/parser/ecmascript2018/asyncGenerators/parser.asyncGenerators.functionDeclarations.es2018.ts:1:18]
+ 1 │ async function * await() {
+   ·                  ─────
+ 2 │ }
+   ╰────
+
+  × The keyword 'await' is reserved
+   ╭─[typescript/tests/cases/conformance/parser/ecmascript2018/asyncGenerators/parser.asyncGenerators.functionDeclarations.es2018.ts:1:18]
+ 1 │ async function * await() {
+   ·                  ─────
+ 2 │ }
+   ╰────
+
+  × Cannot use `await` as an identifier in an async context
+   ╭─[typescript/tests/cases/conformance/parser/ecmascript2018/asyncGenerators/parser.asyncGenerators.functionExpressions.es2018.ts:1:29]
+ 1 │ const f2 = async function * await() {
+   ·                             ─────
+ 2 │ };
+   ╰────
+
+  × The keyword 'await' is reserved
+   ╭─[typescript/tests/cases/conformance/parser/ecmascript2018/asyncGenerators/parser.asyncGenerators.functionExpressions.es2018.ts:1:29]
+ 1 │ const f2 = async function * await() {
+   ·                             ─────
+ 2 │ };
+   ╰────
+
+  × Cannot use `await` as an identifier in an async context
+   ╭─[typescript/tests/cases/conformance/parser/ecmascript2018/asyncGenerators/parser.asyncGenerators.objectLiteralMethods.es2018.ts:2:15]
+ 1 │ const o4 = {
+ 2 │     async * f(await) {
+   ·               ─────
+ 3 │     }
+   ╰────
+
+  × The keyword 'await' is reserved
+   ╭─[typescript/tests/cases/conformance/parser/ecmascript2018/asyncGenerators/parser.asyncGenerators.objectLiteralMethods.es2018.ts:2:15]
+ 1 │ const o4 = {
+ 2 │     async * f(await) {
+   ·               ─────
+ 3 │     }
+   ╰────
+
+  × await can only be used in conjunction with `for...of` statements
+   ╭─[typescript/tests/cases/conformance/parser/ecmascript2018/forAwait/parser.forAwait.es2018.ts:1:1]
+ 1 │ for await (const x in y) {
+   · ────────────────────────
+ 2 │ }
+   ╰────
+
   × Invalid Character `
   │ `
    ╭─[typescript/tests/cases/conformance/parser/ecmascript2021/numericSeparators/parser.numericSeparators.binaryNegative.ts:1:6]
  1 │ 0b00_
    ·      ▲
+   ╰────
+
+  × Invalid Character `
+  │ `
+   ╭─[typescript/tests/cases/conformance/parser/ecmascript2021/numericSeparators/parser.numericSeparators.decmialNegative.ts:1:4]
+ 1 │ 10_
+   ·    ▲
    ╰────
 
   × Invalid Character `
@@ -28526,6 +28985,22 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
  3 │ }
    ╰────
 
+  × Export 'JSDocType' is not defined
+   ╭─[typescript/tests/cases/conformance/salsa/importingExportingTypes.ts:5:10]
+ 4 │ 
+ 5 │ export { JSDocType };
+   ·          ─────────
+ 6 │ export { JSDocType as ThisIsFine };
+   ╰────
+
+  × Export 'JSDocType' is not defined
+   ╭─[typescript/tests/cases/conformance/salsa/importingExportingTypes.ts:6:10]
+ 5 │ export { JSDocType };
+ 6 │ export { JSDocType as ThisIsFine };
+   ·          ─────────
+ 7 │ export { WriteFileOptions };
+   ╰────
+
   × Cannot use `await` as an identifier in an async context
    ╭─[typescript/tests/cases/conformance/salsa/plainJSBinderErrors.ts:6:11]
  5 │ async function f() {
@@ -28669,6 +29144,14 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
    ·     ┬
    ·     ╰── `in` expected
  5 │         #p
+   ╰────
+
+  × `await` is only allowed within async functions and at the top levels of modules
+   ╭─[typescript/tests/cases/conformance/salsa/plainJSGrammarErrors3.ts:2:5]
+ 1 │ function foo() {
+ 2 │     await new Promise(undefined);
+   ·     ─────
+ 3 │ }
    ╰────
 
   × Private field 'b' must be declared in an enclosing class
