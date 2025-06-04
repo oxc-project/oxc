@@ -1058,7 +1058,12 @@ impl<'a> ParserImpl<'a> {
 
     fn parse_type_or_type_predicate(&mut self) -> TSType<'a> {
         let span = self.start_span();
-        let type_predicate_variable = self.try_parse(Self::parse_type_predicate_prefix);
+        let type_predicate_variable = if self.cur_kind().is_identifier_name() {
+            self.try_parse(Self::parse_type_predicate_prefix)
+        } else {
+            None
+        };
+
         let ty = self.parse_ts_type();
         if let Some(parameter_name) = type_predicate_variable {
             let type_annotation = Some(self.ast.ts_type_annotation(ty.span(), ty));
