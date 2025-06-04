@@ -127,34 +127,14 @@ describe('JSX', () => {
 // Test raw transfer output matches JSON snapshots for TypeScript test cases.
 //
 // Only test TypeScript fixtures which TS-ESLint is able to parse.
-// Skip tests which we know we can't pass:
-//
-// 1. Those listed as failing in `estree_typescript.snap` snapshot file.
-// 2. Tests where parser panics due to bug in parser.
+// Skip tests which we know we can't pass (listed as failing in `estree_typescript.snap` snapshot file).
 //
 // Where output does not match snapshot, fallback to comparing to "standard" transfer method instead.
 // We can fail to match the TS-ESLint snapshots where there are syntax errors, because our parser
 // is not recoverable.
-const SKIP_TS_PATHS = [
-  // Panic parsing `export import` (bug in parser).
-  // https://github.com/oxc-project/oxc/issues/11453
-  // TODO: Remove these once that bug is fixed.
-  'tests/cases/compiler/es6ImportDefaultBindingFollowedWithNamedImport1WithExport.ts',
-  'tests/cases/compiler/es6ImportDefaultBindingFollowedWithNamedImportWithExport.ts',
-  'tests/cases/compiler/es6ImportDefaultBindingFollowedWithNamespaceBinding1WithExport.ts',
-  'tests/cases/compiler/es6ImportDefaultBindingFollowedWithNamespaceBindingWithExport.ts',
-  'tests/cases/compiler/es6ImportDefaultBindingWithExport.ts',
-  'tests/cases/compiler/es6ImportNameSpaceImportWithExport.ts',
-  'tests/cases/compiler/es6ImportNamedImportWithExport.ts',
-  'tests/cases/compiler/es6ImportWithoutFromClauseWithExport.ts',
-];
-
 const tsFailPaths = await getTestFailurePaths(TS_SNAPSHOT_PATH, TS_SHORT_DIR_PATH);
-const tsFixturePaths = (await readdir(TS_ESTREE_DIR_PATH, { recursive: true })).filter((path) => {
-  if (!path.endsWith('.md')) return false;
-  const tsPath = path.slice(0, -3); // Trim off `.md`
-  return !SKIP_TS_PATHS.includes(tsPath) && !tsFailPaths.has(tsPath);
-});
+const tsFixturePaths = (await readdir(TS_ESTREE_DIR_PATH, { recursive: true }))
+  .filter(path => path.endsWith('.md') && !tsFailPaths.has(path.slice(0, -3)));
 
 const TS_CASE_HEADER = '__ESTREE_TEST__:PASS:\n```json\n';
 const TS_CASE_FOOTER = '\n```\n';
