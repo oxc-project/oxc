@@ -85,6 +85,7 @@ const { instance: __napiInstance, module: __wasiModule, napiModule: __napiModule
   },
 })
 module.exports = __napiModule.exports
+module.exports.Severity = __napiModule.exports.Severity
 module.exports.ParseResult = __napiModule.exports.ParseResult
 module.exports.ExportExportNameKind = __napiModule.exports.ExportExportNameKind
 module.exports.ExportImportNameKind = __napiModule.exports.ExportImportNameKind
@@ -96,4 +97,3 @@ module.exports.parseAsyncRaw = __napiModule.exports.parseAsyncRaw
 module.exports.parseSync = __napiModule.exports.parseSync
 module.exports.parseSyncRaw = __napiModule.exports.parseSyncRaw
 module.exports.rawTransferSupported = __napiModule.exports.rawTransferSupported
-module.exports.Severity = __napiModule.exports.Severity
