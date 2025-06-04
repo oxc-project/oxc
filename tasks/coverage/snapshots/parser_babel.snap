@@ -5378,11 +5378,10 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ╰────
   help: Did you mean to use a ':'? An '=' can only follow a property name when the containing object literal is part of a destructuring pattern.
 
-  × Expected `,` but found `?`
-   ╭─[babel/packages/babel-parser/test/fixtures/es2017/async-call/with-optional-operator/input.js:1:8]
+  × Unexpected token
+   ╭─[babel/packages/babel-parser/test/fixtures/es2017/async-call/with-optional-operator/input.js:1:9]
  1 │ async(x?)
-   ·        ┬
-   ·        ╰── `,` expected
+   ·         ─
    ╰────
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
@@ -8923,11 +8922,10 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ·     ───
    ╰────
 
-  × Expected `=>` but found `+`
-   ╭─[babel/packages/babel-parser/test/fixtures/esprima/es2015-arrow-function/rest-without-arrow/input.js:1:8]
+  × Unexpected token
+   ╭─[babel/packages/babel-parser/test/fixtures/esprima/es2015-arrow-function/rest-without-arrow/input.js:1:2]
  1 │ (...a) + 1
-   ·        ┬
-   ·        ╰── `=>` expected
+   ·  ───
    ╰────
 
   × Cannot assign to 'eval' in strict mode
@@ -11844,9 +11842,10 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    · ────
    ╰────
 
-  × Expected `=>` but found `EOF`
-   ╭─[babel/packages/babel-parser/test/fixtures/typescript/async-call/with-optional-parameter/input.ts:1:10]
+  × Unexpected token
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/async-call/with-optional-parameter/input.ts:1:9]
  1 │ async(x?)
+   ·         ─
    ╰────
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
@@ -11907,11 +11906,11 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ·      ───────
    ╰────
 
-  × Expected `=>` but found `;`
-   ╭─[babel/packages/babel-parser/test/fixtures/typescript/cast/invalid/input.ts:1:6]
+  × Expected `,` but found `:`
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/cast/invalid/input.ts:1:3]
  1 │ (a:b);
-   ·      ┬
-   ·      ╰── `=>` expected
+   ·   ┬
+   ·   ╰── `,` expected
  2 │ (a:b,c:d);
    ╰────
 

@@ -1214,8 +1214,8 @@ impl<'a> ParserImpl<'a> {
             return self.parse_yield_expression();
         }
         // `() => {}`, `(x) => {}`
-        if let Some(mut arrow_expr) = self
-            .try_parse_parenthesized_arrow_function_expression(allow_return_type_in_arrow_function)
+        if let Some(mut arrow_expr) =
+            self.try_parse_arrow_function_expression(allow_return_type_in_arrow_function)
         {
             if has_no_side_effects_comment {
                 if let Expression::ArrowFunctionExpression(func) = &mut arrow_expr {
@@ -1224,6 +1224,7 @@ impl<'a> ParserImpl<'a> {
             }
             return arrow_expr;
         }
+
         // `async x => {}`
         if let Some(mut arrow_expr) = self
             .try_parse_async_simple_arrow_function_expression(allow_return_type_in_arrow_function)
@@ -1444,5 +1445,210 @@ impl<'a> ParserImpl<'a> {
         let token = self.cur_token();
         let kind = token.kind();
         !token.is_on_new_line() && kind.is_after_await_or_yield()
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use oxc_allocator::Allocator;
+
+    use crate::Parser;
+
+    use super::*;
+
+    #[test]
+    fn test_parse_arrow_function_expression() {
+        parse_and_test("() => {}", |expr| {
+            let Expression::ArrowFunctionExpression(arrow_expr) = expr else {
+                panic!("Expected ArrowFunctionExpression");
+            };
+            assert_eq!(arrow_expr.r#async, false);
+            assert!(arrow_expr.params.is_empty());
+            assert!(arrow_expr.body.is_empty());
+            assert!(arrow_expr.type_parameters.is_none());
+            assert!(arrow_expr.return_type.is_none());
+        });
+        parse_and_test("() => void 0", |expr| {
+            let Expression::ArrowFunctionExpression(arrow_expr) = expr else {
+                panic!("Expected ArrowFunctionExpression");
+            };
+            assert_eq!(arrow_expr.r#async, false);
+            assert!(arrow_expr.params.is_empty());
+            assert!(!arrow_expr.body.is_empty());
+            assert!(arrow_expr.type_parameters.is_none());
+            assert!(arrow_expr.return_type.is_none());
+        });
+        parse_and_test("async () => {}", |expr| {
+            let Expression::ArrowFunctionExpression(arrow_expr) = expr else {
+                panic!("Expected ArrowFunctionExpression");
+            };
+            assert_eq!(arrow_expr.r#async, true);
+            assert!(arrow_expr.params.is_empty());
+            assert!(arrow_expr.body.is_empty());
+            assert!(arrow_expr.type_parameters.is_none());
+            assert!(arrow_expr.return_type.is_none());
+        });
+        parse_and_test("async () => await foo()", |expr| {
+            let Expression::ArrowFunctionExpression(arrow_expr) = expr else {
+                panic!("Expected ArrowFunctionExpression");
+            };
+            assert_eq!(arrow_expr.r#async, true);
+            assert!(arrow_expr.params.is_empty());
+            assert!(!arrow_expr.body.is_empty());
+            assert!(arrow_expr.type_parameters.is_none());
+            assert!(arrow_expr.return_type.is_none());
+        });
+        parse_and_test("(): string => foo()", |expr| {
+            let Expression::ArrowFunctionExpression(arrow_expr) = expr else {
+                panic!("Expected ArrowFunctionExpression");
+            };
+            assert_eq!(arrow_expr.r#async, false);
+            assert!(arrow_expr.params.is_empty());
+            assert!(!arrow_expr.body.is_empty());
+            assert!(arrow_expr.type_parameters.is_none());
+            assert!(arrow_expr.return_type.is_some());
+            let ret = arrow_expr.return_type.as_ref().unwrap();
+            assert!(ret.type_annotation.is_keyword())
+        });
+        parse_and_test("async (): Promise<string> => await foo()", |expr| {
+            let Expression::ArrowFunctionExpression(arrow_expr) = expr else {
+                panic!("Expected ArrowFunctionExpression");
+            };
+            assert_eq!(arrow_expr.r#async, true);
+            assert!(arrow_expr.params.is_empty());
+            assert!(!arrow_expr.body.is_empty());
+            assert!(arrow_expr.type_parameters.is_none());
+            let ret = arrow_expr.return_type.as_ref().unwrap();
+            assert!(matches!(ret.type_annotation, TSType::TSTypeReference(_)));
+        });
+        parse_and_test("({ x }) => x", |expr| {
+            let Expression::ArrowFunctionExpression(arrow_expr) = expr else {
+                panic!("Expected ArrowFunctionExpression");
+            };
+            assert_eq!(arrow_expr.r#async, false);
+            assert!(!arrow_expr.params.is_empty());
+            assert!(matches!(
+                arrow_expr.params.items[0].pattern.kind,
+                BindingPatternKind::ObjectPattern(_)
+            ));
+            assert!(!arrow_expr.body.is_empty());
+            assert!(arrow_expr.type_parameters.is_none());
+            assert!(arrow_expr.return_type.is_none());
+        });
+        parse_and_test("([x]: Array<unknown>) => x", |expr| {
+            let Expression::ArrowFunctionExpression(arrow_expr) = expr else {
+                panic!("Expected ArrowFunctionExpression");
+            };
+            assert_eq!(arrow_expr.r#async, false);
+            assert!(!arrow_expr.params.is_empty());
+            assert!(matches!(
+                arrow_expr.params.items[0].pattern.kind,
+                BindingPatternKind::ArrayPattern(_)
+            ));
+            assert!(matches!(
+                &arrow_expr.params.items[0]
+                    .pattern
+                    .type_annotation
+                    .as_ref()
+                    .unwrap()
+                    .type_annotation,
+                TSType::TSTypeReference(_)
+            ));
+            assert!(!arrow_expr.body.is_empty());
+            assert!(arrow_expr.type_parameters.is_none());
+            assert!(arrow_expr.return_type.is_none());
+        });
+        parse_and_test("(...rest) => rest", |expr| {
+            let Expression::ArrowFunctionExpression(arrow_expr) = expr else {
+                panic!("Expected ArrowFunctionExpression");
+            };
+            assert_eq!(arrow_expr.r#async, false);
+            assert!(arrow_expr.params.items.is_empty());
+            assert!(arrow_expr.params.rest.is_some());
+            assert!(matches!(
+                arrow_expr.params.rest.as_ref().unwrap().argument.kind,
+                BindingPatternKind::BindingIdentifier(_)
+            ));
+        });
+        parse_and_test("(public x) => {}", |expr| {
+            let Expression::ArrowFunctionExpression(arrow_expr) = expr else {
+                panic!("Expected ArrowFunctionExpression");
+            };
+            assert_eq!(arrow_expr.r#async, false);
+            assert!(!arrow_expr.params.items.is_empty());
+            assert!(matches!(
+                arrow_expr.params.items[0].pattern.kind,
+                BindingPatternKind::BindingIdentifier(_)
+            ));
+            assert!(arrow_expr.params.rest.is_none());
+        });
+        parse_and_test("(x: string) => foo()", |expr| {
+            let Expression::ArrowFunctionExpression(arrow_expr) = expr else {
+                panic!("Expected ArrowFunctionExpression");
+            };
+            assert_eq!(arrow_expr.r#async, false);
+            assert!(!arrow_expr.params.is_empty());
+            assert!(matches!(
+                arrow_expr.params.items[0].pattern.kind,
+                BindingPatternKind::BindingIdentifier(_)
+            ));
+            assert!(arrow_expr.params.items[0].pattern.type_annotation.is_some());
+            assert!(!arrow_expr.body.is_empty());
+            assert!(arrow_expr.type_parameters.is_none());
+        });
+        parse_and_test("(x = counter()) => x", |expr| {
+            let Expression::ArrowFunctionExpression(arrow_expr) = expr else {
+                panic!("Expected ArrowFunctionExpression");
+            };
+            assert_eq!(arrow_expr.r#async, false);
+            assert!(!arrow_expr.params.is_empty());
+            assert!(matches!(
+                arrow_expr.params.items[0].pattern.kind,
+                BindingPatternKind::AssignmentPattern(_)
+            ));
+            assert!(!arrow_expr.body.is_empty());
+            assert!(arrow_expr.type_parameters.is_none());
+        });
+        parse_and_test("async of => {};", |expr| {
+            let Expression::ArrowFunctionExpression(arrow_expr) = expr else {
+                panic!("Expected ArrowFunctionExpression");
+            };
+            assert_eq!(arrow_expr.r#async, true);
+            assert!(!arrow_expr.params.is_empty());
+            assert!(matches!(
+                arrow_expr.params.items[0].pattern.kind,
+                BindingPatternKind::BindingIdentifier(_)
+            ));
+            let binding_ident =
+                arrow_expr.params.items[0].pattern.get_binding_identifier().unwrap();
+            assert_eq!(binding_ident.name, "of");
+            assert!(arrow_expr.body.is_empty());
+            assert!(arrow_expr.type_parameters.is_none());
+        });
+        parse_and_test("async (agentCount) => {};", |expr| {
+            let Expression::ArrowFunctionExpression(arrow_expr) = expr else {
+                panic!("Expected ArrowFunctionExpression");
+            };
+            assert_eq!(arrow_expr.r#async, true);
+            assert!(!arrow_expr.params.is_empty());
+            assert!(matches!(
+                arrow_expr.params.items[0].pattern.kind,
+                BindingPatternKind::BindingIdentifier(_)
+            ));
+            let binding_ident =
+                arrow_expr.params.items[0].pattern.get_binding_identifier().unwrap();
+            assert_eq!(binding_ident.name, "agentCount");
+            assert!(arrow_expr.body.is_empty());
+            assert!(arrow_expr.type_parameters.is_none());
+        });
+    }
+
+    fn parse_and_test(src: &str, f: impl FnOnce(Expression<'_>)) {
+        let allocator = Allocator::default();
+        let source_type = SourceType::default().with_typescript(true);
+        match Parser::new(&allocator, src, source_type).parse_expression() {
+            Ok(expr) => f(expr),
+            Err(err) => panic!("Failed to parse expression: `{}`\nErrors: {err:?}", src),
+        }
     }
 }
