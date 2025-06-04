@@ -3,31 +3,33 @@ import { basename, join as pathJoin } from 'node:path';
 import { describe, expect, it } from 'vitest';
 
 import { parseAsync, parseSync } from '../index.js';
+import { makeUnitsFromTest } from './typescript-make-units-from-test.cjs';
 
 const ROOT_DIR = pathJoin(import.meta.dirname, '../../..');
 const TARGET_DIR_PATH = pathJoin(ROOT_DIR, 'target');
 const TEST262_SHORT_DIR_PATH = 'tasks/coverage/test262/test';
 const TEST262_DIR_PATH = pathJoin(ROOT_DIR, TEST262_SHORT_DIR_PATH);
+const TS_SHORT_DIR_PATH = 'tasks/coverage/typescript';
+const TS_DIR_PATH = pathJoin(ROOT_DIR, TS_SHORT_DIR_PATH);
 const ACORN_TEST262_DIR_PATH = pathJoin(ROOT_DIR, 'tasks/coverage/acorn-test262/tests/test262/test');
 const JSX_SHORT_DIR_PATH = 'tasks/coverage/acorn-test262/tests/acorn-jsx/pass';
 const JSX_DIR_PATH = pathJoin(ROOT_DIR, JSX_SHORT_DIR_PATH);
+const TS_ESTREE_SHORT_DIR_PATH = 'tasks/coverage/acorn-test262/tests/typescript';
+const TS_ESTREE_DIR_PATH = pathJoin(ROOT_DIR, TS_ESTREE_SHORT_DIR_PATH);
 const TEST262_SNAPSHOT_PATH = pathJoin(ROOT_DIR, 'tasks/coverage/snapshots/estree_test262.snap');
 const JSX_SNAPSHOT_PATH = pathJoin(ROOT_DIR, 'tasks/coverage/snapshots/estree_acorn_jsx.snap');
+const TS_SNAPSHOT_PATH = pathJoin(ROOT_DIR, 'tasks/coverage/snapshots/estree_typescript.snap');
 
 const INFINITY_PLACEHOLDER = '__INFINITY__INFINITY__INFINITY__';
 const INFINITY_REGEXP = new RegExp(`"${INFINITY_PLACEHOLDER}"`, 'g');
 
 // Load/download fixtures.
 // Save in `target` directory, same as where benchmarks store them.
-//
-// `checker.ts` and `cal.com.tsx` fixture tests are disabled for now while we work on aligning TS AST
-// with TS-ESLint.
-// TODO: Enable them again once that work is complete.
 const benchFixtureUrls = [
   // TypeScript syntax (2.81MB)
-  // 'https://cdn.jsdelivr.net/gh/microsoft/TypeScript@v5.3.3/src/compiler/checker.ts',
+  'https://cdn.jsdelivr.net/gh/microsoft/TypeScript@v5.3.3/src/compiler/checker.ts',
   // Real world app tsx (1.0M)
-  // 'https://cdn.jsdelivr.net/gh/oxc-project/benchmark-files@main/cal.com.tsx',
+  'https://cdn.jsdelivr.net/gh/oxc-project/benchmark-files@main/cal.com.tsx',
   // Real world content-heavy app jsx (3K)
   'https://cdn.jsdelivr.net/gh/oxc-project/benchmark-files@main/RadixUIAdoptionSection.jsx',
   // Heavy with classes (554K)
@@ -92,7 +94,7 @@ describe('test262', () => {
 // Test raw transfer output matches JSON snapshots for Acorn-JSX test cases.
 //
 // Only test Acorn-JSX fixtures which Acorn is able to parse.
-// Skip tests which we know we can't pass (listed as failing in `estree_acron_jsx.snap` snapshot file).
+// Skip tests which we know we can't pass (listed as failing in `estree_acorn_jsx.snap` snapshot file).
 const jsxFailPaths = await getTestFailurePaths(JSX_SNAPSHOT_PATH, JSX_SHORT_DIR_PATH);
 const jsxFixturePaths = (await readdir(JSX_DIR_PATH, { recursive: true }))
   .filter(path => path.endsWith('.jsx') && !jsxFailPaths.has(path));
@@ -122,9 +124,96 @@ describe('JSX', () => {
   });
 });
 
+// Test raw transfer output matches JSON snapshots for TypeScript test cases.
+//
+// Only test TypeScript fixtures which TS-ESLint is able to parse.
+// Skip tests which we know we can't pass:
+//
+// 1. Those listed as failing in `estree_typescript.snap` snapshot file.
+// 2. Tests where parser panics due to bug in parser.
+//
+// Where output does not match snapshot, fallback to comparing to "standard" transfer method instead.
+// We can fail to match the TS-ESLint snapshots where there are syntax errors, because our parser
+// is not recoverable.
+const SKIP_TS_PATHS = [
+  // Panic parsing `export import` (bug in parser).
+  // https://github.com/oxc-project/oxc/issues/11453
+  // TODO: Remove these once that bug is fixed.
+  'tests/cases/compiler/es6ImportDefaultBindingFollowedWithNamedImport1WithExport.ts',
+  'tests/cases/compiler/es6ImportDefaultBindingFollowedWithNamedImportWithExport.ts',
+  'tests/cases/compiler/es6ImportDefaultBindingFollowedWithNamespaceBinding1WithExport.ts',
+  'tests/cases/compiler/es6ImportDefaultBindingFollowedWithNamespaceBindingWithExport.ts',
+  'tests/cases/compiler/es6ImportDefaultBindingWithExport.ts',
+  'tests/cases/compiler/es6ImportNameSpaceImportWithExport.ts',
+  'tests/cases/compiler/es6ImportNamedImportWithExport.ts',
+  'tests/cases/compiler/es6ImportWithoutFromClauseWithExport.ts',
+];
+
+const tsFailPaths = await getTestFailurePaths(TS_SNAPSHOT_PATH, TS_SHORT_DIR_PATH);
+const tsFixturePaths = (await readdir(TS_ESTREE_DIR_PATH, { recursive: true })).filter((path) => {
+  if (!path.endsWith('.md')) return false;
+  const tsPath = path.slice(0, -3); // Trim off `.md`
+  return !SKIP_TS_PATHS.includes(tsPath) && !tsFailPaths.has(tsPath);
+});
+
+const TS_CASE_HEADER = '__ESTREE_TEST__:PASS:\n```json\n';
+const TS_CASE_FOOTER = '\n```\n';
+const TS_CASE_FOOTER_LEN = TS_CASE_FOOTER.length;
+
+describe('TypeScript', () => {
+  it.each(tsFixturePaths)('%s', async (path) => {
+    const tsPath = path.slice(0, -3); // Trim off `.md`
+    let [sourceText, casesJson] = await Promise.all([
+      readFile(pathJoin(TS_DIR_PATH, tsPath), 'utf8'),
+      readFile(pathJoin(TS_ESTREE_DIR_PATH, path), 'utf8'),
+    ]);
+
+    // Trim off UTF-8 BOM
+    if (sourceText.charCodeAt(0) === 0xFEFF) sourceText = sourceText.slice(1);
+
+    const { tests } = makeUnitsFromTest(tsPath, sourceText);
+    const estreeJsons = casesJson.split(TS_CASE_HEADER)
+      .slice(1)
+      .map(part => part.slice(0, -TS_CASE_FOOTER_LEN));
+    expect(estreeJsons.length).toEqual(tests.length);
+
+    for (let i = 0; i < tests.length; i++) {
+      const { name: filename, content: code, sourceType } = tests[i];
+
+      const options = {
+        sourceType: sourceType.module ? 'module' : 'unambiguous',
+        astType: 'ts',
+        preserveParens: false,
+        experimentalRawTransfer: true,
+      };
+      // @ts-ignore
+      const { program, errors } = parseSync(filename, code, options);
+      const oxcJson = stringifyAcornTest262Style(program);
+
+      const estreeJson = estreeJsons[i];
+
+      try {
+        expect(oxcJson).toEqual(estreeJson);
+      } catch (err) {
+        // Fall back to comparing to AST parsed via JSON transfer.
+        // We can fail to match the TS-ESLint snapshots where there are syntax errors,
+        // because our parser is not recoverable.
+        // @ts-ignore
+        const standard = parseSync(filename, code, { ...options, experimentalRawTransfer: false });
+        const standardJson = stringifyAcornTest262Style(standard.program);
+        const errorsStandard = standard.errors;
+
+        expect(oxcJson).toEqual(standardJson);
+        expect(errors.length).toEqual(errorsStandard.length);
+        // expect(errors).toEqual(errorsStandard); // TODO
+      }
+    }
+  });
+});
+
 // Test raw transfer output matches standard (via JSON) output for edge cases not covered by Test262
 describe('edge cases', () => {
-  it.each([
+  describe.each([
     // ECMA stage 3
     'import defer * as ns from "x";',
     'import source src from "x";',
@@ -142,7 +231,13 @@ describe('edge cases', () => {
     '#!/usr/bin/env node\nlet x;',
     '#!/usr/bin/env node\nlet x;\n// foo',
   ])('%s', (sourceText) => {
-    assertRawAndStandardMatch('dummy.js', sourceText);
+    it('JS', () => {
+      assertRawAndStandardMatch('dummy.js', sourceText);
+    });
+
+    it('TS', () => {
+      assertRawAndStandardMatch('dummy.ts', sourceText);
+    });
   });
 });
 
