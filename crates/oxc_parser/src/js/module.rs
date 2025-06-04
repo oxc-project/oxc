@@ -472,7 +472,7 @@ impl<'a> ParserImpl<'a> {
         // For tc39/proposal-decorators
         // For more information, please refer to <https://babeljs.io/docs/babel-plugin-proposal-decorators#decoratorsbeforeexport>
         if self.at(Kind::At) {
-            self.eat_decorators();
+            self.parse_and_save_decorators();
         }
         let reserved_ctx = self.ctx;
         let modifiers =
@@ -510,7 +510,7 @@ impl<'a> ParserImpl<'a> {
         // For tc39/proposal-decorators
         // For more information, please refer to <https://babeljs.io/docs/babel-plugin-proposal-decorators#decoratorsbeforeexport>
         if self.at(Kind::At) {
-            self.eat_decorators();
+            self.parse_and_save_decorators();
         }
         let declaration = match self.cur_kind() {
             Kind::Class => ExportDefaultDeclarationKind::ClassDeclaration(

@@ -84,6 +84,8 @@ fn class() {
         "export class Test2 {\n@decorator\nproperty: ((arg: any) => any) | undefined;\n}",
         "export class Test2 {\n\t@decorator property: ((arg: any) => any) | undefined;\n}\n",
     );
+    test_same("export @dec1 @dec2 class C {}\n");
+    test_same("export default @dec1 @dec2 class {}\n");
     test_minify("class { static [computed] }", "class{static[computed]}");
 }
 

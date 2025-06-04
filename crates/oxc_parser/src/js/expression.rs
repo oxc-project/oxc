@@ -159,7 +159,7 @@ impl<'a> ParserImpl<'a> {
         let span = self.start_span();
 
         if self.at(Kind::At) {
-            self.eat_decorators();
+            self.parse_and_save_decorators();
         }
 
         // FunctionExpression, GeneratorExpression

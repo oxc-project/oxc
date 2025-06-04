@@ -295,8 +295,21 @@ impl<'a> ParserImpl<'a> {
         result
     }
 
+    /// Consume all decorators.
     pub(crate) fn consume_decorators(&mut self) -> Vec<'a, Decorator<'a>> {
         self.state.decorators.take_in(self.ast)
+    }
+
+    /// Parse and save all decorators.
+    pub(crate) fn parse_and_save_decorators(&mut self) {
+        // For `@dec1 export default @dec2 class {}`
+        for decorator in &mut self.state.decorators {
+            self.errors.push(diagnostics::decorators_in_export_and_class(decorator.span));
+        }
+        while self.at(Kind::At) {
+            let decorator = self.parse_decorator();
+            self.state.decorators.push(decorator);
+        }
     }
 
     pub(crate) fn parse_normal_list<F, T>(&mut self, open: Kind, close: Kind, f: F) -> Vec<'a, T>

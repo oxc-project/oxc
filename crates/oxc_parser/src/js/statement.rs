@@ -87,7 +87,7 @@ impl<'a> ParserImpl<'a> {
             self.lexer.trivia_builder.previous_token_has_no_side_effects_comment();
 
         if self.at(Kind::At) {
-            self.eat_decorators();
+            self.parse_and_save_decorators();
         }
 
         let mut stmt = match self.cur_kind() {

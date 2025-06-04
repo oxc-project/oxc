@@ -1,7 +1,7 @@
 parser_misc Summary:
 AST Parsed     : 36/36 (100.00%)
 Positive Passed: 36/36 (100.00%)
-Negative Passed: 35/35 (100.00%)
+Negative Passed: 36/36 (100.00%)
 
   × Identifier `b` has already been declared
    ╭─[misc/fail/oxc-10159.js:1:22]
@@ -33,6 +33,20 @@ Negative Passed: 35/35 (100.00%)
   × Expected `from` but found `EOF`
    ╭─[misc/fail/oxc-11453.js:2:1]
  1 │ export import
+   ╰────
+
+  × Decorators may not appear after 'export' or 'export default' if they also appear before 'export'.
+   ╭─[misc/fail/oxc-11472.js:1:1]
+ 1 │ @dec1 export @dec2 class C {}
+   · ─────
+ 2 │ 
+   ╰────
+
+  × Decorators may not appear after 'export' or 'export default' if they also appear before 'export'.
+   ╭─[misc/fail/oxc-11472.js:3:1]
+ 2 │ 
+ 3 │ @dec1 export default @dec2 class {}
+   · ─────
    ╰────
 
   × Unexpected token

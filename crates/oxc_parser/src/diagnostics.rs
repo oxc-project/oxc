@@ -641,3 +641,8 @@ pub fn index_signature_type_annotation(span: Span) -> OxcDiagnostic {
 pub fn unexpected_export(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::error("Unexpected export.").with_label(span)
 }
+
+#[cold]
+pub fn decorators_in_export_and_class(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::error("Decorators may not appear after 'export' or 'export default' if they also appear before 'export'.").with_label(span)
+}

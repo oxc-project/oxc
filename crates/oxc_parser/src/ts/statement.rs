@@ -480,7 +480,7 @@ impl<'a> ParserImpl<'a> {
         let span = self.start_span();
         self.parse_class_element_modifiers(true);
         if self.at(Kind::At) {
-            self.eat_decorators();
+            self.parse_and_save_decorators();
         }
 
         let this_span = self.start_span();
@@ -489,16 +489,6 @@ impl<'a> ParserImpl<'a> {
 
         let type_annotation = self.parse_ts_type_annotation();
         self.ast.ts_this_parameter(self.end_span(span), this, type_annotation)
-    }
-
-    pub(crate) fn eat_decorators(&mut self) {
-        let mut decorators = self.ast.vec();
-        while self.at(Kind::At) {
-            let decorator = self.parse_decorator();
-            decorators.push(decorator);
-        }
-
-        self.state.decorators = decorators;
     }
 
     pub(crate) fn at_start_of_ts_declaration(&mut self) -> bool {
