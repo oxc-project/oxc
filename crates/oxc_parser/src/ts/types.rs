@@ -55,7 +55,8 @@ impl<'a> ParserImpl<'a> {
         let r#abstract = self.eat(Kind::Abstract);
         let is_constructor_type = self.eat(Kind::New);
         let type_parameters = self.parse_ts_type_parameters();
-        let (this_param, params) = self.parse_formal_parameters(FormalParameterKind::Signature);
+        let (this_param, params) =
+            self.parse_formal_parameters(FormalParameterKind::Signature, false);
         let return_type = {
             let return_type_span = self.start_span();
             let Some(return_type) = self.parse_return_type(Kind::Arrow, /* is_type */ false) else {
@@ -1101,7 +1102,8 @@ impl<'a> ParserImpl<'a> {
             self.expect(Kind::New);
         }
         let type_parameters = self.parse_ts_type_parameters();
-        let (this_param, params) = self.parse_formal_parameters(FormalParameterKind::Signature);
+        let (this_param, params) =
+            self.parse_formal_parameters(FormalParameterKind::Signature, false);
         if kind == CallOrConstructorSignature::Constructor {
             if let Some(this_param) = &this_param {
                 // interface Foo { new(this: number): Foo }
@@ -1135,7 +1137,8 @@ impl<'a> ParserImpl<'a> {
         kind: TSMethodSignatureKind,
     ) -> TSSignature<'a> {
         let (key, computed) = self.parse_property_name();
-        let (this_param, params) = self.parse_formal_parameters(FormalParameterKind::Signature);
+        let (this_param, params) =
+            self.parse_formal_parameters(FormalParameterKind::Signature, false);
         let return_type = self.parse_ts_return_type_annotation(Kind::Colon, false);
         self.parse_type_member_semicolon();
         if kind == TSMethodSignatureKind::Set {
@@ -1168,7 +1171,8 @@ impl<'a> ParserImpl<'a> {
 
         if self.at(Kind::LParen) || self.at(Kind::LAngle) {
             let type_parameters = self.parse_ts_type_parameters();
-            let (this_param, params) = self.parse_formal_parameters(FormalParameterKind::Signature);
+            let (this_param, params) =
+                self.parse_formal_parameters(FormalParameterKind::Signature, false);
             let return_type = self.parse_ts_return_type_annotation(Kind::Colon, true);
             self.parse_type_member_semicolon();
             self.ast.ts_signature_method_signature(
