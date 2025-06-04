@@ -63,6 +63,14 @@ impl Rule for NoUnassignedVars {
         if parent.declare {
             return;
         }
+        if ctx
+            .nodes()
+            .ancestors(node.id())
+            .skip(1)
+            .any(|ancestor| matches!(ancestor.kind(), AstKind::TSModuleDeclaration(_)))
+        {
+            return;
+        }
         let BindingPatternKind::BindingIdentifier(ident) = &declarator.id.kind else {
             return;
         };
@@ -103,21 +111,21 @@ fn test() {
         "const foo = (two) => { let one; if (one !== two) one = two; }",
         "let z: number | undefined = undefined; log(z);",
         "declare let c: string | undefined; log(c);",
-        // "
-        // 				const foo = (two: string): void => {
-        // 					let one: string | undefined;
-        // 					if (one !== two) {
-        // 						one = two;
-        // 					}
-        // 				}
-        // 			",
-        // "
-        // 				declare module 'module' {
-        // 					import type { T } from 'module';
-        // 					let x: T;
-        // 					export = x;
-        // 				}
-        // 			",
+        "
+        				const foo = (two: string): void => {
+        					let one: string | undefined;
+        					if (one !== two) {
+        						one = two;
+        					}
+        				}
+        			",
+        "
+        				declare module 'module' {
+        					import type { T } from 'module';
+        					let x: T;
+        					export = x;
+        				}
+        			",
     ];
 
     let fail = vec![
