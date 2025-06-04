@@ -104,6 +104,7 @@ export interface MinifyResult {
   code: string
   map?: SourceMap
 }
+
 export interface SourceMap {
   file?: string
   mappings: string

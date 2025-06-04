@@ -2,37 +2,18 @@
 /* eslint-disable */
 
 export * from '@oxc-project/types';
-export interface Comment {
-  type: 'Line' | 'Block'
-  value: string
-  start: number
-  end: number
-}
-
-export interface ErrorLabel {
-  message?: string
-  start: number
-  end: number
-}
-
-export interface OxcError {
-  severity: Severity
-  message: string
-  labels: Array<ErrorLabel>
-  helpMessage?: string
-  codeframe?: string
-}
-
-export declare const enum Severity {
-  Error = 'Error',
-  Warning = 'Warning',
-  Advice = 'Advice'
-}
 export declare class ParseResult {
   get program(): import("@oxc-project/types").Program
   get module(): EcmaScriptModule
   get comments(): Array<Comment>
   get errors(): Array<OxcError>
+}
+
+export interface Comment {
+  type: 'Line' | 'Block'
+  value: string
+  start: number
+  end: number
 }
 
 export interface DynamicImport {
@@ -58,6 +39,12 @@ export interface EcmaScriptModule {
   dynamicImports: Array<DynamicImport>
   /** Span positions` of `import.meta` */
   importMetas: Array<Span>
+}
+
+export interface ErrorLabel {
+  message?: string
+  start: number
+  end: number
 }
 
 export interface ExportExportName {
@@ -135,6 +122,14 @@ export declare const enum ImportNameKind {
   NamespaceObject = 'NamespaceObject',
   /** `import defaultExport from "mod"` */
   Default = 'Default'
+}
+
+export interface OxcError {
+  severity: Severity
+  message: string
+  labels: Array<ErrorLabel>
+  helpMessage?: string
+  codeframe?: string
 }
 
 /**
@@ -242,6 +237,12 @@ export declare function parseSyncRaw(filename: string, buffer: Uint8Array, sourc
 
 /** Returns `true` if raw transfer is supported on this platform. */
 export declare function rawTransferSupported(): boolean
+
+export declare const enum Severity {
+  Error = 'Error',
+  Warning = 'Warning',
+  Advice = 'Advice'
+}
 
 export interface Span {
   start: number

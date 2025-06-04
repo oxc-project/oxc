@@ -54,7 +54,6 @@ const {
   },
 })
 export default __napiModule.exports
-export const Severity = __napiModule.exports.Severity
 export const ParseResult = __napiModule.exports.ParseResult
 export const ExportExportNameKind = __napiModule.exports.ExportExportNameKind
 export const ExportImportNameKind = __napiModule.exports.ExportImportNameKind
@@ -66,3 +65,4 @@ export const parseAsyncRaw = __napiModule.exports.parseAsyncRaw
 export const parseSync = __napiModule.exports.parseSync
 export const parseSyncRaw = __napiModule.exports.parseSyncRaw
 export const rawTransferSupported = __napiModule.exports.rawTransferSupported
+export const Severity = __napiModule.exports.Severity
