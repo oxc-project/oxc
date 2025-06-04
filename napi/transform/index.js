@@ -375,8 +375,8 @@ if (!nativeBinding) {
 }
 
 module.exports = nativeBinding
-module.exports.Severity = nativeBinding.Severity
 module.exports.HelperMode = nativeBinding.HelperMode
 module.exports.isolatedDeclaration = nativeBinding.isolatedDeclaration
 module.exports.moduleRunnerTransform = nativeBinding.moduleRunnerTransform
+module.exports.Severity = nativeBinding.Severity
 module.exports.transform = nativeBinding.transform

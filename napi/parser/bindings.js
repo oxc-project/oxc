@@ -383,7 +383,6 @@ if (!nativeBinding) {
 }
 
 module.exports = nativeBinding
-module.exports.Severity = nativeBinding.Severity
 module.exports.ParseResult = nativeBinding.ParseResult
 module.exports.ExportExportNameKind = nativeBinding.ExportExportNameKind
 module.exports.ExportImportNameKind = nativeBinding.ExportImportNameKind
@@ -395,3 +394,4 @@ module.exports.parseAsyncRaw = nativeBinding.parseAsyncRaw
 module.exports.parseSync = nativeBinding.parseSync
 module.exports.parseSyncRaw = nativeBinding.parseSyncRaw
 module.exports.rawTransferSupported = nativeBinding.rawTransferSupported
+module.exports.Severity = nativeBinding.Severity
