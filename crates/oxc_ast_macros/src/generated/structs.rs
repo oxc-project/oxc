@@ -280,7 +280,7 @@ pub static STRUCTS: phf::Map<&'static str, StructDetails> = ::phf::Map {
         ("ExportAllDeclaration", StructDetails { field_order: None }),
         ("TSBooleanKeyword", StructDetails { field_order: None }),
         ("ImportAttribute", StructDetails { field_order: None }),
-        ("Error", StructDetails { field_order: Some(&[3, 0, 1, 2]) }),
+        ("Error", StructDetails { field_order: Some(&[4, 0, 1, 2, 3]) }),
         ("RawTransferData", StructDetails { field_order: None }),
         ("RegExpFlags", StructDetails { field_order: None }),
         ("RegExpLiteral", StructDetails { field_order: None }),

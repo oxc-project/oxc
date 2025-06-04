@@ -184,8 +184,10 @@ describe('TypeScript', () => {
         const errorsStandard = standard.errors;
 
         expect(oxcJson).toEqual(standardJson);
-        expect(errors.length).toEqual(errorsStandard.length);
-        // expect(errors).toEqual(errorsStandard); // TODO
+
+        const errorsRawJson = JSON.stringify(clean(errors), null, 2);
+        const errorsStandardJson = JSON.stringify(errorsStandard, null, 2);
+        expect(errorsRawJson).toEqual(errorsStandardJson);
       }
     }
   });
