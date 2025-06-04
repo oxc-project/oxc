@@ -324,15 +324,19 @@ impl<'a> ParserImpl<'a> {
             Kind::Import => {
                 let import_span = self.start_span();
                 self.bump_any();
-                let decl = self.parse_import_declaration(import_span).into_declaration();
-                self.ast.module_declaration_export_named_declaration(
-                    self.end_span(span),
-                    Some(decl),
-                    self.ast.vec(),
-                    None,
-                    ImportOrExportKind::Value,
-                    NONE,
-                )
+                let stmt = self.parse_import_declaration(import_span);
+                if stmt.is_declaration() {
+                    self.ast.module_declaration_export_named_declaration(
+                        self.end_span(span),
+                        Some(stmt.into_declaration()),
+                        self.ast.vec(),
+                        None,
+                        ImportOrExportKind::Value,
+                        NONE,
+                    )
+                } else {
+                    return self.fatal_error(diagnostics::unexpected_export(stmt.span()));
+                }
             }
             Kind::Eq if self.is_ts => ModuleDeclaration::TSExportAssignment(
                 self.parse_ts_export_assignment_declaration(span),

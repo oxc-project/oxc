@@ -636,3 +636,8 @@ pub fn index_signature_question_mark(span: Span) -> OxcDiagnostic {
 pub fn index_signature_type_annotation(span: Span) -> OxcDiagnostic {
     ts_error("1021", "An index signature must have a type annotation.").with_label(span)
 }
+
+#[cold]
+pub fn unexpected_export(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::error("Unexpected export.").with_label(span)
+}

@@ -1,7 +1,7 @@
 parser_misc Summary:
 AST Parsed     : 36/36 (100.00%)
 Positive Passed: 36/36 (100.00%)
-Negative Passed: 34/34 (100.00%)
+Negative Passed: 35/35 (100.00%)
 
   × Identifier `b` has already been declared
    ╭─[misc/fail/oxc-10159.js:1:22]
@@ -28,6 +28,11 @@ Negative Passed: 34/34 (100.00%)
    ╭─[misc/fail/oxc-10977.ts:1:9]
  1 │ class{h:<=Ö
    ·         ──
+   ╰────
+
+  × Expected `from` but found `EOF`
+   ╭─[misc/fail/oxc-11453.js:2:1]
+ 1 │ export import
    ╰────
 
   × Unexpected token
