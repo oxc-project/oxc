@@ -646,3 +646,8 @@ pub fn unexpected_export(span: Span) -> OxcDiagnostic {
 pub fn decorators_in_export_and_class(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::error("Decorators may not appear after 'export' or 'export default' if they also appear before 'export'.").with_label(span)
 }
+
+#[cold]
+pub fn decorators_are_not_valid_here(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::error("Decorators are not valid here.").with_label(span)
+}

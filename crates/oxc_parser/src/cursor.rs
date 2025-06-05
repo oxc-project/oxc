@@ -312,6 +312,15 @@ impl<'a> ParserImpl<'a> {
         }
     }
 
+    /// Check for unconsumed decorators.
+    pub(crate) fn check_unconsumed_decorators(&mut self) {
+        if !self.state.decorators.is_empty() {
+            for decorator in self.consume_decorators() {
+                self.error(diagnostics::decorators_are_not_valid_here(decorator.span));
+            }
+        }
+    }
+
     pub(crate) fn parse_normal_list<F, T>(&mut self, open: Kind, close: Kind, f: F) -> Vec<'a, T>
     where
         F: Fn(&mut Self) -> Option<T>,

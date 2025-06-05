@@ -190,7 +190,13 @@ impl<'a> ParserImpl<'a> {
         self.ast.alloc_class_body(self.end_span(span), class_elements)
     }
 
-    pub(crate) fn parse_class_element(&mut self) -> ClassElement<'a> {
+    fn parse_class_element(&mut self) -> ClassElement<'a> {
+        let elem = self.parse_class_element_impl();
+        self.check_unconsumed_decorators();
+        elem
+    }
+
+    fn parse_class_element_impl(&mut self) -> ClassElement<'a> {
         let span = self.start_span();
 
         let modifiers = self.parse_modifiers(

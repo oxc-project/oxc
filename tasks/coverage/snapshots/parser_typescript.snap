@@ -3,7 +3,7 @@ commit: 81c95189
 parser_typescript Summary:
 AST Parsed     : 6530/6537 (99.89%)
 Positive Passed: 6519/6537 (99.72%)
-Negative Passed: 1386/5763 (24.05%)
+Negative Passed: 1396/5763 (24.22%)
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/ClassDeclaration24.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/ExportAssignment7.ts
@@ -4628,8 +4628,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/classes/c
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/classes/classExpressions/classWithStaticFieldInParameterInitializer.2.ts
 
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/classes/classStaticBlock/classStaticBlock19.ts
-
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/classes/classStaticBlock/classStaticBlock20.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/classes/classStaticBlock/classStaticBlock23.ts
@@ -5027,24 +5025,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/decorator
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/decorators/class/property/decoratorOnClassProperty7.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/decorators/decoratorCallGeneric.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/decorators/invalid/decoratorOnEnum.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/decorators/invalid/decoratorOnFunctionDeclaration.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/decorators/invalid/decoratorOnFunctionExpression.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/decorators/invalid/decoratorOnImportEquals1.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/decorators/invalid/decoratorOnImportEquals2.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/decorators/invalid/decoratorOnInterface.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/decorators/invalid/decoratorOnInternalModule.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/decorators/invalid/decoratorOnTypeAlias.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/decorators/invalid/decoratorOnVar.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/decorators/missingDecoratorType.ts
 
@@ -19299,6 +19279,14 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
  22 │     getY = (obj: D) => obj.#y;
     ╰────
 
+  × Decorators are not valid here.
+   ╭─[typescript/tests/cases/conformance/classes/classStaticBlock/classStaticBlock19.ts:2:5]
+ 1 │ class C {
+ 2 │     @decorator
+   ·     ──────────
+ 3 │     static {
+   ╰────
+
   × Cannot use `await` as an identifier in an async context
    ╭─[typescript/tests/cases/conformance/classes/classStaticBlock/classStaticBlock22.ts:4:9]
  3 │   static {
@@ -21038,6 +21026,14 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
  4 │ }
    ╰────
 
+  × Decorators are not valid here.
+   ╭─[typescript/tests/cases/conformance/decorators/invalid/decoratorOnEnum.ts:3:1]
+ 2 │ 
+ 3 │ @dec
+   · ────
+ 4 │ enum E {
+   ╰────
+
   × Unexpected token
    ╭─[typescript/tests/cases/conformance/decorators/invalid/decoratorOnEnum2.ts:4:5]
  3 │ enum E {
@@ -21046,12 +21042,75 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
  5 │ }
    ╰────
 
+  × Decorators are not valid here.
+   ╭─[typescript/tests/cases/conformance/decorators/invalid/decoratorOnFunctionDeclaration.ts:3:1]
+ 2 │ 
+ 3 │ @dec
+   · ────
+ 4 │ function F() {
+   ╰────
+
+  × Decorators are not valid here.
+   ╭─[typescript/tests/cases/conformance/decorators/invalid/decoratorOnFunctionExpression.ts:3:9]
+ 2 │ 
+ 3 │ var F = @dec function () {
+   ·         ────
+ 4 │ }
+   ╰────
+
   × Identifier expected. 'this' is a reserved word that cannot be used here.
    ╭─[typescript/tests/cases/conformance/decorators/invalid/decoratorOnFunctionParameter.ts:5:22]
  4 │ 
  5 │ function direct(@dec this: C) { return this.n; }
    ·                      ────
  6 │ function called(@dec() this: C) { return this.n; }
+   ╰────
+
+  × Decorators are not valid here.
+   ╭─[typescript/tests/cases/conformance/decorators/invalid/decoratorOnImportEquals1.ts:8:5]
+ 7 │ module M2 {
+ 8 │     @dec
+   ·     ────
+ 9 │     import X = M1.X;
+   ╰────
+
+  × Decorators are not valid here.
+   ╭─[typescript/tests/cases/conformance/decorators/invalid/decoratorOnImportEquals2.ts:1:1]
+ 1 │ @dec
+   · ────
+ 2 │ import lib = require('./decoratorOnImportEquals2_0');
+   ╰────
+
+  × Decorators are not valid here.
+   ╭─[typescript/tests/cases/conformance/decorators/invalid/decoratorOnInterface.ts:3:1]
+ 2 │ 
+ 3 │ @dec
+   · ────
+ 4 │ interface I {
+   ╰────
+
+  × Decorators are not valid here.
+   ╭─[typescript/tests/cases/conformance/decorators/invalid/decoratorOnInternalModule.ts:3:1]
+ 2 │ 
+ 3 │ @dec
+   · ────
+ 4 │ module M {
+   ╰────
+
+  × Decorators are not valid here.
+   ╭─[typescript/tests/cases/conformance/decorators/invalid/decoratorOnTypeAlias.ts:3:1]
+ 2 │ 
+ 3 │ @dec
+   · ────
+ 4 │ type T = number;
+   ╰────
+
+  × Decorators are not valid here.
+   ╭─[typescript/tests/cases/conformance/decorators/invalid/decoratorOnVar.ts:3:1]
+ 2 │ 
+ 3 │ @dec
+   · ────
+ 4 │ var x: number;
    ╰────
 
   × Unexpected token

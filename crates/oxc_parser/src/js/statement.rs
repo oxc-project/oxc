@@ -147,6 +147,8 @@ impl<'a> ParserImpl<'a> {
             Self::set_pure_on_function_stmt(&mut stmt);
         }
 
+        self.check_unconsumed_decorators();
+
         stmt
     }
 
