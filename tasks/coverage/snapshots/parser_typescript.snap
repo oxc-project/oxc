@@ -13521,13 +13521,19 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
  2 │ Foo<number>(1);
    ╰────
 
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-   ╭─[typescript/tests/cases/compiler/jsFileCompilationTypeAssertions.ts:1:2]
+  × TS(8037): Type assertion expressions can only be used in TypeScript files.
+   ╭─[typescript/tests/cases/compiler/jsFileCompilationTypeAssertions.ts:1:1]
  1 │ 0 as number;
-   ·  ▲
+   · ───────────
  2 │ var v = <string>undefined;
    ╰────
-  help: Try insert a semicolon here
+
+  × Unexpected token
+   ╭─[typescript/tests/cases/compiler/jsFileCompilationTypeAssertions.ts:2:9]
+ 1 │ 0 as number;
+ 2 │ var v = <string>undefined;
+   ·         ─
+   ╰────
 
   × Expected `,` but found `:`
    ╭─[typescript/tests/cases/compiler/jsFileCompilationTypeOfParameter.ts:1:13]
@@ -24841,12 +24847,11 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
    ╰────
   help: Try insert a semicolon here
 
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-   ╭─[typescript/tests/cases/conformance/expressions/typeSatisfaction/typeSatisfaction_js.ts:1:18]
+  × TS(8016): Type satisfaction expressions can only be used in TypeScript files.
+   ╭─[typescript/tests/cases/conformance/expressions/typeSatisfaction/typeSatisfaction_js.ts:1:9]
  1 │ var v = undefined satisfies 1;
-   ·                  ▲
+   ·         ─────────────────────
    ╰────
-  help: Try insert a semicolon here
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[typescript/tests/cases/conformance/expressions/unaryOperators/bitwiseNotOperator/bitwiseNotOperatorInvalidOperations.ts:5:10]

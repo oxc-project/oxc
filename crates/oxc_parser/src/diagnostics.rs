@@ -657,3 +657,15 @@ pub fn decorator_on_overload(span: Span) -> OxcDiagnostic {
     ts_error("1249", "A decorator can only decorate a method implementation, not an overload.")
         .with_label(span)
 }
+
+#[cold]
+pub fn as_in_ts(span: Span) -> OxcDiagnostic {
+    ts_error("8037", "Type assertion expressions can only be used in TypeScript files.")
+        .with_label(span)
+}
+
+#[cold]
+pub fn satisfies_in_ts(span: Span) -> OxcDiagnostic {
+    ts_error("8016", "Type satisfaction expressions can only be used in TypeScript files.")
+        .with_label(span)
+}

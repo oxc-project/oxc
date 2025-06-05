@@ -7,7 +7,7 @@ use oxc_syntax::{
 
 use crate::lexer::Kind;
 
-pub fn kind_to_precedence(kind: Kind, is_typescript: bool) -> Option<Precedence> {
+pub fn kind_to_precedence(kind: Kind) -> Option<Precedence> {
     match kind {
         Kind::Question2 => Some(Precedence::NullishCoalescing),
         Kind::Pipe2 => Some(Precedence::LogicalOr),
@@ -23,7 +23,7 @@ pub fn kind_to_precedence(kind: Kind, is_typescript: bool) -> Option<Precedence>
         Kind::Plus | Kind::Minus => Some(Precedence::Add),
         Kind::Star | Kind::Slash | Kind::Percent => Some(Precedence::Multiply),
         Kind::Star2 => Some(Precedence::Exponentiation),
-        Kind::As | Kind::Satisfies if is_typescript => Some(Precedence::Compare),
+        Kind::As | Kind::Satisfies => Some(Precedence::Compare),
         _ => None,
     }
 }

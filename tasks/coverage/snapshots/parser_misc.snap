@@ -219,10 +219,16 @@ Negative Passed: 38/38 (100.00%)
  9 │ }
    ╰────
 
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-   ╭─[misc/fail/oxc-4111-1.js:1:18]
+  × TS(8037): Type assertion expressions can only be used in TypeScript files.
+   ╭─[misc/fail/oxc-4111-1.js:1:1]
  1 │ funtransientction as longciiConÞr>ol(cde) {
-   ·                  ▲
+   · ─────────────────────────────────
+   ╰────
+
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
+   ╭─[misc/fail/oxc-4111-1.js:1:43]
+ 1 │ funtransientction as longciiConÞr>ol(cde) {
+   ·                                          ▲
    ╰────
   help: Try insert a semicolon here
 
