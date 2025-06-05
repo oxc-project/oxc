@@ -316,15 +316,8 @@ impl Case for EstreeTypescriptCase {
             "typescript/tests/cases/compiler/shebangBeforeReferences.ts",
         ];
 
-        // Skip tests where failure is only due to rounding error in `serde_json` conversion of `f64`s.
-        // These tests will pass once we remove the `serde_json` step from AST comparison,
-        // and compare ASTs by simple JSON-to-JSON string comparison.
-        // TODO: Remove these from skip list once we use JSON string comparison.
-        const SERDE_CONVERSION_PATHS: &[&str] =
-            &["typescript/tests/cases/compiler/castExpressionParentheses.ts"];
-
         static IGNORE_PATHS: &[&str] = concat_slices!(
-            [&str]: PARSE_ERROR_PATHS, INCORRECT_PATHS, HASHBANG_PATHS, SERDE_CONVERSION_PATHS
+            [&str]: PARSE_ERROR_PATHS, INCORRECT_PATHS, HASHBANG_PATHS
         );
 
         // Skip cases where expected to fail to parse
@@ -383,40 +376,6 @@ impl Case for EstreeTypescriptCase {
             Utf8ToUtf16::new(source_text).convert_program_with_ascending_order_checks(&mut program);
 
             let oxc_json = program.to_pretty_estree_ts_json();
-
-            if oxc_json == estree_json {
-                continue;
-            }
-
-            // Parse JSON and stringify back to JSON again.
-            // This ignores any duplicate object properties in original JSON
-            // e.g. `optional: false, optional: true`.
-            // These repeated properties are a problem that we need to fix,
-            // but we aim to fix all other field order problems first.
-            // Note: `serde_json` has `preserve_order` feature enabled so it should maintain original
-            // field order during this conversion.
-            let oxc_json_value = match serde_json::from_str::<serde_json::Value>(&oxc_json) {
-                Ok(v) => v,
-                Err(e) => {
-                    let e = e.to_string();
-                    // Ignore these errors, because they're due to shortcomings of `serde_json`:
-                    // - Unable to handle numbers which are too big to fit in a `f64` (infinity).
-                    // - Unable to handle strings which aren't valid UTF-8 (lone surrogates).
-                    // - Unable to handle very deep trees.
-                    if e.starts_with("number out of range ")
-                        || e.starts_with("unexpected end of hex escape ")
-                        || e.starts_with("lone leading surrogate in hex escape ")
-                        || e.starts_with("recursion limit exceeded ")
-                    {
-                        continue;
-                    }
-                    self.base.result =
-                        TestResult::GenericError("serde_json::from_str(oxc_json)", e);
-                    return;
-                }
-            };
-            let oxc_json = serde_json::to_string_pretty(&oxc_json_value).unwrap();
-
             if oxc_json == estree_json {
                 continue;
             }
