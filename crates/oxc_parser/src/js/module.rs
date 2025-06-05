@@ -651,10 +651,11 @@ impl<'a> ParserImpl<'a> {
                         can_parse_as_keyword = false;
                     } else {
                         // { type as as }
-                        property_name = Some(
-                            self.ast
-                                .module_export_name_identifier_name(first_as.span, first_as.name),
-                        );
+                        property_name =
+                            Some(self.ast.module_export_name_identifier_name(
+                                type_or_name_token.span(),
+                                "type",
+                            ));
                         name = self
                             .ast
                             .module_export_name_identifier_name(second_as.span, second_as.name);
@@ -967,6 +968,22 @@ mod test {
             assert_eq!(specifiers[0].name(), "defaultItem");
             assert_eq!(specifiers[1].name(), "from");
             assert_eq!(specifiers[2].name(), "type");
+        });
+
+        let src = "import { type as as } from 'baz';";
+        parse_and_assert_import_declarations(src, |declarations| {
+            assert_eq!(declarations.len(), 1);
+            let decl = declarations[0];
+            assert_eq!(decl.import_kind, ImportOrExportKind::Value);
+            assert!(decl.specifiers.is_some());
+            let specifiers = decl.specifiers.as_ref().unwrap();
+            assert_eq!(specifiers.len(), 1);
+            if let ImportDeclarationSpecifier::ImportSpecifier(specifier) = &specifiers[0] {
+                assert_eq!(specifier.local.name, "as");
+                assert_eq!(specifier.imported.name(), "type");
+            } else {
+                panic!("Expected ImportSpecifier, found: {:?}", specifiers[0]);
+            }
         });
 
         let src = "import * as foo from 'bar';";
