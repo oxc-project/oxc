@@ -1812,7 +1812,6 @@ pub struct FormalParameters<'a> {
 pub struct FormalParameter<'a> {
     #[estree(skip)]
     pub span: Span,
-    #[ts]
     pub decorators: Vec<'a, Decorator<'a>>,
     #[estree(flatten)]
     pub pattern: BindingPattern<'a>,
