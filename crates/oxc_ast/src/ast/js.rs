@@ -255,6 +255,8 @@ pub struct IdentifierReference<'a> {
 /// function, class, or object.
 ///
 /// See: [13.1 Identifiers](https://tc39.es/ecma262/#sec-identifiers)
+///
+/// Also see other examples in docs for [`BindingPatternKind`].
 #[ast(visit)]
 #[derive(Debug, Clone)]
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
@@ -1515,8 +1517,14 @@ pub struct DebuggerStatement {
     pub span: Span,
 }
 
-/// Destructuring Binding Patterns
-/// * <https://tc39.es/ecma262/#prod-BindingPattern>
+/// Destructuring Binding Patterns.
+/// <https://tc39.es/ecma262/#prod-BindingPattern>
+///
+/// Binding patterns can be nested within other binding patterns
+/// e.g. `const [ { a: [ {x} ] } ] = arr;`.
+///
+/// Type annotations are valid in some positions e.g. `const x: T = f();`
+/// but invalid in others e.g. `const [x: T] = f();`.
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
@@ -1539,19 +1547,57 @@ pub struct BindingPattern<'a> {
 #[derive(Debug)]
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, GetAddress, ContentEq, ESTree)]
 pub enum BindingPatternKind<'a> {
-    /// `const a = 1`
+    /// `x` in `const x = 1;`.
+    ///
+    /// Also e.g. `x` in:
+    /// - `const [x] = arr;`
+    /// - `const { a: x } = obj;`
+    /// - `const [ ...x ] = arr;`
+    /// - `const [x = 1] = arr;`
+    /// - `function f(x) {}`
+    /// - `try {} catch (x) {}`
     BindingIdentifier(Box<'a, BindingIdentifier<'a>>) = 0,
-    /// `const {a} = 1`
+    /// `{x}` in `const {x} = 1;`.
+    ///
+    /// Also e.g. `{x}` in:
+    /// - `const [{x}] = arr;`
+    /// - `const { a: {x} } = obj;`
+    /// - `const [{x} = obj] = arr;`
+    /// - `const [ ...{x} ] = arr;`
+    /// - `function f({x}) {}`
+    /// - `try {} catch ({x}) {}`
     ObjectPattern(Box<'a, ObjectPattern<'a>>) = 1,
-    /// `const [a] = 1`
+    /// `[x]` in `const [x] = 1;`
+    ///
+    /// Also e.g. `[x]` in:
+    /// - `const { a: [x] } = obj;`
+    /// - `const { a: [x] = arr } = obj;`
+    /// - `const [[x]] = obj;`
+    /// - `const [ ...[x] ] = arr;`
+    /// - `function f([x]) {}`
+    /// - `try {} catch ([x]) {}`
     ArrayPattern(Box<'a, ArrayPattern<'a>>) = 2,
-    /// A defaulted binding pattern, i.e.:
-    /// `const {a = 1} = 1`
-    /// the assignment pattern is `a = 1`
-    /// it has an inner left that has a BindingIdentifier
+    /// `x = 1` in `const {x = 1} = obj;`.
+    ///
+    /// Also e.g. `x = 1` in:
+    /// - `const [x = 1] = arr;`
+    /// - `const { a: x = 1 } = obj;`
+    /// - `function f(x = 1) {}`
+    ///
+    /// Also e.g. `{x} = obj` in:
+    /// - `const [{x} = obj] = arr;`
+    /// - `const { a: {x} = obj2 } = obj;`
+    /// - `function f({x} = obj) {}`
+    ///
+    /// Invalid in:
+    /// - `BindingRestElement` e.g. `const [...x = 1] = arr;`.
+    /// - `CatchParameter` e.g. `try {} catch (e = 1) {}`.
     AssignmentPattern(Box<'a, AssignmentPattern<'a>>) = 3,
 }
 
+/// `x = 1` in `const {x = 1} = obj;`.
+///
+/// See other examples in docs for [`BindingPatternKind`].
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
@@ -1565,6 +1611,9 @@ pub struct AssignmentPattern<'a> {
     pub right: Expression<'a>,
 }
 
+/// `{x}` in `const {x} = 1;`.
+///
+/// See other examples in docs for [`BindingPatternKind`].
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
@@ -1595,6 +1644,9 @@ pub struct BindingProperty<'a> {
     pub computed: bool,
 }
 
+/// `[x]` in `const [x] = 1;`
+///
+/// See other examples in docs for [`BindingPatternKind`].
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
