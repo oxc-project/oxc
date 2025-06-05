@@ -8,10 +8,9 @@ use serde::{
     ser::SerializeMap,
 };
 
-use oxc_diagnostics::{Error, OxcDiagnostic};
-
 use crate::{
     AllowWarnDeny,
+    rule::RuleConfig,
     rules::{RULES, RuleEnum},
     utils::{is_eslint_rule_adapted_to_typescript, is_jest_rule_adapted_to_vitest},
 };
@@ -195,14 +194,7 @@ impl JsonSchema for OxlintRules {
             ToggleAndConfig(Vec<serde_json::Value>),
         }
 
-        #[expect(unused)]
-        #[derive(Debug, JsonSchema)]
-        #[schemars(
-            description = "See [Oxlint Rules](https://oxc.rs/docs/guide/usage/linter/rules.html)"
-        )]
-        struct DummyRuleMap(pub FxHashMap<String, DummyRule>);
-
-        r#gen.subschema_for::<DummyRuleMap>()
+        r#gen.subschema_for::<crate::rules::RulesMap>()
     }
 }
 
@@ -254,7 +246,8 @@ impl<'de> Deserialize<'de> for OxlintRules {
                 let mut rules = vec![];
                 while let Some((key, value)) = map.next_entry::<String, serde_json::Value>()? {
                     let (plugin_name, rule_name) = parse_rule_key(&key);
-                    let (severity, config) = parse_rule_value(&value).map_err(de::Error::custom)?;
+                    let RuleConfig { severity, config } =
+                        serde_json::from_value(value).map_err(de::Error::custom)?;
                     rules.push(ESLintRule { plugin_name, rule_name, severity, config });
                 }
 
@@ -294,49 +287,6 @@ fn parse_rule_key(name: &str) -> (String, String) {
     };
 
     (oxlint_plugin_name.to_string(), rule_name.to_string())
-}
-
-fn parse_rule_value(
-    value: &serde_json::Value,
-) -> Result<(AllowWarnDeny, Option<serde_json::Value>), Error> {
-    match value {
-        serde_json::Value::String(_) | serde_json::Value::Number(_) => {
-            let severity = AllowWarnDeny::try_from(value)?;
-            Ok((severity, None))
-        }
-
-        serde_json::Value::Array(v) => {
-            if v.is_empty() {
-                return Err(failed_to_parse_rule_value(
-                    &value.to_string(),
-                    "Type should be `[SeverityConf, ...any[]`",
-                )
-                .into());
-            }
-
-            // The first item should be SeverityConf
-            let severity = AllowWarnDeny::try_from(v.first().unwrap())?;
-            // e.g. ["warn"], [0]
-            let config = if v.len() == 1 {
-                None
-            // e.g. ["error", "args", { type: "whatever" }, ["len", "also"]]
-            } else {
-                Some(serde_json::Value::Array(v.iter().skip(1).cloned().collect::<Vec<_>>()))
-            };
-
-            Ok((severity, config))
-        }
-
-        _ => Err(failed_to_parse_rule_value(
-            &value.to_string(),
-            "Type should be `SeverityConf | [SeverityConf, ...any[]]`",
-        )
-        .into()),
-    }
-}
-
-fn failed_to_parse_rule_value(value: &str, err: &str) -> OxcDiagnostic {
-    OxcDiagnostic::error(format!("Failed to rule value {value:?} with error {err:?}"))
 }
 
 impl ESLintRule {
