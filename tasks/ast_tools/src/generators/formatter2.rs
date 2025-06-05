@@ -179,40 +179,31 @@ fn implementation(type_def: &TypeDef, schema: &Schema) -> TokenStream {
 
             let return_type = match field_type {
                 TypeDef::Struct(struct_def) => {
-                    let name = &struct_def.ident();
-
                     is_reference = !struct_def.derives.contains(&String::from("Copy"));
                     is_not_ast_node = !struct_def.kind.has_kind;
 
-                    quote! {
-                        #name
-                    }
+                    struct_def.ty(schema)
                 }
                 TypeDef::Box(box_def) => {
                     let Some(inner_type) = box_def.inner_type(schema).as_struct() else {
                         unreachable!()
                     };
 
-                    let name = &inner_type.ident();
-
-                    quote! {
-                        #name
-                    }
+                    inner_type.ty(schema)
                 }
                 TypeDef::Vec(vec_def) => vec_def.ty(schema),
                 TypeDef::Enum(enum_def) => {
-                    let name = &enum_def.ident();
                     is_not_ast_node = !enum_def.visit.has_visitor();
                     inherits_parent = enum_def.kind.has_kind;
                     is_reference = !enum_def.derives.contains(&String::from("Copy"));
 
-                    quote! { #name }
+                    enum_def.ty(schema)
                 }
                 TypeDef::Primitive(primitive_def) => {
-                    let ty = primitive_def.ty(schema);
                     is_not_ast_node = true;
                     is_reference = false;
-                    ty
+
+                    primitive_def.ty(schema)
                 }
                 TypeDef::Option(_) => {
                     unreachable!()

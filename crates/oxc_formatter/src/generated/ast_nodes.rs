@@ -305,7 +305,7 @@ impl<'a, 'b> AstNode<'a, 'b, Program<'a>> {
         })
     }
 
-    pub fn hashbang(&self) -> Option<&AstNode<'a, 'b, Hashbang>> {
+    pub fn hashbang(&self) -> Option<&AstNode<'a, 'b, Hashbang<'a>>> {
         self.allocator
             .alloc(self.inner.hashbang.as_ref().map(|inner| AstNode {
                 inner,
@@ -683,7 +683,7 @@ impl<'a, 'b> AstNode<'a, 'b, ObjectProperty<'a>> {
         self.inner.kind
     }
 
-    pub fn key(&self) -> &AstNode<'a, 'b, PropertyKey> {
+    pub fn key(&self) -> &AstNode<'a, 'b, PropertyKey<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.key,
             allocator: self.allocator,
@@ -691,7 +691,7 @@ impl<'a, 'b> AstNode<'a, 'b, ObjectProperty<'a>> {
         })
     }
 
-    pub fn value(&self) -> &AstNode<'a, 'b, Expression> {
+    pub fn value(&self) -> &AstNode<'a, 'b, Expression<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.value,
             allocator: self.allocator,
@@ -779,7 +779,7 @@ impl<'a, 'b> AstNode<'a, 'b, TaggedTemplateExpression<'a>> {
         self.inner.span
     }
 
-    pub fn tag(&self) -> &AstNode<'a, 'b, Expression> {
+    pub fn tag(&self) -> &AstNode<'a, 'b, Expression<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.tag,
             allocator: self.allocator,
@@ -791,7 +791,7 @@ impl<'a, 'b> AstNode<'a, 'b, TaggedTemplateExpression<'a>> {
         })
     }
 
-    pub fn type_arguments(&self) -> Option<&AstNode<'a, 'b, TSTypeParameterInstantiation>> {
+    pub fn type_arguments(&self) -> Option<&AstNode<'a, 'b, TSTypeParameterInstantiation<'a>>> {
         self.allocator
             .alloc(self.inner.type_arguments.as_ref().map(|inner| AstNode {
                 inner: inner.as_ref(),
@@ -805,7 +805,7 @@ impl<'a, 'b> AstNode<'a, 'b, TaggedTemplateExpression<'a>> {
             .as_ref()
     }
 
-    pub fn quasi(&self) -> &AstNode<'a, 'b, TemplateLiteral> {
+    pub fn quasi(&self) -> &AstNode<'a, 'b, TemplateLiteral<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.quasi,
             allocator: self.allocator,
@@ -822,7 +822,7 @@ impl<'a, 'b> AstNode<'a, 'b, TemplateElement<'a>> {
         self.inner.span
     }
 
-    pub fn value(&self) -> &TemplateElementValue {
+    pub fn value(&self) -> &TemplateElementValue<'a> {
         &self.inner.value
     }
 
@@ -879,7 +879,7 @@ impl<'a, 'b> AstNode<'a, 'b, ComputedMemberExpression<'a>> {
         self.inner.span
     }
 
-    pub fn object(&self) -> &AstNode<'a, 'b, Expression> {
+    pub fn object(&self) -> &AstNode<'a, 'b, Expression<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.object,
             allocator: self.allocator,
@@ -891,7 +891,7 @@ impl<'a, 'b> AstNode<'a, 'b, ComputedMemberExpression<'a>> {
         })
     }
 
-    pub fn expression(&self) -> &AstNode<'a, 'b, Expression> {
+    pub fn expression(&self) -> &AstNode<'a, 'b, Expression<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.expression,
             allocator: self.allocator,
@@ -912,7 +912,7 @@ impl<'a, 'b> AstNode<'a, 'b, StaticMemberExpression<'a>> {
         self.inner.span
     }
 
-    pub fn object(&self) -> &AstNode<'a, 'b, Expression> {
+    pub fn object(&self) -> &AstNode<'a, 'b, Expression<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.object,
             allocator: self.allocator,
@@ -924,7 +924,7 @@ impl<'a, 'b> AstNode<'a, 'b, StaticMemberExpression<'a>> {
         })
     }
 
-    pub fn property(&self) -> &AstNode<'a, 'b, IdentifierName> {
+    pub fn property(&self) -> &AstNode<'a, 'b, IdentifierName<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.property,
             allocator: self.allocator,
@@ -945,7 +945,7 @@ impl<'a, 'b> AstNode<'a, 'b, PrivateFieldExpression<'a>> {
         self.inner.span
     }
 
-    pub fn object(&self) -> &AstNode<'a, 'b, Expression> {
+    pub fn object(&self) -> &AstNode<'a, 'b, Expression<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.object,
             allocator: self.allocator,
@@ -957,7 +957,7 @@ impl<'a, 'b> AstNode<'a, 'b, PrivateFieldExpression<'a>> {
         })
     }
 
-    pub fn field(&self) -> &AstNode<'a, 'b, PrivateIdentifier> {
+    pub fn field(&self) -> &AstNode<'a, 'b, PrivateIdentifier<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.field,
             allocator: self.allocator,
@@ -978,7 +978,7 @@ impl<'a, 'b> AstNode<'a, 'b, CallExpression<'a>> {
         self.inner.span
     }
 
-    pub fn callee(&self) -> &AstNode<'a, 'b, Expression> {
+    pub fn callee(&self) -> &AstNode<'a, 'b, Expression<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.callee,
             allocator: self.allocator,
@@ -990,7 +990,7 @@ impl<'a, 'b> AstNode<'a, 'b, CallExpression<'a>> {
         })
     }
 
-    pub fn type_arguments(&self) -> Option<&AstNode<'a, 'b, TSTypeParameterInstantiation>> {
+    pub fn type_arguments(&self) -> Option<&AstNode<'a, 'b, TSTypeParameterInstantiation<'a>>> {
         self.allocator
             .alloc(self.inner.type_arguments.as_ref().map(|inner| AstNode {
                 inner: inner.as_ref(),
@@ -1029,7 +1029,7 @@ impl<'a, 'b> AstNode<'a, 'b, NewExpression<'a>> {
         self.inner.span
     }
 
-    pub fn callee(&self) -> &AstNode<'a, 'b, Expression> {
+    pub fn callee(&self) -> &AstNode<'a, 'b, Expression<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.callee,
             allocator: self.allocator,
@@ -1041,7 +1041,7 @@ impl<'a, 'b> AstNode<'a, 'b, NewExpression<'a>> {
         })
     }
 
-    pub fn type_arguments(&self) -> Option<&AstNode<'a, 'b, TSTypeParameterInstantiation>> {
+    pub fn type_arguments(&self) -> Option<&AstNode<'a, 'b, TSTypeParameterInstantiation<'a>>> {
         self.allocator
             .alloc(self.inner.type_arguments.as_ref().map(|inner| AstNode {
                 inner: inner.as_ref(),
@@ -1076,7 +1076,7 @@ impl<'a, 'b> AstNode<'a, 'b, MetaProperty<'a>> {
         self.inner.span
     }
 
-    pub fn meta(&self) -> &AstNode<'a, 'b, IdentifierName> {
+    pub fn meta(&self) -> &AstNode<'a, 'b, IdentifierName<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.meta,
             allocator: self.allocator,
@@ -1088,7 +1088,7 @@ impl<'a, 'b> AstNode<'a, 'b, MetaProperty<'a>> {
         })
     }
 
-    pub fn property(&self) -> &AstNode<'a, 'b, IdentifierName> {
+    pub fn property(&self) -> &AstNode<'a, 'b, IdentifierName<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.property,
             allocator: self.allocator,
@@ -1105,7 +1105,7 @@ impl<'a, 'b> AstNode<'a, 'b, SpreadElement<'a>> {
         self.inner.span
     }
 
-    pub fn argument(&self) -> &AstNode<'a, 'b, Expression> {
+    pub fn argument(&self) -> &AstNode<'a, 'b, Expression<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.argument,
             allocator: self.allocator,
@@ -1156,7 +1156,7 @@ impl<'a, 'b> AstNode<'a, 'b, UpdateExpression<'a>> {
         self.inner.prefix
     }
 
-    pub fn argument(&self) -> &AstNode<'a, 'b, SimpleAssignmentTarget> {
+    pub fn argument(&self) -> &AstNode<'a, 'b, SimpleAssignmentTarget<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.argument,
             allocator: self.allocator,
@@ -1173,7 +1173,7 @@ impl<'a, 'b> AstNode<'a, 'b, UnaryExpression<'a>> {
         self.inner.operator
     }
 
-    pub fn argument(&self) -> &AstNode<'a, 'b, Expression> {
+    pub fn argument(&self) -> &AstNode<'a, 'b, Expression<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.argument,
             allocator: self.allocator,
@@ -1190,7 +1190,7 @@ impl<'a, 'b> AstNode<'a, 'b, BinaryExpression<'a>> {
         self.inner.span
     }
 
-    pub fn left(&self) -> &AstNode<'a, 'b, Expression> {
+    pub fn left(&self) -> &AstNode<'a, 'b, Expression<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.left,
             allocator: self.allocator,
@@ -1206,7 +1206,7 @@ impl<'a, 'b> AstNode<'a, 'b, BinaryExpression<'a>> {
         self.inner.operator
     }
 
-    pub fn right(&self) -> &AstNode<'a, 'b, Expression> {
+    pub fn right(&self) -> &AstNode<'a, 'b, Expression<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.right,
             allocator: self.allocator,
@@ -1223,7 +1223,7 @@ impl<'a, 'b> AstNode<'a, 'b, PrivateInExpression<'a>> {
         self.inner.span
     }
 
-    pub fn left(&self) -> &AstNode<'a, 'b, PrivateIdentifier> {
+    pub fn left(&self) -> &AstNode<'a, 'b, PrivateIdentifier<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.left,
             allocator: self.allocator,
@@ -1235,7 +1235,7 @@ impl<'a, 'b> AstNode<'a, 'b, PrivateInExpression<'a>> {
         })
     }
 
-    pub fn right(&self) -> &AstNode<'a, 'b, Expression> {
+    pub fn right(&self) -> &AstNode<'a, 'b, Expression<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.right,
             allocator: self.allocator,
@@ -1252,7 +1252,7 @@ impl<'a, 'b> AstNode<'a, 'b, LogicalExpression<'a>> {
         self.inner.span
     }
 
-    pub fn left(&self) -> &AstNode<'a, 'b, Expression> {
+    pub fn left(&self) -> &AstNode<'a, 'b, Expression<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.left,
             allocator: self.allocator,
@@ -1268,7 +1268,7 @@ impl<'a, 'b> AstNode<'a, 'b, LogicalExpression<'a>> {
         self.inner.operator
     }
 
-    pub fn right(&self) -> &AstNode<'a, 'b, Expression> {
+    pub fn right(&self) -> &AstNode<'a, 'b, Expression<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.right,
             allocator: self.allocator,
@@ -1285,7 +1285,7 @@ impl<'a, 'b> AstNode<'a, 'b, ConditionalExpression<'a>> {
         self.inner.span
     }
 
-    pub fn test(&self) -> &AstNode<'a, 'b, Expression> {
+    pub fn test(&self) -> &AstNode<'a, 'b, Expression<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.test,
             allocator: self.allocator,
@@ -1297,7 +1297,7 @@ impl<'a, 'b> AstNode<'a, 'b, ConditionalExpression<'a>> {
         })
     }
 
-    pub fn consequent(&self) -> &AstNode<'a, 'b, Expression> {
+    pub fn consequent(&self) -> &AstNode<'a, 'b, Expression<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.consequent,
             allocator: self.allocator,
@@ -1309,7 +1309,7 @@ impl<'a, 'b> AstNode<'a, 'b, ConditionalExpression<'a>> {
         })
     }
 
-    pub fn alternate(&self) -> &AstNode<'a, 'b, Expression> {
+    pub fn alternate(&self) -> &AstNode<'a, 'b, Expression<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.alternate,
             allocator: self.allocator,
@@ -1330,7 +1330,7 @@ impl<'a, 'b> AstNode<'a, 'b, AssignmentExpression<'a>> {
         self.inner.operator
     }
 
-    pub fn left(&self) -> &AstNode<'a, 'b, AssignmentTarget> {
+    pub fn left(&self) -> &AstNode<'a, 'b, AssignmentTarget<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.left,
             allocator: self.allocator,
@@ -1338,7 +1338,7 @@ impl<'a, 'b> AstNode<'a, 'b, AssignmentExpression<'a>> {
         })
     }
 
-    pub fn right(&self) -> &AstNode<'a, 'b, Expression> {
+    pub fn right(&self) -> &AstNode<'a, 'b, Expression<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.right,
             allocator: self.allocator,
@@ -1487,7 +1487,7 @@ impl<'a, 'b> AstNode<'a, 'b, ArrayAssignmentTarget<'a>> {
         })
     }
 
-    pub fn rest(&self) -> Option<&AssignmentTargetRest> {
+    pub fn rest(&self) -> Option<&AssignmentTargetRest<'a>> {
         self.inner.rest.as_ref()
     }
 }
@@ -1508,7 +1508,7 @@ impl<'a, 'b> AstNode<'a, 'b, ObjectAssignmentTarget<'a>> {
         })
     }
 
-    pub fn rest(&self) -> Option<&AssignmentTargetRest> {
+    pub fn rest(&self) -> Option<&AssignmentTargetRest<'a>> {
         self.inner.rest.as_ref()
     }
 }
@@ -1517,7 +1517,7 @@ impl<'a, 'b> AstNode<'a, 'b, AssignmentTargetRest<'a>> {
         self.inner.span
     }
 
-    pub fn target(&self) -> &AstNode<'a, 'b, AssignmentTarget> {
+    pub fn target(&self) -> &AstNode<'a, 'b, AssignmentTarget<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.target,
             allocator: self.allocator,
@@ -1558,7 +1558,7 @@ impl<'a, 'b> AstNode<'a, 'b, AssignmentTargetWithDefault<'a>> {
         self.inner.span
     }
 
-    pub fn binding(&self) -> &AstNode<'a, 'b, AssignmentTarget> {
+    pub fn binding(&self) -> &AstNode<'a, 'b, AssignmentTarget<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.binding,
             allocator: self.allocator,
@@ -1566,7 +1566,7 @@ impl<'a, 'b> AstNode<'a, 'b, AssignmentTargetWithDefault<'a>> {
         })
     }
 
-    pub fn init(&self) -> &AstNode<'a, 'b, Expression> {
+    pub fn init(&self) -> &AstNode<'a, 'b, Expression<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.init,
             allocator: self.allocator,
@@ -1611,7 +1611,7 @@ impl<'a, 'b> AstNode<'a, 'b, AssignmentTargetPropertyIdentifier<'a>> {
         self.inner.span
     }
 
-    pub fn binding(&self) -> &AstNode<'a, 'b, IdentifierReference> {
+    pub fn binding(&self) -> &AstNode<'a, 'b, IdentifierReference<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.binding,
             allocator: self.allocator,
@@ -1623,7 +1623,7 @@ impl<'a, 'b> AstNode<'a, 'b, AssignmentTargetPropertyIdentifier<'a>> {
         })
     }
 
-    pub fn init(&self) -> Option<&AstNode<'a, 'b, Expression>> {
+    pub fn init(&self) -> Option<&AstNode<'a, 'b, Expression<'a>>> {
         self.allocator
             .alloc(self.inner.init.as_ref().map(|inner| AstNode {
                 inner,
@@ -1640,7 +1640,7 @@ impl<'a, 'b> AstNode<'a, 'b, AssignmentTargetPropertyProperty<'a>> {
         self.inner.span
     }
 
-    pub fn name(&self) -> &AstNode<'a, 'b, PropertyKey> {
+    pub fn name(&self) -> &AstNode<'a, 'b, PropertyKey<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.name,
             allocator: self.allocator,
@@ -1648,7 +1648,7 @@ impl<'a, 'b> AstNode<'a, 'b, AssignmentTargetPropertyProperty<'a>> {
         })
     }
 
-    pub fn binding(&self) -> &AstNode<'a, 'b, AssignmentTargetMaybeDefault> {
+    pub fn binding(&self) -> &AstNode<'a, 'b, AssignmentTargetMaybeDefault<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.binding,
             allocator: self.allocator,
@@ -1691,7 +1691,7 @@ impl<'a, 'b> AstNode<'a, 'b, AwaitExpression<'a>> {
         self.inner.span
     }
 
-    pub fn argument(&self) -> &AstNode<'a, 'b, Expression> {
+    pub fn argument(&self) -> &AstNode<'a, 'b, Expression<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.argument,
             allocator: self.allocator,
@@ -1708,7 +1708,7 @@ impl<'a, 'b> AstNode<'a, 'b, ChainExpression<'a>> {
         self.inner.span
     }
 
-    pub fn expression(&self) -> &AstNode<'a, 'b, ChainElement> {
+    pub fn expression(&self) -> &AstNode<'a, 'b, ChainElement<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.expression,
             allocator: self.allocator,
@@ -1753,7 +1753,7 @@ impl<'a, 'b> AstNode<'a, 'b, ParenthesizedExpression<'a>> {
         self.inner.span
     }
 
-    pub fn expression(&self) -> &AstNode<'a, 'b, Expression> {
+    pub fn expression(&self) -> &AstNode<'a, 'b, Expression<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.expression,
             allocator: self.allocator,
@@ -1868,7 +1868,7 @@ impl<'a, 'b> AstNode<'a, 'b, Directive<'a>> {
         self.inner.span
     }
 
-    pub fn expression(&self) -> &AstNode<'a, 'b, StringLiteral> {
+    pub fn expression(&self) -> &AstNode<'a, 'b, StringLiteral<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.expression,
             allocator: self.allocator,
@@ -1998,11 +1998,11 @@ impl<'a, 'b> AstNode<'a, 'b, VariableDeclarator<'a>> {
         self.inner.kind
     }
 
-    pub fn id(&self) -> &BindingPattern {
+    pub fn id(&self) -> &BindingPattern<'a> {
         &self.inner.id
     }
 
-    pub fn init(&self) -> Option<&AstNode<'a, 'b, Expression>> {
+    pub fn init(&self) -> Option<&AstNode<'a, 'b, Expression<'a>>> {
         self.allocator
             .alloc(self.inner.init.as_ref().map(|inner| AstNode {
                 inner,
@@ -2030,7 +2030,7 @@ impl<'a, 'b> AstNode<'a, 'b, ExpressionStatement<'a>> {
         self.inner.span
     }
 
-    pub fn expression(&self) -> &AstNode<'a, 'b, Expression> {
+    pub fn expression(&self) -> &AstNode<'a, 'b, Expression<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.expression,
             allocator: self.allocator,
@@ -2047,7 +2047,7 @@ impl<'a, 'b> AstNode<'a, 'b, IfStatement<'a>> {
         self.inner.span
     }
 
-    pub fn test(&self) -> &AstNode<'a, 'b, Expression> {
+    pub fn test(&self) -> &AstNode<'a, 'b, Expression<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.test,
             allocator: self.allocator,
@@ -2059,7 +2059,7 @@ impl<'a, 'b> AstNode<'a, 'b, IfStatement<'a>> {
         })
     }
 
-    pub fn consequent(&self) -> &AstNode<'a, 'b, Statement> {
+    pub fn consequent(&self) -> &AstNode<'a, 'b, Statement<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.consequent,
             allocator: self.allocator,
@@ -2071,7 +2071,7 @@ impl<'a, 'b> AstNode<'a, 'b, IfStatement<'a>> {
         })
     }
 
-    pub fn alternate(&self) -> Option<&AstNode<'a, 'b, Statement>> {
+    pub fn alternate(&self) -> Option<&AstNode<'a, 'b, Statement<'a>>> {
         self.allocator
             .alloc(self.inner.alternate.as_ref().map(|inner| AstNode {
                 inner,
@@ -2090,7 +2090,7 @@ impl<'a, 'b> AstNode<'a, 'b, DoWhileStatement<'a>> {
         self.inner.span
     }
 
-    pub fn body(&self) -> &AstNode<'a, 'b, Statement> {
+    pub fn body(&self) -> &AstNode<'a, 'b, Statement<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.body,
             allocator: self.allocator,
@@ -2102,7 +2102,7 @@ impl<'a, 'b> AstNode<'a, 'b, DoWhileStatement<'a>> {
         })
     }
 
-    pub fn test(&self) -> &AstNode<'a, 'b, Expression> {
+    pub fn test(&self) -> &AstNode<'a, 'b, Expression<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.test,
             allocator: self.allocator,
@@ -2119,7 +2119,7 @@ impl<'a, 'b> AstNode<'a, 'b, WhileStatement<'a>> {
         self.inner.span
     }
 
-    pub fn test(&self) -> &AstNode<'a, 'b, Expression> {
+    pub fn test(&self) -> &AstNode<'a, 'b, Expression<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.test,
             allocator: self.allocator,
@@ -2131,7 +2131,7 @@ impl<'a, 'b> AstNode<'a, 'b, WhileStatement<'a>> {
         })
     }
 
-    pub fn body(&self) -> &AstNode<'a, 'b, Statement> {
+    pub fn body(&self) -> &AstNode<'a, 'b, Statement<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.body,
             allocator: self.allocator,
@@ -2148,7 +2148,7 @@ impl<'a, 'b> AstNode<'a, 'b, ForStatement<'a>> {
         self.inner.span
     }
 
-    pub fn init(&self) -> Option<&AstNode<'a, 'b, ForStatementInit>> {
+    pub fn init(&self) -> Option<&AstNode<'a, 'b, ForStatementInit<'a>>> {
         self.allocator
             .alloc(self.inner.init.as_ref().map(|inner| AstNode {
                 inner,
@@ -2158,7 +2158,7 @@ impl<'a, 'b> AstNode<'a, 'b, ForStatement<'a>> {
             .as_ref()
     }
 
-    pub fn test(&self) -> Option<&AstNode<'a, 'b, Expression>> {
+    pub fn test(&self) -> Option<&AstNode<'a, 'b, Expression<'a>>> {
         self.allocator
             .alloc(self.inner.test.as_ref().map(|inner| AstNode {
                 inner,
@@ -2172,7 +2172,7 @@ impl<'a, 'b> AstNode<'a, 'b, ForStatement<'a>> {
             .as_ref()
     }
 
-    pub fn update(&self) -> Option<&AstNode<'a, 'b, Expression>> {
+    pub fn update(&self) -> Option<&AstNode<'a, 'b, Expression<'a>>> {
         self.allocator
             .alloc(self.inner.update.as_ref().map(|inner| AstNode {
                 inner,
@@ -2186,7 +2186,7 @@ impl<'a, 'b> AstNode<'a, 'b, ForStatement<'a>> {
             .as_ref()
     }
 
-    pub fn body(&self) -> &AstNode<'a, 'b, Statement> {
+    pub fn body(&self) -> &AstNode<'a, 'b, Statement<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.body,
             allocator: self.allocator,
@@ -2231,7 +2231,7 @@ impl<'a, 'b> AstNode<'a, 'b, ForInStatement<'a>> {
         self.inner.span
     }
 
-    pub fn left(&self) -> &AstNode<'a, 'b, ForStatementLeft> {
+    pub fn left(&self) -> &AstNode<'a, 'b, ForStatementLeft<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.left,
             allocator: self.allocator,
@@ -2243,7 +2243,7 @@ impl<'a, 'b> AstNode<'a, 'b, ForInStatement<'a>> {
         })
     }
 
-    pub fn right(&self) -> &AstNode<'a, 'b, Expression> {
+    pub fn right(&self) -> &AstNode<'a, 'b, Expression<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.right,
             allocator: self.allocator,
@@ -2255,7 +2255,7 @@ impl<'a, 'b> AstNode<'a, 'b, ForInStatement<'a>> {
         })
     }
 
-    pub fn body(&self) -> &AstNode<'a, 'b, Statement> {
+    pub fn body(&self) -> &AstNode<'a, 'b, Statement<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.body,
             allocator: self.allocator,
@@ -2302,7 +2302,7 @@ impl<'a, 'b> AstNode<'a, 'b, ForOfStatement<'a>> {
         self.inner.r#await
     }
 
-    pub fn left(&self) -> &AstNode<'a, 'b, ForStatementLeft> {
+    pub fn left(&self) -> &AstNode<'a, 'b, ForStatementLeft<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.left,
             allocator: self.allocator,
@@ -2314,7 +2314,7 @@ impl<'a, 'b> AstNode<'a, 'b, ForOfStatement<'a>> {
         })
     }
 
-    pub fn right(&self) -> &AstNode<'a, 'b, Expression> {
+    pub fn right(&self) -> &AstNode<'a, 'b, Expression<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.right,
             allocator: self.allocator,
@@ -2326,7 +2326,7 @@ impl<'a, 'b> AstNode<'a, 'b, ForOfStatement<'a>> {
         })
     }
 
-    pub fn body(&self) -> &AstNode<'a, 'b, Statement> {
+    pub fn body(&self) -> &AstNode<'a, 'b, Statement<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.body,
             allocator: self.allocator,
@@ -2343,7 +2343,7 @@ impl<'a, 'b> AstNode<'a, 'b, ContinueStatement<'a>> {
         self.inner.span
     }
 
-    pub fn label(&self) -> Option<&AstNode<'a, 'b, LabelIdentifier>> {
+    pub fn label(&self) -> Option<&AstNode<'a, 'b, LabelIdentifier<'a>>> {
         self.allocator
             .alloc(self.inner.label.as_ref().map(|inner| AstNode {
                 inner,
@@ -2362,7 +2362,7 @@ impl<'a, 'b> AstNode<'a, 'b, BreakStatement<'a>> {
         self.inner.span
     }
 
-    pub fn label(&self) -> Option<&AstNode<'a, 'b, LabelIdentifier>> {
+    pub fn label(&self) -> Option<&AstNode<'a, 'b, LabelIdentifier<'a>>> {
         self.allocator
             .alloc(self.inner.label.as_ref().map(|inner| AstNode {
                 inner,
@@ -2381,7 +2381,7 @@ impl<'a, 'b> AstNode<'a, 'b, ReturnStatement<'a>> {
         self.inner.span
     }
 
-    pub fn argument(&self) -> Option<&AstNode<'a, 'b, Expression>> {
+    pub fn argument(&self) -> Option<&AstNode<'a, 'b, Expression<'a>>> {
         self.allocator
             .alloc(self.inner.argument.as_ref().map(|inner| AstNode {
                 inner,
@@ -2400,7 +2400,7 @@ impl<'a, 'b> AstNode<'a, 'b, WithStatement<'a>> {
         self.inner.span
     }
 
-    pub fn object(&self) -> &AstNode<'a, 'b, Expression> {
+    pub fn object(&self) -> &AstNode<'a, 'b, Expression<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.object,
             allocator: self.allocator,
@@ -2412,7 +2412,7 @@ impl<'a, 'b> AstNode<'a, 'b, WithStatement<'a>> {
         })
     }
 
-    pub fn body(&self) -> &AstNode<'a, 'b, Statement> {
+    pub fn body(&self) -> &AstNode<'a, 'b, Statement<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.body,
             allocator: self.allocator,
@@ -2429,7 +2429,7 @@ impl<'a, 'b> AstNode<'a, 'b, SwitchStatement<'a>> {
         self.inner.span
     }
 
-    pub fn discriminant(&self) -> &AstNode<'a, 'b, Expression> {
+    pub fn discriminant(&self) -> &AstNode<'a, 'b, Expression<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.discriminant,
             allocator: self.allocator,
@@ -2458,7 +2458,7 @@ impl<'a, 'b> AstNode<'a, 'b, SwitchCase<'a>> {
         self.inner.span
     }
 
-    pub fn test(&self) -> Option<&AstNode<'a, 'b, Expression>> {
+    pub fn test(&self) -> Option<&AstNode<'a, 'b, Expression<'a>>> {
         self.allocator
             .alloc(self.inner.test.as_ref().map(|inner| AstNode {
                 inner,
@@ -2489,7 +2489,7 @@ impl<'a, 'b> AstNode<'a, 'b, LabeledStatement<'a>> {
         self.inner.span
     }
 
-    pub fn label(&self) -> &AstNode<'a, 'b, LabelIdentifier> {
+    pub fn label(&self) -> &AstNode<'a, 'b, LabelIdentifier<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.label,
             allocator: self.allocator,
@@ -2501,7 +2501,7 @@ impl<'a, 'b> AstNode<'a, 'b, LabeledStatement<'a>> {
         })
     }
 
-    pub fn body(&self) -> &AstNode<'a, 'b, Statement> {
+    pub fn body(&self) -> &AstNode<'a, 'b, Statement<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.body,
             allocator: self.allocator,
@@ -2518,7 +2518,7 @@ impl<'a, 'b> AstNode<'a, 'b, ThrowStatement<'a>> {
         self.inner.span
     }
 
-    pub fn argument(&self) -> &AstNode<'a, 'b, Expression> {
+    pub fn argument(&self) -> &AstNode<'a, 'b, Expression<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.argument,
             allocator: self.allocator,
@@ -2535,7 +2535,7 @@ impl<'a, 'b> AstNode<'a, 'b, TryStatement<'a>> {
         self.inner.span
     }
 
-    pub fn block(&self) -> &AstNode<'a, 'b, BlockStatement> {
+    pub fn block(&self) -> &AstNode<'a, 'b, BlockStatement<'a>> {
         self.allocator.alloc(AstNode {
             inner: self.inner.block.as_ref(),
             allocator: self.allocator,
@@ -2547,7 +2547,7 @@ impl<'a, 'b> AstNode<'a, 'b, TryStatement<'a>> {
         })
     }
 
-    pub fn handler(&self) -> Option<&AstNode<'a, 'b, CatchClause>> {
+    pub fn handler(&self) -> Option<&AstNode<'a, 'b, CatchClause<'a>>> {
         self.allocator
             .alloc(self.inner.handler.as_ref().map(|inner| AstNode {
                 inner: inner.as_ref(),
@@ -2561,7 +2561,7 @@ impl<'a, 'b> AstNode<'a, 'b, TryStatement<'a>> {
             .as_ref()
     }
 
-    pub fn finalizer(&self) -> Option<&AstNode<'a, 'b, BlockStatement>> {
+    pub fn finalizer(&self) -> Option<&AstNode<'a, 'b, BlockStatement<'a>>> {
         self.allocator
             .alloc(self.inner.finalizer.as_ref().map(|inner| AstNode {
                 inner: inner.as_ref(),
@@ -2580,7 +2580,7 @@ impl<'a, 'b> AstNode<'a, 'b, CatchClause<'a>> {
         self.inner.span
     }
 
-    pub fn param(&self) -> Option<&AstNode<'a, 'b, CatchParameter>> {
+    pub fn param(&self) -> Option<&AstNode<'a, 'b, CatchParameter<'a>>> {
         self.allocator
             .alloc(self.inner.param.as_ref().map(|inner| AstNode {
                 inner,
@@ -2594,7 +2594,7 @@ impl<'a, 'b> AstNode<'a, 'b, CatchClause<'a>> {
             .as_ref()
     }
 
-    pub fn body(&self) -> &AstNode<'a, 'b, BlockStatement> {
+    pub fn body(&self) -> &AstNode<'a, 'b, BlockStatement<'a>> {
         self.allocator.alloc(AstNode {
             inner: self.inner.body.as_ref(),
             allocator: self.allocator,
@@ -2611,7 +2611,7 @@ impl<'a, 'b> AstNode<'a, 'b, CatchParameter<'a>> {
         self.inner.span
     }
 
-    pub fn pattern(&self) -> &BindingPattern {
+    pub fn pattern(&self) -> &BindingPattern<'a> {
         &self.inner.pattern
     }
 }
@@ -2621,7 +2621,7 @@ impl<'a, 'b> AstNode<'a, 'b, DebuggerStatement> {
     }
 }
 impl<'a, 'b> AstNode<'a, 'b, BindingPattern<'a>> {
-    pub fn kind(&self) -> &AstNode<'a, 'b, BindingPatternKind> {
+    pub fn kind(&self) -> &AstNode<'a, 'b, BindingPatternKind<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.kind,
             allocator: self.allocator,
@@ -2633,7 +2633,7 @@ impl<'a, 'b> AstNode<'a, 'b, BindingPattern<'a>> {
         })
     }
 
-    pub fn type_annotation(&self) -> Option<&AstNode<'a, 'b, TSTypeAnnotation>> {
+    pub fn type_annotation(&self) -> Option<&AstNode<'a, 'b, TSTypeAnnotation<'a>>> {
         self.allocator
             .alloc(self.inner.type_annotation.as_ref().map(|inner| AstNode {
                 inner: inner.as_ref(),
@@ -2684,11 +2684,11 @@ impl<'a, 'b> AstNode<'a, 'b, AssignmentPattern<'a>> {
         self.inner.span
     }
 
-    pub fn left(&self) -> &BindingPattern {
+    pub fn left(&self) -> &BindingPattern<'a> {
         &self.inner.left
     }
 
-    pub fn right(&self) -> &AstNode<'a, 'b, Expression> {
+    pub fn right(&self) -> &AstNode<'a, 'b, Expression<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.right,
             allocator: self.allocator,
@@ -2717,7 +2717,7 @@ impl<'a, 'b> AstNode<'a, 'b, ObjectPattern<'a>> {
         })
     }
 
-    pub fn rest(&self) -> Option<&AstNode<'a, 'b, BindingRestElement>> {
+    pub fn rest(&self) -> Option<&AstNode<'a, 'b, BindingRestElement<'a>>> {
         self.allocator
             .alloc(self.inner.rest.as_ref().map(|inner| AstNode {
                 inner: inner.as_ref(),
@@ -2736,7 +2736,7 @@ impl<'a, 'b> AstNode<'a, 'b, BindingProperty<'a>> {
         self.inner.span
     }
 
-    pub fn key(&self) -> &AstNode<'a, 'b, PropertyKey> {
+    pub fn key(&self) -> &AstNode<'a, 'b, PropertyKey<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.key,
             allocator: self.allocator,
@@ -2744,7 +2744,7 @@ impl<'a, 'b> AstNode<'a, 'b, BindingProperty<'a>> {
         })
     }
 
-    pub fn value(&self) -> &BindingPattern {
+    pub fn value(&self) -> &BindingPattern<'a> {
         &self.inner.value
     }
 
@@ -2773,7 +2773,7 @@ impl<'a, 'b> AstNode<'a, 'b, ArrayPattern<'a>> {
         })
     }
 
-    pub fn rest(&self) -> Option<&AstNode<'a, 'b, BindingRestElement>> {
+    pub fn rest(&self) -> Option<&AstNode<'a, 'b, BindingRestElement<'a>>> {
         self.allocator
             .alloc(self.inner.rest.as_ref().map(|inner| AstNode {
                 inner: inner.as_ref(),
@@ -2792,7 +2792,7 @@ impl<'a, 'b> AstNode<'a, 'b, BindingRestElement<'a>> {
         self.inner.span
     }
 
-    pub fn argument(&self) -> &BindingPattern {
+    pub fn argument(&self) -> &BindingPattern<'a> {
         &self.inner.argument
     }
 }
@@ -2805,7 +2805,7 @@ impl<'a, 'b> AstNode<'a, 'b, Function<'a>> {
         self.inner.r#type
     }
 
-    pub fn id(&self) -> Option<&AstNode<'a, 'b, BindingIdentifier>> {
+    pub fn id(&self) -> Option<&AstNode<'a, 'b, BindingIdentifier<'a>>> {
         self.allocator
             .alloc(self.inner.id.as_ref().map(|inner| AstNode {
                 inner,
@@ -2831,7 +2831,7 @@ impl<'a, 'b> AstNode<'a, 'b, Function<'a>> {
         self.inner.declare
     }
 
-    pub fn type_parameters(&self) -> Option<&AstNode<'a, 'b, TSTypeParameterDeclaration>> {
+    pub fn type_parameters(&self) -> Option<&AstNode<'a, 'b, TSTypeParameterDeclaration<'a>>> {
         self.allocator
             .alloc(self.inner.type_parameters.as_ref().map(|inner| AstNode {
                 inner: inner.as_ref(),
@@ -2845,7 +2845,7 @@ impl<'a, 'b> AstNode<'a, 'b, Function<'a>> {
             .as_ref()
     }
 
-    pub fn this_param(&self) -> Option<&AstNode<'a, 'b, TSThisParameter>> {
+    pub fn this_param(&self) -> Option<&AstNode<'a, 'b, TSThisParameter<'a>>> {
         self.allocator
             .alloc(self.inner.this_param.as_ref().map(|inner| AstNode {
                 inner: inner.as_ref(),
@@ -2859,7 +2859,7 @@ impl<'a, 'b> AstNode<'a, 'b, Function<'a>> {
             .as_ref()
     }
 
-    pub fn params(&self) -> &AstNode<'a, 'b, FormalParameters> {
+    pub fn params(&self) -> &AstNode<'a, 'b, FormalParameters<'a>> {
         self.allocator.alloc(AstNode {
             inner: self.inner.params.as_ref(),
             allocator: self.allocator,
@@ -2871,7 +2871,7 @@ impl<'a, 'b> AstNode<'a, 'b, Function<'a>> {
         })
     }
 
-    pub fn return_type(&self) -> Option<&AstNode<'a, 'b, TSTypeAnnotation>> {
+    pub fn return_type(&self) -> Option<&AstNode<'a, 'b, TSTypeAnnotation<'a>>> {
         self.allocator
             .alloc(self.inner.return_type.as_ref().map(|inner| AstNode {
                 inner: inner.as_ref(),
@@ -2885,7 +2885,7 @@ impl<'a, 'b> AstNode<'a, 'b, Function<'a>> {
             .as_ref()
     }
 
-    pub fn body(&self) -> Option<&AstNode<'a, 'b, FunctionBody>> {
+    pub fn body(&self) -> Option<&AstNode<'a, 'b, FunctionBody<'a>>> {
         self.allocator
             .alloc(self.inner.body.as_ref().map(|inner| AstNode {
                 inner: inner.as_ref(),
@@ -2924,7 +2924,7 @@ impl<'a, 'b> AstNode<'a, 'b, FormalParameters<'a>> {
         })
     }
 
-    pub fn rest(&self) -> Option<&AstNode<'a, 'b, BindingRestElement>> {
+    pub fn rest(&self) -> Option<&AstNode<'a, 'b, BindingRestElement<'a>>> {
         self.allocator
             .alloc(self.inner.rest.as_ref().map(|inner| AstNode {
                 inner: inner.as_ref(),
@@ -2955,7 +2955,7 @@ impl<'a, 'b> AstNode<'a, 'b, FormalParameter<'a>> {
         })
     }
 
-    pub fn pattern(&self) -> &BindingPattern {
+    pub fn pattern(&self) -> &BindingPattern<'a> {
         &self.inner.pattern
     }
 
@@ -3013,7 +3013,7 @@ impl<'a, 'b> AstNode<'a, 'b, ArrowFunctionExpression<'a>> {
         self.inner.r#async
     }
 
-    pub fn type_parameters(&self) -> Option<&AstNode<'a, 'b, TSTypeParameterDeclaration>> {
+    pub fn type_parameters(&self) -> Option<&AstNode<'a, 'b, TSTypeParameterDeclaration<'a>>> {
         self.allocator
             .alloc(self.inner.type_parameters.as_ref().map(|inner| AstNode {
                 inner: inner.as_ref(),
@@ -3027,7 +3027,7 @@ impl<'a, 'b> AstNode<'a, 'b, ArrowFunctionExpression<'a>> {
             .as_ref()
     }
 
-    pub fn params(&self) -> &AstNode<'a, 'b, FormalParameters> {
+    pub fn params(&self) -> &AstNode<'a, 'b, FormalParameters<'a>> {
         self.allocator.alloc(AstNode {
             inner: self.inner.params.as_ref(),
             allocator: self.allocator,
@@ -3039,7 +3039,7 @@ impl<'a, 'b> AstNode<'a, 'b, ArrowFunctionExpression<'a>> {
         })
     }
 
-    pub fn return_type(&self) -> Option<&AstNode<'a, 'b, TSTypeAnnotation>> {
+    pub fn return_type(&self) -> Option<&AstNode<'a, 'b, TSTypeAnnotation<'a>>> {
         self.allocator
             .alloc(self.inner.return_type.as_ref().map(|inner| AstNode {
                 inner: inner.as_ref(),
@@ -3053,7 +3053,7 @@ impl<'a, 'b> AstNode<'a, 'b, ArrowFunctionExpression<'a>> {
             .as_ref()
     }
 
-    pub fn body(&self) -> &AstNode<'a, 'b, FunctionBody> {
+    pub fn body(&self) -> &AstNode<'a, 'b, FunctionBody<'a>> {
         self.allocator.alloc(AstNode {
             inner: self.inner.body.as_ref(),
             allocator: self.allocator,
@@ -3078,7 +3078,7 @@ impl<'a, 'b> AstNode<'a, 'b, YieldExpression<'a>> {
         self.inner.delegate
     }
 
-    pub fn argument(&self) -> Option<&AstNode<'a, 'b, Expression>> {
+    pub fn argument(&self) -> Option<&AstNode<'a, 'b, Expression<'a>>> {
         self.allocator
             .alloc(self.inner.argument.as_ref().map(|inner| AstNode {
                 inner,
@@ -3113,7 +3113,7 @@ impl<'a, 'b> AstNode<'a, 'b, Class<'a>> {
         })
     }
 
-    pub fn id(&self) -> Option<&AstNode<'a, 'b, BindingIdentifier>> {
+    pub fn id(&self) -> Option<&AstNode<'a, 'b, BindingIdentifier<'a>>> {
         self.allocator
             .alloc(self.inner.id.as_ref().map(|inner| AstNode {
                 inner,
@@ -3127,7 +3127,7 @@ impl<'a, 'b> AstNode<'a, 'b, Class<'a>> {
             .as_ref()
     }
 
-    pub fn type_parameters(&self) -> Option<&AstNode<'a, 'b, TSTypeParameterDeclaration>> {
+    pub fn type_parameters(&self) -> Option<&AstNode<'a, 'b, TSTypeParameterDeclaration<'a>>> {
         self.allocator
             .alloc(self.inner.type_parameters.as_ref().map(|inner| AstNode {
                 inner: inner.as_ref(),
@@ -3141,7 +3141,7 @@ impl<'a, 'b> AstNode<'a, 'b, Class<'a>> {
             .as_ref()
     }
 
-    pub fn super_class(&self) -> Option<&AstNode<'a, 'b, Expression>> {
+    pub fn super_class(&self) -> Option<&AstNode<'a, 'b, Expression<'a>>> {
         self.allocator
             .alloc(self.inner.super_class.as_ref().map(|inner| AstNode {
                 inner,
@@ -3155,7 +3155,9 @@ impl<'a, 'b> AstNode<'a, 'b, Class<'a>> {
             .as_ref()
     }
 
-    pub fn super_type_arguments(&self) -> Option<&AstNode<'a, 'b, TSTypeParameterInstantiation>> {
+    pub fn super_type_arguments(
+        &self,
+    ) -> Option<&AstNode<'a, 'b, TSTypeParameterInstantiation<'a>>> {
         self.allocator
             .alloc(self.inner.super_type_arguments.as_ref().map(|inner| AstNode {
                 inner: inner.as_ref(),
@@ -3181,7 +3183,7 @@ impl<'a, 'b> AstNode<'a, 'b, Class<'a>> {
         })
     }
 
-    pub fn body(&self) -> &AstNode<'a, 'b, ClassBody> {
+    pub fn body(&self) -> &AstNode<'a, 'b, ClassBody<'a>> {
         self.allocator.alloc(AstNode {
             inner: self.inner.body.as_ref(),
             allocator: self.allocator,
@@ -3273,7 +3275,7 @@ impl<'a, 'b> AstNode<'a, 'b, MethodDefinition<'a>> {
         })
     }
 
-    pub fn key(&self) -> &AstNode<'a, 'b, PropertyKey> {
+    pub fn key(&self) -> &AstNode<'a, 'b, PropertyKey<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.key,
             allocator: self.allocator,
@@ -3281,7 +3283,7 @@ impl<'a, 'b> AstNode<'a, 'b, MethodDefinition<'a>> {
         })
     }
 
-    pub fn value(&self) -> &AstNode<'a, 'b, Function> {
+    pub fn value(&self) -> &AstNode<'a, 'b, Function<'a>> {
         self.allocator.alloc(AstNode {
             inner: self.inner.value.as_ref(),
             allocator: self.allocator,
@@ -3338,7 +3340,7 @@ impl<'a, 'b> AstNode<'a, 'b, PropertyDefinition<'a>> {
         })
     }
 
-    pub fn key(&self) -> &AstNode<'a, 'b, PropertyKey> {
+    pub fn key(&self) -> &AstNode<'a, 'b, PropertyKey<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.key,
             allocator: self.allocator,
@@ -3346,7 +3348,7 @@ impl<'a, 'b> AstNode<'a, 'b, PropertyDefinition<'a>> {
         })
     }
 
-    pub fn type_annotation(&self) -> Option<&AstNode<'a, 'b, TSTypeAnnotation>> {
+    pub fn type_annotation(&self) -> Option<&AstNode<'a, 'b, TSTypeAnnotation<'a>>> {
         self.allocator
             .alloc(self.inner.type_annotation.as_ref().map(|inner| AstNode {
                 inner: inner.as_ref(),
@@ -3360,7 +3362,7 @@ impl<'a, 'b> AstNode<'a, 'b, PropertyDefinition<'a>> {
             .as_ref()
     }
 
-    pub fn value(&self) -> Option<&AstNode<'a, 'b, Expression>> {
+    pub fn value(&self) -> Option<&AstNode<'a, 'b, Expression<'a>>> {
         self.allocator
             .alloc(self.inner.value.as_ref().map(|inner| AstNode {
                 inner,
@@ -3509,7 +3511,7 @@ impl<'a, 'b> AstNode<'a, 'b, AccessorProperty<'a>> {
         })
     }
 
-    pub fn key(&self) -> &AstNode<'a, 'b, PropertyKey> {
+    pub fn key(&self) -> &AstNode<'a, 'b, PropertyKey<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.key,
             allocator: self.allocator,
@@ -3517,7 +3519,7 @@ impl<'a, 'b> AstNode<'a, 'b, AccessorProperty<'a>> {
         })
     }
 
-    pub fn type_annotation(&self) -> Option<&AstNode<'a, 'b, TSTypeAnnotation>> {
+    pub fn type_annotation(&self) -> Option<&AstNode<'a, 'b, TSTypeAnnotation<'a>>> {
         self.allocator
             .alloc(self.inner.type_annotation.as_ref().map(|inner| AstNode {
                 inner: inner.as_ref(),
@@ -3531,7 +3533,7 @@ impl<'a, 'b> AstNode<'a, 'b, AccessorProperty<'a>> {
             .as_ref()
     }
 
-    pub fn value(&self) -> Option<&AstNode<'a, 'b, Expression>> {
+    pub fn value(&self) -> Option<&AstNode<'a, 'b, Expression<'a>>> {
         self.allocator
             .alloc(self.inner.value.as_ref().map(|inner| AstNode {
                 inner,
@@ -3570,7 +3572,7 @@ impl<'a, 'b> AstNode<'a, 'b, ImportExpression<'a>> {
         self.inner.span
     }
 
-    pub fn source(&self) -> &AstNode<'a, 'b, Expression> {
+    pub fn source(&self) -> &AstNode<'a, 'b, Expression<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.source,
             allocator: self.allocator,
@@ -3582,7 +3584,7 @@ impl<'a, 'b> AstNode<'a, 'b, ImportExpression<'a>> {
         })
     }
 
-    pub fn options(&self) -> Option<&AstNode<'a, 'b, Expression>> {
+    pub fn options(&self) -> Option<&AstNode<'a, 'b, Expression<'a>>> {
         self.allocator
             .alloc(self.inner.options.as_ref().map(|inner| AstNode {
                 inner,
@@ -3619,7 +3621,7 @@ impl<'a, 'b> AstNode<'a, 'b, ImportDeclaration<'a>> {
             .as_ref()
     }
 
-    pub fn source(&self) -> &AstNode<'a, 'b, StringLiteral> {
+    pub fn source(&self) -> &AstNode<'a, 'b, StringLiteral<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.source,
             allocator: self.allocator,
@@ -3635,7 +3637,7 @@ impl<'a, 'b> AstNode<'a, 'b, ImportDeclaration<'a>> {
         self.inner.phase
     }
 
-    pub fn with_clause(&self) -> Option<&AstNode<'a, 'b, WithClause>> {
+    pub fn with_clause(&self) -> Option<&AstNode<'a, 'b, WithClause<'a>>> {
         self.allocator
             .alloc(self.inner.with_clause.as_ref().map(|inner| AstNode {
                 inner: inner.as_ref(),
@@ -3690,7 +3692,7 @@ impl<'a, 'b> AstNode<'a, 'b, ImportSpecifier<'a>> {
         self.inner.span
     }
 
-    pub fn imported(&self) -> &AstNode<'a, 'b, ModuleExportName> {
+    pub fn imported(&self) -> &AstNode<'a, 'b, ModuleExportName<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.imported,
             allocator: self.allocator,
@@ -3702,7 +3704,7 @@ impl<'a, 'b> AstNode<'a, 'b, ImportSpecifier<'a>> {
         })
     }
 
-    pub fn local(&self) -> &AstNode<'a, 'b, BindingIdentifier> {
+    pub fn local(&self) -> &AstNode<'a, 'b, BindingIdentifier<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.local,
             allocator: self.allocator,
@@ -3723,7 +3725,7 @@ impl<'a, 'b> AstNode<'a, 'b, ImportDefaultSpecifier<'a>> {
         self.inner.span
     }
 
-    pub fn local(&self) -> &AstNode<'a, 'b, BindingIdentifier> {
+    pub fn local(&self) -> &AstNode<'a, 'b, BindingIdentifier<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.local,
             allocator: self.allocator,
@@ -3740,7 +3742,7 @@ impl<'a, 'b> AstNode<'a, 'b, ImportNamespaceSpecifier<'a>> {
         self.inner.span
     }
 
-    pub fn local(&self) -> &AstNode<'a, 'b, BindingIdentifier> {
+    pub fn local(&self) -> &AstNode<'a, 'b, BindingIdentifier<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.local,
             allocator: self.allocator,
@@ -3757,7 +3759,7 @@ impl<'a, 'b> AstNode<'a, 'b, WithClause<'a>> {
         self.inner.span
     }
 
-    pub fn attributes_keyword(&self) -> &AstNode<'a, 'b, IdentifierName> {
+    pub fn attributes_keyword(&self) -> &AstNode<'a, 'b, IdentifierName<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.attributes_keyword,
             allocator: self.allocator,
@@ -3786,7 +3788,7 @@ impl<'a, 'b> AstNode<'a, 'b, ImportAttribute<'a>> {
         self.inner.span
     }
 
-    pub fn key(&self) -> &AstNode<'a, 'b, ImportAttributeKey> {
+    pub fn key(&self) -> &AstNode<'a, 'b, ImportAttributeKey<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.key,
             allocator: self.allocator,
@@ -3798,7 +3800,7 @@ impl<'a, 'b> AstNode<'a, 'b, ImportAttribute<'a>> {
         })
     }
 
-    pub fn value(&self) -> &AstNode<'a, 'b, StringLiteral> {
+    pub fn value(&self) -> &AstNode<'a, 'b, StringLiteral<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.value,
             allocator: self.allocator,
@@ -3835,7 +3837,7 @@ impl<'a, 'b> AstNode<'a, 'b, ExportNamedDeclaration<'a>> {
         self.inner.span
     }
 
-    pub fn declaration(&self) -> Option<&AstNode<'a, 'b, Declaration>> {
+    pub fn declaration(&self) -> Option<&AstNode<'a, 'b, Declaration<'a>>> {
         self.allocator
             .alloc(self.inner.declaration.as_ref().map(|inner| AstNode {
                 inner,
@@ -3861,7 +3863,7 @@ impl<'a, 'b> AstNode<'a, 'b, ExportNamedDeclaration<'a>> {
         })
     }
 
-    pub fn source(&self) -> Option<&AstNode<'a, 'b, StringLiteral>> {
+    pub fn source(&self) -> Option<&AstNode<'a, 'b, StringLiteral<'a>>> {
         self.allocator
             .alloc(self.inner.source.as_ref().map(|inner| AstNode {
                 inner,
@@ -3879,7 +3881,7 @@ impl<'a, 'b> AstNode<'a, 'b, ExportNamedDeclaration<'a>> {
         self.inner.export_kind
     }
 
-    pub fn with_clause(&self) -> Option<&AstNode<'a, 'b, WithClause>> {
+    pub fn with_clause(&self) -> Option<&AstNode<'a, 'b, WithClause<'a>>> {
         self.allocator
             .alloc(self.inner.with_clause.as_ref().map(|inner| AstNode {
                 inner: inner.as_ref(),
@@ -3898,7 +3900,7 @@ impl<'a, 'b> AstNode<'a, 'b, ExportDefaultDeclaration<'a>> {
         self.inner.span
     }
 
-    pub fn exported(&self) -> &AstNode<'a, 'b, ModuleExportName> {
+    pub fn exported(&self) -> &AstNode<'a, 'b, ModuleExportName<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.exported,
             allocator: self.allocator,
@@ -3910,7 +3912,7 @@ impl<'a, 'b> AstNode<'a, 'b, ExportDefaultDeclaration<'a>> {
         })
     }
 
-    pub fn declaration(&self) -> &AstNode<'a, 'b, ExportDefaultDeclarationKind> {
+    pub fn declaration(&self) -> &AstNode<'a, 'b, ExportDefaultDeclarationKind<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.declaration,
             allocator: self.allocator,
@@ -3927,7 +3929,7 @@ impl<'a, 'b> AstNode<'a, 'b, ExportAllDeclaration<'a>> {
         self.inner.span
     }
 
-    pub fn exported(&self) -> Option<&AstNode<'a, 'b, ModuleExportName>> {
+    pub fn exported(&self) -> Option<&AstNode<'a, 'b, ModuleExportName<'a>>> {
         self.allocator
             .alloc(self.inner.exported.as_ref().map(|inner| AstNode {
                 inner,
@@ -3941,7 +3943,7 @@ impl<'a, 'b> AstNode<'a, 'b, ExportAllDeclaration<'a>> {
             .as_ref()
     }
 
-    pub fn source(&self) -> &AstNode<'a, 'b, StringLiteral> {
+    pub fn source(&self) -> &AstNode<'a, 'b, StringLiteral<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.source,
             allocator: self.allocator,
@@ -3953,7 +3955,7 @@ impl<'a, 'b> AstNode<'a, 'b, ExportAllDeclaration<'a>> {
         })
     }
 
-    pub fn with_clause(&self) -> Option<&AstNode<'a, 'b, WithClause>> {
+    pub fn with_clause(&self) -> Option<&AstNode<'a, 'b, WithClause<'a>>> {
         self.allocator
             .alloc(self.inner.with_clause.as_ref().map(|inner| AstNode {
                 inner: inner.as_ref(),
@@ -3976,7 +3978,7 @@ impl<'a, 'b> AstNode<'a, 'b, ExportSpecifier<'a>> {
         self.inner.span
     }
 
-    pub fn local(&self) -> &AstNode<'a, 'b, ModuleExportName> {
+    pub fn local(&self) -> &AstNode<'a, 'b, ModuleExportName<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.local,
             allocator: self.allocator,
@@ -3988,7 +3990,7 @@ impl<'a, 'b> AstNode<'a, 'b, ExportSpecifier<'a>> {
         })
     }
 
-    pub fn exported(&self) -> &AstNode<'a, 'b, ModuleExportName> {
+    pub fn exported(&self) -> &AstNode<'a, 'b, ModuleExportName<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.exported,
             allocator: self.allocator,
@@ -4067,7 +4069,7 @@ impl<'a, 'b> AstNode<'a, 'b, V8IntrinsicExpression<'a>> {
         self.inner.span
     }
 
-    pub fn name(&self) -> &AstNode<'a, 'b, IdentifierName> {
+    pub fn name(&self) -> &AstNode<'a, 'b, IdentifierName<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.name,
             allocator: self.allocator,
@@ -4157,7 +4159,7 @@ impl<'a, 'b> AstNode<'a, 'b, RegExpLiteral<'a>> {
         self.inner.span
     }
 
-    pub fn regex(&self) -> &RegExp {
+    pub fn regex(&self) -> &RegExp<'a> {
         &self.inner.regex
     }
 
@@ -4170,7 +4172,7 @@ impl<'a, 'b> AstNode<'a, 'b, JSXElement<'a>> {
         self.inner.span
     }
 
-    pub fn opening_element(&self) -> &AstNode<'a, 'b, JSXOpeningElement> {
+    pub fn opening_element(&self) -> &AstNode<'a, 'b, JSXOpeningElement<'a>> {
         self.allocator.alloc(AstNode {
             inner: self.inner.opening_element.as_ref(),
             allocator: self.allocator,
@@ -4194,7 +4196,7 @@ impl<'a, 'b> AstNode<'a, 'b, JSXElement<'a>> {
         })
     }
 
-    pub fn closing_element(&self) -> Option<&AstNode<'a, 'b, JSXClosingElement>> {
+    pub fn closing_element(&self) -> Option<&AstNode<'a, 'b, JSXClosingElement<'a>>> {
         self.allocator
             .alloc(self.inner.closing_element.as_ref().map(|inner| AstNode {
                 inner: inner.as_ref(),
@@ -4213,7 +4215,7 @@ impl<'a, 'b> AstNode<'a, 'b, JSXOpeningElement<'a>> {
         self.inner.span
     }
 
-    pub fn name(&self) -> &AstNode<'a, 'b, JSXElementName> {
+    pub fn name(&self) -> &AstNode<'a, 'b, JSXElementName<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.name,
             allocator: self.allocator,
@@ -4221,7 +4223,7 @@ impl<'a, 'b> AstNode<'a, 'b, JSXOpeningElement<'a>> {
         })
     }
 
-    pub fn type_arguments(&self) -> Option<&AstNode<'a, 'b, TSTypeParameterInstantiation>> {
+    pub fn type_arguments(&self) -> Option<&AstNode<'a, 'b, TSTypeParameterInstantiation<'a>>> {
         self.allocator
             .alloc(self.inner.type_arguments.as_ref().map(|inner| AstNode {
                 inner: inner.as_ref(),
@@ -4252,7 +4254,7 @@ impl<'a, 'b> AstNode<'a, 'b, JSXClosingElement<'a>> {
         self.inner.span
     }
 
-    pub fn name(&self) -> &AstNode<'a, 'b, JSXElementName> {
+    pub fn name(&self) -> &AstNode<'a, 'b, JSXElementName<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.name,
             allocator: self.allocator,
@@ -4340,7 +4342,7 @@ impl<'a, 'b> AstNode<'a, 'b, JSXNamespacedName<'a>> {
         self.inner.span
     }
 
-    pub fn namespace(&self) -> &AstNode<'a, 'b, JSXIdentifier> {
+    pub fn namespace(&self) -> &AstNode<'a, 'b, JSXIdentifier<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.namespace,
             allocator: self.allocator,
@@ -4352,7 +4354,7 @@ impl<'a, 'b> AstNode<'a, 'b, JSXNamespacedName<'a>> {
         })
     }
 
-    pub fn name(&self) -> &AstNode<'a, 'b, JSXIdentifier> {
+    pub fn name(&self) -> &AstNode<'a, 'b, JSXIdentifier<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.name,
             allocator: self.allocator,
@@ -4369,7 +4371,7 @@ impl<'a, 'b> AstNode<'a, 'b, JSXMemberExpression<'a>> {
         self.inner.span
     }
 
-    pub fn object(&self) -> &AstNode<'a, 'b, JSXMemberExpressionObject> {
+    pub fn object(&self) -> &AstNode<'a, 'b, JSXMemberExpressionObject<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.object,
             allocator: self.allocator,
@@ -4377,7 +4379,7 @@ impl<'a, 'b> AstNode<'a, 'b, JSXMemberExpression<'a>> {
         })
     }
 
-    pub fn property(&self) -> &AstNode<'a, 'b, JSXIdentifier> {
+    pub fn property(&self) -> &AstNode<'a, 'b, JSXIdentifier<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.property,
             allocator: self.allocator,
@@ -4430,7 +4432,7 @@ impl<'a, 'b> AstNode<'a, 'b, JSXExpressionContainer<'a>> {
         self.inner.span
     }
 
-    pub fn expression(&self) -> &AstNode<'a, 'b, JSXExpression> {
+    pub fn expression(&self) -> &AstNode<'a, 'b, JSXExpression<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.expression,
             allocator: self.allocator,
@@ -4502,7 +4504,7 @@ impl<'a, 'b> AstNode<'a, 'b, JSXAttribute<'a>> {
         self.inner.span
     }
 
-    pub fn name(&self) -> &AstNode<'a, 'b, JSXAttributeName> {
+    pub fn name(&self) -> &AstNode<'a, 'b, JSXAttributeName<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.name,
             allocator: self.allocator,
@@ -4514,7 +4516,7 @@ impl<'a, 'b> AstNode<'a, 'b, JSXAttribute<'a>> {
         })
     }
 
-    pub fn value(&self) -> Option<&AstNode<'a, 'b, JSXAttributeValue>> {
+    pub fn value(&self) -> Option<&AstNode<'a, 'b, JSXAttributeValue<'a>>> {
         self.allocator
             .alloc(self.inner.value.as_ref().map(|inner| AstNode {
                 inner,
@@ -4533,7 +4535,7 @@ impl<'a, 'b> AstNode<'a, 'b, JSXSpreadAttribute<'a>> {
         self.inner.span
     }
 
-    pub fn argument(&self) -> &AstNode<'a, 'b, Expression> {
+    pub fn argument(&self) -> &AstNode<'a, 'b, Expression<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.argument,
             allocator: self.allocator,
@@ -4642,7 +4644,7 @@ impl<'a, 'b> AstNode<'a, 'b, JSXSpreadChild<'a>> {
         self.inner.span
     }
 
-    pub fn expression(&self) -> &AstNode<'a, 'b, Expression> {
+    pub fn expression(&self) -> &AstNode<'a, 'b, Expression<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.expression,
             allocator: self.allocator,
@@ -4676,7 +4678,7 @@ impl<'a, 'b> AstNode<'a, 'b, TSThisParameter<'a>> {
         self.inner.this_span
     }
 
-    pub fn type_annotation(&self) -> Option<&AstNode<'a, 'b, TSTypeAnnotation>> {
+    pub fn type_annotation(&self) -> Option<&AstNode<'a, 'b, TSTypeAnnotation<'a>>> {
         self.allocator
             .alloc(self.inner.type_annotation.as_ref().map(|inner| AstNode {
                 inner: inner.as_ref(),
@@ -4695,7 +4697,7 @@ impl<'a, 'b> AstNode<'a, 'b, TSEnumDeclaration<'a>> {
         self.inner.span
     }
 
-    pub fn id(&self) -> &AstNode<'a, 'b, BindingIdentifier> {
+    pub fn id(&self) -> &AstNode<'a, 'b, BindingIdentifier<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.id,
             allocator: self.allocator,
@@ -4707,7 +4709,7 @@ impl<'a, 'b> AstNode<'a, 'b, TSEnumDeclaration<'a>> {
         })
     }
 
-    pub fn body(&self) -> &AstNode<'a, 'b, TSEnumBody> {
+    pub fn body(&self) -> &AstNode<'a, 'b, TSEnumBody<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.body,
             allocator: self.allocator,
@@ -4749,7 +4751,7 @@ impl<'a, 'b> AstNode<'a, 'b, TSEnumMember<'a>> {
         self.inner.span
     }
 
-    pub fn id(&self) -> &AstNode<'a, 'b, TSEnumMemberName> {
+    pub fn id(&self) -> &AstNode<'a, 'b, TSEnumMemberName<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.id,
             allocator: self.allocator,
@@ -4761,7 +4763,7 @@ impl<'a, 'b> AstNode<'a, 'b, TSEnumMember<'a>> {
         })
     }
 
-    pub fn initializer(&self) -> Option<&AstNode<'a, 'b, Expression>> {
+    pub fn initializer(&self) -> Option<&AstNode<'a, 'b, Expression<'a>>> {
         self.allocator
             .alloc(self.inner.initializer.as_ref().map(|inner| AstNode {
                 inner,
@@ -4808,7 +4810,7 @@ impl<'a, 'b> AstNode<'a, 'b, TSTypeAnnotation<'a>> {
         self.inner.span
     }
 
-    pub fn type_annotation(&self) -> &AstNode<'a, 'b, TSType> {
+    pub fn type_annotation(&self) -> &AstNode<'a, 'b, TSType<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.type_annotation,
             allocator: self.allocator,
@@ -4825,7 +4827,7 @@ impl<'a, 'b> AstNode<'a, 'b, TSLiteralType<'a>> {
         self.inner.span
     }
 
-    pub fn literal(&self) -> &AstNode<'a, 'b, TSLiteral> {
+    pub fn literal(&self) -> &AstNode<'a, 'b, TSLiteral<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.literal,
             allocator: self.allocator,
@@ -5053,7 +5055,7 @@ impl<'a, 'b> AstNode<'a, 'b, TSConditionalType<'a>> {
         self.inner.span
     }
 
-    pub fn check_type(&self) -> &AstNode<'a, 'b, TSType> {
+    pub fn check_type(&self) -> &AstNode<'a, 'b, TSType<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.check_type,
             allocator: self.allocator,
@@ -5065,7 +5067,7 @@ impl<'a, 'b> AstNode<'a, 'b, TSConditionalType<'a>> {
         })
     }
 
-    pub fn extends_type(&self) -> &AstNode<'a, 'b, TSType> {
+    pub fn extends_type(&self) -> &AstNode<'a, 'b, TSType<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.extends_type,
             allocator: self.allocator,
@@ -5077,7 +5079,7 @@ impl<'a, 'b> AstNode<'a, 'b, TSConditionalType<'a>> {
         })
     }
 
-    pub fn true_type(&self) -> &AstNode<'a, 'b, TSType> {
+    pub fn true_type(&self) -> &AstNode<'a, 'b, TSType<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.true_type,
             allocator: self.allocator,
@@ -5089,7 +5091,7 @@ impl<'a, 'b> AstNode<'a, 'b, TSConditionalType<'a>> {
         })
     }
 
-    pub fn false_type(&self) -> &AstNode<'a, 'b, TSType> {
+    pub fn false_type(&self) -> &AstNode<'a, 'b, TSType<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.false_type,
             allocator: self.allocator,
@@ -5140,7 +5142,7 @@ impl<'a, 'b> AstNode<'a, 'b, TSParenthesizedType<'a>> {
         self.inner.span
     }
 
-    pub fn type_annotation(&self) -> &AstNode<'a, 'b, TSType> {
+    pub fn type_annotation(&self) -> &AstNode<'a, 'b, TSType<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.type_annotation,
             allocator: self.allocator,
@@ -5161,7 +5163,7 @@ impl<'a, 'b> AstNode<'a, 'b, TSTypeOperator<'a>> {
         self.inner.operator
     }
 
-    pub fn type_annotation(&self) -> &AstNode<'a, 'b, TSType> {
+    pub fn type_annotation(&self) -> &AstNode<'a, 'b, TSType<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.type_annotation,
             allocator: self.allocator,
@@ -5178,7 +5180,7 @@ impl<'a, 'b> AstNode<'a, 'b, TSArrayType<'a>> {
         self.inner.span
     }
 
-    pub fn element_type(&self) -> &AstNode<'a, 'b, TSType> {
+    pub fn element_type(&self) -> &AstNode<'a, 'b, TSType<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.element_type,
             allocator: self.allocator,
@@ -5195,7 +5197,7 @@ impl<'a, 'b> AstNode<'a, 'b, TSIndexedAccessType<'a>> {
         self.inner.span
     }
 
-    pub fn object_type(&self) -> &AstNode<'a, 'b, TSType> {
+    pub fn object_type(&self) -> &AstNode<'a, 'b, TSType<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.object_type,
             allocator: self.allocator,
@@ -5207,7 +5209,7 @@ impl<'a, 'b> AstNode<'a, 'b, TSIndexedAccessType<'a>> {
         })
     }
 
-    pub fn index_type(&self) -> &AstNode<'a, 'b, TSType> {
+    pub fn index_type(&self) -> &AstNode<'a, 'b, TSType<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.index_type,
             allocator: self.allocator,
@@ -5241,7 +5243,7 @@ impl<'a, 'b> AstNode<'a, 'b, TSNamedTupleMember<'a>> {
         self.inner.span
     }
 
-    pub fn label(&self) -> &AstNode<'a, 'b, IdentifierName> {
+    pub fn label(&self) -> &AstNode<'a, 'b, IdentifierName<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.label,
             allocator: self.allocator,
@@ -5253,7 +5255,7 @@ impl<'a, 'b> AstNode<'a, 'b, TSNamedTupleMember<'a>> {
         })
     }
 
-    pub fn element_type(&self) -> &AstNode<'a, 'b, TSTupleElement> {
+    pub fn element_type(&self) -> &AstNode<'a, 'b, TSTupleElement<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.element_type,
             allocator: self.allocator,
@@ -5274,7 +5276,7 @@ impl<'a, 'b> AstNode<'a, 'b, TSOptionalType<'a>> {
         self.inner.span
     }
 
-    pub fn type_annotation(&self) -> &AstNode<'a, 'b, TSType> {
+    pub fn type_annotation(&self) -> &AstNode<'a, 'b, TSType<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.type_annotation,
             allocator: self.allocator,
@@ -5291,7 +5293,7 @@ impl<'a, 'b> AstNode<'a, 'b, TSRestType<'a>> {
         self.inner.span
     }
 
-    pub fn type_annotation(&self) -> &AstNode<'a, 'b, TSType> {
+    pub fn type_annotation(&self) -> &AstNode<'a, 'b, TSType<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.type_annotation,
             allocator: self.allocator,
@@ -5403,7 +5405,7 @@ impl<'a, 'b> AstNode<'a, 'b, TSTypeReference<'a>> {
         self.inner.span
     }
 
-    pub fn type_name(&self) -> &AstNode<'a, 'b, TSTypeName> {
+    pub fn type_name(&self) -> &AstNode<'a, 'b, TSTypeName<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.type_name,
             allocator: self.allocator,
@@ -5411,7 +5413,7 @@ impl<'a, 'b> AstNode<'a, 'b, TSTypeReference<'a>> {
         })
     }
 
-    pub fn type_arguments(&self) -> Option<&AstNode<'a, 'b, TSTypeParameterInstantiation>> {
+    pub fn type_arguments(&self) -> Option<&AstNode<'a, 'b, TSTypeParameterInstantiation<'a>>> {
         self.allocator
             .alloc(self.inner.type_arguments.as_ref().map(|inner| AstNode {
                 inner: inner.as_ref(),
@@ -5456,7 +5458,7 @@ impl<'a, 'b> AstNode<'a, 'b, TSQualifiedName<'a>> {
         self.inner.span
     }
 
-    pub fn left(&self) -> &AstNode<'a, 'b, TSTypeName> {
+    pub fn left(&self) -> &AstNode<'a, 'b, TSTypeName<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.left,
             allocator: self.allocator,
@@ -5464,7 +5466,7 @@ impl<'a, 'b> AstNode<'a, 'b, TSQualifiedName<'a>> {
         })
     }
 
-    pub fn right(&self) -> &AstNode<'a, 'b, IdentifierName> {
+    pub fn right(&self) -> &AstNode<'a, 'b, IdentifierName<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.right,
             allocator: self.allocator,
@@ -5498,7 +5500,7 @@ impl<'a, 'b> AstNode<'a, 'b, TSTypeParameter<'a>> {
         self.inner.span
     }
 
-    pub fn name(&self) -> &AstNode<'a, 'b, BindingIdentifier> {
+    pub fn name(&self) -> &AstNode<'a, 'b, BindingIdentifier<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.name,
             allocator: self.allocator,
@@ -5510,7 +5512,7 @@ impl<'a, 'b> AstNode<'a, 'b, TSTypeParameter<'a>> {
         })
     }
 
-    pub fn constraint(&self) -> Option<&AstNode<'a, 'b, TSType>> {
+    pub fn constraint(&self) -> Option<&AstNode<'a, 'b, TSType<'a>>> {
         self.allocator
             .alloc(self.inner.constraint.as_ref().map(|inner| AstNode {
                 inner,
@@ -5524,7 +5526,7 @@ impl<'a, 'b> AstNode<'a, 'b, TSTypeParameter<'a>> {
             .as_ref()
     }
 
-    pub fn default(&self) -> Option<&AstNode<'a, 'b, TSType>> {
+    pub fn default(&self) -> Option<&AstNode<'a, 'b, TSType<'a>>> {
         self.allocator
             .alloc(self.inner.default.as_ref().map(|inner| AstNode {
                 inner,
@@ -5572,7 +5574,7 @@ impl<'a, 'b> AstNode<'a, 'b, TSTypeAliasDeclaration<'a>> {
         self.inner.span
     }
 
-    pub fn id(&self) -> &AstNode<'a, 'b, BindingIdentifier> {
+    pub fn id(&self) -> &AstNode<'a, 'b, BindingIdentifier<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.id,
             allocator: self.allocator,
@@ -5584,7 +5586,7 @@ impl<'a, 'b> AstNode<'a, 'b, TSTypeAliasDeclaration<'a>> {
         })
     }
 
-    pub fn type_parameters(&self) -> Option<&AstNode<'a, 'b, TSTypeParameterDeclaration>> {
+    pub fn type_parameters(&self) -> Option<&AstNode<'a, 'b, TSTypeParameterDeclaration<'a>>> {
         self.allocator
             .alloc(self.inner.type_parameters.as_ref().map(|inner| AstNode {
                 inner: inner.as_ref(),
@@ -5598,7 +5600,7 @@ impl<'a, 'b> AstNode<'a, 'b, TSTypeAliasDeclaration<'a>> {
             .as_ref()
     }
 
-    pub fn type_annotation(&self) -> &AstNode<'a, 'b, TSType> {
+    pub fn type_annotation(&self) -> &AstNode<'a, 'b, TSType<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.type_annotation,
             allocator: self.allocator,
@@ -5619,7 +5621,7 @@ impl<'a, 'b> AstNode<'a, 'b, TSClassImplements<'a>> {
         self.inner.span
     }
 
-    pub fn expression(&self) -> &AstNode<'a, 'b, TSTypeName> {
+    pub fn expression(&self) -> &AstNode<'a, 'b, TSTypeName<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.expression,
             allocator: self.allocator,
@@ -5627,7 +5629,7 @@ impl<'a, 'b> AstNode<'a, 'b, TSClassImplements<'a>> {
         })
     }
 
-    pub fn type_arguments(&self) -> Option<&AstNode<'a, 'b, TSTypeParameterInstantiation>> {
+    pub fn type_arguments(&self) -> Option<&AstNode<'a, 'b, TSTypeParameterInstantiation<'a>>> {
         self.allocator
             .alloc(self.inner.type_arguments.as_ref().map(|inner| AstNode {
                 inner: inner.as_ref(),
@@ -5646,7 +5648,7 @@ impl<'a, 'b> AstNode<'a, 'b, TSInterfaceDeclaration<'a>> {
         self.inner.span
     }
 
-    pub fn id(&self) -> &AstNode<'a, 'b, BindingIdentifier> {
+    pub fn id(&self) -> &AstNode<'a, 'b, BindingIdentifier<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.id,
             allocator: self.allocator,
@@ -5658,7 +5660,7 @@ impl<'a, 'b> AstNode<'a, 'b, TSInterfaceDeclaration<'a>> {
         })
     }
 
-    pub fn type_parameters(&self) -> Option<&AstNode<'a, 'b, TSTypeParameterDeclaration>> {
+    pub fn type_parameters(&self) -> Option<&AstNode<'a, 'b, TSTypeParameterDeclaration<'a>>> {
         self.allocator
             .alloc(self.inner.type_parameters.as_ref().map(|inner| AstNode {
                 inner: inner.as_ref(),
@@ -5684,7 +5686,7 @@ impl<'a, 'b> AstNode<'a, 'b, TSInterfaceDeclaration<'a>> {
         })
     }
 
-    pub fn body(&self) -> &AstNode<'a, 'b, TSInterfaceBody> {
+    pub fn body(&self) -> &AstNode<'a, 'b, TSInterfaceBody<'a>> {
         self.allocator.alloc(AstNode {
             inner: self.inner.body.as_ref(),
             allocator: self.allocator,
@@ -5734,7 +5736,7 @@ impl<'a, 'b> AstNode<'a, 'b, TSPropertySignature<'a>> {
         self.inner.readonly
     }
 
-    pub fn key(&self) -> &AstNode<'a, 'b, PropertyKey> {
+    pub fn key(&self) -> &AstNode<'a, 'b, PropertyKey<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.key,
             allocator: self.allocator,
@@ -5742,7 +5744,7 @@ impl<'a, 'b> AstNode<'a, 'b, TSPropertySignature<'a>> {
         })
     }
 
-    pub fn type_annotation(&self) -> Option<&AstNode<'a, 'b, TSTypeAnnotation>> {
+    pub fn type_annotation(&self) -> Option<&AstNode<'a, 'b, TSTypeAnnotation<'a>>> {
         self.allocator
             .alloc(self.inner.type_annotation.as_ref().map(|inner| AstNode {
                 inner: inner.as_ref(),
@@ -5815,7 +5817,7 @@ impl<'a, 'b> AstNode<'a, 'b, TSIndexSignature<'a>> {
         })
     }
 
-    pub fn type_annotation(&self) -> &AstNode<'a, 'b, TSTypeAnnotation> {
+    pub fn type_annotation(&self) -> &AstNode<'a, 'b, TSTypeAnnotation<'a>> {
         self.allocator.alloc(AstNode {
             inner: self.inner.type_annotation.as_ref(),
             allocator: self.allocator,
@@ -5840,7 +5842,7 @@ impl<'a, 'b> AstNode<'a, 'b, TSCallSignatureDeclaration<'a>> {
         self.inner.span
     }
 
-    pub fn type_parameters(&self) -> Option<&AstNode<'a, 'b, TSTypeParameterDeclaration>> {
+    pub fn type_parameters(&self) -> Option<&AstNode<'a, 'b, TSTypeParameterDeclaration<'a>>> {
         self.allocator
             .alloc(self.inner.type_parameters.as_ref().map(|inner| AstNode {
                 inner: inner.as_ref(),
@@ -5854,7 +5856,7 @@ impl<'a, 'b> AstNode<'a, 'b, TSCallSignatureDeclaration<'a>> {
             .as_ref()
     }
 
-    pub fn this_param(&self) -> Option<&AstNode<'a, 'b, TSThisParameter>> {
+    pub fn this_param(&self) -> Option<&AstNode<'a, 'b, TSThisParameter<'a>>> {
         self.allocator
             .alloc(self.inner.this_param.as_ref().map(|inner| AstNode {
                 inner: inner.as_ref(),
@@ -5868,7 +5870,7 @@ impl<'a, 'b> AstNode<'a, 'b, TSCallSignatureDeclaration<'a>> {
             .as_ref()
     }
 
-    pub fn params(&self) -> &AstNode<'a, 'b, FormalParameters> {
+    pub fn params(&self) -> &AstNode<'a, 'b, FormalParameters<'a>> {
         self.allocator.alloc(AstNode {
             inner: self.inner.params.as_ref(),
             allocator: self.allocator,
@@ -5880,7 +5882,7 @@ impl<'a, 'b> AstNode<'a, 'b, TSCallSignatureDeclaration<'a>> {
         })
     }
 
-    pub fn return_type(&self) -> Option<&AstNode<'a, 'b, TSTypeAnnotation>> {
+    pub fn return_type(&self) -> Option<&AstNode<'a, 'b, TSTypeAnnotation<'a>>> {
         self.allocator
             .alloc(self.inner.return_type.as_ref().map(|inner| AstNode {
                 inner: inner.as_ref(),
@@ -5899,7 +5901,7 @@ impl<'a, 'b> AstNode<'a, 'b, TSMethodSignature<'a>> {
         self.inner.span
     }
 
-    pub fn key(&self) -> &AstNode<'a, 'b, PropertyKey> {
+    pub fn key(&self) -> &AstNode<'a, 'b, PropertyKey<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.key,
             allocator: self.allocator,
@@ -5919,7 +5921,7 @@ impl<'a, 'b> AstNode<'a, 'b, TSMethodSignature<'a>> {
         self.inner.kind
     }
 
-    pub fn type_parameters(&self) -> Option<&AstNode<'a, 'b, TSTypeParameterDeclaration>> {
+    pub fn type_parameters(&self) -> Option<&AstNode<'a, 'b, TSTypeParameterDeclaration<'a>>> {
         self.allocator
             .alloc(self.inner.type_parameters.as_ref().map(|inner| AstNode {
                 inner: inner.as_ref(),
@@ -5933,7 +5935,7 @@ impl<'a, 'b> AstNode<'a, 'b, TSMethodSignature<'a>> {
             .as_ref()
     }
 
-    pub fn this_param(&self) -> Option<&AstNode<'a, 'b, TSThisParameter>> {
+    pub fn this_param(&self) -> Option<&AstNode<'a, 'b, TSThisParameter<'a>>> {
         self.allocator
             .alloc(self.inner.this_param.as_ref().map(|inner| AstNode {
                 inner: inner.as_ref(),
@@ -5947,7 +5949,7 @@ impl<'a, 'b> AstNode<'a, 'b, TSMethodSignature<'a>> {
             .as_ref()
     }
 
-    pub fn params(&self) -> &AstNode<'a, 'b, FormalParameters> {
+    pub fn params(&self) -> &AstNode<'a, 'b, FormalParameters<'a>> {
         self.allocator.alloc(AstNode {
             inner: self.inner.params.as_ref(),
             allocator: self.allocator,
@@ -5959,7 +5961,7 @@ impl<'a, 'b> AstNode<'a, 'b, TSMethodSignature<'a>> {
         })
     }
 
-    pub fn return_type(&self) -> Option<&AstNode<'a, 'b, TSTypeAnnotation>> {
+    pub fn return_type(&self) -> Option<&AstNode<'a, 'b, TSTypeAnnotation<'a>>> {
         self.allocator
             .alloc(self.inner.return_type.as_ref().map(|inner| AstNode {
                 inner: inner.as_ref(),
@@ -5978,7 +5980,7 @@ impl<'a, 'b> AstNode<'a, 'b, TSConstructSignatureDeclaration<'a>> {
         self.inner.span
     }
 
-    pub fn type_parameters(&self) -> Option<&AstNode<'a, 'b, TSTypeParameterDeclaration>> {
+    pub fn type_parameters(&self) -> Option<&AstNode<'a, 'b, TSTypeParameterDeclaration<'a>>> {
         self.allocator
             .alloc(self.inner.type_parameters.as_ref().map(|inner| AstNode {
                 inner: inner.as_ref(),
@@ -5992,7 +5994,7 @@ impl<'a, 'b> AstNode<'a, 'b, TSConstructSignatureDeclaration<'a>> {
             .as_ref()
     }
 
-    pub fn params(&self) -> &AstNode<'a, 'b, FormalParameters> {
+    pub fn params(&self) -> &AstNode<'a, 'b, FormalParameters<'a>> {
         self.allocator.alloc(AstNode {
             inner: self.inner.params.as_ref(),
             allocator: self.allocator,
@@ -6004,7 +6006,7 @@ impl<'a, 'b> AstNode<'a, 'b, TSConstructSignatureDeclaration<'a>> {
         })
     }
 
-    pub fn return_type(&self) -> Option<&AstNode<'a, 'b, TSTypeAnnotation>> {
+    pub fn return_type(&self) -> Option<&AstNode<'a, 'b, TSTypeAnnotation<'a>>> {
         self.allocator
             .alloc(self.inner.return_type.as_ref().map(|inner| AstNode {
                 inner: inner.as_ref(),
@@ -6027,7 +6029,7 @@ impl<'a, 'b> AstNode<'a, 'b, TSIndexSignatureName<'a>> {
         self.inner.name
     }
 
-    pub fn type_annotation(&self) -> &AstNode<'a, 'b, TSTypeAnnotation> {
+    pub fn type_annotation(&self) -> &AstNode<'a, 'b, TSTypeAnnotation<'a>> {
         self.allocator.alloc(AstNode {
             inner: self.inner.type_annotation.as_ref(),
             allocator: self.allocator,
@@ -6044,7 +6046,7 @@ impl<'a, 'b> AstNode<'a, 'b, TSInterfaceHeritage<'a>> {
         self.inner.span
     }
 
-    pub fn expression(&self) -> &AstNode<'a, 'b, Expression> {
+    pub fn expression(&self) -> &AstNode<'a, 'b, Expression<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.expression,
             allocator: self.allocator,
@@ -6056,7 +6058,7 @@ impl<'a, 'b> AstNode<'a, 'b, TSInterfaceHeritage<'a>> {
         })
     }
 
-    pub fn type_arguments(&self) -> Option<&AstNode<'a, 'b, TSTypeParameterInstantiation>> {
+    pub fn type_arguments(&self) -> Option<&AstNode<'a, 'b, TSTypeParameterInstantiation<'a>>> {
         self.allocator
             .alloc(self.inner.type_arguments.as_ref().map(|inner| AstNode {
                 inner: inner.as_ref(),
@@ -6075,7 +6077,7 @@ impl<'a, 'b> AstNode<'a, 'b, TSTypePredicate<'a>> {
         self.inner.span
     }
 
-    pub fn parameter_name(&self) -> &AstNode<'a, 'b, TSTypePredicateName> {
+    pub fn parameter_name(&self) -> &AstNode<'a, 'b, TSTypePredicateName<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.parameter_name,
             allocator: self.allocator,
@@ -6091,7 +6093,7 @@ impl<'a, 'b> AstNode<'a, 'b, TSTypePredicate<'a>> {
         self.inner.asserts
     }
 
-    pub fn type_annotation(&self) -> Option<&AstNode<'a, 'b, TSTypeAnnotation>> {
+    pub fn type_annotation(&self) -> Option<&AstNode<'a, 'b, TSTypeAnnotation<'a>>> {
         self.allocator
             .alloc(self.inner.type_annotation.as_ref().map(|inner| AstNode {
                 inner: inner.as_ref(),
@@ -6129,7 +6131,7 @@ impl<'a, 'b> AstNode<'a, 'b, TSModuleDeclaration<'a>> {
         self.inner.span
     }
 
-    pub fn id(&self) -> &AstNode<'a, 'b, TSModuleDeclarationName> {
+    pub fn id(&self) -> &AstNode<'a, 'b, TSModuleDeclarationName<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.id,
             allocator: self.allocator,
@@ -6141,7 +6143,7 @@ impl<'a, 'b> AstNode<'a, 'b, TSModuleDeclaration<'a>> {
         })
     }
 
-    pub fn body(&self) -> Option<&AstNode<'a, 'b, TSModuleDeclarationBody>> {
+    pub fn body(&self) -> Option<&AstNode<'a, 'b, TSModuleDeclarationBody<'a>>> {
         self.allocator
             .alloc(self.inner.body.as_ref().map(|inner| AstNode {
                 inner,
@@ -6258,7 +6260,7 @@ impl<'a, 'b> AstNode<'a, 'b, TSInferType<'a>> {
         self.inner.span
     }
 
-    pub fn type_parameter(&self) -> &AstNode<'a, 'b, TSTypeParameter> {
+    pub fn type_parameter(&self) -> &AstNode<'a, 'b, TSTypeParameter<'a>> {
         self.allocator.alloc(AstNode {
             inner: self.inner.type_parameter.as_ref(),
             allocator: self.allocator,
@@ -6275,7 +6277,7 @@ impl<'a, 'b> AstNode<'a, 'b, TSTypeQuery<'a>> {
         self.inner.span
     }
 
-    pub fn expr_name(&self) -> &AstNode<'a, 'b, TSTypeQueryExprName> {
+    pub fn expr_name(&self) -> &AstNode<'a, 'b, TSTypeQueryExprName<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.expr_name,
             allocator: self.allocator,
@@ -6287,7 +6289,7 @@ impl<'a, 'b> AstNode<'a, 'b, TSTypeQuery<'a>> {
         })
     }
 
-    pub fn type_arguments(&self) -> Option<&AstNode<'a, 'b, TSTypeParameterInstantiation>> {
+    pub fn type_arguments(&self) -> Option<&AstNode<'a, 'b, TSTypeParameterInstantiation<'a>>> {
         self.allocator
             .alloc(self.inner.type_arguments.as_ref().map(|inner| AstNode {
                 inner: inner.as_ref(),
@@ -6328,7 +6330,7 @@ impl<'a, 'b> AstNode<'a, 'b, TSImportType<'a>> {
         self.inner.span
     }
 
-    pub fn argument(&self) -> &AstNode<'a, 'b, TSType> {
+    pub fn argument(&self) -> &AstNode<'a, 'b, TSType<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.argument,
             allocator: self.allocator,
@@ -6340,7 +6342,7 @@ impl<'a, 'b> AstNode<'a, 'b, TSImportType<'a>> {
         })
     }
 
-    pub fn options(&self) -> Option<&AstNode<'a, 'b, ObjectExpression>> {
+    pub fn options(&self) -> Option<&AstNode<'a, 'b, ObjectExpression<'a>>> {
         self.allocator
             .alloc(self.inner.options.as_ref().map(|inner| AstNode {
                 inner: inner.as_ref(),
@@ -6354,7 +6356,7 @@ impl<'a, 'b> AstNode<'a, 'b, TSImportType<'a>> {
             .as_ref()
     }
 
-    pub fn qualifier(&self) -> Option<&AstNode<'a, 'b, TSTypeName>> {
+    pub fn qualifier(&self) -> Option<&AstNode<'a, 'b, TSTypeName<'a>>> {
         self.allocator
             .alloc(self.inner.qualifier.as_ref().map(|inner| AstNode {
                 inner,
@@ -6364,7 +6366,7 @@ impl<'a, 'b> AstNode<'a, 'b, TSImportType<'a>> {
             .as_ref()
     }
 
-    pub fn type_arguments(&self) -> Option<&AstNode<'a, 'b, TSTypeParameterInstantiation>> {
+    pub fn type_arguments(&self) -> Option<&AstNode<'a, 'b, TSTypeParameterInstantiation<'a>>> {
         self.allocator
             .alloc(self.inner.type_arguments.as_ref().map(|inner| AstNode {
                 inner: inner.as_ref(),
@@ -6383,7 +6385,7 @@ impl<'a, 'b> AstNode<'a, 'b, TSFunctionType<'a>> {
         self.inner.span
     }
 
-    pub fn type_parameters(&self) -> Option<&AstNode<'a, 'b, TSTypeParameterDeclaration>> {
+    pub fn type_parameters(&self) -> Option<&AstNode<'a, 'b, TSTypeParameterDeclaration<'a>>> {
         self.allocator
             .alloc(self.inner.type_parameters.as_ref().map(|inner| AstNode {
                 inner: inner.as_ref(),
@@ -6397,7 +6399,7 @@ impl<'a, 'b> AstNode<'a, 'b, TSFunctionType<'a>> {
             .as_ref()
     }
 
-    pub fn this_param(&self) -> Option<&AstNode<'a, 'b, TSThisParameter>> {
+    pub fn this_param(&self) -> Option<&AstNode<'a, 'b, TSThisParameter<'a>>> {
         self.allocator
             .alloc(self.inner.this_param.as_ref().map(|inner| AstNode {
                 inner: inner.as_ref(),
@@ -6411,7 +6413,7 @@ impl<'a, 'b> AstNode<'a, 'b, TSFunctionType<'a>> {
             .as_ref()
     }
 
-    pub fn params(&self) -> &AstNode<'a, 'b, FormalParameters> {
+    pub fn params(&self) -> &AstNode<'a, 'b, FormalParameters<'a>> {
         self.allocator.alloc(AstNode {
             inner: self.inner.params.as_ref(),
             allocator: self.allocator,
@@ -6423,7 +6425,7 @@ impl<'a, 'b> AstNode<'a, 'b, TSFunctionType<'a>> {
         })
     }
 
-    pub fn return_type(&self) -> &AstNode<'a, 'b, TSTypeAnnotation> {
+    pub fn return_type(&self) -> &AstNode<'a, 'b, TSTypeAnnotation<'a>> {
         self.allocator.alloc(AstNode {
             inner: self.inner.return_type.as_ref(),
             allocator: self.allocator,
@@ -6444,7 +6446,7 @@ impl<'a, 'b> AstNode<'a, 'b, TSConstructorType<'a>> {
         self.inner.r#abstract
     }
 
-    pub fn type_parameters(&self) -> Option<&AstNode<'a, 'b, TSTypeParameterDeclaration>> {
+    pub fn type_parameters(&self) -> Option<&AstNode<'a, 'b, TSTypeParameterDeclaration<'a>>> {
         self.allocator
             .alloc(self.inner.type_parameters.as_ref().map(|inner| AstNode {
                 inner: inner.as_ref(),
@@ -6458,7 +6460,7 @@ impl<'a, 'b> AstNode<'a, 'b, TSConstructorType<'a>> {
             .as_ref()
     }
 
-    pub fn params(&self) -> &AstNode<'a, 'b, FormalParameters> {
+    pub fn params(&self) -> &AstNode<'a, 'b, FormalParameters<'a>> {
         self.allocator.alloc(AstNode {
             inner: self.inner.params.as_ref(),
             allocator: self.allocator,
@@ -6470,7 +6472,7 @@ impl<'a, 'b> AstNode<'a, 'b, TSConstructorType<'a>> {
         })
     }
 
-    pub fn return_type(&self) -> &AstNode<'a, 'b, TSTypeAnnotation> {
+    pub fn return_type(&self) -> &AstNode<'a, 'b, TSTypeAnnotation<'a>> {
         self.allocator.alloc(AstNode {
             inner: self.inner.return_type.as_ref(),
             allocator: self.allocator,
@@ -6487,7 +6489,7 @@ impl<'a, 'b> AstNode<'a, 'b, TSMappedType<'a>> {
         self.inner.span
     }
 
-    pub fn type_parameter(&self) -> &AstNode<'a, 'b, TSTypeParameter> {
+    pub fn type_parameter(&self) -> &AstNode<'a, 'b, TSTypeParameter<'a>> {
         self.allocator.alloc(AstNode {
             inner: self.inner.type_parameter.as_ref(),
             allocator: self.allocator,
@@ -6499,7 +6501,7 @@ impl<'a, 'b> AstNode<'a, 'b, TSMappedType<'a>> {
         })
     }
 
-    pub fn name_type(&self) -> Option<&AstNode<'a, 'b, TSType>> {
+    pub fn name_type(&self) -> Option<&AstNode<'a, 'b, TSType<'a>>> {
         self.allocator
             .alloc(self.inner.name_type.as_ref().map(|inner| AstNode {
                 inner,
@@ -6513,7 +6515,7 @@ impl<'a, 'b> AstNode<'a, 'b, TSMappedType<'a>> {
             .as_ref()
     }
 
-    pub fn type_annotation(&self) -> Option<&AstNode<'a, 'b, TSType>> {
+    pub fn type_annotation(&self) -> Option<&AstNode<'a, 'b, TSType<'a>>> {
         self.allocator
             .alloc(self.inner.type_annotation.as_ref().map(|inner| AstNode {
                 inner,
@@ -6569,7 +6571,7 @@ impl<'a, 'b> AstNode<'a, 'b, TSAsExpression<'a>> {
         self.inner.span
     }
 
-    pub fn expression(&self) -> &AstNode<'a, 'b, Expression> {
+    pub fn expression(&self) -> &AstNode<'a, 'b, Expression<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.expression,
             allocator: self.allocator,
@@ -6581,7 +6583,7 @@ impl<'a, 'b> AstNode<'a, 'b, TSAsExpression<'a>> {
         })
     }
 
-    pub fn type_annotation(&self) -> &AstNode<'a, 'b, TSType> {
+    pub fn type_annotation(&self) -> &AstNode<'a, 'b, TSType<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.type_annotation,
             allocator: self.allocator,
@@ -6598,7 +6600,7 @@ impl<'a, 'b> AstNode<'a, 'b, TSSatisfiesExpression<'a>> {
         self.inner.span
     }
 
-    pub fn expression(&self) -> &AstNode<'a, 'b, Expression> {
+    pub fn expression(&self) -> &AstNode<'a, 'b, Expression<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.expression,
             allocator: self.allocator,
@@ -6610,7 +6612,7 @@ impl<'a, 'b> AstNode<'a, 'b, TSSatisfiesExpression<'a>> {
         })
     }
 
-    pub fn type_annotation(&self) -> &AstNode<'a, 'b, TSType> {
+    pub fn type_annotation(&self) -> &AstNode<'a, 'b, TSType<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.type_annotation,
             allocator: self.allocator,
@@ -6627,7 +6629,7 @@ impl<'a, 'b> AstNode<'a, 'b, TSTypeAssertion<'a>> {
         self.inner.span
     }
 
-    pub fn type_annotation(&self) -> &AstNode<'a, 'b, TSType> {
+    pub fn type_annotation(&self) -> &AstNode<'a, 'b, TSType<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.type_annotation,
             allocator: self.allocator,
@@ -6639,7 +6641,7 @@ impl<'a, 'b> AstNode<'a, 'b, TSTypeAssertion<'a>> {
         })
     }
 
-    pub fn expression(&self) -> &AstNode<'a, 'b, Expression> {
+    pub fn expression(&self) -> &AstNode<'a, 'b, Expression<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.expression,
             allocator: self.allocator,
@@ -6656,7 +6658,7 @@ impl<'a, 'b> AstNode<'a, 'b, TSImportEqualsDeclaration<'a>> {
         self.inner.span
     }
 
-    pub fn id(&self) -> &AstNode<'a, 'b, BindingIdentifier> {
+    pub fn id(&self) -> &AstNode<'a, 'b, BindingIdentifier<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.id,
             allocator: self.allocator,
@@ -6668,7 +6670,7 @@ impl<'a, 'b> AstNode<'a, 'b, TSImportEqualsDeclaration<'a>> {
         })
     }
 
-    pub fn module_reference(&self) -> &AstNode<'a, 'b, TSModuleReference> {
+    pub fn module_reference(&self) -> &AstNode<'a, 'b, TSModuleReference<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.module_reference,
             allocator: self.allocator,
@@ -6715,7 +6717,7 @@ impl<'a, 'b> AstNode<'a, 'b, TSExternalModuleReference<'a>> {
         self.inner.span
     }
 
-    pub fn expression(&self) -> &AstNode<'a, 'b, StringLiteral> {
+    pub fn expression(&self) -> &AstNode<'a, 'b, StringLiteral<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.expression,
             allocator: self.allocator,
@@ -6732,7 +6734,7 @@ impl<'a, 'b> AstNode<'a, 'b, TSNonNullExpression<'a>> {
         self.inner.span
     }
 
-    pub fn expression(&self) -> &AstNode<'a, 'b, Expression> {
+    pub fn expression(&self) -> &AstNode<'a, 'b, Expression<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.expression,
             allocator: self.allocator,
@@ -6749,7 +6751,7 @@ impl<'a, 'b> AstNode<'a, 'b, Decorator<'a>> {
         self.inner.span
     }
 
-    pub fn expression(&self) -> &AstNode<'a, 'b, Expression> {
+    pub fn expression(&self) -> &AstNode<'a, 'b, Expression<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.expression,
             allocator: self.allocator,
@@ -6766,7 +6768,7 @@ impl<'a, 'b> AstNode<'a, 'b, TSExportAssignment<'a>> {
         self.inner.span
     }
 
-    pub fn expression(&self) -> &AstNode<'a, 'b, Expression> {
+    pub fn expression(&self) -> &AstNode<'a, 'b, Expression<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.expression,
             allocator: self.allocator,
@@ -6783,7 +6785,7 @@ impl<'a, 'b> AstNode<'a, 'b, TSNamespaceExportDeclaration<'a>> {
         self.inner.span
     }
 
-    pub fn id(&self) -> &AstNode<'a, 'b, IdentifierName> {
+    pub fn id(&self) -> &AstNode<'a, 'b, IdentifierName<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.id,
             allocator: self.allocator,
@@ -6800,7 +6802,7 @@ impl<'a, 'b> AstNode<'a, 'b, TSInstantiationExpression<'a>> {
         self.inner.span
     }
 
-    pub fn expression(&self) -> &AstNode<'a, 'b, Expression> {
+    pub fn expression(&self) -> &AstNode<'a, 'b, Expression<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.expression,
             allocator: self.allocator,
@@ -6812,7 +6814,7 @@ impl<'a, 'b> AstNode<'a, 'b, TSInstantiationExpression<'a>> {
         })
     }
 
-    pub fn type_arguments(&self) -> &AstNode<'a, 'b, TSTypeParameterInstantiation> {
+    pub fn type_arguments(&self) -> &AstNode<'a, 'b, TSTypeParameterInstantiation<'a>> {
         self.allocator.alloc(AstNode {
             inner: self.inner.type_arguments.as_ref(),
             allocator: self.allocator,
@@ -6829,7 +6831,7 @@ impl<'a, 'b> AstNode<'a, 'b, JSDocNullableType<'a>> {
         self.inner.span
     }
 
-    pub fn type_annotation(&self) -> &AstNode<'a, 'b, TSType> {
+    pub fn type_annotation(&self) -> &AstNode<'a, 'b, TSType<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.type_annotation,
             allocator: self.allocator,
@@ -6850,7 +6852,7 @@ impl<'a, 'b> AstNode<'a, 'b, JSDocNonNullableType<'a>> {
         self.inner.span
     }
 
-    pub fn type_annotation(&self) -> &AstNode<'a, 'b, TSType> {
+    pub fn type_annotation(&self) -> &AstNode<'a, 'b, TSType<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.type_annotation,
             allocator: self.allocator,
