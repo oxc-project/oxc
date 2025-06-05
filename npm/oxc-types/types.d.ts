@@ -522,12 +522,10 @@ export interface DebuggerStatement extends Span {
   type: 'DebuggerStatement';
 }
 
-export type BindingPattern =
-  & ({
-    typeAnnotation?: TSTypeAnnotation | null;
-    optional?: boolean;
-  })
-  & (BindingIdentifier | ObjectPattern | ArrayPattern | AssignmentPattern);
+export interface BindingPattern extends BindingPatternKind {
+  typeAnnotation?: TSTypeAnnotation | null;
+  optional?: boolean;
+}
 
 export type BindingPatternKind = BindingIdentifier | ObjectPattern | ArrayPattern | AssignmentPattern;
 

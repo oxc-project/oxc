@@ -1522,11 +1522,7 @@ pub struct DebuggerStatement {
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 #[estree(no_type)]
 pub struct BindingPattern<'a> {
-    // estree(flatten) the attributes because estree has no `BindingPattern`
-    #[estree(
-        flatten,
-        ts_type = "(BindingIdentifier | ObjectPattern | ArrayPattern | AssignmentPattern)"
-    )]
+    #[estree(flatten)]
     #[span]
     pub kind: BindingPatternKind<'a>,
     #[ts]
