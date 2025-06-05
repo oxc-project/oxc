@@ -85,5 +85,5 @@ const { instance: __napiInstance, module: __wasiModule, napiModule: __napiModule
   },
 })
 module.exports = __napiModule.exports
-module.exports.Oxc = __napiModule.exports.Oxc
 module.exports.Severity = __napiModule.exports.Severity
+module.exports.Oxc = __napiModule.exports.Oxc
