@@ -35,7 +35,7 @@ use crate::{
         trivia::FormatLeadingComments,
         write,
     },
-    generated::ast_nodes::AstNode,
+    generated::ast_nodes::{AstNode, AstNodes},
     options::{FormatTrailingCommas, QuoteProperties, TrailingSeparator},
     parentheses::NeedsParentheses,
     utils::write_arguments_multi_line,
@@ -108,7 +108,7 @@ impl<'a> Format<'a> for AstNode<'a, 'a, Vec<'a, Directive<'a>>> {
         // }
         //```
         // so we should keep an extra empty line after JsDirectiveList
-        let mut chars = f.source_text()[self.last().unwrap().span.end as usize..].chars();
+        let mut chars = f.source_text()[self.last().unwrap().span().end as usize..].chars();
         let mut count = 0;
         for c in chars.by_ref() {
             if is_line_terminator(c) {
@@ -225,7 +225,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, 'a, ObjectProperty<'a>> {
                 write!(f, self.key())
             }
         });
-        if let Expression::FunctionExpression(func) = &self.value() {
+        if let AstNodes::Function(func) = self.value().as_ast_nodes() {
             let is_accessor = match &self.kind() {
                 PropertyKind::Init => false,
                 PropertyKind::Get => {
@@ -238,10 +238,10 @@ impl<'a> FormatWrite<'a> for AstNode<'a, 'a, ObjectProperty<'a>> {
                 }
             };
             if self.method() || is_accessor {
-                if func.r#async {
+                if func.r#async() {
                     write!(f, ["async", space()])?;
                 }
-                if func.generator {
+                if func.generator() {
                     write!(f, "*")?;
                 }
                 if self.computed() {
@@ -251,14 +251,14 @@ impl<'a> FormatWrite<'a> for AstNode<'a, 'a, ObjectProperty<'a>> {
                 if self.computed() {
                     write!(f, "]")?;
                 }
-                if let Some(type_parameters) = &func.type_parameters {
+                if let Some(type_parameters) = &func.type_parameters() {
                     write!(f, type_parameters)?;
                 }
-                write!(f, group(&func.params))?;
-                if let Some(return_type) = &func.return_type {
+                write!(f, group(&func.params()))?;
+                if let Some(return_type) = &func.return_type() {
                     write!(f, return_type)?;
                 }
-                if let Some(body) = &func.body {
+                if let Some(body) = &func.body() {
                     write!(f, [space(), body])?;
                 }
                 return Ok(());
@@ -296,7 +296,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, 'a, TemplateLiteral<'a>> {
 
 impl<'a> FormatWrite<'a> for AstNode<'a, 'a, TaggedTemplateExpression<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        write!(f, [self.tag, self.type_arguments, self.quasi])
+        write!(f, [self.tag(), self.type_arguments(), self.quasi()])
     }
 }
 
@@ -331,7 +331,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, 'a, CallExpression<'a>> {
         let arguments = self.arguments();
         let optional = self.optional();
 
-        if callee.as_member_expression().is_some_and(|e| {
+        if callee.inner().as_member_expression().is_some_and(|e| {
             matches!(
                 e,
                 MemberExpression::StaticMemberExpression(_)
@@ -345,7 +345,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, 'a, CallExpression<'a>> {
             let format_inner = format_with(|f| {
                 write!(f, [callee, optional.then_some("?."), type_arguments, arguments])
             });
-            if matches!(callee, Expression::CallExpression(_)) {
+            if matches!(callee.inner(), Expression::CallExpression(_)) {
                 write!(f, [group(&format_inner)])
             } else {
                 write!(f, [format_inner])
@@ -451,6 +451,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, 'a, ArrayAssignmentTarget<'a>> {
         let mut join = f.join_nodes_with_soft_line();
         let last_index = self.elements().len().saturating_sub(1);
 
+        let test = self.elements().into_iter();
         for (index, element) in self.elements().into_iter().enumerate() {
             let separator_mode = match element.inner() {
                 None => TrailingSeparatorMode::Force,
@@ -464,9 +465,8 @@ impl<'a> FormatWrite<'a> for AstNode<'a, 'a, ArrayAssignmentTarget<'a>> {
                 SPAN,
                 source_text,
                 &format_with(|f| {
-                    // TODO: Take a look further at this to see remove inner().is_some()
-                    if let Some(e) = element.as_ref() {
-                        write!(f, group(&e))?;
+                    if let Some(element) = element.as_ref() {
+                        write!(f, group(element))?;
                     }
 
                     if is_disallow {
@@ -511,13 +511,13 @@ impl<'a> FormatWrite<'a> for AstNode<'a, 'a, ObjectAssignmentTarget<'a>> {
 
 impl<'a> FormatWrite<'a> for AstNode<'a, 'a, AssignmentTargetRest<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        write!(f, ["...", self.target])
+        write!(f, ["...", self.target()])
     }
 }
 
 impl<'a> FormatWrite<'a> for AstNode<'a, 'a, AssignmentTargetWithDefault<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        write!(f, [self.binding, space(), "=", space(), self.init])
+        write!(f, [self.binding(), space(), "=", space(), self.init()])
     }
 }
 
@@ -635,7 +635,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, 'a, DoWhileStatement<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         let body = self.body();
         write!(f, group(&format_args!("do", FormatStatementBody::new(body))))?;
-        if matches!(body, Statement::BlockStatement(_)) {
+        if matches!(body.inner(), Statement::BlockStatement(_)) {
             write!(f, space())?;
         } else {
             write!(f, hard_line_break())?;
@@ -737,7 +737,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, 'a, ForOfStatement<'a>> {
         let body = self.body();
         let format_inner = format_with(|f| {
             write!(f, "for")?;
-            if *r#await {
+            if r#await {
                 write!(f, [space(), "await"])?;
             }
             write!(
@@ -787,7 +787,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, 'a, IfStatement<'a>> {
                 .iter()
                 .any(|comment| comment.kind().is_line());
 
-            let else_on_same_line = matches!(consequent, Statement::BlockStatement(_))
+            let else_on_same_line = matches!(consequent.inner(), Statement::BlockStatement(_))
                 && !trailing_line_comment
                 && !dangling_line_comment;
 
@@ -798,7 +798,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, 'a, IfStatement<'a>> {
             }
 
             if has_dangling_comments {
-                write!(f, format_dangling_comments(self.span))?;
+                write!(f, format_dangling_comments(self.span()))?;
 
                 if trailing_line_comment || dangling_line_comment {
                     write!(f, hard_line_break())?;
@@ -812,8 +812,10 @@ impl<'a> FormatWrite<'a> for AstNode<'a, 'a, IfStatement<'a>> {
                 [
                     "else",
                     group(
-                        &FormatStatementBody::new(alternate)
-                            .with_forced_space(matches!(alternate, Statement::IfStatement(_)))
+                        &FormatStatementBody::new(alternate).with_forced_space(matches!(
+                            alternate.inner(),
+                            Statement::IfStatement(_)
+                        ))
                     )
                 ]
             )?;
@@ -915,9 +917,10 @@ impl<'a> FormatWrite<'a> for AstNode<'a, 'a, SwitchCase<'a>> {
         // there are no other non-empty statements. Empties may show up when
         // parsing depending on if the input code includes certain newlines.
         let is_single_block_statement =
-            matches!(consequent.into_iter().next(), Some(Statement::BlockStatement(_)))
+            matches!(consequent.inner().first(), Some(Statement::BlockStatement(_)))
                 && consequent
-                    .into_iter()
+                    .inner()
+                    .iter()
                     .filter(|statement| !matches!(statement, Statement::EmptyStatement(_)))
                     .count()
                     == 1;
@@ -971,14 +974,11 @@ impl<'a> FormatWrite<'a> for AstNode<'a, 'a, LabeledStatement<'a>> {
         let label = self.label();
         let body = self.body();
         write!(f, [label, ":"])?;
-        match body {
-            Statement::EmptyStatement(_) => {
-                // If the body is an empty statement, force semicolon insertion
-                write!(f, ";")
-            }
-            body => {
-                write!(f, [space(), body])
-            }
+        if matches!(body.inner(), Statement::EmptyStatement(_)) {
+            // If the body is an empty statement, force semicolon insertion
+            write!(f, ";")
+        } else {
+            write!(f, [space(), body])
         }
     }
 }
@@ -1211,7 +1211,9 @@ impl<'a> Format<'a> for AstNode<'a, 'a, Vec<'a, ClassElement<'a>>> {
     }
 }
 
-impl<'a> Format<'a> for (&ClassElement<'a>, Option<&ClassElement<'a>>) {
+impl<'a, 'b> Format<'a>
+    for (&AstNode<'a, 'b, ClassElement<'a>>, Option<&AstNode<'a, 'b, ClassElement<'a>>>)
+{
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         write!(f, [self.0, ClassPropertySemicolon::new(self.0, self.1)])
     }
@@ -1293,7 +1295,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, 'a, PropertyDefinition<'a>> {
         }
         if self.computed() {
             write!(f, ["[", self.key(), "]"])?;
-        } else if let PropertyKey::StringLiteral(s) = self.key() {
+        } else if let PropertyKey::StringLiteral(s) = self.key().inner() {
             FormatLiteralStringToken::new(
                 s.span.source_text(f.source_text()),
                 s.span,
@@ -1397,6 +1399,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, 'a, ImportDeclaration<'a>> {
         if let Some(specifiers) = self.specifiers() {
             if specifiers.len() == 1
                 && specifiers
+                    .inner()
                     .first()
                     .is_some_and(|s| matches!(s, ImportDeclarationSpecifier::ImportSpecifier(_)))
             {
@@ -1414,21 +1417,22 @@ impl<'a> FormatWrite<'a> for AstNode<'a, 'a, ImportDeclaration<'a>> {
             } else {
                 let mut start_index = 0;
                 for specifier in specifiers {
-                    if !matches!(specifier, ImportDeclarationSpecifier::ImportSpecifier(_)) {
+                    if !matches!(specifier.inner(), ImportDeclarationSpecifier::ImportSpecifier(_))
+                    {
                         start_index += 1;
                     }
                 }
 
-                let (before, after) = specifiers.split_at(start_index);
-
-                for (i, specifier) in before.iter().enumerate() {
+                let iter = specifiers.into_iter().take(start_index);
+                for (i, specifier) in iter.enumerate() {
                     if i != 0 {
                         write!(f, [",", space()])?;
                     }
                     write!(f, specifier)?;
                 }
 
-                let specifiers = after;
+                let specifiers =
+                    specifiers.into_iter().skip(start_index).collect::<std::vec::Vec<_>>();
                 if specifiers.is_empty() {
                     if start_index == 0 {
                         write!(f, ["{}", space()])?;
@@ -1461,7 +1465,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, 'a, ImportDeclaration<'a>> {
     }
 }
 
-impl<'a> Format<'a> for &[ImportDeclarationSpecifier<'a>] {
+impl<'a, 'b> Format<'a> for std::vec::Vec<&AstNode<'a, 'b, ImportDeclarationSpecifier<'a>>> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         let trailing_separator = FormatTrailingCommas::ES5.trailing_separator(f.options());
         f.join_with(&soft_line_break_or_space())
@@ -1552,9 +1556,9 @@ impl<'a> FormatWrite<'a> for AstNode<'a, 'a, ExportNamedDeclaration<'a>> {
         let with_clause = self.with_clause();
         let should_insert_space_around_brackets = f.options().bracket_spacing.value();
 
-        if let Some(Declaration::ClassDeclaration(class)) = declaration {
-            if !class.decorators.is_empty() {
-                write!(f, class.decorators)?;
+        if let Some(AstNodes::Class(class)) = declaration.map(|d| d.as_ast_nodes()) {
+            if !class.decorators().is_empty() {
+                write!(f, class.decorators())?;
             }
         }
 
@@ -1587,11 +1591,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, 'a, ExportNamedDeclaration<'a>> {
         if let Some(with_clause) = with_clause {
             write!(f, [space(), with_clause])?;
         }
-        if declaration.is_none()
-            || declaration
-                .as_ref()
-                .is_some_and(|d| matches!(d, Declaration::VariableDeclaration(_)))
-        {
+        if declaration.is_none_or(|d| matches!(d.inner(), Declaration::VariableDeclaration(_))) {
             write!(f, OptionalSemicolon)?;
         }
         Ok(())
@@ -1600,9 +1600,9 @@ impl<'a> FormatWrite<'a> for AstNode<'a, 'a, ExportNamedDeclaration<'a>> {
 
 impl<'a> FormatWrite<'a> for AstNode<'a, 'a, ExportDefaultDeclaration<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        if let ExportDefaultDeclarationKind::ClassDeclaration(class) = &self.declaration() {
-            if !class.decorators.is_empty() {
-                write!(f, class.decorators)?;
+        if let AstNodes::Class(class) = self.declaration().as_ast_nodes() {
+            if !class.decorators().is_empty() {
+                write!(f, class.decorators())?;
             }
         }
         write!(f, ["export", space(), "default", space(), self.declaration()])?;
@@ -1711,7 +1711,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, 'a, JSXElement<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         write!(f, ["<", self.opening_element().name()])?;
         for attr in self.opening_element().attributes() {
-            match attr {
+            match attr.inner() {
                 JSXAttributeItem::Attribute(_) => {
                     write!(f, hard_space())?;
                 }
@@ -1913,27 +1913,23 @@ impl<'a> FormatWrite<'a> for AstNode<'a, 'a, TSConditionalType<'a>> {
 
 impl<'a> FormatWrite<'a> for AstNode<'a, 'a, TSUnionType<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        let Some((first, rest)) = self.types().split_first() else {
-            return Ok(());
-        };
-        write!(f, first);
-        for item in rest {
-            write!(f, [" | ", item])?;
-        }
-        Ok(())
+        f.join_with(&soft_line_break_or_space())
+            .entries(
+                FormatSeparatedIter::new(self.types().into_iter(), "|")
+                    .with_trailing_separator(TrailingSeparator::Disallowed),
+            )
+            .finish()
     }
 }
 
 impl<'a> FormatWrite<'a> for AstNode<'a, 'a, TSIntersectionType<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        let Some((first, rest)) = self.types().split_first() else {
-            return Ok(());
-        };
-        write!(f, first);
-        for item in rest {
-            write!(f, [" & ", item])?;
-        }
-        Ok(())
+        f.join_with(&soft_line_break_or_space())
+            .entries(
+                FormatSeparatedIter::new(self.types().into_iter(), "&")
+                    .with_trailing_separator(TrailingSeparator::Disallowed),
+            )
+            .finish()
     }
 }
 
@@ -2280,21 +2276,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, 'a, TSPropertySignature<'a>> {
         if self.computed() {
             write!(f, [space(), "[", self.key(), "]"])?;
         } else {
-            let key = self.key();
-            match key {
-                PropertyKey::StaticIdentifier(_) => {
-                    write!(f, key)?;
-                }
-                PropertyKey::PrivateIdentifier(_) => {
-                    write!(f, key)?;
-                }
-                PropertyKey::StringLiteral(_) => {
-                    write!(f, key)?;
-                }
-                key => {
-                    write!(f, key)?;
-                }
-            }
+            write!(f, self.key())?;
         }
         if self.optional() {
             write!(f, "?")?;
@@ -2454,21 +2436,24 @@ impl<'a> FormatWrite<'a> for AstNode<'a, 'a, TSModuleDeclaration<'a>> {
             write!(f, [space(), self.id()])?;
         }
 
-        if let Some(body) = &self.body() {
+        if let Some(body) = self.body() {
             let mut body = body;
             loop {
-                match body {
-                    TSModuleDeclarationBody::TSModuleDeclaration(b) => {
-                        write!(f, [".", b.id])?;
-                        if let Some(b) = &b.body {
+                match body.as_ast_nodes() {
+                    AstNodes::TSModuleDeclaration(b) => {
+                        write!(f, [".", b.id()])?;
+                        if let Some(b) = &b.body() {
                             body = b;
                         } else {
                             break;
                         }
                     }
-                    TSModuleDeclarationBody::TSModuleBlock(body) => {
+                    AstNodes::TSModuleBlock(body) => {
                         write!(f, [space(), body]);
                         break;
+                    }
+                    _ => {
+                        unreachable!()
                     }
                 }
             }
@@ -2660,13 +2645,13 @@ impl<'a> FormatWrite<'a> for AstNode<'a, 'a, TSMappedType<'a>> {
 impl<'a> FormatWrite<'a> for AstNode<'a, 'a, TSTemplateLiteralType<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         write!(f, "`")?;
-        for (index, item) in self.quasis().into_iter().enumerate() {
+        for ((index, quasi), types) in
+            self.quasis().into_iter().enumerate().zip(self.types().into_iter())
+        {
             if index != 0 {
-                if let Some(types) = self.types().get(index - 1) {
-                    write!(f, ["${", types, "}"])?;
-                }
+                write!(f, ["${", types, "}"])?;
             }
-            write!(f, dynamic_text(item.value().raw.as_str(), item.span().start));
+            write!(f, dynamic_text(quasi.value().raw.as_str(), quasi.span().start));
         }
         write!(f, "`")
     }
@@ -2689,7 +2674,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, 'a, TSTypeAssertion<'a>> {
         write!(f, "<")?;
         // var r = < <T>(x: T) => T > ((x) => { return null; });
         //          ^ make sure space is printed here.
-        if matches!(self.type_annotation(), TSType::TSFunctionType(_)) {
+        if matches!(self.type_annotation().inner(), TSType::TSFunctionType(_)) {
             write!(f, space())?;
         }
         write!(f, [self.type_annotation(), ">", self.expression()])

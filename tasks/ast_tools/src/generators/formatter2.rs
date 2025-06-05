@@ -3,7 +3,6 @@
 
 use proc_macro2::TokenStream;
 use quote::{format_ident, quote};
-use rayon::option;
 
 use crate::{
     Codegen, Generator,
@@ -100,22 +99,52 @@ impl Generator for FormatterFormatGenerator2 {
             }
 
             ///@@line_break
+            impl<'a, 'b, T> AstNode<'a, 'b, Option<T>> {
+                pub fn as_ref(&self) -> Option<&'a AstNode<'a, 'b, T>> {
+                    self.allocator
+                        .alloc(self.inner.as_ref().map(|inner| AstNode {
+                            inner,
+                            parent: self.parent,
+                            allocator: self.allocator,
+                        }))
+                        .as_ref()
+                }
+            }
+
+
+            ///@@line_break
             impl<'a, 'b, T> AstNode<'a, 'b, Vec<'a, T>> {
+
+                ///@@line_break
                 pub fn is_empty(&self) -> bool {
                     self.inner.is_empty()
                 }
 
+                ///@@line_break
                 pub fn len(&self) -> usize {
                     self.inner.len()
                 }
 
-                pub fn to_vec(&self) -> Vec<'a, AstNode<'a, 'b, T>> {
-                    let iter = self.inner.iter().map(|inner| AstNode {
-                        inner,
-                        parent: self.parent,
-                        allocator: self.allocator,
-                    });
-                    Vec::from_iter_in(iter, self.allocator)
+                ///@@line_break
+                pub fn first(&self) -> Option<&'a AstNode<'a, 'b, T>> {
+                    self.allocator
+                        .alloc(self.inner.first().map(|inner| AstNode {
+                            inner,
+                            parent: self.parent,
+                            allocator: self.allocator,
+                        }))
+                        .as_ref()
+                }
+
+                ///@@line_break
+                pub fn last(&self) -> Option<&'a AstNode<'a, 'b, T>> {
+                    self.allocator
+                        .alloc(self.inner.last().map(|inner| AstNode {
+                            inner,
+                            parent: self.parent,
+                            allocator: self.allocator,
+                        }))
+                        .as_ref()
                 }
             }
 
@@ -127,7 +156,7 @@ impl Generator for FormatterFormatGenerator2 {
                 allocator: &'a Allocator,
             }
 
-            /// @@line_break
+            ///@@line_break
             impl<'a, 'b, T> Iterator for AstNodeIterator<'a, 'b, T> {
                 type Item = &'a AstNode<'a, 'b, T>;
                 fn next(&mut self) -> Option<Self::Item> {
@@ -180,7 +209,7 @@ fn implementation(type_def: &TypeDef, schema: &Schema) -> TokenStream {
             let return_type = match field_type {
                 TypeDef::Struct(struct_def) => {
                     is_reference = !struct_def.derives.contains(&String::from("Copy"));
-                    is_not_ast_node = !struct_def.kind.has_kind;
+                    is_not_ast_node = !is_reference || !struct_def.visit.has_visitor();
 
                     struct_def.ty(schema)
                 }
@@ -315,16 +344,22 @@ fn implementation(type_def: &TypeDef, schema: &Schema) -> TokenStream {
     let variant_match_arms = enum_def.variants.iter().filter_map(|variant| {
         let variant_name = &variant.ident();
         let field_type = variant.field_type(schema).unwrap();
+        let is_box = field_type.is_box();
         let node_type = field_type
             .maybe_inner_type(schema)
             .map(|inner_type| inner_type.ident())
             .unwrap_or_else(|| field_type.ident());
+        let inner = if is_box {
+            quote! { s.as_ref() }
+        } else {
+            quote! { s }
+        };
 
         Some(quote! {
 
             #enum_ident::#variant_name(s) => {
                 AstNodes::#node_type(AstNode {
-                    inner: s,
+                    inner: #inner,
                     parent,
                     allocator: self.allocator,
                 })
@@ -359,11 +394,12 @@ fn implementation(type_def: &TypeDef, schema: &Schema) -> TokenStream {
         match_arm
     });
 
-    // TODO: unused
+    let node_type = quote! { AstNode<'a, 'b, #type_ty> };
+
     // Enum
     let as_ast_nodes_fn = quote! {
         ///@@line_break
-        impl<'a, 'b> AstNode<'a, 'b, #type_ty> {
+        impl<'a, 'b> #node_type {
             pub fn as_ast_nodes(&self) -> &AstNodes<'a, 'b> {
                 #parent;
                 let node = match self.inner {
@@ -418,7 +454,19 @@ fn implementation(type_def: &TypeDef, schema: &Schema) -> TokenStream {
         match_arm
     });
 
-    let node_type = quote! { AstNode<'a, 'b, #type_ty> };
+    // let get_child_func = quote! {
+    //     ///@@line_break
+    //     impl<'a, 'b> #node_type{
+    //         fn get_child<T>(&self, inner: &'b T) -> Option<&AstNode<'a, 'b, T>> {
+    //             #parent;
+    //             self.allocator.alloc(AstNode {
+    //                 inner,
+    //                 parent,
+    //                 allocator: self.allocator,
+    //             })
+    //         }
+    //     }
+    // };
 
     let impl_format_write = quote! {
         impl<'a, 'b> FormatWrite<'a> for #node_type {
@@ -441,6 +489,8 @@ fn implementation(type_def: &TypeDef, schema: &Schema) -> TokenStream {
     };
 
     quote! {
+        // #get_child_func
+        #as_ast_nodes_fn
         #impl_format_write
         #impl_get_span
     }
