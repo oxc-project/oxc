@@ -22,7 +22,7 @@ fn main() -> Result<(), String> {
 
     let path = Path::new(&name);
     let source_text = fs::read_to_string(path).map_err(|_| format!("Missing '{name}'"))?;
-    let source_type = SourceType::from_path(path).unwrap().with_script(true).with_jsx(true);
+    let source_type = SourceType::from_path(path).unwrap();
 
     let allocator = Allocator::default();
     let ret = Parser::new(&allocator, &source_text, source_type)

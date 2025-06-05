@@ -1,7 +1,7 @@
 parser_misc Summary:
-AST Parsed     : 36/36 (100.00%)
-Positive Passed: 36/36 (100.00%)
-Negative Passed: 36/36 (100.00%)
+AST Parsed     : 37/37 (100.00%)
+Positive Passed: 37/37 (100.00%)
+Negative Passed: 37/37 (100.00%)
 
   × Identifier `b` has already been declared
    ╭─[misc/fail/oxc-10159.js:1:22]
@@ -47,6 +47,12 @@ Negative Passed: 36/36 (100.00%)
  2 │ 
  3 │ @dec1 export default @dec2 class {}
    · ─────
+   ╰────
+
+  × Unexpected token
+   ╭─[misc/fail/oxc-11487.mjs:1:13]
+ 1 │ async await => {}
+   ·             ──
    ╰────
 
   × Unexpected token

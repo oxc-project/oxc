@@ -225,7 +225,7 @@ impl<'a> ParserImpl<'a> {
                     let ident = ident.unbox();
                     self.ast.alloc_binding_identifier(ident.span, ident.name)
                 }
-                _ => unreachable!(),
+                _ => return self.unexpected(),
             };
             let params_span = self.end_span(ident.span.start);
             let ident = BindingPatternKind::BindingIdentifier(ident);
