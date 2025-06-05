@@ -1494,7 +1494,7 @@ pub struct CatchClause<'a> {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
-#[estree(no_type, ts_alias = "BindingPattern")]
+#[estree(no_type, via = CatchParameterConverter)]
 pub struct CatchParameter<'a> {
     #[estree(skip)]
     pub span: Span,
@@ -1528,7 +1528,7 @@ pub struct DebuggerStatement {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
-#[estree(no_type)]
+#[estree(no_type, via = BindingPatternConverter, field_order(kind, optional, type_annotation))]
 pub struct BindingPattern<'a> {
     // estree(flatten) the attributes because estree has no `BindingPattern`
     #[estree(

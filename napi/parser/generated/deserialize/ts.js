@@ -735,11 +735,7 @@ function deserializeCatchClause(pos) {
 }
 
 function deserializeCatchParameter(pos) {
-  return {
-    ...deserializeBindingPatternKind(pos + 8),
-    typeAnnotation: deserializeOptionBoxTSTypeAnnotation(pos + 24),
-    optional: deserializeBool(pos + 32),
-  };
+  return deserializeBindingPattern(pos + 8);
 }
 
 function deserializeDebuggerStatement(pos) {
@@ -751,11 +747,10 @@ function deserializeDebuggerStatement(pos) {
 }
 
 function deserializeBindingPattern(pos) {
-  return {
-    ...deserializeBindingPatternKind(pos),
-    typeAnnotation: deserializeOptionBoxTSTypeAnnotation(pos + 16),
-    optional: deserializeBool(pos + 24),
-  };
+  const pattern = deserializeBindingPatternKind(pos);
+  pattern.optional = deserializeBool(pos + 24);
+  pattern.typeAnnotation = deserializeOptionBoxTSTypeAnnotation(pos + 16);
+  return pattern;
 }
 
 function deserializeAssignmentPattern(pos) {
@@ -875,12 +870,10 @@ function deserializeFormalParameter(pos) {
     override = deserializeBool(pos + 66);
   let param;
   if (accessibility === null && !readonly && !override) {
-    param = {
-      ...deserializeBindingPatternKind(pos + 32),
-      decorators: deserializeVecDecorator(pos + 8),
-      optional: deserializeBool(pos + 56),
-      typeAnnotation: deserializeOptionBoxTSTypeAnnotation(pos + 48),
-    };
+    param = deserializeBindingPatternKind(pos + 32);
+    param.decorators = deserializeVecDecorator(pos + 8);
+    param.optional = deserializeBool(pos + 56);
+    param.typeAnnotation = deserializeOptionBoxTSTypeAnnotation(pos + 48);
   } else {
     param = {
       type: 'TSParameterProperty',

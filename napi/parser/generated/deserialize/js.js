@@ -682,9 +682,7 @@ function deserializeCatchClause(pos) {
 }
 
 function deserializeCatchParameter(pos) {
-  return {
-    ...deserializeBindingPatternKind(pos + 8),
-  };
+  return deserializeBindingPattern(pos + 8);
 }
 
 function deserializeDebuggerStatement(pos) {
@@ -696,9 +694,8 @@ function deserializeDebuggerStatement(pos) {
 }
 
 function deserializeBindingPattern(pos) {
-  return {
-    ...deserializeBindingPatternKind(pos),
-  };
+  const pattern = deserializeBindingPatternKind(pos);
+  return pattern;
 }
 
 function deserializeAssignmentPattern(pos) {
