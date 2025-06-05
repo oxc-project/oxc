@@ -54,6 +54,7 @@ impl Generator for FormatterFormatGenerator {
                     trivia::{format_leading_comments, format_trailing_comments},
                 },
                 parentheses::NeedsParentheses,
+                generated::ast_nodes::AstNode,
                 write::FormatWrite,
             };
 
@@ -73,6 +74,9 @@ impl Generator for FormatterFormatGenerator {
 
 fn implementation(type_def: &TypeDef, schema: &Schema) -> TokenStream {
     let type_ty = type_def.ty(schema);
+    let type_ty = quote! {
+        AstNode::<'a, 'b, #type_ty>
+    };
 
     let has_kind = match type_def {
         TypeDef::Struct(struct_def) => struct_def.kind.has_kind,
@@ -83,7 +87,7 @@ fn implementation(type_def: &TypeDef, schema: &Schema) -> TokenStream {
     if !has_kind {
         return quote! {
             ///@@line_break
-            impl<'a> Format<'a> for #type_ty {
+            impl<'a, 'b> Format<'a> for #type_ty {
                 fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
                     self.write(f)
                 }
@@ -95,7 +99,7 @@ fn implementation(type_def: &TypeDef, schema: &Schema) -> TokenStream {
         quote! {}
     } else {
         quote! {
-            format_leading_comments(self.span.start).fmt(f)?;
+            format_leading_comments(self.span().start).fmt(f)?;
         }
     };
 
@@ -103,7 +107,7 @@ fn implementation(type_def: &TypeDef, schema: &Schema) -> TokenStream {
         quote! {}
     } else {
         quote! {
-            format_trailing_comments(self.span.end).fmt(f)?;
+            format_trailing_comments(self.span().end).fmt(f)?;
         }
     };
 
@@ -150,7 +154,7 @@ fn implementation(type_def: &TypeDef, schema: &Schema) -> TokenStream {
 
     quote! {
         ///@@line_break
-        impl<'a> Format<'a> for #type_ty {
+        impl<'a, 'b> Format<'a> for #type_ty {
             fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
                 #implementation
             }
