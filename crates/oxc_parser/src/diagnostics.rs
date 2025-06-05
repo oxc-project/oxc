@@ -651,3 +651,9 @@ pub fn decorators_in_export_and_class(span: Span) -> OxcDiagnostic {
 pub fn decorators_are_not_valid_here(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::error("Decorators are not valid here.").with_label(span)
 }
+
+#[cold]
+pub fn decorator_on_overload(span: Span) -> OxcDiagnostic {
+    ts_error("1249", "A decorator can only decorate a method implementation, not an overload.")
+        .with_label(span)
+}

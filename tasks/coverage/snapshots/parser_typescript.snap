@@ -3,7 +3,7 @@ commit: 81c95189
 parser_typescript Summary:
 AST Parsed     : 6530/6537 (99.89%)
 Positive Passed: 6519/6537 (99.72%)
-Negative Passed: 1396/5763 (24.22%)
+Negative Passed: 1399/5763 (24.28%)
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/ClassDeclaration24.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/ExportAssignment7.ts
@@ -5016,8 +5016,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/decorator
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/decorators/class/method/decoratorOnClassMethod8.ts
 
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/decorators/class/method/decoratorOnClassMethodOverload1.ts
-
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/decorators/class/property/decoratorOnClassProperty11.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/decorators/class/property/decoratorOnClassProperty6.ts
@@ -5796,8 +5794,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/es7/expon
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/es7/exponentiationOperator/exponentiationOperatorWithUndefinedValueAndValidOperands.ts
 
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/esDecorators/classDeclaration/accessors/esDecorators-classDeclaration-accessors-nonStaticAbstract.ts
-
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/esDecorators/classDeclaration/esDecorators-classDeclaration-missingEmitHelpers-classDecorator.1.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/esDecorators/classDeclaration/esDecorators-classDeclaration-missingEmitHelpers-classDecorator.2.ts
@@ -5843,8 +5839,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/esDecorat
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/esDecorators/classDeclaration/fields/esDecorators-classDeclaration-fields-nonStaticAmbient.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/esDecorators/classDeclaration/fields/esDecorators-classDeclaration-fields-staticAmbient.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/esDecorators/classDeclaration/methods/esDecorators-classDeclaration-methods-nonStaticAbstract.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/esDecorators/classExpression/esDecorators-classExpression-missingEmitHelpers-classDecorator.1.ts
 
@@ -20984,6 +20978,14 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
  5 │ }
    ╰────
 
+  × TS(1249): A decorator can only decorate a method implementation, not an overload.
+   ╭─[typescript/tests/cases/conformance/decorators/class/method/decoratorOnClassMethodOverload1.ts:4:5]
+ 3 │ class C {
+ 4 │     @dec
+   ·     ────
+ 5 │     method()
+   ╰────
+
   × await expression not allowed in formal parameter
    ╭─[typescript/tests/cases/conformance/decorators/class/method/parameter/decoratorOnClassMethodParameter3.ts:5:23]
  4 │   class Class {
@@ -24256,6 +24258,54 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
  3 │ }
    ╰────
 
+  × TS(1249): A decorator can only decorate a method implementation, not an overload.
+   ╭─[typescript/tests/cases/conformance/esDecorators/classDeclaration/accessors/esDecorators-classDeclaration-accessors-nonStaticAbstract.ts:6:5]
+ 5 │ abstract class C {
+ 6 │     @dec(11) abstract get method1(): number;
+   ·     ────────
+ 7 │     @dec(12) abstract set method1(value);
+   ╰────
+
+  × TS(1249): A decorator can only decorate a method implementation, not an overload.
+   ╭─[typescript/tests/cases/conformance/esDecorators/classDeclaration/accessors/esDecorators-classDeclaration-accessors-nonStaticAbstract.ts:7:5]
+ 6 │     @dec(11) abstract get method1(): number;
+ 7 │     @dec(12) abstract set method1(value);
+   ·     ────────
+ 8 │     @dec(21) abstract get ["method2"](): number;
+   ╰────
+
+  × TS(1249): A decorator can only decorate a method implementation, not an overload.
+   ╭─[typescript/tests/cases/conformance/esDecorators/classDeclaration/accessors/esDecorators-classDeclaration-accessors-nonStaticAbstract.ts:8:5]
+ 7 │     @dec(12) abstract set method1(value);
+ 8 │     @dec(21) abstract get ["method2"](): number;
+   ·     ────────
+ 9 │     @dec(22) abstract set ["method2"](value);
+   ╰────
+
+  × TS(1249): A decorator can only decorate a method implementation, not an overload.
+    ╭─[typescript/tests/cases/conformance/esDecorators/classDeclaration/accessors/esDecorators-classDeclaration-accessors-nonStaticAbstract.ts:9:5]
+  8 │     @dec(21) abstract get ["method2"](): number;
+  9 │     @dec(22) abstract set ["method2"](value);
+    ·     ────────
+ 10 │     @dec(31) abstract get [method3](): number;
+    ╰────
+
+  × TS(1249): A decorator can only decorate a method implementation, not an overload.
+    ╭─[typescript/tests/cases/conformance/esDecorators/classDeclaration/accessors/esDecorators-classDeclaration-accessors-nonStaticAbstract.ts:10:5]
+  9 │     @dec(22) abstract set ["method2"](value);
+ 10 │     @dec(31) abstract get [method3](): number;
+    ·     ────────
+ 11 │     @dec(32) abstract set [method3](value);
+    ╰────
+
+  × TS(1249): A decorator can only decorate a method implementation, not an overload.
+    ╭─[typescript/tests/cases/conformance/esDecorators/classDeclaration/accessors/esDecorators-classDeclaration-accessors-nonStaticAbstract.ts:11:5]
+ 10 │     @dec(31) abstract get [method3](): number;
+ 11 │     @dec(32) abstract set [method3](value);
+    ·     ────────
+ 12 │ }
+    ╰────
+
   × 'default' modifier cannot be used here.
    ╭─[typescript/tests/cases/conformance/esDecorators/classDeclaration/esDecorators-classDeclaration-exportModifier.2.ts:2:13]
  1 │ // error
@@ -24268,6 +24318,30 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
  1 │ // error
  2 │ export @dec default class C3 {}
    ·             ───────
+   ╰────
+
+  × TS(1249): A decorator can only decorate a method implementation, not an overload.
+   ╭─[typescript/tests/cases/conformance/esDecorators/classDeclaration/methods/esDecorators-classDeclaration-methods-nonStaticAbstract.ts:6:5]
+ 5 │ abstract class C {
+ 6 │     @dec(1) abstract method1(): void;
+   ·     ───────
+ 7 │     @dec(2) abstract ["method2"](): void;
+   ╰────
+
+  × TS(1249): A decorator can only decorate a method implementation, not an overload.
+   ╭─[typescript/tests/cases/conformance/esDecorators/classDeclaration/methods/esDecorators-classDeclaration-methods-nonStaticAbstract.ts:7:5]
+ 6 │     @dec(1) abstract method1(): void;
+ 7 │     @dec(2) abstract ["method2"](): void;
+   ·     ───────
+ 8 │     @dec(3) abstract [method3](): void;
+   ╰────
+
+  × TS(1249): A decorator can only decorate a method implementation, not an overload.
+   ╭─[typescript/tests/cases/conformance/esDecorators/classDeclaration/methods/esDecorators-classDeclaration-methods-nonStaticAbstract.ts:8:5]
+ 7 │     @dec(2) abstract ["method2"](): void;
+ 8 │     @dec(3) abstract [method3](): void;
+   ·     ───────
+ 9 │ }
    ╰────
 
   × Expression must be enclosed in parentheses to be used as a decorator.

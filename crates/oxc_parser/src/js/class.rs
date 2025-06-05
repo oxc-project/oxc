@@ -192,6 +192,13 @@ impl<'a> ParserImpl<'a> {
 
     fn parse_class_element(&mut self) -> ClassElement<'a> {
         let elem = self.parse_class_element_impl();
+        if let ClassElement::MethodDefinition(def) = &elem {
+            if def.value.body.is_none() && !def.decorators.is_empty() {
+                for decorator in &def.decorators {
+                    self.error(diagnostics::decorator_on_overload(decorator.span));
+                }
+            }
+        }
         self.check_unconsumed_decorators();
         elem
     }
