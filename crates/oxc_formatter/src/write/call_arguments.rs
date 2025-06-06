@@ -47,15 +47,15 @@ impl<'a, 'b> Format<'a> for AstNode<'a, 'b, Vec<'a, Argument<'a>>> {
         }
 
         let (is_commonjs_or_amd_call, is_test_call) =
-            if let AstNodes::CallExpression(call) = self.parent() {
-                (is_commonjs_or_amd_call(self.inner(), call), is_test_call_expression(call.inner()))
+            if let AstNodes::CallExpression(call) = self.parent {
+                (is_commonjs_or_amd_call(self, call), is_test_call_expression(call))
             } else {
                 (false, false)
             };
 
         let is_first_arg_string_literal_or_template = if self.len() == 2 {
             matches!(
-                self.inner().first(),
+                self.as_ref().first(),
                 Some(Argument::StringLiteral(_) | Argument::TemplateLiteral(_))
             )
         } else {
@@ -64,7 +64,7 @@ impl<'a, 'b> Format<'a> for AstNode<'a, 'b, Vec<'a, Argument<'a>>> {
 
         if is_commonjs_or_amd_call
             // || is_multiline_template_only_args(node)
-            || is_react_hook_with_deps_array(self.inner(), f.comments())
+            || is_react_hook_with_deps_array(self, f.comments())
             || (is_test_call && is_first_arg_string_literal_or_template)
         {
             return write!(
@@ -98,16 +98,16 @@ impl<'a, 'b> Format<'a> for AstNode<'a, 'b, Vec<'a, Argument<'a>>> {
             })
             .collect();
 
-        if has_empty_line || is_function_composition_args(self.inner()) {
+        if has_empty_line || is_function_composition_args(self) {
             return write!(
                 f,
                 [FormatAllArgsBrokenOut { args: &arguments, node: self, expand: true }]
             );
         }
 
-        if let Some(group_layout) = arguments_grouped_layout(&self.inner(), f.comments()) {
+        if let Some(group_layout) = arguments_grouped_layout(&self, f.comments()) {
             write_grouped_arguments(self, arguments, group_layout, f)
-        } else if is_long_curried_call(self.parent()) {
+        } else if is_long_curried_call(self.parent) {
             write!(
                 f,
                 [
@@ -670,7 +670,7 @@ fn write_grouped_arguments<'a, 'b, 'c>(
             }
             AstNodes::Function(function)
                 if !other_args.is_empty()
-                    || function_has_only_simple_parameters(&function.inner().params) =>
+                    || function_has_only_simple_parameters(&function.params) =>
             {
                 grouped_arg.cache_function_body(f);
             }
@@ -904,8 +904,7 @@ impl<'a, 'b, 'c> Format<'a> for FormatGroupedLastArgument<'a, 'b, 'c> {
         // to remove any soft line breaks.
         match element.as_ast_nodes() {
             AstNodes::Function(function)
-                if !self.is_only
-                    || function_has_only_simple_parameters(&function.inner().params) =>
+                if !self.is_only || function_has_only_simple_parameters(&function.params) =>
             {
                 with_token_tracking_disabled(f, |f| {
                     write!(
@@ -997,7 +996,7 @@ fn is_commonjs_or_amd_call(
     arguments: &[Argument<'_>],
     call: &AstNode<'_, '_, CallExpression<'_>>,
 ) -> bool {
-    let Expression::Identifier(ident) = &call.inner().callee else {
+    let Expression::Identifier(ident) = &call.callee else {
         return false;
     };
 
@@ -1023,7 +1022,7 @@ fn is_commonjs_or_amd_call(
             }
         }
         "define" => {
-            let in_statement = matches!(call.parent(), AstNodes::ExpressionStatement(_));
+            let in_statement = matches!(call.parent, AstNodes::ExpressionStatement(_));
             if in_statement {
                 match arguments.len() {
                     1 => true,

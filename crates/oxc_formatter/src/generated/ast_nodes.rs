@@ -2,7 +2,7 @@
 // To edit this generated file you have to edit `tasks/ast_tools/src/generators/formatter2.rs`.
 
 #![allow(clippy::undocumented_unsafe_blocks)]
-use std::mem::transmute;
+use std::{mem::transmute, ops::Deref};
 
 use oxc_allocator::{Allocator, Vec};
 use oxc_ast::{AstKind, ast::*};
@@ -16,6 +16,13 @@ use crate::{
     parentheses::NeedsParentheses,
     write::FormatWrite,
 };
+
+fn transmute_self<'a, 'b, T>(s: &AstNode<'a, 'b, T>) -> &'a AstNode<'a, 'b, T> {
+    /// * SAFETY: `self` is already allocated in Arena, so transmute from `&` to `&'a` is safe.
+    unsafe {
+        transmute(s)
+    }
+}
 
 pub enum AstNodes<'a, 'b> {
     DUMMY(),
@@ -191,364 +198,370 @@ impl<'a, 'b> AstNodes<'a, 'b> {
     pub fn span(&self) -> Span {
         match self {
             Self::DUMMY() => panic!("Should never be called on a dummy node"),
-            Self::Program(n) => n.inner.span(),
-            Self::IdentifierName(n) => n.inner.span(),
-            Self::IdentifierReference(n) => n.inner.span(),
-            Self::BindingIdentifier(n) => n.inner.span(),
-            Self::LabelIdentifier(n) => n.inner.span(),
-            Self::ThisExpression(n) => n.inner.span(),
-            Self::ArrayExpression(n) => n.inner.span(),
-            Self::ArrayExpressionElement(n) => n.inner.span(),
-            Self::Elision(n) => n.inner.span(),
-            Self::ObjectExpression(n) => n.inner.span(),
-            Self::ObjectProperty(n) => n.inner.span(),
-            Self::PropertyKey(n) => n.inner.span(),
-            Self::TemplateLiteral(n) => n.inner.span(),
-            Self::TaggedTemplateExpression(n) => n.inner.span(),
-            Self::MemberExpression(n) => n.inner.span(),
-            Self::CallExpression(n) => n.inner.span(),
-            Self::NewExpression(n) => n.inner.span(),
-            Self::MetaProperty(n) => n.inner.span(),
-            Self::SpreadElement(n) => n.inner.span(),
-            Self::Argument(n) => n.inner.span(),
-            Self::UpdateExpression(n) => n.inner.span(),
-            Self::UnaryExpression(n) => n.inner.span(),
-            Self::BinaryExpression(n) => n.inner.span(),
-            Self::PrivateInExpression(n) => n.inner.span(),
-            Self::LogicalExpression(n) => n.inner.span(),
-            Self::ConditionalExpression(n) => n.inner.span(),
-            Self::AssignmentExpression(n) => n.inner.span(),
-            Self::AssignmentTarget(n) => n.inner.span(),
-            Self::SimpleAssignmentTarget(n) => n.inner.span(),
-            Self::AssignmentTargetPattern(n) => n.inner.span(),
-            Self::ArrayAssignmentTarget(n) => n.inner.span(),
-            Self::ObjectAssignmentTarget(n) => n.inner.span(),
-            Self::AssignmentTargetWithDefault(n) => n.inner.span(),
-            Self::SequenceExpression(n) => n.inner.span(),
-            Self::Super(n) => n.inner.span(),
-            Self::AwaitExpression(n) => n.inner.span(),
-            Self::ChainExpression(n) => n.inner.span(),
-            Self::ParenthesizedExpression(n) => n.inner.span(),
-            Self::Directive(n) => n.inner.span(),
-            Self::Hashbang(n) => n.inner.span(),
-            Self::BlockStatement(n) => n.inner.span(),
-            Self::VariableDeclaration(n) => n.inner.span(),
-            Self::VariableDeclarator(n) => n.inner.span(),
-            Self::EmptyStatement(n) => n.inner.span(),
-            Self::ExpressionStatement(n) => n.inner.span(),
-            Self::IfStatement(n) => n.inner.span(),
-            Self::DoWhileStatement(n) => n.inner.span(),
-            Self::WhileStatement(n) => n.inner.span(),
-            Self::ForStatement(n) => n.inner.span(),
-            Self::ForStatementInit(n) => n.inner.span(),
-            Self::ForInStatement(n) => n.inner.span(),
-            Self::ForOfStatement(n) => n.inner.span(),
-            Self::ContinueStatement(n) => n.inner.span(),
-            Self::BreakStatement(n) => n.inner.span(),
-            Self::ReturnStatement(n) => n.inner.span(),
-            Self::WithStatement(n) => n.inner.span(),
-            Self::SwitchStatement(n) => n.inner.span(),
-            Self::SwitchCase(n) => n.inner.span(),
-            Self::LabeledStatement(n) => n.inner.span(),
-            Self::ThrowStatement(n) => n.inner.span(),
-            Self::TryStatement(n) => n.inner.span(),
-            Self::CatchClause(n) => n.inner.span(),
-            Self::CatchParameter(n) => n.inner.span(),
-            Self::DebuggerStatement(n) => n.inner.span(),
-            Self::AssignmentPattern(n) => n.inner.span(),
-            Self::ObjectPattern(n) => n.inner.span(),
-            Self::ArrayPattern(n) => n.inner.span(),
-            Self::BindingRestElement(n) => n.inner.span(),
-            Self::Function(n) => n.inner.span(),
-            Self::FormalParameters(n) => n.inner.span(),
-            Self::FormalParameter(n) => n.inner.span(),
-            Self::FunctionBody(n) => n.inner.span(),
-            Self::ArrowFunctionExpression(n) => n.inner.span(),
-            Self::YieldExpression(n) => n.inner.span(),
-            Self::Class(n) => n.inner.span(),
-            Self::ClassBody(n) => n.inner.span(),
-            Self::MethodDefinition(n) => n.inner.span(),
-            Self::PropertyDefinition(n) => n.inner.span(),
-            Self::PrivateIdentifier(n) => n.inner.span(),
-            Self::StaticBlock(n) => n.inner.span(),
-            Self::ModuleDeclaration(n) => n.inner.span(),
-            Self::ImportExpression(n) => n.inner.span(),
-            Self::ImportDeclaration(n) => n.inner.span(),
-            Self::ImportSpecifier(n) => n.inner.span(),
-            Self::ImportDefaultSpecifier(n) => n.inner.span(),
-            Self::ImportNamespaceSpecifier(n) => n.inner.span(),
-            Self::ExportNamedDeclaration(n) => n.inner.span(),
-            Self::ExportDefaultDeclaration(n) => n.inner.span(),
-            Self::ExportAllDeclaration(n) => n.inner.span(),
-            Self::ExportSpecifier(n) => n.inner.span(),
-            Self::V8IntrinsicExpression(n) => n.inner.span(),
-            Self::BooleanLiteral(n) => n.inner.span(),
-            Self::NullLiteral(n) => n.inner.span(),
-            Self::NumericLiteral(n) => n.inner.span(),
-            Self::StringLiteral(n) => n.inner.span(),
-            Self::BigIntLiteral(n) => n.inner.span(),
-            Self::RegExpLiteral(n) => n.inner.span(),
-            Self::JSXElement(n) => n.inner.span(),
-            Self::JSXOpeningElement(n) => n.inner.span(),
-            Self::JSXClosingElement(n) => n.inner.span(),
-            Self::JSXFragment(n) => n.inner.span(),
-            Self::JSXElementName(n) => n.inner.span(),
-            Self::JSXNamespacedName(n) => n.inner.span(),
-            Self::JSXMemberExpression(n) => n.inner.span(),
-            Self::JSXMemberExpressionObject(n) => n.inner.span(),
-            Self::JSXExpressionContainer(n) => n.inner.span(),
-            Self::JSXAttributeItem(n) => n.inner.span(),
-            Self::JSXSpreadAttribute(n) => n.inner.span(),
-            Self::JSXIdentifier(n) => n.inner.span(),
-            Self::JSXText(n) => n.inner.span(),
-            Self::TSThisParameter(n) => n.inner.span(),
-            Self::TSEnumDeclaration(n) => n.inner.span(),
-            Self::TSEnumBody(n) => n.inner.span(),
-            Self::TSEnumMember(n) => n.inner.span(),
-            Self::TSTypeAnnotation(n) => n.inner.span(),
-            Self::TSLiteralType(n) => n.inner.span(),
-            Self::TSConditionalType(n) => n.inner.span(),
-            Self::TSUnionType(n) => n.inner.span(),
-            Self::TSIntersectionType(n) => n.inner.span(),
-            Self::TSParenthesizedType(n) => n.inner.span(),
-            Self::TSIndexedAccessType(n) => n.inner.span(),
-            Self::TSNamedTupleMember(n) => n.inner.span(),
-            Self::TSAnyKeyword(n) => n.inner.span(),
-            Self::TSStringKeyword(n) => n.inner.span(),
-            Self::TSBooleanKeyword(n) => n.inner.span(),
-            Self::TSNumberKeyword(n) => n.inner.span(),
-            Self::TSNeverKeyword(n) => n.inner.span(),
-            Self::TSIntrinsicKeyword(n) => n.inner.span(),
-            Self::TSUnknownKeyword(n) => n.inner.span(),
-            Self::TSNullKeyword(n) => n.inner.span(),
-            Self::TSUndefinedKeyword(n) => n.inner.span(),
-            Self::TSVoidKeyword(n) => n.inner.span(),
-            Self::TSSymbolKeyword(n) => n.inner.span(),
-            Self::TSThisType(n) => n.inner.span(),
-            Self::TSObjectKeyword(n) => n.inner.span(),
-            Self::TSBigIntKeyword(n) => n.inner.span(),
-            Self::TSTypeReference(n) => n.inner.span(),
-            Self::TSTypeName(n) => n.inner.span(),
-            Self::TSQualifiedName(n) => n.inner.span(),
-            Self::TSTypeParameterInstantiation(n) => n.inner.span(),
-            Self::TSTypeParameter(n) => n.inner.span(),
-            Self::TSTypeParameterDeclaration(n) => n.inner.span(),
-            Self::TSTypeAliasDeclaration(n) => n.inner.span(),
-            Self::TSClassImplements(n) => n.inner.span(),
-            Self::TSInterfaceDeclaration(n) => n.inner.span(),
-            Self::TSPropertySignature(n) => n.inner.span(),
-            Self::TSMethodSignature(n) => n.inner.span(),
-            Self::TSConstructSignatureDeclaration(n) => n.inner.span(),
-            Self::TSInterfaceHeritage(n) => n.inner.span(),
-            Self::TSModuleDeclaration(n) => n.inner.span(),
-            Self::TSModuleBlock(n) => n.inner.span(),
-            Self::TSTypeLiteral(n) => n.inner.span(),
-            Self::TSInferType(n) => n.inner.span(),
-            Self::TSTypeQuery(n) => n.inner.span(),
-            Self::TSImportType(n) => n.inner.span(),
-            Self::TSMappedType(n) => n.inner.span(),
-            Self::TSTemplateLiteralType(n) => n.inner.span(),
-            Self::TSAsExpression(n) => n.inner.span(),
-            Self::TSSatisfiesExpression(n) => n.inner.span(),
-            Self::TSTypeAssertion(n) => n.inner.span(),
-            Self::TSImportEqualsDeclaration(n) => n.inner.span(),
-            Self::TSModuleReference(n) => n.inner.span(),
-            Self::TSExternalModuleReference(n) => n.inner.span(),
-            Self::TSNonNullExpression(n) => n.inner.span(),
-            Self::Decorator(n) => n.inner.span(),
-            Self::TSExportAssignment(n) => n.inner.span(),
-            Self::TSInstantiationExpression(n) => n.inner.span(),
+            Self::Program(n) => n.span(),
+            Self::IdentifierName(n) => n.span(),
+            Self::IdentifierReference(n) => n.span(),
+            Self::BindingIdentifier(n) => n.span(),
+            Self::LabelIdentifier(n) => n.span(),
+            Self::ThisExpression(n) => n.span(),
+            Self::ArrayExpression(n) => n.span(),
+            Self::ArrayExpressionElement(n) => n.span(),
+            Self::Elision(n) => n.span(),
+            Self::ObjectExpression(n) => n.span(),
+            Self::ObjectProperty(n) => n.span(),
+            Self::PropertyKey(n) => n.span(),
+            Self::TemplateLiteral(n) => n.span(),
+            Self::TaggedTemplateExpression(n) => n.span(),
+            Self::MemberExpression(n) => n.span(),
+            Self::CallExpression(n) => n.span(),
+            Self::NewExpression(n) => n.span(),
+            Self::MetaProperty(n) => n.span(),
+            Self::SpreadElement(n) => n.span(),
+            Self::Argument(n) => n.span(),
+            Self::UpdateExpression(n) => n.span(),
+            Self::UnaryExpression(n) => n.span(),
+            Self::BinaryExpression(n) => n.span(),
+            Self::PrivateInExpression(n) => n.span(),
+            Self::LogicalExpression(n) => n.span(),
+            Self::ConditionalExpression(n) => n.span(),
+            Self::AssignmentExpression(n) => n.span(),
+            Self::AssignmentTarget(n) => n.span(),
+            Self::SimpleAssignmentTarget(n) => n.span(),
+            Self::AssignmentTargetPattern(n) => n.span(),
+            Self::ArrayAssignmentTarget(n) => n.span(),
+            Self::ObjectAssignmentTarget(n) => n.span(),
+            Self::AssignmentTargetWithDefault(n) => n.span(),
+            Self::SequenceExpression(n) => n.span(),
+            Self::Super(n) => n.span(),
+            Self::AwaitExpression(n) => n.span(),
+            Self::ChainExpression(n) => n.span(),
+            Self::ParenthesizedExpression(n) => n.span(),
+            Self::Directive(n) => n.span(),
+            Self::Hashbang(n) => n.span(),
+            Self::BlockStatement(n) => n.span(),
+            Self::VariableDeclaration(n) => n.span(),
+            Self::VariableDeclarator(n) => n.span(),
+            Self::EmptyStatement(n) => n.span(),
+            Self::ExpressionStatement(n) => n.span(),
+            Self::IfStatement(n) => n.span(),
+            Self::DoWhileStatement(n) => n.span(),
+            Self::WhileStatement(n) => n.span(),
+            Self::ForStatement(n) => n.span(),
+            Self::ForStatementInit(n) => n.span(),
+            Self::ForInStatement(n) => n.span(),
+            Self::ForOfStatement(n) => n.span(),
+            Self::ContinueStatement(n) => n.span(),
+            Self::BreakStatement(n) => n.span(),
+            Self::ReturnStatement(n) => n.span(),
+            Self::WithStatement(n) => n.span(),
+            Self::SwitchStatement(n) => n.span(),
+            Self::SwitchCase(n) => n.span(),
+            Self::LabeledStatement(n) => n.span(),
+            Self::ThrowStatement(n) => n.span(),
+            Self::TryStatement(n) => n.span(),
+            Self::CatchClause(n) => n.span(),
+            Self::CatchParameter(n) => n.span(),
+            Self::DebuggerStatement(n) => n.span(),
+            Self::AssignmentPattern(n) => n.span(),
+            Self::ObjectPattern(n) => n.span(),
+            Self::ArrayPattern(n) => n.span(),
+            Self::BindingRestElement(n) => n.span(),
+            Self::Function(n) => n.span(),
+            Self::FormalParameters(n) => n.span(),
+            Self::FormalParameter(n) => n.span(),
+            Self::FunctionBody(n) => n.span(),
+            Self::ArrowFunctionExpression(n) => n.span(),
+            Self::YieldExpression(n) => n.span(),
+            Self::Class(n) => n.span(),
+            Self::ClassBody(n) => n.span(),
+            Self::MethodDefinition(n) => n.span(),
+            Self::PropertyDefinition(n) => n.span(),
+            Self::PrivateIdentifier(n) => n.span(),
+            Self::StaticBlock(n) => n.span(),
+            Self::ModuleDeclaration(n) => n.span(),
+            Self::ImportExpression(n) => n.span(),
+            Self::ImportDeclaration(n) => n.span(),
+            Self::ImportSpecifier(n) => n.span(),
+            Self::ImportDefaultSpecifier(n) => n.span(),
+            Self::ImportNamespaceSpecifier(n) => n.span(),
+            Self::ExportNamedDeclaration(n) => n.span(),
+            Self::ExportDefaultDeclaration(n) => n.span(),
+            Self::ExportAllDeclaration(n) => n.span(),
+            Self::ExportSpecifier(n) => n.span(),
+            Self::V8IntrinsicExpression(n) => n.span(),
+            Self::BooleanLiteral(n) => n.span(),
+            Self::NullLiteral(n) => n.span(),
+            Self::NumericLiteral(n) => n.span(),
+            Self::StringLiteral(n) => n.span(),
+            Self::BigIntLiteral(n) => n.span(),
+            Self::RegExpLiteral(n) => n.span(),
+            Self::JSXElement(n) => n.span(),
+            Self::JSXOpeningElement(n) => n.span(),
+            Self::JSXClosingElement(n) => n.span(),
+            Self::JSXFragment(n) => n.span(),
+            Self::JSXElementName(n) => n.span(),
+            Self::JSXNamespacedName(n) => n.span(),
+            Self::JSXMemberExpression(n) => n.span(),
+            Self::JSXMemberExpressionObject(n) => n.span(),
+            Self::JSXExpressionContainer(n) => n.span(),
+            Self::JSXAttributeItem(n) => n.span(),
+            Self::JSXSpreadAttribute(n) => n.span(),
+            Self::JSXIdentifier(n) => n.span(),
+            Self::JSXText(n) => n.span(),
+            Self::TSThisParameter(n) => n.span(),
+            Self::TSEnumDeclaration(n) => n.span(),
+            Self::TSEnumBody(n) => n.span(),
+            Self::TSEnumMember(n) => n.span(),
+            Self::TSTypeAnnotation(n) => n.span(),
+            Self::TSLiteralType(n) => n.span(),
+            Self::TSConditionalType(n) => n.span(),
+            Self::TSUnionType(n) => n.span(),
+            Self::TSIntersectionType(n) => n.span(),
+            Self::TSParenthesizedType(n) => n.span(),
+            Self::TSIndexedAccessType(n) => n.span(),
+            Self::TSNamedTupleMember(n) => n.span(),
+            Self::TSAnyKeyword(n) => n.span(),
+            Self::TSStringKeyword(n) => n.span(),
+            Self::TSBooleanKeyword(n) => n.span(),
+            Self::TSNumberKeyword(n) => n.span(),
+            Self::TSNeverKeyword(n) => n.span(),
+            Self::TSIntrinsicKeyword(n) => n.span(),
+            Self::TSUnknownKeyword(n) => n.span(),
+            Self::TSNullKeyword(n) => n.span(),
+            Self::TSUndefinedKeyword(n) => n.span(),
+            Self::TSVoidKeyword(n) => n.span(),
+            Self::TSSymbolKeyword(n) => n.span(),
+            Self::TSThisType(n) => n.span(),
+            Self::TSObjectKeyword(n) => n.span(),
+            Self::TSBigIntKeyword(n) => n.span(),
+            Self::TSTypeReference(n) => n.span(),
+            Self::TSTypeName(n) => n.span(),
+            Self::TSQualifiedName(n) => n.span(),
+            Self::TSTypeParameterInstantiation(n) => n.span(),
+            Self::TSTypeParameter(n) => n.span(),
+            Self::TSTypeParameterDeclaration(n) => n.span(),
+            Self::TSTypeAliasDeclaration(n) => n.span(),
+            Self::TSClassImplements(n) => n.span(),
+            Self::TSInterfaceDeclaration(n) => n.span(),
+            Self::TSPropertySignature(n) => n.span(),
+            Self::TSMethodSignature(n) => n.span(),
+            Self::TSConstructSignatureDeclaration(n) => n.span(),
+            Self::TSInterfaceHeritage(n) => n.span(),
+            Self::TSModuleDeclaration(n) => n.span(),
+            Self::TSModuleBlock(n) => n.span(),
+            Self::TSTypeLiteral(n) => n.span(),
+            Self::TSInferType(n) => n.span(),
+            Self::TSTypeQuery(n) => n.span(),
+            Self::TSImportType(n) => n.span(),
+            Self::TSMappedType(n) => n.span(),
+            Self::TSTemplateLiteralType(n) => n.span(),
+            Self::TSAsExpression(n) => n.span(),
+            Self::TSSatisfiesExpression(n) => n.span(),
+            Self::TSTypeAssertion(n) => n.span(),
+            Self::TSImportEqualsDeclaration(n) => n.span(),
+            Self::TSModuleReference(n) => n.span(),
+            Self::TSExternalModuleReference(n) => n.span(),
+            Self::TSNonNullExpression(n) => n.span(),
+            Self::Decorator(n) => n.span(),
+            Self::TSExportAssignment(n) => n.span(),
+            Self::TSInstantiationExpression(n) => n.span(),
         }
     }
     pub fn parent(&self) -> &'a Self {
         match self {
             Self::DUMMY() => panic!("Should never be called on a dummy node"),
-            Self::Program(n) => n.parent(),
-            Self::IdentifierName(n) => n.parent(),
-            Self::IdentifierReference(n) => n.parent(),
-            Self::BindingIdentifier(n) => n.parent(),
-            Self::LabelIdentifier(n) => n.parent(),
-            Self::ThisExpression(n) => n.parent(),
-            Self::ArrayExpression(n) => n.parent(),
-            Self::ArrayExpressionElement(n) => n.parent(),
-            Self::Elision(n) => n.parent(),
-            Self::ObjectExpression(n) => n.parent(),
-            Self::ObjectProperty(n) => n.parent(),
-            Self::PropertyKey(n) => n.parent(),
-            Self::TemplateLiteral(n) => n.parent(),
-            Self::TaggedTemplateExpression(n) => n.parent(),
-            Self::MemberExpression(n) => n.parent(),
-            Self::CallExpression(n) => n.parent(),
-            Self::NewExpression(n) => n.parent(),
-            Self::MetaProperty(n) => n.parent(),
-            Self::SpreadElement(n) => n.parent(),
-            Self::Argument(n) => n.parent(),
-            Self::UpdateExpression(n) => n.parent(),
-            Self::UnaryExpression(n) => n.parent(),
-            Self::BinaryExpression(n) => n.parent(),
-            Self::PrivateInExpression(n) => n.parent(),
-            Self::LogicalExpression(n) => n.parent(),
-            Self::ConditionalExpression(n) => n.parent(),
-            Self::AssignmentExpression(n) => n.parent(),
-            Self::AssignmentTarget(n) => n.parent(),
-            Self::SimpleAssignmentTarget(n) => n.parent(),
-            Self::AssignmentTargetPattern(n) => n.parent(),
-            Self::ArrayAssignmentTarget(n) => n.parent(),
-            Self::ObjectAssignmentTarget(n) => n.parent(),
-            Self::AssignmentTargetWithDefault(n) => n.parent(),
-            Self::SequenceExpression(n) => n.parent(),
-            Self::Super(n) => n.parent(),
-            Self::AwaitExpression(n) => n.parent(),
-            Self::ChainExpression(n) => n.parent(),
-            Self::ParenthesizedExpression(n) => n.parent(),
-            Self::Directive(n) => n.parent(),
-            Self::Hashbang(n) => n.parent(),
-            Self::BlockStatement(n) => n.parent(),
-            Self::VariableDeclaration(n) => n.parent(),
-            Self::VariableDeclarator(n) => n.parent(),
-            Self::EmptyStatement(n) => n.parent(),
-            Self::ExpressionStatement(n) => n.parent(),
-            Self::IfStatement(n) => n.parent(),
-            Self::DoWhileStatement(n) => n.parent(),
-            Self::WhileStatement(n) => n.parent(),
-            Self::ForStatement(n) => n.parent(),
-            Self::ForStatementInit(n) => n.parent(),
-            Self::ForInStatement(n) => n.parent(),
-            Self::ForOfStatement(n) => n.parent(),
-            Self::ContinueStatement(n) => n.parent(),
-            Self::BreakStatement(n) => n.parent(),
-            Self::ReturnStatement(n) => n.parent(),
-            Self::WithStatement(n) => n.parent(),
-            Self::SwitchStatement(n) => n.parent(),
-            Self::SwitchCase(n) => n.parent(),
-            Self::LabeledStatement(n) => n.parent(),
-            Self::ThrowStatement(n) => n.parent(),
-            Self::TryStatement(n) => n.parent(),
-            Self::CatchClause(n) => n.parent(),
-            Self::CatchParameter(n) => n.parent(),
-            Self::DebuggerStatement(n) => n.parent(),
-            Self::AssignmentPattern(n) => n.parent(),
-            Self::ObjectPattern(n) => n.parent(),
-            Self::ArrayPattern(n) => n.parent(),
-            Self::BindingRestElement(n) => n.parent(),
-            Self::Function(n) => n.parent(),
-            Self::FormalParameters(n) => n.parent(),
-            Self::FormalParameter(n) => n.parent(),
-            Self::FunctionBody(n) => n.parent(),
-            Self::ArrowFunctionExpression(n) => n.parent(),
-            Self::YieldExpression(n) => n.parent(),
-            Self::Class(n) => n.parent(),
-            Self::ClassBody(n) => n.parent(),
-            Self::MethodDefinition(n) => n.parent(),
-            Self::PropertyDefinition(n) => n.parent(),
-            Self::PrivateIdentifier(n) => n.parent(),
-            Self::StaticBlock(n) => n.parent(),
-            Self::ModuleDeclaration(n) => n.parent(),
-            Self::ImportExpression(n) => n.parent(),
-            Self::ImportDeclaration(n) => n.parent(),
-            Self::ImportSpecifier(n) => n.parent(),
-            Self::ImportDefaultSpecifier(n) => n.parent(),
-            Self::ImportNamespaceSpecifier(n) => n.parent(),
-            Self::ExportNamedDeclaration(n) => n.parent(),
-            Self::ExportDefaultDeclaration(n) => n.parent(),
-            Self::ExportAllDeclaration(n) => n.parent(),
-            Self::ExportSpecifier(n) => n.parent(),
-            Self::V8IntrinsicExpression(n) => n.parent(),
-            Self::BooleanLiteral(n) => n.parent(),
-            Self::NullLiteral(n) => n.parent(),
-            Self::NumericLiteral(n) => n.parent(),
-            Self::StringLiteral(n) => n.parent(),
-            Self::BigIntLiteral(n) => n.parent(),
-            Self::RegExpLiteral(n) => n.parent(),
-            Self::JSXElement(n) => n.parent(),
-            Self::JSXOpeningElement(n) => n.parent(),
-            Self::JSXClosingElement(n) => n.parent(),
-            Self::JSXFragment(n) => n.parent(),
-            Self::JSXElementName(n) => n.parent(),
-            Self::JSXNamespacedName(n) => n.parent(),
-            Self::JSXMemberExpression(n) => n.parent(),
-            Self::JSXMemberExpressionObject(n) => n.parent(),
-            Self::JSXExpressionContainer(n) => n.parent(),
-            Self::JSXAttributeItem(n) => n.parent(),
-            Self::JSXSpreadAttribute(n) => n.parent(),
-            Self::JSXIdentifier(n) => n.parent(),
-            Self::JSXText(n) => n.parent(),
-            Self::TSThisParameter(n) => n.parent(),
-            Self::TSEnumDeclaration(n) => n.parent(),
-            Self::TSEnumBody(n) => n.parent(),
-            Self::TSEnumMember(n) => n.parent(),
-            Self::TSTypeAnnotation(n) => n.parent(),
-            Self::TSLiteralType(n) => n.parent(),
-            Self::TSConditionalType(n) => n.parent(),
-            Self::TSUnionType(n) => n.parent(),
-            Self::TSIntersectionType(n) => n.parent(),
-            Self::TSParenthesizedType(n) => n.parent(),
-            Self::TSIndexedAccessType(n) => n.parent(),
-            Self::TSNamedTupleMember(n) => n.parent(),
-            Self::TSAnyKeyword(n) => n.parent(),
-            Self::TSStringKeyword(n) => n.parent(),
-            Self::TSBooleanKeyword(n) => n.parent(),
-            Self::TSNumberKeyword(n) => n.parent(),
-            Self::TSNeverKeyword(n) => n.parent(),
-            Self::TSIntrinsicKeyword(n) => n.parent(),
-            Self::TSUnknownKeyword(n) => n.parent(),
-            Self::TSNullKeyword(n) => n.parent(),
-            Self::TSUndefinedKeyword(n) => n.parent(),
-            Self::TSVoidKeyword(n) => n.parent(),
-            Self::TSSymbolKeyword(n) => n.parent(),
-            Self::TSThisType(n) => n.parent(),
-            Self::TSObjectKeyword(n) => n.parent(),
-            Self::TSBigIntKeyword(n) => n.parent(),
-            Self::TSTypeReference(n) => n.parent(),
-            Self::TSTypeName(n) => n.parent(),
-            Self::TSQualifiedName(n) => n.parent(),
-            Self::TSTypeParameterInstantiation(n) => n.parent(),
-            Self::TSTypeParameter(n) => n.parent(),
-            Self::TSTypeParameterDeclaration(n) => n.parent(),
-            Self::TSTypeAliasDeclaration(n) => n.parent(),
-            Self::TSClassImplements(n) => n.parent(),
-            Self::TSInterfaceDeclaration(n) => n.parent(),
-            Self::TSPropertySignature(n) => n.parent(),
-            Self::TSMethodSignature(n) => n.parent(),
-            Self::TSConstructSignatureDeclaration(n) => n.parent(),
-            Self::TSInterfaceHeritage(n) => n.parent(),
-            Self::TSModuleDeclaration(n) => n.parent(),
-            Self::TSModuleBlock(n) => n.parent(),
-            Self::TSTypeLiteral(n) => n.parent(),
-            Self::TSInferType(n) => n.parent(),
-            Self::TSTypeQuery(n) => n.parent(),
-            Self::TSImportType(n) => n.parent(),
-            Self::TSMappedType(n) => n.parent(),
-            Self::TSTemplateLiteralType(n) => n.parent(),
-            Self::TSAsExpression(n) => n.parent(),
-            Self::TSSatisfiesExpression(n) => n.parent(),
-            Self::TSTypeAssertion(n) => n.parent(),
-            Self::TSImportEqualsDeclaration(n) => n.parent(),
-            Self::TSModuleReference(n) => n.parent(),
-            Self::TSExternalModuleReference(n) => n.parent(),
-            Self::TSNonNullExpression(n) => n.parent(),
-            Self::Decorator(n) => n.parent(),
-            Self::TSExportAssignment(n) => n.parent(),
-            Self::TSInstantiationExpression(n) => n.parent(),
+            Self::Program(n) => n.parent,
+            Self::IdentifierName(n) => n.parent,
+            Self::IdentifierReference(n) => n.parent,
+            Self::BindingIdentifier(n) => n.parent,
+            Self::LabelIdentifier(n) => n.parent,
+            Self::ThisExpression(n) => n.parent,
+            Self::ArrayExpression(n) => n.parent,
+            Self::ArrayExpressionElement(n) => n.parent,
+            Self::Elision(n) => n.parent,
+            Self::ObjectExpression(n) => n.parent,
+            Self::ObjectProperty(n) => n.parent,
+            Self::PropertyKey(n) => n.parent,
+            Self::TemplateLiteral(n) => n.parent,
+            Self::TaggedTemplateExpression(n) => n.parent,
+            Self::MemberExpression(n) => n.parent,
+            Self::CallExpression(n) => n.parent,
+            Self::NewExpression(n) => n.parent,
+            Self::MetaProperty(n) => n.parent,
+            Self::SpreadElement(n) => n.parent,
+            Self::Argument(n) => n.parent,
+            Self::UpdateExpression(n) => n.parent,
+            Self::UnaryExpression(n) => n.parent,
+            Self::BinaryExpression(n) => n.parent,
+            Self::PrivateInExpression(n) => n.parent,
+            Self::LogicalExpression(n) => n.parent,
+            Self::ConditionalExpression(n) => n.parent,
+            Self::AssignmentExpression(n) => n.parent,
+            Self::AssignmentTarget(n) => n.parent,
+            Self::SimpleAssignmentTarget(n) => n.parent,
+            Self::AssignmentTargetPattern(n) => n.parent,
+            Self::ArrayAssignmentTarget(n) => n.parent,
+            Self::ObjectAssignmentTarget(n) => n.parent,
+            Self::AssignmentTargetWithDefault(n) => n.parent,
+            Self::SequenceExpression(n) => n.parent,
+            Self::Super(n) => n.parent,
+            Self::AwaitExpression(n) => n.parent,
+            Self::ChainExpression(n) => n.parent,
+            Self::ParenthesizedExpression(n) => n.parent,
+            Self::Directive(n) => n.parent,
+            Self::Hashbang(n) => n.parent,
+            Self::BlockStatement(n) => n.parent,
+            Self::VariableDeclaration(n) => n.parent,
+            Self::VariableDeclarator(n) => n.parent,
+            Self::EmptyStatement(n) => n.parent,
+            Self::ExpressionStatement(n) => n.parent,
+            Self::IfStatement(n) => n.parent,
+            Self::DoWhileStatement(n) => n.parent,
+            Self::WhileStatement(n) => n.parent,
+            Self::ForStatement(n) => n.parent,
+            Self::ForStatementInit(n) => n.parent,
+            Self::ForInStatement(n) => n.parent,
+            Self::ForOfStatement(n) => n.parent,
+            Self::ContinueStatement(n) => n.parent,
+            Self::BreakStatement(n) => n.parent,
+            Self::ReturnStatement(n) => n.parent,
+            Self::WithStatement(n) => n.parent,
+            Self::SwitchStatement(n) => n.parent,
+            Self::SwitchCase(n) => n.parent,
+            Self::LabeledStatement(n) => n.parent,
+            Self::ThrowStatement(n) => n.parent,
+            Self::TryStatement(n) => n.parent,
+            Self::CatchClause(n) => n.parent,
+            Self::CatchParameter(n) => n.parent,
+            Self::DebuggerStatement(n) => n.parent,
+            Self::AssignmentPattern(n) => n.parent,
+            Self::ObjectPattern(n) => n.parent,
+            Self::ArrayPattern(n) => n.parent,
+            Self::BindingRestElement(n) => n.parent,
+            Self::Function(n) => n.parent,
+            Self::FormalParameters(n) => n.parent,
+            Self::FormalParameter(n) => n.parent,
+            Self::FunctionBody(n) => n.parent,
+            Self::ArrowFunctionExpression(n) => n.parent,
+            Self::YieldExpression(n) => n.parent,
+            Self::Class(n) => n.parent,
+            Self::ClassBody(n) => n.parent,
+            Self::MethodDefinition(n) => n.parent,
+            Self::PropertyDefinition(n) => n.parent,
+            Self::PrivateIdentifier(n) => n.parent,
+            Self::StaticBlock(n) => n.parent,
+            Self::ModuleDeclaration(n) => n.parent,
+            Self::ImportExpression(n) => n.parent,
+            Self::ImportDeclaration(n) => n.parent,
+            Self::ImportSpecifier(n) => n.parent,
+            Self::ImportDefaultSpecifier(n) => n.parent,
+            Self::ImportNamespaceSpecifier(n) => n.parent,
+            Self::ExportNamedDeclaration(n) => n.parent,
+            Self::ExportDefaultDeclaration(n) => n.parent,
+            Self::ExportAllDeclaration(n) => n.parent,
+            Self::ExportSpecifier(n) => n.parent,
+            Self::V8IntrinsicExpression(n) => n.parent,
+            Self::BooleanLiteral(n) => n.parent,
+            Self::NullLiteral(n) => n.parent,
+            Self::NumericLiteral(n) => n.parent,
+            Self::StringLiteral(n) => n.parent,
+            Self::BigIntLiteral(n) => n.parent,
+            Self::RegExpLiteral(n) => n.parent,
+            Self::JSXElement(n) => n.parent,
+            Self::JSXOpeningElement(n) => n.parent,
+            Self::JSXClosingElement(n) => n.parent,
+            Self::JSXFragment(n) => n.parent,
+            Self::JSXElementName(n) => n.parent,
+            Self::JSXNamespacedName(n) => n.parent,
+            Self::JSXMemberExpression(n) => n.parent,
+            Self::JSXMemberExpressionObject(n) => n.parent,
+            Self::JSXExpressionContainer(n) => n.parent,
+            Self::JSXAttributeItem(n) => n.parent,
+            Self::JSXSpreadAttribute(n) => n.parent,
+            Self::JSXIdentifier(n) => n.parent,
+            Self::JSXText(n) => n.parent,
+            Self::TSThisParameter(n) => n.parent,
+            Self::TSEnumDeclaration(n) => n.parent,
+            Self::TSEnumBody(n) => n.parent,
+            Self::TSEnumMember(n) => n.parent,
+            Self::TSTypeAnnotation(n) => n.parent,
+            Self::TSLiteralType(n) => n.parent,
+            Self::TSConditionalType(n) => n.parent,
+            Self::TSUnionType(n) => n.parent,
+            Self::TSIntersectionType(n) => n.parent,
+            Self::TSParenthesizedType(n) => n.parent,
+            Self::TSIndexedAccessType(n) => n.parent,
+            Self::TSNamedTupleMember(n) => n.parent,
+            Self::TSAnyKeyword(n) => n.parent,
+            Self::TSStringKeyword(n) => n.parent,
+            Self::TSBooleanKeyword(n) => n.parent,
+            Self::TSNumberKeyword(n) => n.parent,
+            Self::TSNeverKeyword(n) => n.parent,
+            Self::TSIntrinsicKeyword(n) => n.parent,
+            Self::TSUnknownKeyword(n) => n.parent,
+            Self::TSNullKeyword(n) => n.parent,
+            Self::TSUndefinedKeyword(n) => n.parent,
+            Self::TSVoidKeyword(n) => n.parent,
+            Self::TSSymbolKeyword(n) => n.parent,
+            Self::TSThisType(n) => n.parent,
+            Self::TSObjectKeyword(n) => n.parent,
+            Self::TSBigIntKeyword(n) => n.parent,
+            Self::TSTypeReference(n) => n.parent,
+            Self::TSTypeName(n) => n.parent,
+            Self::TSQualifiedName(n) => n.parent,
+            Self::TSTypeParameterInstantiation(n) => n.parent,
+            Self::TSTypeParameter(n) => n.parent,
+            Self::TSTypeParameterDeclaration(n) => n.parent,
+            Self::TSTypeAliasDeclaration(n) => n.parent,
+            Self::TSClassImplements(n) => n.parent,
+            Self::TSInterfaceDeclaration(n) => n.parent,
+            Self::TSPropertySignature(n) => n.parent,
+            Self::TSMethodSignature(n) => n.parent,
+            Self::TSConstructSignatureDeclaration(n) => n.parent,
+            Self::TSInterfaceHeritage(n) => n.parent,
+            Self::TSModuleDeclaration(n) => n.parent,
+            Self::TSModuleBlock(n) => n.parent,
+            Self::TSTypeLiteral(n) => n.parent,
+            Self::TSInferType(n) => n.parent,
+            Self::TSTypeQuery(n) => n.parent,
+            Self::TSImportType(n) => n.parent,
+            Self::TSMappedType(n) => n.parent,
+            Self::TSTemplateLiteralType(n) => n.parent,
+            Self::TSAsExpression(n) => n.parent,
+            Self::TSSatisfiesExpression(n) => n.parent,
+            Self::TSTypeAssertion(n) => n.parent,
+            Self::TSImportEqualsDeclaration(n) => n.parent,
+            Self::TSModuleReference(n) => n.parent,
+            Self::TSExternalModuleReference(n) => n.parent,
+            Self::TSNonNullExpression(n) => n.parent,
+            Self::Decorator(n) => n.parent,
+            Self::TSExportAssignment(n) => n.parent,
+            Self::TSInstantiationExpression(n) => n.parent,
         }
     }
 }
 
 pub struct AstNode<'a, 'b, T> {
     inner: &'b T,
-    parent: &'a AstNodes<'a, 'b>,
+    pub parent: &'a AstNodes<'a, 'b>,
     allocator: &'a Allocator,
+}
+
+impl<'a, 'b, T> Deref for AstNode<'a, 'b, T> {
+    type Target = T;
+    fn deref(&self) -> &Self::Target {
+        self.inner
+    }
+}
+impl<'a, 'b, T> AsRef<T> for AstNode<'a, 'b, T> {
+    fn as_ref(&self) -> &T {
+        self.inner
+    }
 }
 
 impl<'a, 'b, T> AstNode<'a, 'b, T> {
     pub fn new(inner: &'b T, parent: &'a AstNodes<'a, 'b>, allocator: &'a Allocator) -> Self {
         AstNode { inner, parent, allocator }
-    }
-    pub fn inner(&self) -> &'b T {
-        self.inner
-    }
-    pub fn parent(&self) -> &'a AstNodes<'a, 'b> {
-        self.parent
     }
 }
 
@@ -643,7 +656,7 @@ impl<'a, 'b> AstNode<'a, 'b, Program<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.comments,
             allocator: self.allocator,
-            parent: self.allocator.alloc(AstNodes::Program(unsafe { transmute(self) })),
+            parent: self.allocator.alloc(AstNodes::Program(transmute_self(self))),
         })
     }
 
@@ -652,7 +665,7 @@ impl<'a, 'b> AstNode<'a, 'b, Program<'a>> {
             .alloc(self.inner.hashbang.as_ref().map(|inner| AstNode {
                 inner,
                 allocator: self.allocator,
-                parent: self.allocator.alloc(AstNodes::Program(unsafe { transmute(self) })),
+                parent: self.allocator.alloc(AstNodes::Program(transmute_self(self))),
             }))
             .as_ref()
     }
@@ -661,7 +674,7 @@ impl<'a, 'b> AstNode<'a, 'b, Program<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.directives,
             allocator: self.allocator,
-            parent: self.allocator.alloc(AstNodes::Program(unsafe { transmute(self) })),
+            parent: self.allocator.alloc(AstNodes::Program(transmute_self(self))),
         })
     }
 
@@ -669,7 +682,7 @@ impl<'a, 'b> AstNode<'a, 'b, Program<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.body,
             allocator: self.allocator,
-            parent: self.allocator.alloc(AstNodes::Program(unsafe { transmute(self) })),
+            parent: self.allocator.alloc(AstNodes::Program(transmute_self(self))),
         })
     }
 }
@@ -1209,15 +1222,14 @@ impl<'a, 'b> AstNode<'a, 'b, ArrayExpression<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.elements,
             allocator: self.allocator,
-            parent: self.allocator.alloc(AstNodes::ArrayExpression(unsafe { transmute(self) })),
+            parent: self.allocator.alloc(AstNodes::ArrayExpression(transmute_self(self))),
         })
     }
 }
 
 impl<'a, 'b> AstNode<'a, 'b, ArrayExpressionElement<'a>> {
     pub fn as_ast_nodes(&self) -> &AstNodes<'a, 'b> {
-        let parent =
-            self.allocator.alloc(AstNodes::ArrayExpressionElement(unsafe { transmute(self) }));
+        let parent = self.allocator.alloc(AstNodes::ArrayExpressionElement(transmute_self(self)));
         let node = match self.inner {
             ArrayExpressionElement::SpreadElement(s) => {
                 AstNodes::SpreadElement(self.allocator.alloc(AstNode {
@@ -1245,8 +1257,7 @@ impl<'a, 'b> AstNode<'a, 'b, ArrayExpressionElement<'a>> {
 }
 impl<'a, 'b> FormatWrite<'a> for AstNode<'a, 'b, ArrayExpressionElement<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        let parent =
-            self.allocator.alloc(AstNodes::ArrayExpressionElement(unsafe { transmute(self) }));
+        let parent = self.allocator.alloc(AstNodes::ArrayExpressionElement(transmute_self(self)));
         match self.inner {
             ArrayExpressionElement::SpreadElement(s) => {
                 AstNode::<'a, 'b, SpreadElement> { inner: s, parent, allocator: self.allocator }
@@ -1283,7 +1294,7 @@ impl<'a, 'b> AstNode<'a, 'b, ObjectExpression<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.properties,
             allocator: self.allocator,
-            parent: self.allocator.alloc(AstNodes::ObjectExpression(unsafe { transmute(self) })),
+            parent: self.allocator.alloc(AstNodes::ObjectExpression(transmute_self(self))),
         })
     }
 }
@@ -1343,7 +1354,7 @@ impl<'a, 'b> AstNode<'a, 'b, ObjectProperty<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.key,
             allocator: self.allocator,
-            parent: self.allocator.alloc(AstNodes::ObjectProperty(unsafe { transmute(self) })),
+            parent: self.allocator.alloc(AstNodes::ObjectProperty(transmute_self(self))),
         })
     }
 
@@ -1351,7 +1362,7 @@ impl<'a, 'b> AstNode<'a, 'b, ObjectProperty<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.value,
             allocator: self.allocator,
-            parent: self.allocator.alloc(AstNodes::ObjectProperty(unsafe { transmute(self) })),
+            parent: self.allocator.alloc(AstNodes::ObjectProperty(transmute_self(self))),
         })
     }
 
@@ -1370,7 +1381,7 @@ impl<'a, 'b> AstNode<'a, 'b, ObjectProperty<'a>> {
 
 impl<'a, 'b> AstNode<'a, 'b, PropertyKey<'a>> {
     pub fn as_ast_nodes(&self) -> &AstNodes<'a, 'b> {
-        let parent = self.allocator.alloc(AstNodes::PropertyKey(unsafe { transmute(self) }));
+        let parent = self.allocator.alloc(AstNodes::PropertyKey(transmute_self(self)));
         let node = match self.inner {
             PropertyKey::StaticIdentifier(s) => {
                 AstNodes::IdentifierName(self.allocator.alloc(AstNode {
@@ -1398,7 +1409,7 @@ impl<'a, 'b> AstNode<'a, 'b, PropertyKey<'a>> {
 }
 impl<'a, 'b> FormatWrite<'a> for AstNode<'a, 'b, PropertyKey<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        let parent = self.allocator.alloc(AstNodes::PropertyKey(unsafe { transmute(self) }));
+        let parent = self.allocator.alloc(AstNodes::PropertyKey(transmute_self(self)));
         match self.inner {
             PropertyKey::StaticIdentifier(s) => {
                 AstNode::<'a, 'b, IdentifierName> { inner: s, parent, allocator: self.allocator }
@@ -1431,7 +1442,7 @@ impl<'a, 'b> AstNode<'a, 'b, TemplateLiteral<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.quasis,
             allocator: self.allocator,
-            parent: self.allocator.alloc(AstNodes::TemplateLiteral(unsafe { transmute(self) })),
+            parent: self.allocator.alloc(AstNodes::TemplateLiteral(transmute_self(self))),
         })
     }
 
@@ -1439,7 +1450,7 @@ impl<'a, 'b> AstNode<'a, 'b, TemplateLiteral<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.expressions,
             allocator: self.allocator,
-            parent: self.allocator.alloc(AstNodes::TemplateLiteral(unsafe { transmute(self) })),
+            parent: self.allocator.alloc(AstNodes::TemplateLiteral(transmute_self(self))),
         })
     }
 }
@@ -1452,22 +1463,17 @@ impl<'a, 'b> AstNode<'a, 'b, TaggedTemplateExpression<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.tag,
             allocator: self.allocator,
-            parent: self
-                .allocator
-                .alloc(AstNodes::TaggedTemplateExpression(unsafe { transmute(self) })),
+            parent: self.allocator.alloc(AstNodes::TaggedTemplateExpression(transmute_self(self))),
         })
     }
 
     pub fn type_arguments(&self) -> Option<&AstNode<'a, 'b, TSTypeParameterInstantiation<'a>>> {
         self.allocator
-            .alloc(self.inner.type_arguments.as_ref().map(|inner| {
-                AstNode {
-                    inner: inner.as_ref(),
-                    allocator: self.allocator,
-                    parent: self
-                        .allocator
-                        .alloc(AstNodes::TaggedTemplateExpression(unsafe { transmute(self) })),
-                }
+            .alloc(self.inner.type_arguments.as_ref().map(|inner| AstNode {
+                inner: inner.as_ref(),
+                allocator: self.allocator,
+                parent:
+                    self.allocator.alloc(AstNodes::TaggedTemplateExpression(transmute_self(self))),
             }))
             .as_ref()
     }
@@ -1476,9 +1482,7 @@ impl<'a, 'b> AstNode<'a, 'b, TaggedTemplateExpression<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.quasi,
             allocator: self.allocator,
-            parent: self
-                .allocator
-                .alloc(AstNodes::TaggedTemplateExpression(unsafe { transmute(self) })),
+            parent: self.allocator.alloc(AstNodes::TaggedTemplateExpression(transmute_self(self))),
         })
     }
 }
@@ -1502,7 +1506,7 @@ impl<'a, 'b> AstNode<'a, 'b, TemplateElement<'a>> {
 
 impl<'a, 'b> AstNode<'a, 'b, MemberExpression<'a>> {
     pub fn as_ast_nodes(&self) -> &AstNodes<'a, 'b> {
-        let parent = self.allocator.alloc(AstNodes::MemberExpression(unsafe { transmute(self) }));
+        let parent = self.allocator.alloc(AstNodes::MemberExpression(transmute_self(self)));
         let node = match self.inner {
             MemberExpression::ComputedMemberExpression(s) => {
                 panic!(
@@ -1525,7 +1529,7 @@ impl<'a, 'b> AstNode<'a, 'b, MemberExpression<'a>> {
 }
 impl<'a, 'b> FormatWrite<'a> for AstNode<'a, 'b, MemberExpression<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        let parent = self.allocator.alloc(AstNodes::MemberExpression(unsafe { transmute(self) }));
+        let parent = self.allocator.alloc(AstNodes::MemberExpression(transmute_self(self)));
         match self.inner {
             MemberExpression::ComputedMemberExpression(s) => {
                 AstNode::<'a, 'b, ComputedMemberExpression> {
@@ -1643,7 +1647,7 @@ impl<'a, 'b> AstNode<'a, 'b, CallExpression<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.callee,
             allocator: self.allocator,
-            parent: self.allocator.alloc(AstNodes::CallExpression(unsafe { transmute(self) })),
+            parent: self.allocator.alloc(AstNodes::CallExpression(transmute_self(self))),
         })
     }
 
@@ -1652,7 +1656,7 @@ impl<'a, 'b> AstNode<'a, 'b, CallExpression<'a>> {
             .alloc(self.inner.type_arguments.as_ref().map(|inner| AstNode {
                 inner: inner.as_ref(),
                 allocator: self.allocator,
-                parent: self.allocator.alloc(AstNodes::CallExpression(unsafe { transmute(self) })),
+                parent: self.allocator.alloc(AstNodes::CallExpression(transmute_self(self))),
             }))
             .as_ref()
     }
@@ -1661,7 +1665,7 @@ impl<'a, 'b> AstNode<'a, 'b, CallExpression<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.arguments,
             allocator: self.allocator,
-            parent: self.allocator.alloc(AstNodes::CallExpression(unsafe { transmute(self) })),
+            parent: self.allocator.alloc(AstNodes::CallExpression(transmute_self(self))),
         })
     }
 
@@ -1682,7 +1686,7 @@ impl<'a, 'b> AstNode<'a, 'b, NewExpression<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.callee,
             allocator: self.allocator,
-            parent: self.allocator.alloc(AstNodes::NewExpression(unsafe { transmute(self) })),
+            parent: self.allocator.alloc(AstNodes::NewExpression(transmute_self(self))),
         })
     }
 
@@ -1691,7 +1695,7 @@ impl<'a, 'b> AstNode<'a, 'b, NewExpression<'a>> {
             .alloc(self.inner.type_arguments.as_ref().map(|inner| AstNode {
                 inner: inner.as_ref(),
                 allocator: self.allocator,
-                parent: self.allocator.alloc(AstNodes::NewExpression(unsafe { transmute(self) })),
+                parent: self.allocator.alloc(AstNodes::NewExpression(transmute_self(self))),
             }))
             .as_ref()
     }
@@ -1700,7 +1704,7 @@ impl<'a, 'b> AstNode<'a, 'b, NewExpression<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.arguments,
             allocator: self.allocator,
-            parent: self.allocator.alloc(AstNodes::NewExpression(unsafe { transmute(self) })),
+            parent: self.allocator.alloc(AstNodes::NewExpression(transmute_self(self))),
         })
     }
 
@@ -1717,7 +1721,7 @@ impl<'a, 'b> AstNode<'a, 'b, MetaProperty<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.meta,
             allocator: self.allocator,
-            parent: self.allocator.alloc(AstNodes::MetaProperty(unsafe { transmute(self) })),
+            parent: self.allocator.alloc(AstNodes::MetaProperty(transmute_self(self))),
         })
     }
 
@@ -1725,7 +1729,7 @@ impl<'a, 'b> AstNode<'a, 'b, MetaProperty<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.property,
             allocator: self.allocator,
-            parent: self.allocator.alloc(AstNodes::MetaProperty(unsafe { transmute(self) })),
+            parent: self.allocator.alloc(AstNodes::MetaProperty(transmute_self(self))),
         })
     }
 }
@@ -1738,14 +1742,14 @@ impl<'a, 'b> AstNode<'a, 'b, SpreadElement<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.argument,
             allocator: self.allocator,
-            parent: self.allocator.alloc(AstNodes::SpreadElement(unsafe { transmute(self) })),
+            parent: self.allocator.alloc(AstNodes::SpreadElement(transmute_self(self))),
         })
     }
 }
 
 impl<'a, 'b> AstNode<'a, 'b, Argument<'a>> {
     pub fn as_ast_nodes(&self) -> &AstNodes<'a, 'b> {
-        let parent = self.allocator.alloc(AstNodes::Argument(unsafe { transmute(self) }));
+        let parent = self.allocator.alloc(AstNodes::Argument(transmute_self(self)));
         let node = match self.inner {
             Argument::SpreadElement(s) => AstNodes::SpreadElement(self.allocator.alloc(AstNode {
                 inner: s.as_ref(),
@@ -1764,7 +1768,7 @@ impl<'a, 'b> AstNode<'a, 'b, Argument<'a>> {
 }
 impl<'a, 'b> FormatWrite<'a> for AstNode<'a, 'b, Argument<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        let parent = self.allocator.alloc(AstNodes::Argument(unsafe { transmute(self) }));
+        let parent = self.allocator.alloc(AstNodes::Argument(transmute_self(self)));
         match self.inner {
             Argument::SpreadElement(s) => {
                 AstNode::<'a, 'b, SpreadElement> { inner: s, parent, allocator: self.allocator }
@@ -1801,7 +1805,7 @@ impl<'a, 'b> AstNode<'a, 'b, UpdateExpression<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.argument,
             allocator: self.allocator,
-            parent: self.allocator.alloc(AstNodes::UpdateExpression(unsafe { transmute(self) })),
+            parent: self.allocator.alloc(AstNodes::UpdateExpression(transmute_self(self))),
         })
     }
 }
@@ -1818,7 +1822,7 @@ impl<'a, 'b> AstNode<'a, 'b, UnaryExpression<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.argument,
             allocator: self.allocator,
-            parent: self.allocator.alloc(AstNodes::UnaryExpression(unsafe { transmute(self) })),
+            parent: self.allocator.alloc(AstNodes::UnaryExpression(transmute_self(self))),
         })
     }
 }
@@ -1831,7 +1835,7 @@ impl<'a, 'b> AstNode<'a, 'b, BinaryExpression<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.left,
             allocator: self.allocator,
-            parent: self.allocator.alloc(AstNodes::BinaryExpression(unsafe { transmute(self) })),
+            parent: self.allocator.alloc(AstNodes::BinaryExpression(transmute_self(self))),
         })
     }
 
@@ -1843,7 +1847,7 @@ impl<'a, 'b> AstNode<'a, 'b, BinaryExpression<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.right,
             allocator: self.allocator,
-            parent: self.allocator.alloc(AstNodes::BinaryExpression(unsafe { transmute(self) })),
+            parent: self.allocator.alloc(AstNodes::BinaryExpression(transmute_self(self))),
         })
     }
 }
@@ -1856,7 +1860,7 @@ impl<'a, 'b> AstNode<'a, 'b, PrivateInExpression<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.left,
             allocator: self.allocator,
-            parent: self.allocator.alloc(AstNodes::PrivateInExpression(unsafe { transmute(self) })),
+            parent: self.allocator.alloc(AstNodes::PrivateInExpression(transmute_self(self))),
         })
     }
 
@@ -1864,7 +1868,7 @@ impl<'a, 'b> AstNode<'a, 'b, PrivateInExpression<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.right,
             allocator: self.allocator,
-            parent: self.allocator.alloc(AstNodes::PrivateInExpression(unsafe { transmute(self) })),
+            parent: self.allocator.alloc(AstNodes::PrivateInExpression(transmute_self(self))),
         })
     }
 }
@@ -1877,7 +1881,7 @@ impl<'a, 'b> AstNode<'a, 'b, LogicalExpression<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.left,
             allocator: self.allocator,
-            parent: self.allocator.alloc(AstNodes::LogicalExpression(unsafe { transmute(self) })),
+            parent: self.allocator.alloc(AstNodes::LogicalExpression(transmute_self(self))),
         })
     }
 
@@ -1889,7 +1893,7 @@ impl<'a, 'b> AstNode<'a, 'b, LogicalExpression<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.right,
             allocator: self.allocator,
-            parent: self.allocator.alloc(AstNodes::LogicalExpression(unsafe { transmute(self) })),
+            parent: self.allocator.alloc(AstNodes::LogicalExpression(transmute_self(self))),
         })
     }
 }
@@ -1902,9 +1906,7 @@ impl<'a, 'b> AstNode<'a, 'b, ConditionalExpression<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.test,
             allocator: self.allocator,
-            parent: self
-                .allocator
-                .alloc(AstNodes::ConditionalExpression(unsafe { transmute(self) })),
+            parent: self.allocator.alloc(AstNodes::ConditionalExpression(transmute_self(self))),
         })
     }
 
@@ -1912,9 +1914,7 @@ impl<'a, 'b> AstNode<'a, 'b, ConditionalExpression<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.consequent,
             allocator: self.allocator,
-            parent: self
-                .allocator
-                .alloc(AstNodes::ConditionalExpression(unsafe { transmute(self) })),
+            parent: self.allocator.alloc(AstNodes::ConditionalExpression(transmute_self(self))),
         })
     }
 
@@ -1922,9 +1922,7 @@ impl<'a, 'b> AstNode<'a, 'b, ConditionalExpression<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.alternate,
             allocator: self.allocator,
-            parent: self
-                .allocator
-                .alloc(AstNodes::ConditionalExpression(unsafe { transmute(self) })),
+            parent: self.allocator.alloc(AstNodes::ConditionalExpression(transmute_self(self))),
         })
     }
 }
@@ -1941,9 +1939,7 @@ impl<'a, 'b> AstNode<'a, 'b, AssignmentExpression<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.left,
             allocator: self.allocator,
-            parent: self
-                .allocator
-                .alloc(AstNodes::AssignmentExpression(unsafe { transmute(self) })),
+            parent: self.allocator.alloc(AstNodes::AssignmentExpression(transmute_self(self))),
         })
     }
 
@@ -1951,16 +1947,14 @@ impl<'a, 'b> AstNode<'a, 'b, AssignmentExpression<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.right,
             allocator: self.allocator,
-            parent: self
-                .allocator
-                .alloc(AstNodes::AssignmentExpression(unsafe { transmute(self) })),
+            parent: self.allocator.alloc(AstNodes::AssignmentExpression(transmute_self(self))),
         })
     }
 }
 
 impl<'a, 'b> AstNode<'a, 'b, AssignmentTarget<'a>> {
     pub fn as_ast_nodes(&self) -> &AstNodes<'a, 'b> {
-        let parent = self.allocator.alloc(AstNodes::AssignmentTarget(unsafe { transmute(self) }));
+        let parent = self.allocator.alloc(AstNodes::AssignmentTarget(transmute_self(self)));
         let node = match self.inner {
             it @ match_simple_assignment_target!(AssignmentTarget) => {
                 AstNodes::SimpleAssignmentTarget(self.allocator.alloc(AstNode {
@@ -1982,7 +1976,7 @@ impl<'a, 'b> AstNode<'a, 'b, AssignmentTarget<'a>> {
 }
 impl<'a, 'b> FormatWrite<'a> for AstNode<'a, 'b, AssignmentTarget<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        let parent = self.allocator.alloc(AstNodes::AssignmentTarget(unsafe { transmute(self) }));
+        let parent = self.allocator.alloc(AstNodes::AssignmentTarget(transmute_self(self)));
         match self.inner {
             it @ match_simple_assignment_target!(AssignmentTarget) => {
                 AstNode::<'a, 'b, SimpleAssignmentTarget> {
@@ -2011,8 +2005,7 @@ impl<'a, 'b> GetSpan for AstNode<'a, 'b, AssignmentTarget<'a>> {
 
 impl<'a, 'b> AstNode<'a, 'b, SimpleAssignmentTarget<'a>> {
     pub fn as_ast_nodes(&self) -> &AstNodes<'a, 'b> {
-        let parent =
-            self.allocator.alloc(AstNodes::SimpleAssignmentTarget(unsafe { transmute(self) }));
+        let parent = self.allocator.alloc(AstNodes::SimpleAssignmentTarget(transmute_self(self)));
         let node = match self.inner {
             SimpleAssignmentTarget::AssignmentTargetIdentifier(s) => {
                 AstNodes::IdentifierReference(self.allocator.alloc(AstNode {
@@ -2062,8 +2055,7 @@ impl<'a, 'b> AstNode<'a, 'b, SimpleAssignmentTarget<'a>> {
 }
 impl<'a, 'b> FormatWrite<'a> for AstNode<'a, 'b, SimpleAssignmentTarget<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        let parent =
-            self.allocator.alloc(AstNodes::SimpleAssignmentTarget(unsafe { transmute(self) }));
+        let parent = self.allocator.alloc(AstNodes::SimpleAssignmentTarget(transmute_self(self)));
         match self.inner {
             SimpleAssignmentTarget::AssignmentTargetIdentifier(s) => {
                 AstNode::<'a, 'b, IdentifierReference> {
@@ -2116,8 +2108,7 @@ impl<'a, 'b> GetSpan for AstNode<'a, 'b, SimpleAssignmentTarget<'a>> {
 
 impl<'a, 'b> AstNode<'a, 'b, AssignmentTargetPattern<'a>> {
     pub fn as_ast_nodes(&self) -> &AstNodes<'a, 'b> {
-        let parent =
-            self.allocator.alloc(AstNodes::AssignmentTargetPattern(unsafe { transmute(self) }));
+        let parent = self.allocator.alloc(AstNodes::AssignmentTargetPattern(transmute_self(self)));
         let node = match self.inner {
             AssignmentTargetPattern::ArrayAssignmentTarget(s) => {
                 AstNodes::ArrayAssignmentTarget(self.allocator.alloc(AstNode {
@@ -2139,8 +2130,7 @@ impl<'a, 'b> AstNode<'a, 'b, AssignmentTargetPattern<'a>> {
 }
 impl<'a, 'b> FormatWrite<'a> for AstNode<'a, 'b, AssignmentTargetPattern<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        let parent =
-            self.allocator.alloc(AstNodes::AssignmentTargetPattern(unsafe { transmute(self) }));
+        let parent = self.allocator.alloc(AstNodes::AssignmentTargetPattern(transmute_self(self)));
         match self.inner {
             AssignmentTargetPattern::ArrayAssignmentTarget(s) => {
                 AstNode::<'a, 'b, ArrayAssignmentTarget> {
@@ -2175,22 +2165,16 @@ impl<'a, 'b> AstNode<'a, 'b, ArrayAssignmentTarget<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.elements,
             allocator: self.allocator,
-            parent: self
-                .allocator
-                .alloc(AstNodes::ArrayAssignmentTarget(unsafe { transmute(self) })),
+            parent: self.allocator.alloc(AstNodes::ArrayAssignmentTarget(transmute_self(self))),
         })
     }
 
     pub fn rest(&self) -> Option<&AstNode<'a, 'b, AssignmentTargetRest<'a>>> {
         self.allocator
-            .alloc(self.inner.rest.as_ref().map(|inner| {
-                AstNode {
-                    inner,
-                    allocator: self.allocator,
-                    parent: self
-                        .allocator
-                        .alloc(AstNodes::ArrayAssignmentTarget(unsafe { transmute(self) })),
-                }
+            .alloc(self.inner.rest.as_ref().map(|inner| AstNode {
+                inner,
+                allocator: self.allocator,
+                parent: self.allocator.alloc(AstNodes::ArrayAssignmentTarget(transmute_self(self))),
             }))
             .as_ref()
     }
@@ -2204,22 +2188,17 @@ impl<'a, 'b> AstNode<'a, 'b, ObjectAssignmentTarget<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.properties,
             allocator: self.allocator,
-            parent: self
-                .allocator
-                .alloc(AstNodes::ObjectAssignmentTarget(unsafe { transmute(self) })),
+            parent: self.allocator.alloc(AstNodes::ObjectAssignmentTarget(transmute_self(self))),
         })
     }
 
     pub fn rest(&self) -> Option<&AstNode<'a, 'b, AssignmentTargetRest<'a>>> {
         self.allocator
-            .alloc(self.inner.rest.as_ref().map(|inner| {
-                AstNode {
-                    inner,
-                    allocator: self.allocator,
-                    parent: self
-                        .allocator
-                        .alloc(AstNodes::ObjectAssignmentTarget(unsafe { transmute(self) })),
-                }
+            .alloc(self.inner.rest.as_ref().map(|inner| AstNode {
+                inner,
+                allocator: self.allocator,
+                parent:
+                    self.allocator.alloc(AstNodes::ObjectAssignmentTarget(transmute_self(self))),
             }))
             .as_ref()
     }
@@ -2299,7 +2278,7 @@ impl<'a, 'b> AstNode<'a, 'b, AssignmentTargetWithDefault<'a>> {
             allocator: self.allocator,
             parent: self
                 .allocator
-                .alloc(AstNodes::AssignmentTargetWithDefault(unsafe { transmute(self) })),
+                .alloc(AstNodes::AssignmentTargetWithDefault(transmute_self(self))),
         })
     }
 
@@ -2309,7 +2288,7 @@ impl<'a, 'b> AstNode<'a, 'b, AssignmentTargetWithDefault<'a>> {
             allocator: self.allocator,
             parent: self
                 .allocator
-                .alloc(AstNodes::AssignmentTargetWithDefault(unsafe { transmute(self) })),
+                .alloc(AstNodes::AssignmentTargetWithDefault(transmute_self(self))),
         })
     }
 }
@@ -2417,7 +2396,7 @@ impl<'a, 'b> AstNode<'a, 'b, SequenceExpression<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.expressions,
             allocator: self.allocator,
-            parent: self.allocator.alloc(AstNodes::SequenceExpression(unsafe { transmute(self) })),
+            parent: self.allocator.alloc(AstNodes::SequenceExpression(transmute_self(self))),
         })
     }
 }
@@ -2435,7 +2414,7 @@ impl<'a, 'b> AstNode<'a, 'b, AwaitExpression<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.argument,
             allocator: self.allocator,
-            parent: self.allocator.alloc(AstNodes::AwaitExpression(unsafe { transmute(self) })),
+            parent: self.allocator.alloc(AstNodes::AwaitExpression(transmute_self(self))),
         })
     }
 }
@@ -2448,7 +2427,7 @@ impl<'a, 'b> AstNode<'a, 'b, ChainExpression<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.expression,
             allocator: self.allocator,
-            parent: self.allocator.alloc(AstNodes::ChainExpression(unsafe { transmute(self) })),
+            parent: self.allocator.alloc(AstNodes::ChainExpression(transmute_self(self))),
         })
     }
 }
@@ -2519,9 +2498,7 @@ impl<'a, 'b> AstNode<'a, 'b, ParenthesizedExpression<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.expression,
             allocator: self.allocator,
-            parent: self
-                .allocator
-                .alloc(AstNodes::ParenthesizedExpression(unsafe { transmute(self) })),
+            parent: self.allocator.alloc(AstNodes::ParenthesizedExpression(transmute_self(self))),
         })
     }
 }
@@ -2776,7 +2753,7 @@ impl<'a, 'b> AstNode<'a, 'b, Directive<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.expression,
             allocator: self.allocator,
-            parent: self.allocator.alloc(AstNodes::Directive(unsafe { transmute(self) })),
+            parent: self.allocator.alloc(AstNodes::Directive(transmute_self(self))),
         })
     }
 
@@ -2802,7 +2779,7 @@ impl<'a, 'b> AstNode<'a, 'b, BlockStatement<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.body,
             allocator: self.allocator,
-            parent: self.allocator.alloc(AstNodes::BlockStatement(unsafe { transmute(self) })),
+            parent: self.allocator.alloc(AstNodes::BlockStatement(transmute_self(self))),
         })
     }
 }
@@ -2936,7 +2913,7 @@ impl<'a, 'b> AstNode<'a, 'b, VariableDeclaration<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.declarations,
             allocator: self.allocator,
-            parent: self.allocator.alloc(AstNodes::VariableDeclaration(unsafe { transmute(self) })),
+            parent: self.allocator.alloc(AstNodes::VariableDeclaration(transmute_self(self))),
         })
     }
 
@@ -2957,7 +2934,7 @@ impl<'a, 'b> AstNode<'a, 'b, VariableDeclarator<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.id,
             allocator: self.allocator,
-            parent: self.allocator.alloc(AstNodes::VariableDeclarator(unsafe { transmute(self) })),
+            parent: self.allocator.alloc(AstNodes::VariableDeclarator(transmute_self(self))),
         })
     }
 
@@ -2966,8 +2943,7 @@ impl<'a, 'b> AstNode<'a, 'b, VariableDeclarator<'a>> {
             .alloc(self.inner.init.as_ref().map(|inner| AstNode {
                 inner,
                 allocator: self.allocator,
-                parent:
-                    self.allocator.alloc(AstNodes::VariableDeclarator(unsafe { transmute(self) })),
+                parent: self.allocator.alloc(AstNodes::VariableDeclarator(transmute_self(self))),
             }))
             .as_ref()
     }
@@ -2990,7 +2966,7 @@ impl<'a, 'b> AstNode<'a, 'b, ExpressionStatement<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.expression,
             allocator: self.allocator,
-            parent: self.allocator.alloc(AstNodes::ExpressionStatement(unsafe { transmute(self) })),
+            parent: self.allocator.alloc(AstNodes::ExpressionStatement(transmute_self(self))),
         })
     }
 }
@@ -3003,7 +2979,7 @@ impl<'a, 'b> AstNode<'a, 'b, IfStatement<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.test,
             allocator: self.allocator,
-            parent: self.allocator.alloc(AstNodes::IfStatement(unsafe { transmute(self) })),
+            parent: self.allocator.alloc(AstNodes::IfStatement(transmute_self(self))),
         })
     }
 
@@ -3011,7 +2987,7 @@ impl<'a, 'b> AstNode<'a, 'b, IfStatement<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.consequent,
             allocator: self.allocator,
-            parent: self.allocator.alloc(AstNodes::IfStatement(unsafe { transmute(self) })),
+            parent: self.allocator.alloc(AstNodes::IfStatement(transmute_self(self))),
         })
     }
 
@@ -3020,7 +2996,7 @@ impl<'a, 'b> AstNode<'a, 'b, IfStatement<'a>> {
             .alloc(self.inner.alternate.as_ref().map(|inner| AstNode {
                 inner,
                 allocator: self.allocator,
-                parent: self.allocator.alloc(AstNodes::IfStatement(unsafe { transmute(self) })),
+                parent: self.allocator.alloc(AstNodes::IfStatement(transmute_self(self))),
             }))
             .as_ref()
     }
@@ -3034,7 +3010,7 @@ impl<'a, 'b> AstNode<'a, 'b, DoWhileStatement<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.body,
             allocator: self.allocator,
-            parent: self.allocator.alloc(AstNodes::DoWhileStatement(unsafe { transmute(self) })),
+            parent: self.allocator.alloc(AstNodes::DoWhileStatement(transmute_self(self))),
         })
     }
 
@@ -3042,7 +3018,7 @@ impl<'a, 'b> AstNode<'a, 'b, DoWhileStatement<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.test,
             allocator: self.allocator,
-            parent: self.allocator.alloc(AstNodes::DoWhileStatement(unsafe { transmute(self) })),
+            parent: self.allocator.alloc(AstNodes::DoWhileStatement(transmute_self(self))),
         })
     }
 }
@@ -3055,7 +3031,7 @@ impl<'a, 'b> AstNode<'a, 'b, WhileStatement<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.test,
             allocator: self.allocator,
-            parent: self.allocator.alloc(AstNodes::WhileStatement(unsafe { transmute(self) })),
+            parent: self.allocator.alloc(AstNodes::WhileStatement(transmute_self(self))),
         })
     }
 
@@ -3063,7 +3039,7 @@ impl<'a, 'b> AstNode<'a, 'b, WhileStatement<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.body,
             allocator: self.allocator,
-            parent: self.allocator.alloc(AstNodes::WhileStatement(unsafe { transmute(self) })),
+            parent: self.allocator.alloc(AstNodes::WhileStatement(transmute_self(self))),
         })
     }
 }
@@ -3077,7 +3053,7 @@ impl<'a, 'b> AstNode<'a, 'b, ForStatement<'a>> {
             .alloc(self.inner.init.as_ref().map(|inner| AstNode {
                 inner,
                 allocator: self.allocator,
-                parent: self.allocator.alloc(AstNodes::ForStatement(unsafe { transmute(self) })),
+                parent: self.allocator.alloc(AstNodes::ForStatement(transmute_self(self))),
             }))
             .as_ref()
     }
@@ -3087,7 +3063,7 @@ impl<'a, 'b> AstNode<'a, 'b, ForStatement<'a>> {
             .alloc(self.inner.test.as_ref().map(|inner| AstNode {
                 inner,
                 allocator: self.allocator,
-                parent: self.allocator.alloc(AstNodes::ForStatement(unsafe { transmute(self) })),
+                parent: self.allocator.alloc(AstNodes::ForStatement(transmute_self(self))),
             }))
             .as_ref()
     }
@@ -3097,7 +3073,7 @@ impl<'a, 'b> AstNode<'a, 'b, ForStatement<'a>> {
             .alloc(self.inner.update.as_ref().map(|inner| AstNode {
                 inner,
                 allocator: self.allocator,
-                parent: self.allocator.alloc(AstNodes::ForStatement(unsafe { transmute(self) })),
+                parent: self.allocator.alloc(AstNodes::ForStatement(transmute_self(self))),
             }))
             .as_ref()
     }
@@ -3106,14 +3082,14 @@ impl<'a, 'b> AstNode<'a, 'b, ForStatement<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.body,
             allocator: self.allocator,
-            parent: self.allocator.alloc(AstNodes::ForStatement(unsafe { transmute(self) })),
+            parent: self.allocator.alloc(AstNodes::ForStatement(transmute_self(self))),
         })
     }
 }
 
 impl<'a, 'b> AstNode<'a, 'b, ForStatementInit<'a>> {
     pub fn as_ast_nodes(&self) -> &AstNodes<'a, 'b> {
-        let parent = self.allocator.alloc(AstNodes::ForStatementInit(unsafe { transmute(self) }));
+        let parent = self.allocator.alloc(AstNodes::ForStatementInit(transmute_self(self)));
         let node = match self.inner {
             ForStatementInit::VariableDeclaration(s) => {
                 AstNodes::VariableDeclaration(self.allocator.alloc(AstNode {
@@ -3134,7 +3110,7 @@ impl<'a, 'b> AstNode<'a, 'b, ForStatementInit<'a>> {
 }
 impl<'a, 'b> FormatWrite<'a> for AstNode<'a, 'b, ForStatementInit<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        let parent = self.allocator.alloc(AstNodes::ForStatementInit(unsafe { transmute(self) }));
+        let parent = self.allocator.alloc(AstNodes::ForStatementInit(transmute_self(self)));
         match self.inner {
             ForStatementInit::VariableDeclaration(s) => AstNode::<'a, 'b, VariableDeclaration> {
                 inner: s,
@@ -3165,7 +3141,7 @@ impl<'a, 'b> AstNode<'a, 'b, ForInStatement<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.left,
             allocator: self.allocator,
-            parent: self.allocator.alloc(AstNodes::ForInStatement(unsafe { transmute(self) })),
+            parent: self.allocator.alloc(AstNodes::ForInStatement(transmute_self(self))),
         })
     }
 
@@ -3173,7 +3149,7 @@ impl<'a, 'b> AstNode<'a, 'b, ForInStatement<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.right,
             allocator: self.allocator,
-            parent: self.allocator.alloc(AstNodes::ForInStatement(unsafe { transmute(self) })),
+            parent: self.allocator.alloc(AstNodes::ForInStatement(transmute_self(self))),
         })
     }
 
@@ -3181,7 +3157,7 @@ impl<'a, 'b> AstNode<'a, 'b, ForInStatement<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.body,
             allocator: self.allocator,
-            parent: self.allocator.alloc(AstNodes::ForInStatement(unsafe { transmute(self) })),
+            parent: self.allocator.alloc(AstNodes::ForInStatement(transmute_self(self))),
         })
     }
 }
@@ -3247,7 +3223,7 @@ impl<'a, 'b> AstNode<'a, 'b, ForOfStatement<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.left,
             allocator: self.allocator,
-            parent: self.allocator.alloc(AstNodes::ForOfStatement(unsafe { transmute(self) })),
+            parent: self.allocator.alloc(AstNodes::ForOfStatement(transmute_self(self))),
         })
     }
 
@@ -3255,7 +3231,7 @@ impl<'a, 'b> AstNode<'a, 'b, ForOfStatement<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.right,
             allocator: self.allocator,
-            parent: self.allocator.alloc(AstNodes::ForOfStatement(unsafe { transmute(self) })),
+            parent: self.allocator.alloc(AstNodes::ForOfStatement(transmute_self(self))),
         })
     }
 
@@ -3263,7 +3239,7 @@ impl<'a, 'b> AstNode<'a, 'b, ForOfStatement<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.body,
             allocator: self.allocator,
-            parent: self.allocator.alloc(AstNodes::ForOfStatement(unsafe { transmute(self) })),
+            parent: self.allocator.alloc(AstNodes::ForOfStatement(transmute_self(self))),
         })
     }
 }
@@ -3277,8 +3253,7 @@ impl<'a, 'b> AstNode<'a, 'b, ContinueStatement<'a>> {
             .alloc(self.inner.label.as_ref().map(|inner| AstNode {
                 inner,
                 allocator: self.allocator,
-                parent:
-                    self.allocator.alloc(AstNodes::ContinueStatement(unsafe { transmute(self) })),
+                parent: self.allocator.alloc(AstNodes::ContinueStatement(transmute_self(self))),
             }))
             .as_ref()
     }
@@ -3293,7 +3268,7 @@ impl<'a, 'b> AstNode<'a, 'b, BreakStatement<'a>> {
             .alloc(self.inner.label.as_ref().map(|inner| AstNode {
                 inner,
                 allocator: self.allocator,
-                parent: self.allocator.alloc(AstNodes::BreakStatement(unsafe { transmute(self) })),
+                parent: self.allocator.alloc(AstNodes::BreakStatement(transmute_self(self))),
             }))
             .as_ref()
     }
@@ -3308,7 +3283,7 @@ impl<'a, 'b> AstNode<'a, 'b, ReturnStatement<'a>> {
             .alloc(self.inner.argument.as_ref().map(|inner| AstNode {
                 inner,
                 allocator: self.allocator,
-                parent: self.allocator.alloc(AstNodes::ReturnStatement(unsafe { transmute(self) })),
+                parent: self.allocator.alloc(AstNodes::ReturnStatement(transmute_self(self))),
             }))
             .as_ref()
     }
@@ -3322,7 +3297,7 @@ impl<'a, 'b> AstNode<'a, 'b, WithStatement<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.object,
             allocator: self.allocator,
-            parent: self.allocator.alloc(AstNodes::WithStatement(unsafe { transmute(self) })),
+            parent: self.allocator.alloc(AstNodes::WithStatement(transmute_self(self))),
         })
     }
 
@@ -3330,7 +3305,7 @@ impl<'a, 'b> AstNode<'a, 'b, WithStatement<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.body,
             allocator: self.allocator,
-            parent: self.allocator.alloc(AstNodes::WithStatement(unsafe { transmute(self) })),
+            parent: self.allocator.alloc(AstNodes::WithStatement(transmute_self(self))),
         })
     }
 }
@@ -3343,7 +3318,7 @@ impl<'a, 'b> AstNode<'a, 'b, SwitchStatement<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.discriminant,
             allocator: self.allocator,
-            parent: self.allocator.alloc(AstNodes::SwitchStatement(unsafe { transmute(self) })),
+            parent: self.allocator.alloc(AstNodes::SwitchStatement(transmute_self(self))),
         })
     }
 
@@ -3351,7 +3326,7 @@ impl<'a, 'b> AstNode<'a, 'b, SwitchStatement<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.cases,
             allocator: self.allocator,
-            parent: self.allocator.alloc(AstNodes::SwitchStatement(unsafe { transmute(self) })),
+            parent: self.allocator.alloc(AstNodes::SwitchStatement(transmute_self(self))),
         })
     }
 }
@@ -3365,7 +3340,7 @@ impl<'a, 'b> AstNode<'a, 'b, SwitchCase<'a>> {
             .alloc(self.inner.test.as_ref().map(|inner| AstNode {
                 inner,
                 allocator: self.allocator,
-                parent: self.allocator.alloc(AstNodes::SwitchCase(unsafe { transmute(self) })),
+                parent: self.allocator.alloc(AstNodes::SwitchCase(transmute_self(self))),
             }))
             .as_ref()
     }
@@ -3374,7 +3349,7 @@ impl<'a, 'b> AstNode<'a, 'b, SwitchCase<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.consequent,
             allocator: self.allocator,
-            parent: self.allocator.alloc(AstNodes::SwitchCase(unsafe { transmute(self) })),
+            parent: self.allocator.alloc(AstNodes::SwitchCase(transmute_self(self))),
         })
     }
 }
@@ -3387,7 +3362,7 @@ impl<'a, 'b> AstNode<'a, 'b, LabeledStatement<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.label,
             allocator: self.allocator,
-            parent: self.allocator.alloc(AstNodes::LabeledStatement(unsafe { transmute(self) })),
+            parent: self.allocator.alloc(AstNodes::LabeledStatement(transmute_self(self))),
         })
     }
 
@@ -3395,7 +3370,7 @@ impl<'a, 'b> AstNode<'a, 'b, LabeledStatement<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.body,
             allocator: self.allocator,
-            parent: self.allocator.alloc(AstNodes::LabeledStatement(unsafe { transmute(self) })),
+            parent: self.allocator.alloc(AstNodes::LabeledStatement(transmute_self(self))),
         })
     }
 }
@@ -3408,7 +3383,7 @@ impl<'a, 'b> AstNode<'a, 'b, ThrowStatement<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.argument,
             allocator: self.allocator,
-            parent: self.allocator.alloc(AstNodes::ThrowStatement(unsafe { transmute(self) })),
+            parent: self.allocator.alloc(AstNodes::ThrowStatement(transmute_self(self))),
         })
     }
 }
@@ -3421,7 +3396,7 @@ impl<'a, 'b> AstNode<'a, 'b, TryStatement<'a>> {
         self.allocator.alloc(AstNode {
             inner: self.inner.block.as_ref(),
             allocator: self.allocator,
-            parent: self.allocator.alloc(AstNodes::TryStatement(unsafe { transmute(self) })),
+            parent: self.allocator.alloc(AstNodes::TryStatement(transmute_self(self))),
         })
     }
 
@@ -3430,7 +3405,7 @@ impl<'a, 'b> AstNode<'a, 'b, TryStatement<'a>> {
             .alloc(self.inner.handler.as_ref().map(|inner| AstNode {
                 inner: inner.as_ref(),
                 allocator: self.allocator,
-                parent: self.allocator.alloc(AstNodes::TryStatement(unsafe { transmute(self) })),
+                parent: self.allocator.alloc(AstNodes::TryStatement(transmute_self(self))),
             }))
             .as_ref()
     }
@@ -3440,7 +3415,7 @@ impl<'a, 'b> AstNode<'a, 'b, TryStatement<'a>> {
             .alloc(self.inner.finalizer.as_ref().map(|inner| AstNode {
                 inner: inner.as_ref(),
                 allocator: self.allocator,
-                parent: self.allocator.alloc(AstNodes::TryStatement(unsafe { transmute(self) })),
+                parent: self.allocator.alloc(AstNodes::TryStatement(transmute_self(self))),
             }))
             .as_ref()
     }
@@ -3455,7 +3430,7 @@ impl<'a, 'b> AstNode<'a, 'b, CatchClause<'a>> {
             .alloc(self.inner.param.as_ref().map(|inner| AstNode {
                 inner,
                 allocator: self.allocator,
-                parent: self.allocator.alloc(AstNodes::CatchClause(unsafe { transmute(self) })),
+                parent: self.allocator.alloc(AstNodes::CatchClause(transmute_self(self))),
             }))
             .as_ref()
     }
@@ -3464,7 +3439,7 @@ impl<'a, 'b> AstNode<'a, 'b, CatchClause<'a>> {
         self.allocator.alloc(AstNode {
             inner: self.inner.body.as_ref(),
             allocator: self.allocator,
-            parent: self.allocator.alloc(AstNodes::CatchClause(unsafe { transmute(self) })),
+            parent: self.allocator.alloc(AstNodes::CatchClause(transmute_self(self))),
         })
     }
 }
@@ -3477,7 +3452,7 @@ impl<'a, 'b> AstNode<'a, 'b, CatchParameter<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.pattern,
             allocator: self.allocator,
-            parent: self.allocator.alloc(AstNodes::CatchParameter(unsafe { transmute(self) })),
+            parent: self.allocator.alloc(AstNodes::CatchParameter(transmute_self(self))),
         })
     }
 }
@@ -3583,7 +3558,7 @@ impl<'a, 'b> AstNode<'a, 'b, AssignmentPattern<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.left,
             allocator: self.allocator,
-            parent: self.allocator.alloc(AstNodes::AssignmentPattern(unsafe { transmute(self) })),
+            parent: self.allocator.alloc(AstNodes::AssignmentPattern(transmute_self(self))),
         })
     }
 
@@ -3591,7 +3566,7 @@ impl<'a, 'b> AstNode<'a, 'b, AssignmentPattern<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.right,
             allocator: self.allocator,
-            parent: self.allocator.alloc(AstNodes::AssignmentPattern(unsafe { transmute(self) })),
+            parent: self.allocator.alloc(AstNodes::AssignmentPattern(transmute_self(self))),
         })
     }
 }
@@ -3604,7 +3579,7 @@ impl<'a, 'b> AstNode<'a, 'b, ObjectPattern<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.properties,
             allocator: self.allocator,
-            parent: self.allocator.alloc(AstNodes::ObjectPattern(unsafe { transmute(self) })),
+            parent: self.allocator.alloc(AstNodes::ObjectPattern(transmute_self(self))),
         })
     }
 
@@ -3613,7 +3588,7 @@ impl<'a, 'b> AstNode<'a, 'b, ObjectPattern<'a>> {
             .alloc(self.inner.rest.as_ref().map(|inner| AstNode {
                 inner: inner.as_ref(),
                 allocator: self.allocator,
-                parent: self.allocator.alloc(AstNodes::ObjectPattern(unsafe { transmute(self) })),
+                parent: self.allocator.alloc(AstNodes::ObjectPattern(transmute_self(self))),
             }))
             .as_ref()
     }
@@ -3656,7 +3631,7 @@ impl<'a, 'b> AstNode<'a, 'b, ArrayPattern<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.elements,
             allocator: self.allocator,
-            parent: self.allocator.alloc(AstNodes::ArrayPattern(unsafe { transmute(self) })),
+            parent: self.allocator.alloc(AstNodes::ArrayPattern(transmute_self(self))),
         })
     }
 
@@ -3665,7 +3640,7 @@ impl<'a, 'b> AstNode<'a, 'b, ArrayPattern<'a>> {
             .alloc(self.inner.rest.as_ref().map(|inner| AstNode {
                 inner: inner.as_ref(),
                 allocator: self.allocator,
-                parent: self.allocator.alloc(AstNodes::ArrayPattern(unsafe { transmute(self) })),
+                parent: self.allocator.alloc(AstNodes::ArrayPattern(transmute_self(self))),
             }))
             .as_ref()
     }
@@ -3679,7 +3654,7 @@ impl<'a, 'b> AstNode<'a, 'b, BindingRestElement<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.argument,
             allocator: self.allocator,
-            parent: self.allocator.alloc(AstNodes::BindingRestElement(unsafe { transmute(self) })),
+            parent: self.allocator.alloc(AstNodes::BindingRestElement(transmute_self(self))),
         })
     }
 }
@@ -3697,7 +3672,7 @@ impl<'a, 'b> AstNode<'a, 'b, Function<'a>> {
             .alloc(self.inner.id.as_ref().map(|inner| AstNode {
                 inner,
                 allocator: self.allocator,
-                parent: self.allocator.alloc(AstNodes::Function(unsafe { transmute(self) })),
+                parent: self.allocator.alloc(AstNodes::Function(transmute_self(self))),
             }))
             .as_ref()
     }
@@ -3719,7 +3694,7 @@ impl<'a, 'b> AstNode<'a, 'b, Function<'a>> {
             .alloc(self.inner.type_parameters.as_ref().map(|inner| AstNode {
                 inner: inner.as_ref(),
                 allocator: self.allocator,
-                parent: self.allocator.alloc(AstNodes::Function(unsafe { transmute(self) })),
+                parent: self.allocator.alloc(AstNodes::Function(transmute_self(self))),
             }))
             .as_ref()
     }
@@ -3729,7 +3704,7 @@ impl<'a, 'b> AstNode<'a, 'b, Function<'a>> {
             .alloc(self.inner.this_param.as_ref().map(|inner| AstNode {
                 inner: inner.as_ref(),
                 allocator: self.allocator,
-                parent: self.allocator.alloc(AstNodes::Function(unsafe { transmute(self) })),
+                parent: self.allocator.alloc(AstNodes::Function(transmute_self(self))),
             }))
             .as_ref()
     }
@@ -3738,7 +3713,7 @@ impl<'a, 'b> AstNode<'a, 'b, Function<'a>> {
         self.allocator.alloc(AstNode {
             inner: self.inner.params.as_ref(),
             allocator: self.allocator,
-            parent: self.allocator.alloc(AstNodes::Function(unsafe { transmute(self) })),
+            parent: self.allocator.alloc(AstNodes::Function(transmute_self(self))),
         })
     }
 
@@ -3747,7 +3722,7 @@ impl<'a, 'b> AstNode<'a, 'b, Function<'a>> {
             .alloc(self.inner.return_type.as_ref().map(|inner| AstNode {
                 inner: inner.as_ref(),
                 allocator: self.allocator,
-                parent: self.allocator.alloc(AstNodes::Function(unsafe { transmute(self) })),
+                parent: self.allocator.alloc(AstNodes::Function(transmute_self(self))),
             }))
             .as_ref()
     }
@@ -3757,7 +3732,7 @@ impl<'a, 'b> AstNode<'a, 'b, Function<'a>> {
             .alloc(self.inner.body.as_ref().map(|inner| AstNode {
                 inner: inner.as_ref(),
                 allocator: self.allocator,
-                parent: self.allocator.alloc(AstNodes::Function(unsafe { transmute(self) })),
+                parent: self.allocator.alloc(AstNodes::Function(transmute_self(self))),
             }))
             .as_ref()
     }
@@ -3779,7 +3754,7 @@ impl<'a, 'b> AstNode<'a, 'b, FormalParameters<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.items,
             allocator: self.allocator,
-            parent: self.allocator.alloc(AstNodes::FormalParameters(unsafe { transmute(self) })),
+            parent: self.allocator.alloc(AstNodes::FormalParameters(transmute_self(self))),
         })
     }
 
@@ -3788,8 +3763,7 @@ impl<'a, 'b> AstNode<'a, 'b, FormalParameters<'a>> {
             .alloc(self.inner.rest.as_ref().map(|inner| AstNode {
                 inner: inner.as_ref(),
                 allocator: self.allocator,
-                parent:
-                    self.allocator.alloc(AstNodes::FormalParameters(unsafe { transmute(self) })),
+                parent: self.allocator.alloc(AstNodes::FormalParameters(transmute_self(self))),
             }))
             .as_ref()
     }
@@ -3803,7 +3777,7 @@ impl<'a, 'b> AstNode<'a, 'b, FormalParameter<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.decorators,
             allocator: self.allocator,
-            parent: self.allocator.alloc(AstNodes::FormalParameter(unsafe { transmute(self) })),
+            parent: self.allocator.alloc(AstNodes::FormalParameter(transmute_self(self))),
         })
     }
 
@@ -3811,7 +3785,7 @@ impl<'a, 'b> AstNode<'a, 'b, FormalParameter<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.pattern,
             allocator: self.allocator,
-            parent: self.allocator.alloc(AstNodes::FormalParameter(unsafe { transmute(self) })),
+            parent: self.allocator.alloc(AstNodes::FormalParameter(transmute_self(self))),
         })
     }
 
@@ -3836,7 +3810,7 @@ impl<'a, 'b> AstNode<'a, 'b, FunctionBody<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.directives,
             allocator: self.allocator,
-            parent: self.allocator.alloc(AstNodes::FunctionBody(unsafe { transmute(self) })),
+            parent: self.allocator.alloc(AstNodes::FunctionBody(transmute_self(self))),
         })
     }
 
@@ -3844,7 +3818,7 @@ impl<'a, 'b> AstNode<'a, 'b, FunctionBody<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.statements,
             allocator: self.allocator,
-            parent: self.allocator.alloc(AstNodes::FunctionBody(unsafe { transmute(self) })),
+            parent: self.allocator.alloc(AstNodes::FunctionBody(transmute_self(self))),
         })
     }
 }
@@ -3863,14 +3837,11 @@ impl<'a, 'b> AstNode<'a, 'b, ArrowFunctionExpression<'a>> {
 
     pub fn type_parameters(&self) -> Option<&AstNode<'a, 'b, TSTypeParameterDeclaration<'a>>> {
         self.allocator
-            .alloc(self.inner.type_parameters.as_ref().map(|inner| {
-                AstNode {
-                    inner: inner.as_ref(),
-                    allocator: self.allocator,
-                    parent: self
-                        .allocator
-                        .alloc(AstNodes::ArrowFunctionExpression(unsafe { transmute(self) })),
-                }
+            .alloc(self.inner.type_parameters.as_ref().map(|inner| AstNode {
+                inner: inner.as_ref(),
+                allocator: self.allocator,
+                parent:
+                    self.allocator.alloc(AstNodes::ArrowFunctionExpression(transmute_self(self))),
             }))
             .as_ref()
     }
@@ -3879,22 +3850,17 @@ impl<'a, 'b> AstNode<'a, 'b, ArrowFunctionExpression<'a>> {
         self.allocator.alloc(AstNode {
             inner: self.inner.params.as_ref(),
             allocator: self.allocator,
-            parent: self
-                .allocator
-                .alloc(AstNodes::ArrowFunctionExpression(unsafe { transmute(self) })),
+            parent: self.allocator.alloc(AstNodes::ArrowFunctionExpression(transmute_self(self))),
         })
     }
 
     pub fn return_type(&self) -> Option<&AstNode<'a, 'b, TSTypeAnnotation<'a>>> {
         self.allocator
-            .alloc(self.inner.return_type.as_ref().map(|inner| {
-                AstNode {
-                    inner: inner.as_ref(),
-                    allocator: self.allocator,
-                    parent: self
-                        .allocator
-                        .alloc(AstNodes::ArrowFunctionExpression(unsafe { transmute(self) })),
-                }
+            .alloc(self.inner.return_type.as_ref().map(|inner| AstNode {
+                inner: inner.as_ref(),
+                allocator: self.allocator,
+                parent:
+                    self.allocator.alloc(AstNodes::ArrowFunctionExpression(transmute_self(self))),
             }))
             .as_ref()
     }
@@ -3903,9 +3869,7 @@ impl<'a, 'b> AstNode<'a, 'b, ArrowFunctionExpression<'a>> {
         self.allocator.alloc(AstNode {
             inner: self.inner.body.as_ref(),
             allocator: self.allocator,
-            parent: self
-                .allocator
-                .alloc(AstNodes::ArrowFunctionExpression(unsafe { transmute(self) })),
+            parent: self.allocator.alloc(AstNodes::ArrowFunctionExpression(transmute_self(self))),
         })
     }
 
@@ -3927,7 +3891,7 @@ impl<'a, 'b> AstNode<'a, 'b, YieldExpression<'a>> {
             .alloc(self.inner.argument.as_ref().map(|inner| AstNode {
                 inner,
                 allocator: self.allocator,
-                parent: self.allocator.alloc(AstNodes::YieldExpression(unsafe { transmute(self) })),
+                parent: self.allocator.alloc(AstNodes::YieldExpression(transmute_self(self))),
             }))
             .as_ref()
     }
@@ -3945,7 +3909,7 @@ impl<'a, 'b> AstNode<'a, 'b, Class<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.decorators,
             allocator: self.allocator,
-            parent: self.allocator.alloc(AstNodes::Class(unsafe { transmute(self) })),
+            parent: self.allocator.alloc(AstNodes::Class(transmute_self(self))),
         })
     }
 
@@ -3954,7 +3918,7 @@ impl<'a, 'b> AstNode<'a, 'b, Class<'a>> {
             .alloc(self.inner.id.as_ref().map(|inner| AstNode {
                 inner,
                 allocator: self.allocator,
-                parent: self.allocator.alloc(AstNodes::Class(unsafe { transmute(self) })),
+                parent: self.allocator.alloc(AstNodes::Class(transmute_self(self))),
             }))
             .as_ref()
     }
@@ -3964,7 +3928,7 @@ impl<'a, 'b> AstNode<'a, 'b, Class<'a>> {
             .alloc(self.inner.type_parameters.as_ref().map(|inner| AstNode {
                 inner: inner.as_ref(),
                 allocator: self.allocator,
-                parent: self.allocator.alloc(AstNodes::Class(unsafe { transmute(self) })),
+                parent: self.allocator.alloc(AstNodes::Class(transmute_self(self))),
             }))
             .as_ref()
     }
@@ -3974,7 +3938,7 @@ impl<'a, 'b> AstNode<'a, 'b, Class<'a>> {
             .alloc(self.inner.super_class.as_ref().map(|inner| AstNode {
                 inner,
                 allocator: self.allocator,
-                parent: self.allocator.alloc(AstNodes::Class(unsafe { transmute(self) })),
+                parent: self.allocator.alloc(AstNodes::Class(transmute_self(self))),
             }))
             .as_ref()
     }
@@ -3986,7 +3950,7 @@ impl<'a, 'b> AstNode<'a, 'b, Class<'a>> {
             .alloc(self.inner.super_type_arguments.as_ref().map(|inner| AstNode {
                 inner: inner.as_ref(),
                 allocator: self.allocator,
-                parent: self.allocator.alloc(AstNodes::Class(unsafe { transmute(self) })),
+                parent: self.allocator.alloc(AstNodes::Class(transmute_self(self))),
             }))
             .as_ref()
     }
@@ -3995,7 +3959,7 @@ impl<'a, 'b> AstNode<'a, 'b, Class<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.implements,
             allocator: self.allocator,
-            parent: self.allocator.alloc(AstNodes::Class(unsafe { transmute(self) })),
+            parent: self.allocator.alloc(AstNodes::Class(transmute_self(self))),
         })
     }
 
@@ -4003,7 +3967,7 @@ impl<'a, 'b> AstNode<'a, 'b, Class<'a>> {
         self.allocator.alloc(AstNode {
             inner: self.inner.body.as_ref(),
             allocator: self.allocator,
-            parent: self.allocator.alloc(AstNodes::Class(unsafe { transmute(self) })),
+            parent: self.allocator.alloc(AstNodes::Class(transmute_self(self))),
         })
     }
 
@@ -4024,7 +3988,7 @@ impl<'a, 'b> AstNode<'a, 'b, ClassBody<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.body,
             allocator: self.allocator,
-            parent: self.allocator.alloc(AstNodes::ClassBody(unsafe { transmute(self) })),
+            parent: self.allocator.alloc(AstNodes::ClassBody(transmute_self(self))),
         })
     }
 }
@@ -4113,7 +4077,7 @@ impl<'a, 'b> AstNode<'a, 'b, MethodDefinition<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.decorators,
             allocator: self.allocator,
-            parent: self.allocator.alloc(AstNodes::MethodDefinition(unsafe { transmute(self) })),
+            parent: self.allocator.alloc(AstNodes::MethodDefinition(transmute_self(self))),
         })
     }
 
@@ -4121,7 +4085,7 @@ impl<'a, 'b> AstNode<'a, 'b, MethodDefinition<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.key,
             allocator: self.allocator,
-            parent: self.allocator.alloc(AstNodes::MethodDefinition(unsafe { transmute(self) })),
+            parent: self.allocator.alloc(AstNodes::MethodDefinition(transmute_self(self))),
         })
     }
 
@@ -4129,7 +4093,7 @@ impl<'a, 'b> AstNode<'a, 'b, MethodDefinition<'a>> {
         self.allocator.alloc(AstNode {
             inner: self.inner.value.as_ref(),
             allocator: self.allocator,
-            parent: self.allocator.alloc(AstNodes::MethodDefinition(unsafe { transmute(self) })),
+            parent: self.allocator.alloc(AstNodes::MethodDefinition(transmute_self(self))),
         })
     }
 
@@ -4170,7 +4134,7 @@ impl<'a, 'b> AstNode<'a, 'b, PropertyDefinition<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.decorators,
             allocator: self.allocator,
-            parent: self.allocator.alloc(AstNodes::PropertyDefinition(unsafe { transmute(self) })),
+            parent: self.allocator.alloc(AstNodes::PropertyDefinition(transmute_self(self))),
         })
     }
 
@@ -4178,7 +4142,7 @@ impl<'a, 'b> AstNode<'a, 'b, PropertyDefinition<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.key,
             allocator: self.allocator,
-            parent: self.allocator.alloc(AstNodes::PropertyDefinition(unsafe { transmute(self) })),
+            parent: self.allocator.alloc(AstNodes::PropertyDefinition(transmute_self(self))),
         })
     }
 
@@ -4187,8 +4151,7 @@ impl<'a, 'b> AstNode<'a, 'b, PropertyDefinition<'a>> {
             .alloc(self.inner.type_annotation.as_ref().map(|inner| AstNode {
                 inner: inner.as_ref(),
                 allocator: self.allocator,
-                parent:
-                    self.allocator.alloc(AstNodes::PropertyDefinition(unsafe { transmute(self) })),
+                parent: self.allocator.alloc(AstNodes::PropertyDefinition(transmute_self(self))),
             }))
             .as_ref()
     }
@@ -4198,8 +4161,7 @@ impl<'a, 'b> AstNode<'a, 'b, PropertyDefinition<'a>> {
             .alloc(self.inner.value.as_ref().map(|inner| AstNode {
                 inner,
                 allocator: self.allocator,
-                parent:
-                    self.allocator.alloc(AstNodes::PropertyDefinition(unsafe { transmute(self) })),
+                parent: self.allocator.alloc(AstNodes::PropertyDefinition(transmute_self(self))),
             }))
             .as_ref()
     }
@@ -4254,14 +4216,14 @@ impl<'a, 'b> AstNode<'a, 'b, StaticBlock<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.body,
             allocator: self.allocator,
-            parent: self.allocator.alloc(AstNodes::StaticBlock(unsafe { transmute(self) })),
+            parent: self.allocator.alloc(AstNodes::StaticBlock(transmute_self(self))),
         })
     }
 }
 
 impl<'a, 'b> AstNode<'a, 'b, ModuleDeclaration<'a>> {
     pub fn as_ast_nodes(&self) -> &AstNodes<'a, 'b> {
-        let parent = self.allocator.alloc(AstNodes::ModuleDeclaration(unsafe { transmute(self) }));
+        let parent = self.allocator.alloc(AstNodes::ModuleDeclaration(transmute_self(self)));
         let node = match self.inner {
             ModuleDeclaration::ImportDeclaration(s) => {
                 AstNodes::ImportDeclaration(self.allocator.alloc(AstNode {
@@ -4309,7 +4271,7 @@ impl<'a, 'b> AstNode<'a, 'b, ModuleDeclaration<'a>> {
 }
 impl<'a, 'b> FormatWrite<'a> for AstNode<'a, 'b, ModuleDeclaration<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        let parent = self.allocator.alloc(AstNodes::ModuleDeclaration(unsafe { transmute(self) }));
+        let parent = self.allocator.alloc(AstNodes::ModuleDeclaration(transmute_self(self)));
         match self.inner {
             ModuleDeclaration::ImportDeclaration(s) => {
                 AstNode::<'a, 'b, ImportDeclaration> { inner: s, parent, allocator: self.allocator }
@@ -4433,7 +4395,7 @@ impl<'a, 'b> AstNode<'a, 'b, ImportExpression<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.source,
             allocator: self.allocator,
-            parent: self.allocator.alloc(AstNodes::ImportExpression(unsafe { transmute(self) })),
+            parent: self.allocator.alloc(AstNodes::ImportExpression(transmute_self(self))),
         })
     }
 
@@ -4442,8 +4404,7 @@ impl<'a, 'b> AstNode<'a, 'b, ImportExpression<'a>> {
             .alloc(self.inner.options.as_ref().map(|inner| AstNode {
                 inner,
                 allocator: self.allocator,
-                parent:
-                    self.allocator.alloc(AstNodes::ImportExpression(unsafe { transmute(self) })),
+                parent: self.allocator.alloc(AstNodes::ImportExpression(transmute_self(self))),
             }))
             .as_ref()
     }
@@ -4462,8 +4423,7 @@ impl<'a, 'b> AstNode<'a, 'b, ImportDeclaration<'a>> {
             .alloc(self.inner.specifiers.as_ref().map(|inner| AstNode {
                 inner,
                 allocator: self.allocator,
-                parent:
-                    self.allocator.alloc(AstNodes::ImportDeclaration(unsafe { transmute(self) })),
+                parent: self.allocator.alloc(AstNodes::ImportDeclaration(transmute_self(self))),
             }))
             .as_ref()
     }
@@ -4472,7 +4432,7 @@ impl<'a, 'b> AstNode<'a, 'b, ImportDeclaration<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.source,
             allocator: self.allocator,
-            parent: self.allocator.alloc(AstNodes::ImportDeclaration(unsafe { transmute(self) })),
+            parent: self.allocator.alloc(AstNodes::ImportDeclaration(transmute_self(self))),
         })
     }
 
@@ -4485,8 +4445,7 @@ impl<'a, 'b> AstNode<'a, 'b, ImportDeclaration<'a>> {
             .alloc(self.inner.with_clause.as_ref().map(|inner| AstNode {
                 inner: inner.as_ref(),
                 allocator: self.allocator,
-                parent:
-                    self.allocator.alloc(AstNodes::ImportDeclaration(unsafe { transmute(self) })),
+                parent: self.allocator.alloc(AstNodes::ImportDeclaration(transmute_self(self))),
             }))
             .as_ref()
     }
@@ -4566,7 +4525,7 @@ impl<'a, 'b> AstNode<'a, 'b, ImportSpecifier<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.imported,
             allocator: self.allocator,
-            parent: self.allocator.alloc(AstNodes::ImportSpecifier(unsafe { transmute(self) })),
+            parent: self.allocator.alloc(AstNodes::ImportSpecifier(transmute_self(self))),
         })
     }
 
@@ -4574,7 +4533,7 @@ impl<'a, 'b> AstNode<'a, 'b, ImportSpecifier<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.local,
             allocator: self.allocator,
-            parent: self.allocator.alloc(AstNodes::ImportSpecifier(unsafe { transmute(self) })),
+            parent: self.allocator.alloc(AstNodes::ImportSpecifier(transmute_self(self))),
         })
     }
 
@@ -4591,9 +4550,7 @@ impl<'a, 'b> AstNode<'a, 'b, ImportDefaultSpecifier<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.local,
             allocator: self.allocator,
-            parent: self
-                .allocator
-                .alloc(AstNodes::ImportDefaultSpecifier(unsafe { transmute(self) })),
+            parent: self.allocator.alloc(AstNodes::ImportDefaultSpecifier(transmute_self(self))),
         })
     }
 }
@@ -4606,9 +4563,7 @@ impl<'a, 'b> AstNode<'a, 'b, ImportNamespaceSpecifier<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.local,
             allocator: self.allocator,
-            parent: self
-                .allocator
-                .alloc(AstNodes::ImportNamespaceSpecifier(unsafe { transmute(self) })),
+            parent: self.allocator.alloc(AstNodes::ImportNamespaceSpecifier(transmute_self(self))),
         })
     }
 }
@@ -4704,14 +4659,11 @@ impl<'a, 'b> AstNode<'a, 'b, ExportNamedDeclaration<'a>> {
 
     pub fn declaration(&self) -> Option<&AstNode<'a, 'b, Declaration<'a>>> {
         self.allocator
-            .alloc(self.inner.declaration.as_ref().map(|inner| {
-                AstNode {
-                    inner,
-                    allocator: self.allocator,
-                    parent: self
-                        .allocator
-                        .alloc(AstNodes::ExportNamedDeclaration(unsafe { transmute(self) })),
-                }
+            .alloc(self.inner.declaration.as_ref().map(|inner| AstNode {
+                inner,
+                allocator: self.allocator,
+                parent:
+                    self.allocator.alloc(AstNodes::ExportNamedDeclaration(transmute_self(self))),
             }))
             .as_ref()
     }
@@ -4720,22 +4672,17 @@ impl<'a, 'b> AstNode<'a, 'b, ExportNamedDeclaration<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.specifiers,
             allocator: self.allocator,
-            parent: self
-                .allocator
-                .alloc(AstNodes::ExportNamedDeclaration(unsafe { transmute(self) })),
+            parent: self.allocator.alloc(AstNodes::ExportNamedDeclaration(transmute_self(self))),
         })
     }
 
     pub fn source(&self) -> Option<&AstNode<'a, 'b, StringLiteral<'a>>> {
         self.allocator
-            .alloc(self.inner.source.as_ref().map(|inner| {
-                AstNode {
-                    inner,
-                    allocator: self.allocator,
-                    parent: self
-                        .allocator
-                        .alloc(AstNodes::ExportNamedDeclaration(unsafe { transmute(self) })),
-                }
+            .alloc(self.inner.source.as_ref().map(|inner| AstNode {
+                inner,
+                allocator: self.allocator,
+                parent:
+                    self.allocator.alloc(AstNodes::ExportNamedDeclaration(transmute_self(self))),
             }))
             .as_ref()
     }
@@ -4746,14 +4693,11 @@ impl<'a, 'b> AstNode<'a, 'b, ExportNamedDeclaration<'a>> {
 
     pub fn with_clause(&self) -> Option<&AstNode<'a, 'b, WithClause<'a>>> {
         self.allocator
-            .alloc(self.inner.with_clause.as_ref().map(|inner| {
-                AstNode {
-                    inner: inner.as_ref(),
-                    allocator: self.allocator,
-                    parent: self
-                        .allocator
-                        .alloc(AstNodes::ExportNamedDeclaration(unsafe { transmute(self) })),
-                }
+            .alloc(self.inner.with_clause.as_ref().map(|inner| AstNode {
+                inner: inner.as_ref(),
+                allocator: self.allocator,
+                parent:
+                    self.allocator.alloc(AstNodes::ExportNamedDeclaration(transmute_self(self))),
             }))
             .as_ref()
     }
@@ -4767,9 +4711,7 @@ impl<'a, 'b> AstNode<'a, 'b, ExportDefaultDeclaration<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.exported,
             allocator: self.allocator,
-            parent: self
-                .allocator
-                .alloc(AstNodes::ExportDefaultDeclaration(unsafe { transmute(self) })),
+            parent: self.allocator.alloc(AstNodes::ExportDefaultDeclaration(transmute_self(self))),
         })
     }
 
@@ -4777,9 +4719,7 @@ impl<'a, 'b> AstNode<'a, 'b, ExportDefaultDeclaration<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.declaration,
             allocator: self.allocator,
-            parent: self
-                .allocator
-                .alloc(AstNodes::ExportDefaultDeclaration(unsafe { transmute(self) })),
+            parent: self.allocator.alloc(AstNodes::ExportDefaultDeclaration(transmute_self(self))),
         })
     }
 }
@@ -4790,15 +4730,11 @@ impl<'a, 'b> AstNode<'a, 'b, ExportAllDeclaration<'a>> {
 
     pub fn exported(&self) -> Option<&AstNode<'a, 'b, ModuleExportName<'a>>> {
         self.allocator
-            .alloc(
-                self.inner.exported.as_ref().map(|inner| AstNode {
-                    inner,
-                    allocator: self.allocator,
-                    parent: self
-                        .allocator
-                        .alloc(AstNodes::ExportAllDeclaration(unsafe { transmute(self) })),
-                }),
-            )
+            .alloc(self.inner.exported.as_ref().map(|inner| AstNode {
+                inner,
+                allocator: self.allocator,
+                parent: self.allocator.alloc(AstNodes::ExportAllDeclaration(transmute_self(self))),
+            }))
             .as_ref()
     }
 
@@ -4806,23 +4742,17 @@ impl<'a, 'b> AstNode<'a, 'b, ExportAllDeclaration<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.source,
             allocator: self.allocator,
-            parent: self
-                .allocator
-                .alloc(AstNodes::ExportAllDeclaration(unsafe { transmute(self) })),
+            parent: self.allocator.alloc(AstNodes::ExportAllDeclaration(transmute_self(self))),
         })
     }
 
     pub fn with_clause(&self) -> Option<&AstNode<'a, 'b, WithClause<'a>>> {
         self.allocator
-            .alloc(
-                self.inner.with_clause.as_ref().map(|inner| AstNode {
-                    inner: inner.as_ref(),
-                    allocator: self.allocator,
-                    parent: self
-                        .allocator
-                        .alloc(AstNodes::ExportAllDeclaration(unsafe { transmute(self) })),
-                }),
-            )
+            .alloc(self.inner.with_clause.as_ref().map(|inner| AstNode {
+                inner: inner.as_ref(),
+                allocator: self.allocator,
+                parent: self.allocator.alloc(AstNodes::ExportAllDeclaration(transmute_self(self))),
+            }))
             .as_ref()
     }
 
@@ -4839,7 +4769,7 @@ impl<'a, 'b> AstNode<'a, 'b, ExportSpecifier<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.local,
             allocator: self.allocator,
-            parent: self.allocator.alloc(AstNodes::ExportSpecifier(unsafe { transmute(self) })),
+            parent: self.allocator.alloc(AstNodes::ExportSpecifier(transmute_self(self))),
         })
     }
 
@@ -4847,7 +4777,7 @@ impl<'a, 'b> AstNode<'a, 'b, ExportSpecifier<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.exported,
             allocator: self.allocator,
-            parent: self.allocator.alloc(AstNodes::ExportSpecifier(unsafe { transmute(self) })),
+            parent: self.allocator.alloc(AstNodes::ExportSpecifier(transmute_self(self))),
         })
     }
 
@@ -4988,9 +4918,7 @@ impl<'a, 'b> AstNode<'a, 'b, V8IntrinsicExpression<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.name,
             allocator: self.allocator,
-            parent: self
-                .allocator
-                .alloc(AstNodes::V8IntrinsicExpression(unsafe { transmute(self) })),
+            parent: self.allocator.alloc(AstNodes::V8IntrinsicExpression(transmute_self(self))),
         })
     }
 
@@ -4998,9 +4926,7 @@ impl<'a, 'b> AstNode<'a, 'b, V8IntrinsicExpression<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.arguments,
             allocator: self.allocator,
-            parent: self
-                .allocator
-                .alloc(AstNodes::V8IntrinsicExpression(unsafe { transmute(self) })),
+            parent: self.allocator.alloc(AstNodes::V8IntrinsicExpression(transmute_self(self))),
         })
     }
 }
@@ -5087,7 +5013,7 @@ impl<'a, 'b> AstNode<'a, 'b, JSXElement<'a>> {
         self.allocator.alloc(AstNode {
             inner: self.inner.opening_element.as_ref(),
             allocator: self.allocator,
-            parent: self.allocator.alloc(AstNodes::JSXElement(unsafe { transmute(self) })),
+            parent: self.allocator.alloc(AstNodes::JSXElement(transmute_self(self))),
         })
     }
 
@@ -5095,7 +5021,7 @@ impl<'a, 'b> AstNode<'a, 'b, JSXElement<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.children,
             allocator: self.allocator,
-            parent: self.allocator.alloc(AstNodes::JSXElement(unsafe { transmute(self) })),
+            parent: self.allocator.alloc(AstNodes::JSXElement(transmute_self(self))),
         })
     }
 
@@ -5104,7 +5030,7 @@ impl<'a, 'b> AstNode<'a, 'b, JSXElement<'a>> {
             .alloc(self.inner.closing_element.as_ref().map(|inner| AstNode {
                 inner: inner.as_ref(),
                 allocator: self.allocator,
-                parent: self.allocator.alloc(AstNodes::JSXElement(unsafe { transmute(self) })),
+                parent: self.allocator.alloc(AstNodes::JSXElement(transmute_self(self))),
             }))
             .as_ref()
     }
@@ -5118,7 +5044,7 @@ impl<'a, 'b> AstNode<'a, 'b, JSXOpeningElement<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.name,
             allocator: self.allocator,
-            parent: self.allocator.alloc(AstNodes::JSXOpeningElement(unsafe { transmute(self) })),
+            parent: self.allocator.alloc(AstNodes::JSXOpeningElement(transmute_self(self))),
         })
     }
 
@@ -5127,8 +5053,7 @@ impl<'a, 'b> AstNode<'a, 'b, JSXOpeningElement<'a>> {
             .alloc(self.inner.type_arguments.as_ref().map(|inner| AstNode {
                 inner: inner.as_ref(),
                 allocator: self.allocator,
-                parent:
-                    self.allocator.alloc(AstNodes::JSXOpeningElement(unsafe { transmute(self) })),
+                parent: self.allocator.alloc(AstNodes::JSXOpeningElement(transmute_self(self))),
             }))
             .as_ref()
     }
@@ -5137,7 +5062,7 @@ impl<'a, 'b> AstNode<'a, 'b, JSXOpeningElement<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.attributes,
             allocator: self.allocator,
-            parent: self.allocator.alloc(AstNodes::JSXOpeningElement(unsafe { transmute(self) })),
+            parent: self.allocator.alloc(AstNodes::JSXOpeningElement(transmute_self(self))),
         })
     }
 }
@@ -5150,7 +5075,7 @@ impl<'a, 'b> AstNode<'a, 'b, JSXClosingElement<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.name,
             allocator: self.allocator,
-            parent: self.allocator.alloc(AstNodes::JSXClosingElement(unsafe { transmute(self) })),
+            parent: self.allocator.alloc(AstNodes::JSXClosingElement(transmute_self(self))),
         })
     }
 }
@@ -5163,7 +5088,7 @@ impl<'a, 'b> AstNode<'a, 'b, JSXFragment<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.opening_fragment,
             allocator: self.allocator,
-            parent: self.allocator.alloc(AstNodes::JSXFragment(unsafe { transmute(self) })),
+            parent: self.allocator.alloc(AstNodes::JSXFragment(transmute_self(self))),
         })
     }
 
@@ -5171,7 +5096,7 @@ impl<'a, 'b> AstNode<'a, 'b, JSXFragment<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.children,
             allocator: self.allocator,
-            parent: self.allocator.alloc(AstNodes::JSXFragment(unsafe { transmute(self) })),
+            parent: self.allocator.alloc(AstNodes::JSXFragment(transmute_self(self))),
         })
     }
 
@@ -5179,7 +5104,7 @@ impl<'a, 'b> AstNode<'a, 'b, JSXFragment<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.closing_fragment,
             allocator: self.allocator,
-            parent: self.allocator.alloc(AstNodes::JSXFragment(unsafe { transmute(self) })),
+            parent: self.allocator.alloc(AstNodes::JSXFragment(transmute_self(self))),
         })
     }
 }
@@ -5196,7 +5121,7 @@ impl<'a, 'b> AstNode<'a, 'b, JSXClosingFragment> {
 
 impl<'a, 'b> AstNode<'a, 'b, JSXElementName<'a>> {
     pub fn as_ast_nodes(&self) -> &AstNodes<'a, 'b> {
-        let parent = self.allocator.alloc(AstNodes::JSXElementName(unsafe { transmute(self) }));
+        let parent = self.allocator.alloc(AstNodes::JSXElementName(transmute_self(self)));
         let node = match self.inner {
             JSXElementName::Identifier(s) => {
                 AstNodes::JSXIdentifier(self.allocator.alloc(AstNode {
@@ -5239,7 +5164,7 @@ impl<'a, 'b> AstNode<'a, 'b, JSXElementName<'a>> {
 }
 impl<'a, 'b> FormatWrite<'a> for AstNode<'a, 'b, JSXElementName<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        let parent = self.allocator.alloc(AstNodes::JSXElementName(unsafe { transmute(self) }));
+        let parent = self.allocator.alloc(AstNodes::JSXElementName(transmute_self(self)));
         match self.inner {
             JSXElementName::Identifier(s) => {
                 AstNode::<'a, 'b, JSXIdentifier> { inner: s, parent, allocator: self.allocator }
@@ -5282,7 +5207,7 @@ impl<'a, 'b> AstNode<'a, 'b, JSXNamespacedName<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.namespace,
             allocator: self.allocator,
-            parent: self.allocator.alloc(AstNodes::JSXNamespacedName(unsafe { transmute(self) })),
+            parent: self.allocator.alloc(AstNodes::JSXNamespacedName(transmute_self(self))),
         })
     }
 
@@ -5290,7 +5215,7 @@ impl<'a, 'b> AstNode<'a, 'b, JSXNamespacedName<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.name,
             allocator: self.allocator,
-            parent: self.allocator.alloc(AstNodes::JSXNamespacedName(unsafe { transmute(self) })),
+            parent: self.allocator.alloc(AstNodes::JSXNamespacedName(transmute_self(self))),
         })
     }
 }
@@ -5303,7 +5228,7 @@ impl<'a, 'b> AstNode<'a, 'b, JSXMemberExpression<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.object,
             allocator: self.allocator,
-            parent: self.allocator.alloc(AstNodes::JSXMemberExpression(unsafe { transmute(self) })),
+            parent: self.allocator.alloc(AstNodes::JSXMemberExpression(transmute_self(self))),
         })
     }
 
@@ -5311,7 +5236,7 @@ impl<'a, 'b> AstNode<'a, 'b, JSXMemberExpression<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.property,
             allocator: self.allocator,
-            parent: self.allocator.alloc(AstNodes::JSXMemberExpression(unsafe { transmute(self) })),
+            parent: self.allocator.alloc(AstNodes::JSXMemberExpression(transmute_self(self))),
         })
     }
 }
@@ -5319,7 +5244,7 @@ impl<'a, 'b> AstNode<'a, 'b, JSXMemberExpression<'a>> {
 impl<'a, 'b> AstNode<'a, 'b, JSXMemberExpressionObject<'a>> {
     pub fn as_ast_nodes(&self) -> &AstNodes<'a, 'b> {
         let parent =
-            self.allocator.alloc(AstNodes::JSXMemberExpressionObject(unsafe { transmute(self) }));
+            self.allocator.alloc(AstNodes::JSXMemberExpressionObject(transmute_self(self)));
         let node = match self.inner {
             JSXMemberExpressionObject::IdentifierReference(s) => {
                 AstNodes::IdentifierReference(self.allocator.alloc(AstNode {
@@ -5349,7 +5274,7 @@ impl<'a, 'b> AstNode<'a, 'b, JSXMemberExpressionObject<'a>> {
 impl<'a, 'b> FormatWrite<'a> for AstNode<'a, 'b, JSXMemberExpressionObject<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         let parent =
-            self.allocator.alloc(AstNodes::JSXMemberExpressionObject(unsafe { transmute(self) }));
+            self.allocator.alloc(AstNodes::JSXMemberExpressionObject(transmute_self(self)));
         match self.inner {
             JSXMemberExpressionObject::IdentifierReference(s) => {
                 AstNode::<'a, 'b, IdentifierReference> {
@@ -5388,9 +5313,7 @@ impl<'a, 'b> AstNode<'a, 'b, JSXExpressionContainer<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.expression,
             allocator: self.allocator,
-            parent: self
-                .allocator
-                .alloc(AstNodes::JSXExpressionContainer(unsafe { transmute(self) })),
+            parent: self.allocator.alloc(AstNodes::JSXExpressionContainer(transmute_self(self))),
         })
     }
 }
@@ -5446,7 +5369,7 @@ impl<'a, 'b> AstNode<'a, 'b, JSXEmptyExpression> {
 
 impl<'a, 'b> AstNode<'a, 'b, JSXAttributeItem<'a>> {
     pub fn as_ast_nodes(&self) -> &AstNodes<'a, 'b> {
-        let parent = self.allocator.alloc(AstNodes::JSXAttributeItem(unsafe { transmute(self) }));
+        let parent = self.allocator.alloc(AstNodes::JSXAttributeItem(transmute_self(self)));
         let node = match self.inner {
             JSXAttributeItem::Attribute(s) => {
                 panic!(
@@ -5466,7 +5389,7 @@ impl<'a, 'b> AstNode<'a, 'b, JSXAttributeItem<'a>> {
 }
 impl<'a, 'b> FormatWrite<'a> for AstNode<'a, 'b, JSXAttributeItem<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        let parent = self.allocator.alloc(AstNodes::JSXAttributeItem(unsafe { transmute(self) }));
+        let parent = self.allocator.alloc(AstNodes::JSXAttributeItem(transmute_self(self)));
         match self.inner {
             JSXAttributeItem::Attribute(s) => {
                 AstNode::<'a, 'b, JSXAttribute> { inner: s, parent, allocator: self.allocator }
@@ -5518,7 +5441,7 @@ impl<'a, 'b> AstNode<'a, 'b, JSXSpreadAttribute<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.argument,
             allocator: self.allocator,
-            parent: self.allocator.alloc(AstNodes::JSXSpreadAttribute(unsafe { transmute(self) })),
+            parent: self.allocator.alloc(AstNodes::JSXSpreadAttribute(transmute_self(self))),
         })
     }
 }
@@ -5748,7 +5671,7 @@ impl<'a, 'b> AstNode<'a, 'b, TSThisParameter<'a>> {
             .alloc(self.inner.type_annotation.as_ref().map(|inner| AstNode {
                 inner: inner.as_ref(),
                 allocator: self.allocator,
-                parent: self.allocator.alloc(AstNodes::TSThisParameter(unsafe { transmute(self) })),
+                parent: self.allocator.alloc(AstNodes::TSThisParameter(transmute_self(self))),
             }))
             .as_ref()
     }
@@ -5762,7 +5685,7 @@ impl<'a, 'b> AstNode<'a, 'b, TSEnumDeclaration<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.id,
             allocator: self.allocator,
-            parent: self.allocator.alloc(AstNodes::TSEnumDeclaration(unsafe { transmute(self) })),
+            parent: self.allocator.alloc(AstNodes::TSEnumDeclaration(transmute_self(self))),
         })
     }
 
@@ -5770,7 +5693,7 @@ impl<'a, 'b> AstNode<'a, 'b, TSEnumDeclaration<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.body,
             allocator: self.allocator,
-            parent: self.allocator.alloc(AstNodes::TSEnumDeclaration(unsafe { transmute(self) })),
+            parent: self.allocator.alloc(AstNodes::TSEnumDeclaration(transmute_self(self))),
         })
     }
 
@@ -5791,7 +5714,7 @@ impl<'a, 'b> AstNode<'a, 'b, TSEnumBody<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.members,
             allocator: self.allocator,
-            parent: self.allocator.alloc(AstNodes::TSEnumBody(unsafe { transmute(self) })),
+            parent: self.allocator.alloc(AstNodes::TSEnumBody(transmute_self(self))),
         })
     }
 }
@@ -5804,7 +5727,7 @@ impl<'a, 'b> AstNode<'a, 'b, TSEnumMember<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.id,
             allocator: self.allocator,
-            parent: self.allocator.alloc(AstNodes::TSEnumMember(unsafe { transmute(self) })),
+            parent: self.allocator.alloc(AstNodes::TSEnumMember(transmute_self(self))),
         })
     }
 
@@ -5813,7 +5736,7 @@ impl<'a, 'b> AstNode<'a, 'b, TSEnumMember<'a>> {
             .alloc(self.inner.initializer.as_ref().map(|inner| AstNode {
                 inner,
                 allocator: self.allocator,
-                parent: self.allocator.alloc(AstNodes::TSEnumMember(unsafe { transmute(self) })),
+                parent: self.allocator.alloc(AstNodes::TSEnumMember(transmute_self(self))),
             }))
             .as_ref()
     }
@@ -5890,7 +5813,7 @@ impl<'a, 'b> AstNode<'a, 'b, TSTypeAnnotation<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.type_annotation,
             allocator: self.allocator,
-            parent: self.allocator.alloc(AstNodes::TSTypeAnnotation(unsafe { transmute(self) })),
+            parent: self.allocator.alloc(AstNodes::TSTypeAnnotation(transmute_self(self))),
         })
     }
 }
@@ -5903,7 +5826,7 @@ impl<'a, 'b> AstNode<'a, 'b, TSLiteralType<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.literal,
             allocator: self.allocator,
-            parent: self.allocator.alloc(AstNodes::TSLiteralType(unsafe { transmute(self) })),
+            parent: self.allocator.alloc(AstNodes::TSLiteralType(transmute_self(self))),
         })
     }
 }
@@ -6400,7 +6323,7 @@ impl<'a, 'b> AstNode<'a, 'b, TSConditionalType<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.check_type,
             allocator: self.allocator,
-            parent: self.allocator.alloc(AstNodes::TSConditionalType(unsafe { transmute(self) })),
+            parent: self.allocator.alloc(AstNodes::TSConditionalType(transmute_self(self))),
         })
     }
 
@@ -6408,7 +6331,7 @@ impl<'a, 'b> AstNode<'a, 'b, TSConditionalType<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.extends_type,
             allocator: self.allocator,
-            parent: self.allocator.alloc(AstNodes::TSConditionalType(unsafe { transmute(self) })),
+            parent: self.allocator.alloc(AstNodes::TSConditionalType(transmute_self(self))),
         })
     }
 
@@ -6416,7 +6339,7 @@ impl<'a, 'b> AstNode<'a, 'b, TSConditionalType<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.true_type,
             allocator: self.allocator,
-            parent: self.allocator.alloc(AstNodes::TSConditionalType(unsafe { transmute(self) })),
+            parent: self.allocator.alloc(AstNodes::TSConditionalType(transmute_self(self))),
         })
     }
 
@@ -6424,7 +6347,7 @@ impl<'a, 'b> AstNode<'a, 'b, TSConditionalType<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.false_type,
             allocator: self.allocator,
-            parent: self.allocator.alloc(AstNodes::TSConditionalType(unsafe { transmute(self) })),
+            parent: self.allocator.alloc(AstNodes::TSConditionalType(transmute_self(self))),
         })
     }
 }
@@ -6437,7 +6360,7 @@ impl<'a, 'b> AstNode<'a, 'b, TSUnionType<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.types,
             allocator: self.allocator,
-            parent: self.allocator.alloc(AstNodes::TSUnionType(unsafe { transmute(self) })),
+            parent: self.allocator.alloc(AstNodes::TSUnionType(transmute_self(self))),
         })
     }
 }
@@ -6450,7 +6373,7 @@ impl<'a, 'b> AstNode<'a, 'b, TSIntersectionType<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.types,
             allocator: self.allocator,
-            parent: self.allocator.alloc(AstNodes::TSIntersectionType(unsafe { transmute(self) })),
+            parent: self.allocator.alloc(AstNodes::TSIntersectionType(transmute_self(self))),
         })
     }
 }
@@ -6463,7 +6386,7 @@ impl<'a, 'b> AstNode<'a, 'b, TSParenthesizedType<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.type_annotation,
             allocator: self.allocator,
-            parent: self.allocator.alloc(AstNodes::TSParenthesizedType(unsafe { transmute(self) })),
+            parent: self.allocator.alloc(AstNodes::TSParenthesizedType(transmute_self(self))),
         })
     }
 }
@@ -6506,7 +6429,7 @@ impl<'a, 'b> AstNode<'a, 'b, TSIndexedAccessType<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.object_type,
             allocator: self.allocator,
-            parent: self.allocator.alloc(AstNodes::TSIndexedAccessType(unsafe { transmute(self) })),
+            parent: self.allocator.alloc(AstNodes::TSIndexedAccessType(transmute_self(self))),
         })
     }
 
@@ -6514,7 +6437,7 @@ impl<'a, 'b> AstNode<'a, 'b, TSIndexedAccessType<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.index_type,
             allocator: self.allocator,
-            parent: self.allocator.alloc(AstNodes::TSIndexedAccessType(unsafe { transmute(self) })),
+            parent: self.allocator.alloc(AstNodes::TSIndexedAccessType(transmute_self(self))),
         })
     }
 }
@@ -6540,7 +6463,7 @@ impl<'a, 'b> AstNode<'a, 'b, TSNamedTupleMember<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.label,
             allocator: self.allocator,
-            parent: self.allocator.alloc(AstNodes::TSNamedTupleMember(unsafe { transmute(self) })),
+            parent: self.allocator.alloc(AstNodes::TSNamedTupleMember(transmute_self(self))),
         })
     }
 
@@ -6548,7 +6471,7 @@ impl<'a, 'b> AstNode<'a, 'b, TSNamedTupleMember<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.element_type,
             allocator: self.allocator,
-            parent: self.allocator.alloc(AstNodes::TSNamedTupleMember(unsafe { transmute(self) })),
+            parent: self.allocator.alloc(AstNodes::TSNamedTupleMember(transmute_self(self))),
         })
     }
 
@@ -6711,7 +6634,7 @@ impl<'a, 'b> AstNode<'a, 'b, TSTypeReference<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.type_name,
             allocator: self.allocator,
-            parent: self.allocator.alloc(AstNodes::TSTypeReference(unsafe { transmute(self) })),
+            parent: self.allocator.alloc(AstNodes::TSTypeReference(transmute_self(self))),
         })
     }
 
@@ -6720,7 +6643,7 @@ impl<'a, 'b> AstNode<'a, 'b, TSTypeReference<'a>> {
             .alloc(self.inner.type_arguments.as_ref().map(|inner| AstNode {
                 inner: inner.as_ref(),
                 allocator: self.allocator,
-                parent: self.allocator.alloc(AstNodes::TSTypeReference(unsafe { transmute(self) })),
+                parent: self.allocator.alloc(AstNodes::TSTypeReference(transmute_self(self))),
             }))
             .as_ref()
     }
@@ -6728,7 +6651,7 @@ impl<'a, 'b> AstNode<'a, 'b, TSTypeReference<'a>> {
 
 impl<'a, 'b> AstNode<'a, 'b, TSTypeName<'a>> {
     pub fn as_ast_nodes(&self) -> &AstNodes<'a, 'b> {
-        let parent = self.allocator.alloc(AstNodes::TSTypeName(unsafe { transmute(self) }));
+        let parent = self.allocator.alloc(AstNodes::TSTypeName(transmute_self(self)));
         let node = match self.inner {
             TSTypeName::IdentifierReference(s) => {
                 AstNodes::IdentifierReference(self.allocator.alloc(AstNode {
@@ -6750,7 +6673,7 @@ impl<'a, 'b> AstNode<'a, 'b, TSTypeName<'a>> {
 }
 impl<'a, 'b> FormatWrite<'a> for AstNode<'a, 'b, TSTypeName<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        let parent = self.allocator.alloc(AstNodes::TSTypeName(unsafe { transmute(self) }));
+        let parent = self.allocator.alloc(AstNodes::TSTypeName(transmute_self(self)));
         match self.inner {
             TSTypeName::IdentifierReference(s) => AstNode::<'a, 'b, IdentifierReference> {
                 inner: s,
@@ -6779,7 +6702,7 @@ impl<'a, 'b> AstNode<'a, 'b, TSQualifiedName<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.left,
             allocator: self.allocator,
-            parent: self.allocator.alloc(AstNodes::TSQualifiedName(unsafe { transmute(self) })),
+            parent: self.allocator.alloc(AstNodes::TSQualifiedName(transmute_self(self))),
         })
     }
 
@@ -6787,7 +6710,7 @@ impl<'a, 'b> AstNode<'a, 'b, TSQualifiedName<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.right,
             allocator: self.allocator,
-            parent: self.allocator.alloc(AstNodes::TSQualifiedName(unsafe { transmute(self) })),
+            parent: self.allocator.alloc(AstNodes::TSQualifiedName(transmute_self(self))),
         })
     }
 }
@@ -6802,7 +6725,7 @@ impl<'a, 'b> AstNode<'a, 'b, TSTypeParameterInstantiation<'a>> {
             allocator: self.allocator,
             parent: self
                 .allocator
-                .alloc(AstNodes::TSTypeParameterInstantiation(unsafe { transmute(self) })),
+                .alloc(AstNodes::TSTypeParameterInstantiation(transmute_self(self))),
         })
     }
 }
@@ -6815,7 +6738,7 @@ impl<'a, 'b> AstNode<'a, 'b, TSTypeParameter<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.name,
             allocator: self.allocator,
-            parent: self.allocator.alloc(AstNodes::TSTypeParameter(unsafe { transmute(self) })),
+            parent: self.allocator.alloc(AstNodes::TSTypeParameter(transmute_self(self))),
         })
     }
 
@@ -6824,7 +6747,7 @@ impl<'a, 'b> AstNode<'a, 'b, TSTypeParameter<'a>> {
             .alloc(self.inner.constraint.as_ref().map(|inner| AstNode {
                 inner,
                 allocator: self.allocator,
-                parent: self.allocator.alloc(AstNodes::TSTypeParameter(unsafe { transmute(self) })),
+                parent: self.allocator.alloc(AstNodes::TSTypeParameter(transmute_self(self))),
             }))
             .as_ref()
     }
@@ -6834,7 +6757,7 @@ impl<'a, 'b> AstNode<'a, 'b, TSTypeParameter<'a>> {
             .alloc(self.inner.default.as_ref().map(|inner| AstNode {
                 inner,
                 allocator: self.allocator,
-                parent: self.allocator.alloc(AstNodes::TSTypeParameter(unsafe { transmute(self) })),
+                parent: self.allocator.alloc(AstNodes::TSTypeParameter(transmute_self(self))),
             }))
             .as_ref()
     }
@@ -6862,7 +6785,7 @@ impl<'a, 'b> AstNode<'a, 'b, TSTypeParameterDeclaration<'a>> {
             allocator: self.allocator,
             parent: self
                 .allocator
-                .alloc(AstNodes::TSTypeParameterDeclaration(unsafe { transmute(self) })),
+                .alloc(AstNodes::TSTypeParameterDeclaration(transmute_self(self))),
         })
     }
 }
@@ -6875,22 +6798,17 @@ impl<'a, 'b> AstNode<'a, 'b, TSTypeAliasDeclaration<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.id,
             allocator: self.allocator,
-            parent: self
-                .allocator
-                .alloc(AstNodes::TSTypeAliasDeclaration(unsafe { transmute(self) })),
+            parent: self.allocator.alloc(AstNodes::TSTypeAliasDeclaration(transmute_self(self))),
         })
     }
 
     pub fn type_parameters(&self) -> Option<&AstNode<'a, 'b, TSTypeParameterDeclaration<'a>>> {
         self.allocator
-            .alloc(self.inner.type_parameters.as_ref().map(|inner| {
-                AstNode {
-                    inner: inner.as_ref(),
-                    allocator: self.allocator,
-                    parent: self
-                        .allocator
-                        .alloc(AstNodes::TSTypeAliasDeclaration(unsafe { transmute(self) })),
-                }
+            .alloc(self.inner.type_parameters.as_ref().map(|inner| AstNode {
+                inner: inner.as_ref(),
+                allocator: self.allocator,
+                parent:
+                    self.allocator.alloc(AstNodes::TSTypeAliasDeclaration(transmute_self(self))),
             }))
             .as_ref()
     }
@@ -6899,9 +6817,7 @@ impl<'a, 'b> AstNode<'a, 'b, TSTypeAliasDeclaration<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.type_annotation,
             allocator: self.allocator,
-            parent: self
-                .allocator
-                .alloc(AstNodes::TSTypeAliasDeclaration(unsafe { transmute(self) })),
+            parent: self.allocator.alloc(AstNodes::TSTypeAliasDeclaration(transmute_self(self))),
         })
     }
 
@@ -6918,7 +6834,7 @@ impl<'a, 'b> AstNode<'a, 'b, TSClassImplements<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.expression,
             allocator: self.allocator,
-            parent: self.allocator.alloc(AstNodes::TSClassImplements(unsafe { transmute(self) })),
+            parent: self.allocator.alloc(AstNodes::TSClassImplements(transmute_self(self))),
         })
     }
 
@@ -6927,8 +6843,7 @@ impl<'a, 'b> AstNode<'a, 'b, TSClassImplements<'a>> {
             .alloc(self.inner.type_arguments.as_ref().map(|inner| AstNode {
                 inner: inner.as_ref(),
                 allocator: self.allocator,
-                parent:
-                    self.allocator.alloc(AstNodes::TSClassImplements(unsafe { transmute(self) })),
+                parent: self.allocator.alloc(AstNodes::TSClassImplements(transmute_self(self))),
             }))
             .as_ref()
     }
@@ -6942,22 +6857,17 @@ impl<'a, 'b> AstNode<'a, 'b, TSInterfaceDeclaration<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.id,
             allocator: self.allocator,
-            parent: self
-                .allocator
-                .alloc(AstNodes::TSInterfaceDeclaration(unsafe { transmute(self) })),
+            parent: self.allocator.alloc(AstNodes::TSInterfaceDeclaration(transmute_self(self))),
         })
     }
 
     pub fn type_parameters(&self) -> Option<&AstNode<'a, 'b, TSTypeParameterDeclaration<'a>>> {
         self.allocator
-            .alloc(self.inner.type_parameters.as_ref().map(|inner| {
-                AstNode {
-                    inner: inner.as_ref(),
-                    allocator: self.allocator,
-                    parent: self
-                        .allocator
-                        .alloc(AstNodes::TSInterfaceDeclaration(unsafe { transmute(self) })),
-                }
+            .alloc(self.inner.type_parameters.as_ref().map(|inner| AstNode {
+                inner: inner.as_ref(),
+                allocator: self.allocator,
+                parent:
+                    self.allocator.alloc(AstNodes::TSInterfaceDeclaration(transmute_self(self))),
             }))
             .as_ref()
     }
@@ -6966,9 +6876,7 @@ impl<'a, 'b> AstNode<'a, 'b, TSInterfaceDeclaration<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.extends,
             allocator: self.allocator,
-            parent: self
-                .allocator
-                .alloc(AstNodes::TSInterfaceDeclaration(unsafe { transmute(self) })),
+            parent: self.allocator.alloc(AstNodes::TSInterfaceDeclaration(transmute_self(self))),
         })
     }
 
@@ -6976,9 +6884,7 @@ impl<'a, 'b> AstNode<'a, 'b, TSInterfaceDeclaration<'a>> {
         self.allocator.alloc(AstNode {
             inner: self.inner.body.as_ref(),
             allocator: self.allocator,
-            parent: self
-                .allocator
-                .alloc(AstNodes::TSInterfaceDeclaration(unsafe { transmute(self) })),
+            parent: self.allocator.alloc(AstNodes::TSInterfaceDeclaration(transmute_self(self))),
         })
     }
 
@@ -7020,7 +6926,7 @@ impl<'a, 'b> AstNode<'a, 'b, TSPropertySignature<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.key,
             allocator: self.allocator,
-            parent: self.allocator.alloc(AstNodes::TSPropertySignature(unsafe { transmute(self) })),
+            parent: self.allocator.alloc(AstNodes::TSPropertySignature(transmute_self(self))),
         })
     }
 
@@ -7029,8 +6935,7 @@ impl<'a, 'b> AstNode<'a, 'b, TSPropertySignature<'a>> {
             .alloc(self.inner.type_annotation.as_ref().map(|inner| AstNode {
                 inner: inner.as_ref(),
                 allocator: self.allocator,
-                parent:
-                    self.allocator.alloc(AstNodes::TSPropertySignature(unsafe { transmute(self) })),
+                parent: self.allocator.alloc(AstNodes::TSPropertySignature(transmute_self(self))),
             }))
             .as_ref()
     }
@@ -7198,7 +7103,7 @@ impl<'a, 'b> AstNode<'a, 'b, TSMethodSignature<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.key,
             allocator: self.allocator,
-            parent: self.allocator.alloc(AstNodes::TSMethodSignature(unsafe { transmute(self) })),
+            parent: self.allocator.alloc(AstNodes::TSMethodSignature(transmute_self(self))),
         })
     }
 
@@ -7219,8 +7124,7 @@ impl<'a, 'b> AstNode<'a, 'b, TSMethodSignature<'a>> {
             .alloc(self.inner.type_parameters.as_ref().map(|inner| AstNode {
                 inner: inner.as_ref(),
                 allocator: self.allocator,
-                parent:
-                    self.allocator.alloc(AstNodes::TSMethodSignature(unsafe { transmute(self) })),
+                parent: self.allocator.alloc(AstNodes::TSMethodSignature(transmute_self(self))),
             }))
             .as_ref()
     }
@@ -7230,8 +7134,7 @@ impl<'a, 'b> AstNode<'a, 'b, TSMethodSignature<'a>> {
             .alloc(self.inner.this_param.as_ref().map(|inner| AstNode {
                 inner: inner.as_ref(),
                 allocator: self.allocator,
-                parent:
-                    self.allocator.alloc(AstNodes::TSMethodSignature(unsafe { transmute(self) })),
+                parent: self.allocator.alloc(AstNodes::TSMethodSignature(transmute_self(self))),
             }))
             .as_ref()
     }
@@ -7240,7 +7143,7 @@ impl<'a, 'b> AstNode<'a, 'b, TSMethodSignature<'a>> {
         self.allocator.alloc(AstNode {
             inner: self.inner.params.as_ref(),
             allocator: self.allocator,
-            parent: self.allocator.alloc(AstNodes::TSMethodSignature(unsafe { transmute(self) })),
+            parent: self.allocator.alloc(AstNodes::TSMethodSignature(transmute_self(self))),
         })
     }
 
@@ -7249,8 +7152,7 @@ impl<'a, 'b> AstNode<'a, 'b, TSMethodSignature<'a>> {
             .alloc(self.inner.return_type.as_ref().map(|inner| AstNode {
                 inner: inner.as_ref(),
                 allocator: self.allocator,
-                parent:
-                    self.allocator.alloc(AstNodes::TSMethodSignature(unsafe { transmute(self) })),
+                parent: self.allocator.alloc(AstNodes::TSMethodSignature(transmute_self(self))),
             }))
             .as_ref()
     }
@@ -7262,13 +7164,14 @@ impl<'a, 'b> AstNode<'a, 'b, TSConstructSignatureDeclaration<'a>> {
 
     pub fn type_parameters(&self) -> Option<&AstNode<'a, 'b, TSTypeParameterDeclaration<'a>>> {
         self.allocator
-            .alloc(self.inner.type_parameters.as_ref().map(|inner| AstNode {
-                inner: inner.as_ref(),
-                allocator: self.allocator,
-                parent:
-                    self.allocator.alloc(AstNodes::TSConstructSignatureDeclaration(unsafe {
-                        transmute(self)
-                    })),
+            .alloc(self.inner.type_parameters.as_ref().map(|inner| {
+                AstNode {
+                    inner: inner.as_ref(),
+                    allocator: self.allocator,
+                    parent: self
+                        .allocator
+                        .alloc(AstNodes::TSConstructSignatureDeclaration(transmute_self(self))),
+                }
             }))
             .as_ref()
     }
@@ -7279,19 +7182,20 @@ impl<'a, 'b> AstNode<'a, 'b, TSConstructSignatureDeclaration<'a>> {
             allocator: self.allocator,
             parent: self
                 .allocator
-                .alloc(AstNodes::TSConstructSignatureDeclaration(unsafe { transmute(self) })),
+                .alloc(AstNodes::TSConstructSignatureDeclaration(transmute_self(self))),
         })
     }
 
     pub fn return_type(&self) -> Option<&AstNode<'a, 'b, TSTypeAnnotation<'a>>> {
         self.allocator
-            .alloc(self.inner.return_type.as_ref().map(|inner| AstNode {
-                inner: inner.as_ref(),
-                allocator: self.allocator,
-                parent:
-                    self.allocator.alloc(AstNodes::TSConstructSignatureDeclaration(unsafe {
-                        transmute(self)
-                    })),
+            .alloc(self.inner.return_type.as_ref().map(|inner| {
+                AstNode {
+                    inner: inner.as_ref(),
+                    allocator: self.allocator,
+                    parent: self
+                        .allocator
+                        .alloc(AstNodes::TSConstructSignatureDeclaration(transmute_self(self))),
+                }
             }))
             .as_ref()
     }
@@ -7322,7 +7226,7 @@ impl<'a, 'b> AstNode<'a, 'b, TSInterfaceHeritage<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.expression,
             allocator: self.allocator,
-            parent: self.allocator.alloc(AstNodes::TSInterfaceHeritage(unsafe { transmute(self) })),
+            parent: self.allocator.alloc(AstNodes::TSInterfaceHeritage(transmute_self(self))),
         })
     }
 
@@ -7331,8 +7235,7 @@ impl<'a, 'b> AstNode<'a, 'b, TSInterfaceHeritage<'a>> {
             .alloc(self.inner.type_arguments.as_ref().map(|inner| AstNode {
                 inner: inner.as_ref(),
                 allocator: self.allocator,
-                parent:
-                    self.allocator.alloc(AstNodes::TSInterfaceHeritage(unsafe { transmute(self) })),
+                parent: self.allocator.alloc(AstNodes::TSInterfaceHeritage(transmute_self(self))),
             }))
             .as_ref()
     }
@@ -7413,7 +7316,7 @@ impl<'a, 'b> AstNode<'a, 'b, TSModuleDeclaration<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.id,
             allocator: self.allocator,
-            parent: self.allocator.alloc(AstNodes::TSModuleDeclaration(unsafe { transmute(self) })),
+            parent: self.allocator.alloc(AstNodes::TSModuleDeclaration(transmute_self(self))),
         })
     }
 
@@ -7422,8 +7325,7 @@ impl<'a, 'b> AstNode<'a, 'b, TSModuleDeclaration<'a>> {
             .alloc(self.inner.body.as_ref().map(|inner| AstNode {
                 inner,
                 allocator: self.allocator,
-                parent:
-                    self.allocator.alloc(AstNodes::TSModuleDeclaration(unsafe { transmute(self) })),
+                parent: self.allocator.alloc(AstNodes::TSModuleDeclaration(transmute_self(self))),
             }))
             .as_ref()
     }
@@ -7535,7 +7437,7 @@ impl<'a, 'b> AstNode<'a, 'b, TSModuleBlock<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.directives,
             allocator: self.allocator,
-            parent: self.allocator.alloc(AstNodes::TSModuleBlock(unsafe { transmute(self) })),
+            parent: self.allocator.alloc(AstNodes::TSModuleBlock(transmute_self(self))),
         })
     }
 
@@ -7543,7 +7445,7 @@ impl<'a, 'b> AstNode<'a, 'b, TSModuleBlock<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.body,
             allocator: self.allocator,
-            parent: self.allocator.alloc(AstNodes::TSModuleBlock(unsafe { transmute(self) })),
+            parent: self.allocator.alloc(AstNodes::TSModuleBlock(transmute_self(self))),
         })
     }
 }
@@ -7556,7 +7458,7 @@ impl<'a, 'b> AstNode<'a, 'b, TSTypeLiteral<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.members,
             allocator: self.allocator,
-            parent: self.allocator.alloc(AstNodes::TSTypeLiteral(unsafe { transmute(self) })),
+            parent: self.allocator.alloc(AstNodes::TSTypeLiteral(transmute_self(self))),
         })
     }
 }
@@ -7569,7 +7471,7 @@ impl<'a, 'b> AstNode<'a, 'b, TSInferType<'a>> {
         self.allocator.alloc(AstNode {
             inner: self.inner.type_parameter.as_ref(),
             allocator: self.allocator,
-            parent: self.allocator.alloc(AstNodes::TSInferType(unsafe { transmute(self) })),
+            parent: self.allocator.alloc(AstNodes::TSInferType(transmute_self(self))),
         })
     }
 }
@@ -7582,7 +7484,7 @@ impl<'a, 'b> AstNode<'a, 'b, TSTypeQuery<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.expr_name,
             allocator: self.allocator,
-            parent: self.allocator.alloc(AstNodes::TSTypeQuery(unsafe { transmute(self) })),
+            parent: self.allocator.alloc(AstNodes::TSTypeQuery(transmute_self(self))),
         })
     }
 
@@ -7591,7 +7493,7 @@ impl<'a, 'b> AstNode<'a, 'b, TSTypeQuery<'a>> {
             .alloc(self.inner.type_arguments.as_ref().map(|inner| AstNode {
                 inner: inner.as_ref(),
                 allocator: self.allocator,
-                parent: self.allocator.alloc(AstNodes::TSTypeQuery(unsafe { transmute(self) })),
+                parent: self.allocator.alloc(AstNodes::TSTypeQuery(transmute_self(self))),
             }))
             .as_ref()
     }
@@ -7650,7 +7552,7 @@ impl<'a, 'b> AstNode<'a, 'b, TSImportType<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.argument,
             allocator: self.allocator,
-            parent: self.allocator.alloc(AstNodes::TSImportType(unsafe { transmute(self) })),
+            parent: self.allocator.alloc(AstNodes::TSImportType(transmute_self(self))),
         })
     }
 
@@ -7659,7 +7561,7 @@ impl<'a, 'b> AstNode<'a, 'b, TSImportType<'a>> {
             .alloc(self.inner.options.as_ref().map(|inner| AstNode {
                 inner: inner.as_ref(),
                 allocator: self.allocator,
-                parent: self.allocator.alloc(AstNodes::TSImportType(unsafe { transmute(self) })),
+                parent: self.allocator.alloc(AstNodes::TSImportType(transmute_self(self))),
             }))
             .as_ref()
     }
@@ -7669,7 +7571,7 @@ impl<'a, 'b> AstNode<'a, 'b, TSImportType<'a>> {
             .alloc(self.inner.qualifier.as_ref().map(|inner| AstNode {
                 inner,
                 allocator: self.allocator,
-                parent: self.allocator.alloc(AstNodes::TSImportType(unsafe { transmute(self) })),
+                parent: self.allocator.alloc(AstNodes::TSImportType(transmute_self(self))),
             }))
             .as_ref()
     }
@@ -7679,7 +7581,7 @@ impl<'a, 'b> AstNode<'a, 'b, TSImportType<'a>> {
             .alloc(self.inner.type_arguments.as_ref().map(|inner| AstNode {
                 inner: inner.as_ref(),
                 allocator: self.allocator,
-                parent: self.allocator.alloc(AstNodes::TSImportType(unsafe { transmute(self) })),
+                parent: self.allocator.alloc(AstNodes::TSImportType(transmute_self(self))),
             }))
             .as_ref()
     }
@@ -7769,7 +7671,7 @@ impl<'a, 'b> AstNode<'a, 'b, TSMappedType<'a>> {
         self.allocator.alloc(AstNode {
             inner: self.inner.type_parameter.as_ref(),
             allocator: self.allocator,
-            parent: self.allocator.alloc(AstNodes::TSMappedType(unsafe { transmute(self) })),
+            parent: self.allocator.alloc(AstNodes::TSMappedType(transmute_self(self))),
         })
     }
 
@@ -7778,7 +7680,7 @@ impl<'a, 'b> AstNode<'a, 'b, TSMappedType<'a>> {
             .alloc(self.inner.name_type.as_ref().map(|inner| AstNode {
                 inner,
                 allocator: self.allocator,
-                parent: self.allocator.alloc(AstNodes::TSMappedType(unsafe { transmute(self) })),
+                parent: self.allocator.alloc(AstNodes::TSMappedType(transmute_self(self))),
             }))
             .as_ref()
     }
@@ -7788,7 +7690,7 @@ impl<'a, 'b> AstNode<'a, 'b, TSMappedType<'a>> {
             .alloc(self.inner.type_annotation.as_ref().map(|inner| AstNode {
                 inner,
                 allocator: self.allocator,
-                parent: self.allocator.alloc(AstNodes::TSMappedType(unsafe { transmute(self) })),
+                parent: self.allocator.alloc(AstNodes::TSMappedType(transmute_self(self))),
             }))
             .as_ref()
     }
@@ -7810,9 +7712,7 @@ impl<'a, 'b> AstNode<'a, 'b, TSTemplateLiteralType<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.quasis,
             allocator: self.allocator,
-            parent: self
-                .allocator
-                .alloc(AstNodes::TSTemplateLiteralType(unsafe { transmute(self) })),
+            parent: self.allocator.alloc(AstNodes::TSTemplateLiteralType(transmute_self(self))),
         })
     }
 
@@ -7820,9 +7720,7 @@ impl<'a, 'b> AstNode<'a, 'b, TSTemplateLiteralType<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.types,
             allocator: self.allocator,
-            parent: self
-                .allocator
-                .alloc(AstNodes::TSTemplateLiteralType(unsafe { transmute(self) })),
+            parent: self.allocator.alloc(AstNodes::TSTemplateLiteralType(transmute_self(self))),
         })
     }
 }
@@ -7835,7 +7733,7 @@ impl<'a, 'b> AstNode<'a, 'b, TSAsExpression<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.expression,
             allocator: self.allocator,
-            parent: self.allocator.alloc(AstNodes::TSAsExpression(unsafe { transmute(self) })),
+            parent: self.allocator.alloc(AstNodes::TSAsExpression(transmute_self(self))),
         })
     }
 
@@ -7843,7 +7741,7 @@ impl<'a, 'b> AstNode<'a, 'b, TSAsExpression<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.type_annotation,
             allocator: self.allocator,
-            parent: self.allocator.alloc(AstNodes::TSAsExpression(unsafe { transmute(self) })),
+            parent: self.allocator.alloc(AstNodes::TSAsExpression(transmute_self(self))),
         })
     }
 }
@@ -7856,9 +7754,7 @@ impl<'a, 'b> AstNode<'a, 'b, TSSatisfiesExpression<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.expression,
             allocator: self.allocator,
-            parent: self
-                .allocator
-                .alloc(AstNodes::TSSatisfiesExpression(unsafe { transmute(self) })),
+            parent: self.allocator.alloc(AstNodes::TSSatisfiesExpression(transmute_self(self))),
         })
     }
 
@@ -7866,9 +7762,7 @@ impl<'a, 'b> AstNode<'a, 'b, TSSatisfiesExpression<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.type_annotation,
             allocator: self.allocator,
-            parent: self
-                .allocator
-                .alloc(AstNodes::TSSatisfiesExpression(unsafe { transmute(self) })),
+            parent: self.allocator.alloc(AstNodes::TSSatisfiesExpression(transmute_self(self))),
         })
     }
 }
@@ -7881,7 +7775,7 @@ impl<'a, 'b> AstNode<'a, 'b, TSTypeAssertion<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.type_annotation,
             allocator: self.allocator,
-            parent: self.allocator.alloc(AstNodes::TSTypeAssertion(unsafe { transmute(self) })),
+            parent: self.allocator.alloc(AstNodes::TSTypeAssertion(transmute_self(self))),
         })
     }
 
@@ -7889,7 +7783,7 @@ impl<'a, 'b> AstNode<'a, 'b, TSTypeAssertion<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.expression,
             allocator: self.allocator,
-            parent: self.allocator.alloc(AstNodes::TSTypeAssertion(unsafe { transmute(self) })),
+            parent: self.allocator.alloc(AstNodes::TSTypeAssertion(transmute_self(self))),
         })
     }
 }
@@ -7902,9 +7796,7 @@ impl<'a, 'b> AstNode<'a, 'b, TSImportEqualsDeclaration<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.id,
             allocator: self.allocator,
-            parent: self
-                .allocator
-                .alloc(AstNodes::TSImportEqualsDeclaration(unsafe { transmute(self) })),
+            parent: self.allocator.alloc(AstNodes::TSImportEqualsDeclaration(transmute_self(self))),
         })
     }
 
@@ -7912,9 +7804,7 @@ impl<'a, 'b> AstNode<'a, 'b, TSImportEqualsDeclaration<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.module_reference,
             allocator: self.allocator,
-            parent: self
-                .allocator
-                .alloc(AstNodes::TSImportEqualsDeclaration(unsafe { transmute(self) })),
+            parent: self.allocator.alloc(AstNodes::TSImportEqualsDeclaration(transmute_self(self))),
         })
     }
 
@@ -7925,7 +7815,7 @@ impl<'a, 'b> AstNode<'a, 'b, TSImportEqualsDeclaration<'a>> {
 
 impl<'a, 'b> AstNode<'a, 'b, TSModuleReference<'a>> {
     pub fn as_ast_nodes(&self) -> &AstNodes<'a, 'b> {
-        let parent = self.allocator.alloc(AstNodes::TSModuleReference(unsafe { transmute(self) }));
+        let parent = self.allocator.alloc(AstNodes::TSModuleReference(transmute_self(self)));
         let node = match self.inner {
             TSModuleReference::ExternalModuleReference(s) => {
                 AstNodes::TSExternalModuleReference(self.allocator.alloc(AstNode {
@@ -7947,7 +7837,7 @@ impl<'a, 'b> AstNode<'a, 'b, TSModuleReference<'a>> {
 }
 impl<'a, 'b> FormatWrite<'a> for AstNode<'a, 'b, TSModuleReference<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        let parent = self.allocator.alloc(AstNodes::TSModuleReference(unsafe { transmute(self) }));
+        let parent = self.allocator.alloc(AstNodes::TSModuleReference(transmute_self(self)));
         match self.inner {
             TSModuleReference::ExternalModuleReference(s) => {
                 AstNode::<'a, 'b, TSExternalModuleReference> {
@@ -7980,9 +7870,7 @@ impl<'a, 'b> AstNode<'a, 'b, TSExternalModuleReference<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.expression,
             allocator: self.allocator,
-            parent: self
-                .allocator
-                .alloc(AstNodes::TSExternalModuleReference(unsafe { transmute(self) })),
+            parent: self.allocator.alloc(AstNodes::TSExternalModuleReference(transmute_self(self))),
         })
     }
 }
@@ -7995,7 +7883,7 @@ impl<'a, 'b> AstNode<'a, 'b, TSNonNullExpression<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.expression,
             allocator: self.allocator,
-            parent: self.allocator.alloc(AstNodes::TSNonNullExpression(unsafe { transmute(self) })),
+            parent: self.allocator.alloc(AstNodes::TSNonNullExpression(transmute_self(self))),
         })
     }
 }
@@ -8008,7 +7896,7 @@ impl<'a, 'b> AstNode<'a, 'b, Decorator<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.expression,
             allocator: self.allocator,
-            parent: self.allocator.alloc(AstNodes::Decorator(unsafe { transmute(self) })),
+            parent: self.allocator.alloc(AstNodes::Decorator(transmute_self(self))),
         })
     }
 }
@@ -8021,7 +7909,7 @@ impl<'a, 'b> AstNode<'a, 'b, TSExportAssignment<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.expression,
             allocator: self.allocator,
-            parent: self.allocator.alloc(AstNodes::TSExportAssignment(unsafe { transmute(self) })),
+            parent: self.allocator.alloc(AstNodes::TSExportAssignment(transmute_self(self))),
         })
     }
 }
@@ -8047,9 +7935,7 @@ impl<'a, 'b> AstNode<'a, 'b, TSInstantiationExpression<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.expression,
             allocator: self.allocator,
-            parent: self
-                .allocator
-                .alloc(AstNodes::TSInstantiationExpression(unsafe { transmute(self) })),
+            parent: self.allocator.alloc(AstNodes::TSInstantiationExpression(transmute_self(self))),
         })
     }
 
@@ -8057,9 +7943,7 @@ impl<'a, 'b> AstNode<'a, 'b, TSInstantiationExpression<'a>> {
         self.allocator.alloc(AstNode {
             inner: self.inner.type_arguments.as_ref(),
             allocator: self.allocator,
-            parent: self
-                .allocator
-                .alloc(AstNodes::TSInstantiationExpression(unsafe { transmute(self) })),
+            parent: self.allocator.alloc(AstNodes::TSInstantiationExpression(transmute_self(self))),
         })
     }
 }

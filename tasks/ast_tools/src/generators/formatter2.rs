@@ -59,20 +59,27 @@ impl Generator for FormatterFormatGenerator2 {
 
         let span_match_arms = ast_nodes_names.iter().map(|(name, _)| {
             quote! {
-                Self::#name(n) => n.inner.span(),
+                Self::#name(n) => n.span(),
             }
         });
 
         let parent_match_arms = ast_nodes_names.iter().map(|(name, _)| {
             quote! {
-                Self::#name(n) => n.parent(),
+                Self::#name(n) => n.parent,
             }
         });
+
+        let transmute_self = quote! {
+            fn transmute_self<'a, 'b, T>(s: &AstNode<'a, 'b, T>) -> &'a AstNode<'a, 'b, T> {
+                /// * SAFETY: `s` is already allocated in Arena, so transmute from `&` to `&'a` is safe.
+                unsafe { transmute(s) }
+            }
+        };
 
         let output = quote! {
             #![allow(clippy::undocumented_unsafe_blocks)]
 
-            use std::mem::transmute;
+            use std::{mem::transmute, ops::Deref};
             ///@@line_break
             use oxc_ast::{AstKind, ast::*};
             use oxc_allocator::{Allocator, Vec};
@@ -88,6 +95,8 @@ impl Generator for FormatterFormatGenerator2 {
                 write::FormatWrite,
             };
 
+            ///@@line_break
+            #transmute_self
 
             ///@@line_break
             pub enum AstNodes<'a, 'b> {
@@ -114,22 +123,29 @@ impl Generator for FormatterFormatGenerator2 {
             ///@@line_break
             pub struct AstNode<'a, 'b, T> {
                 inner: &'b T,
-                parent: &'a AstNodes<'a, 'b>,
+                pub parent: &'a AstNodes<'a, 'b>,
                 allocator: &'a Allocator,
+            }
+
+            ///@@line_break
+            impl<'a, 'b, T> Deref for AstNode<'a, 'b, T> {
+                type Target = T;
+
+                fn deref(&self) -> &Self::Target {
+                    self.inner
+                }
+            }
+
+            impl<'a, 'b, T> AsRef<T> for AstNode<'a, 'b, T> {
+                fn as_ref(&self) -> &T {
+                    self.inner
+                }
             }
 
             ///@@line_break
             impl<'a,'b, T>  AstNode<'a, 'b, T> {
                 pub fn new(inner: &'b T, parent: &'a AstNodes<'a, 'b>, allocator: &'a Allocator) -> Self {
                     AstNode { inner, parent, allocator }
-                }
-
-                pub fn inner(&self) -> &'b T {
-                    self.inner
-                }
-
-                pub fn parent(&self) -> &'a AstNodes<'a, 'b> {
-                    self.parent
                 }
             }
 
@@ -280,7 +296,7 @@ fn implementation(type_def: &TypeDef, schema: &Schema) -> TokenStream {
 
             let parent = if has_kind {
                 quote! {
-                    self.allocator.alloc(AstNodes::#struct_name(unsafe { transmute(self) }))
+                    self.allocator.alloc(AstNodes::#struct_name(transmute_self(self)))
                 }
             } else {
                 quote! { self.parent }
@@ -366,7 +382,7 @@ fn implementation(type_def: &TypeDef, schema: &Schema) -> TokenStream {
 
     let parent = if enum_def.kind.has_kind {
         quote! {
-            let parent = self.allocator.alloc(AstNodes::#enum_ident(unsafe { transmute(self) }))
+            let parent = self.allocator.alloc(AstNodes::#enum_ident(transmute_self(self)))
         }
     } else {
         quote! { let parent = self.parent }

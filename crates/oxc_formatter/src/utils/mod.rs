@@ -40,7 +40,7 @@ where
 /// ```
 pub fn is_long_curried_call(parent: &AstNodes<'_, '_>) -> bool {
     if let AstNodes::CallExpression(call) = parent {
-        if let AstNodes::CallExpression(parent_call) = call.parent() {
+        if let AstNodes::CallExpression(parent_call) = call.parent {
             return call.arguments().len() > parent_call.arguments().len()
                 && !parent_call.arguments().is_empty();
         }

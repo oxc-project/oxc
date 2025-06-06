@@ -19,7 +19,7 @@ use super::FormatWrite;
 
 impl<'a, 'b> FormatWrite<'a> for AstNode<'a, 'b, VariableDeclaration<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        let semicolon = match self.parent() {
+        let semicolon = match self.parent {
             AstNodes::ForStatementInit(_) => false,
             // TODO: It would be better if there is a AstNodes which is `left` of `ForInStatement` and `ForOfStatement`.
             AstNodes::ForInStatement(stmt) => stmt.left().span() != self.span(),
@@ -27,7 +27,7 @@ impl<'a, 'b> FormatWrite<'a> for AstNode<'a, 'b, VariableDeclaration<'a>> {
             _ => true,
         };
         !matches!(
-            self.parent(),
+            self.parent,
             AstNodes::ForStatementInit(_)
                 | AstNodes::ForInStatement(_)
                 | AstNodes::ForOfStatement(_)
@@ -50,7 +50,7 @@ impl<'a, 'b, 'c> Format<'a> for AstNode<'a, 'b, Vec<'a, VariableDeclarator<'a>>>
         let length = self.len();
 
         let is_parent_for_loop = matches!(
-            self.parent(),
+            self.parent,
             AstNodes::ForStatement(_) | AstNodes::ForInStatement(_) | AstNodes::ForOfStatement(_)
         );
 

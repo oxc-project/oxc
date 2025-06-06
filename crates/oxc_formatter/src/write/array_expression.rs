@@ -33,8 +33,7 @@ impl<'a> Format<'a> for FormatArrayExpression<'a, '_, '_> {
             write!(f, format_dangling_comments(self.array.span()).with_block_indent());
         } else {
             let group_id = f.group_id("array");
-            let should_expand = (!self.options.is_force_flat_mode
-                && should_break(self.array.inner()))
+            let should_expand = (!self.options.is_force_flat_mode && should_break(self.array))
                 || f.options().expand == Expand::Always;
 
             let elements = ArrayElementList::new(&self.array.elements(), group_id);

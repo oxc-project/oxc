@@ -31,15 +31,15 @@ impl<'a, 'b, 'c> ObjectPatternLike<'a, 'b, 'c> {
 
     fn is_empty(&self) -> bool {
         match self {
-            Self::ObjectPattern(o) => o.inner().is_empty(),
-            Self::ObjectAssignmentTarget(o) => o.inner().is_empty(),
+            Self::ObjectPattern(o) => o.is_empty(),
+            Self::ObjectAssignmentTarget(o) => o.is_empty(),
         }
     }
 
     fn is_inline(&self, comments: &Comments) -> bool {
         // TODO
         false
-        // let parent_kind = self.syntax().parent().kind();
+        // let parent_kind = self.syntax().parent.kind();
 
         // Ok(
         // (matches!(parent_kind, Some(JsSyntaxKind::JS_FORMAL_PARAMETER))
@@ -51,7 +51,7 @@ impl<'a, 'b, 'c> ObjectPatternLike<'a, 'b, 'c> {
     fn should_break_properties(&self) -> bool {
         false
         // TODO
-        // let parent_kind = self.syntax().parent().kind();
+        // let parent_kind = self.syntax().parent.kind();
 
         // Catch only has a single expression in the declaration, so it will
         // be the direct parent of the object pattern, and the pattern should
@@ -111,7 +111,7 @@ impl<'a, 'b, 'c> ObjectPatternLike<'a, 'b, 'c> {
         // TODO
         false
         // matches!(
-        // self.syntax().parent().kind(),
+        // self.syntax().parent.kind(),
         // Some(JsSyntaxKind::JS_ASSIGNMENT_EXPRESSION | JsSyntaxKind::JS_VARIABLE_DECLARATOR),
         // )
     }

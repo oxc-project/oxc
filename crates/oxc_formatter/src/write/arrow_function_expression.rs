@@ -218,7 +218,7 @@ impl<'a> Format<'a> for FormatJsArrowFunctionExpression<'a, '_, '_> {
                 // Therefore if our body is an arrow self, array, or object, we
                 // do not have a soft line break after the arrow because the body is
                 // going to get broken anyways.
-                let body_has_soft_line_break = match arrow.inner().get_expression() {
+                let body_has_soft_line_break = match arrow.get_expression() {
                     None
                     | Some(
                         Expression::ArrowFunctionExpression(_)
@@ -269,7 +269,7 @@ impl<'a> Format<'a> for FormatJsArrowFunctionExpression<'a, '_, '_> {
                 if body_has_soft_line_break {
                     write!(f, [formatted_signature, space(), format_body])
                 } else {
-                    let should_add_parens = should_add_parens(body.inner());
+                    let should_add_parens = should_add_parens(body);
 
                     let is_last_call_arg = matches!(
                         self.options.call_arg_layout,
@@ -279,7 +279,7 @@ impl<'a> Format<'a> for FormatJsArrowFunctionExpression<'a, '_, '_> {
                     let should_add_soft_line = (
                         is_last_call_arg
                         // if it's inside a JSXExpression (e.g. an attribute) we should align the expression's closing } with the line with the opening {.
-                        /*|| matches!(node.syntax().parent().kind(), Some(JsSyntaxKind::JSX_EXPRESSION_CHILD | JsSyntaxKind::JSX_EXPRESSION_ATTRIBUTE_VALUE))*/
+                        /*|| matches!(node.syntax().parent.kind(), Some(JsSyntaxKind::JSX_EXPRESSION_CHILD | JsSyntaxKind::JSX_EXPRESSION_ATTRIBUTE_VALUE))*/
                     ) && !f
                         .context()
                         .comments()
@@ -389,10 +389,9 @@ impl<'a, 'b, 'c> ArrowFunctionLayout<'a, 'b, 'c> {
                             None | Some(GroupedCallArgumentLayout::GroupedLastArgument)
                         ) && !comments.is_suppressed(next.span())
                         {
-                            should_break =
-                                should_break || Self::should_break_chain(current.inner());
+                            should_break = should_break || Self::should_break_chain(current);
 
-                            should_break = should_break || Self::should_break_chain(next.inner());
+                            should_break = should_break || Self::should_break_chain(next);
 
                             if head.is_none() {
                                 head = Some(current);
@@ -429,7 +428,7 @@ impl<'a, 'b, 'c> ArrowFunctionLayout<'a, 'b, 'c> {
     /// The complexity of these expressions limits their legibility when printed
     /// inline, so they force the chain to break to preserve clarity. Any other
     /// cases are considered simple enough to print in a single line.
-    fn should_break_chain(arrow: &'b ArrowFunctionExpression<'a>) -> bool {
+    fn should_break_chain(arrow: &ArrowFunctionExpression<'a>) -> bool {
         if arrow.type_parameters.is_some() {
             return true;
         }
@@ -486,7 +485,7 @@ impl<'a> Format<'a> for ArrowChain<'a, '_, '_> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         let ArrowChain { tail, expand_signatures, .. } = self;
 
-        // let head_parent = head.syntax().parent();
+        // let head_parent = head.syntax().parent;
         let tail_body = tail.body();
         let is_assignment_rhs = self.options.assignment_layout.is_some();
         let is_grouped_call_arg_layout = self.options.call_arg_layout.is_some();

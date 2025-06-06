@@ -76,8 +76,8 @@ impl<'a, 'b, 'c> BinaryLikeExpression<'a, 'b, 'c> {
 
     pub fn parent(&self) -> &AstNodes<'a, 'b> {
         match self {
-            Self::LogicalExpression(expr) => expr.parent(),
-            Self::BinaryExpression(expr) => expr.parent(),
+            Self::LogicalExpression(expr) => expr.parent,
+            Self::BinaryExpression(expr) => expr.parent,
         }
     }
 
@@ -110,7 +110,7 @@ impl<'a, 'b, 'c> BinaryLikeExpression<'a, 'b, 'c> {
     /// Determines if a binary like expression should be flattened or not. As a rule of thumb, an expression
     /// can be flattened if its left hand side has the same operator-precedence
     fn can_flatten(&self) -> bool {
-        let left_operator = match self.left().inner() {
+        let left_operator = match self.left().as_ref() {
             Expression::BinaryExpression(expr) => BinaryLikeOperator::from(expr.operator),
             Expression::LogicalExpression(expr) => BinaryLikeOperator::from(expr.operator),
             _ => return false,
@@ -123,7 +123,7 @@ impl<'a, 'b, 'c> BinaryLikeExpression<'a, 'b, 'c> {
         let Self::LogicalExpression(logical) = self else {
             return false;
         };
-        match &logical.right().inner() {
+        match &logical.right().as_ref() {
             Expression::ObjectExpression(object) => !object.properties.is_empty(),
             Expression::ArrayExpression(array) => !array.elements.is_empty(),
             Expression::JSXElement(_) | Expression::JSXFragment(_) => true,
@@ -206,10 +206,10 @@ impl<'a> Format<'a> for BinaryLikeExpression<'a, '_, '_> {
         let is_inside_parenthesis = match parent {
             AstNodes::MemberExpression(_) | AstNodes::UnaryExpression(_) => true,
             AstNodes::CallExpression(call) => {
-                call.callee().inner().without_parentheses().span() == self.span()
+                call.callee().without_parentheses().span() == self.span()
             }
             AstNodes::NewExpression(new) => {
-                new.callee().inner().without_parentheses().span() == self.span()
+                new.callee().without_parentheses().span() == self.span()
             }
             _ => false,
         };
@@ -327,11 +327,11 @@ impl<'a> Format<'a> for BinaryLeftOrRightSide<'a, '_, '_> {
                 // Doesn't match prettier that only distinguishes between logical and binary
                 let left_has_same_kind = is_same_binary_expression_kind(
                     binary_like_expression,
-                    binary_like_expression.left().inner(),
+                    binary_like_expression.left(),
                 );
 
                 let right_has_same_kind =
-                    is_same_binary_expression_kind(binary_like_expression, right.inner());
+                    is_same_binary_expression_kind(binary_like_expression, right);
 
                 // let should_break = f
                 //     .context()
@@ -375,13 +375,13 @@ impl BinaryLeftOrRightSide<'_, '_, '_> {
         match self {
             BinaryLeftOrRightSide::Left { parent } => {
                 matches!(
-                    parent.left().inner(),
+                    parent.left().as_ref(),
                     Expression::JSXElement(_) | Expression::JSXFragment(_)
                 )
             }
             BinaryLeftOrRightSide::Right { parent, .. } => {
                 matches!(
-                    parent.right().inner(),
+                    parent.right().as_ref(),
                     Expression::JSXElement(_) | Expression::JSXFragment(_)
                 )
             }
@@ -416,7 +416,7 @@ fn split_into_left_and_right_sides<'a, 'b, 'c>(
                 // SAFETY: `left` is guaranteed to be a valid binary like expression in `can_flatten()`.
                 BinaryLikeExpression::try_from(left).unwrap(),
                 inside_condition,
-                is_same_binary_expression_kind(&binary, left.inner()),
+                is_same_binary_expression_kind(&binary, left),
                 items,
             );
         } else {

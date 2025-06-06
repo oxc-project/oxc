@@ -203,7 +203,7 @@ impl<'a, 'b> Format<'a> for AstNode<'a, 'b, Vec<'a, ObjectPropertyKind<'a>>> {
 impl<'a, 'b> FormatWrite<'a> for AstNode<'a, 'b, ObjectProperty<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         let format_key = format_with(|f| {
-            if let PropertyKey::StringLiteral(s) = &self.key().inner() {
+            if let PropertyKey::StringLiteral(s) = &self.key().as_ref() {
                 FormatLiteralStringToken::new(
                     s.span.source_text(f.source_text()),
                     s.span,
@@ -322,7 +322,7 @@ impl<'a, 'b> FormatWrite<'a> for AstNode<'a, 'b, CallExpression<'a>> {
         let arguments = self.arguments();
         let optional = self.optional();
 
-        if callee.inner().as_member_expression().is_some_and(|e| {
+        if callee.as_member_expression().is_some_and(|e| {
             matches!(
                 e,
                 MemberExpression::StaticMemberExpression(_)
@@ -336,7 +336,7 @@ impl<'a, 'b> FormatWrite<'a> for AstNode<'a, 'b, CallExpression<'a>> {
             let format_inner = format_with(|f| {
                 write!(f, [callee, optional.then_some("?."), type_arguments, arguments])
             });
-            if matches!(callee.inner(), Expression::CallExpression(_)) {
+            if matches!(callee.as_ref(), Expression::CallExpression(_)) {
                 write!(f, [group(&format_inner)])
             } else {
                 write!(f, [format_inner])
@@ -444,7 +444,7 @@ impl<'a, 'b> FormatWrite<'a> for AstNode<'a, 'b, ArrayAssignmentTarget<'a>> {
 
         let test = self.elements().into_iter();
         for (index, element) in self.elements().into_iter().enumerate() {
-            let separator_mode = match element.inner() {
+            let separator_mode = match element.as_ref() {
                 None => TrailingSeparatorMode::Force,
                 _ => TrailingSeparatorMode::Auto,
             };
@@ -600,7 +600,7 @@ impl<'a, 'b> FormatWrite<'a> for AstNode<'a, 'b, Hashbang<'a>> {
 impl<'a, 'b> FormatWrite<'a> for AstNode<'a, 'b, EmptyStatement> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         if matches!(
-            self.parent(),
+            self.parent,
             AstNodes::DoWhileStatement(_)
                 | AstNodes::IfStatement(_)
                 | AstNodes::WhileStatement(_)
@@ -626,7 +626,7 @@ impl<'a, 'b> FormatWrite<'a> for AstNode<'a, 'b, DoWhileStatement<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         let body = self.body();
         write!(f, group(&format_args!("do", FormatStatementBody::new(body))))?;
-        if matches!(body.inner(), Statement::BlockStatement(_)) {
+        if matches!(body.as_ref(), Statement::BlockStatement(_)) {
             write!(f, space())?;
         } else {
             write!(f, hard_line_break())?;
@@ -774,7 +774,7 @@ impl<'a, 'b> FormatWrite<'a> for AstNode<'a, 'b, IfStatement<'a>> {
                 .iter()
                 .any(|comment| comment.kind().is_line());
 
-            let else_on_same_line = matches!(consequent.inner(), Statement::BlockStatement(_))
+            let else_on_same_line = matches!(consequent.as_ref(), Statement::BlockStatement(_))
                 && !trailing_line_comment
                 && !dangling_line_comment;
 
@@ -798,12 +798,10 @@ impl<'a, 'b> FormatWrite<'a> for AstNode<'a, 'b, IfStatement<'a>> {
                 f,
                 [
                     "else",
-                    group(
-                        &FormatStatementBody::new(alternate).with_forced_space(matches!(
-                            alternate.inner(),
-                            Statement::IfStatement(_)
-                        ))
-                    )
+                    group(&FormatStatementBody::new(alternate).with_forced_space(matches!(
+                        alternate.as_ref(),
+                        Statement::IfStatement(_)
+                    )))
                 ]
             )?;
         }
@@ -904,11 +902,10 @@ impl<'a, 'b> FormatWrite<'a> for AstNode<'a, 'b, SwitchCase<'a>> {
         // there are no other non-empty statements. Empties may show up when
         // parsing depending on if the input code includes certain newlines.
         let is_single_block_statement =
-            matches!(consequent.inner().first(), Some(Statement::BlockStatement(_)))
+            matches!(consequent.as_ref().first(), Some(Statement::BlockStatement(_)))
                 && consequent
-                    .inner()
                     .iter()
-                    .filter(|statement| !matches!(statement, Statement::EmptyStatement(_)))
+                    .filter(|statement| !matches!(statement.as_ref(), Statement::EmptyStatement(_)))
                     .count()
                     == 1;
         // When the case block is empty, the case becomes a fallthrough, so it
@@ -961,7 +958,7 @@ impl<'a, 'b> FormatWrite<'a> for AstNode<'a, 'b, LabeledStatement<'a>> {
         let label = self.label();
         let body = self.body();
         write!(f, [label, ":"])?;
-        if matches!(body.inner(), Statement::EmptyStatement(_)) {
+        if matches!(body.as_ref(), Statement::EmptyStatement(_)) {
             // If the body is an empty statement, force semicolon insertion
             write!(f, ";")
         } else {
@@ -1069,7 +1066,7 @@ impl<'a, 'b> FormatWrite<'a> for AstNode<'a, 'b, BindingProperty<'a>> {
 impl<'a, 'b> FormatWrite<'a> for AstNode<'a, 'b, ArrayPattern<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         write!(f, "[")?;
-        if self.inner().is_empty() {
+        if self.is_empty() {
             write!(f, [format_dangling_comments(self.span()).with_block_indent()])?;
         } else {
             // write!(f, [group(&soft_block_indent(&self.elements))])?;
@@ -1093,7 +1090,7 @@ impl<'a, 'b> FormatWrite<'a> for AstNode<'a, 'b, FormalParameters<'a>> {
         let can_hug = false;
         // should_hug_function_parameters(self, f.context().comments(), parentheses_not_needed)?
         // && !has_any_decorated_parameter;
-        let layout = if !self.inner().has_parameter() {
+        let layout = if !self.has_parameter() {
             ParameterLayout::NoParameters
         } else if can_hug
         /* || self.is_in_test_call()? */
@@ -1282,7 +1279,7 @@ impl<'a, 'b> FormatWrite<'a> for AstNode<'a, 'b, PropertyDefinition<'a>> {
         }
         if self.computed() {
             write!(f, ["[", self.key(), "]"])?;
-        } else if let PropertyKey::StringLiteral(s) = self.key().inner() {
+        } else if let PropertyKey::StringLiteral(s) = self.key().as_ref() {
             FormatLiteralStringToken::new(
                 s.span.source_text(f.source_text()),
                 s.span,
@@ -1386,7 +1383,7 @@ impl<'a, 'b> FormatWrite<'a> for AstNode<'a, 'b, ImportDeclaration<'a>> {
         if let Some(specifiers) = self.specifiers() {
             if specifiers.len() == 1
                 && specifiers
-                    .inner()
+                    .as_ref()
                     .first()
                     .is_some_and(|s| matches!(s, ImportDeclarationSpecifier::ImportSpecifier(_)))
             {
@@ -1404,7 +1401,7 @@ impl<'a, 'b> FormatWrite<'a> for AstNode<'a, 'b, ImportDeclaration<'a>> {
             } else {
                 let mut start_index = 0;
                 for specifier in specifiers {
-                    if !matches!(specifier.inner(), ImportDeclarationSpecifier::ImportSpecifier(_))
+                    if !matches!(specifier.as_ref(), ImportDeclarationSpecifier::ImportSpecifier(_))
                     {
                         start_index += 1;
                     }
@@ -1589,7 +1586,7 @@ impl<'a, 'b> FormatWrite<'a> for AstNode<'a, 'b, ExportNamedDeclaration<'a>> {
         if let Some(with_clause) = with_clause {
             write!(f, [space(), with_clause])?;
         }
-        if declaration.is_none_or(|d| matches!(d.inner(), Declaration::VariableDeclaration(_))) {
+        if declaration.is_none_or(|d| matches!(d.as_ref(), Declaration::VariableDeclaration(_))) {
             write!(f, OptionalSemicolon)?;
         }
         Ok(())
@@ -1604,7 +1601,7 @@ impl<'a, 'b> FormatWrite<'a> for AstNode<'a, 'b, ExportDefaultDeclaration<'a>> {
             }
         }
         write!(f, ["export", space(), "default", space(), self.declaration()])?;
-        if self.declaration().inner().is_expression() {
+        if self.declaration().is_expression() {
             write!(f, OptionalSemicolon)?;
         }
         Ok(())
@@ -1709,7 +1706,7 @@ impl<'a, 'b> FormatWrite<'a> for AstNode<'a, 'b, JSXElement<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         write!(f, ["<", self.opening_element().name()])?;
         for attr in self.opening_element().attributes() {
-            match attr.inner() {
+            match attr.as_ref() {
                 JSXAttributeItem::Attribute(_) => {
                     write!(f, hard_space())?;
                 }
@@ -2672,7 +2669,7 @@ impl<'a, 'b> FormatWrite<'a> for AstNode<'a, 'b, TSTypeAssertion<'a>> {
         write!(f, "<")?;
         // var r = < <T>(x: T) => T > ((x) => { return null; });
         //          ^ make sure space is printed here.
-        if matches!(self.type_annotation().inner(), TSType::TSFunctionType(_)) {
+        if matches!(**self.type_annotation(), TSType::TSFunctionType(_)) {
             write!(f, space())?;
         }
         write!(f, [self.type_annotation(), ">", self.expression()])

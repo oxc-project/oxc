@@ -24,10 +24,10 @@ impl<'a, 'b> FormatWrite<'a> for AstNode<'a, 'b, Class<'a>> {
         let body = self.body();
         let r#abstract = self.r#abstract();
 
-        let group_mode = should_group(self.inner(), f);
+        let group_mode = should_group(self, f);
 
         if !matches!(
-            self.parent(),
+            self.parent,
             AstNodes::ExportNamedDeclaration(_) | AstNodes::ExportDefaultDeclaration(_)
         ) {
             write!(f, decorators)?;

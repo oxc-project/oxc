@@ -33,7 +33,7 @@ impl<'a> Format<'a> for ArrayElementList<'a, '_, '_> {
         let expand_lists = f.context().options().expand == Expand::Always;
         let layout = if expand_lists {
             ArrayLayout::OnePerLine
-        } else if can_concisely_print_array_list(self.elements.inner(), f.context().comments()) {
+        } else if can_concisely_print_array_list(self.elements, f.context().comments()) {
             ArrayLayout::Fill
         } else {
             ArrayLayout::OnePerLine
