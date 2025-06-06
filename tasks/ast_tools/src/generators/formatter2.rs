@@ -165,17 +165,6 @@ impl Generator for FormatterFormatGenerator2 {
 
             ///@@line_break
             impl<'a, 'b, T> AstNode<'a, 'b, Vec<'a, T>> {
-
-                ///@@line_break
-                pub fn is_empty(&self) -> bool {
-                    self.inner.is_empty()
-                }
-
-                ///@@line_break
-                pub fn len(&self) -> usize {
-                    self.inner.len()
-                }
-
                 ///@@line_break
                 pub fn iter(&self) -> AstNodeIterator<'a, 'b, T> {
                     AstNodeIterator { inner: self.inner.iter(), parent: self.parent, allocator: self.allocator }
