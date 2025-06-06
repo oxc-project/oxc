@@ -4,6 +4,12 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.72.3] - 2025-06-06
+
+### Features
+
+- 590b809 span: Add `Atom::from_cow_in` method (#11480) (overlookmotel)
+
 ## [0.72.0] - 2025-05-24
 
 - c16ea02 allocator: [**BREAKING**] Remove `String` (#11262) (overlookmotel)

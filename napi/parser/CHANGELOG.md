@@ -4,6 +4,36 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.72.3] - 2025-06-06
+
+### Bug Fixes
+
+- 8451bee ast/estree: Remove repeat fields from `BindingPattern` in TS-ESTree AST (#11500) (overlookmotel)
+- 5c32b7c ast/estree: Make error objects via raw transfer match standard transfer (#11481) (overlookmotel)
+- 953e61b ast/estree: Fix field order of `PropertyKey` constructor in raw transfer TS-ESTree AST (#11463) (overlookmotel)
+- ec4fc83 estree: Use consistent field order in serialization (#11385) (Yuji Sugiura)
+- ab0dd29 napi: Napi build cache problem (#11479) (LongYinan)
+
+### Testing
+
+- 97aa9cc ast/estree: Remove test skip list for TS raw transfer tests (#11478) (overlookmotel)
+- 75e241c ast/estree: Test raw transfer on TS-ESTree (#11476) (overlookmotel)
+
+## [0.72.3] - 2025-06-06
+
+### Bug Fixes
+
+- 8451bee ast/estree: Remove repeat fields from `BindingPattern` in TS-ESTree AST (#11500) (overlookmotel)
+- 5c32b7c ast/estree: Make error objects via raw transfer match standard transfer (#11481) (overlookmotel)
+- 953e61b ast/estree: Fix field order of `PropertyKey` constructor in raw transfer TS-ESTree AST (#11463) (overlookmotel)
+- ec4fc83 estree: Use consistent field order in serialization (#11385) (Yuji Sugiura)
+- ab0dd29 napi: Napi build cache problem (#11479) (LongYinan)
+
+### Testing
+
+- 97aa9cc ast/estree: Remove test skip list for TS raw transfer tests (#11478) (overlookmotel)
+- 75e241c ast/estree: Test raw transfer on TS-ESTree (#11476) (overlookmotel)
+
 ## [0.72.2] - 2025-05-31
 
 ### Features
