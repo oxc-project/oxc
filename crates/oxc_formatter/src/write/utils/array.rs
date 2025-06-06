@@ -4,13 +4,14 @@ use oxc_span::SPAN;
 
 use crate::{
     formatter::{FormatResult, Formatter, prelude::*},
+    generated::ast_nodes::AstNode,
     options::FormatTrailingCommas,
     write,
 };
 
 /// Utility function to print array-like nodes (array expressions, array bindings and assignment patterns)
-pub fn write_array_node<'a>(
-    node: &Vec<'a, ArrayExpressionElement<'a>>,
+pub fn write_array_node<'a, 'b>(
+    node: &AstNode<'a, 'b, Vec<'a, ArrayExpressionElement<'a>>>,
     f: &mut Formatter<'_, 'a>,
 ) -> FormatResult<()> {
     let trailing_separator = FormatTrailingCommas::ES5.trailing_separator(f.options());
@@ -23,8 +24,8 @@ pub fn write_array_node<'a>(
     let mut join = f.join_nodes_with_soft_line();
     let last_index = node.len().saturating_sub(1);
 
-    for (index, element) in node.iter().enumerate() {
-        let separator_mode = match element {
+    for (index, element) in node.into_iter().enumerate() {
+        let separator_mode = match element.inner() {
             ArrayExpressionElement::Elision(_) => TrailingSeparatorMode::Force,
             _ => TrailingSeparatorMode::Auto,
         };

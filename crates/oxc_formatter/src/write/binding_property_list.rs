@@ -3,24 +3,25 @@ use oxc_ast::ast::*;
 
 use crate::{
     formatter::{Format, FormatResult, Formatter, separated::FormatSeparatedIter},
+    generated::ast_nodes::AstNode,
     options::{FormatTrailingCommas, TrailingSeparator},
 };
 
-pub struct BindingPropertyList<'a, 'b> {
-    properties: &'b Vec<'a, BindingProperty<'a>>,
-    rest: Option<&'b Box<'a, BindingRestElement<'a>>>,
+pub struct BindingPropertyList<'a, 'b, 'c> {
+    properties: &'c AstNode<'a, 'b, Vec<'a, BindingProperty<'a>>>,
+    rest: Option<&'c AstNode<'a, 'b, BindingRestElement<'a>>>,
 }
 
-impl<'a, 'b> BindingPropertyList<'a, 'b> {
+impl<'a, 'b, 'c> BindingPropertyList<'a, 'b, 'c> {
     pub fn new(
-        properties: &'b Vec<'a, BindingProperty<'a>>,
-        rest: Option<&'b Box<'a, BindingRestElement<'a>>>,
+        properties: &'c AstNode<'a, 'b, Vec<'a, BindingProperty<'a>>>,
+        rest: Option<&'c AstNode<'a, 'b, BindingRestElement<'a>>>,
     ) -> Self {
         Self { properties, rest }
     }
 }
 
-impl<'a> Format<'a> for BindingPropertyList<'a, '_> {
+impl<'a> Format<'a> for BindingPropertyList<'a, '_, '_> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         let has_trailing_rest = self.rest.is_some();
         let trailing_separator = if has_trailing_rest {
@@ -29,12 +30,12 @@ impl<'a> Format<'a> for BindingPropertyList<'a, '_> {
             FormatTrailingCommas::ES5.trailing_separator(f.options())
         };
         let source_text = f.source_text();
-        let entries = FormatSeparatedIter::new(self.properties.iter(), ",")
+        let entries = FormatSeparatedIter::new(self.properties.into_iter(), ",")
             .with_trailing_separator(trailing_separator)
-            .zip(self.properties.iter());
+            .zip(self.properties.into_iter());
         let mut join = f.join_nodes_with_soft_line();
         for (format_entry, node) in entries {
-            join.entry(node.span, source_text, &format_entry);
+            join.entry(node.span(), source_text, &format_entry);
         }
         join.finish()
     }

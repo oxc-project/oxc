@@ -3,25 +3,25 @@ use oxc_span::GetSpan;
 
 use crate::{
     formatter::{Format, FormatResult, Formatter, prelude::*, separated::FormatSeparatedIter},
+    generated::ast_nodes::{AstNode, AstNodeIterator},
     options::{FormatTrailingCommas, TrailingSeparator},
 };
 
-#[derive(Debug)]
-enum Parameter<'a, 'b> {
-    FormalParameter(&'b FormalParameter<'a>),
-    Rest(&'b BindingRestElement<'a>),
+enum Parameter<'a, 'b, 'c> {
+    FormalParameter(&'c AstNode<'a, 'b, FormalParameter<'a>>),
+    Rest(&'c AstNode<'a, 'b, BindingRestElement<'a>>),
 }
 
-impl GetSpan for Parameter<'_, '_> {
+impl GetSpan for Parameter<'_, '_, '_> {
     fn span(&self) -> Span {
         match self {
-            Self::FormalParameter(param) => param.span,
-            Self::Rest(e) => e.span,
+            Self::FormalParameter(param) => param.span(),
+            Self::Rest(e) => e.span(),
         }
     }
 }
 
-impl<'a> Format<'a> for Parameter<'a, '_> {
+impl<'a> Format<'a> for Parameter<'a, '_, '_> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         match self {
             Self::FormalParameter(param) => param.fmt(f),
@@ -30,39 +30,32 @@ impl<'a> Format<'a> for Parameter<'a, '_> {
     }
 }
 
-struct FormalParametersIter<'a, 'b> {
-    params: &'b FormalParameters<'a>,
-    index: usize,
+struct FormalParametersIter<'a, 'b, 'c> {
+    params: AstNodeIterator<'a, 'b, FormalParameter<'a>>,
+    rest: Option<&'c AstNode<'a, 'b, BindingRestElement<'a>>>,
 }
 
-impl<'a, 'b> From<&'b FormalParameters<'a>> for FormalParametersIter<'a, 'b> {
-    fn from(value: &'b FormalParameters<'a>) -> Self {
-        Self { params: value, index: 0 }
+impl<'a, 'b, 'c> From<&'c AstNode<'a, 'b, FormalParameters<'a>>>
+    for FormalParametersIter<'a, 'b, 'c>
+{
+    fn from(value: &'c AstNode<'a, 'b, FormalParameters<'a>>) -> Self {
+        Self { params: value.items().into_iter(), rest: value.rest() }
     }
 }
 
-impl<'a, 'b> Iterator for FormalParametersIter<'a, 'b> {
-    type Item = Parameter<'a, 'b>;
+impl<'a, 'b, 'c> Iterator for FormalParametersIter<'a, 'b, 'c> {
+    type Item = Parameter<'a, 'b, 'c>;
 
     fn next(&mut self) -> Option<Self::Item> {
-        let len = self.params.items.len();
-        let index = self.index;
-        if index < len {
-            self.index += 1;
-            return Some(Parameter::FormalParameter(&self.params.items[index]));
-        }
-        if index == len {
-            if let Some(rest) = &self.params.rest {
-                self.index += 1;
-                return Some(Parameter::Rest(rest));
-            }
-        }
-        None
+        self.params
+            .next()
+            .map(|param| Parameter::FormalParameter(param))
+            .or_else(|| self.rest.map(|rest| Parameter::Rest(rest)))
     }
 }
 
-pub struct ParameterList<'a, 'b> {
-    list: &'b FormalParameters<'a>,
+pub struct ParameterList<'a, 'b, 'c> {
+    list: &'c AstNode<'a, 'b, FormalParameters<'a>>,
     layout: Option<ParameterLayout>,
 }
 
@@ -99,17 +92,20 @@ pub enum ParameterLayout {
     Default,
 }
 
-impl<'a, 'b> ParameterList<'a, 'b> {
-    pub fn with_layout(list: &'b FormalParameters<'a>, layout: ParameterLayout) -> Self {
+impl<'a, 'b, 'c> ParameterList<'a, 'b, 'c> {
+    pub fn with_layout(
+        list: &'c AstNode<'a, 'b, FormalParameters<'a>>,
+        layout: ParameterLayout,
+    ) -> Self {
         Self { list, layout: Some(layout) }
     }
 }
 
-impl<'a> Format<'a> for ParameterList<'a, '_> {
+impl<'a> Format<'a> for ParameterList<'a, '_, '_> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         match self.layout {
             None | Some(ParameterLayout::Default | ParameterLayout::NoParameters) => {
-                let has_trailing_rest = self.list.rest.is_some();
+                let has_trailing_rest = self.list.rest().is_some();
 
                 // If it's a rest parameter, the assumption is no more
                 // parameters could be added afterward, so no separator is
@@ -147,7 +143,7 @@ impl<'a> Format<'a> for ParameterList<'a, '_> {
             Some(ParameterLayout::Hug) => {
                 let mut join = f.join_with(space());
                 join.entries(
-                    FormatSeparatedIter::new(self.list.items.iter(), ",")
+                    FormatSeparatedIter::new(self.list.items().into_iter(), ",")
                         .with_trailing_separator(TrailingSeparator::Omit),
                 );
                 join.finish()

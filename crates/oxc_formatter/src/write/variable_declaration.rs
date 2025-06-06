@@ -7,19 +7,20 @@ use crate::{
         Buffer, Format, FormatError, FormatResult, Formatter, prelude::*,
         separated::FormatSeparatedIter,
     },
+    generated::ast_nodes::AstNode,
     options::TrailingSeparator,
     write,
 };
 
 use super::FormatWrite;
 
-impl<'a> FormatWrite<'a> for VariableDeclaration<'a> {
+impl<'a, 'b> FormatWrite<'a> for AstNode<'a, 'b, VariableDeclaration<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        write!(f, group(&format_args!(self.kind.as_str(), space(), self.declarations)))
+        write!(f, group(&format_args!(self.kind().as_str(), space(), self.declarations())))
     }
 }
 
-impl<'a> Format<'a> for Vec<'a, VariableDeclarator<'a>> {
+impl<'a, 'b, 'c> Format<'a> for AstNode<'a, 'b, Vec<'a, VariableDeclarator<'a>>> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         let length = self.len();
 
@@ -29,7 +30,7 @@ impl<'a> Format<'a> for Vec<'a, VariableDeclarator<'a>> {
             AstKind::ForStatement(_) | AstKind::ForInStatement(_) | AstKind::ForOfStatement(_)
         );
 
-        let has_any_initializer = self.iter().any(|declarator| declarator.init.is_some());
+        let has_any_initializer = self.iter().any(|declarator| declarator.init().is_some());
 
         let format_separator = format_with(|f| {
             if !is_parent_for_loop && has_any_initializer {
@@ -45,7 +46,7 @@ impl<'a> Format<'a> for Vec<'a, VariableDeclarator<'a>> {
         );
 
         let (first_declarator_span, format_first_declarator) = match declarators.next() {
-            Some((decl, format_first_declarator)) => (decl.span, format_first_declarator),
+            Some((decl, format_first_declarator)) => (decl.span(), format_first_declarator),
             None => return Err(FormatError::SyntaxError),
         };
 
@@ -70,10 +71,10 @@ impl<'a> Format<'a> for Vec<'a, VariableDeclarator<'a>> {
     }
 }
 
-impl<'a> FormatWrite<'a> for VariableDeclarator<'a> {
+impl<'a, 'b> FormatWrite<'a> for AstNode<'a, 'b, VariableDeclarator<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        write!(f, self.id)?;
-        if let Some(init) = &self.init {
+        write!(f, self.id())?;
+        if let Some(init) = &self.init() {
             write!(f, [space(), "=", space(), init])?;
         }
         Ok(())

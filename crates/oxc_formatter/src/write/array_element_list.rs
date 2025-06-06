@@ -8,28 +8,32 @@ use crate::{
         Buffer, Comments, Format, FormatResult, Formatter, GroupId, prelude::*,
         separated::FormatSeparatedIter,
     },
+    generated::ast_nodes::AstNode,
     write,
 };
 
 use super::utils::array::write_array_node;
 
-pub struct ArrayElementList<'a, 'b> {
-    elements: &'b Vec<'a, ArrayExpressionElement<'a>>,
+pub struct ArrayElementList<'a, 'b, 'c> {
+    elements: &'c AstNode<'a, 'b, Vec<'a, ArrayExpressionElement<'a>>>,
     group_id: Option<GroupId>,
 }
 
-impl<'a, 'b> ArrayElementList<'a, 'b> {
-    pub fn new(elements: &'b Vec<'a, ArrayExpressionElement<'a>>, group_id: GroupId) -> Self {
+impl<'a, 'b, 'c> ArrayElementList<'a, 'b, 'c> {
+    pub fn new(
+        elements: &'c AstNode<'a, 'b, Vec<'a, ArrayExpressionElement<'a>>>,
+        group_id: GroupId,
+    ) -> Self {
         Self { elements, group_id: Some(group_id) }
     }
 }
 
-impl<'a> Format<'a> for ArrayElementList<'a, '_> {
+impl<'a> Format<'a> for ArrayElementList<'a, '_, '_> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         let expand_lists = f.context().options().expand == Expand::Always;
         let layout = if expand_lists {
             ArrayLayout::OnePerLine
-        } else if can_concisely_print_array_list(self.elements, f.context().comments()) {
+        } else if can_concisely_print_array_list(self.elements.inner(), f.context().comments()) {
             ArrayLayout::Fill
         } else {
             ArrayLayout::OnePerLine
@@ -42,8 +46,8 @@ impl<'a> Format<'a> for ArrayElementList<'a, '_> {
                 let mut filler = f.fill();
 
                 // Using format_separated is valid in this case as can_print_fill does not allow holes
-                for (element, formatted) in self.elements.iter().zip(
-                    FormatSeparatedIter::new(self.elements.iter(), ",")
+                for (element, formatted) in self.elements.into_iter().zip(
+                    FormatSeparatedIter::new(self.elements.into_iter(), ",")
                         .with_trailing_separator(trailing_separator)
                         .with_group_id(self.group_id),
                 ) {

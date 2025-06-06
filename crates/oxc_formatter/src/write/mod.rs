@@ -57,12 +57,6 @@ use self::{
     },
 };
 
-impl<'a, T: Format<'a>> Format<'a> for Box<'a, T> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        self.as_ref().fmt(f)
-    }
-}
-
 pub trait FormatWrite<'ast> {
     fn write(&self, f: &mut Formatter<'_, 'ast>) -> FormatResult<()>;
 }
@@ -212,7 +206,7 @@ impl<'a, 'b> Format<'a> for AstNode<'a, 'b, Vec<'a, ObjectPropertyKind<'a>>> {
 impl<'a, 'b> FormatWrite<'a> for AstNode<'a, 'b, ObjectProperty<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         let format_key = format_with(|f| {
-            if let PropertyKey::StringLiteral(s) = &self.key() {
+            if let PropertyKey::StringLiteral(s) = &self.key().inner() {
                 FormatLiteralStringToken::new(
                     s.span.source_text(f.source_text()),
                     s.span,

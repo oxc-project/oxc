@@ -126,6 +126,11 @@ impl Generator for FormatterFormatGenerator2 {
                 }
 
                 ///@@line_break
+                pub fn iter(&self) -> AstNodeIterator<'a, 'b, T> {
+                    AstNodeIterator { inner: self.inner.iter(), parent: self.parent, allocator: self.allocator }
+                }
+
+                ///@@line_break
                 pub fn first(&self) -> Option<&'a AstNode<'a, 'b, T>> {
                     self.allocator
                         .alloc(self.inner.first().map(|inner| AstNode {

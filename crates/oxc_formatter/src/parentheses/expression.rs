@@ -10,7 +10,7 @@ use oxc_syntax::{
 use crate::{
     Format,
     formatter::{Formatter, parent_stack::ParentStack},
-    generated::ast_nodes::AstNode,
+    generated::ast_nodes::{AstNode, AstNodes},
     write::{BinaryLikeExpression, should_flatten},
 };
 
@@ -18,50 +18,48 @@ use super::NeedsParentheses;
 
 impl<'a, 'b> NeedsParentheses<'a> for AstNode<'a, 'b, Expression<'a>> {
     fn needs_parentheses(&self, f: &Formatter<'_, 'a>) -> bool {
-        match self {
-            // Expression::BooleanLiteral(it) => it.needs_parentheses(f),
-            // Expression::NullLiteral(it) => it.needs_parentheses(f),
-            Expression::NumericLiteral(it) => it.needs_parentheses(f),
-            // Expression::BigIntLiteral(it) => it.needs_parentheses(f),
-            // Expression::RegExpLiteral(it) => it.needs_parentheses(f),
-            Expression::StringLiteral(it) => it.needs_parentheses(f),
-            // Expression::TemplateLiteral(it) => it.needs_parentheses(f),
-            // Expression::Identifier(it) => it.needs_parentheses(f),
-            // Expression::MetaProperty(it) => it.needs_parentheses(f),
-            // Expression::Super(it) => it.needs_parentheses(f),
-            Expression::ArrayExpression(it) => it.needs_parentheses(f),
-            Expression::ArrowFunctionExpression(it) => it.needs_parentheses(f),
-            Expression::AssignmentExpression(it) => it.needs_parentheses(f),
-            Expression::AwaitExpression(it) => it.needs_parentheses(f),
-            Expression::BinaryExpression(it) => it.needs_parentheses(f),
-            Expression::CallExpression(it) => it.needs_parentheses(f),
-            Expression::ChainExpression(it) => it.needs_parentheses(f),
-            Expression::ClassExpression(it) => it.needs_parentheses(f),
-            Expression::ConditionalExpression(it) => it.needs_parentheses(f),
-            Expression::FunctionExpression(it) => it.needs_parentheses(f),
-            Expression::ImportExpression(it) => it.needs_parentheses(f),
-            Expression::LogicalExpression(it) => it.needs_parentheses(f),
-            Expression::NewExpression(it) => it.needs_parentheses(f),
-            Expression::ObjectExpression(it) => it.needs_parentheses(f),
-            Expression::ParenthesizedExpression(it) => it.needs_parentheses(f),
-            Expression::SequenceExpression(it) => it.needs_parentheses(f),
-            Expression::TaggedTemplateExpression(it) => it.needs_parentheses(f),
-            Expression::ThisExpression(it) => it.needs_parentheses(f),
-            Expression::UnaryExpression(it) => it.needs_parentheses(f),
-            Expression::UpdateExpression(it) => it.needs_parentheses(f),
-            Expression::YieldExpression(it) => it.needs_parentheses(f),
-            Expression::PrivateInExpression(it) => it.needs_parentheses(f),
-            // Expression::JSXElement(it) => it.needs_parentheses(f),
-            // Expression::JSXFragment(it) => it.needs_parentheses(f),
-            Expression::TSAsExpression(it) => it.needs_parentheses(f),
-            Expression::TSSatisfiesExpression(it) => it.needs_parentheses(f),
-            Expression::TSTypeAssertion(it) => it.needs_parentheses(f),
-            Expression::TSNonNullExpression(it) => it.needs_parentheses(f),
-            Expression::TSInstantiationExpression(it) => it.needs_parentheses(f),
-            Expression::V8IntrinsicExpression(it) => it.needs_parentheses(f),
-            match_member_expression!(Expression) => {
-                self.to_member_expression().needs_parentheses(f)
-            }
+        match self.as_ast_nodes() {
+            // AstNodes::BooleanLiteral(it) => it.needs_parentheses(f),
+            // AstNodes::NullLiteral(it) => it.needs_parentheses(f),
+            AstNodes::NumericLiteral(it) => it.needs_parentheses(f),
+            // AstNodes::BigIntLiteral(it) => it.needs_parentheses(f),
+            // AstNodes::RegExpLiteral(it) => it.needs_parentheses(f),
+            AstNodes::StringLiteral(it) => it.needs_parentheses(f),
+            // AstNodes::TemplateLiteral(it) => it.needs_parentheses(f),
+            // AstNodes::Identifier(it) => it.needs_parentheses(f),
+            // AstNodes::MetaProperty(it) => it.needs_parentheses(f),
+            // AstNodes::Super(it) => it.needs_parentheses(f),
+            AstNodes::ArrayExpression(it) => it.needs_parentheses(f),
+            AstNodes::ArrowFunctionExpression(it) => it.needs_parentheses(f),
+            AstNodes::AssignmentExpression(it) => it.needs_parentheses(f),
+            AstNodes::AwaitExpression(it) => it.needs_parentheses(f),
+            AstNodes::BinaryExpression(it) => it.needs_parentheses(f),
+            AstNodes::CallExpression(it) => it.needs_parentheses(f),
+            AstNodes::ChainExpression(it) => it.needs_parentheses(f),
+            AstNodes::Class(it) => it.needs_parentheses(f),
+            AstNodes::ConditionalExpression(it) => it.needs_parentheses(f),
+            AstNodes::Function(it) => it.needs_parentheses(f),
+            AstNodes::ImportExpression(it) => it.needs_parentheses(f),
+            AstNodes::LogicalExpression(it) => it.needs_parentheses(f),
+            AstNodes::NewExpression(it) => it.needs_parentheses(f),
+            AstNodes::ObjectExpression(it) => it.needs_parentheses(f),
+            AstNodes::ParenthesizedExpression(it) => it.needs_parentheses(f),
+            AstNodes::SequenceExpression(it) => it.needs_parentheses(f),
+            AstNodes::TaggedTemplateExpression(it) => it.needs_parentheses(f),
+            AstNodes::ThisExpression(it) => it.needs_parentheses(f),
+            AstNodes::UnaryExpression(it) => it.needs_parentheses(f),
+            AstNodes::UpdateExpression(it) => it.needs_parentheses(f),
+            AstNodes::YieldExpression(it) => it.needs_parentheses(f),
+            AstNodes::PrivateInExpression(it) => it.needs_parentheses(f),
+            // AstNodes::JSXElement(it) => it.needs_parentheses(f),
+            // AstNodes::JSXFragment(it) => it.needs_parentheses(f),
+            AstNodes::TSAsExpression(it) => it.needs_parentheses(f),
+            AstNodes::TSSatisfiesExpression(it) => it.needs_parentheses(f),
+            AstNodes::TSTypeAssertion(it) => it.needs_parentheses(f),
+            AstNodes::TSNonNullExpression(it) => it.needs_parentheses(f),
+            AstNodes::TSInstantiationExpression(it) => it.needs_parentheses(f),
+            AstNodes::V8IntrinsicExpression(it) => it.needs_parentheses(f),
+            AstNodes::MemberExpression(it) => it.needs_parentheses(f),
             _ => todo!(),
         }
     }
@@ -167,7 +165,7 @@ impl<'a, 'b> NeedsParentheses<'a> for AstNode<'a, 'b, UpdateExpression<'a>> {
                         && operator == UpdateOperator::Decrement);
             }
         }
-        unary_like_expression_needs_parens(UnaryLike::UpdateExpression(self), parent_kind)
+        unary_like_expression_needs_parens(UnaryLike::UpdateExpression(self.inner()), parent_kind)
     }
 }
 
@@ -186,15 +184,17 @@ impl<'a, 'b> NeedsParentheses<'a> for AstNode<'a, 'b, UnaryExpression<'a>> {
             // A user typing `!foo in bar` probably intended `!(foo instanceof Bar)`,
             // so format to `(!foo) in bar` to what is really happening
             AstKind::BinaryExpression(e) if e.operator.is_relational() => true,
-            _ => unary_like_expression_needs_parens(UnaryLike::UnaryExpression(self), parent_kind),
+            _ => unary_like_expression_needs_parens(
+                UnaryLike::UnaryExpression(self.inner()),
+                parent_kind,
+            ),
         }
     }
 }
 
 impl<'a, 'b> NeedsParentheses<'a> for AstNode<'a, 'b, BinaryExpression<'a>> {
     fn needs_parentheses(&self, f: &Formatter<'_, 'a>) -> bool {
-        let parent_kind = f.parent_kind_of(Address::from_ptr(self));
-        binary_like_needs_parens(BinaryLikeExpression::BinaryExpression(self), parent_kind)
+        binary_like_needs_parens(BinaryLikeExpression::BinaryExpression(self))
     }
 }
 
@@ -214,7 +214,7 @@ impl<'a, 'b> NeedsParentheses<'a> for AstNode<'a, 'b, LogicalExpression<'a>> {
         {
             true
         } else {
-            binary_like_needs_parens(BinaryLikeExpression::LogicalExpression(self), parent_kind)
+            binary_like_needs_parens(BinaryLikeExpression::LogicalExpression(self))
         }
     }
 }
@@ -411,7 +411,7 @@ impl<'a, 'b> NeedsParentheses<'a> for AstNode<'a, 'b, TSNonNullExpression<'a>> {
         let parent = f.parent_kind_of(Address::from_ptr(self));
         is_class_extends(parent, self.span())
             || (matches!(parent, AstKind::NewExpression(_))
-                && member_chain_callee_needs_parens(&self.expression()))
+                && member_chain_callee_needs_parens(self.expression().inner()))
     }
 }
 
@@ -424,29 +424,26 @@ impl<'a, 'b> NeedsParentheses<'a> for AstNode<'a, 'b, TSInstantiationExpression<
     }
 }
 
-fn binary_like_needs_parens(
-    current: BinaryLikeExpression<'_, '_>,
-    parent_kind: AstKind<'_>,
-) -> bool {
-    let parent = match parent_kind {
-        AstKind::TSAsExpression(_)
-        | AstKind::TSSatisfiesExpression(_)
-        | AstKind::TSTypeAssertion(_)
-        | AstKind::UnaryExpression(_)
-        | AstKind::AwaitExpression(_)
-        | AstKind::TSNonNullExpression(_)
-        | AstKind::SpreadElement(_)
-        | AstKind::CallExpression(_)
-        | AstKind::NewExpression(_)
-        | AstKind::MemberExpression(_)
-        | AstKind::TaggedTemplateExpression(_) => return true,
-        AstKind::BinaryExpression(binary) => BinaryLikeExpression::BinaryExpression(binary),
-        AstKind::LogicalExpression(logical) => BinaryLikeExpression::LogicalExpression(logical),
+fn binary_like_needs_parens(binary_like: BinaryLikeExpression<'_, '_, '_>) -> bool {
+    let parent = match binary_like.parent() {
+        AstNodes::TSAsExpression(_)
+        | AstNodes::TSSatisfiesExpression(_)
+        | AstNodes::TSTypeAssertion(_)
+        | AstNodes::UnaryExpression(_)
+        | AstNodes::AwaitExpression(_)
+        | AstNodes::TSNonNullExpression(_)
+        | AstNodes::SpreadElement(_)
+        | AstNodes::CallExpression(_)
+        | AstNodes::NewExpression(_)
+        | AstNodes::MemberExpression(_)
+        | AstNodes::TaggedTemplateExpression(_) => return true,
+        AstNodes::BinaryExpression(binary) => BinaryLikeExpression::BinaryExpression(binary),
+        AstNodes::LogicalExpression(logical) => BinaryLikeExpression::LogicalExpression(logical),
         _ => return false,
     };
 
     let parent_operator = parent.operator();
-    let operator = current.operator();
+    let operator = binary_like.operator();
     let parent_precedence = parent_operator.precedence();
     let precedence = operator.precedence();
 
@@ -456,7 +453,7 @@ fn binary_like_needs_parens(
         return true;
     }
 
-    let is_right = parent.right().span() == current.span();
+    let is_right = parent.right().span() == binary_like.span();
 
     // `a ** b ** c`
     if is_right && parent_precedence == precedence {

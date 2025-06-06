@@ -8,6 +8,7 @@ use oxc_syntax::precedence::{GetPrecedence, Precedence};
 use crate::{
     Format,
     formatter::{FormatResult, Formatter},
+    generated::ast_nodes::{AstNode, AstNodes},
 };
 
 use crate::{format_args, formatter::prelude::*, write};
@@ -50,26 +51,33 @@ impl BinaryLikeOperator {
     }
 }
 
-#[derive(Debug, Clone, Copy)]
-pub enum BinaryLikeExpression<'a, 'b> {
-    LogicalExpression(&'b LogicalExpression<'a>),
-    BinaryExpression(&'b BinaryExpression<'a>),
+#[derive(Clone, Copy)]
+pub enum BinaryLikeExpression<'a, 'b, 'c> {
+    LogicalExpression(&'c AstNode<'a, 'b, LogicalExpression<'a>>),
+    BinaryExpression(&'c AstNode<'a, 'b, BinaryExpression<'a>>),
 }
 
-impl<'a, 'b> BinaryLikeExpression<'a, 'b> {
+impl<'a, 'b, 'c> BinaryLikeExpression<'a, 'b, 'c> {
     /// Returns the left hand side of the binary expression.
-    fn left(&self) -> &'b Expression<'a> {
+    fn left(&self) -> &'c AstNode<'a, 'b, Expression<'a>> {
         match self {
-            Self::LogicalExpression(expr) => &expr.left,
-            Self::BinaryExpression(expr) => &expr.left,
+            Self::LogicalExpression(expr) => &expr.left(),
+            Self::BinaryExpression(expr) => &expr.left(),
         }
     }
 
     /// Returns the right hand side of the binary expression.
-    pub fn right(&self) -> &'b Expression<'a> {
+    pub fn right(&self) -> &'c AstNode<'a, 'b, Expression<'a>> {
         match self {
-            Self::LogicalExpression(expr) => &expr.right,
-            Self::BinaryExpression(expr) => &expr.right,
+            Self::LogicalExpression(expr) => &expr.right(),
+            Self::BinaryExpression(expr) => &expr.right(),
+        }
+    }
+
+    pub fn parent(&self) -> &AstNodes<'a, 'b> {
+        match self {
+            Self::LogicalExpression(expr) => expr.parent(),
+            Self::BinaryExpression(expr) => expr.parent(),
         }
     }
 
@@ -94,15 +102,15 @@ impl<'a, 'b> BinaryLikeExpression<'a, 'b> {
 
     pub fn operator(&self) -> BinaryLikeOperator {
         match self {
-            Self::LogicalExpression(expr) => BinaryLikeOperator::from(expr.operator),
-            Self::BinaryExpression(expr) => BinaryLikeOperator::from(expr.operator),
+            Self::LogicalExpression(expr) => BinaryLikeOperator::from(expr.operator()),
+            Self::BinaryExpression(expr) => BinaryLikeOperator::from(expr.operator()),
         }
     }
 
     /// Determines if a binary like expression should be flattened or not. As a rule of thumb, an expression
     /// can be flattened if its left hand side has the same operator-precedence
     fn can_flatten(&self) -> bool {
-        let left_operator = match self.left() {
+        let left_operator = match self.left().inner() {
             Expression::BinaryExpression(expr) => BinaryLikeOperator::from(expr.operator),
             Expression::LogicalExpression(expr) => BinaryLikeOperator::from(expr.operator),
             _ => return false,
@@ -115,7 +123,7 @@ impl<'a, 'b> BinaryLikeExpression<'a, 'b> {
         let Self::LogicalExpression(logical) = self else {
             return false;
         };
-        match &logical.right {
+        match &logical.right().inner() {
             Expression::ObjectExpression(object) => !object.properties.is_empty(),
             Expression::ArrayExpression(array) => !array.elements.is_empty(),
             Expression::JSXElement(_) | Expression::JSXFragment(_) => true,
@@ -156,16 +164,16 @@ impl<'a, 'b> BinaryLikeExpression<'a, 'b> {
     }
 }
 
-impl GetSpan for BinaryLikeExpression<'_, '_> {
+impl GetSpan for BinaryLikeExpression<'_, '_, '_> {
     fn span(&self) -> oxc_span::Span {
         match self {
-            Self::LogicalExpression(expr) => expr.span,
-            Self::BinaryExpression(expr) => expr.span,
+            Self::LogicalExpression(expr) => expr.span(),
+            Self::BinaryExpression(expr) => expr.span(),
         }
     }
 }
 
-impl GetAddress for BinaryLikeExpression<'_, '_> {
+impl GetAddress for BinaryLikeExpression<'_, '_, '_> {
     fn address(&self) -> Address {
         match self {
             Self::LogicalExpression(expr) => Address::from_ptr(*expr),
@@ -174,19 +182,19 @@ impl GetAddress for BinaryLikeExpression<'_, '_> {
     }
 }
 
-impl<'a, 'b> TryFrom<&'b Expression<'a>> for BinaryLikeExpression<'a, 'b> {
+impl<'a, 'b, 'c> TryFrom<&'c AstNode<'a, 'b, Expression<'a>>> for BinaryLikeExpression<'a, 'b, 'c> {
     type Error = ();
 
-    fn try_from(value: &'b Expression<'a>) -> Result<Self, Self::Error> {
-        match value {
-            Expression::LogicalExpression(expr) => Ok(Self::LogicalExpression(expr)),
-            Expression::BinaryExpression(expr) => Ok(Self::BinaryExpression(expr)),
+    fn try_from(value: &'c AstNode<'a, 'b, Expression<'a>>) -> Result<Self, Self::Error> {
+        match value.as_ast_nodes() {
+            AstNodes::LogicalExpression(expr) => Ok(Self::LogicalExpression(expr)),
+            AstNodes::BinaryExpression(expr) => Ok(Self::BinaryExpression(expr)),
             _ => Err(()),
         }
     }
 }
 
-impl<'a> Format<'a> for BinaryLikeExpression<'a, '_> {
+impl<'a> Format<'a> for BinaryLikeExpression<'a, '_, '_> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         let parent = f.parent_kind_of(self.address());
 
@@ -267,17 +275,16 @@ impl<'a> Format<'a> for BinaryLikeExpression<'a, '_> {
 }
 
 /// Represents the right or left hand side of a binary expression.
-#[derive(Debug)]
-enum BinaryLeftOrRightSide<'a, 'b> {
+enum BinaryLeftOrRightSide<'a, 'b, 'c> {
     /// A terminal left hand side of a binary expression.
     ///
     /// Formats the left hand side only.
-    Left { parent: BinaryLikeExpression<'a, 'b> },
+    Left { parent: BinaryLikeExpression<'a, 'b, 'c> },
 
     /// The right hand side of a binary expression.
     /// Formats the operand together with the right hand side.
     Right {
-        parent: BinaryLikeExpression<'a, 'b>,
+        parent: BinaryLikeExpression<'a, 'b, 'c>,
         /// Is the parent the condition of a `if` / `while` / `do-while` / `for` statement?
         inside_condition: bool,
 
@@ -290,7 +297,7 @@ enum BinaryLeftOrRightSide<'a, 'b> {
     },
 }
 
-impl<'a> Format<'a> for BinaryLeftOrRightSide<'a, '_> {
+impl<'a> Format<'a> for BinaryLeftOrRightSide<'a, '_, '_> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         match self {
             Self::Left { parent } => write!(f, [group(parent.left())]),
@@ -323,11 +330,11 @@ impl<'a> Format<'a> for BinaryLeftOrRightSide<'a, '_> {
                 // Doesn't match prettier that only distinguishes between logical and binary
                 let left_has_same_kind = is_same_binary_expression_kind(
                     binary_like_expression,
-                    binary_like_expression.left(),
+                    binary_like_expression.left().inner(),
                 );
 
                 let right_has_same_kind =
-                    is_same_binary_expression_kind(binary_like_expression, right);
+                    is_same_binary_expression_kind(binary_like_expression, right.inner());
 
                 // let should_break = f
                 //     .context()
@@ -366,14 +373,20 @@ impl<'a> Format<'a> for BinaryLeftOrRightSide<'a, '_> {
     }
 }
 
-impl BinaryLeftOrRightSide<'_, '_> {
+impl BinaryLeftOrRightSide<'_, '_, '_> {
     fn is_jsx(&self) -> bool {
         match self {
             BinaryLeftOrRightSide::Left { parent } => {
-                matches!(parent.left(), Expression::JSXElement(_) | Expression::JSXFragment(_))
+                matches!(
+                    parent.left().inner(),
+                    Expression::JSXElement(_) | Expression::JSXFragment(_)
+                )
             }
             BinaryLeftOrRightSide::Right { parent, .. } => {
-                matches!(parent.right(), Expression::JSXElement(_) | Expression::JSXFragment(_))
+                matches!(
+                    parent.right().inner(),
+                    Expression::JSXElement(_) | Expression::JSXFragment(_)
+                )
             }
             _ => false,
         }
@@ -386,15 +399,15 @@ impl BinaryLeftOrRightSide<'_, '_> {
 ///
 /// It then traverses upwards from the left most node and creates [BinaryLeftOrRightSide::Right]s for
 /// every [BinaryLikeExpression] until it reaches the root again.
-fn split_into_left_and_right_sides<'a, 'b>(
-    root: BinaryLikeExpression<'a, 'b>,
+fn split_into_left_and_right_sides<'a, 'b, 'c>(
+    root: BinaryLikeExpression<'a, 'b, 'c>,
     inside_condition: bool,
-) -> Vec<BinaryLeftOrRightSide<'a, 'b>> {
-    fn split_into_left_and_right_sides_inner<'a, 'b>(
-        binary: BinaryLikeExpression<'a, 'b>,
+) -> Vec<BinaryLeftOrRightSide<'a, 'b, 'c>> {
+    fn split_into_left_and_right_sides_inner<'a, 'b, 'c>(
+        binary: BinaryLikeExpression<'a, 'b, 'c>,
         inside_condition: bool,
         parent_has_same_kind: bool,
-        items: &mut Vec<BinaryLeftOrRightSide<'a, 'b>>,
+        items: &mut Vec<BinaryLeftOrRightSide<'a, 'b, 'c>>,
     ) {
         let left = binary.left();
         let right = binary.right();
@@ -406,7 +419,7 @@ fn split_into_left_and_right_sides<'a, 'b>(
                 // SAFETY: `left` is guaranteed to be a valid binary like expression in `can_flatten()`.
                 BinaryLikeExpression::try_from(left).unwrap(),
                 inside_condition,
-                is_same_binary_expression_kind(&binary, left),
+                is_same_binary_expression_kind(&binary, left.inner()),
                 items,
             );
         } else {
@@ -453,7 +466,7 @@ fn should_indent_if_parent_inlines(parent: &AstKind<'_>, f: &mut Formatter<'_, '
 }
 
 fn is_same_binary_expression_kind(
-    binary: &BinaryLikeExpression<'_, '_>,
+    binary: &BinaryLikeExpression<'_, '_, '_>,
     other: &Expression<'_>,
 ) -> bool {
     match binary {

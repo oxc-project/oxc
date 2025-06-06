@@ -5,22 +5,23 @@ use oxc_span::GetSpan;
 use super::FormatWrite;
 use crate::{
     formatter::{Buffer, FormatResult, Formatter, prelude::*},
+    generated::ast_nodes::AstNode,
     write,
 };
 
-impl<'a> FormatWrite<'a> for BlockStatement<'a> {
+impl<'a, 'b> FormatWrite<'a> for AstNode<'a, 'b, BlockStatement<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         write!(f, "{")?;
-        if is_empty_block(self, f) {
+        if is_empty_block(self.inner(), f) {
             let comments = f.comments();
-            let has_dangling_comments = comments.has_dangling_comments(self.span);
+            let has_dangling_comments = comments.has_dangling_comments(self.span());
             if has_dangling_comments {
-                write!(f, [format_dangling_comments(self.span).with_block_indent()])?;
+                write!(f, [format_dangling_comments(self.span()).with_block_indent()])?;
             } else if is_non_collapsible(f.parent_kind_of(Address::from_ptr(self)), f) {
                 write!(f, hard_line_break())?;
             }
         } else {
-            write!(f, block_indent(&self.body))?;
+            write!(f, block_indent(&self.body()))?;
         }
         write!(f, "}")
     }

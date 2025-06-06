@@ -258,6 +258,10 @@ impl<'a, 'b, T> AstNode<'a, 'b, Vec<'a, T>> {
         self.inner.len()
     }
 
+    pub fn iter(&self) -> AstNodeIterator<'a, 'b, T> {
+        AstNodeIterator { inner: self.inner.iter(), parent: self.parent, allocator: self.allocator }
+    }
+
     pub fn first(&self) -> Option<&'a AstNode<'a, 'b, T>> {
         self.allocator
             .alloc(self.inner.first().map(|inner| AstNode {
