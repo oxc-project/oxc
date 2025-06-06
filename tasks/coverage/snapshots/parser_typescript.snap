@@ -25332,10 +25332,11 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
    ·                ╰── `,` expected
    ╰────
 
-  × Unexpected token
+  × Expected `from` but found `Identifier`
    ╭─[typescript/tests/cases/conformance/externalModules/typeOnly/grammarErrors.ts:1:13]
  1 │ import type A from './a';
-   ·             ─
+   ·             ┬
+   ·             ╰── `from` expected
  2 │ export type { A };
    ╰────
 
