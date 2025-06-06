@@ -1,8 +1,6 @@
-use oxc_allocator::Address;
 use oxc_ast::{AstKind, ast::Program};
 use oxc_data_structures::stack::NonEmptyStack;
 use oxc_span::Span;
-use rustc_hash::{FxHashMap, FxHashSet};
 
 use super::{FormatContext, GroupId, SyntaxNode, UniqueGroupIdBuilder, parent_stack::ParentStack};
 
