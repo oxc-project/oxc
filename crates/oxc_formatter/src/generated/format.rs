@@ -1,7 +1,7 @@
 // Auto-generated code, DO NOT EDIT DIRECTLY!
 // To edit this generated file you have to edit `tasks/ast_tools/src/generators/formatter.rs`.
 
-#![allow(clippy::undocumented_unsafe_blocks)]
+#![expect(clippy::elidable_lifetime_names)]
 use oxc_ast::{AstKind, ast::*};
 
 use crate::{
@@ -14,12 +14,7 @@ use crate::{
     write::FormatWrite,
 };
 
-/// A hack for erasing the lifetime requirement.
-pub fn hack<'ast, T>(t: &T) -> &'ast T {
-    unsafe { std::mem::transmute(t) }
-}
-
-impl<'a> Format<'a> for AstNode<'a, '_, Program<'a>> {
+impl<'a, 'b> Format<'a> for AstNode<'a, 'b, Program<'a>> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         format_leading_comments(self.span().start).fmt(f)?;
         let result = self.write(f);
@@ -28,13 +23,13 @@ impl<'a> Format<'a> for AstNode<'a, '_, Program<'a>> {
     }
 }
 
-impl<'a> Format<'a> for AstNode<'a, '_, Expression<'a>> {
+impl<'a, 'b> Format<'a> for AstNode<'a, 'b, Expression<'a>> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         self.write(f)
     }
 }
 
-impl<'a> Format<'a> for AstNode<'a, '_, IdentifierName<'a>> {
+impl<'a, 'b> Format<'a> for AstNode<'a, 'b, IdentifierName<'a>> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         format_leading_comments(self.span().start).fmt(f)?;
         let result = self.write(f);
@@ -43,7 +38,7 @@ impl<'a> Format<'a> for AstNode<'a, '_, IdentifierName<'a>> {
     }
 }
 
-impl<'a> Format<'a> for AstNode<'a, '_, IdentifierReference<'a>> {
+impl<'a, 'b> Format<'a> for AstNode<'a, 'b, IdentifierReference<'a>> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         format_leading_comments(self.span().start).fmt(f)?;
         let result = self.write(f);
@@ -52,7 +47,7 @@ impl<'a> Format<'a> for AstNode<'a, '_, IdentifierReference<'a>> {
     }
 }
 
-impl<'a> Format<'a> for AstNode<'a, '_, BindingIdentifier<'a>> {
+impl<'a, 'b> Format<'a> for AstNode<'a, 'b, BindingIdentifier<'a>> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         format_leading_comments(self.span().start).fmt(f)?;
         let result = self.write(f);
@@ -61,7 +56,7 @@ impl<'a> Format<'a> for AstNode<'a, '_, BindingIdentifier<'a>> {
     }
 }
 
-impl<'a> Format<'a> for AstNode<'a, '_, LabelIdentifier<'a>> {
+impl<'a, 'b> Format<'a> for AstNode<'a, 'b, LabelIdentifier<'a>> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         format_leading_comments(self.span().start).fmt(f)?;
         let result = self.write(f);
@@ -70,7 +65,7 @@ impl<'a> Format<'a> for AstNode<'a, '_, LabelIdentifier<'a>> {
     }
 }
 
-impl<'a> Format<'a> for AstNode<'a, '_, ThisExpression> {
+impl<'a, 'b> Format<'a> for AstNode<'a, 'b, ThisExpression> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         format_leading_comments(self.span().start).fmt(f)?;
         let needs_parentheses = self.needs_parentheses(f);
@@ -86,7 +81,7 @@ impl<'a> Format<'a> for AstNode<'a, '_, ThisExpression> {
     }
 }
 
-impl<'a> Format<'a> for AstNode<'a, '_, ArrayExpression<'a>> {
+impl<'a, 'b> Format<'a> for AstNode<'a, 'b, ArrayExpression<'a>> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         format_leading_comments(self.span().start).fmt(f)?;
         let needs_parentheses = self.needs_parentheses(f);
@@ -102,13 +97,13 @@ impl<'a> Format<'a> for AstNode<'a, '_, ArrayExpression<'a>> {
     }
 }
 
-impl<'a> Format<'a> for AstNode<'a, '_, ArrayExpressionElement<'a>> {
+impl<'a, 'b> Format<'a> for AstNode<'a, 'b, ArrayExpressionElement<'a>> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         self.write(f)
     }
 }
 
-impl<'a> Format<'a> for AstNode<'a, '_, Elision> {
+impl<'a, 'b> Format<'a> for AstNode<'a, 'b, Elision> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         format_leading_comments(self.span().start).fmt(f)?;
         let result = self.write(f);
@@ -117,53 +112,7 @@ impl<'a> Format<'a> for AstNode<'a, '_, Elision> {
     }
 }
 
-impl<'a> Format<'a> for AstNode<'a, '_, ObjectExpression<'a>> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        format_leading_comments(self.span().start).fmt(f)?;
-        let needs_parentheses = self.needs_parentheses(f);
-        if needs_parentheses {
-            "(".fmt(f)?;
-        }
-        let result = self.write(f);
-        if needs_parentheses {
-            ")".fmt(f)?;
-        }
-        format_trailing_comments(self.span().end).fmt(f)?;
-        result
-    }
-}
-
-impl<'a> Format<'a> for AstNode<'a, '_, ObjectPropertyKind<'a>> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        self.write(f)
-    }
-}
-
-impl<'a> Format<'a> for AstNode<'a, '_, ObjectProperty<'a>> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        format_leading_comments(self.span().start).fmt(f)?;
-        let result = self.write(f);
-        format_trailing_comments(self.span().end).fmt(f)?;
-        result
-    }
-}
-
-impl<'a> Format<'a> for AstNode<'a, '_, PropertyKey<'a>> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        self.write(f)
-    }
-}
-
-impl<'a> Format<'a> for AstNode<'a, '_, TemplateLiteral<'a>> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        format_leading_comments(self.span().start).fmt(f)?;
-        let result = self.write(f);
-        format_trailing_comments(self.span().end).fmt(f)?;
-        result
-    }
-}
-
-impl<'a> Format<'a> for AstNode<'a, '_, TaggedTemplateExpression<'a>> {
+impl<'a, 'b> Format<'a> for AstNode<'a, 'b, ObjectExpression<'a>> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         format_leading_comments(self.span().start).fmt(f)?;
         let needs_parentheses = self.needs_parentheses(f);
@@ -179,45 +128,37 @@ impl<'a> Format<'a> for AstNode<'a, '_, TaggedTemplateExpression<'a>> {
     }
 }
 
-impl<'a> Format<'a> for AstNode<'a, '_, TemplateElement<'a>> {
+impl<'a, 'b> Format<'a> for AstNode<'a, 'b, ObjectPropertyKind<'a>> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         self.write(f)
     }
 }
 
-impl<'a> Format<'a> for AstNode<'a, '_, MemberExpression<'a>> {
+impl<'a, 'b> Format<'a> for AstNode<'a, 'b, ObjectProperty<'a>> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        let needs_parentheses = self.needs_parentheses(f);
-        if needs_parentheses {
-            "(".fmt(f)?;
-        }
+        format_leading_comments(self.span().start).fmt(f)?;
         let result = self.write(f);
-        if needs_parentheses {
-            ")".fmt(f)?;
-        }
+        format_trailing_comments(self.span().end).fmt(f)?;
         result
     }
 }
 
-impl<'a> Format<'a> for AstNode<'a, '_, ComputedMemberExpression<'a>> {
+impl<'a, 'b> Format<'a> for AstNode<'a, 'b, PropertyKey<'a>> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         self.write(f)
     }
 }
 
-impl<'a> Format<'a> for AstNode<'a, '_, StaticMemberExpression<'a>> {
+impl<'a, 'b> Format<'a> for AstNode<'a, 'b, TemplateLiteral<'a>> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        self.write(f)
+        format_leading_comments(self.span().start).fmt(f)?;
+        let result = self.write(f);
+        format_trailing_comments(self.span().end).fmt(f)?;
+        result
     }
 }
 
-impl<'a> Format<'a> for AstNode<'a, '_, PrivateFieldExpression<'a>> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        self.write(f)
-    }
-}
-
-impl<'a> Format<'a> for AstNode<'a, '_, CallExpression<'a>> {
+impl<'a, 'b> Format<'a> for AstNode<'a, 'b, TaggedTemplateExpression<'a>> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         format_leading_comments(self.span().start).fmt(f)?;
         let needs_parentheses = self.needs_parentheses(f);
@@ -233,7 +174,45 @@ impl<'a> Format<'a> for AstNode<'a, '_, CallExpression<'a>> {
     }
 }
 
-impl<'a> Format<'a> for AstNode<'a, '_, NewExpression<'a>> {
+impl<'a, 'b> Format<'a> for AstNode<'a, 'b, TemplateElement<'a>> {
+    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        self.write(f)
+    }
+}
+
+impl<'a, 'b> Format<'a> for AstNode<'a, 'b, MemberExpression<'a>> {
+    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        let needs_parentheses = self.needs_parentheses(f);
+        if needs_parentheses {
+            "(".fmt(f)?;
+        }
+        let result = self.write(f);
+        if needs_parentheses {
+            ")".fmt(f)?;
+        }
+        result
+    }
+}
+
+impl<'a, 'b> Format<'a> for AstNode<'a, 'b, ComputedMemberExpression<'a>> {
+    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        self.write(f)
+    }
+}
+
+impl<'a, 'b> Format<'a> for AstNode<'a, 'b, StaticMemberExpression<'a>> {
+    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        self.write(f)
+    }
+}
+
+impl<'a, 'b> Format<'a> for AstNode<'a, 'b, PrivateFieldExpression<'a>> {
+    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        self.write(f)
+    }
+}
+
+impl<'a, 'b> Format<'a> for AstNode<'a, 'b, CallExpression<'a>> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         format_leading_comments(self.span().start).fmt(f)?;
         let needs_parentheses = self.needs_parentheses(f);
@@ -249,31 +228,7 @@ impl<'a> Format<'a> for AstNode<'a, '_, NewExpression<'a>> {
     }
 }
 
-impl<'a> Format<'a> for AstNode<'a, '_, MetaProperty<'a>> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        format_leading_comments(self.span().start).fmt(f)?;
-        let result = self.write(f);
-        format_trailing_comments(self.span().end).fmt(f)?;
-        result
-    }
-}
-
-impl<'a> Format<'a> for AstNode<'a, '_, SpreadElement<'a>> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        format_leading_comments(self.span().start).fmt(f)?;
-        let result = self.write(f);
-        format_trailing_comments(self.span().end).fmt(f)?;
-        result
-    }
-}
-
-impl<'a> Format<'a> for AstNode<'a, '_, Argument<'a>> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        self.write(f)
-    }
-}
-
-impl<'a> Format<'a> for AstNode<'a, '_, UpdateExpression<'a>> {
+impl<'a, 'b> Format<'a> for AstNode<'a, 'b, NewExpression<'a>> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         format_leading_comments(self.span().start).fmt(f)?;
         let needs_parentheses = self.needs_parentheses(f);
@@ -289,7 +244,31 @@ impl<'a> Format<'a> for AstNode<'a, '_, UpdateExpression<'a>> {
     }
 }
 
-impl<'a> Format<'a> for AstNode<'a, '_, UnaryExpression<'a>> {
+impl<'a, 'b> Format<'a> for AstNode<'a, 'b, MetaProperty<'a>> {
+    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_leading_comments(self.span().start).fmt(f)?;
+        let result = self.write(f);
+        format_trailing_comments(self.span().end).fmt(f)?;
+        result
+    }
+}
+
+impl<'a, 'b> Format<'a> for AstNode<'a, 'b, SpreadElement<'a>> {
+    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_leading_comments(self.span().start).fmt(f)?;
+        let result = self.write(f);
+        format_trailing_comments(self.span().end).fmt(f)?;
+        result
+    }
+}
+
+impl<'a, 'b> Format<'a> for AstNode<'a, 'b, Argument<'a>> {
+    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        self.write(f)
+    }
+}
+
+impl<'a, 'b> Format<'a> for AstNode<'a, 'b, UpdateExpression<'a>> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         format_leading_comments(self.span().start).fmt(f)?;
         let needs_parentheses = self.needs_parentheses(f);
@@ -305,7 +284,7 @@ impl<'a> Format<'a> for AstNode<'a, '_, UnaryExpression<'a>> {
     }
 }
 
-impl<'a> Format<'a> for AstNode<'a, '_, BinaryExpression<'a>> {
+impl<'a, 'b> Format<'a> for AstNode<'a, 'b, UnaryExpression<'a>> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         format_leading_comments(self.span().start).fmt(f)?;
         let needs_parentheses = self.needs_parentheses(f);
@@ -321,7 +300,7 @@ impl<'a> Format<'a> for AstNode<'a, '_, BinaryExpression<'a>> {
     }
 }
 
-impl<'a> Format<'a> for AstNode<'a, '_, PrivateInExpression<'a>> {
+impl<'a, 'b> Format<'a> for AstNode<'a, 'b, BinaryExpression<'a>> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         format_leading_comments(self.span().start).fmt(f)?;
         let needs_parentheses = self.needs_parentheses(f);
@@ -337,7 +316,7 @@ impl<'a> Format<'a> for AstNode<'a, '_, PrivateInExpression<'a>> {
     }
 }
 
-impl<'a> Format<'a> for AstNode<'a, '_, LogicalExpression<'a>> {
+impl<'a, 'b> Format<'a> for AstNode<'a, 'b, PrivateInExpression<'a>> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         format_leading_comments(self.span().start).fmt(f)?;
         let needs_parentheses = self.needs_parentheses(f);
@@ -353,7 +332,7 @@ impl<'a> Format<'a> for AstNode<'a, '_, LogicalExpression<'a>> {
     }
 }
 
-impl<'a> Format<'a> for AstNode<'a, '_, ConditionalExpression<'a>> {
+impl<'a, 'b> Format<'a> for AstNode<'a, 'b, LogicalExpression<'a>> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         format_leading_comments(self.span().start).fmt(f)?;
         let needs_parentheses = self.needs_parentheses(f);
@@ -369,7 +348,7 @@ impl<'a> Format<'a> for AstNode<'a, '_, ConditionalExpression<'a>> {
     }
 }
 
-impl<'a> Format<'a> for AstNode<'a, '_, AssignmentExpression<'a>> {
+impl<'a, 'b> Format<'a> for AstNode<'a, 'b, ConditionalExpression<'a>> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         format_leading_comments(self.span().start).fmt(f)?;
         let needs_parentheses = self.needs_parentheses(f);
@@ -385,90 +364,7 @@ impl<'a> Format<'a> for AstNode<'a, '_, AssignmentExpression<'a>> {
     }
 }
 
-impl<'a> Format<'a> for AstNode<'a, '_, AssignmentTarget<'a>> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        self.write(f)
-    }
-}
-
-impl<'a> Format<'a> for AstNode<'a, '_, SimpleAssignmentTarget<'a>> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        let needs_parentheses = self.needs_parentheses(f);
-        if needs_parentheses {
-            "(".fmt(f)?;
-        }
-        let result = self.write(f);
-        if needs_parentheses {
-            ")".fmt(f)?;
-        }
-        result
-    }
-}
-
-impl<'a> Format<'a> for AstNode<'a, '_, AssignmentTargetPattern<'a>> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        self.write(f)
-    }
-}
-
-impl<'a> Format<'a> for AstNode<'a, '_, ArrayAssignmentTarget<'a>> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        format_leading_comments(self.span().start).fmt(f)?;
-        let result = self.write(f);
-        format_trailing_comments(self.span().end).fmt(f)?;
-        result
-    }
-}
-
-impl<'a> Format<'a> for AstNode<'a, '_, ObjectAssignmentTarget<'a>> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        format_leading_comments(self.span().start).fmt(f)?;
-        let result = self.write(f);
-        format_trailing_comments(self.span().end).fmt(f)?;
-        result
-    }
-}
-
-impl<'a> Format<'a> for AstNode<'a, '_, AssignmentTargetRest<'a>> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        self.write(f)
-    }
-}
-
-impl<'a> Format<'a> for AstNode<'a, '_, AssignmentTargetMaybeDefault<'a>> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        self.write(f)
-    }
-}
-
-impl<'a> Format<'a> for AstNode<'a, '_, AssignmentTargetWithDefault<'a>> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        format_leading_comments(self.span().start).fmt(f)?;
-        let result = self.write(f);
-        format_trailing_comments(self.span().end).fmt(f)?;
-        result
-    }
-}
-
-impl<'a> Format<'a> for AstNode<'a, '_, AssignmentTargetProperty<'a>> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        self.write(f)
-    }
-}
-
-impl<'a> Format<'a> for AstNode<'a, '_, AssignmentTargetPropertyIdentifier<'a>> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        self.write(f)
-    }
-}
-
-impl<'a> Format<'a> for AstNode<'a, '_, AssignmentTargetPropertyProperty<'a>> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        self.write(f)
-    }
-}
-
-impl<'a> Format<'a> for AstNode<'a, '_, SequenceExpression<'a>> {
+impl<'a, 'b> Format<'a> for AstNode<'a, 'b, AssignmentExpression<'a>> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         format_leading_comments(self.span().start).fmt(f)?;
         let needs_parentheses = self.needs_parentheses(f);
@@ -484,7 +380,33 @@ impl<'a> Format<'a> for AstNode<'a, '_, SequenceExpression<'a>> {
     }
 }
 
-impl<'a> Format<'a> for AstNode<'a, '_, Super> {
+impl<'a, 'b> Format<'a> for AstNode<'a, 'b, AssignmentTarget<'a>> {
+    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        self.write(f)
+    }
+}
+
+impl<'a, 'b> Format<'a> for AstNode<'a, 'b, SimpleAssignmentTarget<'a>> {
+    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        let needs_parentheses = self.needs_parentheses(f);
+        if needs_parentheses {
+            "(".fmt(f)?;
+        }
+        let result = self.write(f);
+        if needs_parentheses {
+            ")".fmt(f)?;
+        }
+        result
+    }
+}
+
+impl<'a, 'b> Format<'a> for AstNode<'a, 'b, AssignmentTargetPattern<'a>> {
+    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        self.write(f)
+    }
+}
+
+impl<'a, 'b> Format<'a> for AstNode<'a, 'b, ArrayAssignmentTarget<'a>> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         format_leading_comments(self.span().start).fmt(f)?;
         let result = self.write(f);
@@ -493,7 +415,55 @@ impl<'a> Format<'a> for AstNode<'a, '_, Super> {
     }
 }
 
-impl<'a> Format<'a> for AstNode<'a, '_, AwaitExpression<'a>> {
+impl<'a, 'b> Format<'a> for AstNode<'a, 'b, ObjectAssignmentTarget<'a>> {
+    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_leading_comments(self.span().start).fmt(f)?;
+        let result = self.write(f);
+        format_trailing_comments(self.span().end).fmt(f)?;
+        result
+    }
+}
+
+impl<'a, 'b> Format<'a> for AstNode<'a, 'b, AssignmentTargetRest<'a>> {
+    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        self.write(f)
+    }
+}
+
+impl<'a, 'b> Format<'a> for AstNode<'a, 'b, AssignmentTargetMaybeDefault<'a>> {
+    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        self.write(f)
+    }
+}
+
+impl<'a, 'b> Format<'a> for AstNode<'a, 'b, AssignmentTargetWithDefault<'a>> {
+    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_leading_comments(self.span().start).fmt(f)?;
+        let result = self.write(f);
+        format_trailing_comments(self.span().end).fmt(f)?;
+        result
+    }
+}
+
+impl<'a, 'b> Format<'a> for AstNode<'a, 'b, AssignmentTargetProperty<'a>> {
+    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        self.write(f)
+    }
+}
+
+impl<'a, 'b> Format<'a> for AstNode<'a, 'b, AssignmentTargetPropertyIdentifier<'a>> {
+    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        self.write(f)
+    }
+}
+
+impl<'a, 'b> Format<'a> for AstNode<'a, 'b, AssignmentTargetPropertyProperty<'a>> {
+    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        self.write(f)
+    }
+}
+
+impl<'a, 'b> Format<'a> for AstNode<'a, 'b, SequenceExpression<'a>> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         format_leading_comments(self.span().start).fmt(f)?;
         let needs_parentheses = self.needs_parentheses(f);
@@ -509,7 +479,16 @@ impl<'a> Format<'a> for AstNode<'a, '_, AwaitExpression<'a>> {
     }
 }
 
-impl<'a> Format<'a> for AstNode<'a, '_, ChainExpression<'a>> {
+impl<'a, 'b> Format<'a> for AstNode<'a, 'b, Super> {
+    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_leading_comments(self.span().start).fmt(f)?;
+        let result = self.write(f);
+        format_trailing_comments(self.span().end).fmt(f)?;
+        result
+    }
+}
+
+impl<'a, 'b> Format<'a> for AstNode<'a, 'b, AwaitExpression<'a>> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         format_leading_comments(self.span().start).fmt(f)?;
         let needs_parentheses = self.needs_parentheses(f);
@@ -525,13 +504,7 @@ impl<'a> Format<'a> for AstNode<'a, '_, ChainExpression<'a>> {
     }
 }
 
-impl<'a> Format<'a> for AstNode<'a, '_, ChainElement<'a>> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        self.write(f)
-    }
-}
-
-impl<'a> Format<'a> for AstNode<'a, '_, ParenthesizedExpression<'a>> {
+impl<'a, 'b> Format<'a> for AstNode<'a, 'b, ChainExpression<'a>> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         format_leading_comments(self.span().start).fmt(f)?;
         let needs_parentheses = self.needs_parentheses(f);
@@ -547,310 +520,13 @@ impl<'a> Format<'a> for AstNode<'a, '_, ParenthesizedExpression<'a>> {
     }
 }
 
-impl<'a> Format<'a> for AstNode<'a, '_, Statement<'a>> {
+impl<'a, 'b> Format<'a> for AstNode<'a, 'b, ChainElement<'a>> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         self.write(f)
     }
 }
 
-impl<'a> Format<'a> for AstNode<'a, '_, Directive<'a>> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        format_leading_comments(self.span().start).fmt(f)?;
-        let result = self.write(f);
-        format_trailing_comments(self.span().end).fmt(f)?;
-        result
-    }
-}
-
-impl<'a> Format<'a> for AstNode<'a, '_, Hashbang<'a>> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        format_leading_comments(self.span().start).fmt(f)?;
-        let result = self.write(f);
-        format_trailing_comments(self.span().end).fmt(f)?;
-        result
-    }
-}
-
-impl<'a> Format<'a> for AstNode<'a, '_, BlockStatement<'a>> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        format_leading_comments(self.span().start).fmt(f)?;
-        let result = self.write(f);
-        format_trailing_comments(self.span().end).fmt(f)?;
-        result
-    }
-}
-
-impl<'a> Format<'a> for AstNode<'a, '_, Declaration<'a>> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        self.write(f)
-    }
-}
-
-impl<'a> Format<'a> for AstNode<'a, '_, VariableDeclaration<'a>> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        format_leading_comments(self.span().start).fmt(f)?;
-        let result = self.write(f);
-        format_trailing_comments(self.span().end).fmt(f)?;
-        result
-    }
-}
-
-impl<'a> Format<'a> for AstNode<'a, '_, VariableDeclarator<'a>> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        format_leading_comments(self.span().start).fmt(f)?;
-        let result = self.write(f);
-        format_trailing_comments(self.span().end).fmt(f)?;
-        result
-    }
-}
-
-impl<'a> Format<'a> for AstNode<'a, '_, EmptyStatement> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        format_leading_comments(self.span().start).fmt(f)?;
-        let result = self.write(f);
-        format_trailing_comments(self.span().end).fmt(f)?;
-        result
-    }
-}
-
-impl<'a> Format<'a> for AstNode<'a, '_, ExpressionStatement<'a>> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        format_leading_comments(self.span().start).fmt(f)?;
-        let result = self.write(f);
-        format_trailing_comments(self.span().end).fmt(f)?;
-        result
-    }
-}
-
-impl<'a> Format<'a> for AstNode<'a, '_, IfStatement<'a>> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        format_leading_comments(self.span().start).fmt(f)?;
-        let result = self.write(f);
-        format_trailing_comments(self.span().end).fmt(f)?;
-        result
-    }
-}
-
-impl<'a> Format<'a> for AstNode<'a, '_, DoWhileStatement<'a>> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        format_leading_comments(self.span().start).fmt(f)?;
-        let result = self.write(f);
-        format_trailing_comments(self.span().end).fmt(f)?;
-        result
-    }
-}
-
-impl<'a> Format<'a> for AstNode<'a, '_, WhileStatement<'a>> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        format_leading_comments(self.span().start).fmt(f)?;
-        let result = self.write(f);
-        format_trailing_comments(self.span().end).fmt(f)?;
-        result
-    }
-}
-
-impl<'a> Format<'a> for AstNode<'a, '_, ForStatement<'a>> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        format_leading_comments(self.span().start).fmt(f)?;
-        let result = self.write(f);
-        format_trailing_comments(self.span().end).fmt(f)?;
-        result
-    }
-}
-
-impl<'a> Format<'a> for AstNode<'a, '_, ForStatementInit<'a>> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        self.write(f)
-    }
-}
-
-impl<'a> Format<'a> for AstNode<'a, '_, ForInStatement<'a>> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        format_leading_comments(self.span().start).fmt(f)?;
-        let result = self.write(f);
-        format_trailing_comments(self.span().end).fmt(f)?;
-        result
-    }
-}
-
-impl<'a> Format<'a> for AstNode<'a, '_, ForStatementLeft<'a>> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        self.write(f)
-    }
-}
-
-impl<'a> Format<'a> for AstNode<'a, '_, ForOfStatement<'a>> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        format_leading_comments(self.span().start).fmt(f)?;
-        let result = self.write(f);
-        format_trailing_comments(self.span().end).fmt(f)?;
-        result
-    }
-}
-
-impl<'a> Format<'a> for AstNode<'a, '_, ContinueStatement<'a>> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        format_leading_comments(self.span().start).fmt(f)?;
-        let result = self.write(f);
-        format_trailing_comments(self.span().end).fmt(f)?;
-        result
-    }
-}
-
-impl<'a> Format<'a> for AstNode<'a, '_, BreakStatement<'a>> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        format_leading_comments(self.span().start).fmt(f)?;
-        let result = self.write(f);
-        format_trailing_comments(self.span().end).fmt(f)?;
-        result
-    }
-}
-
-impl<'a> Format<'a> for AstNode<'a, '_, ReturnStatement<'a>> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        format_leading_comments(self.span().start).fmt(f)?;
-        let result = self.write(f);
-        format_trailing_comments(self.span().end).fmt(f)?;
-        result
-    }
-}
-
-impl<'a> Format<'a> for AstNode<'a, '_, WithStatement<'a>> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        format_leading_comments(self.span().start).fmt(f)?;
-        let result = self.write(f);
-        format_trailing_comments(self.span().end).fmt(f)?;
-        result
-    }
-}
-
-impl<'a> Format<'a> for AstNode<'a, '_, SwitchStatement<'a>> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        format_leading_comments(self.span().start).fmt(f)?;
-        let result = self.write(f);
-        format_trailing_comments(self.span().end).fmt(f)?;
-        result
-    }
-}
-
-impl<'a> Format<'a> for AstNode<'a, '_, SwitchCase<'a>> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        format_leading_comments(self.span().start).fmt(f)?;
-        let result = self.write(f);
-        format_trailing_comments(self.span().end).fmt(f)?;
-        result
-    }
-}
-
-impl<'a> Format<'a> for AstNode<'a, '_, LabeledStatement<'a>> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        format_leading_comments(self.span().start).fmt(f)?;
-        let result = self.write(f);
-        format_trailing_comments(self.span().end).fmt(f)?;
-        result
-    }
-}
-
-impl<'a> Format<'a> for AstNode<'a, '_, ThrowStatement<'a>> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        format_leading_comments(self.span().start).fmt(f)?;
-        let result = self.write(f);
-        format_trailing_comments(self.span().end).fmt(f)?;
-        result
-    }
-}
-
-impl<'a> Format<'a> for AstNode<'a, '_, TryStatement<'a>> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        format_leading_comments(self.span().start).fmt(f)?;
-        let result = self.write(f);
-        format_trailing_comments(self.span().end).fmt(f)?;
-        result
-    }
-}
-
-impl<'a> Format<'a> for AstNode<'a, '_, CatchClause<'a>> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        format_leading_comments(self.span().start).fmt(f)?;
-        let result = self.write(f);
-        format_trailing_comments(self.span().end).fmt(f)?;
-        result
-    }
-}
-
-impl<'a> Format<'a> for AstNode<'a, '_, CatchParameter<'a>> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        format_leading_comments(self.span().start).fmt(f)?;
-        let result = self.write(f);
-        format_trailing_comments(self.span().end).fmt(f)?;
-        result
-    }
-}
-
-impl<'a> Format<'a> for AstNode<'a, '_, DebuggerStatement> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        format_leading_comments(self.span().start).fmt(f)?;
-        let result = self.write(f);
-        format_trailing_comments(self.span().end).fmt(f)?;
-        result
-    }
-}
-
-impl<'a> Format<'a> for AstNode<'a, '_, BindingPattern<'a>> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        self.write(f)
-    }
-}
-
-impl<'a> Format<'a> for AstNode<'a, '_, BindingPatternKind<'a>> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        self.write(f)
-    }
-}
-
-impl<'a> Format<'a> for AstNode<'a, '_, AssignmentPattern<'a>> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        format_leading_comments(self.span().start).fmt(f)?;
-        let result = self.write(f);
-        format_trailing_comments(self.span().end).fmt(f)?;
-        result
-    }
-}
-
-impl<'a> Format<'a> for AstNode<'a, '_, ObjectPattern<'a>> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        format_leading_comments(self.span().start).fmt(f)?;
-        let result = self.write(f);
-        format_trailing_comments(self.span().end).fmt(f)?;
-        result
-    }
-}
-
-impl<'a> Format<'a> for AstNode<'a, '_, BindingProperty<'a>> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        self.write(f)
-    }
-}
-
-impl<'a> Format<'a> for AstNode<'a, '_, ArrayPattern<'a>> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        format_leading_comments(self.span().start).fmt(f)?;
-        let result = self.write(f);
-        format_trailing_comments(self.span().end).fmt(f)?;
-        result
-    }
-}
-
-impl<'a> Format<'a> for AstNode<'a, '_, BindingRestElement<'a>> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        format_leading_comments(self.span().start).fmt(f)?;
-        let result = self.write(f);
-        format_trailing_comments(self.span().end).fmt(f)?;
-        result
-    }
-}
-
-impl<'a> Format<'a> for AstNode<'a, '_, Function<'a>> {
+impl<'a, 'b> Format<'a> for AstNode<'a, 'b, ParenthesizedExpression<'a>> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         format_leading_comments(self.span().start).fmt(f)?;
         let needs_parentheses = self.needs_parentheses(f);
@@ -866,7 +542,13 @@ impl<'a> Format<'a> for AstNode<'a, '_, Function<'a>> {
     }
 }
 
-impl<'a> Format<'a> for AstNode<'a, '_, FormalParameters<'a>> {
+impl<'a, 'b> Format<'a> for AstNode<'a, 'b, Statement<'a>> {
+    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        self.write(f)
+    }
+}
+
+impl<'a, 'b> Format<'a> for AstNode<'a, 'b, Directive<'a>> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         format_leading_comments(self.span().start).fmt(f)?;
         let result = self.write(f);
@@ -875,7 +557,7 @@ impl<'a> Format<'a> for AstNode<'a, '_, FormalParameters<'a>> {
     }
 }
 
-impl<'a> Format<'a> for AstNode<'a, '_, FormalParameter<'a>> {
+impl<'a, 'b> Format<'a> for AstNode<'a, 'b, Hashbang<'a>> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         format_leading_comments(self.span().start).fmt(f)?;
         let result = self.write(f);
@@ -884,7 +566,7 @@ impl<'a> Format<'a> for AstNode<'a, '_, FormalParameter<'a>> {
     }
 }
 
-impl<'a> Format<'a> for AstNode<'a, '_, FunctionBody<'a>> {
+impl<'a, 'b> Format<'a> for AstNode<'a, 'b, BlockStatement<'a>> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         format_leading_comments(self.span().start).fmt(f)?;
         let result = self.write(f);
@@ -893,7 +575,277 @@ impl<'a> Format<'a> for AstNode<'a, '_, FunctionBody<'a>> {
     }
 }
 
-impl<'a> Format<'a> for AstNode<'a, '_, ArrowFunctionExpression<'a>> {
+impl<'a, 'b> Format<'a> for AstNode<'a, 'b, Declaration<'a>> {
+    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        self.write(f)
+    }
+}
+
+impl<'a, 'b> Format<'a> for AstNode<'a, 'b, VariableDeclaration<'a>> {
+    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_leading_comments(self.span().start).fmt(f)?;
+        let result = self.write(f);
+        format_trailing_comments(self.span().end).fmt(f)?;
+        result
+    }
+}
+
+impl<'a, 'b> Format<'a> for AstNode<'a, 'b, VariableDeclarator<'a>> {
+    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_leading_comments(self.span().start).fmt(f)?;
+        let result = self.write(f);
+        format_trailing_comments(self.span().end).fmt(f)?;
+        result
+    }
+}
+
+impl<'a, 'b> Format<'a> for AstNode<'a, 'b, EmptyStatement> {
+    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_leading_comments(self.span().start).fmt(f)?;
+        let result = self.write(f);
+        format_trailing_comments(self.span().end).fmt(f)?;
+        result
+    }
+}
+
+impl<'a, 'b> Format<'a> for AstNode<'a, 'b, ExpressionStatement<'a>> {
+    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_leading_comments(self.span().start).fmt(f)?;
+        let result = self.write(f);
+        format_trailing_comments(self.span().end).fmt(f)?;
+        result
+    }
+}
+
+impl<'a, 'b> Format<'a> for AstNode<'a, 'b, IfStatement<'a>> {
+    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_leading_comments(self.span().start).fmt(f)?;
+        let result = self.write(f);
+        format_trailing_comments(self.span().end).fmt(f)?;
+        result
+    }
+}
+
+impl<'a, 'b> Format<'a> for AstNode<'a, 'b, DoWhileStatement<'a>> {
+    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_leading_comments(self.span().start).fmt(f)?;
+        let result = self.write(f);
+        format_trailing_comments(self.span().end).fmt(f)?;
+        result
+    }
+}
+
+impl<'a, 'b> Format<'a> for AstNode<'a, 'b, WhileStatement<'a>> {
+    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_leading_comments(self.span().start).fmt(f)?;
+        let result = self.write(f);
+        format_trailing_comments(self.span().end).fmt(f)?;
+        result
+    }
+}
+
+impl<'a, 'b> Format<'a> for AstNode<'a, 'b, ForStatement<'a>> {
+    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_leading_comments(self.span().start).fmt(f)?;
+        let result = self.write(f);
+        format_trailing_comments(self.span().end).fmt(f)?;
+        result
+    }
+}
+
+impl<'a, 'b> Format<'a> for AstNode<'a, 'b, ForStatementInit<'a>> {
+    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        self.write(f)
+    }
+}
+
+impl<'a, 'b> Format<'a> for AstNode<'a, 'b, ForInStatement<'a>> {
+    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_leading_comments(self.span().start).fmt(f)?;
+        let result = self.write(f);
+        format_trailing_comments(self.span().end).fmt(f)?;
+        result
+    }
+}
+
+impl<'a, 'b> Format<'a> for AstNode<'a, 'b, ForStatementLeft<'a>> {
+    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        self.write(f)
+    }
+}
+
+impl<'a, 'b> Format<'a> for AstNode<'a, 'b, ForOfStatement<'a>> {
+    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_leading_comments(self.span().start).fmt(f)?;
+        let result = self.write(f);
+        format_trailing_comments(self.span().end).fmt(f)?;
+        result
+    }
+}
+
+impl<'a, 'b> Format<'a> for AstNode<'a, 'b, ContinueStatement<'a>> {
+    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_leading_comments(self.span().start).fmt(f)?;
+        let result = self.write(f);
+        format_trailing_comments(self.span().end).fmt(f)?;
+        result
+    }
+}
+
+impl<'a, 'b> Format<'a> for AstNode<'a, 'b, BreakStatement<'a>> {
+    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_leading_comments(self.span().start).fmt(f)?;
+        let result = self.write(f);
+        format_trailing_comments(self.span().end).fmt(f)?;
+        result
+    }
+}
+
+impl<'a, 'b> Format<'a> for AstNode<'a, 'b, ReturnStatement<'a>> {
+    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_leading_comments(self.span().start).fmt(f)?;
+        let result = self.write(f);
+        format_trailing_comments(self.span().end).fmt(f)?;
+        result
+    }
+}
+
+impl<'a, 'b> Format<'a> for AstNode<'a, 'b, WithStatement<'a>> {
+    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_leading_comments(self.span().start).fmt(f)?;
+        let result = self.write(f);
+        format_trailing_comments(self.span().end).fmt(f)?;
+        result
+    }
+}
+
+impl<'a, 'b> Format<'a> for AstNode<'a, 'b, SwitchStatement<'a>> {
+    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_leading_comments(self.span().start).fmt(f)?;
+        let result = self.write(f);
+        format_trailing_comments(self.span().end).fmt(f)?;
+        result
+    }
+}
+
+impl<'a, 'b> Format<'a> for AstNode<'a, 'b, SwitchCase<'a>> {
+    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_leading_comments(self.span().start).fmt(f)?;
+        let result = self.write(f);
+        format_trailing_comments(self.span().end).fmt(f)?;
+        result
+    }
+}
+
+impl<'a, 'b> Format<'a> for AstNode<'a, 'b, LabeledStatement<'a>> {
+    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_leading_comments(self.span().start).fmt(f)?;
+        let result = self.write(f);
+        format_trailing_comments(self.span().end).fmt(f)?;
+        result
+    }
+}
+
+impl<'a, 'b> Format<'a> for AstNode<'a, 'b, ThrowStatement<'a>> {
+    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_leading_comments(self.span().start).fmt(f)?;
+        let result = self.write(f);
+        format_trailing_comments(self.span().end).fmt(f)?;
+        result
+    }
+}
+
+impl<'a, 'b> Format<'a> for AstNode<'a, 'b, TryStatement<'a>> {
+    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_leading_comments(self.span().start).fmt(f)?;
+        let result = self.write(f);
+        format_trailing_comments(self.span().end).fmt(f)?;
+        result
+    }
+}
+
+impl<'a, 'b> Format<'a> for AstNode<'a, 'b, CatchClause<'a>> {
+    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_leading_comments(self.span().start).fmt(f)?;
+        let result = self.write(f);
+        format_trailing_comments(self.span().end).fmt(f)?;
+        result
+    }
+}
+
+impl<'a, 'b> Format<'a> for AstNode<'a, 'b, CatchParameter<'a>> {
+    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_leading_comments(self.span().start).fmt(f)?;
+        let result = self.write(f);
+        format_trailing_comments(self.span().end).fmt(f)?;
+        result
+    }
+}
+
+impl<'a, 'b> Format<'a> for AstNode<'a, 'b, DebuggerStatement> {
+    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_leading_comments(self.span().start).fmt(f)?;
+        let result = self.write(f);
+        format_trailing_comments(self.span().end).fmt(f)?;
+        result
+    }
+}
+
+impl<'a, 'b> Format<'a> for AstNode<'a, 'b, BindingPattern<'a>> {
+    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        self.write(f)
+    }
+}
+
+impl<'a, 'b> Format<'a> for AstNode<'a, 'b, BindingPatternKind<'a>> {
+    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        self.write(f)
+    }
+}
+
+impl<'a, 'b> Format<'a> for AstNode<'a, 'b, AssignmentPattern<'a>> {
+    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_leading_comments(self.span().start).fmt(f)?;
+        let result = self.write(f);
+        format_trailing_comments(self.span().end).fmt(f)?;
+        result
+    }
+}
+
+impl<'a, 'b> Format<'a> for AstNode<'a, 'b, ObjectPattern<'a>> {
+    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_leading_comments(self.span().start).fmt(f)?;
+        let result = self.write(f);
+        format_trailing_comments(self.span().end).fmt(f)?;
+        result
+    }
+}
+
+impl<'a, 'b> Format<'a> for AstNode<'a, 'b, BindingProperty<'a>> {
+    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        self.write(f)
+    }
+}
+
+impl<'a, 'b> Format<'a> for AstNode<'a, 'b, ArrayPattern<'a>> {
+    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_leading_comments(self.span().start).fmt(f)?;
+        let result = self.write(f);
+        format_trailing_comments(self.span().end).fmt(f)?;
+        result
+    }
+}
+
+impl<'a, 'b> Format<'a> for AstNode<'a, 'b, BindingRestElement<'a>> {
+    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_leading_comments(self.span().start).fmt(f)?;
+        let result = self.write(f);
+        format_trailing_comments(self.span().end).fmt(f)?;
+        result
+    }
+}
+
+impl<'a, 'b> Format<'a> for AstNode<'a, 'b, Function<'a>> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         format_leading_comments(self.span().start).fmt(f)?;
         let needs_parentheses = self.needs_parentheses(f);
@@ -909,7 +861,34 @@ impl<'a> Format<'a> for AstNode<'a, '_, ArrowFunctionExpression<'a>> {
     }
 }
 
-impl<'a> Format<'a> for AstNode<'a, '_, YieldExpression<'a>> {
+impl<'a, 'b> Format<'a> for AstNode<'a, 'b, FormalParameters<'a>> {
+    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_leading_comments(self.span().start).fmt(f)?;
+        let result = self.write(f);
+        format_trailing_comments(self.span().end).fmt(f)?;
+        result
+    }
+}
+
+impl<'a, 'b> Format<'a> for AstNode<'a, 'b, FormalParameter<'a>> {
+    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_leading_comments(self.span().start).fmt(f)?;
+        let result = self.write(f);
+        format_trailing_comments(self.span().end).fmt(f)?;
+        result
+    }
+}
+
+impl<'a, 'b> Format<'a> for AstNode<'a, 'b, FunctionBody<'a>> {
+    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_leading_comments(self.span().start).fmt(f)?;
+        let result = self.write(f);
+        format_trailing_comments(self.span().end).fmt(f)?;
+        result
+    }
+}
+
+impl<'a, 'b> Format<'a> for AstNode<'a, 'b, ArrowFunctionExpression<'a>> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         format_leading_comments(self.span().start).fmt(f)?;
         let needs_parentheses = self.needs_parentheses(f);
@@ -925,7 +904,7 @@ impl<'a> Format<'a> for AstNode<'a, '_, YieldExpression<'a>> {
     }
 }
 
-impl<'a> Format<'a> for AstNode<'a, '_, Class<'a>> {
+impl<'a, 'b> Format<'a> for AstNode<'a, 'b, YieldExpression<'a>> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         format_leading_comments(self.span().start).fmt(f)?;
         let needs_parentheses = self.needs_parentheses(f);
@@ -941,70 +920,7 @@ impl<'a> Format<'a> for AstNode<'a, '_, Class<'a>> {
     }
 }
 
-impl<'a> Format<'a> for AstNode<'a, '_, ClassBody<'a>> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        format_leading_comments(self.span().start).fmt(f)?;
-        let result = self.write(f);
-        format_trailing_comments(self.span().end).fmt(f)?;
-        result
-    }
-}
-
-impl<'a> Format<'a> for AstNode<'a, '_, ClassElement<'a>> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        self.write(f)
-    }
-}
-
-impl<'a> Format<'a> for AstNode<'a, '_, MethodDefinition<'a>> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        format_leading_comments(self.span().start).fmt(f)?;
-        let result = self.write(f);
-        format_trailing_comments(self.span().end).fmt(f)?;
-        result
-    }
-}
-
-impl<'a> Format<'a> for AstNode<'a, '_, PropertyDefinition<'a>> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        format_leading_comments(self.span().start).fmt(f)?;
-        let result = self.write(f);
-        format_trailing_comments(self.span().end).fmt(f)?;
-        result
-    }
-}
-
-impl<'a> Format<'a> for AstNode<'a, '_, PrivateIdentifier<'a>> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        format_leading_comments(self.span().start).fmt(f)?;
-        let result = self.write(f);
-        format_trailing_comments(self.span().end).fmt(f)?;
-        result
-    }
-}
-
-impl<'a> Format<'a> for AstNode<'a, '_, StaticBlock<'a>> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        format_leading_comments(self.span().start).fmt(f)?;
-        let result = self.write(f);
-        format_trailing_comments(self.span().end).fmt(f)?;
-        result
-    }
-}
-
-impl<'a> Format<'a> for AstNode<'a, '_, ModuleDeclaration<'a>> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        self.write(f)
-    }
-}
-
-impl<'a> Format<'a> for AstNode<'a, '_, AccessorProperty<'a>> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        self.write(f)
-    }
-}
-
-impl<'a> Format<'a> for AstNode<'a, '_, ImportExpression<'a>> {
+impl<'a, 'b> Format<'a> for AstNode<'a, 'b, Class<'a>> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         format_leading_comments(self.span().start).fmt(f)?;
         let needs_parentheses = self.needs_parentheses(f);
@@ -1020,7 +936,7 @@ impl<'a> Format<'a> for AstNode<'a, '_, ImportExpression<'a>> {
     }
 }
 
-impl<'a> Format<'a> for AstNode<'a, '_, ImportDeclaration<'a>> {
+impl<'a, 'b> Format<'a> for AstNode<'a, 'b, ClassBody<'a>> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         format_leading_comments(self.span().start).fmt(f)?;
         let result = self.write(f);
@@ -1029,13 +945,13 @@ impl<'a> Format<'a> for AstNode<'a, '_, ImportDeclaration<'a>> {
     }
 }
 
-impl<'a> Format<'a> for AstNode<'a, '_, ImportDeclarationSpecifier<'a>> {
+impl<'a, 'b> Format<'a> for AstNode<'a, 'b, ClassElement<'a>> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         self.write(f)
     }
 }
 
-impl<'a> Format<'a> for AstNode<'a, '_, ImportSpecifier<'a>> {
+impl<'a, 'b> Format<'a> for AstNode<'a, 'b, MethodDefinition<'a>> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         format_leading_comments(self.span().start).fmt(f)?;
         let result = self.write(f);
@@ -1044,7 +960,7 @@ impl<'a> Format<'a> for AstNode<'a, '_, ImportSpecifier<'a>> {
     }
 }
 
-impl<'a> Format<'a> for AstNode<'a, '_, ImportDefaultSpecifier<'a>> {
+impl<'a, 'b> Format<'a> for AstNode<'a, 'b, PropertyDefinition<'a>> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         format_leading_comments(self.span().start).fmt(f)?;
         let result = self.write(f);
@@ -1053,7 +969,7 @@ impl<'a> Format<'a> for AstNode<'a, '_, ImportDefaultSpecifier<'a>> {
     }
 }
 
-impl<'a> Format<'a> for AstNode<'a, '_, ImportNamespaceSpecifier<'a>> {
+impl<'a, 'b> Format<'a> for AstNode<'a, 'b, PrivateIdentifier<'a>> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         format_leading_comments(self.span().start).fmt(f)?;
         let result = self.write(f);
@@ -1062,73 +978,28 @@ impl<'a> Format<'a> for AstNode<'a, '_, ImportNamespaceSpecifier<'a>> {
     }
 }
 
-impl<'a> Format<'a> for AstNode<'a, '_, WithClause<'a>> {
+impl<'a, 'b> Format<'a> for AstNode<'a, 'b, StaticBlock<'a>> {
+    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_leading_comments(self.span().start).fmt(f)?;
+        let result = self.write(f);
+        format_trailing_comments(self.span().end).fmt(f)?;
+        result
+    }
+}
+
+impl<'a, 'b> Format<'a> for AstNode<'a, 'b, ModuleDeclaration<'a>> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         self.write(f)
     }
 }
 
-impl<'a> Format<'a> for AstNode<'a, '_, ImportAttribute<'a>> {
+impl<'a, 'b> Format<'a> for AstNode<'a, 'b, AccessorProperty<'a>> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         self.write(f)
     }
 }
 
-impl<'a> Format<'a> for AstNode<'a, '_, ImportAttributeKey<'a>> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        self.write(f)
-    }
-}
-
-impl<'a> Format<'a> for AstNode<'a, '_, ExportNamedDeclaration<'a>> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        format_leading_comments(self.span().start).fmt(f)?;
-        let result = self.write(f);
-        format_trailing_comments(self.span().end).fmt(f)?;
-        result
-    }
-}
-
-impl<'a> Format<'a> for AstNode<'a, '_, ExportDefaultDeclaration<'a>> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        format_leading_comments(self.span().start).fmt(f)?;
-        let result = self.write(f);
-        format_trailing_comments(self.span().end).fmt(f)?;
-        result
-    }
-}
-
-impl<'a> Format<'a> for AstNode<'a, '_, ExportAllDeclaration<'a>> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        format_leading_comments(self.span().start).fmt(f)?;
-        let result = self.write(f);
-        format_trailing_comments(self.span().end).fmt(f)?;
-        result
-    }
-}
-
-impl<'a> Format<'a> for AstNode<'a, '_, ExportSpecifier<'a>> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        format_leading_comments(self.span().start).fmt(f)?;
-        let result = self.write(f);
-        format_trailing_comments(self.span().end).fmt(f)?;
-        result
-    }
-}
-
-impl<'a> Format<'a> for AstNode<'a, '_, ExportDefaultDeclarationKind<'a>> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        self.write(f)
-    }
-}
-
-impl<'a> Format<'a> for AstNode<'a, '_, ModuleExportName<'a>> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        self.write(f)
-    }
-}
-
-impl<'a> Format<'a> for AstNode<'a, '_, V8IntrinsicExpression<'a>> {
+impl<'a, 'b> Format<'a> for AstNode<'a, 'b, ImportExpression<'a>> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         format_leading_comments(self.span().start).fmt(f)?;
         let needs_parentheses = self.needs_parentheses(f);
@@ -1144,7 +1015,7 @@ impl<'a> Format<'a> for AstNode<'a, '_, V8IntrinsicExpression<'a>> {
     }
 }
 
-impl<'a> Format<'a> for AstNode<'a, '_, BooleanLiteral> {
+impl<'a, 'b> Format<'a> for AstNode<'a, 'b, ImportDeclaration<'a>> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         format_leading_comments(self.span().start).fmt(f)?;
         let result = self.write(f);
@@ -1153,7 +1024,13 @@ impl<'a> Format<'a> for AstNode<'a, '_, BooleanLiteral> {
     }
 }
 
-impl<'a> Format<'a> for AstNode<'a, '_, NullLiteral> {
+impl<'a, 'b> Format<'a> for AstNode<'a, 'b, ImportDeclarationSpecifier<'a>> {
+    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        self.write(f)
+    }
+}
+
+impl<'a, 'b> Format<'a> for AstNode<'a, 'b, ImportSpecifier<'a>> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         format_leading_comments(self.span().start).fmt(f)?;
         let result = self.write(f);
@@ -1162,7 +1039,91 @@ impl<'a> Format<'a> for AstNode<'a, '_, NullLiteral> {
     }
 }
 
-impl<'a> Format<'a> for AstNode<'a, '_, NumericLiteral<'a>> {
+impl<'a, 'b> Format<'a> for AstNode<'a, 'b, ImportDefaultSpecifier<'a>> {
+    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_leading_comments(self.span().start).fmt(f)?;
+        let result = self.write(f);
+        format_trailing_comments(self.span().end).fmt(f)?;
+        result
+    }
+}
+
+impl<'a, 'b> Format<'a> for AstNode<'a, 'b, ImportNamespaceSpecifier<'a>> {
+    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_leading_comments(self.span().start).fmt(f)?;
+        let result = self.write(f);
+        format_trailing_comments(self.span().end).fmt(f)?;
+        result
+    }
+}
+
+impl<'a, 'b> Format<'a> for AstNode<'a, 'b, WithClause<'a>> {
+    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        self.write(f)
+    }
+}
+
+impl<'a, 'b> Format<'a> for AstNode<'a, 'b, ImportAttribute<'a>> {
+    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        self.write(f)
+    }
+}
+
+impl<'a, 'b> Format<'a> for AstNode<'a, 'b, ImportAttributeKey<'a>> {
+    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        self.write(f)
+    }
+}
+
+impl<'a, 'b> Format<'a> for AstNode<'a, 'b, ExportNamedDeclaration<'a>> {
+    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_leading_comments(self.span().start).fmt(f)?;
+        let result = self.write(f);
+        format_trailing_comments(self.span().end).fmt(f)?;
+        result
+    }
+}
+
+impl<'a, 'b> Format<'a> for AstNode<'a, 'b, ExportDefaultDeclaration<'a>> {
+    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_leading_comments(self.span().start).fmt(f)?;
+        let result = self.write(f);
+        format_trailing_comments(self.span().end).fmt(f)?;
+        result
+    }
+}
+
+impl<'a, 'b> Format<'a> for AstNode<'a, 'b, ExportAllDeclaration<'a>> {
+    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_leading_comments(self.span().start).fmt(f)?;
+        let result = self.write(f);
+        format_trailing_comments(self.span().end).fmt(f)?;
+        result
+    }
+}
+
+impl<'a, 'b> Format<'a> for AstNode<'a, 'b, ExportSpecifier<'a>> {
+    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_leading_comments(self.span().start).fmt(f)?;
+        let result = self.write(f);
+        format_trailing_comments(self.span().end).fmt(f)?;
+        result
+    }
+}
+
+impl<'a, 'b> Format<'a> for AstNode<'a, 'b, ExportDefaultDeclarationKind<'a>> {
+    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        self.write(f)
+    }
+}
+
+impl<'a, 'b> Format<'a> for AstNode<'a, 'b, ModuleExportName<'a>> {
+    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        self.write(f)
+    }
+}
+
+impl<'a, 'b> Format<'a> for AstNode<'a, 'b, V8IntrinsicExpression<'a>> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         format_leading_comments(self.span().start).fmt(f)?;
         let needs_parentheses = self.needs_parentheses(f);
@@ -1178,7 +1139,25 @@ impl<'a> Format<'a> for AstNode<'a, '_, NumericLiteral<'a>> {
     }
 }
 
-impl<'a> Format<'a> for AstNode<'a, '_, StringLiteral<'a>> {
+impl<'a, 'b> Format<'a> for AstNode<'a, 'b, BooleanLiteral> {
+    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_leading_comments(self.span().start).fmt(f)?;
+        let result = self.write(f);
+        format_trailing_comments(self.span().end).fmt(f)?;
+        result
+    }
+}
+
+impl<'a, 'b> Format<'a> for AstNode<'a, 'b, NullLiteral> {
+    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_leading_comments(self.span().start).fmt(f)?;
+        let result = self.write(f);
+        format_trailing_comments(self.span().end).fmt(f)?;
+        result
+    }
+}
+
+impl<'a, 'b> Format<'a> for AstNode<'a, 'b, NumericLiteral<'a>> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         format_leading_comments(self.span().start).fmt(f)?;
         let needs_parentheses = self.needs_parentheses(f);
@@ -1194,88 +1173,7 @@ impl<'a> Format<'a> for AstNode<'a, '_, StringLiteral<'a>> {
     }
 }
 
-impl<'a> Format<'a> for AstNode<'a, '_, BigIntLiteral<'a>> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        format_leading_comments(self.span().start).fmt(f)?;
-        let result = self.write(f);
-        format_trailing_comments(self.span().end).fmt(f)?;
-        result
-    }
-}
-
-impl<'a> Format<'a> for AstNode<'a, '_, RegExpLiteral<'a>> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        format_leading_comments(self.span().start).fmt(f)?;
-        let result = self.write(f);
-        format_trailing_comments(self.span().end).fmt(f)?;
-        result
-    }
-}
-
-impl<'a> Format<'a> for AstNode<'a, '_, JSXElement<'a>> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        format_leading_comments(self.span().start).fmt(f)?;
-        let result = self.write(f);
-        format_trailing_comments(self.span().end).fmt(f)?;
-        result
-    }
-}
-
-impl<'a> Format<'a> for AstNode<'a, '_, JSXOpeningElement<'a>> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        format_leading_comments(self.span().start).fmt(f)?;
-        let result = self.write(f);
-        format_trailing_comments(self.span().end).fmt(f)?;
-        result
-    }
-}
-
-impl<'a> Format<'a> for AstNode<'a, '_, JSXClosingElement<'a>> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        format_leading_comments(self.span().start).fmt(f)?;
-        let result = self.write(f);
-        format_trailing_comments(self.span().end).fmt(f)?;
-        result
-    }
-}
-
-impl<'a> Format<'a> for AstNode<'a, '_, JSXFragment<'a>> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        format_leading_comments(self.span().start).fmt(f)?;
-        let result = self.write(f);
-        format_trailing_comments(self.span().end).fmt(f)?;
-        result
-    }
-}
-
-impl<'a> Format<'a> for AstNode<'a, '_, JSXOpeningFragment> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        self.write(f)
-    }
-}
-
-impl<'a> Format<'a> for AstNode<'a, '_, JSXClosingFragment> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        self.write(f)
-    }
-}
-
-impl<'a> Format<'a> for AstNode<'a, '_, JSXElementName<'a>> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        self.write(f)
-    }
-}
-
-impl<'a> Format<'a> for AstNode<'a, '_, JSXNamespacedName<'a>> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        format_leading_comments(self.span().start).fmt(f)?;
-        let result = self.write(f);
-        format_trailing_comments(self.span().end).fmt(f)?;
-        result
-    }
-}
-
-impl<'a> Format<'a> for AstNode<'a, '_, JSXMemberExpression<'a>> {
+impl<'a, 'b> Format<'a> for AstNode<'a, 'b, StringLiteral<'a>> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         format_leading_comments(self.span().start).fmt(f)?;
         let needs_parentheses = self.needs_parentheses(f);
@@ -1291,46 +1189,79 @@ impl<'a> Format<'a> for AstNode<'a, '_, JSXMemberExpression<'a>> {
     }
 }
 
-impl<'a> Format<'a> for AstNode<'a, '_, JSXMemberExpressionObject<'a>> {
+impl<'a, 'b> Format<'a> for AstNode<'a, 'b, BigIntLiteral<'a>> {
+    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_leading_comments(self.span().start).fmt(f)?;
+        let result = self.write(f);
+        format_trailing_comments(self.span().end).fmt(f)?;
+        result
+    }
+}
+
+impl<'a, 'b> Format<'a> for AstNode<'a, 'b, RegExpLiteral<'a>> {
+    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_leading_comments(self.span().start).fmt(f)?;
+        let result = self.write(f);
+        format_trailing_comments(self.span().end).fmt(f)?;
+        result
+    }
+}
+
+impl<'a, 'b> Format<'a> for AstNode<'a, 'b, JSXElement<'a>> {
+    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_leading_comments(self.span().start).fmt(f)?;
+        let result = self.write(f);
+        format_trailing_comments(self.span().end).fmt(f)?;
+        result
+    }
+}
+
+impl<'a, 'b> Format<'a> for AstNode<'a, 'b, JSXOpeningElement<'a>> {
+    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_leading_comments(self.span().start).fmt(f)?;
+        let result = self.write(f);
+        format_trailing_comments(self.span().end).fmt(f)?;
+        result
+    }
+}
+
+impl<'a, 'b> Format<'a> for AstNode<'a, 'b, JSXClosingElement<'a>> {
+    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_leading_comments(self.span().start).fmt(f)?;
+        let result = self.write(f);
+        format_trailing_comments(self.span().end).fmt(f)?;
+        result
+    }
+}
+
+impl<'a, 'b> Format<'a> for AstNode<'a, 'b, JSXFragment<'a>> {
+    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_leading_comments(self.span().start).fmt(f)?;
+        let result = self.write(f);
+        format_trailing_comments(self.span().end).fmt(f)?;
+        result
+    }
+}
+
+impl<'a, 'b> Format<'a> for AstNode<'a, 'b, JSXOpeningFragment> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         self.write(f)
     }
 }
 
-impl<'a> Format<'a> for AstNode<'a, '_, JSXExpressionContainer<'a>> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        format_leading_comments(self.span().start).fmt(f)?;
-        let result = self.write(f);
-        format_trailing_comments(self.span().end).fmt(f)?;
-        result
-    }
-}
-
-impl<'a> Format<'a> for AstNode<'a, '_, JSXExpression<'a>> {
+impl<'a, 'b> Format<'a> for AstNode<'a, 'b, JSXClosingFragment> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         self.write(f)
     }
 }
 
-impl<'a> Format<'a> for AstNode<'a, '_, JSXEmptyExpression> {
+impl<'a, 'b> Format<'a> for AstNode<'a, 'b, JSXElementName<'a>> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         self.write(f)
     }
 }
 
-impl<'a> Format<'a> for AstNode<'a, '_, JSXAttributeItem<'a>> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        self.write(f)
-    }
-}
-
-impl<'a> Format<'a> for AstNode<'a, '_, JSXAttribute<'a>> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        self.write(f)
-    }
-}
-
-impl<'a> Format<'a> for AstNode<'a, '_, JSXSpreadAttribute<'a>> {
+impl<'a, 'b> Format<'a> for AstNode<'a, 'b, JSXNamespacedName<'a>> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         format_leading_comments(self.span().start).fmt(f)?;
         let result = self.write(f);
@@ -1339,595 +1270,7 @@ impl<'a> Format<'a> for AstNode<'a, '_, JSXSpreadAttribute<'a>> {
     }
 }
 
-impl<'a> Format<'a> for AstNode<'a, '_, JSXAttributeName<'a>> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        self.write(f)
-    }
-}
-
-impl<'a> Format<'a> for AstNode<'a, '_, JSXAttributeValue<'a>> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        self.write(f)
-    }
-}
-
-impl<'a> Format<'a> for AstNode<'a, '_, JSXIdentifier<'a>> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        format_leading_comments(self.span().start).fmt(f)?;
-        let result = self.write(f);
-        format_trailing_comments(self.span().end).fmt(f)?;
-        result
-    }
-}
-
-impl<'a> Format<'a> for AstNode<'a, '_, JSXChild<'a>> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        self.write(f)
-    }
-}
-
-impl<'a> Format<'a> for AstNode<'a, '_, JSXSpreadChild<'a>> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        self.write(f)
-    }
-}
-
-impl<'a> Format<'a> for AstNode<'a, '_, JSXText<'a>> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        format_leading_comments(self.span().start).fmt(f)?;
-        let result = self.write(f);
-        format_trailing_comments(self.span().end).fmt(f)?;
-        result
-    }
-}
-
-impl<'a> Format<'a> for AstNode<'a, '_, TSThisParameter<'a>> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        format_leading_comments(self.span().start).fmt(f)?;
-        let result = self.write(f);
-        format_trailing_comments(self.span().end).fmt(f)?;
-        result
-    }
-}
-
-impl<'a> Format<'a> for AstNode<'a, '_, TSEnumDeclaration<'a>> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        format_leading_comments(self.span().start).fmt(f)?;
-        let result = self.write(f);
-        format_trailing_comments(self.span().end).fmt(f)?;
-        result
-    }
-}
-
-impl<'a> Format<'a> for AstNode<'a, '_, TSEnumBody<'a>> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        format_leading_comments(self.span().start).fmt(f)?;
-        let result = self.write(f);
-        format_trailing_comments(self.span().end).fmt(f)?;
-        result
-    }
-}
-
-impl<'a> Format<'a> for AstNode<'a, '_, TSEnumMember<'a>> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        format_leading_comments(self.span().start).fmt(f)?;
-        let result = self.write(f);
-        format_trailing_comments(self.span().end).fmt(f)?;
-        result
-    }
-}
-
-impl<'a> Format<'a> for AstNode<'a, '_, TSEnumMemberName<'a>> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        self.write(f)
-    }
-}
-
-impl<'a> Format<'a> for AstNode<'a, '_, TSTypeAnnotation<'a>> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        format_leading_comments(self.span().start).fmt(f)?;
-        let result = self.write(f);
-        format_trailing_comments(self.span().end).fmt(f)?;
-        result
-    }
-}
-
-impl<'a> Format<'a> for AstNode<'a, '_, TSLiteralType<'a>> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        format_leading_comments(self.span().start).fmt(f)?;
-        let result = self.write(f);
-        format_trailing_comments(self.span().end).fmt(f)?;
-        result
-    }
-}
-
-impl<'a> Format<'a> for AstNode<'a, '_, TSLiteral<'a>> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        self.write(f)
-    }
-}
-
-impl<'a> Format<'a> for AstNode<'a, '_, TSType<'a>> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        self.write(f)
-    }
-}
-
-impl<'a> Format<'a> for AstNode<'a, '_, TSConditionalType<'a>> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        format_leading_comments(self.span().start).fmt(f)?;
-        let result = self.write(f);
-        format_trailing_comments(self.span().end).fmt(f)?;
-        result
-    }
-}
-
-impl<'a> Format<'a> for AstNode<'a, '_, TSUnionType<'a>> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        format_leading_comments(self.span().start).fmt(f)?;
-        let result = self.write(f);
-        format_trailing_comments(self.span().end).fmt(f)?;
-        result
-    }
-}
-
-impl<'a> Format<'a> for AstNode<'a, '_, TSIntersectionType<'a>> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        format_leading_comments(self.span().start).fmt(f)?;
-        let result = self.write(f);
-        format_trailing_comments(self.span().end).fmt(f)?;
-        result
-    }
-}
-
-impl<'a> Format<'a> for AstNode<'a, '_, TSParenthesizedType<'a>> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        format_leading_comments(self.span().start).fmt(f)?;
-        let result = self.write(f);
-        format_trailing_comments(self.span().end).fmt(f)?;
-        result
-    }
-}
-
-impl<'a> Format<'a> for AstNode<'a, '_, TSTypeOperator<'a>> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        self.write(f)
-    }
-}
-
-impl<'a> Format<'a> for AstNode<'a, '_, TSArrayType<'a>> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        self.write(f)
-    }
-}
-
-impl<'a> Format<'a> for AstNode<'a, '_, TSIndexedAccessType<'a>> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        format_leading_comments(self.span().start).fmt(f)?;
-        let result = self.write(f);
-        format_trailing_comments(self.span().end).fmt(f)?;
-        result
-    }
-}
-
-impl<'a> Format<'a> for AstNode<'a, '_, TSTupleType<'a>> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        self.write(f)
-    }
-}
-
-impl<'a> Format<'a> for AstNode<'a, '_, TSNamedTupleMember<'a>> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        format_leading_comments(self.span().start).fmt(f)?;
-        let result = self.write(f);
-        format_trailing_comments(self.span().end).fmt(f)?;
-        result
-    }
-}
-
-impl<'a> Format<'a> for AstNode<'a, '_, TSOptionalType<'a>> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        self.write(f)
-    }
-}
-
-impl<'a> Format<'a> for AstNode<'a, '_, TSRestType<'a>> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        self.write(f)
-    }
-}
-
-impl<'a> Format<'a> for AstNode<'a, '_, TSTupleElement<'a>> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        self.write(f)
-    }
-}
-
-impl<'a> Format<'a> for AstNode<'a, '_, TSAnyKeyword> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        format_leading_comments(self.span().start).fmt(f)?;
-        let result = self.write(f);
-        format_trailing_comments(self.span().end).fmt(f)?;
-        result
-    }
-}
-
-impl<'a> Format<'a> for AstNode<'a, '_, TSStringKeyword> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        format_leading_comments(self.span().start).fmt(f)?;
-        let result = self.write(f);
-        format_trailing_comments(self.span().end).fmt(f)?;
-        result
-    }
-}
-
-impl<'a> Format<'a> for AstNode<'a, '_, TSBooleanKeyword> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        format_leading_comments(self.span().start).fmt(f)?;
-        let result = self.write(f);
-        format_trailing_comments(self.span().end).fmt(f)?;
-        result
-    }
-}
-
-impl<'a> Format<'a> for AstNode<'a, '_, TSNumberKeyword> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        format_leading_comments(self.span().start).fmt(f)?;
-        let result = self.write(f);
-        format_trailing_comments(self.span().end).fmt(f)?;
-        result
-    }
-}
-
-impl<'a> Format<'a> for AstNode<'a, '_, TSNeverKeyword> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        format_leading_comments(self.span().start).fmt(f)?;
-        let result = self.write(f);
-        format_trailing_comments(self.span().end).fmt(f)?;
-        result
-    }
-}
-
-impl<'a> Format<'a> for AstNode<'a, '_, TSIntrinsicKeyword> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        format_leading_comments(self.span().start).fmt(f)?;
-        let result = self.write(f);
-        format_trailing_comments(self.span().end).fmt(f)?;
-        result
-    }
-}
-
-impl<'a> Format<'a> for AstNode<'a, '_, TSUnknownKeyword> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        format_leading_comments(self.span().start).fmt(f)?;
-        let result = self.write(f);
-        format_trailing_comments(self.span().end).fmt(f)?;
-        result
-    }
-}
-
-impl<'a> Format<'a> for AstNode<'a, '_, TSNullKeyword> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        format_leading_comments(self.span().start).fmt(f)?;
-        let result = self.write(f);
-        format_trailing_comments(self.span().end).fmt(f)?;
-        result
-    }
-}
-
-impl<'a> Format<'a> for AstNode<'a, '_, TSUndefinedKeyword> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        format_leading_comments(self.span().start).fmt(f)?;
-        let result = self.write(f);
-        format_trailing_comments(self.span().end).fmt(f)?;
-        result
-    }
-}
-
-impl<'a> Format<'a> for AstNode<'a, '_, TSVoidKeyword> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        format_leading_comments(self.span().start).fmt(f)?;
-        let result = self.write(f);
-        format_trailing_comments(self.span().end).fmt(f)?;
-        result
-    }
-}
-
-impl<'a> Format<'a> for AstNode<'a, '_, TSSymbolKeyword> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        format_leading_comments(self.span().start).fmt(f)?;
-        let result = self.write(f);
-        format_trailing_comments(self.span().end).fmt(f)?;
-        result
-    }
-}
-
-impl<'a> Format<'a> for AstNode<'a, '_, TSThisType> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        format_leading_comments(self.span().start).fmt(f)?;
-        let result = self.write(f);
-        format_trailing_comments(self.span().end).fmt(f)?;
-        result
-    }
-}
-
-impl<'a> Format<'a> for AstNode<'a, '_, TSObjectKeyword> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        format_leading_comments(self.span().start).fmt(f)?;
-        let result = self.write(f);
-        format_trailing_comments(self.span().end).fmt(f)?;
-        result
-    }
-}
-
-impl<'a> Format<'a> for AstNode<'a, '_, TSBigIntKeyword> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        format_leading_comments(self.span().start).fmt(f)?;
-        let result = self.write(f);
-        format_trailing_comments(self.span().end).fmt(f)?;
-        result
-    }
-}
-
-impl<'a> Format<'a> for AstNode<'a, '_, TSTypeReference<'a>> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        format_leading_comments(self.span().start).fmt(f)?;
-        let result = self.write(f);
-        format_trailing_comments(self.span().end).fmt(f)?;
-        result
-    }
-}
-
-impl<'a> Format<'a> for AstNode<'a, '_, TSTypeName<'a>> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        self.write(f)
-    }
-}
-
-impl<'a> Format<'a> for AstNode<'a, '_, TSQualifiedName<'a>> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        format_leading_comments(self.span().start).fmt(f)?;
-        let result = self.write(f);
-        format_trailing_comments(self.span().end).fmt(f)?;
-        result
-    }
-}
-
-impl<'a> Format<'a> for AstNode<'a, '_, TSTypeParameterInstantiation<'a>> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        format_leading_comments(self.span().start).fmt(f)?;
-        let result = self.write(f);
-        format_trailing_comments(self.span().end).fmt(f)?;
-        result
-    }
-}
-
-impl<'a> Format<'a> for AstNode<'a, '_, TSTypeParameter<'a>> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        format_leading_comments(self.span().start).fmt(f)?;
-        let result = self.write(f);
-        format_trailing_comments(self.span().end).fmt(f)?;
-        result
-    }
-}
-
-impl<'a> Format<'a> for AstNode<'a, '_, TSTypeParameterDeclaration<'a>> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        format_leading_comments(self.span().start).fmt(f)?;
-        let result = self.write(f);
-        format_trailing_comments(self.span().end).fmt(f)?;
-        result
-    }
-}
-
-impl<'a> Format<'a> for AstNode<'a, '_, TSTypeAliasDeclaration<'a>> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        format_leading_comments(self.span().start).fmt(f)?;
-        let result = self.write(f);
-        format_trailing_comments(self.span().end).fmt(f)?;
-        result
-    }
-}
-
-impl<'a> Format<'a> for AstNode<'a, '_, TSClassImplements<'a>> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        format_leading_comments(self.span().start).fmt(f)?;
-        let result = self.write(f);
-        format_trailing_comments(self.span().end).fmt(f)?;
-        result
-    }
-}
-
-impl<'a> Format<'a> for AstNode<'a, '_, TSInterfaceDeclaration<'a>> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        format_leading_comments(self.span().start).fmt(f)?;
-        let result = self.write(f);
-        format_trailing_comments(self.span().end).fmt(f)?;
-        result
-    }
-}
-
-impl<'a> Format<'a> for AstNode<'a, '_, TSInterfaceBody<'a>> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        self.write(f)
-    }
-}
-
-impl<'a> Format<'a> for AstNode<'a, '_, TSPropertySignature<'a>> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        format_leading_comments(self.span().start).fmt(f)?;
-        let result = self.write(f);
-        format_trailing_comments(self.span().end).fmt(f)?;
-        result
-    }
-}
-
-impl<'a> Format<'a> for AstNode<'a, '_, TSSignature<'a>> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        self.write(f)
-    }
-}
-
-impl<'a> Format<'a> for AstNode<'a, '_, TSIndexSignature<'a>> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        self.write(f)
-    }
-}
-
-impl<'a> Format<'a> for AstNode<'a, '_, TSCallSignatureDeclaration<'a>> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        self.write(f)
-    }
-}
-
-impl<'a> Format<'a> for AstNode<'a, '_, TSMethodSignature<'a>> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        format_leading_comments(self.span().start).fmt(f)?;
-        let result = self.write(f);
-        format_trailing_comments(self.span().end).fmt(f)?;
-        result
-    }
-}
-
-impl<'a> Format<'a> for AstNode<'a, '_, TSConstructSignatureDeclaration<'a>> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        format_leading_comments(self.span().start).fmt(f)?;
-        let result = self.write(f);
-        format_trailing_comments(self.span().end).fmt(f)?;
-        result
-    }
-}
-
-impl<'a> Format<'a> for AstNode<'a, '_, TSIndexSignatureName<'a>> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        self.write(f)
-    }
-}
-
-impl<'a> Format<'a> for AstNode<'a, '_, TSInterfaceHeritage<'a>> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        format_leading_comments(self.span().start).fmt(f)?;
-        let result = self.write(f);
-        format_trailing_comments(self.span().end).fmt(f)?;
-        result
-    }
-}
-
-impl<'a> Format<'a> for AstNode<'a, '_, TSTypePredicate<'a>> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        self.write(f)
-    }
-}
-
-impl<'a> Format<'a> for AstNode<'a, '_, TSTypePredicateName<'a>> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        self.write(f)
-    }
-}
-
-impl<'a> Format<'a> for AstNode<'a, '_, TSModuleDeclaration<'a>> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        format_leading_comments(self.span().start).fmt(f)?;
-        let result = self.write(f);
-        format_trailing_comments(self.span().end).fmt(f)?;
-        result
-    }
-}
-
-impl<'a> Format<'a> for AstNode<'a, '_, TSModuleDeclarationName<'a>> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        self.write(f)
-    }
-}
-
-impl<'a> Format<'a> for AstNode<'a, '_, TSModuleDeclarationBody<'a>> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        self.write(f)
-    }
-}
-
-impl<'a> Format<'a> for AstNode<'a, '_, TSModuleBlock<'a>> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        format_leading_comments(self.span().start).fmt(f)?;
-        let result = self.write(f);
-        format_trailing_comments(self.span().end).fmt(f)?;
-        result
-    }
-}
-
-impl<'a> Format<'a> for AstNode<'a, '_, TSTypeLiteral<'a>> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        format_leading_comments(self.span().start).fmt(f)?;
-        let result = self.write(f);
-        format_trailing_comments(self.span().end).fmt(f)?;
-        result
-    }
-}
-
-impl<'a> Format<'a> for AstNode<'a, '_, TSInferType<'a>> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        format_leading_comments(self.span().start).fmt(f)?;
-        let result = self.write(f);
-        format_trailing_comments(self.span().end).fmt(f)?;
-        result
-    }
-}
-
-impl<'a> Format<'a> for AstNode<'a, '_, TSTypeQuery<'a>> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        format_leading_comments(self.span().start).fmt(f)?;
-        let result = self.write(f);
-        format_trailing_comments(self.span().end).fmt(f)?;
-        result
-    }
-}
-
-impl<'a> Format<'a> for AstNode<'a, '_, TSTypeQueryExprName<'a>> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        self.write(f)
-    }
-}
-
-impl<'a> Format<'a> for AstNode<'a, '_, TSImportType<'a>> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        format_leading_comments(self.span().start).fmt(f)?;
-        let result = self.write(f);
-        format_trailing_comments(self.span().end).fmt(f)?;
-        result
-    }
-}
-
-impl<'a> Format<'a> for AstNode<'a, '_, TSFunctionType<'a>> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        self.write(f)
-    }
-}
-
-impl<'a> Format<'a> for AstNode<'a, '_, TSConstructorType<'a>> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        self.write(f)
-    }
-}
-
-impl<'a> Format<'a> for AstNode<'a, '_, TSMappedType<'a>> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        format_leading_comments(self.span().start).fmt(f)?;
-        let result = self.write(f);
-        format_trailing_comments(self.span().end).fmt(f)?;
-        result
-    }
-}
-
-impl<'a> Format<'a> for AstNode<'a, '_, TSTemplateLiteralType<'a>> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        format_leading_comments(self.span().start).fmt(f)?;
-        let result = self.write(f);
-        format_trailing_comments(self.span().end).fmt(f)?;
-        result
-    }
-}
-
-impl<'a> Format<'a> for AstNode<'a, '_, TSAsExpression<'a>> {
+impl<'a, 'b> Format<'a> for AstNode<'a, 'b, JSXMemberExpression<'a>> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         format_leading_comments(self.span().start).fmt(f)?;
         let needs_parentheses = self.needs_parentheses(f);
@@ -1943,7 +1286,643 @@ impl<'a> Format<'a> for AstNode<'a, '_, TSAsExpression<'a>> {
     }
 }
 
-impl<'a> Format<'a> for AstNode<'a, '_, TSSatisfiesExpression<'a>> {
+impl<'a, 'b> Format<'a> for AstNode<'a, 'b, JSXMemberExpressionObject<'a>> {
+    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        self.write(f)
+    }
+}
+
+impl<'a, 'b> Format<'a> for AstNode<'a, 'b, JSXExpressionContainer<'a>> {
+    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_leading_comments(self.span().start).fmt(f)?;
+        let result = self.write(f);
+        format_trailing_comments(self.span().end).fmt(f)?;
+        result
+    }
+}
+
+impl<'a, 'b> Format<'a> for AstNode<'a, 'b, JSXExpression<'a>> {
+    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        self.write(f)
+    }
+}
+
+impl<'a, 'b> Format<'a> for AstNode<'a, 'b, JSXEmptyExpression> {
+    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        self.write(f)
+    }
+}
+
+impl<'a, 'b> Format<'a> for AstNode<'a, 'b, JSXAttributeItem<'a>> {
+    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        self.write(f)
+    }
+}
+
+impl<'a, 'b> Format<'a> for AstNode<'a, 'b, JSXAttribute<'a>> {
+    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        self.write(f)
+    }
+}
+
+impl<'a, 'b> Format<'a> for AstNode<'a, 'b, JSXSpreadAttribute<'a>> {
+    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_leading_comments(self.span().start).fmt(f)?;
+        let result = self.write(f);
+        format_trailing_comments(self.span().end).fmt(f)?;
+        result
+    }
+}
+
+impl<'a, 'b> Format<'a> for AstNode<'a, 'b, JSXAttributeName<'a>> {
+    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        self.write(f)
+    }
+}
+
+impl<'a, 'b> Format<'a> for AstNode<'a, 'b, JSXAttributeValue<'a>> {
+    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        self.write(f)
+    }
+}
+
+impl<'a, 'b> Format<'a> for AstNode<'a, 'b, JSXIdentifier<'a>> {
+    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_leading_comments(self.span().start).fmt(f)?;
+        let result = self.write(f);
+        format_trailing_comments(self.span().end).fmt(f)?;
+        result
+    }
+}
+
+impl<'a, 'b> Format<'a> for AstNode<'a, 'b, JSXChild<'a>> {
+    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        self.write(f)
+    }
+}
+
+impl<'a, 'b> Format<'a> for AstNode<'a, 'b, JSXSpreadChild<'a>> {
+    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        self.write(f)
+    }
+}
+
+impl<'a, 'b> Format<'a> for AstNode<'a, 'b, JSXText<'a>> {
+    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_leading_comments(self.span().start).fmt(f)?;
+        let result = self.write(f);
+        format_trailing_comments(self.span().end).fmt(f)?;
+        result
+    }
+}
+
+impl<'a, 'b> Format<'a> for AstNode<'a, 'b, TSThisParameter<'a>> {
+    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_leading_comments(self.span().start).fmt(f)?;
+        let result = self.write(f);
+        format_trailing_comments(self.span().end).fmt(f)?;
+        result
+    }
+}
+
+impl<'a, 'b> Format<'a> for AstNode<'a, 'b, TSEnumDeclaration<'a>> {
+    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_leading_comments(self.span().start).fmt(f)?;
+        let result = self.write(f);
+        format_trailing_comments(self.span().end).fmt(f)?;
+        result
+    }
+}
+
+impl<'a, 'b> Format<'a> for AstNode<'a, 'b, TSEnumBody<'a>> {
+    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_leading_comments(self.span().start).fmt(f)?;
+        let result = self.write(f);
+        format_trailing_comments(self.span().end).fmt(f)?;
+        result
+    }
+}
+
+impl<'a, 'b> Format<'a> for AstNode<'a, 'b, TSEnumMember<'a>> {
+    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_leading_comments(self.span().start).fmt(f)?;
+        let result = self.write(f);
+        format_trailing_comments(self.span().end).fmt(f)?;
+        result
+    }
+}
+
+impl<'a, 'b> Format<'a> for AstNode<'a, 'b, TSEnumMemberName<'a>> {
+    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        self.write(f)
+    }
+}
+
+impl<'a, 'b> Format<'a> for AstNode<'a, 'b, TSTypeAnnotation<'a>> {
+    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_leading_comments(self.span().start).fmt(f)?;
+        let result = self.write(f);
+        format_trailing_comments(self.span().end).fmt(f)?;
+        result
+    }
+}
+
+impl<'a, 'b> Format<'a> for AstNode<'a, 'b, TSLiteralType<'a>> {
+    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_leading_comments(self.span().start).fmt(f)?;
+        let result = self.write(f);
+        format_trailing_comments(self.span().end).fmt(f)?;
+        result
+    }
+}
+
+impl<'a, 'b> Format<'a> for AstNode<'a, 'b, TSLiteral<'a>> {
+    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        self.write(f)
+    }
+}
+
+impl<'a, 'b> Format<'a> for AstNode<'a, 'b, TSType<'a>> {
+    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        self.write(f)
+    }
+}
+
+impl<'a, 'b> Format<'a> for AstNode<'a, 'b, TSConditionalType<'a>> {
+    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_leading_comments(self.span().start).fmt(f)?;
+        let result = self.write(f);
+        format_trailing_comments(self.span().end).fmt(f)?;
+        result
+    }
+}
+
+impl<'a, 'b> Format<'a> for AstNode<'a, 'b, TSUnionType<'a>> {
+    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_leading_comments(self.span().start).fmt(f)?;
+        let result = self.write(f);
+        format_trailing_comments(self.span().end).fmt(f)?;
+        result
+    }
+}
+
+impl<'a, 'b> Format<'a> for AstNode<'a, 'b, TSIntersectionType<'a>> {
+    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_leading_comments(self.span().start).fmt(f)?;
+        let result = self.write(f);
+        format_trailing_comments(self.span().end).fmt(f)?;
+        result
+    }
+}
+
+impl<'a, 'b> Format<'a> for AstNode<'a, 'b, TSParenthesizedType<'a>> {
+    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_leading_comments(self.span().start).fmt(f)?;
+        let result = self.write(f);
+        format_trailing_comments(self.span().end).fmt(f)?;
+        result
+    }
+}
+
+impl<'a, 'b> Format<'a> for AstNode<'a, 'b, TSTypeOperator<'a>> {
+    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        self.write(f)
+    }
+}
+
+impl<'a, 'b> Format<'a> for AstNode<'a, 'b, TSArrayType<'a>> {
+    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        self.write(f)
+    }
+}
+
+impl<'a, 'b> Format<'a> for AstNode<'a, 'b, TSIndexedAccessType<'a>> {
+    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_leading_comments(self.span().start).fmt(f)?;
+        let result = self.write(f);
+        format_trailing_comments(self.span().end).fmt(f)?;
+        result
+    }
+}
+
+impl<'a, 'b> Format<'a> for AstNode<'a, 'b, TSTupleType<'a>> {
+    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        self.write(f)
+    }
+}
+
+impl<'a, 'b> Format<'a> for AstNode<'a, 'b, TSNamedTupleMember<'a>> {
+    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_leading_comments(self.span().start).fmt(f)?;
+        let result = self.write(f);
+        format_trailing_comments(self.span().end).fmt(f)?;
+        result
+    }
+}
+
+impl<'a, 'b> Format<'a> for AstNode<'a, 'b, TSOptionalType<'a>> {
+    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        self.write(f)
+    }
+}
+
+impl<'a, 'b> Format<'a> for AstNode<'a, 'b, TSRestType<'a>> {
+    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        self.write(f)
+    }
+}
+
+impl<'a, 'b> Format<'a> for AstNode<'a, 'b, TSTupleElement<'a>> {
+    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        self.write(f)
+    }
+}
+
+impl<'a, 'b> Format<'a> for AstNode<'a, 'b, TSAnyKeyword> {
+    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_leading_comments(self.span().start).fmt(f)?;
+        let result = self.write(f);
+        format_trailing_comments(self.span().end).fmt(f)?;
+        result
+    }
+}
+
+impl<'a, 'b> Format<'a> for AstNode<'a, 'b, TSStringKeyword> {
+    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_leading_comments(self.span().start).fmt(f)?;
+        let result = self.write(f);
+        format_trailing_comments(self.span().end).fmt(f)?;
+        result
+    }
+}
+
+impl<'a, 'b> Format<'a> for AstNode<'a, 'b, TSBooleanKeyword> {
+    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_leading_comments(self.span().start).fmt(f)?;
+        let result = self.write(f);
+        format_trailing_comments(self.span().end).fmt(f)?;
+        result
+    }
+}
+
+impl<'a, 'b> Format<'a> for AstNode<'a, 'b, TSNumberKeyword> {
+    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_leading_comments(self.span().start).fmt(f)?;
+        let result = self.write(f);
+        format_trailing_comments(self.span().end).fmt(f)?;
+        result
+    }
+}
+
+impl<'a, 'b> Format<'a> for AstNode<'a, 'b, TSNeverKeyword> {
+    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_leading_comments(self.span().start).fmt(f)?;
+        let result = self.write(f);
+        format_trailing_comments(self.span().end).fmt(f)?;
+        result
+    }
+}
+
+impl<'a, 'b> Format<'a> for AstNode<'a, 'b, TSIntrinsicKeyword> {
+    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_leading_comments(self.span().start).fmt(f)?;
+        let result = self.write(f);
+        format_trailing_comments(self.span().end).fmt(f)?;
+        result
+    }
+}
+
+impl<'a, 'b> Format<'a> for AstNode<'a, 'b, TSUnknownKeyword> {
+    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_leading_comments(self.span().start).fmt(f)?;
+        let result = self.write(f);
+        format_trailing_comments(self.span().end).fmt(f)?;
+        result
+    }
+}
+
+impl<'a, 'b> Format<'a> for AstNode<'a, 'b, TSNullKeyword> {
+    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_leading_comments(self.span().start).fmt(f)?;
+        let result = self.write(f);
+        format_trailing_comments(self.span().end).fmt(f)?;
+        result
+    }
+}
+
+impl<'a, 'b> Format<'a> for AstNode<'a, 'b, TSUndefinedKeyword> {
+    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_leading_comments(self.span().start).fmt(f)?;
+        let result = self.write(f);
+        format_trailing_comments(self.span().end).fmt(f)?;
+        result
+    }
+}
+
+impl<'a, 'b> Format<'a> for AstNode<'a, 'b, TSVoidKeyword> {
+    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_leading_comments(self.span().start).fmt(f)?;
+        let result = self.write(f);
+        format_trailing_comments(self.span().end).fmt(f)?;
+        result
+    }
+}
+
+impl<'a, 'b> Format<'a> for AstNode<'a, 'b, TSSymbolKeyword> {
+    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_leading_comments(self.span().start).fmt(f)?;
+        let result = self.write(f);
+        format_trailing_comments(self.span().end).fmt(f)?;
+        result
+    }
+}
+
+impl<'a, 'b> Format<'a> for AstNode<'a, 'b, TSThisType> {
+    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_leading_comments(self.span().start).fmt(f)?;
+        let result = self.write(f);
+        format_trailing_comments(self.span().end).fmt(f)?;
+        result
+    }
+}
+
+impl<'a, 'b> Format<'a> for AstNode<'a, 'b, TSObjectKeyword> {
+    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_leading_comments(self.span().start).fmt(f)?;
+        let result = self.write(f);
+        format_trailing_comments(self.span().end).fmt(f)?;
+        result
+    }
+}
+
+impl<'a, 'b> Format<'a> for AstNode<'a, 'b, TSBigIntKeyword> {
+    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_leading_comments(self.span().start).fmt(f)?;
+        let result = self.write(f);
+        format_trailing_comments(self.span().end).fmt(f)?;
+        result
+    }
+}
+
+impl<'a, 'b> Format<'a> for AstNode<'a, 'b, TSTypeReference<'a>> {
+    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_leading_comments(self.span().start).fmt(f)?;
+        let result = self.write(f);
+        format_trailing_comments(self.span().end).fmt(f)?;
+        result
+    }
+}
+
+impl<'a, 'b> Format<'a> for AstNode<'a, 'b, TSTypeName<'a>> {
+    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        self.write(f)
+    }
+}
+
+impl<'a, 'b> Format<'a> for AstNode<'a, 'b, TSQualifiedName<'a>> {
+    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_leading_comments(self.span().start).fmt(f)?;
+        let result = self.write(f);
+        format_trailing_comments(self.span().end).fmt(f)?;
+        result
+    }
+}
+
+impl<'a, 'b> Format<'a> for AstNode<'a, 'b, TSTypeParameterInstantiation<'a>> {
+    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_leading_comments(self.span().start).fmt(f)?;
+        let result = self.write(f);
+        format_trailing_comments(self.span().end).fmt(f)?;
+        result
+    }
+}
+
+impl<'a, 'b> Format<'a> for AstNode<'a, 'b, TSTypeParameter<'a>> {
+    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_leading_comments(self.span().start).fmt(f)?;
+        let result = self.write(f);
+        format_trailing_comments(self.span().end).fmt(f)?;
+        result
+    }
+}
+
+impl<'a, 'b> Format<'a> for AstNode<'a, 'b, TSTypeParameterDeclaration<'a>> {
+    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_leading_comments(self.span().start).fmt(f)?;
+        let result = self.write(f);
+        format_trailing_comments(self.span().end).fmt(f)?;
+        result
+    }
+}
+
+impl<'a, 'b> Format<'a> for AstNode<'a, 'b, TSTypeAliasDeclaration<'a>> {
+    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_leading_comments(self.span().start).fmt(f)?;
+        let result = self.write(f);
+        format_trailing_comments(self.span().end).fmt(f)?;
+        result
+    }
+}
+
+impl<'a, 'b> Format<'a> for AstNode<'a, 'b, TSClassImplements<'a>> {
+    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_leading_comments(self.span().start).fmt(f)?;
+        let result = self.write(f);
+        format_trailing_comments(self.span().end).fmt(f)?;
+        result
+    }
+}
+
+impl<'a, 'b> Format<'a> for AstNode<'a, 'b, TSInterfaceDeclaration<'a>> {
+    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_leading_comments(self.span().start).fmt(f)?;
+        let result = self.write(f);
+        format_trailing_comments(self.span().end).fmt(f)?;
+        result
+    }
+}
+
+impl<'a, 'b> Format<'a> for AstNode<'a, 'b, TSInterfaceBody<'a>> {
+    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        self.write(f)
+    }
+}
+
+impl<'a, 'b> Format<'a> for AstNode<'a, 'b, TSPropertySignature<'a>> {
+    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_leading_comments(self.span().start).fmt(f)?;
+        let result = self.write(f);
+        format_trailing_comments(self.span().end).fmt(f)?;
+        result
+    }
+}
+
+impl<'a, 'b> Format<'a> for AstNode<'a, 'b, TSSignature<'a>> {
+    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        self.write(f)
+    }
+}
+
+impl<'a, 'b> Format<'a> for AstNode<'a, 'b, TSIndexSignature<'a>> {
+    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        self.write(f)
+    }
+}
+
+impl<'a, 'b> Format<'a> for AstNode<'a, 'b, TSCallSignatureDeclaration<'a>> {
+    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        self.write(f)
+    }
+}
+
+impl<'a, 'b> Format<'a> for AstNode<'a, 'b, TSMethodSignature<'a>> {
+    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_leading_comments(self.span().start).fmt(f)?;
+        let result = self.write(f);
+        format_trailing_comments(self.span().end).fmt(f)?;
+        result
+    }
+}
+
+impl<'a, 'b> Format<'a> for AstNode<'a, 'b, TSConstructSignatureDeclaration<'a>> {
+    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_leading_comments(self.span().start).fmt(f)?;
+        let result = self.write(f);
+        format_trailing_comments(self.span().end).fmt(f)?;
+        result
+    }
+}
+
+impl<'a, 'b> Format<'a> for AstNode<'a, 'b, TSIndexSignatureName<'a>> {
+    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        self.write(f)
+    }
+}
+
+impl<'a, 'b> Format<'a> for AstNode<'a, 'b, TSInterfaceHeritage<'a>> {
+    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_leading_comments(self.span().start).fmt(f)?;
+        let result = self.write(f);
+        format_trailing_comments(self.span().end).fmt(f)?;
+        result
+    }
+}
+
+impl<'a, 'b> Format<'a> for AstNode<'a, 'b, TSTypePredicate<'a>> {
+    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        self.write(f)
+    }
+}
+
+impl<'a, 'b> Format<'a> for AstNode<'a, 'b, TSTypePredicateName<'a>> {
+    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        self.write(f)
+    }
+}
+
+impl<'a, 'b> Format<'a> for AstNode<'a, 'b, TSModuleDeclaration<'a>> {
+    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_leading_comments(self.span().start).fmt(f)?;
+        let result = self.write(f);
+        format_trailing_comments(self.span().end).fmt(f)?;
+        result
+    }
+}
+
+impl<'a, 'b> Format<'a> for AstNode<'a, 'b, TSModuleDeclarationName<'a>> {
+    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        self.write(f)
+    }
+}
+
+impl<'a, 'b> Format<'a> for AstNode<'a, 'b, TSModuleDeclarationBody<'a>> {
+    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        self.write(f)
+    }
+}
+
+impl<'a, 'b> Format<'a> for AstNode<'a, 'b, TSModuleBlock<'a>> {
+    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_leading_comments(self.span().start).fmt(f)?;
+        let result = self.write(f);
+        format_trailing_comments(self.span().end).fmt(f)?;
+        result
+    }
+}
+
+impl<'a, 'b> Format<'a> for AstNode<'a, 'b, TSTypeLiteral<'a>> {
+    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_leading_comments(self.span().start).fmt(f)?;
+        let result = self.write(f);
+        format_trailing_comments(self.span().end).fmt(f)?;
+        result
+    }
+}
+
+impl<'a, 'b> Format<'a> for AstNode<'a, 'b, TSInferType<'a>> {
+    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_leading_comments(self.span().start).fmt(f)?;
+        let result = self.write(f);
+        format_trailing_comments(self.span().end).fmt(f)?;
+        result
+    }
+}
+
+impl<'a, 'b> Format<'a> for AstNode<'a, 'b, TSTypeQuery<'a>> {
+    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_leading_comments(self.span().start).fmt(f)?;
+        let result = self.write(f);
+        format_trailing_comments(self.span().end).fmt(f)?;
+        result
+    }
+}
+
+impl<'a, 'b> Format<'a> for AstNode<'a, 'b, TSTypeQueryExprName<'a>> {
+    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        self.write(f)
+    }
+}
+
+impl<'a, 'b> Format<'a> for AstNode<'a, 'b, TSImportType<'a>> {
+    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_leading_comments(self.span().start).fmt(f)?;
+        let result = self.write(f);
+        format_trailing_comments(self.span().end).fmt(f)?;
+        result
+    }
+}
+
+impl<'a, 'b> Format<'a> for AstNode<'a, 'b, TSFunctionType<'a>> {
+    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        self.write(f)
+    }
+}
+
+impl<'a, 'b> Format<'a> for AstNode<'a, 'b, TSConstructorType<'a>> {
+    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        self.write(f)
+    }
+}
+
+impl<'a, 'b> Format<'a> for AstNode<'a, 'b, TSMappedType<'a>> {
+    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_leading_comments(self.span().start).fmt(f)?;
+        let result = self.write(f);
+        format_trailing_comments(self.span().end).fmt(f)?;
+        result
+    }
+}
+
+impl<'a, 'b> Format<'a> for AstNode<'a, 'b, TSTemplateLiteralType<'a>> {
+    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_leading_comments(self.span().start).fmt(f)?;
+        let result = self.write(f);
+        format_trailing_comments(self.span().end).fmt(f)?;
+        result
+    }
+}
+
+impl<'a, 'b> Format<'a> for AstNode<'a, 'b, TSAsExpression<'a>> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         format_leading_comments(self.span().start).fmt(f)?;
         let needs_parentheses = self.needs_parentheses(f);
@@ -1959,7 +1938,7 @@ impl<'a> Format<'a> for AstNode<'a, '_, TSSatisfiesExpression<'a>> {
     }
 }
 
-impl<'a> Format<'a> for AstNode<'a, '_, TSTypeAssertion<'a>> {
+impl<'a, 'b> Format<'a> for AstNode<'a, 'b, TSSatisfiesExpression<'a>> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         format_leading_comments(self.span().start).fmt(f)?;
         let needs_parentheses = self.needs_parentheses(f);
@@ -1975,31 +1954,7 @@ impl<'a> Format<'a> for AstNode<'a, '_, TSTypeAssertion<'a>> {
     }
 }
 
-impl<'a> Format<'a> for AstNode<'a, '_, TSImportEqualsDeclaration<'a>> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        format_leading_comments(self.span().start).fmt(f)?;
-        let result = self.write(f);
-        format_trailing_comments(self.span().end).fmt(f)?;
-        result
-    }
-}
-
-impl<'a> Format<'a> for AstNode<'a, '_, TSModuleReference<'a>> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        self.write(f)
-    }
-}
-
-impl<'a> Format<'a> for AstNode<'a, '_, TSExternalModuleReference<'a>> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        format_leading_comments(self.span().start).fmt(f)?;
-        let result = self.write(f);
-        format_trailing_comments(self.span().end).fmt(f)?;
-        result
-    }
-}
-
-impl<'a> Format<'a> for AstNode<'a, '_, TSNonNullExpression<'a>> {
+impl<'a, 'b> Format<'a> for AstNode<'a, 'b, TSTypeAssertion<'a>> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         format_leading_comments(self.span().start).fmt(f)?;
         let needs_parentheses = self.needs_parentheses(f);
@@ -2015,7 +1970,7 @@ impl<'a> Format<'a> for AstNode<'a, '_, TSNonNullExpression<'a>> {
     }
 }
 
-impl<'a> Format<'a> for AstNode<'a, '_, Decorator<'a>> {
+impl<'a, 'b> Format<'a> for AstNode<'a, 'b, TSImportEqualsDeclaration<'a>> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         format_leading_comments(self.span().start).fmt(f)?;
         let result = self.write(f);
@@ -2024,22 +1979,22 @@ impl<'a> Format<'a> for AstNode<'a, '_, Decorator<'a>> {
     }
 }
 
-impl<'a> Format<'a> for AstNode<'a, '_, TSExportAssignment<'a>> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        format_leading_comments(self.span().start).fmt(f)?;
-        let result = self.write(f);
-        format_trailing_comments(self.span().end).fmt(f)?;
-        result
-    }
-}
-
-impl<'a> Format<'a> for AstNode<'a, '_, TSNamespaceExportDeclaration<'a>> {
+impl<'a, 'b> Format<'a> for AstNode<'a, 'b, TSModuleReference<'a>> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         self.write(f)
     }
 }
 
-impl<'a> Format<'a> for AstNode<'a, '_, TSInstantiationExpression<'a>> {
+impl<'a, 'b> Format<'a> for AstNode<'a, 'b, TSExternalModuleReference<'a>> {
+    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_leading_comments(self.span().start).fmt(f)?;
+        let result = self.write(f);
+        format_trailing_comments(self.span().end).fmt(f)?;
+        result
+    }
+}
+
+impl<'a, 'b> Format<'a> for AstNode<'a, 'b, TSNonNullExpression<'a>> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         format_leading_comments(self.span().start).fmt(f)?;
         let needs_parentheses = self.needs_parentheses(f);
@@ -2055,19 +2010,59 @@ impl<'a> Format<'a> for AstNode<'a, '_, TSInstantiationExpression<'a>> {
     }
 }
 
-impl<'a> Format<'a> for AstNode<'a, '_, JSDocNullableType<'a>> {
+impl<'a, 'b> Format<'a> for AstNode<'a, 'b, Decorator<'a>> {
+    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_leading_comments(self.span().start).fmt(f)?;
+        let result = self.write(f);
+        format_trailing_comments(self.span().end).fmt(f)?;
+        result
+    }
+}
+
+impl<'a, 'b> Format<'a> for AstNode<'a, 'b, TSExportAssignment<'a>> {
+    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_leading_comments(self.span().start).fmt(f)?;
+        let result = self.write(f);
+        format_trailing_comments(self.span().end).fmt(f)?;
+        result
+    }
+}
+
+impl<'a, 'b> Format<'a> for AstNode<'a, 'b, TSNamespaceExportDeclaration<'a>> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         self.write(f)
     }
 }
 
-impl<'a> Format<'a> for AstNode<'a, '_, JSDocNonNullableType<'a>> {
+impl<'a, 'b> Format<'a> for AstNode<'a, 'b, TSInstantiationExpression<'a>> {
+    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_leading_comments(self.span().start).fmt(f)?;
+        let needs_parentheses = self.needs_parentheses(f);
+        if needs_parentheses {
+            "(".fmt(f)?;
+        }
+        let result = self.write(f);
+        if needs_parentheses {
+            ")".fmt(f)?;
+        }
+        format_trailing_comments(self.span().end).fmt(f)?;
+        result
+    }
+}
+
+impl<'a, 'b> Format<'a> for AstNode<'a, 'b, JSDocNullableType<'a>> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         self.write(f)
     }
 }
 
-impl<'a> Format<'a> for AstNode<'a, '_, JSDocUnknownType> {
+impl<'a, 'b> Format<'a> for AstNode<'a, 'b, JSDocNonNullableType<'a>> {
+    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        self.write(f)
+    }
+}
+
+impl<'a, 'b> Format<'a> for AstNode<'a, 'b, JSDocUnknownType> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         self.write(f)
     }

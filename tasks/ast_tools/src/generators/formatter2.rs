@@ -78,7 +78,8 @@ impl Generator for FormatterFormatGenerator2 {
 
         let output = quote! {
             #![expect(
-                clippy::match_same_arms
+                clippy::match_same_arms,
+                clippy::elidable_lifetime_names
             )]
 
             use std::{mem::transmute, ops::Deref};

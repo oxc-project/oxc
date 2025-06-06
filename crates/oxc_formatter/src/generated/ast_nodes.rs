@@ -1,7 +1,7 @@
 // Auto-generated code, DO NOT EDIT DIRECTLY!
 // To edit this generated file you have to edit `tasks/ast_tools/src/generators/formatter2.rs`.
 
-#![expect(clippy::match_same_arms)]
+#![expect(clippy::match_same_arms, clippy::elidable_lifetime_names)]
 use std::{mem::transmute, ops::Deref};
 
 use oxc_allocator::{Allocator, Vec};
@@ -194,7 +194,7 @@ pub enum AstNodes<'a, 'b> {
     TSExportAssignment(&'a AstNode<'a, 'b, TSExportAssignment<'a>>),
     TSInstantiationExpression(&'a AstNode<'a, 'b, TSInstantiationExpression<'a>>),
 }
-impl<'a> AstNodes<'a, '_> {
+impl<'a, 'b> AstNodes<'a, 'b> {
     pub fn span(&self) -> Span {
         match self {
             Self::Dummy() => panic!("Should never be called on a dummy node"),
@@ -547,13 +547,13 @@ pub struct AstNode<'a, 'b, T> {
     allocator: &'a Allocator,
 }
 
-impl<T> Deref for AstNode<'_, '_, T> {
+impl<'a, 'b, T> Deref for AstNode<'a, 'b, T> {
     type Target = T;
     fn deref(&self) -> &Self::Target {
         self.inner
     }
 }
-impl<T> AsRef<T> for AstNode<'_, '_, T> {
+impl<'a, 'b, T> AsRef<T> for AstNode<'a, 'b, T> {
     fn as_ref(&self) -> &T {
         self.inner
     }
@@ -1163,12 +1163,12 @@ impl<'a, 'b> FormatWrite<'a> for AstNode<'a, 'b, Expression<'a>> {
         }
     }
 }
-impl<'a> GetSpan for AstNode<'a, '_, Expression<'a>> {
+impl<'a, 'b> GetSpan for AstNode<'a, 'b, Expression<'a>> {
     fn span(&self) -> oxc_span::Span {
         self.inner.span()
     }
 }
-impl<'a> AstNode<'a, '_, IdentifierName<'a>> {
+impl<'a, 'b> AstNode<'a, 'b, IdentifierName<'a>> {
     pub fn span(&self) -> Span {
         self.inner.span
     }
@@ -1177,7 +1177,7 @@ impl<'a> AstNode<'a, '_, IdentifierName<'a>> {
         self.inner.name
     }
 }
-impl<'a> AstNode<'a, '_, IdentifierReference<'a>> {
+impl<'a, 'b> AstNode<'a, 'b, IdentifierReference<'a>> {
     pub fn span(&self) -> Span {
         self.inner.span
     }
@@ -1186,7 +1186,7 @@ impl<'a> AstNode<'a, '_, IdentifierReference<'a>> {
         self.inner.name
     }
 }
-impl<'a> AstNode<'a, '_, BindingIdentifier<'a>> {
+impl<'a, 'b> AstNode<'a, 'b, BindingIdentifier<'a>> {
     pub fn span(&self) -> Span {
         self.inner.span
     }
@@ -1195,7 +1195,7 @@ impl<'a> AstNode<'a, '_, BindingIdentifier<'a>> {
         self.inner.name
     }
 }
-impl<'a> AstNode<'a, '_, LabelIdentifier<'a>> {
+impl<'a, 'b> AstNode<'a, 'b, LabelIdentifier<'a>> {
     pub fn span(&self) -> Span {
         self.inner.span
     }
@@ -1204,7 +1204,7 @@ impl<'a> AstNode<'a, '_, LabelIdentifier<'a>> {
         self.inner.name
     }
 }
-impl AstNode<'_, '_, ThisExpression> {
+impl<'a, 'b> AstNode<'a, 'b, ThisExpression> {
     pub fn span(&self) -> Span {
         self.inner.span
     }
@@ -1271,12 +1271,12 @@ impl<'a, 'b> FormatWrite<'a> for AstNode<'a, 'b, ArrayExpressionElement<'a>> {
         }
     }
 }
-impl<'a> GetSpan for AstNode<'a, '_, ArrayExpressionElement<'a>> {
+impl<'a, 'b> GetSpan for AstNode<'a, 'b, ArrayExpressionElement<'a>> {
     fn span(&self) -> oxc_span::Span {
         self.inner.span()
     }
 }
-impl AstNode<'_, '_, Elision> {
+impl<'a, 'b> AstNode<'a, 'b, Elision> {
     pub fn span(&self) -> Span {
         self.inner.span
     }
@@ -1332,7 +1332,7 @@ impl<'a, 'b> FormatWrite<'a> for AstNode<'a, 'b, ObjectPropertyKind<'a>> {
         }
     }
 }
-impl<'a> GetSpan for AstNode<'a, '_, ObjectPropertyKind<'a>> {
+impl<'a, 'b> GetSpan for AstNode<'a, 'b, ObjectPropertyKind<'a>> {
     fn span(&self) -> oxc_span::Span {
         self.inner.span()
     }
@@ -1424,7 +1424,7 @@ impl<'a, 'b> FormatWrite<'a> for AstNode<'a, 'b, PropertyKey<'a>> {
         }
     }
 }
-impl<'a> GetSpan for AstNode<'a, '_, PropertyKey<'a>> {
+impl<'a, 'b> GetSpan for AstNode<'a, 'b, PropertyKey<'a>> {
     fn span(&self) -> oxc_span::Span {
         self.inner.span()
     }
@@ -1482,7 +1482,7 @@ impl<'a, 'b> AstNode<'a, 'b, TaggedTemplateExpression<'a>> {
         })
     }
 }
-impl<'a> AstNode<'a, '_, TemplateElement<'a>> {
+impl<'a, 'b> AstNode<'a, 'b, TemplateElement<'a>> {
     pub fn span(&self) -> Span {
         self.inner.span
     }
@@ -1554,7 +1554,7 @@ impl<'a, 'b> FormatWrite<'a> for AstNode<'a, 'b, MemberExpression<'a>> {
         }
     }
 }
-impl<'a> GetSpan for AstNode<'a, '_, MemberExpression<'a>> {
+impl<'a, 'b> GetSpan for AstNode<'a, 'b, MemberExpression<'a>> {
     fn span(&self) -> oxc_span::Span {
         self.inner.span()
     }
@@ -1779,7 +1779,7 @@ impl<'a, 'b> FormatWrite<'a> for AstNode<'a, 'b, Argument<'a>> {
         }
     }
 }
-impl<'a> GetSpan for AstNode<'a, '_, Argument<'a>> {
+impl<'a, 'b> GetSpan for AstNode<'a, 'b, Argument<'a>> {
     fn span(&self) -> oxc_span::Span {
         self.inner.span()
     }
@@ -1993,7 +1993,7 @@ impl<'a, 'b> FormatWrite<'a> for AstNode<'a, 'b, AssignmentTarget<'a>> {
         }
     }
 }
-impl<'a> GetSpan for AstNode<'a, '_, AssignmentTarget<'a>> {
+impl<'a, 'b> GetSpan for AstNode<'a, 'b, AssignmentTarget<'a>> {
     fn span(&self) -> oxc_span::Span {
         self.inner.span()
     }
@@ -2096,7 +2096,7 @@ impl<'a, 'b> FormatWrite<'a> for AstNode<'a, 'b, SimpleAssignmentTarget<'a>> {
         }
     }
 }
-impl<'a> GetSpan for AstNode<'a, '_, SimpleAssignmentTarget<'a>> {
+impl<'a, 'b> GetSpan for AstNode<'a, 'b, SimpleAssignmentTarget<'a>> {
     fn span(&self) -> oxc_span::Span {
         self.inner.span()
     }
@@ -2147,7 +2147,7 @@ impl<'a, 'b> FormatWrite<'a> for AstNode<'a, 'b, AssignmentTargetPattern<'a>> {
         }
     }
 }
-impl<'a> GetSpan for AstNode<'a, '_, AssignmentTargetPattern<'a>> {
+impl<'a, 'b> GetSpan for AstNode<'a, 'b, AssignmentTargetPattern<'a>> {
     fn span(&self) -> oxc_span::Span {
         self.inner.span()
     }
@@ -2258,7 +2258,7 @@ impl<'a, 'b> FormatWrite<'a> for AstNode<'a, 'b, AssignmentTargetMaybeDefault<'a
         }
     }
 }
-impl<'a> GetSpan for AstNode<'a, '_, AssignmentTargetMaybeDefault<'a>> {
+impl<'a, 'b> GetSpan for AstNode<'a, 'b, AssignmentTargetMaybeDefault<'a>> {
     fn span(&self) -> oxc_span::Span {
         self.inner.span()
     }
@@ -2330,7 +2330,7 @@ impl<'a, 'b> FormatWrite<'a> for AstNode<'a, 'b, AssignmentTargetProperty<'a>> {
         }
     }
 }
-impl<'a> GetSpan for AstNode<'a, '_, AssignmentTargetProperty<'a>> {
+impl<'a, 'b> GetSpan for AstNode<'a, 'b, AssignmentTargetProperty<'a>> {
     fn span(&self) -> oxc_span::Span {
         self.inner.span()
     }
@@ -2396,7 +2396,7 @@ impl<'a, 'b> AstNode<'a, 'b, SequenceExpression<'a>> {
         })
     }
 }
-impl AstNode<'_, '_, Super> {
+impl<'a, 'b> AstNode<'a, 'b, Super> {
     pub fn span(&self) -> Span {
         self.inner.span
     }
@@ -2480,7 +2480,7 @@ impl<'a, 'b> FormatWrite<'a> for AstNode<'a, 'b, ChainElement<'a>> {
         }
     }
 }
-impl<'a> GetSpan for AstNode<'a, '_, ChainElement<'a>> {
+impl<'a, 'b> GetSpan for AstNode<'a, 'b, ChainElement<'a>> {
     fn span(&self) -> oxc_span::Span {
         self.inner.span()
     }
@@ -2735,7 +2735,7 @@ impl<'a, 'b> FormatWrite<'a> for AstNode<'a, 'b, Statement<'a>> {
         }
     }
 }
-impl<'a> GetSpan for AstNode<'a, '_, Statement<'a>> {
+impl<'a, 'b> GetSpan for AstNode<'a, 'b, Statement<'a>> {
     fn span(&self) -> oxc_span::Span {
         self.inner.span()
     }
@@ -2757,7 +2757,7 @@ impl<'a, 'b> AstNode<'a, 'b, Directive<'a>> {
         self.inner.directive
     }
 }
-impl<'a> AstNode<'a, '_, Hashbang<'a>> {
+impl<'a, 'b> AstNode<'a, 'b, Hashbang<'a>> {
     pub fn span(&self) -> Span {
         self.inner.span
     }
@@ -2891,7 +2891,7 @@ impl<'a, 'b> FormatWrite<'a> for AstNode<'a, 'b, Declaration<'a>> {
         }
     }
 }
-impl<'a> GetSpan for AstNode<'a, '_, Declaration<'a>> {
+impl<'a, 'b> GetSpan for AstNode<'a, 'b, Declaration<'a>> {
     fn span(&self) -> oxc_span::Span {
         self.inner.span()
     }
@@ -2948,7 +2948,7 @@ impl<'a, 'b> AstNode<'a, 'b, VariableDeclarator<'a>> {
         self.inner.definite
     }
 }
-impl AstNode<'_, '_, EmptyStatement> {
+impl<'a, 'b> AstNode<'a, 'b, EmptyStatement> {
     pub fn span(&self) -> Span {
         self.inner.span
     }
@@ -3123,7 +3123,7 @@ impl<'a, 'b> FormatWrite<'a> for AstNode<'a, 'b, ForStatementInit<'a>> {
         }
     }
 }
-impl<'a> GetSpan for AstNode<'a, '_, ForStatementInit<'a>> {
+impl<'a, 'b> GetSpan for AstNode<'a, 'b, ForStatementInit<'a>> {
     fn span(&self) -> oxc_span::Span {
         self.inner.span()
     }
@@ -3201,7 +3201,7 @@ impl<'a, 'b> FormatWrite<'a> for AstNode<'a, 'b, ForStatementLeft<'a>> {
         }
     }
 }
-impl<'a> GetSpan for AstNode<'a, '_, ForStatementLeft<'a>> {
+impl<'a, 'b> GetSpan for AstNode<'a, 'b, ForStatementLeft<'a>> {
     fn span(&self) -> oxc_span::Span {
         self.inner.span()
     }
@@ -3452,7 +3452,7 @@ impl<'a, 'b> AstNode<'a, 'b, CatchParameter<'a>> {
         })
     }
 }
-impl AstNode<'_, '_, DebuggerStatement> {
+impl<'a, 'b> AstNode<'a, 'b, DebuggerStatement> {
     pub fn span(&self) -> Span {
         self.inner.span
     }
@@ -3540,7 +3540,7 @@ impl<'a, 'b> FormatWrite<'a> for AstNode<'a, 'b, BindingPatternKind<'a>> {
         }
     }
 }
-impl<'a> GetSpan for AstNode<'a, '_, BindingPatternKind<'a>> {
+impl<'a, 'b> GetSpan for AstNode<'a, 'b, BindingPatternKind<'a>> {
     fn span(&self) -> oxc_span::Span {
         self.inner.span()
     }
@@ -4055,7 +4055,7 @@ impl<'a, 'b> FormatWrite<'a> for AstNode<'a, 'b, ClassElement<'a>> {
         }
     }
 }
-impl<'a> GetSpan for AstNode<'a, '_, ClassElement<'a>> {
+impl<'a, 'b> GetSpan for AstNode<'a, 'b, ClassElement<'a>> {
     fn span(&self) -> oxc_span::Span {
         self.inner.span()
     }
@@ -4194,7 +4194,7 @@ impl<'a, 'b> AstNode<'a, 'b, PropertyDefinition<'a>> {
         self.inner.accessibility
     }
 }
-impl<'a> AstNode<'a, '_, PrivateIdentifier<'a>> {
+impl<'a, 'b> AstNode<'a, 'b, PrivateIdentifier<'a>> {
     pub fn span(&self) -> Span {
         self.inner.span
     }
@@ -4312,7 +4312,7 @@ impl<'a, 'b> FormatWrite<'a> for AstNode<'a, 'b, ModuleDeclaration<'a>> {
         }
     }
 }
-impl<'a> GetSpan for AstNode<'a, '_, ModuleDeclaration<'a>> {
+impl<'a, 'b> GetSpan for AstNode<'a, 'b, ModuleDeclaration<'a>> {
     fn span(&self) -> oxc_span::Span {
         self.inner.span()
     }
@@ -4507,7 +4507,7 @@ impl<'a, 'b> FormatWrite<'a> for AstNode<'a, 'b, ImportDeclarationSpecifier<'a>>
         }
     }
 }
-impl<'a> GetSpan for AstNode<'a, '_, ImportDeclarationSpecifier<'a>> {
+impl<'a, 'b> GetSpan for AstNode<'a, 'b, ImportDeclarationSpecifier<'a>> {
     fn span(&self) -> oxc_span::Span {
         self.inner.span()
     }
@@ -4643,7 +4643,7 @@ impl<'a, 'b> FormatWrite<'a> for AstNode<'a, 'b, ImportAttributeKey<'a>> {
         }
     }
 }
-impl<'a> GetSpan for AstNode<'a, '_, ImportAttributeKey<'a>> {
+impl<'a, 'b> GetSpan for AstNode<'a, 'b, ImportAttributeKey<'a>> {
     fn span(&self) -> oxc_span::Span {
         self.inner.span()
     }
@@ -4844,7 +4844,7 @@ impl<'a, 'b> FormatWrite<'a> for AstNode<'a, 'b, ExportDefaultDeclarationKind<'a
         }
     }
 }
-impl<'a> GetSpan for AstNode<'a, '_, ExportDefaultDeclarationKind<'a>> {
+impl<'a, 'b> GetSpan for AstNode<'a, 'b, ExportDefaultDeclarationKind<'a>> {
     fn span(&self) -> oxc_span::Span {
         self.inner.span()
     }
@@ -4900,7 +4900,7 @@ impl<'a, 'b> FormatWrite<'a> for AstNode<'a, 'b, ModuleExportName<'a>> {
         }
     }
 }
-impl<'a> GetSpan for AstNode<'a, '_, ModuleExportName<'a>> {
+impl<'a, 'b> GetSpan for AstNode<'a, 'b, ModuleExportName<'a>> {
     fn span(&self) -> oxc_span::Span {
         self.inner.span()
     }
@@ -4926,7 +4926,7 @@ impl<'a, 'b> AstNode<'a, 'b, V8IntrinsicExpression<'a>> {
         })
     }
 }
-impl AstNode<'_, '_, BooleanLiteral> {
+impl<'a, 'b> AstNode<'a, 'b, BooleanLiteral> {
     pub fn span(&self) -> Span {
         self.inner.span
     }
@@ -4935,12 +4935,12 @@ impl AstNode<'_, '_, BooleanLiteral> {
         self.inner.value
     }
 }
-impl AstNode<'_, '_, NullLiteral> {
+impl<'a, 'b> AstNode<'a, 'b, NullLiteral> {
     pub fn span(&self) -> Span {
         self.inner.span
     }
 }
-impl<'a> AstNode<'a, '_, NumericLiteral<'a>> {
+impl<'a, 'b> AstNode<'a, 'b, NumericLiteral<'a>> {
     pub fn span(&self) -> Span {
         self.inner.span
     }
@@ -4957,7 +4957,7 @@ impl<'a> AstNode<'a, '_, NumericLiteral<'a>> {
         self.inner.base
     }
 }
-impl<'a> AstNode<'a, '_, StringLiteral<'a>> {
+impl<'a, 'b> AstNode<'a, 'b, StringLiteral<'a>> {
     pub fn span(&self) -> Span {
         self.inner.span
     }
@@ -4974,7 +4974,7 @@ impl<'a> AstNode<'a, '_, StringLiteral<'a>> {
         self.inner.lone_surrogates
     }
 }
-impl<'a> AstNode<'a, '_, BigIntLiteral<'a>> {
+impl<'a, 'b> AstNode<'a, 'b, BigIntLiteral<'a>> {
     pub fn span(&self) -> Span {
         self.inner.span
     }
@@ -4987,7 +4987,7 @@ impl<'a> AstNode<'a, '_, BigIntLiteral<'a>> {
         self.inner.base
     }
 }
-impl<'a> AstNode<'a, '_, RegExpLiteral<'a>> {
+impl<'a, 'b> AstNode<'a, 'b, RegExpLiteral<'a>> {
     pub fn span(&self) -> Span {
         self.inner.span
     }
@@ -5104,12 +5104,12 @@ impl<'a, 'b> AstNode<'a, 'b, JSXFragment<'a>> {
         })
     }
 }
-impl AstNode<'_, '_, JSXOpeningFragment> {
+impl<'a, 'b> AstNode<'a, 'b, JSXOpeningFragment> {
     pub fn span(&self) -> Span {
         self.inner.span
     }
 }
-impl AstNode<'_, '_, JSXClosingFragment> {
+impl<'a, 'b> AstNode<'a, 'b, JSXClosingFragment> {
     pub fn span(&self) -> Span {
         self.inner.span
     }
@@ -5189,7 +5189,7 @@ impl<'a, 'b> FormatWrite<'a> for AstNode<'a, 'b, JSXElementName<'a>> {
         }
     }
 }
-impl<'a> GetSpan for AstNode<'a, '_, JSXElementName<'a>> {
+impl<'a, 'b> GetSpan for AstNode<'a, 'b, JSXElementName<'a>> {
     fn span(&self) -> oxc_span::Span {
         self.inner.span()
     }
@@ -5295,7 +5295,7 @@ impl<'a, 'b> FormatWrite<'a> for AstNode<'a, 'b, JSXMemberExpressionObject<'a>> 
         }
     }
 }
-impl<'a> GetSpan for AstNode<'a, '_, JSXMemberExpressionObject<'a>> {
+impl<'a, 'b> GetSpan for AstNode<'a, 'b, JSXMemberExpressionObject<'a>> {
     fn span(&self) -> oxc_span::Span {
         self.inner.span()
     }
@@ -5352,12 +5352,12 @@ impl<'a, 'b> FormatWrite<'a> for AstNode<'a, 'b, JSXExpression<'a>> {
         }
     }
 }
-impl<'a> GetSpan for AstNode<'a, '_, JSXExpression<'a>> {
+impl<'a, 'b> GetSpan for AstNode<'a, 'b, JSXExpression<'a>> {
     fn span(&self) -> oxc_span::Span {
         self.inner.span()
     }
 }
-impl AstNode<'_, '_, JSXEmptyExpression> {
+impl<'a, 'b> AstNode<'a, 'b, JSXEmptyExpression> {
     pub fn span(&self) -> Span {
         self.inner.span
     }
@@ -5400,7 +5400,7 @@ impl<'a, 'b> FormatWrite<'a> for AstNode<'a, 'b, JSXAttributeItem<'a>> {
         }
     }
 }
-impl<'a> GetSpan for AstNode<'a, '_, JSXAttributeItem<'a>> {
+impl<'a, 'b> GetSpan for AstNode<'a, 'b, JSXAttributeItem<'a>> {
     fn span(&self) -> oxc_span::Span {
         self.inner.span()
     }
@@ -5479,7 +5479,7 @@ impl<'a, 'b> FormatWrite<'a> for AstNode<'a, 'b, JSXAttributeName<'a>> {
         }
     }
 }
-impl<'a> GetSpan for AstNode<'a, '_, JSXAttributeName<'a>> {
+impl<'a, 'b> GetSpan for AstNode<'a, 'b, JSXAttributeName<'a>> {
     fn span(&self) -> oxc_span::Span {
         self.inner.span()
     }
@@ -5545,12 +5545,12 @@ impl<'a, 'b> FormatWrite<'a> for AstNode<'a, 'b, JSXAttributeValue<'a>> {
         }
     }
 }
-impl<'a> GetSpan for AstNode<'a, '_, JSXAttributeValue<'a>> {
+impl<'a, 'b> GetSpan for AstNode<'a, 'b, JSXAttributeValue<'a>> {
     fn span(&self) -> oxc_span::Span {
         self.inner.span()
     }
 }
-impl<'a> AstNode<'a, '_, JSXIdentifier<'a>> {
+impl<'a, 'b> AstNode<'a, 'b, JSXIdentifier<'a>> {
     pub fn span(&self) -> Span {
         self.inner.span
     }
@@ -5622,7 +5622,7 @@ impl<'a, 'b> FormatWrite<'a> for AstNode<'a, 'b, JSXChild<'a>> {
         }
     }
 }
-impl<'a> GetSpan for AstNode<'a, '_, JSXChild<'a>> {
+impl<'a, 'b> GetSpan for AstNode<'a, 'b, JSXChild<'a>> {
     fn span(&self) -> oxc_span::Span {
         self.inner.span()
     }
@@ -5640,7 +5640,7 @@ impl<'a, 'b> AstNode<'a, 'b, JSXSpreadChild<'a>> {
         })
     }
 }
-impl<'a> AstNode<'a, '_, JSXText<'a>> {
+impl<'a, 'b> AstNode<'a, 'b, JSXText<'a>> {
     pub fn span(&self) -> Span {
         self.inner.span
     }
@@ -5795,7 +5795,7 @@ impl<'a, 'b> FormatWrite<'a> for AstNode<'a, 'b, TSEnumMemberName<'a>> {
         }
     }
 }
-impl<'a> GetSpan for AstNode<'a, '_, TSEnumMemberName<'a>> {
+impl<'a, 'b> GetSpan for AstNode<'a, 'b, TSEnumMemberName<'a>> {
     fn span(&self) -> oxc_span::Span {
         self.inner.span()
     }
@@ -5904,7 +5904,7 @@ impl<'a, 'b> FormatWrite<'a> for AstNode<'a, 'b, TSLiteral<'a>> {
         }
     }
 }
-impl<'a> GetSpan for AstNode<'a, '_, TSLiteral<'a>> {
+impl<'a, 'b> GetSpan for AstNode<'a, 'b, TSLiteral<'a>> {
     fn span(&self) -> oxc_span::Span {
         self.inner.span()
     }
@@ -6305,7 +6305,7 @@ impl<'a, 'b> FormatWrite<'a> for AstNode<'a, 'b, TSType<'a>> {
         }
     }
 }
-impl<'a> GetSpan for AstNode<'a, '_, TSType<'a>> {
+impl<'a, 'b> GetSpan for AstNode<'a, 'b, TSType<'a>> {
     fn span(&self) -> oxc_span::Span {
         self.inner.span()
     }
@@ -6546,77 +6546,77 @@ impl<'a, 'b> FormatWrite<'a> for AstNode<'a, 'b, TSTupleElement<'a>> {
         }
     }
 }
-impl<'a> GetSpan for AstNode<'a, '_, TSTupleElement<'a>> {
+impl<'a, 'b> GetSpan for AstNode<'a, 'b, TSTupleElement<'a>> {
     fn span(&self) -> oxc_span::Span {
         self.inner.span()
     }
 }
-impl AstNode<'_, '_, TSAnyKeyword> {
+impl<'a, 'b> AstNode<'a, 'b, TSAnyKeyword> {
     pub fn span(&self) -> Span {
         self.inner.span
     }
 }
-impl AstNode<'_, '_, TSStringKeyword> {
+impl<'a, 'b> AstNode<'a, 'b, TSStringKeyword> {
     pub fn span(&self) -> Span {
         self.inner.span
     }
 }
-impl AstNode<'_, '_, TSBooleanKeyword> {
+impl<'a, 'b> AstNode<'a, 'b, TSBooleanKeyword> {
     pub fn span(&self) -> Span {
         self.inner.span
     }
 }
-impl AstNode<'_, '_, TSNumberKeyword> {
+impl<'a, 'b> AstNode<'a, 'b, TSNumberKeyword> {
     pub fn span(&self) -> Span {
         self.inner.span
     }
 }
-impl AstNode<'_, '_, TSNeverKeyword> {
+impl<'a, 'b> AstNode<'a, 'b, TSNeverKeyword> {
     pub fn span(&self) -> Span {
         self.inner.span
     }
 }
-impl AstNode<'_, '_, TSIntrinsicKeyword> {
+impl<'a, 'b> AstNode<'a, 'b, TSIntrinsicKeyword> {
     pub fn span(&self) -> Span {
         self.inner.span
     }
 }
-impl AstNode<'_, '_, TSUnknownKeyword> {
+impl<'a, 'b> AstNode<'a, 'b, TSUnknownKeyword> {
     pub fn span(&self) -> Span {
         self.inner.span
     }
 }
-impl AstNode<'_, '_, TSNullKeyword> {
+impl<'a, 'b> AstNode<'a, 'b, TSNullKeyword> {
     pub fn span(&self) -> Span {
         self.inner.span
     }
 }
-impl AstNode<'_, '_, TSUndefinedKeyword> {
+impl<'a, 'b> AstNode<'a, 'b, TSUndefinedKeyword> {
     pub fn span(&self) -> Span {
         self.inner.span
     }
 }
-impl AstNode<'_, '_, TSVoidKeyword> {
+impl<'a, 'b> AstNode<'a, 'b, TSVoidKeyword> {
     pub fn span(&self) -> Span {
         self.inner.span
     }
 }
-impl AstNode<'_, '_, TSSymbolKeyword> {
+impl<'a, 'b> AstNode<'a, 'b, TSSymbolKeyword> {
     pub fn span(&self) -> Span {
         self.inner.span
     }
 }
-impl AstNode<'_, '_, TSThisType> {
+impl<'a, 'b> AstNode<'a, 'b, TSThisType> {
     pub fn span(&self) -> Span {
         self.inner.span
     }
 }
-impl AstNode<'_, '_, TSObjectKeyword> {
+impl<'a, 'b> AstNode<'a, 'b, TSObjectKeyword> {
     pub fn span(&self) -> Span {
         self.inner.span
     }
 }
-impl AstNode<'_, '_, TSBigIntKeyword> {
+impl<'a, 'b> AstNode<'a, 'b, TSBigIntKeyword> {
     pub fn span(&self) -> Span {
         self.inner.span
     }
@@ -6684,7 +6684,7 @@ impl<'a, 'b> FormatWrite<'a> for AstNode<'a, 'b, TSTypeName<'a>> {
         }
     }
 }
-impl<'a> GetSpan for AstNode<'a, '_, TSTypeName<'a>> {
+impl<'a, 'b> GetSpan for AstNode<'a, 'b, TSTypeName<'a>> {
     fn span(&self) -> oxc_span::Span {
         self.inner.span()
     }
@@ -7013,7 +7013,7 @@ impl<'a, 'b> FormatWrite<'a> for AstNode<'a, 'b, TSSignature<'a>> {
         }
     }
 }
-impl<'a> GetSpan for AstNode<'a, '_, TSSignature<'a>> {
+impl<'a, 'b> GetSpan for AstNode<'a, 'b, TSSignature<'a>> {
     fn span(&self) -> oxc_span::Span {
         self.inner.span()
     }
@@ -7298,7 +7298,7 @@ impl<'a, 'b> FormatWrite<'a> for AstNode<'a, 'b, TSTypePredicateName<'a>> {
         }
     }
 }
-impl<'a> GetSpan for AstNode<'a, '_, TSTypePredicateName<'a>> {
+impl<'a, 'b> GetSpan for AstNode<'a, 'b, TSTypePredicateName<'a>> {
     fn span(&self) -> oxc_span::Span {
         self.inner.span()
     }
@@ -7372,7 +7372,7 @@ impl<'a, 'b> FormatWrite<'a> for AstNode<'a, 'b, TSModuleDeclarationName<'a>> {
         }
     }
 }
-impl<'a> GetSpan for AstNode<'a, '_, TSModuleDeclarationName<'a>> {
+impl<'a, 'b> GetSpan for AstNode<'a, 'b, TSModuleDeclarationName<'a>> {
     fn span(&self) -> oxc_span::Span {
         self.inner.span()
     }
@@ -7419,7 +7419,7 @@ impl<'a, 'b> FormatWrite<'a> for AstNode<'a, 'b, TSModuleDeclarationBody<'a>> {
         }
     }
 }
-impl<'a> GetSpan for AstNode<'a, '_, TSModuleDeclarationBody<'a>> {
+impl<'a, 'b> GetSpan for AstNode<'a, 'b, TSModuleDeclarationBody<'a>> {
     fn span(&self) -> oxc_span::Span {
         self.inner.span()
     }
@@ -7534,7 +7534,7 @@ impl<'a, 'b> FormatWrite<'a> for AstNode<'a, 'b, TSTypeQueryExprName<'a>> {
         }
     }
 }
-impl<'a> GetSpan for AstNode<'a, '_, TSTypeQueryExprName<'a>> {
+impl<'a, 'b> GetSpan for AstNode<'a, 'b, TSTypeQueryExprName<'a>> {
     fn span(&self) -> oxc_span::Span {
         self.inner.span()
     }
@@ -7852,7 +7852,7 @@ impl<'a, 'b> FormatWrite<'a> for AstNode<'a, 'b, TSModuleReference<'a>> {
         }
     }
 }
-impl<'a> GetSpan for AstNode<'a, '_, TSModuleReference<'a>> {
+impl<'a, 'b> GetSpan for AstNode<'a, 'b, TSModuleReference<'a>> {
     fn span(&self) -> oxc_span::Span {
         self.inner.span()
     }
@@ -7977,7 +7977,7 @@ impl<'a, 'b> AstNode<'a, 'b, JSDocNonNullableType<'a>> {
         self.inner.postfix
     }
 }
-impl AstNode<'_, '_, JSDocUnknownType> {
+impl<'a, 'b> AstNode<'a, 'b, JSDocUnknownType> {
     pub fn span(&self) -> Span {
         self.inner.span
     }

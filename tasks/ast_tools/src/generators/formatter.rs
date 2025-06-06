@@ -43,7 +43,7 @@ impl Generator for FormatterFormatGenerator {
             .collect::<TokenStream>();
 
         let output = quote! {
-            #![allow(clippy::undocumented_unsafe_blocks)]
+            #![expect(clippy::elidable_lifetime_names)]
 
             use oxc_ast::{AstKind, ast::*};
 
@@ -57,13 +57,6 @@ impl Generator for FormatterFormatGenerator {
                 generated::ast_nodes::AstNode,
                 write::FormatWrite,
             };
-
-            ///@@line_break
-            /// A hack for erasing the lifetime requirement.
-            pub fn hack<'ast, T>(t: &T) -> &'ast T {
-                // SAFETY: This is not safe :-)
-                unsafe { std::mem::transmute(t) }
-            }
 
             #impls
         };
