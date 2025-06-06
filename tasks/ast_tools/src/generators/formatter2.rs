@@ -70,6 +70,7 @@ impl Generator for FormatterFormatGenerator2 {
         });
 
         let transmute_self = quote! {
+            #[inline]
             fn transmute_self<'a, 'b, T>(s: &AstNode<'a, 'b, T>) -> &'a AstNode<'a, 'b, T> {
                 /// * SAFETY: `s` is already allocated in Arena, so transmute from `&` to `&'a` is safe.
                 unsafe { transmute(s) }
@@ -108,6 +109,7 @@ impl Generator for FormatterFormatGenerator2 {
             }
 
             impl <'a, 'b> AstNodes<'a, 'b> {
+                #[inline]
                 pub fn span(&self) -> Span {
                     match self {
                         #dummy_variant
@@ -115,6 +117,7 @@ impl Generator for FormatterFormatGenerator2 {
                     }
                 }
 
+                #[inline]
                 pub fn parent(&self) -> &'a Self {
                     match self {
                         #dummy_variant
@@ -355,6 +358,7 @@ fn implementation(type_def: &TypeDef, schema: &Schema) -> TokenStream {
 
             Some(quote! {
                 ///@@line_break
+                #[inline]
                 pub fn #field_name(&self) -> #return_type {
                     #body
                 }
@@ -460,6 +464,7 @@ fn implementation(type_def: &TypeDef, schema: &Schema) -> TokenStream {
     let as_ast_nodes_fn = quote! {
         ///@@line_break
         impl<'a, 'b> #node_type {
+            #[inline]
             pub fn as_ast_nodes(&self) -> &AstNodes<'a, 'b> {
                 #parent;
                 let node = match self.inner {
@@ -527,6 +532,7 @@ fn implementation(type_def: &TypeDef, schema: &Schema) -> TokenStream {
 
     let impl_format_write = quote! {
         impl<'a, 'b> FormatWrite<'a> for #node_type {
+            #[inline]
             fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
                 #parent;
                 match self.inner {
@@ -539,6 +545,7 @@ fn implementation(type_def: &TypeDef, schema: &Schema) -> TokenStream {
 
     let impl_get_span = quote! {
         impl<'a, 'b> GetSpan for #node_type {
+            #[inline]
             fn span(&self) -> oxc_span::Span {
                 self.inner.span()
             }
