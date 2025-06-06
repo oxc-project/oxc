@@ -1530,7 +1530,18 @@ impl<'a, 'b> Format<'a> for AstNode<'a, 'b, Vec<'a, ImportAttribute<'a>>> {
 
 impl<'a, 'b> FormatWrite<'a> for AstNode<'a, 'b, ImportAttribute<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        write!(f, [self.key(), ":", space(), self.value()])
+        if let AstNodes::StringLiteral(s) = self.key().as_ast_nodes() {
+            if f.options().quote_properties == QuoteProperties::AsNeeded
+                && is_identifier_name(s.value().as_str())
+            {
+                dynamic_text(s.value().as_str(), s.span().start).fmt(f)?
+            } else {
+                s.fmt(f)?
+            };
+        } else {
+            write!(f, self.key())?;
+        }
+        write!(f, [":", space(), self.value()])
     }
 }
 

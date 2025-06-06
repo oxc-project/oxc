@@ -196,7 +196,7 @@ ts compatibility: 168/573 (29.32%)
 | typescript/conformance/types/tuple/tupleElementTypes2.ts | 💥 | 0.00% |
 | typescript/conformance/types/tuple/tupleElementTypes3.ts | 💥 | 0.00% |
 | typescript/conformance/types/tuple/tupleElementTypes4.ts | 💥 | 0.00% |
-| typescript/conformance/types/tuple/typeInferenceWithTupleType.ts | 💥 | 86.96% |
+| typescript/conformance/types/tuple/typeInferenceWithTupleType.ts | 💥 | 91.30% |
 | typescript/conformance/types/tuple/wideningTuples1.ts | 💥 | 80.00% |
 | typescript/conformance/types/tuple/wideningTuples3.ts | 💥 | 75.00% |
 | typescript/conformance/types/tuple/wideningTuples4.ts | 💥 | 75.00% |
@@ -408,4 +408,4 @@ ts compatibility: 168/573 (29.32%)
 | typescript/union/consistent-with-flow/single-type.ts | 💥 | 3.70% |
 | typescript/union/consistent-with-flow/within-tuple.ts | 💥 | 10.88% |
 | typescript/union/single-type/single-type.ts | 💥 | 33.33% |
-| typescript/webhost/webtsc.ts | 💥 | 93.52% |
+| typescript/webhost/webtsc.ts | 💥 | 94.44% |

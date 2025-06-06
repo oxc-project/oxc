@@ -393,7 +393,6 @@ fn implementation(type_def: &TypeDef, schema: &Schema) -> TokenStream {
         } else {
             quote! { s }
         };
-        dbg!(field_type);
         let implementation = if has_kind(&field_type, schema) {
             quote! {
                 AstNodes::#node_type(AstNode {

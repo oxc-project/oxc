@@ -1,4 +1,4 @@
-js compatibility: 289/699 (41.34%)
+js compatibility: 293/699 (41.92%)
 
 # Failed
 
@@ -189,7 +189,6 @@ js compatibility: 289/699 (41.34%)
 | js/explicit-resource-management/for-await-using-of-comments.js | 💥 | 0.00% |
 | js/explicit-resource-management/using-declarations.js | 💥 | 70.00% |
 | js/explicit-resource-management/valid-await-using-comments.js | 💥 | 60.61% |
-| js/explicit-resource-management/valid-for-using-declaration.js | 💥 | 66.67% |
 | js/explicit-resource-management/valid-using-as-identifier-for-init.js | 💥 | 0.00% |
 | js/export/blank-line-between-specifiers.js | 💥💥 | 95.00% |
 | js/export-default/function_in_template.js | 💥 | 0.00% |
@@ -199,10 +198,8 @@ js compatibility: 289/699 (41.34%)
 | js/for/continue-and-break-comment-2.js | 💥 | 88.79% |
 | js/for/continue-and-break-comment-without-blocks.js | 💥 | 41.10% |
 | js/for/for-in-with-initializer.js | 💥 | 31.25% |
-| js/for/for.js | 💥 | 60.00% |
 | js/for/in.js | 💥 | 50.00% |
-| js/for/parentheses.js | 💥 | 48.00% |
-| js/for/var.js | 💥 | 50.00% |
+| js/for/parentheses.js | 💥 | 50.00% |
 | js/for-of/async-identifier.js | 💥 | 90.00% |
 | js/function/function_expression.js | 💥 | 63.64% |
 | js/function/issue-10277.js | 💥 | 36.36% |
@@ -232,7 +229,6 @@ js compatibility: 289/699 (41.34%)
 | js/import-assertions/keyword-detect.js | 💥 | 33.33% |
 | js/import-attributes/keyword-detect.js | 💥 | 33.33% |
 | js/import-attributes/long-sources.js | 💥 | 48.48% |
-| js/import-attributes/quote-props/quoted-keys.js | 💥💥✨ | 53.33% |
 | js/label/comment.js | 💥 | 66.67% |
 | js/last-argument-expansion/arrow.js | 💥 | 20.51% |
 | js/last-argument-expansion/assignment-pattern.js | 💥 | 28.57% |

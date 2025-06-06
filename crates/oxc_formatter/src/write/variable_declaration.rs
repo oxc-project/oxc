@@ -1,5 +1,6 @@
 use oxc_allocator::{Address, Vec};
 use oxc_ast::{AstKind, ast::*};
+use oxc_span::GetSpan;
 
 use crate::write::semicolon::MaybeOptionalSemicolon;
 use crate::write::{OptionalSemicolon, semicolon};
@@ -18,9 +19,18 @@ use super::FormatWrite;
 
 impl<'a, 'b> FormatWrite<'a> for AstNode<'a, 'b, VariableDeclaration<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        let semicolon = !matches!(
+        let semicolon = match self.parent() {
+            AstNodes::ForStatementInit(_) => false,
+            // TODO: It would be better if there is a AstNodes which is `left` of `ForInStatement` and `ForOfStatement`.
+            AstNodes::ForInStatement(stmt) => stmt.left().span() != self.span(),
+            AstNodes::ForOfStatement(stmt) => stmt.left().span() != self.span(),
+            _ => true,
+        };
+        !matches!(
             self.parent(),
-            AstNodes::ForStatement(_) | AstNodes::ForInStatement(_) | AstNodes::ForOfStatement(_)
+            AstNodes::ForStatementInit(_)
+                | AstNodes::ForInStatement(_)
+                | AstNodes::ForOfStatement(_)
         );
 
         write!(
