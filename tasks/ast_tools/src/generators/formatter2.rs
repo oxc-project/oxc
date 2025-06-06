@@ -32,24 +32,41 @@ impl Generator for FormatterFormatGenerator2 {
             })
             .map(|type_def| implementation(type_def, schema))
             .collect::<TokenStream>();
-        let ast_nodes_variants = schema.types.iter().filter_map(|type_def| match type_def {
-            TypeDef::Struct(struct_def)
-                if struct_def.visit.has_visitor() && !struct_def.builder.skip =>
-            {
-                let lifetime = struct_def.lifetime(schema);
-                let name = struct_def.ident();
-                Some(quote! {
-                    #name(AstNode<'a, 'b, #name #lifetime>),
-                })
+
+        let ast_nodes_names = schema
+            .types
+            .iter()
+            .filter_map(|type_def| match type_def {
+                TypeDef::Struct(struct_def) if struct_def.kind.has_kind => {
+                    Some((struct_def.ident(), struct_def.lifetime(schema)))
+                }
+                TypeDef::Enum(enum_def) if enum_def.kind.has_kind => {
+                    Some((enum_def.ident(), enum_def.lifetime(schema)))
+                }
+                _ => None,
+            })
+            .collect::<Vec<_>>();
+
+        let ast_nodes_variants = ast_nodes_names.iter().map(|(name, lifetime)| {
+            quote! {
+                #name(AstNode<'a, 'b, #name #lifetime>),
             }
-            TypeDef::Enum(enum_def) if enum_def.kind.has_kind => {
-                let name = enum_def.ident();
-                let lifetime = enum_def.lifetime(schema);
-                Some(quote! {
-                    #name(AstNode<'a, 'b, #name #lifetime>),
-                })
+        });
+
+        let dummy_variant = quote! {
+            Self::DUMMY() => panic!("Should never be called on a dummy node"),
+        };
+
+        let span_match_arms = ast_nodes_names.iter().map(|(name, _)| {
+            quote! {
+                Self::#name(n) => n.inner.span(),
             }
-            _ => None,
+        });
+
+        let parent_match_arms = ast_nodes_names.iter().map(|(name, _)| {
+            quote! {
+                Self::#name(n) => n.parent(),
+            }
         });
 
         let output = quote! {
@@ -74,6 +91,22 @@ impl Generator for FormatterFormatGenerator2 {
             pub enum AstNodes<'a, 'b> {
                 DUMMY(),
                 #(#ast_nodes_variants)*
+            }
+
+            impl <'a, 'b> AstNodes<'a, 'b> {
+                pub fn span(&self) -> Span {
+                    match self {
+                        #dummy_variant
+                        #(#span_match_arms)*
+                    }
+                }
+
+                pub fn parent(&self) -> &'a Self {
+                    match self {
+                        #dummy_variant
+                        #(#parent_match_arms)*
+                    }
+                }
             }
 
             ///@@line_break
@@ -183,6 +216,7 @@ impl Generator for FormatterFormatGenerator2 {
                 }
             }
 
+
             ///@@line_break
             #impls
         };
@@ -195,6 +229,7 @@ fn implementation(type_def: &TypeDef, schema: &Schema) -> TokenStream {
     let type_ty = type_def.ty(schema);
 
     if let Some(struct_def) = type_def.as_struct() {
+        let has_kind = struct_def.kind.has_kind;
         let mut functions = quote! {};
         let struct_name = struct_def.ident();
         functions.extend(struct_def.fields.iter().filter_map(|field| {
@@ -209,7 +244,6 @@ fn implementation(type_def: &TypeDef, schema: &Schema) -> TokenStream {
 
             let field_name = &field.ident();
             let mut is_not_ast_node = false;
-            let mut inherits_parent = false;
 
             let return_type = match field_type {
                 TypeDef::Struct(struct_def) => {
@@ -228,7 +262,6 @@ fn implementation(type_def: &TypeDef, schema: &Schema) -> TokenStream {
                 TypeDef::Vec(vec_def) => vec_def.ty(schema),
                 TypeDef::Enum(enum_def) => {
                     is_not_ast_node = !enum_def.visit.has_visitor();
-                    inherits_parent = enum_def.kind.has_kind;
                     is_reference = !enum_def.derives.contains(&String::from("Copy"));
 
                     enum_def.ty(schema)
@@ -245,9 +278,7 @@ fn implementation(type_def: &TypeDef, schema: &Schema) -> TokenStream {
                 _ => return None,
             };
 
-            let parent = if inherits_parent {
-                quote! { self.parent }
-            } else {
+            let parent = if has_kind {
                 quote! {
                     self.allocator.alloc(AstNodes::#struct_name(AstNode {
                         inner: self.inner,
@@ -255,6 +286,8 @@ fn implementation(type_def: &TypeDef, schema: &Schema) -> TokenStream {
                         allocator: self.allocator,
                     }))
                 }
+            } else {
+                quote! { self.parent }
             };
 
             let reference_symbol = if is_reference {
@@ -334,6 +367,7 @@ fn implementation(type_def: &TypeDef, schema: &Schema) -> TokenStream {
 
     let enum_ident = type_def.ident();
     let enum_def = type_def.as_enum().unwrap();
+
     let parent = if enum_def.kind.has_kind {
         quote! {
             let parent = self.allocator.alloc(AstNodes::#enum_ident(AstNode {
@@ -359,40 +393,65 @@ fn implementation(type_def: &TypeDef, schema: &Schema) -> TokenStream {
         } else {
             quote! { s }
         };
-
-        Some(quote! {
-
-            #enum_ident::#variant_name(s) => {
+        dbg!(field_type);
+        let implementation = if has_kind(&field_type, schema) {
+            quote! {
                 AstNodes::#node_type(AstNode {
                     inner: #inner,
                     parent,
                     allocator: self.allocator,
                 })
+            }
+        } else {
+            quote! {
+                panic!("No Node for enum variant yet, please see `tasks/ast_tools/src/generators/ast_kind.rs`")
+            }
+        };
+
+        Some(quote! {
+
+            #enum_ident::#variant_name(s) => {
+                #implementation
             },
         })
     });
 
-    let inherits_match_arms = enum_def.inherits_types(schema).map(|inherits_type| {
-        let inherits_type = inherits_type.as_enum().unwrap();
-        let inherits_inner_type = inherits_type
+    let inherits_match_arms = enum_def.inherits_types(schema).map(|inherited_type| {
+        let inherited_enum = inherited_type.as_enum().unwrap();
+        let inherited_enum_inner_type = inherited_enum
             .maybe_inner_type(schema)
             .map(|t| t.ident())
-            .unwrap_or_else(|| inherits_type.ident());
+            .unwrap_or_else(|| inherited_enum.ident());
 
-        let inherits_snake_name = inherits_type.snake_name();
+        let inherits_snake_name = inherited_enum.snake_name();
         let match_ident = format_ident!("match_{inherits_snake_name}");
 
         let to_fn_ident = format_ident!("to_{inherits_snake_name}");
+
+        let implementation = if inherited_enum.kind.has_kind {
+            quote! {
+                AstNodes::#inherited_enum_inner_type(AstNode {
+                    inner: it.#to_fn_ident(),
+                    parent,
+                    allocator: self.allocator,
+                })
+            }
+        } else {
+            quote! {
+                    return self
+                        .allocator
+                        .alloc(AstNode {
+                            inner: it.#to_fn_ident(),
+                            parent,
+                            allocator: self.allocator,
+                        })
+                        .as_ast_nodes();
+            }
+        };
+
         let match_arm = quote! {
             it @ #match_ident!(#enum_ident) => {
-                return self
-                    .allocator
-                    .alloc(AstNode::<'a, 'b, #inherits_inner_type> {
-                        inner: it.#to_fn_ident(),
-                        parent,
-                        allocator: self.allocator,
-                    })
-                    .as_ast_nodes();
+                #implementation
             },
         };
 
@@ -498,5 +557,14 @@ fn implementation(type_def: &TypeDef, schema: &Schema) -> TokenStream {
         #as_ast_nodes_fn
         #impl_format_write
         #impl_get_span
+    }
+}
+
+fn has_kind(type_def: &TypeDef, schema: &Schema) -> bool {
+    match type_def {
+        TypeDef::Struct(struct_def) => struct_def.kind.has_kind,
+        TypeDef::Enum(enum_def) => enum_def.kind.has_kind,
+        TypeDef::Box(box_def) => has_kind(box_def.inner_type(schema), schema),
+        _ => false,
     }
 }

@@ -279,7 +279,7 @@ ts compatibility: 168/573 (29.32%)
 | typescript/index-signature/static.ts | 💥 | 66.67% |
 | typescript/infer-extends/basic.ts | 💥 | 12.50% |
 | typescript/instantiation-expression/inferface-asi.ts | 💥 | 88.89% |
-| typescript/instantiation-expression/property-access.ts | 💥 | 7.14% |
+| typescript/instantiation-expression/property-access.ts | 💥 | 78.57% |
 | typescript/interface/comments-generic.ts | 💥💥 | 65.52% |
 | typescript/interface/comments.ts | 💥💥 | 66.67% |
 | typescript/interface/generic.ts | 💥💥 | 75.00% |

@@ -31,11 +31,7 @@ pub enum AstNodes<'a, 'b> {
     PropertyKey(AstNode<'a, 'b, PropertyKey<'a>>),
     TemplateLiteral(AstNode<'a, 'b, TemplateLiteral<'a>>),
     TaggedTemplateExpression(AstNode<'a, 'b, TaggedTemplateExpression<'a>>),
-    TemplateElement(AstNode<'a, 'b, TemplateElement<'a>>),
     MemberExpression(AstNode<'a, 'b, MemberExpression<'a>>),
-    ComputedMemberExpression(AstNode<'a, 'b, ComputedMemberExpression<'a>>),
-    StaticMemberExpression(AstNode<'a, 'b, StaticMemberExpression<'a>>),
-    PrivateFieldExpression(AstNode<'a, 'b, PrivateFieldExpression<'a>>),
     CallExpression(AstNode<'a, 'b, CallExpression<'a>>),
     NewExpression(AstNode<'a, 'b, NewExpression<'a>>),
     MetaProperty(AstNode<'a, 'b, MetaProperty<'a>>),
@@ -53,10 +49,7 @@ pub enum AstNodes<'a, 'b> {
     AssignmentTargetPattern(AstNode<'a, 'b, AssignmentTargetPattern<'a>>),
     ArrayAssignmentTarget(AstNode<'a, 'b, ArrayAssignmentTarget<'a>>),
     ObjectAssignmentTarget(AstNode<'a, 'b, ObjectAssignmentTarget<'a>>),
-    AssignmentTargetRest(AstNode<'a, 'b, AssignmentTargetRest<'a>>),
     AssignmentTargetWithDefault(AstNode<'a, 'b, AssignmentTargetWithDefault<'a>>),
-    AssignmentTargetPropertyIdentifier(AstNode<'a, 'b, AssignmentTargetPropertyIdentifier<'a>>),
-    AssignmentTargetPropertyProperty(AstNode<'a, 'b, AssignmentTargetPropertyProperty<'a>>),
     SequenceExpression(AstNode<'a, 'b, SequenceExpression<'a>>),
     Super(AstNode<'a, 'b, Super>),
     AwaitExpression(AstNode<'a, 'b, AwaitExpression<'a>>),
@@ -88,10 +81,8 @@ pub enum AstNodes<'a, 'b> {
     CatchClause(AstNode<'a, 'b, CatchClause<'a>>),
     CatchParameter(AstNode<'a, 'b, CatchParameter<'a>>),
     DebuggerStatement(AstNode<'a, 'b, DebuggerStatement>),
-    BindingPattern(AstNode<'a, 'b, BindingPattern<'a>>),
     AssignmentPattern(AstNode<'a, 'b, AssignmentPattern<'a>>),
     ObjectPattern(AstNode<'a, 'b, ObjectPattern<'a>>),
-    BindingProperty(AstNode<'a, 'b, BindingProperty<'a>>),
     ArrayPattern(AstNode<'a, 'b, ArrayPattern<'a>>),
     BindingRestElement(AstNode<'a, 'b, BindingRestElement<'a>>),
     Function(AstNode<'a, 'b, Function<'a>>),
@@ -107,14 +98,11 @@ pub enum AstNodes<'a, 'b> {
     PrivateIdentifier(AstNode<'a, 'b, PrivateIdentifier<'a>>),
     StaticBlock(AstNode<'a, 'b, StaticBlock<'a>>),
     ModuleDeclaration(AstNode<'a, 'b, ModuleDeclaration<'a>>),
-    AccessorProperty(AstNode<'a, 'b, AccessorProperty<'a>>),
     ImportExpression(AstNode<'a, 'b, ImportExpression<'a>>),
     ImportDeclaration(AstNode<'a, 'b, ImportDeclaration<'a>>),
     ImportSpecifier(AstNode<'a, 'b, ImportSpecifier<'a>>),
     ImportDefaultSpecifier(AstNode<'a, 'b, ImportDefaultSpecifier<'a>>),
     ImportNamespaceSpecifier(AstNode<'a, 'b, ImportNamespaceSpecifier<'a>>),
-    WithClause(AstNode<'a, 'b, WithClause<'a>>),
-    ImportAttribute(AstNode<'a, 'b, ImportAttribute<'a>>),
     ExportNamedDeclaration(AstNode<'a, 'b, ExportNamedDeclaration<'a>>),
     ExportDefaultDeclaration(AstNode<'a, 'b, ExportDefaultDeclaration<'a>>),
     ExportAllDeclaration(AstNode<'a, 'b, ExportAllDeclaration<'a>>),
@@ -130,19 +118,14 @@ pub enum AstNodes<'a, 'b> {
     JSXOpeningElement(AstNode<'a, 'b, JSXOpeningElement<'a>>),
     JSXClosingElement(AstNode<'a, 'b, JSXClosingElement<'a>>),
     JSXFragment(AstNode<'a, 'b, JSXFragment<'a>>),
-    JSXOpeningFragment(AstNode<'a, 'b, JSXOpeningFragment>),
-    JSXClosingFragment(AstNode<'a, 'b, JSXClosingFragment>),
     JSXElementName(AstNode<'a, 'b, JSXElementName<'a>>),
     JSXNamespacedName(AstNode<'a, 'b, JSXNamespacedName<'a>>),
     JSXMemberExpression(AstNode<'a, 'b, JSXMemberExpression<'a>>),
     JSXMemberExpressionObject(AstNode<'a, 'b, JSXMemberExpressionObject<'a>>),
     JSXExpressionContainer(AstNode<'a, 'b, JSXExpressionContainer<'a>>),
-    JSXEmptyExpression(AstNode<'a, 'b, JSXEmptyExpression>),
     JSXAttributeItem(AstNode<'a, 'b, JSXAttributeItem<'a>>),
-    JSXAttribute(AstNode<'a, 'b, JSXAttribute<'a>>),
     JSXSpreadAttribute(AstNode<'a, 'b, JSXSpreadAttribute<'a>>),
     JSXIdentifier(AstNode<'a, 'b, JSXIdentifier<'a>>),
-    JSXSpreadChild(AstNode<'a, 'b, JSXSpreadChild<'a>>),
     JSXText(AstNode<'a, 'b, JSXText<'a>>),
     TSThisParameter(AstNode<'a, 'b, TSThisParameter<'a>>),
     TSEnumDeclaration(AstNode<'a, 'b, TSEnumDeclaration<'a>>),
@@ -154,13 +137,8 @@ pub enum AstNodes<'a, 'b> {
     TSUnionType(AstNode<'a, 'b, TSUnionType<'a>>),
     TSIntersectionType(AstNode<'a, 'b, TSIntersectionType<'a>>),
     TSParenthesizedType(AstNode<'a, 'b, TSParenthesizedType<'a>>),
-    TSTypeOperator(AstNode<'a, 'b, TSTypeOperator<'a>>),
-    TSArrayType(AstNode<'a, 'b, TSArrayType<'a>>),
     TSIndexedAccessType(AstNode<'a, 'b, TSIndexedAccessType<'a>>),
-    TSTupleType(AstNode<'a, 'b, TSTupleType<'a>>),
     TSNamedTupleMember(AstNode<'a, 'b, TSNamedTupleMember<'a>>),
-    TSOptionalType(AstNode<'a, 'b, TSOptionalType<'a>>),
-    TSRestType(AstNode<'a, 'b, TSRestType<'a>>),
     TSAnyKeyword(AstNode<'a, 'b, TSAnyKeyword>),
     TSStringKeyword(AstNode<'a, 'b, TSStringKeyword>),
     TSBooleanKeyword(AstNode<'a, 'b, TSBooleanKeyword>),
@@ -184,23 +162,16 @@ pub enum AstNodes<'a, 'b> {
     TSTypeAliasDeclaration(AstNode<'a, 'b, TSTypeAliasDeclaration<'a>>),
     TSClassImplements(AstNode<'a, 'b, TSClassImplements<'a>>),
     TSInterfaceDeclaration(AstNode<'a, 'b, TSInterfaceDeclaration<'a>>),
-    TSInterfaceBody(AstNode<'a, 'b, TSInterfaceBody<'a>>),
     TSPropertySignature(AstNode<'a, 'b, TSPropertySignature<'a>>),
-    TSIndexSignature(AstNode<'a, 'b, TSIndexSignature<'a>>),
-    TSCallSignatureDeclaration(AstNode<'a, 'b, TSCallSignatureDeclaration<'a>>),
     TSMethodSignature(AstNode<'a, 'b, TSMethodSignature<'a>>),
     TSConstructSignatureDeclaration(AstNode<'a, 'b, TSConstructSignatureDeclaration<'a>>),
-    TSIndexSignatureName(AstNode<'a, 'b, TSIndexSignatureName<'a>>),
     TSInterfaceHeritage(AstNode<'a, 'b, TSInterfaceHeritage<'a>>),
-    TSTypePredicate(AstNode<'a, 'b, TSTypePredicate<'a>>),
     TSModuleDeclaration(AstNode<'a, 'b, TSModuleDeclaration<'a>>),
     TSModuleBlock(AstNode<'a, 'b, TSModuleBlock<'a>>),
     TSTypeLiteral(AstNode<'a, 'b, TSTypeLiteral<'a>>),
     TSInferType(AstNode<'a, 'b, TSInferType<'a>>),
     TSTypeQuery(AstNode<'a, 'b, TSTypeQuery<'a>>),
     TSImportType(AstNode<'a, 'b, TSImportType<'a>>),
-    TSFunctionType(AstNode<'a, 'b, TSFunctionType<'a>>),
-    TSConstructorType(AstNode<'a, 'b, TSConstructorType<'a>>),
     TSMappedType(AstNode<'a, 'b, TSMappedType<'a>>),
     TSTemplateLiteralType(AstNode<'a, 'b, TSTemplateLiteralType<'a>>),
     TSAsExpression(AstNode<'a, 'b, TSAsExpression<'a>>),
@@ -212,423 +183,351 @@ pub enum AstNodes<'a, 'b> {
     TSNonNullExpression(AstNode<'a, 'b, TSNonNullExpression<'a>>),
     Decorator(AstNode<'a, 'b, Decorator<'a>>),
     TSExportAssignment(AstNode<'a, 'b, TSExportAssignment<'a>>),
-    TSNamespaceExportDeclaration(AstNode<'a, 'b, TSNamespaceExportDeclaration<'a>>),
     TSInstantiationExpression(AstNode<'a, 'b, TSInstantiationExpression<'a>>),
-    JSDocNullableType(AstNode<'a, 'b, JSDocNullableType<'a>>),
-    JSDocNonNullableType(AstNode<'a, 'b, JSDocNonNullableType<'a>>),
-    JSDocUnknownType(AstNode<'a, 'b, JSDocUnknownType>),
 }
-
 impl<'a, 'b> AstNodes<'a, 'b> {
-    pub fn parent(&self) -> &AstNodes<'a, 'b> {
-        match self {
-            AstNodes::DUMMY() => unreachable!("Should never be called on `AstNodes::DUMMY` node"),
-            AstNodes::Program(n) => n.parent(),
-            AstNodes::IdentifierName(n) => n.parent(),
-            AstNodes::IdentifierReference(n) => n.parent(),
-            AstNodes::BindingIdentifier(n) => n.parent(),
-            AstNodes::LabelIdentifier(n) => n.parent(),
-            AstNodes::ThisExpression(n) => n.parent(),
-            AstNodes::ArrayExpression(n) => n.parent(),
-            AstNodes::ArrayExpressionElement(n) => n.parent(),
-            AstNodes::Elision(n) => n.parent(),
-            AstNodes::ObjectExpression(n) => n.parent(),
-            AstNodes::ObjectProperty(n) => n.parent(),
-            AstNodes::PropertyKey(n) => n.parent(),
-            AstNodes::TemplateLiteral(n) => n.parent(),
-            AstNodes::TaggedTemplateExpression(n) => n.parent(),
-            AstNodes::TemplateElement(n) => n.parent(),
-            AstNodes::MemberExpression(n) => n.parent(),
-            AstNodes::ComputedMemberExpression(n) => n.parent(),
-            AstNodes::StaticMemberExpression(n) => n.parent(),
-            AstNodes::PrivateFieldExpression(n) => n.parent(),
-            AstNodes::CallExpression(n) => n.parent(),
-            AstNodes::NewExpression(n) => n.parent(),
-            AstNodes::MetaProperty(n) => n.parent(),
-            AstNodes::SpreadElement(n) => n.parent(),
-            AstNodes::Argument(n) => n.parent(),
-            AstNodes::UpdateExpression(n) => n.parent(),
-            AstNodes::UnaryExpression(n) => n.parent(),
-            AstNodes::BinaryExpression(n) => n.parent(),
-            AstNodes::PrivateInExpression(n) => n.parent(),
-            AstNodes::LogicalExpression(n) => n.parent(),
-            AstNodes::ConditionalExpression(n) => n.parent(),
-            AstNodes::AssignmentExpression(n) => n.parent(),
-            AstNodes::AssignmentTarget(n) => n.parent(),
-            AstNodes::SimpleAssignmentTarget(n) => n.parent(),
-            AstNodes::AssignmentTargetPattern(n) => n.parent(),
-            AstNodes::ArrayAssignmentTarget(n) => n.parent(),
-            AstNodes::ObjectAssignmentTarget(n) => n.parent(),
-            AstNodes::AssignmentTargetRest(n) => n.parent(),
-            AstNodes::AssignmentTargetWithDefault(n) => n.parent(),
-            AstNodes::AssignmentTargetPropertyIdentifier(n) => n.parent(),
-            AstNodes::AssignmentTargetPropertyProperty(n) => n.parent(),
-            AstNodes::SequenceExpression(n) => n.parent(),
-            AstNodes::Super(n) => n.parent(),
-            AstNodes::AwaitExpression(n) => n.parent(),
-            AstNodes::ChainExpression(n) => n.parent(),
-            AstNodes::ParenthesizedExpression(n) => n.parent(),
-            AstNodes::Directive(n) => n.parent(),
-            AstNodes::Hashbang(n) => n.parent(),
-            AstNodes::BlockStatement(n) => n.parent(),
-            AstNodes::VariableDeclaration(n) => n.parent(),
-            AstNodes::VariableDeclarator(n) => n.parent(),
-            AstNodes::EmptyStatement(n) => n.parent(),
-            AstNodes::ExpressionStatement(n) => n.parent(),
-            AstNodes::IfStatement(n) => n.parent(),
-            AstNodes::DoWhileStatement(n) => n.parent(),
-            AstNodes::WhileStatement(n) => n.parent(),
-            AstNodes::ForStatement(n) => n.parent(),
-            AstNodes::ForStatementInit(n) => n.parent(),
-            AstNodes::ForInStatement(n) => n.parent(),
-            AstNodes::ForOfStatement(n) => n.parent(),
-            AstNodes::ContinueStatement(n) => n.parent(),
-            AstNodes::BreakStatement(n) => n.parent(),
-            AstNodes::ReturnStatement(n) => n.parent(),
-            AstNodes::WithStatement(n) => n.parent(),
-            AstNodes::SwitchStatement(n) => n.parent(),
-            AstNodes::SwitchCase(n) => n.parent(),
-            AstNodes::LabeledStatement(n) => n.parent(),
-            AstNodes::ThrowStatement(n) => n.parent(),
-            AstNodes::TryStatement(n) => n.parent(),
-            AstNodes::CatchClause(n) => n.parent(),
-            AstNodes::CatchParameter(n) => n.parent(),
-            AstNodes::DebuggerStatement(n) => n.parent(),
-            AstNodes::BindingPattern(n) => n.parent(),
-            AstNodes::AssignmentPattern(n) => n.parent(),
-            AstNodes::ObjectPattern(n) => n.parent(),
-            AstNodes::BindingProperty(n) => n.parent(),
-            AstNodes::ArrayPattern(n) => n.parent(),
-            AstNodes::BindingRestElement(n) => n.parent(),
-            AstNodes::Function(n) => n.parent(),
-            AstNodes::FormalParameters(n) => n.parent(),
-            AstNodes::FormalParameter(n) => n.parent(),
-            AstNodes::FunctionBody(n) => n.parent(),
-            AstNodes::ArrowFunctionExpression(n) => n.parent(),
-            AstNodes::YieldExpression(n) => n.parent(),
-            AstNodes::Class(n) => n.parent(),
-            AstNodes::ClassBody(n) => n.parent(),
-            AstNodes::MethodDefinition(n) => n.parent(),
-            AstNodes::PropertyDefinition(n) => n.parent(),
-            AstNodes::PrivateIdentifier(n) => n.parent(),
-            AstNodes::StaticBlock(n) => n.parent(),
-            AstNodes::ModuleDeclaration(n) => n.parent(),
-            AstNodes::AccessorProperty(n) => n.parent(),
-            AstNodes::ImportExpression(n) => n.parent(),
-            AstNodes::ImportDeclaration(n) => n.parent(),
-            AstNodes::ImportSpecifier(n) => n.parent(),
-            AstNodes::ImportDefaultSpecifier(n) => n.parent(),
-            AstNodes::ImportNamespaceSpecifier(n) => n.parent(),
-            AstNodes::WithClause(n) => n.parent(),
-            AstNodes::ImportAttribute(n) => n.parent(),
-            AstNodes::ExportNamedDeclaration(n) => n.parent(),
-            AstNodes::ExportDefaultDeclaration(n) => n.parent(),
-            AstNodes::ExportAllDeclaration(n) => n.parent(),
-            AstNodes::ExportSpecifier(n) => n.parent(),
-            AstNodes::V8IntrinsicExpression(n) => n.parent(),
-            AstNodes::BooleanLiteral(n) => n.parent(),
-            AstNodes::NullLiteral(n) => n.parent(),
-            AstNodes::NumericLiteral(n) => n.parent(),
-            AstNodes::StringLiteral(n) => n.parent(),
-            AstNodes::BigIntLiteral(n) => n.parent(),
-            AstNodes::RegExpLiteral(n) => n.parent(),
-            AstNodes::JSXElement(n) => n.parent(),
-            AstNodes::JSXOpeningElement(n) => n.parent(),
-            AstNodes::JSXClosingElement(n) => n.parent(),
-            AstNodes::JSXFragment(n) => n.parent(),
-            AstNodes::JSXOpeningFragment(n) => n.parent(),
-            AstNodes::JSXClosingFragment(n) => n.parent(),
-            AstNodes::JSXElementName(n) => n.parent(),
-            AstNodes::JSXNamespacedName(n) => n.parent(),
-            AstNodes::JSXMemberExpression(n) => n.parent(),
-            AstNodes::JSXMemberExpressionObject(n) => n.parent(),
-            AstNodes::JSXExpressionContainer(n) => n.parent(),
-            AstNodes::JSXEmptyExpression(n) => n.parent(),
-            AstNodes::JSXAttributeItem(n) => n.parent(),
-            AstNodes::JSXAttribute(n) => n.parent(),
-            AstNodes::JSXSpreadAttribute(n) => n.parent(),
-            AstNodes::JSXIdentifier(n) => n.parent(),
-            AstNodes::JSXSpreadChild(n) => n.parent(),
-            AstNodes::JSXText(n) => n.parent(),
-            AstNodes::TSThisParameter(n) => n.parent(),
-            AstNodes::TSEnumDeclaration(n) => n.parent(),
-            AstNodes::TSEnumBody(n) => n.parent(),
-            AstNodes::TSEnumMember(n) => n.parent(),
-            AstNodes::TSTypeAnnotation(n) => n.parent(),
-            AstNodes::TSLiteralType(n) => n.parent(),
-            AstNodes::TSConditionalType(n) => n.parent(),
-            AstNodes::TSUnionType(n) => n.parent(),
-            AstNodes::TSIntersectionType(n) => n.parent(),
-            AstNodes::TSParenthesizedType(n) => n.parent(),
-            AstNodes::TSTypeOperator(n) => n.parent(),
-            AstNodes::TSArrayType(n) => n.parent(),
-            AstNodes::TSIndexedAccessType(n) => n.parent(),
-            AstNodes::TSTupleType(n) => n.parent(),
-            AstNodes::TSNamedTupleMember(n) => n.parent(),
-            AstNodes::TSOptionalType(n) => n.parent(),
-            AstNodes::TSRestType(n) => n.parent(),
-            AstNodes::TSAnyKeyword(n) => n.parent(),
-            AstNodes::TSStringKeyword(n) => n.parent(),
-            AstNodes::TSBooleanKeyword(n) => n.parent(),
-            AstNodes::TSNumberKeyword(n) => n.parent(),
-            AstNodes::TSNeverKeyword(n) => n.parent(),
-            AstNodes::TSIntrinsicKeyword(n) => n.parent(),
-            AstNodes::TSUnknownKeyword(n) => n.parent(),
-            AstNodes::TSNullKeyword(n) => n.parent(),
-            AstNodes::TSUndefinedKeyword(n) => n.parent(),
-            AstNodes::TSVoidKeyword(n) => n.parent(),
-            AstNodes::TSSymbolKeyword(n) => n.parent(),
-            AstNodes::TSThisType(n) => n.parent(),
-            AstNodes::TSObjectKeyword(n) => n.parent(),
-            AstNodes::TSBigIntKeyword(n) => n.parent(),
-            AstNodes::TSTypeReference(n) => n.parent(),
-            AstNodes::TSTypeName(n) => n.parent(),
-            AstNodes::TSQualifiedName(n) => n.parent(),
-            AstNodes::TSTypeParameterInstantiation(n) => n.parent(),
-            AstNodes::TSTypeParameter(n) => n.parent(),
-            AstNodes::TSTypeParameterDeclaration(n) => n.parent(),
-            AstNodes::TSTypeAliasDeclaration(n) => n.parent(),
-            AstNodes::TSClassImplements(n) => n.parent(),
-            AstNodes::TSInterfaceDeclaration(n) => n.parent(),
-            AstNodes::TSInterfaceBody(n) => n.parent(),
-            AstNodes::TSPropertySignature(n) => n.parent(),
-            AstNodes::TSIndexSignature(n) => n.parent(),
-            AstNodes::TSCallSignatureDeclaration(n) => n.parent(),
-            AstNodes::TSMethodSignature(n) => n.parent(),
-            AstNodes::TSConstructSignatureDeclaration(n) => n.parent(),
-            AstNodes::TSIndexSignatureName(n) => n.parent(),
-            AstNodes::TSInterfaceHeritage(n) => n.parent(),
-            AstNodes::TSTypePredicate(n) => n.parent(),
-            AstNodes::TSModuleDeclaration(n) => n.parent(),
-            AstNodes::TSModuleBlock(n) => n.parent(),
-            AstNodes::TSTypeLiteral(n) => n.parent(),
-            AstNodes::TSInferType(n) => n.parent(),
-            AstNodes::TSTypeQuery(n) => n.parent(),
-            AstNodes::TSImportType(n) => n.parent(),
-            AstNodes::TSFunctionType(n) => n.parent(),
-            AstNodes::TSConstructorType(n) => n.parent(),
-            AstNodes::TSMappedType(n) => n.parent(),
-            AstNodes::TSTemplateLiteralType(n) => n.parent(),
-            AstNodes::TSAsExpression(n) => n.parent(),
-            AstNodes::TSSatisfiesExpression(n) => n.parent(),
-            AstNodes::TSTypeAssertion(n) => n.parent(),
-            AstNodes::TSImportEqualsDeclaration(n) => n.parent(),
-            AstNodes::TSModuleReference(n) => n.parent(),
-            AstNodes::TSExternalModuleReference(n) => n.parent(),
-            AstNodes::TSNonNullExpression(n) => n.parent(),
-            AstNodes::Decorator(n) => n.parent(),
-            AstNodes::TSExportAssignment(n) => n.parent(),
-            AstNodes::TSNamespaceExportDeclaration(n) => n.parent(),
-            AstNodes::TSInstantiationExpression(n) => n.parent(),
-            AstNodes::JSDocNullableType(n) => n.parent(),
-            AstNodes::JSDocNonNullableType(n) => n.parent(),
-            AstNodes::JSDocUnknownType(n) => n.parent(),
-        }
-    }
-
     pub fn span(&self) -> Span {
         match self {
-            AstNodes::DUMMY() => unreachable!("Should never be called on `AstNodes::DUMMY` node"),
-            AstNodes::Program(n) => n.inner.span(),
-            AstNodes::IdentifierName(n) => n.inner.span(),
-            AstNodes::IdentifierReference(n) => n.inner.span(),
-            AstNodes::BindingIdentifier(n) => n.inner.span(),
-            AstNodes::LabelIdentifier(n) => n.inner.span(),
-            AstNodes::ThisExpression(n) => n.inner.span(),
-            AstNodes::ArrayExpression(n) => n.inner.span(),
-            AstNodes::ArrayExpressionElement(n) => n.inner.span(),
-            AstNodes::Elision(n) => n.inner.span(),
-            AstNodes::ObjectExpression(n) => n.inner.span(),
-            AstNodes::ObjectProperty(n) => n.inner.span(),
-            AstNodes::PropertyKey(n) => n.inner.span(),
-            AstNodes::TemplateLiteral(n) => n.inner.span(),
-            AstNodes::TaggedTemplateExpression(n) => n.inner.span(),
-            AstNodes::TemplateElement(n) => n.inner.span(),
-            AstNodes::MemberExpression(n) => n.inner.span(),
-            AstNodes::ComputedMemberExpression(n) => n.inner.span(),
-            AstNodes::StaticMemberExpression(n) => n.inner.span(),
-            AstNodes::PrivateFieldExpression(n) => n.inner.span(),
-            AstNodes::CallExpression(n) => n.inner.span(),
-            AstNodes::NewExpression(n) => n.inner.span(),
-            AstNodes::MetaProperty(n) => n.inner.span(),
-            AstNodes::SpreadElement(n) => n.inner.span(),
-            AstNodes::Argument(n) => n.inner.span(),
-            AstNodes::UpdateExpression(n) => n.inner.span(),
-            AstNodes::UnaryExpression(n) => n.inner.span(),
-            AstNodes::BinaryExpression(n) => n.inner.span(),
-            AstNodes::PrivateInExpression(n) => n.inner.span(),
-            AstNodes::LogicalExpression(n) => n.inner.span(),
-            AstNodes::ConditionalExpression(n) => n.inner.span(),
-            AstNodes::AssignmentExpression(n) => n.inner.span(),
-            AstNodes::AssignmentTarget(n) => n.inner.span(),
-            AstNodes::SimpleAssignmentTarget(n) => n.inner.span(),
-            AstNodes::AssignmentTargetPattern(n) => n.inner.span(),
-            AstNodes::ArrayAssignmentTarget(n) => n.inner.span(),
-            AstNodes::ObjectAssignmentTarget(n) => n.inner.span(),
-            AstNodes::AssignmentTargetRest(n) => n.inner.span(),
-            AstNodes::AssignmentTargetWithDefault(n) => n.inner.span(),
-            AstNodes::AssignmentTargetPropertyIdentifier(n) => n.inner.span(),
-            AstNodes::AssignmentTargetPropertyProperty(n) => n.inner.span(),
-            AstNodes::SequenceExpression(n) => n.inner.span(),
-            AstNodes::Super(n) => n.inner.span(),
-            AstNodes::AwaitExpression(n) => n.inner.span(),
-            AstNodes::ChainExpression(n) => n.inner.span(),
-            AstNodes::ParenthesizedExpression(n) => n.inner.span(),
-            AstNodes::Directive(n) => n.inner.span(),
-            AstNodes::Hashbang(n) => n.inner.span(),
-            AstNodes::BlockStatement(n) => n.inner.span(),
-            AstNodes::VariableDeclaration(n) => n.inner.span(),
-            AstNodes::VariableDeclarator(n) => n.inner.span(),
-            AstNodes::EmptyStatement(n) => n.inner.span(),
-            AstNodes::ExpressionStatement(n) => n.inner.span(),
-            AstNodes::IfStatement(n) => n.inner.span(),
-            AstNodes::DoWhileStatement(n) => n.inner.span(),
-            AstNodes::WhileStatement(n) => n.inner.span(),
-            AstNodes::ForStatement(n) => n.inner.span(),
-            AstNodes::ForStatementInit(n) => n.inner.span(),
-            AstNodes::ForInStatement(n) => n.inner.span(),
-            AstNodes::ForOfStatement(n) => n.inner.span(),
-            AstNodes::ContinueStatement(n) => n.inner.span(),
-            AstNodes::BreakStatement(n) => n.inner.span(),
-            AstNodes::ReturnStatement(n) => n.inner.span(),
-            AstNodes::WithStatement(n) => n.inner.span(),
-            AstNodes::SwitchStatement(n) => n.inner.span(),
-            AstNodes::SwitchCase(n) => n.inner.span(),
-            AstNodes::LabeledStatement(n) => n.inner.span(),
-            AstNodes::ThrowStatement(n) => n.inner.span(),
-            AstNodes::TryStatement(n) => n.inner.span(),
-            AstNodes::CatchClause(n) => n.inner.span(),
-            AstNodes::CatchParameter(n) => n.inner.span(),
-            AstNodes::DebuggerStatement(n) => n.inner.span(),
-            AstNodes::BindingPattern(n) => n.inner.span(),
-            AstNodes::AssignmentPattern(n) => n.inner.span(),
-            AstNodes::ObjectPattern(n) => n.inner.span(),
-            AstNodes::BindingProperty(n) => n.inner.span(),
-            AstNodes::ArrayPattern(n) => n.inner.span(),
-            AstNodes::BindingRestElement(n) => n.inner.span(),
-            AstNodes::Function(n) => n.inner.span(),
-            AstNodes::FormalParameters(n) => n.inner.span(),
-            AstNodes::FormalParameter(n) => n.inner.span(),
-            AstNodes::FunctionBody(n) => n.inner.span(),
-            AstNodes::ArrowFunctionExpression(n) => n.inner.span(),
-            AstNodes::YieldExpression(n) => n.inner.span(),
-            AstNodes::Class(n) => n.inner.span(),
-            AstNodes::ClassBody(n) => n.inner.span(),
-            AstNodes::MethodDefinition(n) => n.inner.span(),
-            AstNodes::PropertyDefinition(n) => n.inner.span(),
-            AstNodes::PrivateIdentifier(n) => n.inner.span(),
-            AstNodes::StaticBlock(n) => n.inner.span(),
-            AstNodes::ModuleDeclaration(n) => n.inner.span(),
-            AstNodes::AccessorProperty(n) => n.inner.span(),
-            AstNodes::ImportExpression(n) => n.inner.span(),
-            AstNodes::ImportDeclaration(n) => n.inner.span(),
-            AstNodes::ImportSpecifier(n) => n.inner.span(),
-            AstNodes::ImportDefaultSpecifier(n) => n.inner.span(),
-            AstNodes::ImportNamespaceSpecifier(n) => n.inner.span(),
-            AstNodes::WithClause(n) => n.inner.span(),
-            AstNodes::ImportAttribute(n) => n.inner.span(),
-            AstNodes::ExportNamedDeclaration(n) => n.inner.span(),
-            AstNodes::ExportDefaultDeclaration(n) => n.inner.span(),
-            AstNodes::ExportAllDeclaration(n) => n.inner.span(),
-            AstNodes::ExportSpecifier(n) => n.inner.span(),
-            AstNodes::V8IntrinsicExpression(n) => n.inner.span(),
-            AstNodes::BooleanLiteral(n) => n.inner.span(),
-            AstNodes::NullLiteral(n) => n.inner.span(),
-            AstNodes::NumericLiteral(n) => n.inner.span(),
-            AstNodes::StringLiteral(n) => n.inner.span(),
-            AstNodes::BigIntLiteral(n) => n.inner.span(),
-            AstNodes::RegExpLiteral(n) => n.inner.span(),
-            AstNodes::JSXElement(n) => n.inner.span(),
-            AstNodes::JSXOpeningElement(n) => n.inner.span(),
-            AstNodes::JSXClosingElement(n) => n.inner.span(),
-            AstNodes::JSXFragment(n) => n.inner.span(),
-            AstNodes::JSXOpeningFragment(n) => n.inner.span(),
-            AstNodes::JSXClosingFragment(n) => n.inner.span(),
-            AstNodes::JSXElementName(n) => n.inner.span(),
-            AstNodes::JSXNamespacedName(n) => n.inner.span(),
-            AstNodes::JSXMemberExpression(n) => n.inner.span(),
-            AstNodes::JSXMemberExpressionObject(n) => n.inner.span(),
-            AstNodes::JSXExpressionContainer(n) => n.inner.span(),
-            AstNodes::JSXEmptyExpression(n) => n.inner.span(),
-            AstNodes::JSXAttributeItem(n) => n.inner.span(),
-            AstNodes::JSXAttribute(n) => n.inner.span(),
-            AstNodes::JSXSpreadAttribute(n) => n.inner.span(),
-            AstNodes::JSXIdentifier(n) => n.inner.span(),
-            AstNodes::JSXSpreadChild(n) => n.inner.span(),
-            AstNodes::JSXText(n) => n.inner.span(),
-            AstNodes::TSThisParameter(n) => n.inner.span(),
-            AstNodes::TSEnumDeclaration(n) => n.inner.span(),
-            AstNodes::TSEnumBody(n) => n.inner.span(),
-            AstNodes::TSEnumMember(n) => n.inner.span(),
-            AstNodes::TSTypeAnnotation(n) => n.inner.span(),
-            AstNodes::TSLiteralType(n) => n.inner.span(),
-            AstNodes::TSConditionalType(n) => n.inner.span(),
-            AstNodes::TSUnionType(n) => n.inner.span(),
-            AstNodes::TSIntersectionType(n) => n.inner.span(),
-            AstNodes::TSParenthesizedType(n) => n.inner.span(),
-            AstNodes::TSTypeOperator(n) => n.inner.span(),
-            AstNodes::TSArrayType(n) => n.inner.span(),
-            AstNodes::TSIndexedAccessType(n) => n.inner.span(),
-            AstNodes::TSTupleType(n) => n.inner.span(),
-            AstNodes::TSNamedTupleMember(n) => n.inner.span(),
-            AstNodes::TSOptionalType(n) => n.inner.span(),
-            AstNodes::TSRestType(n) => n.inner.span(),
-            AstNodes::TSAnyKeyword(n) => n.inner.span(),
-            AstNodes::TSStringKeyword(n) => n.inner.span(),
-            AstNodes::TSBooleanKeyword(n) => n.inner.span(),
-            AstNodes::TSNumberKeyword(n) => n.inner.span(),
-            AstNodes::TSNeverKeyword(n) => n.inner.span(),
-            AstNodes::TSIntrinsicKeyword(n) => n.inner.span(),
-            AstNodes::TSUnknownKeyword(n) => n.inner.span(),
-            AstNodes::TSNullKeyword(n) => n.inner.span(),
-            AstNodes::TSUndefinedKeyword(n) => n.inner.span(),
-            AstNodes::TSVoidKeyword(n) => n.inner.span(),
-            AstNodes::TSSymbolKeyword(n) => n.inner.span(),
-            AstNodes::TSThisType(n) => n.inner.span(),
-            AstNodes::TSObjectKeyword(n) => n.inner.span(),
-            AstNodes::TSBigIntKeyword(n) => n.inner.span(),
-            AstNodes::TSTypeReference(n) => n.inner.span(),
-            AstNodes::TSTypeName(n) => n.inner.span(),
-            AstNodes::TSQualifiedName(n) => n.inner.span(),
-            AstNodes::TSTypeParameterInstantiation(n) => n.inner.span(),
-            AstNodes::TSTypeParameter(n) => n.inner.span(),
-            AstNodes::TSTypeParameterDeclaration(n) => n.inner.span(),
-            AstNodes::TSTypeAliasDeclaration(n) => n.inner.span(),
-            AstNodes::TSClassImplements(n) => n.inner.span(),
-            AstNodes::TSInterfaceDeclaration(n) => n.inner.span(),
-            AstNodes::TSInterfaceBody(n) => n.inner.span(),
-            AstNodes::TSPropertySignature(n) => n.inner.span(),
-            AstNodes::TSIndexSignature(n) => n.inner.span(),
-            AstNodes::TSCallSignatureDeclaration(n) => n.inner.span(),
-            AstNodes::TSMethodSignature(n) => n.inner.span(),
-            AstNodes::TSConstructSignatureDeclaration(n) => n.inner.span(),
-            AstNodes::TSIndexSignatureName(n) => n.inner.span(),
-            AstNodes::TSInterfaceHeritage(n) => n.inner.span(),
-            AstNodes::TSTypePredicate(n) => n.inner.span(),
-            AstNodes::TSModuleDeclaration(n) => n.inner.span(),
-            AstNodes::TSModuleBlock(n) => n.inner.span(),
-            AstNodes::TSTypeLiteral(n) => n.inner.span(),
-            AstNodes::TSInferType(n) => n.inner.span(),
-            AstNodes::TSTypeQuery(n) => n.inner.span(),
-            AstNodes::TSImportType(n) => n.inner.span(),
-            AstNodes::TSFunctionType(n) => n.inner.span(),
-            AstNodes::TSConstructorType(n) => n.inner.span(),
-            AstNodes::TSMappedType(n) => n.inner.span(),
-            AstNodes::TSTemplateLiteralType(n) => n.inner.span(),
-            AstNodes::TSAsExpression(n) => n.inner.span(),
-            AstNodes::TSSatisfiesExpression(n) => n.inner.span(),
-            AstNodes::TSTypeAssertion(n) => n.inner.span(),
-            AstNodes::TSImportEqualsDeclaration(n) => n.inner.span(),
-            AstNodes::TSModuleReference(n) => n.inner.span(),
-            AstNodes::TSExternalModuleReference(n) => n.inner.span(),
-            AstNodes::TSNonNullExpression(n) => n.inner.span(),
-            AstNodes::Decorator(n) => n.inner.span(),
-            AstNodes::TSExportAssignment(n) => n.inner.span(),
-            AstNodes::TSNamespaceExportDeclaration(n) => n.inner.span(),
-            AstNodes::TSInstantiationExpression(n) => n.inner.span(),
-            AstNodes::JSDocNullableType(n) => n.inner.span(),
-            AstNodes::JSDocNonNullableType(n) => n.inner.span(),
-            AstNodes::JSDocUnknownType(n) => n.inner.span(),
+            Self::DUMMY() => panic!("Should never be called on a dummy node"),
+            Self::Program(n) => n.inner.span(),
+            Self::IdentifierName(n) => n.inner.span(),
+            Self::IdentifierReference(n) => n.inner.span(),
+            Self::BindingIdentifier(n) => n.inner.span(),
+            Self::LabelIdentifier(n) => n.inner.span(),
+            Self::ThisExpression(n) => n.inner.span(),
+            Self::ArrayExpression(n) => n.inner.span(),
+            Self::ArrayExpressionElement(n) => n.inner.span(),
+            Self::Elision(n) => n.inner.span(),
+            Self::ObjectExpression(n) => n.inner.span(),
+            Self::ObjectProperty(n) => n.inner.span(),
+            Self::PropertyKey(n) => n.inner.span(),
+            Self::TemplateLiteral(n) => n.inner.span(),
+            Self::TaggedTemplateExpression(n) => n.inner.span(),
+            Self::MemberExpression(n) => n.inner.span(),
+            Self::CallExpression(n) => n.inner.span(),
+            Self::NewExpression(n) => n.inner.span(),
+            Self::MetaProperty(n) => n.inner.span(),
+            Self::SpreadElement(n) => n.inner.span(),
+            Self::Argument(n) => n.inner.span(),
+            Self::UpdateExpression(n) => n.inner.span(),
+            Self::UnaryExpression(n) => n.inner.span(),
+            Self::BinaryExpression(n) => n.inner.span(),
+            Self::PrivateInExpression(n) => n.inner.span(),
+            Self::LogicalExpression(n) => n.inner.span(),
+            Self::ConditionalExpression(n) => n.inner.span(),
+            Self::AssignmentExpression(n) => n.inner.span(),
+            Self::AssignmentTarget(n) => n.inner.span(),
+            Self::SimpleAssignmentTarget(n) => n.inner.span(),
+            Self::AssignmentTargetPattern(n) => n.inner.span(),
+            Self::ArrayAssignmentTarget(n) => n.inner.span(),
+            Self::ObjectAssignmentTarget(n) => n.inner.span(),
+            Self::AssignmentTargetWithDefault(n) => n.inner.span(),
+            Self::SequenceExpression(n) => n.inner.span(),
+            Self::Super(n) => n.inner.span(),
+            Self::AwaitExpression(n) => n.inner.span(),
+            Self::ChainExpression(n) => n.inner.span(),
+            Self::ParenthesizedExpression(n) => n.inner.span(),
+            Self::Directive(n) => n.inner.span(),
+            Self::Hashbang(n) => n.inner.span(),
+            Self::BlockStatement(n) => n.inner.span(),
+            Self::VariableDeclaration(n) => n.inner.span(),
+            Self::VariableDeclarator(n) => n.inner.span(),
+            Self::EmptyStatement(n) => n.inner.span(),
+            Self::ExpressionStatement(n) => n.inner.span(),
+            Self::IfStatement(n) => n.inner.span(),
+            Self::DoWhileStatement(n) => n.inner.span(),
+            Self::WhileStatement(n) => n.inner.span(),
+            Self::ForStatement(n) => n.inner.span(),
+            Self::ForStatementInit(n) => n.inner.span(),
+            Self::ForInStatement(n) => n.inner.span(),
+            Self::ForOfStatement(n) => n.inner.span(),
+            Self::ContinueStatement(n) => n.inner.span(),
+            Self::BreakStatement(n) => n.inner.span(),
+            Self::ReturnStatement(n) => n.inner.span(),
+            Self::WithStatement(n) => n.inner.span(),
+            Self::SwitchStatement(n) => n.inner.span(),
+            Self::SwitchCase(n) => n.inner.span(),
+            Self::LabeledStatement(n) => n.inner.span(),
+            Self::ThrowStatement(n) => n.inner.span(),
+            Self::TryStatement(n) => n.inner.span(),
+            Self::CatchClause(n) => n.inner.span(),
+            Self::CatchParameter(n) => n.inner.span(),
+            Self::DebuggerStatement(n) => n.inner.span(),
+            Self::AssignmentPattern(n) => n.inner.span(),
+            Self::ObjectPattern(n) => n.inner.span(),
+            Self::ArrayPattern(n) => n.inner.span(),
+            Self::BindingRestElement(n) => n.inner.span(),
+            Self::Function(n) => n.inner.span(),
+            Self::FormalParameters(n) => n.inner.span(),
+            Self::FormalParameter(n) => n.inner.span(),
+            Self::FunctionBody(n) => n.inner.span(),
+            Self::ArrowFunctionExpression(n) => n.inner.span(),
+            Self::YieldExpression(n) => n.inner.span(),
+            Self::Class(n) => n.inner.span(),
+            Self::ClassBody(n) => n.inner.span(),
+            Self::MethodDefinition(n) => n.inner.span(),
+            Self::PropertyDefinition(n) => n.inner.span(),
+            Self::PrivateIdentifier(n) => n.inner.span(),
+            Self::StaticBlock(n) => n.inner.span(),
+            Self::ModuleDeclaration(n) => n.inner.span(),
+            Self::ImportExpression(n) => n.inner.span(),
+            Self::ImportDeclaration(n) => n.inner.span(),
+            Self::ImportSpecifier(n) => n.inner.span(),
+            Self::ImportDefaultSpecifier(n) => n.inner.span(),
+            Self::ImportNamespaceSpecifier(n) => n.inner.span(),
+            Self::ExportNamedDeclaration(n) => n.inner.span(),
+            Self::ExportDefaultDeclaration(n) => n.inner.span(),
+            Self::ExportAllDeclaration(n) => n.inner.span(),
+            Self::ExportSpecifier(n) => n.inner.span(),
+            Self::V8IntrinsicExpression(n) => n.inner.span(),
+            Self::BooleanLiteral(n) => n.inner.span(),
+            Self::NullLiteral(n) => n.inner.span(),
+            Self::NumericLiteral(n) => n.inner.span(),
+            Self::StringLiteral(n) => n.inner.span(),
+            Self::BigIntLiteral(n) => n.inner.span(),
+            Self::RegExpLiteral(n) => n.inner.span(),
+            Self::JSXElement(n) => n.inner.span(),
+            Self::JSXOpeningElement(n) => n.inner.span(),
+            Self::JSXClosingElement(n) => n.inner.span(),
+            Self::JSXFragment(n) => n.inner.span(),
+            Self::JSXElementName(n) => n.inner.span(),
+            Self::JSXNamespacedName(n) => n.inner.span(),
+            Self::JSXMemberExpression(n) => n.inner.span(),
+            Self::JSXMemberExpressionObject(n) => n.inner.span(),
+            Self::JSXExpressionContainer(n) => n.inner.span(),
+            Self::JSXAttributeItem(n) => n.inner.span(),
+            Self::JSXSpreadAttribute(n) => n.inner.span(),
+            Self::JSXIdentifier(n) => n.inner.span(),
+            Self::JSXText(n) => n.inner.span(),
+            Self::TSThisParameter(n) => n.inner.span(),
+            Self::TSEnumDeclaration(n) => n.inner.span(),
+            Self::TSEnumBody(n) => n.inner.span(),
+            Self::TSEnumMember(n) => n.inner.span(),
+            Self::TSTypeAnnotation(n) => n.inner.span(),
+            Self::TSLiteralType(n) => n.inner.span(),
+            Self::TSConditionalType(n) => n.inner.span(),
+            Self::TSUnionType(n) => n.inner.span(),
+            Self::TSIntersectionType(n) => n.inner.span(),
+            Self::TSParenthesizedType(n) => n.inner.span(),
+            Self::TSIndexedAccessType(n) => n.inner.span(),
+            Self::TSNamedTupleMember(n) => n.inner.span(),
+            Self::TSAnyKeyword(n) => n.inner.span(),
+            Self::TSStringKeyword(n) => n.inner.span(),
+            Self::TSBooleanKeyword(n) => n.inner.span(),
+            Self::TSNumberKeyword(n) => n.inner.span(),
+            Self::TSNeverKeyword(n) => n.inner.span(),
+            Self::TSIntrinsicKeyword(n) => n.inner.span(),
+            Self::TSUnknownKeyword(n) => n.inner.span(),
+            Self::TSNullKeyword(n) => n.inner.span(),
+            Self::TSUndefinedKeyword(n) => n.inner.span(),
+            Self::TSVoidKeyword(n) => n.inner.span(),
+            Self::TSSymbolKeyword(n) => n.inner.span(),
+            Self::TSThisType(n) => n.inner.span(),
+            Self::TSObjectKeyword(n) => n.inner.span(),
+            Self::TSBigIntKeyword(n) => n.inner.span(),
+            Self::TSTypeReference(n) => n.inner.span(),
+            Self::TSTypeName(n) => n.inner.span(),
+            Self::TSQualifiedName(n) => n.inner.span(),
+            Self::TSTypeParameterInstantiation(n) => n.inner.span(),
+            Self::TSTypeParameter(n) => n.inner.span(),
+            Self::TSTypeParameterDeclaration(n) => n.inner.span(),
+            Self::TSTypeAliasDeclaration(n) => n.inner.span(),
+            Self::TSClassImplements(n) => n.inner.span(),
+            Self::TSInterfaceDeclaration(n) => n.inner.span(),
+            Self::TSPropertySignature(n) => n.inner.span(),
+            Self::TSMethodSignature(n) => n.inner.span(),
+            Self::TSConstructSignatureDeclaration(n) => n.inner.span(),
+            Self::TSInterfaceHeritage(n) => n.inner.span(),
+            Self::TSModuleDeclaration(n) => n.inner.span(),
+            Self::TSModuleBlock(n) => n.inner.span(),
+            Self::TSTypeLiteral(n) => n.inner.span(),
+            Self::TSInferType(n) => n.inner.span(),
+            Self::TSTypeQuery(n) => n.inner.span(),
+            Self::TSImportType(n) => n.inner.span(),
+            Self::TSMappedType(n) => n.inner.span(),
+            Self::TSTemplateLiteralType(n) => n.inner.span(),
+            Self::TSAsExpression(n) => n.inner.span(),
+            Self::TSSatisfiesExpression(n) => n.inner.span(),
+            Self::TSTypeAssertion(n) => n.inner.span(),
+            Self::TSImportEqualsDeclaration(n) => n.inner.span(),
+            Self::TSModuleReference(n) => n.inner.span(),
+            Self::TSExternalModuleReference(n) => n.inner.span(),
+            Self::TSNonNullExpression(n) => n.inner.span(),
+            Self::Decorator(n) => n.inner.span(),
+            Self::TSExportAssignment(n) => n.inner.span(),
+            Self::TSInstantiationExpression(n) => n.inner.span(),
+        }
+    }
+    pub fn parent(&self) -> &'a Self {
+        match self {
+            Self::DUMMY() => panic!("Should never be called on a dummy node"),
+            Self::Program(n) => n.parent(),
+            Self::IdentifierName(n) => n.parent(),
+            Self::IdentifierReference(n) => n.parent(),
+            Self::BindingIdentifier(n) => n.parent(),
+            Self::LabelIdentifier(n) => n.parent(),
+            Self::ThisExpression(n) => n.parent(),
+            Self::ArrayExpression(n) => n.parent(),
+            Self::ArrayExpressionElement(n) => n.parent(),
+            Self::Elision(n) => n.parent(),
+            Self::ObjectExpression(n) => n.parent(),
+            Self::ObjectProperty(n) => n.parent(),
+            Self::PropertyKey(n) => n.parent(),
+            Self::TemplateLiteral(n) => n.parent(),
+            Self::TaggedTemplateExpression(n) => n.parent(),
+            Self::MemberExpression(n) => n.parent(),
+            Self::CallExpression(n) => n.parent(),
+            Self::NewExpression(n) => n.parent(),
+            Self::MetaProperty(n) => n.parent(),
+            Self::SpreadElement(n) => n.parent(),
+            Self::Argument(n) => n.parent(),
+            Self::UpdateExpression(n) => n.parent(),
+            Self::UnaryExpression(n) => n.parent(),
+            Self::BinaryExpression(n) => n.parent(),
+            Self::PrivateInExpression(n) => n.parent(),
+            Self::LogicalExpression(n) => n.parent(),
+            Self::ConditionalExpression(n) => n.parent(),
+            Self::AssignmentExpression(n) => n.parent(),
+            Self::AssignmentTarget(n) => n.parent(),
+            Self::SimpleAssignmentTarget(n) => n.parent(),
+            Self::AssignmentTargetPattern(n) => n.parent(),
+            Self::ArrayAssignmentTarget(n) => n.parent(),
+            Self::ObjectAssignmentTarget(n) => n.parent(),
+            Self::AssignmentTargetWithDefault(n) => n.parent(),
+            Self::SequenceExpression(n) => n.parent(),
+            Self::Super(n) => n.parent(),
+            Self::AwaitExpression(n) => n.parent(),
+            Self::ChainExpression(n) => n.parent(),
+            Self::ParenthesizedExpression(n) => n.parent(),
+            Self::Directive(n) => n.parent(),
+            Self::Hashbang(n) => n.parent(),
+            Self::BlockStatement(n) => n.parent(),
+            Self::VariableDeclaration(n) => n.parent(),
+            Self::VariableDeclarator(n) => n.parent(),
+            Self::EmptyStatement(n) => n.parent(),
+            Self::ExpressionStatement(n) => n.parent(),
+            Self::IfStatement(n) => n.parent(),
+            Self::DoWhileStatement(n) => n.parent(),
+            Self::WhileStatement(n) => n.parent(),
+            Self::ForStatement(n) => n.parent(),
+            Self::ForStatementInit(n) => n.parent(),
+            Self::ForInStatement(n) => n.parent(),
+            Self::ForOfStatement(n) => n.parent(),
+            Self::ContinueStatement(n) => n.parent(),
+            Self::BreakStatement(n) => n.parent(),
+            Self::ReturnStatement(n) => n.parent(),
+            Self::WithStatement(n) => n.parent(),
+            Self::SwitchStatement(n) => n.parent(),
+            Self::SwitchCase(n) => n.parent(),
+            Self::LabeledStatement(n) => n.parent(),
+            Self::ThrowStatement(n) => n.parent(),
+            Self::TryStatement(n) => n.parent(),
+            Self::CatchClause(n) => n.parent(),
+            Self::CatchParameter(n) => n.parent(),
+            Self::DebuggerStatement(n) => n.parent(),
+            Self::AssignmentPattern(n) => n.parent(),
+            Self::ObjectPattern(n) => n.parent(),
+            Self::ArrayPattern(n) => n.parent(),
+            Self::BindingRestElement(n) => n.parent(),
+            Self::Function(n) => n.parent(),
+            Self::FormalParameters(n) => n.parent(),
+            Self::FormalParameter(n) => n.parent(),
+            Self::FunctionBody(n) => n.parent(),
+            Self::ArrowFunctionExpression(n) => n.parent(),
+            Self::YieldExpression(n) => n.parent(),
+            Self::Class(n) => n.parent(),
+            Self::ClassBody(n) => n.parent(),
+            Self::MethodDefinition(n) => n.parent(),
+            Self::PropertyDefinition(n) => n.parent(),
+            Self::PrivateIdentifier(n) => n.parent(),
+            Self::StaticBlock(n) => n.parent(),
+            Self::ModuleDeclaration(n) => n.parent(),
+            Self::ImportExpression(n) => n.parent(),
+            Self::ImportDeclaration(n) => n.parent(),
+            Self::ImportSpecifier(n) => n.parent(),
+            Self::ImportDefaultSpecifier(n) => n.parent(),
+            Self::ImportNamespaceSpecifier(n) => n.parent(),
+            Self::ExportNamedDeclaration(n) => n.parent(),
+            Self::ExportDefaultDeclaration(n) => n.parent(),
+            Self::ExportAllDeclaration(n) => n.parent(),
+            Self::ExportSpecifier(n) => n.parent(),
+            Self::V8IntrinsicExpression(n) => n.parent(),
+            Self::BooleanLiteral(n) => n.parent(),
+            Self::NullLiteral(n) => n.parent(),
+            Self::NumericLiteral(n) => n.parent(),
+            Self::StringLiteral(n) => n.parent(),
+            Self::BigIntLiteral(n) => n.parent(),
+            Self::RegExpLiteral(n) => n.parent(),
+            Self::JSXElement(n) => n.parent(),
+            Self::JSXOpeningElement(n) => n.parent(),
+            Self::JSXClosingElement(n) => n.parent(),
+            Self::JSXFragment(n) => n.parent(),
+            Self::JSXElementName(n) => n.parent(),
+            Self::JSXNamespacedName(n) => n.parent(),
+            Self::JSXMemberExpression(n) => n.parent(),
+            Self::JSXMemberExpressionObject(n) => n.parent(),
+            Self::JSXExpressionContainer(n) => n.parent(),
+            Self::JSXAttributeItem(n) => n.parent(),
+            Self::JSXSpreadAttribute(n) => n.parent(),
+            Self::JSXIdentifier(n) => n.parent(),
+            Self::JSXText(n) => n.parent(),
+            Self::TSThisParameter(n) => n.parent(),
+            Self::TSEnumDeclaration(n) => n.parent(),
+            Self::TSEnumBody(n) => n.parent(),
+            Self::TSEnumMember(n) => n.parent(),
+            Self::TSTypeAnnotation(n) => n.parent(),
+            Self::TSLiteralType(n) => n.parent(),
+            Self::TSConditionalType(n) => n.parent(),
+            Self::TSUnionType(n) => n.parent(),
+            Self::TSIntersectionType(n) => n.parent(),
+            Self::TSParenthesizedType(n) => n.parent(),
+            Self::TSIndexedAccessType(n) => n.parent(),
+            Self::TSNamedTupleMember(n) => n.parent(),
+            Self::TSAnyKeyword(n) => n.parent(),
+            Self::TSStringKeyword(n) => n.parent(),
+            Self::TSBooleanKeyword(n) => n.parent(),
+            Self::TSNumberKeyword(n) => n.parent(),
+            Self::TSNeverKeyword(n) => n.parent(),
+            Self::TSIntrinsicKeyword(n) => n.parent(),
+            Self::TSUnknownKeyword(n) => n.parent(),
+            Self::TSNullKeyword(n) => n.parent(),
+            Self::TSUndefinedKeyword(n) => n.parent(),
+            Self::TSVoidKeyword(n) => n.parent(),
+            Self::TSSymbolKeyword(n) => n.parent(),
+            Self::TSThisType(n) => n.parent(),
+            Self::TSObjectKeyword(n) => n.parent(),
+            Self::TSBigIntKeyword(n) => n.parent(),
+            Self::TSTypeReference(n) => n.parent(),
+            Self::TSTypeName(n) => n.parent(),
+            Self::TSQualifiedName(n) => n.parent(),
+            Self::TSTypeParameterInstantiation(n) => n.parent(),
+            Self::TSTypeParameter(n) => n.parent(),
+            Self::TSTypeParameterDeclaration(n) => n.parent(),
+            Self::TSTypeAliasDeclaration(n) => n.parent(),
+            Self::TSClassImplements(n) => n.parent(),
+            Self::TSInterfaceDeclaration(n) => n.parent(),
+            Self::TSPropertySignature(n) => n.parent(),
+            Self::TSMethodSignature(n) => n.parent(),
+            Self::TSConstructSignatureDeclaration(n) => n.parent(),
+            Self::TSInterfaceHeritage(n) => n.parent(),
+            Self::TSModuleDeclaration(n) => n.parent(),
+            Self::TSModuleBlock(n) => n.parent(),
+            Self::TSTypeLiteral(n) => n.parent(),
+            Self::TSInferType(n) => n.parent(),
+            Self::TSTypeQuery(n) => n.parent(),
+            Self::TSImportType(n) => n.parent(),
+            Self::TSMappedType(n) => n.parent(),
+            Self::TSTemplateLiteralType(n) => n.parent(),
+            Self::TSAsExpression(n) => n.parent(),
+            Self::TSSatisfiesExpression(n) => n.parent(),
+            Self::TSTypeAssertion(n) => n.parent(),
+            Self::TSImportEqualsDeclaration(n) => n.parent(),
+            Self::TSModuleReference(n) => n.parent(),
+            Self::TSExternalModuleReference(n) => n.parent(),
+            Self::TSNonNullExpression(n) => n.parent(),
+            Self::Decorator(n) => n.parent(),
+            Self::TSExportAssignment(n) => n.parent(),
+            Self::TSInstantiationExpression(n) => n.parent(),
         }
     }
 }
@@ -989,16 +888,11 @@ impl<'a, 'b> AstNode<'a, 'b, Expression<'a>> {
                 parent,
                 allocator: self.allocator,
             }),
-            it @ match_member_expression!(Expression) => {
-                return self
-                    .allocator
-                    .alloc(AstNode::<'a, 'b, MemberExpression> {
-                        inner: it.to_member_expression(),
-                        parent,
-                        allocator: self.allocator,
-                    })
-                    .as_ast_nodes();
-            }
+            it @ match_member_expression!(Expression) => AstNodes::MemberExpression(AstNode {
+                inner: it.to_member_expression(),
+                parent,
+                allocator: self.allocator,
+            }),
         };
         self.allocator.alloc(node)
     }
@@ -1283,11 +1177,7 @@ impl<'a, 'b> AstNode<'a, 'b, ArrayExpressionElement<'a>> {
             it @ match_expression!(ArrayExpressionElement) => {
                 return self
                     .allocator
-                    .alloc(AstNode::<'a, 'b, Expression> {
-                        inner: it.to_expression(),
-                        parent,
-                        allocator: self.allocator,
-                    })
+                    .alloc(AstNode { inner: it.to_expression(), parent, allocator: self.allocator })
                     .as_ast_nodes();
             }
         };
@@ -1397,7 +1287,11 @@ impl<'a, 'b> AstNode<'a, 'b, ObjectProperty<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.key,
             allocator: self.allocator,
-            parent: self.parent,
+            parent: self.allocator.alloc(AstNodes::ObjectProperty(AstNode {
+                inner: self.inner,
+                parent: self.parent,
+                allocator: self.allocator,
+            })),
         })
     }
 
@@ -1447,11 +1341,7 @@ impl<'a, 'b> AstNode<'a, 'b, PropertyKey<'a>> {
             it @ match_expression!(PropertyKey) => {
                 return self
                     .allocator
-                    .alloc(AstNode::<'a, 'b, Expression> {
-                        inner: it.to_expression(),
-                        parent,
-                        allocator: self.allocator,
-                    })
+                    .alloc(AstNode { inner: it.to_expression(), parent, allocator: self.allocator })
                     .as_ast_nodes();
             }
         };
@@ -1587,25 +1477,19 @@ impl<'a, 'b> AstNode<'a, 'b, MemberExpression<'a>> {
         }));
         let node = match self.inner {
             MemberExpression::ComputedMemberExpression(s) => {
-                AstNodes::ComputedMemberExpression(AstNode {
-                    inner: s.as_ref(),
-                    parent,
-                    allocator: self.allocator,
-                })
+                panic!(
+                    "No Node for enum variant yet, please see `tasks/ast_tools/src/generators/ast_kind.rs`"
+                )
             }
             MemberExpression::StaticMemberExpression(s) => {
-                AstNodes::StaticMemberExpression(AstNode {
-                    inner: s.as_ref(),
-                    parent,
-                    allocator: self.allocator,
-                })
+                panic!(
+                    "No Node for enum variant yet, please see `tasks/ast_tools/src/generators/ast_kind.rs`"
+                )
             }
             MemberExpression::PrivateFieldExpression(s) => {
-                AstNodes::PrivateFieldExpression(AstNode {
-                    inner: s.as_ref(),
-                    parent,
-                    allocator: self.allocator,
-                })
+                panic!(
+                    "No Node for enum variant yet, please see `tasks/ast_tools/src/generators/ast_kind.rs`"
+                )
             }
         };
         self.allocator.alloc(node)
@@ -1660,11 +1544,7 @@ impl<'a, 'b> AstNode<'a, 'b, ComputedMemberExpression<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.object,
             allocator: self.allocator,
-            parent: self.allocator.alloc(AstNodes::ComputedMemberExpression(AstNode {
-                inner: self.inner,
-                parent: self.parent,
-                allocator: self.allocator,
-            })),
+            parent: self.parent,
         })
     }
 
@@ -1672,11 +1552,7 @@ impl<'a, 'b> AstNode<'a, 'b, ComputedMemberExpression<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.expression,
             allocator: self.allocator,
-            parent: self.allocator.alloc(AstNodes::ComputedMemberExpression(AstNode {
-                inner: self.inner,
-                parent: self.parent,
-                allocator: self.allocator,
-            })),
+            parent: self.parent,
         })
     }
 
@@ -1693,11 +1569,7 @@ impl<'a, 'b> AstNode<'a, 'b, StaticMemberExpression<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.object,
             allocator: self.allocator,
-            parent: self.allocator.alloc(AstNodes::StaticMemberExpression(AstNode {
-                inner: self.inner,
-                parent: self.parent,
-                allocator: self.allocator,
-            })),
+            parent: self.parent,
         })
     }
 
@@ -1705,11 +1577,7 @@ impl<'a, 'b> AstNode<'a, 'b, StaticMemberExpression<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.property,
             allocator: self.allocator,
-            parent: self.allocator.alloc(AstNodes::StaticMemberExpression(AstNode {
-                inner: self.inner,
-                parent: self.parent,
-                allocator: self.allocator,
-            })),
+            parent: self.parent,
         })
     }
 
@@ -1726,11 +1594,7 @@ impl<'a, 'b> AstNode<'a, 'b, PrivateFieldExpression<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.object,
             allocator: self.allocator,
-            parent: self.allocator.alloc(AstNodes::PrivateFieldExpression(AstNode {
-                inner: self.inner,
-                parent: self.parent,
-                allocator: self.allocator,
-            })),
+            parent: self.parent,
         })
     }
 
@@ -1738,11 +1602,7 @@ impl<'a, 'b> AstNode<'a, 'b, PrivateFieldExpression<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.field,
             allocator: self.allocator,
-            parent: self.allocator.alloc(AstNodes::PrivateFieldExpression(AstNode {
-                inner: self.inner,
-                parent: self.parent,
-                allocator: self.allocator,
-            })),
+            parent: self.parent,
         })
     }
 
@@ -1911,11 +1771,7 @@ impl<'a, 'b> AstNode<'a, 'b, Argument<'a>> {
             it @ match_expression!(Argument) => {
                 return self
                     .allocator
-                    .alloc(AstNode::<'a, 'b, Expression> {
-                        inner: it.to_expression(),
-                        parent,
-                        allocator: self.allocator,
-                    })
+                    .alloc(AstNode { inner: it.to_expression(), parent, allocator: self.allocator })
                     .as_ast_nodes();
             }
         };
@@ -1965,7 +1821,11 @@ impl<'a, 'b> AstNode<'a, 'b, UpdateExpression<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.argument,
             allocator: self.allocator,
-            parent: self.parent,
+            parent: self.allocator.alloc(AstNodes::UpdateExpression(AstNode {
+                inner: self.inner,
+                parent: self.parent,
+                allocator: self.allocator,
+            })),
         })
     }
 }
@@ -2139,7 +1999,11 @@ impl<'a, 'b> AstNode<'a, 'b, AssignmentExpression<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.left,
             allocator: self.allocator,
-            parent: self.parent,
+            parent: self.allocator.alloc(AstNodes::AssignmentExpression(AstNode {
+                inner: self.inner,
+                parent: self.parent,
+                allocator: self.allocator,
+            })),
         })
     }
 
@@ -2165,24 +2029,18 @@ impl<'a, 'b> AstNode<'a, 'b, AssignmentTarget<'a>> {
         }));
         let node = match self.inner {
             it @ match_simple_assignment_target!(AssignmentTarget) => {
-                return self
-                    .allocator
-                    .alloc(AstNode::<'a, 'b, SimpleAssignmentTarget> {
-                        inner: it.to_simple_assignment_target(),
-                        parent,
-                        allocator: self.allocator,
-                    })
-                    .as_ast_nodes();
+                AstNodes::SimpleAssignmentTarget(AstNode {
+                    inner: it.to_simple_assignment_target(),
+                    parent,
+                    allocator: self.allocator,
+                })
             }
             it @ match_assignment_target_pattern!(AssignmentTarget) => {
-                return self
-                    .allocator
-                    .alloc(AstNode::<'a, 'b, AssignmentTargetPattern> {
-                        inner: it.to_assignment_target_pattern(),
-                        parent,
-                        allocator: self.allocator,
-                    })
-                    .as_ast_nodes();
+                AstNodes::AssignmentTargetPattern(AstNode {
+                    inner: it.to_assignment_target_pattern(),
+                    parent,
+                    allocator: self.allocator,
+                })
             }
         };
         self.allocator.alloc(node)
@@ -2261,14 +2119,11 @@ impl<'a, 'b> AstNode<'a, 'b, SimpleAssignmentTarget<'a>> {
                 allocator: self.allocator,
             }),
             it @ match_member_expression!(SimpleAssignmentTarget) => {
-                return self
-                    .allocator
-                    .alloc(AstNode::<'a, 'b, MemberExpression> {
-                        inner: it.to_member_expression(),
-                        parent,
-                        allocator: self.allocator,
-                    })
-                    .as_ast_nodes();
+                AstNodes::MemberExpression(AstNode {
+                    inner: it.to_member_expression(),
+                    parent,
+                    allocator: self.allocator,
+                })
             }
         };
         self.allocator.alloc(node)
@@ -2477,14 +2332,11 @@ impl<'a, 'b> AstNode<'a, 'b, AssignmentTargetMaybeDefault<'a>> {
                 })
             }
             it @ match_assignment_target!(AssignmentTargetMaybeDefault) => {
-                return self
-                    .allocator
-                    .alloc(AstNode::<'a, 'b, AssignmentTarget> {
-                        inner: it.to_assignment_target(),
-                        parent,
-                        allocator: self.allocator,
-                    })
-                    .as_ast_nodes();
+                AstNodes::AssignmentTarget(AstNode {
+                    inner: it.to_assignment_target(),
+                    parent,
+                    allocator: self.allocator,
+                })
             }
         };
         self.allocator.alloc(node)
@@ -2527,7 +2379,11 @@ impl<'a, 'b> AstNode<'a, 'b, AssignmentTargetWithDefault<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.binding,
             allocator: self.allocator,
-            parent: self.parent,
+            parent: self.allocator.alloc(AstNodes::AssignmentTargetWithDefault(AstNode {
+                inner: self.inner,
+                parent: self.parent,
+                allocator: self.allocator,
+            })),
         })
     }
 
@@ -2549,18 +2405,14 @@ impl<'a, 'b> AstNode<'a, 'b, AssignmentTargetProperty<'a>> {
         let parent = self.parent;
         let node = match self.inner {
             AssignmentTargetProperty::AssignmentTargetPropertyIdentifier(s) => {
-                AstNodes::AssignmentTargetPropertyIdentifier(AstNode {
-                    inner: s.as_ref(),
-                    parent,
-                    allocator: self.allocator,
-                })
+                panic!(
+                    "No Node for enum variant yet, please see `tasks/ast_tools/src/generators/ast_kind.rs`"
+                )
             }
             AssignmentTargetProperty::AssignmentTargetPropertyProperty(s) => {
-                AstNodes::AssignmentTargetPropertyProperty(AstNode {
-                    inner: s.as_ref(),
-                    parent,
-                    allocator: self.allocator,
-                })
+                panic!(
+                    "No Node for enum variant yet, please see `tasks/ast_tools/src/generators/ast_kind.rs`"
+                )
             }
         };
         self.allocator.alloc(node)
@@ -2603,11 +2455,7 @@ impl<'a, 'b> AstNode<'a, 'b, AssignmentTargetPropertyIdentifier<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.binding,
             allocator: self.allocator,
-            parent: self.allocator.alloc(AstNodes::AssignmentTargetPropertyIdentifier(AstNode {
-                inner: self.inner,
-                parent: self.parent,
-                allocator: self.allocator,
-            })),
+            parent: self.parent,
         })
     }
 
@@ -2616,9 +2464,7 @@ impl<'a, 'b> AstNode<'a, 'b, AssignmentTargetPropertyIdentifier<'a>> {
             .alloc(self.inner.init.as_ref().map(|inner| AstNode {
                 inner,
                 allocator: self.allocator,
-                parent: self.allocator.alloc(AstNodes::AssignmentTargetPropertyIdentifier(
-                    AstNode { inner: self.inner, parent: self.parent, allocator: self.allocator },
-                )),
+                parent: self.parent,
             }))
             .as_ref()
     }
@@ -2640,11 +2486,7 @@ impl<'a, 'b> AstNode<'a, 'b, AssignmentTargetPropertyProperty<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.binding,
             allocator: self.allocator,
-            parent: self.allocator.alloc(AstNodes::AssignmentTargetPropertyProperty(AstNode {
-                inner: self.inner,
-                parent: self.parent,
-                allocator: self.allocator,
-            })),
+            parent: self.parent,
         })
     }
 
@@ -2723,16 +2565,11 @@ impl<'a, 'b> AstNode<'a, 'b, ChainElement<'a>> {
                 parent,
                 allocator: self.allocator,
             }),
-            it @ match_member_expression!(ChainElement) => {
-                return self
-                    .allocator
-                    .alloc(AstNode::<'a, 'b, MemberExpression> {
-                        inner: it.to_member_expression(),
-                        parent,
-                        allocator: self.allocator,
-                    })
-                    .as_ast_nodes();
-            }
+            it @ match_member_expression!(ChainElement) => AstNodes::MemberExpression(AstNode {
+                inner: it.to_member_expression(),
+                parent,
+                allocator: self.allocator,
+            }),
         };
         self.allocator.alloc(node)
     }
@@ -2880,23 +2717,18 @@ impl<'a, 'b> AstNode<'a, 'b, Statement<'a>> {
             it @ match_declaration!(Statement) => {
                 return self
                     .allocator
-                    .alloc(AstNode::<'a, 'b, Declaration> {
+                    .alloc(AstNode {
                         inner: it.to_declaration(),
                         parent,
                         allocator: self.allocator,
                     })
                     .as_ast_nodes();
             }
-            it @ match_module_declaration!(Statement) => {
-                return self
-                    .allocator
-                    .alloc(AstNode::<'a, 'b, ModuleDeclaration> {
-                        inner: it.to_module_declaration(),
-                        parent,
-                        allocator: self.allocator,
-                    })
-                    .as_ast_nodes();
-            }
+            it @ match_module_declaration!(Statement) => AstNodes::ModuleDeclaration(AstNode {
+                inner: it.to_module_declaration(),
+                parent,
+                allocator: self.allocator,
+            }),
         };
         self.allocator.alloc(node)
     }
@@ -3344,7 +3176,11 @@ impl<'a, 'b> AstNode<'a, 'b, ForStatement<'a>> {
             .alloc(self.inner.init.as_ref().map(|inner| AstNode {
                 inner,
                 allocator: self.allocator,
-                parent: self.parent,
+                parent: self.allocator.alloc(AstNodes::ForStatement(AstNode {
+                    inner: self.inner,
+                    parent: self.parent,
+                    allocator: self.allocator,
+                })),
             }))
             .as_ref()
     }
@@ -3406,11 +3242,7 @@ impl<'a, 'b> AstNode<'a, 'b, ForStatementInit<'a>> {
             it @ match_expression!(ForStatementInit) => {
                 return self
                     .allocator
-                    .alloc(AstNode::<'a, 'b, Expression> {
-                        inner: it.to_expression(),
-                        parent,
-                        allocator: self.allocator,
-                    })
+                    .alloc(AstNode { inner: it.to_expression(), parent, allocator: self.allocator })
                     .as_ast_nodes();
             }
         };
@@ -3497,14 +3329,11 @@ impl<'a, 'b> AstNode<'a, 'b, ForStatementLeft<'a>> {
                 allocator: self.allocator,
             }),
             it @ match_assignment_target!(ForStatementLeft) => {
-                return self
-                    .allocator
-                    .alloc(AstNode::<'a, 'b, AssignmentTarget> {
-                        inner: it.to_assignment_target(),
-                        parent,
-                        allocator: self.allocator,
-                    })
-                    .as_ast_nodes();
+                AstNodes::AssignmentTarget(AstNode {
+                    inner: it.to_assignment_target(),
+                    parent,
+                    allocator: self.allocator,
+                })
             }
         };
         self.allocator.alloc(node)
@@ -3876,11 +3705,7 @@ impl<'a, 'b> AstNode<'a, 'b, BindingPattern<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.kind,
             allocator: self.allocator,
-            parent: self.allocator.alloc(AstNodes::BindingPattern(AstNode {
-                inner: self.inner,
-                parent: self.parent,
-                allocator: self.allocator,
-            })),
+            parent: self.parent,
         })
     }
 
@@ -3889,11 +3714,7 @@ impl<'a, 'b> AstNode<'a, 'b, BindingPattern<'a>> {
             .alloc(self.inner.type_annotation.as_ref().map(|inner| AstNode {
                 inner: inner.as_ref(),
                 allocator: self.allocator,
-                parent: self.allocator.alloc(AstNodes::BindingPattern(AstNode {
-                    inner: self.inner,
-                    parent: self.parent,
-                    allocator: self.allocator,
-                })),
+                parent: self.parent,
             }))
             .as_ref()
     }
@@ -4036,11 +3857,7 @@ impl<'a, 'b> AstNode<'a, 'b, BindingProperty<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.value,
             allocator: self.allocator,
-            parent: self.allocator.alloc(AstNodes::BindingProperty(AstNode {
-                inner: self.inner,
-                parent: self.parent,
-                allocator: self.allocator,
-            })),
+            parent: self.parent,
         })
     }
 
@@ -4552,16 +4369,16 @@ impl<'a, 'b> AstNode<'a, 'b, ClassElement<'a>> {
                 parent,
                 allocator: self.allocator,
             }),
-            ClassElement::AccessorProperty(s) => AstNodes::AccessorProperty(AstNode {
-                inner: s.as_ref(),
-                parent,
-                allocator: self.allocator,
-            }),
-            ClassElement::TSIndexSignature(s) => AstNodes::TSIndexSignature(AstNode {
-                inner: s.as_ref(),
-                parent,
-                allocator: self.allocator,
-            }),
+            ClassElement::AccessorProperty(s) => {
+                panic!(
+                    "No Node for enum variant yet, please see `tasks/ast_tools/src/generators/ast_kind.rs`"
+                )
+            }
+            ClassElement::TSIndexSignature(s) => {
+                panic!(
+                    "No Node for enum variant yet, please see `tasks/ast_tools/src/generators/ast_kind.rs`"
+                )
+            }
         };
         self.allocator.alloc(node)
     }
@@ -4625,7 +4442,11 @@ impl<'a, 'b> AstNode<'a, 'b, MethodDefinition<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.key,
             allocator: self.allocator,
-            parent: self.parent,
+            parent: self.allocator.alloc(AstNodes::MethodDefinition(AstNode {
+                inner: self.inner,
+                parent: self.parent,
+                allocator: self.allocator,
+            })),
         })
     }
 
@@ -4690,7 +4511,11 @@ impl<'a, 'b> AstNode<'a, 'b, PropertyDefinition<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.key,
             allocator: self.allocator,
-            parent: self.parent,
+            parent: self.allocator.alloc(AstNodes::PropertyDefinition(AstNode {
+                inner: self.inner,
+                parent: self.parent,
+                allocator: self.allocator,
+            })),
         })
     }
 
@@ -4819,11 +4644,9 @@ impl<'a, 'b> AstNode<'a, 'b, ModuleDeclaration<'a>> {
                 allocator: self.allocator,
             }),
             ModuleDeclaration::TSNamespaceExportDeclaration(s) => {
-                AstNodes::TSNamespaceExportDeclaration(AstNode {
-                    inner: s.as_ref(),
-                    parent,
-                    allocator: self.allocator,
-                })
+                panic!(
+                    "No Node for enum variant yet, please see `tasks/ast_tools/src/generators/ast_kind.rs`"
+                )
             }
         };
         self.allocator.alloc(node)
@@ -4898,11 +4721,7 @@ impl<'a, 'b> AstNode<'a, 'b, AccessorProperty<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.decorators,
             allocator: self.allocator,
-            parent: self.allocator.alloc(AstNodes::AccessorProperty(AstNode {
-                inner: self.inner,
-                parent: self.parent,
-                allocator: self.allocator,
-            })),
+            parent: self.parent,
         })
     }
 
@@ -4919,11 +4738,7 @@ impl<'a, 'b> AstNode<'a, 'b, AccessorProperty<'a>> {
             .alloc(self.inner.type_annotation.as_ref().map(|inner| AstNode {
                 inner: inner.as_ref(),
                 allocator: self.allocator,
-                parent: self.allocator.alloc(AstNodes::AccessorProperty(AstNode {
-                    inner: self.inner,
-                    parent: self.parent,
-                    allocator: self.allocator,
-                })),
+                parent: self.parent,
             }))
             .as_ref()
     }
@@ -4933,11 +4748,7 @@ impl<'a, 'b> AstNode<'a, 'b, AccessorProperty<'a>> {
             .alloc(self.inner.value.as_ref().map(|inner| AstNode {
                 inner,
                 allocator: self.allocator,
-                parent: self.allocator.alloc(AstNodes::AccessorProperty(AstNode {
-                    inner: self.inner,
-                    parent: self.parent,
-                    allocator: self.allocator,
-                })),
+                parent: self.parent,
             }))
             .as_ref()
     }
@@ -5186,11 +4997,7 @@ impl<'a, 'b> AstNode<'a, 'b, WithClause<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.attributes_keyword,
             allocator: self.allocator,
-            parent: self.allocator.alloc(AstNodes::WithClause(AstNode {
-                inner: self.inner,
-                parent: self.parent,
-                allocator: self.allocator,
-            })),
+            parent: self.parent,
         })
     }
 
@@ -5198,11 +5005,7 @@ impl<'a, 'b> AstNode<'a, 'b, WithClause<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.with_entries,
             allocator: self.allocator,
-            parent: self.allocator.alloc(AstNodes::WithClause(AstNode {
-                inner: self.inner,
-                parent: self.parent,
-                allocator: self.allocator,
-            })),
+            parent: self.parent,
         })
     }
 }
@@ -5215,11 +5018,7 @@ impl<'a, 'b> AstNode<'a, 'b, ImportAttribute<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.key,
             allocator: self.allocator,
-            parent: self.allocator.alloc(AstNodes::ImportAttribute(AstNode {
-                inner: self.inner,
-                parent: self.parent,
-                allocator: self.allocator,
-            })),
+            parent: self.parent,
         })
     }
 
@@ -5227,11 +5026,7 @@ impl<'a, 'b> AstNode<'a, 'b, ImportAttribute<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.value,
             allocator: self.allocator,
-            parent: self.allocator.alloc(AstNodes::ImportAttribute(AstNode {
-                inner: self.inner,
-                parent: self.parent,
-                allocator: self.allocator,
-            })),
+            parent: self.parent,
         })
     }
 }
@@ -5465,11 +5260,7 @@ impl<'a, 'b> AstNode<'a, 'b, ExportDefaultDeclarationKind<'a>> {
             it @ match_expression!(ExportDefaultDeclarationKind) => {
                 return self
                     .allocator
-                    .alloc(AstNode::<'a, 'b, Expression> {
-                        inner: it.to_expression(),
-                        parent,
-                        allocator: self.allocator,
-                    })
+                    .alloc(AstNode { inner: it.to_expression(), parent, allocator: self.allocator })
                     .as_ast_nodes();
             }
         };
@@ -5709,7 +5500,11 @@ impl<'a, 'b> AstNode<'a, 'b, JSXOpeningElement<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.name,
             allocator: self.allocator,
-            parent: self.parent,
+            parent: self.allocator.alloc(AstNodes::JSXOpeningElement(AstNode {
+                inner: self.inner,
+                parent: self.parent,
+                allocator: self.allocator,
+            })),
         })
     }
 
@@ -5748,7 +5543,11 @@ impl<'a, 'b> AstNode<'a, 'b, JSXClosingElement<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.name,
             allocator: self.allocator,
-            parent: self.parent,
+            parent: self.allocator.alloc(AstNodes::JSXClosingElement(AstNode {
+                inner: self.inner,
+                parent: self.parent,
+                allocator: self.allocator,
+            })),
         })
     }
 }
@@ -5919,7 +5718,11 @@ impl<'a, 'b> AstNode<'a, 'b, JSXMemberExpression<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.object,
             allocator: self.allocator,
-            parent: self.parent,
+            parent: self.allocator.alloc(AstNodes::JSXMemberExpression(AstNode {
+                inner: self.inner,
+                parent: self.parent,
+                allocator: self.allocator,
+            })),
         })
     }
 
@@ -6025,19 +5828,15 @@ impl<'a, 'b> AstNode<'a, 'b, JSXExpression<'a>> {
     pub fn as_ast_nodes(&self) -> &AstNodes<'a, 'b> {
         let parent = self.parent;
         let node = match self.inner {
-            JSXExpression::EmptyExpression(s) => AstNodes::JSXEmptyExpression(AstNode {
-                inner: s,
-                parent,
-                allocator: self.allocator,
-            }),
+            JSXExpression::EmptyExpression(s) => {
+                panic!(
+                    "No Node for enum variant yet, please see `tasks/ast_tools/src/generators/ast_kind.rs`"
+                )
+            }
             it @ match_expression!(JSXExpression) => {
                 return self
                     .allocator
-                    .alloc(AstNode::<'a, 'b, Expression> {
-                        inner: it.to_expression(),
-                        parent,
-                        allocator: self.allocator,
-                    })
+                    .alloc(AstNode { inner: it.to_expression(), parent, allocator: self.allocator })
                     .as_ast_nodes();
             }
         };
@@ -6082,11 +5881,11 @@ impl<'a, 'b> AstNode<'a, 'b, JSXAttributeItem<'a>> {
             allocator: self.allocator,
         }));
         let node = match self.inner {
-            JSXAttributeItem::Attribute(s) => AstNodes::JSXAttribute(AstNode {
-                inner: s.as_ref(),
-                parent,
-                allocator: self.allocator,
-            }),
+            JSXAttributeItem::Attribute(s) => {
+                panic!(
+                    "No Node for enum variant yet, please see `tasks/ast_tools/src/generators/ast_kind.rs`"
+                )
+            }
             JSXAttributeItem::SpreadAttribute(s) => AstNodes::JSXSpreadAttribute(AstNode {
                 inner: s.as_ref(),
                 parent,
@@ -6131,11 +5930,7 @@ impl<'a, 'b> AstNode<'a, 'b, JSXAttribute<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.name,
             allocator: self.allocator,
-            parent: self.allocator.alloc(AstNodes::JSXAttribute(AstNode {
-                inner: self.inner,
-                parent: self.parent,
-                allocator: self.allocator,
-            })),
+            parent: self.parent,
         })
     }
 
@@ -6144,11 +5939,7 @@ impl<'a, 'b> AstNode<'a, 'b, JSXAttribute<'a>> {
             .alloc(self.inner.value.as_ref().map(|inner| AstNode {
                 inner,
                 allocator: self.allocator,
-                parent: self.allocator.alloc(AstNodes::JSXAttribute(AstNode {
-                    inner: self.inner,
-                    parent: self.parent,
-                    allocator: self.allocator,
-                })),
+                parent: self.parent,
             }))
             .as_ref()
     }
@@ -6303,11 +6094,11 @@ impl<'a, 'b> AstNode<'a, 'b, JSXChild<'a>> {
                 parent,
                 allocator: self.allocator,
             }),
-            JSXChild::Spread(s) => AstNodes::JSXSpreadChild(AstNode {
-                inner: s.as_ref(),
-                parent,
-                allocator: self.allocator,
-            }),
+            JSXChild::Spread(s) => {
+                panic!(
+                    "No Node for enum variant yet, please see `tasks/ast_tools/src/generators/ast_kind.rs`"
+                )
+            }
         };
         self.allocator.alloc(node)
     }
@@ -6353,11 +6144,7 @@ impl<'a, 'b> AstNode<'a, 'b, JSXSpreadChild<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.expression,
             allocator: self.allocator,
-            parent: self.allocator.alloc(AstNodes::JSXSpreadChild(AstNode {
-                inner: self.inner,
-                parent: self.parent,
-                allocator: self.allocator,
-            })),
+            parent: self.parent,
         })
     }
 }
@@ -6718,26 +6505,26 @@ impl<'a, 'b> AstNode<'a, 'b, TSType<'a>> {
                 parent,
                 allocator: self.allocator,
             }),
-            TSType::TSArrayType(s) => AstNodes::TSArrayType(AstNode {
-                inner: s.as_ref(),
-                parent,
-                allocator: self.allocator,
-            }),
+            TSType::TSArrayType(s) => {
+                panic!(
+                    "No Node for enum variant yet, please see `tasks/ast_tools/src/generators/ast_kind.rs`"
+                )
+            }
             TSType::TSConditionalType(s) => AstNodes::TSConditionalType(AstNode {
                 inner: s.as_ref(),
                 parent,
                 allocator: self.allocator,
             }),
-            TSType::TSConstructorType(s) => AstNodes::TSConstructorType(AstNode {
-                inner: s.as_ref(),
-                parent,
-                allocator: self.allocator,
-            }),
-            TSType::TSFunctionType(s) => AstNodes::TSFunctionType(AstNode {
-                inner: s.as_ref(),
-                parent,
-                allocator: self.allocator,
-            }),
+            TSType::TSConstructorType(s) => {
+                panic!(
+                    "No Node for enum variant yet, please see `tasks/ast_tools/src/generators/ast_kind.rs`"
+                )
+            }
+            TSType::TSFunctionType(s) => {
+                panic!(
+                    "No Node for enum variant yet, please see `tasks/ast_tools/src/generators/ast_kind.rs`"
+                )
+            }
             TSType::TSImportType(s) => AstNodes::TSImportType(AstNode {
                 inner: s.as_ref(),
                 parent,
@@ -6783,26 +6570,26 @@ impl<'a, 'b> AstNode<'a, 'b, TSType<'a>> {
                 parent,
                 allocator: self.allocator,
             }),
-            TSType::TSTupleType(s) => AstNodes::TSTupleType(AstNode {
-                inner: s.as_ref(),
-                parent,
-                allocator: self.allocator,
-            }),
+            TSType::TSTupleType(s) => {
+                panic!(
+                    "No Node for enum variant yet, please see `tasks/ast_tools/src/generators/ast_kind.rs`"
+                )
+            }
             TSType::TSTypeLiteral(s) => AstNodes::TSTypeLiteral(AstNode {
                 inner: s.as_ref(),
                 parent,
                 allocator: self.allocator,
             }),
-            TSType::TSTypeOperatorType(s) => AstNodes::TSTypeOperator(AstNode {
-                inner: s.as_ref(),
-                parent,
-                allocator: self.allocator,
-            }),
-            TSType::TSTypePredicate(s) => AstNodes::TSTypePredicate(AstNode {
-                inner: s.as_ref(),
-                parent,
-                allocator: self.allocator,
-            }),
+            TSType::TSTypeOperatorType(s) => {
+                panic!(
+                    "No Node for enum variant yet, please see `tasks/ast_tools/src/generators/ast_kind.rs`"
+                )
+            }
+            TSType::TSTypePredicate(s) => {
+                panic!(
+                    "No Node for enum variant yet, please see `tasks/ast_tools/src/generators/ast_kind.rs`"
+                )
+            }
             TSType::TSTypeQuery(s) => AstNodes::TSTypeQuery(AstNode {
                 inner: s.as_ref(),
                 parent,
@@ -6823,21 +6610,21 @@ impl<'a, 'b> AstNode<'a, 'b, TSType<'a>> {
                 parent,
                 allocator: self.allocator,
             }),
-            TSType::JSDocNullableType(s) => AstNodes::JSDocNullableType(AstNode {
-                inner: s.as_ref(),
-                parent,
-                allocator: self.allocator,
-            }),
-            TSType::JSDocNonNullableType(s) => AstNodes::JSDocNonNullableType(AstNode {
-                inner: s.as_ref(),
-                parent,
-                allocator: self.allocator,
-            }),
-            TSType::JSDocUnknownType(s) => AstNodes::JSDocUnknownType(AstNode {
-                inner: s.as_ref(),
-                parent,
-                allocator: self.allocator,
-            }),
+            TSType::JSDocNullableType(s) => {
+                panic!(
+                    "No Node for enum variant yet, please see `tasks/ast_tools/src/generators/ast_kind.rs`"
+                )
+            }
+            TSType::JSDocNonNullableType(s) => {
+                panic!(
+                    "No Node for enum variant yet, please see `tasks/ast_tools/src/generators/ast_kind.rs`"
+                )
+            }
+            TSType::JSDocUnknownType(s) => {
+                panic!(
+                    "No Node for enum variant yet, please see `tasks/ast_tools/src/generators/ast_kind.rs`"
+                )
+            }
         };
         self.allocator.alloc(node)
     }
@@ -7134,11 +6921,7 @@ impl<'a, 'b> AstNode<'a, 'b, TSTypeOperator<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.type_annotation,
             allocator: self.allocator,
-            parent: self.allocator.alloc(AstNodes::TSTypeOperator(AstNode {
-                inner: self.inner,
-                parent: self.parent,
-                allocator: self.allocator,
-            })),
+            parent: self.parent,
         })
     }
 }
@@ -7151,11 +6934,7 @@ impl<'a, 'b> AstNode<'a, 'b, TSArrayType<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.element_type,
             allocator: self.allocator,
-            parent: self.allocator.alloc(AstNodes::TSArrayType(AstNode {
-                inner: self.inner,
-                parent: self.parent,
-                allocator: self.allocator,
-            })),
+            parent: self.parent,
         })
     }
 }
@@ -7197,11 +6976,7 @@ impl<'a, 'b> AstNode<'a, 'b, TSTupleType<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.element_types,
             allocator: self.allocator,
-            parent: self.allocator.alloc(AstNodes::TSTupleType(AstNode {
-                inner: self.inner,
-                parent: self.parent,
-                allocator: self.allocator,
-            })),
+            parent: self.parent,
         })
     }
 }
@@ -7247,11 +7022,7 @@ impl<'a, 'b> AstNode<'a, 'b, TSOptionalType<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.type_annotation,
             allocator: self.allocator,
-            parent: self.allocator.alloc(AstNodes::TSOptionalType(AstNode {
-                inner: self.inner,
-                parent: self.parent,
-                allocator: self.allocator,
-            })),
+            parent: self.parent,
         })
     }
 }
@@ -7264,11 +7035,7 @@ impl<'a, 'b> AstNode<'a, 'b, TSRestType<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.type_annotation,
             allocator: self.allocator,
-            parent: self.allocator.alloc(AstNodes::TSRestType(AstNode {
-                inner: self.inner,
-                parent: self.parent,
-                allocator: self.allocator,
-            })),
+            parent: self.parent,
         })
     }
 }
@@ -7277,24 +7044,20 @@ impl<'a, 'b> AstNode<'a, 'b, TSTupleElement<'a>> {
     pub fn as_ast_nodes(&self) -> &AstNodes<'a, 'b> {
         let parent = self.parent;
         let node = match self.inner {
-            TSTupleElement::TSOptionalType(s) => AstNodes::TSOptionalType(AstNode {
-                inner: s.as_ref(),
-                parent,
-                allocator: self.allocator,
-            }),
-            TSTupleElement::TSRestType(s) => AstNodes::TSRestType(AstNode {
-                inner: s.as_ref(),
-                parent,
-                allocator: self.allocator,
-            }),
+            TSTupleElement::TSOptionalType(s) => {
+                panic!(
+                    "No Node for enum variant yet, please see `tasks/ast_tools/src/generators/ast_kind.rs`"
+                )
+            }
+            TSTupleElement::TSRestType(s) => {
+                panic!(
+                    "No Node for enum variant yet, please see `tasks/ast_tools/src/generators/ast_kind.rs`"
+                )
+            }
             it @ match_ts_type!(TSTupleElement) => {
                 return self
                     .allocator
-                    .alloc(AstNode::<'a, 'b, TSType> {
-                        inner: it.to_ts_type(),
-                        parent,
-                        allocator: self.allocator,
-                    })
+                    .alloc(AstNode { inner: it.to_ts_type(), parent, allocator: self.allocator })
                     .as_ast_nodes();
             }
         };
@@ -7405,7 +7168,11 @@ impl<'a, 'b> AstNode<'a, 'b, TSTypeReference<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.type_name,
             allocator: self.allocator,
-            parent: self.parent,
+            parent: self.allocator.alloc(AstNodes::TSTypeReference(AstNode {
+                inner: self.inner,
+                parent: self.parent,
+                allocator: self.allocator,
+            })),
         })
     }
 
@@ -7481,7 +7248,11 @@ impl<'a, 'b> AstNode<'a, 'b, TSQualifiedName<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.left,
             allocator: self.allocator,
-            parent: self.parent,
+            parent: self.allocator.alloc(AstNodes::TSQualifiedName(AstNode {
+                inner: self.inner,
+                parent: self.parent,
+                allocator: self.allocator,
+            })),
         })
     }
 
@@ -7644,7 +7415,11 @@ impl<'a, 'b> AstNode<'a, 'b, TSClassImplements<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.expression,
             allocator: self.allocator,
-            parent: self.parent,
+            parent: self.allocator.alloc(AstNodes::TSClassImplements(AstNode {
+                inner: self.inner,
+                parent: self.parent,
+                allocator: self.allocator,
+            })),
         })
     }
 
@@ -7730,11 +7505,7 @@ impl<'a, 'b> AstNode<'a, 'b, TSInterfaceBody<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.body,
             allocator: self.allocator,
-            parent: self.allocator.alloc(AstNodes::TSInterfaceBody(AstNode {
-                inner: self.inner,
-                parent: self.parent,
-                allocator: self.allocator,
-            })),
+            parent: self.parent,
         })
     }
 }
@@ -7759,7 +7530,11 @@ impl<'a, 'b> AstNode<'a, 'b, TSPropertySignature<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.key,
             allocator: self.allocator,
-            parent: self.parent,
+            parent: self.allocator.alloc(AstNodes::TSPropertySignature(AstNode {
+                inner: self.inner,
+                parent: self.parent,
+                allocator: self.allocator,
+            })),
         })
     }
 
@@ -7782,22 +7557,20 @@ impl<'a, 'b> AstNode<'a, 'b, TSSignature<'a>> {
     pub fn as_ast_nodes(&self) -> &AstNodes<'a, 'b> {
         let parent = self.parent;
         let node = match self.inner {
-            TSSignature::TSIndexSignature(s) => AstNodes::TSIndexSignature(AstNode {
-                inner: s.as_ref(),
-                parent,
-                allocator: self.allocator,
-            }),
+            TSSignature::TSIndexSignature(s) => {
+                panic!(
+                    "No Node for enum variant yet, please see `tasks/ast_tools/src/generators/ast_kind.rs`"
+                )
+            }
             TSSignature::TSPropertySignature(s) => AstNodes::TSPropertySignature(AstNode {
                 inner: s.as_ref(),
                 parent,
                 allocator: self.allocator,
             }),
             TSSignature::TSCallSignatureDeclaration(s) => {
-                AstNodes::TSCallSignatureDeclaration(AstNode {
-                    inner: s.as_ref(),
-                    parent,
-                    allocator: self.allocator,
-                })
+                panic!(
+                    "No Node for enum variant yet, please see `tasks/ast_tools/src/generators/ast_kind.rs`"
+                )
             }
             TSSignature::TSConstructSignatureDeclaration(s) => {
                 AstNodes::TSConstructSignatureDeclaration(AstNode {
@@ -7866,11 +7639,7 @@ impl<'a, 'b> AstNode<'a, 'b, TSIndexSignature<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.parameters,
             allocator: self.allocator,
-            parent: self.allocator.alloc(AstNodes::TSIndexSignature(AstNode {
-                inner: self.inner,
-                parent: self.parent,
-                allocator: self.allocator,
-            })),
+            parent: self.parent,
         })
     }
 
@@ -7878,11 +7647,7 @@ impl<'a, 'b> AstNode<'a, 'b, TSIndexSignature<'a>> {
         self.allocator.alloc(AstNode {
             inner: self.inner.type_annotation.as_ref(),
             allocator: self.allocator,
-            parent: self.allocator.alloc(AstNodes::TSIndexSignature(AstNode {
-                inner: self.inner,
-                parent: self.parent,
-                allocator: self.allocator,
-            })),
+            parent: self.parent,
         })
     }
 
@@ -7904,11 +7669,7 @@ impl<'a, 'b> AstNode<'a, 'b, TSCallSignatureDeclaration<'a>> {
             .alloc(self.inner.type_parameters.as_ref().map(|inner| AstNode {
                 inner: inner.as_ref(),
                 allocator: self.allocator,
-                parent: self.allocator.alloc(AstNodes::TSCallSignatureDeclaration(AstNode {
-                    inner: self.inner,
-                    parent: self.parent,
-                    allocator: self.allocator,
-                })),
+                parent: self.parent,
             }))
             .as_ref()
     }
@@ -7918,11 +7679,7 @@ impl<'a, 'b> AstNode<'a, 'b, TSCallSignatureDeclaration<'a>> {
             .alloc(self.inner.this_param.as_ref().map(|inner| AstNode {
                 inner: inner.as_ref(),
                 allocator: self.allocator,
-                parent: self.allocator.alloc(AstNodes::TSCallSignatureDeclaration(AstNode {
-                    inner: self.inner,
-                    parent: self.parent,
-                    allocator: self.allocator,
-                })),
+                parent: self.parent,
             }))
             .as_ref()
     }
@@ -7931,11 +7688,7 @@ impl<'a, 'b> AstNode<'a, 'b, TSCallSignatureDeclaration<'a>> {
         self.allocator.alloc(AstNode {
             inner: self.inner.params.as_ref(),
             allocator: self.allocator,
-            parent: self.allocator.alloc(AstNodes::TSCallSignatureDeclaration(AstNode {
-                inner: self.inner,
-                parent: self.parent,
-                allocator: self.allocator,
-            })),
+            parent: self.parent,
         })
     }
 
@@ -7944,11 +7697,7 @@ impl<'a, 'b> AstNode<'a, 'b, TSCallSignatureDeclaration<'a>> {
             .alloc(self.inner.return_type.as_ref().map(|inner| AstNode {
                 inner: inner.as_ref(),
                 allocator: self.allocator,
-                parent: self.allocator.alloc(AstNodes::TSCallSignatureDeclaration(AstNode {
-                    inner: self.inner,
-                    parent: self.parent,
-                    allocator: self.allocator,
-                })),
+                parent: self.parent,
             }))
             .as_ref()
     }
@@ -7962,7 +7711,11 @@ impl<'a, 'b> AstNode<'a, 'b, TSMethodSignature<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.key,
             allocator: self.allocator,
-            parent: self.parent,
+            parent: self.allocator.alloc(AstNodes::TSMethodSignature(AstNode {
+                inner: self.inner,
+                parent: self.parent,
+                allocator: self.allocator,
+            })),
         })
     }
 
@@ -8090,11 +7843,7 @@ impl<'a, 'b> AstNode<'a, 'b, TSIndexSignatureName<'a>> {
         self.allocator.alloc(AstNode {
             inner: self.inner.type_annotation.as_ref(),
             allocator: self.allocator,
-            parent: self.allocator.alloc(AstNodes::TSIndexSignatureName(AstNode {
-                inner: self.inner,
-                parent: self.parent,
-                allocator: self.allocator,
-            })),
+            parent: self.parent,
         })
     }
 }
@@ -8138,11 +7887,7 @@ impl<'a, 'b> AstNode<'a, 'b, TSTypePredicate<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.parameter_name,
             allocator: self.allocator,
-            parent: self.allocator.alloc(AstNodes::TSTypePredicate(AstNode {
-                inner: self.inner,
-                parent: self.parent,
-                allocator: self.allocator,
-            })),
+            parent: self.parent,
         })
     }
 
@@ -8155,11 +7900,7 @@ impl<'a, 'b> AstNode<'a, 'b, TSTypePredicate<'a>> {
             .alloc(self.inner.type_annotation.as_ref().map(|inner| AstNode {
                 inner: inner.as_ref(),
                 allocator: self.allocator,
-                parent: self.allocator.alloc(AstNodes::TSTypePredicate(AstNode {
-                    inner: self.inner,
-                    parent: self.parent,
-                    allocator: self.allocator,
-                })),
+                parent: self.parent,
             }))
             .as_ref()
     }
@@ -8423,16 +8164,11 @@ impl<'a, 'b> AstNode<'a, 'b, TSTypeQueryExprName<'a>> {
                 parent,
                 allocator: self.allocator,
             }),
-            it @ match_ts_type_name!(TSTypeQueryExprName) => {
-                return self
-                    .allocator
-                    .alloc(AstNode::<'a, 'b, TSTypeName> {
-                        inner: it.to_ts_type_name(),
-                        parent,
-                        allocator: self.allocator,
-                    })
-                    .as_ast_nodes();
-            }
+            it @ match_ts_type_name!(TSTypeQueryExprName) => AstNodes::TSTypeName(AstNode {
+                inner: it.to_ts_type_name(),
+                parent,
+                allocator: self.allocator,
+            }),
         };
         self.allocator.alloc(node)
     }
@@ -8495,7 +8231,11 @@ impl<'a, 'b> AstNode<'a, 'b, TSImportType<'a>> {
             .alloc(self.inner.qualifier.as_ref().map(|inner| AstNode {
                 inner,
                 allocator: self.allocator,
-                parent: self.parent,
+                parent: self.allocator.alloc(AstNodes::TSImportType(AstNode {
+                    inner: self.inner,
+                    parent: self.parent,
+                    allocator: self.allocator,
+                })),
             }))
             .as_ref()
     }
@@ -8524,11 +8264,7 @@ impl<'a, 'b> AstNode<'a, 'b, TSFunctionType<'a>> {
             .alloc(self.inner.type_parameters.as_ref().map(|inner| AstNode {
                 inner: inner.as_ref(),
                 allocator: self.allocator,
-                parent: self.allocator.alloc(AstNodes::TSFunctionType(AstNode {
-                    inner: self.inner,
-                    parent: self.parent,
-                    allocator: self.allocator,
-                })),
+                parent: self.parent,
             }))
             .as_ref()
     }
@@ -8538,11 +8274,7 @@ impl<'a, 'b> AstNode<'a, 'b, TSFunctionType<'a>> {
             .alloc(self.inner.this_param.as_ref().map(|inner| AstNode {
                 inner: inner.as_ref(),
                 allocator: self.allocator,
-                parent: self.allocator.alloc(AstNodes::TSFunctionType(AstNode {
-                    inner: self.inner,
-                    parent: self.parent,
-                    allocator: self.allocator,
-                })),
+                parent: self.parent,
             }))
             .as_ref()
     }
@@ -8551,11 +8283,7 @@ impl<'a, 'b> AstNode<'a, 'b, TSFunctionType<'a>> {
         self.allocator.alloc(AstNode {
             inner: self.inner.params.as_ref(),
             allocator: self.allocator,
-            parent: self.allocator.alloc(AstNodes::TSFunctionType(AstNode {
-                inner: self.inner,
-                parent: self.parent,
-                allocator: self.allocator,
-            })),
+            parent: self.parent,
         })
     }
 
@@ -8563,11 +8291,7 @@ impl<'a, 'b> AstNode<'a, 'b, TSFunctionType<'a>> {
         self.allocator.alloc(AstNode {
             inner: self.inner.return_type.as_ref(),
             allocator: self.allocator,
-            parent: self.allocator.alloc(AstNodes::TSFunctionType(AstNode {
-                inner: self.inner,
-                parent: self.parent,
-                allocator: self.allocator,
-            })),
+            parent: self.parent,
         })
     }
 }
@@ -8585,11 +8309,7 @@ impl<'a, 'b> AstNode<'a, 'b, TSConstructorType<'a>> {
             .alloc(self.inner.type_parameters.as_ref().map(|inner| AstNode {
                 inner: inner.as_ref(),
                 allocator: self.allocator,
-                parent: self.allocator.alloc(AstNodes::TSConstructorType(AstNode {
-                    inner: self.inner,
-                    parent: self.parent,
-                    allocator: self.allocator,
-                })),
+                parent: self.parent,
             }))
             .as_ref()
     }
@@ -8598,11 +8318,7 @@ impl<'a, 'b> AstNode<'a, 'b, TSConstructorType<'a>> {
         self.allocator.alloc(AstNode {
             inner: self.inner.params.as_ref(),
             allocator: self.allocator,
-            parent: self.allocator.alloc(AstNodes::TSConstructorType(AstNode {
-                inner: self.inner,
-                parent: self.parent,
-                allocator: self.allocator,
-            })),
+            parent: self.parent,
         })
     }
 
@@ -8610,11 +8326,7 @@ impl<'a, 'b> AstNode<'a, 'b, TSConstructorType<'a>> {
         self.allocator.alloc(AstNode {
             inner: self.inner.return_type.as_ref(),
             allocator: self.allocator,
-            parent: self.allocator.alloc(AstNodes::TSConstructorType(AstNode {
-                inner: self.inner,
-                parent: self.parent,
-                allocator: self.allocator,
-            })),
+            parent: self.parent,
         })
     }
 }
@@ -8808,7 +8520,11 @@ impl<'a, 'b> AstNode<'a, 'b, TSImportEqualsDeclaration<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.module_reference,
             allocator: self.allocator,
-            parent: self.parent,
+            parent: self.allocator.alloc(AstNodes::TSImportEqualsDeclaration(AstNode {
+                inner: self.inner,
+                parent: self.parent,
+                allocator: self.allocator,
+            })),
         })
     }
 
@@ -8832,16 +8548,11 @@ impl<'a, 'b> AstNode<'a, 'b, TSModuleReference<'a>> {
                     allocator: self.allocator,
                 })
             }
-            it @ match_ts_type_name!(TSModuleReference) => {
-                return self
-                    .allocator
-                    .alloc(AstNode::<'a, 'b, TSTypeName> {
-                        inner: it.to_ts_type_name(),
-                        parent,
-                        allocator: self.allocator,
-                    })
-                    .as_ast_nodes();
-            }
+            it @ match_ts_type_name!(TSModuleReference) => AstNodes::TSTypeName(AstNode {
+                inner: it.to_ts_type_name(),
+                parent,
+                allocator: self.allocator,
+            }),
         };
         self.allocator.alloc(node)
     }
@@ -8953,11 +8664,7 @@ impl<'a, 'b> AstNode<'a, 'b, TSNamespaceExportDeclaration<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.id,
             allocator: self.allocator,
-            parent: self.allocator.alloc(AstNodes::TSNamespaceExportDeclaration(AstNode {
-                inner: self.inner,
-                parent: self.parent,
-                allocator: self.allocator,
-            })),
+            parent: self.parent,
         })
     }
 }
@@ -8999,11 +8706,7 @@ impl<'a, 'b> AstNode<'a, 'b, JSDocNullableType<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.type_annotation,
             allocator: self.allocator,
-            parent: self.allocator.alloc(AstNodes::JSDocNullableType(AstNode {
-                inner: self.inner,
-                parent: self.parent,
-                allocator: self.allocator,
-            })),
+            parent: self.parent,
         })
     }
 
@@ -9020,11 +8723,7 @@ impl<'a, 'b> AstNode<'a, 'b, JSDocNonNullableType<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.type_annotation,
             allocator: self.allocator,
-            parent: self.allocator.alloc(AstNodes::JSDocNonNullableType(AstNode {
-                inner: self.inner,
-                parent: self.parent,
-                allocator: self.allocator,
-            })),
+            parent: self.parent,
         })
     }
 
