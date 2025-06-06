@@ -603,14 +603,14 @@ impl<'a, 'b> FormatWrite<'a> for AstNode<'a, 'b, Hashbang<'a>> {
 impl<'a, 'b> FormatWrite<'a> for AstNode<'a, 'b, EmptyStatement> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         if matches!(
-            f.parent_kind_of(Address::from_ptr(self)),
-            AstKind::DoWhileStatement(_)
-                | AstKind::IfStatement(_)
-                | AstKind::WhileStatement(_)
-                | AstKind::ForStatement(_)
-                | AstKind::ForInStatement(_)
-                | AstKind::ForOfStatement(_)
-                | AstKind::WithStatement(_)
+            self.parent(),
+            AstNodes::DoWhileStatement(_)
+                | AstNodes::IfStatement(_)
+                | AstNodes::WhileStatement(_)
+                | AstNodes::ForStatement(_)
+                | AstNodes::ForInStatement(_)
+                | AstNodes::ForOfStatement(_)
+                | AstNodes::WithStatement(_)
         ) {
             write!(f, ";")
         } else {

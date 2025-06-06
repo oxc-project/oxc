@@ -7,7 +7,7 @@ use crate::{
         Buffer, Format, FormatError, FormatResult, Formatter, GroupId, prelude::*,
         separated::FormatSeparatedIter,
     },
-    generated::ast_nodes::AstNode,
+    generated::ast_nodes::{AstNode, AstNodes},
     options::{FormatTrailingCommas, TrailingSeparator},
     write,
 };
@@ -22,9 +22,7 @@ impl<'a, 'b> Format<'a> for AstNode<'a, 'b, Vec<'a, TSTypeParameter<'a>>> {
         let trailing_separator = if self.len() == 1
         // This only concern sources that allow JSX or a restricted standard variant.
         && f.context().source_type().is_jsx()
-        && matches!(f.parent_parent_kind_of(
-            Address::from_ptr(self.first().unwrap())
-        ), Some(AstKind::ArrowFunctionExpression(_)))
+        && matches!(self.parent().parent(), AstNodes::ArrowFunctionExpression(_))
         // Ignore Type parameter with an `extends` clause or a default type.
         && !self.first().is_some_and(|t| t.constraint().is_some() || t.default().is_some())
         {

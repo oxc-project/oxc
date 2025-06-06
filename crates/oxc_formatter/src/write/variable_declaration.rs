@@ -7,7 +7,7 @@ use crate::{
         Buffer, Format, FormatError, FormatResult, Formatter, prelude::*,
         separated::FormatSeparatedIter,
     },
-    generated::ast_nodes::AstNode,
+    generated::ast_nodes::{AstNode, AstNodes},
     options::TrailingSeparator,
     write,
 };
@@ -25,9 +25,8 @@ impl<'a, 'b, 'c> Format<'a> for AstNode<'a, 'b, Vec<'a, VariableDeclarator<'a>>>
         let length = self.len();
 
         let is_parent_for_loop = matches!(
-            // `self.first().unwrap()` is safe because must be at least one declarator
-            f.parent_kind_of(Address::from_ptr(self.first().unwrap())),
-            AstKind::ForStatement(_) | AstKind::ForInStatement(_) | AstKind::ForOfStatement(_)
+            self.parent(),
+            AstNodes::ForStatement(_) | AstNodes::ForInStatement(_) | AstNodes::ForOfStatement(_)
         );
 
         let has_any_initializer = self.iter().any(|declarator| declarator.init().is_some());

@@ -16,8 +16,6 @@ pub struct FormatState<'ast> {
     group_id_builder: UniqueGroupIdBuilder,
 
     pub(crate) stack: ParentStack<'ast>,
-    pub(crate) parents: FxHashMap<Address, Address>,
-    pub(crate) kinds: FxHashMap<Address, AstKind<'ast>>,
     // This is using a RefCell as it only exists in debug mode,
     // the Formatter is still completely immutable in release builds
     // #[cfg(debug_assertions)]
@@ -32,18 +30,11 @@ impl std::fmt::Debug for FormatState<'_> {
 
 impl<'ast> FormatState<'ast> {
     /// Creates a new state with the given language specific context
-    pub fn new(
-        program: &'ast Program<'ast>,
-        parents: FxHashMap<Address, Address>,
-        kinds: FxHashMap<Address, AstKind<'ast>>,
-        context: FormatContext<'ast>,
-    ) -> Self {
+    pub fn new(program: &'ast Program<'ast>, context: FormatContext<'ast>) -> Self {
         Self {
             context,
             group_id_builder: UniqueGroupIdBuilder::default(),
             stack: ParentStack::new(program),
-            parents,
-            kinds,
             // #[cfg(debug_assertions)]
             // printed_tokens: Default::default(),
         }

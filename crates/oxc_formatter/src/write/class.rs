@@ -5,7 +5,7 @@ use oxc_span::GetSpan;
 use crate::{
     format_args,
     formatter::{Buffer, FormatResult, Formatter, prelude::*},
-    generated::ast_nodes::AstNode,
+    generated::ast_nodes::{AstNode, AstNodes},
     write,
 };
 
@@ -27,8 +27,8 @@ impl<'a, 'b> FormatWrite<'a> for AstNode<'a, 'b, Class<'a>> {
         let group_mode = should_group(self.inner(), f);
 
         if !matches!(
-            f.parent_kind_of(Address::from_ptr(self)),
-            AstKind::ExportNamedDeclaration(_) | AstKind::ExportDefaultDeclaration(_)
+            self.parent(),
+            AstNodes::ExportNamedDeclaration(_) | AstNodes::ExportDefaultDeclaration(_)
         ) {
             write!(f, decorators)?;
         }

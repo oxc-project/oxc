@@ -54,7 +54,6 @@ impl<'a> Formatter<'a> {
         let parent = self.allocator.alloc(AstNodes::DUMMY());
         let program_node = AstNode::new(program, parent, self.allocator);
 
-        // AstNodesBuilder::new(program, self.allocator).build();
         let source_text = program.source_text;
         self.source_text = source_text;
         let context = FormatContext::new(program, self.options);

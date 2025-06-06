@@ -50,7 +50,7 @@ impl<'a, 'b, 'c> Iterator for FormalParametersIter<'a, 'b, 'c> {
         self.params
             .next()
             .map(|param| Parameter::FormalParameter(param))
-            .or_else(|| self.rest.map(|rest| Parameter::Rest(rest)))
+            .or_else(|| self.rest.take().map(|rest| Parameter::Rest(rest)))
     }
 }
 

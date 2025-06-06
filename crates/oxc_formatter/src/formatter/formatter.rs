@@ -57,27 +57,6 @@ impl<'buf, 'ast> Formatter<'buf, 'ast> {
         self.context().comments()
     }
 
-    #[inline]
-    pub fn current_kind(&self) -> AstKind<'ast> {
-        self.state().stack.current()
-    }
-
-    #[inline]
-    pub fn parent_kind_of(&self, address: Address) -> AstKind<'ast> {
-        let parent_address = &self.state().parents[&address];
-        self.state().kinds.get(parent_address).copied().unwrap()
-    }
-
-    #[inline]
-    pub fn parent_parent_kind_of(&self, address: Address) -> Option<AstKind<'ast>> {
-        let parent_address = &self.state().parents[&address];
-        self.state()
-            .parents
-            .get(parent_address)
-            .and_then(|parent_parent_address| self.state().kinds.get(parent_parent_address))
-            .copied()
-    }
-
     /// Creates a new group id that is unique to this document. The passed debug name is used in the
     /// [std::fmt::Debug] of the document if this is a debug build.
     /// The name is unused for production builds and has no meaning on the equality of two group ids.

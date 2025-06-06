@@ -46,15 +46,12 @@ impl<'a, 'b> Format<'a> for AstNode<'a, 'b, Vec<'a, Argument<'a>>> {
             );
         }
 
-        // `self.get(0).unwrap` is safe here because the above check ensures that `self` is not empty.
-        // Using ``
-        let call_expression =
-            f.parent_kind_of(Address::from_ptr(self.first().unwrap())).as_call_expression();
-
         let (is_commonjs_or_amd_call, is_test_call) =
-            call_expression.as_ref().map_or((false, false), |call| {
-                (is_commonjs_or_amd_call(self.inner(), call, f), is_test_call_expression(call))
-            });
+            if let AstNodes::CallExpression(call) = self.parent() {
+                (is_commonjs_or_amd_call(self.inner(), call), is_test_call_expression(call.inner()))
+            } else {
+                (false, false)
+            };
 
         let is_first_arg_string_literal_or_template = if self.len() == 2 {
             matches!(
@@ -110,10 +107,7 @@ impl<'a, 'b> Format<'a> for AstNode<'a, 'b, Vec<'a, Argument<'a>>> {
 
         if let Some(group_layout) = arguments_grouped_layout(&self.inner(), f.comments()) {
             write_grouped_arguments(self, arguments, group_layout, f)
-        } else if is_long_curried_call(
-            f.parent_kind_of(Address::from_ptr(self.first().unwrap())),
-            f,
-        ) {
+        } else if is_long_curried_call(self.parent()) {
             write!(
                 f,
                 [
@@ -1001,10 +995,9 @@ fn is_simple_parameter(parameter: &FormalParameter<'_>, allow_type_annotations: 
 /// or amd's [`define`](https://github.com/amdjs/amdjs-api/wiki/AMD#define-function-) function.
 fn is_commonjs_or_amd_call(
     arguments: &[Argument<'_>],
-    call: &CallExpression,
-    f: &mut Formatter<'_, '_>,
+    call: &AstNode<'_, '_, CallExpression<'_>>,
 ) -> bool {
-    let Expression::Identifier(ident) = &call.callee else {
+    let Expression::Identifier(ident) = &call.inner().callee else {
         return false;
     };
 
@@ -1030,8 +1023,7 @@ fn is_commonjs_or_amd_call(
             }
         }
         "define" => {
-            let in_statement =
-                f.parent_kind_of(Address::from_ptr(call)).as_expression_statement().is_some();
+            let in_statement = matches!(call.parent(), AstNodes::ExpressionStatement(_));
             if in_statement {
                 match arguments.len() {
                     1 => true,

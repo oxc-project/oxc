@@ -6,6 +6,7 @@ use oxc_ast::{AstKind, ast::CallExpression};
 use crate::{
     Format, FormatResult, FormatTrailingCommas, format_args,
     formatter::{Formatter, parent_stack::ParentStack, prelude::soft_line_break_or_space},
+    generated::ast_nodes::AstNodes,
 };
 
 /// This function is in charge to format the call arguments.
@@ -37,11 +38,11 @@ where
 /// ```javascript
 /// `connect(a, b, c)(d)`
 /// ```
-pub fn is_long_curried_call(parent: AstKind<'_>, f: &mut Formatter<'_, '_>) -> bool {
-    if let AstKind::CallExpression(call) = parent {
-        if let Some(parent_call) = f.parent_kind_of(Address::from_ptr(call)).as_call_expression() {
-            return call.arguments.len() > parent_call.arguments.len()
-                && !parent_call.arguments.is_empty();
+pub fn is_long_curried_call(parent: &AstNodes<'_, '_>) -> bool {
+    if let AstNodes::CallExpression(call) = parent {
+        if let AstNodes::CallExpression(parent_call) = call.parent() {
+            return call.arguments().len() > parent_call.arguments().len()
+                && !parent_call.arguments().is_empty();
         }
     }
 
