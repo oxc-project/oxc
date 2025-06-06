@@ -134,7 +134,7 @@ fn unnecessary_outer_scope_dependency_diagnostic(
         "React Hook {hook_name} has an unnecessary dependency: {dep_name}."
     ))
     .with_label(span)
-    .with_help("Consider removing it from the dependency array. Outer scope values like aren't valid dependencies because mutating them doesn't re-render the component.")
+    .with_help("Consider removing it from the dependency array. Outer scope values aren't valid dependencies because mutating them doesn't re-render the component.")
     .with_error_code_scope(SCOPE)
 }
 
