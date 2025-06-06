@@ -15,7 +15,7 @@ fn unexpected_es6_class_diagnostic(span: Span) -> OxcDiagnostic {
 }
 
 fn expected_es6_class_diagnostic(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Components should use es6 class instead of createClass.").with_label(span)
+    OxcDiagnostic::warn("Components should use ES6 class instead of createClass.").with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]
