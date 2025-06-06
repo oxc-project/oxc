@@ -73,10 +73,11 @@ impl Tester {
         settings.set_omit_expression(true);
         settings.set_snapshot_suffix("oxlint");
 
-        let regex = Regex::new(r"\d+ms").unwrap();
-
         let output_string = &String::from_utf8(output).unwrap();
-        let output_string = regex.replace_all(output_string, "<variable>ms");
+        let regex = Regex::new(r"\d+ms").unwrap();
+        let output_string = regex.replace_all(output_string, "<variable>ms").into_owned();
+        let regex = Regex::new(r#""start_time": \d+\.\d+"#).unwrap();
+        let output_string = regex.replace_all(&output_string, r#""start_time": <variable>"#);
 
         // do not output the current working directory, each machine has a different one
         let cwd_string = current_cwd.to_str().unwrap();
