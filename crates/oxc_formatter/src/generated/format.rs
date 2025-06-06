@@ -1456,22 +1456,29 @@ impl<'a> Format<'a> for JSXFragment<'a> {
 
 impl<'a> Format<'a> for JSXOpeningFragment {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        self.write(f)
+        f.state_mut().stack.push(AstKind::JSXOpeningFragment(hack(self)));
+        format_leading_comments(self.span.start).fmt(f)?;
+        let result = self.write(f);
+        format_trailing_comments(self.span.end).fmt(f)?;
+        f.state_mut().stack.pop();
+        result
     }
 }
 
 impl<'a> Format<'a> for JSXClosingFragment {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        self.write(f)
+        f.state_mut().stack.push(AstKind::JSXClosingFragment(hack(self)));
+        format_leading_comments(self.span.start).fmt(f)?;
+        let result = self.write(f);
+        format_trailing_comments(self.span.end).fmt(f)?;
+        f.state_mut().stack.pop();
+        result
     }
 }
 
 impl<'a> Format<'a> for JSXElementName<'a> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        f.state_mut().stack.push(AstKind::JSXElementName(hack(self)));
-        let result = self.write(f);
-        f.state_mut().stack.pop();
-        result
+        self.write(f)
     }
 }
 
@@ -1506,10 +1513,7 @@ impl<'a> Format<'a> for JSXMemberExpression<'a> {
 
 impl<'a> Format<'a> for JSXMemberExpressionObject<'a> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        f.state_mut().stack.push(AstKind::JSXMemberExpressionObject(hack(self)));
-        let result = self.write(f);
-        f.state_mut().stack.pop();
-        result
+        self.write(f)
     }
 }
 
@@ -1532,22 +1536,36 @@ impl<'a> Format<'a> for JSXExpression<'a> {
 
 impl<'a> Format<'a> for JSXEmptyExpression {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        self.write(f)
-    }
-}
-
-impl<'a> Format<'a> for JSXAttributeItem<'a> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        f.state_mut().stack.push(AstKind::JSXAttributeItem(hack(self)));
+        f.state_mut().stack.push(AstKind::JSXEmptyExpression(hack(self)));
+        format_leading_comments(self.span.start).fmt(f)?;
+        let needs_parentheses = self.needs_parentheses(&f.state().stack);
+        if needs_parentheses {
+            "(".fmt(f)?;
+        }
         let result = self.write(f);
+        if needs_parentheses {
+            ")".fmt(f)?;
+        }
+        format_trailing_comments(self.span.end).fmt(f)?;
         f.state_mut().stack.pop();
         result
     }
 }
 
-impl<'a> Format<'a> for JSXAttribute<'a> {
+impl<'a> Format<'a> for JSXAttributeItem<'a> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         self.write(f)
+    }
+}
+
+impl<'a> Format<'a> for JSXAttribute<'a> {
+    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        f.state_mut().stack.push(AstKind::JSXAttribute(hack(self)));
+        format_leading_comments(self.span.start).fmt(f)?;
+        let result = self.write(f);
+        format_trailing_comments(self.span.end).fmt(f)?;
+        f.state_mut().stack.pop();
+        result
     }
 }
 
@@ -1593,7 +1611,12 @@ impl<'a> Format<'a> for JSXChild<'a> {
 
 impl<'a> Format<'a> for JSXSpreadChild<'a> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        self.write(f)
+        f.state_mut().stack.push(AstKind::JSXSpreadChild(hack(self)));
+        format_leading_comments(self.span.start).fmt(f)?;
+        let result = self.write(f);
+        format_trailing_comments(self.span.end).fmt(f)?;
+        f.state_mut().stack.pop();
+        result
     }
 }
 
