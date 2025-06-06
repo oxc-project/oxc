@@ -358,10 +358,7 @@ impl<'a> ParserImpl<'a> {
                 ModuleDeclaration::ExportNamedDeclaration(self.parse_export_named_specifiers(span))
             }
             Kind::Type if self.is_ts => {
-                let checkpoint = self.checkpoint();
-                self.bump_any();
-                let next_kind = self.cur_kind();
-                self.rewind(checkpoint);
+                let next_kind = self.lexer.peek_token().kind();
 
                 match next_kind {
                     // `export type { ...`
@@ -777,10 +774,7 @@ impl<'a> ParserImpl<'a> {
             return ImportOrExportKind::Value;
         }
 
-        let checkpoint = self.checkpoint();
-        self.bump_any();
-        let next_kind = self.cur_kind();
-        self.rewind(checkpoint);
+        let next_kind = self.lexer.peek_token().kind();
 
         if matches!(next_kind, Kind::LCurly | Kind::Star) {
             self.bump_any();

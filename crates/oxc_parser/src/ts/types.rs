@@ -389,11 +389,8 @@ impl<'a> ParserImpl<'a> {
                 let this_type = self.ast.ts_this_type(self.end_span(span));
                 // TODO: rewind should not be necessary here, but it causes a regression in the
                 // conformance test suite otherwise
-                let checkpoint = self.checkpoint();
-                self.bump_any();
-                let kind = self.cur_kind();
-                self.rewind(checkpoint);
-                if kind == Kind::Is && !self.cur_token().is_on_new_line() {
+                let next_kind = self.lexer.peek_token().kind();
+                if next_kind == Kind::Is && !self.cur_token().is_on_new_line() {
                     self.parse_this_type_predicate(this_type)
                 } else {
                     TSType::TSThisType(self.alloc(this_type))
