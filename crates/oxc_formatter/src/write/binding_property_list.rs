@@ -30,9 +30,9 @@ impl<'a> Format<'a> for BindingPropertyList<'a, '_, '_> {
             FormatTrailingCommas::ES5.trailing_separator(f.options())
         };
         let source_text = f.source_text();
-        let entries = FormatSeparatedIter::new(self.properties.into_iter(), ",")
+        let entries = FormatSeparatedIter::new(self.properties.iter(), ",")
             .with_trailing_separator(trailing_separator)
-            .zip(self.properties.into_iter());
+            .zip(self.properties.iter());
         let mut join = f.join_nodes_with_soft_line();
         for (format_entry, node) in entries {
             join.entry(node.span(), source_text, &format_entry);

@@ -190,9 +190,8 @@ impl<'a, 'b> Format<'a> for AstNode<'a, 'b, Vec<'a, ObjectPropertyKind<'a>>> {
         let trailing_separator = FormatTrailingCommas::ES5.trailing_separator(f.options());
         let source_text = f.context().source_text();
         let mut join = f.join_nodes_with_soft_line();
-        for (element, formatted) in self.into_iter().zip(
-            FormatSeparatedIter::new(self.into_iter(), ",")
-                .with_trailing_separator(trailing_separator),
+        for (element, formatted) in self.iter().zip(
+            FormatSeparatedIter::new(self.iter(), ",").with_trailing_separator(trailing_separator),
         ) {
             join.entry(element.span(), source_text, &formatted);
         }
@@ -272,7 +271,7 @@ impl<'a, 'b> FormatWrite<'a> for AstNode<'a, 'b, ObjectProperty<'a>> {
 impl<'a, 'b> FormatWrite<'a> for AstNode<'a, 'b, TemplateLiteral<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         write!(f, "`")?;
-        let mut expressions = self.expressions().into_iter();
+        let mut expressions = self.expressions().iter();
 
         for quasi in self.quasis() {
             write!(f, quasi);
@@ -442,8 +441,8 @@ impl<'a, 'b> FormatWrite<'a> for AstNode<'a, 'b, ArrayAssignmentTarget<'a>> {
         let mut join = f.join_nodes_with_soft_line();
         let last_index = self.elements().len().saturating_sub(1);
 
-        let test = self.elements().into_iter();
-        for (index, element) in self.elements().into_iter().enumerate() {
+        let test = self.elements().iter();
+        for (index, element) in self.elements().iter().enumerate() {
             let separator_mode = match element.as_ref() {
                 None => TrailingSeparatorMode::Force,
                 _ => TrailingSeparatorMode::Auto,
@@ -539,7 +538,7 @@ impl<'a, 'b> FormatWrite<'a> for AstNode<'a, 'b, AssignmentTargetPropertyPropert
 impl<'a, 'b> FormatWrite<'a> for AstNode<'a, 'b, SequenceExpression<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         let format_inner = format_with(|f| {
-            for (i, expr) in self.expressions().into_iter().enumerate() {
+            for (i, expr) in self.expressions().iter().enumerate() {
                 if i != 0 {
                     write!(f, [",", line_suffix_boundary(), soft_line_break_or_space()])?;
                 }
@@ -1186,8 +1185,7 @@ impl<'a, 'b> Format<'a> for AstNode<'a, 'b, Vec<'a, ClassElement<'a>>> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         let source_text = f.source_text();
         let mut join = f.join_nodes_with_hardline();
-        for (e1, e2) in
-            self.into_iter().zip(self.into_iter().skip(1).map(Some).chain(std::iter::once(None)))
+        for (e1, e2) in self.iter().zip(self.iter().skip(1).map(Some).chain(std::iter::once(None)))
         {
             join.entry(e1.span(), source_text, &(e1, e2));
         }
@@ -1407,7 +1405,7 @@ impl<'a, 'b> FormatWrite<'a> for AstNode<'a, 'b, ImportDeclaration<'a>> {
                     }
                 }
 
-                let iter = specifiers.into_iter().take(start_index);
+                let iter = specifiers.iter().take(start_index);
                 for (i, specifier) in iter.enumerate() {
                     if i != 0 {
                         write!(f, [",", space()])?;
@@ -1415,8 +1413,7 @@ impl<'a, 'b> FormatWrite<'a> for AstNode<'a, 'b, ImportDeclaration<'a>> {
                     write!(f, specifier)?;
                 }
 
-                let specifiers =
-                    specifiers.into_iter().skip(start_index).collect::<std::vec::Vec<_>>();
+                let specifiers = specifiers.iter().skip(start_index).collect::<std::vec::Vec<_>>();
                 if specifiers.is_empty() {
                     if start_index == 0 {
                         write!(f, ["{}", space()])?;
@@ -1518,7 +1515,7 @@ impl<'a, 'b> Format<'a> for AstNode<'a, 'b, Vec<'a, ImportAttribute<'a>>> {
         let trailing_separator = FormatTrailingCommas::ES5.trailing_separator(f.options());
         f.join_with(&soft_line_break_or_space())
             .entries(
-                FormatSeparatedIter::new(self.into_iter(), ",")
+                FormatSeparatedIter::new(self.iter(), ",")
                     .with_trailing_separator(trailing_separator),
             )
             .finish()
@@ -1623,7 +1620,7 @@ impl<'a, 'b> Format<'a> for AstNode<'a, 'b, Vec<'a, ExportSpecifier<'a>>> {
         let trailing_separator = FormatTrailingCommas::ES5.trailing_separator(f.options());
         f.join_with(&soft_line_break_or_space())
             .entries(
-                FormatSeparatedIter::new(self.into_iter(), ",")
+                FormatSeparatedIter::new(self.iter(), ",")
                     .with_trailing_separator(trailing_separator),
             )
             .finish()
@@ -1696,7 +1693,7 @@ impl<'a, 'b> FormatWrite<'a> for AstNode<'a, 'b, RegExpLiteral<'a>> {
         // TODO: print the flags without allocation.
         let mut flags = flags.chars().collect::<std::vec::Vec<_>>();
         flags.sort_unstable();
-        let flags = flags.into_iter().collect::<String>();
+        let flags = flags.iter().collect::<String>();
         let s = format!("{pattern}/{flags}");
         write!(f, dynamic_text(&s, self.span().start))
     }
@@ -1860,8 +1857,8 @@ impl<'a, 'b> Format<'a> for AstNode<'a, 'b, Vec<'a, TSEnumMember<'a>>> {
         let trailing_separator = FormatTrailingCommas::ES5.trailing_separator(f.options());
         let source_text = f.source_text();
         let mut join = f.join_nodes_with_soft_line();
-        for (element, formatted) in self.into_iter().zip(
-            FormatSeparatedIter::new(self.into_iter(), ",")
+        for (element, formatted) in self.iter().zip(
+            FormatSeparatedIter::new(self.iter(), ",")
                 .with_trailing_separator(trailing_separator)
                 .nodes_grouped(),
         ) {
@@ -1910,7 +1907,7 @@ impl<'a, 'b> FormatWrite<'a> for AstNode<'a, 'b, TSUnionType<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         f.join_with(&soft_line_break_or_space())
             .entries(
-                FormatSeparatedIter::new(self.types().into_iter(), "|")
+                FormatSeparatedIter::new(self.types().iter(), "|")
                     .with_trailing_separator(TrailingSeparator::Disallowed),
             )
             .finish()
@@ -1921,7 +1918,7 @@ impl<'a, 'b> FormatWrite<'a> for AstNode<'a, 'b, TSIntersectionType<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         f.join_with(&soft_line_break_or_space())
             .entries(
-                FormatSeparatedIter::new(self.types().into_iter(), "&")
+                FormatSeparatedIter::new(self.types().iter(), "&")
                     .with_trailing_separator(TrailingSeparator::Disallowed),
             )
             .finish()
@@ -1955,7 +1952,7 @@ impl<'a, 'b> FormatWrite<'a> for AstNode<'a, 'b, TSIndexedAccessType<'a>> {
 impl<'a, 'b> FormatWrite<'a> for AstNode<'a, 'b, TSTupleType<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         write!(f, "[")?;
-        for (i, ty) in self.element_types().into_iter().enumerate() {
+        for (i, ty) in self.element_types().iter().enumerate() {
             if i != 0 {
                 write!(f, [",", space()])?;
             }
@@ -2086,7 +2083,7 @@ impl<'a, 'b> FormatWrite<'a> for AstNode<'a, 'b, TSQualifiedName<'a>> {
 impl<'a, 'b> FormatWrite<'a> for AstNode<'a, 'b, TSTypeParameterInstantiation<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         write!(f, "<")?;
-        for (i, param) in self.params().into_iter().enumerate() {
+        for (i, param) in self.params().iter().enumerate() {
             if i != 0 {
                 write!(f, [",", space()])?;
             }
@@ -2256,7 +2253,7 @@ impl<'a, 'b> FormatWrite<'a> for AstNode<'a, 'b, TSInterfaceBody<'a>> {
         // let last_index = self.body.len().saturating_sub(1);
         let source_text = f.context().source_text();
         let mut joiner = f.join_nodes_with_soft_line();
-        for (index, sig) in self.body().into_iter().enumerate() {
+        for (index, sig) in self.body().iter().enumerate() {
             joiner.entry(sig.span(), source_text, sig);
         }
         joiner.finish()
@@ -2401,7 +2398,7 @@ impl<'a, 'b> Format<'a> for AstNode<'a, 'b, Vec<'a, TSInterfaceHeritage<'a>>> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         f.join_with(&soft_line_break_or_space())
             .entries(
-                FormatSeparatedIter::new(self.into_iter(), ",")
+                FormatSeparatedIter::new(self.iter(), ",")
                     .with_trailing_separator(TrailingSeparator::Disallowed),
             )
             .finish()
@@ -2640,9 +2637,7 @@ impl<'a, 'b> FormatWrite<'a> for AstNode<'a, 'b, TSMappedType<'a>> {
 impl<'a, 'b> FormatWrite<'a> for AstNode<'a, 'b, TSTemplateLiteralType<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         write!(f, "`")?;
-        for ((index, quasi), types) in
-            self.quasis().into_iter().enumerate().zip(self.types().into_iter())
-        {
+        for ((index, quasi), types) in self.quasis().iter().enumerate().zip(self.types().iter()) {
             if index != 0 {
                 write!(f, ["${", types, "}"])?;
             }

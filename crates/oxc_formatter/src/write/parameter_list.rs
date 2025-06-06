@@ -39,7 +39,7 @@ impl<'a, 'b, 'c> From<&'c AstNode<'a, 'b, FormalParameters<'a>>>
     for FormalParametersIter<'a, 'b, 'c>
 {
     fn from(value: &'c AstNode<'a, 'b, FormalParameters<'a>>) -> Self {
-        Self { params: value.items().into_iter(), rest: value.rest() }
+        Self { params: value.items().iter(), rest: value.rest() }
     }
 }
 
@@ -143,7 +143,7 @@ impl<'a> Format<'a> for ParameterList<'a, '_, '_> {
             Some(ParameterLayout::Hug) => {
                 let mut join = f.join_with(space());
                 join.entries(
-                    FormatSeparatedIter::new(self.list.items().into_iter(), ",")
+                    FormatSeparatedIter::new(self.list.items().iter(), ",")
                         .with_trailing_separator(TrailingSeparator::Omit),
                 );
                 join.finish()

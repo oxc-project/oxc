@@ -24,7 +24,7 @@ pub fn write_array_node<'a, 'b>(
     let mut join = f.join_nodes_with_soft_line();
     let last_index = node.len().saturating_sub(1);
 
-    for (index, element) in node.into_iter().enumerate() {
+    for (index, element) in node.iter().enumerate() {
         let separator_mode = match element.as_ref() {
             ArrayExpressionElement::Elision(_) => TrailingSeparatorMode::Force,
             _ => TrailingSeparatorMode::Auto,

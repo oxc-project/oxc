@@ -74,7 +74,7 @@ impl<'a, 'b> Format<'a> for AstNode<'a, 'b, Vec<'a, Argument<'a>>> {
                     format_with(|f| {
                         f.join_with(space())
                             .entries(
-                                FormatSeparatedIter::new(self.into_iter(), ",")
+                                FormatSeparatedIter::new(self.iter(), ",")
                                     .with_trailing_separator(TrailingSeparator::Omit),
                             )
                             .finish()
@@ -88,7 +88,7 @@ impl<'a, 'b> Format<'a> for AstNode<'a, 'b, Vec<'a, Argument<'a>>> {
         let mut has_empty_line = false;
 
         let arguments: std::vec::Vec<_> = self
-            .into_iter()
+            .iter()
             .enumerate()
             .map(|(index, element)| {
                 let leading_lines = get_lines_before(element.span());
