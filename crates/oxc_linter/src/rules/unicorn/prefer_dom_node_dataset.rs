@@ -24,7 +24,7 @@ fn get(span: Span, method_name: &str) -> OxcDiagnostic {
 fn has(span: Span, method_name: &str) -> OxcDiagnostic {
     OxcDiagnostic::warn("Prefer using `dataset` over `hasAttribute`.")
         .with_help(format!(
-            "Check the `dataset` object directly: `Object.hasOwn(element.dataset, '{method_name}')"
+            "Check the `dataset` object directly: `Object.hasOwn(element.dataset, '{method_name}')`"
         ))
         .with_label(span)
 }
@@ -32,7 +32,7 @@ fn has(span: Span, method_name: &str) -> OxcDiagnostic {
 fn remove(span: Span, method_name: &str) -> OxcDiagnostic {
     OxcDiagnostic::warn("Prefer using `dataset` over `removeAttribute`.")
         .with_help(format!(
-            "Access the `.dataset` object directly: `delete element.dataset.{method_name};"
+            "Access the `.dataset` object directly: `delete element.dataset.{method_name};`"
         ))
         .with_label(span)
 }
