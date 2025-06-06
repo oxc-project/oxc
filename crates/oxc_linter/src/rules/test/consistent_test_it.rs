@@ -1,4 +1,4 @@
-use std::{borrow::Cow, str::FromStr};
+use std::{borrow::Cow, marker::PhantomData, str::FromStr};
 
 use oxc_ast::{AstKind, ast::Expression};
 use oxc_diagnostics::OxcDiagnostic;
@@ -10,6 +10,7 @@ use rustc_hash::FxHashMap;
 use crate::{
     context::LintContext,
     rule::Rule,
+    rules::TestFramework,
     utils::{
         JestFnKind, JestGeneralFnKind, ParsedJestFnCallNew, PossibleJestNode,
         collect_possible_jest_call_node, parse_jest_fn_call,
@@ -69,8 +70,14 @@ impl std::str::FromStr for TestCaseName {
     }
 }
 
-#[derive(Debug, Default, Clone)]
-pub struct ConsistentTestIt(Box<ConsistentTestItConfig>);
+#[derive(Debug, Clone)]
+pub struct ConsistentTestIt<F: TestFramework>(PhantomData<F>, Box<ConsistentTestItConfig>);
+
+impl<F: TestFramework> Default for ConsistentTestIt<F> {
+    fn default() -> Self {
+        Self(PhantomData, Box::default())
+    }
+}
 
 #[derive(Debug, Clone)]
 pub struct ConsistentTestItConfig {
@@ -78,11 +85,11 @@ pub struct ConsistentTestItConfig {
     within_fn: TestCaseName,
 }
 
-impl std::ops::Deref for ConsistentTestIt {
+impl<F: TestFramework> std::ops::Deref for ConsistentTestIt<F> {
     type Target = ConsistentTestItConfig;
 
     fn deref(&self) -> &Self::Target {
-        &self.0
+        &self.1
     }
 }
 
@@ -173,12 +180,12 @@ declare_oxc_lint!(
     /// }
     /// ```
     ConsistentTestIt,
-    jest,
+    test,
     style,
     fix
 );
 
-impl Rule for ConsistentTestIt {
+impl<F: TestFramework> Rule for ConsistentTestIt<F> {
     fn from_configuration(value: serde_json::Value) -> Self {
         let config = value.get(0);
 
@@ -200,7 +207,7 @@ impl Rule for ConsistentTestIt {
                     .unwrap_or(TestCaseName::IT),
             );
 
-        Self(Box::new(ConsistentTestItConfig { within_describe, within_fn }))
+        Self(PhantomData, Box::new(ConsistentTestItConfig { within_describe, within_fn }))
     }
 
     fn run_once(&self, ctx: &LintContext) {
@@ -209,121 +216,116 @@ impl Rule for ConsistentTestIt {
         possible_jest_nodes.sort_by_key(|n| n.node.id());
 
         for possible_jest_node in &possible_jest_nodes {
-            self.run(&mut describe_nesting_hash, possible_jest_node, ctx);
+            run(&self.1, &mut describe_nesting_hash, possible_jest_node, ctx);
         }
     }
 }
 
-impl ConsistentTestIt {
-    fn run<'a>(
-        &self,
-        describe_nesting_hash: &mut FxHashMap<ScopeId, i32>,
-        possible_jest_node: &PossibleJestNode<'a, '_>,
-        ctx: &LintContext<'a>,
-    ) {
-        let node = possible_jest_node.node;
-        let AstKind::CallExpression(call_expr) = node.kind() else {
-            return;
-        };
-        let Some(ParsedJestFnCallNew::GeneralJest(jest_fn_call)) =
-            parse_jest_fn_call(call_expr, possible_jest_node, ctx)
-        else {
-            return;
-        };
+fn run<'a>(
+    config: &ConsistentTestItConfig,
+    describe_nesting_hash: &mut FxHashMap<ScopeId, i32>,
+    possible_jest_node: &PossibleJestNode<'a, '_>,
+    ctx: &LintContext<'a>,
+) {
+    let node = possible_jest_node.node;
+    let AstKind::CallExpression(call_expr) = node.kind() else {
+        return;
+    };
+    let Some(ParsedJestFnCallNew::GeneralJest(jest_fn_call)) =
+        parse_jest_fn_call(call_expr, possible_jest_node, ctx)
+    else {
+        return;
+    };
 
-        if matches!(jest_fn_call.kind, JestFnKind::General(JestGeneralFnKind::Describe)) {
-            let scope_id = node.scope_id();
-            let current_count = describe_nesting_hash.get(&scope_id).unwrap_or(&0);
-            describe_nesting_hash.insert(scope_id, *current_count + 1);
-            return;
-        }
+    if matches!(jest_fn_call.kind, JestFnKind::General(JestGeneralFnKind::Describe)) {
+        let scope_id = node.scope_id();
+        let current_count = describe_nesting_hash.get(&scope_id).unwrap_or(&0);
+        describe_nesting_hash.insert(scope_id, *current_count + 1);
+        return;
+    }
 
-        let is_test = matches!(jest_fn_call.kind, JestFnKind::General(JestGeneralFnKind::Test));
-        let fn_to_str = self.within_fn.as_str();
+    let is_test = matches!(jest_fn_call.kind, JestFnKind::General(JestGeneralFnKind::Test));
+    let fn_to_str = config.within_fn.as_str();
 
-        if is_test && describe_nesting_hash.is_empty() && !jest_fn_call.name.ends_with(fn_to_str) {
-            let opposite_test_keyword = Self::get_opposite_test_case(self.within_fn);
-            if let Some((span, prefer_test_name)) = Self::get_prefer_test_name_and_span(
-                call_expr.callee.get_inner_expression(),
-                &jest_fn_call.name,
-                fn_to_str,
-            ) {
-                ctx.diagnostic_with_fix(
-                    consistent_method(fn_to_str, opposite_test_keyword, span),
-                    |fixer| fixer.replace(span, prefer_test_name),
-                );
-            }
-        }
-
-        let describe_to_str = self.within_describe.as_str();
-
-        if is_test
-            && !describe_nesting_hash.is_empty()
-            && !jest_fn_call.name.ends_with(describe_to_str)
-        {
-            let opposite_test_keyword = Self::get_opposite_test_case(self.within_describe);
-            if let Some((span, prefer_test_name)) = Self::get_prefer_test_name_and_span(
-                call_expr.callee.get_inner_expression(),
-                &jest_fn_call.name,
-                describe_to_str,
-            ) {
-                ctx.diagnostic_with_fix(
-                    consistent_method_within_describe(describe_to_str, opposite_test_keyword, span),
-                    |fixer| fixer.replace(span, prefer_test_name),
-                );
-            }
+    if is_test && describe_nesting_hash.is_empty() && !jest_fn_call.name.ends_with(fn_to_str) {
+        let opposite_test_keyword = get_opposite_test_case(config.within_fn);
+        if let Some((span, prefer_test_name)) = get_prefer_test_name_and_span(
+            call_expr.callee.get_inner_expression(),
+            &jest_fn_call.name,
+            fn_to_str,
+        ) {
+            ctx.diagnostic_with_fix(
+                consistent_method(fn_to_str, opposite_test_keyword, span),
+                |fixer| fixer.replace(span, prefer_test_name),
+            );
         }
     }
 
-    fn get_opposite_test_case(test_case_name: TestCaseName) -> &'static str {
-        if matches!(test_case_name, TestCaseName::Test) {
-            TestCaseName::IT.as_str()
-        } else {
-            TestCaseName::Test.as_str()
+    let describe_to_str = config.within_describe.as_str();
+
+    if is_test && !describe_nesting_hash.is_empty() && !jest_fn_call.name.ends_with(describe_to_str)
+    {
+        let opposite_test_keyword = get_opposite_test_case(config.within_describe);
+        if let Some((span, prefer_test_name)) = get_prefer_test_name_and_span(
+            call_expr.callee.get_inner_expression(),
+            &jest_fn_call.name,
+            describe_to_str,
+        ) {
+            ctx.diagnostic_with_fix(
+                consistent_method_within_describe(describe_to_str, opposite_test_keyword, span),
+                |fixer| fixer.replace(span, prefer_test_name),
+            );
         }
     }
+}
 
-    fn get_prefer_test_name_and_span<'s>(
-        expr: &Expression,
-        test_name: &str,
-        fix_jest_name: &'s str,
-    ) -> Option<(Span, Cow<'s, str>)> {
-        match expr {
-            Expression::Identifier(ident) => {
-                if ident.name.eq("fit") {
-                    return Some((ident.span, Cow::Borrowed("test.only")));
-                }
+fn get_opposite_test_case(test_case_name: TestCaseName) -> &'static str {
+    if matches!(test_case_name, TestCaseName::Test) {
+        TestCaseName::IT.as_str()
+    } else {
+        TestCaseName::Test.as_str()
+    }
+}
 
-                let prefer_test_name = match test_name.chars().next() {
-                    Some('x') => Cow::Owned(format!("x{fix_jest_name}")),
-                    Some('f') => Cow::Owned(format!("f{fix_jest_name}")),
-                    _ => Cow::Borrowed(fix_jest_name),
-                };
-                Some((ident.span(), prefer_test_name))
+fn get_prefer_test_name_and_span<'s>(
+    expr: &Expression,
+    test_name: &str,
+    fix_jest_name: &'s str,
+) -> Option<(Span, Cow<'s, str>)> {
+    match expr {
+        Expression::Identifier(ident) => {
+            if ident.name.eq("fit") {
+                return Some((ident.span, Cow::Borrowed("test.only")));
             }
-            Expression::StaticMemberExpression(expr) => {
-                Self::get_prefer_test_name_and_span(&expr.object, test_name, fix_jest_name)
-            }
-            Expression::CallExpression(call_expr) => Self::get_prefer_test_name_and_span(
-                call_expr.callee.get_inner_expression(),
-                test_name,
-                fix_jest_name,
-            ),
-            Expression::TaggedTemplateExpression(expr) => Self::get_prefer_test_name_and_span(
-                expr.tag.get_inner_expression(),
-                test_name,
-                fix_jest_name,
-            ),
-            _ => None,
+
+            let prefer_test_name = match test_name.chars().next() {
+                Some('x') => Cow::Owned(format!("x{fix_jest_name}")),
+                Some('f') => Cow::Owned(format!("f{fix_jest_name}")),
+                _ => Cow::Borrowed(fix_jest_name),
+            };
+            Some((ident.span(), prefer_test_name))
         }
+        Expression::StaticMemberExpression(expr) => {
+            get_prefer_test_name_and_span(&expr.object, test_name, fix_jest_name)
+        }
+        Expression::CallExpression(call_expr) => get_prefer_test_name_and_span(
+            call_expr.callee.get_inner_expression(),
+            test_name,
+            fix_jest_name,
+        ),
+        Expression::TaggedTemplateExpression(expr) => {
+            get_prefer_test_name_and_span(expr.tag.get_inner_expression(), test_name, fix_jest_name)
+        }
+        _ => None,
     }
 }
 
 #[test]
 fn test() {
+    use crate::rules::{TestFrameworkJest, TestFrameworkVitest};
     use crate::tester::Tester;
 
-    let mut pass = vec![
+    let pass = vec![
         // consistent-test-it with fn=test
         ("test(\"foo\")", Some(serde_json::json!([{ "fn": "test" }]))),
         ("test.only(\"foo\")", Some(serde_json::json!([{ "fn": "test" }]))),
@@ -400,7 +402,7 @@ fn test() {
         ),
     ];
 
-    let mut fail = vec![
+    let fail = vec![
         // consistent-test-it with fn=test
         ("it(\"foo\")", Some(serde_json::json!([{ "fn": "test" }]))),
         (
@@ -570,7 +572,7 @@ fn test() {
         ),
     ];
 
-    let mut fix = vec![
+    let fix = vec![
         // consistent-test-it with fn=test
         ("it(\"foo\")", "test(\"foo\")"),
         (
@@ -915,13 +917,23 @@ fn test() {
         // ),
     ];
 
-    pass.extend(pass_vitest);
-    fail.extend(fail_vitest);
-    fix.extend(fix_vitest);
+    Tester::new(
+        ConsistentTestIt::<TestFrameworkJest>::NAME,
+        ConsistentTestIt::<TestFrameworkJest>::PLUGIN,
+        pass,
+        fail,
+    )
+    .expect_fix(fix)
+    .with_jest_plugin(true)
+    .test_and_snapshot();
 
-    Tester::new(ConsistentTestIt::NAME, ConsistentTestIt::PLUGIN, pass, fail)
-        .with_jest_plugin(true)
-        .with_vitest_plugin(true)
-        .expect_fix(fix)
-        .test_and_snapshot();
+    Tester::new(
+        ConsistentTestIt::<TestFrameworkVitest>::NAME,
+        ConsistentTestIt::<TestFrameworkVitest>::PLUGIN,
+        pass_vitest,
+        fail_vitest,
+    )
+    .expect_fix(fix_vitest)
+    .with_vitest_plugin(true)
+    .test_and_snapshot();
 }

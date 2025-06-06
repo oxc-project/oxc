@@ -1,9 +1,11 @@
+use std::marker::PhantomData;
+
 use lazy_regex::{Lazy, Regex, lazy_regex};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
-use crate::{context::LintContext, rule::Rule};
+use crate::{context::LintContext, rule::Rule, rules::TestFramework};
 
 fn no_commented_out_tests_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Some tests seem to be commented")
@@ -11,8 +13,14 @@ fn no_commented_out_tests_diagnostic(span: Span) -> OxcDiagnostic {
         .with_label(span)
 }
 
-#[derive(Debug, Default, Clone)]
-pub struct NoCommentedOutTests;
+#[derive(Debug, Clone)]
+pub struct NoCommentedOutTests<F: TestFramework>(PhantomData<F>);
+
+impl<F: TestFramework> Default for NoCommentedOutTests<F> {
+    fn default() -> Self {
+        Self(PhantomData)
+    }
+}
 
 declare_oxc_lint!(
     /// ### What it does
@@ -49,7 +57,7 @@ declare_oxc_lint!(
     /// }
     /// ```
     NoCommentedOutTests,
-    jest,
+    test,
     suspicious
 );
 
@@ -57,7 +65,7 @@ declare_oxc_lint!(
 static RE: Lazy<Regex> =
     lazy_regex!(r#"(?mu)^\s*[xf]?(test|it|describe)(\.\w+|\[['"]\w+['"]\])?\s*\("#);
 
-impl Rule for NoCommentedOutTests {
+impl<F: TestFramework> Rule for NoCommentedOutTests<F> {
     fn run_once(&self, ctx: &LintContext) {
         let comments = ctx.comments();
         let commented_tests = comments.iter().filter_map(|comment| {
@@ -72,9 +80,10 @@ impl Rule for NoCommentedOutTests {
 
 #[test]
 fn test() {
+    use crate::rules::{TestFrameworkJest, TestFrameworkVitest};
     use crate::tester::Tester;
 
-    let mut pass = vec![
+    let pass = vec![
         ("// foo('bar', function () {})", None),
         ("describe('foo', function () {})", None),
         ("it('foo', function () {})", None),
@@ -125,7 +134,7 @@ fn test() {
         ),
     ];
 
-    let mut fail = vec![
+    let fail = vec![
         ("// fdescribe('foo', function () {})", None),
         ("// describe['skip']('foo', function () {})", None),
         ("// describe['skip']('foo', function () {})", None),
@@ -210,11 +219,21 @@ fn test() {
         "#,
     ];
 
-    pass.extend(pass_vitest.into_iter().map(|x| (x, None)));
-    fail.extend(fail_vitest.into_iter().map(|x| (x, None)));
+    Tester::new(
+        NoCommentedOutTests::<TestFrameworkJest>::NAME,
+        NoCommentedOutTests::<TestFrameworkJest>::PLUGIN,
+        pass,
+        fail,
+    )
+    .with_jest_plugin(true)
+    .test_and_snapshot();
 
-    Tester::new(NoCommentedOutTests::NAME, NoCommentedOutTests::PLUGIN, pass, fail)
-        .with_jest_plugin(true)
-        .with_vitest_plugin(true)
-        .test_and_snapshot();
+    Tester::new(
+        NoCommentedOutTests::<TestFrameworkVitest>::NAME,
+        NoCommentedOutTests::<TestFrameworkVitest>::PLUGIN,
+        pass_vitest,
+        fail_vitest,
+    )
+    .with_vitest_plugin(true)
+    .test_and_snapshot();
 }

@@ -1,3 +1,5 @@
+use std::marker::PhantomData;
+
 use oxc_ast::{AstKind, ast::Expression};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_index::Idx;
@@ -8,6 +10,7 @@ use rustc_hash::FxHashMap;
 use crate::{
     context::LintContext,
     rule::Rule,
+    rules::TestFramework,
     utils::{PossibleJestNode, collect_possible_jest_call_node},
 };
 
@@ -18,13 +21,14 @@ fn exceeded_max_assertion(count: usize, max: usize, span: Span) -> OxcDiagnostic
 }
 
 #[derive(Debug, Clone)]
-pub struct MaxExpects {
+pub struct MaxExpects<F: TestFramework> {
+    framework: PhantomData<F>,
     pub max: usize,
 }
 
-impl Default for MaxExpects {
+impl<F: TestFramework> Default for MaxExpects<F> {
     fn default() -> Self {
-        Self { max: 5 }
+        Self { framework: PhantomData, max: 5 }
     }
 }
 
@@ -63,11 +67,11 @@ declare_oxc_lint!(
     /// });
     /// ```
     MaxExpects,
-    jest,
+    test,
     style,
 );
 
-impl Rule for MaxExpects {
+impl<F: TestFramework> Rule for MaxExpects<F> {
     fn from_configuration(value: serde_json::Value) -> Self {
         let max = value
             .get(0)
@@ -76,54 +80,53 @@ impl Rule for MaxExpects {
             .and_then(serde_json::Number::as_u64)
             .map_or(5, |v| usize::try_from(v).unwrap_or(5));
 
-        Self { max }
+        Self { framework: PhantomData, max }
     }
 
     fn run_once(&self, ctx: &LintContext) {
         let mut count_map: FxHashMap<usize, usize> = FxHashMap::default();
 
         for possible_jest_node in &collect_possible_jest_call_node(ctx) {
-            self.run(possible_jest_node, &mut count_map, ctx);
+            run(self.max, possible_jest_node, &mut count_map, ctx);
         }
     }
 }
 
-impl MaxExpects {
-    fn run<'a>(
-        &self,
-        jest_node: &PossibleJestNode<'a, '_>,
-        count_map: &mut FxHashMap<usize, usize>,
-        ctx: &LintContext<'a>,
-    ) {
-        let node = jest_node.node;
-        let AstKind::CallExpression(call_expr) = node.kind() else {
-            return;
-        };
-        let Expression::Identifier(ident) = &call_expr.callee else {
-            return;
-        };
+fn run<'a>(
+    max: usize,
+    jest_node: &PossibleJestNode<'a, '_>,
+    count_map: &mut FxHashMap<usize, usize>,
+    ctx: &LintContext<'a>,
+) {
+    let node = jest_node.node;
+    let AstKind::CallExpression(call_expr) = node.kind() else {
+        return;
+    };
+    let Expression::Identifier(ident) = &call_expr.callee else {
+        return;
+    };
 
-        if ident.name == "expect" {
-            let position = node.scope_id().index();
+    if ident.name == "expect" {
+        let position = node.scope_id().index();
 
-            if let Some(count) = count_map.get(&position) {
-                if count > &self.max {
-                    ctx.diagnostic(exceeded_max_assertion(*count, self.max, ident.span));
-                } else {
-                    count_map.insert(position, count + 1);
-                }
+        if let Some(count) = count_map.get(&position) {
+            if *count > max {
+                ctx.diagnostic(exceeded_max_assertion(*count, max, ident.span));
             } else {
-                count_map.insert(position, 2);
+                count_map.insert(position, count + 1);
             }
+        } else {
+            count_map.insert(position, 2);
         }
     }
 }
 
 #[test]
 fn test() {
+    use crate::rules::{TestFrameworkJest, TestFrameworkVitest};
     use crate::tester::Tester;
 
-    let mut pass = vec![
+    let pass = vec![
         ("test('should pass')", None),
         ("test('should pass', () => {})", None),
         ("test.skip('should pass', () => {})", None),
@@ -360,7 +363,7 @@ fn test() {
         ),
     ];
 
-    let mut fail = vec![
+    let fail = vec![
         (
             "
                 test('should not pass', function () {
@@ -552,10 +555,21 @@ fn test() {
         ),
     ];
 
-    pass.extend(pass_vitest);
-    fail.extend(fail_vitest);
+    Tester::new(
+        MaxExpects::<TestFrameworkJest>::NAME,
+        MaxExpects::<TestFrameworkJest>::PLUGIN,
+        pass,
+        fail,
+    )
+    .with_jest_plugin(true)
+    .test_and_snapshot();
 
-    Tester::new(MaxExpects::NAME, MaxExpects::PLUGIN, pass, fail)
-        .with_jest_plugin(true)
-        .test_and_snapshot();
+    Tester::new(
+        MaxExpects::<TestFrameworkVitest>::NAME,
+        MaxExpects::<TestFrameworkVitest>::PLUGIN,
+        pass_vitest,
+        fail_vitest,
+    )
+    .with_vitest_plugin(true)
+    .test_and_snapshot();
 }

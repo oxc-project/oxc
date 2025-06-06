@@ -1,3 +1,5 @@
+use std::marker::PhantomData;
+
 use oxc_ast::{AstKind, ast::Expression};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -6,6 +8,7 @@ use oxc_span::{CompactStr, GetSpan, Span};
 use crate::{
     context::LintContext,
     rule::Rule,
+    rules::TestFramework,
     utils::{JestFnKind, JestGeneralFnKind, PossibleJestNode, is_type_of_jest_fn_call},
 };
 
@@ -13,19 +16,25 @@ fn unexpected_hook_diagonsitc(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Do not use setup or teardown hooks").with_label(span)
 }
 
-#[derive(Debug, Default, Clone)]
-pub struct NoHooks(Box<NoHooksConfig>);
+#[derive(Debug, Clone)]
+pub struct NoHooks<F: TestFramework>(PhantomData<F>, Box<NoHooksConfig>);
+
+impl<F: TestFramework> Default for NoHooks<F> {
+    fn default() -> Self {
+        Self(PhantomData, Box::default())
+    }
+}
 
 #[derive(Debug, Default, Clone)]
 pub struct NoHooksConfig {
     allow: Vec<CompactStr>,
 }
 
-impl std::ops::Deref for NoHooks {
+impl<F: TestFramework> std::ops::Deref for NoHooks<F> {
     type Target = NoHooksConfig;
 
     fn deref(&self) -> &Self::Target {
-        &self.0
+        &self.1
     }
 }
 
@@ -79,11 +88,11 @@ declare_oxc_lint!(
     /// });
     /// ```
     NoHooks,
-    jest,
+    test,
     style,
 );
 
-impl Rule for NoHooks {
+impl<F: TestFramework> Rule for NoHooks<F> {
     fn from_configuration(value: serde_json::Value) -> Self {
         let allow = value
             .get(0)
@@ -92,20 +101,14 @@ impl Rule for NoHooks {
             .map(|v| v.iter().filter_map(serde_json::Value::as_str).map(CompactStr::from).collect())
             .unwrap_or_default();
 
-        Self(Box::new(NoHooksConfig { allow }))
+        Self(PhantomData, Box::new(NoHooksConfig { allow }))
     }
 
     fn run_on_jest_node<'a, 'c>(
         &self,
-        jest_node: &PossibleJestNode<'a, 'c>,
+        possible_jest_node: &PossibleJestNode<'a, 'c>,
         ctx: &'c LintContext<'a>,
     ) {
-        self.run(jest_node, ctx);
-    }
-}
-
-impl NoHooks {
-    fn run<'a>(&self, possible_jest_node: &PossibleJestNode<'a, '_>, ctx: &LintContext<'a>) {
         let node = possible_jest_node.node;
         let AstKind::CallExpression(call_expr) = node.kind() else {
             return;
@@ -130,9 +133,10 @@ impl NoHooks {
 
 #[test]
 fn test() {
+    use crate::rules::{TestFrameworkJest, TestFrameworkVitest};
     use crate::tester::Tester;
 
-    let mut pass = vec![
+    let pass = vec![
         ("test(\"foo\")", None),
         ("describe(\"foo\", () => { it(\"bar\") })", None),
         ("test(\"foo\", () => { expect(subject.beforeEach()).toBe(true) })", None),
@@ -143,7 +147,7 @@ fn test() {
         ("test(\"foo\")", Some(serde_json::json!([{ "allow": "undefined" }]))),
     ];
 
-    let mut fail = vec![
+    let fail = vec![
         ("beforeAll(() => {})", None),
         ("beforeEach(() => {})", None),
         ("afterAll(() => {})", None),
@@ -193,10 +197,21 @@ fn test() {
         ), // { "parserOptions": { "sourceType": "module" } }
     ];
 
-    pass.extend(pass_vitest);
-    fail.extend(fail_vitest);
+    Tester::new(
+        NoHooks::<TestFrameworkJest>::NAME,
+        NoHooks::<TestFrameworkJest>::PLUGIN,
+        pass,
+        fail,
+    )
+    .with_jest_plugin(true)
+    .test_and_snapshot();
 
-    Tester::new(NoHooks::NAME, NoHooks::PLUGIN, pass, fail)
-        .with_jest_plugin(true)
-        .test_and_snapshot();
+    Tester::new(
+        NoHooks::<TestFrameworkVitest>::NAME,
+        NoHooks::<TestFrameworkVitest>::PLUGIN,
+        pass_vitest,
+        fail_vitest,
+    )
+    .with_vitest_plugin(true)
+    .test_and_snapshot();
 }

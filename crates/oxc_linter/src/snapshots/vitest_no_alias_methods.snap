@@ -1,0 +1,23 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+  ⚠ eslint-plugin-vitest(no-alias-methods): Unexpected alias "toBeCalled"
+   ╭─[no_alias_methods.tsx:1:11]
+ 1 │ expect(a).toBeCalled()
+   ·           ──────────
+   ╰────
+  help: Replace "toBeCalled" with its canonical name of "toHaveBeenCalled"
+
+  ⚠ eslint-plugin-vitest(no-alias-methods): Unexpected alias "toBeCalledTimes"
+   ╭─[no_alias_methods.tsx:1:11]
+ 1 │ expect(a).toBeCalledTimes()
+   ·           ───────────────
+   ╰────
+  help: Replace "toBeCalledTimes" with its canonical name of "toHaveBeenCalledTimes"
+
+  ⚠ eslint-plugin-vitest(no-alias-methods): Unexpected alias "toThrowError"
+   ╭─[no_alias_methods.tsx:1:15]
+ 1 │ expect(a).not["toThrowError"]()
+   ·               ──────────────
+   ╰────
+  help: Replace "toThrowError" with its canonical name of "toThrow"

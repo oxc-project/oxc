@@ -20,20 +20,10 @@ pub use self::{
 };
 
 /// List of Jest rules that have Vitest equivalents.
-const VITEST_COMPATIBLE_JEST_RULES: [&str; 34] = [
-    "consistent-test-it",
-    "expect-expect",
-    "max-expects",
-    "max-nested-describe",
-    "no-alias-methods",
-    "no-commented-out-tests",
-    "no-conditional-expect",
-    "no-conditional-in-test",
+const VITEST_COMPATIBLE_JEST_RULES: [&str; 24] = [
     "no-disabled-tests",
     "no-duplicate-hooks",
     "no-focused-tests",
-    "no-hooks",
-    "no-identical-title",
     "no-interpolation-in-snapshots",
     "no-restricted-jest-methods",
     "no-restricted-matchers",

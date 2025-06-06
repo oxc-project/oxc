@@ -81,39 +81,3 @@ source: crates/oxc_linter/src/tester.rs
  5 │                 });
    ╰────
   help: Too many assertion calls (2) - maximum allowed is 1
-
-  ⚠ eslint-plugin-jest(max-expects): Enforces a maximum number assertion calls in a test body.
-   ╭─[max_expects.tsx:7:11]
- 6 │                    expect(true).toBeDefined();
- 7 │                    expect(true).toBeDefined();
-   ·                    ──────
- 8 │                  });
-   ╰────
-  help: Too many assertion calls (6) - maximum allowed is 5
-
-  ⚠ eslint-plugin-jest(max-expects): Enforces a maximum number assertion calls in a test body.
-   ╭─[max_expects.tsx:7:10]
- 6 │                   expect(true).toBeDefined();
- 7 │                   expect(true).toBeDefined();
-   ·                   ──────
- 8 │                 });
-   ╰────
-  help: Too many assertion calls (6) - maximum allowed is 5
-
-  ⚠ eslint-plugin-jest(max-expects): Enforces a maximum number assertion calls in a test body.
-    ╭─[max_expects.tsx:15:10]
- 14 │                   expect(true).toBeDefined();
- 15 │                   expect(true).toBeDefined();
-    ·                   ──────
- 16 │                 });
-    ╰────
-  help: Too many assertion calls (6) - maximum allowed is 5
-
-  ⚠ eslint-plugin-jest(max-expects): Enforces a maximum number assertion calls in a test body.
-   ╭─[max_expects.tsx:3:10]
- 2 │                   expect(true).toBeDefined();
- 3 │                   expect(true).toBeDefined();
-   ·                   ──────
- 4 │                    });
-   ╰────
-  help: Too many assertion calls (2) - maximum allowed is 1

@@ -1,3 +1,5 @@
+use std::marker::PhantomData;
+
 use oxc_ast::AstKind;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -6,6 +8,7 @@ use oxc_span::Span;
 use crate::{
     context::LintContext,
     rule::Rule,
+    rules::TestFramework,
     utils::{PossibleJestNode, parse_expect_jest_fn_call},
 };
 
@@ -15,8 +18,14 @@ fn no_alias_methods_diagnostic(name: &str, canonical_name: &str, span: Span) -> 
         .with_label(span)
 }
 
-#[derive(Debug, Default, Clone)]
-pub struct NoAliasMethods;
+#[derive(Debug, Clone)]
+pub struct NoAliasMethods<F: TestFramework>(PhantomData<F>);
+
+impl<F: TestFramework> Default for NoAliasMethods<F> {
+    fn default() -> Self {
+        Self(PhantomData)
+    }
+}
 
 declare_oxc_lint!(
     /// ### What it does
@@ -95,12 +104,12 @@ declare_oxc_lint!(
     /// expect(a)
     /// ```
     NoAliasMethods,
-    jest,
+    test,
     style,
     fix
 );
 
-impl Rule for NoAliasMethods {
+impl<F: TestFramework> Rule for NoAliasMethods<F> {
     fn run_on_jest_node<'a, 'c>(
         &self,
         jest_node: &PossibleJestNode<'a, 'c>,
@@ -196,9 +205,10 @@ impl BadAliasMethodName {
 
 #[test]
 fn test() {
+    use crate::rules::{TestFrameworkJest, TestFrameworkVitest};
     use crate::tester::Tester;
 
-    let mut pass = vec![
+    let pass = vec![
         ("expect(a).toHaveBeenCalled()", None),
         ("expect(a).toHaveBeenCalledTimes()", None),
         ("expect(a).toHaveBeenCalledWith()", None),
@@ -214,7 +224,7 @@ fn test() {
         ("expect(a);", None),
     ];
 
-    let mut fail = vec![
+    let fail = vec![
         ("expect(a).toBeCalled()", None),
         ("expect(a).toBeCalledTimes()", None),
         ("expect(a).toBeCalledWith()", None),
@@ -232,7 +242,7 @@ fn test() {
         ("expect(a).not['toThrowError']()", None),
     ];
 
-    let mut fix = vec![
+    let fix = vec![
         ("expect(a).toBeCalled()", "expect(a).toHaveBeenCalled()", None),
         ("expect(a).not['toThrowError']()", "expect(a).not['toThrow']()", None),
         ("expect(a).not[`toThrowError`]()", "expect(a).not[`toThrow`]()", None),
@@ -266,13 +276,23 @@ fn test() {
         ("expect(a).not['toThrowError']()", "expect(a).not['toThrow']()", None),
     ];
 
-    pass.extend(pass_vitest.into_iter().map(|x| (x, None)));
-    fail.extend(fail_vitest.into_iter().map(|x| (x, None)));
-    fix.extend(fix_vitest);
+    Tester::new(
+        NoAliasMethods::<TestFrameworkJest>::NAME,
+        NoAliasMethods::<TestFrameworkJest>::PLUGIN,
+        pass,
+        fail,
+    )
+    .with_jest_plugin(true)
+    .expect_fix(fix)
+    .test_and_snapshot();
 
-    Tester::new(NoAliasMethods::NAME, NoAliasMethods::PLUGIN, pass, fail)
-        .with_jest_plugin(true)
-        .with_vitest_plugin(true)
-        .expect_fix(fix)
-        .test_and_snapshot();
+    Tester::new(
+        NoAliasMethods::<TestFrameworkVitest>::NAME,
+        NoAliasMethods::<TestFrameworkVitest>::PLUGIN,
+        pass_vitest,
+        fail_vitest,
+    )
+    .with_vitest_plugin(true)
+    .expect_fix(fix_vitest)
+    .test_and_snapshot();
 }
