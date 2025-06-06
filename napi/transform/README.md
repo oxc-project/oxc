@@ -56,3 +56,7 @@ export function isolatedDeclaration(
   options?: IsolatedDeclarationsOptions,
 ): IsolatedDeclarationsResult;
 ```
+
+### Supports WASM
+
+See https://stackblitz.com/edit/oxc-transform for usage example.
