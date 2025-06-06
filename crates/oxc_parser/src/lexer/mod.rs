@@ -154,6 +154,14 @@ impl<'a> Lexer<'a> {
         self.token = checkpoint.token;
     }
 
+    pub fn lookahead_token<U>(&mut self, predicate: impl Fn(Token) -> U) -> U {
+        let checkpoint = self.checkpoint();
+        let token = self.next_token();
+        let answer = predicate(token);
+        self.rewind(checkpoint);
+        answer
+    }
+
     /// Set context
     pub fn set_context(&mut self, context: LexerContext) {
         self.context = context;

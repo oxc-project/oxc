@@ -719,9 +719,8 @@ impl<'a> ParserImpl<'a> {
             let mut question_dot = false;
             let is_property_access = if allow_optional_chain
                 && self.at(Kind::QuestionDot)
-                && self.lookahead(|p| {
-                    p.bump_any();
-                    let kind = p.cur_kind();
+                && self.lexer.lookahead_token(|token| {
+                    let kind = token.kind();
                     kind == Kind::LBrack
                         || kind.is_identifier_or_keyword()
                         || kind.is_template_start_of_tagged_template()

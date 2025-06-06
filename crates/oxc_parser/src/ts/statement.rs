@@ -126,7 +126,9 @@ impl<'a> ParserImpl<'a> {
         let params = self.parse_ts_type_parameters();
         self.expect(Kind::Eq);
 
-        let ty = if self.at(Kind::Intrinsic) && !self.lookahead(Self::is_next_token_dot) {
+        let ty = if self.at(Kind::Intrinsic)
+            && !self.lexer.lookahead_token(|token| token.kind() == Kind::Dot)
+        {
             let span = self.start_span();
             self.bump_any();
             self.ast.ts_type_intrinsic_keyword(self.end_span(span))
@@ -144,11 +146,6 @@ impl<'a> ParserImpl<'a> {
         );
 
         self.ast.declaration_ts_type_alias(span, id, params, ty, modifiers.contains_declare())
-    }
-
-    fn is_next_token_dot(&mut self) -> bool {
-        self.bump_any();
-        self.at(Kind::Dot)
     }
 
     /* ---------------------  Interface  ------------------------ */

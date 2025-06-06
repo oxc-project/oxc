@@ -90,12 +90,8 @@ impl<'a> ParserImpl<'a> {
             return true;
         }
         self.at(Kind::New)
-            || (self.at(Kind::Abstract) && self.lookahead(Self::is_next_token_new_keyword))
-    }
-
-    fn is_next_token_new_keyword(&mut self) -> bool {
-        self.bump_any();
-        self.at(Kind::New)
+            || (self.at(Kind::Abstract)
+                && self.lexer.lookahead_token(|token| token.kind() == Kind::New))
     }
 
     fn is_unambiguously_start_of_function_type(&mut self) -> bool {
@@ -438,11 +434,6 @@ impl<'a> ParserImpl<'a> {
         self.cur_kind().is_identifier_name() && !self.cur_token().is_on_new_line()
     }
 
-    fn is_next_token_number(&mut self) -> bool {
-        self.bump_any();
-        self.cur_kind().is_number()
-    }
-
     fn parse_keyword_and_no_dot(&mut self) -> TSType<'a> {
         let span = self.start_span();
         let ty = match self.cur_kind() {
@@ -536,7 +527,10 @@ impl<'a> ParserImpl<'a> {
             | Kind::NoSubstitutionTemplate
             | Kind::TemplateHead => true,
             Kind::Function => !in_start_of_parameter,
-            Kind::Minus => !in_start_of_parameter && self.lookahead(Self::is_next_token_number),
+            Kind::Minus => {
+                !in_start_of_parameter
+                    && self.lexer.lookahead_token(|token| token.kind().is_number())
+            }
             Kind::LParen => {
                 !in_start_of_parameter
                     && self.lookahead(Self::is_start_of_parenthesized_or_function_type)
@@ -1401,13 +1395,10 @@ impl<'a> ParserImpl<'a> {
             | Kind::New
             | Kind::Slash
             | Kind::SlashEq => true,
-            Kind::Import => self.lookahead(Self::is_next_token_paren_less_than_or_dot),
+            Kind::Import => self.lexer.lookahead_token(|token| {
+                matches!(token.kind(), Kind::LParen | Kind::LAngle | Kind::Dot)
+            }),
             _ => false,
         }
-    }
-
-    fn is_next_token_paren_less_than_or_dot(&mut self) -> bool {
-        self.bump_any();
-        matches!(self.cur_kind(), Kind::LParen | Kind::LAngle | Kind::Dot)
     }
 }

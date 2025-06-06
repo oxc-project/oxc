@@ -212,7 +212,8 @@ impl<'a> ParserImpl<'a> {
         );
 
         // static { block }
-        if self.at(Kind::Static) && self.lookahead(Self::next_token_is_open_brace) {
+        if self.at(Kind::Static) && self.lexer.lookahead_token(|token| token.kind() == Kind::LCurly)
+        {
             return self.parse_class_static_block(span);
         }
 
