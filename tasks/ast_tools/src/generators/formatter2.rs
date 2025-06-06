@@ -49,7 +49,7 @@ impl Generator for FormatterFormatGenerator2 {
 
         let ast_nodes_variants = ast_nodes_names.iter().map(|(name, lifetime)| {
             quote! {
-                #name(AstNode<'a, 'b, #name #lifetime>),
+                #name(&'a AstNode<'a, 'b, #name #lifetime>),
             }
         });
 
@@ -72,6 +72,8 @@ impl Generator for FormatterFormatGenerator2 {
         let output = quote! {
             #![allow(clippy::undocumented_unsafe_blocks)]
 
+            use std::mem::transmute;
+            ///@@line_break
             use oxc_ast::{AstKind, ast::*};
             use oxc_allocator::{Allocator, Vec};
             use oxc_span::GetSpan;
@@ -190,7 +192,7 @@ impl Generator for FormatterFormatGenerator2 {
             ///@@line_break
             pub struct AstNodeIterator<'a, 'b, T> {
                 inner: std::slice::Iter<'b, T>,
-                parent: &'b AstNodes<'a, 'b>,
+                parent: &'a AstNodes<'a, 'b>,
                 allocator: &'a Allocator,
             }
 
@@ -199,9 +201,8 @@ impl Generator for FormatterFormatGenerator2 {
                 type Item = &'a AstNode<'a, 'b, T>;
                 fn next(&mut self) -> Option<Self::Item> {
                     let allocator = self.allocator;
-                    let parent = self.parent;
                     self.allocator
-                        .alloc(self.inner.next().map(|inner| AstNode { parent, inner, allocator }))
+                        .alloc(self.inner.next().map(|inner| AstNode { parent: self.parent, inner, allocator }))
                         .as_ref()
                 }
             }
@@ -211,8 +212,7 @@ impl Generator for FormatterFormatGenerator2 {
                 type Item = &'a AstNode<'a, 'b, T>;
                 type IntoIter = AstNodeIterator<'a, 'b, T>;
                 fn into_iter(self) -> Self::IntoIter {
-                    let parent = self.parent;
-                    AstNodeIterator::<T> { inner: self.inner.iter(), parent, allocator: self.allocator }
+                    AstNodeIterator::<T> { inner: self.inner.iter(), parent: self.parent, allocator: self.allocator }
                 }
             }
 
@@ -280,11 +280,7 @@ fn implementation(type_def: &TypeDef, schema: &Schema) -> TokenStream {
 
             let parent = if has_kind {
                 quote! {
-                    self.allocator.alloc(AstNodes::#struct_name(AstNode {
-                        inner: self.inner,
-                        parent: self.parent,
-                        allocator: self.allocator,
-                    }))
+                    self.allocator.alloc(AstNodes::#struct_name(unsafe { transmute(self) }))
                 }
             } else {
                 quote! { self.parent }
@@ -370,11 +366,7 @@ fn implementation(type_def: &TypeDef, schema: &Schema) -> TokenStream {
 
     let parent = if enum_def.kind.has_kind {
         quote! {
-            let parent = self.allocator.alloc(AstNodes::#enum_ident(AstNode {
-                inner: self.inner,
-                parent: self.parent,
-                allocator: self.allocator,
-            }))
+            let parent = self.allocator.alloc(AstNodes::#enum_ident(unsafe { transmute(self) }))
         }
     } else {
         quote! { let parent = self.parent }
@@ -395,11 +387,11 @@ fn implementation(type_def: &TypeDef, schema: &Schema) -> TokenStream {
         };
         let implementation = if has_kind(&field_type, schema) {
             quote! {
-                AstNodes::#node_type(AstNode {
+                AstNodes::#node_type(self.allocator.alloc(AstNode {
                     inner: #inner,
                     parent,
                     allocator: self.allocator,
-                })
+                }))
             }
         } else {
             quote! {
@@ -429,11 +421,11 @@ fn implementation(type_def: &TypeDef, schema: &Schema) -> TokenStream {
 
         let implementation = if inherited_enum.kind.has_kind {
             quote! {
-                AstNodes::#inherited_enum_inner_type(AstNode {
+                AstNodes::#inherited_enum_inner_type(self.allocator.alloc(AstNode {
                     inner: it.#to_fn_ident(),
                     parent,
                     allocator: self.allocator,
-                })
+                }))
             }
         } else {
             quote! {
