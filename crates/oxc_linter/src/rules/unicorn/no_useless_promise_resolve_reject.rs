@@ -815,11 +815,11 @@ fn test() {
         (r"async () => Promise.reject(...bar);", None),
         // Yield not in an ExpressionStatement
         (
-            r"#
+            r"
         async function * foo() {
             const baz = yield Promise.resolve(bar);
         }
-        #",
+        ",
             None,
         ),
         (

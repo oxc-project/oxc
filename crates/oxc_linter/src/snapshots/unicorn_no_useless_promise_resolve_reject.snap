@@ -269,14 +269,14 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Wrapping the error in `Promise.reject` is needlessly verbose. All errors thrown in async functions are already wrapped in a `Promise`.
 
-  × Invalid Character `
-  │ `
-   ╭─[no_useless_promise_resolve_reject.tsx:1:2]
- 1 │ #
-   ·  ─
+  ⚠ eslint-plugin-unicorn(no-useless-promise-resolve-reject): Prefer `yield value` over `yield Promise.resolve(value)`.
+   ╭─[no_useless_promise_resolve_reject.tsx:3:31]
  2 │         async function * foo() {
  3 │             const baz = yield Promise.resolve(bar);
+   ·                               ────────────────────
+ 4 │         }
    ╰────
+  help: Wrapping the return value in `Promise.Resolve` is needlessly verbose. All return values in async functions are already wrapped in a `Promise`.
 
   ⚠ eslint-plugin-unicorn(no-useless-promise-resolve-reject): Prefer `throw error` over `yield Promise.reject(error)`.
    ╭─[no_useless_promise_resolve_reject.tsx:3:31]
