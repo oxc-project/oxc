@@ -210,7 +210,8 @@ impl<'a> ParserImpl<'a> {
             // If the default specifiers name was `type`, and it was not a type import
             // then skip the `from` specifier expect. This is specifically to support an import
             // like: `import type from 'source'`
-            if import_kind == ImportOrExportKind::Value
+            if self.is_ts
+                && import_kind == ImportOrExportKind::Value
                 && specifiers.len() == 1
                 && specifiers[0].name() == "type"
             {
@@ -1078,6 +1079,25 @@ mod test {
                 panic!("Expected TSImportEqualsDeclaration, found: {:?}", statements[0]);
             }
         });
+    }
+
+    // https://github.com/oxc-project/oxc/issues/11505
+    #[test]
+    fn test_type_from_js_file() {
+        let src = "import type from '../type.js'";
+        let source_type = SourceType::default().with_typescript(false);
+        let allocator = Allocator::default();
+        let ret = Parser::new(&allocator, src, source_type).parse();
+        assert!(ret.errors.is_empty(), "Failed to parse source: {src:?}, error: {:?}", ret.errors);
+        let declarations = ret.program.body.iter().collect::<Vec<_>>();
+        assert_eq!(declarations.len(), 1);
+        let Statement::ImportDeclaration(decl) = declarations[0] else {
+            panic!("Expected ImportDeclaration, found: {:?}", declarations[0]);
+        };
+        assert_eq!(decl.import_kind, ImportOrExportKind::Value);
+        assert!(decl.specifiers.is_some());
+        let specifiers = decl.specifiers.as_ref().unwrap();
+        assert_eq!(specifiers[0].name(), "type");
     }
 
     fn parse_and_assert_statements(
