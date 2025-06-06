@@ -154,12 +154,11 @@ impl<'a> Lexer<'a> {
         self.token = checkpoint.token;
     }
 
-    pub fn lookahead_token<U>(&mut self, predicate: impl Fn(Token) -> U) -> U {
+    pub fn peek_token(&mut self) -> Token {
         let checkpoint = self.checkpoint();
         let token = self.next_token();
-        let answer = predicate(token);
         self.rewind(checkpoint);
-        answer
+        token
     }
 
     /// Set context

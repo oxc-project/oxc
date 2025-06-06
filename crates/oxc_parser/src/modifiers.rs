@@ -437,7 +437,7 @@ impl<'a> ParserImpl<'a> {
         // we're at the start of a static block
         (stop_on_start_of_class_static_block
             && matches!(self.cur_kind(), Kind::Static)
-            && self.lexer.lookahead_token(|token| token.kind() == Kind::LCurly))
+            && self.lexer.peek_token().kind() == Kind::LCurly)
             // we may be at the start of a static block
             || (has_seen_static_modifier && matches!(self.cur_kind(), Kind::Static))
             // next token is not a modifier

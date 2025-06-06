@@ -342,10 +342,7 @@ impl<'a> ParserImpl<'a> {
             Kind::Eq if self.is_ts => ModuleDeclaration::TSExportAssignment(
                 self.parse_ts_export_assignment_declaration(span),
             ),
-            Kind::As
-                if self.is_ts
-                    && self.lexer.lookahead_token(|token| token.kind() == Kind::Namespace) =>
-            {
+            Kind::As if self.is_ts && self.lexer.peek_token().kind() == Kind::Namespace => {
                 // `export as namespace ...`
                 ModuleDeclaration::TSNamespaceExportDeclaration(
                     self.parse_ts_export_namespace(span),
@@ -516,7 +513,7 @@ impl<'a> ParserImpl<'a> {
             ),
             _ if self.is_ts
                 && self.at(Kind::Abstract)
-                && self.lexer.lookahead_token(|token| token.kind() == Kind::Class) =>
+                && self.lexer.peek_token().kind() == Kind::Class =>
             {
                 // `export default abstract class ...`
                 // eat the abstract modifier
@@ -527,7 +524,7 @@ impl<'a> ParserImpl<'a> {
             }
             _ if self.is_ts
                 && self.at(Kind::Interface)
-                && self.lexer.lookahead_token(|token| !token.is_on_new_line()) =>
+                && !self.lexer.peek_token().is_on_new_line() =>
             {
                 // `export default interface [no line break here] ...`
                 let decl = self.parse_ts_interface_declaration(decl_span, &Modifiers::empty());

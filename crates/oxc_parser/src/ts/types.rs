@@ -90,8 +90,7 @@ impl<'a> ParserImpl<'a> {
             return true;
         }
         self.at(Kind::New)
-            || (self.at(Kind::Abstract)
-                && self.lexer.lookahead_token(|token| token.kind() == Kind::New))
+            || (self.at(Kind::Abstract) && self.lexer.peek_token().kind() == Kind::New)
     }
 
     fn is_unambiguously_start_of_function_type(&mut self) -> bool {
@@ -527,10 +526,7 @@ impl<'a> ParserImpl<'a> {
             | Kind::NoSubstitutionTemplate
             | Kind::TemplateHead => true,
             Kind::Function => !in_start_of_parameter,
-            Kind::Minus => {
-                !in_start_of_parameter
-                    && self.lexer.lookahead_token(|token| token.kind().is_number())
-            }
+            Kind::Minus => !in_start_of_parameter && self.lexer.peek_token().kind().is_number(),
             Kind::LParen => {
                 !in_start_of_parameter
                     && self.lookahead(Self::is_start_of_parenthesized_or_function_type)
@@ -1395,9 +1391,9 @@ impl<'a> ParserImpl<'a> {
             | Kind::New
             | Kind::Slash
             | Kind::SlashEq => true,
-            Kind::Import => self.lexer.lookahead_token(|token| {
-                matches!(token.kind(), Kind::LParen | Kind::LAngle | Kind::Dot)
-            }),
+            Kind::Import => {
+                matches!(self.lexer.peek_token().kind(), Kind::LParen | Kind::LAngle | Kind::Dot)
+            }
             _ => false,
         }
     }

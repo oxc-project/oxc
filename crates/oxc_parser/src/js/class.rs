@@ -212,8 +212,7 @@ impl<'a> ParserImpl<'a> {
         );
 
         // static { block }
-        if self.at(Kind::Static) && self.lexer.lookahead_token(|token| token.kind() == Kind::LCurly)
-        {
+        if self.at(Kind::Static) && self.lexer.peek_token().kind() == Kind::LCurly {
             return self.parse_class_static_block(span);
         }
 

@@ -126,9 +126,7 @@ impl<'a> ParserImpl<'a> {
         let params = self.parse_ts_type_parameters();
         self.expect(Kind::Eq);
 
-        let ty = if self.at(Kind::Intrinsic)
-            && !self.lexer.lookahead_token(|token| token.kind() == Kind::Dot)
-        {
+        let ty = if self.at(Kind::Intrinsic) && self.lexer.peek_token().kind() != Kind::Dot {
             let span = self.start_span();
             self.bump_any();
             self.ast.ts_type_intrinsic_keyword(self.end_span(span))
