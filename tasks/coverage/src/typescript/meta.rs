@@ -2,7 +2,7 @@
 
 use std::{fs, path::Path, sync::Arc};
 
-use lazy_regex::{Lazy, Regex, lazy_regex};
+use lazy_regex::{Lazy, Regex, lazy_regex, regex};
 use rustc_hash::FxHashMap;
 
 use oxc::{
@@ -191,7 +191,31 @@ impl TestCaseContent {
         for suffix in suffixes {
             let error_path = root.join(format!("{file_name}{suffix}.errors.txt"));
             if error_path.exists() {
-                let error_file = fs::read_to_string(error_path).unwrap();
+                let error_file = fs::read_to_string(&error_path).unwrap();
+
+                let r = regex!(r"\(\d+,\d+\): error TS([^:]+):");
+
+                let (err_count, syntax_err_count) = r.find_iter(&error_file).fold(
+                    (0, 0),
+                    |(mut err_count, mut syntax_err_count), error| {
+                        err_count += 1;
+                        {
+                            let s = error.as_str();
+                            let n = &s[s.len().saturating_sub(5)..s.len().saturating_sub(1)];
+                            if let Ok(err_num) = n.parse::<usize>() {
+                                if err_num < 3000 {
+                                    syntax_err_count += 1;
+                                }
+                            }
+                        }
+                        (err_count, syntax_err_count)
+                    },
+                );
+
+                if err_count != 0 && syntax_err_count == 0 {
+                    continue;
+                }
+
                 error_files.push(error_file);
             }
         }
