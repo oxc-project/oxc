@@ -16,7 +16,7 @@ use crate::{
 
 fn resolve(span: Span, preferred: &str) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!("Prefer `{preferred} value` over `{preferred} Promise.resolve(value)`."))
-        .with_help("Wrapping the return value in `Promise.Resolve` is needlessly verbose. All return values in async functions are already wrapped in a `Promise`.")
+        .with_help("Wrapping the return value in `Promise.resolve` is needlessly verbose. All return values in async functions are already wrapped in a `Promise`.")
         .with_label(span)
 }
 
