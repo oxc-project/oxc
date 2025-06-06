@@ -33,7 +33,6 @@ use crate::{
         separated::FormatSeparatedIter,
         token::number::{NumberFormatOptions, format_number_token},
         trivia::FormatLeadingComments,
-        write,
     },
     generated::ast_nodes::{AstNode, AstNodes},
     options::{FormatTrailingCommas, QuoteProperties, TrailingSeparator},
@@ -170,9 +169,7 @@ impl<'a, 'b> FormatWrite<'a> for AstNode<'a, 'b, ThisExpression> {
 
 impl<'a, 'b> FormatWrite<'a> for AstNode<'a, 'b, ArrayExpression<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        // TODO: AstNode
-        // FormatArrayExpression::new(self).fmt(f)
-        Ok(())
+        FormatArrayExpression::new(self).fmt(f)
     }
 }
 
@@ -640,8 +637,7 @@ impl<'a, 'b> FormatWrite<'a> for AstNode<'a, 'b, DoWhileStatement<'a>> {
                 "while",
                 space(),
                 "(",
-                // TODO: AstNode
-                // group(&soft_block_indent(&self.test())),
+                group(&soft_block_indent(&self.test())),
                 ")",
                 OptionalSemicolon
             ]
@@ -657,11 +653,9 @@ impl<'a, 'b> FormatWrite<'a> for AstNode<'a, 'b, WhileStatement<'a>> {
                 "while",
                 space(),
                 "(",
-                // TODO: AstNode
-                // group(&soft_block_indent(test)),
+                group(&soft_block_indent(self.test())),
                 ")",
-                // TODO: AstNode
-                // FormatStatementBody::new(body)
+                FormatStatementBody::new(self.body())
             ))
         )
     }
@@ -716,8 +710,7 @@ impl<'a, 'b> FormatWrite<'a> for AstNode<'a, 'b, ForInStatement<'a>> {
                 space(),
                 self.right(),
                 ")",
-                // TODO: AstNode
-                // FormatStatementBody::new(self.body())
+                FormatStatementBody::new(self.body())
             ))
         )
     }

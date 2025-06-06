@@ -18,6 +18,14 @@ impl<'a> Format<'a> for OptionalSemicolon {
     }
 }
 
+pub struct MaybeOptionalSemicolon(pub bool);
+
+impl<'a> Format<'a> for MaybeOptionalSemicolon {
+    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        if self.0 { OptionalSemicolon.fmt(f) } else { Ok(()) }
+    }
+}
+
 pub struct ClassPropertySemicolon<'a, 'b, 'c> {
     element: &'c AstNode<'a, 'b, ClassElement<'a>>,
     next_element: Option<&'c AstNode<'a, 'b, ClassElement<'a>>>,

@@ -1,6 +1,8 @@
 use oxc_allocator::{Address, Vec};
 use oxc_ast::{AstKind, ast::*};
 
+use crate::write::semicolon::MaybeOptionalSemicolon;
+use crate::write::{OptionalSemicolon, semicolon};
 use crate::{
     format_args,
     formatter::{
@@ -16,7 +18,20 @@ use super::FormatWrite;
 
 impl<'a, 'b> FormatWrite<'a> for AstNode<'a, 'b, VariableDeclaration<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        write!(f, group(&format_args!(self.kind().as_str(), space(), self.declarations())))
+        let semicolon = !matches!(
+            self.parent(),
+            AstNodes::ForStatement(_) | AstNodes::ForInStatement(_) | AstNodes::ForOfStatement(_)
+        );
+
+        write!(
+            f,
+            group(&format_args!(
+                self.kind().as_str(),
+                space(),
+                self.declarations(),
+                MaybeOptionalSemicolon(semicolon)
+            ),)
+        )
     }
 }
 
