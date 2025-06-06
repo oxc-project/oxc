@@ -12,7 +12,7 @@ use crate::{
     write,
 };
 
-impl<'a, 'b> Format<'a> for AstNode<'a, 'b, Vec<'a, TSTypeParameter<'a>>> {
+impl<'a> Format<'a> for AstNode<'a, '_, Vec<'a, TSTypeParameter<'a>>> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         // Type parameter lists of arrow function expressions have to include at least one comma
         // to avoid any ambiguity with JSX elements.

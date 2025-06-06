@@ -379,7 +379,7 @@ impl<'a, 'b, 'c> ArrowFunctionLayout<'a, 'b, 'c> {
         loop {
             if current.expression() {
                 if let Some(AstNodes::ExpressionStatement(expr_stmt)) =
-                    current.body().statements().first().map(|s| s.as_ast_nodes())
+                    current.body().statements().first().map(AstNode::<Statement>::as_ast_nodes)
                 {
                     if let AstNodes::ArrowFunctionExpression(next) =
                         &expr_stmt.expression().as_ast_nodes()
@@ -788,8 +788,8 @@ fn has_rest_object_or_array_parameter(params: &FormalParameters) -> bool {
 /// or return type annotation contain any content that forces a [*group to break](FormatElements::will_break).
 ///
 /// This error gets captured by FormatJsCallArguments.
-fn format_signature<'a, 'b, 'c>(
-    arrow: &'c AstNode<'a, 'b, ArrowFunctionExpression<'a>>,
+fn format_signature<'a, 'c>(
+    arrow: &'c AstNode<'a, '_, ArrowFunctionExpression<'a>>,
     is_first_or_last_call_argument: bool,
     is_first_in_chain: bool,
 ) -> impl Format<'a> + 'c {

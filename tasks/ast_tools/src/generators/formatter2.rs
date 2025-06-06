@@ -54,7 +54,7 @@ impl Generator for FormatterFormatGenerator2 {
         });
 
         let dummy_variant = quote! {
-            Self::DUMMY() => panic!("Should never be called on a dummy node"),
+            Self::Dummy() => panic!("Should never be called on a dummy node"),
         };
 
         let span_match_arms = ast_nodes_names.iter().map(|(name, _)| {
@@ -77,7 +77,9 @@ impl Generator for FormatterFormatGenerator2 {
         };
 
         let output = quote! {
-            #![allow(clippy::undocumented_unsafe_blocks)]
+            #![expect(
+                clippy::match_same_arms
+            )]
 
             use std::{mem::transmute, ops::Deref};
             ///@@line_break
@@ -100,7 +102,7 @@ impl Generator for FormatterFormatGenerator2 {
 
             ///@@line_break
             pub enum AstNodes<'a, 'b> {
-                DUMMY(),
+                Dummy(),
                 #(#ast_nodes_variants)*
             }
 
@@ -143,8 +145,8 @@ impl Generator for FormatterFormatGenerator2 {
             }
 
             ///@@line_break
-            impl<'a,'b, T>  AstNode<'a, 'b, T> {
-                pub fn new(inner: &'b T, parent: &'a AstNodes<'a, 'b>, allocator: &'a Allocator) -> Self {
+            impl<'a,'b>  AstNode<'a, 'b, Program<'a>> {
+                pub fn new(inner: &'b Program<'a>, parent: &'a AstNodes<'a, 'b>, allocator: &'a Allocator) -> Self {
                     AstNode { inner, parent, allocator }
                 }
             }
@@ -242,8 +244,7 @@ fn implementation(type_def: &TypeDef, schema: &Schema) -> TokenStream {
             let is_option = field_type.is_option();
             let field_type = field_type
                 .as_option()
-                .map(|option_def| option_def.inner_type(schema))
-                .unwrap_or(field_type);
+                .map_or(field_type, |option_def| option_def.inner_type(schema));
             let is_box = field_type.is_box();
             let mut is_reference = true;
 
@@ -280,7 +281,7 @@ fn implementation(type_def: &TypeDef, schema: &Schema) -> TokenStream {
                 TypeDef::Option(_) => {
                     unreachable!()
                 }
-                _ => return None,
+                TypeDef::Cell(_) => return None,
             };
 
             let parent = if has_kind {
@@ -377,20 +378,19 @@ fn implementation(type_def: &TypeDef, schema: &Schema) -> TokenStream {
         quote! { let parent = self.parent }
     };
 
-    let variant_match_arms = enum_def.variants.iter().filter_map(|variant| {
+    let variant_match_arms = enum_def.variants.iter().map(|variant| {
         let variant_name = &variant.ident();
         let field_type = variant.field_type(schema).unwrap();
         let is_box = field_type.is_box();
         let node_type = field_type
             .maybe_inner_type(schema)
-            .map(|inner_type| inner_type.ident())
-            .unwrap_or_else(|| field_type.ident());
+            .map_or_else(|| field_type.ident(), TypeDef::ident);
         let inner = if is_box {
             quote! { s.as_ref() }
         } else {
             quote! { s }
         };
-        let implementation = if has_kind(&field_type, schema) {
+        let implementation = if has_kind(field_type, schema) {
             quote! {
                 AstNodes::#node_type(self.allocator.alloc(AstNode {
                     inner: #inner,
@@ -416,8 +416,7 @@ fn implementation(type_def: &TypeDef, schema: &Schema) -> TokenStream {
         let inherited_enum = inherited_type.as_enum().unwrap();
         let inherited_enum_inner_type = inherited_enum
             .maybe_inner_type(schema)
-            .map(|t| t.ident())
-            .unwrap_or_else(|| inherited_enum.ident());
+            .map_or_else(|| inherited_enum.ident(), TypeDef::ident);
 
         let inherits_snake_name = inherited_enum.snake_name();
         let match_ident = format_ident!("match_{inherits_snake_name}");
@@ -471,13 +470,11 @@ fn implementation(type_def: &TypeDef, schema: &Schema) -> TokenStream {
         }
     };
 
-    let variant_match_arms = enum_def.variants.iter().filter_map(|variant| {
+    let variant_match_arms = enum_def.variants.iter().map(|variant| {
         let variant_name = &variant.ident();
         let field_type = variant.field_type(schema).unwrap();
-        let node_type = field_type
-            .maybe_inner_type(schema)
-            .map(|inner_type| inner_type.ident())
-            .unwrap_or_else(|| field_type.ident());
+        let node_type =
+            field_type.maybe_inner_type(schema).map_or_else(|| field_type.ident(), TypeDef::ident);
 
         Some(quote! {
             #enum_ident::#variant_name(s) => {
@@ -494,8 +491,7 @@ fn implementation(type_def: &TypeDef, schema: &Schema) -> TokenStream {
         let inherits_type = inherits_type.as_enum().unwrap();
         let inherits_inner_type = inherits_type
             .maybe_inner_type(schema)
-            .map(|t| t.ident())
-            .unwrap_or_else(|| inherits_type.ident());
+            .map_or_else(|| inherits_type.ident(), TypeDef::ident);
 
         let inherits_snake_name = inherits_type.snake_name();
         let match_ident = format_ident!("match_{inherits_snake_name}");

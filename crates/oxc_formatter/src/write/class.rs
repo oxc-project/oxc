@@ -14,7 +14,7 @@ use super::{
     type_parameters::{FormatTsTypeParameters, FormatTsTypeParametersOptions},
 };
 
-impl<'a, 'b> FormatWrite<'a> for AstNode<'a, 'b, Class<'a>> {
+impl<'a> FormatWrite<'a> for AstNode<'a, '_, Class<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         let decorators = self.decorators();
         let id = self.id();
@@ -39,7 +39,7 @@ impl<'a, 'b> FormatWrite<'a> for AstNode<'a, 'b, Class<'a>> {
 
         write!(f, "class")?;
 
-        let indent_only_heritage = (implements.is_empty() || !super_class.is_some())
+        let indent_only_heritage = (implements.is_empty() || super_class.is_none())
             && type_parameters.as_ref().is_some_and(|type_parameters| {
                 !f.comments().has_trailing_line_comment(type_parameters.span().end)
             });

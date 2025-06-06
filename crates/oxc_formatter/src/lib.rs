@@ -51,7 +51,7 @@ impl<'a> Formatter<'a> {
     }
 
     pub fn build(mut self, program: &Program<'a>) -> String {
-        let parent = self.allocator.alloc(AstNodes::DUMMY());
+        let parent = self.allocator.alloc(AstNodes::Dummy());
         let program_node = AstNode::new(program, parent, self.allocator);
 
         let source_text = program.source_text;

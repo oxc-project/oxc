@@ -31,7 +31,7 @@ use super::{
     },
 };
 
-impl<'a, 'b> Format<'a> for AstNode<'a, 'b, Vec<'a, Argument<'a>>> {
+impl<'a> Format<'a> for AstNode<'a, '_, Vec<'a, Argument<'a>>> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         let l_paren_token = "(";
         let r_paren_token = ")";
@@ -105,7 +105,7 @@ impl<'a, 'b> Format<'a> for AstNode<'a, 'b, Vec<'a, Argument<'a>>> {
             );
         }
 
-        if let Some(group_layout) = arguments_grouped_layout(&self, f.comments()) {
+        if let Some(group_layout) = arguments_grouped_layout(self, f.comments()) {
             write_grouped_arguments(self, arguments, group_layout, f)
         } else if is_long_curried_call(self.parent) {
             write!(
@@ -152,7 +152,7 @@ pub enum FormatCallArgument<'a, 'b, 'c> {
     },
 }
 
-impl<'a, 'b, 'c> FormatCallArgument<'a, 'b, 'c> {
+impl<'a, 'b> FormatCallArgument<'a, 'b, '_> {
     /// Returns `true` if this argument contains any content that forces a group to [`break`](FormatElements::will_break).
     fn will_break(&mut self, f: &mut Formatter<'_, 'a>) -> bool {
         match &self {
@@ -255,7 +255,7 @@ impl<'a, 'b, 'c> FormatCallArgument<'a, 'b, 'c> {
     }
 }
 
-impl<'a, 'b, 'c> Format<'a> for FormatCallArgument<'a, 'b, 'c> {
+impl<'a> Format<'a> for FormatCallArgument<'a, '_, '_> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         self.fmt_with_cache_mode(FunctionBodyCacheMode::default(), f)
     }
@@ -306,7 +306,7 @@ pub struct FormatAllArgsBrokenOut<'a, 'b, 'c> {
     pub node: &'c AstNode<'a, 'b, Vec<'a, Argument<'a>>>,
 }
 
-impl<'a, 'b, 'c> Format<'a> for FormatAllArgsBrokenOut<'a, 'b, 'c> {
+impl<'a> Format<'a> for FormatAllArgsBrokenOut<'a, '_, '_> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         // let is_inside_import = self.node.parent::<JsImportCallExpression>().is_some();
         let is_inside_import = false;
@@ -718,11 +718,7 @@ fn write_grouped_arguments<'a, 'b, 'c>(
                 _ => None,
             };
 
-            FormatGroupedArgument {
-                argument: &argument,
-                single_argument_list: last_index == 0,
-                layout,
-            }
+            FormatGroupedArgument { argument, single_argument_list: last_index == 0, layout }
         })
         .collect::<std::vec::Vec<_>>();
 
@@ -832,17 +828,17 @@ struct FormatGroupedArgument<'a, 'b, 'c> {
     layout: Option<GroupedCallArgumentLayout>,
 }
 
-impl<'a, 'b, 'c> Format<'a> for FormatGroupedArgument<'a, 'b, 'c> {
+impl<'a> Format<'a> for FormatGroupedArgument<'a, '_, '_> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         match self.layout {
             Some(GroupedCallArgumentLayout::GroupedFirstArgument) => FormatGroupedFirstArgument {
                 is_only: self.single_argument_list,
-                argument: &self.argument,
+                argument: self.argument,
             }
             .fmt(f),
             Some(GroupedCallArgumentLayout::GroupedLastArgument) => FormatGroupedLastArgument {
                 is_only: self.single_argument_list,
-                argument: &self.argument,
+                argument: self.argument,
             }
             .fmt(f),
             None => self.argument.fmt(f),
@@ -858,7 +854,7 @@ struct FormatGroupedFirstArgument<'a, 'b, 'c> {
     is_only: bool,
 }
 
-impl<'a, 'b, 'c> Format<'a> for FormatGroupedFirstArgument<'a, 'b, 'c> {
+impl<'a> Format<'a> for FormatGroupedFirstArgument<'a, '_, '_> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         let element = self.argument.element();
 
@@ -895,7 +891,7 @@ struct FormatGroupedLastArgument<'a, 'b, 'c> {
     is_only: bool,
 }
 
-impl<'a, 'b, 'c> Format<'a> for FormatGroupedLastArgument<'a, 'b, 'c> {
+impl<'a> Format<'a> for FormatGroupedLastArgument<'a, '_, '_> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         let element = self.argument.element();
 

@@ -9,7 +9,7 @@ use crate::{
     write,
 };
 
-impl<'a, 'b> FormatWrite<'a> for AstNode<'a, 'b, BlockStatement<'a>> {
+impl<'a> FormatWrite<'a> for AstNode<'a, '_, BlockStatement<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         write!(f, "{")?;
         if is_empty_block(self, f) {

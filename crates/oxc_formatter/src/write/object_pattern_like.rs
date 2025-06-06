@@ -21,7 +21,7 @@ pub enum ObjectPatternLike<'a, 'b, 'c> {
     ObjectAssignmentTarget(&'c AstNode<'a, 'b, ObjectAssignmentTarget<'a>>),
 }
 
-impl<'a, 'b, 'c> ObjectPatternLike<'a, 'b, 'c> {
+impl<'a> ObjectPatternLike<'a, '_, '_> {
     fn span(&self) -> Span {
         match self {
             Self::ObjectPattern(o) => o.span(),
@@ -152,11 +152,9 @@ impl<'a, 'b, 'c> ObjectPatternLike<'a, 'b, 'c> {
 
     fn write_properties(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         match self {
-            Self::ObjectPattern(o) => {
-                BindingPropertyList::new(o.properties(), o.rest().as_deref()).fmt(f)
-            }
+            Self::ObjectPattern(o) => BindingPropertyList::new(o.properties(), o.rest()).fmt(f),
             Self::ObjectAssignmentTarget(o) => {
-                AssignmentTargetPropertyList::new(o.properties(), o.rest().as_deref()).fmt(f)
+                AssignmentTargetPropertyList::new(o.properties(), o.rest()).fmt(f)
             }
         }
     }

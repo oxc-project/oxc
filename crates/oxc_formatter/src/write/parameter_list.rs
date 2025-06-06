@@ -49,8 +49,8 @@ impl<'a, 'b, 'c> Iterator for FormalParametersIter<'a, 'b, 'c> {
     fn next(&mut self) -> Option<Self::Item> {
         self.params
             .next()
-            .map(|param| Parameter::FormalParameter(param))
-            .or_else(|| self.rest.take().map(|rest| Parameter::Rest(rest)))
+            .map(Parameter::FormalParameter)
+            .or_else(|| self.rest.take().map(Parameter::Rest))
     }
 }
 

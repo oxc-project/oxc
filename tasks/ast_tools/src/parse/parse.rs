@@ -274,7 +274,7 @@ impl<'c> Parser<'c> {
         let visibility = convert_visibility(&item.vis);
         let (generated_derives, plural_name) =
             self.get_generated_derives_and_plural_name(&item.attrs, &name);
-        let derives = self.get_derives(&item.attrs);
+        let derives = Self::get_derives(&item.attrs);
         let mut type_def = TypeDef::Struct(StructDef::new(
             type_id,
             name,
@@ -353,7 +353,7 @@ impl<'c> Parser<'c> {
         let visibility = convert_visibility(&item.vis);
         let (generated_derives, plural_name) =
             self.get_generated_derives_and_plural_name(&item.attrs, &name);
-        let derives = self.get_derives(&item.attrs);
+        let derives = Self::get_derives(&item.attrs);
         let mut type_def = TypeDef::Enum(EnumDef::new(
             type_id,
             name,
@@ -757,7 +757,7 @@ impl<'c> Parser<'c> {
         (derives, plural_name)
     }
 
-    fn get_derives(&self, attrs: &[Attribute]) -> Vec<String> {
+    fn get_derives(attrs: &[Attribute]) -> Vec<String> {
         let mut derives = Vec::new();
         for attr in attrs {
             if attr.path().is_ident("derive") {

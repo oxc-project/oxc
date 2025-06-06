@@ -36,7 +36,7 @@ impl<'a> Format<'a> for FormatArrayExpression<'a, '_, '_> {
             let should_expand = (!self.options.is_force_flat_mode && should_break(self.array))
                 || f.options().expand == Expand::Always;
 
-            let elements = ArrayElementList::new(&self.array.elements(), group_id);
+            let elements = ArrayElementList::new(self.array.elements(), group_id);
 
             write!(
                 f,

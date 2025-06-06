@@ -61,16 +61,16 @@ impl<'a, 'b, 'c> BinaryLikeExpression<'a, 'b, 'c> {
     /// Returns the left hand side of the binary expression.
     fn left(&self) -> &'c AstNode<'a, 'b, Expression<'a>> {
         match self {
-            Self::LogicalExpression(expr) => &expr.left(),
-            Self::BinaryExpression(expr) => &expr.left(),
+            Self::LogicalExpression(expr) => expr.left(),
+            Self::BinaryExpression(expr) => expr.left(),
         }
     }
 
     /// Returns the right hand side of the binary expression.
     pub fn right(&self) -> &'c AstNode<'a, 'b, Expression<'a>> {
         match self {
-            Self::LogicalExpression(expr) => &expr.right(),
-            Self::BinaryExpression(expr) => &expr.right(),
+            Self::LogicalExpression(expr) => expr.right(),
+            Self::BinaryExpression(expr) => expr.right(),
         }
     }
 
@@ -193,7 +193,7 @@ impl<'a, 'b, 'c> TryFrom<&'c AstNode<'a, 'b, Expression<'a>>> for BinaryLikeExpr
 impl<'a> Format<'a> for BinaryLikeExpression<'a, '_, '_> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         let parent = self.parent();
-        let is_inside_condition = self.is_inside_condition(&parent);
+        let is_inside_condition = self.is_inside_condition(parent);
         let parts = split_into_left_and_right_sides(*self, is_inside_condition);
 
         // Don't indent inside of conditions because conditions add their own indent and grouping.
