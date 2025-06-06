@@ -190,17 +190,13 @@ impl Rule for Namespace {
                                 ctx,
                             );
                         }
-                        AstKind::JSXMemberExpressionObject(_) => {
-                            if let Some(AstKind::JSXMemberExpression(expr)) =
-                                ctx.nodes().parent_kind(node.id())
-                            {
-                                check_binding_exported(
-                                    &expr.property.name,
-                                    || no_export(expr.property.span, &expr.property.name, &source),
-                                    &module,
-                                    ctx,
-                                );
-                            }
+                        AstKind::JSXMemberExpression(expr) => {
+                            check_binding_exported(
+                                &expr.property.name,
+                                || no_export(expr.property.span, &expr.property.name, &source),
+                                &module,
+                                ctx,
+                            );
                         }
                         AstKind::VariableDeclarator(decl) => {
                             let BindingPatternKind::ObjectPattern(pattern) = &decl.id.kind else {

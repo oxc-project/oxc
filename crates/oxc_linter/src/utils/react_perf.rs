@@ -2,10 +2,7 @@ use std::fmt;
 
 use oxc_ast::{
     AstKind,
-    ast::{
-        BindingIdentifier, BindingPattern, BindingPatternKind, Expression, JSXAttributeItem,
-        JSXAttributeValue,
-    },
+    ast::{BindingIdentifier, BindingPattern, BindingPatternKind, Expression, JSXAttributeValue},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_semantic::SymbolId;
@@ -69,7 +66,7 @@ where
 
         // look for JSX attributes whose values are expressions (foo={bar}) (as opposed to
         // spreads ({...foo}) or just boolean attributes) (<div foo />)
-        let AstKind::JSXAttributeItem(JSXAttributeItem::Attribute(attr)) = node.kind() else {
+        let AstKind::JSXAttribute(attr) = node.kind() else {
             return;
         };
         let Some(JSXAttributeValue::ExpressionContainer(container)) = attr.value.as_ref() else {

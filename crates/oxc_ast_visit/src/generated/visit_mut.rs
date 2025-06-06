@@ -3094,8 +3094,10 @@ pub mod walk_mut {
         visitor: &mut V,
         it: &mut JSXOpeningFragment,
     ) {
-        // No `AstType` for this type
+        let kind = AstType::JSXOpeningFragment;
+        visitor.enter_node(kind);
         visitor.visit_span(&mut it.span);
+        visitor.leave_node(kind);
     }
 
     #[inline]
@@ -3103,8 +3105,10 @@ pub mod walk_mut {
         visitor: &mut V,
         it: &mut JSXClosingFragment,
     ) {
-        // No `AstType` for this type
+        let kind = AstType::JSXClosingFragment;
+        visitor.enter_node(kind);
         visitor.visit_span(&mut it.span);
+        visitor.leave_node(kind);
     }
 
     #[inline]
@@ -3112,8 +3116,7 @@ pub mod walk_mut {
         visitor: &mut V,
         it: &mut JSXElementName<'a>,
     ) {
-        let kind = AstType::JSXElementName;
-        visitor.enter_node(kind);
+        // No `AstType` for this type
         match it {
             JSXElementName::Identifier(it) => visitor.visit_jsx_identifier(it),
             JSXElementName::IdentifierReference(it) => visitor.visit_identifier_reference(it),
@@ -3121,7 +3124,6 @@ pub mod walk_mut {
             JSXElementName::MemberExpression(it) => visitor.visit_jsx_member_expression(it),
             JSXElementName::ThisExpression(it) => visitor.visit_this_expression(it),
         }
-        visitor.leave_node(kind);
     }
 
     #[inline]
@@ -3155,8 +3157,7 @@ pub mod walk_mut {
         visitor: &mut V,
         it: &mut JSXMemberExpressionObject<'a>,
     ) {
-        let kind = AstType::JSXMemberExpressionObject;
-        visitor.enter_node(kind);
+        // No `AstType` for this type
         match it {
             JSXMemberExpressionObject::IdentifierReference(it) => {
                 visitor.visit_identifier_reference(it)
@@ -3166,7 +3167,6 @@ pub mod walk_mut {
             }
             JSXMemberExpressionObject::ThisExpression(it) => visitor.visit_this_expression(it),
         }
-        visitor.leave_node(kind);
     }
 
     #[inline]
@@ -3195,8 +3195,10 @@ pub mod walk_mut {
         visitor: &mut V,
         it: &mut JSXEmptyExpression,
     ) {
-        // No `AstType` for this type
+        let kind = AstType::JSXEmptyExpression;
+        visitor.enter_node(kind);
         visitor.visit_span(&mut it.span);
+        visitor.leave_node(kind);
     }
 
     #[inline]
@@ -3204,23 +3206,23 @@ pub mod walk_mut {
         visitor: &mut V,
         it: &mut JSXAttributeItem<'a>,
     ) {
-        let kind = AstType::JSXAttributeItem;
-        visitor.enter_node(kind);
+        // No `AstType` for this type
         match it {
             JSXAttributeItem::Attribute(it) => visitor.visit_jsx_attribute(it),
             JSXAttributeItem::SpreadAttribute(it) => visitor.visit_jsx_spread_attribute(it),
         }
-        visitor.leave_node(kind);
     }
 
     #[inline]
     pub fn walk_jsx_attribute<'a, V: VisitMut<'a>>(visitor: &mut V, it: &mut JSXAttribute<'a>) {
-        // No `AstType` for this type
+        let kind = AstType::JSXAttribute;
+        visitor.enter_node(kind);
         visitor.visit_span(&mut it.span);
         visitor.visit_jsx_attribute_name(&mut it.name);
         if let Some(value) = &mut it.value {
             visitor.visit_jsx_attribute_value(value);
         }
+        visitor.leave_node(kind);
     }
 
     #[inline]
@@ -3288,9 +3290,11 @@ pub mod walk_mut {
         visitor: &mut V,
         it: &mut JSXSpreadChild<'a>,
     ) {
-        // No `AstType` for this type
+        let kind = AstType::JSXSpreadChild;
+        visitor.enter_node(kind);
         visitor.visit_span(&mut it.span);
         visitor.visit_expression(&mut it.expression);
+        visitor.leave_node(kind);
     }
 
     #[inline]
