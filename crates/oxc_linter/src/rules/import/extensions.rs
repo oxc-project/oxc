@@ -357,43 +357,34 @@ impl Rule for Extensions {
 
                 if matches!(func_name, "require") && count > 0 {
                     for argument in &call_expr.arguments {
-                        match argument {
-                            Argument::StringLiteral(s) => {
-                                let file_extension =
-                                    get_file_extension_from_module_name(&s.value.to_compact_str());
-                                let span = call_expr.span;
+                        if let Argument::StringLiteral(s) = argument {
+                            let file_extension =
+                                get_file_extension_from_module_name(&s.value.to_compact_str());
+                            let span = call_expr.span;
 
-                                if let Some(file_extension) = file_extension {
-                                    if never_file_types.contains(&file_extension.as_str())
-                                        || (!always_file_types.is_empty()
-                                            && !always_file_types
-                                                .contains(&file_extension.as_str()))
-                                    // should not have file extension
-                                    {
-                                        ctx.diagnostic(
-                                            extension_should_not_be_included_in_diagnostic(
-                                                span,
-                                                file_extension.as_str(),
-                                                true,
-                                            ),
-                                        );
-
-                                        if file_extension.is_empty()
-                                            && config.require_extension
-                                                == Some(FileExtensionConfig::Always)
-                                        {
-                                            ctx.diagnostic(extension_missing_diagnostic(
-                                                span, true,
-                                            ));
-                                        }
-                                    }
-                                } else if config.require_extension
-                                    == Some(FileExtensionConfig::Always)
+                            if let Some(file_extension) = file_extension {
+                                if never_file_types.contains(&file_extension.as_str())
+                                    || (!always_file_types.is_empty()
+                                        && !always_file_types.contains(&file_extension.as_str()))
+                                // should not have file extension
                                 {
-                                    ctx.diagnostic(extension_missing_diagnostic(span, true));
+                                    ctx.diagnostic(extension_should_not_be_included_in_diagnostic(
+                                        span,
+                                        file_extension.as_str(),
+                                        true,
+                                    ));
+
+                                    if file_extension.is_empty()
+                                        && config.require_extension
+                                            == Some(FileExtensionConfig::Always)
+                                    {
+                                        ctx.diagnostic(extension_missing_diagnostic(span, true));
+                                    }
                                 }
+                            } else if config.require_extension == Some(FileExtensionConfig::Always)
+                            {
+                                ctx.diagnostic(extension_missing_diagnostic(span, true));
                             }
-                            _ => {}
                         }
                     }
                 }
