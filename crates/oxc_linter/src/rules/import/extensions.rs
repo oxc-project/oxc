@@ -177,102 +177,6 @@ declare_oxc_lint!(
     perf,
 );
 
-fn process_module_record(
-    module_record: (CompactStr, &RequestedModule),
-    config: &ExtensionsConfig,
-    ctx: &LintContext,
-    extensions: &Extensions,
-    is_import: bool,
-) {
-    let (module_name, module) = module_record;
-    let always_file_types = extensions.0.get_always_file_types();
-    let never_file_types = extensions.0.get_never_file_types();
-
-    if module.is_type && !config.check_type_imports {
-        return;
-    }
-
-    let is_builtin_node_module = NODEJS_BUILTINS.binary_search(&module_name.as_str()).is_ok()
-        || ctx.globals().is_enabled(module_name.as_str());
-
-    let is_package = module_name.as_str().starts_with('@')
-        || (!module_name.as_str().starts_with('.') && !module_name.as_str()[1..].contains('/'));
-
-    if is_builtin_node_module || (is_package && config.ignore_packages) {
-        return;
-    }
-
-    let file_extension = get_file_extension_from_module_name(&module_name);
-
-    let span = module.statement_span;
-
-    if let Some(file_extension) = file_extension {
-        if never_file_types.contains(&file_extension.as_str())
-            || (!always_file_types.is_empty()
-                && !always_file_types.contains(&file_extension.as_str()))
-        // should not have file extension
-        {
-            ctx.diagnostic(extension_should_not_be_included_in_diagnostic(
-                span,
-                file_extension.as_str(),
-                is_import,
-            ));
-
-            if file_extension.is_empty()
-                && config.require_extension == Some(FileExtensionConfig::Always)
-            {
-                ctx.diagnostic(extension_missing_diagnostic(span, is_import));
-            }
-        }
-    } else if config.require_extension == Some(FileExtensionConfig::Always) {
-        ctx.diagnostic(extension_missing_diagnostic(span, is_import));
-    }
-}
-
-fn build_config(
-    value: &serde_json::Value,
-    default: Option<&FileExtensionConfig>,
-) -> ExtensionsConfig {
-    let config: ExtensionsConfig = ExtensionsConfig {
-        ignore_packages: value.get("ignorePackages").and_then(Value::as_bool).unwrap_or(true),
-        require_extension: default.cloned(),
-        check_type_imports: value
-            .get("checkTypeImports")
-            .and_then(Value::as_bool)
-            .unwrap_or_default(),
-        js: value
-            .get("js")
-            .and_then(Value::as_str)
-            .map(FileExtensionConfig::from)
-            .unwrap_or(default.cloned().unwrap_or_default()),
-        jsx: value
-            .get("jsx")
-            .and_then(Value::as_str)
-            .map(FileExtensionConfig::from)
-            .unwrap_or(default.cloned().unwrap_or_default()),
-
-        ts: value
-            .get("ts")
-            .and_then(Value::as_str)
-            .map(FileExtensionConfig::from)
-            .unwrap_or(default.cloned().unwrap_or_default()),
-
-        tsx: value
-            .get("tsx")
-            .and_then(Value::as_str)
-            .map(FileExtensionConfig::from)
-            .unwrap_or(default.cloned().unwrap_or_default()),
-
-        json: value
-            .get("json")
-            .and_then(Value::as_str)
-            .map(FileExtensionConfig::from)
-            .unwrap_or(default.cloned().unwrap_or_default()),
-    };
-
-    config
-}
-
 impl Rule for Extensions {
     fn from_configuration(value: serde_json::Value) -> Self {
         if let Some(always_or_never) =
@@ -329,13 +233,112 @@ impl Rule for Extensions {
             for module_item in module {
                 process_module_record(
                     (module_name.clone(), module_item),
-                    &config,
                     ctx,
-                    self,
+                    &always_file_types,
+                    &never_file_types,
+                    config.require_extension.as_ref(),
+                    config.check_type_imports,
+                    config.ignore_packages,
                     module_item.is_import,
                 );
             }
         }
+    }
+}
+
+fn build_config(
+    value: &serde_json::Value,
+    default: Option<&FileExtensionConfig>,
+) -> ExtensionsConfig {
+    let config: ExtensionsConfig = ExtensionsConfig {
+        ignore_packages: value.get("ignorePackages").and_then(Value::as_bool).unwrap_or(true),
+        require_extension: default.cloned(),
+        check_type_imports: value
+            .get("checkTypeImports")
+            .and_then(Value::as_bool)
+            .unwrap_or_default(),
+        js: value
+            .get("js")
+            .and_then(Value::as_str)
+            .map(FileExtensionConfig::from)
+            .unwrap_or(default.cloned().unwrap_or_default()),
+        jsx: value
+            .get("jsx")
+            .and_then(Value::as_str)
+            .map(FileExtensionConfig::from)
+            .unwrap_or(default.cloned().unwrap_or_default()),
+
+        ts: value
+            .get("ts")
+            .and_then(Value::as_str)
+            .map(FileExtensionConfig::from)
+            .unwrap_or(default.cloned().unwrap_or_default()),
+
+        tsx: value
+            .get("tsx")
+            .and_then(Value::as_str)
+            .map(FileExtensionConfig::from)
+            .unwrap_or(default.cloned().unwrap_or_default()),
+
+        json: value
+            .get("json")
+            .and_then(Value::as_str)
+            .map(FileExtensionConfig::from)
+            .unwrap_or(default.cloned().unwrap_or_default()),
+    };
+
+    config
+}
+
+fn process_module_record(
+    module_record: (CompactStr, &RequestedModule),
+    ctx: &LintContext,
+    always_file_types: &Vec<&str>,
+    never_file_types: &Vec<&str>,
+    require_extension: Option<&FileExtensionConfig>,
+    check_type_imports: bool,
+    ignore_packages: bool,
+    is_import: bool,
+) {
+    let (module_name, module) = module_record;
+
+    if module.is_type && !check_type_imports {
+        return;
+    }
+
+    let is_builtin_node_module = NODEJS_BUILTINS.binary_search(&module_name.as_str()).is_ok()
+        || ctx.globals().is_enabled(module_name.as_str());
+
+    let is_package = module_name.as_str().starts_with('@')
+        || (!module_name.as_str().starts_with('.') && !module_name.as_str()[1..].contains('/'));
+
+    if is_builtin_node_module || (is_package && ignore_packages) {
+        return;
+    }
+
+    let file_extension = get_file_extension_from_module_name(&module_name);
+
+    let span = module.statement_span;
+
+    if let Some(file_extension) = file_extension {
+        if never_file_types.contains(&file_extension.as_str())
+            || (!always_file_types.is_empty()
+                && !always_file_types.contains(&file_extension.as_str()))
+        // should not have file extension
+        {
+            ctx.diagnostic(extension_should_not_be_included_in_diagnostic(
+                span,
+                file_extension.as_str(),
+                is_import,
+            ));
+
+            if file_extension.is_empty() && require_extension == Some(&FileExtensionConfig::Always)
+            {
+                ctx.diagnostic(extension_missing_diagnostic(span, is_import));
+            }
+        }
+    } else if require_extension == Some(&FileExtensionConfig::Always) {
+        ctx.diagnostic(extension_missing_diagnostic(span, is_import));
     }
 }
 
