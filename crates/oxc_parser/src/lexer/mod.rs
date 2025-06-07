@@ -154,6 +154,13 @@ impl<'a> Lexer<'a> {
         self.token = checkpoint.token;
     }
 
+    pub fn peek_token(&mut self) -> Token {
+        let checkpoint = self.checkpoint();
+        let token = self.next_token();
+        self.rewind(checkpoint);
+        token
+    }
+
     /// Set context
     pub fn set_context(&mut self, context: LexerContext) {
         self.context = context;
