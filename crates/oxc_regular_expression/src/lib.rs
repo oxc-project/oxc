@@ -11,8 +11,6 @@ mod generated {
     pub mod assert_layouts;
     mod derive_clone_in;
     mod derive_content_eq;
-    #[cfg(feature = "serialize")]
-    mod derive_estree;
 }
 
 pub mod ast;

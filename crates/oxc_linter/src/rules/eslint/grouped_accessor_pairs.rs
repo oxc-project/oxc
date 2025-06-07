@@ -55,9 +55,11 @@ pub struct GroupedAccessorPairs {
 
 declare_oxc_lint!(
     /// ### What it does
+    ///
     /// Require grouped accessor pairs in object literals and classes
     ///
     /// ### Why is this bad?
+    ///
     /// While it is allowed to define the pair for a getter or a setter anywhere in an object or class definition,
     /// it’s considered a best practice to group accessor functions for the same property.
     ///

@@ -132,7 +132,7 @@ impl<'a> PeepholeOptimizations {
             // (TRUE || x) => TRUE (also, (3 || x) => 3)
             // (FALSE && x) => FALSE
             if if lval { op.is_or() } else { op.is_and() } {
-                return Some(logical_expr.left.take_in(ctx.ast.allocator));
+                return Some(logical_expr.left.take_in(ctx.ast));
             } else if !left.may_have_side_effects(&ctx) {
                 let should_keep_indirect_access =
                     Self::should_keep_indirect_access(&logical_expr.right, ctx);
@@ -147,19 +147,19 @@ impl<'a> PeepholeOptimizations {
                                 None,
                                 NumberBase::Decimal,
                             ),
-                            logical_expr.right.take_in(ctx.ast.allocator),
+                            logical_expr.right.take_in(ctx.ast),
                         ]),
                     ));
                 }
                 // (FALSE || x) => x
                 // (TRUE && x) => x
-                return Some(logical_expr.right.take_in(ctx.ast.allocator));
+                return Some(logical_expr.right.take_in(ctx.ast));
             }
             // Left side may have side effects, but we know its boolean value.
             // e.g. true_with_sideeffects || foo() => true_with_sideeffects, foo()
             // or: false_with_sideeffects && foo() => false_with_sideeffects, foo()
-            let left = logical_expr.left.take_in(ctx.ast.allocator);
-            let right = logical_expr.right.take_in(ctx.ast.allocator);
+            let left = logical_expr.left.take_in(ctx.ast);
+            let right = logical_expr.right.take_in(ctx.ast);
             let vec = ctx.ast.vec_from_array([left, right]);
             let sequence_expr = ctx.ast.expression_sequence(logical_expr.span, vec);
             return Some(sequence_expr);
@@ -174,8 +174,8 @@ impl<'a> PeepholeOptimizations {
                         if !right_boolean && left_child_op.is_or()
                             || right_boolean && left_child_op.is_and()
                         {
-                            let left = left_child.left.take_in(ctx.ast.allocator);
-                            let right = logical_expr.right.take_in(ctx.ast.allocator);
+                            let left = left_child.left.take_in(ctx.ast);
+                            let right = logical_expr.right.take_in(ctx.ast);
                             let logic_expr = ctx.ast.expression_logical(
                                 logical_expr.span,
                                 left,
@@ -204,8 +204,8 @@ impl<'a> PeepholeOptimizations {
                 Some(if left.may_have_side_effects(&ctx) {
                     // e.g. `(a(), null) ?? 1` => `(a(), null, 1)`
                     let expressions = ctx.ast.vec_from_array([
-                        logical_expr.left.take_in(ctx.ast.allocator),
-                        logical_expr.right.take_in(ctx.ast.allocator),
+                        logical_expr.left.take_in(ctx.ast),
+                        logical_expr.right.take_in(ctx.ast),
                     ]);
                     ctx.ast.expression_sequence(logical_expr.span, expressions)
                 } else {
@@ -222,12 +222,12 @@ impl<'a> PeepholeOptimizations {
                                     None,
                                     NumberBase::Decimal,
                                 ),
-                                logical_expr.right.take_in(ctx.ast.allocator),
+                                logical_expr.right.take_in(ctx.ast),
                             ]),
                         ));
                     }
                     // nullish condition => this expression evaluates to the right side.
-                    logical_expr.right.take_in(ctx.ast.allocator)
+                    logical_expr.right.take_in(ctx.ast)
                 })
             }
             ValueType::Number
@@ -248,12 +248,12 @@ impl<'a> PeepholeOptimizations {
                                 None,
                                 NumberBase::Decimal,
                             ),
-                            logical_expr.left.take_in(ctx.ast.allocator),
+                            logical_expr.left.take_in(ctx.ast),
                         ]),
                     ));
                 }
                 // non-nullish condition => this expression evaluates to the left side.
-                Some(logical_expr.left.take_in(ctx.ast.allocator))
+                Some(logical_expr.left.take_in(ctx.ast))
             }
             ValueType::Undetermined => None,
         }
@@ -389,16 +389,16 @@ impl<'a> PeepholeOptimizations {
                     e.right.get_side_free_string_value(&ctx),
                 ) {
                     let span = Span::new(left_binary_expr.right.span().start, e.right.span().end);
-                    let value = left_str.into_owned() + &right_str;
+                    let value = ctx.ast.atom_from_strs_array([&left_str, &right_str]);
                     let right = ctx.ast.expression_string_literal(span, value, None);
-                    let left = left_binary_expr.left.take_in(ctx.ast.allocator);
+                    let left = left_binary_expr.left.take_in(ctx.ast);
                     return Some(ctx.ast.expression_binary(e.span, left, e.operator, right));
                 }
 
                 if let Some(new_right) =
                     Self::try_fold_add_op(&mut left_binary_expr.right, &mut e.right, ctx)
                 {
-                    let left = left_binary_expr.left.take_in(ctx.ast.allocator);
+                    let left = left_binary_expr.left.take_in(ctx.ast);
                     return Some(ctx.ast.expression_binary(e.span, left, e.operator, new_right));
                 }
             }
@@ -437,7 +437,7 @@ impl<'a> PeepholeOptimizations {
                 }
                 left.quasis.extend(right.quasis.drain(1..)); // first quasi is already handled
                 left.expressions.extend(right.expressions.drain(..));
-                return Some(left_expr.take_in(ctx.ast.allocator));
+                return Some(left_expr.take_in(ctx.ast));
             }
 
             // "`${x}y` + 'z'" => "`${x}yz`"
@@ -453,7 +453,7 @@ impl<'a> PeepholeOptimizations {
                     .cooked
                     .map(|cooked| ctx.ast.atom(&(cooked.as_str().to_string() + &right_str)));
                 last_quasi.value.cooked = new_cooked;
-                return Some(left_expr.take_in(ctx.ast.allocator));
+                return Some(left_expr.take_in(ctx.ast));
             }
         } else if let Expression::TemplateLiteral(right) = right_expr {
             // "'x' + `y${z}`" => "`xy${z}`"
@@ -471,17 +471,17 @@ impl<'a> PeepholeOptimizations {
                     .cooked
                     .map(|cooked| ctx.ast.atom(&(left_str.into_owned() + cooked.as_str())));
                 first_quasi.value.cooked = new_cooked;
-                return Some(right_expr.take_in(ctx.ast.allocator));
+                return Some(right_expr.take_in(ctx.ast));
             }
         }
 
         // remove useless `+ ""` (e.g. `typeof foo + ""` -> `typeof foo`)
         if Self::evaluates_to_empty_string(left_expr) && right_expr.value_type(&ctx).is_string() {
-            return Some(right_expr.take_in(ctx.ast.allocator));
+            return Some(right_expr.take_in(ctx.ast));
         } else if Self::evaluates_to_empty_string(right_expr)
             && left_expr.value_type(&ctx).is_string()
         {
-            return Some(left_expr.take_in(ctx.ast.allocator));
+            return Some(left_expr.take_in(ctx.ast));
         }
 
         None
@@ -523,7 +523,7 @@ impl<'a> PeepholeOptimizations {
 
         Some(ctx.ast.expression_binary(
             e.span,
-            expr_to_move.take_in(ctx.ast.allocator),
+            expr_to_move.take_in(ctx.ast),
             op,
             ctx.value_to_expr(Span::new(left.right.span().start, e.right.span().end), v),
         ))
@@ -556,14 +556,13 @@ impl<'a> PeepholeOptimizations {
             // `Number("a")` -> `+"a"` -> `NaN`
             // `Number("1")` -> `+"1"` -> `1`
             Expression::StringLiteral(n) => {
-                let argument = ctx.ast.expression_string_literal(n.span, n.value, n.raw);
-                if let Some(n) = argument.evaluate_value_to_number(&ctx) {
+                if let Some(n) = arg.evaluate_value_to_number(&ctx) {
                     n
                 } else {
                     return Some(ctx.ast.expression_unary(
                         e.span,
                         UnaryOperator::UnaryPlus,
-                        argument,
+                        ctx.ast.expression_string_literal(n.span, n.value, n.raw),
                     ));
                 }
             }
@@ -647,30 +646,99 @@ impl<'a> PeepholeOptimizations {
         state: &mut State,
         ctx: Ctx<'a, '_>,
     ) {
-        let len = e.properties.len();
-        e.properties.retain(|p| {
-            if let ObjectPropertyKind::SpreadProperty(spread_element) = p {
+        let (new_size, should_fold) =
+            e.properties.iter().fold((0, false), |(new_size, should_fold), p| {
+                let ObjectPropertyKind::SpreadProperty(spread_element) = p else {
+                    return (new_size + 1, should_fold);
+                };
                 let e = &spread_element.argument;
-                if e.is_literal() || ctx.is_expression_undefined(e) {
-                    return false;
+                if ctx.is_expression_undefined(e) {
+                    return (new_size, true);
                 }
-                if let Expression::ObjectExpression(o) = e {
-                    if o.properties.is_empty() {
-                        return false;
+                match e {
+                    Expression::BooleanLiteral(_)
+                    | Expression::NullLiteral(_)
+                    | Expression::NumericLiteral(_)
+                    | Expression::BigIntLiteral(_)
+                    | Expression::RegExpLiteral(_)
+                    | Expression::ArrowFunctionExpression(_)
+                    | Expression::FunctionExpression(_) => (new_size, true),
+                    Expression::ObjectExpression(o)
+                        if Self::is_spread_inlineable_object_literal(o, ctx) =>
+                    {
+                        (new_size + o.properties.len(), true)
                     }
+                    Expression::ArrayExpression(o) if o.elements.is_empty() => (new_size, true),
+                    _ => (new_size + 1, should_fold),
                 }
-                if let Expression::ArrayExpression(o) = e {
-                    if o.elements.is_empty() {
-                        return false;
-                    }
-                }
-                return true;
-            }
-            true
-        });
-        if e.properties.len() != len {
-            state.changed = true;
+            });
+        if !should_fold {
+            return;
         }
+
+        let mut new_properties = ctx.ast.vec_with_capacity::<ObjectPropertyKind>(new_size);
+        for p in e.properties.drain(..) {
+            if let ObjectPropertyKind::SpreadProperty(mut spread_element) = p {
+                let e = &mut spread_element.argument;
+                if ctx.is_expression_undefined(e) {
+                    continue;
+                }
+                match e {
+                    Expression::BooleanLiteral(_)
+                    | Expression::NullLiteral(_)
+                    | Expression::NumericLiteral(_)
+                    | Expression::BigIntLiteral(_)
+                    | Expression::RegExpLiteral(_)
+                    | Expression::ArrowFunctionExpression(_)
+                    | Expression::FunctionExpression(_) => {
+                        // skip
+                    }
+                    Expression::ObjectExpression(o)
+                        if Self::is_spread_inlineable_object_literal(o, ctx) =>
+                    {
+                        new_properties.extend(o.properties.drain(..).filter(|prop| {
+                            match prop {
+                                ObjectPropertyKind::SpreadProperty(_) => true,
+                                ObjectPropertyKind::ObjectProperty(p) => {
+                                    // non-computed __proto__ property sets the prototype of the object instead
+                                    p.computed
+                                        || p.method
+                                        || !p.key.is_specific_static_name("__proto__")
+                                }
+                            }
+                        }));
+                    }
+                    Expression::ArrayExpression(o) if o.elements.is_empty() => {
+                        // skip empty array
+                    }
+                    _ => {
+                        new_properties.push(ObjectPropertyKind::SpreadProperty(spread_element));
+                    }
+                }
+            } else {
+                new_properties.push(p);
+            }
+        }
+
+        e.properties = new_properties;
+        state.changed = true;
+    }
+
+    fn is_spread_inlineable_object_literal(e: &ObjectExpression<'a>, ctx: Ctx<'a, '_>) -> bool {
+        e.properties.iter().all(|p| match p {
+            ObjectPropertyKind::SpreadProperty(_) => true,
+            ObjectPropertyKind::ObjectProperty(p) => {
+                // getters are evaluated when spreading
+                matches!(p.kind, PropertyKind::Init)
+                    && (
+                        // non-computed __proto__ property sets the prototype of the object instead
+                        p.computed
+                            || p.method
+                            || !p.key.is_specific_static_name("__proto__")
+                            || !p.value.may_have_side_effects(&ctx)
+                    )
+            }
+        })
     }
 
     /// Inline constant values in template literals
@@ -2050,6 +2118,19 @@ mod test {
             fold("({ z, ...1 })", result);
             fold("({ z, ...1n })", result);
             fold("({ z, .../asdf/ })", result);
+            fold("({ z, ...()=>{} })", result);
+            fold("({ z, ...function(){} })", result);
+            fold_same("({ z, ...'abc' })");
+            fold("({ a: 0, ...{ b: 1 } })", "({ a: 0, b: 1 })");
+            fold("({ a: 0, ...{ b: 1, ...{ c: 2 } } })", "({ a: 0, b: 1, c: 2 })");
+            fold("({ a: 0, ...{ a: 1 } })", "({ a: 0, a: 1 })"); // can be fold to `({ a: 1 })`
+            fold("({ a: foo(), ...{ a: bar() } })", "({ a: foo(), a: bar() })"); // can be fold to `({ a: (foo(), bar()) })`
+            fold_same("({ ...{ get a() { return 0 } } })");
+            fold("({ ...{ __proto__: null } })", "({})");
+            fold("({ ...{ '__proto__': null } })", "({})");
+            fold_same("({ a: foo(), ...{ __proto__: bar() }, b: baz() })"); // can be folded to `({ a: foo(), b: (bar(), baz()) })`
+            fold("({ ...{ __proto__() {} } })", "({ __proto__() {} })");
+            fold("({ ...{ ['__proto__']: null } })", "({ ['__proto__']: null })");
         }
     }
 }

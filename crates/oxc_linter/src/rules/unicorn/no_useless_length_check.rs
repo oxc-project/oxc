@@ -43,10 +43,18 @@ declare_oxc_lint!(
     ///
     /// An extra unnecessary length check is done.
     ///
-    /// ### Example
+    /// ### Examples
     ///
+    /// Examples of **incorrect** code for this rule:
     /// ```javascript
     /// if (array.length === 0 || array.every(Boolean)) {
+    ///    // do something!
+    /// }
+    /// ```
+    ///
+    /// Examples of **correct** code for this rule:
+    /// ```javascript
+    /// if (array.every(Boolean)) {
     ///    // do something!
     /// }
     /// ```

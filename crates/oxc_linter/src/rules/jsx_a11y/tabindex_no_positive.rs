@@ -31,7 +31,7 @@ declare_oxc_lint!(
     /// interaction difficult for keyboard and assistive technology users,
     /// disrupting the logical order of content.
     ///
-    /// ### Example
+    /// ### Examples
     ///
     /// Examples of **incorrect** code for this rule:
     /// ```jsx

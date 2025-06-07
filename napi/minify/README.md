@@ -47,3 +47,7 @@ console.log(result.map);
 `oxc-minify` makes some assumptions about the source code.
 
 See https://github.com/oxc-project/oxc/blob/main/crates/oxc_minifier/README.md#assumptions for details.
+
+### Supports WASM
+
+See https://stackblitz.com/edit/oxc-minify for usage example.

@@ -38,7 +38,7 @@ declare_oxc_lint!(
     ///
     /// This rule suggests using a function type instead of an interface or object type literal with a single call signature.
     ///
-    /// ### Example
+    /// ### Examples
     /// ```ts
     /// // error
     /// interface Example {

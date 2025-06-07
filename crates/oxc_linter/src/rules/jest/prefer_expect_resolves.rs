@@ -1,6 +1,6 @@
 use oxc_ast::{
     AstKind,
-    ast::{Argument, CallExpression, Expression},
+    ast::{Argument, Expression},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -8,9 +8,8 @@ use oxc_span::Span;
 
 use crate::{
     context::LintContext,
-    fixer::{RuleFix, RuleFixer},
     rule::Rule,
-    utils::{ParsedExpectFnCall, PossibleJestNode, parse_expect_jest_fn_call},
+    utils::{PossibleJestNode, parse_expect_jest_fn_call},
 };
 
 fn expect_resolves(span: Span) -> OxcDiagnostic {
@@ -39,10 +38,21 @@ declare_oxc_lint!(
     /// Additionally, favoring the first style ensures consistency with its `rejects`
     /// counterpart, as there is no way of "awaiting" a rejection.
     ///
-    /// ### Example
+    /// ### Examples
     ///
+    /// Examples of **incorrect** code for this rule:
     /// ```javascript
-    /// // valid
+    /// it('passes', async () => {
+    ///     expect(await someValue()).toBe(true);
+    /// });
+    /// it('is true', async () => {
+    ///     const myPromise = Promise.resolve(true);
+    ///     expect(await myPromise).toBe(true);
+    /// });
+    /// ```
+    ///
+    /// Examples of **correct** code for this rule:
+    /// ```javascript
     /// it('passes', async () => {
     ///     await expect(someValue()).resolves.toBe(true);
     /// });
@@ -51,20 +61,10 @@ declare_oxc_lint!(
     ///
     ///     await expect(myPromise).resolves.toBe(true);
     /// });
-    ///
     /// it('errors', async () => {
     ///     await expect(Promise.reject(new Error('oh noes!'))).rejects.toThrowError(
     ///         'oh noes!',
     ///     );
-    /// });
-    ///
-    /// // invalid
-    /// it('passes', async () => {
-    ///     expect(await someValue()).toBe(true);
-    /// });
-    /// it('is true', async () => {
-    ///     const myPromise = Promise.resolve(true);
-    ///     expect(await myPromise).toBe(true);
     /// });
     /// ```
     PreferExpectResolves,
@@ -76,15 +76,9 @@ declare_oxc_lint!(
 impl Rule for PreferExpectResolves {
     fn run_on_jest_node<'a, 'c>(
         &self,
-        jest_node: &PossibleJestNode<'a, 'c>,
+        possible_jest_node: &PossibleJestNode<'a, 'c>,
         ctx: &'c LintContext<'a>,
     ) {
-        Self::run(jest_node, ctx);
-    }
-}
-
-impl PreferExpectResolves {
-    fn run<'a>(possible_jest_node: &PossibleJestNode<'a, '_>, ctx: &LintContext<'a>) {
         let node = possible_jest_node.node;
         let AstKind::CallExpression(call_expr) = node.kind() else {
             return;
@@ -106,43 +100,26 @@ impl PreferExpectResolves {
         let Some(ident) = call_expr.callee.get_identifier_reference() else {
             return;
         };
-
         ctx.diagnostic_with_fix(expect_resolves(await_expr.span), |fixer| {
-            Self::fix(fixer, &jest_expect_fn_call, call_expr, ident.span)
+            let offset = match &await_expr.argument {
+                Expression::CallExpression(call_expr) => call_expr.span.start - ident.span.end,
+                Expression::Identifier(promise_ident) => promise_ident.span.start - ident.span.end,
+                _ => 0,
+            };
+            let arg_span = Span::new(
+                call_expr.span.start + (ident.span.end - ident.span.start) + offset,
+                await_expr.span.end,
+            );
+            let local = jest_expect_fn_call.local.as_ref();
+            let argument = fixer.source_range(arg_span);
+            let mut code = String::with_capacity(local.len() + argument.len() + 17);
+            code.push_str("await ");
+            code.push_str(local);
+            code.push('(');
+            code.push_str(argument);
+            code.push_str(").resolves");
+            fixer.replace(call_expr.span, code)
         });
-    }
-
-    fn fix<'c, 'a: 'c>(
-        fixer: RuleFixer<'c, 'a>,
-        jest_expect_fn_call: &ParsedExpectFnCall<'a>,
-        call_expr: &CallExpression<'a>,
-        ident_span: Span,
-    ) -> RuleFix<'a> {
-        let mut formatter = fixer.codegen();
-        let first = call_expr.arguments.first().unwrap();
-        let Argument::AwaitExpression(await_expr) = first else {
-            // return formatter.into_source_text();
-            return fixer.replace(call_expr.span, formatter);
-        };
-
-        let offset = match &await_expr.argument {
-            Expression::CallExpression(call_expr) => call_expr.span.start - ident_span.end,
-            Expression::Identifier(promise_ident) => promise_ident.span.start - ident_span.end,
-            _ => 0,
-        };
-
-        let arg_span = Span::new(
-            call_expr.span.start + (ident_span.end - ident_span.start) + offset,
-            call_expr.span.end,
-        );
-
-        formatter.print_str("await");
-        formatter.print_ascii_byte(b' ');
-        formatter.print_str(&jest_expect_fn_call.local);
-        formatter.print_ascii_byte(b'(');
-        formatter.print_str(fixer.source_range(arg_span));
-        formatter.print_str(".resolves");
-        fixer.replace(call_expr.span, formatter)
     }
 }
 
@@ -224,7 +201,7 @@ fn tests() {
             ",
             "
                 it('passes', async () => {
-                    await expect(someValue(),).resolves.toBe(true);
+                    await expect(someValue()).resolves.toBe(true);
                 });
             ",
             None,

@@ -55,7 +55,7 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/type-declaratio
         "references": []
       },
       {
-        "flags": "SymbolFlags(NameSpaceModule)",
+        "flags": "SymbolFlags(NamespaceModule)",
         "id": 1,
         "name": "Member",
         "node": "TSModuleDeclaration(Member)",

@@ -27,7 +27,7 @@ declare_oxc_lint!(
     ///
     /// Using the return value from ReactDOM.render() is a legacy feature and should not be used.
     ///
-    /// ### Example
+    /// ### Examples
     ///
     /// Examples of **incorrect** code for this rule:
     /// ```jsx

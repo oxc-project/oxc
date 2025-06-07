@@ -270,3 +270,12 @@ source: crates/oxc_linter/src/tester.rs
   help: These paths form a cycle:
         -> ./typescript/ts-types-some-type-imports - fixtures/import/cycles/typescript/ts-types-some-type-imports.ts
         -> ../depth-zero - fixtures/import/cycles/depth-zero.js
+
+  ⚠ eslint-plugin-import(no-cycle): Dependency cycle detected
+   ╭─[cycles/depth-zero.js:1:21]
+ 1 │ import { foo } from "./typescript/ts-types-re-exporting-type";
+   ·                     ─────────────────────────────────────────
+   ╰────
+  help: These paths form a cycle:
+        -> ./typescript/ts-types-re-exporting-type - fixtures/import/cycles/typescript/ts-types-re-exporting-type.ts
+        -> ../depth-zero - fixtures/import/cycles/depth-zero.js

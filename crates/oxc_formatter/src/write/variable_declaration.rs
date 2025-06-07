@@ -30,9 +30,7 @@ impl<'a> Format<'a> for Vec<'a, VariableDeclarator<'a>> {
             )
         );
 
-        let has_any_initializer = false; //node.iter().any(|declarator| {
-        // declarator.is_ok_and(|declarator| declarator.initializer().is_some())
-        // });
+        let has_any_initializer = self.iter().any(|declarator| declarator.init.is_some());
 
         let format_separator = format_with(|f| {
             if !is_parent_for_loop && has_any_initializer {

@@ -1,9 +1,9 @@
 use oxc_ast::{
     AstKind,
-    ast::{Expression, VariableDeclarator},
+    ast::{Expression, ForInStatement, ForOfStatement, VariableDeclarator},
 };
 use oxc_semantic::NodeId;
-use oxc_span::CompactStr;
+use oxc_span::{CompactStr, GetSpan};
 
 use super::{BindingInfo, NoUnusedVars, Symbol, count_whitespace_or_commas};
 use crate::{
@@ -35,13 +35,13 @@ impl NoUnusedVars {
             return fixer.noop();
         }
 
-        let Some(parent) = symbol.nodes().parent_kind(decl_id) else {
+        let Some(parent) = symbol.nodes().parent_node(decl_id) else {
             #[cfg(debug_assertions)]
             panic!("VariableDeclarator nodes should always have a parent node");
             #[cfg(not(debug_assertions))]
             return fixer.noop();
         };
-        let (span, declarations) = match parent {
+        let (span, declarations) = match parent.kind() {
             AstKind::VariableDeclaration(decl) => (decl.span, &decl.declarations),
             _ => {
                 #[cfg(debug_assertions)]
@@ -52,6 +52,19 @@ impl NoUnusedVars {
                 return fixer.noop();
             }
         };
+
+        if let Some(
+            AstKind::ForOfStatement(ForOfStatement { span, .. })
+            | AstKind::ForInStatement(ForInStatement { span, .. }),
+        ) = symbol.nodes().parent_kind(parent.id())
+        {
+            if span.contains_inclusive(symbol.span()) {
+                if let Some(new_name) = self.get_unused_var_name(symbol) {
+                    return symbol.rename(&new_name).dangerously();
+                }
+                return fixer.noop();
+            }
+        }
 
         // `true` even if references aren't considered a usage.
         let has_references = symbol.has_references();

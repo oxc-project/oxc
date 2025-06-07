@@ -1,5 +1,5 @@
 // Auto-generated code, DO NOT EDIT DIRECTLY!
-// To edit this generated file you have to edit `tasks/ast_tools/src/generators/get_id.rs`
+// To edit this generated file you have to edit `tasks/ast_tools/src/generators/get_id.rs`.
 
 use oxc_syntax::{reference::ReferenceId, scope::ScopeId, symbol::SymbolId};
 

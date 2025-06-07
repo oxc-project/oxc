@@ -40,13 +40,6 @@ where
 
 // ---------------- Primitive allocations ----------------
 
-impl<'a> FromIn<'a, String> for crate::String<'a> {
-    #[inline(always)]
-    fn from_in(value: String, allocator: &'a Allocator) -> Self {
-        crate::String::from_str_in(value.as_str(), allocator)
-    }
-}
-
 impl<'a> FromIn<'a, String> for &'a str {
     #[inline(always)]
     fn from_in(value: String, allocator: &'a Allocator) -> Self {

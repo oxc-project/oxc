@@ -4,6 +4,162 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.72.0] - 2025-05-24
+
+### Features
+
+- 03390ad allocator: `TakeIn` trait with `AllocatorAccessor` (#11201) (Boshen)
+- 4feeeee span: Add `Atom::from_strs_array_in` method (#11261) (overlookmotel)
+
+### Performance
+
+- 3281e99 transformer/react-refresh: Faster base64 encoding (#11254) (overlookmotel)
+
+### Refactor
+
+- cef5452 allocator: `TakeIn::take_in_box` accept any `AllocatorAccessor` (#11216) (overlookmotel)
+- 202ffd2 transformer: Use `StringBuilder` instead of `String` (#11260) (overlookmotel)
+
+## [0.71.0] - 2025-05-20
+
+- 5d9344f rust: [**BREAKING**] Clippy avoid-breaking-exported-api = false (#11088) (Boshen)
+
+### Bug Fixes
+
+- fcd5ba9 transformer/legacy-decorator: Decorates insertion order is incorrect (#11144) (Dunqing)
+- 468ddf4 transformer/legacy-decorator: Static class fields cannot be accessed in static field initializer when `class-properties` plugin is not enabled (#11143) (Dunqing)
+- 907e114 transformer/optional-chaining: Optional chaining expression isn't being transformed correctly when inside a double call expression (#11179) (Dunqing)
+- d374490 transformer/typescript: Panics when `setPublicClassFields = true` and the class includes private field (#11089) (Dunqing)
+
+### Refactor
+
+
+## [0.70.0] - 2025-05-15
+
+- 4e5c73b span: [**BREAKING**] `SourceType::from_path(".js")` return js instead of jsx (#11038) (Boshen)
+
+### Bug Fixes
+
+- 6c20277 transformer: Always update jsx options from comments (#10966) (magic-akari)
+- 27a21a7 transformer/jsx: Fix parsing JSX pragma comments (#10983) (overlookmotel)
+- a39eb85 transformer/legacy-decorator: Abstract class doesn't work in metadata (#10952) (Dunqing)
+
+### Performance
+
+- 1aed99b transformer/jsx: Use `memchr` for parsing JSX pragma comments (#11001) (overlookmotel)
+
+### Testing
+
+- 6540f44 transformer/jsx: Fix tests for JSX pragma parsing (#11000) (overlookmotel)
+
+## [0.69.0] - 2025-05-09
+
+- 8a3bba8 ast: [**BREAKING**] Fix field order for `PropertyDefinition` (#10902) (overlookmotel)
+
+- 5746d36 ast: [**BREAKING**] Fix field order for `NewExpression` (#10893) (overlookmotel)
+
+- ad4fbf4 ast: [**BREAKING**] Simplify `RegExpPattern` (#10834) (overlookmotel)
+
+### Features
+
+- 6de0bc2 transformer/typescript: Support transforming class fields into this assignment (#10854) (Dunqing)
+
+### Bug Fixes
+
+- a033c1e transformer/typescript: Panic when using `removeClassFieldsWithoutInitializer` and private class members (#10838) (camc314)
+
+### Refactor
+
+- faf0a95 syntax: Rename `NameSpaceModule` to `NamespaceModule` (#10917) (Dunqing)
+
+## [0.68.0] - 2025-05-03
+
+- a0a37e0 ast: [**BREAKING**] `AstBuilder` methods require an `Atom` with correct lifetime (#10735) (overlookmotel)
+
+- 315143a codegen: [**BREAKING**] Remove useless `CodeGenerator` type alias (#10702) (Boshen)
+
+### Performance
+
+- 8d84cf5 transformer: Avoid copying string data (#10726) (overlookmotel)
+- 91df9d4 transformer: Optimize inserting var/let statements (#10654) (Dunqing)
+- 2256918 transformer/jsx: Skip creating temp `String` (#10721) (overlookmotel)
+- b57f2e8 transformer/refresh: `RefreshIdentifierResolver::parse` search string for `.` only once (#10719) (overlookmotel)
+- 9e557cf transformer/refresh: Remove temp `Vec` (#10713) (overlookmotel)
+- 2aa3c4c transformer/refresh: Reuse existing `Atom` (#10709) (overlookmotel)
+- 7d8efd8 transformer/refresh: Use `take/take_in` instead of `drain` (#10656) (Dunqing)
+- dec3c80 transformer/regexp: Do not store parsed regexp (#10748) (overlookmotel)
+- fc90298 transformer/regexp: Inline `enter_expression` (#10745) (overlookmotel)
+- 8e902a5 transformer/regexp: Avoid copying string data and temp `String` (#10723) (overlookmotel)
+
+### Refactor
+
+- 62843e6 transformer/refresh: Shorten code (#10718) (overlookmotel)
+- c4a5dba transformer/refresh: Do not unnecessarily consume `Vec` (#10712) (overlookmotel)
+
+## [0.67.0] - 2025-04-27
+
+### Features
+
+- 42ca96a transformer, napi/transform: Deprecate `allowDeclareFields` option (#10584) (Dunqing)
+- fae8c26 transformer/typescript: Support `allowDeclareFields: false` for backward compatibility (#10585) (Dunqing)
+- 6bff64e transformer/typescript: Support `removeClassFieldsWithoutInitializer` option (#10576) (Dunqing)
+- 1962bc6 transformer_plugins: Split out `oxc_transformer_plugins` crate (#10617) (Boshen)
+
+### Bug Fixes
+
+- bb522fa transformer/legacy-decorator: Should fallback to `Object` when a type reference refers to a type symbol (#10633) (Dunqing)
+- 6abc2f3 transformer/legacy-decorator: Keep imports when it's referenced as metadata (#10632) (Dunqing)
+
+### Performance
+
+- bdcbeb4 traverse: Use `ArenaString` instead `CompactString` to store UID name (#10562) (Dunqing)
+
+### Documentation
+
+- 73cd730 transformer: Add documentation for `CompilerAssumptions::set_public_class_fields` (#10582) (Dunqing)
+
+### Refactor
+
+- b31ab87 traverse: Take `&str` instead of `CompactStr` in `TraverseScoping::rename_symbol` (#10610) (Dunqing)
+- f35efd3 traverse, semantic: Move `rename_symbol` from `TraverseScoping` to `Scoping` (#10611) (Dunqing)
+
+## [0.66.0] - 2025-04-23
+
+### Bug Fixes
+
+- 84742d8 transformer/module_runner: Fix export default live binding (#10560) (hi-ogawa)
+- 6c115c7 transformer/module_runner: Fix execution order of re-export (#10362) (hi-ogawa)
+- b9d84b0 transformer/typescript: Remove `StringLiteral::raw` when rewriting extensions (#10554) (overlookmotel)
+
+### Performance
+
+- 3418ae5 transformer/class-properties: Re-use `InstanceInitializerVisitor` (#10543) (overlookmotel)
+- 7fcf0ac transformer/typescript: Reduce allocations renaming extensions (#10555) (overlookmotel)
+
+### Documentation
+
+- 1a9530c transformer/class-properties: Fix typo (#10542) (overlookmotel)
+
+### Refactor
+
+- 7e71282 transformer/class-properties: Correct outdated comment (#10546) (overlookmotel)
+- 596978b transformer/class-properties: Simplify to get `constructor` method only once (#10493) (Dunqing)
+- f13fe0a transformer/class-properties: Defer re-parenting initializers scopes until all instance properties are transformed (#10495) (Dunqing)
+- c83dad6 transformer/class-properties: Streamline handling scope of instance property initializer (#10492) (Dunqing)
+
+## [0.65.0] - 2025-04-21
+
+### Bug Fixes
+
+- 45f8cc0 transformer/class-properties: `private_field_count` is incorrect when class only have `accessor` with private field (#10463) (Dunqing)
+- 33a2625 transformer/typescript: Namespaces disappeared and do not transform when a type-only namespace followed by a value module namespace (#10511) (Dunqing)
+- 710a35c transformer/typescript: Variable declaration disappears when declaring type-alias/interface first and then declaring namespace (#10510) (Dunqing)
+
+### Refactor
+
+- a5875da transformer/class-properties: Refactor code for decrementing `private_field_count` (#10464) (overlookmotel)
+- e0ef9a8 transformer/class-properties: Debug assert `private_field_count` is 0 at end of transform (#10457) (overlookmotel)
+
 ## [0.64.0] - 2025-04-17
 
 - 7284135 ast: [**BREAKING**] Remove `trailing_commas` from `ArrayExpression` and `ObjectExpression` (#10431) (Boshen)

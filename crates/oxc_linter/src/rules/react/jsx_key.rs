@@ -1,7 +1,10 @@
 use cow_utils::CowUtils;
 use oxc_ast::{
     AstKind,
-    ast::{Expression, JSXAttributeItem, JSXAttributeName, JSXElement, JSXFragment, Statement},
+    ast::{
+        CallExpression, Expression, JSXAttributeItem, JSXAttributeName, JSXElement, JSXFragment,
+        Statement,
+    },
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -46,7 +49,7 @@ declare_oxc_lint!(
     ///
     /// React requires a `key` prop for elements in an array to help identify which items have changed, are added, or are removed.
     ///
-    /// ### Example
+    /// ### Examples
     ///
     /// Examples of **incorrect** code for this rule:
     /// ```jsx
@@ -84,18 +87,8 @@ impl Rule for JsxKey {
     }
 }
 
-pub fn is_to_array(node: &AstNode<'_>) -> bool {
-    const TOARRAY: &str = "toArray";
-
-    let AstKind::CallExpression(call) = node.kind() else { return false };
-
-    let Some(subject) = call.callee_name() else { return false };
-
-    if subject != TOARRAY {
-        return false;
-    }
-
-    true
+pub fn is_to_array(call: &CallExpression<'_>) -> bool {
+    call.callee_name().is_some_and(|subject| subject == "toArray")
 }
 
 pub fn import_matcher<'a>(
@@ -125,11 +118,9 @@ pub fn is_import<'a>(
     import_matcher(ctx, actual_local_name, expected_module_name)
 }
 
-pub fn is_children<'a, 'b>(node: &'b AstNode<'a>, ctx: &'b LintContext<'a>) -> bool {
+pub fn is_children<'a, 'b>(call: &'b CallExpression<'a>, ctx: &'b LintContext<'a>) -> bool {
     const REACT: &str = "React";
     const CHILDREN: &str = "Children";
-
-    let AstKind::CallExpression(call) = node.kind() else { return false };
 
     let Some(member) = call.callee.as_member_expression() else { return false };
 
@@ -150,8 +141,8 @@ pub fn is_children<'a, 'b>(node: &'b AstNode<'a>, ctx: &'b LintContext<'a>) -> b
 fn is_within_children_to_array<'a, 'b>(node: &'b AstNode<'a>, ctx: &'b LintContext<'a>) -> bool {
     let parents_iter = ctx.nodes().ancestors(node.id()).skip(2);
     parents_iter
-        .filter(|parent_node| matches!(parent_node.kind(), AstKind::CallExpression(_)))
-        .any(|parent_node| is_children(parent_node, ctx) && is_to_array(parent_node))
+        .filter_map(|parent_node| parent_node.kind().as_call_expression())
+        .any(|parent_call| is_children(parent_call, ctx) && is_to_array(parent_call))
 }
 
 enum InsideArrayOrIterator {

@@ -15,17 +15,14 @@ use crate::{
     },
 };
 
-// TODO: re-word diagnostic messages
-fn restricted_chain(x0: &str, span1: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Disallow specific matchers & modifiers")
-        .with_help(format!("Use of `{x0:?}` is disallowed`"))
-        .with_label(span1)
+fn restricted_chain(chain_call: &str, span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn(format!("Use of `{chain_call}` is disallowed")).with_label(span)
 }
 
-fn restricted_chain_with_message(x0: &str, span1: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Disallow specific matchers & modifiers")
-        .with_help(format!("{x0:?}"))
-        .with_label(span1)
+fn restricted_chain_with_message(chain_call: &str, message: &str, span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn(format!("Use of `{chain_call}` is disallowed"))
+        .with_help(message.to_string())
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -49,9 +46,35 @@ declare_oxc_lint!(
     ///
     /// Ban specific matchers & modifiers from being used, and can suggest alternatives.
     ///
-    /// ### Example
-    /// ```javascript
+    /// ### Examples
     ///
+    /// Bans are expressed in the form of a map, with the value being either a string message to be shown,
+    /// or null if only the default rule message should be used. Bans are checked against the start of
+    /// the expect chain - this means that to ban a specific matcher entirely you must specify all
+    /// six permutations, but allows you to ban modifiers as well. By default, this map is empty, meaning
+    /// no matchers or modifiers are banned.
+    ///
+    /// Example configuration:
+    /// ```json
+    /// {
+    ///   "jest/no-restricted-matchers": [
+    ///     "error",
+    ///     {
+    ///       "toBeFalsy": null,
+    ///       "resolves": "Use `expect(await promise)` instead.",
+    ///       "toHaveBeenCalledWith": null,
+    ///       "not.toHaveBeenCalledWith": null,
+    ///       "resolves.toHaveBeenCalledWith": null,
+    ///       "rejects.toHaveBeenCalledWith": null,
+    ///       "resolves.not.toHaveBeenCalledWith": null,
+    ///       "rejects.not.toHaveBeenCalledWith": null
+    ///     }
+    ///   ]
+    /// }
+    /// ```
+    ///
+    /// Examples of **incorrect** code for this rule with the above configuration:
+    /// ```javascript
     /// it('is false', () => {
     ///   // if this has a modifier (i.e. `not.toBeFalsy`), it would be considered fine
     ///   expect(a).toBeFalsy();
@@ -69,7 +92,6 @@ declare_oxc_lint!(
     ///   });
     /// });
     /// ```
-    ///
     NoRestrictedMatchers,
     jest,
     style,
@@ -79,15 +101,13 @@ const MODIFIER_NAME: [&str; 3] = ["not", "rejects", "resolves"];
 
 impl Rule for NoRestrictedMatchers {
     fn from_configuration(value: serde_json::Value) -> Self {
-        let restricted_matchers = &value
+        let restricted_matchers = value
             .get(0)
             .and_then(serde_json::Value::as_object)
-            .and_then(Self::compile_restricted_matchers)
+            .map(Self::compile_restricted_matchers)
             .unwrap_or_default();
 
-        Self(Box::new(NoRestrictedMatchersConfig {
-            restricted_matchers: restricted_matchers.clone(),
-        }))
+        Self(Box::new(NoRestrictedMatchersConfig { restricted_matchers }))
     }
 
     fn run_on_jest_node<'a, 'c>(
@@ -134,7 +154,7 @@ impl NoRestrictedMatchers {
                 if message.is_empty() {
                     ctx.diagnostic(restricted_chain(&chain_call, span));
                 } else {
-                    ctx.diagnostic(restricted_chain_with_message(message, span));
+                    ctx.diagnostic(restricted_chain_with_message(&chain_call, message, span));
                 }
             }
         }
@@ -144,23 +164,21 @@ impl NoRestrictedMatchers {
         if MODIFIER_NAME.contains(&restriction)
             || Path::new(restriction).extension().is_some_and(|ext| ext.eq_ignore_ascii_case("not"))
         {
-            return chain_call.starts_with(restriction);
+            chain_call.starts_with(restriction)
+        } else {
+            chain_call == restriction
         }
-
-        chain_call == restriction
     }
 
     pub fn compile_restricted_matchers(
         matchers: &serde_json::Map<String, serde_json::Value>,
-    ) -> Option<FxHashMap<String, String>> {
-        Some(
-            matchers
-                .iter()
-                .map(|(key, value)| {
-                    (String::from(key), String::from(value.as_str().unwrap_or_default()))
-                })
-                .collect(),
-        )
+    ) -> FxHashMap<String, String> {
+        matchers
+            .iter()
+            .map(|(key, value)| {
+                (String::from(key), String::from(value.as_str().unwrap_or_default()))
+            })
+            .collect()
     }
 }
 

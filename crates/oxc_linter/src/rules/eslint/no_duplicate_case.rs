@@ -24,7 +24,7 @@ declare_oxc_lint!(
     /// If a switch statement has duplicate test expressions in case clauses,
     /// it is likely that a programmer copied a case clause but forgot to change the test expression.
     ///
-    /// ### Example
+    /// ### Examples
     ///
     /// Examples of **incorrect** code for this rule:
     /// ```js

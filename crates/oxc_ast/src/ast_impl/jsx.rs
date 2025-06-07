@@ -1,5 +1,6 @@
 //! [JSX](https://facebook.github.io/jsx)
-use std::fmt;
+
+use std::fmt::{self, Display};
 
 use oxc_span::Atom;
 
@@ -7,14 +8,14 @@ use crate::ast::*;
 
 // 1.2 JSX Elements
 
-impl fmt::Display for JSXIdentifier<'_> {
+impl Display for JSXIdentifier<'_> {
     #[inline]
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         self.name.fmt(f)
     }
 }
 
-impl fmt::Display for JSXNamespacedName<'_> {
+impl Display for JSXNamespacedName<'_> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{}:{}", self.namespace.name, self.name.name)
     }
@@ -91,13 +92,13 @@ impl<'a> JSXMemberExpressionObject<'a> {
     }
 }
 
-impl fmt::Display for JSXMemberExpression<'_> {
+impl Display for JSXMemberExpression<'_> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{}.{}", self.object, self.property)
     }
 }
 
-impl fmt::Display for JSXMemberExpressionObject<'_> {
+impl Display for JSXMemberExpressionObject<'_> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Self::IdentifierReference(id) => id.fmt(f),
@@ -107,7 +108,7 @@ impl fmt::Display for JSXMemberExpressionObject<'_> {
     }
 }
 
-impl fmt::Display for JSXElementName<'_> {
+impl Display for JSXElementName<'_> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Self::Identifier(ident) => ident.fmt(f),

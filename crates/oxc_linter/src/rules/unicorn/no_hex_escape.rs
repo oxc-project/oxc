@@ -95,7 +95,7 @@ impl Rule for NoHexEscape {
                 });
             }
             AstKind::RegExpLiteral(regex) => {
-                let Some(pattern) = regex.regex.pattern.as_pattern() else {
+                let Some(pattern) = &regex.regex.pattern.pattern else {
                     return;
                 };
 

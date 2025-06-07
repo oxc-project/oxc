@@ -25,12 +25,14 @@ fn autocomplete_valid_diagnostic(span: Span, autocomplete: &str) -> OxcDiagnosti
 pub struct AutocompleteValid(Box<AutocompleteValidConfig>);
 declare_oxc_lint!(
     /// ### What it does
+    ///
     /// Enforces that an element's autocomplete attribute must be a valid value.
     ///
     /// ### Why is this bad?
+    ///
     /// Incorrectly using the autocomplete attribute may decrease the accessibility of the website for users.
     ///
-    /// ### Example
+    /// ### Examples
     ///
     /// Examples of **incorrect** code for this rule:
     /// ```jsx

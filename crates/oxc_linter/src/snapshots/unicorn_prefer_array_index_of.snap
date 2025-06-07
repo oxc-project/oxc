@@ -1,0 +1,222 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+  ⚠ eslint-plugin-unicorn(prefer-array-index-of): Prefer 'indexOf' over 'findIndex' for simple equality checks
+   ╭─[prefer_array_index_of.tsx:1:8]
+ 1 │ values.findIndex(x => x === "foo")
+   ·        ─────────
+   ╰────
+  help: Use 'indexOf(value)' instead of 'findIndex(x => x === value)' for better clarity and performance
+
+  ⚠ eslint-plugin-unicorn(prefer-array-index-of): Prefer 'indexOf' over 'findIndex' for simple equality checks
+   ╭─[prefer_array_index_of.tsx:1:8]
+ 1 │ values.findIndex(x => "foo" === x)
+   ·        ─────────
+   ╰────
+  help: Use 'indexOf(value)' instead of 'findIndex(x => x === value)' for better clarity and performance
+
+  ⚠ eslint-plugin-unicorn(prefer-array-index-of): Prefer 'indexOf' over 'findIndex' for simple equality checks
+   ╭─[prefer_array_index_of.tsx:1:8]
+ 1 │ values.findIndex(x => {return x === "foo";})
+   ·        ─────────
+   ╰────
+  help: Use 'indexOf(value)' instead of 'findIndex(x => x === value)' for better clarity and performance
+
+  ⚠ eslint-plugin-unicorn(prefer-array-index-of): Prefer 'indexOf' over 'findIndex' for simple equality checks
+   ╭─[prefer_array_index_of.tsx:1:8]
+ 1 │ values.findIndex(function (x) {return x === "foo";})
+   ·        ─────────
+   ╰────
+  help: Use 'indexOf(value)' instead of 'findIndex(x => x === value)' for better clarity and performance
+
+  ⚠ eslint-plugin-unicorn(prefer-array-index-of): Prefer 'indexOf' over 'findIndex' for simple equality checks
+   ╭─[prefer_array_index_of.tsx:4:10]
+ 3 │     // 2
+ 4 │     ./* 3 */findIndex /* 3 */ (
+   ·             ─────────
+ 5 │         /* 4 */
+   ╰────
+  help: Use 'indexOf(value)' instead of 'findIndex(x => x === value)' for better clarity and performance
+
+  ⚠ eslint-plugin-unicorn(prefer-array-index-of): Prefer 'indexOf' over 'findIndex' for simple equality checks
+   ╭─[prefer_array_index_of.tsx:1:5]
+ 1 │ foo.findIndex(function (element) {
+   ·     ─────────
+ 2 │     return element === bar.findIndex(x => x === 1);
+   ╰────
+  help: Use 'indexOf(value)' instead of 'findIndex(x => x === value)' for better clarity and performance
+
+  ⚠ eslint-plugin-unicorn(prefer-array-index-of): Prefer 'indexOf' over 'findIndex' for simple equality checks
+   ╭─[prefer_array_index_of.tsx:2:25]
+ 1 │ foo.findIndex(function (element) {
+ 2 │     return element === bar.findIndex(x => x === 1);
+   ·                            ─────────
+ 3 │ });
+   ╰────
+  help: Use 'indexOf(value)' instead of 'findIndex(x => x === value)' for better clarity and performance
+
+  ⚠ eslint-plugin-unicorn(prefer-array-index-of): Prefer 'indexOf' over 'findIndex' for simple equality checks
+   ╭─[prefer_array_index_of.tsx:1:8]
+ 1 │ values.findIndex(x => x === (0, "foo"))
+   ·        ─────────
+   ╰────
+  help: Use 'indexOf(value)' instead of 'findIndex(x => x === value)' for better clarity and performance
+
+  ⚠ eslint-plugin-unicorn(prefer-array-index-of): Prefer 'indexOf' over 'findIndex' for simple equality checks
+   ╭─[prefer_array_index_of.tsx:1:8]
+ 1 │ values.findIndex((x => x === (0, "foo")))
+   ·        ─────────
+   ╰────
+  help: Use 'indexOf(value)' instead of 'findIndex(x => x === value)' for better clarity and performance
+
+  ⚠ eslint-plugin-unicorn(prefer-array-index-of): Prefer 'indexOf' over 'findIndex' for simple equality checks
+   ╭─[prefer_array_index_of.tsx:2:6]
+ 1 │ function fn() {
+ 2 │     foo.findIndex(x => x === arguments.length)
+   ·         ─────────
+ 3 │ }
+   ╰────
+  help: Use 'indexOf(value)' instead of 'findIndex(x => x === value)' for better clarity and performance
+
+  ⚠ eslint-plugin-unicorn(prefer-array-index-of): Prefer 'indexOf' over 'findIndex' for simple equality checks
+   ╭─[prefer_array_index_of.tsx:2:6]
+ 1 │ function fn() {
+ 2 │     foo.findIndex(x => x === this[1])
+   ·         ─────────
+ 3 │ }
+   ╰────
+  help: Use 'indexOf(value)' instead of 'findIndex(x => x === value)' for better clarity and performance
+
+  ⚠ eslint-plugin-unicorn(prefer-array-index-of): Prefer 'indexOf' over 'findIndex' for simple equality checks
+   ╭─[prefer_array_index_of.tsx:1:8]
+ 1 │ values.findIndex(x => x === foo())
+   ·        ─────────
+   ╰────
+  help: Use 'indexOf(value)' instead of 'findIndex(x => x === value)' for better clarity and performance
+
+  ⚠ eslint-plugin-unicorn(prefer-array-index-of): Prefer 'indexOf' over 'findIndex' for simple equality checks
+   ╭─[prefer_array_index_of.tsx:1:5]
+ 1 │ foo.findIndex(function a(x) {
+   ·     ─────────
+ 2 │     return x === (function (a) {
+   ╰────
+  help: Use 'indexOf(value)' instead of 'findIndex(x => x === value)' for better clarity and performance
+
+  ⚠ eslint-plugin-unicorn(prefer-array-index-of): Prefer 'indexOf' over 'findIndex' for simple equality checks
+   ╭─[prefer_array_index_of.tsx:2:25]
+ 1 │ function foo() {
+ 2 │     return (bar as string).findIndex(x => x === "foo");
+   ·                            ─────────
+ 3 │ }
+   ╰────
+  help: Use 'indexOf(value)' instead of 'findIndex(x => x === value)' for better clarity and performance
+
+  ⚠ eslint-plugin-unicorn(prefer-array-index-of): Prefer 'indexOf' over 'findIndex' for simple equality checks
+   ╭─[prefer_array_index_of.tsx:1:8]
+ 1 │ values.findLastIndex(x => x === "foo")
+   ·        ─────────────
+   ╰────
+  help: Use 'indexOf(value)' instead of 'findIndex(x => x === value)' for better clarity and performance
+
+  ⚠ eslint-plugin-unicorn(prefer-array-index-of): Prefer 'indexOf' over 'findIndex' for simple equality checks
+   ╭─[prefer_array_index_of.tsx:1:8]
+ 1 │ values.findLastIndex(x => "foo" === x)
+   ·        ─────────────
+   ╰────
+  help: Use 'indexOf(value)' instead of 'findIndex(x => x === value)' for better clarity and performance
+
+  ⚠ eslint-plugin-unicorn(prefer-array-index-of): Prefer 'indexOf' over 'findIndex' for simple equality checks
+   ╭─[prefer_array_index_of.tsx:1:8]
+ 1 │ values.findLastIndex(x => {return x === "foo";})
+   ·        ─────────────
+   ╰────
+  help: Use 'indexOf(value)' instead of 'findIndex(x => x === value)' for better clarity and performance
+
+  ⚠ eslint-plugin-unicorn(prefer-array-index-of): Prefer 'indexOf' over 'findIndex' for simple equality checks
+   ╭─[prefer_array_index_of.tsx:1:8]
+ 1 │ values.findLastIndex(function (x) {return x === "foo";})
+   ·        ─────────────
+   ╰────
+  help: Use 'indexOf(value)' instead of 'findIndex(x => x === value)' for better clarity and performance
+
+  ⚠ eslint-plugin-unicorn(prefer-array-index-of): Prefer 'indexOf' over 'findIndex' for simple equality checks
+   ╭─[prefer_array_index_of.tsx:4:10]
+ 3 │     // 2
+ 4 │     ./* 3 */findLastIndex /* 3 */ (
+   ·             ─────────────
+ 5 │         /* 4 */
+   ╰────
+  help: Use 'indexOf(value)' instead of 'findIndex(x => x === value)' for better clarity and performance
+
+  ⚠ eslint-plugin-unicorn(prefer-array-index-of): Prefer 'indexOf' over 'findIndex' for simple equality checks
+   ╭─[prefer_array_index_of.tsx:1:5]
+ 1 │ foo.findLastIndex(function (element) {
+   ·     ─────────────
+ 2 │     return element === bar.findLastIndex(x => x === 1);
+   ╰────
+  help: Use 'indexOf(value)' instead of 'findIndex(x => x === value)' for better clarity and performance
+
+  ⚠ eslint-plugin-unicorn(prefer-array-index-of): Prefer 'indexOf' over 'findIndex' for simple equality checks
+   ╭─[prefer_array_index_of.tsx:2:25]
+ 1 │ foo.findLastIndex(function (element) {
+ 2 │     return element === bar.findLastIndex(x => x === 1);
+   ·                            ─────────────
+ 3 │ });
+   ╰────
+  help: Use 'indexOf(value)' instead of 'findIndex(x => x === value)' for better clarity and performance
+
+  ⚠ eslint-plugin-unicorn(prefer-array-index-of): Prefer 'indexOf' over 'findIndex' for simple equality checks
+   ╭─[prefer_array_index_of.tsx:1:8]
+ 1 │ values.findLastIndex(x => x === (0, "foo"))
+   ·        ─────────────
+   ╰────
+  help: Use 'indexOf(value)' instead of 'findIndex(x => x === value)' for better clarity and performance
+
+  ⚠ eslint-plugin-unicorn(prefer-array-index-of): Prefer 'indexOf' over 'findIndex' for simple equality checks
+   ╭─[prefer_array_index_of.tsx:1:8]
+ 1 │ values.findLastIndex((x => x === (0, "foo")))
+   ·        ─────────────
+   ╰────
+  help: Use 'indexOf(value)' instead of 'findIndex(x => x === value)' for better clarity and performance
+
+  ⚠ eslint-plugin-unicorn(prefer-array-index-of): Prefer 'indexOf' over 'findIndex' for simple equality checks
+   ╭─[prefer_array_index_of.tsx:2:6]
+ 1 │ function fn() {
+ 2 │     foo.findLastIndex(x => x === arguments.length)
+   ·         ─────────────
+ 3 │ }
+   ╰────
+  help: Use 'indexOf(value)' instead of 'findIndex(x => x === value)' for better clarity and performance
+
+  ⚠ eslint-plugin-unicorn(prefer-array-index-of): Prefer 'indexOf' over 'findIndex' for simple equality checks
+   ╭─[prefer_array_index_of.tsx:2:6]
+ 1 │ function fn() {
+ 2 │     foo.findLastIndex(x => x === this[1])
+   ·         ─────────────
+ 3 │ }
+   ╰────
+  help: Use 'indexOf(value)' instead of 'findIndex(x => x === value)' for better clarity and performance
+
+  ⚠ eslint-plugin-unicorn(prefer-array-index-of): Prefer 'indexOf' over 'findIndex' for simple equality checks
+   ╭─[prefer_array_index_of.tsx:1:8]
+ 1 │ values.findLastIndex(x => x === foo())
+   ·        ─────────────
+   ╰────
+  help: Use 'indexOf(value)' instead of 'findIndex(x => x === value)' for better clarity and performance
+
+  ⚠ eslint-plugin-unicorn(prefer-array-index-of): Prefer 'indexOf' over 'findIndex' for simple equality checks
+   ╭─[prefer_array_index_of.tsx:1:5]
+ 1 │ foo.findLastIndex(function a(x) {
+   ·     ─────────────
+ 2 │     return x === (function (a) {
+   ╰────
+  help: Use 'indexOf(value)' instead of 'findIndex(x => x === value)' for better clarity and performance
+
+  ⚠ eslint-plugin-unicorn(prefer-array-index-of): Prefer 'indexOf' over 'findIndex' for simple equality checks
+   ╭─[prefer_array_index_of.tsx:2:25]
+ 1 │ function foo() {
+ 2 │     return (bar as string).findLastIndex(x => x === "foo");
+   ·                            ─────────────
+ 3 │ }
+   ╰────
+  help: Use 'indexOf(value)' instead of 'findIndex(x => x === value)' for better clarity and performance

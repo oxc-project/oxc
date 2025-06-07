@@ -44,7 +44,6 @@ declare_oxc_lint!(
     /// export * from "./export-all"; // No conflict if export-all.js also exports foo
     /// ```
     Export,
-
     import,
     nursery
 );
@@ -74,7 +73,7 @@ impl Rule for Export {
             walk_exported_recursive(remote_module_record, &mut export_names, &mut visited);
 
             if export_names.is_empty() {
-                ctx.diagnostic(no_named_export(module_request.name(), module_request.span()));
+                ctx.diagnostic(no_named_export(module_request.name(), module_request.span));
             } else {
                 all_export_names.insert(star_export_entry.span, export_names);
             }

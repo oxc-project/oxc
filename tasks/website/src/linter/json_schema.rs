@@ -1,4 +1,5 @@
 use handlebars::Handlebars;
+use itertools::Itertools;
 use oxc_linter::Oxlintrc;
 use schemars::{
     schema::{InstanceType, RootSchema, Schema, SchemaObject, SingleOrVec, SubschemaValidation},
@@ -65,22 +66,28 @@ struct Root {
 
 /// Data passed to [`SECTION`] hbs template
 #[derive(Serialize)]
-struct Section {
+pub(super) struct Section {
     level: String,
     title: String,
     instance_type: Option<String>,
     description: String,
-    default: Option<String>,
+    pub(super) default: Option<String>,
     sections: Vec<Section>,
 }
+impl Section {
+    pub fn to_md(&self, renderer: &Renderer) -> String {
+        renderer.handlebars.render("section", self).unwrap()
+    }
+}
 
-struct Renderer {
+#[derive(Debug)]
+pub struct Renderer {
     handlebars: Handlebars<'static>,
     root_schema: RootSchema,
 }
 
 impl Renderer {
-    fn new(root_schema: RootSchema) -> Self {
+    pub fn new(root_schema: RootSchema) -> Self {
         let mut handlebars = Handlebars::new();
         handlebars.register_escape_fn(handlebars::no_escape);
         handlebars
@@ -142,7 +149,7 @@ impl Renderer {
                     SingleOrVec::Single(schema) => {
                         let schema_object = Self::get_schema_object(schema);
                         let key = parent_key.map_or_else(String::new, |k| format!("{k}[n]"));
-                        self.render_schema(depth + 1, &key, schema_object)
+                        self.render_schema_impl(depth + 1, &key, schema_object)
                     }
                     SingleOrVec::Vec(_) => panic!(),
                 })
@@ -160,7 +167,7 @@ impl Renderer {
                         return self.render_sub_schema(depth, &key, subschemas, schema_object);
                     }
 
-                    vec![self.render_schema(depth + 1, &key, schema_object)]
+                    vec![self.render_schema_impl(depth + 1, &key, schema_object)]
                 })
                 .collect::<Vec<_>>();
         }
@@ -184,7 +191,7 @@ impl Renderer {
                 .map(|subschema| {
                     let subschema = Self::get_schema_object(subschema);
                     let subschema = self.get_referenced_schema(subschema);
-                    let mut section = self.render_schema(depth + 1, key, subschema);
+                    let mut section = self.render_schema_impl(depth + 1, key, subschema);
                     if section.default.is_none() && !subschema.has_type(InstanceType::Object) {
                         section.default = Self::render_default(schema);
                     }
@@ -196,7 +203,13 @@ impl Renderer {
         vec![]
     }
 
-    fn render_schema(&self, depth: usize, key: &str, schema: &SchemaObject) -> Section {
+    pub fn render_schema(&self, depth: usize, key: &str, schema: &SchemaObject) -> Section {
+        let mut section = self.render_schema_impl(depth, key, schema);
+        section.sanitize();
+        section
+    }
+
+    fn render_schema_impl(&self, depth: usize, key: &str, schema: &SchemaObject) -> Section {
         let ref_schema = schema;
         let schema = self.get_referenced_schema(schema);
 
@@ -222,11 +235,24 @@ impl Renderer {
 
             (Some(instance_type), vec![])
         } else {
-            let instance_type = schema
+            let mut instance_type = schema
                 .instance_type
                 .as_ref()
                 .map(|t| serde_json::to_string_pretty(t).unwrap().replace('"', ""));
-            let sections = self.render_properties(depth, Some(key), schema);
+            let key_to_render = if key.is_empty() { None } else { Some(key) };
+            let sections = self.render_properties(depth, key_to_render, schema);
+
+            if instance_type.as_ref().is_some_and(|it| it == "string") {
+                if let Some(r#enum) = &schema.enum_values {
+                    instance_type = Some(
+                        r#enum
+                            .iter()
+                            .map(|v| v.as_str().unwrap())
+                            .map(|s| format!(r#""{s}""#))
+                            .join(" | "),
+                    );
+                }
+            }
 
             (instance_type, sections)
         };
@@ -240,6 +266,7 @@ impl Renderer {
                 .metadata
                 .as_ref()
                 .and_then(|m| m.description.clone())
+                .or_else(|| ref_schema.metadata.as_ref().and_then(|m| m.description.clone()))
                 .unwrap_or_default(),
             sections,
         }

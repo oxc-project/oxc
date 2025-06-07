@@ -1,6 +1,68 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+  ⚠ eslint-plugin-unicorn(prefer-number-properties): Use `Number.parseInt` instead of the global `parseInt`
+   ╭─[prefer_number_properties.tsx:1:1]
+ 1 │ parseInt("10", 2);
+   · ────────
+   ╰────
+  help: Replace it with `Number.parseInt`
+
+  ⚠ eslint-plugin-unicorn(prefer-number-properties): Use `Number.parseFloat` instead of the global `parseFloat`
+   ╭─[prefer_number_properties.tsx:1:1]
+ 1 │ parseFloat("10.5");
+   · ──────────
+   ╰────
+  help: Replace it with `Number.parseFloat`
+
+  ⚠ eslint-plugin-unicorn(prefer-number-properties): Use `Number.isNaN` instead of the global `isNaN`
+   ╭─[prefer_number_properties.tsx:1:1]
+ 1 │ isNaN(10);
+   · ─────
+   ╰────
+  help: Replace it with `Number.isNaN`
+
+  ⚠ eslint-plugin-unicorn(prefer-number-properties): Use `Number.isFinite` instead of the global `isFinite`
+   ╭─[prefer_number_properties.tsx:1:1]
+ 1 │ isFinite(10);
+   · ────────
+   ╰────
+  help: Replace it with `Number.isFinite`
+
+  ⚠ eslint-plugin-unicorn(prefer-number-properties): Use `Number.parseInt` instead of the global `parseInt`
+   ╭─[prefer_number_properties.tsx:1:11]
+ 1 │ const a = parseInt("10", 2);
+   ·           ────────
+ 2 │     const b = parseFloat("10.5");
+   ╰────
+  help: Replace it with `Number.parseInt`
+
+  ⚠ eslint-plugin-unicorn(prefer-number-properties): Use `Number.parseFloat` instead of the global `parseFloat`
+   ╭─[prefer_number_properties.tsx:2:15]
+ 1 │ const a = parseInt("10", 2);
+ 2 │     const b = parseFloat("10.5");
+   ·               ──────────
+ 3 │     const c = isNaN(10);
+   ╰────
+  help: Replace it with `Number.parseFloat`
+
+  ⚠ eslint-plugin-unicorn(prefer-number-properties): Use `Number.isNaN` instead of the global `isNaN`
+   ╭─[prefer_number_properties.tsx:3:15]
+ 2 │     const b = parseFloat("10.5");
+ 3 │     const c = isNaN(10);
+   ·               ─────
+ 4 │     const d = isFinite(10);
+   ╰────
+  help: Replace it with `Number.isNaN`
+
+  ⚠ eslint-plugin-unicorn(prefer-number-properties): Use `Number.isFinite` instead of the global `isFinite`
+   ╭─[prefer_number_properties.tsx:4:15]
+ 3 │     const c = isNaN(10);
+ 4 │     const d = isFinite(10);
+   ·               ────────
+   ╰────
+  help: Replace it with `Number.isFinite`
+
   ⚠ eslint-plugin-unicorn(prefer-number-properties): Use `Number.NaN` instead of the global `NaN`
    ╭─[prefer_number_properties.tsx:1:13]
  1 │ const foo = NaN;
@@ -63,6 +125,20 @@ source: crates/oxc_linter/src/tester.rs
    ·              ───
    ╰────
   help: Replace it with `Number.NaN`
+
+  ⚠ eslint-plugin-unicorn(prefer-number-properties): Use `Number.Infinity` instead of the global `Infinity`
+   ╭─[prefer_number_properties.tsx:1:13]
+ 1 │ const foo = Infinity;
+   ·             ────────
+   ╰────
+  help: Replace it with `Number.Infinity`
+
+  ⚠ eslint-plugin-unicorn(prefer-number-properties): Use `Number.Infinity` instead of the global `Infinity`
+   ╭─[prefer_number_properties.tsx:1:14]
+ 1 │ const foo = -Infinity;
+   ·              ────────
+   ╰────
+  help: Replace it with `Number.Infinity`
 
   ⚠ eslint-plugin-unicorn(prefer-number-properties): Use `Number.NaN` instead of the global `NaN`
    ╭─[prefer_number_properties.tsx:1:14]
@@ -413,3 +489,21 @@ source: crates/oxc_linter/src/tester.rs
    ·  ───────────────────
    ╰────
   help: Replace it with `Number.Infinity`
+
+  ⚠ eslint-plugin-unicorn(prefer-number-properties): Use `Number.parseFloat` instead of the global `parseFloat`
+   ╭─[prefer_number_properties.tsx:2:24]
+ 1 │ const options = {
+ 2 │             normalize: parseFloat,
+   ·                        ──────────
+ 3 │              parseInt,
+   ╰────
+  help: Replace it with `Number.parseFloat`
+
+  ⚠ eslint-plugin-unicorn(prefer-number-properties): Use `Number.parseInt` instead of the global `parseInt`
+   ╭─[prefer_number_properties.tsx:3:14]
+ 2 │             normalize: parseFloat,
+ 3 │              parseInt,
+   ·              ────────
+ 4 │          };
+   ╰────
+  help: Replace it with `Number.parseInt`

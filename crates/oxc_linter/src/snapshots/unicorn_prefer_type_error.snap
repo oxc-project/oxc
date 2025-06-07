@@ -64,22 +64,23 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Change to `throw new TypeError(...)`
 
-  × Invalid Character `"`
-   ╭─[prefer_type_error.tsx:5:11]
+  ⚠ eslint-plugin-unicorn(prefer-type-error): Prefer throwing a `TypeError` over a generic `Error` after a type checking if-statement
+   ╭─[prefer_type_error.tsx:3:27]
+ 2 │             if (typeof foo == 'Foo' || 'Foo' === typeof foo) {
+ 3 │                 throw new Error();
+   ·                           ─────
  4 │             }
- 5 │         r#"
-   ·           ─
- 6 │             if (Number.isFinite(foo) && Number.isSafeInteger(foo) && Number.isInteger(foo)) {
    ╰────
+  help: Change to `throw new TypeError(...)`
 
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-   ╭─[prefer_type_error.tsx:5:10]
+  ⚠ eslint-plugin-unicorn(prefer-type-error): Prefer throwing a `TypeError` over a generic `Error` after a type checking if-statement
+   ╭─[prefer_type_error.tsx:3:27]
+ 2 │             if (Number.isFinite(foo) && Number.isSafeInteger(foo) && Number.isInteger(foo)) {
+ 3 │                 throw new Error();
+   ·                           ─────
  4 │             }
- 5 │         r#"
-   ·          ▲
- 6 │             if (Number.isFinite(foo) && Number.isSafeInteger(foo) && Number.isInteger(foo)) {
    ╰────
-  help: Try insert a semicolon here
+  help: Change to `throw new TypeError(...)`
 
   ⚠ eslint-plugin-unicorn(prefer-type-error): Prefer throwing a `TypeError` over a generic `Error` after a type checking if-statement
    ╭─[prefer_type_error.tsx:3:27]

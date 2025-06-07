@@ -1,7 +1,7 @@
 use std::fmt::Write;
 
 use oxc_allocator::Allocator;
-use oxc_codegen::CodeGenerator;
+use oxc_codegen::Codegen;
 use oxc_mangler::{MangleOptions, MangleOptionsKeepNames, Mangler};
 use oxc_parser::Parser;
 use oxc_span::SourceType;
@@ -12,7 +12,7 @@ fn mangle(source_text: &str, options: MangleOptions) -> String {
     let ret = Parser::new(&allocator, source_text, source_type).parse();
     let program = ret.program;
     let symbol_table = Mangler::new().with_options(options).build(&program);
-    CodeGenerator::new().with_scoping(Some(symbol_table)).build(&program).code
+    Codegen::new().with_scoping(Some(symbol_table)).build(&program).code
 }
 
 #[test]

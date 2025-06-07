@@ -183,7 +183,7 @@ TypeScript and React transforms are complete. See [Milestone 2](https://github.c
 
 [TypeScript Isolated Declarations Emit](https://devblogs.microsoft.com/typescript/announcing-typescript-5-5/#isolated-declarations) without using the TypeScript compiler.
 
-Our [benchmark](https://github.com/oxc-project/bench-transformer) indications that our implementation is at least 20 times faster than the TypeScript compiler.
+Our [benchmark](https://github.com/oxc-project/bench-transformer) indicates that our implementation is at least 20 times faster than the TypeScript compiler.
 
 The [npm package](https://www.npmjs.com/package/oxc-transform) or [crate](https://crates.io/crates/oxc_isolated_declarations) can be used for this task.
 

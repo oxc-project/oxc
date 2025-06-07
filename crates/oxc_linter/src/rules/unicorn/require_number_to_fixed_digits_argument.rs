@@ -69,18 +69,15 @@ impl Rule for RequireNumberToFixedDigitsArgument {
                         require_number_to_fixed_digits_argument_diagnostic(parenthesis_span),
                         |fixer| {
                             let modified_code = {
-                                let mut formatter = fixer.codegen();
+                                let span_source_code = fixer.source_range(Span::new(
+                                    parenthesis_span.start,
+                                    parenthesis_span.end - 1,
+                                ));
 
-                                let mut parenthesis_span_without_right_one = parenthesis_span;
-                                parenthesis_span_without_right_one.end -= 1;
-
-                                let span_source_code =
-                                    fixer.source_range(parenthesis_span_without_right_one);
-
-                                formatter.print_str(span_source_code);
-                                formatter.print_str("0)");
-
-                                formatter.into_source_text()
+                                let mut code = String::with_capacity(span_source_code.len() + 2);
+                                code.push_str(span_source_code);
+                                code.push_str("0)");
+                                code
                             };
 
                             fixer.replace(parenthesis_span, modified_code)
@@ -118,17 +115,15 @@ fn test() {
     ];
 
     let fix = vec![
-        ("const string = number.toFixed();", "const string = number.toFixed(0);", None),
+        ("const string = number.toFixed();", "const string = number.toFixed(0);"),
         (
             "const string = number.toFixed( /* comment */ );",
             "const string = number.toFixed( /* comment */ 0);",
-            None,
         ),
-        ("Number(1).toFixed()", "Number(1).toFixed(0)", None),
+        ("Number(1).toFixed()", "Number(1).toFixed(0)"),
         (
             "const bigNumber = new BigNumber(1); const string = bigNumber.toFixed();",
             "const bigNumber = new BigNumber(1); const string = bigNumber.toFixed(0);",
-            None,
         ),
     ];
 

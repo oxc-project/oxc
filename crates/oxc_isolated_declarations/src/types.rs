@@ -3,17 +3,19 @@ use oxc_ast::{
     NONE,
     ast::{
         ArrayExpression, ArrayExpressionElement, ArrowFunctionExpression, Expression, Function,
-        ObjectExpression, ObjectPropertyKind, TSLiteral, TSMethodSignatureKind, TSTupleElement,
-        TSType, TSTypeOperatorOperator,
+        ObjectExpression, ObjectPropertyKind, PropertyKey, PropertyKind, TSLiteral,
+        TSMethodSignatureKind, TSTupleElement, TSType, TSTypeOperatorOperator,
     },
 };
-use oxc_span::{GetSpan, SPAN, Span};
+use oxc_span::{ContentEq, GetSpan, SPAN, Span};
+use oxc_syntax::identifier::is_identifier_name;
 
 use crate::{
     IsolatedDeclarations,
     diagnostics::{
         arrays_with_spread_elements, function_must_have_explicit_return_type,
-        inferred_type_of_expression, object_with_spread_assignments, shorthand_property,
+        inferred_type_of_expression, method_must_have_explicit_return_type,
+        object_with_spread_assignments, shorthand_property,
     },
     function::get_function_span,
 };
@@ -64,6 +66,25 @@ impl<'a> IsolatedDeclarations<'a> {
         })
     }
 
+    /// Convert a a computed property key to a static property key when possible
+    fn transform_property_key(&self, key: &PropertyKey<'a>) -> PropertyKey<'a> {
+        match key {
+            // ["string"] -> string
+            PropertyKey::StringLiteral(literal) if is_identifier_name(&literal.value) => {
+                self.ast.property_key_static_identifier(literal.span, literal.value.as_str())
+            }
+            // [`string`] -> string
+            PropertyKey::TemplateLiteral(literal)
+                if is_identifier_name(&literal.quasis[0].value.raw) =>
+            {
+                self.ast.property_key_static_identifier(literal.span, literal.quasis[0].value.raw)
+            }
+            // [100] -> 100
+            // number literal will be cloned as-is
+            _ => key.clone_in(self.ast.allocator),
+        }
+    }
+
     /// Transform object expression to TypeScript type
     /// ```ts
     /// export const obj = {
@@ -81,6 +102,13 @@ impl<'a> IsolatedDeclarations<'a> {
         expr: &ObjectExpression<'a>,
         is_const: bool,
     ) -> TSType<'a> {
+        // The span of accessors that cannot infer the type.
+        let mut accessor_spans = Vec::new();
+        // If either a setter or getter is inferred, the PropertyKey will be added.
+        // Use `Vec` rather than `HashSet` because the `PropertyKey` doesn't support
+        // `Hash` trait, fortunately, the number of accessors is small.
+        let mut accessor_inferred: Vec<&PropertyKey<'a>> = Vec::new();
+
         let members =
             self.ast.vec_from_iter(expr.properties.iter().filter_map(|property| match property {
                 ObjectPropertyKind::ObjectProperty(object) => {
@@ -93,44 +121,106 @@ impl<'a> IsolatedDeclarations<'a> {
                         return None;
                     }
 
-                    if let Expression::FunctionExpression(function) = &object.value {
-                        if !is_const && object.method {
-                            let return_type = self.infer_function_return_type(function);
-                            let params = self.transform_formal_parameters(&function.params);
-                            return Some(self.ast.ts_signature_method_signature(
-                                object.span,
-                                object.key.clone_in(self.ast.allocator),
-                                object.computed,
-                                false,
-                                TSMethodSignatureKind::Method,
-                                function.type_parameters.clone_in(self.ast.allocator),
-                                function.this_param.clone_in(self.ast.allocator),
-                                params,
-                                return_type,
-                            ));
+                    let key = &object.key;
+
+                    if !is_const && object.method {
+                        let Expression::FunctionExpression(function) = &object.value else {
+                            unreachable!(
+                                "`object.kind` being `Method` guarantees that it is a function"
+                            );
+                        };
+                        let return_type = self.infer_function_return_type(function);
+                        if return_type.is_none() {
+                            self.error(method_must_have_explicit_return_type(object.key.span()));
                         }
+                        let params = self.transform_formal_parameters(&function.params);
+                        let key = self.transform_property_key(key);
+                        let computed = key
+                            .as_expression()
+                            .is_some_and(|k| !k.is_string_literal() && !k.is_number_literal());
+
+                        return Some(self.ast.ts_signature_method_signature(
+                            object.span,
+                            key,
+                            computed,
+                            false,
+                            TSMethodSignatureKind::Method,
+                            function.type_parameters.clone_in(self.ast.allocator),
+                            function.this_param.clone_in(self.ast.allocator),
+                            params,
+                            return_type,
+                        ));
                     }
 
-                    let type_annotation = if is_const {
-                        self.transform_expression_to_ts_type(&object.value)
-                    } else {
-                        self.infer_type_from_expression(&object.value)
+                    let type_annotation = match object.kind {
+                        PropertyKind::Get => {
+                            if accessor_inferred.iter().any(|k| k.content_eq(key)) {
+                                return None;
+                            }
+
+                            let Expression::FunctionExpression(function) = &object.value else {
+                                unreachable!(
+                                    "`object.kind` being `Get` guarantees that it is a function"
+                                );
+                            };
+
+                            let annotation = self.infer_function_return_type(function);
+                            if annotation.is_none() {
+                                accessor_spans.push((key, key.span()));
+                                return None;
+                            }
+
+                            accessor_inferred.push(key);
+                            annotation
+                        }
+                        PropertyKind::Set => {
+                            if accessor_inferred.iter().any(|k| k.content_eq(key)) {
+                                return None;
+                            }
+
+                            let Expression::FunctionExpression(function) = &object.value else {
+                                unreachable!(
+                                    "`object.kind` being `Set` guarantees that it is a function"
+                                );
+                            };
+                            let annotation = function.params.items.first().and_then(|param| {
+                                param.pattern.type_annotation.clone_in(self.ast.allocator)
+                            });
+                            if annotation.is_none() {
+                                accessor_spans.push((key, function.params.span));
+                                return None;
+                            }
+
+                            accessor_inferred.push(key);
+                            annotation
+                        }
+                        PropertyKind::Init => {
+                            let type_annotation = if is_const {
+                                self.transform_expression_to_ts_type(&object.value)
+                            } else {
+                                self.infer_type_from_expression(&object.value)
+                            };
+
+                            if type_annotation.is_none() {
+                                self.error(inferred_type_of_expression(object.value.span()));
+                                return None;
+                            }
+
+                            type_annotation.map(|type_annotation| {
+                                self.ast.alloc_ts_type_annotation(SPAN, type_annotation)
+                            })
+                        }
                     };
 
-                    if type_annotation.is_none() {
-                        self.error(inferred_type_of_expression(object.value.span()));
-                        return None;
-                    }
-
+                    let key = self.transform_property_key(key);
                     let property_signature = self.ast.ts_signature_property_signature(
                         object.span,
-                        false,
+                        key.as_expression()
+                            .is_some_and(|k| !k.is_string_literal() && !k.is_number_literal()),
                         false,
                         is_const,
-                        object.key.clone_in(self.ast.allocator),
-                        type_annotation.map(|type_annotation| {
-                            self.ast.ts_type_annotation(SPAN, type_annotation)
-                        }),
+                        key,
+                        type_annotation,
                     );
                     Some(property_signature)
                 }
@@ -139,6 +229,14 @@ impl<'a> IsolatedDeclarations<'a> {
                     None
                 }
             }));
+
+        // Report an error if the type of neither the setter nor the getter is inferred.
+        for (key, span) in accessor_spans {
+            if !accessor_inferred.iter().any(|k| k.content_eq(key)) {
+                self.error(inferred_type_of_expression(span));
+            }
+        }
+
         self.ast.ts_type_type_literal(SPAN, members)
     }
 

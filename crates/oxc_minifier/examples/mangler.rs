@@ -2,7 +2,7 @@
 use std::path::Path;
 
 use oxc_allocator::Allocator;
-use oxc_codegen::CodeGenerator;
+use oxc_codegen::Codegen;
 use oxc_mangler::{MangleOptions, MangleOptionsKeepNames, Mangler};
 use oxc_parser::Parser;
 use oxc_span::SourceType;
@@ -45,5 +45,5 @@ fn mangler(source_text: &str, source_type: SourceType, options: MangleOptions) -
     let allocator = Allocator::default();
     let ret = Parser::new(&allocator, source_text, source_type).parse();
     let symbol_table = Mangler::new().with_options(options).build(&ret.program);
-    CodeGenerator::new().with_scoping(Some(symbol_table)).build(&ret.program).code
+    Codegen::new().with_scoping(Some(symbol_table)).build(&ret.program).code
 }

@@ -6,25 +6,25 @@ source: crates/oxc_linter/src/tester.rs
  1 │ const r = /\0/;
    ·           ────
    ╰────
-  help: '\0' is not a valid control character.
+  help: '\0' matches the null character (U+0000), which is a control character.
 
   ⚠ eslint(no-control-regex): Unexpected control character
    ╭─[no_control_regex.tsx:1:11]
  1 │ const r = /[a-z]\1/;
    ·           ─────────
    ╰────
-  help: '\1' is not a valid control character.
+  help: '\1' is a control character. They look like backreferences, but there is no corresponding capture group.
 
   ⚠ eslint(no-control-regex): Unexpected control character
    ╭─[no_control_regex.tsx:1:11]
  1 │ const r = /([a-z])\2/;
    ·           ───────────
    ╰────
-  help: '\2' is not a valid control character.
+  help: '\2' is a control character. They look like backreferences, but there is no corresponding capture group.
 
   ⚠ eslint(no-control-regex): Unexpected control character
    ╭─[no_control_regex.tsx:1:11]
  1 │ const r = /([a-z])\0/;
    ·           ───────────
    ╰────
-  help: '\0' is not a valid control character.
+  help: '\0' matches the null character (U+0000), which is a control character.

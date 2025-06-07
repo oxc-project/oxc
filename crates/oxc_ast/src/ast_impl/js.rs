@@ -878,14 +878,14 @@ impl ObjectAssignmentTarget<'_> {
     }
 }
 
-impl AssignmentTargetMaybeDefault<'_> {
+impl<'a> AssignmentTargetMaybeDefault<'a> {
     /// Returns the identifier bound by this assignment target.
     ///
     /// ## Example
     ///
     /// - returns `b` when called on `a: b = 1` in `({a: b = 1} = obj)`
     /// - returns `b` when called on `a: b` in `({a: b} = obj)`
-    pub fn identifier(&self) -> Option<&IdentifierReference<'_>> {
+    pub fn identifier(&self) -> Option<&IdentifierReference<'a>> {
         match self {
             AssignmentTargetMaybeDefault::AssignmentTargetIdentifier(id) => Some(id),
             Self::AssignmentTargetWithDefault(target) => {
@@ -1328,7 +1328,7 @@ impl<'a> Function<'a> {
 
 impl FunctionType {
     /// Returns `true` if it is a [`FunctionType::TSDeclareFunction`] or [`FunctionType::TSEmptyBodyFunctionExpression`].
-    pub fn is_typescript_syntax(&self) -> bool {
+    pub fn is_typescript_syntax(self) -> bool {
         matches!(self, Self::TSDeclareFunction | Self::TSEmptyBodyFunctionExpression)
     }
 }
@@ -1873,6 +1873,16 @@ impl<'a> ModuleExportName<'a> {
             Self::IdentifierReference(identifier) => Some(identifier.name),
             Self::StringLiteral(_) => None,
         }
+    }
+
+    /// Returns `true` if this module export name is an identifier, and not a string literal.
+    ///
+    /// ## Example
+    ///
+    /// - `export { foo }` => `true`
+    /// - `export { "foo" }` => `false`
+    pub fn is_identifier(&self) -> bool {
+        matches!(self, Self::IdentifierName(_) | Self::IdentifierReference(_))
     }
 }
 

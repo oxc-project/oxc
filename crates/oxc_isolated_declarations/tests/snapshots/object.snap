@@ -1,0 +1,109 @@
+---
+source: crates/oxc_isolated_declarations/tests/mod.rs
+input_file: crates/oxc_isolated_declarations/tests/fixtures/object.ts
+---
+```
+==================== .D.TS ====================
+
+declare const A: {
+	state: number;
+};
+declare const B: {
+	state: string;
+};
+declare const C: {
+	state: number;
+};
+declare const D: {
+	state: number;
+};
+declare const E: {};
+declare const ObjectMethods: {
+	a(): number;
+	b(): number;
+	c();
+};
+declare const ObjectKeys: {
+	a: number;
+	b: number;
+	c: number;
+	3: number;
+	[-3]: number;
+};
+type family = "-apple-system, BlinkMacSystemFont, San Francisco, Segoe UI, Roboto, Helvetica Neue, sans-serif";
+declare const family: family;
+declare const theme: {
+	readonly "font-family": family;
+};
+declare const X: {
+	async: number;
+	await: number;
+};
+declare const Y: {
+	0: number;
+	1: number;
+	"2": number;
+	3: number;
+	4: number;
+	"5": number;
+};
+declare const exoticKeys: {
+	// --- WORKING KEYS ---
+	a: string;
+	é: string;
+	ø: string;
+	Ж: string;
+	你: string;
+	あ: string;
+	한: string;
+	á: string;
+	// --- NON-WORKING KEYS ---
+	"😃": string;
+	"👍🏻": string;
+	"👨‍👩‍👧‍👦": string;
+	"±": string;
+	"€": string;
+	"“": string;
+	"\0": string;
+	"\\": string;
+};
+
+
+==================== Errors ====================
+
+  x TS9013: Expression type can't be inferred with --isolatedDeclarations.
+    ,-[32:6]
+ 31 | const E = {
+ 32 |     get state() {
+    :         ^^^^^
+ 33 |         return A;
+    `----
+
+  x TS9013: Expression type can't be inferred with --isolatedDeclarations.
+    ,-[35:11]
+ 34 |     },
+ 35 |     set state(v) {
+    :              ^^^
+ 36 |         // do something
+    `----
+
+  x TS9008: Method must have an explicit return type annotation with
+  | --isolatedDeclarations.
+    ,-[45:2]
+ 44 |     b(): number {},
+ 45 |     c() {},
+    :     ^
+ 46 | };
+    `----
+
+  x TS9038: Computed property names on class or object literals cannot be
+  | inferred with --isolatedDeclarations.
+    ,-[54:3]
+ 53 |     [-3]: 4,
+ 54 |     [4n]: 5,
+    :      ^^
+ 55 | };
+    `----
+
+
+```

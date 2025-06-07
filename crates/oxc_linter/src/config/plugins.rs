@@ -43,7 +43,7 @@ bitflags! {
 impl Default for LintPlugins {
     #[inline]
     fn default() -> Self {
-        LintPlugins::REACT | LintPlugins::UNICORN | LintPlugins::TYPESCRIPT | LintPlugins::OXC
+        LintPlugins::UNICORN | LintPlugins::TYPESCRIPT | LintPlugins::OXC
     }
 }
 
@@ -219,7 +219,26 @@ impl JsonSchema for LintPlugins {
     }
 
     fn json_schema(r#gen: &mut SchemaGenerator) -> Schema {
-        r#gen.subschema_for::<Vec<&str>>()
+        #[derive(JsonSchema)]
+        #[serde(rename_all = "kebab-case")]
+        #[expect(dead_code)]
+        enum LintPluginOptionsSchema {
+            Eslint,
+            React,
+            Unicorn,
+            Typescript,
+            Oxc,
+            Import,
+            Jsdoc,
+            Jest,
+            Vitest,
+            JsxA11y,
+            Nextjs,
+            ReactPerf,
+            Promise,
+            Node,
+        }
+        r#gen.subschema_for::<Vec<LintPluginOptionsSchema>>()
     }
 }
 
@@ -248,7 +267,7 @@ pub struct LintPluginOptions {
 impl Default for LintPluginOptions {
     fn default() -> Self {
         Self {
-            react: true,
+            react: false,
             unicorn: true,
             typescript: true,
             oxc: true,

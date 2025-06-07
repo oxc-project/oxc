@@ -10,13 +10,6 @@ source: crates/oxc_linter/src/tester.rs
 
   ⚠ eslint(no-constant-condition): Unexpected constant condition
    ╭─[no_constant_condition.tsx:1:4]
- 1 │ if(-2);
-   ·    ──
-   ╰────
-  help: Constant expression as a test condition is not allowed
-
-  ⚠ eslint(no-constant-condition): Unexpected constant condition
-   ╭─[no_constant_condition.tsx:1:4]
  1 │ if(true);
    ·    ────
    ╰────
@@ -366,6 +359,13 @@ source: crates/oxc_linter/src/tester.rs
   help: Constant expression as a test condition is not allowed
 
   ⚠ eslint(no-constant-condition): Unexpected constant condition
+   ╭─[no_constant_condition.tsx:1:7]
+ 1 │ while(x = 1);
+   ·       ─────
+   ╰────
+  help: Constant expression as a test condition is not allowed
+
+  ⚠ eslint(no-constant-condition): Unexpected constant condition
    ╭─[no_constant_condition.tsx:1:4]
  1 │ if(typeof x){}
    ·    ────────
@@ -397,6 +397,13 @@ source: crates/oxc_linter/src/tester.rs
    ╭─[no_constant_condition.tsx:1:4]
  1 │ if(typeof 'a' == 'string' || typeof 'b' == 'string'){}
    ·    ────────────────────────────────────────────────
+   ╰────
+  help: Constant expression as a test condition is not allowed
+
+  ⚠ eslint(no-constant-condition): Unexpected constant condition
+   ╭─[no_constant_condition.tsx:1:7]
+ 1 │ while(typeof x){}
+   ·       ────────
    ╰────
   help: Constant expression as a test condition is not allowed
 
@@ -768,5 +775,173 @@ source: crates/oxc_linter/src/tester.rs
    ╭─[no_constant_condition.tsx:1:1]
  1 │ `foo${bar}` ? 1 : 2;
    · ───────────
+   ╰────
+  help: Constant expression as a test condition is not allowed
+
+  ⚠ eslint(no-constant-condition): Unexpected constant condition
+   ╭─[no_constant_condition.tsx:1:6]
+ 1 │ for(;true;);
+   ·      ────
+   ╰────
+  help: Constant expression as a test condition is not allowed
+
+  ⚠ eslint(no-constant-condition): Unexpected constant condition
+   ╭─[no_constant_condition.tsx:1:6]
+ 1 │ for(;``;);
+   ·      ──
+   ╰────
+  help: Constant expression as a test condition is not allowed
+
+  ⚠ eslint(no-constant-condition): Unexpected constant condition
+   ╭─[no_constant_condition.tsx:1:6]
+ 1 │ for(;`foo`;);
+   ·      ─────
+   ╰────
+  help: Constant expression as a test condition is not allowed
+
+  ⚠ eslint(no-constant-condition): Unexpected constant condition
+   ╭─[no_constant_condition.tsx:1:6]
+ 1 │ for(;`foo${bar}`;);
+   ·      ───────────
+   ╰────
+  help: Constant expression as a test condition is not allowed
+
+  ⚠ eslint(no-constant-condition): Unexpected constant condition
+   ╭─[no_constant_condition.tsx:1:11]
+ 1 │ do{}while(true)
+   ·           ────
+   ╰────
+  help: Constant expression as a test condition is not allowed
+
+  ⚠ eslint(no-constant-condition): Unexpected constant condition
+   ╭─[no_constant_condition.tsx:1:11]
+ 1 │ do{}while('1')
+   ·           ───
+   ╰────
+  help: Constant expression as a test condition is not allowed
+
+  ⚠ eslint(no-constant-condition): Unexpected constant condition
+   ╭─[no_constant_condition.tsx:1:11]
+ 1 │ do{}while(0)
+   ·           ─
+   ╰────
+  help: Constant expression as a test condition is not allowed
+
+  ⚠ eslint(no-constant-condition): Unexpected constant condition
+   ╭─[no_constant_condition.tsx:1:11]
+ 1 │ do{}while(t = -2)
+   ·           ──────
+   ╰────
+  help: Constant expression as a test condition is not allowed
+
+  ⚠ eslint(no-constant-condition): Unexpected constant condition
+   ╭─[no_constant_condition.tsx:1:11]
+ 1 │ do{}while(``)
+   ·           ──
+   ╰────
+  help: Constant expression as a test condition is not allowed
+
+  ⚠ eslint(no-constant-condition): Unexpected constant condition
+   ╭─[no_constant_condition.tsx:1:11]
+ 1 │ do{}while(`foo`)
+   ·           ─────
+   ╰────
+  help: Constant expression as a test condition is not allowed
+
+  ⚠ eslint(no-constant-condition): Unexpected constant condition
+   ╭─[no_constant_condition.tsx:1:11]
+ 1 │ do{}while(`foo${bar}`)
+   ·           ───────────
+   ╰────
+  help: Constant expression as a test condition is not allowed
+
+  ⚠ eslint(no-constant-condition): Unexpected constant condition
+   ╭─[no_constant_condition.tsx:1:7]
+ 1 │ while([]);
+   ·       ──
+   ╰────
+  help: Constant expression as a test condition is not allowed
+
+  ⚠ eslint(no-constant-condition): Unexpected constant condition
+   ╭─[no_constant_condition.tsx:1:7]
+ 1 │ while(~!0);
+   ·       ───
+   ╰────
+  help: Constant expression as a test condition is not allowed
+
+  ⚠ eslint(no-constant-condition): Unexpected constant condition
+   ╭─[no_constant_condition.tsx:1:7]
+ 1 │ while(x = 1);
+   ·       ─────
+   ╰────
+  help: Constant expression as a test condition is not allowed
+
+  ⚠ eslint(no-constant-condition): Unexpected constant condition
+   ╭─[no_constant_condition.tsx:1:7]
+ 1 │ while(function(){});
+   ·       ────────────
+   ╰────
+  help: Constant expression as a test condition is not allowed
+
+  ⚠ eslint(no-constant-condition): Unexpected constant condition
+   ╭─[no_constant_condition.tsx:1:7]
+ 1 │ while(true);
+   ·       ────
+   ╰────
+  help: Constant expression as a test condition is not allowed
+
+  ⚠ eslint(no-constant-condition): Unexpected constant condition
+   ╭─[no_constant_condition.tsx:1:7]
+ 1 │ while(1);
+   ·       ─
+   ╰────
+  help: Constant expression as a test condition is not allowed
+
+  ⚠ eslint(no-constant-condition): Unexpected constant condition
+   ╭─[no_constant_condition.tsx:1:7]
+ 1 │ while(() => {});
+   ·       ────────
+   ╰────
+  help: Constant expression as a test condition is not allowed
+
+  ⚠ eslint(no-constant-condition): Unexpected constant condition
+   ╭─[no_constant_condition.tsx:1:7]
+ 1 │ while(`foo`);
+   ·       ─────
+   ╰────
+  help: Constant expression as a test condition is not allowed
+
+  ⚠ eslint(no-constant-condition): Unexpected constant condition
+   ╭─[no_constant_condition.tsx:1:7]
+ 1 │ while(``);
+   ·       ──
+   ╰────
+  help: Constant expression as a test condition is not allowed
+
+  ⚠ eslint(no-constant-condition): Unexpected constant condition
+   ╭─[no_constant_condition.tsx:1:7]
+ 1 │ while(`${'foo'}`);
+   ·       ──────────
+   ╰────
+  help: Constant expression as a test condition is not allowed
+
+  ⚠ eslint(no-constant-condition): Unexpected constant condition
+   ╭─[no_constant_condition.tsx:1:7]
+ 1 │ while(`${'foo' + 'bar'}`);
+   ·       ──────────────────
+   ╰────
+  help: Constant expression as a test condition is not allowed
+
+  ⚠ eslint(no-constant-condition): Unexpected constant condition
+   ╭─[no_constant_condition.tsx:1:12]
+ 1 │ do{ }while(x = 1)
+   ·            ─────
+   ╰────
+  help: Constant expression as a test condition is not allowed
+
+  ⚠ eslint(no-constant-condition): Unexpected constant condition
+   ╭─[no_constant_condition.tsx:1:7]
+ 1 │ for (;true;) {};
+   ·       ────
    ╰────
   help: Constant expression as a test condition is not allowed

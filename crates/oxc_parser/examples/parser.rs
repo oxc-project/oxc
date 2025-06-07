@@ -60,8 +60,8 @@ fn main() -> Result<(), String> {
         for error in ret.errors {
             let error = error.with_source_code(source_text.clone());
             println!("{error:?}");
-            println!("Parsed with Errors.");
         }
+        println!("Parsed with Errors.");
     }
 
     Ok(())

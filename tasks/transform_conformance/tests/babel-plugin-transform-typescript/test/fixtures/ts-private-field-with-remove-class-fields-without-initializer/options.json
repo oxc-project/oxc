@@ -1,0 +1,11 @@
+{
+  "plugins": [
+    "transform-class-properties",
+    [
+      "transform-typescript",
+      {
+        "removeClassFieldsWithoutInitializer": true
+      }
+    ]
+  ]
+}

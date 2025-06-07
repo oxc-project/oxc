@@ -7,10 +7,10 @@ use serde_json::Value;
 
 use crate::{context::LintContext, rule::Rule};
 
-fn max_classes_per_file_diagnostic(total: usize, max: usize, span1: Span) -> OxcDiagnostic {
+fn max_classes_per_file_diagnostic(total: usize, max: usize, span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!("File has too many classes ({total}). Maximum allowed is {max}",))
         .with_help("Reduce the number of classes in this file")
-        .with_label(span1)
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -46,10 +46,21 @@ declare_oxc_lint!(
     /// Files containing multiple classes can often result in a less navigable and poorly
     /// structured codebase. Best practice is to keep each file limited to a single responsibility.
     ///
-    /// ### Example
+    /// ### Examples
+    ///
+    /// Examples of **incorrect** code for this rule:
     /// ```javascript
     /// class Foo {}
     /// class Bar {}
+    /// ```
+    ///
+    /// Examples of **correct** code for this rule:
+    /// ```js
+    /// function foo() {
+    ///     var bar = 1;
+    ///     let baz = 2;
+    ///     const qux = 3;
+    /// }
     /// ```
     MaxClassesPerFile,
     eslint,

@@ -11,7 +11,7 @@ use crate::{AstNode, context::LintContext, rule::Rule};
 fn bad_array_method_on_arguments_diagnostic(method_name: &str, span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Bad array method on arguments")
         .with_help(format!(
-            "The 'arguments' object does not have '{method_name}()' method. If an array method was intended, consider converting the 'arguments' object to an array or using ES6 rest parameter instead."
+            "The 'arguments' object does not have a '{method_name}()' method. If you intended to use an array method, consider converting the 'arguments' object to an array or using an ES6 rest parameter instead."
         ))
         .with_label(span)
 }
@@ -21,19 +21,33 @@ pub struct BadArrayMethodOnArguments;
 
 declare_oxc_lint!(
     /// ### What it does
+    ///
     /// This rule applies when an array method is called on the arguments object itself.
     ///
     /// ### Why is this bad?
+    ///
     /// The arguments object is not an array, but an array-like object. It should be converted to a real array before calling an array method.
     /// Otherwise, a TypeError exception will be thrown because of the non-existent method.
     ///
-    /// ### Example
+    /// ### Examples
+    ///
+    /// Examples of **incorrect** code for this rule:
     /// ```javascript
     /// function add(x, y) {
     ///   return x + y;
     /// }
     /// function sum() {
     ///   return arguments.reduce(add, 0);
+    /// }
+    /// ```
+    ///
+    /// Examples of **correct** code for this rule:
+    /// ```javascript
+    /// function add(x, y) {
+    ///   return x + y;
+    /// }
+    /// function sum(...args) {
+    ///   return args.reduce(add, 0);
     /// }
     /// ```
     BadArrayMethodOnArguments,

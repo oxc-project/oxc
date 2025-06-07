@@ -2,5 +2,5 @@
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
   "extends": ["github>Boshen/renovate", "helpers:pinGitHubActionDigestsToSemver"],
   "ignorePaths": ["crates/oxc_linter/fixtures/**"],
-  "ignoreDeps": ["@types/vscode"]
+  "ignoreDeps": ["@types/vscode", "allocator-api2"]
 }

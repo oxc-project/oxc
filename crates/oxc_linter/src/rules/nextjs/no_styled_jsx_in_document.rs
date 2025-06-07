@@ -26,7 +26,13 @@ declare_oxc_lint!(
     ///
     /// Custom CSS like styled-jsx is not allowed in a [Custom Document](https://nextjs.org/docs/pages/building-your-application/routing/custom-document).
     ///
-    /// ### Example
+    /// ### Examples
+    ///
+    /// Examples of **incorrect** code for this rule:
+    /// ```javascript
+    /// ```
+    ///
+    /// Examples of **correct** code for this rule:
     /// ```javascript
     /// ```
     NoStyledJsxInDocument,

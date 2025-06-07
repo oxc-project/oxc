@@ -1,0 +1,107 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+  ⚠ eslint-plugin-unicorn(no-unnecessary-slice-end): Passing `string.length` as the `end` argument is unnecessary.
+   ╭─[no_unnecessary_slice_end.tsx:1:29]
+ 1 │ const foo = string.slice(1, string.length)
+   ·                             ─────────────
+   ╰────
+  help: Consider omitting the unnecessary end argument.
+
+  ⚠ eslint-plugin-unicorn(no-unnecessary-slice-end): Passing `….length` as the `end` argument is unnecessary.
+   ╭─[no_unnecessary_slice_end.tsx:1:15]
+ 1 │ a[b].slice(1, a[b].length)
+   ·               ───────────
+   ╰────
+  help: Consider omitting the unnecessary end argument.
+
+  ⚠ eslint-plugin-unicorn(no-unnecessary-slice-end): Passing `…?.length` as the `end` argument is unnecessary.
+   ╭─[no_unnecessary_slice_end.tsx:1:17]
+ 1 │ a?.[b].slice(1, a[b]?.length)
+   ·                 ────────────
+   ╰────
+  help: Consider omitting the unnecessary end argument.
+
+  ⚠ eslint-plugin-unicorn(no-unnecessary-slice-end): Passing `foo.length` as the `end` argument is unnecessary.
+   ╭─[no_unnecessary_slice_end.tsx:1:14]
+ 1 │ foo.slice(1, foo.length,)
+   ·              ──────────
+   ╰────
+  help: Consider omitting the unnecessary end argument.
+
+  ⚠ eslint-plugin-unicorn(no-unnecessary-slice-end): Passing `foo.length` as the `end` argument is unnecessary.
+   ╭─[no_unnecessary_slice_end.tsx:1:14]
+ 1 │ foo.slice(1, (( foo.length )))
+   ·              ────────────────
+   ╰────
+  help: Consider omitting the unnecessary end argument.
+
+  ⚠ eslint-plugin-unicorn(no-unnecessary-slice-end): Passing `foo?.length` as the `end` argument is unnecessary.
+   ╭─[no_unnecessary_slice_end.tsx:1:14]
+ 1 │ foo.slice(1, foo?.length)
+   ·              ───────────
+   ╰────
+  help: Consider omitting the unnecessary end argument.
+
+  ⚠ eslint-plugin-unicorn(no-unnecessary-slice-end): Passing `foo?.length` as the `end` argument is unnecessary.
+   ╭─[no_unnecessary_slice_end.tsx:1:15]
+ 1 │ foo?.slice(1, foo?.length)
+   ·               ───────────
+   ╰────
+  help: Consider omitting the unnecessary end argument.
+
+  ⚠ eslint-plugin-unicorn(no-unnecessary-slice-end): Passing `Infinity` as the `end` argument is unnecessary.
+   ╭─[no_unnecessary_slice_end.tsx:1:15]
+ 1 │ foo?.slice(1, Infinity)
+   ·               ────────
+   ╰────
+  help: Consider omitting the unnecessary end argument.
+
+  ⚠ eslint-plugin-unicorn(no-unnecessary-slice-end): Passing `Number.POSITIVE_INFINITY` as the `end` argument is unnecessary.
+   ╭─[no_unnecessary_slice_end.tsx:1:15]
+ 1 │ foo?.slice(1, Number.POSITIVE_INFINITY)
+   ·               ────────────────────────
+   ╰────
+  help: Consider omitting the unnecessary end argument.
+
+  ⚠ eslint-plugin-unicorn(no-unnecessary-slice-end): Passing `….length` as the `end` argument is unnecessary.
+   ╭─[no_unnecessary_slice_end.tsx:1:18]
+ 1 │ foo.bar.slice(1, foo.bar.length)
+   ·                  ──────────────
+   ╰────
+  help: Consider omitting the unnecessary end argument.
+
+  ⚠ eslint-plugin-unicorn(no-unnecessary-slice-end): Passing `Number.POSITIVE_INFINITY` as the `end` argument is unnecessary.
+   ╭─[no_unnecessary_slice_end.tsx:1:15]
+ 1 │ foo?.slice(1, (Number.POSITIVE_INFINITY))
+   ·               ──────────────────────────
+   ╰────
+  help: Consider omitting the unnecessary end argument.
+
+  ⚠ eslint-plugin-unicorn(no-unnecessary-slice-end): Passing `….length` as the `end` argument is unnecessary.
+   ╭─[no_unnecessary_slice_end.tsx:1:16]
+ 1 │ a?.b?.slice(1, a.b.length)
+   ·                ──────────
+   ╰────
+  help: Consider omitting the unnecessary end argument.
+
+  ⚠ eslint-plugin-unicorn(no-unnecessary-slice-end): Passing `…?.length` as the `end` argument is unnecessary.
+   ╭─[no_unnecessary_slice_end.tsx:1:16]
+ 1 │ a?.b?.slice(1, a?.b.length)
+   ·                ───────────
+   ╰────
+  help: Consider omitting the unnecessary end argument.
+
+  ⚠ eslint-plugin-unicorn(no-unnecessary-slice-end): Passing `a?.length` as the `end` argument is unnecessary.
+   ╭─[no_unnecessary_slice_end.tsx:1:13]
+ 1 │ a?.slice(1, a?.length)
+   ·             ─────────
+   ╰────
+  help: Consider omitting the unnecessary end argument.
+
+  ⚠ eslint-plugin-unicorn(no-unnecessary-slice-end): Passing `Infinity` as the `end` argument is unnecessary.
+   ╭─[no_unnecessary_slice_end.tsx:1:26]
+ 1 │ Array.prototype.slice(1, Infinity)
+   ·                          ────────
+   ╰────
+  help: Consider omitting the unnecessary end argument.

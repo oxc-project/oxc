@@ -1,4 +1,7 @@
-use oxc_ast::{AstKind, ast::Expression};
+use oxc_ast::{
+    AstKind,
+    ast::{BindingPatternKind, Expression, MemberExpression},
+};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
@@ -24,12 +27,17 @@ declare_oxc_lint!(
     /// When accessing a member from an `await` expression,
     /// the `await` expression has to be parenthesized, which is not readable.
     ///
-    /// ### Example
+    /// ### Examples
+    ///
+    /// Examples of **incorrect** code for this rule:
     /// ```javascript
     /// async function bad() {
     ///     const secondElement = (await getArray())[1];
     /// }
+    /// ```
     ///
+    /// Examples of **correct** code for this rule:
+    /// ```javascript
     /// async function good() {
     ///     const [, secondElement] = await getArray();
     /// }
@@ -37,7 +45,7 @@ declare_oxc_lint!(
     NoAwaitExpressionMember,
     unicorn,
     style,
-    pending
+    fix_dangerous,
 );
 
 impl Rule for NoAwaitExpressionMember {
@@ -52,7 +60,68 @@ impl Rule for NoAwaitExpressionMember {
 
         if matches!(paren_expr.expression, Expression::AwaitExpression(_)) {
             let node_span = member_expr.span();
-            ctx.diagnostic(no_await_expression_member_diagnostic(node_span));
+            ctx.diagnostic_with_dangerous_fix(
+                no_await_expression_member_diagnostic(node_span),
+                |fixer| {
+                    if member_expr.optional() {
+                        return fixer.noop();
+                    }
+                    let Some(AstKind::VariableDeclarator(parent)) =
+                        ctx.nodes().parent_kind(node.id())
+                    else {
+                        return fixer.noop();
+                    };
+                    if parent.id.type_annotation.is_some() {
+                        return fixer.noop();
+                    }
+                    let BindingPatternKind::BindingIdentifier(id) = &parent.id.kind else {
+                        return fixer.noop();
+                    };
+                    let name = id.name.as_str();
+                    let inner_text = ctx.source_range(Span::new(
+                        paren_expr.span.start + 1,
+                        paren_expr.span.end - 1,
+                    ));
+                    let fixer = fixer.for_multifix();
+                    let mut rule_fixes = fixer.new_fix_with_capacity(5);
+
+                    match member_expr {
+                        // e.g. "const a = (await b())[0]" => "const {a} = await b()"
+                        MemberExpression::ComputedMemberExpression(computed_member_expr) => {
+                            let Expression::NumericLiteral(prop) = &computed_member_expr.expression
+                            else {
+                                return fixer.noop();
+                            };
+                            let Some(value) = prop.raw.map(|v| v.as_str()) else {
+                                return fixer.noop();
+                            };
+                            if value != "0" && value != "1" {
+                                return fixer.noop();
+                            }
+                            // a => [a] or [, a]
+                            let replacement = if value == "0" {
+                                format!("[{name}]")
+                            } else {
+                                format!("[, {name}]")
+                            };
+                            rule_fixes.push(fixer.replace(id.span, replacement));
+                        }
+                        MemberExpression::StaticMemberExpression(static_member_expr)
+                            if static_member_expr.property.name.as_str() == name =>
+                        {
+                            // e.g. "const a = (await b()).a" => "const {a} = await b()"
+                            rule_fixes.push(fixer.replace(id.span, format!("{{{name}}}")));
+                        }
+                        _ => {
+                            return fixer.noop();
+                        }
+                    }
+                    // (await b())[0] => await b()
+                    // (await b()).a => await b()
+                    rule_fixes.push(fixer.replace(member_expr.span(), inner_text));
+                    rule_fixes.with_message("Assign the result of the await expression to a variable, then access the member from that variable.")
+                },
+            );
         }
     }
 }
@@ -104,6 +173,27 @@ fn test() {
         (r"const foo: Type | A = (await promise).foo", None),
     ];
 
+    let fix = vec![
+        ("const a = (await b()).a", "const {a} = await b()"),
+        ("const {a} = (await b()).a", "const {a} = (await b()).a"),
+        ("const a = (await b()).b", "const a = (await b()).b"),
+        ("const [a] = (await foo()).a", "const [a] = (await foo()).a"),
+        ("const a = (await b())[0]", "const [a] = await b()"),
+        ("const a = (await b())[1]", "const [, a] = await b()"),
+        ("const a = (await b())[2]", "const a = (await b())[2]"),
+        ("const [a] = (await b())[1]", "const [a] = (await b())[1]"),
+        ("let b, a = (await f()).a", "let b, {a} = await f()"),
+        ("const a = (/** comments */await b())[1]", "const [, a] = /** comments */await b()"),
+        (
+            "const a = (/** comments */await b() /** comments */)[1]",
+            "const [, a] = /** comments */await b() /** comments */",
+        ),
+        ("const foo: Type = (await promise)[0]", "const foo: Type = (await promise)[0]"),
+        ("const a = (await b())?.a", "const a = (await b())?.a"),
+        ("const a = (await b())?.[0]", "const a = (await b())?.[0]"),
+    ];
+
     Tester::new(NoAwaitExpressionMember::NAME, NoAwaitExpressionMember::PLUGIN, pass, fail)
+        .expect_fix(fix)
         .test_and_snapshot();
 }

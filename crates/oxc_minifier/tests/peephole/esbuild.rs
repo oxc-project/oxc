@@ -1200,33 +1200,33 @@ fn test_flatten_values() {
     test("({['y']: z} = x)", "({ y: z } = x);");
     test("x = {a, ...{}, b}", "x = { a, b };");
     test("x = {a, ...b, c}", "x = { a, ...b, c };");
-    // test("x = {a, ...{b}, c}", "x = { a, b, c };");
-    // test("x = {a, ...{b() {}}, c}", "x = { a, b() {}, c };");
-    // test("x = {a, ...{b, c}, d}", "x = { a, b, c, d };");
-    // test("x = {a, ...{b, ...y, c}, d}", "x = { a, b, ...y, c, d };");
-    // test("x = {a, ...[b, c], d}", "x = { a, ...[b, c], d };");
-    // test("x = {a, ...{[b]: c}, d}", "x = { a, [b]: c, d };");
-    // test("x = {a, ...{[b]() {}}, c}", "x = { a, [b]() {}, c };");
-    // test(
-    //     "x = {a, ...{b, get c() { return y++ }, d}, e}",
-    //     "x = { a, b, ...{ get c() { return y++;}, d }, e };",
-    // );
-    // test(
-    //     "x = {a, ...{b, set c(_) { throw _ }, d}, e}",
-    //     "x = { a, b, ...{ set c(_) { throw _;}, d }, e };",
-    // );
-    // test("x = {a, ...{b, __proto__: c, d}, e}", "x = { a, b, ...{ __proto__: c, d }, e };");
-    // test("x = {a, ...{b, ['__proto__']: c, d}, e}", "x = { a, b, ['__proto__']: c, d, e };");
-    // test("x = {a, ...{b, __proto__() {}, c}, d}", "x = { a, b, __proto__() {}, c, d };");
+    test("x = {a, ...{b}, c}", "x = { a, b, c };");
+    test("x = {a, ...{b() {}}, c}", "x = { a, b() {}, c };");
+    test("x = {a, ...{b, c}, d}", "x = { a, b, c, d };");
+    test("x = {a, ...{b, ...y, c}, d}", "x = { a, b, ...y, c, d };");
+    test("x = {a, ...[b, c], d}", "x = { a, ...[b, c], d };");
+    test("x = {a, ...{[b]: c}, d}", "x = { a, [b]: c, d };");
+    test("x = {a, ...{[b]() {}}, c}", "x = { a, [b]() {}, c };");
+    test(
+        "x = {a, ...{b, get c() { return y++ }, d}, e}",
+        "x = { a, ...{ b, get c() { return y++;}, d }, e };",
+    );
+    test(
+        "x = {a, ...{b, set c(_) { throw _ }, d}, e}",
+        "x = { a, ...{ b, set c(_) { throw _;}, d }, e };",
+    );
+    test("x = {a, ...{b, __proto__: c, d}, e}", "x = { a, ...{ b, __proto__: c, d }, e };");
+    test("x = {a, ...{b, ['__proto__']: c, d}, e}", "x = { a, b, ['__proto__']: c, d, e };");
+    test("x = {a, ...{b, __proto__() {}, c}, d}", "x = { a, b, __proto__() {}, c, d };");
     test("x = {a, ...true, b}", "x = { a, b };");
     test("x = {a, ...null, b}", "x = { a, b };");
     test("x = {a, ...void 0, b}", "x = { a, b };");
     test("x = {a, ...123, b}", "x = { a, b };");
     test("x = {a, ...123n, b}", "x = { a, b };");
     test("x = {a, .../x/, b}", "x = { a, b };");
-    // test("x = {a, ...function(){}, b}", "x = { a, b };");
-    // test("x = {a, ...()=>{}, b}", "x = { a, b };");
-    // test("x = {a, ...'123', b}", "x = { a, ...'123', b };");
+    test("x = {a, ...function(){}, b}", "x = { a, b };");
+    test("x = {a, ...()=>{}, b}", "x = { a, b };");
+    test("x = {a, ...'123', b}", "x = { a, ...'123', b };");
     test("x = {a, ...[1, 2, 3], b}", "x = { a, ...[1, 2, 3], b };");
     // test("x = {a, ...(()=>{})(), b}", "x = { a, .../* @__PURE__ */ (() => {})(), b };");
     // test("x = {['y']: z}.y", "x = { y: z }.y;");

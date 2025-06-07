@@ -36,14 +36,17 @@ impl Snapshot {
         let content = if let Some(new_sha) = &self.sha {
             if path.exists() {
                 let file = fs::read_to_string(path).unwrap();
-                let line =
-                    file.lines().next().unwrap_or_else(|| panic!("{path:?} content is empty."));
+                let line = file
+                    .lines()
+                    .next()
+                    .unwrap_or_else(|| panic!("{} content is empty.", path.display()));
                 if let Some(old_sha) = line.strip_prefix("commit: ") {
                     let outdated = new_sha != old_sha && env::var("UPDATE_SNAPSHOT").is_err();
                     assert!(
                         !outdated,
-                        "\nRepository {:?} is outdated for {path:?}.\nsha from file = {old_sha}, sha from repo = {new_sha}\nPlease run `just submodules` to update it.\n",
-                        self.git_repo_path
+                        "\nRepository {} is outdated for {}.\nsha from file = {old_sha}, sha from repo = {new_sha}\nPlease run `just submodules` to update it.\n",
+                        self.git_repo_path.display(),
+                        path.display()
                     );
                 }
             }

@@ -26,11 +26,12 @@ declare_oxc_lint!(
     /// The scope prop should be used only on `<th>` elements.
     ///
     /// ### Why is this bad?
+    ///
     /// The scope attribute makes table navigation much easier for screen reader users, provided that it is used correctly.
     /// Incorrectly used, scope can make table navigation much harder and less efficient.
     /// A screen reader operates under the assumption that a table has a header and that this header specifies a scope. Because of the way screen readers function, having an accurate header makes viewing a table far more accessible and more efficient for people who use the device.
     ///
-    /// ### Example
+    /// ### Examples
     ///
     /// Examples of **incorrect** code for this rule:
     /// ```jsx
@@ -54,16 +55,10 @@ impl Rule for Scope {
             return;
         };
 
-        let scope_attribute = match has_jsx_prop_ignore_case(jsx_el, "scope") {
-            Some(v) => match v {
-                JSXAttributeItem::Attribute(attr) => attr,
-                JSXAttributeItem::SpreadAttribute(_) => {
-                    return;
-                }
-            },
-            None => {
-                return;
-            }
+        let Some(JSXAttributeItem::Attribute(scope_attribute)) =
+            has_jsx_prop_ignore_case(jsx_el, "scope")
+        else {
+            return;
         };
 
         let element_type = get_element_type(ctx, jsx_el);

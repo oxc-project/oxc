@@ -19,7 +19,9 @@ declare_oxc_lint!(
     ///
     /// Disallows the use of async/await.
     ///
-    /// ### Example
+    /// ### Examples
+    ///
+    /// Examples of **incorrect** code for this rule:
     /// ```javascript
     /// async function foo() {
     ///    await bar();

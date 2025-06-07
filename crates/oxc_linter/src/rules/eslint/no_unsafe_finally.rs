@@ -27,7 +27,9 @@ declare_oxc_lint!(
     /// JavaScript suspends the control flow statements of try and catch blocks until the execution of finally block finishes.
     /// So, when return, throw, break, or continue is used in finally, control flow statements inside try and catch are overwritten, which is considered as unexpected behavior.
     ///
-    /// ### Example
+    /// ### Examples
+    ///
+    /// Examples of **incorrect** code for this rule:
     /// ```javascript
     /// // We expect this function to return 1;
     /// (() => {

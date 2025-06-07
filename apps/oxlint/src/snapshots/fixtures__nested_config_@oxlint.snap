@@ -6,7 +6,7 @@ arguments:
 working directory: fixtures/nested_config
 ----------
 
-  x ]8;;https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-console.html\eslint(no-console)]8;;\: eslint(no-console): Unexpected console statement.
+  x ]8;;https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-console.html\eslint(no-console)]8;;\: Unexpected console statement.
    ,-[console.ts:1:1]
  1 | console.log("test");
    : ^^^^^^^^^^^
@@ -20,14 +20,7 @@ working directory: fixtures/nested_config
    `----
   help: Remove the debugger statement
 
-  ! ]8;;https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-debugger.html\eslint(no-debugger)]8;;\: `debugger` statement is not allowed
-   ,-[package1-empty-config/debugger.js:1:1]
- 1 | debugger;
-   : ^^^^^^^^^
-   `----
-  help: Remove the debugger statement
-
-  x ]8;;https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-console.html\eslint(no-console)]8;;\: eslint(no-console): Unexpected console statement.
+  x ]8;;https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-console.html\eslint(no-console)]8;;\: Unexpected console statement.
    ,-[package2-no-config/console.ts:1:1]
  1 | console.log("test");
    : ^^^^^^^^^^^
@@ -41,7 +34,7 @@ working directory: fixtures/nested_config
    `----
   help: Remove the debugger statement
 
-  x ]8;;https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-console.html\eslint(no-console)]8;;\: eslint(no-console): Unexpected console statement.
+  x ]8;;https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-console.html\eslint(no-console)]8;;\: Unexpected console statement.
    ,-[package3-deep-config/src/components/component.js:2:3]
  1 | export function Component() {
  2 |   console.log("hello");
@@ -50,7 +43,7 @@ working directory: fixtures/nested_config
    `----
   help: Delete this console statement.
 
-Found 1 warning and 5 errors.
+Found 0 warnings and 5 errors.
 Finished in <variable>ms on 7 files using 1 threads.
 ----------
 CLI result: LintFoundErrors

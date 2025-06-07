@@ -92,3 +92,19 @@ source: crates/oxc_linter/src/tester.rs
    ·                ╰── 'LinkedList' is declared here
    ╰────
   help: Consider removing this declaration.
+
+  ⚠ eslint(no-unused-vars): Function 'foo' is declared but never used.
+   ╭─[no_unused_vars.ts:1:10]
+ 1 │ function foo(): typeof foo { }
+   ·          ─┬─
+   ·           ╰── 'foo' is declared here
+   ╰────
+  help: Consider removing this declaration.
+
+  ⚠ eslint(no-unused-vars): Function 'foo' is declared but never used.
+   ╭─[no_unused_vars.ts:1:10]
+ 1 │ function foo(): typeof foo { return foo }
+   ·          ─┬─
+   ·           ╰── 'foo' is declared here
+   ╰────
+  help: Consider removing this declaration.

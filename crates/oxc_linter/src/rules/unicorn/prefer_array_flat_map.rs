@@ -26,11 +26,16 @@ declare_oxc_lint!(
     ///
     /// It is slightly more efficient to use `.flatMap(…)` instead of `.map(…).flat()`.
     ///
-    /// ### Example
-    /// ```javascript
-    /// const bar = [1,2,3].map(i => [i]).flat(); // ✗ fail
+    /// ### Examples
     ///
-    /// const bar = [1,2,3].flatMap(i => [i]); // ✓ pass
+    /// Examples of **incorrect** code for this rule:
+    /// ```javascript
+    /// const bar = [1,2,3].map(i => [i]).flat();
+    /// ```
+    ///
+    /// Examples of **correct** code for this rule:
+    /// ```javascript
+    /// const bar = [1,2,3].flatMap(i => [i]);
     /// ```
     PreferArrayFlatMap,
     unicorn,

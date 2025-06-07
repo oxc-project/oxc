@@ -158,3 +158,14 @@ source: crates/oxc_linter/src/tester.rs
    ·                  ╰── This export is duplicated
    ╰────
   help: Merge the duplicated exports into a single export statement
+
+  ⚠ eslint(no-duplicate-imports): './HostEditDialogs' import is duplicated
+   ╭─[no_duplicate_imports.tsx:1:83]
+ 1 │ import type { PriorityDialogCustomClassNames, WeightDialogCustomClassNames } from "./HostEditDialogs";
+   ·                                                                                   ─────────┬─────────
+   ·                                                                                            ╰── Can be merged with this import
+ 2 │             import { PriorityDialog, WeightDialog } from "./HostEditDialogs";
+   ·                                                          ─────────┬─────────
+   ·                                                                   ╰── This import is duplicated
+   ╰────
+  help: Merge the duplicated import into a single import statement

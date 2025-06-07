@@ -79,9 +79,7 @@ impl Rule for NoWrapperObjectTypes {
                     return;
                 }
             }
-            _ => {
-                return;
-            }
+            _ => return,
         };
 
         if matches!(ident_name, "BigInt" | "Boolean" | "Number" | "Object" | "String" | "Symbol") {

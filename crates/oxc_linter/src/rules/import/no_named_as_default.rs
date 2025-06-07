@@ -32,7 +32,6 @@ declare_oxc_lint!(
     /// code clarity, making it harder for other developers to understand the intended
     /// imports.
     ///
-    ///
     /// ### Examples
     ///
     /// Given

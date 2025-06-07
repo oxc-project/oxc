@@ -16,14 +16,18 @@ pub struct NoProto;
 
 declare_oxc_lint!(
     /// ### What it does
+    ///
     /// Disallow the use of the `__proto__` property
     ///
     /// ### Why is this bad?
+    ///
     /// The `__proto__` property has been deprecated as of ECMAScript 3.1 and
     /// shouldn’t be used in new code. Use `Object.getPrototypeOf` and
     /// `Object.setPrototypeOf` instead.
     ///
-    /// ### Example
+    /// ### Examples
+    ///
+    /// Examples of **incorrect** code for this rule:
     /// ```javascript
     /// /*eslint no-proto: "error"*/
     ///

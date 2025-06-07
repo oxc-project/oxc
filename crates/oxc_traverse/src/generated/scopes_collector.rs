@@ -1,5 +1,5 @@
 // Auto-generated code, DO NOT EDIT DIRECTLY!
-// To edit this generated file you have to edit `tasks/ast_tools/src/generators/scopes_collector.rs`
+// To edit this generated file you have to edit `tasks/ast_tools/src/generators/scopes_collector.rs`.
 
 #![expect(
     unused_variables,
@@ -285,10 +285,10 @@ impl<'a> Visit<'a> for ChildScopeCollector {
     #[inline]
     fn visit_tagged_template_expression(&mut self, it: &TaggedTemplateExpression<'a>) {
         self.visit_expression(&it.tag);
-        self.visit_template_literal(&it.quasi);
         if let Some(type_arguments) = &it.type_arguments {
             self.visit_ts_type_parameter_instantiation(type_arguments);
         }
+        self.visit_template_literal(&it.quasi);
     }
 
     #[inline(always)]
@@ -324,10 +324,10 @@ impl<'a> Visit<'a> for ChildScopeCollector {
     #[inline]
     fn visit_new_expression(&mut self, it: &NewExpression<'a>) {
         self.visit_expression(&it.callee);
-        self.visit_arguments(&it.arguments);
         if let Some(type_arguments) = &it.type_arguments {
             self.visit_ts_type_parameter_instantiation(type_arguments);
         }
+        self.visit_arguments(&it.arguments);
     }
 
     #[inline(always)]
@@ -1006,11 +1006,11 @@ impl<'a> Visit<'a> for ChildScopeCollector {
     fn visit_property_definition(&mut self, it: &PropertyDefinition<'a>) {
         self.visit_decorators(&it.decorators);
         self.visit_property_key(&it.key);
-        if let Some(value) = &it.value {
-            self.visit_expression(value);
-        }
         if let Some(type_annotation) = &it.type_annotation {
             self.visit_ts_type_annotation(type_annotation);
+        }
+        if let Some(value) = &it.value {
+            self.visit_expression(value);
         }
     }
 
@@ -1047,11 +1047,11 @@ impl<'a> Visit<'a> for ChildScopeCollector {
     fn visit_accessor_property(&mut self, it: &AccessorProperty<'a>) {
         self.visit_decorators(&it.decorators);
         self.visit_property_key(&it.key);
-        if let Some(value) = &it.value {
-            self.visit_expression(value);
-        }
         if let Some(type_annotation) = &it.type_annotation {
             self.visit_ts_type_annotation(type_annotation);
+        }
+        if let Some(value) = &it.value {
+            self.visit_expression(value);
         }
     }
 
@@ -1265,10 +1265,10 @@ impl<'a> Visit<'a> for ChildScopeCollector {
 
     #[inline]
     fn visit_jsx_opening_element(&mut self, it: &JSXOpeningElement<'a>) {
-        self.visit_jsx_attribute_items(&it.attributes);
         if let Some(type_arguments) = &it.type_arguments {
             self.visit_ts_type_parameter_instantiation(type_arguments);
         }
+        self.visit_jsx_attribute_items(&it.attributes);
     }
 
     #[inline(always)]
@@ -1943,8 +1943,8 @@ impl<'a> Visit<'a> for ChildScopeCollector {
 
     #[inline]
     fn visit_ts_type_assertion(&mut self, it: &TSTypeAssertion<'a>) {
-        self.visit_expression(&it.expression);
         self.visit_ts_type(&it.type_annotation);
+        self.visit_expression(&it.expression);
     }
 
     #[inline(always)]

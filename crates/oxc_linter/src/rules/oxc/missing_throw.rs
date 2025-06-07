@@ -23,7 +23,7 @@ declare_oxc_lint!(
     ///
     /// The `throw` keyword is required in front of a `new` expression to throw an error. Omitting it is usually a mistake.
     ///
-    /// ### Example
+    /// ### Examples
     ///
     /// Examples of **incorrect** code for this rule:
     /// ```javascript

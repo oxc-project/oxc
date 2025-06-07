@@ -28,7 +28,7 @@ declare_oxc_lint!(
     /// When using JSX, `<a />` expands to `React.createElement("a")`. Therefore
     /// the `React` variable must be in scope.
     ///
-    /// ### Example
+    /// ### Examples
     ///
     /// Examples of **incorrect** code for this rule:
     /// ```jsx
@@ -39,7 +39,6 @@ declare_oxc_lint!(
     /// ```jsx
     /// import React from "react";
     /// var a = <a />;
-    ///
     /// ```
     ReactInJsxScope,
     react,

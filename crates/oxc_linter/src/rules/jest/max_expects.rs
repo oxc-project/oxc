@@ -11,10 +11,10 @@ use crate::{
     utils::{PossibleJestNode, collect_possible_jest_call_node},
 };
 
-fn exceeded_max_assertion(x0: usize, x1: usize, span2: Span) -> OxcDiagnostic {
+fn exceeded_max_assertion(count: usize, max: usize, span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Enforces a maximum number assertion calls in a test body.")
-        .with_help(format!("Too many assertion calls ({x0:?}) - maximum allowed is {x1:?}"))
-        .with_label(span2)
+        .with_help(format!("Too many assertion calls ({count}) - maximum allowed is {max}"))
+        .with_label(span)
 }
 
 #[derive(Debug, Clone)]
@@ -30,6 +30,7 @@ impl Default for MaxExpects {
 
 declare_oxc_lint!(
     /// ### What it does
+    ///
     /// As more assertions are made, there is a possible tendency for the test to be
     /// more likely to mix multiple objectives. To avoid this, this rule reports when
     /// the maximum number of assertions is exceeded.
@@ -39,8 +40,9 @@ declare_oxc_lint!(
     /// This rule enforces a maximum number of `expect()` calls.
     /// The following patterns are considered warnings (with the default option of `{ "max": 5 } `):
     ///
-    /// ### Example
+    /// ### Examples
     ///
+    /// Examples of **incorrect** code for this rule:
     /// ```javascript
     /// test('should not pass', () => {
     ///     expect(true).toBeDefined();

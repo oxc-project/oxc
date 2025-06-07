@@ -33,7 +33,7 @@ declare_oxc_lint!(
     /// }
     /// ```
     ///
-    /// ### Example
+    /// ### Examples
     ///
     /// Examples of **incorrect** code for this rule:
     /// ```javascript

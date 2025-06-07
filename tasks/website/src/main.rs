@@ -1,4 +1,4 @@
-#![expect(clippy::print_stdout)]
+#![expect(clippy::print_stderr)]
 
 use pico_args::Arguments;
 use website::linter;
@@ -14,6 +14,6 @@ fn main() {
         "linter-schema-markdown" => linter::print_schema_markdown(),
         "linter-cli" => linter::print_cli(),
         "linter-rules" => linter::print_rules(args),
-        _ => println!("Missing task command."),
+        _ => eprintln!("Missing task command."),
     }
 }

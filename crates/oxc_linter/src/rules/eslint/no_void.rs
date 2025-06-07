@@ -4,7 +4,7 @@ use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 use oxc_syntax::operator::UnaryOperator;
 
-use crate::{AstNode, context::LintContext, rule::Rule};
+use crate::{AstNode, ast_util::outermost_paren_parent, context::LintContext, rule::Rule};
 
 fn no_void_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Unexpected `void` operator")
@@ -20,11 +20,12 @@ pub struct NoVoid {
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// Disallow `void` operators.
+    /// Disallows the use of the `void` operator.
     ///
     /// Why is this bad
     ///
-    /// The `void` operator is often used to obtain the `undefined` primitive value, but it is unnecessary. You can use `undefined` directly instead.
+    /// The `void` operator is often used to get `undefined`,
+    /// but this is unnecessary because `undefined` can be used directly instead.
     ///
     /// ### Examples
     ///
@@ -40,10 +41,18 @@ declare_oxc_lint!(
     /// "foo.void()";
     /// "foo.void = bar";
     /// ```
+    ///
+    /// ### Options
+    ///
+    /// #### allowAsStatement
+    ///
+    /// `{ type: boolean, default: false }`
+    ///
+    /// If set to `true`, using `void` as a standalone statement is allowed.
     NoVoid,
     eslint,
     restriction,
-    pending // TODO: suggestion
+    suggestion
 );
 
 impl Rule for NoVoid {
@@ -62,17 +71,16 @@ impl Rule for NoVoid {
             return;
         };
 
-        if let Some(kind) = ctx.nodes().parent_kind(node.id()) {
-            if self.allow_as_statement && matches!(kind, AstKind::ExpressionStatement(_)) {
+        if let Some(node) = outermost_paren_parent(node, ctx) {
+            if self.allow_as_statement && matches!(node.kind(), AstKind::ExpressionStatement(_)) {
                 return;
             }
         }
 
         if unary_expr.operator == UnaryOperator::Void {
-            ctx.diagnostic(no_void_diagnostic(Span::new(
-                unary_expr.span.start,
-                unary_expr.span.start + 4,
-            )));
+            ctx.diagnostic_with_suggestion(no_void_diagnostic(unary_expr.span), |fixer| {
+                fixer.replace(unary_expr.span, "undefined")
+            });
         }
     }
 }
@@ -88,6 +96,7 @@ fn test() {
         ("delete foo;", None),
         ("void 0", Some(serde_json::json!([{ "allowAsStatement": true }]))),
         ("void(0)", Some(serde_json::json!([{ "allowAsStatement": true }]))),
+        ("(void 0)", Some(serde_json::json!([{ "allowAsStatement": true }]))),
     ];
 
     let fail = vec![
@@ -99,5 +108,18 @@ fn test() {
         ("var foo = void 0", Some(serde_json::json!([{ "allowAsStatement": true }]))),
     ];
 
-    Tester::new(NoVoid::NAME, NoVoid::PLUGIN, pass, fail).test_and_snapshot();
+    let fix = vec![
+        ("void 0", "undefined", None),
+        ("void 0", "undefined", Some(serde_json::json!([{}]))),
+        ("void 0", "undefined", Some(serde_json::json!([{ "allowAsStatement": false }]))),
+        ("void(0)", "undefined", None),
+        ("var foo = void 0", "var foo = undefined", None),
+        (
+            "var foo = void 0",
+            "var foo = undefined",
+            Some(serde_json::json!([{ "allowAsStatement": true }])),
+        ),
+    ];
+
+    Tester::new(NoVoid::NAME, NoVoid::PLUGIN, pass, fail).expect_fix(fix).test_and_snapshot();
 }

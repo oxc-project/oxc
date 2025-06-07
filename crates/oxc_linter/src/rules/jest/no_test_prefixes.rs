@@ -33,7 +33,9 @@ declare_oxc_lint!(
     ///
     /// This rule enforces usages from the only & skip list.
     ///
-    /// ### Example
+    /// ### Examples
+    ///
+    /// Examples of **incorrect** code for this rule:
     /// ```javascript
     /// fit('foo'); // invalid
     /// fdescribe('foo'); // invalid

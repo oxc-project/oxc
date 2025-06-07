@@ -27,7 +27,7 @@ declare_oxc_lint!(
     ///
     /// The `trimLeft` and `trimRight` names are confusing and inconsistent with the rest of the language.
     ///
-    /// ### Example
+    /// ### Examples
     ///
     /// Examples of **incorrect** code for this rule:
     /// ```javascript

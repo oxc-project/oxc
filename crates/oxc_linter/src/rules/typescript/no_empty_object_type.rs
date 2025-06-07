@@ -44,9 +44,11 @@ impl std::ops::Deref for NoEmptyObjectType {
 
 declare_oxc_lint!(
     /// ### What it does
+    ///
     /// To avoid confusion around the `{}` type allowing any non-nullish value, this rule bans usage of the `{}` type. That includes interfaces and object type aliases with no fields.
     ///
     /// ### Why is this bad?
+    ///
     /// The `{}`, or "empty object" type in TypeScript is a common source of confusion for developers unfamiliar with TypeScript's structural typing. `{}` represents any non-nullish value, including literals like 0 and "".
     /// Often, developers writing `{}` actually mean either:
     /// - object: representing any object value

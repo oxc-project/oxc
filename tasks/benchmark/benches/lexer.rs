@@ -20,7 +20,7 @@ fn bench_lexer(criterion: &mut Criterion) {
     // It's unfortunate that this benchmark doesn't exercise the code paths for these syntaxes,
     // but this is the closest we can get to a realistic benchmark of lexer in isolation.
     let mut allocator = Allocator::default();
-    let files = TestFiles::complicated()
+    let files = TestFiles::minimal()
         .files()
         .iter()
         .map(|file| {
@@ -32,14 +32,19 @@ fn bench_lexer(criterion: &mut Criterion) {
 
             allocator.reset();
 
-            TestFile { url: file.url.clone(), file_name: file.file_name.clone(), source_text }
+            TestFile {
+                url: file.url.clone(),
+                file_name: file.file_name.clone(),
+                source_text,
+                source_type,
+            }
         })
         .collect::<Vec<_>>();
 
     for file in files {
         let id = BenchmarkId::from_parameter(&file.file_name);
         let source_text = file.source_text.as_str();
-        let source_type = SourceType::from_path(&file.file_name).unwrap();
+        let source_type = file.source_type;
         group.bench_function(id, |b| {
             // Do not include initializing allocator in benchmark.
             // User code would likely reuse the same allocator over and over to parse multiple files,
@@ -47,7 +52,7 @@ fn bench_lexer(criterion: &mut Criterion) {
             let mut allocator = Allocator::default();
             b.iter(|| {
                 let mut lexer = Lexer::new_for_benchmarks(&allocator, source_text, source_type);
-                while lexer.next_token().kind != Kind::Eof {}
+                while lexer.next_token().kind() != Kind::Eof {}
                 allocator.reset();
             });
         });
@@ -108,7 +113,7 @@ impl SourceCleaner {
 
         // Check lexer can lex it without any errors
         let mut lexer = Lexer::new_for_benchmarks(allocator, &self.source_text, source_type);
-        while lexer.next_token().kind != Kind::Eof {}
+        while lexer.next_token().kind() != Kind::Eof {}
         assert!(lexer.errors().is_empty());
     }
 
@@ -119,9 +124,9 @@ impl SourceCleaner {
 
 impl<'a> Visit<'a> for SourceCleaner {
     fn visit_reg_exp_literal(&mut self, regexp: &RegExpLiteral<'a>) {
-        let RegExpPattern::Raw(pattern) = regexp.regex.pattern else { unreachable!() };
-        let span = Span::sized(regexp.span.start, u32::try_from(pattern.len()).unwrap() + 2);
-        let text = convert_to_string(pattern);
+        let pattern_text = regexp.regex.pattern.text.as_str();
+        let span = Span::sized(regexp.span.start, u32::try_from(pattern_text.len()).unwrap() + 2);
+        let text = convert_to_string(pattern_text);
         self.replace(span, text);
     }
 

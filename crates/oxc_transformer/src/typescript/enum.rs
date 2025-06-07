@@ -226,10 +226,11 @@ impl<'a> TypeScriptEnum<'a> {
                 previous_enum_members.insert(member_name, constant_value.clone());
 
                 // prev_constant_value = constant_value
-                let init = match constant_value {
+
+                match constant_value {
                     None => {
                         prev_constant_value = None;
-                        let mut new_initializer = initializer.take_in(ast.allocator);
+                        let mut new_initializer = initializer.take_in(ast);
 
                         IdentifierReferenceRename::new(
                             param_binding.name,
@@ -248,12 +249,10 @@ impl<'a> TypeScriptEnum<'a> {
                         }
                         ConstantValue::String(str) => {
                             prev_constant_value = None;
-                            ast.expression_string_literal(SPAN, str, None)
+                            ast.expression_string_literal(SPAN, ast.atom(&str), None)
                         }
                     },
-                };
-
-                init
+                }
             } else if let Some(value) = &prev_constant_value {
                 match value {
                     ConstantValue::Number(value) => {

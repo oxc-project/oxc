@@ -4,41 +4,41 @@ source: crates/oxc_linter/src/tester.rs
   ⚠ eslint(no-void): Unexpected `void` operator
    ╭─[no_void.tsx:1:1]
  1 │ void 0
-   · ────
+   · ──────
    ╰────
   help: Use `undefined` instead
 
   ⚠ eslint(no-void): Unexpected `void` operator
    ╭─[no_void.tsx:1:1]
  1 │ void 0
-   · ────
+   · ──────
    ╰────
   help: Use `undefined` instead
 
   ⚠ eslint(no-void): Unexpected `void` operator
    ╭─[no_void.tsx:1:1]
  1 │ void 0
-   · ────
+   · ──────
    ╰────
   help: Use `undefined` instead
 
   ⚠ eslint(no-void): Unexpected `void` operator
    ╭─[no_void.tsx:1:1]
  1 │ void(0)
-   · ────
+   · ───────
    ╰────
   help: Use `undefined` instead
 
   ⚠ eslint(no-void): Unexpected `void` operator
    ╭─[no_void.tsx:1:11]
  1 │ var foo = void 0
-   ·           ────
+   ·           ──────
    ╰────
   help: Use `undefined` instead
 
   ⚠ eslint(no-void): Unexpected `void` operator
    ╭─[no_void.tsx:1:11]
  1 │ var foo = void 0
-   ·           ────
+   ·           ──────
    ╰────
   help: Use `undefined` instead

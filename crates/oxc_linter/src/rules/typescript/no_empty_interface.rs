@@ -35,10 +35,22 @@ declare_oxc_lint!(
     /// Using an empty interface is often a sign of programmer error, such as misunderstanding the concept of {} or forgetting to fill in fields.
     /// This rule aims to ensure that only meaningful interfaces are declared in the code.
     ///
-    /// ### Example
+    /// ### Examples
+    ///
+    /// Examples of **incorrect** code for this rule:
     /// ```ts
     /// interface Foo {}
     /// interface Bar extends Foo {}
+    /// ```
+    ///
+    /// Examples of **correct** code for this rule:
+    /// ```ts
+    /// interface Foo {
+    ///     member: string;
+    /// }
+    /// interface Bar extends Foo {
+    ///     member: string;
+    /// }
     /// ```
     NoEmptyInterface,
     typescript,

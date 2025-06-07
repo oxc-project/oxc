@@ -1578,22 +1578,31 @@ impl<'a> PatternParser<'a> {
     fn parse_modifiers(&mut self) -> Result<Option<ast::Modifiers>> {
         let span_start = self.reader.offset();
 
-        // Currently only `[i, m, s]` are supported
-        let mut enabling_flags = [0, 0, 0];
-        let mut disabling_flags = [0, 0, 0];
+        let mut enabling = ast::Modifier::empty();
+        let mut disabling = ast::Modifier::empty();
+        let mut duplicate = false;
 
         // Enabling
         while self.reader.peek().filter(|&cp| cp == ':' as u32 || cp == '-' as u32).is_none() {
             if self.reader.eat('i') {
-                enabling_flags[0] += 1;
+                if enabling.contains(ast::Modifier::I) {
+                    duplicate = true;
+                }
+                enabling |= ast::Modifier::I;
                 continue;
             }
             if self.reader.eat('m') {
-                enabling_flags[1] += 1;
+                if enabling.contains(ast::Modifier::M) {
+                    duplicate = true;
+                }
+                enabling |= ast::Modifier::M;
                 continue;
             }
             if self.reader.eat('s') {
-                enabling_flags[2] += 1;
+                if enabling.contains(ast::Modifier::S) {
+                    duplicate = true;
+                }
+                enabling |= ast::Modifier::S;
                 continue;
             }
 
@@ -1606,15 +1615,24 @@ impl<'a> PatternParser<'a> {
         if self.reader.eat('-') {
             while self.reader.peek().filter(|&cp| cp == ':' as u32).is_none() {
                 if self.reader.eat('i') {
-                    disabling_flags[0] += 1;
+                    if disabling.contains(ast::Modifier::I) {
+                        duplicate = true;
+                    }
+                    disabling |= ast::Modifier::I;
                     continue;
                 }
                 if self.reader.eat('m') {
-                    disabling_flags[1] += 1;
+                    if disabling.contains(ast::Modifier::M) {
+                        duplicate = true;
+                    }
+                    disabling |= ast::Modifier::M;
                     continue;
                 }
                 if self.reader.eat('s') {
-                    disabling_flags[2] += 1;
+                    if disabling.contains(ast::Modifier::S) {
+                        duplicate = true;
+                    }
+                    disabling |= ast::Modifier::S;
                     continue;
                 }
 
@@ -1624,23 +1642,18 @@ impl<'a> PatternParser<'a> {
             }
         }
 
-        let (enabling_iter, disabling_iter) = (enabling_flags.iter(), disabling_flags.iter());
-
         // [SS:EE] Atom :: (? RegularExpressionModifiers : Disjunction )
         // It is a Syntax Error if the source text matched by RegularExpressionModifiers contains the same code point more than once.
         // [SS:EE] Atom :: (? RegularExpressionModifiers - RegularExpressionModifiers : Disjunction )
+        // It is a Syntax Error if the source text matched by the first RegularExpressionModifiers and the source text matched by the second RegularExpressionModifiers are both empty.
         // It is a Syntax Error if the source text matched by the first RegularExpressionModifiers contains the same code point more than once.
-        // It is a Syntax Error if the source text matched by the second RegularExpressionModifiers contains the same code point more than once.
         // It is a Syntax Error if any code point in the source text matched by the first RegularExpressionModifiers is also contained in the source text matched by the second RegularExpressionModifiers.
-        let flags_iter = enabling_iter.clone().zip(disabling_iter.clone());
-        if flags_iter.clone().any(|flags| !matches!(flags, (0 | 1, 0) | (0, 1))) {
-            return Err(diagnostics::invalid_modifiers(
-                self.span_factory.create(span_start, self.reader.offset()),
-            ));
-        }
-        // NOTE: Spec is not yet fixed and merged, so these may change:
-        // https://github.com/tc39/ecma262/pull/3221#pullrequestreview-2341169958
-        if flags_iter.clone().all(|flags| matches!(flags, (0, 0))) {
+        if enabling.is_empty() && disabling.is_empty()
+            || duplicate
+            || [ast::Modifier::I, ast::Modifier::M, ast::Modifier::S]
+                .iter()
+                .any(|&modifier| enabling.contains(modifier) && disabling.contains(modifier))
+        {
             return Err(diagnostics::invalid_modifiers(
                 self.span_factory.create(span_start, self.reader.offset()),
             ));
@@ -1648,16 +1661,8 @@ impl<'a> PatternParser<'a> {
 
         Ok(Some(ast::Modifiers {
             span: self.span_factory.create(span_start, self.reader.offset()),
-            enabling: enabling_iter.clone().any(|f| *f == 1).then(|| ast::Modifier {
-                ignore_case: enabling_flags[0] == 1,
-                multiline: enabling_flags[1] == 1,
-                sticky: enabling_flags[2] == 1,
-            }),
-            disabling: disabling_iter.clone().any(|f| *f == 1).then(|| ast::Modifier {
-                ignore_case: disabling_flags[0] == 1,
-                multiline: disabling_flags[1] == 1,
-                sticky: disabling_flags[2] == 1,
-            }),
+            enabling,
+            disabling,
         }))
     }
 

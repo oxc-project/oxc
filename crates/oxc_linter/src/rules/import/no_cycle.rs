@@ -142,8 +142,21 @@ impl Rule for NoCycle {
                         .iter()
                         .filter(|entry| entry.module_request.name() == key)
                         .collect::<Vec<_>>();
-                    if !import_entries.is_empty()
+
+                    let indirect_export_entries = parent
+                        .indirect_export_entries
+                        .iter()
+                        .filter(|entry| {
+                            entry
+                                .module_request
+                                .as_ref()
+                                .is_some_and(|module_request| module_request.name() == key)
+                        })
+                        .collect::<Vec<_>>();
+
+                    if (!import_entries.is_empty() || !indirect_export_entries.is_empty())
                         && import_entries.iter().all(|entry| entry.is_type)
+                        && indirect_export_entries.iter().all(|entry| entry.is_type)
                     {
                         return false;
                     }
@@ -257,6 +270,7 @@ fn test() {
         // (r#"import { bar } from "./flow-types-only-importing-type""#, None),
         // (r#"import { bar } from "./flow-types-only-importing-multiple-types""#, None),
         // (r#"import { bar } from "./flow-typeof""#, None),
+        (r#"import { foo } from "./typescript/ts-types-re-exporting-type";"#, None),
     ];
 
     let fail = vec![
@@ -360,6 +374,10 @@ fn test() {
         (
             r#"import { foo } from "./typescript/ts-types-some-type-imports";"#,
             Some(json!([{"ignoreTypes":true}])),
+        ),
+        (
+            r#"import { foo } from "./typescript/ts-types-re-exporting-type";"#,
+            Some(json!([{"ignoreTypes":false}])),
         ),
     ];
 

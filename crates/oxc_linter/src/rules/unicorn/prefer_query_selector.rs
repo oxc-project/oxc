@@ -35,7 +35,7 @@ declare_oxc_lint!(
     /// - Using `.querySelector()` and `.querySelectorAll()` is more flexible and allows for more specific selectors.
     /// - It's better to use the same method to query DOM elements. This helps keep consistency and it lends itself to future improvements (e.g. more specific selectors).
     ///
-    /// ### Example
+    /// ### Examples
     ///
     /// Examples of **incorrect** code for this rule:
     /// ```javascript

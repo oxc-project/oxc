@@ -129,3 +129,54 @@ source: crates/oxc_linter/src/tester.rs
  21 │             }
     ╰────
   help: Consider removing this setter or adding logic to it.
+
+  ⚠ eslint(no-empty-function): Unexpected empty constructor `constructor`
+   ╭─[no_empty_function.tsx:1:42]
+ 1 │ class Person { constructor(name: string) {} }
+   ·                                          ──
+   ╰────
+  help: Consider removing this constructor or adding logic to it.
+
+  ⚠ eslint(no-empty-function): Unexpected empty method `otherMethod`
+   ╭─[no_empty_function.tsx:1:42]
+ 1 │ class Person { otherMethod(name: string) {} }
+   ·                                          ──
+   ╰────
+  help: Consider removing this method or adding logic to it.
+
+  ⚠ eslint(no-empty-function): Unexpected empty constructor `constructor`
+   ╭─[no_empty_function.tsx:1:35]
+ 1 │ class Foo { private constructor() {} }
+   ·                                   ──
+   ╰────
+  help: Consider removing this constructor or adding logic to it.
+
+  ⚠ eslint(no-empty-function): Unexpected empty constructor `constructor`
+   ╭─[no_empty_function.tsx:1:37]
+ 1 │ class Foo { protected constructor() {} }
+   ·                                     ──
+   ╰────
+  help: Consider removing this constructor or adding logic to it.
+
+  ⚠ eslint(no-empty-function): Unexpected empty function `foo`
+   ╭─[no_empty_function.tsx:1:16]
+ 1 │ function foo() {}
+   ·                ──
+   ╰────
+  help: Consider removing this function or adding logic to it.
+
+  ⚠ eslint(no-empty-function): Unexpected empty method `foo`
+   ╭─[no_empty_function.tsx:4:17]
+ 3 │           @decorator()
+ 4 │           foo() {}
+   ·                 ──
+ 5 │         }
+   ╰────
+  help: Consider removing this method or adding logic to it.
+
+  ⚠ eslint(no-empty-function): Unexpected empty method `foo`
+   ╭─[no_empty_function.tsx:1:41]
+ 1 │ class Foo extends Base { override foo() {} }
+   ·                                         ──
+   ╰────
+  help: Consider removing this method or adding logic to it.

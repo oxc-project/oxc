@@ -113,21 +113,21 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Consider giving this function expression a name.
 
-  ⚠ eslint(func-names): Unexpected named function foo.
+  ⚠ eslint(func-names): Unexpected named function `foo`.
    ╭─[func_names.tsx:1:9]
  1 │ var x = function foo() {};
    ·         ────────────
    ╰────
   help: Remove the name on this function expression.
 
-  ⚠ eslint(func-names): Unexpected named function foo.
+  ⚠ eslint(func-names): Unexpected named function `foo`.
    ╭─[func_names.tsx:1:21]
  1 │ Foo.prototype.bar = function foo() {};
    ·                     ────────────
    ╰────
   help: Remove the name on this function expression.
 
-  ⚠ eslint(func-names): Unexpected named function foo.
+  ⚠ eslint(func-names): Unexpected named function `foo`.
    ╭─[func_names.tsx:1:8]
  1 │ ({foo: function foo() {}})
    ·        ────────────
@@ -295,42 +295,42 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Consider giving this function expression a name.
 
-  ⚠ eslint(func-names): Unexpected named generator function baz.
+  ⚠ eslint(func-names): Unexpected named generator function `baz`.
    ╭─[func_names.tsx:1:15]
  1 │ var foo = bar(function *baz() {});
    ·               ─────────────
    ╰────
   help: Remove the name on this function expression.
 
-  ⚠ eslint(func-names): Unexpected named generator function baz.
+  ⚠ eslint(func-names): Unexpected named generator function `baz`.
    ╭─[func_names.tsx:1:15]
  1 │ var foo = bar(function *baz() {});
    ·               ─────────────
    ╰────
   help: Remove the name on this function expression.
 
-  ⚠ eslint(func-names): Unexpected named generator function baz.
+  ⚠ eslint(func-names): Unexpected named generator function `baz`.
    ╭─[func_names.tsx:1:15]
  1 │ var foo = bar(function *baz() {});
    ·               ─────────────
    ╰────
   help: Remove the name on this function expression.
 
-  ⚠ eslint(func-names): Unexpected named generator function baz.
+  ⚠ eslint(func-names): Unexpected named generator function `baz`.
    ╭─[func_names.tsx:1:15]
  1 │ var foo = bar(function *baz() {});
    ·               ─────────────
    ╰────
   help: Remove the name on this function expression.
 
-  ⚠ eslint(func-names): Unexpected unnamed method foo.
+  ⚠ eslint(func-names): Unexpected unnamed method `foo`.
    ╭─[func_names.tsx:1:17]
  1 │ class C { foo = function() {} }
    ·                 ────────
    ╰────
   help: Consider giving this function expression a name.
 
-  ⚠ eslint(func-names): Unexpected unnamed public method foo.
+  ⚠ eslint(func-names): Unexpected unnamed public method `foo`.
    ╭─[func_names.tsx:1:24]
  1 │ class C { public foo = function() {} }
    ·                        ────────
@@ -344,7 +344,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Consider giving this function expression a name.
 
-  ⚠ eslint(func-names): Unexpected unnamed private method foo.
+  ⚠ eslint(func-names): Unexpected unnamed private method `foo`.
    ╭─[func_names.tsx:1:18]
  1 │ class C { #foo = function() {} }
    ·                  ────────
@@ -358,7 +358,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Consider giving this function expression a name.
 
-  ⚠ eslint(func-names): Unexpected named method foo.
+  ⚠ eslint(func-names): Unexpected named method `foo`.
    ╭─[func_names.tsx:1:17]
  1 │ class C { foo = function bar() {} }
    ·                 ────────────

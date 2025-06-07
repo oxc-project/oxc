@@ -44,8 +44,6 @@
 //! TODO(improve-on-babel): When flags is empty, we could output `RegExp("(?<=x)")` instead of `RegExp("(?<=x)", "")`.
 //! (actually these would be improvements on ESBuild, not Babel)
 
-use std::borrow::Cow;
-
 use oxc_ast::{NONE, ast::*};
 use oxc_diagnostics::Result;
 use oxc_regular_expression::ast::{
@@ -113,16 +111,24 @@ impl<'a, 'ctx> RegExp<'a, 'ctx> {
 }
 
 impl<'a> Traverse<'a> for RegExp<'a, '_> {
-    fn enter_expression(
-        &mut self,
-        expr: &mut Expression<'a>,
-        ctx: &mut oxc_traverse::TraverseCtx<'a>,
-    ) {
+    // `#[inline]` to avoid cost of function call for all `Expression`s which aren't `RegExpLiteral`s
+    #[inline]
+    fn enter_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
+        if matches!(expr, Expression::RegExpLiteral(_)) {
+            self.transform_regexp(expr, ctx);
+        }
+    }
+}
+
+impl<'a> RegExp<'a, '_> {
+    /// If `RegExpLiteral` contains unsupported syntax or flags, transform to `new RegExp(...)`.
+    fn transform_regexp(&self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
         let Expression::RegExpLiteral(regexp) = expr else {
-            return;
+            unreachable!();
         };
         let regexp = regexp.as_mut();
 
+        let pattern_text = regexp.regex.pattern.text;
         let flags = regexp.regex.flags;
         let has_unsupported_flags = flags.intersects(self.unsupported_flags);
         if !has_unsupported_flags {
@@ -132,39 +138,34 @@ impl<'a> Traverse<'a> for RegExp<'a, '_> {
                 return;
             }
 
-            let literal_span = regexp.span;
-            let pattern = match &mut regexp.regex.pattern {
-                RegExpPattern::Raw(raw) => {
-                    #[expect(clippy::cast_possible_truncation)]
-                    let pattern_len = raw.len() as u32;
-                    let pattern_span_start = literal_span.start + 1; // +1 to skip the opening `/`
-                    let flags_span_start = pattern_span_start + pattern_len + 1; // +1 to skip the closing `/`
-                    let flags_text = Span::new(flags_span_start, literal_span.end)
-                        .source_text(self.ctx.source_text);
-                    // Try to parse pattern
-                    match try_parse_pattern(
-                        raw,
-                        pattern_span_start,
-                        flags_text,
-                        flags_span_start,
-                        ctx,
-                    ) {
-                        Ok(pattern) => {
-                            regexp.regex.pattern = RegExpPattern::Pattern(ctx.alloc(pattern));
-                            let RegExpPattern::Pattern(pattern) = &regexp.regex.pattern else {
-                                unreachable!()
-                            };
-                            pattern
-                        }
-                        Err(error) => {
-                            regexp.regex.pattern = RegExpPattern::Invalid(raw);
-                            self.ctx.error(error);
-                            return;
-                        }
+            let owned_pattern;
+            let pattern = if let Some(pattern) = &regexp.regex.pattern.pattern {
+                pattern
+            } else {
+                #[expect(clippy::cast_possible_truncation)]
+                let pattern_len = pattern_text.len() as u32;
+                let literal_span = regexp.span;
+                let pattern_span_start = literal_span.start + 1; // +1 to skip the opening `/`
+                let flags_span_start = pattern_span_start + pattern_len + 1; // +1 to skip the closing `/`
+                let flags_text =
+                    Span::new(flags_span_start, literal_span.end).source_text(self.ctx.source_text);
+                // Try to parse pattern
+                match try_parse_pattern(
+                    pattern_text.as_str(),
+                    pattern_span_start,
+                    flags_text,
+                    flags_span_start,
+                    ctx,
+                ) {
+                    Ok(pattern) => {
+                        owned_pattern = Some(pattern);
+                        owned_pattern.as_ref().unwrap()
+                    }
+                    Err(error) => {
+                        self.ctx.error(error);
+                        return;
                     }
                 }
-                RegExpPattern::Invalid(_) => return,
-                RegExpPattern::Pattern(pattern) => &**pattern,
             };
 
             if !self.has_unsupported_regular_expression_pattern(pattern) {
@@ -172,31 +173,23 @@ impl<'a> Traverse<'a> for RegExp<'a, '_> {
             }
         }
 
-        let pattern_source: Cow<'_, str> = match &regexp.regex.pattern {
-            RegExpPattern::Raw(raw) => Cow::Borrowed(raw),
-            RegExpPattern::Pattern(p) => Cow::Owned(p.to_string()),
-            RegExpPattern::Invalid(_) => return,
-        };
-
         let callee = {
             let symbol_id = ctx.scoping().find_binding(ctx.current_scope_id(), "RegExp");
             ctx.create_ident_expr(SPAN, Atom::from("RegExp"), symbol_id, ReferenceFlags::read())
         };
 
         let arguments = ctx.ast.vec_from_array([
-            Argument::from(ctx.ast.expression_string_literal(SPAN, pattern_source, None)),
+            Argument::from(ctx.ast.expression_string_literal(SPAN, pattern_text, None)),
             Argument::from(ctx.ast.expression_string_literal(
                 SPAN,
-                flags.to_inline_string().as_str(),
+                ctx.ast.atom(flags.to_inline_string().as_str()),
                 None,
             )),
         ]);
 
-        *expr = ctx.ast.expression_new(regexp.span, callee, arguments, NONE);
+        *expr = ctx.ast.expression_new(regexp.span, callee, NONE, arguments);
     }
-}
 
-impl<'a> RegExp<'a, '_> {
     /// Check if the regular expression contains any unsupported syntax.
     ///
     /// Based on parsed regular expression pattern.

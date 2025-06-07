@@ -15,6 +15,7 @@ pub struct NoNonNullAssertedNullishCoalescing;
 
 declare_oxc_lint!(
     /// ### What it does
+    ///
     /// Disallow non-null assertions in the left operand of a nullish coalescing operator.
     ///
     /// ### Why is this bad?

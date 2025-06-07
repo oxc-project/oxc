@@ -23,7 +23,7 @@ declare_oxc_lint!(
     ///
     /// Enforce that elements with explicit or implicit roles defined contain only `aria-*` properties supported by that `role`. Many ARIA attributes (states and properties) can only be used on elements with particular roles. Some elements have implicit roles, such as `<a href="#" />`, which will resolve to `role="link"`.
     ///
-    /// ### Example
+    /// ### Examples
     ///
     /// Examples of **incorrect** code for this rule:
     /// ```jsx
@@ -42,7 +42,6 @@ declare_oxc_lint!(
     ///     <li tabIndex="0" role="radio" aria-checked="true">Lake Trout</li>
     /// </ul>
     /// ```
-    ///
     RoleSupportsAriaProps,
     jsx_a11y,
     correctness

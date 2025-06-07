@@ -1,7 +1,7 @@
 use oxc_data_structures::rope::{Rope, get_line_column};
 use std::borrow::Cow;
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct SpanPositionMessage<'a> {
     /// A brief suggestion message describing the fix. Will be shown in
     /// editors via code actions.
@@ -34,7 +34,7 @@ impl<'a> SpanPositionMessage<'a> {
     }
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct SpanPosition {
     pub line: u32,
     pub character: u32,

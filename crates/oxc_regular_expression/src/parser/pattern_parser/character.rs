@@ -23,7 +23,7 @@ pub fn is_class_set_syntax_character(cp: u32) -> bool {
 // ```
 // ClassSetReservedDoublePunctuator :: one of
 //   && !! ## $$ %% ** ++ ,, .. :: ;; << == >> ?? @@ ^^ `` ~~
-// ````
+// ```
 pub fn is_class_set_reserved_double_punctuator(cp1: u32, cp2: u32) -> bool {
     char::from_u32(cp1).is_some_and(|ch1| {
         char::from_u32(cp2).is_some_and(|ch2| {

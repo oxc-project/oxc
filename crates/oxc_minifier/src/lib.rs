@@ -58,12 +58,13 @@ impl Minifier {
             Stats::default()
         };
         let scoping = self.options.mangle.map(|options| {
-            let semantic = SemanticBuilder::new()
+            let mut semantic = SemanticBuilder::new()
                 .with_stats(stats)
                 .with_scope_tree_child_ids(true)
                 .build(program)
                 .semantic;
-            Mangler::default().with_options(options).build_with_semantic(semantic, program)
+            Mangler::default().with_options(options).build_with_semantic(&mut semantic, program);
+            semantic.into_scoping()
         });
         MinifierReturn { scoping }
     }

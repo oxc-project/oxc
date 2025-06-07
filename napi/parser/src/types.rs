@@ -7,12 +7,13 @@ use oxc_napi::{Comment, OxcError};
 #[napi(object)]
 #[derive(Default)]
 pub struct ParserOptions {
-    #[napi(ts_type = "'script' | 'module' | 'unambiguous' | undefined")]
-    pub source_type: Option<String>,
-
     /// Treat the source text as `js`, `jsx`, `ts`, or `tsx`.
     #[napi(ts_type = "'js' | 'jsx' | 'ts' | 'tsx'")]
     pub lang: Option<String>,
+
+    /// Treat the source text as `script` or `module` code.
+    #[napi(ts_type = "'script' | 'module' | 'unambiguous' | undefined")]
+    pub source_type: Option<String>,
 
     /// Return an AST which includes TypeScript-related properties, or excludes them.
     ///
@@ -41,7 +42,7 @@ pub struct ParserOptions {
 
 #[napi]
 pub struct ParseResult {
-    pub(crate) program: String,
+    pub(crate) program_and_fixes: String,
     pub(crate) module: EcmaScriptModule,
     pub(crate) comments: Vec<Comment>,
     pub(crate) errors: Vec<OxcError>,
@@ -51,7 +52,7 @@ pub struct ParseResult {
 impl ParseResult {
     #[napi(getter, ts_return_type = "import(\"@oxc-project/types\").Program")]
     pub fn get_program(&mut self) -> String {
-        mem::take(&mut self.program)
+        mem::take(&mut self.program_and_fixes)
     }
 
     #[napi(getter)]
@@ -180,6 +181,18 @@ pub struct StaticExportEntry {
     pub export_name: ExportExportName,
     /// The name that is used to locally access the exported value from within the importing module.
     pub local_name: ExportLocalName,
+    /// Whether the export is a TypeScript `export type`.
+    ///
+    /// Examples:
+    ///
+    /// ```ts
+    /// export type * from 'mod';
+    /// export type * as ns from 'mod';
+    /// export type { foo };
+    /// export { type foo }:
+    /// export type { foo } from 'mod';
+    /// ```
+    pub is_type: bool,
 }
 
 #[napi(object)]

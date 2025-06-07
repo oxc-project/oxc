@@ -1,19 +1,20 @@
-use std::{borrow::Cow, path::PathBuf, str::FromStr};
+use std::{borrow::Cow, str::FromStr};
 
-use oxc_linter::MessageWithPosition;
-use tower_lsp_server::{
-    UriExt,
-    lsp_types::{
-        self, CodeDescription, DiagnosticRelatedInformation, NumberOrString, Position, Range, Uri,
-    },
+use oxc_linter::{FixWithPosition, MessageWithPosition, PossibleFixesWithPosition};
+use tower_lsp_server::lsp_types::{
+    self, CodeDescription, DiagnosticRelatedInformation, NumberOrString, Position, Range, Uri,
 };
 
 use oxc_diagnostics::Severity;
 
+// max range for LSP integer is 2^31 - 1
+// https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#baseTypes
+const LSP_MAX_INT: u32 = 2u32.pow(31) - 1;
+
 #[derive(Debug, Clone)]
 pub struct DiagnosticReport {
     pub diagnostic: lsp_types::Diagnostic,
-    pub fixed_content: Option<FixedContent>,
+    pub fixed_content: PossibleFixContent,
 }
 
 #[derive(Debug, Clone)]
@@ -21,6 +22,13 @@ pub struct FixedContent {
     pub message: Option<String>,
     pub code: String,
     pub range: Range,
+}
+
+#[derive(Debug, Clone)]
+pub enum PossibleFixContent {
+    None,
+    Single(FixedContent),
+    Multiple(Vec<FixedContent>),
 }
 
 fn cmp_range(first: &Range, other: &Range) -> std::cmp::Ordering {
@@ -32,13 +40,12 @@ fn cmp_range(first: &Range, other: &Range) -> std::cmp::Ordering {
 
 fn message_with_position_to_lsp_diagnostic(
     message: &MessageWithPosition<'_>,
-    path: &PathBuf,
+    uri: &Uri,
 ) -> lsp_types::Diagnostic {
     let severity = match message.severity {
         Severity::Error => Some(lsp_types::DiagnosticSeverity::ERROR),
         _ => Some(lsp_types::DiagnosticSeverity::WARNING),
     };
-    let uri = lsp_types::Uri::from_file_path(path).unwrap();
 
     let related_information = message.labels.as_ref().map(|spans| {
         spans
@@ -64,13 +71,13 @@ fn message_with_position_to_lsp_diagnostic(
 
     let range = related_information.as_ref().map_or(
         Range {
-            start: Position { line: u32::MAX, character: u32::MAX },
-            end: Position { line: u32::MAX, character: u32::MAX },
+            start: Position { line: LSP_MAX_INT, character: LSP_MAX_INT },
+            end: Position { line: LSP_MAX_INT, character: LSP_MAX_INT },
         },
         |infos: &Vec<DiagnosticRelatedInformation>| {
             let mut ret_range = Range {
-                start: Position { line: u32::MAX, character: u32::MAX },
-                end: Position { line: u32::MAX, character: u32::MAX },
+                start: Position { line: LSP_MAX_INT, character: LSP_MAX_INT },
+                end: Position { line: LSP_MAX_INT, character: LSP_MAX_INT },
             };
             for info in infos {
                 if cmp_range(&ret_range, &info.location.range) == std::cmp::Ordering::Greater {
@@ -101,25 +108,31 @@ fn message_with_position_to_lsp_diagnostic(
     }
 }
 
+fn fix_with_position_to_fix_content(fix: &FixWithPosition<'_>) -> FixedContent {
+    FixedContent {
+        message: fix.span.message().map(std::string::ToString::to_string),
+        code: fix.content.to_string(),
+        range: Range {
+            start: Position { line: fix.span.start().line, character: fix.span.start().character },
+            end: Position { line: fix.span.end().line, character: fix.span.end().character },
+        },
+    }
+}
+
 pub fn message_with_position_to_lsp_diagnostic_report(
     message: &MessageWithPosition<'_>,
-    path: &PathBuf,
+    uri: &Uri,
 ) -> DiagnosticReport {
     DiagnosticReport {
-        diagnostic: message_with_position_to_lsp_diagnostic(message, path),
-        fixed_content: message.fix.as_ref().map(|infos| FixedContent {
-            message: infos.span.message().map(std::string::ToString::to_string),
-            code: infos.content.to_string(),
-            range: Range {
-                start: Position {
-                    line: infos.span.start().line,
-                    character: infos.span.start().character,
-                },
-                end: Position {
-                    line: infos.span.end().line,
-                    character: infos.span.end().character,
-                },
-            },
-        }),
+        diagnostic: message_with_position_to_lsp_diagnostic(message, uri),
+        fixed_content: match &message.fixes {
+            PossibleFixesWithPosition::None => PossibleFixContent::None,
+            PossibleFixesWithPosition::Single(fix) => {
+                PossibleFixContent::Single(fix_with_position_to_fix_content(fix))
+            }
+            PossibleFixesWithPosition::Multiple(fixes) => PossibleFixContent::Multiple(
+                fixes.iter().map(fix_with_position_to_fix_content).collect(),
+            ),
+        },
     }
 }

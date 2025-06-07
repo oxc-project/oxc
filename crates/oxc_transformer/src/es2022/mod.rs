@@ -19,13 +19,21 @@ pub struct ES2022<'a, 'ctx> {
 }
 
 impl<'a, 'ctx> ES2022<'a, 'ctx> {
-    pub fn new(options: ES2022Options, ctx: &'ctx TransformCtx<'a>) -> Self {
+    pub fn new(
+        options: ES2022Options,
+        remove_class_fields_without_initializer: bool,
+        ctx: &'ctx TransformCtx<'a>,
+    ) -> Self {
         // Class properties transform performs the static block transform differently.
         // So only enable static block transform if class properties transform is disabled.
         let (class_static_block, class_properties) =
             if let Some(properties_options) = options.class_properties {
-                let class_properties =
-                    ClassProperties::new(properties_options, options.class_static_block, ctx);
+                let class_properties = ClassProperties::new(
+                    properties_options,
+                    options.class_static_block,
+                    remove_class_fields_without_initializer,
+                    ctx,
+                );
                 (None, Some(class_properties))
             } else {
                 let class_static_block =

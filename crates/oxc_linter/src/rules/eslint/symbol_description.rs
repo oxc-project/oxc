@@ -36,12 +36,17 @@ declare_oxc_lint!(
     /// // prints - Symbol(some description)
     /// ```
     ///
-    /// ### Example
+    /// ### Examples
+    ///
+    /// Examples of **incorrect** code for this rule:
     /// ```javascript
     /// var foo = Symbol();
     /// ```
     ///
-    ///
+    /// Examples of **correct** code for this rule:
+    /// ```javascript
+    /// var foo = Symbol("some description");
+    /// ```
     SymbolDescription,
     eslint,
     pedantic,

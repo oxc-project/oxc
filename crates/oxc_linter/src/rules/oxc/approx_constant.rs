@@ -28,7 +28,7 @@ declare_oxc_lint!(
     ///
     /// Approximate constants are not as accurate as the constants in the `Math` object.
     ///
-    /// ### Example
+    /// ### Examples
     ///
     /// Examples of **incorrect** code for this rule:
     /// ```javascript

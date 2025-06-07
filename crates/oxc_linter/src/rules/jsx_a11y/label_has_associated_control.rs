@@ -70,9 +70,11 @@ impl Default for LabelHasAssociatedControlConfig {
 
 declare_oxc_lint!(
     /// ### What it does
+    ///
     /// Enforce that a label tag has a text label and an associated control.
     ///
     /// ### Why is this bad?
+    ///
     /// A form label that either isn't properly associated with a form control (such as an `<input>`), or doesn't contain accessible text, hinders accessibility for users using assistive technologies such as screen readers. The user may not have enough information to understand the purpose of the form control.
     ///
     /// ### Examples

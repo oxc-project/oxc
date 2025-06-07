@@ -1,0 +1,6 @@
+{
+  "plugins": [
+    ["transform-typescript", { "onlyRemoveTypeImports": true }],
+    "transform-react-jsx"
+  ]
+}

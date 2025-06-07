@@ -80,6 +80,9 @@ pub const SKIP_TESTS: &[&str] = &[
     "babel-plugin-transform-typescript/test/fixtures/node-extensions/type-param-arrow-in-cts",
     "babel-plugin-transform-typescript/test/fixtures/node-extensions/type-param-arrow-in-mts",
     "babel-plugin-transform-typescript/test/fixtures/node-extensions/with-in-mts",
+    // We follow ESBuild on JSX pragma parsing
+    // https://github.com/oxc-project/oxc/issues/10955
+    "babel-plugin-transform-react-jsx/test/fixtures/react/should-not-allow-jsx-pragma-to-be-anywhere-in-comment",
     // Report error for deprecate option or oxc doesn’t follow error message
     "babel-plugin-transform-typescript/test/fixtures/opts/allowDeclareFields",
     "babel-plugin-transform-react-jsx/test/fixtures/react-automatic/should-throw-when-filter-is-specified",

@@ -211,8 +211,9 @@ impl DiagnosticService {
                     // Setting to 1200 because graphical output may contain ansi escape codes and other decorations.
                     if err_str.lines().any(|line| line.len() >= 1200) {
                         let minified_diagnostic = Error::new(
-                            OxcDiagnostic::warn("File is too long to fit on the screen")
-                                .with_help(format!("{path:?} seems like a minified file")),
+                            OxcDiagnostic::warn("File is too long to fit on the screen").with_help(
+                                format!("{} seems like a minified file", path.display()),
+                            ),
                         );
 
                         if let Some(err_str) = self.reporter.render_error(minified_diagnostic) {

@@ -1,5 +1,5 @@
 // Auto-generated code, DO NOT EDIT DIRECTLY!
-// To edit this generated file you have to edit `tasks/ast_tools/src/generators/formatter.rs`
+// To edit this generated file you have to edit `tasks/ast_tools/src/generators/formatter.rs`.
 
 #![allow(clippy::undocumented_unsafe_blocks)]
 use oxc_ast::{AstKind, ast::*};
@@ -9,6 +9,7 @@ use crate::{
         Buffer, Format, FormatResult, Formatter,
         trivia::{format_leading_comments, format_trailing_comments},
     },
+    parentheses::NeedsParentheses,
     write::FormatWrite,
 };
 
@@ -23,7 +24,7 @@ impl<'a> Format<'a> for Program<'a> {
         format_leading_comments(self.span.start).fmt(f)?;
         let result = self.write(f);
         format_trailing_comments(self.span.end).fmt(f)?;
-        unsafe { f.state_mut().stack.pop_unchecked() };
+        f.state_mut().stack.pop();
         result
     }
 }
@@ -40,7 +41,7 @@ impl<'a> Format<'a> for IdentifierName<'a> {
         format_leading_comments(self.span.start).fmt(f)?;
         let result = self.write(f);
         format_trailing_comments(self.span.end).fmt(f)?;
-        unsafe { f.state_mut().stack.pop_unchecked() };
+        f.state_mut().stack.pop();
         result
     }
 }
@@ -51,7 +52,7 @@ impl<'a> Format<'a> for IdentifierReference<'a> {
         format_leading_comments(self.span.start).fmt(f)?;
         let result = self.write(f);
         format_trailing_comments(self.span.end).fmt(f)?;
-        unsafe { f.state_mut().stack.pop_unchecked() };
+        f.state_mut().stack.pop();
         result
     }
 }
@@ -62,7 +63,7 @@ impl<'a> Format<'a> for BindingIdentifier<'a> {
         format_leading_comments(self.span.start).fmt(f)?;
         let result = self.write(f);
         format_trailing_comments(self.span.end).fmt(f)?;
-        unsafe { f.state_mut().stack.pop_unchecked() };
+        f.state_mut().stack.pop();
         result
     }
 }
@@ -73,7 +74,7 @@ impl<'a> Format<'a> for LabelIdentifier<'a> {
         format_leading_comments(self.span.start).fmt(f)?;
         let result = self.write(f);
         format_trailing_comments(self.span.end).fmt(f)?;
-        unsafe { f.state_mut().stack.pop_unchecked() };
+        f.state_mut().stack.pop();
         result
     }
 }
@@ -82,9 +83,16 @@ impl<'a> Format<'a> for ThisExpression {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         f.state_mut().stack.push(AstKind::ThisExpression(hack(self)));
         format_leading_comments(self.span.start).fmt(f)?;
+        let needs_parentheses = self.needs_parentheses(&f.state().stack);
+        if needs_parentheses {
+            "(".fmt(f)?;
+        }
         let result = self.write(f);
+        if needs_parentheses {
+            ")".fmt(f)?;
+        }
         format_trailing_comments(self.span.end).fmt(f)?;
-        unsafe { f.state_mut().stack.pop_unchecked() };
+        f.state_mut().stack.pop();
         result
     }
 }
@@ -93,9 +101,16 @@ impl<'a> Format<'a> for ArrayExpression<'a> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         f.state_mut().stack.push(AstKind::ArrayExpression(hack(self)));
         format_leading_comments(self.span.start).fmt(f)?;
+        let needs_parentheses = self.needs_parentheses(&f.state().stack);
+        if needs_parentheses {
+            "(".fmt(f)?;
+        }
         let result = self.write(f);
+        if needs_parentheses {
+            ")".fmt(f)?;
+        }
         format_trailing_comments(self.span.end).fmt(f)?;
-        unsafe { f.state_mut().stack.pop_unchecked() };
+        f.state_mut().stack.pop();
         result
     }
 }
@@ -104,7 +119,7 @@ impl<'a> Format<'a> for ArrayExpressionElement<'a> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         f.state_mut().stack.push(AstKind::ArrayExpressionElement(hack(self)));
         let result = self.write(f);
-        unsafe { f.state_mut().stack.pop_unchecked() };
+        f.state_mut().stack.pop();
         result
     }
 }
@@ -115,7 +130,7 @@ impl<'a> Format<'a> for Elision {
         format_leading_comments(self.span.start).fmt(f)?;
         let result = self.write(f);
         format_trailing_comments(self.span.end).fmt(f)?;
-        unsafe { f.state_mut().stack.pop_unchecked() };
+        f.state_mut().stack.pop();
         result
     }
 }
@@ -124,9 +139,16 @@ impl<'a> Format<'a> for ObjectExpression<'a> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         f.state_mut().stack.push(AstKind::ObjectExpression(hack(self)));
         format_leading_comments(self.span.start).fmt(f)?;
+        let needs_parentheses = self.needs_parentheses(&f.state().stack);
+        if needs_parentheses {
+            "(".fmt(f)?;
+        }
         let result = self.write(f);
+        if needs_parentheses {
+            ")".fmt(f)?;
+        }
         format_trailing_comments(self.span.end).fmt(f)?;
-        unsafe { f.state_mut().stack.pop_unchecked() };
+        f.state_mut().stack.pop();
         result
     }
 }
@@ -143,7 +165,7 @@ impl<'a> Format<'a> for ObjectProperty<'a> {
         format_leading_comments(self.span.start).fmt(f)?;
         let result = self.write(f);
         format_trailing_comments(self.span.end).fmt(f)?;
-        unsafe { f.state_mut().stack.pop_unchecked() };
+        f.state_mut().stack.pop();
         result
     }
 }
@@ -152,7 +174,7 @@ impl<'a> Format<'a> for PropertyKey<'a> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         f.state_mut().stack.push(AstKind::PropertyKey(hack(self)));
         let result = self.write(f);
-        unsafe { f.state_mut().stack.pop_unchecked() };
+        f.state_mut().stack.pop();
         result
     }
 }
@@ -163,7 +185,7 @@ impl<'a> Format<'a> for TemplateLiteral<'a> {
         format_leading_comments(self.span.start).fmt(f)?;
         let result = self.write(f);
         format_trailing_comments(self.span.end).fmt(f)?;
-        unsafe { f.state_mut().stack.pop_unchecked() };
+        f.state_mut().stack.pop();
         result
     }
 }
@@ -172,9 +194,16 @@ impl<'a> Format<'a> for TaggedTemplateExpression<'a> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         f.state_mut().stack.push(AstKind::TaggedTemplateExpression(hack(self)));
         format_leading_comments(self.span.start).fmt(f)?;
+        let needs_parentheses = self.needs_parentheses(&f.state().stack);
+        if needs_parentheses {
+            "(".fmt(f)?;
+        }
         let result = self.write(f);
+        if needs_parentheses {
+            ")".fmt(f)?;
+        }
         format_trailing_comments(self.span.end).fmt(f)?;
-        unsafe { f.state_mut().stack.pop_unchecked() };
+        f.state_mut().stack.pop();
         result
     }
 }
@@ -188,8 +217,15 @@ impl<'a> Format<'a> for TemplateElement<'a> {
 impl<'a> Format<'a> for MemberExpression<'a> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         f.state_mut().stack.push(AstKind::MemberExpression(hack(self)));
+        let needs_parentheses = self.needs_parentheses(&f.state().stack);
+        if needs_parentheses {
+            "(".fmt(f)?;
+        }
         let result = self.write(f);
-        unsafe { f.state_mut().stack.pop_unchecked() };
+        if needs_parentheses {
+            ")".fmt(f)?;
+        }
+        f.state_mut().stack.pop();
         result
     }
 }
@@ -216,9 +252,16 @@ impl<'a> Format<'a> for CallExpression<'a> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         f.state_mut().stack.push(AstKind::CallExpression(hack(self)));
         format_leading_comments(self.span.start).fmt(f)?;
+        let needs_parentheses = self.needs_parentheses(&f.state().stack);
+        if needs_parentheses {
+            "(".fmt(f)?;
+        }
         let result = self.write(f);
+        if needs_parentheses {
+            ")".fmt(f)?;
+        }
         format_trailing_comments(self.span.end).fmt(f)?;
-        unsafe { f.state_mut().stack.pop_unchecked() };
+        f.state_mut().stack.pop();
         result
     }
 }
@@ -227,9 +270,16 @@ impl<'a> Format<'a> for NewExpression<'a> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         f.state_mut().stack.push(AstKind::NewExpression(hack(self)));
         format_leading_comments(self.span.start).fmt(f)?;
+        let needs_parentheses = self.needs_parentheses(&f.state().stack);
+        if needs_parentheses {
+            "(".fmt(f)?;
+        }
         let result = self.write(f);
+        if needs_parentheses {
+            ")".fmt(f)?;
+        }
         format_trailing_comments(self.span.end).fmt(f)?;
-        unsafe { f.state_mut().stack.pop_unchecked() };
+        f.state_mut().stack.pop();
         result
     }
 }
@@ -240,7 +290,7 @@ impl<'a> Format<'a> for MetaProperty<'a> {
         format_leading_comments(self.span.start).fmt(f)?;
         let result = self.write(f);
         format_trailing_comments(self.span.end).fmt(f)?;
-        unsafe { f.state_mut().stack.pop_unchecked() };
+        f.state_mut().stack.pop();
         result
     }
 }
@@ -251,7 +301,7 @@ impl<'a> Format<'a> for SpreadElement<'a> {
         format_leading_comments(self.span.start).fmt(f)?;
         let result = self.write(f);
         format_trailing_comments(self.span.end).fmt(f)?;
-        unsafe { f.state_mut().stack.pop_unchecked() };
+        f.state_mut().stack.pop();
         result
     }
 }
@@ -260,7 +310,7 @@ impl<'a> Format<'a> for Argument<'a> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         f.state_mut().stack.push(AstKind::Argument(hack(self)));
         let result = self.write(f);
-        unsafe { f.state_mut().stack.pop_unchecked() };
+        f.state_mut().stack.pop();
         result
     }
 }
@@ -269,9 +319,16 @@ impl<'a> Format<'a> for UpdateExpression<'a> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         f.state_mut().stack.push(AstKind::UpdateExpression(hack(self)));
         format_leading_comments(self.span.start).fmt(f)?;
+        let needs_parentheses = self.needs_parentheses(&f.state().stack);
+        if needs_parentheses {
+            "(".fmt(f)?;
+        }
         let result = self.write(f);
+        if needs_parentheses {
+            ")".fmt(f)?;
+        }
         format_trailing_comments(self.span.end).fmt(f)?;
-        unsafe { f.state_mut().stack.pop_unchecked() };
+        f.state_mut().stack.pop();
         result
     }
 }
@@ -280,9 +337,16 @@ impl<'a> Format<'a> for UnaryExpression<'a> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         f.state_mut().stack.push(AstKind::UnaryExpression(hack(self)));
         format_leading_comments(self.span.start).fmt(f)?;
+        let needs_parentheses = self.needs_parentheses(&f.state().stack);
+        if needs_parentheses {
+            "(".fmt(f)?;
+        }
         let result = self.write(f);
+        if needs_parentheses {
+            ")".fmt(f)?;
+        }
         format_trailing_comments(self.span.end).fmt(f)?;
-        unsafe { f.state_mut().stack.pop_unchecked() };
+        f.state_mut().stack.pop();
         result
     }
 }
@@ -291,9 +355,16 @@ impl<'a> Format<'a> for BinaryExpression<'a> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         f.state_mut().stack.push(AstKind::BinaryExpression(hack(self)));
         format_leading_comments(self.span.start).fmt(f)?;
+        let needs_parentheses = self.needs_parentheses(&f.state().stack);
+        if needs_parentheses {
+            "(".fmt(f)?;
+        }
         let result = self.write(f);
+        if needs_parentheses {
+            ")".fmt(f)?;
+        }
         format_trailing_comments(self.span.end).fmt(f)?;
-        unsafe { f.state_mut().stack.pop_unchecked() };
+        f.state_mut().stack.pop();
         result
     }
 }
@@ -302,9 +373,16 @@ impl<'a> Format<'a> for PrivateInExpression<'a> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         f.state_mut().stack.push(AstKind::PrivateInExpression(hack(self)));
         format_leading_comments(self.span.start).fmt(f)?;
+        let needs_parentheses = self.needs_parentheses(&f.state().stack);
+        if needs_parentheses {
+            "(".fmt(f)?;
+        }
         let result = self.write(f);
+        if needs_parentheses {
+            ")".fmt(f)?;
+        }
         format_trailing_comments(self.span.end).fmt(f)?;
-        unsafe { f.state_mut().stack.pop_unchecked() };
+        f.state_mut().stack.pop();
         result
     }
 }
@@ -313,9 +391,16 @@ impl<'a> Format<'a> for LogicalExpression<'a> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         f.state_mut().stack.push(AstKind::LogicalExpression(hack(self)));
         format_leading_comments(self.span.start).fmt(f)?;
+        let needs_parentheses = self.needs_parentheses(&f.state().stack);
+        if needs_parentheses {
+            "(".fmt(f)?;
+        }
         let result = self.write(f);
+        if needs_parentheses {
+            ")".fmt(f)?;
+        }
         format_trailing_comments(self.span.end).fmt(f)?;
-        unsafe { f.state_mut().stack.pop_unchecked() };
+        f.state_mut().stack.pop();
         result
     }
 }
@@ -324,9 +409,16 @@ impl<'a> Format<'a> for ConditionalExpression<'a> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         f.state_mut().stack.push(AstKind::ConditionalExpression(hack(self)));
         format_leading_comments(self.span.start).fmt(f)?;
+        let needs_parentheses = self.needs_parentheses(&f.state().stack);
+        if needs_parentheses {
+            "(".fmt(f)?;
+        }
         let result = self.write(f);
+        if needs_parentheses {
+            ")".fmt(f)?;
+        }
         format_trailing_comments(self.span.end).fmt(f)?;
-        unsafe { f.state_mut().stack.pop_unchecked() };
+        f.state_mut().stack.pop();
         result
     }
 }
@@ -335,9 +427,16 @@ impl<'a> Format<'a> for AssignmentExpression<'a> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         f.state_mut().stack.push(AstKind::AssignmentExpression(hack(self)));
         format_leading_comments(self.span.start).fmt(f)?;
+        let needs_parentheses = self.needs_parentheses(&f.state().stack);
+        if needs_parentheses {
+            "(".fmt(f)?;
+        }
         let result = self.write(f);
+        if needs_parentheses {
+            ")".fmt(f)?;
+        }
         format_trailing_comments(self.span.end).fmt(f)?;
-        unsafe { f.state_mut().stack.pop_unchecked() };
+        f.state_mut().stack.pop();
         result
     }
 }
@@ -346,7 +445,7 @@ impl<'a> Format<'a> for AssignmentTarget<'a> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         f.state_mut().stack.push(AstKind::AssignmentTarget(hack(self)));
         let result = self.write(f);
-        unsafe { f.state_mut().stack.pop_unchecked() };
+        f.state_mut().stack.pop();
         result
     }
 }
@@ -354,8 +453,15 @@ impl<'a> Format<'a> for AssignmentTarget<'a> {
 impl<'a> Format<'a> for SimpleAssignmentTarget<'a> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         f.state_mut().stack.push(AstKind::SimpleAssignmentTarget(hack(self)));
+        let needs_parentheses = self.needs_parentheses(&f.state().stack);
+        if needs_parentheses {
+            "(".fmt(f)?;
+        }
         let result = self.write(f);
-        unsafe { f.state_mut().stack.pop_unchecked() };
+        if needs_parentheses {
+            ")".fmt(f)?;
+        }
+        f.state_mut().stack.pop();
         result
     }
 }
@@ -364,7 +470,7 @@ impl<'a> Format<'a> for AssignmentTargetPattern<'a> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         f.state_mut().stack.push(AstKind::AssignmentTargetPattern(hack(self)));
         let result = self.write(f);
-        unsafe { f.state_mut().stack.pop_unchecked() };
+        f.state_mut().stack.pop();
         result
     }
 }
@@ -375,7 +481,7 @@ impl<'a> Format<'a> for ArrayAssignmentTarget<'a> {
         format_leading_comments(self.span.start).fmt(f)?;
         let result = self.write(f);
         format_trailing_comments(self.span.end).fmt(f)?;
-        unsafe { f.state_mut().stack.pop_unchecked() };
+        f.state_mut().stack.pop();
         result
     }
 }
@@ -386,7 +492,7 @@ impl<'a> Format<'a> for ObjectAssignmentTarget<'a> {
         format_leading_comments(self.span.start).fmt(f)?;
         let result = self.write(f);
         format_trailing_comments(self.span.end).fmt(f)?;
-        unsafe { f.state_mut().stack.pop_unchecked() };
+        f.state_mut().stack.pop();
         result
     }
 }
@@ -409,7 +515,7 @@ impl<'a> Format<'a> for AssignmentTargetWithDefault<'a> {
         format_leading_comments(self.span.start).fmt(f)?;
         let result = self.write(f);
         format_trailing_comments(self.span.end).fmt(f)?;
-        unsafe { f.state_mut().stack.pop_unchecked() };
+        f.state_mut().stack.pop();
         result
     }
 }
@@ -436,9 +542,16 @@ impl<'a> Format<'a> for SequenceExpression<'a> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         f.state_mut().stack.push(AstKind::SequenceExpression(hack(self)));
         format_leading_comments(self.span.start).fmt(f)?;
+        let needs_parentheses = self.needs_parentheses(&f.state().stack);
+        if needs_parentheses {
+            "(".fmt(f)?;
+        }
         let result = self.write(f);
+        if needs_parentheses {
+            ")".fmt(f)?;
+        }
         format_trailing_comments(self.span.end).fmt(f)?;
-        unsafe { f.state_mut().stack.pop_unchecked() };
+        f.state_mut().stack.pop();
         result
     }
 }
@@ -449,7 +562,7 @@ impl<'a> Format<'a> for Super {
         format_leading_comments(self.span.start).fmt(f)?;
         let result = self.write(f);
         format_trailing_comments(self.span.end).fmt(f)?;
-        unsafe { f.state_mut().stack.pop_unchecked() };
+        f.state_mut().stack.pop();
         result
     }
 }
@@ -458,9 +571,16 @@ impl<'a> Format<'a> for AwaitExpression<'a> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         f.state_mut().stack.push(AstKind::AwaitExpression(hack(self)));
         format_leading_comments(self.span.start).fmt(f)?;
+        let needs_parentheses = self.needs_parentheses(&f.state().stack);
+        if needs_parentheses {
+            "(".fmt(f)?;
+        }
         let result = self.write(f);
+        if needs_parentheses {
+            ")".fmt(f)?;
+        }
         format_trailing_comments(self.span.end).fmt(f)?;
-        unsafe { f.state_mut().stack.pop_unchecked() };
+        f.state_mut().stack.pop();
         result
     }
 }
@@ -469,9 +589,16 @@ impl<'a> Format<'a> for ChainExpression<'a> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         f.state_mut().stack.push(AstKind::ChainExpression(hack(self)));
         format_leading_comments(self.span.start).fmt(f)?;
+        let needs_parentheses = self.needs_parentheses(&f.state().stack);
+        if needs_parentheses {
+            "(".fmt(f)?;
+        }
         let result = self.write(f);
+        if needs_parentheses {
+            ")".fmt(f)?;
+        }
         format_trailing_comments(self.span.end).fmt(f)?;
-        unsafe { f.state_mut().stack.pop_unchecked() };
+        f.state_mut().stack.pop();
         result
     }
 }
@@ -484,11 +611,16 @@ impl<'a> Format<'a> for ChainElement<'a> {
 
 impl<'a> Format<'a> for ParenthesizedExpression<'a> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        f.state_mut().stack.push(AstKind::ParenthesizedExpression(hack(self)));
         format_leading_comments(self.span.start).fmt(f)?;
+        let needs_parentheses = self.needs_parentheses(&f.state().stack);
+        if needs_parentheses {
+            "(".fmt(f)?;
+        }
         let result = self.write(f);
+        if needs_parentheses {
+            ")".fmt(f)?;
+        }
         format_trailing_comments(self.span.end).fmt(f)?;
-        unsafe { f.state_mut().stack.pop_unchecked() };
         result
     }
 }
@@ -505,7 +637,7 @@ impl<'a> Format<'a> for Directive<'a> {
         format_leading_comments(self.span.start).fmt(f)?;
         let result = self.write(f);
         format_trailing_comments(self.span.end).fmt(f)?;
-        unsafe { f.state_mut().stack.pop_unchecked() };
+        f.state_mut().stack.pop();
         result
     }
 }
@@ -516,7 +648,7 @@ impl<'a> Format<'a> for Hashbang<'a> {
         format_leading_comments(self.span.start).fmt(f)?;
         let result = self.write(f);
         format_trailing_comments(self.span.end).fmt(f)?;
-        unsafe { f.state_mut().stack.pop_unchecked() };
+        f.state_mut().stack.pop();
         result
     }
 }
@@ -527,7 +659,7 @@ impl<'a> Format<'a> for BlockStatement<'a> {
         format_leading_comments(self.span.start).fmt(f)?;
         let result = self.write(f);
         format_trailing_comments(self.span.end).fmt(f)?;
-        unsafe { f.state_mut().stack.pop_unchecked() };
+        f.state_mut().stack.pop();
         result
     }
 }
@@ -544,7 +676,7 @@ impl<'a> Format<'a> for VariableDeclaration<'a> {
         format_leading_comments(self.span.start).fmt(f)?;
         let result = self.write(f);
         format_trailing_comments(self.span.end).fmt(f)?;
-        unsafe { f.state_mut().stack.pop_unchecked() };
+        f.state_mut().stack.pop();
         result
     }
 }
@@ -555,7 +687,7 @@ impl<'a> Format<'a> for VariableDeclarator<'a> {
         format_leading_comments(self.span.start).fmt(f)?;
         let result = self.write(f);
         format_trailing_comments(self.span.end).fmt(f)?;
-        unsafe { f.state_mut().stack.pop_unchecked() };
+        f.state_mut().stack.pop();
         result
     }
 }
@@ -566,7 +698,7 @@ impl<'a> Format<'a> for EmptyStatement {
         format_leading_comments(self.span.start).fmt(f)?;
         let result = self.write(f);
         format_trailing_comments(self.span.end).fmt(f)?;
-        unsafe { f.state_mut().stack.pop_unchecked() };
+        f.state_mut().stack.pop();
         result
     }
 }
@@ -577,7 +709,7 @@ impl<'a> Format<'a> for ExpressionStatement<'a> {
         format_leading_comments(self.span.start).fmt(f)?;
         let result = self.write(f);
         format_trailing_comments(self.span.end).fmt(f)?;
-        unsafe { f.state_mut().stack.pop_unchecked() };
+        f.state_mut().stack.pop();
         result
     }
 }
@@ -588,7 +720,7 @@ impl<'a> Format<'a> for IfStatement<'a> {
         format_leading_comments(self.span.start).fmt(f)?;
         let result = self.write(f);
         format_trailing_comments(self.span.end).fmt(f)?;
-        unsafe { f.state_mut().stack.pop_unchecked() };
+        f.state_mut().stack.pop();
         result
     }
 }
@@ -599,7 +731,7 @@ impl<'a> Format<'a> for DoWhileStatement<'a> {
         format_leading_comments(self.span.start).fmt(f)?;
         let result = self.write(f);
         format_trailing_comments(self.span.end).fmt(f)?;
-        unsafe { f.state_mut().stack.pop_unchecked() };
+        f.state_mut().stack.pop();
         result
     }
 }
@@ -610,7 +742,7 @@ impl<'a> Format<'a> for WhileStatement<'a> {
         format_leading_comments(self.span.start).fmt(f)?;
         let result = self.write(f);
         format_trailing_comments(self.span.end).fmt(f)?;
-        unsafe { f.state_mut().stack.pop_unchecked() };
+        f.state_mut().stack.pop();
         result
     }
 }
@@ -621,7 +753,7 @@ impl<'a> Format<'a> for ForStatement<'a> {
         format_leading_comments(self.span.start).fmt(f)?;
         let result = self.write(f);
         format_trailing_comments(self.span.end).fmt(f)?;
-        unsafe { f.state_mut().stack.pop_unchecked() };
+        f.state_mut().stack.pop();
         result
     }
 }
@@ -630,7 +762,7 @@ impl<'a> Format<'a> for ForStatementInit<'a> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         f.state_mut().stack.push(AstKind::ForStatementInit(hack(self)));
         let result = self.write(f);
-        unsafe { f.state_mut().stack.pop_unchecked() };
+        f.state_mut().stack.pop();
         result
     }
 }
@@ -641,7 +773,7 @@ impl<'a> Format<'a> for ForInStatement<'a> {
         format_leading_comments(self.span.start).fmt(f)?;
         let result = self.write(f);
         format_trailing_comments(self.span.end).fmt(f)?;
-        unsafe { f.state_mut().stack.pop_unchecked() };
+        f.state_mut().stack.pop();
         result
     }
 }
@@ -658,7 +790,7 @@ impl<'a> Format<'a> for ForOfStatement<'a> {
         format_leading_comments(self.span.start).fmt(f)?;
         let result = self.write(f);
         format_trailing_comments(self.span.end).fmt(f)?;
-        unsafe { f.state_mut().stack.pop_unchecked() };
+        f.state_mut().stack.pop();
         result
     }
 }
@@ -669,7 +801,7 @@ impl<'a> Format<'a> for ContinueStatement<'a> {
         format_leading_comments(self.span.start).fmt(f)?;
         let result = self.write(f);
         format_trailing_comments(self.span.end).fmt(f)?;
-        unsafe { f.state_mut().stack.pop_unchecked() };
+        f.state_mut().stack.pop();
         result
     }
 }
@@ -680,7 +812,7 @@ impl<'a> Format<'a> for BreakStatement<'a> {
         format_leading_comments(self.span.start).fmt(f)?;
         let result = self.write(f);
         format_trailing_comments(self.span.end).fmt(f)?;
-        unsafe { f.state_mut().stack.pop_unchecked() };
+        f.state_mut().stack.pop();
         result
     }
 }
@@ -691,7 +823,7 @@ impl<'a> Format<'a> for ReturnStatement<'a> {
         format_leading_comments(self.span.start).fmt(f)?;
         let result = self.write(f);
         format_trailing_comments(self.span.end).fmt(f)?;
-        unsafe { f.state_mut().stack.pop_unchecked() };
+        f.state_mut().stack.pop();
         result
     }
 }
@@ -702,7 +834,7 @@ impl<'a> Format<'a> for WithStatement<'a> {
         format_leading_comments(self.span.start).fmt(f)?;
         let result = self.write(f);
         format_trailing_comments(self.span.end).fmt(f)?;
-        unsafe { f.state_mut().stack.pop_unchecked() };
+        f.state_mut().stack.pop();
         result
     }
 }
@@ -713,7 +845,7 @@ impl<'a> Format<'a> for SwitchStatement<'a> {
         format_leading_comments(self.span.start).fmt(f)?;
         let result = self.write(f);
         format_trailing_comments(self.span.end).fmt(f)?;
-        unsafe { f.state_mut().stack.pop_unchecked() };
+        f.state_mut().stack.pop();
         result
     }
 }
@@ -724,7 +856,7 @@ impl<'a> Format<'a> for SwitchCase<'a> {
         format_leading_comments(self.span.start).fmt(f)?;
         let result = self.write(f);
         format_trailing_comments(self.span.end).fmt(f)?;
-        unsafe { f.state_mut().stack.pop_unchecked() };
+        f.state_mut().stack.pop();
         result
     }
 }
@@ -735,7 +867,7 @@ impl<'a> Format<'a> for LabeledStatement<'a> {
         format_leading_comments(self.span.start).fmt(f)?;
         let result = self.write(f);
         format_trailing_comments(self.span.end).fmt(f)?;
-        unsafe { f.state_mut().stack.pop_unchecked() };
+        f.state_mut().stack.pop();
         result
     }
 }
@@ -746,7 +878,7 @@ impl<'a> Format<'a> for ThrowStatement<'a> {
         format_leading_comments(self.span.start).fmt(f)?;
         let result = self.write(f);
         format_trailing_comments(self.span.end).fmt(f)?;
-        unsafe { f.state_mut().stack.pop_unchecked() };
+        f.state_mut().stack.pop();
         result
     }
 }
@@ -757,7 +889,7 @@ impl<'a> Format<'a> for TryStatement<'a> {
         format_leading_comments(self.span.start).fmt(f)?;
         let result = self.write(f);
         format_trailing_comments(self.span.end).fmt(f)?;
-        unsafe { f.state_mut().stack.pop_unchecked() };
+        f.state_mut().stack.pop();
         result
     }
 }
@@ -768,7 +900,7 @@ impl<'a> Format<'a> for CatchClause<'a> {
         format_leading_comments(self.span.start).fmt(f)?;
         let result = self.write(f);
         format_trailing_comments(self.span.end).fmt(f)?;
-        unsafe { f.state_mut().stack.pop_unchecked() };
+        f.state_mut().stack.pop();
         result
     }
 }
@@ -779,7 +911,7 @@ impl<'a> Format<'a> for CatchParameter<'a> {
         format_leading_comments(self.span.start).fmt(f)?;
         let result = self.write(f);
         format_trailing_comments(self.span.end).fmt(f)?;
-        unsafe { f.state_mut().stack.pop_unchecked() };
+        f.state_mut().stack.pop();
         result
     }
 }
@@ -790,7 +922,7 @@ impl<'a> Format<'a> for DebuggerStatement {
         format_leading_comments(self.span.start).fmt(f)?;
         let result = self.write(f);
         format_trailing_comments(self.span.end).fmt(f)?;
-        unsafe { f.state_mut().stack.pop_unchecked() };
+        f.state_mut().stack.pop();
         result
     }
 }
@@ -813,7 +945,7 @@ impl<'a> Format<'a> for AssignmentPattern<'a> {
         format_leading_comments(self.span.start).fmt(f)?;
         let result = self.write(f);
         format_trailing_comments(self.span.end).fmt(f)?;
-        unsafe { f.state_mut().stack.pop_unchecked() };
+        f.state_mut().stack.pop();
         result
     }
 }
@@ -824,7 +956,7 @@ impl<'a> Format<'a> for ObjectPattern<'a> {
         format_leading_comments(self.span.start).fmt(f)?;
         let result = self.write(f);
         format_trailing_comments(self.span.end).fmt(f)?;
-        unsafe { f.state_mut().stack.pop_unchecked() };
+        f.state_mut().stack.pop();
         result
     }
 }
@@ -841,7 +973,7 @@ impl<'a> Format<'a> for ArrayPattern<'a> {
         format_leading_comments(self.span.start).fmt(f)?;
         let result = self.write(f);
         format_trailing_comments(self.span.end).fmt(f)?;
-        unsafe { f.state_mut().stack.pop_unchecked() };
+        f.state_mut().stack.pop();
         result
     }
 }
@@ -852,7 +984,7 @@ impl<'a> Format<'a> for BindingRestElement<'a> {
         format_leading_comments(self.span.start).fmt(f)?;
         let result = self.write(f);
         format_trailing_comments(self.span.end).fmt(f)?;
-        unsafe { f.state_mut().stack.pop_unchecked() };
+        f.state_mut().stack.pop();
         result
     }
 }
@@ -861,9 +993,16 @@ impl<'a> Format<'a> for Function<'a> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         f.state_mut().stack.push(AstKind::Function(hack(self)));
         format_leading_comments(self.span.start).fmt(f)?;
+        let needs_parentheses = self.needs_parentheses(&f.state().stack);
+        if needs_parentheses {
+            "(".fmt(f)?;
+        }
         let result = self.write(f);
+        if needs_parentheses {
+            ")".fmt(f)?;
+        }
         format_trailing_comments(self.span.end).fmt(f)?;
-        unsafe { f.state_mut().stack.pop_unchecked() };
+        f.state_mut().stack.pop();
         result
     }
 }
@@ -874,7 +1013,7 @@ impl<'a> Format<'a> for FormalParameters<'a> {
         format_leading_comments(self.span.start).fmt(f)?;
         let result = self.write(f);
         format_trailing_comments(self.span.end).fmt(f)?;
-        unsafe { f.state_mut().stack.pop_unchecked() };
+        f.state_mut().stack.pop();
         result
     }
 }
@@ -885,7 +1024,7 @@ impl<'a> Format<'a> for FormalParameter<'a> {
         format_leading_comments(self.span.start).fmt(f)?;
         let result = self.write(f);
         format_trailing_comments(self.span.end).fmt(f)?;
-        unsafe { f.state_mut().stack.pop_unchecked() };
+        f.state_mut().stack.pop();
         result
     }
 }
@@ -896,7 +1035,7 @@ impl<'a> Format<'a> for FunctionBody<'a> {
         format_leading_comments(self.span.start).fmt(f)?;
         let result = self.write(f);
         format_trailing_comments(self.span.end).fmt(f)?;
-        unsafe { f.state_mut().stack.pop_unchecked() };
+        f.state_mut().stack.pop();
         result
     }
 }
@@ -905,9 +1044,16 @@ impl<'a> Format<'a> for ArrowFunctionExpression<'a> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         f.state_mut().stack.push(AstKind::ArrowFunctionExpression(hack(self)));
         format_leading_comments(self.span.start).fmt(f)?;
+        let needs_parentheses = self.needs_parentheses(&f.state().stack);
+        if needs_parentheses {
+            "(".fmt(f)?;
+        }
         let result = self.write(f);
+        if needs_parentheses {
+            ")".fmt(f)?;
+        }
         format_trailing_comments(self.span.end).fmt(f)?;
-        unsafe { f.state_mut().stack.pop_unchecked() };
+        f.state_mut().stack.pop();
         result
     }
 }
@@ -916,9 +1062,16 @@ impl<'a> Format<'a> for YieldExpression<'a> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         f.state_mut().stack.push(AstKind::YieldExpression(hack(self)));
         format_leading_comments(self.span.start).fmt(f)?;
+        let needs_parentheses = self.needs_parentheses(&f.state().stack);
+        if needs_parentheses {
+            "(".fmt(f)?;
+        }
         let result = self.write(f);
+        if needs_parentheses {
+            ")".fmt(f)?;
+        }
         format_trailing_comments(self.span.end).fmt(f)?;
-        unsafe { f.state_mut().stack.pop_unchecked() };
+        f.state_mut().stack.pop();
         result
     }
 }
@@ -927,9 +1080,16 @@ impl<'a> Format<'a> for Class<'a> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         f.state_mut().stack.push(AstKind::Class(hack(self)));
         format_leading_comments(self.span.start).fmt(f)?;
+        let needs_parentheses = self.needs_parentheses(&f.state().stack);
+        if needs_parentheses {
+            "(".fmt(f)?;
+        }
         let result = self.write(f);
+        if needs_parentheses {
+            ")".fmt(f)?;
+        }
         format_trailing_comments(self.span.end).fmt(f)?;
-        unsafe { f.state_mut().stack.pop_unchecked() };
+        f.state_mut().stack.pop();
         result
     }
 }
@@ -940,7 +1100,7 @@ impl<'a> Format<'a> for ClassBody<'a> {
         format_leading_comments(self.span.start).fmt(f)?;
         let result = self.write(f);
         format_trailing_comments(self.span.end).fmt(f)?;
-        unsafe { f.state_mut().stack.pop_unchecked() };
+        f.state_mut().stack.pop();
         result
     }
 }
@@ -957,7 +1117,7 @@ impl<'a> Format<'a> for MethodDefinition<'a> {
         format_leading_comments(self.span.start).fmt(f)?;
         let result = self.write(f);
         format_trailing_comments(self.span.end).fmt(f)?;
-        unsafe { f.state_mut().stack.pop_unchecked() };
+        f.state_mut().stack.pop();
         result
     }
 }
@@ -968,7 +1128,7 @@ impl<'a> Format<'a> for PropertyDefinition<'a> {
         format_leading_comments(self.span.start).fmt(f)?;
         let result = self.write(f);
         format_trailing_comments(self.span.end).fmt(f)?;
-        unsafe { f.state_mut().stack.pop_unchecked() };
+        f.state_mut().stack.pop();
         result
     }
 }
@@ -979,7 +1139,7 @@ impl<'a> Format<'a> for PrivateIdentifier<'a> {
         format_leading_comments(self.span.start).fmt(f)?;
         let result = self.write(f);
         format_trailing_comments(self.span.end).fmt(f)?;
-        unsafe { f.state_mut().stack.pop_unchecked() };
+        f.state_mut().stack.pop();
         result
     }
 }
@@ -990,7 +1150,7 @@ impl<'a> Format<'a> for StaticBlock<'a> {
         format_leading_comments(self.span.start).fmt(f)?;
         let result = self.write(f);
         format_trailing_comments(self.span.end).fmt(f)?;
-        unsafe { f.state_mut().stack.pop_unchecked() };
+        f.state_mut().stack.pop();
         result
     }
 }
@@ -999,7 +1159,7 @@ impl<'a> Format<'a> for ModuleDeclaration<'a> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         f.state_mut().stack.push(AstKind::ModuleDeclaration(hack(self)));
         let result = self.write(f);
-        unsafe { f.state_mut().stack.pop_unchecked() };
+        f.state_mut().stack.pop();
         result
     }
 }
@@ -1014,9 +1174,16 @@ impl<'a> Format<'a> for ImportExpression<'a> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         f.state_mut().stack.push(AstKind::ImportExpression(hack(self)));
         format_leading_comments(self.span.start).fmt(f)?;
+        let needs_parentheses = self.needs_parentheses(&f.state().stack);
+        if needs_parentheses {
+            "(".fmt(f)?;
+        }
         let result = self.write(f);
+        if needs_parentheses {
+            ")".fmt(f)?;
+        }
         format_trailing_comments(self.span.end).fmt(f)?;
-        unsafe { f.state_mut().stack.pop_unchecked() };
+        f.state_mut().stack.pop();
         result
     }
 }
@@ -1027,7 +1194,7 @@ impl<'a> Format<'a> for ImportDeclaration<'a> {
         format_leading_comments(self.span.start).fmt(f)?;
         let result = self.write(f);
         format_trailing_comments(self.span.end).fmt(f)?;
-        unsafe { f.state_mut().stack.pop_unchecked() };
+        f.state_mut().stack.pop();
         result
     }
 }
@@ -1044,7 +1211,7 @@ impl<'a> Format<'a> for ImportSpecifier<'a> {
         format_leading_comments(self.span.start).fmt(f)?;
         let result = self.write(f);
         format_trailing_comments(self.span.end).fmt(f)?;
-        unsafe { f.state_mut().stack.pop_unchecked() };
+        f.state_mut().stack.pop();
         result
     }
 }
@@ -1055,7 +1222,7 @@ impl<'a> Format<'a> for ImportDefaultSpecifier<'a> {
         format_leading_comments(self.span.start).fmt(f)?;
         let result = self.write(f);
         format_trailing_comments(self.span.end).fmt(f)?;
-        unsafe { f.state_mut().stack.pop_unchecked() };
+        f.state_mut().stack.pop();
         result
     }
 }
@@ -1066,7 +1233,7 @@ impl<'a> Format<'a> for ImportNamespaceSpecifier<'a> {
         format_leading_comments(self.span.start).fmt(f)?;
         let result = self.write(f);
         format_trailing_comments(self.span.end).fmt(f)?;
-        unsafe { f.state_mut().stack.pop_unchecked() };
+        f.state_mut().stack.pop();
         result
     }
 }
@@ -1095,7 +1262,7 @@ impl<'a> Format<'a> for ExportNamedDeclaration<'a> {
         format_leading_comments(self.span.start).fmt(f)?;
         let result = self.write(f);
         format_trailing_comments(self.span.end).fmt(f)?;
-        unsafe { f.state_mut().stack.pop_unchecked() };
+        f.state_mut().stack.pop();
         result
     }
 }
@@ -1106,7 +1273,7 @@ impl<'a> Format<'a> for ExportDefaultDeclaration<'a> {
         format_leading_comments(self.span.start).fmt(f)?;
         let result = self.write(f);
         format_trailing_comments(self.span.end).fmt(f)?;
-        unsafe { f.state_mut().stack.pop_unchecked() };
+        f.state_mut().stack.pop();
         result
     }
 }
@@ -1117,7 +1284,7 @@ impl<'a> Format<'a> for ExportAllDeclaration<'a> {
         format_leading_comments(self.span.start).fmt(f)?;
         let result = self.write(f);
         format_trailing_comments(self.span.end).fmt(f)?;
-        unsafe { f.state_mut().stack.pop_unchecked() };
+        f.state_mut().stack.pop();
         result
     }
 }
@@ -1128,7 +1295,7 @@ impl<'a> Format<'a> for ExportSpecifier<'a> {
         format_leading_comments(self.span.start).fmt(f)?;
         let result = self.write(f);
         format_trailing_comments(self.span.end).fmt(f)?;
-        unsafe { f.state_mut().stack.pop_unchecked() };
+        f.state_mut().stack.pop();
         result
     }
 }
@@ -1149,9 +1316,16 @@ impl<'a> Format<'a> for V8IntrinsicExpression<'a> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         f.state_mut().stack.push(AstKind::V8IntrinsicExpression(hack(self)));
         format_leading_comments(self.span.start).fmt(f)?;
+        let needs_parentheses = self.needs_parentheses(&f.state().stack);
+        if needs_parentheses {
+            "(".fmt(f)?;
+        }
         let result = self.write(f);
+        if needs_parentheses {
+            ")".fmt(f)?;
+        }
         format_trailing_comments(self.span.end).fmt(f)?;
-        unsafe { f.state_mut().stack.pop_unchecked() };
+        f.state_mut().stack.pop();
         result
     }
 }
@@ -1162,7 +1336,7 @@ impl<'a> Format<'a> for BooleanLiteral {
         format_leading_comments(self.span.start).fmt(f)?;
         let result = self.write(f);
         format_trailing_comments(self.span.end).fmt(f)?;
-        unsafe { f.state_mut().stack.pop_unchecked() };
+        f.state_mut().stack.pop();
         result
     }
 }
@@ -1173,7 +1347,7 @@ impl<'a> Format<'a> for NullLiteral {
         format_leading_comments(self.span.start).fmt(f)?;
         let result = self.write(f);
         format_trailing_comments(self.span.end).fmt(f)?;
-        unsafe { f.state_mut().stack.pop_unchecked() };
+        f.state_mut().stack.pop();
         result
     }
 }
@@ -1182,9 +1356,16 @@ impl<'a> Format<'a> for NumericLiteral<'a> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         f.state_mut().stack.push(AstKind::NumericLiteral(hack(self)));
         format_leading_comments(self.span.start).fmt(f)?;
+        let needs_parentheses = self.needs_parentheses(&f.state().stack);
+        if needs_parentheses {
+            "(".fmt(f)?;
+        }
         let result = self.write(f);
+        if needs_parentheses {
+            ")".fmt(f)?;
+        }
         format_trailing_comments(self.span.end).fmt(f)?;
-        unsafe { f.state_mut().stack.pop_unchecked() };
+        f.state_mut().stack.pop();
         result
     }
 }
@@ -1193,9 +1374,16 @@ impl<'a> Format<'a> for StringLiteral<'a> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         f.state_mut().stack.push(AstKind::StringLiteral(hack(self)));
         format_leading_comments(self.span.start).fmt(f)?;
+        let needs_parentheses = self.needs_parentheses(&f.state().stack);
+        if needs_parentheses {
+            "(".fmt(f)?;
+        }
         let result = self.write(f);
+        if needs_parentheses {
+            ")".fmt(f)?;
+        }
         format_trailing_comments(self.span.end).fmt(f)?;
-        unsafe { f.state_mut().stack.pop_unchecked() };
+        f.state_mut().stack.pop();
         result
     }
 }
@@ -1206,7 +1394,7 @@ impl<'a> Format<'a> for BigIntLiteral<'a> {
         format_leading_comments(self.span.start).fmt(f)?;
         let result = self.write(f);
         format_trailing_comments(self.span.end).fmt(f)?;
-        unsafe { f.state_mut().stack.pop_unchecked() };
+        f.state_mut().stack.pop();
         result
     }
 }
@@ -1217,7 +1405,7 @@ impl<'a> Format<'a> for RegExpLiteral<'a> {
         format_leading_comments(self.span.start).fmt(f)?;
         let result = self.write(f);
         format_trailing_comments(self.span.end).fmt(f)?;
-        unsafe { f.state_mut().stack.pop_unchecked() };
+        f.state_mut().stack.pop();
         result
     }
 }
@@ -1228,7 +1416,7 @@ impl<'a> Format<'a> for JSXElement<'a> {
         format_leading_comments(self.span.start).fmt(f)?;
         let result = self.write(f);
         format_trailing_comments(self.span.end).fmt(f)?;
-        unsafe { f.state_mut().stack.pop_unchecked() };
+        f.state_mut().stack.pop();
         result
     }
 }
@@ -1239,7 +1427,7 @@ impl<'a> Format<'a> for JSXOpeningElement<'a> {
         format_leading_comments(self.span.start).fmt(f)?;
         let result = self.write(f);
         format_trailing_comments(self.span.end).fmt(f)?;
-        unsafe { f.state_mut().stack.pop_unchecked() };
+        f.state_mut().stack.pop();
         result
     }
 }
@@ -1250,7 +1438,7 @@ impl<'a> Format<'a> for JSXClosingElement<'a> {
         format_leading_comments(self.span.start).fmt(f)?;
         let result = self.write(f);
         format_trailing_comments(self.span.end).fmt(f)?;
-        unsafe { f.state_mut().stack.pop_unchecked() };
+        f.state_mut().stack.pop();
         result
     }
 }
@@ -1261,7 +1449,7 @@ impl<'a> Format<'a> for JSXFragment<'a> {
         format_leading_comments(self.span.start).fmt(f)?;
         let result = self.write(f);
         format_trailing_comments(self.span.end).fmt(f)?;
-        unsafe { f.state_mut().stack.pop_unchecked() };
+        f.state_mut().stack.pop();
         result
     }
 }
@@ -1282,7 +1470,7 @@ impl<'a> Format<'a> for JSXElementName<'a> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         f.state_mut().stack.push(AstKind::JSXElementName(hack(self)));
         let result = self.write(f);
-        unsafe { f.state_mut().stack.pop_unchecked() };
+        f.state_mut().stack.pop();
         result
     }
 }
@@ -1293,7 +1481,7 @@ impl<'a> Format<'a> for JSXNamespacedName<'a> {
         format_leading_comments(self.span.start).fmt(f)?;
         let result = self.write(f);
         format_trailing_comments(self.span.end).fmt(f)?;
-        unsafe { f.state_mut().stack.pop_unchecked() };
+        f.state_mut().stack.pop();
         result
     }
 }
@@ -1302,9 +1490,16 @@ impl<'a> Format<'a> for JSXMemberExpression<'a> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         f.state_mut().stack.push(AstKind::JSXMemberExpression(hack(self)));
         format_leading_comments(self.span.start).fmt(f)?;
+        let needs_parentheses = self.needs_parentheses(&f.state().stack);
+        if needs_parentheses {
+            "(".fmt(f)?;
+        }
         let result = self.write(f);
+        if needs_parentheses {
+            ")".fmt(f)?;
+        }
         format_trailing_comments(self.span.end).fmt(f)?;
-        unsafe { f.state_mut().stack.pop_unchecked() };
+        f.state_mut().stack.pop();
         result
     }
 }
@@ -1313,7 +1508,7 @@ impl<'a> Format<'a> for JSXMemberExpressionObject<'a> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         f.state_mut().stack.push(AstKind::JSXMemberExpressionObject(hack(self)));
         let result = self.write(f);
-        unsafe { f.state_mut().stack.pop_unchecked() };
+        f.state_mut().stack.pop();
         result
     }
 }
@@ -1324,7 +1519,7 @@ impl<'a> Format<'a> for JSXExpressionContainer<'a> {
         format_leading_comments(self.span.start).fmt(f)?;
         let result = self.write(f);
         format_trailing_comments(self.span.end).fmt(f)?;
-        unsafe { f.state_mut().stack.pop_unchecked() };
+        f.state_mut().stack.pop();
         result
     }
 }
@@ -1345,7 +1540,7 @@ impl<'a> Format<'a> for JSXAttributeItem<'a> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         f.state_mut().stack.push(AstKind::JSXAttributeItem(hack(self)));
         let result = self.write(f);
-        unsafe { f.state_mut().stack.pop_unchecked() };
+        f.state_mut().stack.pop();
         result
     }
 }
@@ -1362,7 +1557,7 @@ impl<'a> Format<'a> for JSXSpreadAttribute<'a> {
         format_leading_comments(self.span.start).fmt(f)?;
         let result = self.write(f);
         format_trailing_comments(self.span.end).fmt(f)?;
-        unsafe { f.state_mut().stack.pop_unchecked() };
+        f.state_mut().stack.pop();
         result
     }
 }
@@ -1385,7 +1580,7 @@ impl<'a> Format<'a> for JSXIdentifier<'a> {
         format_leading_comments(self.span.start).fmt(f)?;
         let result = self.write(f);
         format_trailing_comments(self.span.end).fmt(f)?;
-        unsafe { f.state_mut().stack.pop_unchecked() };
+        f.state_mut().stack.pop();
         result
     }
 }
@@ -1408,7 +1603,7 @@ impl<'a> Format<'a> for JSXText<'a> {
         format_leading_comments(self.span.start).fmt(f)?;
         let result = self.write(f);
         format_trailing_comments(self.span.end).fmt(f)?;
-        unsafe { f.state_mut().stack.pop_unchecked() };
+        f.state_mut().stack.pop();
         result
     }
 }
@@ -1419,7 +1614,7 @@ impl<'a> Format<'a> for TSThisParameter<'a> {
         format_leading_comments(self.span.start).fmt(f)?;
         let result = self.write(f);
         format_trailing_comments(self.span.end).fmt(f)?;
-        unsafe { f.state_mut().stack.pop_unchecked() };
+        f.state_mut().stack.pop();
         result
     }
 }
@@ -1430,7 +1625,7 @@ impl<'a> Format<'a> for TSEnumDeclaration<'a> {
         format_leading_comments(self.span.start).fmt(f)?;
         let result = self.write(f);
         format_trailing_comments(self.span.end).fmt(f)?;
-        unsafe { f.state_mut().stack.pop_unchecked() };
+        f.state_mut().stack.pop();
         result
     }
 }
@@ -1441,7 +1636,7 @@ impl<'a> Format<'a> for TSEnumBody<'a> {
         format_leading_comments(self.span.start).fmt(f)?;
         let result = self.write(f);
         format_trailing_comments(self.span.end).fmt(f)?;
-        unsafe { f.state_mut().stack.pop_unchecked() };
+        f.state_mut().stack.pop();
         result
     }
 }
@@ -1452,7 +1647,7 @@ impl<'a> Format<'a> for TSEnumMember<'a> {
         format_leading_comments(self.span.start).fmt(f)?;
         let result = self.write(f);
         format_trailing_comments(self.span.end).fmt(f)?;
-        unsafe { f.state_mut().stack.pop_unchecked() };
+        f.state_mut().stack.pop();
         result
     }
 }
@@ -1469,7 +1664,7 @@ impl<'a> Format<'a> for TSTypeAnnotation<'a> {
         format_leading_comments(self.span.start).fmt(f)?;
         let result = self.write(f);
         format_trailing_comments(self.span.end).fmt(f)?;
-        unsafe { f.state_mut().stack.pop_unchecked() };
+        f.state_mut().stack.pop();
         result
     }
 }
@@ -1480,7 +1675,7 @@ impl<'a> Format<'a> for TSLiteralType<'a> {
         format_leading_comments(self.span.start).fmt(f)?;
         let result = self.write(f);
         format_trailing_comments(self.span.end).fmt(f)?;
-        unsafe { f.state_mut().stack.pop_unchecked() };
+        f.state_mut().stack.pop();
         result
     }
 }
@@ -1503,7 +1698,7 @@ impl<'a> Format<'a> for TSConditionalType<'a> {
         format_leading_comments(self.span.start).fmt(f)?;
         let result = self.write(f);
         format_trailing_comments(self.span.end).fmt(f)?;
-        unsafe { f.state_mut().stack.pop_unchecked() };
+        f.state_mut().stack.pop();
         result
     }
 }
@@ -1514,7 +1709,7 @@ impl<'a> Format<'a> for TSUnionType<'a> {
         format_leading_comments(self.span.start).fmt(f)?;
         let result = self.write(f);
         format_trailing_comments(self.span.end).fmt(f)?;
-        unsafe { f.state_mut().stack.pop_unchecked() };
+        f.state_mut().stack.pop();
         result
     }
 }
@@ -1525,7 +1720,7 @@ impl<'a> Format<'a> for TSIntersectionType<'a> {
         format_leading_comments(self.span.start).fmt(f)?;
         let result = self.write(f);
         format_trailing_comments(self.span.end).fmt(f)?;
-        unsafe { f.state_mut().stack.pop_unchecked() };
+        f.state_mut().stack.pop();
         result
     }
 }
@@ -1536,7 +1731,7 @@ impl<'a> Format<'a> for TSParenthesizedType<'a> {
         format_leading_comments(self.span.start).fmt(f)?;
         let result = self.write(f);
         format_trailing_comments(self.span.end).fmt(f)?;
-        unsafe { f.state_mut().stack.pop_unchecked() };
+        f.state_mut().stack.pop();
         result
     }
 }
@@ -1559,7 +1754,7 @@ impl<'a> Format<'a> for TSIndexedAccessType<'a> {
         format_leading_comments(self.span.start).fmt(f)?;
         let result = self.write(f);
         format_trailing_comments(self.span.end).fmt(f)?;
-        unsafe { f.state_mut().stack.pop_unchecked() };
+        f.state_mut().stack.pop();
         result
     }
 }
@@ -1576,7 +1771,7 @@ impl<'a> Format<'a> for TSNamedTupleMember<'a> {
         format_leading_comments(self.span.start).fmt(f)?;
         let result = self.write(f);
         format_trailing_comments(self.span.end).fmt(f)?;
-        unsafe { f.state_mut().stack.pop_unchecked() };
+        f.state_mut().stack.pop();
         result
     }
 }
@@ -1605,7 +1800,7 @@ impl<'a> Format<'a> for TSAnyKeyword {
         format_leading_comments(self.span.start).fmt(f)?;
         let result = self.write(f);
         format_trailing_comments(self.span.end).fmt(f)?;
-        unsafe { f.state_mut().stack.pop_unchecked() };
+        f.state_mut().stack.pop();
         result
     }
 }
@@ -1616,7 +1811,7 @@ impl<'a> Format<'a> for TSStringKeyword {
         format_leading_comments(self.span.start).fmt(f)?;
         let result = self.write(f);
         format_trailing_comments(self.span.end).fmt(f)?;
-        unsafe { f.state_mut().stack.pop_unchecked() };
+        f.state_mut().stack.pop();
         result
     }
 }
@@ -1627,7 +1822,7 @@ impl<'a> Format<'a> for TSBooleanKeyword {
         format_leading_comments(self.span.start).fmt(f)?;
         let result = self.write(f);
         format_trailing_comments(self.span.end).fmt(f)?;
-        unsafe { f.state_mut().stack.pop_unchecked() };
+        f.state_mut().stack.pop();
         result
     }
 }
@@ -1638,7 +1833,7 @@ impl<'a> Format<'a> for TSNumberKeyword {
         format_leading_comments(self.span.start).fmt(f)?;
         let result = self.write(f);
         format_trailing_comments(self.span.end).fmt(f)?;
-        unsafe { f.state_mut().stack.pop_unchecked() };
+        f.state_mut().stack.pop();
         result
     }
 }
@@ -1649,7 +1844,7 @@ impl<'a> Format<'a> for TSNeverKeyword {
         format_leading_comments(self.span.start).fmt(f)?;
         let result = self.write(f);
         format_trailing_comments(self.span.end).fmt(f)?;
-        unsafe { f.state_mut().stack.pop_unchecked() };
+        f.state_mut().stack.pop();
         result
     }
 }
@@ -1660,7 +1855,7 @@ impl<'a> Format<'a> for TSIntrinsicKeyword {
         format_leading_comments(self.span.start).fmt(f)?;
         let result = self.write(f);
         format_trailing_comments(self.span.end).fmt(f)?;
-        unsafe { f.state_mut().stack.pop_unchecked() };
+        f.state_mut().stack.pop();
         result
     }
 }
@@ -1671,7 +1866,7 @@ impl<'a> Format<'a> for TSUnknownKeyword {
         format_leading_comments(self.span.start).fmt(f)?;
         let result = self.write(f);
         format_trailing_comments(self.span.end).fmt(f)?;
-        unsafe { f.state_mut().stack.pop_unchecked() };
+        f.state_mut().stack.pop();
         result
     }
 }
@@ -1682,7 +1877,7 @@ impl<'a> Format<'a> for TSNullKeyword {
         format_leading_comments(self.span.start).fmt(f)?;
         let result = self.write(f);
         format_trailing_comments(self.span.end).fmt(f)?;
-        unsafe { f.state_mut().stack.pop_unchecked() };
+        f.state_mut().stack.pop();
         result
     }
 }
@@ -1693,7 +1888,7 @@ impl<'a> Format<'a> for TSUndefinedKeyword {
         format_leading_comments(self.span.start).fmt(f)?;
         let result = self.write(f);
         format_trailing_comments(self.span.end).fmt(f)?;
-        unsafe { f.state_mut().stack.pop_unchecked() };
+        f.state_mut().stack.pop();
         result
     }
 }
@@ -1704,7 +1899,7 @@ impl<'a> Format<'a> for TSVoidKeyword {
         format_leading_comments(self.span.start).fmt(f)?;
         let result = self.write(f);
         format_trailing_comments(self.span.end).fmt(f)?;
-        unsafe { f.state_mut().stack.pop_unchecked() };
+        f.state_mut().stack.pop();
         result
     }
 }
@@ -1715,7 +1910,7 @@ impl<'a> Format<'a> for TSSymbolKeyword {
         format_leading_comments(self.span.start).fmt(f)?;
         let result = self.write(f);
         format_trailing_comments(self.span.end).fmt(f)?;
-        unsafe { f.state_mut().stack.pop_unchecked() };
+        f.state_mut().stack.pop();
         result
     }
 }
@@ -1726,7 +1921,7 @@ impl<'a> Format<'a> for TSThisType {
         format_leading_comments(self.span.start).fmt(f)?;
         let result = self.write(f);
         format_trailing_comments(self.span.end).fmt(f)?;
-        unsafe { f.state_mut().stack.pop_unchecked() };
+        f.state_mut().stack.pop();
         result
     }
 }
@@ -1737,7 +1932,7 @@ impl<'a> Format<'a> for TSObjectKeyword {
         format_leading_comments(self.span.start).fmt(f)?;
         let result = self.write(f);
         format_trailing_comments(self.span.end).fmt(f)?;
-        unsafe { f.state_mut().stack.pop_unchecked() };
+        f.state_mut().stack.pop();
         result
     }
 }
@@ -1748,7 +1943,7 @@ impl<'a> Format<'a> for TSBigIntKeyword {
         format_leading_comments(self.span.start).fmt(f)?;
         let result = self.write(f);
         format_trailing_comments(self.span.end).fmt(f)?;
-        unsafe { f.state_mut().stack.pop_unchecked() };
+        f.state_mut().stack.pop();
         result
     }
 }
@@ -1759,7 +1954,7 @@ impl<'a> Format<'a> for TSTypeReference<'a> {
         format_leading_comments(self.span.start).fmt(f)?;
         let result = self.write(f);
         format_trailing_comments(self.span.end).fmt(f)?;
-        unsafe { f.state_mut().stack.pop_unchecked() };
+        f.state_mut().stack.pop();
         result
     }
 }
@@ -1768,7 +1963,7 @@ impl<'a> Format<'a> for TSTypeName<'a> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         f.state_mut().stack.push(AstKind::TSTypeName(hack(self)));
         let result = self.write(f);
-        unsafe { f.state_mut().stack.pop_unchecked() };
+        f.state_mut().stack.pop();
         result
     }
 }
@@ -1779,7 +1974,7 @@ impl<'a> Format<'a> for TSQualifiedName<'a> {
         format_leading_comments(self.span.start).fmt(f)?;
         let result = self.write(f);
         format_trailing_comments(self.span.end).fmt(f)?;
-        unsafe { f.state_mut().stack.pop_unchecked() };
+        f.state_mut().stack.pop();
         result
     }
 }
@@ -1790,7 +1985,7 @@ impl<'a> Format<'a> for TSTypeParameterInstantiation<'a> {
         format_leading_comments(self.span.start).fmt(f)?;
         let result = self.write(f);
         format_trailing_comments(self.span.end).fmt(f)?;
-        unsafe { f.state_mut().stack.pop_unchecked() };
+        f.state_mut().stack.pop();
         result
     }
 }
@@ -1801,7 +1996,7 @@ impl<'a> Format<'a> for TSTypeParameter<'a> {
         format_leading_comments(self.span.start).fmt(f)?;
         let result = self.write(f);
         format_trailing_comments(self.span.end).fmt(f)?;
-        unsafe { f.state_mut().stack.pop_unchecked() };
+        f.state_mut().stack.pop();
         result
     }
 }
@@ -1812,7 +2007,7 @@ impl<'a> Format<'a> for TSTypeParameterDeclaration<'a> {
         format_leading_comments(self.span.start).fmt(f)?;
         let result = self.write(f);
         format_trailing_comments(self.span.end).fmt(f)?;
-        unsafe { f.state_mut().stack.pop_unchecked() };
+        f.state_mut().stack.pop();
         result
     }
 }
@@ -1823,7 +2018,7 @@ impl<'a> Format<'a> for TSTypeAliasDeclaration<'a> {
         format_leading_comments(self.span.start).fmt(f)?;
         let result = self.write(f);
         format_trailing_comments(self.span.end).fmt(f)?;
-        unsafe { f.state_mut().stack.pop_unchecked() };
+        f.state_mut().stack.pop();
         result
     }
 }
@@ -1834,7 +2029,7 @@ impl<'a> Format<'a> for TSClassImplements<'a> {
         format_leading_comments(self.span.start).fmt(f)?;
         let result = self.write(f);
         format_trailing_comments(self.span.end).fmt(f)?;
-        unsafe { f.state_mut().stack.pop_unchecked() };
+        f.state_mut().stack.pop();
         result
     }
 }
@@ -1845,7 +2040,7 @@ impl<'a> Format<'a> for TSInterfaceDeclaration<'a> {
         format_leading_comments(self.span.start).fmt(f)?;
         let result = self.write(f);
         format_trailing_comments(self.span.end).fmt(f)?;
-        unsafe { f.state_mut().stack.pop_unchecked() };
+        f.state_mut().stack.pop();
         result
     }
 }
@@ -1862,7 +2057,7 @@ impl<'a> Format<'a> for TSPropertySignature<'a> {
         format_leading_comments(self.span.start).fmt(f)?;
         let result = self.write(f);
         format_trailing_comments(self.span.end).fmt(f)?;
-        unsafe { f.state_mut().stack.pop_unchecked() };
+        f.state_mut().stack.pop();
         result
     }
 }
@@ -1891,7 +2086,7 @@ impl<'a> Format<'a> for TSMethodSignature<'a> {
         format_leading_comments(self.span.start).fmt(f)?;
         let result = self.write(f);
         format_trailing_comments(self.span.end).fmt(f)?;
-        unsafe { f.state_mut().stack.pop_unchecked() };
+        f.state_mut().stack.pop();
         result
     }
 }
@@ -1902,7 +2097,7 @@ impl<'a> Format<'a> for TSConstructSignatureDeclaration<'a> {
         format_leading_comments(self.span.start).fmt(f)?;
         let result = self.write(f);
         format_trailing_comments(self.span.end).fmt(f)?;
-        unsafe { f.state_mut().stack.pop_unchecked() };
+        f.state_mut().stack.pop();
         result
     }
 }
@@ -1919,7 +2114,7 @@ impl<'a> Format<'a> for TSInterfaceHeritage<'a> {
         format_leading_comments(self.span.start).fmt(f)?;
         let result = self.write(f);
         format_trailing_comments(self.span.end).fmt(f)?;
-        unsafe { f.state_mut().stack.pop_unchecked() };
+        f.state_mut().stack.pop();
         result
     }
 }
@@ -1942,7 +2137,7 @@ impl<'a> Format<'a> for TSModuleDeclaration<'a> {
         format_leading_comments(self.span.start).fmt(f)?;
         let result = self.write(f);
         format_trailing_comments(self.span.end).fmt(f)?;
-        unsafe { f.state_mut().stack.pop_unchecked() };
+        f.state_mut().stack.pop();
         result
     }
 }
@@ -1965,7 +2160,7 @@ impl<'a> Format<'a> for TSModuleBlock<'a> {
         format_leading_comments(self.span.start).fmt(f)?;
         let result = self.write(f);
         format_trailing_comments(self.span.end).fmt(f)?;
-        unsafe { f.state_mut().stack.pop_unchecked() };
+        f.state_mut().stack.pop();
         result
     }
 }
@@ -1976,7 +2171,7 @@ impl<'a> Format<'a> for TSTypeLiteral<'a> {
         format_leading_comments(self.span.start).fmt(f)?;
         let result = self.write(f);
         format_trailing_comments(self.span.end).fmt(f)?;
-        unsafe { f.state_mut().stack.pop_unchecked() };
+        f.state_mut().stack.pop();
         result
     }
 }
@@ -1987,7 +2182,7 @@ impl<'a> Format<'a> for TSInferType<'a> {
         format_leading_comments(self.span.start).fmt(f)?;
         let result = self.write(f);
         format_trailing_comments(self.span.end).fmt(f)?;
-        unsafe { f.state_mut().stack.pop_unchecked() };
+        f.state_mut().stack.pop();
         result
     }
 }
@@ -1998,7 +2193,7 @@ impl<'a> Format<'a> for TSTypeQuery<'a> {
         format_leading_comments(self.span.start).fmt(f)?;
         let result = self.write(f);
         format_trailing_comments(self.span.end).fmt(f)?;
-        unsafe { f.state_mut().stack.pop_unchecked() };
+        f.state_mut().stack.pop();
         result
     }
 }
@@ -2015,7 +2210,7 @@ impl<'a> Format<'a> for TSImportType<'a> {
         format_leading_comments(self.span.start).fmt(f)?;
         let result = self.write(f);
         format_trailing_comments(self.span.end).fmt(f)?;
-        unsafe { f.state_mut().stack.pop_unchecked() };
+        f.state_mut().stack.pop();
         result
     }
 }
@@ -2038,7 +2233,7 @@ impl<'a> Format<'a> for TSMappedType<'a> {
         format_leading_comments(self.span.start).fmt(f)?;
         let result = self.write(f);
         format_trailing_comments(self.span.end).fmt(f)?;
-        unsafe { f.state_mut().stack.pop_unchecked() };
+        f.state_mut().stack.pop();
         result
     }
 }
@@ -2049,7 +2244,7 @@ impl<'a> Format<'a> for TSTemplateLiteralType<'a> {
         format_leading_comments(self.span.start).fmt(f)?;
         let result = self.write(f);
         format_trailing_comments(self.span.end).fmt(f)?;
-        unsafe { f.state_mut().stack.pop_unchecked() };
+        f.state_mut().stack.pop();
         result
     }
 }
@@ -2058,9 +2253,16 @@ impl<'a> Format<'a> for TSAsExpression<'a> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         f.state_mut().stack.push(AstKind::TSAsExpression(hack(self)));
         format_leading_comments(self.span.start).fmt(f)?;
+        let needs_parentheses = self.needs_parentheses(&f.state().stack);
+        if needs_parentheses {
+            "(".fmt(f)?;
+        }
         let result = self.write(f);
+        if needs_parentheses {
+            ")".fmt(f)?;
+        }
         format_trailing_comments(self.span.end).fmt(f)?;
-        unsafe { f.state_mut().stack.pop_unchecked() };
+        f.state_mut().stack.pop();
         result
     }
 }
@@ -2069,9 +2271,16 @@ impl<'a> Format<'a> for TSSatisfiesExpression<'a> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         f.state_mut().stack.push(AstKind::TSSatisfiesExpression(hack(self)));
         format_leading_comments(self.span.start).fmt(f)?;
+        let needs_parentheses = self.needs_parentheses(&f.state().stack);
+        if needs_parentheses {
+            "(".fmt(f)?;
+        }
         let result = self.write(f);
+        if needs_parentheses {
+            ")".fmt(f)?;
+        }
         format_trailing_comments(self.span.end).fmt(f)?;
-        unsafe { f.state_mut().stack.pop_unchecked() };
+        f.state_mut().stack.pop();
         result
     }
 }
@@ -2080,9 +2289,16 @@ impl<'a> Format<'a> for TSTypeAssertion<'a> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         f.state_mut().stack.push(AstKind::TSTypeAssertion(hack(self)));
         format_leading_comments(self.span.start).fmt(f)?;
+        let needs_parentheses = self.needs_parentheses(&f.state().stack);
+        if needs_parentheses {
+            "(".fmt(f)?;
+        }
         let result = self.write(f);
+        if needs_parentheses {
+            ")".fmt(f)?;
+        }
         format_trailing_comments(self.span.end).fmt(f)?;
-        unsafe { f.state_mut().stack.pop_unchecked() };
+        f.state_mut().stack.pop();
         result
     }
 }
@@ -2093,7 +2309,7 @@ impl<'a> Format<'a> for TSImportEqualsDeclaration<'a> {
         format_leading_comments(self.span.start).fmt(f)?;
         let result = self.write(f);
         format_trailing_comments(self.span.end).fmt(f)?;
-        unsafe { f.state_mut().stack.pop_unchecked() };
+        f.state_mut().stack.pop();
         result
     }
 }
@@ -2102,7 +2318,7 @@ impl<'a> Format<'a> for TSModuleReference<'a> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         f.state_mut().stack.push(AstKind::TSModuleReference(hack(self)));
         let result = self.write(f);
-        unsafe { f.state_mut().stack.pop_unchecked() };
+        f.state_mut().stack.pop();
         result
     }
 }
@@ -2113,7 +2329,7 @@ impl<'a> Format<'a> for TSExternalModuleReference<'a> {
         format_leading_comments(self.span.start).fmt(f)?;
         let result = self.write(f);
         format_trailing_comments(self.span.end).fmt(f)?;
-        unsafe { f.state_mut().stack.pop_unchecked() };
+        f.state_mut().stack.pop();
         result
     }
 }
@@ -2122,9 +2338,16 @@ impl<'a> Format<'a> for TSNonNullExpression<'a> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         f.state_mut().stack.push(AstKind::TSNonNullExpression(hack(self)));
         format_leading_comments(self.span.start).fmt(f)?;
+        let needs_parentheses = self.needs_parentheses(&f.state().stack);
+        if needs_parentheses {
+            "(".fmt(f)?;
+        }
         let result = self.write(f);
+        if needs_parentheses {
+            ")".fmt(f)?;
+        }
         format_trailing_comments(self.span.end).fmt(f)?;
-        unsafe { f.state_mut().stack.pop_unchecked() };
+        f.state_mut().stack.pop();
         result
     }
 }
@@ -2135,7 +2358,7 @@ impl<'a> Format<'a> for Decorator<'a> {
         format_leading_comments(self.span.start).fmt(f)?;
         let result = self.write(f);
         format_trailing_comments(self.span.end).fmt(f)?;
-        unsafe { f.state_mut().stack.pop_unchecked() };
+        f.state_mut().stack.pop();
         result
     }
 }
@@ -2146,7 +2369,7 @@ impl<'a> Format<'a> for TSExportAssignment<'a> {
         format_leading_comments(self.span.start).fmt(f)?;
         let result = self.write(f);
         format_trailing_comments(self.span.end).fmt(f)?;
-        unsafe { f.state_mut().stack.pop_unchecked() };
+        f.state_mut().stack.pop();
         result
     }
 }
@@ -2161,9 +2384,16 @@ impl<'a> Format<'a> for TSInstantiationExpression<'a> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         f.state_mut().stack.push(AstKind::TSInstantiationExpression(hack(self)));
         format_leading_comments(self.span.start).fmt(f)?;
+        let needs_parentheses = self.needs_parentheses(&f.state().stack);
+        if needs_parentheses {
+            "(".fmt(f)?;
+        }
         let result = self.write(f);
+        if needs_parentheses {
+            ")".fmt(f)?;
+        }
         format_trailing_comments(self.span.end).fmt(f)?;
-        unsafe { f.state_mut().stack.pop_unchecked() };
+        f.state_mut().stack.pop();
         result
     }
 }

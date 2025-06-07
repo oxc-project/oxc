@@ -339,9 +339,14 @@ fn test_string() {
     test("let x = '\t'", "let x = \"\t\";\n");
     test("let x = '\\v'", "let x = \"\\v\";\n");
     test("let x = '\\n'", "let x = \"\\n\";\n");
+    test("let x = '\\r'", "let x = \"\\r\";\n");
+    test("let x = '\\r\\n'", "let x = \"\\r\\n\";\n");
     test("let x = '\\''", "let x = \"'\";\n");
-    test("let x = '\\\"'", "let x = \"\\\"\";\n");
+    test("let x = '\"'", "let x = \"\\\"\";\n");
+    test("let x = '`'", "let x = \"`\";\n");
     test("let x = '\\'\"'", "let x = \"'\\\"\";\n");
+    test("let x = '\\'`'", "let x = \"'`\";\n");
+    test("let x = '\"`'", "let x = \"\\\"`\";\n");
     test("let x = '\\\\'", "let x = \"\\\\\";\n");
     test("let x = '\x00'", "let x = \"\\0\";\n");
     test("let x = '\x00!'", "let x = \"\\0!\";\n");
@@ -358,10 +363,12 @@ fn test_string() {
     test("let x = '\\x10'", "let x = \"\x10\";\n");
     test("let x = '\x1B'", "let x = \"\\x1B\";\n");
     test("let x = '\\x1B'", "let x = \"\\x1B\";\n");
+    test("let x = '\\x41'", "let x = \"A\";\n");
     test("let x = '\u{ABCD}'", "let x = \"\u{ABCD}\";\n");
     test("let x = '\\uABCD'", "let x = \"\u{ABCD}\";\n");
     test("let x = '\\U000123AB'", "let x = \"U000123AB\";\n");
     test("let x = '\\u{123AB}'", "let x = \"\u{123ab}\";\n");
+    test("let x = '\\u{41}'", "let x = \"A\";\n");
     test("let x = '\\uD808\\uDFAB'", "let x = \"\u{123ab}\";\n");
     test("let x = '\\uD808'", "let x = \"\\ud808\";\n"); // lone surrogate
     test("let x = '\\uD808X'", "let x = \"\\ud808X\";\n");

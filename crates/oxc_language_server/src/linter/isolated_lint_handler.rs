@@ -1,5 +1,4 @@
 use std::{
-    fs,
     path::{Path, PathBuf},
     sync::{Arc, OnceLock},
 };
@@ -12,13 +11,14 @@ use tower_lsp_server::{
 };
 
 use oxc_allocator::Allocator;
+use oxc_linter::RuntimeFileSystem;
 use oxc_linter::{
     LINTABLE_EXTENSIONS, LintService, LintServiceOptions, Linter, MessageWithPosition,
-    loader::Loader,
+    loader::Loader, read_to_string,
 };
 
 use super::error_with_position::{
-    DiagnosticReport, message_with_position_to_lsp_diagnostic_report,
+    DiagnosticReport, PossibleFixContent, message_with_position_to_lsp_diagnostic_report,
 };
 
 /// smaller subset of LintServiceOptions, which is used by IsolatedLintHandler
@@ -33,28 +33,49 @@ pub struct IsolatedLintHandler {
     options: IsolatedLintHandlerOptions,
 }
 
+pub struct IsolatedLintHandlerFileSystem {
+    path_to_lint: PathBuf,
+    source_text: String,
+}
+
+impl IsolatedLintHandlerFileSystem {
+    pub fn new(path_to_lint: PathBuf, source_text: String) -> Self {
+        Self { path_to_lint, source_text }
+    }
+}
+
+impl RuntimeFileSystem for IsolatedLintHandlerFileSystem {
+    fn read_to_string(&self, path: &Path) -> Result<String, std::io::Error> {
+        if path == self.path_to_lint {
+            return Ok(self.source_text.clone());
+        }
+
+        read_to_string(path)
+    }
+
+    fn write_file(&self, _path: &Path, _content: String) -> Result<(), std::io::Error> {
+        panic!("writing file should not be allowed in Language Server");
+    }
+}
+
 impl IsolatedLintHandler {
     pub fn new(linter: Linter, options: IsolatedLintHandlerOptions) -> Self {
         Self { linter, options }
     }
 
-    pub fn run_single(
-        &self,
-        path: &Path,
-        content: Option<String>,
-    ) -> Option<Vec<DiagnosticReport>> {
-        if !Self::should_lint_path(path) {
+    pub fn run_single(&self, uri: &Uri, content: Option<String>) -> Option<Vec<DiagnosticReport>> {
+        let path = uri.to_file_path()?;
+
+        if !Self::should_lint_path(&path) {
             return None;
         }
 
         let allocator = Allocator::default();
 
-        Some(self.lint_path(&allocator, path, content).map_or(vec![], |errors| {
-            let path_buf = &path.to_path_buf();
-
+        Some(self.lint_path(&allocator, &path, content).map_or(vec![], |errors| {
             let mut diagnostics: Vec<DiagnosticReport> = errors
                 .iter()
-                .map(|e| message_with_position_to_lsp_diagnostic_report(e, path_buf))
+                .map(|e| message_with_position_to_lsp_diagnostic_report(e, uri))
                 .collect();
 
             // a diagnostics connected from related_info to original diagnostic
@@ -64,10 +85,7 @@ impl IsolatedLintHandler {
                     continue;
                 };
                 let related_information = Some(vec![DiagnosticRelatedInformation {
-                    location: lsp_types::Location {
-                        uri: Uri::from_file_path(path).unwrap(),
-                        range: d.diagnostic.range,
-                    },
+                    location: lsp_types::Location { uri: uri.clone(), range: d.diagnostic.range },
                     message: "original diagnostic".to_string(),
                 }]);
                 for r in related_info {
@@ -91,7 +109,7 @@ impl IsolatedLintHandler {
                             tags: None,
                             data: None,
                         },
-                        fixed_content: None,
+                        fixed_content: PossibleFixContent::None,
                     });
                 }
             }
@@ -110,19 +128,21 @@ impl IsolatedLintHandler {
             debug!("extension not supported yet.");
             return None;
         }
-        let source_text = source_text.or_else(|| fs::read_to_string(path).ok())?;
+        let source_text = source_text.or_else(|| read_to_string(path).ok())?;
 
-        debug!("lint {path:?}");
+        debug!("lint {}", path.display());
 
         let lint_service_options = LintServiceOptions::new(
             self.options.root_path.clone(),
             vec![Arc::from(path.as_os_str())],
         )
         .with_cross_module(self.options.use_cross_module);
-        // ToDo: do not clone the linter
-        let path_arc = Arc::from(path.as_os_str());
-        let mut lint_service = LintService::new(self.linter.clone(), lint_service_options);
-        let result = lint_service.run_source(allocator, &path_arc, &source_text);
+
+        let mut lint_service =
+            LintService::new(&self.linter, lint_service_options).with_file_system(Box::new(
+                IsolatedLintHandlerFileSystem::new(path.to_path_buf(), source_text),
+            ));
+        let result = lint_service.run_source(allocator);
 
         Some(result)
     }

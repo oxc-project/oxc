@@ -8,6 +8,7 @@
 use oxc_ast::ast::{
     ExportAllDeclaration, ExportNamedDeclaration, ImportDeclaration, StringLiteral,
 };
+use oxc_span::Atom;
 use oxc_traverse::{Traverse, TraverseCtx};
 
 use crate::TypeScriptOptions;
@@ -29,23 +30,21 @@ impl TypeScriptRewriteExtensions {
             return;
         }
 
-        let Some((_, extension)) = value.rsplit_once('.') else { return };
+        let Some((without_extension, extension)) = value.rsplit_once('.') else { return };
 
         let replace = match extension {
-            "mts" => "mjs",
-            "cts" => "cjs",
-            "ts" | "tsx" => "js",
-            _ => return, // do not  rewrite or remove other unknown extensions
+            "mts" => ".mjs",
+            "cts" => ".cjs",
+            "ts" | "tsx" => ".js",
+            _ => return, // do not rewrite or remove other unknown extensions
         };
 
-        let value = value.trim_end_matches(extension);
         source.value = if self.mode.is_remove() {
-            ctx.ast.atom(value.trim_end_matches('.'))
+            Atom::from(without_extension)
         } else {
-            let mut value = value.to_string();
-            value.push_str(replace);
-            ctx.ast.atom(&value)
+            ctx.ast.atom_from_strs_array([without_extension, replace])
         };
+        source.raw = None;
     }
 }
 

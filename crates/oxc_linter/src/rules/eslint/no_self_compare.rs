@@ -5,10 +5,10 @@ use oxc_span::{ContentEq, GetSpan, Span};
 
 use crate::{AstNode, context::LintContext, rule::Rule};
 
-fn no_self_compare_diagnostic(span: Span, span1: Span) -> OxcDiagnostic {
+fn no_self_compare_diagnostic(left_span: Span, right_span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Both sides of this comparison are exactly the same")
         .with_help("If you are testing for NaN, you can use Number.isNaN function.")
-        .with_labels([span, span1])
+        .with_labels([left_span, right_span])
 }
 
 #[derive(Debug, Default, Clone)]
@@ -24,7 +24,7 @@ declare_oxc_lint!(
     /// Comparing a variable against itself is usually an error, either a typo or refactoring error.
     /// It is confusing to the reader and may potentially introduce a runtime error.
     ///
-    /// ### Example
+    /// ### Examples
     ///
     /// Examples of **incorrect** code for this rule:
     /// ```javascript

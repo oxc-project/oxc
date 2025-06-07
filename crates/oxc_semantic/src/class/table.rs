@@ -78,10 +78,15 @@ impl<'a> ClassTable<'a> {
         self.declarations[class_id]
     }
 
-    pub fn get_element_ids(&self, class_id: ClassId, name: &str) -> Vec<ElementId> {
+    pub fn get_element_ids(
+        &self,
+        class_id: ClassId,
+        name: &str,
+        is_private: bool,
+    ) -> Vec<ElementId> {
         let mut element_ids = vec![];
         for (element_id, element) in self.elements[class_id].iter_enumerated() {
-            if element.name == name {
+            if element.name == name && element.is_private == is_private {
                 element_ids.push(element_id);
 
                 // Property or Accessor only has 1 element

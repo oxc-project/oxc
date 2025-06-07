@@ -4,7 +4,7 @@
 #[cfg(test)]
 mod tests {
     use oxc_allocator::Allocator;
-    use oxc_codegen::CodeGenerator;
+    use oxc_codegen::Codegen;
     use oxc_isolated_declarations::{IsolatedDeclarations, IsolatedDeclarationsOptions};
     use oxc_parser::Parser;
     use oxc_span::SourceType;
@@ -18,9 +18,9 @@ mod tests {
             IsolatedDeclarationsOptions { strip_internal: true },
         )
         .build(&ret.program);
-        let actual = CodeGenerator::new().build(&ret.program).code;
+        let actual = Codegen::new().build(&ret.program).code;
         let expected_program = Parser::new(&allocator, expected, source_type).parse().program;
-        let expected = CodeGenerator::new().build(&expected_program).code;
+        let expected = Codegen::new().build(&expected_program).code;
         assert_eq!(actual.trim(), expected.trim());
     }
 

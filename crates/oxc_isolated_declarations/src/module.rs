@@ -52,24 +52,44 @@ impl<'a> IsolatedDeclarations<'a> {
                 Some((None, decl.declaration.clone_in(self.ast.allocator)))
             }
             declaration @ match_expression!(ExportDefaultDeclarationKind) => self
-                .transform_export_expression(declaration.to_expression())
+                .transform_export_expression(decl.span, declaration.to_expression())
                 .map(|(var_decl, expr)| (var_decl, ExportDefaultDeclarationKind::from(expr))),
         };
 
         declaration.map(|(var_decl, declaration)| {
             let exported =
                 ModuleExportName::IdentifierName(self.ast.identifier_name(SPAN, "default"));
-            let declaration = self.ast.module_declaration_export_default_declaration(
-                decl.span,
-                exported,
-                declaration,
-            );
+            // When `var_decl` is Some, the comments are moved to the variable declaration, otherwise
+            // keep the comments on the export default declaration to avoid losing them.
+            // ```ts
+            // // comment
+            // export default function(): void {}
+            //
+            // // comment
+            // export default 1;
+            // ```
+            //
+            // to
+            //
+            // ```ts
+            // // comment
+            // export default function(): void;
+            //
+            // // comment
+            // const _default = 1;
+            // export default _default;
+            // ```
+
+            let span = if var_decl.is_some() { SPAN } else { decl.span };
+            let declaration =
+                self.ast.module_declaration_export_default_declaration(span, exported, declaration);
             (var_decl, Statement::from(declaration))
         })
     }
 
     fn transform_export_expression(
         &self,
+        decl_span: Span,
         expr: &Expression<'a>,
     ) -> Option<(Option<Statement<'a>>, Expression<'a>)> {
         if matches!(expr, Expression::Identifier(_)) {
@@ -92,7 +112,7 @@ impl<'a> IsolatedDeclarations<'a> {
                 self.ast.vec1(self.ast.variable_declarator(SPAN, kind, id, None, false));
 
             let variable_statement = Statement::from(self.ast.declaration_variable(
-                SPAN,
+                decl_span,
                 kind,
                 declarations,
                 self.is_declare(),
@@ -105,10 +125,10 @@ impl<'a> IsolatedDeclarations<'a> {
         &self,
         decl: &TSExportAssignment<'a>,
     ) -> Option<(Option<Statement<'a>>, Statement<'a>)> {
-        self.transform_export_expression(&decl.expression).map(|(var_decl, expr)| {
+        self.transform_export_expression(decl.span, &decl.expression).map(|(var_decl, expr)| {
             (
                 var_decl,
-                Statement::from(self.ast.module_declaration_ts_export_assignment(decl.span, expr)),
+                Statement::from(self.ast.module_declaration_ts_export_assignment(SPAN, expr)),
             )
         })
     }
@@ -167,7 +187,7 @@ impl<'a> IsolatedDeclarations<'a> {
         stmts.iter_mut().for_each(|stmt| {
             if let Statement::ExportNamedDeclaration(decl) = stmt {
                 if let Some(declaration) = &mut decl.declaration {
-                    *stmt = Statement::from(declaration.take_in(self.ast.allocator));
+                    *stmt = Statement::from(declaration.take_in(self.ast));
                 }
             }
         });

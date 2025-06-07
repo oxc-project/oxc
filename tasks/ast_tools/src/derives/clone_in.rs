@@ -74,36 +74,38 @@ impl Derive for DeriveCloneIn {
 }
 
 fn derive_struct(struct_def: &StructDef, schema: &Schema) -> TokenStream {
-    assert!(
-        !struct_def.clone_in.is_default,
-        "Cannot derive `CloneIn` on a type which has a `#[clone_in(default)]` attribute: `{}`",
-        struct_def.name()
-    );
-
     let type_ident = struct_def.ident();
-    let has_fields = !struct_def.fields.is_empty();
-    let clone_in_body = if has_fields {
-        let fields = struct_def.fields.iter().map(|field| {
-            let field_ident = field.ident();
-            if struct_field_is_default(field, schema) {
-                quote!( #field_ident: Default::default() )
-            } else {
-                quote!( #field_ident: CloneIn::clone_in(&self.#field_ident, allocator) )
-            }
-        });
-        quote!( #type_ident { #(#fields),* } )
-    } else {
-        quote!( #type_ident )
-    };
 
-    let clone_in_with_semantic_ids_body = if has_fields {
-        let fields = struct_def.fields.iter().map(|field| {
-            let field_ident = field.ident();
-            quote!( #field_ident: CloneIn::clone_in_with_semantic_ids(&self.#field_ident, allocator) )
-        });
-        quote!( #type_ident { #(#fields),* } )
+    let (clone_in_body, clone_in_with_semantic_ids_body) = if struct_def.clone_in.is_default {
+        let clone_in_body = quote!(Default::default());
+        (clone_in_body.clone(), clone_in_body)
     } else {
-        quote!( #type_ident )
+        let has_fields = !struct_def.fields.is_empty();
+        let clone_in_body = if has_fields {
+            let fields = struct_def.fields.iter().map(|field| {
+                let field_ident = field.ident();
+                if struct_field_is_default(field, schema) {
+                    quote!( #field_ident: Default::default() )
+                } else {
+                    quote!( #field_ident: CloneIn::clone_in(&self.#field_ident, allocator) )
+                }
+            });
+            quote!( #type_ident { #(#fields),* } )
+        } else {
+            quote!( #type_ident )
+        };
+
+        let clone_in_with_semantic_ids_body = if has_fields {
+            let fields = struct_def.fields.iter().map(|field| {
+                let field_ident = field.ident();
+                quote!( #field_ident: CloneIn::clone_in_with_semantic_ids(&self.#field_ident, allocator) )
+            });
+            quote!( #type_ident { #(#fields),* } )
+        } else {
+            quote!( #type_ident )
+        };
+
+        (clone_in_body, clone_in_with_semantic_ids_body)
     };
 
     generate_impl(
@@ -134,16 +136,15 @@ fn struct_field_is_default(field: &FieldDef, schema: &Schema) -> bool {
 }
 
 fn derive_enum(enum_def: &EnumDef, schema: &Schema) -> TokenStream {
-    assert!(
-        !enum_def.clone_in.is_default,
-        "Cannot derive `CloneIn` on a type which has a `#[clone_in(default)]` attribute: `{}`",
-        enum_def.name()
-    );
-
     let type_ident = enum_def.ident();
-    let (clone_in_body, clone_in_with_semantic_ids_body) = if enum_def.is_fieldless() {
+
+    let (clone_in_body, clone_in_with_semantic_ids_body) = if enum_def.clone_in.is_default {
+        let clone_in_body = quote!(Default::default());
+        (clone_in_body.clone(), clone_in_body)
+    } else if enum_def.is_fieldless() {
         // Fieldless enums are always `Copy`
-        (quote!(*self), quote!(*self))
+        let clone_in_body = quote!(*self);
+        (clone_in_body.clone(), clone_in_body)
     } else {
         let match_arms = enum_def.all_variants(schema).map(|variant| {
             let ident = variant.ident();

@@ -78,7 +78,7 @@ impl Rule for PreferAwaitToThen {
             return;
         };
 
-        if is_promise(call_expr).is_none() {
+        if is_promise(call_expr).is_none_or(|v| v == "withResolvers") {
             return;
         }
 
@@ -93,7 +93,12 @@ impl Rule for PreferAwaitToThen {
             }
         }
 
-        ctx.diagnostic(prefer_wait_to_then_diagnostic(call_expr.span));
+        let span = call_expr
+            .callee
+            .as_member_expression()
+            .and_then(oxc_ast::ast::MemberExpression::static_property_info)
+            .map_or(call_expr.span, |(span, _)| span);
+        ctx.diagnostic(prefer_wait_to_then_diagnostic(span));
     }
 }
 
@@ -132,6 +137,7 @@ fn test() {
             "async function hi() { await thing().then() }",
             Some(serde_json::json!({ "strict": false })),
         ),
+        ("const { promise, resolve } = Promise.withResolvers()", None),
     ];
 
     let fail = vec![

@@ -1,4 +1,4 @@
-use oxc_ast::ast::*;
+use oxc_ast::{AstKind, ast::*};
 use oxc_span::GetSpan;
 
 use crate::{
@@ -20,7 +20,12 @@ impl<'a> FormatWrite<'a> for Class<'a> {
 
         let group_mode = should_group(self, f);
 
-        write!(f, decorators)?;
+        if !matches!(
+            f.parent_kind(),
+            AstKind::ExportNamedDeclaration(_) | AstKind::ExportDefaultDeclaration(_)
+        ) {
+            write!(f, decorators)?;
+        }
 
         if *r#abstract {
             write!(f, ["abstract", space()])?;

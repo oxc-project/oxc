@@ -1,5 +1,5 @@
 use oxc_allocator::Allocator;
-use oxc_codegen::{CodeGenerator, CodegenOptions};
+use oxc_codegen::{Codegen, CodegenOptions};
 use oxc_parser::{ParseOptions, Parser};
 use oxc_span::SourceType;
 
@@ -33,7 +33,7 @@ pub fn run(source_text: &str, options: Option<CompressOptions>) -> String {
     if let Some(options) = options {
         Compressor::new(&allocator, options).build(&mut program);
     }
-    CodeGenerator::new()
+    Codegen::new()
         .with_options(CodegenOptions {
             single_quote: true,
             minify: false,

@@ -130,7 +130,7 @@ impl AssignmentOperator {
     /// Get the string representation of this operator.
     ///
     /// This is the same as how the operator appears in source code.
-    pub fn as_str(&self) -> &'static str {
+    pub fn as_str(self) -> &'static str {
         match self {
             Self::Assign => "=",
             Self::Addition => "+=",
@@ -338,7 +338,7 @@ impl BinaryOperator {
     }
 
     /// The string representation of this operator as it appears in source code.
-    pub fn as_str(&self) -> &'static str {
+    pub fn as_str(self) -> &'static str {
         match self {
             Self::Equality => "==",
             Self::Inequality => "!=",
@@ -368,7 +368,7 @@ impl BinaryOperator {
     /// Get the operator that has a lower precedence than this operator by a
     /// single level. Use [`BinaryOperator::precedence`] to get the operator
     /// with a higher precedence.
-    pub fn lower_precedence(&self) -> Precedence {
+    pub fn lower_precedence(self) -> Precedence {
         match self {
             Self::BitwiseOR => Precedence::LogicalAnd,
             Self::BitwiseXOR => Precedence::BitwiseOr,
@@ -449,7 +449,7 @@ impl LogicalOperator {
     }
 
     /// Get the string representation of this operator as it appears in source code.
-    pub fn as_str(&self) -> &'static str {
+    pub fn as_str(self) -> &'static str {
         match self {
             Self::Or => "||",
             Self::And => "&&",
@@ -460,7 +460,7 @@ impl LogicalOperator {
     /// Get the operator that has a lower precedence than this operator by a
     /// single level. Use [`BinaryOperator::precedence`] to get the operator
     /// with a higher precedence.
-    pub fn lower_precedence(&self) -> Precedence {
+    pub fn lower_precedence(self) -> Precedence {
         match self {
             Self::Or => Precedence::NullishCoalescing,
             Self::And => Precedence::LogicalOr,
@@ -560,7 +560,7 @@ impl UnaryOperator {
     }
 
     /// Get the string representation of this operator as it appears in source code.
-    pub fn as_str(&self) -> &'static str {
+    pub fn as_str(self) -> &'static str {
         match self {
             Self::UnaryPlus => "+",
             Self::UnaryNegation => "-",
@@ -588,7 +588,7 @@ pub enum UpdateOperator {
 
 impl UpdateOperator {
     /// Get the string representation of this operator as it appears in source code.
-    pub fn as_str(&self) -> &'static str {
+    pub fn as_str(self) -> &'static str {
         match self {
             Self::Increment => "++",
             Self::Decrement => "--",

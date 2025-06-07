@@ -2,7 +2,7 @@ use std::{borrow::Cow, fmt::Write};
 
 use cow_utils::CowUtils;
 
-use oxc_allocator::String;
+use oxc_allocator::StringBuilder;
 use oxc_syntax::identifier::{
     CR, FF, LF, LS, PS, TAB, VT, is_identifier_part, is_identifier_start,
     is_identifier_start_unicode, is_irregular_line_terminator, is_irregular_whitespace,
@@ -39,13 +39,13 @@ impl<'a> Lexer<'a> {
             }
             c if is_irregular_whitespace(c) => {
                 self.consume_char();
-                self.trivia_builder.add_irregular_whitespace(self.token.start, self.offset());
+                self.trivia_builder.add_irregular_whitespace(self.token.start(), self.offset());
                 Kind::Skip
             }
             c if is_irregular_line_terminator(c) => {
                 self.consume_char();
-                self.token.is_on_new_line = true;
-                self.trivia_builder.add_irregular_whitespace(self.token.start, self.offset());
+                self.token.set_is_on_new_line(true);
+                self.trivia_builder.add_irregular_whitespace(self.token.start(), self.offset());
                 Kind::Skip
             }
             _ => {
@@ -61,7 +61,7 @@ impl<'a> Lexer<'a> {
     ///   \u{ `CodePoint` }
     pub(super) fn identifier_unicode_escape_sequence(
         &mut self,
-        str: &mut String<'a>,
+        str: &mut StringBuilder<'a>,
         check_identifier_start: bool,
     ) {
         let start = self.offset();
@@ -115,7 +115,7 @@ impl<'a> Lexer<'a> {
     ///   \u{ `CodePoint` }
     fn string_unicode_escape_sequence(
         &mut self,
-        text: &mut String<'a>,
+        text: &mut StringBuilder<'a>,
         is_valid_escape_sequence: &mut bool,
     ) {
         let value = match self.peek_byte() {
@@ -135,7 +135,7 @@ impl<'a> Lexer<'a> {
         // For strings and templates, surrogate pairs are valid grammar, e.g. `"\uD83D\uDE00" === 😀`.
         match value {
             UnicodeEscape::CodePoint(ch) => {
-                if ch == '\u{FFFD}' && self.token.lone_surrogates {
+                if ch == '\u{FFFD}' && self.token.lone_surrogates() {
                     // Lossy replacement character is being used as an escape marker. Escape it.
                     text.push_str("\u{FFFD}fffd");
                 } else {
@@ -153,11 +153,11 @@ impl<'a> Lexer<'a> {
     }
 
     /// Lone surrogate found in string.
-    fn string_lone_surrogate(&mut self, code_point: u32, text: &mut String<'a>) {
+    fn string_lone_surrogate(&mut self, code_point: u32, text: &mut StringBuilder<'a>) {
         debug_assert!(code_point <= 0xFFFF);
 
-        if !self.token.lone_surrogates {
-            self.token.lone_surrogates = true;
+        if !self.token.lone_surrogates() {
+            self.token.set_lone_surrogates(true);
 
             // We use `\u{FFFD}` (the lossy replacement character) as a marker indicating the start
             // of a lone surrogate. e.g. `\u{FFFD}d800` (which will be output as `\ud800`).
@@ -167,7 +167,7 @@ impl<'a> Lexer<'a> {
             // But strings containing both lone surrogates and lossy replacement characters
             // should be vanishingly rare, so don't bother.
             if let Cow::Owned(replaced) = text.cow_replace("\u{FFFD}", "\u{FFFD}fffd") {
-                *text = String::from_str_in(&replaced, self.allocator);
+                *text = StringBuilder::from_str_in(&replaced, self.allocator);
             }
         }
 
@@ -307,7 +307,7 @@ impl<'a> Lexer<'a> {
     // EscapeSequence ::
     pub(super) fn read_string_escape_sequence(
         &mut self,
-        text: &mut String<'a>,
+        text: &mut StringBuilder<'a>,
         in_template: bool,
         is_valid_escape_sequence: &mut bool,
     ) {
@@ -363,32 +363,31 @@ impl<'a> Lexer<'a> {
                 // Section 12.9.4 String Literals
                 // LegacyOctalEscapeSequence
                 // NonOctalDecimalEscapeSequence
-                a @ '0'..='7' if !in_template => {
-                    let mut num = String::new_in(self.allocator);
-                    num.push(a);
-                    match a {
-                        '4'..='7' => {
-                            if matches!(self.peek_byte(), Some(b'0'..=b'7')) {
-                                let b = self.consume_char();
-                                num.push(b);
+                c @ '0'..='7' if !in_template => {
+                    let first_digit = c as u8 - b'0';
+                    let mut value = first_digit;
+
+                    if matches!(self.peek_byte(), Some(b'0'..=b'7')) {
+                        let digit = self.consume_char() as u8 - b'0';
+                        value = value * 8 + digit;
+                        if first_digit < 4 && matches!(self.peek_byte(), Some(b'0'..=b'7')) {
+                            let digit = self.consume_char() as u8 - b'0';
+                            value = value * 8 + digit;
+
+                            if value >= 128 {
+                                // `value` is between 128 and 255. UTF-8 representation is:
+                                // 128-191: `0xC2`, followed by code point value.
+                                // 192-255: `0xC3`, followed by code point value - 64.
+                                let bytes = [0xC0 + first_digit, value & 0b1011_1111];
+                                // SAFETY: `bytes` is a valid 2-byte UTF-8 sequence
+                                unsafe { text.push_bytes_unchecked(&bytes) };
+                                return;
                             }
                         }
-                        '0'..='3' => {
-                            if matches!(self.peek_byte(), Some(b'0'..=b'7')) {
-                                let b = self.consume_char();
-                                num.push(b);
-                                if matches!(self.peek_byte(), Some(b'0'..=b'7')) {
-                                    let c = self.consume_char();
-                                    num.push(c);
-                                }
-                            }
-                        }
-                        _ => {}
                     }
 
-                    let value =
-                        char::from_u32(u32::from_str_radix(num.as_str(), 8).unwrap()).unwrap();
-                    text.push(value);
+                    // SAFETY: `value` is in range 0 to `((1 * 8) + 7) * 8 + 7` (127) i.e. ASCII
+                    unsafe { text.push_byte_unchecked(value) };
                 }
                 '0' if in_template && self.peek_byte().is_some_and(|b| b.is_ascii_digit()) => {
                     self.consume_char();

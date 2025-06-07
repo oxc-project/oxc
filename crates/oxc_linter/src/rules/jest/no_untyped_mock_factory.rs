@@ -33,9 +33,9 @@ declare_oxc_lint!(
     /// strict type. Requiring a type makes it easier to use TypeScript to catch changes
     /// needed in test mocks when the source module changes.
     ///
-    /// ### Example
+    /// ### Examples
     ///
-    /// // invalid
+    /// Examples of **incorrect** code for this rule:
     /// ```typescript
     /// jest.mock('../moduleName', () => {
     ///     return jest.fn(() => 42);
@@ -51,9 +51,8 @@ declare_oxc_lint!(
     /// });
     /// ```
     ///
-    /// // valid
+    /// Examples of **correct** code for this rule:
     /// ```typescript
-    ///
     /// // Uses typeof import()
     /// jest.mock<typeof import('../moduleName')>('../moduleName', () => {
     ///     return jest.fn(() => 42);
@@ -81,7 +80,6 @@ declare_oxc_lint!(
     ///     { virtual: true },
     /// );
     /// ```
-    ///
     NoUntypedMockFactory,
     jest,
     style,
@@ -142,13 +140,12 @@ impl NoUntypedMockFactory {
                     property_span,
                 ),
                 |fixer| {
-                    let mut content = fixer.codegen();
-                    content.print_str("<typeof import('");
-                    content.print_str(string_literal.value.as_str());
-                    content.print_str("')>(");
-                    let span = Span::sized(string_literal.span.start - 1, 1);
+                    let mut code = String::with_capacity(string_literal.value.len() + 20);
+                    code.push_str("<typeof import('");
+                    code.push_str(string_literal.value.as_str());
+                    code.push_str("')>(");
 
-                    fixer.replace(span, content)
+                    fixer.replace(Span::sized(string_literal.span.start - 1, 1), code)
                 },
             );
         } else if let Expression::Identifier(ident) = expr {

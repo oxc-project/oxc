@@ -1,4 +1,4 @@
-import { Foo, Bar } from "mod";
+import { Foo, Bar, type Zoo } from "mod";
 
 declare function dec(
   target: any,
@@ -7,7 +7,7 @@ declare function dec(
 ): void;
 
 class Cls {
-  constructor(@dec param: Foo, param2: Foo | Bar) {
-    console.log(param, param2);
+  constructor(@dec param: Foo, param2: Foo | Bar, param3: Zoo, param4: Zoo.o.o) {
+    console.log(param, param2, param3, param4);
   }
 }

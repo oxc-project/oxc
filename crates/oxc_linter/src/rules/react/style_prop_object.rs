@@ -39,9 +39,11 @@ impl std::ops::Deref for StylePropObject {
 
 declare_oxc_lint!(
     /// ### What it does
+    ///
     /// Require that the value of the prop `style` be an object or a variable that is an object.
     ///
     /// ### Why is this bad?
+    ///
     /// The `style` prop expects an object mapping from style properties to values when using JSX.
     ///
     /// ### Examples

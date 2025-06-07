@@ -58,11 +58,11 @@ declare_oxc_lint!(
     ///
     /// Checks that `expect()` is called correctly.
     ///
-    /// Why is this bad?
+    /// ### Why is this bad?
     ///
     /// `expect()` is a function that is used to assert values in tests. It should be called with a single argument, which is the value to be tested. If you call `expect()` with no arguments, or with more than one argument, it will not work as expected.
     ///
-    /// ### Example
+    /// ### Examples
     ///
     /// Examples of **incorrect** code for this rule:
     /// ```javascript
@@ -405,7 +405,7 @@ impl Message {
         match self {
             Self::MatcherNotFound => (
                 "Expect must have a corresponding matcher call.",
-                "Did you forget add a matcher(e.g. `toBe`, `toBeDefined`)",
+                "Did you forget add a matcher, e.g. `toBe`, `toBeDefined`",
             ),
             Self::MatcherNotCalled => (
                 "Matchers must be called to assert.",

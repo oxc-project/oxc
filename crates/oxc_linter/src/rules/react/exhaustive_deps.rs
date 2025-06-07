@@ -7,9 +7,9 @@ use oxc_ast::{
     AstKind, AstType,
     ast::{
         Argument, ArrayExpressionElement, ArrowFunctionExpression, BindingPatternKind,
-        CallExpression, ChainElement, Expression, Function, FunctionBody, IdentifierReference,
-        MemberExpression, StaticMemberExpression, TSTypeAnnotation, TSTypeParameter,
-        TSTypeReference, VariableDeclarationKind,
+        CallExpression, ChainElement, Expression, FormalParameters, Function, FunctionBody,
+        IdentifierReference, MemberExpression, StaticMemberExpression, TSTypeAnnotation,
+        TSTypeParameter, TSTypeReference, VariableDeclarationKind,
     },
     match_expression,
 };
@@ -134,7 +134,7 @@ fn unnecessary_outer_scope_dependency_diagnostic(
         "React Hook {hook_name} has an unnecessary dependency: {dep_name}."
     ))
     .with_label(span)
-    .with_help("Consider removing it from the dependency array. Outer scope values like aren't valid dependencies because mutating them doesn't re-render the component.")
+    .with_help("Consider removing it from the dependency array. Outer scope values aren't valid dependencies because mutating them doesn't re-render the component.")
     .with_error_code_scope(SCOPE)
 }
 
@@ -190,7 +190,7 @@ declare_oxc_lint!(
     /// ```
     ExhaustiveDeps,
     react,
-    nursery
+    correctness
 );
 
 const HOOKS_USELESS_WITHOUT_DEPENDENCIES: [&str; 2] = ["useCallback", "useMemo"];
@@ -373,6 +373,8 @@ impl Rule for ExhaustiveDeps {
         let (found_dependencies, refs_inside_cleanups) = {
             let mut found_dependencies = ExhaustiveDepsVisitor::new(ctx.semantic());
 
+            found_dependencies.visit_formal_parameters(callback_node.parameters());
+
             if let Some(function_body) = callback_node.body() {
                 found_dependencies.visit_function_body(function_body);
             }
@@ -502,7 +504,13 @@ impl Rule for ExhaustiveDeps {
                 return false;
             }
 
-            if !is_identifier_a_dependency(dep.name, dep.reference_id, ctx, component_scope_id) {
+            if !is_identifier_a_dependency(
+                dep.name,
+                dep.reference_id,
+                dep.span,
+                ctx,
+                component_scope_id,
+            ) {
                 return false;
             }
             true
@@ -628,6 +636,13 @@ impl<'a> CallbackNode<'a> {
         match self {
             CallbackNode::Function(func) => func.r#async,
             CallbackNode::ArrowFunction(func) => func.r#async,
+        }
+    }
+
+    fn parameters(&self) -> &FormalParameters<'a> {
+        match self {
+            CallbackNode::Function(func) => &func.params,
+            CallbackNode::ArrowFunction(func) => &func.params,
         }
     }
 
@@ -770,6 +785,7 @@ fn concat_members<'a, 'b>(
 fn is_identifier_a_dependency<'a>(
     ident_name: Atom<'a>,
     ident_reference_id: ReferenceId,
+    ident_span: Span,
     ctx: &'_ LintContext<'a>,
     component_scope_id: ScopeId,
 ) -> bool {
@@ -823,6 +839,17 @@ fn is_identifier_a_dependency<'a>(
 
     // if the value is stable (for example the setter returned by useState), then it's not a dependency
     if is_stable_value(declaration, ident_name, ident_reference_id, ctx, component_scope_id) {
+        return false;
+    }
+
+    // Using a declaration recursively is ok
+    // ```tsx
+    // function MyComponent() {
+    //     const recursive = useCallback((n: number): number => (n <= 0 ? 0 : n + recursive(n - 1)), []);
+    //     return recursive
+    // }
+    // ```
+    if declaration.span().contains_inclusive(ident_span) {
         return false;
     }
 
@@ -893,7 +920,7 @@ fn is_stable_value<'a, 'b>(
                 return false;
             };
 
-            if init_name == "useRef" || init_name == "useCallback" {
+            if init_name == "useRef" {
                 return true;
             }
 
@@ -960,7 +987,13 @@ fn is_function_stable<'a, 'b>(
 
     deps.iter().all(|dep| {
         dep.symbol_id.zip(function_symbol_id).is_none_or(|(l, r)| l != r)
-            && !is_identifier_a_dependency(dep.name, dep.reference_id, ctx, component_scope_id)
+            && !is_identifier_a_dependency(
+                dep.name,
+                dep.reference_id,
+                dep.span,
+                ctx,
+                component_scope_id,
+            )
     })
 }
 
@@ -2009,18 +2042,20 @@ fn test() {
             </>
           );
         }",
-        r"function Example() {
-          const foo = useCallback(() => {
-            foo();
-          }, []);
-        }",
-        r"function Example({ prop }) {
-          const foo = useCallback(() => {
-            if (prop) {
-              foo();
-            }
-          }, [prop]);
-        }",
+        // we don't support the following two cases as they would both cause an infinite loop at runtime
+        //  r"function Example() {
+        //    const foo = useCallback(() => {
+        //      foo();
+        //    }, []);
+        //  }",
+        //
+        //  r"function Example({ prop }) {
+        //    const foo = useCallback(() => {
+        //      if (prop) {
+        //        foo();
+        //      }
+        //    }, [prop]);
+        //  }",
         r"function Hello() {
           const [state, setState] = useState(0);
           useEffect(() => {
@@ -2137,6 +2172,18 @@ fn test() {
                };
            }, []);
         }",
+        r#"function X() {
+  const defaultParam1 = "";
+  const myFunction = useCallback(
+    (param1 = defaultParam1, param2) => {
+    },
+    [defaultParam1]
+  );
+
+  return null;
+}
+"#,
+        r"function MyComponent() { const recursive = useCallback((n: number): number => (n <= 0 ? 0 : n + recursive(n - 1)), []); return recursive }",
     ];
 
     let fail = vec![
@@ -2453,7 +2500,7 @@ fn test() {
             const local1 = {};
             console.log(local1);
           }, [local1]);
-        }`",
+        }",
         r"function MyComponent() {
           const local1 = {};
           useCallback(() => {}, [local1]);
@@ -3324,21 +3371,20 @@ fn test() {
         r"function Thing() {
           useEffect(async () => {});
         }",
-        // TODO: not supported yet
+        // NOTE: intentionally not supported, as `foo` would be referenced before it's declaration
         // r"function Example() {
         //   const foo = useCallback(() => {
         //     foo();
         //     }, [foo]);
         //     }",
-        // TODO: not supported yet
-        // r"function Example({ prop }) {
-        //   const foo = useCallback(() => {
-        //     prop.hello(foo);
-        //   }, [foo]);
-        //   const bar = useCallback(() => {
-        //     foo();
-        //   }, [foo]);
-        // }",
+        r"function Example({ prop }) {
+          const foo = useCallback(() => {
+            prop.hello(foo);
+          }, [foo]);
+          const bar = useCallback(() => {
+            foo();
+          }, [foo]);
+        }",
         r"function MyComponent() {
           const local = {};
           function myEffect() {
@@ -3563,6 +3609,17 @@ fn test() {
             <></>
           )
         }",
+        // https://github.com/oxc-project/oxc/issues/9788
+        r#"import { useCallback, useEffect } from "react";
+
+        function Component({ foo }) {
+          const log = useCallback(() => {
+          console.log(foo);
+        }, [foo]);
+        useEffect(() => {
+          log();
+        }, []);
+        }"#,
     ];
 
     Tester::new(ExhaustiveDeps::NAME, ExhaustiveDeps::PLUGIN, pass, fail).test_and_snapshot();

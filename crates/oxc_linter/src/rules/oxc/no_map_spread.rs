@@ -365,9 +365,7 @@ impl Rule for NoMapSpread {
             }
             // Mapped class properties likely have their elements spread to
             // avoid side effects on the class instance.
-            Err(Expression::ThisExpression(_)) => {
-                return;
-            }
+            Err(Expression::ThisExpression(_)) => return,
             Err(_) => {}
         }
 

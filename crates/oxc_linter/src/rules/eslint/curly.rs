@@ -249,7 +249,7 @@ fn should_have_braces<'a>(
     };
     let braces_necessary = are_braces_necessary(body, ctx);
 
-    let should_block = if is_block && (is_not_single_statement || braces_necessary) {
+    if is_block && (is_not_single_statement || braces_necessary) {
         Some(true)
     } else if options.contains(&CurlyType::Multi) {
         Some(false)
@@ -271,9 +271,7 @@ fn should_have_braces<'a>(
         })
     } else {
         Some(true)
-    };
-
-    should_block
+    }
 }
 
 fn report_if_needed<'a>(
@@ -391,8 +389,16 @@ fn is_lexical_declaration(node: &Statement) -> bool {
 
 #[expect(clippy::cast_possible_truncation)]
 fn get_next_char_offset(span: Span, ctx: &LintContext) -> Option<u32> {
-    let next_char = ctx.source_text()[(span.end as usize)..].chars().next();
-    next_char.map(|c| span.end + c.len_utf8() as u32)
+    let src = ctx.source_text();
+    let start = span.end as usize;
+
+    if let Some(tail) = src.get(start..) {
+        if tail.starts_with("\r\n") || tail.starts_with("\n\r") {
+            return Some(span.end + 2);
+        }
+    }
+
+    src[start..].chars().next().map(|c| span.end + c.len_utf8() as u32)
 }
 
 #[expect(clippy::cast_possible_truncation)] // for `as i32`
@@ -799,6 +805,26 @@ fn test() {
         ),
         (
             "if (a) while (cond) for (;;) for (key in obj) { if (b) foo(); } else bar();",
+            Some(serde_json::json!(["multi"])),
+        ),
+        (
+            "  const isIterable = (obj: any) : obj is Iterable<IgnoreRule> => {
+                if (obj === null) return false;
+                else if (typeof obj === 'string') return false;
+                else return typeof value[Symbol.iterator] === 'function';
+            };",
+            Some(serde_json::json!(["multi"])),
+        ),
+        (
+            "const isIterable = (obj: any): obj is Iterable<IgnoreRule> => {\r\n    if (obj === null) return false;\r\n    else if (typeof obj === 'string') return false;\r\n    else return typeof value[Symbol.iterator] === 'function';\r\n};\r\n",
+            Some(serde_json::json!(["multi-line"])),
+        ),
+        (
+            "  const isIterable = (obj: any) : obj is Iterable<IgnoreRule> => {
+                if (obj === null) return false;
+                else if (typeof obj === 'string') return false;
+                else return typeof value[Symbol.iterator] === 'function';
+            };",
             Some(serde_json::json!(["multi"])),
         ),
     ];

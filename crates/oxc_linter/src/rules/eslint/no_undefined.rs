@@ -14,6 +14,7 @@ fn no_undefined_diagnostic(span: Span) -> OxcDiagnostic {
 
 declare_oxc_lint!(
     /// ### What it does
+    ///
     /// Disallow the use of `undefined` as an identifier
     ///
     /// ### Why is this bad?
@@ -51,7 +52,6 @@ declare_oxc_lint!(
     ///
     /// bar(void 0, "lorem");
     /// ```
-    ///
     NoUndefined,
     eslint,
     restriction,

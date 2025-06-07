@@ -1,6 +1,7 @@
 mod checkstyle;
 mod default;
 mod github;
+mod gitlab;
 mod json;
 mod junit;
 mod stylish;
@@ -12,6 +13,7 @@ use std::time::Duration;
 
 use checkstyle::CheckStyleOutputFormatter;
 use github::GithubOutputFormatter;
+use gitlab::GitlabOutputFormatter;
 use junit::JUnitOutputFormatter;
 use stylish::StylishOutputFormatter;
 use unix::UnixOutputFormatter;
@@ -26,6 +28,7 @@ pub enum OutputFormat {
     /// GitHub Check Annotation
     /// <https://docs.github.com/en/actions/using-workflows/workflow-commands-for-github-actions#setting-a-notice-message>
     Github,
+    Gitlab,
     Json,
     Unix,
     Checkstyle,
@@ -43,6 +46,7 @@ impl FromStr for OutputFormat {
             "unix" => Ok(Self::Unix),
             "checkstyle" => Ok(Self::Checkstyle),
             "github" => Ok(Self::Github),
+            "gitlab" => Ok(Self::Gitlab),
             "stylish" => Ok(Self::Stylish),
             "junit" => Ok(Self::JUnit),
             _ => Err(format!("'{s}' is not a known format")),
@@ -96,6 +100,7 @@ impl OutputFormatter {
             OutputFormat::Json => Box::<JsonOutputFormatter>::default(),
             OutputFormat::Checkstyle => Box::<CheckStyleOutputFormatter>::default(),
             OutputFormat::Github => Box::new(GithubOutputFormatter),
+            OutputFormat::Gitlab => Box::<GitlabOutputFormatter>::default(),
             OutputFormat::Unix => Box::<UnixOutputFormatter>::default(),
             OutputFormat::Default => Box::new(DefaultOutputFormatter),
             OutputFormat::Stylish => Box::<StylishOutputFormatter>::default(),

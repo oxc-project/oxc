@@ -1,84 +1,84 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
-  ⚠ eslint(no-unsafe-negation): Unexpected negating the left operand of 'in' operator
+  ⚠ eslint(no-unsafe-negation): Unexpected negation of the left operand of 'in' operator.
    ╭─[no_unsafe_negation.tsx:1:1]
  1 │ !a in b
    · ──
    ╰────
   help: Use `()` to negate the whole expression, as '!' binds more closely than 'in'
 
-  ⚠ eslint(no-unsafe-negation): Unexpected negating the left operand of 'in' operator
+  ⚠ eslint(no-unsafe-negation): Unexpected negation of the left operand of 'in' operator.
    ╭─[no_unsafe_negation.tsx:1:2]
  1 │ (!a in b)
    ·  ──
    ╰────
   help: Use `()` to negate the whole expression, as '!' binds more closely than 'in'
 
-  ⚠ eslint(no-unsafe-negation): Unexpected negating the left operand of 'in' operator
+  ⚠ eslint(no-unsafe-negation): Unexpected negation of the left operand of 'in' operator.
    ╭─[no_unsafe_negation.tsx:1:1]
  1 │ !(a) in b
    · ────
    ╰────
   help: Use `()` to negate the whole expression, as '!' binds more closely than 'in'
 
-  ⚠ eslint(no-unsafe-negation): Unexpected negating the left operand of 'instanceof' operator
+  ⚠ eslint(no-unsafe-negation): Unexpected negation of the left operand of 'instanceof' operator.
    ╭─[no_unsafe_negation.tsx:1:1]
  1 │ !a instanceof b
    · ──
    ╰────
   help: Use `()` to negate the whole expression, as '!' binds more closely than 'instanceof'
 
-  ⚠ eslint(no-unsafe-negation): Unexpected negating the left operand of 'instanceof' operator
+  ⚠ eslint(no-unsafe-negation): Unexpected negation of the left operand of 'instanceof' operator.
    ╭─[no_unsafe_negation.tsx:1:2]
  1 │ (!a instanceof b)
    ·  ──
    ╰────
   help: Use `()` to negate the whole expression, as '!' binds more closely than 'instanceof'
 
-  ⚠ eslint(no-unsafe-negation): Unexpected negating the left operand of 'instanceof' operator
+  ⚠ eslint(no-unsafe-negation): Unexpected negation of the left operand of 'instanceof' operator.
    ╭─[no_unsafe_negation.tsx:1:1]
  1 │ !(a) instanceof b
    · ────
    ╰────
   help: Use `()` to negate the whole expression, as '!' binds more closely than 'instanceof'
 
-  ⚠ eslint(no-unsafe-negation): Unexpected negating the left operand of 'in' operator
+  ⚠ eslint(no-unsafe-negation): Unexpected negation of the left operand of 'in' operator.
    ╭─[no_unsafe_negation.tsx:1:9]
  1 │ (y=>{if(!/s/ in(l)){}})
    ·         ────
    ╰────
   help: Use `()` to negate the whole expression, as '!' binds more closely than 'in'
 
-  ⚠ eslint(no-unsafe-negation): Unexpected negating the left operand of '<' operator
+  ⚠ eslint(no-unsafe-negation): Unexpected negation of the left operand of '<' operator.
    ╭─[no_unsafe_negation.tsx:1:5]
  1 │ if (! a < b) {}
    ·     ───
    ╰────
   help: Use `()` to negate the whole expression, as '!' binds more closely than '<'
 
-  ⚠ eslint(no-unsafe-negation): Unexpected negating the left operand of '>' operator
+  ⚠ eslint(no-unsafe-negation): Unexpected negation of the left operand of '>' operator.
    ╭─[no_unsafe_negation.tsx:1:8]
  1 │ while (! a > b) {}
    ·        ───
    ╰────
   help: Use `()` to negate the whole expression, as '!' binds more closely than '>'
 
-  ⚠ eslint(no-unsafe-negation): Unexpected negating the left operand of '<=' operator
+  ⚠ eslint(no-unsafe-negation): Unexpected negation of the left operand of '<=' operator.
    ╭─[no_unsafe_negation.tsx:1:7]
  1 │ foo = ! a <= b;
    ·       ───
    ╰────
   help: Use `()` to negate the whole expression, as '!' binds more closely than '<='
 
-  ⚠ eslint(no-unsafe-negation): Unexpected negating the left operand of '>=' operator
+  ⚠ eslint(no-unsafe-negation): Unexpected negation of the left operand of '>=' operator.
    ╭─[no_unsafe_negation.tsx:1:7]
  1 │ foo = ! a >= b;
    ·       ───
    ╰────
   help: Use `()` to negate the whole expression, as '!' binds more closely than '>='
 
-  ⚠ eslint(no-unsafe-negation): Unexpected negating the left operand of '<=' operator
+  ⚠ eslint(no-unsafe-negation): Unexpected negation of the left operand of '<=' operator.
    ╭─[no_unsafe_negation.tsx:1:1]
  1 │ ! a <= b
    · ───

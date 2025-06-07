@@ -19,7 +19,8 @@ declare_oxc_lint!(
     ///
     /// Disallow empty exports that don't change anything in a module file.
     ///
-    /// ## Why is this bad?
+    /// ### Why is this bad?
+    ///
     /// An empty `export {}` statement is sometimes useful in TypeScript code to
     /// turn a file that would otherwise be a script file into a module file.
     /// Per the [TypeScript Handbook Modules page](https://www.typescriptlang.org/docs/handbook/modules/introduction.html):
@@ -36,7 +37,7 @@ declare_oxc_lint!(
     /// This rule reports an `export {}` that doesn't do anything in a file
     /// already using ES modules.
     ///
-    /// ### Example
+    /// ### Examples
     ///
     /// Examples of **incorrect** code for this rule:
     /// ```ts

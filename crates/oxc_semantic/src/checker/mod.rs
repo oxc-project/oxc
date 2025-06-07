@@ -104,8 +104,6 @@ pub fn check<'a>(node: &AstNode<'a>, ctx: &SemanticBuilder<'a>) {
 
         AstKind::AssignmentExpression(expr) => js::check_assignment_expression(expr, ctx),
         AstKind::AwaitExpression(expr) => js::check_await_expression(expr, node, ctx),
-        AstKind::BinaryExpression(expr) => js::check_binary_expression(expr, ctx),
-        AstKind::LogicalExpression(expr) => js::check_logical_expression(expr, ctx),
         AstKind::MemberExpression(expr) => js::check_member_expression(expr, ctx),
         AstKind::ObjectExpression(expr) => js::check_object_expression(expr, ctx),
         AstKind::UnaryExpression(expr) => js::check_unary_expression(expr, ctx),

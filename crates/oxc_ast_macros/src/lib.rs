@@ -1,9 +1,13 @@
 use proc_macro::TokenStream;
+use proc_macro2::TokenStream as TokenStream2;
 use quote::quote;
 use syn::{Item, parse_macro_input};
 
 mod ast;
-mod generated;
+mod generated {
+    pub mod derived_traits;
+    pub mod structs;
+}
 
 /// This attribute serves two purposes:
 ///
@@ -36,9 +40,9 @@ mod generated;
 ///
 /// Add assertions that traits used in `#[generate_derive(...)]` are in scope.
 #[proc_macro_attribute]
-pub fn ast(_args: TokenStream, input: TokenStream) -> TokenStream {
-    let input = parse_macro_input!(input as Item);
-    let expanded = ast::ast(&input);
+pub fn ast(args: TokenStream, input: TokenStream) -> TokenStream {
+    let mut input = parse_macro_input!(input as Item);
+    let expanded = ast::ast(&mut input, TokenStream2::from(args));
     TokenStream::from(expanded)
 }
 
@@ -70,6 +74,7 @@ pub fn ast_meta(_args: TokenStream, input: TokenStream) -> TokenStream {
         content_eq,
         estree,
         generate_derive,
+        js_only,
         plural,
         scope,
         span,

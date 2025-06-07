@@ -146,7 +146,7 @@ pub struct RegExpLiteral<'a> {
 #[ast]
 #[derive(Debug)]
 #[generate_derive(CloneIn, Dummy, TakeIn, ContentEq, ESTree)]
-#[estree(no_type)]
+#[estree(no_type, ts_alias = "{ pattern: string; flags: string; }")]
 pub struct RegExp<'a> {
     /// The regex pattern between the slashes
     pub pattern: RegExpPattern<'a>,
@@ -159,18 +159,22 @@ pub struct RegExp<'a> {
 /// This pattern may or may not be parsed.
 #[ast]
 #[derive(Debug)]
-#[generate_derive(CloneIn, Dummy, TakeIn, ESTree)]
-#[estree(via = RegExpPatternConverter)]
-pub enum RegExpPattern<'a> {
-    /// Unparsed pattern. Contains string slice of the pattern.
-    /// Pattern was not parsed, so may be valid or invalid.
-    Raw(&'a str) = 0,
-    /// An invalid pattern. Contains string slice of the pattern.
-    /// Pattern was parsed and found to be invalid.
-    Invalid(&'a str) = 1,
-    /// A parsed pattern. Read [Pattern] for more details.
-    /// Pattern was parsed and found to be valid.
-    Pattern(Box<'a, Pattern<'a>>) = 2,
+#[generate_derive(CloneIn, Dummy, TakeIn, ContentEq, ESTree)]
+#[estree(no_type, flatten)]
+pub struct RegExpPattern<'a> {
+    /// The regexp's pattern as a string.
+    ///
+    /// If `pattern` is defined, `pattern` and `text` must be in sync.
+    /// i.e. If you alter the regexp by mutating `pattern`, you must regenerate `text` to match it,
+    /// using `format_atom!("{}", &pattern)`.
+    ///
+    /// `oxc_codegen` ignores `pattern` field, and prints `text`.
+    #[estree(rename = "pattern")]
+    pub text: Atom<'a>,
+    /// Parsed regexp pattern
+    #[content_eq(skip)]
+    #[estree(skip)]
+    pub pattern: Option<Box<'a, Pattern<'a>>>,
 }
 
 bitflags! {

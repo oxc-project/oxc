@@ -17,6 +17,7 @@ pub struct NoDisabledTests;
 
 declare_oxc_lint!(
     /// ### What it does
+    ///
     /// This rule raises a warning about disabled tests.
     ///
     /// ### Why is this bad?
@@ -28,7 +29,7 @@ declare_oxc_lint!(
     ///
     /// ### Example
     ///
-    ///```js
+    /// ```js
     /// describe.skip('foo', () => {});
     /// it.skip('foo', () => {});
     /// test.skip('foo', () => {});

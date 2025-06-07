@@ -25,14 +25,16 @@ pub struct PreferForOf;
 
 declare_oxc_lint!(
     /// ### What it does
+    ///
     /// Enforces the use of for-of loop instead of a for loop with a simple iteration.
     ///
     /// ### Why is this bad?
+    ///
     /// Using a for loop with a simple iteration over an array can be replaced with a more concise
     /// and readable for-of loop. For-of loops are easier to read and less error-prone, as they
     /// eliminate the need for an index variable and manual array access.
     ///
-    /// ### Example
+    /// ### Examples
     ///
     /// Examples of **incorrect** code for this rule:
     /// ```typescript
@@ -52,16 +54,6 @@ declare_oxc_lint!(
     style,
     pending
 );
-
-trait SpanExt {
-    fn contains(&self, other: Self) -> bool;
-}
-
-impl SpanExt for Span {
-    fn contains(&self, other: Self) -> bool {
-        self.start <= other.start && self.end >= other.end
-    }
-}
 
 trait ExpressionExt {
     fn is_increment_of(&self, var_name: &str) -> bool;
@@ -188,7 +180,7 @@ impl Rule for PreferForOf {
             let ref_id = reference.node_id();
 
             let symbol_span = nodes.get_node(ref_id).kind().span();
-            if !body_span.contains(symbol_span) {
+            if !body_span.contains_inclusive(symbol_span) {
                 return false;
             }
 
@@ -282,6 +274,39 @@ fn test() {
         "for (let i = 0; i < arr.length; i++) { ({ foo: arr[i] } = { foo: 1 }); }",
         "for (let i = 0; i < arr.length; i++) { arr[i]++; }",
         "function* gen() { for (let i = 0; i < this.length; ++i) { yield this[i]; } }",
+        // subsection of eslint-plugin-unicotn test cases
+        "for (;;);",
+        "for (;;) {}",
+        "for (a;; c) { d }",
+        "for (a; b;) { d }",
+        "for (the; love; of) { god }",
+        "for ([a] = b; f(c); d--) { arr[d] }",
+        "for (var a = b; c < arr.length; d++) { arr[e] }",
+        "for (const x of xs) {}",
+        "for (var j = 0; j < 10; j++) {}",
+        "for (i = 0; i < arr.length; i++) { el = arr[i]; console.log(i, el); }",
+        "for (let i = 0, j = 0; i < arr.length; i++) { const el = arr[i]; console.log(i, el); }",
+        "for (let {i} = 0; i < arr.length; i++) { const el = arr[i]; console.log(i, el); }",
+        "for (let i = 0; f(i, arr.length); i++) { const el = arr[i]; console.log(i, el); }",
+        "for (let i = 0; i < arr.size; i++) { const el = arr[i]; console.log(i, el); }",
+        "for (let i = 0; j < arr.length; i++) { const el = arr[i]; console.log(i, el); }",
+        "for (let i = 0; i <= arr.length; i++) { const el = arr[i]; console.log(i, el); }",
+        "for (let i = 0; arr.length > i;) { let el = arr[i]; console.log(i, el); }",
+        "for (let i = 0; arr.length > i; i--) { let el = arr[i]; console.log(i, el); }",
+        "for (let i = 0; arr.length > i; f(i)) { let el = arr[i]; console.log(i, el); }",
+        "for (let i = 0; arr.length > i; i = f(i)) { let el = arr[i]; console.log(i, el); }",
+        "const arr = []; for (let i = 0; arr.length > i; i ++);",
+        "const arr = []; for (let i = 0; arr.length > i; i ++) console.log(NaN)",
+        "const arr = []; for (let i = 0; i < arr.length; ++i) { const el = f(i); console.log(i, el); }",
+        "const arr = []; for (let i = 0; i < arr.length; i++) { console.log(i); }",
+        "const input = []; for (let i = 0; i < input.length; i++) { const el = input[i]; i++; console.log(i, el); }",
+        "const input = []; for (let i = 0; i < input.length; i++) { const el = input[i]; i = 4; console.log(i, el); }",
+        "const arr = []; for (let i = 0; i < arr.length; i++) { arr[i] = i + 2; }",
+        "for (;;);",
+        "for (;;) {}",
+        "for (var j = 0; j < 10; j++) {}",
+        "const arr = [];
+        for (i = 0; i < arr.length; i++) { el = arr[i]; console.log(i, el); }",
     ];
 
     let fail = vec![
@@ -305,6 +330,14 @@ fn test() {
         "for (let i = 0; i < arr.length; i++) { ({ foo: obj[arr[i]] } = { foo: 1 }); }",
         "for (let i = 0; i < this.item.length; ++i) { this.item[i]; }",
         "function* gen() { for (let i = 0; i < this.array.length; ++i) { yield this.array[i]; } }",
+        // subsection of eslint-plugin-unicorn test cases
+        "const positions = []; for (let i = 0; i < positions.length; i++) { let last: vscode.Position | vscode.Range = positions[i]; }",
+        "const arr = []; for (let i = 0; i < arr.length; i += 1) { console.log(arr[i]) }",
+        "const plugins = []; for (let i = 0; i < plugins.length; i++) { let plugin = plugins[i]; plugin = calculateSomeNewValue(); }",
+        "const array = []; for (let i = 0; i < array.length; i++) { var foo = array[i]; foo = bar(); }",
+        "const array = []; for (let i = 0; i < array.length; i++) { let foo = array[i]; }",
+        "const array = []; for (let i = 0; i < array.length; i++) { const foo = array[i]; }",
+        "const array = []; for (let i = 0; i < array.length; i++) { var foo = array[i], bar = 1; }",
     ];
 
     Tester::new(PreferForOf::NAME, PreferForOf::PLUGIN, pass, fail).test_and_snapshot();

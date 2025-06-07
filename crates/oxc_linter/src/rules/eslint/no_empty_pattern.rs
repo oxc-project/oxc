@@ -16,9 +16,11 @@ pub struct NoEmptyPattern;
 
 declare_oxc_lint!(
     /// ### What it does
+    ///
     /// Disallow empty destructuring patterns
     ///
     /// ### Why is this bad?
+    ///
     /// When using destructuring, it’s possible to create a pattern that has no effect.
     /// This happens when empty curly braces are used to the right of
     /// an embedded object destructuring pattern, such as:
@@ -67,7 +69,6 @@ declare_oxc_lint!(
     /// function foo({a = {}}) {}
     /// function foo({a = []}) {}
     /// ```
-    ///
     NoEmptyPattern,
     eslint,
     correctness,

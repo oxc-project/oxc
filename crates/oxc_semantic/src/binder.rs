@@ -417,7 +417,7 @@ impl<'a> Binder<'a> for TSModuleDeclaration<'a> {
         let (mut includes, excludes) = if instantiated {
             (SymbolFlags::ValueModule, SymbolFlags::ValueModuleExcludes)
         } else {
-            (SymbolFlags::NameSpaceModule, SymbolFlags::NamespaceModuleExcludes)
+            (SymbolFlags::NamespaceModule, SymbolFlags::NamespaceModuleExcludes)
         };
 
         if self.declare {

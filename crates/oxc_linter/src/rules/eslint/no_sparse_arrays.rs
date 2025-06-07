@@ -30,7 +30,6 @@ declare_oxc_lint!(
     /// avoid using them unless you are certain that they are useful in your
     /// code.
     ///
-    ///
     /// ### Examples
     ///
     /// Examples of **incorrect** code for this rule:

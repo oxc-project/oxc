@@ -1,0 +1,560 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+  ⚠ eslint(no-useless-backreference): Backreference '\2' will be ignored. It references group '(\2a)' from within that group.
+   ╭─[no_useless_backreference.tsx:1:6]
+ 1 │ /(b)(\2a)/
+   ·      ──
+   ╰────
+
+  ⚠ eslint(no-useless-backreference): Backreference '\k<foo>' will be ignored. It references group '(?<foo>bar)' which appears before in the same lookbehind.
+   ╭─[no_useless_backreference.tsx:1:2]
+ 1 │ /\k<foo>(?<foo>bar)/
+   ·  ───────
+   ╰────
+
+  ⚠ eslint(no-useless-backreference): Backreference '\\1' will be ignored. It references group '(a|bc)' which is in another alternative.
+   ╭─[no_useless_backreference.tsx:1:16]
+ 1 │ RegExp('(a|bc)|\\1')
+   ·                ───
+   ╰────
+
+  ⚠ eslint(no-useless-backreference): Backreference '\\1' will be ignored. It references group '(?<foo>\\n)' which is in a negative lookaround.
+   ╭─[no_useless_backreference.tsx:1:28]
+ 1 │ new RegExp('(?!(?<foo>\\n))\\1')
+   ·                            ───
+   ╰────
+
+  ⚠ eslint(no-useless-backreference): Backreference '\1' will be ignored. It references group '(a)' which appears later in the pattern.
+   ╭─[no_useless_backreference.tsx:1:9]
+ 1 │ /(?<!(a)\1)b/
+   ·         ──
+   ╰────
+
+  ⚠ eslint(no-useless-backreference): Backreference '\\1' will be ignored. It references group '(\\1)' from within that group.
+   ╭─[no_useless_backreference.tsx:1:14]
+ 1 │ new RegExp('(\\1)')
+   ·              ───
+   ╰────
+
+  ⚠ eslint(no-useless-backreference): Backreference '\1' will be ignored. It references group '(a\1)' from within that group.
+   ╭─[no_useless_backreference.tsx:1:5]
+ 1 │ /^(a\1)$/
+   ·     ──
+   ╰────
+
+  ⚠ eslint(no-useless-backreference): Backreference '\1' will be ignored. It references group '((a)\1)' from within that group.
+   ╭─[no_useless_backreference.tsx:1:7]
+ 1 │ /^((a)\1)$/
+   ·       ──
+   ╰────
+
+  ⚠ eslint(no-useless-backreference): Backreference '\\1' will be ignored. It references group '(a\\1b)' from within that group.
+   ╭─[no_useless_backreference.tsx:1:16]
+ 1 │ new RegExp('^(a\\1b)$')
+   ·                ───
+   ╰────
+
+  ⚠ eslint(no-useless-backreference): Backreference '\\1' will be ignored. It references group '((\\1))' from within that group.
+   ╭─[no_useless_backreference.tsx:1:12]
+ 1 │ RegExp('^((\\1))$')
+   ·            ───
+   ╰────
+
+  ⚠ eslint(no-useless-backreference): Backreference '\2' will be ignored. It references group '(\2)' from within that group.
+   ╭─[no_useless_backreference.tsx:1:4]
+ 1 │ /((\2))/
+   ·    ──
+   ╰────
+
+  ⚠ eslint(no-useless-backreference): Backreference '\1' will be ignored. It references group '(?<foo>(.)b\1)' from within that group.
+   ╭─[no_useless_backreference.tsx:1:14]
+ 1 │ /a(?<foo>(.)b\1)/
+   ·              ──
+   ╰────
+
+  ⚠ eslint(no-useless-backreference): Backreference '\k<foo>' will be ignored. It references group '(?<foo>\k<foo>)' from within that group.
+   ╭─[no_useless_backreference.tsx:1:10]
+ 1 │ /a(?<foo>\k<foo>)b/
+   ·          ───────
+   ╰────
+
+  ⚠ eslint(no-useless-backreference): Backreference '\1' will be ignored. It references group '(\1)' from within that group.
+   ╭─[no_useless_backreference.tsx:1:4]
+ 1 │ /^(\1)*$/
+   ·    ──
+   ╰────
+
+  ⚠ eslint(no-useless-backreference): Backreference '\1' will be ignored. It references group '((?:\1))' from within that group.
+   ╭─[no_useless_backreference.tsx:1:15]
+ 1 │ /^(?:a)(?:((?:\1)))*$/
+   ·               ──
+   ╰────
+
+  ⚠ eslint(no-useless-backreference): Backreference '\1' will be ignored. It references group '(\1)' from within that group.
+   ╭─[no_useless_backreference.tsx:1:6]
+ 1 │ /(?!(\1))/
+   ·      ──
+   ╰────
+
+  ⚠ eslint(no-useless-backreference): Backreference '\1' will be ignored. It references group '(b\1c)' from within that group.
+   ╭─[no_useless_backreference.tsx:1:6]
+ 1 │ /a|(b\1c)/
+   ·      ──
+   ╰────
+
+  ⚠ eslint(no-useless-backreference): Backreference '\1' will be ignored. It references group '(a|(\1))' from within that group.
+   ╭─[no_useless_backreference.tsx:1:6]
+ 1 │ /(a|(\1))/
+   ·      ──
+   ╰────
+
+  ⚠ eslint(no-useless-backreference): Backreference '\2' will be ignored. It references group '(\2)' from within that group.
+   ╭─[no_useless_backreference.tsx:1:6]
+ 1 │ /(a|(\2))/
+   ·      ──
+   ╰────
+
+  ⚠ eslint(no-useless-backreference): Backreference '\1' will be ignored. It references group '(\1)' from within that group.
+   ╭─[no_useless_backreference.tsx:1:8]
+ 1 │ /(?:a|(\1))/
+   ·        ──
+   ╰────
+
+  ⚠ eslint(no-useless-backreference): Backreference '\3' will be ignored. It references group '(\3)' from within that group.
+   ╭─[no_useless_backreference.tsx:1:11]
+ 1 │ /(a)?(b)*(\3)/
+   ·           ──
+   ╰────
+
+  ⚠ eslint(no-useless-backreference): Backreference '\1' will be ignored. It references group '(a\1)' from within that group.
+   ╭─[no_useless_backreference.tsx:1:8]
+ 1 │ /(?<=(a\1))b/
+   ·        ──
+   ╰────
+
+  ⚠ eslint(no-useless-backreference): Backreference '\1' will be ignored. It references group '(a)' which appears before in the same lookbehind.
+   ╭─[no_useless_backreference.tsx:1:2]
+ 1 │ /\1(a)/
+   ·  ──
+   ╰────
+
+  ⚠ eslint(no-useless-backreference): Backreference '\1' will be ignored. It references group '(a)' which appears before in the same lookbehind.
+   ╭─[no_useless_backreference.tsx:1:2]
+ 1 │ /\1.(a)/
+   ·  ──
+   ╰────
+
+  ⚠ eslint(no-useless-backreference): Backreference '\1' will be ignored. It references group '(a)' which appears before in the same lookbehind.
+   ╭─[no_useless_backreference.tsx:1:5]
+ 1 │ /(?:\1)(?:(a))/
+   ·     ──
+   ╰────
+
+  ⚠ eslint(no-useless-backreference): Backreference '\1' will be ignored. It references group '((a))' which appears before in the same lookbehind.
+   ╭─[no_useless_backreference.tsx:1:5]
+ 1 │ /(?:\1)(?:((a)))/
+   ·     ──
+   ╰────
+
+  ⚠ eslint(no-useless-backreference): Backreference '\2' will be ignored. It references group '(a)' which appears before in the same lookbehind.
+   ╭─[no_useless_backreference.tsx:1:5]
+ 1 │ /(?:\2)(?:((a)))/
+   ·     ──
+   ╰────
+
+  ⚠ eslint(no-useless-backreference): Backreference '\1' will be ignored. It references group '((?:a))' which appears before in the same lookbehind.
+   ╭─[no_useless_backreference.tsx:1:5]
+ 1 │ /(?:\1)(?:((?:a)))/
+   ·     ──
+   ╰────
+
+  ⚠ eslint(no-useless-backreference): Backreference '\2' will be ignored. It references group '(a)' which appears before in the same lookbehind.
+   ╭─[no_useless_backreference.tsx:1:3]
+ 1 │ /(\2)(a)/
+   ·   ──
+   ╰────
+
+  ⚠ eslint(no-useless-backreference): Backreference '\\2' will be ignored. It references group '(b)' which appears before in the same lookbehind.
+   ╭─[no_useless_backreference.tsx:1:12]
+ 1 │ RegExp('(a)\\2(b)')
+   ·            ───
+   ╰────
+
+  ⚠ eslint(no-useless-backreference): Backreference '\2' will be ignored. It references group '(c)' which appears before in the same lookbehind.
+   ╭─[no_useless_backreference.tsx:1:10]
+ 1 │ /(?:a)(b)\2(c)/
+   ·          ──
+   ╰────
+
+  ⚠ eslint(no-useless-backreference): Backreference '\k<foo>' will be ignored. It references group '(?<foo>a)' which appears before in the same lookbehind.
+   ╭─[no_useless_backreference.tsx:1:2]
+ 1 │ /\k<foo>(?<foo>a)/
+   ·  ───────
+   ╰────
+
+  ⚠ eslint(no-useless-backreference): Backreference '\2' will be ignored. It references group '(c)' which appears before in the same lookbehind.
+   ╭─[no_useless_backreference.tsx:1:9]
+ 1 │ /(?:a(b)\2)(c)/
+   ·         ──
+   ╰────
+
+  ⚠ eslint(no-useless-backreference): Backreference '\\3' will be ignored. It references group '(c)' which appears before in the same lookbehind.
+   ╭─[no_useless_backreference.tsx:1:19]
+ 1 │ new RegExp('(a)(b)\\3(c)')
+   ·                   ───
+   ╰────
+
+  ⚠ eslint(no-useless-backreference): Backreference '\1' will be ignored. It references group '(a)' which appears before in the same lookbehind.
+   ╭─[no_useless_backreference.tsx:1:2]
+ 1 │ /\1(?<=(a))./
+   ·  ──
+   ╰────
+
+  ⚠ eslint(no-useless-backreference): Backreference '\1' will be ignored. It references group '(a)' which appears before in the same lookbehind.
+   ╭─[no_useless_backreference.tsx:1:2]
+ 1 │ /\1(?<!(a))./
+   ·  ──
+   ╰────
+
+  ⚠ eslint(no-useless-backreference): Backreference '\1' will be ignored. It references group '(a)' which appears before in the same lookbehind.
+   ╭─[no_useless_backreference.tsx:1:6]
+ 1 │ /(?<=\1)(?<=(a))/
+   ·      ──
+   ╰────
+
+  ⚠ eslint(no-useless-backreference): Backreference '\1' will be ignored. It references group '(a)' which appears before in the same lookbehind.
+   ╭─[no_useless_backreference.tsx:1:6]
+ 1 │ /(?<!\1)(?<!(a))/
+   ·      ──
+   ╰────
+
+  ⚠ eslint(no-useless-backreference): Backreference '\1' will be ignored. It references group '(a)' which appears before in the same lookbehind.
+   ╭─[no_useless_backreference.tsx:1:5]
+ 1 │ /(?=\1(a))./
+   ·     ──
+   ╰────
+
+  ⚠ eslint(no-useless-backreference): Backreference '\1' will be ignored. It references group '(a)' which appears before in the same lookbehind.
+   ╭─[no_useless_backreference.tsx:1:5]
+ 1 │ /(?!\1(a))./
+   ·     ──
+   ╰────
+
+  ⚠ eslint(no-useless-backreference): Backreference '\1' will be ignored. It references group '(a)' which appears later in the pattern.
+   ╭─[no_useless_backreference.tsx:1:9]
+ 1 │ /(?<=(a)\1)b/
+   ·         ──
+   ╰────
+
+  ⚠ eslint(no-useless-backreference): Backreference '\1' will be ignored. It references group '(a)' which appears later in the pattern.
+   ╭─[no_useless_backreference.tsx:1:11]
+ 1 │ /(?<!.(a).\1.)b/
+   ·           ──
+   ╰────
+
+  ⚠ eslint(no-useless-backreference): Backreference '\2' will be ignored. It references group '(b|c)' which appears later in the pattern.
+   ╭─[no_useless_backreference.tsx:1:14]
+ 1 │ /(.)(?<!(b|c)\2)d/
+   ·              ──
+   ╰────
+
+  ⚠ eslint(no-useless-backreference): Backreference '\1' will be ignored. It references group '(a)' which appears later in the pattern.
+   ╭─[no_useless_backreference.tsx:1:12]
+ 1 │ /(?<=(?:(a)\1))b/
+   ·            ──
+   ╰────
+
+  ⚠ eslint(no-useless-backreference): Backreference '\1' will be ignored. It references group '(a)' which appears later in the pattern.
+   ╭─[no_useless_backreference.tsx:1:13]
+ 1 │ /(?<=(?:(a))\1)b/
+   ·             ──
+   ╰────
+
+  ⚠ eslint(no-useless-backreference): Backreference '\1' will be ignored. It references group '(a)' which appears later in the pattern.
+   ╭─[no_useless_backreference.tsx:1:12]
+ 1 │ /(?<=(a)(?:\1))b/
+   ·            ──
+   ╰────
+
+  ⚠ eslint(no-useless-backreference): Backreference '\1' will be ignored. It references group '(a)' which appears later in the pattern.
+   ╭─[no_useless_backreference.tsx:1:16]
+ 1 │ /(?<!(?:(a))(?:\1))b/
+   ·                ──
+   ╰────
+
+  ⚠ eslint(no-useless-backreference): Backreference '\1' will be ignored. It references group '(a)' which appears later in the pattern.
+   ╭─[no_useless_backreference.tsx:1:16]
+ 1 │ /(?<!(?:(a))(?:\1)|.)b/
+   ·                ──
+   ╰────
+
+  ⚠ eslint(no-useless-backreference): Backreference '\1' will be ignored. It references group '(a)' which appears later in the pattern.
+   ╭─[no_useless_backreference.tsx:1:13]
+ 1 │ /.(?!(?<!(a)\1))./
+   ·             ──
+   ╰────
+
+  ⚠ eslint(no-useless-backreference): Backreference '\1' will be ignored. It references group '(a)' which appears later in the pattern.
+   ╭─[no_useless_backreference.tsx:1:13]
+ 1 │ /.(?=(?<!(a)\1))./
+   ·             ──
+   ╰────
+
+  ⚠ eslint(no-useless-backreference): Backreference '\1' will be ignored. It references group '(a)' which appears later in the pattern.
+   ╭─[no_useless_backreference.tsx:1:13]
+ 1 │ /.(?!(?<=(a)\1))./
+   ·             ──
+   ╰────
+
+  ⚠ eslint(no-useless-backreference): Backreference '\1' will be ignored. It references group '(a)' which appears later in the pattern.
+   ╭─[no_useless_backreference.tsx:1:13]
+ 1 │ /.(?=(?<=(a)\1))./
+   ·             ──
+   ╰────
+
+  ⚠ eslint(no-useless-backreference): Backreference '\1' will be ignored. It references group '(a)' which is in another alternative.
+   ╭─[no_useless_backreference.tsx:1:6]
+ 1 │ /(a)|\1b/
+   ·      ──
+   ╰────
+
+  ⚠ eslint(no-useless-backreference): Backreference '\1' will be ignored. It references group '(a)' which is in another alternative.
+   ╭─[no_useless_backreference.tsx:1:10]
+ 1 │ /^(?:(a)|\1b)$/
+   ·          ──
+   ╰────
+
+  ⚠ eslint(no-useless-backreference): Backreference '\1' will be ignored. It references group '(a)' which is in another alternative.
+   ╭─[no_useless_backreference.tsx:1:16]
+ 1 │ /^(?:(a)|b(?:c|\1))$/
+   ·                ──
+   ╰────
+
+  ⚠ eslint(no-useless-backreference): Backreference '\1' will be ignored. It references group '(c)' which is in another alternative.
+   ╭─[no_useless_backreference.tsx:1:16]
+ 1 │ /^(?:a|b(?:(c)|\1))$/
+   ·                ──
+   ╰────
+
+  ⚠ eslint(no-useless-backreference): Backreference '\1' will be ignored. It references group '(a(?!b))' which is in another alternative.
+   ╭─[no_useless_backreference.tsx:1:15]
+ 1 │ /^(?:(a(?!b))|\1b)+$/
+   ·               ──
+   ╰────
+
+  ⚠ eslint(no-useless-backreference): Backreference '\1' will be ignored. It references group '(a)' which is in another alternative.
+   ╭─[no_useless_backreference.tsx:1:19]
+ 1 │ /^(?:(?:(a)(?!b))|\1b)+$/
+   ·                   ──
+   ╰────
+
+  ⚠ eslint(no-useless-backreference): Backreference '\1' will be ignored. It references group '(a(?=a))' which is in another alternative.
+   ╭─[no_useless_backreference.tsx:1:15]
+ 1 │ /^(?:(a(?=a))|\1b)+$/
+   ·               ──
+   ╰────
+
+  ⚠ eslint(no-useless-backreference): Backreference '\1' will be ignored. It references group '(a)' which is in another alternative.
+   ╭─[no_useless_backreference.tsx:1:15]
+ 1 │ /^(?:(a)(?=a)|\1b)+$/
+   ·               ──
+   ╰────
+
+  ⚠ eslint(no-useless-backreference): Backreference '\1' will be ignored. It references group '(b)' which is in another alternative.
+   ╭─[no_useless_backreference.tsx:1:18]
+ 1 │ /.(?:a|(b)).|(?:(\1)|c)./
+   ·                  ──
+   ╰────
+
+  ⚠ eslint(no-useless-backreference): Backreference '\1' will be ignored. It references group '(a)' which is in another alternative.
+   ╭─[no_useless_backreference.tsx:1:10]
+ 1 │ /.(?!(a)|\1)./
+   ·          ──
+   ╰────
+
+  ⚠ eslint(no-useless-backreference): Backreference '\1' will be ignored. It references group '(a)' which is in another alternative.
+   ╭─[no_useless_backreference.tsx:1:7]
+ 1 │ /.(?<=\1|(a))./
+   ·       ──
+   ╰────
+
+  ⚠ eslint(no-useless-backreference): Backreference '\1' will be ignored. It references group '(b)' which is in a negative lookaround.
+   ╭─[no_useless_backreference.tsx:1:11]
+ 1 │ /a(?!(b)).\1/
+   ·           ──
+   ╰────
+
+  ⚠ eslint(no-useless-backreference): Backreference '\1' will be ignored. It references group '(a)' which is in a negative lookaround.
+   ╭─[no_useless_backreference.tsx:1:11]
+ 1 │ /(?<!(a))b\1/
+   ·           ──
+   ╰────
+
+  ⚠ eslint(no-useless-backreference): Backreference '\1' will be ignored. It references group '(a)' which is in a negative lookaround.
+   ╭─[no_useless_backreference.tsx:1:13]
+ 1 │ /(?<!(a))(?:\1)/
+   ·             ──
+   ╰────
+
+  ⚠ eslint(no-useless-backreference): Backreference '\1' will be ignored. It references group '(b)' which is in a negative lookaround.
+   ╭─[no_useless_backreference.tsx:1:14]
+ 1 │ /.(?<!a|(b)).\1/
+   ·              ──
+   ╰────
+
+  ⚠ eslint(no-useless-backreference): Backreference '\1' will be ignored. It references group '(a)' which is in a negative lookaround.
+   ╭─[no_useless_backreference.tsx:1:14]
+ 1 │ /.(?!(a)).(?!\1)./
+   ·              ──
+   ╰────
+
+  ⚠ eslint(no-useless-backreference): Backreference '\1' will be ignored. It references group '(a)' which is in a negative lookaround.
+   ╭─[no_useless_backreference.tsx:1:16]
+ 1 │ /.(?<!(a)).(?<!\1)./
+   ·                ──
+   ╰────
+
+  ⚠ eslint(no-useless-backreference): Backreference '\1' will be ignored. It references group '(a)' which is in a negative lookaround.
+   ╭─[no_useless_backreference.tsx:1:13]
+ 1 │ /.(?=(?!(a))\1)./
+   ·             ──
+   ╰────
+
+  ⚠ eslint(no-useless-backreference): Backreference '\1' will be ignored. It references group '(a)' which is in a negative lookaround.
+   ╭─[no_useless_backreference.tsx:1:7]
+ 1 │ /.(?<!\1(?!(a)))/
+   ·       ──
+   ╰────
+
+  ⚠ eslint(no-useless-backreference): Backreference '\1' will be ignored. It references group '(a)' which appears before in the same lookbehind.
+   ╭─[no_useless_backreference.tsx:1:2]
+ 1 │ /\1(a)(b)\2/
+   ·  ──
+   ╰────
+
+  ⚠ eslint(no-useless-backreference): Backreference '\1' will be ignored. It references group '(a)' which appears before in the same lookbehind.
+   ╭─[no_useless_backreference.tsx:1:2]
+ 1 │ /\1(a)\1/
+   ·  ──
+   ╰────
+
+  ⚠ eslint(no-useless-backreference): Backreference '\1' will be ignored. It references group '(a)' which appears before in the same lookbehind.
+   ╭─[no_useless_backreference.tsx:1:2]
+ 1 │ /\1(a)\2(b)/
+   ·  ──
+   ╰────
+
+  ⚠ eslint(no-useless-backreference): Backreference '\2' will be ignored. It references group '(b)' which appears before in the same lookbehind.
+   ╭─[no_useless_backreference.tsx:1:7]
+ 1 │ /\1(a)\2(b)/
+   ·       ──
+   ╰────
+
+  ⚠ eslint(no-useless-backreference): Backreference '\1' will be ignored. It references group '(a)' which appears before in the same lookbehind.
+   ╭─[no_useless_backreference.tsx:1:2]
+ 1 │ /\1.(?<=(a)\1)/
+   ·  ──
+   ╰────
+
+  ⚠ eslint(no-useless-backreference): Backreference '\1' will be ignored. It references group '(a)' which appears later in the pattern.
+   ╭─[no_useless_backreference.tsx:1:12]
+ 1 │ /\1.(?<=(a)\1)/
+   ·            ──
+   ╰────
+
+  ⚠ eslint(no-useless-backreference): Backreference '\1' will be ignored. It references group '(a)' which appears before in the same lookbehind.
+   ╭─[no_useless_backreference.tsx:1:5]
+ 1 │ /(?!\1(a)).\1/
+   ·     ──
+   ╰────
+
+  ⚠ eslint(no-useless-backreference): Backreference '\1' will be ignored. It references group '(a)' which is in a negative lookaround.
+   ╭─[no_useless_backreference.tsx:1:12]
+ 1 │ /(?!\1(a)).\1/
+   ·            ──
+   ╰────
+
+  ⚠ eslint(no-useless-backreference): Backreference '\2' will be ignored. It references group '(b)' which appears before in the same lookbehind.
+   ╭─[no_useless_backreference.tsx:1:5]
+ 1 │ /(a)\2(b)/; RegExp('(\\1)');
+   ·     ──
+   ╰────
+
+  ⚠ eslint(no-useless-backreference): Backreference '\\1' will be ignored. It references group '(\\1)' from within that group.
+   ╭─[no_useless_backreference.tsx:1:22]
+ 1 │ /(a)\2(b)/; RegExp('(\\1)');
+   ·                      ───
+   ╰────
+
+  ⚠ eslint(no-useless-backreference): Backreference '\\1' will be ignored. It references group '(a)' which appears before in the same lookbehind.
+   ╭─[no_useless_backreference.tsx:1:9]
+ 1 │ RegExp('\\1(a){', flags);
+   ·         ───
+   ╰────
+
+  ⚠ eslint(no-useless-backreference): Backreference '\\1' will be ignored. It references group '([[A--B]])' which appears before in the same lookbehind.
+   ╭─[no_useless_backreference.tsx:1:13]
+ 1 │ new RegExp('\\1([[A--B]])', 'v')
+   ·             ───
+   ╰────
+
+  ⚠ eslint(no-useless-backreference): Backreference '\k<foo>' will be ignored. It references group '(?<foo>bar)' which appears before in the same lookbehind.
+   ╭─[no_useless_backreference.tsx:1:2]
+ 1 │ /\k<foo>((?<foo>bar)|(?<foo>baz))/
+   ·  ───────
+   ╰────
+
+  ⚠ eslint(no-useless-backreference): Backreference '\k<foo>' will be ignored. It references group '(?<foo>bar)' which is in another alternative.
+   ╭─[no_useless_backreference.tsx:1:15]
+ 1 │ /((?<foo>bar)|\k<foo>(?<foo>baz))/
+   ·               ───────
+   ╰────
+
+  ⚠ eslint(no-useless-backreference): Backreference '\k<foo>' will be ignored. It references group '(?<foo>bar)' which appears before in the same lookbehind.
+   ╭─[no_useless_backreference.tsx:1:2]
+ 1 │ /\k<foo>((?<foo>bar)|(?<foo>baz)|(?<foo>qux))/
+   ·  ───────
+   ╰────
+
+  ⚠ eslint(no-useless-backreference): Backreference '\k<foo>' will be ignored. It references group '(?<foo>bar)' which is in another alternative.
+   ╭─[no_useless_backreference.tsx:1:15]
+ 1 │ /((?<foo>bar)|\k<foo>(?<foo>baz)|(?<foo>qux))/
+   ·               ───────
+   ╰────
+
+  ⚠ eslint(no-useless-backreference): Backreference '\k<foo>' will be ignored. It references group '(?<foo>bar)' which is in another alternative.
+   ╭─[no_useless_backreference.tsx:1:15]
+ 1 │ /((?<foo>bar)|\k<foo>|(?<foo>baz))/
+   ·               ───────
+   ╰────
+
+  ⚠ eslint(no-useless-backreference): Backreference '\k<foo>' will be ignored. It references group '(?<foo>bar)' which is in another alternative.
+   ╭─[no_useless_backreference.tsx:1:15]
+ 1 │ /((?<foo>bar)|\k<foo>|(?<foo>baz)|(?<foo>qux))/
+   ·               ───────
+   ╰────
+
+  ⚠ eslint(no-useless-backreference): Backreference '\k<foo>' will be ignored. It references group '(?<foo>bar)' which is in another alternative.
+   ╭─[no_useless_backreference.tsx:1:25]
+ 1 │ /((?<foo>bar)|(?<foo>baz\k<foo>)|(?<foo>qux\k<foo>))/
+   ·                         ───────
+   ╰────
+
+  ⚠ eslint(no-useless-backreference): Backreference '\k<foo>' will be ignored. It references group '(?<foo>bar)' which is in another alternative.
+   ╭─[no_useless_backreference.tsx:1:44]
+ 1 │ /((?<foo>bar)|(?<foo>baz\k<foo>)|(?<foo>qux\k<foo>))/
+   ·                                            ───────
+   ╰────
+
+  ⚠ eslint(no-useless-backreference): Backreference '\k<foo>' will be ignored. It references group '(?<foo>bar)' which appears later in the pattern.
+   ╭─[no_useless_backreference.tsx:1:31]
+ 1 │ /(?<=((?<foo>bar)|(?<foo>baz))\k<foo>)/
+   ·                               ───────
+   ╰────
+
+  ⚠ eslint(no-useless-backreference): Backreference '\k<foo>' will be ignored. It references group '(?<foo>bar)' which is in a negative lookaround.
+   ╭─[no_useless_backreference.tsx:1:35]
+ 1 │ /((?!(?<foo>bar))|(?!(?<foo>baz)))\k<foo>/
+   ·                                   ───────
+   ╰────

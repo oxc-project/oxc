@@ -585,7 +585,7 @@ source: crates/oxc_linter/src/tester.rs
    ·               ──────────
    ╰────
 
-  ⚠ eslint-plugin-react-hooks(rules-of-hooks): message: `React Hook "AsyncComponent" cannot be called in an async function.
+  ⚠ eslint-plugin-react-hooks(rules-of-hooks): React Hook "AsyncComponent" cannot be called in an async function.
    ╭─[rules_of_hooks.tsx:2:32]
  1 │ 
  2 │                 async function AsyncComponent() {
@@ -593,7 +593,7 @@ source: crates/oxc_linter/src/tester.rs
  3 │                     useState();
    ╰────
 
-  ⚠ eslint-plugin-react-hooks(rules-of-hooks): message: `React Hook "Anonymous" cannot be called in an async function.
+  ⚠ eslint-plugin-react-hooks(rules-of-hooks): React Hook "Anonymous" cannot be called in an async function.
    ╭─[rules_of_hooks.tsx:2:40]
  1 │     
  2 │ ╭─▶                 const AsyncComponent = async () => {
@@ -602,7 +602,7 @@ source: crates/oxc_linter/src/tester.rs
  5 │             
    ╰────
 
-  ⚠ eslint-plugin-react-hooks(rules-of-hooks): message: `React Hook "Page" cannot be called in an async function.
+  ⚠ eslint-plugin-react-hooks(rules-of-hooks): React Hook "Page" cannot be called in an async function.
    ╭─[rules_of_hooks.tsx:2:32]
  1 │ 
  2 │                 async function Page() {
@@ -610,7 +610,7 @@ source: crates/oxc_linter/src/tester.rs
  3 │                   useId();
    ╰────
 
-  ⚠ eslint-plugin-react-hooks(rules-of-hooks): message: `React Hook "Page" cannot be called in an async function.
+  ⚠ eslint-plugin-react-hooks(rules-of-hooks): React Hook "Page" cannot be called in an async function.
    ╭─[rules_of_hooks.tsx:2:32]
  1 │ 
  2 │                 async function Page() {
@@ -618,7 +618,7 @@ source: crates/oxc_linter/src/tester.rs
  3 │                   useId();
    ╰────
 
-  ⚠ eslint-plugin-react-hooks(rules-of-hooks): message: `React Hook "useAsyncHook" cannot be called in an async function.
+  ⚠ eslint-plugin-react-hooks(rules-of-hooks): React Hook "useAsyncHook" cannot be called in an async function.
    ╭─[rules_of_hooks.tsx:2:32]
  1 │ 
  2 │                 async function useAsyncHook() {
@@ -682,7 +682,7 @@ source: crates/oxc_linter/src/tester.rs
  5 │                 }
    ╰────
 
-  ⚠ eslint-plugin-react-hooks(rules-of-hooks): message: `React Hook "AsyncComponent" cannot be called in an async function.
+  ⚠ eslint-plugin-react-hooks(rules-of-hooks): React Hook "AsyncComponent" cannot be called in an async function.
    ╭─[rules_of_hooks.tsx:2:28]
  1 │ 
  2 │             async function AsyncComponent() {

@@ -188,15 +188,6 @@ impl ModuleGraphVisitor {
         enter: &mut EnterMod,
         leave: &mut LeaveMod,
     ) -> VisitFoldWhile<T> {
-        macro_rules! accumulate {
-            ($acc:expr_2021) => {
-                accumulator = $acc;
-
-                if accumulator.is_done() {
-                    break;
-                }
-            };
-        }
         for pair in module_record.loaded_modules.read().unwrap().iter() {
             if self.depth > self.max_depth {
                 return VisitFoldWhile::Stop(accumulator.into_inner());
@@ -216,16 +207,16 @@ impl ModuleGraphVisitor {
             event(ModuleGraphVisitorEvent::Enter, pair, module_record);
             enter(pair, module_record);
 
-            accumulate!(fold(accumulator.into_inner(), pair, module_record));
-            accumulate!(self.filter_fold_recursive(
-                accumulator,
-                pair.1,
-                filter,
-                fold,
-                event,
-                enter,
-                leave
-            ));
+            accumulator = fold(accumulator.into_inner(), pair, module_record);
+            if accumulator.is_done() {
+                break;
+            }
+
+            accumulator =
+                self.filter_fold_recursive(accumulator, pair.1, filter, fold, event, enter, leave);
+            if accumulator.is_done() {
+                break;
+            }
 
             event(ModuleGraphVisitorEvent::Leave, pair, module_record);
             leave(pair, module_record);

@@ -116,6 +116,10 @@ impl<'a> Semantic<'a> {
         &mut self.scoping
     }
 
+    pub fn scoping_mut_and_nodes(&mut self) -> (&mut Scoping, &AstNodes<'a>) {
+        (&mut self.scoping, &self.nodes)
+    }
+
     pub fn classes(&self) -> &ClassTable {
         &self.classes
     }

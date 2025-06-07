@@ -11,7 +11,7 @@ use std::{
 
 use cow_utils::CowUtils;
 use rustc_hash::FxHashSet;
-use similar::{ChangeTag, TextDiff};
+use similar::TextDiff;
 use walkdir::WalkDir;
 
 use oxc_allocator::Allocator;
@@ -208,6 +208,14 @@ impl TestRunner {
             spec_path.to_string_lossy()
         );
 
+        let spec_calls = parse_spec(spec_path)
+            .into_iter()
+            .filter(|call| {
+                // Don't support experimental operator position yet
+                call.0.experimental_operator_position.is_end()
+            })
+            .collect::<Vec<_>>();
+
         let snapshots =
             std::fs::read_to_string(dir.join(SNAPSHOT_DIR_NAME).join(SNAPSHOT_FILE_NAME)).unwrap();
 
@@ -271,16 +279,6 @@ impl TestRunner {
                     // );
 
                     if !result {
-                        let mut count = 0;
-                        for op in diff.ops() {
-                            for change in diff.iter_changes(op) {
-                                match change.tag() {
-                                    ChangeTag::Delete | ChangeTag::Insert => count += 1,
-                                    ChangeTag::Equal => {}
-                                }
-                            }
-                        }
-
                         // print_with_border("Input");
                         // println!("{source_text}");
                         // print_with_border(&format!(
@@ -291,15 +289,13 @@ impl TestRunner {
                         // print_with_border(&format!("OxcOutput: {}LoC", actual.lines().count()));
                         // println!("{actual}");
                         // print_with_border("Diff");
-                        if count <= 10 {
-                            println!(
-                                "{}",
-                                path.strip_prefix(fixtures_root()).unwrap().to_string_lossy()
-                            );
-                            oxc_tasks_common::print_diff_in_terminal(&diff);
-                        }
+                        println!(
+                            "{}",
+                            path.strip_prefix(fixtures_root()).unwrap().to_string_lossy()
+                        );
+                        oxc_tasks_common::print_diff_in_terminal(&diff);
                     }
-                    // println!();
+                    println!();
                 }
             }
 
@@ -423,6 +419,7 @@ impl TestRunner {
         formatter_options: FormatOptions,
     ) -> String {
         let allocator = Allocator::default();
+        let source_type = source_type.with_jsx(source_type.is_javascript());
         let ret = Parser::new(&allocator, source_text, source_type)
             .with_options(ParseOptions {
                 preserve_parens: false,

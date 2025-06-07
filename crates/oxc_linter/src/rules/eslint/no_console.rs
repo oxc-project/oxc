@@ -17,9 +17,7 @@ fn no_console_diagnostic(span: Span, allow: &[CompactStr]) -> OxcDiagnostic {
         format!("Supported methods are: {}.", allow.join(", "))
     };
 
-    OxcDiagnostic::warn("eslint(no-console): Unexpected console statement.")
-        .with_label(span)
-        .with_help(only_msg)
+    OxcDiagnostic::warn("Unexpected console statement.").with_label(span).with_help(only_msg)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -27,6 +25,18 @@ pub struct NoConsole(Box<NoConsoleConfig>);
 
 #[derive(Debug, Default, Clone)]
 pub struct NoConsoleConfig {
+    pub allow: Vec<CompactStr>,
+}
+
+impl std::ops::Deref for NoConsole {
+    type Target = NoConsoleConfig;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+declare_oxc_lint!(
     /// ### What it does
     ///
     /// Disallow the use of console.
@@ -56,9 +66,9 @@ pub struct NoConsoleConfig {
     ///
     /// ### Options
     ///
-    /// ### allow
+    /// #### allow
     ///
-    /// `{ "allow": string[] }`
+    /// `{ type: string[], default: [] }`
     ///
     /// The `allow` option permits the given list of console methods to be used as exceptions to
     /// this rule.
@@ -74,31 +84,6 @@ pub struct NoConsoleConfig {
     /// Example of **incorrect** code for this option:
     /// ```javascript
     /// console.info('foo');
-    /// ```
-    pub allow: Vec<CompactStr>,
-}
-
-impl std::ops::Deref for NoConsole {
-    type Target = NoConsoleConfig;
-
-    fn deref(&self) -> &Self::Target {
-        &self.0
-    }
-}
-
-declare_oxc_lint!(
-    /// ### What it does
-    /// Disallows using the global console object.
-    ///
-    /// ### Why is this bad?
-    /// In JavaScript that is designed to be executed in the browser,
-    /// it’s considered a best practice to avoid using methods on console.
-    /// Such messages are considered to be for debugging purposes and therefore
-    /// not suitable to ship to the client.
-    ///
-    /// ### Example
-    /// ```javascript
-    /// console.log('here');
     /// ```
     NoConsole,
     eslint,

@@ -25,8 +25,9 @@ declare_oxc_lint!(
     /// You may forget to uncomment some tests. This rule raises a warning about commented out tests. It's similar to
     /// no-disabled-tests rule.
     ///
-    /// ### Example
+    /// ### Examples
     ///
+    /// Examples of **incorrect** code for this rule:
     /// ```javascript
     /// // describe('foo', () => {});
     /// // it('foo', () => {});

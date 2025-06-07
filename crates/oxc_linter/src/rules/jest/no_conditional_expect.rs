@@ -16,7 +16,7 @@ use crate::{
 
 fn no_conditional_expect_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Unexpected conditional expect")
-        .with_help("Avoid calling `expect` conditionally`")
+        .with_help("Avoid calling `expect` conditionally")
         .with_label(span)
 }
 
@@ -181,7 +181,7 @@ fn check_parents<'a>(
             // function foo() {
             //   foo()
             // }
-            // ````
+            // ```
             // To avoid infinite loop, we need to check if the function is already visited when
             // call `check_parents`.
             let boolean = symbol_table.get_resolved_references(symbol_id).any(|reference| {

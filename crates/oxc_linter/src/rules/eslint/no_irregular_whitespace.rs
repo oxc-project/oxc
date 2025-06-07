@@ -15,16 +15,25 @@ pub struct NoIrregularWhitespace;
 
 declare_oxc_lint!(
     /// ### What it does
+    ///
     /// Disallows the use of irregular whitespaces in the code.
     ///
     /// ### Why is this bad
     /// The use of irregular whitespaces can hinder code readability and
     /// create inconsistencies, making maintenance and collaboration more challenging.
     ///
-    /// ### Example
+    /// ### Examples
+    ///
+    /// Examples of **incorrect** code for this rule:
     /// ```javascript
     /// function  invalidExample  (  ) {
     ///     return  42;
+    /// }
+    /// ```
+    /// Examples of **incorrect** code for this rule:
+    /// ```javascript
+    /// function invalidExample () {
+    ///     return 42;
     /// }
     /// ```
     NoIrregularWhitespace,

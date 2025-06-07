@@ -1,11 +1,12 @@
+use oxc_allocator::Allocator;
 use oxc_ast::{
-    AstKind,
+    AstBuilder, AstKind,
     ast::{CallExpression, Expression, MemberExpression, RegExpFlags, RegExpLiteral},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_regular_expression::ast::{BoundaryAssertionKind, Term};
-use oxc_span::{GetSpan, Span};
+use oxc_span::{GetSpan, SPAN, Span};
 
 use crate::{
     AstNode,
@@ -34,7 +35,7 @@ declare_oxc_lint!(
     ///
     /// Using `String#startsWith()` and `String#endsWith()` is more readable and performant as it does not need to parse a regex.
     ///
-    /// ### Example
+    /// ### Examples
     ///
     /// Examples of **incorrect** code for this rule:
     /// ```javascript
@@ -79,22 +80,19 @@ impl Rule for PreferStringStartsEndsWith {
             return;
         };
 
-        let pattern_text = regex.regex.pattern.source_text(ctx.source_text());
-        let pattern_text = pattern_text.as_ref();
-
-        let Some(err_kind) = check_regex(regex, pattern_text) else {
+        let Some(err_kind) = check_regex(regex) else {
             return;
         };
 
         match err_kind {
-            ErrorKind::StartsWith => {
+            ErrorKind::StartsWith(_) => {
                 ctx.diagnostic_with_fix(starts_with(member_expr.span()), |fixer| {
-                    do_fix(fixer, err_kind, call_expr, pattern_text)
+                    do_fix(fixer, err_kind, call_expr)
                 });
             }
-            ErrorKind::EndsWith => {
+            ErrorKind::EndsWith(_) => {
                 ctx.diagnostic_with_fix(ends_with(member_expr.span()), |fixer| {
-                    do_fix(fixer, err_kind, call_expr, pattern_text)
+                    do_fix(fixer, err_kind, call_expr)
                 });
             }
         }
@@ -105,17 +103,26 @@ fn do_fix<'a>(
     fixer: RuleFixer<'_, 'a>,
     err_kind: ErrorKind,
     call_expr: &CallExpression<'a>,
-    pattern_text: &str,
 ) -> RuleFix<'a> {
     let Some(target_span) = can_replace(call_expr) else { return fixer.noop() };
     let (argument, method) = match err_kind {
-        ErrorKind::StartsWith => (pattern_text.trim_start_matches('^'), "startsWith"),
-        ErrorKind::EndsWith => (pattern_text.trim_end_matches('$'), "endsWith"),
+        ErrorKind::StartsWith(arg) => {
+            (arg.into_iter().map(std::char::from_u32).collect::<Option<String>>(), "startsWith")
+        }
+        ErrorKind::EndsWith(arg) => {
+            (arg.into_iter().map(std::char::from_u32).collect::<Option<String>>(), "endsWith")
+        }
     };
-    let fix_text = format!(r#"{}.{}("{}")"#, fixer.source_range(target_span), method, argument);
-
-    fixer.replace(call_expr.span, fix_text)
+    let Some(argument) = argument else { return fixer.noop() };
+    let mut content = fixer.codegen();
+    let alloc = Allocator::default();
+    let ast = AstBuilder::new(&alloc);
+    content.print_str(&format!(r"{}.{}(", fixer.source_range(target_span), method));
+    content.print_expression(&ast.expression_string_literal(SPAN, ast.atom(&argument), None));
+    content.print_str(r")");
+    fixer.replace(call_expr.span, content)
 }
+
 fn can_replace(call_expr: &CallExpression) -> Option<Span> {
     if call_expr.arguments.len() != 1 {
         return None;
@@ -134,13 +141,13 @@ fn can_replace(call_expr: &CallExpression) -> Option<Span> {
     }
 }
 
-#[derive(Clone, Copy)]
 enum ErrorKind {
-    StartsWith,
-    EndsWith,
+    StartsWith(Vec<u32>),
+    EndsWith(Vec<u32>),
 }
 
-fn check_regex(regexp_lit: &RegExpLiteral, pattern_text: &str) -> Option<ErrorKind> {
+fn check_regex(regexp_lit: &RegExpLiteral) -> Option<ErrorKind> {
+    let pattern_text = regexp_lit.regex.pattern.text.as_str();
     if regexp_lit.regex.flags.intersects(RegExpFlags::M)
         || (regexp_lit.regex.flags.intersects(RegExpFlags::I | RegExpFlags::M)
             && is_useless_case_sensitive_regex_flag(pattern_text))
@@ -148,7 +155,8 @@ fn check_regex(regexp_lit: &RegExpLiteral, pattern_text: &str) -> Option<ErrorKi
         return None;
     }
 
-    let alternatives = regexp_lit.regex.pattern.as_pattern().map(|pattern| &pattern.body.body)?;
+    let alternatives =
+        regexp_lit.regex.pattern.pattern.as_ref().map(|pattern| &pattern.body.body)?;
     // Must not be something with multiple alternatives like `/^a|b/`
     if alternatives.len() > 1 {
         return None;
@@ -156,21 +164,24 @@ fn check_regex(regexp_lit: &RegExpLiteral, pattern_text: &str) -> Option<ErrorKi
     let pattern_terms = alternatives.first().map(|it| &it.body)?;
 
     if let Some(Term::BoundaryAssertion(boundary_assert)) = pattern_terms.first() {
-        if boundary_assert.kind == BoundaryAssertionKind::Start
-            && pattern_terms.iter().skip(1).all(|term| matches!(term, Term::Character(_)))
-        {
-            return Some(ErrorKind::StartsWith);
+        if boundary_assert.kind == BoundaryAssertionKind::Start {
+            return pattern_terms
+                .iter()
+                .skip(1)
+                .map(|t| if let Term::Character(c) = t { Some(c.value) } else { None })
+                .collect::<Option<Vec<_>>>()
+                .map(ErrorKind::StartsWith);
         }
     }
 
     if let Some(Term::BoundaryAssertion(boundary_assert)) = pattern_terms.last() {
-        if boundary_assert.kind == BoundaryAssertionKind::End
-            && pattern_terms
+        if boundary_assert.kind == BoundaryAssertionKind::End {
+            return pattern_terms
                 .iter()
                 .take(pattern_terms.len() - 1)
-                .all(|term| matches!(term, Term::Character(_)))
-        {
-            return Some(ErrorKind::EndsWith);
+                .map(|t| if let Term::Character(c) = t { Some(c.value) } else { None })
+                .collect::<Option<Vec<_>>>()
+                .map(ErrorKind::EndsWith);
         }
     }
 
@@ -227,6 +238,8 @@ fn test() {
     let fail = vec![
         r"/^foo/.test(bar)",
         r"/foo$/.test(bar)",
+        r"/\$$/.test(bar)",
+        r"/^\^/.test(bar)",
         r"/^!/.test(bar)",
         r"/!$/.test(bar)",
         r"/^ /.test(bar)",
@@ -271,16 +284,24 @@ fn test() {
     ];
 
     let fix = vec![
-        ("/^foo/.test(x)", r#"x.startsWith("foo")"#, None),
-        ("/foo$/.test(x)", r#"x.endsWith("foo")"#, None),
-        ("/^foo/.test(x.y)", r#"x.y.startsWith("foo")"#, None),
-        ("/foo$/.test(x.y)", r#"x.y.endsWith("foo")"#, None),
-        ("/^foo/.test('x')", r#"'x'.startsWith("foo")"#, None),
-        ("/foo$/.test('x')", r#"'x'.endsWith("foo")"#, None),
-        ("/^foo/.test(`x${y}`)", r#"`x${y}`.startsWith("foo")"#, None),
-        ("/foo$/.test(`x${y}`)", r#"`x${y}`.endsWith("foo")"#, None),
-        ("/^foo/.test(String(x))", r#"String(x).startsWith("foo")"#, None),
-        ("/foo$/.test(String(x))", r#"String(x).endsWith("foo")"#, None),
+        ("/^foo/.test(x)", r"x.startsWith('foo')", None),
+        ("/foo$/.test(x)", r"x.endsWith('foo')", None),
+        ("/^foo/.test(x.y)", r"x.y.startsWith('foo')", None),
+        ("/foo$/.test(x.y)", r"x.y.endsWith('foo')", None),
+        ("/^foo/.test('x')", r"'x'.startsWith('foo')", None),
+        ("/foo$/.test('x')", r"'x'.endsWith('foo')", None),
+        ("/^foo/.test(`x${y}`)", r"`x${y}`.startsWith('foo')", None),
+        ("/foo$/.test(`x${y}`)", r"`x${y}`.endsWith('foo')", None),
+        ("/^foo/.test(String(x))", r"String(x).startsWith('foo')", None),
+        ("/foo$/.test(String(x))", r"String(x).endsWith('foo')", None),
+        // https://github.com/oxc-project/oxc/issues/10523
+        (
+            r"const makePosix = str => /^\\\\\?\\/.test(str)",
+            r"const makePosix = str => str.startsWith('\\\\?\\')",
+            None,
+        ),
+        ("/^'/.test('foo')", r"'foo'.startsWith('\'')", None),
+        (r#"/^"/.test('foo')"#, r#"'foo'.startsWith('"')"#, None),
         // should not get fixed
         ("/^foo/.test(new String('bar'))", "/^foo/.test(new String('bar'))", None),
         ("/^foo/.test(x as string)", "/^foo/.test(x as string)", None),

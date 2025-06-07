@@ -1,5 +1,5 @@
 // Auto-generated code, DO NOT EDIT DIRECTLY!
-// To edit this generated file you have to edit `tasks/ast_tools/src/derives/clone_in.rs`
+// To edit this generated file you have to edit `tasks/ast_tools/src/derives/clone_in.rs`.
 
 #![allow(unused_variables, clippy::default_trait_access, clippy::inline_always)]
 
@@ -525,26 +525,6 @@ impl<'new_alloc> CloneIn<'new_alloc> for Modifiers {
             span: CloneIn::clone_in_with_semantic_ids(&self.span, allocator),
             enabling: CloneIn::clone_in_with_semantic_ids(&self.enabling, allocator),
             disabling: CloneIn::clone_in_with_semantic_ids(&self.disabling, allocator),
-        }
-    }
-}
-
-impl<'new_alloc> CloneIn<'new_alloc> for Modifier {
-    type Cloned = Modifier;
-
-    fn clone_in(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {
-        Modifier {
-            ignore_case: CloneIn::clone_in(&self.ignore_case, allocator),
-            multiline: CloneIn::clone_in(&self.multiline, allocator),
-            sticky: CloneIn::clone_in(&self.sticky, allocator),
-        }
-    }
-
-    fn clone_in_with_semantic_ids(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {
-        Modifier {
-            ignore_case: CloneIn::clone_in_with_semantic_ids(&self.ignore_case, allocator),
-            multiline: CloneIn::clone_in_with_semantic_ids(&self.multiline, allocator),
-            sticky: CloneIn::clone_in_with_semantic_ids(&self.sticky, allocator),
         }
     }
 }

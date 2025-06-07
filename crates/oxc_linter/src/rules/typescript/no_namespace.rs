@@ -26,9 +26,11 @@ pub struct NoNamespace {
 
 declare_oxc_lint!(
     /// ### What it does
+    ///
     /// Disallow TypeScript namespaces.
     ///
     /// ### Why is this bad?
+    ///
     /// TypeScript historically allowed a form of code organization called "custom modules" (module Example {}),
     /// later renamed to "namespaces" (namespace Example). Namespaces are an outdated way to organize TypeScript code.
     /// ES2015 module syntax is now preferred (import/export).
@@ -180,12 +182,9 @@ impl Rule for NoNamespace {
 }
 
 fn is_declaration(node: &AstNode, ctx: &LintContext) -> bool {
-    ctx.nodes().ancestors(node.id()).any(|node| {
-        let AstKind::TSModuleDeclaration(declaration) = node.kind() else {
-            return false;
-        };
-        declaration.declare
-    })
+    ctx.nodes()
+        .ancestors(node.id())
+        .any(|node| node.kind().as_ts_module_declaration().is_some_and(|decl| decl.declare))
 }
 
 #[test]

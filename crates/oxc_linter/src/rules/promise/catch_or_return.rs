@@ -59,7 +59,6 @@ declare_oxc_lint!(
     /// missing handling of error conditions. In the worst case, unhandled
     /// promise rejections can cause your application to crash.
     ///
-    ///
     /// ### Examples
     ///
     /// Examples of **incorrect** code for this rule:

@@ -400,6 +400,9 @@ impl<'a> IsolatedDeclarations<'a> {
                                 transformed_variable_declarator.remove(&declarator.span)
                             }),
                         );
+                        if declarations.is_empty() {
+                            continue;
+                        }
                         new_stmts.push(Statement::VariableDeclaration(
                             self.ast.alloc_variable_declaration(
                                 decl.span,

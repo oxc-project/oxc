@@ -1,6 +1,9 @@
 #![expect(clippy::needless_pass_by_value, clippy::missing_errors_doc)]
 
-#[cfg(all(feature = "allocator", not(target_arch = "arm"), not(target_family = "wasm")))]
+#[cfg(all(
+    feature = "allocator",
+    not(any(target_arch = "arm", target_os = "freebsd", target_family = "wasm"))
+))]
 #[global_allocator]
 static ALLOC: mimalloc_safe::MiMalloc = mimalloc_safe::MiMalloc;
 
@@ -42,10 +45,9 @@ pub fn minify(
     let scoping = Minifier::new(minifier_options).build(&allocator, &mut program).scoping;
 
     let mut codegen_options = match &options.codegen {
-        Some(Either::A(false)) => CodegenOptions { minify: false, ..CodegenOptions::default() },
-        None | Some(Either::A(true)) => {
-            CodegenOptions { minify: true, ..CodegenOptions::default() }
-        }
+        // Need to remove all comments.
+        Some(Either::A(false)) => CodegenOptions { minify: false, ..CodegenOptions::minify() },
+        None | Some(Either::A(true)) => CodegenOptions::minify(),
         Some(Either::B(o)) => CodegenOptions::from(o),
     };
 

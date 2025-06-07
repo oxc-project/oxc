@@ -1,11 +1,10 @@
 // Auto-generated code, DO NOT EDIT DIRECTLY!
-// To edit this generated file you have to edit `tasks/ast_tools/src/derives/estree.rs`
+// To edit this generated file you have to edit `tasks/ast_tools/src/derives/estree.rs`.
 
 #![allow(unused_imports, clippy::match_same_arms, clippy::semicolon_if_nothing_returned)]
 
 use oxc_estree::{
-    ESTree, FlatStructSerializer, JsonSafeString, Serializer, StructSerializer,
-    ser::{AppendTo, AppendToConcat},
+    Concat2, Concat3, ESTree, FlatStructSerializer, JsonSafeString, Serializer, StructSerializer,
 };
 
 use crate::raw_transfer_types::*;
@@ -28,6 +27,7 @@ impl ESTree for Error<'_> {
         state.serialize_field("message", &self.message);
         state.serialize_field("labels", &self.labels);
         state.serialize_field("helpMessage", &self.help_message);
+        state.serialize_field("codeframe", &self.codeframe);
         state.end();
     }
 }

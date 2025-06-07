@@ -7,7 +7,7 @@ use oxc_ecmascript::{BoundNames, IsSimpleParameterList, PropName};
 use oxc_span::{GetSpan, ModuleKind, Span};
 use oxc_syntax::{
     number::NumberBase,
-    operator::{AssignmentOperator, BinaryOperator, LogicalOperator, UnaryOperator},
+    operator::{AssignmentOperator, UnaryOperator},
     scope::ScopeFlags,
     symbol::SymbolFlags,
 };
@@ -1010,56 +1010,6 @@ pub fn check_object_expression(obj_expr: &ObjectExpression, ctx: &SemanticBuilde
                     }
                     prev_proto = Some(span);
                 }
-            }
-        }
-    }
-}
-
-fn unexpected_exponential(x0: &str, span1: Span) -> OxcDiagnostic {
-    OxcDiagnostic::error("Unexpected exponentiation expression")
-        .with_help(format!("Wrap {x0} expression in parentheses to enforce operator precedence"))
-        .with_label(span1)
-}
-
-pub fn check_binary_expression(binary_expr: &BinaryExpression, ctx: &SemanticBuilder<'_>) {
-    if binary_expr.operator == BinaryOperator::Exponential {
-        match binary_expr.left {
-            // async () => await 5 ** 6
-            // async () => await -5 ** 6
-            Expression::AwaitExpression(_) => {
-                ctx.error(unexpected_exponential("await", binary_expr.span));
-            }
-            // -5 ** 6
-            Expression::UnaryExpression(_) => {
-                ctx.error(unexpected_exponential("unary", binary_expr.span));
-            }
-            _ => {}
-        }
-    }
-}
-
-fn mixed_coalesce(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::error("Logical expressions and coalesce expressions cannot be mixed")
-        .with_help("Wrap either expression by parentheses")
-        .with_label(span)
-}
-
-pub fn check_logical_expression(logical_expr: &LogicalExpression, ctx: &SemanticBuilder<'_>) {
-    // check mixed coalesce
-    // a ?? b || c - a ?? (b || c)
-    // a ?? b && c - a ?? (b && c)
-    // a || b ?? c - (a || b) ?? c
-    // a && b ?? c - (a && b) ?? c
-    if logical_expr.operator == LogicalOperator::Coalesce {
-        let mut maybe_mixed_coalesce_expr = None;
-        if let Expression::LogicalExpression(rhs) = &logical_expr.right {
-            maybe_mixed_coalesce_expr = Some(rhs);
-        } else if let Expression::LogicalExpression(lhs) = &logical_expr.left {
-            maybe_mixed_coalesce_expr = Some(lhs);
-        }
-        if let Some(expr) = maybe_mixed_coalesce_expr {
-            if matches!(expr.operator, LogicalOperator::And | LogicalOperator::Or) {
-                ctx.error(mixed_coalesce(logical_expr.span));
             }
         }
     }

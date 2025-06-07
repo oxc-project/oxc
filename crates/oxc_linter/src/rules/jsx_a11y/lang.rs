@@ -35,14 +35,13 @@ declare_oxc_lint!(
     /// Language settings become an issue for users who speak multiple languages
     /// and access website in more than one language.
     ///
-    ///
     /// ### Examples
     ///
     /// Examples of **incorrect** code for this rule:
     /// ```jsx
     /// <html>
     /// <html lang="foo">
-    /// ````
+    /// ```
     ///
     /// Examples of **correct** code for this rule:
     /// ```jsx

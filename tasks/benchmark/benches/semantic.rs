@@ -2,15 +2,14 @@ use oxc_allocator::Allocator;
 use oxc_benchmark::{BenchmarkId, Criterion, black_box, criterion_group, criterion_main};
 use oxc_parser::Parser;
 use oxc_semantic::SemanticBuilder;
-use oxc_span::SourceType;
 use oxc_tasks_common::TestFiles;
 
 fn bench_semantic(criterion: &mut Criterion) {
     let mut group = criterion.benchmark_group("semantic");
-    for file in TestFiles::complicated().files() {
+    for file in TestFiles::minimal().files() {
         let id = BenchmarkId::from_parameter(&file.file_name);
-        let source_text = file.source_text.as_str();
-        let source_type = SourceType::from_path(&file.file_name).unwrap();
+        let source_text = &file.source_text;
+        let source_type = file.source_type;
 
         // Create `Allocator` outside of `bench_function`, so same allocator is used for
         // both the warmup and measurement phases

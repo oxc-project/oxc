@@ -218,7 +218,7 @@ impl<'a> SymbolTester<'a> {
         self
     }
 
-    pub fn is_in_scope(mut self, expected_flags: ScopeFlags) -> Self {
+    pub fn in_scope(mut self, expected_flags: ScopeFlags) -> Self {
         let target_name: &str = self.target_symbol_name.as_ref();
         self.test_result = match self.test_result {
             Ok(symbol_id) => {
@@ -237,7 +237,7 @@ impl<'a> SymbolTester<'a> {
         self
     }
 
-    pub fn is_not_in_scope(mut self, excluded_flags: ScopeFlags) -> Self {
+    pub fn not_in_scope(mut self, excluded_flags: ScopeFlags) -> Self {
         let target_name: &str = self.target_symbol_name.as_ref();
         self.test_result = match self.test_result {
             Ok(symbol_id) => {

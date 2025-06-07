@@ -4,7 +4,7 @@ use serde_json::json;
 
 use oxc::{
     allocator::Allocator,
-    codegen::{CodeGenerator, CodegenOptions},
+    codegen::{Codegen, CodegenOptions},
     minifier::{Minifier, MinifierOptions},
     parser::Parser,
     semantic::SemanticBuilder,
@@ -200,7 +200,7 @@ impl Test262RuntimeCase {
             None
         };
 
-        let mut text = CodeGenerator::new()
+        let mut text = Codegen::new()
             .with_options(CodegenOptions { minify, ..CodegenOptions::default() })
             .with_scoping(symbol_table)
             .build(&program)

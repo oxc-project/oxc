@@ -6,17 +6,18 @@
 
 use std::{
     borrow::Cow,
-    cmp::{max, min},
+    cmp::{Ordering, max, min},
     num,
 };
 
+use phf_codegen::Map as PhfMapGen;
 use proc_macro2::TokenStream;
 use quote::quote;
 use rustc_hash::FxHashMap;
-use syn::Ident;
+use syn::{Expr, Ident, parse_str};
 
 use crate::{
-    Codegen, Generator,
+    AST_MACROS_CRATE_PATH, Codegen, Generator,
     output::{Output, output_path},
     schema::{
         Def, Discriminant, EnumDef, PrimitiveDef, Schema, StructDef, TypeDef, TypeId, Visibility,
@@ -40,9 +41,12 @@ impl Generator for AssertLayouts {
         }
     }
 
-    /// Generate assertions that calculated layouts are correct.
+    /// Generate assertions that calculated layouts are correct,
+    /// and struct layout data for `oxc_ast_macros` crate.
     fn generate_many(&self, schema: &Schema, _codegen: &Codegen) -> Vec<Output> {
-        generate_assertions(schema)
+        let mut outputs = generate_assertions(schema);
+        outputs.push(generate_struct_details(schema));
+        outputs
     }
 }
 
@@ -55,12 +59,14 @@ fn calculate_layout(type_id: TypeId, schema: &mut Schema) -> &Layout {
         layout.layout_64.align == 0
     }
 
+    let span_type_id = schema.type_names["Span"];
+
     let type_def = &schema.types[type_id];
     match type_def {
         TypeDef::Struct(struct_def) => {
             if is_not_calculated(&struct_def.layout) {
                 schema.struct_def_mut(type_id).layout =
-                    calculate_layout_for_struct(type_id, schema);
+                    calculate_layout_for_struct(type_id, span_type_id, schema);
             }
             &schema.struct_def(type_id).layout
         }
@@ -110,26 +116,110 @@ fn calculate_layout(type_id: TypeId, schema: &mut Schema) -> &Layout {
 /// All structs in AST are `#[repr(C)]`. In a `#[repr(C)]` struct, compiler does not re-order the fields,
 /// so they are stored in memory in same order as they're defined.
 ///
-/// Each field is aligned to the alignment of the field type. Padding bytes are added between fields
-/// as necessary to ensure this.
+/// So we determine a field order here which avoids excess padding. [`generate_struct_details`] generates
+/// code describing this field order, and `#[ast]` macro re-orders the fields.
+///
+/// This gives us the stability guarantees of `#[repr(C)]` without the downside of structs which are
+/// larger than they need to be due to excess padding.
 ///
 /// Alignment of the struct is the highest alignment of its fields (or 1 if no fields).
 /// Size of struct is a multiple of its alignment.
 ///
 /// A struct has a niche if any of its fields has a niche. The niche will be the largest niche
 /// in any of its fields. Padding bytes are not used as niches.
-fn calculate_layout_for_struct(type_id: TypeId, schema: &mut Schema) -> Layout {
+///
+/// # Field order
+///
+/// Fields are ordered according to the following rules, in order:
+///
+/// 1. If field is `span: Span` it goes first.
+/// 2. If field is ZST, it goes last.
+/// 3. Fields with higher alignment on 64-bit systems go first.
+/// 4. Fields with higher alignment on 32-bit systems go first.
+/// 5. Otherwise, retain original field order.
+///
+/// This ordering scheme does not match `#[repr(Rust)]`, but is equally efficient in terms of packing
+/// structs into as few bytes as possible.
+///
+/// `#[repr(Rust)]` would move fields with niches (e.g. `Expression`) earlier than fields without
+/// niches (e.g. `Option<Box<T>>`), but we don't do that. AST is generally visited in source order,
+/// so keeping fields in original order as much as possible is preferable for CPU caching.
+///
+/// `span: Span` is always first to make `Expression::get_span` etc branchless, because the `span` field
+/// is in the same position for all of `Expression`'s variants.
+///
+/// Ordering by 64-bit alignment first, then 32-alignment creates a layout that is optimally packed
+/// on both platforms. Fields will be ordered `u64`, `usize`, `u32`, so `usize` will have same alignment
+/// as `u64` fields that come before it on 64-bit systems, and will have same alignment as
+/// `u32`s that come after it on 32-bit systems. So it never results in padding on either platform.
+///
+/// Note: "usize" here also includes pointer-aligned types e.g. `Box`, `Vec`, `Atom`, `&str`.
+/// "u64" includes other 8-byte aligned types e.g. `f64`, `Span`.
+///
+/// ZSTs need to go last so that they don't have same offset as another sized field.
+/// If they did, this would screw up sorting the fields in `generate_struct_details`.
+fn calculate_layout_for_struct(
+    type_id: TypeId,
+    span_type_id: TypeId,
+    schema: &mut Schema,
+) -> Layout {
+    // Get layout of fields' types and calculate optimal field order
+    struct FieldData {
+        index: usize,
+        layout: Layout,
+        is_span: bool,
+        is_zst: bool,
+    }
+
+    let mut field_order = schema
+        .struct_def(type_id)
+        .field_indices()
+        .map(|index| {
+            let field = &schema.struct_def(type_id).fields[index];
+            let is_span = field.type_id == span_type_id && field.name() == "span";
+            let layout = calculate_layout(field.type_id, schema);
+            let is_zst = layout.layout_64.size == 0 && layout.layout_32.size == 0;
+            FieldData { index, layout: layout.clone(), is_span, is_zst }
+        })
+        .collect::<Vec<_>>();
+
+    field_order.sort_unstable_by(|f1, f2| {
+        let mut order = f1.is_span.cmp(&f2.is_span).reverse();
+        if order == Ordering::Equal {
+            order = f1.is_zst.cmp(&f2.is_zst);
+            if order == Ordering::Equal {
+                order = f1.layout.layout_64.align.cmp(&f2.layout.layout_64.align).reverse();
+                if order == Ordering::Equal {
+                    order = f1.layout.layout_32.align.cmp(&f2.layout.layout_32.align).reverse();
+                    if order == Ordering::Equal {
+                        order = f1.index.cmp(&f2.index);
+                    }
+                }
+            }
+        }
+        order
+    });
+
+    // Calculate offset of each field, and size + alignment of struct
     let mut layout_64 = PlatformLayout::from_size_align(0, 1);
     let mut layout_32 = PlatformLayout::from_size_align(0, 1);
 
-    for field_index in schema.struct_def(type_id).field_indices() {
-        let field_type_id = schema.struct_def(type_id).fields[field_index].type_id;
-        let field_layout = calculate_layout(field_type_id, schema);
-
-        #[expect(clippy::items_after_statements)]
-        fn update(layout: &mut PlatformLayout, field_layout: &PlatformLayout) -> u32 {
-            // Field needs to be aligned
-            let offset = layout.size.next_multiple_of(field_layout.align);
+    let struct_def = schema.struct_def_mut(type_id);
+    for field_data in &field_order {
+        fn update(
+            layout: &mut PlatformLayout,
+            field_layout: &PlatformLayout,
+            struct_name: &str,
+        ) -> u32 {
+            // Field should already be aligned as we've re-ordered fields to ensure they're tightly packed.
+            // This shouldn't break as long as all fields are aligned on `< 16`.
+            // If we introduce a `u128` into AST, we might need to change the field ordering algorithm
+            // to fill in the gap between `span` and the `u128` field.
+            let offset = layout.size;
+            assert!(
+                offset % field_layout.align == 0,
+                "Incorrect alignment for struct fields in `{struct_name}`"
+            );
 
             // Update alignment
             layout.align = max(layout.align, field_layout.align);
@@ -138,7 +228,7 @@ fn calculate_layout_for_struct(type_id: TypeId, schema: &mut Schema) -> Layout {
             // Take the largest niche. Preference for (in order):
             // * Largest single range of niche values.
             // * Largest number of niche values at start of range.
-            // * Earlier field.
+            // * Earlier field (earlier after re-ordering).
             if let Some(field_niche) = &field_layout.niche {
                 if layout.niche.as_ref().is_none_or(|niche| {
                     field_niche.count_max() > niche.count_max()
@@ -158,11 +248,11 @@ fn calculate_layout_for_struct(type_id: TypeId, schema: &mut Schema) -> Layout {
             offset
         }
 
-        let offset_64 = update(&mut layout_64, &field_layout.layout_64);
-        let offset_32 = update(&mut layout_32, &field_layout.layout_32);
+        let offset_64 = update(&mut layout_64, &field_data.layout.layout_64, struct_def.name());
+        let offset_32 = update(&mut layout_32, &field_data.layout.layout_32, struct_def.name());
 
         // Store offset on `field`
-        let field = &mut schema.struct_def_mut(type_id).fields[field_index];
+        let field = &mut struct_def.fields[field_data.index];
         field.offset = Offset { offset_64, offset_32 };
     }
 
@@ -301,7 +391,7 @@ fn calculate_layout_for_box() -> Layout {
 /// They have a single niche on the first field - the pointer which is `NonNull`.
 fn calculate_layout_for_vec() -> Layout {
     Layout {
-        layout_64: PlatformLayout::from_size_align_niche(32, 8, Niche::new(0, 8, 1, 0)),
+        layout_64: PlatformLayout::from_size_align_niche(24, 8, Niche::new(0, 8, 1, 0)),
         layout_32: PlatformLayout::from_size_align_niche(16, 4, Niche::new(0, 4, 1, 0)),
     }
 }
@@ -437,8 +527,22 @@ fn generate_layout_assertions_for_struct<'s>(
     assertions: &mut FxHashMap<&'s str, (/* 64 bit */ TokenStream, /* 32 bit */ TokenStream)>,
     schema: &'s Schema,
 ) {
-    fn r#gen(struct_def: &StructDef, is_64: bool, struct_ident: &Ident) -> TokenStream {
+    fn r#gen(
+        struct_def: &StructDef,
+        is_64: bool,
+        struct_ident: &Ident,
+        schema: &Schema,
+    ) -> TokenStream {
         let layout = struct_def.platform_layout(is_64);
+
+        let fields_total_bytes: u32 = struct_def
+            .fields
+            .iter()
+            .map(|field| field.type_def(schema).platform_layout(is_64).size)
+            .sum();
+        let padding_bytes = layout.size - fields_total_bytes;
+        let padding_comment = format!("@ Padding: {padding_bytes} bytes");
+        let padding_comment = quote!( #[doc = #padding_comment] );
 
         let size_align_assertions = generate_size_align_assertions(layout, struct_ident);
 
@@ -457,6 +561,8 @@ fn generate_layout_assertions_for_struct<'s>(
         });
 
         quote! {
+            ///@@line_break
+            #padding_comment
             #size_align_assertions
             #(#offset_asserts)*
         }
@@ -466,8 +572,8 @@ fn generate_layout_assertions_for_struct<'s>(
         assertions.entry(struct_def.file(schema).krate()).or_default();
 
     let ident = struct_def.ident();
-    assertions_64.extend(r#gen(struct_def, true, &ident));
-    assertions_32.extend(r#gen(struct_def, false, &ident));
+    assertions_64.extend(r#gen(struct_def, true, &ident, schema));
+    assertions_32.extend(r#gen(struct_def, false, &ident, schema));
 }
 
 /// Generate layout assertions for an enum.
@@ -481,7 +587,9 @@ fn generate_layout_assertions_for_enum<'s>(
         assertions.entry(enum_def.file(schema).krate()).or_default();
 
     let ident = enum_def.ident();
+    add_line_break(assertions_64);
     assertions_64.extend(generate_size_align_assertions(enum_def.layout_64(), &ident));
+    add_line_break(assertions_32);
     assertions_32.extend(generate_size_align_assertions(enum_def.layout_32(), &ident));
 }
 
@@ -490,7 +598,6 @@ fn generate_size_align_assertions(layout: &PlatformLayout, ident: &Ident) -> Tok
     let size = number_lit(layout.size);
     let align = number_lit(layout.align);
     quote! {
-        ///@@line_break
         assert!(size_of::<#ident>() == #size);
         assert!(align_of::<#ident>() == #align);
     }
@@ -513,7 +620,7 @@ fn template(krate: &str, assertions_64: &TokenStream, assertions_32: &TokenStrea
             use nonmax::NonMaxU32;
 
             ///@@line_break
-            use crate::{module_record::*, number::*, operator::*, reference::*, scope::*, symbol::*};
+            use crate::{comment_node::*, module_record::*, number::*, operator::*, reference::*, scope::*, symbol::*};
         },
         "napi/parser" => quote! {
             use crate::raw_transfer_types::*;
@@ -544,4 +651,74 @@ fn template(krate: &str, assertions_64: &TokenStream, assertions_32: &TokenStrea
         #[cfg(not(any(target_pointer_width = "64", target_pointer_width = "32")))]
         const _: () = panic!("Platforms with pointer width other than 64 or 32 bit are not supported");
     }
+}
+
+/// Generate struct field orders for `oxc_ast_macros` crate.
+///
+/// `#[ast]` macro will re-order struct fields in order we provide here.
+fn generate_struct_details(schema: &Schema) -> Output {
+    let mut map = PhfMapGen::new();
+    for type_def in &schema.types {
+        let TypeDef::Struct(struct_def) = type_def else { continue };
+
+        // Get indexes of fields in ascending order of offset.
+        // Field index is included in sorting so any ZST fields remain in same order as in source
+        // (multiple ZST fields will have same offset as each other).
+        //
+        // If struct as written already has all fields in offset order then no-reordering is required,
+        // in which case output `None`.
+        let mut field_offsets_and_source_indexes = struct_def
+            .fields
+            .iter()
+            .enumerate()
+            .map(|(index, field)| (field.offset.offset_64, index))
+            .collect::<Vec<_>>();
+        field_offsets_and_source_indexes.sort_unstable();
+
+        let field_order = if field_offsets_and_source_indexes
+            .iter()
+            .enumerate()
+            .any(|(new_index, &(_, source_index))| source_index != new_index)
+        {
+            // Field order needs to change from source order.
+            // Remap to `Vec` indexed by source field index,
+            // with each entry containing the new index after re-ordering
+            let mut source_and_new_indexes = field_offsets_and_source_indexes
+                .into_iter()
+                .enumerate()
+                .map(|(new_index, (_, source_index))| (source_index, new_index))
+                .collect::<Vec<_>>();
+            source_and_new_indexes.sort_unstable_by_key(|&(source_index, _)| source_index);
+            let new_indexes = source_and_new_indexes
+                .into_iter()
+                .map(|(_, new_index)| number_lit(u8::try_from(new_index).unwrap()));
+            quote!(Some(&[#(#new_indexes),*]))
+        } else {
+            // Field order stays as it is in source
+            quote!(None)
+        };
+
+        let details = quote!( StructDetails { field_order: #field_order } );
+
+        map.entry(struct_def.name(), &details.to_string());
+    }
+    let map = parse_str::<Expr>(&map.build().to_string()).unwrap();
+
+    let code = quote! {
+        use crate::ast::StructDetails;
+
+        ///@@line_break
+        /// Details of how `#[ast]` macro should modify structs.
+        #[expect(clippy::unreadable_literal)]
+        pub static STRUCTS: phf::Map<&'static str, StructDetails> = #map;
+    };
+
+    Output::Rust { path: output_path(AST_MACROS_CRATE_PATH, "structs.rs"), tokens: code }
+}
+
+/// Add a line break to [`TokenStream`].
+fn add_line_break(tokens: &mut TokenStream) {
+    tokens.extend(quote! {
+        ///@@line_break
+    });
 }

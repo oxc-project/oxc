@@ -59,6 +59,8 @@ const PROMISE_TEST_PATH: &str =
 const VITEST_TEST_PATH: &str =
     "https://raw.githubusercontent.com/veritem/eslint-plugin-vitest/main/tests";
 
+const REGEXP_TEST_PATH: &str = "https://raw.githubusercontent.com/ota-meshi/eslint-plugin-regexp/refs/heads/master/tests/lib/rules";
+
 struct TestCase {
     source_text: String,
     code: Option<String>,
@@ -597,6 +599,7 @@ pub enum RuleKind {
     Node,
     Promise,
     Vitest,
+    Regexp,
 }
 
 impl RuleKind {
@@ -615,6 +618,7 @@ impl RuleKind {
             "n" => Self::Node,
             "promise" => Self::Promise,
             "vitest" => Self::Vitest,
+            "regexp" => Self::Regexp,
             _ => Self::ESLint,
         }
     }
@@ -637,6 +641,7 @@ impl Display for RuleKind {
             Self::Node => "eslint-plugin-n",
             Self::Promise => "eslint-plugin-promise",
             Self::Vitest => "eslint-plugin-vitest",
+            Self::Regexp => "eslint-plugin-regexp",
         };
         f.write_str(kind_name)
     }
@@ -665,6 +670,7 @@ fn main() {
         RuleKind::Node => format!("{NODE_TEST_PATH}/{kebab_rule_name}.js"),
         RuleKind::Promise => format!("{PROMISE_TEST_PATH}/{kebab_rule_name}.js"),
         RuleKind::Vitest => format!("{VITEST_TEST_PATH}/{kebab_rule_name}.test.ts"),
+        RuleKind::Regexp => format!("{REGEXP_TEST_PATH}/{kebab_rule_name}.ts"),
         RuleKind::Oxc => String::new(),
     };
     let language = match rule_kind {
@@ -787,6 +793,7 @@ fn get_mod_name(rule_kind: RuleKind) -> String {
         RuleKind::Promise => "promise".into(),
         RuleKind::Vitest => "vitest".into(),
         RuleKind::Node => "node".into(),
+        RuleKind::Regexp => "regexp".into(),
     }
 }
 
@@ -806,10 +813,20 @@ fn add_rules_entry(ctx: &Context, rule_kind: RuleKind) -> Result<(), Box<dyn std
         .ok_or(format!("failed to find end of '{mod_def}' module in {rules_path}"))?;
     let mod_rules = &rules[mod_start..(*mod_end + mod_start)];
 
-    // find the rule name (`pub mod xyz;`) that comes alphabetically before the new rule mod def,
-    // otherwise just append it to the mod.
-    let rule_mod_def = format!("pub mod {};", ctx.kebab_rule_name);
-    let rule_mod_def_start = mod_rules
+    // Check if the rule mod def already exists
+    let rule_mod_def = format!("pub mod {};", ctx.snake_rule_name);
+    let mut needs_mod_insertion = true;
+
+    if mod_rules.contains(&rule_mod_def) {
+        needs_mod_insertion = false;
+        println!("Rule module '{}' already exists, skipping mod insertion", ctx.snake_rule_name);
+    }
+
+    // Insert the rule mod def if it doesn't exist
+    if needs_mod_insertion {
+        // Find the rule name (`pub mod xyz;`) that comes alphabetically before the new rule mod def,
+        // otherwise just append it to the mod.
+        let rule_mod_def_start = mod_rules
         .lines()
         .filter_map(|line| line.split_once("pub mod ").map(|(_, rest)| rest))
         .position(|rule_mod| rule_mod < rule_mod_def.as_str())
@@ -819,41 +836,61 @@ fn add_rules_entry(ctx: &Context, rule_kind: RuleKind) -> Result<(), Box<dyn std
             "failed to find where to insert the new rule mod def ({rule_mod_def}) in {rules_path}"
         ))?;
 
-    rules.insert_str(
-        mod_start + rule_mod_def_start,
-        &format!("    pub mod {};\n", ctx.snake_rule_name),
-    );
-
+        rules.insert_str(
+            mod_start + rule_mod_def_start,
+            &format!("    pub mod {};\n", ctx.snake_rule_name),
+        );
+    }
     // then, insert `{mod_name}::{rule_name};` in the `declare_all_lint_rules!` macro block
     // in the correct position, alphabetically.
     let declare_all_lint_rules_start = rules
         .find("declare_all_lint_rules!")
         .ok_or(format!("failed to find 'declare_all_lint_rules!' in {rules_path}"))?;
-    let rule_def = format!("{mod_name}::{};", ctx.snake_rule_name);
-    let rule_def_start = rules[declare_all_lint_rules_start..]
-        .lines()
-        .filter_map(|line| line.trim().split_once("::"))
-        .find_map(|(plugin, rule)| {
-            if plugin == mod_name && rule > ctx.kebab_rule_name.as_str() {
-                let def = format!("{plugin}::{rule}");
-                rules.find(&def)
-            } else {
-                None
-            }
-        })
-        .ok_or(format!(
-            "failed to find where to insert the new rule def ({rule_def}) in {rules_path}"
-        ))?;
-    rules.insert_str(
-        rule_def_start,
-        &format!(
-            "{mod_name}::{rule_name},\n    ",
-            mod_name = mod_name,
-            rule_name = ctx.snake_rule_name
-        ),
-    );
+    let rule_def = format!("{mod_name}::{},", ctx.snake_rule_name);
+    let mut needs_rule_insertion = true;
 
-    std::fs::write(rules_path, rules)?;
+    if rules[declare_all_lint_rules_start..].contains(&rule_def) {
+        needs_rule_insertion = false;
+        println!(
+            "Rule '{}::{}' already declared, skipping rule insertion",
+            mod_name, ctx.snake_rule_name
+        );
+    }
+
+    // Insert the rule declaration if it doesn't exist
+    if needs_rule_insertion {
+        let rule_def_start = rules[declare_all_lint_rules_start..]
+            .lines()
+            .filter_map(|line| line.trim().split_once("::"))
+            .find_map(|(plugin, rule)| {
+                if plugin == mod_name && rule > ctx.kebab_rule_name.as_str() {
+                    let def = format!("{plugin}::{rule}");
+                    rules.find(&def)
+                } else {
+                    None
+                }
+            })
+            .ok_or(format!(
+                "failed to find where to insert the new rule def ({rule_def}) in {rules_path}"
+            ))?;
+
+        rules.insert_str(
+            rule_def_start,
+            &format!(
+                "{mod_name}::{rule_name},\n    ",
+                mod_name = mod_name,
+                rule_name = ctx.snake_rule_name
+            ),
+        );
+    }
+
+    // Only write if we made changes
+    if needs_mod_insertion || needs_rule_insertion {
+        std::fs::write(rules_path, rules)?;
+        println!("Updated {rules_path}",);
+    } else {
+        println!("No changes needed - rule already exists in {rules_path}",);
+    }
 
     Ok(())
 }

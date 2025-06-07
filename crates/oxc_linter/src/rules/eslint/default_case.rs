@@ -86,17 +86,17 @@ declare_oxc_lint!(
     /// }
     /// ```
     ///
-    ///  ### Options
+    /// ### Options
     ///
-    ///  ### commentPattern
+    /// #### commentPattern
     ///
-    /// `{ "commentPattern": string }`
+    /// `{ type: string, default: "/^no default$/i" }`
     ///
-    ///  This option is for specifying an alternative regular expression which
-    ///  will override the default `/^no default$/i` comment test pattern.
+    /// This option is for specifying an alternative regular expression which
+    /// will override the default `/^no default$/i` comment test pattern.
     ///
-    ///  For example if `{ "commentPattern": "^skip\\sdefault" }` were used
-    ///  then the following example would not violate the rule:
+    /// For example if `{ "commentPattern": "^skip\\sdefault" }` were used
+    /// then the following example would not violate the rule:
     ///
     /// ```javascript
     /// switch(a) {

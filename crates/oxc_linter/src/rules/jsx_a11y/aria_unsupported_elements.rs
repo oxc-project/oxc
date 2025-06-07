@@ -19,7 +19,7 @@ declare_oxc_lint!(
     /// `meta`, `html`, `script`, `style`. This rule enforces that these DOM
     /// elements do not contain the `role` and/or `aria-*` props.
     ///
-    /// ### Example
+    /// ### Examples
     ///
     /// Examples of **incorrect** code for this rule:
     /// ```jsx
@@ -30,7 +30,6 @@ declare_oxc_lint!(
     /// ```jsx
     ///	<meta charset="UTF-8" />
     /// ```
-    ///
     AriaUnsupportedElements,
     jsx_a11y,
     correctness,
@@ -40,9 +39,9 @@ declare_oxc_lint!(
 #[derive(Debug, Default, Clone)]
 pub struct AriaUnsupportedElements;
 
-fn aria_unsupported_elements_diagnostic(span: Span, x1: &str) -> OxcDiagnostic {
+fn aria_unsupported_elements_diagnostic(span: Span, attr_name: &str) -> OxcDiagnostic {
     OxcDiagnostic::warn("This element does not support ARIA roles, states and properties.")
-        .with_help(format!("Try removing the prop `{x1}`."))
+        .with_help(format!("Try removing the prop `{attr_name}`."))
         .with_label(span)
 }
 

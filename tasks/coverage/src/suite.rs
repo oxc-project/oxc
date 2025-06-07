@@ -47,12 +47,16 @@ pub struct CoverageReport<'a, T> {
 pub trait Suite<T: Case> {
     fn run(&mut self, name: &str, args: &AppArgs) {
         self.read_test_cases(name, args);
-        self.get_test_cases_mut().par_iter_mut().for_each(|case| {
-            if args.debug {
+
+        if args.debug {
+            self.get_test_cases_mut().iter_mut().for_each(|case| {
                 println!("{}", case.path().to_string_lossy());
-            }
-            case.run();
-        });
+                case.run();
+            });
+        } else {
+            self.get_test_cases_mut().par_iter_mut().for_each(Case::run);
+        }
+
         self.run_coverage(name, args);
     }
 
@@ -121,7 +125,7 @@ pub trait Suite<T: Case> {
         let cases = paths
             .into_par_iter()
             .map(|path| {
-                let code = fs::read_to_string(&path).unwrap_or_else(|_| {
+                let mut code = fs::read_to_string(&path).unwrap_or_else(|_| {
                     // TypeScript tests may contain utf_16 encoding files
                     let file = fs::File::open(&path).unwrap();
                     let mut content = String::new();
@@ -134,8 +138,10 @@ pub trait Suite<T: Case> {
                 });
 
                 let path = path.strip_prefix(&test_path).unwrap().to_owned();
-                // remove the Byte Order Mark in some of the TypeScript files
-                let code = code.trim_start_matches('\u{feff}').to_string();
+                // Remove the Byte Order Mark in some of the TypeScript files
+                if code.starts_with('\u{feff}') {
+                    code.remove(0);
+                }
                 T::new(path, code)
             })
             .filter(|case| !case.skip_test_case())
@@ -314,8 +320,7 @@ pub trait Case: Sized + Sync + Send + UnwindSafe {
     #[expect(clippy::unused_async)]
     async fn run_async(&mut self) {}
 
-    /// Execute the parser once and get the test result
-    fn execute(&mut self, source_type: SourceType) -> TestResult {
+    fn parse(&self, code: &str, source_type: SourceType) -> Result<(), (String, bool)> {
         let path = self.path();
 
         let mut driver = Driver {
@@ -328,16 +333,15 @@ pub trait Case: Sized + Sync + Send + UnwindSafe {
             // To run in strict mode, the test contents must be modified prior to execution--
             // a "use strict" directive must be inserted as the initial character sequence of the file,
             // followed by a semicolon (;) and newline character (\n): "use strict";
-            Cow::Owned(format!("'use strict';\n{}", self.code()))
+            Cow::Owned(format!("'use strict';\n{code}"))
         } else {
-            Cow::Borrowed(self.code())
+            Cow::Borrowed(code)
         };
 
         driver.run(&source_text, source_type);
         let errors = driver.errors();
-
-        let result = if errors.is_empty() {
-            Ok(String::new())
+        if errors.is_empty() {
+            Ok(())
         } else {
             let handler =
                 GraphicalReportHandler::new().with_theme(GraphicalTheme::unicode_nocolor());
@@ -349,15 +353,23 @@ pub trait Case: Sized + Sync + Send + UnwindSafe {
                 ));
                 handler.render_report(&mut output, error.as_ref()).unwrap();
             }
-            Err(output)
-        };
+            Err((output, driver.panicked))
+        }
+    }
 
+    /// Execute the parser once and get the test result
+    fn execute(&mut self, source_type: SourceType) -> TestResult {
+        let result = self.parse(self.code(), source_type);
+        self.evaluate_result(result)
+    }
+
+    fn evaluate_result(&self, result: Result<(), (String, bool)>) -> TestResult {
         let should_fail = self.should_fail();
         match result {
-            Err(err) if should_fail => TestResult::CorrectError(err, driver.panicked),
-            Err(err) if !should_fail => TestResult::ParseError(err, driver.panicked),
-            Ok(_) if should_fail => TestResult::IncorrectlyPassed,
-            Ok(_) if !should_fail => TestResult::Passed,
+            Err((err, panicked)) if should_fail => TestResult::CorrectError(err, panicked),
+            Err((err, panicked)) if !should_fail => TestResult::ParseError(err, panicked),
+            Ok(()) if should_fail => TestResult::IncorrectlyPassed,
+            Ok(()) if !should_fail => TestResult::Passed,
             _ => unreachable!(),
         }
     }
@@ -377,14 +389,15 @@ pub trait Case: Sized + Sync + Send + UnwindSafe {
                 }
             }
             TestResult::GenericError(case, error) => {
-                writer.write_all(format!("{path}\n").as_bytes())?;
-                writer.write_all(format!("{case} error: {error}\n\n").as_bytes())?;
+                writer.write_all(format!("{case} Error: {path}\n",).as_bytes())?;
+                writer.write_all(format!("{error}\n").as_bytes())?;
             }
             TestResult::IncorrectlyPassed => {
                 writer.write_all(format!("Expect Syntax Error: {path}\n").as_bytes())?;
             }
             TestResult::Passed | TestResult::ToBeRun | TestResult::CorrectError(..) => {}
         }
+        writer.write_all(b"\n")?;
         Ok(())
     }
 

@@ -32,9 +32,10 @@ declare_oxc_lint!(
     /// implicit/default role property on element.
     ///
     /// ### Why is this bad?
+    ///
     /// Redundant roles can lead to confusion and verbosity in the codebase.
     ///
-    /// ### Example
+    /// ### Examples
     ///
     /// Examples of **incorrect** code for this rule:
     /// ```jsx

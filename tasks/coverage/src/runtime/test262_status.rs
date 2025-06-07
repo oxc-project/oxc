@@ -14,7 +14,7 @@ pub fn get_v8_test262_failure_paths() -> &'static Vec<String> {
     STATUS.get_or_init(|| {
         let path = workspace_root().join("src/runtime/v8_test262.status");
 
-        let lines = if path.exists() {
+        if path.exists() {
             fs::read_to_string(&path).unwrap().lines().map(ToString::to_string).collect::<Vec<_>>()
         } else {
             let res = agent()
@@ -35,8 +35,6 @@ pub fn get_v8_test262_failure_paths() -> &'static Vec<String> {
             tests.dedup();
             fs::write(path, tests.join("\n")).unwrap();
             tests
-        };
-
-        lines
+        }
     })
 }

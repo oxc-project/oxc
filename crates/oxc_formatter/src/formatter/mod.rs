@@ -28,6 +28,7 @@ mod format_extensions;
 pub mod formatter;
 pub mod group_id;
 pub mod macros;
+pub mod parent_stack;
 pub mod prelude;
 #[cfg(debug_assertions)]
 pub mod printed_tokens;

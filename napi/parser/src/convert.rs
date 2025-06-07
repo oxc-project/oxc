@@ -92,6 +92,7 @@ impl From<&module_record::ExportEntry<'_>> for StaticExportEntry {
             import_name: ExportImportName::from(&e.import_name),
             export_name: ExportExportName::from(&e.export_name),
             local_name: ExportLocalName::from(&e.local_name),
+            is_type: e.is_type,
         }
     }
 }

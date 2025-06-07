@@ -36,11 +36,20 @@ declare_oxc_lint!(
     /// This is often undesirable due to variable hoisting, and moving declarations to the root of the program or function body can increase clarity.
     /// Note that block bindings (let, const) are not hoisted and therefore they are not affected by this rule.
     ///
+    /// ### Examples
     ///
-    /// ### Example
+    /// Examples of **incorrect** code for this rule:
     /// ```javascript
     /// if (test) {
     ///     function doSomethingElse () { }
+    /// }
+    /// ```
+    ///
+    /// Examples of **correct** code for this rule:
+    /// ```javascript
+    /// function doSomethingElse () { }
+    /// if (test) {
+    ///   // your code here
     /// }
     /// ```
     NoInnerDeclarations,

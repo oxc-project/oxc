@@ -71,7 +71,6 @@ declare_oxc_lint!(
     ///         expect(true).toMatchInlineSnapshot();
     ///     })
     /// })
-    ///
     /// ```
     ///
     /// Examples of **correct** code for this rule:
@@ -118,15 +117,10 @@ impl RequireLocalTestContextForConcurrentSnapshots {
 
             let test_or_describe_node_found =
                 ctx.nodes().ancestors(possible_jest_node.node.id()).any(|node| {
-                    if let AstKind::CallExpression(ancestor_call_expr) = node.kind() {
-                        if let Some(ancestor_member_expr) =
-                            ancestor_call_expr.callee.as_member_expression()
-                        {
-                            return is_test_or_describe_node(ancestor_member_expr);
-                        }
-                    }
-
-                    false
+                    node.kind()
+                        .as_call_expression()
+                        .and_then(|call_expr| call_expr.callee.as_member_expression())
+                        .is_some_and(|member_expr| is_test_or_describe_node(member_expr))
                 });
 
             if test_or_describe_node_found {

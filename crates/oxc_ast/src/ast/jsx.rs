@@ -37,14 +37,14 @@ pub struct JSXElement<'a> {
     /// Node location in source code
     pub span: Span,
     /// Opening tag of the element.
-    #[estree(via = JSXElementOpening)]
+    #[estree(via = JSXElementOpeningElement)]
     pub opening_element: Box<'a, JSXOpeningElement<'a>>,
-    /// Closing tag of the element.
-    /// [`None`] for self-closing tags.
-    pub closing_element: Option<Box<'a, JSXClosingElement<'a>>>,
     /// Children of the element.
     /// This can be text, other elements, or expressions.
     pub children: Vec<'a, JSXChild<'a>>,
+    /// Closing tag of the element.
+    /// [`None`] for self-closing tags.
+    pub closing_element: Option<Box<'a, JSXClosingElement<'a>>>,
 }
 
 /// JSX Opening Element
@@ -65,20 +65,17 @@ pub struct JSXElement<'a> {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
-#[estree(
-    add_fields(selfClosing = JSXOpeningElementSelfClosing),
-    field_order(span, attributes, name, selfClosing, type_arguments),
-)]
+#[estree(add_fields(selfClosing = JSXOpeningElementSelfClosing))]
 pub struct JSXOpeningElement<'a> {
     /// Node location in source code
     pub span: Span,
     /// The possibly-namespaced tag name, e.g. `Foo` in `<Foo />`.
     pub name: JSXElementName<'a>,
-    /// List of JSX attributes. In React-like applications, these become props.
-    pub attributes: Vec<'a, JSXAttributeItem<'a>>,
     /// Type parameters for generic JSX elements.
     #[ts]
     pub type_arguments: Option<Box<'a, TSTypeParameterInstantiation<'a>>>,
+    /// List of JSX attributes. In React-like applications, these become props.
+    pub attributes: Vec<'a, JSXAttributeItem<'a>>,
 }
 
 /// JSX Closing Element
@@ -118,17 +115,17 @@ pub struct JSXFragment<'a> {
     pub span: Span,
     /// `<>`
     pub opening_fragment: JSXOpeningFragment,
-    /// `</>`
-    pub closing_fragment: JSXClosingFragment,
     /// Elements inside the fragment.
     pub children: Vec<'a, JSXChild<'a>>,
+    /// `</>`
+    pub closing_fragment: JSXClosingFragment,
 }
 
 /// JSX Opening Fragment (`<>`)
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
-#[estree(via = JSXOpeningFragmentConverter, add_fields(attributes = TsEmptyArray, selfClosing = TsFalse))]
+#[estree(add_fields(attributes = JsEmptyArray, selfClosing = JsFalse))]
 pub struct JSXOpeningFragment {
     /// Node location in source code
     pub span: Span,

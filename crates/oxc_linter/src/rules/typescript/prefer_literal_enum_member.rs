@@ -25,13 +25,17 @@ pub struct PreferLiteralEnumMember {
 
 declare_oxc_lint!(
     /// ### What it does
+    ///
     /// Explicit enum value must only be a literal value (string, number, boolean, etc).
     ///
     /// ### Why is this bad?
+    ///
     /// TypeScript allows the value of an enum member to be many different kinds of valid JavaScript expressions.
     /// However, because enums create their own scope whereby each enum member becomes a variable in that scope, developers are often surprised at the resultant values.
     ///
-    /// ### Example
+    /// ### Examples
+    ///
+    /// Examples of **incorrect** code for this rule:
     /// ```ts
     /// const imOutside = 2;
     /// const b = 2;

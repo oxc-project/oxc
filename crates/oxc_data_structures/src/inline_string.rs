@@ -5,6 +5,8 @@ use std::{
     ops::{Add, AddAssign, Deref},
 };
 
+use crate::assert_unchecked;
+
 /// Short inline string.
 ///
 /// `CAPACITY` determines the maximum length of the string.
@@ -26,6 +28,7 @@ use std::{
 /// * `FixedSizeString<7, u8>` = 8 bytes
 /// * `FixedSizeString<8, usize>` = 16 bytes (on 64-bit platforms)
 /// * `FixedSizeString<12, u32>` = 16 bytes
+#[derive(Clone, Copy)]
 #[repr(C)]
 pub struct InlineString<const CAPACITY: usize, Len: UnsignedInt> {
     bytes: [u8; CAPACITY],
@@ -118,10 +121,23 @@ impl<const CAPACITY: usize, Len: UnsignedInt> InlineString<CAPACITY, Len> {
     #[inline]
     pub fn as_str(&self) -> &str {
         // SAFETY: If safety conditions of `push_unchecked` have been upheld,
-        // slice cannot be out of bounds, and contents of that slice is a valid UTF-8 string
+        // `self.len <= CAPACITY`, and contents of slice of `bytes` is a valid UTF-8 string
         unsafe {
-            let slice = self.bytes.get_unchecked(..self.len.to_usize());
+            assert_unchecked!(self.len.to_usize() <= CAPACITY);
+            let slice = &self.bytes[..self.len.to_usize()];
             std::str::from_utf8_unchecked(slice)
+        }
+    }
+
+    /// Get string as `&mut str` slice.
+    #[inline]
+    pub fn as_mut_str(&mut self) -> &mut str {
+        // SAFETY: If safety conditions of `push_unchecked` have been upheld,
+        // `self.len <= CAPACITY`, and contents of slice of `bytes` is a valid UTF-8 string
+        unsafe {
+            assert_unchecked!(self.len.to_usize() <= CAPACITY);
+            let slice = &mut self.bytes[..self.len.to_usize()];
+            std::str::from_utf8_unchecked_mut(slice)
         }
     }
 }

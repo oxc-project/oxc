@@ -30,7 +30,7 @@ declare_oxc_lint!(
     /// It's better to make it clear what the separator is when calling Array#join(),
     /// instead of relying on the default comma (',') separator.
     ///
-    /// ### Example
+    /// ### Examples
     ///
     /// Examples of **incorrect** code for this rule:
     /// ```javascript

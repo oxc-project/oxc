@@ -1,0 +1,9 @@
+{
+  "plugins": ["react"],
+  "categories": {
+    "correctness": "off"
+  },
+  "rules": {
+    "react/forward-ref-uses-ref": "error"
+  }
+}

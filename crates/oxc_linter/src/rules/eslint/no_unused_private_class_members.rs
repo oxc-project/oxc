@@ -82,7 +82,6 @@ declare_oxc_lint!(
     ///					this.#usedAccessor = 42;
     ///			}
     ///	}
-    ///
     /// ```
     NoUnusedPrivateClassMembers,
     eslint,
@@ -295,6 +294,19 @@ fn test() {
                 this.#x = 1;
             }
         }",
+        r"type Callback<T> = () => Promise<T> | T;
+
+         export class Issue_11039<T> {
+            load: () => Promise<T>;
+
+            constructor(callback: Callback<T>) {
+                this.load = () => this.#load(callback);
+            }
+
+            async #load(callback: Callback<T>) {
+                callback;
+            }
+         }",
     ];
 
     let fail = vec![

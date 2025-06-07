@@ -36,12 +36,15 @@ declare_oxc_lint!(
     /// Require that function overload signatures be consecutive.
     ///
     /// ### Why is this bad?
+    ///
     /// Function overload signatures represent multiple ways
     /// a function can be called, potentially with different return types.
     /// It's typical for an interface or type alias describing a function to place all overload signatures next to each other.
     /// If Signatures placed elsewhere in the type are easier to be missed by future developers reading the code.
     ///
-    /// ### Example
+    /// ### Examples
+    ///
+    /// Examples of **incorrect** code for this rule:
     /// ```typescript
     /// declare namespace Foo {
     ///   export function foo(s: string): void;

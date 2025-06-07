@@ -2,79 +2,79 @@
 source: crates/oxc_linter/src/tester.rs
 ---
   ⚠ eslint-plugin-promise(prefer-await-to-then): Prefer await to then()/catch()/finally()
-   ╭─[prefer_await_to_then.tsx:1:18]
+   ╭─[prefer_await_to_then.tsx:1:22]
  1 │ function foo() { hey.then(x => {}) }
-   ·                  ─────────────────
+   ·                      ────
    ╰────
 
   ⚠ eslint-plugin-promise(prefer-await-to-then): Prefer await to then()/catch()/finally()
-   ╭─[prefer_await_to_then.tsx:1:18]
+   ╭─[prefer_await_to_then.tsx:1:43]
  1 │ function foo() { hey.then(function() { }).then() }
-   ·                  ───────────────────────────────
-   ╰────
-
-  ⚠ eslint-plugin-promise(prefer-await-to-then): Prefer await to then()/catch()/finally()
-   ╭─[prefer_await_to_then.tsx:1:18]
- 1 │ function foo() { hey.then(function() { }).then() }
-   ·                  ────────────────────────
-   ╰────
-
-  ⚠ eslint-plugin-promise(prefer-await-to-then): Prefer await to then()/catch()/finally()
-   ╭─[prefer_await_to_then.tsx:1:18]
- 1 │ function foo() { hey.then(function() { }).then(x).catch() }
-   ·                  ────────────────────────────────────────
-   ╰────
-
-  ⚠ eslint-plugin-promise(prefer-await-to-then): Prefer await to then()/catch()/finally()
-   ╭─[prefer_await_to_then.tsx:1:18]
- 1 │ function foo() { hey.then(function() { }).then(x).catch() }
-   ·                  ────────────────────────────────
-   ╰────
-
-  ⚠ eslint-plugin-promise(prefer-await-to-then): Prefer await to then()/catch()/finally()
-   ╭─[prefer_await_to_then.tsx:1:18]
- 1 │ function foo() { hey.then(function() { }).then(x).catch() }
-   ·                  ────────────────────────
+   ·                                           ────
    ╰────
 
   ⚠ eslint-plugin-promise(prefer-await-to-then): Prefer await to then()/catch()/finally()
    ╭─[prefer_await_to_then.tsx:1:22]
- 1 │ async function a() { hey.then(function() { }).then(function() { }) }
-   ·                      ─────────────────────────────────────────────
+ 1 │ function foo() { hey.then(function() { }).then() }
+   ·                      ────
+   ╰────
+
+  ⚠ eslint-plugin-promise(prefer-await-to-then): Prefer await to then()/catch()/finally()
+   ╭─[prefer_await_to_then.tsx:1:51]
+ 1 │ function foo() { hey.then(function() { }).then(x).catch() }
+   ·                                                   ─────
+   ╰────
+
+  ⚠ eslint-plugin-promise(prefer-await-to-then): Prefer await to then()/catch()/finally()
+   ╭─[prefer_await_to_then.tsx:1:43]
+ 1 │ function foo() { hey.then(function() { }).then(x).catch() }
+   ·                                           ────
    ╰────
 
   ⚠ eslint-plugin-promise(prefer-await-to-then): Prefer await to then()/catch()/finally()
    ╭─[prefer_await_to_then.tsx:1:22]
- 1 │ async function a() { hey.then(function() { }).then(function() { }) }
-   ·                      ────────────────────────
+ 1 │ function foo() { hey.then(function() { }).then(x).catch() }
+   ·                      ────
    ╰────
 
   ⚠ eslint-plugin-promise(prefer-await-to-then): Prefer await to then()/catch()/finally()
-   ╭─[prefer_await_to_then.tsx:1:18]
+   ╭─[prefer_await_to_then.tsx:1:47]
+ 1 │ async function a() { hey.then(function() { }).then(function() { }) }
+   ·                                               ────
+   ╰────
+
+  ⚠ eslint-plugin-promise(prefer-await-to-then): Prefer await to then()/catch()/finally()
+   ╭─[prefer_await_to_then.tsx:1:26]
+ 1 │ async function a() { hey.then(function() { }).then(function() { }) }
+   ·                          ────
+   ╰────
+
+  ⚠ eslint-plugin-promise(prefer-await-to-then): Prefer await to then()/catch()/finally()
+   ╭─[prefer_await_to_then.tsx:1:22]
  1 │ function foo() { hey.catch(x => {}) }
-   ·                  ──────────────────
+   ·                      ─────
    ╰────
 
   ⚠ eslint-plugin-promise(prefer-await-to-then): Prefer await to then()/catch()/finally()
-   ╭─[prefer_await_to_then.tsx:1:18]
+   ╭─[prefer_await_to_then.tsx:1:22]
  1 │ function foo() { hey.finally(x => {}) }
-   ·                  ────────────────────
+   ·                      ───────
    ╰────
 
   ⚠ eslint-plugin-promise(prefer-await-to-then): Prefer await to then()/catch()/finally()
-   ╭─[prefer_await_to_then.tsx:1:1]
+   ╭─[prefer_await_to_then.tsx:1:13]
  1 │ something().then(async () => await somethingElse())
-   · ───────────────────────────────────────────────────
+   ·             ────
    ╰────
 
   ⚠ eslint-plugin-promise(prefer-await-to-then): Prefer await to then()/catch()/finally()
-   ╭─[prefer_await_to_then.tsx:1:30]
+   ╭─[prefer_await_to_then.tsx:1:38]
  1 │ async function foo() { await thing().then() }
-   ·                              ──────────────
+   ·                                      ────
    ╰────
 
   ⚠ eslint-plugin-promise(prefer-await-to-then): Prefer await to then()/catch()/finally()
-   ╭─[prefer_await_to_then.tsx:1:24]
+   ╭─[prefer_await_to_then.tsx:1:32]
  1 │ async function foo() { thing().then() }
-   ·                        ──────────────
+   ·                                ────
    ╰────

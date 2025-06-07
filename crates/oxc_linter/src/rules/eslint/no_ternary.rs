@@ -16,6 +16,7 @@ pub struct NoTernary;
 
 declare_oxc_lint!(
     /// ### What it does
+    ///
     /// Disallow ternary operators
     ///
     /// ### Why is this bad?

@@ -48,7 +48,7 @@ dummy_estree_impl!(ExportLocalNameDefault<'_, '_>);
 /// Serializer for `Null` variant of `ExportLocalName`, `ExportExportName`, and `ExportImportName`.
 #[ast_meta]
 #[estree(ts_type = "Dummy", raw_deser = "{kind: 'None', name: null, start: null, end: null}")]
-pub struct ExportNameNull;
+pub struct ExportNameNull(pub ());
 
 dummy_estree_impl!(ExportNameNull);
 
@@ -68,7 +68,7 @@ dummy_estree_impl!(ImportOrExportNameDefault<'_>);
 /// Serializer for `All` variant of `ExportImportName`.
 #[ast_meta]
 #[estree(ts_type = "Dummy", raw_deser = "{kind: 'All', name: null, start: null, end: null}")]
-pub struct ExportImportNameAll;
+pub struct ExportImportNameAll(pub ());
 
 dummy_estree_impl!(ExportImportNameAll);
 
@@ -78,7 +78,7 @@ dummy_estree_impl!(ExportImportNameAll);
     ts_type = "Dummy",
     raw_deser = "{kind: 'AllButDefault', name: null, start: null, end: null}"
 )]
-pub struct ExportImportNameAllButDefault;
+pub struct ExportImportNameAllButDefault(pub ());
 
 dummy_estree_impl!(ExportImportNameAllButDefault);
 
@@ -88,6 +88,6 @@ dummy_estree_impl!(ExportImportNameAllButDefault);
     ts_type = "Dummy",
     raw_deser = "{kind: 'NamespaceObject', name: null, start: null, end: null}"
 )]
-pub struct ImportImportNameNamespaceObject;
+pub struct ImportImportNameNamespaceObject(pub ());
 
 dummy_estree_impl!(ImportImportNameNamespaceObject);

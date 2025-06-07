@@ -184,7 +184,7 @@ impl TSModuleDeclarationKind {
 
     /// Declaration keyword as a string, identical to how it would appear in the
     /// source code.
-    pub fn as_str(&self) -> &'static str {
+    pub fn as_str(self) -> &'static str {
         match self {
             Self::Global => "global",
             Self::Module => "module",
@@ -295,12 +295,12 @@ impl<'a> Decorator<'a> {
 
 impl ImportOrExportKind {
     /// Returns `true` for "regular" imports and exports.
-    pub fn is_value(&self) -> bool {
+    pub fn is_value(self) -> bool {
         matches!(self, Self::Value)
     }
 
     /// Returns `true` if this is an `import type` or `export type` statement.
-    pub fn is_type(&self) -> bool {
+    pub fn is_type(self) -> bool {
         matches!(self, Self::Type)
     }
 }

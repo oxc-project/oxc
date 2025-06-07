@@ -1,0 +1,139 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+  ⚠ eslint-plugin-react(forbid-elements): <button> is forbidden.
+   ╭─[forbid_elements.tsx:1:2]
+ 1 │ <button />
+   ·  ──────
+   ╰────
+
+  ⚠ eslint-plugin-react(forbid-elements): <Modal> is forbidden.
+   ╭─[forbid_elements.tsx:1:3]
+ 1 │ [<Modal />, <button />]
+   ·   ─────
+   ╰────
+
+  ⚠ eslint-plugin-react(forbid-elements): <button> is forbidden.
+   ╭─[forbid_elements.tsx:1:14]
+ 1 │ [<Modal />, <button />]
+   ·              ──────
+   ╰────
+
+  ⚠ eslint-plugin-react(forbid-elements): <dotted.component> is forbidden.
+   ╭─[forbid_elements.tsx:1:2]
+ 1 │ <dotted.component />
+   ·  ────────────────
+   ╰────
+
+  ⚠ eslint-plugin-react(forbid-elements): <dotted.Component> is forbidden.
+   ╭─[forbid_elements.tsx:1:2]
+ 1 │ <dotted.Component />
+   ·  ────────────────
+   ╰────
+  help: that ain"t cool
+
+  ⚠ eslint-plugin-react(forbid-elements): <button> is forbidden.
+   ╭─[forbid_elements.tsx:1:2]
+ 1 │ <button />
+   ·  ──────
+   ╰────
+  help: use <Button> instead
+
+  ⚠ eslint-plugin-react(forbid-elements): <button> is forbidden.
+   ╭─[forbid_elements.tsx:1:2]
+ 1 │ <button><input /></button>
+   ·  ──────
+   ╰────
+
+  ⚠ eslint-plugin-react(forbid-elements): <input> is forbidden.
+   ╭─[forbid_elements.tsx:1:10]
+ 1 │ <button><input /></button>
+   ·          ─────
+   ╰────
+
+  ⚠ eslint-plugin-react(forbid-elements): <button> is forbidden.
+   ╭─[forbid_elements.tsx:1:2]
+ 1 │ <button><input /></button>
+   ·  ──────
+   ╰────
+
+  ⚠ eslint-plugin-react(forbid-elements): <input> is forbidden.
+   ╭─[forbid_elements.tsx:1:10]
+ 1 │ <button><input /></button>
+   ·          ─────
+   ╰────
+
+  ⚠ eslint-plugin-react(forbid-elements): <button> is forbidden.
+   ╭─[forbid_elements.tsx:1:2]
+ 1 │ <button><input /></button>
+   ·  ──────
+   ╰────
+
+  ⚠ eslint-plugin-react(forbid-elements): <input> is forbidden.
+   ╭─[forbid_elements.tsx:1:10]
+ 1 │ <button><input /></button>
+   ·          ─────
+   ╰────
+
+  ⚠ eslint-plugin-react(forbid-elements): <button> is forbidden.
+   ╭─[forbid_elements.tsx:1:2]
+ 1 │ <button />
+   ·  ──────
+   ╰────
+  help: use <Button2> instead
+
+  ⚠ eslint-plugin-react(forbid-elements): <button> is forbidden.
+   ╭─[forbid_elements.tsx:1:21]
+ 1 │ React.createElement("button", {}, child)
+   ·                     ────────
+   ╰────
+
+  ⚠ eslint-plugin-react(forbid-elements): <Modal> is forbidden.
+   ╭─[forbid_elements.tsx:1:22]
+ 1 │ [React.createElement(Modal), React.createElement("button")]
+   ·                      ─────
+   ╰────
+
+  ⚠ eslint-plugin-react(forbid-elements): <button> is forbidden.
+   ╭─[forbid_elements.tsx:1:50]
+ 1 │ [React.createElement(Modal), React.createElement("button")]
+   ·                                                  ────────
+   ╰────
+
+  ⚠ eslint-plugin-react(forbid-elements): <dotted.Component> is forbidden.
+   ╭─[forbid_elements.tsx:1:21]
+ 1 │ React.createElement(dotted.Component)
+   ·                     ────────────────
+   ╰────
+  help: that ain"t cool
+
+  ⚠ eslint-plugin-react(forbid-elements): <dotted.component> is forbidden.
+   ╭─[forbid_elements.tsx:1:21]
+ 1 │ React.createElement(dotted.component)
+   ·                     ────────────────
+   ╰────
+
+  ⚠ eslint-plugin-react(forbid-elements): <_comp> is forbidden.
+   ╭─[forbid_elements.tsx:1:21]
+ 1 │ React.createElement(_comp)
+   ·                     ─────
+   ╰────
+
+  ⚠ eslint-plugin-react(forbid-elements): <button> is forbidden.
+   ╭─[forbid_elements.tsx:1:21]
+ 1 │ React.createElement("button")
+   ·                     ────────
+   ╰────
+  help: use <Button> instead
+
+  ⚠ eslint-plugin-react(forbid-elements): <button> is forbidden.
+   ╭─[forbid_elements.tsx:1:21]
+ 1 │ React.createElement("button", {}, React.createElement("input"))
+   ·                     ────────
+   ╰────
+
+  ⚠ eslint-plugin-react(forbid-elements): <input> is forbidden.
+   ╭─[forbid_elements.tsx:1:55]
+ 1 │ React.createElement("button", {}, React.createElement("input"))
+   ·                                                       ───────
+   ╰────

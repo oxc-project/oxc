@@ -219,9 +219,7 @@ fn get_nearest_function<'a>(node: &AstNode, ctx: &'a LintContext) -> Option<&'a 
     let mut parent = ctx.nodes().parent_node(node.id())?;
     while let Some(new_parent) = ctx.nodes().parent_node(parent.id()) {
         match parent.kind() {
-            AstKind::Function(_) => {
-                break;
-            }
+            AstKind::Function(_) => break,
             // If a class is declared in the accessor, ignore it
             // e.g. "let foo = { get bar() { class baz { } } }"
             AstKind::Class(_) => {

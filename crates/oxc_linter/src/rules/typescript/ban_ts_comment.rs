@@ -105,13 +105,17 @@ impl DirectiveConfig {
 
 declare_oxc_lint!(
     /// ### What it does
+    ///
     /// This rule lets you set which directive comments you want to allow in your codebase.
     ///
     /// ### Why is this bad?
+    ///
     /// Using TypeScript directives to suppress TypeScript compiler errors
     /// reduces the effectiveness of TypeScript overall.
     ///
-    /// ### Example
+    /// ### Examples
+    ///
+    /// Examples of **incorrect** code for this rule:
     /// ```ts
     /// if (false) {
     ///   // @ts-ignore: Unreachable code error

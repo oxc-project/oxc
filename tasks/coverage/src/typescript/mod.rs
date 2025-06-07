@@ -107,14 +107,12 @@ impl Case for TypeScriptCase {
     }
 
     fn run(&mut self) {
-        let units = self.units.clone();
-        for unit in units {
-            self.code.clone_from(&unit.content);
-            self.result = self.execute(unit.source_type);
-            if self.result != TestResult::Passed {
-                return;
-            }
-        }
-        self.result = TestResult::Passed;
+        let result = self
+            .units
+            .iter()
+            .map(|unit| self.parse(&unit.content, unit.source_type))
+            .find(Result::is_err)
+            .unwrap_or(Ok(()));
+        self.result = self.evaluate_result(result);
     }
 }

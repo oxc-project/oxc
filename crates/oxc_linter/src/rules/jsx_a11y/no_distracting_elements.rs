@@ -31,7 +31,7 @@ declare_oxc_lint!(
     ///
     /// This rule checks for marquee and blink element.
     ///
-    /// ### Example
+    /// ### Examples
     ///
     /// Examples of **incorrect** code for this rule:
     /// ```jsx

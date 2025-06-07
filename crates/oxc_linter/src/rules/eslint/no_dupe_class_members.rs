@@ -23,13 +23,17 @@ pub struct NoDupeClassMembers;
 
 declare_oxc_lint!(
     /// ### What it does
+    ///
     /// Disallow duplicate class members
     ///
     /// ### Why is this bad?
+    ///
     /// If there are declarations of the same name in class members,
     /// the last declaration overwrites other declarations silently. It can cause unexpected behaviors.
     ///
-    /// ### Example
+    /// ### Examples
+    ///
+    /// Examples of **incorrect** code for this rule:
     /// ```javascript
     /// class A {
     ///   foo() { console.log("foo") }
@@ -37,6 +41,15 @@ declare_oxc_lint!(
     /// }
     /// let a = new A();
     /// a.foo() // Uncaught TypeError: a.foo is not a function
+    /// ```
+    ///
+    /// Examples of **correct** code for this rule:
+    /// ```javascript
+    /// class A {
+    ///   foo() { console.log("foo") }
+    /// }
+    /// let a = new A();
+    /// a.foo();
     /// ```
     NoDupeClassMembers,
     eslint,

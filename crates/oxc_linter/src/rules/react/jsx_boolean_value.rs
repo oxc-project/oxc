@@ -63,7 +63,8 @@ declare_oxc_lint!(
     ///
     /// In JSX, you can set a boolean attribute to `true` or omit it. This rule will enforce a consistent style for boolean attributes.
     ///
-    /// ### Example
+    /// ### Examples
+    ///
     /// Examples of **incorrect** code for this rule:
     /// ```jsx
     /// const Hello = <Hello personal={true} />;
@@ -73,7 +74,6 @@ declare_oxc_lint!(
     /// ```jsx
     /// const Hello = <Hello personal />;
     /// ```
-    ///
     JsxBooleanValue,
     react,
     style,

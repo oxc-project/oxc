@@ -25,9 +25,16 @@ declare_oxc_lint!(
     /// Characters /= at the beginning of a regular expression literal can be confused with a
     /// division assignment operator.
     ///
-    /// ### Example
+    /// ### Examples
+    ///
+    /// Examples of **incorrect** code for this rule:
     /// ```javascript
     /// function bar() { return /=foo/; }
+    /// ```
+    ///
+    /// Examples of **correct** code for this rule:
+    /// ```javascript
+    /// function bar() { return /[=]foo/; }
     /// ```
     NoDivRegex,
     eslint,
@@ -38,7 +45,7 @@ declare_oxc_lint!(
 impl Rule for NoDivRegex {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         if let AstKind::RegExpLiteral(lit) = node.kind() {
-            let Some(pattern) = lit.regex.pattern.as_pattern() else { return };
+            let Some(pattern) = &lit.regex.pattern.pattern else { return };
             if pattern
                 .body
                 .body

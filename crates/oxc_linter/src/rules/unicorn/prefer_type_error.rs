@@ -29,7 +29,7 @@ declare_oxc_lint!(
     ///
     /// Throwing a `TypeError` instead of a generic `Error` after a type checking if-statement is more specific and helps to catch bugs.
     ///
-    /// ### Example
+    /// ### Examples
     ///
     /// Examples of **incorrect** code for this rule:
     /// ```javascript
@@ -447,15 +447,16 @@ fn test() {
         //             throw new TypeError;
         //         }
         //         "#,
-        r#"
+        r"
             if (typeof foo == 'Foo' || 'Foo' === typeof foo) {
                 throw new Error();
             }
-        r#"
+        ",
+        r"
             if (Number.isFinite(foo) && Number.isSafeInteger(foo) && Number.isInteger(foo)) {
                 throw new Error();
             }
-        "#,
+        ",
         r"
             if (wrapper.n.isFinite(foo) && wrapper.n.isSafeInteger(foo) && wrapper.n.isInteger(foo)) {
                 throw new Error();

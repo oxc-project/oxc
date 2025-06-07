@@ -50,10 +50,6 @@ harness = false
 name = "minifier"
 harness = false
 
-[[bench]]
-name = "isolated_declarations"
-harness = false
-
 # Only run in CI
 [[bench]]
 name = "parser_napi"
@@ -80,6 +76,8 @@ oxc_transformer = { workspace = true, optional = true }
 
 criterion2 = { workspace = true }
 
+rustc-hash = { workspace = true }
+
 # Only for NAPI benchmark
 serde = { workspace = true, optional = true }
 serde_json = { workspace = true, optional = true }
@@ -94,7 +92,6 @@ default = [
   "codegen",
   "linter",
   "formatter",
-  "isolated_declarations",
 ]
 codspeed = ["criterion2/codspeed"]
 codspeed_napi = ["criterion2/codspeed", "dep:serde", "dep:serde_json"]
@@ -119,6 +116,7 @@ parser = [
 ]
 transformer = [
   "dep:oxc_allocator",
+  "dep:oxc_isolated_declarations",
   "dep:oxc_parser",
   "dep:oxc_semantic",
   "dep:oxc_span",
@@ -134,6 +132,7 @@ minifier = [
   "dep:oxc_semantic",
   "dep:oxc_span",
   "dep:oxc_tasks_common",
+  "transformer",
 ]
 codegen = [
   "dep:oxc_allocator",
@@ -153,10 +152,3 @@ linter = [
   "dep:oxc_tasks_common",
 ]
 formatter = ["dep:oxc_allocator", "dep:oxc_parser", "dep:oxc_formatter", "dep:oxc_span", "dep:oxc_tasks_common"]
-isolated_declarations = [
-  "dep:oxc_allocator",
-  "dep:oxc_isolated_declarations",
-  "dep:oxc_parser",
-  "dep:oxc_span",
-  "dep:oxc_tasks_common",
-]

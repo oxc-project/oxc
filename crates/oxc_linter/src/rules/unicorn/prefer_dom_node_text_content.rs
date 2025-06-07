@@ -26,7 +26,7 @@ declare_oxc_lint!(
     /// - `.innerText` is defined only for HTMLElement objects, while `.textContent` is defined for all Node objects.
     /// - `.innerText` is not standard, for example, it is not present in Firefox.
     ///
-    /// ### Example
+    /// ### Examples
     ///
     /// Examples of **incorrect** code for this rule:
     /// ```javascript

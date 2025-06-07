@@ -1,6 +1,6 @@
 use std::{cmp::max, str};
 
-use oxc_allocator::String;
+use oxc_allocator::StringBuilder;
 
 use crate::diagnostics;
 
@@ -50,7 +50,7 @@ impl<'a> Lexer<'a> {
                     b'$' => {
                         // SAFETY: Next byte is `$` which is ASCII, so after it is a UTF-8 char boundary
                         let after_dollar = unsafe { pos.add(1) };
-                        if after_dollar.addr() < self.source.end_addr() {
+                        if after_dollar.is_not_end_of(&self.source) {
                             // If `${`, exit.
                             // SAFETY: Have checked there's at least 1 further byte to read.
                             if unsafe { after_dollar.read() } == b'{' {
@@ -118,7 +118,7 @@ impl<'a> Lexer<'a> {
         pos = unsafe { pos.add(1) };
 
         // If at EOF, exit. This illegal in valid JS, so cold branch.
-        if pos.addr() == self.source.end_addr() {
+        if pos.is_end_of(&self.source) {
             return cold_branch(|| {
                 self.source.advance_to_end();
                 self.error(diagnostics::unterminated_string(self.unterminated_range()));
@@ -194,14 +194,14 @@ impl<'a> Lexer<'a> {
     ///
     /// # SAFETY
     /// `pos` must not be before `self.source.position()`
-    unsafe fn template_literal_create_string(&self, pos: SourcePosition<'a>) -> String<'a> {
+    unsafe fn template_literal_create_string(&self, pos: SourcePosition<'a>) -> StringBuilder<'a> {
         // Create arena string to hold modified template literal.
         // We don't know how long template literal will end up being. Take a guess that total length
         // will be double what we've seen so far, or `MIN_ESCAPED_TEMPLATE_LIT_LEN` minimum.
         // SAFETY: Caller guarantees `pos` is not before `self.source.position()`.
         let so_far = unsafe { self.source.str_from_current_to_pos_unchecked(pos) };
         let capacity = max(so_far.len() * 2, MIN_ESCAPED_TEMPLATE_LIT_LEN);
-        let mut str = String::with_capacity_in(capacity, self.allocator);
+        let mut str = StringBuilder::with_capacity_in(capacity, self.allocator);
         str.push_str(so_far);
         str
     }
@@ -212,7 +212,7 @@ impl<'a> Lexer<'a> {
     /// `chunk_start` must not be after `pos`.
     unsafe fn template_literal_escaped(
         &mut self,
-        mut str: String<'a>,
+        mut str: StringBuilder<'a>,
         pos: SourcePosition<'a>,
         mut chunk_start: SourcePosition<'a>,
         mut is_valid_escape_sequence: bool,
@@ -229,7 +229,7 @@ impl<'a> Lexer<'a> {
                 if next_byte == b'$' {
                     // SAFETY: Next byte is `$` which is ASCII, so after it is a UTF-8 char boundary
                     let after_dollar = unsafe {pos.add(1)};
-                    if after_dollar.addr() < self.source.end_addr() {
+                    if after_dollar.is_not_end_of(&self.source) {
                         // If `${`, exit.
                         // SAFETY: Have checked there's at least 1 further byte to read.
                         if unsafe {after_dollar.read()} == b'{' {
@@ -280,7 +280,7 @@ impl<'a> Lexer<'a> {
                             // brought up to `chunk_start` again.
                             chunk_start = unsafe {pos.add(1)};
 
-                            if chunk_start.addr() < self.source.end_addr() {
+                            if chunk_start.is_not_end_of(&self.source) {
                                 // Either `\r` alone or `\r\n` needs to be converted to `\n`.
                                 // SAFETY: Have checked not at EOF.
                                 if unsafe {chunk_start.read()} == b'\n' {
@@ -321,7 +321,7 @@ impl<'a> Lexer<'a> {
 
                             // Start next chunk after escape sequence
                             chunk_start = self.source.position();
-                            assert!(chunk_start.addr() >= after_backslash.addr());
+                            assert!(chunk_start >= after_backslash);
 
                             // Continue search after escape sequence.
                             // NB: `byte_search!` macro increments `pos` when return `true`,
@@ -342,7 +342,7 @@ impl<'a> Lexer<'a> {
                             // so there must be 2 more bytes to read
                             let next2 = unsafe { pos.add(1).read2() };
                             if next2 == [LOSSY_REPLACEMENT_CHAR_BYTES[1], LOSSY_REPLACEMENT_CHAR_BYTES[2]]
-                                && self.token.lone_surrogates
+                                && self.token.lone_surrogates()
                             {
                                 str.push_str("\u{FFFD}fffd");
                             } else {
@@ -379,7 +379,7 @@ impl<'a> Lexer<'a> {
             },
         };
 
-        self.save_template_string(is_valid_escape_sequence, str.into_bump_str());
+        self.save_template_string(is_valid_escape_sequence, str.into_str());
 
         ret
     }
@@ -387,32 +387,19 @@ impl<'a> Lexer<'a> {
     /// Re-tokenize the current `}` token for `TemplateSubstitutionTail`
     /// See Section 12, the parser needs to re-tokenize on `TemplateSubstitutionTail`,
     pub(crate) fn next_template_substitution_tail(&mut self) -> Token {
-        self.token.start = self.offset() - 1;
+        self.token.set_start(self.offset() - 1);
         let kind = self.read_template_literal(Kind::TemplateMiddle, Kind::TemplateTail);
-        self.lookahead.clear();
         self.finish_next(kind)
     }
 
     /// Save escaped template string
     fn save_template_string(&mut self, is_valid_escape_sequence: bool, s: &'a str) {
-        self.escaped_templates.insert(self.token.start, is_valid_escape_sequence.then_some(s));
-        self.token.escaped = true;
+        self.escaped_templates.insert(self.token.start(), is_valid_escape_sequence.then_some(s));
+        self.token.set_escaped(true);
     }
 
-    pub(crate) fn get_template_string(&self, token: Token) -> Option<&'a str> {
-        if token.escaped {
-            return self.escaped_templates[&token.start];
-        }
-        let raw = &self.source.whole()[token.start as usize..token.end as usize];
-        Some(match token.kind {
-            Kind::NoSubstitutionTemplate | Kind::TemplateTail => {
-                &raw[1..raw.len() - 1] // omit surrounding quotes or leading "}" and trailing "`"
-            }
-            Kind::TemplateHead | Kind::TemplateMiddle => {
-                &raw[1..raw.len() - 2] // omit leading "`" or "}" and trailing "${"
-            }
-            _ => raw,
-        })
+    pub(crate) fn get_template_string(&self, span_start: u32) -> Option<&'a str> {
+        self.escaped_templates[&span_start]
     }
 }
 
@@ -457,10 +444,10 @@ mod test {
             let mut lexer = Lexer::new(&allocator, &source_text, SourceType::default(), unique);
             let token = lexer.next_token();
             assert_eq!(
-                token.kind,
+                token.kind(),
                 if is_only_part { Kind::NoSubstitutionTemplate } else { Kind::TemplateHead }
             );
-            let escaped = lexer.escaped_templates[&0];
+            let escaped = lexer.escaped_templates[&token.start()];
             assert_eq!(escaped, Some(expected_escaped.as_str()));
         }
 

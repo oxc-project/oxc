@@ -31,7 +31,7 @@ pub struct NoPlusplus {
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// Disallow the unary operators `++`` and `--`.
+    /// Disallow the unary operators `++` and `--`.
     ///
     /// ### Why is this bad?
     ///
@@ -75,6 +75,21 @@ declare_oxc_lint!(
     /// for (let i = 0; i < l; i += 1) {
     ///    doSomething(i);
     /// }
+    ///
+    /// ### Options
+    ///
+    /// #### allowForLoopAfterthoughts
+    ///
+    /// `{ type: boolean, default: false }`
+    ///
+    /// Pass `"allowForLoopAfterthoughts": true` to allow `++` and `--` in for loop afterthoughts.
+    ///
+    /// Example:
+    /// ```json
+    /// "no-plusplus": [
+    ///   "error",
+    ///   { "allowForLoopAfterthoughts": true }
+    /// ]
     /// ```
     NoPlusplus,
     eslint,

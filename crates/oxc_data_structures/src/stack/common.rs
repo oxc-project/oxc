@@ -5,7 +5,7 @@ use std::{
     slice,
 };
 
-use crate::assert_unchecked;
+use crate::pointer_ext::PointerExt;
 
 use super::StackCapacity;
 
@@ -146,18 +146,12 @@ pub trait StackCommon<T>: StackCapacity<T> {
     /// * `self.cursor()` must be `>= self.start()`.
     /// * Byte distance between `self.cursor()` and `self.start()` must be a multiple of `size_of::<T>()`.
     unsafe fn cursor_offset(&self) -> usize {
-        // `offset_from` returns offset in units of `T`.
+        // `offset_from_usize` returns offset in units of `T`.
         // SAFETY: Caller guarantees `cursor` and `start` are derived from same pointer.
         // This implies that both pointers are always within bounds of a single allocation.
         // Caller guarantees `cursor >= start`.
         // Caller guarantees distance between pointers is a multiple of `size_of::<T>()`.
-        // `assert_unchecked!` is to help compiler to optimize.
-        // See: https://doc.rust-lang.org/std/primitive.pointer.html#method.sub_ptr
-        #[expect(clippy::cast_sign_loss)]
-        unsafe {
-            assert_unchecked!(self.cursor() >= self.start());
-            self.cursor().offset_from(self.start()) as usize
-        }
+        unsafe { self.cursor().offset_from_usize(self.start()) }
     }
 
     /// Get capacity.
@@ -168,13 +162,7 @@ pub trait StackCommon<T>: StackCapacity<T> {
         // * `start` and `end` are both within bounds of a single allocation.
         // * `end` is always >= `start`.
         // * Distance between `start` and `end` is always a multiple of `size_of::<T>()`.
-        // `assert_unchecked!` is to help compiler to optimize.
-        // See: https://doc.rust-lang.org/std/primitive.pointer.html#method.sub_ptr
-        #[expect(clippy::cast_sign_loss)]
-        unsafe {
-            assert_unchecked!(self.end() >= self.start());
-            self.end().offset_from(self.start()) as usize
-        }
+        unsafe { self.end().offset_from_usize(self.start()) }
     }
 
     /// Get capacity in bytes.
@@ -185,13 +173,7 @@ pub trait StackCommon<T>: StackCapacity<T> {
         // * `start` and `end` are both within bounds of a single allocation.
         // * `end` is always >= `start`.
         // * Distance between `start` and `end` is always a multiple of `size_of::<T>()`.
-        // `assert_unchecked!` is to help compiler to optimize.
-        // See: https://doc.rust-lang.org/std/primitive.pointer.html#method.sub_ptr
-        #[expect(clippy::cast_sign_loss)]
-        unsafe {
-            assert_unchecked!(self.end() >= self.start());
-            self.end().byte_offset_from(self.start()) as usize
-        }
+        unsafe { self.end().byte_offset_from_usize(self.start()) }
     }
 
     /// Get contents of stack as a slice `&[T]`.

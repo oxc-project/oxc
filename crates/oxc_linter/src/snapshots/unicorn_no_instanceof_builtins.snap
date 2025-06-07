@@ -1,0 +1,229 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+  ⚠ eslint-plugin-unicorn(no-instanceof-builtins): Do not use `instanceof` with built-in constructors
+   ╭─[no_instanceof_builtins.tsx:1:1]
+ 1 │ foo instanceof String
+   · ─────────────────────
+   ╰────
+  help: Use `Array.isArray(…)`, `typeof … === 'string'`, or another realm-safe alternative instead
+
+  ⚠ eslint-plugin-unicorn(no-instanceof-builtins): Do not use `instanceof` with built-in constructors
+   ╭─[no_instanceof_builtins.tsx:1:1]
+ 1 │ foo instanceof Number
+   · ─────────────────────
+   ╰────
+  help: Use `Array.isArray(…)`, `typeof … === 'string'`, or another realm-safe alternative instead
+
+  ⚠ eslint-plugin-unicorn(no-instanceof-builtins): Do not use `instanceof` with built-in constructors
+   ╭─[no_instanceof_builtins.tsx:1:1]
+ 1 │ foo instanceof Boolean
+   · ──────────────────────
+   ╰────
+  help: Use `Array.isArray(…)`, `typeof … === 'string'`, or another realm-safe alternative instead
+
+  ⚠ eslint-plugin-unicorn(no-instanceof-builtins): Do not use `instanceof` with built-in constructors
+   ╭─[no_instanceof_builtins.tsx:1:1]
+ 1 │ foo instanceof BigInt
+   · ─────────────────────
+   ╰────
+  help: Use `Array.isArray(…)`, `typeof … === 'string'`, or another realm-safe alternative instead
+
+  ⚠ eslint-plugin-unicorn(no-instanceof-builtins): Do not use `instanceof` with built-in constructors
+   ╭─[no_instanceof_builtins.tsx:1:1]
+ 1 │ foo instanceof Symbol
+   · ─────────────────────
+   ╰────
+  help: Use `Array.isArray(…)`, `typeof … === 'string'`, or another realm-safe alternative instead
+
+  ⚠ eslint-plugin-unicorn(no-instanceof-builtins): Do not use `instanceof` with built-in constructors
+   ╭─[no_instanceof_builtins.tsx:1:1]
+ 1 │ foo instanceof Function
+   · ───────────────────────
+   ╰────
+  help: Use `Array.isArray(…)`, `typeof … === 'string'`, or another realm-safe alternative instead
+
+  ⚠ eslint-plugin-unicorn(no-instanceof-builtins): Do not use `instanceof` with built-in constructors
+   ╭─[no_instanceof_builtins.tsx:1:1]
+ 1 │ foo instanceof Array
+   · ────────────────────
+   ╰────
+  help: Use `Array.isArray(…)`, `typeof … === 'string'`, or another realm-safe alternative instead
+
+  ⚠ eslint-plugin-unicorn(no-instanceof-builtins): Do not use `instanceof` with built-in constructors
+   ╭─[no_instanceof_builtins.tsx:1:1]
+ 1 │ fooErr instanceof Error
+   · ───────────────────────
+   ╰────
+  help: Use `Array.isArray(…)`, `typeof … === 'string'`, or another realm-safe alternative instead
+
+  ⚠ eslint-plugin-unicorn(no-instanceof-builtins): Do not use `instanceof` with built-in constructors
+   ╭─[no_instanceof_builtins.tsx:1:1]
+ 1 │ (fooErr) instanceof (Error)
+   · ───────────────────────────
+   ╰────
+  help: Use `Array.isArray(…)`, `typeof … === 'string'`, or another realm-safe alternative instead
+
+  ⚠ eslint-plugin-unicorn(no-instanceof-builtins): Do not use `instanceof` with built-in constructors
+   ╭─[no_instanceof_builtins.tsx:1:1]
+ 1 │ err instanceof Error
+   · ────────────────────
+   ╰────
+  help: Use `Array.isArray(…)`, `typeof … === 'string'`, or another realm-safe alternative instead
+
+  ⚠ eslint-plugin-unicorn(no-instanceof-builtins): Do not use `instanceof` with built-in constructors
+   ╭─[no_instanceof_builtins.tsx:1:1]
+ 1 │ err instanceof EvalError
+   · ────────────────────────
+   ╰────
+  help: Use `Array.isArray(…)`, `typeof … === 'string'`, or another realm-safe alternative instead
+
+  ⚠ eslint-plugin-unicorn(no-instanceof-builtins): Do not use `instanceof` with built-in constructors
+   ╭─[no_instanceof_builtins.tsx:1:1]
+ 1 │ err instanceof RangeError
+   · ─────────────────────────
+   ╰────
+  help: Use `Array.isArray(…)`, `typeof … === 'string'`, or another realm-safe alternative instead
+
+  ⚠ eslint-plugin-unicorn(no-instanceof-builtins): Do not use `instanceof` with built-in constructors
+   ╭─[no_instanceof_builtins.tsx:1:1]
+ 1 │ err instanceof ReferenceError
+   · ─────────────────────────────
+   ╰────
+  help: Use `Array.isArray(…)`, `typeof … === 'string'`, or another realm-safe alternative instead
+
+  ⚠ eslint-plugin-unicorn(no-instanceof-builtins): Do not use `instanceof` with built-in constructors
+   ╭─[no_instanceof_builtins.tsx:1:1]
+ 1 │ err instanceof SyntaxError
+   · ──────────────────────────
+   ╰────
+  help: Use `Array.isArray(…)`, `typeof … === 'string'`, or another realm-safe alternative instead
+
+  ⚠ eslint-plugin-unicorn(no-instanceof-builtins): Do not use `instanceof` with built-in constructors
+   ╭─[no_instanceof_builtins.tsx:1:1]
+ 1 │ err instanceof TypeError
+   · ────────────────────────
+   ╰────
+  help: Use `Array.isArray(…)`, `typeof … === 'string'`, or another realm-safe alternative instead
+
+  ⚠ eslint-plugin-unicorn(no-instanceof-builtins): Do not use `instanceof` with built-in constructors
+   ╭─[no_instanceof_builtins.tsx:1:1]
+ 1 │ err instanceof URIError
+   · ───────────────────────
+   ╰────
+  help: Use `Array.isArray(…)`, `typeof … === 'string'`, or another realm-safe alternative instead
+
+  ⚠ eslint-plugin-unicorn(no-instanceof-builtins): Do not use `instanceof` with built-in constructors
+   ╭─[no_instanceof_builtins.tsx:1:1]
+ 1 │ err instanceof InternalError
+   · ────────────────────────────
+   ╰────
+  help: Use `Array.isArray(…)`, `typeof … === 'string'`, or another realm-safe alternative instead
+
+  ⚠ eslint-plugin-unicorn(no-instanceof-builtins): Do not use `instanceof` with built-in constructors
+   ╭─[no_instanceof_builtins.tsx:1:1]
+ 1 │ err instanceof AggregateError
+   · ─────────────────────────────
+   ╰────
+  help: Use `Array.isArray(…)`, `typeof … === 'string'`, or another realm-safe alternative instead
+
+  ⚠ eslint-plugin-unicorn(no-instanceof-builtins): Do not use `instanceof` with built-in constructors
+   ╭─[no_instanceof_builtins.tsx:1:1]
+ 1 │ fooInclude instanceof WebWorker
+   · ───────────────────────────────
+   ╰────
+  help: Use `Array.isArray(…)`, `typeof … === 'string'`, or another realm-safe alternative instead
+
+  ⚠ eslint-plugin-unicorn(no-instanceof-builtins): Do not use `instanceof` with built-in constructors
+   ╭─[no_instanceof_builtins.tsx:1:1]
+ 1 │ fooInclude instanceof HTMLElement
+   · ─────────────────────────────────
+   ╰────
+  help: Use `Array.isArray(…)`, `typeof … === 'string'`, or another realm-safe alternative instead
+
+  ⚠ eslint-plugin-unicorn(no-instanceof-builtins): Do not use `instanceof` with built-in constructors
+   ╭─[no_instanceof_builtins.tsx:1:1]
+ 1 │ arr instanceof Array
+   · ────────────────────
+   ╰────
+  help: Use `Array.isArray(…)`, `typeof … === 'string'`, or another realm-safe alternative instead
+
+  ⚠ eslint-plugin-unicorn(no-instanceof-builtins): Do not use `instanceof` with built-in constructors
+   ╭─[no_instanceof_builtins.tsx:1:1]
+ 1 │ [] instanceof Array
+   · ───────────────────
+   ╰────
+  help: Use `Array.isArray(…)`, `typeof … === 'string'`, or another realm-safe alternative instead
+
+  ⚠ eslint-plugin-unicorn(no-instanceof-builtins): Do not use `instanceof` with built-in constructors
+   ╭─[no_instanceof_builtins.tsx:1:1]
+ 1 │ [1,2,3] instanceof Array === true
+   · ────────────────────────
+   ╰────
+  help: Use `Array.isArray(…)`, `typeof … === 'string'`, or another realm-safe alternative instead
+
+  ⚠ eslint-plugin-unicorn(no-instanceof-builtins): Do not use `instanceof` with built-in constructors
+   ╭─[no_instanceof_builtins.tsx:1:1]
+ 1 │ fun.call(1, 2, 3) instanceof Array
+   · ──────────────────────────────────
+   ╰────
+  help: Use `Array.isArray(…)`, `typeof … === 'string'`, or another realm-safe alternative instead
+
+  ⚠ eslint-plugin-unicorn(no-instanceof-builtins): Do not use `instanceof` with built-in constructors
+   ╭─[no_instanceof_builtins.tsx:1:1]
+ 1 │ obj.arr instanceof Array
+   · ────────────────────────
+   ╰────
+  help: Use `Array.isArray(…)`, `typeof … === 'string'`, or another realm-safe alternative instead
+
+  ⚠ eslint-plugin-unicorn(no-instanceof-builtins): Do not use `instanceof` with built-in constructors
+   ╭─[no_instanceof_builtins.tsx:1:1]
+ 1 │ foo.bar[2] instanceof Array
+   · ───────────────────────────
+   ╰────
+  help: Use `Array.isArray(…)`, `typeof … === 'string'`, or another realm-safe alternative instead
+
+  ⚠ eslint-plugin-unicorn(no-instanceof-builtins): Do not use `instanceof` with built-in constructors
+   ╭─[no_instanceof_builtins.tsx:1:1]
+ 1 │ (0, array) instanceof Array
+   · ───────────────────────────
+   ╰────
+  help: Use `Array.isArray(…)`, `typeof … === 'string'`, or another realm-safe alternative instead
+
+  ⚠ eslint-plugin-unicorn(no-instanceof-builtins): Do not use `instanceof` with built-in constructors
+   ╭─[no_instanceof_builtins.tsx:1:22]
+ 1 │ function foo(){return[]instanceof Array}
+   ·                      ──────────────────
+   ╰────
+  help: Use `Array.isArray(…)`, `typeof … === 'string'`, or another realm-safe alternative instead
+
+  ⚠ eslint-plugin-unicorn(no-instanceof-builtins): Do not use `instanceof` with built-in constructors
+    ╭─[no_instanceof_builtins.tsx:1:1]
+  1 │ ╭─▶ (
+  2 │ │                   // comment
+  3 │ │                   ((
+  4 │ │                       // comment
+  5 │ │                       (
+  6 │ │                           // comment
+  7 │ │                           foo
+  8 │ │                           // comment
+  9 │ │                       )
+ 10 │ │                       // comment
+ 11 │ │                   ))
+ 12 │ │                   // comment
+ 13 │ │               )
+ 14 │ │               // comment before instanceof
+ 15 │ │               instanceof
+ 16 │ │               // comment after instanceof
+ 17 │ │               (
+ 18 │ │                   // comment
+ 19 │ │                   (
+ 20 │ │                       // comment
+ 21 │ │                       Array
+ 22 │ │                       // comment
+ 23 │ │                   )
+ 24 │ │                       // comment
+ 25 │ ╰─▶             )
+ 26 │                     // comment
+    ╰────
+  help: Use `Array.isArray(…)`, `typeof … === 'string'`, or another realm-safe alternative instead

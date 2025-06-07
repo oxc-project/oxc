@@ -4,14 +4,14 @@ import { describe, expect, it } from 'vitest';
 import { minify } from '../index';
 
 describe('simple', () => {
-  const code = 'function foo() { var bar; bar(undefined) } foo();';
+  const code = '/*! legal comment */\nfunction foo() { var bar; bar(undefined) } foo();';
 
   it('matches output', () => {
     const ret = minify('test.js', code, { sourcemap: true });
     expect(ret).toStrictEqual({
       'code': 'function foo(){var e;e(void 0)}foo();',
       'map': {
-        'mappings': 'AAAA,SAAS,KAAM,CAAE,IAAIA,EAAK,SAAc,AAAE,CAAC,KAAK',
+        'mappings': 'AACA,SAAS,KAAM,CAAE,IAAIA,EAAK,SAAc,AAAE,CAAC,KAAK',
         'names': [
           'bar',
         ],

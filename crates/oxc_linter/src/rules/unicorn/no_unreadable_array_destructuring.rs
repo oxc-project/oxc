@@ -24,7 +24,7 @@ declare_oxc_lint!(
     /// Destructuring is very useful, but it can also make some code harder to read.
     /// This rule prevents ignoring consecutive values when destructuring from an array.
     ///
-    /// ### Example
+    /// ### Examples
     ///
     /// Examples of **incorrect** code for this rule:
     /// ```javascript

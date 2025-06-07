@@ -41,7 +41,7 @@ declare_oxc_lint!(
     RequirePostMessageTargetOrigin,
     unicorn,
     suspicious,
-    fix
+    suggestion
 );
 
 impl Rule for RequirePostMessageTargetOrigin {
@@ -75,7 +75,7 @@ impl Rule for RequirePostMessageTargetOrigin {
             Span::new(arg.span().end, call_expr.span.end).source_text(ctx.source_text()).find(',');
         let offset = comma_idx.unwrap_or(0) as u32;
         let target_span = Span::new(arg.span().end + offset, call_expr.span.end);
-        ctx.diagnostic_with_fix(
+        ctx.diagnostic_with_suggestion(
             require_post_message_target_origin_diagnostic(target_span),
             |fixer| {
                 let last_token = Span::new(call_expr.span.end - 1, call_expr.span.end);

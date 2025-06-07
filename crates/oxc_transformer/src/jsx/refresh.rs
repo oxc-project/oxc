@@ -1,4 +1,4 @@
-use std::collections::hash_map::Entry;
+use std::{collections::hash_map::Entry, iter, str};
 
 use base64::{
     encoded_len as base64_encoded_len,
@@ -7,7 +7,9 @@ use base64::{
 use rustc_hash::FxHashMap;
 use sha1::{Digest, Sha1};
 
-use oxc_allocator::{Address, CloneIn, GetAddress, String as ArenaString, TakeIn, Vec as ArenaVec};
+use oxc_allocator::{
+    Address, CloneIn, GetAddress, StringBuilder as ArenaStringBuilder, TakeIn, Vec as ArenaVec,
+};
 use oxc_ast::{AstBuilder, NONE, ast::*, match_expression};
 use oxc_semantic::{Reference, ReferenceFlags, ScopeFlags, ScopeId, SymbolFlags};
 use oxc_span::{Atom, GetSpan, SPAN};
@@ -32,26 +34,26 @@ enum RefreshIdentifierResolver<'a> {
 impl<'a> RefreshIdentifierResolver<'a> {
     /// Parses a string into a RefreshIdentifierResolver
     pub fn parse(input: &str, ast: AstBuilder<'a>) -> Self {
-        if !input.contains('.') {
-            // Handle simple identifier reference
-            return Self::Identifier(ast.identifier_reference(SPAN, input));
-        }
-
         let mut parts = input.split('.');
+
         let first_part = parts.next().unwrap();
+        let Some(second_part) = parts.next() else {
+            // Handle simple identifier reference
+            return Self::Identifier(ast.identifier_reference(SPAN, ast.atom(input)));
+        };
 
         if first_part == "import" {
-            // Handle import.meta.$RefreshReg$ expression
+            // Handle `import.meta.$RefreshReg$` expression
             let mut expr = ast.expression_meta_property(
                 SPAN,
                 ast.identifier_name(SPAN, "import"),
-                ast.identifier_name(SPAN, parts.next().unwrap()),
+                ast.identifier_name(SPAN, ast.atom(second_part)),
             );
             if let Some(property) = parts.next() {
                 expr = Expression::from(ast.member_expression_static(
                     SPAN,
                     expr,
-                    ast.identifier_name(SPAN, property),
+                    ast.identifier_name(SPAN, ast.atom(property)),
                     false,
                 ));
             }
@@ -59,8 +61,8 @@ impl<'a> RefreshIdentifierResolver<'a> {
         }
 
         // Handle `window.$RefreshReg$` member expression
-        let object = ast.identifier_reference(SPAN, first_part);
-        let property = ast.identifier_name(SPAN, parts.next().unwrap());
+        let object = ast.identifier_reference(SPAN, ast.atom(first_part));
+        let property = ast.identifier_name(SPAN, ast.atom(second_part));
         Self::Member((object, property))
     }
 
@@ -69,20 +71,19 @@ impl<'a> RefreshIdentifierResolver<'a> {
         match self {
             Self::Identifier(ident) => {
                 let reference_id = ctx.create_unbound_reference(&ident.name, ReferenceFlags::Read);
-                Expression::Identifier(ctx.ast.alloc_identifier_reference_with_reference_id(
+                ctx.ast.expression_identifier_with_reference_id(
                     ident.span,
                     ident.name,
                     reference_id,
-                ))
+                )
             }
             Self::Member((ident, property)) => {
                 let reference_id = ctx.create_unbound_reference(&ident.name, ReferenceFlags::Read);
-                let ident =
-                    Expression::Identifier(ctx.ast.alloc_identifier_reference_with_reference_id(
-                        ident.span,
-                        ident.name,
-                        reference_id,
-                    ));
+                let ident = ctx.ast.expression_identifier_with_reference_id(
+                    ident.span,
+                    ident.name,
+                    reference_id,
+                );
                 Expression::from(ctx.ast.member_expression_static(
                     SPAN,
                     ident,
@@ -139,8 +140,8 @@ impl<'a, 'ctx> ReactRefresh<'a, 'ctx> {
 
 impl<'a> Traverse<'a> for ReactRefresh<'a, '_> {
     fn enter_program(&mut self, program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
-        let mut new_statements = ctx.ast.vec_with_capacity(program.body.len());
-        for mut statement in program.body.drain(..) {
+        let mut new_statements = ctx.ast.vec_with_capacity(program.body.len() * 2);
+        for mut statement in program.body.take_in(ctx.ast) {
             let next_statement = self.process_statement(&mut statement, ctx);
             new_statements.push(statement);
             if let Some(assignment_expression) = next_statement {
@@ -155,9 +156,15 @@ impl<'a> Traverse<'a> for ReactRefresh<'a, '_> {
             return;
         }
 
+        let var_decl = Statement::from(ctx.ast.declaration_variable(
+            SPAN,
+            VariableDeclarationKind::Var,
+            ctx.ast.vec(), // This is replaced at the end
+            false,
+        ));
+
         let mut variable_declarator_items = ctx.ast.vec_with_capacity(self.registrations.len());
-        let mut new_statements = ctx.ast.vec_with_capacity(self.registrations.len() + 1);
-        for (binding, persistent_id) in self.registrations.drain(..) {
+        let calls = self.registrations.iter().map(|(binding, persistent_id)| {
             variable_declarator_items.push(ctx.ast.variable_declarator(
                 SPAN,
                 VariableDeclarationKind::Var,
@@ -169,24 +176,21 @@ impl<'a> Traverse<'a> for ReactRefresh<'a, '_> {
             let callee = self.refresh_reg.to_expression(ctx);
             let arguments = ctx.ast.vec_from_array([
                 Argument::from(binding.create_read_expression(ctx)),
-                Argument::from(ctx.ast.expression_string_literal(
-                    SPAN,
-                    ctx.ast.atom(&persistent_id),
-                    None,
-                )),
+                Argument::from(ctx.ast.expression_string_literal(SPAN, *persistent_id, None)),
             ]);
-            new_statements.push(ctx.ast.statement_expression(
+            ctx.ast.statement_expression(
                 SPAN,
                 ctx.ast.expression_call(SPAN, callee, NONE, arguments, false),
-            ));
-        }
-        program.body.push(Statement::from(ctx.ast.declaration_variable(
-            SPAN,
-            VariableDeclarationKind::Var,
-            variable_declarator_items,
-            false,
-        )));
-        program.body.extend(new_statements);
+            )
+        });
+
+        let var_decl_index = program.body.len();
+        program.body.extend(iter::once(var_decl).chain(calls));
+
+        let Statement::VariableDeclaration(var_decl) = &mut program.body[var_decl_index] else {
+            unreachable!()
+        };
+        var_decl.declarations = variable_declarator_items;
     }
 
     fn exit_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
@@ -250,7 +254,7 @@ impl<'a> Traverse<'a> for ReactRefresh<'a, '_> {
                 Some((binding_identifier.clone(), arguments.clone_in(ctx.ast.allocator)));
         }
 
-        arguments.insert(0, Argument::from(expr.take_in(ctx.ast.allocator)));
+        arguments.insert(0, Argument::from(expr.take_in(ctx.ast)));
         *expr = ctx.ast.expression_call(
             SPAN,
             binding.create_read_expression(ctx),
@@ -503,7 +507,7 @@ impl<'a> ReactRefresh<'a, '_> {
                 SPAN,
                 AssignmentOperator::Assign,
                 self.create_registration(ctx.ast.atom(inferred_name), ctx),
-                expr.take_in(ctx.ast.allocator),
+                expr.take_in(ctx.ast),
             );
         }
 
@@ -554,10 +558,21 @@ impl<'a> ReactRefresh<'a, '_> {
             debug_assert_eq!(hash.len(), SHA1_HASH_LEN);
 
             // Encode to base64 string directly in arena, without an intermediate string allocation
-            let mut hashed_key = ArenaVec::from_array_in([0; ENCODED_LEN], ctx.ast.allocator);
-            let encoded_bytes = BASE64_STANDARD.encode_slice(hash, &mut hashed_key).unwrap();
+            #[expect(clippy::items_after_statements)]
+            const ZEROS_STR: &str = {
+                const ZEROS_BYTES: [u8; ENCODED_LEN] = [0; ENCODED_LEN];
+                match str::from_utf8(&ZEROS_BYTES) {
+                    Ok(s) => s,
+                    Err(_) => unreachable!(),
+                }
+            };
+
+            let mut hashed_key = ArenaStringBuilder::from_str_in(ZEROS_STR, ctx.ast.allocator);
+            // SAFETY: Base64 encoding only produces ASCII bytes. Even if our assumptions are incorrect,
+            // and Base64 bytes do not fill `hashed_key` completely, the remaining bytes are 0, so also ASCII.
+            let hashed_key_bytes = unsafe { hashed_key.as_mut_str().as_bytes_mut() };
+            let encoded_bytes = BASE64_STANDARD.encode_slice(hash, hashed_key_bytes).unwrap();
             debug_assert_eq!(encoded_bytes, ENCODED_LEN);
-            let hashed_key = ArenaString::from_utf8(hashed_key).unwrap();
             Atom::from(hashed_key)
         };
 

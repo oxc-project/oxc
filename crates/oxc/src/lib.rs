@@ -80,6 +80,16 @@ pub mod transformer {
     pub use oxc_transformer::*;
 }
 
+#[cfg(feature = "transformer")]
+pub mod transformer_plugins {
+    //! Transformer/Transpiler
+    //!
+    //! See the [`oxc_transformer_plugins` module-level documentation](oxc_transformer_plugins) for more
+    //! information.
+    #[doc(inline)]
+    pub use oxc_transformer_plugins::*;
+}
+
 #[cfg(feature = "minifier")]
 pub mod minifier {
     //! Source code minifier.

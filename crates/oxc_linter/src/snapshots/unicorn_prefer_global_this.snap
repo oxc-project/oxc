@@ -1,0 +1,461 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+  ⚠ eslint-plugin-unicorn(prefer-global-this): Prefer `globalThis` over environment-specific global aliases like `window`, `self`, and `global`.
+   ╭─[prefer_global_this.tsx:1:1]
+ 1 │ global
+   · ──────
+   ╰────
+  help: Replace the alias with `globalThis`.
+
+  ⚠ eslint-plugin-unicorn(prefer-global-this): Prefer `globalThis` over environment-specific global aliases like `window`, `self`, and `global`.
+   ╭─[prefer_global_this.tsx:1:1]
+ 1 │ self
+   · ────
+   ╰────
+  help: Replace the alias with `globalThis`.
+
+  ⚠ eslint-plugin-unicorn(prefer-global-this): Prefer `globalThis` over environment-specific global aliases like `window`, `self`, and `global`.
+   ╭─[prefer_global_this.tsx:1:1]
+ 1 │ window
+   · ──────
+   ╰────
+  help: Replace the alias with `globalThis`.
+
+  ⚠ eslint-plugin-unicorn(prefer-global-this): Prefer `globalThis` over environment-specific global aliases like `window`, `self`, and `global`.
+   ╭─[prefer_global_this.tsx:1:1]
+ 1 │ window.foo
+   · ──────
+   ╰────
+  help: Replace the alias with `globalThis`.
+
+  ⚠ eslint-plugin-unicorn(prefer-global-this): Prefer `globalThis` over environment-specific global aliases like `window`, `self`, and `global`.
+   ╭─[prefer_global_this.tsx:1:1]
+ 1 │ window.foo()
+   · ──────
+   ╰────
+  help: Replace the alias with `globalThis`.
+
+  ⚠ eslint-plugin-unicorn(prefer-global-this): Prefer `globalThis` over environment-specific global aliases like `window`, `self`, and `global`.
+   ╭─[prefer_global_this.tsx:1:1]
+ 1 │ window > 10
+   · ──────
+   ╰────
+  help: Replace the alias with `globalThis`.
+
+  ⚠ eslint-plugin-unicorn(prefer-global-this): Prefer `globalThis` over environment-specific global aliases like `window`, `self`, and `global`.
+   ╭─[prefer_global_this.tsx:1:6]
+ 1 │ 10 > window
+   ·      ──────
+   ╰────
+  help: Replace the alias with `globalThis`.
+
+  ⚠ eslint-plugin-unicorn(prefer-global-this): Prefer `globalThis` over environment-specific global aliases like `window`, `self`, and `global`.
+   ╭─[prefer_global_this.tsx:1:1]
+ 1 │ window ?? 10
+   · ──────
+   ╰────
+  help: Replace the alias with `globalThis`.
+
+  ⚠ eslint-plugin-unicorn(prefer-global-this): Prefer `globalThis` over environment-specific global aliases like `window`, `self`, and `global`.
+   ╭─[prefer_global_this.tsx:1:7]
+ 1 │ 10 ?? window
+   ·       ──────
+   ╰────
+  help: Replace the alias with `globalThis`.
+
+  ⚠ eslint-plugin-unicorn(prefer-global-this): Prefer `globalThis` over environment-specific global aliases like `window`, `self`, and `global`.
+   ╭─[prefer_global_this.tsx:1:1]
+ 1 │ window.foo = 123
+   · ──────
+   ╰────
+  help: Replace the alias with `globalThis`.
+
+  ⚠ eslint-plugin-unicorn(prefer-global-this): Prefer `globalThis` over environment-specific global aliases like `window`, `self`, and `global`.
+   ╭─[prefer_global_this.tsx:1:1]
+ 1 │ window = 123
+   · ──────
+   ╰────
+  help: Replace the alias with `globalThis`.
+
+  ⚠ eslint-plugin-unicorn(prefer-global-this): Prefer `globalThis` over environment-specific global aliases like `window`, `self`, and `global`.
+   ╭─[prefer_global_this.tsx:1:9]
+ 1 │ obj.a = window
+   ·         ──────
+   ╰────
+  help: Replace the alias with `globalThis`.
+
+  ⚠ eslint-plugin-unicorn(prefer-global-this): Prefer `globalThis` over environment-specific global aliases like `window`, `self`, and `global`.
+   ╭─[prefer_global_this.tsx:2:12]
+ 1 │ function* gen() {
+ 2 │               yield window
+   ·                     ──────
+ 3 │             }
+   ╰────
+  help: Replace the alias with `globalThis`.
+
+  ⚠ eslint-plugin-unicorn(prefer-global-this): Prefer `globalThis` over environment-specific global aliases like `window`, `self`, and `global`.
+   ╭─[prefer_global_this.tsx:2:12]
+ 1 │ async function gen() {
+ 2 │               await window
+   ·                     ──────
+ 3 │             }
+   ╰────
+  help: Replace the alias with `globalThis`.
+
+  ⚠ eslint-plugin-unicorn(prefer-global-this): Prefer `globalThis` over environment-specific global aliases like `window`, `self`, and `global`.
+   ╭─[prefer_global_this.tsx:1:1]
+ 1 │ window ? foo : bar
+   · ──────
+   ╰────
+  help: Replace the alias with `globalThis`.
+
+  ⚠ eslint-plugin-unicorn(prefer-global-this): Prefer `globalThis` over environment-specific global aliases like `window`, `self`, and `global`.
+   ╭─[prefer_global_this.tsx:1:7]
+ 1 │ foo ? window : bar
+   ·       ──────
+   ╰────
+  help: Replace the alias with `globalThis`.
+
+  ⚠ eslint-plugin-unicorn(prefer-global-this): Prefer `globalThis` over environment-specific global aliases like `window`, `self`, and `global`.
+   ╭─[prefer_global_this.tsx:1:13]
+ 1 │ foo ? bar : window
+   ·             ──────
+   ╰────
+  help: Replace the alias with `globalThis`.
+
+  ⚠ eslint-plugin-unicorn(prefer-global-this): Prefer `globalThis` over environment-specific global aliases like `window`, `self`, and `global`.
+   ╭─[prefer_global_this.tsx:2:13]
+ 1 │ function foo() {
+ 2 │               return window
+   ·                      ──────
+ 3 │             }
+   ╰────
+  help: Replace the alias with `globalThis`.
+
+  ⚠ eslint-plugin-unicorn(prefer-global-this): Prefer `globalThis` over environment-specific global aliases like `window`, `self`, and `global`.
+   ╭─[prefer_global_this.tsx:1:5]
+ 1 │ new window()
+   ·     ──────
+   ╰────
+  help: Replace the alias with `globalThis`.
+
+  ⚠ eslint-plugin-unicorn(prefer-global-this): Prefer `globalThis` over environment-specific global aliases like `window`, `self`, and `global`.
+   ╭─[prefer_global_this.tsx:2:10]
+ 1 │ const obj = {
+ 2 │                 foo: window.foo,
+   ·                      ──────
+ 3 │                 bar: window.bar,
+   ╰────
+  help: Replace the alias with `globalThis`.
+
+  ⚠ eslint-plugin-unicorn(prefer-global-this): Prefer `globalThis` over environment-specific global aliases like `window`, `self`, and `global`.
+   ╭─[prefer_global_this.tsx:3:10]
+ 2 │                 foo: window.foo,
+ 3 │                 bar: window.bar,
+   ·                      ──────
+ 4 │                 window: window
+   ╰────
+  help: Replace the alias with `globalThis`.
+
+  ⚠ eslint-plugin-unicorn(prefer-global-this): Prefer `globalThis` over environment-specific global aliases like `window`, `self`, and `global`.
+   ╭─[prefer_global_this.tsx:4:13]
+ 3 │                 bar: window.bar,
+ 4 │                 window: window
+   ·                         ──────
+ 5 │             }
+   ╰────
+  help: Replace the alias with `globalThis`.
+
+  ⚠ eslint-plugin-unicorn(prefer-global-this): Prefer `globalThis` over environment-specific global aliases like `window`, `self`, and `global`.
+   ╭─[prefer_global_this.tsx:3:25]
+ 2 │                 let x, y;
+ 3 │                 x = (y = 10, y + 5, window);
+   ·                                     ──────
+ 4 │                 console.log(x, y);
+   ╰────
+  help: Replace the alias with `globalThis`.
+
+  ⚠ eslint-plugin-unicorn(prefer-global-this): Prefer `globalThis` over environment-specific global aliases like `window`, `self`, and `global`.
+   ╭─[prefer_global_this.tsx:1:1]
+ 1 │ window`Hello ${42} World`
+   · ──────
+   ╰────
+  help: Replace the alias with `globalThis`.
+
+  ⚠ eslint-plugin-unicorn(prefer-global-this): Prefer `globalThis` over environment-specific global aliases like `window`, `self`, and `global`.
+   ╭─[prefer_global_this.tsx:1:13]
+ 1 │ tag`Hello ${window.foo} World`
+   ·             ──────
+   ╰────
+  help: Replace the alias with `globalThis`.
+
+  ⚠ eslint-plugin-unicorn(prefer-global-this): Prefer `globalThis` over environment-specific global aliases like `window`, `self`, and `global`.
+   ╭─[prefer_global_this.tsx:1:20]
+ 1 │ var str = `hello ${window.foo} world!`
+   ·                    ──────
+   ╰────
+  help: Replace the alias with `globalThis`.
+
+  ⚠ eslint-plugin-unicorn(prefer-global-this): Prefer `globalThis` over environment-specific global aliases like `window`, `self`, and `global`.
+   ╭─[prefer_global_this.tsx:1:8]
+ 1 │ delete window.foo
+   ·        ──────
+   ╰────
+  help: Replace the alias with `globalThis`.
+
+  ⚠ eslint-plugin-unicorn(prefer-global-this): Prefer `globalThis` over environment-specific global aliases like `window`, `self`, and `global`.
+   ╭─[prefer_global_this.tsx:1:3]
+ 1 │ ++window
+   ·   ──────
+   ╰────
+  help: Replace the alias with `globalThis`.
+
+  ⚠ eslint-plugin-unicorn(prefer-global-this): Prefer `globalThis` over environment-specific global aliases like `window`, `self`, and `global`.
+   ╭─[prefer_global_this.tsx:1:3]
+ 1 │ ++window.foo
+   ·   ──────
+   ╰────
+  help: Replace the alias with `globalThis`.
+
+  ⚠ eslint-plugin-unicorn(prefer-global-this): Prefer `globalThis` over environment-specific global aliases like `window`, `self`, and `global`.
+   ╭─[prefer_global_this.tsx:1:18]
+ 1 │ for (var attr in window) {
+   ·                  ──────
+ 2 │             }
+   ╰────
+  help: Replace the alias with `globalThis`.
+
+  ⚠ eslint-plugin-unicorn(prefer-global-this): Prefer `globalThis` over environment-specific global aliases like `window`, `self`, and `global`.
+   ╭─[prefer_global_this.tsx:1:6]
+ 1 │ for (window.foo = 0; i < 10; window.foo++) {
+   ·      ──────
+ 2 │             }
+   ╰────
+  help: Replace the alias with `globalThis`.
+
+  ⚠ eslint-plugin-unicorn(prefer-global-this): Prefer `globalThis` over environment-specific global aliases like `window`, `self`, and `global`.
+   ╭─[prefer_global_this.tsx:1:30]
+ 1 │ for (window.foo = 0; i < 10; window.foo++) {
+   ·                              ──────
+ 2 │             }
+   ╰────
+  help: Replace the alias with `globalThis`.
+
+  ⚠ eslint-plugin-unicorn(prefer-global-this): Prefer `globalThis` over environment-specific global aliases like `window`, `self`, and `global`.
+   ╭─[prefer_global_this.tsx:1:20]
+ 1 │ for (const item of window.foo) {
+   ·                    ──────
+ 2 │             }
+   ╰────
+  help: Replace the alias with `globalThis`.
+
+  ⚠ eslint-plugin-unicorn(prefer-global-this): Prefer `globalThis` over environment-specific global aliases like `window`, `self`, and `global`.
+   ╭─[prefer_global_this.tsx:1:20]
+ 1 │ for (const item of window) {
+   ·                    ──────
+ 2 │             }
+   ╰────
+  help: Replace the alias with `globalThis`.
+
+  ⚠ eslint-plugin-unicorn(prefer-global-this): Prefer `globalThis` over environment-specific global aliases like `window`, `self`, and `global`.
+   ╭─[prefer_global_this.tsx:1:9]
+ 1 │ switch (window) {}
+   ·         ──────
+   ╰────
+  help: Replace the alias with `globalThis`.
+
+  ⚠ eslint-plugin-unicorn(prefer-global-this): Prefer `globalThis` over environment-specific global aliases like `window`, `self`, and `global`.
+   ╭─[prefer_global_this.tsx:2:10]
+ 1 │ switch (true) {
+ 2 │                 case window:
+   ·                      ──────
+ 3 │                     break;
+   ╰────
+  help: Replace the alias with `globalThis`.
+
+  ⚠ eslint-plugin-unicorn(prefer-global-this): Prefer `globalThis` over environment-specific global aliases like `window`, `self`, and `global`.
+   ╭─[prefer_global_this.tsx:2:10]
+ 1 │ switch (true) {
+ 2 │                 case window.foo:
+   ·                      ──────
+ 3 │                     break;
+   ╰────
+  help: Replace the alias with `globalThis`.
+
+  ⚠ eslint-plugin-unicorn(prefer-global-this): Prefer `globalThis` over environment-specific global aliases like `window`, `self`, and `global`.
+   ╭─[prefer_global_this.tsx:1:8]
+ 1 │ while (window) {
+   ·        ──────
+ 2 │             }
+   ╰────
+  help: Replace the alias with `globalThis`.
+
+  ⚠ eslint-plugin-unicorn(prefer-global-this): Prefer `globalThis` over environment-specific global aliases like `window`, `self`, and `global`.
+   ╭─[prefer_global_this.tsx:1:14]
+ 1 │ do {} while (window) {}
+   ·              ──────
+   ╰────
+  help: Replace the alias with `globalThis`.
+
+  ⚠ eslint-plugin-unicorn(prefer-global-this): Prefer `globalThis` over environment-specific global aliases like `window`, `self`, and `global`.
+   ╭─[prefer_global_this.tsx:1:5]
+ 1 │ if (window) {}
+   ·     ──────
+   ╰────
+  help: Replace the alias with `globalThis`.
+
+  ⚠ eslint-plugin-unicorn(prefer-global-this): Prefer `globalThis` over environment-specific global aliases like `window`, `self`, and `global`.
+   ╭─[prefer_global_this.tsx:1:7]
+ 1 │ throw window
+   ·       ──────
+   ╰────
+  help: Replace the alias with `globalThis`.
+
+  ⚠ eslint-plugin-unicorn(prefer-global-this): Prefer `globalThis` over environment-specific global aliases like `window`, `self`, and `global`.
+   ╭─[prefer_global_this.tsx:1:11]
+ 1 │ var foo = window
+   ·           ──────
+   ╰────
+  help: Replace the alias with `globalThis`.
+
+  ⚠ eslint-plugin-unicorn(prefer-global-this): Prefer `globalThis` over environment-specific global aliases like `window`, `self`, and `global`.
+   ╭─[prefer_global_this.tsx:1:22]
+ 1 │ function foo (name = window) {
+   ·                      ──────
+ 2 │             }
+   ╰────
+  help: Replace the alias with `globalThis`.
+
+  ⚠ eslint-plugin-unicorn(prefer-global-this): Prefer `globalThis` over environment-specific global aliases like `window`, `self`, and `global`.
+   ╭─[prefer_global_this.tsx:1:1]
+ 1 │ self.innerWidth
+   · ────
+   ╰────
+  help: Replace the alias with `globalThis`.
+
+  ⚠ eslint-plugin-unicorn(prefer-global-this): Prefer `globalThis` over environment-specific global aliases like `window`, `self`, and `global`.
+   ╭─[prefer_global_this.tsx:1:1]
+ 1 │ self.innerHeight
+   · ────
+   ╰────
+  help: Replace the alias with `globalThis`.
+
+  ⚠ eslint-plugin-unicorn(prefer-global-this): Prefer `globalThis` over environment-specific global aliases like `window`, `self`, and `global`.
+   ╭─[prefer_global_this.tsx:1:1]
+ 1 │ window.crypto
+   · ──────
+   ╰────
+  help: Replace the alias with `globalThis`.
+
+  ⚠ eslint-plugin-unicorn(prefer-global-this): Prefer `globalThis` over environment-specific global aliases like `window`, `self`, and `global`.
+   ╭─[prefer_global_this.tsx:1:1]
+ 1 │ window.addEventListener("play", () => {})
+   · ──────
+   ╰────
+  help: Replace the alias with `globalThis`.
+
+  ⚠ eslint-plugin-unicorn(prefer-global-this): Prefer `globalThis` over environment-specific global aliases like `window`, `self`, and `global`.
+   ╭─[prefer_global_this.tsx:1:1]
+ 1 │ window.onplay = function () {}
+   · ──────
+   ╰────
+  help: Replace the alias with `globalThis`.
+
+  ⚠ eslint-plugin-unicorn(prefer-global-this): Prefer `globalThis` over environment-specific global aliases like `window`, `self`, and `global`.
+   ╭─[prefer_global_this.tsx:1:25]
+ 1 │ function greet({ name = window.foo }) {}
+   ·                         ──────
+   ╰────
+  help: Replace the alias with `globalThis`.
+
+  ⚠ eslint-plugin-unicorn(prefer-global-this): Prefer `globalThis` over environment-specific global aliases like `window`, `self`, and `global`.
+   ╭─[prefer_global_this.tsx:1:9]
+ 1 │ ({ foo: window.foo } =  {})
+   ·         ──────
+   ╰────
+  help: Replace the alias with `globalThis`.
+
+  ⚠ eslint-plugin-unicorn(prefer-global-this): Prefer `globalThis` over environment-specific global aliases like `window`, `self`, and `global`.
+   ╭─[prefer_global_this.tsx:1:2]
+ 1 │ [window.foo] = []
+   ·  ──────
+   ╰────
+  help: Replace the alias with `globalThis`.
+
+  ⚠ eslint-plugin-unicorn(prefer-global-this): Prefer `globalThis` over environment-specific global aliases like `window`, `self`, and `global`.
+   ╭─[prefer_global_this.tsx:1:5]
+ 1 │ foo[window]
+   ·     ──────
+   ╰────
+  help: Replace the alias with `globalThis`.
+
+  ⚠ eslint-plugin-unicorn(prefer-global-this): Prefer `globalThis` over environment-specific global aliases like `window`, `self`, and `global`.
+   ╭─[prefer_global_this.tsx:1:5]
+ 1 │ foo[window.foo]
+   ·     ──────
+   ╰────
+  help: Replace the alias with `globalThis`.
+
+  ⚠ eslint-plugin-unicorn(prefer-global-this): Prefer `globalThis` over environment-specific global aliases like `window`, `self`, and `global`.
+   ╭─[prefer_global_this.tsx:1:8]
+ 1 │ typeof window !== "undefined"
+   ·        ──────
+   ╰────
+  help: Replace the alias with `globalThis`.
+
+  ⚠ eslint-plugin-unicorn(prefer-global-this): Prefer `globalThis` over environment-specific global aliases like `window`, `self`, and `global`.
+   ╭─[prefer_global_this.tsx:1:8]
+ 1 │ typeof self !== "undefined"
+   ·        ────
+   ╰────
+  help: Replace the alias with `globalThis`.
+
+  ⚠ eslint-plugin-unicorn(prefer-global-this): Prefer `globalThis` over environment-specific global aliases like `window`, `self`, and `global`.
+   ╭─[prefer_global_this.tsx:1:8]
+ 1 │ typeof global !== "undefined"
+   ·        ──────
+   ╰────
+  help: Replace the alias with `globalThis`.
+
+  ⚠ eslint-plugin-unicorn(prefer-global-this): Prefer `globalThis` over environment-specific global aliases like `window`, `self`, and `global`.
+   ╭─[prefer_global_this.tsx:1:8]
+ 1 │ typeof window.something === "function"
+   ·        ──────
+   ╰────
+  help: Replace the alias with `globalThis`.
+
+  ⚠ eslint-plugin-unicorn(prefer-global-this): Prefer `globalThis` over environment-specific global aliases like `window`, `self`, and `global`.
+   ╭─[prefer_global_this.tsx:1:8]
+ 1 │ typeof self.something === "function"
+   ·        ────
+   ╰────
+  help: Replace the alias with `globalThis`.
+
+  ⚠ eslint-plugin-unicorn(prefer-global-this): Prefer `globalThis` over environment-specific global aliases like `window`, `self`, and `global`.
+   ╭─[prefer_global_this.tsx:1:8]
+ 1 │ typeof global.something === "function"
+   ·        ──────
+   ╰────
+  help: Replace the alias with `globalThis`.
+
+  ⚠ eslint-plugin-unicorn(prefer-global-this): Prefer `globalThis` over environment-specific global aliases like `window`, `self`, and `global`.
+   ╭─[prefer_global_this.tsx:1:1]
+ 1 │ global.global_did_not_declare_in_language_options
+   · ──────
+   ╰────
+  help: Replace the alias with `globalThis`.
+
+  ⚠ eslint-plugin-unicorn(prefer-global-this): Prefer `globalThis` over environment-specific global aliases like `window`, `self`, and `global`.
+   ╭─[prefer_global_this.tsx:1:1]
+ 1 │ window.window_did_not_declare_in_language_options
+   · ──────
+   ╰────
+  help: Replace the alias with `globalThis`.
+
+  ⚠ eslint-plugin-unicorn(prefer-global-this): Prefer `globalThis` over environment-specific global aliases like `window`, `self`, and `global`.
+   ╭─[prefer_global_this.tsx:1:1]
+ 1 │ self.self_did_not_declare_in_language_options
+   · ────
+   ╰────
+  help: Replace the alias with `globalThis`.

@@ -2,7 +2,7 @@
 use std::path::Path;
 
 use oxc_allocator::Allocator;
-use oxc_codegen::CodeGenerator;
+use oxc_codegen::Codegen;
 use oxc_parser::Parser;
 use oxc_semantic::SemanticBuilder;
 use oxc_span::SourceType;
@@ -85,7 +85,7 @@ fn main() {
         }
     }
 
-    let printed = CodeGenerator::new().build(&program).code;
+    let printed = Codegen::new().build(&program).code;
     println!("Transformed:\n");
     println!("{printed}");
 }

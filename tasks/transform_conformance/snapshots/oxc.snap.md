@@ -1,6 +1,6 @@
-commit: 578ac4df
+commit: 1d4546bc
 
-Passed: 150/243
+Passed: 154/258
 
 # All Passed:
 * babel-plugin-transform-class-static-block
@@ -44,7 +44,12 @@ after transform: SymbolId(0): [ReferenceId(0), ReferenceId(2), ReferenceId(6), R
 rebuilt        : SymbolId(0): [ReferenceId(0), ReferenceId(2), ReferenceId(6), ReferenceId(10)]
 
 
-# babel-plugin-transform-typescript (4/17)
+# babel-plugin-transform-typescript (5/26)
+* allow-declare-fields-false/input.ts
+Unresolved references mismatch:
+after transform: ["dce"]
+rebuilt        : []
+
 * class-property-definition/input.ts
 Unresolved references mismatch:
 after transform: ["const"]
@@ -287,6 +292,66 @@ Symbol redeclarations mismatch for "y":
 after transform: SymbolId(2): [Span { start: 59, end: 60 }, Span { start: 83, end: 84 }]
 rebuilt        : SymbolId(3): []
 
+* namespace/redeclaration-with-interface/input.ts
+Bindings mismatch:
+after transform: ScopeId(0): []
+rebuilt        : ScopeId(0): ["Foo"]
+Scope children mismatch:
+after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
+rebuilt        : ScopeId(0): [ScopeId(1)]
+Scope flags mismatch:
+after transform: ScopeId(2): ScopeFlags(StrictMode | Function)
+rebuilt        : ScopeId(1): ScopeFlags(Function)
+Symbol flags mismatch for "Foo":
+after transform: SymbolId(0): SymbolFlags(Interface | ValueModule)
+rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
+Symbol span mismatch for "Foo":
+after transform: SymbolId(0): Span { start: 17, end: 20 }
+rebuilt        : SymbolId(0): Span { start: 0, end: 0 }
+Symbol redeclarations mismatch for "Foo":
+after transform: SymbolId(0): [Span { start: 17, end: 20 }, Span { start: 41, end: 44 }]
+rebuilt        : SymbolId(0): []
+
+* namespace/redeclaration-with-type-alias/input.ts
+Bindings mismatch:
+after transform: ScopeId(0): []
+rebuilt        : ScopeId(0): ["Foo"]
+Scope children mismatch:
+after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3)]
+rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2)]
+Scope flags mismatch:
+after transform: ScopeId(2): ScopeFlags(StrictMode | Function)
+rebuilt        : ScopeId(1): ScopeFlags(Function)
+Scope flags mismatch:
+after transform: ScopeId(3): ScopeFlags(StrictMode | Function)
+rebuilt        : ScopeId(2): ScopeFlags(Function)
+Symbol flags mismatch for "Foo":
+after transform: SymbolId(0): SymbolFlags(TypeAlias | ValueModule)
+rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
+Symbol span mismatch for "Foo":
+after transform: SymbolId(0): Span { start: 12, end: 15 }
+rebuilt        : SymbolId(0): Span { start: 0, end: 0 }
+Symbol redeclarations mismatch for "Foo":
+after transform: SymbolId(0): [Span { start: 12, end: 15 }, Span { start: 39, end: 42 }, Span { start: 87, end: 90 }]
+rebuilt        : SymbolId(0): []
+
+* namespace/redeclaration-with-type-only-namespace/input.ts
+Scope children mismatch:
+after transform: ScopeId(0): [ScopeId(1), ScopeId(3)]
+rebuilt        : ScopeId(0): [ScopeId(1)]
+Scope flags mismatch:
+after transform: ScopeId(3): ScopeFlags(StrictMode | Function)
+rebuilt        : ScopeId(1): ScopeFlags(Function)
+Symbol flags mismatch for "Foo":
+after transform: SymbolId(0): SymbolFlags(NamespaceModule | ValueModule)
+rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
+Symbol span mismatch for "Foo":
+after transform: SymbolId(0): Span { start: 17, end: 20 }
+rebuilt        : SymbolId(0): Span { start: 0, end: 0 }
+Symbol redeclarations mismatch for "Foo":
+after transform: SymbolId(0): [Span { start: 17, end: 20 }, Span { start: 62, end: 65 }]
+rebuilt        : SymbolId(0): []
+
 * preserve-import-=/input.js
 Symbol reference IDs mismatch for "Foo":
 after transform: SymbolId(1): [ReferenceId(1)]
@@ -330,8 +395,76 @@ Symbol redeclarations mismatch for "B":
 after transform: SymbolId(2): [Span { start: 267, end: 268 }, Span { start: 289, end: 293 }, Span { start: 304, end: 305 }]
 rebuilt        : SymbolId(2): []
 
+* remove-class-properties-without-initializer/input.ts
+Unresolved references mismatch:
+after transform: ["dce"]
+rebuilt        : []
+
 * ts-declaration-empty-output/input.d.ts
 x Output mismatch
+
+* ts-private-field-with-remove-class-fields-without-initializer/input.ts
+Unresolved references mismatch:
+after transform: ["ArrayBufferView", "Transferable", "WeakMap", "babelHelpers", "kTransferable", "kValue"]
+rebuilt        : ["WeakMap", "babelHelpers", "kTransferable", "kValue"]
+
+* use-define-for-class-fields/input.ts
+Unresolved references mismatch:
+after transform: ["dce"]
+rebuilt        : []
+
+* use-define-for-class-fields-without-class-properties/input.ts
+Scope children mismatch:
+after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(4), ScopeId(5), ScopeId(8), ScopeId(11), ScopeId(12), ScopeId(13), ScopeId(14), ScopeId(15), ScopeId(16), ScopeId(17), ScopeId(18), ScopeId(19), ScopeId(20)]
+rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(4), ScopeId(7), ScopeId(11), ScopeId(15)]
+Scope children mismatch:
+after transform: ScopeId(1): []
+rebuilt        : ScopeId(1): [ScopeId(2), ScopeId(3)]
+Scope parent mismatch:
+after transform: ScopeId(12): Some(ScopeId(0))
+rebuilt        : ScopeId(2): Some(ScopeId(1))
+Scope parent mismatch:
+after transform: ScopeId(11): Some(ScopeId(0))
+rebuilt        : ScopeId(3): Some(ScopeId(1))
+Scope children mismatch:
+after transform: ScopeId(2): [ScopeId(3)]
+rebuilt        : ScopeId(4): [ScopeId(5), ScopeId(6)]
+Scope parent mismatch:
+after transform: ScopeId(13): Some(ScopeId(0))
+rebuilt        : ScopeId(5): Some(ScopeId(4))
+Scope children mismatch:
+after transform: ScopeId(4): []
+rebuilt        : ScopeId(7): [ScopeId(8), ScopeId(9), ScopeId(10)]
+Scope parent mismatch:
+after transform: ScopeId(16): Some(ScopeId(0))
+rebuilt        : ScopeId(8): Some(ScopeId(7))
+Scope parent mismatch:
+after transform: ScopeId(14): Some(ScopeId(0))
+rebuilt        : ScopeId(9): Some(ScopeId(7))
+Scope parent mismatch:
+after transform: ScopeId(15): Some(ScopeId(0))
+rebuilt        : ScopeId(10): Some(ScopeId(7))
+Scope children mismatch:
+after transform: ScopeId(5): [ScopeId(6), ScopeId(7)]
+rebuilt        : ScopeId(11): [ScopeId(12), ScopeId(13), ScopeId(14)]
+Scope parent mismatch:
+after transform: ScopeId(17): Some(ScopeId(0))
+rebuilt        : ScopeId(12): Some(ScopeId(11))
+Scope children mismatch:
+after transform: ScopeId(8): [ScopeId(9), ScopeId(10)]
+rebuilt        : ScopeId(15): [ScopeId(16), ScopeId(17), ScopeId(18), ScopeId(19), ScopeId(20)]
+Scope parent mismatch:
+after transform: ScopeId(18): Some(ScopeId(0))
+rebuilt        : ScopeId(17): Some(ScopeId(15))
+Scope parent mismatch:
+after transform: ScopeId(19): Some(ScopeId(0))
+rebuilt        : ScopeId(19): Some(ScopeId(15))
+Scope parent mismatch:
+after transform: ScopeId(20): Some(ScopeId(0))
+rebuilt        : ScopeId(20): Some(ScopeId(15))
+Unresolved reference IDs mismatch for "dce":
+after transform: [ReferenceId(0), ReferenceId(1), ReferenceId(4), ReferenceId(9), ReferenceId(12), ReferenceId(14), ReferenceId(17)]
+rebuilt        : [ReferenceId(5)]
 
 
 # babel-plugin-transform-react-jsx (42/45)
@@ -364,7 +497,18 @@ after transform: SymbolId(4): ScopeId(1)
 rebuilt        : SymbolId(5): ScopeId(4)
 
 
-# legacy-decorators (2/71)
+# legacy-decorators (4/76)
+* oxc/metadata/abstract-class/input.ts
+Symbol reference IDs mismatch for "Dependency":
+after transform: SymbolId(1): [ReferenceId(1), ReferenceId(2), ReferenceId(3)]
+rebuilt        : SymbolId(1): [ReferenceId(6), ReferenceId(7)]
+Symbol span mismatch for "AbstractClass":
+after transform: SymbolId(2): Span { start: 69, end: 82 }
+rebuilt        : SymbolId(3): Span { start: 0, end: 0 }
+Symbol span mismatch for "AbstractClass":
+after transform: SymbolId(5): Span { start: 0, end: 0 }
+rebuilt        : SymbolId(4): Span { start: 69, end: 82 }
+
 * oxc/metadata/bound-type-reference/input.ts
 Symbol reference IDs mismatch for "BoundTypeReference":
 after transform: SymbolId(0): [ReferenceId(1), ReferenceId(3), ReferenceId(4), ReferenceId(5), ReferenceId(6)]
@@ -378,49 +522,38 @@ rebuilt        : SymbolId(3): Span { start: 87, end: 94 }
 
 * oxc/metadata/imports/input.ts
 Bindings mismatch:
-after transform: ScopeId(0): ["Bar", "Cls", "Foo", "_ref", "dec"]
-rebuilt        : ScopeId(0): ["Cls", "_ref"]
+after transform: ScopeId(0): ["Bar", "Cls", "Foo", "Zoo", "_ref", "dec"]
+rebuilt        : ScopeId(0): ["Cls", "Foo", "_ref"]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
 rebuilt        : ScopeId(0): [ScopeId(1)]
+Symbol reference IDs mismatch for "Foo":
+after transform: SymbolId(0): [ReferenceId(2), ReferenceId(3), ReferenceId(12), ReferenceId(13)]
+rebuilt        : SymbolId(0): [ReferenceId(9), ReferenceId(10)]
 Symbol span mismatch for "Cls":
-after transform: SymbolId(6): Span { start: 135, end: 138 }
-rebuilt        : SymbolId(1): Span { start: 0, end: 0 }
+after transform: SymbolId(7): Span { start: 145, end: 148 }
+rebuilt        : SymbolId(2): Span { start: 0, end: 0 }
 Symbol span mismatch for "Cls":
-after transform: SymbolId(10): Span { start: 0, end: 0 }
-rebuilt        : SymbolId(2): Span { start: 135, end: 138 }
-Reference symbol mismatch for "Foo":
-after transform: SymbolId(0) "Foo"
-rebuilt        : <None>
-Reference flags mismatch for "Foo":
-after transform: ReferenceId(8): ReferenceFlags(Type)
-rebuilt        : ReferenceId(7): ReferenceFlags(Read)
-Reference symbol mismatch for "Foo":
-after transform: SymbolId(0) "Foo"
-rebuilt        : <None>
-Reference flags mismatch for "Foo":
-after transform: ReferenceId(9): ReferenceFlags(Type)
-rebuilt        : ReferenceId(8): ReferenceFlags(Read)
+after transform: SymbolId(13): Span { start: 0, end: 0 }
+rebuilt        : SymbolId(3): Span { start: 145, end: 148 }
 Reference symbol mismatch for "dec":
-after transform: SymbolId(2) "dec"
+after transform: SymbolId(3) "dec"
 rebuilt        : <None>
 Unresolved references mismatch:
 after transform: ["Object", "PropertyDescriptor", "babelHelpers", "console"]
-rebuilt        : ["Foo", "Object", "babelHelpers", "console", "dec"]
+rebuilt        : ["Object", "babelHelpers", "console", "dec"]
 
 * oxc/metadata/typescript-syntax/input.ts
-Bindings mismatch:
-after transform: ScopeId(0): ["A", "B"]
-rebuilt        : ScopeId(0): ["B"]
-Scope children mismatch:
-after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
-rebuilt        : ScopeId(0): [ScopeId(1)]
-Scope children mismatch:
-after transform: ScopeId(2): [ScopeId(3), ScopeId(4)]
-rebuilt        : ScopeId(1): [ScopeId(2)]
-Unresolved references mismatch:
-after transform: ["dec", "m"]
-rebuilt        : []
+
+  x TS(1249): A decorator can only decorate a method implementation, not an
+  | overload.
+   ,-[tasks/transform_conformance/tests/legacy-decorators/test/fixtures/oxc/metadata/typescript-syntax/input.ts:6:3]
+ 5 | class B {
+ 6 |   @m
+   :   ^^
+ 7 |   method();
+   `----
+
 
 * oxc/metadata/unbound-type-reference/input.ts
 Symbol span mismatch for "Example":
@@ -446,6 +579,46 @@ rebuilt        : SymbolId(2): Span { start: 0, end: 0 }
 Symbol span mismatch for "C":
 after transform: SymbolId(3): Span { start: 0, end: 0 }
 rebuilt        : SymbolId(3): Span { start: 106, end: 107 }
+
+* oxc/static-field/input.ts
+Scope children mismatch:
+after transform: ScopeId(0): [ScopeId(1), ScopeId(3), ScopeId(4)]
+rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(3)]
+Scope children mismatch:
+after transform: ScopeId(3): []
+rebuilt        : ScopeId(3): [ScopeId(4)]
+Scope flags mismatch:
+after transform: ScopeId(4): ScopeFlags(ClassStaticBlock)
+rebuilt        : ScopeId(4): ScopeFlags(StrictMode | ClassStaticBlock)
+Scope parent mismatch:
+after transform: ScopeId(4): Some(ScopeId(0))
+rebuilt        : ScopeId(4): Some(ScopeId(3))
+Symbol span mismatch for "Foo":
+after transform: SymbolId(2): Span { start: 103, end: 106 }
+rebuilt        : SymbolId(3): Span { start: 0, end: 0 }
+Symbol reference IDs mismatch for "Foo":
+after transform: SymbolId(2): [ReferenceId(4), ReferenceId(6), ReferenceId(8)]
+rebuilt        : SymbolId(3): [ReferenceId(4), ReferenceId(8)]
+Symbol span mismatch for "Foo":
+after transform: SymbolId(3): Span { start: 0, end: 0 }
+rebuilt        : SymbolId(4): Span { start: 103, end: 106 }
+Unresolved references mismatch:
+after transform: ["ClassDecorator", "babelHelpers", "console"]
+rebuilt        : ["babelHelpers", "console"]
+
+* oxc/static-field-with-class-properties/input.ts
+Symbol span mismatch for "Foo":
+after transform: SymbolId(2): Span { start: 103, end: 106 }
+rebuilt        : SymbolId(3): Span { start: 0, end: 0 }
+Symbol reference IDs mismatch for "Foo":
+after transform: SymbolId(2): [ReferenceId(4), ReferenceId(6), ReferenceId(8), ReferenceId(10)]
+rebuilt        : SymbolId(3): [ReferenceId(3), ReferenceId(7), ReferenceId(9)]
+Symbol span mismatch for "Foo":
+after transform: SymbolId(3): Span { start: 0, end: 0 }
+rebuilt        : SymbolId(4): Span { start: 103, end: 106 }
+Unresolved references mismatch:
+after transform: ["ClassDecorator", "babelHelpers", "console"]
+rebuilt        : ["babelHelpers", "console"]
 
 * oxc/with-class-private-properties/input.ts
 Symbol span mismatch for "C":
@@ -502,15 +675,14 @@ rebuilt        : ["babelHelpers", "dec"]
 
 * typescript/accessor/decoratorOnClassAccessor3/input.ts
 
-  x Expected a semicolon or an implicit semicolon after a statement, but found
-  | none
-   ,-[tasks/transform_conformance/tests/legacy-decorators/test/fixtures/typescript/accessor/decoratorOnClassAccessor3/input.ts:6:11]
+  x Expected `;` but found `@`
+   ,-[tasks/transform_conformance/tests/legacy-decorators/test/fixtures/typescript/accessor/decoratorOnClassAccessor3/input.ts:6:12]
  5 | class C {
  6 |     public @dec get accessor() { return 1; }
-   :           ^
+   :            |
+   :            `-- `;` expected
  7 | }
    `----
-  help: Try insert a semicolon here
 
 
 * typescript/accessor/decoratorOnClassAccessor4/input.ts
@@ -543,15 +715,14 @@ rebuilt        : ["babelHelpers", "dec"]
 
 * typescript/accessor/decoratorOnClassAccessor6/input.ts
 
-  x Expected a semicolon or an implicit semicolon after a statement, but found
-  | none
-   ,-[tasks/transform_conformance/tests/legacy-decorators/test/fixtures/typescript/accessor/decoratorOnClassAccessor6/input.ts:6:11]
+  x Expected `;` but found `@`
+   ,-[tasks/transform_conformance/tests/legacy-decorators/test/fixtures/typescript/accessor/decoratorOnClassAccessor6/input.ts:6:12]
  5 | class C {
  6 |     public @dec set accessor(value: number) { }
-   :           ^
+   :            |
+   :            `-- `;` expected
  7 | }
    `----
-  help: Try insert a semicolon here
 
 
 * typescript/accessor/decoratorOnClassAccessor7/input.ts
@@ -919,15 +1090,14 @@ rebuilt        : ["Function", "babelHelpers", "decorator"]
 
 * typescript/method/decoratorOnClassMethod17/input.ts
 
-  x Expected a semicolon or an implicit semicolon after a statement, but found
-  | none
-   ,-[tasks/transform_conformance/tests/legacy-decorators/test/fixtures/typescript/method/decoratorOnClassMethod17/input.ts:7:17]
+  x Expected `;` but found `@`
+   ,-[tasks/transform_conformance/tests/legacy-decorators/test/fixtures/typescript/method/decoratorOnClassMethod17/input.ts:7:18]
  6 | class Foo {
  7 |     private prop @decorator
-   :                 ^
+   :                  |
+   :                  `-- `;` expected
  8 |     foo() {
    `----
-  help: Try insert a semicolon here
 
 
 * typescript/method/decoratorOnClassMethod18/input.ts
@@ -960,15 +1130,14 @@ rebuilt        : ["babelHelpers", "dec"]
 
 * typescript/method/decoratorOnClassMethod3/input.ts
 
-  x Expected a semicolon or an implicit semicolon after a statement, but found
-  | none
-   ,-[tasks/transform_conformance/tests/legacy-decorators/test/fixtures/typescript/method/decoratorOnClassMethod3/input.ts:6:11]
+  x Expected `;` but found `@`
+   ,-[tasks/transform_conformance/tests/legacy-decorators/test/fixtures/typescript/method/decoratorOnClassMethod3/input.ts:6:12]
  5 | class C {
  6 |     public @dec method() {}
-   :           ^
+   :            |
+   :            `-- `;` expected
  7 | }
    `----
-  help: Try insert a semicolon here
 
 
 * typescript/method/decoratorOnClassMethod4/input.ts
@@ -1042,18 +1211,16 @@ after transform: ["babelHelpers"]
 rebuilt        : ["babelHelpers", "dec"]
 
 * typescript/method/decoratorOnClassMethodOverload1/input.ts
-Bindings mismatch:
-after transform: ScopeId(0): ["C", "dec"]
-rebuilt        : ScopeId(0): ["C"]
-Scope children mismatch:
-after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
-rebuilt        : ScopeId(0): [ScopeId(1)]
-Scope children mismatch:
-after transform: ScopeId(2): [ScopeId(3), ScopeId(4)]
-rebuilt        : ScopeId(1): [ScopeId(2)]
-Unresolved references mismatch:
-after transform: ["TypedPropertyDescriptor"]
-rebuilt        : []
+
+  x TS(1249): A decorator can only decorate a method implementation, not an
+  | overload.
+   ,-[tasks/transform_conformance/tests/legacy-decorators/test/fixtures/typescript/method/decoratorOnClassMethodOverload1/input.ts:6:5]
+ 5 | class C {
+ 6 |     @dec
+   :     ^^^^
+ 7 |     method()
+   `----
+
 
 * typescript/method/decoratorOnClassMethodOverload2/input.ts
 Bindings mismatch:
@@ -1214,15 +1381,14 @@ rebuilt        : ["babelHelpers", "dec"]
 
 * typescript/property/decoratorOnClassProperty3/input.ts
 
-  x Expected a semicolon or an implicit semicolon after a statement, but found
-  | none
-   ,-[tasks/transform_conformance/tests/legacy-decorators/test/fixtures/typescript/property/decoratorOnClassProperty3/input.ts:6:11]
+  x Expected `;` but found `@`
+   ,-[tasks/transform_conformance/tests/legacy-decorators/test/fixtures/typescript/property/decoratorOnClassProperty3/input.ts:6:12]
  5 | class C {
  6 |     public @dec prop;
-   :           ^
+   :            |
+   :            `-- `;` expected
  7 | }
    `----
-  help: Try insert a semicolon here
 
 
 * typescript/property/decoratorOnClassProperty6/input.ts

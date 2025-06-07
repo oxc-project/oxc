@@ -34,7 +34,7 @@ declare_oxc_lint!(
     /// It is safe to disable this rule when using TypeScript because
     /// TypeScript's compiler enforces this check.
     ///
-    /// ### Example
+    /// ### Examples
     ///
     /// Examples of **incorrect** code for this rule:
     /// ```js

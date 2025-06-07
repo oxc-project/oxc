@@ -7,11 +7,13 @@ use oxc_syntax::operator::UnaryOperator;
 use crate::{AstNode, context::LintContext, fixer::RuleFixer, rule::Rule};
 
 fn no_unsafe_negation_diagnostic(operator: &str, span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn(format!("Unexpected negating the left operand of '{operator}' operator"))
-        .with_help(format!(
-            "Use `()` to negate the whole expression, as '!' binds more closely than '{operator}'"
-        ))
-        .with_label(span)
+    OxcDiagnostic::warn(format!(
+        "Unexpected negation of the left operand of '{operator}' operator."
+    ))
+    .with_help(format!(
+        "Use `()` to negate the whole expression, as '!' binds more closely than '{operator}'"
+    ))
+    .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]

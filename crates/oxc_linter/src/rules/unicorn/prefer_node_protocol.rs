@@ -27,7 +27,7 @@ declare_oxc_lint!(
     ///
     /// Node.js builtin modules should be imported using the `node:` protocol to avoid ambiguity with local modules.
     ///
-    /// ### Example
+    /// ### Examples
     ///
     /// Examples of **incorrect** code for this rule:
     /// ```javascript

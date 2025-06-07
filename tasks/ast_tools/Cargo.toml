@@ -23,6 +23,7 @@ itertools = { workspace = true }
 lazy-regex = { workspace = true }
 oxc_index = { workspace = true }
 phf = { workspace = true, features = ["macros"] }
+phf_codegen = { workspace = true }
 prettyplease = { workspace = true }
 proc-macro2 = { workspace = true }
 quote = { workspace = true }

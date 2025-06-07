@@ -312,9 +312,7 @@ impl NoSelfAssign {
                     binding @ match_assignment_target!(AssignmentTargetMaybeDefault) => {
                         binding.to_assignment_target()
                     }
-                    AssignmentTargetMaybeDefault::AssignmentTargetWithDefault(_) => {
-                        return;
-                    }
+                    AssignmentTargetMaybeDefault::AssignmentTargetWithDefault(_) => return,
                 };
                 let ObjectPropertyKind::ObjectProperty(obj_prop) = right else {
                     return;

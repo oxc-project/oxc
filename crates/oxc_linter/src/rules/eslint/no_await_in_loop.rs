@@ -25,7 +25,7 @@ declare_oxc_lint!(
     /// It potentially indicates that the async operations are not being effectively parallelized.
     /// Instead, they are being run in series, which can lead to poorer performance.
     ///
-    /// ### Example
+    /// ### Examples
     ///
     /// Examples of **incorrect** code for this rule:
     /// ```javascript
@@ -94,9 +94,9 @@ impl Rule for NoAwaitInLoop {
 impl NoAwaitInLoop {
     fn node_matches_stmt_span(span: Span, stmt: &Statement) -> bool {
         match stmt {
-            Statement::BlockStatement(block) => Self::include_span(block.span, span),
+            Statement::BlockStatement(block) => block.span.contains_inclusive(span),
             Statement::ExpressionStatement(expr_statement) => {
-                Self::include_span(expr_statement.span, span)
+                expr_statement.span.contains_inclusive(span)
             }
             _ => false,
         }
@@ -104,29 +104,29 @@ impl NoAwaitInLoop {
 
     fn node_matches_expr_span(span: Span, expr: &Expression) -> bool {
         match expr {
-            Expression::TemplateLiteral(expr) => Self::include_span(expr.span, span),
-            Expression::ArrayExpression(expr) => Self::include_span(expr.span, span),
-            Expression::ArrowFunctionExpression(expr) => Self::include_span(expr.span, span),
-            Expression::AssignmentExpression(expr) => Self::include_span(expr.span, span),
-            Expression::AwaitExpression(expr) => Self::include_span(expr.span, span),
-            Expression::BinaryExpression(expr) => Self::include_span(expr.span, span),
-            Expression::CallExpression(expr) => Self::include_span(expr.span, span),
-            Expression::ChainExpression(expr) => Self::include_span(expr.span, span),
-            Expression::ClassExpression(expr) => Self::include_span(expr.span, span),
-            Expression::ConditionalExpression(expr) => Self::include_span(expr.span, span),
-            Expression::FunctionExpression(expr) => Self::include_span(expr.span, span),
-            Expression::ImportExpression(expr) => Self::include_span(expr.span, span),
-            Expression::LogicalExpression(expr) => Self::include_span(expr.span, span),
-            Expression::NewExpression(expr) => Self::include_span(expr.span, span),
-            Expression::ObjectExpression(expr) => Self::include_span(expr.span, span),
-            Expression::ParenthesizedExpression(expr) => Self::include_span(expr.span, span),
-            Expression::SequenceExpression(expr) => Self::include_span(expr.span, span),
-            Expression::TaggedTemplateExpression(expr) => Self::include_span(expr.span, span),
-            Expression::ThisExpression(expr) => Self::include_span(expr.span, span),
-            Expression::UnaryExpression(expr) => Self::include_span(expr.span, span),
-            Expression::UpdateExpression(expr) => Self::include_span(expr.span, span),
-            Expression::YieldExpression(expr) => Self::include_span(expr.span, span),
-            Expression::PrivateInExpression(expr) => Self::include_span(expr.span, span),
+            Expression::TemplateLiteral(expr) => expr.span.contains_inclusive(span),
+            Expression::ArrayExpression(expr) => expr.span.contains_inclusive(span),
+            Expression::ArrowFunctionExpression(expr) => expr.span.contains_inclusive(span),
+            Expression::AssignmentExpression(expr) => expr.span.contains_inclusive(span),
+            Expression::AwaitExpression(expr) => expr.span.contains_inclusive(span),
+            Expression::BinaryExpression(expr) => expr.span.contains_inclusive(span),
+            Expression::CallExpression(expr) => expr.span.contains_inclusive(span),
+            Expression::ChainExpression(expr) => expr.span.contains_inclusive(span),
+            Expression::ClassExpression(expr) => expr.span.contains_inclusive(span),
+            Expression::ConditionalExpression(expr) => expr.span.contains_inclusive(span),
+            Expression::FunctionExpression(expr) => expr.span.contains_inclusive(span),
+            Expression::ImportExpression(expr) => expr.span.contains_inclusive(span),
+            Expression::LogicalExpression(expr) => expr.span.contains_inclusive(span),
+            Expression::NewExpression(expr) => expr.span.contains_inclusive(span),
+            Expression::ObjectExpression(expr) => expr.span.contains_inclusive(span),
+            Expression::ParenthesizedExpression(expr) => expr.span.contains_inclusive(span),
+            Expression::SequenceExpression(expr) => expr.span.contains_inclusive(span),
+            Expression::TaggedTemplateExpression(expr) => expr.span.contains_inclusive(span),
+            Expression::ThisExpression(expr) => expr.span.contains_inclusive(span),
+            Expression::UnaryExpression(expr) => expr.span.contains_inclusive(span),
+            Expression::UpdateExpression(expr) => expr.span.contains_inclusive(span),
+            Expression::YieldExpression(expr) => expr.span.contains_inclusive(span),
+            Expression::PrivateInExpression(expr) => expr.span.contains_inclusive(span),
             _ => false,
         }
     }
@@ -164,11 +164,6 @@ impl NoAwaitInLoop {
             }
             _ => false,
         }
-    }
-
-    // is span1 include span2
-    fn include_span(span1: Span, span2: Span) -> bool {
-        span1.start <= span2.start && span1.end >= span2.end
     }
 
     fn is_boundary(node: &AstNode) -> bool {

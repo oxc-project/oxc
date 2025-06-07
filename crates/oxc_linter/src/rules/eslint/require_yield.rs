@@ -21,7 +21,9 @@ declare_oxc_lint!(
     ///
     /// Probably a mistake.
     ///
-    /// ### Example
+    /// ### Examples
+    ///
+    /// Examples of **incorrect** code for this rule:
     /// ```javascript
     /// function* foo() {
     ///   return 10;

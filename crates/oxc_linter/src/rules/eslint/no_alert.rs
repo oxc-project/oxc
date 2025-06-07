@@ -17,6 +17,7 @@ pub struct NoAlert;
 
 declare_oxc_lint!(
     /// ### What it does
+    ///
     /// Disallow the use of alert, confirm, and prompt
     ///
     /// ### Why is this bad?

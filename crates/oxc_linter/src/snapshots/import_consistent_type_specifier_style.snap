@@ -1,0 +1,86 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+  ⚠ eslint-plugin-import(consistent-type-specifier-style): Prefer using a top-level type-only import instead of inline type specifiers.
+   ╭─[consistent_type_specifier_style.tsx:1:10]
+ 1 │ import { type Foo, type Bar } from 'Foo'
+   ·          ────────
+   ╰────
+  help: Replace inline type specifiers with a top‐level import type statement.
+
+  ⚠ eslint-plugin-import(consistent-type-specifier-style): Prefer using a top-level type-only import instead of inline type specifiers.
+   ╭─[consistent_type_specifier_style.tsx:1:20]
+ 1 │ import { type Foo, type Bar } from 'Foo'
+   ·                    ────────
+   ╰────
+  help: Replace inline type specifiers with a top‐level import type statement.
+
+  ⚠ eslint-plugin-import(consistent-type-specifier-style): Prefer using inline type specifiers instead of a top-level type-only import.
+   ╭─[consistent_type_specifier_style.tsx:1:1]
+ 1 │ import type { Foo } from 'Foo'
+   · ──────────────────────────────
+   ╰────
+  help: Replace top‐level import type with an inline type specifier.
+
+  ⚠ eslint-plugin-import(consistent-type-specifier-style): Prefer using a top-level type-only import instead of inline type specifiers.
+   ╭─[consistent_type_specifier_style.tsx:1:10]
+ 1 │ import { type Foo as Bar } from 'Foo';
+   ·          ───────────────
+   ╰────
+  help: Replace inline type specifiers with a top‐level import type statement.
+
+  ⚠ eslint-plugin-import(consistent-type-specifier-style): Prefer using a top-level type-only import instead of inline type specifiers.
+   ╭─[consistent_type_specifier_style.tsx:1:10]
+ 1 │ import { type Foo, type Bar } from 'Foo';
+   ·          ────────
+   ╰────
+  help: Replace inline type specifiers with a top‐level import type statement.
+
+  ⚠ eslint-plugin-import(consistent-type-specifier-style): Prefer using a top-level type-only import instead of inline type specifiers.
+   ╭─[consistent_type_specifier_style.tsx:1:20]
+ 1 │ import { type Foo, type Bar } from 'Foo';
+   ·                    ────────
+   ╰────
+  help: Replace inline type specifiers with a top‐level import type statement.
+
+  ⚠ eslint-plugin-import(consistent-type-specifier-style): Prefer using a top-level type-only import instead of inline type specifiers.
+   ╭─[consistent_type_specifier_style.tsx:1:15]
+ 1 │ import { Foo, type Bar } from 'Foo';
+   ·               ────────
+   ╰────
+  help: Replace inline type specifiers with a top‐level import type statement.
+
+  ⚠ eslint-plugin-import(consistent-type-specifier-style): Prefer using a top-level type-only import instead of inline type specifiers.
+   ╭─[consistent_type_specifier_style.tsx:1:10]
+ 1 │ import { type Foo, Bar } from 'Foo';
+   ·          ────────
+   ╰────
+  help: Replace inline type specifiers with a top‐level import type statement.
+
+  ⚠ eslint-plugin-import(consistent-type-specifier-style): Prefer using a top-level type-only import instead of inline type specifiers.
+   ╭─[consistent_type_specifier_style.tsx:1:15]
+ 1 │ import Foo, { type Bar } from 'Foo';
+   ·               ────────
+   ╰────
+  help: Replace inline type specifiers with a top‐level import type statement.
+
+  ⚠ eslint-plugin-import(consistent-type-specifier-style): Prefer using a top-level type-only import instead of inline type specifiers.
+   ╭─[consistent_type_specifier_style.tsx:1:15]
+ 1 │ import Foo, { type Bar, Baz } from 'Foo';
+   ·               ────────
+   ╰────
+  help: Replace inline type specifiers with a top‐level import type statement.
+
+  ⚠ eslint-plugin-import(consistent-type-specifier-style): Prefer using a top-level type-only import instead of inline type specifiers.
+   ╭─[consistent_type_specifier_style.tsx:1:21]
+ 1 │ import { Component, type ComponentProps } from 'package-1';
+   ·                     ───────────────────
+   ╰────
+  help: Replace inline type specifiers with a top‐level import type statement.
+
+  ⚠ eslint-plugin-import(consistent-type-specifier-style): Prefer using inline type specifiers instead of a top-level type-only import.
+   ╭─[consistent_type_specifier_style.tsx:1:1]
+ 1 │ import type { Foo, Bar, Baz } from 'Foo';
+   · ─────────────────────────────────────────
+   ╰────
+  help: Replace top‐level import type with an inline type specifier.

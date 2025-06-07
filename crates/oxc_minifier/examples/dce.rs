@@ -2,7 +2,7 @@
 use std::path::Path;
 
 use oxc_allocator::Allocator;
-use oxc_codegen::{CodeGenerator, CodegenOptions};
+use oxc_codegen::{Codegen, CodegenOptions};
 use oxc_minifier::{CompressOptions, Compressor};
 use oxc_parser::Parser;
 use oxc_span::SourceType;
@@ -41,7 +41,7 @@ fn dce(allocator: &Allocator, source_text: &str, source_type: SourceType, nospac
     let ret = Parser::new(allocator, source_text, source_type).parse();
     let mut program = ret.program;
     Compressor::new(allocator, CompressOptions::default()).dead_code_elimination(&mut program);
-    CodeGenerator::new()
+    Codegen::new()
         .with_options(CodegenOptions { minify: nospace, ..CodegenOptions::default() })
         .build(&program)
         .code

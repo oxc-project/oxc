@@ -36,8 +36,9 @@ declare_oxc_lint!(
     ///
     /// Disallow [optional chaining](https://github.com/tc39/proposal-optional-chaining).
     ///
-    /// ### Example
+    /// ### Examples
     ///
+    /// Examples of **incorrect** code for this rule:
     /// ```javascript
     /// const foo = obj?.foo;
     /// obj.fn?.();

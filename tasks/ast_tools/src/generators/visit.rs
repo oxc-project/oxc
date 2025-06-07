@@ -240,7 +240,15 @@ fn generate_output(
         //! * [rustc visitor](https://github.com/rust-lang/rust/blob/1.82.0/compiler/rustc_ast/src/visit.rs)
 
         //!@@line_break
-        #![expect(unused_variables, clippy::semicolon_if_nothing_returned, clippy::match_same_arms)]
+        #![expect(
+            unused_variables,
+            clippy::match_same_arms,
+            clippy::semicolon_if_nothing_returned,
+        )]
+        #![allow(
+            clippy::needless_pass_by_ref_mut,
+            clippy::trivially_copy_pass_by_ref,
+        )]
 
         ///@@line_break
         use std::cell::Cell;

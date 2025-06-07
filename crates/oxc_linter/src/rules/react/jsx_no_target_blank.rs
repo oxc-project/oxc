@@ -94,6 +94,7 @@ impl JsxNoTargetBlank {
 
 declare_oxc_lint!(
     /// ### What it does
+    ///
     /// This rule aims to prevent user generated link hrefs and form actions from creating security vulnerabilities by
     /// requiring `rel='noreferrer'` for external link hrefs and form actions, and optionally any dynamically generated
     /// link hrefs and form actions.
@@ -105,7 +106,15 @@ declare_oxc_lint!(
     /// vulnerability (see [`noreferrer` docs] and [`noopener` docs] for more details).
     /// This rules requires that you accompany `target='_blank'` attributes with `rel='noreferrer'`.
     ///
-    /// ### Example
+    /// ### Examples
+    ///
+    /// Examples of **incorrect** code for this rule:
+    /// ```jsx
+    /// var Hello = <a target='_blank' href="https://example.com/"></a>
+    /// var Hello = <a target='_blank' href={dynamicLink}></a>
+    /// ```
+    ///
+    /// Examples of **correct** code for this rule:
     /// ```jsx
     /// /// correct
     /// var Hello = <p target="_blank"></p>
@@ -114,9 +123,6 @@ declare_oxc_lint!(
     /// var Hello = <a target="_blank" href="relative/path/in/the/host"></a>
     /// var Hello = <a target="_blank" href="/absolute/path/in/the/host"></a>
     /// var Hello = <a></a>
-    /// /// incorrect
-    /// var Hello = <a target='_blank' href="https://example.com/"></a>
-    /// var Hello = <a target='_blank' href={dynamicLink}></a>
     /// ```
     ///
     /// [`noreferrer` docs]: https://html.spec.whatwg.org/multipage/links.html#link-type-noreferrer

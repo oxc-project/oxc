@@ -115,7 +115,6 @@ declare_oxc_lint!(
     ///     });
     /// });
     /// ```
-    ///
     MaxNestedDescribe,
     jest,
     style,

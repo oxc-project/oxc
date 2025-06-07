@@ -8,7 +8,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                                  ──────
  4 │                 })
    ╰────
-  help: Avoid calling `expect` conditionally`
+  help: Avoid calling `expect` conditionally
 
   ⚠ eslint-plugin-jest(no-conditional-expect): Unexpected conditional expect
    ╭─[no_conditional_expect.tsx:3:31]
@@ -17,7 +17,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                               ──────
  4 │                 })
    ╰────
-  help: Avoid calling `expect` conditionally`
+  help: Avoid calling `expect` conditionally
 
   ⚠ eslint-plugin-jest(no-conditional-expect): Unexpected conditional expect
    ╭─[no_conditional_expect.tsx:3:33]
@@ -26,7 +26,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                                 ──────
  4 │                 })
    ╰────
-  help: Avoid calling `expect` conditionally`
+  help: Avoid calling `expect` conditionally
 
   ⚠ eslint-plugin-jest(no-conditional-expect): Unexpected conditional expect
    ╭─[no_conditional_expect.tsx:3:32]
@@ -35,7 +35,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                                ──────
  4 │                 })
    ╰────
-  help: Avoid calling `expect` conditionally`
+  help: Avoid calling `expect` conditionally
 
   ⚠ eslint-plugin-jest(no-conditional-expect): Unexpected conditional expect
    ╭─[no_conditional_expect.tsx:3:31]
@@ -44,7 +44,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                               ──────
  4 │                 })
    ╰────
-  help: Avoid calling `expect` conditionally`
+  help: Avoid calling `expect` conditionally
 
   ⚠ eslint-plugin-jest(no-conditional-expect): Unexpected conditional expect
    ╭─[no_conditional_expect.tsx:3:31]
@@ -53,7 +53,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                               ──────
  4 │                 })
    ╰────
-  help: Avoid calling `expect` conditionally`
+  help: Avoid calling `expect` conditionally
 
   ⚠ eslint-plugin-jest(no-conditional-expect): Unexpected conditional expect
    ╭─[no_conditional_expect.tsx:3:33]
@@ -62,7 +62,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                                 ──────
  4 │                 })
    ╰────
-  help: Avoid calling `expect` conditionally`
+  help: Avoid calling `expect` conditionally
 
   ⚠ eslint-plugin-jest(no-conditional-expect): Unexpected conditional expect
    ╭─[no_conditional_expect.tsx:3:34]
@@ -71,7 +71,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                                  ──────
  4 │                 }
    ╰────
-  help: Avoid calling `expect` conditionally`
+  help: Avoid calling `expect` conditionally
 
   ⚠ eslint-plugin-jest(no-conditional-expect): Unexpected conditional expect
    ╭─[no_conditional_expect.tsx:3:34]
@@ -80,7 +80,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                                  ──────
  4 │                 })
    ╰────
-  help: Avoid calling `expect` conditionally`
+  help: Avoid calling `expect` conditionally
 
   ⚠ eslint-plugin-jest(no-conditional-expect): Unexpected conditional expect
    ╭─[no_conditional_expect.tsx:3:34]
@@ -89,7 +89,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                                  ──────
  4 │                 })
    ╰────
-  help: Avoid calling `expect` conditionally`
+  help: Avoid calling `expect` conditionally
 
   ⚠ eslint-plugin-jest(no-conditional-expect): Unexpected conditional expect
    ╭─[no_conditional_expect.tsx:3:34]
@@ -98,7 +98,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                                  ──────
  4 │                 })
    ╰────
-  help: Avoid calling `expect` conditionally`
+  help: Avoid calling `expect` conditionally
 
   ⚠ eslint-plugin-jest(no-conditional-expect): Unexpected conditional expect
    ╭─[no_conditional_expect.tsx:3:34]
@@ -107,7 +107,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                                  ──────
  4 │                 }
    ╰────
-  help: Avoid calling `expect` conditionally`
+  help: Avoid calling `expect` conditionally
 
   ⚠ eslint-plugin-jest(no-conditional-expect): Unexpected conditional expect
    ╭─[no_conditional_expect.tsx:3:33]
@@ -116,7 +116,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                                 ──────
  4 │                 })
    ╰────
-  help: Avoid calling `expect` conditionally`
+  help: Avoid calling `expect` conditionally
 
   ⚠ eslint-plugin-jest(no-conditional-expect): Unexpected conditional expect
    ╭─[no_conditional_expect.tsx:3:33]
@@ -125,7 +125,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                                 ──────
  4 │                 }
    ╰────
-  help: Avoid calling `expect` conditionally`
+  help: Avoid calling `expect` conditionally
 
   ⚠ eslint-plugin-jest(no-conditional-expect): Unexpected conditional expect
    ╭─[no_conditional_expect.tsx:3:42]
@@ -134,7 +134,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                                          ──────
  4 │                 })
    ╰────
-  help: Avoid calling `expect` conditionally`
+  help: Avoid calling `expect` conditionally
 
   ⚠ eslint-plugin-jest(no-conditional-expect): Unexpected conditional expect
    ╭─[no_conditional_expect.tsx:3:42]
@@ -143,7 +143,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                                          ──────
  4 │                 })
    ╰────
-  help: Avoid calling `expect` conditionally`
+  help: Avoid calling `expect` conditionally
 
   ⚠ eslint-plugin-jest(no-conditional-expect): Unexpected conditional expect
    ╭─[no_conditional_expect.tsx:3:42]
@@ -152,7 +152,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                                          ──────
  4 │                 })
    ╰────
-  help: Avoid calling `expect` conditionally`
+  help: Avoid calling `expect` conditionally
 
   ⚠ eslint-plugin-jest(no-conditional-expect): Unexpected conditional expect
    ╭─[no_conditional_expect.tsx:3:42]
@@ -161,7 +161,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                                          ──────
  4 │                 }
    ╰────
-  help: Avoid calling `expect` conditionally`
+  help: Avoid calling `expect` conditionally
 
   ⚠ eslint-plugin-jest(no-conditional-expect): Unexpected conditional expect
    ╭─[no_conditional_expect.tsx:7:25]
@@ -170,7 +170,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                         ──────
  8 │                     }
    ╰────
-  help: Avoid calling `expect` conditionally`
+  help: Avoid calling `expect` conditionally
 
   ⚠ eslint-plugin-jest(no-conditional-expect): Unexpected conditional expect
    ╭─[no_conditional_expect.tsx:5:25]
@@ -179,7 +179,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                         ──────
  6 │                     default:
    ╰────
-  help: Avoid calling `expect` conditionally`
+  help: Avoid calling `expect` conditionally
 
   ⚠ eslint-plugin-jest(no-conditional-expect): Unexpected conditional expect
    ╭─[no_conditional_expect.tsx:5:25]
@@ -188,7 +188,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                         ──────
  6 │                     default:
    ╰────
-  help: Avoid calling `expect` conditionally`
+  help: Avoid calling `expect` conditionally
 
   ⚠ eslint-plugin-jest(no-conditional-expect): Unexpected conditional expect
    ╭─[no_conditional_expect.tsx:5:25]
@@ -197,7 +197,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                         ──────
  6 │                     default:
    ╰────
-  help: Avoid calling `expect` conditionally`
+  help: Avoid calling `expect` conditionally
 
   ⚠ eslint-plugin-jest(no-conditional-expect): Unexpected conditional expect
    ╭─[no_conditional_expect.tsx:7:25]
@@ -206,7 +206,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                         ──────
  8 │                     }
    ╰────
-  help: Avoid calling `expect` conditionally`
+  help: Avoid calling `expect` conditionally
 
   ⚠ eslint-plugin-jest(no-conditional-expect): Unexpected conditional expect
    ╭─[no_conditional_expect.tsx:4:25]
@@ -215,7 +215,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                         ──────
  5 │                     }
    ╰────
-  help: Avoid calling `expect` conditionally`
+  help: Avoid calling `expect` conditionally
 
   ⚠ eslint-plugin-jest(no-conditional-expect): Unexpected conditional expect
    ╭─[no_conditional_expect.tsx:6:25]
@@ -224,7 +224,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                         ──────
  7 │                     }
    ╰────
-  help: Avoid calling `expect` conditionally`
+  help: Avoid calling `expect` conditionally
 
   ⚠ eslint-plugin-jest(no-conditional-expect): Unexpected conditional expect
    ╭─[no_conditional_expect.tsx:6:25]
@@ -233,7 +233,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                         ──────
  7 │                     }
    ╰────
-  help: Avoid calling `expect` conditionally`
+  help: Avoid calling `expect` conditionally
 
   ⚠ eslint-plugin-jest(no-conditional-expect): Unexpected conditional expect
    ╭─[no_conditional_expect.tsx:6:25]
@@ -242,7 +242,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                         ──────
  7 │                     }
    ╰────
-  help: Avoid calling `expect` conditionally`
+  help: Avoid calling `expect` conditionally
 
   ⚠ eslint-plugin-jest(no-conditional-expect): Unexpected conditional expect
    ╭─[no_conditional_expect.tsx:4:25]
@@ -251,7 +251,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                         ──────
  5 │                     }
    ╰────
-  help: Avoid calling `expect` conditionally`
+  help: Avoid calling `expect` conditionally
 
   ⚠ eslint-plugin-jest(no-conditional-expect): Unexpected conditional expect
    ╭─[no_conditional_expect.tsx:6:21]
@@ -260,7 +260,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                     ──────
  7 │                     }
    ╰────
-  help: Avoid calling `expect` conditionally`
+  help: Avoid calling `expect` conditionally
 
   ⚠ eslint-plugin-jest(no-conditional-expect): Unexpected conditional expect
    ╭─[no_conditional_expect.tsx:6:21]
@@ -269,7 +269,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                     ──────
  7 │                     }
    ╰────
-  help: Avoid calling `expect` conditionally`
+  help: Avoid calling `expect` conditionally
 
   ⚠ eslint-plugin-jest(no-conditional-expect): Unexpected conditional expect
    ╭─[no_conditional_expect.tsx:6:21]
@@ -278,7 +278,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                     ──────
  7 │                     }
    ╰────
-  help: Avoid calling `expect` conditionally`
+  help: Avoid calling `expect` conditionally
 
   ⚠ eslint-plugin-jest(no-conditional-expect): Unexpected conditional expect
    ╭─[no_conditional_expect.tsx:6:25]
@@ -287,7 +287,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                         ──────
  7 │                     }
    ╰────
-  help: Avoid calling `expect` conditionally`
+  help: Avoid calling `expect` conditionally
 
   ⚠ eslint-plugin-jest(no-conditional-expect): Unexpected conditional expect
    ╭─[no_conditional_expect.tsx:6:25]
@@ -296,7 +296,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                         ──────
  7 │                     }
    ╰────
-  help: Avoid calling `expect` conditionally`
+  help: Avoid calling `expect` conditionally
 
   ⚠ eslint-plugin-jest(no-conditional-expect): Unexpected conditional expect
    ╭─[no_conditional_expect.tsx:6:25]
@@ -305,7 +305,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                         ──────
  7 │                     }
    ╰────
-  help: Avoid calling `expect` conditionally`
+  help: Avoid calling `expect` conditionally
 
   ⚠ eslint-plugin-jest(no-conditional-expect): Unexpected conditional expect
    ╭─[no_conditional_expect.tsx:6:21]
@@ -314,7 +314,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                     ──────
  7 │                     }
    ╰────
-  help: Avoid calling `expect` conditionally`
+  help: Avoid calling `expect` conditionally
 
   ⚠ eslint-plugin-jest(no-conditional-expect): Unexpected conditional expect
    ╭─[no_conditional_expect.tsx:5:37]
@@ -323,7 +323,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                                     ──────
  6 │                 });
    ╰────
-  help: Avoid calling `expect` conditionally`
+  help: Avoid calling `expect` conditionally
 
   ⚠ eslint-plugin-jest(no-conditional-expect): Unexpected conditional expect
    ╭─[no_conditional_expect.tsx:5:37]
@@ -332,7 +332,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                                     ──────
  6 │                     .then(() => { throw new Error('oh noes!'); })
    ╰────
-  help: Avoid calling `expect` conditionally`
+  help: Avoid calling `expect` conditionally
 
   ⚠ eslint-plugin-jest(no-conditional-expect): Unexpected conditional expect
    ╭─[no_conditional_expect.tsx:7:37]
@@ -341,7 +341,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                                     ──────
  8 │                     .then(() => { throw new Error('oh noes!'); })
    ╰────
-  help: Avoid calling `expect` conditionally`
+  help: Avoid calling `expect` conditionally
 
   ⚠ eslint-plugin-jest(no-conditional-expect): Unexpected conditional expect
     ╭─[no_conditional_expect.tsx:9:37]
@@ -350,7 +350,7 @@ source: crates/oxc_linter/src/tester.rs
     ·                                     ──────
  10 │                 });
     ╰────
-  help: Avoid calling `expect` conditionally`
+  help: Avoid calling `expect` conditionally
 
   ⚠ eslint-plugin-jest(no-conditional-expect): Unexpected conditional expect
    ╭─[no_conditional_expect.tsx:4:32]
@@ -359,7 +359,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                                         ──────
  5 │                         .catch(error => expect(error).toBeInstanceOf(Error))
    ╰────
-  help: Avoid calling `expect` conditionally`
+  help: Avoid calling `expect` conditionally
 
   ⚠ eslint-plugin-jest(no-conditional-expect): Unexpected conditional expect
    ╭─[no_conditional_expect.tsx:5:32]
@@ -368,7 +368,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                                         ──────
  6 │                         .catch(error => expect(error).toBeInstanceOf(Error));
    ╰────
-  help: Avoid calling `expect` conditionally`
+  help: Avoid calling `expect` conditionally
 
   ⚠ eslint-plugin-jest(no-conditional-expect): Unexpected conditional expect
    ╭─[no_conditional_expect.tsx:6:32]
@@ -377,7 +377,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                                         ──────
  7 │                     });
    ╰────
-  help: Avoid calling `expect` conditionally`
+  help: Avoid calling `expect` conditionally
 
   ⚠ eslint-plugin-jest(no-conditional-expect): Unexpected conditional expect
    ╭─[no_conditional_expect.tsx:4:37]
@@ -386,7 +386,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                                     ──────
  5 │                     .then(() => { throw new Error('oh noes!'); })
    ╰────
-  help: Avoid calling `expect` conditionally`
+  help: Avoid calling `expect` conditionally
 
   ⚠ eslint-plugin-jest(no-conditional-expect): Unexpected conditional expect
    ╭─[no_conditional_expect.tsx:5:37]
@@ -395,7 +395,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                                     ──────
  6 │                 });
    ╰────
-  help: Avoid calling `expect` conditionally`
+  help: Avoid calling `expect` conditionally
 
   ⚠ eslint-plugin-jest(no-conditional-expect): Unexpected conditional expect
    ╭─[no_conditional_expect.tsx:3:54]
@@ -404,7 +404,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                                                      ──────
  4 │                 });
    ╰────
-  help: Avoid calling `expect` conditionally`
+  help: Avoid calling `expect` conditionally
 
   ⚠ eslint-plugin-jest(no-conditional-expect): Unexpected conditional expect
    ╭─[no_conditional_expect.tsx:7:25]
@@ -413,7 +413,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                         ──────
  8 │                     }
    ╰────
-  help: Avoid calling `expect` conditionally`
+  help: Avoid calling `expect` conditionally
 
   ⚠ eslint-plugin-jest(no-conditional-expect): Unexpected conditional expect
    ╭─[no_conditional_expect.tsx:3:30]
@@ -422,7 +422,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                              ──────
  4 │             })
    ╰────
-  help: Avoid calling `expect` conditionally`
+  help: Avoid calling `expect` conditionally
 
   ⚠ eslint-plugin-jest(no-conditional-expect): Unexpected conditional expect
    ╭─[no_conditional_expect.tsx:3:28]
@@ -431,7 +431,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                            ──────
  4 │             })
    ╰────
-  help: Avoid calling `expect` conditionally`
+  help: Avoid calling `expect` conditionally
 
   ⚠ eslint-plugin-jest(no-conditional-expect): Unexpected conditional expect
    ╭─[no_conditional_expect.tsx:3:30]
@@ -440,7 +440,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                              ──────
  4 │             });
    ╰────
-  help: Avoid calling `expect` conditionally`
+  help: Avoid calling `expect` conditionally
 
   ⚠ eslint-plugin-jest(no-conditional-expect): Unexpected conditional expect
    ╭─[no_conditional_expect.tsx:3:30]
@@ -449,7 +449,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                              ──────
  4 │             })
    ╰────
-  help: Avoid calling `expect` conditionally`
+  help: Avoid calling `expect` conditionally
 
   ⚠ eslint-plugin-jest(no-conditional-expect): Unexpected conditional expect
    ╭─[no_conditional_expect.tsx:3:30]
@@ -458,7 +458,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                              ──────
  4 │             }
    ╰────
-  help: Avoid calling `expect` conditionally`
+  help: Avoid calling `expect` conditionally
 
   ⚠ eslint-plugin-jest(no-conditional-expect): Unexpected conditional expect
    ╭─[no_conditional_expect.tsx:3:29]
@@ -467,7 +467,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                             ──────
  4 │             })
    ╰────
-  help: Avoid calling `expect` conditionally`
+  help: Avoid calling `expect` conditionally
 
   ⚠ eslint-plugin-jest(no-conditional-expect): Unexpected conditional expect
    ╭─[no_conditional_expect.tsx:3:29]
@@ -476,7 +476,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                             ──────
  4 │             }
    ╰────
-  help: Avoid calling `expect` conditionally`
+  help: Avoid calling `expect` conditionally
 
   ⚠ eslint-plugin-jest(no-conditional-expect): Unexpected conditional expect
    ╭─[no_conditional_expect.tsx:3:38]
@@ -485,4 +485,4 @@ source: crates/oxc_linter/src/tester.rs
    ·                                      ──────
  4 │             })
    ╰────
-  help: Avoid calling `expect` conditionally`
+  help: Avoid calling `expect` conditionally

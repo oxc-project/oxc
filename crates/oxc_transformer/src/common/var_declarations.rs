@@ -214,15 +214,30 @@ impl<'a> VarDeclarationsStore<'a> {
             return;
         }
 
-        if let Some(insert_stmts) = self.get_var_statement(ctx) {
-            stmts.splice(0..0, insert_stmts);
+        if let Some((var_statement, let_statement)) = self.get_var_statement(ctx) {
+            let mut new_stmts = ctx.ast.vec_with_capacity(stmts.len() + 2);
+            match (var_statement, let_statement) {
+                (Some(var_statement), Some(let_statement)) => {
+                    // Insert `var` and `let` statements
+                    new_stmts.extend([var_statement, let_statement]);
+                }
+                (Some(statement), None) | (None, Some(statement)) => {
+                    // Insert `var` or `let` statement
+                    new_stmts.push(statement);
+                }
+                (None, None) => return,
+            }
+            new_stmts.append(stmts);
+            *stmts = new_stmts;
         }
     }
 
     fn insert_into_program(&self, transform_ctx: &TransformCtx<'a>, ctx: &TraverseCtx<'a>) {
-        if let Some(insert_stmts) = self.get_var_statement(ctx) {
+        if let Some((var_statement, let_statement)) = self.get_var_statement(ctx) {
             // Delegate to `TopLevelStatements`
-            transform_ctx.top_level_statements.insert_statements(insert_stmts);
+            transform_ctx
+                .top_level_statements
+                .insert_statements(var_statement.into_iter().chain(let_statement));
         }
 
         // Check stack is emptied
@@ -231,26 +246,20 @@ impl<'a> VarDeclarationsStore<'a> {
         debug_assert!(stack.last().is_none());
     }
 
-    fn get_var_statement(&self, ctx: &TraverseCtx<'a>) -> Option<Vec<Statement<'a>>> {
+    #[inline]
+    fn get_var_statement(
+        &self,
+        ctx: &TraverseCtx<'a>,
+    ) -> Option<(Option<Statement<'a>>, Option<Statement<'a>>)> {
         let mut stack = self.stack.borrow_mut();
         let Declarators { var_declarators, let_declarators } = stack.pop()?;
 
-        let mut stmts = Vec::with_capacity(2);
-        if !var_declarators.is_empty() {
-            stmts.push(Self::create_declaration(
-                VariableDeclarationKind::Var,
-                var_declarators,
-                ctx,
-            ));
-        }
-        if !let_declarators.is_empty() {
-            stmts.push(Self::create_declaration(
-                VariableDeclarationKind::Let,
-                let_declarators,
-                ctx,
-            ));
-        }
-        Some(stmts)
+        let var_statement = (!var_declarators.is_empty())
+            .then(|| Self::create_declaration(VariableDeclarationKind::Var, var_declarators, ctx));
+        let let_statement = (!let_declarators.is_empty())
+            .then(|| Self::create_declaration(VariableDeclarationKind::Let, let_declarators, ctx));
+
+        Some((var_statement, let_statement))
     }
 
     fn create_declaration(

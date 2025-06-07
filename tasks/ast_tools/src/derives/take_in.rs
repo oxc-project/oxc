@@ -27,7 +27,7 @@ impl Derive for DeriveTakeIn {
 
     fn prelude(&self) -> TokenStream {
         quote! {
-            #![allow(clippy::needless_lifetimes)]
+            #![expect(clippy::elidable_lifetime_names)]
 
             ///@@line_break
             use oxc_allocator::TakeIn;

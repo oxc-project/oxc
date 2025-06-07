@@ -1,7 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
-  ⚠ eslint(max-lines-per-function): The function name has too many lines (2). Maximum allowed is 1.
+  ⚠ eslint(max-lines-per-function): The function `name` has too many lines (2). Maximum allowed is 1.
    ╭─[max_lines_per_function.tsx:1:1]
  1 │ ╭─▶ function name() {
  2 │ ╰─▶             }
@@ -97,7 +97,7 @@ source: crates/oxc_linter/src/tester.rs
     ╰────
   help: Consider splitting it into smaller functions.
 
-  ⚠ eslint(max-lines-per-function): The function name has too many lines (7). Maximum allowed is 6.
+  ⚠ eslint(max-lines-per-function): The function `name` has too many lines (7). Maximum allowed is 6.
    ╭─[max_lines_per_function.tsx:1:1]
  1 │ ╭─▶ function name() {
  2 │ │               var x = 5;
@@ -109,7 +109,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Consider splitting it into smaller functions.
 
-  ⚠ eslint(max-lines-per-function): The function name has too many lines (7). Maximum allowed is 6.
+  ⚠ eslint(max-lines-per-function): The function `name` has too many lines (7). Maximum allowed is 6.
    ╭─[max_lines_per_function.tsx:1:1]
  1 │ ╭─▶ function name() {
  2 │ │               var x = 5;
@@ -121,7 +121,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Consider splitting it into smaller functions.
 
-  ⚠ eslint(max-lines-per-function): The function name has too many lines (4). Maximum allowed is 2.
+  ⚠ eslint(max-lines-per-function): The function `name` has too many lines (4). Maximum allowed is 2.
    ╭─[max_lines_per_function.tsx:1:1]
  1 │ ╭─▶ function name() {
  2 │ │               var x = 5;
@@ -133,7 +133,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Consider splitting it into smaller functions.
 
-  ⚠ eslint(max-lines-per-function): The function name has too many lines (4). Maximum allowed is 2.
+  ⚠ eslint(max-lines-per-function): The function `name` has too many lines (4). Maximum allowed is 2.
    ╭─[max_lines_per_function.tsx:1:1]
  1 │ ╭─▶ function name() {
  2 │ │               var x = 5;
@@ -145,7 +145,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Consider splitting it into smaller functions.
 
-  ⚠ eslint(max-lines-per-function): The function name has too many lines (7). Maximum allowed is 6.
+  ⚠ eslint(max-lines-per-function): The function `name` has too many lines (7). Maximum allowed is 6.
    ╭─[max_lines_per_function.tsx:1:1]
  1 │ ╭─▶ function name() { // end of line comment
  2 │ │               var x = 5; /* mid line comment */
@@ -158,7 +158,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Consider splitting it into smaller functions.
 
-  ⚠ eslint(max-lines-per-function): The function name has too many lines (4). Maximum allowed is 1.
+  ⚠ eslint(max-lines-per-function): The function `name` has too many lines (4). Maximum allowed is 1.
    ╭─[max_lines_per_function.tsx:1:1]
  1 │ ╭─▶ function name() { // end of line comment
  2 │ │               var x = 5; /* mid line comment */
@@ -171,7 +171,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Consider splitting it into smaller functions.
 
-  ⚠ eslint(max-lines-per-function): The function name has too many lines (5). Maximum allowed is 1.
+  ⚠ eslint(max-lines-per-function): The function `name` has too many lines (5). Maximum allowed is 1.
    ╭─[max_lines_per_function.tsx:1:1]
  1 │ ╭─▶ function name() { // end of line comment
  2 │ │               var x = 5; /* mid line comment */
@@ -184,7 +184,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Consider splitting it into smaller functions.
 
-  ⚠ eslint(max-lines-per-function): The function foo has too many lines (7). Maximum allowed is 2.
+  ⚠ eslint(max-lines-per-function): The function `foo` has too many lines (7). Maximum allowed is 2.
    ╭─[max_lines_per_function.tsx:1:1]
  1 │ ╭─▶ function foo(
  2 │ │                   aaa = 1,
@@ -207,7 +207,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Consider splitting it into smaller functions.
 
-  ⚠ eslint(max-lines-per-function): The function parent has too many lines (10). Maximum allowed is 9.
+  ⚠ eslint(max-lines-per-function): The function `parent` has too many lines (10). Maximum allowed is 9.
     ╭─[max_lines_per_function.tsx:1:1]
   1 │ ╭─▶ function parent() {
   2 │ │               var x = 0;
@@ -222,7 +222,7 @@ source: crates/oxc_linter/src/tester.rs
     ╰────
   help: Consider splitting it into smaller functions.
 
-  ⚠ eslint(max-lines-per-function): The function parent has too many lines (10). Maximum allowed is 2.
+  ⚠ eslint(max-lines-per-function): The function `parent` has too many lines (10). Maximum allowed is 2.
     ╭─[max_lines_per_function.tsx:1:1]
   1 │ ╭─▶ function parent() {
   2 │ │               var x = 0;
@@ -237,7 +237,7 @@ source: crates/oxc_linter/src/tester.rs
     ╰────
   help: Consider splitting it into smaller functions.
 
-  ⚠ eslint(max-lines-per-function): The function nested has too many lines (4). Maximum allowed is 2.
+  ⚠ eslint(max-lines-per-function): The function `nested` has too many lines (4). Maximum allowed is 2.
    ╭─[max_lines_per_function.tsx:3:4]
  2 │                 var x = 0;
  3 │ ╭─▶             function nested() {
@@ -248,7 +248,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Consider splitting it into smaller functions.
 
-  ⚠ eslint(max-lines-per-function): The method method has too many lines (5). Maximum allowed is 2.
+  ⚠ eslint(max-lines-per-function): The method `method` has too many lines (5). Maximum allowed is 2.
    ╭─[max_lines_per_function.tsx:2:14]
  1 │     class foo {
  2 │ ╭─▶                 method() {
@@ -260,7 +260,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Consider splitting it into smaller functions.
 
-  ⚠ eslint(max-lines-per-function): The static method foo has too many lines (3). Maximum allowed is 2.
+  ⚠ eslint(max-lines-per-function): The static method `foo` has too many lines (3). Maximum allowed is 2.
    ╭─[max_lines_per_function.tsx:4:8]
  3 │                     foo
  4 │ ╭─▶                 (a) {
@@ -270,7 +270,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Consider splitting it into smaller functions.
 
-  ⚠ eslint(max-lines-per-function): The function foo has too many lines (3). Maximum allowed is 2.
+  ⚠ eslint(max-lines-per-function): The function `foo` has too many lines (3). Maximum allowed is 2.
    ╭─[max_lines_per_function.tsx:4:8]
  3 │                     foo
  4 │ ╭─▶                 () {
@@ -280,7 +280,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Consider splitting it into smaller functions.
 
-  ⚠ eslint(max-lines-per-function): The function foo has too many lines (3). Maximum allowed is 2.
+  ⚠ eslint(max-lines-per-function): The function `foo` has too many lines (3). Maximum allowed is 2.
    ╭─[max_lines_per_function.tsx:4:8]
  3 │                     foo
  4 │ ╭─▶                 ( val ) {

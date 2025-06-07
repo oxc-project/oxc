@@ -13,13 +13,16 @@ use std::{
     slice::SliceIndex,
 };
 
-use crate::vec2::Vec as InnerVec;
-#[cfg(any(feature = "serialize", test))]
-use oxc_estree::{ESTree, Serializer as ESTreeSerializer};
+use bumpalo::Bump;
 #[cfg(any(feature = "serialize", test))]
 use serde::{Serialize, Serializer as SerdeSerializer};
 
-use crate::{Allocator, Box};
+#[cfg(any(feature = "serialize", test))]
+use oxc_estree::{ConcatElement, ESTree, SequenceSerializer, Serializer as ESTreeSerializer};
+
+use crate::{Allocator, Box, vec2::Vec as InnerVecGeneric};
+
+type InnerVec<'a, T> = InnerVecGeneric<'a, T, Bump>;
 
 /// A `Vec` without [`Drop`], which stores its data in the arena allocator.
 ///
@@ -78,7 +81,7 @@ impl<'alloc, T> Vec<'alloc, T> {
     /// minimum *capacity* specified, the vector will have a zero *length*.
     ///
     /// For `Vec<T>` where `T` is a zero-sized type, there will be no allocation
-    /// and the capacity will always be `usize::MAX`.
+    /// and the capacity will always be `u32::MAX`.
     ///
     /// # Panics
     ///
@@ -245,6 +248,15 @@ impl<T: Serialize> Serialize for Vec<'_, T> {
 impl<T: ESTree> ESTree for Vec<'_, T> {
     fn serialize<S: ESTreeSerializer>(&self, serializer: S) {
         self.as_slice().serialize(serializer);
+    }
+}
+
+#[cfg(feature = "serialize")]
+impl<T: ESTree> ConcatElement for Vec<'_, T> {
+    fn push_to_sequence<S: SequenceSerializer>(&self, seq: &mut S) {
+        for element in self {
+            seq.serialize_element(element);
+        }
     }
 }
 

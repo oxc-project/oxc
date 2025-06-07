@@ -1,5 +1,5 @@
 // Auto-generated code, DO NOT EDIT DIRECTLY!
-// To edit this generated file you have to edit `tasks/ast_tools/src/generators/visit.rs`
+// To edit this generated file you have to edit `tasks/ast_tools/src/generators/visit.rs`.
 
 //! Visitor Pattern
 //!
@@ -7,7 +7,8 @@
 //! * [visitor pattern](https://rust-unofficial.github.io/patterns/patterns/behavioural/visitor.html)
 //! * [rustc visitor](https://github.com/rust-lang/rust/blob/1.82.0/compiler/rustc_ast/src/visit.rs)
 
-#![expect(unused_variables, clippy::semicolon_if_nothing_returned, clippy::match_same_arms)]
+#![expect(unused_variables, clippy::match_same_arms, clippy::semicolon_if_nothing_returned)]
+#![allow(clippy::needless_pass_by_ref_mut, clippy::trivially_copy_pass_by_ref)]
 
 use std::cell::Cell;
 
@@ -1564,10 +1565,10 @@ pub mod walk_mut {
         visitor.enter_node(kind);
         visitor.visit_span(&mut it.span);
         visitor.visit_expression(&mut it.tag);
-        visitor.visit_template_literal(&mut it.quasi);
         if let Some(type_arguments) = &mut it.type_arguments {
             visitor.visit_ts_type_parameter_instantiation(type_arguments);
         }
+        visitor.visit_template_literal(&mut it.quasi);
         visitor.leave_node(kind);
     }
 
@@ -1653,10 +1654,10 @@ pub mod walk_mut {
         visitor.enter_node(kind);
         visitor.visit_span(&mut it.span);
         visitor.visit_expression(&mut it.callee);
-        visitor.visit_arguments(&mut it.arguments);
         if let Some(type_arguments) = &mut it.type_arguments {
             visitor.visit_ts_type_parameter_instantiation(type_arguments);
         }
+        visitor.visit_arguments(&mut it.arguments);
         visitor.leave_node(kind);
     }
 
@@ -2687,11 +2688,11 @@ pub mod walk_mut {
         visitor.visit_span(&mut it.span);
         visitor.visit_decorators(&mut it.decorators);
         visitor.visit_property_key(&mut it.key);
-        if let Some(value) = &mut it.value {
-            visitor.visit_expression(value);
-        }
         if let Some(type_annotation) = &mut it.type_annotation {
             visitor.visit_ts_type_annotation(type_annotation);
+        }
+        if let Some(value) = &mut it.value {
+            visitor.visit_expression(value);
         }
         visitor.leave_node(kind);
     }
@@ -2750,11 +2751,11 @@ pub mod walk_mut {
         visitor.visit_span(&mut it.span);
         visitor.visit_decorators(&mut it.decorators);
         visitor.visit_property_key(&mut it.key);
-        if let Some(value) = &mut it.value {
-            visitor.visit_expression(value);
-        }
         if let Some(type_annotation) = &mut it.type_annotation {
             visitor.visit_ts_type_annotation(type_annotation);
+        }
+        if let Some(value) = &mut it.value {
+            visitor.visit_expression(value);
         }
     }
 
@@ -3042,10 +3043,10 @@ pub mod walk_mut {
         visitor.enter_node(kind);
         visitor.visit_span(&mut it.span);
         visitor.visit_jsx_opening_element(&mut it.opening_element);
+        visitor.visit_jsx_children(&mut it.children);
         if let Some(closing_element) = &mut it.closing_element {
             visitor.visit_jsx_closing_element(closing_element);
         }
-        visitor.visit_jsx_children(&mut it.children);
         visitor.leave_node(kind);
     }
 
@@ -3058,10 +3059,10 @@ pub mod walk_mut {
         visitor.enter_node(kind);
         visitor.visit_span(&mut it.span);
         visitor.visit_jsx_element_name(&mut it.name);
-        visitor.visit_jsx_attribute_items(&mut it.attributes);
         if let Some(type_arguments) = &mut it.type_arguments {
             visitor.visit_ts_type_parameter_instantiation(type_arguments);
         }
+        visitor.visit_jsx_attribute_items(&mut it.attributes);
         visitor.leave_node(kind);
     }
 
@@ -3083,8 +3084,8 @@ pub mod walk_mut {
         visitor.enter_node(kind);
         visitor.visit_span(&mut it.span);
         visitor.visit_jsx_opening_fragment(&mut it.opening_fragment);
-        visitor.visit_jsx_closing_fragment(&mut it.closing_fragment);
         visitor.visit_jsx_children(&mut it.children);
+        visitor.visit_jsx_closing_fragment(&mut it.closing_fragment);
         visitor.leave_node(kind);
     }
 
@@ -3536,8 +3537,8 @@ pub mod walk_mut {
         let kind = AstType::TSNamedTupleMember;
         visitor.enter_node(kind);
         visitor.visit_span(&mut it.span);
-        visitor.visit_ts_tuple_element(&mut it.element_type);
         visitor.visit_identifier_name(&mut it.label);
+        visitor.visit_ts_tuple_element(&mut it.element_type);
         visitor.leave_node(kind);
     }
 
@@ -4213,8 +4214,8 @@ pub mod walk_mut {
         let kind = AstType::TSTypeAssertion;
         visitor.enter_node(kind);
         visitor.visit_span(&mut it.span);
-        visitor.visit_expression(&mut it.expression);
         visitor.visit_ts_type(&mut it.type_annotation);
+        visitor.visit_expression(&mut it.expression);
         visitor.leave_node(kind);
     }
 

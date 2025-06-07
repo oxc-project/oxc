@@ -52,11 +52,10 @@ declare_oxc_lint!(
     /// (`beforeAll`, `beforeEach`, `afterEach`, `afterAll`) is not located in a
     /// top-level `describe` block.
     ///
-    /// ### Example
+    /// ### Examples
     ///
+    /// Examples of **incorrect** code for this rule:
     /// ```javascript
-    /// // invalid
-    ///
     /// // Above a describe block
     /// test('my test', () => {});
     /// describe('test suite', () => {
@@ -71,9 +70,10 @@ declare_oxc_lint!(
     /// beforeAll('my beforeAll', () => {});
     /// describe('test suite', () => {});
     /// afterEach('my afterEach', () => {});
+    /// ```
     ///
-    /// //valid
-    ///
+    /// Examples of **correct** code for this rule:
+    /// ```javascript
     /// // Above a describe block
     /// // In a describe block
     /// describe('test suite', () => {
@@ -104,7 +104,6 @@ declare_oxc_lint!(
     ///   ]
     /// }
     /// ```
-    ///
     RequireTopLevelDescribe,
     jest,
     style,

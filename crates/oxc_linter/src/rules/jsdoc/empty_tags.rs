@@ -5,9 +5,9 @@ use serde::Deserialize;
 
 use crate::{context::LintContext, rule::Rule, utils::should_ignore_as_private};
 
-fn empty_tags_diagnostic(span: Span, x1: &str) -> OxcDiagnostic {
+fn empty_tags_diagnostic(span: Span, tag_name: &str) -> OxcDiagnostic {
     OxcDiagnostic::warn("Expects the void tags to be empty of any content.")
-        .with_help(format!("`@{x1}` tag should not have body."))
+        .with_help(format!("`@{tag_name}` tag should not have body."))
         .with_label(span)
 }
 
