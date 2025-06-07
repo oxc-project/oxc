@@ -217,13 +217,11 @@ fn process_module_record(
                 && !always_file_types.contains(&file_extension.as_str()))
         // should not have file extension
         {
-            if config.require_extension != Some(FileExtensionConfig::Always) {
-                ctx.diagnostic(extension_should_not_be_included_in_diagnostic(
-                    span,
-                    file_extension.as_str(),
-                    is_import,
-                ));
-            }
+            ctx.diagnostic(extension_should_not_be_included_in_diagnostic(
+                span,
+                file_extension.as_str(),
+                is_import,
+            ));
 
             if file_extension.is_empty()
                 && config.require_extension == Some(FileExtensionConfig::Always)
@@ -235,113 +233,6 @@ fn process_module_record(
         ctx.diagnostic(extension_missing_diagnostic(span, is_import));
     }
 }
-
-// fn process_import_record(
-//     import: &ImportEntry,
-//     config: &ExtensionsConfig,
-//     ctx: &LintContext,
-//     extensions: &Extensions,
-// ) {
-//     let always_file_types = extensions.0.get_always_file_types();
-//     let never_file_types = extensions.0.get_never_file_types();
-
-//     if import.is_type && !config.check_type_imports {
-//         return;
-//     }
-
-//     let import_name = import.module_request.name;
-
-//     let is_builtin_node_module =
-//         BUILT_IN_NODE_MODULES.contains(import_name.as_str()) || ctx.globals().is_enabled(import_name.as_str());
-
-//     let is_package = import_name.starts_with('@')
-//         || (!import_name.starts_with('.') && !import_name[1..].contains('/'));
-
-//     if is_builtin_node_module || (is_package && config.ignore_packages) {
-//         return;
-//     }
-
-//     let file_extension = get_file_extension_from_module_name(&import.module_request.name.to_compact_str());
-
-//     let span = import.statement_span;
-//     if let Some(file_extension) = file_extension {
-//         if never_file_types.contains(&file_extension.as_str())
-//             || (!always_file_types.is_empty() && !always_file_types.contains(&file_extension.as_str()))
-//         // should not have file extension
-//         {
-//             ctx.diagnostic(extension_should_not_be_included_in_diagnostic(
-//                 span,
-//                 file_extension.as_str(),
-//                 true
-//             ));
-
-//             if file_extension.is_empty()
-//                 && config.require_extension == Some(FileExtensionConfig::Always)
-//             {
-//                 ctx.diagnostic(extension_missing_diagnostic(span, true));
-//             }
-//         }
-//     } else if config.require_extension == Some(FileExtensionConfig::Always) {
-//                 ctx.diagnostic(extension_missing_diagnostic(span, true));
-//     }
-// }
-
-// fn process_export_record(
-//     export: &ExportEntry,
-//     config: &ExtensionsConfig,
-//     ctx: &LintContext,
-//     extensions: &Extensions,
-// ) {
-//     let always_file_types = extensions.0.get_always_file_types();
-//     let never_file_types = extensions.0.get_never_file_types();
-
-//     if export.module_request.is_none() {
-//         return;
-//     }
-
-//     if export.is_type && !config.check_type_imports {
-//         return;
-//     }
-
-//     let export_module_request = export.module_request.as_ref().unwrap();
-
-//     let export_name = &export_module_request.name;
-
-//     let is_builtin_node_module =
-//         NODEJS_BUILTINS.binary_search(&export_name.as_str()).is_ok() || ctx.globals().is_enabled(export_name.as_str());
-
-//     let is_package = export_name.starts_with('@')
-//         || (!export_name.starts_with('.') && !export_name.as_str()[1..].contains('/'));
-
-//     if is_builtin_node_module || (is_package && config.ignore_packages) {
-//         return;
-//     }
-
-//     let file_extension = get_file_extension_from_module_name(&export_module_request.name);
-
-//     let span = export.statement_span;
-
-//     if let Some(file_extension) = file_extension {
-//         if never_file_types.contains(&file_extension.as_str())
-//             || (!always_file_types.is_empty() && !always_file_types.contains(&file_extension.as_str()))
-//         // should not have file extension
-//         {
-//             ctx.diagnostic(extension_should_not_be_included_in_diagnostic(
-//                 span,
-//                 file_extension.as_str(),
-//                 false
-//             ));
-
-//             if file_extension.is_empty()
-//                 && config.require_extension == Some(FileExtensionConfig::Always)
-//             {
-//                 ctx.diagnostic(extension_missing_diagnostic(span, false));
-//             }
-//         }
-//     } else if config.require_extension == Some(FileExtensionConfig::Always) {
-//         ctx.diagnostic(extension_missing_diagnostic(span, false));
-//     }
-// }
 
 impl Rule for Extensions {
     fn from_configuration(value: serde_json::Value) -> Self {
@@ -580,13 +471,13 @@ fn test() {
 
         // Link to eslint-plugin-import extensions rule unit tests:
         // https://github.com/import-js/eslint-plugin-import/blob/main/tests/src/rules/extensions.js
-        // (
-        //     r#"
-        //         import barjson from "./bar.json";
-        //         import barhbs from "./bar.hbs";
-        //     "#,
-        //     Some(json!(["always", { "js": "never", "jsx": "never"}])),
-        // ),
+        (
+            r#"
+                import barjson from "./bar.json";
+                import barhbs from "./bar.hbs";
+            "#,
+            Some(json!(["always", { "js": "never", "jsx": "never"}])),
+        ),
         (
             r#"
                 import bar from "./bar.js";
