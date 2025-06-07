@@ -1,7 +1,7 @@
 parser_misc Summary:
-AST Parsed     : 38/38 (100.00%)
-Positive Passed: 38/38 (100.00%)
-Negative Passed: 38/38 (100.00%)
+AST Parsed     : 40/40 (100.00%)
+Positive Passed: 40/40 (100.00%)
+Negative Passed: 39/39 (100.00%)
 
   × Identifier `b` has already been declared
    ╭─[misc/fail/oxc-10159.js:1:22]
@@ -58,6 +58,14 @@ Negative Passed: 38/38 (100.00%)
    ╭─[misc/fail/oxc-11487.mjs:1:13]
  1 │ async await => {}
    ·             ──
+   ╰────
+
+  × Expected `from` but found `{`
+   ╭─[misc/fail/oxc-11532.js:1:15]
+ 1 │ import source { x } from 'x';
+   ·               ┬
+   ·               ╰── `from` expected
+ 2 │ import defer { x } from "x";
    ╰────
 
   × Unexpected token
