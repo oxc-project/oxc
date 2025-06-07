@@ -1,4 +1,4 @@
-use oxc_allocator::Vec;
+use oxc_allocator::{Address, Vec};
 use oxc_ast::{ast::*, match_expression};
 use oxc_span::GetSpan;
 
@@ -15,6 +15,7 @@ use crate::{
         separated::FormatSeparatedIter,
         write,
     },
+    generated::ast_nodes::{AstNode, AstNodes},
     utils::{
         is_long_curried_call, member_chain::simple_argument::SimpleArgument,
         write_arguments_multi_line,
@@ -30,7 +31,7 @@ use super::{
     },
 };
 
-impl<'a> Format<'a> for Vec<'a, Argument<'a>> {
+impl<'a> Format<'a> for AstNode<'a, '_, Vec<'a, Argument<'a>>> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         let l_paren_token = "(";
         let r_paren_token = ")";
@@ -45,20 +46,16 @@ impl<'a> Format<'a> for Vec<'a, Argument<'a>> {
             );
         }
 
-        // We don't have a `AstKind` like `Vec<'a, Argument<'a>>`, so the `current_kind` is the parent.
-        let call_expression = f.current_kind().as_call_expression();
-
         let (is_commonjs_or_amd_call, is_test_call) =
-            call_expression.as_ref().map_or((false, false), |call| {
-                (
-                    is_commonjs_or_amd_call(self.as_slice(), call, f.parent_stack()),
-                    is_test_call_expression(call),
-                )
-            });
+            if let AstNodes::CallExpression(call) = self.parent {
+                (is_commonjs_or_amd_call(self, call), is_test_call_expression(call))
+            } else {
+                (false, false)
+            };
 
         let is_first_arg_string_literal_or_template = if self.len() == 2 {
             matches!(
-                self.iter().next(),
+                self.as_ref().first(),
                 Some(Argument::StringLiteral(_) | Argument::TemplateLiteral(_))
             )
         } else {
@@ -110,7 +107,7 @@ impl<'a> Format<'a> for Vec<'a, Argument<'a>> {
 
         if let Some(group_layout) = arguments_grouped_layout(self, f.comments()) {
             write_grouped_arguments(self, arguments, group_layout, f)
-        } else if is_long_curried_call(f.parent_stack()) {
+        } else if is_long_curried_call(self.parent) {
             write!(
                 f,
                 [
@@ -128,10 +125,10 @@ impl<'a> Format<'a> for Vec<'a, Argument<'a>> {
 }
 
 /// Helper for formatting a call argument
-pub enum FormatCallArgument<'a, 'b> {
+pub enum FormatCallArgument<'a, 'b, 'c> {
     /// Argument that has not been inspected if its formatted content breaks.
     Default {
-        element: &'b Argument<'a>,
+        element: &'c AstNode<'a, 'b, Argument<'a>>,
 
         /// Whether this is the last element.
         is_last: bool,
@@ -148,14 +145,14 @@ pub enum FormatCallArgument<'a, 'b> {
         content: FormatResult<Option<FormatElement>>,
 
         /// The separated element
-        element: &'b Argument<'a>,
+        element: &'c AstNode<'a, 'b, Argument<'a>>,
 
         /// The lines before this element
         leading_lines: usize,
     },
 }
 
-impl<'a> FormatCallArgument<'a, '_> {
+impl<'a, 'b> FormatCallArgument<'a, 'b, '_> {
     /// Returns `true` if this argument contains any content that forces a group to [`break`](FormatElements::will_break).
     fn will_break(&mut self, f: &mut Formatter<'_, 'a>) -> bool {
         match &self {
@@ -212,8 +209,8 @@ impl<'a> FormatCallArgument<'a, '_> {
                 None => Ok(()),
             },
             Self::Default { element, is_last, .. } => {
-                match element {
-                    Argument::FunctionExpression(function) => {
+                match element.as_ast_nodes() {
+                    AstNodes::Function(function) => {
                         write!(
                             f,
                             // [function.format().with_options(FormatFunctionOptions {
@@ -223,7 +220,7 @@ impl<'a> FormatCallArgument<'a, '_> {
                             function
                         )?;
                     }
-                    Argument::ArrowFunctionExpression(arrow) => write!(
+                    AstNodes::ArrowFunctionExpression(arrow) => write!(
                         f,
                         FormatJsArrowFunctionExpression::new_with_options(
                             arrow,
@@ -233,7 +230,7 @@ impl<'a> FormatCallArgument<'a, '_> {
                             },
                         )
                     )?,
-                    node => write!(f, node)?,
+                    _ => write!(f, element)?,
                 }
 
                 if *is_last { Ok(()) } else { write!(f, ",") }
@@ -251,14 +248,14 @@ impl<'a> FormatCallArgument<'a, '_> {
     }
 
     /// Returns an argument.
-    fn element(&self) -> &Argument<'a> {
+    fn element(&self) -> &AstNode<'a, 'b, Argument<'a>> {
         match self {
             Self::Inspected { element, .. } | Self::Default { element, .. } => element,
         }
     }
 }
 
-impl<'a> Format<'a> for FormatCallArgument<'a, '_> {
+impl<'a> Format<'a> for FormatCallArgument<'a, '_, '_> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         self.fmt_with_cache_mode(FunctionBodyCacheMode::default(), f)
     }
@@ -303,13 +300,13 @@ pub fn is_function_composition_args(args: &[Argument<'_>]) -> bool {
     false
 }
 
-pub struct FormatAllArgsBrokenOut<'a, 'b> {
-    pub args: &'b [FormatCallArgument<'a, 'b>],
+pub struct FormatAllArgsBrokenOut<'a, 'b, 'c> {
+    pub args: &'c [FormatCallArgument<'a, 'b, 'c>],
     pub expand: bool,
-    pub node: &'b [Argument<'a>],
+    pub node: &'c AstNode<'a, 'b, Vec<'a, Argument<'a>>>,
 }
 
-impl<'a> Format<'a> for FormatAllArgsBrokenOut<'a, '_> {
+impl<'a> Format<'a> for FormatAllArgsBrokenOut<'a, '_, '_> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         // let is_inside_import = self.node.parent::<JsImportCallExpression>().is_some();
         let is_inside_import = false;
@@ -634,9 +631,9 @@ fn can_group_expression_argument(
     }
 }
 
-fn write_grouped_arguments<'a>(
-    call_arguments: &[Argument<'a>],
-    mut arguments: std::vec::Vec<FormatCallArgument<'a, '_>>,
+fn write_grouped_arguments<'a, 'b, 'c>(
+    call_arguments: &'c AstNode<'a, 'b, Vec<'a, Argument<'a>>>,
+    mut arguments: std::vec::Vec<FormatCallArgument<'a, 'b, 'c>>,
     group_layout: GroupedCallArgumentLayout,
     f: &mut Formatter<'_, 'a>,
 ) -> FormatResult<()> {
@@ -667,11 +664,11 @@ fn write_grouped_arguments<'a>(
             );
         }
 
-        match grouped_arg.element() {
-            Argument::ArrowFunctionExpression(_) => {
+        match grouped_arg.element().as_ast_nodes() {
+            AstNodes::ArrowFunctionExpression(_) => {
                 grouped_arg.cache_function_body(f);
             }
-            Argument::FunctionExpression(function)
+            AstNodes::Function(function)
                 if !other_args.is_empty()
                     || function_has_only_simple_parameters(&function.params) =>
             {
@@ -708,7 +705,7 @@ fn write_grouped_arguments<'a>(
     // as first or last argument.
     let last_index = arguments.len() - 1;
     let grouped = arguments
-        .into_iter()
+        .iter()
         .enumerate()
         .map(|(index, argument)| {
             let layout = match group_layout {
@@ -722,7 +719,6 @@ fn write_grouped_arguments<'a>(
             };
 
             FormatGroupedArgument { argument, single_argument_list: last_index == 0, layout }
-            // .memoized()
         })
         .collect::<std::vec::Vec<_>>();
 
@@ -822,8 +818,8 @@ fn write_grouped_arguments<'a>(
 }
 
 /// Helper for formatting a grouped call argument (see [should_group_first_argument] and [should_group_last_argument]).
-struct FormatGroupedArgument<'a, 'b> {
-    argument: FormatCallArgument<'a, 'b>,
+struct FormatGroupedArgument<'a, 'b, 'c> {
+    argument: &'c FormatCallArgument<'a, 'b, 'c>,
 
     /// Whether this argument is the only argument in the argument list.
     single_argument_list: bool,
@@ -832,17 +828,17 @@ struct FormatGroupedArgument<'a, 'b> {
     layout: Option<GroupedCallArgumentLayout>,
 }
 
-impl<'a> Format<'a> for FormatGroupedArgument<'a, '_> {
+impl<'a> Format<'a> for FormatGroupedArgument<'a, '_, '_> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         match self.layout {
             Some(GroupedCallArgumentLayout::GroupedFirstArgument) => FormatGroupedFirstArgument {
-                argument: &self.argument,
                 is_only: self.single_argument_list,
+                argument: self.argument,
             }
             .fmt(f),
             Some(GroupedCallArgumentLayout::GroupedLastArgument) => FormatGroupedLastArgument {
-                argument: &self.argument,
                 is_only: self.single_argument_list,
+                argument: self.argument,
             }
             .fmt(f),
             None => self.argument.fmt(f),
@@ -851,21 +847,21 @@ impl<'a> Format<'a> for FormatGroupedArgument<'a, '_> {
 }
 
 /// Helper for formatting the first grouped argument (see [should_group_first_argument]).
-struct FormatGroupedFirstArgument<'a, 'b> {
-    argument: &'b FormatCallArgument<'a, 'b>,
+struct FormatGroupedFirstArgument<'a, 'b, 'c> {
+    argument: &'c FormatCallArgument<'a, 'b, 'c>,
 
     /// Whether this is the only argument in the argument list.
     is_only: bool,
 }
 
-impl<'a> Format<'a> for FormatGroupedFirstArgument<'a, '_> {
+impl<'a> Format<'a> for FormatGroupedFirstArgument<'a, '_, '_> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         let element = self.argument.element();
 
-        match element {
+        match element.as_ast_nodes() {
             // Call the arrow function formatting but explicitly passes the call argument layout down
             // so that the arrow function formatting removes any soft line breaks between parameters and the return type.
-            Argument::ArrowFunctionExpression(arrow) => with_token_tracking_disabled(f, |f| {
+            AstNodes::ArrowFunctionExpression(arrow) => with_token_tracking_disabled(f, |f| {
                 write!(
                     f,
                     FormatJsArrowFunctionExpression::new_with_options(
@@ -888,21 +884,22 @@ impl<'a> Format<'a> for FormatGroupedFirstArgument<'a, '_> {
 }
 
 /// Helper for formatting the last grouped argument (see [should_group_last_argument]).
-struct FormatGroupedLastArgument<'a, 'b> {
-    argument: &'b FormatCallArgument<'a, 'b>,
+struct FormatGroupedLastArgument<'a, 'b, 'c> {
+    /// The argument to format
+    argument: &'c FormatCallArgument<'a, 'b, 'c>,
     /// Is this the only argument in the arguments list
     is_only: bool,
 }
 
-impl<'a> Format<'a> for FormatGroupedLastArgument<'a, '_> {
+impl<'a> Format<'a> for FormatGroupedLastArgument<'a, '_, '_> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         let element = self.argument.element();
 
         // For function and arrow expressions, re-format the node and pass the argument that it is the
         // last grouped argument. This changes the formatting of parameters, type parameters, and return types
         // to remove any soft line breaks.
-        match element {
-            Argument::FunctionExpression(function)
+        match element.as_ast_nodes() {
+            AstNodes::Function(function)
                 if !self.is_only || function_has_only_simple_parameters(&function.params) =>
             {
                 with_token_tracking_disabled(f, |f| {
@@ -921,7 +918,7 @@ impl<'a> Format<'a> for FormatGroupedLastArgument<'a, '_> {
                 })
             }
 
-            Argument::ArrowFunctionExpression(arrow) => with_token_tracking_disabled(f, |f| {
+            AstNodes::ArrowFunctionExpression(arrow) => with_token_tracking_disabled(f, |f| {
                 write!(
                     f,
                     FormatJsArrowFunctionExpression::new_with_options(
@@ -993,8 +990,7 @@ fn is_simple_parameter(parameter: &FormalParameter<'_>, allow_type_annotations: 
 /// or amd's [`define`](https://github.com/amdjs/amdjs-api/wiki/AMD#define-function-) function.
 fn is_commonjs_or_amd_call(
     arguments: &[Argument<'_>],
-    call: &CallExpression,
-    parent_stack: &ParentStack<'_>,
+    call: &AstNode<'_, '_, CallExpression<'_>>,
 ) -> bool {
     let Expression::Identifier(ident) = &call.callee else {
         return false;
@@ -1022,7 +1018,7 @@ fn is_commonjs_or_amd_call(
             }
         }
         "define" => {
-            let in_statement = parent_stack.parent().as_expression_statement().is_some();
+            let in_statement = matches!(call.parent, AstNodes::ExpressionStatement(_));
             if in_statement {
                 match arguments.len() {
                     1 => true,

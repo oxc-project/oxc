@@ -2,6 +2,7 @@ use oxc_ast::ast::*;
 
 use crate::{
     formatter::{Buffer, Format, FormatResult, Formatter},
+    generated::ast_nodes::AstNode,
     options::Semicolons,
     write,
 };
@@ -17,20 +18,31 @@ impl<'a> Format<'a> for OptionalSemicolon {
     }
 }
 
-pub struct ClassPropertySemicolon<'a, 'b> {
-    element: &'b ClassElement<'a>,
-    next_element: Option<&'b ClassElement<'a>>,
+pub struct MaybeOptionalSemicolon(pub bool);
+
+impl<'a> Format<'a> for MaybeOptionalSemicolon {
+    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        if self.0 { OptionalSemicolon.fmt(f) } else { Ok(()) }
+    }
 }
 
-impl<'a, 'b> ClassPropertySemicolon<'a, 'b> {
-    pub fn new(element: &'b ClassElement<'a>, next_element: Option<&'b ClassElement<'a>>) -> Self {
+pub struct ClassPropertySemicolon<'a, 'b, 'c> {
+    element: &'c AstNode<'a, 'b, ClassElement<'a>>,
+    next_element: Option<&'c AstNode<'a, 'b, ClassElement<'a>>>,
+}
+
+impl<'a, 'b, 'c> ClassPropertySemicolon<'a, 'b, 'c> {
+    pub fn new(
+        element: &'c AstNode<'a, 'b, ClassElement<'a>>,
+        next_element: Option<&'c AstNode<'a, 'b, ClassElement<'a>>>,
+    ) -> Self {
         Self { element, next_element }
     }
 
     fn needs_semicolon(&self) -> bool {
         let Self { element, next_element, .. } = self;
 
-        if let ClassElement::PropertyDefinition(def) = element {
+        if let ClassElement::PropertyDefinition(def) = element.as_ref() {
             if def.value.is_none()
                 && def.type_annotation.is_none()
                 && matches!(&def.key, PropertyKey::StaticIdentifier(ident) if matches!(ident.name.as_str(), "static" | "get" | "set") )
@@ -43,7 +55,7 @@ impl<'a, 'b> ClassPropertySemicolon<'a, 'b> {
         // TODO
         // `needs_semicolon` in crates/biome_js_formatter/src/js/classes/property_class_member.rs
 
-        match next_element {
+        match next_element.as_ref() {
             // When the name starts with the generator token or `[`
             ClassElement::MethodDefinition(def) => {
                 !def.value.r#async && (def.computed || def.value.generator)
@@ -53,10 +65,10 @@ impl<'a, 'b> ClassPropertySemicolon<'a, 'b> {
     }
 }
 
-impl<'a> Format<'a> for ClassPropertySemicolon<'a, '_> {
+impl<'a> Format<'a> for ClassPropertySemicolon<'a, '_, '_> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         if matches!(
-            self.element,
+            self.element.as_ref(),
             ClassElement::StaticBlock(_)
                 | ClassElement::MethodDefinition(_)
                 | ClassElement::TSIndexSignature(_)

@@ -8,23 +8,27 @@ use crate::{
         Buffer, Comments, Format, FormatResult, Formatter, GroupId, prelude::*,
         separated::FormatSeparatedIter,
     },
+    generated::ast_nodes::AstNode,
     write,
 };
 
 use super::utils::array::write_array_node;
 
-pub struct ArrayElementList<'a, 'b> {
-    elements: &'b Vec<'a, ArrayExpressionElement<'a>>,
+pub struct ArrayElementList<'a, 'b, 'c> {
+    elements: &'c AstNode<'a, 'b, Vec<'a, ArrayExpressionElement<'a>>>,
     group_id: Option<GroupId>,
 }
 
-impl<'a, 'b> ArrayElementList<'a, 'b> {
-    pub fn new(elements: &'b Vec<'a, ArrayExpressionElement<'a>>, group_id: GroupId) -> Self {
+impl<'a, 'b, 'c> ArrayElementList<'a, 'b, 'c> {
+    pub fn new(
+        elements: &'c AstNode<'a, 'b, Vec<'a, ArrayExpressionElement<'a>>>,
+        group_id: GroupId,
+    ) -> Self {
         Self { elements, group_id: Some(group_id) }
     }
 }
 
-impl<'a> Format<'a> for ArrayElementList<'a, '_> {
+impl<'a> Format<'a> for ArrayElementList<'a, '_, '_> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         let expand_lists = f.context().options().expand == Expand::Always;
         let layout = if expand_lists {

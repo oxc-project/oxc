@@ -55,7 +55,10 @@ use std::{
 pub use buffer::{Buffer, BufferExtensions, VecBuffer};
 pub use format_element::FormatElement;
 pub use group_id::GroupId;
-use oxc_ast::ast::Program;
+use oxc_allocator::{Address, GetAddress};
+use oxc_ast::{AstKind, ast::Program};
+use oxc_ast_visit::Visit;
+use rustc_hash::FxHashMap;
 
 pub use self::comments::{Comments, SourceComment};
 use self::printer::Printer;
