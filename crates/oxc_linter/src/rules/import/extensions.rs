@@ -1,5 +1,6 @@
 use oxc_ast::{
-    ast::{Argument, CallExpression, Expression}, AstKind
+    AstKind,
+    ast::{Argument, CallExpression, Expression},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -228,43 +229,46 @@ fn process_module_record(
     }
 }
 
-fn build_config(value: &serde_json::Value, default: &Option<FileExtensionConfig>) -> ExtensionsConfig {
+fn build_config(
+    value: &serde_json::Value,
+    default: Option<&FileExtensionConfig>,
+) -> ExtensionsConfig {
     let config: ExtensionsConfig = ExtensionsConfig {
-                    ignore_packages: value
-                        .get("ignorePackages")
-                        .and_then(Value::as_bool)
-                        .unwrap_or(true),
-                    require_extension: default.clone(),
-                    check_type_imports: value
-                        .get("checkTypeImports")
-                        .and_then(Value::as_bool)
-                        .unwrap_or_default(),
-                    js: value
-                        .get("js")
-                        .and_then(Value::as_str)
-                        .map(FileExtensionConfig::from)
-                        .unwrap_or(default.clone().unwrap_or_default()),
-                    jsx: value
-                        .get("jsx")
-                        .and_then(Value::as_str)
-                        .map(FileExtensionConfig::from)
-                        .unwrap_or(default.clone().unwrap_or_default()),
-                    ts: value
-                        .get("ts")
-                        .and_then(Value::as_str)
-                        .map(FileExtensionConfig::from)
-                        .unwrap_or(default.clone().unwrap_or_default()),
-                    tsx: value
-                        .get("tsx")
-                        .and_then(Value::as_str)
-                        .map(FileExtensionConfig::from)
-                        .unwrap_or(default.clone().unwrap_or_default()),
-                    json: value
-                        .get("json")
-                        .and_then(Value::as_str)
-                        .map(FileExtensionConfig::from)
-                        .unwrap_or(default.clone().unwrap_or_default()),
-                };
+        ignore_packages: value.get("ignorePackages").and_then(Value::as_bool).unwrap_or(true),
+        require_extension: default.cloned(),
+        check_type_imports: value
+            .get("checkTypeImports")
+            .and_then(Value::as_bool)
+            .unwrap_or_default(),
+        js: value
+            .get("js")
+            .and_then(Value::as_str)
+            .map(FileExtensionConfig::from)
+            .unwrap_or(default.cloned().unwrap_or_default()),
+        jsx: value
+            .get("jsx")
+            .and_then(Value::as_str)
+            .map(FileExtensionConfig::from)
+            .unwrap_or(default.cloned().unwrap_or_default()),
+
+        ts: value
+            .get("ts")
+            .and_then(Value::as_str)
+            .map(FileExtensionConfig::from)
+            .unwrap_or(default.cloned().unwrap_or_default()),
+
+        tsx: value
+            .get("tsx")
+            .and_then(Value::as_str)
+            .map(FileExtensionConfig::from)
+            .unwrap_or(default.cloned().unwrap_or_default()),
+
+        json: value
+            .get("json")
+            .and_then(Value::as_str)
+            .map(FileExtensionConfig::from)
+            .unwrap_or(default.cloned().unwrap_or_default()),
+    };
 
     config
 }
@@ -279,16 +283,16 @@ impl Rule for Extensions {
             if let Some(val) = value.get(1) {
                 let root = val.get("pattern").unwrap_or(val);
 
-                let config = build_config(root, &Some(default));
+                let config = build_config(root, Some(&default));
 
                 Self(Box::new(config))
             } else {
-                let config = build_config(&value, &Some(default));
+                let config = build_config(&value, Some(&default));
 
                 Self(Box::new(config))
             }
         } else {
-            let config = build_config(&value, &None);
+            let config = build_config(&value, None);
             Self(Box::new(config))
         }
     }
@@ -310,7 +314,13 @@ impl Rule for Extensions {
                 let count = call_expr.arguments.len();
 
                 if matches!(func_name, "require") && count > 0 {
-                    process_require_record(call_expr, ctx, &always_file_types, &never_file_types, &config.require_extension);
+                    process_require_record(
+                        call_expr,
+                        ctx,
+                        &always_file_types,
+                        &never_file_types,
+                        config.require_extension.as_ref(),
+                    );
                 }
             }
         }
@@ -329,38 +339,41 @@ impl Rule for Extensions {
     }
 }
 
-fn process_require_record(call_expr: &CallExpression<'_>, ctx: &LintContext, always_file_types: &Vec<&str>, never_file_types: &Vec<&str>, require_extension:&Option<FileExtensionConfig>) {
+fn process_require_record(
+    call_expr: &CallExpression<'_>,
+    ctx: &LintContext,
+    always_file_types: &Vec<&str>,
+    never_file_types: &Vec<&str>,
+    require_extension: Option<&FileExtensionConfig>,
+) {
     for argument in &call_expr.arguments {
-                        if let Argument::StringLiteral(s) = argument {
-                            let file_extension =
-                                get_file_extension_from_module_name(&s.value.to_compact_str());
-                            let span = call_expr.span;
+        if let Argument::StringLiteral(s) = argument {
+            let file_extension = get_file_extension_from_module_name(&s.value.to_compact_str());
+            let span = call_expr.span;
 
-                            if let Some(file_extension) = file_extension {
-                                if never_file_types.contains(&file_extension.as_str())
-                                    || (!always_file_types.is_empty()
-                                        && !always_file_types.contains(&file_extension.as_str()))
-                                // should not have file extension
-                                {
-                                    ctx.diagnostic(extension_should_not_be_included_in_diagnostic(
-                                        span,
-                                        file_extension.as_str(),
-                                        true,
-                                    ));
+            if let Some(file_extension) = file_extension {
+                if never_file_types.contains(&file_extension.as_str())
+                    || (!always_file_types.is_empty()
+                        && !always_file_types.contains(&file_extension.as_str()))
+                // should not have file extension
+                {
+                    ctx.diagnostic(extension_should_not_be_included_in_diagnostic(
+                        span,
+                        file_extension.as_str(),
+                        true,
+                    ));
 
-                                    if file_extension.is_empty()
-                                        && *require_extension
-                                            == Some(FileExtensionConfig::Always)
-                                    {
-                                        ctx.diagnostic(extension_missing_diagnostic(span, true));
-                                    }
-                                }
-                            } else if *require_extension == Some(FileExtensionConfig::Always)
-                            {
-                                ctx.diagnostic(extension_missing_diagnostic(span, true));
-                            }
-                        }
+                    if file_extension.is_empty()
+                        && require_extension == Some(&FileExtensionConfig::Always)
+                    {
+                        ctx.diagnostic(extension_missing_diagnostic(span, true));
                     }
+                }
+            } else if require_extension == Some(&FileExtensionConfig::Always) {
+                ctx.diagnostic(extension_missing_diagnostic(span, true));
+            }
+        }
+    }
 }
 
 fn get_file_extension_from_module_name(module_name: &CompactStr) -> Option<CompactStr> {
