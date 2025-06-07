@@ -31,7 +31,6 @@ declare_oxc_lint!(
     ///
     /// Examples of **incorrect** code for this rule:
     /// ```javascript
-    ///
     /// if (!a) {
     /// 	doSomethingC();
     /// } else {
