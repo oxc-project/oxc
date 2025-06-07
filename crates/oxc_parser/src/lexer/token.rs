@@ -1,6 +1,6 @@
 //! Token
 
-use std::{mem, ptr};
+use std::{fmt, mem, ptr};
 
 use oxc_span::Span;
 
@@ -40,7 +40,7 @@ const _: () = {
     assert!(is_valid_shift(HAS_SEPARATOR_SHIFT));
 };
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Clone, Copy)]
 #[repr(transparent)]
 pub struct Token(u128);
 
@@ -57,6 +57,20 @@ impl Default for Token {
         // has_separator: false,
         const _: () = assert!(Kind::Eof as u8 == 0);
         Self(0)
+    }
+}
+
+impl fmt::Debug for Token {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_struct("Token")
+            .field("kind", &self.kind())
+            .field("start", &self.start())
+            .field("end", &self.end())
+            .field("is_on_new_line", &self.is_on_new_line())
+            .field("escaped", &self.escaped())
+            .field("lone_surrogates", &self.lone_surrogates())
+            .field("has_separator", &self.has_separator())
+            .finish()
     }
 }
 
