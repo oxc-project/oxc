@@ -217,11 +217,13 @@ fn process_module_record(
                 && !always_file_types.contains(&file_extension.as_str()))
         // should not have file extension
         {
-            ctx.diagnostic(extension_should_not_be_included_in_diagnostic(
-                span,
-                file_extension.as_str(),
-                is_import,
-            ));
+            if config.require_extension != Some(FileExtensionConfig::Always) {
+                ctx.diagnostic(extension_should_not_be_included_in_diagnostic(
+                    span,
+                    file_extension.as_str(),
+                    is_import,
+                ));
+            }
 
             if file_extension.is_empty()
                 && config.require_extension == Some(FileExtensionConfig::Always)
@@ -457,7 +459,7 @@ impl Rule for Extensions {
         let config = self.0.clone();
 
         let always_file_types = self.0.get_always_file_types();
-    let never_file_types = self.0.get_never_file_types();
+        let never_file_types = self.0.get_never_file_types();
 
         for node in ctx.nodes().iter() {
             match node.kind() {
@@ -472,65 +474,50 @@ impl Rule for Extensions {
                     println!("count: {count}");
 
                     if matches!(func_name, "require") && count > 0 {
-
                         for argument in call_expr.arguments.iter() {
                             println!("argument: {argument:?}");
                             match argument {
                                 Argument::StringLiteral(s) => {
                                     println!("arg: {s}");
 
-                                        let file_extension = get_file_extension_from_module_name(&s.value.to_compact_str());
-                                                                                    let span = call_expr.span;
+                                    let file_extension = get_file_extension_from_module_name(
+                                        &s.value.to_compact_str(),
+                                    );
+                                    let span = call_expr.span;
 
+                                    if let Some(file_extension) = file_extension {
+                                        if never_file_types.contains(&file_extension.as_str())
+                                            || (!always_file_types.is_empty()
+                                                && !always_file_types
+                                                    .contains(&file_extension.as_str()))
+                                        // should not have file extension
+                                        {
+                                            ctx.diagnostic(
+                                                extension_should_not_be_included_in_diagnostic(
+                                                    span,
+                                                    file_extension.as_str(),
+                                                    true,
+                                                ),
+                                            );
 
-                                        if let Some(file_extension) = file_extension {
-        if never_file_types.contains(&file_extension.as_str())
-            || (!always_file_types.is_empty()
-                && !always_file_types.contains(&file_extension.as_str()))
-        // should not have file extension
-        {
-            ctx.diagnostic(extension_should_not_be_included_in_diagnostic(
-                span,
-                file_extension.as_str(),
-                true,
-            ));
-
-            if file_extension.is_empty()
-                && config.require_extension == Some(FileExtensionConfig::Always)
-            {
-                ctx.diagnostic(extension_missing_diagnostic(span, true));
-            }
-        }
-    } else if config.require_extension == Some(FileExtensionConfig::Always) {
-        ctx.diagnostic(extension_missing_diagnostic(span, true));
-    }
-
-                                },
+                                            if file_extension.is_empty()
+                                                && config.require_extension
+                                                    == Some(FileExtensionConfig::Always)
+                                            {
+                                                ctx.diagnostic(extension_missing_diagnostic(
+                                                    span, true,
+                                                ));
+                                            }
+                                        }
+                                    } else if config.require_extension
+                                        == Some(FileExtensionConfig::Always)
+                                    {
+                                        ctx.diagnostic(extension_missing_diagnostic(span, true));
+                                    }
+                                }
                                 _ => {}
                             }
-
                         }
-
-                        // match &call_expr.arguments[0] {
-                        //     Argument::StringLiteral(str_literal)
-                        //         if count == 1 && func_name == "require" && self.commonjs =>
-                        //     {
-                        //         // if check_path_is_absolute(str_literal.value.as_str()) {
-                        //         //     ctx.diagnostic(no_absolute_path_diagnostic(str_literal.span));
-                        //         // }
-                        //     }
-                        //     Argument::ArrayExpression(arr_expr) if count == 2 && self.amd => {
-                        //         for el in &arr_expr.elements {
-                        //             if let Some(el_expr) = el.as_expression() {
-                        //                 if matches!(el_expr, Expression::StringLiteral(literal) if check_path_is_absolute(literal.value.as_str()))
-                        //                 {
-                        //                     ctx.diagnostic(no_absolute_path_diagnostic(el_expr.span()));
-                        //                 }
-                        //             }
-                        //         }
-                        //     }
-                        //     _ => {}
-                        // }
                     }
                 }
                 _ => {}
@@ -595,7 +582,6 @@ fn test() {
         // https://github.com/import-js/eslint-plugin-import/blob/main/tests/src/rules/extensions.js
         // (
         //     r#"
-        //         import bar from "./bar";
         //         import barjson from "./bar.json";
         //         import barhbs from "./bar.hbs";
         //     "#,
