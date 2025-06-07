@@ -322,8 +322,7 @@ fn process_module_record(
 
     if let Some(file_extension) = file_extension {
         if never_file_types.contains(&file_extension)
-            || (!always_file_types.is_empty()
-                && !always_file_types.contains(&file_extension))
+            || (!always_file_types.is_empty() && !always_file_types.contains(&file_extension))
         // should not have file extension
         {
             ctx.diagnostic(extension_should_not_be_included_in_diagnostic(
@@ -392,7 +391,7 @@ fn get_file_extension_from_module_name(module_name: &CompactStr) -> Option<Compa
 #[test]
 fn test() {
     use crate::tester::Tester;
-    use serde_json::{json};
+    use serde_json::json;
 
     let pass = vec![
         (r#"import a from "@/a""#, None),
