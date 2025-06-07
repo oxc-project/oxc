@@ -86,7 +86,7 @@ pub fn check<'a>(kind: AstKind<'a>, ctx: &SemanticBuilder<'a>) {
         AstKind::ObjectProperty(prop) => {
             ts::check_object_property(prop, ctx);
         }
-        AstKind::Super(sup) => js::check_super(sup, ctx),
+        AstKind::Super(&sup) => js::check_super(sup, ctx),
 
         AstKind::FormalParameters(params) => {
             ts::check_formal_parameters(params, ctx);

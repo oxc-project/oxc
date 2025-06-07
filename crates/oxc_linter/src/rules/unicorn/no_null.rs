@@ -73,7 +73,7 @@ impl NoNull {
     fn diagnose_binary_expression(
         &self,
         ctx: &LintContext,
-        null_literal: &NullLiteral,
+        null_literal: NullLiteral,
         binary_expr: &BinaryExpression,
     ) {
         match binary_expr.operator {
@@ -103,7 +103,7 @@ impl NoNull {
 
 fn diagnose_variable_declarator(
     ctx: &LintContext,
-    null_literal: &NullLiteral,
+    null_literal: NullLiteral,
     variable_declarator: &VariableDeclarator,
     parent_kind: Option<AstKind>,
 ) {
@@ -124,7 +124,7 @@ fn diagnose_variable_declarator(
     });
 }
 
-fn match_call_expression_pass_case(null_literal: &NullLiteral, call_expr: &CallExpression) -> bool {
+fn match_call_expression_pass_case(null_literal: NullLiteral, call_expr: &CallExpression) -> bool {
     // `Object.create(null)`, `Object.create(null, foo)`
     if is_method_call(call_expr, Some(&["Object"]), Some(&["create"]), Some(1), Some(2))
         && !call_expr.optional
@@ -176,7 +176,7 @@ impl Rule for NoNull {
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        let AstKind::NullLiteral(null_literal) = node.kind() else {
+        let AstKind::NullLiteral(&null_literal) = node.kind() else {
             return;
         };
 
@@ -235,13 +235,13 @@ impl Rule for NoNull {
     }
 }
 
-fn fix_null<'a>(fixer: RuleFixer<'_, 'a>, null: &NullLiteral) -> RuleFix<'a> {
+fn fix_null<'a>(fixer: RuleFixer<'_, 'a>, null: NullLiteral) -> RuleFix<'a> {
     fixer.replace(null.span, "undefined")
 }
 
 fn try_fix_case<'a>(
     fixer: RuleFixer<'_, 'a>,
-    null: &NullLiteral,
+    null: NullLiteral,
     switch: &SwitchStatement<'a>,
 ) -> RuleFix<'a> {
     let also_has_undefined = switch

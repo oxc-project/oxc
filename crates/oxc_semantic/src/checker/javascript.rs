@@ -796,7 +796,7 @@ fn unexpected_super_reference(span: Span) -> OxcDiagnostic {
 .with_label(span)
 }
 
-pub fn check_super(sup: &Super, ctx: &SemanticBuilder<'_>) {
+pub fn check_super(sup: Super, ctx: &SemanticBuilder<'_>) {
     let super_call_span = match ctx.nodes.parent_kind(ctx.current_node_id) {
         Some(AstKind::CallExpression(expr)) => Some(expr.span),
         Some(AstKind::NewExpression(expr)) => Some(expr.span),

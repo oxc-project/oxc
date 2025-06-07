@@ -302,7 +302,7 @@ pub struct LabelIdentifier<'a> {
 ///
 /// Represents a `this` expression, which is a reference to the current object.
 #[ast(visit)]
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy)]
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct ThisExpression {
     pub span: Span,
@@ -345,7 +345,7 @@ pub enum ArrayExpressionElement<'a> {
 ///
 /// Array Expression Elision Element
 #[ast(visit)]
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Copy)]
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 #[estree(via = Null)]
 pub struct Elision {
@@ -1005,7 +1005,7 @@ pub struct SequenceExpression<'a> {
 ///
 /// Represents a super expression.
 #[ast(visit)]
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy)]
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct Super {
     pub span: Span,
@@ -1220,7 +1220,7 @@ pub struct VariableDeclarator<'a> {
 
 /// Empty Statement
 #[ast(visit)]
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy)]
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct EmptyStatement {
     pub span: Span,
@@ -1511,7 +1511,7 @@ pub struct CatchParameter<'a> {
 /// debugger; // <--
 /// ```
 #[ast(visit)]
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy)]
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct DebuggerStatement {
     pub span: Span,

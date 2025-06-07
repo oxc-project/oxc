@@ -4906,12 +4906,8 @@ impl<'a> AstNode<'a, JSXFragment<'a>> {
     }
 
     #[inline]
-    pub fn opening_fragment(&self) -> &AstNode<'a, JSXOpeningFragment> {
-        self.allocator.alloc(AstNode {
-            inner: &self.inner.opening_fragment,
-            allocator: self.allocator,
-            parent: self.allocator.alloc(AstNodes::JSXFragment(transmute_self(self))),
-        })
+    pub fn opening_fragment(&self) -> JSXOpeningFragment {
+        self.inner.opening_fragment
     }
 
     #[inline]
@@ -4924,12 +4920,8 @@ impl<'a> AstNode<'a, JSXFragment<'a>> {
     }
 
     #[inline]
-    pub fn closing_fragment(&self) -> &AstNode<'a, JSXClosingFragment> {
-        self.allocator.alloc(AstNode {
-            inner: &self.inner.closing_fragment,
-            allocator: self.allocator,
-            parent: self.allocator.alloc(AstNodes::JSXFragment(transmute_self(self))),
-        })
+    pub fn closing_fragment(&self) -> JSXClosingFragment {
+        self.inner.closing_fragment
     }
 }
 impl<'a> AstNode<'a, JSXOpeningFragment> {

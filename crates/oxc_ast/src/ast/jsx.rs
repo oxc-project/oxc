@@ -123,7 +123,7 @@ pub struct JSXFragment<'a> {
 
 /// JSX Opening Fragment (`<>`)
 #[ast(visit)]
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy)]
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 #[estree(add_fields(attributes = JsEmptyArray, selfClosing = JsFalse))]
 pub struct JSXOpeningFragment {
@@ -133,7 +133,7 @@ pub struct JSXOpeningFragment {
 
 /// JSX Closing Fragment (`</>`)
 #[ast(visit)]
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy)]
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct JSXClosingFragment {
     /// Node location in source code
@@ -284,7 +284,7 @@ pub enum JSXExpression<'a> {
 
 /// An empty JSX expression (`{}`)
 #[ast(visit)]
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy)]
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct JSXEmptyExpression {
     /// Node location in source code

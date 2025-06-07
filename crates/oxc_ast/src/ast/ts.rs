@@ -570,7 +570,7 @@ pub enum TSTupleElement<'a> {
 /// ## Reference
 /// * [TypeScript Handbook - Any Type](https://www.typescriptlang.org/docs/handbook/2/everyday-types.html#any)
 #[ast(visit)]
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy)]
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct TSAnyKeyword {
     pub span: Span,
@@ -586,7 +586,7 @@ pub struct TSAnyKeyword {
 /// ## Reference
 /// * [TypeScript Handbook - Everyday Types](https://www.typescriptlang.org/docs/handbook/2/everyday-types.html#the-primitives-string-number-and-boolean)
 #[ast(visit)]
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy)]
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct TSStringKeyword {
     pub span: Span,
@@ -602,7 +602,7 @@ pub struct TSStringKeyword {
 /// ## Reference
 /// * [TypeScript Handbook - Everyday Types](https://www.typescriptlang.org/docs/handbook/2/everyday-types.html#the-primitives-string-number-and-boolean)
 #[ast(visit)]
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy)]
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct TSBooleanKeyword {
     pub span: Span,
@@ -618,7 +618,7 @@ pub struct TSBooleanKeyword {
 /// ## Reference
 /// * [TypeScript Handbook - Everyday Types](https://www.typescriptlang.org/docs/handbook/2/everyday-types.html#the-primitives-string-number-and-boolean)
 #[ast(visit)]
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy)]
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct TSNumberKeyword {
     pub span: Span,
@@ -635,7 +635,7 @@ pub struct TSNumberKeyword {
 /// ## Reference
 /// * [TypeScript Handbook - Advanced Topics](https://www.typescriptlang.org/docs/handbook/type-compatibility.html#advanced-topics)
 #[ast(visit)]
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy)]
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct TSNeverKeyword {
     pub span: Span,
@@ -652,7 +652,7 @@ pub struct TSNeverKeyword {
 /// Types](https://www.typescriptlang.org/docs/handbook/2/template-literal-types.html#intrinsic-string-manipulation-types)
 /// * [microsoft/TypeScript #40580](https://github.com/microsoft/TypeScript/pull/40580)
 #[ast(visit)]
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy)]
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct TSIntrinsicKeyword {
     pub span: Span,
@@ -670,7 +670,7 @@ pub struct TSIntrinsicKeyword {
 /// ## Reference
 /// * [TypeScript Handbook - Advanced Topics](https://www.typescriptlang.org/docs/handbook/type-compatibility.html#advanced-topics)
 #[ast(visit)]
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy)]
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct TSUnknownKeyword {
     pub span: Span,
@@ -687,7 +687,7 @@ pub struct TSUnknownKeyword {
 /// ## Reference
 /// * [TypeScript Handbook - Everyday Types](https://www.typescriptlang.org/docs/handbook/2/everyday-types.html#null-and-undefined)
 #[ast(visit)]
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy)]
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct TSNullKeyword {
     pub span: Span,
@@ -706,42 +706,42 @@ pub struct TSNullKeyword {
 /// ## Reference
 /// * [TypeScript Handbook - Everyday Types](https://www.typescriptlang.org/docs/handbook/2/everyday-types.html#null-and-undefined)
 #[ast(visit)]
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy)]
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct TSUndefinedKeyword {
     pub span: Span,
 }
 
 #[ast(visit)]
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy)]
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct TSVoidKeyword {
     pub span: Span,
 }
 
 #[ast(visit)]
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy)]
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct TSSymbolKeyword {
     pub span: Span,
 }
 
 #[ast(visit)]
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy)]
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct TSThisType {
     pub span: Span,
 }
 
 #[ast(visit)]
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy)]
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct TSObjectKeyword {
     pub span: Span,
 }
 
 #[ast(visit)]
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy)]
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 pub struct TSBigIntKeyword {
     pub span: Span,
@@ -1703,7 +1703,7 @@ pub struct JSDocNonNullableType<'a> {
 }
 
 #[ast(visit)]
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy)]
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree)]
 #[estree(rename = "TSJSDocUnknownType")]
 pub struct JSDocUnknownType {
