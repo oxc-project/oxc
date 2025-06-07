@@ -20,7 +20,7 @@ pub use binary_like_expression::{BinaryLikeExpression, BinaryLikeOperator, shoul
 use call_arguments::{FormatAllArgsBrokenOut, FormatCallArgument, is_function_composition_args};
 use cow_utils::CowUtils;
 
-use oxc_allocator::{Box, Vec};
+use oxc_allocator::{Address, Box, Vec};
 use oxc_ast::{AstKind, ast::*};
 use oxc_span::{GetSpan, SPAN};
 use oxc_syntax::identifier::{ZWNBSP, is_identifier_name, is_line_terminator};
@@ -417,7 +417,7 @@ impl<'a> FormatWrite<'a> for CallExpression<'a> {
                 MemberExpression::StaticMemberExpression(_)
                     | MemberExpression::ComputedMemberExpression(_)
             )
-        }) && !callee.needs_parentheses(f.parent_stack())
+        }) && !callee.needs_parentheses(f)
         {
             // TODO
             write!(f, [callee, optional.then_some("?."), type_arguments, arguments])
@@ -810,7 +810,7 @@ impl<'a> FormatWrite<'a> for Declaration<'a> {
 impl<'a> FormatWrite<'a> for EmptyStatement {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         if matches!(
-            f.parent_kind(),
+            f.parent_kind_of(Address::from_ptr(self)),
             AstKind::DoWhileStatement(_)
                 | AstKind::IfStatement(_)
                 | AstKind::WhileStatement(_)

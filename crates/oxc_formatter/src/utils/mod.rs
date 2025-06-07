@@ -1,5 +1,6 @@
 pub mod member_chain;
 
+use oxc_allocator::Address;
 use oxc_ast::{AstKind, ast::CallExpression};
 
 use crate::{
@@ -36,9 +37,9 @@ where
 /// ```javascript
 /// `connect(a, b, c)(d)`
 /// ```
-pub fn is_long_curried_call(parent_stack: &ParentStack<'_>) -> bool {
-    if let AstKind::CallExpression(call) = parent_stack.current() {
-        if let AstKind::CallExpression(parent_call) = parent_stack.parent() {
+pub fn is_long_curried_call(parent: AstKind<'_>, f: &mut Formatter<'_, '_>) -> bool {
+    if let AstKind::CallExpression(call) = parent {
+        if let Some(parent_call) = f.parent_kind_of(Address::from_ptr(call)).as_call_expression() {
             return call.arguments.len() > parent_call.arguments.len()
                 && !parent_call.arguments.is_empty();
         }
