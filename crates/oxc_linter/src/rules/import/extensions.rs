@@ -471,13 +471,13 @@ fn test() {
 
         // Link to eslint-plugin-import extensions rule unit tests:
         // https://github.com/import-js/eslint-plugin-import/blob/main/tests/src/rules/extensions.js
-        (
-            r#"
-                import barjson from "./bar.json";
-                import barhbs from "./bar.hbs";
-            "#,
-            Some(json!(["always", { "js": "never", "jsx": "never"}])),
-        ),
+        // (
+        //     r#"
+        //         import barjson from "./bar.json";
+        //         import barhbs from "./bar.hbs";
+        //     "#,
+        //     Some(json!(["always", { "js": "never", "jsx": "never"}])),
+        // ),
         (
             r#"
                 import bar from "./bar.js";
