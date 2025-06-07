@@ -243,7 +243,7 @@ fn test() {
             None,
         ),
         (
-            "import foo from 'bar
+            "import foo from 'bar'
          Object()",
             None,
             None,
