@@ -209,7 +209,7 @@ fn collect_ids_referenced_to_import<'a, 'c>(
         .resolved_references()
         .enumerate()
         .filter_map(|(symbol_id, reference_ids)| {
-            let symbol_id: SymbolId = SymbolId::from_usize(symbol_id);
+            let symbol_id = SymbolId::from_usize(symbol_id);
             if semantic.scoping().symbol_flags(symbol_id).is_import() {
                 let id = semantic.scoping().symbol_declaration(symbol_id);
                 let Some(AstKind::ImportDeclaration(import_decl)) =
@@ -217,7 +217,7 @@ fn collect_ids_referenced_to_import<'a, 'c>(
                 else {
                     return None;
                 };
-                let name: &str = semantic.scoping().symbol_name(symbol_id);
+                let name = semantic.scoping().symbol_name(symbol_id);
 
                 if matches!(import_decl.source.value.as_str(), "@jest/globals" | "vitest") {
                     let original = find_original_name(import_decl, name);
