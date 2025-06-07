@@ -233,7 +233,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                 ──────
  9 │           }
    ╰────
-  help: Consider removing it from the dependency array. Outer scope values like aren't valid dependencies because mutating them doesn't re-render the component.
+  help: Consider removing it from the dependency array. Outer scope values aren't valid dependencies because mutating them doesn't re-render the component.
 
   ⚠ eslint-plugin-react-hooks(exhaustive-deps): React Hook useCallback has a missing dependency: 'local2'
    ╭─[exhaustive_deps.tsx:8:16]
@@ -278,7 +278,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                                  ──────
  3 │         }
    ╰────
-  help: Consider removing it from the dependency array. Outer scope values like aren't valid dependencies because mutating them doesn't re-render the component.
+  help: Consider removing it from the dependency array. Outer scope values aren't valid dependencies because mutating them doesn't re-render the component.
 
   ⚠ eslint-plugin-react(exhaustive-deps): React Hook useCallback has unnecessary dependency: window
    ╭─[exhaustive_deps.tsx:2:33]
@@ -942,7 +942,7 @@ source: crates/oxc_linter/src/tester.rs
     ·               ────────────
  10 │         }
     ╰────
-  help: Consider removing it from the dependency array. Outer scope values like aren't valid dependencies because mutating them doesn't re-render the component.
+  help: Consider removing it from the dependency array. Outer scope values aren't valid dependencies because mutating them doesn't re-render the component.
 
   ⚠ eslint-plugin-react-hooks(exhaustive-deps): React Hook useEffect has an unnecessary dependency: ref2.
     ╭─[exhaustive_deps.tsx:9:29]
@@ -951,7 +951,7 @@ source: crates/oxc_linter/src/tester.rs
     ·                             ────────────
  10 │         }
     ╰────
-  help: Consider removing it from the dependency array. Outer scope values like aren't valid dependencies because mutating them doesn't re-render the component.
+  help: Consider removing it from the dependency array. Outer scope values aren't valid dependencies because mutating them doesn't re-render the component.
 
   ⚠ eslint-plugin-react-hooks(exhaustive-deps): React Hook useEffect has an unnecessary dependency: ref1.
     ╭─[exhaustive_deps.tsx:9:15]
@@ -960,7 +960,7 @@ source: crates/oxc_linter/src/tester.rs
     ·               ─────────────
  10 │         }
     ╰────
-  help: Consider removing it from the dependency array. Outer scope values like aren't valid dependencies because mutating them doesn't re-render the component.
+  help: Consider removing it from the dependency array. Outer scope values aren't valid dependencies because mutating them doesn't re-render the component.
 
   ⚠ eslint-plugin-react-hooks(exhaustive-deps): React Hook useEffect has an unnecessary dependency: ref2.
     ╭─[exhaustive_deps.tsx:9:30]
@@ -969,7 +969,7 @@ source: crates/oxc_linter/src/tester.rs
     ·                              ─────────────
  10 │         }
     ╰────
-  help: Consider removing it from the dependency array. Outer scope values like aren't valid dependencies because mutating them doesn't re-render the component.
+  help: Consider removing it from the dependency array. Outer scope values aren't valid dependencies because mutating them doesn't re-render the component.
 
   ⚠ eslint-plugin-react-hooks(exhaustive-deps): React Hook useEffect has an unnecessary dependency: ref.
    ╭─[exhaustive_deps.tsx:5:15]
@@ -978,7 +978,7 @@ source: crates/oxc_linter/src/tester.rs
    ·               ───────────
  6 │         }
    ╰────
-  help: Consider removing it from the dependency array. Outer scope values like aren't valid dependencies because mutating them doesn't re-render the component.
+  help: Consider removing it from the dependency array. Outer scope values aren't valid dependencies because mutating them doesn't re-render the component.
 
   ⚠ eslint-plugin-react-hooks(exhaustive-deps): React Hook useEffect has an unnecessary dependency: ref1.
    ╭─[exhaustive_deps.tsx:7:15]
@@ -987,7 +987,7 @@ source: crates/oxc_linter/src/tester.rs
    ·               ────────────
  8 │         }
    ╰────
-  help: Consider removing it from the dependency array. Outer scope values like aren't valid dependencies because mutating them doesn't re-render the component.
+  help: Consider removing it from the dependency array. Outer scope values aren't valid dependencies because mutating them doesn't re-render the component.
 
   ⚠ eslint-plugin-react-hooks(exhaustive-deps): React Hook useEffect has an unnecessary dependency: ref2.
    ╭─[exhaustive_deps.tsx:7:29]
@@ -996,7 +996,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                             ────────────
  8 │         }
    ╰────
-  help: Consider removing it from the dependency array. Outer scope values like aren't valid dependencies because mutating them doesn't re-render the component.
+  help: Consider removing it from the dependency array. Outer scope values aren't valid dependencies because mutating them doesn't re-render the component.
 
   ⚠ eslint-plugin-react-hooks(exhaustive-deps): React Hook useCallback has an unnecessary dependency: ref1.
    ╭─[exhaustive_deps.tsx:7:15]
@@ -1005,7 +1005,7 @@ source: crates/oxc_linter/src/tester.rs
    ·               ────────────
  8 │         }
    ╰────
-  help: Consider removing it from the dependency array. Outer scope values like aren't valid dependencies because mutating them doesn't re-render the component.
+  help: Consider removing it from the dependency array. Outer scope values aren't valid dependencies because mutating them doesn't re-render the component.
 
   ⚠ eslint-plugin-react-hooks(exhaustive-deps): React Hook useCallback has an unnecessary dependency: ref2.
    ╭─[exhaustive_deps.tsx:7:29]
@@ -1014,7 +1014,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                             ────────────
  8 │         }
    ╰────
-  help: Consider removing it from the dependency array. Outer scope values like aren't valid dependencies because mutating them doesn't re-render the component.
+  help: Consider removing it from the dependency array. Outer scope values aren't valid dependencies because mutating them doesn't re-render the component.
 
   ⚠ eslint-plugin-react(exhaustive-deps): React Hook useCallback has unnecessary dependency: activeTab
    ╭─[exhaustive_deps.tsx:7:14]
@@ -1032,7 +1032,7 @@ source: crates/oxc_linter/src/tester.rs
    ·               ───────────
  6 │         }
    ╰────
-  help: Consider removing it from the dependency array. Outer scope values like aren't valid dependencies because mutating them doesn't re-render the component.
+  help: Consider removing it from the dependency array. Outer scope values aren't valid dependencies because mutating them doesn't re-render the component.
 
   ⚠ eslint-plugin-react-hooks(exhaustive-deps): React Hook useImperativeHandle has a missing dependency: 'props.hello'
    ╭─[exhaustive_deps.tsx:6:15]
@@ -1221,7 +1221,7 @@ source: crates/oxc_linter/src/tester.rs
    ·               ──────
  5 │         }
    ╰────
-  help: Consider removing it from the dependency array. Outer scope values like aren't valid dependencies because mutating them doesn't re-render the component.
+  help: Consider removing it from the dependency array. Outer scope values aren't valid dependencies because mutating them doesn't re-render the component.
 
   ⚠ eslint-plugin-react-hooks(exhaustive-deps): React Hook useEffect has an unnecessary dependency: MutableStore.
    ╭─[exhaustive_deps.tsx:5:15]
@@ -1230,7 +1230,7 @@ source: crates/oxc_linter/src/tester.rs
    ·               ──────────────────
  6 │         }
    ╰────
-  help: Consider removing it from the dependency array. Outer scope values like aren't valid dependencies because mutating them doesn't re-render the component.
+  help: Consider removing it from the dependency array. Outer scope values aren't valid dependencies because mutating them doesn't re-render the component.
 
   ⚠ eslint-plugin-react-hooks(exhaustive-deps): React Hook useEffect has an unnecessary dependency: MutableStore.
     ╭─[exhaustive_deps.tsx:10:17]
@@ -1239,7 +1239,7 @@ source: crates/oxc_linter/src/tester.rs
     ·                 ────────────────────────
  11 │           }
     ╰────
-  help: Consider removing it from the dependency array. Outer scope values like aren't valid dependencies because mutating them doesn't re-render the component.
+  help: Consider removing it from the dependency array. Outer scope values aren't valid dependencies because mutating them doesn't re-render the component.
 
   ⚠ eslint-plugin-react-hooks(exhaustive-deps): React Hook useEffect has an unnecessary dependency: z.
     ╭─[exhaustive_deps.tsx:10:60]
@@ -1248,7 +1248,7 @@ source: crates/oxc_linter/src/tester.rs
     ·                                                            ─
  11 │           }
     ╰────
-  help: Consider removing it from the dependency array. Outer scope values like aren't valid dependencies because mutating them doesn't re-render the component.
+  help: Consider removing it from the dependency array. Outer scope values aren't valid dependencies because mutating them doesn't re-render the component.
 
   ⚠ eslint-plugin-react-hooks(exhaustive-deps): React Hook useEffect has an unnecessary dependency: global.
     ╭─[exhaustive_deps.tsx:10:63]
@@ -1257,7 +1257,7 @@ source: crates/oxc_linter/src/tester.rs
     ·                                                               ────────────
  11 │           }
     ╰────
-  help: Consider removing it from the dependency array. Outer scope values like aren't valid dependencies because mutating them doesn't re-render the component.
+  help: Consider removing it from the dependency array. Outer scope values aren't valid dependencies because mutating them doesn't re-render the component.
 
   ⚠ eslint-plugin-react-hooks(exhaustive-deps): React Hook useEffect has a dependency array that changes every render.
     ╭─[exhaustive_deps.tsx:10:16]
@@ -1275,7 +1275,7 @@ source: crates/oxc_linter/src/tester.rs
     ·                 ────────────────────────
  11 │           }
     ╰────
-  help: Consider removing it from the dependency array. Outer scope values like aren't valid dependencies because mutating them doesn't re-render the component.
+  help: Consider removing it from the dependency array. Outer scope values aren't valid dependencies because mutating them doesn't re-render the component.
 
   ⚠ eslint-plugin-react-hooks(exhaustive-deps): React Hook useEffect has an unnecessary dependency: z.
     ╭─[exhaustive_deps.tsx:10:60]
@@ -1284,7 +1284,7 @@ source: crates/oxc_linter/src/tester.rs
     ·                                                            ─
  11 │           }
     ╰────
-  help: Consider removing it from the dependency array. Outer scope values like aren't valid dependencies because mutating them doesn't re-render the component.
+  help: Consider removing it from the dependency array. Outer scope values aren't valid dependencies because mutating them doesn't re-render the component.
 
   ⚠ eslint-plugin-react-hooks(exhaustive-deps): React Hook useEffect has an unnecessary dependency: global.
     ╭─[exhaustive_deps.tsx:10:63]
@@ -1293,7 +1293,7 @@ source: crates/oxc_linter/src/tester.rs
     ·                                                               ────────────
  11 │           }
     ╰────
-  help: Consider removing it from the dependency array. Outer scope values like aren't valid dependencies because mutating them doesn't re-render the component.
+  help: Consider removing it from the dependency array. Outer scope values aren't valid dependencies because mutating them doesn't re-render the component.
 
   ⚠ eslint-plugin-react-hooks(exhaustive-deps): React Hook useEffect has a dependency array that changes every render.
     ╭─[exhaustive_deps.tsx:10:16]
@@ -1311,7 +1311,7 @@ source: crates/oxc_linter/src/tester.rs
     ·                 ────────────────────────
  11 │           }
     ╰────
-  help: Consider removing it from the dependency array. Outer scope values like aren't valid dependencies because mutating them doesn't re-render the component.
+  help: Consider removing it from the dependency array. Outer scope values aren't valid dependencies because mutating them doesn't re-render the component.
 
   ⚠ eslint-plugin-react-hooks(exhaustive-deps): React Hook useCallback has an unnecessary dependency: z.
     ╭─[exhaustive_deps.tsx:10:60]
@@ -1320,7 +1320,7 @@ source: crates/oxc_linter/src/tester.rs
     ·                                                            ─
  11 │           }
     ╰────
-  help: Consider removing it from the dependency array. Outer scope values like aren't valid dependencies because mutating them doesn't re-render the component.
+  help: Consider removing it from the dependency array. Outer scope values aren't valid dependencies because mutating them doesn't re-render the component.
 
   ⚠ eslint-plugin-react-hooks(exhaustive-deps): React Hook useCallback has an unnecessary dependency: global.
     ╭─[exhaustive_deps.tsx:10:63]
@@ -1329,7 +1329,7 @@ source: crates/oxc_linter/src/tester.rs
     ·                                                               ────────────
  11 │           }
     ╰────
-  help: Consider removing it from the dependency array. Outer scope values like aren't valid dependencies because mutating them doesn't re-render the component.
+  help: Consider removing it from the dependency array. Outer scope values aren't valid dependencies because mutating them doesn't re-render the component.
 
   ⚠ eslint-plugin-react(exhaustive-deps): React Hook useCallback has unnecessary dependency: MutableStore.hello.world
     ╭─[exhaustive_deps.tsx:10:16]
@@ -1401,7 +1401,7 @@ source: crates/oxc_linter/src/tester.rs
     ·                 ──────────────────────────
  11 │           }
     ╰────
-  help: Consider removing it from the dependency array. Outer scope values like aren't valid dependencies because mutating them doesn't re-render the component.
+  help: Consider removing it from the dependency array. Outer scope values aren't valid dependencies because mutating them doesn't re-render the component.
 
   ⚠ eslint-plugin-react-hooks(exhaustive-deps): React Hook useCallback has an unnecessary dependency: z.
     ╭─[exhaustive_deps.tsx:10:62]
@@ -1410,7 +1410,7 @@ source: crates/oxc_linter/src/tester.rs
     ·                                                              ─
  11 │           }
     ╰────
-  help: Consider removing it from the dependency array. Outer scope values like aren't valid dependencies because mutating them doesn't re-render the component.
+  help: Consider removing it from the dependency array. Outer scope values aren't valid dependencies because mutating them doesn't re-render the component.
 
   ⚠ eslint-plugin-react-hooks(exhaustive-deps): React Hook useCallback has an unnecessary dependency: global.
     ╭─[exhaustive_deps.tsx:10:65]
@@ -1419,7 +1419,7 @@ source: crates/oxc_linter/src/tester.rs
     ·                                                                 ─────────────
  11 │           }
     ╰────
-  help: Consider removing it from the dependency array. Outer scope values like aren't valid dependencies because mutating them doesn't re-render the component.
+  help: Consider removing it from the dependency array. Outer scope values aren't valid dependencies because mutating them doesn't re-render the component.
 
   ⚠ eslint-plugin-react(exhaustive-deps): React Hook useCallback has unnecessary dependency: MutableStore.hello.world
     ╭─[exhaustive_deps.tsx:10:16]

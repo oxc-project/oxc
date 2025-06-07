@@ -9,8 +9,8 @@ use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
-fn func_style_diagnostic(span: Span, style: Style) -> OxcDiagnostic {
-    OxcDiagnostic::warn(format!("Expected a function {}.", style.as_str()))
+fn func_style_diagnostic(span: Span, style: &str) -> OxcDiagnostic {
+    OxcDiagnostic::warn(format!("Expected a function {style}."))
         .with_help("Enforce the consistent use of either `function` declarations or expressions assigned to variables")
         .with_label(span)
 }
@@ -59,6 +59,7 @@ impl From<&str> for NamedExports {
 pub struct FuncStyle {
     style: Style,
     allow_arrow_functions: bool,
+    allow_type_annotation: bool,
     named_exports: Option<NamedExports>,
 }
 
@@ -206,6 +207,10 @@ impl Rule for FuncStyle {
                 .and_then(|v| v.get("allowArrowFunctions"))
                 .and_then(Value::as_bool)
                 .unwrap_or(false),
+            allow_type_annotation: obj2
+                .and_then(|v| v.get("allowTypeAnnotation"))
+                .and_then(Value::as_bool)
+                .unwrap_or(false),
             named_exports: obj2
                 .and_then(|v| v.get("overrides"))
                 .and_then(|v| v.get("namedExports"))
@@ -228,7 +233,7 @@ impl Rule for FuncStyle {
             match node.kind() {
                 AstKind::Function(func) => {
                     let Some(parent) = semantic.nodes().parent_node(node.id()) else {
-                        return;
+                        continue;
                     };
                     match func.r#type {
                         FunctionType::FunctionDeclaration => {
@@ -249,29 +254,40 @@ impl Rule for FuncStyle {
                                     _ => true,
                                 };
                                 if should_diagnostic {
-                                    ctx.diagnostic(func_style_diagnostic(func.span, self.style));
+                                    ctx.diagnostic(func_style_diagnostic(
+                                        func.span,
+                                        self.style.as_str(),
+                                    ));
                                 }
                             }
 
                             if self.named_exports == Some(NamedExports::Expression)
                                 && matches!(parent.kind(), AstKind::ExportNamedDeclaration(_))
                             {
-                                ctx.diagnostic(func_style_diagnostic(func.span, self.style));
+                                ctx.diagnostic(func_style_diagnostic(func.span, "expression"));
                             }
                         }
                         FunctionType::FunctionExpression => {
                             let is_ancestor_export = is_ancestor_export_name_decl(node, ctx);
                             if let AstKind::VariableDeclarator(decl) = parent.kind() {
+                                let is_type_annotation =
+                                    self.allow_type_annotation && decl.id.type_annotation.is_some();
+                                if is_type_annotation {
+                                    continue;
+                                }
                                 if is_decl_style
                                     && (self.named_exports.is_none() || !is_ancestor_export)
                                 {
-                                    ctx.diagnostic(func_style_diagnostic(decl.span, self.style));
+                                    ctx.diagnostic(func_style_diagnostic(
+                                        decl.span,
+                                        self.style.as_str(),
+                                    ));
                                 }
 
                                 if self.named_exports == Some(NamedExports::Declaration)
                                     && is_ancestor_export
                                 {
-                                    ctx.diagnostic(func_style_diagnostic(decl.span, self.style));
+                                    ctx.diagnostic(func_style_diagnostic(decl.span, "declaration"));
                                 }
                             }
                         }
@@ -305,13 +321,18 @@ impl Rule for FuncStyle {
                     return;
                 };
                 if let AstKind::VariableDeclarator(decl) = parent.kind() {
+                    let is_type_annotation =
+                        self.allow_type_annotation && decl.id.type_annotation.is_some();
+                    if is_type_annotation {
+                        continue;
+                    }
                     let is_ancestor_export = is_ancestor_export_name_decl(node, ctx);
                     if is_decl_style && (self.named_exports.is_none() || !is_ancestor_export) {
-                        ctx.diagnostic(func_style_diagnostic(decl.span, self.style));
+                        ctx.diagnostic(func_style_diagnostic(decl.span, "declaration"));
                     }
 
                     if self.named_exports == Some(NamedExports::Declaration) && is_ancestor_export {
-                        ctx.diagnostic(func_style_diagnostic(decl.span, self.style));
+                        ctx.diagnostic(func_style_diagnostic(decl.span, "declaration"));
                     }
                 }
             }
@@ -447,6 +468,52 @@ fn test() {
                 serde_json::json!(["declaration", { "allowArrowFunctions": true, "overrides": { "namedExports": "ignore" } }]),
             ),
         ),
+        (
+            "const arrow: Fn = () => {}",
+            Some(
+                serde_json::json!(["declaration", { "allowTypeAnnotation": true, "allowArrowFunctions": false }]),
+            ),
+        ),
+        (
+            "const arrow: Fn = () => {}",
+            Some(
+                serde_json::json!(["expression", { "allowTypeAnnotation": false, "allowArrowFunctions": false }]),
+            ),
+        ),
+        (
+            "export const foo: () => void = function () {}",
+            Some(
+                serde_json::json!(["declaration", { "overrides": { "namedExports": "expression" } }]),
+            ),
+        ),
+        (
+            "export const foo: () => void = function () {}",
+            Some(
+                serde_json::json!(["expression", { "allowTypeAnnotation": true, "overrides": { "namedExports": "declaration" } }]),
+            ),
+        ),
+        (
+            "export const foo: () => void = function () {}",
+            Some(serde_json::json!(["declaration", { "allowTypeAnnotation": true }])),
+        ),
+        (
+            "const arrow: Fn = () => {}",
+            Some(serde_json::json!(["declaration", { "allowTypeAnnotation": true }])),
+        ),
+        (
+            "export const expression: Fn = function () {}",
+            Some(serde_json::json!(["declaration", { "allowTypeAnnotation": true }])),
+        ),
+        (
+            "export const arrow: Fn = () => {}",
+            Some(serde_json::json!(["declaration", { "allowTypeAnnotation": true }])),
+        ),
+        (
+            "export const expression: Fn = function () {}",
+            Some(
+                serde_json::json!(["expression", { "allowTypeAnnotation": true, "overrides": { "namedExports": "declaration" } }]),
+            ),
+        ),
     ];
 
     let fail = vec![
@@ -456,6 +523,12 @@ fn test() {
         ("var foo = () => ({ bar() { super.baz(); } });", Some(serde_json::json!(["declaration"]))), // { "ecmaVersion": 6 },
         ("function foo(){}", Some(serde_json::json!(["expression"]))),
         ("export function foo(){}", Some(serde_json::json!(["expression"]))),
+        (
+            "export const foo = () => {}",
+            Some(
+                serde_json::json!(["declaration", { "overrides": { "namedExports": "declaration" } }]),
+            ),
+        ),
         (
             "export function foo() {};",
             Some(
@@ -512,6 +585,30 @@ fn test() {
                 serde_json::json!(["declaration", { "overrides": { "namedExports": "expression" } }]),
             ),
         ), // { "ecmaVersion": 6 }
+        (
+            "const arrow: Fn = () => {}",
+            Some(
+                serde_json::json!(["declaration", { "allowTypeAnnotation": false, "allowArrowFunctions": false }]),
+            ),
+        ),
+        (
+            "const foo = function() {}",
+            Some(serde_json::json!(["declaration", { "allowTypeAnnotation": true }])),
+        ),
+        (
+            "export const foo = function() {}",
+            Some(serde_json::json!(["declaration", { "allowTypeAnnotation": true }])),
+        ),
+        (
+            "export const foo = () => {}",
+            Some(serde_json::json!(["declaration", { "allowTypeAnnotation": true }])),
+        ),
+        (
+            "export const foo: () => void = function () {}",
+            Some(
+                serde_json::json!(["declaration", { "overrides": { "namedExports": "declaration" } }]),
+            ),
+        ),
     ];
 
     Tester::new(FuncStyle::NAME, FuncStyle::PLUGIN, pass, fail).test_and_snapshot();

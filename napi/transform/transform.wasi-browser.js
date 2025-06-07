@@ -54,8 +54,8 @@ const {
   },
 })
 export default __napiModule.exports
+export const Severity = __napiModule.exports.Severity
 export const HelperMode = __napiModule.exports.HelperMode
 export const isolatedDeclaration = __napiModule.exports.isolatedDeclaration
 export const moduleRunnerTransform = __napiModule.exports.moduleRunnerTransform
-export const Severity = __napiModule.exports.Severity
 export const transform = __napiModule.exports.transform

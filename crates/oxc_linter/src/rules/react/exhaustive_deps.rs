@@ -134,7 +134,7 @@ fn unnecessary_outer_scope_dependency_diagnostic(
         "React Hook {hook_name} has an unnecessary dependency: {dep_name}."
     ))
     .with_label(span)
-    .with_help("Consider removing it from the dependency array. Outer scope values like aren't valid dependencies because mutating them doesn't re-render the component.")
+    .with_help("Consider removing it from the dependency array. Outer scope values aren't valid dependencies because mutating them doesn't re-render the component.")
     .with_error_code_scope(SCOPE)
 }
 
@@ -504,7 +504,13 @@ impl Rule for ExhaustiveDeps {
                 return false;
             }
 
-            if !is_identifier_a_dependency(dep.name, dep.reference_id, ctx, component_scope_id) {
+            if !is_identifier_a_dependency(
+                dep.name,
+                dep.reference_id,
+                dep.span,
+                ctx,
+                component_scope_id,
+            ) {
                 return false;
             }
             true
@@ -779,6 +785,7 @@ fn concat_members<'a, 'b>(
 fn is_identifier_a_dependency<'a>(
     ident_name: Atom<'a>,
     ident_reference_id: ReferenceId,
+    ident_span: Span,
     ctx: &'_ LintContext<'a>,
     component_scope_id: ScopeId,
 ) -> bool {
@@ -832,6 +839,17 @@ fn is_identifier_a_dependency<'a>(
 
     // if the value is stable (for example the setter returned by useState), then it's not a dependency
     if is_stable_value(declaration, ident_name, ident_reference_id, ctx, component_scope_id) {
+        return false;
+    }
+
+    // Using a declaration recursively is ok
+    // ```tsx
+    // function MyComponent() {
+    //     const recursive = useCallback((n: number): number => (n <= 0 ? 0 : n + recursive(n - 1)), []);
+    //     return recursive
+    // }
+    // ```
+    if declaration.span().contains_inclusive(ident_span) {
         return false;
     }
 
@@ -969,7 +987,13 @@ fn is_function_stable<'a, 'b>(
 
     deps.iter().all(|dep| {
         dep.symbol_id.zip(function_symbol_id).is_none_or(|(l, r)| l != r)
-            && !is_identifier_a_dependency(dep.name, dep.reference_id, ctx, component_scope_id)
+            && !is_identifier_a_dependency(
+                dep.name,
+                dep.reference_id,
+                dep.span,
+                ctx,
+                component_scope_id,
+            )
     })
 }
 
@@ -2159,6 +2183,7 @@ fn test() {
   return null;
 }
 "#,
+        r"function MyComponent() { const recursive = useCallback((n: number): number => (n <= 0 ? 0 : n + recursive(n - 1)), []); return recursive }",
     ];
 
     let fail = vec![

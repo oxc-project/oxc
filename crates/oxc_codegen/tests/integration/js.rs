@@ -5,6 +5,12 @@ use crate::tester::{
 };
 
 #[test]
+fn cases() {
+    test_same("class C {\n\t@foo static accessor A = @bar class {};\n}\n");
+    test_same("function foo(@foo x = @bar class {}) {}\n");
+}
+
+#[test]
 fn decl() {
     test_minify("const [foo] = bar", "const[foo]=bar;");
     test_minify("const {foo} = bar", "const{foo}=bar;");
@@ -78,6 +84,8 @@ fn class() {
         "export class Test2 {\n@decorator\nproperty: ((arg: any) => any) | undefined;\n}",
         "export class Test2 {\n\t@decorator property: ((arg: any) => any) | undefined;\n}\n",
     );
+    test_same("export @dec1 @dec2 class C {}\n");
+    test_same("export default @dec1 @dec2 class {}\n");
     test_minify("class { static [computed] }", "class{static[computed]}");
 }
 

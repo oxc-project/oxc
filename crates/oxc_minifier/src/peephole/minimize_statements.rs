@@ -375,9 +375,9 @@ impl<'a> PeepholeOptimizations {
     ) {
         if let Some(Statement::VariableDeclaration(prev_var_decl)) = result.last_mut() {
             if var_decl.kind == prev_var_decl.kind {
-                var_decl.declarations.splice(0..0, prev_var_decl.declarations.drain(..));
-                result.pop();
+                prev_var_decl.declarations.extend(var_decl.declarations.drain(..));
                 state.changed = true;
+                return;
             }
         }
         result.push(Statement::VariableDeclaration(var_decl));

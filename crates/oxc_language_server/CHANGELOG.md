@@ -4,6 +4,13 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.18.0] - 2025-06-06
+
+### Refactor
+
+- db0b099 language_server: Convert only once uri to path when creating `ServerLinter` (#11503) (Sysix)
+- ccceb52 language_server: Simplify `workspace/didChangeConfiguration` call (#11462) (Sysix)
+
 ## [0.17.0] - 2025-05-30
 
 ### Features

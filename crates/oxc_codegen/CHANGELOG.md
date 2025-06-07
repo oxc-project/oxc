@@ -4,6 +4,21 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.72.3] - 2025-06-06
+
+### Features
+
+- 7e88451 parser: Syntax errors for decorators appearing in conflicting places (#11482) (Boshen)
+
+### Bug Fixes
+
+- 392752f parser: Handle `import {type as as}` correctly (#11488) (camchenry)
+- f729734 parser: Fix decorator placed incorrectly in initializers (#11461) (Boshen)
+
+### Performance
+
+- 25167f2 parser: Parse ts type signature without rewind (#11443) (Boshen)
+
 ## [0.72.2] - 2025-05-31
 
 ### Bug Fixes

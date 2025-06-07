@@ -10,7 +10,7 @@ use crate::{AstNode, ast_util::is_method_call, context::LintContext, rule::Rule}
 
 fn no_array_for_each_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Do not use `Array#forEach`")
-        .with_help("Replace it with a for` loop. For loop is faster, more readable, and you can use `break` or `return` to exit early.")
+        .with_help("Replace it with a for loop. For loop is faster, more readable, and you can use `break` or `return` to exit early.")
         .with_label(span)
 }
 

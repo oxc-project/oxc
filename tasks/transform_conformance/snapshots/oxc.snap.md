@@ -544,18 +544,16 @@ after transform: ["Object", "PropertyDescriptor", "babelHelpers", "console"]
 rebuilt        : ["Object", "babelHelpers", "console", "dec"]
 
 * oxc/metadata/typescript-syntax/input.ts
-Bindings mismatch:
-after transform: ScopeId(0): ["A", "B"]
-rebuilt        : ScopeId(0): ["B"]
-Scope children mismatch:
-after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
-rebuilt        : ScopeId(0): [ScopeId(1)]
-Scope children mismatch:
-after transform: ScopeId(2): [ScopeId(3), ScopeId(4)]
-rebuilt        : ScopeId(1): [ScopeId(2)]
-Unresolved references mismatch:
-after transform: ["dec", "m"]
-rebuilt        : []
+
+  x TS(1249): A decorator can only decorate a method implementation, not an
+  | overload.
+   ,-[tasks/transform_conformance/tests/legacy-decorators/test/fixtures/oxc/metadata/typescript-syntax/input.ts:6:3]
+ 5 | class B {
+ 6 |   @m
+   :   ^^
+ 7 |   method();
+   `----
+
 
 * oxc/metadata/unbound-type-reference/input.ts
 Symbol span mismatch for "Example":
@@ -1213,18 +1211,16 @@ after transform: ["babelHelpers"]
 rebuilt        : ["babelHelpers", "dec"]
 
 * typescript/method/decoratorOnClassMethodOverload1/input.ts
-Bindings mismatch:
-after transform: ScopeId(0): ["C", "dec"]
-rebuilt        : ScopeId(0): ["C"]
-Scope children mismatch:
-after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
-rebuilt        : ScopeId(0): [ScopeId(1)]
-Scope children mismatch:
-after transform: ScopeId(2): [ScopeId(3), ScopeId(4)]
-rebuilt        : ScopeId(1): [ScopeId(2)]
-Unresolved references mismatch:
-after transform: ["TypedPropertyDescriptor"]
-rebuilt        : []
+
+  x TS(1249): A decorator can only decorate a method implementation, not an
+  | overload.
+   ,-[tasks/transform_conformance/tests/legacy-decorators/test/fixtures/typescript/method/decoratorOnClassMethodOverload1/input.ts:6:5]
+ 5 | class C {
+ 6 |     @dec
+   :     ^^^^
+ 7 |     method()
+   `----
+
 
 * typescript/method/decoratorOnClassMethodOverload2/input.ts
 Bindings mismatch:

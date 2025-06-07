@@ -15,6 +15,7 @@ fn cases() {
         "class Foo {\n\t#name: string;\n\tf() {\n\t\t#name in other && this.#name === other.#name;\n\t}\n}\n",
     );
     test_same("class B {\n\tconstructor(override readonly a: number) {}\n}\n");
+    test_same("export { type as as };\n");
 }
 
 #[test]

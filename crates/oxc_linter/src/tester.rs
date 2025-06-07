@@ -11,7 +11,7 @@ use oxc_allocator::Allocator;
 use oxc_diagnostics::{GraphicalReportHandler, GraphicalTheme, NamedSource};
 use rustc_hash::FxHashMap;
 use serde::Deserialize;
-use serde_json::Value;
+use serde_json::{Value, json};
 
 use crate::{
     AllowWarnDeny, ConfigStore, ConfigStoreBuilder, LintPlugins, LintService, LintServiceOptions,
@@ -414,14 +414,8 @@ impl Tester {
 
     fn test_pass(&mut self) {
         for TestCase { source, rule_config, eslint_config, path } in self.expect_pass.clone() {
-            let result = self.run(
-                &source,
-                rule_config.clone(),
-                &eslint_config,
-                path,
-                ExpectFixKind::None,
-                0,
-            );
+            let result =
+                self.run(&source, rule_config.clone(), eslint_config, path, ExpectFixKind::None, 0);
             let passed = result == TestResult::Passed;
             let config = rule_config.map_or_else(
                 || "\n\n------------------------\n".to_string(),
@@ -442,14 +436,8 @@ impl Tester {
 
     fn test_fail(&mut self) {
         for TestCase { source, rule_config, eslint_config, path } in self.expect_fail.clone() {
-            let result = self.run(
-                &source,
-                rule_config.clone(),
-                &eslint_config,
-                path,
-                ExpectFixKind::None,
-                0,
-            );
+            let result =
+                self.run(&source, rule_config.clone(), eslint_config, path, ExpectFixKind::None, 0);
             let failed = result == TestResult::Failed;
             let config = rule_config.map_or_else(
                 || "\n\n------------------------".to_string(),
@@ -485,7 +473,7 @@ impl Tester {
             let ExpectFixTestCase { source, expected, rule_config: config } = fix;
             for (index, expect) in expected.iter().enumerate() {
                 let result =
-                    self.run(&source, config.clone(), &None, None, expect.kind, index as u8);
+                    self.run(&source, config.clone(), None, None, expect.kind, index as u8);
                 match result {
                     TestResult::Fixed(fixed_str) => assert_eq!(
                         expect.expected, fixed_str,
@@ -499,12 +487,11 @@ impl Tester {
         }
     }
 
-    #[expect(clippy::ref_option)]
     fn run(
         &mut self,
         source_text: &str,
         rule_config: Option<Value>,
-        eslint_config: &Option<Value>,
+        eslint_config: Option<Value>,
         path: Option<PathBuf>,
         fix_kind: ExpectFixKind,
         fix_index: u8,
@@ -515,8 +502,8 @@ impl Tester {
             self.lint_options,
             ConfigStore::new(
                 eslint_config
-                    .as_ref()
-                    .map_or_else(ConfigStoreBuilder::empty, |v| {
+                    .map_or_else(ConfigStoreBuilder::empty, |mut v| {
+                        v.as_object_mut().unwrap().insert("categories".into(), json!({}));
                         ConfigStoreBuilder::from_oxlintrc(true, Oxlintrc::deserialize(v).unwrap())
                             .unwrap()
                     })

@@ -24,7 +24,8 @@ impl<'a> ParserState<'a> {
     pub fn new(allocator: &'a Allocator) -> Self {
         Self {
             not_parenthesized_arrow: FxHashSet::default(),
-            decorators: ArenaVec::new_in(allocator),
+            // Create a large enough buffer for most cases.
+            decorators: ArenaVec::with_capacity_in(4, allocator),
             cover_initialized_name: FxHashMap::default(),
             trailing_commas: FxHashMap::default(),
         }

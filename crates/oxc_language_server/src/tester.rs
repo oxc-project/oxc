@@ -1,4 +1,4 @@
-use std::fmt::Write;
+use std::{fmt::Write, path::PathBuf};
 
 use tower_lsp_server::{
     UriExt,
@@ -9,11 +9,15 @@ use crate::{Options, worker::WorkspaceWorker};
 
 use super::linter::error_with_position::DiagnosticReport;
 
+/// Given a file path relative to the crate root directory, return the absolute path of the file.
+pub fn get_file_path(relative_file_path: &str) -> PathBuf {
+    std::env::current_dir().expect("could not get current dir").join(relative_file_path)
+}
+
 /// Given a file path relative to the crate root directory, return the URI of the file.
 pub fn get_file_uri(relative_file_path: &str) -> Uri {
-    let absolute_file_path =
-        std::env::current_dir().expect("could not get current dir").join(relative_file_path);
-    Uri::from_file_path(absolute_file_path).expect("failed to convert file path to URL")
+    Uri::from_file_path(get_file_path(relative_file_path))
+        .expect("failed to convert file path to URL")
 }
 
 fn get_snapshot_from_report(report: &DiagnosticReport) -> String {

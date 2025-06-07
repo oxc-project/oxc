@@ -1,7 +1,7 @@
 parser_misc Summary:
-AST Parsed     : 36/36 (100.00%)
-Positive Passed: 36/36 (100.00%)
-Negative Passed: 34/34 (100.00%)
+AST Parsed     : 40/40 (100.00%)
+Positive Passed: 40/40 (100.00%)
+Negative Passed: 39/39 (100.00%)
 
   × Identifier `b` has already been declared
    ╭─[misc/fail/oxc-10159.js:1:22]
@@ -28,6 +28,44 @@ Negative Passed: 34/34 (100.00%)
    ╭─[misc/fail/oxc-10977.ts:1:9]
  1 │ class{h:<=Ö
    ·         ──
+   ╰────
+
+  × Expected `from` but found `EOF`
+   ╭─[misc/fail/oxc-11453.js:2:1]
+ 1 │ export import
+   ╰────
+
+  × Decorators may not appear after 'export' or 'export default' if they also appear before 'export'.
+   ╭─[misc/fail/oxc-11472.js:1:1]
+ 1 │ @dec1 export @dec2 class C {}
+   · ─────
+ 2 │ 
+   ╰────
+
+  × Decorators may not appear after 'export' or 'export default' if they also appear before 'export'.
+   ╭─[misc/fail/oxc-11472.js:3:1]
+ 2 │ 
+ 3 │ @dec1 export default @dec2 class {}
+   · ─────
+   ╰────
+
+  × Expected `from` but found `EOF`
+   ╭─[misc/fail/oxc-11484.ts:2:1]
+ 1 │ import { type as as }
+   ╰────
+
+  × Unexpected token
+   ╭─[misc/fail/oxc-11487.mjs:1:13]
+ 1 │ async await => {}
+   ·             ──
+   ╰────
+
+  × Expected `from` but found `{`
+   ╭─[misc/fail/oxc-11532.js:1:15]
+ 1 │ import source { x } from 'x';
+   ·               ┬
+   ·               ╰── `from` expected
+ 2 │ import defer { x } from "x";
    ╰────
 
   × Unexpected token
@@ -189,10 +227,16 @@ Negative Passed: 34/34 (100.00%)
  9 │ }
    ╰────
 
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-   ╭─[misc/fail/oxc-4111-1.js:1:18]
+  × TS(8037): Type assertion expressions can only be used in TypeScript files.
+   ╭─[misc/fail/oxc-4111-1.js:1:1]
  1 │ funtransientction as longciiConÞr>ol(cde) {
-   ·                  ▲
+   · ─────────────────────────────────
+   ╰────
+
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
+   ╭─[misc/fail/oxc-4111-1.js:1:43]
+ 1 │ funtransientction as longciiConÞr>ol(cde) {
+   ·                                          ▲
    ╰────
   help: Try insert a semicolon here
 
@@ -287,11 +331,11 @@ Negative Passed: 34/34 (100.00%)
  4 │ }
    ╰────
 
-  × Unexpected token
-   ╭─[misc/fail/oxc-5955-3.ts:2:18]
+  × TS(1021): An index signature must have a type annotation.
+   ╭─[misc/fail/oxc-5955-3.ts:2:5]
  1 │ class A {
  2 │     [key: string]?: number;
-   ·                  ─
+   ·     ─────────────
  3 │ }
    ╰────
 

@@ -524,8 +524,8 @@ export interface DebuggerStatement extends Span {
 
 export type BindingPattern =
   & ({
-    typeAnnotation?: TSTypeAnnotation | null;
     optional?: boolean;
+    typeAnnotation?: TSTypeAnnotation | null;
   })
   & (BindingIdentifier | ObjectPattern | ArrayPattern | AssignmentPattern);
 
@@ -1700,4 +1700,4 @@ export type Node =
   | JSDocNullableType
   | JSDocNonNullableType
   | JSDocUnknownType
-  | FormalParameterRest;
+  | ParamPattern;

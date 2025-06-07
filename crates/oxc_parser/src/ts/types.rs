@@ -9,6 +9,8 @@ use crate::{
     modifiers::{Modifier, ModifierFlags, ModifierKind, Modifiers},
 };
 
+use super::statement::CallOrConstructorSignature;
+
 impl<'a> ParserImpl<'a> {
     pub(crate) fn parse_ts_type(&mut self) -> TSType<'a> {
         if self.is_start_of_function_type_or_constructor_type() {
@@ -290,11 +292,15 @@ impl<'a> ParserImpl<'a> {
                     );
                 }
                 Kind::Question => {
+                    let checkpoint = self.checkpoint();
+                    self.bump_any();
                     // If next token is start of a type we have a conditional type
-                    if self.lookahead(Self::next_token_is_start_of_type) {
+                    if self.is_start_of_type(false) {
+                        self.rewind(checkpoint);
+
                         return ty;
                     }
-                    self.bump_any();
+
                     ty = self.ast.ts_type_js_doc_nullable_type(
                         self.end_span(span),
                         ty,
@@ -554,11 +560,6 @@ impl<'a> ParserImpl<'a> {
 
         self.bump_any();
         self.at(Kind::In)
-    }
-
-    fn next_token_is_start_of_type(&mut self) -> bool {
-        self.bump_any();
-        self.is_start_of_type(false)
     }
 
     fn is_start_of_parenthesized_or_function_type(&mut self) -> bool {
@@ -1057,7 +1058,12 @@ impl<'a> ParserImpl<'a> {
 
     fn parse_type_or_type_predicate(&mut self) -> TSType<'a> {
         let span = self.start_span();
-        let type_predicate_variable = self.try_parse(Self::parse_type_predicate_prefix);
+        let type_predicate_variable = if self.cur_kind().is_identifier_name() {
+            self.try_parse(Self::parse_type_predicate_prefix)
+        } else {
+            None
+        };
+
         let ty = self.parse_ts_type();
         if let Some(parameter_name) = type_predicate_variable {
             let type_annotation = Some(self.ast.ts_type_annotation(ty.span(), ty));
@@ -1086,43 +1092,65 @@ impl<'a> ParserImpl<'a> {
         self.unexpected()
     }
 
-    pub(crate) fn is_next_at_type_member_name(&mut self) -> bool {
-        self.lookahead(Self::is_next_at_type_member_name_worker)
-    }
-
-    fn is_next_at_type_member_name_worker(&mut self) -> bool {
-        self.bump_any();
-        self.cur_kind().is_literal_property_name() || self.at(Kind::LBrack)
-    }
-
-    pub(crate) fn parse_ts_call_signature_member(&mut self) -> TSSignature<'a> {
+    pub(super) fn parse_signature_member(
+        &mut self,
+        kind: CallOrConstructorSignature,
+    ) -> TSSignature<'a> {
         let span = self.start_span();
+        if kind == CallOrConstructorSignature::Constructor {
+            self.expect(Kind::New);
+        }
         let type_parameters = self.parse_ts_type_parameters();
         let (this_param, params) = self.parse_formal_parameters(FormalParameterKind::Signature);
+        if kind == CallOrConstructorSignature::Constructor {
+            if let Some(this_param) = &this_param {
+                // interface Foo { new(this: number): Foo }
+                self.error(diagnostics::ts_constructor_this_parameter(this_param.span));
+            }
+        }
         let return_type = self.parse_ts_return_type_annotation(Kind::Colon, false);
         self.parse_type_member_semicolon();
-        self.ast.ts_signature_call_signature_declaration(
-            self.end_span(span),
-            type_parameters,
-            this_param,
-            params,
-            return_type,
-        )
+        match kind {
+            CallOrConstructorSignature::Call => self.ast.ts_signature_call_signature_declaration(
+                self.end_span(span),
+                type_parameters,
+                this_param,
+                params,
+                return_type,
+            ),
+            CallOrConstructorSignature::Constructor => {
+                self.ast.ts_signature_construct_signature_declaration(
+                    self.end_span(span),
+                    type_parameters,
+                    params,
+                    return_type,
+                )
+            }
+        }
     }
 
-    pub(crate) fn parse_ts_getter_signature_member(&mut self) -> TSSignature<'a> {
-        let span = self.start_span();
-        self.expect(Kind::Get);
+    pub(crate) fn parse_getter_setter_signature_member(
+        &mut self,
+        span: u32,
+        kind: TSMethodSignatureKind,
+    ) -> TSSignature<'a> {
         let (key, computed) = self.parse_property_name();
         let (this_param, params) = self.parse_formal_parameters(FormalParameterKind::Signature);
         let return_type = self.parse_ts_return_type_annotation(Kind::Colon, false);
         self.parse_type_member_semicolon();
+        if kind == TSMethodSignatureKind::Set {
+            if let Some(return_type) = return_type.as_ref() {
+                self.error(diagnostics::a_set_accessor_cannot_have_a_return_type_annotation(
+                    return_type.span,
+                ));
+            }
+        }
         self.ast.ts_signature_method_signature(
             self.end_span(span),
             key,
             computed,
             /* optional */ false,
-            TSMethodSignatureKind::Get,
+            kind,
             NONE,
             this_param,
             params,
@@ -1130,60 +1158,29 @@ impl<'a> ParserImpl<'a> {
         )
     }
 
-    pub(crate) fn parse_ts_setter_signature_member(&mut self) -> TSSignature<'a> {
-        let span = self.start_span();
-        self.expect(Kind::Set);
-        let (key, computed) = self.parse_property_name();
-        let (this_param, params) = self.parse_formal_parameters(FormalParameterKind::Signature);
-        let return_type = self.parse_ts_return_type_annotation(Kind::Colon, false);
-        self.parse_type_member_semicolon();
-        if let Some(return_type) = return_type.as_ref() {
-            self.error(diagnostics::a_set_accessor_cannot_have_a_return_type_annotation(
-                return_type.span,
-            ));
-        }
-        self.ast.ts_signature_method_signature(
-            self.end_span(span),
-            key,
-            computed,
-            /* optional */ false,
-            TSMethodSignatureKind::Set,
-            NONE,
-            this_param,
-            params,
-            return_type,
-        )
-    }
-
-    pub(crate) fn parse_ts_property_or_method_signature_member(&mut self) -> TSSignature<'a> {
-        let span = self.start_span();
-        let readonly = self.at(Kind::Readonly) && self.is_next_at_type_member_name();
-
-        if readonly {
-            self.bump_any();
-        }
-
+    pub(super) fn parse_property_or_method_signature(
+        &mut self,
+        span: u32,
+        modifiers: &Modifiers<'a>,
+    ) -> TSSignature<'a> {
         let (key, computed) = self.parse_property_name();
         let optional = self.eat(Kind::Question);
 
         if self.at(Kind::LParen) || self.at(Kind::LAngle) {
-            let TSSignature::TSCallSignatureDeclaration(call_signature) =
-                self.parse_ts_call_signature_member()
-            else {
-                unreachable!()
-            };
+            let type_parameters = self.parse_ts_type_parameters();
+            let (this_param, params) = self.parse_formal_parameters(FormalParameterKind::Signature);
+            let return_type = self.parse_ts_return_type_annotation(Kind::Colon, true);
             self.parse_type_member_semicolon();
-            let call_signature = call_signature.unbox();
             self.ast.ts_signature_method_signature(
                 self.end_span(span),
                 key,
                 computed,
                 optional,
                 TSMethodSignatureKind::Method,
-                call_signature.type_parameters,
-                call_signature.this_param,
-                call_signature.params,
-                call_signature.return_type,
+                type_parameters,
+                this_param,
+                params,
+                return_type,
             )
         } else {
             let type_annotation = self.parse_ts_type_annotation();
@@ -1192,41 +1189,18 @@ impl<'a> ParserImpl<'a> {
                 self.end_span(span),
                 computed,
                 optional,
-                readonly,
+                modifiers.contains_readonly(),
                 key,
                 type_annotation,
             )
         }
     }
 
-    pub(crate) fn parse_ts_constructor_signature_member(&mut self) -> TSSignature<'a> {
-        let span = self.start_span();
-        self.expect(Kind::New);
-
-        let type_parameters = self.parse_ts_type_parameters();
-        let (this_param, params) = self.parse_formal_parameters(FormalParameterKind::Signature);
-
-        if let Some(this_param) = this_param {
-            // interface Foo { new(this: number): Foo }
-            self.error(diagnostics::ts_constructor_this_parameter(this_param.span));
-        }
-
-        let return_type = self.parse_ts_return_type_annotation(Kind::Colon, false);
-        self.parse_type_member_semicolon();
-
-        self.ast.ts_signature_construct_signature_declaration(
-            self.end_span(span),
-            type_parameters,
-            params,
-            return_type,
-        )
-    }
-
     pub(crate) fn parse_index_signature_declaration(
         &mut self,
         span: u32,
         modifiers: &Modifiers<'a>,
-    ) -> TSIndexSignature<'a> {
+    ) -> Box<'a, TSIndexSignature<'a>> {
         self.verify_modifiers(
             modifiers,
             ModifierFlags::READONLY | ModifierFlags::STATIC,
@@ -1246,10 +1220,11 @@ impl<'a> ParserImpl<'a> {
             self.error(diagnostics::index_signature_one_parameter(self.end_span(span)));
         }
         let Some(type_annotation) = self.parse_ts_type_annotation() else {
-            return self.unexpected();
+            return self
+                .fatal_error(diagnostics::index_signature_type_annotation(self.end_span(span)));
         };
         self.parse_type_member_semicolon();
-        self.ast.ts_index_signature(
+        self.ast.alloc_ts_index_signature(
             self.end_span(span),
             params,
             type_annotation,
@@ -1271,11 +1246,16 @@ impl<'a> ParserImpl<'a> {
     fn parse_ts_index_signature_name(&mut self) -> TSIndexSignatureName<'a> {
         let span = self.start_span();
         let name = self.parse_identifier_name().name;
+        if self.at(Kind::Question) {
+            self.error(diagnostics::index_signature_question_mark(self.cur_token().span()));
+            self.bump_any();
+        }
         let type_annotation = self.parse_ts_type_annotation();
         if let Some(type_annotation) = type_annotation {
-            return self.ast.ts_index_signature_name(self.end_span(span), name, type_annotation);
+            self.ast.ts_index_signature_name(self.end_span(span), name, type_annotation)
+        } else {
+            self.unexpected()
         }
-        self.unexpected()
     }
 
     pub(crate) fn parse_class_element_modifiers(

@@ -10,15 +10,15 @@ export interface X {
 }
 export type A = {
 	set value({ a, b, c }: {
-		a: string
-		b: string
-		c: string
-	})
+		a: string;
+		b: string;
+		c: string;
+	});
 	get value(): {
-		a: string
-		b: string
-		c: string
-	}
+		a: string;
+		b: string;
+		c: string;
+	};
 };
 export interface I {
 	set value(_: string);

@@ -621,3 +621,51 @@ pub fn unexpected_exponential(x0: &str, span1: Span) -> OxcDiagnostic {
         .with_help(format!("Wrap {x0} expression in parentheses to enforce operator precedence"))
         .with_label(span1)
 }
+
+#[cold]
+pub fn import_equals_can_only_be_used_in_typescript_files(span: Span) -> OxcDiagnostic {
+    ts_error("8002", "'import ... =' can only be used in TypeScript files.").with_label(span)
+}
+
+#[cold]
+pub fn index_signature_question_mark(span: Span) -> OxcDiagnostic {
+    ts_error("1019", "An index signature parameter cannot have a question mark.").with_label(span)
+}
+
+#[cold]
+pub fn index_signature_type_annotation(span: Span) -> OxcDiagnostic {
+    ts_error("1021", "An index signature must have a type annotation.").with_label(span)
+}
+
+#[cold]
+pub fn unexpected_export(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::error("Unexpected export.").with_label(span)
+}
+
+#[cold]
+pub fn decorators_in_export_and_class(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::error("Decorators may not appear after 'export' or 'export default' if they also appear before 'export'.").with_label(span)
+}
+
+#[cold]
+pub fn decorators_are_not_valid_here(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::error("Decorators are not valid here.").with_label(span)
+}
+
+#[cold]
+pub fn decorator_on_overload(span: Span) -> OxcDiagnostic {
+    ts_error("1249", "A decorator can only decorate a method implementation, not an overload.")
+        .with_label(span)
+}
+
+#[cold]
+pub fn as_in_ts(span: Span) -> OxcDiagnostic {
+    ts_error("8037", "Type assertion expressions can only be used in TypeScript files.")
+        .with_label(span)
+}
+
+#[cold]
+pub fn satisfies_in_ts(span: Span) -> OxcDiagnostic {
+    ts_error("8016", "Type satisfaction expressions can only be used in TypeScript files.")
+        .with_label(span)
+}

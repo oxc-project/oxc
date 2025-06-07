@@ -159,7 +159,7 @@ impl<'a> ParserImpl<'a> {
         let span = self.start_span();
 
         if self.at(Kind::At) {
-            self.eat_decorators();
+            self.parse_and_save_decorators();
         }
 
         // FunctionExpression, GeneratorExpression
@@ -1086,7 +1086,7 @@ impl<'a> ParserImpl<'a> {
             // This is need for jsx `<div>=</div>` case
             let kind = self.re_lex_right_angle();
 
-            let Some(left_precedence) = kind_to_precedence(kind, self.is_ts) else { break };
+            let Some(left_precedence) = kind_to_precedence(kind) else { break };
 
             let stop = if left_precedence.is_right_associative() {
                 left_precedence < min_precedence
@@ -1105,7 +1105,7 @@ impl<'a> ParserImpl<'a> {
                 break;
             }
 
-            if self.is_ts && matches!(kind, Kind::As | Kind::Satisfies) {
+            if matches!(kind, Kind::As | Kind::Satisfies) {
                 if self.cur_token().is_on_new_line() {
                     break;
                 }
@@ -1113,8 +1113,14 @@ impl<'a> ParserImpl<'a> {
                 let type_annotation = self.parse_ts_type();
                 let span = self.end_span(lhs_span);
                 lhs = if kind == Kind::As {
+                    if !self.is_ts {
+                        self.error(diagnostics::as_in_ts(span));
+                    }
                     self.ast.expression_ts_as(span, lhs, type_annotation)
                 } else {
+                    if !self.is_ts {
+                        self.error(diagnostics::satisfies_in_ts(span));
+                    }
                     self.ast.expression_ts_satisfies(span, lhs, type_annotation)
                 };
                 continue;

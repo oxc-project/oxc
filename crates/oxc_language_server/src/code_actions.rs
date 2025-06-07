@@ -153,8 +153,8 @@ pub fn ignore_this_line_code_action(report: &DiagnosticReport, uri: &Uri) -> Cod
                         },
                     },
                     new_text: rule_name.as_ref().map_or_else(
-                        || "// eslint-disable-next-line\n".into(),
-                        |s| format!("// eslint-disable-next-line {s}\n"),
+                        || "// oxlint-disable-next-line\n".into(),
+                        |s| format!("// oxlint-disable-next-line {s}\n"),
                     ),
                 }],
             )])),
@@ -187,8 +187,8 @@ pub fn ignore_this_rule_code_action(report: &DiagnosticReport, uri: &Uri) -> Cod
                         end: Position { line: 0, character: 0 },
                     },
                     new_text: rule_name.as_ref().map_or_else(
-                        || "// eslint-disable\n".into(),
-                        |s| format!("// eslint-disable {s}\n"),
+                        || "// oxlint-disable\n".into(),
+                        |s| format!("// oxlint-disable {s}\n"),
                     ),
                 }],
             )])),

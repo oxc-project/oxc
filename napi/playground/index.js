@@ -375,5 +375,5 @@ if (!nativeBinding) {
 }
 
 module.exports = nativeBinding
-module.exports.Oxc = nativeBinding.Oxc
 module.exports.Severity = nativeBinding.Severity
+module.exports.Oxc = nativeBinding.Oxc

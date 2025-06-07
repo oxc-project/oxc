@@ -54,6 +54,7 @@ const {
   },
 })
 export default __napiModule.exports
+export const Severity = __napiModule.exports.Severity
 
 import { jsonParseAst } from "../parser/wrap.mjs"
 
@@ -73,4 +74,3 @@ export function Oxc() {
   })
 }
 
-export const Severity = __napiModule.exports.Severity

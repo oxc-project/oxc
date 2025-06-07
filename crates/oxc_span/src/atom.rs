@@ -88,6 +88,20 @@ impl<'a> Atom<'a> {
     ) -> Atom<'a> {
         Self::from(allocator.alloc_concat_strs_array(strings))
     }
+
+    /// Convert a [`Cow<'a, str>`] to an [`Atom<'a>`].
+    ///
+    /// If the `Cow` borrows a string from arena, returns an `Atom` which references that same string,
+    /// without allocating a new one.
+    ///
+    /// If the `Cow` is owned, allocates the string into arena to generate a new `Atom`.
+    #[inline]
+    pub fn from_cow_in(value: &Cow<'a, str>, allocator: &'a Allocator) -> Atom<'a> {
+        match value {
+            Cow::Borrowed(s) => Atom::from(*s),
+            Cow::Owned(s) => Atom::from_in(s, allocator),
+        }
+    }
 }
 
 impl<'new_alloc> CloneIn<'new_alloc> for Atom<'_> {

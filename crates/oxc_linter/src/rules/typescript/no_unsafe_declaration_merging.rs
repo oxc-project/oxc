@@ -12,7 +12,7 @@ use crate::{
 
 fn no_unsafe_declaration_merging_diagnostic(span: Span, span1: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Unsafe declaration merging between classes and interfaces.")
-        .with_help("The TypeScript compiler doesn't check whether properties are initialized, which can cause lead to TypeScript not detecting code that will cause runtime errors.")
+        .with_help("The TypeScript compiler doesn't check whether properties are initialized, which can lead to TypeScript not detecting code that will cause runtime errors.")
         .with_labels([span, span1])
 }
 
@@ -27,7 +27,7 @@ declare_oxc_lint!(
     /// ### Why is this bad?
     ///
     /// Declaration merging between classes and interfaces is unsafe.
-    /// The TypeScript compiler doesn't check whether properties are initialized, which can cause lead to TypeScript not detecting code that will cause runtime errors.
+    /// The TypeScript compiler doesn't check whether properties are initialized, which can lead to TypeScript not detecting code that will cause runtime errors.
     ///
     /// ### Examples
     ///

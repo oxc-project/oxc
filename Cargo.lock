@@ -176,9 +176,9 @@ dependencies = [
 
 [[package]]
 name = "cc"
-version = "1.2.24"
+version = "1.2.25"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "16595d3be041c03b09d08d0858631facccee9221e579704070e6e9e4915d3bc7"
+checksum = "d0fc897dc1e865cc67c0e05a836d9d3f1df3cbe442aa4a9473b18e12624a4951"
 dependencies = [
  "shlex",
 ]
@@ -1230,9 +1230,9 @@ checksum = "b4ce301924b7887e9d637144fdade93f9dfff9b60981d4ac161db09720d39aa5"
 
 [[package]]
 name = "lock_api"
-version = "0.4.12"
+version = "0.4.13"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "07af8b9cdd281b7915f413fa73f29ebd5d55d0d3f0155584dade1ff18cea1b17"
+checksum = "96936507f153605bddfcda068dd804796c84324ed2510809e5b2a624c81da765"
 dependencies = [
  "autocfg",
  "scopeguard",
@@ -1292,28 +1292,30 @@ dependencies = [
 
 [[package]]
 name = "napi"
-version = "3.0.0-beta.2"
+version = "3.0.0-beta.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3357a01f87a8c7a1b060067212436b0ab9d3b1f06084406edb926a64b7400985"
+checksum = "738f7ddf53c70b9bbddaf876317c985640a2c89061035fa87ff171fd93193e37"
 dependencies = [
  "bitflags 2.9.1",
  "ctor",
  "napi-build",
  "napi-sys",
+ "nohash-hasher",
+ "rustc-hash",
  "tokio",
 ]
 
 [[package]]
 name = "napi-build"
-version = "2.2.0"
+version = "2.2.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "03acbfa4f156a32188bfa09b86dc11a431b5725253fc1fc6f6df5bed273382c4"
+checksum = "44e0e3177307063d3e7e55b7dd7b648cca9d7f46daa35422c0d98cc2bf48c2c1"
 
 [[package]]
 name = "napi-derive"
-version = "3.0.0-beta.2"
+version = "3.0.0-beta.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "cb71c236fe23004d7abf4a00ad5e86332ea3468f6c48935d283a5d71aa7cca0c"
+checksum = "1c48e8ab579e603cb66e0f9048303d25fca9f4275f421c0af150a40080bd299d"
 dependencies = [
  "convert_case",
  "ctor",
@@ -1325,9 +1327,9 @@ dependencies = [
 
 [[package]]
 name = "napi-derive-backend"
-version = "2.0.0-beta.2"
+version = "2.0.0-beta.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6aeebae33f1d5d0ad2b65d97e4fa1266d46454dd1a74dc4a9f1f406e7358f5eb"
+checksum = "0a767a2d3aa9fe20f7032b9e90912e8061224dc48fcfd5a3e8716dbef8ba39a5"
 dependencies = [
  "convert_case",
  "proc-macro2",
@@ -1338,12 +1340,18 @@ dependencies = [
 
 [[package]]
 name = "napi-sys"
-version = "3.0.0-alpha.1"
+version = "3.0.0-alpha.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4cc061b99c514ad4b7abc99d4db1ca24b9542b7ff48b4760bd9f82b24611534d"
+checksum = "c4401c63f866b42d673a8b213d5662c84a0701b0f6c3acff7e2b9fc439f1675d"
 dependencies = [
  "libloading",
 ]
+
+[[package]]
+name = "nohash-hasher"
+version = "0.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "2bf50223579dc7cdcfb3bfcacf7069ff68243f8c363f62ffa99cf000a6b9c451"
 
 [[package]]
 name = "nom"
@@ -1469,7 +1477,7 @@ checksum = "26995317201fa17f3656c36716aed4a7c81743a9634ac4c99c0eeda495db0cec"
 
 [[package]]
 name = "oxc"
-version = "0.72.2"
+version = "0.72.3"
 dependencies = [
  "oxc_allocator",
  "oxc_ast",
@@ -1491,9 +1499,9 @@ dependencies = [
 
 [[package]]
 name = "oxc-browserslist"
-version = "2.0.3"
+version = "2.0.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4038a8bd870385e829bc8982cb3c50ae98e125e3715218fa1daa10d663749698"
+checksum = "64b8c3145cb549ff84db178619bf85c952cbccb583cbae58bb23072dac36c0d7"
 dependencies = [
  "nom",
  "rustc-hash",
@@ -1543,7 +1551,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_allocator"
-version = "0.72.2"
+version = "0.72.3"
 dependencies = [
  "allocator-api2",
  "bumpalo",
@@ -1557,7 +1565,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_ast"
-version = "0.72.2"
+version = "0.72.3"
 dependencies = [
  "bitflags 2.9.1",
  "cow-utils",
@@ -1572,7 +1580,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_ast_macros"
-version = "0.72.2"
+version = "0.72.3"
 dependencies = [
  "phf",
  "proc-macro2",
@@ -1605,7 +1613,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_ast_visit"
-version = "0.72.2"
+version = "0.72.3"
 dependencies = [
  "oxc_allocator",
  "oxc_ast",
@@ -1640,7 +1648,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_cfg"
-version = "0.72.2"
+version = "0.72.3"
 dependencies = [
  "bitflags 2.9.1",
  "itertools",
@@ -1653,7 +1661,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_codegen"
-version = "0.72.2"
+version = "0.72.3"
 dependencies = [
  "base64",
  "bitflags 2.9.1",
@@ -1716,7 +1724,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_data_structures"
-version = "0.72.2"
+version = "0.72.3"
 dependencies = [
  "ropey",
  "rustversion",
@@ -1724,7 +1732,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_diagnostics"
-version = "0.72.2"
+version = "0.72.3"
 dependencies = [
  "cow-utils",
  "oxc-miette",
@@ -1732,7 +1740,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_ecmascript"
-version = "0.72.2"
+version = "0.72.3"
 dependencies = [
  "cow-utils",
  "num-bigint",
@@ -1744,7 +1752,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_estree"
-version = "0.72.2"
+version = "0.72.3"
 dependencies = [
  "itoa",
  "oxc_data_structures",
@@ -1778,7 +1786,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_isolated_declarations"
-version = "0.72.2"
+version = "0.72.3"
 dependencies = [
  "bitflags 2.9.1",
  "insta",
@@ -1796,7 +1804,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_language_server"
-version = "0.17.0"
+version = "0.18.0"
 dependencies = [
  "env_logger",
  "futures",
@@ -1817,7 +1825,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_linter"
-version = "0.17.0"
+version = "0.18.0"
 dependencies = [
  "bitflags 2.9.1",
  "constcat",
@@ -1878,7 +1886,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_mangler"
-version = "0.72.2"
+version = "0.72.3"
 dependencies = [
  "fixedbitset",
  "itertools",
@@ -1894,7 +1902,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_minifier"
-version = "0.72.2"
+version = "0.72.3"
 dependencies = [
  "cow-utils",
  "insta",
@@ -1952,7 +1960,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_napi"
-version = "0.72.2"
+version = "0.72.3"
 dependencies = [
  "napi",
  "napi-build",
@@ -1966,7 +1974,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_parser"
-version = "0.72.2"
+version = "0.72.3"
 dependencies = [
  "bitflags 2.9.1",
  "cow-utils",
@@ -1989,7 +1997,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_parser_napi"
-version = "0.72.2"
+version = "0.72.3"
 dependencies = [
  "mimalloc-safe",
  "napi",
@@ -2039,7 +2047,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_regular_expression"
-version = "0.72.2"
+version = "0.72.3"
 dependencies = [
  "bitflags 2.9.1",
  "oxc_allocator",
@@ -2053,9 +2061,9 @@ dependencies = [
 
 [[package]]
 name = "oxc_resolver"
-version = "11.0.0"
+version = "11.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8ccb4b5c7d5c66631f3df7cc46ee16b376e90da80b7e27900137eade76b51637"
+checksum = "7a8e165f3f80bf9ecb03d1fd921d74f85db104bc179bfbd68b96302237397044"
 dependencies = [
  "cfg-if",
  "indexmap",
@@ -2084,7 +2092,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_semantic"
-version = "0.72.2"
+version = "0.72.3"
 dependencies = [
  "insta",
  "itertools",
@@ -2125,7 +2133,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_span"
-version = "0.72.2"
+version = "0.72.3"
 dependencies = [
  "compact_str",
  "oxc-miette",
@@ -2138,7 +2146,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_syntax"
-version = "0.72.2"
+version = "0.72.3"
 dependencies = [
  "bitflags 2.9.1",
  "cow-utils",
@@ -2198,7 +2206,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_transform_napi"
-version = "0.72.2"
+version = "0.72.3"
 dependencies = [
  "mimalloc-safe",
  "napi",
@@ -2212,7 +2220,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_transformer"
-version = "0.72.2"
+version = "0.72.3"
 dependencies = [
  "base64",
  "compact_str",
@@ -2244,7 +2252,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_transformer_plugins"
-version = "0.72.2"
+version = "0.72.3"
 dependencies = [
  "cow-utils",
  "insta",
@@ -2270,7 +2278,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_traverse"
-version = "0.72.2"
+version = "0.72.3"
 dependencies = [
  "itoa",
  "oxc_allocator",
@@ -2286,7 +2294,7 @@ dependencies = [
 
 [[package]]
 name = "oxlint"
-version = "0.17.0"
+version = "0.18.0"
 dependencies = [
  "bpaf",
  "cow-utils",
@@ -2318,9 +2326,9 @@ dependencies = [
 
 [[package]]
 name = "parking_lot_core"
-version = "0.9.10"
+version = "0.9.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1e401f977ab385c9e4e3ab30627d6f26d00e2c73eef317493c4ec6d468726cf8"
+checksum = "bc838d2a56b5b1a6c25f55575dfc605fabb63bb2365f6c2353ef9159aa69e4a5"
 dependencies = [
  "cfg-if",
  "libc",
@@ -2494,9 +2502,9 @@ checksum = "439ee305def115ba05938db6eb1644ff94165c5ab5e9420d1c1bcedbba909391"
 
 [[package]]
 name = "prettyplease"
-version = "0.2.32"
+version = "0.2.33"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "664ec5419c51e34154eec046ebcba56312d5a2fc3b09a06da188e1ad21afadf6"
+checksum = "9dee91521343f4c5c6a63edd65e54f31f5c92fe8978c40a4282f8372194c6a7d"
 dependencies = [
  "proc-macro2",
  "syn",

@@ -58,70 +58,130 @@ impl<'a> ParserImpl<'a> {
 
     /// Section 16.2.2 Import Declaration
     pub(crate) fn parse_import_declaration(&mut self, span: u32) -> Statement<'a> {
-        // `import something = ...`
-        // `import type something = ...`
-        if self.is_ts
-            && ((self.cur_kind().is_binding_identifier()
-                && self.lookahead(Self::is_next_token_equals))
-                || (self.at(Kind::Type)
-                    && self.lookahead(|p| {
-                        p.bump_any();
-                        if !p.cur_kind().is_binding_identifier() {
-                            return false;
-                        }
-                        p.bump_any();
-                        p.at(Kind::Eq)
-                    })))
-        {
-            let decl = self.parse_ts_import_equals_declaration(span);
-            return Statement::from(decl);
-        }
+        let token_after_import = self.cur_token();
+        let mut identifier_after_import: Option<BindingIdentifier<'_>> =
+            if self.cur_kind().is_binding_identifier() {
+                // `import something ...`
+                Some(self.parse_binding_identifier())
+            } else {
+                // `import ...`
+                None
+            };
+        let mut has_default_specifier = identifier_after_import.is_some();
+        let mut should_parse_specifiers = true;
 
-        // `import type ...`
-        // `import source ...`
-        // `import defer ...`
-        let mut import_kind = ImportOrExportKind::Value;
         let mut phase = None;
-        match self.cur_kind() {
-            Kind::Source => {
-                // `import source something from ...`
-                if self.lookahead(|p| {
-                    p.bump_any();
-                    if !p.cur_kind().is_binding_identifier() {
-                        return false;
+        let mut import_kind = ImportOrExportKind::Value;
+
+        if self.at(Kind::Eq) && identifier_after_import.is_some() {
+            // `import something = ...`
+            let decl = self.parse_ts_import_equals_declaration(
+                ImportOrExportKind::Value,
+                identifier_after_import.unwrap(),
+                span,
+            );
+            return Statement::from(decl);
+        } else if self.is_ts && token_after_import.kind() == Kind::Type {
+            // `import type ...`
+
+            if token_after_import.escaped() {
+                self.error(diagnostics::escaped_keyword(token_after_import.span()));
+            }
+
+            if self.at(Kind::LCurly) || self.at(Kind::Star) {
+                // `import type { ...`
+                // `import type * ...`
+                import_kind = ImportOrExportKind::Type;
+                has_default_specifier = false;
+            } else if self.cur_kind().is_binding_identifier() {
+                // `import type something ...`
+                let token = self.cur_token();
+                let identifier_after_type = self.parse_binding_identifier();
+                if token.kind() == Kind::From && self.at(Kind::Str) {
+                    // `import type from 'source'`
+                    has_default_specifier = true;
+                    import_kind = ImportOrExportKind::Value;
+                    should_parse_specifiers = false;
+                } else {
+                    identifier_after_import = Some(identifier_after_type);
+                    import_kind = ImportOrExportKind::Type;
+
+                    if self.at(Kind::Eq) {
+                        // `import type something = ...`
+                        let decl = self.parse_ts_import_equals_declaration(
+                            ImportOrExportKind::Type,
+                            identifier_after_import.unwrap(),
+                            span,
+                        );
+                        return Statement::from(decl);
+                    } else if self.at(Kind::From) {
+                        // `import type something from ...`
+                        has_default_specifier = true;
+                        should_parse_specifiers = false;
                     }
-                    p.bump_any();
-                    p.at(Kind::From)
-                }) {
-                    self.bump_any();
-                    phase = Some(ImportPhase::Source);
                 }
             }
-            Kind::Defer
-                if self.lookahead(|p| {
-                    p.bump_any();
-                    p.at(Kind::Star)
-                }) =>
-            {
-                // `import defer * ...`
-                self.bump_any();
-                phase = Some(ImportPhase::Defer);
+        } else if token_after_import.kind() == Kind::Defer && self.at(Kind::Star) {
+            // `import defer * ...`
+            phase = Some(ImportPhase::Defer);
+            has_default_specifier = false;
+        } else if token_after_import.kind() == Kind::Source
+            && self.cur_kind().is_binding_identifier()
+        {
+            // `import source something ...`
+            let kind = self.cur_kind();
+            let identifier_after_source = self.parse_binding_identifier();
+            if kind == Kind::From {
+                // `import source from ...`
+                if self.at(Kind::From) {
+                    // `import source from from ...`
+                    identifier_after_import = Some(identifier_after_source);
+                    phase = Some(ImportPhase::Source);
+                    has_default_specifier = true;
+                } else if self.at(Kind::Str) {
+                    // `import source from 'source'`
+                    has_default_specifier = true;
+                    should_parse_specifiers = false;
+                }
+            } else if self.at(Kind::From) {
+                // `import source something from ...`
+                identifier_after_import = Some(identifier_after_source);
+                phase = Some(ImportPhase::Source);
+                has_default_specifier = true;
+            } else {
+                return self.unexpected();
             }
-            Kind::Type if self.is_ts => import_kind = self.parse_import_or_export_kind(),
-            _ => {}
         }
 
         let specifiers = if self.at(Kind::Str) {
-            // import "source"
-            None
+            if has_default_specifier && !should_parse_specifiers {
+                match identifier_after_import {
+                    Some(identifier_after_import) => {
+                        // Special case: `import type from 'source'` where we already consumed `type` and `from`
+                        Some(self.ast.vec1(
+                            self.ast.import_declaration_specifier_import_default_specifier(
+                                identifier_after_import.span,
+                                identifier_after_import,
+                            ),
+                        ))
+                    }
+                    None => unreachable!(),
+                }
+            } else {
+                None
+            }
         } else {
-            Some(self.parse_import_declaration_specifiers(import_kind))
+            let default_specifier =
+                if has_default_specifier { identifier_after_import } else { None };
+
+            Some(self.parse_import_declaration_specifiers(default_specifier, import_kind))
         };
 
         let source = self.parse_literal_string();
         let with_clause = self.parse_import_attributes();
         self.asi();
         let span = self.end_span(span);
+
         self.ast
             .module_declaration_import_declaration(
                 span,
@@ -137,12 +197,23 @@ impl<'a> ParserImpl<'a> {
     // Full Syntax: <https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/import#syntax>
     fn parse_import_declaration_specifiers(
         &mut self,
+        // A default specifier, if we already saw any identifier after `import`
+        default_specifier: Option<BindingIdentifier<'a>>,
         import_kind: ImportOrExportKind,
     ) -> Vec<'a, ImportDeclarationSpecifier<'a>> {
-        let mut specifiers = self.ast.vec();
-        // import defaultExport from "module-name";
-        if self.cur_kind().is_binding_identifier() {
-            specifiers.push(self.parse_import_default_specifier());
+        // If there is a default specifier, create a Vec with the default specifier in it,
+        // otherwise, create an empty Vec.
+        let mut specifiers = if default_specifier.is_some() {
+            self.ast.vec_with_capacity(1)
+        } else {
+            self.ast.vec()
+        };
+
+        if let Some(default_specifier) = default_specifier {
+            specifiers.push(self.ast.import_declaration_specifier_import_default_specifier(
+                default_specifier.span,
+                default_specifier,
+            ));
             if self.eat(Kind::Comma) {
                 match self.cur_kind() {
                     // import defaultExport, * as name from "module-name";
@@ -155,25 +226,28 @@ impl<'a> ParserImpl<'a> {
                     _ => return self.unexpected(),
                 }
             }
-        // import * as name from "module-name";
+
+            // If the default specifiers name was `type`, and it was not a type import
+            // then skip the `from` specifier expect. This is specifically to support an import
+            // like: `import type from 'source'`
+            if self.is_ts
+                && import_kind == ImportOrExportKind::Value
+                && specifiers.len() == 1
+                && specifiers[0].name() == "type"
+            {
+                return specifiers;
+            }
         } else if self.at(Kind::Star) {
+            // import * as name from "module-name";
             specifiers.push(self.parse_import_namespace_specifier());
-        // import { export1 , export2 as alias2 , [...] } from "module-name";
         } else if self.at(Kind::LCurly) {
+            // import { export1 , export2 as alias2 , [...] } from "module-name";
             let mut import_specifiers = self.parse_import_specifiers(import_kind);
             specifiers.append(&mut import_specifiers);
         }
 
         self.expect(Kind::From);
         specifiers
-    }
-
-    // import default from "module-name"
-    fn parse_import_default_specifier(&mut self) -> ImportDeclarationSpecifier<'a> {
-        let span = self.start_span();
-        let local = self.parse_binding_identifier();
-        let span = self.end_span(span);
-        self.ast.import_declaration_specifier_import_default_specifier(span, local)
     }
 
     // import * as name from "module-name"
@@ -271,15 +345,19 @@ impl<'a> ParserImpl<'a> {
             Kind::Import => {
                 let import_span = self.start_span();
                 self.bump_any();
-                let decl = self.parse_import_declaration(import_span).into_declaration();
-                self.ast.module_declaration_export_named_declaration(
-                    self.end_span(span),
-                    Some(decl),
-                    self.ast.vec(),
-                    None,
-                    ImportOrExportKind::Value,
-                    NONE,
-                )
+                let stmt = self.parse_import_declaration(import_span);
+                if stmt.is_declaration() {
+                    self.ast.module_declaration_export_named_declaration(
+                        self.end_span(span),
+                        Some(stmt.into_declaration()),
+                        self.ast.vec(),
+                        None,
+                        ImportOrExportKind::Value,
+                        NONE,
+                    )
+                } else {
+                    return self.fatal_error(diagnostics::unexpected_export(stmt.span()));
+                }
             }
             Kind::Eq if self.is_ts => ModuleDeclaration::TSExportAssignment(
                 self.parse_ts_export_assignment_declaration(span),
@@ -415,7 +493,7 @@ impl<'a> ParserImpl<'a> {
         // For tc39/proposal-decorators
         // For more information, please refer to <https://babeljs.io/docs/babel-plugin-proposal-decorators#decoratorsbeforeexport>
         if self.at(Kind::At) {
-            self.eat_decorators();
+            self.parse_and_save_decorators();
         }
         let reserved_ctx = self.ctx;
         let modifiers =
@@ -453,7 +531,7 @@ impl<'a> ParserImpl<'a> {
         // For tc39/proposal-decorators
         // For more information, please refer to <https://babeljs.io/docs/babel-plugin-proposal-decorators#decoratorsbeforeexport>
         if self.at(Kind::At) {
-            self.eat_decorators();
+            self.parse_and_save_decorators();
         }
         let declaration = match self.cur_kind() {
             Kind::Class => ExportDefaultDeclarationKind::ClassDeclaration(
@@ -594,10 +672,11 @@ impl<'a> ParserImpl<'a> {
                         can_parse_as_keyword = false;
                     } else {
                         // { type as as }
-                        property_name = Some(
-                            self.ast
-                                .module_export_name_identifier_name(first_as.span, first_as.name),
-                        );
+                        property_name =
+                            Some(self.ast.module_export_name_identifier_name(
+                                type_or_name_token.span(),
+                                "type",
+                            ));
                         name = self
                             .ast
                             .module_export_name_identifier_name(second_as.span, second_as.name);
@@ -770,5 +849,361 @@ impl<'a> ParserImpl<'a> {
 
     fn can_parse_module_export_name(&self) -> bool {
         self.cur_kind().is_identifier_name() || self.at(Kind::Str)
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use oxc_allocator::Allocator;
+    use oxc_ast::ast::{ImportDeclarationSpecifier, ImportOrExportKind, ImportPhase, Statement};
+    use oxc_span::SourceType;
+
+    use crate::Parser;
+    #[test]
+    fn test_parse_import_declaration() {
+        let src = "import foo from 'bar';";
+        parse_and_assert_import_declarations(src, |declarations| {
+            assert_eq!(declarations.len(), 1);
+            let decl = declarations[0];
+            assert_eq!(decl.import_kind, ImportOrExportKind::Value);
+            let specifiers = decl.specifiers.as_ref().unwrap();
+            assert_eq!(specifiers.len(), 1);
+            assert_eq!(specifiers[0].name(), "foo");
+        });
+
+        let src = "import type foo from 'bar';";
+        parse_and_assert_import_declarations(src, |declarations| {
+            assert_eq!(declarations.len(), 1);
+            let decl = declarations[0];
+            assert_eq!(decl.import_kind, ImportOrExportKind::Type);
+            let specifiers = decl.specifiers.as_ref().unwrap();
+            assert_eq!(specifiers.len(), 1);
+            assert_eq!(specifiers[0].name(), "foo");
+        });
+
+        let src = "import type from 'bar';";
+        parse_and_assert_import_declarations(src, |declarations| {
+            assert_eq!(declarations.len(), 1);
+            let decl = declarations[0];
+            assert_eq!(decl.import_kind, ImportOrExportKind::Value);
+            let specifiers = decl.specifiers.as_ref().unwrap();
+            assert_eq!(specifiers.len(), 1);
+            assert_eq!(specifiers[0].name(), "type");
+        });
+
+        let src = "import type from from 'bar';";
+        parse_and_assert_import_declarations(src, |declarations| {
+            assert_eq!(declarations.len(), 1);
+            let decl = declarations[0];
+            assert_eq!(decl.import_kind, ImportOrExportKind::Type);
+            let specifiers = decl.specifiers.as_ref().unwrap();
+            assert_eq!(specifiers.len(), 1);
+            assert_eq!(specifiers[0].name(), "from");
+            assert!(matches!(specifiers[0], ImportDeclarationSpecifier::ImportDefaultSpecifier(_)));
+        });
+
+        let src = "import type type from 'bar';";
+        parse_and_assert_import_declarations(src, |declarations| {
+            assert_eq!(declarations.len(), 1);
+            let decl = declarations[0];
+            assert_eq!(decl.import_kind, ImportOrExportKind::Type);
+            let specifiers = decl.specifiers.as_ref().unwrap();
+            assert_eq!(specifiers.len(), 1);
+            assert_eq!(specifiers[0].name(), "type");
+            assert!(matches!(specifiers[0], ImportDeclarationSpecifier::ImportDefaultSpecifier(_)));
+        });
+
+        let src = "import type { type } from 'bar';";
+        parse_and_assert_import_declarations(src, |declarations| {
+            assert_eq!(declarations.len(), 1);
+            let decl = declarations[0];
+            assert_eq!(decl.import_kind, ImportOrExportKind::Type);
+            let specifiers = decl.specifiers.as_ref().unwrap();
+            assert_eq!(specifiers.len(), 1);
+            assert_eq!(specifiers[0].name(), "type");
+        });
+
+        let src = "import './a'";
+        parse_and_assert_import_declarations(src, |declarations| {
+            assert_eq!(declarations.len(), 1);
+            let decl = declarations[0];
+            assert_eq!(decl.import_kind, ImportOrExportKind::Value);
+            assert!(decl.specifiers.is_none());
+        });
+
+        let src = "import type, { bar } from 'foo';";
+        parse_and_assert_import_declarations(src, |declarations| {
+            assert_eq!(declarations.len(), 1);
+            let decl = declarations[0];
+            assert_eq!(decl.import_kind, ImportOrExportKind::Value);
+            let specifiers = decl.specifiers.as_ref().unwrap();
+            assert_eq!(specifiers.len(), 2);
+            assert_eq!(specifiers[0].name(), "type");
+            assert_eq!(specifiers[1].name(), "bar");
+        });
+
+        let src = "import { foo, bar } from 'baz';";
+        parse_and_assert_import_declarations(src, |declarations| {
+            assert_eq!(declarations.len(), 1);
+            let decl = declarations[0];
+            assert_eq!(decl.import_kind, ImportOrExportKind::Value);
+            assert!(decl.specifiers.is_some());
+            let specifiers = decl.specifiers.as_ref().unwrap();
+            assert_eq!(specifiers.len(), 2);
+            assert_eq!(specifiers[0].name(), "foo");
+            assert_eq!(specifiers[1].name(), "bar");
+        });
+
+        let src = "import type { foo, bar } from 'baz';";
+        parse_and_assert_import_declarations(src, |declarations| {
+            assert_eq!(declarations.len(), 1);
+            let decl = declarations[0];
+            assert_eq!(decl.import_kind, ImportOrExportKind::Type);
+            assert!(decl.specifiers.is_some());
+            let specifiers = decl.specifiers.as_ref().unwrap();
+            assert_eq!(specifiers.len(), 2);
+            assert_eq!(specifiers[0].name(), "foo");
+            assert_eq!(specifiers[1].name(), "bar");
+        });
+
+        let src = "import type { from, type } from 'baz';";
+        parse_and_assert_import_declarations(src, |declarations| {
+            assert_eq!(declarations.len(), 1);
+            let decl = declarations[0];
+            assert_eq!(decl.import_kind, ImportOrExportKind::Type);
+            assert!(decl.specifiers.is_some());
+            let specifiers = decl.specifiers.as_ref().unwrap();
+            assert_eq!(specifiers.len(), 2);
+            assert_eq!(specifiers[0].name(), "from");
+            assert_eq!(specifiers[1].name(), "type");
+        });
+
+        let src = "import defaultItem, { type from, type } from 'baz';";
+        parse_and_assert_import_declarations(src, |declarations| {
+            assert_eq!(declarations.len(), 1);
+            let decl = declarations[0];
+            assert_eq!(decl.import_kind, ImportOrExportKind::Value);
+            assert!(decl.specifiers.is_some());
+            let specifiers = decl.specifiers.as_ref().unwrap();
+            assert_eq!(specifiers.len(), 3);
+            assert_eq!(specifiers[0].name(), "defaultItem");
+            assert_eq!(specifiers[1].name(), "from");
+            assert_eq!(specifiers[2].name(), "type");
+        });
+
+        let src = "import { type as as } from 'baz';";
+        parse_and_assert_import_declarations(src, |declarations| {
+            assert_eq!(declarations.len(), 1);
+            let decl = declarations[0];
+            assert_eq!(decl.import_kind, ImportOrExportKind::Value);
+            assert!(decl.specifiers.is_some());
+            let specifiers = decl.specifiers.as_ref().unwrap();
+            assert_eq!(specifiers.len(), 1);
+            if let ImportDeclarationSpecifier::ImportSpecifier(specifier) = &specifiers[0] {
+                assert_eq!(specifier.local.name, "as");
+                assert_eq!(specifier.imported.name(), "type");
+            } else {
+                panic!("Expected ImportSpecifier, found: {:?}", specifiers[0]);
+            }
+        });
+
+        let src = "import * as foo from 'bar';";
+        parse_and_assert_import_declarations(src, |declarations| {
+            assert_eq!(declarations.len(), 1);
+            let decl = declarations[0];
+            assert_eq!(decl.import_kind, ImportOrExportKind::Value);
+            let specifiers = decl.specifiers.as_ref().unwrap();
+            assert_eq!(specifiers.len(), 1);
+            assert_eq!(specifiers[0].name(), "foo");
+        });
+
+        let src = "import type * as foo from 'bar';";
+        parse_and_assert_import_declarations(src, |declarations| {
+            assert_eq!(declarations.len(), 1);
+            let decl = declarations[0];
+            assert_eq!(decl.import_kind, ImportOrExportKind::Type);
+            let specifiers = decl.specifiers.as_ref().unwrap();
+            assert_eq!(specifiers.len(), 1);
+            assert_eq!(specifiers[0].name(), "foo");
+        });
+
+        let src = "import defer * as ns from 'x'";
+        parse_and_assert_import_declarations(src, |declarations| {
+            assert_eq!(declarations.len(), 1);
+            let decl = declarations[0];
+            assert_eq!(decl.import_kind, ImportOrExportKind::Value);
+            assert_eq!(decl.phase, Some(ImportPhase::Defer));
+            let specifiers = decl.specifiers.as_ref().unwrap();
+            assert_eq!(specifiers.len(), 1);
+            assert_eq!(specifiers[0].name(), "ns");
+        });
+
+        let src = "import source x from 'source'";
+        parse_and_assert_import_declarations(src, |declarations| {
+            assert_eq!(declarations.len(), 1);
+            let decl = declarations[0];
+            assert_eq!(decl.import_kind, ImportOrExportKind::Value);
+            assert_eq!(decl.phase, Some(ImportPhase::Source));
+            let specifiers = decl.specifiers.as_ref().unwrap();
+            assert_eq!(specifiers.len(), 1);
+            assert_eq!(specifiers[0].name(), "x");
+        });
+
+        let src = "import source from 'source'";
+        parse_and_assert_import_declarations(src, |declarations| {
+            assert_eq!(declarations.len(), 1);
+            let decl = declarations[0];
+            assert_eq!(decl.import_kind, ImportOrExportKind::Value);
+            assert_eq!(decl.phase, None);
+            let specifiers = decl.specifiers.as_ref().unwrap();
+            assert_eq!(specifiers.len(), 1);
+            assert_eq!(specifiers[0].name(), "source");
+        });
+
+        let src = "import source from from 'source'";
+        parse_and_assert_import_declarations(src, |declarations| {
+            assert_eq!(declarations.len(), 1);
+            let decl = declarations[0];
+            assert_eq!(decl.import_kind, ImportOrExportKind::Value);
+            assert_eq!(decl.phase, Some(ImportPhase::Source));
+            let specifiers = decl.specifiers.as_ref().unwrap();
+            assert_eq!(specifiers.len(), 1);
+            assert_eq!(specifiers[0].name(), "from");
+        });
+
+        let src = "import source as from 'source'";
+        parse_and_assert_import_declarations(src, |declarations| {
+            assert_eq!(declarations.len(), 1);
+            let decl = declarations[0];
+            assert_eq!(decl.import_kind, ImportOrExportKind::Value);
+            assert_eq!(decl.phase, Some(ImportPhase::Source));
+            let specifiers = decl.specifiers.as_ref().unwrap();
+            assert_eq!(specifiers.len(), 1);
+            assert_eq!(specifiers[0].name(), "as");
+        });
+
+        let src = "import source source from 'source'";
+        parse_and_assert_import_declarations(src, |declarations| {
+            assert_eq!(declarations.len(), 1);
+            let decl = declarations[0];
+            assert_eq!(decl.import_kind, ImportOrExportKind::Value);
+            assert_eq!(decl.phase, Some(ImportPhase::Source));
+            let specifiers = decl.specifiers.as_ref().unwrap();
+            assert_eq!(specifiers.len(), 1);
+            assert_eq!(specifiers[0].name(), "source");
+        });
+
+        let src = "import defer from 'source'";
+        parse_and_assert_import_declarations(src, |declarations| {
+            assert_eq!(declarations.len(), 1);
+            let decl = declarations[0];
+            assert_eq!(decl.import_kind, ImportOrExportKind::Value);
+            assert_eq!(decl.phase, None);
+            let specifiers = decl.specifiers.as_ref().unwrap();
+            assert_eq!(specifiers.len(), 1);
+            assert_eq!(specifiers[0].name(), "defer");
+        });
+
+        let src = "import type foo, { bar } from 'bar';";
+        parse_and_assert_import_declarations(src, |declarations| {
+            assert_eq!(declarations.len(), 1);
+            let decl = declarations[0];
+            assert_eq!(decl.import_kind, ImportOrExportKind::Type);
+            let specifiers = decl.specifiers.as_ref().unwrap();
+            assert_eq!(specifiers.len(), 2);
+            assert_eq!(specifiers[0].name(), "foo");
+            assert_eq!(specifiers[1].name(), "bar");
+        });
+
+        let src = "import foo = bar";
+        parse_and_assert_statements(src, |statements| {
+            if let Statement::TSImportEqualsDeclaration(decl) = statements[0] {
+                assert_eq!(decl.import_kind, ImportOrExportKind::Value);
+                assert_eq!(decl.id.name, "foo");
+            } else {
+                panic!("Expected TSImportEqualsDeclaration, found: {:?}", statements[0]);
+            }
+        });
+
+        let src = "import type foo = bar";
+        parse_and_assert_statements(src, |statements| {
+            if let Statement::TSImportEqualsDeclaration(decl) = statements[0] {
+                assert_eq!(decl.import_kind, ImportOrExportKind::Type);
+                assert_eq!(decl.id.name, "foo");
+            } else {
+                panic!("Expected TSImportEqualsDeclaration, found: {:?}", statements[0]);
+            }
+        });
+
+        let src = "import type from = require('./a')";
+        parse_and_assert_statements(src, |statements| {
+            if let Statement::TSImportEqualsDeclaration(decl) = statements[0] {
+                assert_eq!(decl.import_kind, ImportOrExportKind::Type);
+                assert_eq!(decl.id.name, "from");
+            } else {
+                panic!("Expected TSImportEqualsDeclaration, found: {:?}", statements[0]);
+            }
+        });
+
+        let src = "import from = b";
+        parse_and_assert_statements(src, |statements| {
+            if let Statement::TSImportEqualsDeclaration(decl) = statements[0] {
+                assert_eq!(decl.import_kind, ImportOrExportKind::Value);
+                assert_eq!(decl.id.name, "from");
+            } else {
+                panic!("Expected TSImportEqualsDeclaration, found: {:?}", statements[0]);
+            }
+        });
+    }
+
+    // https://github.com/oxc-project/oxc/issues/11505
+    #[test]
+    fn test_type_from_js_file() {
+        let src = "import type from '../type.js'";
+        let source_type = SourceType::default().with_typescript(false);
+        let allocator = Allocator::default();
+        let ret = Parser::new(&allocator, src, source_type).parse();
+        assert!(ret.errors.is_empty(), "Failed to parse source: {src:?}, error: {:?}", ret.errors);
+        let declarations = ret.program.body.iter().collect::<Vec<_>>();
+        assert_eq!(declarations.len(), 1);
+        let Statement::ImportDeclaration(decl) = declarations[0] else {
+            panic!("Expected ImportDeclaration, found: {:?}", declarations[0]);
+        };
+        assert_eq!(decl.import_kind, ImportOrExportKind::Value);
+        assert!(decl.specifiers.is_some());
+        let specifiers = decl.specifiers.as_ref().unwrap();
+        assert_eq!(specifiers[0].name(), "type");
+    }
+
+    fn parse_and_assert_statements(
+        src: &'static str,
+        // takes a function which accepts the list of statements
+        f: fn(Vec<&oxc_ast::ast::Statement<'_>>) -> (),
+    ) {
+        let source_type = SourceType::default().with_typescript(true);
+        let allocator = Allocator::default();
+        let ret = Parser::new(&allocator, src, source_type).parse();
+        assert!(ret.errors.is_empty(), "Failed to parse source: {src:?}, error: {:?}", ret.errors);
+        f(ret.program.body.iter().collect::<Vec<_>>());
+    }
+
+    fn parse_and_assert_import_declarations(
+        src: &'static str,
+        // takes a function which accepts the list of statements
+        f: fn(Vec<&oxc_allocator::Box<'_, oxc_ast::ast::ImportDeclaration<'_>>>) -> (),
+    ) {
+        let source_type = SourceType::default().with_typescript(true);
+        let allocator = Allocator::default();
+        let ret = Parser::new(&allocator, src, source_type).parse();
+        assert!(ret.errors.is_empty(), "Failed to parse source: {src:?}, error: {:?}", ret.errors);
+        let statements =
+            ret.program
+                .body
+                .iter()
+                .filter_map(|s| {
+                    if let Statement::ImportDeclaration(decl) = s { Some(decl) } else { None }
+                })
+                .collect::<Vec<_>>();
+        f(statements);
     }
 }

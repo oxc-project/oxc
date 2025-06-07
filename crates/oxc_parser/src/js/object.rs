@@ -46,9 +46,7 @@ impl<'a> ParserImpl<'a> {
         );
 
         let kind = self.cur_kind();
-        if matches!(kind, Kind::Get | Kind::Set)
-            && self.try_parse(Self::next_token_can_follow_modifier).is_some()
-        {
+        if self.parse_contextual_modifier(Kind::Get) || self.parse_contextual_modifier(Kind::Set) {
             return match kind {
                 Kind::Get => self.parse_method_getter_setter(span, PropertyKind::Get, &modifiers),
                 Kind::Set => self.parse_method_getter_setter(span, PropertyKind::Set, &modifiers),

@@ -10,7 +10,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                   ───
  4 │                   
    ╰────
-  help: The TypeScript compiler doesn't check whether properties are initialized, which can cause lead to TypeScript not detecting code that will cause runtime errors.
+  help: The TypeScript compiler doesn't check whether properties are initialized, which can lead to TypeScript not detecting code that will cause runtime errors.
 
   ⚠ typescript-eslint(no-unsafe-declaration-merging): Unsafe declaration merging between classes and interfaces.
    ╭─[no_unsafe_declaration_merging.tsx:2:19]
@@ -21,7 +21,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                               ───
  4 │                           
    ╰────
-  help: The TypeScript compiler doesn't check whether properties are initialized, which can cause lead to TypeScript not detecting code that will cause runtime errors.
+  help: The TypeScript compiler doesn't check whether properties are initialized, which can lead to TypeScript not detecting code that will cause runtime errors.
 
   ⚠ typescript-eslint(no-unsafe-declaration-merging): Unsafe declaration merging between classes and interfaces.
    ╭─[no_unsafe_declaration_merging.tsx:3:25]
@@ -32,4 +32,4 @@ source: crates/oxc_linter/src/tester.rs
    ·                             ───
  5 │                     }
    ╰────
-  help: The TypeScript compiler doesn't check whether properties are initialized, which can cause lead to TypeScript not detecting code that will cause runtime errors.
+  help: The TypeScript compiler doesn't check whether properties are initialized, which can lead to TypeScript not detecting code that will cause runtime errors.

@@ -405,7 +405,7 @@ impl Message {
         match self {
             Self::MatcherNotFound => (
                 "Expect must have a corresponding matcher call.",
-                "Did you forget add a matcher(e.g. `toBe`, `toBeDefined`)",
+                "Did you forget add a matcher, e.g. `toBe`, `toBeDefined`",
             ),
             Self::MatcherNotCalled => (
                 "Matchers must be called to assert.",

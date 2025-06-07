@@ -197,5 +197,5 @@ export type TSTypeLiteral = {
 	/**
 	* Comment
 	*/
-	foo: string
+	foo: string;
 };

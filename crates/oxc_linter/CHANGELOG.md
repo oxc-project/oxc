@@ -4,6 +4,38 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.18.0] - 2025-06-06
+
+### Features
+
+- 825d40c linter: Fix casing in unicorn/no-useless-promise-resolve-reject (#11528) (camc314)
+- 2faee3d linter: Fix grammer in react/exhaustive-deps (#11527) (camc314)
+
+### Bug Fixes
+
+- 1a71d7c linter: Misplaced backtick in unicorn/no-array-for-each diagnostic (#11529) (camc314)
+- 7430b14 linter: Grammer in jest/valid-expect diagnostic (#11522) (camc314)
+- b92ac41 linter: Grammer in eslint/no-redeclare diagnostic (#11521) (camc314)
+- 17883e3 linter: Improve eslint/no-unsafe-negation diagnostic (#11520) (camc314)
+- 8c89937 linter: Improve eslint/no-shadow-restricted-names diagnostic (#11519) (camc314)
+- 3f0d889 linter: Add missing article to oxc/bad-array-method-on-arguments diagnostic (#11518) (camc314)
+- cf0c24c linter: Improve message in react/prefer-es6-class diagnostic (#11516) (camc314)
+- 91855df linter: Fix message in react/rules-of-hooks diagnostic (#11515) (camc314)
+- b272194 linter: Misplaced backtick in jest/no-conditional-expect diagnostic (#11514) (camc314)
+- 3403303 linter: Misplaced backtick in unicorn/prefer-dom-node-dataset diagnostic (#11513) (camc314)
+- d5ca872 linter: Misplaced backtick in eslint/radix diagnostic (#11512) (camc314)
+- 2dcf8be linter: Improve diagnostic message when function name is referenced (#11509) (camc314)
+- 0de0c9c linter: Improve diagnostic message for no-unsafe-declaration-merging (#11508) (camc314)
+- 0946dac linter: Correctly inherit categories when plugins are enabled (#11353) (Cameron)
+- 510c1c6 linter: Add missing `allowArrowFunctions` option for eslint/func-style (#11455) (yefan)
+- c77787c linter: Improve `eslint/no-loss-of-precision` (#11437) (magic-akari)
+- 11d4523 linter: False positive in react/exhaustive-deps (#11438) (camc314)
+- 616b613 linter/switch-case-braces: Align the logic with `unicorn` (#11405) (shulaoda)
+
+### Refactor
+
+- 0fdc51e linter: Simplify `OxlintRules::override_rules` (#11510) (camc314)
+
 ## [0.17.0] - 2025-05-30
 
 - ead5309 linter: [**BREAKING**] Remove react from default plugin set (#11382) (camc314)

@@ -35,10 +35,11 @@ impl Generator for TypescriptGenerator {
             }
         }
 
-        // Manually append `FormalParameterRest`, which is generated via `add_ts_def`.
+        // Manually append `ParamPattern`, which is generated via `add_ts_def`.
+        // `ParamPattern` is a union type of other `add_ts_def`ed types.
         // TODO: Should not be hard-coded here.
         let ast_node_union = ast_node_names.join(" | ");
-        write_it!(code, "export type Node = {ast_node_union} | FormalParameterRest;\n\n");
+        write_it!(code, "export type Node = {ast_node_union} | ParamPattern;\n\n");
 
         Output::Javascript { path: TYPESCRIPT_DEFINITIONS_PATH.to_string(), code }
     }

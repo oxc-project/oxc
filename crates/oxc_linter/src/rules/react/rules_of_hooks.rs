@@ -66,7 +66,7 @@ mod diagnostics {
 
     pub(super) fn async_component(span: Span, func_name: &str) -> OxcDiagnostic {
         OxcDiagnostic::warn(format!(
-            "message: `React Hook {func_name:?} cannot be called in an async function. "
+            "React Hook {func_name:?} cannot be called in an async function. "
         ))
         .with_label(span)
         .with_error_code_scope(SCOPE)

@@ -9,6 +9,12 @@ use crate::{
     modifiers::{ModifierFlags, ModifierKind, Modifiers},
 };
 
+#[derive(Debug, Clone, Copy, Eq, PartialEq)]
+pub(super) enum CallOrConstructorSignature {
+    Call,
+    Constructor,
+}
+
 impl<'a> ParserImpl<'a> {
     /* ------------------- Enum ------------------ */
     /// `https://www.typescriptlang.org/docs/handbook/enums.html`
@@ -185,26 +191,37 @@ impl<'a> ParserImpl<'a> {
     }
 
     pub(crate) fn parse_ts_type_signature(&mut self) -> TSSignature<'a> {
-        if self.lookahead(Self::is_at_ts_index_signature_member) {
-            let span = self.start_span();
-            let modifiers = self.parse_modifiers(false, false, false);
-            let sig = self.parse_index_signature_declaration(span, &modifiers);
-            return TSSignature::TSIndexSignature(self.alloc(sig));
+        let span = self.start_span();
+        let kind = self.cur_kind();
+
+        if matches!(kind, Kind::LParen | Kind::LAngle) {
+            return self.parse_signature_member(CallOrConstructorSignature::Call);
         }
 
-        match self.cur_kind() {
-            Kind::LParen | Kind::LAngle => self.parse_ts_call_signature_member(),
-            Kind::New if self.lookahead(Self::is_next_token_open_paren_or_angle_bracket) => {
-                self.parse_ts_constructor_signature_member()
-            }
-            Kind::Get if self.is_next_at_type_member_name() => {
-                self.parse_ts_getter_signature_member()
-            }
-            Kind::Set if self.is_next_at_type_member_name() => {
-                self.parse_ts_setter_signature_member()
-            }
-            _ => self.parse_ts_property_or_method_signature_member(),
+        if kind == Kind::New && self.lookahead(Self::is_next_token_open_paren_or_angle_bracket) {
+            return self.parse_signature_member(CallOrConstructorSignature::Constructor);
         }
+
+        let modifiers = self.parse_modifiers(
+            /* allow_decorators */ false, /* permit_const_as_modifier */ false,
+            /* stop_on_start_of_class_static_block */ false,
+        );
+
+        if self.parse_contextual_modifier(Kind::Get) {
+            return self.parse_getter_setter_signature_member(span, TSMethodSignatureKind::Get);
+        }
+
+        if self.parse_contextual_modifier(Kind::Set) {
+            return self.parse_getter_setter_signature_member(span, TSMethodSignatureKind::Set);
+        }
+
+        if self.is_index_signature() {
+            return TSSignature::TSIndexSignature(
+                self.parse_index_signature_declaration(span, &modifiers),
+            );
+        }
+
+        self.parse_property_or_method_signature(span, &modifiers)
     }
 
     fn is_next_token_open_paren_or_angle_bracket(&mut self) -> bool {
@@ -212,35 +229,33 @@ impl<'a> ParserImpl<'a> {
         matches!(self.cur_kind(), Kind::LParen | Kind::LAngle)
     }
 
-    /// Must be at `[ident:` or `<modifiers> [ident:`
-    fn is_at_ts_index_signature_member(&mut self) -> bool {
-        if matches!(
-            self.cur_kind(),
-            Kind::Public
-                | Kind::Protected
-                | Kind::Private
-                | Kind::Static
-                | Kind::Abstract
-                | Kind::Readonly
-                | Kind::Declare
-                | Kind::Override
-                | Kind::Export
-        ) {
+    pub(crate) fn is_index_signature(&mut self) -> bool {
+        self.at(Kind::LBrack) && self.lookahead(Self::is_unambiguously_index_signature)
+    }
+
+    fn is_unambiguously_index_signature(&mut self) -> bool {
+        self.bump_any();
+        if matches!(self.cur_kind(), Kind::Dot3 | Kind::LBrack) {
+            return true;
+        }
+        if self.cur_kind().is_modifier_kind() {
+            self.bump_any();
+            if self.cur_kind().is_identifier() {
+                return true;
+            }
+        } else if !self.cur_kind().is_identifier() {
+            return false;
+        } else {
             self.bump_any();
         }
-
-        if !self.at(Kind::LBrack) {
+        if matches!(self.cur_kind(), Kind::Colon | Kind::Comma) {
+            return true;
+        }
+        if self.cur_kind() != Kind::Question {
             return false;
         }
-
         self.bump_any();
-
-        if !self.cur_kind().is_identifier() {
-            return false;
-        }
-
-        self.bump_any();
-        self.at(Kind::Colon)
+        matches!(self.cur_kind(), Kind::Colon | Kind::Comma | Kind::RBrack)
     }
 
     /* ----------------------- Namespace & Module ----------------------- */
@@ -348,7 +363,21 @@ impl<'a> ParserImpl<'a> {
             }
             Kind::Import => {
                 self.bump_any();
-                self.parse_ts_import_equals_declaration(start_span)
+                let token = self.cur_token();
+                let mut import_kind = ImportOrExportKind::Value;
+                let mut identifier = self.parse_binding_identifier();
+                if self.is_ts && token.kind() == Kind::Type {
+                    // `import type ...`
+                    if self.cur_kind().is_binding_identifier() {
+                        // `import type something ...`
+                        identifier = self.parse_binding_identifier();
+                        import_kind = ImportOrExportKind::Type;
+                    } else {
+                        // `import type = ...`
+                        import_kind = ImportOrExportKind::Value;
+                    }
+                }
+                self.parse_ts_import_equals_declaration(import_kind, identifier, start_span)
             }
             kind if kind.is_variable_declaration() => {
                 let kind = self.get_variable_declaration_kind();
@@ -414,15 +443,12 @@ impl<'a> ParserImpl<'a> {
         self.ast.expression_ts_type_assertion(self.end_span(span), type_annotation, expression)
     }
 
-    pub(crate) fn parse_ts_import_equals_declaration(&mut self, span: u32) -> Declaration<'a> {
-        let import_kind = if !self.lookahead(Self::is_next_token_equals) && self.eat(Kind::Type) {
-            ImportOrExportKind::Type
-        } else {
-            ImportOrExportKind::Value
-        };
-
-        let id = self.parse_binding_identifier();
-
+    pub(crate) fn parse_ts_import_equals_declaration(
+        &mut self,
+        import_kind: ImportOrExportKind,
+        identifier: BindingIdentifier<'a>,
+        span: u32,
+    ) -> Declaration<'a> {
         self.expect(Kind::Eq);
 
         let reference_span = self.start_span();
@@ -441,24 +467,20 @@ impl<'a> ParserImpl<'a> {
 
         self.asi();
 
-        self.ast.declaration_ts_import_equals(
-            self.end_span(span),
-            id,
-            module_reference,
-            import_kind,
-        )
-    }
+        let span = self.end_span(span);
 
-    pub(crate) fn is_next_token_equals(&mut self) -> bool {
-        self.bump_any();
-        self.at(Kind::Eq)
+        if !self.is_ts {
+            self.error(diagnostics::import_equals_can_only_be_used_in_typescript_files(span));
+        }
+
+        self.ast.declaration_ts_import_equals(span, identifier, module_reference, import_kind)
     }
 
     pub(crate) fn parse_ts_this_parameter(&mut self) -> TSThisParameter<'a> {
         let span = self.start_span();
         self.parse_class_element_modifiers(true);
         if self.at(Kind::At) {
-            self.eat_decorators();
+            self.parse_and_save_decorators();
         }
 
         let this_span = self.start_span();
@@ -467,16 +489,6 @@ impl<'a> ParserImpl<'a> {
 
         let type_annotation = self.parse_ts_type_annotation();
         self.ast.ts_this_parameter(self.end_span(span), this, type_annotation)
-    }
-
-    pub(crate) fn eat_decorators(&mut self) {
-        let mut decorators = self.ast.vec();
-        while self.at(Kind::At) {
-            let decorator = self.parse_decorator();
-            decorators.push(decorator);
-        }
-
-        self.state.decorators = decorators;
     }
 
     pub(crate) fn at_start_of_ts_declaration(&mut self) -> bool {

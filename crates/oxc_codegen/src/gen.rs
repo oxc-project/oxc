@@ -3222,9 +3222,7 @@ impl Gen for TSTypeLiteral<'_> {
                 p.print_leading_comments(item.span().start);
                 p.print_indent();
                 item.print(p, ctx);
-                if p.options.minify {
-                    p.print_semicolon();
-                }
+                p.print_semicolon();
                 p.print_soft_newline();
             }
         });
