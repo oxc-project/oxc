@@ -23,30 +23,48 @@ pub struct DisplayName;
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// Briefly describe the rule's purpose.
+    /// This rule allows you to name your component. This name is used by React in debugging messages.
     ///
     /// ### Why is this bad?
     ///
-    /// Explain why violating this rule is problematic.
+    /// When debugging React components, there will be missing identifiers for the components that lack a displayName property.
     ///
     /// ### Examples
     ///
     /// Examples of **incorrect** code for this rule:
     /// ```jsx
-    /// FIXME: Tests will fail if examples are missing or syntactically incorrect.
+    /// var Hello = createReactClass({
+    ///   render: function() {
+    ///     return <div>Hello {this.props.name}</div>;
+    ///   }
+    /// });
+    ///
+    /// const Hello = React.memo(({ a }) => {
+    ///   return <>{a}</>
+    /// })
+    ///
+    /// export default ({ a }) => {
+    ///   return <>{a}</>
+    /// }
     /// ```
     ///
     /// Examples of **correct** code for this rule:
     /// ```jsx
-    /// FIXME: Tests will fail if examples are missing or syntactically incorrect.
+    /// var Hello = createReactClass({
+    ///   displayName: 'Hello',
+    ///   render: function() {
+    ///     return <div>Hello {this.props.name}</div>;
+    ///   }
+    /// });
+    ///
+    /// const Hello = React.memo(function Hello({ a }) {
+    ///   return <>{a}</>
+    /// })
     /// ```
+    ///
     DisplayName,
     react,
-    nursery, // TODO: change category to `correctness`, `suspicious`, `pedantic`, `perf`, `restriction`, or `style`
-             // See <https://oxc.rs/docs/contribute/linter.html#rule-category> for details
-    pending  // TODO: describe fix capabilities. Remove if no fix can be done,
-             // keep at 'pending' if you think one could be added but don't know how.
-             // Options are 'fix', 'fix_dangerous', 'suggestion', and 'conditional_fix_suggestion'
+    style,
 );
 
 impl Rule for DisplayName {
@@ -487,15 +505,15 @@ fn test() {
             "
 			        import React from 'react'
 			        import { string } from 'prop-types'
-			
+
 			        function Component({ world }) {
 			          return <div>Hello {world}</div>
 			        }
-			
+
 			        Component.propTypes = {
 			          world: string,
 			        }
-			
+
 			        export default React.memo(Component)
 			      ",
             None,
@@ -504,7 +522,7 @@ fn test() {
         (
             "
 			        import React from 'react'
-			
+
 			        const ComponentWithMemo = React.memo(function Component({ world }) {
 			          return <div>Hello {world}</div>
 			        })
@@ -515,7 +533,7 @@ fn test() {
         (
             "
 			        import React from 'react';
-			
+
 			        const Hello = React.memo(function Hello() {
 			          return;
 			        });
@@ -526,7 +544,7 @@ fn test() {
         (
             "
 			        import React from 'react'
-			
+
 			        const ForwardRefComponentLike = React.forwardRef(function ComponentLike({ world }, ref) {
 			          return <div ref={ref}>Hello {world}</div>
 			        })
@@ -607,7 +625,7 @@ fn test() {
 			              name: 'Bob',
 			            },
 			          ];
-			
+
 			          const columns = [
 			            {
 			              Header: 'Name',
@@ -615,7 +633,7 @@ fn test() {
 			              Cell: ({ value }) => <div>{value}</div>,
 			            },
 			          ];
-			
+
 			          return <ReactTable columns={columns} data={data} />;
 			        }
 			      ",
@@ -643,7 +661,7 @@ fn test() {
 			                name: 'Bob',
 			              },
 			            ];
-			
+
 			            const columns = [
 			              {
 			                Header: 'Name',
@@ -651,7 +669,7 @@ fn test() {
 			                Cell: ({ value }) => <div>{value}</div>,
 			              },
 			            ];
-			
+
 			            return <ReactTable columns={columns} data={data} />;
 			          }
 			        }
@@ -736,7 +754,7 @@ fn test() {
 			        function MyComponent(props) {
 			          return <b>{props.name}</b>;
 			        }
-			
+
 			        const MemoizedMyComponent = React.memo(
 			          MyComponent,
 			          (prevProps, nextProps) => prevProps.name === nextProps.name
@@ -748,7 +766,7 @@ fn test() {
         (
             "
 			        import React from 'react'
-			
+
 			        const MemoizedForwardRefComponentLike = React.memo(
 			          React.forwardRef(function({ world }, ref) {
 			            return <div ref={ref}>Hello {world}</div>
@@ -763,7 +781,7 @@ fn test() {
         (
             "
 			        import React from 'react'
-			
+
 			        const MemoizedForwardRefComponentLike = React.memo(
 			          React.forwardRef(({ world }, ref) => {
 			            return <div ref={ref}>Hello {world}</div>
@@ -778,7 +796,7 @@ fn test() {
         (
             "
 			        import React from 'react'
-			
+
 			        const MemoizedForwardRefComponentLike = React.memo(
 			          React.forwardRef(function ComponentLike({ world }, ref) {
 			            return <div ref={ref}>Hello {world}</div>
@@ -806,7 +824,7 @@ fn test() {
         (
             "
 			        import React from 'react'
-			
+
 			        const MemoizedForwardRefComponentLike = React.memo(
 			          React.forwardRef(function({ world }, ref) {
 			            return <div ref={ref}>Hello {world}</div>
@@ -821,7 +839,7 @@ fn test() {
         (
             r#"
 			        import React from 'react';
-			
+
 			        const Hello = React.createContext();
 			        Hello.displayName = "HelloContext"
 			      "#,
@@ -831,7 +849,7 @@ fn test() {
         (
             r#"
 			        import { createContext } from 'react';
-			
+
 			        const Hello = createContext();
 			        Hello.displayName = "HelloContext"
 			      "#,
@@ -841,12 +859,12 @@ fn test() {
         (
             r#"
 			        import { createContext } from 'react';
-			
+
 			        const Hello = createContext();
-			
+
 			        const obj = {};
 			        obj.displayName = "False positive";
-			
+
 			        Hello.displayName = "HelloContext"
 			      "#,
             Some(serde_json::json!([{ "checkContextObjects": true }])),
@@ -855,12 +873,12 @@ fn test() {
         (
             r#"
 			        import * as React from 'react';
-			
+
 			        const Hello = React.createContext();
-			
+
 			        const obj = {};
 			        obj.displayName = "False positive";
-			
+
 			        Hello.displayName = "HelloContext";
 			      "#,
             Some(serde_json::json!([{ "checkContextObjects": true }])),
@@ -877,7 +895,7 @@ fn test() {
         (
             "
 			        import { createContext } from 'react';
-			
+
 			        const Hello = createContext();
 			      ",
             Some(serde_json::json!([{ "checkContextObjects": true }])),
@@ -888,7 +906,7 @@ fn test() {
         (
             r#"
 			        import { createContext } from 'react';
-			
+
 			        const Hello = createContext();
 			        Hello.displayName = "HelloContext";
 			      "#,
@@ -900,7 +918,7 @@ fn test() {
         (
             r#"
 			        import { createContext } from 'react';
-			
+
 			        let Hello;
 			        Hello = createContext();
 			        Hello.displayName = "HelloContext";
@@ -911,7 +929,7 @@ fn test() {
         (
             "
 			        import { createContext } from 'react';
-			
+
 			        const Hello = createContext();
 			      ",
             Some(serde_json::json!([{ "checkContextObjects": false }])),
@@ -922,7 +940,7 @@ fn test() {
         (
             r#"
 			        import { createContext } from 'react';
-			
+
 			        var Hello;
 			        Hello = createContext();
 			        Hello.displayName = "HelloContext";
@@ -933,7 +951,7 @@ fn test() {
         (
             r#"
 			        import { createContext } from 'react';
-			
+
 			        var Hello;
 			        Hello = React.createContext();
 			        Hello.displayName = "HelloContext";
@@ -1117,7 +1135,7 @@ fn test() {
         (
             "
 			        import React from 'react'
-			
+
 			        const ComponentWithMemo = React.memo(({ world }) => {
 			          return <div>Hello {world}</div>
 			        })
@@ -1128,7 +1146,7 @@ fn test() {
         (
             "
 			        import React from 'react'
-			
+
 			        const ComponentWithMemo = React.memo(function() {
 			          return <div>Hello {world}</div>
 			        })
@@ -1139,7 +1157,7 @@ fn test() {
         (
             "
 			        import React from 'react'
-			
+
 			        const ForwardRefComponentLike = React.forwardRef(({ world }, ref) => {
 			          return <div ref={ref}>Hello {world}</div>
 			        })
@@ -1150,7 +1168,7 @@ fn test() {
         (
             "
 			        import React from 'react'
-			
+
 			        const ForwardRefComponentLike = React.forwardRef(function({ world }, ref) {
 			          return <div ref={ref}>Hello {world}</div>
 			        })
@@ -1161,7 +1179,7 @@ fn test() {
         (
             "
 			        import React from 'react'
-			
+
 			        const MemoizedForwardRefComponentLike = React.memo(
 			          React.forwardRef(({ world }, ref) => {
 			            return <div ref={ref}>Hello {world}</div>
@@ -1176,7 +1194,7 @@ fn test() {
         (
             "
 			        import React from 'react'
-			
+
 			        const MemoizedForwardRefComponentLike = React.memo(
 			          React.forwardRef(function({ world }, ref) {
 			            return <div ref={ref}>Hello {world}</div>
@@ -1191,7 +1209,7 @@ fn test() {
         (
             "
 			        import React from 'react'
-			
+
 			        const MemoizedForwardRefComponentLike = React.memo(
 			          React.forwardRef(function ComponentLike({ world }, ref) {
 			            return <div ref={ref}>Hello {world}</div>
@@ -1257,7 +1275,7 @@ fn test() {
 			            c () {},
 			            d: () => {},
 			          }
-			
+
 			          return React.createElement("div", {}, "text content");
 			        }
 			      "#,
@@ -1292,7 +1310,7 @@ fn test() {
 			            return <Card />;
 			          }
 			        }
-			
+
 			        const Card = (() => {
 			          return React.memo(({ }) => (
 			            <div />
@@ -1314,12 +1332,12 @@ fn test() {
         (
             "
 			        const processData = (options?: { value: string }) => options?.value || 'no data';
-			
+
 			        export const Component = observer(() => {
 			          const data = processData({ value: 'data' });
 			          return <div>{data}</div>;
 			        });
-			
+
 			        export const Component2 = observer(() => {
 			          const data = processData();
 			          return <div>{data}</div>;
@@ -1331,7 +1349,7 @@ fn test() {
         (
             "
 			        import React from 'react';
-			
+
 			        const Hello = React.createContext();
 			      ",
             Some(serde_json::json!([{ "checkContextObjects": true }])),
@@ -1340,7 +1358,7 @@ fn test() {
         (
             "
 			        import * as React from 'react';
-			
+
 			        const Hello = React.createContext();
 			      ",
             Some(serde_json::json!([{ "checkContextObjects": true }])),
@@ -1349,7 +1367,7 @@ fn test() {
         (
             "
 			        import { createContext } from 'react';
-			
+
 			        const Hello = createContext();
 			      ",
             Some(serde_json::json!([{ "checkContextObjects": true }])),
@@ -1358,7 +1376,7 @@ fn test() {
         (
             "
 			        import { createContext } from 'react';
-			
+
 			        var Hello;
 			        Hello = createContext();
 			      ",
@@ -1368,7 +1386,7 @@ fn test() {
         (
             "
 			        import { createContext } from 'react';
-			
+
 			        var Hello;
 			        Hello = React.createContext();
 			      ",
