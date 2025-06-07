@@ -1,11 +1,12 @@
 use crate::{AstNode, context::LintContext, rule::Rule};
 use oxc_ast::AstKind;
-use oxc_ast::ast::{Statement, Statement::BlockStatement};
+use oxc_ast::ast::{IfStatement, Statement};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
-fn no_lonely_if_diagnostic(span: Span) -> OxcDiagnostic {
+fn no_lonely_if_diagnostic(lonely_if: &IfStatement) -> OxcDiagnostic {
+    let span = Span::sized(lonely_if.span.start, 2);
     OxcDiagnostic::warn("Unexpected `if` as the only statement in an `else` block")
         .with_help("Consider using `else if` instead.")
         .with_label(span)
@@ -90,19 +91,11 @@ impl Rule for NoLonelyIf {
             return;
         };
 
-        let Some(ref alternate) = if_stmt.alternate else {
+        let Some(Statement::BlockStatement(alternate_block)) = &if_stmt.alternate else {
             return;
         };
 
-        let BlockStatement(b) = alternate else {
-            return;
-        };
-
-        if b.body.len() != 1 {
-            return;
-        }
-
-        let Some(only_stmt) = b.body.first() else {
+        let [only_stmt] = alternate_block.body.as_slice() else {
             return;
         };
 
@@ -110,14 +103,16 @@ impl Rule for NoLonelyIf {
             return;
         }
 
-        if let Statement::BlockStatement(inner_block) = only_stmt {
-            if inner_block.body.len() == 1 {
-                if let Some(Statement::IfStatement(lonely_if)) = inner_block.body.first() {
-                    ctx.diagnostic(no_lonely_if_diagnostic(Span::sized(lonely_if.span.start, 2)));
+        match only_stmt {
+            Statement::IfStatement(lonely_if) => {
+                ctx.diagnostic(no_lonely_if_diagnostic(lonely_if));
+            }
+            Statement::BlockStatement(inner_block) => {
+                if let [Statement::IfStatement(lonely_if)] = inner_block.body.as_slice() {
+                    ctx.diagnostic(no_lonely_if_diagnostic(lonely_if));
                 }
             }
-        } else if let Statement::IfStatement(lonely_if) = only_stmt {
-            ctx.diagnostic(no_lonely_if_diagnostic(Span::sized(lonely_if.span.start, 2)));
+            _ => {}
         }
     }
 }
