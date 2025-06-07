@@ -18,7 +18,6 @@ fn extension_should_not_be_included_in_diagnostic(
 ) -> OxcDiagnostic {
     let import_or_export = if is_import { "import" } else { "export" };
 
-    // See <https://oxc.rs/docs/contribute/linter/adding-rules.html#diagnostics> for details
     OxcDiagnostic::warn(format!(
         "File extension \"{extension}\" should not be included in the {import_or_export} declaration."
     ))
@@ -29,7 +28,6 @@ fn extension_should_not_be_included_in_diagnostic(
 fn extension_missing_diagnostic(span: Span, is_import: bool) -> OxcDiagnostic {
     let import_or_export = if is_import { "import" } else { "export" };
 
-    // See <https://oxc.rs/docs/contribute/linter/adding-rules.html#diagnostics> for details
     OxcDiagnostic::warn(format!("Missing file extension in {import_or_export} declaration"))
         .with_help(format!("Add a file extension to this {import_or_export}."))
         .with_label(span)
