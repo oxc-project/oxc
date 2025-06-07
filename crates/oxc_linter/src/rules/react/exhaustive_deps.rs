@@ -2500,7 +2500,7 @@ fn test() {
             const local1 = {};
             console.log(local1);
           }, [local1]);
-        }`",
+        }",
         r"function MyComponent() {
           const local1 = {};
           useCallback(() => {}, [local1]);
