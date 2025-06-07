@@ -126,11 +126,12 @@ impl<'a> ParserImpl<'a> {
         let params = self.parse_ts_type_parameters();
         self.expect(Kind::Eq);
 
-        let ty = if self.at(Kind::Intrinsic) && !self.lookahead(Self::is_next_token_dot) {
+        let checkpoint = self.checkpoint();
+        let ty = if self.at(Kind::Intrinsic) && !self.is_next_token_dot() {
             let span = self.start_span();
-            self.bump_any();
             self.ast.ts_type_intrinsic_keyword(self.end_span(span))
         } else {
+            self.rewind(checkpoint);
             self.parse_ts_type()
         };
 
