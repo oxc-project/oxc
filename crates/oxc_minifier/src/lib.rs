@@ -63,7 +63,9 @@ impl Minifier {
                 .with_scope_tree_child_ids(true)
                 .build(program)
                 .semantic;
-            Mangler::default().with_options(options).build_with_semantic(&mut semantic, program);
+            Mangler::new(allocator)
+                .with_options(options)
+                .build_with_semantic(&mut semantic, program);
             semantic.into_scoping()
         });
         MinifierReturn { scoping }

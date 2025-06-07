@@ -57,14 +57,16 @@ fn bench_mangler(criterion: &mut Criterion) {
         let source_type = SourceType::from_path(&file.file_name).unwrap();
         let source_text = file.source_text.as_str();
         let mut allocator = Allocator::default();
+        let mut mangler_allocator = Allocator::default();
         group.bench_function(id, |b| {
             b.iter_with_setup_wrapper(|runner| {
                 allocator.reset();
+                mangler_allocator.reset();
                 let program = Parser::new(&allocator, source_text, source_type).parse().program;
                 let mut semantic =
                     SemanticBuilder::new().with_scope_tree_child_ids(true).build(&program).semantic;
                 runner.run(|| {
-                    Mangler::new().build_with_semantic(&mut semantic, &program);
+                    Mangler::new(&mangler_allocator).build_with_semantic(&mut semantic, &program);
                 });
             });
         });
