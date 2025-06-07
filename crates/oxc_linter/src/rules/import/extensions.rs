@@ -185,9 +185,6 @@ fn process_module_record(
     is_import: bool,
 ) {
     let (module_name, module) = module_record;
-
-    println!("module_name: {module_name}");
-    println!("module: {:?}", module);
     let always_file_types = extensions.0.get_always_file_types();
     let never_file_types = extensions.0.get_never_file_types();
 
@@ -206,8 +203,6 @@ fn process_module_record(
     }
 
     let file_extension = get_file_extension_from_module_name(&module_name);
-
-    println!("file_extension: {:?}", file_extension);
 
     let span = module.statement_span;
 
@@ -359,18 +354,12 @@ impl Rule for Extensions {
                         return;
                     };
                     let func_name = ident.name.as_str();
-
-                    println!("func_name: {func_name}");
                     let count = call_expr.arguments.len();
-                    println!("count: {count}");
 
                     if matches!(func_name, "require") && count > 0 {
                         for argument in call_expr.arguments.iter() {
-                            println!("argument: {argument:?}");
                             match argument {
                                 Argument::StringLiteral(s) => {
-                                    println!("arg: {s}");
-
                                     let file_extension = get_file_extension_from_module_name(
                                         &s.value.to_compact_str(),
                                     );
@@ -415,8 +404,6 @@ impl Rule for Extensions {
             }
         }
 
-        println!("module_record: {:?}", module_record);
-
         for (module_name, module) in module_record.requested_modules.iter() {
             for module_item in module {
                 process_module_record(
@@ -431,7 +418,7 @@ impl Rule for Extensions {
     }
 }
 
-fn get_file_extension_from_module_name<'a>(module_name: &CompactStr) -> Option<CompactStr> {
+fn get_file_extension_from_module_name(module_name: &CompactStr) -> Option<CompactStr> {
     if let Some((_, extension)) = module_name.rsplit_once('.') {
         if !extension.starts_with('/') {
             return extension.split('?').map(CompactStr::from).next();
