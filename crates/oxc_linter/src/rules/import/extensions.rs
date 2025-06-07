@@ -357,7 +357,7 @@ impl Rule for Extensions {
                     let count = call_expr.arguments.len();
 
                     if matches!(func_name, "require") && count > 0 {
-                        for argument in call_expr.arguments.iter() {
+                        for argument in &call_expr.arguments {
                             match argument {
                                 Argument::StringLiteral(s) => {
                                     let file_extension = get_file_extension_from_module_name(
@@ -404,7 +404,7 @@ impl Rule for Extensions {
             }
         }
 
-        for (module_name, module) in module_record.requested_modules.iter() {
+        for (module_name, module) in &module_record.requested_modules {
             for module_item in module {
                 process_module_record(
                     (module_name.clone(), module_item),
