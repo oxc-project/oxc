@@ -293,8 +293,8 @@ fn build_config(
 fn process_module_record(
     module_record: (CompactStr, &RequestedModule),
     ctx: &LintContext,
-    always_file_types: &Vec<CompactStr>,
-    never_file_types: &Vec<CompactStr>,
+    always_file_types: &[CompactStr],
+    never_file_types: &[CompactStr],
     require_extension: Option<&FileExtensionConfig>,
     check_type_imports: bool,
     ignore_packages: bool,
@@ -344,8 +344,8 @@ fn process_module_record(
 fn process_require_record(
     call_expr: &CallExpression<'_>,
     ctx: &LintContext,
-    always_file_types: &Vec<CompactStr>,
-    never_file_types: &Vec<CompactStr>,
+    always_file_types: &[CompactStr],
+    never_file_types: &[CompactStr],
     require_extension: Option<&FileExtensionConfig>,
 ) {
     for argument in &call_expr.arguments {
