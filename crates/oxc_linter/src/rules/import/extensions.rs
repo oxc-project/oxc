@@ -43,8 +43,8 @@ enum FileExtensionConfig {
 }
 
 impl FileExtensionConfig {
-    pub fn from(str: &str) -> FileExtensionConfig {
-        match str {
+    pub fn from(s: &str) -> FileExtensionConfig {
+        match s {
             "always" | "ignorePackages" => FileExtensionConfig::Always,
             "never" => FileExtensionConfig::Never,
             _ => FileExtensionConfig::default(),
@@ -392,9 +392,9 @@ fn get_file_extension_from_module_name(module_name: &CompactStr) -> Option<Compa
 #[test]
 fn test() {
     use crate::tester::Tester;
-    use serde_json::{Value, json};
+    use serde_json::{json};
 
-    let pass: Vec<(&str, Option<Value>)> = vec![
+    let pass = vec![
         (r#"import a from "@/a""#, None),
         (r#"import a from "a""#, None),
         (r#"import dot from "./file.with.dot""#, None),
@@ -540,7 +540,7 @@ fn test() {
         ),
     ];
 
-    let fail: Vec<(&str, Option<Value>)> = vec![
+    let fail = vec![
         (r#"import a from "a/index.js""#, None),
         (r#"import dot from "./file.with.dot""#, Some(json!(["always"]))),
         (
