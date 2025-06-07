@@ -24,7 +24,6 @@ fn no_magic_number_diagnostic(span: Span, raw: &str) -> OxcDiagnostic {
 }
 
 #[derive(Debug, Default, Clone)]
-
 pub struct NoMagicNumbers(Box<NoMagicNumbersConfig>);
 
 impl std::ops::Deref for NoMagicNumbers {
@@ -66,7 +65,7 @@ impl TryFrom<&serde_json::Value> for NoMagicNumbersConfig {
         raw.get(0).map_or_else(
             || {
                 Err(OxcDiagnostic::warn(
-                    "Expecting object for typescript/no-magic-numbers configuration",
+                    "Expecting object for eslint/no-magic-numbers configuration",
                 ))
             },
             |object| {
@@ -116,7 +115,7 @@ impl TryFrom<&serde_json::Value> for NoMagicNumbersConfig {
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// The no-magic-numbers rule aims to make code more readable and refactoring easier by ensuring that special numbers are declared as constants to make their meaning explicit.
+    /// This rule aims to make code more readable and refactoring easier by ensuring that special numbers are declared as constants to make their meaning explicit.
     /// The current implementation does not support BigInt numbers inside array indexes.
     ///
     /// ### Why is this bad?
@@ -127,7 +126,6 @@ declare_oxc_lint!(
     ///
     /// Examples of **incorrect** code for this rule:
     /// ```javascript
-    ///
     /// var dutyFreePrice = 100;
     /// var finalPrice = dutyFreePrice + (dutyFreePrice * 0.25);
     /// ```
