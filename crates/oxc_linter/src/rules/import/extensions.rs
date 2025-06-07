@@ -13,7 +13,7 @@ use crate::{context::LintContext, rule::Rule};
 
 fn extension_should_not_be_included_in_diagnostic(
     span: Span,
-    extension: &str,
+    extension: &CompactStr,
     is_import: bool,
 ) -> OxcDiagnostic {
     let import_or_export = if is_import { "import" } else { "export" };
@@ -65,52 +65,52 @@ pub struct ExtensionsConfig {
 }
 
 impl ExtensionsConfig {
-    pub fn get_always_file_types(&self) -> Vec<&str> {
-        let mut result: Vec<&str> = vec![];
+    pub fn get_always_file_types(&self) -> Vec<CompactStr> {
+        let mut result: Vec<CompactStr> = vec![];
 
         if matches!(self.js, FileExtensionConfig::Always) {
-            result.push("js");
+            result.push(CompactStr::from("js"));
         }
 
         if matches!(self.jsx, FileExtensionConfig::Always) {
-            result.push("jsx");
+            result.push(CompactStr::from("jsx"));
         }
 
         if matches!(self.ts, FileExtensionConfig::Always) {
-            result.push("ts");
+            result.push(CompactStr::from("ts"));
         }
 
         if matches!(self.tsx, FileExtensionConfig::Always) {
-            result.push("tsx");
+            result.push(CompactStr::from("tsx"));
         }
 
         if matches!(self.json, FileExtensionConfig::Always) {
-            result.push("json");
+            result.push(CompactStr::from("json"));
         }
 
         result
     }
-    pub fn get_never_file_types(&self) -> Vec<&str> {
-        let mut result: Vec<&str> = vec![];
+    pub fn get_never_file_types(&self) -> Vec<CompactStr> {
+        let mut result: Vec<CompactStr> = vec![];
 
         if matches!(self.js, FileExtensionConfig::Never) {
-            result.push("js");
+            result.push(CompactStr::from("js"));
         }
 
         if matches!(self.jsx, FileExtensionConfig::Never) {
-            result.push("jsx");
+            result.push(CompactStr::from("jsx"));
         }
 
         if matches!(self.ts, FileExtensionConfig::Never) {
-            result.push("ts");
+            result.push(CompactStr::from("ts"));
         }
 
         if matches!(self.tsx, FileExtensionConfig::Never) {
-            result.push("tsx");
+            result.push(CompactStr::from("tsx"));
         }
 
         if matches!(self.json, FileExtensionConfig::Never) {
-            result.push("json");
+            result.push(CompactStr::from("json"));
         }
 
         result
@@ -293,8 +293,8 @@ fn build_config(
 fn process_module_record(
     module_record: (CompactStr, &RequestedModule),
     ctx: &LintContext,
-    always_file_types: &Vec<&str>,
-    never_file_types: &Vec<&str>,
+    always_file_types: &Vec<CompactStr>,
+    never_file_types: &Vec<CompactStr>,
     require_extension: Option<&FileExtensionConfig>,
     check_type_imports: bool,
     ignore_packages: bool,
@@ -321,14 +321,14 @@ fn process_module_record(
     let span = module.statement_span;
 
     if let Some(file_extension) = file_extension {
-        if never_file_types.contains(&file_extension.as_str())
+        if never_file_types.contains(&file_extension)
             || (!always_file_types.is_empty()
-                && !always_file_types.contains(&file_extension.as_str()))
+                && !always_file_types.contains(&file_extension))
         // should not have file extension
         {
             ctx.diagnostic(extension_should_not_be_included_in_diagnostic(
                 span,
-                file_extension.as_str(),
+                &file_extension,
                 is_import,
             ));
 
@@ -345,8 +345,8 @@ fn process_module_record(
 fn process_require_record(
     call_expr: &CallExpression<'_>,
     ctx: &LintContext,
-    always_file_types: &Vec<&str>,
-    never_file_types: &Vec<&str>,
+    always_file_types: &Vec<CompactStr>,
+    never_file_types: &Vec<CompactStr>,
     require_extension: Option<&FileExtensionConfig>,
 ) {
     for argument in &call_expr.arguments {
@@ -355,14 +355,14 @@ fn process_require_record(
             let span = call_expr.span;
 
             if let Some(file_extension) = file_extension {
-                if never_file_types.contains(&file_extension.as_str())
+                if never_file_types.contains(&file_extension)
                     || (!always_file_types.is_empty()
-                        && !always_file_types.contains(&file_extension.as_str()))
+                        && !always_file_types.contains(&file_extension))
                 // should not have file extension
                 {
                     ctx.diagnostic(extension_should_not_be_included_in_diagnostic(
                         span,
-                        file_extension.as_str(),
+                        &file_extension,
                         true,
                     ));
 
