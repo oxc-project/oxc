@@ -1,7 +1,4 @@
-use oxc_ast::{
-    AstKind,
-    ast::{JSXAttributeItem, JSXAttributeName},
-};
+use oxc_ast::{AstKind, ast::JSXAttributeName};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::NodeId;
@@ -91,7 +88,7 @@ fn is_jsx_meta_elem_with_charset_attr(id: NodeId, ctx: &LintContext) -> bool {
     let Some(parent) = ctx.nodes().parent_node(id) else {
         return false;
     };
-    let AstKind::JSXAttributeItem(JSXAttributeItem::Attribute(jsx_attr)) = parent.kind() else {
+    let AstKind::JSXAttribute(jsx_attr) = parent.kind() else {
         return false;
     };
     let JSXAttributeName::Identifier(ident) = &jsx_attr.name else {

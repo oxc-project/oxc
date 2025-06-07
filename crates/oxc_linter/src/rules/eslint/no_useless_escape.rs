@@ -152,11 +152,8 @@ impl Rule for NoUselessEscape {
     }
 }
 
-fn is_within_jsx_attribute_item(id: NodeId, ctx: &LintContext) -> bool {
-    if matches!(ctx.nodes().parent_kind(id), Some(AstKind::JSXAttributeItem(_))) {
-        return true;
-    }
-    false
+fn is_within_jsx_attribute(id: NodeId, ctx: &LintContext) -> bool {
+    matches!(ctx.nodes().parent_kind(id), Some(AstKind::JSXAttribute(_)))
 }
 
 #[expect(clippy::cast_possible_truncation)]
@@ -168,7 +165,7 @@ fn check(ctx: &LintContext<'_>, node_id: NodeId, start: u32, offsets: &[usize]) 
         let offset = offset as u32;
         let len = c.len_utf8() as u32;
 
-        if !is_within_jsx_attribute_item(node_id, ctx) {
+        if !is_within_jsx_attribute(node_id, ctx) {
             let span = Span::new(offset - 1, offset + len);
             ctx.diagnostic_with_fix(no_useless_escape_diagnostic(c, span), |fixer| {
                 fixer.replace(span, c.to_string())

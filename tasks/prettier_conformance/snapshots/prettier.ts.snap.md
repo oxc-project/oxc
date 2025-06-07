@@ -9,7 +9,7 @@ ts compatibility: 186/573 (32.46%)
 | jsx/comments/eslint-disable.js | 💥 | 0.00% |
 | jsx/comments/in-attributes.js | 💥 | 41.67% |
 | jsx/comments/in-end-tag.js | 💥 | 32.18% |
-| jsx/comments/in-tags.js | 💥 | 53.33% |
+| jsx/comments/in-tags.js | 💥 | 48.89% |
 | jsx/comments/jsx-tag-comment-after-prop.js | 💥 | 42.11% |
 | jsx/comments/like-a-comment-in-jsx-text.js | 💥 | 0.00% |
 | jsx/deprecated-jsx-bracket-same-line-option/jsx.js | 💥💥💥💥 | 45.33% |

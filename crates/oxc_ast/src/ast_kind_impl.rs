@@ -74,19 +74,6 @@ impl<'a> AstKind<'a> {
         }
     }
 
-    pub fn is_jsx(self) -> bool {
-        matches!(
-            self,
-            Self::JSXElement(_)
-                | Self::JSXOpeningElement(_)
-                | Self::JSXElementName(_)
-                | Self::JSXFragment(_)
-                | Self::JSXAttributeItem(_)
-                | Self::JSXText(_)
-                | Self::JSXExpressionContainer(_)
-        )
-    }
-
     pub fn is_specific_id_reference(&self, name: &str) -> bool {
         match self {
             Self::IdentifierReference(ident) => ident.name == name,
@@ -306,16 +293,18 @@ impl AstKind<'_> {
             Self::ExportAllDeclaration(_) => "ExportAllDeclaration".into(),
             Self::JSXOpeningElement(_) => "JSXOpeningElement".into(),
             Self::JSXClosingElement(_) => "JSXClosingElement".into(),
-            Self::JSXElementName(n) => format!("JSXElementName({n})").into(),
             Self::JSXElement(_) => "JSXElement".into(),
             Self::JSXFragment(_) => "JSXFragment".into(),
-            Self::JSXAttributeItem(_) => "JSXAttributeItem".into(),
+            Self::JSXOpeningFragment(_) => "JSXOpeningFragment".into(),
+            Self::JSXClosingFragment(_) => "JSXClosingFragment".into(),
+            Self::JSXEmptyExpression(_) => "JSXEmptyExpression".into(),
+            Self::JSXSpreadChild(_) => "JSXSpreadChild".into(),
+            Self::JSXAttribute(_) => "JSXAttribute".into(),
             Self::JSXSpreadAttribute(_) => "JSXSpreadAttribute".into(),
             Self::JSXText(_) => "JSXText".into(),
             Self::JSXExpressionContainer(_) => "JSXExpressionContainer".into(),
             Self::JSXIdentifier(id) => format!("JSXIdentifier({id})").into(),
             Self::JSXMemberExpression(_) => "JSXMemberExpression".into(),
-            Self::JSXMemberExpressionObject(_) => "JSXMemberExpressionObject".into(),
             Self::JSXNamespacedName(_) => "JSXNamespacedName".into(),
 
             Self::TSModuleBlock(_) => "TSModuleBlock".into(),
