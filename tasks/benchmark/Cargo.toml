@@ -50,6 +50,10 @@ harness = false
 name = "minifier"
 harness = false
 
+[[bench]]
+name = "language_server"
+harness = false
+
 # Only run in CI
 [[bench]]
 name = "parser_napi"
@@ -152,3 +156,12 @@ linter = [
   "dep:oxc_tasks_common",
 ]
 formatter = ["dep:oxc_allocator", "dep:oxc_parser", "dep:oxc_formatter", "dep:oxc_span", "dep:oxc_tasks_common"]
+
+language_server = [
+  "dep:oxc_allocator",
+  "dep:oxc_linter",
+  "dep:oxc_parser",
+  "dep:oxc_semantic",
+  "dep:oxc_span",
+  "dep:oxc_tasks_common",
+]
