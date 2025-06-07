@@ -518,6 +518,7 @@ impl Kind {
     }
 
     pub fn to_str(self) -> &'static str {
+        #[expect(clippy::match_same_arms)]
         match self {
             Undetermined => "Unknown",
             Eof => "EOF",
@@ -655,7 +656,7 @@ impl Kind {
             NoSubstitutionTemplate => "${}",
             TemplateHead => "${",
             TemplateMiddle => "${expr}",
-            TemplateTail => "$}",
+            TemplateTail => "}",
             PrivateIdentifier => "#identifier",
             JSXText => "jsx",
             At => "@",
