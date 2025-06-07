@@ -146,7 +146,7 @@ fn generate_struct(
     let fn_name = struct_def.deser_name(schema);
     let mut generator = StructDeserializerGenerator::new(is_ts, schema);
 
-    let body = if let Some(converter_name) = &struct_def.estree.via {
+    let body = struct_def.estree.via.as_deref().and_then(|converter_name| {
         let converter = schema.meta_by_name(converter_name);
         generator.apply_converter(converter, struct_def, 0).map(|value| {
             if generator.preamble.is_empty() {
@@ -161,13 +161,9 @@ fn generate_struct(
                 )
             }
         })
-    } else {
-        None
-    };
+    });
 
-    let body = if let Some(body) = body {
-        body
-    } else {
+    let body = body.unwrap_or_else(|| {
         let mut preamble_str = String::new();
         let mut fields_str = String::new();
 
@@ -207,7 +203,7 @@ fn generate_struct(
             }};
         "
         )
-    };
+    });
 
     #[rustfmt::skip]
     write_it!(code, "
