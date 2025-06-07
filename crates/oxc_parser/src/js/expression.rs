@@ -471,17 +471,15 @@ impl<'a> ParserImpl<'a> {
                         }
                         Kind::TemplateMiddle => {
                             quasis.push(self.parse_template_element(tagged));
-                        }
-                        Kind::Eof => {
-                            self.expect(Kind::TemplateTail);
-                            break;
-                        }
-                        _ => {
                             // TemplateMiddle Expression[+In, ?Yield, ?Await]
                             let expr =
                                 self.context(Context::In, Context::empty(), Self::parse_expr);
                             expressions.push(expr);
                             self.re_lex_template_substitution_tail();
+                        }
+                        _ => {
+                            self.expect(Kind::TemplateTail);
+                            break;
                         }
                     }
                 }

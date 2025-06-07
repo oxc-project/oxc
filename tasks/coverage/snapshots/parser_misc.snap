@@ -1,7 +1,7 @@
 parser_misc Summary:
 AST Parsed     : 40/40 (100.00%)
 Positive Passed: 40/40 (100.00%)
-Negative Passed: 39/39 (100.00%)
+Negative Passed: 40/40 (100.00%)
 
   × Identifier `b` has already been declared
    ╭─[misc/fail/oxc-10159.js:1:22]
@@ -66,6 +66,13 @@ Negative Passed: 39/39 (100.00%)
    ·               ┬
    ·               ╰── `from` expected
  2 │ import defer { x } from "x";
+   ╰────
+
+  × Expected `}` but found `function`
+   ╭─[misc/fail/oxc-11538.js:1:20]
+ 1 │ const y = `foo ${x function() {} function () {}}`;
+   ·                    ────┬───
+   ·                        ╰── `}` expected
    ╰────
 
   × Unexpected token
