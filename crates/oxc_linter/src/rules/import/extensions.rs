@@ -1,6 +1,5 @@
 use oxc_ast::{
-    AstKind,
-    ast::{Argument, Expression},
+    ast::{Argument, CallExpression, Expression}, AstKind
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -229,6 +228,47 @@ fn process_module_record(
     }
 }
 
+fn build_config(value: &serde_json::Value, default: &Option<FileExtensionConfig>) -> ExtensionsConfig {
+    let config: ExtensionsConfig = ExtensionsConfig {
+                    ignore_packages: value
+                        .get("ignorePackages")
+                        .and_then(Value::as_bool)
+                        .unwrap_or(true),
+                    require_extension: default.clone(),
+                    check_type_imports: value
+                        .get("checkTypeImports")
+                        .and_then(Value::as_bool)
+                        .unwrap_or_default(),
+                    js: value
+                        .get("js")
+                        .and_then(Value::as_str)
+                        .map(FileExtensionConfig::from)
+                        .unwrap_or(default.clone().unwrap_or_default()),
+                    jsx: value
+                        .get("jsx")
+                        .and_then(Value::as_str)
+                        .map(FileExtensionConfig::from)
+                        .unwrap_or(default.clone().unwrap_or_default()),
+                    ts: value
+                        .get("ts")
+                        .and_then(Value::as_str)
+                        .map(FileExtensionConfig::from)
+                        .unwrap_or(default.clone().unwrap_or_default()),
+                    tsx: value
+                        .get("tsx")
+                        .and_then(Value::as_str)
+                        .map(FileExtensionConfig::from)
+                        .unwrap_or(default.clone().unwrap_or_default()),
+                    json: value
+                        .get("json")
+                        .and_then(Value::as_str)
+                        .map(FileExtensionConfig::from)
+                        .unwrap_or(default.clone().unwrap_or_default()),
+                };
+
+    config
+}
+
 impl Rule for Extensions {
     fn from_configuration(value: serde_json::Value) -> Self {
         if let Some(always_or_never) =
@@ -239,102 +279,16 @@ impl Rule for Extensions {
             if let Some(val) = value.get(1) {
                 let root = val.get("pattern").unwrap_or(val);
 
-                let config: ExtensionsConfig = ExtensionsConfig {
-                    ignore_packages: root
-                        .get("ignorePackages")
-                        .and_then(Value::as_bool)
-                        .unwrap_or(true),
-                    require_extension: Some(default.clone()),
-                    check_type_imports: root
-                        .get("checkTypeImports")
-                        .and_then(Value::as_bool)
-                        .unwrap_or_default(),
-                    js: root
-                        .get("js")
-                        .and_then(Value::as_str)
-                        .map(FileExtensionConfig::from)
-                        .unwrap_or(default.clone()),
-                    jsx: root
-                        .get("jsx")
-                        .and_then(Value::as_str)
-                        .map(FileExtensionConfig::from)
-                        .unwrap_or(default.clone()),
-                    ts: root
-                        .get("ts")
-                        .and_then(Value::as_str)
-                        .map(FileExtensionConfig::from)
-                        .unwrap_or(default.clone()),
-                    tsx: root
-                        .get("tsx")
-                        .and_then(Value::as_str)
-                        .map(FileExtensionConfig::from)
-                        .unwrap_or(default.clone()),
-                    json: root
-                        .get("json")
-                        .and_then(Value::as_str)
-                        .map(FileExtensionConfig::from)
-                        .unwrap_or(default),
-                };
+                let config = build_config(root, &Some(default));
 
                 Self(Box::new(config))
             } else {
-                let config: ExtensionsConfig = ExtensionsConfig {
-                    ignore_packages: value
-                        .get("ignorePackages")
-                        .and_then(Value::as_bool)
-                        .unwrap_or(true),
-                    check_type_imports: value
-                        .get("checkTypeImports")
-                        .and_then(Value::as_bool)
-                        .unwrap_or_default(),
-                    js: default.clone(),
-                    jsx: default.clone(),
-                    ts: default.clone(),
-                    tsx: default.clone(),
-                    json: default.clone(),
-                    require_extension: Some(default),
-                };
+                let config = build_config(&value, &Some(default));
 
                 Self(Box::new(config))
             }
         } else {
-            let config = ExtensionsConfig {
-                ignore_packages: value
-                    .get("ignorePackages")
-                    .and_then(Value::as_bool)
-                    .unwrap_or(true),
-                check_type_imports: value
-                    .get("checkTypeImports")
-                    .and_then(Value::as_bool)
-                    .unwrap_or_default(),
-                js: value
-                    .get("js")
-                    .and_then(Value::as_str)
-                    .map(FileExtensionConfig::from)
-                    .unwrap_or_default(),
-                jsx: value
-                    .get("jsx")
-                    .and_then(Value::as_str)
-                    .map(FileExtensionConfig::from)
-                    .unwrap_or_default(),
-                ts: value
-                    .get("ts")
-                    .and_then(Value::as_str)
-                    .map(FileExtensionConfig::from)
-                    .unwrap_or_default(),
-                tsx: value
-                    .get("tsx")
-                    .and_then(Value::as_str)
-                    .map(FileExtensionConfig::from)
-                    .unwrap_or_default(),
-                json: value
-                    .get("json")
-                    .and_then(Value::as_str)
-                    .map(FileExtensionConfig::from)
-                    .unwrap_or_default(),
-                require_extension: None,
-            };
-
+            let config = build_config(&value, &None);
             Self(Box::new(config))
         }
     }
@@ -356,7 +310,27 @@ impl Rule for Extensions {
                 let count = call_expr.arguments.len();
 
                 if matches!(func_name, "require") && count > 0 {
-                    for argument in &call_expr.arguments {
+                    process_require_record(call_expr, ctx, &always_file_types, &never_file_types, &config.require_extension);
+                }
+            }
+        }
+
+        for (module_name, module) in &module_record.requested_modules {
+            for module_item in module {
+                process_module_record(
+                    (module_name.clone(), module_item),
+                    &config,
+                    ctx,
+                    self,
+                    module_item.is_import,
+                );
+            }
+        }
+    }
+}
+
+fn process_require_record(call_expr: &CallExpression<'_>, ctx: &LintContext, always_file_types: &Vec<&str>, never_file_types: &Vec<&str>, require_extension:&Option<FileExtensionConfig>) {
+    for argument in &call_expr.arguments {
                         if let Argument::StringLiteral(s) = argument {
                             let file_extension =
                                 get_file_extension_from_module_name(&s.value.to_compact_str());
@@ -375,34 +349,18 @@ impl Rule for Extensions {
                                     ));
 
                                     if file_extension.is_empty()
-                                        && config.require_extension
+                                        && *require_extension
                                             == Some(FileExtensionConfig::Always)
                                     {
                                         ctx.diagnostic(extension_missing_diagnostic(span, true));
                                     }
                                 }
-                            } else if config.require_extension == Some(FileExtensionConfig::Always)
+                            } else if *require_extension == Some(FileExtensionConfig::Always)
                             {
                                 ctx.diagnostic(extension_missing_diagnostic(span, true));
                             }
                         }
                     }
-                }
-            }
-        }
-
-        for (module_name, module) in &module_record.requested_modules {
-            for module_item in module {
-                process_module_record(
-                    (module_name.clone(), module_item),
-                    &config,
-                    ctx,
-                    self,
-                    module_item.is_import,
-                );
-            }
-        }
-    }
 }
 
 fn get_file_extension_from_module_name(module_name: &CompactStr) -> Option<CompactStr> {
