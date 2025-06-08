@@ -17766,7 +17766,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
    ·                  ─
    ╰────
 
-  × Expected `}` but found `EOF`
+  × Unexpected token
    ╭─[typescript/tests/cases/compiler/taggedTemplatesWithIncompleteTemplateExpressions3.ts:5:23]
  4 │ // Incomplete call, not enough parameters.
  5 │ f `123qdawdrqw${ 1 }${
@@ -17786,13 +17786,13 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
    ·                        ─
    ╰────
 
-  × Expected `}` but found `EOF`
+  × Unexpected token
    ╭─[typescript/tests/cases/compiler/taggedTemplatesWithIncompleteTemplateExpressions5.ts:5:30]
  4 │ // Incomplete call, but too many parameters.
  5 │ f `123qdawdrqw${ 1 }${ 2 }${ 
    ╰────
 
-  × Expected `}` but found `EOF`
+  × Unexpected token
    ╭─[typescript/tests/cases/compiler/taggedTemplatesWithIncompleteTemplateExpressions6.ts:5:23]
  4 │ // Incomplete call, not enough parameters, at EOF.
  5 │ f `123qdawdrqw${ 1 }${
