@@ -56,7 +56,7 @@ fn main() -> std::io::Result<()> {
     println!("Wrote AST to: {}", &ast_file_name);
 
     let semantic =
-        SemanticBuilder::new().with_check_syntax_error(true).with_cfg(true).build(&program);
+        SemanticBuilder::<false>::new().with_check_syntax_error(true).with_cfg(true).build(&program);
 
     if !semantic.errors.is_empty() {
         let error_message: String = semantic

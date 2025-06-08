@@ -18,9 +18,9 @@ fn empty_type_parameter_list(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::error("Type parameter list cannot be empty.").with_label(span)
 }
 
-pub fn check_ts_type_parameter_declaration(
+pub fn check_ts_type_parameter_declaration<const WITH_CFG: bool>(
     declaration: &TSTypeParameterDeclaration<'_>,
-    ctx: &SemanticBuilder<'_>,
+    ctx: &SemanticBuilder<'_, WITH_CFG>,
 ) {
     if declaration.params.is_empty() {
         ctx.error(empty_type_parameter_list(declaration.span));
@@ -43,7 +43,10 @@ fn jsdoc_type_in_annotation(
     .with_help(format!("Did you mean to write '{suggested_type}'?"))
 }
 
-pub fn check_ts_type_annotation(annotation: &TSTypeAnnotation<'_>, ctx: &SemanticBuilder<'_>) {
+pub fn check_ts_type_annotation<const WITH_CFG: bool>(
+    annotation: &TSTypeAnnotation<'_>,
+    ctx: &SemanticBuilder<'_, WITH_CFG>,
+) {
     let (modifier, is_start, span_with_illegal_modifier) = match &annotation.type_annotation {
         TSType::JSDocNonNullableType(ty) => ('!', !ty.postfix, ty.span()),
         TSType::JSDocNullableType(ty) => ('?', !ty.postfix, ty.span()),
@@ -78,7 +81,10 @@ fn initializer_in_ambient_context(init_span: Span) -> OxcDiagnostic {
     ts_error("1039", "Initializers are not allowed in ambient contexts.").with_label(init_span)
 }
 
-pub fn check_variable_declaration(decl: &VariableDeclaration, ctx: &SemanticBuilder<'_>) {
+pub fn check_variable_declaration<const WITH_CFG: bool>(
+    decl: &VariableDeclaration,
+    ctx: &SemanticBuilder<'_, WITH_CFG>,
+) {
     if decl.declare {
         for var in &decl.declarations {
             if let Some(init) = &var.init {
@@ -110,7 +116,10 @@ fn find_char(span: Span, source_text: &str, c: char) -> Option<Span> {
     Some(Span::new(offset, offset))
 }
 
-pub fn check_variable_declarator(decl: &VariableDeclarator, ctx: &SemanticBuilder<'_>) {
+pub fn check_variable_declarator<const WITH_CFG: bool>(
+    decl: &VariableDeclarator,
+    ctx: &SemanticBuilder<'_, WITH_CFG>,
+) {
     // Check for `let x?: number;`
     if decl.id.optional {
         // NOTE: BindingPattern spans cover the identifier _and_ the type annotation.
@@ -156,7 +165,10 @@ fn parameter_property_outside_constructor(span: Span) -> OxcDiagnostic {
         .with_label(span)
 }
 
-pub fn check_formal_parameters(params: &FormalParameters, ctx: &SemanticBuilder<'_>) {
+pub fn check_formal_parameters<const WITH_CFG: bool>(
+    params: &FormalParameters,
+    ctx: &SemanticBuilder<'_, WITH_CFG>,
+) {
     if !params.is_empty() && params.kind == FormalParameterKind::Signature {
         check_duplicate_bound_names(params, ctx);
     }
@@ -181,7 +193,10 @@ pub fn check_formal_parameters(params: &FormalParameters, ctx: &SemanticBuilder<
     }
 }
 
-fn check_duplicate_bound_names<'a, T: BoundNames<'a>>(bound_names: &T, ctx: &SemanticBuilder<'_>) {
+fn check_duplicate_bound_names<'a, const WITH_CFG: bool, T: BoundNames<'a>>(
+    bound_names: &T,
+    ctx: &SemanticBuilder<'_, WITH_CFG>,
+) {
     let mut idents: FxHashMap<Atom<'a>, Span> = FxHashMap::default();
     bound_names.bound_names(&mut |ident| {
         if let Some(old_span) = idents.insert(ident.name, ident.span) {
@@ -197,9 +212,9 @@ fn unexpected_assignment(span: Span) -> OxcDiagnostic {
     .with_label(span)
 }
 
-pub fn check_simple_assignment_target<'a>(
+pub fn check_simple_assignment_target<'a, const WITH_CFG: bool>(
     target: &SimpleAssignmentTarget<'a>,
-    ctx: &SemanticBuilder<'a>,
+    ctx: &SemanticBuilder<'a, WITH_CFG>,
 ) {
     if let Some(expression) = target.get_expression() {
         #[expect(clippy::match_same_arms)]
@@ -217,7 +232,10 @@ fn unexpected_type_annotation(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::error("Unexpected type annotation").with_label(span)
 }
 
-pub fn check_array_pattern<'a>(pattern: &ArrayPattern<'a>, ctx: &SemanticBuilder<'a>) {
+pub fn check_array_pattern<'a, const WITH_CFG: bool>(
+    pattern: &ArrayPattern<'a>,
+    ctx: &SemanticBuilder<'a, WITH_CFG>,
+) {
     for element in &pattern.elements {
         if let Some(element) = element.as_ref() {
             if let Some(type_annotation) = &element.type_annotation {
@@ -236,9 +254,9 @@ fn invalid_interface_extend(span: Span) -> OxcDiagnostic {
     .with_label(span)
 }
 
-pub fn check_ts_interface_declaration<'a>(
+pub fn check_ts_interface_declaration<'a, const WITH_CFG: bool>(
     decl: &TSInterfaceDeclaration<'a>,
-    ctx: &SemanticBuilder<'a>,
+    ctx: &SemanticBuilder<'a, WITH_CFG>,
 ) {
     for extend in &decl.extends {
         if !matches!(
@@ -257,7 +275,10 @@ fn not_allowed_namespace_declaration(span: Span) -> OxcDiagnostic {
     .with_label(span)
 }
 
-pub fn check_ts_module_declaration<'a>(decl: &TSModuleDeclaration<'a>, ctx: &SemanticBuilder<'a>) {
+pub fn check_ts_module_declaration<'a, const WITH_CFG: bool>(
+    decl: &TSModuleDeclaration<'a>,
+    ctx: &SemanticBuilder<'a, WITH_CFG>,
+) {
     // skip current node
     for node in ctx.nodes.ancestors(ctx.current_node_id).skip(1) {
         match node.kind() {
@@ -279,7 +300,10 @@ fn enum_member_must_have_initializer(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::error("Enum member must have initializer.").with_label(span)
 }
 
-pub fn check_ts_enum_declaration<'a>(decl: &TSEnumDeclaration<'a>, ctx: &SemanticBuilder<'a>) {
+pub fn check_ts_enum_declaration<'a, const WITH_CFG: bool>(
+    decl: &TSEnumDeclaration<'a>,
+    ctx: &SemanticBuilder<'a, WITH_CFG>,
+) {
     let mut need_initializer = false;
 
     decl.body.members.iter().for_each(|member| {
@@ -309,9 +333,9 @@ fn import_alias_cannot_use_import_type(span: Span) -> OxcDiagnostic {
     ts_error("1392", "An import alias cannot use 'import type'").with_label(span)
 }
 
-pub fn check_ts_import_equals_declaration<'a>(
+pub fn check_ts_import_equals_declaration<'a, const WITH_CFG: bool>(
     decl: &TSImportEqualsDeclaration<'a>,
-    ctx: &SemanticBuilder<'a>,
+    ctx: &SemanticBuilder<'a, WITH_CFG>,
 ) {
     // `import type Foo = require('./foo')` is allowed
     // `import { Foo } from './foo'; import type Bar = Foo.Bar` is not allowed
@@ -339,7 +363,10 @@ fn function_implementation_missing(span: Span) -> OxcDiagnostic {
     .with_label(span)
 }
 
-pub fn check_class<'a>(class: &Class<'a>, ctx: &SemanticBuilder<'a>) {
+pub fn check_class<'a, const WITH_CFG: bool>(
+    class: &Class<'a>,
+    ctx: &SemanticBuilder<'a, WITH_CFG>,
+) {
     if !class.r#abstract {
         for elem in &class.body.body {
             if elem.is_abstract() {
@@ -439,7 +466,10 @@ fn accessor_without_body(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::error("Getters and setters must have an implementation.").with_label(span)
 }
 
-pub fn check_method_definition<'a>(method: &MethodDefinition<'a>, ctx: &SemanticBuilder<'a>) {
+pub fn check_method_definition<'a, const WITH_CFG: bool>(
+    method: &MethodDefinition<'a>,
+    ctx: &SemanticBuilder<'a, WITH_CFG>,
+) {
     let is_abstract = method.r#type.is_abstract();
     let is_declare = ctx.class_table_builder.current_class_id.map_or(
         ctx.source_type.is_typescript_definition(),
@@ -496,7 +526,10 @@ pub fn check_method_definition<'a>(method: &MethodDefinition<'a>, ctx: &Semantic
     }
 }
 
-pub fn check_property_definition<'a>(prop: &PropertyDefinition<'a>, ctx: &SemanticBuilder<'a>) {
+pub fn check_property_definition<'a, const WITH_CFG: bool>(
+    prop: &PropertyDefinition<'a>,
+    ctx: &SemanticBuilder<'a, WITH_CFG>,
+) {
     if prop.r#type.is_abstract() && prop.value.is_some() {
         let (prop_name, span) = prop.key.prop_name().unwrap_or_else(|| {
             let key_span = prop.key.span();
@@ -506,7 +539,10 @@ pub fn check_property_definition<'a>(prop: &PropertyDefinition<'a>, ctx: &Semant
     }
 }
 
-pub fn check_object_property(prop: &ObjectProperty, ctx: &SemanticBuilder<'_>) {
+pub fn check_object_property<const WITH_CFG: bool>(
+    prop: &ObjectProperty,
+    ctx: &SemanticBuilder<'_, WITH_CFG>,
+) {
     if let Expression::FunctionExpression(func) = &prop.value {
         if prop.kind.is_accessor()
             && matches!(func.r#type, FunctionType::TSEmptyBodyFunctionExpression)
@@ -527,7 +563,11 @@ fn type_annotation_in_for_left(span: Span, is_for_in: bool) -> OxcDiagnostic {
     ).with_label(span).with_help("This iterator's type will be inferred from the iterable. You can safely remove the type annotation.")
 }
 
-pub fn check_for_statement_left(left: &ForStatementLeft, is_for_in: bool, ctx: &SemanticBuilder) {
+pub fn check_for_statement_left<const WITH_CFG: bool>(
+    left: &ForStatementLeft,
+    is_for_in: bool,
+    ctx: &SemanticBuilder<'_, WITH_CFG>,
+) {
     let ForStatementLeft::VariableDeclaration(decls) = left else {
         return;
     };
@@ -551,9 +591,9 @@ fn jsx_expressions_may_not_use_the_comma_operator(span: Span) -> OxcDiagnostic {
         .with_label(span)
 }
 
-pub fn check_jsx_expression_container(
+pub fn check_jsx_expression_container<const WITH_CFG: bool>(
     container: &JSXExpressionContainer,
-    ctx: &SemanticBuilder<'_>,
+    ctx: &SemanticBuilder<'_, WITH_CFG>,
 ) {
     if matches!(container.expression, JSXExpression::EmptyExpression(_))
         && matches!(ctx.nodes.parent_kind(ctx.current_node_id), Some(AstKind::JSXAttributeItem(_)))

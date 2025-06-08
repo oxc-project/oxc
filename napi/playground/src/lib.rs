@@ -131,7 +131,7 @@ impl Oxc {
                 .parse();
         self.diagnostics.extend(errors);
 
-        let mut semantic_builder = SemanticBuilder::new();
+        let mut semantic_builder = SemanticBuilder::<false>::new();
         if run_options.transform.unwrap_or_default() {
             // Estimate transformer will triple scopes, symbols, references
             semantic_builder = semantic_builder.with_excess_capacity(2.0);
@@ -283,7 +283,7 @@ impl Oxc {
     ) {
         // Only lint if there are no syntax errors
         if run_options.lint.unwrap_or_default() && self.diagnostics.is_empty() {
-            let semantic_ret = SemanticBuilder::new().with_cfg(true).build(program);
+            let semantic_ret = SemanticBuilder::<false>::new().with_cfg(true).build(program);
             let semantic = Rc::new(semantic_ret.semantic);
             let lint_config = ConfigStoreBuilder::default().build();
             let linter_ret = Linter::new(

@@ -49,7 +49,7 @@ impl Minifier {
 
     pub fn build<'a>(self, allocator: &'a Allocator, program: &mut Program<'a>) -> MinifierReturn {
         let stats = if let Some(compress) = self.options.compress {
-            let semantic = SemanticBuilder::new().build(program).semantic;
+            let semantic = SemanticBuilder::<false>::new().build(program).semantic;
             let stats = semantic.stats();
             let scoping = semantic.into_scoping();
             Compressor::new(allocator, compress).build_with_scoping(scoping, program);
@@ -58,7 +58,7 @@ impl Minifier {
             Stats::default()
         };
         let scoping = self.options.mangle.map(|options| {
-            let mut semantic = SemanticBuilder::new()
+            let mut semantic = SemanticBuilder::<false>::new()
                 .with_stats(stats)
                 .with_scope_tree_child_ids(true)
                 .build(program)

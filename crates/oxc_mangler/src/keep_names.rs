@@ -250,7 +250,7 @@ mod test {
         let ret = Parser::new(&allocator, source_text, SourceType::mjs()).parse();
         assert!(!ret.panicked, "{source_text}");
         assert!(ret.errors.is_empty(), "{source_text}");
-        let ret = SemanticBuilder::new().build(&ret.program);
+        let ret = SemanticBuilder::<false>::new().build(&ret.program);
         assert!(ret.errors.is_empty(), "{source_text}");
         let semantic = ret.semantic;
         let symbols = collect_name_symbols(opts, semantic.scoping(), semantic.nodes());

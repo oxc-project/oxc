@@ -14,7 +14,7 @@ use oxc_syntax::{
 
 use crate::{AstNode, builder::SemanticBuilder, diagnostics::redeclaration};
 
-pub fn check_duplicate_class_elements(ctx: &SemanticBuilder<'_>) {
+pub fn check_duplicate_class_elements<const WITH_CFG: bool>(ctx: &SemanticBuilder<'_, WITH_CFG>) {
     let classes = &ctx.class_table_builder.classes;
     classes.iter_enumerated().for_each(|(class_id, _)| {
         let mut defined_elements = FxHashMap::default();
@@ -70,7 +70,12 @@ pub const STRICT_MODE_NAMES: Set<&'static str> = phf_set! {
     "yield",
 };
 
-pub fn check_identifier<'a>(name: &str, span: Span, node: &AstNode<'a>, ctx: &SemanticBuilder<'a>) {
+pub fn check_identifier<'a, const WITH_CFG: bool>(
+    name: &str,
+    span: Span,
+    node: &AstNode<'a>,
+    ctx: &SemanticBuilder<'a, WITH_CFG>,
+) {
     // ts module block allows revered keywords
     if ctx.current_scope_flags().is_ts_module_block() {
         return;
@@ -103,10 +108,10 @@ fn invalid_let_declaration(x0: &str, span1: Span) -> OxcDiagnostic {
     .with_label(span1)
 }
 
-pub fn check_binding_identifier<'a>(
+pub fn check_binding_identifier<'a, const WITH_CFG: bool>(
     ident: &BindingIdentifier,
     node: &AstNode<'a>,
-    ctx: &SemanticBuilder<'a>,
+    ctx: &SemanticBuilder<'a, WITH_CFG>,
 ) {
     let strict_mode = ctx.strict_mode();
     // It is a Diagnostic if the StringValue of a BindingIdentifier is "eval" or "arguments" within strict mode code.
@@ -135,10 +140,10 @@ fn unexpected_arguments(x0: &str, span1: Span) -> OxcDiagnostic {
     OxcDiagnostic::error(format!("'arguments' is not allowed in {x0}")).with_label(span1)
 }
 
-pub fn check_identifier_reference<'a>(
+pub fn check_identifier_reference<'a, const WITH_CFG: bool>(
     ident: &IdentifierReference,
     node: &AstNode<'a>,
-    ctx: &SemanticBuilder<'a>,
+    ctx: &SemanticBuilder<'a, WITH_CFG>,
 ) {
     //  Static Semantics: AssignmentTargetType
     //  1. If this IdentifierReference is contained in strict mode code and StringValue of Identifier is "eval" or "arguments", return invalid.
@@ -181,9 +186,9 @@ fn private_not_in_class(x0: &str, span1: Span) -> OxcDiagnostic {
         .with_label(span1)
 }
 
-pub fn check_private_identifier_outside_class(
+pub fn check_private_identifier_outside_class<const WITH_CFG: bool>(
     ident: &PrivateIdentifier,
-    ctx: &SemanticBuilder<'_>,
+    ctx: &SemanticBuilder<'_, WITH_CFG>,
 ) {
     if ctx.class_table_builder.current_class_id.is_none() {
         ctx.error(private_not_in_class(&ident.name, ident.span));
@@ -195,7 +200,7 @@ fn private_field_undeclared(x0: &str, span1: Span) -> OxcDiagnostic {
         .with_label(span1)
 }
 
-fn check_private_identifier(ctx: &SemanticBuilder<'_>) {
+fn check_private_identifier<const WITH_CFG: bool>(ctx: &SemanticBuilder<'_, WITH_CFG>) {
     if let Some(class_id) = ctx.class_table_builder.current_class_id {
         for reference in ctx.class_table_builder.classes.iter_private_identifiers(class_id) {
             if !ctx.class_table_builder.classes.ancestors(class_id).any(|class_id| {
@@ -219,7 +224,10 @@ fn leading_zero_decimal(span: Span) -> OxcDiagnostic {
         .with_label(span)
 }
 
-pub fn check_number_literal(lit: &NumericLiteral, ctx: &SemanticBuilder<'_>) {
+pub fn check_number_literal<const WITH_CFG: bool>(
+    lit: &NumericLiteral,
+    ctx: &SemanticBuilder<'_, WITH_CFG>,
+) {
     // NumericLiteral :: legacy_octalIntegerLiteral
     // DecimalIntegerLiteral :: NonOctalDecimalIntegerLiteral
     // * It is a Syntax Error if the source text matched by this production is strict mode code.
@@ -254,7 +262,10 @@ fn non_octal_decimal_escape_sequence(span: Span) -> OxcDiagnostic {
         .with_label(span)
 }
 
-pub fn check_string_literal(lit: &StringLiteral, ctx: &SemanticBuilder<'_>) {
+pub fn check_string_literal<const WITH_CFG: bool>(
+    lit: &StringLiteral,
+    ctx: &SemanticBuilder<'_, WITH_CFG>,
+) {
     // 12.9.4.1 Static Semantics: Early Errors
     // EscapeSequence ::
     //   legacy_octalEscapeSequence
@@ -293,7 +304,10 @@ fn illegal_use_strict(span: Span) -> OxcDiagnostic {
 
 // It is a Syntax Error if FunctionBodyContainsUseStrict of AsyncFunctionBody is true and IsSimpleParameterList of FormalParameters is false.
 // background: https://humanwhocodes.com/blog/2016/10/the-ecmascript-2016-change-you-probably-dont-know/
-pub fn check_directive(directive: &Directive, ctx: &SemanticBuilder<'_>) {
+pub fn check_directive<const WITH_CFG: bool>(
+    directive: &Directive,
+    ctx: &SemanticBuilder<'_, WITH_CFG>,
+) {
     if directive.directive != "use strict" {
         return;
     }
@@ -322,10 +336,10 @@ fn module_code(x0: &str, span1: Span) -> OxcDiagnostic {
     OxcDiagnostic::error(format!("Cannot use {x0} outside a module")).with_label(span1)
 }
 
-pub fn check_module_declaration<'a>(
+pub fn check_module_declaration<'a, const WITH_CFG: bool>(
     decl: &ModuleDeclaration,
     node: &AstNode<'a>,
-    ctx: &SemanticBuilder<'a>,
+    ctx: &SemanticBuilder<'a, WITH_CFG>,
 ) {
     // It is ambiguous between script and module for `TypeScript`, skipping this check for now.
     // Basically we need to "upgrade" from script to module if we see any module syntax inside the
@@ -373,7 +387,11 @@ fn import_meta(span: Span) -> OxcDiagnostic {
         .with_label(span)
 }
 
-pub fn check_meta_property<'a>(prop: &MetaProperty, node: &AstNode<'a>, ctx: &SemanticBuilder<'a>) {
+pub fn check_meta_property<'a, const WITH_CFG: bool>(
+    prop: &MetaProperty,
+    node: &AstNode<'a>,
+    ctx: &SemanticBuilder<'a, WITH_CFG>,
+) {
     match prop.meta.name.as_str() {
         "import" => {
             if prop.property.name == "meta" && ctx.source_type.is_script() {
@@ -417,10 +435,10 @@ fn function_declaration_non_strict(span: Span) -> OxcDiagnostic {
 .with_label(span)
 }
 
-pub fn check_function_declaration<'a>(
+pub fn check_function_declaration<'a, const WITH_CFG: bool>(
     stmt: &Statement<'a>,
     is_if_stmt_or_labeled_stmt: bool,
-    ctx: &SemanticBuilder<'a>,
+    ctx: &SemanticBuilder<'a, WITH_CFG>,
 ) {
     // Function declaration not allowed in statement position
     if let Statement::FunctionDeclaration(decl) = stmt {
@@ -433,10 +451,10 @@ pub fn check_function_declaration<'a>(
 }
 
 // It is a Syntax Error if IsLabelledFunction(Statement) is true.
-pub fn check_function_declaration_in_labeled_statement<'a>(
+pub fn check_function_declaration_in_labeled_statement<'a, const WITH_CFG: bool>(
     body: &Statement<'a>,
     node: &AstNode<'a>,
-    ctx: &SemanticBuilder<'a>,
+    ctx: &SemanticBuilder<'a, WITH_CFG>,
 ) {
     if let Statement::FunctionDeclaration(decl) = body {
         if ctx.strict_mode() {
@@ -465,9 +483,9 @@ pub fn check_function_declaration_in_labeled_statement<'a>(
 
 // It is a Syntax Error if any element of the LexicallyDeclaredNames of
 // StatementList also occurs in the VarDeclaredNames of StatementList.
-pub fn check_variable_declarator_redeclaration(
+pub fn check_variable_declarator_redeclaration<const WITH_CFG: bool>(
     decl: &VariableDeclarator,
-    ctx: &SemanticBuilder<'_>,
+    ctx: &SemanticBuilder<'_, WITH_CFG>,
 ) {
     if decl.kind != VariableDeclarationKind::Var
         || ctx.current_scope_flags().intersects(ScopeFlags::Top | ScopeFlags::Function)
@@ -491,7 +509,10 @@ pub fn check_variable_declarator_redeclaration(
 // unless the source text matched by this production is not strict mode code
 // and the duplicate entries are only bound by FunctionDeclarations.
 // https://tc39.es/ecma262/#sec-block-level-function-declarations-web-legacy-compatibility-semantics
-pub fn check_function_redeclaration(func: &Function, ctx: &SemanticBuilder<'_>) {
+pub fn check_function_redeclaration<const WITH_CFG: bool>(
+    func: &Function,
+    ctx: &SemanticBuilder<'_, WITH_CFG>,
+) {
     let Some(id) = &func.id else { return };
     let symbol_id = id.symbol_id();
 
@@ -530,7 +551,10 @@ pub fn check_function_redeclaration(func: &Function, ctx: &SemanticBuilder<'_>) 
     ctx.error(redeclaration(&id.name, prev.span, id.span));
 }
 
-pub fn check_class_redeclaration(class: &Class, ctx: &SemanticBuilder<'_>) {
+pub fn check_class_redeclaration<const WITH_CFG: bool>(
+    class: &Class,
+    ctx: &SemanticBuilder<'_, WITH_CFG>,
+) {
     let Some(id) = &class.id else { return };
     let symbol_id = id.symbol_id();
 
@@ -552,7 +576,10 @@ fn reg_exp_flag_u_and_v(span: Span) -> OxcDiagnostic {
     .with_label(span)
 }
 
-pub fn check_regexp_literal(lit: &RegExpLiteral, ctx: &SemanticBuilder<'_>) {
+pub fn check_regexp_literal<const WITH_CFG: bool>(
+    lit: &RegExpLiteral,
+    ctx: &SemanticBuilder<'_, WITH_CFG>,
+) {
     let flags = lit.regex.flags;
     if flags.contains(RegExpFlags::U | RegExpFlags::V) {
         ctx.error(reg_exp_flag_u_and_v(lit.span));
@@ -563,13 +590,19 @@ fn with_statement(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::error("'with' statements are not allowed").with_label(span)
 }
 
-pub fn check_with_statement(stmt: &WithStatement, ctx: &SemanticBuilder<'_>) {
+pub fn check_with_statement<const WITH_CFG: bool>(
+    stmt: &WithStatement,
+    ctx: &SemanticBuilder<'_, WITH_CFG>,
+) {
     if ctx.strict_mode() || ctx.source_type.is_typescript() {
         ctx.error(with_statement(Span::new(stmt.span.start, stmt.span.start + 4)));
     }
 }
 
-pub fn check_switch_statement<'a>(stmt: &SwitchStatement<'a>, ctx: &SemanticBuilder<'a>) {
+pub fn check_switch_statement<'a, const WITH_CFG: bool>(
+    stmt: &SwitchStatement<'a>,
+    ctx: &SemanticBuilder<'a, WITH_CFG>,
+) {
     let mut previous_default: Option<Span> = None;
     for case in &stmt.cases {
         if case.test.is_none() {
@@ -604,10 +637,10 @@ fn invalid_break(span: Span) -> OxcDiagnostic {
 .with_label(span)
 }
 
-pub fn check_break_statement<'a>(
+pub fn check_break_statement<'a, const WITH_CFG: bool>(
     stmt: &BreakStatement,
     node: &AstNode<'a>,
-    ctx: &SemanticBuilder<'a>,
+    ctx: &SemanticBuilder<'a, WITH_CFG>,
 ) {
     // It is a Syntax Error if this BreakStatement is not nested, directly or indirectly (but not crossing function or static initialization block boundaries), within an IterationStatement or a SwitchStatement.
     for node_id in ctx.nodes.ancestor_ids(node.id()).skip(1) {
@@ -650,10 +683,10 @@ fn invalid_continue(span: Span) -> OxcDiagnostic {
 .with_label(span)
 }
 
-pub fn check_continue_statement<'a>(
+pub fn check_continue_statement<'a, const WITH_CFG: bool>(
     stmt: &ContinueStatement,
     node: &AstNode<'a>,
-    ctx: &SemanticBuilder<'a>,
+    ctx: &SemanticBuilder<'a, WITH_CFG>,
 ) {
     // It is a Syntax Error if this ContinueStatement is not nested, directly or indirectly (but not crossing function or static initialization block boundaries), within an IterationStatement.
     for node_id in ctx.nodes.ancestor_ids(node.id()).skip(1) {
@@ -704,10 +737,10 @@ fn label_redeclaration(x0: &str, span1: Span, span2: Span) -> OxcDiagnostic {
     ])
 }
 
-pub fn check_labeled_statement<'a>(
+pub fn check_labeled_statement<'a, const WITH_CFG: bool>(
     stmt: &LabeledStatement,
     node: &AstNode<'a>,
-    ctx: &SemanticBuilder<'a>,
+    ctx: &SemanticBuilder<'a, WITH_CFG>,
 ) {
     for node_id in ctx.nodes.ancestor_ids(node.id()).skip(1) {
         match ctx.nodes.kind(node_id) {
@@ -738,10 +771,10 @@ fn unexpected_initializer_in_for_loop_head(x0: &str, span1: Span) -> OxcDiagnost
         .with_label(span1)
 }
 
-pub fn check_for_statement_left(
+pub fn check_for_statement_left<const WITH_CFG: bool>(
     left: &ForStatementLeft,
     is_for_in: bool,
-    ctx: &SemanticBuilder<'_>,
+    ctx: &SemanticBuilder<'_, WITH_CFG>,
 ) {
     let ForStatementLeft::VariableDeclaration(decl) = left else { return };
 
@@ -780,7 +813,11 @@ fn require_class_name(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::error("A class name is required.").with_label(span)
 }
 
-pub fn check_class(class: &Class, node: &AstNode<'_>, ctx: &SemanticBuilder<'_>) {
+pub fn check_class<const WITH_CFG: bool>(
+    class: &Class,
+    node: &AstNode<'_>,
+    ctx: &SemanticBuilder<'_, WITH_CFG>,
+) {
     check_private_identifier(ctx);
 
     if class.is_declaration()
@@ -820,7 +857,10 @@ fn setter_with_rest_parameter(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::error("A 'set' accessor cannot have rest parameter.").with_label(span)
 }
 
-fn check_setter(function: &Function<'_>, ctx: &SemanticBuilder<'_>) {
+fn check_setter<const WITH_CFG: bool>(
+    function: &Function<'_>,
+    ctx: &SemanticBuilder<'_, WITH_CFG>,
+) {
     function.params.rest.as_ref().map_or_else(
         || {
             if function.params.parameters_count() != 1 {
@@ -837,13 +877,19 @@ fn getter_parameters(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::error("A 'get' accessor must not have any formal parameters.").with_label(span)
 }
 
-fn check_getter(function: &Function<'_>, ctx: &SemanticBuilder<'_>) {
+fn check_getter<const WITH_CFG: bool>(
+    function: &Function<'_>,
+    ctx: &SemanticBuilder<'_, WITH_CFG>,
+) {
     if !function.params.items.is_empty() {
         ctx.error(getter_parameters(function.params.span));
     }
 }
 
-pub fn check_method_definition(method: &MethodDefinition<'_>, ctx: &SemanticBuilder<'_>) {
+pub fn check_method_definition<const WITH_CFG: bool>(
+    method: &MethodDefinition<'_>,
+    ctx: &SemanticBuilder<'_, WITH_CFG>,
+) {
     match method.kind {
         MethodDefinitionKind::Set => check_setter(&method.value, ctx),
         MethodDefinitionKind::Get => check_getter(&method.value, ctx),
@@ -870,7 +916,11 @@ fn unexpected_super_reference(span: Span) -> OxcDiagnostic {
 .with_label(span)
 }
 
-pub fn check_super<'a>(sup: &Super, node: &AstNode<'a>, ctx: &SemanticBuilder<'a>) {
+pub fn check_super<'a, const WITH_CFG: bool>(
+    sup: &Super,
+    node: &AstNode<'a>,
+    ctx: &SemanticBuilder<'a, WITH_CFG>,
+) {
     let super_call_span = match ctx.nodes.parent_kind(node.id()) {
         Some(AstKind::CallExpression(expr)) => Some(expr.span),
         Some(AstKind::NewExpression(expr)) => Some(expr.span),
@@ -963,7 +1013,10 @@ pub fn check_super<'a>(sup: &Super, node: &AstNode<'a>, ctx: &SemanticBuilder<'a
     }
 }
 
-pub fn check_object_property(prop: &ObjectProperty, ctx: &SemanticBuilder<'_>) {
+pub fn check_object_property<const WITH_CFG: bool>(
+    prop: &ObjectProperty,
+    ctx: &SemanticBuilder<'_, WITH_CFG>,
+) {
     if let Expression::FunctionExpression(function) = &prop.value {
         match prop.kind {
             PropertyKind::Set => check_setter(function, ctx),
@@ -977,7 +1030,10 @@ fn assignment_is_not_simple(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::error("Invalid left-hand side in assignment").with_label(span)
 }
 
-pub fn check_assignment_expression(assign_expr: &AssignmentExpression, ctx: &SemanticBuilder<'_>) {
+pub fn check_assignment_expression<const WITH_CFG: bool>(
+    assign_expr: &AssignmentExpression,
+    ctx: &SemanticBuilder<'_, WITH_CFG>,
+) {
     // AssignmentExpression :
     //     LeftHandSideExpression AssignmentOperator AssignmentExpression
     //     LeftHandSideExpression &&= AssignmentExpression
@@ -991,7 +1047,10 @@ pub fn check_assignment_expression(assign_expr: &AssignmentExpression, ctx: &Sem
     }
 }
 
-pub fn check_object_expression(obj_expr: &ObjectExpression, ctx: &SemanticBuilder<'_>) {
+pub fn check_object_expression<const WITH_CFG: bool>(
+    obj_expr: &ObjectExpression,
+    ctx: &SemanticBuilder<'_, WITH_CFG>,
+) {
     // ObjectLiteral : { PropertyDefinitionList }
     // It is a Syntax Error if PropertyNameList of PropertyDefinitionList contains any duplicate entries for "__proto__"
     // and at least two of those entries were obtained from productions of the form PropertyDefinition : PropertyName : AssignmentExpression
@@ -1019,7 +1078,10 @@ fn super_private(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::error("Private fields cannot be accessed on super").with_label(span)
 }
 
-pub fn check_member_expression(member_expr: &MemberExpression, ctx: &SemanticBuilder<'_>) {
+pub fn check_member_expression<const WITH_CFG: bool>(
+    member_expr: &MemberExpression,
+    ctx: &SemanticBuilder<'_, WITH_CFG>,
+) {
     if let MemberExpression::PrivateFieldExpression(private_expr) = member_expr {
         // `super.#m`
         if private_expr.object.is_super() {
@@ -1037,7 +1099,10 @@ fn delete_private_field(span: Span) -> OxcDiagnostic {
         .with_label(span)
 }
 
-pub fn check_unary_expression(unary_expr: &UnaryExpression, ctx: &SemanticBuilder<'_>) {
+pub fn check_unary_expression<const WITH_CFG: bool>(
+    unary_expr: &UnaryExpression,
+    ctx: &SemanticBuilder<'_, WITH_CFG>,
+) {
     // https://tc39.es/ecma262/#sec-delete-operator-static-semantics-early-errors
     if unary_expr.operator == UnaryOperator::Delete {
         match unary_expr.argument.get_inner_expression() {
@@ -1057,7 +1122,10 @@ pub fn check_unary_expression(unary_expr: &UnaryExpression, ctx: &SemanticBuilde
     }
 }
 
-fn is_in_formal_parameters<'a>(node: &AstNode<'a>, ctx: &SemanticBuilder<'a>) -> bool {
+fn is_in_formal_parameters<'a, const WITH_CFG: bool>(
+    node: &AstNode<'a>,
+    ctx: &SemanticBuilder<'a, WITH_CFG>,
+) -> bool {
     for node_id in ctx.nodes.ancestor_ids(node.id()).skip(1) {
         match ctx.nodes.kind(node_id) {
             AstKind::FormalParameter(_) => return true,
@@ -1075,10 +1143,10 @@ fn await_or_yield_in_parameter(x0: &str, span1: Span) -> OxcDiagnostic {
         .with_label(span1.label(format!("{x0} expression not allowed in formal parameter")))
 }
 
-pub fn check_await_expression<'a>(
+pub fn check_await_expression<'a, const WITH_CFG: bool>(
     expr: &AwaitExpression,
     node: &AstNode<'a>,
-    ctx: &SemanticBuilder<'a>,
+    ctx: &SemanticBuilder<'a, WITH_CFG>,
 ) {
     if is_in_formal_parameters(node, ctx) {
         ctx.error(await_or_yield_in_parameter("await", expr.span));
@@ -1090,10 +1158,10 @@ pub fn check_await_expression<'a>(
     }
 }
 
-pub fn check_yield_expression<'a>(
+pub fn check_yield_expression<'a, const WITH_CFG: bool>(
     expr: &YieldExpression,
     node: &AstNode<'a>,
-    ctx: &SemanticBuilder<'a>,
+    ctx: &SemanticBuilder<'a, WITH_CFG>,
 ) {
     if is_in_formal_parameters(node, ctx) {
         ctx.error(await_or_yield_in_parameter("yield", expr.span));

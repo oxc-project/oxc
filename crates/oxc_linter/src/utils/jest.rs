@@ -324,7 +324,7 @@ mod test {
         let source_type = SourceType::default();
         let parser_ret = Parser::new(&allocator, "", source_type).parse();
         let semantic_ret =
-            SemanticBuilder::new().with_cfg(true).build(&parser_ret.program).semantic;
+            SemanticBuilder::<false>::new().with_cfg(true).build(&parser_ret.program).semantic;
         let semantic_ret = Rc::new(semantic_ret);
 
         let build_ctx = |path: &'static str| {

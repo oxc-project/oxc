@@ -865,7 +865,7 @@ pub fn module_runner_transform(
     let mut program = parser_ret.program;
 
     let SemanticBuilderReturn { semantic, errors } =
-        SemanticBuilder::new().with_check_syntax_error(true).build(&program);
+        SemanticBuilder::<false>::new().with_check_syntax_error(true).build(&program);
     parser_ret.errors.extend(errors);
 
     let scoping = semantic.into_scoping();

@@ -175,8 +175,11 @@ pub trait CompilerInterface {
 
         // Symbols and scopes are out of sync.
         if inject_options.is_some() || define_options.is_some() {
-            scoping =
-                SemanticBuilder::new().with_stats(stats).build(&program).semantic.into_scoping();
+            scoping = SemanticBuilder::<false>::new()
+                .with_stats(stats)
+                .build(&program)
+                .semantic
+                .into_scoping();
         }
 
         if let Some(options) = inject_options {
@@ -190,7 +193,7 @@ pub trait CompilerInterface {
             if self.compress_options().is_none() {
                 // Rebuild semantic because define plugin changed the AST.
                 // DCE assumes semantic data to be correct, it will crash otherwise.
-                scoping = SemanticBuilder::new()
+                scoping = SemanticBuilder::<false>::new()
                     .with_stats(stats)
                     .build(&program)
                     .semantic
@@ -228,7 +231,7 @@ pub trait CompilerInterface {
     }
 
     fn semantic<'a>(&self, program: &'a Program<'a>) -> SemanticBuilderReturn<'a> {
-        let mut builder = SemanticBuilder::new();
+        let mut builder = SemanticBuilder::<false>::new();
 
         if self.transform_options().is_some() {
             // Estimate transformer will triple scopes, symbols, references

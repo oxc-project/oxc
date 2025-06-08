@@ -865,7 +865,7 @@ impl<'l> Runtime<'l> {
             return Err(if ret.is_flow_language { vec![] } else { ret.errors });
         }
 
-        let semantic_ret = SemanticBuilder::new()
+        let semantic_ret = SemanticBuilder::<true>::new()
             .with_cfg(true)
             .with_scope_tree_child_ids(true)
             .with_build_jsdoc(true)

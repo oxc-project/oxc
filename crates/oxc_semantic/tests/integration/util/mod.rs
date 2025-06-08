@@ -167,7 +167,7 @@ impl<'a> SemanticTester<'a> {
                 .collect::<String>()
         );
 
-        SemanticBuilder::new()
+        SemanticBuilder::<false>::new()
             .with_check_syntax_error(true)
             .with_cfg(self.cfg)
             .with_scope_tree_child_ids(self.scope_tree_child_ids)

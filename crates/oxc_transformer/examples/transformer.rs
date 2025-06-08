@@ -42,7 +42,7 @@ fn main() {
 
     let mut program = ret.program;
 
-    let ret = SemanticBuilder::new()
+    let ret = SemanticBuilder::<false>::new()
         // Estimate transformer will triple scopes, symbols, references
         .with_excess_capacity(2.0)
         .build(&program);

@@ -34,7 +34,7 @@ fn main() -> std::io::Result<()> {
 
     let program = parser_ret.program;
 
-    let semantic = SemanticBuilder::new()
+    let semantic = SemanticBuilder::<false>::new()
         // Enable additional syntax checks not performed by the parser
         .with_check_syntax_error(true)
         .build(&program);

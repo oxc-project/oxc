@@ -183,7 +183,7 @@ impl Test262RuntimeCase {
         let mut program = Parser::new(&allocator, source_text, source_type).parse().program;
 
         if transform {
-            let scoping = SemanticBuilder::new().build(&program).semantic.into_scoping();
+            let scoping = SemanticBuilder::<false>::new().build(&program).semantic.into_scoping();
             let mut options = TransformOptions::enable_all();
             options.jsx.refresh = None;
             options.helper_loader.mode = HelperLoaderMode::External;

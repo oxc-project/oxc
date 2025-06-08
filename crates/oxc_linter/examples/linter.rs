@@ -29,7 +29,7 @@ fn main() -> std::io::Result<()> {
         return Ok(());
     }
 
-    let semantic_ret = SemanticBuilder::new().build(&ret.program);
+    let semantic_ret = SemanticBuilder::<false>::new().build(&ret.program);
 
     let mut errors: Vec<OxcDiagnostic> = vec![];
 

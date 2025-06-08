@@ -17,7 +17,7 @@ fn test(source_text: &str, expected: &str, config: InjectGlobalVariablesConfig) 
     let allocator = Allocator::default();
     let ret = Parser::new(&allocator, source_text, source_type).parse();
     let mut program = ret.program;
-    let scoping = SemanticBuilder::new().build(&program).semantic.into_scoping();
+    let scoping = SemanticBuilder::<false>::new().build(&program).semantic.into_scoping();
     let _ = InjectGlobalVariables::new(&allocator, config).build(scoping, &mut program);
     let result = Codegen::new()
         .with_options(CodegenOptions { single_quote: true, ..CodegenOptions::default() })

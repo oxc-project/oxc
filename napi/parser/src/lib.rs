@@ -82,7 +82,8 @@ fn parse_with_return(filename: &str, source_text: String, options: &ParserOption
     let mut diagnostics = ret.errors;
 
     if options.show_semantic_errors == Some(true) {
-        let semantic_ret = SemanticBuilder::new().with_check_syntax_error(true).build(&program);
+        let semantic_ret =
+            SemanticBuilder::<false>::new().with_check_syntax_error(true).build(&program);
         diagnostics.extend(semantic_ret.errors);
     }
 

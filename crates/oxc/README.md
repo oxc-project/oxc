@@ -99,7 +99,7 @@ if panicked {
 let SemanticBuilderReturn {
     semantic,
     errors: semantic_errors,
-} = SemanticBuilder::new()
+} = SemanticBuilder::<false>::new()
     .with_check_syntax_error(true) // Enable extra syntax error checking
     .with_build_jsdoc(true)        // Enable JSDoc parsing
     .with_cfg(true)                // Build a Control Flow Graph

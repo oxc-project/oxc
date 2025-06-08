@@ -13,7 +13,7 @@ use typescript as ts;
 
 use crate::{AstNode, builder::SemanticBuilder};
 
-pub fn check<'a>(node: &AstNode<'a>, ctx: &SemanticBuilder<'a>) {
+pub fn check<'a, const WITH_CFG: bool>(node: &AstNode<'a>, ctx: &SemanticBuilder<'a, WITH_CFG>) {
     let kind = node.kind();
 
     let is_typescript = ctx.source_type.is_typescript();
@@ -140,7 +140,7 @@ fn undefined_export(x0: &str, span1: Span) -> OxcDiagnostic {
 
 /// It is a Syntax Error if any element of the ExportedBindings of ModuleItemList
 /// does not also occur in either the VarDeclaredNames of ModuleItemList, or the LexicallyDeclaredNames of ModuleItemList.
-pub fn check_unresolved_exports(ctx: &SemanticBuilder<'_>) {
+pub fn check_unresolved_exports<const WITH_CFG: bool>(ctx: &SemanticBuilder<'_, WITH_CFG>) {
     for reference_ids in ctx.unresolved_references.root().values() {
         for reference_id in reference_ids {
             let reference = ctx.scoping.get_reference(*reference_id);

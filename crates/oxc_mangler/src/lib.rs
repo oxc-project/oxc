@@ -177,7 +177,7 @@ impl Mangler {
     #[must_use]
     pub fn build(self, program: &Program<'_>) -> Scoping {
         let mut semantic =
-            SemanticBuilder::new().with_scope_tree_child_ids(true).build(program).semantic;
+            SemanticBuilder::<false>::new().with_scope_tree_child_ids(true).build(program).semantic;
         self.build_with_semantic(&mut semantic, program);
         semantic.into_scoping()
     }

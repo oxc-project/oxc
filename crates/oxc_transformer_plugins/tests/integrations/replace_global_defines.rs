@@ -14,10 +14,10 @@ pub fn test(source_text: &str, expected: &str, config: ReplaceGlobalDefinesConfi
     let allocator = Allocator::default();
     let ret = Parser::new(&allocator, source_text, source_type).parse();
     let mut program = ret.program;
-    let scoping = SemanticBuilder::new().build(&program).semantic.into_scoping();
+    let scoping = SemanticBuilder::<false>::new().build(&program).semantic.into_scoping();
     let _ = ReplaceGlobalDefines::new(&allocator, config).build(scoping, &mut program);
     // Run DCE, to align pipeline in crates/oxc/src/compiler.rs
-    let scoping = SemanticBuilder::new().build(&program).semantic.into_scoping();
+    let scoping = SemanticBuilder::<false>::new().build(&program).semantic.into_scoping();
     Compressor::new(&allocator, CompressOptions::default())
         .dead_code_elimination_with_scoping(scoping, &mut program);
     let result = Codegen::new()
@@ -277,7 +277,7 @@ log(__MEMBER__);
     let allocator = Allocator::default();
     let ret = Parser::new(&allocator, source_text, source_type).parse();
     let mut program = ret.program;
-    let scoping = SemanticBuilder::new().build(&program).semantic.into_scoping();
+    let scoping = SemanticBuilder::<false>::new().build(&program).semantic.into_scoping();
     let _ = ReplaceGlobalDefines::new(&allocator, config).build(scoping, &mut program);
     let result = Codegen::new()
         .with_options(CodegenOptions {

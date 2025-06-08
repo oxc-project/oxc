@@ -19,7 +19,7 @@ fn bench_linter(criterion: &mut Criterion) {
         let allocator = Allocator::default();
         let ret = Parser::new(&allocator, source_text, source_type).parse();
         let path = Path::new("");
-        let semantic_ret = SemanticBuilder::new()
+        let semantic_ret = SemanticBuilder::<false>::new()
             .with_build_jsdoc(true)
             .with_scope_tree_child_ids(true)
             .with_cfg(true)

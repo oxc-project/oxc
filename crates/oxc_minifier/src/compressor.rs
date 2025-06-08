@@ -22,7 +22,7 @@ impl<'a> Compressor<'a> {
     }
 
     pub fn build(self, program: &mut Program<'a>) {
-        let scoping = SemanticBuilder::new().build(program).semantic.into_scoping();
+        let scoping = SemanticBuilder::<false>::new().build(program).semantic.into_scoping();
         self.build_with_scoping(scoping, program);
     }
 
@@ -37,7 +37,7 @@ impl<'a> Compressor<'a> {
     }
 
     pub fn dead_code_elimination(self, program: &mut Program<'a>) {
-        let scoping = SemanticBuilder::new().build(program).semantic.into_scoping();
+        let scoping = SemanticBuilder::<false>::new().build(program).semantic.into_scoping();
         self.dead_code_elimination_with_scoping(scoping, program);
     }
 

@@ -13,13 +13,13 @@ use oxc_syntax::{
 
 use crate::SemanticBuilder;
 
-pub trait Binder<'a> {
+pub trait Binder<'a, const WITH_CFG: bool> {
     #[expect(unused_variables)]
-    fn bind(&self, builder: &mut SemanticBuilder<'a>) {}
+    fn bind(&self, builder: &mut SemanticBuilder<'a, WITH_CFG>) {}
 }
 
-impl<'a> Binder<'a> for VariableDeclarator<'a> {
-    fn bind(&self, builder: &mut SemanticBuilder<'a>) {
+impl<'a, const WITH_CFG: bool> Binder<'a, WITH_CFG> for VariableDeclarator<'a> {
+    fn bind(&self, builder: &mut SemanticBuilder<'a, WITH_CFG>) {
         let is_declare = builder
             .nodes
             .parent_kind(builder.current_node_id)
@@ -124,8 +124,8 @@ impl<'a> Binder<'a> for VariableDeclarator<'a> {
     }
 }
 
-impl<'a> Binder<'a> for Class<'a> {
-    fn bind(&self, builder: &mut SemanticBuilder) {
+impl<'a, const WITH_CFG: bool> Binder<'a, WITH_CFG> for Class<'a> {
+    fn bind(&self, builder: &mut SemanticBuilder<'_, WITH_CFG>) {
         let includes = if self.declare {
             SymbolFlags::Class | SymbolFlags::Ambient
         } else {
@@ -139,7 +139,10 @@ impl<'a> Binder<'a> for Class<'a> {
 }
 
 /// Check for Annex B `if (foo) function a() {} else function b() {}`
-fn is_function_part_of_if_statement(function: &Function, builder: &SemanticBuilder) -> bool {
+fn is_function_part_of_if_statement<const WITH_CFG: bool>(
+    function: &Function,
+    builder: &SemanticBuilder<'_, WITH_CFG>,
+) -> bool {
     if builder.current_scope_flags().is_strict_mode() {
         return false;
     }
@@ -160,8 +163,8 @@ fn is_function_part_of_if_statement(function: &Function, builder: &SemanticBuild
     false
 }
 
-impl<'a> Binder<'a> for Function<'a> {
-    fn bind(&self, builder: &mut SemanticBuilder) {
+impl<'a, const WITH_CFG: bool> Binder<'a, WITH_CFG> for Function<'a> {
+    fn bind(&self, builder: &mut SemanticBuilder<'_, WITH_CFG>) {
         let includes = if self.declare {
             SymbolFlags::Function | SymbolFlags::Ambient
         } else {
@@ -213,9 +216,9 @@ impl<'a> Binder<'a> for Function<'a> {
     }
 }
 
-impl<'a> Binder<'a> for BindingRestElement<'a> {
+impl<'a, const WITH_CFG: bool> Binder<'a, WITH_CFG> for BindingRestElement<'a> {
     // Binds the FormalParameters's rest of a function or method.
-    fn bind(&self, builder: &mut SemanticBuilder) {
+    fn bind(&self, builder: &mut SemanticBuilder<'_, WITH_CFG>) {
         let parent_kind = builder.nodes.parent_kind(builder.current_node_id).unwrap();
         let AstKind::FormalParameters(parameters) = parent_kind else {
             return;
@@ -235,9 +238,9 @@ impl<'a> Binder<'a> for BindingRestElement<'a> {
     }
 }
 
-impl<'a> Binder<'a> for FormalParameter<'a> {
+impl<'a, const WITH_CFG: bool> Binder<'a, WITH_CFG> for FormalParameter<'a> {
     // Binds the FormalParameter of a function or method.
-    fn bind(&self, builder: &mut SemanticBuilder) {
+    fn bind(&self, builder: &mut SemanticBuilder<'_, WITH_CFG>) {
         let parent_kind = builder.nodes.parent_kind(builder.current_node_id).unwrap();
         let AstKind::FormalParameters(parameters) = parent_kind else { unreachable!() };
 
@@ -274,8 +277,8 @@ impl<'a> Binder<'a> for FormalParameter<'a> {
     }
 }
 
-impl<'a> Binder<'a> for CatchParameter<'a> {
-    fn bind(&self, builder: &mut SemanticBuilder) {
+impl<'a, const WITH_CFG: bool> Binder<'a, WITH_CFG> for CatchParameter<'a> {
+    fn bind(&self, builder: &mut SemanticBuilder<'_, WITH_CFG>) {
         let current_scope_id = builder.current_scope_id;
         // https://tc39.es/ecma262/#sec-variablestatements-in-catch-blocks
         // It is a Syntax Error if any element of the BoundNames of CatchParameter also occurs in the VarDeclaredNames of Block
@@ -299,10 +302,10 @@ impl<'a> Binder<'a> for CatchParameter<'a> {
     }
 }
 
-fn declare_symbol_for_import_specifier(
+fn declare_symbol_for_import_specifier<const WITH_CFG: bool>(
     ident: &BindingIdentifier,
     is_type: bool,
-    builder: &mut SemanticBuilder,
+    builder: &mut SemanticBuilder<'_, WITH_CFG>,
 ) {
     let includes = if is_type
         || builder.nodes.parent_kind(builder.current_node_id).is_some_and(
@@ -322,32 +325,32 @@ fn declare_symbol_for_import_specifier(
     ident.symbol_id.set(Some(symbol_id));
 }
 
-impl<'a> Binder<'a> for ImportSpecifier<'a> {
-    fn bind(&self, builder: &mut SemanticBuilder) {
+impl<'a, const WITH_CFG: bool> Binder<'a, WITH_CFG> for ImportSpecifier<'a> {
+    fn bind(&self, builder: &mut SemanticBuilder<'_, WITH_CFG>) {
         declare_symbol_for_import_specifier(&self.local, self.import_kind.is_type(), builder);
     }
 }
 
-impl<'a> Binder<'a> for ImportDefaultSpecifier<'a> {
-    fn bind(&self, builder: &mut SemanticBuilder) {
+impl<'a, const WITH_CFG: bool> Binder<'a, WITH_CFG> for ImportDefaultSpecifier<'a> {
+    fn bind(&self, builder: &mut SemanticBuilder<'_, WITH_CFG>) {
         declare_symbol_for_import_specifier(&self.local, false, builder);
     }
 }
 
-impl<'a> Binder<'a> for ImportNamespaceSpecifier<'a> {
-    fn bind(&self, builder: &mut SemanticBuilder) {
+impl<'a, const WITH_CFG: bool> Binder<'a, WITH_CFG> for ImportNamespaceSpecifier<'a> {
+    fn bind(&self, builder: &mut SemanticBuilder<'_, WITH_CFG>) {
         declare_symbol_for_import_specifier(&self.local, false, builder);
     }
 }
 
-impl<'a> Binder<'a> for TSImportEqualsDeclaration<'a> {
-    fn bind(&self, builder: &mut SemanticBuilder) {
+impl<'a, const WITH_CFG: bool> Binder<'a, WITH_CFG> for TSImportEqualsDeclaration<'a> {
+    fn bind(&self, builder: &mut SemanticBuilder<'_, WITH_CFG>) {
         declare_symbol_for_import_specifier(&self.id, false, builder);
     }
 }
 
-impl<'a> Binder<'a> for TSTypeAliasDeclaration<'a> {
-    fn bind(&self, builder: &mut SemanticBuilder) {
+impl<'a, const WITH_CFG: bool> Binder<'a, WITH_CFG> for TSTypeAliasDeclaration<'a> {
+    fn bind(&self, builder: &mut SemanticBuilder<'_, WITH_CFG>) {
         let includes = if self.declare {
             SymbolFlags::TypeAlias | SymbolFlags::Ambient
         } else {
@@ -363,8 +366,8 @@ impl<'a> Binder<'a> for TSTypeAliasDeclaration<'a> {
     }
 }
 
-impl<'a> Binder<'a> for TSInterfaceDeclaration<'a> {
-    fn bind(&self, builder: &mut SemanticBuilder) {
+impl<'a, const WITH_CFG: bool> Binder<'a, WITH_CFG> for TSInterfaceDeclaration<'a> {
+    fn bind(&self, builder: &mut SemanticBuilder<'_, WITH_CFG>) {
         let includes = if self.declare {
             SymbolFlags::Interface | SymbolFlags::Ambient
         } else {
@@ -380,8 +383,8 @@ impl<'a> Binder<'a> for TSInterfaceDeclaration<'a> {
     }
 }
 
-impl<'a> Binder<'a> for TSEnumDeclaration<'a> {
-    fn bind(&self, builder: &mut SemanticBuilder) {
+impl<'a, const WITH_CFG: bool> Binder<'a, WITH_CFG> for TSEnumDeclaration<'a> {
+    fn bind(&self, builder: &mut SemanticBuilder<'_, WITH_CFG>) {
         let is_const = self.r#const;
         let includes = if self.declare { SymbolFlags::Ambient } else { SymbolFlags::empty() };
         let (includes, excludes) = if is_const {
@@ -394,8 +397,8 @@ impl<'a> Binder<'a> for TSEnumDeclaration<'a> {
     }
 }
 
-impl<'a> Binder<'a> for TSEnumMember<'a> {
-    fn bind(&self, builder: &mut SemanticBuilder) {
+impl<'a, const WITH_CFG: bool> Binder<'a, WITH_CFG> for TSEnumMember<'a> {
+    fn bind(&self, builder: &mut SemanticBuilder<'_, WITH_CFG>) {
         builder.declare_symbol(
             self.span,
             self.id.static_name().as_str(),
@@ -405,8 +408,8 @@ impl<'a> Binder<'a> for TSEnumMember<'a> {
     }
 }
 
-impl<'a> Binder<'a> for TSModuleDeclaration<'a> {
-    fn bind(&self, builder: &mut SemanticBuilder<'a>) {
+impl<'a, const WITH_CFG: bool> Binder<'a, WITH_CFG> for TSModuleDeclaration<'a> {
+    fn bind(&self, builder: &mut SemanticBuilder<'a, WITH_CFG>) {
         // do not bind `global` for `declare global { ... }`
         if self.kind.is_global() {
             return;
@@ -445,16 +448,16 @@ impl ModuleInstanceState {
 /// Determines if a module is instantiated or not.
 ///
 /// Based on `https://github.com/microsoft/TypeScript/blob/15392346d05045742e653eab5c87538ff2a3c863/src/compiler/binder.ts#L342-L474`
-fn get_module_instance_state<'a>(
-    builder: &mut SemanticBuilder<'a>,
+fn get_module_instance_state<'a, const WITH_CFG: bool>(
+    builder: &mut SemanticBuilder<'a, WITH_CFG>,
     decl: &TSModuleDeclaration<'a>,
     current_node_id: NodeId,
 ) -> ModuleInstanceState {
     get_module_instance_state_impl(builder, decl, current_node_id, &mut Vec::new())
 }
 
-fn get_module_instance_state_impl<'a, 'b>(
-    builder: &mut SemanticBuilder<'a>,
+fn get_module_instance_state_impl<'a, 'b, const WITH_CFG: bool>(
+    builder: &mut SemanticBuilder<'a, WITH_CFG>,
     decl: &'b TSModuleDeclaration<'a>,
     current_node_id: NodeId,
     module_declaration_stmts: &mut Vec<&'b Statement<'a>>,
@@ -497,8 +500,8 @@ fn get_module_instance_state_impl<'a, 'b>(
     state
 }
 
-fn get_module_instance_state_for_statement<'a, 'b>(
-    builder: &mut SemanticBuilder<'a>,
+fn get_module_instance_state_for_statement<'a, 'b, const WITH_CFG: bool>(
+    builder: &mut SemanticBuilder<'a, WITH_CFG>,
     stmt: &'b Statement<'a>,
     current_node_id: NodeId,
     module_declaration_stmts: &mut Vec<&'b Statement<'a>>,
@@ -575,8 +578,8 @@ fn get_module_instance_state_for_statement<'a, 'b>(
 // whether they refer to a declaration that declared in the module block or not. And we can't use
 // `self.nodes.node(node_id)` to get the nested module block's statements since the child ModuleBlock
 // AstNode hasn't created yet.
-fn get_module_instance_state_for_alias_target<'a>(
-    builder: &mut SemanticBuilder<'a>,
+fn get_module_instance_state_for_alias_target<'a, const WITH_CFG: bool>(
+    builder: &mut SemanticBuilder<'a, WITH_CFG>,
     specifier: &ExportSpecifier<'a>,
     mut current_node_id: NodeId,
     module_declaration_stmts: &[&Statement<'a>],
@@ -684,8 +687,8 @@ fn get_module_instance_state_for_alias_target<'a>(
     ModuleInstanceState::Instantiated
 }
 
-impl<'a> Binder<'a> for TSTypeParameter<'a> {
-    fn bind(&self, builder: &mut SemanticBuilder) {
+impl<'a, const WITH_CFG: bool> Binder<'a, WITH_CFG> for TSTypeParameter<'a> {
+    fn bind(&self, builder: &mut SemanticBuilder<'_, WITH_CFG>) {
         let scope_id = if matches!(
             builder.nodes.parent_kind(builder.current_node_id),
             Some(AstKind::TSInferType(_))

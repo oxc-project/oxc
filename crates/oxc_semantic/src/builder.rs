@@ -39,9 +39,15 @@ use crate::{
 };
 
 macro_rules! control_flow {
-    ($self:ident, |$cfg:tt| $body:expr) => {
-        if let Some($cfg) = &mut $self.cfg { $body } else { Default::default() }
-    };
+    ($self:ident, $with_cfg:expr, |$cfg:tt| $body:expr) => {{
+        match $with_cfg {
+            true => {
+                let $cfg = &mut $self.cfg.as_mut().expect("cfg should be Some if WITH_CFG");
+                $body
+            }
+            false => Default::default(),
+        }
+    }};
 }
 
 /// Semantic Builder
@@ -52,7 +58,7 @@ macro_rules! control_flow {
 /// The main API is the [`build`] method.
 ///
 /// [`build`]: SemanticBuilder::build
-pub struct SemanticBuilder<'a> {
+pub struct SemanticBuilder<'a, const WITH_CFG: bool> {
     /// source code of the parsed program
     pub(crate) source_text: &'a str,
 
@@ -102,13 +108,7 @@ pub struct SemanticBuilderReturn<'a> {
     pub errors: Vec<OxcDiagnostic>,
 }
 
-impl Default for SemanticBuilder<'_> {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
-impl<'a> SemanticBuilder<'a> {
+impl<'a, const WITH_CFG: bool> SemanticBuilder<'a, WITH_CFG> {
     pub fn new() -> Self {
         let scoping = Scoping::default();
         let current_scope_id = scoping.root_scope_id();
@@ -311,7 +311,7 @@ impl<'a> SemanticBuilder<'a> {
             kind,
             self.current_scope_id,
             self.current_node_id,
-            control_flow!(self, |cfg| cfg.current_node_ix),
+            control_flow!(self, WITH_CFG, |cfg| cfg.current_node_ix),
             flags,
         );
         self.record_ast_node();
@@ -325,14 +325,14 @@ impl<'a> SemanticBuilder<'a> {
 
     #[inline]
     fn record_ast_nodes(&mut self) {
-        if self.cfg.is_some() {
+        if WITH_CFG && self.cfg.is_some() {
             self.ast_node_records.push(NodeId::DUMMY);
         }
     }
 
     #[inline]
     fn retrieve_recorded_ast_node(&mut self) -> Option<NodeId> {
-        if self.cfg.is_some() {
+        if WITH_CFG && self.cfg.is_some() {
             Some(self.ast_node_records.pop().expect("there is no ast node record to stop."))
         } else {
             None
@@ -344,7 +344,7 @@ impl<'a> SemanticBuilder<'a> {
         // The `self.cfg.is_some()` check here could be removed, since `ast_node_records` is empty
         // if CFG is disabled. But benchmarks showed removing the extra check is a perf regression.
         // <https://github.com/oxc-project/oxc/pull/4273>
-        if self.cfg.is_some() {
+        if WITH_CFG && self.cfg.is_some() {
             if let Some(record) = self.ast_node_records.last_mut() {
                 if *record == NodeId::DUMMY {
                     *record = self.current_node_id;
@@ -557,7 +557,7 @@ impl<'a> SemanticBuilder<'a> {
     }
 }
 
-impl<'a> Visit<'a> for SemanticBuilder<'a> {
+impl<'a, const WITH_CFG: bool> Visit<'a> for SemanticBuilder<'a, WITH_CFG> {
     // NB: Not called for `Program`
     fn enter_scope(&mut self, flags: ScopeFlags, scope_id: &Cell<Option<ScopeId>>) {
         let parent_scope_id = self.current_scope_id;
@@ -609,7 +609,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
     fn visit_program(&mut self, program: &Program<'a>) {
         let kind = AstKind::Program(self.alloc(program));
         /* cfg */
-        let error_harness = control_flow!(self, |cfg| {
+        let error_harness = control_flow!(self, WITH_CFG, |cfg| {
             let error_harness = cfg.attach_error_harness(ErrorEdgeKind::Implicit);
             let _program_basic_block = cfg.new_basic_block_normal();
             error_harness
@@ -624,7 +624,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         self.current_node_id = self.nodes.add_program_node(
             kind,
             self.current_scope_id,
-            control_flow!(self, |cfg| cfg.current_node_ix),
+            control_flow!(self, WITH_CFG, |cfg| cfg.current_node_ix),
             self.current_node_flags,
         );
 
@@ -651,7 +651,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         self.visit_statements(&program.body);
 
         /* cfg */
-        control_flow!(self, |cfg| cfg.release_error_harness(error_harness));
+        control_flow!(self, WITH_CFG, |cfg| cfg.release_error_harness(error_harness));
         /* cfg */
 
         // Don't call `leave_scope` here as `Program` is a special case - scope has no `parent_id`.
@@ -676,7 +676,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         }
 
         /* cfg */
-        control_flow!(self, |cfg| cfg
+        control_flow!(self, WITH_CFG, |cfg| cfg
             .append_break(node_id, stmt.label.as_ref().map(|it| it.name.as_str())));
         /* cfg */
 
@@ -761,7 +761,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         }
 
         /* cfg */
-        control_flow!(self, |cfg| cfg
+        control_flow!(self, WITH_CFG, |cfg| cfg
             .append_continue(node_id, stmt.label.as_ref().map(|it| it.name.as_str())));
         /* cfg */
 
@@ -773,22 +773,24 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         self.enter_node(kind);
 
         /* cfg */
-        let (before_do_while_stmt_graph_ix, start_body_graph_ix) = control_flow!(self, |cfg| {
-            let before_do_while_stmt_graph_ix = cfg.current_node_ix;
-            let start_body_graph_ix = cfg.new_basic_block_normal();
-            cfg.ctx(None).default().allow_break().allow_continue();
-            (before_do_while_stmt_graph_ix, start_body_graph_ix)
-        });
+        let (before_do_while_stmt_graph_ix, start_body_graph_ix) =
+            control_flow!(self, WITH_CFG, |cfg| {
+                let before_do_while_stmt_graph_ix = cfg.current_node_ix;
+                let start_body_graph_ix = cfg.new_basic_block_normal();
+                cfg.ctx(None).default().allow_break().allow_continue();
+                (before_do_while_stmt_graph_ix, start_body_graph_ix)
+            });
         /* cfg */
 
         self.visit_statement(&stmt.body);
 
         /* cfg - condition basic block */
-        let (after_body_graph_ix, start_of_condition_graph_ix) = control_flow!(self, |cfg| {
-            let after_body_graph_ix = cfg.current_node_ix;
-            let start_of_condition_graph_ix = cfg.new_basic_block_normal();
-            (after_body_graph_ix, start_of_condition_graph_ix)
-        });
+        let (after_body_graph_ix, start_of_condition_graph_ix) =
+            control_flow!(self, WITH_CFG, |cfg| {
+                let after_body_graph_ix = cfg.current_node_ix;
+                let start_of_condition_graph_ix = cfg.new_basic_block_normal();
+                (after_body_graph_ix, start_of_condition_graph_ix)
+            });
         /* cfg */
 
         self.record_ast_nodes();
@@ -796,7 +798,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         let test_node_id = self.retrieve_recorded_ast_node();
 
         /* cfg */
-        control_flow!(self, |cfg| {
+        control_flow!(self, WITH_CFG, |cfg| {
             cfg.append_condition_to(start_of_condition_graph_ix, test_node_id);
             let end_of_condition_graph_ix = cfg.current_node_ix;
 
@@ -833,7 +835,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         self.visit_expression(&expr.left);
 
         /* cfg  */
-        let (left_expr_end_ix, right_expr_start_ix) = control_flow!(self, |cfg| {
+        let (left_expr_end_ix, right_expr_start_ix) = control_flow!(self, WITH_CFG, |cfg| {
             let left_expr_end_ix = cfg.current_node_ix;
             let right_expr_start_ix = cfg.new_basic_block_normal();
             (left_expr_end_ix, right_expr_start_ix)
@@ -843,7 +845,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         self.visit_expression(&expr.right);
 
         /* cfg */
-        control_flow!(self, |cfg| {
+        control_flow!(self, WITH_CFG, |cfg| {
             let right_expr_end_ix = cfg.current_node_ix;
             let after_logical_expr_ix = cfg.new_basic_block_normal();
 
@@ -875,7 +877,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         self.visit_assignment_target(&expr.left);
 
         /* cfg  */
-        let cfg_ixs = control_flow!(self, |cfg| {
+        let cfg_ixs = control_flow!(self, WITH_CFG, |cfg| {
             if expr.operator.is_logical() {
                 let target_end_ix = cfg.current_node_ix;
                 let expr_start_ix = cfg.new_basic_block_normal();
@@ -889,7 +891,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         self.visit_expression(&expr.right);
 
         /* cfg */
-        control_flow!(self, |cfg| {
+        control_flow!(self, WITH_CFG, |cfg| {
             if let Some((target_end_ix, expr_start_ix)) = cfg_ixs {
                 let expr_end_ix = cfg.current_node_ix;
                 let after_assignment_ix = cfg.new_basic_block_normal();
@@ -910,7 +912,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
 
         /* cfg - condition basic block */
         let (before_conditional_graph_ix, start_of_condition_graph_ix) =
-            control_flow!(self, |cfg| {
+            control_flow!(self, WITH_CFG, |cfg| {
                 let before_conditional_graph_ix = cfg.current_node_ix;
                 let start_of_condition_graph_ix = cfg.new_basic_block_normal();
                 (before_conditional_graph_ix, start_of_condition_graph_ix)
@@ -923,7 +925,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
 
         /* cfg */
         let (after_condition_graph_ix, before_consequent_expr_graph_ix) =
-            control_flow!(self, |cfg| {
+            control_flow!(self, WITH_CFG, |cfg| {
                 cfg.append_condition_to(start_of_condition_graph_ix, test_node_id);
                 let after_condition_graph_ix = cfg.current_node_ix;
                 // conditional expression basic block
@@ -936,7 +938,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
 
         /* cfg */
         let (after_consequent_expr_graph_ix, start_alternate_graph_ix) =
-            control_flow!(self, |cfg| {
+            control_flow!(self, WITH_CFG, |cfg| {
                 let after_consequent_expr_graph_ix = cfg.current_node_ix;
                 let start_alternate_graph_ix = cfg.new_basic_block_normal();
                 (after_consequent_expr_graph_ix, start_alternate_graph_ix)
@@ -946,7 +948,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         self.visit_expression(&expr.alternate);
 
         /* cfg */
-        control_flow!(self, |cfg| {
+        control_flow!(self, WITH_CFG, |cfg| {
             let after_alternate_graph_ix = cfg.current_node_ix;
             /* bb after conditional expression joins consequent and alternate */
             let after_conditional_graph_ix = cfg.new_basic_block_normal();
@@ -980,7 +982,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
             self.visit_for_statement_init(init);
         }
         /* cfg */
-        let (before_for_graph_ix, test_graph_ix) = control_flow!(self, |cfg| {
+        let (before_for_graph_ix, test_graph_ix) = control_flow!(self, WITH_CFG, |cfg| {
             let before_for_graph_ix = cfg.current_node_ix;
             let test_graph_ix = cfg.new_basic_block_normal();
             (before_for_graph_ix, test_graph_ix)
@@ -993,13 +995,16 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
             let test_node_id = self.retrieve_recorded_ast_node();
 
             /* cfg */
-            control_flow!(self, |cfg| cfg.append_condition_to(test_graph_ix, test_node_id));
+            control_flow!(self, WITH_CFG, |cfg| cfg
+                .append_condition_to(test_graph_ix, test_node_id));
             /* cfg */
         }
 
         /* cfg */
-        let (after_test_graph_ix, update_graph_ix) =
-            control_flow!(self, |cfg| (cfg.current_node_ix, cfg.new_basic_block_normal()));
+        let (after_test_graph_ix, update_graph_ix) = control_flow!(self, WITH_CFG, |cfg| (
+            cfg.current_node_ix,
+            cfg.new_basic_block_normal()
+        ));
         /* cfg */
 
         if let Some(update) = &stmt.update {
@@ -1007,7 +1012,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         }
 
         /* cfg */
-        let before_body_graph_ix = control_flow!(self, |cfg| {
+        let before_body_graph_ix = control_flow!(self, WITH_CFG, |cfg| {
             let before_body_graph_ix = cfg.new_basic_block_normal();
             cfg.ctx(None).default().allow_break().allow_continue();
             before_body_graph_ix
@@ -1017,7 +1022,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         self.visit_statement(&stmt.body);
 
         /* cfg */
-        control_flow!(self, |cfg| {
+        control_flow!(self, WITH_CFG, |cfg| {
             let after_body_graph_ix = cfg.current_node_ix;
             let after_for_stmt = cfg.new_basic_block_normal();
             cfg.add_edge(before_for_graph_ix, test_graph_ix, EdgeType::Normal);
@@ -1045,8 +1050,11 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         self.visit_for_statement_left(&stmt.left);
 
         /* cfg */
-        let (before_for_stmt_graph_ix, start_prepare_cond_graph_ix) =
-            control_flow!(self, |cfg| (cfg.current_node_ix, cfg.new_basic_block_normal(),));
+        let (before_for_stmt_graph_ix, start_prepare_cond_graph_ix) = control_flow!(
+            self,
+            WITH_CFG,
+            |cfg| (cfg.current_node_ix, cfg.new_basic_block_normal(),)
+        );
         /* cfg */
 
         self.record_ast_nodes();
@@ -1055,7 +1063,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
 
         /* cfg */
         let (end_of_prepare_cond_graph_ix, iteration_graph_ix, body_graph_ix) =
-            control_flow!(self, |cfg| {
+            control_flow!(self, WITH_CFG, |cfg| {
                 let end_of_prepare_cond_graph_ix = cfg.current_node_ix;
                 let iteration_graph_ix = cfg.new_basic_block_normal();
                 cfg.append_iteration(right_node_id, IterationInstructionKind::In);
@@ -1069,7 +1077,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         self.visit_statement(&stmt.body);
 
         /* cfg */
-        control_flow!(self, |cfg| {
+        control_flow!(self, WITH_CFG, |cfg| {
             let end_of_body_graph_ix = cfg.current_node_ix;
             let after_for_graph_ix = cfg.new_basic_block_normal();
             // connect before for statement to the iterable expression
@@ -1104,8 +1112,11 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         self.visit_for_statement_left(&stmt.left);
 
         /* cfg */
-        let (before_for_stmt_graph_ix, start_prepare_cond_graph_ix) =
-            control_flow!(self, |cfg| (cfg.current_node_ix, cfg.new_basic_block_normal()));
+        let (before_for_stmt_graph_ix, start_prepare_cond_graph_ix) = control_flow!(
+            self,
+            WITH_CFG,
+            |cfg| (cfg.current_node_ix, cfg.new_basic_block_normal())
+        );
         /* cfg */
 
         self.record_ast_nodes();
@@ -1114,7 +1125,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
 
         /* cfg */
         let (end_of_prepare_cond_graph_ix, iteration_graph_ix, body_graph_ix) =
-            control_flow!(self, |cfg| {
+            control_flow!(self, WITH_CFG, |cfg| {
                 let end_of_prepare_cond_graph_ix = cfg.current_node_ix;
                 let iteration_graph_ix = cfg.new_basic_block_normal();
                 cfg.append_iteration(right_node_id, IterationInstructionKind::Of);
@@ -1127,7 +1138,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         self.visit_statement(&stmt.body);
 
         /* cfg */
-        control_flow!(self, |cfg| {
+        control_flow!(self, WITH_CFG, |cfg| {
             let end_of_body_graph_ix = cfg.current_node_ix;
             let after_for_graph_ix = cfg.new_basic_block_normal();
             // connect before for statement to the iterable expression
@@ -1159,8 +1170,11 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         self.enter_node(kind);
 
         /* cfg - condition basic block */
-        let (before_if_stmt_graph_ix, start_of_condition_graph_ix) =
-            control_flow!(self, |cfg| (cfg.current_node_ix, cfg.new_basic_block_normal(),));
+        let (before_if_stmt_graph_ix, start_of_condition_graph_ix) = control_flow!(
+            self,
+            WITH_CFG,
+            |cfg| (cfg.current_node_ix, cfg.new_basic_block_normal(),)
+        );
         /* cfg */
 
         self.record_ast_nodes();
@@ -1168,32 +1182,34 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         let test_node_id = self.retrieve_recorded_ast_node();
 
         /* cfg */
-        let (after_test_graph_ix, before_consequent_stmt_graph_ix) = control_flow!(self, |cfg| {
-            cfg.append_condition_to(start_of_condition_graph_ix, test_node_id);
-            (cfg.current_node_ix, cfg.new_basic_block_normal())
-        });
+        let (after_test_graph_ix, before_consequent_stmt_graph_ix) =
+            control_flow!(self, WITH_CFG, |cfg| {
+                cfg.append_condition_to(start_of_condition_graph_ix, test_node_id);
+                (cfg.current_node_ix, cfg.new_basic_block_normal())
+            });
         /* cfg */
 
         self.visit_statement(&stmt.consequent);
 
         /* cfg */
-        let after_consequent_stmt_graph_ix = control_flow!(self, |cfg| cfg.current_node_ix);
+        let after_consequent_stmt_graph_ix =
+            control_flow!(self, WITH_CFG, |cfg| cfg.current_node_ix);
         /* cfg */
 
         let else_graph_ix = if let Some(alternate) = &stmt.alternate {
             /* cfg */
-            let else_graph_ix = control_flow!(self, |cfg| cfg.new_basic_block_normal());
+            let else_graph_ix = control_flow!(self, WITH_CFG, |cfg| cfg.new_basic_block_normal());
             /* cfg */
 
             self.visit_statement(alternate);
 
-            control_flow!(self, |cfg| Some((else_graph_ix, cfg.current_node_ix)))
+            control_flow!(self, WITH_CFG, |cfg| Some((else_graph_ix, cfg.current_node_ix)))
         } else {
             None
         };
 
         /* cfg - bb after if statement joins consequent and alternate */
-        control_flow!(self, |cfg| {
+        control_flow!(self, WITH_CFG, |cfg| {
             let after_if_graph_ix = cfg.new_basic_block_normal();
 
             cfg.add_edge(before_if_stmt_graph_ix, start_of_condition_graph_ix, EdgeType::Normal);
@@ -1222,7 +1238,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
 
         /* cfg */
         let label = &stmt.label.name;
-        control_flow!(self, |cfg| {
+        control_flow!(self, WITH_CFG, |cfg| {
             let ctx = cfg.ctx(Some(label.as_str())).default().allow_break();
             if stmt.body.is_iteration_statement() {
                 ctx.allow_continue();
@@ -1235,7 +1251,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         self.visit_statement(&stmt.body);
 
         /* cfg */
-        control_flow!(self, |cfg| {
+        control_flow!(self, WITH_CFG, |cfg| {
             let after_body_graph_ix = cfg.current_node_ix;
             let after_labeled_stmt_graph_ix = cfg.new_basic_block_normal();
             cfg.add_edge(after_body_graph_ix, after_labeled_stmt_graph_ix, EdgeType::Normal);
@@ -1263,7 +1279,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         };
 
         /* cfg */
-        control_flow!(self, |cfg| {
+        control_flow!(self, WITH_CFG, |cfg| {
             cfg.push_return(ret_kind, Some(node_id));
             cfg.append_unreachable();
         });
@@ -1279,7 +1295,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         self.enter_scope(ScopeFlags::empty(), &stmt.scope_id);
 
         /* cfg */
-        let discriminant_graph_ix = control_flow!(self, |cfg| {
+        let discriminant_graph_ix = control_flow!(self, WITH_CFG, |cfg| {
             let discriminant_graph_ix = cfg.current_node_ix;
             cfg.ctx(None).default().allow_break();
             discriminant_graph_ix
@@ -1289,18 +1305,19 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         /* cfg */
 
         for case in &stmt.cases {
-            let before_case_graph_ix = control_flow!(self, |cfg| cfg.new_basic_block_normal());
+            let before_case_graph_ix =
+                control_flow!(self, WITH_CFG, |cfg| cfg.new_basic_block_normal());
             self.visit_switch_case(case);
             if case.is_default_case() {
                 have_default_case = true;
             }
-            control_flow!(self, |cfg| switch_case_graph_spans
+            control_flow!(self, WITH_CFG, |cfg| switch_case_graph_spans
                 .push((before_case_graph_ix, cfg.current_node_ix)));
         }
 
         /* cfg */
         // for each switch case
-        control_flow!(self, |cfg| {
+        control_flow!(self, WITH_CFG, |cfg| {
             for i in 0..switch_case_graph_spans.len() {
                 let case_graph_span = switch_case_graph_spans[i];
 
@@ -1354,11 +1371,12 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
             self.record_ast_nodes();
             self.visit_expression(expr);
             let test_node_id = self.retrieve_recorded_ast_node();
-            control_flow!(self, |cfg| cfg.append_condition_to(cfg.current_node_ix, test_node_id));
+            control_flow!(self, WITH_CFG, |cfg| cfg
+                .append_condition_to(cfg.current_node_ix, test_node_id));
         }
 
         /* cfg */
-        control_flow!(self, |cfg| {
+        control_flow!(self, WITH_CFG, |cfg| {
             let after_test_graph_ix = cfg.current_node_ix;
             let statements_in_switch_graph_ix = cfg.new_basic_block_normal();
             cfg.add_edge(after_test_graph_ix, statements_in_switch_graph_ix, EdgeType::Jump);
@@ -1381,7 +1399,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         self.visit_expression(&stmt.argument);
 
         /* cfg */
-        control_flow!(self, |cfg| cfg.append_throw(node_id));
+        control_flow!(self, WITH_CFG, |cfg| cfg.append_throw(node_id));
         /* cfg */
 
         self.leave_node(kind);
@@ -1398,7 +1416,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
             error_harness,
             before_finalizer_graph_ix,
             before_try_block_graph_ix,
-        ) = control_flow!(self, |cfg| {
+        ) = control_flow!(self, WITH_CFG, |cfg| {
             let before_try_statement_graph_ix = cfg.current_node_ix;
             let error_harness =
                 stmt.handler.as_ref().map(|_| cfg.attach_error_harness(ErrorEdgeKind::Explicit));
@@ -1417,12 +1435,12 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         self.visit_block_statement(&stmt.block);
 
         /* cfg */
-        let after_try_block_graph_ix = control_flow!(self, |cfg| cfg.current_node_ix);
+        let after_try_block_graph_ix = control_flow!(self, WITH_CFG, |cfg| cfg.current_node_ix);
         /* cfg */
 
         let catch_block_end_ix = if let Some(handler) = &stmt.handler {
             /* cfg */
-            control_flow!(self, |cfg| {
+            control_flow!(self, WITH_CFG, |cfg| {
                 let Some(error_harness) = error_harness else {
                     unreachable!("we always create an error harness if we have a catch block.");
                 };
@@ -1435,7 +1453,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
             self.visit_catch_clause(handler);
 
             /* cfg */
-            control_flow!(self, |cfg| {
+            control_flow!(self, WITH_CFG, |cfg| {
                 let catch_block_end_ix = cfg.current_node_ix;
                 // TODO: we shouldn't directly change the current node index.
                 cfg.current_node_ix = after_try_block_graph_ix;
@@ -1448,7 +1466,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
 
         let finally_block_end_ix = if let Some(finalizer) = &stmt.finalizer {
             /* cfg */
-            control_flow!(self, |cfg| {
+            control_flow!(self, WITH_CFG, |cfg| {
                 let Some(before_finalizer_graph_ix) = before_finalizer_graph_ix else {
                     unreachable!("we always create a finalizer when there is a finally block.");
                 };
@@ -1461,7 +1479,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
             self.visit_block_statement(finalizer);
 
             /* cfg */
-            control_flow!(self, |cfg| {
+            control_flow!(self, WITH_CFG, |cfg| {
                 let finally_block_end_ix = cfg.current_node_ix;
                 // TODO: we shouldn't directly change the current node index.
                 cfg.current_node_ix = after_try_block_graph_ix;
@@ -1473,7 +1491,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         };
 
         /* cfg */
-        control_flow!(self, |cfg| {
+        control_flow!(self, WITH_CFG, |cfg| {
             let after_try_statement_block_ix = cfg.new_basic_block_normal();
             cfg.add_edge(
                 before_try_statement_graph_ix,
@@ -1525,8 +1543,11 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         self.enter_node(kind);
 
         /* cfg - condition basic block */
-        let (before_while_stmt_graph_ix, condition_graph_ix) =
-            control_flow!(self, |cfg| (cfg.current_node_ix, cfg.new_basic_block_normal()));
+        let (before_while_stmt_graph_ix, condition_graph_ix) = control_flow!(
+            self,
+            WITH_CFG,
+            |cfg| (cfg.current_node_ix, cfg.new_basic_block_normal())
+        );
         /* cfg */
 
         self.record_ast_nodes();
@@ -1534,7 +1555,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         let test_node_id = self.retrieve_recorded_ast_node();
 
         /* cfg - body basic block */
-        let body_graph_ix = control_flow!(self, |cfg| {
+        let body_graph_ix = control_flow!(self, WITH_CFG, |cfg| {
             cfg.append_condition_to(condition_graph_ix, test_node_id);
             let body_graph_ix = cfg.new_basic_block_normal();
 
@@ -1546,7 +1567,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         self.visit_statement(&stmt.body);
 
         /* cfg - after body basic block */
-        control_flow!(self, |cfg| {
+        control_flow!(self, WITH_CFG, |cfg| {
             let after_body_graph_ix = cfg.current_node_ix;
             let after_while_graph_ix = cfg.new_basic_block_normal();
 
@@ -1569,20 +1590,23 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         self.enter_node(kind);
 
         /* cfg - condition basic block */
-        let (before_with_stmt_graph_ix, condition_graph_ix) =
-            control_flow!(self, |cfg| (cfg.current_node_ix, cfg.new_basic_block_normal()));
+        let (before_with_stmt_graph_ix, condition_graph_ix) = control_flow!(
+            self,
+            WITH_CFG,
+            |cfg| (cfg.current_node_ix, cfg.new_basic_block_normal())
+        );
         /* cfg */
 
         self.visit_expression(&stmt.object);
 
         /* cfg - body basic block */
-        let body_graph_ix = control_flow!(self, |cfg| cfg.new_basic_block_normal());
+        let body_graph_ix = control_flow!(self, WITH_CFG, |cfg| cfg.new_basic_block_normal());
         /* cfg */
 
         self.visit_statement(&stmt.body);
 
         /* cfg - after body basic block */
-        control_flow!(self, |cfg| {
+        control_flow!(self, WITH_CFG, |cfg| {
             let after_body_graph_ix = cfg.new_basic_block_normal();
 
             cfg.add_edge(before_with_stmt_graph_ix, condition_graph_ix, EdgeType::Normal);
@@ -1598,7 +1622,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
     fn visit_function(&mut self, func: &Function<'a>, flags: ScopeFlags) {
         /* cfg */
         let (before_function_graph_ix, error_harness, function_graph_ix) =
-            control_flow!(self, |cfg| {
+            control_flow!(self, WITH_CFG, |cfg| {
                 let before_function_graph_ix = cfg.current_node_ix;
                 cfg.push_finalization_stack();
                 let error_harness = cfg.attach_error_harness(ErrorEdgeKind::Implicit);
@@ -1633,7 +1657,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         }
 
         /* cfg */
-        control_flow!(self, |cfg| cfg.add_edge(
+        control_flow!(self, WITH_CFG, |cfg| cfg.add_edge(
             before_function_graph_ix,
             function_graph_ix,
             EdgeType::NewFunction
@@ -1667,7 +1691,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         }
 
         /* cfg */
-        control_flow!(self, |cfg| {
+        control_flow!(self, WITH_CFG, |cfg| {
             let c = cfg.current_basic_block();
             // If the last is an unreachable instruction, it means there is already a explicit
             // return or throw statement at the end of function body, we don't need to
@@ -1692,14 +1716,15 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
 
     fn visit_arrow_function_expression(&mut self, expr: &ArrowFunctionExpression<'a>) {
         /* cfg */
-        let (current_node_ix, error_harness, function_graph_ix) = control_flow!(self, |cfg| {
-            let current_node_ix = cfg.current_node_ix;
-            cfg.push_finalization_stack();
-            let error_harness = cfg.attach_error_harness(ErrorEdgeKind::Implicit);
-            let function_graph_ix = cfg.new_basic_block_function();
-            cfg.ctx(None).new_function();
-            (current_node_ix, error_harness, function_graph_ix)
-        });
+        let (current_node_ix, error_harness, function_graph_ix) =
+            control_flow!(self, WITH_CFG, |cfg| {
+                let current_node_ix = cfg.current_node_ix;
+                cfg.push_finalization_stack();
+                let error_harness = cfg.attach_error_harness(ErrorEdgeKind::Implicit);
+                let function_graph_ix = cfg.new_basic_block_function();
+                cfg.ctx(None).new_function();
+                (current_node_ix, error_harness, function_graph_ix)
+            });
         /* cfg */
 
         // We add a new basic block to the cfg before entering the node
@@ -1724,7 +1749,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         self.visit_formal_parameters(&expr.params);
 
         /* cfg */
-        control_flow!(self, |cfg| cfg.add_edge(
+        control_flow!(self, WITH_CFG, |cfg| cfg.add_edge(
             current_node_ix,
             function_graph_ix,
             EdgeType::NewFunction
@@ -1749,7 +1774,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         self.visit_function_body(&expr.body);
 
         /* cfg */
-        control_flow!(self, |cfg| {
+        control_flow!(self, WITH_CFG, |cfg| {
             let c = cfg.current_basic_block();
             // If the last is an unreachable instruction, it means there is already a explicit
             // return or throw statement at the end of function body, we don't need to
@@ -1926,10 +1951,10 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
     }
 }
 
-impl<'a> SemanticBuilder<'a> {
+impl<'a, const WITH_CFG: bool> SemanticBuilder<'a, WITH_CFG> {
     fn enter_kind(&mut self, kind: AstKind<'a>) {
         /* cfg */
-        control_flow!(self, |cfg| {
+        control_flow!(self, WITH_CFG, |cfg| {
             match kind {
                 AstKind::ReturnStatement(_)
                 | AstKind::BreakStatement(_)
