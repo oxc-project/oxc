@@ -4459,10 +4459,11 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
  1 │ `hello ${10 `test`
    ╰────
 
-  × Unexpected token
+  × Expected `}` but found `;`
    ╭─[babel/packages/babel-parser/test/fixtures/es2015/uncategorised/267/input.js:1:12]
  1 │ `hello ${10;test`
-   ·            ─
+   ·            ┬
+   ·            ╰── `}` expected
    ╰────
 
   × Unexpected token
@@ -9516,10 +9517,11 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    · ──────
    ╰────
 
-  × Unexpected token
+  × Expected `}` but found `;`
    ╭─[babel/packages/babel-parser/test/fixtures/esprima/es2015-template-literals/unclosed-interpolation/input.js:1:12]
  1 │ `hello ${10;test`
-   ·            ─
+   ·            ┬
+   ·            ╰── `}` expected
    ╰────
 
   × Expected `}` but found `EOF`
