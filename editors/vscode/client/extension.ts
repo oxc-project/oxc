@@ -165,18 +165,6 @@ export async function activate(context: ExtensionContext) {
   // Otherwise the run options are used
   // Options to control the language client
   let clientOptions: LanguageClientOptions = {
-    // Register the server for plain text documents
-    documentSelector: [
-      'typescript',
-      'javascript',
-      'typescriptreact',
-      'javascriptreact',
-      'vue',
-      'svelte',
-    ].map((lang) => ({
-      language: lang,
-      scheme: 'file',
-    })),
     initializationOptions: configService.languageServerConfig,
     outputChannel,
     traceOutputChannel: outputChannel,

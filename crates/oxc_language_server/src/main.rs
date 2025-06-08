@@ -1,6 +1,7 @@
 use futures::future::join_all;
 use log::{debug, info, warn};
 use options::{Options, Run, WorkspaceOption};
+use oxc_linter::LINTABLE_EXTENSIONS;
 use rustc_hash::FxBuildHasher;
 use serde_json::json;
 use std::{str::FromStr, sync::Arc};
@@ -13,8 +14,10 @@ use tower_lsp_server::{
         DidChangeConfigurationParams, DidChangeTextDocumentParams, DidChangeWatchedFilesParams,
         DidChangeWatchedFilesRegistrationOptions, DidChangeWorkspaceFoldersParams,
         DidCloseTextDocumentParams, DidOpenTextDocumentParams, DidSaveTextDocumentParams,
-        ExecuteCommandParams, InitializeParams, InitializeResult, InitializedParams, Registration,
-        ServerInfo, Unregistration, Uri, WorkspaceEdit,
+        DocumentFilter, ExecuteCommandParams, InitializeParams, InitializeResult,
+        InitializedParams, Registration, ServerInfo, TextDocumentChangeRegistrationOptions,
+        TextDocumentRegistrationOptions, TextDocumentSaveRegistrationOptions, TextDocumentSyncKind,
+        Unregistration, Uri, WorkspaceEdit,
     },
 };
 // #
@@ -178,9 +181,9 @@ impl LanguageServer for Backend {
             }
         }
 
+        let mut registrations = vec![];
         // init all file watchers
         if capabilities.dynamic_watchers {
-            let mut registrations = vec![];
             for worker in workers {
                 registrations.push(Registration {
                     id: format!("watcher-{}", worker.get_root_uri().as_str()),
@@ -190,9 +193,55 @@ impl LanguageServer for Backend {
                     })),
                 });
             }
+        }
 
+        if capabilities.dynamic_sync {
+            let document_pattern = format!("**/*.{{{}}}", LINTABLE_EXTENSIONS.join(","));
+
+            registrations.push(Registration {
+                id: "textDocumentSync-open".to_string(),
+                method: "textDocument/didOpen".to_string(),
+                register_options: Some(json!(TextDocumentRegistrationOptions {
+                    document_selector: Some(vec![DocumentFilter {
+                        pattern: Some(document_pattern.clone()),
+                        scheme: Some("file".to_string()),
+                        language: None,
+                    }])
+                })),
+            });
+
+            registrations.push(Registration {
+                id: "textDocumentSync-change".to_string(),
+                method: "textDocument/didChange".to_string(),
+                register_options: Some(json!(TextDocumentChangeRegistrationOptions {
+                    document_selector: Some(vec![DocumentFilter {
+                        pattern: Some(document_pattern.clone()),
+                        scheme: Some("file".to_string()),
+                        language: None,
+                    }]),
+                    sync_kind: TextDocumentSyncKind::FULL
+                })),
+            });
+
+            registrations.push(Registration {
+                id: "textDocumentSync-save".to_string(),
+                method: "textDocument/didSave".to_string(),
+                register_options: Some(json!(TextDocumentSaveRegistrationOptions {
+                    text_document_registration_options: TextDocumentRegistrationOptions {
+                        document_selector: Some(vec![DocumentFilter {
+                            pattern: Some(document_pattern),
+                            scheme: Some("file".to_string()),
+                            language: None,
+                        }])
+                    },
+                    include_text: Some(false)
+                })),
+            });
+        }
+
+        if !registrations.is_empty() {
             if let Err(err) = self.client.register_capability(registrations).await {
-                warn!("sending registerCapability.didChangeWatchedFiles failed: {err}");
+                warn!("sending registerCapability request failed: {err}");
             }
         }
     }

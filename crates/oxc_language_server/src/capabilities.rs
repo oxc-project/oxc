@@ -14,6 +14,8 @@ pub struct Capabilities {
     pub workspace_execute_command: bool,
     pub workspace_configuration: bool,
     pub dynamic_watchers: bool,
+    // The server can tell the client to send `didOpen`, `didChange`, and `didClose` requests for specific files
+    pub dynamic_sync: bool,
 }
 
 impl From<ClientCapabilities> for Capabilities {
@@ -40,12 +42,19 @@ impl From<ClientCapabilities> for Capabilities {
             })
         });
 
+        let dynamic_sync = value.text_document.is_some_and(|text_document| {
+            text_document.synchronization.as_ref().is_some_and(|synchronization| {
+                synchronization.dynamic_registration.is_some_and(|dynamic| dynamic)
+            })
+        });
+
         Self {
             code_action_provider,
             workspace_apply_edit,
             workspace_execute_command,
             workspace_configuration,
             dynamic_watchers,
+            dynamic_sync,
         }
     }
 }
@@ -53,6 +62,8 @@ impl From<ClientCapabilities> for Capabilities {
 impl From<Capabilities> for ServerCapabilities {
     fn from(value: Capabilities) -> Self {
         Self {
+            // when the client supports dynamic sync, we tell them on `initialized` request
+            // how we want to sync the files between server and client
             text_document_sync: Some(TextDocumentSyncCapability::Options(
                 TextDocumentSyncOptions {
                     change: Some(TextDocumentSyncKind::FULL),
