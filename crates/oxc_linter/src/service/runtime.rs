@@ -554,6 +554,7 @@ impl<'l> Runtime<'l> {
         allocator: &'a oxc_allocator::Allocator,
     ) -> Vec<MessageWithPosition<'a>> {
         use oxc_allocator::CloneIn;
+        use oxc_data_structures::rope::Rope;
         use std::sync::Mutex;
 
         use crate::{
@@ -564,11 +565,12 @@ impl<'l> Runtime<'l> {
 
         fn fix_to_fix_with_position<'a>(
             fix: &Fix<'a>,
+            rope: &Rope,
             offset: u32,
             source_text: &str,
         ) -> FixWithPosition<'a> {
-            let start_position = offset_to_position(offset + fix.span.start, source_text);
-            let end_position = offset_to_position(offset + fix.span.end, source_text);
+            let start_position = offset_to_position(rope, offset + fix.span.start, source_text);
+            let end_position = offset_to_position(rope, offset + fix.span.end, source_text);
             FixWithPosition {
                 content: fix.content.clone(),
                 span: SpanPositionMessage::new(start_position, end_position)
@@ -582,6 +584,8 @@ impl<'l> Runtime<'l> {
             self.resolve_modules(scope, true, &sender, |me, mut module| {
                 module.content.with_dependent_mut(|owner, dependent| {
                     assert_eq!(module.section_module_records.len(), dependent.len());
+
+                    let rope = &Rope::from_str(&owner.source_text);
 
                     for (record_result, section) in
                         module.section_module_records.into_iter().zip(dependent.drain(..))
@@ -610,10 +614,12 @@ impl<'l> Runtime<'l> {
                                                 .map(|labeled_span| {
                                                     let offset = labeled_span.offset() as u32;
                                                     let start_position = offset_to_position(
+                                                        rope,
                                                         offset + section.source.start,
                                                         &owner.source_text,
                                                     );
                                                     let end_position = offset_to_position(
+                                                        rope,
                                                         offset
                                                             + section.source.start
                                                             + labeled_span.len() as u32,
@@ -647,6 +653,7 @@ impl<'l> Runtime<'l> {
                                                     PossibleFixesWithPosition::Single(
                                                         fix_to_fix_with_position(
                                                             fix,
+                                                            rope,
                                                             section.source.start,
                                                             &owner.source_text,
                                                         ),
@@ -659,6 +666,7 @@ impl<'l> Runtime<'l> {
                                                             .map(|fix| {
                                                                 fix_to_fix_with_position(
                                                                     fix,
+                                                                    rope,
                                                                     section.source.start,
                                                                     &owner.source_text,
                                                                 )
