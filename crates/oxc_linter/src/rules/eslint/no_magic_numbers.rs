@@ -276,7 +276,7 @@ impl InternConfig<'_> {
             }
             _ => {
                 unreachable!(
-                    "expected AstKind BingIntLiteral or NumericLiteral, got {:?}",
+                    "expected AstKind BigIntLiteral or NumericLiteral, got {:?}",
                     node.kind().debug_name()
                 )
             }
