@@ -855,70 +855,67 @@ impl<'a> ParserImpl<'a> {
     fn parse_tuple_type(&mut self) -> TSType<'a> {
         let span = self.start_span();
         self.expect(Kind::LBrack);
-        let (elements, _) = self.parse_delimited_list(
-            Kind::RBrack,
-            Kind::Comma,
-            Self::parse_tuple_element_name_or_tuple_element_type,
-        );
+        let (elements, _) =
+            self.parse_delimited_list(Kind::RBrack, Kind::Comma, Self::parse_tuple_element);
         self.expect(Kind::RBrack);
         self.ast.ts_type_tuple_type(self.end_span(span), elements)
     }
 
-    pub(super) fn parse_tuple_element_name_or_tuple_element_type(&mut self) -> TSTupleElement<'a> {
-        if self.lookahead(Self::is_tuple_element_name) {
-            let span = self.start_span();
-            let dotdotdot = self.eat(Kind::Dot3);
-            let member_span = self.start_span();
+    pub(super) fn parse_tuple_element(&mut self) -> TSTupleElement<'a> {
+        let span_start = self.start_span();
+        let is_rest_type = self.eat(Kind::Dot3);
+
+        if self.cur_kind().is_identifier_name()
+            && self.lookahead(Self::is_next_token_colon_or_question_colon)
+        {
+            let member_span_start = self.start_span();
             let label = self.parse_identifier_name();
             let optional = self.eat(Kind::Question);
             self.expect(Kind::Colon);
-            let element_type = self.parse_tuple_element_type();
-            let span = self.end_span(span);
-            return if dotdotdot {
-                let type_annotation = self.ast.ts_type_named_tuple_member(
-                    self.end_span(member_span),
-                    label,
-                    element_type,
-                    // TODO: A tuple member cannot be both optional and rest. (TS5085)
-                    // See typescript suite <conformance/types/tuple/restTupleElements1.ts>
-                    optional,
-                );
-                self.ast.ts_tuple_element_rest_type(span, type_annotation)
+            let type_span_start = self.start_span();
+            let rest_after_tuple_member_name = self.eat(Kind::Dot3);
+            let ty = self.parse_ts_type();
+            let optional_after_tuple_member_name = matches!(ty, TSType::JSDocNullableType(_));
+            let tuple_element = self.convert_type_to_tuple_element(ty);
+            let member_span = self.end_span(member_span_start);
+            let named_tuple_member =
+                self.ast.ts_type_named_tuple_member(member_span, label, tuple_element, optional);
+            if rest_after_tuple_member_name {
+                self.error(diagnostics::rest_after_tuple_member_name(
+                    self.end_span(type_span_start),
+                ));
+            }
+            if optional_after_tuple_member_name {
+                self.error(diagnostics::optional_after_tuple_member_name(
+                    self.end_span(type_span_start),
+                ));
+            }
+            if is_rest_type {
+                let span = self.end_span(span_start);
+                if optional {
+                    self.error(diagnostics::optional_and_rest_tuple_member(span));
+                }
+                self.ast.ts_tuple_element_rest_type(span, named_tuple_member)
             } else {
-                TSTupleElement::from(self.ast.ts_type_named_tuple_member(
-                    span,
-                    label,
-                    element_type,
-                    optional,
-                ))
-            };
+                TSTupleElement::from(named_tuple_member)
+            }
+        } else {
+            let ty = self.parse_ts_type();
+            if is_rest_type {
+                self.ast.ts_tuple_element_rest_type(self.end_span(span_start), ty)
+            } else {
+                self.convert_type_to_tuple_element(ty)
+            }
         }
-        self.parse_tuple_element_type()
-    }
-
-    fn is_tuple_element_name(&mut self) -> bool {
-        if self.eat(Kind::Dot3) {
-            return self.cur_kind().is_identifier_name()
-                && self.is_next_token_colon_or_question_colon();
-        }
-        self.cur_kind().is_identifier_name() && self.is_next_token_colon_or_question_colon()
     }
 
     fn is_next_token_colon_or_question_colon(&mut self) -> bool {
         self.bump_any();
-        if self.at(Kind::Colon) {
-            return true;
-        }
-        self.eat(Kind::Question) && self.at(Kind::Colon)
+        self.bump(Kind::Question);
+        self.at(Kind::Colon)
     }
 
-    fn parse_tuple_element_type(&mut self) -> TSTupleElement<'a> {
-        let span = self.start_span();
-        if self.eat(Kind::Dot3) {
-            let ty = self.parse_ts_type();
-            return self.ast.ts_tuple_element_rest_type(self.end_span(span), ty);
-        }
-        let ty = self.parse_ts_type();
+    fn convert_type_to_tuple_element(&self, ty: TSType<'a>) -> TSTupleElement<'a> {
         if let TSType::JSDocNullableType(ty) = ty {
             if ty.postfix {
                 self.ast.ts_tuple_element_optional_type(ty.span, ty.unbox().type_annotation)
