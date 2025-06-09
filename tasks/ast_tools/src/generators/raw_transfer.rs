@@ -112,13 +112,13 @@ fn generate_deserializers(schema: &Schema, codegen: &Codegen) -> Codes {
                 generate_primitive(primitive_def, &mut codes.both, schema);
             }
             TypeDef::Option(option_def) => {
-                generate_option(option_def, &mut codes.both, schema);
+                generate_option(option_def, &mut codes.both, estree_derive_id, schema);
             }
             TypeDef::Box(box_def) => {
-                generate_box(box_def, &mut codes.both, schema);
+                generate_box(box_def, &mut codes.both, estree_derive_id, schema);
             }
             TypeDef::Vec(vec_def) => {
-                generate_vec(vec_def, &mut codes.both, schema);
+                generate_vec(vec_def, &mut codes.both, estree_derive_id, schema);
             }
             TypeDef::Cell(_cell_def) => {
                 // No deserializers for `Cell`s - use inner type's deserializer
@@ -533,9 +533,18 @@ static STR_DESERIALIZER_BODY: &str = "
 ";
 
 /// Generate deserialize function for an `Option`.
-fn generate_option(option_def: &OptionDef, code: &mut String, schema: &Schema) {
-    let fn_name = option_def.deser_name(schema);
+fn generate_option(
+    option_def: &OptionDef,
+    code: &mut String,
+    estree_derive_id: DeriveId,
+    schema: &Schema,
+) {
     let inner_type = option_def.inner_type(schema);
+    if should_skip_innermost_type(inner_type, estree_derive_id, schema) {
+        return;
+    }
+
+    let fn_name = option_def.deser_name(schema);
     let inner_fn_name = inner_type.deser_name(schema);
     let inner_layout = inner_type.layout_64();
 
@@ -574,9 +583,14 @@ fn generate_option(option_def: &OptionDef, code: &mut String, schema: &Schema) {
 }
 
 /// Generate deserialize function for a `Box`.
-fn generate_box(box_def: &BoxDef, code: &mut String, schema: &Schema) {
+fn generate_box(box_def: &BoxDef, code: &mut String, estree_derive_id: DeriveId, schema: &Schema) {
+    let inner_type = box_def.inner_type(schema);
+    if should_skip_innermost_type(inner_type, estree_derive_id, schema) {
+        return;
+    }
+
     let fn_name = box_def.deser_name(schema);
-    let inner_fn_name = box_def.inner_type(schema).deser_name(schema);
+    let inner_fn_name = inner_type.deser_name(schema);
 
     #[rustfmt::skip]
     write_it!(code, "
@@ -587,9 +601,13 @@ fn generate_box(box_def: &BoxDef, code: &mut String, schema: &Schema) {
 }
 
 /// Generate deserialize function for a `Vec`.
-fn generate_vec(vec_def: &VecDef, code: &mut String, schema: &Schema) {
-    let fn_name = vec_def.deser_name(schema);
+fn generate_vec(vec_def: &VecDef, code: &mut String, estree_derive_id: DeriveId, schema: &Schema) {
     let inner_type = vec_def.inner_type(schema);
+    if should_skip_innermost_type(inner_type, estree_derive_id, schema) {
+        return;
+    }
+
+    let fn_name = vec_def.deser_name(schema);
     let inner_fn_name = inner_type.deser_name(schema);
     let inner_type_size = inner_type.layout_64().size;
 
@@ -610,6 +628,23 @@ fn generate_vec(vec_def: &VecDef, code: &mut String, schema: &Schema) {
             return arr;
         }}
     ");
+}
+
+/// Check if innermost type does not require a deserializer.
+fn should_skip_innermost_type(
+    type_def: &TypeDef,
+    estree_derive_id: DeriveId,
+    schema: &Schema,
+) -> bool {
+    match type_def.innermost_type(schema) {
+        TypeDef::Struct(struct_def) => {
+            !struct_def.generates_derive(estree_derive_id) || struct_def.estree.skip
+        }
+        TypeDef::Enum(enum_def) => {
+            !enum_def.generates_derive(estree_derive_id) || enum_def.estree.skip
+        }
+        _ => false,
+    }
 }
 
 /// Generate pos offset string.
