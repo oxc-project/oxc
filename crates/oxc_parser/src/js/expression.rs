@@ -451,13 +451,16 @@ impl<'a> ParserImpl<'a> {
     ///     `SubstitutionTemplate`[?Yield, ?Await, ?Tagged]
     pub(crate) fn parse_template_literal(&mut self, tagged: bool) -> TemplateLiteral<'a> {
         let span = self.start_span();
-        let mut expressions = self.ast.vec();
-        let mut quasis = self.ast.vec();
-        match self.cur_kind() {
+
+        let (quasis, expressions) = match self.cur_kind() {
             Kind::NoSubstitutionTemplate => {
-                quasis.push(self.parse_template_element(tagged));
+                let quasis = self.ast.vec1(self.parse_template_element(tagged));
+                (quasis, self.ast.vec())
             }
             Kind::TemplateHead => {
+                let mut expressions = self.ast.vec_with_capacity(1);
+                let mut quasis = self.ast.vec_with_capacity(2);
+
                 quasis.push(self.parse_template_element(tagged));
                 // TemplateHead Expression[+In, ?Yield, ?Await]
                 let expr = self.context(Context::In, Context::empty(), Self::parse_expr);
@@ -483,9 +486,12 @@ impl<'a> ParserImpl<'a> {
                         }
                     }
                 }
+
+                (quasis, expressions)
             }
             _ => unreachable!("parse_template_literal"),
-        }
+        };
+
         self.ast.template_literal(self.end_span(span), quasis, expressions)
     }
 
