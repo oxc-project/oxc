@@ -1,7 +1,11 @@
 import { writeFile } from 'fs/promises';
 import { join as pathJoin } from 'path';
 import { bench, describe } from 'vitest';
+import bindings from './bindings.js';
+import deserializeJS from './generated/deserialize/js.js';
+import deserializeTS from './generated/deserialize/ts.js';
 import { parseAsync, parseSync } from './index.js';
+import { isJsAst, prepareRaw } from './raw-transfer/index.js';
 
 // Same fixtures as used in Rust parser benchmarks
 let fixtureUrls = [
@@ -72,6 +76,15 @@ for (const { filename, code } of fixtures) {
       const ret = await parseAsync(filename, code, { experimentalRawTransfer: true });
       // Read returned object's properties to execute getters
       const { program, comments, module, errors } = ret;
+    });
+
+    // Prepare buffer but don't deserialize
+    const { buffer, sourceByteLen, options } = prepareRaw(code, { experimentalRawTransfer: true });
+    bindings.parseSyncRaw(filename, buffer, sourceByteLen, options);
+    const deserialize = isJsAst(buffer) ? deserializeJS : deserializeTS;
+
+    benchRaw('parser_napi_raw_deser_only', () => {
+      deserialize(buffer, code, sourceByteLen);
     });
   });
 }
