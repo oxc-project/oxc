@@ -41,11 +41,11 @@ pub struct CodegenOptions {
     /// Default is [LegalComment::Inline].
     pub legal_comments: LegalComment,
 
-    /// Override the source map path. This affects the `sourceMappingURL`
-    /// comment at the end of the generated code.
+    /// Enable sourcemap.
     ///
-    /// By default, the source map path is the same as the input source code
-    /// (with a `.map` extension).
+    /// The provided path sets the `source` field in the returned sourcemap.
+    ///
+    /// Default is `None` - no sourcemap is produced.
     pub source_map_path: Option<PathBuf>,
 }
 
