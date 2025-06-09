@@ -54,28 +54,9 @@ impl LanguageServer for Backend {
     async fn initialize(&self, params: InitializeParams) -> Result<InitializeResult> {
         let server_version = env!("CARGO_PKG_VERSION");
         // initialization_options can be anything, so we are requesting `workspace/configuration` when no initialize options are provided
-        let options = params.initialization_options.and_then(|mut value| {
-            // the client supports the new settings object
-            if let Ok(new_settings) = serde_json::from_value::<Vec<WorkspaceOption>>(value.clone())
-            {
-                // ToDo: validate they have the same length as params.workspace_folders
-                return Some(new_settings);
-            }
-
-            let deprecated_settings = Options::try_from(value.get_mut("settings")?.take()).ok();
-
-            // the client has deprecated settings and has a deprecated root uri.
-            // handle all things like the old way
-            if deprecated_settings.is_some() && params.root_uri.is_some() {
-                return Some(vec![WorkspaceOption {
-                    workspace_uri: params.root_uri.clone().unwrap(),
-                    options: deprecated_settings.unwrap(),
-                }]);
-            }
-
-            // no workspace options could be generated fallback to default one or request when possible
-            None
-        });
+        let options = params
+            .initialization_options
+            .and_then(|value| serde_json::from_value::<Vec<WorkspaceOption>>(value).ok());
 
         info!("initialize: {options:?}");
         info!("language server version: {server_version}");
@@ -209,27 +190,10 @@ impl LanguageServer for Backend {
         let mut removing_registrations = vec![];
         let mut adding_registrations = vec![];
 
-        // new valid configuration is passed
-        let options = serde_json::from_value::<Vec<WorkspaceOption>>(params.settings.clone())
-            .ok()
-            .or_else(|| {
-                // fallback to old configuration
-                let options = serde_json::from_value::<Options>(params.settings).ok()?;
-
-                // for all workers (default only one)
-                let options = workers
-                    .iter()
-                    .map(|worker| WorkspaceOption {
-                        workspace_uri: worker.get_root_uri().clone(),
-                        options: options.clone(),
-                    })
-                    .collect();
-
-                Some(options)
-            });
+        let options = serde_json::from_value::<Vec<WorkspaceOption>>(params.settings.clone());
 
         // the client passed valid options.
-        let resolved_options = if let Some(options) = options {
+        let resolved_options = if let Ok(options) = options {
             options
             // else check if the client support workspace configuration requests
         } else if self
