@@ -1,5 +1,5 @@
 use num_bigint::BigInt;
-use num_traits::Zero;
+use num_traits::{Num, Zero};
 
 /// `StringToBigInt`
 ///
@@ -21,21 +21,20 @@ impl StringToBigInt<'_> for &str {
             return Some(BigInt::zero());
         }
 
-        if s.len() > 2 && s.starts_with('0') {
-            let radix: u32 = match s.chars().nth(1) {
-                Some('x' | 'X') => 16,
-                Some('o' | 'O') => 8,
-                Some('b' | 'B') => 2,
-                _ => 0,
+        if s.len() > 2 && s.as_bytes()[0] == b'0' {
+            // `| 32` converts upper case ASCII letters to lower case.
+            // A bit more efficient than testing for `b'x' | b'X'`.
+            // https://godbolt.org/z/Korrhd4TE
+            let radix: u32 = match s.as_bytes()[1] | 32 {
+                b'x' => 16,
+                b'o' => 8,
+                b'b' => 2,
+                _ => return None,
             };
 
-            if radix == 0 {
-                return None;
-            }
-
-            return BigInt::parse_bytes(&s.as_bytes()[2..], radix);
+            return BigInt::from_str_radix(&s[2..], radix).ok();
         }
 
-        BigInt::parse_bytes(s.as_bytes(), 10)
+        BigInt::from_str_radix(s, 10).ok()
     }
 }
