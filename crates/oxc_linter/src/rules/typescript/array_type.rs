@@ -1,6 +1,9 @@
 use oxc_ast::{
     AstKind,
-    ast::{TSType, TSTypeName, TSTypeOperatorOperator, TSTypeReference},
+    ast::{
+        TSType, TSTypeAliasDeclaration, TSTypeAnnotation, TSTypeName, TSTypeOperatorOperator,
+        TSTypeReference,
+    },
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -8,6 +11,7 @@ use oxc_semantic::AstNode;
 use oxc_span::Span;
 
 use crate::{
+    ast_util::outermost_paren_parent,
     context::{ContextHost, LintContext},
     rule::Rule,
 };
@@ -155,6 +159,25 @@ impl Rule for ArrayType {
             // for example: let ya = [[1, '2']] as [number, string][];
             AstKind::TSAsExpression(ts_as_expression) => {
                 check(&ts_as_expression.type_annotation, default_config, readonly_config, ctx);
+            }
+            AstKind::TSTypeReference(ts_type_reference)
+                if outermost_paren_parent(node, ctx).is_some_and(|x| match x.kind() {
+                    AstKind::TSTypeAliasDeclaration(TSTypeAliasDeclaration {
+                        type_annotation,
+                        ..
+                    })
+                    | AstKind::TSTypeAnnotation(TSTypeAnnotation { type_annotation, .. }) => {
+                        matches!(type_annotation, TSType::TSArrayType(_))
+                    }
+                    _ => false,
+                }) =>
+            {
+                check_and_report_error_reference(
+                    default_config,
+                    readonly_config,
+                    ts_type_reference,
+                    ctx,
+                );
             }
             _ => {}
         }
@@ -1192,6 +1215,10 @@ fn test() {
             "let a: Promise<string[]> = Promise.resolve([]);",
             Some(serde_json::json!([{"default": "generic"}])),
         ),
+        // https://github.com/oxc-project/oxc/issues/11568
+        ("type x = Array<number>[]", None),
+        ("const arr: Array<Array<number>>[] = [];", None),
+        ("export function fn4(arr: Array<number>[]) { return arr; }", None),
     ];
 
     let fix: Vec<(&str, &str, Option<serde_json::Value>)> = vec![
