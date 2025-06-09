@@ -56,6 +56,7 @@ pub struct NumericLiteral<'a> {
     ///
     /// `None` when this ast node is not constructed from the parser.
     #[content_eq(skip)]
+    #[estree(json_safe)]
     pub raw: Option<Atom<'a>>,
     /// The base representation used by the literal in source code
     #[content_eq(skip)]
