@@ -91,35 +91,36 @@ impl<'a> ParserImpl<'a> {
         }
 
         let mut stmt = match self.cur_kind() {
-            Kind::LCurly => self.parse_block_statement(),
-            Kind::Semicolon => self.parse_empty_statement(),
+            Kind::Export => self.parse_export_declaration(),
+            Kind::Import => self.parse_import_statement(),
+            Kind::Const => self.parse_const_statement(stmt_ctx),
             Kind::If => self.parse_if_statement(),
             Kind::Do => self.parse_do_while_statement(),
             Kind::While => self.parse_while_statement(),
             Kind::For => self.parse_for_statement(),
+            // Fast path
+            Kind::Function => {
+                self.parse_function_declaration(start_span, /* async */ false, stmt_ctx)
+            }
             Kind::Break | Kind::Continue => self.parse_break_or_continue_statement(),
-            Kind::With => self.parse_with_statement(),
+            // [+Return] ReturnStatement[?Yield, ?Await]
+            Kind::Return => self.parse_return_statement(),
             Kind::Switch => self.parse_switch_statement(),
             Kind::Throw => self.parse_throw_statement(),
             Kind::Try => self.parse_try_statement(),
-            Kind::Debugger => self.parse_debugger_statement(),
             Kind::Class => self.parse_class_statement(stmt_ctx, start_span),
-            Kind::Export => self.parse_export_declaration(),
-            // [+Return] ReturnStatement[?Yield, ?Await]
-            Kind::Return => self.parse_return_statement(),
+            Kind::Async => self.parse_async_statement(start_span, stmt_ctx),
+            Kind::LCurly => self.parse_block_statement(),
+            Kind::Semicolon => self.parse_empty_statement(),
             Kind::Var => {
                 let span = self.start_span();
                 self.bump_any();
                 self.parse_variable_statement(span, VariableDeclarationKind::Var, stmt_ctx)
             }
-            // Fast path
-            Kind::Function => {
-                self.parse_function_declaration(start_span, /* async */ false, stmt_ctx)
-            }
             Kind::Let if !self.cur_token().escaped() => self.parse_let(stmt_ctx),
-            Kind::Async => self.parse_async_statement(start_span, stmt_ctx),
-            Kind::Import => self.parse_import_statement(),
-            Kind::Const => self.parse_const_statement(stmt_ctx),
+            Kind::Debugger => self.parse_debugger_statement(),
+            Kind::With => self.parse_with_statement(),
+            // Slower checks (requires lookahead / other expensive checks):
             Kind::Using if self.is_using_declaration() => self.parse_using_statement(),
             Kind::Await if self.is_using_statement() => self.parse_using_statement(),
             Kind::Interface
