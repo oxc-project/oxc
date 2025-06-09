@@ -59,8 +59,8 @@ impl<'a> ToBigInt<'a> for Expression<'a> {
 
 impl<'a> ToBigInt<'a> for BigIntLiteral<'a> {
     fn to_big_int(&self, _is_global_reference: &impl IsGlobalReference) -> Option<BigInt> {
-        let value = self.raw.as_str().trim_end_matches('n').string_to_big_int();
-        debug_assert!(value.is_some(), "Failed to parse {}", self.raw);
+        let value = self.value.as_str().string_to_big_int();
+        debug_assert!(value.is_some(), "Failed to parse {}n", self.value);
         value
     }
 }

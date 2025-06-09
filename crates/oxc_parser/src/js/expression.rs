@@ -338,10 +338,10 @@ impl<'a> ParserImpl<'a> {
         let span = token.span();
         let raw = self.cur_src();
         let src = raw.strip_suffix('n').unwrap();
-        let _value = parse_big_int(src, token.kind(), token.has_separator())
-            .map_err(|err| diagnostics::invalid_number(err, span));
+        let value = parse_big_int(src, token.kind(), token.has_separator(), self.ast.allocator);
+
         self.bump_any();
-        self.ast.big_int_literal(span, raw, base)
+        self.ast.big_int_literal(span, value, Some(Atom::from(raw)), base)
     }
 
     pub(crate) fn parse_literal_regexp(&mut self) -> RegExpLiteral<'a> {

@@ -1223,14 +1223,13 @@ function deserializeStringLiteral(pos) {
 }
 
 function deserializeBigIntLiteral(pos) {
-  const raw = deserializeStr(pos + 8),
-    bigint = raw.slice(0, -1).replace(/_/g, '');
+  const bigint = deserializeStr(pos + 8);
   return {
     type: 'Literal',
     start: deserializeU32(pos),
     end: deserializeU32(pos + 4),
     value: BigInt(bigint),
-    raw,
+    raw: deserializeOptionStr(pos + 24),
     bigint,
   };
 }

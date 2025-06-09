@@ -1568,7 +1568,6 @@ name = "oxc_ast"
 version = "0.72.3"
 dependencies = [
  "bitflags 2.9.1",
- "cow-utils",
  "oxc_allocator",
  "oxc_ast_macros",
  "oxc_data_structures",
@@ -1742,7 +1741,6 @@ dependencies = [
 name = "oxc_ecmascript"
 version = "0.72.3"
 dependencies = [
- "cow-utils",
  "num-bigint",
  "num-traits",
  "oxc_ast",

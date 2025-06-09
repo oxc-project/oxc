@@ -877,11 +877,12 @@ const _: () = {
     assert!(offset_of!(StringLiteral, lone_surrogates) == 40);
 
     // Padding: 7 bytes
-    assert!(size_of::<BigIntLiteral>() == 32);
+    assert!(size_of::<BigIntLiteral>() == 48);
     assert!(align_of::<BigIntLiteral>() == 8);
     assert!(offset_of!(BigIntLiteral, span) == 0);
-    assert!(offset_of!(BigIntLiteral, raw) == 8);
-    assert!(offset_of!(BigIntLiteral, base) == 24);
+    assert!(offset_of!(BigIntLiteral, value) == 8);
+    assert!(offset_of!(BigIntLiteral, raw) == 24);
+    assert!(offset_of!(BigIntLiteral, base) == 40);
 
     // Padding: 0 bytes
     assert!(size_of::<RegExpLiteral>() == 56);
@@ -2466,11 +2467,12 @@ const _: () = {
     assert!(offset_of!(StringLiteral, lone_surrogates) == 24);
 
     // Padding: 3 bytes
-    assert!(size_of::<BigIntLiteral>() == 20);
+    assert!(size_of::<BigIntLiteral>() == 28);
     assert!(align_of::<BigIntLiteral>() == 4);
     assert!(offset_of!(BigIntLiteral, span) == 0);
-    assert!(offset_of!(BigIntLiteral, raw) == 8);
-    assert!(offset_of!(BigIntLiteral, base) == 16);
+    assert!(offset_of!(BigIntLiteral, value) == 8);
+    assert!(offset_of!(BigIntLiteral, raw) == 16);
+    assert!(offset_of!(BigIntLiteral, base) == 24);
 
     // Padding: 0 bytes
     assert!(size_of::<RegExpLiteral>() == 32);

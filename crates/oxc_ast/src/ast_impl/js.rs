@@ -439,7 +439,7 @@ impl<'a> PropertyKey<'a> {
             Self::StringLiteral(lit) => Some(Cow::Borrowed(lit.value.as_str())),
             Self::RegExpLiteral(lit) => Some(Cow::Owned(lit.regex.to_string())),
             Self::NumericLiteral(lit) => Some(Cow::Owned(lit.value.to_string())),
-            Self::BigIntLiteral(lit) => Some(Cow::Borrowed(lit.raw.as_str())),
+            Self::BigIntLiteral(lit) => Some(Cow::Borrowed(lit.value.as_str())),
             Self::NullLiteral(_) => Some(Cow::Borrowed("null")),
             Self::TemplateLiteral(lit) => {
                 lit.expressions.is_empty().then(|| lit.quasi()).flatten().map(Into::into)

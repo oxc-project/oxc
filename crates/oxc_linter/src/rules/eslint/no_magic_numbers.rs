@@ -257,20 +257,19 @@ impl InternConfig<'_> {
                 }
             }
             AstKind::BigIntLiteral(bigint) => {
-                let big_int_string = bigint.raw.into_string();
                 if is_negative {
-                    let raw = format!("-{big_int_string}");
-
+                    let big_int_string = format!("-{}n", bigint.value);
                     InternConfig {
                         node: parent_node,
-                        value: NoMagicNumbersNumber::BigInt(raw.clone()),
-                        raw,
+                        value: NoMagicNumbersNumber::BigInt(big_int_string),
+                        raw: format!("-{}", bigint.raw.unwrap()),
                     }
                 } else {
+                    let big_int_string = format!("{}n", bigint.value);
                     InternConfig {
                         node: if is_unary { parent_node } else { node },
-                        value: NoMagicNumbersNumber::BigInt(big_int_string.clone()),
-                        raw: big_int_string,
+                        value: NoMagicNumbersNumber::BigInt(big_int_string),
+                        raw: bigint.raw.unwrap().into_string(),
                     }
                 }
             }

@@ -1961,7 +1961,7 @@ impl<'a> FormatWrite<'a> for StringLiteral<'a> {
 
 impl<'a> FormatWrite<'a> for BigIntLiteral<'a> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        write!(f, dynamic_text(&self.raw.as_str().cow_to_ascii_lowercase(), self.span.start))
+        write!(f, dynamic_text(&self.raw.unwrap().cow_to_ascii_lowercase(), self.span.start))
     }
 }
 

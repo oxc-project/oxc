@@ -2,166 +2,18 @@ commit: 4b5d36ab
 
 estree_test262 Summary:
 AST Parsed     : 44203/44203 (100.00%)
-Positive Passed: 44120/44203 (99.81%)
-Mismatch: tasks/coverage/test262/test/built-ins/Atomics/and/bigint/good-views.js
-
-Mismatch: tasks/coverage/test262/test/built-ins/Atomics/or/bigint/good-views.js
-
-Mismatch: tasks/coverage/test262/test/built-ins/Atomics/wait/bigint/no-spurious-wakeup-on-store.js
-
-Mismatch: tasks/coverage/test262/test/built-ins/Atomics/waitAsync/bigint/no-spurious-wakeup-on-store.js
-
-Mismatch: tasks/coverage/test262/test/built-ins/Atomics/xor/bigint/good-views.js
-
-Mismatch: tasks/coverage/test262/test/built-ins/BigInt/asIntN/arithmetic.js
-
-Mismatch: tasks/coverage/test262/test/built-ins/BigInt/asUintN/arithmetic.js
-
-Mismatch: tasks/coverage/test262/test/built-ins/DataView/prototype/getBigInt64/return-values-custom-offset.js
-
-Mismatch: tasks/coverage/test262/test/built-ins/DataView/prototype/getBigInt64/return-values.js
-
-Mismatch: tasks/coverage/test262/test/built-ins/DataView/prototype/getBigInt64/to-boolean-littleendian.js
-
-Mismatch: tasks/coverage/test262/test/built-ins/DataView/prototype/getBigInt64/toindex-byteoffset-toprimitive.js
-
-Mismatch: tasks/coverage/test262/test/built-ins/DataView/prototype/getBigInt64/toindex-byteoffset-wrapped-values.js
-
-Mismatch: tasks/coverage/test262/test/built-ins/DataView/prototype/getBigInt64/toindex-byteoffset.js
-
-Mismatch: tasks/coverage/test262/test/built-ins/DataView/prototype/getBigUint64/return-values-custom-offset.js
-
-Mismatch: tasks/coverage/test262/test/built-ins/DataView/prototype/getBigUint64/return-values.js
-
-Mismatch: tasks/coverage/test262/test/built-ins/DataView/prototype/getBigUint64/to-boolean-littleendian.js
-
-Mismatch: tasks/coverage/test262/test/built-ins/DataView/prototype/getBigUint64/toindex-byteoffset-toprimitive.js
-
-Mismatch: tasks/coverage/test262/test/built-ins/DataView/prototype/getBigUint64/toindex-byteoffset-wrapped-values.js
-
-Mismatch: tasks/coverage/test262/test/built-ins/DataView/prototype/getBigUint64/toindex-byteoffset.js
-
-Mismatch: tasks/coverage/test262/test/built-ins/DataView/prototype/setBigInt64/set-values-little-endian-order.js
-
-Mismatch: tasks/coverage/test262/test/built-ins/DataView/prototype/setBigInt64/to-boolean-littleendian.js
-
-Mismatch: tasks/coverage/test262/test/language/expressions/addition/bigint-arithmetic.js
-
+Positive Passed: 44194/44203 (99.98%)
 Mismatch: tasks/coverage/test262/test/language/expressions/assignment/fn-name-lhs-cover.js
 
 Mismatch: tasks/coverage/test262/test/language/expressions/assignment/target-cover-id.js
 
-Mismatch: tasks/coverage/test262/test/language/expressions/bitwise-and/bigint-non-primitive.js
-
-Mismatch: tasks/coverage/test262/test/language/expressions/bitwise-and/bigint.js
-
-Mismatch: tasks/coverage/test262/test/language/expressions/bitwise-not/bigint.js
-
-Mismatch: tasks/coverage/test262/test/language/expressions/bitwise-or/bigint-non-primitive.js
-
-Mismatch: tasks/coverage/test262/test/language/expressions/bitwise-or/bigint.js
-
-Mismatch: tasks/coverage/test262/test/language/expressions/bitwise-xor/bigint-non-primitive.js
-
-Mismatch: tasks/coverage/test262/test/language/expressions/bitwise-xor/bigint.js
-
-Mismatch: tasks/coverage/test262/test/language/expressions/division/bigint-arithmetic.js
-
-Mismatch: tasks/coverage/test262/test/language/expressions/does-not-equals/bigint-and-bigint.js
-
-Mismatch: tasks/coverage/test262/test/language/expressions/does-not-equals/bigint-and-number-extremes.js
-
-Mismatch: tasks/coverage/test262/test/language/expressions/equals/bigint-and-bigint.js
-
-Mismatch: tasks/coverage/test262/test/language/expressions/equals/bigint-and-number-extremes.js
-
-Mismatch: tasks/coverage/test262/test/language/expressions/exponentiation/bigint-arithmetic.js
-
-Mismatch: tasks/coverage/test262/test/language/expressions/greater-than/bigint-and-bigint.js
-
-Mismatch: tasks/coverage/test262/test/language/expressions/greater-than/bigint-and-number-extremes.js
-
-Mismatch: tasks/coverage/test262/test/language/expressions/greater-than-or-equal/bigint-and-bigint.js
-
-Mismatch: tasks/coverage/test262/test/language/expressions/greater-than-or-equal/bigint-and-number-extremes.js
-
-Mismatch: tasks/coverage/test262/test/language/expressions/left-shift/bigint-non-primitive.js
-
-Mismatch: tasks/coverage/test262/test/language/expressions/left-shift/bigint.js
-
-Mismatch: tasks/coverage/test262/test/language/expressions/less-than/bigint-and-bigint.js
-
-Mismatch: tasks/coverage/test262/test/language/expressions/less-than/bigint-and-number-extremes.js
-
-Mismatch: tasks/coverage/test262/test/language/expressions/less-than-or-equal/bigint-and-bigint.js
-
-Mismatch: tasks/coverage/test262/test/language/expressions/less-than-or-equal/bigint-and-number-extremes.js
-
-Mismatch: tasks/coverage/test262/test/language/expressions/modulus/bigint-arithmetic.js
-
-Mismatch: tasks/coverage/test262/test/language/expressions/multiplication/bigint-arithmetic.js
-
-Mismatch: tasks/coverage/test262/test/language/expressions/postfix-decrement/bigint.js
-
 Mismatch: tasks/coverage/test262/test/language/expressions/postfix-decrement/target-cover-id.js
-
-Mismatch: tasks/coverage/test262/test/language/expressions/postfix-increment/bigint.js
 
 Mismatch: tasks/coverage/test262/test/language/expressions/postfix-increment/target-cover-id.js
 
-Mismatch: tasks/coverage/test262/test/language/expressions/prefix-decrement/bigint.js
-
 Mismatch: tasks/coverage/test262/test/language/expressions/prefix-decrement/target-cover-id.js
 
-Mismatch: tasks/coverage/test262/test/language/expressions/prefix-increment/bigint.js
-
 Mismatch: tasks/coverage/test262/test/language/expressions/prefix-increment/target-cover-id.js
-
-Mismatch: tasks/coverage/test262/test/language/expressions/right-shift/bigint-non-primitive.js
-
-Mismatch: tasks/coverage/test262/test/language/expressions/right-shift/bigint.js
-
-Mismatch: tasks/coverage/test262/test/language/expressions/strict-does-not-equals/bigint-and-bigint.js
-
-Mismatch: tasks/coverage/test262/test/language/expressions/strict-does-not-equals/bigint-and-number-extremes.js
-
-Mismatch: tasks/coverage/test262/test/language/expressions/strict-equals/bigint-and-bigint.js
-
-Mismatch: tasks/coverage/test262/test/language/expressions/strict-equals/bigint-and-number-extremes.js
-
-Mismatch: tasks/coverage/test262/test/language/expressions/subtraction/bigint-arithmetic.js
-
-Mismatch: tasks/coverage/test262/test/language/expressions/unary-minus/bigint.js
-
-Mismatch: tasks/coverage/test262/test/language/expressions/unsigned-right-shift/bigint-non-primitive.js
-
-Mismatch: tasks/coverage/test262/test/language/literals/bigint/numeric-separators/numeric-separator-literal-bil-bd-nsl-bd.js
-
-Mismatch: tasks/coverage/test262/test/language/literals/bigint/numeric-separators/numeric-separator-literal-bil-bd-nsl-bds.js
-
-Mismatch: tasks/coverage/test262/test/language/literals/bigint/numeric-separators/numeric-separator-literal-bil-bds-nsl-bd.js
-
-Mismatch: tasks/coverage/test262/test/language/literals/bigint/numeric-separators/numeric-separator-literal-bil-bds-nsl-bds.js
-
-Mismatch: tasks/coverage/test262/test/language/literals/bigint/numeric-separators/numeric-separator-literal-hil-hd-nsl-hd.js
-
-Mismatch: tasks/coverage/test262/test/language/literals/bigint/numeric-separators/numeric-separator-literal-hil-hd-nsl-hds.js
-
-Mismatch: tasks/coverage/test262/test/language/literals/bigint/numeric-separators/numeric-separator-literal-hil-hds-nsl-hd.js
-
-Mismatch: tasks/coverage/test262/test/language/literals/bigint/numeric-separators/numeric-separator-literal-hil-hds-nsl-hds.js
-
-Mismatch: tasks/coverage/test262/test/language/literals/bigint/numeric-separators/numeric-separator-literal-hil-od-nsl-od-one-of.js
-
-Mismatch: tasks/coverage/test262/test/language/literals/bigint/numeric-separators/numeric-separator-literal-oil-od-nsl-od-one-of.js
-
-Mismatch: tasks/coverage/test262/test/language/literals/bigint/numeric-separators/numeric-separator-literal-oil-od-nsl-od.js
-
-Mismatch: tasks/coverage/test262/test/language/literals/bigint/numeric-separators/numeric-separator-literal-oil-od-nsl-ods.js
-
-Mismatch: tasks/coverage/test262/test/language/literals/bigint/numeric-separators/numeric-separator-literal-oil-ods-nsl-od.js
-
-Mismatch: tasks/coverage/test262/test/language/literals/bigint/numeric-separators/numeric-separator-literal-oil-ods-nsl-ods.js
 
 Mismatch: tasks/coverage/test262/test/language/statements/for-in/head-lhs-cover.js
 

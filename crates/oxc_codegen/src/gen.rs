@@ -1284,15 +1284,14 @@ impl GenExpr for BigIntLiteral<'_> {
     fn gen_expr(&self, p: &mut Codegen, precedence: Precedence, _ctx: Context) {
         p.print_space_before_identifier();
         p.add_source_mapping(self.span);
-        let raw = self.raw.as_str().cow_replace('_', "");
-        if !raw.starts_with('-') {
-            p.print_str(&raw);
-        } else if precedence >= Precedence::Prefix {
+        let value = self.value.as_str();
+        if value.starts_with('-') && precedence >= Precedence::Prefix {
             p.print_ascii_byte(b'(');
-            p.print_str(&raw);
-            p.print_ascii_byte(b')');
+            p.print_str(value);
+            p.print_str("n)");
         } else {
-            p.print_str(&raw);
+            p.print_str(value);
+            p.print_ascii_byte(b'n');
         }
     }
 }

@@ -45,7 +45,7 @@ impl DebugDotContext<'_, '_> {
             AstKind::NumericLiteral(lit) => Some(lit.value.to_string()),
             AstKind::BooleanLiteral(lit) => Some(lit.value.to_string()),
             AstKind::StringLiteral(lit) => Some(lit.value.to_string()),
-            AstKind::BigIntLiteral(lit) => Some(lit.raw.to_string()),
+            AstKind::BigIntLiteral(lit) => Some(lit.value.to_string()),
             AstKind::NullLiteral(_) => Some("null".to_string()),
             _ => None,
         }

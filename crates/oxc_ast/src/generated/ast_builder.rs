@@ -137,19 +137,21 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// * `span`: Node location in source code
+    /// * `value`: Bigint value in base 10 with no underscores
     /// * `raw`: The bigint as it appears in source code
     /// * `base`: The base representation used by the literal in source code
     #[inline]
     pub fn expression_big_int_literal<A1>(
         self,
         span: Span,
-        raw: A1,
+        value: A1,
+        raw: Option<Atom<'a>>,
         base: BigintBase,
     ) -> Expression<'a>
     where
         A1: Into<Atom<'a>>,
     {
-        Expression::BigIntLiteral(self.alloc_big_int_literal(span, raw, base))
+        Expression::BigIntLiteral(self.alloc_big_int_literal(span, value, raw, base))
     }
 
     /// Build an [`Expression::RegExpLiteral`].
@@ -8520,14 +8522,21 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// * `span`: Node location in source code
+    /// * `value`: Bigint value in base 10 with no underscores
     /// * `raw`: The bigint as it appears in source code
     /// * `base`: The base representation used by the literal in source code
     #[inline]
-    pub fn big_int_literal<A1>(self, span: Span, raw: A1, base: BigintBase) -> BigIntLiteral<'a>
+    pub fn big_int_literal<A1>(
+        self,
+        span: Span,
+        value: A1,
+        raw: Option<Atom<'a>>,
+        base: BigintBase,
+    ) -> BigIntLiteral<'a>
     where
         A1: Into<Atom<'a>>,
     {
-        BigIntLiteral { span, raw: raw.into(), base }
+        BigIntLiteral { span, value: value.into(), raw, base }
     }
 
     /// Build a [`BigIntLiteral`], and store it in the memory arena.
@@ -8537,19 +8546,21 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// * `span`: Node location in source code
+    /// * `value`: Bigint value in base 10 with no underscores
     /// * `raw`: The bigint as it appears in source code
     /// * `base`: The base representation used by the literal in source code
     #[inline]
     pub fn alloc_big_int_literal<A1>(
         self,
         span: Span,
-        raw: A1,
+        value: A1,
+        raw: Option<Atom<'a>>,
         base: BigintBase,
     ) -> Box<'a, BigIntLiteral<'a>>
     where
         A1: Into<Atom<'a>>,
     {
-        Box::new_in(self.big_int_literal(span, raw, base), self.allocator)
+        Box::new_in(self.big_int_literal(span, value, raw, base), self.allocator)
     }
 
     /// Build a [`RegExpLiteral`].
@@ -9975,19 +9986,21 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// * `span`: Node location in source code
+    /// * `value`: Bigint value in base 10 with no underscores
     /// * `raw`: The bigint as it appears in source code
     /// * `base`: The base representation used by the literal in source code
     #[inline]
     pub fn ts_literal_big_int_literal<A1>(
         self,
         span: Span,
-        raw: A1,
+        value: A1,
+        raw: Option<Atom<'a>>,
         base: BigintBase,
     ) -> TSLiteral<'a>
     where
         A1: Into<Atom<'a>>,
     {
-        TSLiteral::BigIntLiteral(self.alloc_big_int_literal(span, raw, base))
+        TSLiteral::BigIntLiteral(self.alloc_big_int_literal(span, value, raw, base))
     }
 
     /// Build a [`TSLiteral::StringLiteral`].

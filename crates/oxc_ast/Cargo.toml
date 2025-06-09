@@ -28,7 +28,6 @@ oxc_span = { workspace = true }
 oxc_syntax = { workspace = true }
 
 bitflags = { workspace = true }
-cow-utils = { workspace = true }
 
 [features]
 default = []
