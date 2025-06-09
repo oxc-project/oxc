@@ -30,7 +30,7 @@ Following configuration are supported via `settings.json` and effect the window 
 | Key                | Default Value | Possible Values                  | Description                                                                 |
 | ------------------ | ------------- | -------------------------------- | --------------------------------------------------------------------------- |
 | `oxc.enable`       | `true`        | `true` \| `false`                | Enables the language server to receive lint diagnostics                     |
-| `oxc.trace.server` | `off`         | `off` \| `messages` \| `verbose` | races the communication between VS Code and the language server.            |
+| `oxc.trace.server` | `off`         | `off` \| `messages` \| `verbose` | Traces the communication between VS Code and the language server.           |
 | `oxc.path.server`  | -             | `<string>`                       | Path to Oxc language server binary. Mostly for testing the language server. |
 
 ### Workspace Configuration
