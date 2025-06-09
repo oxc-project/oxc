@@ -1,4 +1,4 @@
-use oxc_allocator::Allocator;
+use oxc_allocator::{Allocator, Vec};
 use oxc_ast::ast::*;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_ecmascript::BoundNames;
@@ -10,8 +10,8 @@ use crate::diagnostics;
 pub struct ModuleRecordBuilder<'a> {
     allocator: &'a Allocator,
     module_record: ModuleRecord<'a>,
-    export_entries: Vec<ExportEntry<'a>>,
-    exported_bindings_duplicated: Vec<NameSpan<'a>>,
+    export_entries: Vec<'a, ExportEntry<'a>>,
+    exported_bindings_duplicated: Vec<'a, NameSpan<'a>>,
 }
 
 impl<'a> ModuleRecordBuilder<'a> {
@@ -19,12 +19,12 @@ impl<'a> ModuleRecordBuilder<'a> {
         Self {
             allocator,
             module_record: ModuleRecord::new(allocator),
-            export_entries: vec![],
-            exported_bindings_duplicated: vec![],
+            export_entries: Vec::new_in(allocator),
+            exported_bindings_duplicated: Vec::new_in(allocator),
         }
     }
 
-    pub fn build(mut self) -> (ModuleRecord<'a>, Vec<OxcDiagnostic>) {
+    pub fn build(mut self) -> (ModuleRecord<'a>, std::vec::Vec<OxcDiagnostic>) {
         // The `ParseModule` algorithm requires `importedBoundNames` (import entries) to be
         // resolved before resolving export entries.
         self.resolve_export_entries();
@@ -32,7 +32,7 @@ impl<'a> ModuleRecordBuilder<'a> {
         (self.module_record, errors)
     }
 
-    pub fn errors(&self) -> Vec<OxcDiagnostic> {
+    pub fn errors(&self) -> std::vec::Vec<OxcDiagnostic> {
         let mut errors = vec![];
 
         let module_record = &self.module_record;
@@ -56,7 +56,7 @@ impl<'a> ModuleRecordBuilder<'a> {
                     .iter()
                     .filter_map(|export_entry| export_entry.export_name.default_export_span()),
             )
-            .collect::<Vec<_>>();
+            .collect::<std::vec::Vec<_>>();
         if default_exports.len() > 1 {
             errors.push(
                 OxcDiagnostic::error("Duplicated default export").with_labels(default_exports),
@@ -102,7 +102,9 @@ impl<'a> ModuleRecordBuilder<'a> {
     /// [ParseModule](https://tc39.es/ecma262/#sec-parsemodule)
     /// Step 10.
     fn resolve_export_entries(&mut self) {
-        let export_entries = self.export_entries.drain(..).collect::<Vec<_>>();
+        // let export_entries = self.export_entries.drain(..).collect::<Vec<_>>();
+        let export_entries =
+            std::mem::replace(&mut self.export_entries, Vec::new_in(self.allocator));
         // 10. For each ExportEntry Record ee of exportEntries, do
         for ee in export_entries {
             // a. If ee.[[ModuleRequest]] is null, then
