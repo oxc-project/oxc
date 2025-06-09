@@ -2,6 +2,23 @@
 
 All notable changes to this package will be documented in this file.
 
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
+
+## [0.18.1] - 2025-06-09
+
+### 🚜 Refactor
+
+- 7ab84c2 editor: Use pattern for textDocument filter (#11559) (Sysix)
+
+### 📚 Documentation
+
+- e13ed51 editor/vscode: Fix typo in README (#11572) (David)
+
+
+# Changelog
+
+All notable changes to this package will be documented in this file.
+
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
 ## [0.18.0] - 2025-06-06
