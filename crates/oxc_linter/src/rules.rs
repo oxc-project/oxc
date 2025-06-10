@@ -93,6 +93,7 @@ mod eslint {
     pub mod no_eval;
     pub mod no_ex_assign;
     pub mod no_extend_native;
+    pub mod no_extra_bind;
     pub mod no_extra_boolean_cast;
     pub mod no_extra_label;
     pub mod no_fallthrough;
@@ -591,6 +592,7 @@ oxc_macros::declare_all_lint_rules! {
     eslint::max_nested_callbacks,
     eslint::max_params,
     eslint::new_cap,
+    eslint::no_extra_bind,
     eslint::no_alert,
     eslint::no_array_constructor,
     eslint::no_async_promise_executor,
