@@ -212,7 +212,7 @@ jobs:
         run: sleep 180s
 
   smoke:
-    needs: [check, github_release, publish]
+    needs: [check, publish]
     strategy:
       matrix:
         include:
@@ -234,7 +234,7 @@ jobs:
           npx oxlint@${OXLINT_VERSION} ./test.js
 
   eslint-plugin-oxlint:
-    needs: [check, publish, github_release, smoke]
+    needs: [check, publish, smoke]
     name: Update eslint-plugin-oxlint
     runs-on: ubuntu-latest
     steps:
