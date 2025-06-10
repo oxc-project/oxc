@@ -3,9 +3,7 @@
 
 'use strict';
 
-// Unique token which is not exposed publicly.
-// Used to prevent user calling class constructors.
-const TOKEN = {};
+const { NodeArray, TOKEN } = require('../../raw-transfer/node-array.js');
 
 module.exports = { deserialize, TOKEN };
 
@@ -10888,15 +10886,16 @@ function deserializeStr(pos, ast) {
 
 function deserializeVecComment(pos, ast) {
   const { uint32 } = ast.buffer,
-    arr = [],
-    pos32 = pos >> 2,
-    len = uint32[pos32 + 2];
-  pos = uint32[pos32];
-  for (let i = 0; i < len; i++) {
-    arr.push(deserializeComment(pos, ast));
-    pos += 16;
-  }
-  return arr;
+    pos32 = pos >> 2;
+  return new NodeArray(
+    uint32[pos32],
+    uint32[pos32 + 2],
+    16,
+    deserializeComment,
+    null,
+    0,
+    ast,
+  );
 }
 
 function deserializeOptionHashbang(pos, ast) {
@@ -10906,28 +10905,30 @@ function deserializeOptionHashbang(pos, ast) {
 
 function deserializeVecDirective(pos, ast) {
   const { uint32 } = ast.buffer,
-    arr = [],
-    pos32 = pos >> 2,
-    len = uint32[pos32 + 2];
-  pos = uint32[pos32];
-  for (let i = 0; i < len; i++) {
-    arr.push(deserializeDirective(pos, ast));
-    pos += 72;
-  }
-  return arr;
+    pos32 = pos >> 2;
+  return new NodeArray(
+    uint32[pos32],
+    uint32[pos32 + 2],
+    72,
+    deserializeDirective,
+    null,
+    0,
+    ast,
+  );
 }
 
 function deserializeVecStatement(pos, ast) {
   const { uint32 } = ast.buffer,
-    arr = [],
-    pos32 = pos >> 2,
-    len = uint32[pos32 + 2];
-  pos = uint32[pos32];
-  for (let i = 0; i < len; i++) {
-    arr.push(deserializeStatement(pos, ast));
-    pos += 16;
-  }
-  return arr;
+    pos32 = pos >> 2;
+  return new NodeArray(
+    uint32[pos32],
+    uint32[pos32 + 2],
+    16,
+    deserializeStatement,
+    null,
+    0,
+    ast,
+  );
 }
 
 function deserializeBoxBooleanLiteral(pos, ast) {
@@ -11092,15 +11093,16 @@ function deserializeBoxV8IntrinsicExpression(pos, ast) {
 
 function deserializeVecArrayExpressionElement(pos, ast) {
   const { uint32 } = ast.buffer,
-    arr = [],
-    pos32 = pos >> 2,
-    len = uint32[pos32 + 2];
-  pos = uint32[pos32];
-  for (let i = 0; i < len; i++) {
-    arr.push(deserializeArrayExpressionElement(pos, ast));
-    pos += 16;
-  }
-  return arr;
+    pos32 = pos >> 2;
+  return new NodeArray(
+    uint32[pos32],
+    uint32[pos32 + 2],
+    16,
+    deserializeArrayExpressionElement,
+    null,
+    0,
+    ast,
+  );
 }
 
 function deserializeBoxSpreadElement(pos, ast) {
@@ -11109,15 +11111,16 @@ function deserializeBoxSpreadElement(pos, ast) {
 
 function deserializeVecObjectPropertyKind(pos, ast) {
   const { uint32 } = ast.buffer,
-    arr = [],
-    pos32 = pos >> 2,
-    len = uint32[pos32 + 2];
-  pos = uint32[pos32];
-  for (let i = 0; i < len; i++) {
-    arr.push(deserializeObjectPropertyKind(pos, ast));
-    pos += 16;
-  }
-  return arr;
+    pos32 = pos >> 2;
+  return new NodeArray(
+    uint32[pos32],
+    uint32[pos32 + 2],
+    16,
+    deserializeObjectPropertyKind,
+    null,
+    0,
+    ast,
+  );
 }
 
 function deserializeBoxObjectProperty(pos, ast) {
@@ -11138,28 +11141,30 @@ function deserializeBoxPrivateIdentifier(pos, ast) {
 
 function deserializeVecTemplateElement(pos, ast) {
   const { uint32 } = ast.buffer,
-    arr = [],
-    pos32 = pos >> 2,
-    len = uint32[pos32 + 2];
-  pos = uint32[pos32];
-  for (let i = 0; i < len; i++) {
-    arr.push(deserializeTemplateElement(pos, ast));
-    pos += 48;
-  }
-  return arr;
+    pos32 = pos >> 2;
+  return new NodeArray(
+    uint32[pos32],
+    uint32[pos32 + 2],
+    48,
+    deserializeTemplateElement,
+    null,
+    0,
+    ast,
+  );
 }
 
 function deserializeVecExpression(pos, ast) {
   const { uint32 } = ast.buffer,
-    arr = [],
-    pos32 = pos >> 2,
-    len = uint32[pos32 + 2];
-  pos = uint32[pos32];
-  for (let i = 0; i < len; i++) {
-    arr.push(deserializeExpression(pos, ast));
-    pos += 16;
-  }
-  return arr;
+    pos32 = pos >> 2;
+  return new NodeArray(
+    uint32[pos32],
+    uint32[pos32 + 2],
+    16,
+    deserializeExpression,
+    null,
+    0,
+    ast,
+  );
 }
 
 function deserializeBoxTSTypeParameterInstantiation(pos, ast) {
@@ -11190,15 +11195,16 @@ function deserializeBoxPrivateFieldExpression(pos, ast) {
 
 function deserializeVecArgument(pos, ast) {
   const { uint32 } = ast.buffer,
-    arr = [],
-    pos32 = pos >> 2,
-    len = uint32[pos32 + 2];
-  pos = uint32[pos32];
-  for (let i = 0; i < len; i++) {
-    arr.push(deserializeArgument(pos, ast));
-    pos += 16;
-  }
-  return arr;
+    pos32 = pos >> 2;
+  return new NodeArray(
+    uint32[pos32],
+    uint32[pos32 + 2],
+    16,
+    deserializeArgument,
+    null,
+    0,
+    ast,
+  );
 }
 
 function deserializeBoxArrayAssignmentTarget(pos, ast) {
@@ -11216,15 +11222,16 @@ function deserializeOptionAssignmentTargetMaybeDefault(pos, ast) {
 
 function deserializeVecOptionAssignmentTargetMaybeDefault(pos, ast) {
   const { uint32 } = ast.buffer,
-    arr = [],
-    pos32 = pos >> 2,
-    len = uint32[pos32 + 2];
-  pos = uint32[pos32];
-  for (let i = 0; i < len; i++) {
-    arr.push(deserializeOptionAssignmentTargetMaybeDefault(pos, ast));
-    pos += 16;
-  }
-  return arr;
+    pos32 = pos >> 2;
+  return new NodeArray(
+    uint32[pos32],
+    uint32[pos32 + 2],
+    16,
+    deserializeOptionAssignmentTargetMaybeDefault,
+    null,
+    0,
+    ast,
+  );
 }
 
 function deserializeOptionAssignmentTargetRest(pos, ast) {
@@ -11234,15 +11241,16 @@ function deserializeOptionAssignmentTargetRest(pos, ast) {
 
 function deserializeVecAssignmentTargetProperty(pos, ast) {
   const { uint32 } = ast.buffer,
-    arr = [],
-    pos32 = pos >> 2,
-    len = uint32[pos32 + 2];
-  pos = uint32[pos32];
-  for (let i = 0; i < len; i++) {
-    arr.push(deserializeAssignmentTargetProperty(pos, ast));
-    pos += 16;
-  }
-  return arr;
+    pos32 = pos >> 2;
+  return new NodeArray(
+    uint32[pos32],
+    uint32[pos32 + 2],
+    16,
+    deserializeAssignmentTargetProperty,
+    null,
+    0,
+    ast,
+  );
 }
 
 function deserializeBoxAssignmentTargetWithDefault(pos, ast) {
@@ -11360,15 +11368,16 @@ function deserializeBoxTSImportEqualsDeclaration(pos, ast) {
 
 function deserializeVecVariableDeclarator(pos, ast) {
   const { uint32 } = ast.buffer,
-    arr = [],
-    pos32 = pos >> 2,
-    len = uint32[pos32 + 2];
-  pos = uint32[pos32];
-  for (let i = 0; i < len; i++) {
-    arr.push(deserializeVariableDeclarator(pos, ast));
-    pos += 64;
-  }
-  return arr;
+    pos32 = pos >> 2;
+  return new NodeArray(
+    uint32[pos32],
+    uint32[pos32 + 2],
+    64,
+    deserializeVariableDeclarator,
+    null,
+    0,
+    ast,
+  );
 }
 
 function deserializeOptionStatement(pos, ast) {
@@ -11388,15 +11397,16 @@ function deserializeOptionLabelIdentifier(pos, ast) {
 
 function deserializeVecSwitchCase(pos, ast) {
   const { uint32 } = ast.buffer,
-    arr = [],
-    pos32 = pos >> 2,
-    len = uint32[pos32 + 2];
-  pos = uint32[pos32];
-  for (let i = 0; i < len; i++) {
-    arr.push(deserializeSwitchCase(pos, ast));
-    pos += 48;
-  }
-  return arr;
+    pos32 = pos >> 2;
+  return new NodeArray(
+    uint32[pos32],
+    uint32[pos32 + 2],
+    48,
+    deserializeSwitchCase,
+    null,
+    0,
+    ast,
+  );
 }
 
 function deserializeBoxCatchClause(pos, ast) {
@@ -11445,15 +11455,16 @@ function deserializeBoxAssignmentPattern(pos, ast) {
 
 function deserializeVecBindingProperty(pos, ast) {
   const { uint32 } = ast.buffer,
-    arr = [],
-    pos32 = pos >> 2,
-    len = uint32[pos32 + 2];
-  pos = uint32[pos32];
-  for (let i = 0; i < len; i++) {
-    arr.push(deserializeBindingProperty(pos, ast));
-    pos += 64;
-  }
-  return arr;
+    pos32 = pos >> 2;
+  return new NodeArray(
+    uint32[pos32],
+    uint32[pos32 + 2],
+    64,
+    deserializeBindingProperty,
+    null,
+    0,
+    ast,
+  );
 }
 
 function deserializeBoxBindingRestElement(pos, ast) {
@@ -11472,15 +11483,16 @@ function deserializeOptionBindingPattern(pos, ast) {
 
 function deserializeVecOptionBindingPattern(pos, ast) {
   const { uint32 } = ast.buffer,
-    arr = [],
-    pos32 = pos >> 2,
-    len = uint32[pos32 + 2];
-  pos = uint32[pos32];
-  for (let i = 0; i < len; i++) {
-    arr.push(deserializeOptionBindingPattern(pos, ast));
-    pos += 32;
-  }
-  return arr;
+    pos32 = pos >> 2;
+  return new NodeArray(
+    uint32[pos32],
+    uint32[pos32 + 2],
+    32,
+    deserializeOptionBindingPattern,
+    null,
+    0,
+    ast,
+  );
 }
 
 function deserializeOptionBindingIdentifier(pos, ast) {
@@ -11521,28 +11533,30 @@ function deserializeOptionBoxFunctionBody(pos, ast) {
 
 function deserializeVecFormalParameter(pos, ast) {
   const { uint32 } = ast.buffer,
-    arr = [],
-    pos32 = pos >> 2,
-    len = uint32[pos32 + 2];
-  pos = uint32[pos32];
-  for (let i = 0; i < len; i++) {
-    arr.push(deserializeFormalParameter(pos, ast));
-    pos += 72;
-  }
-  return arr;
+    pos32 = pos >> 2;
+  return new NodeArray(
+    uint32[pos32],
+    uint32[pos32 + 2],
+    72,
+    deserializeFormalParameter,
+    null,
+    0,
+    ast,
+  );
 }
 
 function deserializeVecDecorator(pos, ast) {
   const { uint32 } = ast.buffer,
-    arr = [],
-    pos32 = pos >> 2,
-    len = uint32[pos32 + 2];
-  pos = uint32[pos32];
-  for (let i = 0; i < len; i++) {
-    arr.push(deserializeDecorator(pos, ast));
-    pos += 24;
-  }
-  return arr;
+    pos32 = pos >> 2;
+  return new NodeArray(
+    uint32[pos32],
+    uint32[pos32 + 2],
+    24,
+    deserializeDecorator,
+    null,
+    0,
+    ast,
+  );
 }
 
 function deserializeOptionTSAccessibility(pos, ast) {
@@ -11552,15 +11566,16 @@ function deserializeOptionTSAccessibility(pos, ast) {
 
 function deserializeVecTSClassImplements(pos, ast) {
   const { uint32 } = ast.buffer,
-    arr = [],
-    pos32 = pos >> 2,
-    len = uint32[pos32 + 2];
-  pos = uint32[pos32];
-  for (let i = 0; i < len; i++) {
-    arr.push(deserializeTSClassImplements(pos, ast));
-    pos += 32;
-  }
-  return arr;
+    pos32 = pos >> 2;
+  return new NodeArray(
+    uint32[pos32],
+    uint32[pos32 + 2],
+    32,
+    deserializeTSClassImplements,
+    null,
+    0,
+    ast,
+  );
 }
 
 function deserializeBoxClassBody(pos, ast) {
@@ -11569,15 +11584,16 @@ function deserializeBoxClassBody(pos, ast) {
 
 function deserializeVecClassElement(pos, ast) {
   const { uint32 } = ast.buffer,
-    arr = [],
-    pos32 = pos >> 2,
-    len = uint32[pos32 + 2];
-  pos = uint32[pos32];
-  for (let i = 0; i < len; i++) {
-    arr.push(deserializeClassElement(pos, ast));
-    pos += 16;
-  }
-  return arr;
+    pos32 = pos >> 2;
+  return new NodeArray(
+    uint32[pos32],
+    uint32[pos32 + 2],
+    16,
+    deserializeClassElement,
+    null,
+    0,
+    ast,
+  );
 }
 
 function deserializeBoxStaticBlock(pos, ast) {
@@ -11631,15 +11647,16 @@ function deserializeOptionImportPhase(pos, ast) {
 
 function deserializeVecImportDeclarationSpecifier(pos, ast) {
   const { uint32 } = ast.buffer,
-    arr = [],
-    pos32 = pos >> 2,
-    len = uint32[pos32 + 2];
-  pos = uint32[pos32];
-  for (let i = 0; i < len; i++) {
-    arr.push(deserializeImportDeclarationSpecifier(pos, ast));
-    pos += 16;
-  }
-  return arr;
+    pos32 = pos >> 2;
+  return new NodeArray(
+    uint32[pos32],
+    uint32[pos32 + 2],
+    16,
+    deserializeImportDeclarationSpecifier,
+    null,
+    0,
+    ast,
+  );
 }
 
 function deserializeOptionVecImportDeclarationSpecifier(pos, ast) {
@@ -11670,15 +11687,16 @@ function deserializeBoxImportNamespaceSpecifier(pos, ast) {
 
 function deserializeVecImportAttribute(pos, ast) {
   const { uint32 } = ast.buffer,
-    arr = [],
-    pos32 = pos >> 2,
-    len = uint32[pos32 + 2];
-  pos = uint32[pos32];
-  for (let i = 0; i < len; i++) {
-    arr.push(deserializeImportAttribute(pos, ast));
-    pos += 112;
-  }
-  return arr;
+    pos32 = pos >> 2;
+  return new NodeArray(
+    uint32[pos32],
+    uint32[pos32 + 2],
+    112,
+    deserializeImportAttribute,
+    null,
+    0,
+    ast,
+  );
 }
 
 function deserializeOptionDeclaration(pos, ast) {
@@ -11688,15 +11706,16 @@ function deserializeOptionDeclaration(pos, ast) {
 
 function deserializeVecExportSpecifier(pos, ast) {
   const { uint32 } = ast.buffer,
-    arr = [],
-    pos32 = pos >> 2,
-    len = uint32[pos32 + 2];
-  pos = uint32[pos32];
-  for (let i = 0; i < len; i++) {
-    arr.push(deserializeExportSpecifier(pos, ast));
-    pos += 128;
-  }
-  return arr;
+    pos32 = pos >> 2;
+  return new NodeArray(
+    uint32[pos32],
+    uint32[pos32 + 2],
+    128,
+    deserializeExportSpecifier,
+    null,
+    0,
+    ast,
+  );
 }
 
 function deserializeOptionStringLiteral(pos, ast) {
@@ -11723,15 +11742,16 @@ function deserializeBoxJSXOpeningElement(pos, ast) {
 
 function deserializeVecJSXChild(pos, ast) {
   const { uint32 } = ast.buffer,
-    arr = [],
-    pos32 = pos >> 2,
-    len = uint32[pos32 + 2];
-  pos = uint32[pos32];
-  for (let i = 0; i < len; i++) {
-    arr.push(deserializeJSXChild(pos, ast));
-    pos += 16;
-  }
-  return arr;
+    pos32 = pos >> 2;
+  return new NodeArray(
+    uint32[pos32],
+    uint32[pos32 + 2],
+    16,
+    deserializeJSXChild,
+    null,
+    0,
+    ast,
+  );
 }
 
 function deserializeBoxJSXClosingElement(pos, ast) {
@@ -11745,15 +11765,16 @@ function deserializeOptionBoxJSXClosingElement(pos, ast) {
 
 function deserializeVecJSXAttributeItem(pos, ast) {
   const { uint32 } = ast.buffer,
-    arr = [],
-    pos32 = pos >> 2,
-    len = uint32[pos32 + 2];
-  pos = uint32[pos32];
-  for (let i = 0; i < len; i++) {
-    arr.push(deserializeJSXAttributeItem(pos, ast));
-    pos += 16;
-  }
-  return arr;
+    pos32 = pos >> 2;
+  return new NodeArray(
+    uint32[pos32],
+    uint32[pos32 + 2],
+    16,
+    deserializeJSXAttributeItem,
+    null,
+    0,
+    ast,
+  );
 }
 
 function deserializeBoxJSXIdentifier(pos, ast) {
@@ -11795,15 +11816,16 @@ function deserializeBoxJSXSpreadChild(pos, ast) {
 
 function deserializeVecTSEnumMember(pos, ast) {
   const { uint32 } = ast.buffer,
-    arr = [],
-    pos32 = pos >> 2,
-    len = uint32[pos32 + 2];
-  pos = uint32[pos32];
-  for (let i = 0; i < len; i++) {
-    arr.push(deserializeTSEnumMember(pos, ast));
-    pos += 40;
-  }
-  return arr;
+    pos32 = pos >> 2;
+  return new NodeArray(
+    uint32[pos32],
+    uint32[pos32 + 2],
+    40,
+    deserializeTSEnumMember,
+    null,
+    0,
+    ast,
+  );
 }
 
 function deserializeBoxTSAnyKeyword(pos, ast) {
@@ -11956,28 +11978,30 @@ function deserializeBoxJSDocUnknownType(pos, ast) {
 
 function deserializeVecTSType(pos, ast) {
   const { uint32 } = ast.buffer,
-    arr = [],
-    pos32 = pos >> 2,
-    len = uint32[pos32 + 2];
-  pos = uint32[pos32];
-  for (let i = 0; i < len; i++) {
-    arr.push(deserializeTSType(pos, ast));
-    pos += 16;
-  }
-  return arr;
+    pos32 = pos >> 2;
+  return new NodeArray(
+    uint32[pos32],
+    uint32[pos32 + 2],
+    16,
+    deserializeTSType,
+    null,
+    0,
+    ast,
+  );
 }
 
 function deserializeVecTSTupleElement(pos, ast) {
   const { uint32 } = ast.buffer,
-    arr = [],
-    pos32 = pos >> 2,
-    len = uint32[pos32 + 2];
-  pos = uint32[pos32];
-  for (let i = 0; i < len; i++) {
-    arr.push(deserializeTSTupleElement(pos, ast));
-    pos += 16;
-  }
-  return arr;
+    pos32 = pos >> 2;
+  return new NodeArray(
+    uint32[pos32],
+    uint32[pos32 + 2],
+    16,
+    deserializeTSTupleElement,
+    null,
+    0,
+    ast,
+  );
 }
 
 function deserializeBoxTSOptionalType(pos, ast) {
@@ -11999,28 +12023,30 @@ function deserializeOptionTSType(pos, ast) {
 
 function deserializeVecTSTypeParameter(pos, ast) {
   const { uint32 } = ast.buffer,
-    arr = [],
-    pos32 = pos >> 2,
-    len = uint32[pos32 + 2];
-  pos = uint32[pos32];
-  for (let i = 0; i < len; i++) {
-    arr.push(deserializeTSTypeParameter(pos, ast));
-    pos += 80;
-  }
-  return arr;
+    pos32 = pos >> 2;
+  return new NodeArray(
+    uint32[pos32],
+    uint32[pos32 + 2],
+    80,
+    deserializeTSTypeParameter,
+    null,
+    0,
+    ast,
+  );
 }
 
 function deserializeVecTSInterfaceHeritage(pos, ast) {
   const { uint32 } = ast.buffer,
-    arr = [],
-    pos32 = pos >> 2,
-    len = uint32[pos32 + 2];
-  pos = uint32[pos32];
-  for (let i = 0; i < len; i++) {
-    arr.push(deserializeTSInterfaceHeritage(pos, ast));
-    pos += 32;
-  }
-  return arr;
+    pos32 = pos >> 2;
+  return new NodeArray(
+    uint32[pos32],
+    uint32[pos32 + 2],
+    32,
+    deserializeTSInterfaceHeritage,
+    null,
+    0,
+    ast,
+  );
 }
 
 function deserializeBoxTSInterfaceBody(pos, ast) {
@@ -12029,15 +12055,16 @@ function deserializeBoxTSInterfaceBody(pos, ast) {
 
 function deserializeVecTSSignature(pos, ast) {
   const { uint32 } = ast.buffer,
-    arr = [],
-    pos32 = pos >> 2,
-    len = uint32[pos32 + 2];
-  pos = uint32[pos32];
-  for (let i = 0; i < len; i++) {
-    arr.push(deserializeTSSignature(pos, ast));
-    pos += 16;
-  }
-  return arr;
+    pos32 = pos >> 2;
+  return new NodeArray(
+    uint32[pos32],
+    uint32[pos32 + 2],
+    16,
+    deserializeTSSignature,
+    null,
+    0,
+    ast,
+  );
 }
 
 function deserializeBoxTSPropertySignature(pos, ast) {
@@ -12058,15 +12085,16 @@ function deserializeBoxTSMethodSignature(pos, ast) {
 
 function deserializeVecTSIndexSignatureName(pos, ast) {
   const { uint32 } = ast.buffer,
-    arr = [],
-    pos32 = pos >> 2,
-    len = uint32[pos32 + 2];
-  pos = uint32[pos32];
-  for (let i = 0; i < len; i++) {
-    arr.push(deserializeTSIndexSignatureName(pos, ast));
-    pos += 32;
-  }
-  return arr;
+    pos32 = pos >> 2;
+  return new NodeArray(
+    uint32[pos32],
+    uint32[pos32 + 2],
+    32,
+    deserializeTSIndexSignatureName,
+    null,
+    0,
+    ast,
+  );
 }
 
 function deserializeOptionTSModuleDeclarationBody(pos, ast) {
@@ -12123,104 +12151,112 @@ function deserializeOptionU64(pos, ast) {
 
 function deserializeVecError(pos, ast) {
   const { uint32 } = ast.buffer,
-    arr = [],
-    pos32 = pos >> 2,
-    len = uint32[pos32 + 2];
-  pos = uint32[pos32];
-  for (let i = 0; i < len; i++) {
-    arr.push(deserializeError(pos, ast));
-    pos += 80;
-  }
-  return arr;
+    pos32 = pos >> 2;
+  return new NodeArray(
+    uint32[pos32],
+    uint32[pos32 + 2],
+    80,
+    deserializeError,
+    null,
+    0,
+    ast,
+  );
 }
 
 function deserializeVecErrorLabel(pos, ast) {
   const { uint32 } = ast.buffer,
-    arr = [],
-    pos32 = pos >> 2,
-    len = uint32[pos32 + 2];
-  pos = uint32[pos32];
-  for (let i = 0; i < len; i++) {
-    arr.push(deserializeErrorLabel(pos, ast));
-    pos += 24;
-  }
-  return arr;
+    pos32 = pos >> 2;
+  return new NodeArray(
+    uint32[pos32],
+    uint32[pos32 + 2],
+    24,
+    deserializeErrorLabel,
+    null,
+    0,
+    ast,
+  );
 }
 
 function deserializeVecStaticImport(pos, ast) {
   const { uint32 } = ast.buffer,
-    arr = [],
-    pos32 = pos >> 2,
-    len = uint32[pos32 + 2];
-  pos = uint32[pos32];
-  for (let i = 0; i < len; i++) {
-    arr.push(deserializeStaticImport(pos, ast));
-    pos += 56;
-  }
-  return arr;
+    pos32 = pos >> 2;
+  return new NodeArray(
+    uint32[pos32],
+    uint32[pos32 + 2],
+    56,
+    deserializeStaticImport,
+    null,
+    0,
+    ast,
+  );
 }
 
 function deserializeVecStaticExport(pos, ast) {
   const { uint32 } = ast.buffer,
-    arr = [],
-    pos32 = pos >> 2,
-    len = uint32[pos32 + 2];
-  pos = uint32[pos32];
-  for (let i = 0; i < len; i++) {
-    arr.push(deserializeStaticExport(pos, ast));
-    pos += 32;
-  }
-  return arr;
+    pos32 = pos >> 2;
+  return new NodeArray(
+    uint32[pos32],
+    uint32[pos32 + 2],
+    32,
+    deserializeStaticExport,
+    null,
+    0,
+    ast,
+  );
 }
 
 function deserializeVecDynamicImport(pos, ast) {
   const { uint32 } = ast.buffer,
-    arr = [],
-    pos32 = pos >> 2,
-    len = uint32[pos32 + 2];
-  pos = uint32[pos32];
-  for (let i = 0; i < len; i++) {
-    arr.push(deserializeDynamicImport(pos, ast));
-    pos += 16;
-  }
-  return arr;
+    pos32 = pos >> 2;
+  return new NodeArray(
+    uint32[pos32],
+    uint32[pos32 + 2],
+    16,
+    deserializeDynamicImport,
+    null,
+    0,
+    ast,
+  );
 }
 
 function deserializeVecSpan(pos, ast) {
   const { uint32 } = ast.buffer,
-    arr = [],
-    pos32 = pos >> 2,
-    len = uint32[pos32 + 2];
-  pos = uint32[pos32];
-  for (let i = 0; i < len; i++) {
-    arr.push(deserializeSpan(pos, ast));
-    pos += 8;
-  }
-  return arr;
+    pos32 = pos >> 2;
+  return new NodeArray(
+    uint32[pos32],
+    uint32[pos32 + 2],
+    8,
+    deserializeSpan,
+    null,
+    0,
+    ast,
+  );
 }
 
 function deserializeVecImportEntry(pos, ast) {
   const { uint32 } = ast.buffer,
-    arr = [],
-    pos32 = pos >> 2,
-    len = uint32[pos32 + 2];
-  pos = uint32[pos32];
-  for (let i = 0; i < len; i++) {
-    arr.push(deserializeImportEntry(pos, ast));
-    pos += 96;
-  }
-  return arr;
+    pos32 = pos >> 2;
+  return new NodeArray(
+    uint32[pos32],
+    uint32[pos32 + 2],
+    96,
+    deserializeImportEntry,
+    null,
+    0,
+    ast,
+  );
 }
 
 function deserializeVecExportEntry(pos, ast) {
   const { uint32 } = ast.buffer,
-    arr = [],
-    pos32 = pos >> 2,
-    len = uint32[pos32 + 2];
-  pos = uint32[pos32];
-  for (let i = 0; i < len; i++) {
-    arr.push(deserializeExportEntry(pos, ast));
-    pos += 144;
-  }
-  return arr;
+    pos32 = pos >> 2;
+  return new NodeArray(
+    uint32[pos32],
+    uint32[pos32 + 2],
+    144,
+    deserializeExportEntry,
+    null,
+    0,
+    ast,
+  );
 }
