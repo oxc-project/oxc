@@ -123,51 +123,55 @@ fn generate_struct(
         }
 
         let field_name = get_struct_field_name(field);
+        let field_type = field.type_def(schema);
+
+        // TODO: Don't hard-code this
+        if let TypeDef::Struct(field_struct_def) = field_type {
+            if field_name == "span" && field_struct_def.name() == "Span" {
+                for span_field in &field_struct_def.fields {
+                    if span_field.name() == "_align" {
+                        continue;
+                    }
+
+                    let span_field_name = get_struct_field_name(span_field);
+                    let value_fn = span_field.type_def(schema).deser_name(schema);
+                    let pos = internal_pos_offset(field.offset_64() + span_field.offset_64());
+
+                    #[rustfmt::skip]
+                    write_it!(getters, "
+                        get {span_field_name}() {{
+                            const internal = this.#internal;
+                            return {value_fn}({pos}, internal.$ast);
+                        }}
+                    ");
+
+                    write_it!(to_json, "{span_field_name}: this.{span_field_name},\n");
+                }
+                continue;
+            }
+        }
+
         if field_name == "type" {
             add_type_field = false;
         }
 
-        let field_type = field.type_def(schema);
-        let needs_cached_prop = match field_type {
-            TypeDef::Vec(_) => true,
-            TypeDef::Primitive(primitive_def) => {
-                matches!(primitive_def.name(), "&str" | "Atom")
-            }
-            TypeDef::Option(option_def) => {
-                if let TypeDef::Primitive(primitive_def) = option_def.inner_type(schema) {
-                    matches!(primitive_def.name(), "&str" | "Atom")
-                } else {
-                    false
+        // Structs, `Vec`s, and fieldful enums need to be cached to ensure repeat access gets same object.
+        // Strings are cached because they're slow to deserialize.
+        // Ditto `Box<Struct>`, `Option<Box<Struct>>`, `Option<Vec>` etc.
+        // TODO: If we had a global node cache, would only need to locally cache `Vec`s and strings
+        // (inc `Option<Vec>`, `Option<&str>`).
+        let mut current_field_type = field_type;
+        let needs_cached_prop = loop {
+            match current_field_type {
+                TypeDef::Vec(_) | TypeDef::Struct(_) => break true,
+                TypeDef::Enum(enum_def) => break !enum_def.is_fieldless(),
+                TypeDef::Primitive(primitive_def) => {
+                    break matches!(primitive_def.name(), "&str" | "Atom");
                 }
+                TypeDef::Option(option_def) => current_field_type = option_def.inner_type(schema),
+                TypeDef::Box(box_def) => current_field_type = box_def.inner_type(schema),
+                TypeDef::Cell(cell_def) => current_field_type = cell_def.inner_type(schema),
             }
-            TypeDef::Struct(struct_def) => {
-                // TODO: Don't hard-code this
-                if field_name == "span" && struct_def.name() == "Span" {
-                    for span_field in &struct_def.fields {
-                        if span_field.name() == "_align" {
-                            continue;
-                        }
-
-                        let span_field_name = get_struct_field_name(span_field);
-                        let value_fn = span_field.type_def(schema).deser_name(schema);
-                        let pos = internal_pos_offset(field.offset_64() + span_field.offset_64());
-
-                        #[rustfmt::skip]
-                        write_it!(getters, "
-                            get {span_field_name}() {{
-                                const internal = this.#internal;
-                                return {value_fn}({pos}, internal.$ast);
-                            }}
-                        ");
-
-                        write_it!(to_json, "{span_field_name}: this.{span_field_name},\n");
-                    }
-                    continue;
-                }
-
-                false
-            }
-            _ => false,
         };
 
         let value_fn = field_type.deser_name(schema);
@@ -195,7 +199,7 @@ fn generate_struct(
             ");
         }
 
-        // Remove this special case for `RegExpFlags`
+        // TODO: Remove this special case for `RegExpFlags`
         if struct_name != "RegExpFlags" {
             write_it!(to_json, "{field_name}: this.{field_name},\n");
         }

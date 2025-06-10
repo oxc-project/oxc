@@ -28,7 +28,7 @@ class Program {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
-    this.#internal = { $pos: pos, $ast: ast, body: void 0 };
+    this.#internal = { $pos: pos, $ast: ast, sourceType: void 0, hashbang: void 0, body: void 0 };
   }
 
   get start() {
@@ -42,13 +42,17 @@ class Program {
   }
 
   get sourceType() {
-    const internal = this.#internal;
-    return deserializeSourceType(internal.$pos + 124, internal.$ast);
+    const internal = this.#internal,
+      node = internal.sourceType;
+    if (node !== void 0) return node;
+    return internal.sourceType = deserializeSourceType(internal.$pos + 124, internal.$ast);
   }
 
   get hashbang() {
-    const internal = this.#internal;
-    return deserializeOptionHashbang(internal.$pos + 48, internal.$ast);
+    const internal = this.#internal,
+      node = internal.hashbang;
+    if (node !== void 0) return node;
+    return internal.hashbang = deserializeOptionHashbang(internal.$pos + 48, internal.$ast);
   }
 
   get body() {
@@ -585,7 +589,7 @@ class ObjectProperty {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
-    this.#internal = { $pos: pos, $ast: ast };
+    this.#internal = { $pos: pos, $ast: ast, key: void 0, value: void 0 };
   }
 
   get start() {
@@ -604,13 +608,17 @@ class ObjectProperty {
   }
 
   get key() {
-    const internal = this.#internal;
-    return deserializePropertyKey(internal.$pos + 8, internal.$ast);
+    const internal = this.#internal,
+      node = internal.key;
+    if (node !== void 0) return node;
+    return internal.key = deserializePropertyKey(internal.$pos + 8, internal.$ast);
   }
 
   get value() {
-    const internal = this.#internal;
-    return deserializeExpression(internal.$pos + 24, internal.$ast);
+    const internal = this.#internal,
+      node = internal.value;
+    if (node !== void 0) return node;
+    return internal.value = deserializeExpression(internal.$pos + 24, internal.$ast);
   }
 
   get method() {
@@ -811,7 +819,7 @@ class TaggedTemplateExpression {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
-    this.#internal = { $pos: pos, $ast: ast };
+    this.#internal = { $pos: pos, $ast: ast, tag: void 0, typeArguments: void 0, quasi: void 0 };
   }
 
   get start() {
@@ -825,18 +833,24 @@ class TaggedTemplateExpression {
   }
 
   get tag() {
-    const internal = this.#internal;
-    return deserializeExpression(internal.$pos + 8, internal.$ast);
+    const internal = this.#internal,
+      node = internal.tag;
+    if (node !== void 0) return node;
+    return internal.tag = deserializeExpression(internal.$pos + 8, internal.$ast);
   }
 
   get typeArguments() {
-    const internal = this.#internal;
-    return deserializeOptionBoxTSTypeParameterInstantiation(internal.$pos + 24, internal.$ast);
+    const internal = this.#internal,
+      node = internal.typeArguments;
+    if (node !== void 0) return node;
+    return internal.typeArguments = deserializeOptionBoxTSTypeParameterInstantiation(internal.$pos + 24, internal.$ast);
   }
 
   get quasi() {
-    const internal = this.#internal;
-    return deserializeTemplateLiteral(internal.$pos + 32, internal.$ast);
+    const internal = this.#internal,
+      node = internal.quasi;
+    if (node !== void 0) return node;
+    return internal.quasi = deserializeTemplateLiteral(internal.$pos + 32, internal.$ast);
   }
 
   toJSON() {
@@ -861,7 +875,7 @@ class TemplateElement {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
-    this.#internal = { $pos: pos, $ast: ast };
+    this.#internal = { $pos: pos, $ast: ast, value: void 0 };
   }
 
   get start() {
@@ -875,8 +889,10 @@ class TemplateElement {
   }
 
   get value() {
-    const internal = this.#internal;
-    return deserializeTemplateElementValue(internal.$pos + 8, internal.$ast);
+    const internal = this.#internal,
+      node = internal.value;
+    if (node !== void 0) return node;
+    return internal.value = deserializeTemplateElementValue(internal.$pos + 8, internal.$ast);
   }
 
   get tail() {
@@ -952,7 +968,7 @@ class ComputedMemberExpression {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
-    this.#internal = { $pos: pos, $ast: ast };
+    this.#internal = { $pos: pos, $ast: ast, object: void 0, property: void 0 };
   }
 
   get start() {
@@ -966,13 +982,17 @@ class ComputedMemberExpression {
   }
 
   get object() {
-    const internal = this.#internal;
-    return deserializeExpression(internal.$pos + 8, internal.$ast);
+    const internal = this.#internal,
+      node = internal.object;
+    if (node !== void 0) return node;
+    return internal.object = deserializeExpression(internal.$pos + 8, internal.$ast);
   }
 
   get property() {
-    const internal = this.#internal;
-    return deserializeExpression(internal.$pos + 24, internal.$ast);
+    const internal = this.#internal,
+      node = internal.property;
+    if (node !== void 0) return node;
+    return internal.property = deserializeExpression(internal.$pos + 24, internal.$ast);
   }
 
   get optional() {
@@ -1002,7 +1022,7 @@ class StaticMemberExpression {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
-    this.#internal = { $pos: pos, $ast: ast };
+    this.#internal = { $pos: pos, $ast: ast, object: void 0, property: void 0 };
   }
 
   get start() {
@@ -1016,13 +1036,17 @@ class StaticMemberExpression {
   }
 
   get object() {
-    const internal = this.#internal;
-    return deserializeExpression(internal.$pos + 8, internal.$ast);
+    const internal = this.#internal,
+      node = internal.object;
+    if (node !== void 0) return node;
+    return internal.object = deserializeExpression(internal.$pos + 8, internal.$ast);
   }
 
   get property() {
-    const internal = this.#internal;
-    return deserializeIdentifierName(internal.$pos + 24, internal.$ast);
+    const internal = this.#internal,
+      node = internal.property;
+    if (node !== void 0) return node;
+    return internal.property = deserializeIdentifierName(internal.$pos + 24, internal.$ast);
   }
 
   get optional() {
@@ -1052,7 +1076,7 @@ class PrivateFieldExpression {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
-    this.#internal = { $pos: pos, $ast: ast };
+    this.#internal = { $pos: pos, $ast: ast, object: void 0, property: void 0 };
   }
 
   get start() {
@@ -1066,13 +1090,17 @@ class PrivateFieldExpression {
   }
 
   get object() {
-    const internal = this.#internal;
-    return deserializeExpression(internal.$pos + 8, internal.$ast);
+    const internal = this.#internal,
+      node = internal.object;
+    if (node !== void 0) return node;
+    return internal.object = deserializeExpression(internal.$pos + 8, internal.$ast);
   }
 
   get property() {
-    const internal = this.#internal;
-    return deserializePrivateIdentifier(internal.$pos + 24, internal.$ast);
+    const internal = this.#internal,
+      node = internal.property;
+    if (node !== void 0) return node;
+    return internal.property = deserializePrivateIdentifier(internal.$pos + 24, internal.$ast);
   }
 
   get optional() {
@@ -1102,7 +1130,7 @@ class CallExpression {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
-    this.#internal = { $pos: pos, $ast: ast, arguments: void 0 };
+    this.#internal = { $pos: pos, $ast: ast, callee: void 0, typeArguments: void 0, arguments: void 0 };
   }
 
   get start() {
@@ -1116,13 +1144,17 @@ class CallExpression {
   }
 
   get callee() {
-    const internal = this.#internal;
-    return deserializeExpression(internal.$pos + 8, internal.$ast);
+    const internal = this.#internal,
+      node = internal.callee;
+    if (node !== void 0) return node;
+    return internal.callee = deserializeExpression(internal.$pos + 8, internal.$ast);
   }
 
   get typeArguments() {
-    const internal = this.#internal;
-    return deserializeOptionBoxTSTypeParameterInstantiation(internal.$pos + 24, internal.$ast);
+    const internal = this.#internal,
+      node = internal.typeArguments;
+    if (node !== void 0) return node;
+    return internal.typeArguments = deserializeOptionBoxTSTypeParameterInstantiation(internal.$pos + 24, internal.$ast);
   }
 
   get arguments() {
@@ -1160,7 +1192,7 @@ class NewExpression {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
-    this.#internal = { $pos: pos, $ast: ast, arguments: void 0 };
+    this.#internal = { $pos: pos, $ast: ast, callee: void 0, typeArguments: void 0, arguments: void 0 };
   }
 
   get start() {
@@ -1174,13 +1206,17 @@ class NewExpression {
   }
 
   get callee() {
-    const internal = this.#internal;
-    return deserializeExpression(internal.$pos + 8, internal.$ast);
+    const internal = this.#internal,
+      node = internal.callee;
+    if (node !== void 0) return node;
+    return internal.callee = deserializeExpression(internal.$pos + 8, internal.$ast);
   }
 
   get typeArguments() {
-    const internal = this.#internal;
-    return deserializeOptionBoxTSTypeParameterInstantiation(internal.$pos + 24, internal.$ast);
+    const internal = this.#internal,
+      node = internal.typeArguments;
+    if (node !== void 0) return node;
+    return internal.typeArguments = deserializeOptionBoxTSTypeParameterInstantiation(internal.$pos + 24, internal.$ast);
   }
 
   get arguments() {
@@ -1212,7 +1248,7 @@ class MetaProperty {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
-    this.#internal = { $pos: pos, $ast: ast };
+    this.#internal = { $pos: pos, $ast: ast, meta: void 0, property: void 0 };
   }
 
   get start() {
@@ -1226,13 +1262,17 @@ class MetaProperty {
   }
 
   get meta() {
-    const internal = this.#internal;
-    return deserializeIdentifierName(internal.$pos + 8, internal.$ast);
+    const internal = this.#internal,
+      node = internal.meta;
+    if (node !== void 0) return node;
+    return internal.meta = deserializeIdentifierName(internal.$pos + 8, internal.$ast);
   }
 
   get property() {
-    const internal = this.#internal;
-    return deserializeIdentifierName(internal.$pos + 32, internal.$ast);
+    const internal = this.#internal,
+      node = internal.property;
+    if (node !== void 0) return node;
+    return internal.property = deserializeIdentifierName(internal.$pos + 32, internal.$ast);
   }
 
   toJSON() {
@@ -1256,7 +1296,7 @@ class SpreadElement {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
-    this.#internal = { $pos: pos, $ast: ast };
+    this.#internal = { $pos: pos, $ast: ast, argument: void 0 };
   }
 
   get start() {
@@ -1270,8 +1310,10 @@ class SpreadElement {
   }
 
   get argument() {
-    const internal = this.#internal;
-    return deserializeExpression(internal.$pos + 8, internal.$ast);
+    const internal = this.#internal,
+      node = internal.argument;
+    if (node !== void 0) return node;
+    return internal.argument = deserializeExpression(internal.$pos + 8, internal.$ast);
   }
 
   toJSON() {
@@ -1389,7 +1431,7 @@ class UpdateExpression {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
-    this.#internal = { $pos: pos, $ast: ast };
+    this.#internal = { $pos: pos, $ast: ast, argument: void 0 };
   }
 
   get start() {
@@ -1413,8 +1455,10 @@ class UpdateExpression {
   }
 
   get argument() {
-    const internal = this.#internal;
-    return deserializeSimpleAssignmentTarget(internal.$pos + 8, internal.$ast);
+    const internal = this.#internal,
+      node = internal.argument;
+    if (node !== void 0) return node;
+    return internal.argument = deserializeSimpleAssignmentTarget(internal.$pos + 8, internal.$ast);
   }
 
   toJSON() {
@@ -1439,7 +1483,7 @@ class UnaryExpression {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
-    this.#internal = { $pos: pos, $ast: ast };
+    this.#internal = { $pos: pos, $ast: ast, argument: void 0 };
   }
 
   get start() {
@@ -1458,8 +1502,10 @@ class UnaryExpression {
   }
 
   get argument() {
-    const internal = this.#internal;
-    return deserializeExpression(internal.$pos + 8, internal.$ast);
+    const internal = this.#internal,
+      node = internal.argument;
+    if (node !== void 0) return node;
+    return internal.argument = deserializeExpression(internal.$pos + 8, internal.$ast);
   }
 
   toJSON() {
@@ -1483,7 +1529,7 @@ class BinaryExpression {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
-    this.#internal = { $pos: pos, $ast: ast };
+    this.#internal = { $pos: pos, $ast: ast, left: void 0, right: void 0 };
   }
 
   get start() {
@@ -1497,8 +1543,10 @@ class BinaryExpression {
   }
 
   get left() {
-    const internal = this.#internal;
-    return deserializeExpression(internal.$pos + 8, internal.$ast);
+    const internal = this.#internal,
+      node = internal.left;
+    if (node !== void 0) return node;
+    return internal.left = deserializeExpression(internal.$pos + 8, internal.$ast);
   }
 
   get operator() {
@@ -1507,8 +1555,10 @@ class BinaryExpression {
   }
 
   get right() {
-    const internal = this.#internal;
-    return deserializeExpression(internal.$pos + 24, internal.$ast);
+    const internal = this.#internal,
+      node = internal.right;
+    if (node !== void 0) return node;
+    return internal.right = deserializeExpression(internal.$pos + 24, internal.$ast);
   }
 
   toJSON() {
@@ -1533,7 +1583,7 @@ class PrivateInExpression {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
-    this.#internal = { $pos: pos, $ast: ast };
+    this.#internal = { $pos: pos, $ast: ast, left: void 0, right: void 0 };
   }
 
   get start() {
@@ -1547,13 +1597,17 @@ class PrivateInExpression {
   }
 
   get left() {
-    const internal = this.#internal;
-    return deserializePrivateIdentifier(internal.$pos + 8, internal.$ast);
+    const internal = this.#internal,
+      node = internal.left;
+    if (node !== void 0) return node;
+    return internal.left = deserializePrivateIdentifier(internal.$pos + 8, internal.$ast);
   }
 
   get right() {
-    const internal = this.#internal;
-    return deserializeExpression(internal.$pos + 32, internal.$ast);
+    const internal = this.#internal,
+      node = internal.right;
+    if (node !== void 0) return node;
+    return internal.right = deserializeExpression(internal.$pos + 32, internal.$ast);
   }
 
   toJSON() {
@@ -1577,7 +1631,7 @@ class LogicalExpression {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
-    this.#internal = { $pos: pos, $ast: ast };
+    this.#internal = { $pos: pos, $ast: ast, left: void 0, right: void 0 };
   }
 
   get start() {
@@ -1591,8 +1645,10 @@ class LogicalExpression {
   }
 
   get left() {
-    const internal = this.#internal;
-    return deserializeExpression(internal.$pos + 8, internal.$ast);
+    const internal = this.#internal,
+      node = internal.left;
+    if (node !== void 0) return node;
+    return internal.left = deserializeExpression(internal.$pos + 8, internal.$ast);
   }
 
   get operator() {
@@ -1601,8 +1657,10 @@ class LogicalExpression {
   }
 
   get right() {
-    const internal = this.#internal;
-    return deserializeExpression(internal.$pos + 24, internal.$ast);
+    const internal = this.#internal,
+      node = internal.right;
+    if (node !== void 0) return node;
+    return internal.right = deserializeExpression(internal.$pos + 24, internal.$ast);
   }
 
   toJSON() {
@@ -1627,7 +1685,7 @@ class ConditionalExpression {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
-    this.#internal = { $pos: pos, $ast: ast };
+    this.#internal = { $pos: pos, $ast: ast, test: void 0, consequent: void 0, alternate: void 0 };
   }
 
   get start() {
@@ -1641,18 +1699,24 @@ class ConditionalExpression {
   }
 
   get test() {
-    const internal = this.#internal;
-    return deserializeExpression(internal.$pos + 8, internal.$ast);
+    const internal = this.#internal,
+      node = internal.test;
+    if (node !== void 0) return node;
+    return internal.test = deserializeExpression(internal.$pos + 8, internal.$ast);
   }
 
   get consequent() {
-    const internal = this.#internal;
-    return deserializeExpression(internal.$pos + 24, internal.$ast);
+    const internal = this.#internal,
+      node = internal.consequent;
+    if (node !== void 0) return node;
+    return internal.consequent = deserializeExpression(internal.$pos + 24, internal.$ast);
   }
 
   get alternate() {
-    const internal = this.#internal;
-    return deserializeExpression(internal.$pos + 40, internal.$ast);
+    const internal = this.#internal,
+      node = internal.alternate;
+    if (node !== void 0) return node;
+    return internal.alternate = deserializeExpression(internal.$pos + 40, internal.$ast);
   }
 
   toJSON() {
@@ -1677,7 +1741,7 @@ class AssignmentExpression {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
-    this.#internal = { $pos: pos, $ast: ast };
+    this.#internal = { $pos: pos, $ast: ast, left: void 0, right: void 0 };
   }
 
   get start() {
@@ -1696,13 +1760,17 @@ class AssignmentExpression {
   }
 
   get left() {
-    const internal = this.#internal;
-    return deserializeAssignmentTarget(internal.$pos + 8, internal.$ast);
+    const internal = this.#internal,
+      node = internal.left;
+    if (node !== void 0) return node;
+    return internal.left = deserializeAssignmentTarget(internal.$pos + 8, internal.$ast);
   }
 
   get right() {
-    const internal = this.#internal;
-    return deserializeExpression(internal.$pos + 24, internal.$ast);
+    const internal = this.#internal,
+      node = internal.right;
+    if (node !== void 0) return node;
+    return internal.right = deserializeExpression(internal.$pos + 24, internal.$ast);
   }
 
   toJSON() {
@@ -1868,7 +1936,7 @@ class AssignmentTargetRest {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
-    this.#internal = { $pos: pos, $ast: ast };
+    this.#internal = { $pos: pos, $ast: ast, argument: void 0 };
   }
 
   get start() {
@@ -1882,8 +1950,10 @@ class AssignmentTargetRest {
   }
 
   get argument() {
-    const internal = this.#internal;
-    return deserializeAssignmentTarget(internal.$pos + 8, internal.$ast);
+    const internal = this.#internal,
+      node = internal.argument;
+    if (node !== void 0) return node;
+    return internal.argument = deserializeAssignmentTarget(internal.$pos + 8, internal.$ast);
   }
 
   toJSON() {
@@ -1935,7 +2005,7 @@ class AssignmentTargetWithDefault {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
-    this.#internal = { $pos: pos, $ast: ast };
+    this.#internal = { $pos: pos, $ast: ast, left: void 0, right: void 0 };
   }
 
   get start() {
@@ -1949,13 +2019,17 @@ class AssignmentTargetWithDefault {
   }
 
   get left() {
-    const internal = this.#internal;
-    return deserializeAssignmentTarget(internal.$pos + 8, internal.$ast);
+    const internal = this.#internal,
+      node = internal.left;
+    if (node !== void 0) return node;
+    return internal.left = deserializeAssignmentTarget(internal.$pos + 8, internal.$ast);
   }
 
   get right() {
-    const internal = this.#internal;
-    return deserializeExpression(internal.$pos + 24, internal.$ast);
+    const internal = this.#internal,
+      node = internal.right;
+    if (node !== void 0) return node;
+    return internal.right = deserializeExpression(internal.$pos + 24, internal.$ast);
   }
 
   toJSON() {
@@ -1990,7 +2064,7 @@ class AssignmentTargetPropertyIdentifier {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
-    this.#internal = { $pos: pos, $ast: ast };
+    this.#internal = { $pos: pos, $ast: ast, key: void 0, value: void 0 };
   }
 
   get start() {
@@ -2004,13 +2078,17 @@ class AssignmentTargetPropertyIdentifier {
   }
 
   get key() {
-    const internal = this.#internal;
-    return deserializeIdentifierReference(internal.$pos + 8, internal.$ast);
+    const internal = this.#internal,
+      node = internal.key;
+    if (node !== void 0) return node;
+    return internal.key = deserializeIdentifierReference(internal.$pos + 8, internal.$ast);
   }
 
   get value() {
-    const internal = this.#internal;
-    return deserializeOptionExpression(internal.$pos + 40, internal.$ast);
+    const internal = this.#internal,
+      node = internal.value;
+    if (node !== void 0) return node;
+    return internal.value = deserializeOptionExpression(internal.$pos + 40, internal.$ast);
   }
 
   toJSON() {
@@ -2034,7 +2112,7 @@ class AssignmentTargetPropertyProperty {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
-    this.#internal = { $pos: pos, $ast: ast };
+    this.#internal = { $pos: pos, $ast: ast, key: void 0, value: void 0 };
   }
 
   get start() {
@@ -2048,13 +2126,17 @@ class AssignmentTargetPropertyProperty {
   }
 
   get key() {
-    const internal = this.#internal;
-    return deserializePropertyKey(internal.$pos + 8, internal.$ast);
+    const internal = this.#internal,
+      node = internal.key;
+    if (node !== void 0) return node;
+    return internal.key = deserializePropertyKey(internal.$pos + 8, internal.$ast);
   }
 
   get value() {
-    const internal = this.#internal;
-    return deserializeAssignmentTargetMaybeDefault(internal.$pos + 24, internal.$ast);
+    const internal = this.#internal,
+      node = internal.value;
+    if (node !== void 0) return node;
+    return internal.value = deserializeAssignmentTargetMaybeDefault(internal.$pos + 24, internal.$ast);
   }
 
   get computed() {
@@ -2156,7 +2238,7 @@ class AwaitExpression {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
-    this.#internal = { $pos: pos, $ast: ast };
+    this.#internal = { $pos: pos, $ast: ast, argument: void 0 };
   }
 
   get start() {
@@ -2170,8 +2252,10 @@ class AwaitExpression {
   }
 
   get argument() {
-    const internal = this.#internal;
-    return deserializeExpression(internal.$pos + 8, internal.$ast);
+    const internal = this.#internal,
+      node = internal.argument;
+    if (node !== void 0) return node;
+    return internal.argument = deserializeExpression(internal.$pos + 8, internal.$ast);
   }
 
   toJSON() {
@@ -2194,7 +2278,7 @@ class ChainExpression {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
-    this.#internal = { $pos: pos, $ast: ast };
+    this.#internal = { $pos: pos, $ast: ast, expression: void 0 };
   }
 
   get start() {
@@ -2208,8 +2292,10 @@ class ChainExpression {
   }
 
   get expression() {
-    const internal = this.#internal;
-    return deserializeChainElement(internal.$pos + 8, internal.$ast);
+    const internal = this.#internal,
+      node = internal.expression;
+    if (node !== void 0) return node;
+    return internal.expression = deserializeChainElement(internal.$pos + 8, internal.$ast);
   }
 
   toJSON() {
@@ -2249,7 +2335,7 @@ class ParenthesizedExpression {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
-    this.#internal = { $pos: pos, $ast: ast };
+    this.#internal = { $pos: pos, $ast: ast, expression: void 0 };
   }
 
   get start() {
@@ -2263,8 +2349,10 @@ class ParenthesizedExpression {
   }
 
   get expression() {
-    const internal = this.#internal;
-    return deserializeExpression(internal.$pos + 8, internal.$ast);
+    const internal = this.#internal,
+      node = internal.expression;
+    if (node !== void 0) return node;
+    return internal.expression = deserializeExpression(internal.$pos + 8, internal.$ast);
   }
 
   toJSON() {
@@ -2358,7 +2446,7 @@ class Directive {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
-    this.#internal = { $pos: pos, $ast: ast, directive: void 0 };
+    this.#internal = { $pos: pos, $ast: ast, expression: void 0, directive: void 0 };
   }
 
   get start() {
@@ -2372,8 +2460,10 @@ class Directive {
   }
 
   get expression() {
-    const internal = this.#internal;
-    return deserializeStringLiteral(internal.$pos + 8, internal.$ast);
+    const internal = this.#internal,
+      node = internal.expression;
+    if (node !== void 0) return node;
+    return internal.expression = deserializeStringLiteral(internal.$pos + 8, internal.$ast);
   }
 
   get directive() {
@@ -2576,7 +2666,7 @@ class VariableDeclarator {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
-    this.#internal = { $pos: pos, $ast: ast };
+    this.#internal = { $pos: pos, $ast: ast, id: void 0, init: void 0 };
   }
 
   get start() {
@@ -2590,13 +2680,17 @@ class VariableDeclarator {
   }
 
   get id() {
-    const internal = this.#internal;
-    return deserializeBindingPattern(internal.$pos + 8, internal.$ast);
+    const internal = this.#internal,
+      node = internal.id;
+    if (node !== void 0) return node;
+    return internal.id = deserializeBindingPattern(internal.$pos + 8, internal.$ast);
   }
 
   get init() {
-    const internal = this.#internal;
-    return deserializeOptionExpression(internal.$pos + 40, internal.$ast);
+    const internal = this.#internal,
+      node = internal.init;
+    if (node !== void 0) return node;
+    return internal.init = deserializeOptionExpression(internal.$pos + 40, internal.$ast);
   }
 
   get definite() {
@@ -2658,7 +2752,7 @@ class ExpressionStatement {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
-    this.#internal = { $pos: pos, $ast: ast };
+    this.#internal = { $pos: pos, $ast: ast, expression: void 0 };
   }
 
   get start() {
@@ -2672,8 +2766,10 @@ class ExpressionStatement {
   }
 
   get expression() {
-    const internal = this.#internal;
-    return deserializeExpression(internal.$pos + 8, internal.$ast);
+    const internal = this.#internal,
+      node = internal.expression;
+    if (node !== void 0) return node;
+    return internal.expression = deserializeExpression(internal.$pos + 8, internal.$ast);
   }
 
   toJSON() {
@@ -2696,7 +2792,7 @@ class IfStatement {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
-    this.#internal = { $pos: pos, $ast: ast };
+    this.#internal = { $pos: pos, $ast: ast, test: void 0, consequent: void 0, alternate: void 0 };
   }
 
   get start() {
@@ -2710,18 +2806,24 @@ class IfStatement {
   }
 
   get test() {
-    const internal = this.#internal;
-    return deserializeExpression(internal.$pos + 8, internal.$ast);
+    const internal = this.#internal,
+      node = internal.test;
+    if (node !== void 0) return node;
+    return internal.test = deserializeExpression(internal.$pos + 8, internal.$ast);
   }
 
   get consequent() {
-    const internal = this.#internal;
-    return deserializeStatement(internal.$pos + 24, internal.$ast);
+    const internal = this.#internal,
+      node = internal.consequent;
+    if (node !== void 0) return node;
+    return internal.consequent = deserializeStatement(internal.$pos + 24, internal.$ast);
   }
 
   get alternate() {
-    const internal = this.#internal;
-    return deserializeOptionStatement(internal.$pos + 40, internal.$ast);
+    const internal = this.#internal,
+      node = internal.alternate;
+    if (node !== void 0) return node;
+    return internal.alternate = deserializeOptionStatement(internal.$pos + 40, internal.$ast);
   }
 
   toJSON() {
@@ -2746,7 +2848,7 @@ class DoWhileStatement {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
-    this.#internal = { $pos: pos, $ast: ast };
+    this.#internal = { $pos: pos, $ast: ast, body: void 0, test: void 0 };
   }
 
   get start() {
@@ -2760,13 +2862,17 @@ class DoWhileStatement {
   }
 
   get body() {
-    const internal = this.#internal;
-    return deserializeStatement(internal.$pos + 8, internal.$ast);
+    const internal = this.#internal,
+      node = internal.body;
+    if (node !== void 0) return node;
+    return internal.body = deserializeStatement(internal.$pos + 8, internal.$ast);
   }
 
   get test() {
-    const internal = this.#internal;
-    return deserializeExpression(internal.$pos + 24, internal.$ast);
+    const internal = this.#internal,
+      node = internal.test;
+    if (node !== void 0) return node;
+    return internal.test = deserializeExpression(internal.$pos + 24, internal.$ast);
   }
 
   toJSON() {
@@ -2790,7 +2896,7 @@ class WhileStatement {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
-    this.#internal = { $pos: pos, $ast: ast };
+    this.#internal = { $pos: pos, $ast: ast, test: void 0, body: void 0 };
   }
 
   get start() {
@@ -2804,13 +2910,17 @@ class WhileStatement {
   }
 
   get test() {
-    const internal = this.#internal;
-    return deserializeExpression(internal.$pos + 8, internal.$ast);
+    const internal = this.#internal,
+      node = internal.test;
+    if (node !== void 0) return node;
+    return internal.test = deserializeExpression(internal.$pos + 8, internal.$ast);
   }
 
   get body() {
-    const internal = this.#internal;
-    return deserializeStatement(internal.$pos + 24, internal.$ast);
+    const internal = this.#internal,
+      node = internal.body;
+    if (node !== void 0) return node;
+    return internal.body = deserializeStatement(internal.$pos + 24, internal.$ast);
   }
 
   toJSON() {
@@ -2834,7 +2944,7 @@ class ForStatement {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
-    this.#internal = { $pos: pos, $ast: ast };
+    this.#internal = { $pos: pos, $ast: ast, init: void 0, test: void 0, update: void 0, body: void 0 };
   }
 
   get start() {
@@ -2848,23 +2958,31 @@ class ForStatement {
   }
 
   get init() {
-    const internal = this.#internal;
-    return deserializeOptionForStatementInit(internal.$pos + 8, internal.$ast);
+    const internal = this.#internal,
+      node = internal.init;
+    if (node !== void 0) return node;
+    return internal.init = deserializeOptionForStatementInit(internal.$pos + 8, internal.$ast);
   }
 
   get test() {
-    const internal = this.#internal;
-    return deserializeOptionExpression(internal.$pos + 24, internal.$ast);
+    const internal = this.#internal,
+      node = internal.test;
+    if (node !== void 0) return node;
+    return internal.test = deserializeOptionExpression(internal.$pos + 24, internal.$ast);
   }
 
   get update() {
-    const internal = this.#internal;
-    return deserializeOptionExpression(internal.$pos + 40, internal.$ast);
+    const internal = this.#internal,
+      node = internal.update;
+    if (node !== void 0) return node;
+    return internal.update = deserializeOptionExpression(internal.$pos + 40, internal.$ast);
   }
 
   get body() {
-    const internal = this.#internal;
-    return deserializeStatement(internal.$pos + 56, internal.$ast);
+    const internal = this.#internal,
+      node = internal.body;
+    if (node !== void 0) return node;
+    return internal.body = deserializeStatement(internal.$pos + 56, internal.$ast);
   }
 
   toJSON() {
@@ -2985,7 +3103,7 @@ class ForInStatement {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
-    this.#internal = { $pos: pos, $ast: ast };
+    this.#internal = { $pos: pos, $ast: ast, left: void 0, right: void 0, body: void 0 };
   }
 
   get start() {
@@ -2999,18 +3117,24 @@ class ForInStatement {
   }
 
   get left() {
-    const internal = this.#internal;
-    return deserializeForStatementLeft(internal.$pos + 8, internal.$ast);
+    const internal = this.#internal,
+      node = internal.left;
+    if (node !== void 0) return node;
+    return internal.left = deserializeForStatementLeft(internal.$pos + 8, internal.$ast);
   }
 
   get right() {
-    const internal = this.#internal;
-    return deserializeExpression(internal.$pos + 24, internal.$ast);
+    const internal = this.#internal,
+      node = internal.right;
+    if (node !== void 0) return node;
+    return internal.right = deserializeExpression(internal.$pos + 24, internal.$ast);
   }
 
   get body() {
-    const internal = this.#internal;
-    return deserializeStatement(internal.$pos + 40, internal.$ast);
+    const internal = this.#internal,
+      node = internal.body;
+    if (node !== void 0) return node;
+    return internal.body = deserializeStatement(internal.$pos + 40, internal.$ast);
   }
 
   toJSON() {
@@ -3064,7 +3188,7 @@ class ForOfStatement {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
-    this.#internal = { $pos: pos, $ast: ast };
+    this.#internal = { $pos: pos, $ast: ast, left: void 0, right: void 0, body: void 0 };
   }
 
   get start() {
@@ -3083,18 +3207,24 @@ class ForOfStatement {
   }
 
   get left() {
-    const internal = this.#internal;
-    return deserializeForStatementLeft(internal.$pos + 8, internal.$ast);
+    const internal = this.#internal,
+      node = internal.left;
+    if (node !== void 0) return node;
+    return internal.left = deserializeForStatementLeft(internal.$pos + 8, internal.$ast);
   }
 
   get right() {
-    const internal = this.#internal;
-    return deserializeExpression(internal.$pos + 24, internal.$ast);
+    const internal = this.#internal,
+      node = internal.right;
+    if (node !== void 0) return node;
+    return internal.right = deserializeExpression(internal.$pos + 24, internal.$ast);
   }
 
   get body() {
-    const internal = this.#internal;
-    return deserializeStatement(internal.$pos + 40, internal.$ast);
+    const internal = this.#internal,
+      node = internal.body;
+    if (node !== void 0) return node;
+    return internal.body = deserializeStatement(internal.$pos + 40, internal.$ast);
   }
 
   toJSON() {
@@ -3120,7 +3250,7 @@ class ContinueStatement {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
-    this.#internal = { $pos: pos, $ast: ast };
+    this.#internal = { $pos: pos, $ast: ast, label: void 0 };
   }
 
   get start() {
@@ -3134,8 +3264,10 @@ class ContinueStatement {
   }
 
   get label() {
-    const internal = this.#internal;
-    return deserializeOptionLabelIdentifier(internal.$pos + 8, internal.$ast);
+    const internal = this.#internal,
+      node = internal.label;
+    if (node !== void 0) return node;
+    return internal.label = deserializeOptionLabelIdentifier(internal.$pos + 8, internal.$ast);
   }
 
   toJSON() {
@@ -3158,7 +3290,7 @@ class BreakStatement {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
-    this.#internal = { $pos: pos, $ast: ast };
+    this.#internal = { $pos: pos, $ast: ast, label: void 0 };
   }
 
   get start() {
@@ -3172,8 +3304,10 @@ class BreakStatement {
   }
 
   get label() {
-    const internal = this.#internal;
-    return deserializeOptionLabelIdentifier(internal.$pos + 8, internal.$ast);
+    const internal = this.#internal,
+      node = internal.label;
+    if (node !== void 0) return node;
+    return internal.label = deserializeOptionLabelIdentifier(internal.$pos + 8, internal.$ast);
   }
 
   toJSON() {
@@ -3196,7 +3330,7 @@ class ReturnStatement {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
-    this.#internal = { $pos: pos, $ast: ast };
+    this.#internal = { $pos: pos, $ast: ast, argument: void 0 };
   }
 
   get start() {
@@ -3210,8 +3344,10 @@ class ReturnStatement {
   }
 
   get argument() {
-    const internal = this.#internal;
-    return deserializeOptionExpression(internal.$pos + 8, internal.$ast);
+    const internal = this.#internal,
+      node = internal.argument;
+    if (node !== void 0) return node;
+    return internal.argument = deserializeOptionExpression(internal.$pos + 8, internal.$ast);
   }
 
   toJSON() {
@@ -3234,7 +3370,7 @@ class WithStatement {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
-    this.#internal = { $pos: pos, $ast: ast };
+    this.#internal = { $pos: pos, $ast: ast, object: void 0, body: void 0 };
   }
 
   get start() {
@@ -3248,13 +3384,17 @@ class WithStatement {
   }
 
   get object() {
-    const internal = this.#internal;
-    return deserializeExpression(internal.$pos + 8, internal.$ast);
+    const internal = this.#internal,
+      node = internal.object;
+    if (node !== void 0) return node;
+    return internal.object = deserializeExpression(internal.$pos + 8, internal.$ast);
   }
 
   get body() {
-    const internal = this.#internal;
-    return deserializeStatement(internal.$pos + 24, internal.$ast);
+    const internal = this.#internal,
+      node = internal.body;
+    if (node !== void 0) return node;
+    return internal.body = deserializeStatement(internal.$pos + 24, internal.$ast);
   }
 
   toJSON() {
@@ -3278,7 +3418,7 @@ class SwitchStatement {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
-    this.#internal = { $pos: pos, $ast: ast, cases: void 0 };
+    this.#internal = { $pos: pos, $ast: ast, discriminant: void 0, cases: void 0 };
   }
 
   get start() {
@@ -3292,8 +3432,10 @@ class SwitchStatement {
   }
 
   get discriminant() {
-    const internal = this.#internal;
-    return deserializeExpression(internal.$pos + 8, internal.$ast);
+    const internal = this.#internal,
+      node = internal.discriminant;
+    if (node !== void 0) return node;
+    return internal.discriminant = deserializeExpression(internal.$pos + 8, internal.$ast);
   }
 
   get cases() {
@@ -3324,7 +3466,7 @@ class SwitchCase {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
-    this.#internal = { $pos: pos, $ast: ast, consequent: void 0 };
+    this.#internal = { $pos: pos, $ast: ast, test: void 0, consequent: void 0 };
   }
 
   get start() {
@@ -3338,8 +3480,10 @@ class SwitchCase {
   }
 
   get test() {
-    const internal = this.#internal;
-    return deserializeOptionExpression(internal.$pos + 8, internal.$ast);
+    const internal = this.#internal,
+      node = internal.test;
+    if (node !== void 0) return node;
+    return internal.test = deserializeOptionExpression(internal.$pos + 8, internal.$ast);
   }
 
   get consequent() {
@@ -3370,7 +3514,7 @@ class LabeledStatement {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
-    this.#internal = { $pos: pos, $ast: ast };
+    this.#internal = { $pos: pos, $ast: ast, label: void 0, body: void 0 };
   }
 
   get start() {
@@ -3384,13 +3528,17 @@ class LabeledStatement {
   }
 
   get label() {
-    const internal = this.#internal;
-    return deserializeLabelIdentifier(internal.$pos + 8, internal.$ast);
+    const internal = this.#internal,
+      node = internal.label;
+    if (node !== void 0) return node;
+    return internal.label = deserializeLabelIdentifier(internal.$pos + 8, internal.$ast);
   }
 
   get body() {
-    const internal = this.#internal;
-    return deserializeStatement(internal.$pos + 32, internal.$ast);
+    const internal = this.#internal,
+      node = internal.body;
+    if (node !== void 0) return node;
+    return internal.body = deserializeStatement(internal.$pos + 32, internal.$ast);
   }
 
   toJSON() {
@@ -3414,7 +3562,7 @@ class ThrowStatement {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
-    this.#internal = { $pos: pos, $ast: ast };
+    this.#internal = { $pos: pos, $ast: ast, argument: void 0 };
   }
 
   get start() {
@@ -3428,8 +3576,10 @@ class ThrowStatement {
   }
 
   get argument() {
-    const internal = this.#internal;
-    return deserializeExpression(internal.$pos + 8, internal.$ast);
+    const internal = this.#internal,
+      node = internal.argument;
+    if (node !== void 0) return node;
+    return internal.argument = deserializeExpression(internal.$pos + 8, internal.$ast);
   }
 
   toJSON() {
@@ -3452,7 +3602,7 @@ class TryStatement {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
-    this.#internal = { $pos: pos, $ast: ast };
+    this.#internal = { $pos: pos, $ast: ast, block: void 0, handler: void 0, finalizer: void 0 };
   }
 
   get start() {
@@ -3466,18 +3616,24 @@ class TryStatement {
   }
 
   get block() {
-    const internal = this.#internal;
-    return deserializeBoxBlockStatement(internal.$pos + 8, internal.$ast);
+    const internal = this.#internal,
+      node = internal.block;
+    if (node !== void 0) return node;
+    return internal.block = deserializeBoxBlockStatement(internal.$pos + 8, internal.$ast);
   }
 
   get handler() {
-    const internal = this.#internal;
-    return deserializeOptionBoxCatchClause(internal.$pos + 16, internal.$ast);
+    const internal = this.#internal,
+      node = internal.handler;
+    if (node !== void 0) return node;
+    return internal.handler = deserializeOptionBoxCatchClause(internal.$pos + 16, internal.$ast);
   }
 
   get finalizer() {
-    const internal = this.#internal;
-    return deserializeOptionBoxBlockStatement(internal.$pos + 24, internal.$ast);
+    const internal = this.#internal,
+      node = internal.finalizer;
+    if (node !== void 0) return node;
+    return internal.finalizer = deserializeOptionBoxBlockStatement(internal.$pos + 24, internal.$ast);
   }
 
   toJSON() {
@@ -3502,7 +3658,7 @@ class CatchClause {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
-    this.#internal = { $pos: pos, $ast: ast };
+    this.#internal = { $pos: pos, $ast: ast, param: void 0, body: void 0 };
   }
 
   get start() {
@@ -3516,13 +3672,17 @@ class CatchClause {
   }
 
   get param() {
-    const internal = this.#internal;
-    return deserializeOptionCatchParameter(internal.$pos + 8, internal.$ast);
+    const internal = this.#internal,
+      node = internal.param;
+    if (node !== void 0) return node;
+    return internal.param = deserializeOptionCatchParameter(internal.$pos + 8, internal.$ast);
   }
 
   get body() {
-    const internal = this.#internal;
-    return deserializeBoxBlockStatement(internal.$pos + 48, internal.$ast);
+    const internal = this.#internal,
+      node = internal.body;
+    if (node !== void 0) return node;
+    return internal.body = deserializeBoxBlockStatement(internal.$pos + 48, internal.$ast);
   }
 
   toJSON() {
@@ -3545,12 +3705,14 @@ class CatchParameter {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
-    this.#internal = { $pos: pos, $ast: ast };
+    this.#internal = { $pos: pos, $ast: ast, pattern: void 0 };
   }
 
   get pattern() {
-    const internal = this.#internal;
-    return deserializeBindingPattern(internal.$pos + 8, internal.$ast);
+    const internal = this.#internal,
+      node = internal.pattern;
+    if (node !== void 0) return node;
+    return internal.pattern = deserializeBindingPattern(internal.$pos + 8, internal.$ast);
   }
 
   toJSON() {
@@ -3601,17 +3763,21 @@ class BindingPattern {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
-    this.#internal = { $pos: pos, $ast: ast };
+    this.#internal = { $pos: pos, $ast: ast, kind: void 0, typeAnnotation: void 0 };
   }
 
   get kind() {
-    const internal = this.#internal;
-    return deserializeBindingPatternKind(internal.$pos, internal.$ast);
+    const internal = this.#internal,
+      node = internal.kind;
+    if (node !== void 0) return node;
+    return internal.kind = deserializeBindingPatternKind(internal.$pos, internal.$ast);
   }
 
   get typeAnnotation() {
-    const internal = this.#internal;
-    return deserializeOptionBoxTSTypeAnnotation(internal.$pos + 16, internal.$ast);
+    const internal = this.#internal,
+      node = internal.typeAnnotation;
+    if (node !== void 0) return node;
+    return internal.typeAnnotation = deserializeOptionBoxTSTypeAnnotation(internal.$pos + 16, internal.$ast);
   }
 
   get optional() {
@@ -3653,7 +3819,7 @@ class AssignmentPattern {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
-    this.#internal = { $pos: pos, $ast: ast };
+    this.#internal = { $pos: pos, $ast: ast, left: void 0, right: void 0 };
   }
 
   get start() {
@@ -3667,13 +3833,17 @@ class AssignmentPattern {
   }
 
   get left() {
-    const internal = this.#internal;
-    return deserializeBindingPattern(internal.$pos + 8, internal.$ast);
+    const internal = this.#internal,
+      node = internal.left;
+    if (node !== void 0) return node;
+    return internal.left = deserializeBindingPattern(internal.$pos + 8, internal.$ast);
   }
 
   get right() {
-    const internal = this.#internal;
-    return deserializeExpression(internal.$pos + 40, internal.$ast);
+    const internal = this.#internal,
+      node = internal.right;
+    if (node !== void 0) return node;
+    return internal.right = deserializeExpression(internal.$pos + 40, internal.$ast);
   }
 
   toJSON() {
@@ -3737,7 +3907,7 @@ class BindingProperty {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
-    this.#internal = { $pos: pos, $ast: ast };
+    this.#internal = { $pos: pos, $ast: ast, key: void 0, value: void 0 };
   }
 
   get start() {
@@ -3751,13 +3921,17 @@ class BindingProperty {
   }
 
   get key() {
-    const internal = this.#internal;
-    return deserializePropertyKey(internal.$pos + 8, internal.$ast);
+    const internal = this.#internal,
+      node = internal.key;
+    if (node !== void 0) return node;
+    return internal.key = deserializePropertyKey(internal.$pos + 8, internal.$ast);
   }
 
   get value() {
-    const internal = this.#internal;
-    return deserializeBindingPattern(internal.$pos + 24, internal.$ast);
+    const internal = this.#internal,
+      node = internal.value;
+    if (node !== void 0) return node;
+    return internal.value = deserializeBindingPattern(internal.$pos + 24, internal.$ast);
   }
 
   get shorthand() {
@@ -3833,7 +4007,7 @@ class BindingRestElement {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
-    this.#internal = { $pos: pos, $ast: ast };
+    this.#internal = { $pos: pos, $ast: ast, argument: void 0 };
   }
 
   get start() {
@@ -3847,8 +4021,10 @@ class BindingRestElement {
   }
 
   get argument() {
-    const internal = this.#internal;
-    return deserializeBindingPattern(internal.$pos + 8, internal.$ast);
+    const internal = this.#internal,
+      node = internal.argument;
+    if (node !== void 0) return node;
+    return internal.argument = deserializeBindingPattern(internal.$pos + 8, internal.$ast);
   }
 
   toJSON() {
@@ -3870,7 +4046,15 @@ class Function {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
-    this.#internal = { $pos: pos, $ast: ast };
+    this.#internal = {
+      $pos: pos,
+      $ast: ast,
+      id: void 0,
+      typeParameters: void 0,
+      params: void 0,
+      returnType: void 0,
+      body: void 0,
+    };
   }
 
   get start() {
@@ -3889,8 +4073,10 @@ class Function {
   }
 
   get id() {
-    const internal = this.#internal;
-    return deserializeOptionBindingIdentifier(internal.$pos + 8, internal.$ast);
+    const internal = this.#internal,
+      node = internal.id;
+    if (node !== void 0) return node;
+    return internal.id = deserializeOptionBindingIdentifier(internal.$pos + 8, internal.$ast);
   }
 
   get generator() {
@@ -3909,23 +4095,31 @@ class Function {
   }
 
   get typeParameters() {
-    const internal = this.#internal;
-    return deserializeOptionBoxTSTypeParameterDeclaration(internal.$pos + 40, internal.$ast);
+    const internal = this.#internal,
+      node = internal.typeParameters;
+    if (node !== void 0) return node;
+    return internal.typeParameters = deserializeOptionBoxTSTypeParameterDeclaration(internal.$pos + 40, internal.$ast);
   }
 
   get params() {
-    const internal = this.#internal;
-    return deserializeBoxFormalParameters(internal.$pos + 56, internal.$ast);
+    const internal = this.#internal,
+      node = internal.params;
+    if (node !== void 0) return node;
+    return internal.params = deserializeBoxFormalParameters(internal.$pos + 56, internal.$ast);
   }
 
   get returnType() {
-    const internal = this.#internal;
-    return deserializeOptionBoxTSTypeAnnotation(internal.$pos + 64, internal.$ast);
+    const internal = this.#internal,
+      node = internal.returnType;
+    if (node !== void 0) return node;
+    return internal.returnType = deserializeOptionBoxTSTypeAnnotation(internal.$pos + 64, internal.$ast);
   }
 
   get body() {
-    const internal = this.#internal;
-    return deserializeOptionBoxFunctionBody(internal.$pos + 72, internal.$ast);
+    const internal = this.#internal,
+      node = internal.body;
+    if (node !== void 0) return node;
+    return internal.body = deserializeOptionBoxFunctionBody(internal.$pos + 72, internal.$ast);
   }
 
   toJSON() {
@@ -4015,7 +4209,7 @@ class FormalParameter {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
-    this.#internal = { $pos: pos, $ast: ast, decorators: void 0 };
+    this.#internal = { $pos: pos, $ast: ast, decorators: void 0, pattern: void 0 };
   }
 
   get decorators() {
@@ -4026,8 +4220,10 @@ class FormalParameter {
   }
 
   get pattern() {
-    const internal = this.#internal;
-    return deserializeBindingPattern(internal.$pos + 32, internal.$ast);
+    const internal = this.#internal,
+      node = internal.pattern;
+    if (node !== void 0) return node;
+    return internal.pattern = deserializeBindingPattern(internal.$pos + 32, internal.$ast);
   }
 
   toJSON() {
@@ -4103,7 +4299,7 @@ class ArrowFunctionExpression {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
-    this.#internal = { $pos: pos, $ast: ast };
+    this.#internal = { $pos: pos, $ast: ast, typeParameters: void 0, params: void 0, returnType: void 0, body: void 0 };
   }
 
   get start() {
@@ -4127,23 +4323,31 @@ class ArrowFunctionExpression {
   }
 
   get typeParameters() {
-    const internal = this.#internal;
-    return deserializeOptionBoxTSTypeParameterDeclaration(internal.$pos + 8, internal.$ast);
+    const internal = this.#internal,
+      node = internal.typeParameters;
+    if (node !== void 0) return node;
+    return internal.typeParameters = deserializeOptionBoxTSTypeParameterDeclaration(internal.$pos + 8, internal.$ast);
   }
 
   get params() {
-    const internal = this.#internal;
-    return deserializeBoxFormalParameters(internal.$pos + 16, internal.$ast);
+    const internal = this.#internal,
+      node = internal.params;
+    if (node !== void 0) return node;
+    return internal.params = deserializeBoxFormalParameters(internal.$pos + 16, internal.$ast);
   }
 
   get returnType() {
-    const internal = this.#internal;
-    return deserializeOptionBoxTSTypeAnnotation(internal.$pos + 24, internal.$ast);
+    const internal = this.#internal,
+      node = internal.returnType;
+    if (node !== void 0) return node;
+    return internal.returnType = deserializeOptionBoxTSTypeAnnotation(internal.$pos + 24, internal.$ast);
   }
 
   get body() {
-    const internal = this.#internal;
-    return deserializeBoxFunctionBody(internal.$pos + 32, internal.$ast);
+    const internal = this.#internal,
+      node = internal.body;
+    if (node !== void 0) return node;
+    return internal.body = deserializeBoxFunctionBody(internal.$pos + 32, internal.$ast);
   }
 
   toJSON() {
@@ -4171,7 +4375,7 @@ class YieldExpression {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
-    this.#internal = { $pos: pos, $ast: ast };
+    this.#internal = { $pos: pos, $ast: ast, argument: void 0 };
   }
 
   get start() {
@@ -4190,8 +4394,10 @@ class YieldExpression {
   }
 
   get argument() {
-    const internal = this.#internal;
-    return deserializeOptionExpression(internal.$pos + 8, internal.$ast);
+    const internal = this.#internal,
+      node = internal.argument;
+    if (node !== void 0) return node;
+    return internal.argument = deserializeOptionExpression(internal.$pos + 8, internal.$ast);
   }
 
   toJSON() {
@@ -4214,7 +4420,17 @@ class Class {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
-    this.#internal = { $pos: pos, $ast: ast, decorators: void 0, implements: void 0 };
+    this.#internal = {
+      $pos: pos,
+      $ast: ast,
+      decorators: void 0,
+      id: void 0,
+      typeParameters: void 0,
+      superClass: void 0,
+      superTypeArguments: void 0,
+      implements: void 0,
+      body: void 0,
+    };
   }
 
   get start() {
@@ -4240,23 +4456,34 @@ class Class {
   }
 
   get id() {
-    const internal = this.#internal;
-    return deserializeOptionBindingIdentifier(internal.$pos + 32, internal.$ast);
+    const internal = this.#internal,
+      node = internal.id;
+    if (node !== void 0) return node;
+    return internal.id = deserializeOptionBindingIdentifier(internal.$pos + 32, internal.$ast);
   }
 
   get typeParameters() {
-    const internal = this.#internal;
-    return deserializeOptionBoxTSTypeParameterDeclaration(internal.$pos + 64, internal.$ast);
+    const internal = this.#internal,
+      node = internal.typeParameters;
+    if (node !== void 0) return node;
+    return internal.typeParameters = deserializeOptionBoxTSTypeParameterDeclaration(internal.$pos + 64, internal.$ast);
   }
 
   get superClass() {
-    const internal = this.#internal;
-    return deserializeOptionExpression(internal.$pos + 72, internal.$ast);
+    const internal = this.#internal,
+      node = internal.superClass;
+    if (node !== void 0) return node;
+    return internal.superClass = deserializeOptionExpression(internal.$pos + 72, internal.$ast);
   }
 
   get superTypeArguments() {
-    const internal = this.#internal;
-    return deserializeOptionBoxTSTypeParameterInstantiation(internal.$pos + 88, internal.$ast);
+    const internal = this.#internal,
+      node = internal.superTypeArguments;
+    if (node !== void 0) return node;
+    return internal.superTypeArguments = deserializeOptionBoxTSTypeParameterInstantiation(
+      internal.$pos + 88,
+      internal.$ast,
+    );
   }
 
   get implements() {
@@ -4267,8 +4494,10 @@ class Class {
   }
 
   get body() {
-    const internal = this.#internal;
-    return deserializeBoxClassBody(internal.$pos + 120, internal.$ast);
+    const internal = this.#internal,
+      node = internal.body;
+    if (node !== void 0) return node;
+    return internal.body = deserializeBoxClassBody(internal.$pos + 120, internal.$ast);
   }
 
   get abstract() {
@@ -4376,7 +4605,7 @@ class MethodDefinition {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
-    this.#internal = { $pos: pos, $ast: ast, decorators: void 0 };
+    this.#internal = { $pos: pos, $ast: ast, decorators: void 0, key: void 0, value: void 0 };
   }
 
   get start() {
@@ -4402,13 +4631,17 @@ class MethodDefinition {
   }
 
   get key() {
-    const internal = this.#internal;
-    return deserializePropertyKey(internal.$pos + 32, internal.$ast);
+    const internal = this.#internal,
+      node = internal.key;
+    if (node !== void 0) return node;
+    return internal.key = deserializePropertyKey(internal.$pos + 32, internal.$ast);
   }
 
   get value() {
-    const internal = this.#internal;
-    return deserializeBoxFunction(internal.$pos + 48, internal.$ast);
+    const internal = this.#internal,
+      node = internal.value;
+    if (node !== void 0) return node;
+    return internal.value = deserializeBoxFunction(internal.$pos + 48, internal.$ast);
   }
 
   get kind() {
@@ -4479,7 +4712,7 @@ class PropertyDefinition {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
-    this.#internal = { $pos: pos, $ast: ast, decorators: void 0 };
+    this.#internal = { $pos: pos, $ast: ast, decorators: void 0, key: void 0, typeAnnotation: void 0, value: void 0 };
   }
 
   get start() {
@@ -4505,18 +4738,24 @@ class PropertyDefinition {
   }
 
   get key() {
-    const internal = this.#internal;
-    return deserializePropertyKey(internal.$pos + 32, internal.$ast);
+    const internal = this.#internal,
+      node = internal.key;
+    if (node !== void 0) return node;
+    return internal.key = deserializePropertyKey(internal.$pos + 32, internal.$ast);
   }
 
   get typeAnnotation() {
-    const internal = this.#internal;
-    return deserializeOptionBoxTSTypeAnnotation(internal.$pos + 48, internal.$ast);
+    const internal = this.#internal,
+      node = internal.typeAnnotation;
+    if (node !== void 0) return node;
+    return internal.typeAnnotation = deserializeOptionBoxTSTypeAnnotation(internal.$pos + 48, internal.$ast);
   }
 
   get value() {
-    const internal = this.#internal;
-    return deserializeOptionExpression(internal.$pos + 56, internal.$ast);
+    const internal = this.#internal,
+      node = internal.value;
+    if (node !== void 0) return node;
+    return internal.value = deserializeOptionExpression(internal.$pos + 56, internal.$ast);
   }
 
   get computed() {
@@ -4725,7 +4964,7 @@ class AccessorProperty {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
-    this.#internal = { $pos: pos, $ast: ast, decorators: void 0 };
+    this.#internal = { $pos: pos, $ast: ast, decorators: void 0, key: void 0, typeAnnotation: void 0, value: void 0 };
   }
 
   get start() {
@@ -4751,18 +4990,24 @@ class AccessorProperty {
   }
 
   get key() {
-    const internal = this.#internal;
-    return deserializePropertyKey(internal.$pos + 32, internal.$ast);
+    const internal = this.#internal,
+      node = internal.key;
+    if (node !== void 0) return node;
+    return internal.key = deserializePropertyKey(internal.$pos + 32, internal.$ast);
   }
 
   get typeAnnotation() {
-    const internal = this.#internal;
-    return deserializeOptionBoxTSTypeAnnotation(internal.$pos + 48, internal.$ast);
+    const internal = this.#internal,
+      node = internal.typeAnnotation;
+    if (node !== void 0) return node;
+    return internal.typeAnnotation = deserializeOptionBoxTSTypeAnnotation(internal.$pos + 48, internal.$ast);
   }
 
   get value() {
-    const internal = this.#internal;
-    return deserializeOptionExpression(internal.$pos + 56, internal.$ast);
+    const internal = this.#internal,
+      node = internal.value;
+    if (node !== void 0) return node;
+    return internal.value = deserializeOptionExpression(internal.$pos + 56, internal.$ast);
   }
 
   get computed() {
@@ -4818,7 +5063,7 @@ class ImportExpression {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
-    this.#internal = { $pos: pos, $ast: ast };
+    this.#internal = { $pos: pos, $ast: ast, source: void 0, options: void 0 };
   }
 
   get start() {
@@ -4832,13 +5077,17 @@ class ImportExpression {
   }
 
   get source() {
-    const internal = this.#internal;
-    return deserializeExpression(internal.$pos + 8, internal.$ast);
+    const internal = this.#internal,
+      node = internal.source;
+    if (node !== void 0) return node;
+    return internal.source = deserializeExpression(internal.$pos + 8, internal.$ast);
   }
 
   get options() {
-    const internal = this.#internal;
-    return deserializeOptionExpression(internal.$pos + 24, internal.$ast);
+    const internal = this.#internal,
+      node = internal.options;
+    if (node !== void 0) return node;
+    return internal.options = deserializeOptionExpression(internal.$pos + 24, internal.$ast);
   }
 
   get phase() {
@@ -4868,7 +5117,7 @@ class ImportDeclaration {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
-    this.#internal = { $pos: pos, $ast: ast };
+    this.#internal = { $pos: pos, $ast: ast, specifiers: void 0, source: void 0, attributes: void 0 };
   }
 
   get start() {
@@ -4882,13 +5131,17 @@ class ImportDeclaration {
   }
 
   get specifiers() {
-    const internal = this.#internal;
-    return deserializeOptionVecImportDeclarationSpecifier(internal.$pos + 8, internal.$ast);
+    const internal = this.#internal,
+      node = internal.specifiers;
+    if (node !== void 0) return node;
+    return internal.specifiers = deserializeOptionVecImportDeclarationSpecifier(internal.$pos + 8, internal.$ast);
   }
 
   get source() {
-    const internal = this.#internal;
-    return deserializeStringLiteral(internal.$pos + 32, internal.$ast);
+    const internal = this.#internal,
+      node = internal.source;
+    if (node !== void 0) return node;
+    return internal.source = deserializeStringLiteral(internal.$pos + 32, internal.$ast);
   }
 
   get phase() {
@@ -4897,8 +5150,10 @@ class ImportDeclaration {
   }
 
   get attributes() {
-    const internal = this.#internal;
-    return deserializeOptionBoxWithClause(internal.$pos + 80, internal.$ast);
+    const internal = this.#internal,
+      node = internal.attributes;
+    if (node !== void 0) return node;
+    return internal.attributes = deserializeOptionBoxWithClause(internal.$pos + 80, internal.$ast);
   }
 
   get importKind() {
@@ -4954,7 +5209,7 @@ class ImportSpecifier {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
-    this.#internal = { $pos: pos, $ast: ast };
+    this.#internal = { $pos: pos, $ast: ast, imported: void 0, local: void 0 };
   }
 
   get start() {
@@ -4968,13 +5223,17 @@ class ImportSpecifier {
   }
 
   get imported() {
-    const internal = this.#internal;
-    return deserializeModuleExportName(internal.$pos + 8, internal.$ast);
+    const internal = this.#internal,
+      node = internal.imported;
+    if (node !== void 0) return node;
+    return internal.imported = deserializeModuleExportName(internal.$pos + 8, internal.$ast);
   }
 
   get local() {
-    const internal = this.#internal;
-    return deserializeBindingIdentifier(internal.$pos + 64, internal.$ast);
+    const internal = this.#internal,
+      node = internal.local;
+    if (node !== void 0) return node;
+    return internal.local = deserializeBindingIdentifier(internal.$pos + 64, internal.$ast);
   }
 
   get importKind() {
@@ -5004,7 +5263,7 @@ class ImportDefaultSpecifier {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
-    this.#internal = { $pos: pos, $ast: ast };
+    this.#internal = { $pos: pos, $ast: ast, local: void 0 };
   }
 
   get start() {
@@ -5018,8 +5277,10 @@ class ImportDefaultSpecifier {
   }
 
   get local() {
-    const internal = this.#internal;
-    return deserializeBindingIdentifier(internal.$pos + 8, internal.$ast);
+    const internal = this.#internal,
+      node = internal.local;
+    if (node !== void 0) return node;
+    return internal.local = deserializeBindingIdentifier(internal.$pos + 8, internal.$ast);
   }
 
   toJSON() {
@@ -5042,7 +5303,7 @@ class ImportNamespaceSpecifier {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
-    this.#internal = { $pos: pos, $ast: ast };
+    this.#internal = { $pos: pos, $ast: ast, local: void 0 };
   }
 
   get start() {
@@ -5056,8 +5317,10 @@ class ImportNamespaceSpecifier {
   }
 
   get local() {
-    const internal = this.#internal;
-    return deserializeBindingIdentifier(internal.$pos + 8, internal.$ast);
+    const internal = this.#internal,
+      node = internal.local;
+    if (node !== void 0) return node;
+    return internal.local = deserializeBindingIdentifier(internal.$pos + 8, internal.$ast);
   }
 
   toJSON() {
@@ -5106,7 +5369,7 @@ class ImportAttribute {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
-    this.#internal = { $pos: pos, $ast: ast };
+    this.#internal = { $pos: pos, $ast: ast, key: void 0, value: void 0 };
   }
 
   get start() {
@@ -5120,13 +5383,17 @@ class ImportAttribute {
   }
 
   get key() {
-    const internal = this.#internal;
-    return deserializeImportAttributeKey(internal.$pos + 8, internal.$ast);
+    const internal = this.#internal,
+      node = internal.key;
+    if (node !== void 0) return node;
+    return internal.key = deserializeImportAttributeKey(internal.$pos + 8, internal.$ast);
   }
 
   get value() {
-    const internal = this.#internal;
-    return deserializeStringLiteral(internal.$pos + 64, internal.$ast);
+    const internal = this.#internal,
+      node = internal.value;
+    if (node !== void 0) return node;
+    return internal.value = deserializeStringLiteral(internal.$pos + 64, internal.$ast);
   }
 
   toJSON() {
@@ -5161,7 +5428,14 @@ class ExportNamedDeclaration {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
-    this.#internal = { $pos: pos, $ast: ast, specifiers: void 0 };
+    this.#internal = {
+      $pos: pos,
+      $ast: ast,
+      declaration: void 0,
+      specifiers: void 0,
+      source: void 0,
+      attributes: void 0,
+    };
   }
 
   get start() {
@@ -5175,8 +5449,10 @@ class ExportNamedDeclaration {
   }
 
   get declaration() {
-    const internal = this.#internal;
-    return deserializeOptionDeclaration(internal.$pos + 8, internal.$ast);
+    const internal = this.#internal,
+      node = internal.declaration;
+    if (node !== void 0) return node;
+    return internal.declaration = deserializeOptionDeclaration(internal.$pos + 8, internal.$ast);
   }
 
   get specifiers() {
@@ -5187,8 +5463,10 @@ class ExportNamedDeclaration {
   }
 
   get source() {
-    const internal = this.#internal;
-    return deserializeOptionStringLiteral(internal.$pos + 48, internal.$ast);
+    const internal = this.#internal,
+      node = internal.source;
+    if (node !== void 0) return node;
+    return internal.source = deserializeOptionStringLiteral(internal.$pos + 48, internal.$ast);
   }
 
   get exportKind() {
@@ -5197,8 +5475,10 @@ class ExportNamedDeclaration {
   }
 
   get attributes() {
-    const internal = this.#internal;
-    return deserializeOptionBoxWithClause(internal.$pos + 96, internal.$ast);
+    const internal = this.#internal,
+      node = internal.attributes;
+    if (node !== void 0) return node;
+    return internal.attributes = deserializeOptionBoxWithClause(internal.$pos + 96, internal.$ast);
   }
 
   toJSON() {
@@ -5225,7 +5505,7 @@ class ExportDefaultDeclaration {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
-    this.#internal = { $pos: pos, $ast: ast };
+    this.#internal = { $pos: pos, $ast: ast, declaration: void 0 };
   }
 
   get start() {
@@ -5239,8 +5519,10 @@ class ExportDefaultDeclaration {
   }
 
   get declaration() {
-    const internal = this.#internal;
-    return deserializeExportDefaultDeclarationKind(internal.$pos + 64, internal.$ast);
+    const internal = this.#internal,
+      node = internal.declaration;
+    if (node !== void 0) return node;
+    return internal.declaration = deserializeExportDefaultDeclarationKind(internal.$pos + 64, internal.$ast);
   }
 
   toJSON() {
@@ -5263,7 +5545,7 @@ class ExportAllDeclaration {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
-    this.#internal = { $pos: pos, $ast: ast };
+    this.#internal = { $pos: pos, $ast: ast, exported: void 0, source: void 0, attributes: void 0 };
   }
 
   get start() {
@@ -5277,18 +5559,24 @@ class ExportAllDeclaration {
   }
 
   get exported() {
-    const internal = this.#internal;
-    return deserializeOptionModuleExportName(internal.$pos + 8, internal.$ast);
+    const internal = this.#internal,
+      node = internal.exported;
+    if (node !== void 0) return node;
+    return internal.exported = deserializeOptionModuleExportName(internal.$pos + 8, internal.$ast);
   }
 
   get source() {
-    const internal = this.#internal;
-    return deserializeStringLiteral(internal.$pos + 64, internal.$ast);
+    const internal = this.#internal,
+      node = internal.source;
+    if (node !== void 0) return node;
+    return internal.source = deserializeStringLiteral(internal.$pos + 64, internal.$ast);
   }
 
   get attributes() {
-    const internal = this.#internal;
-    return deserializeOptionBoxWithClause(internal.$pos + 112, internal.$ast);
+    const internal = this.#internal,
+      node = internal.attributes;
+    if (node !== void 0) return node;
+    return internal.attributes = deserializeOptionBoxWithClause(internal.$pos + 112, internal.$ast);
   }
 
   get exportKind() {
@@ -5319,7 +5607,7 @@ class ExportSpecifier {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
-    this.#internal = { $pos: pos, $ast: ast };
+    this.#internal = { $pos: pos, $ast: ast, local: void 0, exported: void 0 };
   }
 
   get start() {
@@ -5333,13 +5621,17 @@ class ExportSpecifier {
   }
 
   get local() {
-    const internal = this.#internal;
-    return deserializeModuleExportName(internal.$pos + 8, internal.$ast);
+    const internal = this.#internal,
+      node = internal.local;
+    if (node !== void 0) return node;
+    return internal.local = deserializeModuleExportName(internal.$pos + 8, internal.$ast);
   }
 
   get exported() {
-    const internal = this.#internal;
-    return deserializeModuleExportName(internal.$pos + 64, internal.$ast);
+    const internal = this.#internal,
+      node = internal.exported;
+    if (node !== void 0) return node;
+    return internal.exported = deserializeModuleExportName(internal.$pos + 64, internal.$ast);
   }
 
   get exportKind() {
@@ -5481,7 +5773,7 @@ class V8IntrinsicExpression {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
-    this.#internal = { $pos: pos, $ast: ast, arguments: void 0 };
+    this.#internal = { $pos: pos, $ast: ast, name: void 0, arguments: void 0 };
   }
 
   get start() {
@@ -5495,8 +5787,10 @@ class V8IntrinsicExpression {
   }
 
   get name() {
-    const internal = this.#internal;
-    return deserializeIdentifierName(internal.$pos + 8, internal.$ast);
+    const internal = this.#internal,
+      node = internal.name;
+    if (node !== void 0) return node;
+    return internal.name = deserializeIdentifierName(internal.$pos + 8, internal.$ast);
   }
 
   get arguments() {
@@ -5739,7 +6033,7 @@ class RegExpLiteral {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
-    this.#internal = { $pos: pos, $ast: ast, raw: void 0 };
+    this.#internal = { $pos: pos, $ast: ast, regex: void 0, raw: void 0 };
   }
 
   get start() {
@@ -5753,8 +6047,10 @@ class RegExpLiteral {
   }
 
   get regex() {
-    const internal = this.#internal;
-    return deserializeRegExp(internal.$pos + 8, internal.$ast);
+    const internal = this.#internal,
+      node = internal.regex;
+    if (node !== void 0) return node;
+    return internal.regex = deserializeRegExp(internal.$pos + 8, internal.$ast);
   }
 
   get raw() {
@@ -5784,17 +6080,21 @@ class RegExp {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
-    this.#internal = { $pos: pos, $ast: ast };
+    this.#internal = { $pos: pos, $ast: ast, pattern: void 0, flags: void 0 };
   }
 
   get pattern() {
-    const internal = this.#internal;
-    return deserializeRegExpPattern(internal.$pos, internal.$ast);
+    const internal = this.#internal,
+      node = internal.pattern;
+    if (node !== void 0) return node;
+    return internal.pattern = deserializeRegExpPattern(internal.$pos, internal.$ast);
   }
 
   get flags() {
-    const internal = this.#internal;
-    return deserializeRegExpFlags(internal.$pos + 24, internal.$ast);
+    const internal = this.#internal,
+      node = internal.flags;
+    if (node !== void 0) return node;
+    return internal.flags = deserializeRegExpFlags(internal.$pos + 24, internal.$ast);
   }
 
   toJSON() {
@@ -5866,7 +6166,7 @@ class JSXElement {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
-    this.#internal = { $pos: pos, $ast: ast, children: void 0 };
+    this.#internal = { $pos: pos, $ast: ast, openingElement: void 0, children: void 0, closingElement: void 0 };
   }
 
   get start() {
@@ -5880,8 +6180,10 @@ class JSXElement {
   }
 
   get openingElement() {
-    const internal = this.#internal;
-    return deserializeBoxJSXOpeningElement(internal.$pos + 8, internal.$ast);
+    const internal = this.#internal,
+      node = internal.openingElement;
+    if (node !== void 0) return node;
+    return internal.openingElement = deserializeBoxJSXOpeningElement(internal.$pos + 8, internal.$ast);
   }
 
   get children() {
@@ -5892,8 +6194,10 @@ class JSXElement {
   }
 
   get closingElement() {
-    const internal = this.#internal;
-    return deserializeOptionBoxJSXClosingElement(internal.$pos + 40, internal.$ast);
+    const internal = this.#internal,
+      node = internal.closingElement;
+    if (node !== void 0) return node;
+    return internal.closingElement = deserializeOptionBoxJSXClosingElement(internal.$pos + 40, internal.$ast);
   }
 
   toJSON() {
@@ -5918,7 +6222,7 @@ class JSXOpeningElement {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
-    this.#internal = { $pos: pos, $ast: ast, attributes: void 0 };
+    this.#internal = { $pos: pos, $ast: ast, name: void 0, typeArguments: void 0, attributes: void 0 };
   }
 
   get start() {
@@ -5932,13 +6236,17 @@ class JSXOpeningElement {
   }
 
   get name() {
-    const internal = this.#internal;
-    return deserializeJSXElementName(internal.$pos + 8, internal.$ast);
+    const internal = this.#internal,
+      node = internal.name;
+    if (node !== void 0) return node;
+    return internal.name = deserializeJSXElementName(internal.$pos + 8, internal.$ast);
   }
 
   get typeArguments() {
-    const internal = this.#internal;
-    return deserializeOptionBoxTSTypeParameterInstantiation(internal.$pos + 24, internal.$ast);
+    const internal = this.#internal,
+      node = internal.typeArguments;
+    if (node !== void 0) return node;
+    return internal.typeArguments = deserializeOptionBoxTSTypeParameterInstantiation(internal.$pos + 24, internal.$ast);
   }
 
   get attributes() {
@@ -5970,7 +6278,7 @@ class JSXClosingElement {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
-    this.#internal = { $pos: pos, $ast: ast };
+    this.#internal = { $pos: pos, $ast: ast, name: void 0 };
   }
 
   get start() {
@@ -5984,8 +6292,10 @@ class JSXClosingElement {
   }
 
   get name() {
-    const internal = this.#internal;
-    return deserializeJSXElementName(internal.$pos + 8, internal.$ast);
+    const internal = this.#internal,
+      node = internal.name;
+    if (node !== void 0) return node;
+    return internal.name = deserializeJSXElementName(internal.$pos + 8, internal.$ast);
   }
 
   toJSON() {
@@ -6008,7 +6318,7 @@ class JSXFragment {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
-    this.#internal = { $pos: pos, $ast: ast, children: void 0 };
+    this.#internal = { $pos: pos, $ast: ast, openingFragment: void 0, children: void 0, closingFragment: void 0 };
   }
 
   get start() {
@@ -6022,8 +6332,10 @@ class JSXFragment {
   }
 
   get openingFragment() {
-    const internal = this.#internal;
-    return deserializeJSXOpeningFragment(internal.$pos + 8, internal.$ast);
+    const internal = this.#internal,
+      node = internal.openingFragment;
+    if (node !== void 0) return node;
+    return internal.openingFragment = deserializeJSXOpeningFragment(internal.$pos + 8, internal.$ast);
   }
 
   get children() {
@@ -6034,8 +6346,10 @@ class JSXFragment {
   }
 
   get closingFragment() {
-    const internal = this.#internal;
-    return deserializeJSXClosingFragment(internal.$pos + 40, internal.$ast);
+    const internal = this.#internal,
+      node = internal.closingFragment;
+    if (node !== void 0) return node;
+    return internal.closingFragment = deserializeJSXClosingFragment(internal.$pos + 40, internal.$ast);
   }
 
   toJSON() {
@@ -6141,7 +6455,7 @@ class JSXNamespacedName {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
-    this.#internal = { $pos: pos, $ast: ast };
+    this.#internal = { $pos: pos, $ast: ast, namespace: void 0, name: void 0 };
   }
 
   get start() {
@@ -6155,13 +6469,17 @@ class JSXNamespacedName {
   }
 
   get namespace() {
-    const internal = this.#internal;
-    return deserializeJSXIdentifier(internal.$pos + 8, internal.$ast);
+    const internal = this.#internal,
+      node = internal.namespace;
+    if (node !== void 0) return node;
+    return internal.namespace = deserializeJSXIdentifier(internal.$pos + 8, internal.$ast);
   }
 
   get name() {
-    const internal = this.#internal;
-    return deserializeJSXIdentifier(internal.$pos + 32, internal.$ast);
+    const internal = this.#internal,
+      node = internal.name;
+    if (node !== void 0) return node;
+    return internal.name = deserializeJSXIdentifier(internal.$pos + 32, internal.$ast);
   }
 
   toJSON() {
@@ -6185,7 +6503,7 @@ class JSXMemberExpression {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
-    this.#internal = { $pos: pos, $ast: ast };
+    this.#internal = { $pos: pos, $ast: ast, object: void 0, property: void 0 };
   }
 
   get start() {
@@ -6199,13 +6517,17 @@ class JSXMemberExpression {
   }
 
   get object() {
-    const internal = this.#internal;
-    return deserializeJSXMemberExpressionObject(internal.$pos + 8, internal.$ast);
+    const internal = this.#internal,
+      node = internal.object;
+    if (node !== void 0) return node;
+    return internal.object = deserializeJSXMemberExpressionObject(internal.$pos + 8, internal.$ast);
   }
 
   get property() {
-    const internal = this.#internal;
-    return deserializeJSXIdentifier(internal.$pos + 24, internal.$ast);
+    const internal = this.#internal,
+      node = internal.property;
+    if (node !== void 0) return node;
+    return internal.property = deserializeJSXIdentifier(internal.$pos + 24, internal.$ast);
   }
 
   toJSON() {
@@ -6242,7 +6564,7 @@ class JSXExpressionContainer {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
-    this.#internal = { $pos: pos, $ast: ast };
+    this.#internal = { $pos: pos, $ast: ast, expression: void 0 };
   }
 
   get start() {
@@ -6256,8 +6578,10 @@ class JSXExpressionContainer {
   }
 
   get expression() {
-    const internal = this.#internal;
-    return deserializeJSXExpression(internal.$pos + 8, internal.$ast);
+    const internal = this.#internal,
+      node = internal.expression;
+    if (node !== void 0) return node;
+    return internal.expression = deserializeJSXExpression(internal.$pos + 8, internal.$ast);
   }
 
   toJSON() {
@@ -6418,7 +6742,7 @@ class JSXAttribute {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
-    this.#internal = { $pos: pos, $ast: ast };
+    this.#internal = { $pos: pos, $ast: ast, name: void 0, value: void 0 };
   }
 
   get start() {
@@ -6432,13 +6756,17 @@ class JSXAttribute {
   }
 
   get name() {
-    const internal = this.#internal;
-    return deserializeJSXAttributeName(internal.$pos + 8, internal.$ast);
+    const internal = this.#internal,
+      node = internal.name;
+    if (node !== void 0) return node;
+    return internal.name = deserializeJSXAttributeName(internal.$pos + 8, internal.$ast);
   }
 
   get value() {
-    const internal = this.#internal;
-    return deserializeOptionJSXAttributeValue(internal.$pos + 24, internal.$ast);
+    const internal = this.#internal,
+      node = internal.value;
+    if (node !== void 0) return node;
+    return internal.value = deserializeOptionJSXAttributeValue(internal.$pos + 24, internal.$ast);
   }
 
   toJSON() {
@@ -6462,7 +6790,7 @@ class JSXSpreadAttribute {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
-    this.#internal = { $pos: pos, $ast: ast };
+    this.#internal = { $pos: pos, $ast: ast, argument: void 0 };
   }
 
   get start() {
@@ -6476,8 +6804,10 @@ class JSXSpreadAttribute {
   }
 
   get argument() {
-    const internal = this.#internal;
-    return deserializeExpression(internal.$pos + 8, internal.$ast);
+    const internal = this.#internal,
+      node = internal.argument;
+    if (node !== void 0) return node;
+    return internal.argument = deserializeExpression(internal.$pos + 8, internal.$ast);
   }
 
   toJSON() {
@@ -6583,7 +6913,7 @@ class JSXSpreadChild {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
-    this.#internal = { $pos: pos, $ast: ast };
+    this.#internal = { $pos: pos, $ast: ast, expression: void 0 };
   }
 
   get start() {
@@ -6597,8 +6927,10 @@ class JSXSpreadChild {
   }
 
   get expression() {
-    const internal = this.#internal;
-    return deserializeExpression(internal.$pos + 8, internal.$ast);
+    const internal = this.#internal,
+      node = internal.expression;
+    if (node !== void 0) return node;
+    return internal.expression = deserializeExpression(internal.$pos + 8, internal.$ast);
   }
 
   toJSON() {
@@ -6669,7 +7001,7 @@ class TSThisParameter {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
-    this.#internal = { $pos: pos, $ast: ast };
+    this.#internal = { $pos: pos, $ast: ast, typeAnnotation: void 0 };
   }
 
   get start() {
@@ -6683,8 +7015,10 @@ class TSThisParameter {
   }
 
   get typeAnnotation() {
-    const internal = this.#internal;
-    return deserializeOptionBoxTSTypeAnnotation(internal.$pos + 16, internal.$ast);
+    const internal = this.#internal,
+      node = internal.typeAnnotation;
+    if (node !== void 0) return node;
+    return internal.typeAnnotation = deserializeOptionBoxTSTypeAnnotation(internal.$pos + 16, internal.$ast);
   }
 
   toJSON() {
@@ -6707,7 +7041,7 @@ class TSEnumDeclaration {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
-    this.#internal = { $pos: pos, $ast: ast };
+    this.#internal = { $pos: pos, $ast: ast, id: void 0, body: void 0 };
   }
 
   get start() {
@@ -6721,13 +7055,17 @@ class TSEnumDeclaration {
   }
 
   get id() {
-    const internal = this.#internal;
-    return deserializeBindingIdentifier(internal.$pos + 8, internal.$ast);
+    const internal = this.#internal,
+      node = internal.id;
+    if (node !== void 0) return node;
+    return internal.id = deserializeBindingIdentifier(internal.$pos + 8, internal.$ast);
   }
 
   get body() {
-    const internal = this.#internal;
-    return deserializeTSEnumBody(internal.$pos + 40, internal.$ast);
+    const internal = this.#internal,
+      node = internal.body;
+    if (node !== void 0) return node;
+    return internal.body = deserializeTSEnumBody(internal.$pos + 40, internal.$ast);
   }
 
   get const() {
@@ -6803,7 +7141,7 @@ class TSEnumMember {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
-    this.#internal = { $pos: pos, $ast: ast };
+    this.#internal = { $pos: pos, $ast: ast, id: void 0, initializer: void 0 };
   }
 
   get start() {
@@ -6817,13 +7155,17 @@ class TSEnumMember {
   }
 
   get id() {
-    const internal = this.#internal;
-    return deserializeTSEnumMemberName(internal.$pos + 8, internal.$ast);
+    const internal = this.#internal,
+      node = internal.id;
+    if (node !== void 0) return node;
+    return internal.id = deserializeTSEnumMemberName(internal.$pos + 8, internal.$ast);
   }
 
   get initializer() {
-    const internal = this.#internal;
-    return deserializeOptionExpression(internal.$pos + 24, internal.$ast);
+    const internal = this.#internal,
+      node = internal.initializer;
+    if (node !== void 0) return node;
+    return internal.initializer = deserializeOptionExpression(internal.$pos + 24, internal.$ast);
   }
 
   toJSON() {
@@ -6862,7 +7204,7 @@ class TSTypeAnnotation {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
-    this.#internal = { $pos: pos, $ast: ast };
+    this.#internal = { $pos: pos, $ast: ast, typeAnnotation: void 0 };
   }
 
   get start() {
@@ -6876,8 +7218,10 @@ class TSTypeAnnotation {
   }
 
   get typeAnnotation() {
-    const internal = this.#internal;
-    return deserializeTSType(internal.$pos + 8, internal.$ast);
+    const internal = this.#internal,
+      node = internal.typeAnnotation;
+    if (node !== void 0) return node;
+    return internal.typeAnnotation = deserializeTSType(internal.$pos + 8, internal.$ast);
   }
 
   toJSON() {
@@ -6900,7 +7244,7 @@ class TSLiteralType {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
-    this.#internal = { $pos: pos, $ast: ast };
+    this.#internal = { $pos: pos, $ast: ast, literal: void 0 };
   }
 
   get start() {
@@ -6914,8 +7258,10 @@ class TSLiteralType {
   }
 
   get literal() {
-    const internal = this.#internal;
-    return deserializeTSLiteral(internal.$pos + 8, internal.$ast);
+    const internal = this.#internal,
+      node = internal.literal;
+    if (node !== void 0) return node;
+    return internal.literal = deserializeTSLiteral(internal.$pos + 8, internal.$ast);
   }
 
   toJSON() {
@@ -7038,7 +7384,14 @@ class TSConditionalType {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
-    this.#internal = { $pos: pos, $ast: ast };
+    this.#internal = {
+      $pos: pos,
+      $ast: ast,
+      checkType: void 0,
+      extendsType: void 0,
+      trueType: void 0,
+      falseType: void 0,
+    };
   }
 
   get start() {
@@ -7052,23 +7405,31 @@ class TSConditionalType {
   }
 
   get checkType() {
-    const internal = this.#internal;
-    return deserializeTSType(internal.$pos + 8, internal.$ast);
+    const internal = this.#internal,
+      node = internal.checkType;
+    if (node !== void 0) return node;
+    return internal.checkType = deserializeTSType(internal.$pos + 8, internal.$ast);
   }
 
   get extendsType() {
-    const internal = this.#internal;
-    return deserializeTSType(internal.$pos + 24, internal.$ast);
+    const internal = this.#internal,
+      node = internal.extendsType;
+    if (node !== void 0) return node;
+    return internal.extendsType = deserializeTSType(internal.$pos + 24, internal.$ast);
   }
 
   get trueType() {
-    const internal = this.#internal;
-    return deserializeTSType(internal.$pos + 40, internal.$ast);
+    const internal = this.#internal,
+      node = internal.trueType;
+    if (node !== void 0) return node;
+    return internal.trueType = deserializeTSType(internal.$pos + 40, internal.$ast);
   }
 
   get falseType() {
-    const internal = this.#internal;
-    return deserializeTSType(internal.$pos + 56, internal.$ast);
+    const internal = this.#internal,
+      node = internal.falseType;
+    if (node !== void 0) return node;
+    return internal.falseType = deserializeTSType(internal.$pos + 56, internal.$ast);
   }
 
   toJSON() {
@@ -7174,7 +7535,7 @@ class TSParenthesizedType {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
-    this.#internal = { $pos: pos, $ast: ast };
+    this.#internal = { $pos: pos, $ast: ast, typeAnnotation: void 0 };
   }
 
   get start() {
@@ -7188,8 +7549,10 @@ class TSParenthesizedType {
   }
 
   get typeAnnotation() {
-    const internal = this.#internal;
-    return deserializeTSType(internal.$pos + 8, internal.$ast);
+    const internal = this.#internal,
+      node = internal.typeAnnotation;
+    if (node !== void 0) return node;
+    return internal.typeAnnotation = deserializeTSType(internal.$pos + 8, internal.$ast);
   }
 
   toJSON() {
@@ -7212,7 +7575,7 @@ class TSTypeOperator {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
-    this.#internal = { $pos: pos, $ast: ast };
+    this.#internal = { $pos: pos, $ast: ast, typeAnnotation: void 0 };
   }
 
   get start() {
@@ -7231,8 +7594,10 @@ class TSTypeOperator {
   }
 
   get typeAnnotation() {
-    const internal = this.#internal;
-    return deserializeTSType(internal.$pos + 8, internal.$ast);
+    const internal = this.#internal,
+      node = internal.typeAnnotation;
+    if (node !== void 0) return node;
+    return internal.typeAnnotation = deserializeTSType(internal.$pos + 8, internal.$ast);
   }
 
   toJSON() {
@@ -7269,7 +7634,7 @@ class TSArrayType {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
-    this.#internal = { $pos: pos, $ast: ast };
+    this.#internal = { $pos: pos, $ast: ast, elementType: void 0 };
   }
 
   get start() {
@@ -7283,8 +7648,10 @@ class TSArrayType {
   }
 
   get elementType() {
-    const internal = this.#internal;
-    return deserializeTSType(internal.$pos + 8, internal.$ast);
+    const internal = this.#internal,
+      node = internal.elementType;
+    if (node !== void 0) return node;
+    return internal.elementType = deserializeTSType(internal.$pos + 8, internal.$ast);
   }
 
   toJSON() {
@@ -7307,7 +7674,7 @@ class TSIndexedAccessType {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
-    this.#internal = { $pos: pos, $ast: ast };
+    this.#internal = { $pos: pos, $ast: ast, objectType: void 0, indexType: void 0 };
   }
 
   get start() {
@@ -7321,13 +7688,17 @@ class TSIndexedAccessType {
   }
 
   get objectType() {
-    const internal = this.#internal;
-    return deserializeTSType(internal.$pos + 8, internal.$ast);
+    const internal = this.#internal,
+      node = internal.objectType;
+    if (node !== void 0) return node;
+    return internal.objectType = deserializeTSType(internal.$pos + 8, internal.$ast);
   }
 
   get indexType() {
-    const internal = this.#internal;
-    return deserializeTSType(internal.$pos + 24, internal.$ast);
+    const internal = this.#internal,
+      node = internal.indexType;
+    if (node !== void 0) return node;
+    return internal.indexType = deserializeTSType(internal.$pos + 24, internal.$ast);
   }
 
   toJSON() {
@@ -7391,7 +7762,7 @@ class TSNamedTupleMember {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
-    this.#internal = { $pos: pos, $ast: ast };
+    this.#internal = { $pos: pos, $ast: ast, label: void 0, elementType: void 0 };
   }
 
   get start() {
@@ -7405,13 +7776,17 @@ class TSNamedTupleMember {
   }
 
   get label() {
-    const internal = this.#internal;
-    return deserializeIdentifierName(internal.$pos + 8, internal.$ast);
+    const internal = this.#internal,
+      node = internal.label;
+    if (node !== void 0) return node;
+    return internal.label = deserializeIdentifierName(internal.$pos + 8, internal.$ast);
   }
 
   get elementType() {
-    const internal = this.#internal;
-    return deserializeTSTupleElement(internal.$pos + 32, internal.$ast);
+    const internal = this.#internal,
+      node = internal.elementType;
+    if (node !== void 0) return node;
+    return internal.elementType = deserializeTSTupleElement(internal.$pos + 32, internal.$ast);
   }
 
   get optional() {
@@ -7441,7 +7816,7 @@ class TSOptionalType {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
-    this.#internal = { $pos: pos, $ast: ast };
+    this.#internal = { $pos: pos, $ast: ast, typeAnnotation: void 0 };
   }
 
   get start() {
@@ -7455,8 +7830,10 @@ class TSOptionalType {
   }
 
   get typeAnnotation() {
-    const internal = this.#internal;
-    return deserializeTSType(internal.$pos + 8, internal.$ast);
+    const internal = this.#internal,
+      node = internal.typeAnnotation;
+    if (node !== void 0) return node;
+    return internal.typeAnnotation = deserializeTSType(internal.$pos + 8, internal.$ast);
   }
 
   toJSON() {
@@ -7479,7 +7856,7 @@ class TSRestType {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
-    this.#internal = { $pos: pos, $ast: ast };
+    this.#internal = { $pos: pos, $ast: ast, typeAnnotation: void 0 };
   }
 
   get start() {
@@ -7493,8 +7870,10 @@ class TSRestType {
   }
 
   get typeAnnotation() {
-    const internal = this.#internal;
-    return deserializeTSType(internal.$pos + 8, internal.$ast);
+    const internal = this.#internal,
+      node = internal.typeAnnotation;
+    if (node !== void 0) return node;
+    return internal.typeAnnotation = deserializeTSType(internal.$pos + 8, internal.$ast);
   }
 
   toJSON() {
@@ -8050,7 +8429,7 @@ class TSTypeReference {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
-    this.#internal = { $pos: pos, $ast: ast };
+    this.#internal = { $pos: pos, $ast: ast, typeName: void 0, typeArguments: void 0 };
   }
 
   get start() {
@@ -8064,13 +8443,17 @@ class TSTypeReference {
   }
 
   get typeName() {
-    const internal = this.#internal;
-    return deserializeTSTypeName(internal.$pos + 8, internal.$ast);
+    const internal = this.#internal,
+      node = internal.typeName;
+    if (node !== void 0) return node;
+    return internal.typeName = deserializeTSTypeName(internal.$pos + 8, internal.$ast);
   }
 
   get typeArguments() {
-    const internal = this.#internal;
-    return deserializeOptionBoxTSTypeParameterInstantiation(internal.$pos + 24, internal.$ast);
+    const internal = this.#internal,
+      node = internal.typeArguments;
+    if (node !== void 0) return node;
+    return internal.typeArguments = deserializeOptionBoxTSTypeParameterInstantiation(internal.$pos + 24, internal.$ast);
   }
 
   toJSON() {
@@ -8105,7 +8488,7 @@ class TSQualifiedName {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
-    this.#internal = { $pos: pos, $ast: ast };
+    this.#internal = { $pos: pos, $ast: ast, left: void 0, right: void 0 };
   }
 
   get start() {
@@ -8119,13 +8502,17 @@ class TSQualifiedName {
   }
 
   get left() {
-    const internal = this.#internal;
-    return deserializeTSTypeName(internal.$pos + 8, internal.$ast);
+    const internal = this.#internal,
+      node = internal.left;
+    if (node !== void 0) return node;
+    return internal.left = deserializeTSTypeName(internal.$pos + 8, internal.$ast);
   }
 
   get right() {
-    const internal = this.#internal;
-    return deserializeIdentifierName(internal.$pos + 24, internal.$ast);
+    const internal = this.#internal,
+      node = internal.right;
+    if (node !== void 0) return node;
+    return internal.right = deserializeIdentifierName(internal.$pos + 24, internal.$ast);
   }
 
   toJSON() {
@@ -8189,7 +8576,7 @@ class TSTypeParameter {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
-    this.#internal = { $pos: pos, $ast: ast };
+    this.#internal = { $pos: pos, $ast: ast, name: void 0, constraint: void 0, default: void 0 };
   }
 
   get start() {
@@ -8203,18 +8590,24 @@ class TSTypeParameter {
   }
 
   get name() {
-    const internal = this.#internal;
-    return deserializeBindingIdentifier(internal.$pos + 8, internal.$ast);
+    const internal = this.#internal,
+      node = internal.name;
+    if (node !== void 0) return node;
+    return internal.name = deserializeBindingIdentifier(internal.$pos + 8, internal.$ast);
   }
 
   get constraint() {
-    const internal = this.#internal;
-    return deserializeOptionTSType(internal.$pos + 40, internal.$ast);
+    const internal = this.#internal,
+      node = internal.constraint;
+    if (node !== void 0) return node;
+    return internal.constraint = deserializeOptionTSType(internal.$pos + 40, internal.$ast);
   }
 
   get default() {
-    const internal = this.#internal;
-    return deserializeOptionTSType(internal.$pos + 56, internal.$ast);
+    const internal = this.#internal,
+      node = internal.default;
+    if (node !== void 0) return node;
+    return internal.default = deserializeOptionTSType(internal.$pos + 56, internal.$ast);
   }
 
   get in() {
@@ -8297,7 +8690,7 @@ class TSTypeAliasDeclaration {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
-    this.#internal = { $pos: pos, $ast: ast };
+    this.#internal = { $pos: pos, $ast: ast, id: void 0, typeParameters: void 0, typeAnnotation: void 0 };
   }
 
   get start() {
@@ -8311,18 +8704,24 @@ class TSTypeAliasDeclaration {
   }
 
   get id() {
-    const internal = this.#internal;
-    return deserializeBindingIdentifier(internal.$pos + 8, internal.$ast);
+    const internal = this.#internal,
+      node = internal.id;
+    if (node !== void 0) return node;
+    return internal.id = deserializeBindingIdentifier(internal.$pos + 8, internal.$ast);
   }
 
   get typeParameters() {
-    const internal = this.#internal;
-    return deserializeOptionBoxTSTypeParameterDeclaration(internal.$pos + 40, internal.$ast);
+    const internal = this.#internal,
+      node = internal.typeParameters;
+    if (node !== void 0) return node;
+    return internal.typeParameters = deserializeOptionBoxTSTypeParameterDeclaration(internal.$pos + 40, internal.$ast);
   }
 
   get typeAnnotation() {
-    const internal = this.#internal;
-    return deserializeTSType(internal.$pos + 48, internal.$ast);
+    const internal = this.#internal,
+      node = internal.typeAnnotation;
+    if (node !== void 0) return node;
+    return internal.typeAnnotation = deserializeTSType(internal.$pos + 48, internal.$ast);
   }
 
   get declare() {
@@ -8366,7 +8765,7 @@ class TSClassImplements {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
-    this.#internal = { $pos: pos, $ast: ast };
+    this.#internal = { $pos: pos, $ast: ast, expression: void 0, typeArguments: void 0 };
   }
 
   get start() {
@@ -8380,13 +8779,17 @@ class TSClassImplements {
   }
 
   get expression() {
-    const internal = this.#internal;
-    return deserializeTSTypeName(internal.$pos + 8, internal.$ast);
+    const internal = this.#internal,
+      node = internal.expression;
+    if (node !== void 0) return node;
+    return internal.expression = deserializeTSTypeName(internal.$pos + 8, internal.$ast);
   }
 
   get typeArguments() {
-    const internal = this.#internal;
-    return deserializeOptionBoxTSTypeParameterInstantiation(internal.$pos + 24, internal.$ast);
+    const internal = this.#internal,
+      node = internal.typeArguments;
+    if (node !== void 0) return node;
+    return internal.typeArguments = deserializeOptionBoxTSTypeParameterInstantiation(internal.$pos + 24, internal.$ast);
   }
 
   toJSON() {
@@ -8410,7 +8813,7 @@ class TSInterfaceDeclaration {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
-    this.#internal = { $pos: pos, $ast: ast, extends: void 0 };
+    this.#internal = { $pos: pos, $ast: ast, id: void 0, typeParameters: void 0, extends: void 0, body: void 0 };
   }
 
   get start() {
@@ -8424,13 +8827,17 @@ class TSInterfaceDeclaration {
   }
 
   get id() {
-    const internal = this.#internal;
-    return deserializeBindingIdentifier(internal.$pos + 8, internal.$ast);
+    const internal = this.#internal,
+      node = internal.id;
+    if (node !== void 0) return node;
+    return internal.id = deserializeBindingIdentifier(internal.$pos + 8, internal.$ast);
   }
 
   get typeParameters() {
-    const internal = this.#internal;
-    return deserializeOptionBoxTSTypeParameterDeclaration(internal.$pos + 40, internal.$ast);
+    const internal = this.#internal,
+      node = internal.typeParameters;
+    if (node !== void 0) return node;
+    return internal.typeParameters = deserializeOptionBoxTSTypeParameterDeclaration(internal.$pos + 40, internal.$ast);
   }
 
   get extends() {
@@ -8441,8 +8848,10 @@ class TSInterfaceDeclaration {
   }
 
   get body() {
-    const internal = this.#internal;
-    return deserializeBoxTSInterfaceBody(internal.$pos + 72, internal.$ast);
+    const internal = this.#internal,
+      node = internal.body;
+    if (node !== void 0) return node;
+    return internal.body = deserializeBoxTSInterfaceBody(internal.$pos + 72, internal.$ast);
   }
 
   get declare() {
@@ -8514,7 +8923,7 @@ class TSPropertySignature {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
-    this.#internal = { $pos: pos, $ast: ast };
+    this.#internal = { $pos: pos, $ast: ast, key: void 0, typeAnnotation: void 0 };
   }
 
   get start() {
@@ -8543,13 +8952,17 @@ class TSPropertySignature {
   }
 
   get key() {
-    const internal = this.#internal;
-    return deserializePropertyKey(internal.$pos + 8, internal.$ast);
+    const internal = this.#internal,
+      node = internal.key;
+    if (node !== void 0) return node;
+    return internal.key = deserializePropertyKey(internal.$pos + 8, internal.$ast);
   }
 
   get typeAnnotation() {
-    const internal = this.#internal;
-    return deserializeOptionBoxTSTypeAnnotation(internal.$pos + 24, internal.$ast);
+    const internal = this.#internal,
+      node = internal.typeAnnotation;
+    if (node !== void 0) return node;
+    return internal.typeAnnotation = deserializeOptionBoxTSTypeAnnotation(internal.$pos + 24, internal.$ast);
   }
 
   toJSON() {
@@ -8593,7 +9006,7 @@ class TSIndexSignature {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
-    this.#internal = { $pos: pos, $ast: ast, parameters: void 0 };
+    this.#internal = { $pos: pos, $ast: ast, parameters: void 0, typeAnnotation: void 0 };
   }
 
   get start() {
@@ -8614,8 +9027,10 @@ class TSIndexSignature {
   }
 
   get typeAnnotation() {
-    const internal = this.#internal;
-    return deserializeBoxTSTypeAnnotation(internal.$pos + 32, internal.$ast);
+    const internal = this.#internal,
+      node = internal.typeAnnotation;
+    if (node !== void 0) return node;
+    return internal.typeAnnotation = deserializeBoxTSTypeAnnotation(internal.$pos + 32, internal.$ast);
   }
 
   get readonly() {
@@ -8651,7 +9066,7 @@ class TSCallSignatureDeclaration {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
-    this.#internal = { $pos: pos, $ast: ast };
+    this.#internal = { $pos: pos, $ast: ast, typeParameters: void 0, params: void 0, returnType: void 0 };
   }
 
   get start() {
@@ -8665,18 +9080,24 @@ class TSCallSignatureDeclaration {
   }
 
   get typeParameters() {
-    const internal = this.#internal;
-    return deserializeOptionBoxTSTypeParameterDeclaration(internal.$pos + 8, internal.$ast);
+    const internal = this.#internal,
+      node = internal.typeParameters;
+    if (node !== void 0) return node;
+    return internal.typeParameters = deserializeOptionBoxTSTypeParameterDeclaration(internal.$pos + 8, internal.$ast);
   }
 
   get params() {
-    const internal = this.#internal;
-    return deserializeBoxFormalParameters(internal.$pos + 24, internal.$ast);
+    const internal = this.#internal,
+      node = internal.params;
+    if (node !== void 0) return node;
+    return internal.params = deserializeBoxFormalParameters(internal.$pos + 24, internal.$ast);
   }
 
   get returnType() {
-    const internal = this.#internal;
-    return deserializeOptionBoxTSTypeAnnotation(internal.$pos + 32, internal.$ast);
+    const internal = this.#internal,
+      node = internal.returnType;
+    if (node !== void 0) return node;
+    return internal.returnType = deserializeOptionBoxTSTypeAnnotation(internal.$pos + 32, internal.$ast);
   }
 
   toJSON() {
@@ -8714,7 +9135,7 @@ class TSMethodSignature {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
-    this.#internal = { $pos: pos, $ast: ast };
+    this.#internal = { $pos: pos, $ast: ast, key: void 0, typeParameters: void 0, params: void 0, returnType: void 0 };
   }
 
   get start() {
@@ -8728,8 +9149,10 @@ class TSMethodSignature {
   }
 
   get key() {
-    const internal = this.#internal;
-    return deserializePropertyKey(internal.$pos + 8, internal.$ast);
+    const internal = this.#internal,
+      node = internal.key;
+    if (node !== void 0) return node;
+    return internal.key = deserializePropertyKey(internal.$pos + 8, internal.$ast);
   }
 
   get computed() {
@@ -8748,18 +9171,24 @@ class TSMethodSignature {
   }
 
   get typeParameters() {
-    const internal = this.#internal;
-    return deserializeOptionBoxTSTypeParameterDeclaration(internal.$pos + 24, internal.$ast);
+    const internal = this.#internal,
+      node = internal.typeParameters;
+    if (node !== void 0) return node;
+    return internal.typeParameters = deserializeOptionBoxTSTypeParameterDeclaration(internal.$pos + 24, internal.$ast);
   }
 
   get params() {
-    const internal = this.#internal;
-    return deserializeBoxFormalParameters(internal.$pos + 40, internal.$ast);
+    const internal = this.#internal,
+      node = internal.params;
+    if (node !== void 0) return node;
+    return internal.params = deserializeBoxFormalParameters(internal.$pos + 40, internal.$ast);
   }
 
   get returnType() {
-    const internal = this.#internal;
-    return deserializeOptionBoxTSTypeAnnotation(internal.$pos + 48, internal.$ast);
+    const internal = this.#internal,
+      node = internal.returnType;
+    if (node !== void 0) return node;
+    return internal.returnType = deserializeOptionBoxTSTypeAnnotation(internal.$pos + 48, internal.$ast);
   }
 
   toJSON() {
@@ -8788,7 +9217,7 @@ class TSConstructSignatureDeclaration {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
-    this.#internal = { $pos: pos, $ast: ast };
+    this.#internal = { $pos: pos, $ast: ast, typeParameters: void 0, params: void 0, returnType: void 0 };
   }
 
   get start() {
@@ -8802,18 +9231,24 @@ class TSConstructSignatureDeclaration {
   }
 
   get typeParameters() {
-    const internal = this.#internal;
-    return deserializeOptionBoxTSTypeParameterDeclaration(internal.$pos + 8, internal.$ast);
+    const internal = this.#internal,
+      node = internal.typeParameters;
+    if (node !== void 0) return node;
+    return internal.typeParameters = deserializeOptionBoxTSTypeParameterDeclaration(internal.$pos + 8, internal.$ast);
   }
 
   get params() {
-    const internal = this.#internal;
-    return deserializeBoxFormalParameters(internal.$pos + 16, internal.$ast);
+    const internal = this.#internal,
+      node = internal.params;
+    if (node !== void 0) return node;
+    return internal.params = deserializeBoxFormalParameters(internal.$pos + 16, internal.$ast);
   }
 
   get returnType() {
-    const internal = this.#internal;
-    return deserializeOptionBoxTSTypeAnnotation(internal.$pos + 24, internal.$ast);
+    const internal = this.#internal,
+      node = internal.returnType;
+    if (node !== void 0) return node;
+    return internal.returnType = deserializeOptionBoxTSTypeAnnotation(internal.$pos + 24, internal.$ast);
   }
 
   toJSON() {
@@ -8838,7 +9273,7 @@ class TSIndexSignatureName {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
-    this.#internal = { $pos: pos, $ast: ast, name: void 0 };
+    this.#internal = { $pos: pos, $ast: ast, name: void 0, typeAnnotation: void 0 };
   }
 
   get start() {
@@ -8859,8 +9294,10 @@ class TSIndexSignatureName {
   }
 
   get typeAnnotation() {
-    const internal = this.#internal;
-    return deserializeBoxTSTypeAnnotation(internal.$pos + 24, internal.$ast);
+    const internal = this.#internal,
+      node = internal.typeAnnotation;
+    if (node !== void 0) return node;
+    return internal.typeAnnotation = deserializeBoxTSTypeAnnotation(internal.$pos + 24, internal.$ast);
   }
 
   toJSON() {
@@ -8884,7 +9321,7 @@ class TSInterfaceHeritage {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
-    this.#internal = { $pos: pos, $ast: ast };
+    this.#internal = { $pos: pos, $ast: ast, expression: void 0, typeArguments: void 0 };
   }
 
   get start() {
@@ -8898,13 +9335,17 @@ class TSInterfaceHeritage {
   }
 
   get expression() {
-    const internal = this.#internal;
-    return deserializeExpression(internal.$pos + 8, internal.$ast);
+    const internal = this.#internal,
+      node = internal.expression;
+    if (node !== void 0) return node;
+    return internal.expression = deserializeExpression(internal.$pos + 8, internal.$ast);
   }
 
   get typeArguments() {
-    const internal = this.#internal;
-    return deserializeOptionBoxTSTypeParameterInstantiation(internal.$pos + 24, internal.$ast);
+    const internal = this.#internal,
+      node = internal.typeArguments;
+    if (node !== void 0) return node;
+    return internal.typeArguments = deserializeOptionBoxTSTypeParameterInstantiation(internal.$pos + 24, internal.$ast);
   }
 
   toJSON() {
@@ -8928,7 +9369,7 @@ class TSTypePredicate {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
-    this.#internal = { $pos: pos, $ast: ast };
+    this.#internal = { $pos: pos, $ast: ast, parameterName: void 0, typeAnnotation: void 0 };
   }
 
   get start() {
@@ -8942,8 +9383,10 @@ class TSTypePredicate {
   }
 
   get parameterName() {
-    const internal = this.#internal;
-    return deserializeTSTypePredicateName(internal.$pos + 8, internal.$ast);
+    const internal = this.#internal,
+      node = internal.parameterName;
+    if (node !== void 0) return node;
+    return internal.parameterName = deserializeTSTypePredicateName(internal.$pos + 8, internal.$ast);
   }
 
   get asserts() {
@@ -8952,8 +9395,10 @@ class TSTypePredicate {
   }
 
   get typeAnnotation() {
-    const internal = this.#internal;
-    return deserializeOptionBoxTSTypeAnnotation(internal.$pos + 24, internal.$ast);
+    const internal = this.#internal,
+      node = internal.typeAnnotation;
+    if (node !== void 0) return node;
+    return internal.typeAnnotation = deserializeOptionBoxTSTypeAnnotation(internal.$pos + 24, internal.$ast);
   }
 
   toJSON() {
@@ -8989,7 +9434,7 @@ class TSModuleDeclaration {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
-    this.#internal = { $pos: pos, $ast: ast };
+    this.#internal = { $pos: pos, $ast: ast, id: void 0, body: void 0 };
   }
 
   get start() {
@@ -9003,13 +9448,17 @@ class TSModuleDeclaration {
   }
 
   get id() {
-    const internal = this.#internal;
-    return deserializeTSModuleDeclarationName(internal.$pos + 8, internal.$ast);
+    const internal = this.#internal,
+      node = internal.id;
+    if (node !== void 0) return node;
+    return internal.id = deserializeTSModuleDeclarationName(internal.$pos + 8, internal.$ast);
   }
 
   get body() {
-    const internal = this.#internal;
-    return deserializeOptionTSModuleDeclarationBody(internal.$pos + 64, internal.$ast);
+    const internal = this.#internal,
+      node = internal.body;
+    if (node !== void 0) return node;
+    return internal.body = deserializeOptionTSModuleDeclarationBody(internal.$pos + 64, internal.$ast);
   }
 
   get kind() {
@@ -9160,7 +9609,7 @@ class TSInferType {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
-    this.#internal = { $pos: pos, $ast: ast };
+    this.#internal = { $pos: pos, $ast: ast, typeParameter: void 0 };
   }
 
   get start() {
@@ -9174,8 +9623,10 @@ class TSInferType {
   }
 
   get typeParameter() {
-    const internal = this.#internal;
-    return deserializeBoxTSTypeParameter(internal.$pos + 8, internal.$ast);
+    const internal = this.#internal,
+      node = internal.typeParameter;
+    if (node !== void 0) return node;
+    return internal.typeParameter = deserializeBoxTSTypeParameter(internal.$pos + 8, internal.$ast);
   }
 
   toJSON() {
@@ -9198,7 +9649,7 @@ class TSTypeQuery {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
-    this.#internal = { $pos: pos, $ast: ast };
+    this.#internal = { $pos: pos, $ast: ast, exprName: void 0, typeArguments: void 0 };
   }
 
   get start() {
@@ -9212,13 +9663,17 @@ class TSTypeQuery {
   }
 
   get exprName() {
-    const internal = this.#internal;
-    return deserializeTSTypeQueryExprName(internal.$pos + 8, internal.$ast);
+    const internal = this.#internal,
+      node = internal.exprName;
+    if (node !== void 0) return node;
+    return internal.exprName = deserializeTSTypeQueryExprName(internal.$pos + 8, internal.$ast);
   }
 
   get typeArguments() {
-    const internal = this.#internal;
-    return deserializeOptionBoxTSTypeParameterInstantiation(internal.$pos + 24, internal.$ast);
+    const internal = this.#internal,
+      node = internal.typeArguments;
+    if (node !== void 0) return node;
+    return internal.typeArguments = deserializeOptionBoxTSTypeParameterInstantiation(internal.$pos + 24, internal.$ast);
   }
 
   toJSON() {
@@ -9255,7 +9710,14 @@ class TSImportType {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
-    this.#internal = { $pos: pos, $ast: ast };
+    this.#internal = {
+      $pos: pos,
+      $ast: ast,
+      argument: void 0,
+      options: void 0,
+      qualifier: void 0,
+      typeArguments: void 0,
+    };
   }
 
   get start() {
@@ -9269,23 +9731,31 @@ class TSImportType {
   }
 
   get argument() {
-    const internal = this.#internal;
-    return deserializeTSType(internal.$pos + 8, internal.$ast);
+    const internal = this.#internal,
+      node = internal.argument;
+    if (node !== void 0) return node;
+    return internal.argument = deserializeTSType(internal.$pos + 8, internal.$ast);
   }
 
   get options() {
-    const internal = this.#internal;
-    return deserializeOptionBoxObjectExpression(internal.$pos + 24, internal.$ast);
+    const internal = this.#internal,
+      node = internal.options;
+    if (node !== void 0) return node;
+    return internal.options = deserializeOptionBoxObjectExpression(internal.$pos + 24, internal.$ast);
   }
 
   get qualifier() {
-    const internal = this.#internal;
-    return deserializeOptionTSTypeName(internal.$pos + 32, internal.$ast);
+    const internal = this.#internal,
+      node = internal.qualifier;
+    if (node !== void 0) return node;
+    return internal.qualifier = deserializeOptionTSTypeName(internal.$pos + 32, internal.$ast);
   }
 
   get typeArguments() {
-    const internal = this.#internal;
-    return deserializeOptionBoxTSTypeParameterInstantiation(internal.$pos + 48, internal.$ast);
+    const internal = this.#internal,
+      node = internal.typeArguments;
+    if (node !== void 0) return node;
+    return internal.typeArguments = deserializeOptionBoxTSTypeParameterInstantiation(internal.$pos + 48, internal.$ast);
   }
 
   toJSON() {
@@ -9311,7 +9781,7 @@ class TSFunctionType {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
-    this.#internal = { $pos: pos, $ast: ast };
+    this.#internal = { $pos: pos, $ast: ast, typeParameters: void 0, params: void 0, returnType: void 0 };
   }
 
   get start() {
@@ -9325,18 +9795,24 @@ class TSFunctionType {
   }
 
   get typeParameters() {
-    const internal = this.#internal;
-    return deserializeOptionBoxTSTypeParameterDeclaration(internal.$pos + 8, internal.$ast);
+    const internal = this.#internal,
+      node = internal.typeParameters;
+    if (node !== void 0) return node;
+    return internal.typeParameters = deserializeOptionBoxTSTypeParameterDeclaration(internal.$pos + 8, internal.$ast);
   }
 
   get params() {
-    const internal = this.#internal;
-    return deserializeBoxFormalParameters(internal.$pos + 24, internal.$ast);
+    const internal = this.#internal,
+      node = internal.params;
+    if (node !== void 0) return node;
+    return internal.params = deserializeBoxFormalParameters(internal.$pos + 24, internal.$ast);
   }
 
   get returnType() {
-    const internal = this.#internal;
-    return deserializeBoxTSTypeAnnotation(internal.$pos + 32, internal.$ast);
+    const internal = this.#internal,
+      node = internal.returnType;
+    if (node !== void 0) return node;
+    return internal.returnType = deserializeBoxTSTypeAnnotation(internal.$pos + 32, internal.$ast);
   }
 
   toJSON() {
@@ -9361,7 +9837,7 @@ class TSConstructorType {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
-    this.#internal = { $pos: pos, $ast: ast };
+    this.#internal = { $pos: pos, $ast: ast, typeParameters: void 0, params: void 0, returnType: void 0 };
   }
 
   get start() {
@@ -9380,18 +9856,24 @@ class TSConstructorType {
   }
 
   get typeParameters() {
-    const internal = this.#internal;
-    return deserializeOptionBoxTSTypeParameterDeclaration(internal.$pos + 8, internal.$ast);
+    const internal = this.#internal,
+      node = internal.typeParameters;
+    if (node !== void 0) return node;
+    return internal.typeParameters = deserializeOptionBoxTSTypeParameterDeclaration(internal.$pos + 8, internal.$ast);
   }
 
   get params() {
-    const internal = this.#internal;
-    return deserializeBoxFormalParameters(internal.$pos + 16, internal.$ast);
+    const internal = this.#internal,
+      node = internal.params;
+    if (node !== void 0) return node;
+    return internal.params = deserializeBoxFormalParameters(internal.$pos + 16, internal.$ast);
   }
 
   get returnType() {
-    const internal = this.#internal;
-    return deserializeBoxTSTypeAnnotation(internal.$pos + 24, internal.$ast);
+    const internal = this.#internal,
+      node = internal.returnType;
+    if (node !== void 0) return node;
+    return internal.returnType = deserializeBoxTSTypeAnnotation(internal.$pos + 24, internal.$ast);
   }
 
   toJSON() {
@@ -9417,7 +9899,7 @@ class TSMappedType {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
-    this.#internal = { $pos: pos, $ast: ast };
+    this.#internal = { $pos: pos, $ast: ast, nameType: void 0, typeAnnotation: void 0 };
   }
 
   get start() {
@@ -9431,13 +9913,17 @@ class TSMappedType {
   }
 
   get nameType() {
-    const internal = this.#internal;
-    return deserializeOptionTSType(internal.$pos + 16, internal.$ast);
+    const internal = this.#internal,
+      node = internal.nameType;
+    if (node !== void 0) return node;
+    return internal.nameType = deserializeOptionTSType(internal.$pos + 16, internal.$ast);
   }
 
   get typeAnnotation() {
-    const internal = this.#internal;
-    return deserializeOptionTSType(internal.$pos + 32, internal.$ast);
+    const internal = this.#internal,
+      node = internal.typeAnnotation;
+    if (node !== void 0) return node;
+    return internal.typeAnnotation = deserializeOptionTSType(internal.$pos + 32, internal.$ast);
   }
 
   get optional() {
@@ -9534,7 +10020,7 @@ class TSAsExpression {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
-    this.#internal = { $pos: pos, $ast: ast };
+    this.#internal = { $pos: pos, $ast: ast, expression: void 0, typeAnnotation: void 0 };
   }
 
   get start() {
@@ -9548,13 +10034,17 @@ class TSAsExpression {
   }
 
   get expression() {
-    const internal = this.#internal;
-    return deserializeExpression(internal.$pos + 8, internal.$ast);
+    const internal = this.#internal,
+      node = internal.expression;
+    if (node !== void 0) return node;
+    return internal.expression = deserializeExpression(internal.$pos + 8, internal.$ast);
   }
 
   get typeAnnotation() {
-    const internal = this.#internal;
-    return deserializeTSType(internal.$pos + 24, internal.$ast);
+    const internal = this.#internal,
+      node = internal.typeAnnotation;
+    if (node !== void 0) return node;
+    return internal.typeAnnotation = deserializeTSType(internal.$pos + 24, internal.$ast);
   }
 
   toJSON() {
@@ -9578,7 +10068,7 @@ class TSSatisfiesExpression {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
-    this.#internal = { $pos: pos, $ast: ast };
+    this.#internal = { $pos: pos, $ast: ast, expression: void 0, typeAnnotation: void 0 };
   }
 
   get start() {
@@ -9592,13 +10082,17 @@ class TSSatisfiesExpression {
   }
 
   get expression() {
-    const internal = this.#internal;
-    return deserializeExpression(internal.$pos + 8, internal.$ast);
+    const internal = this.#internal,
+      node = internal.expression;
+    if (node !== void 0) return node;
+    return internal.expression = deserializeExpression(internal.$pos + 8, internal.$ast);
   }
 
   get typeAnnotation() {
-    const internal = this.#internal;
-    return deserializeTSType(internal.$pos + 24, internal.$ast);
+    const internal = this.#internal,
+      node = internal.typeAnnotation;
+    if (node !== void 0) return node;
+    return internal.typeAnnotation = deserializeTSType(internal.$pos + 24, internal.$ast);
   }
 
   toJSON() {
@@ -9622,7 +10116,7 @@ class TSTypeAssertion {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
-    this.#internal = { $pos: pos, $ast: ast };
+    this.#internal = { $pos: pos, $ast: ast, typeAnnotation: void 0, expression: void 0 };
   }
 
   get start() {
@@ -9636,13 +10130,17 @@ class TSTypeAssertion {
   }
 
   get typeAnnotation() {
-    const internal = this.#internal;
-    return deserializeTSType(internal.$pos + 8, internal.$ast);
+    const internal = this.#internal,
+      node = internal.typeAnnotation;
+    if (node !== void 0) return node;
+    return internal.typeAnnotation = deserializeTSType(internal.$pos + 8, internal.$ast);
   }
 
   get expression() {
-    const internal = this.#internal;
-    return deserializeExpression(internal.$pos + 24, internal.$ast);
+    const internal = this.#internal,
+      node = internal.expression;
+    if (node !== void 0) return node;
+    return internal.expression = deserializeExpression(internal.$pos + 24, internal.$ast);
   }
 
   toJSON() {
@@ -9666,7 +10164,7 @@ class TSImportEqualsDeclaration {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
-    this.#internal = { $pos: pos, $ast: ast };
+    this.#internal = { $pos: pos, $ast: ast, id: void 0, moduleReference: void 0 };
   }
 
   get start() {
@@ -9680,13 +10178,17 @@ class TSImportEqualsDeclaration {
   }
 
   get id() {
-    const internal = this.#internal;
-    return deserializeBindingIdentifier(internal.$pos + 8, internal.$ast);
+    const internal = this.#internal,
+      node = internal.id;
+    if (node !== void 0) return node;
+    return internal.id = deserializeBindingIdentifier(internal.$pos + 8, internal.$ast);
   }
 
   get moduleReference() {
-    const internal = this.#internal;
-    return deserializeTSModuleReference(internal.$pos + 40, internal.$ast);
+    const internal = this.#internal,
+      node = internal.moduleReference;
+    if (node !== void 0) return node;
+    return internal.moduleReference = deserializeTSModuleReference(internal.$pos + 40, internal.$ast);
   }
 
   get importKind() {
@@ -9729,7 +10231,7 @@ class TSExternalModuleReference {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
-    this.#internal = { $pos: pos, $ast: ast };
+    this.#internal = { $pos: pos, $ast: ast, expression: void 0 };
   }
 
   get start() {
@@ -9743,8 +10245,10 @@ class TSExternalModuleReference {
   }
 
   get expression() {
-    const internal = this.#internal;
-    return deserializeStringLiteral(internal.$pos + 8, internal.$ast);
+    const internal = this.#internal,
+      node = internal.expression;
+    if (node !== void 0) return node;
+    return internal.expression = deserializeStringLiteral(internal.$pos + 8, internal.$ast);
   }
 
   toJSON() {
@@ -9767,7 +10271,7 @@ class TSNonNullExpression {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
-    this.#internal = { $pos: pos, $ast: ast };
+    this.#internal = { $pos: pos, $ast: ast, expression: void 0 };
   }
 
   get start() {
@@ -9781,8 +10285,10 @@ class TSNonNullExpression {
   }
 
   get expression() {
-    const internal = this.#internal;
-    return deserializeExpression(internal.$pos + 8, internal.$ast);
+    const internal = this.#internal,
+      node = internal.expression;
+    if (node !== void 0) return node;
+    return internal.expression = deserializeExpression(internal.$pos + 8, internal.$ast);
   }
 
   toJSON() {
@@ -9805,7 +10311,7 @@ class Decorator {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
-    this.#internal = { $pos: pos, $ast: ast };
+    this.#internal = { $pos: pos, $ast: ast, expression: void 0 };
   }
 
   get start() {
@@ -9819,8 +10325,10 @@ class Decorator {
   }
 
   get expression() {
-    const internal = this.#internal;
-    return deserializeExpression(internal.$pos + 8, internal.$ast);
+    const internal = this.#internal,
+      node = internal.expression;
+    if (node !== void 0) return node;
+    return internal.expression = deserializeExpression(internal.$pos + 8, internal.$ast);
   }
 
   toJSON() {
@@ -9843,7 +10351,7 @@ class TSExportAssignment {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
-    this.#internal = { $pos: pos, $ast: ast };
+    this.#internal = { $pos: pos, $ast: ast, expression: void 0 };
   }
 
   get start() {
@@ -9857,8 +10365,10 @@ class TSExportAssignment {
   }
 
   get expression() {
-    const internal = this.#internal;
-    return deserializeExpression(internal.$pos + 8, internal.$ast);
+    const internal = this.#internal,
+      node = internal.expression;
+    if (node !== void 0) return node;
+    return internal.expression = deserializeExpression(internal.$pos + 8, internal.$ast);
   }
 
   toJSON() {
@@ -9881,7 +10391,7 @@ class TSNamespaceExportDeclaration {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
-    this.#internal = { $pos: pos, $ast: ast };
+    this.#internal = { $pos: pos, $ast: ast, id: void 0 };
   }
 
   get start() {
@@ -9895,8 +10405,10 @@ class TSNamespaceExportDeclaration {
   }
 
   get id() {
-    const internal = this.#internal;
-    return deserializeIdentifierName(internal.$pos + 8, internal.$ast);
+    const internal = this.#internal,
+      node = internal.id;
+    if (node !== void 0) return node;
+    return internal.id = deserializeIdentifierName(internal.$pos + 8, internal.$ast);
   }
 
   toJSON() {
@@ -9919,7 +10431,7 @@ class TSInstantiationExpression {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
-    this.#internal = { $pos: pos, $ast: ast };
+    this.#internal = { $pos: pos, $ast: ast, expression: void 0, typeArguments: void 0 };
   }
 
   get start() {
@@ -9933,13 +10445,17 @@ class TSInstantiationExpression {
   }
 
   get expression() {
-    const internal = this.#internal;
-    return deserializeExpression(internal.$pos + 8, internal.$ast);
+    const internal = this.#internal,
+      node = internal.expression;
+    if (node !== void 0) return node;
+    return internal.expression = deserializeExpression(internal.$pos + 8, internal.$ast);
   }
 
   get typeArguments() {
-    const internal = this.#internal;
-    return deserializeBoxTSTypeParameterInstantiation(internal.$pos + 24, internal.$ast);
+    const internal = this.#internal,
+      node = internal.typeArguments;
+    if (node !== void 0) return node;
+    return internal.typeArguments = deserializeBoxTSTypeParameterInstantiation(internal.$pos + 24, internal.$ast);
   }
 
   toJSON() {
@@ -9974,7 +10490,7 @@ class JSDocNullableType {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
-    this.#internal = { $pos: pos, $ast: ast };
+    this.#internal = { $pos: pos, $ast: ast, typeAnnotation: void 0 };
   }
 
   get start() {
@@ -9988,8 +10504,10 @@ class JSDocNullableType {
   }
 
   get typeAnnotation() {
-    const internal = this.#internal;
-    return deserializeTSType(internal.$pos + 8, internal.$ast);
+    const internal = this.#internal,
+      node = internal.typeAnnotation;
+    if (node !== void 0) return node;
+    return internal.typeAnnotation = deserializeTSType(internal.$pos + 8, internal.$ast);
   }
 
   get postfix() {
@@ -10018,7 +10536,7 @@ class JSDocNonNullableType {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
-    this.#internal = { $pos: pos, $ast: ast };
+    this.#internal = { $pos: pos, $ast: ast, typeAnnotation: void 0 };
   }
 
   get start() {
@@ -10032,8 +10550,10 @@ class JSDocNonNullableType {
   }
 
   get typeAnnotation() {
-    const internal = this.#internal;
-    return deserializeTSType(internal.$pos + 8, internal.$ast);
+    const internal = this.#internal,
+      node = internal.typeAnnotation;
+    if (node !== void 0) return node;
+    return internal.typeAnnotation = deserializeTSType(internal.$pos + 8, internal.$ast);
   }
 
   get postfix() {
@@ -10178,17 +10698,21 @@ class ImportEntry {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
-    this.#internal = { $pos: pos, $ast: ast };
+    this.#internal = { $pos: pos, $ast: ast, importName: void 0, localName: void 0 };
   }
 
   get importName() {
-    const internal = this.#internal;
-    return deserializeImportImportName(internal.$pos + 32, internal.$ast);
+    const internal = this.#internal,
+      node = internal.importName;
+    if (node !== void 0) return node;
+    return internal.importName = deserializeImportImportName(internal.$pos + 32, internal.$ast);
   }
 
   get localName() {
-    const internal = this.#internal;
-    return deserializeNameSpan(internal.$pos + 64, internal.$ast);
+    const internal = this.#internal,
+      node = internal.localName;
+    if (node !== void 0) return node;
+    return internal.localName = deserializeNameSpan(internal.$pos + 64, internal.$ast);
   }
 
   get isType() {
@@ -10227,7 +10751,14 @@ class ExportEntry {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
-    this.#internal = { $pos: pos, $ast: ast };
+    this.#internal = {
+      $pos: pos,
+      $ast: ast,
+      moduleRequest: void 0,
+      importName: void 0,
+      exportName: void 0,
+      localName: void 0,
+    };
   }
 
   get start() {
@@ -10241,23 +10772,31 @@ class ExportEntry {
   }
 
   get moduleRequest() {
-    const internal = this.#internal;
-    return deserializeOptionNameSpan(internal.$pos + 16, internal.$ast);
+    const internal = this.#internal,
+      node = internal.moduleRequest;
+    if (node !== void 0) return node;
+    return internal.moduleRequest = deserializeOptionNameSpan(internal.$pos + 16, internal.$ast);
   }
 
   get importName() {
-    const internal = this.#internal;
-    return deserializeExportImportName(internal.$pos + 40, internal.$ast);
+    const internal = this.#internal,
+      node = internal.importName;
+    if (node !== void 0) return node;
+    return internal.importName = deserializeExportImportName(internal.$pos + 40, internal.$ast);
   }
 
   get exportName() {
-    const internal = this.#internal;
-    return deserializeExportExportName(internal.$pos + 72, internal.$ast);
+    const internal = this.#internal,
+      node = internal.exportName;
+    if (node !== void 0) return node;
+    return internal.exportName = deserializeExportExportName(internal.$pos + 72, internal.$ast);
   }
 
   get localName() {
-    const internal = this.#internal;
-    return deserializeExportLocalName(internal.$pos + 104, internal.$ast);
+    const internal = this.#internal,
+      node = internal.localName;
+    if (node !== void 0) return node;
+    return internal.localName = deserializeExportLocalName(internal.$pos + 104, internal.$ast);
   }
 
   get isType() {
@@ -10328,7 +10867,7 @@ class DynamicImport {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
-    this.#internal = { $pos: pos, $ast: ast };
+    this.#internal = { $pos: pos, $ast: ast, moduleRequest: void 0 };
   }
 
   get start() {
@@ -10342,8 +10881,10 @@ class DynamicImport {
   }
 
   get moduleRequest() {
-    const internal = this.#internal;
-    return deserializeSpan(internal.$pos + 8, internal.$ast);
+    const internal = this.#internal,
+      node = internal.moduleRequest;
+    if (node !== void 0) return node;
+    return internal.moduleRequest = deserializeSpan(internal.$pos + 8, internal.$ast);
   }
 
   toJSON() {
@@ -10564,12 +11105,14 @@ class RawTransferData {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
-    this.#internal = { $pos: pos, $ast: ast, comments: void 0, errors: void 0 };
+    this.#internal = { $pos: pos, $ast: ast, program: void 0, comments: void 0, module: void 0, errors: void 0 };
   }
 
   get program() {
-    const internal = this.#internal;
-    return deserializeProgram(internal.$pos, internal.$ast);
+    const internal = this.#internal,
+      node = internal.program;
+    if (node !== void 0) return node;
+    return internal.program = deserializeProgram(internal.$pos, internal.$ast);
   }
 
   get comments() {
@@ -10580,8 +11123,10 @@ class RawTransferData {
   }
 
   get module() {
-    const internal = this.#internal;
-    return deserializeEcmaScriptModule(internal.$pos + 152, internal.$ast);
+    const internal = this.#internal,
+      node = internal.module;
+    if (node !== void 0) return node;
+    return internal.module = deserializeEcmaScriptModule(internal.$pos + 152, internal.$ast);
   }
 
   get errors() {
@@ -10780,7 +11325,7 @@ class StaticImport {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
-    this.#internal = { $pos: pos, $ast: ast, entries: void 0 };
+    this.#internal = { $pos: pos, $ast: ast, moduleRequest: void 0, entries: void 0 };
   }
 
   get start() {
@@ -10794,8 +11339,10 @@ class StaticImport {
   }
 
   get moduleRequest() {
-    const internal = this.#internal;
-    return deserializeNameSpan(internal.$pos + 8, internal.$ast);
+    const internal = this.#internal,
+      node = internal.moduleRequest;
+    if (node !== void 0) return node;
+    return internal.moduleRequest = deserializeNameSpan(internal.$pos + 8, internal.$ast);
   }
 
   get entries() {
