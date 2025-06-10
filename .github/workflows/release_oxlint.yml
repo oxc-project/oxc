@@ -154,22 +154,6 @@ jobs:
           fetch-depth: 0 # for changelog
           persist-credentials: false
 
-      - uses: oxc-project/setup-rust@cd82e1efec7fef815e2c23d296756f31c7cdc03d # v1.0.0
-        with:
-          restore-cache: false
-          tools: cargo-release-oxc
-
-      - name: Run
-        id: run
-        run: |
-          mkdir -p target
-          cargo release-oxc changelog --release oxlint
-          {
-            echo 'CHANGELOG<<EOF'
-            cat ./target/OXC_CHANGELOG
-            echo EOF
-          } >> $GITHUB_OUTPUT
-
       - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
         with:
           merge-multiple: true
@@ -204,10 +188,19 @@ jobs:
             echo '----'
           done
 
+      - name: Get changelog from commit body
+        id: changelog
+        run: |
+          {
+            echo 'CHANGELOG<<EOF'
+            git show -s --format=%b
+            echo EOF
+          } >> $GITHUB_OUTPUT
+
       - name: Create GitHub Release
         uses: softprops/action-gh-release@da05d552573ad5aba039eaac05058a918a7bf631 # v2.2.2
         with:
-          body: ${{ steps.run.outputs.CHANGELOG }}
+          body: ${{ steps.changelog.outputs.CHANGELOG }}
           draft: false
           files: oxlint-*
           name: oxlint v${{ needs.check.outputs.version }}
@@ -219,7 +212,7 @@ jobs:
         run: sleep 180s
 
   smoke:
-    needs: [check, publish]
+    needs: [check, github_release, publish]
     strategy:
       matrix:
         include:
@@ -241,7 +234,7 @@ jobs:
           npx oxlint@${OXLINT_VERSION} ./test.js
 
   eslint-plugin-oxlint:
-    needs: [check, publish, smoke]
+    needs: [check, publish, github_release, smoke]
     name: Update eslint-plugin-oxlint
     runs-on: ubuntu-latest
     steps:
