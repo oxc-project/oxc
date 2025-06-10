@@ -1,6 +1,6 @@
 'use strict';
 
-const { availableParallelism } = require('node:os');
+const os = require('node:os');
 const bindings = require('../bindings.js');
 
 module.exports = { parseSyncRaw, parseAsyncRaw, rawTransferSupported, prepareRaw, isJsAst };
@@ -43,7 +43,10 @@ function parseSyncRaw(filename, sourceText, options) {
 // To guard against this possibility, we implement a simple queue.
 // No more than `os.availableParallelism()` files can be parsed simultaneously, and any further calls to
 // `parseAsyncRaw` will be put in a queue, to execute once other tasks complete.
-let availableCores = availableParallelism();
+//
+// Fallback to `os.cpus().length` on versions of NodeJS prior to v18.14.0, which do not support
+// `os.availableParallelism`.
+let availableCores = os.availableParallelism ? os.availableParallelism() : os.cpus().length;
 const queue = [];
 
 async function parseAsyncRaw(filename, sourceText, options) {
