@@ -1189,12 +1189,9 @@ impl<'a> Visit<'a> for ExhaustiveDepsVisitor<'a, '_> {
                                 if let Cow::Borrowed(id) = id {
                                     if id == "current" {
                                         did_see_ref = true;
-                                        if is_inside_effect_cleanup(&self.stack) {
-                                            // don't report `current` in effect cleanups
-                                            // self.refs_inside_cleanups.push(...);
-                                        }
+                                    } else {
+                                        destructured_props.push(id.into());
                                     }
-                                    destructured_props.push(id.into());
                                 } else {
                                     // todo
                                 }
@@ -1254,15 +1251,11 @@ impl<'a> Visit<'a> for ExhaustiveDepsVisitor<'a, '_> {
                 if let Cow::Borrowed(id) = id {
                     if id == "current" {
                         did_see_ref = true;
-                        if is_inside_effect_cleanup(&self.stack) {
-                            // don't report `current` in effect cleanups
-                            // self.refs_inside_cleanups.push(ident.to_static_member_expression());
-                        }
-                        return;
+                    } else {
+                        destructured_props.push(id.into());
                     }
-                    destructured_props.push(id.into());
                 } else {
-                    // todo: arena-allocate
+                    // todo: arena allocate
                 }
             })
             .unwrap_or(true);
