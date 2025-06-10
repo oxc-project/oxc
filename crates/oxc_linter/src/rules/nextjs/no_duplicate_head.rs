@@ -106,7 +106,7 @@ impl Rule for NoDuplicateHead {
             }
 
             if !matches!(
-                nodes.ancestor_ids(reference.node_id()).nth(2).map(|node_id| nodes.kind(node_id)),
+                nodes.parent_kind(reference.node_id()),
                 Some(AstKind::JSXOpeningElement(_))
             ) {
                 continue;

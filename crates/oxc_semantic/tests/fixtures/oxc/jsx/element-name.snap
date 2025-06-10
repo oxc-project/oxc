@@ -27,13 +27,13 @@ input_file: crates/oxc_semantic/tests/fixtures/oxc/jsx/element-name.jsx
             "flags": "ReferenceFlags(Read)",
             "id": 0,
             "name": "Component",
-            "node_id": 19
+            "node_id": 16
           },
           {
             "flags": "ReferenceFlags(Read)",
             "id": 1,
             "name": "Component",
-            "node_id": 22
+            "node_id": 18
           }
         ]
       }
