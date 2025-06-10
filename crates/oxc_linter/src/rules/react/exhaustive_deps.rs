@@ -1054,7 +1054,7 @@ impl<'a, 'b> ExhaustiveDepsVisitor<'a, 'b> {
 
     fn iter_destructure_bindings<F>(&self, mut cb: F) -> Option<bool>
     where
-        F: FnMut(std::borrow::Cow<'a, str>) -> (),
+        F: FnMut(std::borrow::Cow<'a, str>),
     {
         // check for object destructuring
         // `const { foo } = props;`
@@ -1079,12 +1079,11 @@ impl<'a, 'b> ExhaustiveDepsVisitor<'a, 'b> {
             }
             match &prop.value.kind {
                 BindingPatternKind::BindingIdentifier(id) => {
-                    cb(id.name.clone().into());
-                    continue;
+                    cb(id.name.into());
                 }
                 BindingPatternKind::AssignmentPattern(pat) => {
                     if let Some(id) = pat.left.get_binding_identifier() {
-                        cb(id.name.clone().into());
+                        cb(id.name.into());
                     } else {
                         // `const { idk: { thing } = { } } = props;`
                         // not sure what to do
@@ -1186,20 +1185,17 @@ impl<'a> Visit<'a> for ExhaustiveDepsVisitor<'a, '_> {
                         let mut destructured_props: Vec<Atom<'a>> = vec![];
                         let mut did_see_ref = false;
                         let needs_full_chain = self
-                            .iter_destructure_bindings(|id| match id {
-                                Cow::Borrowed(id) => {
+                            .iter_destructure_bindings(|id| {
+                                if let Cow::Borrowed(id) = id {
                                     if id == "current" {
                                         did_see_ref = true;
                                         if is_inside_effect_cleanup(&self.stack) {
                                             // don't report `current` in effect cleanups
                                             // self.refs_inside_cleanups.push(...);
                                         }
-                                        return;
-                                    } else {
-                                        destructured_props.push(id.into());
                                     }
-                                }
-                                Cow::Owned(_) => {
+                                    destructured_props.push(id.into());
+                                } else {
                                     // todo
                                 }
                             })
@@ -1254,8 +1250,8 @@ impl<'a> Visit<'a> for ExhaustiveDepsVisitor<'a, '_> {
         let mut destructured_props: Vec<Atom<'a>> = vec![];
         let mut did_see_ref = false;
         let needs_full_identifier = self
-            .iter_destructure_bindings(|id| match id {
-                Cow::Borrowed(id) => {
+            .iter_destructure_bindings(|id| {
+                if let Cow::Borrowed(id) = id {
                     if id == "current" {
                         did_see_ref = true;
                         if is_inside_effect_cleanup(&self.stack) {
@@ -1265,8 +1261,7 @@ impl<'a> Visit<'a> for ExhaustiveDepsVisitor<'a, '_> {
                         return;
                     }
                     destructured_props.push(id.into());
-                }
-                Cow::Owned(_) => {
+                } else {
                     // todo: arena-allocate
                 }
             })
@@ -1323,10 +1318,10 @@ fn is_inside_effect_cleanup(stack: &[AstType]) -> bool {
     let mut iter = stack.iter().rev();
 
     while let Some(&cur) = iter.next() {
-        if matches!(cur, AstType::Function | AstType::ArrowFunctionExpression) {
-            if iter.next() == Some(&AstType::ReturnStatement) {
-                return true;
-            }
+        if matches!(cur, AstType::Function | AstType::ArrowFunctionExpression)
+            && iter.next() == Some(&AstType::ReturnStatement)
+        {
+            return true;
         }
     }
 
