@@ -26,8 +26,8 @@ use super::define_generator;
 
 // Offsets of `Vec`'s fields.
 // `Vec` is `#[repr(transparent)]` and `RawVec` is `#[repr(C)]`, so these offsets are fixed.
-const VEC_PTR_FIELD_OFFSET: usize = 0;
-const VEC_LEN_FIELD_OFFSET: usize = 8;
+pub(super) const VEC_PTR_FIELD_OFFSET: usize = 0;
+pub(super) const VEC_LEN_FIELD_OFFSET: usize = 8;
 
 /// Generator for raw transfer deserializer.
 pub struct RawTransferGenerator;
@@ -631,7 +631,7 @@ fn generate_vec(vec_def: &VecDef, code: &mut String, estree_derive_id: DeriveId,
 }
 
 /// Check if innermost type does not require a deserializer.
-fn should_skip_innermost_type(
+pub(super) fn should_skip_innermost_type(
     type_def: &TypeDef,
     estree_derive_id: DeriveId,
     schema: &Schema,
@@ -651,7 +651,7 @@ fn should_skip_innermost_type(
 ///
 /// * If `offset == 0` -> `pos`.
 /// * Otherwise -> `pos + <offset>` (e.g. `pos + 8`).
-fn pos_offset<O>(offset: O) -> Cow<'static, str>
+pub(super) fn pos_offset<O>(offset: O) -> Cow<'static, str>
 where
     O: TryInto<u64>,
     <O as TryInto<u64>>::Error: Debug,
@@ -666,7 +666,7 @@ where
 /// * If `offset == 0` -> `pos >> <shift>` (e.g. `pos >> 2`).
 /// * If `shift == 0` -> `pos + <offset>` (e.g. `pos + 8`).
 /// * Otherwise -> `(pos + <offset>) >> <shift>` (e.g. `(pos + 8) >> 2`).
-fn pos_offset_shift<O, S>(offset: O, shift: S) -> Cow<'static, str>
+pub(super) fn pos_offset_shift<O, S>(offset: O, shift: S) -> Cow<'static, str>
 where
     O: TryInto<u64>,
     <O as TryInto<u64>>::Error: Debug,
@@ -687,7 +687,7 @@ where
 ///
 /// * If `offset == 0` -> `pos32`.
 /// * Otherwise -> `pos32 + <offset>` (e.g. `pos32 + 4`).
-fn pos32_offset<O>(offset: O) -> Cow<'static, str>
+pub(super) fn pos32_offset<O>(offset: O) -> Cow<'static, str>
 where
     O: TryInto<u64>,
     <O as TryInto<u64>>::Error: Debug,
@@ -876,7 +876,7 @@ impl Replacer for IfJsReplacer {
 }
 
 /// Trait to get deserializer function name for a type.
-trait DeserializeFunctionName {
+pub(super) trait DeserializeFunctionName {
     fn deser_name(&self, schema: &Schema) -> String {
         format!("deserialize{}", self.plain_name(schema))
     }
