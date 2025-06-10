@@ -369,6 +369,10 @@ impl AstKind<'_> {
             Self::TSModuleReference(_) => "TSModuleReference".into(),
             Self::TSExportAssignment(_) => "TSExportAssignment".into(),
             Self::V8IntrinsicExpression(_) => "V8IntrinsicExpression".into(),
+
+            Self::JSDocNullableType(_) => "JSDocNullableType".into(),
+            Self::JSDocNonNullableType(_) => "JSDocNonNullableType".into(),
+            Self::JSDocUnknownType(_) => "JSDocUnknownType".into(),
         }
     }
 }

@@ -2423,18 +2423,33 @@ impl<'a> Format<'a> for TSInstantiationExpression<'a> {
 
 impl<'a> Format<'a> for JSDocNullableType<'a> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        self.write(f)
+        f.state_mut().stack.push(AstKind::JSDocNullableType(hack(self)));
+        format_leading_comments(self.span.start).fmt(f)?;
+        let result = self.write(f);
+        format_trailing_comments(self.span.end).fmt(f)?;
+        f.state_mut().stack.pop();
+        result
     }
 }
 
 impl<'a> Format<'a> for JSDocNonNullableType<'a> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        self.write(f)
+        f.state_mut().stack.push(AstKind::JSDocNonNullableType(hack(self)));
+        format_leading_comments(self.span.start).fmt(f)?;
+        let result = self.write(f);
+        format_trailing_comments(self.span.end).fmt(f)?;
+        f.state_mut().stack.pop();
+        result
     }
 }
 
 impl<'a> Format<'a> for JSDocUnknownType {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        self.write(f)
+        f.state_mut().stack.push(AstKind::JSDocUnknownType(hack(self)));
+        format_leading_comments(self.span.start).fmt(f)?;
+        let result = self.write(f);
+        format_trailing_comments(self.span.end).fmt(f)?;
+        f.state_mut().stack.pop();
+        result
     }
 }

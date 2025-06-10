@@ -4103,9 +4103,11 @@ pub mod walk {
         visitor: &mut V,
         it: &JSDocNullableType<'a>,
     ) {
-        // No `AstKind` for this type
+        let kind = AstKind::JSDocNullableType(visitor.alloc(it));
+        visitor.enter_node(kind);
         visitor.visit_span(&it.span);
         visitor.visit_ts_type(&it.type_annotation);
+        visitor.leave_node(kind);
     }
 
     #[inline]
@@ -4113,15 +4115,19 @@ pub mod walk {
         visitor: &mut V,
         it: &JSDocNonNullableType<'a>,
     ) {
-        // No `AstKind` for this type
+        let kind = AstKind::JSDocNonNullableType(visitor.alloc(it));
+        visitor.enter_node(kind);
         visitor.visit_span(&it.span);
         visitor.visit_ts_type(&it.type_annotation);
+        visitor.leave_node(kind);
     }
 
     #[inline]
     pub fn walk_js_doc_unknown_type<'a, V: Visit<'a>>(visitor: &mut V, it: &JSDocUnknownType) {
-        // No `AstKind` for this type
+        let kind = AstKind::JSDocUnknownType(visitor.alloc(it));
+        visitor.enter_node(kind);
         visitor.visit_span(&it.span);
+        visitor.leave_node(kind);
     }
 
     #[inline]

@@ -51,9 +51,6 @@ const STRUCTS_BLACK_LIST: &[&str] = &[
     "TSFunctionType",
     "TSConstructorType",
     "TSNamespaceExportDeclaration",
-    "JSDocNullableType",
-    "JSDocNonNullableType",
-    "JSDocUnknownType",
     "Span",
 ];
 

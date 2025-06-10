@@ -4327,9 +4327,11 @@ pub mod walk_mut {
         visitor: &mut V,
         it: &mut JSDocNullableType<'a>,
     ) {
-        // No `AstType` for this type
+        let kind = AstType::JSDocNullableType;
+        visitor.enter_node(kind);
         visitor.visit_span(&mut it.span);
         visitor.visit_ts_type(&mut it.type_annotation);
+        visitor.leave_node(kind);
     }
 
     #[inline]
@@ -4337,9 +4339,11 @@ pub mod walk_mut {
         visitor: &mut V,
         it: &mut JSDocNonNullableType<'a>,
     ) {
-        // No `AstType` for this type
+        let kind = AstType::JSDocNonNullableType;
+        visitor.enter_node(kind);
         visitor.visit_span(&mut it.span);
         visitor.visit_ts_type(&mut it.type_annotation);
+        visitor.leave_node(kind);
     }
 
     #[inline]
@@ -4347,8 +4351,10 @@ pub mod walk_mut {
         visitor: &mut V,
         it: &mut JSDocUnknownType,
     ) {
-        // No `AstType` for this type
+        let kind = AstType::JSDocUnknownType;
+        visitor.enter_node(kind);
         visitor.visit_span(&mut it.span);
+        visitor.leave_node(kind);
     }
 
     #[inline]
