@@ -23,20 +23,24 @@ const bufferRecycleRegistry = typeof FinalizationRegistry === 'undefined'
   ? null
   : new FinalizationRegistry(returnBufferToCache);
 
-let deserializeLazy = null;
+let deserializeLazy = null, TOKEN;
 
 // Get an object with getters which lazy deserialize AST from buffer
 function deserialize(buffer, sourceText, sourceLen) {
+  // Lazy load deserializer, and get `TOKEN` to store in `ast` objects
+  if (deserializeLazy === null) {
+    ({ deserialize: deserializeLazy, TOKEN } = require('../generated/deserialize/lazy.js'));
+  }
+
   // Create AST object
   const sourceIsAscii = sourceText.length === sourceLen;
-  const ast = { buffer, sourceText, sourceLen, sourceIsAscii, nodes: new Map() };
+  const ast = { buffer, sourceText, sourceLen, sourceIsAscii, nodes: new Map(), token: TOKEN };
 
   // Register `ast` with the recycle registry so buffer is returned to cache
   // when `ast` is garbage collected
   bufferRecycleRegistry.register(ast, buffer, ast);
 
-  // Lazy load deserializer, and get lazy data
-  if (deserializeLazy === null) deserializeLazy = require('../generated/deserialize/lazy.js');
+  // Get root data class instance
   const data = deserializeLazy(ast);
 
   return {

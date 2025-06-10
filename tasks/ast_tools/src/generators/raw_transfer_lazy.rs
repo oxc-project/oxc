@@ -46,7 +46,11 @@ impl Generator for RawTransferLazyGenerator {
 static PRELUDE: &str = "
     'use strict';
 
-    module.exports = deserialize;
+    // Unique token which is not exposed publicly.
+    // Used to prevent user calling class constructors.
+    const TOKEN = {};
+
+    module.exports = { deserialize, TOKEN };
 
     function deserialize(ast) {
         // (2 * 1024 * 1024 * 1024 - 16) >> 2
@@ -55,8 +59,7 @@ static PRELUDE: &str = "
         return new RawTransferData(ast.buffer.uint32[metadataPos32], ast, TOKEN);
     }
 
-    const TOKEN = {},
-        textDecoder = new TextDecoder('utf-8', { ignoreBOM: true }),
+    const textDecoder = new TextDecoder('utf-8', { ignoreBOM: true }),
         decodeStr = textDecoder.decode.bind(textDecoder),
         { fromCodePoint } = String;
 
@@ -213,7 +216,7 @@ fn generate_struct(
         const {{ nodes }} = ast;
         let node = nodes.get(pos);
         if (node === void 0) {{
-            node = new {struct_name}(pos, ast, TOKEN);
+            node = new {struct_name}(pos, ast);
             nodes.set(pos, node);
         }}
         return node;
@@ -223,15 +226,15 @@ fn generate_struct(
     #[rustfmt::skip]
     write_it!(code, "
         function {fn_name}(pos, ast) {{
-            return new {struct_name}(pos, ast, TOKEN);
+            return new {struct_name}(pos, ast);
         }}
 
         class {struct_name} {{
             {type_prop_init}
             #internal;
 
-            constructor(pos, ast, token) {{
-                if (token !== TOKEN) throw new Error('Constructor is for internal use only');
+            constructor(pos, ast) {{
+                if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
                 this.#internal = {{ $pos: pos, $ast: ast {extra_props} }};
             }}
 

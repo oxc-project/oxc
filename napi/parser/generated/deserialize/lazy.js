@@ -3,7 +3,11 @@
 
 'use strict';
 
-module.exports = deserialize;
+// Unique token which is not exposed publicly.
+// Used to prevent user calling class constructors.
+const TOKEN = {};
+
+module.exports = { deserialize, TOKEN };
 
 function deserialize(ast) {
   // (2 * 1024 * 1024 * 1024 - 16) >> 2
@@ -12,21 +16,20 @@ function deserialize(ast) {
   return new RawTransferData(ast.buffer.uint32[metadataPos32], ast, TOKEN);
 }
 
-const TOKEN = {},
-  textDecoder = new TextDecoder('utf-8', { ignoreBOM: true }),
+const textDecoder = new TextDecoder('utf-8', { ignoreBOM: true }),
   decodeStr = textDecoder.decode.bind(textDecoder),
   { fromCodePoint } = String;
 
 function deserializeProgram(pos, ast) {
-  return new Program(pos, ast, TOKEN);
+  return new Program(pos, ast);
 }
 
 class Program {
   type = 'Program';
   #internal;
 
-  constructor(pos, ast, token) {
-    if (token !== TOKEN) throw new Error('Constructor is for internal use only');
+  constructor(pos, ast) {
+    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
     this.#internal = { $pos: pos, $ast: ast, body: void 0 };
   }
 
@@ -163,15 +166,15 @@ function deserializeExpression(pos, ast) {
 }
 
 function deserializeIdentifierName(pos, ast) {
-  return new IdentifierName(pos, ast, TOKEN);
+  return new IdentifierName(pos, ast);
 }
 
 class IdentifierName {
   type = 'IdentifierName';
   #internal;
 
-  constructor(pos, ast, token) {
-    if (token !== TOKEN) throw new Error('Constructor is for internal use only');
+  constructor(pos, ast) {
+    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
     this.#internal = { $pos: pos, $ast: ast, name: void 0 };
   }
 
@@ -203,15 +206,15 @@ class IdentifierName {
 }
 
 function deserializeIdentifierReference(pos, ast) {
-  return new IdentifierReference(pos, ast, TOKEN);
+  return new IdentifierReference(pos, ast);
 }
 
 class IdentifierReference {
   type = 'IdentifierReference';
   #internal;
 
-  constructor(pos, ast, token) {
-    if (token !== TOKEN) throw new Error('Constructor is for internal use only');
+  constructor(pos, ast) {
+    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
     this.#internal = { $pos: pos, $ast: ast, name: void 0 };
   }
 
@@ -243,15 +246,15 @@ class IdentifierReference {
 }
 
 function deserializeBindingIdentifier(pos, ast) {
-  return new BindingIdentifier(pos, ast, TOKEN);
+  return new BindingIdentifier(pos, ast);
 }
 
 class BindingIdentifier {
   type = 'BindingIdentifier';
   #internal;
 
-  constructor(pos, ast, token) {
-    if (token !== TOKEN) throw new Error('Constructor is for internal use only');
+  constructor(pos, ast) {
+    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
     this.#internal = { $pos: pos, $ast: ast, name: void 0 };
   }
 
@@ -283,15 +286,15 @@ class BindingIdentifier {
 }
 
 function deserializeLabelIdentifier(pos, ast) {
-  return new LabelIdentifier(pos, ast, TOKEN);
+  return new LabelIdentifier(pos, ast);
 }
 
 class LabelIdentifier {
   type = 'LabelIdentifier';
   #internal;
 
-  constructor(pos, ast, token) {
-    if (token !== TOKEN) throw new Error('Constructor is for internal use only');
+  constructor(pos, ast) {
+    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
     this.#internal = { $pos: pos, $ast: ast, name: void 0 };
   }
 
@@ -323,15 +326,15 @@ class LabelIdentifier {
 }
 
 function deserializeThisExpression(pos, ast) {
-  return new ThisExpression(pos, ast, TOKEN);
+  return new ThisExpression(pos, ast);
 }
 
 class ThisExpression {
   type = 'ThisExpression';
   #internal;
 
-  constructor(pos, ast, token) {
-    if (token !== TOKEN) throw new Error('Constructor is for internal use only');
+  constructor(pos, ast) {
+    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
     this.#internal = { $pos: pos, $ast: ast };
   }
 
@@ -355,15 +358,15 @@ class ThisExpression {
 }
 
 function deserializeArrayExpression(pos, ast) {
-  return new ArrayExpression(pos, ast, TOKEN);
+  return new ArrayExpression(pos, ast);
 }
 
 class ArrayExpression {
   type = 'ArrayExpression';
   #internal;
 
-  constructor(pos, ast, token) {
-    if (token !== TOKEN) throw new Error('Constructor is for internal use only');
+  constructor(pos, ast) {
+    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
     this.#internal = { $pos: pos, $ast: ast, elements: void 0 };
   }
 
@@ -492,15 +495,15 @@ function deserializeArrayExpressionElement(pos, ast) {
 }
 
 function deserializeElision(pos, ast) {
-  return new Elision(pos, ast, TOKEN);
+  return new Elision(pos, ast);
 }
 
 class Elision {
   type = 'Elision';
   #internal;
 
-  constructor(pos, ast, token) {
-    if (token !== TOKEN) throw new Error('Constructor is for internal use only');
+  constructor(pos, ast) {
+    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
     this.#internal = { $pos: pos, $ast: ast };
   }
 
@@ -524,15 +527,15 @@ class Elision {
 }
 
 function deserializeObjectExpression(pos, ast) {
-  return new ObjectExpression(pos, ast, TOKEN);
+  return new ObjectExpression(pos, ast);
 }
 
 class ObjectExpression {
   type = 'ObjectExpression';
   #internal;
 
-  constructor(pos, ast, token) {
-    if (token !== TOKEN) throw new Error('Constructor is for internal use only');
+  constructor(pos, ast) {
+    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
     this.#internal = { $pos: pos, $ast: ast, properties: void 0 };
   }
 
@@ -575,15 +578,15 @@ function deserializeObjectPropertyKind(pos, ast) {
 }
 
 function deserializeObjectProperty(pos, ast) {
-  return new ObjectProperty(pos, ast, TOKEN);
+  return new ObjectProperty(pos, ast);
 }
 
 class ObjectProperty {
   type = 'ObjectProperty';
   #internal;
 
-  constructor(pos, ast, token) {
-    if (token !== TOKEN) throw new Error('Constructor is for internal use only');
+  constructor(pos, ast) {
+    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
     this.#internal = { $pos: pos, $ast: ast };
   }
 
@@ -753,15 +756,15 @@ function deserializePropertyKind(pos, ast) {
 }
 
 function deserializeTemplateLiteral(pos, ast) {
-  return new TemplateLiteral(pos, ast, TOKEN);
+  return new TemplateLiteral(pos, ast);
 }
 
 class TemplateLiteral {
   type = 'TemplateLiteral';
   #internal;
 
-  constructor(pos, ast, token) {
-    if (token !== TOKEN) throw new Error('Constructor is for internal use only');
+  constructor(pos, ast) {
+    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
     this.#internal = { $pos: pos, $ast: ast, quasis: void 0, expressions: void 0 };
   }
 
@@ -801,15 +804,15 @@ class TemplateLiteral {
 }
 
 function deserializeTaggedTemplateExpression(pos, ast) {
-  return new TaggedTemplateExpression(pos, ast, TOKEN);
+  return new TaggedTemplateExpression(pos, ast);
 }
 
 class TaggedTemplateExpression {
   type = 'TaggedTemplateExpression';
   #internal;
 
-  constructor(pos, ast, token) {
-    if (token !== TOKEN) throw new Error('Constructor is for internal use only');
+  constructor(pos, ast) {
+    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
     this.#internal = { $pos: pos, $ast: ast };
   }
 
@@ -851,15 +854,15 @@ class TaggedTemplateExpression {
 }
 
 function deserializeTemplateElement(pos, ast) {
-  return new TemplateElement(pos, ast, TOKEN);
+  return new TemplateElement(pos, ast);
 }
 
 class TemplateElement {
   type = 'TemplateElement';
   #internal;
 
-  constructor(pos, ast, token) {
-    if (token !== TOKEN) throw new Error('Constructor is for internal use only');
+  constructor(pos, ast) {
+    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
     this.#internal = { $pos: pos, $ast: ast };
   }
 
@@ -895,14 +898,14 @@ class TemplateElement {
 }
 
 function deserializeTemplateElementValue(pos, ast) {
-  return new TemplateElementValue(pos, ast, TOKEN);
+  return new TemplateElementValue(pos, ast);
 }
 
 class TemplateElementValue {
   #internal;
 
-  constructor(pos, ast, token) {
-    if (token !== TOKEN) throw new Error('Constructor is for internal use only');
+  constructor(pos, ast) {
+    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
     this.#internal = { $pos: pos, $ast: ast, raw: void 0, cooked: void 0 };
   }
 
@@ -942,15 +945,15 @@ function deserializeMemberExpression(pos, ast) {
 }
 
 function deserializeComputedMemberExpression(pos, ast) {
-  return new ComputedMemberExpression(pos, ast, TOKEN);
+  return new ComputedMemberExpression(pos, ast);
 }
 
 class ComputedMemberExpression {
   type = 'ComputedMemberExpression';
   #internal;
 
-  constructor(pos, ast, token) {
-    if (token !== TOKEN) throw new Error('Constructor is for internal use only');
+  constructor(pos, ast) {
+    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
     this.#internal = { $pos: pos, $ast: ast };
   }
 
@@ -992,15 +995,15 @@ class ComputedMemberExpression {
 }
 
 function deserializeStaticMemberExpression(pos, ast) {
-  return new StaticMemberExpression(pos, ast, TOKEN);
+  return new StaticMemberExpression(pos, ast);
 }
 
 class StaticMemberExpression {
   type = 'StaticMemberExpression';
   #internal;
 
-  constructor(pos, ast, token) {
-    if (token !== TOKEN) throw new Error('Constructor is for internal use only');
+  constructor(pos, ast) {
+    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
     this.#internal = { $pos: pos, $ast: ast };
   }
 
@@ -1042,15 +1045,15 @@ class StaticMemberExpression {
 }
 
 function deserializePrivateFieldExpression(pos, ast) {
-  return new PrivateFieldExpression(pos, ast, TOKEN);
+  return new PrivateFieldExpression(pos, ast);
 }
 
 class PrivateFieldExpression {
   type = 'PrivateFieldExpression';
   #internal;
 
-  constructor(pos, ast, token) {
-    if (token !== TOKEN) throw new Error('Constructor is for internal use only');
+  constructor(pos, ast) {
+    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
     this.#internal = { $pos: pos, $ast: ast };
   }
 
@@ -1092,15 +1095,15 @@ class PrivateFieldExpression {
 }
 
 function deserializeCallExpression(pos, ast) {
-  return new CallExpression(pos, ast, TOKEN);
+  return new CallExpression(pos, ast);
 }
 
 class CallExpression {
   type = 'CallExpression';
   #internal;
 
-  constructor(pos, ast, token) {
-    if (token !== TOKEN) throw new Error('Constructor is for internal use only');
+  constructor(pos, ast) {
+    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
     this.#internal = { $pos: pos, $ast: ast, arguments: void 0 };
   }
 
@@ -1150,15 +1153,15 @@ class CallExpression {
 }
 
 function deserializeNewExpression(pos, ast) {
-  return new NewExpression(pos, ast, TOKEN);
+  return new NewExpression(pos, ast);
 }
 
 class NewExpression {
   type = 'NewExpression';
   #internal;
 
-  constructor(pos, ast, token) {
-    if (token !== TOKEN) throw new Error('Constructor is for internal use only');
+  constructor(pos, ast) {
+    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
     this.#internal = { $pos: pos, $ast: ast, arguments: void 0 };
   }
 
@@ -1202,15 +1205,15 @@ class NewExpression {
 }
 
 function deserializeMetaProperty(pos, ast) {
-  return new MetaProperty(pos, ast, TOKEN);
+  return new MetaProperty(pos, ast);
 }
 
 class MetaProperty {
   type = 'MetaProperty';
   #internal;
 
-  constructor(pos, ast, token) {
-    if (token !== TOKEN) throw new Error('Constructor is for internal use only');
+  constructor(pos, ast) {
+    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
     this.#internal = { $pos: pos, $ast: ast };
   }
 
@@ -1246,15 +1249,15 @@ class MetaProperty {
 }
 
 function deserializeSpreadElement(pos, ast) {
-  return new SpreadElement(pos, ast, TOKEN);
+  return new SpreadElement(pos, ast);
 }
 
 class SpreadElement {
   type = 'SpreadElement';
   #internal;
 
-  constructor(pos, ast, token) {
-    if (token !== TOKEN) throw new Error('Constructor is for internal use only');
+  constructor(pos, ast) {
+    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
     this.#internal = { $pos: pos, $ast: ast };
   }
 
@@ -1379,15 +1382,15 @@ function deserializeArgument(pos, ast) {
 }
 
 function deserializeUpdateExpression(pos, ast) {
-  return new UpdateExpression(pos, ast, TOKEN);
+  return new UpdateExpression(pos, ast);
 }
 
 class UpdateExpression {
   type = 'UpdateExpression';
   #internal;
 
-  constructor(pos, ast, token) {
-    if (token !== TOKEN) throw new Error('Constructor is for internal use only');
+  constructor(pos, ast) {
+    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
     this.#internal = { $pos: pos, $ast: ast };
   }
 
@@ -1429,15 +1432,15 @@ class UpdateExpression {
 }
 
 function deserializeUnaryExpression(pos, ast) {
-  return new UnaryExpression(pos, ast, TOKEN);
+  return new UnaryExpression(pos, ast);
 }
 
 class UnaryExpression {
   type = 'UnaryExpression';
   #internal;
 
-  constructor(pos, ast, token) {
-    if (token !== TOKEN) throw new Error('Constructor is for internal use only');
+  constructor(pos, ast) {
+    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
     this.#internal = { $pos: pos, $ast: ast };
   }
 
@@ -1473,15 +1476,15 @@ class UnaryExpression {
 }
 
 function deserializeBinaryExpression(pos, ast) {
-  return new BinaryExpression(pos, ast, TOKEN);
+  return new BinaryExpression(pos, ast);
 }
 
 class BinaryExpression {
   type = 'BinaryExpression';
   #internal;
 
-  constructor(pos, ast, token) {
-    if (token !== TOKEN) throw new Error('Constructor is for internal use only');
+  constructor(pos, ast) {
+    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
     this.#internal = { $pos: pos, $ast: ast };
   }
 
@@ -1523,15 +1526,15 @@ class BinaryExpression {
 }
 
 function deserializePrivateInExpression(pos, ast) {
-  return new PrivateInExpression(pos, ast, TOKEN);
+  return new PrivateInExpression(pos, ast);
 }
 
 class PrivateInExpression {
   type = 'PrivateInExpression';
   #internal;
 
-  constructor(pos, ast, token) {
-    if (token !== TOKEN) throw new Error('Constructor is for internal use only');
+  constructor(pos, ast) {
+    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
     this.#internal = { $pos: pos, $ast: ast };
   }
 
@@ -1567,15 +1570,15 @@ class PrivateInExpression {
 }
 
 function deserializeLogicalExpression(pos, ast) {
-  return new LogicalExpression(pos, ast, TOKEN);
+  return new LogicalExpression(pos, ast);
 }
 
 class LogicalExpression {
   type = 'LogicalExpression';
   #internal;
 
-  constructor(pos, ast, token) {
-    if (token !== TOKEN) throw new Error('Constructor is for internal use only');
+  constructor(pos, ast) {
+    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
     this.#internal = { $pos: pos, $ast: ast };
   }
 
@@ -1617,15 +1620,15 @@ class LogicalExpression {
 }
 
 function deserializeConditionalExpression(pos, ast) {
-  return new ConditionalExpression(pos, ast, TOKEN);
+  return new ConditionalExpression(pos, ast);
 }
 
 class ConditionalExpression {
   type = 'ConditionalExpression';
   #internal;
 
-  constructor(pos, ast, token) {
-    if (token !== TOKEN) throw new Error('Constructor is for internal use only');
+  constructor(pos, ast) {
+    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
     this.#internal = { $pos: pos, $ast: ast };
   }
 
@@ -1667,15 +1670,15 @@ class ConditionalExpression {
 }
 
 function deserializeAssignmentExpression(pos, ast) {
-  return new AssignmentExpression(pos, ast, TOKEN);
+  return new AssignmentExpression(pos, ast);
 }
 
 class AssignmentExpression {
   type = 'AssignmentExpression';
   #internal;
 
-  constructor(pos, ast, token) {
-    if (token !== TOKEN) throw new Error('Constructor is for internal use only');
+  constructor(pos, ast) {
+    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
     this.#internal = { $pos: pos, $ast: ast };
   }
 
@@ -1778,15 +1781,15 @@ function deserializeAssignmentTargetPattern(pos, ast) {
 }
 
 function deserializeArrayAssignmentTarget(pos, ast) {
-  return new ArrayAssignmentTarget(pos, ast, TOKEN);
+  return new ArrayAssignmentTarget(pos, ast);
 }
 
 class ArrayAssignmentTarget {
   type = 'ArrayAssignmentTarget';
   #internal;
 
-  constructor(pos, ast, token) {
-    if (token !== TOKEN) throw new Error('Constructor is for internal use only');
+  constructor(pos, ast) {
+    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
     this.#internal = { $pos: pos, $ast: ast, elements: void 0 };
   }
 
@@ -1818,15 +1821,15 @@ class ArrayAssignmentTarget {
 }
 
 function deserializeObjectAssignmentTarget(pos, ast) {
-  return new ObjectAssignmentTarget(pos, ast, TOKEN);
+  return new ObjectAssignmentTarget(pos, ast);
 }
 
 class ObjectAssignmentTarget {
   type = 'ObjectAssignmentTarget';
   #internal;
 
-  constructor(pos, ast, token) {
-    if (token !== TOKEN) throw new Error('Constructor is for internal use only');
+  constructor(pos, ast) {
+    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
     this.#internal = { $pos: pos, $ast: ast, properties: void 0 };
   }
 
@@ -1858,15 +1861,15 @@ class ObjectAssignmentTarget {
 }
 
 function deserializeAssignmentTargetRest(pos, ast) {
-  return new AssignmentTargetRest(pos, ast, TOKEN);
+  return new AssignmentTargetRest(pos, ast);
 }
 
 class AssignmentTargetRest {
   type = 'AssignmentTargetRest';
   #internal;
 
-  constructor(pos, ast, token) {
-    if (token !== TOKEN) throw new Error('Constructor is for internal use only');
+  constructor(pos, ast) {
+    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
     this.#internal = { $pos: pos, $ast: ast };
   }
 
@@ -1925,15 +1928,15 @@ function deserializeAssignmentTargetMaybeDefault(pos, ast) {
 }
 
 function deserializeAssignmentTargetWithDefault(pos, ast) {
-  return new AssignmentTargetWithDefault(pos, ast, TOKEN);
+  return new AssignmentTargetWithDefault(pos, ast);
 }
 
 class AssignmentTargetWithDefault {
   type = 'AssignmentTargetWithDefault';
   #internal;
 
-  constructor(pos, ast, token) {
-    if (token !== TOKEN) throw new Error('Constructor is for internal use only');
+  constructor(pos, ast) {
+    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
     this.#internal = { $pos: pos, $ast: ast };
   }
 
@@ -1980,15 +1983,15 @@ function deserializeAssignmentTargetProperty(pos, ast) {
 }
 
 function deserializeAssignmentTargetPropertyIdentifier(pos, ast) {
-  return new AssignmentTargetPropertyIdentifier(pos, ast, TOKEN);
+  return new AssignmentTargetPropertyIdentifier(pos, ast);
 }
 
 class AssignmentTargetPropertyIdentifier {
   type = 'AssignmentTargetPropertyIdentifier';
   #internal;
 
-  constructor(pos, ast, token) {
-    if (token !== TOKEN) throw new Error('Constructor is for internal use only');
+  constructor(pos, ast) {
+    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
     this.#internal = { $pos: pos, $ast: ast };
   }
 
@@ -2024,15 +2027,15 @@ class AssignmentTargetPropertyIdentifier {
 }
 
 function deserializeAssignmentTargetPropertyProperty(pos, ast) {
-  return new AssignmentTargetPropertyProperty(pos, ast, TOKEN);
+  return new AssignmentTargetPropertyProperty(pos, ast);
 }
 
 class AssignmentTargetPropertyProperty {
   type = 'AssignmentTargetPropertyProperty';
   #internal;
 
-  constructor(pos, ast, token) {
-    if (token !== TOKEN) throw new Error('Constructor is for internal use only');
+  constructor(pos, ast) {
+    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
     this.#internal = { $pos: pos, $ast: ast };
   }
 
@@ -2074,15 +2077,15 @@ class AssignmentTargetPropertyProperty {
 }
 
 function deserializeSequenceExpression(pos, ast) {
-  return new SequenceExpression(pos, ast, TOKEN);
+  return new SequenceExpression(pos, ast);
 }
 
 class SequenceExpression {
   type = 'SequenceExpression';
   #internal;
 
-  constructor(pos, ast, token) {
-    if (token !== TOKEN) throw new Error('Constructor is for internal use only');
+  constructor(pos, ast) {
+    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
     this.#internal = { $pos: pos, $ast: ast, expressions: void 0 };
   }
 
@@ -2114,15 +2117,15 @@ class SequenceExpression {
 }
 
 function deserializeSuper(pos, ast) {
-  return new Super(pos, ast, TOKEN);
+  return new Super(pos, ast);
 }
 
 class Super {
   type = 'Super';
   #internal;
 
-  constructor(pos, ast, token) {
-    if (token !== TOKEN) throw new Error('Constructor is for internal use only');
+  constructor(pos, ast) {
+    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
     this.#internal = { $pos: pos, $ast: ast };
   }
 
@@ -2146,15 +2149,15 @@ class Super {
 }
 
 function deserializeAwaitExpression(pos, ast) {
-  return new AwaitExpression(pos, ast, TOKEN);
+  return new AwaitExpression(pos, ast);
 }
 
 class AwaitExpression {
   type = 'AwaitExpression';
   #internal;
 
-  constructor(pos, ast, token) {
-    if (token !== TOKEN) throw new Error('Constructor is for internal use only');
+  constructor(pos, ast) {
+    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
     this.#internal = { $pos: pos, $ast: ast };
   }
 
@@ -2184,15 +2187,15 @@ class AwaitExpression {
 }
 
 function deserializeChainExpression(pos, ast) {
-  return new ChainExpression(pos, ast, TOKEN);
+  return new ChainExpression(pos, ast);
 }
 
 class ChainExpression {
   type = 'ChainExpression';
   #internal;
 
-  constructor(pos, ast, token) {
-    if (token !== TOKEN) throw new Error('Constructor is for internal use only');
+  constructor(pos, ast) {
+    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
     this.#internal = { $pos: pos, $ast: ast };
   }
 
@@ -2239,15 +2242,15 @@ function deserializeChainElement(pos, ast) {
 }
 
 function deserializeParenthesizedExpression(pos, ast) {
-  return new ParenthesizedExpression(pos, ast, TOKEN);
+  return new ParenthesizedExpression(pos, ast);
 }
 
 class ParenthesizedExpression {
   type = 'ParenthesizedExpression';
   #internal;
 
-  constructor(pos, ast, token) {
-    if (token !== TOKEN) throw new Error('Constructor is for internal use only');
+  constructor(pos, ast) {
+    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
     this.#internal = { $pos: pos, $ast: ast };
   }
 
@@ -2348,15 +2351,15 @@ function deserializeStatement(pos, ast) {
 }
 
 function deserializeDirective(pos, ast) {
-  return new Directive(pos, ast, TOKEN);
+  return new Directive(pos, ast);
 }
 
 class Directive {
   type = 'Directive';
   #internal;
 
-  constructor(pos, ast, token) {
-    if (token !== TOKEN) throw new Error('Constructor is for internal use only');
+  constructor(pos, ast) {
+    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
     this.#internal = { $pos: pos, $ast: ast, directive: void 0 };
   }
 
@@ -2394,15 +2397,15 @@ class Directive {
 }
 
 function deserializeHashbang(pos, ast) {
-  return new Hashbang(pos, ast, TOKEN);
+  return new Hashbang(pos, ast);
 }
 
 class Hashbang {
   type = 'Hashbang';
   #internal;
 
-  constructor(pos, ast, token) {
-    if (token !== TOKEN) throw new Error('Constructor is for internal use only');
+  constructor(pos, ast) {
+    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
     this.#internal = { $pos: pos, $ast: ast, value: void 0 };
   }
 
@@ -2434,15 +2437,15 @@ class Hashbang {
 }
 
 function deserializeBlockStatement(pos, ast) {
-  return new BlockStatement(pos, ast, TOKEN);
+  return new BlockStatement(pos, ast);
 }
 
 class BlockStatement {
   type = 'BlockStatement';
   #internal;
 
-  constructor(pos, ast, token) {
-    if (token !== TOKEN) throw new Error('Constructor is for internal use only');
+  constructor(pos, ast) {
+    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
     this.#internal = { $pos: pos, $ast: ast, body: void 0 };
   }
 
@@ -2497,15 +2500,15 @@ function deserializeDeclaration(pos, ast) {
 }
 
 function deserializeVariableDeclaration(pos, ast) {
-  return new VariableDeclaration(pos, ast, TOKEN);
+  return new VariableDeclaration(pos, ast);
 }
 
 class VariableDeclaration {
   type = 'VariableDeclaration';
   #internal;
 
-  constructor(pos, ast, token) {
-    if (token !== TOKEN) throw new Error('Constructor is for internal use only');
+  constructor(pos, ast) {
+    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
     this.#internal = { $pos: pos, $ast: ast, declarations: void 0 };
   }
 
@@ -2566,15 +2569,15 @@ function deserializeVariableDeclarationKind(pos, ast) {
 }
 
 function deserializeVariableDeclarator(pos, ast) {
-  return new VariableDeclarator(pos, ast, TOKEN);
+  return new VariableDeclarator(pos, ast);
 }
 
 class VariableDeclarator {
   type = 'VariableDeclarator';
   #internal;
 
-  constructor(pos, ast, token) {
-    if (token !== TOKEN) throw new Error('Constructor is for internal use only');
+  constructor(pos, ast) {
+    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
     this.#internal = { $pos: pos, $ast: ast };
   }
 
@@ -2616,15 +2619,15 @@ class VariableDeclarator {
 }
 
 function deserializeEmptyStatement(pos, ast) {
-  return new EmptyStatement(pos, ast, TOKEN);
+  return new EmptyStatement(pos, ast);
 }
 
 class EmptyStatement {
   type = 'EmptyStatement';
   #internal;
 
-  constructor(pos, ast, token) {
-    if (token !== TOKEN) throw new Error('Constructor is for internal use only');
+  constructor(pos, ast) {
+    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
     this.#internal = { $pos: pos, $ast: ast };
   }
 
@@ -2648,15 +2651,15 @@ class EmptyStatement {
 }
 
 function deserializeExpressionStatement(pos, ast) {
-  return new ExpressionStatement(pos, ast, TOKEN);
+  return new ExpressionStatement(pos, ast);
 }
 
 class ExpressionStatement {
   type = 'ExpressionStatement';
   #internal;
 
-  constructor(pos, ast, token) {
-    if (token !== TOKEN) throw new Error('Constructor is for internal use only');
+  constructor(pos, ast) {
+    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
     this.#internal = { $pos: pos, $ast: ast };
   }
 
@@ -2686,15 +2689,15 @@ class ExpressionStatement {
 }
 
 function deserializeIfStatement(pos, ast) {
-  return new IfStatement(pos, ast, TOKEN);
+  return new IfStatement(pos, ast);
 }
 
 class IfStatement {
   type = 'IfStatement';
   #internal;
 
-  constructor(pos, ast, token) {
-    if (token !== TOKEN) throw new Error('Constructor is for internal use only');
+  constructor(pos, ast) {
+    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
     this.#internal = { $pos: pos, $ast: ast };
   }
 
@@ -2736,15 +2739,15 @@ class IfStatement {
 }
 
 function deserializeDoWhileStatement(pos, ast) {
-  return new DoWhileStatement(pos, ast, TOKEN);
+  return new DoWhileStatement(pos, ast);
 }
 
 class DoWhileStatement {
   type = 'DoWhileStatement';
   #internal;
 
-  constructor(pos, ast, token) {
-    if (token !== TOKEN) throw new Error('Constructor is for internal use only');
+  constructor(pos, ast) {
+    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
     this.#internal = { $pos: pos, $ast: ast };
   }
 
@@ -2780,15 +2783,15 @@ class DoWhileStatement {
 }
 
 function deserializeWhileStatement(pos, ast) {
-  return new WhileStatement(pos, ast, TOKEN);
+  return new WhileStatement(pos, ast);
 }
 
 class WhileStatement {
   type = 'WhileStatement';
   #internal;
 
-  constructor(pos, ast, token) {
-    if (token !== TOKEN) throw new Error('Constructor is for internal use only');
+  constructor(pos, ast) {
+    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
     this.#internal = { $pos: pos, $ast: ast };
   }
 
@@ -2824,15 +2827,15 @@ class WhileStatement {
 }
 
 function deserializeForStatement(pos, ast) {
-  return new ForStatement(pos, ast, TOKEN);
+  return new ForStatement(pos, ast);
 }
 
 class ForStatement {
   type = 'ForStatement';
   #internal;
 
-  constructor(pos, ast, token) {
-    if (token !== TOKEN) throw new Error('Constructor is for internal use only');
+  constructor(pos, ast) {
+    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
     this.#internal = { $pos: pos, $ast: ast };
   }
 
@@ -2975,15 +2978,15 @@ function deserializeForStatementInit(pos, ast) {
 }
 
 function deserializeForInStatement(pos, ast) {
-  return new ForInStatement(pos, ast, TOKEN);
+  return new ForInStatement(pos, ast);
 }
 
 class ForInStatement {
   type = 'ForInStatement';
   #internal;
 
-  constructor(pos, ast, token) {
-    if (token !== TOKEN) throw new Error('Constructor is for internal use only');
+  constructor(pos, ast) {
+    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
     this.#internal = { $pos: pos, $ast: ast };
   }
 
@@ -3054,15 +3057,15 @@ function deserializeForStatementLeft(pos, ast) {
 }
 
 function deserializeForOfStatement(pos, ast) {
-  return new ForOfStatement(pos, ast, TOKEN);
+  return new ForOfStatement(pos, ast);
 }
 
 class ForOfStatement {
   type = 'ForOfStatement';
   #internal;
 
-  constructor(pos, ast, token) {
-    if (token !== TOKEN) throw new Error('Constructor is for internal use only');
+  constructor(pos, ast) {
+    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
     this.#internal = { $pos: pos, $ast: ast };
   }
 
@@ -3110,15 +3113,15 @@ class ForOfStatement {
 }
 
 function deserializeContinueStatement(pos, ast) {
-  return new ContinueStatement(pos, ast, TOKEN);
+  return new ContinueStatement(pos, ast);
 }
 
 class ContinueStatement {
   type = 'ContinueStatement';
   #internal;
 
-  constructor(pos, ast, token) {
-    if (token !== TOKEN) throw new Error('Constructor is for internal use only');
+  constructor(pos, ast) {
+    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
     this.#internal = { $pos: pos, $ast: ast };
   }
 
@@ -3148,15 +3151,15 @@ class ContinueStatement {
 }
 
 function deserializeBreakStatement(pos, ast) {
-  return new BreakStatement(pos, ast, TOKEN);
+  return new BreakStatement(pos, ast);
 }
 
 class BreakStatement {
   type = 'BreakStatement';
   #internal;
 
-  constructor(pos, ast, token) {
-    if (token !== TOKEN) throw new Error('Constructor is for internal use only');
+  constructor(pos, ast) {
+    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
     this.#internal = { $pos: pos, $ast: ast };
   }
 
@@ -3186,15 +3189,15 @@ class BreakStatement {
 }
 
 function deserializeReturnStatement(pos, ast) {
-  return new ReturnStatement(pos, ast, TOKEN);
+  return new ReturnStatement(pos, ast);
 }
 
 class ReturnStatement {
   type = 'ReturnStatement';
   #internal;
 
-  constructor(pos, ast, token) {
-    if (token !== TOKEN) throw new Error('Constructor is for internal use only');
+  constructor(pos, ast) {
+    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
     this.#internal = { $pos: pos, $ast: ast };
   }
 
@@ -3224,15 +3227,15 @@ class ReturnStatement {
 }
 
 function deserializeWithStatement(pos, ast) {
-  return new WithStatement(pos, ast, TOKEN);
+  return new WithStatement(pos, ast);
 }
 
 class WithStatement {
   type = 'WithStatement';
   #internal;
 
-  constructor(pos, ast, token) {
-    if (token !== TOKEN) throw new Error('Constructor is for internal use only');
+  constructor(pos, ast) {
+    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
     this.#internal = { $pos: pos, $ast: ast };
   }
 
@@ -3268,15 +3271,15 @@ class WithStatement {
 }
 
 function deserializeSwitchStatement(pos, ast) {
-  return new SwitchStatement(pos, ast, TOKEN);
+  return new SwitchStatement(pos, ast);
 }
 
 class SwitchStatement {
   type = 'SwitchStatement';
   #internal;
 
-  constructor(pos, ast, token) {
-    if (token !== TOKEN) throw new Error('Constructor is for internal use only');
+  constructor(pos, ast) {
+    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
     this.#internal = { $pos: pos, $ast: ast, cases: void 0 };
   }
 
@@ -3314,15 +3317,15 @@ class SwitchStatement {
 }
 
 function deserializeSwitchCase(pos, ast) {
-  return new SwitchCase(pos, ast, TOKEN);
+  return new SwitchCase(pos, ast);
 }
 
 class SwitchCase {
   type = 'SwitchCase';
   #internal;
 
-  constructor(pos, ast, token) {
-    if (token !== TOKEN) throw new Error('Constructor is for internal use only');
+  constructor(pos, ast) {
+    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
     this.#internal = { $pos: pos, $ast: ast, consequent: void 0 };
   }
 
@@ -3360,15 +3363,15 @@ class SwitchCase {
 }
 
 function deserializeLabeledStatement(pos, ast) {
-  return new LabeledStatement(pos, ast, TOKEN);
+  return new LabeledStatement(pos, ast);
 }
 
 class LabeledStatement {
   type = 'LabeledStatement';
   #internal;
 
-  constructor(pos, ast, token) {
-    if (token !== TOKEN) throw new Error('Constructor is for internal use only');
+  constructor(pos, ast) {
+    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
     this.#internal = { $pos: pos, $ast: ast };
   }
 
@@ -3404,15 +3407,15 @@ class LabeledStatement {
 }
 
 function deserializeThrowStatement(pos, ast) {
-  return new ThrowStatement(pos, ast, TOKEN);
+  return new ThrowStatement(pos, ast);
 }
 
 class ThrowStatement {
   type = 'ThrowStatement';
   #internal;
 
-  constructor(pos, ast, token) {
-    if (token !== TOKEN) throw new Error('Constructor is for internal use only');
+  constructor(pos, ast) {
+    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
     this.#internal = { $pos: pos, $ast: ast };
   }
 
@@ -3442,15 +3445,15 @@ class ThrowStatement {
 }
 
 function deserializeTryStatement(pos, ast) {
-  return new TryStatement(pos, ast, TOKEN);
+  return new TryStatement(pos, ast);
 }
 
 class TryStatement {
   type = 'TryStatement';
   #internal;
 
-  constructor(pos, ast, token) {
-    if (token !== TOKEN) throw new Error('Constructor is for internal use only');
+  constructor(pos, ast) {
+    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
     this.#internal = { $pos: pos, $ast: ast };
   }
 
@@ -3492,15 +3495,15 @@ class TryStatement {
 }
 
 function deserializeCatchClause(pos, ast) {
-  return new CatchClause(pos, ast, TOKEN);
+  return new CatchClause(pos, ast);
 }
 
 class CatchClause {
   type = 'CatchClause';
   #internal;
 
-  constructor(pos, ast, token) {
-    if (token !== TOKEN) throw new Error('Constructor is for internal use only');
+  constructor(pos, ast) {
+    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
     this.#internal = { $pos: pos, $ast: ast };
   }
 
@@ -3536,14 +3539,14 @@ class CatchClause {
 }
 
 function deserializeCatchParameter(pos, ast) {
-  return new CatchParameter(pos, ast, TOKEN);
+  return new CatchParameter(pos, ast);
 }
 
 class CatchParameter {
   #internal;
 
-  constructor(pos, ast, token) {
-    if (token !== TOKEN) throw new Error('Constructor is for internal use only');
+  constructor(pos, ast) {
+    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
     this.#internal = { $pos: pos, $ast: ast };
   }
 
@@ -3560,15 +3563,15 @@ class CatchParameter {
 }
 
 function deserializeDebuggerStatement(pos, ast) {
-  return new DebuggerStatement(pos, ast, TOKEN);
+  return new DebuggerStatement(pos, ast);
 }
 
 class DebuggerStatement {
   type = 'DebuggerStatement';
   #internal;
 
-  constructor(pos, ast, token) {
-    if (token !== TOKEN) throw new Error('Constructor is for internal use only');
+  constructor(pos, ast) {
+    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
     this.#internal = { $pos: pos, $ast: ast };
   }
 
@@ -3592,14 +3595,14 @@ class DebuggerStatement {
 }
 
 function deserializeBindingPattern(pos, ast) {
-  return new BindingPattern(pos, ast, TOKEN);
+  return new BindingPattern(pos, ast);
 }
 
 class BindingPattern {
   #internal;
 
-  constructor(pos, ast, token) {
-    if (token !== TOKEN) throw new Error('Constructor is for internal use only');
+  constructor(pos, ast) {
+    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
     this.#internal = { $pos: pos, $ast: ast };
   }
 
@@ -3643,15 +3646,15 @@ function deserializeBindingPatternKind(pos, ast) {
 }
 
 function deserializeAssignmentPattern(pos, ast) {
-  return new AssignmentPattern(pos, ast, TOKEN);
+  return new AssignmentPattern(pos, ast);
 }
 
 class AssignmentPattern {
   type = 'AssignmentPattern';
   #internal;
 
-  constructor(pos, ast, token) {
-    if (token !== TOKEN) throw new Error('Constructor is for internal use only');
+  constructor(pos, ast) {
+    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
     this.#internal = { $pos: pos, $ast: ast };
   }
 
@@ -3687,15 +3690,15 @@ class AssignmentPattern {
 }
 
 function deserializeObjectPattern(pos, ast) {
-  return new ObjectPattern(pos, ast, TOKEN);
+  return new ObjectPattern(pos, ast);
 }
 
 class ObjectPattern {
   type = 'ObjectPattern';
   #internal;
 
-  constructor(pos, ast, token) {
-    if (token !== TOKEN) throw new Error('Constructor is for internal use only');
+  constructor(pos, ast) {
+    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
     this.#internal = { $pos: pos, $ast: ast, properties: void 0 };
   }
 
@@ -3727,15 +3730,15 @@ class ObjectPattern {
 }
 
 function deserializeBindingProperty(pos, ast) {
-  return new BindingProperty(pos, ast, TOKEN);
+  return new BindingProperty(pos, ast);
 }
 
 class BindingProperty {
   type = 'BindingProperty';
   #internal;
 
-  constructor(pos, ast, token) {
-    if (token !== TOKEN) throw new Error('Constructor is for internal use only');
+  constructor(pos, ast) {
+    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
     this.#internal = { $pos: pos, $ast: ast };
   }
 
@@ -3783,15 +3786,15 @@ class BindingProperty {
 }
 
 function deserializeArrayPattern(pos, ast) {
-  return new ArrayPattern(pos, ast, TOKEN);
+  return new ArrayPattern(pos, ast);
 }
 
 class ArrayPattern {
   type = 'ArrayPattern';
   #internal;
 
-  constructor(pos, ast, token) {
-    if (token !== TOKEN) throw new Error('Constructor is for internal use only');
+  constructor(pos, ast) {
+    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
     this.#internal = { $pos: pos, $ast: ast, elements: void 0 };
   }
 
@@ -3823,15 +3826,15 @@ class ArrayPattern {
 }
 
 function deserializeBindingRestElement(pos, ast) {
-  return new BindingRestElement(pos, ast, TOKEN);
+  return new BindingRestElement(pos, ast);
 }
 
 class BindingRestElement {
   type = 'BindingRestElement';
   #internal;
 
-  constructor(pos, ast, token) {
-    if (token !== TOKEN) throw new Error('Constructor is for internal use only');
+  constructor(pos, ast) {
+    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
     this.#internal = { $pos: pos, $ast: ast };
   }
 
@@ -3861,14 +3864,14 @@ class BindingRestElement {
 }
 
 function deserializeFunction(pos, ast) {
-  return new Function(pos, ast, TOKEN);
+  return new Function(pos, ast);
 }
 
 class Function {
   #internal;
 
-  constructor(pos, ast, token) {
-    if (token !== TOKEN) throw new Error('Constructor is for internal use only');
+  constructor(pos, ast) {
+    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
     this.#internal = { $pos: pos, $ast: ast };
   }
 
@@ -3960,15 +3963,15 @@ function deserializeFunctionType(pos, ast) {
 }
 
 function deserializeFormalParameters(pos, ast) {
-  return new FormalParameters(pos, ast, TOKEN);
+  return new FormalParameters(pos, ast);
 }
 
 class FormalParameters {
   type = 'FormalParameters';
   #internal;
 
-  constructor(pos, ast, token) {
-    if (token !== TOKEN) throw new Error('Constructor is for internal use only');
+  constructor(pos, ast) {
+    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
     this.#internal = { $pos: pos, $ast: ast, items: void 0 };
   }
 
@@ -4006,14 +4009,14 @@ class FormalParameters {
 }
 
 function deserializeFormalParameter(pos, ast) {
-  return new FormalParameter(pos, ast, TOKEN);
+  return new FormalParameter(pos, ast);
 }
 
 class FormalParameter {
   #internal;
 
-  constructor(pos, ast, token) {
-    if (token !== TOKEN) throw new Error('Constructor is for internal use only');
+  constructor(pos, ast) {
+    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
     this.#internal = { $pos: pos, $ast: ast, decorators: void 0 };
   }
 
@@ -4053,15 +4056,15 @@ function deserializeFormalParameterKind(pos, ast) {
 }
 
 function deserializeFunctionBody(pos, ast) {
-  return new FunctionBody(pos, ast, TOKEN);
+  return new FunctionBody(pos, ast);
 }
 
 class FunctionBody {
   type = 'FunctionBody';
   #internal;
 
-  constructor(pos, ast, token) {
-    if (token !== TOKEN) throw new Error('Constructor is for internal use only');
+  constructor(pos, ast) {
+    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
     this.#internal = { $pos: pos, $ast: ast, body: void 0 };
   }
 
@@ -4093,15 +4096,15 @@ class FunctionBody {
 }
 
 function deserializeArrowFunctionExpression(pos, ast) {
-  return new ArrowFunctionExpression(pos, ast, TOKEN);
+  return new ArrowFunctionExpression(pos, ast);
 }
 
 class ArrowFunctionExpression {
   type = 'ArrowFunctionExpression';
   #internal;
 
-  constructor(pos, ast, token) {
-    if (token !== TOKEN) throw new Error('Constructor is for internal use only');
+  constructor(pos, ast) {
+    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
     this.#internal = { $pos: pos, $ast: ast };
   }
 
@@ -4161,15 +4164,15 @@ class ArrowFunctionExpression {
 }
 
 function deserializeYieldExpression(pos, ast) {
-  return new YieldExpression(pos, ast, TOKEN);
+  return new YieldExpression(pos, ast);
 }
 
 class YieldExpression {
   type = 'YieldExpression';
   #internal;
 
-  constructor(pos, ast, token) {
-    if (token !== TOKEN) throw new Error('Constructor is for internal use only');
+  constructor(pos, ast) {
+    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
     this.#internal = { $pos: pos, $ast: ast };
   }
 
@@ -4205,14 +4208,14 @@ class YieldExpression {
 }
 
 function deserializeClass(pos, ast) {
-  return new Class(pos, ast, TOKEN);
+  return new Class(pos, ast);
 }
 
 class Class {
   #internal;
 
-  constructor(pos, ast, token) {
-    if (token !== TOKEN) throw new Error('Constructor is for internal use only');
+  constructor(pos, ast) {
+    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
     this.#internal = { $pos: pos, $ast: ast, decorators: void 0, implements: void 0 };
   }
 
@@ -4310,15 +4313,15 @@ function deserializeClassType(pos, ast) {
 }
 
 function deserializeClassBody(pos, ast) {
-  return new ClassBody(pos, ast, TOKEN);
+  return new ClassBody(pos, ast);
 }
 
 class ClassBody {
   type = 'ClassBody';
   #internal;
 
-  constructor(pos, ast, token) {
-    if (token !== TOKEN) throw new Error('Constructor is for internal use only');
+  constructor(pos, ast) {
+    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
     this.#internal = { $pos: pos, $ast: ast, body: void 0 };
   }
 
@@ -4367,14 +4370,14 @@ function deserializeClassElement(pos, ast) {
 }
 
 function deserializeMethodDefinition(pos, ast) {
-  return new MethodDefinition(pos, ast, TOKEN);
+  return new MethodDefinition(pos, ast);
 }
 
 class MethodDefinition {
   #internal;
 
-  constructor(pos, ast, token) {
-    if (token !== TOKEN) throw new Error('Constructor is for internal use only');
+  constructor(pos, ast) {
+    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
     this.#internal = { $pos: pos, $ast: ast, decorators: void 0 };
   }
 
@@ -4470,14 +4473,14 @@ function deserializeMethodDefinitionType(pos, ast) {
 }
 
 function deserializePropertyDefinition(pos, ast) {
-  return new PropertyDefinition(pos, ast, TOKEN);
+  return new PropertyDefinition(pos, ast);
 }
 
 class PropertyDefinition {
   #internal;
 
-  constructor(pos, ast, token) {
-    if (token !== TOKEN) throw new Error('Constructor is for internal use only');
+  constructor(pos, ast) {
+    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
     this.#internal = { $pos: pos, $ast: ast, decorators: void 0 };
   }
 
@@ -4606,15 +4609,15 @@ function deserializeMethodDefinitionKind(pos, ast) {
 }
 
 function deserializePrivateIdentifier(pos, ast) {
-  return new PrivateIdentifier(pos, ast, TOKEN);
+  return new PrivateIdentifier(pos, ast);
 }
 
 class PrivateIdentifier {
   type = 'PrivateIdentifier';
   #internal;
 
-  constructor(pos, ast, token) {
-    if (token !== TOKEN) throw new Error('Constructor is for internal use only');
+  constructor(pos, ast) {
+    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
     this.#internal = { $pos: pos, $ast: ast, name: void 0 };
   }
 
@@ -4646,15 +4649,15 @@ class PrivateIdentifier {
 }
 
 function deserializeStaticBlock(pos, ast) {
-  return new StaticBlock(pos, ast, TOKEN);
+  return new StaticBlock(pos, ast);
 }
 
 class StaticBlock {
   type = 'StaticBlock';
   #internal;
 
-  constructor(pos, ast, token) {
-    if (token !== TOKEN) throw new Error('Constructor is for internal use only');
+  constructor(pos, ast) {
+    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
     this.#internal = { $pos: pos, $ast: ast, body: void 0 };
   }
 
@@ -4716,14 +4719,14 @@ function deserializeAccessorPropertyType(pos, ast) {
 }
 
 function deserializeAccessorProperty(pos, ast) {
-  return new AccessorProperty(pos, ast, TOKEN);
+  return new AccessorProperty(pos, ast);
 }
 
 class AccessorProperty {
   #internal;
 
-  constructor(pos, ast, token) {
-    if (token !== TOKEN) throw new Error('Constructor is for internal use only');
+  constructor(pos, ast) {
+    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
     this.#internal = { $pos: pos, $ast: ast, decorators: void 0 };
   }
 
@@ -4808,15 +4811,15 @@ class AccessorProperty {
 }
 
 function deserializeImportExpression(pos, ast) {
-  return new ImportExpression(pos, ast, TOKEN);
+  return new ImportExpression(pos, ast);
 }
 
 class ImportExpression {
   type = 'ImportExpression';
   #internal;
 
-  constructor(pos, ast, token) {
-    if (token !== TOKEN) throw new Error('Constructor is for internal use only');
+  constructor(pos, ast) {
+    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
     this.#internal = { $pos: pos, $ast: ast };
   }
 
@@ -4858,15 +4861,15 @@ class ImportExpression {
 }
 
 function deserializeImportDeclaration(pos, ast) {
-  return new ImportDeclaration(pos, ast, TOKEN);
+  return new ImportDeclaration(pos, ast);
 }
 
 class ImportDeclaration {
   type = 'ImportDeclaration';
   #internal;
 
-  constructor(pos, ast, token) {
-    if (token !== TOKEN) throw new Error('Constructor is for internal use only');
+  constructor(pos, ast) {
+    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
     this.#internal = { $pos: pos, $ast: ast };
   }
 
@@ -4944,15 +4947,15 @@ function deserializeImportDeclarationSpecifier(pos, ast) {
 }
 
 function deserializeImportSpecifier(pos, ast) {
-  return new ImportSpecifier(pos, ast, TOKEN);
+  return new ImportSpecifier(pos, ast);
 }
 
 class ImportSpecifier {
   type = 'ImportSpecifier';
   #internal;
 
-  constructor(pos, ast, token) {
-    if (token !== TOKEN) throw new Error('Constructor is for internal use only');
+  constructor(pos, ast) {
+    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
     this.#internal = { $pos: pos, $ast: ast };
   }
 
@@ -4994,15 +4997,15 @@ class ImportSpecifier {
 }
 
 function deserializeImportDefaultSpecifier(pos, ast) {
-  return new ImportDefaultSpecifier(pos, ast, TOKEN);
+  return new ImportDefaultSpecifier(pos, ast);
 }
 
 class ImportDefaultSpecifier {
   type = 'ImportDefaultSpecifier';
   #internal;
 
-  constructor(pos, ast, token) {
-    if (token !== TOKEN) throw new Error('Constructor is for internal use only');
+  constructor(pos, ast) {
+    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
     this.#internal = { $pos: pos, $ast: ast };
   }
 
@@ -5032,15 +5035,15 @@ class ImportDefaultSpecifier {
 }
 
 function deserializeImportNamespaceSpecifier(pos, ast) {
-  return new ImportNamespaceSpecifier(pos, ast, TOKEN);
+  return new ImportNamespaceSpecifier(pos, ast);
 }
 
 class ImportNamespaceSpecifier {
   type = 'ImportNamespaceSpecifier';
   #internal;
 
-  constructor(pos, ast, token) {
-    if (token !== TOKEN) throw new Error('Constructor is for internal use only');
+  constructor(pos, ast) {
+    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
     this.#internal = { $pos: pos, $ast: ast };
   }
 
@@ -5070,14 +5073,14 @@ class ImportNamespaceSpecifier {
 }
 
 function deserializeWithClause(pos, ast) {
-  return new WithClause(pos, ast, TOKEN);
+  return new WithClause(pos, ast);
 }
 
 class WithClause {
   #internal;
 
-  constructor(pos, ast, token) {
-    if (token !== TOKEN) throw new Error('Constructor is for internal use only');
+  constructor(pos, ast) {
+    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
     this.#internal = { $pos: pos, $ast: ast, attributes: void 0 };
   }
 
@@ -5096,15 +5099,15 @@ class WithClause {
 }
 
 function deserializeImportAttribute(pos, ast) {
-  return new ImportAttribute(pos, ast, TOKEN);
+  return new ImportAttribute(pos, ast);
 }
 
 class ImportAttribute {
   type = 'ImportAttribute';
   #internal;
 
-  constructor(pos, ast, token) {
-    if (token !== TOKEN) throw new Error('Constructor is for internal use only');
+  constructor(pos, ast) {
+    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
     this.#internal = { $pos: pos, $ast: ast };
   }
 
@@ -5151,15 +5154,15 @@ function deserializeImportAttributeKey(pos, ast) {
 }
 
 function deserializeExportNamedDeclaration(pos, ast) {
-  return new ExportNamedDeclaration(pos, ast, TOKEN);
+  return new ExportNamedDeclaration(pos, ast);
 }
 
 class ExportNamedDeclaration {
   type = 'ExportNamedDeclaration';
   #internal;
 
-  constructor(pos, ast, token) {
-    if (token !== TOKEN) throw new Error('Constructor is for internal use only');
+  constructor(pos, ast) {
+    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
     this.#internal = { $pos: pos, $ast: ast, specifiers: void 0 };
   }
 
@@ -5215,15 +5218,15 @@ class ExportNamedDeclaration {
 }
 
 function deserializeExportDefaultDeclaration(pos, ast) {
-  return new ExportDefaultDeclaration(pos, ast, TOKEN);
+  return new ExportDefaultDeclaration(pos, ast);
 }
 
 class ExportDefaultDeclaration {
   type = 'ExportDefaultDeclaration';
   #internal;
 
-  constructor(pos, ast, token) {
-    if (token !== TOKEN) throw new Error('Constructor is for internal use only');
+  constructor(pos, ast) {
+    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
     this.#internal = { $pos: pos, $ast: ast };
   }
 
@@ -5253,15 +5256,15 @@ class ExportDefaultDeclaration {
 }
 
 function deserializeExportAllDeclaration(pos, ast) {
-  return new ExportAllDeclaration(pos, ast, TOKEN);
+  return new ExportAllDeclaration(pos, ast);
 }
 
 class ExportAllDeclaration {
   type = 'ExportAllDeclaration';
   #internal;
 
-  constructor(pos, ast, token) {
-    if (token !== TOKEN) throw new Error('Constructor is for internal use only');
+  constructor(pos, ast) {
+    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
     this.#internal = { $pos: pos, $ast: ast };
   }
 
@@ -5309,15 +5312,15 @@ class ExportAllDeclaration {
 }
 
 function deserializeExportSpecifier(pos, ast) {
-  return new ExportSpecifier(pos, ast, TOKEN);
+  return new ExportSpecifier(pos, ast);
 }
 
 class ExportSpecifier {
   type = 'ExportSpecifier';
   #internal;
 
-  constructor(pos, ast, token) {
-    if (token !== TOKEN) throw new Error('Constructor is for internal use only');
+  constructor(pos, ast) {
+    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
     this.#internal = { $pos: pos, $ast: ast };
   }
 
@@ -5471,15 +5474,15 @@ function deserializeModuleExportName(pos, ast) {
 }
 
 function deserializeV8IntrinsicExpression(pos, ast) {
-  return new V8IntrinsicExpression(pos, ast, TOKEN);
+  return new V8IntrinsicExpression(pos, ast);
 }
 
 class V8IntrinsicExpression {
   type = 'V8IntrinsicExpression';
   #internal;
 
-  constructor(pos, ast, token) {
-    if (token !== TOKEN) throw new Error('Constructor is for internal use only');
+  constructor(pos, ast) {
+    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
     this.#internal = { $pos: pos, $ast: ast, arguments: void 0 };
   }
 
@@ -5517,15 +5520,15 @@ class V8IntrinsicExpression {
 }
 
 function deserializeBooleanLiteral(pos, ast) {
-  return new BooleanLiteral(pos, ast, TOKEN);
+  return new BooleanLiteral(pos, ast);
 }
 
 class BooleanLiteral {
   type = 'BooleanLiteral';
   #internal;
 
-  constructor(pos, ast, token) {
-    if (token !== TOKEN) throw new Error('Constructor is for internal use only');
+  constructor(pos, ast) {
+    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
     this.#internal = { $pos: pos, $ast: ast };
   }
 
@@ -5555,15 +5558,15 @@ class BooleanLiteral {
 }
 
 function deserializeNullLiteral(pos, ast) {
-  return new NullLiteral(pos, ast, TOKEN);
+  return new NullLiteral(pos, ast);
 }
 
 class NullLiteral {
   type = 'NullLiteral';
   #internal;
 
-  constructor(pos, ast, token) {
-    if (token !== TOKEN) throw new Error('Constructor is for internal use only');
+  constructor(pos, ast) {
+    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
     this.#internal = { $pos: pos, $ast: ast };
   }
 
@@ -5587,15 +5590,15 @@ class NullLiteral {
 }
 
 function deserializeNumericLiteral(pos, ast) {
-  return new NumericLiteral(pos, ast, TOKEN);
+  return new NumericLiteral(pos, ast);
 }
 
 class NumericLiteral {
   type = 'NumericLiteral';
   #internal;
 
-  constructor(pos, ast, token) {
-    if (token !== TOKEN) throw new Error('Constructor is for internal use only');
+  constructor(pos, ast) {
+    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
     this.#internal = { $pos: pos, $ast: ast, raw: void 0 };
   }
 
@@ -5633,15 +5636,15 @@ class NumericLiteral {
 }
 
 function deserializeStringLiteral(pos, ast) {
-  return new StringLiteral(pos, ast, TOKEN);
+  return new StringLiteral(pos, ast);
 }
 
 class StringLiteral {
   type = 'StringLiteral';
   #internal;
 
-  constructor(pos, ast, token) {
-    if (token !== TOKEN) throw new Error('Constructor is for internal use only');
+  constructor(pos, ast) {
+    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
     this.#internal = { $pos: pos, $ast: ast, value: void 0, raw: void 0 };
   }
 
@@ -5681,15 +5684,15 @@ class StringLiteral {
 }
 
 function deserializeBigIntLiteral(pos, ast) {
-  return new BigIntLiteral(pos, ast, TOKEN);
+  return new BigIntLiteral(pos, ast);
 }
 
 class BigIntLiteral {
   type = 'BigIntLiteral';
   #internal;
 
-  constructor(pos, ast, token) {
-    if (token !== TOKEN) throw new Error('Constructor is for internal use only');
+  constructor(pos, ast) {
+    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
     this.#internal = { $pos: pos, $ast: ast, value: void 0, raw: void 0 };
   }
 
@@ -5729,15 +5732,15 @@ class BigIntLiteral {
 }
 
 function deserializeRegExpLiteral(pos, ast) {
-  return new RegExpLiteral(pos, ast, TOKEN);
+  return new RegExpLiteral(pos, ast);
 }
 
 class RegExpLiteral {
   type = 'RegExpLiteral';
   #internal;
 
-  constructor(pos, ast, token) {
-    if (token !== TOKEN) throw new Error('Constructor is for internal use only');
+  constructor(pos, ast) {
+    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
     this.#internal = { $pos: pos, $ast: ast, raw: void 0 };
   }
 
@@ -5775,14 +5778,14 @@ class RegExpLiteral {
 }
 
 function deserializeRegExp(pos, ast) {
-  return new RegExp(pos, ast, TOKEN);
+  return new RegExp(pos, ast);
 }
 
 class RegExp {
   #internal;
 
-  constructor(pos, ast, token) {
-    if (token !== TOKEN) throw new Error('Constructor is for internal use only');
+  constructor(pos, ast) {
+    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
     this.#internal = { $pos: pos, $ast: ast };
   }
 
@@ -5805,14 +5808,14 @@ class RegExp {
 }
 
 function deserializeRegExpPattern(pos, ast) {
-  return new RegExpPattern(pos, ast, TOKEN);
+  return new RegExpPattern(pos, ast);
 }
 
 class RegExpPattern {
   #internal;
 
-  constructor(pos, ast, token) {
-    if (token !== TOKEN) throw new Error('Constructor is for internal use only');
+  constructor(pos, ast) {
+    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
     this.#internal = { $pos: pos, $ast: ast, pattern: void 0 };
   }
 
@@ -5831,15 +5834,15 @@ class RegExpPattern {
 }
 
 function deserializeRegExpFlags(pos, ast) {
-  return new RegExpFlags(pos, ast, TOKEN);
+  return new RegExpFlags(pos, ast);
 }
 
 class RegExpFlags {
   type = 'RegExpFlags';
   #internal;
 
-  constructor(pos, ast, token) {
-    if (token !== TOKEN) throw new Error('Constructor is for internal use only');
+  constructor(pos, ast) {
+    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
     this.#internal = { $pos: pos, $ast: ast };
   }
 
@@ -5856,15 +5859,15 @@ class RegExpFlags {
 }
 
 function deserializeJSXElement(pos, ast) {
-  return new JSXElement(pos, ast, TOKEN);
+  return new JSXElement(pos, ast);
 }
 
 class JSXElement {
   type = 'JSXElement';
   #internal;
 
-  constructor(pos, ast, token) {
-    if (token !== TOKEN) throw new Error('Constructor is for internal use only');
+  constructor(pos, ast) {
+    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
     this.#internal = { $pos: pos, $ast: ast, children: void 0 };
   }
 
@@ -5908,15 +5911,15 @@ class JSXElement {
 }
 
 function deserializeJSXOpeningElement(pos, ast) {
-  return new JSXOpeningElement(pos, ast, TOKEN);
+  return new JSXOpeningElement(pos, ast);
 }
 
 class JSXOpeningElement {
   type = 'JSXOpeningElement';
   #internal;
 
-  constructor(pos, ast, token) {
-    if (token !== TOKEN) throw new Error('Constructor is for internal use only');
+  constructor(pos, ast) {
+    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
     this.#internal = { $pos: pos, $ast: ast, attributes: void 0 };
   }
 
@@ -5960,15 +5963,15 @@ class JSXOpeningElement {
 }
 
 function deserializeJSXClosingElement(pos, ast) {
-  return new JSXClosingElement(pos, ast, TOKEN);
+  return new JSXClosingElement(pos, ast);
 }
 
 class JSXClosingElement {
   type = 'JSXClosingElement';
   #internal;
 
-  constructor(pos, ast, token) {
-    if (token !== TOKEN) throw new Error('Constructor is for internal use only');
+  constructor(pos, ast) {
+    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
     this.#internal = { $pos: pos, $ast: ast };
   }
 
@@ -5998,15 +6001,15 @@ class JSXClosingElement {
 }
 
 function deserializeJSXFragment(pos, ast) {
-  return new JSXFragment(pos, ast, TOKEN);
+  return new JSXFragment(pos, ast);
 }
 
 class JSXFragment {
   type = 'JSXFragment';
   #internal;
 
-  constructor(pos, ast, token) {
-    if (token !== TOKEN) throw new Error('Constructor is for internal use only');
+  constructor(pos, ast) {
+    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
     this.#internal = { $pos: pos, $ast: ast, children: void 0 };
   }
 
@@ -6050,15 +6053,15 @@ class JSXFragment {
 }
 
 function deserializeJSXOpeningFragment(pos, ast) {
-  return new JSXOpeningFragment(pos, ast, TOKEN);
+  return new JSXOpeningFragment(pos, ast);
 }
 
 class JSXOpeningFragment {
   type = 'JSXOpeningFragment';
   #internal;
 
-  constructor(pos, ast, token) {
-    if (token !== TOKEN) throw new Error('Constructor is for internal use only');
+  constructor(pos, ast) {
+    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
     this.#internal = { $pos: pos, $ast: ast };
   }
 
@@ -6082,15 +6085,15 @@ class JSXOpeningFragment {
 }
 
 function deserializeJSXClosingFragment(pos, ast) {
-  return new JSXClosingFragment(pos, ast, TOKEN);
+  return new JSXClosingFragment(pos, ast);
 }
 
 class JSXClosingFragment {
   type = 'JSXClosingFragment';
   #internal;
 
-  constructor(pos, ast, token) {
-    if (token !== TOKEN) throw new Error('Constructor is for internal use only');
+  constructor(pos, ast) {
+    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
     this.#internal = { $pos: pos, $ast: ast };
   }
 
@@ -6131,15 +6134,15 @@ function deserializeJSXElementName(pos, ast) {
 }
 
 function deserializeJSXNamespacedName(pos, ast) {
-  return new JSXNamespacedName(pos, ast, TOKEN);
+  return new JSXNamespacedName(pos, ast);
 }
 
 class JSXNamespacedName {
   type = 'JSXNamespacedName';
   #internal;
 
-  constructor(pos, ast, token) {
-    if (token !== TOKEN) throw new Error('Constructor is for internal use only');
+  constructor(pos, ast) {
+    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
     this.#internal = { $pos: pos, $ast: ast };
   }
 
@@ -6175,15 +6178,15 @@ class JSXNamespacedName {
 }
 
 function deserializeJSXMemberExpression(pos, ast) {
-  return new JSXMemberExpression(pos, ast, TOKEN);
+  return new JSXMemberExpression(pos, ast);
 }
 
 class JSXMemberExpression {
   type = 'JSXMemberExpression';
   #internal;
 
-  constructor(pos, ast, token) {
-    if (token !== TOKEN) throw new Error('Constructor is for internal use only');
+  constructor(pos, ast) {
+    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
     this.#internal = { $pos: pos, $ast: ast };
   }
 
@@ -6232,15 +6235,15 @@ function deserializeJSXMemberExpressionObject(pos, ast) {
 }
 
 function deserializeJSXExpressionContainer(pos, ast) {
-  return new JSXExpressionContainer(pos, ast, TOKEN);
+  return new JSXExpressionContainer(pos, ast);
 }
 
 class JSXExpressionContainer {
   type = 'JSXExpressionContainer';
   #internal;
 
-  constructor(pos, ast, token) {
-    if (token !== TOKEN) throw new Error('Constructor is for internal use only');
+  constructor(pos, ast) {
+    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
     this.#internal = { $pos: pos, $ast: ast };
   }
 
@@ -6365,15 +6368,15 @@ function deserializeJSXExpression(pos, ast) {
 }
 
 function deserializeJSXEmptyExpression(pos, ast) {
-  return new JSXEmptyExpression(pos, ast, TOKEN);
+  return new JSXEmptyExpression(pos, ast);
 }
 
 class JSXEmptyExpression {
   type = 'JSXEmptyExpression';
   #internal;
 
-  constructor(pos, ast, token) {
-    if (token !== TOKEN) throw new Error('Constructor is for internal use only');
+  constructor(pos, ast) {
+    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
     this.#internal = { $pos: pos, $ast: ast };
   }
 
@@ -6408,15 +6411,15 @@ function deserializeJSXAttributeItem(pos, ast) {
 }
 
 function deserializeJSXAttribute(pos, ast) {
-  return new JSXAttribute(pos, ast, TOKEN);
+  return new JSXAttribute(pos, ast);
 }
 
 class JSXAttribute {
   type = 'JSXAttribute';
   #internal;
 
-  constructor(pos, ast, token) {
-    if (token !== TOKEN) throw new Error('Constructor is for internal use only');
+  constructor(pos, ast) {
+    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
     this.#internal = { $pos: pos, $ast: ast };
   }
 
@@ -6452,15 +6455,15 @@ class JSXAttribute {
 }
 
 function deserializeJSXSpreadAttribute(pos, ast) {
-  return new JSXSpreadAttribute(pos, ast, TOKEN);
+  return new JSXSpreadAttribute(pos, ast);
 }
 
 class JSXSpreadAttribute {
   type = 'JSXSpreadAttribute';
   #internal;
 
-  constructor(pos, ast, token) {
-    if (token !== TOKEN) throw new Error('Constructor is for internal use only');
+  constructor(pos, ast) {
+    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
     this.#internal = { $pos: pos, $ast: ast };
   }
 
@@ -6516,15 +6519,15 @@ function deserializeJSXAttributeValue(pos, ast) {
 }
 
 function deserializeJSXIdentifier(pos, ast) {
-  return new JSXIdentifier(pos, ast, TOKEN);
+  return new JSXIdentifier(pos, ast);
 }
 
 class JSXIdentifier {
   type = 'JSXIdentifier';
   #internal;
 
-  constructor(pos, ast, token) {
-    if (token !== TOKEN) throw new Error('Constructor is for internal use only');
+  constructor(pos, ast) {
+    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
     this.#internal = { $pos: pos, $ast: ast, name: void 0 };
   }
 
@@ -6573,15 +6576,15 @@ function deserializeJSXChild(pos, ast) {
 }
 
 function deserializeJSXSpreadChild(pos, ast) {
-  return new JSXSpreadChild(pos, ast, TOKEN);
+  return new JSXSpreadChild(pos, ast);
 }
 
 class JSXSpreadChild {
   type = 'JSXSpreadChild';
   #internal;
 
-  constructor(pos, ast, token) {
-    if (token !== TOKEN) throw new Error('Constructor is for internal use only');
+  constructor(pos, ast) {
+    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
     this.#internal = { $pos: pos, $ast: ast };
   }
 
@@ -6611,15 +6614,15 @@ class JSXSpreadChild {
 }
 
 function deserializeJSXText(pos, ast) {
-  return new JSXText(pos, ast, TOKEN);
+  return new JSXText(pos, ast);
 }
 
 class JSXText {
   type = 'JSXText';
   #internal;
 
-  constructor(pos, ast, token) {
-    if (token !== TOKEN) throw new Error('Constructor is for internal use only');
+  constructor(pos, ast) {
+    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
     this.#internal = { $pos: pos, $ast: ast, value: void 0, raw: void 0 };
   }
 
@@ -6659,15 +6662,15 @@ class JSXText {
 }
 
 function deserializeTSThisParameter(pos, ast) {
-  return new TSThisParameter(pos, ast, TOKEN);
+  return new TSThisParameter(pos, ast);
 }
 
 class TSThisParameter {
   type = 'TSThisParameter';
   #internal;
 
-  constructor(pos, ast, token) {
-    if (token !== TOKEN) throw new Error('Constructor is for internal use only');
+  constructor(pos, ast) {
+    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
     this.#internal = { $pos: pos, $ast: ast };
   }
 
@@ -6697,15 +6700,15 @@ class TSThisParameter {
 }
 
 function deserializeTSEnumDeclaration(pos, ast) {
-  return new TSEnumDeclaration(pos, ast, TOKEN);
+  return new TSEnumDeclaration(pos, ast);
 }
 
 class TSEnumDeclaration {
   type = 'TSEnumDeclaration';
   #internal;
 
-  constructor(pos, ast, token) {
-    if (token !== TOKEN) throw new Error('Constructor is for internal use only');
+  constructor(pos, ast) {
+    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
     this.#internal = { $pos: pos, $ast: ast };
   }
 
@@ -6753,15 +6756,15 @@ class TSEnumDeclaration {
 }
 
 function deserializeTSEnumBody(pos, ast) {
-  return new TSEnumBody(pos, ast, TOKEN);
+  return new TSEnumBody(pos, ast);
 }
 
 class TSEnumBody {
   type = 'TSEnumBody';
   #internal;
 
-  constructor(pos, ast, token) {
-    if (token !== TOKEN) throw new Error('Constructor is for internal use only');
+  constructor(pos, ast) {
+    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
     this.#internal = { $pos: pos, $ast: ast, members: void 0 };
   }
 
@@ -6793,15 +6796,15 @@ class TSEnumBody {
 }
 
 function deserializeTSEnumMember(pos, ast) {
-  return new TSEnumMember(pos, ast, TOKEN);
+  return new TSEnumMember(pos, ast);
 }
 
 class TSEnumMember {
   type = 'TSEnumMember';
   #internal;
 
-  constructor(pos, ast, token) {
-    if (token !== TOKEN) throw new Error('Constructor is for internal use only');
+  constructor(pos, ast) {
+    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
     this.#internal = { $pos: pos, $ast: ast };
   }
 
@@ -6852,15 +6855,15 @@ function deserializeTSEnumMemberName(pos, ast) {
 }
 
 function deserializeTSTypeAnnotation(pos, ast) {
-  return new TSTypeAnnotation(pos, ast, TOKEN);
+  return new TSTypeAnnotation(pos, ast);
 }
 
 class TSTypeAnnotation {
   type = 'TSTypeAnnotation';
   #internal;
 
-  constructor(pos, ast, token) {
-    if (token !== TOKEN) throw new Error('Constructor is for internal use only');
+  constructor(pos, ast) {
+    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
     this.#internal = { $pos: pos, $ast: ast };
   }
 
@@ -6890,15 +6893,15 @@ class TSTypeAnnotation {
 }
 
 function deserializeTSLiteralType(pos, ast) {
-  return new TSLiteralType(pos, ast, TOKEN);
+  return new TSLiteralType(pos, ast);
 }
 
 class TSLiteralType {
   type = 'TSLiteralType';
   #internal;
 
-  constructor(pos, ast, token) {
-    if (token !== TOKEN) throw new Error('Constructor is for internal use only');
+  constructor(pos, ast) {
+    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
     this.#internal = { $pos: pos, $ast: ast };
   }
 
@@ -7028,15 +7031,15 @@ function deserializeTSType(pos, ast) {
 }
 
 function deserializeTSConditionalType(pos, ast) {
-  return new TSConditionalType(pos, ast, TOKEN);
+  return new TSConditionalType(pos, ast);
 }
 
 class TSConditionalType {
   type = 'TSConditionalType';
   #internal;
 
-  constructor(pos, ast, token) {
-    if (token !== TOKEN) throw new Error('Constructor is for internal use only');
+  constructor(pos, ast) {
+    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
     this.#internal = { $pos: pos, $ast: ast };
   }
 
@@ -7084,15 +7087,15 @@ class TSConditionalType {
 }
 
 function deserializeTSUnionType(pos, ast) {
-  return new TSUnionType(pos, ast, TOKEN);
+  return new TSUnionType(pos, ast);
 }
 
 class TSUnionType {
   type = 'TSUnionType';
   #internal;
 
-  constructor(pos, ast, token) {
-    if (token !== TOKEN) throw new Error('Constructor is for internal use only');
+  constructor(pos, ast) {
+    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
     this.#internal = { $pos: pos, $ast: ast, types: void 0 };
   }
 
@@ -7124,15 +7127,15 @@ class TSUnionType {
 }
 
 function deserializeTSIntersectionType(pos, ast) {
-  return new TSIntersectionType(pos, ast, TOKEN);
+  return new TSIntersectionType(pos, ast);
 }
 
 class TSIntersectionType {
   type = 'TSIntersectionType';
   #internal;
 
-  constructor(pos, ast, token) {
-    if (token !== TOKEN) throw new Error('Constructor is for internal use only');
+  constructor(pos, ast) {
+    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
     this.#internal = { $pos: pos, $ast: ast, types: void 0 };
   }
 
@@ -7164,15 +7167,15 @@ class TSIntersectionType {
 }
 
 function deserializeTSParenthesizedType(pos, ast) {
-  return new TSParenthesizedType(pos, ast, TOKEN);
+  return new TSParenthesizedType(pos, ast);
 }
 
 class TSParenthesizedType {
   type = 'TSParenthesizedType';
   #internal;
 
-  constructor(pos, ast, token) {
-    if (token !== TOKEN) throw new Error('Constructor is for internal use only');
+  constructor(pos, ast) {
+    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
     this.#internal = { $pos: pos, $ast: ast };
   }
 
@@ -7202,15 +7205,15 @@ class TSParenthesizedType {
 }
 
 function deserializeTSTypeOperator(pos, ast) {
-  return new TSTypeOperator(pos, ast, TOKEN);
+  return new TSTypeOperator(pos, ast);
 }
 
 class TSTypeOperator {
   type = 'TSTypeOperator';
   #internal;
 
-  constructor(pos, ast, token) {
-    if (token !== TOKEN) throw new Error('Constructor is for internal use only');
+  constructor(pos, ast) {
+    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
     this.#internal = { $pos: pos, $ast: ast };
   }
 
@@ -7259,15 +7262,15 @@ function deserializeTSTypeOperatorOperator(pos, ast) {
 }
 
 function deserializeTSArrayType(pos, ast) {
-  return new TSArrayType(pos, ast, TOKEN);
+  return new TSArrayType(pos, ast);
 }
 
 class TSArrayType {
   type = 'TSArrayType';
   #internal;
 
-  constructor(pos, ast, token) {
-    if (token !== TOKEN) throw new Error('Constructor is for internal use only');
+  constructor(pos, ast) {
+    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
     this.#internal = { $pos: pos, $ast: ast };
   }
 
@@ -7297,15 +7300,15 @@ class TSArrayType {
 }
 
 function deserializeTSIndexedAccessType(pos, ast) {
-  return new TSIndexedAccessType(pos, ast, TOKEN);
+  return new TSIndexedAccessType(pos, ast);
 }
 
 class TSIndexedAccessType {
   type = 'TSIndexedAccessType';
   #internal;
 
-  constructor(pos, ast, token) {
-    if (token !== TOKEN) throw new Error('Constructor is for internal use only');
+  constructor(pos, ast) {
+    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
     this.#internal = { $pos: pos, $ast: ast };
   }
 
@@ -7341,15 +7344,15 @@ class TSIndexedAccessType {
 }
 
 function deserializeTSTupleType(pos, ast) {
-  return new TSTupleType(pos, ast, TOKEN);
+  return new TSTupleType(pos, ast);
 }
 
 class TSTupleType {
   type = 'TSTupleType';
   #internal;
 
-  constructor(pos, ast, token) {
-    if (token !== TOKEN) throw new Error('Constructor is for internal use only');
+  constructor(pos, ast) {
+    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
     this.#internal = { $pos: pos, $ast: ast, elementTypes: void 0 };
   }
 
@@ -7381,15 +7384,15 @@ class TSTupleType {
 }
 
 function deserializeTSNamedTupleMember(pos, ast) {
-  return new TSNamedTupleMember(pos, ast, TOKEN);
+  return new TSNamedTupleMember(pos, ast);
 }
 
 class TSNamedTupleMember {
   type = 'TSNamedTupleMember';
   #internal;
 
-  constructor(pos, ast, token) {
-    if (token !== TOKEN) throw new Error('Constructor is for internal use only');
+  constructor(pos, ast) {
+    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
     this.#internal = { $pos: pos, $ast: ast };
   }
 
@@ -7431,15 +7434,15 @@ class TSNamedTupleMember {
 }
 
 function deserializeTSOptionalType(pos, ast) {
-  return new TSOptionalType(pos, ast, TOKEN);
+  return new TSOptionalType(pos, ast);
 }
 
 class TSOptionalType {
   type = 'TSOptionalType';
   #internal;
 
-  constructor(pos, ast, token) {
-    if (token !== TOKEN) throw new Error('Constructor is for internal use only');
+  constructor(pos, ast) {
+    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
     this.#internal = { $pos: pos, $ast: ast };
   }
 
@@ -7469,15 +7472,15 @@ class TSOptionalType {
 }
 
 function deserializeTSRestType(pos, ast) {
-  return new TSRestType(pos, ast, TOKEN);
+  return new TSRestType(pos, ast);
 }
 
 class TSRestType {
   type = 'TSRestType';
   #internal;
 
-  constructor(pos, ast, token) {
-    if (token !== TOKEN) throw new Error('Constructor is for internal use only');
+  constructor(pos, ast) {
+    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
     this.#internal = { $pos: pos, $ast: ast };
   }
 
@@ -7592,15 +7595,15 @@ function deserializeTSTupleElement(pos, ast) {
 }
 
 function deserializeTSAnyKeyword(pos, ast) {
-  return new TSAnyKeyword(pos, ast, TOKEN);
+  return new TSAnyKeyword(pos, ast);
 }
 
 class TSAnyKeyword {
   type = 'TSAnyKeyword';
   #internal;
 
-  constructor(pos, ast, token) {
-    if (token !== TOKEN) throw new Error('Constructor is for internal use only');
+  constructor(pos, ast) {
+    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
     this.#internal = { $pos: pos, $ast: ast };
   }
 
@@ -7624,15 +7627,15 @@ class TSAnyKeyword {
 }
 
 function deserializeTSStringKeyword(pos, ast) {
-  return new TSStringKeyword(pos, ast, TOKEN);
+  return new TSStringKeyword(pos, ast);
 }
 
 class TSStringKeyword {
   type = 'TSStringKeyword';
   #internal;
 
-  constructor(pos, ast, token) {
-    if (token !== TOKEN) throw new Error('Constructor is for internal use only');
+  constructor(pos, ast) {
+    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
     this.#internal = { $pos: pos, $ast: ast };
   }
 
@@ -7656,15 +7659,15 @@ class TSStringKeyword {
 }
 
 function deserializeTSBooleanKeyword(pos, ast) {
-  return new TSBooleanKeyword(pos, ast, TOKEN);
+  return new TSBooleanKeyword(pos, ast);
 }
 
 class TSBooleanKeyword {
   type = 'TSBooleanKeyword';
   #internal;
 
-  constructor(pos, ast, token) {
-    if (token !== TOKEN) throw new Error('Constructor is for internal use only');
+  constructor(pos, ast) {
+    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
     this.#internal = { $pos: pos, $ast: ast };
   }
 
@@ -7688,15 +7691,15 @@ class TSBooleanKeyword {
 }
 
 function deserializeTSNumberKeyword(pos, ast) {
-  return new TSNumberKeyword(pos, ast, TOKEN);
+  return new TSNumberKeyword(pos, ast);
 }
 
 class TSNumberKeyword {
   type = 'TSNumberKeyword';
   #internal;
 
-  constructor(pos, ast, token) {
-    if (token !== TOKEN) throw new Error('Constructor is for internal use only');
+  constructor(pos, ast) {
+    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
     this.#internal = { $pos: pos, $ast: ast };
   }
 
@@ -7720,15 +7723,15 @@ class TSNumberKeyword {
 }
 
 function deserializeTSNeverKeyword(pos, ast) {
-  return new TSNeverKeyword(pos, ast, TOKEN);
+  return new TSNeverKeyword(pos, ast);
 }
 
 class TSNeverKeyword {
   type = 'TSNeverKeyword';
   #internal;
 
-  constructor(pos, ast, token) {
-    if (token !== TOKEN) throw new Error('Constructor is for internal use only');
+  constructor(pos, ast) {
+    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
     this.#internal = { $pos: pos, $ast: ast };
   }
 
@@ -7752,15 +7755,15 @@ class TSNeverKeyword {
 }
 
 function deserializeTSIntrinsicKeyword(pos, ast) {
-  return new TSIntrinsicKeyword(pos, ast, TOKEN);
+  return new TSIntrinsicKeyword(pos, ast);
 }
 
 class TSIntrinsicKeyword {
   type = 'TSIntrinsicKeyword';
   #internal;
 
-  constructor(pos, ast, token) {
-    if (token !== TOKEN) throw new Error('Constructor is for internal use only');
+  constructor(pos, ast) {
+    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
     this.#internal = { $pos: pos, $ast: ast };
   }
 
@@ -7784,15 +7787,15 @@ class TSIntrinsicKeyword {
 }
 
 function deserializeTSUnknownKeyword(pos, ast) {
-  return new TSUnknownKeyword(pos, ast, TOKEN);
+  return new TSUnknownKeyword(pos, ast);
 }
 
 class TSUnknownKeyword {
   type = 'TSUnknownKeyword';
   #internal;
 
-  constructor(pos, ast, token) {
-    if (token !== TOKEN) throw new Error('Constructor is for internal use only');
+  constructor(pos, ast) {
+    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
     this.#internal = { $pos: pos, $ast: ast };
   }
 
@@ -7816,15 +7819,15 @@ class TSUnknownKeyword {
 }
 
 function deserializeTSNullKeyword(pos, ast) {
-  return new TSNullKeyword(pos, ast, TOKEN);
+  return new TSNullKeyword(pos, ast);
 }
 
 class TSNullKeyword {
   type = 'TSNullKeyword';
   #internal;
 
-  constructor(pos, ast, token) {
-    if (token !== TOKEN) throw new Error('Constructor is for internal use only');
+  constructor(pos, ast) {
+    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
     this.#internal = { $pos: pos, $ast: ast };
   }
 
@@ -7848,15 +7851,15 @@ class TSNullKeyword {
 }
 
 function deserializeTSUndefinedKeyword(pos, ast) {
-  return new TSUndefinedKeyword(pos, ast, TOKEN);
+  return new TSUndefinedKeyword(pos, ast);
 }
 
 class TSUndefinedKeyword {
   type = 'TSUndefinedKeyword';
   #internal;
 
-  constructor(pos, ast, token) {
-    if (token !== TOKEN) throw new Error('Constructor is for internal use only');
+  constructor(pos, ast) {
+    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
     this.#internal = { $pos: pos, $ast: ast };
   }
 
@@ -7880,15 +7883,15 @@ class TSUndefinedKeyword {
 }
 
 function deserializeTSVoidKeyword(pos, ast) {
-  return new TSVoidKeyword(pos, ast, TOKEN);
+  return new TSVoidKeyword(pos, ast);
 }
 
 class TSVoidKeyword {
   type = 'TSVoidKeyword';
   #internal;
 
-  constructor(pos, ast, token) {
-    if (token !== TOKEN) throw new Error('Constructor is for internal use only');
+  constructor(pos, ast) {
+    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
     this.#internal = { $pos: pos, $ast: ast };
   }
 
@@ -7912,15 +7915,15 @@ class TSVoidKeyword {
 }
 
 function deserializeTSSymbolKeyword(pos, ast) {
-  return new TSSymbolKeyword(pos, ast, TOKEN);
+  return new TSSymbolKeyword(pos, ast);
 }
 
 class TSSymbolKeyword {
   type = 'TSSymbolKeyword';
   #internal;
 
-  constructor(pos, ast, token) {
-    if (token !== TOKEN) throw new Error('Constructor is for internal use only');
+  constructor(pos, ast) {
+    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
     this.#internal = { $pos: pos, $ast: ast };
   }
 
@@ -7944,15 +7947,15 @@ class TSSymbolKeyword {
 }
 
 function deserializeTSThisType(pos, ast) {
-  return new TSThisType(pos, ast, TOKEN);
+  return new TSThisType(pos, ast);
 }
 
 class TSThisType {
   type = 'TSThisType';
   #internal;
 
-  constructor(pos, ast, token) {
-    if (token !== TOKEN) throw new Error('Constructor is for internal use only');
+  constructor(pos, ast) {
+    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
     this.#internal = { $pos: pos, $ast: ast };
   }
 
@@ -7976,15 +7979,15 @@ class TSThisType {
 }
 
 function deserializeTSObjectKeyword(pos, ast) {
-  return new TSObjectKeyword(pos, ast, TOKEN);
+  return new TSObjectKeyword(pos, ast);
 }
 
 class TSObjectKeyword {
   type = 'TSObjectKeyword';
   #internal;
 
-  constructor(pos, ast, token) {
-    if (token !== TOKEN) throw new Error('Constructor is for internal use only');
+  constructor(pos, ast) {
+    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
     this.#internal = { $pos: pos, $ast: ast };
   }
 
@@ -8008,15 +8011,15 @@ class TSObjectKeyword {
 }
 
 function deserializeTSBigIntKeyword(pos, ast) {
-  return new TSBigIntKeyword(pos, ast, TOKEN);
+  return new TSBigIntKeyword(pos, ast);
 }
 
 class TSBigIntKeyword {
   type = 'TSBigIntKeyword';
   #internal;
 
-  constructor(pos, ast, token) {
-    if (token !== TOKEN) throw new Error('Constructor is for internal use only');
+  constructor(pos, ast) {
+    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
     this.#internal = { $pos: pos, $ast: ast };
   }
 
@@ -8040,15 +8043,15 @@ class TSBigIntKeyword {
 }
 
 function deserializeTSTypeReference(pos, ast) {
-  return new TSTypeReference(pos, ast, TOKEN);
+  return new TSTypeReference(pos, ast);
 }
 
 class TSTypeReference {
   type = 'TSTypeReference';
   #internal;
 
-  constructor(pos, ast, token) {
-    if (token !== TOKEN) throw new Error('Constructor is for internal use only');
+  constructor(pos, ast) {
+    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
     this.#internal = { $pos: pos, $ast: ast };
   }
 
@@ -8095,15 +8098,15 @@ function deserializeTSTypeName(pos, ast) {
 }
 
 function deserializeTSQualifiedName(pos, ast) {
-  return new TSQualifiedName(pos, ast, TOKEN);
+  return new TSQualifiedName(pos, ast);
 }
 
 class TSQualifiedName {
   type = 'TSQualifiedName';
   #internal;
 
-  constructor(pos, ast, token) {
-    if (token !== TOKEN) throw new Error('Constructor is for internal use only');
+  constructor(pos, ast) {
+    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
     this.#internal = { $pos: pos, $ast: ast };
   }
 
@@ -8139,15 +8142,15 @@ class TSQualifiedName {
 }
 
 function deserializeTSTypeParameterInstantiation(pos, ast) {
-  return new TSTypeParameterInstantiation(pos, ast, TOKEN);
+  return new TSTypeParameterInstantiation(pos, ast);
 }
 
 class TSTypeParameterInstantiation {
   type = 'TSTypeParameterInstantiation';
   #internal;
 
-  constructor(pos, ast, token) {
-    if (token !== TOKEN) throw new Error('Constructor is for internal use only');
+  constructor(pos, ast) {
+    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
     this.#internal = { $pos: pos, $ast: ast, params: void 0 };
   }
 
@@ -8179,15 +8182,15 @@ class TSTypeParameterInstantiation {
 }
 
 function deserializeTSTypeParameter(pos, ast) {
-  return new TSTypeParameter(pos, ast, TOKEN);
+  return new TSTypeParameter(pos, ast);
 }
 
 class TSTypeParameter {
   type = 'TSTypeParameter';
   #internal;
 
-  constructor(pos, ast, token) {
-    if (token !== TOKEN) throw new Error('Constructor is for internal use only');
+  constructor(pos, ast) {
+    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
     this.#internal = { $pos: pos, $ast: ast };
   }
 
@@ -8247,15 +8250,15 @@ class TSTypeParameter {
 }
 
 function deserializeTSTypeParameterDeclaration(pos, ast) {
-  return new TSTypeParameterDeclaration(pos, ast, TOKEN);
+  return new TSTypeParameterDeclaration(pos, ast);
 }
 
 class TSTypeParameterDeclaration {
   type = 'TSTypeParameterDeclaration';
   #internal;
 
-  constructor(pos, ast, token) {
-    if (token !== TOKEN) throw new Error('Constructor is for internal use only');
+  constructor(pos, ast) {
+    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
     this.#internal = { $pos: pos, $ast: ast, params: void 0 };
   }
 
@@ -8287,15 +8290,15 @@ class TSTypeParameterDeclaration {
 }
 
 function deserializeTSTypeAliasDeclaration(pos, ast) {
-  return new TSTypeAliasDeclaration(pos, ast, TOKEN);
+  return new TSTypeAliasDeclaration(pos, ast);
 }
 
 class TSTypeAliasDeclaration {
   type = 'TSTypeAliasDeclaration';
   #internal;
 
-  constructor(pos, ast, token) {
-    if (token !== TOKEN) throw new Error('Constructor is for internal use only');
+  constructor(pos, ast) {
+    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
     this.#internal = { $pos: pos, $ast: ast };
   }
 
@@ -8356,15 +8359,15 @@ function deserializeTSAccessibility(pos, ast) {
 }
 
 function deserializeTSClassImplements(pos, ast) {
-  return new TSClassImplements(pos, ast, TOKEN);
+  return new TSClassImplements(pos, ast);
 }
 
 class TSClassImplements {
   type = 'TSClassImplements';
   #internal;
 
-  constructor(pos, ast, token) {
-    if (token !== TOKEN) throw new Error('Constructor is for internal use only');
+  constructor(pos, ast) {
+    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
     this.#internal = { $pos: pos, $ast: ast };
   }
 
@@ -8400,15 +8403,15 @@ class TSClassImplements {
 }
 
 function deserializeTSInterfaceDeclaration(pos, ast) {
-  return new TSInterfaceDeclaration(pos, ast, TOKEN);
+  return new TSInterfaceDeclaration(pos, ast);
 }
 
 class TSInterfaceDeclaration {
   type = 'TSInterfaceDeclaration';
   #internal;
 
-  constructor(pos, ast, token) {
-    if (token !== TOKEN) throw new Error('Constructor is for internal use only');
+  constructor(pos, ast) {
+    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
     this.#internal = { $pos: pos, $ast: ast, extends: void 0 };
   }
 
@@ -8464,15 +8467,15 @@ class TSInterfaceDeclaration {
 }
 
 function deserializeTSInterfaceBody(pos, ast) {
-  return new TSInterfaceBody(pos, ast, TOKEN);
+  return new TSInterfaceBody(pos, ast);
 }
 
 class TSInterfaceBody {
   type = 'TSInterfaceBody';
   #internal;
 
-  constructor(pos, ast, token) {
-    if (token !== TOKEN) throw new Error('Constructor is for internal use only');
+  constructor(pos, ast) {
+    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
     this.#internal = { $pos: pos, $ast: ast, body: void 0 };
   }
 
@@ -8504,15 +8507,15 @@ class TSInterfaceBody {
 }
 
 function deserializeTSPropertySignature(pos, ast) {
-  return new TSPropertySignature(pos, ast, TOKEN);
+  return new TSPropertySignature(pos, ast);
 }
 
 class TSPropertySignature {
   type = 'TSPropertySignature';
   #internal;
 
-  constructor(pos, ast, token) {
-    if (token !== TOKEN) throw new Error('Constructor is for internal use only');
+  constructor(pos, ast) {
+    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
     this.#internal = { $pos: pos, $ast: ast };
   }
 
@@ -8583,15 +8586,15 @@ function deserializeTSSignature(pos, ast) {
 }
 
 function deserializeTSIndexSignature(pos, ast) {
-  return new TSIndexSignature(pos, ast, TOKEN);
+  return new TSIndexSignature(pos, ast);
 }
 
 class TSIndexSignature {
   type = 'TSIndexSignature';
   #internal;
 
-  constructor(pos, ast, token) {
-    if (token !== TOKEN) throw new Error('Constructor is for internal use only');
+  constructor(pos, ast) {
+    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
     this.#internal = { $pos: pos, $ast: ast, parameters: void 0 };
   }
 
@@ -8641,15 +8644,15 @@ class TSIndexSignature {
 }
 
 function deserializeTSCallSignatureDeclaration(pos, ast) {
-  return new TSCallSignatureDeclaration(pos, ast, TOKEN);
+  return new TSCallSignatureDeclaration(pos, ast);
 }
 
 class TSCallSignatureDeclaration {
   type = 'TSCallSignatureDeclaration';
   #internal;
 
-  constructor(pos, ast, token) {
-    if (token !== TOKEN) throw new Error('Constructor is for internal use only');
+  constructor(pos, ast) {
+    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
     this.#internal = { $pos: pos, $ast: ast };
   }
 
@@ -8704,15 +8707,15 @@ function deserializeTSMethodSignatureKind(pos, ast) {
 }
 
 function deserializeTSMethodSignature(pos, ast) {
-  return new TSMethodSignature(pos, ast, TOKEN);
+  return new TSMethodSignature(pos, ast);
 }
 
 class TSMethodSignature {
   type = 'TSMethodSignature';
   #internal;
 
-  constructor(pos, ast, token) {
-    if (token !== TOKEN) throw new Error('Constructor is for internal use only');
+  constructor(pos, ast) {
+    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
     this.#internal = { $pos: pos, $ast: ast };
   }
 
@@ -8778,15 +8781,15 @@ class TSMethodSignature {
 }
 
 function deserializeTSConstructSignatureDeclaration(pos, ast) {
-  return new TSConstructSignatureDeclaration(pos, ast, TOKEN);
+  return new TSConstructSignatureDeclaration(pos, ast);
 }
 
 class TSConstructSignatureDeclaration {
   type = 'TSConstructSignatureDeclaration';
   #internal;
 
-  constructor(pos, ast, token) {
-    if (token !== TOKEN) throw new Error('Constructor is for internal use only');
+  constructor(pos, ast) {
+    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
     this.#internal = { $pos: pos, $ast: ast };
   }
 
@@ -8828,15 +8831,15 @@ class TSConstructSignatureDeclaration {
 }
 
 function deserializeTSIndexSignatureName(pos, ast) {
-  return new TSIndexSignatureName(pos, ast, TOKEN);
+  return new TSIndexSignatureName(pos, ast);
 }
 
 class TSIndexSignatureName {
   type = 'TSIndexSignatureName';
   #internal;
 
-  constructor(pos, ast, token) {
-    if (token !== TOKEN) throw new Error('Constructor is for internal use only');
+  constructor(pos, ast) {
+    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
     this.#internal = { $pos: pos, $ast: ast, name: void 0 };
   }
 
@@ -8874,15 +8877,15 @@ class TSIndexSignatureName {
 }
 
 function deserializeTSInterfaceHeritage(pos, ast) {
-  return new TSInterfaceHeritage(pos, ast, TOKEN);
+  return new TSInterfaceHeritage(pos, ast);
 }
 
 class TSInterfaceHeritage {
   type = 'TSInterfaceHeritage';
   #internal;
 
-  constructor(pos, ast, token) {
-    if (token !== TOKEN) throw new Error('Constructor is for internal use only');
+  constructor(pos, ast) {
+    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
     this.#internal = { $pos: pos, $ast: ast };
   }
 
@@ -8918,15 +8921,15 @@ class TSInterfaceHeritage {
 }
 
 function deserializeTSTypePredicate(pos, ast) {
-  return new TSTypePredicate(pos, ast, TOKEN);
+  return new TSTypePredicate(pos, ast);
 }
 
 class TSTypePredicate {
   type = 'TSTypePredicate';
   #internal;
 
-  constructor(pos, ast, token) {
-    if (token !== TOKEN) throw new Error('Constructor is for internal use only');
+  constructor(pos, ast) {
+    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
     this.#internal = { $pos: pos, $ast: ast };
   }
 
@@ -8979,15 +8982,15 @@ function deserializeTSTypePredicateName(pos, ast) {
 }
 
 function deserializeTSModuleDeclaration(pos, ast) {
-  return new TSModuleDeclaration(pos, ast, TOKEN);
+  return new TSModuleDeclaration(pos, ast);
 }
 
 class TSModuleDeclaration {
   type = 'TSModuleDeclaration';
   #internal;
 
-  constructor(pos, ast, token) {
-    if (token !== TOKEN) throw new Error('Constructor is for internal use only');
+  constructor(pos, ast) {
+    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
     this.#internal = { $pos: pos, $ast: ast };
   }
 
@@ -9070,15 +9073,15 @@ function deserializeTSModuleDeclarationBody(pos, ast) {
 }
 
 function deserializeTSModuleBlock(pos, ast) {
-  return new TSModuleBlock(pos, ast, TOKEN);
+  return new TSModuleBlock(pos, ast);
 }
 
 class TSModuleBlock {
   type = 'TSModuleBlock';
   #internal;
 
-  constructor(pos, ast, token) {
-    if (token !== TOKEN) throw new Error('Constructor is for internal use only');
+  constructor(pos, ast) {
+    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
     this.#internal = { $pos: pos, $ast: ast, body: void 0 };
   }
 
@@ -9110,15 +9113,15 @@ class TSModuleBlock {
 }
 
 function deserializeTSTypeLiteral(pos, ast) {
-  return new TSTypeLiteral(pos, ast, TOKEN);
+  return new TSTypeLiteral(pos, ast);
 }
 
 class TSTypeLiteral {
   type = 'TSTypeLiteral';
   #internal;
 
-  constructor(pos, ast, token) {
-    if (token !== TOKEN) throw new Error('Constructor is for internal use only');
+  constructor(pos, ast) {
+    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
     this.#internal = { $pos: pos, $ast: ast, members: void 0 };
   }
 
@@ -9150,15 +9153,15 @@ class TSTypeLiteral {
 }
 
 function deserializeTSInferType(pos, ast) {
-  return new TSInferType(pos, ast, TOKEN);
+  return new TSInferType(pos, ast);
 }
 
 class TSInferType {
   type = 'TSInferType';
   #internal;
 
-  constructor(pos, ast, token) {
-    if (token !== TOKEN) throw new Error('Constructor is for internal use only');
+  constructor(pos, ast) {
+    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
     this.#internal = { $pos: pos, $ast: ast };
   }
 
@@ -9188,15 +9191,15 @@ class TSInferType {
 }
 
 function deserializeTSTypeQuery(pos, ast) {
-  return new TSTypeQuery(pos, ast, TOKEN);
+  return new TSTypeQuery(pos, ast);
 }
 
 class TSTypeQuery {
   type = 'TSTypeQuery';
   #internal;
 
-  constructor(pos, ast, token) {
-    if (token !== TOKEN) throw new Error('Constructor is for internal use only');
+  constructor(pos, ast) {
+    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
     this.#internal = { $pos: pos, $ast: ast };
   }
 
@@ -9245,15 +9248,15 @@ function deserializeTSTypeQueryExprName(pos, ast) {
 }
 
 function deserializeTSImportType(pos, ast) {
-  return new TSImportType(pos, ast, TOKEN);
+  return new TSImportType(pos, ast);
 }
 
 class TSImportType {
   type = 'TSImportType';
   #internal;
 
-  constructor(pos, ast, token) {
-    if (token !== TOKEN) throw new Error('Constructor is for internal use only');
+  constructor(pos, ast) {
+    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
     this.#internal = { $pos: pos, $ast: ast };
   }
 
@@ -9301,15 +9304,15 @@ class TSImportType {
 }
 
 function deserializeTSFunctionType(pos, ast) {
-  return new TSFunctionType(pos, ast, TOKEN);
+  return new TSFunctionType(pos, ast);
 }
 
 class TSFunctionType {
   type = 'TSFunctionType';
   #internal;
 
-  constructor(pos, ast, token) {
-    if (token !== TOKEN) throw new Error('Constructor is for internal use only');
+  constructor(pos, ast) {
+    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
     this.#internal = { $pos: pos, $ast: ast };
   }
 
@@ -9351,15 +9354,15 @@ class TSFunctionType {
 }
 
 function deserializeTSConstructorType(pos, ast) {
-  return new TSConstructorType(pos, ast, TOKEN);
+  return new TSConstructorType(pos, ast);
 }
 
 class TSConstructorType {
   type = 'TSConstructorType';
   #internal;
 
-  constructor(pos, ast, token) {
-    if (token !== TOKEN) throw new Error('Constructor is for internal use only');
+  constructor(pos, ast) {
+    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
     this.#internal = { $pos: pos, $ast: ast };
   }
 
@@ -9407,15 +9410,15 @@ class TSConstructorType {
 }
 
 function deserializeTSMappedType(pos, ast) {
-  return new TSMappedType(pos, ast, TOKEN);
+  return new TSMappedType(pos, ast);
 }
 
 class TSMappedType {
   type = 'TSMappedType';
   #internal;
 
-  constructor(pos, ast, token) {
-    if (token !== TOKEN) throw new Error('Constructor is for internal use only');
+  constructor(pos, ast) {
+    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
     this.#internal = { $pos: pos, $ast: ast };
   }
 
@@ -9476,15 +9479,15 @@ function deserializeTSMappedTypeModifierOperator(pos, ast) {
 }
 
 function deserializeTSTemplateLiteralType(pos, ast) {
-  return new TSTemplateLiteralType(pos, ast, TOKEN);
+  return new TSTemplateLiteralType(pos, ast);
 }
 
 class TSTemplateLiteralType {
   type = 'TSTemplateLiteralType';
   #internal;
 
-  constructor(pos, ast, token) {
-    if (token !== TOKEN) throw new Error('Constructor is for internal use only');
+  constructor(pos, ast) {
+    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
     this.#internal = { $pos: pos, $ast: ast, quasis: void 0, types: void 0 };
   }
 
@@ -9524,15 +9527,15 @@ class TSTemplateLiteralType {
 }
 
 function deserializeTSAsExpression(pos, ast) {
-  return new TSAsExpression(pos, ast, TOKEN);
+  return new TSAsExpression(pos, ast);
 }
 
 class TSAsExpression {
   type = 'TSAsExpression';
   #internal;
 
-  constructor(pos, ast, token) {
-    if (token !== TOKEN) throw new Error('Constructor is for internal use only');
+  constructor(pos, ast) {
+    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
     this.#internal = { $pos: pos, $ast: ast };
   }
 
@@ -9568,15 +9571,15 @@ class TSAsExpression {
 }
 
 function deserializeTSSatisfiesExpression(pos, ast) {
-  return new TSSatisfiesExpression(pos, ast, TOKEN);
+  return new TSSatisfiesExpression(pos, ast);
 }
 
 class TSSatisfiesExpression {
   type = 'TSSatisfiesExpression';
   #internal;
 
-  constructor(pos, ast, token) {
-    if (token !== TOKEN) throw new Error('Constructor is for internal use only');
+  constructor(pos, ast) {
+    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
     this.#internal = { $pos: pos, $ast: ast };
   }
 
@@ -9612,15 +9615,15 @@ class TSSatisfiesExpression {
 }
 
 function deserializeTSTypeAssertion(pos, ast) {
-  return new TSTypeAssertion(pos, ast, TOKEN);
+  return new TSTypeAssertion(pos, ast);
 }
 
 class TSTypeAssertion {
   type = 'TSTypeAssertion';
   #internal;
 
-  constructor(pos, ast, token) {
-    if (token !== TOKEN) throw new Error('Constructor is for internal use only');
+  constructor(pos, ast) {
+    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
     this.#internal = { $pos: pos, $ast: ast };
   }
 
@@ -9656,15 +9659,15 @@ class TSTypeAssertion {
 }
 
 function deserializeTSImportEqualsDeclaration(pos, ast) {
-  return new TSImportEqualsDeclaration(pos, ast, TOKEN);
+  return new TSImportEqualsDeclaration(pos, ast);
 }
 
 class TSImportEqualsDeclaration {
   type = 'TSImportEqualsDeclaration';
   #internal;
 
-  constructor(pos, ast, token) {
-    if (token !== TOKEN) throw new Error('Constructor is for internal use only');
+  constructor(pos, ast) {
+    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
     this.#internal = { $pos: pos, $ast: ast };
   }
 
@@ -9719,15 +9722,15 @@ function deserializeTSModuleReference(pos, ast) {
 }
 
 function deserializeTSExternalModuleReference(pos, ast) {
-  return new TSExternalModuleReference(pos, ast, TOKEN);
+  return new TSExternalModuleReference(pos, ast);
 }
 
 class TSExternalModuleReference {
   type = 'TSExternalModuleReference';
   #internal;
 
-  constructor(pos, ast, token) {
-    if (token !== TOKEN) throw new Error('Constructor is for internal use only');
+  constructor(pos, ast) {
+    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
     this.#internal = { $pos: pos, $ast: ast };
   }
 
@@ -9757,15 +9760,15 @@ class TSExternalModuleReference {
 }
 
 function deserializeTSNonNullExpression(pos, ast) {
-  return new TSNonNullExpression(pos, ast, TOKEN);
+  return new TSNonNullExpression(pos, ast);
 }
 
 class TSNonNullExpression {
   type = 'TSNonNullExpression';
   #internal;
 
-  constructor(pos, ast, token) {
-    if (token !== TOKEN) throw new Error('Constructor is for internal use only');
+  constructor(pos, ast) {
+    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
     this.#internal = { $pos: pos, $ast: ast };
   }
 
@@ -9795,15 +9798,15 @@ class TSNonNullExpression {
 }
 
 function deserializeDecorator(pos, ast) {
-  return new Decorator(pos, ast, TOKEN);
+  return new Decorator(pos, ast);
 }
 
 class Decorator {
   type = 'Decorator';
   #internal;
 
-  constructor(pos, ast, token) {
-    if (token !== TOKEN) throw new Error('Constructor is for internal use only');
+  constructor(pos, ast) {
+    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
     this.#internal = { $pos: pos, $ast: ast };
   }
 
@@ -9833,15 +9836,15 @@ class Decorator {
 }
 
 function deserializeTSExportAssignment(pos, ast) {
-  return new TSExportAssignment(pos, ast, TOKEN);
+  return new TSExportAssignment(pos, ast);
 }
 
 class TSExportAssignment {
   type = 'TSExportAssignment';
   #internal;
 
-  constructor(pos, ast, token) {
-    if (token !== TOKEN) throw new Error('Constructor is for internal use only');
+  constructor(pos, ast) {
+    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
     this.#internal = { $pos: pos, $ast: ast };
   }
 
@@ -9871,15 +9874,15 @@ class TSExportAssignment {
 }
 
 function deserializeTSNamespaceExportDeclaration(pos, ast) {
-  return new TSNamespaceExportDeclaration(pos, ast, TOKEN);
+  return new TSNamespaceExportDeclaration(pos, ast);
 }
 
 class TSNamespaceExportDeclaration {
   type = 'TSNamespaceExportDeclaration';
   #internal;
 
-  constructor(pos, ast, token) {
-    if (token !== TOKEN) throw new Error('Constructor is for internal use only');
+  constructor(pos, ast) {
+    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
     this.#internal = { $pos: pos, $ast: ast };
   }
 
@@ -9909,15 +9912,15 @@ class TSNamespaceExportDeclaration {
 }
 
 function deserializeTSInstantiationExpression(pos, ast) {
-  return new TSInstantiationExpression(pos, ast, TOKEN);
+  return new TSInstantiationExpression(pos, ast);
 }
 
 class TSInstantiationExpression {
   type = 'TSInstantiationExpression';
   #internal;
 
-  constructor(pos, ast, token) {
-    if (token !== TOKEN) throw new Error('Constructor is for internal use only');
+  constructor(pos, ast) {
+    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
     this.#internal = { $pos: pos, $ast: ast };
   }
 
@@ -9964,15 +9967,15 @@ function deserializeImportOrExportKind(pos, ast) {
 }
 
 function deserializeJSDocNullableType(pos, ast) {
-  return new JSDocNullableType(pos, ast, TOKEN);
+  return new JSDocNullableType(pos, ast);
 }
 
 class JSDocNullableType {
   type = 'JSDocNullableType';
   #internal;
 
-  constructor(pos, ast, token) {
-    if (token !== TOKEN) throw new Error('Constructor is for internal use only');
+  constructor(pos, ast) {
+    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
     this.#internal = { $pos: pos, $ast: ast };
   }
 
@@ -10008,15 +10011,15 @@ class JSDocNullableType {
 }
 
 function deserializeJSDocNonNullableType(pos, ast) {
-  return new JSDocNonNullableType(pos, ast, TOKEN);
+  return new JSDocNonNullableType(pos, ast);
 }
 
 class JSDocNonNullableType {
   type = 'JSDocNonNullableType';
   #internal;
 
-  constructor(pos, ast, token) {
-    if (token !== TOKEN) throw new Error('Constructor is for internal use only');
+  constructor(pos, ast) {
+    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
     this.#internal = { $pos: pos, $ast: ast };
   }
 
@@ -10052,15 +10055,15 @@ class JSDocNonNullableType {
 }
 
 function deserializeJSDocUnknownType(pos, ast) {
-  return new JSDocUnknownType(pos, ast, TOKEN);
+  return new JSDocUnknownType(pos, ast);
 }
 
 class JSDocUnknownType {
   type = 'JSDocUnknownType';
   #internal;
 
-  constructor(pos, ast, token) {
-    if (token !== TOKEN) throw new Error('Constructor is for internal use only');
+  constructor(pos, ast) {
+    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
     this.#internal = { $pos: pos, $ast: ast };
   }
 
@@ -10095,14 +10098,14 @@ function deserializeCommentKind(pos, ast) {
 }
 
 function deserializeComment(pos, ast) {
-  return new Comment(pos, ast, TOKEN);
+  return new Comment(pos, ast);
 }
 
 class Comment {
   #internal;
 
-  constructor(pos, ast, token) {
-    if (token !== TOKEN) throw new Error('Constructor is for internal use only');
+  constructor(pos, ast) {
+    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
     this.#internal = { $pos: pos, $ast: ast };
   }
 
@@ -10131,14 +10134,14 @@ class Comment {
 }
 
 function deserializeNameSpan(pos, ast) {
-  return new NameSpan(pos, ast, TOKEN);
+  return new NameSpan(pos, ast);
 }
 
 class NameSpan {
   #internal;
 
-  constructor(pos, ast, token) {
-    if (token !== TOKEN) throw new Error('Constructor is for internal use only');
+  constructor(pos, ast) {
+    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
     this.#internal = { $pos: pos, $ast: ast, value: void 0 };
   }
 
@@ -10169,14 +10172,14 @@ class NameSpan {
 }
 
 function deserializeImportEntry(pos, ast) {
-  return new ImportEntry(pos, ast, TOKEN);
+  return new ImportEntry(pos, ast);
 }
 
 class ImportEntry {
   #internal;
 
-  constructor(pos, ast, token) {
-    if (token !== TOKEN) throw new Error('Constructor is for internal use only');
+  constructor(pos, ast) {
+    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
     this.#internal = { $pos: pos, $ast: ast };
   }
 
@@ -10218,14 +10221,14 @@ function deserializeImportImportName(pos, ast) {
 }
 
 function deserializeExportEntry(pos, ast) {
-  return new ExportEntry(pos, ast, TOKEN);
+  return new ExportEntry(pos, ast);
 }
 
 class ExportEntry {
   #internal;
 
-  constructor(pos, ast, token) {
-    if (token !== TOKEN) throw new Error('Constructor is for internal use only');
+  constructor(pos, ast) {
+    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
     this.#internal = { $pos: pos, $ast: ast };
   }
 
@@ -10319,14 +10322,14 @@ function deserializeExportLocalName(pos, ast) {
 }
 
 function deserializeDynamicImport(pos, ast) {
-  return new DynamicImport(pos, ast, TOKEN);
+  return new DynamicImport(pos, ast);
 }
 
 class DynamicImport {
   #internal;
 
-  constructor(pos, ast, token) {
-    if (token !== TOKEN) throw new Error('Constructor is for internal use only');
+  constructor(pos, ast) {
+    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
     this.#internal = { $pos: pos, $ast: ast };
   }
 
@@ -10490,14 +10493,14 @@ function deserializeUpdateOperator(pos, ast) {
 }
 
 function deserializeSpan(pos, ast) {
-  return new Span(pos, ast, TOKEN);
+  return new Span(pos, ast);
 }
 
 class Span {
   #internal;
 
-  constructor(pos, ast, token) {
-    if (token !== TOKEN) throw new Error('Constructor is for internal use only');
+  constructor(pos, ast) {
+    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
     this.#internal = { $pos: pos, $ast: ast };
   }
 
@@ -10520,14 +10523,14 @@ class Span {
 }
 
 function deserializeSourceType(pos, ast) {
-  return new SourceType(pos, ast, TOKEN);
+  return new SourceType(pos, ast);
 }
 
 class SourceType {
   #internal;
 
-  constructor(pos, ast, token) {
-    if (token !== TOKEN) throw new Error('Constructor is for internal use only');
+  constructor(pos, ast) {
+    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
     this.#internal = { $pos: pos, $ast: ast };
   }
 
@@ -10555,14 +10558,14 @@ function deserializeModuleKind(pos, ast) {
 }
 
 function deserializeRawTransferData(pos, ast) {
-  return new RawTransferData(pos, ast, TOKEN);
+  return new RawTransferData(pos, ast);
 }
 
 class RawTransferData {
   #internal;
 
-  constructor(pos, ast, token) {
-    if (token !== TOKEN) throw new Error('Constructor is for internal use only');
+  constructor(pos, ast) {
+    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
     this.#internal = { $pos: pos, $ast: ast, comments: void 0, errors: void 0 };
   }
 
@@ -10601,14 +10604,14 @@ class RawTransferData {
 }
 
 function deserializeError(pos, ast) {
-  return new Error(pos, ast, TOKEN);
+  return new Error(pos, ast);
 }
 
 class Error {
   #internal;
 
-  constructor(pos, ast, token) {
-    if (token !== TOKEN) throw new Error('Constructor is for internal use only');
+  constructor(pos, ast) {
+    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
     this.#internal = { $pos: pos, $ast: ast, message: void 0, labels: void 0, helpMessage: void 0, codeframe: void 0 };
   }
 
@@ -10670,14 +10673,14 @@ function deserializeErrorSeverity(pos, ast) {
 }
 
 function deserializeErrorLabel(pos, ast) {
-  return new ErrorLabel(pos, ast, TOKEN);
+  return new ErrorLabel(pos, ast);
 }
 
 class ErrorLabel {
   #internal;
 
-  constructor(pos, ast, token) {
-    if (token !== TOKEN) throw new Error('Constructor is for internal use only');
+  constructor(pos, ast) {
+    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
     this.#internal = { $pos: pos, $ast: ast, message: void 0 };
   }
 
@@ -10708,14 +10711,14 @@ class ErrorLabel {
 }
 
 function deserializeEcmaScriptModule(pos, ast) {
-  return new EcmaScriptModule(pos, ast, TOKEN);
+  return new EcmaScriptModule(pos, ast);
 }
 
 class EcmaScriptModule {
   #internal;
 
-  constructor(pos, ast, token) {
-    if (token !== TOKEN) throw new Error('Constructor is for internal use only');
+  constructor(pos, ast) {
+    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
     this.#internal = {
       $pos: pos,
       $ast: ast,
@@ -10771,14 +10774,14 @@ class EcmaScriptModule {
 }
 
 function deserializeStaticImport(pos, ast) {
-  return new StaticImport(pos, ast, TOKEN);
+  return new StaticImport(pos, ast);
 }
 
 class StaticImport {
   #internal;
 
-  constructor(pos, ast, token) {
-    if (token !== TOKEN) throw new Error('Constructor is for internal use only');
+  constructor(pos, ast) {
+    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
     this.#internal = { $pos: pos, $ast: ast, entries: void 0 };
   }
 
@@ -10815,14 +10818,14 @@ class StaticImport {
 }
 
 function deserializeStaticExport(pos, ast) {
-  return new StaticExport(pos, ast, TOKEN);
+  return new StaticExport(pos, ast);
 }
 
 class StaticExport {
   #internal;
 
-  constructor(pos, ast, token) {
-    if (token !== TOKEN) throw new Error('Constructor is for internal use only');
+  constructor(pos, ast) {
+    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
     this.#internal = { $pos: pos, $ast: ast, entries: void 0 };
   }
 
