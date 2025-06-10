@@ -669,3 +669,18 @@ pub fn satisfies_in_ts(span: Span) -> OxcDiagnostic {
     ts_error("8016", "Type satisfaction expressions can only be used in TypeScript files.")
         .with_label(span)
 }
+
+#[cold]
+pub fn optional_and_rest_tuple_member(span: Span) -> OxcDiagnostic {
+    ts_error("5085", "A tuple member cannot be both optional and rest.").with_label(span)
+}
+
+#[cold]
+pub fn optional_after_tuple_member_name(span: Span) -> OxcDiagnostic {
+    ts_error("5086", "A labeled tuple element is declared as optional with a question mark after the name and before the colon, rather than after the type.").with_label(span)
+}
+
+#[cold]
+pub fn rest_after_tuple_member_name(span: Span) -> OxcDiagnostic {
+    ts_error("5087", "A labeled tuple element is declared as rest with a '...' before the name, rather than before the type.").with_label(span)
+}

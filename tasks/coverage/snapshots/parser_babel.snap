@@ -3,7 +3,7 @@ commit: 1d4546bc
 parser_babel Summary:
 AST Parsed     : 2351/2362 (99.53%)
 Positive Passed: 2330/2362 (98.65%)
-Negative Passed: 1586/1698 (93.40%)
+Negative Passed: 1587/1698 (93.46%)
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/core/categorized/invalid-startindex-and-startline-specified-without-startcolumn/input.js
 
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/core/categorized/startline-and-startcolumn-specified/input.js
@@ -221,8 +221,6 @@ Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/ty
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/types/invalid-import-type-options-with-spread-element/input.ts
 
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/types/invalid-import-type-options-with-trailing-comma/input.ts
-
-Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/types/tuple-labeled-invalid-optional/input.ts
 
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/types/tuple-optional-invalid/input.ts
 
@@ -13401,6 +13399,12 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
  1 │ type T = [x<y>: A];
    ·               ┬
    ·               ╰── `,` expected
+   ╰────
+
+  × TS(5086): A labeled tuple element is declared as optional with a question mark after the name and before the colon, rather than after the type.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/types/tuple-labeled-invalid-optional/input.ts:1:14]
+ 1 │ type T = [x: A?];
+   ·              ──
    ╰────
 
   × TS(1273): 'public' modifier cannot be used on a type parameter.
