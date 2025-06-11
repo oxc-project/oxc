@@ -18,7 +18,9 @@ mod visit;
 pub use assert_layouts::AssertLayouts;
 pub use ast_builder::AstBuilderGenerator;
 pub use ast_kind::AstKindGenerator;
-pub use formatter::FormatterFormatGenerator;
+pub use formatter::{
+    FormatterAstNodesGenerator, FormatterFormatGenerator, FormatterFormatWriteGenerator,
+};
 pub use get_id::GetIdGenerator;
 pub use raw_transfer::RawTransferGenerator;
 pub use scopes_collector::ScopesCollectorGenerator;

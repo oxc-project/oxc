@@ -2,6 +2,7 @@ use oxc_ast::ast::*;
 
 use crate::{
     formatter::{Buffer, Formatter, prelude::*},
+    generated::ast_nodes::AstNode,
     options::Expand,
     write,
 };
@@ -14,12 +15,12 @@ pub struct FormatArrayExpressionOptions {
 }
 
 pub struct FormatArrayExpression<'a, 'b> {
-    array: &'b ArrayExpression<'a>,
+    array: &'b AstNode<'a, ArrayExpression<'a>>,
     options: FormatArrayExpressionOptions,
 }
 
 impl<'a, 'b> FormatArrayExpression<'a, 'b> {
-    pub fn new(array: &'b ArrayExpression<'a>) -> Self {
+    pub fn new(array: &'b AstNode<'a, ArrayExpression<'a>>) -> Self {
         Self { array, options: FormatArrayExpressionOptions::default() }
     }
 }
@@ -28,14 +29,14 @@ impl<'a> Format<'a> for FormatArrayExpression<'a, '_> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         write!(f, "[")?;
 
-        if self.array.elements.is_empty() {
-            write!(f, format_dangling_comments(self.array.span).with_block_indent());
+        if self.array.elements().is_empty() {
+            write!(f, format_dangling_comments(self.array.span()).with_block_indent());
         } else {
             let group_id = f.group_id("array");
             let should_expand = (!self.options.is_force_flat_mode && should_break(self.array))
                 || f.options().expand == Expand::Always;
 
-            let elements = ArrayElementList::new(&self.array.elements, group_id);
+            let elements = ArrayElementList::new(self.array.elements(), group_id);
 
             write!(
                 f,

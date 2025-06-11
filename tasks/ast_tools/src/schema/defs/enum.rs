@@ -36,6 +36,8 @@ pub struct EnumDef {
     pub containers: Containers,
     #[expect(unused)]
     pub visibility: Visibility,
+    // For `#[derive(...)]` attributes.
+    pub derives: Vec<String>,
     pub generated_derives: Derives,
     pub variants: Vec<VariantDef>,
     /// For `@inherits` inherited enum variants
@@ -60,6 +62,7 @@ impl EnumDef {
         is_foreign: bool,
         file_id: FileId,
         visibility: Visibility,
+        derives: Vec<String>,
         generated_derives: Derives,
         variants: Vec<VariantDef>,
         inherits: Vec<TypeId>,
@@ -73,6 +76,7 @@ impl EnumDef {
             file_id,
             containers: Containers::default(),
             visibility,
+            derives,
             generated_derives,
             variants,
             inherits,

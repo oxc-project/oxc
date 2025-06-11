@@ -1,9 +1,11 @@
+use oxc_allocator::Address;
 use oxc_ast::{AstKind, ast::*};
 use oxc_span::GetSpan;
 
 use crate::{
     format_args,
     formatter::{Buffer, FormatResult, Formatter, prelude::*},
+    generated::ast_nodes::{AstNode, AstNodes},
     write,
 };
 
@@ -12,30 +14,34 @@ use super::{
     type_parameters::{FormatTsTypeParameters, FormatTsTypeParametersOptions},
 };
 
-impl<'a> FormatWrite<'a> for Class<'a> {
+impl<'a> FormatWrite<'a> for AstNode<'a, Class<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        let Self {
-            decorators, id, type_parameters, super_class, implements, body, r#abstract, ..
-        } = self;
+        let decorators = self.decorators();
+        let id = self.id();
+        let type_parameters = self.type_parameters();
+        let super_class = self.super_class();
+        let implements = self.implements();
+        let body = self.body();
+        let r#abstract = self.r#abstract();
 
         let group_mode = should_group(self, f);
 
         if !matches!(
-            f.parent_kind(),
-            AstKind::ExportNamedDeclaration(_) | AstKind::ExportDefaultDeclaration(_)
+            self.parent,
+            AstNodes::ExportNamedDeclaration(_) | AstNodes::ExportDefaultDeclaration(_)
         ) {
             write!(f, decorators)?;
         }
 
-        if *r#abstract {
+        if r#abstract {
             write!(f, ["abstract", space()])?;
         }
 
         write!(f, "class")?;
 
-        let indent_only_heritage = (implements.is_empty() || !super_class.is_some())
+        let indent_only_heritage = (implements.is_empty() || super_class.is_none())
             && type_parameters.as_ref().is_some_and(|type_parameters| {
-                !f.comments().has_trailing_line_comment(type_parameters.span.end)
+                !f.comments().has_trailing_line_comment(type_parameters.span().end)
             });
 
         let type_parameters_id = if indent_only_heritage && !implements.is_empty() {
@@ -107,15 +113,15 @@ impl<'a> FormatWrite<'a> for Class<'a> {
             let heritage_id = f.group_id("heritageGroup");
             write!(f, [group(&indented).with_group_id(Some(heritage_id)), space()])?;
 
-            if !body.body.is_empty() {
+            if !body.body().is_empty() {
                 write!(f, [if_group_breaks(&hard_line_break()).with_group_id(Some(heritage_id))])?;
             }
         } else {
             write!(f, [head, format_heritage_clauses, space()])?;
         }
 
-        if body.body.is_empty() {
-            write!(f, ["{", format_dangling_comments(self.span).with_block_indent(), "}"])
+        if body.body().is_empty() {
+            write!(f, ["{", format_dangling_comments(self.span()).with_block_indent(), "}"])
         } else {
             write!(f, body)
         }

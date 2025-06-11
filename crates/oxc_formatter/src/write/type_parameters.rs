@@ -1,4 +1,4 @@
-use oxc_allocator::Vec;
+use oxc_allocator::{Address, Vec};
 use oxc_ast::{AstKind, ast::*};
 
 use crate::{
@@ -7,11 +7,12 @@ use crate::{
         Buffer, Format, FormatError, FormatResult, Formatter, GroupId, prelude::*,
         separated::FormatSeparatedIter,
     },
+    generated::ast_nodes::{AstNode, AstNodes},
     options::{FormatTrailingCommas, TrailingSeparator},
     write,
 };
 
-impl<'a> Format<'a> for Vec<'a, TSTypeParameter<'a>> {
+impl<'a> Format<'a> for AstNode<'a, Vec<'a, TSTypeParameter<'a>>> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         // Type parameter lists of arrow function expressions have to include at least one comma
         // to avoid any ambiguity with JSX elements.
@@ -21,9 +22,9 @@ impl<'a> Format<'a> for Vec<'a, TSTypeParameter<'a>> {
         let trailing_separator = if self.len() == 1
         // This only concern sources that allow JSX or a restricted standard variant.
         && f.context().source_type().is_jsx()
-        && matches!(f.parent_stack().parent2(), Some(AstKind::ArrowFunctionExpression(_)))
+        && matches!(self.parent.parent(), AstNodes::ArrowFunctionExpression(_))
         // Ignore Type parameter with an `extends` clause or a default type.
-        && !self.first().is_some_and(|t| t.constraint.is_some() || t.default.is_some())
+        && !self.first().is_some_and(|t| t.constraint().is_some() || t.default().is_some())
         {
             TrailingSeparator::Mandatory
         } else {
@@ -45,13 +46,13 @@ pub struct FormatTsTypeParametersOptions {
 }
 
 pub struct FormatTsTypeParameters<'a, 'b> {
-    decl: &'b TSTypeParameterDeclaration<'a>,
+    decl: &'b AstNode<'a, TSTypeParameterDeclaration<'a>>,
     options: FormatTsTypeParametersOptions,
 }
 
 impl<'a, 'b> FormatTsTypeParameters<'a, 'b> {
     pub fn new(
-        decl: &'b TSTypeParameterDeclaration<'a>,
+        decl: &'b AstNode<'a, TSTypeParameterDeclaration<'a>>,
         options: FormatTsTypeParametersOptions,
     ) -> Self {
         Self { decl, options }
@@ -60,14 +61,14 @@ impl<'a, 'b> FormatTsTypeParameters<'a, 'b> {
 
 impl<'a> Format<'a> for FormatTsTypeParameters<'a, '_> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        if self.decl.params.is_empty() && self.options.is_type_or_interface_decl {
+        if self.decl.params().is_empty() && self.options.is_type_or_interface_decl {
             write!(f, "<>")
-        } else if self.decl.params.is_empty() {
+        } else if self.decl.params().is_empty() {
             return Err(FormatError::SyntaxError);
         } else {
             write!(
                 f,
-                [group(&format_args!("<", soft_block_indent(&self.decl.params), ">"))
+                [group(&format_args!("<", soft_block_indent(&self.decl.params()), ">"))
                     .with_group_id(self.options.group_id)]
             )
         }
