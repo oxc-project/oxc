@@ -700,3 +700,12 @@ pub fn implementation_in_ambient(span: Span) -> OxcDiagnostic {
 pub fn interface_implements(span: Span) -> OxcDiagnostic {
     ts_error("1176", "Interface declaration cannot have 'implements' clause.").with_label(span)
 }
+
+#[cold]
+pub fn interface_extend(span: Span) -> OxcDiagnostic {
+    ts_error(
+        "2499",
+        "An interface can only extend an identifier/qualified-name with optional type arguments.",
+    )
+    .with_label(span)
+}

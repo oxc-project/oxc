@@ -370,6 +370,21 @@ impl<'a> Expression<'a> {
     pub fn is_assignment(&self) -> bool {
         matches!(self, Expression::AssignmentExpression(_))
     }
+
+    /// Is identifier or `a.b` expression where `a` is an identifier.
+    pub fn is_entity_name_expression(&self) -> bool {
+        matches!(self.without_parentheses(), Expression::Identifier(_))
+            || self.is_property_access_entity_name_expression()
+    }
+
+    /// `a.b` expression where `a` is an identifier.
+    pub fn is_property_access_entity_name_expression(&self) -> bool {
+        if let Expression::StaticMemberExpression(e) = self {
+            e.object.is_entity_name_expression()
+        } else {
+            false
+        }
+    }
 }
 
 impl Display for IdentifierName<'_> {

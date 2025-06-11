@@ -2,8 +2,8 @@ commit: 1d4546bc
 
 parser_babel Summary:
 AST Parsed     : 2351/2362 (99.53%)
-Positive Passed: 2330/2362 (98.65%)
-Negative Passed: 1588/1698 (93.52%)
+Positive Passed: 2329/2362 (98.60%)
+Negative Passed: 1589/1698 (93.58%)
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/core/categorized/invalid-startindex-and-startline-specified-without-startcolumn/input.js
 
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/core/categorized/startline-and-startcolumn-specified/input.js
@@ -139,8 +139,6 @@ Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/ty
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/interface/invalid-modifiers-method-babel-7/input.ts
 
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/interface/invalid-modifiers-property/input.ts
-
-Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/regression/keyword-qualified-type-2/input.ts
 
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/regression/keyword-qualified-type-disallowed/input.ts
 
@@ -668,6 +666,16 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/function/declare-pattern-parameters/input.ts:1:25]
  1 │ declare function f([]?, {})
    ·                         ──
+   ╰────
+
+Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/regression/keyword-qualified-type-2-babel-7/input.ts
+
+  × TS(2499): An interface can only extend an identifier/qualified-name with optional type arguments.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/regression/keyword-qualified-type-2-babel-7/input.ts:3:21]
+ 2 │ // but they are always type-checking errors.
+ 3 │ interface A extends this.B {}
+   ·                     ──────
+ 4 │ type T = typeof var.bar;
    ╰────
 
 Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/regression/nested-extends-in-arrow-type-param/input.ts
@@ -12694,6 +12702,13 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ╰────
 
   × TS(2499): An interface can only extend an identifier/qualified-name with optional type arguments.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/interface/invalid-extends/input.ts:2:69]
+ 1 │ // Every extend element here is invalid
+ 2 │ interface Invalid extends (foo.bar), (foo).bar, foo[bar], foo?.bar, foo!.bar, foo(), import.meta {}
+   ·                                                                     ────────
+   ╰────
+
+  × TS(2499): An interface can only extend an identifier/qualified-name with optional type arguments.
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/interface/invalid-extends/input.ts:2:79]
  1 │ // Every extend element here is invalid
  2 │ interface Invalid extends (foo.bar), (foo).bar, foo[bar], foo?.bar, foo!.bar, foo(), import.meta {}
@@ -12786,6 +12801,14 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
  2 │     const x = await 42;
    ·               ─────
  3 │ }
+   ╰────
+
+  × TS(2499): An interface can only extend an identifier/qualified-name with optional type arguments.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/regression/keyword-qualified-type-2/input.ts:3:21]
+ 2 │ // but they are always type-checking errors.
+ 3 │ interface A extends this.B {}
+   ·                     ──────
+ 4 │ type T = typeof var.bar;
    ╰────
 
   × Identifier `A` has already been declared

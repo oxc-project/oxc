@@ -178,16 +178,6 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Consider removing this import.
 
-  ⚠ eslint(no-unused-vars): Identifier 'test' is imported but never used.
-   ╭─[no_unused_vars.ts:2:18]
- 1 │ 
- 2 │           import test from 'test';
-   ·                  ──┬─
-   ·                    ╰── 'test' is imported here
- 3 │           import baz from 'baz';
-   ╰────
-  help: Consider removing this import.
-
   ⚠ eslint(no-unused-vars): Variable 'Foo' is declared but never used.
    ╭─[no_unused_vars.ts:1:11]
  1 │ namespace Foo {}

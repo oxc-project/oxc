@@ -172,8 +172,14 @@ impl<'a> ParserImpl<'a> {
         let type_parameters = self.parse_ts_type_parameters();
         let (extends, implements) = self.parse_heritage_clause();
         let body = self.parse_ts_interface_body();
-        let extends =
-            extends.map_or_else(|| self.ast.vec(), |e| self.ast.ts_interface_heritages(e));
+        let extends = extends.map_or_else(
+            || self.ast.vec(),
+            |e| {
+                self.ast.vec_from_iter(e.into_iter().map(|(expression, type_parameters, span)| {
+                    TSInterfaceHeritage { span, expression, type_arguments: type_parameters }
+                }))
+            },
+        );
         self.verify_modifiers(
             modifiers,
             ModifierFlags::DECLARE,
@@ -184,6 +190,11 @@ impl<'a> ParserImpl<'a> {
                 implements.first().unwrap().span.start,
                 implements.last().unwrap().span.end,
             )));
+        }
+        for extend in &extends {
+            if !extend.expression.is_entity_name_expression() {
+                self.error(diagnostics::interface_extend(extend.span));
+            }
         }
         self.ast.declaration_ts_interface(
             self.end_span(span),
