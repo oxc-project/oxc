@@ -1,7 +1,9 @@
 use std::{borrow::Cow, hash::Hash};
 
 use itertools::Itertools;
+use lazy_regex::Regex;
 use rustc_hash::FxHashSet;
+use serde::{Deserialize, Serialize};
 
 use oxc_ast::{
     AstKind, AstType,
@@ -157,7 +159,18 @@ fn ref_accessed_directly_in_effect_cleanup_diagnostic(span: Span) -> OxcDiagnost
 }
 
 #[derive(Debug, Default, Clone)]
-pub struct ExhaustiveDeps;
+pub struct ExhaustiveDeps(Box<ExhaustiveDepsConfig>);
+
+#[derive(Debug, Clone, Default)]
+pub struct ExhaustiveDepsConfig {
+    additional_hooks: Option<Regex>,
+}
+
+#[derive(Debug, Deserialize, Serialize)]
+struct ExhaustiveDepsConfigJson {
+    #[serde(rename = "additionalHooks")]
+    additional_hooks: Option<String>,
+}
 
 declare_oxc_lint!(
     /// ### What it does
@@ -190,6 +203,20 @@ declare_oxc_lint!(
     ///     return <div />;
     /// }
     /// ```
+    ///
+    /// ### Options
+    ///
+    /// #### additionalHooks
+    ///
+    /// `{ type: string }`
+    ///
+    /// Optionally provide a regex of additional hooks to check.
+    ///
+    /// Example:
+    ///
+    /// ```json
+    /// { "react/exhaustive-deps": ["error", { "additionalHooks": "useSpecialEffect" }] }
+    /// ```
     ExhaustiveDeps,
     react,
     correctness
@@ -198,6 +225,23 @@ declare_oxc_lint!(
 const HOOKS_USELESS_WITHOUT_DEPENDENCIES: [&str; 2] = ["useCallback", "useMemo"];
 
 impl Rule for ExhaustiveDeps {
+    fn from_configuration(value: serde_json::Value) -> Self {
+        let config = value
+            .as_array()
+            .and_then(|arr| arr.first())
+            .and_then(|first| {
+                serde_json::from_value::<ExhaustiveDepsConfigJson>(first.clone()).ok()
+            })
+            .map(|config_json| ExhaustiveDepsConfig {
+                additional_hooks: config_json
+                    .additional_hooks
+                    .and_then(|pattern| Regex::new(&pattern).ok()),
+            })
+            .unwrap_or_default();
+
+        Self(Box::new(config))
+    }
+
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         let AstKind::CallExpression(call_expr) = node.kind() else { return };
 
@@ -215,7 +259,9 @@ impl Rule for ExhaustiveDeps {
             }
         };
 
-        let Some(callback_index) = get_reactive_hook_callback_index(call_expr) else { return };
+        let Some(callback_index) = self.get_reactive_hook_callback_index(hook_name) else {
+            return;
+        };
         let callback_node = call_expr.arguments.get(callback_index);
         let dependencies_node = call_expr.arguments.get(callback_index + 1);
 
@@ -665,16 +711,18 @@ impl GetSpan for CallbackNode<'_> {
     }
 }
 
-// https://github.com/facebook/react/blob/1b0132c05acabae5aebd32c2cadddfb16bda70bc/packages/eslint-plugin-react-hooks/src/ExhaustiveDeps.js#L1789
-fn get_reactive_hook_callback_index(node: &CallExpression) -> Option<usize> {
-    let hook_name = get_node_name_without_react_namespace(&node.callee)?;
-
-    match hook_name.as_str() {
-        "useEffect" | "useLayoutEffect" | "useCallback" | "useMemo" => Some(0),
-        "useImperativeHandle" => Some(1),
-        _ => {
-            // TODO: custom nodes
-            None
+impl ExhaustiveDeps {
+    // https://github.com/facebook/react/blob/1b0132c05acabae5aebd32c2cadddfb16bda70bc/packages/eslint-plugin-react-hooks/src/ExhaustiveDeps.js#L1789
+    fn get_reactive_hook_callback_index(&self, hook_name: &str) -> Option<usize> {
+        match hook_name {
+            "useEffect" | "useLayoutEffect" | "useCallback" | "useMemo" => Some(0),
+            "useImperativeHandle" => Some(1),
+            _ => self
+                .0
+                .additional_hooks
+                .as_ref()
+                .is_some_and(|regex| regex.is_match(hook_name))
+                .then_some(0),
         }
     }
 }
@@ -3845,5 +3893,32 @@ fn test() {
         }"#,
     ];
 
-    Tester::new(ExhaustiveDeps::NAME, ExhaustiveDeps::PLUGIN, pass, fail).test_and_snapshot();
+    let pass_additional_hooks = vec![(
+        "function MyComponent(props) {
+          useSpecialEffect(() => {
+            console.log(props.foo);
+          });
+        }",
+        Some(serde_json::json!([{ "additionalHooks": "useSpecialEffect" }])),
+    )];
+
+    let fail_additional_hooks = vec![(
+        "function MyComponent() {
+          const [state, setState] = React.useState<number>(0);
+
+          useSpecialEffect(() => {
+            const someNumber: typeof state = 2;
+            setState(prevState => prevState + someNumber + state);
+          }, [])
+        }",
+        Some(serde_json::json!([{ "additionalHooks": "useSpecialEffect" }])),
+    )];
+
+    Tester::new(
+        ExhaustiveDeps::NAME,
+        ExhaustiveDeps::PLUGIN,
+        pass.iter().map(|&code| (code, None)).chain(pass_additional_hooks).collect::<Vec<_>>(),
+        fail.iter().map(|&code| (code, None)).chain(fail_additional_hooks).collect::<Vec<_>>(),
+    )
+    .test_and_snapshot();
 }
