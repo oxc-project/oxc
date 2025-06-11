@@ -6,11 +6,7 @@ use std::{
     ptr::NonNull,
 };
 
-#[cfg(not(nightly))]
 use allocator_api2::alloc::Allocator;
-#[cfg(nightly)]
-use std::alloc::Allocator;
-
 use bumpalo::Bump;
 
 /// Trait describing an allocator.
