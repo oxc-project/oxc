@@ -1,7 +1,4 @@
-use oxc_ast::{
-    AstKind,
-    ast::{ForStatement, ForStatementInit},
-};
+use oxc_ast::AstKind;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
@@ -99,14 +96,9 @@ impl Rule for NoInnerDeclarations {
                 | AstKind::StaticBlock(_)
                 | AstKind::ExportNamedDeclaration(_)
                 | AstKind::ExportDefaultDeclaration(_)
+                | AstKind::ForStatement(_)
                 | AstKind::ForInStatement(_)
                 | AstKind::ForOfStatement(_) => return,
-                AstKind::ForStatement(ForStatement {
-                    init: Some(ForStatementInit::VariableDeclaration(init)),
-                    ..
-                }) if init.span.contains_inclusive(span) => {
-                    return;
-                }
                 _ => {}
             }
         }
