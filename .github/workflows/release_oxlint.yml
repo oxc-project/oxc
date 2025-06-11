@@ -233,23 +233,35 @@ jobs:
           ldd --version || true
           npx oxlint@${OXLINT_VERSION} ./test.js
 
-  eslint-plugin-oxlint:
+  bump:
     needs: [check, publish, smoke]
-    name: Update eslint-plugin-oxlint
+    name: Bump oxlint dependents
     runs-on: ubuntu-latest
     steps:
       - uses: taiki-e/checkout-action@b13d20b7cda4e2f325ef19895128f7ff735c0b3d # v1.3.1
-      - uses: benc-uk/workflow-dispatch@e2e5e9a103e331dad343f381a29e654aea3cf8fc # v1.2.4
+
+      - name: Bump oxc-project/eslint-plugin-oxlint
+        uses: benc-uk/workflow-dispatch@e2e5e9a103e331dad343f381a29e654aea3cf8fc # v1.2.4
         with:
           repo: oxc-project/eslint-plugin-oxlint
           workflow: bump_oxlint.yml
           token: ${{ secrets.OXC_BOT_PAT }}
           ref: main
           inputs: '{ "version": "${{ needs.check.outputs.version }}" }'
-      - uses: benc-uk/workflow-dispatch@e2e5e9a103e331dad343f381a29e654aea3cf8fc # v1.2.4
+
+      - name: Bump oxc-project/eslint-plugin-oxlint
+        uses: benc-uk/workflow-dispatch@e2e5e9a103e331dad343f381a29e654aea3cf8fc # v1.2.4
         with:
           repo: oxc-project/oxlint-migrate
           workflow: bump_oxlint.yml
           token: ${{ secrets.OXC_BOT_PAT }}
           ref: main
           inputs: '{ "version": "${{ needs.check.outputs.version }}" }'
+
+      - name: Bump oxc-project/mirrors-oxlint
+        uses: benc-uk/workflow-dispatch@e2e5e9a103e331dad343f381a29e654aea3cf8fc # v1.2.4
+        with:
+          repo: oxc-project/mirrors-oxlint
+          workflow: main.yml
+          token: ${{ secrets.OXC_BOT_PAT }}
+          ref: main
