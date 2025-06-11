@@ -317,11 +317,7 @@ impl<'a> ParserImpl<'a> {
         // disallow for (let in ..)
         if self.at(Kind::Const)
             || self.at(Kind::Var)
-            || (self.at(Kind::Let)
-                && self.lookahead(|p| {
-                    p.bump_any();
-                    p.cur_kind().is_after_let()
-                }))
+            || (self.at(Kind::Let) && self.lexer.peek_token().kind().is_after_let())
         {
             return self.parse_variable_declaration_for_statement(span, r#await);
         }
@@ -340,14 +336,11 @@ impl<'a> ParserImpl<'a> {
         }
 
         // [+Using] using [no LineTerminator here] ForBinding[?Yield, ?Await, ~Pattern]
-        if self.at(Kind::Using)
-            && self.lookahead(|p| {
-                p.bump_any();
-                !p.cur_token().is_on_new_line()
-                    && !p.at(Kind::Of)
-                    && p.cur_kind().is_binding_identifier()
-            })
-        {
+        if self.at(Kind::Using) && {
+            let token = self.lexer.peek_token();
+            let kind = token.kind();
+            !token.is_on_new_line() && kind != Kind::Of && kind.is_binding_identifier()
+        } {
             return self.parse_using_declaration_for_statement(span, r#await);
         }
 
@@ -355,17 +348,10 @@ impl<'a> ParserImpl<'a> {
             return self.parse_for_loop(span, None, r#await);
         }
 
-        let is_let_of = self.at(Kind::Let)
-            && self.lookahead(|p| {
-                p.bump_any();
-                p.at(Kind::Of)
-            });
+        let is_let_of = self.at(Kind::Let) && self.lexer.peek_token().kind() == Kind::Of;
         let is_async_of = self.at(Kind::Async)
             && !self.cur_token().escaped()
-            && self.lookahead(|p| {
-                p.bump_any();
-                p.at(Kind::Of)
-            });
+            && self.lexer.peek_token().kind() == Kind::Of;
         let expr_span = self.start_span();
 
         let init_expression = self.context(Context::empty(), Context::In, ParserImpl::parse_expr);

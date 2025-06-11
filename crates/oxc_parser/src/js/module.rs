@@ -362,13 +362,7 @@ impl<'a> ParserImpl<'a> {
             Kind::Eq if self.is_ts => ModuleDeclaration::TSExportAssignment(
                 self.parse_ts_export_assignment_declaration(span),
             ),
-            Kind::As
-                if self.is_ts
-                    && self.lookahead(|p| {
-                        p.bump_any();
-                        p.at(Kind::Namespace)
-                    }) =>
-            {
+            Kind::As if self.is_ts && self.lexer.peek_token().kind() == Kind::Namespace => {
                 // `export as namespace ...`
                 ModuleDeclaration::TSNamespaceExportDeclaration(
                     self.parse_ts_export_namespace(span),
@@ -384,10 +378,7 @@ impl<'a> ParserImpl<'a> {
                 ModuleDeclaration::ExportNamedDeclaration(self.parse_export_named_specifiers(span))
             }
             Kind::Type if self.is_ts => {
-                let checkpoint = self.checkpoint();
-                self.bump_any();
-                let next_kind = self.cur_kind();
-                self.rewind(checkpoint);
+                let next_kind = self.lexer.peek_token().kind();
 
                 match next_kind {
                     // `export type { ...`
@@ -539,10 +530,7 @@ impl<'a> ParserImpl<'a> {
             ),
             _ if self.is_ts
                 && self.at(Kind::Abstract)
-                && self.lookahead(|p| {
-                    p.bump_any();
-                    p.at(Kind::Class)
-                }) =>
+                && self.lexer.peek_token().kind() == Kind::Class =>
             {
                 // `export default abstract class ...`
                 // eat the abstract modifier
@@ -553,10 +541,7 @@ impl<'a> ParserImpl<'a> {
             }
             _ if self.is_ts
                 && self.at(Kind::Interface)
-                && self.lookahead(|p| {
-                    p.bump_any();
-                    !p.cur_token().is_on_new_line()
-                }) =>
+                && !self.lexer.peek_token().is_on_new_line() =>
             {
                 // `export default interface [no line break here] ...`
                 let decl = self.parse_ts_interface_declaration(decl_span, &Modifiers::empty());
@@ -809,10 +794,7 @@ impl<'a> ParserImpl<'a> {
             return ImportOrExportKind::Value;
         }
 
-        let checkpoint = self.checkpoint();
-        self.bump_any();
-        let next_kind = self.cur_kind();
-        self.rewind(checkpoint);
+        let next_kind = self.lexer.peek_token().kind();
 
         if matches!(next_kind, Kind::LCurly | Kind::Star) {
             self.bump_any();

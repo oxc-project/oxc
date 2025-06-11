@@ -90,12 +90,7 @@ impl<'a> ParserImpl<'a> {
             return true;
         }
         self.at(Kind::New)
-            || (self.at(Kind::Abstract) && self.lookahead(Self::is_next_token_new_keyword))
-    }
-
-    fn is_next_token_new_keyword(&mut self) -> bool {
-        self.bump_any();
-        self.at(Kind::New)
+            || (self.at(Kind::Abstract) && self.lexer.peek_token().kind() == Kind::New)
     }
 
     fn is_unambiguously_start_of_function_type(&mut self) -> bool {
@@ -394,11 +389,8 @@ impl<'a> ParserImpl<'a> {
                 let this_type = self.ast.ts_this_type(self.end_span(span));
                 // TODO: rewind should not be necessary here, but it causes a regression in the
                 // conformance test suite otherwise
-                let checkpoint = self.checkpoint();
-                self.bump_any();
-                let kind = self.cur_kind();
-                self.rewind(checkpoint);
-                if kind == Kind::Is && !self.cur_token().is_on_new_line() {
+                let next_kind = self.lexer.peek_token().kind();
+                if next_kind == Kind::Is && !self.cur_token().is_on_new_line() {
                     self.parse_this_type_predicate(this_type)
                 } else {
                     TSType::TSThisType(self.alloc(this_type))
@@ -436,11 +428,6 @@ impl<'a> ParserImpl<'a> {
 
     fn is_token_identifier_or_keyword_on_same_line(&self) -> bool {
         self.cur_kind().is_identifier_name() && !self.cur_token().is_on_new_line()
-    }
-
-    fn is_next_token_number(&mut self) -> bool {
-        self.bump_any();
-        self.cur_kind().is_number()
     }
 
     fn parse_keyword_and_no_dot(&mut self) -> TSType<'a> {
@@ -536,7 +523,7 @@ impl<'a> ParserImpl<'a> {
             | Kind::NoSubstitutionTemplate
             | Kind::TemplateHead => true,
             Kind::Function => !in_start_of_parameter,
-            Kind::Minus => !in_start_of_parameter && self.lookahead(Self::is_next_token_number),
+            Kind::Minus => !in_start_of_parameter && self.lexer.peek_token().kind().is_number(),
             Kind::LParen => {
                 !in_start_of_parameter
                     && self.lookahead(Self::is_start_of_parenthesized_or_function_type)
@@ -1398,13 +1385,10 @@ impl<'a> ParserImpl<'a> {
             | Kind::New
             | Kind::Slash
             | Kind::SlashEq => true,
-            Kind::Import => self.lookahead(Self::is_next_token_paren_less_than_or_dot),
+            Kind::Import => {
+                matches!(self.lexer.peek_token().kind(), Kind::LParen | Kind::LAngle | Kind::Dot)
+            }
             _ => false,
         }
-    }
-
-    fn is_next_token_paren_less_than_or_dot(&mut self) -> bool {
-        self.bump_any();
-        matches!(self.cur_kind(), Kind::LParen | Kind::LAngle | Kind::Dot)
     }
 }

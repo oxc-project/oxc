@@ -721,15 +721,12 @@ impl<'a> ParserImpl<'a> {
             }
 
             let mut question_dot = false;
-            let is_property_access = if allow_optional_chain
-                && self.at(Kind::QuestionDot)
-                && self.lookahead(|p| {
-                    p.bump_any();
-                    let kind = p.cur_kind();
-                    kind == Kind::LBrack
-                        || kind.is_identifier_or_keyword()
-                        || kind.is_template_start_of_tagged_template()
-                }) {
+            let is_property_access = if allow_optional_chain && self.at(Kind::QuestionDot) && {
+                let kind = self.lexer.peek_token().kind();
+                kind == Kind::LBrack
+                    || kind.is_identifier_or_keyword()
+                    || kind.is_template_start_of_tagged_template()
+            } {
                 self.bump_any();
                 *in_optional_chain = true;
                 question_dot = true;
