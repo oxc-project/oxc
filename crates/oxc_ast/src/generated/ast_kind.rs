@@ -182,6 +182,9 @@ pub enum AstType {
     Decorator = 166,
     TSExportAssignment = 167,
     TSInstantiationExpression = 168,
+    JSDocNullableType = 169,
+    JSDocNonNullableType = 170,
+    JSDocUnknownType = 171,
 }
 
 /// Untyped AST Node Kind
@@ -370,6 +373,9 @@ pub enum AstKind<'a> {
     TSExportAssignment(&'a TSExportAssignment<'a>) = AstType::TSExportAssignment as u8,
     TSInstantiationExpression(&'a TSInstantiationExpression<'a>) =
         AstType::TSInstantiationExpression as u8,
+    JSDocNullableType(&'a JSDocNullableType<'a>) = AstType::JSDocNullableType as u8,
+    JSDocNonNullableType(&'a JSDocNonNullableType<'a>) = AstType::JSDocNonNullableType as u8,
+    JSDocUnknownType(&'a JSDocUnknownType) = AstType::JSDocUnknownType as u8,
 }
 
 impl AstKind<'_> {
@@ -556,6 +562,9 @@ impl GetSpan for AstKind<'_> {
             Self::Decorator(it) => it.span(),
             Self::TSExportAssignment(it) => it.span(),
             Self::TSInstantiationExpression(it) => it.span(),
+            Self::JSDocNullableType(it) => it.span(),
+            Self::JSDocNonNullableType(it) => it.span(),
+            Self::JSDocUnknownType(it) => it.span(),
         }
     }
 }
@@ -1408,5 +1417,20 @@ impl<'a> AstKind<'a> {
     #[inline]
     pub fn as_ts_instantiation_expression(self) -> Option<&'a TSInstantiationExpression<'a>> {
         if let Self::TSInstantiationExpression(v) = self { Some(v) } else { None }
+    }
+
+    #[inline]
+    pub fn as_js_doc_nullable_type(self) -> Option<&'a JSDocNullableType<'a>> {
+        if let Self::JSDocNullableType(v) = self { Some(v) } else { None }
+    }
+
+    #[inline]
+    pub fn as_js_doc_non_nullable_type(self) -> Option<&'a JSDocNonNullableType<'a>> {
+        if let Self::JSDocNonNullableType(v) = self { Some(v) } else { None }
+    }
+
+    #[inline]
+    pub fn as_js_doc_unknown_type(self) -> Option<&'a JSDocUnknownType> {
+        if let Self::JSDocUnknownType(v) = self { Some(v) } else { None }
     }
 }
