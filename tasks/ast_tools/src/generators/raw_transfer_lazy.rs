@@ -17,13 +17,13 @@ use crate::{
         StructDef, TypeDef, VecDef,
         extensions::layout::{GetLayout, GetOffset},
     },
-    utils::{format_cow, write_it},
+    utils::{format_cow, upper_case_first, write_it},
 };
 
 use super::define_generator;
 use super::raw_transfer::{
-    DeserializeFunctionName, VEC_LEN_FIELD_OFFSET, VEC_PTR_FIELD_OFFSET, pos_offset,
-    pos_offset_shift, pos32_offset, should_skip_innermost_type,
+    VEC_LEN_FIELD_OFFSET, VEC_PTR_FIELD_OFFSET, pos_offset, pos_offset_shift, pos32_offset,
+    should_skip_innermost_type,
 };
 
 /// Generator for raw transfer deserializer.
@@ -112,7 +112,6 @@ fn generate_struct(
     }
 
     let struct_name = struct_def.name();
-    let fn_name = struct_def.deser_name(schema);
 
     let mut getters = String::new();
     let mut to_json = String::new();
@@ -212,27 +211,20 @@ fn generate_struct(
 
     // TODO: Nodes cache does not work because some types have same `pos` as their parent
     /*
-    function {fn_name}(pos, ast) {{
+    constructor(pos, ast) {{
+        if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+
         const {{ nodes }} = ast;
         let node = nodes.get(pos);
-        if (node === void 0) {{
-            node = new {struct_name}(pos, ast);
-            nodes.set(pos, node);
-        }}
-        return node;
+        if (node !== void 0) return node;
+
+        this.#internal = {{ $pos: pos, $ast: ast {extra_props} }};
+        nodes.set(pos, this);
     }}
     */
 
-    // TODO: Don't need `deserializeThing` wrapper functions - just call `new Thing(pos, ast)` instead.
-    // When introduce node caching, can do that in class constructor.
-    // Note: Also need to cache strings in `Vec<&str>`.
-
     #[rustfmt::skip]
     write_it!(code, "
-        function {fn_name}(pos, ast) {{
-            return new {struct_name}(pos, ast);
-        }}
-
         class {struct_name} {{
             {type_prop_init}
             #internal;
@@ -489,5 +481,98 @@ where
         Cow::Borrowed("internal.$pos")
     } else {
         format_cow!("internal.$pos + {offset}")
+    }
+}
+
+/// Trait to get deserializer function name for a type.
+///
+/// `deserialize<type name>` for all types except structs, for which it's `new <type name>`.
+pub(super) trait DeserializeFunctionName {
+    fn deser_name(&self, schema: &Schema) -> String {
+        format!("deserialize{}", self.plain_name(schema))
+    }
+
+    fn plain_name<'s>(&'s self, schema: &'s Schema) -> Cow<'s, str>;
+}
+
+impl DeserializeFunctionName for TypeDef {
+    fn deser_name(&self, schema: &Schema) -> String {
+        match self {
+            TypeDef::Struct(def) => def.deser_name(schema),
+            TypeDef::Enum(def) => def.deser_name(schema),
+            TypeDef::Primitive(def) => def.deser_name(schema),
+            TypeDef::Option(def) => def.deser_name(schema),
+            TypeDef::Box(def) => def.deser_name(schema),
+            TypeDef::Vec(def) => def.deser_name(schema),
+            TypeDef::Cell(def) => def.deser_name(schema),
+        }
+    }
+
+    fn plain_name<'s>(&'s self, schema: &'s Schema) -> Cow<'s, str> {
+        match self {
+            TypeDef::Struct(def) => def.plain_name(schema),
+            TypeDef::Enum(def) => def.plain_name(schema),
+            TypeDef::Primitive(def) => def.plain_name(schema),
+            TypeDef::Option(def) => def.plain_name(schema),
+            TypeDef::Box(def) => def.plain_name(schema),
+            TypeDef::Vec(def) => def.plain_name(schema),
+            TypeDef::Cell(def) => def.plain_name(schema),
+        }
+    }
+}
+
+impl DeserializeFunctionName for StructDef {
+    fn deser_name(&self, _schema: &Schema) -> String {
+        format!("new {}", self.name())
+    }
+
+    fn plain_name(&self, _schema: &Schema) -> Cow<'_, str> {
+        Cow::Borrowed(self.name())
+    }
+}
+
+impl DeserializeFunctionName for EnumDef {
+    fn plain_name(&self, _schema: &Schema) -> Cow<'_, str> {
+        Cow::Borrowed(self.name())
+    }
+}
+
+macro_rules! impl_deser_name_concat {
+    ($ty:ident, $prefix:expr) => {
+        impl DeserializeFunctionName for $ty {
+            fn plain_name<'s>(&'s self, schema: &'s Schema) -> Cow<'s, str> {
+                format_cow!("{}{}", $prefix, self.inner_type(schema).plain_name(schema))
+            }
+        }
+    };
+}
+
+impl_deser_name_concat!(OptionDef, "Option");
+impl_deser_name_concat!(BoxDef, "Box");
+impl_deser_name_concat!(VecDef, "Vec");
+
+impl DeserializeFunctionName for PrimitiveDef {
+    fn plain_name<'s>(&'s self, _schema: &'s Schema) -> Cow<'s, str> {
+        let type_name = self.name();
+        if matches!(type_name, "&str" | "Atom") {
+            // Use 1 deserializer for both `&str` and `Atom`
+            Cow::Borrowed("Str")
+        } else if let Some(type_name) = type_name.strip_prefix("NonZero") {
+            // Use zeroed type's deserializer for `NonZero*` types
+            Cow::Borrowed(type_name)
+        } else {
+            upper_case_first(type_name)
+        }
+    }
+}
+
+// `Cell`s use same deserializer as inner type, as layout is identical
+impl DeserializeFunctionName for CellDef {
+    fn deser_name<'s>(&'s self, schema: &'s Schema) -> String {
+        self.inner_type(schema).deser_name(schema)
+    }
+
+    fn plain_name<'s>(&'s self, schema: &'s Schema) -> Cow<'s, str> {
+        self.inner_type(schema).plain_name(schema)
     }
 }
