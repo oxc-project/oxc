@@ -2161,13 +2161,11 @@ pub mod walk {
 
     #[inline]
     pub fn walk_for_statement_init<'a, V: Visit<'a>>(visitor: &mut V, it: &ForStatementInit<'a>) {
-        let kind = AstKind::ForStatementInit(visitor.alloc(it));
-        visitor.enter_node(kind);
+        // No `AstKind` for this type
         match it {
             ForStatementInit::VariableDeclaration(it) => visitor.visit_variable_declaration(it),
             match_expression!(ForStatementInit) => visitor.visit_expression(it.to_expression()),
         }
-        visitor.leave_node(kind);
     }
 
     #[inline]

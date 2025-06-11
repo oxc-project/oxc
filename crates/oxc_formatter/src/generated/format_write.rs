@@ -472,7 +472,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, ForStatementInit<'a>> {
     #[inline]
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         let allocator = self.allocator;
-        let parent = allocator.alloc(AstNodes::ForStatementInit(transmute_self(self)));
+        let parent = self.parent;
         match self.inner {
             ForStatementInit::VariableDeclaration(inner) => {
                 allocator.alloc(AstNode::<VariableDeclaration> { inner, parent, allocator }).fmt(f)
