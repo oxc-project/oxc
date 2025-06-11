@@ -44,9 +44,12 @@ impl<'a> ParserImpl<'a> {
     pub(crate) fn parse_formal_parameters(
         &mut self,
         params_kind: FormalParameterKind,
+        after_paren: bool,
     ) -> (Option<TSThisParameter<'a>>, Box<'a, FormalParameters<'a>>) {
         let span = self.start_span();
-        self.expect(Kind::LParen);
+        if !after_paren {
+            self.expect(Kind::LParen);
+        }
         let this_param = if self.is_ts && self.at(Kind::This) {
             let param = self.parse_ts_this_parameter();
             if !self.at(Kind::RParen) {
@@ -112,7 +115,7 @@ impl<'a> ParserImpl<'a> {
 
         let type_parameters = self.parse_ts_type_parameters();
 
-        let (this_param, params) = self.parse_formal_parameters(param_kind);
+        let (this_param, params) = self.parse_formal_parameters(param_kind, false);
 
         let return_type =
             self.parse_ts_return_type_annotation(Kind::Colon, /* is_type */ true);
