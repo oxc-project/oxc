@@ -7,6 +7,9 @@ use oxlint::cli::{CliRunResult, LintRunner, Runner};
 use std::io::BufWriter;
 
 fn main() -> CliRunResult {
+    // SAFETY: xx
+    unsafe { backtrace_on_stack_overflow::enable() }; // add `backtrace-on-stack-overflow = "0.3"`
+
     init_tracing();
     init_miette();
 
