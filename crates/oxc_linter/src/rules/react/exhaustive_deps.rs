@@ -837,6 +837,24 @@ fn is_identifier_a_dependency<'a>(
     ctx: &'_ LintContext<'a>,
     component_scope_id: ScopeId,
 ) -> bool {
+    let mut visited = FxHashSet::default();
+    is_identifier_a_dependency_impl(
+        ident_name,
+        ident_reference_id,
+        ident_span,
+        ctx,
+        component_scope_id,
+        &mut visited,
+    )
+}
+fn is_identifier_a_dependency_impl<'a>(
+    ident_name: Atom<'a>,
+    ident_reference_id: ReferenceId,
+    ident_span: Span,
+    ctx: &'_ LintContext<'a>,
+    component_scope_id: ScopeId,
+    visited: &mut FxHashSet<SymbolId>,
+) -> bool {
     // if it is a global e.g. `console` or `window`, then it's not a dependency
     if ctx.scoping().root_unresolved_references().contains_key(ident_name.as_str()) {
         return false;
@@ -885,8 +903,14 @@ fn is_identifier_a_dependency<'a>(
         return false;
     }
 
-    // if the value is stable (for example the setter returned by useState), then it's not a dependency
-    if is_stable_value(declaration, ident_name, ident_reference_id, ctx, component_scope_id) {
+    if is_stable_value(
+        declaration,
+        ident_name,
+        ident_reference_id,
+        ctx,
+        component_scope_id,
+        visited,
+    ) {
         return false;
     }
 
@@ -911,7 +935,14 @@ fn is_stable_value<'a, 'b>(
     ident_reference_id: ReferenceId,
     ctx: &'b LintContext<'a>,
     component_scope_id: ScopeId,
+    visited: &mut FxHashSet<SymbolId>,
 ) -> bool {
+    if let Some(symbol_id) = ctx.scoping().get_reference(ident_reference_id).symbol_id() {
+        if !visited.insert(symbol_id) {
+            return true;
+        }
+    }
+
     match node.kind() {
         AstKind::VariableDeclaration(declaration) => {
             if declaration.kind == VariableDeclarationKind::Const {
@@ -942,6 +973,7 @@ fn is_stable_value<'a, 'b>(
                             .map(oxc_ast::ast::BindingIdentifier::symbol_id),
                         ctx,
                         component_scope_id,
+                        visited,
                     );
                 }
             }
@@ -1015,7 +1047,7 @@ fn is_stable_value<'a, 'b>(
 
             let Some(function_body) = function_body else { return false };
 
-            is_function_stable(function_body, None, ctx, component_scope_id)
+            is_function_stable(function_body, None, ctx, component_scope_id, visited)
         }
         _ => false,
     }
@@ -1026,6 +1058,7 @@ fn is_function_stable<'a, 'b>(
     function_symbol_id: Option<SymbolId>,
     ctx: &'b LintContext<'a>,
     component_scope_id: ScopeId,
+    visited: &mut FxHashSet<SymbolId>,
 ) -> bool {
     let deps = {
         let mut collector = ExhaustiveDepsVisitor::new(ctx.semantic());
@@ -1035,12 +1068,13 @@ fn is_function_stable<'a, 'b>(
 
     deps.iter().all(|dep| {
         dep.symbol_id.zip(function_symbol_id).is_none_or(|(l, r)| l != r)
-            && !is_identifier_a_dependency(
+            && !is_identifier_a_dependency_impl(
                 dep.name,
                 dep.reference_id,
                 dep.span,
                 ctx,
                 component_scope_id,
+                visited,
             )
     })
 }
@@ -2434,6 +2468,7 @@ fn test() {
 }
 "#,
         r"function MyComponent() { const recursive = useCallback((n: number): number => (n <= 0 ? 0 : n + recursive(n - 1)), []); return recursive }",
+        r"function Foo2() { useEffect(() => { foo() }, []); const foo = () => { bar() }; function bar () { foo() } }",
     ];
 
     let fail = vec![
