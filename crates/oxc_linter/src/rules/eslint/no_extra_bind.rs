@@ -11,14 +11,14 @@ use oxc_span::Span;
 use crate::{AstNode, ast_util::is_method_call, context::LintContext, rule::Rule};
 
 fn no_extra_bind_diagnostic(span: Span) -> OxcDiagnostic {
-    // See <https://oxc.rs/docs/contribute/linter/adding-rules.html#diagnostics> for details
-    OxcDiagnostic::warn("The function binding is unnecessary.").with_label(span)
+    OxcDiagnostic::warn("The function binding is unnecessary.")
+        .with_label(span)
+        .with_help("Remove the `.bind` call.")
 }
 
 #[derive(Debug, Default, Clone)]
 pub struct NoExtraBind;
 
-// See <https://github.com/oxc-project/oxc/issues/6050> for documentation details.
 declare_oxc_lint!(
     /// ### What it does
     ///
@@ -67,11 +67,11 @@ impl Rule for NoExtraBind {
         if !is_method_call(call_expr, None, Some(&["bind"]), Some(1), Some(1)) {
             return;
         }
-        let first_arg = call_expr.arguments.first().unwrap();
-        if matches!(first_arg, Argument::SpreadElement(_)) {
+        if matches!(call_expr.arguments.first(), Some(Argument::SpreadElement(_))) {
             return;
         }
-        let expr = call_expr.callee.without_parentheses();
+
+        let expr = call_expr.callee.get_inner_expression();
 
         let Some(member_expr) = (match expr {
             Expression::ChainExpression(chain_expr) => chain_expr.expression.as_member_expression(),
@@ -82,7 +82,7 @@ impl Rule for NoExtraBind {
         let Some((span, _)) = member_expr.static_property_info() else {
             return;
         };
-        let obj = member_expr.object().without_parentheses();
+        let obj = member_expr.object().get_inner_expression();
         match obj {
             Expression::FunctionExpression(func_expr) => {
                 let Some(body) = &func_expr.body else {
