@@ -44,7 +44,8 @@
     "bindings.js",
     "webcontainer-fallback.js",
     "generated/deserialize/js.js",
-    "generated/deserialize/ts.js"
+    "generated/deserialize/ts.js",
+    "raw-transfer/index.js"
   ],
   "publishConfig": {
     "registry": "https://registry.npmjs.org/",
