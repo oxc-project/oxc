@@ -84,22 +84,26 @@ impl Rule for NoInnerDeclarations {
 
         let mut parent = ctx.nodes().parent_node(node.id());
         if let Some(parent_node) = parent {
-            match parent_node.kind() {
-                AstKind::FunctionBody(_) => {
-                    if let Some(grandparent) = ctx.nodes().parent_node(parent_node.id()) {
-                        if grandparent.kind().is_function_like() {
-                            return;
-                        }
+            let parent_kind = parent_node.kind();
+            if let AstKind::FunctionBody(_) = parent_kind {
+                if let Some(grandparent) = ctx.nodes().parent_node(parent_node.id()) {
+                    if grandparent.kind().is_function_like() {
+                        return;
                     }
                 }
+            }
+
+            if matches!(
+                parent_kind,
                 AstKind::Program(_)
-                | AstKind::StaticBlock(_)
-                | AstKind::ExportNamedDeclaration(_)
-                | AstKind::ExportDefaultDeclaration(_)
-                | AstKind::ForStatement(_)
-                | AstKind::ForInStatement(_)
-                | AstKind::ForOfStatement(_) => return,
-                _ => {}
+                    | AstKind::StaticBlock(_)
+                    | AstKind::ExportNamedDeclaration(_)
+                    | AstKind::ExportDefaultDeclaration(_)
+                    | AstKind::ForStatement(_)
+                    | AstKind::ForInStatement(_)
+                    | AstKind::ForOfStatement(_)
+            ) {
+                return;
             }
         }
 
