@@ -26,14 +26,14 @@ use super::raw_transfer::{
     should_skip_innermost_type,
 };
 
-/// Generator for raw transfer deserializer.
+/// Generator for raw transfer lazy deserializer.
 pub struct RawTransferLazyGenerator;
 
 define_generator!(RawTransferLazyGenerator);
 
 impl Generator for RawTransferLazyGenerator {
     fn generate(&self, schema: &Schema, codegen: &Codegen) -> Output {
-        let code = generate_deserializers(schema, codegen);
+        let code = generate_constructors(schema, codegen);
         Output::Javascript {
             path: format!("{NAPI_PARSER_PACKAGE_PATH}/generated/deserialize/lazy.js"),
             code,
@@ -42,7 +42,7 @@ impl Generator for RawTransferLazyGenerator {
 }
 
 /// Prelude to generated deserializer.
-/// Defines the main `deserialize` function.
+/// Defines the main `construct` function.
 static PRELUDE: &str = "
     'use strict';
 
@@ -50,9 +50,9 @@ static PRELUDE: &str = "
     // Used to prevent user calling class constructors.
     const TOKEN = {};
 
-    module.exports = { deserialize, TOKEN };
+    module.exports = { construct, TOKEN };
 
-    function deserialize(ast) {
+    function construct(ast) {
         // (2 * 1024 * 1024 * 1024 - 16) >> 2
         const metadataPos32 = 536870908;
 
@@ -65,8 +65,8 @@ static PRELUDE: &str = "
 
 ";
 
-/// Generate deserializer functions for all types.
-fn generate_deserializers(schema: &Schema, codegen: &Codegen) -> String {
+/// Generate constructor functions for all types.
+fn generate_constructors(schema: &Schema, codegen: &Codegen) -> String {
     let estree_derive_id = codegen.get_derive_id_by_name("ESTree");
 
     let mut code = PRELUDE.to_string();
@@ -92,7 +92,7 @@ fn generate_deserializers(schema: &Schema, codegen: &Codegen) -> String {
                 generate_vec(vec_def, &mut code, estree_derive_id, schema);
             }
             TypeDef::Cell(_cell_def) => {
-                // No deserializers for `Cell`s - use inner type's deserializer
+                // No constructor for `Cell`s - use inner type's constructor
             }
         }
     }
@@ -100,7 +100,7 @@ fn generate_deserializers(schema: &Schema, codegen: &Codegen) -> String {
     code
 }
 
-/// Generate deserialize function for a struct.
+/// Generate class for a struct.
 fn generate_struct(
     struct_def: &StructDef,
     code: &mut String,
@@ -150,7 +150,7 @@ fn generate_struct(
                         }
 
                         let span_field_name = get_struct_field_name(span_field);
-                        let value_fn = span_field.type_def(schema).deser_name(schema);
+                        let value_fn = span_field.type_def(schema).constructor_name(schema);
                         let pos = internal_pos_offset(field.offset_64() + span_field.offset_64());
 
                         #[rustfmt::skip]
@@ -171,7 +171,7 @@ fn generate_struct(
             _ => false,
         };
 
-        let value_fn = field_type.deser_name(schema);
+        let value_fn = field_type.constructor_name(schema);
         let pos = internal_pos_offset(field.offset_64());
 
         if needs_cached_prop {
@@ -245,7 +245,7 @@ fn generate_struct(
     ");
 }
 
-/// Generate deserialize function for an enum.
+/// Generate constructor function for an enum.
 fn generate_enum(
     enum_def: &EnumDef,
     code: &mut String,
@@ -257,7 +257,7 @@ fn generate_enum(
     }
 
     let type_name = enum_def.name();
-    let fn_name = enum_def.deser_name(schema);
+    let fn_name = enum_def.constructor_name(schema);
     let payload_offset = enum_def.layout_64().align;
 
     let mut variants = enum_def
@@ -271,7 +271,7 @@ fn generate_enum(
         write_it!(switch_cases, "case {}: ", variant.discriminant);
 
         if let Some(variant_type) = variant.field_type(schema) {
-            let variant_fn_name = variant_type.deser_name(schema);
+            let variant_fn_name = variant_type.constructor_name(schema);
             let payload_pos = pos_offset(payload_offset);
             write_it!(switch_cases, "return {variant_fn_name}({payload_pos}, ast);");
         } else {
@@ -296,11 +296,11 @@ fn generate_enum(
     ");
 }
 
-/// Generate deserialize function for a primitive.
+/// Generate constructor function for a primitive.
 fn generate_primitive(primitive_def: &PrimitiveDef, code: &mut String, schema: &Schema) {
     #[expect(clippy::match_same_arms)]
     let ret = match primitive_def.name() {
-        // Reuse deserializer for `&str`
+        // Reuse constructor for `&str`
         "Atom" => return,
         // Dummy type
         "PointerAlign" => return,
@@ -316,12 +316,12 @@ fn generate_primitive(primitive_def: &PrimitiveDef, code: &mut String, schema: &
         ",
         "f64" => "return ast.buffer.float64[pos >> 3];",
         "&str" => STR_DESERIALIZER_BODY,
-        // Reuse deserializers for zeroed types
+        // Reuse constructors for zeroed types
         type_name if type_name.starts_with("NonZero") => return,
-        type_name => panic!("Cannot generate deserializer for primitive `{type_name}`"),
+        type_name => panic!("Cannot generate constructor for primitive `{type_name}`"),
     };
 
-    let fn_name = primitive_def.deser_name(schema);
+    let fn_name = primitive_def.constructor_name(schema);
 
     #[rustfmt::skip]
     write_it!(code, "
@@ -362,7 +362,7 @@ static STR_DESERIALIZER_BODY: &str = "
     return out;
 ";
 
-/// Generate deserialize function for an `Option`.
+/// Generate constructor function for an `Option`.
 fn generate_option(
     option_def: &OptionDef,
     code: &mut String,
@@ -374,8 +374,8 @@ fn generate_option(
         return;
     }
 
-    let fn_name = option_def.deser_name(schema);
-    let inner_fn_name = inner_type.deser_name(schema);
+    let fn_name = option_def.constructor_name(schema);
+    let inner_fn_name = inner_type.constructor_name(schema);
     let inner_layout = inner_type.layout_64();
 
     let (none_condition, payload_offset) = if option_def.layout_64().size == inner_layout.size {
@@ -416,15 +416,15 @@ fn generate_option(
     ");
 }
 
-/// Generate deserialize function for a `Box`.
+/// Generate constructor function for a `Box`.
 fn generate_box(box_def: &BoxDef, code: &mut String, estree_derive_id: DeriveId, schema: &Schema) {
     let inner_type = box_def.inner_type(schema);
     if should_skip_innermost_type(inner_type, estree_derive_id, schema) {
         return;
     }
 
-    let fn_name = box_def.deser_name(schema);
-    let inner_fn_name = inner_type.deser_name(schema);
+    let fn_name = box_def.constructor_name(schema);
+    let inner_fn_name = inner_type.constructor_name(schema);
 
     #[rustfmt::skip]
     write_it!(code, "
@@ -434,15 +434,15 @@ fn generate_box(box_def: &BoxDef, code: &mut String, estree_derive_id: DeriveId,
     ");
 }
 
-/// Generate deserialize function for a `Vec`.
+/// Generate constructor function for a `Vec`.
 fn generate_vec(vec_def: &VecDef, code: &mut String, estree_derive_id: DeriveId, schema: &Schema) {
     let inner_type = vec_def.inner_type(schema);
     if should_skip_innermost_type(inner_type, estree_derive_id, schema) {
         return;
     }
 
-    let fn_name = vec_def.deser_name(schema);
-    let inner_fn_name = inner_type.deser_name(schema);
+    let fn_name = vec_def.constructor_name(schema);
+    let inner_fn_name = inner_type.constructor_name(schema);
     let inner_type_size = inner_type.layout_64().size;
 
     let ptr_pos32 = pos32_offset(VEC_PTR_FIELD_OFFSET);
@@ -484,27 +484,27 @@ where
     }
 }
 
-/// Trait to get deserializer function name for a type.
+/// Trait to get constructor function name for a type.
 ///
-/// `deserialize<type name>` for all types except structs, for which it's `new <type name>`.
-pub(super) trait DeserializeFunctionName {
-    fn deser_name(&self, schema: &Schema) -> String {
-        format!("deserialize{}", self.plain_name(schema))
+/// `construct<type name>` for all types except structs, for which it's `new <type name>`.
+pub(super) trait ConstructorName {
+    fn constructor_name(&self, schema: &Schema) -> String {
+        format!("construct{}", self.plain_name(schema))
     }
 
     fn plain_name<'s>(&'s self, schema: &'s Schema) -> Cow<'s, str>;
 }
 
-impl DeserializeFunctionName for TypeDef {
-    fn deser_name(&self, schema: &Schema) -> String {
+impl ConstructorName for TypeDef {
+    fn constructor_name(&self, schema: &Schema) -> String {
         match self {
-            TypeDef::Struct(def) => def.deser_name(schema),
-            TypeDef::Enum(def) => def.deser_name(schema),
-            TypeDef::Primitive(def) => def.deser_name(schema),
-            TypeDef::Option(def) => def.deser_name(schema),
-            TypeDef::Box(def) => def.deser_name(schema),
-            TypeDef::Vec(def) => def.deser_name(schema),
-            TypeDef::Cell(def) => def.deser_name(schema),
+            TypeDef::Struct(def) => def.constructor_name(schema),
+            TypeDef::Enum(def) => def.constructor_name(schema),
+            TypeDef::Primitive(def) => def.constructor_name(schema),
+            TypeDef::Option(def) => def.constructor_name(schema),
+            TypeDef::Box(def) => def.constructor_name(schema),
+            TypeDef::Vec(def) => def.constructor_name(schema),
+            TypeDef::Cell(def) => def.constructor_name(schema),
         }
     }
 
@@ -521,8 +521,8 @@ impl DeserializeFunctionName for TypeDef {
     }
 }
 
-impl DeserializeFunctionName for StructDef {
-    fn deser_name(&self, _schema: &Schema) -> String {
+impl ConstructorName for StructDef {
+    fn constructor_name(&self, _schema: &Schema) -> String {
         format!("new {}", self.name())
     }
 
@@ -531,7 +531,7 @@ impl DeserializeFunctionName for StructDef {
     }
 }
 
-impl DeserializeFunctionName for EnumDef {
+impl ConstructorName for EnumDef {
     fn plain_name(&self, _schema: &Schema) -> Cow<'_, str> {
         Cow::Borrowed(self.name())
     }
@@ -539,7 +539,7 @@ impl DeserializeFunctionName for EnumDef {
 
 macro_rules! impl_deser_name_concat {
     ($ty:ident, $prefix:expr) => {
-        impl DeserializeFunctionName for $ty {
+        impl ConstructorName for $ty {
             fn plain_name<'s>(&'s self, schema: &'s Schema) -> Cow<'s, str> {
                 format_cow!("{}{}", $prefix, self.inner_type(schema).plain_name(schema))
             }
@@ -551,14 +551,14 @@ impl_deser_name_concat!(OptionDef, "Option");
 impl_deser_name_concat!(BoxDef, "Box");
 impl_deser_name_concat!(VecDef, "Vec");
 
-impl DeserializeFunctionName for PrimitiveDef {
+impl ConstructorName for PrimitiveDef {
     fn plain_name<'s>(&'s self, _schema: &'s Schema) -> Cow<'s, str> {
         let type_name = self.name();
         if matches!(type_name, "&str" | "Atom") {
-            // Use 1 deserializer for both `&str` and `Atom`
+            // Use 1 constructor for both `&str` and `Atom`
             Cow::Borrowed("Str")
         } else if let Some(type_name) = type_name.strip_prefix("NonZero") {
-            // Use zeroed type's deserializer for `NonZero*` types
+            // Use zeroed type's constructor for `NonZero*` types
             Cow::Borrowed(type_name)
         } else {
             upper_case_first(type_name)
@@ -566,10 +566,10 @@ impl DeserializeFunctionName for PrimitiveDef {
     }
 }
 
-// `Cell`s use same deserializer as inner type, as layout is identical
-impl DeserializeFunctionName for CellDef {
-    fn deser_name<'s>(&'s self, schema: &'s Schema) -> String {
-        self.inner_type(schema).deser_name(schema)
+// `Cell`s use same constructor as inner type, as layout is identical
+impl ConstructorName for CellDef {
+    fn constructor_name<'s>(&'s self, schema: &'s Schema) -> String {
+        self.inner_type(schema).constructor_name(schema)
     }
 
     fn plain_name<'s>(&'s self, schema: &'s Schema) -> Cow<'s, str> {

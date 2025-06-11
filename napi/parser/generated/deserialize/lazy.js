@@ -7,9 +7,9 @@
 // Used to prevent user calling class constructors.
 const TOKEN = {};
 
-module.exports = { deserialize, TOKEN };
+module.exports = { construct, TOKEN };
 
-function deserialize(ast) {
+function construct(ast) {
   // (2 * 1024 * 1024 * 1024 - 16) >> 2
   const metadataPos32 = 536870908;
 
@@ -31,12 +31,12 @@ class Program {
 
   get start() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos, internal.$ast);
+    return constructU32(internal.$pos, internal.$ast);
   }
 
   get end() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos + 4, internal.$ast);
+    return constructU32(internal.$pos + 4, internal.$ast);
   }
 
   get sourceType() {
@@ -46,14 +46,14 @@ class Program {
 
   get hashbang() {
     const internal = this.#internal;
-    return deserializeOptionHashbang(internal.$pos + 48, internal.$ast);
+    return constructOptionHashbang(internal.$pos + 48, internal.$ast);
   }
 
   get body() {
     const internal = this.#internal,
       node = internal.body;
     if (node !== void 0) return node;
-    return internal.body = deserializeVecStatement(internal.$pos + 96, internal.$ast);
+    return internal.body = constructVecStatement(internal.$pos + 96, internal.$ast);
   }
 
   toJSON() {
@@ -68,94 +68,94 @@ class Program {
   }
 }
 
-function deserializeExpression(pos, ast) {
+function constructExpression(pos, ast) {
   switch (ast.buffer[pos]) {
     case 0:
-      return deserializeBoxBooleanLiteral(pos + 8, ast);
+      return constructBoxBooleanLiteral(pos + 8, ast);
     case 1:
-      return deserializeBoxNullLiteral(pos + 8, ast);
+      return constructBoxNullLiteral(pos + 8, ast);
     case 2:
-      return deserializeBoxNumericLiteral(pos + 8, ast);
+      return constructBoxNumericLiteral(pos + 8, ast);
     case 3:
-      return deserializeBoxBigIntLiteral(pos + 8, ast);
+      return constructBoxBigIntLiteral(pos + 8, ast);
     case 4:
-      return deserializeBoxRegExpLiteral(pos + 8, ast);
+      return constructBoxRegExpLiteral(pos + 8, ast);
     case 5:
-      return deserializeBoxStringLiteral(pos + 8, ast);
+      return constructBoxStringLiteral(pos + 8, ast);
     case 6:
-      return deserializeBoxTemplateLiteral(pos + 8, ast);
+      return constructBoxTemplateLiteral(pos + 8, ast);
     case 7:
-      return deserializeBoxIdentifierReference(pos + 8, ast);
+      return constructBoxIdentifierReference(pos + 8, ast);
     case 8:
-      return deserializeBoxMetaProperty(pos + 8, ast);
+      return constructBoxMetaProperty(pos + 8, ast);
     case 9:
-      return deserializeBoxSuper(pos + 8, ast);
+      return constructBoxSuper(pos + 8, ast);
     case 10:
-      return deserializeBoxArrayExpression(pos + 8, ast);
+      return constructBoxArrayExpression(pos + 8, ast);
     case 11:
-      return deserializeBoxArrowFunctionExpression(pos + 8, ast);
+      return constructBoxArrowFunctionExpression(pos + 8, ast);
     case 12:
-      return deserializeBoxAssignmentExpression(pos + 8, ast);
+      return constructBoxAssignmentExpression(pos + 8, ast);
     case 13:
-      return deserializeBoxAwaitExpression(pos + 8, ast);
+      return constructBoxAwaitExpression(pos + 8, ast);
     case 14:
-      return deserializeBoxBinaryExpression(pos + 8, ast);
+      return constructBoxBinaryExpression(pos + 8, ast);
     case 15:
-      return deserializeBoxCallExpression(pos + 8, ast);
+      return constructBoxCallExpression(pos + 8, ast);
     case 16:
-      return deserializeBoxChainExpression(pos + 8, ast);
+      return constructBoxChainExpression(pos + 8, ast);
     case 17:
-      return deserializeBoxClass(pos + 8, ast);
+      return constructBoxClass(pos + 8, ast);
     case 18:
-      return deserializeBoxConditionalExpression(pos + 8, ast);
+      return constructBoxConditionalExpression(pos + 8, ast);
     case 19:
-      return deserializeBoxFunction(pos + 8, ast);
+      return constructBoxFunction(pos + 8, ast);
     case 20:
-      return deserializeBoxImportExpression(pos + 8, ast);
+      return constructBoxImportExpression(pos + 8, ast);
     case 21:
-      return deserializeBoxLogicalExpression(pos + 8, ast);
+      return constructBoxLogicalExpression(pos + 8, ast);
     case 22:
-      return deserializeBoxNewExpression(pos + 8, ast);
+      return constructBoxNewExpression(pos + 8, ast);
     case 23:
-      return deserializeBoxObjectExpression(pos + 8, ast);
+      return constructBoxObjectExpression(pos + 8, ast);
     case 24:
-      return deserializeBoxParenthesizedExpression(pos + 8, ast);
+      return constructBoxParenthesizedExpression(pos + 8, ast);
     case 25:
-      return deserializeBoxSequenceExpression(pos + 8, ast);
+      return constructBoxSequenceExpression(pos + 8, ast);
     case 26:
-      return deserializeBoxTaggedTemplateExpression(pos + 8, ast);
+      return constructBoxTaggedTemplateExpression(pos + 8, ast);
     case 27:
-      return deserializeBoxThisExpression(pos + 8, ast);
+      return constructBoxThisExpression(pos + 8, ast);
     case 28:
-      return deserializeBoxUnaryExpression(pos + 8, ast);
+      return constructBoxUnaryExpression(pos + 8, ast);
     case 29:
-      return deserializeBoxUpdateExpression(pos + 8, ast);
+      return constructBoxUpdateExpression(pos + 8, ast);
     case 30:
-      return deserializeBoxYieldExpression(pos + 8, ast);
+      return constructBoxYieldExpression(pos + 8, ast);
     case 31:
-      return deserializeBoxPrivateInExpression(pos + 8, ast);
+      return constructBoxPrivateInExpression(pos + 8, ast);
     case 32:
-      return deserializeBoxJSXElement(pos + 8, ast);
+      return constructBoxJSXElement(pos + 8, ast);
     case 33:
-      return deserializeBoxJSXFragment(pos + 8, ast);
+      return constructBoxJSXFragment(pos + 8, ast);
     case 34:
-      return deserializeBoxTSAsExpression(pos + 8, ast);
+      return constructBoxTSAsExpression(pos + 8, ast);
     case 35:
-      return deserializeBoxTSSatisfiesExpression(pos + 8, ast);
+      return constructBoxTSSatisfiesExpression(pos + 8, ast);
     case 36:
-      return deserializeBoxTSTypeAssertion(pos + 8, ast);
+      return constructBoxTSTypeAssertion(pos + 8, ast);
     case 37:
-      return deserializeBoxTSNonNullExpression(pos + 8, ast);
+      return constructBoxTSNonNullExpression(pos + 8, ast);
     case 38:
-      return deserializeBoxTSInstantiationExpression(pos + 8, ast);
+      return constructBoxTSInstantiationExpression(pos + 8, ast);
     case 39:
-      return deserializeBoxV8IntrinsicExpression(pos + 8, ast);
+      return constructBoxV8IntrinsicExpression(pos + 8, ast);
     case 48:
-      return deserializeBoxComputedMemberExpression(pos + 8, ast);
+      return constructBoxComputedMemberExpression(pos + 8, ast);
     case 49:
-      return deserializeBoxStaticMemberExpression(pos + 8, ast);
+      return constructBoxStaticMemberExpression(pos + 8, ast);
     case 50:
-      return deserializeBoxPrivateFieldExpression(pos + 8, ast);
+      return constructBoxPrivateFieldExpression(pos + 8, ast);
     default:
       throw new Error(`Unexpected discriminant ${ast.buffer[pos]} for Expression`);
   }
@@ -172,19 +172,19 @@ class IdentifierName {
 
   get start() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos, internal.$ast);
+    return constructU32(internal.$pos, internal.$ast);
   }
 
   get end() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos + 4, internal.$ast);
+    return constructU32(internal.$pos + 4, internal.$ast);
   }
 
   get name() {
     const internal = this.#internal,
       node = internal.name;
     if (node !== void 0) return node;
-    return internal.name = deserializeStr(internal.$pos + 8, internal.$ast);
+    return internal.name = constructStr(internal.$pos + 8, internal.$ast);
   }
 
   toJSON() {
@@ -208,19 +208,19 @@ class IdentifierReference {
 
   get start() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos, internal.$ast);
+    return constructU32(internal.$pos, internal.$ast);
   }
 
   get end() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos + 4, internal.$ast);
+    return constructU32(internal.$pos + 4, internal.$ast);
   }
 
   get name() {
     const internal = this.#internal,
       node = internal.name;
     if (node !== void 0) return node;
-    return internal.name = deserializeStr(internal.$pos + 8, internal.$ast);
+    return internal.name = constructStr(internal.$pos + 8, internal.$ast);
   }
 
   toJSON() {
@@ -244,19 +244,19 @@ class BindingIdentifier {
 
   get start() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos, internal.$ast);
+    return constructU32(internal.$pos, internal.$ast);
   }
 
   get end() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos + 4, internal.$ast);
+    return constructU32(internal.$pos + 4, internal.$ast);
   }
 
   get name() {
     const internal = this.#internal,
       node = internal.name;
     if (node !== void 0) return node;
-    return internal.name = deserializeStr(internal.$pos + 8, internal.$ast);
+    return internal.name = constructStr(internal.$pos + 8, internal.$ast);
   }
 
   toJSON() {
@@ -280,19 +280,19 @@ class LabelIdentifier {
 
   get start() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos, internal.$ast);
+    return constructU32(internal.$pos, internal.$ast);
   }
 
   get end() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos + 4, internal.$ast);
+    return constructU32(internal.$pos + 4, internal.$ast);
   }
 
   get name() {
     const internal = this.#internal,
       node = internal.name;
     if (node !== void 0) return node;
-    return internal.name = deserializeStr(internal.$pos + 8, internal.$ast);
+    return internal.name = constructStr(internal.$pos + 8, internal.$ast);
   }
 
   toJSON() {
@@ -316,12 +316,12 @@ class ThisExpression {
 
   get start() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos, internal.$ast);
+    return constructU32(internal.$pos, internal.$ast);
   }
 
   get end() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos + 4, internal.$ast);
+    return constructU32(internal.$pos + 4, internal.$ast);
   }
 
   toJSON() {
@@ -344,19 +344,19 @@ class ArrayExpression {
 
   get start() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos, internal.$ast);
+    return constructU32(internal.$pos, internal.$ast);
   }
 
   get end() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos + 4, internal.$ast);
+    return constructU32(internal.$pos + 4, internal.$ast);
   }
 
   get elements() {
     const internal = this.#internal,
       node = internal.elements;
     if (node !== void 0) return node;
-    return internal.elements = deserializeVecArrayExpressionElement(internal.$pos + 8, internal.$ast);
+    return internal.elements = constructVecArrayExpressionElement(internal.$pos + 8, internal.$ast);
   }
 
   toJSON() {
@@ -369,96 +369,96 @@ class ArrayExpression {
   }
 }
 
-function deserializeArrayExpressionElement(pos, ast) {
+function constructArrayExpressionElement(pos, ast) {
   switch (ast.buffer[pos]) {
     case 0:
-      return deserializeBoxBooleanLiteral(pos + 8, ast);
+      return constructBoxBooleanLiteral(pos + 8, ast);
     case 1:
-      return deserializeBoxNullLiteral(pos + 8, ast);
+      return constructBoxNullLiteral(pos + 8, ast);
     case 2:
-      return deserializeBoxNumericLiteral(pos + 8, ast);
+      return constructBoxNumericLiteral(pos + 8, ast);
     case 3:
-      return deserializeBoxBigIntLiteral(pos + 8, ast);
+      return constructBoxBigIntLiteral(pos + 8, ast);
     case 4:
-      return deserializeBoxRegExpLiteral(pos + 8, ast);
+      return constructBoxRegExpLiteral(pos + 8, ast);
     case 5:
-      return deserializeBoxStringLiteral(pos + 8, ast);
+      return constructBoxStringLiteral(pos + 8, ast);
     case 6:
-      return deserializeBoxTemplateLiteral(pos + 8, ast);
+      return constructBoxTemplateLiteral(pos + 8, ast);
     case 7:
-      return deserializeBoxIdentifierReference(pos + 8, ast);
+      return constructBoxIdentifierReference(pos + 8, ast);
     case 8:
-      return deserializeBoxMetaProperty(pos + 8, ast);
+      return constructBoxMetaProperty(pos + 8, ast);
     case 9:
-      return deserializeBoxSuper(pos + 8, ast);
+      return constructBoxSuper(pos + 8, ast);
     case 10:
-      return deserializeBoxArrayExpression(pos + 8, ast);
+      return constructBoxArrayExpression(pos + 8, ast);
     case 11:
-      return deserializeBoxArrowFunctionExpression(pos + 8, ast);
+      return constructBoxArrowFunctionExpression(pos + 8, ast);
     case 12:
-      return deserializeBoxAssignmentExpression(pos + 8, ast);
+      return constructBoxAssignmentExpression(pos + 8, ast);
     case 13:
-      return deserializeBoxAwaitExpression(pos + 8, ast);
+      return constructBoxAwaitExpression(pos + 8, ast);
     case 14:
-      return deserializeBoxBinaryExpression(pos + 8, ast);
+      return constructBoxBinaryExpression(pos + 8, ast);
     case 15:
-      return deserializeBoxCallExpression(pos + 8, ast);
+      return constructBoxCallExpression(pos + 8, ast);
     case 16:
-      return deserializeBoxChainExpression(pos + 8, ast);
+      return constructBoxChainExpression(pos + 8, ast);
     case 17:
-      return deserializeBoxClass(pos + 8, ast);
+      return constructBoxClass(pos + 8, ast);
     case 18:
-      return deserializeBoxConditionalExpression(pos + 8, ast);
+      return constructBoxConditionalExpression(pos + 8, ast);
     case 19:
-      return deserializeBoxFunction(pos + 8, ast);
+      return constructBoxFunction(pos + 8, ast);
     case 20:
-      return deserializeBoxImportExpression(pos + 8, ast);
+      return constructBoxImportExpression(pos + 8, ast);
     case 21:
-      return deserializeBoxLogicalExpression(pos + 8, ast);
+      return constructBoxLogicalExpression(pos + 8, ast);
     case 22:
-      return deserializeBoxNewExpression(pos + 8, ast);
+      return constructBoxNewExpression(pos + 8, ast);
     case 23:
-      return deserializeBoxObjectExpression(pos + 8, ast);
+      return constructBoxObjectExpression(pos + 8, ast);
     case 24:
-      return deserializeBoxParenthesizedExpression(pos + 8, ast);
+      return constructBoxParenthesizedExpression(pos + 8, ast);
     case 25:
-      return deserializeBoxSequenceExpression(pos + 8, ast);
+      return constructBoxSequenceExpression(pos + 8, ast);
     case 26:
-      return deserializeBoxTaggedTemplateExpression(pos + 8, ast);
+      return constructBoxTaggedTemplateExpression(pos + 8, ast);
     case 27:
-      return deserializeBoxThisExpression(pos + 8, ast);
+      return constructBoxThisExpression(pos + 8, ast);
     case 28:
-      return deserializeBoxUnaryExpression(pos + 8, ast);
+      return constructBoxUnaryExpression(pos + 8, ast);
     case 29:
-      return deserializeBoxUpdateExpression(pos + 8, ast);
+      return constructBoxUpdateExpression(pos + 8, ast);
     case 30:
-      return deserializeBoxYieldExpression(pos + 8, ast);
+      return constructBoxYieldExpression(pos + 8, ast);
     case 31:
-      return deserializeBoxPrivateInExpression(pos + 8, ast);
+      return constructBoxPrivateInExpression(pos + 8, ast);
     case 32:
-      return deserializeBoxJSXElement(pos + 8, ast);
+      return constructBoxJSXElement(pos + 8, ast);
     case 33:
-      return deserializeBoxJSXFragment(pos + 8, ast);
+      return constructBoxJSXFragment(pos + 8, ast);
     case 34:
-      return deserializeBoxTSAsExpression(pos + 8, ast);
+      return constructBoxTSAsExpression(pos + 8, ast);
     case 35:
-      return deserializeBoxTSSatisfiesExpression(pos + 8, ast);
+      return constructBoxTSSatisfiesExpression(pos + 8, ast);
     case 36:
-      return deserializeBoxTSTypeAssertion(pos + 8, ast);
+      return constructBoxTSTypeAssertion(pos + 8, ast);
     case 37:
-      return deserializeBoxTSNonNullExpression(pos + 8, ast);
+      return constructBoxTSNonNullExpression(pos + 8, ast);
     case 38:
-      return deserializeBoxTSInstantiationExpression(pos + 8, ast);
+      return constructBoxTSInstantiationExpression(pos + 8, ast);
     case 39:
-      return deserializeBoxV8IntrinsicExpression(pos + 8, ast);
+      return constructBoxV8IntrinsicExpression(pos + 8, ast);
     case 48:
-      return deserializeBoxComputedMemberExpression(pos + 8, ast);
+      return constructBoxComputedMemberExpression(pos + 8, ast);
     case 49:
-      return deserializeBoxStaticMemberExpression(pos + 8, ast);
+      return constructBoxStaticMemberExpression(pos + 8, ast);
     case 50:
-      return deserializeBoxPrivateFieldExpression(pos + 8, ast);
+      return constructBoxPrivateFieldExpression(pos + 8, ast);
     case 64:
-      return deserializeBoxSpreadElement(pos + 8, ast);
+      return constructBoxSpreadElement(pos + 8, ast);
     case 65:
       return new Elision(pos + 8, ast);
     default:
@@ -477,12 +477,12 @@ class Elision {
 
   get start() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos, internal.$ast);
+    return constructU32(internal.$pos, internal.$ast);
   }
 
   get end() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos + 4, internal.$ast);
+    return constructU32(internal.$pos + 4, internal.$ast);
   }
 
   toJSON() {
@@ -505,19 +505,19 @@ class ObjectExpression {
 
   get start() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos, internal.$ast);
+    return constructU32(internal.$pos, internal.$ast);
   }
 
   get end() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos + 4, internal.$ast);
+    return constructU32(internal.$pos + 4, internal.$ast);
   }
 
   get properties() {
     const internal = this.#internal,
       node = internal.properties;
     if (node !== void 0) return node;
-    return internal.properties = deserializeVecObjectPropertyKind(internal.$pos + 8, internal.$ast);
+    return internal.properties = constructVecObjectPropertyKind(internal.$pos + 8, internal.$ast);
   }
 
   toJSON() {
@@ -530,12 +530,12 @@ class ObjectExpression {
   }
 }
 
-function deserializeObjectPropertyKind(pos, ast) {
+function constructObjectPropertyKind(pos, ast) {
   switch (ast.buffer[pos]) {
     case 0:
-      return deserializeBoxObjectProperty(pos + 8, ast);
+      return constructBoxObjectProperty(pos + 8, ast);
     case 1:
-      return deserializeBoxSpreadElement(pos + 8, ast);
+      return constructBoxSpreadElement(pos + 8, ast);
     default:
       throw new Error(`Unexpected discriminant ${ast.buffer[pos]} for ObjectPropertyKind`);
   }
@@ -552,42 +552,42 @@ class ObjectProperty {
 
   get start() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos, internal.$ast);
+    return constructU32(internal.$pos, internal.$ast);
   }
 
   get end() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos + 4, internal.$ast);
+    return constructU32(internal.$pos + 4, internal.$ast);
   }
 
   get kind() {
     const internal = this.#internal;
-    return deserializePropertyKind(internal.$pos + 40, internal.$ast);
+    return constructPropertyKind(internal.$pos + 40, internal.$ast);
   }
 
   get key() {
     const internal = this.#internal;
-    return deserializePropertyKey(internal.$pos + 8, internal.$ast);
+    return constructPropertyKey(internal.$pos + 8, internal.$ast);
   }
 
   get value() {
     const internal = this.#internal;
-    return deserializeExpression(internal.$pos + 24, internal.$ast);
+    return constructExpression(internal.$pos + 24, internal.$ast);
   }
 
   get method() {
     const internal = this.#internal;
-    return deserializeBool(internal.$pos + 41, internal.$ast);
+    return constructBool(internal.$pos + 41, internal.$ast);
   }
 
   get shorthand() {
     const internal = this.#internal;
-    return deserializeBool(internal.$pos + 42, internal.$ast);
+    return constructBool(internal.$pos + 42, internal.$ast);
   }
 
   get computed() {
     const internal = this.#internal;
-    return deserializeBool(internal.$pos + 43, internal.$ast);
+    return constructBool(internal.$pos + 43, internal.$ast);
   }
 
   toJSON() {
@@ -605,104 +605,104 @@ class ObjectProperty {
   }
 }
 
-function deserializePropertyKey(pos, ast) {
+function constructPropertyKey(pos, ast) {
   switch (ast.buffer[pos]) {
     case 0:
-      return deserializeBoxBooleanLiteral(pos + 8, ast);
+      return constructBoxBooleanLiteral(pos + 8, ast);
     case 1:
-      return deserializeBoxNullLiteral(pos + 8, ast);
+      return constructBoxNullLiteral(pos + 8, ast);
     case 2:
-      return deserializeBoxNumericLiteral(pos + 8, ast);
+      return constructBoxNumericLiteral(pos + 8, ast);
     case 3:
-      return deserializeBoxBigIntLiteral(pos + 8, ast);
+      return constructBoxBigIntLiteral(pos + 8, ast);
     case 4:
-      return deserializeBoxRegExpLiteral(pos + 8, ast);
+      return constructBoxRegExpLiteral(pos + 8, ast);
     case 5:
-      return deserializeBoxStringLiteral(pos + 8, ast);
+      return constructBoxStringLiteral(pos + 8, ast);
     case 6:
-      return deserializeBoxTemplateLiteral(pos + 8, ast);
+      return constructBoxTemplateLiteral(pos + 8, ast);
     case 7:
-      return deserializeBoxIdentifierReference(pos + 8, ast);
+      return constructBoxIdentifierReference(pos + 8, ast);
     case 8:
-      return deserializeBoxMetaProperty(pos + 8, ast);
+      return constructBoxMetaProperty(pos + 8, ast);
     case 9:
-      return deserializeBoxSuper(pos + 8, ast);
+      return constructBoxSuper(pos + 8, ast);
     case 10:
-      return deserializeBoxArrayExpression(pos + 8, ast);
+      return constructBoxArrayExpression(pos + 8, ast);
     case 11:
-      return deserializeBoxArrowFunctionExpression(pos + 8, ast);
+      return constructBoxArrowFunctionExpression(pos + 8, ast);
     case 12:
-      return deserializeBoxAssignmentExpression(pos + 8, ast);
+      return constructBoxAssignmentExpression(pos + 8, ast);
     case 13:
-      return deserializeBoxAwaitExpression(pos + 8, ast);
+      return constructBoxAwaitExpression(pos + 8, ast);
     case 14:
-      return deserializeBoxBinaryExpression(pos + 8, ast);
+      return constructBoxBinaryExpression(pos + 8, ast);
     case 15:
-      return deserializeBoxCallExpression(pos + 8, ast);
+      return constructBoxCallExpression(pos + 8, ast);
     case 16:
-      return deserializeBoxChainExpression(pos + 8, ast);
+      return constructBoxChainExpression(pos + 8, ast);
     case 17:
-      return deserializeBoxClass(pos + 8, ast);
+      return constructBoxClass(pos + 8, ast);
     case 18:
-      return deserializeBoxConditionalExpression(pos + 8, ast);
+      return constructBoxConditionalExpression(pos + 8, ast);
     case 19:
-      return deserializeBoxFunction(pos + 8, ast);
+      return constructBoxFunction(pos + 8, ast);
     case 20:
-      return deserializeBoxImportExpression(pos + 8, ast);
+      return constructBoxImportExpression(pos + 8, ast);
     case 21:
-      return deserializeBoxLogicalExpression(pos + 8, ast);
+      return constructBoxLogicalExpression(pos + 8, ast);
     case 22:
-      return deserializeBoxNewExpression(pos + 8, ast);
+      return constructBoxNewExpression(pos + 8, ast);
     case 23:
-      return deserializeBoxObjectExpression(pos + 8, ast);
+      return constructBoxObjectExpression(pos + 8, ast);
     case 24:
-      return deserializeBoxParenthesizedExpression(pos + 8, ast);
+      return constructBoxParenthesizedExpression(pos + 8, ast);
     case 25:
-      return deserializeBoxSequenceExpression(pos + 8, ast);
+      return constructBoxSequenceExpression(pos + 8, ast);
     case 26:
-      return deserializeBoxTaggedTemplateExpression(pos + 8, ast);
+      return constructBoxTaggedTemplateExpression(pos + 8, ast);
     case 27:
-      return deserializeBoxThisExpression(pos + 8, ast);
+      return constructBoxThisExpression(pos + 8, ast);
     case 28:
-      return deserializeBoxUnaryExpression(pos + 8, ast);
+      return constructBoxUnaryExpression(pos + 8, ast);
     case 29:
-      return deserializeBoxUpdateExpression(pos + 8, ast);
+      return constructBoxUpdateExpression(pos + 8, ast);
     case 30:
-      return deserializeBoxYieldExpression(pos + 8, ast);
+      return constructBoxYieldExpression(pos + 8, ast);
     case 31:
-      return deserializeBoxPrivateInExpression(pos + 8, ast);
+      return constructBoxPrivateInExpression(pos + 8, ast);
     case 32:
-      return deserializeBoxJSXElement(pos + 8, ast);
+      return constructBoxJSXElement(pos + 8, ast);
     case 33:
-      return deserializeBoxJSXFragment(pos + 8, ast);
+      return constructBoxJSXFragment(pos + 8, ast);
     case 34:
-      return deserializeBoxTSAsExpression(pos + 8, ast);
+      return constructBoxTSAsExpression(pos + 8, ast);
     case 35:
-      return deserializeBoxTSSatisfiesExpression(pos + 8, ast);
+      return constructBoxTSSatisfiesExpression(pos + 8, ast);
     case 36:
-      return deserializeBoxTSTypeAssertion(pos + 8, ast);
+      return constructBoxTSTypeAssertion(pos + 8, ast);
     case 37:
-      return deserializeBoxTSNonNullExpression(pos + 8, ast);
+      return constructBoxTSNonNullExpression(pos + 8, ast);
     case 38:
-      return deserializeBoxTSInstantiationExpression(pos + 8, ast);
+      return constructBoxTSInstantiationExpression(pos + 8, ast);
     case 39:
-      return deserializeBoxV8IntrinsicExpression(pos + 8, ast);
+      return constructBoxV8IntrinsicExpression(pos + 8, ast);
     case 48:
-      return deserializeBoxComputedMemberExpression(pos + 8, ast);
+      return constructBoxComputedMemberExpression(pos + 8, ast);
     case 49:
-      return deserializeBoxStaticMemberExpression(pos + 8, ast);
+      return constructBoxStaticMemberExpression(pos + 8, ast);
     case 50:
-      return deserializeBoxPrivateFieldExpression(pos + 8, ast);
+      return constructBoxPrivateFieldExpression(pos + 8, ast);
     case 64:
-      return deserializeBoxIdentifierName(pos + 8, ast);
+      return constructBoxIdentifierName(pos + 8, ast);
     case 65:
-      return deserializeBoxPrivateIdentifier(pos + 8, ast);
+      return constructBoxPrivateIdentifier(pos + 8, ast);
     default:
       throw new Error(`Unexpected discriminant ${ast.buffer[pos]} for PropertyKey`);
   }
 }
 
-function deserializePropertyKind(pos, ast) {
+function constructPropertyKind(pos, ast) {
   switch (ast.buffer[pos]) {
     case 0:
       return 'init';
@@ -726,26 +726,26 @@ class TemplateLiteral {
 
   get start() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos, internal.$ast);
+    return constructU32(internal.$pos, internal.$ast);
   }
 
   get end() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos + 4, internal.$ast);
+    return constructU32(internal.$pos + 4, internal.$ast);
   }
 
   get quasis() {
     const internal = this.#internal,
       node = internal.quasis;
     if (node !== void 0) return node;
-    return internal.quasis = deserializeVecTemplateElement(internal.$pos + 8, internal.$ast);
+    return internal.quasis = constructVecTemplateElement(internal.$pos + 8, internal.$ast);
   }
 
   get expressions() {
     const internal = this.#internal,
       node = internal.expressions;
     if (node !== void 0) return node;
-    return internal.expressions = deserializeVecExpression(internal.$pos + 32, internal.$ast);
+    return internal.expressions = constructVecExpression(internal.$pos + 32, internal.$ast);
   }
 
   toJSON() {
@@ -770,22 +770,22 @@ class TaggedTemplateExpression {
 
   get start() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos, internal.$ast);
+    return constructU32(internal.$pos, internal.$ast);
   }
 
   get end() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos + 4, internal.$ast);
+    return constructU32(internal.$pos + 4, internal.$ast);
   }
 
   get tag() {
     const internal = this.#internal;
-    return deserializeExpression(internal.$pos + 8, internal.$ast);
+    return constructExpression(internal.$pos + 8, internal.$ast);
   }
 
   get typeArguments() {
     const internal = this.#internal;
-    return deserializeOptionBoxTSTypeParameterInstantiation(internal.$pos + 24, internal.$ast);
+    return constructOptionBoxTSTypeParameterInstantiation(internal.$pos + 24, internal.$ast);
   }
 
   get quasi() {
@@ -816,12 +816,12 @@ class TemplateElement {
 
   get start() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos, internal.$ast);
+    return constructU32(internal.$pos, internal.$ast);
   }
 
   get end() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos + 4, internal.$ast);
+    return constructU32(internal.$pos + 4, internal.$ast);
   }
 
   get value() {
@@ -831,7 +831,7 @@ class TemplateElement {
 
   get tail() {
     const internal = this.#internal;
-    return deserializeBool(internal.$pos + 40, internal.$ast);
+    return constructBool(internal.$pos + 40, internal.$ast);
   }
 
   toJSON() {
@@ -857,14 +857,14 @@ class TemplateElementValue {
     const internal = this.#internal,
       node = internal.raw;
     if (node !== void 0) return node;
-    return internal.raw = deserializeStr(internal.$pos, internal.$ast);
+    return internal.raw = constructStr(internal.$pos, internal.$ast);
   }
 
   get cooked() {
     const internal = this.#internal,
       node = internal.cooked;
     if (node !== void 0) return node;
-    return internal.cooked = deserializeOptionStr(internal.$pos + 16, internal.$ast);
+    return internal.cooked = constructOptionStr(internal.$pos + 16, internal.$ast);
   }
 
   toJSON() {
@@ -875,14 +875,14 @@ class TemplateElementValue {
   }
 }
 
-function deserializeMemberExpression(pos, ast) {
+function constructMemberExpression(pos, ast) {
   switch (ast.buffer[pos]) {
     case 48:
-      return deserializeBoxComputedMemberExpression(pos + 8, ast);
+      return constructBoxComputedMemberExpression(pos + 8, ast);
     case 49:
-      return deserializeBoxStaticMemberExpression(pos + 8, ast);
+      return constructBoxStaticMemberExpression(pos + 8, ast);
     case 50:
-      return deserializeBoxPrivateFieldExpression(pos + 8, ast);
+      return constructBoxPrivateFieldExpression(pos + 8, ast);
     default:
       throw new Error(`Unexpected discriminant ${ast.buffer[pos]} for MemberExpression`);
   }
@@ -899,27 +899,27 @@ class ComputedMemberExpression {
 
   get start() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos, internal.$ast);
+    return constructU32(internal.$pos, internal.$ast);
   }
 
   get end() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos + 4, internal.$ast);
+    return constructU32(internal.$pos + 4, internal.$ast);
   }
 
   get object() {
     const internal = this.#internal;
-    return deserializeExpression(internal.$pos + 8, internal.$ast);
+    return constructExpression(internal.$pos + 8, internal.$ast);
   }
 
   get property() {
     const internal = this.#internal;
-    return deserializeExpression(internal.$pos + 24, internal.$ast);
+    return constructExpression(internal.$pos + 24, internal.$ast);
   }
 
   get optional() {
     const internal = this.#internal;
-    return deserializeBool(internal.$pos + 40, internal.$ast);
+    return constructBool(internal.$pos + 40, internal.$ast);
   }
 
   toJSON() {
@@ -945,17 +945,17 @@ class StaticMemberExpression {
 
   get start() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos, internal.$ast);
+    return constructU32(internal.$pos, internal.$ast);
   }
 
   get end() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos + 4, internal.$ast);
+    return constructU32(internal.$pos + 4, internal.$ast);
   }
 
   get object() {
     const internal = this.#internal;
-    return deserializeExpression(internal.$pos + 8, internal.$ast);
+    return constructExpression(internal.$pos + 8, internal.$ast);
   }
 
   get property() {
@@ -965,7 +965,7 @@ class StaticMemberExpression {
 
   get optional() {
     const internal = this.#internal;
-    return deserializeBool(internal.$pos + 48, internal.$ast);
+    return constructBool(internal.$pos + 48, internal.$ast);
   }
 
   toJSON() {
@@ -991,17 +991,17 @@ class PrivateFieldExpression {
 
   get start() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos, internal.$ast);
+    return constructU32(internal.$pos, internal.$ast);
   }
 
   get end() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos + 4, internal.$ast);
+    return constructU32(internal.$pos + 4, internal.$ast);
   }
 
   get object() {
     const internal = this.#internal;
-    return deserializeExpression(internal.$pos + 8, internal.$ast);
+    return constructExpression(internal.$pos + 8, internal.$ast);
   }
 
   get property() {
@@ -1011,7 +1011,7 @@ class PrivateFieldExpression {
 
   get optional() {
     const internal = this.#internal;
-    return deserializeBool(internal.$pos + 48, internal.$ast);
+    return constructBool(internal.$pos + 48, internal.$ast);
   }
 
   toJSON() {
@@ -1037,34 +1037,34 @@ class CallExpression {
 
   get start() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos, internal.$ast);
+    return constructU32(internal.$pos, internal.$ast);
   }
 
   get end() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos + 4, internal.$ast);
+    return constructU32(internal.$pos + 4, internal.$ast);
   }
 
   get callee() {
     const internal = this.#internal;
-    return deserializeExpression(internal.$pos + 8, internal.$ast);
+    return constructExpression(internal.$pos + 8, internal.$ast);
   }
 
   get typeArguments() {
     const internal = this.#internal;
-    return deserializeOptionBoxTSTypeParameterInstantiation(internal.$pos + 24, internal.$ast);
+    return constructOptionBoxTSTypeParameterInstantiation(internal.$pos + 24, internal.$ast);
   }
 
   get arguments() {
     const internal = this.#internal,
       node = internal.arguments;
     if (node !== void 0) return node;
-    return internal.arguments = deserializeVecArgument(internal.$pos + 32, internal.$ast);
+    return internal.arguments = constructVecArgument(internal.$pos + 32, internal.$ast);
   }
 
   get optional() {
     const internal = this.#internal;
-    return deserializeBool(internal.$pos + 56, internal.$ast);
+    return constructBool(internal.$pos + 56, internal.$ast);
   }
 
   toJSON() {
@@ -1091,29 +1091,29 @@ class NewExpression {
 
   get start() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos, internal.$ast);
+    return constructU32(internal.$pos, internal.$ast);
   }
 
   get end() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos + 4, internal.$ast);
+    return constructU32(internal.$pos + 4, internal.$ast);
   }
 
   get callee() {
     const internal = this.#internal;
-    return deserializeExpression(internal.$pos + 8, internal.$ast);
+    return constructExpression(internal.$pos + 8, internal.$ast);
   }
 
   get typeArguments() {
     const internal = this.#internal;
-    return deserializeOptionBoxTSTypeParameterInstantiation(internal.$pos + 24, internal.$ast);
+    return constructOptionBoxTSTypeParameterInstantiation(internal.$pos + 24, internal.$ast);
   }
 
   get arguments() {
     const internal = this.#internal,
       node = internal.arguments;
     if (node !== void 0) return node;
-    return internal.arguments = deserializeVecArgument(internal.$pos + 32, internal.$ast);
+    return internal.arguments = constructVecArgument(internal.$pos + 32, internal.$ast);
   }
 
   toJSON() {
@@ -1139,12 +1139,12 @@ class MetaProperty {
 
   get start() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos, internal.$ast);
+    return constructU32(internal.$pos, internal.$ast);
   }
 
   get end() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos + 4, internal.$ast);
+    return constructU32(internal.$pos + 4, internal.$ast);
   }
 
   get meta() {
@@ -1179,17 +1179,17 @@ class SpreadElement {
 
   get start() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos, internal.$ast);
+    return constructU32(internal.$pos, internal.$ast);
   }
 
   get end() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos + 4, internal.$ast);
+    return constructU32(internal.$pos + 4, internal.$ast);
   }
 
   get argument() {
     const internal = this.#internal;
-    return deserializeExpression(internal.$pos + 8, internal.$ast);
+    return constructExpression(internal.$pos + 8, internal.$ast);
   }
 
   toJSON() {
@@ -1202,96 +1202,96 @@ class SpreadElement {
   }
 }
 
-function deserializeArgument(pos, ast) {
+function constructArgument(pos, ast) {
   switch (ast.buffer[pos]) {
     case 0:
-      return deserializeBoxBooleanLiteral(pos + 8, ast);
+      return constructBoxBooleanLiteral(pos + 8, ast);
     case 1:
-      return deserializeBoxNullLiteral(pos + 8, ast);
+      return constructBoxNullLiteral(pos + 8, ast);
     case 2:
-      return deserializeBoxNumericLiteral(pos + 8, ast);
+      return constructBoxNumericLiteral(pos + 8, ast);
     case 3:
-      return deserializeBoxBigIntLiteral(pos + 8, ast);
+      return constructBoxBigIntLiteral(pos + 8, ast);
     case 4:
-      return deserializeBoxRegExpLiteral(pos + 8, ast);
+      return constructBoxRegExpLiteral(pos + 8, ast);
     case 5:
-      return deserializeBoxStringLiteral(pos + 8, ast);
+      return constructBoxStringLiteral(pos + 8, ast);
     case 6:
-      return deserializeBoxTemplateLiteral(pos + 8, ast);
+      return constructBoxTemplateLiteral(pos + 8, ast);
     case 7:
-      return deserializeBoxIdentifierReference(pos + 8, ast);
+      return constructBoxIdentifierReference(pos + 8, ast);
     case 8:
-      return deserializeBoxMetaProperty(pos + 8, ast);
+      return constructBoxMetaProperty(pos + 8, ast);
     case 9:
-      return deserializeBoxSuper(pos + 8, ast);
+      return constructBoxSuper(pos + 8, ast);
     case 10:
-      return deserializeBoxArrayExpression(pos + 8, ast);
+      return constructBoxArrayExpression(pos + 8, ast);
     case 11:
-      return deserializeBoxArrowFunctionExpression(pos + 8, ast);
+      return constructBoxArrowFunctionExpression(pos + 8, ast);
     case 12:
-      return deserializeBoxAssignmentExpression(pos + 8, ast);
+      return constructBoxAssignmentExpression(pos + 8, ast);
     case 13:
-      return deserializeBoxAwaitExpression(pos + 8, ast);
+      return constructBoxAwaitExpression(pos + 8, ast);
     case 14:
-      return deserializeBoxBinaryExpression(pos + 8, ast);
+      return constructBoxBinaryExpression(pos + 8, ast);
     case 15:
-      return deserializeBoxCallExpression(pos + 8, ast);
+      return constructBoxCallExpression(pos + 8, ast);
     case 16:
-      return deserializeBoxChainExpression(pos + 8, ast);
+      return constructBoxChainExpression(pos + 8, ast);
     case 17:
-      return deserializeBoxClass(pos + 8, ast);
+      return constructBoxClass(pos + 8, ast);
     case 18:
-      return deserializeBoxConditionalExpression(pos + 8, ast);
+      return constructBoxConditionalExpression(pos + 8, ast);
     case 19:
-      return deserializeBoxFunction(pos + 8, ast);
+      return constructBoxFunction(pos + 8, ast);
     case 20:
-      return deserializeBoxImportExpression(pos + 8, ast);
+      return constructBoxImportExpression(pos + 8, ast);
     case 21:
-      return deserializeBoxLogicalExpression(pos + 8, ast);
+      return constructBoxLogicalExpression(pos + 8, ast);
     case 22:
-      return deserializeBoxNewExpression(pos + 8, ast);
+      return constructBoxNewExpression(pos + 8, ast);
     case 23:
-      return deserializeBoxObjectExpression(pos + 8, ast);
+      return constructBoxObjectExpression(pos + 8, ast);
     case 24:
-      return deserializeBoxParenthesizedExpression(pos + 8, ast);
+      return constructBoxParenthesizedExpression(pos + 8, ast);
     case 25:
-      return deserializeBoxSequenceExpression(pos + 8, ast);
+      return constructBoxSequenceExpression(pos + 8, ast);
     case 26:
-      return deserializeBoxTaggedTemplateExpression(pos + 8, ast);
+      return constructBoxTaggedTemplateExpression(pos + 8, ast);
     case 27:
-      return deserializeBoxThisExpression(pos + 8, ast);
+      return constructBoxThisExpression(pos + 8, ast);
     case 28:
-      return deserializeBoxUnaryExpression(pos + 8, ast);
+      return constructBoxUnaryExpression(pos + 8, ast);
     case 29:
-      return deserializeBoxUpdateExpression(pos + 8, ast);
+      return constructBoxUpdateExpression(pos + 8, ast);
     case 30:
-      return deserializeBoxYieldExpression(pos + 8, ast);
+      return constructBoxYieldExpression(pos + 8, ast);
     case 31:
-      return deserializeBoxPrivateInExpression(pos + 8, ast);
+      return constructBoxPrivateInExpression(pos + 8, ast);
     case 32:
-      return deserializeBoxJSXElement(pos + 8, ast);
+      return constructBoxJSXElement(pos + 8, ast);
     case 33:
-      return deserializeBoxJSXFragment(pos + 8, ast);
+      return constructBoxJSXFragment(pos + 8, ast);
     case 34:
-      return deserializeBoxTSAsExpression(pos + 8, ast);
+      return constructBoxTSAsExpression(pos + 8, ast);
     case 35:
-      return deserializeBoxTSSatisfiesExpression(pos + 8, ast);
+      return constructBoxTSSatisfiesExpression(pos + 8, ast);
     case 36:
-      return deserializeBoxTSTypeAssertion(pos + 8, ast);
+      return constructBoxTSTypeAssertion(pos + 8, ast);
     case 37:
-      return deserializeBoxTSNonNullExpression(pos + 8, ast);
+      return constructBoxTSNonNullExpression(pos + 8, ast);
     case 38:
-      return deserializeBoxTSInstantiationExpression(pos + 8, ast);
+      return constructBoxTSInstantiationExpression(pos + 8, ast);
     case 39:
-      return deserializeBoxV8IntrinsicExpression(pos + 8, ast);
+      return constructBoxV8IntrinsicExpression(pos + 8, ast);
     case 48:
-      return deserializeBoxComputedMemberExpression(pos + 8, ast);
+      return constructBoxComputedMemberExpression(pos + 8, ast);
     case 49:
-      return deserializeBoxStaticMemberExpression(pos + 8, ast);
+      return constructBoxStaticMemberExpression(pos + 8, ast);
     case 50:
-      return deserializeBoxPrivateFieldExpression(pos + 8, ast);
+      return constructBoxPrivateFieldExpression(pos + 8, ast);
     case 64:
-      return deserializeBoxSpreadElement(pos + 8, ast);
+      return constructBoxSpreadElement(pos + 8, ast);
     default:
       throw new Error(`Unexpected discriminant ${ast.buffer[pos]} for Argument`);
   }
@@ -1308,27 +1308,27 @@ class UpdateExpression {
 
   get start() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos, internal.$ast);
+    return constructU32(internal.$pos, internal.$ast);
   }
 
   get end() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos + 4, internal.$ast);
+    return constructU32(internal.$pos + 4, internal.$ast);
   }
 
   get operator() {
     const internal = this.#internal;
-    return deserializeUpdateOperator(internal.$pos + 24, internal.$ast);
+    return constructUpdateOperator(internal.$pos + 24, internal.$ast);
   }
 
   get prefix() {
     const internal = this.#internal;
-    return deserializeBool(internal.$pos + 25, internal.$ast);
+    return constructBool(internal.$pos + 25, internal.$ast);
   }
 
   get argument() {
     const internal = this.#internal;
-    return deserializeSimpleAssignmentTarget(internal.$pos + 8, internal.$ast);
+    return constructSimpleAssignmentTarget(internal.$pos + 8, internal.$ast);
   }
 
   toJSON() {
@@ -1354,22 +1354,22 @@ class UnaryExpression {
 
   get start() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos, internal.$ast);
+    return constructU32(internal.$pos, internal.$ast);
   }
 
   get end() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos + 4, internal.$ast);
+    return constructU32(internal.$pos + 4, internal.$ast);
   }
 
   get operator() {
     const internal = this.#internal;
-    return deserializeUnaryOperator(internal.$pos + 24, internal.$ast);
+    return constructUnaryOperator(internal.$pos + 24, internal.$ast);
   }
 
   get argument() {
     const internal = this.#internal;
-    return deserializeExpression(internal.$pos + 8, internal.$ast);
+    return constructExpression(internal.$pos + 8, internal.$ast);
   }
 
   toJSON() {
@@ -1394,27 +1394,27 @@ class BinaryExpression {
 
   get start() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos, internal.$ast);
+    return constructU32(internal.$pos, internal.$ast);
   }
 
   get end() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos + 4, internal.$ast);
+    return constructU32(internal.$pos + 4, internal.$ast);
   }
 
   get left() {
     const internal = this.#internal;
-    return deserializeExpression(internal.$pos + 8, internal.$ast);
+    return constructExpression(internal.$pos + 8, internal.$ast);
   }
 
   get operator() {
     const internal = this.#internal;
-    return deserializeBinaryOperator(internal.$pos + 40, internal.$ast);
+    return constructBinaryOperator(internal.$pos + 40, internal.$ast);
   }
 
   get right() {
     const internal = this.#internal;
-    return deserializeExpression(internal.$pos + 24, internal.$ast);
+    return constructExpression(internal.$pos + 24, internal.$ast);
   }
 
   toJSON() {
@@ -1440,12 +1440,12 @@ class PrivateInExpression {
 
   get start() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos, internal.$ast);
+    return constructU32(internal.$pos, internal.$ast);
   }
 
   get end() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos + 4, internal.$ast);
+    return constructU32(internal.$pos + 4, internal.$ast);
   }
 
   get left() {
@@ -1455,7 +1455,7 @@ class PrivateInExpression {
 
   get right() {
     const internal = this.#internal;
-    return deserializeExpression(internal.$pos + 32, internal.$ast);
+    return constructExpression(internal.$pos + 32, internal.$ast);
   }
 
   toJSON() {
@@ -1480,27 +1480,27 @@ class LogicalExpression {
 
   get start() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos, internal.$ast);
+    return constructU32(internal.$pos, internal.$ast);
   }
 
   get end() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos + 4, internal.$ast);
+    return constructU32(internal.$pos + 4, internal.$ast);
   }
 
   get left() {
     const internal = this.#internal;
-    return deserializeExpression(internal.$pos + 8, internal.$ast);
+    return constructExpression(internal.$pos + 8, internal.$ast);
   }
 
   get operator() {
     const internal = this.#internal;
-    return deserializeLogicalOperator(internal.$pos + 40, internal.$ast);
+    return constructLogicalOperator(internal.$pos + 40, internal.$ast);
   }
 
   get right() {
     const internal = this.#internal;
-    return deserializeExpression(internal.$pos + 24, internal.$ast);
+    return constructExpression(internal.$pos + 24, internal.$ast);
   }
 
   toJSON() {
@@ -1526,27 +1526,27 @@ class ConditionalExpression {
 
   get start() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos, internal.$ast);
+    return constructU32(internal.$pos, internal.$ast);
   }
 
   get end() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos + 4, internal.$ast);
+    return constructU32(internal.$pos + 4, internal.$ast);
   }
 
   get test() {
     const internal = this.#internal;
-    return deserializeExpression(internal.$pos + 8, internal.$ast);
+    return constructExpression(internal.$pos + 8, internal.$ast);
   }
 
   get consequent() {
     const internal = this.#internal;
-    return deserializeExpression(internal.$pos + 24, internal.$ast);
+    return constructExpression(internal.$pos + 24, internal.$ast);
   }
 
   get alternate() {
     const internal = this.#internal;
-    return deserializeExpression(internal.$pos + 40, internal.$ast);
+    return constructExpression(internal.$pos + 40, internal.$ast);
   }
 
   toJSON() {
@@ -1572,27 +1572,27 @@ class AssignmentExpression {
 
   get start() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos, internal.$ast);
+    return constructU32(internal.$pos, internal.$ast);
   }
 
   get end() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos + 4, internal.$ast);
+    return constructU32(internal.$pos + 4, internal.$ast);
   }
 
   get operator() {
     const internal = this.#internal;
-    return deserializeAssignmentOperator(internal.$pos + 40, internal.$ast);
+    return constructAssignmentOperator(internal.$pos + 40, internal.$ast);
   }
 
   get left() {
     const internal = this.#internal;
-    return deserializeAssignmentTarget(internal.$pos + 8, internal.$ast);
+    return constructAssignmentTarget(internal.$pos + 8, internal.$ast);
   }
 
   get right() {
     const internal = this.#internal;
-    return deserializeExpression(internal.$pos + 24, internal.$ast);
+    return constructExpression(internal.$pos + 24, internal.$ast);
   }
 
   toJSON() {
@@ -1607,62 +1607,62 @@ class AssignmentExpression {
   }
 }
 
-function deserializeAssignmentTarget(pos, ast) {
+function constructAssignmentTarget(pos, ast) {
   switch (ast.buffer[pos]) {
     case 0:
-      return deserializeBoxIdentifierReference(pos + 8, ast);
+      return constructBoxIdentifierReference(pos + 8, ast);
     case 1:
-      return deserializeBoxTSAsExpression(pos + 8, ast);
+      return constructBoxTSAsExpression(pos + 8, ast);
     case 2:
-      return deserializeBoxTSSatisfiesExpression(pos + 8, ast);
+      return constructBoxTSSatisfiesExpression(pos + 8, ast);
     case 3:
-      return deserializeBoxTSNonNullExpression(pos + 8, ast);
+      return constructBoxTSNonNullExpression(pos + 8, ast);
     case 4:
-      return deserializeBoxTSTypeAssertion(pos + 8, ast);
+      return constructBoxTSTypeAssertion(pos + 8, ast);
     case 8:
-      return deserializeBoxArrayAssignmentTarget(pos + 8, ast);
+      return constructBoxArrayAssignmentTarget(pos + 8, ast);
     case 9:
-      return deserializeBoxObjectAssignmentTarget(pos + 8, ast);
+      return constructBoxObjectAssignmentTarget(pos + 8, ast);
     case 48:
-      return deserializeBoxComputedMemberExpression(pos + 8, ast);
+      return constructBoxComputedMemberExpression(pos + 8, ast);
     case 49:
-      return deserializeBoxStaticMemberExpression(pos + 8, ast);
+      return constructBoxStaticMemberExpression(pos + 8, ast);
     case 50:
-      return deserializeBoxPrivateFieldExpression(pos + 8, ast);
+      return constructBoxPrivateFieldExpression(pos + 8, ast);
     default:
       throw new Error(`Unexpected discriminant ${ast.buffer[pos]} for AssignmentTarget`);
   }
 }
 
-function deserializeSimpleAssignmentTarget(pos, ast) {
+function constructSimpleAssignmentTarget(pos, ast) {
   switch (ast.buffer[pos]) {
     case 0:
-      return deserializeBoxIdentifierReference(pos + 8, ast);
+      return constructBoxIdentifierReference(pos + 8, ast);
     case 1:
-      return deserializeBoxTSAsExpression(pos + 8, ast);
+      return constructBoxTSAsExpression(pos + 8, ast);
     case 2:
-      return deserializeBoxTSSatisfiesExpression(pos + 8, ast);
+      return constructBoxTSSatisfiesExpression(pos + 8, ast);
     case 3:
-      return deserializeBoxTSNonNullExpression(pos + 8, ast);
+      return constructBoxTSNonNullExpression(pos + 8, ast);
     case 4:
-      return deserializeBoxTSTypeAssertion(pos + 8, ast);
+      return constructBoxTSTypeAssertion(pos + 8, ast);
     case 48:
-      return deserializeBoxComputedMemberExpression(pos + 8, ast);
+      return constructBoxComputedMemberExpression(pos + 8, ast);
     case 49:
-      return deserializeBoxStaticMemberExpression(pos + 8, ast);
+      return constructBoxStaticMemberExpression(pos + 8, ast);
     case 50:
-      return deserializeBoxPrivateFieldExpression(pos + 8, ast);
+      return constructBoxPrivateFieldExpression(pos + 8, ast);
     default:
       throw new Error(`Unexpected discriminant ${ast.buffer[pos]} for SimpleAssignmentTarget`);
   }
 }
 
-function deserializeAssignmentTargetPattern(pos, ast) {
+function constructAssignmentTargetPattern(pos, ast) {
   switch (ast.buffer[pos]) {
     case 8:
-      return deserializeBoxArrayAssignmentTarget(pos + 8, ast);
+      return constructBoxArrayAssignmentTarget(pos + 8, ast);
     case 9:
-      return deserializeBoxObjectAssignmentTarget(pos + 8, ast);
+      return constructBoxObjectAssignmentTarget(pos + 8, ast);
     default:
       throw new Error(`Unexpected discriminant ${ast.buffer[pos]} for AssignmentTargetPattern`);
   }
@@ -1679,19 +1679,19 @@ class ArrayAssignmentTarget {
 
   get start() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos, internal.$ast);
+    return constructU32(internal.$pos, internal.$ast);
   }
 
   get end() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos + 4, internal.$ast);
+    return constructU32(internal.$pos + 4, internal.$ast);
   }
 
   get elements() {
     const internal = this.#internal,
       node = internal.elements;
     if (node !== void 0) return node;
-    return internal.elements = deserializeVecOptionAssignmentTargetMaybeDefault(internal.$pos + 8, internal.$ast);
+    return internal.elements = constructVecOptionAssignmentTargetMaybeDefault(internal.$pos + 8, internal.$ast);
   }
 
   toJSON() {
@@ -1715,19 +1715,19 @@ class ObjectAssignmentTarget {
 
   get start() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos, internal.$ast);
+    return constructU32(internal.$pos, internal.$ast);
   }
 
   get end() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos + 4, internal.$ast);
+    return constructU32(internal.$pos + 4, internal.$ast);
   }
 
   get properties() {
     const internal = this.#internal,
       node = internal.properties;
     if (node !== void 0) return node;
-    return internal.properties = deserializeVecAssignmentTargetProperty(internal.$pos + 8, internal.$ast);
+    return internal.properties = constructVecAssignmentTargetProperty(internal.$pos + 8, internal.$ast);
   }
 
   toJSON() {
@@ -1751,17 +1751,17 @@ class AssignmentTargetRest {
 
   get start() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos, internal.$ast);
+    return constructU32(internal.$pos, internal.$ast);
   }
 
   get end() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos + 4, internal.$ast);
+    return constructU32(internal.$pos + 4, internal.$ast);
   }
 
   get argument() {
     const internal = this.#internal;
-    return deserializeAssignmentTarget(internal.$pos + 8, internal.$ast);
+    return constructAssignmentTarget(internal.$pos + 8, internal.$ast);
   }
 
   toJSON() {
@@ -1774,30 +1774,30 @@ class AssignmentTargetRest {
   }
 }
 
-function deserializeAssignmentTargetMaybeDefault(pos, ast) {
+function constructAssignmentTargetMaybeDefault(pos, ast) {
   switch (ast.buffer[pos]) {
     case 0:
-      return deserializeBoxIdentifierReference(pos + 8, ast);
+      return constructBoxIdentifierReference(pos + 8, ast);
     case 1:
-      return deserializeBoxTSAsExpression(pos + 8, ast);
+      return constructBoxTSAsExpression(pos + 8, ast);
     case 2:
-      return deserializeBoxTSSatisfiesExpression(pos + 8, ast);
+      return constructBoxTSSatisfiesExpression(pos + 8, ast);
     case 3:
-      return deserializeBoxTSNonNullExpression(pos + 8, ast);
+      return constructBoxTSNonNullExpression(pos + 8, ast);
     case 4:
-      return deserializeBoxTSTypeAssertion(pos + 8, ast);
+      return constructBoxTSTypeAssertion(pos + 8, ast);
     case 8:
-      return deserializeBoxArrayAssignmentTarget(pos + 8, ast);
+      return constructBoxArrayAssignmentTarget(pos + 8, ast);
     case 9:
-      return deserializeBoxObjectAssignmentTarget(pos + 8, ast);
+      return constructBoxObjectAssignmentTarget(pos + 8, ast);
     case 16:
-      return deserializeBoxAssignmentTargetWithDefault(pos + 8, ast);
+      return constructBoxAssignmentTargetWithDefault(pos + 8, ast);
     case 48:
-      return deserializeBoxComputedMemberExpression(pos + 8, ast);
+      return constructBoxComputedMemberExpression(pos + 8, ast);
     case 49:
-      return deserializeBoxStaticMemberExpression(pos + 8, ast);
+      return constructBoxStaticMemberExpression(pos + 8, ast);
     case 50:
-      return deserializeBoxPrivateFieldExpression(pos + 8, ast);
+      return constructBoxPrivateFieldExpression(pos + 8, ast);
     default:
       throw new Error(`Unexpected discriminant ${ast.buffer[pos]} for AssignmentTargetMaybeDefault`);
   }
@@ -1814,22 +1814,22 @@ class AssignmentTargetWithDefault {
 
   get start() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos, internal.$ast);
+    return constructU32(internal.$pos, internal.$ast);
   }
 
   get end() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos + 4, internal.$ast);
+    return constructU32(internal.$pos + 4, internal.$ast);
   }
 
   get left() {
     const internal = this.#internal;
-    return deserializeAssignmentTarget(internal.$pos + 8, internal.$ast);
+    return constructAssignmentTarget(internal.$pos + 8, internal.$ast);
   }
 
   get right() {
     const internal = this.#internal;
-    return deserializeExpression(internal.$pos + 24, internal.$ast);
+    return constructExpression(internal.$pos + 24, internal.$ast);
   }
 
   toJSON() {
@@ -1843,12 +1843,12 @@ class AssignmentTargetWithDefault {
   }
 }
 
-function deserializeAssignmentTargetProperty(pos, ast) {
+function constructAssignmentTargetProperty(pos, ast) {
   switch (ast.buffer[pos]) {
     case 0:
-      return deserializeBoxAssignmentTargetPropertyIdentifier(pos + 8, ast);
+      return constructBoxAssignmentTargetPropertyIdentifier(pos + 8, ast);
     case 1:
-      return deserializeBoxAssignmentTargetPropertyProperty(pos + 8, ast);
+      return constructBoxAssignmentTargetPropertyProperty(pos + 8, ast);
     default:
       throw new Error(`Unexpected discriminant ${ast.buffer[pos]} for AssignmentTargetProperty`);
   }
@@ -1865,12 +1865,12 @@ class AssignmentTargetPropertyIdentifier {
 
   get start() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos, internal.$ast);
+    return constructU32(internal.$pos, internal.$ast);
   }
 
   get end() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos + 4, internal.$ast);
+    return constructU32(internal.$pos + 4, internal.$ast);
   }
 
   get key() {
@@ -1880,7 +1880,7 @@ class AssignmentTargetPropertyIdentifier {
 
   get value() {
     const internal = this.#internal;
-    return deserializeOptionExpression(internal.$pos + 40, internal.$ast);
+    return constructOptionExpression(internal.$pos + 40, internal.$ast);
   }
 
   toJSON() {
@@ -1905,27 +1905,27 @@ class AssignmentTargetPropertyProperty {
 
   get start() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos, internal.$ast);
+    return constructU32(internal.$pos, internal.$ast);
   }
 
   get end() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos + 4, internal.$ast);
+    return constructU32(internal.$pos + 4, internal.$ast);
   }
 
   get key() {
     const internal = this.#internal;
-    return deserializePropertyKey(internal.$pos + 8, internal.$ast);
+    return constructPropertyKey(internal.$pos + 8, internal.$ast);
   }
 
   get value() {
     const internal = this.#internal;
-    return deserializeAssignmentTargetMaybeDefault(internal.$pos + 24, internal.$ast);
+    return constructAssignmentTargetMaybeDefault(internal.$pos + 24, internal.$ast);
   }
 
   get computed() {
     const internal = this.#internal;
-    return deserializeBool(internal.$pos + 40, internal.$ast);
+    return constructBool(internal.$pos + 40, internal.$ast);
   }
 
   toJSON() {
@@ -1951,19 +1951,19 @@ class SequenceExpression {
 
   get start() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos, internal.$ast);
+    return constructU32(internal.$pos, internal.$ast);
   }
 
   get end() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos + 4, internal.$ast);
+    return constructU32(internal.$pos + 4, internal.$ast);
   }
 
   get expressions() {
     const internal = this.#internal,
       node = internal.expressions;
     if (node !== void 0) return node;
-    return internal.expressions = deserializeVecExpression(internal.$pos + 8, internal.$ast);
+    return internal.expressions = constructVecExpression(internal.$pos + 8, internal.$ast);
   }
 
   toJSON() {
@@ -1987,12 +1987,12 @@ class Super {
 
   get start() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos, internal.$ast);
+    return constructU32(internal.$pos, internal.$ast);
   }
 
   get end() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos + 4, internal.$ast);
+    return constructU32(internal.$pos + 4, internal.$ast);
   }
 
   toJSON() {
@@ -2015,17 +2015,17 @@ class AwaitExpression {
 
   get start() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos, internal.$ast);
+    return constructU32(internal.$pos, internal.$ast);
   }
 
   get end() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos + 4, internal.$ast);
+    return constructU32(internal.$pos + 4, internal.$ast);
   }
 
   get argument() {
     const internal = this.#internal;
-    return deserializeExpression(internal.$pos + 8, internal.$ast);
+    return constructExpression(internal.$pos + 8, internal.$ast);
   }
 
   toJSON() {
@@ -2049,17 +2049,17 @@ class ChainExpression {
 
   get start() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos, internal.$ast);
+    return constructU32(internal.$pos, internal.$ast);
   }
 
   get end() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos + 4, internal.$ast);
+    return constructU32(internal.$pos + 4, internal.$ast);
   }
 
   get expression() {
     const internal = this.#internal;
-    return deserializeChainElement(internal.$pos + 8, internal.$ast);
+    return constructChainElement(internal.$pos + 8, internal.$ast);
   }
 
   toJSON() {
@@ -2072,18 +2072,18 @@ class ChainExpression {
   }
 }
 
-function deserializeChainElement(pos, ast) {
+function constructChainElement(pos, ast) {
   switch (ast.buffer[pos]) {
     case 0:
-      return deserializeBoxCallExpression(pos + 8, ast);
+      return constructBoxCallExpression(pos + 8, ast);
     case 1:
-      return deserializeBoxTSNonNullExpression(pos + 8, ast);
+      return constructBoxTSNonNullExpression(pos + 8, ast);
     case 48:
-      return deserializeBoxComputedMemberExpression(pos + 8, ast);
+      return constructBoxComputedMemberExpression(pos + 8, ast);
     case 49:
-      return deserializeBoxStaticMemberExpression(pos + 8, ast);
+      return constructBoxStaticMemberExpression(pos + 8, ast);
     case 50:
-      return deserializeBoxPrivateFieldExpression(pos + 8, ast);
+      return constructBoxPrivateFieldExpression(pos + 8, ast);
     default:
       throw new Error(`Unexpected discriminant ${ast.buffer[pos]} for ChainElement`);
   }
@@ -2100,17 +2100,17 @@ class ParenthesizedExpression {
 
   get start() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos, internal.$ast);
+    return constructU32(internal.$pos, internal.$ast);
   }
 
   get end() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos + 4, internal.$ast);
+    return constructU32(internal.$pos + 4, internal.$ast);
   }
 
   get expression() {
     const internal = this.#internal;
-    return deserializeExpression(internal.$pos + 8, internal.$ast);
+    return constructExpression(internal.$pos + 8, internal.$ast);
   }
 
   toJSON() {
@@ -2123,72 +2123,72 @@ class ParenthesizedExpression {
   }
 }
 
-function deserializeStatement(pos, ast) {
+function constructStatement(pos, ast) {
   switch (ast.buffer[pos]) {
     case 0:
-      return deserializeBoxBlockStatement(pos + 8, ast);
+      return constructBoxBlockStatement(pos + 8, ast);
     case 1:
-      return deserializeBoxBreakStatement(pos + 8, ast);
+      return constructBoxBreakStatement(pos + 8, ast);
     case 2:
-      return deserializeBoxContinueStatement(pos + 8, ast);
+      return constructBoxContinueStatement(pos + 8, ast);
     case 3:
-      return deserializeBoxDebuggerStatement(pos + 8, ast);
+      return constructBoxDebuggerStatement(pos + 8, ast);
     case 4:
-      return deserializeBoxDoWhileStatement(pos + 8, ast);
+      return constructBoxDoWhileStatement(pos + 8, ast);
     case 5:
-      return deserializeBoxEmptyStatement(pos + 8, ast);
+      return constructBoxEmptyStatement(pos + 8, ast);
     case 6:
-      return deserializeBoxExpressionStatement(pos + 8, ast);
+      return constructBoxExpressionStatement(pos + 8, ast);
     case 7:
-      return deserializeBoxForInStatement(pos + 8, ast);
+      return constructBoxForInStatement(pos + 8, ast);
     case 8:
-      return deserializeBoxForOfStatement(pos + 8, ast);
+      return constructBoxForOfStatement(pos + 8, ast);
     case 9:
-      return deserializeBoxForStatement(pos + 8, ast);
+      return constructBoxForStatement(pos + 8, ast);
     case 10:
-      return deserializeBoxIfStatement(pos + 8, ast);
+      return constructBoxIfStatement(pos + 8, ast);
     case 11:
-      return deserializeBoxLabeledStatement(pos + 8, ast);
+      return constructBoxLabeledStatement(pos + 8, ast);
     case 12:
-      return deserializeBoxReturnStatement(pos + 8, ast);
+      return constructBoxReturnStatement(pos + 8, ast);
     case 13:
-      return deserializeBoxSwitchStatement(pos + 8, ast);
+      return constructBoxSwitchStatement(pos + 8, ast);
     case 14:
-      return deserializeBoxThrowStatement(pos + 8, ast);
+      return constructBoxThrowStatement(pos + 8, ast);
     case 15:
-      return deserializeBoxTryStatement(pos + 8, ast);
+      return constructBoxTryStatement(pos + 8, ast);
     case 16:
-      return deserializeBoxWhileStatement(pos + 8, ast);
+      return constructBoxWhileStatement(pos + 8, ast);
     case 17:
-      return deserializeBoxWithStatement(pos + 8, ast);
+      return constructBoxWithStatement(pos + 8, ast);
     case 32:
-      return deserializeBoxVariableDeclaration(pos + 8, ast);
+      return constructBoxVariableDeclaration(pos + 8, ast);
     case 33:
-      return deserializeBoxFunction(pos + 8, ast);
+      return constructBoxFunction(pos + 8, ast);
     case 34:
-      return deserializeBoxClass(pos + 8, ast);
+      return constructBoxClass(pos + 8, ast);
     case 35:
-      return deserializeBoxTSTypeAliasDeclaration(pos + 8, ast);
+      return constructBoxTSTypeAliasDeclaration(pos + 8, ast);
     case 36:
-      return deserializeBoxTSInterfaceDeclaration(pos + 8, ast);
+      return constructBoxTSInterfaceDeclaration(pos + 8, ast);
     case 37:
-      return deserializeBoxTSEnumDeclaration(pos + 8, ast);
+      return constructBoxTSEnumDeclaration(pos + 8, ast);
     case 38:
-      return deserializeBoxTSModuleDeclaration(pos + 8, ast);
+      return constructBoxTSModuleDeclaration(pos + 8, ast);
     case 39:
-      return deserializeBoxTSImportEqualsDeclaration(pos + 8, ast);
+      return constructBoxTSImportEqualsDeclaration(pos + 8, ast);
     case 64:
-      return deserializeBoxImportDeclaration(pos + 8, ast);
+      return constructBoxImportDeclaration(pos + 8, ast);
     case 65:
-      return deserializeBoxExportAllDeclaration(pos + 8, ast);
+      return constructBoxExportAllDeclaration(pos + 8, ast);
     case 66:
-      return deserializeBoxExportDefaultDeclaration(pos + 8, ast);
+      return constructBoxExportDefaultDeclaration(pos + 8, ast);
     case 67:
-      return deserializeBoxExportNamedDeclaration(pos + 8, ast);
+      return constructBoxExportNamedDeclaration(pos + 8, ast);
     case 68:
-      return deserializeBoxTSExportAssignment(pos + 8, ast);
+      return constructBoxTSExportAssignment(pos + 8, ast);
     case 69:
-      return deserializeBoxTSNamespaceExportDeclaration(pos + 8, ast);
+      return constructBoxTSNamespaceExportDeclaration(pos + 8, ast);
     default:
       throw new Error(`Unexpected discriminant ${ast.buffer[pos]} for Statement`);
   }
@@ -2205,12 +2205,12 @@ class Directive {
 
   get start() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos, internal.$ast);
+    return constructU32(internal.$pos, internal.$ast);
   }
 
   get end() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos + 4, internal.$ast);
+    return constructU32(internal.$pos + 4, internal.$ast);
   }
 
   get expression() {
@@ -2222,7 +2222,7 @@ class Directive {
     const internal = this.#internal,
       node = internal.directive;
     if (node !== void 0) return node;
-    return internal.directive = deserializeStr(internal.$pos + 56, internal.$ast);
+    return internal.directive = constructStr(internal.$pos + 56, internal.$ast);
   }
 
   toJSON() {
@@ -2247,19 +2247,19 @@ class Hashbang {
 
   get start() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos, internal.$ast);
+    return constructU32(internal.$pos, internal.$ast);
   }
 
   get end() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos + 4, internal.$ast);
+    return constructU32(internal.$pos + 4, internal.$ast);
   }
 
   get value() {
     const internal = this.#internal,
       node = internal.value;
     if (node !== void 0) return node;
-    return internal.value = deserializeStr(internal.$pos + 8, internal.$ast);
+    return internal.value = constructStr(internal.$pos + 8, internal.$ast);
   }
 
   toJSON() {
@@ -2283,19 +2283,19 @@ class BlockStatement {
 
   get start() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos, internal.$ast);
+    return constructU32(internal.$pos, internal.$ast);
   }
 
   get end() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos + 4, internal.$ast);
+    return constructU32(internal.$pos + 4, internal.$ast);
   }
 
   get body() {
     const internal = this.#internal,
       node = internal.body;
     if (node !== void 0) return node;
-    return internal.body = deserializeVecStatement(internal.$pos + 8, internal.$ast);
+    return internal.body = constructVecStatement(internal.$pos + 8, internal.$ast);
   }
 
   toJSON() {
@@ -2308,24 +2308,24 @@ class BlockStatement {
   }
 }
 
-function deserializeDeclaration(pos, ast) {
+function constructDeclaration(pos, ast) {
   switch (ast.buffer[pos]) {
     case 32:
-      return deserializeBoxVariableDeclaration(pos + 8, ast);
+      return constructBoxVariableDeclaration(pos + 8, ast);
     case 33:
-      return deserializeBoxFunction(pos + 8, ast);
+      return constructBoxFunction(pos + 8, ast);
     case 34:
-      return deserializeBoxClass(pos + 8, ast);
+      return constructBoxClass(pos + 8, ast);
     case 35:
-      return deserializeBoxTSTypeAliasDeclaration(pos + 8, ast);
+      return constructBoxTSTypeAliasDeclaration(pos + 8, ast);
     case 36:
-      return deserializeBoxTSInterfaceDeclaration(pos + 8, ast);
+      return constructBoxTSInterfaceDeclaration(pos + 8, ast);
     case 37:
-      return deserializeBoxTSEnumDeclaration(pos + 8, ast);
+      return constructBoxTSEnumDeclaration(pos + 8, ast);
     case 38:
-      return deserializeBoxTSModuleDeclaration(pos + 8, ast);
+      return constructBoxTSModuleDeclaration(pos + 8, ast);
     case 39:
-      return deserializeBoxTSImportEqualsDeclaration(pos + 8, ast);
+      return constructBoxTSImportEqualsDeclaration(pos + 8, ast);
     default:
       throw new Error(`Unexpected discriminant ${ast.buffer[pos]} for Declaration`);
   }
@@ -2342,29 +2342,29 @@ class VariableDeclaration {
 
   get start() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos, internal.$ast);
+    return constructU32(internal.$pos, internal.$ast);
   }
 
   get end() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos + 4, internal.$ast);
+    return constructU32(internal.$pos + 4, internal.$ast);
   }
 
   get kind() {
     const internal = this.#internal;
-    return deserializeVariableDeclarationKind(internal.$pos + 32, internal.$ast);
+    return constructVariableDeclarationKind(internal.$pos + 32, internal.$ast);
   }
 
   get declarations() {
     const internal = this.#internal,
       node = internal.declarations;
     if (node !== void 0) return node;
-    return internal.declarations = deserializeVecVariableDeclarator(internal.$pos + 8, internal.$ast);
+    return internal.declarations = constructVecVariableDeclarator(internal.$pos + 8, internal.$ast);
   }
 
   get declare() {
     const internal = this.#internal;
-    return deserializeBool(internal.$pos + 33, internal.$ast);
+    return constructBool(internal.$pos + 33, internal.$ast);
   }
 
   toJSON() {
@@ -2379,7 +2379,7 @@ class VariableDeclaration {
   }
 }
 
-function deserializeVariableDeclarationKind(pos, ast) {
+function constructVariableDeclarationKind(pos, ast) {
   switch (ast.buffer[pos]) {
     case 0:
       return 'var';
@@ -2407,12 +2407,12 @@ class VariableDeclarator {
 
   get start() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos, internal.$ast);
+    return constructU32(internal.$pos, internal.$ast);
   }
 
   get end() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos + 4, internal.$ast);
+    return constructU32(internal.$pos + 4, internal.$ast);
   }
 
   get id() {
@@ -2422,12 +2422,12 @@ class VariableDeclarator {
 
   get init() {
     const internal = this.#internal;
-    return deserializeOptionExpression(internal.$pos + 40, internal.$ast);
+    return constructOptionExpression(internal.$pos + 40, internal.$ast);
   }
 
   get definite() {
     const internal = this.#internal;
-    return deserializeBool(internal.$pos + 57, internal.$ast);
+    return constructBool(internal.$pos + 57, internal.$ast);
   }
 
   toJSON() {
@@ -2453,12 +2453,12 @@ class EmptyStatement {
 
   get start() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos, internal.$ast);
+    return constructU32(internal.$pos, internal.$ast);
   }
 
   get end() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos + 4, internal.$ast);
+    return constructU32(internal.$pos + 4, internal.$ast);
   }
 
   toJSON() {
@@ -2481,17 +2481,17 @@ class ExpressionStatement {
 
   get start() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos, internal.$ast);
+    return constructU32(internal.$pos, internal.$ast);
   }
 
   get end() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos + 4, internal.$ast);
+    return constructU32(internal.$pos + 4, internal.$ast);
   }
 
   get expression() {
     const internal = this.#internal;
-    return deserializeExpression(internal.$pos + 8, internal.$ast);
+    return constructExpression(internal.$pos + 8, internal.$ast);
   }
 
   toJSON() {
@@ -2515,27 +2515,27 @@ class IfStatement {
 
   get start() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos, internal.$ast);
+    return constructU32(internal.$pos, internal.$ast);
   }
 
   get end() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos + 4, internal.$ast);
+    return constructU32(internal.$pos + 4, internal.$ast);
   }
 
   get test() {
     const internal = this.#internal;
-    return deserializeExpression(internal.$pos + 8, internal.$ast);
+    return constructExpression(internal.$pos + 8, internal.$ast);
   }
 
   get consequent() {
     const internal = this.#internal;
-    return deserializeStatement(internal.$pos + 24, internal.$ast);
+    return constructStatement(internal.$pos + 24, internal.$ast);
   }
 
   get alternate() {
     const internal = this.#internal;
-    return deserializeOptionStatement(internal.$pos + 40, internal.$ast);
+    return constructOptionStatement(internal.$pos + 40, internal.$ast);
   }
 
   toJSON() {
@@ -2561,22 +2561,22 @@ class DoWhileStatement {
 
   get start() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos, internal.$ast);
+    return constructU32(internal.$pos, internal.$ast);
   }
 
   get end() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos + 4, internal.$ast);
+    return constructU32(internal.$pos + 4, internal.$ast);
   }
 
   get body() {
     const internal = this.#internal;
-    return deserializeStatement(internal.$pos + 8, internal.$ast);
+    return constructStatement(internal.$pos + 8, internal.$ast);
   }
 
   get test() {
     const internal = this.#internal;
-    return deserializeExpression(internal.$pos + 24, internal.$ast);
+    return constructExpression(internal.$pos + 24, internal.$ast);
   }
 
   toJSON() {
@@ -2601,22 +2601,22 @@ class WhileStatement {
 
   get start() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos, internal.$ast);
+    return constructU32(internal.$pos, internal.$ast);
   }
 
   get end() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos + 4, internal.$ast);
+    return constructU32(internal.$pos + 4, internal.$ast);
   }
 
   get test() {
     const internal = this.#internal;
-    return deserializeExpression(internal.$pos + 8, internal.$ast);
+    return constructExpression(internal.$pos + 8, internal.$ast);
   }
 
   get body() {
     const internal = this.#internal;
-    return deserializeStatement(internal.$pos + 24, internal.$ast);
+    return constructStatement(internal.$pos + 24, internal.$ast);
   }
 
   toJSON() {
@@ -2641,32 +2641,32 @@ class ForStatement {
 
   get start() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos, internal.$ast);
+    return constructU32(internal.$pos, internal.$ast);
   }
 
   get end() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos + 4, internal.$ast);
+    return constructU32(internal.$pos + 4, internal.$ast);
   }
 
   get init() {
     const internal = this.#internal;
-    return deserializeOptionForStatementInit(internal.$pos + 8, internal.$ast);
+    return constructOptionForStatementInit(internal.$pos + 8, internal.$ast);
   }
 
   get test() {
     const internal = this.#internal;
-    return deserializeOptionExpression(internal.$pos + 24, internal.$ast);
+    return constructOptionExpression(internal.$pos + 24, internal.$ast);
   }
 
   get update() {
     const internal = this.#internal;
-    return deserializeOptionExpression(internal.$pos + 40, internal.$ast);
+    return constructOptionExpression(internal.$pos + 40, internal.$ast);
   }
 
   get body() {
     const internal = this.#internal;
-    return deserializeStatement(internal.$pos + 56, internal.$ast);
+    return constructStatement(internal.$pos + 56, internal.$ast);
   }
 
   toJSON() {
@@ -2682,96 +2682,96 @@ class ForStatement {
   }
 }
 
-function deserializeForStatementInit(pos, ast) {
+function constructForStatementInit(pos, ast) {
   switch (ast.buffer[pos]) {
     case 0:
-      return deserializeBoxBooleanLiteral(pos + 8, ast);
+      return constructBoxBooleanLiteral(pos + 8, ast);
     case 1:
-      return deserializeBoxNullLiteral(pos + 8, ast);
+      return constructBoxNullLiteral(pos + 8, ast);
     case 2:
-      return deserializeBoxNumericLiteral(pos + 8, ast);
+      return constructBoxNumericLiteral(pos + 8, ast);
     case 3:
-      return deserializeBoxBigIntLiteral(pos + 8, ast);
+      return constructBoxBigIntLiteral(pos + 8, ast);
     case 4:
-      return deserializeBoxRegExpLiteral(pos + 8, ast);
+      return constructBoxRegExpLiteral(pos + 8, ast);
     case 5:
-      return deserializeBoxStringLiteral(pos + 8, ast);
+      return constructBoxStringLiteral(pos + 8, ast);
     case 6:
-      return deserializeBoxTemplateLiteral(pos + 8, ast);
+      return constructBoxTemplateLiteral(pos + 8, ast);
     case 7:
-      return deserializeBoxIdentifierReference(pos + 8, ast);
+      return constructBoxIdentifierReference(pos + 8, ast);
     case 8:
-      return deserializeBoxMetaProperty(pos + 8, ast);
+      return constructBoxMetaProperty(pos + 8, ast);
     case 9:
-      return deserializeBoxSuper(pos + 8, ast);
+      return constructBoxSuper(pos + 8, ast);
     case 10:
-      return deserializeBoxArrayExpression(pos + 8, ast);
+      return constructBoxArrayExpression(pos + 8, ast);
     case 11:
-      return deserializeBoxArrowFunctionExpression(pos + 8, ast);
+      return constructBoxArrowFunctionExpression(pos + 8, ast);
     case 12:
-      return deserializeBoxAssignmentExpression(pos + 8, ast);
+      return constructBoxAssignmentExpression(pos + 8, ast);
     case 13:
-      return deserializeBoxAwaitExpression(pos + 8, ast);
+      return constructBoxAwaitExpression(pos + 8, ast);
     case 14:
-      return deserializeBoxBinaryExpression(pos + 8, ast);
+      return constructBoxBinaryExpression(pos + 8, ast);
     case 15:
-      return deserializeBoxCallExpression(pos + 8, ast);
+      return constructBoxCallExpression(pos + 8, ast);
     case 16:
-      return deserializeBoxChainExpression(pos + 8, ast);
+      return constructBoxChainExpression(pos + 8, ast);
     case 17:
-      return deserializeBoxClass(pos + 8, ast);
+      return constructBoxClass(pos + 8, ast);
     case 18:
-      return deserializeBoxConditionalExpression(pos + 8, ast);
+      return constructBoxConditionalExpression(pos + 8, ast);
     case 19:
-      return deserializeBoxFunction(pos + 8, ast);
+      return constructBoxFunction(pos + 8, ast);
     case 20:
-      return deserializeBoxImportExpression(pos + 8, ast);
+      return constructBoxImportExpression(pos + 8, ast);
     case 21:
-      return deserializeBoxLogicalExpression(pos + 8, ast);
+      return constructBoxLogicalExpression(pos + 8, ast);
     case 22:
-      return deserializeBoxNewExpression(pos + 8, ast);
+      return constructBoxNewExpression(pos + 8, ast);
     case 23:
-      return deserializeBoxObjectExpression(pos + 8, ast);
+      return constructBoxObjectExpression(pos + 8, ast);
     case 24:
-      return deserializeBoxParenthesizedExpression(pos + 8, ast);
+      return constructBoxParenthesizedExpression(pos + 8, ast);
     case 25:
-      return deserializeBoxSequenceExpression(pos + 8, ast);
+      return constructBoxSequenceExpression(pos + 8, ast);
     case 26:
-      return deserializeBoxTaggedTemplateExpression(pos + 8, ast);
+      return constructBoxTaggedTemplateExpression(pos + 8, ast);
     case 27:
-      return deserializeBoxThisExpression(pos + 8, ast);
+      return constructBoxThisExpression(pos + 8, ast);
     case 28:
-      return deserializeBoxUnaryExpression(pos + 8, ast);
+      return constructBoxUnaryExpression(pos + 8, ast);
     case 29:
-      return deserializeBoxUpdateExpression(pos + 8, ast);
+      return constructBoxUpdateExpression(pos + 8, ast);
     case 30:
-      return deserializeBoxYieldExpression(pos + 8, ast);
+      return constructBoxYieldExpression(pos + 8, ast);
     case 31:
-      return deserializeBoxPrivateInExpression(pos + 8, ast);
+      return constructBoxPrivateInExpression(pos + 8, ast);
     case 32:
-      return deserializeBoxJSXElement(pos + 8, ast);
+      return constructBoxJSXElement(pos + 8, ast);
     case 33:
-      return deserializeBoxJSXFragment(pos + 8, ast);
+      return constructBoxJSXFragment(pos + 8, ast);
     case 34:
-      return deserializeBoxTSAsExpression(pos + 8, ast);
+      return constructBoxTSAsExpression(pos + 8, ast);
     case 35:
-      return deserializeBoxTSSatisfiesExpression(pos + 8, ast);
+      return constructBoxTSSatisfiesExpression(pos + 8, ast);
     case 36:
-      return deserializeBoxTSTypeAssertion(pos + 8, ast);
+      return constructBoxTSTypeAssertion(pos + 8, ast);
     case 37:
-      return deserializeBoxTSNonNullExpression(pos + 8, ast);
+      return constructBoxTSNonNullExpression(pos + 8, ast);
     case 38:
-      return deserializeBoxTSInstantiationExpression(pos + 8, ast);
+      return constructBoxTSInstantiationExpression(pos + 8, ast);
     case 39:
-      return deserializeBoxV8IntrinsicExpression(pos + 8, ast);
+      return constructBoxV8IntrinsicExpression(pos + 8, ast);
     case 48:
-      return deserializeBoxComputedMemberExpression(pos + 8, ast);
+      return constructBoxComputedMemberExpression(pos + 8, ast);
     case 49:
-      return deserializeBoxStaticMemberExpression(pos + 8, ast);
+      return constructBoxStaticMemberExpression(pos + 8, ast);
     case 50:
-      return deserializeBoxPrivateFieldExpression(pos + 8, ast);
+      return constructBoxPrivateFieldExpression(pos + 8, ast);
     case 64:
-      return deserializeBoxVariableDeclaration(pos + 8, ast);
+      return constructBoxVariableDeclaration(pos + 8, ast);
     default:
       throw new Error(`Unexpected discriminant ${ast.buffer[pos]} for ForStatementInit`);
   }
@@ -2788,27 +2788,27 @@ class ForInStatement {
 
   get start() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos, internal.$ast);
+    return constructU32(internal.$pos, internal.$ast);
   }
 
   get end() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos + 4, internal.$ast);
+    return constructU32(internal.$pos + 4, internal.$ast);
   }
 
   get left() {
     const internal = this.#internal;
-    return deserializeForStatementLeft(internal.$pos + 8, internal.$ast);
+    return constructForStatementLeft(internal.$pos + 8, internal.$ast);
   }
 
   get right() {
     const internal = this.#internal;
-    return deserializeExpression(internal.$pos + 24, internal.$ast);
+    return constructExpression(internal.$pos + 24, internal.$ast);
   }
 
   get body() {
     const internal = this.#internal;
-    return deserializeStatement(internal.$pos + 40, internal.$ast);
+    return constructStatement(internal.$pos + 40, internal.$ast);
   }
 
   toJSON() {
@@ -2823,30 +2823,30 @@ class ForInStatement {
   }
 }
 
-function deserializeForStatementLeft(pos, ast) {
+function constructForStatementLeft(pos, ast) {
   switch (ast.buffer[pos]) {
     case 0:
-      return deserializeBoxIdentifierReference(pos + 8, ast);
+      return constructBoxIdentifierReference(pos + 8, ast);
     case 1:
-      return deserializeBoxTSAsExpression(pos + 8, ast);
+      return constructBoxTSAsExpression(pos + 8, ast);
     case 2:
-      return deserializeBoxTSSatisfiesExpression(pos + 8, ast);
+      return constructBoxTSSatisfiesExpression(pos + 8, ast);
     case 3:
-      return deserializeBoxTSNonNullExpression(pos + 8, ast);
+      return constructBoxTSNonNullExpression(pos + 8, ast);
     case 4:
-      return deserializeBoxTSTypeAssertion(pos + 8, ast);
+      return constructBoxTSTypeAssertion(pos + 8, ast);
     case 8:
-      return deserializeBoxArrayAssignmentTarget(pos + 8, ast);
+      return constructBoxArrayAssignmentTarget(pos + 8, ast);
     case 9:
-      return deserializeBoxObjectAssignmentTarget(pos + 8, ast);
+      return constructBoxObjectAssignmentTarget(pos + 8, ast);
     case 16:
-      return deserializeBoxVariableDeclaration(pos + 8, ast);
+      return constructBoxVariableDeclaration(pos + 8, ast);
     case 48:
-      return deserializeBoxComputedMemberExpression(pos + 8, ast);
+      return constructBoxComputedMemberExpression(pos + 8, ast);
     case 49:
-      return deserializeBoxStaticMemberExpression(pos + 8, ast);
+      return constructBoxStaticMemberExpression(pos + 8, ast);
     case 50:
-      return deserializeBoxPrivateFieldExpression(pos + 8, ast);
+      return constructBoxPrivateFieldExpression(pos + 8, ast);
     default:
       throw new Error(`Unexpected discriminant ${ast.buffer[pos]} for ForStatementLeft`);
   }
@@ -2863,32 +2863,32 @@ class ForOfStatement {
 
   get start() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos, internal.$ast);
+    return constructU32(internal.$pos, internal.$ast);
   }
 
   get end() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos + 4, internal.$ast);
+    return constructU32(internal.$pos + 4, internal.$ast);
   }
 
   get await() {
     const internal = this.#internal;
-    return deserializeBool(internal.$pos + 60, internal.$ast);
+    return constructBool(internal.$pos + 60, internal.$ast);
   }
 
   get left() {
     const internal = this.#internal;
-    return deserializeForStatementLeft(internal.$pos + 8, internal.$ast);
+    return constructForStatementLeft(internal.$pos + 8, internal.$ast);
   }
 
   get right() {
     const internal = this.#internal;
-    return deserializeExpression(internal.$pos + 24, internal.$ast);
+    return constructExpression(internal.$pos + 24, internal.$ast);
   }
 
   get body() {
     const internal = this.#internal;
-    return deserializeStatement(internal.$pos + 40, internal.$ast);
+    return constructStatement(internal.$pos + 40, internal.$ast);
   }
 
   toJSON() {
@@ -2915,17 +2915,17 @@ class ContinueStatement {
 
   get start() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos, internal.$ast);
+    return constructU32(internal.$pos, internal.$ast);
   }
 
   get end() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos + 4, internal.$ast);
+    return constructU32(internal.$pos + 4, internal.$ast);
   }
 
   get label() {
     const internal = this.#internal;
-    return deserializeOptionLabelIdentifier(internal.$pos + 8, internal.$ast);
+    return constructOptionLabelIdentifier(internal.$pos + 8, internal.$ast);
   }
 
   toJSON() {
@@ -2949,17 +2949,17 @@ class BreakStatement {
 
   get start() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos, internal.$ast);
+    return constructU32(internal.$pos, internal.$ast);
   }
 
   get end() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos + 4, internal.$ast);
+    return constructU32(internal.$pos + 4, internal.$ast);
   }
 
   get label() {
     const internal = this.#internal;
-    return deserializeOptionLabelIdentifier(internal.$pos + 8, internal.$ast);
+    return constructOptionLabelIdentifier(internal.$pos + 8, internal.$ast);
   }
 
   toJSON() {
@@ -2983,17 +2983,17 @@ class ReturnStatement {
 
   get start() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos, internal.$ast);
+    return constructU32(internal.$pos, internal.$ast);
   }
 
   get end() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos + 4, internal.$ast);
+    return constructU32(internal.$pos + 4, internal.$ast);
   }
 
   get argument() {
     const internal = this.#internal;
-    return deserializeOptionExpression(internal.$pos + 8, internal.$ast);
+    return constructOptionExpression(internal.$pos + 8, internal.$ast);
   }
 
   toJSON() {
@@ -3017,22 +3017,22 @@ class WithStatement {
 
   get start() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos, internal.$ast);
+    return constructU32(internal.$pos, internal.$ast);
   }
 
   get end() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos + 4, internal.$ast);
+    return constructU32(internal.$pos + 4, internal.$ast);
   }
 
   get object() {
     const internal = this.#internal;
-    return deserializeExpression(internal.$pos + 8, internal.$ast);
+    return constructExpression(internal.$pos + 8, internal.$ast);
   }
 
   get body() {
     const internal = this.#internal;
-    return deserializeStatement(internal.$pos + 24, internal.$ast);
+    return constructStatement(internal.$pos + 24, internal.$ast);
   }
 
   toJSON() {
@@ -3057,24 +3057,24 @@ class SwitchStatement {
 
   get start() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos, internal.$ast);
+    return constructU32(internal.$pos, internal.$ast);
   }
 
   get end() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos + 4, internal.$ast);
+    return constructU32(internal.$pos + 4, internal.$ast);
   }
 
   get discriminant() {
     const internal = this.#internal;
-    return deserializeExpression(internal.$pos + 8, internal.$ast);
+    return constructExpression(internal.$pos + 8, internal.$ast);
   }
 
   get cases() {
     const internal = this.#internal,
       node = internal.cases;
     if (node !== void 0) return node;
-    return internal.cases = deserializeVecSwitchCase(internal.$pos + 24, internal.$ast);
+    return internal.cases = constructVecSwitchCase(internal.$pos + 24, internal.$ast);
   }
 
   toJSON() {
@@ -3099,24 +3099,24 @@ class SwitchCase {
 
   get start() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos, internal.$ast);
+    return constructU32(internal.$pos, internal.$ast);
   }
 
   get end() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos + 4, internal.$ast);
+    return constructU32(internal.$pos + 4, internal.$ast);
   }
 
   get test() {
     const internal = this.#internal;
-    return deserializeOptionExpression(internal.$pos + 8, internal.$ast);
+    return constructOptionExpression(internal.$pos + 8, internal.$ast);
   }
 
   get consequent() {
     const internal = this.#internal,
       node = internal.consequent;
     if (node !== void 0) return node;
-    return internal.consequent = deserializeVecStatement(internal.$pos + 24, internal.$ast);
+    return internal.consequent = constructVecStatement(internal.$pos + 24, internal.$ast);
   }
 
   toJSON() {
@@ -3141,12 +3141,12 @@ class LabeledStatement {
 
   get start() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos, internal.$ast);
+    return constructU32(internal.$pos, internal.$ast);
   }
 
   get end() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos + 4, internal.$ast);
+    return constructU32(internal.$pos + 4, internal.$ast);
   }
 
   get label() {
@@ -3156,7 +3156,7 @@ class LabeledStatement {
 
   get body() {
     const internal = this.#internal;
-    return deserializeStatement(internal.$pos + 32, internal.$ast);
+    return constructStatement(internal.$pos + 32, internal.$ast);
   }
 
   toJSON() {
@@ -3181,17 +3181,17 @@ class ThrowStatement {
 
   get start() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos, internal.$ast);
+    return constructU32(internal.$pos, internal.$ast);
   }
 
   get end() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos + 4, internal.$ast);
+    return constructU32(internal.$pos + 4, internal.$ast);
   }
 
   get argument() {
     const internal = this.#internal;
-    return deserializeExpression(internal.$pos + 8, internal.$ast);
+    return constructExpression(internal.$pos + 8, internal.$ast);
   }
 
   toJSON() {
@@ -3215,27 +3215,27 @@ class TryStatement {
 
   get start() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos, internal.$ast);
+    return constructU32(internal.$pos, internal.$ast);
   }
 
   get end() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos + 4, internal.$ast);
+    return constructU32(internal.$pos + 4, internal.$ast);
   }
 
   get block() {
     const internal = this.#internal;
-    return deserializeBoxBlockStatement(internal.$pos + 8, internal.$ast);
+    return constructBoxBlockStatement(internal.$pos + 8, internal.$ast);
   }
 
   get handler() {
     const internal = this.#internal;
-    return deserializeOptionBoxCatchClause(internal.$pos + 16, internal.$ast);
+    return constructOptionBoxCatchClause(internal.$pos + 16, internal.$ast);
   }
 
   get finalizer() {
     const internal = this.#internal;
-    return deserializeOptionBoxBlockStatement(internal.$pos + 24, internal.$ast);
+    return constructOptionBoxBlockStatement(internal.$pos + 24, internal.$ast);
   }
 
   toJSON() {
@@ -3261,22 +3261,22 @@ class CatchClause {
 
   get start() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos, internal.$ast);
+    return constructU32(internal.$pos, internal.$ast);
   }
 
   get end() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos + 4, internal.$ast);
+    return constructU32(internal.$pos + 4, internal.$ast);
   }
 
   get param() {
     const internal = this.#internal;
-    return deserializeOptionCatchParameter(internal.$pos + 8, internal.$ast);
+    return constructOptionCatchParameter(internal.$pos + 8, internal.$ast);
   }
 
   get body() {
     const internal = this.#internal;
-    return deserializeBoxBlockStatement(internal.$pos + 48, internal.$ast);
+    return constructBoxBlockStatement(internal.$pos + 48, internal.$ast);
   }
 
   toJSON() {
@@ -3321,12 +3321,12 @@ class DebuggerStatement {
 
   get start() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos, internal.$ast);
+    return constructU32(internal.$pos, internal.$ast);
   }
 
   get end() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos + 4, internal.$ast);
+    return constructU32(internal.$pos + 4, internal.$ast);
   }
 
   toJSON() {
@@ -3348,17 +3348,17 @@ class BindingPattern {
 
   get kind() {
     const internal = this.#internal;
-    return deserializeBindingPatternKind(internal.$pos, internal.$ast);
+    return constructBindingPatternKind(internal.$pos, internal.$ast);
   }
 
   get typeAnnotation() {
     const internal = this.#internal;
-    return deserializeOptionBoxTSTypeAnnotation(internal.$pos + 16, internal.$ast);
+    return constructOptionBoxTSTypeAnnotation(internal.$pos + 16, internal.$ast);
   }
 
   get optional() {
     const internal = this.#internal;
-    return deserializeBool(internal.$pos + 24, internal.$ast);
+    return constructBool(internal.$pos + 24, internal.$ast);
   }
 
   toJSON() {
@@ -3370,16 +3370,16 @@ class BindingPattern {
   }
 }
 
-function deserializeBindingPatternKind(pos, ast) {
+function constructBindingPatternKind(pos, ast) {
   switch (ast.buffer[pos]) {
     case 0:
-      return deserializeBoxBindingIdentifier(pos + 8, ast);
+      return constructBoxBindingIdentifier(pos + 8, ast);
     case 1:
-      return deserializeBoxObjectPattern(pos + 8, ast);
+      return constructBoxObjectPattern(pos + 8, ast);
     case 2:
-      return deserializeBoxArrayPattern(pos + 8, ast);
+      return constructBoxArrayPattern(pos + 8, ast);
     case 3:
-      return deserializeBoxAssignmentPattern(pos + 8, ast);
+      return constructBoxAssignmentPattern(pos + 8, ast);
     default:
       throw new Error(`Unexpected discriminant ${ast.buffer[pos]} for BindingPatternKind`);
   }
@@ -3396,12 +3396,12 @@ class AssignmentPattern {
 
   get start() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos, internal.$ast);
+    return constructU32(internal.$pos, internal.$ast);
   }
 
   get end() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos + 4, internal.$ast);
+    return constructU32(internal.$pos + 4, internal.$ast);
   }
 
   get left() {
@@ -3411,7 +3411,7 @@ class AssignmentPattern {
 
   get right() {
     const internal = this.#internal;
-    return deserializeExpression(internal.$pos + 40, internal.$ast);
+    return constructExpression(internal.$pos + 40, internal.$ast);
   }
 
   toJSON() {
@@ -3436,19 +3436,19 @@ class ObjectPattern {
 
   get start() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos, internal.$ast);
+    return constructU32(internal.$pos, internal.$ast);
   }
 
   get end() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos + 4, internal.$ast);
+    return constructU32(internal.$pos + 4, internal.$ast);
   }
 
   get properties() {
     const internal = this.#internal,
       node = internal.properties;
     if (node !== void 0) return node;
-    return internal.properties = deserializeVecBindingProperty(internal.$pos + 8, internal.$ast);
+    return internal.properties = constructVecBindingProperty(internal.$pos + 8, internal.$ast);
   }
 
   toJSON() {
@@ -3472,17 +3472,17 @@ class BindingProperty {
 
   get start() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos, internal.$ast);
+    return constructU32(internal.$pos, internal.$ast);
   }
 
   get end() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos + 4, internal.$ast);
+    return constructU32(internal.$pos + 4, internal.$ast);
   }
 
   get key() {
     const internal = this.#internal;
-    return deserializePropertyKey(internal.$pos + 8, internal.$ast);
+    return constructPropertyKey(internal.$pos + 8, internal.$ast);
   }
 
   get value() {
@@ -3492,12 +3492,12 @@ class BindingProperty {
 
   get shorthand() {
     const internal = this.#internal;
-    return deserializeBool(internal.$pos + 56, internal.$ast);
+    return constructBool(internal.$pos + 56, internal.$ast);
   }
 
   get computed() {
     const internal = this.#internal;
-    return deserializeBool(internal.$pos + 57, internal.$ast);
+    return constructBool(internal.$pos + 57, internal.$ast);
   }
 
   toJSON() {
@@ -3524,19 +3524,19 @@ class ArrayPattern {
 
   get start() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos, internal.$ast);
+    return constructU32(internal.$pos, internal.$ast);
   }
 
   get end() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos + 4, internal.$ast);
+    return constructU32(internal.$pos + 4, internal.$ast);
   }
 
   get elements() {
     const internal = this.#internal,
       node = internal.elements;
     if (node !== void 0) return node;
-    return internal.elements = deserializeVecOptionBindingPattern(internal.$pos + 8, internal.$ast);
+    return internal.elements = constructVecOptionBindingPattern(internal.$pos + 8, internal.$ast);
   }
 
   toJSON() {
@@ -3560,12 +3560,12 @@ class BindingRestElement {
 
   get start() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos, internal.$ast);
+    return constructU32(internal.$pos, internal.$ast);
   }
 
   get end() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos + 4, internal.$ast);
+    return constructU32(internal.$pos + 4, internal.$ast);
   }
 
   get argument() {
@@ -3593,57 +3593,57 @@ class Function {
 
   get start() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos, internal.$ast);
+    return constructU32(internal.$pos, internal.$ast);
   }
 
   get end() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos + 4, internal.$ast);
+    return constructU32(internal.$pos + 4, internal.$ast);
   }
 
   get type() {
     const internal = this.#internal;
-    return deserializeFunctionType(internal.$pos + 84, internal.$ast);
+    return constructFunctionType(internal.$pos + 84, internal.$ast);
   }
 
   get id() {
     const internal = this.#internal;
-    return deserializeOptionBindingIdentifier(internal.$pos + 8, internal.$ast);
+    return constructOptionBindingIdentifier(internal.$pos + 8, internal.$ast);
   }
 
   get generator() {
     const internal = this.#internal;
-    return deserializeBool(internal.$pos + 85, internal.$ast);
+    return constructBool(internal.$pos + 85, internal.$ast);
   }
 
   get async() {
     const internal = this.#internal;
-    return deserializeBool(internal.$pos + 86, internal.$ast);
+    return constructBool(internal.$pos + 86, internal.$ast);
   }
 
   get declare() {
     const internal = this.#internal;
-    return deserializeBool(internal.$pos + 87, internal.$ast);
+    return constructBool(internal.$pos + 87, internal.$ast);
   }
 
   get typeParameters() {
     const internal = this.#internal;
-    return deserializeOptionBoxTSTypeParameterDeclaration(internal.$pos + 40, internal.$ast);
+    return constructOptionBoxTSTypeParameterDeclaration(internal.$pos + 40, internal.$ast);
   }
 
   get params() {
     const internal = this.#internal;
-    return deserializeBoxFormalParameters(internal.$pos + 56, internal.$ast);
+    return constructBoxFormalParameters(internal.$pos + 56, internal.$ast);
   }
 
   get returnType() {
     const internal = this.#internal;
-    return deserializeOptionBoxTSTypeAnnotation(internal.$pos + 64, internal.$ast);
+    return constructOptionBoxTSTypeAnnotation(internal.$pos + 64, internal.$ast);
   }
 
   get body() {
     const internal = this.#internal;
-    return deserializeOptionBoxFunctionBody(internal.$pos + 72, internal.$ast);
+    return constructOptionBoxFunctionBody(internal.$pos + 72, internal.$ast);
   }
 
   toJSON() {
@@ -3663,7 +3663,7 @@ class Function {
   }
 }
 
-function deserializeFunctionType(pos, ast) {
+function constructFunctionType(pos, ast) {
   switch (ast.buffer[pos]) {
     case 0:
       return 'FunctionDeclaration';
@@ -3689,24 +3689,24 @@ class FormalParameters {
 
   get start() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos, internal.$ast);
+    return constructU32(internal.$pos, internal.$ast);
   }
 
   get end() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos + 4, internal.$ast);
+    return constructU32(internal.$pos + 4, internal.$ast);
   }
 
   get kind() {
     const internal = this.#internal;
-    return deserializeFormalParameterKind(internal.$pos + 40, internal.$ast);
+    return constructFormalParameterKind(internal.$pos + 40, internal.$ast);
   }
 
   get items() {
     const internal = this.#internal,
       node = internal.items;
     if (node !== void 0) return node;
-    return internal.items = deserializeVecFormalParameter(internal.$pos + 8, internal.$ast);
+    return internal.items = constructVecFormalParameter(internal.$pos + 8, internal.$ast);
   }
 
   toJSON() {
@@ -3732,7 +3732,7 @@ class FormalParameter {
     const internal = this.#internal,
       node = internal.decorators;
     if (node !== void 0) return node;
-    return internal.decorators = deserializeVecDecorator(internal.$pos + 8, internal.$ast);
+    return internal.decorators = constructVecDecorator(internal.$pos + 8, internal.$ast);
   }
 
   get pattern() {
@@ -3748,7 +3748,7 @@ class FormalParameter {
   }
 }
 
-function deserializeFormalParameterKind(pos, ast) {
+function constructFormalParameterKind(pos, ast) {
   switch (ast.buffer[pos]) {
     case 0:
       return 'FormalParameter';
@@ -3774,19 +3774,19 @@ class FunctionBody {
 
   get start() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos, internal.$ast);
+    return constructU32(internal.$pos, internal.$ast);
   }
 
   get end() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos + 4, internal.$ast);
+    return constructU32(internal.$pos + 4, internal.$ast);
   }
 
   get body() {
     const internal = this.#internal,
       node = internal.body;
     if (node !== void 0) return node;
-    return internal.body = deserializeVecStatement(internal.$pos + 32, internal.$ast);
+    return internal.body = constructVecStatement(internal.$pos + 32, internal.$ast);
   }
 
   toJSON() {
@@ -3810,42 +3810,42 @@ class ArrowFunctionExpression {
 
   get start() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos, internal.$ast);
+    return constructU32(internal.$pos, internal.$ast);
   }
 
   get end() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos + 4, internal.$ast);
+    return constructU32(internal.$pos + 4, internal.$ast);
   }
 
   get expression() {
     const internal = this.#internal;
-    return deserializeBool(internal.$pos + 44, internal.$ast);
+    return constructBool(internal.$pos + 44, internal.$ast);
   }
 
   get async() {
     const internal = this.#internal;
-    return deserializeBool(internal.$pos + 45, internal.$ast);
+    return constructBool(internal.$pos + 45, internal.$ast);
   }
 
   get typeParameters() {
     const internal = this.#internal;
-    return deserializeOptionBoxTSTypeParameterDeclaration(internal.$pos + 8, internal.$ast);
+    return constructOptionBoxTSTypeParameterDeclaration(internal.$pos + 8, internal.$ast);
   }
 
   get params() {
     const internal = this.#internal;
-    return deserializeBoxFormalParameters(internal.$pos + 16, internal.$ast);
+    return constructBoxFormalParameters(internal.$pos + 16, internal.$ast);
   }
 
   get returnType() {
     const internal = this.#internal;
-    return deserializeOptionBoxTSTypeAnnotation(internal.$pos + 24, internal.$ast);
+    return constructOptionBoxTSTypeAnnotation(internal.$pos + 24, internal.$ast);
   }
 
   get body() {
     const internal = this.#internal;
-    return deserializeBoxFunctionBody(internal.$pos + 32, internal.$ast);
+    return constructBoxFunctionBody(internal.$pos + 32, internal.$ast);
   }
 
   toJSON() {
@@ -3874,22 +3874,22 @@ class YieldExpression {
 
   get start() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos, internal.$ast);
+    return constructU32(internal.$pos, internal.$ast);
   }
 
   get end() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos + 4, internal.$ast);
+    return constructU32(internal.$pos + 4, internal.$ast);
   }
 
   get delegate() {
     const internal = this.#internal;
-    return deserializeBool(internal.$pos + 24, internal.$ast);
+    return constructBool(internal.$pos + 24, internal.$ast);
   }
 
   get argument() {
     const internal = this.#internal;
-    return deserializeOptionExpression(internal.$pos + 8, internal.$ast);
+    return constructOptionExpression(internal.$pos + 8, internal.$ast);
   }
 
   toJSON() {
@@ -3913,66 +3913,66 @@ class Class {
 
   get start() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos, internal.$ast);
+    return constructU32(internal.$pos, internal.$ast);
   }
 
   get end() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos + 4, internal.$ast);
+    return constructU32(internal.$pos + 4, internal.$ast);
   }
 
   get type() {
     const internal = this.#internal;
-    return deserializeClassType(internal.$pos + 132, internal.$ast);
+    return constructClassType(internal.$pos + 132, internal.$ast);
   }
 
   get decorators() {
     const internal = this.#internal,
       node = internal.decorators;
     if (node !== void 0) return node;
-    return internal.decorators = deserializeVecDecorator(internal.$pos + 8, internal.$ast);
+    return internal.decorators = constructVecDecorator(internal.$pos + 8, internal.$ast);
   }
 
   get id() {
     const internal = this.#internal;
-    return deserializeOptionBindingIdentifier(internal.$pos + 32, internal.$ast);
+    return constructOptionBindingIdentifier(internal.$pos + 32, internal.$ast);
   }
 
   get typeParameters() {
     const internal = this.#internal;
-    return deserializeOptionBoxTSTypeParameterDeclaration(internal.$pos + 64, internal.$ast);
+    return constructOptionBoxTSTypeParameterDeclaration(internal.$pos + 64, internal.$ast);
   }
 
   get superClass() {
     const internal = this.#internal;
-    return deserializeOptionExpression(internal.$pos + 72, internal.$ast);
+    return constructOptionExpression(internal.$pos + 72, internal.$ast);
   }
 
   get superTypeArguments() {
     const internal = this.#internal;
-    return deserializeOptionBoxTSTypeParameterInstantiation(internal.$pos + 88, internal.$ast);
+    return constructOptionBoxTSTypeParameterInstantiation(internal.$pos + 88, internal.$ast);
   }
 
   get implements() {
     const internal = this.#internal,
       node = internal.implements;
     if (node !== void 0) return node;
-    return internal.implements = deserializeVecTSClassImplements(internal.$pos + 96, internal.$ast);
+    return internal.implements = constructVecTSClassImplements(internal.$pos + 96, internal.$ast);
   }
 
   get body() {
     const internal = this.#internal;
-    return deserializeBoxClassBody(internal.$pos + 120, internal.$ast);
+    return constructBoxClassBody(internal.$pos + 120, internal.$ast);
   }
 
   get abstract() {
     const internal = this.#internal;
-    return deserializeBool(internal.$pos + 133, internal.$ast);
+    return constructBool(internal.$pos + 133, internal.$ast);
   }
 
   get declare() {
     const internal = this.#internal;
-    return deserializeBool(internal.$pos + 134, internal.$ast);
+    return constructBool(internal.$pos + 134, internal.$ast);
   }
 
   toJSON() {
@@ -3993,7 +3993,7 @@ class Class {
   }
 }
 
-function deserializeClassType(pos, ast) {
+function constructClassType(pos, ast) {
   switch (ast.buffer[pos]) {
     case 0:
       return 'ClassDeclaration';
@@ -4015,19 +4015,19 @@ class ClassBody {
 
   get start() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos, internal.$ast);
+    return constructU32(internal.$pos, internal.$ast);
   }
 
   get end() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos + 4, internal.$ast);
+    return constructU32(internal.$pos + 4, internal.$ast);
   }
 
   get body() {
     const internal = this.#internal,
       node = internal.body;
     if (node !== void 0) return node;
-    return internal.body = deserializeVecClassElement(internal.$pos + 8, internal.$ast);
+    return internal.body = constructVecClassElement(internal.$pos + 8, internal.$ast);
   }
 
   toJSON() {
@@ -4040,18 +4040,18 @@ class ClassBody {
   }
 }
 
-function deserializeClassElement(pos, ast) {
+function constructClassElement(pos, ast) {
   switch (ast.buffer[pos]) {
     case 0:
-      return deserializeBoxStaticBlock(pos + 8, ast);
+      return constructBoxStaticBlock(pos + 8, ast);
     case 1:
-      return deserializeBoxMethodDefinition(pos + 8, ast);
+      return constructBoxMethodDefinition(pos + 8, ast);
     case 2:
-      return deserializeBoxPropertyDefinition(pos + 8, ast);
+      return constructBoxPropertyDefinition(pos + 8, ast);
     case 3:
-      return deserializeBoxAccessorProperty(pos + 8, ast);
+      return constructBoxAccessorProperty(pos + 8, ast);
     case 4:
-      return deserializeBoxTSIndexSignature(pos + 8, ast);
+      return constructBoxTSIndexSignature(pos + 8, ast);
     default:
       throw new Error(`Unexpected discriminant ${ast.buffer[pos]} for ClassElement`);
   }
@@ -4067,64 +4067,64 @@ class MethodDefinition {
 
   get start() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos, internal.$ast);
+    return constructU32(internal.$pos, internal.$ast);
   }
 
   get end() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos + 4, internal.$ast);
+    return constructU32(internal.$pos + 4, internal.$ast);
   }
 
   get type() {
     const internal = this.#internal;
-    return deserializeMethodDefinitionType(internal.$pos + 56, internal.$ast);
+    return constructMethodDefinitionType(internal.$pos + 56, internal.$ast);
   }
 
   get decorators() {
     const internal = this.#internal,
       node = internal.decorators;
     if (node !== void 0) return node;
-    return internal.decorators = deserializeVecDecorator(internal.$pos + 8, internal.$ast);
+    return internal.decorators = constructVecDecorator(internal.$pos + 8, internal.$ast);
   }
 
   get key() {
     const internal = this.#internal;
-    return deserializePropertyKey(internal.$pos + 32, internal.$ast);
+    return constructPropertyKey(internal.$pos + 32, internal.$ast);
   }
 
   get value() {
     const internal = this.#internal;
-    return deserializeBoxFunction(internal.$pos + 48, internal.$ast);
+    return constructBoxFunction(internal.$pos + 48, internal.$ast);
   }
 
   get kind() {
     const internal = this.#internal;
-    return deserializeMethodDefinitionKind(internal.$pos + 57, internal.$ast);
+    return constructMethodDefinitionKind(internal.$pos + 57, internal.$ast);
   }
 
   get computed() {
     const internal = this.#internal;
-    return deserializeBool(internal.$pos + 58, internal.$ast);
+    return constructBool(internal.$pos + 58, internal.$ast);
   }
 
   get static() {
     const internal = this.#internal;
-    return deserializeBool(internal.$pos + 59, internal.$ast);
+    return constructBool(internal.$pos + 59, internal.$ast);
   }
 
   get override() {
     const internal = this.#internal;
-    return deserializeBool(internal.$pos + 60, internal.$ast);
+    return constructBool(internal.$pos + 60, internal.$ast);
   }
 
   get optional() {
     const internal = this.#internal;
-    return deserializeBool(internal.$pos + 61, internal.$ast);
+    return constructBool(internal.$pos + 61, internal.$ast);
   }
 
   get accessibility() {
     const internal = this.#internal;
-    return deserializeOptionTSAccessibility(internal.$pos + 62, internal.$ast);
+    return constructOptionTSAccessibility(internal.$pos + 62, internal.$ast);
   }
 
   toJSON() {
@@ -4145,7 +4145,7 @@ class MethodDefinition {
   }
 }
 
-function deserializeMethodDefinitionType(pos, ast) {
+function constructMethodDefinitionType(pos, ast) {
   switch (ast.buffer[pos]) {
     case 0:
       return 'MethodDefinition';
@@ -4166,79 +4166,79 @@ class PropertyDefinition {
 
   get start() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos, internal.$ast);
+    return constructU32(internal.$pos, internal.$ast);
   }
 
   get end() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos + 4, internal.$ast);
+    return constructU32(internal.$pos + 4, internal.$ast);
   }
 
   get type() {
     const internal = this.#internal;
-    return deserializePropertyDefinitionType(internal.$pos + 72, internal.$ast);
+    return constructPropertyDefinitionType(internal.$pos + 72, internal.$ast);
   }
 
   get decorators() {
     const internal = this.#internal,
       node = internal.decorators;
     if (node !== void 0) return node;
-    return internal.decorators = deserializeVecDecorator(internal.$pos + 8, internal.$ast);
+    return internal.decorators = constructVecDecorator(internal.$pos + 8, internal.$ast);
   }
 
   get key() {
     const internal = this.#internal;
-    return deserializePropertyKey(internal.$pos + 32, internal.$ast);
+    return constructPropertyKey(internal.$pos + 32, internal.$ast);
   }
 
   get typeAnnotation() {
     const internal = this.#internal;
-    return deserializeOptionBoxTSTypeAnnotation(internal.$pos + 48, internal.$ast);
+    return constructOptionBoxTSTypeAnnotation(internal.$pos + 48, internal.$ast);
   }
 
   get value() {
     const internal = this.#internal;
-    return deserializeOptionExpression(internal.$pos + 56, internal.$ast);
+    return constructOptionExpression(internal.$pos + 56, internal.$ast);
   }
 
   get computed() {
     const internal = this.#internal;
-    return deserializeBool(internal.$pos + 73, internal.$ast);
+    return constructBool(internal.$pos + 73, internal.$ast);
   }
 
   get static() {
     const internal = this.#internal;
-    return deserializeBool(internal.$pos + 74, internal.$ast);
+    return constructBool(internal.$pos + 74, internal.$ast);
   }
 
   get declare() {
     const internal = this.#internal;
-    return deserializeBool(internal.$pos + 75, internal.$ast);
+    return constructBool(internal.$pos + 75, internal.$ast);
   }
 
   get override() {
     const internal = this.#internal;
-    return deserializeBool(internal.$pos + 76, internal.$ast);
+    return constructBool(internal.$pos + 76, internal.$ast);
   }
 
   get optional() {
     const internal = this.#internal;
-    return deserializeBool(internal.$pos + 77, internal.$ast);
+    return constructBool(internal.$pos + 77, internal.$ast);
   }
 
   get definite() {
     const internal = this.#internal;
-    return deserializeBool(internal.$pos + 78, internal.$ast);
+    return constructBool(internal.$pos + 78, internal.$ast);
   }
 
   get readonly() {
     const internal = this.#internal;
-    return deserializeBool(internal.$pos + 79, internal.$ast);
+    return constructBool(internal.$pos + 79, internal.$ast);
   }
 
   get accessibility() {
     const internal = this.#internal;
-    return deserializeOptionTSAccessibility(internal.$pos + 80, internal.$ast);
+    return constructOptionTSAccessibility(internal.$pos + 80, internal.$ast);
   }
 
   toJSON() {
@@ -4262,7 +4262,7 @@ class PropertyDefinition {
   }
 }
 
-function deserializePropertyDefinitionType(pos, ast) {
+function constructPropertyDefinitionType(pos, ast) {
   switch (ast.buffer[pos]) {
     case 0:
       return 'PropertyDefinition';
@@ -4273,7 +4273,7 @@ function deserializePropertyDefinitionType(pos, ast) {
   }
 }
 
-function deserializeMethodDefinitionKind(pos, ast) {
+function constructMethodDefinitionKind(pos, ast) {
   switch (ast.buffer[pos]) {
     case 0:
       return 'constructor';
@@ -4299,19 +4299,19 @@ class PrivateIdentifier {
 
   get start() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos, internal.$ast);
+    return constructU32(internal.$pos, internal.$ast);
   }
 
   get end() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos + 4, internal.$ast);
+    return constructU32(internal.$pos + 4, internal.$ast);
   }
 
   get name() {
     const internal = this.#internal,
       node = internal.name;
     if (node !== void 0) return node;
-    return internal.name = deserializeStr(internal.$pos + 8, internal.$ast);
+    return internal.name = constructStr(internal.$pos + 8, internal.$ast);
   }
 
   toJSON() {
@@ -4335,19 +4335,19 @@ class StaticBlock {
 
   get start() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos, internal.$ast);
+    return constructU32(internal.$pos, internal.$ast);
   }
 
   get end() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos + 4, internal.$ast);
+    return constructU32(internal.$pos + 4, internal.$ast);
   }
 
   get body() {
     const internal = this.#internal,
       node = internal.body;
     if (node !== void 0) return node;
-    return internal.body = deserializeVecStatement(internal.$pos + 8, internal.$ast);
+    return internal.body = constructVecStatement(internal.$pos + 8, internal.$ast);
   }
 
   toJSON() {
@@ -4360,26 +4360,26 @@ class StaticBlock {
   }
 }
 
-function deserializeModuleDeclaration(pos, ast) {
+function constructModuleDeclaration(pos, ast) {
   switch (ast.buffer[pos]) {
     case 64:
-      return deserializeBoxImportDeclaration(pos + 8, ast);
+      return constructBoxImportDeclaration(pos + 8, ast);
     case 65:
-      return deserializeBoxExportAllDeclaration(pos + 8, ast);
+      return constructBoxExportAllDeclaration(pos + 8, ast);
     case 66:
-      return deserializeBoxExportDefaultDeclaration(pos + 8, ast);
+      return constructBoxExportDefaultDeclaration(pos + 8, ast);
     case 67:
-      return deserializeBoxExportNamedDeclaration(pos + 8, ast);
+      return constructBoxExportNamedDeclaration(pos + 8, ast);
     case 68:
-      return deserializeBoxTSExportAssignment(pos + 8, ast);
+      return constructBoxTSExportAssignment(pos + 8, ast);
     case 69:
-      return deserializeBoxTSNamespaceExportDeclaration(pos + 8, ast);
+      return constructBoxTSNamespaceExportDeclaration(pos + 8, ast);
     default:
       throw new Error(`Unexpected discriminant ${ast.buffer[pos]} for ModuleDeclaration`);
   }
 }
 
-function deserializeAccessorPropertyType(pos, ast) {
+function constructAccessorPropertyType(pos, ast) {
   switch (ast.buffer[pos]) {
     case 0:
       return 'AccessorProperty';
@@ -4400,64 +4400,64 @@ class AccessorProperty {
 
   get start() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos, internal.$ast);
+    return constructU32(internal.$pos, internal.$ast);
   }
 
   get end() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos + 4, internal.$ast);
+    return constructU32(internal.$pos + 4, internal.$ast);
   }
 
   get type() {
     const internal = this.#internal;
-    return deserializeAccessorPropertyType(internal.$pos + 72, internal.$ast);
+    return constructAccessorPropertyType(internal.$pos + 72, internal.$ast);
   }
 
   get decorators() {
     const internal = this.#internal,
       node = internal.decorators;
     if (node !== void 0) return node;
-    return internal.decorators = deserializeVecDecorator(internal.$pos + 8, internal.$ast);
+    return internal.decorators = constructVecDecorator(internal.$pos + 8, internal.$ast);
   }
 
   get key() {
     const internal = this.#internal;
-    return deserializePropertyKey(internal.$pos + 32, internal.$ast);
+    return constructPropertyKey(internal.$pos + 32, internal.$ast);
   }
 
   get typeAnnotation() {
     const internal = this.#internal;
-    return deserializeOptionBoxTSTypeAnnotation(internal.$pos + 48, internal.$ast);
+    return constructOptionBoxTSTypeAnnotation(internal.$pos + 48, internal.$ast);
   }
 
   get value() {
     const internal = this.#internal;
-    return deserializeOptionExpression(internal.$pos + 56, internal.$ast);
+    return constructOptionExpression(internal.$pos + 56, internal.$ast);
   }
 
   get computed() {
     const internal = this.#internal;
-    return deserializeBool(internal.$pos + 73, internal.$ast);
+    return constructBool(internal.$pos + 73, internal.$ast);
   }
 
   get static() {
     const internal = this.#internal;
-    return deserializeBool(internal.$pos + 74, internal.$ast);
+    return constructBool(internal.$pos + 74, internal.$ast);
   }
 
   get override() {
     const internal = this.#internal;
-    return deserializeBool(internal.$pos + 75, internal.$ast);
+    return constructBool(internal.$pos + 75, internal.$ast);
   }
 
   get definite() {
     const internal = this.#internal;
-    return deserializeBool(internal.$pos + 76, internal.$ast);
+    return constructBool(internal.$pos + 76, internal.$ast);
   }
 
   get accessibility() {
     const internal = this.#internal;
-    return deserializeOptionTSAccessibility(internal.$pos + 77, internal.$ast);
+    return constructOptionTSAccessibility(internal.$pos + 77, internal.$ast);
   }
 
   toJSON() {
@@ -4489,27 +4489,27 @@ class ImportExpression {
 
   get start() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos, internal.$ast);
+    return constructU32(internal.$pos, internal.$ast);
   }
 
   get end() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos + 4, internal.$ast);
+    return constructU32(internal.$pos + 4, internal.$ast);
   }
 
   get source() {
     const internal = this.#internal;
-    return deserializeExpression(internal.$pos + 8, internal.$ast);
+    return constructExpression(internal.$pos + 8, internal.$ast);
   }
 
   get options() {
     const internal = this.#internal;
-    return deserializeOptionExpression(internal.$pos + 24, internal.$ast);
+    return constructOptionExpression(internal.$pos + 24, internal.$ast);
   }
 
   get phase() {
     const internal = this.#internal;
-    return deserializeOptionImportPhase(internal.$pos + 40, internal.$ast);
+    return constructOptionImportPhase(internal.$pos + 40, internal.$ast);
   }
 
   toJSON() {
@@ -4535,17 +4535,17 @@ class ImportDeclaration {
 
   get start() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos, internal.$ast);
+    return constructU32(internal.$pos, internal.$ast);
   }
 
   get end() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos + 4, internal.$ast);
+    return constructU32(internal.$pos + 4, internal.$ast);
   }
 
   get specifiers() {
     const internal = this.#internal;
-    return deserializeOptionVecImportDeclarationSpecifier(internal.$pos + 8, internal.$ast);
+    return constructOptionVecImportDeclarationSpecifier(internal.$pos + 8, internal.$ast);
   }
 
   get source() {
@@ -4555,17 +4555,17 @@ class ImportDeclaration {
 
   get phase() {
     const internal = this.#internal;
-    return deserializeOptionImportPhase(internal.$pos + 88, internal.$ast);
+    return constructOptionImportPhase(internal.$pos + 88, internal.$ast);
   }
 
   get attributes() {
     const internal = this.#internal;
-    return deserializeOptionBoxWithClause(internal.$pos + 80, internal.$ast);
+    return constructOptionBoxWithClause(internal.$pos + 80, internal.$ast);
   }
 
   get importKind() {
     const internal = this.#internal;
-    return deserializeImportOrExportKind(internal.$pos + 89, internal.$ast);
+    return constructImportOrExportKind(internal.$pos + 89, internal.$ast);
   }
 
   toJSON() {
@@ -4582,7 +4582,7 @@ class ImportDeclaration {
   }
 }
 
-function deserializeImportPhase(pos, ast) {
+function constructImportPhase(pos, ast) {
   switch (ast.buffer[pos]) {
     case 0:
       return 'source';
@@ -4593,14 +4593,14 @@ function deserializeImportPhase(pos, ast) {
   }
 }
 
-function deserializeImportDeclarationSpecifier(pos, ast) {
+function constructImportDeclarationSpecifier(pos, ast) {
   switch (ast.buffer[pos]) {
     case 0:
-      return deserializeBoxImportSpecifier(pos + 8, ast);
+      return constructBoxImportSpecifier(pos + 8, ast);
     case 1:
-      return deserializeBoxImportDefaultSpecifier(pos + 8, ast);
+      return constructBoxImportDefaultSpecifier(pos + 8, ast);
     case 2:
-      return deserializeBoxImportNamespaceSpecifier(pos + 8, ast);
+      return constructBoxImportNamespaceSpecifier(pos + 8, ast);
     default:
       throw new Error(`Unexpected discriminant ${ast.buffer[pos]} for ImportDeclarationSpecifier`);
   }
@@ -4617,17 +4617,17 @@ class ImportSpecifier {
 
   get start() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos, internal.$ast);
+    return constructU32(internal.$pos, internal.$ast);
   }
 
   get end() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos + 4, internal.$ast);
+    return constructU32(internal.$pos + 4, internal.$ast);
   }
 
   get imported() {
     const internal = this.#internal;
-    return deserializeModuleExportName(internal.$pos + 8, internal.$ast);
+    return constructModuleExportName(internal.$pos + 8, internal.$ast);
   }
 
   get local() {
@@ -4637,7 +4637,7 @@ class ImportSpecifier {
 
   get importKind() {
     const internal = this.#internal;
-    return deserializeImportOrExportKind(internal.$pos + 96, internal.$ast);
+    return constructImportOrExportKind(internal.$pos + 96, internal.$ast);
   }
 
   toJSON() {
@@ -4663,12 +4663,12 @@ class ImportDefaultSpecifier {
 
   get start() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos, internal.$ast);
+    return constructU32(internal.$pos, internal.$ast);
   }
 
   get end() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos + 4, internal.$ast);
+    return constructU32(internal.$pos + 4, internal.$ast);
   }
 
   get local() {
@@ -4697,12 +4697,12 @@ class ImportNamespaceSpecifier {
 
   get start() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos, internal.$ast);
+    return constructU32(internal.$pos, internal.$ast);
   }
 
   get end() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos + 4, internal.$ast);
+    return constructU32(internal.$pos + 4, internal.$ast);
   }
 
   get local() {
@@ -4732,7 +4732,7 @@ class WithClause {
     const internal = this.#internal,
       node = internal.attributes;
     if (node !== void 0) return node;
-    return internal.attributes = deserializeVecImportAttribute(internal.$pos + 32, internal.$ast);
+    return internal.attributes = constructVecImportAttribute(internal.$pos + 32, internal.$ast);
   }
 
   toJSON() {
@@ -4753,17 +4753,17 @@ class ImportAttribute {
 
   get start() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos, internal.$ast);
+    return constructU32(internal.$pos, internal.$ast);
   }
 
   get end() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos + 4, internal.$ast);
+    return constructU32(internal.$pos + 4, internal.$ast);
   }
 
   get key() {
     const internal = this.#internal;
-    return deserializeImportAttributeKey(internal.$pos + 8, internal.$ast);
+    return constructImportAttributeKey(internal.$pos + 8, internal.$ast);
   }
 
   get value() {
@@ -4782,7 +4782,7 @@ class ImportAttribute {
   }
 }
 
-function deserializeImportAttributeKey(pos, ast) {
+function constructImportAttributeKey(pos, ast) {
   switch (ast.buffer[pos]) {
     case 0:
       return new IdentifierName(pos + 8, ast);
@@ -4804,39 +4804,39 @@ class ExportNamedDeclaration {
 
   get start() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos, internal.$ast);
+    return constructU32(internal.$pos, internal.$ast);
   }
 
   get end() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos + 4, internal.$ast);
+    return constructU32(internal.$pos + 4, internal.$ast);
   }
 
   get declaration() {
     const internal = this.#internal;
-    return deserializeOptionDeclaration(internal.$pos + 8, internal.$ast);
+    return constructOptionDeclaration(internal.$pos + 8, internal.$ast);
   }
 
   get specifiers() {
     const internal = this.#internal,
       node = internal.specifiers;
     if (node !== void 0) return node;
-    return internal.specifiers = deserializeVecExportSpecifier(internal.$pos + 24, internal.$ast);
+    return internal.specifiers = constructVecExportSpecifier(internal.$pos + 24, internal.$ast);
   }
 
   get source() {
     const internal = this.#internal;
-    return deserializeOptionStringLiteral(internal.$pos + 48, internal.$ast);
+    return constructOptionStringLiteral(internal.$pos + 48, internal.$ast);
   }
 
   get exportKind() {
     const internal = this.#internal;
-    return deserializeImportOrExportKind(internal.$pos + 104, internal.$ast);
+    return constructImportOrExportKind(internal.$pos + 104, internal.$ast);
   }
 
   get attributes() {
     const internal = this.#internal;
-    return deserializeOptionBoxWithClause(internal.$pos + 96, internal.$ast);
+    return constructOptionBoxWithClause(internal.$pos + 96, internal.$ast);
   }
 
   toJSON() {
@@ -4864,17 +4864,17 @@ class ExportDefaultDeclaration {
 
   get start() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos, internal.$ast);
+    return constructU32(internal.$pos, internal.$ast);
   }
 
   get end() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos + 4, internal.$ast);
+    return constructU32(internal.$pos + 4, internal.$ast);
   }
 
   get declaration() {
     const internal = this.#internal;
-    return deserializeExportDefaultDeclarationKind(internal.$pos + 64, internal.$ast);
+    return constructExportDefaultDeclarationKind(internal.$pos + 64, internal.$ast);
   }
 
   toJSON() {
@@ -4898,17 +4898,17 @@ class ExportAllDeclaration {
 
   get start() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos, internal.$ast);
+    return constructU32(internal.$pos, internal.$ast);
   }
 
   get end() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos + 4, internal.$ast);
+    return constructU32(internal.$pos + 4, internal.$ast);
   }
 
   get exported() {
     const internal = this.#internal;
-    return deserializeOptionModuleExportName(internal.$pos + 8, internal.$ast);
+    return constructOptionModuleExportName(internal.$pos + 8, internal.$ast);
   }
 
   get source() {
@@ -4918,12 +4918,12 @@ class ExportAllDeclaration {
 
   get attributes() {
     const internal = this.#internal;
-    return deserializeOptionBoxWithClause(internal.$pos + 112, internal.$ast);
+    return constructOptionBoxWithClause(internal.$pos + 112, internal.$ast);
   }
 
   get exportKind() {
     const internal = this.#internal;
-    return deserializeImportOrExportKind(internal.$pos + 120, internal.$ast);
+    return constructImportOrExportKind(internal.$pos + 120, internal.$ast);
   }
 
   toJSON() {
@@ -4950,27 +4950,27 @@ class ExportSpecifier {
 
   get start() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos, internal.$ast);
+    return constructU32(internal.$pos, internal.$ast);
   }
 
   get end() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos + 4, internal.$ast);
+    return constructU32(internal.$pos + 4, internal.$ast);
   }
 
   get local() {
     const internal = this.#internal;
-    return deserializeModuleExportName(internal.$pos + 8, internal.$ast);
+    return constructModuleExportName(internal.$pos + 8, internal.$ast);
   }
 
   get exported() {
     const internal = this.#internal;
-    return deserializeModuleExportName(internal.$pos + 64, internal.$ast);
+    return constructModuleExportName(internal.$pos + 64, internal.$ast);
   }
 
   get exportKind() {
     const internal = this.#internal;
-    return deserializeImportOrExportKind(internal.$pos + 120, internal.$ast);
+    return constructImportOrExportKind(internal.$pos + 120, internal.$ast);
   }
 
   toJSON() {
@@ -4985,106 +4985,106 @@ class ExportSpecifier {
   }
 }
 
-function deserializeExportDefaultDeclarationKind(pos, ast) {
+function constructExportDefaultDeclarationKind(pos, ast) {
   switch (ast.buffer[pos]) {
     case 0:
-      return deserializeBoxBooleanLiteral(pos + 8, ast);
+      return constructBoxBooleanLiteral(pos + 8, ast);
     case 1:
-      return deserializeBoxNullLiteral(pos + 8, ast);
+      return constructBoxNullLiteral(pos + 8, ast);
     case 2:
-      return deserializeBoxNumericLiteral(pos + 8, ast);
+      return constructBoxNumericLiteral(pos + 8, ast);
     case 3:
-      return deserializeBoxBigIntLiteral(pos + 8, ast);
+      return constructBoxBigIntLiteral(pos + 8, ast);
     case 4:
-      return deserializeBoxRegExpLiteral(pos + 8, ast);
+      return constructBoxRegExpLiteral(pos + 8, ast);
     case 5:
-      return deserializeBoxStringLiteral(pos + 8, ast);
+      return constructBoxStringLiteral(pos + 8, ast);
     case 6:
-      return deserializeBoxTemplateLiteral(pos + 8, ast);
+      return constructBoxTemplateLiteral(pos + 8, ast);
     case 7:
-      return deserializeBoxIdentifierReference(pos + 8, ast);
+      return constructBoxIdentifierReference(pos + 8, ast);
     case 8:
-      return deserializeBoxMetaProperty(pos + 8, ast);
+      return constructBoxMetaProperty(pos + 8, ast);
     case 9:
-      return deserializeBoxSuper(pos + 8, ast);
+      return constructBoxSuper(pos + 8, ast);
     case 10:
-      return deserializeBoxArrayExpression(pos + 8, ast);
+      return constructBoxArrayExpression(pos + 8, ast);
     case 11:
-      return deserializeBoxArrowFunctionExpression(pos + 8, ast);
+      return constructBoxArrowFunctionExpression(pos + 8, ast);
     case 12:
-      return deserializeBoxAssignmentExpression(pos + 8, ast);
+      return constructBoxAssignmentExpression(pos + 8, ast);
     case 13:
-      return deserializeBoxAwaitExpression(pos + 8, ast);
+      return constructBoxAwaitExpression(pos + 8, ast);
     case 14:
-      return deserializeBoxBinaryExpression(pos + 8, ast);
+      return constructBoxBinaryExpression(pos + 8, ast);
     case 15:
-      return deserializeBoxCallExpression(pos + 8, ast);
+      return constructBoxCallExpression(pos + 8, ast);
     case 16:
-      return deserializeBoxChainExpression(pos + 8, ast);
+      return constructBoxChainExpression(pos + 8, ast);
     case 17:
-      return deserializeBoxClass(pos + 8, ast);
+      return constructBoxClass(pos + 8, ast);
     case 18:
-      return deserializeBoxConditionalExpression(pos + 8, ast);
+      return constructBoxConditionalExpression(pos + 8, ast);
     case 19:
-      return deserializeBoxFunction(pos + 8, ast);
+      return constructBoxFunction(pos + 8, ast);
     case 20:
-      return deserializeBoxImportExpression(pos + 8, ast);
+      return constructBoxImportExpression(pos + 8, ast);
     case 21:
-      return deserializeBoxLogicalExpression(pos + 8, ast);
+      return constructBoxLogicalExpression(pos + 8, ast);
     case 22:
-      return deserializeBoxNewExpression(pos + 8, ast);
+      return constructBoxNewExpression(pos + 8, ast);
     case 23:
-      return deserializeBoxObjectExpression(pos + 8, ast);
+      return constructBoxObjectExpression(pos + 8, ast);
     case 24:
-      return deserializeBoxParenthesizedExpression(pos + 8, ast);
+      return constructBoxParenthesizedExpression(pos + 8, ast);
     case 25:
-      return deserializeBoxSequenceExpression(pos + 8, ast);
+      return constructBoxSequenceExpression(pos + 8, ast);
     case 26:
-      return deserializeBoxTaggedTemplateExpression(pos + 8, ast);
+      return constructBoxTaggedTemplateExpression(pos + 8, ast);
     case 27:
-      return deserializeBoxThisExpression(pos + 8, ast);
+      return constructBoxThisExpression(pos + 8, ast);
     case 28:
-      return deserializeBoxUnaryExpression(pos + 8, ast);
+      return constructBoxUnaryExpression(pos + 8, ast);
     case 29:
-      return deserializeBoxUpdateExpression(pos + 8, ast);
+      return constructBoxUpdateExpression(pos + 8, ast);
     case 30:
-      return deserializeBoxYieldExpression(pos + 8, ast);
+      return constructBoxYieldExpression(pos + 8, ast);
     case 31:
-      return deserializeBoxPrivateInExpression(pos + 8, ast);
+      return constructBoxPrivateInExpression(pos + 8, ast);
     case 32:
-      return deserializeBoxJSXElement(pos + 8, ast);
+      return constructBoxJSXElement(pos + 8, ast);
     case 33:
-      return deserializeBoxJSXFragment(pos + 8, ast);
+      return constructBoxJSXFragment(pos + 8, ast);
     case 34:
-      return deserializeBoxTSAsExpression(pos + 8, ast);
+      return constructBoxTSAsExpression(pos + 8, ast);
     case 35:
-      return deserializeBoxTSSatisfiesExpression(pos + 8, ast);
+      return constructBoxTSSatisfiesExpression(pos + 8, ast);
     case 36:
-      return deserializeBoxTSTypeAssertion(pos + 8, ast);
+      return constructBoxTSTypeAssertion(pos + 8, ast);
     case 37:
-      return deserializeBoxTSNonNullExpression(pos + 8, ast);
+      return constructBoxTSNonNullExpression(pos + 8, ast);
     case 38:
-      return deserializeBoxTSInstantiationExpression(pos + 8, ast);
+      return constructBoxTSInstantiationExpression(pos + 8, ast);
     case 39:
-      return deserializeBoxV8IntrinsicExpression(pos + 8, ast);
+      return constructBoxV8IntrinsicExpression(pos + 8, ast);
     case 48:
-      return deserializeBoxComputedMemberExpression(pos + 8, ast);
+      return constructBoxComputedMemberExpression(pos + 8, ast);
     case 49:
-      return deserializeBoxStaticMemberExpression(pos + 8, ast);
+      return constructBoxStaticMemberExpression(pos + 8, ast);
     case 50:
-      return deserializeBoxPrivateFieldExpression(pos + 8, ast);
+      return constructBoxPrivateFieldExpression(pos + 8, ast);
     case 64:
-      return deserializeBoxFunction(pos + 8, ast);
+      return constructBoxFunction(pos + 8, ast);
     case 65:
-      return deserializeBoxClass(pos + 8, ast);
+      return constructBoxClass(pos + 8, ast);
     case 66:
-      return deserializeBoxTSInterfaceDeclaration(pos + 8, ast);
+      return constructBoxTSInterfaceDeclaration(pos + 8, ast);
     default:
       throw new Error(`Unexpected discriminant ${ast.buffer[pos]} for ExportDefaultDeclarationKind`);
   }
 }
 
-function deserializeModuleExportName(pos, ast) {
+function constructModuleExportName(pos, ast) {
   switch (ast.buffer[pos]) {
     case 0:
       return new IdentifierName(pos + 8, ast);
@@ -5108,12 +5108,12 @@ class V8IntrinsicExpression {
 
   get start() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos, internal.$ast);
+    return constructU32(internal.$pos, internal.$ast);
   }
 
   get end() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos + 4, internal.$ast);
+    return constructU32(internal.$pos + 4, internal.$ast);
   }
 
   get name() {
@@ -5125,7 +5125,7 @@ class V8IntrinsicExpression {
     const internal = this.#internal,
       node = internal.arguments;
     if (node !== void 0) return node;
-    return internal.arguments = deserializeVecArgument(internal.$pos + 32, internal.$ast);
+    return internal.arguments = constructVecArgument(internal.$pos + 32, internal.$ast);
   }
 
   toJSON() {
@@ -5150,17 +5150,17 @@ class BooleanLiteral {
 
   get start() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos, internal.$ast);
+    return constructU32(internal.$pos, internal.$ast);
   }
 
   get end() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos + 4, internal.$ast);
+    return constructU32(internal.$pos + 4, internal.$ast);
   }
 
   get value() {
     const internal = this.#internal;
-    return deserializeBool(internal.$pos + 8, internal.$ast);
+    return constructBool(internal.$pos + 8, internal.$ast);
   }
 
   toJSON() {
@@ -5184,12 +5184,12 @@ class NullLiteral {
 
   get start() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos, internal.$ast);
+    return constructU32(internal.$pos, internal.$ast);
   }
 
   get end() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos + 4, internal.$ast);
+    return constructU32(internal.$pos + 4, internal.$ast);
   }
 
   toJSON() {
@@ -5212,24 +5212,24 @@ class NumericLiteral {
 
   get start() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos, internal.$ast);
+    return constructU32(internal.$pos, internal.$ast);
   }
 
   get end() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos + 4, internal.$ast);
+    return constructU32(internal.$pos + 4, internal.$ast);
   }
 
   get value() {
     const internal = this.#internal;
-    return deserializeF64(internal.$pos + 8, internal.$ast);
+    return constructF64(internal.$pos + 8, internal.$ast);
   }
 
   get raw() {
     const internal = this.#internal,
       node = internal.raw;
     if (node !== void 0) return node;
-    return internal.raw = deserializeOptionStr(internal.$pos + 16, internal.$ast);
+    return internal.raw = constructOptionStr(internal.$pos + 16, internal.$ast);
   }
 
   toJSON() {
@@ -5254,26 +5254,26 @@ class StringLiteral {
 
   get start() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos, internal.$ast);
+    return constructU32(internal.$pos, internal.$ast);
   }
 
   get end() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos + 4, internal.$ast);
+    return constructU32(internal.$pos + 4, internal.$ast);
   }
 
   get value() {
     const internal = this.#internal,
       node = internal.value;
     if (node !== void 0) return node;
-    return internal.value = deserializeStr(internal.$pos + 8, internal.$ast);
+    return internal.value = constructStr(internal.$pos + 8, internal.$ast);
   }
 
   get raw() {
     const internal = this.#internal,
       node = internal.raw;
     if (node !== void 0) return node;
-    return internal.raw = deserializeOptionStr(internal.$pos + 24, internal.$ast);
+    return internal.raw = constructOptionStr(internal.$pos + 24, internal.$ast);
   }
 
   toJSON() {
@@ -5298,26 +5298,26 @@ class BigIntLiteral {
 
   get start() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos, internal.$ast);
+    return constructU32(internal.$pos, internal.$ast);
   }
 
   get end() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos + 4, internal.$ast);
+    return constructU32(internal.$pos + 4, internal.$ast);
   }
 
   get value() {
     const internal = this.#internal,
       node = internal.value;
     if (node !== void 0) return node;
-    return internal.value = deserializeStr(internal.$pos + 8, internal.$ast);
+    return internal.value = constructStr(internal.$pos + 8, internal.$ast);
   }
 
   get raw() {
     const internal = this.#internal,
       node = internal.raw;
     if (node !== void 0) return node;
-    return internal.raw = deserializeOptionStr(internal.$pos + 24, internal.$ast);
+    return internal.raw = constructOptionStr(internal.$pos + 24, internal.$ast);
   }
 
   toJSON() {
@@ -5342,12 +5342,12 @@ class RegExpLiteral {
 
   get start() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos, internal.$ast);
+    return constructU32(internal.$pos, internal.$ast);
   }
 
   get end() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos + 4, internal.$ast);
+    return constructU32(internal.$pos + 4, internal.$ast);
   }
 
   get regex() {
@@ -5359,7 +5359,7 @@ class RegExpLiteral {
     const internal = this.#internal,
       node = internal.raw;
     if (node !== void 0) return node;
-    return internal.raw = deserializeOptionStr(internal.$pos + 40, internal.$ast);
+    return internal.raw = constructOptionStr(internal.$pos + 40, internal.$ast);
   }
 
   toJSON() {
@@ -5411,7 +5411,7 @@ class RegExpPattern {
     const internal = this.#internal,
       node = internal.pattern;
     if (node !== void 0) return node;
-    return internal.pattern = deserializeStr(internal.$pos, internal.$ast);
+    return internal.pattern = constructStr(internal.$pos, internal.$ast);
   }
 
   toJSON() {
@@ -5432,7 +5432,7 @@ class RegExpFlags {
 
   get 0() {
     const internal = this.#internal;
-    return deserializeU8(internal.$pos, internal.$ast);
+    return constructU8(internal.$pos, internal.$ast);
   }
 
   toJSON() {
@@ -5453,29 +5453,29 @@ class JSXElement {
 
   get start() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos, internal.$ast);
+    return constructU32(internal.$pos, internal.$ast);
   }
 
   get end() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos + 4, internal.$ast);
+    return constructU32(internal.$pos + 4, internal.$ast);
   }
 
   get openingElement() {
     const internal = this.#internal;
-    return deserializeBoxJSXOpeningElement(internal.$pos + 8, internal.$ast);
+    return constructBoxJSXOpeningElement(internal.$pos + 8, internal.$ast);
   }
 
   get children() {
     const internal = this.#internal,
       node = internal.children;
     if (node !== void 0) return node;
-    return internal.children = deserializeVecJSXChild(internal.$pos + 16, internal.$ast);
+    return internal.children = constructVecJSXChild(internal.$pos + 16, internal.$ast);
   }
 
   get closingElement() {
     const internal = this.#internal;
-    return deserializeOptionBoxJSXClosingElement(internal.$pos + 40, internal.$ast);
+    return constructOptionBoxJSXClosingElement(internal.$pos + 40, internal.$ast);
   }
 
   toJSON() {
@@ -5501,29 +5501,29 @@ class JSXOpeningElement {
 
   get start() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos, internal.$ast);
+    return constructU32(internal.$pos, internal.$ast);
   }
 
   get end() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos + 4, internal.$ast);
+    return constructU32(internal.$pos + 4, internal.$ast);
   }
 
   get name() {
     const internal = this.#internal;
-    return deserializeJSXElementName(internal.$pos + 8, internal.$ast);
+    return constructJSXElementName(internal.$pos + 8, internal.$ast);
   }
 
   get typeArguments() {
     const internal = this.#internal;
-    return deserializeOptionBoxTSTypeParameterInstantiation(internal.$pos + 24, internal.$ast);
+    return constructOptionBoxTSTypeParameterInstantiation(internal.$pos + 24, internal.$ast);
   }
 
   get attributes() {
     const internal = this.#internal,
       node = internal.attributes;
     if (node !== void 0) return node;
-    return internal.attributes = deserializeVecJSXAttributeItem(internal.$pos + 32, internal.$ast);
+    return internal.attributes = constructVecJSXAttributeItem(internal.$pos + 32, internal.$ast);
   }
 
   toJSON() {
@@ -5549,17 +5549,17 @@ class JSXClosingElement {
 
   get start() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos, internal.$ast);
+    return constructU32(internal.$pos, internal.$ast);
   }
 
   get end() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos + 4, internal.$ast);
+    return constructU32(internal.$pos + 4, internal.$ast);
   }
 
   get name() {
     const internal = this.#internal;
-    return deserializeJSXElementName(internal.$pos + 8, internal.$ast);
+    return constructJSXElementName(internal.$pos + 8, internal.$ast);
   }
 
   toJSON() {
@@ -5583,12 +5583,12 @@ class JSXFragment {
 
   get start() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos, internal.$ast);
+    return constructU32(internal.$pos, internal.$ast);
   }
 
   get end() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos + 4, internal.$ast);
+    return constructU32(internal.$pos + 4, internal.$ast);
   }
 
   get openingFragment() {
@@ -5600,7 +5600,7 @@ class JSXFragment {
     const internal = this.#internal,
       node = internal.children;
     if (node !== void 0) return node;
-    return internal.children = deserializeVecJSXChild(internal.$pos + 16, internal.$ast);
+    return internal.children = constructVecJSXChild(internal.$pos + 16, internal.$ast);
   }
 
   get closingFragment() {
@@ -5631,12 +5631,12 @@ class JSXOpeningFragment {
 
   get start() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos, internal.$ast);
+    return constructU32(internal.$pos, internal.$ast);
   }
 
   get end() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos + 4, internal.$ast);
+    return constructU32(internal.$pos + 4, internal.$ast);
   }
 
   toJSON() {
@@ -5659,12 +5659,12 @@ class JSXClosingFragment {
 
   get start() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos, internal.$ast);
+    return constructU32(internal.$pos, internal.$ast);
   }
 
   get end() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos + 4, internal.$ast);
+    return constructU32(internal.$pos + 4, internal.$ast);
   }
 
   toJSON() {
@@ -5676,18 +5676,18 @@ class JSXClosingFragment {
   }
 }
 
-function deserializeJSXElementName(pos, ast) {
+function constructJSXElementName(pos, ast) {
   switch (ast.buffer[pos]) {
     case 0:
-      return deserializeBoxJSXIdentifier(pos + 8, ast);
+      return constructBoxJSXIdentifier(pos + 8, ast);
     case 1:
-      return deserializeBoxIdentifierReference(pos + 8, ast);
+      return constructBoxIdentifierReference(pos + 8, ast);
     case 2:
-      return deserializeBoxJSXNamespacedName(pos + 8, ast);
+      return constructBoxJSXNamespacedName(pos + 8, ast);
     case 3:
-      return deserializeBoxJSXMemberExpression(pos + 8, ast);
+      return constructBoxJSXMemberExpression(pos + 8, ast);
     case 4:
-      return deserializeBoxThisExpression(pos + 8, ast);
+      return constructBoxThisExpression(pos + 8, ast);
     default:
       throw new Error(`Unexpected discriminant ${ast.buffer[pos]} for JSXElementName`);
   }
@@ -5704,12 +5704,12 @@ class JSXNamespacedName {
 
   get start() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos, internal.$ast);
+    return constructU32(internal.$pos, internal.$ast);
   }
 
   get end() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos + 4, internal.$ast);
+    return constructU32(internal.$pos + 4, internal.$ast);
   }
 
   get namespace() {
@@ -5744,17 +5744,17 @@ class JSXMemberExpression {
 
   get start() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos, internal.$ast);
+    return constructU32(internal.$pos, internal.$ast);
   }
 
   get end() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos + 4, internal.$ast);
+    return constructU32(internal.$pos + 4, internal.$ast);
   }
 
   get object() {
     const internal = this.#internal;
-    return deserializeJSXMemberExpressionObject(internal.$pos + 8, internal.$ast);
+    return constructJSXMemberExpressionObject(internal.$pos + 8, internal.$ast);
   }
 
   get property() {
@@ -5773,14 +5773,14 @@ class JSXMemberExpression {
   }
 }
 
-function deserializeJSXMemberExpressionObject(pos, ast) {
+function constructJSXMemberExpressionObject(pos, ast) {
   switch (ast.buffer[pos]) {
     case 0:
-      return deserializeBoxIdentifierReference(pos + 8, ast);
+      return constructBoxIdentifierReference(pos + 8, ast);
     case 1:
-      return deserializeBoxJSXMemberExpression(pos + 8, ast);
+      return constructBoxJSXMemberExpression(pos + 8, ast);
     case 2:
-      return deserializeBoxThisExpression(pos + 8, ast);
+      return constructBoxThisExpression(pos + 8, ast);
     default:
       throw new Error(`Unexpected discriminant ${ast.buffer[pos]} for JSXMemberExpressionObject`);
   }
@@ -5797,17 +5797,17 @@ class JSXExpressionContainer {
 
   get start() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos, internal.$ast);
+    return constructU32(internal.$pos, internal.$ast);
   }
 
   get end() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos + 4, internal.$ast);
+    return constructU32(internal.$pos + 4, internal.$ast);
   }
 
   get expression() {
     const internal = this.#internal;
-    return deserializeJSXExpression(internal.$pos + 8, internal.$ast);
+    return constructJSXExpression(internal.$pos + 8, internal.$ast);
   }
 
   toJSON() {
@@ -5820,94 +5820,94 @@ class JSXExpressionContainer {
   }
 }
 
-function deserializeJSXExpression(pos, ast) {
+function constructJSXExpression(pos, ast) {
   switch (ast.buffer[pos]) {
     case 0:
-      return deserializeBoxBooleanLiteral(pos + 8, ast);
+      return constructBoxBooleanLiteral(pos + 8, ast);
     case 1:
-      return deserializeBoxNullLiteral(pos + 8, ast);
+      return constructBoxNullLiteral(pos + 8, ast);
     case 2:
-      return deserializeBoxNumericLiteral(pos + 8, ast);
+      return constructBoxNumericLiteral(pos + 8, ast);
     case 3:
-      return deserializeBoxBigIntLiteral(pos + 8, ast);
+      return constructBoxBigIntLiteral(pos + 8, ast);
     case 4:
-      return deserializeBoxRegExpLiteral(pos + 8, ast);
+      return constructBoxRegExpLiteral(pos + 8, ast);
     case 5:
-      return deserializeBoxStringLiteral(pos + 8, ast);
+      return constructBoxStringLiteral(pos + 8, ast);
     case 6:
-      return deserializeBoxTemplateLiteral(pos + 8, ast);
+      return constructBoxTemplateLiteral(pos + 8, ast);
     case 7:
-      return deserializeBoxIdentifierReference(pos + 8, ast);
+      return constructBoxIdentifierReference(pos + 8, ast);
     case 8:
-      return deserializeBoxMetaProperty(pos + 8, ast);
+      return constructBoxMetaProperty(pos + 8, ast);
     case 9:
-      return deserializeBoxSuper(pos + 8, ast);
+      return constructBoxSuper(pos + 8, ast);
     case 10:
-      return deserializeBoxArrayExpression(pos + 8, ast);
+      return constructBoxArrayExpression(pos + 8, ast);
     case 11:
-      return deserializeBoxArrowFunctionExpression(pos + 8, ast);
+      return constructBoxArrowFunctionExpression(pos + 8, ast);
     case 12:
-      return deserializeBoxAssignmentExpression(pos + 8, ast);
+      return constructBoxAssignmentExpression(pos + 8, ast);
     case 13:
-      return deserializeBoxAwaitExpression(pos + 8, ast);
+      return constructBoxAwaitExpression(pos + 8, ast);
     case 14:
-      return deserializeBoxBinaryExpression(pos + 8, ast);
+      return constructBoxBinaryExpression(pos + 8, ast);
     case 15:
-      return deserializeBoxCallExpression(pos + 8, ast);
+      return constructBoxCallExpression(pos + 8, ast);
     case 16:
-      return deserializeBoxChainExpression(pos + 8, ast);
+      return constructBoxChainExpression(pos + 8, ast);
     case 17:
-      return deserializeBoxClass(pos + 8, ast);
+      return constructBoxClass(pos + 8, ast);
     case 18:
-      return deserializeBoxConditionalExpression(pos + 8, ast);
+      return constructBoxConditionalExpression(pos + 8, ast);
     case 19:
-      return deserializeBoxFunction(pos + 8, ast);
+      return constructBoxFunction(pos + 8, ast);
     case 20:
-      return deserializeBoxImportExpression(pos + 8, ast);
+      return constructBoxImportExpression(pos + 8, ast);
     case 21:
-      return deserializeBoxLogicalExpression(pos + 8, ast);
+      return constructBoxLogicalExpression(pos + 8, ast);
     case 22:
-      return deserializeBoxNewExpression(pos + 8, ast);
+      return constructBoxNewExpression(pos + 8, ast);
     case 23:
-      return deserializeBoxObjectExpression(pos + 8, ast);
+      return constructBoxObjectExpression(pos + 8, ast);
     case 24:
-      return deserializeBoxParenthesizedExpression(pos + 8, ast);
+      return constructBoxParenthesizedExpression(pos + 8, ast);
     case 25:
-      return deserializeBoxSequenceExpression(pos + 8, ast);
+      return constructBoxSequenceExpression(pos + 8, ast);
     case 26:
-      return deserializeBoxTaggedTemplateExpression(pos + 8, ast);
+      return constructBoxTaggedTemplateExpression(pos + 8, ast);
     case 27:
-      return deserializeBoxThisExpression(pos + 8, ast);
+      return constructBoxThisExpression(pos + 8, ast);
     case 28:
-      return deserializeBoxUnaryExpression(pos + 8, ast);
+      return constructBoxUnaryExpression(pos + 8, ast);
     case 29:
-      return deserializeBoxUpdateExpression(pos + 8, ast);
+      return constructBoxUpdateExpression(pos + 8, ast);
     case 30:
-      return deserializeBoxYieldExpression(pos + 8, ast);
+      return constructBoxYieldExpression(pos + 8, ast);
     case 31:
-      return deserializeBoxPrivateInExpression(pos + 8, ast);
+      return constructBoxPrivateInExpression(pos + 8, ast);
     case 32:
-      return deserializeBoxJSXElement(pos + 8, ast);
+      return constructBoxJSXElement(pos + 8, ast);
     case 33:
-      return deserializeBoxJSXFragment(pos + 8, ast);
+      return constructBoxJSXFragment(pos + 8, ast);
     case 34:
-      return deserializeBoxTSAsExpression(pos + 8, ast);
+      return constructBoxTSAsExpression(pos + 8, ast);
     case 35:
-      return deserializeBoxTSSatisfiesExpression(pos + 8, ast);
+      return constructBoxTSSatisfiesExpression(pos + 8, ast);
     case 36:
-      return deserializeBoxTSTypeAssertion(pos + 8, ast);
+      return constructBoxTSTypeAssertion(pos + 8, ast);
     case 37:
-      return deserializeBoxTSNonNullExpression(pos + 8, ast);
+      return constructBoxTSNonNullExpression(pos + 8, ast);
     case 38:
-      return deserializeBoxTSInstantiationExpression(pos + 8, ast);
+      return constructBoxTSInstantiationExpression(pos + 8, ast);
     case 39:
-      return deserializeBoxV8IntrinsicExpression(pos + 8, ast);
+      return constructBoxV8IntrinsicExpression(pos + 8, ast);
     case 48:
-      return deserializeBoxComputedMemberExpression(pos + 8, ast);
+      return constructBoxComputedMemberExpression(pos + 8, ast);
     case 49:
-      return deserializeBoxStaticMemberExpression(pos + 8, ast);
+      return constructBoxStaticMemberExpression(pos + 8, ast);
     case 50:
-      return deserializeBoxPrivateFieldExpression(pos + 8, ast);
+      return constructBoxPrivateFieldExpression(pos + 8, ast);
     case 64:
       return new JSXEmptyExpression(pos + 8, ast);
     default:
@@ -5926,12 +5926,12 @@ class JSXEmptyExpression {
 
   get start() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos, internal.$ast);
+    return constructU32(internal.$pos, internal.$ast);
   }
 
   get end() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos + 4, internal.$ast);
+    return constructU32(internal.$pos + 4, internal.$ast);
   }
 
   toJSON() {
@@ -5943,12 +5943,12 @@ class JSXEmptyExpression {
   }
 }
 
-function deserializeJSXAttributeItem(pos, ast) {
+function constructJSXAttributeItem(pos, ast) {
   switch (ast.buffer[pos]) {
     case 0:
-      return deserializeBoxJSXAttribute(pos + 8, ast);
+      return constructBoxJSXAttribute(pos + 8, ast);
     case 1:
-      return deserializeBoxJSXSpreadAttribute(pos + 8, ast);
+      return constructBoxJSXSpreadAttribute(pos + 8, ast);
     default:
       throw new Error(`Unexpected discriminant ${ast.buffer[pos]} for JSXAttributeItem`);
   }
@@ -5965,22 +5965,22 @@ class JSXAttribute {
 
   get start() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos, internal.$ast);
+    return constructU32(internal.$pos, internal.$ast);
   }
 
   get end() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos + 4, internal.$ast);
+    return constructU32(internal.$pos + 4, internal.$ast);
   }
 
   get name() {
     const internal = this.#internal;
-    return deserializeJSXAttributeName(internal.$pos + 8, internal.$ast);
+    return constructJSXAttributeName(internal.$pos + 8, internal.$ast);
   }
 
   get value() {
     const internal = this.#internal;
-    return deserializeOptionJSXAttributeValue(internal.$pos + 24, internal.$ast);
+    return constructOptionJSXAttributeValue(internal.$pos + 24, internal.$ast);
   }
 
   toJSON() {
@@ -6005,17 +6005,17 @@ class JSXSpreadAttribute {
 
   get start() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos, internal.$ast);
+    return constructU32(internal.$pos, internal.$ast);
   }
 
   get end() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos + 4, internal.$ast);
+    return constructU32(internal.$pos + 4, internal.$ast);
   }
 
   get argument() {
     const internal = this.#internal;
-    return deserializeExpression(internal.$pos + 8, internal.$ast);
+    return constructExpression(internal.$pos + 8, internal.$ast);
   }
 
   toJSON() {
@@ -6028,27 +6028,27 @@ class JSXSpreadAttribute {
   }
 }
 
-function deserializeJSXAttributeName(pos, ast) {
+function constructJSXAttributeName(pos, ast) {
   switch (ast.buffer[pos]) {
     case 0:
-      return deserializeBoxJSXIdentifier(pos + 8, ast);
+      return constructBoxJSXIdentifier(pos + 8, ast);
     case 1:
-      return deserializeBoxJSXNamespacedName(pos + 8, ast);
+      return constructBoxJSXNamespacedName(pos + 8, ast);
     default:
       throw new Error(`Unexpected discriminant ${ast.buffer[pos]} for JSXAttributeName`);
   }
 }
 
-function deserializeJSXAttributeValue(pos, ast) {
+function constructJSXAttributeValue(pos, ast) {
   switch (ast.buffer[pos]) {
     case 0:
-      return deserializeBoxStringLiteral(pos + 8, ast);
+      return constructBoxStringLiteral(pos + 8, ast);
     case 1:
-      return deserializeBoxJSXExpressionContainer(pos + 8, ast);
+      return constructBoxJSXExpressionContainer(pos + 8, ast);
     case 2:
-      return deserializeBoxJSXElement(pos + 8, ast);
+      return constructBoxJSXElement(pos + 8, ast);
     case 3:
-      return deserializeBoxJSXFragment(pos + 8, ast);
+      return constructBoxJSXFragment(pos + 8, ast);
     default:
       throw new Error(`Unexpected discriminant ${ast.buffer[pos]} for JSXAttributeValue`);
   }
@@ -6065,19 +6065,19 @@ class JSXIdentifier {
 
   get start() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos, internal.$ast);
+    return constructU32(internal.$pos, internal.$ast);
   }
 
   get end() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos + 4, internal.$ast);
+    return constructU32(internal.$pos + 4, internal.$ast);
   }
 
   get name() {
     const internal = this.#internal,
       node = internal.name;
     if (node !== void 0) return node;
-    return internal.name = deserializeStr(internal.$pos + 8, internal.$ast);
+    return internal.name = constructStr(internal.$pos + 8, internal.$ast);
   }
 
   toJSON() {
@@ -6090,18 +6090,18 @@ class JSXIdentifier {
   }
 }
 
-function deserializeJSXChild(pos, ast) {
+function constructJSXChild(pos, ast) {
   switch (ast.buffer[pos]) {
     case 0:
-      return deserializeBoxJSXText(pos + 8, ast);
+      return constructBoxJSXText(pos + 8, ast);
     case 1:
-      return deserializeBoxJSXElement(pos + 8, ast);
+      return constructBoxJSXElement(pos + 8, ast);
     case 2:
-      return deserializeBoxJSXFragment(pos + 8, ast);
+      return constructBoxJSXFragment(pos + 8, ast);
     case 3:
-      return deserializeBoxJSXExpressionContainer(pos + 8, ast);
+      return constructBoxJSXExpressionContainer(pos + 8, ast);
     case 4:
-      return deserializeBoxJSXSpreadChild(pos + 8, ast);
+      return constructBoxJSXSpreadChild(pos + 8, ast);
     default:
       throw new Error(`Unexpected discriminant ${ast.buffer[pos]} for JSXChild`);
   }
@@ -6118,17 +6118,17 @@ class JSXSpreadChild {
 
   get start() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos, internal.$ast);
+    return constructU32(internal.$pos, internal.$ast);
   }
 
   get end() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos + 4, internal.$ast);
+    return constructU32(internal.$pos + 4, internal.$ast);
   }
 
   get expression() {
     const internal = this.#internal;
-    return deserializeExpression(internal.$pos + 8, internal.$ast);
+    return constructExpression(internal.$pos + 8, internal.$ast);
   }
 
   toJSON() {
@@ -6152,26 +6152,26 @@ class JSXText {
 
   get start() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos, internal.$ast);
+    return constructU32(internal.$pos, internal.$ast);
   }
 
   get end() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos + 4, internal.$ast);
+    return constructU32(internal.$pos + 4, internal.$ast);
   }
 
   get value() {
     const internal = this.#internal,
       node = internal.value;
     if (node !== void 0) return node;
-    return internal.value = deserializeStr(internal.$pos + 8, internal.$ast);
+    return internal.value = constructStr(internal.$pos + 8, internal.$ast);
   }
 
   get raw() {
     const internal = this.#internal,
       node = internal.raw;
     if (node !== void 0) return node;
-    return internal.raw = deserializeOptionStr(internal.$pos + 24, internal.$ast);
+    return internal.raw = constructOptionStr(internal.$pos + 24, internal.$ast);
   }
 
   toJSON() {
@@ -6196,17 +6196,17 @@ class TSThisParameter {
 
   get start() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos, internal.$ast);
+    return constructU32(internal.$pos, internal.$ast);
   }
 
   get end() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos + 4, internal.$ast);
+    return constructU32(internal.$pos + 4, internal.$ast);
   }
 
   get typeAnnotation() {
     const internal = this.#internal;
-    return deserializeOptionBoxTSTypeAnnotation(internal.$pos + 16, internal.$ast);
+    return constructOptionBoxTSTypeAnnotation(internal.$pos + 16, internal.$ast);
   }
 
   toJSON() {
@@ -6230,12 +6230,12 @@ class TSEnumDeclaration {
 
   get start() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos, internal.$ast);
+    return constructU32(internal.$pos, internal.$ast);
   }
 
   get end() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos + 4, internal.$ast);
+    return constructU32(internal.$pos + 4, internal.$ast);
   }
 
   get id() {
@@ -6250,12 +6250,12 @@ class TSEnumDeclaration {
 
   get const() {
     const internal = this.#internal;
-    return deserializeBool(internal.$pos + 76, internal.$ast);
+    return constructBool(internal.$pos + 76, internal.$ast);
   }
 
   get declare() {
     const internal = this.#internal;
-    return deserializeBool(internal.$pos + 77, internal.$ast);
+    return constructBool(internal.$pos + 77, internal.$ast);
   }
 
   toJSON() {
@@ -6282,19 +6282,19 @@ class TSEnumBody {
 
   get start() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos, internal.$ast);
+    return constructU32(internal.$pos, internal.$ast);
   }
 
   get end() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos + 4, internal.$ast);
+    return constructU32(internal.$pos + 4, internal.$ast);
   }
 
   get members() {
     const internal = this.#internal,
       node = internal.members;
     if (node !== void 0) return node;
-    return internal.members = deserializeVecTSEnumMember(internal.$pos + 8, internal.$ast);
+    return internal.members = constructVecTSEnumMember(internal.$pos + 8, internal.$ast);
   }
 
   toJSON() {
@@ -6318,22 +6318,22 @@ class TSEnumMember {
 
   get start() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos, internal.$ast);
+    return constructU32(internal.$pos, internal.$ast);
   }
 
   get end() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos + 4, internal.$ast);
+    return constructU32(internal.$pos + 4, internal.$ast);
   }
 
   get id() {
     const internal = this.#internal;
-    return deserializeTSEnumMemberName(internal.$pos + 8, internal.$ast);
+    return constructTSEnumMemberName(internal.$pos + 8, internal.$ast);
   }
 
   get initializer() {
     const internal = this.#internal;
-    return deserializeOptionExpression(internal.$pos + 24, internal.$ast);
+    return constructOptionExpression(internal.$pos + 24, internal.$ast);
   }
 
   toJSON() {
@@ -6347,16 +6347,16 @@ class TSEnumMember {
   }
 }
 
-function deserializeTSEnumMemberName(pos, ast) {
+function constructTSEnumMemberName(pos, ast) {
   switch (ast.buffer[pos]) {
     case 0:
-      return deserializeBoxIdentifierName(pos + 8, ast);
+      return constructBoxIdentifierName(pos + 8, ast);
     case 1:
-      return deserializeBoxStringLiteral(pos + 8, ast);
+      return constructBoxStringLiteral(pos + 8, ast);
     case 2:
-      return deserializeBoxStringLiteral(pos + 8, ast);
+      return constructBoxStringLiteral(pos + 8, ast);
     case 3:
-      return deserializeBoxTemplateLiteral(pos + 8, ast);
+      return constructBoxTemplateLiteral(pos + 8, ast);
     default:
       throw new Error(`Unexpected discriminant ${ast.buffer[pos]} for TSEnumMemberName`);
   }
@@ -6373,17 +6373,17 @@ class TSTypeAnnotation {
 
   get start() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos, internal.$ast);
+    return constructU32(internal.$pos, internal.$ast);
   }
 
   get end() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos + 4, internal.$ast);
+    return constructU32(internal.$pos + 4, internal.$ast);
   }
 
   get typeAnnotation() {
     const internal = this.#internal;
-    return deserializeTSType(internal.$pos + 8, internal.$ast);
+    return constructTSType(internal.$pos + 8, internal.$ast);
   }
 
   toJSON() {
@@ -6407,17 +6407,17 @@ class TSLiteralType {
 
   get start() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos, internal.$ast);
+    return constructU32(internal.$pos, internal.$ast);
   }
 
   get end() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos + 4, internal.$ast);
+    return constructU32(internal.$pos + 4, internal.$ast);
   }
 
   get literal() {
     const internal = this.#internal;
-    return deserializeTSLiteral(internal.$pos + 8, internal.$ast);
+    return constructTSLiteral(internal.$pos + 8, internal.$ast);
   }
 
   toJSON() {
@@ -6430,101 +6430,101 @@ class TSLiteralType {
   }
 }
 
-function deserializeTSLiteral(pos, ast) {
+function constructTSLiteral(pos, ast) {
   switch (ast.buffer[pos]) {
     case 0:
-      return deserializeBoxBooleanLiteral(pos + 8, ast);
+      return constructBoxBooleanLiteral(pos + 8, ast);
     case 1:
-      return deserializeBoxNumericLiteral(pos + 8, ast);
+      return constructBoxNumericLiteral(pos + 8, ast);
     case 2:
-      return deserializeBoxBigIntLiteral(pos + 8, ast);
+      return constructBoxBigIntLiteral(pos + 8, ast);
     case 3:
-      return deserializeBoxStringLiteral(pos + 8, ast);
+      return constructBoxStringLiteral(pos + 8, ast);
     case 4:
-      return deserializeBoxTemplateLiteral(pos + 8, ast);
+      return constructBoxTemplateLiteral(pos + 8, ast);
     case 5:
-      return deserializeBoxUnaryExpression(pos + 8, ast);
+      return constructBoxUnaryExpression(pos + 8, ast);
     default:
       throw new Error(`Unexpected discriminant ${ast.buffer[pos]} for TSLiteral`);
   }
 }
 
-function deserializeTSType(pos, ast) {
+function constructTSType(pos, ast) {
   switch (ast.buffer[pos]) {
     case 0:
-      return deserializeBoxTSAnyKeyword(pos + 8, ast);
+      return constructBoxTSAnyKeyword(pos + 8, ast);
     case 1:
-      return deserializeBoxTSBigIntKeyword(pos + 8, ast);
+      return constructBoxTSBigIntKeyword(pos + 8, ast);
     case 2:
-      return deserializeBoxTSBooleanKeyword(pos + 8, ast);
+      return constructBoxTSBooleanKeyword(pos + 8, ast);
     case 3:
-      return deserializeBoxTSIntrinsicKeyword(pos + 8, ast);
+      return constructBoxTSIntrinsicKeyword(pos + 8, ast);
     case 4:
-      return deserializeBoxTSNeverKeyword(pos + 8, ast);
+      return constructBoxTSNeverKeyword(pos + 8, ast);
     case 5:
-      return deserializeBoxTSNullKeyword(pos + 8, ast);
+      return constructBoxTSNullKeyword(pos + 8, ast);
     case 6:
-      return deserializeBoxTSNumberKeyword(pos + 8, ast);
+      return constructBoxTSNumberKeyword(pos + 8, ast);
     case 7:
-      return deserializeBoxTSObjectKeyword(pos + 8, ast);
+      return constructBoxTSObjectKeyword(pos + 8, ast);
     case 8:
-      return deserializeBoxTSStringKeyword(pos + 8, ast);
+      return constructBoxTSStringKeyword(pos + 8, ast);
     case 9:
-      return deserializeBoxTSSymbolKeyword(pos + 8, ast);
+      return constructBoxTSSymbolKeyword(pos + 8, ast);
     case 10:
-      return deserializeBoxTSThisType(pos + 8, ast);
+      return constructBoxTSThisType(pos + 8, ast);
     case 11:
-      return deserializeBoxTSUndefinedKeyword(pos + 8, ast);
+      return constructBoxTSUndefinedKeyword(pos + 8, ast);
     case 12:
-      return deserializeBoxTSUnknownKeyword(pos + 8, ast);
+      return constructBoxTSUnknownKeyword(pos + 8, ast);
     case 13:
-      return deserializeBoxTSVoidKeyword(pos + 8, ast);
+      return constructBoxTSVoidKeyword(pos + 8, ast);
     case 14:
-      return deserializeBoxTSArrayType(pos + 8, ast);
+      return constructBoxTSArrayType(pos + 8, ast);
     case 15:
-      return deserializeBoxTSConditionalType(pos + 8, ast);
+      return constructBoxTSConditionalType(pos + 8, ast);
     case 16:
-      return deserializeBoxTSConstructorType(pos + 8, ast);
+      return constructBoxTSConstructorType(pos + 8, ast);
     case 17:
-      return deserializeBoxTSFunctionType(pos + 8, ast);
+      return constructBoxTSFunctionType(pos + 8, ast);
     case 18:
-      return deserializeBoxTSImportType(pos + 8, ast);
+      return constructBoxTSImportType(pos + 8, ast);
     case 19:
-      return deserializeBoxTSIndexedAccessType(pos + 8, ast);
+      return constructBoxTSIndexedAccessType(pos + 8, ast);
     case 20:
-      return deserializeBoxTSInferType(pos + 8, ast);
+      return constructBoxTSInferType(pos + 8, ast);
     case 21:
-      return deserializeBoxTSIntersectionType(pos + 8, ast);
+      return constructBoxTSIntersectionType(pos + 8, ast);
     case 22:
-      return deserializeBoxTSLiteralType(pos + 8, ast);
+      return constructBoxTSLiteralType(pos + 8, ast);
     case 23:
-      return deserializeBoxTSMappedType(pos + 8, ast);
+      return constructBoxTSMappedType(pos + 8, ast);
     case 24:
-      return deserializeBoxTSNamedTupleMember(pos + 8, ast);
+      return constructBoxTSNamedTupleMember(pos + 8, ast);
     case 26:
-      return deserializeBoxTSTemplateLiteralType(pos + 8, ast);
+      return constructBoxTSTemplateLiteralType(pos + 8, ast);
     case 27:
-      return deserializeBoxTSTupleType(pos + 8, ast);
+      return constructBoxTSTupleType(pos + 8, ast);
     case 28:
-      return deserializeBoxTSTypeLiteral(pos + 8, ast);
+      return constructBoxTSTypeLiteral(pos + 8, ast);
     case 29:
-      return deserializeBoxTSTypeOperator(pos + 8, ast);
+      return constructBoxTSTypeOperator(pos + 8, ast);
     case 30:
-      return deserializeBoxTSTypePredicate(pos + 8, ast);
+      return constructBoxTSTypePredicate(pos + 8, ast);
     case 31:
-      return deserializeBoxTSTypeQuery(pos + 8, ast);
+      return constructBoxTSTypeQuery(pos + 8, ast);
     case 32:
-      return deserializeBoxTSTypeReference(pos + 8, ast);
+      return constructBoxTSTypeReference(pos + 8, ast);
     case 33:
-      return deserializeBoxTSUnionType(pos + 8, ast);
+      return constructBoxTSUnionType(pos + 8, ast);
     case 34:
-      return deserializeBoxTSParenthesizedType(pos + 8, ast);
+      return constructBoxTSParenthesizedType(pos + 8, ast);
     case 35:
-      return deserializeBoxJSDocNullableType(pos + 8, ast);
+      return constructBoxJSDocNullableType(pos + 8, ast);
     case 36:
-      return deserializeBoxJSDocNonNullableType(pos + 8, ast);
+      return constructBoxJSDocNonNullableType(pos + 8, ast);
     case 37:
-      return deserializeBoxJSDocUnknownType(pos + 8, ast);
+      return constructBoxJSDocUnknownType(pos + 8, ast);
     default:
       throw new Error(`Unexpected discriminant ${ast.buffer[pos]} for TSType`);
   }
@@ -6541,32 +6541,32 @@ class TSConditionalType {
 
   get start() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos, internal.$ast);
+    return constructU32(internal.$pos, internal.$ast);
   }
 
   get end() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos + 4, internal.$ast);
+    return constructU32(internal.$pos + 4, internal.$ast);
   }
 
   get checkType() {
     const internal = this.#internal;
-    return deserializeTSType(internal.$pos + 8, internal.$ast);
+    return constructTSType(internal.$pos + 8, internal.$ast);
   }
 
   get extendsType() {
     const internal = this.#internal;
-    return deserializeTSType(internal.$pos + 24, internal.$ast);
+    return constructTSType(internal.$pos + 24, internal.$ast);
   }
 
   get trueType() {
     const internal = this.#internal;
-    return deserializeTSType(internal.$pos + 40, internal.$ast);
+    return constructTSType(internal.$pos + 40, internal.$ast);
   }
 
   get falseType() {
     const internal = this.#internal;
-    return deserializeTSType(internal.$pos + 56, internal.$ast);
+    return constructTSType(internal.$pos + 56, internal.$ast);
   }
 
   toJSON() {
@@ -6593,19 +6593,19 @@ class TSUnionType {
 
   get start() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos, internal.$ast);
+    return constructU32(internal.$pos, internal.$ast);
   }
 
   get end() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos + 4, internal.$ast);
+    return constructU32(internal.$pos + 4, internal.$ast);
   }
 
   get types() {
     const internal = this.#internal,
       node = internal.types;
     if (node !== void 0) return node;
-    return internal.types = deserializeVecTSType(internal.$pos + 8, internal.$ast);
+    return internal.types = constructVecTSType(internal.$pos + 8, internal.$ast);
   }
 
   toJSON() {
@@ -6629,19 +6629,19 @@ class TSIntersectionType {
 
   get start() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos, internal.$ast);
+    return constructU32(internal.$pos, internal.$ast);
   }
 
   get end() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos + 4, internal.$ast);
+    return constructU32(internal.$pos + 4, internal.$ast);
   }
 
   get types() {
     const internal = this.#internal,
       node = internal.types;
     if (node !== void 0) return node;
-    return internal.types = deserializeVecTSType(internal.$pos + 8, internal.$ast);
+    return internal.types = constructVecTSType(internal.$pos + 8, internal.$ast);
   }
 
   toJSON() {
@@ -6665,17 +6665,17 @@ class TSParenthesizedType {
 
   get start() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos, internal.$ast);
+    return constructU32(internal.$pos, internal.$ast);
   }
 
   get end() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos + 4, internal.$ast);
+    return constructU32(internal.$pos + 4, internal.$ast);
   }
 
   get typeAnnotation() {
     const internal = this.#internal;
-    return deserializeTSType(internal.$pos + 8, internal.$ast);
+    return constructTSType(internal.$pos + 8, internal.$ast);
   }
 
   toJSON() {
@@ -6699,22 +6699,22 @@ class TSTypeOperator {
 
   get start() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos, internal.$ast);
+    return constructU32(internal.$pos, internal.$ast);
   }
 
   get end() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos + 4, internal.$ast);
+    return constructU32(internal.$pos + 4, internal.$ast);
   }
 
   get operator() {
     const internal = this.#internal;
-    return deserializeTSTypeOperatorOperator(internal.$pos + 24, internal.$ast);
+    return constructTSTypeOperatorOperator(internal.$pos + 24, internal.$ast);
   }
 
   get typeAnnotation() {
     const internal = this.#internal;
-    return deserializeTSType(internal.$pos + 8, internal.$ast);
+    return constructTSType(internal.$pos + 8, internal.$ast);
   }
 
   toJSON() {
@@ -6728,7 +6728,7 @@ class TSTypeOperator {
   }
 }
 
-function deserializeTSTypeOperatorOperator(pos, ast) {
+function constructTSTypeOperatorOperator(pos, ast) {
   switch (ast.buffer[pos]) {
     case 0:
       return 'keyof';
@@ -6752,17 +6752,17 @@ class TSArrayType {
 
   get start() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos, internal.$ast);
+    return constructU32(internal.$pos, internal.$ast);
   }
 
   get end() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos + 4, internal.$ast);
+    return constructU32(internal.$pos + 4, internal.$ast);
   }
 
   get elementType() {
     const internal = this.#internal;
-    return deserializeTSType(internal.$pos + 8, internal.$ast);
+    return constructTSType(internal.$pos + 8, internal.$ast);
   }
 
   toJSON() {
@@ -6786,22 +6786,22 @@ class TSIndexedAccessType {
 
   get start() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos, internal.$ast);
+    return constructU32(internal.$pos, internal.$ast);
   }
 
   get end() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos + 4, internal.$ast);
+    return constructU32(internal.$pos + 4, internal.$ast);
   }
 
   get objectType() {
     const internal = this.#internal;
-    return deserializeTSType(internal.$pos + 8, internal.$ast);
+    return constructTSType(internal.$pos + 8, internal.$ast);
   }
 
   get indexType() {
     const internal = this.#internal;
-    return deserializeTSType(internal.$pos + 24, internal.$ast);
+    return constructTSType(internal.$pos + 24, internal.$ast);
   }
 
   toJSON() {
@@ -6826,19 +6826,19 @@ class TSTupleType {
 
   get start() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos, internal.$ast);
+    return constructU32(internal.$pos, internal.$ast);
   }
 
   get end() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos + 4, internal.$ast);
+    return constructU32(internal.$pos + 4, internal.$ast);
   }
 
   get elementTypes() {
     const internal = this.#internal,
       node = internal.elementTypes;
     if (node !== void 0) return node;
-    return internal.elementTypes = deserializeVecTSTupleElement(internal.$pos + 8, internal.$ast);
+    return internal.elementTypes = constructVecTSTupleElement(internal.$pos + 8, internal.$ast);
   }
 
   toJSON() {
@@ -6862,12 +6862,12 @@ class TSNamedTupleMember {
 
   get start() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos, internal.$ast);
+    return constructU32(internal.$pos, internal.$ast);
   }
 
   get end() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos + 4, internal.$ast);
+    return constructU32(internal.$pos + 4, internal.$ast);
   }
 
   get label() {
@@ -6877,12 +6877,12 @@ class TSNamedTupleMember {
 
   get elementType() {
     const internal = this.#internal;
-    return deserializeTSTupleElement(internal.$pos + 32, internal.$ast);
+    return constructTSTupleElement(internal.$pos + 32, internal.$ast);
   }
 
   get optional() {
     const internal = this.#internal;
-    return deserializeBool(internal.$pos + 48, internal.$ast);
+    return constructBool(internal.$pos + 48, internal.$ast);
   }
 
   toJSON() {
@@ -6908,17 +6908,17 @@ class TSOptionalType {
 
   get start() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos, internal.$ast);
+    return constructU32(internal.$pos, internal.$ast);
   }
 
   get end() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos + 4, internal.$ast);
+    return constructU32(internal.$pos + 4, internal.$ast);
   }
 
   get typeAnnotation() {
     const internal = this.#internal;
-    return deserializeTSType(internal.$pos + 8, internal.$ast);
+    return constructTSType(internal.$pos + 8, internal.$ast);
   }
 
   toJSON() {
@@ -6942,17 +6942,17 @@ class TSRestType {
 
   get start() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos, internal.$ast);
+    return constructU32(internal.$pos, internal.$ast);
   }
 
   get end() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos + 4, internal.$ast);
+    return constructU32(internal.$pos + 4, internal.$ast);
   }
 
   get typeAnnotation() {
     const internal = this.#internal;
-    return deserializeTSType(internal.$pos + 8, internal.$ast);
+    return constructTSType(internal.$pos + 8, internal.$ast);
   }
 
   toJSON() {
@@ -6965,86 +6965,86 @@ class TSRestType {
   }
 }
 
-function deserializeTSTupleElement(pos, ast) {
+function constructTSTupleElement(pos, ast) {
   switch (ast.buffer[pos]) {
     case 0:
-      return deserializeBoxTSAnyKeyword(pos + 8, ast);
+      return constructBoxTSAnyKeyword(pos + 8, ast);
     case 1:
-      return deserializeBoxTSBigIntKeyword(pos + 8, ast);
+      return constructBoxTSBigIntKeyword(pos + 8, ast);
     case 2:
-      return deserializeBoxTSBooleanKeyword(pos + 8, ast);
+      return constructBoxTSBooleanKeyword(pos + 8, ast);
     case 3:
-      return deserializeBoxTSIntrinsicKeyword(pos + 8, ast);
+      return constructBoxTSIntrinsicKeyword(pos + 8, ast);
     case 4:
-      return deserializeBoxTSNeverKeyword(pos + 8, ast);
+      return constructBoxTSNeverKeyword(pos + 8, ast);
     case 5:
-      return deserializeBoxTSNullKeyword(pos + 8, ast);
+      return constructBoxTSNullKeyword(pos + 8, ast);
     case 6:
-      return deserializeBoxTSNumberKeyword(pos + 8, ast);
+      return constructBoxTSNumberKeyword(pos + 8, ast);
     case 7:
-      return deserializeBoxTSObjectKeyword(pos + 8, ast);
+      return constructBoxTSObjectKeyword(pos + 8, ast);
     case 8:
-      return deserializeBoxTSStringKeyword(pos + 8, ast);
+      return constructBoxTSStringKeyword(pos + 8, ast);
     case 9:
-      return deserializeBoxTSSymbolKeyword(pos + 8, ast);
+      return constructBoxTSSymbolKeyword(pos + 8, ast);
     case 10:
-      return deserializeBoxTSThisType(pos + 8, ast);
+      return constructBoxTSThisType(pos + 8, ast);
     case 11:
-      return deserializeBoxTSUndefinedKeyword(pos + 8, ast);
+      return constructBoxTSUndefinedKeyword(pos + 8, ast);
     case 12:
-      return deserializeBoxTSUnknownKeyword(pos + 8, ast);
+      return constructBoxTSUnknownKeyword(pos + 8, ast);
     case 13:
-      return deserializeBoxTSVoidKeyword(pos + 8, ast);
+      return constructBoxTSVoidKeyword(pos + 8, ast);
     case 14:
-      return deserializeBoxTSArrayType(pos + 8, ast);
+      return constructBoxTSArrayType(pos + 8, ast);
     case 15:
-      return deserializeBoxTSConditionalType(pos + 8, ast);
+      return constructBoxTSConditionalType(pos + 8, ast);
     case 16:
-      return deserializeBoxTSConstructorType(pos + 8, ast);
+      return constructBoxTSConstructorType(pos + 8, ast);
     case 17:
-      return deserializeBoxTSFunctionType(pos + 8, ast);
+      return constructBoxTSFunctionType(pos + 8, ast);
     case 18:
-      return deserializeBoxTSImportType(pos + 8, ast);
+      return constructBoxTSImportType(pos + 8, ast);
     case 19:
-      return deserializeBoxTSIndexedAccessType(pos + 8, ast);
+      return constructBoxTSIndexedAccessType(pos + 8, ast);
     case 20:
-      return deserializeBoxTSInferType(pos + 8, ast);
+      return constructBoxTSInferType(pos + 8, ast);
     case 21:
-      return deserializeBoxTSIntersectionType(pos + 8, ast);
+      return constructBoxTSIntersectionType(pos + 8, ast);
     case 22:
-      return deserializeBoxTSLiteralType(pos + 8, ast);
+      return constructBoxTSLiteralType(pos + 8, ast);
     case 23:
-      return deserializeBoxTSMappedType(pos + 8, ast);
+      return constructBoxTSMappedType(pos + 8, ast);
     case 24:
-      return deserializeBoxTSNamedTupleMember(pos + 8, ast);
+      return constructBoxTSNamedTupleMember(pos + 8, ast);
     case 26:
-      return deserializeBoxTSTemplateLiteralType(pos + 8, ast);
+      return constructBoxTSTemplateLiteralType(pos + 8, ast);
     case 27:
-      return deserializeBoxTSTupleType(pos + 8, ast);
+      return constructBoxTSTupleType(pos + 8, ast);
     case 28:
-      return deserializeBoxTSTypeLiteral(pos + 8, ast);
+      return constructBoxTSTypeLiteral(pos + 8, ast);
     case 29:
-      return deserializeBoxTSTypeOperator(pos + 8, ast);
+      return constructBoxTSTypeOperator(pos + 8, ast);
     case 30:
-      return deserializeBoxTSTypePredicate(pos + 8, ast);
+      return constructBoxTSTypePredicate(pos + 8, ast);
     case 31:
-      return deserializeBoxTSTypeQuery(pos + 8, ast);
+      return constructBoxTSTypeQuery(pos + 8, ast);
     case 32:
-      return deserializeBoxTSTypeReference(pos + 8, ast);
+      return constructBoxTSTypeReference(pos + 8, ast);
     case 33:
-      return deserializeBoxTSUnionType(pos + 8, ast);
+      return constructBoxTSUnionType(pos + 8, ast);
     case 34:
-      return deserializeBoxTSParenthesizedType(pos + 8, ast);
+      return constructBoxTSParenthesizedType(pos + 8, ast);
     case 35:
-      return deserializeBoxJSDocNullableType(pos + 8, ast);
+      return constructBoxJSDocNullableType(pos + 8, ast);
     case 36:
-      return deserializeBoxJSDocNonNullableType(pos + 8, ast);
+      return constructBoxJSDocNonNullableType(pos + 8, ast);
     case 37:
-      return deserializeBoxJSDocUnknownType(pos + 8, ast);
+      return constructBoxJSDocUnknownType(pos + 8, ast);
     case 64:
-      return deserializeBoxTSOptionalType(pos + 8, ast);
+      return constructBoxTSOptionalType(pos + 8, ast);
     case 65:
-      return deserializeBoxTSRestType(pos + 8, ast);
+      return constructBoxTSRestType(pos + 8, ast);
     default:
       throw new Error(`Unexpected discriminant ${ast.buffer[pos]} for TSTupleElement`);
   }
@@ -7061,12 +7061,12 @@ class TSAnyKeyword {
 
   get start() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos, internal.$ast);
+    return constructU32(internal.$pos, internal.$ast);
   }
 
   get end() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos + 4, internal.$ast);
+    return constructU32(internal.$pos + 4, internal.$ast);
   }
 
   toJSON() {
@@ -7089,12 +7089,12 @@ class TSStringKeyword {
 
   get start() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos, internal.$ast);
+    return constructU32(internal.$pos, internal.$ast);
   }
 
   get end() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos + 4, internal.$ast);
+    return constructU32(internal.$pos + 4, internal.$ast);
   }
 
   toJSON() {
@@ -7117,12 +7117,12 @@ class TSBooleanKeyword {
 
   get start() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos, internal.$ast);
+    return constructU32(internal.$pos, internal.$ast);
   }
 
   get end() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos + 4, internal.$ast);
+    return constructU32(internal.$pos + 4, internal.$ast);
   }
 
   toJSON() {
@@ -7145,12 +7145,12 @@ class TSNumberKeyword {
 
   get start() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos, internal.$ast);
+    return constructU32(internal.$pos, internal.$ast);
   }
 
   get end() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos + 4, internal.$ast);
+    return constructU32(internal.$pos + 4, internal.$ast);
   }
 
   toJSON() {
@@ -7173,12 +7173,12 @@ class TSNeverKeyword {
 
   get start() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos, internal.$ast);
+    return constructU32(internal.$pos, internal.$ast);
   }
 
   get end() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos + 4, internal.$ast);
+    return constructU32(internal.$pos + 4, internal.$ast);
   }
 
   toJSON() {
@@ -7201,12 +7201,12 @@ class TSIntrinsicKeyword {
 
   get start() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos, internal.$ast);
+    return constructU32(internal.$pos, internal.$ast);
   }
 
   get end() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos + 4, internal.$ast);
+    return constructU32(internal.$pos + 4, internal.$ast);
   }
 
   toJSON() {
@@ -7229,12 +7229,12 @@ class TSUnknownKeyword {
 
   get start() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos, internal.$ast);
+    return constructU32(internal.$pos, internal.$ast);
   }
 
   get end() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos + 4, internal.$ast);
+    return constructU32(internal.$pos + 4, internal.$ast);
   }
 
   toJSON() {
@@ -7257,12 +7257,12 @@ class TSNullKeyword {
 
   get start() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos, internal.$ast);
+    return constructU32(internal.$pos, internal.$ast);
   }
 
   get end() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos + 4, internal.$ast);
+    return constructU32(internal.$pos + 4, internal.$ast);
   }
 
   toJSON() {
@@ -7285,12 +7285,12 @@ class TSUndefinedKeyword {
 
   get start() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos, internal.$ast);
+    return constructU32(internal.$pos, internal.$ast);
   }
 
   get end() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos + 4, internal.$ast);
+    return constructU32(internal.$pos + 4, internal.$ast);
   }
 
   toJSON() {
@@ -7313,12 +7313,12 @@ class TSVoidKeyword {
 
   get start() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos, internal.$ast);
+    return constructU32(internal.$pos, internal.$ast);
   }
 
   get end() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos + 4, internal.$ast);
+    return constructU32(internal.$pos + 4, internal.$ast);
   }
 
   toJSON() {
@@ -7341,12 +7341,12 @@ class TSSymbolKeyword {
 
   get start() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos, internal.$ast);
+    return constructU32(internal.$pos, internal.$ast);
   }
 
   get end() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos + 4, internal.$ast);
+    return constructU32(internal.$pos + 4, internal.$ast);
   }
 
   toJSON() {
@@ -7369,12 +7369,12 @@ class TSThisType {
 
   get start() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos, internal.$ast);
+    return constructU32(internal.$pos, internal.$ast);
   }
 
   get end() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos + 4, internal.$ast);
+    return constructU32(internal.$pos + 4, internal.$ast);
   }
 
   toJSON() {
@@ -7397,12 +7397,12 @@ class TSObjectKeyword {
 
   get start() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos, internal.$ast);
+    return constructU32(internal.$pos, internal.$ast);
   }
 
   get end() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos + 4, internal.$ast);
+    return constructU32(internal.$pos + 4, internal.$ast);
   }
 
   toJSON() {
@@ -7425,12 +7425,12 @@ class TSBigIntKeyword {
 
   get start() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos, internal.$ast);
+    return constructU32(internal.$pos, internal.$ast);
   }
 
   get end() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos + 4, internal.$ast);
+    return constructU32(internal.$pos + 4, internal.$ast);
   }
 
   toJSON() {
@@ -7453,22 +7453,22 @@ class TSTypeReference {
 
   get start() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos, internal.$ast);
+    return constructU32(internal.$pos, internal.$ast);
   }
 
   get end() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos + 4, internal.$ast);
+    return constructU32(internal.$pos + 4, internal.$ast);
   }
 
   get typeName() {
     const internal = this.#internal;
-    return deserializeTSTypeName(internal.$pos + 8, internal.$ast);
+    return constructTSTypeName(internal.$pos + 8, internal.$ast);
   }
 
   get typeArguments() {
     const internal = this.#internal;
-    return deserializeOptionBoxTSTypeParameterInstantiation(internal.$pos + 24, internal.$ast);
+    return constructOptionBoxTSTypeParameterInstantiation(internal.$pos + 24, internal.$ast);
   }
 
   toJSON() {
@@ -7482,12 +7482,12 @@ class TSTypeReference {
   }
 }
 
-function deserializeTSTypeName(pos, ast) {
+function constructTSTypeName(pos, ast) {
   switch (ast.buffer[pos]) {
     case 0:
-      return deserializeBoxIdentifierReference(pos + 8, ast);
+      return constructBoxIdentifierReference(pos + 8, ast);
     case 1:
-      return deserializeBoxTSQualifiedName(pos + 8, ast);
+      return constructBoxTSQualifiedName(pos + 8, ast);
     default:
       throw new Error(`Unexpected discriminant ${ast.buffer[pos]} for TSTypeName`);
   }
@@ -7504,17 +7504,17 @@ class TSQualifiedName {
 
   get start() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos, internal.$ast);
+    return constructU32(internal.$pos, internal.$ast);
   }
 
   get end() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos + 4, internal.$ast);
+    return constructU32(internal.$pos + 4, internal.$ast);
   }
 
   get left() {
     const internal = this.#internal;
-    return deserializeTSTypeName(internal.$pos + 8, internal.$ast);
+    return constructTSTypeName(internal.$pos + 8, internal.$ast);
   }
 
   get right() {
@@ -7544,19 +7544,19 @@ class TSTypeParameterInstantiation {
 
   get start() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos, internal.$ast);
+    return constructU32(internal.$pos, internal.$ast);
   }
 
   get end() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos + 4, internal.$ast);
+    return constructU32(internal.$pos + 4, internal.$ast);
   }
 
   get params() {
     const internal = this.#internal,
       node = internal.params;
     if (node !== void 0) return node;
-    return internal.params = deserializeVecTSType(internal.$pos + 8, internal.$ast);
+    return internal.params = constructVecTSType(internal.$pos + 8, internal.$ast);
   }
 
   toJSON() {
@@ -7580,12 +7580,12 @@ class TSTypeParameter {
 
   get start() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos, internal.$ast);
+    return constructU32(internal.$pos, internal.$ast);
   }
 
   get end() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos + 4, internal.$ast);
+    return constructU32(internal.$pos + 4, internal.$ast);
   }
 
   get name() {
@@ -7595,27 +7595,27 @@ class TSTypeParameter {
 
   get constraint() {
     const internal = this.#internal;
-    return deserializeOptionTSType(internal.$pos + 40, internal.$ast);
+    return constructOptionTSType(internal.$pos + 40, internal.$ast);
   }
 
   get default() {
     const internal = this.#internal;
-    return deserializeOptionTSType(internal.$pos + 56, internal.$ast);
+    return constructOptionTSType(internal.$pos + 56, internal.$ast);
   }
 
   get in() {
     const internal = this.#internal;
-    return deserializeBool(internal.$pos + 72, internal.$ast);
+    return constructBool(internal.$pos + 72, internal.$ast);
   }
 
   get out() {
     const internal = this.#internal;
-    return deserializeBool(internal.$pos + 73, internal.$ast);
+    return constructBool(internal.$pos + 73, internal.$ast);
   }
 
   get const() {
     const internal = this.#internal;
-    return deserializeBool(internal.$pos + 74, internal.$ast);
+    return constructBool(internal.$pos + 74, internal.$ast);
   }
 
   toJSON() {
@@ -7644,19 +7644,19 @@ class TSTypeParameterDeclaration {
 
   get start() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos, internal.$ast);
+    return constructU32(internal.$pos, internal.$ast);
   }
 
   get end() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos + 4, internal.$ast);
+    return constructU32(internal.$pos + 4, internal.$ast);
   }
 
   get params() {
     const internal = this.#internal,
       node = internal.params;
     if (node !== void 0) return node;
-    return internal.params = deserializeVecTSTypeParameter(internal.$pos + 8, internal.$ast);
+    return internal.params = constructVecTSTypeParameter(internal.$pos + 8, internal.$ast);
   }
 
   toJSON() {
@@ -7680,12 +7680,12 @@ class TSTypeAliasDeclaration {
 
   get start() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos, internal.$ast);
+    return constructU32(internal.$pos, internal.$ast);
   }
 
   get end() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos + 4, internal.$ast);
+    return constructU32(internal.$pos + 4, internal.$ast);
   }
 
   get id() {
@@ -7695,17 +7695,17 @@ class TSTypeAliasDeclaration {
 
   get typeParameters() {
     const internal = this.#internal;
-    return deserializeOptionBoxTSTypeParameterDeclaration(internal.$pos + 40, internal.$ast);
+    return constructOptionBoxTSTypeParameterDeclaration(internal.$pos + 40, internal.$ast);
   }
 
   get typeAnnotation() {
     const internal = this.#internal;
-    return deserializeTSType(internal.$pos + 48, internal.$ast);
+    return constructTSType(internal.$pos + 48, internal.$ast);
   }
 
   get declare() {
     const internal = this.#internal;
-    return deserializeBool(internal.$pos + 68, internal.$ast);
+    return constructBool(internal.$pos + 68, internal.$ast);
   }
 
   toJSON() {
@@ -7721,7 +7721,7 @@ class TSTypeAliasDeclaration {
   }
 }
 
-function deserializeTSAccessibility(pos, ast) {
+function constructTSAccessibility(pos, ast) {
   switch (ast.buffer[pos]) {
     case 0:
       return 'private';
@@ -7745,22 +7745,22 @@ class TSClassImplements {
 
   get start() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos, internal.$ast);
+    return constructU32(internal.$pos, internal.$ast);
   }
 
   get end() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos + 4, internal.$ast);
+    return constructU32(internal.$pos + 4, internal.$ast);
   }
 
   get expression() {
     const internal = this.#internal;
-    return deserializeTSTypeName(internal.$pos + 8, internal.$ast);
+    return constructTSTypeName(internal.$pos + 8, internal.$ast);
   }
 
   get typeArguments() {
     const internal = this.#internal;
-    return deserializeOptionBoxTSTypeParameterInstantiation(internal.$pos + 24, internal.$ast);
+    return constructOptionBoxTSTypeParameterInstantiation(internal.$pos + 24, internal.$ast);
   }
 
   toJSON() {
@@ -7785,12 +7785,12 @@ class TSInterfaceDeclaration {
 
   get start() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos, internal.$ast);
+    return constructU32(internal.$pos, internal.$ast);
   }
 
   get end() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos + 4, internal.$ast);
+    return constructU32(internal.$pos + 4, internal.$ast);
   }
 
   get id() {
@@ -7800,24 +7800,24 @@ class TSInterfaceDeclaration {
 
   get typeParameters() {
     const internal = this.#internal;
-    return deserializeOptionBoxTSTypeParameterDeclaration(internal.$pos + 40, internal.$ast);
+    return constructOptionBoxTSTypeParameterDeclaration(internal.$pos + 40, internal.$ast);
   }
 
   get extends() {
     const internal = this.#internal,
       node = internal.extends;
     if (node !== void 0) return node;
-    return internal.extends = deserializeVecTSInterfaceHeritage(internal.$pos + 48, internal.$ast);
+    return internal.extends = constructVecTSInterfaceHeritage(internal.$pos + 48, internal.$ast);
   }
 
   get body() {
     const internal = this.#internal;
-    return deserializeBoxTSInterfaceBody(internal.$pos + 72, internal.$ast);
+    return constructBoxTSInterfaceBody(internal.$pos + 72, internal.$ast);
   }
 
   get declare() {
     const internal = this.#internal;
-    return deserializeBool(internal.$pos + 84, internal.$ast);
+    return constructBool(internal.$pos + 84, internal.$ast);
   }
 
   toJSON() {
@@ -7845,19 +7845,19 @@ class TSInterfaceBody {
 
   get start() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos, internal.$ast);
+    return constructU32(internal.$pos, internal.$ast);
   }
 
   get end() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos + 4, internal.$ast);
+    return constructU32(internal.$pos + 4, internal.$ast);
   }
 
   get body() {
     const internal = this.#internal,
       node = internal.body;
     if (node !== void 0) return node;
-    return internal.body = deserializeVecTSSignature(internal.$pos + 8, internal.$ast);
+    return internal.body = constructVecTSSignature(internal.$pos + 8, internal.$ast);
   }
 
   toJSON() {
@@ -7881,37 +7881,37 @@ class TSPropertySignature {
 
   get start() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos, internal.$ast);
+    return constructU32(internal.$pos, internal.$ast);
   }
 
   get end() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos + 4, internal.$ast);
+    return constructU32(internal.$pos + 4, internal.$ast);
   }
 
   get computed() {
     const internal = this.#internal;
-    return deserializeBool(internal.$pos + 32, internal.$ast);
+    return constructBool(internal.$pos + 32, internal.$ast);
   }
 
   get optional() {
     const internal = this.#internal;
-    return deserializeBool(internal.$pos + 33, internal.$ast);
+    return constructBool(internal.$pos + 33, internal.$ast);
   }
 
   get readonly() {
     const internal = this.#internal;
-    return deserializeBool(internal.$pos + 34, internal.$ast);
+    return constructBool(internal.$pos + 34, internal.$ast);
   }
 
   get key() {
     const internal = this.#internal;
-    return deserializePropertyKey(internal.$pos + 8, internal.$ast);
+    return constructPropertyKey(internal.$pos + 8, internal.$ast);
   }
 
   get typeAnnotation() {
     const internal = this.#internal;
-    return deserializeOptionBoxTSTypeAnnotation(internal.$pos + 24, internal.$ast);
+    return constructOptionBoxTSTypeAnnotation(internal.$pos + 24, internal.$ast);
   }
 
   toJSON() {
@@ -7928,18 +7928,18 @@ class TSPropertySignature {
   }
 }
 
-function deserializeTSSignature(pos, ast) {
+function constructTSSignature(pos, ast) {
   switch (ast.buffer[pos]) {
     case 0:
-      return deserializeBoxTSIndexSignature(pos + 8, ast);
+      return constructBoxTSIndexSignature(pos + 8, ast);
     case 1:
-      return deserializeBoxTSPropertySignature(pos + 8, ast);
+      return constructBoxTSPropertySignature(pos + 8, ast);
     case 2:
-      return deserializeBoxTSCallSignatureDeclaration(pos + 8, ast);
+      return constructBoxTSCallSignatureDeclaration(pos + 8, ast);
     case 3:
-      return deserializeBoxTSConstructSignatureDeclaration(pos + 8, ast);
+      return constructBoxTSConstructSignatureDeclaration(pos + 8, ast);
     case 4:
-      return deserializeBoxTSMethodSignature(pos + 8, ast);
+      return constructBoxTSMethodSignature(pos + 8, ast);
     default:
       throw new Error(`Unexpected discriminant ${ast.buffer[pos]} for TSSignature`);
   }
@@ -7956,34 +7956,34 @@ class TSIndexSignature {
 
   get start() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos, internal.$ast);
+    return constructU32(internal.$pos, internal.$ast);
   }
 
   get end() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos + 4, internal.$ast);
+    return constructU32(internal.$pos + 4, internal.$ast);
   }
 
   get parameters() {
     const internal = this.#internal,
       node = internal.parameters;
     if (node !== void 0) return node;
-    return internal.parameters = deserializeVecTSIndexSignatureName(internal.$pos + 8, internal.$ast);
+    return internal.parameters = constructVecTSIndexSignatureName(internal.$pos + 8, internal.$ast);
   }
 
   get typeAnnotation() {
     const internal = this.#internal;
-    return deserializeBoxTSTypeAnnotation(internal.$pos + 32, internal.$ast);
+    return constructBoxTSTypeAnnotation(internal.$pos + 32, internal.$ast);
   }
 
   get readonly() {
     const internal = this.#internal;
-    return deserializeBool(internal.$pos + 40, internal.$ast);
+    return constructBool(internal.$pos + 40, internal.$ast);
   }
 
   get static() {
     const internal = this.#internal;
-    return deserializeBool(internal.$pos + 41, internal.$ast);
+    return constructBool(internal.$pos + 41, internal.$ast);
   }
 
   toJSON() {
@@ -8010,27 +8010,27 @@ class TSCallSignatureDeclaration {
 
   get start() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos, internal.$ast);
+    return constructU32(internal.$pos, internal.$ast);
   }
 
   get end() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos + 4, internal.$ast);
+    return constructU32(internal.$pos + 4, internal.$ast);
   }
 
   get typeParameters() {
     const internal = this.#internal;
-    return deserializeOptionBoxTSTypeParameterDeclaration(internal.$pos + 8, internal.$ast);
+    return constructOptionBoxTSTypeParameterDeclaration(internal.$pos + 8, internal.$ast);
   }
 
   get params() {
     const internal = this.#internal;
-    return deserializeBoxFormalParameters(internal.$pos + 24, internal.$ast);
+    return constructBoxFormalParameters(internal.$pos + 24, internal.$ast);
   }
 
   get returnType() {
     const internal = this.#internal;
-    return deserializeOptionBoxTSTypeAnnotation(internal.$pos + 32, internal.$ast);
+    return constructOptionBoxTSTypeAnnotation(internal.$pos + 32, internal.$ast);
   }
 
   toJSON() {
@@ -8045,7 +8045,7 @@ class TSCallSignatureDeclaration {
   }
 }
 
-function deserializeTSMethodSignatureKind(pos, ast) {
+function constructTSMethodSignatureKind(pos, ast) {
   switch (ast.buffer[pos]) {
     case 0:
       return 'method';
@@ -8069,47 +8069,47 @@ class TSMethodSignature {
 
   get start() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos, internal.$ast);
+    return constructU32(internal.$pos, internal.$ast);
   }
 
   get end() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos + 4, internal.$ast);
+    return constructU32(internal.$pos + 4, internal.$ast);
   }
 
   get key() {
     const internal = this.#internal;
-    return deserializePropertyKey(internal.$pos + 8, internal.$ast);
+    return constructPropertyKey(internal.$pos + 8, internal.$ast);
   }
 
   get computed() {
     const internal = this.#internal;
-    return deserializeBool(internal.$pos + 60, internal.$ast);
+    return constructBool(internal.$pos + 60, internal.$ast);
   }
 
   get optional() {
     const internal = this.#internal;
-    return deserializeBool(internal.$pos + 61, internal.$ast);
+    return constructBool(internal.$pos + 61, internal.$ast);
   }
 
   get kind() {
     const internal = this.#internal;
-    return deserializeTSMethodSignatureKind(internal.$pos + 62, internal.$ast);
+    return constructTSMethodSignatureKind(internal.$pos + 62, internal.$ast);
   }
 
   get typeParameters() {
     const internal = this.#internal;
-    return deserializeOptionBoxTSTypeParameterDeclaration(internal.$pos + 24, internal.$ast);
+    return constructOptionBoxTSTypeParameterDeclaration(internal.$pos + 24, internal.$ast);
   }
 
   get params() {
     const internal = this.#internal;
-    return deserializeBoxFormalParameters(internal.$pos + 40, internal.$ast);
+    return constructBoxFormalParameters(internal.$pos + 40, internal.$ast);
   }
 
   get returnType() {
     const internal = this.#internal;
-    return deserializeOptionBoxTSTypeAnnotation(internal.$pos + 48, internal.$ast);
+    return constructOptionBoxTSTypeAnnotation(internal.$pos + 48, internal.$ast);
   }
 
   toJSON() {
@@ -8139,27 +8139,27 @@ class TSConstructSignatureDeclaration {
 
   get start() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos, internal.$ast);
+    return constructU32(internal.$pos, internal.$ast);
   }
 
   get end() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos + 4, internal.$ast);
+    return constructU32(internal.$pos + 4, internal.$ast);
   }
 
   get typeParameters() {
     const internal = this.#internal;
-    return deserializeOptionBoxTSTypeParameterDeclaration(internal.$pos + 8, internal.$ast);
+    return constructOptionBoxTSTypeParameterDeclaration(internal.$pos + 8, internal.$ast);
   }
 
   get params() {
     const internal = this.#internal;
-    return deserializeBoxFormalParameters(internal.$pos + 16, internal.$ast);
+    return constructBoxFormalParameters(internal.$pos + 16, internal.$ast);
   }
 
   get returnType() {
     const internal = this.#internal;
-    return deserializeOptionBoxTSTypeAnnotation(internal.$pos + 24, internal.$ast);
+    return constructOptionBoxTSTypeAnnotation(internal.$pos + 24, internal.$ast);
   }
 
   toJSON() {
@@ -8185,24 +8185,24 @@ class TSIndexSignatureName {
 
   get start() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos, internal.$ast);
+    return constructU32(internal.$pos, internal.$ast);
   }
 
   get end() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos + 4, internal.$ast);
+    return constructU32(internal.$pos + 4, internal.$ast);
   }
 
   get name() {
     const internal = this.#internal,
       node = internal.name;
     if (node !== void 0) return node;
-    return internal.name = deserializeStr(internal.$pos + 8, internal.$ast);
+    return internal.name = constructStr(internal.$pos + 8, internal.$ast);
   }
 
   get typeAnnotation() {
     const internal = this.#internal;
-    return deserializeBoxTSTypeAnnotation(internal.$pos + 24, internal.$ast);
+    return constructBoxTSTypeAnnotation(internal.$pos + 24, internal.$ast);
   }
 
   toJSON() {
@@ -8227,22 +8227,22 @@ class TSInterfaceHeritage {
 
   get start() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos, internal.$ast);
+    return constructU32(internal.$pos, internal.$ast);
   }
 
   get end() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos + 4, internal.$ast);
+    return constructU32(internal.$pos + 4, internal.$ast);
   }
 
   get expression() {
     const internal = this.#internal;
-    return deserializeExpression(internal.$pos + 8, internal.$ast);
+    return constructExpression(internal.$pos + 8, internal.$ast);
   }
 
   get typeArguments() {
     const internal = this.#internal;
-    return deserializeOptionBoxTSTypeParameterInstantiation(internal.$pos + 24, internal.$ast);
+    return constructOptionBoxTSTypeParameterInstantiation(internal.$pos + 24, internal.$ast);
   }
 
   toJSON() {
@@ -8267,27 +8267,27 @@ class TSTypePredicate {
 
   get start() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos, internal.$ast);
+    return constructU32(internal.$pos, internal.$ast);
   }
 
   get end() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos + 4, internal.$ast);
+    return constructU32(internal.$pos + 4, internal.$ast);
   }
 
   get parameterName() {
     const internal = this.#internal;
-    return deserializeTSTypePredicateName(internal.$pos + 8, internal.$ast);
+    return constructTSTypePredicateName(internal.$pos + 8, internal.$ast);
   }
 
   get asserts() {
     const internal = this.#internal;
-    return deserializeBool(internal.$pos + 32, internal.$ast);
+    return constructBool(internal.$pos + 32, internal.$ast);
   }
 
   get typeAnnotation() {
     const internal = this.#internal;
-    return deserializeOptionBoxTSTypeAnnotation(internal.$pos + 24, internal.$ast);
+    return constructOptionBoxTSTypeAnnotation(internal.$pos + 24, internal.$ast);
   }
 
   toJSON() {
@@ -8302,10 +8302,10 @@ class TSTypePredicate {
   }
 }
 
-function deserializeTSTypePredicateName(pos, ast) {
+function constructTSTypePredicateName(pos, ast) {
   switch (ast.buffer[pos]) {
     case 0:
-      return deserializeBoxIdentifierName(pos + 8, ast);
+      return constructBoxIdentifierName(pos + 8, ast);
     case 1:
       return new TSThisType(pos + 8, ast);
     default:
@@ -8324,32 +8324,32 @@ class TSModuleDeclaration {
 
   get start() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos, internal.$ast);
+    return constructU32(internal.$pos, internal.$ast);
   }
 
   get end() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos + 4, internal.$ast);
+    return constructU32(internal.$pos + 4, internal.$ast);
   }
 
   get id() {
     const internal = this.#internal;
-    return deserializeTSModuleDeclarationName(internal.$pos + 8, internal.$ast);
+    return constructTSModuleDeclarationName(internal.$pos + 8, internal.$ast);
   }
 
   get body() {
     const internal = this.#internal;
-    return deserializeOptionTSModuleDeclarationBody(internal.$pos + 64, internal.$ast);
+    return constructOptionTSModuleDeclarationBody(internal.$pos + 64, internal.$ast);
   }
 
   get kind() {
     const internal = this.#internal;
-    return deserializeTSModuleDeclarationKind(internal.$pos + 84, internal.$ast);
+    return constructTSModuleDeclarationKind(internal.$pos + 84, internal.$ast);
   }
 
   get declare() {
     const internal = this.#internal;
-    return deserializeBool(internal.$pos + 85, internal.$ast);
+    return constructBool(internal.$pos + 85, internal.$ast);
   }
 
   toJSON() {
@@ -8365,7 +8365,7 @@ class TSModuleDeclaration {
   }
 }
 
-function deserializeTSModuleDeclarationKind(pos, ast) {
+function constructTSModuleDeclarationKind(pos, ast) {
   switch (ast.buffer[pos]) {
     case 0:
       return 'global';
@@ -8378,7 +8378,7 @@ function deserializeTSModuleDeclarationKind(pos, ast) {
   }
 }
 
-function deserializeTSModuleDeclarationName(pos, ast) {
+function constructTSModuleDeclarationName(pos, ast) {
   switch (ast.buffer[pos]) {
     case 0:
       return new BindingIdentifier(pos + 8, ast);
@@ -8389,12 +8389,12 @@ function deserializeTSModuleDeclarationName(pos, ast) {
   }
 }
 
-function deserializeTSModuleDeclarationBody(pos, ast) {
+function constructTSModuleDeclarationBody(pos, ast) {
   switch (ast.buffer[pos]) {
     case 0:
-      return deserializeBoxTSModuleDeclaration(pos + 8, ast);
+      return constructBoxTSModuleDeclaration(pos + 8, ast);
     case 1:
-      return deserializeBoxTSModuleBlock(pos + 8, ast);
+      return constructBoxTSModuleBlock(pos + 8, ast);
     default:
       throw new Error(`Unexpected discriminant ${ast.buffer[pos]} for TSModuleDeclarationBody`);
   }
@@ -8411,19 +8411,19 @@ class TSModuleBlock {
 
   get start() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos, internal.$ast);
+    return constructU32(internal.$pos, internal.$ast);
   }
 
   get end() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos + 4, internal.$ast);
+    return constructU32(internal.$pos + 4, internal.$ast);
   }
 
   get body() {
     const internal = this.#internal,
       node = internal.body;
     if (node !== void 0) return node;
-    return internal.body = deserializeVecStatement(internal.$pos + 32, internal.$ast);
+    return internal.body = constructVecStatement(internal.$pos + 32, internal.$ast);
   }
 
   toJSON() {
@@ -8447,19 +8447,19 @@ class TSTypeLiteral {
 
   get start() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos, internal.$ast);
+    return constructU32(internal.$pos, internal.$ast);
   }
 
   get end() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos + 4, internal.$ast);
+    return constructU32(internal.$pos + 4, internal.$ast);
   }
 
   get members() {
     const internal = this.#internal,
       node = internal.members;
     if (node !== void 0) return node;
-    return internal.members = deserializeVecTSSignature(internal.$pos + 8, internal.$ast);
+    return internal.members = constructVecTSSignature(internal.$pos + 8, internal.$ast);
   }
 
   toJSON() {
@@ -8483,17 +8483,17 @@ class TSInferType {
 
   get start() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos, internal.$ast);
+    return constructU32(internal.$pos, internal.$ast);
   }
 
   get end() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos + 4, internal.$ast);
+    return constructU32(internal.$pos + 4, internal.$ast);
   }
 
   get typeParameter() {
     const internal = this.#internal;
-    return deserializeBoxTSTypeParameter(internal.$pos + 8, internal.$ast);
+    return constructBoxTSTypeParameter(internal.$pos + 8, internal.$ast);
   }
 
   toJSON() {
@@ -8517,22 +8517,22 @@ class TSTypeQuery {
 
   get start() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos, internal.$ast);
+    return constructU32(internal.$pos, internal.$ast);
   }
 
   get end() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos + 4, internal.$ast);
+    return constructU32(internal.$pos + 4, internal.$ast);
   }
 
   get exprName() {
     const internal = this.#internal;
-    return deserializeTSTypeQueryExprName(internal.$pos + 8, internal.$ast);
+    return constructTSTypeQueryExprName(internal.$pos + 8, internal.$ast);
   }
 
   get typeArguments() {
     const internal = this.#internal;
-    return deserializeOptionBoxTSTypeParameterInstantiation(internal.$pos + 24, internal.$ast);
+    return constructOptionBoxTSTypeParameterInstantiation(internal.$pos + 24, internal.$ast);
   }
 
   toJSON() {
@@ -8546,14 +8546,14 @@ class TSTypeQuery {
   }
 }
 
-function deserializeTSTypeQueryExprName(pos, ast) {
+function constructTSTypeQueryExprName(pos, ast) {
   switch (ast.buffer[pos]) {
     case 0:
-      return deserializeBoxIdentifierReference(pos + 8, ast);
+      return constructBoxIdentifierReference(pos + 8, ast);
     case 1:
-      return deserializeBoxTSQualifiedName(pos + 8, ast);
+      return constructBoxTSQualifiedName(pos + 8, ast);
     case 2:
-      return deserializeBoxTSImportType(pos + 8, ast);
+      return constructBoxTSImportType(pos + 8, ast);
     default:
       throw new Error(`Unexpected discriminant ${ast.buffer[pos]} for TSTypeQueryExprName`);
   }
@@ -8570,32 +8570,32 @@ class TSImportType {
 
   get start() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos, internal.$ast);
+    return constructU32(internal.$pos, internal.$ast);
   }
 
   get end() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos + 4, internal.$ast);
+    return constructU32(internal.$pos + 4, internal.$ast);
   }
 
   get argument() {
     const internal = this.#internal;
-    return deserializeTSType(internal.$pos + 8, internal.$ast);
+    return constructTSType(internal.$pos + 8, internal.$ast);
   }
 
   get options() {
     const internal = this.#internal;
-    return deserializeOptionBoxObjectExpression(internal.$pos + 24, internal.$ast);
+    return constructOptionBoxObjectExpression(internal.$pos + 24, internal.$ast);
   }
 
   get qualifier() {
     const internal = this.#internal;
-    return deserializeOptionTSTypeName(internal.$pos + 32, internal.$ast);
+    return constructOptionTSTypeName(internal.$pos + 32, internal.$ast);
   }
 
   get typeArguments() {
     const internal = this.#internal;
-    return deserializeOptionBoxTSTypeParameterInstantiation(internal.$pos + 48, internal.$ast);
+    return constructOptionBoxTSTypeParameterInstantiation(internal.$pos + 48, internal.$ast);
   }
 
   toJSON() {
@@ -8622,27 +8622,27 @@ class TSFunctionType {
 
   get start() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos, internal.$ast);
+    return constructU32(internal.$pos, internal.$ast);
   }
 
   get end() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos + 4, internal.$ast);
+    return constructU32(internal.$pos + 4, internal.$ast);
   }
 
   get typeParameters() {
     const internal = this.#internal;
-    return deserializeOptionBoxTSTypeParameterDeclaration(internal.$pos + 8, internal.$ast);
+    return constructOptionBoxTSTypeParameterDeclaration(internal.$pos + 8, internal.$ast);
   }
 
   get params() {
     const internal = this.#internal;
-    return deserializeBoxFormalParameters(internal.$pos + 24, internal.$ast);
+    return constructBoxFormalParameters(internal.$pos + 24, internal.$ast);
   }
 
   get returnType() {
     const internal = this.#internal;
-    return deserializeBoxTSTypeAnnotation(internal.$pos + 32, internal.$ast);
+    return constructBoxTSTypeAnnotation(internal.$pos + 32, internal.$ast);
   }
 
   toJSON() {
@@ -8668,32 +8668,32 @@ class TSConstructorType {
 
   get start() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos, internal.$ast);
+    return constructU32(internal.$pos, internal.$ast);
   }
 
   get end() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos + 4, internal.$ast);
+    return constructU32(internal.$pos + 4, internal.$ast);
   }
 
   get abstract() {
     const internal = this.#internal;
-    return deserializeBool(internal.$pos + 32, internal.$ast);
+    return constructBool(internal.$pos + 32, internal.$ast);
   }
 
   get typeParameters() {
     const internal = this.#internal;
-    return deserializeOptionBoxTSTypeParameterDeclaration(internal.$pos + 8, internal.$ast);
+    return constructOptionBoxTSTypeParameterDeclaration(internal.$pos + 8, internal.$ast);
   }
 
   get params() {
     const internal = this.#internal;
-    return deserializeBoxFormalParameters(internal.$pos + 16, internal.$ast);
+    return constructBoxFormalParameters(internal.$pos + 16, internal.$ast);
   }
 
   get returnType() {
     const internal = this.#internal;
-    return deserializeBoxTSTypeAnnotation(internal.$pos + 24, internal.$ast);
+    return constructBoxTSTypeAnnotation(internal.$pos + 24, internal.$ast);
   }
 
   toJSON() {
@@ -8720,32 +8720,32 @@ class TSMappedType {
 
   get start() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos, internal.$ast);
+    return constructU32(internal.$pos, internal.$ast);
   }
 
   get end() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos + 4, internal.$ast);
+    return constructU32(internal.$pos + 4, internal.$ast);
   }
 
   get nameType() {
     const internal = this.#internal;
-    return deserializeOptionTSType(internal.$pos + 16, internal.$ast);
+    return constructOptionTSType(internal.$pos + 16, internal.$ast);
   }
 
   get typeAnnotation() {
     const internal = this.#internal;
-    return deserializeOptionTSType(internal.$pos + 32, internal.$ast);
+    return constructOptionTSType(internal.$pos + 32, internal.$ast);
   }
 
   get optional() {
     const internal = this.#internal;
-    return deserializeOptionTSMappedTypeModifierOperator(internal.$pos + 52, internal.$ast);
+    return constructOptionTSMappedTypeModifierOperator(internal.$pos + 52, internal.$ast);
   }
 
   get readonly() {
     const internal = this.#internal;
-    return deserializeOptionTSMappedTypeModifierOperator(internal.$pos + 53, internal.$ast);
+    return constructOptionTSMappedTypeModifierOperator(internal.$pos + 53, internal.$ast);
   }
 
   toJSON() {
@@ -8761,7 +8761,7 @@ class TSMappedType {
   }
 }
 
-function deserializeTSMappedTypeModifierOperator(pos, ast) {
+function constructTSMappedTypeModifierOperator(pos, ast) {
   switch (ast.buffer[pos]) {
     case 0:
       return 'true';
@@ -8785,26 +8785,26 @@ class TSTemplateLiteralType {
 
   get start() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos, internal.$ast);
+    return constructU32(internal.$pos, internal.$ast);
   }
 
   get end() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos + 4, internal.$ast);
+    return constructU32(internal.$pos + 4, internal.$ast);
   }
 
   get quasis() {
     const internal = this.#internal,
       node = internal.quasis;
     if (node !== void 0) return node;
-    return internal.quasis = deserializeVecTemplateElement(internal.$pos + 8, internal.$ast);
+    return internal.quasis = constructVecTemplateElement(internal.$pos + 8, internal.$ast);
   }
 
   get types() {
     const internal = this.#internal,
       node = internal.types;
     if (node !== void 0) return node;
-    return internal.types = deserializeVecTSType(internal.$pos + 32, internal.$ast);
+    return internal.types = constructVecTSType(internal.$pos + 32, internal.$ast);
   }
 
   toJSON() {
@@ -8829,22 +8829,22 @@ class TSAsExpression {
 
   get start() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos, internal.$ast);
+    return constructU32(internal.$pos, internal.$ast);
   }
 
   get end() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos + 4, internal.$ast);
+    return constructU32(internal.$pos + 4, internal.$ast);
   }
 
   get expression() {
     const internal = this.#internal;
-    return deserializeExpression(internal.$pos + 8, internal.$ast);
+    return constructExpression(internal.$pos + 8, internal.$ast);
   }
 
   get typeAnnotation() {
     const internal = this.#internal;
-    return deserializeTSType(internal.$pos + 24, internal.$ast);
+    return constructTSType(internal.$pos + 24, internal.$ast);
   }
 
   toJSON() {
@@ -8869,22 +8869,22 @@ class TSSatisfiesExpression {
 
   get start() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos, internal.$ast);
+    return constructU32(internal.$pos, internal.$ast);
   }
 
   get end() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos + 4, internal.$ast);
+    return constructU32(internal.$pos + 4, internal.$ast);
   }
 
   get expression() {
     const internal = this.#internal;
-    return deserializeExpression(internal.$pos + 8, internal.$ast);
+    return constructExpression(internal.$pos + 8, internal.$ast);
   }
 
   get typeAnnotation() {
     const internal = this.#internal;
-    return deserializeTSType(internal.$pos + 24, internal.$ast);
+    return constructTSType(internal.$pos + 24, internal.$ast);
   }
 
   toJSON() {
@@ -8909,22 +8909,22 @@ class TSTypeAssertion {
 
   get start() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos, internal.$ast);
+    return constructU32(internal.$pos, internal.$ast);
   }
 
   get end() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos + 4, internal.$ast);
+    return constructU32(internal.$pos + 4, internal.$ast);
   }
 
   get typeAnnotation() {
     const internal = this.#internal;
-    return deserializeTSType(internal.$pos + 8, internal.$ast);
+    return constructTSType(internal.$pos + 8, internal.$ast);
   }
 
   get expression() {
     const internal = this.#internal;
-    return deserializeExpression(internal.$pos + 24, internal.$ast);
+    return constructExpression(internal.$pos + 24, internal.$ast);
   }
 
   toJSON() {
@@ -8949,12 +8949,12 @@ class TSImportEqualsDeclaration {
 
   get start() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos, internal.$ast);
+    return constructU32(internal.$pos, internal.$ast);
   }
 
   get end() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos + 4, internal.$ast);
+    return constructU32(internal.$pos + 4, internal.$ast);
   }
 
   get id() {
@@ -8964,12 +8964,12 @@ class TSImportEqualsDeclaration {
 
   get moduleReference() {
     const internal = this.#internal;
-    return deserializeTSModuleReference(internal.$pos + 40, internal.$ast);
+    return constructTSModuleReference(internal.$pos + 40, internal.$ast);
   }
 
   get importKind() {
     const internal = this.#internal;
-    return deserializeImportOrExportKind(internal.$pos + 56, internal.$ast);
+    return constructImportOrExportKind(internal.$pos + 56, internal.$ast);
   }
 
   toJSON() {
@@ -8984,14 +8984,14 @@ class TSImportEqualsDeclaration {
   }
 }
 
-function deserializeTSModuleReference(pos, ast) {
+function constructTSModuleReference(pos, ast) {
   switch (ast.buffer[pos]) {
     case 0:
-      return deserializeBoxIdentifierReference(pos + 8, ast);
+      return constructBoxIdentifierReference(pos + 8, ast);
     case 1:
-      return deserializeBoxTSQualifiedName(pos + 8, ast);
+      return constructBoxTSQualifiedName(pos + 8, ast);
     case 2:
-      return deserializeBoxTSExternalModuleReference(pos + 8, ast);
+      return constructBoxTSExternalModuleReference(pos + 8, ast);
     default:
       throw new Error(`Unexpected discriminant ${ast.buffer[pos]} for TSModuleReference`);
   }
@@ -9008,12 +9008,12 @@ class TSExternalModuleReference {
 
   get start() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos, internal.$ast);
+    return constructU32(internal.$pos, internal.$ast);
   }
 
   get end() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos + 4, internal.$ast);
+    return constructU32(internal.$pos + 4, internal.$ast);
   }
 
   get expression() {
@@ -9042,17 +9042,17 @@ class TSNonNullExpression {
 
   get start() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos, internal.$ast);
+    return constructU32(internal.$pos, internal.$ast);
   }
 
   get end() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos + 4, internal.$ast);
+    return constructU32(internal.$pos + 4, internal.$ast);
   }
 
   get expression() {
     const internal = this.#internal;
-    return deserializeExpression(internal.$pos + 8, internal.$ast);
+    return constructExpression(internal.$pos + 8, internal.$ast);
   }
 
   toJSON() {
@@ -9076,17 +9076,17 @@ class Decorator {
 
   get start() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos, internal.$ast);
+    return constructU32(internal.$pos, internal.$ast);
   }
 
   get end() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos + 4, internal.$ast);
+    return constructU32(internal.$pos + 4, internal.$ast);
   }
 
   get expression() {
     const internal = this.#internal;
-    return deserializeExpression(internal.$pos + 8, internal.$ast);
+    return constructExpression(internal.$pos + 8, internal.$ast);
   }
 
   toJSON() {
@@ -9110,17 +9110,17 @@ class TSExportAssignment {
 
   get start() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos, internal.$ast);
+    return constructU32(internal.$pos, internal.$ast);
   }
 
   get end() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos + 4, internal.$ast);
+    return constructU32(internal.$pos + 4, internal.$ast);
   }
 
   get expression() {
     const internal = this.#internal;
-    return deserializeExpression(internal.$pos + 8, internal.$ast);
+    return constructExpression(internal.$pos + 8, internal.$ast);
   }
 
   toJSON() {
@@ -9144,12 +9144,12 @@ class TSNamespaceExportDeclaration {
 
   get start() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos, internal.$ast);
+    return constructU32(internal.$pos, internal.$ast);
   }
 
   get end() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos + 4, internal.$ast);
+    return constructU32(internal.$pos + 4, internal.$ast);
   }
 
   get id() {
@@ -9178,22 +9178,22 @@ class TSInstantiationExpression {
 
   get start() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos, internal.$ast);
+    return constructU32(internal.$pos, internal.$ast);
   }
 
   get end() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos + 4, internal.$ast);
+    return constructU32(internal.$pos + 4, internal.$ast);
   }
 
   get expression() {
     const internal = this.#internal;
-    return deserializeExpression(internal.$pos + 8, internal.$ast);
+    return constructExpression(internal.$pos + 8, internal.$ast);
   }
 
   get typeArguments() {
     const internal = this.#internal;
-    return deserializeBoxTSTypeParameterInstantiation(internal.$pos + 24, internal.$ast);
+    return constructBoxTSTypeParameterInstantiation(internal.$pos + 24, internal.$ast);
   }
 
   toJSON() {
@@ -9207,7 +9207,7 @@ class TSInstantiationExpression {
   }
 }
 
-function deserializeImportOrExportKind(pos, ast) {
+function constructImportOrExportKind(pos, ast) {
   switch (ast.buffer[pos]) {
     case 0:
       return 'value';
@@ -9229,22 +9229,22 @@ class JSDocNullableType {
 
   get start() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos, internal.$ast);
+    return constructU32(internal.$pos, internal.$ast);
   }
 
   get end() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos + 4, internal.$ast);
+    return constructU32(internal.$pos + 4, internal.$ast);
   }
 
   get typeAnnotation() {
     const internal = this.#internal;
-    return deserializeTSType(internal.$pos + 8, internal.$ast);
+    return constructTSType(internal.$pos + 8, internal.$ast);
   }
 
   get postfix() {
     const internal = this.#internal;
-    return deserializeBool(internal.$pos + 24, internal.$ast);
+    return constructBool(internal.$pos + 24, internal.$ast);
   }
 
   toJSON() {
@@ -9269,22 +9269,22 @@ class JSDocNonNullableType {
 
   get start() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos, internal.$ast);
+    return constructU32(internal.$pos, internal.$ast);
   }
 
   get end() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos + 4, internal.$ast);
+    return constructU32(internal.$pos + 4, internal.$ast);
   }
 
   get typeAnnotation() {
     const internal = this.#internal;
-    return deserializeTSType(internal.$pos + 8, internal.$ast);
+    return constructTSType(internal.$pos + 8, internal.$ast);
   }
 
   get postfix() {
     const internal = this.#internal;
-    return deserializeBool(internal.$pos + 24, internal.$ast);
+    return constructBool(internal.$pos + 24, internal.$ast);
   }
 
   toJSON() {
@@ -9309,12 +9309,12 @@ class JSDocUnknownType {
 
   get start() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos, internal.$ast);
+    return constructU32(internal.$pos, internal.$ast);
   }
 
   get end() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos + 4, internal.$ast);
+    return constructU32(internal.$pos + 4, internal.$ast);
   }
 
   toJSON() {
@@ -9326,7 +9326,7 @@ class JSDocUnknownType {
   }
 }
 
-function deserializeCommentKind(pos, ast) {
+function constructCommentKind(pos, ast) {
   switch (ast.buffer[pos]) {
     case 0:
       return 'Line';
@@ -9347,17 +9347,17 @@ class Comment {
 
   get start() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos, internal.$ast);
+    return constructU32(internal.$pos, internal.$ast);
   }
 
   get end() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos + 4, internal.$ast);
+    return constructU32(internal.$pos + 4, internal.$ast);
   }
 
   get type() {
     const internal = this.#internal;
-    return deserializeCommentKind(internal.$pos + 12, internal.$ast);
+    return constructCommentKind(internal.$pos + 12, internal.$ast);
   }
 
   toJSON() {
@@ -9381,17 +9381,17 @@ class NameSpan {
     const internal = this.#internal,
       node = internal.value;
     if (node !== void 0) return node;
-    return internal.value = deserializeStr(internal.$pos + 8, internal.$ast);
+    return internal.value = constructStr(internal.$pos + 8, internal.$ast);
   }
 
   get start() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos, internal.$ast);
+    return constructU32(internal.$pos, internal.$ast);
   }
 
   get end() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos + 4, internal.$ast);
+    return constructU32(internal.$pos + 4, internal.$ast);
   }
 
   toJSON() {
@@ -9413,7 +9413,7 @@ class ImportEntry {
 
   get importName() {
     const internal = this.#internal;
-    return deserializeImportImportName(internal.$pos + 32, internal.$ast);
+    return constructImportImportName(internal.$pos + 32, internal.$ast);
   }
 
   get localName() {
@@ -9423,7 +9423,7 @@ class ImportEntry {
 
   get isType() {
     const internal = this.#internal;
-    return deserializeBool(internal.$pos + 88, internal.$ast);
+    return constructBool(internal.$pos + 88, internal.$ast);
   }
 
   toJSON() {
@@ -9435,7 +9435,7 @@ class ImportEntry {
   }
 }
 
-function deserializeImportImportName(pos, ast) {
+function constructImportImportName(pos, ast) {
   switch (ast.buffer[pos]) {
     case 0:
       return new NameSpan(pos + 8, ast);
@@ -9458,37 +9458,37 @@ class ExportEntry {
 
   get start() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos, internal.$ast);
+    return constructU32(internal.$pos, internal.$ast);
   }
 
   get end() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos + 4, internal.$ast);
+    return constructU32(internal.$pos + 4, internal.$ast);
   }
 
   get moduleRequest() {
     const internal = this.#internal;
-    return deserializeOptionNameSpan(internal.$pos + 16, internal.$ast);
+    return constructOptionNameSpan(internal.$pos + 16, internal.$ast);
   }
 
   get importName() {
     const internal = this.#internal;
-    return deserializeExportImportName(internal.$pos + 40, internal.$ast);
+    return constructExportImportName(internal.$pos + 40, internal.$ast);
   }
 
   get exportName() {
     const internal = this.#internal;
-    return deserializeExportExportName(internal.$pos + 72, internal.$ast);
+    return constructExportExportName(internal.$pos + 72, internal.$ast);
   }
 
   get localName() {
     const internal = this.#internal;
-    return deserializeExportLocalName(internal.$pos + 104, internal.$ast);
+    return constructExportLocalName(internal.$pos + 104, internal.$ast);
   }
 
   get isType() {
     const internal = this.#internal;
-    return deserializeBool(internal.$pos + 136, internal.$ast);
+    return constructBool(internal.$pos + 136, internal.$ast);
   }
 
   toJSON() {
@@ -9504,7 +9504,7 @@ class ExportEntry {
   }
 }
 
-function deserializeExportImportName(pos, ast) {
+function constructExportImportName(pos, ast) {
   switch (ast.buffer[pos]) {
     case 0:
       return new NameSpan(pos + 8, ast);
@@ -9519,7 +9519,7 @@ function deserializeExportImportName(pos, ast) {
   }
 }
 
-function deserializeExportExportName(pos, ast) {
+function constructExportExportName(pos, ast) {
   switch (ast.buffer[pos]) {
     case 0:
       return new NameSpan(pos + 8, ast);
@@ -9532,7 +9532,7 @@ function deserializeExportExportName(pos, ast) {
   }
 }
 
-function deserializeExportLocalName(pos, ast) {
+function constructExportLocalName(pos, ast) {
   switch (ast.buffer[pos]) {
     case 0:
       return new NameSpan(pos + 8, ast);
@@ -9555,12 +9555,12 @@ class DynamicImport {
 
   get start() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos, internal.$ast);
+    return constructU32(internal.$pos, internal.$ast);
   }
 
   get end() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos + 4, internal.$ast);
+    return constructU32(internal.$pos + 4, internal.$ast);
   }
 
   get moduleRequest() {
@@ -9577,7 +9577,7 @@ class DynamicImport {
   }
 }
 
-function deserializeAssignmentOperator(pos, ast) {
+function constructAssignmentOperator(pos, ast) {
   switch (ast.buffer[pos]) {
     case 0:
       return '=';
@@ -9616,7 +9616,7 @@ function deserializeAssignmentOperator(pos, ast) {
   }
 }
 
-function deserializeBinaryOperator(pos, ast) {
+function constructBinaryOperator(pos, ast) {
   switch (ast.buffer[pos]) {
     case 0:
       return '==';
@@ -9667,7 +9667,7 @@ function deserializeBinaryOperator(pos, ast) {
   }
 }
 
-function deserializeLogicalOperator(pos, ast) {
+function constructLogicalOperator(pos, ast) {
   switch (ast.buffer[pos]) {
     case 0:
       return '||';
@@ -9680,7 +9680,7 @@ function deserializeLogicalOperator(pos, ast) {
   }
 }
 
-function deserializeUnaryOperator(pos, ast) {
+function constructUnaryOperator(pos, ast) {
   switch (ast.buffer[pos]) {
     case 0:
       return '+';
@@ -9701,7 +9701,7 @@ function deserializeUnaryOperator(pos, ast) {
   }
 }
 
-function deserializeUpdateOperator(pos, ast) {
+function constructUpdateOperator(pos, ast) {
   switch (ast.buffer[pos]) {
     case 0:
       return '++';
@@ -9722,12 +9722,12 @@ class Span {
 
   get start() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos, internal.$ast);
+    return constructU32(internal.$pos, internal.$ast);
   }
 
   get end() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos + 4, internal.$ast);
+    return constructU32(internal.$pos + 4, internal.$ast);
   }
 
   toJSON() {
@@ -9748,7 +9748,7 @@ class SourceType {
 
   get sourceType() {
     const internal = this.#internal;
-    return deserializeModuleKind(internal.$pos + 1, internal.$ast);
+    return constructModuleKind(internal.$pos + 1, internal.$ast);
   }
 
   toJSON() {
@@ -9758,7 +9758,7 @@ class SourceType {
   }
 }
 
-function deserializeModuleKind(pos, ast) {
+function constructModuleKind(pos, ast) {
   switch (ast.buffer[pos]) {
     case 0:
       return 'script';
@@ -9786,7 +9786,7 @@ class RawTransferData {
     const internal = this.#internal,
       node = internal.comments;
     if (node !== void 0) return node;
-    return internal.comments = deserializeVecComment(internal.$pos + 128, internal.$ast);
+    return internal.comments = constructVecComment(internal.$pos + 128, internal.$ast);
   }
 
   get module() {
@@ -9798,7 +9798,7 @@ class RawTransferData {
     const internal = this.#internal,
       node = internal.errors;
     if (node !== void 0) return node;
-    return internal.errors = deserializeVecError(internal.$pos + 256, internal.$ast);
+    return internal.errors = constructVecError(internal.$pos + 256, internal.$ast);
   }
 
   toJSON() {
@@ -9821,35 +9821,35 @@ class Error {
 
   get severity() {
     const internal = this.#internal;
-    return deserializeErrorSeverity(internal.$pos + 72, internal.$ast);
+    return constructErrorSeverity(internal.$pos + 72, internal.$ast);
   }
 
   get message() {
     const internal = this.#internal,
       node = internal.message;
     if (node !== void 0) return node;
-    return internal.message = deserializeStr(internal.$pos, internal.$ast);
+    return internal.message = constructStr(internal.$pos, internal.$ast);
   }
 
   get labels() {
     const internal = this.#internal,
       node = internal.labels;
     if (node !== void 0) return node;
-    return internal.labels = deserializeVecErrorLabel(internal.$pos + 16, internal.$ast);
+    return internal.labels = constructVecErrorLabel(internal.$pos + 16, internal.$ast);
   }
 
   get helpMessage() {
     const internal = this.#internal,
       node = internal.helpMessage;
     if (node !== void 0) return node;
-    return internal.helpMessage = deserializeOptionStr(internal.$pos + 40, internal.$ast);
+    return internal.helpMessage = constructOptionStr(internal.$pos + 40, internal.$ast);
   }
 
   get codeframe() {
     const internal = this.#internal,
       node = internal.codeframe;
     if (node !== void 0) return node;
-    return internal.codeframe = deserializeStr(internal.$pos + 56, internal.$ast);
+    return internal.codeframe = constructStr(internal.$pos + 56, internal.$ast);
   }
 
   toJSON() {
@@ -9863,7 +9863,7 @@ class Error {
   }
 }
 
-function deserializeErrorSeverity(pos, ast) {
+function constructErrorSeverity(pos, ast) {
   switch (ast.buffer[pos]) {
     case 0:
       return 'Error';
@@ -9888,17 +9888,17 @@ class ErrorLabel {
     const internal = this.#internal,
       node = internal.message;
     if (node !== void 0) return node;
-    return internal.message = deserializeOptionStr(internal.$pos + 8, internal.$ast);
+    return internal.message = constructOptionStr(internal.$pos + 8, internal.$ast);
   }
 
   get start() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos, internal.$ast);
+    return constructU32(internal.$pos, internal.$ast);
   }
 
   get end() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos + 4, internal.$ast);
+    return constructU32(internal.$pos + 4, internal.$ast);
   }
 
   toJSON() {
@@ -9927,35 +9927,35 @@ class EcmaScriptModule {
 
   get hasModuleSyntax() {
     const internal = this.#internal;
-    return deserializeBool(internal.$pos + 96, internal.$ast);
+    return constructBool(internal.$pos + 96, internal.$ast);
   }
 
   get staticImports() {
     const internal = this.#internal,
       node = internal.staticImports;
     if (node !== void 0) return node;
-    return internal.staticImports = deserializeVecStaticImport(internal.$pos, internal.$ast);
+    return internal.staticImports = constructVecStaticImport(internal.$pos, internal.$ast);
   }
 
   get staticExports() {
     const internal = this.#internal,
       node = internal.staticExports;
     if (node !== void 0) return node;
-    return internal.staticExports = deserializeVecStaticExport(internal.$pos + 24, internal.$ast);
+    return internal.staticExports = constructVecStaticExport(internal.$pos + 24, internal.$ast);
   }
 
   get dynamicImports() {
     const internal = this.#internal,
       node = internal.dynamicImports;
     if (node !== void 0) return node;
-    return internal.dynamicImports = deserializeVecDynamicImport(internal.$pos + 48, internal.$ast);
+    return internal.dynamicImports = constructVecDynamicImport(internal.$pos + 48, internal.$ast);
   }
 
   get importMetas() {
     const internal = this.#internal,
       node = internal.importMetas;
     if (node !== void 0) return node;
-    return internal.importMetas = deserializeVecSpan(internal.$pos + 72, internal.$ast);
+    return internal.importMetas = constructVecSpan(internal.$pos + 72, internal.$ast);
   }
 
   toJSON() {
@@ -9979,12 +9979,12 @@ class StaticImport {
 
   get start() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos, internal.$ast);
+    return constructU32(internal.$pos, internal.$ast);
   }
 
   get end() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos + 4, internal.$ast);
+    return constructU32(internal.$pos + 4, internal.$ast);
   }
 
   get moduleRequest() {
@@ -9996,7 +9996,7 @@ class StaticImport {
     const internal = this.#internal,
       node = internal.entries;
     if (node !== void 0) return node;
-    return internal.entries = deserializeVecImportEntry(internal.$pos + 32, internal.$ast);
+    return internal.entries = constructVecImportEntry(internal.$pos + 32, internal.$ast);
   }
 
   toJSON() {
@@ -10019,19 +10019,19 @@ class StaticExport {
 
   get start() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos, internal.$ast);
+    return constructU32(internal.$pos, internal.$ast);
   }
 
   get end() {
     const internal = this.#internal;
-    return deserializeU32(internal.$pos + 4, internal.$ast);
+    return constructU32(internal.$pos + 4, internal.$ast);
   }
 
   get entries() {
     const internal = this.#internal,
       node = internal.entries;
     if (node !== void 0) return node;
-    return internal.entries = deserializeVecExportEntry(internal.$pos + 8, internal.$ast);
+    return internal.entries = constructVecExportEntry(internal.$pos + 8, internal.$ast);
   }
 
   toJSON() {
@@ -10043,7 +10043,7 @@ class StaticExport {
   }
 }
 
-function deserializeStr(pos, ast) {
+function constructStr(pos, ast) {
   const pos32 = pos >> 2,
     { buffer } = ast,
     { uint32 } = buffer,
@@ -10074,7 +10074,7 @@ function deserializeStr(pos, ast) {
   return out;
 }
 
-function deserializeVecComment(pos, ast) {
+function constructVecComment(pos, ast) {
   const { uint32 } = ast.buffer,
     arr = [],
     pos32 = pos >> 2,
@@ -10087,12 +10087,12 @@ function deserializeVecComment(pos, ast) {
   return arr;
 }
 
-function deserializeOptionHashbang(pos, ast) {
+function constructOptionHashbang(pos, ast) {
   if (ast.buffer.uint32[(pos + 8) >> 2] === 0 && ast.buffer.uint32[(pos + 12) >> 2] === 0) return null;
   return new Hashbang(pos, ast);
 }
 
-function deserializeVecDirective(pos, ast) {
+function constructVecDirective(pos, ast) {
   const { uint32 } = ast.buffer,
     arr = [],
     pos32 = pos >> 2,
@@ -10105,226 +10105,226 @@ function deserializeVecDirective(pos, ast) {
   return arr;
 }
 
-function deserializeVecStatement(pos, ast) {
+function constructVecStatement(pos, ast) {
   const { uint32 } = ast.buffer,
     arr = [],
     pos32 = pos >> 2,
     len = uint32[pos32 + 2];
   pos = uint32[pos32];
   for (let i = 0; i < len; i++) {
-    arr.push(deserializeStatement(pos, ast));
+    arr.push(constructStatement(pos, ast));
     pos += 16;
   }
   return arr;
 }
 
-function deserializeBoxBooleanLiteral(pos, ast) {
+function constructBoxBooleanLiteral(pos, ast) {
   return new BooleanLiteral(ast.buffer.uint32[pos >> 2], ast);
 }
 
-function deserializeBoxNullLiteral(pos, ast) {
+function constructBoxNullLiteral(pos, ast) {
   return new NullLiteral(ast.buffer.uint32[pos >> 2], ast);
 }
 
-function deserializeBoxNumericLiteral(pos, ast) {
+function constructBoxNumericLiteral(pos, ast) {
   return new NumericLiteral(ast.buffer.uint32[pos >> 2], ast);
 }
 
-function deserializeBoxBigIntLiteral(pos, ast) {
+function constructBoxBigIntLiteral(pos, ast) {
   return new BigIntLiteral(ast.buffer.uint32[pos >> 2], ast);
 }
 
-function deserializeBoxRegExpLiteral(pos, ast) {
+function constructBoxRegExpLiteral(pos, ast) {
   return new RegExpLiteral(ast.buffer.uint32[pos >> 2], ast);
 }
 
-function deserializeBoxStringLiteral(pos, ast) {
+function constructBoxStringLiteral(pos, ast) {
   return new StringLiteral(ast.buffer.uint32[pos >> 2], ast);
 }
 
-function deserializeBoxTemplateLiteral(pos, ast) {
+function constructBoxTemplateLiteral(pos, ast) {
   return new TemplateLiteral(ast.buffer.uint32[pos >> 2], ast);
 }
 
-function deserializeBoxIdentifierReference(pos, ast) {
+function constructBoxIdentifierReference(pos, ast) {
   return new IdentifierReference(ast.buffer.uint32[pos >> 2], ast);
 }
 
-function deserializeBoxMetaProperty(pos, ast) {
+function constructBoxMetaProperty(pos, ast) {
   return new MetaProperty(ast.buffer.uint32[pos >> 2], ast);
 }
 
-function deserializeBoxSuper(pos, ast) {
+function constructBoxSuper(pos, ast) {
   return new Super(ast.buffer.uint32[pos >> 2], ast);
 }
 
-function deserializeBoxArrayExpression(pos, ast) {
+function constructBoxArrayExpression(pos, ast) {
   return new ArrayExpression(ast.buffer.uint32[pos >> 2], ast);
 }
 
-function deserializeBoxArrowFunctionExpression(pos, ast) {
+function constructBoxArrowFunctionExpression(pos, ast) {
   return new ArrowFunctionExpression(ast.buffer.uint32[pos >> 2], ast);
 }
 
-function deserializeBoxAssignmentExpression(pos, ast) {
+function constructBoxAssignmentExpression(pos, ast) {
   return new AssignmentExpression(ast.buffer.uint32[pos >> 2], ast);
 }
 
-function deserializeBoxAwaitExpression(pos, ast) {
+function constructBoxAwaitExpression(pos, ast) {
   return new AwaitExpression(ast.buffer.uint32[pos >> 2], ast);
 }
 
-function deserializeBoxBinaryExpression(pos, ast) {
+function constructBoxBinaryExpression(pos, ast) {
   return new BinaryExpression(ast.buffer.uint32[pos >> 2], ast);
 }
 
-function deserializeBoxCallExpression(pos, ast) {
+function constructBoxCallExpression(pos, ast) {
   return new CallExpression(ast.buffer.uint32[pos >> 2], ast);
 }
 
-function deserializeBoxChainExpression(pos, ast) {
+function constructBoxChainExpression(pos, ast) {
   return new ChainExpression(ast.buffer.uint32[pos >> 2], ast);
 }
 
-function deserializeBoxClass(pos, ast) {
+function constructBoxClass(pos, ast) {
   return new Class(ast.buffer.uint32[pos >> 2], ast);
 }
 
-function deserializeBoxConditionalExpression(pos, ast) {
+function constructBoxConditionalExpression(pos, ast) {
   return new ConditionalExpression(ast.buffer.uint32[pos >> 2], ast);
 }
 
-function deserializeBoxFunction(pos, ast) {
+function constructBoxFunction(pos, ast) {
   return new Function(ast.buffer.uint32[pos >> 2], ast);
 }
 
-function deserializeBoxImportExpression(pos, ast) {
+function constructBoxImportExpression(pos, ast) {
   return new ImportExpression(ast.buffer.uint32[pos >> 2], ast);
 }
 
-function deserializeBoxLogicalExpression(pos, ast) {
+function constructBoxLogicalExpression(pos, ast) {
   return new LogicalExpression(ast.buffer.uint32[pos >> 2], ast);
 }
 
-function deserializeBoxNewExpression(pos, ast) {
+function constructBoxNewExpression(pos, ast) {
   return new NewExpression(ast.buffer.uint32[pos >> 2], ast);
 }
 
-function deserializeBoxObjectExpression(pos, ast) {
+function constructBoxObjectExpression(pos, ast) {
   return new ObjectExpression(ast.buffer.uint32[pos >> 2], ast);
 }
 
-function deserializeBoxParenthesizedExpression(pos, ast) {
+function constructBoxParenthesizedExpression(pos, ast) {
   return new ParenthesizedExpression(ast.buffer.uint32[pos >> 2], ast);
 }
 
-function deserializeBoxSequenceExpression(pos, ast) {
+function constructBoxSequenceExpression(pos, ast) {
   return new SequenceExpression(ast.buffer.uint32[pos >> 2], ast);
 }
 
-function deserializeBoxTaggedTemplateExpression(pos, ast) {
+function constructBoxTaggedTemplateExpression(pos, ast) {
   return new TaggedTemplateExpression(ast.buffer.uint32[pos >> 2], ast);
 }
 
-function deserializeBoxThisExpression(pos, ast) {
+function constructBoxThisExpression(pos, ast) {
   return new ThisExpression(ast.buffer.uint32[pos >> 2], ast);
 }
 
-function deserializeBoxUnaryExpression(pos, ast) {
+function constructBoxUnaryExpression(pos, ast) {
   return new UnaryExpression(ast.buffer.uint32[pos >> 2], ast);
 }
 
-function deserializeBoxUpdateExpression(pos, ast) {
+function constructBoxUpdateExpression(pos, ast) {
   return new UpdateExpression(ast.buffer.uint32[pos >> 2], ast);
 }
 
-function deserializeBoxYieldExpression(pos, ast) {
+function constructBoxYieldExpression(pos, ast) {
   return new YieldExpression(ast.buffer.uint32[pos >> 2], ast);
 }
 
-function deserializeBoxPrivateInExpression(pos, ast) {
+function constructBoxPrivateInExpression(pos, ast) {
   return new PrivateInExpression(ast.buffer.uint32[pos >> 2], ast);
 }
 
-function deserializeBoxJSXElement(pos, ast) {
+function constructBoxJSXElement(pos, ast) {
   return new JSXElement(ast.buffer.uint32[pos >> 2], ast);
 }
 
-function deserializeBoxJSXFragment(pos, ast) {
+function constructBoxJSXFragment(pos, ast) {
   return new JSXFragment(ast.buffer.uint32[pos >> 2], ast);
 }
 
-function deserializeBoxTSAsExpression(pos, ast) {
+function constructBoxTSAsExpression(pos, ast) {
   return new TSAsExpression(ast.buffer.uint32[pos >> 2], ast);
 }
 
-function deserializeBoxTSSatisfiesExpression(pos, ast) {
+function constructBoxTSSatisfiesExpression(pos, ast) {
   return new TSSatisfiesExpression(ast.buffer.uint32[pos >> 2], ast);
 }
 
-function deserializeBoxTSTypeAssertion(pos, ast) {
+function constructBoxTSTypeAssertion(pos, ast) {
   return new TSTypeAssertion(ast.buffer.uint32[pos >> 2], ast);
 }
 
-function deserializeBoxTSNonNullExpression(pos, ast) {
+function constructBoxTSNonNullExpression(pos, ast) {
   return new TSNonNullExpression(ast.buffer.uint32[pos >> 2], ast);
 }
 
-function deserializeBoxTSInstantiationExpression(pos, ast) {
+function constructBoxTSInstantiationExpression(pos, ast) {
   return new TSInstantiationExpression(ast.buffer.uint32[pos >> 2], ast);
 }
 
-function deserializeBoxV8IntrinsicExpression(pos, ast) {
+function constructBoxV8IntrinsicExpression(pos, ast) {
   return new V8IntrinsicExpression(ast.buffer.uint32[pos >> 2], ast);
 }
 
-function deserializeVecArrayExpressionElement(pos, ast) {
+function constructVecArrayExpressionElement(pos, ast) {
   const { uint32 } = ast.buffer,
     arr = [],
     pos32 = pos >> 2,
     len = uint32[pos32 + 2];
   pos = uint32[pos32];
   for (let i = 0; i < len; i++) {
-    arr.push(deserializeArrayExpressionElement(pos, ast));
+    arr.push(constructArrayExpressionElement(pos, ast));
     pos += 16;
   }
   return arr;
 }
 
-function deserializeBoxSpreadElement(pos, ast) {
+function constructBoxSpreadElement(pos, ast) {
   return new SpreadElement(ast.buffer.uint32[pos >> 2], ast);
 }
 
-function deserializeVecObjectPropertyKind(pos, ast) {
+function constructVecObjectPropertyKind(pos, ast) {
   const { uint32 } = ast.buffer,
     arr = [],
     pos32 = pos >> 2,
     len = uint32[pos32 + 2];
   pos = uint32[pos32];
   for (let i = 0; i < len; i++) {
-    arr.push(deserializeObjectPropertyKind(pos, ast));
+    arr.push(constructObjectPropertyKind(pos, ast));
     pos += 16;
   }
   return arr;
 }
 
-function deserializeBoxObjectProperty(pos, ast) {
+function constructBoxObjectProperty(pos, ast) {
   return new ObjectProperty(ast.buffer.uint32[pos >> 2], ast);
 }
 
-function deserializeBool(pos, ast) {
+function constructBool(pos, ast) {
   return ast.buffer[pos] === 1;
 }
 
-function deserializeBoxIdentifierName(pos, ast) {
+function constructBoxIdentifierName(pos, ast) {
   return new IdentifierName(ast.buffer.uint32[pos >> 2], ast);
 }
 
-function deserializeBoxPrivateIdentifier(pos, ast) {
+function constructBoxPrivateIdentifier(pos, ast) {
   return new PrivateIdentifier(ast.buffer.uint32[pos >> 2], ast);
 }
 
-function deserializeVecTemplateElement(pos, ast) {
+function constructVecTemplateElement(pos, ast) {
   const { uint32 } = ast.buffer,
     arr = [],
     pos32 = pos >> 2,
@@ -10337,216 +10337,216 @@ function deserializeVecTemplateElement(pos, ast) {
   return arr;
 }
 
-function deserializeVecExpression(pos, ast) {
+function constructVecExpression(pos, ast) {
   const { uint32 } = ast.buffer,
     arr = [],
     pos32 = pos >> 2,
     len = uint32[pos32 + 2];
   pos = uint32[pos32];
   for (let i = 0; i < len; i++) {
-    arr.push(deserializeExpression(pos, ast));
+    arr.push(constructExpression(pos, ast));
     pos += 16;
   }
   return arr;
 }
 
-function deserializeBoxTSTypeParameterInstantiation(pos, ast) {
+function constructBoxTSTypeParameterInstantiation(pos, ast) {
   return new TSTypeParameterInstantiation(ast.buffer.uint32[pos >> 2], ast);
 }
 
-function deserializeOptionBoxTSTypeParameterInstantiation(pos, ast) {
+function constructOptionBoxTSTypeParameterInstantiation(pos, ast) {
   if (ast.buffer.uint32[pos >> 2] === 0 && ast.buffer.uint32[(pos + 4) >> 2] === 0) return null;
-  return deserializeBoxTSTypeParameterInstantiation(pos, ast);
+  return constructBoxTSTypeParameterInstantiation(pos, ast);
 }
 
-function deserializeOptionStr(pos, ast) {
+function constructOptionStr(pos, ast) {
   if (ast.buffer.uint32[pos >> 2] === 0 && ast.buffer.uint32[(pos + 4) >> 2] === 0) return null;
-  return deserializeStr(pos, ast);
+  return constructStr(pos, ast);
 }
 
-function deserializeBoxComputedMemberExpression(pos, ast) {
+function constructBoxComputedMemberExpression(pos, ast) {
   return new ComputedMemberExpression(ast.buffer.uint32[pos >> 2], ast);
 }
 
-function deserializeBoxStaticMemberExpression(pos, ast) {
+function constructBoxStaticMemberExpression(pos, ast) {
   return new StaticMemberExpression(ast.buffer.uint32[pos >> 2], ast);
 }
 
-function deserializeBoxPrivateFieldExpression(pos, ast) {
+function constructBoxPrivateFieldExpression(pos, ast) {
   return new PrivateFieldExpression(ast.buffer.uint32[pos >> 2], ast);
 }
 
-function deserializeVecArgument(pos, ast) {
+function constructVecArgument(pos, ast) {
   const { uint32 } = ast.buffer,
     arr = [],
     pos32 = pos >> 2,
     len = uint32[pos32 + 2];
   pos = uint32[pos32];
   for (let i = 0; i < len; i++) {
-    arr.push(deserializeArgument(pos, ast));
+    arr.push(constructArgument(pos, ast));
     pos += 16;
   }
   return arr;
 }
 
-function deserializeBoxArrayAssignmentTarget(pos, ast) {
+function constructBoxArrayAssignmentTarget(pos, ast) {
   return new ArrayAssignmentTarget(ast.buffer.uint32[pos >> 2], ast);
 }
 
-function deserializeBoxObjectAssignmentTarget(pos, ast) {
+function constructBoxObjectAssignmentTarget(pos, ast) {
   return new ObjectAssignmentTarget(ast.buffer.uint32[pos >> 2], ast);
 }
 
-function deserializeOptionAssignmentTargetMaybeDefault(pos, ast) {
+function constructOptionAssignmentTargetMaybeDefault(pos, ast) {
   if (ast.buffer[pos] === 51) return null;
-  return deserializeAssignmentTargetMaybeDefault(pos, ast);
+  return constructAssignmentTargetMaybeDefault(pos, ast);
 }
 
-function deserializeVecOptionAssignmentTargetMaybeDefault(pos, ast) {
+function constructVecOptionAssignmentTargetMaybeDefault(pos, ast) {
   const { uint32 } = ast.buffer,
     arr = [],
     pos32 = pos >> 2,
     len = uint32[pos32 + 2];
   pos = uint32[pos32];
   for (let i = 0; i < len; i++) {
-    arr.push(deserializeOptionAssignmentTargetMaybeDefault(pos, ast));
+    arr.push(constructOptionAssignmentTargetMaybeDefault(pos, ast));
     pos += 16;
   }
   return arr;
 }
 
-function deserializeOptionAssignmentTargetRest(pos, ast) {
+function constructOptionAssignmentTargetRest(pos, ast) {
   if (ast.buffer[pos + 8] === 51) return null;
   return new AssignmentTargetRest(pos, ast);
 }
 
-function deserializeVecAssignmentTargetProperty(pos, ast) {
+function constructVecAssignmentTargetProperty(pos, ast) {
   const { uint32 } = ast.buffer,
     arr = [],
     pos32 = pos >> 2,
     len = uint32[pos32 + 2];
   pos = uint32[pos32];
   for (let i = 0; i < len; i++) {
-    arr.push(deserializeAssignmentTargetProperty(pos, ast));
+    arr.push(constructAssignmentTargetProperty(pos, ast));
     pos += 16;
   }
   return arr;
 }
 
-function deserializeBoxAssignmentTargetWithDefault(pos, ast) {
+function constructBoxAssignmentTargetWithDefault(pos, ast) {
   return new AssignmentTargetWithDefault(ast.buffer.uint32[pos >> 2], ast);
 }
 
-function deserializeBoxAssignmentTargetPropertyIdentifier(pos, ast) {
+function constructBoxAssignmentTargetPropertyIdentifier(pos, ast) {
   return new AssignmentTargetPropertyIdentifier(ast.buffer.uint32[pos >> 2], ast);
 }
 
-function deserializeBoxAssignmentTargetPropertyProperty(pos, ast) {
+function constructBoxAssignmentTargetPropertyProperty(pos, ast) {
   return new AssignmentTargetPropertyProperty(ast.buffer.uint32[pos >> 2], ast);
 }
 
-function deserializeOptionExpression(pos, ast) {
+function constructOptionExpression(pos, ast) {
   if (ast.buffer[pos] === 51) return null;
-  return deserializeExpression(pos, ast);
+  return constructExpression(pos, ast);
 }
 
-function deserializeBoxBlockStatement(pos, ast) {
+function constructBoxBlockStatement(pos, ast) {
   return new BlockStatement(ast.buffer.uint32[pos >> 2], ast);
 }
 
-function deserializeBoxBreakStatement(pos, ast) {
+function constructBoxBreakStatement(pos, ast) {
   return new BreakStatement(ast.buffer.uint32[pos >> 2], ast);
 }
 
-function deserializeBoxContinueStatement(pos, ast) {
+function constructBoxContinueStatement(pos, ast) {
   return new ContinueStatement(ast.buffer.uint32[pos >> 2], ast);
 }
 
-function deserializeBoxDebuggerStatement(pos, ast) {
+function constructBoxDebuggerStatement(pos, ast) {
   return new DebuggerStatement(ast.buffer.uint32[pos >> 2], ast);
 }
 
-function deserializeBoxDoWhileStatement(pos, ast) {
+function constructBoxDoWhileStatement(pos, ast) {
   return new DoWhileStatement(ast.buffer.uint32[pos >> 2], ast);
 }
 
-function deserializeBoxEmptyStatement(pos, ast) {
+function constructBoxEmptyStatement(pos, ast) {
   return new EmptyStatement(ast.buffer.uint32[pos >> 2], ast);
 }
 
-function deserializeBoxExpressionStatement(pos, ast) {
+function constructBoxExpressionStatement(pos, ast) {
   return new ExpressionStatement(ast.buffer.uint32[pos >> 2], ast);
 }
 
-function deserializeBoxForInStatement(pos, ast) {
+function constructBoxForInStatement(pos, ast) {
   return new ForInStatement(ast.buffer.uint32[pos >> 2], ast);
 }
 
-function deserializeBoxForOfStatement(pos, ast) {
+function constructBoxForOfStatement(pos, ast) {
   return new ForOfStatement(ast.buffer.uint32[pos >> 2], ast);
 }
 
-function deserializeBoxForStatement(pos, ast) {
+function constructBoxForStatement(pos, ast) {
   return new ForStatement(ast.buffer.uint32[pos >> 2], ast);
 }
 
-function deserializeBoxIfStatement(pos, ast) {
+function constructBoxIfStatement(pos, ast) {
   return new IfStatement(ast.buffer.uint32[pos >> 2], ast);
 }
 
-function deserializeBoxLabeledStatement(pos, ast) {
+function constructBoxLabeledStatement(pos, ast) {
   return new LabeledStatement(ast.buffer.uint32[pos >> 2], ast);
 }
 
-function deserializeBoxReturnStatement(pos, ast) {
+function constructBoxReturnStatement(pos, ast) {
   return new ReturnStatement(ast.buffer.uint32[pos >> 2], ast);
 }
 
-function deserializeBoxSwitchStatement(pos, ast) {
+function constructBoxSwitchStatement(pos, ast) {
   return new SwitchStatement(ast.buffer.uint32[pos >> 2], ast);
 }
 
-function deserializeBoxThrowStatement(pos, ast) {
+function constructBoxThrowStatement(pos, ast) {
   return new ThrowStatement(ast.buffer.uint32[pos >> 2], ast);
 }
 
-function deserializeBoxTryStatement(pos, ast) {
+function constructBoxTryStatement(pos, ast) {
   return new TryStatement(ast.buffer.uint32[pos >> 2], ast);
 }
 
-function deserializeBoxWhileStatement(pos, ast) {
+function constructBoxWhileStatement(pos, ast) {
   return new WhileStatement(ast.buffer.uint32[pos >> 2], ast);
 }
 
-function deserializeBoxWithStatement(pos, ast) {
+function constructBoxWithStatement(pos, ast) {
   return new WithStatement(ast.buffer.uint32[pos >> 2], ast);
 }
 
-function deserializeBoxVariableDeclaration(pos, ast) {
+function constructBoxVariableDeclaration(pos, ast) {
   return new VariableDeclaration(ast.buffer.uint32[pos >> 2], ast);
 }
 
-function deserializeBoxTSTypeAliasDeclaration(pos, ast) {
+function constructBoxTSTypeAliasDeclaration(pos, ast) {
   return new TSTypeAliasDeclaration(ast.buffer.uint32[pos >> 2], ast);
 }
 
-function deserializeBoxTSInterfaceDeclaration(pos, ast) {
+function constructBoxTSInterfaceDeclaration(pos, ast) {
   return new TSInterfaceDeclaration(ast.buffer.uint32[pos >> 2], ast);
 }
 
-function deserializeBoxTSEnumDeclaration(pos, ast) {
+function constructBoxTSEnumDeclaration(pos, ast) {
   return new TSEnumDeclaration(ast.buffer.uint32[pos >> 2], ast);
 }
 
-function deserializeBoxTSModuleDeclaration(pos, ast) {
+function constructBoxTSModuleDeclaration(pos, ast) {
   return new TSModuleDeclaration(ast.buffer.uint32[pos >> 2], ast);
 }
 
-function deserializeBoxTSImportEqualsDeclaration(pos, ast) {
+function constructBoxTSImportEqualsDeclaration(pos, ast) {
   return new TSImportEqualsDeclaration(ast.buffer.uint32[pos >> 2], ast);
 }
 
-function deserializeVecVariableDeclarator(pos, ast) {
+function constructVecVariableDeclarator(pos, ast) {
   const { uint32 } = ast.buffer,
     arr = [],
     pos32 = pos >> 2,
@@ -10559,22 +10559,22 @@ function deserializeVecVariableDeclarator(pos, ast) {
   return arr;
 }
 
-function deserializeOptionStatement(pos, ast) {
+function constructOptionStatement(pos, ast) {
   if (ast.buffer[pos] === 70) return null;
-  return deserializeStatement(pos, ast);
+  return constructStatement(pos, ast);
 }
 
-function deserializeOptionForStatementInit(pos, ast) {
+function constructOptionForStatementInit(pos, ast) {
   if (ast.buffer[pos] === 65) return null;
-  return deserializeForStatementInit(pos, ast);
+  return constructForStatementInit(pos, ast);
 }
 
-function deserializeOptionLabelIdentifier(pos, ast) {
+function constructOptionLabelIdentifier(pos, ast) {
   if (ast.buffer.uint32[(pos + 8) >> 2] === 0 && ast.buffer.uint32[(pos + 12) >> 2] === 0) return null;
   return new LabelIdentifier(pos, ast);
 }
 
-function deserializeVecSwitchCase(pos, ast) {
+function constructVecSwitchCase(pos, ast) {
   const { uint32 } = ast.buffer,
     arr = [],
     pos32 = pos >> 2,
@@ -10587,51 +10587,51 @@ function deserializeVecSwitchCase(pos, ast) {
   return arr;
 }
 
-function deserializeBoxCatchClause(pos, ast) {
+function constructBoxCatchClause(pos, ast) {
   return new CatchClause(ast.buffer.uint32[pos >> 2], ast);
 }
 
-function deserializeOptionBoxCatchClause(pos, ast) {
+function constructOptionBoxCatchClause(pos, ast) {
   if (ast.buffer.uint32[pos >> 2] === 0 && ast.buffer.uint32[(pos + 4) >> 2] === 0) return null;
-  return deserializeBoxCatchClause(pos, ast);
+  return constructBoxCatchClause(pos, ast);
 }
 
-function deserializeOptionBoxBlockStatement(pos, ast) {
+function constructOptionBoxBlockStatement(pos, ast) {
   if (ast.buffer.uint32[pos >> 2] === 0 && ast.buffer.uint32[(pos + 4) >> 2] === 0) return null;
-  return deserializeBoxBlockStatement(pos, ast);
+  return constructBoxBlockStatement(pos, ast);
 }
 
-function deserializeOptionCatchParameter(pos, ast) {
+function constructOptionCatchParameter(pos, ast) {
   if (ast.buffer[pos + 32] === 2) return null;
   return new CatchParameter(pos, ast);
 }
 
-function deserializeBoxTSTypeAnnotation(pos, ast) {
+function constructBoxTSTypeAnnotation(pos, ast) {
   return new TSTypeAnnotation(ast.buffer.uint32[pos >> 2], ast);
 }
 
-function deserializeOptionBoxTSTypeAnnotation(pos, ast) {
+function constructOptionBoxTSTypeAnnotation(pos, ast) {
   if (ast.buffer.uint32[pos >> 2] === 0 && ast.buffer.uint32[(pos + 4) >> 2] === 0) return null;
-  return deserializeBoxTSTypeAnnotation(pos, ast);
+  return constructBoxTSTypeAnnotation(pos, ast);
 }
 
-function deserializeBoxBindingIdentifier(pos, ast) {
+function constructBoxBindingIdentifier(pos, ast) {
   return new BindingIdentifier(ast.buffer.uint32[pos >> 2], ast);
 }
 
-function deserializeBoxObjectPattern(pos, ast) {
+function constructBoxObjectPattern(pos, ast) {
   return new ObjectPattern(ast.buffer.uint32[pos >> 2], ast);
 }
 
-function deserializeBoxArrayPattern(pos, ast) {
+function constructBoxArrayPattern(pos, ast) {
   return new ArrayPattern(ast.buffer.uint32[pos >> 2], ast);
 }
 
-function deserializeBoxAssignmentPattern(pos, ast) {
+function constructBoxAssignmentPattern(pos, ast) {
   return new AssignmentPattern(ast.buffer.uint32[pos >> 2], ast);
 }
 
-function deserializeVecBindingProperty(pos, ast) {
+function constructVecBindingProperty(pos, ast) {
   const { uint32 } = ast.buffer,
     arr = [],
     pos32 = pos >> 2,
@@ -10644,70 +10644,70 @@ function deserializeVecBindingProperty(pos, ast) {
   return arr;
 }
 
-function deserializeBoxBindingRestElement(pos, ast) {
+function constructBoxBindingRestElement(pos, ast) {
   return new BindingRestElement(ast.buffer.uint32[pos >> 2], ast);
 }
 
-function deserializeOptionBoxBindingRestElement(pos, ast) {
+function constructOptionBoxBindingRestElement(pos, ast) {
   if (ast.buffer.uint32[pos >> 2] === 0 && ast.buffer.uint32[(pos + 4) >> 2] === 0) return null;
-  return deserializeBoxBindingRestElement(pos, ast);
+  return constructBoxBindingRestElement(pos, ast);
 }
 
-function deserializeOptionBindingPattern(pos, ast) {
+function constructOptionBindingPattern(pos, ast) {
   if (ast.buffer[pos + 24] === 2) return null;
   return new BindingPattern(pos, ast);
 }
 
-function deserializeVecOptionBindingPattern(pos, ast) {
+function constructVecOptionBindingPattern(pos, ast) {
   const { uint32 } = ast.buffer,
     arr = [],
     pos32 = pos >> 2,
     len = uint32[pos32 + 2];
   pos = uint32[pos32];
   for (let i = 0; i < len; i++) {
-    arr.push(deserializeOptionBindingPattern(pos, ast));
+    arr.push(constructOptionBindingPattern(pos, ast));
     pos += 32;
   }
   return arr;
 }
 
-function deserializeOptionBindingIdentifier(pos, ast) {
+function constructOptionBindingIdentifier(pos, ast) {
   if (ast.buffer.uint32[(pos + 8) >> 2] === 0 && ast.buffer.uint32[(pos + 12) >> 2] === 0) return null;
   return new BindingIdentifier(pos, ast);
 }
 
-function deserializeBoxTSTypeParameterDeclaration(pos, ast) {
+function constructBoxTSTypeParameterDeclaration(pos, ast) {
   return new TSTypeParameterDeclaration(ast.buffer.uint32[pos >> 2], ast);
 }
 
-function deserializeOptionBoxTSTypeParameterDeclaration(pos, ast) {
+function constructOptionBoxTSTypeParameterDeclaration(pos, ast) {
   if (ast.buffer.uint32[pos >> 2] === 0 && ast.buffer.uint32[(pos + 4) >> 2] === 0) return null;
-  return deserializeBoxTSTypeParameterDeclaration(pos, ast);
+  return constructBoxTSTypeParameterDeclaration(pos, ast);
 }
 
-function deserializeBoxTSThisParameter(pos, ast) {
+function constructBoxTSThisParameter(pos, ast) {
   return new TSThisParameter(ast.buffer.uint32[pos >> 2], ast);
 }
 
-function deserializeOptionBoxTSThisParameter(pos, ast) {
+function constructOptionBoxTSThisParameter(pos, ast) {
   if (ast.buffer.uint32[pos >> 2] === 0 && ast.buffer.uint32[(pos + 4) >> 2] === 0) return null;
-  return deserializeBoxTSThisParameter(pos, ast);
+  return constructBoxTSThisParameter(pos, ast);
 }
 
-function deserializeBoxFormalParameters(pos, ast) {
+function constructBoxFormalParameters(pos, ast) {
   return new FormalParameters(ast.buffer.uint32[pos >> 2], ast);
 }
 
-function deserializeBoxFunctionBody(pos, ast) {
+function constructBoxFunctionBody(pos, ast) {
   return new FunctionBody(ast.buffer.uint32[pos >> 2], ast);
 }
 
-function deserializeOptionBoxFunctionBody(pos, ast) {
+function constructOptionBoxFunctionBody(pos, ast) {
   if (ast.buffer.uint32[pos >> 2] === 0 && ast.buffer.uint32[(pos + 4) >> 2] === 0) return null;
-  return deserializeBoxFunctionBody(pos, ast);
+  return constructBoxFunctionBody(pos, ast);
 }
 
-function deserializeVecFormalParameter(pos, ast) {
+function constructVecFormalParameter(pos, ast) {
   const { uint32 } = ast.buffer,
     arr = [],
     pos32 = pos >> 2,
@@ -10720,7 +10720,7 @@ function deserializeVecFormalParameter(pos, ast) {
   return arr;
 }
 
-function deserializeVecDecorator(pos, ast) {
+function constructVecDecorator(pos, ast) {
   const { uint32 } = ast.buffer,
     arr = [],
     pos32 = pos >> 2,
@@ -10733,12 +10733,12 @@ function deserializeVecDecorator(pos, ast) {
   return arr;
 }
 
-function deserializeOptionTSAccessibility(pos, ast) {
+function constructOptionTSAccessibility(pos, ast) {
   if (ast.buffer[pos] === 3) return null;
-  return deserializeTSAccessibility(pos, ast);
+  return constructTSAccessibility(pos, ast);
 }
 
-function deserializeVecTSClassImplements(pos, ast) {
+function constructVecTSClassImplements(pos, ast) {
   const { uint32 } = ast.buffer,
     arr = [],
     pos32 = pos >> 2,
@@ -10751,112 +10751,112 @@ function deserializeVecTSClassImplements(pos, ast) {
   return arr;
 }
 
-function deserializeBoxClassBody(pos, ast) {
+function constructBoxClassBody(pos, ast) {
   return new ClassBody(ast.buffer.uint32[pos >> 2], ast);
 }
 
-function deserializeVecClassElement(pos, ast) {
+function constructVecClassElement(pos, ast) {
   const { uint32 } = ast.buffer,
     arr = [],
     pos32 = pos >> 2,
     len = uint32[pos32 + 2];
   pos = uint32[pos32];
   for (let i = 0; i < len; i++) {
-    arr.push(deserializeClassElement(pos, ast));
+    arr.push(constructClassElement(pos, ast));
     pos += 16;
   }
   return arr;
 }
 
-function deserializeBoxStaticBlock(pos, ast) {
+function constructBoxStaticBlock(pos, ast) {
   return new StaticBlock(ast.buffer.uint32[pos >> 2], ast);
 }
 
-function deserializeBoxMethodDefinition(pos, ast) {
+function constructBoxMethodDefinition(pos, ast) {
   return new MethodDefinition(ast.buffer.uint32[pos >> 2], ast);
 }
 
-function deserializeBoxPropertyDefinition(pos, ast) {
+function constructBoxPropertyDefinition(pos, ast) {
   return new PropertyDefinition(ast.buffer.uint32[pos >> 2], ast);
 }
 
-function deserializeBoxAccessorProperty(pos, ast) {
+function constructBoxAccessorProperty(pos, ast) {
   return new AccessorProperty(ast.buffer.uint32[pos >> 2], ast);
 }
 
-function deserializeBoxTSIndexSignature(pos, ast) {
+function constructBoxTSIndexSignature(pos, ast) {
   return new TSIndexSignature(ast.buffer.uint32[pos >> 2], ast);
 }
 
-function deserializeBoxImportDeclaration(pos, ast) {
+function constructBoxImportDeclaration(pos, ast) {
   return new ImportDeclaration(ast.buffer.uint32[pos >> 2], ast);
 }
 
-function deserializeBoxExportAllDeclaration(pos, ast) {
+function constructBoxExportAllDeclaration(pos, ast) {
   return new ExportAllDeclaration(ast.buffer.uint32[pos >> 2], ast);
 }
 
-function deserializeBoxExportDefaultDeclaration(pos, ast) {
+function constructBoxExportDefaultDeclaration(pos, ast) {
   return new ExportDefaultDeclaration(ast.buffer.uint32[pos >> 2], ast);
 }
 
-function deserializeBoxExportNamedDeclaration(pos, ast) {
+function constructBoxExportNamedDeclaration(pos, ast) {
   return new ExportNamedDeclaration(ast.buffer.uint32[pos >> 2], ast);
 }
 
-function deserializeBoxTSExportAssignment(pos, ast) {
+function constructBoxTSExportAssignment(pos, ast) {
   return new TSExportAssignment(ast.buffer.uint32[pos >> 2], ast);
 }
 
-function deserializeBoxTSNamespaceExportDeclaration(pos, ast) {
+function constructBoxTSNamespaceExportDeclaration(pos, ast) {
   return new TSNamespaceExportDeclaration(ast.buffer.uint32[pos >> 2], ast);
 }
 
-function deserializeOptionImportPhase(pos, ast) {
+function constructOptionImportPhase(pos, ast) {
   if (ast.buffer[pos] === 2) return null;
-  return deserializeImportPhase(pos, ast);
+  return constructImportPhase(pos, ast);
 }
 
-function deserializeVecImportDeclarationSpecifier(pos, ast) {
+function constructVecImportDeclarationSpecifier(pos, ast) {
   const { uint32 } = ast.buffer,
     arr = [],
     pos32 = pos >> 2,
     len = uint32[pos32 + 2];
   pos = uint32[pos32];
   for (let i = 0; i < len; i++) {
-    arr.push(deserializeImportDeclarationSpecifier(pos, ast));
+    arr.push(constructImportDeclarationSpecifier(pos, ast));
     pos += 16;
   }
   return arr;
 }
 
-function deserializeOptionVecImportDeclarationSpecifier(pos, ast) {
+function constructOptionVecImportDeclarationSpecifier(pos, ast) {
   if (ast.buffer.uint32[pos >> 2] === 0 && ast.buffer.uint32[(pos + 4) >> 2] === 0) return null;
-  return deserializeVecImportDeclarationSpecifier(pos, ast);
+  return constructVecImportDeclarationSpecifier(pos, ast);
 }
 
-function deserializeBoxWithClause(pos, ast) {
+function constructBoxWithClause(pos, ast) {
   return new WithClause(ast.buffer.uint32[pos >> 2], ast);
 }
 
-function deserializeOptionBoxWithClause(pos, ast) {
+function constructOptionBoxWithClause(pos, ast) {
   if (ast.buffer.uint32[pos >> 2] === 0 && ast.buffer.uint32[(pos + 4) >> 2] === 0) return null;
-  return deserializeBoxWithClause(pos, ast);
+  return constructBoxWithClause(pos, ast);
 }
 
-function deserializeBoxImportSpecifier(pos, ast) {
+function constructBoxImportSpecifier(pos, ast) {
   return new ImportSpecifier(ast.buffer.uint32[pos >> 2], ast);
 }
 
-function deserializeBoxImportDefaultSpecifier(pos, ast) {
+function constructBoxImportDefaultSpecifier(pos, ast) {
   return new ImportDefaultSpecifier(ast.buffer.uint32[pos >> 2], ast);
 }
 
-function deserializeBoxImportNamespaceSpecifier(pos, ast) {
+function constructBoxImportNamespaceSpecifier(pos, ast) {
   return new ImportNamespaceSpecifier(ast.buffer.uint32[pos >> 2], ast);
 }
 
-function deserializeVecImportAttribute(pos, ast) {
+function constructVecImportAttribute(pos, ast) {
   const { uint32 } = ast.buffer,
     arr = [],
     pos32 = pos >> 2,
@@ -10869,12 +10869,12 @@ function deserializeVecImportAttribute(pos, ast) {
   return arr;
 }
 
-function deserializeOptionDeclaration(pos, ast) {
+function constructOptionDeclaration(pos, ast) {
   if (ast.buffer[pos] === 31) return null;
-  return deserializeDeclaration(pos, ast);
+  return constructDeclaration(pos, ast);
 }
 
-function deserializeVecExportSpecifier(pos, ast) {
+function constructVecExportSpecifier(pos, ast) {
   const { uint32 } = ast.buffer,
     arr = [],
     pos32 = pos >> 2,
@@ -10887,101 +10887,101 @@ function deserializeVecExportSpecifier(pos, ast) {
   return arr;
 }
 
-function deserializeOptionStringLiteral(pos, ast) {
+function constructOptionStringLiteral(pos, ast) {
   if (ast.buffer[pos + 40] === 2) return null;
   return new StringLiteral(pos, ast);
 }
 
-function deserializeOptionModuleExportName(pos, ast) {
+function constructOptionModuleExportName(pos, ast) {
   if (ast.buffer[pos] === 3) return null;
-  return deserializeModuleExportName(pos, ast);
+  return constructModuleExportName(pos, ast);
 }
 
-function deserializeF64(pos, ast) {
+function constructF64(pos, ast) {
   return ast.buffer.float64[pos >> 3];
 }
 
-function deserializeU8(pos, ast) {
+function constructU8(pos, ast) {
   return ast.buffer[pos];
 }
 
-function deserializeBoxJSXOpeningElement(pos, ast) {
+function constructBoxJSXOpeningElement(pos, ast) {
   return new JSXOpeningElement(ast.buffer.uint32[pos >> 2], ast);
 }
 
-function deserializeVecJSXChild(pos, ast) {
+function constructVecJSXChild(pos, ast) {
   const { uint32 } = ast.buffer,
     arr = [],
     pos32 = pos >> 2,
     len = uint32[pos32 + 2];
   pos = uint32[pos32];
   for (let i = 0; i < len; i++) {
-    arr.push(deserializeJSXChild(pos, ast));
+    arr.push(constructJSXChild(pos, ast));
     pos += 16;
   }
   return arr;
 }
 
-function deserializeBoxJSXClosingElement(pos, ast) {
+function constructBoxJSXClosingElement(pos, ast) {
   return new JSXClosingElement(ast.buffer.uint32[pos >> 2], ast);
 }
 
-function deserializeOptionBoxJSXClosingElement(pos, ast) {
+function constructOptionBoxJSXClosingElement(pos, ast) {
   if (ast.buffer.uint32[pos >> 2] === 0 && ast.buffer.uint32[(pos + 4) >> 2] === 0) return null;
-  return deserializeBoxJSXClosingElement(pos, ast);
+  return constructBoxJSXClosingElement(pos, ast);
 }
 
-function deserializeVecJSXAttributeItem(pos, ast) {
+function constructVecJSXAttributeItem(pos, ast) {
   const { uint32 } = ast.buffer,
     arr = [],
     pos32 = pos >> 2,
     len = uint32[pos32 + 2];
   pos = uint32[pos32];
   for (let i = 0; i < len; i++) {
-    arr.push(deserializeJSXAttributeItem(pos, ast));
+    arr.push(constructJSXAttributeItem(pos, ast));
     pos += 16;
   }
   return arr;
 }
 
-function deserializeBoxJSXIdentifier(pos, ast) {
+function constructBoxJSXIdentifier(pos, ast) {
   return new JSXIdentifier(ast.buffer.uint32[pos >> 2], ast);
 }
 
-function deserializeBoxJSXNamespacedName(pos, ast) {
+function constructBoxJSXNamespacedName(pos, ast) {
   return new JSXNamespacedName(ast.buffer.uint32[pos >> 2], ast);
 }
 
-function deserializeBoxJSXMemberExpression(pos, ast) {
+function constructBoxJSXMemberExpression(pos, ast) {
   return new JSXMemberExpression(ast.buffer.uint32[pos >> 2], ast);
 }
 
-function deserializeBoxJSXAttribute(pos, ast) {
+function constructBoxJSXAttribute(pos, ast) {
   return new JSXAttribute(ast.buffer.uint32[pos >> 2], ast);
 }
 
-function deserializeBoxJSXSpreadAttribute(pos, ast) {
+function constructBoxJSXSpreadAttribute(pos, ast) {
   return new JSXSpreadAttribute(ast.buffer.uint32[pos >> 2], ast);
 }
 
-function deserializeOptionJSXAttributeValue(pos, ast) {
+function constructOptionJSXAttributeValue(pos, ast) {
   if (ast.buffer[pos] === 4) return null;
-  return deserializeJSXAttributeValue(pos, ast);
+  return constructJSXAttributeValue(pos, ast);
 }
 
-function deserializeBoxJSXExpressionContainer(pos, ast) {
+function constructBoxJSXExpressionContainer(pos, ast) {
   return new JSXExpressionContainer(ast.buffer.uint32[pos >> 2], ast);
 }
 
-function deserializeBoxJSXText(pos, ast) {
+function constructBoxJSXText(pos, ast) {
   return new JSXText(ast.buffer.uint32[pos >> 2], ast);
 }
 
-function deserializeBoxJSXSpreadChild(pos, ast) {
+function constructBoxJSXSpreadChild(pos, ast) {
   return new JSXSpreadChild(ast.buffer.uint32[pos >> 2], ast);
 }
 
-function deserializeVecTSEnumMember(pos, ast) {
+function constructVecTSEnumMember(pos, ast) {
   const { uint32 } = ast.buffer,
     arr = [],
     pos32 = pos >> 2,
@@ -10994,198 +10994,198 @@ function deserializeVecTSEnumMember(pos, ast) {
   return arr;
 }
 
-function deserializeBoxTSAnyKeyword(pos, ast) {
+function constructBoxTSAnyKeyword(pos, ast) {
   return new TSAnyKeyword(ast.buffer.uint32[pos >> 2], ast);
 }
 
-function deserializeBoxTSBigIntKeyword(pos, ast) {
+function constructBoxTSBigIntKeyword(pos, ast) {
   return new TSBigIntKeyword(ast.buffer.uint32[pos >> 2], ast);
 }
 
-function deserializeBoxTSBooleanKeyword(pos, ast) {
+function constructBoxTSBooleanKeyword(pos, ast) {
   return new TSBooleanKeyword(ast.buffer.uint32[pos >> 2], ast);
 }
 
-function deserializeBoxTSIntrinsicKeyword(pos, ast) {
+function constructBoxTSIntrinsicKeyword(pos, ast) {
   return new TSIntrinsicKeyword(ast.buffer.uint32[pos >> 2], ast);
 }
 
-function deserializeBoxTSNeverKeyword(pos, ast) {
+function constructBoxTSNeverKeyword(pos, ast) {
   return new TSNeverKeyword(ast.buffer.uint32[pos >> 2], ast);
 }
 
-function deserializeBoxTSNullKeyword(pos, ast) {
+function constructBoxTSNullKeyword(pos, ast) {
   return new TSNullKeyword(ast.buffer.uint32[pos >> 2], ast);
 }
 
-function deserializeBoxTSNumberKeyword(pos, ast) {
+function constructBoxTSNumberKeyword(pos, ast) {
   return new TSNumberKeyword(ast.buffer.uint32[pos >> 2], ast);
 }
 
-function deserializeBoxTSObjectKeyword(pos, ast) {
+function constructBoxTSObjectKeyword(pos, ast) {
   return new TSObjectKeyword(ast.buffer.uint32[pos >> 2], ast);
 }
 
-function deserializeBoxTSStringKeyword(pos, ast) {
+function constructBoxTSStringKeyword(pos, ast) {
   return new TSStringKeyword(ast.buffer.uint32[pos >> 2], ast);
 }
 
-function deserializeBoxTSSymbolKeyword(pos, ast) {
+function constructBoxTSSymbolKeyword(pos, ast) {
   return new TSSymbolKeyword(ast.buffer.uint32[pos >> 2], ast);
 }
 
-function deserializeBoxTSUndefinedKeyword(pos, ast) {
+function constructBoxTSUndefinedKeyword(pos, ast) {
   return new TSUndefinedKeyword(ast.buffer.uint32[pos >> 2], ast);
 }
 
-function deserializeBoxTSUnknownKeyword(pos, ast) {
+function constructBoxTSUnknownKeyword(pos, ast) {
   return new TSUnknownKeyword(ast.buffer.uint32[pos >> 2], ast);
 }
 
-function deserializeBoxTSVoidKeyword(pos, ast) {
+function constructBoxTSVoidKeyword(pos, ast) {
   return new TSVoidKeyword(ast.buffer.uint32[pos >> 2], ast);
 }
 
-function deserializeBoxTSArrayType(pos, ast) {
+function constructBoxTSArrayType(pos, ast) {
   return new TSArrayType(ast.buffer.uint32[pos >> 2], ast);
 }
 
-function deserializeBoxTSConditionalType(pos, ast) {
+function constructBoxTSConditionalType(pos, ast) {
   return new TSConditionalType(ast.buffer.uint32[pos >> 2], ast);
 }
 
-function deserializeBoxTSConstructorType(pos, ast) {
+function constructBoxTSConstructorType(pos, ast) {
   return new TSConstructorType(ast.buffer.uint32[pos >> 2], ast);
 }
 
-function deserializeBoxTSFunctionType(pos, ast) {
+function constructBoxTSFunctionType(pos, ast) {
   return new TSFunctionType(ast.buffer.uint32[pos >> 2], ast);
 }
 
-function deserializeBoxTSImportType(pos, ast) {
+function constructBoxTSImportType(pos, ast) {
   return new TSImportType(ast.buffer.uint32[pos >> 2], ast);
 }
 
-function deserializeBoxTSIndexedAccessType(pos, ast) {
+function constructBoxTSIndexedAccessType(pos, ast) {
   return new TSIndexedAccessType(ast.buffer.uint32[pos >> 2], ast);
 }
 
-function deserializeBoxTSInferType(pos, ast) {
+function constructBoxTSInferType(pos, ast) {
   return new TSInferType(ast.buffer.uint32[pos >> 2], ast);
 }
 
-function deserializeBoxTSIntersectionType(pos, ast) {
+function constructBoxTSIntersectionType(pos, ast) {
   return new TSIntersectionType(ast.buffer.uint32[pos >> 2], ast);
 }
 
-function deserializeBoxTSLiteralType(pos, ast) {
+function constructBoxTSLiteralType(pos, ast) {
   return new TSLiteralType(ast.buffer.uint32[pos >> 2], ast);
 }
 
-function deserializeBoxTSMappedType(pos, ast) {
+function constructBoxTSMappedType(pos, ast) {
   return new TSMappedType(ast.buffer.uint32[pos >> 2], ast);
 }
 
-function deserializeBoxTSNamedTupleMember(pos, ast) {
+function constructBoxTSNamedTupleMember(pos, ast) {
   return new TSNamedTupleMember(ast.buffer.uint32[pos >> 2], ast);
 }
 
-function deserializeBoxTSTemplateLiteralType(pos, ast) {
+function constructBoxTSTemplateLiteralType(pos, ast) {
   return new TSTemplateLiteralType(ast.buffer.uint32[pos >> 2], ast);
 }
 
-function deserializeBoxTSThisType(pos, ast) {
+function constructBoxTSThisType(pos, ast) {
   return new TSThisType(ast.buffer.uint32[pos >> 2], ast);
 }
 
-function deserializeBoxTSTupleType(pos, ast) {
+function constructBoxTSTupleType(pos, ast) {
   return new TSTupleType(ast.buffer.uint32[pos >> 2], ast);
 }
 
-function deserializeBoxTSTypeLiteral(pos, ast) {
+function constructBoxTSTypeLiteral(pos, ast) {
   return new TSTypeLiteral(ast.buffer.uint32[pos >> 2], ast);
 }
 
-function deserializeBoxTSTypeOperator(pos, ast) {
+function constructBoxTSTypeOperator(pos, ast) {
   return new TSTypeOperator(ast.buffer.uint32[pos >> 2], ast);
 }
 
-function deserializeBoxTSTypePredicate(pos, ast) {
+function constructBoxTSTypePredicate(pos, ast) {
   return new TSTypePredicate(ast.buffer.uint32[pos >> 2], ast);
 }
 
-function deserializeBoxTSTypeQuery(pos, ast) {
+function constructBoxTSTypeQuery(pos, ast) {
   return new TSTypeQuery(ast.buffer.uint32[pos >> 2], ast);
 }
 
-function deserializeBoxTSTypeReference(pos, ast) {
+function constructBoxTSTypeReference(pos, ast) {
   return new TSTypeReference(ast.buffer.uint32[pos >> 2], ast);
 }
 
-function deserializeBoxTSUnionType(pos, ast) {
+function constructBoxTSUnionType(pos, ast) {
   return new TSUnionType(ast.buffer.uint32[pos >> 2], ast);
 }
 
-function deserializeBoxTSParenthesizedType(pos, ast) {
+function constructBoxTSParenthesizedType(pos, ast) {
   return new TSParenthesizedType(ast.buffer.uint32[pos >> 2], ast);
 }
 
-function deserializeBoxJSDocNullableType(pos, ast) {
+function constructBoxJSDocNullableType(pos, ast) {
   return new JSDocNullableType(ast.buffer.uint32[pos >> 2], ast);
 }
 
-function deserializeBoxJSDocNonNullableType(pos, ast) {
+function constructBoxJSDocNonNullableType(pos, ast) {
   return new JSDocNonNullableType(ast.buffer.uint32[pos >> 2], ast);
 }
 
-function deserializeBoxJSDocUnknownType(pos, ast) {
+function constructBoxJSDocUnknownType(pos, ast) {
   return new JSDocUnknownType(ast.buffer.uint32[pos >> 2], ast);
 }
 
-function deserializeVecTSType(pos, ast) {
+function constructVecTSType(pos, ast) {
   const { uint32 } = ast.buffer,
     arr = [],
     pos32 = pos >> 2,
     len = uint32[pos32 + 2];
   pos = uint32[pos32];
   for (let i = 0; i < len; i++) {
-    arr.push(deserializeTSType(pos, ast));
+    arr.push(constructTSType(pos, ast));
     pos += 16;
   }
   return arr;
 }
 
-function deserializeVecTSTupleElement(pos, ast) {
+function constructVecTSTupleElement(pos, ast) {
   const { uint32 } = ast.buffer,
     arr = [],
     pos32 = pos >> 2,
     len = uint32[pos32 + 2];
   pos = uint32[pos32];
   for (let i = 0; i < len; i++) {
-    arr.push(deserializeTSTupleElement(pos, ast));
+    arr.push(constructTSTupleElement(pos, ast));
     pos += 16;
   }
   return arr;
 }
 
-function deserializeBoxTSOptionalType(pos, ast) {
+function constructBoxTSOptionalType(pos, ast) {
   return new TSOptionalType(ast.buffer.uint32[pos >> 2], ast);
 }
 
-function deserializeBoxTSRestType(pos, ast) {
+function constructBoxTSRestType(pos, ast) {
   return new TSRestType(ast.buffer.uint32[pos >> 2], ast);
 }
 
-function deserializeBoxTSQualifiedName(pos, ast) {
+function constructBoxTSQualifiedName(pos, ast) {
   return new TSQualifiedName(ast.buffer.uint32[pos >> 2], ast);
 }
 
-function deserializeOptionTSType(pos, ast) {
+function constructOptionTSType(pos, ast) {
   if (ast.buffer[pos] === 38) return null;
-  return deserializeTSType(pos, ast);
+  return constructTSType(pos, ast);
 }
 
-function deserializeVecTSTypeParameter(pos, ast) {
+function constructVecTSTypeParameter(pos, ast) {
   const { uint32 } = ast.buffer,
     arr = [],
     pos32 = pos >> 2,
@@ -11198,7 +11198,7 @@ function deserializeVecTSTypeParameter(pos, ast) {
   return arr;
 }
 
-function deserializeVecTSInterfaceHeritage(pos, ast) {
+function constructVecTSInterfaceHeritage(pos, ast) {
   const { uint32 } = ast.buffer,
     arr = [],
     pos32 = pos >> 2,
@@ -11211,40 +11211,40 @@ function deserializeVecTSInterfaceHeritage(pos, ast) {
   return arr;
 }
 
-function deserializeBoxTSInterfaceBody(pos, ast) {
+function constructBoxTSInterfaceBody(pos, ast) {
   return new TSInterfaceBody(ast.buffer.uint32[pos >> 2], ast);
 }
 
-function deserializeVecTSSignature(pos, ast) {
+function constructVecTSSignature(pos, ast) {
   const { uint32 } = ast.buffer,
     arr = [],
     pos32 = pos >> 2,
     len = uint32[pos32 + 2];
   pos = uint32[pos32];
   for (let i = 0; i < len; i++) {
-    arr.push(deserializeTSSignature(pos, ast));
+    arr.push(constructTSSignature(pos, ast));
     pos += 16;
   }
   return arr;
 }
 
-function deserializeBoxTSPropertySignature(pos, ast) {
+function constructBoxTSPropertySignature(pos, ast) {
   return new TSPropertySignature(ast.buffer.uint32[pos >> 2], ast);
 }
 
-function deserializeBoxTSCallSignatureDeclaration(pos, ast) {
+function constructBoxTSCallSignatureDeclaration(pos, ast) {
   return new TSCallSignatureDeclaration(ast.buffer.uint32[pos >> 2], ast);
 }
 
-function deserializeBoxTSConstructSignatureDeclaration(pos, ast) {
+function constructBoxTSConstructSignatureDeclaration(pos, ast) {
   return new TSConstructSignatureDeclaration(ast.buffer.uint32[pos >> 2], ast);
 }
 
-function deserializeBoxTSMethodSignature(pos, ast) {
+function constructBoxTSMethodSignature(pos, ast) {
   return new TSMethodSignature(ast.buffer.uint32[pos >> 2], ast);
 }
 
-function deserializeVecTSIndexSignatureName(pos, ast) {
+function constructVecTSIndexSignatureName(pos, ast) {
   const { uint32 } = ast.buffer,
     arr = [],
     pos32 = pos >> 2,
@@ -11257,59 +11257,59 @@ function deserializeVecTSIndexSignatureName(pos, ast) {
   return arr;
 }
 
-function deserializeOptionTSModuleDeclarationBody(pos, ast) {
+function constructOptionTSModuleDeclarationBody(pos, ast) {
   if (ast.buffer[pos] === 2) return null;
-  return deserializeTSModuleDeclarationBody(pos, ast);
+  return constructTSModuleDeclarationBody(pos, ast);
 }
 
-function deserializeBoxTSModuleBlock(pos, ast) {
+function constructBoxTSModuleBlock(pos, ast) {
   return new TSModuleBlock(ast.buffer.uint32[pos >> 2], ast);
 }
 
-function deserializeBoxTSTypeParameter(pos, ast) {
+function constructBoxTSTypeParameter(pos, ast) {
   return new TSTypeParameter(ast.buffer.uint32[pos >> 2], ast);
 }
 
-function deserializeOptionBoxObjectExpression(pos, ast) {
+function constructOptionBoxObjectExpression(pos, ast) {
   if (ast.buffer.uint32[pos >> 2] === 0 && ast.buffer.uint32[(pos + 4) >> 2] === 0) return null;
-  return deserializeBoxObjectExpression(pos, ast);
+  return constructBoxObjectExpression(pos, ast);
 }
 
-function deserializeOptionTSTypeName(pos, ast) {
+function constructOptionTSTypeName(pos, ast) {
   if (ast.buffer[pos] === 2) return null;
-  return deserializeTSTypeName(pos, ast);
+  return constructTSTypeName(pos, ast);
 }
 
-function deserializeOptionTSMappedTypeModifierOperator(pos, ast) {
+function constructOptionTSMappedTypeModifierOperator(pos, ast) {
   if (ast.buffer[pos] === 3) return null;
-  return deserializeTSMappedTypeModifierOperator(pos, ast);
+  return constructTSMappedTypeModifierOperator(pos, ast);
 }
 
-function deserializeBoxTSExternalModuleReference(pos, ast) {
+function constructBoxTSExternalModuleReference(pos, ast) {
   return new TSExternalModuleReference(ast.buffer.uint32[pos >> 2], ast);
 }
 
-function deserializeU32(pos, ast) {
+function constructU32(pos, ast) {
   return ast.buffer.uint32[pos >> 2];
 }
 
-function deserializeOptionNameSpan(pos, ast) {
+function constructOptionNameSpan(pos, ast) {
   if (ast.buffer.uint32[(pos + 8) >> 2] === 0 && ast.buffer.uint32[(pos + 12) >> 2] === 0) return null;
   return new NameSpan(pos, ast);
 }
 
-function deserializeU64(pos, ast) {
+function constructU64(pos, ast) {
   const { uint32 } = ast.buffer,
     pos32 = pos >> 2;
   return uint32[pos32] + uint32[pos32 + 1] * 4294967296;
 }
 
-function deserializeOptionU64(pos, ast) {
+function constructOptionU64(pos, ast) {
   if (ast.buffer[pos] === 0) return null;
-  return deserializeU64(pos + 8, ast);
+  return constructU64(pos + 8, ast);
 }
 
-function deserializeVecError(pos, ast) {
+function constructVecError(pos, ast) {
   const { uint32 } = ast.buffer,
     arr = [],
     pos32 = pos >> 2,
@@ -11322,7 +11322,7 @@ function deserializeVecError(pos, ast) {
   return arr;
 }
 
-function deserializeVecErrorLabel(pos, ast) {
+function constructVecErrorLabel(pos, ast) {
   const { uint32 } = ast.buffer,
     arr = [],
     pos32 = pos >> 2,
@@ -11335,7 +11335,7 @@ function deserializeVecErrorLabel(pos, ast) {
   return arr;
 }
 
-function deserializeVecStaticImport(pos, ast) {
+function constructVecStaticImport(pos, ast) {
   const { uint32 } = ast.buffer,
     arr = [],
     pos32 = pos >> 2,
@@ -11348,7 +11348,7 @@ function deserializeVecStaticImport(pos, ast) {
   return arr;
 }
 
-function deserializeVecStaticExport(pos, ast) {
+function constructVecStaticExport(pos, ast) {
   const { uint32 } = ast.buffer,
     arr = [],
     pos32 = pos >> 2,
@@ -11361,7 +11361,7 @@ function deserializeVecStaticExport(pos, ast) {
   return arr;
 }
 
-function deserializeVecDynamicImport(pos, ast) {
+function constructVecDynamicImport(pos, ast) {
   const { uint32 } = ast.buffer,
     arr = [],
     pos32 = pos >> 2,
@@ -11374,7 +11374,7 @@ function deserializeVecDynamicImport(pos, ast) {
   return arr;
 }
 
-function deserializeVecSpan(pos, ast) {
+function constructVecSpan(pos, ast) {
   const { uint32 } = ast.buffer,
     arr = [],
     pos32 = pos >> 2,
@@ -11387,7 +11387,7 @@ function deserializeVecSpan(pos, ast) {
   return arr;
 }
 
-function deserializeVecImportEntry(pos, ast) {
+function constructVecImportEntry(pos, ast) {
   const { uint32 } = ast.buffer,
     arr = [],
     pos32 = pos >> 2,
@@ -11400,7 +11400,7 @@ function deserializeVecImportEntry(pos, ast) {
   return arr;
 }
 
-function deserializeVecExportEntry(pos, ast) {
+function constructVecExportEntry(pos, ast) {
   const { uint32 } = ast.buffer,
     arr = [],
     pos32 = pos >> 2,

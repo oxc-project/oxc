@@ -5,11 +5,11 @@ const { parseSyncRawImpl, parseAsyncRawImpl, returnBufferToCache } = require('./
 module.exports = { parseSyncLazy, parseAsyncLazy };
 
 function parseSyncLazy(filename, sourceText, options) {
-  return parseSyncRawImpl(filename, sourceText, options, deserialize);
+  return parseSyncRawImpl(filename, sourceText, options, construct);
 }
 
 function parseAsyncLazy(filename, sourceText, options) {
-  return parseAsyncRawImpl(filename, sourceText, options, deserialize);
+  return parseAsyncRawImpl(filename, sourceText, options, construct);
 }
 
 // Registry for buffers which are held by lazily-deserialized ASTs.
@@ -23,13 +23,13 @@ const bufferRecycleRegistry = typeof FinalizationRegistry === 'undefined'
   ? null
   : new FinalizationRegistry(returnBufferToCache);
 
-let deserializeLazy = null, TOKEN;
+let constructLazyData = null, TOKEN;
 
 // Get an object with getters which lazy deserialize AST from buffer
-function deserialize(buffer, sourceText, sourceLen) {
+function construct(buffer, sourceText, sourceLen) {
   // Lazy load deserializer, and get `TOKEN` to store in `ast` objects
-  if (deserializeLazy === null) {
-    ({ deserialize: deserializeLazy, TOKEN } = require('../generated/deserialize/lazy.js'));
+  if (constructLazyData === null) {
+    ({ construct: constructLazyData, TOKEN } = require('../generated/deserialize/lazy.js'));
   }
 
   // Create AST object
@@ -41,7 +41,7 @@ function deserialize(buffer, sourceText, sourceLen) {
   bufferRecycleRegistry.register(ast, buffer, ast);
 
   // Get root data class instance
-  const data = deserializeLazy(ast);
+  const data = constructLazyData(ast);
 
   return {
     get program() {
