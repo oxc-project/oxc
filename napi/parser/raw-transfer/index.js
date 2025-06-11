@@ -249,7 +249,10 @@ function clearBuffersCache() {
 function createBuffer() {
   const arrayBuffer = new ArrayBuffer(SIX_GIB);
   const offset = bindings.getBufferOffset(new Uint8Array(arrayBuffer));
-  return new Uint8Array(arrayBuffer, offset, TWO_GIB);
+  const buffer = new Uint8Array(arrayBuffer, offset, TWO_GIB);
+  buffer.uint32 = new Uint32Array(arrayBuffer, offset, TWO_GIB / 4);
+  buffer.float64 = new Float64Array(arrayBuffer, offset, TWO_GIB / 8);
+  return buffer;
 }
 
 let rawTransferIsSupported = null;

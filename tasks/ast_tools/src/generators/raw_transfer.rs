@@ -65,8 +65,8 @@ static PRELUDE: &str = "
 
     function deserialize(buffer, sourceTextInput, sourceLenInput) {
         uint8 = buffer;
-        uint32 = new Uint32Array(buffer.buffer, buffer.byteOffset);
-        float64 = new Float64Array(buffer.buffer, buffer.byteOffset);
+        uint32 = buffer.uint32;
+        float64 = buffer.float64;
 
         sourceText = sourceTextInput;
         sourceLen = sourceLenInput;
