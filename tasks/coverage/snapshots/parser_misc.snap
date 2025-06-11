@@ -1,6 +1,6 @@
 parser_misc Summary:
-AST Parsed     : 40/40 (100.00%)
-Positive Passed: 40/40 (100.00%)
+AST Parsed     : 41/41 (100.00%)
+Positive Passed: 41/41 (100.00%)
 Negative Passed: 40/40 (100.00%)
 
   × Identifier `b` has already been declared
@@ -36,13 +36,13 @@ Negative Passed: 40/40 (100.00%)
    ╰────
 
   × Decorators may not appear after 'export' or 'export default' if they also appear before 'export'.
-   ╭─[misc/fail/oxc-11472.js:1:1]
+   ╭─[misc/fail/oxc-11472.js:1:14]
  1 │ @dec1 export @dec2 class C {}
-   · ─────
+   ·              ─────
  2 │ 
    ╰────
 
-  × Decorators may not appear after 'export' or 'export default' if they also appear before 'export'.
+  × Decorators are not valid here.
    ╭─[misc/fail/oxc-11472.js:3:1]
  2 │ 
  3 │ @dec1 export default @dec2 class {}

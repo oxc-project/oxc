@@ -628,6 +628,13 @@ impl<'a> Codegen<'a> {
         }
     }
 
+    fn print_decorators(&mut self, decorators: &[Decorator<'_>], ctx: Context) {
+        for decorator in decorators {
+            decorator.print(self, ctx);
+            self.print_hard_space();
+        }
+    }
+
     // `get_minified_number` from terser
     // https://github.com/terser/terser/blob/c5315c3fd6321d6b2e076af35a70ef532f498505/lib/output.js#L2418
     #[expect(clippy::cast_possible_truncation, clippy::cast_sign_loss, clippy::cast_possible_wrap)]

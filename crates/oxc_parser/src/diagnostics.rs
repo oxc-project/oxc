@@ -540,7 +540,7 @@ pub fn accessibility_modifier_already_seen(modifier: &Modifier) -> OxcDiagnostic
 
 #[cold]
 pub fn modifier_already_seen(modifier: &Modifier) -> OxcDiagnostic {
-    ts_error("1030", format!("{}' modifier already seen.", modifier.kind))
+    ts_error("1030", format!("'{}' modifier already seen.", modifier.kind))
         .with_label(modifier.span)
         .with_help("Remove the duplicate modifier.")
 }
@@ -683,4 +683,10 @@ pub fn optional_after_tuple_member_name(span: Span) -> OxcDiagnostic {
 #[cold]
 pub fn rest_after_tuple_member_name(span: Span) -> OxcDiagnostic {
     ts_error("5087", "A labeled tuple element is declared as rest with a '...' before the name, rather than before the type.").with_label(span)
+}
+
+#[cold]
+pub fn parameter_modifiers_in_ts(modifier: &Modifier) -> OxcDiagnostic {
+    ts_error("8012", "Parameter modifiers can only be used in TypeScript files.")
+        .with_label(modifier.span)
 }

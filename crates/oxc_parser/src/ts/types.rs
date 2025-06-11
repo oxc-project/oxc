@@ -124,7 +124,7 @@ impl<'a> ParserImpl<'a> {
     fn skip_parameter_start(&mut self) -> bool {
         // Skip modifiers
         if self.cur_kind().is_modifier_kind() {
-            self.parse_modifiers(false, false, false);
+            self.parse_modifiers(false, false);
         }
         if self.cur_kind().is_identifier() || self.at(Kind::This) {
             self.bump_any();
@@ -170,7 +170,7 @@ impl<'a> ParserImpl<'a> {
     pub(crate) fn parse_ts_type_parameter(&mut self) -> TSTypeParameter<'a> {
         let span = self.start_span();
 
-        let modifiers = self.parse_modifiers(false, true, false);
+        let modifiers = self.parse_modifiers(true, false);
         self.verify_modifiers(
             &modifiers,
             ModifierFlags::IN | ModifierFlags::OUT | ModifierFlags::CONST,
@@ -1264,7 +1264,7 @@ impl<'a> ParserImpl<'a> {
         }
 
         let mut flags = ModifierFlags::empty();
-        let mut modifiers: Vec<Modifier> = self.ast.vec();
+        let mut modifiers = None;
 
         loop {
             if !self.is_at_modifier(is_constructor_parameter) {
@@ -1278,7 +1278,7 @@ impl<'a> ParserImpl<'a> {
                     self.error(diagnostics::accessibility_modifier_already_seen(&modifier));
                 } else {
                     flags.insert(new_flag);
-                    modifiers.push(modifier);
+                    modifiers.get_or_insert_with(|| self.ast.vec()).push(modifier);
                 }
             } else {
                 break;

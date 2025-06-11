@@ -1,4 +1,4 @@
-use oxc_allocator::Box;
+use oxc_allocator::{Box, Vec};
 use oxc_ast::ast::*;
 use oxc_span::GetSpan;
 
@@ -203,7 +203,7 @@ impl<'a> ParserImpl<'a> {
         }
 
         let modifiers = self.parse_modifiers(
-            /* allow_decorators */ false, /* permit_const_as_modifier */ false,
+            /* permit_const_as_modifier */ false,
             /* stop_on_start_of_class_static_block */ false,
         );
 
@@ -322,7 +322,7 @@ impl<'a> ParserImpl<'a> {
             .ctx
             .union_ambient_if(modifiers.contains_declare())
             .and_await(modifiers.contains_async());
-        let decl = self.parse_declaration(start_span, &modifiers);
+        let decl = self.parse_declaration(start_span, &modifiers, self.ast.vec());
         self.ctx = reserved_ctx;
         Statement::from(decl)
     }
@@ -331,8 +331,15 @@ impl<'a> ParserImpl<'a> {
         &mut self,
         start_span: u32,
         modifiers: &Modifiers<'a>,
+        decorators: Vec<'a, Decorator<'a>>,
     ) -> Declaration<'a> {
-        match self.cur_kind() {
+        let kind = self.cur_kind();
+        if kind != Kind::Class {
+            for decorator in &decorators {
+                self.error(diagnostics::decorators_are_not_valid_here(decorator.span));
+            }
+        }
+        match kind {
             Kind::Namespace => {
                 let kind = TSModuleDeclarationKind::Namespace;
                 self.bump_any();
@@ -358,7 +365,7 @@ impl<'a> ParserImpl<'a> {
             Kind::Enum => self.parse_ts_enum_declaration(start_span, modifiers),
             Kind::Interface => self.parse_ts_interface_declaration(start_span, modifiers),
             Kind::Class => {
-                let decl = self.parse_class_declaration(start_span, modifiers);
+                let decl = self.parse_class_declaration(start_span, modifiers, decorators);
                 Declaration::ClassDeclaration(decl)
             }
             Kind::Import => {
@@ -479,9 +486,6 @@ impl<'a> ParserImpl<'a> {
     pub(crate) fn parse_ts_this_parameter(&mut self) -> TSThisParameter<'a> {
         let span = self.start_span();
         self.parse_class_element_modifiers(true);
-        if self.at(Kind::At) {
-            self.parse_and_save_decorators();
-        }
 
         let this_span = self.start_span();
         self.bump_any();

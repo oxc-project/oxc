@@ -41,7 +41,7 @@ impl<'a> ParserImpl<'a> {
         let span = self.start_span();
 
         let modifiers = self.parse_modifiers(
-            /* allow_decorators */ true, /* permit_const_as_modifier */ false,
+            /* permit_const_as_modifier */ false,
             /* stop_on_start_of_class_static_block */ false,
         );
 

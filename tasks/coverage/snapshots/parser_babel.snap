@@ -12111,7 +12111,7 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ╰────
   help: Try insert a semicolon here
 
-  × TS(1030): declare' modifier already seen.
+  × TS(1030): 'declare' modifier already seen.
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/duplicate-modifier-1/input.ts:2:18]
  1 │ class A {
  2 │   declare public declare foo;
@@ -12120,7 +12120,7 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ╰────
   help: Remove the duplicate modifier.
 
-  × TS(1030): declare' modifier already seen.
+  × TS(1030): 'declare' modifier already seen.
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/duplicate-modifier-2/input.ts:2:25]
  1 │ class A {
  2 │   declare public static declare foo;
@@ -12129,7 +12129,7 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ╰────
   help: Remove the duplicate modifier.
 
-  × TS(1030): public' modifier already seen.
+  × TS(1030): 'public' modifier already seen.
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/duplicates-accessibility/input.ts:2:10]
  1 │ class Foo {
  2 │   public public a;
@@ -12469,7 +12469,7 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ·                ───
    ╰────
 
-  × TS(1030): declare' modifier already seen.
+  × TS(1030): 'declare' modifier already seen.
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/export/double-declare/input.ts:1:16]
  1 │ export declare declare var name;
    ·                ───────
@@ -13415,7 +13415,7 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
  96 │ type T21<in out in T> = T;  // Error
     ╰────
 
-  × TS(1030): in' modifier already seen.
+  × TS(1030): 'in' modifier already seen.
     ╭─[babel/packages/babel-parser/test/fixtures/typescript/types/variance-annotations/input.ts:96:17]
  95 │ type T20<public T> = T;  // Error
  96 │ type T21<in out in T> = T;  // Error
@@ -13424,7 +13424,7 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
     ╰────
   help: Remove the duplicate modifier.
 
-  × TS(1030): out' modifier already seen.
+  × TS(1030): 'out' modifier already seen.
     ╭─[babel/packages/babel-parser/test/fixtures/typescript/types/variance-annotations/input.ts:97:17]
  96 │ type T21<in out in T> = T;  // Error
  97 │ type T22<in out out T> = T;  // Error
@@ -13441,7 +13441,7 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
  96 │ type T21<in out in T> = T;  // Error
     ╰────
 
-  × TS(1030): in' modifier already seen.
+  × TS(1030): 'in' modifier already seen.
     ╭─[babel/packages/babel-parser/test/fixtures/typescript/types/variance-annotations-babel-7/input.ts:96:17]
  95 │ type T20<public T> = T;  // Error
  96 │ type T21<in out in T> = T;  // Error
@@ -13450,7 +13450,7 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
     ╰────
   help: Remove the duplicate modifier.
 
-  × TS(1030): out' modifier already seen.
+  × TS(1030): 'out' modifier already seen.
     ╭─[babel/packages/babel-parser/test/fixtures/typescript/types/variance-annotations-babel-7/input.ts:97:17]
  96 │ type T21<in out in T> = T;  // Error
  97 │ type T22<in out out T> = T;  // Error

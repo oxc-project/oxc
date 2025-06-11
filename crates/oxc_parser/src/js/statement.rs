@@ -81,14 +81,8 @@ impl<'a> ParserImpl<'a> {
         &mut self,
         stmt_ctx: StatementContext,
     ) -> Statement<'a> {
-        let start_span = self.start_span();
-
         let has_no_side_effects_comment =
             self.lexer.trivia_builder.previous_token_has_no_side_effects_comment();
-
-        if self.at(Kind::At) {
-            self.parse_and_save_decorators();
-        }
 
         let mut stmt = match self.cur_kind() {
             Kind::LCurly => self.parse_block_statement(),
@@ -103,8 +97,13 @@ impl<'a> ParserImpl<'a> {
             Kind::Throw => self.parse_throw_statement(),
             Kind::Try => self.parse_try_statement(),
             Kind::Debugger => self.parse_debugger_statement(),
-            Kind::Class => self.parse_class_statement(stmt_ctx, start_span),
-            Kind::Export => self.parse_export_declaration(),
+            Kind::Class => self.parse_class_statement(
+                self.start_span(),
+                stmt_ctx,
+                &Modifiers::empty(),
+                self.ast.vec(),
+            ),
+            Kind::Export => self.parse_export_declaration(self.start_span(), self.ast.vec()),
             // [+Return] ReturnStatement[?Yield, ?Await]
             Kind::Return => self.parse_return_statement(),
             Kind::Var => {
@@ -114,10 +113,23 @@ impl<'a> ParserImpl<'a> {
             }
             // Fast path
             Kind::Function => {
-                self.parse_function_declaration(start_span, /* async */ false, stmt_ctx)
+                self.parse_function_declaration(self.start_span(), /* async */ false, stmt_ctx)
+            }
+            Kind::At => {
+                let span = self.start_span();
+                let decorators = self.parse_decorators();
+                match self.cur_kind() {
+                    Kind::Class => {
+                        // Class span.start starts before decorators.
+                        self.parse_class_statement(span, stmt_ctx, &Modifiers::empty(), decorators)
+                    }
+                    // Export span.start starts after decorators.
+                    Kind::Export => self.parse_export_declaration(self.start_span(), decorators),
+                    _ => self.unexpected(),
+                }
             }
             Kind::Let if !self.cur_token().escaped() => self.parse_let(stmt_ctx),
-            Kind::Async => self.parse_async_statement(start_span, stmt_ctx),
+            Kind::Async => self.parse_async_statement(self.start_span(), stmt_ctx),
             Kind::Import => self.parse_import_statement(),
             Kind::Const => self.parse_const_statement(stmt_ctx),
             Kind::Using if self.is_using_declaration() => self.parse_using_statement(),
@@ -138,7 +150,7 @@ impl<'a> ParserImpl<'a> {
             | Kind::Global
                 if self.is_ts && self.at_start_of_ts_declaration() =>
             {
-                self.parse_ts_declaration_statement(start_span)
+                self.parse_ts_declaration_statement(self.start_span())
             }
             _ => self.parse_expression_or_labeled_statement(),
         };
@@ -146,8 +158,6 @@ impl<'a> ParserImpl<'a> {
         if has_no_side_effects_comment {
             Self::set_pure_on_function_stmt(&mut stmt);
         }
-
-        self.check_unconsumed_decorators();
 
         stmt
     }
@@ -659,7 +669,7 @@ impl<'a> ParserImpl<'a> {
         self.bump_any();
         if self.is_ts && self.at(Kind::Enum) {
             let modifiers = self.ast.vec1(Modifier::new(self.end_span(span), ModifierKind::Const));
-            let modifiers = Modifiers::new(modifiers, ModifierFlags::CONST);
+            let modifiers = Modifiers::new(Some(modifiers), ModifierFlags::CONST);
             Statement::from(self.parse_ts_enum_declaration(span, &modifiers))
         } else {
             self.parse_variable_statement(span, VariableDeclarationKind::Const, stmt_ctx)

@@ -67,25 +67,25 @@ impl<'a> ParserImpl<'a> {
         (this_param, formal_parameters)
     }
 
-    fn parse_parameter_modifiers(&mut self) -> Modifiers<'a> {
-        let modifiers = self.parse_class_element_modifiers(true);
-        self.verify_modifiers(
-            &modifiers,
-            ModifierFlags::ACCESSIBILITY
-                .union(ModifierFlags::READONLY)
-                .union(ModifierFlags::OVERRIDE),
-            diagnostics::cannot_appear_on_a_parameter,
-        );
-        modifiers
-    }
-
     fn parse_formal_parameter(&mut self) -> FormalParameter<'a> {
         let span = self.start_span();
-        if self.at(Kind::At) {
-            self.parse_and_save_decorators();
+        let decorators = self.parse_decorators();
+        let modifiers = self.parse_modifiers(false, false);
+        if self.is_ts {
+            self.verify_modifiers(
+                &modifiers,
+                ModifierFlags::ACCESSIBILITY
+                    .union(ModifierFlags::READONLY)
+                    .union(ModifierFlags::OVERRIDE),
+                diagnostics::cannot_appear_on_a_parameter,
+            );
+        } else {
+            self.verify_modifiers(
+                &modifiers,
+                ModifierFlags::empty(),
+                diagnostics::parameter_modifiers_in_ts,
+            );
         }
-        let decorators = self.consume_decorators();
-        let modifiers = self.parse_parameter_modifiers();
         let pattern = self.parse_binding_pattern_with_initializer();
         self.ast.formal_parameter(
             self.end_span(span),
