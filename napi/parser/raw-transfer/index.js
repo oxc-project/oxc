@@ -3,9 +3,25 @@
 const os = require('node:os');
 const bindings = require('../bindings.js');
 
-module.exports = { parseSyncRaw, parseAsyncRaw, rawTransferSupported, prepareRaw, isJsAst };
+module.exports = {
+  rawTransferSupported,
+  parseSyncRawImpl,
+  parseAsyncRawImpl,
+  prepareRaw,
+  isJsAst,
+  returnBufferToCache,
+};
 
-function parseSyncRaw(filename, sourceText, options) {
+// Import `eager.js` and `lazy.js` after the exports above, because of circular dependencies
+const { parseSyncRaw, parseAsyncRaw } = require('./eager.js');
+module.exports.parseSyncRaw = parseSyncRaw;
+module.exports.parseAsyncRaw = parseAsyncRaw;
+
+const { parseSyncLazy, parseAsyncLazy } = require('./lazy.js');
+module.exports.parseSyncLazy = parseSyncLazy;
+module.exports.parseAsyncLazy = parseAsyncLazy;
+
+function parseSyncRawImpl(filename, sourceText, options, deserialize) {
   const { buffer, sourceByteLen, options: optionsAmended } = prepareRaw(sourceText, options);
   bindings.parseSyncRaw(filename, buffer, sourceByteLen, optionsAmended);
   return deserialize(buffer, sourceText, sourceByteLen);
@@ -49,7 +65,7 @@ function parseSyncRaw(filename, sourceText, options) {
 let availableCores = os.availableParallelism ? os.availableParallelism() : os.cpus().length;
 const queue = [];
 
-async function parseAsyncRaw(filename, sourceText, options) {
+async function parseAsyncRawImpl(filename, sourceText, options, deserialize) {
   // Wait for a free CPU core if all CPUs are currently busy.
   //
   // Note: `availableCores` is NOT decremented if have to wait in the queue first,
@@ -125,7 +141,7 @@ const ONE_GIB = 1 << 30,
 const CLEAR_BUFFERS_TIMEOUT = 10_000; // 10 seconds
 const buffers = [], oldBuffers = [];
 
-let encoder = null, deserializeJS = null, deserializeTS = null, clearBuffersTimeout = null;
+let encoder = null, clearBuffersTimeout = null;
 
 // Get a buffer (from cache if possible), copy source text into it, and amend options object
 function prepareRaw(sourceText, options) {
@@ -136,9 +152,9 @@ function prepareRaw(sourceText, options) {
     );
   }
 
-  // Delete `experimentalRawTransfer` option
+  // Delete `experimentalRawTransfer` and `experimentalLazy` options
   let _;
-  ({ experimentalRawTransfer: _, ...options } = options);
+  ({ experimentalRawTransfer: _, experimentalLazy: _, ...options } = options);
 
   // Cancel timeout for clearing buffers
   if (clearBuffersTimeout !== null) {
@@ -173,58 +189,22 @@ function prepareRaw(sourceText, options) {
   return { buffer, sourceByteLen, options };
 }
 
-// Deserialize AST from buffer
-function deserialize(buffer, sourceText, sourceByteLen) {
-  // Lazy load deserializer, and deserialize buffer to JS objects
-  let data;
-  if (isJsAst(buffer)) {
-    if (deserializeJS === null) deserializeJS = require('../generated/deserialize/js.js');
-    data = deserializeJS(buffer, sourceText, sourceByteLen);
-
-    // Add a line comment for hashbang
-    const { hashbang } = data.program;
-    if (hashbang !== null) {
-      data.comments.unshift({ type: 'Line', value: hashbang.value, start: hashbang.start, end: hashbang.end });
-    }
-  } else {
-    if (deserializeTS === null) deserializeTS = require('../generated/deserialize/ts.js');
-    data = deserializeTS(buffer, sourceText, sourceByteLen);
-    // Note: Do not add line comment for hashbang, to match `@typescript-eslint/parser`.
-    // See https://github.com/oxc-project/oxc/blob/ea784f5f082e4c53c98afde9bf983afd0b95e44e/napi/parser/src/lib.rs#L106-L130
-  }
-
-  // Return buffer to cache, to be reused
-  buffers.push(buffer);
-
-  // Set timer to clear buffers
-  if (clearBuffersTimeout !== null) clearTimeout(clearBuffersTimeout);
-  clearBuffersTimeout = setTimeout(clearBuffersCache, CLEAR_BUFFERS_TIMEOUT);
-  clearBuffersTimeout.unref();
-
-  // We cannot lazily deserialize in the getters, because the buffer might be re-used to parse
-  // another file before the getter is called.
-  return {
-    get program() {
-      return data.program;
-    },
-    get module() {
-      return data.module;
-    },
-    get comments() {
-      return data.comments;
-    },
-    get errors() {
-      return data.errors;
-    },
-  };
-}
-
 // Get if AST should be parsed as JS or TS.
 // Rust side sets a `bool` in this position in buffer which is `true` if TS.
 function isJsAst(buffer) {
   // 2147483636 = (2 * 1024 * 1024 * 1024) - 12
   // i.e. 12 bytes from end of 2 GiB buffer
   return buffer[2147483636] === 0;
+}
+
+// Return buffer to cache, to be reused.
+// Set a timer to clear buffers.
+function returnBufferToCache(buffer) {
+  buffers.push(buffer);
+
+  if (clearBuffersTimeout !== null) clearTimeout(clearBuffersTimeout);
+  clearBuffersTimeout = setTimeout(clearBuffersCache, CLEAR_BUFFERS_TIMEOUT);
+  clearBuffersTimeout.unref();
 }
 
 // Downgrade buffers in tier 1 cache (`buffers`) to tier 2 (`oldBuffers`),

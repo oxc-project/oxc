@@ -45,7 +45,10 @@
     "webcontainer-fallback.js",
     "generated/deserialize/js.js",
     "generated/deserialize/ts.js",
-    "raw-transfer/index.js"
+    "generated/deserialize/lazy.js",
+    "raw-transfer/index.js",
+    "raw-transfer/eager.js",
+    "raw-transfer/lazy.js"
   ],
   "publishConfig": {
     "registry": "https://registry.npmjs.org/",

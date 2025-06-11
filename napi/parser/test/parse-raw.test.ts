@@ -5,6 +5,10 @@ import { describe, expect, it } from 'vitest';
 import { parseAsync, parseSync } from '../index.js';
 import { makeUnitsFromTest } from './typescript-make-units-from-test.cjs';
 
+const RUN_LAZY_TESTS = false;
+const describeLazy = RUN_LAZY_TESTS ? describe : () => {};
+const itLazy = RUN_LAZY_TESTS ? it : () => {};
+
 const ROOT_DIR = pathJoin(import.meta.dirname, '../../..');
 const TARGET_DIR_PATH = pathJoin(ROOT_DIR, 'target');
 const TEST262_SHORT_DIR_PATH = 'tasks/coverage/test262/test';
@@ -91,6 +95,37 @@ describe('test262', () => {
   });
 });
 
+// Check lazy deserialization doesn't throw
+describeLazy('lazy test262', () => {
+  it.each(test262FixturePaths)('%s', async (path) => {
+    const filename = basename(path);
+    const [sourceText, acornJson] = await Promise.all([
+      readFile(pathJoin(TEST262_DIR_PATH, path), 'utf8'),
+      readFile(pathJoin(ACORN_TEST262_DIR_PATH, `${path}on`), 'utf8'),
+    ]);
+
+    // Acorn JSON files always end with:
+    // ```
+    //   "sourceType": "script",
+    //   "hashbang": null
+    // }
+    // ```
+    // For speed, extract `sourceType` with a slice, rather than parsing the JSON.
+    const sourceType = acornJson.slice(-29, -23);
+
+    testLazy(filename, sourceText, { sourceType });
+  });
+});
+
+function testLazy(filename, sourceText, options) {
+  // @ts-ignore
+  const ret = parseSync(filename, sourceText, { ...options, experimentalLazy: true });
+  JSON.stringify(ret.program);
+  JSON.stringify(ret.comments);
+  JSON.stringify(ret.errors);
+  JSON.stringify(ret.module);
+}
+
 // Test raw transfer output matches JSON snapshots for Acorn-JSX test cases.
 //
 // Only test Acorn-JSX fixtures which Acorn is able to parse.
@@ -121,6 +156,29 @@ describe('JSX', () => {
     const { program } = parseSync(filename, sourceText, { sourceType, experimentalRawTransfer: true });
     const json = stringifyAcornTest262Style(program);
     expect(json).toEqual(acornJson);
+  });
+});
+
+// Check lazy deserialization doesn't throw
+describeLazy('lazy JSX', () => {
+  it.each(jsxFixturePaths)('%s', async (filename) => {
+    const sourcePath = pathJoin(JSX_DIR_PATH, filename),
+      jsonPath = sourcePath.slice(0, -1) + 'on'; // `.jsx` -> `.json`
+    const [sourceText, acornJson] = await Promise.all([
+      readFile(sourcePath, 'utf8'),
+      readFile(jsonPath, 'utf8'),
+    ]);
+
+    // Acorn JSON files always end with:
+    // ```
+    //   "sourceType": "script",
+    //   "hashbang": null
+    // }
+    // ```
+    // For speed, extract `sourceType` with a slice, rather than parsing the JSON.
+    const sourceType = acornJson.slice(-29, -23);
+
+    testLazy(filename, sourceText, { sourceType });
   });
 });
 
@@ -193,6 +251,27 @@ describe('TypeScript', () => {
   });
 });
 
+// Check lazy deserialization doesn't throw
+describeLazy('lazy TypeScript', () => {
+  it.each(tsFixturePaths)('%s', async (path) => {
+    const tsPath = path.slice(0, -3); // Trim off `.md`
+    let sourceText = await readFile(pathJoin(TS_DIR_PATH, tsPath), 'utf8');
+
+    // Trim off UTF-8 BOM
+    if (sourceText.charCodeAt(0) === 0xFEFF) sourceText = sourceText.slice(1);
+
+    const { tests } = makeUnitsFromTest(tsPath, sourceText);
+
+    for (const { name: filename, content: code, sourceType } of tests) {
+      testLazy(filename, sourceText, {
+        sourceType: sourceType.module ? 'module' : 'unambiguous',
+        astType: 'ts',
+        preserveParens: false,
+      });
+    }
+  });
+});
+
 // Test raw transfer output matches standard (via JSON) output for edge cases not covered by Test262
 describe('edge cases', () => {
   describe.each([
@@ -220,6 +299,15 @@ describe('edge cases', () => {
     it('TS', () => {
       assertRawAndStandardMatch('dummy.ts', sourceText);
     });
+
+    // Check lazy deserialization doesn't throw
+    itLazy('lazy JS', () => {
+      testLazy('dummy.js', sourceText, {});
+    });
+
+    itLazy('lazy TS', () => {
+      testLazy('dummy.ts', sourceText, {});
+    });
   });
 });
 
@@ -227,6 +315,13 @@ describe('edge cases', () => {
 describe('fixtures', () => {
   it.each(benchFixtures)('%s', (filename, sourceText) => {
     assertRawAndStandardMatch(filename, sourceText);
+  });
+});
+
+// Check lazy deserialization doesn't throw
+describeLazy('lazy fixtures', () => {
+  it.each(benchFixtures)('lazy %s', (filename, sourceText) => {
+    testLazy(filename, sourceText, {});
   });
 });
 

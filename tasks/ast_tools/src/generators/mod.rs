@@ -10,6 +10,7 @@ mod ast_kind;
 mod formatter;
 mod get_id;
 mod raw_transfer;
+mod raw_transfer_lazy;
 mod scopes_collector;
 mod typescript;
 mod utf8_to_utf16;
@@ -23,6 +24,7 @@ pub use formatter::{
 };
 pub use get_id::GetIdGenerator;
 pub use raw_transfer::RawTransferGenerator;
+pub use raw_transfer_lazy::RawTransferLazyGenerator;
 pub use scopes_collector::ScopesCollectorGenerator;
 pub use typescript::TypescriptGenerator;
 pub use utf8_to_utf16::Utf8ToUtf16ConverterGenerator;
