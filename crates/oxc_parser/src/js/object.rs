@@ -8,6 +8,8 @@ use crate::{
     modifiers::{ModifierFlags, Modifiers},
 };
 
+use super::FunctionKind;
+
 impl<'a> ParserImpl<'a> {
     /// [Object Expression](https://tc39.es/ecma262/#sec-object-initializer)
     /// `ObjectLiteral`[Yield, Await] :
@@ -65,7 +67,11 @@ impl<'a> ParserImpl<'a> {
                 ModifierFlags::ASYNC,
                 diagnostics::modifier_cannot_be_used_here,
             );
-            let method = self.parse_method(modifiers.contains_async(), asterisk_token);
+            let method = self.parse_method(
+                modifiers.contains_async(),
+                asterisk_token,
+                FunctionKind::ObjectMethod,
+            );
             return self.ast.alloc_object_property(
                 self.end_span(span),
                 PropertyKind::Init,
@@ -196,7 +202,7 @@ impl<'a> ParserImpl<'a> {
         modifiers: &Modifiers<'a>,
     ) -> Box<'a, ObjectProperty<'a>> {
         let (key, computed) = self.parse_property_name();
-        let method = self.parse_method(false, false);
+        let method = self.parse_method(false, false, FunctionKind::ObjectMethod);
         let value = Expression::FunctionExpression(method);
         self.verify_modifiers(
             modifiers,

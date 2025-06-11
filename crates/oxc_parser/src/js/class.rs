@@ -9,6 +9,8 @@ use crate::{
     modifiers::{ModifierFlags, ModifierKind, Modifiers},
 };
 
+use super::FunctionKind;
+
 type Extends<'a> =
     Vec<'a, (Expression<'a>, Option<Box<'a, TSTypeParameterInstantiation<'a>>>, Span)>;
 
@@ -364,7 +366,11 @@ impl<'a> ParserImpl<'a> {
         decorators: Vec<'a, Decorator<'a>>,
     ) -> ClassElement<'a> {
         let (name, computed) = self.parse_class_element_name(modifiers);
-        let value = self.parse_method(modifiers.contains(ModifierKind::Async), false);
+        let value = self.parse_method(
+            modifiers.contains(ModifierKind::Async),
+            false,
+            FunctionKind::ClassMethod,
+        );
         let method_definition = self.ast.alloc_method_definition(
             self.end_span(span),
             r#type,
@@ -395,7 +401,11 @@ impl<'a> ParserImpl<'a> {
         modifiers: &Modifiers<'a>,
         decorators: Vec<'a, Decorator<'a>>,
     ) -> ClassElement<'a> {
-        let value = self.parse_method(modifiers.contains(ModifierKind::Async), false);
+        let value = self.parse_method(
+            modifiers.contains(ModifierKind::Async),
+            false,
+            FunctionKind::ClassMethod,
+        );
         let method_definition = self.ast.alloc_method_definition(
             self.end_span(span),
             r#type,
@@ -499,7 +509,11 @@ impl<'a> ParserImpl<'a> {
         modifiers: &Modifiers<'a>,
         decorators: Vec<'a, Decorator<'a>>,
     ) -> ClassElement<'a> {
-        let value = self.parse_method(modifiers.contains(ModifierKind::Async), generator);
+        let value = self.parse_method(
+            modifiers.contains(ModifierKind::Async),
+            generator,
+            FunctionKind::ClassMethod,
+        );
         let method_definition = self.ast.alloc_method_definition(
             self.end_span(span),
             r#type,

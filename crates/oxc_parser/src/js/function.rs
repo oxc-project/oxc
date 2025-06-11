@@ -43,6 +43,7 @@ impl<'a> ParserImpl<'a> {
 
     pub(crate) fn parse_formal_parameters(
         &mut self,
+        func_kind: FunctionKind,
         params_kind: FormalParameterKind,
     ) -> (Option<TSThisParameter<'a>>, Box<'a, FormalParameters<'a>>) {
         let span = self.start_span();
@@ -58,7 +59,7 @@ impl<'a> ParserImpl<'a> {
         };
         let (list, rest) = self.parse_delimited_list_with_rest(
             Kind::RParen,
-            Self::parse_formal_parameter,
+            |p| p.parse_formal_parameter(func_kind),
             diagnostics::rest_parameter_last,
         );
         self.expect(Kind::RParen);
@@ -67,7 +68,7 @@ impl<'a> ParserImpl<'a> {
         (this_param, formal_parameters)
     }
 
-    fn parse_formal_parameter(&mut self) -> FormalParameter<'a> {
+    fn parse_formal_parameter(&mut self, func_kind: FunctionKind) -> FormalParameter<'a> {
         let span = self.start_span();
         let decorators = self.parse_decorators();
         let modifiers = self.parse_modifiers(false, false);
@@ -87,6 +88,11 @@ impl<'a> ParserImpl<'a> {
             );
         }
         let pattern = self.parse_binding_pattern_with_initializer();
+        if func_kind != FunctionKind::ClassMethod {
+            for decorator in &decorators {
+                self.error(diagnostics::decorators_are_not_valid_here(decorator.span));
+            }
+        }
         self.ast.formal_parameter(
             self.end_span(span),
             decorators,
@@ -110,7 +116,7 @@ impl<'a> ParserImpl<'a> {
         let ctx = self.ctx;
         self.ctx = self.ctx.and_in(true).and_await(r#async).and_yield(generator);
         let type_parameters = self.parse_ts_type_parameters();
-        let (this_param, params) = self.parse_formal_parameters(param_kind);
+        let (this_param, params) = self.parse_formal_parameters(func_kind, param_kind);
         let return_type =
             self.parse_ts_return_type_annotation(Kind::Colon, /* is_type */ true);
         let body = if self.at(Kind::LCurly) { Some(self.parse_function_body()) } else { None };
@@ -127,7 +133,7 @@ impl<'a> ParserImpl<'a> {
                     FunctionType::FunctionDeclaration
                 }
             }
-            FunctionKind::Expression => {
+            FunctionKind::Expression | FunctionKind::ClassMethod | FunctionKind::ObjectMethod => {
                 if body.is_none() {
                     FunctionType::TSEmptyBodyFunctionExpression
                 } else {
@@ -269,14 +275,19 @@ impl<'a> ParserImpl<'a> {
     ///   async `ClassElementName`
     /// `AsyncGeneratorMethod`
     ///   async * `ClassElementName`
-    pub(crate) fn parse_method(&mut self, r#async: bool, generator: bool) -> Box<'a, Function<'a>> {
+    pub(crate) fn parse_method(
+        &mut self,
+        r#async: bool,
+        generator: bool,
+        func_kind: FunctionKind,
+    ) -> Box<'a, Function<'a>> {
         let span = self.start_span();
         self.parse_function(
             span,
             None,
             r#async,
             generator,
-            FunctionKind::Expression,
+            func_kind,
             FormalParameterKind::UniqueFormalParameters,
             &Modifiers::empty(),
         )

@@ -1,7 +1,7 @@
 parser_misc Summary:
 AST Parsed     : 41/41 (100.00%)
 Positive Passed: 41/41 (100.00%)
-Negative Passed: 43/43 (100.00%)
+Negative Passed: 44/44 (100.00%)
 
   × Identifier `b` has already been declared
    ╭─[misc/fail/oxc-10159.js:1:22]
@@ -52,6 +52,21 @@ Negative Passed: 43/43 (100.00%)
   × Expected `from` but found `EOF`
    ╭─[misc/fail/oxc-11484.ts:2:1]
  1 │ import { type as as }
+   ╰────
+
+  × Decorators are not valid here.
+   ╭─[misc/fail/oxc-11485.ts:2:10]
+ 1 │ var obj = {
+ 2 │   method(@foo x) {},
+   ·          ────
+ 3 │ };
+   ╰────
+
+  × Decorators are not valid here.
+   ╭─[misc/fail/oxc-11485.ts:5:17]
+ 4 │ 
+ 5 │ function method(@foo x) {}
+   ·                 ────
    ╰────
 
   × Unexpected token
