@@ -225,6 +225,10 @@ fn generate_struct(
     }}
     */
 
+    // TODO: Don't need `deserializeThing` wrapper functions - just call `new Thing(pos, ast)` instead.
+    // When introduce node caching, can do that in class constructor.
+    // Note: Also need to cache strings in `Vec<&str>`.
+
     #[rustfmt::skip]
     write_it!(code, "
         function {fn_name}(pos, ast) {{
