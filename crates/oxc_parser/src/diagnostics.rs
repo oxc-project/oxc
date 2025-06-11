@@ -695,3 +695,8 @@ pub fn parameter_modifiers_in_ts(modifier: &Modifier) -> OxcDiagnostic {
 pub fn implementation_in_ambient(span: Span) -> OxcDiagnostic {
     ts_error("1183", "An implementation cannot be declared in ambient contexts.").with_label(span)
 }
+
+#[cold]
+pub fn interface_implements(span: Span) -> OxcDiagnostic {
+    ts_error("1176", "Interface declaration cannot have 'implements' clause.").with_label(span)
+}

@@ -170,17 +170,21 @@ impl<'a> ParserImpl<'a> {
         self.expect(Kind::Interface); // bump interface
         let id = self.parse_binding_identifier();
         let type_parameters = self.parse_ts_type_parameters();
-        let (extends, _) = self.parse_heritage_clause();
+        let (extends, implements) = self.parse_heritage_clause();
         let body = self.parse_ts_interface_body();
         let extends =
             extends.map_or_else(|| self.ast.vec(), |e| self.ast.ts_interface_heritages(e));
-
         self.verify_modifiers(
             modifiers,
             ModifierFlags::DECLARE,
             diagnostics::modifier_cannot_be_used_here,
         );
-
+        if !implements.is_empty() {
+            self.error(diagnostics::interface_implements(Span::new(
+                implements.first().unwrap().span.start,
+                implements.last().unwrap().span.end,
+            )));
+        }
         self.ast.declaration_ts_interface(
             self.end_span(span),
             id,
