@@ -1,7 +1,7 @@
 parser_misc Summary:
 AST Parsed     : 41/41 (100.00%)
 Positive Passed: 41/41 (100.00%)
-Negative Passed: 40/40 (100.00%)
+Negative Passed: 43/43 (100.00%)
 
   × Identifier `b` has already been declared
    ╭─[misc/fail/oxc-10159.js:1:22]
@@ -73,6 +73,26 @@ Negative Passed: 40/40 (100.00%)
  1 │ const y = `foo ${x function() {} function () {}}`;
    ·                    ────┬───
    ·                        ╰── `}` expected
+   ╰────
+
+  × Unexpected token
+   ╭─[misc/fail/oxc-11592-1.ts:1:11]
+ 1 │ namespace "a" {}
+   ·           ───
+   ╰────
+
+  × Unexpected token
+   ╭─[misc/fail/oxc-11592-2.ts:1:11]
+ 1 │ namespace "a";
+   ·           ───
+ 2 │ 
+   ╰────
+
+  × Expected `{` but found `;`
+   ╭─[misc/fail/oxc-11592-3.ts:1:12]
+ 1 │ namespace a;
+   ·            ┬
+   ·            ╰── `{` expected
    ╰────
 
   × Unexpected token

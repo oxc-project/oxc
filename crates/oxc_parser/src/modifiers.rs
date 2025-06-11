@@ -26,7 +26,6 @@ bitflags! {
       const CONST         = 1 << 9;
       const IN            = 1 << 10;
       const OUT           = 1 << 11;
-      const EXPORT        = 1 << 12;
       const DEFAULT       = 1 << 13;
       const ACCESSOR      = 1 << 14;
       const ACCESSIBILITY = Self::PRIVATE.bits() | Self::PROTECTED.bits() | Self::PUBLIC.bits();
