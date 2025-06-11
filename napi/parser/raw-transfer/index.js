@@ -3,7 +3,7 @@
 const { availableParallelism } = require('node:os');
 const bindings = require('../bindings.js');
 
-module.exports = { parseSyncRaw, parseAsyncRaw, rawTransferSupported };
+module.exports = { parseSyncRaw, parseAsyncRaw, rawTransferSupported, prepareRaw, isJsAst };
 
 function parseSyncRaw(filename, sourceText, options) {
   const { buffer, sourceByteLen, options: optionsAmended } = prepareRaw(sourceText, options);
@@ -172,13 +172,9 @@ function prepareRaw(sourceText, options) {
 
 // Deserialize AST from buffer
 function deserialize(buffer, sourceText, sourceByteLen) {
-  // 2147483636 = (2 * 1024 * 1024 * 1024) - 12
-  // i.e. 12 bytes from end of 2 GiB buffer
-  const isJsAst = buffer[2147483636] === 0;
-
   // Lazy load deserializer, and deserialize buffer to JS objects
   let data;
-  if (isJsAst) {
+  if (isJsAst(buffer)) {
     if (deserializeJS === null) deserializeJS = require('../generated/deserialize/js.js');
     data = deserializeJS(buffer, sourceText, sourceByteLen);
 
@@ -218,6 +214,14 @@ function deserialize(buffer, sourceText, sourceByteLen) {
       return data.errors;
     },
   };
+}
+
+// Get if AST should be parsed as JS or TS.
+// Rust side sets a `bool` in this position in buffer which is `true` if TS.
+function isJsAst(buffer) {
+  // 2147483636 = (2 * 1024 * 1024 * 1024) - 12
+  // i.e. 12 bytes from end of 2 GiB buffer
+  return buffer[2147483636] === 0;
 }
 
 // Downgrade buffers in tier 1 cache (`buffers`) to tier 2 (`oldBuffers`),
