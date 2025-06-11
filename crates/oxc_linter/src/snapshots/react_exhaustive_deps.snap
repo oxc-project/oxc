@@ -541,6 +541,51 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Either include it or remove the dependency array.
 
+  ⚠ eslint-plugin-react-hooks(exhaustive-deps): React Hook useCallback has a missing dependency: 'props.foo'
+   ╭─[exhaustive_deps.tsx:5:14]
+ 4 │             console.log(foo);
+ 5 │           }, [props.bar]);
+   ·              ───────────
+ 6 │         }
+   ╰────
+  help: Either include it or remove the dependency array.
+
+  ⚠ eslint-plugin-react(exhaustive-deps): React Hook useCallback has unnecessary dependency: props.bar
+   ╭─[exhaustive_deps.tsx:5:14]
+ 4 │             console.log(foo);
+ 5 │           }, [props.bar]);
+   ·              ───────────
+ 6 │         }
+   ╰────
+  help: Either include it or remove the dependency array.
+
+  ⚠ eslint-plugin-react-hooks(exhaustive-deps): React Hook useCallback has a missing dependency: 'props.foo'
+   ╭─[exhaustive_deps.tsx:5:14]
+ 4 │             console.log(bar);
+ 5 │           }, [props.foo.bar]);
+   ·              ───────────────
+ 6 │         }
+   ╰────
+  help: Either include it or remove the dependency array.
+
+  ⚠ eslint-plugin-react(exhaustive-deps): React Hook useCallback has unnecessary dependency: props.foo.bar
+   ╭─[exhaustive_deps.tsx:5:14]
+ 4 │             console.log(bar);
+ 5 │           }, [props.foo.bar]);
+   ·              ───────────────
+ 6 │         }
+   ╰────
+  help: Either include it or remove the dependency array.
+
+  ⚠ eslint-plugin-react-hooks(exhaustive-deps): React Hook useEffect has a missing dependency: 'foo.bar'
+   ╭─[exhaustive_deps.tsx:6:14]
+ 5 │             console.log(bar);
+ 6 │           }, [props.foo.bar]);
+   ·              ───────────────
+ 7 │         }
+   ╰────
+  help: Either include it or remove the dependency array.
+
   ⚠ eslint-plugin-react-hooks(exhaustive-deps): React Hook useEffect has a missing dependency: 'local'
    ╭─[exhaustive_deps.tsx:5:14]
  4 │             console.log(local);
