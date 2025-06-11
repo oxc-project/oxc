@@ -22,16 +22,17 @@ declare_oxc_lint!(
     ///
     /// This rule triggers a warning if `toEqual()` is used to assert equality.
     ///
-    /// ### Example
+    /// ### Examples
     ///
+    /// Examples of **incorrect** code for this rule:
     /// ```javascript
-    /// // invalid
     /// expect({ a: 'a', b: undefined }).toEqual({ a: 'a' });
-    ///
-    /// // valid
-    /// expect({ a: 'a', b: undefined }).toStrictEqual({ a: 'a' });
     /// ```
     ///
+    /// Examples of **correct** code for this rule:
+    /// ```javascript
+    /// expect({ a: 'a', b: undefined }).toStrictEqual({ a: 'a' });
+    /// ```
     PreferStrictEqual,
     jest,
     style,

@@ -1,11 +1,10 @@
 // Auto-generated code, DO NOT EDIT DIRECTLY!
-// To edit this generated file you have to edit `tasks/ast_tools/src/derives/estree.rs`
+// To edit this generated file you have to edit `tasks/ast_tools/src/derives/estree.rs`.
 
 #![allow(unused_imports, clippy::match_same_arms, clippy::semicolon_if_nothing_returned)]
 
 use oxc_estree::{
-    ESTree, FlatStructSerializer, JsonSafeString, Serializer, StructSerializer,
-    ser::{AppendTo, AppendToConcat},
+    Concat2, Concat3, ESTree, FlatStructSerializer, JsonSafeString, Serializer, StructSerializer,
 };
 
 use crate::module_record::*;
@@ -35,7 +34,9 @@ impl ESTree for ImportImportName<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         match self {
             Self::Name(it) => crate::serialize::ImportOrExportNameName(it).serialize(serializer),
-            Self::NamespaceObject => JsonSafeString("namespaceObject").serialize(serializer),
+            Self::NamespaceObject => {
+                crate::serialize::ImportImportNameNamespaceObject(()).serialize(serializer)
+            }
             Self::Default(it) => {
                 crate::serialize::ImportOrExportNameDefault(it).serialize(serializer)
             }
@@ -61,9 +62,11 @@ impl ESTree for ExportImportName<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         match self {
             Self::Name(it) => crate::serialize::ImportOrExportNameName(it).serialize(serializer),
-            Self::All => JsonSafeString("all").serialize(serializer),
-            Self::AllButDefault => JsonSafeString("allButDefault").serialize(serializer),
-            Self::Null => JsonSafeString("null").serialize(serializer),
+            Self::All => crate::serialize::ExportImportNameAll(()).serialize(serializer),
+            Self::AllButDefault => {
+                crate::serialize::ExportImportNameAllButDefault(()).serialize(serializer)
+            }
+            Self::Null => crate::serialize::ExportNameNull(()).serialize(serializer),
         }
     }
 }
@@ -75,7 +78,7 @@ impl ESTree for ExportExportName<'_> {
             Self::Default(it) => {
                 crate::serialize::ImportOrExportNameDefault(it).serialize(serializer)
             }
-            Self::Null => JsonSafeString("null").serialize(serializer),
+            Self::Null => crate::serialize::ExportNameNull(()).serialize(serializer),
         }
     }
 }
@@ -85,7 +88,7 @@ impl ESTree for ExportLocalName<'_> {
         match self {
             Self::Name(it) => crate::serialize::ImportOrExportNameName(it).serialize(serializer),
             Self::Default(it) => crate::serialize::ExportLocalNameDefault(it).serialize(serializer),
-            Self::Null => JsonSafeString("null").serialize(serializer),
+            Self::Null => crate::serialize::ExportNameNull(()).serialize(serializer),
         }
     }
 }

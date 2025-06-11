@@ -41,6 +41,7 @@ declare_oxc_lint!(
     /// `undefined` is the default value for new variables, parameters, return statements, etc… so specifying it doesn't make any difference.
     ///
     /// ### Examples
+    ///
     /// Examples of **incorrect** code for this rule:
     /// ```javascript
     /// let foo = undefined;

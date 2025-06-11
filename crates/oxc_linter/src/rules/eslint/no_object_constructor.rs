@@ -53,9 +53,7 @@ impl Rule for NoObjectConstructor {
             AstKind::NewExpression(new_expr) => {
                 (new_expr.span, &new_expr.callee, &new_expr.arguments, &new_expr.type_arguments)
             }
-            _ => {
-                return;
-            }
+            _ => return,
         };
 
         let Expression::Identifier(ident) = &callee else {
@@ -245,7 +243,7 @@ fn test() {
             None,
         ),
         (
-            "import foo from 'bar
+            "import foo from 'bar'
          Object()",
             None,
             None,

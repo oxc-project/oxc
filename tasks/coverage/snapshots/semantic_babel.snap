@@ -1,8 +1,8 @@
-commit: 578ac4df
+commit: 1d4546bc
 
 semantic_babel Summary:
-AST Parsed     : 2322/2322 (100.00%)
-Positive Passed: 1903/2322 (81.96%)
+AST Parsed     : 2362/2362 (100.00%)
+Positive Passed: 1945/2362 (82.35%)
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/annex-b/enabled/3.3-function-in-if-body/input.js
 Symbol scope ID mismatch for "f":
 after transform: SymbolId(0): ScopeId(4294967294)
@@ -78,7 +78,15 @@ after transform: ScopeId(5): ScopeFlags(StrictMode)
 rebuilt        : ScopeId(7): ScopeFlags(0x0)
 
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2022/class-private-properties/await-in-private-property-in-params-of-async-arrow/input.js
-Expected a semicolon or an implicit semicolon after a statement, but found none
+Bindings mismatch:
+after transform: ScopeId(0): ["_asyncToGenerator", "_classPrivateFieldInitSpec"]
+rebuilt        : ScopeId(0): ["_asyncToGenerator", "_classPrivateFieldInitSpec", "_x"]
+Bindings mismatch:
+after transform: ScopeId(1): ["_x", "x"]
+rebuilt        : ScopeId(1): ["x"]
+Symbol scope ID mismatch for "_x":
+after transform: SymbolId(1): ScopeId(1)
+rebuilt        : SymbolId(2): ScopeId(0)
 
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2022/class-properties/arguments-in-key/input.js
 'arguments' is not allowed in class field initializer
@@ -94,9 +102,6 @@ Symbol scope ID mismatch for "_await":
 after transform: SymbolId(3): ScopeId(2)
 rebuilt        : SymbolId(2): ScopeId(0)
 
-semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2022/class-properties/await-in-property-in-params-of-async-arrow/input.js
-Expected a semicolon or an implicit semicolon after a statement, but found none
-
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2022/class-properties/new-target/input.js
 Unexpected new.target expression
 Unexpected new.target expression
@@ -106,9 +111,6 @@ Unexpected new.target expression
 Unexpected new.target expression
 Unexpected new.target expression
 Unexpected new.target expression
-
-semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2022/class-static-block/await-binding-in-initializer-in-static-block/input.js
-Unexpected token
 
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2022/class-static-block/duplicate-function-var-name/input.js
 Identifier `x` has already been declared
@@ -203,6 +205,16 @@ Unresolved references mismatch:
 after transform: ["Y", "foo"]
 rebuilt        : []
 
+semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/estree/typescript/instantiation-expression-optional-chain/input.ts
+Unresolved references mismatch:
+after transform: ["a", "c"]
+rebuilt        : ["a"]
+
+semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/estree/typescript/instantiation-expression-optional-chain-babel-7/input.ts
+Unresolved references mismatch:
+after transform: ["a", "c"]
+rebuilt        : ["a"]
+
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/estree/typescript/literals/input.js
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(4), ScopeId(5), ScopeId(6), ScopeId(7)]
@@ -234,11 +246,10 @@ Unresolved references mismatch:
 after transform: ["T", "foo"]
 rebuilt        : ["foo"]
 
-semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/jsx/errors/_no-plugin-ts-type-param-no-flow/input.js
-Unexpected token. Did you mean `{'>'}` or `&gt;`?
-
-semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/jsx/errors/_no-plugin-ts-type-param-no-flow-babel-7/input.js
-Unexpected token. Did you mean `{'>'}` or `&gt;`?
+semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/estree/typescript/shorthand-ambient-module/input.ts
+Scope children mismatch:
+after transform: ScopeId(0): [ScopeId(1)]
+rebuilt        : ScopeId(0): []
 
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/arrow-function/arrow-function-with-newline/input.ts
 Unresolved references mismatch:
@@ -331,6 +342,9 @@ after transform: ["T", "a", "b", "c", "x", "y"]
 rebuilt        : ["a", "b", "c", "x", "y"]
 
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/cast/for-of-lhs/input.ts
+Reference flags mismatch for "a":
+after transform: ReferenceId(3): ReferenceFlags(Read)
+rebuilt        : ReferenceId(1): ReferenceFlags(Write)
 Unresolved references mismatch:
 after transform: ["T", "a"]
 rebuilt        : ["a"]
@@ -848,10 +862,8 @@ Symbol flags mismatch for "E":
 after transform: SymbolId(0): SymbolFlags(RegularEnum)
 rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
 
-semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/estree-compat/shorthand-ambient-module/input.ts
-Scope children mismatch:
-after transform: ScopeId(0): [ScopeId(1)]
-rebuilt        : ScopeId(0): []
+semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/explicit-resource-management/valid-for-using-declaration-binding-of/input.js
+Unexpected token
 
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/export/declare/input.ts
 Bindings mismatch:
@@ -1164,9 +1176,6 @@ Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1)]
 rebuilt        : ScopeId(0): []
 
-semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/interface/get-set-properties/input.ts
-Expected `(` but found `:`
-
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/interface/index-signature/input.ts
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1)]
@@ -1407,6 +1416,7 @@ after transform: ["this"]
 rebuilt        : []
 
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/regression/keyword-qualified-type-2-babel-7/input.ts
+An interface can only extend an identifier/qualified-name with optional type arguments.
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
 rebuilt        : ScopeId(0): []

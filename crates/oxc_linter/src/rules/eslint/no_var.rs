@@ -30,15 +30,19 @@ declare_oxc_lint!(
     /// programmers avoid mistakes.
     ///
     /// ### Why is this bad?
+    ///
     /// Using `var` in an es6 environment triggers this error
     ///
-    /// ### Example
+    /// ### Examples
+    ///
+    /// Examples of **incorrect** code for this rule:
     /// ```javascript
-    /// // error
     /// var x = "y";
     /// var CONFIG = {};
+    /// ```
     ///
-    /// // success
+    /// Examples of **correct** code for this rule:
+    /// ```javascript
     /// let x = "y";
     /// const CONFIG = {};
     /// ```

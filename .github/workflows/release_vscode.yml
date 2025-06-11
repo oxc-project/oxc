@@ -74,14 +74,16 @@ jobs:
     steps:
       - uses: taiki-e/checkout-action@b13d20b7cda4e2f325ef19895128f7ff735c0b3d # v1.3.1
 
-      - uses: ./.github/actions/pnpm
+      - uses: oxc-project/setup-node@f42e3bda950c7454575e78ee4eaac880a077700c # v1.0.0
 
       - name: Build JS
         working-directory: editors/vscode
-        run: pnpm run compile
+        run: |
+          pnpm run preinstall
+          pnpm run compile
 
       - name: Install cross
-        uses: taiki-e/install-action@ab3728c7ba6948b9b429627f4d55a68842b27f18 # v2.50.3
+        uses: taiki-e/install-action@92f69c195229fe62d58b4d697ab4bc75def98e76 # v2.52.7
         with:
           tool: cross
 
@@ -139,7 +141,7 @@ jobs:
           merge-multiple: true
           path: editors/vscode
 
-      - uses: ./.github/actions/pnpm
+      - uses: oxc-project/setup-node@f42e3bda950c7454575e78ee4eaac880a077700c # v1.0.0
 
       - name: Publish to Microsoft Marketplace
         working-directory: editors/vscode

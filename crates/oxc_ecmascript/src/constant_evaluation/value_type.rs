@@ -1,6 +1,6 @@
 use oxc_ast::ast::{
     AssignmentExpression, AssignmentOperator, BinaryExpression, ConditionalExpression, Expression,
-    LogicalExpression, LogicalOperator, UnaryExpression,
+    LogicalExpression, LogicalOperator, StaticMemberExpression, UnaryExpression,
 };
 use oxc_syntax::operator::{BinaryOperator, UnaryOperator};
 
@@ -110,6 +110,7 @@ impl DetermineValueType for Expression<'_> {
             Expression::ConditionalExpression(e) => e.value_type(is_global_reference),
             Expression::LogicalExpression(e) => e.value_type(is_global_reference),
             Expression::ParenthesizedExpression(e) => e.expression.value_type(is_global_reference),
+            Expression::StaticMemberExpression(e) => e.value_type(is_global_reference),
             _ => ValueType::Undetermined,
         }
     }
@@ -270,5 +271,20 @@ impl DetermineValueType for LogicalExpression<'_> {
                 }
             }
         }
+    }
+}
+
+impl DetermineValueType for StaticMemberExpression<'_> {
+    fn value_type(&self, is_global_reference: &impl IsGlobalReference) -> ValueType {
+        if matches!(self.property.name.as_str(), "POSITIVE_INFINITY" | "NEGATIVE_INFINITY") {
+            if let Some(ident) = self.object.get_identifier_reference() {
+                if ident.name.as_str() == "Number"
+                    && is_global_reference.is_global_reference(ident) == Some(true)
+                {
+                    return ValueType::Number;
+                }
+            }
+        }
+        ValueType::Undetermined
     }
 }

@@ -159,43 +159,43 @@ impl ReferenceFlags {
 
     /// The identifier is read from. It may also be written to.
     #[inline]
-    pub const fn is_read(&self) -> bool {
+    pub const fn is_read(self) -> bool {
         self.intersects(Self::Read)
     }
 
     /// The identifier is only read from.
     #[inline]
-    pub const fn is_read_only(&self) -> bool {
+    pub const fn is_read_only(self) -> bool {
         !self.contains(Self::Write)
     }
 
     /// The identifier is written to. It may also be read from.
     #[inline]
-    pub const fn is_write(&self) -> bool {
+    pub const fn is_write(self) -> bool {
         self.intersects(Self::Write)
     }
 
     /// The identifier is only written to. It is not read from in this reference.
     #[inline]
-    pub const fn is_write_only(&self) -> bool {
+    pub const fn is_write_only(self) -> bool {
         !self.contains(Self::Read)
     }
 
     /// The identifier is both read from and written to, e.g `a += 1`.
     #[inline]
-    pub fn is_read_write(&self) -> bool {
+    pub fn is_read_write(self) -> bool {
         self.contains(Self::Read | Self::Write)
     }
 
     /// Checks if the reference is a value being used in a type context.
     #[inline]
-    pub fn is_value_as_type(&self) -> bool {
+    pub fn is_value_as_type(self) -> bool {
         self.contains(Self::ValueAsType)
     }
 
     /// The identifier is used in a type definition.
     #[inline]
-    pub const fn is_type(&self) -> bool {
+    pub const fn is_type(self) -> bool {
         self.contains(Self::Type)
     }
 
@@ -205,7 +205,7 @@ impl ReferenceFlags {
     }
 
     #[inline]
-    pub const fn is_value(&self) -> bool {
+    pub const fn is_value(self) -> bool {
         self.intersects(Self::Value)
     }
 }

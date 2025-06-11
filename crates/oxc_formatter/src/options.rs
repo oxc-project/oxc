@@ -56,6 +56,12 @@ pub struct FormatOptions {
 
     /// Whether to expand object and array literals to multiple lines. Defaults to "auto".
     pub expand: Expand,
+
+    /// Controls the position of operators in binary expressions.
+    /// Accepted values are:
+    /// - `"start"`: Places the operator at the beginning of the next line.
+    /// - `"end"`: Places the operator at the end of the current line (default).
+    pub experimental_operator_position: OperatorPosition,
 }
 
 impl FormatOptions {
@@ -75,6 +81,7 @@ impl FormatOptions {
             bracket_same_line: BracketSameLine::default(),
             attribute_position: AttributePosition::default(),
             expand: Expand::default(),
+            experimental_operator_position: OperatorPosition::default(),
         }
     }
 
@@ -98,7 +105,8 @@ impl fmt::Display for FormatOptions {
         writeln!(f, "Bracket spacing: {}", self.bracket_spacing.value())?;
         writeln!(f, "Bracket same line: {}", self.bracket_same_line.value())?;
         writeln!(f, "Attribute Position: {}", self.attribute_position)?;
-        writeln!(f, "Expand lists: {}", self.expand)
+        writeln!(f, "Expand lists: {}", self.expand)?;
+        writeln!(f, "Experimental operator position: {}", self.experimental_operator_position)
     }
 }
 
@@ -115,12 +123,12 @@ impl IndentStyle {
     pub const DEFAULT_SPACES: u8 = 2;
 
     /// Returns `true` if this is an [IndentStyle::Tab].
-    pub const fn is_tab(&self) -> bool {
+    pub const fn is_tab(self) -> bool {
         matches!(self, IndentStyle::Tab)
     }
 
     /// Returns `true` if this is an [IndentStyle::Space].
-    pub const fn is_space(&self) -> bool {
+    pub const fn is_space(self) -> bool {
         matches!(self, IndentStyle::Space)
     }
 }
@@ -163,7 +171,7 @@ pub enum LineEnding {
 
 impl LineEnding {
     #[inline]
-    pub const fn as_str(&self) -> &'static str {
+    pub const fn as_str(self) -> &'static str {
         match self {
             LineEnding::Lf => "\n",
             LineEnding::Crlf => "\r\n",
@@ -172,17 +180,17 @@ impl LineEnding {
     }
 
     /// Returns `true` if this is a [LineEnding::Lf].
-    pub const fn is_line_feed(&self) -> bool {
+    pub const fn is_line_feed(self) -> bool {
         matches!(self, LineEnding::Lf)
     }
 
     /// Returns `true` if this is a [LineEnding::Crlf].
-    pub const fn is_carriage_return_line_feed(&self) -> bool {
+    pub const fn is_carriage_return_line_feed(self) -> bool {
         matches!(self, LineEnding::Crlf)
     }
 
     /// Returns `true` if this is a [LineEnding::Cr].
-    pub const fn is_carriage_return(&self) -> bool {
+    pub const fn is_carriage_return(self) -> bool {
         matches!(self, LineEnding::Cr)
     }
 }
@@ -219,7 +227,7 @@ impl IndentWidth {
     pub const MIN: u8 = 0;
 
     /// Return the numeric value for this [IndentWidth]
-    pub fn value(&self) -> u8 {
+    pub fn value(self) -> u8 {
         self.0
     }
 }
@@ -278,7 +286,7 @@ impl LineWidth {
     pub const MIN: u16 = 1;
 
     /// Return the numeric value for this [LineWidth]
-    pub fn value(&self) -> u16 {
+    pub fn value(self) -> u16 {
         self.0
     }
 }
@@ -410,14 +418,14 @@ impl QuoteStyle {
         }
     }
 
-    pub fn as_char(&self) -> char {
+    pub fn as_char(self) -> char {
         match self {
             QuoteStyle::Double => '"',
             QuoteStyle::Single => '\'',
         }
     }
 
-    pub fn as_byte(&self) -> u8 {
+    pub fn as_byte(self) -> u8 {
         self.as_char() as u8
     }
 
@@ -431,14 +439,14 @@ impl QuoteStyle {
 
     /// Given the current quote, it returns the other one
     #[must_use]
-    pub fn other(&self) -> Self {
+    pub fn other(self) -> Self {
         match self {
             QuoteStyle::Double => QuoteStyle::Single,
             QuoteStyle::Single => QuoteStyle::Double,
         }
     }
 
-    pub const fn is_double(&self) -> bool {
+    pub const fn is_double(self) -> bool {
         matches!(self, Self::Double)
     }
 }
@@ -527,11 +535,11 @@ pub enum Semicolons {
 }
 
 impl Semicolons {
-    pub const fn is_as_needed(&self) -> bool {
+    pub const fn is_as_needed(self) -> bool {
         matches!(self, Self::AsNeeded)
     }
 
-    pub const fn is_always(&self) -> bool {
+    pub const fn is_always(self) -> bool {
         matches!(self, Self::Always)
     }
 }
@@ -568,11 +576,11 @@ pub enum ArrowParentheses {
 }
 
 impl ArrowParentheses {
-    pub const fn is_as_needed(&self) -> bool {
+    pub const fn is_as_needed(self) -> bool {
         matches!(self, Self::AsNeeded)
     }
 
-    pub const fn is_always(&self) -> bool {
+    pub const fn is_always(self) -> bool {
         matches!(self, Self::Always)
     }
 }
@@ -629,7 +637,7 @@ pub enum TrailingSeparator {
 
 impl FormatTrailingCommas {
     /// This function returns corresponding [TrailingSeparator] for `format_separated` function.
-    pub fn trailing_separator(&self, options: &FormatOptions) -> TrailingSeparator {
+    pub fn trailing_separator(self, options: &FormatOptions) -> TrailingSeparator {
         if options.trailing_commas.is_none() {
             return TrailingSeparator::Omit;
         }
@@ -674,15 +682,15 @@ pub enum TrailingCommas {
 }
 
 impl TrailingCommas {
-    pub const fn is_es5(&self) -> bool {
+    pub const fn is_es5(self) -> bool {
         matches!(self, TrailingCommas::Es5)
     }
 
-    pub const fn is_all(&self) -> bool {
+    pub const fn is_all(self) -> bool {
         matches!(self, TrailingCommas::All)
     }
 
-    pub const fn is_none(&self) -> bool {
+    pub const fn is_none(self) -> bool {
         matches!(self, TrailingCommas::None)
     }
 }
@@ -748,7 +756,7 @@ pub struct BracketSpacing(bool);
 
 impl BracketSpacing {
     /// Return the boolean value for this [BracketSpacing]
-    pub fn value(&self) -> bool {
+    pub fn value(self) -> bool {
         self.0
     }
 }
@@ -792,7 +800,7 @@ pub struct BracketSameLine(bool);
 
 impl BracketSameLine {
     /// Return the boolean value for this [BracketSameLine]
-    pub fn value(&self) -> bool {
+    pub fn value(self) -> bool {
         self.0
     }
 }
@@ -853,6 +861,48 @@ impl fmt::Display for Expand {
             Expand::Auto => "Auto",
             Expand::Always => "Always",
             Expand::Never => "Never",
+        };
+        f.write_str(s)
+    }
+}
+
+#[derive(Clone, Copy, Debug, Default, Eq, Hash, PartialEq)]
+pub enum OperatorPosition {
+    /// When binary expressions wrap lines, print operators at the start of new lines.
+    Start,
+
+    // Default behavior; when binary expressions wrap lines, print operators at the end of previous lines.
+    #[default]
+    End,
+}
+
+impl OperatorPosition {
+    pub const fn is_start(self) -> bool {
+        matches!(self, Self::Start)
+    }
+
+    pub const fn is_end(self) -> bool {
+        matches!(self, Self::End)
+    }
+}
+
+impl FromStr for OperatorPosition {
+    type Err = &'static str;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s {
+            "start" => Ok(Self::Start),
+            "end" => Ok(Self::End),
+            _ => Err("Value not supported for OperatorPosition"),
+        }
+    }
+}
+
+impl fmt::Display for OperatorPosition {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        let s = match self {
+            OperatorPosition::Start => "Start",
+            OperatorPosition::End => "End",
         };
         f.write_str(s)
     }

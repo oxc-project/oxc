@@ -55,7 +55,6 @@ declare_oxc_lint!(
     /// <a />
     /// <a><TextWrapper aria-hidden /></a>
     /// ```
-    ///
     AnchorHasContent,
     jsx_a11y,
     correctness,

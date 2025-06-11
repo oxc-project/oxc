@@ -20,3 +20,29 @@ source: crates/oxc_linter/src/tester.rs
  3 │             return foo
    ╰────
   help: Consider removing this declaration.
+
+  ⚠ eslint(no-unused-vars): Variable 'cancel' is assigned a value but never used. Unused variables should start with a '_'.
+   ╭─[no_unused_vars.tsx:2:13]
+ 1 │ 
+ 2 │         let cancel = () => {};
+   ·             ───┬──
+   ·                ╰── 'cancel' is declared here
+ 3 │         cancel = cancel?.();
+   ·         ───┬──
+   ·            ╰── it was last assigned here
+ 4 │         
+   ╰────
+  help: Did you mean to use this variable?
+
+  ⚠ eslint(no-unused-vars): Variable 'cancel' is assigned a value but never used. Unused variables should start with a '_'.
+   ╭─[no_unused_vars.tsx:2:13]
+ 1 │ 
+ 2 │         let cancel = () => {};
+   ·             ───┬──
+   ·                ╰── 'cancel' is declared here
+ 3 │         { cancel = cancel?.(); }
+   ·           ───┬──
+   ·              ╰── it was last assigned here
+ 4 │         
+   ╰────
+  help: Did you mean to use this variable?

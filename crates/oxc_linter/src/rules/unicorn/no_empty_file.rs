@@ -22,19 +22,21 @@ pub struct NoEmptyFile;
 declare_oxc_lint!(
     /// ### What it does
     ///
+    /// Disallows files that do not contain any meaningful code.
     ///
-    /// Disallows any files only containing the following:
-    ///  - Whitespace
-    ///  - Comments
-    ///  - Directives
-    ///  - Empty statements
-    ///  - Empty blocks
-    ///  - Hashbang
+    /// This includes files that consist only of:
+    /// - Whitespace
+    /// - Comments
+    /// - Directives (e.g., `"use strict"`)
+    /// - Empty statements (`;`)
+    /// - Empty blocks (`{}`)
+    /// - Hashbangs (`#!/usr/bin/env node`)
     ///
     /// ### Why is this bad?
     ///
-    /// Meaningless files clutter a codebase.
-    ///
+    /// Files with no executable or exportable content are typically unintentional
+    /// or left over from refactoring. They clutter the codebase and may confuse
+    /// tooling or developers by appearing to serve a purpose when they do not.
     NoEmptyFile,
     unicorn,
     correctness,
@@ -45,8 +47,8 @@ impl Rule for NoEmptyFile {
         let Some(root) = ctx.nodes().root_node() else {
             return;
         };
-        let AstKind::Program(program) = root.kind() else { unreachable!() };
 
+        let AstKind::Program(program) = root.kind() else { unreachable!() };
         if program.body.iter().any(|node| !is_empty_stmt(node)) {
             return;
         }
@@ -81,7 +83,6 @@ fn has_triple_slash_directive(ctx: &LintContext<'_>) -> bool {
             return true;
         }
     }
-
     false
 }
 

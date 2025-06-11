@@ -8,16 +8,11 @@ use oxc_span::{GetSpan, Span};
 
 use crate::{
     context::LintContext,
-    fixer::{RuleFix, RuleFixer},
     rule::Rule,
     utils::{JestFnKind, JestGeneralFnKind, PossibleJestNode, is_type_of_jest_fn_call},
 };
 
-fn empty_test(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Suggest using `test.todo`.").with_label(span)
-}
-
-fn un_implemented_test_diagnostic(span: Span) -> OxcDiagnostic {
+fn prefer_todo_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Suggest using `test.todo`.").with_label(span)
 }
 
@@ -26,6 +21,7 @@ pub struct PreferTodo;
 
 declare_oxc_lint!(
     /// ### What it does
+    ///
     /// When test cases are empty then it is better to mark them as `test.todo` as it
     /// will be highlighted in the summary output.
     ///
@@ -33,13 +29,17 @@ declare_oxc_lint!(
     ///
     /// This rule triggers a warning if empty test cases are used without 'test.todo'.
     ///
-    /// ### Example
+    /// ### Examples
     ///
+    /// Examples of **incorrect** code for this rule:
     /// ```javascript
     /// test('i need to write this test'); // invalid
     /// test('i need to write this test', () => {}); // invalid
     /// test.skip('i need to write this test', () => {}); // invalid
+    /// ```
     ///
+    /// Examples of **correct** code for this rule:
+    /// ```javascript
     /// test.todo('i need to write this test');
     /// ```
     PreferTodo,
@@ -51,53 +51,59 @@ declare_oxc_lint!(
 impl Rule for PreferTodo {
     fn run_on_jest_node<'a, 'c>(
         &self,
-        jest_node: &PossibleJestNode<'a, 'c>,
+        possible_jest_node: &PossibleJestNode<'a, 'c>,
         ctx: &'c LintContext<'a>,
     ) {
-        run(jest_node, ctx);
-    }
-}
+        let node = possible_jest_node.node;
+        if let AstKind::CallExpression(call_expr) = node.kind() {
+            let counts = call_expr.arguments.len();
 
-fn run<'a>(possible_jest_node: &PossibleJestNode<'a, '_>, ctx: &LintContext<'a>) {
-    let node = possible_jest_node.node;
-    if let AstKind::CallExpression(call_expr) = node.kind() {
-        let counts = call_expr.arguments.len();
+            if counts < 1
+                || should_filter_case(call_expr)
+                || !is_string_type(&call_expr.arguments[0])
+                || !is_type_of_jest_fn_call(
+                    call_expr,
+                    possible_jest_node,
+                    ctx,
+                    &[JestFnKind::General(JestGeneralFnKind::Test)],
+                )
+            {
+                return;
+            }
 
-        if counts < 1
-            || should_filter_case(call_expr)
-            || !is_string_type(&call_expr.arguments[0])
-            || !is_type_of_jest_fn_call(
-                call_expr,
-                possible_jest_node,
-                ctx,
-                &[JestFnKind::General(JestGeneralFnKind::Test)],
-            )
-        {
-            return;
-        }
+            if (counts == 1 && !filter_todo_case(call_expr))
+                || (counts > 1 && is_empty_function(call_expr))
+            {
+                let span = call_expr.callee.span();
+                ctx.diagnostic_with_fix(prefer_todo_diagnostic(span), |fixer| {
+                    let fix = if let Expression::Identifier(ident) = &call_expr.callee {
+                        fixer.insert_text_after_range(ident.span, ".todo")
+                    } else {
+                        match &call_expr.callee {
+                            Expression::StaticMemberExpression(mem_expr) => {
+                                fixer.replace(mem_expr.property.span, "todo")
+                            }
+                            Expression::ComputedMemberExpression(mem_expr) => {
+                                fixer.replace(mem_expr.expression.span(), "'todo'")
+                            }
+                            _ => return fixer.delete_range(call_expr.span),
+                        }
+                    };
 
-        if counts == 1 && !filter_todo_case(call_expr) {
-            let span = call_expr
-                .callee
-                .as_member_expression()
-                .map_or(call_expr.callee.span(), GetSpan::span);
-            ctx.diagnostic_with_fix(un_implemented_test_diagnostic(span), |fixer| {
-                if let Expression::Identifier(ident) = &call_expr.callee {
-                    return fixer.replace(Span::empty(ident.span.end), ".todo");
-                }
-                if let Some(mem_expr) = call_expr.callee.as_member_expression() {
-                    if let Some((span, _)) = mem_expr.static_property_info() {
-                        return fixer.replace(span, "todo");
+                    if counts == 1 {
+                        return fix;
                     }
-                }
-                fixer.delete_range(call_expr.span)
-            });
-        }
 
-        if counts > 1 && is_empty_function(call_expr) {
-            ctx.diagnostic_with_fix(empty_test(call_expr.span), |fixer| {
-                build_code(fixer, call_expr)
-            });
+                    let multi_fixer = fixer.for_multifix();
+                    let mut multi_fix = multi_fixer.new_fix_with_capacity(2);
+                    multi_fix.push(fix);
+                    multi_fix.push(multi_fixer.delete_range(Span::new(
+                        call_expr.arguments[0].span().end,
+                        call_expr.span.end - 1,
+                    )));
+                    multi_fix.with_message("Replace with `test.todo` or `it.todo`.")
+                });
+            }
         }
     }
 }
@@ -134,49 +140,6 @@ fn is_empty_function(expr: &CallExpression) -> bool {
         }
         _ => false,
     }
-}
-
-fn build_code<'a>(fixer: RuleFixer<'_, 'a>, expr: &CallExpression<'a>) -> RuleFix<'a> {
-    let mut formatter = fixer.codegen();
-
-    match &expr.callee {
-        Expression::Identifier(ident) => {
-            formatter.print_str(ident.name.as_str());
-            formatter.print_str(".todo(");
-        }
-        Expression::ComputedMemberExpression(expr) => {
-            if let Expression::Identifier(ident) = &expr.object {
-                formatter.print_str(ident.name.as_str());
-                formatter.print_str("[");
-                formatter.print_str("'todo'");
-                formatter.print_str("](");
-            }
-        }
-        Expression::StaticMemberExpression(expr) => {
-            if let Expression::Identifier(ident) = &expr.object {
-                formatter.print_str(ident.name.as_str());
-                formatter.print_str(".todo(");
-            }
-        }
-        _ => {}
-    }
-
-    if let Argument::StringLiteral(ident) = &expr.arguments[0] {
-        // Todo: this punctuation should read from the config
-        formatter.print_ascii_byte(b'\'');
-        formatter.print_str(ident.value.as_str());
-        formatter.print_ascii_byte(b'\'');
-        formatter.print_ascii_byte(b')');
-    } else if let Argument::TemplateLiteral(temp) = &expr.arguments[0] {
-        formatter.print_ascii_byte(b'`');
-        for q in &temp.quasis {
-            formatter.print_str(q.value.raw.as_str());
-        }
-        formatter.print_ascii_byte(b'`');
-        formatter.print_ascii_byte(b')');
-    }
-
-    fixer.replace(expr.span, formatter)
 }
 
 #[test]
@@ -248,6 +211,11 @@ fn tests() {
         ),
         (
             "test['skip']('i need to write this test', () => {});",
+            "test['todo']('i need to write this test');",
+            None,
+        ),
+        (
+            "test['skip']('i need to write this test');",
             "test['todo']('i need to write this test');",
             None,
         ),

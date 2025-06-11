@@ -245,6 +245,10 @@ pub struct ClassProperties<'a, 'ctx> {
     private_fields_as_properties: bool,
     /// If `true`, transform static blocks.
     transform_static_blocks: bool,
+    /// If `true`, remove class fields without initializer. Only works with `set_public_class_fields: true`.
+    ///
+    /// This option is controlled by [`crate::TypeScriptOptions::remove_class_fields_without_initializer`].
+    remove_class_fields_without_initializer: bool,
 
     ctx: &'ctx TransformCtx<'a>,
 
@@ -286,6 +290,7 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
     pub fn new(
         options: ClassPropertiesOptions,
         transform_static_blocks: bool,
+        remove_class_fields_without_initializer: bool,
         ctx: &'ctx TransformCtx<'a>,
     ) -> Self {
         // TODO: Raise error if these 2 options are inconsistent
@@ -298,6 +303,7 @@ impl<'a, 'ctx> ClassProperties<'a, 'ctx> {
             set_public_class_fields,
             private_fields_as_properties,
             transform_static_blocks,
+            remove_class_fields_without_initializer,
             ctx,
             classes_stack: ClassesStack::new(),
             private_field_count: 0,

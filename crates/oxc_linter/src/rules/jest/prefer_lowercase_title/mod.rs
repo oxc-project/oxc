@@ -46,21 +46,23 @@ declare_oxc_lint!(
     /// lowercase letter. This provides more readable test failures. This rule is not
     /// enabled by default.
     ///
-    /// ### Example
+    /// ### Examples
     ///
+    /// Examples of **incorrect** code for this rule:
     /// ```javascript
-    /// // invalid
     /// it('Adds 1 + 2 to equal 3', () => {
     ///     expect(sum(1, 2)).toBe(3);
     /// });
+    /// ```
     ///
-    /// // valid
+    /// Examples of **correct** code for this rule:
+    /// ```javascript
     /// it('adds 1 + 2 to equal 3', () => {
     ///     expect(sum(1, 2)).toBe(3);
     /// });
     /// ```
     ///
-    /// ## Options
+    /// ### Options
     /// ```json
     /// {
     ///     "jest/prefer-lowercase-title": [
@@ -72,7 +74,7 @@ declare_oxc_lint!(
     /// }
     /// ```
     ///
-    /// ### `ignore`
+    /// #### `ignore`
     ///
     /// This array option controls which Jest or Vitest functions are checked by this rule. There
     /// are four possible values:
@@ -91,7 +93,6 @@ declare_oxc_lint!(
     /// ```
     ///
     /// Example of **correct** code for the `{ "ignore": ["test"] }` option:
-    ///
     /// ```js
     /// /* eslint jest/prefer-lowercase-title: ["error", { "ignore": ["test"] }] */
     /// test('Uppercase description');
@@ -103,7 +104,8 @@ declare_oxc_lint!(
     /// it('Uppercase description');
     /// ```
     ///
-    /// ### `allowedPrefixes`
+    /// #### `allowedPrefixes`
+    ///
     /// This array option allows specifying prefixes, which contain capitals that titles
     /// can start with. This can be useful when writing tests for API endpoints, where
     /// you'd like to prefix with the HTTP method.
@@ -115,11 +117,12 @@ declare_oxc_lint!(
     /// describe('GET /live');
     /// ```
     ///
-    /// ### `ignoreTopLevelDescribe`
+    /// #### `ignoreTopLevelDescribe`
+    ///
     /// This option can be set to allow only the top-level `describe` blocks to have a
     /// title starting with an upper-case letter.
-    /// Example of **correct** code for the `{ "ignoreTopLevelDescribe": true }` option:
     ///
+    /// Example of **correct** code for the `{ "ignoreTopLevelDescribe": true }` option:
     /// ```js
     /// /* eslint jest/prefer-lowercase-title: ["error", { "ignoreTopLevelDescribe": true }] */
     /// describe('MyClass', () => {
@@ -131,11 +134,11 @@ declare_oxc_lint!(
     /// });
     /// ```
     ///
-    /// ### `lowercaseFirstCharacterOnly`
+    /// #### `lowercaseFirstCharacterOnly`
+    ///
     /// This option can be set to only validate that the first character of a test name is lowercased.
     ///
     /// Example of **correct** code for the `{ "lowercaseFirstCharacterOnly": true }` option:
-    ///
     /// ```js
     /// /* eslint vitest/prefer-lowercase-title: ["error", { "lowercaseFirstCharacterOnly": true }] */
     /// describe('myClass', () => {
@@ -148,7 +151,6 @@ declare_oxc_lint!(
     /// ```
     ///
     /// Example of **incorrect** code for the `{ "lowercaseFirstCharacterOnly": true }` option:
-    ///
     /// ```js
     /// /* eslint vitest/prefer-lowercase-title: ["error", { "lowercaseFirstCharacterOnly": true }] */
     /// describe('MyClass', () => {

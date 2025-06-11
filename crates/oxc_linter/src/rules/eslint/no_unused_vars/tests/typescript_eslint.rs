@@ -3,8 +3,6 @@ use serde_json::json;
 use super::NoUnusedVars;
 use crate::{RuleMeta as _, tester::Tester};
 
-// TODO: port these over. I (@DonIsaac) would love some help with this...
-
 #[test]
 fn test() {
     let pass = vec![
@@ -1569,14 +1567,6 @@ fn test() {
             "
           import test from 'test';
           import baz from 'baz';
-          export interface Bar extends baz().test {}
-          ",
-            None,
-        ),
-        (
-            "
-          import test from 'test';
-          import baz from 'baz';
           export class Bar implements baz.test {}
           ",
             None,
@@ -1731,28 +1721,28 @@ fn test() {
          const foo: number = 1;
          export type Foo = typeof foo;
              ",
-            None,
+            Some(json!([{ "reportVarsOnlyUsedAsTypes": true, "varsIgnorePattern": "^_" }])),
         ),
         (
             "
         declare const foo: number;
         export type Foo = typeof foo;
             ",
-            None,
+            Some(json!([{ "reportVarsOnlyUsedAsTypes": true, "varsIgnorePattern": "^_" }])),
         ),
         (
             "
         const foo: number = 1;
         export type Foo = typeof foo | string;
             ",
-            None,
+            Some(json!([{ "reportVarsOnlyUsedAsTypes": true, "varsIgnorePattern": "^_" }])),
         ),
         (
             "
         const foo: number = 1;
         export type Foo = (typeof foo | string) & { __brand: 'foo' };
             ",
-            None,
+            Some(json!([{ "reportVarsOnlyUsedAsTypes": true, "varsIgnorePattern": "^_" }])),
         ),
         (
             "
@@ -1763,7 +1753,7 @@ fn test() {
         };
         export type Bar = typeof foo.bar;
             ",
-            None,
+            Some(json!([{ "reportVarsOnlyUsedAsTypes": true, "varsIgnorePattern": "^_" }])),
         ),
         (
             "
@@ -1774,7 +1764,7 @@ fn test() {
         };
         export type Bar = (typeof foo)['bar'];
             ",
-            None,
+            Some(json!([{ "reportVarsOnlyUsedAsTypes": true, "varsIgnorePattern": "^_" }])),
         ),
     ];
 

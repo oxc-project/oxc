@@ -4,6 +4,95 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.72.3] - 2025-06-06
+
+### Features
+
+- 7e88451 parser: Syntax errors for decorators appearing in conflicting places (#11482) (Boshen)
+
+### Bug Fixes
+
+- 392752f parser: Handle `import {type as as}` correctly (#11488) (camchenry)
+- f729734 parser: Fix decorator placed incorrectly in initializers (#11461) (Boshen)
+
+### Performance
+
+- 25167f2 parser: Parse ts type signature without rewind (#11443) (Boshen)
+
+## [0.72.2] - 2025-05-31
+
+### Bug Fixes
+
+- daaa8f5 parser: Correctly parse decorators of property declaration (#11370) (magic-akari)
+
+## [0.71.0] - 2025-05-20
+
+- 1a4fec0 codegen: [**BREAKING**] A legal comment can also be a jsdoc comment (#11158) (Boshen)
+
+### Features
+
+- fa06d7f codegen: Print override modifier of FormalParameter (#11134) (Ulrich Stark)
+- c29b1b8 codegen: Deduplicate repeated legal comments (#11069) (Boshen)
+- c79a7d0 data_structures: Introduce `PointerExt` trait (#11095) (overlookmotel)
+
+### Bug Fixes
+
+- ef72143 parser: Parse index signature with multiple parameter (#11068) (Boshen)
+
+### Performance
+
+- b9e51e2 ast: Reduce size of `Comment` to 16 bytes (#11062) (camchenry)
+
+## [0.70.0] - 2025-05-15
+
+### Features
+
+- 4a72b58 codegen: Print comments inside `JSXEmptyExpression` (#11022) (Boshen)
+- 1673ffb codegen: Rework printing normal / legal / annotation comments (#10997) (Boshen)
+
+### Refactor
+
+- 9225bde codegen: Make `Statement::Gen` code more compact (#10937) (Boshen)
+- 751876b parser: Rewrite parse class element (#11035) (Boshen)
+
+## [0.69.0] - 2025-05-09
+
+- ad4fbf4 ast: [**BREAKING**] Simplify `RegExpPattern` (#10834) (overlookmotel)
+
+### Bug Fixes
+
+- 2c05fa1 parser: Fix rhs precedence while parsing `PrivateInExpression` (#10866) (Boshen)
+- 087af52 parser: Set the correct context for class property definition (#10859) (Boshen)
+
+### Refactor
+
+
+## [0.68.1] - 2025-05-04
+
+### Bug Fixes
+
+- 368d05f codegen: Make `source_text` an option, avoid panic (#10790) (Cameron)
+
+## [0.68.0] - 2025-05-03
+
+- 28ceb90 ast: [**BREAKING**] Remove `TSMappedTypeModifierOperator::None` variant (#10749) (overlookmotel)
+
+- 315143a codegen: [**BREAKING**] Remove useless `CodeGenerator` type alias (#10702) (Boshen)
+
+### Features
+
+- 2d13b49 codegen: Expose `with_source_text` function (#10768) (camc314)
+- b01cb45 codegen: A way to keep legal comments after minification (#10689) (Boshen)
+
+### Bug Fixes
+
+- 4825eb5 codegen: Add missing `in` `out` from ts type parameter (#10696) (Boshen)
+- 06f796f codegen: Add missing return type from object methods (#10694) (Boshen)
+- 8c499c6 linter: Fix panic when doing code gen on regexp (#10769) (camc314)
+
+### Refactor
+
+
 ## [0.66.0] - 2025-04-23
 
 - 10e1018 codegen: [**BREAKING**] Print `StringLiteral` `raw` if `minify` option disabled (#10553) (overlookmotel)

@@ -1,4 +1,4 @@
-use oxc_allocator::Allocator;
+use oxc_allocator::{Allocator, Vec};
 use oxc_ast::ast::*;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_ecmascript::BoundNames;
@@ -10,8 +10,8 @@ use crate::diagnostics;
 pub struct ModuleRecordBuilder<'a> {
     allocator: &'a Allocator,
     module_record: ModuleRecord<'a>,
-    export_entries: Vec<ExportEntry<'a>>,
-    exported_bindings_duplicated: Vec<NameSpan<'a>>,
+    export_entries: Vec<'a, ExportEntry<'a>>,
+    exported_bindings_duplicated: Vec<'a, NameSpan<'a>>,
 }
 
 impl<'a> ModuleRecordBuilder<'a> {
@@ -19,12 +19,12 @@ impl<'a> ModuleRecordBuilder<'a> {
         Self {
             allocator,
             module_record: ModuleRecord::new(allocator),
-            export_entries: vec![],
-            exported_bindings_duplicated: vec![],
+            export_entries: Vec::new_in(allocator),
+            exported_bindings_duplicated: Vec::new_in(allocator),
         }
     }
 
-    pub fn build(mut self) -> (ModuleRecord<'a>, Vec<OxcDiagnostic>) {
+    pub fn build(mut self) -> (ModuleRecord<'a>, std::vec::Vec<OxcDiagnostic>) {
         // The `ParseModule` algorithm requires `importedBoundNames` (import entries) to be
         // resolved before resolving export entries.
         self.resolve_export_entries();
@@ -32,7 +32,7 @@ impl<'a> ModuleRecordBuilder<'a> {
         (self.module_record, errors)
     }
 
-    pub fn errors(&self) -> Vec<OxcDiagnostic> {
+    pub fn errors(&self) -> std::vec::Vec<OxcDiagnostic> {
         let mut errors = vec![];
 
         let module_record = &self.module_record;
@@ -56,7 +56,7 @@ impl<'a> ModuleRecordBuilder<'a> {
                     .iter()
                     .filter_map(|export_entry| export_entry.export_name.default_export_span()),
             )
-            .collect::<Vec<_>>();
+            .collect::<std::vec::Vec<_>>();
         if default_exports.len() > 1 {
             errors.push(
                 OxcDiagnostic::error("Duplicated default export").with_labels(default_exports),
@@ -102,7 +102,9 @@ impl<'a> ModuleRecordBuilder<'a> {
     /// [ParseModule](https://tc39.es/ecma262/#sec-parsemodule)
     /// Step 10.
     fn resolve_export_entries(&mut self) {
-        let export_entries = self.export_entries.drain(..).collect::<Vec<_>>();
+        // let export_entries = self.export_entries.drain(..).collect::<Vec<_>>();
+        let export_entries =
+            std::mem::replace(&mut self.export_entries, Vec::new_in(self.allocator));
         // 10. For each ExportEntry Record ee of exportEntries, do
         for ee in export_entries {
             // a. If ee.[[ModuleRequest]] is null, then
@@ -282,10 +284,6 @@ impl<'a> ModuleRecordBuilder<'a> {
     }
 
     fn visit_export_default_declaration(&mut self, decl: &ExportDefaultDeclaration<'a>) {
-        // ignore all TypeScript syntax as they overload
-        if decl.declaration.is_typescript_syntax() {
-            return;
-        }
         let exported_name = &decl.exported;
 
         let local_name = match &decl.declaration {
@@ -302,6 +300,9 @@ impl<'a> ModuleRecordBuilder<'a> {
                 || ExportLocalName::Null,
                 |id| ExportLocalName::Name(NameSpan::new(id.name, id.span)),
             ),
+            ExportDefaultDeclarationKind::TSInterfaceDeclaration(t) => {
+                ExportLocalName::Name(NameSpan::new(t.id.name, t.id.span))
+            }
             _ => ExportLocalName::Null,
         };
         let export_entry = ExportEntry {
@@ -311,7 +312,7 @@ impl<'a> ModuleRecordBuilder<'a> {
             import_name: ExportImportName::default(),
             export_name: ExportExportName::Default(exported_name.span()),
             local_name,
-            is_type: false,
+            is_type: decl.is_typescript_syntax(),
         };
         self.add_export_entry(export_entry);
     }
@@ -403,7 +404,7 @@ mod module_record_tests {
     use crate::Parser;
 
     fn build<'a>(allocator: &'a Allocator, source_text: &'a str) -> ModuleRecord<'a> {
-        let source_type = SourceType::mjs();
+        let source_type = SourceType::ts();
         let ret = Parser::new(allocator, source_text, source_type).parse();
         ret.module_record
     }
@@ -713,5 +714,16 @@ mod module_record_tests {
         assert_eq!(module_record.dynamic_imports.len(), 1);
         assert_eq!(module_record.dynamic_imports[0].span, Span::new(0, 13));
         assert_eq!(module_record.dynamic_imports[0].module_request, Span::new(7, 12));
+    }
+
+    #[test]
+    fn export_default_interface() {
+        let allocator = Allocator::default();
+        let module_record = build(&allocator, "export default interface Foo {}");
+        assert_eq!(module_record.local_export_entries.len(), 1);
+        let entry = &module_record.local_export_entries[0];
+        assert_eq!(entry.local_name.name().unwrap().as_str(), "Foo");
+        assert!(entry.export_name.is_default());
+        assert!(entry.is_type);
     }
 }

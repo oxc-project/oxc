@@ -104,8 +104,6 @@ pub fn check<'a>(node: &AstNode<'a>, ctx: &SemanticBuilder<'a>) {
 
         AstKind::AssignmentExpression(expr) => js::check_assignment_expression(expr, ctx),
         AstKind::AwaitExpression(expr) => js::check_await_expression(expr, node, ctx),
-        AstKind::BinaryExpression(expr) => js::check_binary_expression(expr, ctx),
-        AstKind::LogicalExpression(expr) => js::check_logical_expression(expr, ctx),
         AstKind::MemberExpression(expr) => js::check_member_expression(expr, ctx),
         AstKind::ObjectExpression(expr) => js::check_object_expression(expr, ctx),
         AstKind::UnaryExpression(expr) => js::check_unary_expression(expr, ctx),
@@ -118,7 +116,6 @@ pub fn check<'a>(node: &AstNode<'a>, ctx: &SemanticBuilder<'a>) {
             ts::check_variable_declarator(decl, ctx);
         }
         AstKind::SimpleAssignmentTarget(target) => ts::check_simple_assignment_target(target, ctx),
-        AstKind::TSInterfaceDeclaration(decl) => ts::check_ts_interface_declaration(decl, ctx),
         AstKind::TSTypeAnnotation(annot) => ts::check_ts_type_annotation(annot, ctx),
         AstKind::TSTypeParameterDeclaration(declaration) => {
             ts::check_ts_type_parameter_declaration(declaration, ctx);

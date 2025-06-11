@@ -313,12 +313,13 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Use object literal notation {} instead
 
-  × Unterminated string
-   ╭─[no_object_constructor.tsx:1:17]
- 1 │ import foo from 'bar
-   ·                 ─────
+  ⚠ eslint(no-object-constructor): Disallow calls to the `Object` constructor without an argument
+   ╭─[no_object_constructor.tsx:2:10]
+ 1 │ import foo from 'bar'
  2 │          Object()
+   ·          ────────
    ╰────
+  help: Use object literal notation {} instead
 
   ⚠ eslint(no-object-constructor): Disallow calls to the `Object` constructor without an argument
    ╭─[no_object_constructor.tsx:5:13]

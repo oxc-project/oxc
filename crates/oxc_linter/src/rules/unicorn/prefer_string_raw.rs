@@ -26,7 +26,7 @@ declare_oxc_lint!(
     ///
     /// Excessive backslashes can make string values less readable which can be avoided by using `String.raw`.
     ///
-    /// ### Example
+    /// ### Examples
     ///
     /// Examples of **incorrect** code for this rule:
     /// ```javascript
@@ -77,9 +77,7 @@ impl Rule for PreferStringRaw {
 
         if let Some(parent_node) = parent_node {
             match parent_node.kind() {
-                AstKind::Directive(_) => {
-                    return;
-                }
+                AstKind::Directive(_) => return,
                 AstKind::ImportDeclaration(decl) => {
                     if string_literal.span == decl.source.span {
                         return;
@@ -119,11 +117,7 @@ impl Rule for PreferStringRaw {
                         }
                     }
                 }
-                AstKind::JSXAttributeItem(attr) => {
-                    let Some(attr) = attr.as_attribute() else {
-                        return;
-                    };
-
+                AstKind::JSXAttribute(attr) => {
                     let Some(JSXAttributeValue::StringLiteral(value)) = &attr.value else {
                         return;
                     };

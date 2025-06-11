@@ -27,11 +27,10 @@ declare_oxc_lint!(
     ///
     /// Negated conditions are more difficult to understand. Code can be made more readable by inverting the condition.
     ///
-    /// ### Example
+    /// ### Examples
     ///
     /// Examples of **incorrect** code for this rule:
     /// ```javascript
-    ///
     /// if (!a) {
     /// 	doSomethingC();
     /// } else {
@@ -74,9 +73,7 @@ impl Rule for NoNegatedCondition {
             AstKind::ConditionalExpression(conditional_expr) => {
                 conditional_expr.test.without_parentheses()
             }
-            _ => {
-                return;
-            }
+            _ => return,
         };
 
         match stmt_test {
@@ -93,9 +90,7 @@ impl Rule for NoNegatedCondition {
                     return;
                 }
             }
-            _ => {
-                return;
-            }
+            _ => return,
         }
 
         ctx.diagnostic(no_negated_condition_diagnostic(stmt_test.span()));

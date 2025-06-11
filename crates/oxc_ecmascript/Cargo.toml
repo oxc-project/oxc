@@ -1,6 +1,6 @@
 [package]
 name = "oxc_ecmascript"
-version = "0.67.0"
+version = "0.72.3"
 authors.workspace = true
 categories.workspace = true
 edition.workspace = true
@@ -25,6 +25,5 @@ oxc_ast = { workspace = true }
 oxc_span = { workspace = true }
 oxc_syntax = { workspace = true, features = ["to_js_string"] }
 
-cow-utils = { workspace = true }
 num-bigint = { workspace = true }
 num-traits = { workspace = true }

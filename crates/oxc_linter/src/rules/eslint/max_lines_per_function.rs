@@ -193,18 +193,19 @@ impl Rule for MaxLinesPerFunction {
         };
 
         let code = &source_text[span.start as usize..span.end as usize];
-        let lines_in_function = code.lines().count();
-        let blank_lines = if self.skip_blank_lines {
-            code.lines().filter(|&line| line.trim().is_empty()).count()
+        let lines_in_function = if self.skip_blank_lines {
+            code.lines().filter(|&line| !line.trim().is_empty()).count()
         } else {
-            0
+            // Intentionally counting newline bytes instead of using .lines() for performance (see PR 11242)
+            let newlines = code.bytes().filter(|ch| *ch == b'\n').count();
+            if code.ends_with('\n') { newlines } else { newlines + 1 }
         };
-        let result_lines =
-            lines_in_function.saturating_sub(blank_lines).saturating_sub(comment_lines);
-        if result_lines > self.max {
+
+        let final_lines = lines_in_function.saturating_sub(comment_lines);
+        if final_lines > self.max {
             let name =
                 get_function_name_with_kind(node, ctx.nodes().parent_node(node.id()).unwrap());
-            ctx.diagnostic(max_lines_per_function_diagnostic(&name, result_lines, self.max, span));
+            ctx.diagnostic(max_lines_per_function_diagnostic(&name, final_lines, self.max, span));
         }
     }
 }

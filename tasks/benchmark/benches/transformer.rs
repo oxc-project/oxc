@@ -2,19 +2,19 @@ use std::path::Path;
 
 use oxc_allocator::Allocator;
 use oxc_benchmark::{BenchmarkId, Criterion, criterion_group, criterion_main};
+use oxc_isolated_declarations::{IsolatedDeclarations, IsolatedDeclarationsOptions};
 use oxc_parser::{Parser, ParserReturn};
 use oxc_semantic::SemanticBuilder;
-use oxc_span::SourceType;
-use oxc_tasks_common::TestFiles;
+use oxc_tasks_common::{TestFile, TestFiles};
 use oxc_transformer::{EnvOptions, TransformOptions, Transformer};
 
 fn bench_transformer(criterion: &mut Criterion) {
     let mut group = criterion.benchmark_group("transformer");
 
-    for file in TestFiles::complicated().files() {
+    for file in TestFiles::minimal().files() {
         let id = BenchmarkId::from_parameter(&file.file_name);
-        let source_type = SourceType::from_path(&file.file_name).unwrap();
-        let source_text = file.source_text.as_str();
+        let source_text = &file.source_text;
+        let source_type = file.source_type;
 
         // Create `Allocator` outside of `bench_function`, so same allocator is used for
         // both the warmup and measurement phases
@@ -41,17 +41,11 @@ fn bench_transformer(criterion: &mut Criterion) {
                     .into_scoping();
 
                 runner.run(|| {
-                    let ret = Transformer::new(
-                        &allocator,
-                        Path::new(&file.file_name),
-                        &transform_options,
-                    )
-                    .build_with_scoping(scoping, &mut program);
-
                     // Return the `TransformerReturn`, so it's dropped outside of the measured section.
                     // `TransformerReturn` contains `ScopeTree` and `SymbolTable` which are costly to drop.
                     // That's not central to transformer, so we don't want it included in this measure.
-                    ret
+                    Transformer::new(&allocator, Path::new(&file.file_name), &transform_options)
+                        .build_with_scoping(scoping, &mut program)
                 });
             });
         });
@@ -60,5 +54,36 @@ fn bench_transformer(criterion: &mut Criterion) {
     group.finish();
 }
 
-criterion_group!(transformer, bench_transformer);
+fn bench_isolated_declarations(criterion: &mut Criterion) {
+    let mut group = criterion.benchmark_group("isolated-declarations");
+
+    let file =
+        TestFile::new("https://cdn.jsdelivr.net/gh/oxc-project/benchmark-files@main/vue-id.ts");
+
+    let id = BenchmarkId::from_parameter(&file.file_name);
+    let source_text = &file.source_text;
+    let source_type = file.source_type;
+
+    let ast_allocator = Allocator::new();
+    let program = Parser::new(&ast_allocator, source_text, source_type).parse().program;
+
+    // Create `Allocator` outside of `bench_function`, so same allocator is used for
+    // both the warmup and measurement phases
+    let mut output_allocator = Allocator::new();
+    group.bench_function(id, |b| {
+        b.iter_with_setup_wrapper(|runner| {
+            // Reset allocator at start of each iteration
+            output_allocator.reset();
+
+            // Include dropping `IsolatedDeclarations::build`'s return value in benchmark timing.
+            // Drop time is part of the cost of using this API.
+            let options = IsolatedDeclarationsOptions { strip_internal: true };
+            runner.run(|| IsolatedDeclarations::new(&output_allocator, options).build(&program));
+        });
+    });
+
+    group.finish();
+}
+
+criterion_group!(transformer, bench_transformer, bench_isolated_declarations);
 criterion_main!(transformer);

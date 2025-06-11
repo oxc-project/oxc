@@ -16,18 +16,18 @@ use crate::options::babel::BabelModule;
 pub enum Module {
     #[default]
     Preserve,
-    ESM,
+    Esm,
     CommonJS,
 }
 
 impl Module {
     /// Check if the module is ECMAScript Module(ESM).
-    pub fn is_esm(&self) -> bool {
-        matches!(self, Self::ESM)
+    pub fn is_esm(self) -> bool {
+        matches!(self, Self::Esm)
     }
 
     /// Check if the module is CommonJS.
-    pub fn is_commonjs(&self) -> bool {
+    pub fn is_commonjs(self) -> bool {
         matches!(self, Self::CommonJS)
     }
 }

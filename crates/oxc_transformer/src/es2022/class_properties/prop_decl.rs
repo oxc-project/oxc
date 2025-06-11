@@ -6,11 +6,11 @@ use oxc_span::SPAN;
 use oxc_syntax::reference::ReferenceFlags;
 use oxc_traverse::TraverseCtx;
 
-use crate::common::helper_loader::Helper;
+use crate::{common::helper_loader::Helper, utils::ast_builder::create_assignment};
 
 use super::{
     ClassProperties,
-    utils::{create_assignment, create_underscore_ident_name, create_variable_declaration},
+    utils::{create_underscore_ident_name, create_variable_declaration},
 };
 
 // Instance properties
@@ -24,11 +24,26 @@ impl<'a> ClassProperties<'a, '_> {
         ctx: &mut TraverseCtx<'a>,
     ) {
         // Get value
-        let value = prop.value.take().unwrap_or_else(|| ctx.ast.void_0(SPAN));
+        let value = prop.value.take();
 
         let init_expr = if let PropertyKey::PrivateIdentifier(ident) = &mut prop.key {
+            let value = value.unwrap_or_else(|| ctx.ast.void_0(SPAN));
             self.create_private_instance_init_assignment(ident, value, ctx)
         } else {
+            let value = match value {
+                Some(value) => value,
+                // Do not need to convert property to `assignee.prop = void 0` if no initializer exists when
+                // `set_public_class_fields` and `remove_class_fields_without_initializer`
+                // are both true.
+                // This is to align `TypeScript` with `useDefineForClassFields: false`.
+                None if self.set_public_class_fields
+                    && self.remove_class_fields_without_initializer =>
+                {
+                    return;
+                }
+                None => ctx.ast.void_0(SPAN),
+            };
+
             // Convert to assignment or `_defineProperty` call, depending on `loose` option
             let this = ctx.ast.expression_this(SPAN);
             self.create_init_assignment(prop, value, this, false, ctx)
@@ -85,17 +100,29 @@ impl<'a> ClassProperties<'a, '_> {
         // Get value.
         // Transform it to replace `this` and references to class name with temp var for class.
         // Also transform `super`.
-        let value = match prop.value.take() {
-            Some(mut value) => {
-                self.transform_static_initializer(&mut value, ctx);
-                value
-            }
-            None => ctx.ast.void_0(SPAN),
-        };
+        let value = prop.value.take().map(|mut value| {
+            self.transform_static_initializer(&mut value, ctx);
+            value
+        });
 
         if let PropertyKey::PrivateIdentifier(ident) = &mut prop.key {
+            let value = value.unwrap_or_else(|| ctx.ast.void_0(SPAN));
             self.insert_private_static_init_assignment(ident, value, ctx);
         } else {
+            let value = match value {
+                Some(value) => value,
+                // Do not need to convert property to `assignee.prop = void 0` if no initializer exists when
+                // `set_public_class_fields` and `remove_class_fields_without_initializer`
+                // are both true.
+                // This is to align `TypeScript` with `useDefineForClassFields: false`.
+                None if self.set_public_class_fields
+                    && self.remove_class_fields_without_initializer =>
+                {
+                    return;
+                }
+                None => ctx.ast.void_0(SPAN),
+            };
+
             // Convert to assignment or `_defineProperty` call, depending on `loose` option
             let class_details = self.current_class();
             let class_binding = if class_details.is_declaration {
@@ -200,6 +227,9 @@ impl<'a> ClassProperties<'a, '_> {
 // Used for both instance and static properties
 impl<'a> ClassProperties<'a, '_> {
     /// `assignee.prop = value` or `_defineProperty(assignee, "prop", value)`
+    /// `#[inline]` because the caller has been checked `self.set_public_class_fields`.
+    /// After inlining, the two `self.set_public_class_fields` checks may be folded into one.
+    #[inline]
     fn create_init_assignment(
         &mut self,
         prop: &mut PropertyDefinition<'a>,

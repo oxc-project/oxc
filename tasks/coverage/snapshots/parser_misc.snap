@@ -1,7 +1,7 @@
 parser_misc Summary:
-AST Parsed     : 35/35 (100.00%)
-Positive Passed: 35/35 (100.00%)
-Negative Passed: 32/32 (100.00%)
+AST Parsed     : 41/41 (100.00%)
+Positive Passed: 41/41 (100.00%)
+Negative Passed: 43/43 (100.00%)
 
   × Identifier `b` has already been declared
    ╭─[misc/fail/oxc-10159.js:1:22]
@@ -19,23 +19,102 @@ Negative Passed: 32/32 (100.00%)
    ╰────
 
   × Unexpected token
+   ╭─[misc/fail/oxc-10639.js:1:1]
+ 1 │ <<Ç
+   · ──
+   ╰────
+
+  × Unexpected token
+   ╭─[misc/fail/oxc-10977.ts:1:9]
+ 1 │ class{h:<=Ö
+   ·         ──
+   ╰────
+
+  × Expected `from` but found `EOF`
+   ╭─[misc/fail/oxc-11453.js:2:1]
+ 1 │ export import
+   ╰────
+
+  × Decorators may not appear after 'export' or 'export default' if they also appear before 'export'.
+   ╭─[misc/fail/oxc-11472.js:1:14]
+ 1 │ @dec1 export @dec2 class C {}
+   ·              ─────
+ 2 │ 
+   ╰────
+
+  × Decorators are not valid here.
+   ╭─[misc/fail/oxc-11472.js:3:1]
+ 2 │ 
+ 3 │ @dec1 export default @dec2 class {}
+   · ─────
+   ╰────
+
+  × Expected `from` but found `EOF`
+   ╭─[misc/fail/oxc-11484.ts:2:1]
+ 1 │ import { type as as }
+   ╰────
+
+  × Unexpected token
+   ╭─[misc/fail/oxc-11487.mjs:1:13]
+ 1 │ async await => {}
+   ·             ──
+   ╰────
+
+  × Expected `from` but found `{`
+   ╭─[misc/fail/oxc-11532.js:1:15]
+ 1 │ import source { x } from 'x';
+   ·               ┬
+   ·               ╰── `from` expected
+ 2 │ import defer { x } from "x";
+   ╰────
+
+  × Expected `}` but found `function`
+   ╭─[misc/fail/oxc-11538.js:1:20]
+ 1 │ const y = `foo ${x function() {} function () {}}`;
+   ·                    ────┬───
+   ·                        ╰── `}` expected
+   ╰────
+
+  × Unexpected token
+   ╭─[misc/fail/oxc-11592-1.ts:1:11]
+ 1 │ namespace "a" {}
+   ·           ───
+   ╰────
+
+  × Unexpected token
+   ╭─[misc/fail/oxc-11592-2.ts:1:11]
+ 1 │ namespace "a";
+   ·           ───
+ 2 │ 
+   ╰────
+
+  × Expected `{` but found `;`
+   ╭─[misc/fail/oxc-11592-3.ts:1:12]
+ 1 │ namespace a;
+   ·            ┬
+   ·            ╰── `{` expected
+   ╰────
+
+  × Unexpected token
    ╭─[misc/fail/oxc-169.js:2:1]
  1 │ 1<(V=82<<t-j0<(V=$<LBI<(V=ut<I<(V=$<LBI<(V=uIV=82<<t-j0<(V=$<LBI<(V=ut<I<(V=$<LBI<(V<II>
    ╰────
 
-  × Unexpected token
+  × Expected `(` but found `:`
    ╭─[misc/fail/oxc-1942-1.ts:2:8]
  1 │ class Foo {
  2 │   get x: () => {
-   ·        ─
+   ·        ┬
+   ·        ╰── `(` expected
  3 │       return 5;
    ╰────
 
-  × Unexpected token
+  × Expected `(` but found `:`
    ╭─[misc/fail/oxc-1942-2.ts:2:8]
  1 │ class Foo {
  2 │   set x: (v: number) => {}
-   ·        ─
+   ·        ┬
+   ·        ╰── `(` expected
  3 │ }
    ╰────
 
@@ -114,10 +193,11 @@ Negative Passed: 32/32 (100.00%)
  39 │     & import("pkg", [ {"resolution-mode": "import"} ]).ImportInterface;
     ╰────
 
-  × Unexpected token
+  × Expected `:` but found `[`
    ╭─[misc/fail/oxc-3320.tsx:1:8]
  1 │ m< $<{3[   $<{3[  $<{3[ m< m$<{3[ m< mm< $<{3[   $<{3[  $<{3[ m< m$<{3[ m< m$<{3[  $<{3[ m< m$<{3[
-   ·        ─
+   ·        ┬
+   ·        ╰── `:` expected
    ╰────
 
   × Expected corresponding JSX closing tag for 'Apple'.
@@ -174,26 +254,32 @@ Negative Passed: 32/32 (100.00%)
  9 │ }
    ╰────
 
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-   ╭─[misc/fail/oxc-4111-1.js:1:18]
+  × TS(8037): Type assertion expressions can only be used in TypeScript files.
+   ╭─[misc/fail/oxc-4111-1.js:1:1]
  1 │ funtransientction as longciiConÞr>ol(cde) {
-   ·                  ▲
+   · ─────────────────────────────────
+   ╰────
+
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
+   ╭─[misc/fail/oxc-4111-1.js:1:43]
+ 1 │ funtransientction as longciiConÞr>ol(cde) {
+   ·                                          ▲
    ╰────
   help: Try insert a semicolon here
 
   × TS(1248): A class member cannot have the 'const' keyword.
-   ╭─[misc/fail/oxc-4212-1.ts:1:17]
+   ╭─[misc/fail/oxc-4212-1.ts:1:11]
  1 │ class a { const enum b(); }
-   ·                 ────
+   ·           ─────
    ╰────
   help: Did you mean `readonly`?
 
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-   ╭─[misc/fail/oxc-4212-1.ts:1:21]
+  × Expected `;` but found `Identifier`
+   ╭─[misc/fail/oxc-4212-1.ts:1:22]
  1 │ class a { const enum b(); }
-   ·                     ▲
+   ·                      ┬
+   ·                      ╰── `;` expected
    ╰────
-  help: Try insert a semicolon here
 
   × TS(1164): Computed property names are not allowed in enums.
    ╭─[misc/fail/oxc-4449-1.ts:1:11]
@@ -272,11 +358,11 @@ Negative Passed: 32/32 (100.00%)
  4 │ }
    ╰────
 
-  × Unexpected token
-   ╭─[misc/fail/oxc-5955-3.ts:2:18]
+  × TS(1021): An index signature must have a type annotation.
+   ╭─[misc/fail/oxc-5955-3.ts:2:5]
  1 │ class A {
  2 │     [key: string]?: number;
-   ·                  ─
+   ·     ─────────────
  3 │ }
    ╰────
 

@@ -7,7 +7,9 @@ use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 use serde_json::Value;
 
-use crate::{AstNode, context::LintContext, globals::GLOBAL_OBJECT_NAMES, rule::Rule};
+use crate::{
+    AstNode, context::LintContext, fixer::RuleFixer, globals::GLOBAL_OBJECT_NAMES, rule::Rule,
+};
 
 fn prefer_number_properties_diagnostic(span: Span, method_name: &str) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!("Use `Number.{method_name}` instead of the global `{method_name}`"))
@@ -73,7 +75,7 @@ declare_oxc_lint!(
     PreferNumberProperties,
     unicorn,
     restriction,
-    pending
+    dangerous_fix
 );
 
 impl Rule for PreferNumberProperties {
@@ -100,40 +102,55 @@ impl Rule for PreferNumberProperties {
                 };
 
                 if GLOBAL_OBJECT_NAMES.contains(&ident_name.name.as_str()) {
-                    match member_expr.static_property_name() {
-                        Some("NaN") if self.check_nan => {
-                            ctx.diagnostic(prefer_number_properties_diagnostic(
-                                member_expr.span(),
-                                "NaN",
-                            ));
-                        }
-                        Some("Infinity") if self.check_infinity => {
-                            ctx.diagnostic(prefer_number_properties_diagnostic(
-                                member_expr.span(),
-                                "Infinity",
-                            ));
-                        }
-                        _ => {}
+                    let Some(name) = member_expr.static_property_name() else { return };
+                    if (name == "NaN" && self.check_nan)
+                        || (name == "Infinity" && self.check_infinity)
+                    {
+                        ctx.diagnostic_with_fix(
+                            prefer_number_properties_diagnostic(member_expr.span(), name),
+                            |fixer| fixer.replace(ident_name.span, "Number"),
+                        );
                     }
                 }
             }
             AstKind::IdentifierReference(ident_ref)
                 if ctx.is_reference_to_global_variable(ident_ref) =>
             {
-                match ident_ref.name.as_str() {
-                    "NaN" if self.check_nan => {
-                        ctx.diagnostic(prefer_number_properties_diagnostic(
-                            ident_ref.span,
-                            &ident_ref.name,
-                        ));
+                if (ident_ref.name.as_str() == "NaN" && self.check_nan)
+                    || (ident_ref.name.as_str() == "Infinity" && self.check_infinity)
+                    || (matches!(
+                        ident_ref.name.as_str(),
+                        "isNaN" | "isFinite" | "parseFloat" | "parseInt"
+                    ) && matches!(
+                        ctx.nodes().parent_kind(node.id()),
+                        Some(AstKind::ObjectProperty(_))
+                    ))
+                {
+                    let fixer = |fixer: RuleFixer<'_, 'a>| match ctx.nodes().parent_kind(node.id())
+                    {
+                        Some(AstKind::ObjectProperty(object_property))
+                            if object_property.shorthand =>
+                        {
+                            fixer.insert_text_before(
+                                &ident_ref.span,
+                                format!("{}: Number.", ident_ref.name.as_str()),
+                            )
+                        }
+                        Some(_) => fixer.insert_text_before(&ident_ref.span, "Number."),
+                        None => unreachable!(),
+                    };
+
+                    if ident_ref.name.as_str() == "isNaN" || ident_ref.name.as_str() == "isFinite" {
+                        ctx.diagnostic_with_dangerous_fix(
+                            prefer_number_properties_diagnostic(ident_ref.span, &ident_ref.name),
+                            fixer,
+                        );
+                    } else {
+                        ctx.diagnostic_with_fix(
+                            prefer_number_properties_diagnostic(ident_ref.span, &ident_ref.name),
+                            fixer,
+                        );
                     }
-                    "Infinity" if self.check_infinity => {
-                        ctx.diagnostic(prefer_number_properties_diagnostic(
-                            ident_ref.span,
-                            &ident_ref.name,
-                        ));
-                    }
-                    _ => {}
                 }
             }
             AstKind::CallExpression(call_expr) => {
@@ -148,10 +165,35 @@ impl Rule for PreferNumberProperties {
                         }
                     }
 
-                    ctx.diagnostic(prefer_number_properties_diagnostic(
-                        call_expr.callee.span(),
-                        ident_name,
-                    ));
+                    let fixer = |fixer: RuleFixer<'_, 'a>| match &call_expr.callee {
+                        Expression::Identifier(ident) => {
+                            fixer.insert_text_before(&ident.span, "Number.")
+                        }
+                        match_member_expression!(Expression) => {
+                            let member_expr = call_expr.callee.to_member_expression();
+
+                            fixer.replace(member_expr.object().span(), "Number")
+                        }
+                        _ => unreachable!(),
+                    };
+
+                    if ident_name == "isFinite" || ident_name == "isNaN" {
+                        ctx.diagnostic_with_dangerous_fix(
+                            prefer_number_properties_diagnostic(
+                                call_expr.callee.span(),
+                                ident_name,
+                            ),
+                            fixer,
+                        );
+                    } else {
+                        ctx.diagnostic_with_fix(
+                            prefer_number_properties_diagnostic(
+                                call_expr.callee.span(),
+                                ident_name,
+                            ),
+                            fixer,
+                        );
+                    }
                 }
             }
             _ => {}
@@ -402,18 +444,18 @@ function inner() {
         (r"self.parseFloat(foo);", None),
         (r"globalThis.NaN", None),
         (r"-globalThis.Infinity", Some(json!([{"checkInfinity":true}]))),
-        //     (
-        //         r"const options = {
-        //     normalize: parseFloat,
-        //     parseInt,
-        // };
+        (
+            r"const options = {
+            normalize: parseFloat,
+             parseInt,
+         };
 
-        // run(foo, options);",
-        //         None,
-        //     ),
+         run(foo, options);",
+            None,
+        ),
     ];
 
-    let _fix = vec![
+    let fix = vec![
         (
             r#"const a = parseInt("10", 2);
 			const b = parseFloat("10.5");
@@ -421,8 +463,8 @@ function inner() {
 			const d = isFinite(10);"#,
             r#"const a = Number.parseInt("10", 2);
 			const b = Number.parseFloat("10.5");
-			const c = isNaN(10);
-			const d = isFinite(10);"#,
+			const c = Number.isNaN(10);
+			const d = Number.isFinite(10);"#,
             None::<Value>,
         ),
         ("const foo = NaN;", "const foo = Number.NaN;", None),
@@ -439,5 +481,6 @@ function inner() {
     ];
 
     Tester::new(PreferNumberProperties::NAME, PreferNumberProperties::PLUGIN, pass, fail)
+        .expect_fix(fix)
         .test_and_snapshot();
 }

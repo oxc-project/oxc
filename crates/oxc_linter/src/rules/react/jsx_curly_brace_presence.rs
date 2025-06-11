@@ -915,12 +915,12 @@ fn test() {
         (r#"<App>{"foo 'bar'"}</App>"#, Some(json!([{ "children": "never" }]))),
         (
             r#"
-			        <App prop=""#,
+			        <App prop="" />"#,
             Some(json!(["always"])),
         ),
         (
             "
-			        <App prop='",
+			        <App prop='' />",
             Some(json!(["always"])),
         ),
         (
@@ -1186,9 +1186,9 @@ fn test() {
         ),
         (
             r#"
-			        <App prop=""#,
+			        <App prop="" />"#,
             r#"
-			        <App prop=""#,
+			        <App prop="" />"#,
             Some(json!(["always"])),
         ),
         (

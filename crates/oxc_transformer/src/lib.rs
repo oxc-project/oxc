@@ -120,12 +120,7 @@ impl<'a> Transformer<'a> {
         self.ctx.source_type = program.source_type;
         self.ctx.source_text = program.source_text;
 
-        // Update options from comments when source type is JSX or TypeScript which has enabled `only_remove_type_imports`.
-        // Because if `only_remove_type_imports` is enabled, no imports will be removed, so that we don't care about
-        // TypeScript's `jsx_pragma` and `jsx_pragma_frag` options.
-        if program.source_type.is_jsx()
-            && (!program.source_type.is_typescript() || !self.typescript.only_remove_type_imports)
-        {
+        if program.source_type.is_jsx() {
             jsx::update_options_with_comments(
                 &program.comments,
                 &mut self.typescript,
@@ -146,7 +141,12 @@ impl<'a> Transformer<'a> {
                 .is_typescript()
                 .then(|| TypeScript::new(&self.typescript, &self.ctx)),
             x1_jsx: Jsx::new(self.jsx, self.env.es2018.object_rest_spread, ast_builder, &self.ctx),
-            x2_es2022: ES2022::new(self.env.es2022, &self.ctx),
+            x2_es2022: ES2022::new(
+                self.env.es2022,
+                !self.typescript.allow_declare_fields
+                    || self.typescript.remove_class_fields_without_initializer,
+                &self.ctx,
+            ),
             x2_es2021: ES2021::new(self.env.es2021, &self.ctx),
             x2_es2020: ES2020::new(self.env.es2020, &self.ctx),
             x2_es2019: ES2019::new(self.env.es2019),
@@ -283,6 +283,9 @@ impl<'a> Traverse<'a> for TransformerImpl<'a, '_> {
 
     fn exit_class(&mut self, class: &mut Class<'a>, ctx: &mut TraverseCtx<'a>) {
         self.decorator.exit_class(class, ctx);
+        if let Some(typescript) = self.x0_typescript.as_mut() {
+            typescript.exit_class(class, ctx);
+        }
         self.x2_es2022.exit_class(class, ctx);
     }
 
@@ -447,16 +450,6 @@ impl<'a> Traverse<'a> for TransformerImpl<'a, '_> {
         }
     }
 
-    fn exit_method_definition(
-        &mut self,
-        def: &mut MethodDefinition<'a>,
-        ctx: &mut TraverseCtx<'a>,
-    ) {
-        if let Some(typescript) = self.x0_typescript.as_mut() {
-            typescript.exit_method_definition(def, ctx);
-        }
-    }
-
     fn enter_new_expression(&mut self, expr: &mut NewExpression<'a>, ctx: &mut TraverseCtx<'a>) {
         if let Some(typescript) = self.x0_typescript.as_mut() {
             typescript.enter_new_expression(expr, ctx);
@@ -535,7 +528,7 @@ impl<'a> Traverse<'a> for TransformerImpl<'a, '_> {
                 let Statement::ExpressionStatement(expr_stmt) = stmt else {
                     continue;
                 };
-                let expression = Some(expr_stmt.expression.take_in(ctx.ast.allocator));
+                let expression = Some(expr_stmt.expression.take_in(ctx.ast));
                 *stmt = ctx.ast.statement_return(SPAN, expression);
                 return;
             }

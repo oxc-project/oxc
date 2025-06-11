@@ -22,7 +22,7 @@ test = false
 doctest = false
 
 [dependencies]
-oxc = { workspace = true, features = ["full", "isolated_declarations", "serialize"] }
+oxc = { workspace = true, features = ["full", "isolated_declarations", "serialize", "conformance"] }
 oxc_formatter = { workspace = true }
 oxc_tasks_common = { workspace = true }
 oxc_tasks_transform_checker = { workspace = true }
@@ -39,7 +39,7 @@ rayon = { workspace = true }
 rustc-hash = { workspace = true }
 saphyr = { workspace = true }
 serde = { workspace = true, features = ["derive"] }
-serde_json = { workspace = true, features = ["unbounded_depth", "preserve_order"] }
+serde_json = { workspace = true }
 similar = { workspace = true }
 tokio = { workspace = true, features = ["macros", "rt-multi-thread"] }
 walkdir = { workspace = true }

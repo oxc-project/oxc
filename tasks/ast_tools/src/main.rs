@@ -212,8 +212,14 @@ static SOURCE_PATHS: &[&str] = &[
     "crates/oxc_ast/src/ast/jsx.rs",
     "crates/oxc_ast/src/ast/ts.rs",
     "crates/oxc_ast/src/ast/comment.rs",
-    "crates/oxc_ast/src/serialize.rs",
+    "crates/oxc_ast/src/serialize/mod.rs",
+    "crates/oxc_ast/src/serialize/basic.rs",
+    "crates/oxc_ast/src/serialize/literal.rs",
+    "crates/oxc_ast/src/serialize/js.rs",
+    "crates/oxc_ast/src/serialize/jsx.rs",
+    "crates/oxc_ast/src/serialize/ts.rs",
     "crates/oxc_syntax/src/lib.rs",
+    "crates/oxc_syntax/src/comment_node.rs",
     "crates/oxc_syntax/src/module_record.rs",
     "crates/oxc_syntax/src/number.rs",
     "crates/oxc_syntax/src/operator.rs",
@@ -222,7 +228,7 @@ static SOURCE_PATHS: &[&str] = &[
     "crates/oxc_syntax/src/symbol.rs",
     "crates/oxc_syntax/src/reference.rs",
     "crates/oxc_span/src/span.rs",
-    "crates/oxc_span/src/source_type/mod.rs",
+    "crates/oxc_span/src/source_type.rs",
     "crates/oxc_regular_expression/src/ast.rs",
     "napi/parser/src/raw_transfer_types.rs",
 ];
@@ -270,8 +276,11 @@ const GENERATORS: &[&(dyn Generator + Sync)] = &[
     &generators::ScopesCollectorGenerator,
     &generators::Utf8ToUtf16ConverterGenerator,
     &generators::RawTransferGenerator,
+    &generators::RawTransferLazyGenerator,
     &generators::TypescriptGenerator,
     &generators::FormatterFormatGenerator,
+    &generators::FormatterAstNodesGenerator,
+    &generators::FormatterFormatWriteGenerator,
 ];
 
 /// Attributes on structs and enums (not including those defined by derives/generators)
@@ -384,15 +393,16 @@ fn generate_proc_macro() -> RawOutput {
         use quote::quote;
 
         ///@@line_break
-        pub fn get_trait_crate_and_generics(trait_name: &str) -> (TokenStream, TokenStream) {
-            match trait_name {
+        pub fn get_trait_crate_and_generics(trait_name: &str) -> Option<(TokenStream, TokenStream)> {
+            let res = match trait_name {
                 #(#match_arms,)*
-                _ => panic!("Invalid derive trait(generate_derive): {trait_name}"),
-            }
+                _ => return None,
+            };
+            Some(res)
         }
     };
 
-    Output::Rust { path: output_path(AST_MACROS_CRATE_PATH, "mod.rs"), tokens: output }
+    Output::Rust { path: output_path(AST_MACROS_CRATE_PATH, "derived_traits.rs"), tokens: output }
         .into_raw(file!())
 }
 

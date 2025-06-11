@@ -44,9 +44,11 @@ pub struct InitDeclarations {
 
 declare_oxc_lint!(
     /// ### What it does
+    ///
     /// Require or disallow initialization in variable declarations
     ///
     /// ### Why is this bad?
+    ///
     /// In JavaScript, variables can be assigned during declaration, or at any point afterwards using an assignment statement.
     /// For example, in the following code, foo is initialized during declaration, while bar is initialized later.
     ///

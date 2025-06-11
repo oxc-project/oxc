@@ -44,6 +44,10 @@ pub struct TransformCtx<'a> {
     pub statement_injector: StatementInjectorStore<'a>,
     /// Manage inserting statements at top of program globally
     pub top_level_statements: TopLevelStatementsStore<'a>,
+
+    // State for multiple plugins interacting
+    /// `true` if class properties plugin is enabled
+    pub is_class_properties_plugin_enabled: bool,
 }
 
 impl TransformCtx<'_> {
@@ -65,6 +69,7 @@ impl TransformCtx<'_> {
             var_declarations: VarDeclarationsStore::new(),
             statement_injector: StatementInjectorStore::new(),
             top_level_statements: TopLevelStatementsStore::new(),
+            is_class_properties_plugin_enabled: options.env.es2022.class_properties.is_some(),
         }
     }
 

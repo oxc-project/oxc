@@ -1,6 +1,5 @@
 #![expect(missing_docs)] // FIXME
 use oxc_span::Atom;
-use oxc_syntax::scope::ScopeId;
 
 use super::{AstKind, ast::*};
 
@@ -75,51 +74,10 @@ impl<'a> AstKind<'a> {
         }
     }
 
-    pub fn is_jsx(self) -> bool {
-        matches!(
-            self,
-            Self::JSXElement(_)
-                | Self::JSXOpeningElement(_)
-                | Self::JSXElementName(_)
-                | Self::JSXFragment(_)
-                | Self::JSXAttributeItem(_)
-                | Self::JSXText(_)
-                | Self::JSXExpressionContainer(_)
-        )
-    }
-
     pub fn is_specific_id_reference(&self, name: &str) -> bool {
         match self {
             Self::IdentifierReference(ident) => ident.name == name,
             _ => false,
-        }
-    }
-
-    /// If this node is a container, get the [`ScopeId`] it creates.
-    ///
-    /// Will always be none if semantic analysis has not been run.
-    pub fn get_container_scope_id(self) -> Option<ScopeId> {
-        match self {
-            Self::Program(p) => Some(p.scope_id()),
-            Self::BlockStatement(b) => Some(b.scope_id()),
-            Self::ForStatement(f) => Some(f.scope_id()),
-            Self::ForInStatement(f) => Some(f.scope_id()),
-            Self::ForOfStatement(f) => Some(f.scope_id()),
-            Self::SwitchStatement(switch) => Some(switch.scope_id()),
-            Self::CatchClause(catch) => Some(catch.scope_id()),
-            Self::Function(f) => Some(f.scope_id()),
-            Self::ArrowFunctionExpression(f) => Some(f.scope_id()),
-            Self::Class(class) => Some(class.scope_id()),
-            Self::StaticBlock(b) => Some(b.scope_id()),
-            Self::TSEnumDeclaration(e) => Some(e.scope_id()),
-            Self::TSConditionalType(e) => Some(e.scope_id()),
-            Self::TSTypeAliasDeclaration(e) => Some(e.scope_id()),
-            Self::TSInterfaceDeclaration(e) => Some(e.scope_id()),
-            Self::TSMethodSignature(e) => Some(e.scope_id()),
-            Self::TSConstructSignatureDeclaration(e) => Some(e.scope_id()),
-            Self::TSModuleDeclaration(e) => Some(e.scope_id()),
-            Self::TSMappedType(e) => Some(e.scope_id()),
-            _ => None,
         }
     }
 
@@ -236,7 +194,7 @@ impl AstKind<'_> {
             Self::StringLiteral(s) => format!("StringLiteral({})", s.value).into(),
             Self::BooleanLiteral(b) => format!("BooleanLiteral({})", b.value).into(),
             Self::NullLiteral(_) => "NullLiteral".into(),
-            Self::BigIntLiteral(b) => format!("BigIntLiteral({})", b.raw).into(),
+            Self::BigIntLiteral(b) => format!("BigIntLiteral({})", b.value).into(),
             Self::RegExpLiteral(r) => format!("RegExpLiteral({})", r.regex).into(),
             Self::TemplateLiteral(t) => format!(
                 "TemplateLiteral({})",
@@ -335,16 +293,18 @@ impl AstKind<'_> {
             Self::ExportAllDeclaration(_) => "ExportAllDeclaration".into(),
             Self::JSXOpeningElement(_) => "JSXOpeningElement".into(),
             Self::JSXClosingElement(_) => "JSXClosingElement".into(),
-            Self::JSXElementName(n) => format!("JSXElementName({n})").into(),
             Self::JSXElement(_) => "JSXElement".into(),
             Self::JSXFragment(_) => "JSXFragment".into(),
-            Self::JSXAttributeItem(_) => "JSXAttributeItem".into(),
+            Self::JSXOpeningFragment(_) => "JSXOpeningFragment".into(),
+            Self::JSXClosingFragment(_) => "JSXClosingFragment".into(),
+            Self::JSXEmptyExpression(_) => "JSXEmptyExpression".into(),
+            Self::JSXSpreadChild(_) => "JSXSpreadChild".into(),
+            Self::JSXAttribute(_) => "JSXAttribute".into(),
             Self::JSXSpreadAttribute(_) => "JSXSpreadAttribute".into(),
             Self::JSXText(_) => "JSXText".into(),
             Self::JSXExpressionContainer(_) => "JSXExpressionContainer".into(),
             Self::JSXIdentifier(id) => format!("JSXIdentifier({id})").into(),
             Self::JSXMemberExpression(_) => "JSXMemberExpression".into(),
-            Self::JSXMemberExpressionObject(_) => "JSXMemberExpressionObject".into(),
             Self::JSXNamespacedName(_) => "JSXNamespacedName".into(),
 
             Self::TSModuleBlock(_) => "TSModuleBlock".into(),
@@ -409,6 +369,10 @@ impl AstKind<'_> {
             Self::TSModuleReference(_) => "TSModuleReference".into(),
             Self::TSExportAssignment(_) => "TSExportAssignment".into(),
             Self::V8IntrinsicExpression(_) => "V8IntrinsicExpression".into(),
+
+            Self::JSDocNullableType(_) => "JSDocNullableType".into(),
+            Self::JSDocNonNullableType(_) => "JSDocNonNullableType".into(),
+            Self::JSDocUnknownType(_) => "JSDocUnknownType".into(),
         }
     }
 }

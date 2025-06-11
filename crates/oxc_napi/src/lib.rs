@@ -6,6 +6,7 @@ pub use error::*;
 
 use oxc_ast::{CommentKind, ast::Program};
 use oxc_ast_visit::utf8_to_utf16::Utf8ToUtf16;
+use oxc_span::SourceType;
 use oxc_syntax::module_record::ModuleRecord;
 
 /// Convert spans to UTF-16
@@ -55,4 +56,24 @@ pub fn convert_utf8_to_utf16(
     }
 
     comments
+}
+
+pub fn get_source_type(
+    filename: &str,
+    lang: Option<&str>,
+    source_type: Option<&str>,
+) -> SourceType {
+    let ty = match lang {
+        Some("js") => SourceType::mjs(),
+        Some("jsx") => SourceType::jsx(),
+        Some("ts") => SourceType::ts(),
+        Some("tsx") => SourceType::tsx(),
+        _ => SourceType::from_path(filename).unwrap_or_default(),
+    };
+    match source_type {
+        Some("script") => ty.with_script(true),
+        Some("module") => ty.with_module(true),
+        Some("unambiguous") => ty.with_unambiguous(true),
+        _ => ty,
+    }
 }

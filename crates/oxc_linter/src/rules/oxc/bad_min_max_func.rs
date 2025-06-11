@@ -8,12 +8,12 @@ use oxc_span::Span;
 
 use crate::{AstNode, context::LintContext, rule::Rule};
 
-fn bad_min_max_func_diagnostic(constant_result: f64, span1: Span) -> OxcDiagnostic {
+fn bad_min_max_func_diagnostic(constant_result: f64, span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Math.min and Math.max combination leads to constant result")
         .with_help(format!(
             "This evaluates to {constant_result:?} because of the incorrect `Math.min`/`Math.max` combination"
         ))
-        .with_label(span1)
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -30,7 +30,7 @@ declare_oxc_lint!(
     /// The `Math.min(Math.max(x, y), z)` function is used to clamp a value between two other values.
     /// If the arguments are in the wrong order, the function will always evaluate to a constant result.
     ///
-    /// ### Example
+    /// ### Examples
     ///
     /// Examples of **incorrect** code for this rule:
     /// ```javascript
@@ -39,12 +39,10 @@ declare_oxc_lint!(
     /// ```
     ///
     /// Examples of **correct** code for this rule:
-    ///
     /// ```javascript
     /// Math.max(0, Math.min(100, x));
     /// Math.min(1000, Math.max(0, z));
     /// ```
-    ///
     BadMinMaxFunc,
     oxc,
     correctness

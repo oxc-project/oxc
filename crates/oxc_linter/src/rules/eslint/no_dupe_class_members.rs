@@ -23,13 +23,17 @@ pub struct NoDupeClassMembers;
 
 declare_oxc_lint!(
     /// ### What it does
+    ///
     /// Disallow duplicate class members
     ///
     /// ### Why is this bad?
+    ///
     /// If there are declarations of the same name in class members,
     /// the last declaration overwrites other declarations silently. It can cause unexpected behaviors.
     ///
-    /// ### Example
+    /// ### Examples
+    ///
+    /// Examples of **incorrect** code for this rule:
     /// ```javascript
     /// class A {
     ///   foo() { console.log("foo") }
@@ -37,6 +41,15 @@ declare_oxc_lint!(
     /// }
     /// let a = new A();
     /// a.foo() // Uncaught TypeError: a.foo is not a function
+    /// ```
+    ///
+    /// Examples of **correct** code for this rule:
+    /// ```javascript
+    /// class A {
+    ///   foo() { console.log("foo") }
+    /// }
+    /// let a = new A();
+    /// a.foo();
     /// ```
     NoDupeClassMembers,
     eslint,
@@ -120,8 +133,6 @@ fn test() {
         "class A { get foo() {} get bar() {} get baz() {} }",
         "class A { 1() {} 2() {} }",
         "class Foo { foo(a: string): string; foo(a: number): number; foo(a: any): any {} }",
-        // NOTE: This should fail when we get read the big int value
-        "class A { [123n]() {} 123() {} }",
     ];
 
     let fail = vec![
@@ -145,6 +156,7 @@ fn test() {
         "class A { [0x10]() {} 16() {} }",
         "class A { [100]() {} [1e2]() {} }",
         "class A { [123.00]() {} [`123`]() {} }",
+        "class A { [123n]() {} 123() {} }",
         "class A { static '65'() {} static [0o101]() {} }",
         "class A { [null]() {} 'null'() {} }",
         "class A { foo() {} foo() {} foo() {} }",

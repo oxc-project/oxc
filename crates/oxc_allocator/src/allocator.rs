@@ -1,4 +1,8 @@
+use std::{alloc::Layout, ptr, slice, str};
+
 use bumpalo::Bump;
+
+use oxc_data_structures::assert_unchecked;
 
 /// A bump-allocated memory arena.
 ///
@@ -288,6 +292,109 @@ impl Allocator {
         self.bump.alloc_str(src)
     }
 
+    /// Create new `&str` from a fixed-size array of `&str`s concatenated together,
+    /// allocated in the given `allocator`.
+    ///
+    /// # Panics
+    ///
+    /// Panics if the sum of length of all strings exceeds `isize::MAX`.
+    ///
+    /// # Example
+    /// ```
+    /// use oxc_allocator::Allocator;
+    ///
+    /// let allocator = Allocator::new();
+    /// let s = allocator.alloc_concat_strs_array(["hello", " ", "world", "!"]);
+    /// assert_eq!(s, "hello world!");
+    /// ```
+    // `#[inline(always)]` because want compiler to be able to remove checked addition where some of
+    // `strings` are statically known.
+    #[expect(clippy::inline_always)]
+    #[inline(always)]
+    pub fn alloc_concat_strs_array<'a, const N: usize>(&'a self, strings: [&str; N]) -> &'a str {
+        // Calculate total length of all the strings concatenated.
+        //
+        // We have to use `checked_add` here to guard against additions wrapping around
+        // if some of the input `&str`s are very long, or there's many of them.
+        //
+        // However, `&str`s have max length of `isize::MAX`.
+        // https://users.rust-lang.org/t/does-str-reliably-have-length-isize-max/126777
+        // Use `assert_unchecked!` to communicate this invariant to compiler, which allows it to
+        // optimize out the overflow checks where some of `strings` are static, so their size is known.
+        //
+        // e.g. `allocator.from_strs_array_in(["__vite_ssr_import_", str, "__"])`, for example,
+        // requires no checks at all, because the static parts have total length of 20 bytes,
+        // and `str` has max length of `isize::MAX`. `isize::MAX as usize + 20` cannot overflow `usize`.
+        // Compiler can see that, and removes the overflow check.
+        // https://godbolt.org/z/MGh44Yz5d
+        #[expect(clippy::checked_conversions)]
+        let total_len = strings.iter().fold(0usize, |total_len, s| {
+            let len = s.len();
+            // SAFETY: `&str`s have maximum length of `isize::MAX`
+            unsafe { assert_unchecked!(len <= (isize::MAX as usize)) };
+            total_len.checked_add(len).unwrap()
+        });
+        assert!(
+            isize::try_from(total_len).is_ok(),
+            "attempted to create a string longer than `isize::MAX` bytes"
+        );
+
+        // Create actual `&str` in a separate function, to ensure that `alloc_concat_strs_array`
+        // is inlined, so that compiler has knowledge to remove the overflow checks above.
+        // When some of `strings` are static, this function is usually only a few instructions.
+        // Compiler can choose whether or not to inline `alloc_concat_strs_array_with_total_len_in`.
+        // SAFETY: `total_len` has been calculated correctly above.
+        // `total_len` is `<= isize::MAX`.
+        unsafe { self.alloc_concat_strs_array_with_total_len_in(strings, total_len) }
+    }
+
+    /// Create a new `&str` from a fixed-size array of `&str`s concatenated together,
+    /// allocated in the given `allocator`, with provided `total_len`.
+    ///
+    /// # SAFETY
+    /// * `total_len` must be the total length of all `strings` concatenated.
+    /// * `total_len` must be `<= isize::MAX`.
+    unsafe fn alloc_concat_strs_array_with_total_len_in<'a, const N: usize>(
+        &'a self,
+        strings: [&str; N],
+        total_len: usize,
+    ) -> &'a str {
+        if total_len == 0 {
+            return "";
+        }
+
+        // Allocate `total_len` bytes.
+        // SAFETY: Caller guarantees `total_len <= isize::MAX`.
+        let layout = unsafe { Layout::from_size_align_unchecked(total_len, 1) };
+        let start_ptr = self.bump().alloc_layout(layout);
+
+        let mut end_ptr = start_ptr;
+        for str in strings {
+            let src_ptr = str.as_ptr();
+            let len = str.len();
+
+            // SAFETY:
+            // `src` is obtained from a `&str` with length `len`, so is valid for reading `len` bytes.
+            // `end_ptr` is within bounds of the allocation. So is `end_ptr + len`.
+            // `u8` has no alignment requirements, so `src_ptr` and `end_ptr` are sufficiently aligned.
+            // No overlapping, because we're copying from an existing `&str` to a newly allocated buffer.
+            unsafe { ptr::copy_nonoverlapping(src_ptr, end_ptr.as_ptr(), len) };
+
+            // SAFETY: We allocated sufficient capacity for all the strings concatenated.
+            // So `end_ptr.add(len)` cannot go out of bounds.
+            end_ptr = unsafe { end_ptr.add(len) };
+        }
+
+        debug_assert_eq!(end_ptr.as_ptr() as usize - start_ptr.as_ptr() as usize, total_len);
+
+        // SAFETY: We have allocated and filled `total_len` bytes starting at `start_ptr`.
+        // Concatenating multiple `&str`s results in a valid UTF-8 string.
+        unsafe {
+            let slice = slice::from_raw_parts(start_ptr.as_ptr(), total_len);
+            str::from_utf8_unchecked(slice)
+        }
+    }
+
     /// Reset this allocator.
     ///
     /// Performs mass deallocation on everything allocated in this arena by resetting the pointer
@@ -363,13 +470,13 @@ impl Allocator {
     ///
     /// 1. Padding bytes between objects which have been allocated to preserve alignment of types
     ///    where they have different alignments or have larger-than-typical alignment.
-    /// 2. Excess capacity in [`Vec`]s, [`String`]s and [`HashMap`]s.
+    /// 2. Excess capacity in [`Vec`]s, [`StringBuilder`]s and [`HashMap`]s.
     /// 3. Objects which were allocated but later dropped. [`Allocator`] does not re-use allocations,
     ///    so anything which is allocated into arena continues to take up "dead space", even after it's
     ///    no longer referenced anywhere.
-    /// 4. "Dead space" left over where a [`Vec`], [`String`] or [`HashMap`] has grown and had to make
-    ///    a new allocation to accommodate its new larger size. Its old allocation continues to take up
-    ///    "dead" space in the allocator, unless it was the most recent allocation.
+    /// 4. "Dead space" left over where a [`Vec`], [`StringBuilder`] or [`HashMap`] has grown and had to
+    ///    make a new allocation to accommodate its new larger size. Its old allocation continues to
+    ///    take up "dead" space in the allocator, unless it was the most recent allocation.
     ///
     /// In practice, this almost always means that the result returned from this function will be an
     /// over-estimate vs the amount of "live" data in the arena.
@@ -412,7 +519,7 @@ impl Allocator {
     ///
     /// [`capacity`]: Allocator::capacity
     /// [`Vec`]: crate::Vec
-    /// [`String`]: crate::String
+    /// [`StringBuilder`]: crate::StringBuilder
     /// [`HashMap`]: crate::HashMap
     pub fn used_bytes(&self) -> usize {
         let mut bytes = 0;
@@ -468,5 +575,49 @@ mod test {
             assert_eq!(str, "hello");
         }
         allocator.reset();
+    }
+
+    #[test]
+    fn string_from_array_len_1() {
+        let allocator = Allocator::default();
+        let s = allocator.alloc_concat_strs_array(["hello"]);
+        assert_eq!(s, "hello");
+    }
+
+    #[test]
+    fn string_from_array_len_2() {
+        let allocator = Allocator::default();
+        let s = allocator.alloc_concat_strs_array(["hello", "world!"]);
+        assert_eq!(s, "helloworld!");
+    }
+
+    #[test]
+    fn string_from_array_len_3() {
+        let hello = "hello";
+        let world = std::string::String::from("world");
+        let allocator = Allocator::default();
+        let s = allocator.alloc_concat_strs_array([hello, &world, "!"]);
+        assert_eq!(s, "helloworld!");
+    }
+
+    #[test]
+    fn string_from_empty_array() {
+        let allocator = Allocator::default();
+        let s = allocator.alloc_concat_strs_array([]);
+        assert_eq!(s, "");
+    }
+
+    #[test]
+    fn string_from_array_of_empty_strs() {
+        let allocator = Allocator::default();
+        let s = allocator.alloc_concat_strs_array(["", "", ""]);
+        assert_eq!(s, "");
+    }
+
+    #[test]
+    fn string_from_array_containing_some_empty_strs() {
+        let allocator = Allocator::default();
+        let s = allocator.alloc_concat_strs_array(["", "hello", ""]);
+        assert_eq!(s, "hello");
     }
 }

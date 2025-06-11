@@ -87,7 +87,7 @@ impl<'a> ModuleRecord<'a> {
 #[ast]
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[generate_derive(ESTree)]
-#[estree(no_type, no_ts_def)]
+#[estree(no_type, no_ts_def, field_order(name, span))]
 pub struct NameSpan<'a> {
     /// Name
     #[estree(rename = "value")]
@@ -100,7 +100,7 @@ pub struct NameSpan<'a> {
 impl<'a> NameSpan<'a> {
     /// Constructor
     pub fn new(name: Atom<'a>, span: Span) -> Self {
-        Self { name, span }
+        Self { span, name }
     }
 }
 

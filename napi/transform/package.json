@@ -1,12 +1,13 @@
 {
   "name": "oxc-transform",
-  "version": "0.67.0",
+  "version": "0.72.3",
   "main": "index.js",
   "browser": "browser.js",
   "scripts": {
-    "build-dev": "napi --no-dts-cache build --platform",
+    "build-dev": "napi build --platform",
     "build": "pnpm run build-dev --features allocator --release",
-    "test": "vitest run --dir ./test && tsc"
+    "postbuild-dev": "node patch.mjs",
+    "test": "tsc && vitest run --dir ./test"
   },
   "engines": {
     "node": ">=14.0.0"
@@ -31,14 +32,16 @@
   "files": [
     "index.d.ts",
     "index.js",
-    "browser.js"
+    "browser.js",
+    "webcontainer-fallback.js"
   ],
   "publishConfig": {
     "registry": "https://registry.npmjs.org/",
     "access": "public"
   },
   "devDependencies": {
-    "vitest": "catalog:"
+    "vitest": "catalog:",
+    "typescript": "catalog:"
   },
   "napi": {
     "binaryName": "transform",
@@ -48,9 +51,13 @@
       "aarch64-pc-windows-msvc",
       "x86_64-unknown-linux-gnu",
       "x86_64-unknown-linux-musl",
+      "x86_64-unknown-freebsd",
       "aarch64-unknown-linux-gnu",
       "aarch64-unknown-linux-musl",
       "armv7-unknown-linux-gnueabihf",
+      "armv7-unknown-linux-musleabihf",
+      "s390x-unknown-linux-gnu",
+      "riscv64gc-unknown-linux-gnu",
       "x86_64-apple-darwin",
       "aarch64-apple-darwin",
       "wasm32-wasip1-threads"

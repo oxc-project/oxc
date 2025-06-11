@@ -10,21 +10,21 @@ runs:
         show-progress: false
         repository: tc39/test262
         path: tasks/coverage/test262
-        ref: bc5c14176e2b11a78859571eb693f028c8822458
+        ref: 4b5d36ab6ef2f59d0a8902cd383762547a3a74c4
 
     - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
       with:
         show-progress: false
         repository: babel/babel
         path: tasks/coverage/babel
-        ref: 578ac4df1c8a05f01350553950dbfbbeaac013c2
+        ref: 1d4546bcb80009303aab386b59f4df1fd335c1d5
 
     - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
       with:
         show-progress: false
         repository: microsoft/TypeScript
         path: tasks/coverage/typescript
-        ref: 15392346d05045742e653eab5c87538ff2a3c863
+        ref: 81c951894e93bdc37c6916f18adcd80de76679bc
 
     - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
       with:
@@ -38,4 +38,4 @@ runs:
         show-progress: false
         repository: oxc-project/acorn-test262
         path: tasks/coverage/acorn-test262
-        ref: b2c816adc6a8a12fbe6d44135c7188e95bcd4cc9 # Latest main at 24/4/25
+        ref: 9bfb9ab035c3df785284d27004a80824fb8a2dd6 # Latest main at 8/6/25

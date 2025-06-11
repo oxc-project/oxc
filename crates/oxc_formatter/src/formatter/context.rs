@@ -1,7 +1,7 @@
 use oxc_ast::ast::{FunctionBody, Program};
 use oxc_span::{GetSpan, SourceType, Span};
 
-use crate::{formatter::FormatElement, options::FormatOptions};
+use crate::{formatter::FormatElement, generated::ast_nodes::AstNode, options::FormatOptions};
 
 use super::Comments;
 
@@ -56,10 +56,10 @@ impl<'ast> FormatContext<'ast> {
     /// See [JsFormatContext::cached_function_body] for more in depth documentation.
     pub(crate) fn get_cached_function_body(
         &self,
-        body: &FunctionBody<'_>,
+        body: &AstNode<'ast, FunctionBody<'ast>>,
     ) -> Option<FormatElement> {
         self.cached_function_body.as_ref().and_then(|(expected_body_span, formatted)| {
-            if *expected_body_span == body.span { Some(formatted.clone()) } else { None }
+            if *expected_body_span == body.span() { Some(formatted.clone()) } else { None }
         })
     }
 
@@ -68,9 +68,9 @@ impl<'ast> FormatContext<'ast> {
     /// See [JsFormatContext::cached_function_body] for more in depth documentation.
     pub(crate) fn set_cached_function_body(
         &mut self,
-        body: &FunctionBody<'_>,
+        body: &AstNode<'ast, FunctionBody<'ast>>,
         formatted: FormatElement,
     ) {
-        self.cached_function_body = Some((body.span, formatted));
+        self.cached_function_body = Some((body.span(), formatted));
     }
 }

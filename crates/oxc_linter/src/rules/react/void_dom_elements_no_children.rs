@@ -28,13 +28,15 @@ pub struct VoidDomElementsNoChildren;
 
 declare_oxc_lint!(
     /// ### What it does
+    ///
     /// Disallow void DOM elements (e.g. `<img />`, `<br />`) from receiving children.
     ///
     /// ### Why is this bad?
+    ///
     /// There are some HTML elements that are only self-closing (e.g. img, br, hr). These are collectively known as void DOM elements.
     /// This rule checks that children are not passed to void DOM elements.
     ///
-    /// ### Example
+    /// ### Examples
     ///
     /// Examples of **incorrect** code for this rule:
     /// ```jsx

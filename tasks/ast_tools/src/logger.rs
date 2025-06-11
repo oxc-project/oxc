@@ -15,7 +15,7 @@ pub fn __internal_log_enable() -> bool {
 ///
 /// Does not include a trailing newline.
 macro_rules! log {
-    ($fmt:literal $(, $args:expr_2021)*) => {
+    ($fmt:literal $(, $args:expr)*) => {
         if $crate::logger::__internal_log_enable() {
             print!($fmt$(, $args)*);
             std::io::Write::flush(&mut std::io::stdout()).unwrap();
@@ -28,7 +28,7 @@ pub(crate) use log;
 ///
 /// Includes a trailing newline.
 macro_rules! logln {
-    ($fmt:literal $(, $args:expr_2021)*) => {
+    ($fmt:literal $(, $args:expr)*) => {
         if $crate::logger::__internal_log_enable() {
             println!($fmt$(, $args)*);
             std::io::Write::flush(&mut std::io::stdout()).unwrap();
@@ -55,7 +55,7 @@ pub(crate) use log_failed;
 
 /// Log a [`Result`].
 macro_rules! log_result {
-    ($result:expr_2021) => {
+    ($result:expr) => {
         match &($result) {
             Ok(_) => {
                 $crate::log_success!();

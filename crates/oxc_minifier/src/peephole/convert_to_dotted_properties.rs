@@ -22,7 +22,7 @@ impl<'a> LatePeepholeOptimizations {
             *expr =
                 MemberExpression::StaticMemberExpression(ctx.ast.alloc_static_member_expression(
                     e.span,
-                    e.object.take_in(ctx.ast.allocator),
+                    e.object.take_in(ctx.ast),
                     property,
                     e.optional,
                 ));

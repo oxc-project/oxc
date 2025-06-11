@@ -21,6 +21,7 @@ mod bound_identifier;
 mod maybe_bound_identifier;
 mod reusable;
 mod scoping;
+mod uid;
 use ancestry::PopToken;
 pub use ancestry::TraverseAncestry;
 pub use bound_identifier::BoundIdentifier;
@@ -108,7 +109,6 @@ pub use scoping::TraverseScoping;
 /// [`ancestors`]: `TraverseCtx::ancestors`
 /// [`scoping`]: `TraverseCtx::scoping`
 /// [`scoping_mut`]: `TraverseCtx::scoping_mut`
-/// [`symbols_mut`]: `TraverseCtx::symbols_mut`
 /// [`ancestor_scopes`]: `TraverseCtx::ancestor_scopes`
 /// [`ast`]: `TraverseCtx::ast`
 /// [`alloc`]: `TraverseCtx::alloc`

@@ -40,7 +40,7 @@ declare_oxc_lint!(
     ///
     /// This rule aims to standardize the use of `Array#flat()` over legacy techniques to flatten arrays.
     ///
-    /// ### Example
+    /// ### Examples
     ///
     /// Examples of **incorrect** code for this rule:
     /// ```javascript
@@ -63,7 +63,7 @@ declare_oxc_lint!(
     PreferArrayFlat,
     unicorn,
     pedantic,
-    conditional_fix
+    conditional_dangerous_fix
 );
 
 impl Rule for PreferArrayFlat {

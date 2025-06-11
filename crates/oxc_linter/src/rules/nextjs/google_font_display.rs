@@ -38,10 +38,9 @@ declare_oxc_lint!(
     /// layout shift. If swapping to the custom font after it has loaded is
     /// important to you, then use `display=swap`` instead.
     ///
-    /// ### Example
+    /// ### Examples
     ///
     /// Examples of **incorrect** code for this rule:
-    ///
     /// ```jsx
     /// import Head from "next/head";
     ///
@@ -58,7 +57,6 @@ declare_oxc_lint!(
     /// ```
     ///
     /// Examples of **correct** code for this rule:
-    ///
     /// ```jsx
     /// import Head from "next/head";
     ///
@@ -73,7 +71,6 @@ declare_oxc_lint!(
     ///     );
     /// };
     /// ```
-    ///
     GoogleFontDisplay,
     nextjs,
     correctness

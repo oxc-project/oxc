@@ -1,6 +1,5 @@
 ---
 source: crates/oxc_linter/src/tester.rs
-assertion_line: 357
 ---
   ⚠ eslint-plugin-unicorn(consistent-date-clone): Unnecessary `.getTime()` call
    ╭─[consistent_date_clone.tsx:1:10]

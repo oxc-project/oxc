@@ -11,7 +11,7 @@ use cow_utils::CowUtils;
 use flate2::{Compression, write::GzEncoder};
 use humansize::{DECIMAL, format_size};
 use oxc_allocator::Allocator;
-use oxc_codegen::{CodeGenerator, CodegenOptions};
+use oxc_codegen::{Codegen, CodegenOptions};
 use oxc_minifier::{Minifier, MinifierOptions};
 use oxc_parser::Parser;
 use oxc_semantic::SemanticBuilder;
@@ -149,8 +149,8 @@ fn minify(source_text: &str, source_type: SourceType) -> String {
     )
     .build(scoping, &mut program);
     let ret = Minifier::new(MinifierOptions::default()).build(&allocator, &mut program);
-    CodeGenerator::new()
-        .with_options(CodegenOptions { minify: true, comments: false, ..CodegenOptions::default() })
+    Codegen::new()
+        .with_options(CodegenOptions::minify())
         .with_scoping(ret.scoping)
         .build(&program)
         .code

@@ -8,19 +8,23 @@ use crate::{
         Buffer, Comments, Format, FormatResult, Formatter, GroupId, prelude::*,
         separated::FormatSeparatedIter,
     },
+    generated::ast_nodes::AstNode,
     write,
 };
 
 use super::utils::array::write_array_node;
 
 pub struct ArrayElementList<'a, 'b> {
-    elements: &'b Vec<'a, ArrayExpressionElement<'a>>,
+    elements: &'b AstNode<'a, Vec<'a, ArrayExpressionElement<'a>>>,
     group_id: Option<GroupId>,
 }
 
 impl<'a, 'b> ArrayElementList<'a, 'b> {
-    pub fn new(elements: &'b Vec<'a, ArrayExpressionElement<'a>>, group_id: GroupId) -> Self {
-        Self { elements, group_id: None }
+    pub fn new(
+        elements: &'b AstNode<'a, Vec<'a, ArrayExpressionElement<'a>>>,
+        group_id: GroupId,
+    ) -> Self {
+        Self { elements, group_id: Some(group_id) }
     }
 }
 
@@ -111,36 +115,25 @@ pub fn can_concisely_print_array_list(
     }
 
     list.iter().all(|item| {
-        // TODO
-        // let syntax = match item.into_node() {
-        // Ok(AnyJsExpression(AnyJsLiteralExpression(
-        // biome_js_syntax::AnyJsLiteralExpression::JsNumberLiteralExpression(literal),
-        // ))) => literal.into_syntax(),
+        let end = match &item {
+            ArrayExpressionElement::NumericLiteral(literal) => literal.span.end,
+            ArrayExpressionElement::UnaryExpression(expr) => {
+                let signed = expr.operator.is_arithmetic();
+                let argument = &expr.argument;
 
-        // Ok(AnyJsExpression(JsUnaryExpression(expr))) => {
-        // let signed = matches!(expr.operator(), Ok(Plus | Minus));
-        // let argument = expr.argument();
-
-        // match argument {
-        // Ok(AnyJsLiteralExpression(
-        // biome_js_syntax::AnyJsLiteralExpression::JsNumberLiteralExpression(literal),
-        // )) => {
-        // if signed && !comments.has_comments(literal.syntax()) {
-        // expr.into_syntax()
-        // } else {
-        // return false;
-        // }
-        // }
-        // _ => {
-        // return false;
-        // }
-        // }
-        // }
-
-        // _ => {
-        // return false;
-        // }
-        // };
+                match argument {
+                    Expression::NumericLiteral(literal) => {
+                        if signed && !comments.has_comments(literal.span) {
+                            literal.span.end
+                        } else {
+                            return false;
+                        }
+                    }
+                    _ => return false,
+                }
+            }
+            _ => return false,
+        };
 
         // Does not have a line comment ending on the same line
         // ```javascript
@@ -153,7 +146,7 @@ pub fn can_concisely_print_array_list(
         // ]
         // ```
         !comments
-            .trailing_comments(item.span().end)
+            .trailing_comments(end)
             .iter()
             .filter(|comment| comment.kind().is_line())
             .any(|comment| comment.lines_before() == 0)

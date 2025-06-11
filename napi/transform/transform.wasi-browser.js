@@ -1,8 +1,8 @@
 import {
-  instantiateNapiModuleSync as __emnapiInstantiateNapiModuleSync,
-  getDefaultContext as __emnapiGetDefaultContext,
-  WASI as __WASI,
   createOnMessage as __wasmCreateOnMessageForFsProxy,
+  getDefaultContext as __emnapiGetDefaultContext,
+  instantiateNapiModuleSync as __emnapiInstantiateNapiModuleSync,
+  WASI as __WASI,
 } from '@napi-rs/wasm-runtime'
 
 import __wasmUrl from './transform.wasm32-wasi.wasm?url'
@@ -53,8 +53,9 @@ const {
     }
   },
 })
+export default __napiModule.exports
+export const Severity = __napiModule.exports.Severity
 export const HelperMode = __napiModule.exports.HelperMode
 export const isolatedDeclaration = __napiModule.exports.isolatedDeclaration
 export const moduleRunnerTransform = __napiModule.exports.moduleRunnerTransform
-export const Severity = __napiModule.exports.Severity
 export const transform = __napiModule.exports.transform

@@ -32,7 +32,7 @@ declare_oxc_lint!(
     ///
     /// A negated expression on the left of an (in)equality check is likely a mistake from trying to negate the whole condition.
     ///
-    /// ### Example
+    /// ### Examples
     ///
     /// Examples of **incorrect** code for this rule:
     /// ```javascript

@@ -281,7 +281,18 @@ fn diagnose_array_in_array_spread<'a>(
                     spreads.iter().flat_map(|arr| arr.elements.iter()).collect::<Vec<_>>();
                 let n = elements.len();
                 for (i, el) in elements.into_iter().enumerate() {
-                    codegen.print_expression(el.to_expression());
+                    match el {
+                        ArrayExpressionElement::Elision(_) => {
+                            if i == n - 1 {
+                                codegen.print_ascii_byte(b',');
+                            }
+                        }
+                        ArrayExpressionElement::SpreadElement(spread) => {
+                            codegen.print_str("...");
+                            codegen.print_expression(&spread.argument);
+                        }
+                        _ => codegen.print_expression(el.to_expression()),
+                    }
                     if i < n - 1 {
                         codegen.print_ascii_byte(b',');
                         codegen.print_ascii_byte(b' ');
@@ -760,6 +771,8 @@ fn test() {
         // Issue: <https://github.com/oxc-project/oxc/issues/8115>
         ("setupServer(...[...importHandlers])", "setupServer(...importHandlers)"),
         ("setupServer(...[1, 2, 3])", "setupServer(1, 2, 3)"),
+        ("[...[1,2,,,],...[3,4,,,]]", "[1, 2, , , 3, 4, , ,]"),
+        ("[...[...foo], ...[...bar]]", "[...foo, ...bar]"),
     ];
     Tester::new(NoUselessSpread::NAME, NoUselessSpread::PLUGIN, pass, fail)
         .expect_fix(fix)

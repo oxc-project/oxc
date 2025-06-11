@@ -2,7 +2,79 @@
 
 All notable changes to this package will be documented in this file.
 
-The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
+
+## [1.0.0] - 2025-06-10
+
+## [0.18.1] - 2025-06-09
+
+### 🚜 Refactor
+
+- 7ab84c2 editor: Use pattern for textDocument filter (#11559) (Sysix)
+
+### 📚 Documentation
+
+- e13ed51 editor/vscode: Fix typo in README (#11572) (David)
+
+## [0.18.0] - 2025-06-06
+
+### Testing
+
+- 2ba2893 editor: Fix test for auto `fixAll` on save (#11448) (Sysix)
+
+## [0.16.12] - 2025-05-25
+
+### Features
+
+- 0c1f382 language_server: Watch for files inside `.oxlintrc.json` extends (#11226) (Sysix)
+- 1675b2c language_server: Tell clients to watch for .oxlintrc.json files (#11078) (Sysix)
+
+### Refactor
+
+- a28fe1e editor: Use always the provided language server (#11115) (Sysix)
+- 35761ae language_server/editor: Refresh file watchers without restarting the server (didChangeConfiguration) (#11112) (Sysix)
+- d5fdf17 language_server/editor: Refresh file watchers without restarting the server (didChangeWorkspaceFolders) (#11094) (Sysix)
+
+## [0.16.11] - 2025-05-16
+
+### Features
+
+- 078bf0b language_server: Better fallback handling when passing invalid `Options` values (#10930) (Sysix)
+- be7f7e1 language_server/editor: Support multi workspace folders (#10875) (Sysix)
+
+### Bug Fixes
+
+- 87bf2a8 editor: Send only `workspace/didChangeConfiguration` when some workspace configuration is effected (#11017) (Sysix)
+- ed5708d editor: Detect all workspaces config path changes (#11016) (Sysix)
+
+### Refactor
+
+- 3cc1466 language_server: New configuration structure for `initialize` and `workspace/didChangeConfiguration` (#10890) (Sysix)
+
+### Testing
+
+- 76b6b33 editor: Add tests for multi workspace folder setup (#10904) (Sysix)
+
+## [0.16.10] - 2025-05-09
+
+### Features
+
+- e1bc037 language_server: Request for workspace configuration when client did not send them in `initialize` (#10789) (Sysix)
+- 3bd339b language_server: Provide commands / code actions for unopened files (#10815) (Sysix)
+
+## [0.16.9] - 2025-05-02
+
+### Bug Fixes
+
+- 4ee95ec editor: Activate extension when astro files are opened too (#10725) (Sysix)
+
+### Documentation
+
+- 275fe71 editor: `oxc.flags` are not related to `oxlint` (#10645) (Sysix)
+
+### Testing
+
+- 1c4f90f editor: Add test for nested config serverity (#10697) (Sysix)
 
 ## [0.16.8] - 2025-04-27
 

@@ -1,6 +1,28 @@
 use oxc_codegen::CodegenOptions;
 
-use crate::{snapshot, snapshot_options, tester::test_tsx};
+use crate::{
+    snapshot, snapshot_options,
+    tester::{test_same, test_tsx},
+};
+
+#[test]
+fn cases() {
+    test_same("({ foo(): string {} });\n");
+    test_same("interface I<in out T,> {}\n");
+    test_same("function F<const in out T,>() {}\n");
+    test_same("class C {\n\tp = await(0);\n}\n");
+    test_same(
+        "class Foo {\n\t#name: string;\n\tf() {\n\t\t#name in other && this.#name === other.#name;\n\t}\n}\n",
+    );
+    test_same("class B {\n\tconstructor(override readonly a: number) {}\n}\n");
+    test_same("export { type as as };\n");
+}
+
+#[test]
+fn tsx() {
+    test_tsx("<T,>() => {}", "<T,>() => {};\n");
+    test_tsx("<T, B>() => {}", "<\n\tT,\n\tB\n>() => {};\n");
+}
 
 #[test]
 fn ts() {
@@ -98,18 +120,14 @@ export { default as name16 } from "module-name";
 import a = require("a");
 export import b = require("b");
 "#,
+        "class C {
+  static
+  static
+  static
+  bar() {}
+}",
     ];
 
     snapshot("ts", &cases);
-    snapshot_options(
-        "minify",
-        &cases,
-        &CodegenOptions { minify: true, ..CodegenOptions::default() },
-    );
-}
-
-#[test]
-fn tsx() {
-    test_tsx("<T,>() => {}", "<T,>() => {};\n");
-    test_tsx("<T, B>() => {}", "<\n\tT,\n\tB\n>() => {};\n");
+    snapshot_options("minify", &cases, &CodegenOptions::minify());
 }

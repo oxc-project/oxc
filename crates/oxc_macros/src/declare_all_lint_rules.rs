@@ -116,9 +116,17 @@ pub fn declare_all_lint_rules(metadata: AllLintRulesMeta) -> TokenStream {
                 }
             }
 
+            #[cfg(feature = "ruledocs")]
             pub fn documentation(&self) -> Option<&'static str> {
                 match self {
                     #(Self::#struct_names(_) => #struct_names::documentation()),*
+                }
+            }
+
+            #[cfg(feature = "ruledocs")]
+            pub fn schema(&self, generator: &mut schemars::SchemaGenerator) -> Option<schemars::schema::Schema> {
+                match self {
+                    #(Self::#struct_names(_) => #struct_names::config_schema(generator).or_else(||#struct_names::schema(generator))),*
                 }
             }
 

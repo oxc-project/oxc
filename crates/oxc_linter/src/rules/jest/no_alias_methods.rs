@@ -9,10 +9,10 @@ use crate::{
     utils::{PossibleJestNode, parse_expect_jest_fn_call},
 };
 
-fn no_alias_methods_diagnostic(x1: &str, x2: &str, span3: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn(format!("Unexpected alias {x1:?}"))
-        .with_help(format!("Replace {x1:?} with its canonical name of {x2:?}"))
-        .with_label(span3)
+fn no_alias_methods_diagnostic(name: &str, canonical_name: &str, span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn(format!("Unexpected alias {name:?}"))
+        .with_help(format!("Replace {name:?} with its canonical name of {canonical_name:?}"))
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]

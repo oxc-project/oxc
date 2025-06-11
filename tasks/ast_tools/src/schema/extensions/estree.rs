@@ -66,6 +66,8 @@ pub struct ESTreeStructField {
     pub via: Option<String>,
     /// TS type of this field.
     pub ts_type: Option<String>,
+    /// Field index of field to prepend to this one
+    pub prepend_field_index: Option<usize>,
     /// Field index of field to append to this one
     pub append_field_index: Option<usize>,
     /// Skip this struct field.
@@ -77,6 +79,8 @@ pub struct ESTreeStructField {
     pub no_flatten: bool,
     /// `true` for fields containing a `&str` or `Atom` which does not need escaping in JSON
     pub json_safe: bool,
+    /// `true` if field is only included in JS ESTree AST (not TS-ESTree AST).
+    pub is_js: bool,
     /// `true` if field is only included in TS-ESTree AST (not JS ESTree AST).
     pub is_ts: bool,
 }
@@ -101,6 +105,8 @@ pub struct ESTreeMeta {
     pub ts_type: Option<String>,
     /// JS code for raw transfer deserializer.
     pub raw_deser: Option<String>,
+    /// `true` if meta type is for a struct field which is present only in JS AST.
+    pub is_js: bool,
     /// `true` if meta type is for a struct field which is present only in TS AST.
     pub is_ts: bool,
 }

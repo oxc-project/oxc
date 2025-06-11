@@ -34,7 +34,8 @@ declare_oxc_lint!(
     /// The precision argument of `Number.prototype.toFixed` and `Number.prototype.toExponential` should be between 0 and 20.
     /// The precision argument of `Number.prototype.toPrecision` should be between 1 and 21.
     ///
-    /// ### Example
+    /// ### Examples
+    ///
     /// Examples of **incorrect** code for this rule:
     /// ```javascript
     /// var x = 42;
@@ -47,7 +48,6 @@ declare_oxc_lint!(
     /// var x = 42;
     /// var s_radix_16 = x.toString(16);
     /// ```
-    ///
     NumberArgOutOfRange,
     oxc,
     correctness

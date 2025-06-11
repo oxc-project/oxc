@@ -370,6 +370,21 @@ impl<'a> Expression<'a> {
     pub fn is_assignment(&self) -> bool {
         matches!(self, Expression::AssignmentExpression(_))
     }
+
+    /// Is identifier or `a.b` expression where `a` is an identifier.
+    pub fn is_entity_name_expression(&self) -> bool {
+        matches!(self.without_parentheses(), Expression::Identifier(_))
+            || self.is_property_access_entity_name_expression()
+    }
+
+    /// `a.b` expression where `a` is an identifier.
+    pub fn is_property_access_entity_name_expression(&self) -> bool {
+        if let Expression::StaticMemberExpression(e) = self {
+            e.object.is_entity_name_expression()
+        } else {
+            false
+        }
+    }
 }
 
 impl Display for IdentifierName<'_> {
@@ -439,7 +454,7 @@ impl<'a> PropertyKey<'a> {
             Self::StringLiteral(lit) => Some(Cow::Borrowed(lit.value.as_str())),
             Self::RegExpLiteral(lit) => Some(Cow::Owned(lit.regex.to_string())),
             Self::NumericLiteral(lit) => Some(Cow::Owned(lit.value.to_string())),
-            Self::BigIntLiteral(lit) => Some(Cow::Borrowed(lit.raw.as_str())),
+            Self::BigIntLiteral(lit) => Some(Cow::Borrowed(lit.value.as_str())),
             Self::NullLiteral(_) => Some(Cow::Borrowed("null")),
             Self::TemplateLiteral(lit) => {
                 lit.expressions.is_empty().then(|| lit.quasi()).flatten().map(Into::into)
@@ -878,14 +893,14 @@ impl ObjectAssignmentTarget<'_> {
     }
 }
 
-impl AssignmentTargetMaybeDefault<'_> {
+impl<'a> AssignmentTargetMaybeDefault<'a> {
     /// Returns the identifier bound by this assignment target.
     ///
     /// ## Example
     ///
     /// - returns `b` when called on `a: b = 1` in `({a: b = 1} = obj)`
     /// - returns `b` when called on `a: b` in `({a: b} = obj)`
-    pub fn identifier(&self) -> Option<&IdentifierReference<'_>> {
+    pub fn identifier(&self) -> Option<&IdentifierReference<'a>> {
         match self {
             AssignmentTargetMaybeDefault::AssignmentTargetIdentifier(id) => Some(id),
             Self::AssignmentTargetWithDefault(target) => {
@@ -1328,7 +1343,7 @@ impl<'a> Function<'a> {
 
 impl FunctionType {
     /// Returns `true` if it is a [`FunctionType::TSDeclareFunction`] or [`FunctionType::TSEmptyBodyFunctionExpression`].
-    pub fn is_typescript_syntax(&self) -> bool {
+    pub fn is_typescript_syntax(self) -> bool {
         matches!(self, Self::TSDeclareFunction | Self::TSEmptyBodyFunctionExpression)
     }
 }
@@ -1873,6 +1888,16 @@ impl<'a> ModuleExportName<'a> {
             Self::IdentifierReference(identifier) => Some(identifier.name),
             Self::StringLiteral(_) => None,
         }
+    }
+
+    /// Returns `true` if this module export name is an identifier, and not a string literal.
+    ///
+    /// ## Example
+    ///
+    /// - `export { foo }` => `true`
+    /// - `export { "foo" }` => `false`
+    pub fn is_identifier(&self) -> bool {
+        matches!(self, Self::IdentifierName(_) | Self::IdentifierReference(_))
     }
 }
 

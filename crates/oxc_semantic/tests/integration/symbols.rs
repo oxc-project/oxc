@@ -319,22 +319,6 @@ fn test_type_query() {
 }
 
 #[test]
-fn test_ts_interface_heritage() {
-    // NOTE: interface heritage clauses can only be identifiers or qualified
-    // names, but we handle references on invalid heritage clauses anyways.
-    SemanticTester::ts(
-        "
-        type Heritage = { x: number; y: string; };
-        interface A extends (Heritage.x) {}
-    ",
-    )
-    .expect_errors(true)
-    .has_some_symbol("Heritage")
-    .has_number_of_references(1)
-    .test();
-}
-
-#[test]
 fn test_arrow_implicit_return() {
     SemanticTester::js("let i = 0; const x = () => i")
         .has_root_symbol("i")
@@ -425,7 +409,7 @@ fn test_module_like_declarations() {
 
     SemanticTester::ts("module A { export type x = 1; }")
         .has_root_symbol("A")
-        .contains_flags(SymbolFlags::NameSpaceModule)
+        .contains_flags(SymbolFlags::NamespaceModule)
         .test();
 
     let test = SemanticTester::ts("declare global { interface Window { x: number; } }");

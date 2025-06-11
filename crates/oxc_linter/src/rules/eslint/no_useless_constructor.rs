@@ -44,17 +44,15 @@ pub struct NoUselessConstructor;
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// Disallow unnecessary constructors
+    /// Disallow constructors that can be safely removed without changing how the class works.
     ///
-    /// This rule flags class constructors that can be safely removed without
-    /// changing how the class works.
+    /// ### Why is this bad?
     ///
     /// ES2015 provides a default class constructor if one is not specified. As
     /// such, it is unnecessary to provide an empty constructor or one that
-    /// simply delegates into its parent class, as in the following examples:
+    /// simply delegates into its parent class.
     ///
-    ///
-    /// ### Example
+    /// ### Examples
     ///
     /// Examples of **incorrect** code for this rule:
     /// ```javascript
@@ -92,7 +90,7 @@ declare_oxc_lint!(
     ///         doSomething();
     ///     }
     /// }
-    ///```
+    /// ```
     NoUselessConstructor,
     eslint,
     suspicious,
@@ -118,16 +116,12 @@ impl Rule for NoUselessConstructor {
             return;
         }
 
-        let class = ctx
-            .nodes()
-            .ancestors(node.id())
-            .skip(1)
-            .find(|parent| matches!(parent.kind(), AstKind::Class(_)));
+        let class =
+            ctx.nodes().ancestors(node.id()).skip(1).find_map(|parent| parent.kind().as_class());
         debug_assert!(class.is_some(), "Found a constructor outside of a class definition");
-        let Some(class_node) = class else {
+        let Some(class) = class else {
             return;
         };
-        let AstKind::Class(class) = class_node.kind() else { unreachable!() };
         if class.declare {
             return;
         }
@@ -150,7 +144,7 @@ fn lint_empty_constructor<'a>(
         return;
     }
 
-    // allow constructors with access modifiers since they actually declare
+    // allow constructors with parameter properties since they actually declare
     // class members
     if constructor.value.params.items.iter().any(FormalParameter::has_modifier) {
         return;
@@ -170,7 +164,7 @@ fn lint_redundant_super_call<'a>(
         return;
     };
 
-    let params = &*constructor.value.params;
+    let params = &constructor.value.params;
     let super_args = &super_call.arguments;
 
     if is_only_simple_params(params)
@@ -178,7 +172,7 @@ fn lint_redundant_super_call<'a>(
         && (is_spread_arguments(super_args) || is_passing_through(params, super_args))
     {
         ctx.diagnostic_with_fix(
-            no_redundant_super_call(constructor.key.span(), super_call.span()),
+            no_redundant_super_call(constructor.key.span(), super_call.span),
             |fixer| fixer.delete_range(constructor.span),
         );
     }
@@ -348,10 +342,8 @@ fn test() {
     let fix = vec![
         ("class A { constructor(){} }", "class A {  }"),
         (
-            r"
-class A extends B { constructor() { super(); } foo() { bar(); } }",
-            r"
-class A extends B {  foo() { bar(); } }",
+            "class A extends B { constructor() { super(); } foo() { bar(); } }",
+            "class A extends B {  foo() { bar(); } }",
         ),
     ];
 

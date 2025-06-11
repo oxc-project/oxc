@@ -100,9 +100,7 @@ impl PreferEach {
 
         for parent_node in ctx.nodes().ancestors(node.id()).skip(1) {
             match parent_node.kind() {
-                AstKind::CallExpression(_) => {
-                    return;
-                }
+                AstKind::CallExpression(_) => return,
                 AstKind::ForStatement(_)
                 | AstKind::ForInStatement(_)
                 | AstKind::ForOfStatement(_) => {

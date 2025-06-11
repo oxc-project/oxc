@@ -82,6 +82,15 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Consider removing the duplicated key
 
+  ⚠ eslint(no-dupe-keys): Duplicate key '1'
+   ╭─[no_dupe_keys.tsx:1:11]
+ 1 │ var x = { 1n: 1, 1: 2 };
+   ·           ─┬     ┬
+   ·            │     ╰── and duplicated here
+   ·            ╰── Key is first defined here
+   ╰────
+  help: Consider removing the duplicated key
+
   ⚠ eslint(no-dupe-keys): Duplicate key 'z'
    ╭─[no_dupe_keys.tsx:1:11]
  1 │ var x = { "z": 1, z: 2 };

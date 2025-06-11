@@ -91,7 +91,7 @@ declare_oxc_lint!(
     /// and should not be considered unused. Since ES6 modules are now a TC39
     /// standard, Oxlint does not support this feature.
     ///
-    /// ### Example
+    /// ### Examples
     ///
     /// Examples of **incorrect** code for this rule:
     ///
@@ -215,12 +215,15 @@ impl Rule for NoUnusedVars {
     }
 
     fn should_run(&self, ctx: &ContextHost) -> bool {
-        // ignore .d.ts and vue/svelte files.
+        // ignore .d.ts and vue/svelte/astro files.
         // 1. declarations have side effects (they get merged together)
-        // 2. vue/svelte scripts declare variables that get used in the template, which
+        // 2. vue/svelte/astro scripts declare variables that get used in the template, which
         //    we can't detect
         !ctx.source_type().is_typescript_definition()
-            && !ctx.file_path().extension().is_some_and(|ext| ext == "vue" || ext == "svelte")
+            && !ctx
+                .file_path()
+                .extension()
+                .is_some_and(|ext| ext == "vue" || ext == "svelte" || ext == "astro")
     }
 }
 
@@ -281,7 +284,6 @@ impl NoUnusedVars {
                 }
                 let report = match symbol.references().rev().find(|r| r.is_write()) {
                     Some(last_write) => {
-                        // ahg
                         let span = ctx.nodes().get_node(last_write.node_id()).kind().span();
                         diagnostic::assign(symbol, span, &self.vars_ignore_pattern)
                     }
@@ -346,7 +348,7 @@ impl NoUnusedVars {
 
     fn should_skip_symbol(symbol: &Symbol<'_, '_>) -> bool {
         const AMBIENT_NAMESPACE_FLAGS: SymbolFlags =
-            SymbolFlags::NameSpaceModule.union(SymbolFlags::Ambient);
+            SymbolFlags::NamespaceModule.union(SymbolFlags::Ambient);
         let flags = symbol.flags();
 
         // 1. ignore enum members. Only enums get checked

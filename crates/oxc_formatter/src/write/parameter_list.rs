@@ -1,12 +1,59 @@
 use oxc_ast::ast::*;
+use oxc_span::GetSpan;
 
 use crate::{
     formatter::{Format, FormatResult, Formatter, prelude::*, separated::FormatSeparatedIter},
+    generated::ast_nodes::{AstNode, AstNodeIterator},
     options::{FormatTrailingCommas, TrailingSeparator},
 };
 
+enum Parameter<'a, 'b> {
+    FormalParameter(&'b AstNode<'a, FormalParameter<'a>>),
+    Rest(&'b AstNode<'a, BindingRestElement<'a>>),
+}
+
+impl GetSpan for Parameter<'_, '_> {
+    fn span(&self) -> Span {
+        match self {
+            Self::FormalParameter(param) => param.span(),
+            Self::Rest(e) => e.span(),
+        }
+    }
+}
+
+impl<'a> Format<'a> for Parameter<'a, '_> {
+    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        match self {
+            Self::FormalParameter(param) => param.fmt(f),
+            Self::Rest(e) => e.fmt(f),
+        }
+    }
+}
+
+struct FormalParametersIter<'a, 'b> {
+    params: AstNodeIterator<'a, FormalParameter<'a>>,
+    rest: Option<&'b AstNode<'a, BindingRestElement<'a>>>,
+}
+
+impl<'a, 'b> From<&'b AstNode<'a, FormalParameters<'a>>> for FormalParametersIter<'a, 'b> {
+    fn from(value: &'b AstNode<'a, FormalParameters<'a>>) -> Self {
+        Self { params: value.items().iter(), rest: value.rest() }
+    }
+}
+
+impl<'a, 'b> Iterator for FormalParametersIter<'a, 'b> {
+    type Item = Parameter<'a, 'b>;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        self.params
+            .next()
+            .map(Parameter::FormalParameter)
+            .or_else(|| self.rest.take().map(Parameter::Rest))
+    }
+}
+
 pub struct ParameterList<'a, 'b> {
-    list: &'b FormalParameters<'a>,
+    list: &'b AstNode<'a, FormalParameters<'a>>,
     layout: Option<ParameterLayout>,
 }
 
@@ -44,7 +91,10 @@ pub enum ParameterLayout {
 }
 
 impl<'a, 'b> ParameterList<'a, 'b> {
-    pub fn with_layout(list: &'b FormalParameters<'a>, layout: ParameterLayout) -> Self {
+    pub fn with_layout(
+        list: &'b AstNode<'a, FormalParameters<'a>>,
+        layout: ParameterLayout,
+    ) -> Self {
         Self { list, layout: Some(layout) }
     }
 }
@@ -53,7 +103,7 @@ impl<'a> Format<'a> for ParameterList<'a, '_> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         match self.layout {
             None | Some(ParameterLayout::Default | ParameterLayout::NoParameters) => {
-                let has_trailing_rest = self.list.rest.is_some();
+                let has_trailing_rest = self.list.rest().is_some();
 
                 // If it's a rest parameter, the assumption is no more
                 // parameters could be added afterward, so no separator is
@@ -80,33 +130,22 @@ impl<'a> Format<'a> for ParameterList<'a, '_> {
                 } else {
                     f.join_nodes_with_soft_line()
                 };
-                join_parameter_list(&mut joiner, self.list, trailing_separator, source_text);
+                let entries = FormatSeparatedIter::new(FormalParametersIter::from(self.list), ",")
+                    .with_trailing_separator(trailing_separator)
+                    .zip(FormalParametersIter::from(self.list));
+                for (formatted, param) in entries {
+                    joiner.entry(param.span(), source_text, &formatted);
+                }
                 joiner.finish()
             }
             Some(ParameterLayout::Hug) => {
                 let mut join = f.join_with(space());
                 join.entries(
-                    FormatSeparatedIter::new(self.list.items.iter(), ",")
+                    FormatSeparatedIter::new(self.list.items().iter(), ",")
                         .with_trailing_separator(TrailingSeparator::Omit),
                 );
                 join.finish()
             }
         }
-    }
-}
-
-fn join_parameter_list<'a, Separator>(
-    joiner: &mut JoinNodesBuilder<'_, '_, 'a, Separator>,
-    list: &FormalParameters<'a>,
-    trailing_separator: TrailingSeparator,
-    source_text: &str,
-) where
-    Separator: Format<'a>,
-{
-    let entries = FormatSeparatedIter::new(list.items.iter(), ",")
-        .with_trailing_separator(trailing_separator)
-        .zip(list.items.iter());
-    for (formatted, param) in entries {
-        joiner.entry(param.span, source_text, &formatted);
     }
 }

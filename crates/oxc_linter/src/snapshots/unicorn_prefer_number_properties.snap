@@ -489,3 +489,21 @@ source: crates/oxc_linter/src/tester.rs
    ·  ───────────────────
    ╰────
   help: Replace it with `Number.Infinity`
+
+  ⚠ eslint-plugin-unicorn(prefer-number-properties): Use `Number.parseFloat` instead of the global `parseFloat`
+   ╭─[prefer_number_properties.tsx:2:24]
+ 1 │ const options = {
+ 2 │             normalize: parseFloat,
+   ·                        ──────────
+ 3 │              parseInt,
+   ╰────
+  help: Replace it with `Number.parseFloat`
+
+  ⚠ eslint-plugin-unicorn(prefer-number-properties): Use `Number.parseInt` instead of the global `parseInt`
+   ╭─[prefer_number_properties.tsx:3:14]
+ 2 │             normalize: parseFloat,
+ 3 │              parseInt,
+   ·              ────────
+ 4 │          };
+   ╰────
+  help: Replace it with `Number.parseInt`

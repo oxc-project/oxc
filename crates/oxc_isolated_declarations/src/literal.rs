@@ -10,11 +10,11 @@ impl<'a> IsolatedDeclarations<'a> {
     ) -> Option<ArenaBox<'a, StringLiteral<'a>>> {
         if lit.expressions.is_empty() {
             lit.quasis.first().map(|item| {
-                self.ast.alloc(self.ast.string_literal(
+                self.ast.alloc_string_literal(
                     lit.span,
-                    if let Some(cooked) = &item.value.cooked { cooked } else { &item.value.raw },
+                    item.value.cooked.unwrap_or(item.value.raw),
                     None,
-                ))
+                )
             })
         } else {
             None

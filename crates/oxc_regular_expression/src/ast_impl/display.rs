@@ -250,14 +250,14 @@ impl Display for CapturingGroup<'_> {
 
 impl Display for IgnoreGroup<'_> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        fn write_flags(f: &mut fmt::Formatter<'_>, flags: &Modifier) -> fmt::Result {
-            if flags.ignore_case {
+        fn write_flags(f: &mut fmt::Formatter<'_>, flags: Modifier) -> fmt::Result {
+            if flags.contains(Modifier::I) {
                 f.write_str("i")?;
             }
-            if flags.multiline {
+            if flags.contains(Modifier::M) {
                 f.write_str("m")?;
             }
-            if flags.sticky {
+            if flags.contains(Modifier::S) {
                 f.write_str("s")?;
             }
             Ok(())
@@ -266,12 +266,12 @@ impl Display for IgnoreGroup<'_> {
         f.write_str("(?")?;
 
         if let Some(modifiers) = &self.modifiers {
-            if let Some(enabling) = &modifiers.enabling {
-                write_flags(f, enabling)?;
+            if !modifiers.enabling.is_empty() {
+                write_flags(f, modifiers.enabling)?;
             }
-            if let Some(disabling) = &modifiers.disabling {
+            if !modifiers.disabling.is_empty() {
                 f.write_str("-")?;
-                write_flags(f, disabling)?;
+                write_flags(f, modifiers.disabling)?;
             }
         }
 

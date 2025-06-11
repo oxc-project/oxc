@@ -54,7 +54,7 @@ impl Lexer<'_> {
     }
 
     pub(crate) fn next_jsx_child(&mut self) -> Token {
-        self.token.start = self.offset();
+        self.token.set_start(self.offset());
         let kind = self.read_jsx_child();
         self.finish_next(kind)
     }
@@ -115,9 +115,6 @@ impl Lexer<'_> {
             return None;
         }
         self.consume_char();
-
-        // Clear the current lookahead `Minus` Token
-        self.lookahead.clear();
 
         // Consume bytes which are part of identifier tail
         let next_byte = byte_search! {

@@ -22,36 +22,26 @@ use oxc_resolver::Resolver;
 use oxc_semantic::{Semantic, SemanticBuilder};
 use oxc_span::{CompactStr, SourceType, VALID_EXTENSIONS};
 
-#[cfg(feature = "language_server")]
-use oxc_allocator::CloneIn;
-
 use super::LintServiceOptions;
 use crate::{
     Fixer, Linter, Message,
+    fixer::PossibleFixes,
     loader::{JavaScriptSource, LINT_PARTIAL_LOADER_EXTENSIONS, PartialLoader},
     module_record::ModuleRecord,
     utils::read_to_string,
 };
 
 #[cfg(feature = "language_server")]
-use crate::fixer::{FixWithPosition, MessageWithPosition};
-#[cfg(feature = "language_server")]
-use crate::service::offset_to_position::{SpanPositionMessage, offset_to_position};
+use crate::fixer::MessageWithPosition;
 
-pub struct Runtime {
+pub struct Runtime<'l> {
     cwd: Box<Path>,
     /// All paths to lint
     paths: IndexSet<Arc<OsStr>, FxBuildHasher>,
-    pub(super) linter: Linter,
+    pub(super) linter: &'l Linter,
     resolver: Option<Resolver>,
 
-    // The language server uses more up to date source_text provided by `workspace/didChange` request.
-    // This is required to support `run: "onType"` configuration
-    #[cfg(feature = "language_server")]
-    source_text_cache: FxHashMap<Arc<OsStr>, String>,
-
-    #[cfg(test)]
-    pub(super) test_source: std::sync::RwLock<Option<String>>,
+    pub(super) file_system: Box<dyn RuntimeFileSystem + Sync + Send>,
 }
 
 /// Output of `Runtime::process_path`
@@ -140,8 +130,37 @@ impl ModuleToLint {
     }
 }
 
-impl Runtime {
-    pub(super) fn new(linter: Linter, options: LintServiceOptions) -> Self {
+/// A simple trait for the `Runtime` to load and save file from a filesystem
+/// The `Runtime` uses OsFileSystem as a default
+/// The Tester and `oxc_language_server` would like to provide the content from memory
+pub trait RuntimeFileSystem {
+    /// reads the content of a file path
+    ///
+    /// # Errors
+    /// When no valid path is provided or the content is not valid UTF-8 Stream
+    fn read_to_string(&self, path: &Path) -> Result<String, std::io::Error>;
+
+    /// write a file to the file system
+    ///
+    /// # Errors
+    /// When the program does not have write permission for the file system
+    fn write_file(&self, path: &Path, content: String) -> Result<(), std::io::Error>;
+}
+
+struct OsFileSystem;
+
+impl RuntimeFileSystem for OsFileSystem {
+    fn read_to_string(&self, path: &Path) -> Result<String, std::io::Error> {
+        read_to_string(path)
+    }
+
+    fn write_file(&self, path: &Path, content: String) -> Result<(), std::io::Error> {
+        fs::write(path, content)
+    }
+}
+
+impl<'l> Runtime<'l> {
+    pub(super) fn new(linter: &'l Linter, options: LintServiceOptions) -> Self {
         let resolver = options.cross_module.then(|| {
             Self::get_resolver(options.tsconfig.or_else(|| Some(options.cwd.join("tsconfig.json"))))
         });
@@ -150,11 +169,16 @@ impl Runtime {
             paths: options.paths.iter().cloned().collect(),
             linter,
             resolver,
-            #[cfg(feature = "language_server")]
-            source_text_cache: FxHashMap::default(),
-            #[cfg(test)]
-            test_source: std::sync::RwLock::new(None),
+            file_system: Box::new(OsFileSystem),
         }
+    }
+
+    pub fn with_file_system(
+        mut self,
+        file_system: Box<dyn RuntimeFileSystem + Sync + Send>,
+    ) -> Self {
+        self.file_system = file_system;
+        self
     }
 
     fn get_resolver(tsconfig_path: Option<PathBuf>) -> Resolver {
@@ -193,25 +217,17 @@ impl Runtime {
         if not_supported_yet {
             return None;
         }
-        let source_type = source_type.unwrap_or_default();
 
-        #[cfg(test)]
-        if let (true, Some(test_source)) =
-            (self.paths.contains(path.as_os_str()), &*self.test_source.read().unwrap())
-        {
-            return Some(Ok((source_type, test_source.clone())));
+        let mut source_type = source_type.unwrap_or_default();
+        // Treat JS and JSX files to maximize chance of parsing files.
+        if source_type.is_javascript() {
+            source_type = source_type.with_jsx(true);
         }
 
-        // The language server uses more up to date source_text provided by `workspace/didChange` request.
-        // This is required to support `run: "onType"` configuration
-        #[cfg(feature = "language_server")]
-        if let Some(source_text) = self.source_text_cache.get(path.as_os_str()) {
-            return Some(Ok((source_type, source_text.clone())));
-        }
-
-        let file_result = read_to_string(path).map_err(|e| {
+        let file_result = self.file_system.read_to_string(path).map_err(|e| {
             Error::new(OxcDiagnostic::error(format!(
-                "Failed to open file {path:?} with error \"{e}\""
+                "Failed to open file {} with error \"{e}\"",
+                path.display()
             )))
         });
         Some(match file_result {
@@ -233,7 +249,7 @@ impl Runtime {
     ) {
         if self.resolver.is_none() {
             self.paths.par_iter().for_each(|path| {
-                let output = self.process_path(Arc::clone(path), check_syntax_errors, tx_error);
+                let output = self.process_path(path, check_syntax_errors, tx_error);
                 let Some(entry) =
                     ModuleToLint::from_processed_module(output.path, output.processed_module)
                 else {
@@ -332,7 +348,7 @@ impl Runtime {
                     let tx_process_output = tx_process_output.clone();
                     scope.spawn(move |_| {
                         tx_process_output
-                            .send(me.process_path(path, check_syntax_errors, tx_error))
+                            .send(me.process_path(&path, check_syntax_errors, tx_error))
                             .unwrap();
                     });
                 }
@@ -367,7 +383,7 @@ impl Runtime {
                                 move |_| {
                                     tx_resolve_output
                                         .send(me.process_path(
-                                            dep_path,
+                                            &dep_path,
                                             check_syntax_errors,
                                             tx_error,
                                         ))
@@ -479,9 +495,10 @@ impl Runtime {
                                 Rc::new(section.semantic.unwrap()),
                                 Arc::clone(&module_record),
                             ),
-                            Err(errors) => {
-                                errors.into_iter().map(|err| Message::new(err, None)).collect()
-                            }
+                            Err(errors) => errors
+                                .into_iter()
+                                .map(|err| Message::new(err, PossibleFixes::None))
+                                .collect(),
                         };
 
                         let source_text = section.source.source_text;
@@ -518,7 +535,7 @@ impl Runtime {
                     // If the new source text is owned, that means it was modified,
                     // so we write the new source text to the file.
                     if let Cow::Owned(new_source_text) = new_source_text {
-                        fs::write(path, new_source_text).unwrap();
+                        me.file_system.write_file(path, new_source_text).unwrap();
                     }
                 });
             });
@@ -535,23 +552,40 @@ impl Runtime {
     pub(super) fn run_source<'a>(
         &mut self,
         allocator: &'a oxc_allocator::Allocator,
-        path: &Arc<OsStr>,
-        source_text: &str,
     ) -> Vec<MessageWithPosition<'a>> {
+        use oxc_allocator::CloneIn;
+        use oxc_data_structures::rope::Rope;
         use std::sync::Mutex;
 
-        // the language server can have more up to date source_text then the filesystem
-        #[cfg(feature = "language_server")]
-        {
-            self.source_text_cache.insert(Arc::clone(path), source_text.to_owned());
+        use crate::{
+            FixWithPosition,
+            fixer::{Fix, PossibleFixesWithPosition},
+            service::offset_to_position::{SpanPositionMessage, offset_to_position},
+        };
+
+        fn fix_to_fix_with_position<'a>(
+            fix: &Fix<'a>,
+            rope: &Rope,
+            offset: u32,
+            source_text: &str,
+        ) -> FixWithPosition<'a> {
+            let start_position = offset_to_position(rope, offset + fix.span.start, source_text);
+            let end_position = offset_to_position(rope, offset + fix.span.end, source_text);
+            FixWithPosition {
+                content: fix.content.clone(),
+                span: SpanPositionMessage::new(start_position, end_position)
+                    .with_message(fix.message.as_ref().map(|label| Cow::Owned(label.to_string()))),
+            }
         }
 
         let messages = Mutex::new(Vec::<MessageWithPosition<'a>>::new());
         let (sender, _receiver) = mpsc::channel();
         rayon::scope(|scope| {
             self.resolve_modules(scope, true, &sender, |me, mut module| {
-                module.content.with_dependent_mut(|_owner, dependent| {
+                module.content.with_dependent_mut(|owner, dependent| {
                     assert_eq!(module.section_module_records.len(), dependent.len());
+
+                    let rope = &Rope::from_str(&owner.source_text);
 
                     for (record_result, section) in
                         module.section_module_records.into_iter().zip(dependent.drain(..))
@@ -580,14 +614,16 @@ impl Runtime {
                                                 .map(|labeled_span| {
                                                     let offset = labeled_span.offset() as u32;
                                                     let start_position = offset_to_position(
+                                                        rope,
                                                         offset + section.source.start,
-                                                        source_text,
+                                                        &owner.source_text,
                                                     );
                                                     let end_position = offset_to_position(
+                                                        rope,
                                                         offset
                                                             + section.source.start
                                                             + labeled_span.len() as u32,
-                                                        source_text,
+                                                        &owner.source_text,
                                                     );
                                                     let message = labeled_span
                                                         .label()
@@ -609,18 +645,36 @@ impl Runtime {
                                             url: message.error.url.clone(),
                                             code: message.error.code.clone(),
                                             labels: labels.clone(),
-                                            fix: message.fix.map(|fix| FixWithPosition {
-                                                content: fix.content,
-                                                span: SpanPositionMessage::new(
-                                                    offset_to_position(fix.span.start, source_text),
-                                                    offset_to_position(fix.span.end, source_text),
-                                                )
-                                                .with_message(
-                                                    fix.message
-                                                        .as_ref()
-                                                        .map(|label| Cow::Owned(label.to_string())),
-                                                ),
-                                            }),
+                                            fixes: match &message.fixes {
+                                                PossibleFixes::None => {
+                                                    PossibleFixesWithPosition::None
+                                                }
+                                                PossibleFixes::Single(fix) => {
+                                                    PossibleFixesWithPosition::Single(
+                                                        fix_to_fix_with_position(
+                                                            fix,
+                                                            rope,
+                                                            section.source.start,
+                                                            &owner.source_text,
+                                                        ),
+                                                    )
+                                                }
+                                                PossibleFixes::Multiple(fixes) => {
+                                                    PossibleFixesWithPosition::Multiple(
+                                                        fixes
+                                                            .iter()
+                                                            .map(|fix| {
+                                                                fix_to_fix_with_position(
+                                                                    fix,
+                                                                    rope,
+                                                                    section.source.start,
+                                                                    &owner.source_text,
+                                                                )
+                                                            })
+                                                            .collect(),
+                                                    )
+                                                }
+                                            },
                                         }
                                     },
                                 ));
@@ -650,14 +704,11 @@ impl Runtime {
     pub(super) fn run_test_source<'a>(
         &mut self,
         allocator: &'a Allocator,
-        source_text: &str,
         check_syntax_errors: bool,
         tx_error: &DiagnosticSender,
     ) -> Vec<Message<'a>> {
         use oxc_allocator::CloneIn;
         use std::sync::Mutex;
-
-        *self.test_source.write().unwrap() = Some(source_text.to_owned());
 
         let messages = Mutex::new(Vec::<Message<'a>>::new());
         rayon::scope(|scope| {
@@ -674,9 +725,10 @@ impl Runtime {
                                     Rc::new(section.semantic.unwrap()),
                                     Arc::clone(&module_record),
                                 ),
-                                Err(errors) => {
-                                    errors.into_iter().map(|err| Message::new(err, None)).collect()
-                                }
+                                Err(errors) => errors
+                                    .into_iter()
+                                    .map(|err| Message::new(err, PossibleFixes::None))
+                                    .collect(),
                             }
                             .into_iter()
                             .map(|message| message.clone_in(allocator)),
@@ -690,34 +742,42 @@ impl Runtime {
 
     fn process_path(
         &self,
-        path: Arc<OsStr>,
+        path: &Arc<OsStr>,
         check_syntax_errors: bool,
         tx_error: &DiagnosticSender,
     ) -> ModuleProcessOutput {
-        let Some(ext) = Path::new(&path).extension().and_then(OsStr::to_str) else {
-            return ModuleProcessOutput { path, processed_module: ProcessedModule::default() };
+        let Some(ext) = Path::new(path).extension().and_then(OsStr::to_str) else {
+            return ModuleProcessOutput {
+                path: Arc::clone(path),
+                processed_module: ProcessedModule::default(),
+            };
         };
-        let Some(source_type_and_text) = self.get_source_type_and_text(Path::new(&path), ext)
-        else {
-            return ModuleProcessOutput { path, processed_module: ProcessedModule::default() };
+        let Some(source_type_and_text) = self.get_source_type_and_text(Path::new(path), ext) else {
+            return ModuleProcessOutput {
+                path: Arc::clone(path),
+                processed_module: ProcessedModule::default(),
+            };
         };
 
         let (source_type, source_text) = match source_type_and_text {
             Ok(source_text) => source_text,
             Err(e) => {
-                tx_error.send(Some((Path::new(&path).to_path_buf(), vec![e]))).unwrap();
-                return ModuleProcessOutput { path, processed_module: ProcessedModule::default() };
+                tx_error.send(Some((Path::new(path).to_path_buf(), vec![e]))).unwrap();
+                return ModuleProcessOutput {
+                    path: Arc::clone(path),
+                    processed_module: ProcessedModule::default(),
+                };
             }
         };
         let mut records = SmallVec::<[Result<ResolvedModuleRecord, Vec<OxcDiagnostic>>; 1]>::new();
         let mut module_content: Option<ModuleContent> = None;
         let allocator = Allocator::default();
-        if self.paths.contains(&path) {
+        if self.paths.contains(path) {
             module_content =
                 Some(ModuleContent::new(ModuleContentOwner { source_text, allocator }, |owner| {
                     let mut section_contents = SmallVec::new();
                     records = self.process_source(
-                        Path::new(&path),
+                        Path::new(path),
                         ext,
                         check_syntax_errors,
                         source_type,
@@ -729,7 +789,7 @@ impl Runtime {
                 }));
         } else {
             records = self.process_source(
-                Path::new(&path),
+                Path::new(path),
                 ext,
                 check_syntax_errors,
                 source_type,
@@ -740,7 +800,7 @@ impl Runtime {
         }
 
         ModuleProcessOutput {
-            path,
+            path: Arc::clone(path),
             processed_module: ProcessedModule {
                 section_module_records: records,
                 content: module_content,

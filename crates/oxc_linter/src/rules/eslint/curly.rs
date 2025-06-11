@@ -249,7 +249,7 @@ fn should_have_braces<'a>(
     };
     let braces_necessary = are_braces_necessary(body, ctx);
 
-    let should_block = if is_block && (is_not_single_statement || braces_necessary) {
+    if is_block && (is_not_single_statement || braces_necessary) {
         Some(true)
     } else if options.contains(&CurlyType::Multi) {
         Some(false)
@@ -271,9 +271,7 @@ fn should_have_braces<'a>(
         })
     } else {
         Some(true)
-    };
-
-    should_block
+    }
 }
 
 fn report_if_needed<'a>(

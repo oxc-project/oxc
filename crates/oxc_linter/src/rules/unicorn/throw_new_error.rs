@@ -1,8 +1,4 @@
-use lazy_regex::{Lazy, Regex, lazy_regex};
-use oxc_ast::{
-    AstKind,
-    ast::{Expression, match_member_expression},
-};
+use oxc_ast::{AstKind, ast::Expression};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
@@ -16,7 +12,7 @@ use crate::{
 
 fn throw_new_error_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Require `new` when throwing an error.")
-        .with_help("While it's possible to create a new error without using the `new` keyword, it's better to be explicit.")
+        .with_help("Using `new` ensures the error is correctly initialized.")
         .with_label(span)
 }
 
@@ -26,11 +22,14 @@ pub struct ThrowNewError;
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// Require `new` when throwing an error.`
+    /// This rule makes sure you always use `new` when throwing an error.
     ///
     /// ### Why is this bad?
     ///
-    /// While it's possible to create a new error without using the `new` keyword, it's better to be explicit.
+    /// In JavaScript, omitting `new` (e.g., `throw Error('message')`) is allowed,
+    /// but it does not properly initialize the error object. This can lead to missing
+    /// stack traces or incorrect prototype chains. Using `new` makes the intent clear,
+    /// ensures consistent behavior, and helps avoid subtle bugs.
     ///
     /// ### Examples
     ///
@@ -53,8 +52,6 @@ declare_oxc_lint!(
     fix
 );
 
-static CUSTOM_ERROR_REGEX_PATTERN: Lazy<Regex> = lazy_regex!(r"^(?:[A-Z][\da-z]*)*Error$");
-
 impl Rule for ThrowNewError {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         let AstKind::CallExpression(call_expr) = node.kind() else {
@@ -69,29 +66,17 @@ impl Rule for ThrowNewError {
             return;
         };
 
-        match call_expr.callee.without_parentheses() {
-            Expression::Identifier(v) => {
-                if !CUSTOM_ERROR_REGEX_PATTERN.is_match(&v.name) {
-                    return;
-                }
-            }
-            callee @ match_member_expression!(Expression) => {
-                let member_expr = callee.to_member_expression();
-                if member_expr.is_computed() {
-                    return;
-                }
-                if let Some(v) = member_expr.static_property_name() {
-                    if !CUSTOM_ERROR_REGEX_PATTERN.is_match(v) {
-                        return;
-                    }
-                }
-            }
+        let name = match call_expr.callee.without_parentheses() {
+            Expression::Identifier(v) => v.name,
+            Expression::StaticMemberExpression(v) => v.property.name,
             _ => return,
-        }
+        };
 
-        ctx.diagnostic_with_fix(throw_new_error_diagnostic(call_expr.span), |fixer| {
-            fixer.insert_text_before_range(call_expr.span, "new ")
-        });
+        if name.len() >= 5 && name.as_bytes()[0].is_ascii_uppercase() && name.ends_with("Error") {
+            ctx.diagnostic_with_fix(throw_new_error_diagnostic(call_expr.span), |fixer| {
+                fixer.insert_text_before_range(call_expr.span, "new ")
+            });
+        }
     }
 }
 

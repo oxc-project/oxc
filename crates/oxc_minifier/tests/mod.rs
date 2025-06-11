@@ -5,7 +5,7 @@ mod mangler;
 mod peephole;
 
 use oxc_allocator::Allocator;
-use oxc_codegen::{CodeGenerator, CodegenOptions};
+use oxc_codegen::{Codegen, CodegenOptions};
 use oxc_minifier::{CompressOptions, Compressor};
 use oxc_parser::{ParseOptions, Parser};
 use oxc_span::SourceType;
@@ -43,7 +43,7 @@ pub(crate) fn run(
     if let Some(options) = options {
         Compressor::new(&allocator, options).build(&mut program);
     }
-    CodeGenerator::new()
+    Codegen::new()
         .with_options(CodegenOptions { single_quote: true, ..CodegenOptions::default() })
         .build(&program)
         .code

@@ -15,7 +15,7 @@ fn unexpected_es6_class_diagnostic(span: Span) -> OxcDiagnostic {
 }
 
 fn expected_es6_class_diagnostic(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Components should use es6 class instead of createClass.").with_label(span)
+    OxcDiagnostic::warn("Components should use ES6 class instead of createClass.").with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -33,7 +33,9 @@ declare_oxc_lint!(
     ///
     /// This rule enforces a consistent React class style.
     ///
-    /// ### Example
+    /// ### Examples
+    ///
+    /// Examples of **incorrect** code for this rule:
     /// ```jsx
     /// var Hello = createReactClass({
     ///   render: function() {

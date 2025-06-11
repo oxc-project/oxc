@@ -224,24 +224,19 @@ impl<'a, 'b> PeepholeOptimizations {
                         if_stmt.consequent = ctx.ast.statement_empty(if_stmt.consequent.span());
                     }
                 }
-                return Some(
-                    ctx.ast.statement_if(
-                        if_stmt.span,
-                        if_stmt.test.take_in(ctx.ast.allocator),
-                        if_stmt.consequent.take_in(ctx.ast.allocator),
-                        if_stmt
-                            .alternate
-                            .as_mut()
-                            .map(|alternate| alternate.take_in(ctx.ast.allocator)),
-                    ),
-                );
+                return Some(ctx.ast.statement_if(
+                    if_stmt.span,
+                    if_stmt.test.take_in(ctx.ast),
+                    if_stmt.consequent.take_in(ctx.ast),
+                    if_stmt.alternate.as_mut().map(|alternate| alternate.take_in(ctx.ast)),
+                ));
             }
             return Some(if boolean {
-                if_stmt.consequent.take_in(ctx.ast.allocator)
+                if_stmt.consequent.take_in(ctx.ast)
             } else {
                 if_stmt.alternate.as_mut().map_or_else(
                     || ctx.ast.statement_empty(if_stmt.span),
-                    |alternate| alternate.take_in(ctx.ast.allocator),
+                    |alternate| alternate.take_in(ctx.ast),
                 )
             });
         }
@@ -284,9 +279,9 @@ impl<'a, 'b> PeepholeOptimizations {
                         if let Some(var_decl) = &mut var_decl {
                             var_decl
                                 .declarations
-                                .splice(0..0, var_init.declarations.take_in(ctx.ast.allocator));
+                                .splice(0..0, var_init.declarations.take_in(ctx.ast));
                         } else {
-                            var_decl = Some(var_init.take_in_box(ctx.ast.allocator));
+                            var_decl = Some(var_init.take_in_box(ctx.ast));
                         }
                     }
                     Some(var_decl.map_or_else(
@@ -404,22 +399,22 @@ impl<'a, 'b> PeepholeOptimizations {
                 // "(a, true) ? b : c" => "a, b"
                 let exprs = ctx.ast.vec_from_array([
                     {
-                        let mut test = expr.test.take_in(ctx.ast.allocator);
+                        let mut test = expr.test.take_in(ctx.ast);
                         self.remove_unused_expression(&mut test, state, ctx);
                         test
                     },
                     if v {
-                        expr.consequent.take_in(ctx.ast.allocator)
+                        expr.consequent.take_in(ctx.ast)
                     } else {
-                        expr.alternate.take_in(ctx.ast.allocator)
+                        expr.alternate.take_in(ctx.ast)
                     },
                 ]);
                 ctx.ast.expression_sequence(expr.span, exprs)
             } else {
                 let result_expr = if v {
-                    expr.consequent.take_in(ctx.ast.allocator)
+                    expr.consequent.take_in(ctx.ast)
                 } else {
-                    expr.alternate.take_in(ctx.ast.allocator)
+                    expr.alternate.take_in(ctx.ast)
                 };
 
                 let should_keep_as_sequence_expr =

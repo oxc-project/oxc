@@ -4,6 +4,336 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.72.3] - 2025-06-06
+
+### Bug Fixes
+
+- 8451bee ast/estree: Remove repeat fields from `BindingPattern` in TS-ESTree AST (#11500) (overlookmotel)
+- 5c32b7c ast/estree: Make error objects via raw transfer match standard transfer (#11481) (overlookmotel)
+- 953e61b ast/estree: Fix field order of `PropertyKey` constructor in raw transfer TS-ESTree AST (#11463) (overlookmotel)
+- ec4fc83 estree: Use consistent field order in serialization (#11385) (Yuji Sugiura)
+- ab0dd29 napi: Napi build cache problem (#11479) (LongYinan)
+
+### Testing
+
+- 97aa9cc ast/estree: Remove test skip list for TS raw transfer tests (#11478) (overlookmotel)
+- 75e241c ast/estree: Test raw transfer on TS-ESTree (#11476) (overlookmotel)
+
+## [0.72.3] - 2025-06-06
+
+### Bug Fixes
+
+- 8451bee ast/estree: Remove repeat fields from `BindingPattern` in TS-ESTree AST (#11500) (overlookmotel)
+- 5c32b7c ast/estree: Make error objects via raw transfer match standard transfer (#11481) (overlookmotel)
+- 953e61b ast/estree: Fix field order of `PropertyKey` constructor in raw transfer TS-ESTree AST (#11463) (overlookmotel)
+- ec4fc83 estree: Use consistent field order in serialization (#11385) (Yuji Sugiura)
+- ab0dd29 napi: Napi build cache problem (#11479) (LongYinan)
+
+### Testing
+
+- 97aa9cc ast/estree: Remove test skip list for TS raw transfer tests (#11478) (overlookmotel)
+- 75e241c ast/estree: Test raw transfer on TS-ESTree (#11476) (overlookmotel)
+
+## [0.72.2] - 2025-05-31
+
+### Features
+
+- 1df6732 ast/estree: Add decorators to ESTree AST (#11393) (overlookmotel)
+
+### Refactor
+
+- 12690a1 ast/estree: Re-order fields in visitation order (#11362) (overlookmotel)
+- 75ee3a5 ast/estree: Do not put TS struct fields last (#11360) (overlookmotel)
+- 1d1ebd6 ast_tools/estree: Order `type` and `span` fields first by default (#11361) (overlookmotel)
+
+## [0.72.2] - 2025-05-31
+
+### Features
+
+- 1df6732 ast/estree: Add decorators to ESTree AST (#11393) (overlookmotel)
+
+### Refactor
+
+- 12690a1 ast/estree: Re-order fields in visitation order (#11362) (overlookmotel)
+- 75ee3a5 ast/estree: Do not put TS struct fields last (#11360) (overlookmotel)
+- 1d1ebd6 ast_tools/estree: Order `type` and `span` fields first by default (#11361) (overlookmotel)
+
+## [0.72.1] - 2025-05-28
+
+### Features
+
+- b8aa4e3 napi/parser: `parseAsync` support raw transfer (#11335) (overlookmotel)
+
+## [0.72.1] - 2025-05-28
+
+### Features
+
+- b8aa4e3 napi/parser: `parseAsync` support raw transfer (#11335) (overlookmotel)
+
+## [0.72.0] - 2025-05-24
+
+### Features
+
+- 23182b8 ast/estree: Add `phase` field to `ImportExpression` in TS-ESTree AST (#11193) (overlookmotel)
+
+## [0.72.0] - 2025-05-24
+
+### Features
+
+- 23182b8 ast/estree: Add `phase` field to `ImportExpression` in TS-ESTree AST (#11193) (overlookmotel)
+
+## [0.71.0] - 2025-05-20
+
+### Features
+
+- c60382d allocator/vec2: Change `len` and `cap` fields from `usize` to `u32` (#10884) (Dunqing)
+- d47b305 ast/estree: Add `phase` field to `ImportExpression` in ESTree AST (#11165) (overlookmotel)
+- 1bc8d29 ast/estree: Add `phase` field to `ImportDeclaration` in ESTree AST (#11157) (overlookmotel)
+- 9e90e00 ast_tools: Introduce `#[js_only]` attr for struct fields and converters (#11160) (overlookmotel)
+- d67c9e5 napi: Bump napi to beta (#11159) (Boshen)
+
+### Bug Fixes
+
+- 3795eb6 ci: Use jsdelivr for all benchmark files (#11108) (Boshen)
+- 963167d napi: Fix cfg feature on global_allocator (Boshen)
+
+### Performance
+
+- 5dcd0f1 allocator/vec2: Reorder `RawVec` fields (#11050) (Dunqing)
+- 2b0a69f ast: Re-order struct fields to reduce padding (#11056) (overlookmotel)
+- b9e51e2 ast: Reduce size of `Comment` to 16 bytes (#11062) (camchenry)
+
+### Documentation
+
+- e92bf1f napi: Update docs for `oxc-parser` (#11156) (overlookmotel)
+
+### Refactor
+
+- 9775585 regular_expression: Refactor `regexp-modifiers` support (#11142) (Yuji Sugiura)
+
+## [0.71.0] - 2025-05-20
+
+### Features
+
+- c60382d allocator/vec2: Change `len` and `cap` fields from `usize` to `u32` (#10884) (Dunqing)
+- d47b305 ast/estree: Add `phase` field to `ImportExpression` in ESTree AST (#11165) (overlookmotel)
+- 1bc8d29 ast/estree: Add `phase` field to `ImportDeclaration` in ESTree AST (#11157) (overlookmotel)
+- 9e90e00 ast_tools: Introduce `#[js_only]` attr for struct fields and converters (#11160) (overlookmotel)
+- d67c9e5 napi: Bump napi to beta (#11159) (Boshen)
+
+### Bug Fixes
+
+- 3795eb6 ci: Use jsdelivr for all benchmark files (#11108) (Boshen)
+- 963167d napi: Fix cfg feature on global_allocator (Boshen)
+
+### Performance
+
+- 5dcd0f1 allocator/vec2: Reorder `RawVec` fields (#11050) (Dunqing)
+- 2b0a69f ast: Re-order struct fields to reduce padding (#11056) (overlookmotel)
+- b9e51e2 ast: Reduce size of `Comment` to 16 bytes (#11062) (camchenry)
+
+### Documentation
+
+- e92bf1f napi: Update docs for `oxc-parser` (#11156) (overlookmotel)
+
+### Refactor
+
+- 9775585 regular_expression: Refactor `regexp-modifiers` support (#11142) (Yuji Sugiura)
+
+## [0.70.0] - 2025-05-15
+
+### Features
+
+- 647b6f3 napi: Add arm musl (#10958) (Bernd Storath)
+
+### Bug Fixes
+
+- 6f3f9d7 ast/estree: Fix `raw_deser` for `TSMappedTypeOptional` serializer (#10971) (overlookmotel)
+- 53329f8 ast/estree: Fix field order for `FormalParameter` (#10962) (overlookmotel)
+- 8b8f78f ast/estree: Fix field order and type def for `RestElement` in `FormalParameters` (#10961) (overlookmotel)
+- 2b76ab5 ast/estree: Fix `TSModuleDeclaration` raw deserializer (#10924) (overlookmotel)
+- d036cf5 estree: Ensure the same key order for `AssignmentPattern` (#10953) (Yuji Sugiura)
+- 635aa96 napi: Computed final source type from `lang` then `sourceType` (#11060) (Boshen)
+- 584d8b9 napi: Enable mimalloc `no_opt_arch` feature on linux aarch64 (#11053) (Boshen)
+
+### Performance
+
+- a4b5716 ast/estree: Streamline raw deserializer for `WithClause` (#10974) (overlookmotel)
+
+## [0.70.0] - 2025-05-15
+
+### Features
+
+- 647b6f3 napi: Add arm musl (#10958) (Bernd Storath)
+
+### Bug Fixes
+
+- 6f3f9d7 ast/estree: Fix `raw_deser` for `TSMappedTypeOptional` serializer (#10971) (overlookmotel)
+- 53329f8 ast/estree: Fix field order for `FormalParameter` (#10962) (overlookmotel)
+- 8b8f78f ast/estree: Fix field order and type def for `RestElement` in `FormalParameters` (#10961) (overlookmotel)
+- 2b76ab5 ast/estree: Fix `TSModuleDeclaration` raw deserializer (#10924) (overlookmotel)
+- d036cf5 estree: Ensure the same key order for `AssignmentPattern` (#10953) (Yuji Sugiura)
+- 635aa96 napi: Computed final source type from `lang` then `sourceType` (#11060) (Boshen)
+- 584d8b9 napi: Enable mimalloc `no_opt_arch` feature on linux aarch64 (#11053) (Boshen)
+
+### Performance
+
+- a4b5716 ast/estree: Streamline raw deserializer for `WithClause` (#10974) (overlookmotel)
+
+## [0.69.0] - 2025-05-09
+
+- 2b5d826 ast: [**BREAKING**] Fix field order for `TSTypeAssertion` (#10906) (overlookmotel)
+
+- 1f35910 ast: [**BREAKING**] Fix field order for `TSNamedTupleMember` (#10905) (overlookmotel)
+
+- 8a3bba8 ast: [**BREAKING**] Fix field order for `PropertyDefinition` (#10902) (overlookmotel)
+
+- 5746d36 ast: [**BREAKING**] Fix field order for `NewExpression` (#10893) (overlookmotel)
+
+- 0139793 ast: [**BREAKING**] Re-order fields of `TaggedTemplateExpression` (#10889) (overlookmotel)
+
+- 6646b6b ast: [**BREAKING**] Fix field order for `JSXOpeningElement` (#10882) (overlookmotel)
+
+- cc2ed21 ast: [**BREAKING**] Fix field order for `JSXElement` and `JSXFragment` (#10881) (overlookmotel)
+
+- ad4fbf4 ast: [**BREAKING**] Simplify `RegExpPattern` (#10834) (overlookmotel)
+
+### Features
+
+- d066516 ast_tools: Support `#[estree(prepend_to)]` (#10849) (overlookmotel)
+- 22ba60b napi: Add `s390x-unknown-linux-gnu` build (#10892) (Boshen)
+- 308fe73 napi: Add `x86_64-unknown-freebsd` and `riscv64gc-unknown-linux-gnu` builds (#10886) (Boshen)
+- 3cf867c napi/parser: Expose module record data for `export default interface` (#10894) (Boshen)
+
+### Bug Fixes
+
+- 2c09243 ast: Fix field order for `AccessorProperty` (#10878) (overlookmotel)
+- e7228fa ast/estree: Fix `optional` field of `TSMappedType` in TS-ESTree AST (#10874) (overlookmotel)
+- 6f0638a ast/estree: Remove `TSImportTypeOptions` custom serializer (#10873) (overlookmotel)
+- e6657ae ast/estree: Reorder fields for TS `Identifier` types in TS-ESTree AST (#10864) (overlookmotel)
+- 87fc903 napi/parser: Expose visitor keys files in NPM package (#10817) (overlookmotel)
+
+### Performance
+
+- 49a6f97 napi/parser: Faster fixup of `BigInt`s and `RegExp`s (#10820) (overlookmotel)
+- 0905767 napi/parser: Simplify recursion and avoid function calls in fixup visitor (#10813) (overlookmotel)
+- f85bda4 parser: Use visitor instead of JSON.parse reviver (#10791) (Arnaud Barré)
+
+### Refactor
+
+- b16331e ast/estree: Generalize concatenating fields with `Concat2` (#10848) (overlookmotel)
+- daba0a7 estree: Remove regular expression types from ESTree AST (#10855) (overlookmotel)
+
+### Styling
+
+- 62c3a4a ast_tools: Add full stop to end of generated comments (#10809) (overlookmotel)
+
+## [0.69.0] - 2025-05-09
+
+- 2b5d826 ast: [**BREAKING**] Fix field order for `TSTypeAssertion` (#10906) (overlookmotel)
+
+- 1f35910 ast: [**BREAKING**] Fix field order for `TSNamedTupleMember` (#10905) (overlookmotel)
+
+- 8a3bba8 ast: [**BREAKING**] Fix field order for `PropertyDefinition` (#10902) (overlookmotel)
+
+- 5746d36 ast: [**BREAKING**] Fix field order for `NewExpression` (#10893) (overlookmotel)
+
+- 0139793 ast: [**BREAKING**] Re-order fields of `TaggedTemplateExpression` (#10889) (overlookmotel)
+
+- 6646b6b ast: [**BREAKING**] Fix field order for `JSXOpeningElement` (#10882) (overlookmotel)
+
+- cc2ed21 ast: [**BREAKING**] Fix field order for `JSXElement` and `JSXFragment` (#10881) (overlookmotel)
+
+- ad4fbf4 ast: [**BREAKING**] Simplify `RegExpPattern` (#10834) (overlookmotel)
+
+### Features
+
+- d066516 ast_tools: Support `#[estree(prepend_to)]` (#10849) (overlookmotel)
+- 22ba60b napi: Add `s390x-unknown-linux-gnu` build (#10892) (Boshen)
+- 308fe73 napi: Add `x86_64-unknown-freebsd` and `riscv64gc-unknown-linux-gnu` builds (#10886) (Boshen)
+- 3cf867c napi/parser: Expose module record data for `export default interface` (#10894) (Boshen)
+
+### Bug Fixes
+
+- 2c09243 ast: Fix field order for `AccessorProperty` (#10878) (overlookmotel)
+- e7228fa ast/estree: Fix `optional` field of `TSMappedType` in TS-ESTree AST (#10874) (overlookmotel)
+- 6f0638a ast/estree: Remove `TSImportTypeOptions` custom serializer (#10873) (overlookmotel)
+- e6657ae ast/estree: Reorder fields for TS `Identifier` types in TS-ESTree AST (#10864) (overlookmotel)
+- 87fc903 napi/parser: Expose visitor keys files in NPM package (#10817) (overlookmotel)
+
+### Performance
+
+- 49a6f97 napi/parser: Faster fixup of `BigInt`s and `RegExp`s (#10820) (overlookmotel)
+- 0905767 napi/parser: Simplify recursion and avoid function calls in fixup visitor (#10813) (overlookmotel)
+- f85bda4 parser: Use visitor instead of JSON.parse reviver (#10791) (Arnaud Barré)
+
+### Refactor
+
+- b16331e ast/estree: Generalize concatenating fields with `Concat2` (#10848) (overlookmotel)
+- daba0a7 estree: Remove regular expression types from ESTree AST (#10855) (overlookmotel)
+
+### Styling
+
+- 62c3a4a ast_tools: Add full stop to end of generated comments (#10809) (overlookmotel)
+
+## [0.68.1] - 2025-05-04
+
+### Bug Fixes
+
+- c33eb9c ast/estree: Fix raw deser for `TSTypeReference` (#10787) (overlookmotel)
+
+## [0.68.1] - 2025-05-04
+
+### Bug Fixes
+
+- c33eb9c ast/estree: Fix raw deser for `TSTypeReference` (#10787) (overlookmotel)
+
+## [0.68.0] - 2025-05-03
+
+- 28ceb90 ast: [**BREAKING**] Remove `TSMappedTypeModifierOperator::None` variant (#10749) (overlookmotel)
+
+### Bug Fixes
+
+- 61d825b ast/estree: Rename `assert` to `with` in `TSImportType` `options` in TS-ESTree AST (#10681) (overlookmotel)
+- c8005ad ast/estree: Add line comment for hashbang in ESTree AST (#10669) (overlookmotel)
+
+### Performance
+
+- d882eaa napi/parser: Lazy load raw transfer deserializers (#10482) (overlookmotel)
+
+### Refactor
+
+- 050ecd9 ast/estree: Remove custom serializer for `TSMappedTypeModifierOperator` (#10747) (overlookmotel)
+- a2ba7c3 napi/parser: Add comments about hashbang comments (#10692) (overlookmotel)
+- 3b6d52d napi/parser: Move generated deserializer files (#10481) (overlookmotel)
+
+### Testing
+
+- 14c4bbb ast/estree: Fix raw transfer tests (#10666) (overlookmotel)
+
+## [0.68.0] - 2025-05-03
+
+- 28ceb90 ast: [**BREAKING**] Remove `TSMappedTypeModifierOperator::None` variant (#10749) (overlookmotel)
+
+### Bug Fixes
+
+- 61d825b ast/estree: Rename `assert` to `with` in `TSImportType` `options` in TS-ESTree AST (#10681) (overlookmotel)
+- c8005ad ast/estree: Add line comment for hashbang in ESTree AST (#10669) (overlookmotel)
+
+### Performance
+
+- d882eaa napi/parser: Lazy load raw transfer deserializers (#10482) (overlookmotel)
+
+### Refactor
+
+- 050ecd9 ast/estree: Remove custom serializer for `TSMappedTypeModifierOperator` (#10747) (overlookmotel)
+- a2ba7c3 napi/parser: Add comments about hashbang comments (#10692) (overlookmotel)
+- 3b6d52d napi/parser: Move generated deserializer files (#10481) (overlookmotel)
+
+### Testing
+
+- 14c4bbb ast/estree: Fix raw transfer tests (#10666) (overlookmotel)
+
 ## [0.67.0] - 2025-04-27
 
 ### Bug Fixes

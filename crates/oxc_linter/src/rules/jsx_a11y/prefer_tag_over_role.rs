@@ -26,12 +26,14 @@ pub struct PreferTagOverRole;
 
 declare_oxc_lint!(
     /// ### What it does
+    ///
     /// Enforces using semantic HTML tags over `role` attribute.
     ///
     /// ### Why is this bad?
+    ///
     /// Using semantic HTML tags can improve accessibility and readability of the code.
     ///
-    /// ### Example
+    /// ### Examples
     ///
     /// Examples of **incorrect** code for this rule:
     /// ```jsx

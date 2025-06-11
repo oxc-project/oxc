@@ -7,7 +7,7 @@ use rustc_hash::FxHashMap;
 
 use oxc::{
     allocator::Allocator,
-    codegen::CodeGenerator,
+    codegen::Codegen,
     diagnostics::{NamedSource, OxcDiagnostic},
     parser::Parser,
     span::SourceType,
@@ -34,6 +34,7 @@ pub struct CompilerSettings {
     pub allow_unreachable_code: bool,
     pub allow_unused_labels: bool,
     pub no_fallthrough_cases_in_switch: bool,
+    pub experimental_decorators: Vec<bool>,
 }
 
 impl CompilerSettings {
@@ -58,6 +59,11 @@ impl CompilerSettings {
                 options.get("nofallthroughcasesinswitch"),
                 false,
             ),
+            experimental_decorators: options
+                .get("experimentaldecorators")
+                .filter(|&v| v == "*")
+                .map(|_| vec![true, false])
+                .unwrap_or_default(),
         }
     }
 
@@ -175,6 +181,12 @@ impl TestCaseContent {
         suffixes.extend(options.modules.iter().map(|module| format!("(module={module})")));
         suffixes.extend(options.targets.iter().map(|target| format!("(target={target})")));
         suffixes.extend(options.jsx.iter().map(|jsx| format!("(jsx={jsx})")));
+        suffixes.extend(
+            options
+                .experimental_decorators
+                .iter()
+                .map(|&b| format!("(experimentaldecorators={})", if b { "true" } else { "false" })),
+        );
         let mut error_files = vec![];
         for suffix in suffixes {
             let error_path = root.join(format!("{file_name}{suffix}.errors.txt"));
@@ -201,7 +213,7 @@ impl Baseline {
         let allocator = Allocator::default();
         let source_type = SourceType::from_path(Path::new(&self.name)).unwrap();
         let ret = Parser::new(&allocator, &self.original, source_type).parse();
-        let printed = CodeGenerator::new().build(&ret.program).code;
+        let printed = Codegen::new().build(&ret.program).code;
         self.oxc_printed = printed;
     }
 

@@ -12,8 +12,6 @@ use super::{FormatContext, GroupId, SyntaxNode, UniqueGroupIdBuilder};
 pub struct FormatState<'ast> {
     context: FormatContext<'ast>,
     group_id_builder: UniqueGroupIdBuilder,
-
-    pub(crate) stack: NonEmptyStack<AstKind<'ast>>,
     // This is using a RefCell as it only exists in debug mode,
     // the Formatter is still completely immutable in release builds
     // #[cfg(debug_assertions)]
@@ -32,7 +30,6 @@ impl<'ast> FormatState<'ast> {
         Self {
             context,
             group_id_builder: UniqueGroupIdBuilder::default(),
-            stack: NonEmptyStack::new(AstKind::Program(program)),
             // #[cfg(debug_assertions)]
             // printed_tokens: Default::default(),
         }

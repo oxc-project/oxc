@@ -1,8 +1,8 @@
 use oxc_ast::{
     AstKind,
     ast::{
-        ArrowFunctionExpression, BindingPatternKind, Expression, FunctionType, JSXAttributeItem,
-        PropertyKind, Statement, TSType, TSTypeName,
+        ArrowFunctionExpression, BindingPatternKind, Expression, FunctionType, PropertyKind,
+        Statement, TSType, TSTypeName,
     },
 };
 use oxc_diagnostics::OxcDiagnostic;
@@ -58,10 +58,9 @@ declare_oxc_lint!(
     /// Another benefit of explicit return types is the potential for a speed up of type
     /// checking in large codebases with many large functions.
     ///
-    /// ### Example
+    /// ### Examples
     ///
     /// Examples of **incorrect** code for this rule:
-    ///
     /// ```ts
     /// // Should indicate that no value is returned (void)
     /// function test() {
@@ -85,7 +84,6 @@ declare_oxc_lint!(
     /// ```
     ///
     /// Examples of **correct** code for this rule:
-    ///
     /// ```ts
     /// // No return value should be expected (void)
     /// function test(): void {
@@ -605,12 +603,7 @@ fn is_property_definition_with_type_annotation(node: &AstNode) -> bool {
  * ```
  */
 fn is_typed_jsx(node: &AstNode) -> bool {
-    if matches!(node.kind(), AstKind::JSXExpressionContainer(_) | AstKind::JSXSpreadAttribute(_)) {
-        return true;
-    }
-
-    let AstKind::JSXAttributeItem(jsx_attr_item) = node.kind() else { return false };
-    matches!(jsx_attr_item, JSXAttributeItem::SpreadAttribute(_))
+    matches!(node.kind(), AstKind::JSXExpressionContainer(_) | AstKind::JSXSpreadAttribute(_))
 }
 
 fn is_function(expr: &Expression) -> bool {

@@ -19,6 +19,7 @@ doctest = false
 [dependencies]
 bpaf = { workspace = true, features = ["docgen"] }
 handlebars = { workspace = true }
+itertools = { workspace = true }
 oxc_linter = { workspace = true, features = ["ruledocs"] }
 oxlint = { path = "../../apps/oxlint" }
 pico-args = { workspace = true }

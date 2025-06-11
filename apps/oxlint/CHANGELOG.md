@@ -2,7 +2,94 @@
 
 All notable changes to this package will be documented in this file.
 
-The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
+
+## [1.0.0] - 2025-06-10
+
+## [0.18.0] - 2025-06-06
+
+- bd9dd88 linter: [**BREAKING**] Add more info to json reporter (#11524) (camc314)
+
+### Features
+
+
+### Bug Fixes
+
+- 0946dac linter: Correctly inherit categories when plugins are enabled (#11353) (Cameron)
+
+## [0.17.0] - 2025-05-30
+
+- ead5309 linter: [**BREAKING**] Remove react from default plugin set (#11382) (camc314)
+
+### Bug Fixes
+
+- f6424dd linter: Reflect react plugin is disabled by default in cli (#11397) (camc314)
+
+### Documentation
+
+- cd354d4 oxlint: Remove incorrect doc comment (#11326) (camc314)
+
+### Testing
+
+- c4f64aa linter: Explicitly disable correctness for clarity (#11327) (camc314)
+
+## [0.16.12] - 2025-05-25
+
+- 5d9344f rust: [**BREAKING**] Clippy avoid-breaking-exported-api = false (#11088) (Boshen)
+
+### Features
+
+- 12b0917 linter: Auto-generate docs for rule configs (#10629) (DonIsaac)
+
+### Bug Fixes
+
+- e8470d9 linter: Delay merging of oxlintrc configs (#10835) (camc314)
+
+### Refactor
+
+- 9f3a14a linter: Cleanup diagnostic and docs for `eslint/no-console` (#11101) (Ulrich Stark)
+
+## [0.16.11] - 2025-05-16
+
+- 4e5c73b span: [**BREAKING**] `SourceType::from_path(".js")` return js instead of jsx (#11038) (Boshen)
+
+### Features
+
+- 466c24a linter: Add gitlab reporter output format (#10927) (Connor Pearson)
+
+### Bug Fixes
+
+- c52a9ba linter: Fix plugins inside overrides not being applied (#11057) (camc314)
+- b12bd48 linter: Fix rule config not being correctly applied (#11055) (camc314)
+- 0961296 linter: Add `gitlab` to linter `--help` docs (#10932) (camc314)
+- 584d8b9 napi: Enable mimalloc `no_opt_arch` feature on linux aarch64 (#11053) (Boshen)
+
+### Refactor
+
+- bb999a3 language_server: Avoid cloning linter by taking reference in LintService (#10907) (Ulrich Stark)
+
+## [0.16.10] - 2025-05-09
+
+### Features
+
+- 4c62348 linter: Regex/no-useless-backreference (#10773) (camc314)
+
+### Refactor
+
+- 79819cc linter: Move around some config store logic (#10861) (camc314)
+- e132aba linter: Extract nested config searching to a fn (#10860) (camc314)
+- efb4fb8 oxlint: Avoid result unwrap (#10836) (camc314)
+
+## [0.16.9] - 2025-05-02
+
+### Features
+
+- 63f02a8 linter: Add react/forward_ref_uses_ref (#10506) (x6eull)
+- eac205f linter: Add unicorn/consistent-assert rule (#10653) (Shota Kitahara)
+
+### Bug Fixes
+
+- e7c2b32 linter: Move `consistent-assert` to `pedantic` (#10665) (camc314)
 
 ## [0.16.8] - 2025-04-27
 

@@ -35,7 +35,7 @@ declare_oxc_lint!(
     ///
     /// Using `String#startsWith()` and `String#endsWith()` is more readable and performant as it does not need to parse a regex.
     ///
-    /// ### Example
+    /// ### Examples
     ///
     /// Examples of **incorrect** code for this rule:
     /// ```javascript
@@ -80,10 +80,7 @@ impl Rule for PreferStringStartsEndsWith {
             return;
         };
 
-        let pattern_text = regex.regex.pattern.source_text(ctx.source_text());
-        let pattern_text = pattern_text.as_ref();
-
-        let Some(err_kind) = check_regex(regex, pattern_text) else {
+        let Some(err_kind) = check_regex(regex) else {
             return;
         };
 
@@ -121,7 +118,7 @@ fn do_fix<'a>(
     let alloc = Allocator::default();
     let ast = AstBuilder::new(&alloc);
     content.print_str(&format!(r"{}.{}(", fixer.source_range(target_span), method));
-    content.print_expression(&ast.expression_string_literal(SPAN, argument, None));
+    content.print_expression(&ast.expression_string_literal(SPAN, ast.atom(&argument), None));
     content.print_str(r")");
     fixer.replace(call_expr.span, content)
 }
@@ -149,7 +146,8 @@ enum ErrorKind {
     EndsWith(Vec<u32>),
 }
 
-fn check_regex(regexp_lit: &RegExpLiteral, pattern_text: &str) -> Option<ErrorKind> {
+fn check_regex(regexp_lit: &RegExpLiteral) -> Option<ErrorKind> {
+    let pattern_text = regexp_lit.regex.pattern.text.as_str();
     if regexp_lit.regex.flags.intersects(RegExpFlags::M)
         || (regexp_lit.regex.flags.intersects(RegExpFlags::I | RegExpFlags::M)
             && is_useless_case_sensitive_regex_flag(pattern_text))
@@ -157,7 +155,8 @@ fn check_regex(regexp_lit: &RegExpLiteral, pattern_text: &str) -> Option<ErrorKi
         return None;
     }
 
-    let alternatives = regexp_lit.regex.pattern.as_pattern().map(|pattern| &pattern.body.body)?;
+    let alternatives =
+        regexp_lit.regex.pattern.pattern.as_ref().map(|pattern| &pattern.body.body)?;
     // Must not be something with multiple alternatives like `/^a|b/`
     if alternatives.len() > 1 {
         return None;

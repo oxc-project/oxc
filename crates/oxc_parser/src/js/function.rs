@@ -23,8 +23,10 @@ impl<'a> ParserImpl<'a> {
     pub(crate) fn at_function_with_async(&mut self) -> bool {
         self.at(Kind::Function)
             || self.at(Kind::Async)
-                && self.peek_at(Kind::Function)
-                && !self.peek_token().is_on_new_line
+                && self.lookahead(|p| {
+                    p.bump_any();
+                    p.at(Kind::Function) && !p.token.is_on_new_line()
+                })
     }
 
     pub(crate) fn parse_function_body(&mut self) -> Box<'a, FunctionBody<'a>> {
@@ -57,7 +59,7 @@ impl<'a> ParserImpl<'a> {
         let (list, rest) = self.parse_delimited_list_with_rest(
             Kind::RParen,
             Self::parse_formal_parameter,
-            Self::parse_rest_parameter,
+            diagnostics::rest_parameter_last,
         );
         self.expect(Kind::RParen);
         let formal_parameters =
@@ -65,24 +67,26 @@ impl<'a> ParserImpl<'a> {
         (this_param, formal_parameters)
     }
 
-    fn parse_parameter_modifiers(&mut self) -> Modifiers<'a> {
-        let modifiers = self.parse_class_element_modifiers(true);
-        self.verify_modifiers(
-            &modifiers,
-            ModifierFlags::ACCESSIBILITY
-                .union(ModifierFlags::READONLY)
-                .union(ModifierFlags::OVERRIDE),
-            diagnostics::cannot_appear_on_a_parameter,
-        );
-        modifiers
-    }
-
     fn parse_formal_parameter(&mut self) -> FormalParameter<'a> {
         let span = self.start_span();
-        self.eat_decorators();
-        let modifiers = self.parse_parameter_modifiers();
+        let decorators = self.parse_decorators();
+        let modifiers = self.parse_modifiers(false, false);
+        if self.is_ts {
+            self.verify_modifiers(
+                &modifiers,
+                ModifierFlags::ACCESSIBILITY
+                    .union(ModifierFlags::READONLY)
+                    .union(ModifierFlags::OVERRIDE),
+                diagnostics::cannot_appear_on_a_parameter,
+            );
+        } else {
+            self.verify_modifiers(
+                &modifiers,
+                ModifierFlags::empty(),
+                diagnostics::parameter_modifiers_in_ts,
+            );
+        }
         let pattern = self.parse_binding_pattern_with_initializer();
-        let decorators = self.consume_decorators();
         self.ast.formal_parameter(
             self.end_span(span),
             decorators,
@@ -91,21 +95,6 @@ impl<'a> ParserImpl<'a> {
             modifiers.contains_readonly(),
             modifiers.contains_override(),
         )
-    }
-
-    fn parse_rest_parameter(&mut self) -> BindingRestElement<'a> {
-        let element = self.parse_rest_element();
-        if self.at(Kind::Comma) {
-            if matches!(self.peek_kind(), Kind::RCurly | Kind::RBrack) {
-                let span = self.cur_token().span();
-                self.bump_any();
-                self.error(diagnostics::binding_rest_element_trailing_comma(span));
-            }
-            if !self.ctx.has_ambient() {
-                self.error(diagnostics::rest_parameter_last(element.span));
-            }
-        }
-        element
     }
 
     pub(crate) fn parse_function(
@@ -120,23 +109,16 @@ impl<'a> ParserImpl<'a> {
     ) -> Box<'a, Function<'a>> {
         let ctx = self.ctx;
         self.ctx = self.ctx.and_in(true).and_await(r#async).and_yield(generator);
-
         let type_parameters = self.parse_ts_type_parameters();
-
         let (this_param, params) = self.parse_formal_parameters(param_kind);
-
         let return_type =
             self.parse_ts_return_type_annotation(Kind::Colon, /* is_type */ true);
-
         let body = if self.at(Kind::LCurly) { Some(self.parse_function_body()) } else { None };
-
         self.ctx =
             self.ctx.and_in(ctx.has_in()).and_await(ctx.has_await()).and_yield(ctx.has_yield());
-
         if !self.is_ts && body.is_none() {
             return self.unexpected();
         }
-
         let function_type = match func_kind {
             FunctionKind::Declaration | FunctionKind::DefaultExport => {
                 if body.is_none() {
@@ -161,6 +143,14 @@ impl<'a> ParserImpl<'a> {
             self.asi();
         }
 
+        if ctx.has_ambient() && modifiers.contains_declare() {
+            if let Some(body) = &body {
+                self.error(diagnostics::implementation_in_ambient(Span::new(
+                    body.span.start,
+                    body.span.start,
+                )));
+            }
+        }
         self.verify_modifiers(
             modifiers,
             ModifierFlags::DECLARE | ModifierFlags::ASYNC,
@@ -185,10 +175,12 @@ impl<'a> ParserImpl<'a> {
     /// [Function Declaration](https://tc39.es/ecma262/#prod-FunctionDeclaration)
     pub(crate) fn parse_function_declaration(
         &mut self,
+        span: u32,
+        r#async: bool,
         stmt_ctx: StatementContext,
     ) -> Statement<'a> {
         let func_kind = FunctionKind::Declaration;
-        let decl = self.parse_function_impl(func_kind);
+        let decl = self.parse_function_impl(span, r#async, func_kind);
         if stmt_ctx.is_single_statement() {
             if decl.r#async {
                 self.error(diagnostics::async_function_declaration(Span::new(
@@ -207,9 +199,12 @@ impl<'a> ParserImpl<'a> {
 
     /// Parse function implementation in Javascript, cursor
     /// at `function` or `async function`
-    pub(crate) fn parse_function_impl(&mut self, func_kind: FunctionKind) -> Box<'a, Function<'a>> {
-        let span = self.start_span();
-        let r#async = self.eat(Kind::Async);
+    pub(crate) fn parse_function_impl(
+        &mut self,
+        span: u32,
+        r#async: bool,
+        func_kind: FunctionKind,
+    ) -> Box<'a, Function<'a>> {
         self.expect(Kind::Function);
         let generator = self.eat(Kind::Star);
         let id = self.parse_function_id(func_kind, r#async, generator);
@@ -303,7 +298,7 @@ impl<'a> ParserImpl<'a> {
         let mut delegate = false;
         let mut argument = None;
 
-        if !self.cur_token().is_on_new_line {
+        if !self.cur_token().is_on_new_line() {
             delegate = self.eat(Kind::Star);
             let not_assignment_expr = matches!(
                 self.cur_kind(),
@@ -328,31 +323,32 @@ impl<'a> ParserImpl<'a> {
     // id: None - for AnonymousDefaultExportedFunctionDeclaration
     pub(crate) fn parse_function_id(
         &mut self,
-        kind: FunctionKind,
+        func_kind: FunctionKind,
         r#async: bool,
         generator: bool,
     ) -> Option<BindingIdentifier<'a>> {
-        let ctx = self.ctx;
-        if kind.is_expression() {
-            self.ctx = self.ctx.and_await(r#async).and_yield(generator);
-        }
-        let id = self.cur_kind().is_binding_identifier().then(|| {
-            let (span, name) = self.parse_identifier_kind(Kind::Ident);
-            self.check_identifier(span, &name);
-            self.ast.binding_identifier(span, name)
-        });
-        self.ctx = ctx;
-
-        if kind.is_id_required() && id.is_none() {
-            match self.cur_kind() {
-                Kind::LParen => {
-                    self.error(diagnostics::expect_function_name(self.cur_token().span()));
-                }
-                kind if kind.is_reserved_keyword() => self.expect_without_advance(Kind::Ident),
-                _ => {}
+        let kind = self.cur_kind();
+        if kind.is_binding_identifier() {
+            let mut ctx = self.ctx;
+            if func_kind.is_expression() {
+                ctx = ctx.and_await(r#async).and_yield(generator);
             }
-        }
+            self.check_identifier(kind, ctx);
 
-        id
+            let (span, name) = self.parse_identifier_kind(Kind::Ident);
+            Some(self.ast.binding_identifier(span, name))
+        } else {
+            if func_kind.is_id_required() {
+                match self.cur_kind() {
+                    Kind::LParen => {
+                        self.error(diagnostics::expect_function_name(self.cur_token().span()));
+                    }
+                    kind if kind.is_reserved_keyword() => self.expect_without_advance(Kind::Ident),
+                    _ => {}
+                }
+            }
+
+            None
+        }
     }
 }

@@ -205,6 +205,34 @@ pub struct NoUnusedVarsOptions {
     /// console.log(firstVar, secondVar);
     /// ```
     pub report_used_ignore_pattern: bool,
+
+    /// The `reportVarsOnlyUsedAsTypes` option is a boolean (default: `false`).
+    ///
+    /// If `true`, the rule will also report variables that are only used as types.
+    ///
+    /// ## Examples
+    ///
+    /// Examples of **incorrect** code for the `{ "reportVarsOnlyUsedAsTypes": true }` option:
+    ///
+    /// ```javascript
+    /// /* eslint no-unused-vars: ["error", { "reportVarsOnlyUsedAsTypes": true }] */
+    ///
+    /// const myNumber: number = 4;
+    /// export type MyNumber = typeof myNumber
+    /// ```
+    ///
+    /// Examples of **correct** code for the `{ "reportVarsOnlyUsedAsTypes": true }` option:
+    ///
+    /// ```javascript
+    /// export type MyNumber = number;
+    /// ```
+    ///
+    /// Note: even with `{ "reportVarsOnlyUsedAsTypes": false }`, cases where the value is
+    /// only used a type within itself will still be reported:
+    /// ```javascript
+    /// function foo(): typeof foo {}
+    /// ```
+    pub report_vars_only_used_as_types: bool,
 }
 
 /// Represents an `Option<Regex>` with an additional `Default` variant,
@@ -314,6 +342,7 @@ impl Default for NoUnusedVarsOptions {
             destructured_array_ignore_pattern: IgnorePattern::None,
             ignore_class_with_static_init_block: false,
             report_used_ignore_pattern: false,
+            report_vars_only_used_as_types: false,
         }
     }
 }
@@ -555,6 +584,11 @@ impl TryFrom<Value> for NoUnusedVarsOptions {
                     .map_or(Some(false), Value::as_bool)
                     .unwrap_or(false);
 
+                let report_vars_only_used_as_types: bool = config
+                    .get("reportVarsOnlyUsedAsTypes")
+                    .map_or(Some(false), Value::as_bool)
+                    .unwrap_or(false);
+
                 Ok(Self {
                     vars,
                     vars_ignore_pattern,
@@ -566,6 +600,7 @@ impl TryFrom<Value> for NoUnusedVarsOptions {
                     destructured_array_ignore_pattern,
                     ignore_class_with_static_init_block,
                     report_used_ignore_pattern,
+                    report_vars_only_used_as_types,
                 })
             }
             Value::Null => Ok(Self::default()),

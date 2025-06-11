@@ -100,71 +100,71 @@ impl ScopeFlags {
     }
 
     #[inline]
-    pub fn is_strict_mode(&self) -> bool {
+    pub fn is_strict_mode(self) -> bool {
         self.contains(Self::StrictMode)
     }
 
     #[inline]
-    pub fn is_block(&self) -> bool {
-        self.is_empty() || *self == Self::StrictMode
+    pub fn is_block(self) -> bool {
+        self.is_empty() || self == Self::StrictMode
     }
 
     #[inline]
-    pub fn is_top(&self) -> bool {
+    pub fn is_top(self) -> bool {
         self.contains(Self::Top)
     }
 
     #[inline]
-    pub fn is_function(&self) -> bool {
+    pub fn is_function(self) -> bool {
         self.contains(Self::Function)
     }
 
     #[inline]
-    pub fn is_arrow(&self) -> bool {
+    pub fn is_arrow(self) -> bool {
         self.contains(Self::Arrow)
     }
 
     #[inline]
-    pub fn is_constructor(&self) -> bool {
+    pub fn is_constructor(self) -> bool {
         self.contains(Self::Constructor)
     }
 
     #[inline]
-    pub fn is_class_static_block(&self) -> bool {
+    pub fn is_class_static_block(self) -> bool {
         self.contains(Self::ClassStaticBlock)
     }
 
     #[inline]
-    pub fn is_ts_module_block(&self) -> bool {
+    pub fn is_ts_module_block(self) -> bool {
         self.contains(Self::TsModuleBlock)
     }
 
     #[inline]
-    pub fn is_var(&self) -> bool {
+    pub fn is_var(self) -> bool {
         self.intersects(Self::Var)
     }
 
     #[inline]
-    pub fn is_set_accessor(&self) -> bool {
+    pub fn is_set_accessor(self) -> bool {
         self.contains(Self::SetAccessor)
     }
 
     #[inline]
-    pub fn is_set_or_get_accessor(&self) -> bool {
+    pub fn is_set_or_get_accessor(self) -> bool {
         self.intersects(Self::SetAccessor | Self::GetAccessor)
     }
 
     #[inline]
-    pub fn is_catch_clause(&self) -> bool {
+    pub fn is_catch_clause(self) -> bool {
         self.contains(Self::CatchClause)
     }
 
-    pub fn is_ts_conditional(&self) -> bool {
+    pub fn is_ts_conditional(self) -> bool {
         self.contains(Self::TsConditional)
     }
 
     #[inline]
-    pub fn contains_direct_eval(&self) -> bool {
+    pub fn contains_direct_eval(self) -> bool {
         self.contains(Self::DirectEval)
     }
 }

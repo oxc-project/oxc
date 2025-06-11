@@ -57,7 +57,7 @@ pub trait DiagnosticReporter {
 
 /// DiagnosticResult will be submitted to the Reporter when the [`DiagnosticService`](crate::service::DiagnosticService)
 /// is finished receiving all files
-#[derive(Default)]
+#[derive(Default, Debug)]
 pub struct DiagnosticResult {
     /// Total number of warnings received
     warnings_count: usize,

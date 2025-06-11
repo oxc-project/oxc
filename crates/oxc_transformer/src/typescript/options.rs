@@ -123,7 +123,7 @@ pub enum RewriteExtensionsMode {
 }
 
 impl RewriteExtensionsMode {
-    pub fn is_remove(&self) -> bool {
+    pub fn is_remove(self) -> bool {
         matches!(self, Self::Remove)
     }
 }

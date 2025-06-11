@@ -1,0 +1,86 @@
+---
+source: crates/oxc_semantic/tests/main.rs
+input_file: crates/oxc_semantic/tests/fixtures/oxc/ts/namespaces/value-module.ts
+---
+[
+  {
+    "children": [
+      {
+        "children": [
+          {
+            "children": [],
+            "flags": "ScopeFlags(StrictMode)",
+            "id": 2,
+            "node": "TSTypeAliasDeclaration",
+            "symbols": []
+          }
+        ],
+        "flags": "ScopeFlags(StrictMode | TsModuleBlock)",
+        "id": 1,
+        "node": "TSModuleDeclaration(N1)",
+        "symbols": [
+          {
+            "flags": "SymbolFlags(BlockScopedVariable | ConstVariable)",
+            "id": 1,
+            "name": "A",
+            "node": "VariableDeclarator(A)",
+            "references": []
+          },
+          {
+            "flags": "SymbolFlags(TypeAlias)",
+            "id": 2,
+            "name": "B",
+            "node": "TSTypeAliasDeclaration",
+            "references": []
+          }
+        ]
+      },
+      {
+        "children": [],
+        "flags": "ScopeFlags(StrictMode)",
+        "id": 3,
+        "node": "TSTypeAliasDeclaration",
+        "symbols": []
+      }
+    ],
+    "flags": "ScopeFlags(StrictMode | Top)",
+    "id": 0,
+    "node": "Program",
+    "symbols": [
+      {
+        "flags": "SymbolFlags(ValueModule)",
+        "id": 0,
+        "name": "N1",
+        "node": "TSModuleDeclaration(N1)",
+        "references": [
+          {
+            "flags": "ReferenceFlags(Type)",
+            "id": 0,
+            "name": "N1",
+            "node_id": 22
+          },
+          {
+            "flags": "ReferenceFlags(Read)",
+            "id": 1,
+            "name": "N1",
+            "node_id": 28
+          }
+        ]
+      },
+      {
+        "flags": "SymbolFlags(TypeAlias)",
+        "id": 3,
+        "name": "T1",
+        "node": "TSTypeAliasDeclaration",
+        "references": []
+      },
+      {
+        "flags": "SymbolFlags(BlockScopedVariable | ConstVariable)",
+        "id": 4,
+        "name": "T2",
+        "node": "VariableDeclarator(T2)",
+        "references": []
+      }
+    ]
+  }
+]

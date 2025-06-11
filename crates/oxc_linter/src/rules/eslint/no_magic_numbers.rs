@@ -24,7 +24,6 @@ fn no_magic_number_diagnostic(span: Span, raw: &str) -> OxcDiagnostic {
 }
 
 #[derive(Debug, Default, Clone)]
-
 pub struct NoMagicNumbers(Box<NoMagicNumbersConfig>);
 
 impl std::ops::Deref for NoMagicNumbers {
@@ -66,7 +65,7 @@ impl TryFrom<&serde_json::Value> for NoMagicNumbersConfig {
         raw.get(0).map_or_else(
             || {
                 Err(OxcDiagnostic::warn(
-                    "Expecting object for typescript/no-magic-numbers configuration",
+                    "Expecting object for eslint/no-magic-numbers configuration",
                 ))
             },
             |object| {
@@ -116,7 +115,7 @@ impl TryFrom<&serde_json::Value> for NoMagicNumbersConfig {
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// The no-magic-numbers rule aims to make code more readable and refactoring easier by ensuring that special numbers are declared as constants to make their meaning explicit.
+    /// This rule aims to make code more readable and refactoring easier by ensuring that special numbers are declared as constants to make their meaning explicit.
     /// The current implementation does not support BigInt numbers inside array indexes.
     ///
     /// ### Why is this bad?
@@ -127,7 +126,6 @@ declare_oxc_lint!(
     ///
     /// Examples of **incorrect** code for this rule:
     /// ```javascript
-    ///
     /// var dutyFreePrice = 100;
     /// var finalPrice = dutyFreePrice + (dutyFreePrice * 0.25);
     /// ```
@@ -259,26 +257,25 @@ impl InternConfig<'_> {
                 }
             }
             AstKind::BigIntLiteral(bigint) => {
-                let big_int_string = bigint.raw.into_string();
                 if is_negative {
-                    let raw = format!("-{big_int_string}");
-
+                    let big_int_string = format!("-{}n", bigint.value);
                     InternConfig {
                         node: parent_node,
-                        value: NoMagicNumbersNumber::BigInt(raw.clone()),
-                        raw,
+                        value: NoMagicNumbersNumber::BigInt(big_int_string),
+                        raw: format!("-{}", bigint.raw.unwrap()),
                     }
                 } else {
+                    let big_int_string = format!("{}n", bigint.value);
                     InternConfig {
                         node: if is_unary { parent_node } else { node },
-                        value: NoMagicNumbersNumber::BigInt(big_int_string.clone()),
-                        raw: big_int_string,
+                        value: NoMagicNumbersNumber::BigInt(big_int_string),
+                        raw: bigint.raw.unwrap().into_string(),
                     }
                 }
             }
             _ => {
                 unreachable!(
-                    "expected AstKind BingIntLiteral or NumericLiteral, got {:?}",
+                    "expected AstKind BigIntLiteral or NumericLiteral, got {:?}",
                     node.kind().debug_name()
                 )
             }

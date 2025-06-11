@@ -35,8 +35,9 @@ declare_oxc_lint!(
     ///
     /// Disallow [Object Rest/Spread Properties](https://github.com/tc39/proposal-object-rest-spread#readme).
     ///
-    /// ### Example
+    /// ### Examples
     ///
+    /// Examples of **incorrect** code for this rule:
     /// ```javascript
     /// let { x, ...y } = z;
     /// let z = { x, ...y };

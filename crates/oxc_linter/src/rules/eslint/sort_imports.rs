@@ -19,10 +19,10 @@ use crate::{context::LintContext, rule::Rule};
 fn unexpected_syntax_order_diagnostic(
     curr_kind: &ImportKind,
     prev_kind: &ImportKind,
-    span2: Span,
+    span: Span,
 ) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!("Expected '{curr_kind}' syntax before '{prev_kind}' syntax."))
-        .with_label(span2)
+        .with_label(span)
 }
 
 fn sort_imports_alphabetically_diagnostic(span: Span) -> OxcDiagnostic {
@@ -67,7 +67,9 @@ declare_oxc_lint!(
     ///
     /// ### Why is this bad?
     ///
-    /// ### Example
+    /// ### Examples
+    ///
+    /// Examples of **incorrect** code for this rule:
     /// ```javascript
     /// import {b, a, c} from 'foo.js'
     ///

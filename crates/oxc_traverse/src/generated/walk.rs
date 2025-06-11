@@ -495,13 +495,6 @@ unsafe fn walk_tagged_template_expression<'a, Tr: Traverse<'a>>(
         (node as *mut u8).add(ancestor::OFFSET_TAGGED_TEMPLATE_EXPRESSION_TAG) as *mut Expression,
         ctx,
     );
-    ctx.retag_stack(AncestorType::TaggedTemplateExpressionQuasi);
-    walk_template_literal(
-        traverser,
-        (node as *mut u8).add(ancestor::OFFSET_TAGGED_TEMPLATE_EXPRESSION_QUASI)
-            as *mut TemplateLiteral,
-        ctx,
-    );
     if let Some(field) = &mut *((node as *mut u8)
         .add(ancestor::OFFSET_TAGGED_TEMPLATE_EXPRESSION_TYPE_ARGUMENTS)
         as *mut Option<Box<TSTypeParameterInstantiation>>)
@@ -509,6 +502,13 @@ unsafe fn walk_tagged_template_expression<'a, Tr: Traverse<'a>>(
         ctx.retag_stack(AncestorType::TaggedTemplateExpressionTypeArguments);
         walk_ts_type_parameter_instantiation(traverser, (&mut **field) as *mut _, ctx);
     }
+    ctx.retag_stack(AncestorType::TaggedTemplateExpressionQuasi);
+    walk_template_literal(
+        traverser,
+        (node as *mut u8).add(ancestor::OFFSET_TAGGED_TEMPLATE_EXPRESSION_QUASI)
+            as *mut TemplateLiteral,
+        ctx,
+    );
     ctx.pop_stack(pop_token);
     traverser.exit_tagged_template_expression(&mut *node, ctx);
 }
@@ -663,18 +663,18 @@ unsafe fn walk_new_expression<'a, Tr: Traverse<'a>>(
         (node as *mut u8).add(ancestor::OFFSET_NEW_EXPRESSION_CALLEE) as *mut Expression,
         ctx,
     );
-    ctx.retag_stack(AncestorType::NewExpressionArguments);
-    for item in &mut *((node as *mut u8).add(ancestor::OFFSET_NEW_EXPRESSION_ARGUMENTS)
-        as *mut Vec<Argument>)
-    {
-        walk_argument(traverser, item as *mut _, ctx);
-    }
     if let Some(field) = &mut *((node as *mut u8)
         .add(ancestor::OFFSET_NEW_EXPRESSION_TYPE_ARGUMENTS)
         as *mut Option<Box<TSTypeParameterInstantiation>>)
     {
         ctx.retag_stack(AncestorType::NewExpressionTypeArguments);
         walk_ts_type_parameter_instantiation(traverser, (&mut **field) as *mut _, ctx);
+    }
+    ctx.retag_stack(AncestorType::NewExpressionArguments);
+    for item in &mut *((node as *mut u8).add(ancestor::OFFSET_NEW_EXPRESSION_ARGUMENTS)
+        as *mut Vec<Argument>)
+    {
+        walk_argument(traverser, item as *mut _, ctx);
     }
     ctx.pop_stack(pop_token);
     traverser.exit_new_expression(&mut *node, ctx);
@@ -2621,18 +2621,18 @@ unsafe fn walk_property_definition<'a, Tr: Traverse<'a>>(
         (node as *mut u8).add(ancestor::OFFSET_PROPERTY_DEFINITION_KEY) as *mut PropertyKey,
         ctx,
     );
-    if let Some(field) = &mut *((node as *mut u8).add(ancestor::OFFSET_PROPERTY_DEFINITION_VALUE)
-        as *mut Option<Expression>)
-    {
-        ctx.retag_stack(AncestorType::PropertyDefinitionValue);
-        walk_expression(traverser, field as *mut _, ctx);
-    }
     if let Some(field) = &mut *((node as *mut u8)
         .add(ancestor::OFFSET_PROPERTY_DEFINITION_TYPE_ANNOTATION)
         as *mut Option<Box<TSTypeAnnotation>>)
     {
         ctx.retag_stack(AncestorType::PropertyDefinitionTypeAnnotation);
         walk_ts_type_annotation(traverser, (&mut **field) as *mut _, ctx);
+    }
+    if let Some(field) = &mut *((node as *mut u8).add(ancestor::OFFSET_PROPERTY_DEFINITION_VALUE)
+        as *mut Option<Expression>)
+    {
+        ctx.retag_stack(AncestorType::PropertyDefinitionValue);
+        walk_expression(traverser, field as *mut _, ctx);
     }
     ctx.pop_stack(pop_token);
     traverser.exit_property_definition(&mut *node, ctx);
@@ -2726,18 +2726,18 @@ unsafe fn walk_accessor_property<'a, Tr: Traverse<'a>>(
         (node as *mut u8).add(ancestor::OFFSET_ACCESSOR_PROPERTY_KEY) as *mut PropertyKey,
         ctx,
     );
-    if let Some(field) = &mut *((node as *mut u8).add(ancestor::OFFSET_ACCESSOR_PROPERTY_VALUE)
-        as *mut Option<Expression>)
-    {
-        ctx.retag_stack(AncestorType::AccessorPropertyValue);
-        walk_expression(traverser, field as *mut _, ctx);
-    }
     if let Some(field) = &mut *((node as *mut u8)
         .add(ancestor::OFFSET_ACCESSOR_PROPERTY_TYPE_ANNOTATION)
         as *mut Option<Box<TSTypeAnnotation>>)
     {
         ctx.retag_stack(AncestorType::AccessorPropertyTypeAnnotation);
         walk_ts_type_annotation(traverser, (&mut **field) as *mut _, ctx);
+    }
+    if let Some(field) = &mut *((node as *mut u8).add(ancestor::OFFSET_ACCESSOR_PROPERTY_VALUE)
+        as *mut Option<Expression>)
+    {
+        ctx.retag_stack(AncestorType::AccessorPropertyValue);
+        walk_expression(traverser, field as *mut _, ctx);
     }
     ctx.pop_stack(pop_token);
     traverser.exit_accessor_property(&mut *node, ctx);
@@ -3194,17 +3194,17 @@ unsafe fn walk_jsx_element<'a, Tr: Traverse<'a>>(
             as *mut Box<JSXOpeningElement>)) as *mut _,
         ctx,
     );
-    if let Some(field) = &mut *((node as *mut u8).add(ancestor::OFFSET_JSX_ELEMENT_CLOSING_ELEMENT)
-        as *mut Option<Box<JSXClosingElement>>)
-    {
-        ctx.retag_stack(AncestorType::JSXElementClosingElement);
-        walk_jsx_closing_element(traverser, (&mut **field) as *mut _, ctx);
-    }
     ctx.retag_stack(AncestorType::JSXElementChildren);
     for item in
         &mut *((node as *mut u8).add(ancestor::OFFSET_JSX_ELEMENT_CHILDREN) as *mut Vec<JSXChild>)
     {
         walk_jsx_child(traverser, item as *mut _, ctx);
+    }
+    if let Some(field) = &mut *((node as *mut u8).add(ancestor::OFFSET_JSX_ELEMENT_CLOSING_ELEMENT)
+        as *mut Option<Box<JSXClosingElement>>)
+    {
+        ctx.retag_stack(AncestorType::JSXElementClosingElement);
+        walk_jsx_closing_element(traverser, (&mut **field) as *mut _, ctx);
     }
     ctx.pop_stack(pop_token);
     traverser.exit_jsx_element(&mut *node, ctx);
@@ -3224,18 +3224,18 @@ unsafe fn walk_jsx_opening_element<'a, Tr: Traverse<'a>>(
         (node as *mut u8).add(ancestor::OFFSET_JSX_OPENING_ELEMENT_NAME) as *mut JSXElementName,
         ctx,
     );
-    ctx.retag_stack(AncestorType::JSXOpeningElementAttributes);
-    for item in &mut *((node as *mut u8).add(ancestor::OFFSET_JSX_OPENING_ELEMENT_ATTRIBUTES)
-        as *mut Vec<JSXAttributeItem>)
-    {
-        walk_jsx_attribute_item(traverser, item as *mut _, ctx);
-    }
     if let Some(field) = &mut *((node as *mut u8)
         .add(ancestor::OFFSET_JSX_OPENING_ELEMENT_TYPE_ARGUMENTS)
         as *mut Option<Box<TSTypeParameterInstantiation>>)
     {
         ctx.retag_stack(AncestorType::JSXOpeningElementTypeArguments);
         walk_ts_type_parameter_instantiation(traverser, (&mut **field) as *mut _, ctx);
+    }
+    ctx.retag_stack(AncestorType::JSXOpeningElementAttributes);
+    for item in &mut *((node as *mut u8).add(ancestor::OFFSET_JSX_OPENING_ELEMENT_ATTRIBUTES)
+        as *mut Vec<JSXAttributeItem>)
+    {
+        walk_jsx_attribute_item(traverser, item as *mut _, ctx);
     }
     ctx.pop_stack(pop_token);
     traverser.exit_jsx_opening_element(&mut *node, ctx);
@@ -3274,6 +3274,12 @@ unsafe fn walk_jsx_fragment<'a, Tr: Traverse<'a>>(
             as *mut JSXOpeningFragment,
         ctx,
     );
+    ctx.retag_stack(AncestorType::JSXFragmentChildren);
+    for item in
+        &mut *((node as *mut u8).add(ancestor::OFFSET_JSX_FRAGMENT_CHILDREN) as *mut Vec<JSXChild>)
+    {
+        walk_jsx_child(traverser, item as *mut _, ctx);
+    }
     ctx.retag_stack(AncestorType::JSXFragmentClosingFragment);
     walk_jsx_closing_fragment(
         traverser,
@@ -3281,12 +3287,6 @@ unsafe fn walk_jsx_fragment<'a, Tr: Traverse<'a>>(
             as *mut JSXClosingFragment,
         ctx,
     );
-    ctx.retag_stack(AncestorType::JSXFragmentChildren);
-    for item in
-        &mut *((node as *mut u8).add(ancestor::OFFSET_JSX_FRAGMENT_CHILDREN) as *mut Vec<JSXChild>)
-    {
-        walk_jsx_child(traverser, item as *mut _, ctx);
-    }
     ctx.pop_stack(pop_token);
     traverser.exit_jsx_fragment(&mut *node, ctx);
 }
@@ -4166,19 +4166,19 @@ unsafe fn walk_ts_named_tuple_member<'a, Tr: Traverse<'a>>(
     ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_ts_named_tuple_member(&mut *node, ctx);
-    let pop_token = ctx.push_stack(Ancestor::TSNamedTupleMemberElementType(
-        ancestor::TSNamedTupleMemberWithoutElementType(node, PhantomData),
+    let pop_token = ctx.push_stack(Ancestor::TSNamedTupleMemberLabel(
+        ancestor::TSNamedTupleMemberWithoutLabel(node, PhantomData),
     ));
+    walk_identifier_name(
+        traverser,
+        (node as *mut u8).add(ancestor::OFFSET_TS_NAMED_TUPLE_MEMBER_LABEL) as *mut IdentifierName,
+        ctx,
+    );
+    ctx.retag_stack(AncestorType::TSNamedTupleMemberElementType);
     walk_ts_tuple_element(
         traverser,
         (node as *mut u8).add(ancestor::OFFSET_TS_NAMED_TUPLE_MEMBER_ELEMENT_TYPE)
             as *mut TSTupleElement,
-        ctx,
-    );
-    ctx.retag_stack(AncestorType::TSNamedTupleMemberLabel);
-    walk_identifier_name(
-        traverser,
-        (node as *mut u8).add(ancestor::OFFSET_TS_NAMED_TUPLE_MEMBER_LABEL) as *mut IdentifierName,
         ctx,
     );
     ctx.pop_stack(pop_token);
@@ -5370,18 +5370,18 @@ unsafe fn walk_ts_type_assertion<'a, Tr: Traverse<'a>>(
     ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_ts_type_assertion(&mut *node, ctx);
-    let pop_token = ctx.push_stack(Ancestor::TSTypeAssertionExpression(
-        ancestor::TSTypeAssertionWithoutExpression(node, PhantomData),
+    let pop_token = ctx.push_stack(Ancestor::TSTypeAssertionTypeAnnotation(
+        ancestor::TSTypeAssertionWithoutTypeAnnotation(node, PhantomData),
     ));
-    walk_expression(
-        traverser,
-        (node as *mut u8).add(ancestor::OFFSET_TS_TYPE_ASSERTION_EXPRESSION) as *mut Expression,
-        ctx,
-    );
-    ctx.retag_stack(AncestorType::TSTypeAssertionTypeAnnotation);
     walk_ts_type(
         traverser,
         (node as *mut u8).add(ancestor::OFFSET_TS_TYPE_ASSERTION_TYPE_ANNOTATION) as *mut TSType,
+        ctx,
+    );
+    ctx.retag_stack(AncestorType::TSTypeAssertionExpression);
+    walk_expression(
+        traverser,
+        (node as *mut u8).add(ancestor::OFFSET_TS_TYPE_ASSERTION_EXPRESSION) as *mut Expression,
         ctx,
     );
     ctx.pop_stack(pop_token);

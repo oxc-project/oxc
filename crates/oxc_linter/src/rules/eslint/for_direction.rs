@@ -12,12 +12,12 @@ use oxc_syntax::operator::{AssignmentOperator, BinaryOperator, UnaryOperator, Up
 
 use crate::{AstNode, context::LintContext, rule::Rule};
 
-fn for_direction_diagnostic(span: Span, span1: Span) -> OxcDiagnostic {
+fn for_direction_diagnostic(test_span: Span, update_span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("The update clause in this loop moves the variable in the wrong direction")
         .with_help("Use while loop for intended infinite loop")
         .with_labels([
-            span.label("This test moves in the wrong direction"),
-            span1.label("with this update"),
+            test_span.label("This test moves in the wrong direction"),
+            update_span.label("with this update"),
         ])
 }
 
@@ -26,9 +26,11 @@ pub struct ForDirection;
 
 declare_oxc_lint!(
     /// ### What it does
+    ///
     /// Disallow `for` loop update causing the counter to move in the wrong direction.
     ///
     /// ### Why is this bad?
+    ///
     /// A `for` loop with a stop condition that can never be reached, such as one
     /// with a counter that moves in the wrong direction, will run infinitely.
     /// While there are occasions when an infinite loop is intended, the
@@ -41,7 +43,7 @@ declare_oxc_lint!(
     /// that the counter is greater than zero (`i >= 0`) then the loop will never
     /// exit.
     ///
-    /// ### Example
+    /// ### Examples
     ///
     /// Examples of **incorrect** code for this rule:
     /// ```js

@@ -4,6 +4,78 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.72.3] - 2025-06-06
+
+### Bug Fixes
+
+- 8451bee ast/estree: Remove repeat fields from `BindingPattern` in TS-ESTree AST (#11500) (overlookmotel)
+- 8842604 estree: Update `add_ts_def` types in oxc-types (#11434) (Yuji Sugiura)
+
+## [0.72.2] - 2025-05-31
+
+### Features
+
+- 1df6732 ast/estree: Add decorators to ESTree AST (#11393) (overlookmotel)
+
+### Refactor
+
+- 12690a1 ast/estree: Re-order fields in visitation order (#11362) (overlookmotel)
+- 75ee3a5 ast/estree: Do not put TS struct fields last (#11360) (overlookmotel)
+
+## [0.72.0] - 2025-05-24
+
+### Features
+
+- 23182b8 ast/estree: Add `phase` field to `ImportExpression` in TS-ESTree AST (#11193) (overlookmotel)
+
+## [0.71.0] - 2025-05-20
+
+### Features
+
+- d47b305 ast/estree: Add `phase` field to `ImportExpression` in ESTree AST (#11165) (overlookmotel)
+- 1bc8d29 ast/estree: Add `phase` field to `ImportDeclaration` in ESTree AST (#11157) (overlookmotel)
+
+## [0.70.0] - 2025-05-15
+
+### Bug Fixes
+
+- 8b8f78f ast/estree: Fix field order and type def for `RestElement` in `FormalParameters` (#10961) (overlookmotel)
+
+## [0.69.0] - 2025-05-09
+
+- 2b5d826 ast: [**BREAKING**] Fix field order for `TSTypeAssertion` (#10906) (overlookmotel)
+
+- 1f35910 ast: [**BREAKING**] Fix field order for `TSNamedTupleMember` (#10905) (overlookmotel)
+
+### Bug Fixes
+
+- 2c09243 ast: Fix field order for `AccessorProperty` (#10878) (overlookmotel)
+- 581d068 ast/estree: Fix TS type def for `RegExpLiteral` (#10876) (overlookmotel)
+- e7228fa ast/estree: Fix `optional` field of `TSMappedType` in TS-ESTree AST (#10874) (overlookmotel)
+- e6657ae ast/estree: Reorder fields for TS `Identifier` types in TS-ESTree AST (#10864) (overlookmotel)
+
+### Refactor
+
+- daba0a7 estree: Remove regular expression types from ESTree AST (#10855) (overlookmotel)
+
+### Styling
+
+- 62c3a4a ast_tools: Add full stop to end of generated comments (#10809) (overlookmotel)
+
+## [0.68.1] - 2025-05-04
+
+### Bug Fixes
+
+- 663fb53 ast/estree: For TS type def for `BigIntLiteral` (#10786) (overlookmotel)
+
+## [0.68.0] - 2025-05-03
+
+- 28ceb90 ast: [**BREAKING**] Remove `TSMappedTypeModifierOperator::None` variant (#10749) (overlookmotel)
+
+### Refactor
+
+- 050ecd9 ast/estree: Remove custom serializer for `TSMappedTypeModifierOperator` (#10747) (overlookmotel)
+
 ## [0.67.0] - 2025-04-27
 
 ### Bug Fixes

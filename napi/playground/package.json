@@ -13,8 +13,8 @@
     "./*": "./*"
   },
   "scripts": {
-    "build": "napi build --no-dts-cache --platform --release --target wasm32-wasip1-threads && node patch.mjs",
-    "dev": "napi build --no-dts-cache --platform --target wasm32-wasip1-threads && node patch.mjs"
+    "build": "napi build --platform --release --target wasm32-wasip1-threads && node patch.mjs",
+    "dev": "napi build --platform --target wasm32-wasip1-threads && node patch.mjs"
   },
   "dependencies": {
     "@napi-rs/wasm-runtime": "^0.2.7"

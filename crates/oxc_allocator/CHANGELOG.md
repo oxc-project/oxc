@@ -4,6 +4,86 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.72.0] - 2025-05-24
+
+- c16ea02 allocator: [**BREAKING**] Remove `String` (#11262) (overlookmotel)
+
+### Features
+
+- c901b5b allocator: Introduce `StringBuilder` (#11257) (overlookmotel)
+- 03390ad allocator: `TakeIn` trait with `AllocatorAccessor` (#11201) (Boshen)
+- 4feeeee span: Add `Atom::from_strs_array_in` method (#11261) (overlookmotel)
+
+### Bug Fixes
+
+- 250e56f allocator/vec: Fix unsoundness in `Vec::extend_from_slices_copy` (#11200) (overlookmotel)
+
+### Refactor
+
+- ddcf248 allocator: Use type alias for `InnerVec` (#11209) (overlookmotel)
+- cef5452 allocator: `TakeIn::take_in_box` accept any `AllocatorAccessor` (#11216) (overlookmotel)
+- 6827543 allocator: `InnerVec` use `Alloc` trait (#11199) (overlookmotel)
+- a2ab84b allocator: Introduce `Alloc` trait (#11198) (overlookmotel)
+- 8ec0c74 allocator/vec: Access `len` and `cap` fields via getters/setters (#11081) (overlookmotel)
+
+## [0.71.0] - 2025-05-20
+
+### Features
+
+- c60382d allocator/vec2: Change `len` and `cap` fields from `usize` to `u32` (#10884) (Dunqing)
+
+### Performance
+
+- a6057c7 allocator/vec: Remove `SetLenOnDrop` (#11079) (overlookmotel)
+- 7e69c08 allocator/vec: Remove `alloc_guard` from `RawVec::from_raw_parts_in` + clarify safety docs (#11073) (overlookmotel)
+- 5dcd0f1 allocator/vec2: Reorder `RawVec` fields (#11050) (Dunqing)
+
+### Documentation
+
+- 7c84a56 allocator/vec: Correct safety comments for `RawVec::append_elements` (#11072) (overlookmotel)
+
+### Refactor
+
+- f081757 allocator/vec: Simplify comparison macros (#11178) (overlookmotel)
+- b4b7d09 allocator/vec: Remove `RawVec::with_capacity_zeroed_in` (#11177) (overlookmotel)
+- 44630a9 allocator/vec: Re-order arguments to `RawVec::from_raw_parts_in` (#11176) (overlookmotel)
+- 31c5169 allocator/vec: Rename vars and lifetimes (#11175) (overlookmotel)
+- aa76a16 allocator/vec: Re-order methods (#11080) (overlookmotel)
+- 2f05c54 allocator/vec: Limit scope of `#[expect(clippy::cast_possible_truncation)]` (#11074) (overlookmotel)
+- fc2f040 allocator/vec: Clarify comment (#11071) (overlookmotel)
+- 7d54577 allocator/vec2: Move `len` field from `Vec` to `RawVec` (#10883) (Dunqing)
+
+## [0.69.0] - 2025-05-09
+
+### Bug Fixes
+
+- 446d9b3 allocator: `Allocator::from_raw_parts` do not use const assertion for endianness test (#10888) (overlookmotel)
+
+### Refactor
+
+- b16331e ast/estree: Generalize concatenating fields with `Concat2` (#10848) (overlookmotel)
+
+## [0.68.0] - 2025-05-03
+
+### Features
+
+- 4b4b09e allocator: Add `String::set_len` method (#10757) (overlookmotel)
+- d5f66fb allocator: Implement `Display` for `Box` (#10731) (overlookmotel)
+- 3cd3d23 allocator/vec2: Align `RawVec::reserve` with standard library implementation (#10701) (Dunqing)
+- 7f2f247 allocator/vec2: Add specialized `grow_one` method (#9855) (Dunqing)
+- 6ce3bbb allocator/vec2: Introduce `extend_desugared` method as `extend` internal implementation (#10670) (Dunqing)
+
+### Performance
+
+- 4eaef66 allocator/vec2: Align min amortized cap size with `std` (#9857) (Dunqing)
+- 04e0390 allocator/vec2: Replace `self.reserve(1)` calls with `self.grow_one()` for better efficiency (#9856) (Dunqing)
+- 2dc4779 allocator/vec2: Calling `Bump::grow` or `Bump::shrink` at the call site directly instead of calling `realloc` (#10686) (Dunqing)
+- b4953b4 allocator/vec2: Resolve performance regression for `extend` by marking reserve as `#[cold]` and `#[inline(never)]` (#10675) (Dunqing)
+
+### Documentation
+
+- c48f6ae allocator: Document cargo features (#10695) (overlookmotel)
+
 ## [0.66.0] - 2025-04-23
 
 ### Testing

@@ -33,6 +33,8 @@ pub struct StructDef {
     pub containers: Containers,
     #[expect(unused)]
     pub visibility: Visibility,
+    /// For `#[derive(...)]` attributes.
+    pub derives: Vec<String>,
     pub generated_derives: Derives,
     pub fields: Vec<FieldDef>,
     pub builder: AstBuilderType,
@@ -56,6 +58,7 @@ impl StructDef {
         is_foreign: bool,
         file_id: FileId,
         visibility: Visibility,
+        derives: Vec<String>,
         generated_derives: Derives,
         fields: Vec<FieldDef>,
     ) -> Self {
@@ -68,6 +71,7 @@ impl StructDef {
             file_id,
             containers: Containers::default(),
             visibility,
+            derives,
             generated_derives,
             fields,
             builder: AstBuilderType::default(),

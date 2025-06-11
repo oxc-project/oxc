@@ -37,7 +37,7 @@ impl Derive for DeriveESTree {
     /// Register that accept `#[estree]` attr on structs, enums, struct fields, enum variants,
     /// or meta types.
     /// Allow attr on structs and enums which don't derive this trait.
-    /// Also accept `#[ts]` attr on struct fields and enum variants.
+    /// Also accept `#[ts]` and `#[js_only]` attrs on struct fields and meta types.
     fn attrs(&self) -> &[(&'static str, AttrPositions)] {
         &[
             (
@@ -47,6 +47,7 @@ impl Derive for DeriveESTree {
                 ),
             ),
             ("ts", attr_positions!(StructField | Meta)),
+            ("js_only", attr_positions!(StructField | Meta)),
         ]
     }
 
@@ -55,6 +56,7 @@ impl Derive for DeriveESTree {
         match attr_name {
             "estree" => parse_estree_attr(location, part),
             "ts" => parse_ts_attr(location, &part),
+            "js_only" => parse_js_only_attr(location, &part),
             _ => unreachable!(),
         }
     }
@@ -71,8 +73,8 @@ impl Derive for DeriveESTree {
 
             ///@@line_break
             use oxc_estree::{
-                ser::{AppendTo, AppendToConcat},
-                ESTree, FlatStructSerializer, JsonSafeString, Serializer, StructSerializer,
+                Concat2, Concat3, ESTree, FlatStructSerializer,
+                JsonSafeString, Serializer, StructSerializer,
             };
         }
     }
@@ -153,8 +155,8 @@ fn parse_estree_attr(location: AttrLocation, part: AttrPart) -> Result<()> {
             AttrPart::String("via", value) => {
                 struct_def.fields[field_index].estree.via = Some(value);
             }
-            AttrPart::String("append_to", value) => {
-                // Find field this field is to be appended to
+            AttrPart::String(attr @ ("prepend_to" | "append_to"), value) => {
+                // Find field this field is to be prepended/appended to
                 let target_field_index = struct_def
                     .fields
                     .iter()
@@ -163,15 +165,20 @@ fn parse_estree_attr(location: AttrLocation, part: AttrPart) -> Result<()> {
                     .map(|(field_index, _)| field_index)
                     .ok_or(())?;
                 if target_field_index == field_index {
-                    // Can't append field to itself
+                    // Can't prepend/append field to itself
                     return Err(());
                 }
                 let target_field = &mut struct_def.fields[target_field_index];
-                if target_field.estree.append_field_index.is_some() {
-                    // Can't append twice to same field
+                let other_field_index_mut = if attr == "prepend_to" {
+                    &mut target_field.estree.prepend_field_index
+                } else {
+                    &mut target_field.estree.append_field_index
+                };
+                if other_field_index_mut.is_some() {
+                    // Can't prepend/append twice to same field
                     return Err(());
                 }
-                target_field.estree.append_field_index = Some(field_index);
+                *other_field_index_mut = Some(field_index);
                 struct_def.fields[field_index].estree.skip = true;
             }
             AttrPart::String("ts_type", value) => {
@@ -222,11 +229,29 @@ fn parse_ts_attr(location: AttrLocation, part: &AttrPart) -> Result<()> {
     Ok(())
 }
 
+/// Parse `#[js_only]` attr on struct field or meta type.
+fn parse_js_only_attr(location: AttrLocation, part: &AttrPart) -> Result<()> {
+    if !matches!(part, AttrPart::None) {
+        return Err(());
+    }
+
+    // Location can only be `StructField` or `Meta`
+    match location {
+        AttrLocation::StructField(struct_def, field_index) => {
+            struct_def.fields[field_index].estree.is_js = true;
+        }
+        AttrLocation::Meta(meta) => meta.estree.is_js = true,
+        _ => unreachable!(),
+    }
+
+    Ok(())
+}
+
 /// Initialize `estree.field_order` on all structs.
 fn prepare_field_orders(schema: &mut Schema, estree_derive_id: DeriveId) {
     // Note: Outside the loop to avoid allocating temporary `Vec`s on each turn of the loop.
     // Instead, reuse this `Vec` over and over.
-    let mut field_indices_temp = vec![];
+    let mut unskipped_field_indices = vec![];
 
     for type_id in schema.types.indices() {
         let Some(struct_def) = schema.types[type_id].as_struct() else { continue };
@@ -236,44 +261,45 @@ fn prepare_field_orders(schema: &mut Schema, estree_derive_id: DeriveId) {
 
         if struct_def.estree.field_indices.is_empty() {
             // No field order specified with `#[estree(field_order(...))]`.
-            // Set default order:
-            // 1. Fields without `#[ts]` attr.
-            // 2. Fields with `#[ts]` attr.
-            // 3. Added fields `#[estree(add_fields(...)]`.
-            // 4. Added fields `#[estree(add_fields(...)]`, where converter meta type has `#[ts]` attr.
-            // Within the above groups, ordered in definition order.
+            // Default field order is:
+            // 1. `type` field (if present)
+            // 2. `span` field (if present)
+            // 3. Struct fields, in definition order.
+            // 4. Extra fields (`#[estree(add_fields(...)]`), in order.
             let mut field_indices = vec![];
-            let ts_field_indices = &mut field_indices_temp;
+            let mut type_field_index = None;
+            let mut span_field_index = None;
             for (field_index, field) in struct_def.fields.iter().enumerate() {
                 if !should_skip_field(field, schema) {
                     let field_index = u8::try_from(field_index).unwrap();
-                    if field.estree.is_ts {
-                        ts_field_indices.push(field_index);
-                    } else {
-                        field_indices.push(field_index);
+                    match field.name() {
+                        "type" => type_field_index = Some(field_index),
+                        "span" => span_field_index = Some(field_index),
+                        _ => field_indices.push(field_index),
                     }
                 }
             }
 
-            let fields_len = struct_def.fields.len();
-            for (index, (_, converter_name)) in struct_def.estree.add_fields.iter().enumerate() {
-                let field_index = u8::try_from(fields_len + index).unwrap();
-                let converter = schema.meta_by_name(converter_name);
-                if converter.estree.is_ts {
-                    ts_field_indices.push(field_index);
-                } else {
-                    field_indices.push(field_index);
-                }
+            if let Some(span_field_index) = span_field_index {
+                field_indices.insert(0, span_field_index);
+            }
+            if let Some(type_field_index) = type_field_index {
+                field_indices.insert(0, type_field_index);
             }
 
-            field_indices.append(ts_field_indices);
+            if !struct_def.estree.add_fields.is_empty() {
+                let first_index = u8::try_from(struct_def.fields.len()).unwrap();
+                let last_index =
+                    u8::try_from(struct_def.fields.len() + struct_def.estree.add_fields.len() - 1)
+                        .unwrap();
+                field_indices.extend(first_index..=last_index);
+            }
 
             let struct_def = schema.struct_def_mut(type_id);
             struct_def.estree.field_indices = field_indices;
         } else {
             // Custom field order specified with `#[estree(field_order(...))]`.
             // Verify does not miss any fields, no fields marked `#[estree(skip)]` are included.
-            let unskipped_field_indices = &mut field_indices_temp;
             for (field_index, field) in struct_def.fields.iter().enumerate() {
                 if !should_skip_field(field, schema) {
                     let field_index = u8::try_from(field_index).unwrap();
@@ -440,37 +466,62 @@ impl<'s> StructSerializerGenerator<'s> {
         }
 
         let value = if let Some(converter_name) = &field.estree.via {
-            let converter = self.schema.meta_by_name(converter_name);
-            let converter_path = converter.import_path_from_crate(self.krate, self.schema);
+            let converter_path = get_converter_path(converter_name, self.krate, self.schema);
             quote!( #converter_path(#self_path) )
-        } else if let Some(append_field_index) = field.estree.append_field_index {
-            let append_field = &struct_def.fields[append_field_index];
-            let append_from_ident = append_field.ident();
-            let wrapper_name = if append_field.type_def(self.schema).is_option() {
-                "AppendTo"
+        } else if let Some(prepend_field_index) = field.estree.prepend_field_index {
+            let prepend_from_ident = struct_def.fields[prepend_field_index].ident();
+            if let Some(append_field_index) = field.estree.append_field_index {
+                let append_from_ident = struct_def.fields[append_field_index].ident();
+                quote! {
+                    Concat3(&#self_path.#prepend_from_ident, &#self_path.#field_name_ident, &#self_path.#append_from_ident)
+                }
             } else {
-                "AppendToConcat"
-            };
-            let wrapper_ident = create_safe_ident(wrapper_name);
+                quote! {
+                    Concat2(&#self_path.#prepend_from_ident, &#self_path.#field_name_ident)
+                }
+            }
+        } else if let Some(append_field_index) = field.estree.append_field_index {
+            let append_from_ident = struct_def.fields[append_field_index].ident();
             quote! {
-                #wrapper_ident { array: &#self_path.#field_name_ident, after: &#self_path.#append_from_ident  }
+                Concat2(&#self_path.#field_name_ident, &#self_path.#append_from_ident)
             }
         } else if field.estree.json_safe {
             // Wrap value in `JsonSafeString(...)` if field is tagged `#[estree(json_safe)]`
-            match field.type_def(self.schema).name() {
-                "&str" => quote!( JsonSafeString(#self_path.#field_name_ident) ),
-                "Atom" => quote!( JsonSafeString(#self_path.#field_name_ident.as_str()) ),
-                _ => panic!(
+            let value = match field.type_def(self.schema) {
+                TypeDef::Primitive(primitive_def) => match primitive_def.name() {
+                    "&str" => Some(quote!( JsonSafeString(#self_path.#field_name_ident) )),
+                    "Atom" => Some(quote!( JsonSafeString(#self_path.#field_name_ident.as_str()) )),
+                    _ => None,
+                },
+                TypeDef::Option(option_def) => option_def
+                    .inner_type(self.schema)
+                    .as_primitive()
+                    .and_then(|primitive_def| match primitive_def.name() {
+                        "&str" => Some(quote! {
+                            #self_path.#field_name_ident.map(|s| JsonSafeString(s))
+                        }),
+                        "Atom" => Some(quote! {
+                            #self_path.#field_name_ident.map(|s| JsonSafeString(s.as_str()))
+                        }),
+                        _ => None,
+                    }),
+                _ => None,
+            };
+
+            value.unwrap_or_else(|| {
+                panic!(
                     "`#[estree(json_safe)]` is only valid on struct fields containing a `&str` or `Atom`: {}::{}",
                     struct_def.name(),
                     field.name(),
-                ),
-            }
+                )
+            })
         } else {
             quote!( #self_path.#field_name_ident )
         };
 
-        let serialize_method_ident = create_safe_ident(if field.estree.is_ts {
+        let serialize_method_ident = create_safe_ident(if field.estree.is_js {
+            "serialize_js_field"
+        } else if field.estree.is_ts {
             "serialize_ts_field"
         } else {
             "serialize_field"
@@ -489,7 +540,9 @@ impl<'s> StructSerializerGenerator<'s> {
     ) {
         let converter = self.schema.meta_by_name(converter_name);
         let converter_path = converter.import_path_from_crate(self.krate, self.schema);
-        let serialize_method_ident = create_safe_ident(if converter.estree.is_ts {
+        let serialize_method_ident = create_safe_ident(if converter.estree.is_js {
+            "serialize_js_field"
+        } else if converter.estree.is_ts {
             "serialize_ts_field"
         } else {
             "serialize_field"
@@ -506,22 +559,29 @@ fn generate_body_for_enum(enum_def: &EnumDef, schema: &Schema) -> TokenStream {
         let variant_ident = variant.ident();
 
         if should_skip_enum_variant(variant) {
+            let pattern = if variant.is_fieldless() { quote!() } else { quote!((_)) };
             return quote! {
-                Self::#variant_ident => { unreachable!("This enum variant is skipped.") }
+                Self::#variant_ident #pattern => unreachable!("This enum variant is skipped."),
             };
         }
 
+        let converter_path = variant.estree.via.as_deref().map(|converter_name| {
+            get_converter_path(converter_name, enum_def.file(schema).krate(), schema)
+        });
+
         if variant.is_fieldless() {
-            let value = get_fieldless_variant_value(enum_def, variant);
-            let value = string_to_tokens(value.as_ref(), false);
+            let value = if let Some(converter_path) = converter_path {
+                quote!( #converter_path(()) )
+            } else {
+                let value = get_fieldless_variant_value(enum_def, variant);
+                string_to_tokens(value.as_ref(), false)
+            };
+
             quote! {
                 Self::#variant_ident => #value.serialize(serializer),
             }
         } else {
-            let value = if let Some(converter_name) = &variant.estree.via {
-                let converter = schema.meta_by_name(converter_name);
-                let krate = enum_def.file(schema).krate();
-                let converter_path = converter.import_path_from_crate(krate, schema);
+            let value = if let Some(converter_path) = converter_path {
                 quote!( #converter_path(it) )
             } else {
                 quote!(it)
@@ -546,9 +606,15 @@ fn generate_body_for_via_override(
     file: &File,
     schema: &Schema,
 ) -> TokenStream {
-    let converter = schema.meta_by_name(converter_name);
-    let converter_path = converter.import_path_from_crate(file.krate(), schema);
+    let converter_path = get_converter_path(converter_name, file.krate(), schema);
     quote!( #converter_path(self).serialize(serializer) )
+}
+
+/// Get path to converter from crate `from_krate`.
+/// e.g. `oxc_ast::serialize::Null` or `crate::serialize::Null`.
+fn get_converter_path(converter_name: &str, from_krate: &str, schema: &Schema) -> TokenStream {
+    let converter = schema.meta_by_name(converter_name);
+    converter.import_path_from_crate(from_krate, schema)
 }
 
 /// Get if a struct field should be skipped when serializing.

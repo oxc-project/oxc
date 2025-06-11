@@ -129,7 +129,7 @@ impl<'a> Traverse<'a> for ExplicitResourceManagement<'a, '_> {
             body.body.insert(0, using_stmt);
         } else {
             // `for (const _x of y) x();` -> `for (const _x of y) { using x = _x; x(); }`
-            let old_body = for_of_stmt.body.take_in(ctx.ast.allocator);
+            let old_body = for_of_stmt.body.take_in(ctx.ast);
 
             let new_body = ctx.ast.vec_from_array([using_stmt, old_body]);
             for_of_stmt.body = ctx.ast.statement_block_with_scope_id(SPAN, new_body, scope_id);
@@ -303,7 +303,7 @@ impl<'a> Traverse<'a> for ExplicitResourceManagement<'a, '_> {
             return;
         }
 
-        let program_body = program.body.take_in(ctx.ast.allocator);
+        let program_body = program.body.take_in(ctx.ast);
 
         let (mut program_body, inner_block): (
             ArenaVec<'a, Statement<'a>>,
@@ -413,7 +413,7 @@ impl<'a> Traverse<'a> for ExplicitResourceManagement<'a, '_> {
                             return (program_body, inner_block);
                         }
 
-                        let export_specifiers = match decl.take_in(ctx.ast.allocator) {
+                        let export_specifiers = match decl.take_in(ctx.ast) {
                             Declaration::ClassDeclaration(class_decl) => {
                                 let class_binding = class_decl.id.as_ref().unwrap();
                                 let class_binding_name = class_binding.name;
@@ -660,7 +660,7 @@ impl<'a> ExplicitResourceManagement<'a, '_> {
                     )),
                     false,
                 )),
-                stmt.take_in(ctx.ast.allocator),
+                stmt.take_in(ctx.ast),
             ]);
 
             ctx.ast.block_statement_with_scope_id(SPAN, vec, block_stmt_sid)
@@ -755,7 +755,7 @@ impl<'a> ExplicitResourceManagement<'a, '_> {
 
         let using_ctx = using_ctx?;
 
-        let mut stmts = stmts.take_in(ctx.ast.allocator);
+        let mut stmts = stmts.take_in(ctx.ast);
 
         // `var _usingCtx = babelHelpers.usingCtx();`
         let callee = self.ctx.helper_load(Helper::UsingCtx, ctx);

@@ -15,12 +15,38 @@ pub struct NoDuplicateHead;
 
 declare_oxc_lint!(
     /// ### What it does
+    ///
     /// Prevent duplicate usage of `<Head>` in `pages/_document.js``.
     ///
     /// ### Why is this bad?
+    ///
     /// This can cause unexpected behavior in your application.
     ///
-    /// ### Example
+    /// ### Examples
+    ///
+    /// Examples of **incorrect** code for this rule:
+    /// ```jsx
+    /// import Document, { Html, Head, Main, NextScript } from 'next/document'
+    /// class MyDocument extends Document {
+    ///   static async getInitialProps(ctx) {
+    ///   }
+    ///   render() {
+    ///     return (
+    ///       <Html>
+    ///         <Head />
+    ///         <Head />
+    ///         <body>
+    ///           <Main />
+    ///           <NextScript />
+    ///         </body>
+    ///       </Html>
+    ///     )
+    ///   }
+    /// }
+    /// export default MyDocument
+    /// ```
+    ///
+    /// Examples of **correct** code for this rule:
     /// ```jsx
     /// import Document, { Html, Head, Main, NextScript } from 'next/document'
     /// class MyDocument extends Document {
@@ -35,10 +61,10 @@ declare_oxc_lint!(
     ///           <NextScript />
     ///         </body>
     ///       </Html>
-    ///    )
-    ///  }
-    ///}
-    ///export default MyDocument
+    ///     )
+    ///   }
+    /// }
+    /// export default MyDocument
     /// ```
     NoDuplicateHead,
     nextjs,
@@ -80,7 +106,7 @@ impl Rule for NoDuplicateHead {
             }
 
             if !matches!(
-                nodes.ancestor_ids(reference.node_id()).nth(2).map(|node_id| nodes.kind(node_id)),
+                nodes.parent_kind(reference.node_id()),
                 Some(AstKind::JSXOpeningElement(_))
             ) {
                 continue;

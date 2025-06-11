@@ -22,7 +22,7 @@ declare_oxc_lint!(
     /// re-renders of child components. This also leads to harder-to-maintain code
     /// as the component's props are not passed consistently.
     ///
-    /// ### Example
+    /// ### Examples
     ///
     /// Examples of **incorrect** code for this rule:
     /// ```jsx

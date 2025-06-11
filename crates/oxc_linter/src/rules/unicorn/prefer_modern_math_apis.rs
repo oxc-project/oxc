@@ -40,7 +40,7 @@ declare_oxc_lint!(
     ///  - Prefer `Math.log10(x)` over alternatives
     ///  - Prefer `Math.hypot(…)` over alternatives
     ///
-    /// ### Example
+    /// ### Examples
     ///
     /// Examples of **incorrect** code for this rule:
     /// ```javascript

@@ -25,6 +25,8 @@ declare_oxc_lint!(
     /// Requires that all `@typedef` and `@namespace` tags have `@property` tags
     /// when their type is a plain `object`, `Object`, or `PlainObject`.
     ///
+    /// Note: this rule can be configured via [jsdoc settings](https://oxc.rs/docs/guide/usage/linter/config-file-reference.html#settings) option.
+    ///
     /// ### Why is this bad?
     ///
     /// Object type should have properties defined.

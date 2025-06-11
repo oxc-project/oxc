@@ -1,10 +1,12 @@
+use std::sync::Arc;
+
 use rustc_hash::FxHashMap;
 
 use oxc::{
     allocator::{Allocator, FromIn, Vec},
     ast::ast::{Comment, Program},
-    diagnostics::{LabeledSpan, OxcDiagnostic, Severity},
-    span::{Atom, Span},
+    diagnostics::{LabeledSpan, NamedSource, OxcDiagnostic, Severity},
+    span::{Atom, Span, format_atom},
     syntax::module_record::{DynamicImport, ExportEntry, ImportEntry, ModuleRecord, NameSpan},
 };
 use oxc_ast_macros::ast;
@@ -35,10 +37,31 @@ pub struct Error<'a> {
     pub message: Atom<'a>,
     pub labels: Vec<'a, ErrorLabel<'a>>,
     pub help_message: Option<Atom<'a>>,
+    pub codeframe: Atom<'a>,
 }
 
-impl<'a> FromIn<'a, &OxcDiagnostic> for Error<'a> {
-    fn from_in(diagnostic: &OxcDiagnostic, allocator: &'a Allocator) -> Self {
+impl<'a> Error<'a> {
+    pub(crate) fn from_diagnostics_in(
+        diagnostics: impl IntoIterator<Item = OxcDiagnostic>,
+        source_text: &str,
+        filename: &str,
+        allocator: &'a Allocator,
+    ) -> Vec<'a, Self> {
+        let named_source = Arc::new(NamedSource::new(filename, source_text.to_string()));
+
+        Vec::from_iter_in(
+            diagnostics
+                .into_iter()
+                .map(|diagnostic| Self::from_diagnostic_in(diagnostic, &named_source, allocator)),
+            allocator,
+        )
+    }
+
+    fn from_diagnostic_in(
+        diagnostic: OxcDiagnostic,
+        named_source: &Arc<NamedSource<String>>,
+        allocator: &'a Allocator,
+    ) -> Self {
         let labels = diagnostic.labels.as_ref().map_or_else(
             || Vec::new_in(allocator),
             |labels| {
@@ -49,15 +72,15 @@ impl<'a> FromIn<'a, &OxcDiagnostic> for Error<'a> {
             },
         );
 
-        Self {
-            severity: ErrorSeverity::from(diagnostic.severity),
-            message: Atom::from_in(diagnostic.message.as_ref(), allocator),
-            labels,
-            help_message: diagnostic
-                .help
-                .as_ref()
-                .map(|help| Atom::from_in(help.as_ref(), allocator)),
-        }
+        let severity = ErrorSeverity::from(diagnostic.severity);
+        let message = Atom::from_in(diagnostic.message.as_ref(), allocator);
+        let help_message =
+            diagnostic.help.as_ref().map(|help| Atom::from_in(help.as_ref(), allocator));
+        let report = diagnostic.with_source_code(Arc::clone(named_source));
+        let codeframe = format_atom!(allocator, "{report:?}");
+
+        #[expect(clippy::inconsistent_struct_constructor)] // `#[ast]` macro re-orders struct fields
+        Self { severity, message, labels, help_message, codeframe }
     }
 }
 
@@ -83,17 +106,17 @@ impl From<Severity> for ErrorSeverity {
 
 #[ast]
 #[generate_derive(ESTree)]
-#[estree(no_type, no_ts_def)]
+#[estree(no_type, no_ts_def, field_order(message, span))]
 pub struct ErrorLabel<'a> {
     pub message: Option<Atom<'a>>,
     pub span: Span,
 }
 
 impl<'a> FromIn<'a, &LabeledSpan> for ErrorLabel<'a> {
-    #[expect(clippy::cast_possible_truncation)]
     fn from_in(label: &LabeledSpan, allocator: &'a Allocator) -> Self {
         Self {
             message: label.label().map(|message| Atom::from_in(message, allocator)),
+            #[expect(clippy::cast_possible_truncation)]
             span: Span::new(label.offset() as u32, (label.offset() + label.len()) as u32),
         }
     }

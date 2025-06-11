@@ -25,13 +25,21 @@ pub struct NoPageCustomFont;
 
 declare_oxc_lint!(
     /// ### What it does
+    ///
     /// Prevent page-only custom fonts.
     ///
     /// ### Why is this bad?
+    ///
     /// * The custom font you're adding was added to a page - this only adds the font to the specific page and not the entire application.
     /// * The custom font you're adding was added to a separate component within pages/_document.js - this disables automatic font optimization.
     ///
-    /// ### Example
+    /// ### Examples
+    ///
+    /// Examples of **incorrect** code for this rule:
+    /// ```javascript
+    /// ```
+    ///
+    /// Examples of **correct** code for this rule:
     /// ```javascript
     /// ```
     NoPageCustomFont,

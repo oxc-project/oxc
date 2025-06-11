@@ -445,7 +445,7 @@ const Foo = /* @__PURE__ */ (() => {})();
 const Foo = /* @__PURE__ */ (() => { })() as unknown as { new (): any }
 ----------
 const Foo = (/* @__PURE__ */ (() => {})() as unknown) as {
-	new (): any
+	new (): any;
 };
 
 ########## 27

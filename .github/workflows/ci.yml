@@ -21,26 +21,32 @@ on:
       - "!.github/actions/clone-submodules/action.yml"
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.sha }}
+  group: ${{ github.workflow }}-${{ github.ref_name }}-${{ github.event.pull_request.number || github.sha }}
   cancel-in-progress: ${{ github.ref_name != 'main' }}
 
 jobs:
-  test:
-    name: Test
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          # - os: windows-latest # See `test-windows` job below
-          - os: ubuntu-latest
-          - os: macos-latest
-    runs-on: ${{ matrix.os }}
+  test-ubuntu:
+    name: Test Linux
+    runs-on: ubuntu-latest
     steps:
       - uses: taiki-e/checkout-action@b13d20b7cda4e2f325ef19895128f7ff735c0b3d # v1.3.1
       - uses: oxc-project/setup-rust@cd82e1efec7fef815e2c23d296756f31c7cdc03d # v1.0.0
         with:
-          # warm cache factory for all other CI jobs
-          # cache `target` directory to avoid download crates
+          save-cache: ${{ github.ref_name == 'main' }}
+          cache-key: warm
+      - run: cargo ck
+      - run: cargo test --all-features
+      - run: git diff --exit-code # Must commit everything
+
+  # Separate job to save a job on PRs
+  test-mac:
+    name: Test Mac
+    runs-on: macos-latest
+    if: ${{ github.ref_name == 'main' }}
+    steps:
+      - uses: taiki-e/checkout-action@b13d20b7cda4e2f325ef19895128f7ff735c0b3d # v1.3.1
+      - uses: oxc-project/setup-rust@cd82e1efec7fef815e2c23d296756f31c7cdc03d # v1.0.0
+        with:
           save-cache: ${{ github.ref_name == 'main' }}
           cache-key: warm
       - run: cargo ck
@@ -48,7 +54,7 @@ jobs:
       - run: git diff --exit-code # Must commit everything
 
   test-windows:
-    name: Test (windows-latest)
+    name: Test Windows
     if: ${{ github.ref_name == 'main' }}
     runs-on: windows-latest
     steps:
@@ -89,6 +95,19 @@ jobs:
         working-directory: ${{ env.DEV_DRIVE_WORKSPACE }}
         shell: bash
 
+  test-big-endian:
+    name: Test big-endian # s390x-unknown-linux-gnu is a big-endian
+    if: ${{ github.ref_name == 'main' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: taiki-e/checkout-action@b13d20b7cda4e2f325ef19895128f7ff735c0b3d # v1.3.1
+      - uses: oxc-project/setup-rust@cd82e1efec7fef815e2c23d296756f31c7cdc03d # v1.0.0
+        with:
+          save-cache: ${{ github.ref_name == 'main' }}
+          cache-key: s390x-unknown-linux-gnu
+          tools: cross
+      - run: cross test --target s390x-unknown-linux-gnu
+
   test-wasm32-wasip1-threads:
     name: Test wasm32-wasip1-threads
     runs-on: ubuntu-latest
@@ -105,7 +124,7 @@ jobs:
         with:
           cache-key: wasi
           save-cache: ${{ github.ref_name == 'main' }}
-      - uses: ./.github/actions/pnpm
+      - uses: oxc-project/setup-node@f42e3bda950c7454575e78ee4eaac880a077700c # v1.0.0
         if: steps.filter.outputs.src == 'true'
       - name: Build
         if: steps.filter.outputs.src == 'true'
@@ -147,7 +166,7 @@ jobs:
         with:
           cache-key: napi
           save-cache: ${{ github.ref_name == 'main' }}
-      - uses: ./.github/actions/pnpm
+      - uses: oxc-project/setup-node@f42e3bda950c7454575e78ee4eaac880a077700c # v1.0.0
         if: steps.filter.outputs.src == 'true'
       - if: steps.filter.outputs.src == 'true'
         name: Run tests in workspace
@@ -170,7 +189,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: taiki-e/checkout-action@b13d20b7cda4e2f325ef19895128f7ff735c0b3d # v1.3.1
-      - uses: crate-ci/typos@3be83342e28b9421997e9f781f713f8dde8453d2 # v1.31.2
+      - uses: crate-ci/typos@b1ae8d918b6e85bd611117d3d9a3be4f903ee5e4 # v1.33.1
         with:
           files: .
 
@@ -233,7 +252,7 @@ jobs:
       - uses: ./.github/actions/clone-submodules
         if: steps.filter.outputs.src == 'true'
 
-      - uses: ./.github/actions/pnpm
+      - uses: oxc-project/setup-node@f42e3bda950c7454575e78ee4eaac880a077700c # v1.0.0
         if: steps.filter.outputs.src == 'true'
 
       - uses: oxc-project/setup-rust@cd82e1efec7fef815e2c23d296756f31c7cdc03d # v1.0.0

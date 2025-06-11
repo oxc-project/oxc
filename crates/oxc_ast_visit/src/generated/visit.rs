@@ -1,5 +1,5 @@
 // Auto-generated code, DO NOT EDIT DIRECTLY!
-// To edit this generated file you have to edit `tasks/ast_tools/src/generators/visit.rs`
+// To edit this generated file you have to edit `tasks/ast_tools/src/generators/visit.rs`.
 
 //! Visitor Pattern
 //!
@@ -7,7 +7,8 @@
 //! * [visitor pattern](https://rust-unofficial.github.io/patterns/patterns/behavioural/visitor.html)
 //! * [rustc visitor](https://github.com/rust-lang/rust/blob/1.82.0/compiler/rustc_ast/src/visit.rs)
 
-#![expect(unused_variables, clippy::semicolon_if_nothing_returned, clippy::match_same_arms)]
+#![expect(unused_variables, clippy::match_same_arms, clippy::semicolon_if_nothing_returned)]
+#![allow(clippy::needless_pass_by_ref_mut, clippy::trivially_copy_pass_by_ref)]
 
 use std::cell::Cell;
 
@@ -1554,10 +1555,10 @@ pub mod walk {
         visitor.enter_node(kind);
         visitor.visit_span(&it.span);
         visitor.visit_expression(&it.tag);
-        visitor.visit_template_literal(&it.quasi);
         if let Some(type_arguments) = &it.type_arguments {
             visitor.visit_ts_type_parameter_instantiation(type_arguments);
         }
+        visitor.visit_template_literal(&it.quasi);
         visitor.leave_node(kind);
     }
 
@@ -1637,10 +1638,10 @@ pub mod walk {
         visitor.enter_node(kind);
         visitor.visit_span(&it.span);
         visitor.visit_expression(&it.callee);
-        visitor.visit_arguments(&it.arguments);
         if let Some(type_arguments) = &it.type_arguments {
             visitor.visit_ts_type_parameter_instantiation(type_arguments);
         }
+        visitor.visit_arguments(&it.arguments);
         visitor.leave_node(kind);
     }
 
@@ -2598,11 +2599,11 @@ pub mod walk {
         visitor.visit_span(&it.span);
         visitor.visit_decorators(&it.decorators);
         visitor.visit_property_key(&it.key);
-        if let Some(value) = &it.value {
-            visitor.visit_expression(value);
-        }
         if let Some(type_annotation) = &it.type_annotation {
             visitor.visit_ts_type_annotation(type_annotation);
+        }
+        if let Some(value) = &it.value {
+            visitor.visit_expression(value);
         }
         visitor.leave_node(kind);
     }
@@ -2652,11 +2653,11 @@ pub mod walk {
         visitor.visit_span(&it.span);
         visitor.visit_decorators(&it.decorators);
         visitor.visit_property_key(&it.key);
-        if let Some(value) = &it.value {
-            visitor.visit_expression(value);
-        }
         if let Some(type_annotation) = &it.type_annotation {
             visitor.visit_ts_type_annotation(type_annotation);
+        }
+        if let Some(value) = &it.value {
+            visitor.visit_expression(value);
         }
     }
 
@@ -2926,10 +2927,10 @@ pub mod walk {
         visitor.enter_node(kind);
         visitor.visit_span(&it.span);
         visitor.visit_jsx_opening_element(&it.opening_element);
+        visitor.visit_jsx_children(&it.children);
         if let Some(closing_element) = &it.closing_element {
             visitor.visit_jsx_closing_element(closing_element);
         }
-        visitor.visit_jsx_children(&it.children);
         visitor.leave_node(kind);
     }
 
@@ -2939,10 +2940,10 @@ pub mod walk {
         visitor.enter_node(kind);
         visitor.visit_span(&it.span);
         visitor.visit_jsx_element_name(&it.name);
-        visitor.visit_jsx_attribute_items(&it.attributes);
         if let Some(type_arguments) = &it.type_arguments {
             visitor.visit_ts_type_parameter_instantiation(type_arguments);
         }
+        visitor.visit_jsx_attribute_items(&it.attributes);
         visitor.leave_node(kind);
     }
 
@@ -2961,27 +2962,30 @@ pub mod walk {
         visitor.enter_node(kind);
         visitor.visit_span(&it.span);
         visitor.visit_jsx_opening_fragment(&it.opening_fragment);
-        visitor.visit_jsx_closing_fragment(&it.closing_fragment);
         visitor.visit_jsx_children(&it.children);
+        visitor.visit_jsx_closing_fragment(&it.closing_fragment);
         visitor.leave_node(kind);
     }
 
     #[inline]
     pub fn walk_jsx_opening_fragment<'a, V: Visit<'a>>(visitor: &mut V, it: &JSXOpeningFragment) {
-        // No `AstKind` for this type
+        let kind = AstKind::JSXOpeningFragment(visitor.alloc(it));
+        visitor.enter_node(kind);
         visitor.visit_span(&it.span);
+        visitor.leave_node(kind);
     }
 
     #[inline]
     pub fn walk_jsx_closing_fragment<'a, V: Visit<'a>>(visitor: &mut V, it: &JSXClosingFragment) {
-        // No `AstKind` for this type
+        let kind = AstKind::JSXClosingFragment(visitor.alloc(it));
+        visitor.enter_node(kind);
         visitor.visit_span(&it.span);
+        visitor.leave_node(kind);
     }
 
     #[inline]
     pub fn walk_jsx_element_name<'a, V: Visit<'a>>(visitor: &mut V, it: &JSXElementName<'a>) {
-        let kind = AstKind::JSXElementName(visitor.alloc(it));
-        visitor.enter_node(kind);
+        // No `AstKind` for this type
         match it {
             JSXElementName::Identifier(it) => visitor.visit_jsx_identifier(it),
             JSXElementName::IdentifierReference(it) => visitor.visit_identifier_reference(it),
@@ -2989,7 +2993,6 @@ pub mod walk {
             JSXElementName::MemberExpression(it) => visitor.visit_jsx_member_expression(it),
             JSXElementName::ThisExpression(it) => visitor.visit_this_expression(it),
         }
-        visitor.leave_node(kind);
     }
 
     #[inline]
@@ -3020,8 +3023,7 @@ pub mod walk {
         visitor: &mut V,
         it: &JSXMemberExpressionObject<'a>,
     ) {
-        let kind = AstKind::JSXMemberExpressionObject(visitor.alloc(it));
-        visitor.enter_node(kind);
+        // No `AstKind` for this type
         match it {
             JSXMemberExpressionObject::IdentifierReference(it) => {
                 visitor.visit_identifier_reference(it)
@@ -3031,7 +3033,6 @@ pub mod walk {
             }
             JSXMemberExpressionObject::ThisExpression(it) => visitor.visit_this_expression(it),
         }
-        visitor.leave_node(kind);
     }
 
     #[inline]
@@ -3057,29 +3058,31 @@ pub mod walk {
 
     #[inline]
     pub fn walk_jsx_empty_expression<'a, V: Visit<'a>>(visitor: &mut V, it: &JSXEmptyExpression) {
-        // No `AstKind` for this type
-        visitor.visit_span(&it.span);
-    }
-
-    #[inline]
-    pub fn walk_jsx_attribute_item<'a, V: Visit<'a>>(visitor: &mut V, it: &JSXAttributeItem<'a>) {
-        let kind = AstKind::JSXAttributeItem(visitor.alloc(it));
+        let kind = AstKind::JSXEmptyExpression(visitor.alloc(it));
         visitor.enter_node(kind);
-        match it {
-            JSXAttributeItem::Attribute(it) => visitor.visit_jsx_attribute(it),
-            JSXAttributeItem::SpreadAttribute(it) => visitor.visit_jsx_spread_attribute(it),
-        }
+        visitor.visit_span(&it.span);
         visitor.leave_node(kind);
     }
 
     #[inline]
-    pub fn walk_jsx_attribute<'a, V: Visit<'a>>(visitor: &mut V, it: &JSXAttribute<'a>) {
+    pub fn walk_jsx_attribute_item<'a, V: Visit<'a>>(visitor: &mut V, it: &JSXAttributeItem<'a>) {
         // No `AstKind` for this type
+        match it {
+            JSXAttributeItem::Attribute(it) => visitor.visit_jsx_attribute(it),
+            JSXAttributeItem::SpreadAttribute(it) => visitor.visit_jsx_spread_attribute(it),
+        }
+    }
+
+    #[inline]
+    pub fn walk_jsx_attribute<'a, V: Visit<'a>>(visitor: &mut V, it: &JSXAttribute<'a>) {
+        let kind = AstKind::JSXAttribute(visitor.alloc(it));
+        visitor.enter_node(kind);
         visitor.visit_span(&it.span);
         visitor.visit_jsx_attribute_name(&it.name);
         if let Some(value) = &it.value {
             visitor.visit_jsx_attribute_value(value);
         }
+        visitor.leave_node(kind);
     }
 
     #[inline]
@@ -3138,9 +3141,11 @@ pub mod walk {
 
     #[inline]
     pub fn walk_jsx_spread_child<'a, V: Visit<'a>>(visitor: &mut V, it: &JSXSpreadChild<'a>) {
-        // No `AstKind` for this type
+        let kind = AstKind::JSXSpreadChild(visitor.alloc(it));
+        visitor.enter_node(kind);
         visitor.visit_span(&it.span);
         visitor.visit_expression(&it.expression);
+        visitor.leave_node(kind);
     }
 
     #[inline]
@@ -3369,8 +3374,8 @@ pub mod walk {
         let kind = AstKind::TSNamedTupleMember(visitor.alloc(it));
         visitor.enter_node(kind);
         visitor.visit_span(&it.span);
-        visitor.visit_ts_tuple_element(&it.element_type);
         visitor.visit_identifier_name(&it.label);
+        visitor.visit_ts_tuple_element(&it.element_type);
         visitor.leave_node(kind);
     }
 
@@ -3992,8 +3997,8 @@ pub mod walk {
         let kind = AstKind::TSTypeAssertion(visitor.alloc(it));
         visitor.enter_node(kind);
         visitor.visit_span(&it.span);
-        visitor.visit_expression(&it.expression);
         visitor.visit_ts_type(&it.type_annotation);
+        visitor.visit_expression(&it.expression);
         visitor.leave_node(kind);
     }
 
@@ -4098,9 +4103,11 @@ pub mod walk {
         visitor: &mut V,
         it: &JSDocNullableType<'a>,
     ) {
-        // No `AstKind` for this type
+        let kind = AstKind::JSDocNullableType(visitor.alloc(it));
+        visitor.enter_node(kind);
         visitor.visit_span(&it.span);
         visitor.visit_ts_type(&it.type_annotation);
+        visitor.leave_node(kind);
     }
 
     #[inline]
@@ -4108,15 +4115,19 @@ pub mod walk {
         visitor: &mut V,
         it: &JSDocNonNullableType<'a>,
     ) {
-        // No `AstKind` for this type
+        let kind = AstKind::JSDocNonNullableType(visitor.alloc(it));
+        visitor.enter_node(kind);
         visitor.visit_span(&it.span);
         visitor.visit_ts_type(&it.type_annotation);
+        visitor.leave_node(kind);
     }
 
     #[inline]
     pub fn walk_js_doc_unknown_type<'a, V: Visit<'a>>(visitor: &mut V, it: &JSDocUnknownType) {
-        // No `AstKind` for this type
+        let kind = AstKind::JSDocUnknownType(visitor.alloc(it));
+        visitor.enter_node(kind);
         visitor.visit_span(&it.span);
+        visitor.leave_node(kind);
     }
 
     #[inline]

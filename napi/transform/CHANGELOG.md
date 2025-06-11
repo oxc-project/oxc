@@ -4,6 +4,114 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.72.3] - 2025-06-06
+
+### Features
+
+- 1401839 napi: Add webcontainer fallback to transform and minify packages (#11471) (Boshen)
+
+### Bug Fixes
+
+- ab0dd29 napi: Napi build cache problem (#11479) (LongYinan)
+
+## [0.72.3] - 2025-06-06
+
+### Features
+
+- 1401839 napi: Add webcontainer fallback to transform and minify packages (#11471) (Boshen)
+
+### Bug Fixes
+
+- ab0dd29 napi: Napi build cache problem (#11479) (LongYinan)
+
+## [0.71.0] - 2025-05-20
+
+### Features
+
+- d67c9e5 napi: Bump napi to beta (#11159) (Boshen)
+
+### Bug Fixes
+
+- 963167d napi: Fix cfg feature on global_allocator (Boshen)
+
+## [0.71.0] - 2025-05-20
+
+### Features
+
+- d67c9e5 napi: Bump napi to beta (#11159) (Boshen)
+
+### Bug Fixes
+
+- 963167d napi: Fix cfg feature on global_allocator (Boshen)
+
+## [0.70.0] - 2025-05-15
+
+### Features
+
+- 647b6f3 napi: Add arm musl (#10958) (Bernd Storath)
+
+### Bug Fixes
+
+- 635aa96 napi: Computed final source type from `lang` then `sourceType` (#11060) (Boshen)
+- 584d8b9 napi: Enable mimalloc `no_opt_arch` feature on linux aarch64 (#11053) (Boshen)
+
+## [0.70.0] - 2025-05-15
+
+### Features
+
+- 647b6f3 napi: Add arm musl (#10958) (Bernd Storath)
+
+### Bug Fixes
+
+- 635aa96 napi: Computed final source type from `lang` then `sourceType` (#11060) (Boshen)
+- 584d8b9 napi: Enable mimalloc `no_opt_arch` feature on linux aarch64 (#11053) (Boshen)
+
+## [0.69.0] - 2025-05-09
+
+### Features
+
+- 22ba60b napi: Add `s390x-unknown-linux-gnu` build (#10892) (Boshen)
+- 308fe73 napi: Add `x86_64-unknown-freebsd` and `riscv64gc-unknown-linux-gnu` builds (#10886) (Boshen)
+- 6de0bc2 transformer/typescript: Support transforming class fields into this assignment (#10854) (Dunqing)
+
+## [0.69.0] - 2025-05-09
+
+### Features
+
+- 22ba60b napi: Add `s390x-unknown-linux-gnu` build (#10892) (Boshen)
+- 308fe73 napi: Add `x86_64-unknown-freebsd` and `riscv64gc-unknown-linux-gnu` builds (#10886) (Boshen)
+- 6de0bc2 transformer/typescript: Support transforming class fields into this assignment (#10854) (Dunqing)
+
+## [0.68.0] - 2025-05-03
+
+- 315143a codegen: [**BREAKING**] Remove useless `CodeGenerator` type alias (#10702) (Boshen)
+
+### Bug Fixes
+
+- 4795059 transformer_plugins: Provide reference data when identifiers are replaced (#10620) (Boshen)
+
+### Performance
+
+- 88249f7 napi/transform: Do not create temp `String` (#10752) (overlookmotel)
+
+### Refactor
+
+
+## [0.68.0] - 2025-05-03
+
+- 315143a codegen: [**BREAKING**] Remove useless `CodeGenerator` type alias (#10702) (Boshen)
+
+### Bug Fixes
+
+- 4795059 transformer_plugins: Provide reference data when identifiers are replaced (#10620) (Boshen)
+
+### Performance
+
+- 88249f7 napi/transform: Do not create temp `String` (#10752) (overlookmotel)
+
+### Refactor
+
+
 ## [0.67.0] - 2025-04-27
 
 ### Features

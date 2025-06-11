@@ -130,12 +130,10 @@ impl Rule for Namespace {
             let (source, module) = match &entry.import_name {
                 ImportImportName::NamespaceObject => {
                     let source = entry.module_request.name();
-                    match loaded_modules.get(source) {
-                        Some(module) => (source.to_string(), Arc::clone(module)),
-                        _ => {
-                            return;
-                        }
-                    }
+                    let Some(module) = loaded_modules.get(source) else {
+                        return;
+                    };
+                    (source.to_string(), Arc::clone(module))
                 }
                 ImportImportName::Name(name) => {
                     let Some(loaded_module) = loaded_modules.get(entry.module_request.name())
@@ -192,17 +190,13 @@ impl Rule for Namespace {
                                 ctx,
                             );
                         }
-                        AstKind::JSXMemberExpressionObject(_) => {
-                            if let Some(AstKind::JSXMemberExpression(expr)) =
-                                ctx.nodes().parent_kind(node.id())
-                            {
-                                check_binding_exported(
-                                    &expr.property.name,
-                                    || no_export(expr.property.span, &expr.property.name, &source),
-                                    &module,
-                                    ctx,
-                                );
-                            }
+                        AstKind::JSXMemberExpression(expr) => {
+                            check_binding_exported(
+                                &expr.property.name,
+                                || no_export(expr.property.span, &expr.property.name, &source),
+                                &module,
+                                ctx,
+                            );
                         }
                         AstKind::VariableDeclarator(decl) => {
                             let BindingPatternKind::ObjectPattern(pattern) = &decl.id.kind else {

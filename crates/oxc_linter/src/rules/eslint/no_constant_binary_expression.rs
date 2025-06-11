@@ -18,9 +18,11 @@ pub struct NoConstantBinaryExpression;
 
 declare_oxc_lint!(
     /// ### What it does
+    ///
     /// Disallow expressions where the operation doesn't affect the value
     ///
     /// ### Why is this bad?
+    ///
     /// Comparisons which will always evaluate to true or false and logical expressions (`||`, `&&`, `??`) which either always
     /// short-circuit or never short-circuit are both likely indications of programmer error.
     ///
@@ -30,7 +32,9 @@ declare_oxc_lint!(
     /// In JavaScript, where objects are compared by reference, a newly constructed object can never `===` any other value.
     /// This can be surprising for programmers coming from languages where objects are compared by value.
     ///
-    /// ### Example
+    /// ### Examples
+    ///
+    /// Examples of **incorrect** code for this rule:
     /// ```javascript
     /// // One might think this would evaluate as `a + (b ?? c)`:
     /// const x = a + b ?? c;
@@ -42,6 +46,13 @@ declare_oxc_lint!(
     /// const isEmpty = x === [];
     ///
     /// // However, this will always result in `isEmpty` being `false`.
+    /// ```
+    ///
+    /// Examples of **correct** code for this rule:
+    /// ```javascript
+    /// const x = a + (b ?? c);
+    ///
+    /// const isEmpty = x.length === 0;
     /// ```
     NoConstantBinaryExpression,
     eslint,

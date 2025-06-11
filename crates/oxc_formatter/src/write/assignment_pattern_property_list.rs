@@ -4,18 +4,19 @@ use oxc_span::GetSpan;
 
 use crate::{
     formatter::{Format, FormatResult, Formatter, separated::FormatSeparatedIter},
+    generated::ast_nodes::AstNode,
     options::{FormatTrailingCommas, TrailingSeparator},
 };
 
 pub struct AssignmentTargetPropertyList<'a, 'b> {
-    properties: &'b Vec<'a, AssignmentTargetProperty<'a>>,
-    rest: Option<&'b AssignmentTargetRest<'a>>,
+    properties: &'b AstNode<'a, Vec<'a, AssignmentTargetProperty<'a>>>,
+    rest: Option<&'b AstNode<'a, AssignmentTargetRest<'a>>>,
 }
 
 impl<'a, 'b> AssignmentTargetPropertyList<'a, 'b> {
     pub fn new(
-        properties: &'b Vec<'a, AssignmentTargetProperty<'a>>,
-        rest: Option<&'b AssignmentTargetRest<'a>>,
+        properties: &'b AstNode<'a, Vec<'a, AssignmentTargetProperty<'a>>>,
+        rest: Option<&'b AstNode<'a, AssignmentTargetRest<'a>>>,
     ) -> Self {
         Self { properties, rest }
     }

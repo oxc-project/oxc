@@ -119,7 +119,7 @@ impl Rule for MaxDependencies {
             "File has too many dependencies ({}). Maximum allowed is {}.",
             module_count, self.max,
         );
-        ctx.diagnostic(max_dependencies_diagnostic(error, entry.module_request.span()));
+        ctx.diagnostic(max_dependencies_diagnostic(error, entry.module_request.span));
     }
 }
 

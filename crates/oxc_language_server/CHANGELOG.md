@@ -2,7 +2,122 @@
 
 All notable changes to this package will be documented in this file.
 
-The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
+
+## [1.0.0] - 2025-06-10
+
+## [0.18.1] - 2025-06-09
+
+### ⚡ Performance
+
+- 7bf25cb language_server: Transform `MessageWithPosition` to `Diagnostic` with less allocations (#11561) (Sysix)
+
+## [0.18.0] - 2025-06-06
+
+### Refactor
+
+- db0b099 language_server: Convert only once uri to path when creating `ServerLinter` (#11503) (Sysix)
+- ccceb52 language_server: Simplify `workspace/didChangeConfiguration` call (#11462) (Sysix)
+
+## [0.17.0] - 2025-05-30
+
+### Features
+
+- 2083d33 linter/language_server: Add second editor suggestion for `react/forward-ref-uses-ref` (#11375) (Sysix)
+
+### Bug Fixes
+
+- 7af5bb1 oxc_language_server: Include save option for text document sync capability (#11297) (Nicholas Rayburn)
+
+### Performance
+
+- 0ed6c1a language_server: Use `Arc<RwLock>` instead of `Mutex` for workspace workers (#11328) (Sysix)
+
+### Refactor
+
+- 042a3f3 linter: Use `PossibleFixes` instead of `Option<Fix>` (#11284) (Sysix)
+
+## [0.16.12] - 2025-05-25
+
+- 5d9344f rust: [**BREAKING**] Clippy avoid-breaking-exported-api = false (#11088) (Boshen)
+
+### Features
+
+- 0c1f382 language_server: Watch for files inside `.oxlintrc.json` extends (#11226) (Sysix)
+- 1675b2c language_server: Tell clients to watch for .oxlintrc.json files (#11078) (Sysix)
+
+### Bug Fixes
+
+- 0df5147 language_server: Correctly disable nested config search (#11173) (Sysix)
+
+### Refactor
+
+- 0d192e8 language_server: Introduce `ServerLinter.extended_paths` property (#11223) (Sysix)
+- ff8f519 language_server: Restructure `initialized` function (#11077) (Sysix)
+- 6b68de0 language_server: Add intern capability for `didChangeWatchedFiles.dynamicRegistration` (#11075) (Sysix)
+- 35761ae language_server/editor: Refresh file watchers without restarting the server (didChangeConfiguration) (#11112) (Sysix)
+- d5fdf17 language_server/editor: Refresh file watchers without restarting the server (didChangeWorkspaceFolders) (#11094) (Sysix)
+- 9f3a14a linter: Cleanup diagnostic and docs for `eslint/no-console` (#11101) (Ulrich Stark)
+
+## [0.16.11] - 2025-05-16
+
+### Features
+
+- 078bf0b language_server: Better fallback handling when passing invalid `Options` values (#10930) (Sysix)
+- be7f7e1 language_server/editor: Support multi workspace folders (#10875) (Sysix)
+
+### Bug Fixes
+
+- 89cc21b language_server: Normalize oxlintrc config path (#10982) (Sysix)
+- 39063ce linter: Reword diagnostic message for no-control-regex (#10993) (camc314)
+
+### Refactor
+
+- 3cc1466 language_server: New configuration structure for `initialize` and `workspace/didChangeConfiguration` (#10890) (Sysix)
+- bd2ef7d language_server: Use `Arc` for `diagnostic_report_map` (#10940) (Sysix)
+- bb999a3 language_server: Avoid cloning linter by taking reference in LintService (#10907) (Ulrich Stark)
+
+## [0.16.10] - 2025-05-09
+
+### Features
+
+- e1bc037 language_server: Request for workspace configuration when client did not send them in `initialize` (#10789) (Sysix)
+- 3bd339b language_server: Provide commands / code actions for unopened files (#10815) (Sysix)
+
+### Bug Fixes
+
+- f3cc3a2 language_server: Request client for configuration when no configuration is passed in `workspace/didChangeConfiguration` (#10871) (Sysix)
+- 24fcb1e language_server: Return server version `initialize` response (#10810) (Sysix)
+
+### Performance
+
+- 00ffbc9 language_server: Do not request for configuration when all workers are ready (#10897) (Sysix)
+- 96cca22 language_server: Use `simdutf8` when reading files from file system (#10814) (Sysix)
+
+### Refactor
+
+- 553ab5b language_server: Remove `OnceCell` from `WorkspaceWorker.root_uri` (#10898) (Sysix)
+- f43fd18 language_server: Move the initialization of `ServerLinter` into a separate call (#10776) (Sysix)
+- 39e0463 language_server: Move `nested_configs` to `ServerLinter` (#10775) (Sysix)
+- 9ec13f6 language_server: Move `gitignore_glob` to `ServerLinter` (#10762) (Sysix)
+- 3d47159 language_server: Use `IsolatedLintHandlerFileSystem` (#10830) (Sysix)
+- 3d794f6 language_server: Move functions related to `ServerLinter` to `ServerLinter` (#10761) (Sysix)
+- 79819cc linter: Move around some config store logic (#10861) (camc314)
+
+## [0.16.9] - 2025-05-02
+
+### Bug Fixes
+
+- 46665bd langage_server: Fix initialize nested configs (#10698) (Sysix)
+- 98bcd5f lsp: Incorrect quick fix offset in vue files (#10742) (camc314)
+
+### Testing
+
+- 9ebf3d4 language_server: Refactor tester to use WorkspaceWorker (#10730) (Sysix)
+- 5a709ad language_server: Add test for `init_nested_configs` (#10728) (Sysix)
+- 2615758 language_server: Fix slow test (#10659) (Alexander S.)
+- fd18aaa language_server: Skip slow test (#10658) (overlookmotel)
+- f6f1c5c lsp: Include fixed content in lsp snapshots (#10744) (camc314)
 
 ## [0.16.8] - 2025-04-27
 

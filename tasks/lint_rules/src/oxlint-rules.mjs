@@ -50,7 +50,91 @@ const NOT_SUPPORTED_RULE_NAMES = new Set([
   'eslint/no-with', // superseded by strict mode
   'eslint/no-new-symbol', // Deprecated as of ESLint v9, but for a while disable manually
   'eslint/no-undef-init', // #6456 unicorn/no-useless-undefined covers this case
-  'import/no-unresolved', // Will always contain false positives due to module resolution complexity
+  'import/no-unresolved', // Will always contain false positives due to module resolution complexity,
+  'react/jsx-equals-spacing', // stylistic rule
+  'react/jsx-curly-spacing', // stylistic rule
+  'react/jsx-indent', // stylistic rule
+  'react/jsx-indent-props', // stylistic rule
+  'react/jsx-props-no-multi-spaces', // stylistic rule
+  'unicorn/no-for-loop', // this rule suggest using `Array.prototype.entries` which is slow https://github.com/oxc-project/oxc/issues/11311, furthermore, `typescript/prefer-for-of` covers most cases
+
+  'regexp/no-invalid-regexp', // handled by eslint/no-invalid-regexp
+  'regexp/no-useless-escape', // handled by eslint/no-useless-escape
+  'regexp/no-useless-backreference', // handled by eslint/no-useless-backreference
+  'regexp/no-useless-character-class', // handled by eslint/no-useless-character-class`
+  'regexp/no-empty-character-class', // handled by eslint/no-empty-character-class
+
+  // not supported as it requires parsing the vue template
+  'vue/array-bracket-newline',
+  'vue/array-bracket-spacing',
+  'vue/array-element-newline',
+  'vue/arrow-spacing',
+  'vue/attribute-hyphenation',
+  'vue/attributes-order',
+  'vue/block-lang',
+  'vue/block-order',
+  'vue/block-spacing',
+  'vue/block-tag-newline',
+  'vue/brace-style',
+  'vue/camelcase',
+  'vue/comma-dangle',
+  'vue/comma-spacing',
+  'vue/comma-style',
+  'vue/comment-directive',
+  'vue/component-name-in-template-casing',
+  'vue/custom-event-name-casing',
+  'vue/define-macros-order',
+  'vue/dot-location',
+  'vue/dot-notation',
+  'vue/enforce-style-attribute',
+  'vue/eqeqeq',
+  'vue/first-attribute-linebreak',
+  'vue/func-call-spacing',
+  'vue/html-button-has-type',
+  'vue/html-closing-bracket-newline',
+  'vue/html-closing-bracket-spacing',
+  'vue/html-comment-content-newline',
+  'vue/html-comment-content-spacing',
+  'vue/html-comment-indent',
+  'vue/html-end-tags',
+  'vue/html-indent',
+  'vue/html-self-closing',
+  'vue/key-spacing',
+  'vue/keyword-spacing',
+  'vue/max-attributes-per-line',
+  'vue/max-len',
+  'vue/max-lines-per-block',
+  'vue/multiline-html-element-content-newline',
+  'vue/mustache-interpolation-spacing',
+  'vue/no-dupe-v-else-if',
+  'vue/no-multi-spaces',
+  'vue/no-spaces-around-equal-signs-in-attribute',
+  'vue/no-template-shadow',
+  'vue/no-v-for-template-key',
+  'vue/no-v-model-argument',
+  'vue/require-explicit-emits',
+  'vue/singleline-html-element-content-newline',
+  'vue/v-bind-style',
+  'vue/v-on-event-hyphenation',
+  'vue/v-on-style',
+  'vue/v-slot-style',
+  'vue/valid-v-bind-sync',
+  'vue/valid-v-bind',
+  'vue/valid-v-cloak',
+  'vue/valid-v-else-if',
+  'vue/valid-v-else',
+  'vue/valid-v-for',
+  'vue/valid-v-html',
+  'vue/valid-v-if',
+  'vue/valid-v-is',
+  'vue/valid-v-memo',
+  'vue/valid-v-model',
+  'vue/valid-v-on',
+  'vue/valid-v-once',
+  'vue/valid-v-pre',
+  'vue/valid-v-show',
+  'vue/valid-v-slot',
+  'vue/valid-v-text',
 ]);
 
 /**
@@ -159,7 +243,10 @@ export const overrideTypeScriptPluginStatusWithEslintPluginStatus = async (
     'crates/oxc_linter/src/utils/mod.rs',
     'utf8',
   );
-  const rules = getArrayEntries('TYPESCRIPT_COMPATIBLE_ESLINT_RULES', typescriptCompatibleRulesFile);
+  const rules = getArrayEntries(
+    'TYPESCRIPT_COMPATIBLE_ESLINT_RULES',
+    typescriptCompatibleRulesFile,
+  );
 
   for (const rule of rules) {
     const typescriptRuleEntry = ruleEntries.get(`typescript/${rule}`);
@@ -178,12 +265,17 @@ export const overrideTypeScriptPluginStatusWithEslintPluginStatus = async (
  * override the status of the Vitest rules to match the Jest rules.
  * @param {RuleEntries} ruleEntries
  */
-export const syncVitestPluginStatusWithJestPluginStatus = async (ruleEntries) => {
+export const syncVitestPluginStatusWithJestPluginStatus = async (
+  ruleEntries,
+) => {
   const vitestCompatibleRulesFile = await readFile(
     'crates/oxc_linter/src/utils/mod.rs',
     'utf8',
   );
-  const rules = getArrayEntries('VITEST_COMPATIBLE_JEST_RULES', vitestCompatibleRulesFile);
+  const rules = getArrayEntries(
+    'VITEST_COMPATIBLE_JEST_RULES',
+    vitestCompatibleRulesFile,
+  );
 
   for (const rule of rules) {
     const vitestRuleEntry = ruleEntries.get(`vitest/${rule}`);

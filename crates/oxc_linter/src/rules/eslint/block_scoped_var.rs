@@ -1,14 +1,25 @@
 use oxc_ast::{AstKind, ast::VariableDeclarationKind};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::Span;
+use oxc_span::{GetSpan, Span};
 
 use crate::{AstNode, context::LintContext, rule::Rule};
 
-fn block_scoped_var_diagnostic(span: Span, name: &str) -> OxcDiagnostic {
+fn redeclaration_diagnostic(decl_span: Span, redecl_span: Span, name: &str) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!("'{name}' is used outside of binding context."))
         .with_help(format!("Variable '{name}' is used outside its declaration block. Declare it outside the block or use 'let'/'const'."))
-        .with_label(span)
+        .with_labels([
+            redecl_span.label("it is redeclared here"),
+            decl_span.label(format!("'{name}' is first declared here")),
+        ])
+}
+fn use_outside_scope_diagnostic(decl_span: Span, used_span: Span, name: &str) -> OxcDiagnostic {
+    OxcDiagnostic::warn(format!("'{name}' is used outside of binding context."))
+        .with_help(format!("Variable '{name}' is used outside its declaration block. Declare it outside the block or use 'let'/'const'."))
+        .with_labels([
+            used_span.label(format!("'{name}' is used here")),
+            decl_span.label("It is declared in a different scope here"),
+        ])
 }
 
 #[derive(Debug, Default, Clone)]
@@ -47,7 +58,6 @@ declare_oxc_lint!(
     ///    }
     ///     console.log(build);
     /// }
-    ///
     /// ```
     BlockScopedVar,
     eslint,
@@ -85,7 +95,11 @@ impl Rule for BlockScopedVar {
                 for redeclaration in ctx.scoping().symbol_redeclarations(symbol_id) {
                     let re_scope_id = ctx.nodes().get_node(redeclaration.declaration).scope_id();
                     if !scope_arr.contains(&re_scope_id) && re_scope_id != cur_node_scope_id {
-                        ctx.diagnostic(block_scoped_var_diagnostic(redeclaration.span, name));
+                        ctx.diagnostic(redeclaration_diagnostic(
+                            item.id.span(),
+                            redeclaration.span,
+                            name,
+                        ));
                     }
                 }
                 // e.g. "var a = 4; console.log(a);"
@@ -94,7 +108,8 @@ impl Rule for BlockScopedVar {
                     if !scope_arr.contains(&reference_scope_id)
                         && reference_scope_id != cur_node_scope_id
                     {
-                        ctx.diagnostic(block_scoped_var_diagnostic(
+                        ctx.diagnostic(use_outside_scope_diagnostic(
+                            item.id.span(),
                             ctx.reference_span(reference),
                             name,
                         ));

@@ -10,10 +10,7 @@ use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 use phf::{Map, phf_map, phf_ordered_set};
 
-use crate::{
-    AstNode, ast_util::get_symbol_id_of_variable, context::LintContext, fixer::RuleFixer,
-    rule::Rule,
-};
+use crate::{AstNode, ast_util::get_symbol_id_of_variable, context::LintContext, rule::Rule};
 
 fn prefer_numeric_literals_diagnostic(span: Span, prefix_name: &str) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!("Use {prefix_name} literals instead of parseInt()."))
@@ -42,7 +39,9 @@ declare_oxc_lint!(
     /// in ES6, this rule encourages use of those numeric literals instead of parseInt() or
     /// Number.parseInt().
     ///
-    /// ### Example
+    /// ### Examples
+    ///
+    /// Examples of **incorrect** code for this rule:
     /// ```javascript
     /// parseInt("111110111", 2) === 503;
     /// parseInt(`111110111`, 2) === 503;
@@ -147,10 +146,30 @@ fn check_arguments<'a>(call_expr: &CallExpression<'a>, ctx: &LintContext<'a>) {
                 ctx.diagnostic_with_fix(
                     prefer_numeric_literals_diagnostic(call_expr.span, name),
                     |fixer| {
-                        fixer.replace(
-                            call_expr.span,
-                            generate_fix(fixer, ctx, call_expr, &argument, prefix),
-                        )
+                        let code = {
+                            let span = call_expr.span;
+                            let mut code = String::with_capacity(prefix.len() + argument.len() + 2);
+
+                            if span.start > 1 {
+                                let start = ctx.source_text().as_bytes()[span.start as usize - 1];
+                                if start.is_ascii_alphabetic() || !start.is_ascii() {
+                                    code.push(' ');
+                                }
+                            }
+
+                            code.push_str(prefix);
+                            code.push_str(&argument);
+
+                            if (span.end as usize) < ctx.source_text().len() {
+                                let end = ctx.source_text().as_bytes()[span.end as usize];
+                                if end.is_ascii_alphabetic() || !end.is_ascii() {
+                                    code.push(' ');
+                                }
+                            }
+
+                            code
+                        };
+                        fixer.replace(call_expr.span, code)
                     },
                 );
             }
@@ -188,36 +207,6 @@ fn get_string_argument(call_expr: &CallExpression) -> Option<String> {
     }
 
     None
-}
-
-fn generate_fix<'a>(
-    fixer: RuleFixer<'_, 'a>,
-    ctx: &LintContext<'a>,
-    call_expr: &CallExpression<'a>,
-    argument: &str,
-    prefix: &str,
-) -> String {
-    let mut formatter = fixer.codegen();
-    let span = call_expr.span;
-
-    if span.start > 1 {
-        let start = ctx.source_text().as_bytes()[span.start as usize - 1];
-        if start.is_ascii_alphabetic() || !start.is_ascii() {
-            formatter.print_str(" ");
-        }
-    }
-
-    formatter.print_str(prefix);
-    formatter.print_str(argument);
-
-    if (span.end as usize) < ctx.source_text().len() {
-        let end = ctx.source_text().as_bytes()[span.end as usize];
-        if end.is_ascii_alphabetic() || !end.is_ascii() {
-            formatter.print_str(" ");
-        }
-    }
-
-    formatter.into_source_text()
 }
 
 #[test]

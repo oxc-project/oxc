@@ -1,6 +1,6 @@
 use std::cmp::max;
 
-use oxc_allocator::String;
+use oxc_allocator::StringBuilder;
 use oxc_span::Span;
 use oxc_syntax::identifier::{
     is_identifier_part, is_identifier_part_unicode, is_identifier_start_unicode,
@@ -136,7 +136,7 @@ impl<'a> Lexer<'a> {
     pub fn identifier_backslash_handler(&mut self) -> Kind {
         // Create arena string to hold unescaped identifier.
         // We don't know how long identifier will end up being, so guess.
-        let str = String::with_capacity_in(MIN_ESCAPED_STR_LEN, self.allocator);
+        let str = StringBuilder::with_capacity_in(MIN_ESCAPED_STR_LEN, self.allocator);
 
         // Process escape and get rest of identifier
         let id = self.identifier_on_backslash(str, true);
@@ -153,7 +153,7 @@ impl<'a> Lexer<'a> {
         // will be double what we've seen so far, or `MIN_ESCAPED_STR_LEN` minimum.
         let so_far = self.source.str_from_pos_to_current(start_pos);
         let capacity = max(so_far.len() * 2, MIN_ESCAPED_STR_LEN);
-        let mut str = String::with_capacity_in(capacity, self.allocator);
+        let mut str = StringBuilder::with_capacity_in(capacity, self.allocator);
 
         // Push identifier up this point into `str`
         str.push_str(so_far);
@@ -167,7 +167,11 @@ impl<'a> Lexer<'a> {
     /// `self.source` should be positioned *on* the `\` (i.e. `\` has not been consumed yet).
     /// `str` should contain the identifier up to before the escape.
     /// `is_start` should be `true` if this is first char in the identifier, `false` otherwise.
-    fn identifier_on_backslash(&mut self, mut str: String<'a>, mut is_start: bool) -> &'a str {
+    fn identifier_on_backslash(
+        &mut self,
+        mut str: StringBuilder<'a>,
+        mut is_start: bool,
+    ) -> &'a str {
         'outer: loop {
             // Consume `\`
             self.consume_char();
@@ -201,7 +205,7 @@ impl<'a> Lexer<'a> {
         }
 
         // Convert `str` to arena slice and save to `escaped_strings`
-        let id = str.into_bump_str();
+        let id = str.into_str();
         self.save_string(true, id);
         id
     }
@@ -215,7 +219,7 @@ impl<'a> Lexer<'a> {
     pub fn private_identifier(&mut self) -> Kind {
         // Handle EOF directly after `#`
         let start_pos = self.source.position();
-        if start_pos.addr() == self.source.end_addr() {
+        if start_pos.is_end_of(&self.source) {
             return cold_branch(|| {
                 let start = self.offset();
                 self.error(diagnostics::unexpected_end(Span::new(start, start)));

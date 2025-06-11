@@ -1,31 +1,35 @@
-use code_actions::CODE_ACTION_KIND_SOURCE_FIX_ALL_OXC;
-use commands::{FIX_ALL_COMMAND_ID, FixAllCommandArgs};
 use futures::future::join_all;
-use log::{debug, info};
-use oxc_linter::FixKind;
-use rustc_hash::{FxBuildHasher, FxHashMap};
-use serde::{Deserialize, Serialize};
-use std::{fmt::Debug, str::FromStr};
-use tokio::sync::{Mutex, OnceCell, SetError};
+use log::{debug, info, warn};
+use options::{Options, Run, WorkspaceOption};
+use rustc_hash::FxBuildHasher;
+use serde_json::json;
+use std::{str::FromStr, sync::Arc};
+use tokio::sync::{OnceCell, RwLock, SetError};
 use tower_lsp_server::{
     Client, LanguageServer, LspService, Server,
     jsonrpc::{Error, ErrorCode, Result},
     lsp_types::{
         CodeActionParams, CodeActionResponse, ConfigurationItem, Diagnostic,
         DidChangeConfigurationParams, DidChangeTextDocumentParams, DidChangeWatchedFilesParams,
+        DidChangeWatchedFilesRegistrationOptions, DidChangeWorkspaceFoldersParams,
         DidCloseTextDocumentParams, DidOpenTextDocumentParams, DidSaveTextDocumentParams,
-        ExecuteCommandParams, InitializeParams, InitializeResult, InitializedParams, ServerInfo,
-        Uri, WorkspaceEdit,
+        ExecuteCommandParams, InitializeParams, InitializeResult, InitializedParams, Registration,
+        ServerInfo, Unregistration, Uri, WorkspaceEdit,
     },
 };
+// #
+use capabilities::Capabilities;
+use code_actions::CODE_ACTION_KIND_SOURCE_FIX_ALL_OXC;
+use commands::{FIX_ALL_COMMAND_ID, FixAllCommandArgs};
 use worker::WorkspaceWorker;
-
-use crate::capabilities::Capabilities;
 
 mod capabilities;
 mod code_actions;
 mod commands;
 mod linter;
+mod options;
+#[cfg(test)]
+mod tester;
 mod worker;
 
 type ConcurrentHashMap<K, V> = papaya::HashMap<K, V, FxBuildHasher>;
@@ -38,67 +42,84 @@ struct Backend {
     // We must respect each program inside with its own root folder
     // and can not use shared programmes across multiple workspaces.
     // Each Workspace can have its own server configuration and program root configuration.
-    workspace_workers: Mutex<Vec<WorkspaceWorker>>,
+    // WorkspaceWorkers are only written on 2 occasions:
+    // 1. `initialize` request with workspace folders
+    // 2. `workspace/didChangeWorkspaceFolders` request
+    workspace_workers: Arc<RwLock<Vec<WorkspaceWorker>>>,
     capabilities: OnceCell<Capabilities>,
 }
 
-#[derive(Debug, Serialize, Deserialize, Default, PartialEq, Eq, Clone, Copy)]
-#[serde(rename_all = "camelCase")]
-pub enum Run {
-    OnSave,
-    #[default]
-    OnType,
-}
-#[derive(Debug, Default, Serialize, Deserialize, Clone)]
-#[serde(rename_all = "camelCase")]
-struct Options {
-    run: Run,
-    config_path: Option<String>,
-    flags: FxHashMap<String, String>,
-}
-
-impl Options {
-    fn use_nested_configs(&self) -> bool {
-        !self.flags.contains_key("disable_nested_config") || self.config_path.is_some()
-    }
-
-    fn fix_kind(&self) -> FixKind {
-        self.flags.get("fix_kind").map_or(FixKind::SafeFix, |kind| match kind.as_str() {
-            "safe_fix" => FixKind::SafeFix,
-            "safe_fix_or_suggestion" => FixKind::SafeFixOrSuggestion,
-            "dangerous_fix" => FixKind::DangerousFix,
-            "dangerous_fix_or_suggestion" => FixKind::DangerousFixOrSuggestion,
-            "none" => FixKind::None,
-            "all" => FixKind::All,
-            _ => {
-                info!("invalid fix_kind flag `{kind}`, fallback to `safe_fix`");
-                FixKind::SafeFix
-            }
-        })
-    }
-}
-
 impl LanguageServer for Backend {
-    #[expect(deprecated)] // TODO: FIXME
+    #[expect(deprecated)] // `params.root_uri` is deprecated, we are only falling back to it if no workspace folder is provided
     async fn initialize(&self, params: InitializeParams) -> Result<InitializeResult> {
+        let server_version = env!("CARGO_PKG_VERSION");
+        // initialization_options can be anything, so we are requesting `workspace/configuration` when no initialize options are provided
         let options = params.initialization_options.and_then(|mut value| {
-            let settings = value.get_mut("settings")?.take();
-            serde_json::from_value::<Options>(settings).ok()
+            // the client supports the new settings object
+            if let Ok(new_settings) = serde_json::from_value::<Vec<WorkspaceOption>>(value.clone())
+            {
+                // ToDo: validate they have the same length as params.workspace_folders
+                return Some(new_settings);
+            }
+
+            let deprecated_settings = Options::try_from(value.get_mut("settings")?.take()).ok();
+
+            // the client has deprecated settings and has a deprecated root uri.
+            // handle all things like the old way
+            if deprecated_settings.is_some() && params.root_uri.is_some() {
+                return Some(vec![WorkspaceOption {
+                    workspace_uri: params.root_uri.clone().unwrap(),
+                    options: deprecated_settings.unwrap(),
+                }]);
+            }
+
+            // no workspace options could be generated fallback to default one or request when possible
+            None
         });
 
-        // ToDo: add support for multiple workspace folders
-        // maybe fallback when the client does not support it
-        let root_worker =
-            WorkspaceWorker::new(&params.root_uri.unwrap(), options.clone().unwrap_or_default());
-
-        *self.workspace_workers.lock().await = vec![root_worker];
-
-        if let Some(value) = options {
-            info!("initialize: {value:?}");
-            info!("language server version: {:?}", env!("CARGO_PKG_VERSION"));
-        }
+        info!("initialize: {options:?}");
+        info!("language server version: {server_version}");
 
         let capabilities = Capabilities::from(params.capabilities);
+
+        // client sent workspace folders
+        let workers = if let Some(workspace_folders) = &params.workspace_folders {
+            workspace_folders
+                .iter()
+                .map(|workspace_folder| WorkspaceWorker::new(workspace_folder.uri.clone()))
+                .collect()
+        // client sent deprecated root uri
+        } else if let Some(root_uri) = params.root_uri {
+            vec![WorkspaceWorker::new(root_uri)]
+        // client is in single file mode, create no workers
+        } else {
+            vec![]
+        };
+
+        // When the client did not send our custom `initialization_options`,
+        // or the client does not support `workspace/configuration` request,
+        // start the linter. We do not start the linter when the client support the request,
+        // we will init the linter after requesting for the workspace configuration.
+        if !capabilities.workspace_configuration || options.is_some() {
+            for worker in &workers {
+                worker
+                    .init_linter(
+                        &options
+                            .clone()
+                            .unwrap_or_default()
+                            .iter()
+                            .find(|workspace_option| {
+                                worker.is_responsible_for_uri(&workspace_option.workspace_uri)
+                            })
+                            .map(|workspace_options| workspace_options.options.clone())
+                            .unwrap_or_default(),
+                    )
+                    .await;
+            }
+        }
+
+        *self.workspace_workers.write().await = workers;
+
         self.capabilities.set(capabilities.clone()).map_err(|err| {
             let message = match err {
                 SetError::AlreadyInitializedError(_) => {
@@ -111,63 +132,197 @@ impl LanguageServer for Backend {
         })?;
 
         Ok(InitializeResult {
-            server_info: Some(ServerInfo { name: "oxc".into(), version: None }),
+            server_info: Some(ServerInfo {
+                name: "oxc".into(),
+                version: Some(server_version.to_string()),
+            }),
             offset_encoding: None,
             capabilities: capabilities.into(),
         })
     }
 
+    async fn initialized(&self, _params: InitializedParams) {
+        debug!("oxc initialized.");
+        let Some(capabilities) = self.capabilities.get() else {
+            return;
+        };
+
+        let workers = &*self.workspace_workers.read().await;
+        let needed_configurations =
+            ConcurrentHashMap::with_capacity_and_hasher(workers.len(), FxBuildHasher);
+        let needed_configurations = needed_configurations.pin_owned();
+        for worker in workers {
+            if worker.needs_init_linter().await {
+                needed_configurations.insert(worker.get_root_uri().clone(), worker);
+            }
+        }
+
+        if !needed_configurations.is_empty() {
+            let configurations = if capabilities.workspace_configuration {
+                self.request_workspace_configuration(needed_configurations.keys().collect()).await
+            } else {
+                // every worker should be initialized already in `initialize` request
+                vec![Some(Options::default()); needed_configurations.len()]
+            };
+
+            for (index, worker) in needed_configurations.values().enumerate() {
+                worker
+                    .init_linter(
+                        configurations
+                            .get(index)
+                            .unwrap_or(&None)
+                            .as_ref()
+                            .unwrap_or(&Options::default()),
+                    )
+                    .await;
+            }
+        }
+
+        // init all file watchers
+        if capabilities.dynamic_watchers {
+            let mut registrations = vec![];
+            for worker in workers {
+                registrations.push(Registration {
+                    id: format!("watcher-{}", worker.get_root_uri().as_str()),
+                    method: "workspace/didChangeWatchedFiles".to_string(),
+                    register_options: Some(json!(DidChangeWatchedFilesRegistrationOptions {
+                        watchers: worker.init_watchers().await
+                    })),
+                });
+            }
+
+            if let Err(err) = self.client.register_capability(registrations).await {
+                warn!("sending registerCapability.didChangeWatchedFiles failed: {err}");
+            }
+        }
+    }
+
+    async fn shutdown(&self) -> Result<()> {
+        self.clear_all_diagnostics().await;
+        Ok(())
+    }
+
     async fn did_change_configuration(&self, params: DidChangeConfigurationParams) {
-        let workers = self.workspace_workers.lock().await;
+        let workers = self.workspace_workers.read().await;
+        let new_diagnostics: papaya::HashMap<String, Vec<Diagnostic>, FxBuildHasher> =
+            ConcurrentHashMap::default();
+        let mut removing_registrations = vec![];
+        let mut adding_registrations = vec![];
 
-        // when we have only workspace folder, apply to it
-        // ToDo: check if this is really safe because the client could still pass an empty settings
-        if workers.len() == 1 {
-            let worker = workers.first().unwrap();
-            worker.did_change_configuration(params.settings).await;
+        // new valid configuration is passed
+        let options = serde_json::from_value::<Vec<WorkspaceOption>>(params.settings.clone())
+            .ok()
+            .or_else(|| {
+                // fallback to old configuration
+                let options = serde_json::from_value::<Options>(params.settings).ok()?;
 
-        // else check if the client support workspace configuration requests so we can only restart only the needed workers
+                // for all workers (default only one)
+                let options = workers
+                    .iter()
+                    .map(|worker| WorkspaceOption {
+                        workspace_uri: worker.get_root_uri().clone(),
+                        options: options.clone(),
+                    })
+                    .collect();
+
+                Some(options)
+            });
+
+        // the client passed valid options.
+        let resolved_options = if let Some(options) = options {
+            options
+            // else check if the client support workspace configuration requests
         } else if self
             .capabilities
             .get()
             .is_some_and(|capabilities| capabilities.workspace_configuration)
         {
-            let mut config_items = vec![];
-            for worker in workers.iter() {
-                let Some(uri) = worker.get_root_uri() else {
-                    continue;
-                };
-                // ToDo: this is broken in VSCode. Check how we can get the language server configuration from the client
-                // changing `section` to `oxc` will return the client configuration.
-                config_items.push(ConfigurationItem {
-                    scope_uri: Some(uri),
-                    section: Some("oxc_language_server".into()),
-                });
-            }
+            let configs = self
+                .request_workspace_configuration(
+                    workers.iter().map(worker::WorkspaceWorker::get_root_uri).collect(),
+                )
+                .await;
 
-            let Ok(configs) = self.client.configuration(config_items).await else {
-                debug!("failed to get configuration");
-                return;
+            // Only create WorkspaceOption when the config is Some
+            configs
+                .iter()
+                .enumerate()
+                // filter out results where the client did not return a configuration
+                .filter_map(|(index, config)| {
+                    config.as_ref().map(|options| WorkspaceOption {
+                        workspace_uri: workers[index].get_root_uri().clone(),
+                        options: options.clone(),
+                    })
+                })
+                .collect::<Vec<_>>()
+        } else {
+            warn!(
+                "could not update the configuration for a worker. Send a custom configuration with `workspace/didChangeConfiguration` or support `workspace/configuration`."
+            );
+            return;
+        };
+
+        for option in resolved_options {
+            let Some(worker) =
+                workers.iter().find(|worker| worker.is_responsible_for_uri(&option.workspace_uri))
+            else {
+                continue;
             };
 
-            // we expect that the client is sending all the configuration items in order and completed
-            // this is a LSP specification and errors should be reported on the client side
-            for (index, worker) in workers.iter().enumerate() {
-                let config = &configs[index];
-                worker.did_change_configuration(config.clone()).await;
+            let (diagnostics, watcher) = worker.did_change_configuration(&option.options).await;
+
+            if let Some(diagnostics) = diagnostics {
+                for (uri, reports) in &diagnostics.pin() {
+                    new_diagnostics.pin().insert(
+                        uri.clone(),
+                        reports.iter().map(|d| d.diagnostic.clone()).collect(),
+                    );
+                }
             }
 
-            // we have multiple workspace folders and the client does not support workspace configuration requests
-            // we assume that every workspace is under effect
-        } else {
-            for worker in workers.iter() {
-                worker.did_change_configuration(params.settings.clone()).await;
+            if let Some(watcher) = watcher {
+                // remove the old watcher
+                removing_registrations.push(Unregistration {
+                    id: format!("watcher-{}", worker.get_root_uri().as_str()),
+                    method: "workspace/didChangeWatchedFiles".to_string(),
+                });
+                // add the new watcher
+                adding_registrations.push(Registration {
+                    id: format!("watcher-{}", worker.get_root_uri().as_str()),
+                    method: "workspace/didChangeWatchedFiles".to_string(),
+                    register_options: Some(json!(DidChangeWatchedFilesRegistrationOptions {
+                        watchers: vec![watcher]
+                    })),
+                });
+            }
+        }
+
+        if !new_diagnostics.is_empty() {
+            let x = &new_diagnostics
+                .pin()
+                .into_iter()
+                .map(|(key, value)| (key.clone(), value.clone()))
+                .collect::<Vec<_>>();
+
+            self.publish_all_diagnostics(x).await;
+        }
+
+        if self.capabilities.get().is_some_and(|capabilities| capabilities.dynamic_watchers) {
+            if !removing_registrations.is_empty() {
+                if let Err(err) = self.client.unregister_capability(removing_registrations).await {
+                    warn!("sending unregisterCapability.didChangeWatchedFiles failed: {err}");
+                }
+            }
+            if !adding_registrations.is_empty() {
+                if let Err(err) = self.client.register_capability(adding_registrations).await {
+                    warn!("sending registerCapability.didChangeWatchedFiles failed: {err}");
+                }
             }
         }
     }
 
     async fn did_change_watched_files(&self, params: DidChangeWatchedFilesParams) {
-        let workers = self.workspace_workers.lock().await;
+        let workers = self.workspace_workers.read().await;
         // ToDo: what if an empty changes flag is passed?
         debug!("watched file did change");
         let all_diagnostics: papaya::HashMap<String, Vec<Diagnostic>, FxBuildHasher> =
@@ -205,19 +360,83 @@ impl LanguageServer for Backend {
         self.publish_all_diagnostics(x).await;
     }
 
-    async fn initialized(&self, _params: InitializedParams) {
-        debug!("oxc initialized.");
-    }
+    async fn did_change_workspace_folders(&self, params: DidChangeWorkspaceFoldersParams) {
+        let mut workers = self.workspace_workers.write().await;
+        let mut cleared_diagnostics = vec![];
+        let mut added_registrations = vec![];
+        let mut removed_registrations = vec![];
 
-    async fn shutdown(&self) -> Result<()> {
-        self.clear_all_diagnostics().await;
-        Ok(())
+        for folder in params.event.removed {
+            let Some((index, worker)) = workers
+                .iter()
+                .enumerate()
+                .find(|(_, worker)| worker.is_responsible_for_uri(&folder.uri))
+            else {
+                continue;
+            };
+            cleared_diagnostics.extend(worker.get_clear_diagnostics());
+            removed_registrations.push(Unregistration {
+                id: format!("watcher-{}", worker.get_root_uri().as_str()),
+                method: "workspace/didChangeWatchedFiles".to_string(),
+            });
+            workers.remove(index);
+        }
+
+        self.publish_all_diagnostics(&cleared_diagnostics).await;
+
+        // client support `workspace/configuration` request
+        if self.capabilities.get().is_some_and(|capabilities| capabilities.workspace_configuration)
+        {
+            let configurations = self
+                .request_workspace_configuration(
+                    params.event.added.iter().map(|w| &w.uri).collect(),
+                )
+                .await;
+
+            for (index, folder) in params.event.added.iter().enumerate() {
+                let worker = WorkspaceWorker::new(folder.uri.clone());
+                // get the configuration from the response and init the linter
+                let options = configurations.get(index).unwrap_or(&None);
+                worker.init_linter(options.as_ref().unwrap_or(&Options::default())).await;
+                added_registrations.push(Registration {
+                    id: format!("watcher-{}", worker.get_root_uri().as_str()),
+                    method: "workspace/didChangeWatchedFiles".to_string(),
+                    register_options: Some(json!(DidChangeWatchedFilesRegistrationOptions {
+                        watchers: worker.init_watchers().await
+                    })),
+                });
+                workers.push(worker);
+            }
+        // client does not support the request
+        } else {
+            for folder in params.event.added {
+                let worker = WorkspaceWorker::new(folder.uri);
+                // use default options
+                worker.init_linter(&Options::default()).await;
+                workers.push(worker);
+            }
+        }
+
+        // tell client to stop / start watching for files
+        if self.capabilities.get().is_some_and(|capabilities| capabilities.dynamic_watchers) {
+            if !added_registrations.is_empty() {
+                if let Err(err) = self.client.register_capability(added_registrations).await {
+                    warn!("sending registerCapability.didChangeWatchedFiles failed: {err}");
+                }
+            }
+
+            if !removed_registrations.is_empty() {
+                if let Err(err) = self.client.unregister_capability(removed_registrations).await {
+                    warn!("sending unregisterCapability.didChangeWatchedFiles failed: {err}");
+                }
+            }
+        }
     }
 
     async fn did_save(&self, params: DidSaveTextDocumentParams) {
         debug!("oxc server did save");
         let uri = &params.text_document.uri;
-        let workers = self.workspace_workers.lock().await;
+        let workers = self.workspace_workers.read().await;
         let Some(worker) = workers.iter().find(|worker| worker.is_responsible_for_uri(uri)) else {
             return;
         };
@@ -239,7 +458,7 @@ impl LanguageServer for Backend {
     /// get the file context from the language client
     async fn did_change(&self, params: DidChangeTextDocumentParams) {
         let uri = &params.text_document.uri;
-        let workers = self.workspace_workers.lock().await;
+        let workers = self.workspace_workers.read().await;
         let Some(worker) = workers.iter().find(|worker| worker.is_responsible_for_uri(uri)) else {
             return;
         };
@@ -260,7 +479,7 @@ impl LanguageServer for Backend {
 
     async fn did_open(&self, params: DidOpenTextDocumentParams) {
         let uri = &params.text_document.uri;
-        let workers = self.workspace_workers.lock().await;
+        let workers = self.workspace_workers.read().await;
         let Some(worker) = workers.iter().find(|worker| worker.is_responsible_for_uri(uri)) else {
             return;
         };
@@ -279,16 +498,16 @@ impl LanguageServer for Backend {
 
     async fn did_close(&self, params: DidCloseTextDocumentParams) {
         let uri = &params.text_document.uri;
-        let workers = self.workspace_workers.lock().await;
+        let workers = self.workspace_workers.read().await;
         let Some(worker) = workers.iter().find(|worker| worker.is_responsible_for_uri(uri)) else {
             return;
         };
-        worker.remove_diagnostics(&params.text_document.uri).await;
+        worker.remove_diagnostics(&params.text_document.uri);
     }
 
     async fn code_action(&self, params: CodeActionParams) -> Result<Option<CodeActionResponse>> {
         let uri = &params.text_document.uri;
-        let workers = self.workspace_workers.lock().await;
+        let workers = self.workspace_workers.read().await;
         let Some(worker) = workers.iter().find(|worker| worker.is_responsible_for_uri(uri)) else {
             return Ok(None);
         };
@@ -321,7 +540,7 @@ impl LanguageServer for Backend {
                 FixAllCommandArgs::try_from(params.arguments).map_err(Error::invalid_params)?;
 
             let uri = &Uri::from_str(&args.uri).unwrap();
-            let workers = self.workspace_workers.lock().await;
+            let workers = self.workspace_workers.read().await;
             let Some(worker) = workers.iter().find(|worker| worker.is_responsible_for_uri(uri))
             else {
                 return Ok(None);
@@ -346,11 +565,43 @@ impl LanguageServer for Backend {
 }
 
 impl Backend {
+    /// Request the workspace configuration from the client
+    /// and return the options for each workspace folder.
+    /// The check if the client support workspace configuration, should be done before.
+    async fn request_workspace_configuration(&self, uris: Vec<&Uri>) -> Vec<Option<Options>> {
+        let length = uris.len();
+        let config_items = uris
+            .into_iter()
+            .map(|uri| ConfigurationItem {
+                scope_uri: Some(uri.clone()),
+                section: Some("oxc_language_server".into()),
+            })
+            .collect::<Vec<_>>();
+
+        let Ok(configs) = self.client.configuration(config_items).await else {
+            debug!("failed to get configuration");
+            // return none for each workspace folder
+            return vec![None; length];
+        };
+
+        let mut options = vec![];
+        for config in configs {
+            options.push(serde_json::from_value::<Options>(config).ok());
+        }
+
+        debug_assert!(
+            options.len() == length,
+            "the number of configuration items should be the same as the number of workspace folders"
+        );
+
+        options
+    }
+
     // clears all diagnostics for workspace folders
     async fn clear_all_diagnostics(&self) {
         let mut cleared_diagnostics = vec![];
-        for worker in self.workspace_workers.lock().await.iter() {
-            cleared_diagnostics.extend(worker.get_clear_diagnostics().await);
+        for worker in self.workspace_workers.read().await.iter() {
+            cleared_diagnostics.extend(worker.get_clear_diagnostics());
         }
         self.publish_all_diagnostics(&cleared_diagnostics).await;
     }
@@ -372,7 +623,7 @@ async fn main() {
 
     let (service, socket) = LspService::build(|client| Backend {
         client,
-        workspace_workers: Mutex::new(vec![]),
+        workspace_workers: Arc::new(RwLock::new(vec![])),
         capabilities: OnceCell::new(),
     })
     .finish();

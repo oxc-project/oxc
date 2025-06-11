@@ -1,5 +1,7 @@
 //! Test cases created by oxc maintainers
 
+use std::path::PathBuf;
+
 use serde_json::json;
 
 use super::NoUnusedVars;
@@ -171,6 +173,10 @@ fn test_vars_self_use() {
         }
         foo();
         ",
+        "
+        let cancel = () => {}
+        export function close() { cancel = cancel?.() }
+        ",
     ];
     let fail = vec![
         "
@@ -183,12 +189,38 @@ fn test_vars_self_use() {
             return foo
         }
         ",
+        "
+        let cancel = () => {};
+        cancel = cancel?.();
+        ",
+        "
+        let cancel = () => {};
+        { cancel = cancel?.(); }
+        ",
     ];
 
     Tester::new(NoUnusedVars::NAME, NoUnusedVars::PLUGIN, pass, fail)
         .intentionally_allow_no_fix_tests()
         .with_snapshot_suffix("oxc-vars-self-use")
         .test_and_snapshot();
+}
+
+#[test]
+fn test_vars_self_use_js() {
+    let pass = vec![
+        // https://github.com/oxc-project/oxc/issues/11215
+        "export function promisify() { var fn; function fn() {} return fn; }",
+    ];
+
+    let fail = vec![
+        // https://github.com/oxc-project/oxc/issues/11215
+        "export function promisify() { var fn; function fn() { fn() } }",
+    ];
+
+    Tester::new(NoUnusedVars::NAME, NoUnusedVars::PLUGIN, pass, fail)
+        .change_rule_path_extension("js")
+        .intentionally_allow_no_fix_tests()
+        .test();
 }
 
 #[test]
@@ -236,6 +268,15 @@ fn test_vars_discarded_reads() {
         }
         foo(1)
         ",
+        // https://github.com/oxc-project/oxc/issues/10806
+        "export function f1(fn: () => Promise<void>) {
+            return async () => (await fn(), 1)
+        }",
+        "export function f2(fn: () => Promise<void>) {
+            return function* () {
+                return (yield fn(), 1);
+            }
+        }",
     ];
 
     let fail = vec![
@@ -1224,6 +1265,87 @@ fn test_ts_in_assignment() {
     Tester::new(NoUnusedVars::NAME, NoUnusedVars::PLUGIN, pass, fail)
         .intentionally_allow_no_fix_tests()
         .with_snapshot_suffix("oxc-assignment-ts")
+        .test();
+}
+
+#[test]
+fn test_loops() {
+    let pass: Vec<&str> = vec![];
+
+    let fail: Vec<&str> = vec![];
+    let fix = vec![
+        ("for (const unused of arr) {}", "for (const _unused of arr) {}"),
+        ("for (const unused in arr) {}", "for (const _unused in arr) {}"),
+        (
+            "for (const foo of arr) { console.log(foo); const unused = 1; }",
+            "for (const foo of arr) { console.log(foo);  }",
+        ),
+    ];
+
+    Tester::new(NoUnusedVars::NAME, NoUnusedVars::PLUGIN, pass, fail).expect_fix(fix).test();
+}
+
+#[test]
+fn test_report_vars_only_used_as_types() {
+    let pass = vec![
+        ("const foo = 123; export type Foo = typeof foo;", None),
+        (
+            "const foo = 123; export type Foo = typeof foo;",
+            Some(json!([{ "reportVarsOnlyUsedAsTypes": false, "varsIgnorePattern": "^_" }])),
+        ),
+        (
+            "export const foo = 123; export type Foo = typeof foo;",
+            Some(json!([{ "reportVarsOnlyUsedAsTypes": true, "varsIgnorePattern": "^_" }])),
+        ),
+    ];
+
+    let fail = vec![
+        (
+            "const foo = 123; export type Foo = typeof foo;",
+            Some(json!([{ "reportVarsOnlyUsedAsTypes": true, "varsIgnorePattern": "^_" }])),
+        ),
+        ("function foo(): typeof foo {}", None),
+    ];
+
+    Tester::new(NoUnusedVars::NAME, NoUnusedVars::PLUGIN, pass, fail)
+        .intentionally_allow_no_fix_tests()
+        .test();
+}
+
+#[test]
+fn test_should_run() {
+    let pass = vec![
+        (
+            r#"<script setup lang="ts"> import * as vue from 'vue' </script>"#,
+            None,
+            None,
+            Some(PathBuf::from("src/foo/bar.vue")),
+        ),
+        (
+            r"---
+import Welcome from '../components/Welcome.astro';
+import Layout from '../layouts/Layout.astro';
+---
+<Layout>
+	<Welcome />
+</Layout>",
+            None,
+            None,
+            Some(PathBuf::from("src/foo/bar.astro")),
+        ),
+        (
+            r"<script>
+	            import Nested from './Nested.svelte';
+            </script>
+            <Nested answer={42} />",
+            None,
+            None,
+            Some(PathBuf::from("src/foo/bar.svelte")),
+        ),
+    ];
+
+    Tester::new(NoUnusedVars::NAME, NoUnusedVars::PLUGIN, pass, vec![])
+        .intentionally_allow_no_fix_tests()
         .test();
 }
 

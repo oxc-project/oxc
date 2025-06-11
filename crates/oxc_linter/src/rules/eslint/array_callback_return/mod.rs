@@ -6,6 +6,7 @@ use oxc_ast::{AstKind, ast::Expression};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
+use schemars::JsonSchema;
 use serde_json::Value;
 
 use self::return_checker::{StatementReturnStatus, check_function_body};
@@ -32,7 +33,8 @@ fn expect_no_return(method_name: &str, span: Span) -> OxcDiagnostic {
         .with_label(span)
 }
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default, Clone, JsonSchema)]
+#[serde(rename_all = "camelCase", default)]
 pub struct ArrayCallbackReturn {
     /// When set to true, rule will also report forEach callbacks that return a value.
     check_for_each: bool,
@@ -43,24 +45,38 @@ pub struct ArrayCallbackReturn {
 
 declare_oxc_lint!(
     /// ### What it does
+    ///
     /// Enforce return statements in callbacks of array methods
     ///
     /// ### Why is this bad?
+    ///
     /// Array has several methods for filtering, mapping, and folding.
     /// If we forget to write return statement in a callback of those, it’s probably a mistake.
     /// If you don’t want to use a return or don’t need the returned results,
     /// consider using .forEach instead.
     ///
-    /// ### Example
+    /// ### Examples
+    ///
+    /// Examples of **incorrect** code for this rule:
     /// ```javascript
     /// let foo = [1, 2, 3, 4];
     /// foo.map((a) => {
     ///   console.log(a)
     /// });
     /// ```
+    ///
+    /// Examples of **correct** code for this rule:
+    /// ```javascript
+    /// let foo = [1, 2, 3, 4];
+    /// foo.map((a) => {
+    ///   console.log(a)
+    ///   return a
+    /// });
+    /// ```
     ArrayCallbackReturn,
     eslint,
-    pedantic
+    pedantic,
+    config = ArrayCallbackReturn
 );
 
 impl Rule for ArrayCallbackReturn {

@@ -1,9 +1,6 @@
-use std::borrow::Cow;
-
 use oxc_allocator::{Box as ArenaBox, CloneIn, Vec as ArenaVec};
 use oxc_ast::{NONE, ast::*};
-use oxc_span::{GetSpan, SPAN};
-use rustc_hash::FxHashMap;
+use oxc_span::{ContentEq, GetSpan, SPAN};
 
 use crate::{
     IsolatedDeclarations,
@@ -16,9 +13,7 @@ use crate::{
 impl<'a> IsolatedDeclarations<'a> {
     pub(crate) fn is_literal_key(key: &PropertyKey<'a>) -> bool {
         match key {
-            PropertyKey::StringLiteral(_)
-            | PropertyKey::NumericLiteral(_)
-            | PropertyKey::BigIntLiteral(_) => true,
+            PropertyKey::StringLiteral(_) | PropertyKey::NumericLiteral(_) => true,
             PropertyKey::TemplateLiteral(l) => l.expressions.is_empty(),
             PropertyKey::UnaryExpression(expr) => {
                 expr.operator.is_arithmetic()
@@ -53,12 +48,16 @@ impl<'a> IsolatedDeclarations<'a> {
         }
     }
 
+    pub(crate) fn is_valid_property_key(key: &PropertyKey<'a>) -> bool {
+        Self::is_literal_key(key) || Self::is_global_symbol(key)
+    }
+
     pub(crate) fn report_property_key(&self, key: &PropertyKey<'a>) -> bool {
-        if !Self::is_literal_key(key) && !Self::is_global_symbol(key) {
+        if Self::is_valid_property_key(key) {
+            false
+        } else {
             self.error(computed_property_name(key.span()));
             true
-        } else {
-            false
         }
     }
 
@@ -76,12 +75,12 @@ impl<'a> IsolatedDeclarations<'a> {
         &self,
         property: &PropertyDefinition<'a>,
     ) -> ClassElement<'a> {
-        let mut type_annotations = None;
+        let mut type_annotation = None;
         let mut value = None;
 
         if property.accessibility.is_none_or(|a| !a.is_private()) {
             if property.type_annotation.is_some() {
-                type_annotations = property.type_annotation.clone_in(self.ast.allocator);
+                type_annotation = property.type_annotation.clone_in(self.ast.allocator);
             } else if let Some(expr) = property.value.as_ref() {
                 let ts_type = if property.readonly {
                     // `field = 'string'` remain `field = 'string'` instead of `field: 'string'`
@@ -101,10 +100,10 @@ impl<'a> IsolatedDeclarations<'a> {
                     self.infer_type_from_expression(expr)
                 };
 
-                type_annotations = ts_type.map(|t| self.ast.alloc_ts_type_annotation(SPAN, t));
+                type_annotation = ts_type.map(|t| self.ast.alloc_ts_type_annotation(SPAN, t));
             }
 
-            if type_annotations.is_none() && value.is_none() {
+            if type_annotation.is_none() && value.is_none() {
                 self.error(property_must_have_explicit_type(property.key.span()));
             }
         }
@@ -114,6 +113,7 @@ impl<'a> IsolatedDeclarations<'a> {
             property.r#type,
             self.ast.vec(),
             property.key.clone_in(self.ast.allocator),
+            type_annotation,
             value,
             property.computed,
             property.r#static,
@@ -122,7 +122,6 @@ impl<'a> IsolatedDeclarations<'a> {
             property.optional,
             property.definite,
             property.readonly,
-            type_annotations,
             Self::transform_accessibility(property.accessibility),
         )
     }
@@ -178,6 +177,7 @@ impl<'a> IsolatedDeclarations<'a> {
             r#type,
             self.ast.vec(),
             key,
+            NONE,
             None,
             false,
             r#static,
@@ -186,7 +186,6 @@ impl<'a> IsolatedDeclarations<'a> {
             false,
             false,
             false,
-            NONE,
             accessibility,
         )
     }
@@ -206,6 +205,7 @@ impl<'a> IsolatedDeclarations<'a> {
             PropertyDefinitionType::PropertyDefinition,
             self.ast.vec(),
             key,
+            type_annotation,
             None,
             false,
             false,
@@ -214,7 +214,6 @@ impl<'a> IsolatedDeclarations<'a> {
             param.pattern.optional,
             false,
             param.readonly,
-            type_annotation,
             Self::transform_accessibility(param.accessibility),
         ))
     }
@@ -293,23 +292,19 @@ impl<'a> IsolatedDeclarations<'a> {
     /// ### Setter
     ///
     /// 1. If it has no parameter type, infer it from the getter method's return type
-    fn collect_getter_or_setter_annotations(
+    fn collect_accessor_annotations(
         &self,
         decl: &Class<'a>,
-    ) -> FxHashMap<Cow<str>, ArenaBox<'a, TSTypeAnnotation<'a>>> {
-        let mut method_annotations = FxHashMap::default();
+    ) -> Vec<(PropertyKey<'a>, ArenaBox<'a, TSTypeAnnotation<'a>>)> {
+        let mut method_annotations = Vec::new();
         for element in &decl.body.body {
             if let ClassElement::MethodDefinition(method) = element {
                 if (method.key.is_private_identifier()
                     || method.accessibility.is_some_and(TSAccessibility::is_private))
-                    || (method.computed && !Self::is_literal_key(&method.key))
+                    || (method.computed && !Self::is_valid_property_key(&method.key))
                 {
                     continue;
                 }
-
-                let Some(name) = method.key.static_name() else {
-                    continue;
-                };
 
                 match method.kind {
                     MethodDefinitionKind::Set => {
@@ -319,17 +314,15 @@ impl<'a> IsolatedDeclarations<'a> {
                         if let Some(annotation) =
                             first_param.pattern.type_annotation.clone_in(self.ast.allocator)
                         {
-                            method_annotations.insert(name, annotation);
+                            method_annotations
+                                .push((method.key.clone_in(self.ast.allocator), annotation));
                         }
                     }
                     MethodDefinitionKind::Get => {
                         let function = &method.value;
-                        if let Some(annotation) = function
-                            .return_type
-                            .clone_in(self.ast.allocator)
-                            .or_else(|| self.infer_function_return_type(function))
-                        {
-                            method_annotations.insert(name, annotation);
+                        if let Some(annotation) = self.infer_function_return_type(function) {
+                            method_annotations
+                                .push((method.key.clone_in(self.ast.allocator), annotation));
                         }
                     }
                     _ => {}
@@ -358,7 +351,7 @@ impl<'a> IsolatedDeclarations<'a> {
             }
         }
 
-        let setter_getter_annotations = self.collect_getter_or_setter_annotations(decl);
+        let accessor_annotations = self.collect_accessor_annotations(decl);
         let mut has_private_key = false;
         let mut elements = self.ast.vec();
         let mut is_function_overloads = false;
@@ -402,10 +395,12 @@ impl<'a> IsolatedDeclarations<'a> {
                                 let mut params = params.clone_in(self.ast.allocator);
                                 if let Some(param) = params.items.first_mut() {
                                     if let Some(annotation) =
-                                        method.key.static_name().and_then(|name| {
-                                            setter_getter_annotations
-                                                .get(&name)
-                                                .map(|a| a.clone_in(self.ast.allocator))
+                                        accessor_annotations.iter().find_map(|(key, annotation)| {
+                                            if method.key.content_eq(key) {
+                                                Some(annotation.clone_in(self.ast.allocator))
+                                            } else {
+                                                None
+                                            }
                                         })
                                     {
                                         param.pattern.type_annotation = Some(annotation);
@@ -450,15 +445,13 @@ impl<'a> IsolatedDeclarations<'a> {
                             rt
                         }
                         MethodDefinitionKind::Get => {
-                            let rt = method.value.return_type.clone_in(self.ast.allocator).or_else(
-                                || {
-                                    method
-                                        .key
-                                        .static_name()
-                                        .and_then(|name| setter_getter_annotations.get(&name))
-                                        .map(|a| a.clone_in(self.ast.allocator))
-                                },
-                            );
+                            let rt = accessor_annotations.iter().find_map(|(key, annotation)| {
+                                if method.key.content_eq(key) {
+                                    Some(annotation.clone_in(self.ast.allocator))
+                                } else {
+                                    None
+                                }
+                            });
                             if rt.is_none() {
                                 self.error(accessor_must_have_explicit_return_type(
                                     method.key.span(),
@@ -512,12 +505,12 @@ impl<'a> IsolatedDeclarations<'a> {
                         property.r#type,
                         self.ast.vec(),
                         property.key.clone_in(self.ast.allocator),
+                        type_annotation,
                         None,
                         property.computed,
                         property.r#static,
                         property.r#override,
                         property.definite,
-                        type_annotation,
                         property.accessibility,
                     );
                     elements.push(new_element);
@@ -540,8 +533,8 @@ impl<'a> IsolatedDeclarations<'a> {
             let r#type = PropertyDefinitionType::PropertyDefinition;
             let decorators = self.ast.vec();
             let element = self.ast.class_element_property_definition(
-                SPAN, r#type, decorators, ident, None, false, false, false, false, false, false,
-                false, NONE, None,
+                SPAN, r#type, decorators, ident, NONE, None, false, false, false, false, false,
+                false, false, None,
             );
 
             elements.insert(0, element);

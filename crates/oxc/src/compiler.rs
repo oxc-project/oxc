@@ -2,7 +2,7 @@ use std::{mem, ops::ControlFlow, path::Path};
 
 use oxc_allocator::Allocator;
 use oxc_ast::ast::Program;
-use oxc_codegen::{CodeGenerator, CodegenOptions, CodegenReturn};
+use oxc_codegen::{Codegen, CodegenOptions, CodegenReturn};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_isolated_declarations::{IsolatedDeclarations, IsolatedDeclarationsOptions};
 use oxc_mangler::{MangleOptions, Mangler};
@@ -294,6 +294,6 @@ pub trait CompilerInterface {
         if self.enable_sourcemap() {
             options.source_map_path = Some(source_path.to_path_buf());
         }
-        CodeGenerator::new().with_options(options).with_scoping(scoping).build(program)
+        Codegen::new().with_options(options).with_scoping(scoping).build(program)
     }
 }

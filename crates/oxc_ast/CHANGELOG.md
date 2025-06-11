@@ -4,6 +4,214 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.72.3] - 2025-06-06
+
+### Features
+
+- 590b809 span: Add `Atom::from_cow_in` method (#11480) (overlookmotel)
+
+### Bug Fixes
+
+- 90b8b33 ast: Restore `#[ts]` attribute to `FormalParameter` `decorators` field (#11497) (overlookmotel)
+- f79b43a ast: Emit parameter decorators in js estree (#11494) (Boshen)
+- 8451bee ast/estree: Remove repeat fields from `BindingPattern` in TS-ESTree AST (#11500) (overlookmotel)
+- 953e61b ast/estree: Fix field order of `PropertyKey` constructor in raw transfer TS-ESTree AST (#11463) (overlookmotel)
+- ec4fc83 estree: Use consistent field order in serialization (#11385) (Yuji Sugiura)
+
+### Documentation
+
+- ca3214d ast: Correct and improve docs for `BindingPattern` (#11499) (overlookmotel)
+
+## [0.72.2] - 2025-05-31
+
+### Features
+
+- 1df6732 ast/estree: Add decorators to ESTree AST (#11393) (overlookmotel)
+
+### Documentation
+
+- a30cd3f ast: Fix typo in docs for `TSPropertySignature` (#11352) (overlookmotel)
+
+### Refactor
+
+- 12690a1 ast/estree: Re-order fields in visitation order (#11362) (overlookmotel)
+- 75ee3a5 ast/estree: Do not put TS struct fields last (#11360) (overlookmotel)
+- 4c49274 parser: Rewrite import/export specifier parsing (#11356) (camchenry)
+
+## [0.72.1] - 2025-05-28
+
+### Features
+
+- f88f666 minifier: Normalize `Number.NaN` as `NaN` (#11275) (Boshen)
+
+### Refactor
+
+- 3a49220 ast: Remove `AstKind::get_container_scope_id` (#11282) (Dunqing)
+
+## [0.72.0] - 2025-05-24
+
+### Features
+
+- 03390ad allocator: `TakeIn` trait with `AllocatorAccessor` (#11201) (Boshen)
+- 23182b8 ast/estree: Add `phase` field to `ImportExpression` in TS-ESTree AST (#11193) (overlookmotel)
+- 4feeeee span: Add `Atom::from_strs_array_in` method (#11261) (overlookmotel)
+- c2c0268 syntax: Introduce `CommentNodeId` (#11214) (overlookmotel)
+
+### Refactor
+
+- f05c506 ast: Move `AstBuilder` type definition (#11238) (overlookmotel)
+
+## [0.71.0] - 2025-05-20
+
+- 1a4fec0 codegen: [**BREAKING**] A legal comment can also be a jsdoc comment (#11158) (Boshen)
+
+- 5d9344f rust: [**BREAKING**] Clippy avoid-breaking-exported-api = false (#11088) (Boshen)
+
+### Features
+
+- c60382d allocator/vec2: Change `len` and `cap` fields from `usize` to `u32` (#10884) (Dunqing)
+- d47b305 ast/estree: Add `phase` field to `ImportExpression` in ESTree AST (#11165) (overlookmotel)
+- 1bc8d29 ast/estree: Add `phase` field to `ImportDeclaration` in ESTree AST (#11157) (overlookmotel)
+- 9e90e00 ast_tools: Introduce `#[js_only]` attr for struct fields and converters (#11160) (overlookmotel)
+
+### Bug Fixes
+
+
+### Performance
+
+- 6571b9b ast: Use bitflags for storing comment newline state (#11096) (camchenry)
+- 2b0a69f ast: Re-order struct fields to reduce padding (#11056) (overlookmotel)
+- b9e51e2 ast: Reduce size of `Comment` to 16 bytes (#11062) (camchenry)
+
+### Documentation
+
+- e92bf1f napi: Update docs for `oxc-parser` (#11156) (overlookmotel)
+
+### Refactor
+
+- 20a4a8c ast: Shorten `CommentNewlines` methods (#11152) (overlookmotel)
+- 58c7de6 ast: Rename `CommentNewlines` fields (#11151) (overlookmotel)
+- e5438dc ast: Inline `Comment` newline flags setters (#11150) (overlookmotel)
+
+### Styling
+
+- b3519ca ast: Remove dummy comment (#11162) (overlookmotel)
+
+## [0.70.0] - 2025-05-15
+
+### Features
+
+- 1673ffb codegen: Rework printing normal / legal / annotation comments (#10997) (Boshen)
+
+### Bug Fixes
+
+- 6f3f9d7 ast/estree: Fix `raw_deser` for `TSMappedTypeOptional` serializer (#10971) (overlookmotel)
+- 53329f8 ast/estree: Fix field order for `FormalParameter` (#10962) (overlookmotel)
+- 8b8f78f ast/estree: Fix field order and type def for `RestElement` in `FormalParameters` (#10961) (overlookmotel)
+- 2b76ab5 ast/estree: Fix `TSModuleDeclaration` raw deserializer (#10924) (overlookmotel)
+- d036cf5 estree: Ensure the same key order for `AssignmentPattern` (#10953) (Yuji Sugiura)
+
+### Performance
+
+- a4b5716 ast/estree: Streamline raw deserializer for `WithClause` (#10974) (overlookmotel)
+
+### Documentation
+
+- 206e07d ast: Fix docs for `ExportSpecifier` (#10891) (overlookmotel)
+- b23fef7 ast/estree: Standardize doc comments for ESTree serializers (#10968) (overlookmotel)
+
+### Refactor
+
+- 6cc74ff ast/estree: Add semi-colon (#10973) (overlookmotel)
+- 2958ff7 ast/estree: Rename serializers (#10969) (overlookmotel)
+- b8018b9 ast/estree: Split custom serializers into multiple files (#10967) (overlookmotel)
+- 08f1f3f ast/estree: Remove custom serializer for `Elision` (#10965) (overlookmotel)
+- d01a47b ast/estree: Simplify custom serializers for `FormalParameters` (#10964) (overlookmotel)
+- bfc6b9a ast/estree: Rename custom serializers for fields containing `FormalParameters` (#10963) (overlookmotel)
+
+### Styling
+
+- 6d4936f ast/estree: Reformat `raw_deser` code (#10972) (overlookmotel)
+
+## [0.69.0] - 2025-05-09
+
+- 2b5d826 ast: [**BREAKING**] Fix field order for `TSTypeAssertion` (#10906) (overlookmotel)
+
+- 1f35910 ast: [**BREAKING**] Fix field order for `TSNamedTupleMember` (#10905) (overlookmotel)
+
+- 8a3bba8 ast: [**BREAKING**] Fix field order for `PropertyDefinition` (#10902) (overlookmotel)
+
+- 5746d36 ast: [**BREAKING**] Fix field order for `NewExpression` (#10893) (overlookmotel)
+
+- 0139793 ast: [**BREAKING**] Re-order fields of `TaggedTemplateExpression` (#10889) (overlookmotel)
+
+- 6646b6b ast: [**BREAKING**] Fix field order for `JSXOpeningElement` (#10882) (overlookmotel)
+
+- cc2ed21 ast: [**BREAKING**] Fix field order for `JSXElement` and `JSXFragment` (#10881) (overlookmotel)
+
+- ad4fbf4 ast: [**BREAKING**] Simplify `RegExpPattern` (#10834) (overlookmotel)
+
+### Features
+
+- d066516 ast_tools: Support `#[estree(prepend_to)]` (#10849) (overlookmotel)
+
+### Bug Fixes
+
+- 2c09243 ast: Fix field order for `AccessorProperty` (#10878) (overlookmotel)
+- 581d068 ast/estree: Fix TS type def for `RegExpLiteral` (#10876) (overlookmotel)
+- e7228fa ast/estree: Fix `optional` field of `TSMappedType` in TS-ESTree AST (#10874) (overlookmotel)
+- 6f0638a ast/estree: Remove `TSImportTypeOptions` custom serializer (#10873) (overlookmotel)
+- e6657ae ast/estree: Reorder fields for TS `Identifier` types in TS-ESTree AST (#10864) (overlookmotel)
+
+### Performance
+
+- 49a6f97 napi/parser: Faster fixup of `BigInt`s and `RegExp`s (#10820) (overlookmotel)
+
+### Documentation
+
+- 4863eef ast: Improve docs for `TSImportType` (#10903) (overlookmotel)
+
+### Refactor
+
+- 805735b ast: Remove quotes from `#[estree(append_to)]` attributes (#10863) (overlookmotel)
+- 0f7e755 ast/estree: Use `#[estree(prepend_to)]` (#10862) (overlookmotel)
+- b16331e ast/estree: Generalize concatenating fields with `Concat2` (#10848) (overlookmotel)
+- daba0a7 estree: Remove regular expression types from ESTree AST (#10855) (overlookmotel)
+
+### Styling
+
+- 62c3a4a ast_tools: Add full stop to end of generated comments (#10809) (overlookmotel)
+
+## [0.68.1] - 2025-05-04
+
+### Bug Fixes
+
+- 663fb53 ast/estree: For TS type def for `BigIntLiteral` (#10786) (overlookmotel)
+- c33eb9c ast/estree: Fix raw deser for `TSTypeReference` (#10787) (overlookmotel)
+
+## [0.68.0] - 2025-05-03
+
+- 28ceb90 ast: [**BREAKING**] Remove `TSMappedTypeModifierOperator::None` variant (#10749) (overlookmotel)
+
+- a0a37e0 ast: [**BREAKING**] `AstBuilder` methods require an `Atom` with correct lifetime (#10735) (overlookmotel)
+
+### Features
+
+- 60347e7 ast_tools: `AstBuilder` generator support types with more than 1 `Atom` field (#10737) (overlookmotel)
+
+### Bug Fixes
+
+- 8bfd5e3 ast: `AssignmentTargetMaybeDefault::identifier` preserve lifetime (#10720) (overlookmotel)
+- 61d825b ast/estree: Rename `assert` to `with` in `TSImportType` `options` in TS-ESTree AST (#10681) (overlookmotel)
+
+### Refactor
+
+- 050ecd9 ast/estree: Remove custom serializer for `TSMappedTypeModifierOperator` (#10747) (overlookmotel)
+
+### Styling
+
+- c18c81f ast: Import `Display` trait (#10724) (overlookmotel)
+
 ## [0.67.0] - 2025-04-27
 
 ### Bug Fixes
