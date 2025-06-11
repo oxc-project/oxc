@@ -4,7 +4,10 @@
 
 use std::{alloc::Layout, ptr::NonNull};
 
+#[cfg(not(nightly))]
 use allocator_api2::alloc::{AllocError, Allocator};
+#[cfg(nightly)]
+use std::alloc::{AllocError, Allocator};
 
 /// SAFETY:
 /// <https://github.com/fitzgen/bumpalo/blob/4eeab8847c85d5cde135ca21ae14a54e56b05224/src/lib.rs#L1938>
