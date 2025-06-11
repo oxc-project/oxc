@@ -109,23 +109,16 @@ impl<'a> ParserImpl<'a> {
     ) -> Box<'a, Function<'a>> {
         let ctx = self.ctx;
         self.ctx = self.ctx.and_in(true).and_await(r#async).and_yield(generator);
-
         let type_parameters = self.parse_ts_type_parameters();
-
         let (this_param, params) = self.parse_formal_parameters(param_kind);
-
         let return_type =
             self.parse_ts_return_type_annotation(Kind::Colon, /* is_type */ true);
-
         let body = if self.at(Kind::LCurly) { Some(self.parse_function_body()) } else { None };
-
         self.ctx =
             self.ctx.and_in(ctx.has_in()).and_await(ctx.has_await()).and_yield(ctx.has_yield());
-
         if !self.is_ts && body.is_none() {
             return self.unexpected();
         }
-
         let function_type = match func_kind {
             FunctionKind::Declaration | FunctionKind::DefaultExport => {
                 if body.is_none() {
@@ -150,6 +143,14 @@ impl<'a> ParserImpl<'a> {
             self.asi();
         }
 
+        if ctx.has_ambient() && modifiers.contains_declare() {
+            if let Some(body) = &body {
+                self.error(diagnostics::implementation_in_ambient(Span::new(
+                    body.span.start,
+                    body.span.start,
+                )));
+            }
+        }
         self.verify_modifiers(
             modifiers,
             ModifierFlags::DECLARE | ModifierFlags::ASYNC,

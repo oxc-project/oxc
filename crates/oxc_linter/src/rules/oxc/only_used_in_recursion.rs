@@ -540,8 +540,6 @@ fn test() {
             return _get(target, property, receiver || target);
         }
         "#,
-        "function foo() {}
-        declare function foo() {}",
         r#"
         var validator = function validator(node, key, val) {
             var validator = node.operator === "in" ? inOp : expression;

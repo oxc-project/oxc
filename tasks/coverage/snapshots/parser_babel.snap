@@ -3,7 +3,7 @@ commit: 1d4546bc
 parser_babel Summary:
 AST Parsed     : 2351/2362 (99.53%)
 Positive Passed: 2330/2362 (98.65%)
-Negative Passed: 1587/1698 (93.46%)
+Negative Passed: 1588/1698 (93.52%)
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/core/categorized/invalid-startindex-and-startline-specified-without-startcolumn/input.js
 
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/core/categorized/startline-and-startcolumn-specified/input.js
@@ -81,8 +81,6 @@ Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/ty
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/class/parameter-properties-binding-patterns/input.ts
 
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/class/private-fields-modifier-abstract/input.ts
-
-Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/declare/function/input.ts
 
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/declare/module-class/input.ts
 
@@ -12447,6 +12445,12 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
  1 │ declare
  2 │ const { x, y }: { x: number, y: number };
    ·       ──────────────────────────────────
+   ╰────
+
+  × TS(1183): An implementation cannot be declared in ambient contexts.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/declare/function/input.ts:1:24]
+ 1 │ declare function foo() {}
+   ·                        ▲
    ╰────
 
   × Unexpected exponentiation expression

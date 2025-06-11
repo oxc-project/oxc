@@ -690,3 +690,8 @@ pub fn parameter_modifiers_in_ts(modifier: &Modifier) -> OxcDiagnostic {
     ts_error("8012", "Parameter modifiers can only be used in TypeScript files.")
         .with_label(modifier.span)
 }
+
+#[cold]
+pub fn implementation_in_ambient(span: Span) -> OxcDiagnostic {
+    ts_error("1183", "An implementation cannot be declared in ambient contexts.").with_label(span)
+}
