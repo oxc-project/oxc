@@ -28,10 +28,9 @@ import {
   TS_SNAPSHOT_PATH,
 } from './parse-raw-common.mjs';
 
-const RUN_LAZY_TESTS = false;
-const noop = Object.assign(() => {}, { concurrent() {} });
-const describeLazy = RUN_LAZY_TESTS ? describe : noop;
-const itLazy = RUN_LAZY_TESTS ? it : noop;
+const [describeLazy, itLazy] = process.env.RUN_LAZY_TESTS === 'true'
+  ? [describe, it]
+  : (noop => [noop, noop])(Object.assign(() => {}, { concurrent() {} }));
 
 // Worker pool for running test cases.
 // Vitest provides parallelism across test files, but not across cases within a single test file.
