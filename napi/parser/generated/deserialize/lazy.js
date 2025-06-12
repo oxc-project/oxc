@@ -26,7 +26,13 @@ class Program {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+
+    const { nodes } = ast;
+    const cached = nodes.get(pos);
+    if (cached !== void 0) return cached;
+
     this.#internal = { $pos: pos, $ast: ast, body: void 0 };
+    nodes.set(pos, this);
   }
 
   get start() {
@@ -51,8 +57,8 @@ class Program {
 
   get body() {
     const internal = this.#internal,
-      node = internal.body;
-    if (node !== void 0) return node;
+      cached = internal.body;
+    if (cached !== void 0) return cached;
     return internal.body = constructVecStatement(internal.$pos + 96, internal.$ast);
   }
 
@@ -167,7 +173,13 @@ class IdentifierName {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+
+    const { nodes } = ast;
+    const cached = nodes.get(pos);
+    if (cached !== void 0) return cached;
+
     this.#internal = { $pos: pos, $ast: ast, name: void 0 };
+    nodes.set(pos, this);
   }
 
   get start() {
@@ -182,8 +194,8 @@ class IdentifierName {
 
   get name() {
     const internal = this.#internal,
-      node = internal.name;
-    if (node !== void 0) return node;
+      cached = internal.name;
+    if (cached !== void 0) return cached;
     return internal.name = constructStr(internal.$pos + 8, internal.$ast);
   }
 
@@ -203,7 +215,13 @@ class IdentifierReference {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+
+    const { nodes } = ast;
+    const cached = nodes.get(pos);
+    if (cached !== void 0) return cached;
+
     this.#internal = { $pos: pos, $ast: ast, name: void 0 };
+    nodes.set(pos, this);
   }
 
   get start() {
@@ -218,8 +236,8 @@ class IdentifierReference {
 
   get name() {
     const internal = this.#internal,
-      node = internal.name;
-    if (node !== void 0) return node;
+      cached = internal.name;
+    if (cached !== void 0) return cached;
     return internal.name = constructStr(internal.$pos + 8, internal.$ast);
   }
 
@@ -239,7 +257,13 @@ class BindingIdentifier {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+
+    const { nodes } = ast;
+    const cached = nodes.get(pos);
+    if (cached !== void 0) return cached;
+
     this.#internal = { $pos: pos, $ast: ast, name: void 0 };
+    nodes.set(pos, this);
   }
 
   get start() {
@@ -254,8 +278,8 @@ class BindingIdentifier {
 
   get name() {
     const internal = this.#internal,
-      node = internal.name;
-    if (node !== void 0) return node;
+      cached = internal.name;
+    if (cached !== void 0) return cached;
     return internal.name = constructStr(internal.$pos + 8, internal.$ast);
   }
 
@@ -275,7 +299,13 @@ class LabelIdentifier {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+
+    const { nodes } = ast;
+    const cached = nodes.get(pos);
+    if (cached !== void 0) return cached;
+
     this.#internal = { $pos: pos, $ast: ast, name: void 0 };
+    nodes.set(pos, this);
   }
 
   get start() {
@@ -290,8 +320,8 @@ class LabelIdentifier {
 
   get name() {
     const internal = this.#internal,
-      node = internal.name;
-    if (node !== void 0) return node;
+      cached = internal.name;
+    if (cached !== void 0) return cached;
     return internal.name = constructStr(internal.$pos + 8, internal.$ast);
   }
 
@@ -311,7 +341,13 @@ class ThisExpression {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+
+    const { nodes } = ast;
+    const cached = nodes.get(pos);
+    if (cached !== void 0) return cached;
+
     this.#internal = { $pos: pos, $ast: ast };
+    nodes.set(pos, this);
   }
 
   get start() {
@@ -339,7 +375,13 @@ class ArrayExpression {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+
+    const { nodes } = ast;
+    const cached = nodes.get(pos);
+    if (cached !== void 0) return cached;
+
     this.#internal = { $pos: pos, $ast: ast, elements: void 0 };
+    nodes.set(pos, this);
   }
 
   get start() {
@@ -354,8 +396,8 @@ class ArrayExpression {
 
   get elements() {
     const internal = this.#internal,
-      node = internal.elements;
-    if (node !== void 0) return node;
+      cached = internal.elements;
+    if (cached !== void 0) return cached;
     return internal.elements = constructVecArrayExpressionElement(internal.$pos + 8, internal.$ast);
   }
 
@@ -472,7 +514,13 @@ class Elision {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+
+    const { nodes } = ast;
+    const cached = nodes.get(pos);
+    if (cached !== void 0) return cached;
+
     this.#internal = { $pos: pos, $ast: ast };
+    nodes.set(pos, this);
   }
 
   get start() {
@@ -500,7 +548,13 @@ class ObjectExpression {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+
+    const { nodes } = ast;
+    const cached = nodes.get(pos);
+    if (cached !== void 0) return cached;
+
     this.#internal = { $pos: pos, $ast: ast, properties: void 0 };
+    nodes.set(pos, this);
   }
 
   get start() {
@@ -515,8 +569,8 @@ class ObjectExpression {
 
   get properties() {
     const internal = this.#internal,
-      node = internal.properties;
-    if (node !== void 0) return node;
+      cached = internal.properties;
+    if (cached !== void 0) return cached;
     return internal.properties = constructVecObjectPropertyKind(internal.$pos + 8, internal.$ast);
   }
 
@@ -547,7 +601,13 @@ class ObjectProperty {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+
+    const { nodes } = ast;
+    const cached = nodes.get(pos);
+    if (cached !== void 0) return cached;
+
     this.#internal = { $pos: pos, $ast: ast };
+    nodes.set(pos, this);
   }
 
   get start() {
@@ -721,7 +781,13 @@ class TemplateLiteral {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+
+    const { nodes } = ast;
+    const cached = nodes.get(pos);
+    if (cached !== void 0) return cached;
+
     this.#internal = { $pos: pos, $ast: ast, quasis: void 0, expressions: void 0 };
+    nodes.set(pos, this);
   }
 
   get start() {
@@ -736,15 +802,15 @@ class TemplateLiteral {
 
   get quasis() {
     const internal = this.#internal,
-      node = internal.quasis;
-    if (node !== void 0) return node;
+      cached = internal.quasis;
+    if (cached !== void 0) return cached;
     return internal.quasis = constructVecTemplateElement(internal.$pos + 8, internal.$ast);
   }
 
   get expressions() {
     const internal = this.#internal,
-      node = internal.expressions;
-    if (node !== void 0) return node;
+      cached = internal.expressions;
+    if (cached !== void 0) return cached;
     return internal.expressions = constructVecExpression(internal.$pos + 32, internal.$ast);
   }
 
@@ -765,7 +831,13 @@ class TaggedTemplateExpression {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+
+    const { nodes } = ast;
+    const cached = nodes.get(pos);
+    if (cached !== void 0) return cached;
+
     this.#internal = { $pos: pos, $ast: ast };
+    nodes.set(pos, this);
   }
 
   get start() {
@@ -811,7 +883,13 @@ class TemplateElement {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+
+    const { nodes } = ast;
+    const cached = nodes.get(pos);
+    if (cached !== void 0) return cached;
+
     this.#internal = { $pos: pos, $ast: ast };
+    nodes.set(pos, this);
   }
 
   get start() {
@@ -850,20 +928,26 @@ class TemplateElementValue {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+
+    const { nodes } = ast;
+    const cached = nodes.get(pos);
+    if (cached !== void 0) return cached;
+
     this.#internal = { $pos: pos, $ast: ast, raw: void 0, cooked: void 0 };
+    nodes.set(pos, this);
   }
 
   get raw() {
     const internal = this.#internal,
-      node = internal.raw;
-    if (node !== void 0) return node;
+      cached = internal.raw;
+    if (cached !== void 0) return cached;
     return internal.raw = constructStr(internal.$pos, internal.$ast);
   }
 
   get cooked() {
     const internal = this.#internal,
-      node = internal.cooked;
-    if (node !== void 0) return node;
+      cached = internal.cooked;
+    if (cached !== void 0) return cached;
     return internal.cooked = constructOptionStr(internal.$pos + 16, internal.$ast);
   }
 
@@ -894,7 +978,13 @@ class ComputedMemberExpression {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+
+    const { nodes } = ast;
+    const cached = nodes.get(pos);
+    if (cached !== void 0) return cached;
+
     this.#internal = { $pos: pos, $ast: ast };
+    nodes.set(pos, this);
   }
 
   get start() {
@@ -940,7 +1030,13 @@ class StaticMemberExpression {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+
+    const { nodes } = ast;
+    const cached = nodes.get(pos);
+    if (cached !== void 0) return cached;
+
     this.#internal = { $pos: pos, $ast: ast };
+    nodes.set(pos, this);
   }
 
   get start() {
@@ -986,7 +1082,13 @@ class PrivateFieldExpression {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+
+    const { nodes } = ast;
+    const cached = nodes.get(pos);
+    if (cached !== void 0) return cached;
+
     this.#internal = { $pos: pos, $ast: ast };
+    nodes.set(pos, this);
   }
 
   get start() {
@@ -1032,7 +1134,13 @@ class CallExpression {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+
+    const { nodes } = ast;
+    const cached = nodes.get(pos);
+    if (cached !== void 0) return cached;
+
     this.#internal = { $pos: pos, $ast: ast, arguments: void 0 };
+    nodes.set(pos, this);
   }
 
   get start() {
@@ -1057,8 +1165,8 @@ class CallExpression {
 
   get arguments() {
     const internal = this.#internal,
-      node = internal.arguments;
-    if (node !== void 0) return node;
+      cached = internal.arguments;
+    if (cached !== void 0) return cached;
     return internal.arguments = constructVecArgument(internal.$pos + 32, internal.$ast);
   }
 
@@ -1086,7 +1194,13 @@ class NewExpression {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+
+    const { nodes } = ast;
+    const cached = nodes.get(pos);
+    if (cached !== void 0) return cached;
+
     this.#internal = { $pos: pos, $ast: ast, arguments: void 0 };
+    nodes.set(pos, this);
   }
 
   get start() {
@@ -1111,8 +1225,8 @@ class NewExpression {
 
   get arguments() {
     const internal = this.#internal,
-      node = internal.arguments;
-    if (node !== void 0) return node;
+      cached = internal.arguments;
+    if (cached !== void 0) return cached;
     return internal.arguments = constructVecArgument(internal.$pos + 32, internal.$ast);
   }
 
@@ -1134,7 +1248,13 @@ class MetaProperty {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+
+    const { nodes } = ast;
+    const cached = nodes.get(pos);
+    if (cached !== void 0) return cached;
+
     this.#internal = { $pos: pos, $ast: ast };
+    nodes.set(pos, this);
   }
 
   get start() {
@@ -1174,7 +1294,13 @@ class SpreadElement {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+
+    const { nodes } = ast;
+    const cached = nodes.get(pos);
+    if (cached !== void 0) return cached;
+
     this.#internal = { $pos: pos, $ast: ast };
+    nodes.set(pos, this);
   }
 
   get start() {
@@ -1303,7 +1429,13 @@ class UpdateExpression {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+
+    const { nodes } = ast;
+    const cached = nodes.get(pos);
+    if (cached !== void 0) return cached;
+
     this.#internal = { $pos: pos, $ast: ast };
+    nodes.set(pos, this);
   }
 
   get start() {
@@ -1349,7 +1481,13 @@ class UnaryExpression {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+
+    const { nodes } = ast;
+    const cached = nodes.get(pos);
+    if (cached !== void 0) return cached;
+
     this.#internal = { $pos: pos, $ast: ast };
+    nodes.set(pos, this);
   }
 
   get start() {
@@ -1389,7 +1527,13 @@ class BinaryExpression {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+
+    const { nodes } = ast;
+    const cached = nodes.get(pos);
+    if (cached !== void 0) return cached;
+
     this.#internal = { $pos: pos, $ast: ast };
+    nodes.set(pos, this);
   }
 
   get start() {
@@ -1435,7 +1579,13 @@ class PrivateInExpression {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+
+    const { nodes } = ast;
+    const cached = nodes.get(pos);
+    if (cached !== void 0) return cached;
+
     this.#internal = { $pos: pos, $ast: ast };
+    nodes.set(pos, this);
   }
 
   get start() {
@@ -1475,7 +1625,13 @@ class LogicalExpression {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+
+    const { nodes } = ast;
+    const cached = nodes.get(pos);
+    if (cached !== void 0) return cached;
+
     this.#internal = { $pos: pos, $ast: ast };
+    nodes.set(pos, this);
   }
 
   get start() {
@@ -1521,7 +1677,13 @@ class ConditionalExpression {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+
+    const { nodes } = ast;
+    const cached = nodes.get(pos);
+    if (cached !== void 0) return cached;
+
     this.#internal = { $pos: pos, $ast: ast };
+    nodes.set(pos, this);
   }
 
   get start() {
@@ -1567,7 +1729,13 @@ class AssignmentExpression {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+
+    const { nodes } = ast;
+    const cached = nodes.get(pos);
+    if (cached !== void 0) return cached;
+
     this.#internal = { $pos: pos, $ast: ast };
+    nodes.set(pos, this);
   }
 
   get start() {
@@ -1674,7 +1842,13 @@ class ArrayAssignmentTarget {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+
+    const { nodes } = ast;
+    const cached = nodes.get(pos);
+    if (cached !== void 0) return cached;
+
     this.#internal = { $pos: pos, $ast: ast, elements: void 0 };
+    nodes.set(pos, this);
   }
 
   get start() {
@@ -1689,8 +1863,8 @@ class ArrayAssignmentTarget {
 
   get elements() {
     const internal = this.#internal,
-      node = internal.elements;
-    if (node !== void 0) return node;
+      cached = internal.elements;
+    if (cached !== void 0) return cached;
     return internal.elements = constructVecOptionAssignmentTargetMaybeDefault(internal.$pos + 8, internal.$ast);
   }
 
@@ -1710,7 +1884,13 @@ class ObjectAssignmentTarget {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+
+    const { nodes } = ast;
+    const cached = nodes.get(pos);
+    if (cached !== void 0) return cached;
+
     this.#internal = { $pos: pos, $ast: ast, properties: void 0 };
+    nodes.set(pos, this);
   }
 
   get start() {
@@ -1725,8 +1905,8 @@ class ObjectAssignmentTarget {
 
   get properties() {
     const internal = this.#internal,
-      node = internal.properties;
-    if (node !== void 0) return node;
+      cached = internal.properties;
+    if (cached !== void 0) return cached;
     return internal.properties = constructVecAssignmentTargetProperty(internal.$pos + 8, internal.$ast);
   }
 
@@ -1746,7 +1926,13 @@ class AssignmentTargetRest {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+
+    const { nodes } = ast;
+    const cached = nodes.get(pos);
+    if (cached !== void 0) return cached;
+
     this.#internal = { $pos: pos, $ast: ast };
+    nodes.set(pos, this);
   }
 
   get start() {
@@ -1809,7 +1995,13 @@ class AssignmentTargetWithDefault {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+
+    const { nodes } = ast;
+    const cached = nodes.get(pos);
+    if (cached !== void 0) return cached;
+
     this.#internal = { $pos: pos, $ast: ast };
+    nodes.set(pos, this);
   }
 
   get start() {
@@ -1860,7 +2052,13 @@ class AssignmentTargetPropertyIdentifier {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+
+    const { nodes } = ast;
+    const cached = nodes.get(pos);
+    if (cached !== void 0) return cached;
+
     this.#internal = { $pos: pos, $ast: ast };
+    nodes.set(pos, this);
   }
 
   get start() {
@@ -1900,7 +2098,13 @@ class AssignmentTargetPropertyProperty {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+
+    const { nodes } = ast;
+    const cached = nodes.get(pos);
+    if (cached !== void 0) return cached;
+
     this.#internal = { $pos: pos, $ast: ast };
+    nodes.set(pos, this);
   }
 
   get start() {
@@ -1946,7 +2150,13 @@ class SequenceExpression {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+
+    const { nodes } = ast;
+    const cached = nodes.get(pos);
+    if (cached !== void 0) return cached;
+
     this.#internal = { $pos: pos, $ast: ast, expressions: void 0 };
+    nodes.set(pos, this);
   }
 
   get start() {
@@ -1961,8 +2171,8 @@ class SequenceExpression {
 
   get expressions() {
     const internal = this.#internal,
-      node = internal.expressions;
-    if (node !== void 0) return node;
+      cached = internal.expressions;
+    if (cached !== void 0) return cached;
     return internal.expressions = constructVecExpression(internal.$pos + 8, internal.$ast);
   }
 
@@ -1982,7 +2192,13 @@ class Super {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+
+    const { nodes } = ast;
+    const cached = nodes.get(pos);
+    if (cached !== void 0) return cached;
+
     this.#internal = { $pos: pos, $ast: ast };
+    nodes.set(pos, this);
   }
 
   get start() {
@@ -2010,7 +2226,13 @@ class AwaitExpression {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+
+    const { nodes } = ast;
+    const cached = nodes.get(pos);
+    if (cached !== void 0) return cached;
+
     this.#internal = { $pos: pos, $ast: ast };
+    nodes.set(pos, this);
   }
 
   get start() {
@@ -2044,7 +2266,13 @@ class ChainExpression {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+
+    const { nodes } = ast;
+    const cached = nodes.get(pos);
+    if (cached !== void 0) return cached;
+
     this.#internal = { $pos: pos, $ast: ast };
+    nodes.set(pos, this);
   }
 
   get start() {
@@ -2095,7 +2323,13 @@ class ParenthesizedExpression {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+
+    const { nodes } = ast;
+    const cached = nodes.get(pos);
+    if (cached !== void 0) return cached;
+
     this.#internal = { $pos: pos, $ast: ast };
+    nodes.set(pos, this);
   }
 
   get start() {
@@ -2200,7 +2434,13 @@ class Directive {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+
+    const { nodes } = ast;
+    const cached = nodes.get(pos);
+    if (cached !== void 0) return cached;
+
     this.#internal = { $pos: pos, $ast: ast, directive: void 0 };
+    nodes.set(pos, this);
   }
 
   get start() {
@@ -2220,8 +2460,8 @@ class Directive {
 
   get directive() {
     const internal = this.#internal,
-      node = internal.directive;
-    if (node !== void 0) return node;
+      cached = internal.directive;
+    if (cached !== void 0) return cached;
     return internal.directive = constructStr(internal.$pos + 56, internal.$ast);
   }
 
@@ -2242,7 +2482,13 @@ class Hashbang {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+
+    const { nodes } = ast;
+    const cached = nodes.get(pos);
+    if (cached !== void 0) return cached;
+
     this.#internal = { $pos: pos, $ast: ast, value: void 0 };
+    nodes.set(pos, this);
   }
 
   get start() {
@@ -2257,8 +2503,8 @@ class Hashbang {
 
   get value() {
     const internal = this.#internal,
-      node = internal.value;
-    if (node !== void 0) return node;
+      cached = internal.value;
+    if (cached !== void 0) return cached;
     return internal.value = constructStr(internal.$pos + 8, internal.$ast);
   }
 
@@ -2278,7 +2524,13 @@ class BlockStatement {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+
+    const { nodes } = ast;
+    const cached = nodes.get(pos);
+    if (cached !== void 0) return cached;
+
     this.#internal = { $pos: pos, $ast: ast, body: void 0 };
+    nodes.set(pos, this);
   }
 
   get start() {
@@ -2293,8 +2545,8 @@ class BlockStatement {
 
   get body() {
     const internal = this.#internal,
-      node = internal.body;
-    if (node !== void 0) return node;
+      cached = internal.body;
+    if (cached !== void 0) return cached;
     return internal.body = constructVecStatement(internal.$pos + 8, internal.$ast);
   }
 
@@ -2337,7 +2589,13 @@ class VariableDeclaration {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+
+    const { nodes } = ast;
+    const cached = nodes.get(pos);
+    if (cached !== void 0) return cached;
+
     this.#internal = { $pos: pos, $ast: ast, declarations: void 0 };
+    nodes.set(pos, this);
   }
 
   get start() {
@@ -2357,8 +2615,8 @@ class VariableDeclaration {
 
   get declarations() {
     const internal = this.#internal,
-      node = internal.declarations;
-    if (node !== void 0) return node;
+      cached = internal.declarations;
+    if (cached !== void 0) return cached;
     return internal.declarations = constructVecVariableDeclarator(internal.$pos + 8, internal.$ast);
   }
 
@@ -2402,7 +2660,13 @@ class VariableDeclarator {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+
+    const { nodes } = ast;
+    const cached = nodes.get(pos);
+    if (cached !== void 0) return cached;
+
     this.#internal = { $pos: pos, $ast: ast };
+    nodes.set(pos, this);
   }
 
   get start() {
@@ -2448,7 +2712,13 @@ class EmptyStatement {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+
+    const { nodes } = ast;
+    const cached = nodes.get(pos);
+    if (cached !== void 0) return cached;
+
     this.#internal = { $pos: pos, $ast: ast };
+    nodes.set(pos, this);
   }
 
   get start() {
@@ -2476,7 +2746,13 @@ class ExpressionStatement {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+
+    const { nodes } = ast;
+    const cached = nodes.get(pos);
+    if (cached !== void 0) return cached;
+
     this.#internal = { $pos: pos, $ast: ast };
+    nodes.set(pos, this);
   }
 
   get start() {
@@ -2510,7 +2786,13 @@ class IfStatement {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+
+    const { nodes } = ast;
+    const cached = nodes.get(pos);
+    if (cached !== void 0) return cached;
+
     this.#internal = { $pos: pos, $ast: ast };
+    nodes.set(pos, this);
   }
 
   get start() {
@@ -2556,7 +2838,13 @@ class DoWhileStatement {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+
+    const { nodes } = ast;
+    const cached = nodes.get(pos);
+    if (cached !== void 0) return cached;
+
     this.#internal = { $pos: pos, $ast: ast };
+    nodes.set(pos, this);
   }
 
   get start() {
@@ -2596,7 +2884,13 @@ class WhileStatement {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+
+    const { nodes } = ast;
+    const cached = nodes.get(pos);
+    if (cached !== void 0) return cached;
+
     this.#internal = { $pos: pos, $ast: ast };
+    nodes.set(pos, this);
   }
 
   get start() {
@@ -2636,7 +2930,13 @@ class ForStatement {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+
+    const { nodes } = ast;
+    const cached = nodes.get(pos);
+    if (cached !== void 0) return cached;
+
     this.#internal = { $pos: pos, $ast: ast };
+    nodes.set(pos, this);
   }
 
   get start() {
@@ -2783,7 +3083,13 @@ class ForInStatement {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+
+    const { nodes } = ast;
+    const cached = nodes.get(pos);
+    if (cached !== void 0) return cached;
+
     this.#internal = { $pos: pos, $ast: ast };
+    nodes.set(pos, this);
   }
 
   get start() {
@@ -2858,7 +3164,13 @@ class ForOfStatement {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+
+    const { nodes } = ast;
+    const cached = nodes.get(pos);
+    if (cached !== void 0) return cached;
+
     this.#internal = { $pos: pos, $ast: ast };
+    nodes.set(pos, this);
   }
 
   get start() {
@@ -2910,7 +3222,13 @@ class ContinueStatement {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+
+    const { nodes } = ast;
+    const cached = nodes.get(pos);
+    if (cached !== void 0) return cached;
+
     this.#internal = { $pos: pos, $ast: ast };
+    nodes.set(pos, this);
   }
 
   get start() {
@@ -2944,7 +3262,13 @@ class BreakStatement {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+
+    const { nodes } = ast;
+    const cached = nodes.get(pos);
+    if (cached !== void 0) return cached;
+
     this.#internal = { $pos: pos, $ast: ast };
+    nodes.set(pos, this);
   }
 
   get start() {
@@ -2978,7 +3302,13 @@ class ReturnStatement {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+
+    const { nodes } = ast;
+    const cached = nodes.get(pos);
+    if (cached !== void 0) return cached;
+
     this.#internal = { $pos: pos, $ast: ast };
+    nodes.set(pos, this);
   }
 
   get start() {
@@ -3012,7 +3342,13 @@ class WithStatement {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+
+    const { nodes } = ast;
+    const cached = nodes.get(pos);
+    if (cached !== void 0) return cached;
+
     this.#internal = { $pos: pos, $ast: ast };
+    nodes.set(pos, this);
   }
 
   get start() {
@@ -3052,7 +3388,13 @@ class SwitchStatement {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+
+    const { nodes } = ast;
+    const cached = nodes.get(pos);
+    if (cached !== void 0) return cached;
+
     this.#internal = { $pos: pos, $ast: ast, cases: void 0 };
+    nodes.set(pos, this);
   }
 
   get start() {
@@ -3072,8 +3414,8 @@ class SwitchStatement {
 
   get cases() {
     const internal = this.#internal,
-      node = internal.cases;
-    if (node !== void 0) return node;
+      cached = internal.cases;
+    if (cached !== void 0) return cached;
     return internal.cases = constructVecSwitchCase(internal.$pos + 24, internal.$ast);
   }
 
@@ -3094,7 +3436,13 @@ class SwitchCase {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+
+    const { nodes } = ast;
+    const cached = nodes.get(pos);
+    if (cached !== void 0) return cached;
+
     this.#internal = { $pos: pos, $ast: ast, consequent: void 0 };
+    nodes.set(pos, this);
   }
 
   get start() {
@@ -3114,8 +3462,8 @@ class SwitchCase {
 
   get consequent() {
     const internal = this.#internal,
-      node = internal.consequent;
-    if (node !== void 0) return node;
+      cached = internal.consequent;
+    if (cached !== void 0) return cached;
     return internal.consequent = constructVecStatement(internal.$pos + 24, internal.$ast);
   }
 
@@ -3136,7 +3484,13 @@ class LabeledStatement {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+
+    const { nodes } = ast;
+    const cached = nodes.get(pos);
+    if (cached !== void 0) return cached;
+
     this.#internal = { $pos: pos, $ast: ast };
+    nodes.set(pos, this);
   }
 
   get start() {
@@ -3176,7 +3530,13 @@ class ThrowStatement {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+
+    const { nodes } = ast;
+    const cached = nodes.get(pos);
+    if (cached !== void 0) return cached;
+
     this.#internal = { $pos: pos, $ast: ast };
+    nodes.set(pos, this);
   }
 
   get start() {
@@ -3210,7 +3570,13 @@ class TryStatement {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+
+    const { nodes } = ast;
+    const cached = nodes.get(pos);
+    if (cached !== void 0) return cached;
+
     this.#internal = { $pos: pos, $ast: ast };
+    nodes.set(pos, this);
   }
 
   get start() {
@@ -3256,7 +3622,13 @@ class CatchClause {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+
+    const { nodes } = ast;
+    const cached = nodes.get(pos);
+    if (cached !== void 0) return cached;
+
     this.#internal = { $pos: pos, $ast: ast };
+    nodes.set(pos, this);
   }
 
   get start() {
@@ -3295,7 +3667,13 @@ class CatchParameter {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+
+    const { nodes } = ast;
+    const cached = nodes.get(pos);
+    if (cached !== void 0) return cached;
+
     this.#internal = { $pos: pos, $ast: ast };
+    nodes.set(pos, this);
   }
 
   get pattern() {
@@ -3316,7 +3694,13 @@ class DebuggerStatement {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+
+    const { nodes } = ast;
+    const cached = nodes.get(pos);
+    if (cached !== void 0) return cached;
+
     this.#internal = { $pos: pos, $ast: ast };
+    nodes.set(pos, this);
   }
 
   get start() {
@@ -3343,7 +3727,13 @@ class BindingPattern {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+
+    const { nodes } = ast;
+    const cached = nodes.get(pos);
+    if (cached !== void 0) return cached;
+
     this.#internal = { $pos: pos, $ast: ast };
+    nodes.set(pos, this);
   }
 
   get kind() {
@@ -3391,7 +3781,13 @@ class AssignmentPattern {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+
+    const { nodes } = ast;
+    const cached = nodes.get(pos);
+    if (cached !== void 0) return cached;
+
     this.#internal = { $pos: pos, $ast: ast };
+    nodes.set(pos, this);
   }
 
   get start() {
@@ -3431,7 +3827,13 @@ class ObjectPattern {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+
+    const { nodes } = ast;
+    const cached = nodes.get(pos);
+    if (cached !== void 0) return cached;
+
     this.#internal = { $pos: pos, $ast: ast, properties: void 0 };
+    nodes.set(pos, this);
   }
 
   get start() {
@@ -3446,8 +3848,8 @@ class ObjectPattern {
 
   get properties() {
     const internal = this.#internal,
-      node = internal.properties;
-    if (node !== void 0) return node;
+      cached = internal.properties;
+    if (cached !== void 0) return cached;
     return internal.properties = constructVecBindingProperty(internal.$pos + 8, internal.$ast);
   }
 
@@ -3467,7 +3869,13 @@ class BindingProperty {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+
+    const { nodes } = ast;
+    const cached = nodes.get(pos);
+    if (cached !== void 0) return cached;
+
     this.#internal = { $pos: pos, $ast: ast };
+    nodes.set(pos, this);
   }
 
   get start() {
@@ -3519,7 +3927,13 @@ class ArrayPattern {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+
+    const { nodes } = ast;
+    const cached = nodes.get(pos);
+    if (cached !== void 0) return cached;
+
     this.#internal = { $pos: pos, $ast: ast, elements: void 0 };
+    nodes.set(pos, this);
   }
 
   get start() {
@@ -3534,8 +3948,8 @@ class ArrayPattern {
 
   get elements() {
     const internal = this.#internal,
-      node = internal.elements;
-    if (node !== void 0) return node;
+      cached = internal.elements;
+    if (cached !== void 0) return cached;
     return internal.elements = constructVecOptionBindingPattern(internal.$pos + 8, internal.$ast);
   }
 
@@ -3555,7 +3969,13 @@ class BindingRestElement {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+
+    const { nodes } = ast;
+    const cached = nodes.get(pos);
+    if (cached !== void 0) return cached;
+
     this.#internal = { $pos: pos, $ast: ast };
+    nodes.set(pos, this);
   }
 
   get start() {
@@ -3588,7 +4008,13 @@ class Function {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+
+    const { nodes } = ast;
+    const cached = nodes.get(pos);
+    if (cached !== void 0) return cached;
+
     this.#internal = { $pos: pos, $ast: ast };
+    nodes.set(pos, this);
   }
 
   get start() {
@@ -3684,7 +4110,13 @@ class FormalParameters {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+
+    const { nodes } = ast;
+    const cached = nodes.get(pos);
+    if (cached !== void 0) return cached;
+
     this.#internal = { $pos: pos, $ast: ast, items: void 0 };
+    nodes.set(pos, this);
   }
 
   get start() {
@@ -3704,8 +4136,8 @@ class FormalParameters {
 
   get items() {
     const internal = this.#internal,
-      node = internal.items;
-    if (node !== void 0) return node;
+      cached = internal.items;
+    if (cached !== void 0) return cached;
     return internal.items = constructVecFormalParameter(internal.$pos + 8, internal.$ast);
   }
 
@@ -3725,13 +4157,19 @@ class FormalParameter {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+
+    const { nodes } = ast;
+    const cached = nodes.get(pos);
+    if (cached !== void 0) return cached;
+
     this.#internal = { $pos: pos, $ast: ast, decorators: void 0 };
+    nodes.set(pos, this);
   }
 
   get decorators() {
     const internal = this.#internal,
-      node = internal.decorators;
-    if (node !== void 0) return node;
+      cached = internal.decorators;
+    if (cached !== void 0) return cached;
     return internal.decorators = constructVecDecorator(internal.$pos + 8, internal.$ast);
   }
 
@@ -3769,7 +4207,13 @@ class FunctionBody {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+
+    const { nodes } = ast;
+    const cached = nodes.get(pos);
+    if (cached !== void 0) return cached;
+
     this.#internal = { $pos: pos, $ast: ast, body: void 0 };
+    nodes.set(pos, this);
   }
 
   get start() {
@@ -3784,8 +4228,8 @@ class FunctionBody {
 
   get body() {
     const internal = this.#internal,
-      node = internal.body;
-    if (node !== void 0) return node;
+      cached = internal.body;
+    if (cached !== void 0) return cached;
     return internal.body = constructVecStatement(internal.$pos + 32, internal.$ast);
   }
 
@@ -3805,7 +4249,13 @@ class ArrowFunctionExpression {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+
+    const { nodes } = ast;
+    const cached = nodes.get(pos);
+    if (cached !== void 0) return cached;
+
     this.#internal = { $pos: pos, $ast: ast };
+    nodes.set(pos, this);
   }
 
   get start() {
@@ -3869,7 +4319,13 @@ class YieldExpression {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+
+    const { nodes } = ast;
+    const cached = nodes.get(pos);
+    if (cached !== void 0) return cached;
+
     this.#internal = { $pos: pos, $ast: ast };
+    nodes.set(pos, this);
   }
 
   get start() {
@@ -3908,7 +4364,13 @@ class Class {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+
+    const { nodes } = ast;
+    const cached = nodes.get(pos);
+    if (cached !== void 0) return cached;
+
     this.#internal = { $pos: pos, $ast: ast, decorators: void 0, implements: void 0 };
+    nodes.set(pos, this);
   }
 
   get start() {
@@ -3928,8 +4390,8 @@ class Class {
 
   get decorators() {
     const internal = this.#internal,
-      node = internal.decorators;
-    if (node !== void 0) return node;
+      cached = internal.decorators;
+    if (cached !== void 0) return cached;
     return internal.decorators = constructVecDecorator(internal.$pos + 8, internal.$ast);
   }
 
@@ -3955,8 +4417,8 @@ class Class {
 
   get implements() {
     const internal = this.#internal,
-      node = internal.implements;
-    if (node !== void 0) return node;
+      cached = internal.implements;
+    if (cached !== void 0) return cached;
     return internal.implements = constructVecTSClassImplements(internal.$pos + 96, internal.$ast);
   }
 
@@ -4010,7 +4472,13 @@ class ClassBody {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+
+    const { nodes } = ast;
+    const cached = nodes.get(pos);
+    if (cached !== void 0) return cached;
+
     this.#internal = { $pos: pos, $ast: ast, body: void 0 };
+    nodes.set(pos, this);
   }
 
   get start() {
@@ -4025,8 +4493,8 @@ class ClassBody {
 
   get body() {
     const internal = this.#internal,
-      node = internal.body;
-    if (node !== void 0) return node;
+      cached = internal.body;
+    if (cached !== void 0) return cached;
     return internal.body = constructVecClassElement(internal.$pos + 8, internal.$ast);
   }
 
@@ -4062,7 +4530,13 @@ class MethodDefinition {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+
+    const { nodes } = ast;
+    const cached = nodes.get(pos);
+    if (cached !== void 0) return cached;
+
     this.#internal = { $pos: pos, $ast: ast, decorators: void 0 };
+    nodes.set(pos, this);
   }
 
   get start() {
@@ -4082,8 +4556,8 @@ class MethodDefinition {
 
   get decorators() {
     const internal = this.#internal,
-      node = internal.decorators;
-    if (node !== void 0) return node;
+      cached = internal.decorators;
+    if (cached !== void 0) return cached;
     return internal.decorators = constructVecDecorator(internal.$pos + 8, internal.$ast);
   }
 
@@ -4161,7 +4635,13 @@ class PropertyDefinition {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+
+    const { nodes } = ast;
+    const cached = nodes.get(pos);
+    if (cached !== void 0) return cached;
+
     this.#internal = { $pos: pos, $ast: ast, decorators: void 0 };
+    nodes.set(pos, this);
   }
 
   get start() {
@@ -4181,8 +4661,8 @@ class PropertyDefinition {
 
   get decorators() {
     const internal = this.#internal,
-      node = internal.decorators;
-    if (node !== void 0) return node;
+      cached = internal.decorators;
+    if (cached !== void 0) return cached;
     return internal.decorators = constructVecDecorator(internal.$pos + 8, internal.$ast);
   }
 
@@ -4294,7 +4774,13 @@ class PrivateIdentifier {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+
+    const { nodes } = ast;
+    const cached = nodes.get(pos);
+    if (cached !== void 0) return cached;
+
     this.#internal = { $pos: pos, $ast: ast, name: void 0 };
+    nodes.set(pos, this);
   }
 
   get start() {
@@ -4309,8 +4795,8 @@ class PrivateIdentifier {
 
   get name() {
     const internal = this.#internal,
-      node = internal.name;
-    if (node !== void 0) return node;
+      cached = internal.name;
+    if (cached !== void 0) return cached;
     return internal.name = constructStr(internal.$pos + 8, internal.$ast);
   }
 
@@ -4330,7 +4816,13 @@ class StaticBlock {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+
+    const { nodes } = ast;
+    const cached = nodes.get(pos);
+    if (cached !== void 0) return cached;
+
     this.#internal = { $pos: pos, $ast: ast, body: void 0 };
+    nodes.set(pos, this);
   }
 
   get start() {
@@ -4345,8 +4837,8 @@ class StaticBlock {
 
   get body() {
     const internal = this.#internal,
-      node = internal.body;
-    if (node !== void 0) return node;
+      cached = internal.body;
+    if (cached !== void 0) return cached;
     return internal.body = constructVecStatement(internal.$pos + 8, internal.$ast);
   }
 
@@ -4395,7 +4887,13 @@ class AccessorProperty {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+
+    const { nodes } = ast;
+    const cached = nodes.get(pos);
+    if (cached !== void 0) return cached;
+
     this.#internal = { $pos: pos, $ast: ast, decorators: void 0 };
+    nodes.set(pos, this);
   }
 
   get start() {
@@ -4415,8 +4913,8 @@ class AccessorProperty {
 
   get decorators() {
     const internal = this.#internal,
-      node = internal.decorators;
-    if (node !== void 0) return node;
+      cached = internal.decorators;
+    if (cached !== void 0) return cached;
     return internal.decorators = constructVecDecorator(internal.$pos + 8, internal.$ast);
   }
 
@@ -4484,7 +4982,13 @@ class ImportExpression {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+
+    const { nodes } = ast;
+    const cached = nodes.get(pos);
+    if (cached !== void 0) return cached;
+
     this.#internal = { $pos: pos, $ast: ast };
+    nodes.set(pos, this);
   }
 
   get start() {
@@ -4530,7 +5034,13 @@ class ImportDeclaration {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+
+    const { nodes } = ast;
+    const cached = nodes.get(pos);
+    if (cached !== void 0) return cached;
+
     this.#internal = { $pos: pos, $ast: ast };
+    nodes.set(pos, this);
   }
 
   get start() {
@@ -4612,7 +5122,13 @@ class ImportSpecifier {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+
+    const { nodes } = ast;
+    const cached = nodes.get(pos);
+    if (cached !== void 0) return cached;
+
     this.#internal = { $pos: pos, $ast: ast };
+    nodes.set(pos, this);
   }
 
   get start() {
@@ -4658,7 +5174,13 @@ class ImportDefaultSpecifier {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+
+    const { nodes } = ast;
+    const cached = nodes.get(pos);
+    if (cached !== void 0) return cached;
+
     this.#internal = { $pos: pos, $ast: ast };
+    nodes.set(pos, this);
   }
 
   get start() {
@@ -4692,7 +5214,13 @@ class ImportNamespaceSpecifier {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+
+    const { nodes } = ast;
+    const cached = nodes.get(pos);
+    if (cached !== void 0) return cached;
+
     this.#internal = { $pos: pos, $ast: ast };
+    nodes.set(pos, this);
   }
 
   get start() {
@@ -4725,13 +5253,19 @@ class WithClause {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+
+    const { nodes } = ast;
+    const cached = nodes.get(pos);
+    if (cached !== void 0) return cached;
+
     this.#internal = { $pos: pos, $ast: ast, attributes: void 0 };
+    nodes.set(pos, this);
   }
 
   get attributes() {
     const internal = this.#internal,
-      node = internal.attributes;
-    if (node !== void 0) return node;
+      cached = internal.attributes;
+    if (cached !== void 0) return cached;
     return internal.attributes = constructVecImportAttribute(internal.$pos + 32, internal.$ast);
   }
 
@@ -4748,7 +5282,13 @@ class ImportAttribute {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+
+    const { nodes } = ast;
+    const cached = nodes.get(pos);
+    if (cached !== void 0) return cached;
+
     this.#internal = { $pos: pos, $ast: ast };
+    nodes.set(pos, this);
   }
 
   get start() {
@@ -4799,7 +5339,13 @@ class ExportNamedDeclaration {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+
+    const { nodes } = ast;
+    const cached = nodes.get(pos);
+    if (cached !== void 0) return cached;
+
     this.#internal = { $pos: pos, $ast: ast, specifiers: void 0 };
+    nodes.set(pos, this);
   }
 
   get start() {
@@ -4819,8 +5365,8 @@ class ExportNamedDeclaration {
 
   get specifiers() {
     const internal = this.#internal,
-      node = internal.specifiers;
-    if (node !== void 0) return node;
+      cached = internal.specifiers;
+    if (cached !== void 0) return cached;
     return internal.specifiers = constructVecExportSpecifier(internal.$pos + 24, internal.$ast);
   }
 
@@ -4859,7 +5405,13 @@ class ExportDefaultDeclaration {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+
+    const { nodes } = ast;
+    const cached = nodes.get(pos);
+    if (cached !== void 0) return cached;
+
     this.#internal = { $pos: pos, $ast: ast };
+    nodes.set(pos, this);
   }
 
   get start() {
@@ -4893,7 +5445,13 @@ class ExportAllDeclaration {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+
+    const { nodes } = ast;
+    const cached = nodes.get(pos);
+    if (cached !== void 0) return cached;
+
     this.#internal = { $pos: pos, $ast: ast };
+    nodes.set(pos, this);
   }
 
   get start() {
@@ -4945,7 +5503,13 @@ class ExportSpecifier {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+
+    const { nodes } = ast;
+    const cached = nodes.get(pos);
+    if (cached !== void 0) return cached;
+
     this.#internal = { $pos: pos, $ast: ast };
+    nodes.set(pos, this);
   }
 
   get start() {
@@ -5103,7 +5667,13 @@ class V8IntrinsicExpression {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+
+    const { nodes } = ast;
+    const cached = nodes.get(pos);
+    if (cached !== void 0) return cached;
+
     this.#internal = { $pos: pos, $ast: ast, arguments: void 0 };
+    nodes.set(pos, this);
   }
 
   get start() {
@@ -5123,8 +5693,8 @@ class V8IntrinsicExpression {
 
   get arguments() {
     const internal = this.#internal,
-      node = internal.arguments;
-    if (node !== void 0) return node;
+      cached = internal.arguments;
+    if (cached !== void 0) return cached;
     return internal.arguments = constructVecArgument(internal.$pos + 32, internal.$ast);
   }
 
@@ -5145,7 +5715,13 @@ class BooleanLiteral {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+
+    const { nodes } = ast;
+    const cached = nodes.get(pos);
+    if (cached !== void 0) return cached;
+
     this.#internal = { $pos: pos, $ast: ast };
+    nodes.set(pos, this);
   }
 
   get start() {
@@ -5179,7 +5755,13 @@ class NullLiteral {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+
+    const { nodes } = ast;
+    const cached = nodes.get(pos);
+    if (cached !== void 0) return cached;
+
     this.#internal = { $pos: pos, $ast: ast };
+    nodes.set(pos, this);
   }
 
   get start() {
@@ -5207,7 +5789,13 @@ class NumericLiteral {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+
+    const { nodes } = ast;
+    const cached = nodes.get(pos);
+    if (cached !== void 0) return cached;
+
     this.#internal = { $pos: pos, $ast: ast, raw: void 0 };
+    nodes.set(pos, this);
   }
 
   get start() {
@@ -5227,8 +5815,8 @@ class NumericLiteral {
 
   get raw() {
     const internal = this.#internal,
-      node = internal.raw;
-    if (node !== void 0) return node;
+      cached = internal.raw;
+    if (cached !== void 0) return cached;
     return internal.raw = constructOptionStr(internal.$pos + 16, internal.$ast);
   }
 
@@ -5249,7 +5837,13 @@ class StringLiteral {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+
+    const { nodes } = ast;
+    const cached = nodes.get(pos);
+    if (cached !== void 0) return cached;
+
     this.#internal = { $pos: pos, $ast: ast, value: void 0, raw: void 0 };
+    nodes.set(pos, this);
   }
 
   get start() {
@@ -5264,15 +5858,15 @@ class StringLiteral {
 
   get value() {
     const internal = this.#internal,
-      node = internal.value;
-    if (node !== void 0) return node;
+      cached = internal.value;
+    if (cached !== void 0) return cached;
     return internal.value = constructStr(internal.$pos + 8, internal.$ast);
   }
 
   get raw() {
     const internal = this.#internal,
-      node = internal.raw;
-    if (node !== void 0) return node;
+      cached = internal.raw;
+    if (cached !== void 0) return cached;
     return internal.raw = constructOptionStr(internal.$pos + 24, internal.$ast);
   }
 
@@ -5293,7 +5887,13 @@ class BigIntLiteral {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+
+    const { nodes } = ast;
+    const cached = nodes.get(pos);
+    if (cached !== void 0) return cached;
+
     this.#internal = { $pos: pos, $ast: ast, value: void 0, raw: void 0 };
+    nodes.set(pos, this);
   }
 
   get start() {
@@ -5308,15 +5908,15 @@ class BigIntLiteral {
 
   get value() {
     const internal = this.#internal,
-      node = internal.value;
-    if (node !== void 0) return node;
+      cached = internal.value;
+    if (cached !== void 0) return cached;
     return internal.value = constructStr(internal.$pos + 8, internal.$ast);
   }
 
   get raw() {
     const internal = this.#internal,
-      node = internal.raw;
-    if (node !== void 0) return node;
+      cached = internal.raw;
+    if (cached !== void 0) return cached;
     return internal.raw = constructOptionStr(internal.$pos + 24, internal.$ast);
   }
 
@@ -5337,7 +5937,13 @@ class RegExpLiteral {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+
+    const { nodes } = ast;
+    const cached = nodes.get(pos);
+    if (cached !== void 0) return cached;
+
     this.#internal = { $pos: pos, $ast: ast, raw: void 0 };
+    nodes.set(pos, this);
   }
 
   get start() {
@@ -5357,8 +5963,8 @@ class RegExpLiteral {
 
   get raw() {
     const internal = this.#internal,
-      node = internal.raw;
-    if (node !== void 0) return node;
+      cached = internal.raw;
+    if (cached !== void 0) return cached;
     return internal.raw = constructOptionStr(internal.$pos + 40, internal.$ast);
   }
 
@@ -5378,7 +5984,14 @@ class RegExp {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+
+    const { nodes } = ast;
+    // `pos` would be same as one of fields, so add offset to ensure unique cache key
+    const cached = nodes.get(pos + 1);
+    if (cached !== void 0) return cached;
+
     this.#internal = { $pos: pos, $ast: ast };
+    nodes.set(pos + 1, this);
   }
 
   get pattern() {
@@ -5404,13 +6017,19 @@ class RegExpPattern {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+
+    const { nodes } = ast;
+    const cached = nodes.get(pos);
+    if (cached !== void 0) return cached;
+
     this.#internal = { $pos: pos, $ast: ast, pattern: void 0 };
+    nodes.set(pos, this);
   }
 
   get pattern() {
     const internal = this.#internal,
-      node = internal.pattern;
-    if (node !== void 0) return node;
+      cached = internal.pattern;
+    if (cached !== void 0) return cached;
     return internal.pattern = constructStr(internal.$pos, internal.$ast);
   }
 
@@ -5427,7 +6046,13 @@ class RegExpFlags {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+
+    const { nodes } = ast;
+    const cached = nodes.get(pos);
+    if (cached !== void 0) return cached;
+
     this.#internal = { $pos: pos, $ast: ast };
+    nodes.set(pos, this);
   }
 
   get 0() {
@@ -5448,7 +6073,13 @@ class JSXElement {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+
+    const { nodes } = ast;
+    const cached = nodes.get(pos);
+    if (cached !== void 0) return cached;
+
     this.#internal = { $pos: pos, $ast: ast, children: void 0 };
+    nodes.set(pos, this);
   }
 
   get start() {
@@ -5468,8 +6099,8 @@ class JSXElement {
 
   get children() {
     const internal = this.#internal,
-      node = internal.children;
-    if (node !== void 0) return node;
+      cached = internal.children;
+    if (cached !== void 0) return cached;
     return internal.children = constructVecJSXChild(internal.$pos + 16, internal.$ast);
   }
 
@@ -5496,7 +6127,13 @@ class JSXOpeningElement {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+
+    const { nodes } = ast;
+    const cached = nodes.get(pos);
+    if (cached !== void 0) return cached;
+
     this.#internal = { $pos: pos, $ast: ast, attributes: void 0 };
+    nodes.set(pos, this);
   }
 
   get start() {
@@ -5521,8 +6158,8 @@ class JSXOpeningElement {
 
   get attributes() {
     const internal = this.#internal,
-      node = internal.attributes;
-    if (node !== void 0) return node;
+      cached = internal.attributes;
+    if (cached !== void 0) return cached;
     return internal.attributes = constructVecJSXAttributeItem(internal.$pos + 32, internal.$ast);
   }
 
@@ -5544,7 +6181,13 @@ class JSXClosingElement {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+
+    const { nodes } = ast;
+    const cached = nodes.get(pos);
+    if (cached !== void 0) return cached;
+
     this.#internal = { $pos: pos, $ast: ast };
+    nodes.set(pos, this);
   }
 
   get start() {
@@ -5578,7 +6221,13 @@ class JSXFragment {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+
+    const { nodes } = ast;
+    const cached = nodes.get(pos);
+    if (cached !== void 0) return cached;
+
     this.#internal = { $pos: pos, $ast: ast, children: void 0 };
+    nodes.set(pos, this);
   }
 
   get start() {
@@ -5598,8 +6247,8 @@ class JSXFragment {
 
   get children() {
     const internal = this.#internal,
-      node = internal.children;
-    if (node !== void 0) return node;
+      cached = internal.children;
+    if (cached !== void 0) return cached;
     return internal.children = constructVecJSXChild(internal.$pos + 16, internal.$ast);
   }
 
@@ -5626,7 +6275,13 @@ class JSXOpeningFragment {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+
+    const { nodes } = ast;
+    const cached = nodes.get(pos);
+    if (cached !== void 0) return cached;
+
     this.#internal = { $pos: pos, $ast: ast };
+    nodes.set(pos, this);
   }
 
   get start() {
@@ -5654,7 +6309,13 @@ class JSXClosingFragment {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+
+    const { nodes } = ast;
+    const cached = nodes.get(pos);
+    if (cached !== void 0) return cached;
+
     this.#internal = { $pos: pos, $ast: ast };
+    nodes.set(pos, this);
   }
 
   get start() {
@@ -5699,7 +6360,13 @@ class JSXNamespacedName {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+
+    const { nodes } = ast;
+    const cached = nodes.get(pos);
+    if (cached !== void 0) return cached;
+
     this.#internal = { $pos: pos, $ast: ast };
+    nodes.set(pos, this);
   }
 
   get start() {
@@ -5739,7 +6406,13 @@ class JSXMemberExpression {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+
+    const { nodes } = ast;
+    const cached = nodes.get(pos);
+    if (cached !== void 0) return cached;
+
     this.#internal = { $pos: pos, $ast: ast };
+    nodes.set(pos, this);
   }
 
   get start() {
@@ -5792,7 +6465,13 @@ class JSXExpressionContainer {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+
+    const { nodes } = ast;
+    const cached = nodes.get(pos);
+    if (cached !== void 0) return cached;
+
     this.#internal = { $pos: pos, $ast: ast };
+    nodes.set(pos, this);
   }
 
   get start() {
@@ -5921,7 +6600,13 @@ class JSXEmptyExpression {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+
+    const { nodes } = ast;
+    const cached = nodes.get(pos);
+    if (cached !== void 0) return cached;
+
     this.#internal = { $pos: pos, $ast: ast };
+    nodes.set(pos, this);
   }
 
   get start() {
@@ -5960,7 +6645,13 @@ class JSXAttribute {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+
+    const { nodes } = ast;
+    const cached = nodes.get(pos);
+    if (cached !== void 0) return cached;
+
     this.#internal = { $pos: pos, $ast: ast };
+    nodes.set(pos, this);
   }
 
   get start() {
@@ -6000,7 +6691,13 @@ class JSXSpreadAttribute {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+
+    const { nodes } = ast;
+    const cached = nodes.get(pos);
+    if (cached !== void 0) return cached;
+
     this.#internal = { $pos: pos, $ast: ast };
+    nodes.set(pos, this);
   }
 
   get start() {
@@ -6060,7 +6757,13 @@ class JSXIdentifier {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+
+    const { nodes } = ast;
+    const cached = nodes.get(pos);
+    if (cached !== void 0) return cached;
+
     this.#internal = { $pos: pos, $ast: ast, name: void 0 };
+    nodes.set(pos, this);
   }
 
   get start() {
@@ -6075,8 +6778,8 @@ class JSXIdentifier {
 
   get name() {
     const internal = this.#internal,
-      node = internal.name;
-    if (node !== void 0) return node;
+      cached = internal.name;
+    if (cached !== void 0) return cached;
     return internal.name = constructStr(internal.$pos + 8, internal.$ast);
   }
 
@@ -6113,7 +6816,13 @@ class JSXSpreadChild {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+
+    const { nodes } = ast;
+    const cached = nodes.get(pos);
+    if (cached !== void 0) return cached;
+
     this.#internal = { $pos: pos, $ast: ast };
+    nodes.set(pos, this);
   }
 
   get start() {
@@ -6147,7 +6856,13 @@ class JSXText {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+
+    const { nodes } = ast;
+    const cached = nodes.get(pos);
+    if (cached !== void 0) return cached;
+
     this.#internal = { $pos: pos, $ast: ast, value: void 0, raw: void 0 };
+    nodes.set(pos, this);
   }
 
   get start() {
@@ -6162,15 +6877,15 @@ class JSXText {
 
   get value() {
     const internal = this.#internal,
-      node = internal.value;
-    if (node !== void 0) return node;
+      cached = internal.value;
+    if (cached !== void 0) return cached;
     return internal.value = constructStr(internal.$pos + 8, internal.$ast);
   }
 
   get raw() {
     const internal = this.#internal,
-      node = internal.raw;
-    if (node !== void 0) return node;
+      cached = internal.raw;
+    if (cached !== void 0) return cached;
     return internal.raw = constructOptionStr(internal.$pos + 24, internal.$ast);
   }
 
@@ -6191,7 +6906,13 @@ class TSThisParameter {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+
+    const { nodes } = ast;
+    const cached = nodes.get(pos);
+    if (cached !== void 0) return cached;
+
     this.#internal = { $pos: pos, $ast: ast };
+    nodes.set(pos, this);
   }
 
   get start() {
@@ -6225,7 +6946,13 @@ class TSEnumDeclaration {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+
+    const { nodes } = ast;
+    const cached = nodes.get(pos);
+    if (cached !== void 0) return cached;
+
     this.#internal = { $pos: pos, $ast: ast };
+    nodes.set(pos, this);
   }
 
   get start() {
@@ -6277,7 +7004,13 @@ class TSEnumBody {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+
+    const { nodes } = ast;
+    const cached = nodes.get(pos);
+    if (cached !== void 0) return cached;
+
     this.#internal = { $pos: pos, $ast: ast, members: void 0 };
+    nodes.set(pos, this);
   }
 
   get start() {
@@ -6292,8 +7025,8 @@ class TSEnumBody {
 
   get members() {
     const internal = this.#internal,
-      node = internal.members;
-    if (node !== void 0) return node;
+      cached = internal.members;
+    if (cached !== void 0) return cached;
     return internal.members = constructVecTSEnumMember(internal.$pos + 8, internal.$ast);
   }
 
@@ -6313,7 +7046,13 @@ class TSEnumMember {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+
+    const { nodes } = ast;
+    const cached = nodes.get(pos);
+    if (cached !== void 0) return cached;
+
     this.#internal = { $pos: pos, $ast: ast };
+    nodes.set(pos, this);
   }
 
   get start() {
@@ -6368,7 +7107,13 @@ class TSTypeAnnotation {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+
+    const { nodes } = ast;
+    const cached = nodes.get(pos);
+    if (cached !== void 0) return cached;
+
     this.#internal = { $pos: pos, $ast: ast };
+    nodes.set(pos, this);
   }
 
   get start() {
@@ -6402,7 +7147,13 @@ class TSLiteralType {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+
+    const { nodes } = ast;
+    const cached = nodes.get(pos);
+    if (cached !== void 0) return cached;
+
     this.#internal = { $pos: pos, $ast: ast };
+    nodes.set(pos, this);
   }
 
   get start() {
@@ -6536,7 +7287,13 @@ class TSConditionalType {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+
+    const { nodes } = ast;
+    const cached = nodes.get(pos);
+    if (cached !== void 0) return cached;
+
     this.#internal = { $pos: pos, $ast: ast };
+    nodes.set(pos, this);
   }
 
   get start() {
@@ -6588,7 +7345,13 @@ class TSUnionType {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+
+    const { nodes } = ast;
+    const cached = nodes.get(pos);
+    if (cached !== void 0) return cached;
+
     this.#internal = { $pos: pos, $ast: ast, types: void 0 };
+    nodes.set(pos, this);
   }
 
   get start() {
@@ -6603,8 +7366,8 @@ class TSUnionType {
 
   get types() {
     const internal = this.#internal,
-      node = internal.types;
-    if (node !== void 0) return node;
+      cached = internal.types;
+    if (cached !== void 0) return cached;
     return internal.types = constructVecTSType(internal.$pos + 8, internal.$ast);
   }
 
@@ -6624,7 +7387,13 @@ class TSIntersectionType {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+
+    const { nodes } = ast;
+    const cached = nodes.get(pos);
+    if (cached !== void 0) return cached;
+
     this.#internal = { $pos: pos, $ast: ast, types: void 0 };
+    nodes.set(pos, this);
   }
 
   get start() {
@@ -6639,8 +7408,8 @@ class TSIntersectionType {
 
   get types() {
     const internal = this.#internal,
-      node = internal.types;
-    if (node !== void 0) return node;
+      cached = internal.types;
+    if (cached !== void 0) return cached;
     return internal.types = constructVecTSType(internal.$pos + 8, internal.$ast);
   }
 
@@ -6660,7 +7429,13 @@ class TSParenthesizedType {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+
+    const { nodes } = ast;
+    const cached = nodes.get(pos);
+    if (cached !== void 0) return cached;
+
     this.#internal = { $pos: pos, $ast: ast };
+    nodes.set(pos, this);
   }
 
   get start() {
@@ -6694,7 +7469,13 @@ class TSTypeOperator {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+
+    const { nodes } = ast;
+    const cached = nodes.get(pos);
+    if (cached !== void 0) return cached;
+
     this.#internal = { $pos: pos, $ast: ast };
+    nodes.set(pos, this);
   }
 
   get start() {
@@ -6747,7 +7528,13 @@ class TSArrayType {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+
+    const { nodes } = ast;
+    const cached = nodes.get(pos);
+    if (cached !== void 0) return cached;
+
     this.#internal = { $pos: pos, $ast: ast };
+    nodes.set(pos, this);
   }
 
   get start() {
@@ -6781,7 +7568,13 @@ class TSIndexedAccessType {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+
+    const { nodes } = ast;
+    const cached = nodes.get(pos);
+    if (cached !== void 0) return cached;
+
     this.#internal = { $pos: pos, $ast: ast };
+    nodes.set(pos, this);
   }
 
   get start() {
@@ -6821,7 +7614,13 @@ class TSTupleType {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+
+    const { nodes } = ast;
+    const cached = nodes.get(pos);
+    if (cached !== void 0) return cached;
+
     this.#internal = { $pos: pos, $ast: ast, elementTypes: void 0 };
+    nodes.set(pos, this);
   }
 
   get start() {
@@ -6836,8 +7635,8 @@ class TSTupleType {
 
   get elementTypes() {
     const internal = this.#internal,
-      node = internal.elementTypes;
-    if (node !== void 0) return node;
+      cached = internal.elementTypes;
+    if (cached !== void 0) return cached;
     return internal.elementTypes = constructVecTSTupleElement(internal.$pos + 8, internal.$ast);
   }
 
@@ -6857,7 +7656,13 @@ class TSNamedTupleMember {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+
+    const { nodes } = ast;
+    const cached = nodes.get(pos);
+    if (cached !== void 0) return cached;
+
     this.#internal = { $pos: pos, $ast: ast };
+    nodes.set(pos, this);
   }
 
   get start() {
@@ -6903,7 +7708,13 @@ class TSOptionalType {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+
+    const { nodes } = ast;
+    const cached = nodes.get(pos);
+    if (cached !== void 0) return cached;
+
     this.#internal = { $pos: pos, $ast: ast };
+    nodes.set(pos, this);
   }
 
   get start() {
@@ -6937,7 +7748,13 @@ class TSRestType {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+
+    const { nodes } = ast;
+    const cached = nodes.get(pos);
+    if (cached !== void 0) return cached;
+
     this.#internal = { $pos: pos, $ast: ast };
+    nodes.set(pos, this);
   }
 
   get start() {
@@ -7056,7 +7873,13 @@ class TSAnyKeyword {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+
+    const { nodes } = ast;
+    const cached = nodes.get(pos);
+    if (cached !== void 0) return cached;
+
     this.#internal = { $pos: pos, $ast: ast };
+    nodes.set(pos, this);
   }
 
   get start() {
@@ -7084,7 +7907,13 @@ class TSStringKeyword {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+
+    const { nodes } = ast;
+    const cached = nodes.get(pos);
+    if (cached !== void 0) return cached;
+
     this.#internal = { $pos: pos, $ast: ast };
+    nodes.set(pos, this);
   }
 
   get start() {
@@ -7112,7 +7941,13 @@ class TSBooleanKeyword {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+
+    const { nodes } = ast;
+    const cached = nodes.get(pos);
+    if (cached !== void 0) return cached;
+
     this.#internal = { $pos: pos, $ast: ast };
+    nodes.set(pos, this);
   }
 
   get start() {
@@ -7140,7 +7975,13 @@ class TSNumberKeyword {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+
+    const { nodes } = ast;
+    const cached = nodes.get(pos);
+    if (cached !== void 0) return cached;
+
     this.#internal = { $pos: pos, $ast: ast };
+    nodes.set(pos, this);
   }
 
   get start() {
@@ -7168,7 +8009,13 @@ class TSNeverKeyword {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+
+    const { nodes } = ast;
+    const cached = nodes.get(pos);
+    if (cached !== void 0) return cached;
+
     this.#internal = { $pos: pos, $ast: ast };
+    nodes.set(pos, this);
   }
 
   get start() {
@@ -7196,7 +8043,13 @@ class TSIntrinsicKeyword {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+
+    const { nodes } = ast;
+    const cached = nodes.get(pos);
+    if (cached !== void 0) return cached;
+
     this.#internal = { $pos: pos, $ast: ast };
+    nodes.set(pos, this);
   }
 
   get start() {
@@ -7224,7 +8077,13 @@ class TSUnknownKeyword {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+
+    const { nodes } = ast;
+    const cached = nodes.get(pos);
+    if (cached !== void 0) return cached;
+
     this.#internal = { $pos: pos, $ast: ast };
+    nodes.set(pos, this);
   }
 
   get start() {
@@ -7252,7 +8111,13 @@ class TSNullKeyword {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+
+    const { nodes } = ast;
+    const cached = nodes.get(pos);
+    if (cached !== void 0) return cached;
+
     this.#internal = { $pos: pos, $ast: ast };
+    nodes.set(pos, this);
   }
 
   get start() {
@@ -7280,7 +8145,13 @@ class TSUndefinedKeyword {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+
+    const { nodes } = ast;
+    const cached = nodes.get(pos);
+    if (cached !== void 0) return cached;
+
     this.#internal = { $pos: pos, $ast: ast };
+    nodes.set(pos, this);
   }
 
   get start() {
@@ -7308,7 +8179,13 @@ class TSVoidKeyword {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+
+    const { nodes } = ast;
+    const cached = nodes.get(pos);
+    if (cached !== void 0) return cached;
+
     this.#internal = { $pos: pos, $ast: ast };
+    nodes.set(pos, this);
   }
 
   get start() {
@@ -7336,7 +8213,13 @@ class TSSymbolKeyword {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+
+    const { nodes } = ast;
+    const cached = nodes.get(pos);
+    if (cached !== void 0) return cached;
+
     this.#internal = { $pos: pos, $ast: ast };
+    nodes.set(pos, this);
   }
 
   get start() {
@@ -7364,7 +8247,13 @@ class TSThisType {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+
+    const { nodes } = ast;
+    const cached = nodes.get(pos);
+    if (cached !== void 0) return cached;
+
     this.#internal = { $pos: pos, $ast: ast };
+    nodes.set(pos, this);
   }
 
   get start() {
@@ -7392,7 +8281,13 @@ class TSObjectKeyword {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+
+    const { nodes } = ast;
+    const cached = nodes.get(pos);
+    if (cached !== void 0) return cached;
+
     this.#internal = { $pos: pos, $ast: ast };
+    nodes.set(pos, this);
   }
 
   get start() {
@@ -7420,7 +8315,13 @@ class TSBigIntKeyword {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+
+    const { nodes } = ast;
+    const cached = nodes.get(pos);
+    if (cached !== void 0) return cached;
+
     this.#internal = { $pos: pos, $ast: ast };
+    nodes.set(pos, this);
   }
 
   get start() {
@@ -7448,7 +8349,13 @@ class TSTypeReference {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+
+    const { nodes } = ast;
+    const cached = nodes.get(pos);
+    if (cached !== void 0) return cached;
+
     this.#internal = { $pos: pos, $ast: ast };
+    nodes.set(pos, this);
   }
 
   get start() {
@@ -7499,7 +8406,13 @@ class TSQualifiedName {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+
+    const { nodes } = ast;
+    const cached = nodes.get(pos);
+    if (cached !== void 0) return cached;
+
     this.#internal = { $pos: pos, $ast: ast };
+    nodes.set(pos, this);
   }
 
   get start() {
@@ -7539,7 +8452,13 @@ class TSTypeParameterInstantiation {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+
+    const { nodes } = ast;
+    const cached = nodes.get(pos);
+    if (cached !== void 0) return cached;
+
     this.#internal = { $pos: pos, $ast: ast, params: void 0 };
+    nodes.set(pos, this);
   }
 
   get start() {
@@ -7554,8 +8473,8 @@ class TSTypeParameterInstantiation {
 
   get params() {
     const internal = this.#internal,
-      node = internal.params;
-    if (node !== void 0) return node;
+      cached = internal.params;
+    if (cached !== void 0) return cached;
     return internal.params = constructVecTSType(internal.$pos + 8, internal.$ast);
   }
 
@@ -7575,7 +8494,13 @@ class TSTypeParameter {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+
+    const { nodes } = ast;
+    const cached = nodes.get(pos);
+    if (cached !== void 0) return cached;
+
     this.#internal = { $pos: pos, $ast: ast };
+    nodes.set(pos, this);
   }
 
   get start() {
@@ -7639,7 +8564,13 @@ class TSTypeParameterDeclaration {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+
+    const { nodes } = ast;
+    const cached = nodes.get(pos);
+    if (cached !== void 0) return cached;
+
     this.#internal = { $pos: pos, $ast: ast, params: void 0 };
+    nodes.set(pos, this);
   }
 
   get start() {
@@ -7654,8 +8585,8 @@ class TSTypeParameterDeclaration {
 
   get params() {
     const internal = this.#internal,
-      node = internal.params;
-    if (node !== void 0) return node;
+      cached = internal.params;
+    if (cached !== void 0) return cached;
     return internal.params = constructVecTSTypeParameter(internal.$pos + 8, internal.$ast);
   }
 
@@ -7675,7 +8606,13 @@ class TSTypeAliasDeclaration {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+
+    const { nodes } = ast;
+    const cached = nodes.get(pos);
+    if (cached !== void 0) return cached;
+
     this.#internal = { $pos: pos, $ast: ast };
+    nodes.set(pos, this);
   }
 
   get start() {
@@ -7740,7 +8677,13 @@ class TSClassImplements {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+
+    const { nodes } = ast;
+    const cached = nodes.get(pos);
+    if (cached !== void 0) return cached;
+
     this.#internal = { $pos: pos, $ast: ast };
+    nodes.set(pos, this);
   }
 
   get start() {
@@ -7780,7 +8723,13 @@ class TSInterfaceDeclaration {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+
+    const { nodes } = ast;
+    const cached = nodes.get(pos);
+    if (cached !== void 0) return cached;
+
     this.#internal = { $pos: pos, $ast: ast, extends: void 0 };
+    nodes.set(pos, this);
   }
 
   get start() {
@@ -7805,8 +8754,8 @@ class TSInterfaceDeclaration {
 
   get extends() {
     const internal = this.#internal,
-      node = internal.extends;
-    if (node !== void 0) return node;
+      cached = internal.extends;
+    if (cached !== void 0) return cached;
     return internal.extends = constructVecTSInterfaceHeritage(internal.$pos + 48, internal.$ast);
   }
 
@@ -7840,7 +8789,13 @@ class TSInterfaceBody {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+
+    const { nodes } = ast;
+    const cached = nodes.get(pos);
+    if (cached !== void 0) return cached;
+
     this.#internal = { $pos: pos, $ast: ast, body: void 0 };
+    nodes.set(pos, this);
   }
 
   get start() {
@@ -7855,8 +8810,8 @@ class TSInterfaceBody {
 
   get body() {
     const internal = this.#internal,
-      node = internal.body;
-    if (node !== void 0) return node;
+      cached = internal.body;
+    if (cached !== void 0) return cached;
     return internal.body = constructVecTSSignature(internal.$pos + 8, internal.$ast);
   }
 
@@ -7876,7 +8831,13 @@ class TSPropertySignature {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+
+    const { nodes } = ast;
+    const cached = nodes.get(pos);
+    if (cached !== void 0) return cached;
+
     this.#internal = { $pos: pos, $ast: ast };
+    nodes.set(pos, this);
   }
 
   get start() {
@@ -7951,7 +8912,13 @@ class TSIndexSignature {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+
+    const { nodes } = ast;
+    const cached = nodes.get(pos);
+    if (cached !== void 0) return cached;
+
     this.#internal = { $pos: pos, $ast: ast, parameters: void 0 };
+    nodes.set(pos, this);
   }
 
   get start() {
@@ -7966,8 +8933,8 @@ class TSIndexSignature {
 
   get parameters() {
     const internal = this.#internal,
-      node = internal.parameters;
-    if (node !== void 0) return node;
+      cached = internal.parameters;
+    if (cached !== void 0) return cached;
     return internal.parameters = constructVecTSIndexSignatureName(internal.$pos + 8, internal.$ast);
   }
 
@@ -8005,7 +8972,13 @@ class TSCallSignatureDeclaration {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+
+    const { nodes } = ast;
+    const cached = nodes.get(pos);
+    if (cached !== void 0) return cached;
+
     this.#internal = { $pos: pos, $ast: ast };
+    nodes.set(pos, this);
   }
 
   get start() {
@@ -8064,7 +9037,13 @@ class TSMethodSignature {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+
+    const { nodes } = ast;
+    const cached = nodes.get(pos);
+    if (cached !== void 0) return cached;
+
     this.#internal = { $pos: pos, $ast: ast };
+    nodes.set(pos, this);
   }
 
   get start() {
@@ -8134,7 +9113,13 @@ class TSConstructSignatureDeclaration {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+
+    const { nodes } = ast;
+    const cached = nodes.get(pos);
+    if (cached !== void 0) return cached;
+
     this.#internal = { $pos: pos, $ast: ast };
+    nodes.set(pos, this);
   }
 
   get start() {
@@ -8180,7 +9165,13 @@ class TSIndexSignatureName {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+
+    const { nodes } = ast;
+    const cached = nodes.get(pos);
+    if (cached !== void 0) return cached;
+
     this.#internal = { $pos: pos, $ast: ast, name: void 0 };
+    nodes.set(pos, this);
   }
 
   get start() {
@@ -8195,8 +9186,8 @@ class TSIndexSignatureName {
 
   get name() {
     const internal = this.#internal,
-      node = internal.name;
-    if (node !== void 0) return node;
+      cached = internal.name;
+    if (cached !== void 0) return cached;
     return internal.name = constructStr(internal.$pos + 8, internal.$ast);
   }
 
@@ -8222,7 +9213,13 @@ class TSInterfaceHeritage {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+
+    const { nodes } = ast;
+    const cached = nodes.get(pos);
+    if (cached !== void 0) return cached;
+
     this.#internal = { $pos: pos, $ast: ast };
+    nodes.set(pos, this);
   }
 
   get start() {
@@ -8262,7 +9259,13 @@ class TSTypePredicate {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+
+    const { nodes } = ast;
+    const cached = nodes.get(pos);
+    if (cached !== void 0) return cached;
+
     this.#internal = { $pos: pos, $ast: ast };
+    nodes.set(pos, this);
   }
 
   get start() {
@@ -8319,7 +9322,13 @@ class TSModuleDeclaration {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+
+    const { nodes } = ast;
+    const cached = nodes.get(pos);
+    if (cached !== void 0) return cached;
+
     this.#internal = { $pos: pos, $ast: ast };
+    nodes.set(pos, this);
   }
 
   get start() {
@@ -8406,7 +9415,13 @@ class TSModuleBlock {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+
+    const { nodes } = ast;
+    const cached = nodes.get(pos);
+    if (cached !== void 0) return cached;
+
     this.#internal = { $pos: pos, $ast: ast, body: void 0 };
+    nodes.set(pos, this);
   }
 
   get start() {
@@ -8421,8 +9436,8 @@ class TSModuleBlock {
 
   get body() {
     const internal = this.#internal,
-      node = internal.body;
-    if (node !== void 0) return node;
+      cached = internal.body;
+    if (cached !== void 0) return cached;
     return internal.body = constructVecStatement(internal.$pos + 32, internal.$ast);
   }
 
@@ -8442,7 +9457,13 @@ class TSTypeLiteral {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+
+    const { nodes } = ast;
+    const cached = nodes.get(pos);
+    if (cached !== void 0) return cached;
+
     this.#internal = { $pos: pos, $ast: ast, members: void 0 };
+    nodes.set(pos, this);
   }
 
   get start() {
@@ -8457,8 +9478,8 @@ class TSTypeLiteral {
 
   get members() {
     const internal = this.#internal,
-      node = internal.members;
-    if (node !== void 0) return node;
+      cached = internal.members;
+    if (cached !== void 0) return cached;
     return internal.members = constructVecTSSignature(internal.$pos + 8, internal.$ast);
   }
 
@@ -8478,7 +9499,13 @@ class TSInferType {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+
+    const { nodes } = ast;
+    const cached = nodes.get(pos);
+    if (cached !== void 0) return cached;
+
     this.#internal = { $pos: pos, $ast: ast };
+    nodes.set(pos, this);
   }
 
   get start() {
@@ -8512,7 +9539,13 @@ class TSTypeQuery {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+
+    const { nodes } = ast;
+    const cached = nodes.get(pos);
+    if (cached !== void 0) return cached;
+
     this.#internal = { $pos: pos, $ast: ast };
+    nodes.set(pos, this);
   }
 
   get start() {
@@ -8565,7 +9598,13 @@ class TSImportType {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+
+    const { nodes } = ast;
+    const cached = nodes.get(pos);
+    if (cached !== void 0) return cached;
+
     this.#internal = { $pos: pos, $ast: ast };
+    nodes.set(pos, this);
   }
 
   get start() {
@@ -8617,7 +9656,13 @@ class TSFunctionType {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+
+    const { nodes } = ast;
+    const cached = nodes.get(pos);
+    if (cached !== void 0) return cached;
+
     this.#internal = { $pos: pos, $ast: ast };
+    nodes.set(pos, this);
   }
 
   get start() {
@@ -8663,7 +9708,13 @@ class TSConstructorType {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+
+    const { nodes } = ast;
+    const cached = nodes.get(pos);
+    if (cached !== void 0) return cached;
+
     this.#internal = { $pos: pos, $ast: ast };
+    nodes.set(pos, this);
   }
 
   get start() {
@@ -8715,7 +9766,13 @@ class TSMappedType {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+
+    const { nodes } = ast;
+    const cached = nodes.get(pos);
+    if (cached !== void 0) return cached;
+
     this.#internal = { $pos: pos, $ast: ast };
+    nodes.set(pos, this);
   }
 
   get start() {
@@ -8780,7 +9837,13 @@ class TSTemplateLiteralType {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+
+    const { nodes } = ast;
+    const cached = nodes.get(pos);
+    if (cached !== void 0) return cached;
+
     this.#internal = { $pos: pos, $ast: ast, quasis: void 0, types: void 0 };
+    nodes.set(pos, this);
   }
 
   get start() {
@@ -8795,15 +9858,15 @@ class TSTemplateLiteralType {
 
   get quasis() {
     const internal = this.#internal,
-      node = internal.quasis;
-    if (node !== void 0) return node;
+      cached = internal.quasis;
+    if (cached !== void 0) return cached;
     return internal.quasis = constructVecTemplateElement(internal.$pos + 8, internal.$ast);
   }
 
   get types() {
     const internal = this.#internal,
-      node = internal.types;
-    if (node !== void 0) return node;
+      cached = internal.types;
+    if (cached !== void 0) return cached;
     return internal.types = constructVecTSType(internal.$pos + 32, internal.$ast);
   }
 
@@ -8824,7 +9887,13 @@ class TSAsExpression {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+
+    const { nodes } = ast;
+    const cached = nodes.get(pos);
+    if (cached !== void 0) return cached;
+
     this.#internal = { $pos: pos, $ast: ast };
+    nodes.set(pos, this);
   }
 
   get start() {
@@ -8864,7 +9933,13 @@ class TSSatisfiesExpression {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+
+    const { nodes } = ast;
+    const cached = nodes.get(pos);
+    if (cached !== void 0) return cached;
+
     this.#internal = { $pos: pos, $ast: ast };
+    nodes.set(pos, this);
   }
 
   get start() {
@@ -8904,7 +9979,13 @@ class TSTypeAssertion {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+
+    const { nodes } = ast;
+    const cached = nodes.get(pos);
+    if (cached !== void 0) return cached;
+
     this.#internal = { $pos: pos, $ast: ast };
+    nodes.set(pos, this);
   }
 
   get start() {
@@ -8944,7 +10025,13 @@ class TSImportEqualsDeclaration {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+
+    const { nodes } = ast;
+    const cached = nodes.get(pos);
+    if (cached !== void 0) return cached;
+
     this.#internal = { $pos: pos, $ast: ast };
+    nodes.set(pos, this);
   }
 
   get start() {
@@ -9003,7 +10090,13 @@ class TSExternalModuleReference {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+
+    const { nodes } = ast;
+    const cached = nodes.get(pos);
+    if (cached !== void 0) return cached;
+
     this.#internal = { $pos: pos, $ast: ast };
+    nodes.set(pos, this);
   }
 
   get start() {
@@ -9037,7 +10130,13 @@ class TSNonNullExpression {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+
+    const { nodes } = ast;
+    const cached = nodes.get(pos);
+    if (cached !== void 0) return cached;
+
     this.#internal = { $pos: pos, $ast: ast };
+    nodes.set(pos, this);
   }
 
   get start() {
@@ -9071,7 +10170,13 @@ class Decorator {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+
+    const { nodes } = ast;
+    const cached = nodes.get(pos);
+    if (cached !== void 0) return cached;
+
     this.#internal = { $pos: pos, $ast: ast };
+    nodes.set(pos, this);
   }
 
   get start() {
@@ -9105,7 +10210,13 @@ class TSExportAssignment {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+
+    const { nodes } = ast;
+    const cached = nodes.get(pos);
+    if (cached !== void 0) return cached;
+
     this.#internal = { $pos: pos, $ast: ast };
+    nodes.set(pos, this);
   }
 
   get start() {
@@ -9139,7 +10250,13 @@ class TSNamespaceExportDeclaration {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+
+    const { nodes } = ast;
+    const cached = nodes.get(pos);
+    if (cached !== void 0) return cached;
+
     this.#internal = { $pos: pos, $ast: ast };
+    nodes.set(pos, this);
   }
 
   get start() {
@@ -9173,7 +10290,13 @@ class TSInstantiationExpression {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+
+    const { nodes } = ast;
+    const cached = nodes.get(pos);
+    if (cached !== void 0) return cached;
+
     this.#internal = { $pos: pos, $ast: ast };
+    nodes.set(pos, this);
   }
 
   get start() {
@@ -9224,7 +10347,13 @@ class JSDocNullableType {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+
+    const { nodes } = ast;
+    const cached = nodes.get(pos);
+    if (cached !== void 0) return cached;
+
     this.#internal = { $pos: pos, $ast: ast };
+    nodes.set(pos, this);
   }
 
   get start() {
@@ -9264,7 +10393,13 @@ class JSDocNonNullableType {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+
+    const { nodes } = ast;
+    const cached = nodes.get(pos);
+    if (cached !== void 0) return cached;
+
     this.#internal = { $pos: pos, $ast: ast };
+    nodes.set(pos, this);
   }
 
   get start() {
@@ -9304,7 +10439,13 @@ class JSDocUnknownType {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+
+    const { nodes } = ast;
+    const cached = nodes.get(pos);
+    if (cached !== void 0) return cached;
+
     this.#internal = { $pos: pos, $ast: ast };
+    nodes.set(pos, this);
   }
 
   get start() {
@@ -9342,7 +10483,13 @@ class Comment {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+
+    const { nodes } = ast;
+    const cached = nodes.get(pos);
+    if (cached !== void 0) return cached;
+
     this.#internal = { $pos: pos, $ast: ast };
+    nodes.set(pos, this);
   }
 
   get start() {
@@ -9374,13 +10521,19 @@ class NameSpan {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+
+    const { nodes } = ast;
+    const cached = nodes.get(pos);
+    if (cached !== void 0) return cached;
+
     this.#internal = { $pos: pos, $ast: ast, value: void 0 };
+    nodes.set(pos, this);
   }
 
   get value() {
     const internal = this.#internal,
-      node = internal.value;
-    if (node !== void 0) return node;
+      cached = internal.value;
+    if (cached !== void 0) return cached;
     return internal.value = constructStr(internal.$pos + 8, internal.$ast);
   }
 
@@ -9408,7 +10561,13 @@ class ImportEntry {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+
+    const { nodes } = ast;
+    const cached = nodes.get(pos);
+    if (cached !== void 0) return cached;
+
     this.#internal = { $pos: pos, $ast: ast };
+    nodes.set(pos, this);
   }
 
   get importName() {
@@ -9453,7 +10612,13 @@ class ExportEntry {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+
+    const { nodes } = ast;
+    const cached = nodes.get(pos);
+    if (cached !== void 0) return cached;
+
     this.#internal = { $pos: pos, $ast: ast };
+    nodes.set(pos, this);
   }
 
   get start() {
@@ -9550,7 +10715,13 @@ class DynamicImport {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+
+    const { nodes } = ast;
+    const cached = nodes.get(pos);
+    if (cached !== void 0) return cached;
+
     this.#internal = { $pos: pos, $ast: ast };
+    nodes.set(pos, this);
   }
 
   get start() {
@@ -9717,7 +10888,13 @@ class Span {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+
+    const { nodes } = ast;
+    const cached = nodes.get(pos);
+    if (cached !== void 0) return cached;
+
     this.#internal = { $pos: pos, $ast: ast };
+    nodes.set(pos, this);
   }
 
   get start() {
@@ -9743,7 +10920,13 @@ class SourceType {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+
+    const { nodes } = ast;
+    const cached = nodes.get(pos);
+    if (cached !== void 0) return cached;
+
     this.#internal = { $pos: pos, $ast: ast };
+    nodes.set(pos, this);
   }
 
   get sourceType() {
@@ -9774,7 +10957,14 @@ class RawTransferData {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+
+    const { nodes } = ast;
+    // `pos` would be same as one of fields, so add offset to ensure unique cache key
+    const cached = nodes.get(pos + 1);
+    if (cached !== void 0) return cached;
+
     this.#internal = { $pos: pos, $ast: ast, comments: void 0, errors: void 0 };
+    nodes.set(pos + 1, this);
   }
 
   get program() {
@@ -9784,8 +10974,8 @@ class RawTransferData {
 
   get comments() {
     const internal = this.#internal,
-      node = internal.comments;
-    if (node !== void 0) return node;
+      cached = internal.comments;
+    if (cached !== void 0) return cached;
     return internal.comments = constructVecComment(internal.$pos + 128, internal.$ast);
   }
 
@@ -9796,8 +10986,8 @@ class RawTransferData {
 
   get errors() {
     const internal = this.#internal,
-      node = internal.errors;
-    if (node !== void 0) return node;
+      cached = internal.errors;
+    if (cached !== void 0) return cached;
     return internal.errors = constructVecError(internal.$pos + 256, internal.$ast);
   }
 
@@ -9816,7 +11006,13 @@ class Error {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+
+    const { nodes } = ast;
+    const cached = nodes.get(pos);
+    if (cached !== void 0) return cached;
+
     this.#internal = { $pos: pos, $ast: ast, message: void 0, labels: void 0, helpMessage: void 0, codeframe: void 0 };
+    nodes.set(pos, this);
   }
 
   get severity() {
@@ -9826,29 +11022,29 @@ class Error {
 
   get message() {
     const internal = this.#internal,
-      node = internal.message;
-    if (node !== void 0) return node;
+      cached = internal.message;
+    if (cached !== void 0) return cached;
     return internal.message = constructStr(internal.$pos, internal.$ast);
   }
 
   get labels() {
     const internal = this.#internal,
-      node = internal.labels;
-    if (node !== void 0) return node;
+      cached = internal.labels;
+    if (cached !== void 0) return cached;
     return internal.labels = constructVecErrorLabel(internal.$pos + 16, internal.$ast);
   }
 
   get helpMessage() {
     const internal = this.#internal,
-      node = internal.helpMessage;
-    if (node !== void 0) return node;
+      cached = internal.helpMessage;
+    if (cached !== void 0) return cached;
     return internal.helpMessage = constructOptionStr(internal.$pos + 40, internal.$ast);
   }
 
   get codeframe() {
     const internal = this.#internal,
-      node = internal.codeframe;
-    if (node !== void 0) return node;
+      cached = internal.codeframe;
+    if (cached !== void 0) return cached;
     return internal.codeframe = constructStr(internal.$pos + 56, internal.$ast);
   }
 
@@ -9881,13 +11077,19 @@ class ErrorLabel {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+
+    const { nodes } = ast;
+    const cached = nodes.get(pos);
+    if (cached !== void 0) return cached;
+
     this.#internal = { $pos: pos, $ast: ast, message: void 0 };
+    nodes.set(pos, this);
   }
 
   get message() {
     const internal = this.#internal,
-      node = internal.message;
-    if (node !== void 0) return node;
+      cached = internal.message;
+    if (cached !== void 0) return cached;
     return internal.message = constructOptionStr(internal.$pos + 8, internal.$ast);
   }
 
@@ -9915,6 +11117,11 @@ class EcmaScriptModule {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+
+    const { nodes } = ast;
+    const cached = nodes.get(pos);
+    if (cached !== void 0) return cached;
+
     this.#internal = {
       $pos: pos,
       $ast: ast,
@@ -9923,6 +11130,7 @@ class EcmaScriptModule {
       dynamicImports: void 0,
       importMetas: void 0,
     };
+    nodes.set(pos, this);
   }
 
   get hasModuleSyntax() {
@@ -9932,29 +11140,29 @@ class EcmaScriptModule {
 
   get staticImports() {
     const internal = this.#internal,
-      node = internal.staticImports;
-    if (node !== void 0) return node;
+      cached = internal.staticImports;
+    if (cached !== void 0) return cached;
     return internal.staticImports = constructVecStaticImport(internal.$pos, internal.$ast);
   }
 
   get staticExports() {
     const internal = this.#internal,
-      node = internal.staticExports;
-    if (node !== void 0) return node;
+      cached = internal.staticExports;
+    if (cached !== void 0) return cached;
     return internal.staticExports = constructVecStaticExport(internal.$pos + 24, internal.$ast);
   }
 
   get dynamicImports() {
     const internal = this.#internal,
-      node = internal.dynamicImports;
-    if (node !== void 0) return node;
+      cached = internal.dynamicImports;
+    if (cached !== void 0) return cached;
     return internal.dynamicImports = constructVecDynamicImport(internal.$pos + 48, internal.$ast);
   }
 
   get importMetas() {
     const internal = this.#internal,
-      node = internal.importMetas;
-    if (node !== void 0) return node;
+      cached = internal.importMetas;
+    if (cached !== void 0) return cached;
     return internal.importMetas = constructVecSpan(internal.$pos + 72, internal.$ast);
   }
 
@@ -9974,7 +11182,13 @@ class StaticImport {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+
+    const { nodes } = ast;
+    const cached = nodes.get(pos);
+    if (cached !== void 0) return cached;
+
     this.#internal = { $pos: pos, $ast: ast, entries: void 0 };
+    nodes.set(pos, this);
   }
 
   get start() {
@@ -9994,8 +11208,8 @@ class StaticImport {
 
   get entries() {
     const internal = this.#internal,
-      node = internal.entries;
-    if (node !== void 0) return node;
+      cached = internal.entries;
+    if (cached !== void 0) return cached;
     return internal.entries = constructVecImportEntry(internal.$pos + 32, internal.$ast);
   }
 
@@ -10014,7 +11228,13 @@ class StaticExport {
 
   constructor(pos, ast) {
     if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+
+    const { nodes } = ast;
+    const cached = nodes.get(pos);
+    if (cached !== void 0) return cached;
+
     this.#internal = { $pos: pos, $ast: ast, entries: void 0 };
+    nodes.set(pos, this);
   }
 
   get start() {
@@ -10029,8 +11249,8 @@ class StaticExport {
 
   get entries() {
     const internal = this.#internal,
-      node = internal.entries;
-    if (node !== void 0) return node;
+      cached = internal.entries;
+    if (cached !== void 0) return cached;
     return internal.entries = constructVecExportEntry(internal.$pos + 8, internal.$ast);
   }
 

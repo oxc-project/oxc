@@ -4,6 +4,8 @@
 
 use std::{borrow::Cow, fmt::Debug, str};
 
+use oxc_index::{IndexVec, index_vec};
+
 use crate::{
     Generator, NAPI_PARSER_PACKAGE_PATH,
     codegen::{Codegen, DeriveId},
@@ -14,8 +16,8 @@ use crate::{
     output::Output,
     schema::{
         BoxDef, CellDef, Def, EnumDef, FieldDef, MetaType, OptionDef, PrimitiveDef, Schema,
-        StructDef, TypeDef, VecDef,
-        extensions::layout::{GetLayout, GetOffset},
+        StructDef, TypeDef, TypeId, VecDef,
+        extensions::layout::{self, GetLayout, GetOffset},
     },
     utils::{format_cow, upper_case_first, write_it},
 };
@@ -69,12 +71,25 @@ static PRELUDE: &str = "
 fn generate_constructors(schema: &Schema, codegen: &Codegen) -> String {
     let estree_derive_id = codegen.get_derive_id_by_name("ESTree");
 
+    // Find any structs which are positioned at offset 0 in another struct.
+    // Their position cannot be used as a cache key as the parent and the child
+    // both have same memory address.
+    // Calculate an offset to add to position which will be unique across all AST nodes.
+    let cache_key_offsets = CacheKeyOffsets::calculate(estree_derive_id, schema);
+
+    // Generate code
     let mut code = PRELUDE.to_string();
 
     for type_def in &schema.types {
         match type_def {
             TypeDef::Struct(struct_def) => {
-                generate_struct(struct_def, &mut code, estree_derive_id, schema);
+                generate_struct(
+                    struct_def,
+                    &mut code,
+                    &cache_key_offsets,
+                    estree_derive_id,
+                    schema,
+                );
             }
             TypeDef::Enum(enum_def) => {
                 generate_enum(enum_def, &mut code, estree_derive_id, schema);
@@ -100,10 +115,188 @@ fn generate_constructors(schema: &Schema, codegen: &Codegen) -> String {
     code
 }
 
+/// Sentinel value for a cache key offset which has not been calculated yet
+const UNCALCULATED: u8 = u8::MAX;
+
+/// Structure for calculating cache key offsets.
+struct CacheKeyOffsets<'s> {
+    offsets: IndexVec<TypeId, u8>,
+    estree_derive_id: DeriveId,
+    span_type_id: TypeId,
+    schema: &'s Schema,
+}
+
+impl<'s> CacheKeyOffsets<'s> {
+    /// Calculate cache key offsets for all structs in AST.
+    fn calculate(estree_derive_id: DeriveId, schema: &'s Schema) -> IndexVec<TypeId, u8> {
+        // Create mapping from `TypeId` to cache key offset.
+        // Set as `UNCALCULATED` for all structs which are in JS-side AST.
+        let mut offsets = schema
+            .types
+            .iter()
+            .map(|type_def| {
+                if let TypeDef::Struct(struct_def) = type_def {
+                    if struct_def.generates_derive(estree_derive_id) {
+                        return UNCALCULATED;
+                    }
+                }
+                0
+            })
+            .collect::<IndexVec<TypeId, u8>>();
+
+        // `Span` is a special case. It is a struct, but it is not cached.
+        // Set cache key offset for `Span` to 0, so it doesn't have to be checked over and over.
+        let span_type_id = schema.type_names["Span"];
+        offsets[span_type_id] = 0;
+
+        // Calculate cache key offset for all structs
+        let mut cache_key_offsets = Self { offsets, estree_derive_id, span_type_id, schema };
+
+        for type_def in &schema.types {
+            if let TypeDef::Struct(struct_def) = type_def {
+                if struct_def.generates_derive(estree_derive_id) {
+                    cache_key_offsets.calculate_struct_key_offset(struct_def);
+                }
+            }
+        }
+
+        cache_key_offsets.offsets
+    }
+
+    /// Calculate cache key offset for a struct.
+    fn calculate_struct_key_offset(&mut self, struct_def: &StructDef) -> u32 {
+        // Return already calculated offset
+        let offset = self.offsets[struct_def.id()];
+        if offset != UNCALCULATED {
+            return u32::from(offset);
+        }
+
+        let offset = if struct_def.id() == self.span_type_id {
+            // `Span` is a special case. It is a struct, but it is not cached,
+            // so all offsets within a `Span` are available.
+            0
+        } else {
+            // Use first offset which is available
+            let mut found_offset = None;
+            for offset in 0..struct_def.layout_64().size {
+                if self.is_available_offset_for_struct(struct_def, offset) {
+                    found_offset = Some(offset);
+                    break;
+                }
+            }
+
+            found_offset.unwrap_or_else(|| {
+                panic!("Cannot find a unique cache key offset for `{}`", struct_def.name())
+            })
+        };
+
+        assert!(
+            offset < u32::from(UNCALCULATED),
+            "Cache key offset out of range for `{}`",
+            struct_def.name()
+        );
+
+        self.offsets[struct_def.id()] = u8::try_from(offset).unwrap();
+
+        offset
+    }
+
+    /// Check if a cache key offset is available for a struct.
+    fn is_available_offset_for_struct(&mut self, struct_def: &StructDef, offset: u32) -> bool {
+        for field in &struct_def.fields {
+            if offset >= field.offset_64() {
+                let offset_within_field = offset - field.offset_64();
+                let field_type = field.type_def(self.schema);
+                if offset_within_field < field_type.layout_64().size {
+                    return self.is_available_offset(field_type, offset_within_field);
+                }
+            }
+        }
+
+        // Offsets within padding are available
+        true
+    }
+
+    /// Check if a cache key offset is available for a type.
+    fn is_available_offset(&mut self, type_def: &TypeDef, offset: u32) -> bool {
+        #[expect(clippy::match_same_arms)]
+        match type_def {
+            // Any offset within a field depends on type of the field.
+            // Offsets within padding are available.
+            TypeDef::Struct(struct_def) => {
+                // `Span` is a special case.
+                // It is a struct, but it is not cached, so all offsets within a `Span` are available.
+                if struct_def.id() == self.span_type_id {
+                    return true;
+                }
+
+                // If struct is not included in JS-side AST, all offsets are available
+                if !struct_def.generates_derive(self.estree_derive_id) {
+                    return true;
+                }
+
+                let key_offset = self.calculate_struct_key_offset(struct_def);
+                if offset == key_offset {
+                    return false;
+                }
+
+                self.is_available_offset_for_struct(struct_def, offset)
+            }
+            // Enums are always `#[repr(C)]`, so always have a discriminant.
+            // Any offset before payload is available.
+            // An offset within the payload depends on type of the payload.
+            // Some variants may have padding after them.
+            TypeDef::Enum(enum_def) => {
+                if enum_def.is_fieldless() {
+                    return true;
+                }
+                let payload_offset = enum_def.layout_64().align;
+                if offset < payload_offset {
+                    return true;
+                }
+
+                let offset_within_variant = offset - payload_offset;
+                enum_def.all_variants(self.schema).all(|variants| {
+                    variants.field_type(self.schema).is_none_or(|variant_type| {
+                        let is_in_padding_after_payload =
+                            offset_within_variant >= variant_type.layout_64().size;
+                        is_in_padding_after_payload
+                            || self.is_available_offset(variant_type, offset_within_variant)
+                    })
+                })
+            }
+            // `Option` may or may not have a separate discriminant before the payload.
+            // Any offset before payload is available.
+            // Offsets inside payload depend on type of the payload.
+            // There cannot be padding after the payload.
+            TypeDef::Option(option_def) => {
+                let inner_type = option_def.inner_type(self.schema);
+                let layout = option_def.layout_64();
+                let inner_layout = inner_type.layout_64();
+                let payload_offset =
+                    if layout.size == inner_layout.size { 0 } else { layout.align };
+                if offset < payload_offset {
+                    return true;
+                }
+                self.is_available_offset(inner_type, offset - payload_offset)
+            }
+            // `Cell` has same layout as its payload
+            TypeDef::Cell(cell_def) => {
+                self.is_available_offset(cell_def.inner_type(self.schema), offset)
+            }
+            // Primitives don't contain structs, so all offsets are available
+            TypeDef::Primitive(_) => true,
+            // `Box` and `Vec` store payload in a separate allocation, so all offsets are available
+            TypeDef::Box(_) | TypeDef::Vec(_) => true,
+        }
+    }
+}
+
 /// Generate class for a struct.
 fn generate_struct(
     struct_def: &StructDef,
     code: &mut String,
+    cache_key_offsets: &IndexVec<TypeId, u8>,
     estree_derive_id: DeriveId,
     schema: &Schema,
 ) {
@@ -181,8 +374,8 @@ fn generate_struct(
             write_it!(getters, "
                 get {field_name}() {{
                     const internal = this.#internal,
-                        node = internal.{field_name};
-                    if (node !== void 0) return node;
+                        cached = internal.{field_name};
+                    if (cached !== void 0) return cached;
                     return internal.{field_name} = {value_fn}({pos}, internal.$ast);
                 }}
             ");
@@ -209,19 +402,15 @@ fn generate_struct(
         String::new()
     };
 
-    // TODO: Nodes cache does not work because some types have same `pos` as their parent
-    /*
-    constructor(pos, ast) {{
-        if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
-
-        const {{ nodes }} = ast;
-        let node = nodes.get(pos);
-        if (node !== void 0) return node;
-
-        this.#internal = {{ $pos: pos, $ast: ast {extra_props} }};
-        nodes.set(pos, this);
-    }}
-    */
+    let cache_key_offset = cache_key_offsets[struct_def.id()];
+    let (pos_cache_key, cache_key_comment) = if cache_key_offset == 0 {
+        (Cow::Borrowed("pos"), "")
+    } else {
+        (
+            pos_offset(cache_key_offset),
+            "\n// `pos` would be same as one of fields, so add offset to ensure unique cache key",
+        )
+    };
 
     #[rustfmt::skip]
     write_it!(code, "
@@ -231,7 +420,13 @@ fn generate_struct(
 
             constructor(pos, ast) {{
                 if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+
+                const {{ nodes }} = ast; {cache_key_comment}
+                const cached = nodes.get({pos_cache_key});
+                if (cached !== void 0) return cached;
+
                 this.#internal = {{ $pos: pos, $ast: ast {extra_props} }};
+                nodes.set({pos_cache_key}, this);
             }}
 
             {getters}
