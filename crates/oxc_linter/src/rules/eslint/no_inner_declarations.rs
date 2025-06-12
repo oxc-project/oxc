@@ -1,7 +1,7 @@
 use oxc_ast::AstKind;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::Span;
+use oxc_span::{GetSpan, Span};
 
 use crate::{AstNode, context::LintContext, rule::Rule};
 
@@ -70,7 +70,8 @@ impl Rule for NoInnerDeclarations {
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        let span = match node.kind() {
+        let kind = node.kind();
+        let span = match kind {
             AstKind::VariableDeclaration(decl)
                 if decl.kind.is_var() && self.config == NoInnerDeclarationsConfig::Both =>
             {
@@ -84,26 +85,30 @@ impl Rule for NoInnerDeclarations {
 
         let mut parent = ctx.nodes().parent_node(node.id());
         if let Some(parent_node) = parent {
-            let parent_kind = parent_node.kind();
-            if let AstKind::FunctionBody(_) = parent_kind {
-                if let Some(grandparent) = ctx.nodes().parent_node(parent_node.id()) {
-                    if grandparent.kind().is_function_like() {
+            match parent_node.kind() {
+                AstKind::FunctionBody(_) => {
+                    if let Some(grandparent) = ctx.nodes().parent_node(parent_node.id()) {
+                        if grandparent.kind().is_function_like() {
+                            return;
+                        }
+                    }
+                }
+                AstKind::Program(_)
+                | AstKind::StaticBlock(_)
+                | AstKind::ExportNamedDeclaration(_)
+                | AstKind::ExportDefaultDeclaration(_) => return,
+                AstKind::ForStatement(for_stmt) => {
+                    if for_stmt.init.as_ref().is_some_and(|init| init.span() == kind.span()) {
                         return;
                     }
                 }
-            }
-
-            if matches!(
-                parent_kind,
-                AstKind::Program(_)
-                    | AstKind::StaticBlock(_)
-                    | AstKind::ExportNamedDeclaration(_)
-                    | AstKind::ExportDefaultDeclaration(_)
-                    | AstKind::ForStatement(_)
-                    | AstKind::ForInStatement(_)
-                    | AstKind::ForOfStatement(_)
-            ) {
-                return;
+                AstKind::ForInStatement(for_stmt) if for_stmt.left.span() == kind.span() => {
+                    return;
+                }
+                AstKind::ForOfStatement(for_stmt) if for_stmt.left.span() == kind.span() => {
+                    return;
+                }
+                _ => {}
             }
         }
 
@@ -213,6 +218,9 @@ fn test() {
         ("for (const x in {}) { var y = 5; }", Some(serde_json::json!(["both"]))),
         ("for (const x of []) { var y = 5; }", Some(serde_json::json!(["both"]))),
         ("for (const x = 1; a < 10; a++) { var y = 5; }", Some(serde_json::json!(["both"]))),
+        ("for (const x in {}) var y = 5;", Some(serde_json::json!(["both"]))),
+        ("for (const x of []) var y = 5;", Some(serde_json::json!(["both"]))),
+        ("for (const x = 1; a < 10; a++) var y = 5;", Some(serde_json::json!(["both"]))),
     ];
 
     Tester::new(NoInnerDeclarations::NAME, NoInnerDeclarations::PLUGIN, pass, fail)
