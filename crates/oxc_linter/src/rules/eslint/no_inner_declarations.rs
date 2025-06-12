@@ -83,33 +83,25 @@ impl Rule for NoInnerDeclarations {
             _ => return,
         };
 
-        let mut parent = ctx.nodes().parent_node(node.id());
-        if let Some(parent_node) = parent {
-            match parent_node.kind() {
-                AstKind::FunctionBody(_) => {
-                    if let Some(grandparent) = ctx.nodes().parent_node(parent_node.id()) {
-                        if grandparent.kind().is_function_like() {
-                            return;
-                        }
-                    }
-                }
-                AstKind::Program(_)
-                | AstKind::StaticBlock(_)
-                | AstKind::ExportNamedDeclaration(_)
-                | AstKind::ExportDefaultDeclaration(_) => return,
-                AstKind::ForStatement(for_stmt) => {
-                    if for_stmt.init.as_ref().is_some_and(|init| init.span() == kind.span()) {
-                        return;
-                    }
-                }
-                AstKind::ForInStatement(for_stmt) if for_stmt.left.span() == kind.span() => {
+        let parent_node = ctx.nodes().parent_node(node.id()).unwrap();
+        match parent_node.kind() {
+            AstKind::Program(_)
+            | AstKind::FunctionBody(_)
+            | AstKind::StaticBlock(_)
+            | AstKind::ExportNamedDeclaration(_)
+            | AstKind::ExportDefaultDeclaration(_) => return,
+            AstKind::ForStatement(for_stmt) => {
+                if for_stmt.init.as_ref().is_some_and(|init| init.span() == kind.span()) {
                     return;
                 }
-                AstKind::ForOfStatement(for_stmt) if for_stmt.left.span() == kind.span() => {
-                    return;
-                }
-                _ => {}
             }
+            AstKind::ForInStatement(for_stmt) if for_stmt.left.span() == kind.span() => {
+                return;
+            }
+            AstKind::ForOfStatement(for_stmt) if for_stmt.left.span() == kind.span() => {
+                return;
+            }
+            _ => {}
         }
 
         let decl_type = match node.kind() {
@@ -119,6 +111,7 @@ impl Rule for NoInnerDeclarations {
         };
 
         let mut body = "program";
+        let mut parent = ctx.nodes().parent_node(parent_node.id());
         while let Some(parent_node) = parent {
             let parent_kind = parent_node.kind();
             match parent_kind {
