@@ -68,8 +68,8 @@ source: crates/oxc_linter/src/tester.rs
    ╭─[const_comparisons.tsx:1:1]
  1 │ status_code < 200 && status_code <= 299;
    · ────────┬────────    ─────────┬────────
-   ·         │                     ╰── If this evaluates to `true`
-   ·         ╰── This will always evaluate to true.
+   ·         │                     ╰── This will always evaluate to true.
+   ·         ╰── If this evaluates to `true`
    ╰────
   help: if `status_code < 200` evaluates to true, `status_code <= 299` will always evaluate to true as well
 
@@ -77,8 +77,8 @@ source: crates/oxc_linter/src/tester.rs
    ╭─[const_comparisons.tsx:1:1]
  1 │ status_code > 200 && status_code >= 299;
    · ────────┬────────    ─────────┬────────
-   ·         │                     ╰── This will always evaluate to true.
-   ·         ╰── If this evaluates to `true`
+   ·         │                     ╰── If this evaluates to `true`
+   ·         ╰── This will always evaluate to true.
    ╰────
   help: if `status_code >= 299` evaluates to true, `status_code > 200` will always evaluate to true as well
 
@@ -86,8 +86,8 @@ source: crates/oxc_linter/src/tester.rs
    ╭─[const_comparisons.tsx:1:1]
  1 │ status_code >= 500 && status_code > 500;
    · ─────────┬────────    ────────┬────────
-   ·          │                    ╰── This will always evaluate to true.
-   ·          ╰── If this evaluates to `true`
+   ·          │                    ╰── If this evaluates to `true`
+   ·          ╰── This will always evaluate to true.
    ╰────
   help: if `status_code > 500` evaluates to true, `status_code >= 500` will always evaluate to true as well
 
@@ -95,8 +95,8 @@ source: crates/oxc_linter/src/tester.rs
    ╭─[const_comparisons.tsx:1:1]
  1 │ status_code > 500 && status_code >= 500;
    · ────────┬────────    ─────────┬────────
-   ·         │                     ╰── If this evaluates to `true`
-   ·         ╰── This will always evaluate to true.
+   ·         │                     ╰── This will always evaluate to true.
+   ·         ╰── If this evaluates to `true`
    ╰────
   help: if `status_code > 500` evaluates to true, `status_code >= 500` will always evaluate to true as well
 
@@ -104,8 +104,8 @@ source: crates/oxc_linter/src/tester.rs
    ╭─[const_comparisons.tsx:1:1]
  1 │ status_code <= 500 && status_code < 500;
    · ─────────┬────────    ────────┬────────
-   ·          │                    ╰── This will always evaluate to true.
-   ·          ╰── If this evaluates to `true`
+   ·          │                    ╰── If this evaluates to `true`
+   ·          ╰── This will always evaluate to true.
    ╰────
   help: if `status_code < 500` evaluates to true, `status_code <= 500` will always evaluate to true as well
 
@@ -113,8 +113,8 @@ source: crates/oxc_linter/src/tester.rs
    ╭─[const_comparisons.tsx:1:1]
  1 │ status_code < 500 && status_code <= 500;
    · ────────┬────────    ─────────┬────────
-   ·         │                     ╰── If this evaluates to `true`
-   ·         ╰── This will always evaluate to true.
+   ·         │                     ╰── This will always evaluate to true.
+   ·         ╰── If this evaluates to `true`
    ╰────
   help: if `status_code < 500` evaluates to true, `status_code <= 500` will always evaluate to true as well
 
@@ -185,8 +185,8 @@ source: crates/oxc_linter/src/tester.rs
    ╭─[const_comparisons.tsx:1:10]
  1 │ foo() && status_code >= 500 && status_code > 500;
    ·          ─────────┬────────    ────────┬────────
-   ·                   │                    ╰── This will always evaluate to true.
-   ·                   ╰── If this evaluates to `true`
+   ·                   │                    ╰── If this evaluates to `true`
+   ·                   ╰── This will always evaluate to true.
    ╰────
   help: if `status_code > 500` evaluates to true, `status_code >= 500` will always evaluate to true as well
 
@@ -194,8 +194,8 @@ source: crates/oxc_linter/src/tester.rs
    ╭─[const_comparisons.tsx:1:1]
  1 │ status_code <= 500 && foo() && status_code < 500;
    · ─────────┬────────             ────────┬────────
-   ·          │                             ╰── This will always evaluate to true.
-   ·          ╰── If this evaluates to `true`
+   ·          │                             ╰── If this evaluates to `true`
+   ·          ╰── This will always evaluate to true.
    ╰────
   help: if `status_code < 500` evaluates to true, `status_code <= 500` will always evaluate to true as well
 
@@ -203,8 +203,8 @@ source: crates/oxc_linter/src/tester.rs
    ╭─[const_comparisons.tsx:1:1]
  1 │ status_code >= 500 && response && status_code > 500;
    · ─────────┬────────                ────────┬────────
-   ·          │                                ╰── This will always evaluate to true.
-   ·          ╰── If this evaluates to `true`
+   ·          │                                ╰── If this evaluates to `true`
+   ·          ╰── This will always evaluate to true.
    ╰────
   help: if `status_code > 500` evaluates to true, `status_code >= 500` will always evaluate to true as well
 
@@ -212,8 +212,8 @@ source: crates/oxc_linter/src/tester.rs
    ╭─[const_comparisons.tsx:1:13]
  1 │ response && status_code > 500 && status_code >= 500;
    ·             ────────┬────────    ─────────┬────────
-   ·                     │                     ╰── If this evaluates to `true`
-   ·                     ╰── This will always evaluate to true.
+   ·                     │                     ╰── This will always evaluate to true.
+   ·                     ╰── If this evaluates to `true`
    ╰────
   help: if `status_code > 500` evaluates to true, `status_code >= 500` will always evaluate to true as well
 
@@ -221,8 +221,8 @@ source: crates/oxc_linter/src/tester.rs
    ╭─[const_comparisons.tsx:1:1]
  1 │ status_code <= 500 && response && status_code < 500;
    · ─────────┬────────                ────────┬────────
-   ·          │                                ╰── This will always evaluate to true.
-   ·          ╰── If this evaluates to `true`
+   ·          │                                ╰── If this evaluates to `true`
+   ·          ╰── This will always evaluate to true.
    ╰────
   help: if `status_code < 500` evaluates to true, `status_code <= 500` will always evaluate to true as well
 
@@ -230,8 +230,8 @@ source: crates/oxc_linter/src/tester.rs
    ╭─[const_comparisons.tsx:1:1]
  1 │ status_code < 500 && response && status_code <= 500;
    · ────────┬────────                ─────────┬────────
-   ·         │                                 ╰── If this evaluates to `true`
-   ·         ╰── This will always evaluate to true.
+   ·         │                                 ╰── This will always evaluate to true.
+   ·         ╰── If this evaluates to `true`
    ╰────
   help: if `status_code < 500` evaluates to true, `status_code <= 500` will always evaluate to true as well
 
