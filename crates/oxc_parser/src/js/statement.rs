@@ -115,19 +115,7 @@ impl<'a> ParserImpl<'a> {
             Kind::Function => {
                 self.parse_function_declaration(self.start_span(), /* async */ false, stmt_ctx)
             }
-            Kind::At => {
-                let span = self.start_span();
-                let decorators = self.parse_decorators();
-                match self.cur_kind() {
-                    Kind::Class => {
-                        // Class span.start starts before decorators.
-                        self.parse_class_statement(span, stmt_ctx, &Modifiers::empty(), decorators)
-                    }
-                    // Export span.start starts after decorators.
-                    Kind::Export => self.parse_export_declaration(self.start_span(), decorators),
-                    _ => self.unexpected(),
-                }
-            }
+            Kind::At => self.parse_decorated_statement(stmt_ctx),
             Kind::Let if !self.cur_token().escaped() => self.parse_let(stmt_ctx),
             Kind::Async => self.parse_async_statement(self.start_span(), stmt_ctx),
             Kind::Import => self.parse_import_statement(),
@@ -724,5 +712,22 @@ impl<'a> ParserImpl<'a> {
             return self.parse_ts_declaration_statement(span);
         }
         self.parse_expression_or_labeled_statement()
+    }
+
+    /// Parse statements that start with `@`.
+    fn parse_decorated_statement(&mut self, stmt_ctx: StatementContext) -> Statement<'a> {
+        let span = self.start_span();
+        let decorators = self.parse_decorators();
+        let kind = self.cur_kind();
+        if kind == Kind::Export {
+            // Export span.start starts after decorators.
+            return self.parse_export_declaration(self.start_span(), decorators);
+        }
+        let modifiers = self.parse_modifiers(false, false);
+        if self.at(Kind::Class) {
+            // Class span.start starts before decorators.
+            return self.parse_class_statement(span, stmt_ctx, &modifiers, decorators);
+        }
+        self.unexpected()
     }
 }

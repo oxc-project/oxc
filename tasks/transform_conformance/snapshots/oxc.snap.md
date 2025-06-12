@@ -545,12 +545,13 @@ rebuilt        : ["Object", "babelHelpers", "console", "dec"]
 
 * oxc/metadata/typescript-syntax/input.ts
 
-  x Unexpected token
-   ,-[tasks/transform_conformance/tests/legacy-decorators/test/fixtures/oxc/metadata/typescript-syntax/input.ts:2:1]
- 1 | @dec
- 2 | declare class A {}
-   : ^^^^^^^
- 3 | 
+  x TS(1249): A decorator can only decorate a method implementation, not an
+  | overload.
+   ,-[tasks/transform_conformance/tests/legacy-decorators/test/fixtures/oxc/metadata/typescript-syntax/input.ts:6:3]
+ 5 | class B {
+ 6 |   @m
+   :   ^^
+ 7 |   method();
    `----
 
 
