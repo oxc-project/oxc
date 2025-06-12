@@ -762,7 +762,7 @@ impl<'a> ParserImpl<'a> {
         )
     }
 
-    fn parse_type_reference(&mut self) -> TSType<'a> {
+    pub(crate) fn parse_type_reference(&mut self) -> TSType<'a> {
         let span = self.start_span();
         let type_name = self.parse_ts_type_name();
         let type_parameters = self.parse_type_arguments_of_type_reference();
@@ -780,12 +780,24 @@ impl<'a> ParserImpl<'a> {
         let span = self.start_span();
         let ident = self.parse_identifier_name();
         let ident = self.ast.alloc_identifier_reference(ident.span, ident.name);
-        let mut left = TSTypeName::IdentifierReference(ident);
+        let left_name = TSTypeName::IdentifierReference(ident);
+        if self.at(Kind::Dot) {
+            self.parse_ts_qualified_type_name(span, left_name)
+        } else {
+            left_name
+        }
+    }
+
+    pub(crate) fn parse_ts_qualified_type_name(
+        &mut self,
+        span: u32,
+        mut left_name: TSTypeName<'a>,
+    ) -> TSTypeName<'a> {
         while self.eat(Kind::Dot) {
             let right = self.parse_identifier_name();
-            left = self.ast.ts_type_name_qualified_name(self.end_span(span), left, right);
+            left_name = self.ast.ts_type_name_qualified_name(self.end_span(span), left_name, right);
         }
-        left
+        left_name
     }
 
     pub(crate) fn try_parse_type_arguments(
@@ -804,7 +816,7 @@ impl<'a> ParserImpl<'a> {
         None
     }
 
-    fn parse_type_arguments_of_type_reference(
+    pub(crate) fn parse_type_arguments_of_type_reference(
         &mut self,
     ) -> Option<Box<'a, TSTypeParameterInstantiation<'a>>> {
         if !self.cur_token().is_on_new_line() && self.re_lex_l_angle() == Kind::LAngle {

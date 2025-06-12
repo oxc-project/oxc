@@ -135,11 +135,30 @@ impl<'a> ParserImpl<'a> {
         let params = self.parse_ts_type_parameters();
         self.expect(Kind::Eq);
 
-        let ty = if self.at(Kind::Intrinsic) && !self.lookahead(Self::is_next_token_dot) {
-            let span = self.start_span();
+        let intrinsic_token = self.cur_token();
+        let ty = if self.at(Kind::Intrinsic) {
             self.bump_any();
-            self.ast.ts_type_intrinsic_keyword(self.end_span(span))
+            if self.at(Kind::Dot) {
+                // `type something = intrinsic. ...`
+                let intrinsic_ident = self
+                    .ast
+                    .alloc_identifier_reference(intrinsic_token.span(), Kind::Intrinsic.to_str());
+                let type_name = self.parse_ts_qualified_type_name(
+                    intrinsic_token.start(),
+                    TSTypeName::IdentifierReference(intrinsic_ident),
+                );
+                let type_parameters = self.parse_type_arguments_of_type_reference();
+                self.ast.ts_type_type_reference(
+                    self.end_span(intrinsic_token.start()),
+                    type_name,
+                    type_parameters,
+                )
+            } else {
+                // `type something = intrinsic`
+                self.ast.ts_type_intrinsic_keyword(intrinsic_token.span())
+            }
         } else {
+            // `type something = ...`
             self.parse_ts_type()
         };
 
@@ -153,11 +172,6 @@ impl<'a> ParserImpl<'a> {
         );
 
         self.ast.declaration_ts_type_alias(span, id, params, ty, modifiers.contains_declare())
-    }
-
-    fn is_next_token_dot(&mut self) -> bool {
-        self.bump_any();
-        self.at(Kind::Dot)
     }
 
     /* ---------------------  Interface  ------------------------ */
