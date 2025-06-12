@@ -4,6 +4,29 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [1.1.0] - 2025-06-12
+
+### 🚀 Features
+
+- 1181018 linter: Add eslint/no-extra-bind rule (#11588) (yefan)
+- 3b03fd3 parser: Produce correct syntax error for `interface I extends (typeof T)` (#11610) (Boshen)
+- 844a8a8 parser: Produce syntax error for `declare function foo() {}` (#11606) (Boshen)
+
+### 🐛 Bug Fixes
+
+- 0f24366 linter: Correct labels for redundant comparisons (#11620) (Wei Zhu)
+- dd87f93 linter: Stack overflow in react/exhaustive-deps (#11613) (camc314)
+- 4af58e0 linter: Add missing `additional_hooks` option to exhaustive-deps (#11602) (camc314)
+- a6adc0c linter/exhaustive-deps: Handle destructuring inside hooks (#11598) (Don Isaac)
+- 779727f linter: Improve span diagnostic loc within react/rules-of-hooks (#11589) (camc314)
+
+### 🚜 Refactor
+
+- b7b0dc3 parser: Improve `TSModuleDeclaration` parsing (#11605) (Boshen)
+- d29bbb2 linter: Simplify implementation of `eslint/no-lonely-if` (#11550) (Ulrich Stark)
+- d41fb13 ast: Get jsx types out of AstKind exceptions (#11535) (Ulrich Stark)
+
+
 ## [1.0.0] - 2025-06-10
 
 ## [0.18.1] - 2025-06-09
