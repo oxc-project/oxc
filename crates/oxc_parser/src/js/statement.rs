@@ -323,18 +323,33 @@ impl<'a> ParserImpl<'a> {
             return self.parse_for_loop(span, None, r#await);
         }
 
-        // `for (let` | `for (const` | `for (var`
-        // disallow for (let in ..)
-        if self.at(Kind::Const)
-            || self.at(Kind::Var)
-            || (self.at(Kind::Let)
-                && self.lookahead(|p| {
-                    p.bump_any();
-                    p.cur_kind().is_after_let()
-                }))
-        {
-            return self.parse_variable_declaration_for_statement(span, r#await);
+        // `for (const` | `for (var`
+        match self.cur_kind() {
+            Kind::Const | Kind::Var => {
+                let start_span = self.start_span();
+                return self
+                    .parse_variable_declaration_for_statement(span, start_span, None, r#await);
+            }
+            Kind::Let => {
+                // `for (let`
+                let start_span = self.start_span();
+                let checkpoint = self.checkpoint();
+                self.bump_any(); // bump `let`
+                // disallow for `(let in ...`
+                if self.cur_kind().is_after_let() {
+                    return self.parse_variable_declaration_for_statement(
+                        span,
+                        start_span,
+                        Some(VariableDeclarationKind::Let),
+                        r#await,
+                    );
+                }
+                // Should be a relatively cold branch, since most tokens after `let` will be allowed in most files
+                self.rewind(checkpoint);
+            }
+            _ => {}
         }
+
         // [+Using, +Await] await [no LineTerminator here] using [no LineTerminator here]
         if self.at(Kind::Await)
             && self.lookahead(|p| {
@@ -399,13 +414,19 @@ impl<'a> ParserImpl<'a> {
     fn parse_variable_declaration_for_statement(
         &mut self,
         span: u32,
+        start_span: u32,
+        decl_kind: Option<VariableDeclarationKind>,
         r#await: bool,
     ) -> Statement<'a> {
-        let start_span = self.start_span();
         let init_declaration = self.context(Context::empty(), Context::In, |p| {
             let decl_ctx = VariableDeclarationParent::For;
-            let kind = p.get_variable_declaration_kind();
-            p.bump_any();
+            let kind = if let Some(kind) = decl_kind {
+                kind
+            } else {
+                let kind = p.get_variable_declaration_kind();
+                p.bump_any();
+                kind
+            };
             p.parse_variable_declaration(start_span, kind, decl_ctx, &Modifiers::empty())
         });
 
