@@ -88,7 +88,7 @@ impl<'a> ParserImpl<'a> {
             );
         }
         let pattern = self.parse_binding_pattern_with_initializer();
-        if func_kind != FunctionKind::ClassMethod {
+        if func_kind != FunctionKind::ClassMethod || !self.is_ts {
             for decorator in &decorators {
                 self.error(diagnostics::decorators_are_not_valid_here(decorator.span));
             }
