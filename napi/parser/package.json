@@ -16,7 +16,7 @@
     "bench": "vitest bench --run ./bench.bench.mjs"
   },
   "engines": {
-    "node": ">=14.0.0"
+    "node": ">=20.0.0"
   },
   "description": "Oxc Parser Node API",
   "keywords": [
