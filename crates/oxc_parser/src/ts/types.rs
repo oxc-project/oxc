@@ -87,38 +87,53 @@ impl<'a> ParserImpl<'a> {
         if self.at(Kind::LAngle) {
             return true;
         }
-        if self.at(Kind::LParen) && self.lookahead(Self::is_unambiguously_start_of_function_type) {
+        if self.at(Kind::New) {
             return true;
         }
-        self.at(Kind::New)
-            || (self.at(Kind::Abstract) && self.lookahead(Self::is_next_token_new_keyword))
-    }
-
-    fn is_next_token_new_keyword(&mut self) -> bool {
-        self.bump_any();
-        self.at(Kind::New)
-    }
-
-    fn is_unambiguously_start_of_function_type(&mut self) -> bool {
-        self.bump_any();
-        // ( )
-        // ( ...
-        if matches!(self.cur_kind(), Kind::RParen | Kind::Dot3) {
-            return true;
+        if !self.at(Kind::LParen) && !self.at(Kind::Abstract) {
+            return false;
         }
-        if self.skip_parameter_start() {
-            // ( xxx :
-            // ( xxx ,
-            // ( xxx ?
-            // ( xxx =
-            if matches!(self.cur_kind(), Kind::Colon | Kind::Comma | Kind::Question | Kind::Eq) {
-                return true;
+        let checkpoint = self.checkpoint();
+        let first = self.cur_kind();
+        self.bump_any();
+
+        match first {
+            Kind::Abstract => {
+                // `abstract new ...`
+                if self.at(Kind::New) {
+                    self.rewind(checkpoint);
+                    return true;
+                }
             }
-            // ( xxx ) =>
-            if self.eat(Kind::RParen) && self.at(Kind::Arrow) {
-                return true;
+            Kind::LParen => {
+                // `( ...`
+                if matches!(self.cur_kind(), Kind::RParen | Kind::Dot3) {
+                    self.rewind(checkpoint);
+                    return true;
+                }
+                if self.skip_parameter_start() {
+                    // ( xxx :
+                    // ( xxx ,
+                    // ( xxx ?
+                    // ( xxx =
+                    if matches!(
+                        self.cur_kind(),
+                        Kind::Colon | Kind::Comma | Kind::Question | Kind::Eq
+                    ) {
+                        self.rewind(checkpoint);
+                        return true;
+                    }
+                    // ( xxx ) =>
+                    if self.eat(Kind::RParen) && self.at(Kind::Arrow) {
+                        self.rewind(checkpoint);
+                        return true;
+                    }
+                }
             }
+            _ => unreachable!(),
         }
+
+        self.rewind(checkpoint);
         false
     }
 
