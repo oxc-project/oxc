@@ -4,7 +4,11 @@ use oxc_span::GetSpan;
 use rustc_hash::FxHashMap;
 
 use super::FunctionKind;
-use crate::{Context, ParserImpl, diagnostics, lexer::Kind, modifiers::Modifiers};
+use crate::{
+    Context, ParserImpl, diagnostics,
+    lexer::Kind,
+    modifiers::{Modifier, ModifierFlags, ModifierKind, Modifiers},
+};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 enum ImportOrExport {
@@ -548,78 +552,127 @@ impl<'a> ParserImpl<'a> {
         decorators: Vec<'a, Decorator<'a>>,
     ) -> Box<'a, ExportDefaultDeclaration<'a>> {
         let exported = self.parse_keyword_identifier(Kind::Default);
-        let decl_span = self.start_span();
-        let has_no_side_effects_comment =
-            self.lexer.trivia_builder.previous_token_has_no_side_effects_comment();
-        let kind = self.cur_kind();
-        if kind != Kind::Class {
-            for decorator in &decorators {
-                self.error(diagnostics::decorators_are_not_valid_here(decorator.span));
-            }
-        }
-        let declaration = match kind {
-            Kind::Class => ExportDefaultDeclarationKind::ClassDeclaration(
-                self.parse_class_declaration(decl_span, &Modifiers::empty(), decorators),
-            ),
-            Kind::At => {
-                let decorators = self.parse_decorators();
-                let modifiers = self.parse_modifiers(false, false);
-                ExportDefaultDeclarationKind::ClassDeclaration(
-                    self.parse_class_declaration(decl_span, &modifiers, decorators),
-                )
-            }
-            _ if self.is_ts
-                && self.at(Kind::Abstract)
-                && self.lookahead(|p| {
-                    p.bump_any();
-                    p.at(Kind::Class)
-                }) =>
-            {
-                // `export default abstract class ...`
-                // eat the abstract modifier
-                let modifiers = self.eat_modifiers_before_declaration();
-                ExportDefaultDeclarationKind::ClassDeclaration(self.parse_class_declaration(
-                    decl_span,
-                    &modifiers,
-                    self.ast.vec(),
-                ))
-            }
-            _ if self.is_ts
-                && self.at(Kind::Interface)
-                && self.lookahead(|p| {
-                    p.bump_any();
-                    !p.cur_token().is_on_new_line()
-                }) =>
-            {
-                // `export default interface [no line break here] ...`
-                let decl = self.parse_ts_interface_declaration(decl_span, &Modifiers::empty());
-                match decl {
-                    Declaration::TSInterfaceDeclaration(decl) => {
-                        ExportDefaultDeclarationKind::TSInterfaceDeclaration(decl)
-                    }
-                    _ => unreachable!(),
-                }
-            }
-            _ if self.at_function_with_async() => {
-                let span = self.start_span();
-                let r#async = self.eat(Kind::Async);
-                let mut func = self.parse_function_impl(span, r#async, FunctionKind::DefaultExport);
-                if has_no_side_effects_comment {
-                    func.pure = true;
-                }
-                ExportDefaultDeclarationKind::FunctionDeclaration(func)
-            }
-            _ => {
-                let decl = ExportDefaultDeclarationKind::from(
-                    self.parse_assignment_expression_or_higher(),
-                );
-                self.asi();
-                decl
-            }
-        };
+        let declaration = self.parse_export_default_declaration_kind(decorators);
         let exported = ModuleExportName::IdentifierName(exported);
         let span = self.end_span(span);
         self.ast.alloc_export_default_declaration(span, exported, declaration)
+    }
+
+    fn parse_export_default_declaration_kind(
+        &mut self,
+        mut decorators: Vec<'a, Decorator<'a>>,
+    ) -> ExportDefaultDeclarationKind<'a> {
+        let decl_span = self.start_span();
+
+        // export default /* @__NO_SIDE_EFFECTS__ */ ...
+        let has_no_side_effects_comment =
+            self.lexer.trivia_builder.previous_token_has_no_side_effects_comment();
+
+        // export default @decorator ...
+        if self.at(Kind::At) {
+            let after_export_decorators = self.parse_decorators();
+            // @decorator export default @decorator ...
+            if !decorators.is_empty() {
+                for decorator in &after_export_decorators {
+                    self.error(diagnostics::decorators_in_export_and_class(decorator.span));
+                }
+            }
+            decorators.extend(after_export_decorators);
+        }
+
+        let function_span = self.start_span();
+
+        let checkpoint = self.checkpoint();
+        let mut is_abstract = false;
+        let mut is_async = false;
+        let mut is_interface = false;
+
+        match self.cur_kind() {
+            Kind::Abstract => is_abstract = true,
+            Kind::Async => is_async = true,
+            Kind::Interface => is_interface = true,
+            _ => {}
+        }
+
+        if is_abstract || is_async || is_interface {
+            let modifier_span = self.start_span();
+            self.bump_any();
+            let cur_token = self.cur_token();
+            let kind = cur_token.kind();
+            if !cur_token.is_on_new_line() {
+                // export default abstract class ...
+                if is_abstract && kind == Kind::Class {
+                    let modifiers = self
+                        .ast
+                        .vec1(Modifier::new(self.end_span(modifier_span), ModifierKind::Abstract));
+                    let modifiers = Modifiers::new(Some(modifiers), ModifierFlags::ABSTRACT);
+                    return ExportDefaultDeclarationKind::ClassDeclaration(
+                        self.parse_class_declaration(decl_span, &modifiers, decorators),
+                    );
+                }
+
+                // export default async function ...
+                if is_async && kind == Kind::Function {
+                    for decorator in &decorators {
+                        self.error(diagnostics::decorators_are_not_valid_here(decorator.span));
+                    }
+                    let mut func = self.parse_function_impl(
+                        function_span,
+                        /* r#async */ true,
+                        FunctionKind::DefaultExport,
+                    );
+                    if has_no_side_effects_comment {
+                        func.pure = true;
+                    }
+                    return ExportDefaultDeclarationKind::FunctionDeclaration(func);
+                }
+
+                // export default interface ...
+                if is_interface {
+                    for decorator in &decorators {
+                        self.error(diagnostics::decorators_are_not_valid_here(decorator.span));
+                    }
+                    if let Declaration::TSInterfaceDeclaration(decl) =
+                        self.parse_ts_interface_declaration(modifier_span, &Modifiers::empty())
+                    {
+                        return ExportDefaultDeclarationKind::TSInterfaceDeclaration(decl);
+                    }
+                }
+            }
+            self.rewind(checkpoint);
+        }
+
+        let kind = self.cur_kind();
+        // export default class ...
+        if kind == Kind::Class {
+            return ExportDefaultDeclarationKind::ClassDeclaration(self.parse_class_declaration(
+                decl_span,
+                &Modifiers::empty(),
+                decorators,
+            ));
+        }
+
+        for decorator in &decorators {
+            self.error(diagnostics::decorators_are_not_valid_here(decorator.span));
+        }
+
+        // export default function ...
+        if kind == Kind::Function {
+            let mut func = self.parse_function_impl(
+                function_span,
+                /* r#async */ false,
+                FunctionKind::DefaultExport,
+            );
+            if has_no_side_effects_comment {
+                func.pure = true;
+            }
+            return ExportDefaultDeclarationKind::FunctionDeclaration(func);
+        }
+
+        // export default expr
+        let decl = ExportDefaultDeclarationKind::from(self.parse_assignment_expression_or_higher());
+        self.asi();
+        decl
     }
 
     // export ExportFromClause FromClause ;

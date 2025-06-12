@@ -16,7 +16,12 @@ fn cases() {
     );
     test_same("class B {\n\tconstructor(override readonly a: number) {}\n}\n");
     test_same("export { type as as };\n");
-    test_same("@Decorator() abstract class C {}\n");
+}
+
+#[test]
+fn decorators() {
+    test_same("@a abstract class C {}\n");
+    test_tsx("@a @b export default abstract class {}", "export default @a @b abstract class {}\n");
 }
 
 #[test]

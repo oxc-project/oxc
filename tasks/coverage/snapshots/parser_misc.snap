@@ -42,11 +42,11 @@ Negative Passed: 45/45 (100.00%)
  2 │ 
    ╰────
 
-  × Decorators are not valid here.
-   ╭─[misc/fail/oxc-11472.js:3:1]
+  × Decorators may not appear after 'export' or 'export default' if they also appear before 'export'.
+   ╭─[misc/fail/oxc-11472.js:3:22]
  2 │ 
  3 │ @dec1 export default @dec2 class {}
-   · ─────
+   ·                      ─────
    ╰────
 
   × Expected `from` but found `EOF`
