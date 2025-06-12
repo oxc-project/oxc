@@ -228,6 +228,7 @@ tokio = { version = "1.45.1", default-features = false }
 tower-lsp-server = "0.21.1"
 tracing-subscriber = "0.3.19"
 ureq = { version = "3.0.11", default-features = false }
+url = "2.5.4"
 walkdir = "2.5.0"
 
 [workspace.metadata.cargo-shear]
