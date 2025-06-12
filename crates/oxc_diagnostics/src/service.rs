@@ -6,6 +6,7 @@ use std::{
 
 use cow_utils::CowUtils;
 use miette::LabeledSpan;
+use url::Url;
 
 use crate::{
     Error, NamedSource, OxcDiagnostic, Severity,
@@ -128,20 +129,38 @@ impl DiagnosticService {
     /// Wrap [diagnostics] with the source code and path, converting them into [Error]s.
     ///
     /// [diagnostics]: OxcDiagnostic
-    pub fn wrap_diagnostics<P: AsRef<Path>>(
+    pub fn wrap_diagnostics<C: AsRef<Path>, P: AsRef<Path>>(
+        cwd: C,
         path: P,
         source_text: &str,
         source_start: u32,
         diagnostics: Vec<OxcDiagnostic>,
-    ) -> (PathBuf, Vec<Error>) {
-        let path = path.as_ref();
-        let path_display = path.to_string_lossy();
+    ) -> Vec<Error> {
+        #[cfg(test)]
+        let is_jetbrains_terminal = false;
+        #[cfg(not(test))]
+        let is_jetbrains_terminal =
+            std::env::var("TERMINAL_EMULATOR").is_ok_and(|x| x.eq("JetBrains-JediTerm"));
+
         // replace windows \ path separator with posix style one
         // reflects what eslint is outputting
-        let path_display = path_display.cow_replace('\\', "/");
+        let default_path = path
+            .as_ref()
+            .strip_prefix(cwd)
+            .unwrap_or(path.as_ref())
+            .to_string_lossy()
+            .cow_replace('\\', "/")
+            .to_string();
+
+        let file_url = Url::from_file_path(path.as_ref());
+        let path_display = if is_jetbrains_terminal {
+            file_url.map(|x| x.to_string()).unwrap_or(default_path)
+        } else {
+            default_path
+        };
 
         let source = Arc::new(NamedSource::new(path_display, source_text.to_owned()));
-        let diagnostics = diagnostics
+        diagnostics
             .into_iter()
             .map(|diagnostic| {
                 if source_start == 0 {
@@ -166,8 +185,7 @@ impl DiagnosticService {
                     }
                 }
             })
-            .collect();
-        (path.to_path_buf(), diagnostics)
+            .collect()
     }
 
     /// # Panics

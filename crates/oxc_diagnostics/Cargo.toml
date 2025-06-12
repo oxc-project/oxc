@@ -21,3 +21,4 @@ doctest = false
 [dependencies]
 cow-utils = { workspace = true }
 miette = { workspace = true }
+url = { workspace = true }
