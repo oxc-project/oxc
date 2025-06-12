@@ -63,7 +63,8 @@ static PRELUDE: &str = "
 
     const textDecoder = new TextDecoder('utf-8', { ignoreBOM: true }),
         decodeStr = textDecoder.decode.bind(textDecoder),
-        { fromCodePoint } = String;
+        { fromCodePoint } = String,
+        inspectSymbol = Symbol.for('nodejs.util.inspect.custom');
 
 ";
 
@@ -412,6 +413,7 @@ fn generate_struct(
         )
     };
 
+    // Note: `[inspectSymbol]() {}` method makes `console.log` show deserialized value
     #[rustfmt::skip]
     write_it!(code, "
         class {struct_name} {{
@@ -436,7 +438,13 @@ fn generate_struct(
                     {to_json}
                 }};
             }}
+
+            [inspectSymbol]() {{
+                return Object.setPrototypeOf(this.toJSON(), Debug{struct_name}.prototype);
+            }}
         }}
+
+        const Debug{struct_name} = class {struct_name} {{}};
     ");
 }
 

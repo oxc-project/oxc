@@ -18,7 +18,8 @@ function construct(ast) {
 
 const textDecoder = new TextDecoder('utf-8', { ignoreBOM: true }),
   decodeStr = textDecoder.decode.bind(textDecoder),
-  { fromCodePoint } = String;
+  { fromCodePoint } = String,
+  inspectSymbol = Symbol.for('nodejs.util.inspect.custom');
 
 class Program {
   type = 'Program';
@@ -72,7 +73,13 @@ class Program {
       body: this.body,
     };
   }
+
+  [inspectSymbol]() {
+    return Object.setPrototypeOf(this.toJSON(), DebugProgram.prototype);
+  }
 }
+
+const DebugProgram = class Program {};
 
 function constructExpression(pos, ast) {
   switch (ast.buffer[pos]) {
@@ -207,7 +214,13 @@ class IdentifierName {
       name: this.name,
     };
   }
+
+  [inspectSymbol]() {
+    return Object.setPrototypeOf(this.toJSON(), DebugIdentifierName.prototype);
+  }
 }
+
+const DebugIdentifierName = class IdentifierName {};
 
 class IdentifierReference {
   type = 'IdentifierReference';
@@ -249,7 +262,13 @@ class IdentifierReference {
       name: this.name,
     };
   }
+
+  [inspectSymbol]() {
+    return Object.setPrototypeOf(this.toJSON(), DebugIdentifierReference.prototype);
+  }
 }
+
+const DebugIdentifierReference = class IdentifierReference {};
 
 class BindingIdentifier {
   type = 'BindingIdentifier';
@@ -291,7 +310,13 @@ class BindingIdentifier {
       name: this.name,
     };
   }
+
+  [inspectSymbol]() {
+    return Object.setPrototypeOf(this.toJSON(), DebugBindingIdentifier.prototype);
+  }
 }
+
+const DebugBindingIdentifier = class BindingIdentifier {};
 
 class LabelIdentifier {
   type = 'LabelIdentifier';
@@ -333,7 +358,13 @@ class LabelIdentifier {
       name: this.name,
     };
   }
+
+  [inspectSymbol]() {
+    return Object.setPrototypeOf(this.toJSON(), DebugLabelIdentifier.prototype);
+  }
 }
+
+const DebugLabelIdentifier = class LabelIdentifier {};
 
 class ThisExpression {
   type = 'ThisExpression';
@@ -367,7 +398,13 @@ class ThisExpression {
       end: this.end,
     };
   }
+
+  [inspectSymbol]() {
+    return Object.setPrototypeOf(this.toJSON(), DebugThisExpression.prototype);
+  }
 }
+
+const DebugThisExpression = class ThisExpression {};
 
 class ArrayExpression {
   type = 'ArrayExpression';
@@ -409,7 +446,13 @@ class ArrayExpression {
       elements: this.elements,
     };
   }
+
+  [inspectSymbol]() {
+    return Object.setPrototypeOf(this.toJSON(), DebugArrayExpression.prototype);
+  }
 }
+
+const DebugArrayExpression = class ArrayExpression {};
 
 function constructArrayExpressionElement(pos, ast) {
   switch (ast.buffer[pos]) {
@@ -540,7 +583,13 @@ class Elision {
       end: this.end,
     };
   }
+
+  [inspectSymbol]() {
+    return Object.setPrototypeOf(this.toJSON(), DebugElision.prototype);
+  }
 }
+
+const DebugElision = class Elision {};
 
 class ObjectExpression {
   type = 'ObjectExpression';
@@ -582,7 +631,13 @@ class ObjectExpression {
       properties: this.properties,
     };
   }
+
+  [inspectSymbol]() {
+    return Object.setPrototypeOf(this.toJSON(), DebugObjectExpression.prototype);
+  }
 }
+
+const DebugObjectExpression = class ObjectExpression {};
 
 function constructObjectPropertyKind(pos, ast) {
   switch (ast.buffer[pos]) {
@@ -663,7 +718,13 @@ class ObjectProperty {
       computed: this.computed,
     };
   }
+
+  [inspectSymbol]() {
+    return Object.setPrototypeOf(this.toJSON(), DebugObjectProperty.prototype);
+  }
 }
+
+const DebugObjectProperty = class ObjectProperty {};
 
 function constructPropertyKey(pos, ast) {
   switch (ast.buffer[pos]) {
@@ -823,7 +884,13 @@ class TemplateLiteral {
       expressions: this.expressions,
     };
   }
+
+  [inspectSymbol]() {
+    return Object.setPrototypeOf(this.toJSON(), DebugTemplateLiteral.prototype);
+  }
 }
+
+const DebugTemplateLiteral = class TemplateLiteral {};
 
 class TaggedTemplateExpression {
   type = 'TaggedTemplateExpression';
@@ -875,7 +942,13 @@ class TaggedTemplateExpression {
       quasi: this.quasi,
     };
   }
+
+  [inspectSymbol]() {
+    return Object.setPrototypeOf(this.toJSON(), DebugTaggedTemplateExpression.prototype);
+  }
 }
+
+const DebugTaggedTemplateExpression = class TaggedTemplateExpression {};
 
 class TemplateElement {
   type = 'TemplateElement';
@@ -921,7 +994,13 @@ class TemplateElement {
       tail: this.tail,
     };
   }
+
+  [inspectSymbol]() {
+    return Object.setPrototypeOf(this.toJSON(), DebugTemplateElement.prototype);
+  }
 }
+
+const DebugTemplateElement = class TemplateElement {};
 
 class TemplateElementValue {
   #internal;
@@ -957,7 +1036,13 @@ class TemplateElementValue {
       cooked: this.cooked,
     };
   }
+
+  [inspectSymbol]() {
+    return Object.setPrototypeOf(this.toJSON(), DebugTemplateElementValue.prototype);
+  }
 }
+
+const DebugTemplateElementValue = class TemplateElementValue {};
 
 function constructMemberExpression(pos, ast) {
   switch (ast.buffer[pos]) {
@@ -1022,7 +1107,13 @@ class ComputedMemberExpression {
       optional: this.optional,
     };
   }
+
+  [inspectSymbol]() {
+    return Object.setPrototypeOf(this.toJSON(), DebugComputedMemberExpression.prototype);
+  }
 }
+
+const DebugComputedMemberExpression = class ComputedMemberExpression {};
 
 class StaticMemberExpression {
   type = 'StaticMemberExpression';
@@ -1074,7 +1165,13 @@ class StaticMemberExpression {
       optional: this.optional,
     };
   }
+
+  [inspectSymbol]() {
+    return Object.setPrototypeOf(this.toJSON(), DebugStaticMemberExpression.prototype);
+  }
 }
+
+const DebugStaticMemberExpression = class StaticMemberExpression {};
 
 class PrivateFieldExpression {
   type = 'PrivateFieldExpression';
@@ -1126,7 +1223,13 @@ class PrivateFieldExpression {
       optional: this.optional,
     };
   }
+
+  [inspectSymbol]() {
+    return Object.setPrototypeOf(this.toJSON(), DebugPrivateFieldExpression.prototype);
+  }
 }
+
+const DebugPrivateFieldExpression = class PrivateFieldExpression {};
 
 class CallExpression {
   type = 'CallExpression';
@@ -1186,7 +1289,13 @@ class CallExpression {
       optional: this.optional,
     };
   }
+
+  [inspectSymbol]() {
+    return Object.setPrototypeOf(this.toJSON(), DebugCallExpression.prototype);
+  }
 }
+
+const DebugCallExpression = class CallExpression {};
 
 class NewExpression {
   type = 'NewExpression';
@@ -1240,7 +1349,13 @@ class NewExpression {
       arguments: this.arguments,
     };
   }
+
+  [inspectSymbol]() {
+    return Object.setPrototypeOf(this.toJSON(), DebugNewExpression.prototype);
+  }
 }
+
+const DebugNewExpression = class NewExpression {};
 
 class MetaProperty {
   type = 'MetaProperty';
@@ -1286,7 +1401,13 @@ class MetaProperty {
       property: this.property,
     };
   }
+
+  [inspectSymbol]() {
+    return Object.setPrototypeOf(this.toJSON(), DebugMetaProperty.prototype);
+  }
 }
+
+const DebugMetaProperty = class MetaProperty {};
 
 class SpreadElement {
   type = 'SpreadElement';
@@ -1326,7 +1447,13 @@ class SpreadElement {
       argument: this.argument,
     };
   }
+
+  [inspectSymbol]() {
+    return Object.setPrototypeOf(this.toJSON(), DebugSpreadElement.prototype);
+  }
 }
+
+const DebugSpreadElement = class SpreadElement {};
 
 function constructArgument(pos, ast) {
   switch (ast.buffer[pos]) {
@@ -1473,7 +1600,13 @@ class UpdateExpression {
       argument: this.argument,
     };
   }
+
+  [inspectSymbol]() {
+    return Object.setPrototypeOf(this.toJSON(), DebugUpdateExpression.prototype);
+  }
 }
+
+const DebugUpdateExpression = class UpdateExpression {};
 
 class UnaryExpression {
   type = 'UnaryExpression';
@@ -1519,7 +1652,13 @@ class UnaryExpression {
       argument: this.argument,
     };
   }
+
+  [inspectSymbol]() {
+    return Object.setPrototypeOf(this.toJSON(), DebugUnaryExpression.prototype);
+  }
 }
+
+const DebugUnaryExpression = class UnaryExpression {};
 
 class BinaryExpression {
   type = 'BinaryExpression';
@@ -1571,7 +1710,13 @@ class BinaryExpression {
       right: this.right,
     };
   }
+
+  [inspectSymbol]() {
+    return Object.setPrototypeOf(this.toJSON(), DebugBinaryExpression.prototype);
+  }
 }
+
+const DebugBinaryExpression = class BinaryExpression {};
 
 class PrivateInExpression {
   type = 'PrivateInExpression';
@@ -1617,7 +1762,13 @@ class PrivateInExpression {
       right: this.right,
     };
   }
+
+  [inspectSymbol]() {
+    return Object.setPrototypeOf(this.toJSON(), DebugPrivateInExpression.prototype);
+  }
 }
+
+const DebugPrivateInExpression = class PrivateInExpression {};
 
 class LogicalExpression {
   type = 'LogicalExpression';
@@ -1669,7 +1820,13 @@ class LogicalExpression {
       right: this.right,
     };
   }
+
+  [inspectSymbol]() {
+    return Object.setPrototypeOf(this.toJSON(), DebugLogicalExpression.prototype);
+  }
 }
+
+const DebugLogicalExpression = class LogicalExpression {};
 
 class ConditionalExpression {
   type = 'ConditionalExpression';
@@ -1721,7 +1878,13 @@ class ConditionalExpression {
       alternate: this.alternate,
     };
   }
+
+  [inspectSymbol]() {
+    return Object.setPrototypeOf(this.toJSON(), DebugConditionalExpression.prototype);
+  }
 }
+
+const DebugConditionalExpression = class ConditionalExpression {};
 
 class AssignmentExpression {
   type = 'AssignmentExpression';
@@ -1773,7 +1936,13 @@ class AssignmentExpression {
       right: this.right,
     };
   }
+
+  [inspectSymbol]() {
+    return Object.setPrototypeOf(this.toJSON(), DebugAssignmentExpression.prototype);
+  }
 }
+
+const DebugAssignmentExpression = class AssignmentExpression {};
 
 function constructAssignmentTarget(pos, ast) {
   switch (ast.buffer[pos]) {
@@ -1876,7 +2045,13 @@ class ArrayAssignmentTarget {
       elements: this.elements,
     };
   }
+
+  [inspectSymbol]() {
+    return Object.setPrototypeOf(this.toJSON(), DebugArrayAssignmentTarget.prototype);
+  }
 }
+
+const DebugArrayAssignmentTarget = class ArrayAssignmentTarget {};
 
 class ObjectAssignmentTarget {
   type = 'ObjectAssignmentTarget';
@@ -1918,7 +2093,13 @@ class ObjectAssignmentTarget {
       properties: this.properties,
     };
   }
+
+  [inspectSymbol]() {
+    return Object.setPrototypeOf(this.toJSON(), DebugObjectAssignmentTarget.prototype);
+  }
 }
+
+const DebugObjectAssignmentTarget = class ObjectAssignmentTarget {};
 
 class AssignmentTargetRest {
   type = 'AssignmentTargetRest';
@@ -1958,7 +2139,13 @@ class AssignmentTargetRest {
       argument: this.argument,
     };
   }
+
+  [inspectSymbol]() {
+    return Object.setPrototypeOf(this.toJSON(), DebugAssignmentTargetRest.prototype);
+  }
 }
+
+const DebugAssignmentTargetRest = class AssignmentTargetRest {};
 
 function constructAssignmentTargetMaybeDefault(pos, ast) {
   switch (ast.buffer[pos]) {
@@ -2033,7 +2220,13 @@ class AssignmentTargetWithDefault {
       right: this.right,
     };
   }
+
+  [inspectSymbol]() {
+    return Object.setPrototypeOf(this.toJSON(), DebugAssignmentTargetWithDefault.prototype);
+  }
 }
+
+const DebugAssignmentTargetWithDefault = class AssignmentTargetWithDefault {};
 
 function constructAssignmentTargetProperty(pos, ast) {
   switch (ast.buffer[pos]) {
@@ -2090,7 +2283,13 @@ class AssignmentTargetPropertyIdentifier {
       value: this.value,
     };
   }
+
+  [inspectSymbol]() {
+    return Object.setPrototypeOf(this.toJSON(), DebugAssignmentTargetPropertyIdentifier.prototype);
+  }
 }
+
+const DebugAssignmentTargetPropertyIdentifier = class AssignmentTargetPropertyIdentifier {};
 
 class AssignmentTargetPropertyProperty {
   type = 'AssignmentTargetPropertyProperty';
@@ -2142,7 +2341,13 @@ class AssignmentTargetPropertyProperty {
       computed: this.computed,
     };
   }
+
+  [inspectSymbol]() {
+    return Object.setPrototypeOf(this.toJSON(), DebugAssignmentTargetPropertyProperty.prototype);
+  }
 }
+
+const DebugAssignmentTargetPropertyProperty = class AssignmentTargetPropertyProperty {};
 
 class SequenceExpression {
   type = 'SequenceExpression';
@@ -2184,7 +2389,13 @@ class SequenceExpression {
       expressions: this.expressions,
     };
   }
+
+  [inspectSymbol]() {
+    return Object.setPrototypeOf(this.toJSON(), DebugSequenceExpression.prototype);
+  }
 }
+
+const DebugSequenceExpression = class SequenceExpression {};
 
 class Super {
   type = 'Super';
@@ -2218,7 +2429,13 @@ class Super {
       end: this.end,
     };
   }
+
+  [inspectSymbol]() {
+    return Object.setPrototypeOf(this.toJSON(), DebugSuper.prototype);
+  }
 }
+
+const DebugSuper = class Super {};
 
 class AwaitExpression {
   type = 'AwaitExpression';
@@ -2258,7 +2475,13 @@ class AwaitExpression {
       argument: this.argument,
     };
   }
+
+  [inspectSymbol]() {
+    return Object.setPrototypeOf(this.toJSON(), DebugAwaitExpression.prototype);
+  }
 }
+
+const DebugAwaitExpression = class AwaitExpression {};
 
 class ChainExpression {
   type = 'ChainExpression';
@@ -2298,7 +2521,13 @@ class ChainExpression {
       expression: this.expression,
     };
   }
+
+  [inspectSymbol]() {
+    return Object.setPrototypeOf(this.toJSON(), DebugChainExpression.prototype);
+  }
 }
+
+const DebugChainExpression = class ChainExpression {};
 
 function constructChainElement(pos, ast) {
   switch (ast.buffer[pos]) {
@@ -2355,7 +2584,13 @@ class ParenthesizedExpression {
       expression: this.expression,
     };
   }
+
+  [inspectSymbol]() {
+    return Object.setPrototypeOf(this.toJSON(), DebugParenthesizedExpression.prototype);
+  }
 }
+
+const DebugParenthesizedExpression = class ParenthesizedExpression {};
 
 function constructStatement(pos, ast) {
   switch (ast.buffer[pos]) {
@@ -2474,7 +2709,13 @@ class Directive {
       directive: this.directive,
     };
   }
+
+  [inspectSymbol]() {
+    return Object.setPrototypeOf(this.toJSON(), DebugDirective.prototype);
+  }
 }
+
+const DebugDirective = class Directive {};
 
 class Hashbang {
   type = 'Hashbang';
@@ -2516,7 +2757,13 @@ class Hashbang {
       value: this.value,
     };
   }
+
+  [inspectSymbol]() {
+    return Object.setPrototypeOf(this.toJSON(), DebugHashbang.prototype);
+  }
 }
+
+const DebugHashbang = class Hashbang {};
 
 class BlockStatement {
   type = 'BlockStatement';
@@ -2558,7 +2805,13 @@ class BlockStatement {
       body: this.body,
     };
   }
+
+  [inspectSymbol]() {
+    return Object.setPrototypeOf(this.toJSON(), DebugBlockStatement.prototype);
+  }
 }
+
+const DebugBlockStatement = class BlockStatement {};
 
 function constructDeclaration(pos, ast) {
   switch (ast.buffer[pos]) {
@@ -2635,7 +2888,13 @@ class VariableDeclaration {
       declare: this.declare,
     };
   }
+
+  [inspectSymbol]() {
+    return Object.setPrototypeOf(this.toJSON(), DebugVariableDeclaration.prototype);
+  }
 }
+
+const DebugVariableDeclaration = class VariableDeclaration {};
 
 function constructVariableDeclarationKind(pos, ast) {
   switch (ast.buffer[pos]) {
@@ -2704,7 +2963,13 @@ class VariableDeclarator {
       definite: this.definite,
     };
   }
+
+  [inspectSymbol]() {
+    return Object.setPrototypeOf(this.toJSON(), DebugVariableDeclarator.prototype);
+  }
 }
+
+const DebugVariableDeclarator = class VariableDeclarator {};
 
 class EmptyStatement {
   type = 'EmptyStatement';
@@ -2738,7 +3003,13 @@ class EmptyStatement {
       end: this.end,
     };
   }
+
+  [inspectSymbol]() {
+    return Object.setPrototypeOf(this.toJSON(), DebugEmptyStatement.prototype);
+  }
 }
+
+const DebugEmptyStatement = class EmptyStatement {};
 
 class ExpressionStatement {
   type = 'ExpressionStatement';
@@ -2778,7 +3049,13 @@ class ExpressionStatement {
       expression: this.expression,
     };
   }
+
+  [inspectSymbol]() {
+    return Object.setPrototypeOf(this.toJSON(), DebugExpressionStatement.prototype);
+  }
 }
+
+const DebugExpressionStatement = class ExpressionStatement {};
 
 class IfStatement {
   type = 'IfStatement';
@@ -2830,7 +3107,13 @@ class IfStatement {
       alternate: this.alternate,
     };
   }
+
+  [inspectSymbol]() {
+    return Object.setPrototypeOf(this.toJSON(), DebugIfStatement.prototype);
+  }
 }
+
+const DebugIfStatement = class IfStatement {};
 
 class DoWhileStatement {
   type = 'DoWhileStatement';
@@ -2876,7 +3159,13 @@ class DoWhileStatement {
       test: this.test,
     };
   }
+
+  [inspectSymbol]() {
+    return Object.setPrototypeOf(this.toJSON(), DebugDoWhileStatement.prototype);
+  }
 }
+
+const DebugDoWhileStatement = class DoWhileStatement {};
 
 class WhileStatement {
   type = 'WhileStatement';
@@ -2922,7 +3211,13 @@ class WhileStatement {
       body: this.body,
     };
   }
+
+  [inspectSymbol]() {
+    return Object.setPrototypeOf(this.toJSON(), DebugWhileStatement.prototype);
+  }
 }
+
+const DebugWhileStatement = class WhileStatement {};
 
 class ForStatement {
   type = 'ForStatement';
@@ -2980,7 +3275,13 @@ class ForStatement {
       body: this.body,
     };
   }
+
+  [inspectSymbol]() {
+    return Object.setPrototypeOf(this.toJSON(), DebugForStatement.prototype);
+  }
 }
+
+const DebugForStatement = class ForStatement {};
 
 function constructForStatementInit(pos, ast) {
   switch (ast.buffer[pos]) {
@@ -3127,7 +3428,13 @@ class ForInStatement {
       body: this.body,
     };
   }
+
+  [inspectSymbol]() {
+    return Object.setPrototypeOf(this.toJSON(), DebugForInStatement.prototype);
+  }
 }
+
+const DebugForInStatement = class ForInStatement {};
 
 function constructForStatementLeft(pos, ast) {
   switch (ast.buffer[pos]) {
@@ -3214,7 +3521,13 @@ class ForOfStatement {
       body: this.body,
     };
   }
+
+  [inspectSymbol]() {
+    return Object.setPrototypeOf(this.toJSON(), DebugForOfStatement.prototype);
+  }
 }
+
+const DebugForOfStatement = class ForOfStatement {};
 
 class ContinueStatement {
   type = 'ContinueStatement';
@@ -3254,7 +3567,13 @@ class ContinueStatement {
       label: this.label,
     };
   }
+
+  [inspectSymbol]() {
+    return Object.setPrototypeOf(this.toJSON(), DebugContinueStatement.prototype);
+  }
 }
+
+const DebugContinueStatement = class ContinueStatement {};
 
 class BreakStatement {
   type = 'BreakStatement';
@@ -3294,7 +3613,13 @@ class BreakStatement {
       label: this.label,
     };
   }
+
+  [inspectSymbol]() {
+    return Object.setPrototypeOf(this.toJSON(), DebugBreakStatement.prototype);
+  }
 }
+
+const DebugBreakStatement = class BreakStatement {};
 
 class ReturnStatement {
   type = 'ReturnStatement';
@@ -3334,7 +3659,13 @@ class ReturnStatement {
       argument: this.argument,
     };
   }
+
+  [inspectSymbol]() {
+    return Object.setPrototypeOf(this.toJSON(), DebugReturnStatement.prototype);
+  }
 }
+
+const DebugReturnStatement = class ReturnStatement {};
 
 class WithStatement {
   type = 'WithStatement';
@@ -3380,7 +3711,13 @@ class WithStatement {
       body: this.body,
     };
   }
+
+  [inspectSymbol]() {
+    return Object.setPrototypeOf(this.toJSON(), DebugWithStatement.prototype);
+  }
 }
+
+const DebugWithStatement = class WithStatement {};
 
 class SwitchStatement {
   type = 'SwitchStatement';
@@ -3428,7 +3765,13 @@ class SwitchStatement {
       cases: this.cases,
     };
   }
+
+  [inspectSymbol]() {
+    return Object.setPrototypeOf(this.toJSON(), DebugSwitchStatement.prototype);
+  }
 }
+
+const DebugSwitchStatement = class SwitchStatement {};
 
 class SwitchCase {
   type = 'SwitchCase';
@@ -3476,7 +3819,13 @@ class SwitchCase {
       consequent: this.consequent,
     };
   }
+
+  [inspectSymbol]() {
+    return Object.setPrototypeOf(this.toJSON(), DebugSwitchCase.prototype);
+  }
 }
+
+const DebugSwitchCase = class SwitchCase {};
 
 class LabeledStatement {
   type = 'LabeledStatement';
@@ -3522,7 +3871,13 @@ class LabeledStatement {
       body: this.body,
     };
   }
+
+  [inspectSymbol]() {
+    return Object.setPrototypeOf(this.toJSON(), DebugLabeledStatement.prototype);
+  }
 }
+
+const DebugLabeledStatement = class LabeledStatement {};
 
 class ThrowStatement {
   type = 'ThrowStatement';
@@ -3562,7 +3917,13 @@ class ThrowStatement {
       argument: this.argument,
     };
   }
+
+  [inspectSymbol]() {
+    return Object.setPrototypeOf(this.toJSON(), DebugThrowStatement.prototype);
+  }
 }
+
+const DebugThrowStatement = class ThrowStatement {};
 
 class TryStatement {
   type = 'TryStatement';
@@ -3614,7 +3975,13 @@ class TryStatement {
       finalizer: this.finalizer,
     };
   }
+
+  [inspectSymbol]() {
+    return Object.setPrototypeOf(this.toJSON(), DebugTryStatement.prototype);
+  }
 }
+
+const DebugTryStatement = class TryStatement {};
 
 class CatchClause {
   type = 'CatchClause';
@@ -3660,7 +4027,13 @@ class CatchClause {
       body: this.body,
     };
   }
+
+  [inspectSymbol]() {
+    return Object.setPrototypeOf(this.toJSON(), DebugCatchClause.prototype);
+  }
 }
+
+const DebugCatchClause = class CatchClause {};
 
 class CatchParameter {
   #internal;
@@ -3686,7 +4059,13 @@ class CatchParameter {
       pattern: this.pattern,
     };
   }
+
+  [inspectSymbol]() {
+    return Object.setPrototypeOf(this.toJSON(), DebugCatchParameter.prototype);
+  }
 }
+
+const DebugCatchParameter = class CatchParameter {};
 
 class DebuggerStatement {
   type = 'DebuggerStatement';
@@ -3720,7 +4099,13 @@ class DebuggerStatement {
       end: this.end,
     };
   }
+
+  [inspectSymbol]() {
+    return Object.setPrototypeOf(this.toJSON(), DebugDebuggerStatement.prototype);
+  }
 }
+
+const DebugDebuggerStatement = class DebuggerStatement {};
 
 class BindingPattern {
   #internal;
@@ -3758,7 +4143,13 @@ class BindingPattern {
       optional: this.optional,
     };
   }
+
+  [inspectSymbol]() {
+    return Object.setPrototypeOf(this.toJSON(), DebugBindingPattern.prototype);
+  }
 }
+
+const DebugBindingPattern = class BindingPattern {};
 
 function constructBindingPatternKind(pos, ast) {
   switch (ast.buffer[pos]) {
@@ -3819,7 +4210,13 @@ class AssignmentPattern {
       right: this.right,
     };
   }
+
+  [inspectSymbol]() {
+    return Object.setPrototypeOf(this.toJSON(), DebugAssignmentPattern.prototype);
+  }
 }
+
+const DebugAssignmentPattern = class AssignmentPattern {};
 
 class ObjectPattern {
   type = 'ObjectPattern';
@@ -3861,7 +4258,13 @@ class ObjectPattern {
       properties: this.properties,
     };
   }
+
+  [inspectSymbol]() {
+    return Object.setPrototypeOf(this.toJSON(), DebugObjectPattern.prototype);
+  }
 }
+
+const DebugObjectPattern = class ObjectPattern {};
 
 class BindingProperty {
   type = 'BindingProperty';
@@ -3919,7 +4322,13 @@ class BindingProperty {
       computed: this.computed,
     };
   }
+
+  [inspectSymbol]() {
+    return Object.setPrototypeOf(this.toJSON(), DebugBindingProperty.prototype);
+  }
 }
+
+const DebugBindingProperty = class BindingProperty {};
 
 class ArrayPattern {
   type = 'ArrayPattern';
@@ -3961,7 +4370,13 @@ class ArrayPattern {
       elements: this.elements,
     };
   }
+
+  [inspectSymbol]() {
+    return Object.setPrototypeOf(this.toJSON(), DebugArrayPattern.prototype);
+  }
 }
+
+const DebugArrayPattern = class ArrayPattern {};
 
 class BindingRestElement {
   type = 'BindingRestElement';
@@ -4001,7 +4416,13 @@ class BindingRestElement {
       argument: this.argument,
     };
   }
+
+  [inspectSymbol]() {
+    return Object.setPrototypeOf(this.toJSON(), DebugBindingRestElement.prototype);
+  }
 }
+
+const DebugBindingRestElement = class BindingRestElement {};
 
 class Function {
   #internal;
@@ -4087,7 +4508,13 @@ class Function {
       body: this.body,
     };
   }
+
+  [inspectSymbol]() {
+    return Object.setPrototypeOf(this.toJSON(), DebugFunction.prototype);
+  }
 }
+
+const DebugFunction = class Function {};
 
 function constructFunctionType(pos, ast) {
   switch (ast.buffer[pos]) {
@@ -4150,7 +4577,13 @@ class FormalParameters {
       items: this.items,
     };
   }
+
+  [inspectSymbol]() {
+    return Object.setPrototypeOf(this.toJSON(), DebugFormalParameters.prototype);
+  }
 }
+
+const DebugFormalParameters = class FormalParameters {};
 
 class FormalParameter {
   #internal;
@@ -4184,7 +4617,13 @@ class FormalParameter {
       pattern: this.pattern,
     };
   }
+
+  [inspectSymbol]() {
+    return Object.setPrototypeOf(this.toJSON(), DebugFormalParameter.prototype);
+  }
 }
+
+const DebugFormalParameter = class FormalParameter {};
 
 function constructFormalParameterKind(pos, ast) {
   switch (ast.buffer[pos]) {
@@ -4241,7 +4680,13 @@ class FunctionBody {
       body: this.body,
     };
   }
+
+  [inspectSymbol]() {
+    return Object.setPrototypeOf(this.toJSON(), DebugFunctionBody.prototype);
+  }
 }
+
+const DebugFunctionBody = class FunctionBody {};
 
 class ArrowFunctionExpression {
   type = 'ArrowFunctionExpression';
@@ -4311,7 +4756,13 @@ class ArrowFunctionExpression {
       body: this.body,
     };
   }
+
+  [inspectSymbol]() {
+    return Object.setPrototypeOf(this.toJSON(), DebugArrowFunctionExpression.prototype);
+  }
 }
+
+const DebugArrowFunctionExpression = class ArrowFunctionExpression {};
 
 class YieldExpression {
   type = 'YieldExpression';
@@ -4357,7 +4808,13 @@ class YieldExpression {
       argument: this.argument,
     };
   }
+
+  [inspectSymbol]() {
+    return Object.setPrototypeOf(this.toJSON(), DebugYieldExpression.prototype);
+  }
 }
+
+const DebugYieldExpression = class YieldExpression {};
 
 class Class {
   #internal;
@@ -4453,7 +4910,13 @@ class Class {
       declare: this.declare,
     };
   }
+
+  [inspectSymbol]() {
+    return Object.setPrototypeOf(this.toJSON(), DebugClass.prototype);
+  }
 }
+
+const DebugClass = class Class {};
 
 function constructClassType(pos, ast) {
   switch (ast.buffer[pos]) {
@@ -4506,7 +4969,13 @@ class ClassBody {
       body: this.body,
     };
   }
+
+  [inspectSymbol]() {
+    return Object.setPrototypeOf(this.toJSON(), DebugClassBody.prototype);
+  }
 }
+
+const DebugClassBody = class ClassBody {};
 
 function constructClassElement(pos, ast) {
   switch (ast.buffer[pos]) {
@@ -4617,7 +5086,13 @@ class MethodDefinition {
       accessibility: this.accessibility,
     };
   }
+
+  [inspectSymbol]() {
+    return Object.setPrototypeOf(this.toJSON(), DebugMethodDefinition.prototype);
+  }
 }
+
+const DebugMethodDefinition = class MethodDefinition {};
 
 function constructMethodDefinitionType(pos, ast) {
   switch (ast.buffer[pos]) {
@@ -4740,7 +5215,13 @@ class PropertyDefinition {
       accessibility: this.accessibility,
     };
   }
+
+  [inspectSymbol]() {
+    return Object.setPrototypeOf(this.toJSON(), DebugPropertyDefinition.prototype);
+  }
 }
+
+const DebugPropertyDefinition = class PropertyDefinition {};
 
 function constructPropertyDefinitionType(pos, ast) {
   switch (ast.buffer[pos]) {
@@ -4808,7 +5289,13 @@ class PrivateIdentifier {
       name: this.name,
     };
   }
+
+  [inspectSymbol]() {
+    return Object.setPrototypeOf(this.toJSON(), DebugPrivateIdentifier.prototype);
+  }
 }
+
+const DebugPrivateIdentifier = class PrivateIdentifier {};
 
 class StaticBlock {
   type = 'StaticBlock';
@@ -4850,7 +5337,13 @@ class StaticBlock {
       body: this.body,
     };
   }
+
+  [inspectSymbol]() {
+    return Object.setPrototypeOf(this.toJSON(), DebugStaticBlock.prototype);
+  }
 }
+
+const DebugStaticBlock = class StaticBlock {};
 
 function constructModuleDeclaration(pos, ast) {
   switch (ast.buffer[pos]) {
@@ -4974,7 +5467,13 @@ class AccessorProperty {
       accessibility: this.accessibility,
     };
   }
+
+  [inspectSymbol]() {
+    return Object.setPrototypeOf(this.toJSON(), DebugAccessorProperty.prototype);
+  }
 }
+
+const DebugAccessorProperty = class AccessorProperty {};
 
 class ImportExpression {
   type = 'ImportExpression';
@@ -5026,7 +5525,13 @@ class ImportExpression {
       phase: this.phase,
     };
   }
+
+  [inspectSymbol]() {
+    return Object.setPrototypeOf(this.toJSON(), DebugImportExpression.prototype);
+  }
 }
+
+const DebugImportExpression = class ImportExpression {};
 
 class ImportDeclaration {
   type = 'ImportDeclaration';
@@ -5090,7 +5595,13 @@ class ImportDeclaration {
       importKind: this.importKind,
     };
   }
+
+  [inspectSymbol]() {
+    return Object.setPrototypeOf(this.toJSON(), DebugImportDeclaration.prototype);
+  }
 }
+
+const DebugImportDeclaration = class ImportDeclaration {};
 
 function constructImportPhase(pos, ast) {
   switch (ast.buffer[pos]) {
@@ -5166,7 +5677,13 @@ class ImportSpecifier {
       importKind: this.importKind,
     };
   }
+
+  [inspectSymbol]() {
+    return Object.setPrototypeOf(this.toJSON(), DebugImportSpecifier.prototype);
+  }
 }
+
+const DebugImportSpecifier = class ImportSpecifier {};
 
 class ImportDefaultSpecifier {
   type = 'ImportDefaultSpecifier';
@@ -5206,7 +5723,13 @@ class ImportDefaultSpecifier {
       local: this.local,
     };
   }
+
+  [inspectSymbol]() {
+    return Object.setPrototypeOf(this.toJSON(), DebugImportDefaultSpecifier.prototype);
+  }
 }
+
+const DebugImportDefaultSpecifier = class ImportDefaultSpecifier {};
 
 class ImportNamespaceSpecifier {
   type = 'ImportNamespaceSpecifier';
@@ -5246,7 +5769,13 @@ class ImportNamespaceSpecifier {
       local: this.local,
     };
   }
+
+  [inspectSymbol]() {
+    return Object.setPrototypeOf(this.toJSON(), DebugImportNamespaceSpecifier.prototype);
+  }
 }
+
+const DebugImportNamespaceSpecifier = class ImportNamespaceSpecifier {};
 
 class WithClause {
   #internal;
@@ -5274,7 +5803,13 @@ class WithClause {
       attributes: this.attributes,
     };
   }
+
+  [inspectSymbol]() {
+    return Object.setPrototypeOf(this.toJSON(), DebugWithClause.prototype);
+  }
 }
+
+const DebugWithClause = class WithClause {};
 
 class ImportAttribute {
   type = 'ImportAttribute';
@@ -5320,7 +5855,13 @@ class ImportAttribute {
       value: this.value,
     };
   }
+
+  [inspectSymbol]() {
+    return Object.setPrototypeOf(this.toJSON(), DebugImportAttribute.prototype);
+  }
 }
+
+const DebugImportAttribute = class ImportAttribute {};
 
 function constructImportAttributeKey(pos, ast) {
   switch (ast.buffer[pos]) {
@@ -5397,7 +5938,13 @@ class ExportNamedDeclaration {
       attributes: this.attributes,
     };
   }
+
+  [inspectSymbol]() {
+    return Object.setPrototypeOf(this.toJSON(), DebugExportNamedDeclaration.prototype);
+  }
 }
+
+const DebugExportNamedDeclaration = class ExportNamedDeclaration {};
 
 class ExportDefaultDeclaration {
   type = 'ExportDefaultDeclaration';
@@ -5437,7 +5984,13 @@ class ExportDefaultDeclaration {
       declaration: this.declaration,
     };
   }
+
+  [inspectSymbol]() {
+    return Object.setPrototypeOf(this.toJSON(), DebugExportDefaultDeclaration.prototype);
+  }
 }
+
+const DebugExportDefaultDeclaration = class ExportDefaultDeclaration {};
 
 class ExportAllDeclaration {
   type = 'ExportAllDeclaration';
@@ -5495,7 +6048,13 @@ class ExportAllDeclaration {
       exportKind: this.exportKind,
     };
   }
+
+  [inspectSymbol]() {
+    return Object.setPrototypeOf(this.toJSON(), DebugExportAllDeclaration.prototype);
+  }
 }
+
+const DebugExportAllDeclaration = class ExportAllDeclaration {};
 
 class ExportSpecifier {
   type = 'ExportSpecifier';
@@ -5547,7 +6106,13 @@ class ExportSpecifier {
       exportKind: this.exportKind,
     };
   }
+
+  [inspectSymbol]() {
+    return Object.setPrototypeOf(this.toJSON(), DebugExportSpecifier.prototype);
+  }
 }
+
+const DebugExportSpecifier = class ExportSpecifier {};
 
 function constructExportDefaultDeclarationKind(pos, ast) {
   switch (ast.buffer[pos]) {
@@ -5707,7 +6272,13 @@ class V8IntrinsicExpression {
       arguments: this.arguments,
     };
   }
+
+  [inspectSymbol]() {
+    return Object.setPrototypeOf(this.toJSON(), DebugV8IntrinsicExpression.prototype);
+  }
 }
+
+const DebugV8IntrinsicExpression = class V8IntrinsicExpression {};
 
 class BooleanLiteral {
   type = 'BooleanLiteral';
@@ -5747,7 +6318,13 @@ class BooleanLiteral {
       value: this.value,
     };
   }
+
+  [inspectSymbol]() {
+    return Object.setPrototypeOf(this.toJSON(), DebugBooleanLiteral.prototype);
+  }
 }
+
+const DebugBooleanLiteral = class BooleanLiteral {};
 
 class NullLiteral {
   type = 'NullLiteral';
@@ -5781,7 +6358,13 @@ class NullLiteral {
       end: this.end,
     };
   }
+
+  [inspectSymbol]() {
+    return Object.setPrototypeOf(this.toJSON(), DebugNullLiteral.prototype);
+  }
 }
+
+const DebugNullLiteral = class NullLiteral {};
 
 class NumericLiteral {
   type = 'NumericLiteral';
@@ -5829,7 +6412,13 @@ class NumericLiteral {
       raw: this.raw,
     };
   }
+
+  [inspectSymbol]() {
+    return Object.setPrototypeOf(this.toJSON(), DebugNumericLiteral.prototype);
+  }
 }
+
+const DebugNumericLiteral = class NumericLiteral {};
 
 class StringLiteral {
   type = 'StringLiteral';
@@ -5879,7 +6468,13 @@ class StringLiteral {
       raw: this.raw,
     };
   }
+
+  [inspectSymbol]() {
+    return Object.setPrototypeOf(this.toJSON(), DebugStringLiteral.prototype);
+  }
 }
+
+const DebugStringLiteral = class StringLiteral {};
 
 class BigIntLiteral {
   type = 'BigIntLiteral';
@@ -5929,7 +6524,13 @@ class BigIntLiteral {
       raw: this.raw,
     };
   }
+
+  [inspectSymbol]() {
+    return Object.setPrototypeOf(this.toJSON(), DebugBigIntLiteral.prototype);
+  }
 }
+
+const DebugBigIntLiteral = class BigIntLiteral {};
 
 class RegExpLiteral {
   type = 'RegExpLiteral';
@@ -5977,7 +6578,13 @@ class RegExpLiteral {
       raw: this.raw,
     };
   }
+
+  [inspectSymbol]() {
+    return Object.setPrototypeOf(this.toJSON(), DebugRegExpLiteral.prototype);
+  }
 }
+
+const DebugRegExpLiteral = class RegExpLiteral {};
 
 class RegExp {
   #internal;
@@ -6010,7 +6617,13 @@ class RegExp {
       flags: this.flags,
     };
   }
+
+  [inspectSymbol]() {
+    return Object.setPrototypeOf(this.toJSON(), DebugRegExp.prototype);
+  }
 }
+
+const DebugRegExp = class RegExp {};
 
 class RegExpPattern {
   #internal;
@@ -6038,7 +6651,13 @@ class RegExpPattern {
       pattern: this.pattern,
     };
   }
+
+  [inspectSymbol]() {
+    return Object.setPrototypeOf(this.toJSON(), DebugRegExpPattern.prototype);
+  }
 }
+
+const DebugRegExpPattern = class RegExpPattern {};
 
 class RegExpFlags {
   type = 'RegExpFlags';
@@ -6065,7 +6684,13 @@ class RegExpFlags {
       type: 'RegExpFlags',
     };
   }
+
+  [inspectSymbol]() {
+    return Object.setPrototypeOf(this.toJSON(), DebugRegExpFlags.prototype);
+  }
 }
+
+const DebugRegExpFlags = class RegExpFlags {};
 
 class JSXElement {
   type = 'JSXElement';
@@ -6119,7 +6744,13 @@ class JSXElement {
       closingElement: this.closingElement,
     };
   }
+
+  [inspectSymbol]() {
+    return Object.setPrototypeOf(this.toJSON(), DebugJSXElement.prototype);
+  }
 }
+
+const DebugJSXElement = class JSXElement {};
 
 class JSXOpeningElement {
   type = 'JSXOpeningElement';
@@ -6173,7 +6804,13 @@ class JSXOpeningElement {
       attributes: this.attributes,
     };
   }
+
+  [inspectSymbol]() {
+    return Object.setPrototypeOf(this.toJSON(), DebugJSXOpeningElement.prototype);
+  }
 }
+
+const DebugJSXOpeningElement = class JSXOpeningElement {};
 
 class JSXClosingElement {
   type = 'JSXClosingElement';
@@ -6213,7 +6850,13 @@ class JSXClosingElement {
       name: this.name,
     };
   }
+
+  [inspectSymbol]() {
+    return Object.setPrototypeOf(this.toJSON(), DebugJSXClosingElement.prototype);
+  }
 }
+
+const DebugJSXClosingElement = class JSXClosingElement {};
 
 class JSXFragment {
   type = 'JSXFragment';
@@ -6267,7 +6910,13 @@ class JSXFragment {
       closingFragment: this.closingFragment,
     };
   }
+
+  [inspectSymbol]() {
+    return Object.setPrototypeOf(this.toJSON(), DebugJSXFragment.prototype);
+  }
 }
+
+const DebugJSXFragment = class JSXFragment {};
 
 class JSXOpeningFragment {
   type = 'JSXOpeningFragment';
@@ -6301,7 +6950,13 @@ class JSXOpeningFragment {
       end: this.end,
     };
   }
+
+  [inspectSymbol]() {
+    return Object.setPrototypeOf(this.toJSON(), DebugJSXOpeningFragment.prototype);
+  }
 }
+
+const DebugJSXOpeningFragment = class JSXOpeningFragment {};
 
 class JSXClosingFragment {
   type = 'JSXClosingFragment';
@@ -6335,7 +6990,13 @@ class JSXClosingFragment {
       end: this.end,
     };
   }
+
+  [inspectSymbol]() {
+    return Object.setPrototypeOf(this.toJSON(), DebugJSXClosingFragment.prototype);
+  }
 }
+
+const DebugJSXClosingFragment = class JSXClosingFragment {};
 
 function constructJSXElementName(pos, ast) {
   switch (ast.buffer[pos]) {
@@ -6398,7 +7059,13 @@ class JSXNamespacedName {
       name: this.name,
     };
   }
+
+  [inspectSymbol]() {
+    return Object.setPrototypeOf(this.toJSON(), DebugJSXNamespacedName.prototype);
+  }
 }
+
+const DebugJSXNamespacedName = class JSXNamespacedName {};
 
 class JSXMemberExpression {
   type = 'JSXMemberExpression';
@@ -6444,7 +7111,13 @@ class JSXMemberExpression {
       property: this.property,
     };
   }
+
+  [inspectSymbol]() {
+    return Object.setPrototypeOf(this.toJSON(), DebugJSXMemberExpression.prototype);
+  }
 }
+
+const DebugJSXMemberExpression = class JSXMemberExpression {};
 
 function constructJSXMemberExpressionObject(pos, ast) {
   switch (ast.buffer[pos]) {
@@ -6497,7 +7170,13 @@ class JSXExpressionContainer {
       expression: this.expression,
     };
   }
+
+  [inspectSymbol]() {
+    return Object.setPrototypeOf(this.toJSON(), DebugJSXExpressionContainer.prototype);
+  }
 }
+
+const DebugJSXExpressionContainer = class JSXExpressionContainer {};
 
 function constructJSXExpression(pos, ast) {
   switch (ast.buffer[pos]) {
@@ -6626,7 +7305,13 @@ class JSXEmptyExpression {
       end: this.end,
     };
   }
+
+  [inspectSymbol]() {
+    return Object.setPrototypeOf(this.toJSON(), DebugJSXEmptyExpression.prototype);
+  }
 }
+
+const DebugJSXEmptyExpression = class JSXEmptyExpression {};
 
 function constructJSXAttributeItem(pos, ast) {
   switch (ast.buffer[pos]) {
@@ -6683,7 +7368,13 @@ class JSXAttribute {
       value: this.value,
     };
   }
+
+  [inspectSymbol]() {
+    return Object.setPrototypeOf(this.toJSON(), DebugJSXAttribute.prototype);
+  }
 }
+
+const DebugJSXAttribute = class JSXAttribute {};
 
 class JSXSpreadAttribute {
   type = 'JSXSpreadAttribute';
@@ -6723,7 +7414,13 @@ class JSXSpreadAttribute {
       argument: this.argument,
     };
   }
+
+  [inspectSymbol]() {
+    return Object.setPrototypeOf(this.toJSON(), DebugJSXSpreadAttribute.prototype);
+  }
 }
+
+const DebugJSXSpreadAttribute = class JSXSpreadAttribute {};
 
 function constructJSXAttributeName(pos, ast) {
   switch (ast.buffer[pos]) {
@@ -6791,7 +7488,13 @@ class JSXIdentifier {
       name: this.name,
     };
   }
+
+  [inspectSymbol]() {
+    return Object.setPrototypeOf(this.toJSON(), DebugJSXIdentifier.prototype);
+  }
 }
+
+const DebugJSXIdentifier = class JSXIdentifier {};
 
 function constructJSXChild(pos, ast) {
   switch (ast.buffer[pos]) {
@@ -6848,7 +7551,13 @@ class JSXSpreadChild {
       expression: this.expression,
     };
   }
+
+  [inspectSymbol]() {
+    return Object.setPrototypeOf(this.toJSON(), DebugJSXSpreadChild.prototype);
+  }
 }
+
+const DebugJSXSpreadChild = class JSXSpreadChild {};
 
 class JSXText {
   type = 'JSXText';
@@ -6898,7 +7607,13 @@ class JSXText {
       raw: this.raw,
     };
   }
+
+  [inspectSymbol]() {
+    return Object.setPrototypeOf(this.toJSON(), DebugJSXText.prototype);
+  }
 }
+
+const DebugJSXText = class JSXText {};
 
 class TSThisParameter {
   type = 'TSThisParameter';
@@ -6938,7 +7653,13 @@ class TSThisParameter {
       typeAnnotation: this.typeAnnotation,
     };
   }
+
+  [inspectSymbol]() {
+    return Object.setPrototypeOf(this.toJSON(), DebugTSThisParameter.prototype);
+  }
 }
+
+const DebugTSThisParameter = class TSThisParameter {};
 
 class TSEnumDeclaration {
   type = 'TSEnumDeclaration';
@@ -6996,7 +7717,13 @@ class TSEnumDeclaration {
       declare: this.declare,
     };
   }
+
+  [inspectSymbol]() {
+    return Object.setPrototypeOf(this.toJSON(), DebugTSEnumDeclaration.prototype);
+  }
 }
+
+const DebugTSEnumDeclaration = class TSEnumDeclaration {};
 
 class TSEnumBody {
   type = 'TSEnumBody';
@@ -7038,7 +7765,13 @@ class TSEnumBody {
       members: this.members,
     };
   }
+
+  [inspectSymbol]() {
+    return Object.setPrototypeOf(this.toJSON(), DebugTSEnumBody.prototype);
+  }
 }
+
+const DebugTSEnumBody = class TSEnumBody {};
 
 class TSEnumMember {
   type = 'TSEnumMember';
@@ -7084,7 +7817,13 @@ class TSEnumMember {
       initializer: this.initializer,
     };
   }
+
+  [inspectSymbol]() {
+    return Object.setPrototypeOf(this.toJSON(), DebugTSEnumMember.prototype);
+  }
 }
+
+const DebugTSEnumMember = class TSEnumMember {};
 
 function constructTSEnumMemberName(pos, ast) {
   switch (ast.buffer[pos]) {
@@ -7139,7 +7878,13 @@ class TSTypeAnnotation {
       typeAnnotation: this.typeAnnotation,
     };
   }
+
+  [inspectSymbol]() {
+    return Object.setPrototypeOf(this.toJSON(), DebugTSTypeAnnotation.prototype);
+  }
 }
+
+const DebugTSTypeAnnotation = class TSTypeAnnotation {};
 
 class TSLiteralType {
   type = 'TSLiteralType';
@@ -7179,7 +7924,13 @@ class TSLiteralType {
       literal: this.literal,
     };
   }
+
+  [inspectSymbol]() {
+    return Object.setPrototypeOf(this.toJSON(), DebugTSLiteralType.prototype);
+  }
 }
+
+const DebugTSLiteralType = class TSLiteralType {};
 
 function constructTSLiteral(pos, ast) {
   switch (ast.buffer[pos]) {
@@ -7337,7 +8088,13 @@ class TSConditionalType {
       falseType: this.falseType,
     };
   }
+
+  [inspectSymbol]() {
+    return Object.setPrototypeOf(this.toJSON(), DebugTSConditionalType.prototype);
+  }
 }
+
+const DebugTSConditionalType = class TSConditionalType {};
 
 class TSUnionType {
   type = 'TSUnionType';
@@ -7379,7 +8136,13 @@ class TSUnionType {
       types: this.types,
     };
   }
+
+  [inspectSymbol]() {
+    return Object.setPrototypeOf(this.toJSON(), DebugTSUnionType.prototype);
+  }
 }
+
+const DebugTSUnionType = class TSUnionType {};
 
 class TSIntersectionType {
   type = 'TSIntersectionType';
@@ -7421,7 +8184,13 @@ class TSIntersectionType {
       types: this.types,
     };
   }
+
+  [inspectSymbol]() {
+    return Object.setPrototypeOf(this.toJSON(), DebugTSIntersectionType.prototype);
+  }
 }
+
+const DebugTSIntersectionType = class TSIntersectionType {};
 
 class TSParenthesizedType {
   type = 'TSParenthesizedType';
@@ -7461,7 +8230,13 @@ class TSParenthesizedType {
       typeAnnotation: this.typeAnnotation,
     };
   }
+
+  [inspectSymbol]() {
+    return Object.setPrototypeOf(this.toJSON(), DebugTSParenthesizedType.prototype);
+  }
 }
+
+const DebugTSParenthesizedType = class TSParenthesizedType {};
 
 class TSTypeOperator {
   type = 'TSTypeOperator';
@@ -7507,7 +8282,13 @@ class TSTypeOperator {
       typeAnnotation: this.typeAnnotation,
     };
   }
+
+  [inspectSymbol]() {
+    return Object.setPrototypeOf(this.toJSON(), DebugTSTypeOperator.prototype);
+  }
 }
+
+const DebugTSTypeOperator = class TSTypeOperator {};
 
 function constructTSTypeOperatorOperator(pos, ast) {
   switch (ast.buffer[pos]) {
@@ -7560,7 +8341,13 @@ class TSArrayType {
       elementType: this.elementType,
     };
   }
+
+  [inspectSymbol]() {
+    return Object.setPrototypeOf(this.toJSON(), DebugTSArrayType.prototype);
+  }
 }
+
+const DebugTSArrayType = class TSArrayType {};
 
 class TSIndexedAccessType {
   type = 'TSIndexedAccessType';
@@ -7606,7 +8393,13 @@ class TSIndexedAccessType {
       indexType: this.indexType,
     };
   }
+
+  [inspectSymbol]() {
+    return Object.setPrototypeOf(this.toJSON(), DebugTSIndexedAccessType.prototype);
+  }
 }
+
+const DebugTSIndexedAccessType = class TSIndexedAccessType {};
 
 class TSTupleType {
   type = 'TSTupleType';
@@ -7648,7 +8441,13 @@ class TSTupleType {
       elementTypes: this.elementTypes,
     };
   }
+
+  [inspectSymbol]() {
+    return Object.setPrototypeOf(this.toJSON(), DebugTSTupleType.prototype);
+  }
 }
+
+const DebugTSTupleType = class TSTupleType {};
 
 class TSNamedTupleMember {
   type = 'TSNamedTupleMember';
@@ -7700,7 +8499,13 @@ class TSNamedTupleMember {
       optional: this.optional,
     };
   }
+
+  [inspectSymbol]() {
+    return Object.setPrototypeOf(this.toJSON(), DebugTSNamedTupleMember.prototype);
+  }
 }
+
+const DebugTSNamedTupleMember = class TSNamedTupleMember {};
 
 class TSOptionalType {
   type = 'TSOptionalType';
@@ -7740,7 +8545,13 @@ class TSOptionalType {
       typeAnnotation: this.typeAnnotation,
     };
   }
+
+  [inspectSymbol]() {
+    return Object.setPrototypeOf(this.toJSON(), DebugTSOptionalType.prototype);
+  }
 }
+
+const DebugTSOptionalType = class TSOptionalType {};
 
 class TSRestType {
   type = 'TSRestType';
@@ -7780,7 +8591,13 @@ class TSRestType {
       typeAnnotation: this.typeAnnotation,
     };
   }
+
+  [inspectSymbol]() {
+    return Object.setPrototypeOf(this.toJSON(), DebugTSRestType.prototype);
+  }
 }
+
+const DebugTSRestType = class TSRestType {};
 
 function constructTSTupleElement(pos, ast) {
   switch (ast.buffer[pos]) {
@@ -7899,7 +8716,13 @@ class TSAnyKeyword {
       end: this.end,
     };
   }
+
+  [inspectSymbol]() {
+    return Object.setPrototypeOf(this.toJSON(), DebugTSAnyKeyword.prototype);
+  }
 }
+
+const DebugTSAnyKeyword = class TSAnyKeyword {};
 
 class TSStringKeyword {
   type = 'TSStringKeyword';
@@ -7933,7 +8756,13 @@ class TSStringKeyword {
       end: this.end,
     };
   }
+
+  [inspectSymbol]() {
+    return Object.setPrototypeOf(this.toJSON(), DebugTSStringKeyword.prototype);
+  }
 }
+
+const DebugTSStringKeyword = class TSStringKeyword {};
 
 class TSBooleanKeyword {
   type = 'TSBooleanKeyword';
@@ -7967,7 +8796,13 @@ class TSBooleanKeyword {
       end: this.end,
     };
   }
+
+  [inspectSymbol]() {
+    return Object.setPrototypeOf(this.toJSON(), DebugTSBooleanKeyword.prototype);
+  }
 }
+
+const DebugTSBooleanKeyword = class TSBooleanKeyword {};
 
 class TSNumberKeyword {
   type = 'TSNumberKeyword';
@@ -8001,7 +8836,13 @@ class TSNumberKeyword {
       end: this.end,
     };
   }
+
+  [inspectSymbol]() {
+    return Object.setPrototypeOf(this.toJSON(), DebugTSNumberKeyword.prototype);
+  }
 }
+
+const DebugTSNumberKeyword = class TSNumberKeyword {};
 
 class TSNeverKeyword {
   type = 'TSNeverKeyword';
@@ -8035,7 +8876,13 @@ class TSNeverKeyword {
       end: this.end,
     };
   }
+
+  [inspectSymbol]() {
+    return Object.setPrototypeOf(this.toJSON(), DebugTSNeverKeyword.prototype);
+  }
 }
+
+const DebugTSNeverKeyword = class TSNeverKeyword {};
 
 class TSIntrinsicKeyword {
   type = 'TSIntrinsicKeyword';
@@ -8069,7 +8916,13 @@ class TSIntrinsicKeyword {
       end: this.end,
     };
   }
+
+  [inspectSymbol]() {
+    return Object.setPrototypeOf(this.toJSON(), DebugTSIntrinsicKeyword.prototype);
+  }
 }
+
+const DebugTSIntrinsicKeyword = class TSIntrinsicKeyword {};
 
 class TSUnknownKeyword {
   type = 'TSUnknownKeyword';
@@ -8103,7 +8956,13 @@ class TSUnknownKeyword {
       end: this.end,
     };
   }
+
+  [inspectSymbol]() {
+    return Object.setPrototypeOf(this.toJSON(), DebugTSUnknownKeyword.prototype);
+  }
 }
+
+const DebugTSUnknownKeyword = class TSUnknownKeyword {};
 
 class TSNullKeyword {
   type = 'TSNullKeyword';
@@ -8137,7 +8996,13 @@ class TSNullKeyword {
       end: this.end,
     };
   }
+
+  [inspectSymbol]() {
+    return Object.setPrototypeOf(this.toJSON(), DebugTSNullKeyword.prototype);
+  }
 }
+
+const DebugTSNullKeyword = class TSNullKeyword {};
 
 class TSUndefinedKeyword {
   type = 'TSUndefinedKeyword';
@@ -8171,7 +9036,13 @@ class TSUndefinedKeyword {
       end: this.end,
     };
   }
+
+  [inspectSymbol]() {
+    return Object.setPrototypeOf(this.toJSON(), DebugTSUndefinedKeyword.prototype);
+  }
 }
+
+const DebugTSUndefinedKeyword = class TSUndefinedKeyword {};
 
 class TSVoidKeyword {
   type = 'TSVoidKeyword';
@@ -8205,7 +9076,13 @@ class TSVoidKeyword {
       end: this.end,
     };
   }
+
+  [inspectSymbol]() {
+    return Object.setPrototypeOf(this.toJSON(), DebugTSVoidKeyword.prototype);
+  }
 }
+
+const DebugTSVoidKeyword = class TSVoidKeyword {};
 
 class TSSymbolKeyword {
   type = 'TSSymbolKeyword';
@@ -8239,7 +9116,13 @@ class TSSymbolKeyword {
       end: this.end,
     };
   }
+
+  [inspectSymbol]() {
+    return Object.setPrototypeOf(this.toJSON(), DebugTSSymbolKeyword.prototype);
+  }
 }
+
+const DebugTSSymbolKeyword = class TSSymbolKeyword {};
 
 class TSThisType {
   type = 'TSThisType';
@@ -8273,7 +9156,13 @@ class TSThisType {
       end: this.end,
     };
   }
+
+  [inspectSymbol]() {
+    return Object.setPrototypeOf(this.toJSON(), DebugTSThisType.prototype);
+  }
 }
+
+const DebugTSThisType = class TSThisType {};
 
 class TSObjectKeyword {
   type = 'TSObjectKeyword';
@@ -8307,7 +9196,13 @@ class TSObjectKeyword {
       end: this.end,
     };
   }
+
+  [inspectSymbol]() {
+    return Object.setPrototypeOf(this.toJSON(), DebugTSObjectKeyword.prototype);
+  }
 }
+
+const DebugTSObjectKeyword = class TSObjectKeyword {};
 
 class TSBigIntKeyword {
   type = 'TSBigIntKeyword';
@@ -8341,7 +9236,13 @@ class TSBigIntKeyword {
       end: this.end,
     };
   }
+
+  [inspectSymbol]() {
+    return Object.setPrototypeOf(this.toJSON(), DebugTSBigIntKeyword.prototype);
+  }
 }
+
+const DebugTSBigIntKeyword = class TSBigIntKeyword {};
 
 class TSTypeReference {
   type = 'TSTypeReference';
@@ -8387,7 +9288,13 @@ class TSTypeReference {
       typeArguments: this.typeArguments,
     };
   }
+
+  [inspectSymbol]() {
+    return Object.setPrototypeOf(this.toJSON(), DebugTSTypeReference.prototype);
+  }
 }
+
+const DebugTSTypeReference = class TSTypeReference {};
 
 function constructTSTypeName(pos, ast) {
   switch (ast.buffer[pos]) {
@@ -8444,7 +9351,13 @@ class TSQualifiedName {
       right: this.right,
     };
   }
+
+  [inspectSymbol]() {
+    return Object.setPrototypeOf(this.toJSON(), DebugTSQualifiedName.prototype);
+  }
 }
+
+const DebugTSQualifiedName = class TSQualifiedName {};
 
 class TSTypeParameterInstantiation {
   type = 'TSTypeParameterInstantiation';
@@ -8486,7 +9399,13 @@ class TSTypeParameterInstantiation {
       params: this.params,
     };
   }
+
+  [inspectSymbol]() {
+    return Object.setPrototypeOf(this.toJSON(), DebugTSTypeParameterInstantiation.prototype);
+  }
 }
+
+const DebugTSTypeParameterInstantiation = class TSTypeParameterInstantiation {};
 
 class TSTypeParameter {
   type = 'TSTypeParameter';
@@ -8556,7 +9475,13 @@ class TSTypeParameter {
       const: this.const,
     };
   }
+
+  [inspectSymbol]() {
+    return Object.setPrototypeOf(this.toJSON(), DebugTSTypeParameter.prototype);
+  }
 }
+
+const DebugTSTypeParameter = class TSTypeParameter {};
 
 class TSTypeParameterDeclaration {
   type = 'TSTypeParameterDeclaration';
@@ -8598,7 +9523,13 @@ class TSTypeParameterDeclaration {
       params: this.params,
     };
   }
+
+  [inspectSymbol]() {
+    return Object.setPrototypeOf(this.toJSON(), DebugTSTypeParameterDeclaration.prototype);
+  }
 }
+
+const DebugTSTypeParameterDeclaration = class TSTypeParameterDeclaration {};
 
 class TSTypeAliasDeclaration {
   type = 'TSTypeAliasDeclaration';
@@ -8656,7 +9587,13 @@ class TSTypeAliasDeclaration {
       declare: this.declare,
     };
   }
+
+  [inspectSymbol]() {
+    return Object.setPrototypeOf(this.toJSON(), DebugTSTypeAliasDeclaration.prototype);
+  }
 }
+
+const DebugTSTypeAliasDeclaration = class TSTypeAliasDeclaration {};
 
 function constructTSAccessibility(pos, ast) {
   switch (ast.buffer[pos]) {
@@ -8715,7 +9652,13 @@ class TSClassImplements {
       typeArguments: this.typeArguments,
     };
   }
+
+  [inspectSymbol]() {
+    return Object.setPrototypeOf(this.toJSON(), DebugTSClassImplements.prototype);
+  }
 }
+
+const DebugTSClassImplements = class TSClassImplements {};
 
 class TSInterfaceDeclaration {
   type = 'TSInterfaceDeclaration';
@@ -8781,7 +9724,13 @@ class TSInterfaceDeclaration {
       declare: this.declare,
     };
   }
+
+  [inspectSymbol]() {
+    return Object.setPrototypeOf(this.toJSON(), DebugTSInterfaceDeclaration.prototype);
+  }
 }
+
+const DebugTSInterfaceDeclaration = class TSInterfaceDeclaration {};
 
 class TSInterfaceBody {
   type = 'TSInterfaceBody';
@@ -8823,7 +9772,13 @@ class TSInterfaceBody {
       body: this.body,
     };
   }
+
+  [inspectSymbol]() {
+    return Object.setPrototypeOf(this.toJSON(), DebugTSInterfaceBody.prototype);
+  }
 }
+
+const DebugTSInterfaceBody = class TSInterfaceBody {};
 
 class TSPropertySignature {
   type = 'TSPropertySignature';
@@ -8887,7 +9842,13 @@ class TSPropertySignature {
       typeAnnotation: this.typeAnnotation,
     };
   }
+
+  [inspectSymbol]() {
+    return Object.setPrototypeOf(this.toJSON(), DebugTSPropertySignature.prototype);
+  }
 }
+
+const DebugTSPropertySignature = class TSPropertySignature {};
 
 function constructTSSignature(pos, ast) {
   switch (ast.buffer[pos]) {
@@ -8964,7 +9925,13 @@ class TSIndexSignature {
       static: this.static,
     };
   }
+
+  [inspectSymbol]() {
+    return Object.setPrototypeOf(this.toJSON(), DebugTSIndexSignature.prototype);
+  }
 }
+
+const DebugTSIndexSignature = class TSIndexSignature {};
 
 class TSCallSignatureDeclaration {
   type = 'TSCallSignatureDeclaration';
@@ -9016,7 +9983,13 @@ class TSCallSignatureDeclaration {
       returnType: this.returnType,
     };
   }
+
+  [inspectSymbol]() {
+    return Object.setPrototypeOf(this.toJSON(), DebugTSCallSignatureDeclaration.prototype);
+  }
 }
+
+const DebugTSCallSignatureDeclaration = class TSCallSignatureDeclaration {};
 
 function constructTSMethodSignatureKind(pos, ast) {
   switch (ast.buffer[pos]) {
@@ -9105,7 +10078,13 @@ class TSMethodSignature {
       returnType: this.returnType,
     };
   }
+
+  [inspectSymbol]() {
+    return Object.setPrototypeOf(this.toJSON(), DebugTSMethodSignature.prototype);
+  }
 }
+
+const DebugTSMethodSignature = class TSMethodSignature {};
 
 class TSConstructSignatureDeclaration {
   type = 'TSConstructSignatureDeclaration';
@@ -9157,7 +10136,13 @@ class TSConstructSignatureDeclaration {
       returnType: this.returnType,
     };
   }
+
+  [inspectSymbol]() {
+    return Object.setPrototypeOf(this.toJSON(), DebugTSConstructSignatureDeclaration.prototype);
+  }
 }
+
+const DebugTSConstructSignatureDeclaration = class TSConstructSignatureDeclaration {};
 
 class TSIndexSignatureName {
   type = 'TSIndexSignatureName';
@@ -9205,7 +10190,13 @@ class TSIndexSignatureName {
       typeAnnotation: this.typeAnnotation,
     };
   }
+
+  [inspectSymbol]() {
+    return Object.setPrototypeOf(this.toJSON(), DebugTSIndexSignatureName.prototype);
+  }
 }
+
+const DebugTSIndexSignatureName = class TSIndexSignatureName {};
 
 class TSInterfaceHeritage {
   type = 'TSInterfaceHeritage';
@@ -9251,7 +10242,13 @@ class TSInterfaceHeritage {
       typeArguments: this.typeArguments,
     };
   }
+
+  [inspectSymbol]() {
+    return Object.setPrototypeOf(this.toJSON(), DebugTSInterfaceHeritage.prototype);
+  }
 }
+
+const DebugTSInterfaceHeritage = class TSInterfaceHeritage {};
 
 class TSTypePredicate {
   type = 'TSTypePredicate';
@@ -9303,7 +10300,13 @@ class TSTypePredicate {
       typeAnnotation: this.typeAnnotation,
     };
   }
+
+  [inspectSymbol]() {
+    return Object.setPrototypeOf(this.toJSON(), DebugTSTypePredicate.prototype);
+  }
 }
+
+const DebugTSTypePredicate = class TSTypePredicate {};
 
 function constructTSTypePredicateName(pos, ast) {
   switch (ast.buffer[pos]) {
@@ -9372,7 +10375,13 @@ class TSModuleDeclaration {
       declare: this.declare,
     };
   }
+
+  [inspectSymbol]() {
+    return Object.setPrototypeOf(this.toJSON(), DebugTSModuleDeclaration.prototype);
+  }
 }
+
+const DebugTSModuleDeclaration = class TSModuleDeclaration {};
 
 function constructTSModuleDeclarationKind(pos, ast) {
   switch (ast.buffer[pos]) {
@@ -9449,7 +10458,13 @@ class TSModuleBlock {
       body: this.body,
     };
   }
+
+  [inspectSymbol]() {
+    return Object.setPrototypeOf(this.toJSON(), DebugTSModuleBlock.prototype);
+  }
 }
+
+const DebugTSModuleBlock = class TSModuleBlock {};
 
 class TSTypeLiteral {
   type = 'TSTypeLiteral';
@@ -9491,7 +10506,13 @@ class TSTypeLiteral {
       members: this.members,
     };
   }
+
+  [inspectSymbol]() {
+    return Object.setPrototypeOf(this.toJSON(), DebugTSTypeLiteral.prototype);
+  }
 }
+
+const DebugTSTypeLiteral = class TSTypeLiteral {};
 
 class TSInferType {
   type = 'TSInferType';
@@ -9531,7 +10552,13 @@ class TSInferType {
       typeParameter: this.typeParameter,
     };
   }
+
+  [inspectSymbol]() {
+    return Object.setPrototypeOf(this.toJSON(), DebugTSInferType.prototype);
+  }
 }
+
+const DebugTSInferType = class TSInferType {};
 
 class TSTypeQuery {
   type = 'TSTypeQuery';
@@ -9577,7 +10604,13 @@ class TSTypeQuery {
       typeArguments: this.typeArguments,
     };
   }
+
+  [inspectSymbol]() {
+    return Object.setPrototypeOf(this.toJSON(), DebugTSTypeQuery.prototype);
+  }
 }
+
+const DebugTSTypeQuery = class TSTypeQuery {};
 
 function constructTSTypeQueryExprName(pos, ast) {
   switch (ast.buffer[pos]) {
@@ -9648,7 +10681,13 @@ class TSImportType {
       typeArguments: this.typeArguments,
     };
   }
+
+  [inspectSymbol]() {
+    return Object.setPrototypeOf(this.toJSON(), DebugTSImportType.prototype);
+  }
 }
+
+const DebugTSImportType = class TSImportType {};
 
 class TSFunctionType {
   type = 'TSFunctionType';
@@ -9700,7 +10739,13 @@ class TSFunctionType {
       returnType: this.returnType,
     };
   }
+
+  [inspectSymbol]() {
+    return Object.setPrototypeOf(this.toJSON(), DebugTSFunctionType.prototype);
+  }
 }
+
+const DebugTSFunctionType = class TSFunctionType {};
 
 class TSConstructorType {
   type = 'TSConstructorType';
@@ -9758,7 +10803,13 @@ class TSConstructorType {
       returnType: this.returnType,
     };
   }
+
+  [inspectSymbol]() {
+    return Object.setPrototypeOf(this.toJSON(), DebugTSConstructorType.prototype);
+  }
 }
+
+const DebugTSConstructorType = class TSConstructorType {};
 
 class TSMappedType {
   type = 'TSMappedType';
@@ -9816,7 +10867,13 @@ class TSMappedType {
       readonly: this.readonly,
     };
   }
+
+  [inspectSymbol]() {
+    return Object.setPrototypeOf(this.toJSON(), DebugTSMappedType.prototype);
+  }
 }
+
+const DebugTSMappedType = class TSMappedType {};
 
 function constructTSMappedTypeModifierOperator(pos, ast) {
   switch (ast.buffer[pos]) {
@@ -9879,7 +10936,13 @@ class TSTemplateLiteralType {
       types: this.types,
     };
   }
+
+  [inspectSymbol]() {
+    return Object.setPrototypeOf(this.toJSON(), DebugTSTemplateLiteralType.prototype);
+  }
 }
+
+const DebugTSTemplateLiteralType = class TSTemplateLiteralType {};
 
 class TSAsExpression {
   type = 'TSAsExpression';
@@ -9925,7 +10988,13 @@ class TSAsExpression {
       typeAnnotation: this.typeAnnotation,
     };
   }
+
+  [inspectSymbol]() {
+    return Object.setPrototypeOf(this.toJSON(), DebugTSAsExpression.prototype);
+  }
 }
+
+const DebugTSAsExpression = class TSAsExpression {};
 
 class TSSatisfiesExpression {
   type = 'TSSatisfiesExpression';
@@ -9971,7 +11040,13 @@ class TSSatisfiesExpression {
       typeAnnotation: this.typeAnnotation,
     };
   }
+
+  [inspectSymbol]() {
+    return Object.setPrototypeOf(this.toJSON(), DebugTSSatisfiesExpression.prototype);
+  }
 }
+
+const DebugTSSatisfiesExpression = class TSSatisfiesExpression {};
 
 class TSTypeAssertion {
   type = 'TSTypeAssertion';
@@ -10017,7 +11092,13 @@ class TSTypeAssertion {
       expression: this.expression,
     };
   }
+
+  [inspectSymbol]() {
+    return Object.setPrototypeOf(this.toJSON(), DebugTSTypeAssertion.prototype);
+  }
 }
+
+const DebugTSTypeAssertion = class TSTypeAssertion {};
 
 class TSImportEqualsDeclaration {
   type = 'TSImportEqualsDeclaration';
@@ -10069,7 +11150,13 @@ class TSImportEqualsDeclaration {
       importKind: this.importKind,
     };
   }
+
+  [inspectSymbol]() {
+    return Object.setPrototypeOf(this.toJSON(), DebugTSImportEqualsDeclaration.prototype);
+  }
 }
+
+const DebugTSImportEqualsDeclaration = class TSImportEqualsDeclaration {};
 
 function constructTSModuleReference(pos, ast) {
   switch (ast.buffer[pos]) {
@@ -10122,7 +11209,13 @@ class TSExternalModuleReference {
       expression: this.expression,
     };
   }
+
+  [inspectSymbol]() {
+    return Object.setPrototypeOf(this.toJSON(), DebugTSExternalModuleReference.prototype);
+  }
 }
+
+const DebugTSExternalModuleReference = class TSExternalModuleReference {};
 
 class TSNonNullExpression {
   type = 'TSNonNullExpression';
@@ -10162,7 +11255,13 @@ class TSNonNullExpression {
       expression: this.expression,
     };
   }
+
+  [inspectSymbol]() {
+    return Object.setPrototypeOf(this.toJSON(), DebugTSNonNullExpression.prototype);
+  }
 }
+
+const DebugTSNonNullExpression = class TSNonNullExpression {};
 
 class Decorator {
   type = 'Decorator';
@@ -10202,7 +11301,13 @@ class Decorator {
       expression: this.expression,
     };
   }
+
+  [inspectSymbol]() {
+    return Object.setPrototypeOf(this.toJSON(), DebugDecorator.prototype);
+  }
 }
+
+const DebugDecorator = class Decorator {};
 
 class TSExportAssignment {
   type = 'TSExportAssignment';
@@ -10242,7 +11347,13 @@ class TSExportAssignment {
       expression: this.expression,
     };
   }
+
+  [inspectSymbol]() {
+    return Object.setPrototypeOf(this.toJSON(), DebugTSExportAssignment.prototype);
+  }
 }
+
+const DebugTSExportAssignment = class TSExportAssignment {};
 
 class TSNamespaceExportDeclaration {
   type = 'TSNamespaceExportDeclaration';
@@ -10282,7 +11393,13 @@ class TSNamespaceExportDeclaration {
       id: this.id,
     };
   }
+
+  [inspectSymbol]() {
+    return Object.setPrototypeOf(this.toJSON(), DebugTSNamespaceExportDeclaration.prototype);
+  }
 }
+
+const DebugTSNamespaceExportDeclaration = class TSNamespaceExportDeclaration {};
 
 class TSInstantiationExpression {
   type = 'TSInstantiationExpression';
@@ -10328,7 +11445,13 @@ class TSInstantiationExpression {
       typeArguments: this.typeArguments,
     };
   }
+
+  [inspectSymbol]() {
+    return Object.setPrototypeOf(this.toJSON(), DebugTSInstantiationExpression.prototype);
+  }
 }
+
+const DebugTSInstantiationExpression = class TSInstantiationExpression {};
 
 function constructImportOrExportKind(pos, ast) {
   switch (ast.buffer[pos]) {
@@ -10385,7 +11508,13 @@ class JSDocNullableType {
       postfix: this.postfix,
     };
   }
+
+  [inspectSymbol]() {
+    return Object.setPrototypeOf(this.toJSON(), DebugJSDocNullableType.prototype);
+  }
 }
+
+const DebugJSDocNullableType = class JSDocNullableType {};
 
 class JSDocNonNullableType {
   type = 'JSDocNonNullableType';
@@ -10431,7 +11560,13 @@ class JSDocNonNullableType {
       postfix: this.postfix,
     };
   }
+
+  [inspectSymbol]() {
+    return Object.setPrototypeOf(this.toJSON(), DebugJSDocNonNullableType.prototype);
+  }
 }
+
+const DebugJSDocNonNullableType = class JSDocNonNullableType {};
 
 class JSDocUnknownType {
   type = 'JSDocUnknownType';
@@ -10465,7 +11600,13 @@ class JSDocUnknownType {
       end: this.end,
     };
   }
+
+  [inspectSymbol]() {
+    return Object.setPrototypeOf(this.toJSON(), DebugJSDocUnknownType.prototype);
+  }
 }
+
+const DebugJSDocUnknownType = class JSDocUnknownType {};
 
 function constructCommentKind(pos, ast) {
   switch (ast.buffer[pos]) {
@@ -10514,7 +11655,13 @@ class Comment {
       type: this.type,
     };
   }
+
+  [inspectSymbol]() {
+    return Object.setPrototypeOf(this.toJSON(), DebugComment.prototype);
+  }
 }
+
+const DebugComment = class Comment {};
 
 class NameSpan {
   #internal;
@@ -10554,7 +11701,13 @@ class NameSpan {
       end: this.end,
     };
   }
+
+  [inspectSymbol]() {
+    return Object.setPrototypeOf(this.toJSON(), DebugNameSpan.prototype);
+  }
 }
+
+const DebugNameSpan = class NameSpan {};
 
 class ImportEntry {
   #internal;
@@ -10592,7 +11745,13 @@ class ImportEntry {
       isType: this.isType,
     };
   }
+
+  [inspectSymbol]() {
+    return Object.setPrototypeOf(this.toJSON(), DebugImportEntry.prototype);
+  }
 }
+
+const DebugImportEntry = class ImportEntry {};
 
 function constructImportImportName(pos, ast) {
   switch (ast.buffer[pos]) {
@@ -10667,7 +11826,13 @@ class ExportEntry {
       isType: this.isType,
     };
   }
+
+  [inspectSymbol]() {
+    return Object.setPrototypeOf(this.toJSON(), DebugExportEntry.prototype);
+  }
 }
+
+const DebugExportEntry = class ExportEntry {};
 
 function constructExportImportName(pos, ast) {
   switch (ast.buffer[pos]) {
@@ -10746,7 +11911,13 @@ class DynamicImport {
       moduleRequest: this.moduleRequest,
     };
   }
+
+  [inspectSymbol]() {
+    return Object.setPrototypeOf(this.toJSON(), DebugDynamicImport.prototype);
+  }
 }
+
+const DebugDynamicImport = class DynamicImport {};
 
 function constructAssignmentOperator(pos, ast) {
   switch (ast.buffer[pos]) {
@@ -10913,7 +12084,13 @@ class Span {
       end: this.end,
     };
   }
+
+  [inspectSymbol]() {
+    return Object.setPrototypeOf(this.toJSON(), DebugSpan.prototype);
+  }
 }
+
+const DebugSpan = class Span {};
 
 class SourceType {
   #internal;
@@ -10939,7 +12116,13 @@ class SourceType {
       sourceType: this.sourceType,
     };
   }
+
+  [inspectSymbol]() {
+    return Object.setPrototypeOf(this.toJSON(), DebugSourceType.prototype);
+  }
 }
+
+const DebugSourceType = class SourceType {};
 
 function constructModuleKind(pos, ast) {
   switch (ast.buffer[pos]) {
@@ -10999,7 +12182,13 @@ class RawTransferData {
       errors: this.errors,
     };
   }
+
+  [inspectSymbol]() {
+    return Object.setPrototypeOf(this.toJSON(), DebugRawTransferData.prototype);
+  }
 }
+
+const DebugRawTransferData = class RawTransferData {};
 
 class Error {
   #internal;
@@ -11057,7 +12246,13 @@ class Error {
       codeframe: this.codeframe,
     };
   }
+
+  [inspectSymbol]() {
+    return Object.setPrototypeOf(this.toJSON(), DebugError.prototype);
+  }
 }
+
+const DebugError = class Error {};
 
 function constructErrorSeverity(pos, ast) {
   switch (ast.buffer[pos]) {
@@ -11110,7 +12305,13 @@ class ErrorLabel {
       end: this.end,
     };
   }
+
+  [inspectSymbol]() {
+    return Object.setPrototypeOf(this.toJSON(), DebugErrorLabel.prototype);
+  }
 }
+
+const DebugErrorLabel = class ErrorLabel {};
 
 class EcmaScriptModule {
   #internal;
@@ -11175,7 +12376,13 @@ class EcmaScriptModule {
       importMetas: this.importMetas,
     };
   }
+
+  [inspectSymbol]() {
+    return Object.setPrototypeOf(this.toJSON(), DebugEcmaScriptModule.prototype);
+  }
 }
+
+const DebugEcmaScriptModule = class EcmaScriptModule {};
 
 class StaticImport {
   #internal;
@@ -11221,7 +12428,13 @@ class StaticImport {
       entries: this.entries,
     };
   }
+
+  [inspectSymbol]() {
+    return Object.setPrototypeOf(this.toJSON(), DebugStaticImport.prototype);
+  }
 }
+
+const DebugStaticImport = class StaticImport {};
 
 class StaticExport {
   #internal;
@@ -11261,7 +12474,13 @@ class StaticExport {
       entries: this.entries,
     };
   }
+
+  [inspectSymbol]() {
+    return Object.setPrototypeOf(this.toJSON(), DebugStaticExport.prototype);
+  }
 }
+
+const DebugStaticExport = class StaticExport {};
 
 function constructStr(pos, ast) {
   const pos32 = pos >> 2,
