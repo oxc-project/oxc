@@ -179,7 +179,11 @@ impl TriviaBuilder {
             s = ss;
         } else if let Some(ss) = s.strip_prefix('#') {
             s = ss;
-        } else if s.starts_with("webpack") {
+        } else if s
+            .strip_prefix("webpack")
+            .and_then(|s| s.bytes().next())
+            .is_some_and(|b| b.is_ascii_uppercase())
+        {
             comment.content = CommentContent::Webpack;
             return;
         } else if ["v8 ignore", "c8 ignore", "node:coverage", "istanbul ignore"]
@@ -466,6 +470,7 @@ token /* Trailing 1 */
             ("/* @vite-ignore */", CommentContent::Vite),
             ("/* @vite-xxx */", CommentContent::Vite),
             ("/* webpackChunkName: 'my-chunk-name' */", CommentContent::Webpack),
+            ("/* webpack */", CommentContent::None),
             ("/* @__PURE__ */", CommentContent::Pure),
             ("/* @__NO_SIDE_EFFECTS__ */", CommentContent::NoSideEffects),
             ("/* #__PURE__ */", CommentContent::Pure),
