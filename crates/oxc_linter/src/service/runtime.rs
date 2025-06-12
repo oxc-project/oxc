@@ -878,7 +878,7 @@ impl<'l> Runtime<'l> {
             .with_scope_tree_child_ids(true)
             .with_build_jsdoc(true)
             .with_check_syntax_error(check_syntax_errors)
-            .build(allocator.alloc(ret.program));
+            .build(&ret.program);
 
         if !semantic_ret.errors.is_empty() {
             return Err(semantic_ret.errors);
