@@ -1,33 +1,64 @@
-import { readdir, readFile, writeFile } from 'node:fs/promises';
+// Tests for raw transfer.
+
+import { readdir, readFile, stat, writeFile } from 'node:fs/promises';
 import { basename, join as pathJoin } from 'node:path';
+import Tinypool from 'tinypool';
 import { describe, expect, it } from 'vitest';
 
 import { parseAsync, parseSync } from '../index.js';
-import { makeUnitsFromTest } from './typescript-make-units-from-test.cjs';
+
+import {
+  ACORN_TEST262_DIR_PATH,
+  JSX_DIR_PATH,
+  JSX_SHORT_DIR_PATH,
+  JSX_SNAPSHOT_PATH,
+  ROOT_DIR_PATH,
+  TARGET_DIR_PATH,
+  TEST262_SHORT_DIR_PATH,
+  TEST262_SNAPSHOT_PATH,
+  TEST_TYPE_FIXTURE,
+  TEST_TYPE_INLINE_FIXTURE,
+  TEST_TYPE_JSX,
+  TEST_TYPE_LAZY,
+  TEST_TYPE_PRETTY,
+  TEST_TYPE_TEST262,
+  TEST_TYPE_TS,
+  TS_ESTREE_DIR_PATH,
+  TS_SHORT_DIR_PATH,
+  TS_SNAPSHOT_PATH,
+} from './parse-raw-common.mjs';
 
 const RUN_LAZY_TESTS = false;
-const describeLazy = RUN_LAZY_TESTS ? describe : () => {};
-const itLazy = RUN_LAZY_TESTS ? it : () => {};
+const noop = Object.assign(() => {}, { concurrent() {} });
+const describeLazy = RUN_LAZY_TESTS ? describe : noop;
+const itLazy = RUN_LAZY_TESTS ? it : noop;
 
-const ROOT_DIR = pathJoin(import.meta.dirname, '../../..');
-const TARGET_DIR_PATH = pathJoin(ROOT_DIR, 'target');
-const TEST262_SHORT_DIR_PATH = 'tasks/coverage/test262/test';
-const TEST262_DIR_PATH = pathJoin(ROOT_DIR, TEST262_SHORT_DIR_PATH);
-const TS_SHORT_DIR_PATH = 'tasks/coverage/typescript';
-const TS_DIR_PATH = pathJoin(ROOT_DIR, TS_SHORT_DIR_PATH);
-const ACORN_TEST262_DIR_PATH = pathJoin(ROOT_DIR, 'tasks/coverage/acorn-test262/tests/test262/test');
-const JSX_SHORT_DIR_PATH = 'tasks/coverage/acorn-test262/tests/acorn-jsx/pass';
-const JSX_DIR_PATH = pathJoin(ROOT_DIR, JSX_SHORT_DIR_PATH);
-const TS_ESTREE_SHORT_DIR_PATH = 'tasks/coverage/acorn-test262/tests/typescript';
-const TS_ESTREE_DIR_PATH = pathJoin(ROOT_DIR, TS_ESTREE_SHORT_DIR_PATH);
-const TEST262_SNAPSHOT_PATH = pathJoin(ROOT_DIR, 'tasks/coverage/snapshots/estree_test262.snap');
-const JSX_SNAPSHOT_PATH = pathJoin(ROOT_DIR, 'tasks/coverage/snapshots/estree_acorn_jsx.snap');
-const TS_SNAPSHOT_PATH = pathJoin(ROOT_DIR, 'tasks/coverage/snapshots/estree_typescript.snap');
+// Worker pool for running test cases.
+// Vitest provides parallelism across test files, but not across cases within a single test file.
+// So we run each case in a worker to achieve parallelism.
+const pool = new Tinypool({ filename: new URL('./parse-raw-worker.mjs', import.meta.url).href });
 
-const INFINITY_PLACEHOLDER = '__INFINITY__INFINITY__INFINITY__';
-const INFINITY_REGEXP = new RegExp(`"${INFINITY_PLACEHOLDER}"`, 'g');
+let runCase;
 
-// Load/download fixtures.
+// Run test case in a worker
+async function runCaseInWorker(type, props) {
+  const success = await pool.run({ type, props });
+
+  // If test failed in worker, run it again in main thread with Vitest's `expect`,
+  // to get a nice diff and stack trace
+  if (!success) {
+    if (!runCase) ({ runCase } = await import('./parse-raw-worker.mjs'));
+    try {
+      type |= TEST_TYPE_PRETTY;
+      await runCase({ type, props }, expect);
+      throw new Error('Failed on worker but unexpectedly passed on main thread');
+    } catch (err) {
+      throw err;
+    }
+  }
+}
+
+// Download fixtures.
 // Save in `target` directory, same as where benchmarks store them.
 const benchFixtureUrls = [
   // TypeScript syntax (2.81MB)
@@ -42,19 +73,17 @@ const benchFixtureUrls = [
   'https://cdn.jsdelivr.net/npm/antd@5.12.5/dist/antd.js',
 ];
 
-const benchFixtures = await Promise.all(benchFixtureUrls.map(async (url) => {
+const benchFixturePaths = await Promise.all(benchFixtureUrls.map(async (url) => {
   const filename = url.split('/').at(-1),
     path = pathJoin(TARGET_DIR_PATH, filename);
-  let sourceText;
   try {
-    sourceText = await readFile(path, 'utf8');
+    await stat(path);
   } catch {
     const res = await fetch(url);
-    sourceText = await res.text();
+    const sourceText = await res.text();
     await writeFile(path, sourceText);
   }
-
-  return [filename, sourceText];
+  return path.slice(ROOT_DIR_PATH.length + 1);
 }));
 
 // Test raw transfer output matches JSON snapshots for Test262 test cases.
@@ -71,60 +100,14 @@ for (let path of await readdir(ACORN_TEST262_DIR_PATH, { recursive: true })) {
   test262FixturePaths.push(path);
 }
 
-describe('test262', () => {
-  it.each(test262FixturePaths)('%s', async (path) => {
-    const filename = basename(path);
-    const [sourceText, acornJson] = await Promise.all([
-      readFile(pathJoin(TEST262_DIR_PATH, path), 'utf8'),
-      readFile(pathJoin(ACORN_TEST262_DIR_PATH, `${path}on`), 'utf8'),
-    ]);
-
-    // Acorn JSON files always end with:
-    // ```
-    //   "sourceType": "script",
-    //   "hashbang": null
-    // }
-    // ```
-    // For speed, extract `sourceType` with a slice, rather than parsing the JSON.
-    const sourceType = acornJson.slice(-29, -23);
-
-    // @ts-ignore
-    const { program } = parseSync(filename, sourceText, { sourceType, experimentalRawTransfer: true });
-    const json = stringifyAcornTest262Style(program);
-    expect(json).toEqual(acornJson);
-  });
+describe.concurrent('test262', () => {
+  it.each(test262FixturePaths)('%s', path => runCaseInWorker(TEST_TYPE_TEST262, path));
 });
 
 // Check lazy deserialization doesn't throw
-describeLazy('lazy test262', () => {
-  it.each(test262FixturePaths)('%s', async (path) => {
-    const filename = basename(path);
-    const [sourceText, acornJson] = await Promise.all([
-      readFile(pathJoin(TEST262_DIR_PATH, path), 'utf8'),
-      readFile(pathJoin(ACORN_TEST262_DIR_PATH, `${path}on`), 'utf8'),
-    ]);
-
-    // Acorn JSON files always end with:
-    // ```
-    //   "sourceType": "script",
-    //   "hashbang": null
-    // }
-    // ```
-    // For speed, extract `sourceType` with a slice, rather than parsing the JSON.
-    const sourceType = acornJson.slice(-29, -23);
-
-    testLazy(filename, sourceText, { sourceType });
-  });
+describeLazy.concurrent('lazy test262', () => {
+  it.each(test262FixturePaths)('%s', path => runCaseInWorker(TEST_TYPE_TEST262 | TEST_TYPE_LAZY, path));
 });
-
-function testLazy(filename, sourceText, options) {
-  // @ts-ignore
-  const ret = parseSync(filename, sourceText, { ...options, experimentalLazy: true });
-  JSON.stringify(ret.program);
-  JSON.stringify(ret.comments);
-  JSON.stringify(ret.errors);
-  JSON.stringify(ret.module);
-}
 
 // Test raw transfer output matches JSON snapshots for Acorn-JSX test cases.
 //
@@ -134,52 +117,13 @@ const jsxFailPaths = await getTestFailurePaths(JSX_SNAPSHOT_PATH, JSX_SHORT_DIR_
 const jsxFixturePaths = (await readdir(JSX_DIR_PATH, { recursive: true }))
   .filter(path => path.endsWith('.jsx') && !jsxFailPaths.has(path));
 
-describe('JSX', () => {
-  it.each(jsxFixturePaths)('%s', async (filename) => {
-    const sourcePath = pathJoin(JSX_DIR_PATH, filename),
-      jsonPath = sourcePath.slice(0, -1) + 'on'; // `.jsx` -> `.json`
-    const [sourceText, acornJson] = await Promise.all([
-      readFile(sourcePath, 'utf8'),
-      readFile(jsonPath, 'utf8'),
-    ]);
-
-    // Acorn JSON files always end with:
-    // ```
-    //   "sourceType": "script",
-    //   "hashbang": null
-    // }
-    // ```
-    // For speed, extract `sourceType` with a slice, rather than parsing the JSON.
-    const sourceType = acornJson.slice(-29, -23);
-
-    // @ts-ignore
-    const { program } = parseSync(filename, sourceText, { sourceType, experimentalRawTransfer: true });
-    const json = stringifyAcornTest262Style(program);
-    expect(json).toEqual(acornJson);
-  });
+describe.concurrent('JSX', () => {
+  it.each(jsxFixturePaths)('%s', filename => runCaseInWorker(TEST_TYPE_JSX, filename));
 });
 
 // Check lazy deserialization doesn't throw
-describeLazy('lazy JSX', () => {
-  it.each(jsxFixturePaths)('%s', async (filename) => {
-    const sourcePath = pathJoin(JSX_DIR_PATH, filename),
-      jsonPath = sourcePath.slice(0, -1) + 'on'; // `.jsx` -> `.json`
-    const [sourceText, acornJson] = await Promise.all([
-      readFile(sourcePath, 'utf8'),
-      readFile(jsonPath, 'utf8'),
-    ]);
-
-    // Acorn JSON files always end with:
-    // ```
-    //   "sourceType": "script",
-    //   "hashbang": null
-    // }
-    // ```
-    // For speed, extract `sourceType` with a slice, rather than parsing the JSON.
-    const sourceType = acornJson.slice(-29, -23);
-
-    testLazy(filename, sourceText, { sourceType });
-  });
+describeLazy.concurrent('lazy JSX', () => {
+  it.each(jsxFixturePaths)('%s', filename => runCaseInWorker(TEST_TYPE_JSX | TEST_TYPE_LAZY, filename));
 });
 
 // Test raw transfer output matches JSON snapshots for TypeScript test cases.
@@ -194,86 +138,17 @@ const tsFailPaths = await getTestFailurePaths(TS_SNAPSHOT_PATH, TS_SHORT_DIR_PAT
 const tsFixturePaths = (await readdir(TS_ESTREE_DIR_PATH, { recursive: true }))
   .filter(path => path.endsWith('.md') && !tsFailPaths.has(path.slice(0, -3)));
 
-const TS_CASE_HEADER = '__ESTREE_TEST__:PASS:\n```json\n';
-const TS_CASE_FOOTER = '\n```\n';
-const TS_CASE_FOOTER_LEN = TS_CASE_FOOTER.length;
-
-describe('TypeScript', () => {
-  it.each(tsFixturePaths)('%s', async (path) => {
-    const tsPath = path.slice(0, -3); // Trim off `.md`
-    let [sourceText, casesJson] = await Promise.all([
-      readFile(pathJoin(TS_DIR_PATH, tsPath), 'utf8'),
-      readFile(pathJoin(TS_ESTREE_DIR_PATH, path), 'utf8'),
-    ]);
-
-    // Trim off UTF-8 BOM
-    if (sourceText.charCodeAt(0) === 0xFEFF) sourceText = sourceText.slice(1);
-
-    const { tests } = makeUnitsFromTest(tsPath, sourceText);
-    const estreeJsons = casesJson.split(TS_CASE_HEADER)
-      .slice(1)
-      .map(part => part.slice(0, -TS_CASE_FOOTER_LEN));
-    expect(estreeJsons.length).toEqual(tests.length);
-
-    for (let i = 0; i < tests.length; i++) {
-      const { name: filename, content: code, sourceType } = tests[i];
-
-      const options = {
-        sourceType: sourceType.module ? 'module' : 'unambiguous',
-        astType: 'ts',
-        preserveParens: false,
-        experimentalRawTransfer: true,
-      };
-      // @ts-ignore
-      const { program, errors } = parseSync(filename, code, options);
-      const oxcJson = stringifyAcornTest262Style(program);
-
-      const estreeJson = estreeJsons[i];
-
-      try {
-        expect(oxcJson).toEqual(estreeJson);
-      } catch (err) {
-        // Fall back to comparing to AST parsed via JSON transfer.
-        // We can fail to match the TS-ESLint snapshots where there are syntax errors,
-        // because our parser is not recoverable.
-        // @ts-ignore
-        const standard = parseSync(filename, code, { ...options, experimentalRawTransfer: false });
-        const standardJson = stringifyAcornTest262Style(standard.program);
-        const errorsStandard = standard.errors;
-
-        expect(oxcJson).toEqual(standardJson);
-
-        const errorsRawJson = JSON.stringify(clean(errors), null, 2);
-        const errorsStandardJson = JSON.stringify(errorsStandard, null, 2);
-        expect(errorsRawJson).toEqual(errorsStandardJson);
-      }
-    }
-  });
+describe.concurrent('TypeScript', () => {
+  it.each(tsFixturePaths)('%s', path => runCaseInWorker(TEST_TYPE_TS, path));
 });
 
 // Check lazy deserialization doesn't throw
-describeLazy('lazy TypeScript', () => {
-  it.each(tsFixturePaths)('%s', async (path) => {
-    const tsPath = path.slice(0, -3); // Trim off `.md`
-    let sourceText = await readFile(pathJoin(TS_DIR_PATH, tsPath), 'utf8');
-
-    // Trim off UTF-8 BOM
-    if (sourceText.charCodeAt(0) === 0xFEFF) sourceText = sourceText.slice(1);
-
-    const { tests } = makeUnitsFromTest(tsPath, sourceText);
-
-    for (const { name: filename, content: code, sourceType } of tests) {
-      testLazy(filename, sourceText, {
-        sourceType: sourceType.module ? 'module' : 'unambiguous',
-        astType: 'ts',
-        preserveParens: false,
-      });
-    }
-  });
+describeLazy.concurrent('lazy TypeScript', () => {
+  it.each(tsFixturePaths)('%s', path => runCaseInWorker(TEST_TYPE_TS | TEST_TYPE_LAZY, path));
 });
 
 // Test raw transfer output matches standard (via JSON) output for edge cases not covered by Test262
-describe('edge cases', () => {
+describe.concurrent('edge cases', () => {
   describe.each([
     // ECMA stage 3
     'import defer * as ns from "x";',
@@ -292,67 +167,29 @@ describe('edge cases', () => {
     '#!/usr/bin/env node\nlet x;',
     '#!/usr/bin/env node\nlet x;\n// foo',
   ])('%s', (sourceText) => {
-    it('JS', () => {
-      assertRawAndStandardMatch('dummy.js', sourceText);
-    });
+    it('JS', () => runCaseInWorker(TEST_TYPE_INLINE_FIXTURE, { filename: 'dummy.js', sourceText }));
+    it('TS', () => runCaseInWorker(TEST_TYPE_INLINE_FIXTURE, { filename: 'dummy.ts', sourceText }));
 
-    it('TS', () => {
-      assertRawAndStandardMatch('dummy.ts', sourceText);
-    });
-
-    // Check lazy deserialization doesn't throw
-    itLazy('lazy JS', () => {
-      testLazy('dummy.js', sourceText, {});
-    });
-
-    itLazy('lazy TS', () => {
-      testLazy('dummy.ts', sourceText, {});
-    });
+    itLazy(
+      'JS',
+      () => runCaseInWorker(TEST_TYPE_INLINE_FIXTURE | TEST_TYPE_LAZY, { filename: 'dummy.js', sourceText }),
+    );
+    itLazy(
+      'TS',
+      () => runCaseInWorker(TEST_TYPE_INLINE_FIXTURE | TEST_TYPE_LAZY, { filename: 'dummy.ts', sourceText }),
+    );
   });
 });
 
 // Test raw transfer output matches standard (via JSON) output for some large files
-describe('fixtures', () => {
-  it.each(benchFixtures)('%s', (filename, sourceText) => {
-    assertRawAndStandardMatch(filename, sourceText);
-  });
+describe.concurrent('fixtures', () => {
+  it.each(benchFixturePaths)('%s', path => runCaseInWorker(TEST_TYPE_FIXTURE, path));
 });
 
 // Check lazy deserialization doesn't throw
-describeLazy('lazy fixtures', () => {
-  it.each(benchFixtures)('lazy %s', (filename, sourceText) => {
-    testLazy(filename, sourceText, {});
-  });
+describeLazy.concurrent('lazy fixtures', () => {
+  it.each(benchFixturePaths)('%s', path => runCaseInWorker(TEST_TYPE_FIXTURE | TEST_TYPE_LAZY, path));
 });
-
-function assertRawAndStandardMatch(filename, sourceText) {
-  const retStandard = parseSync(filename, sourceText);
-  const { program: programStandard, comments: commentsStandard, module: moduleStandard, errors: errorsStandard } =
-    retStandard;
-
-  // @ts-ignore
-  const retRaw = parseSync(filename, sourceText, { experimentalRawTransfer: true });
-  const { program: programRaw, comments: commentsRaw } = retRaw;
-  // Remove `null` values, to match what NAPI-RS does
-  const moduleRaw = clean(retRaw.module);
-  const errorsRaw = clean(retRaw.errors);
-
-  // Compare as objects
-  expect(programRaw).toEqual(programStandard);
-  expect(commentsRaw).toEqual(commentsStandard);
-  expect(moduleRaw).toEqual(moduleStandard);
-  expect(errorsRaw).toEqual(errorsStandard);
-
-  // Compare as JSON (to ensure same field order)
-  const jsonStandard = stringify({
-    program: programStandard,
-    comments: commentsStandard,
-    module: moduleStandard,
-    errors: errorsStandard,
-  });
-  const jsonRaw = stringify({ program: programRaw, comments: commentsRaw, module: moduleRaw, errors: errorsRaw });
-  expect(jsonRaw).toEqual(jsonStandard);
-}
 
 // Get `Set` containing test paths which failed from snapshot file
 async function getTestFailurePaths(snapshotPath, pathPrefix) {
@@ -367,40 +204,11 @@ async function getTestFailurePaths(snapshotPath, pathPrefix) {
   );
 }
 
-// Stringify to JSON, removing values which are invalid in JSON
-function stringify(obj) {
-  return JSON.stringify(obj, (_key, value) => {
-    if (typeof value === 'bigint') return `__BIGINT__: ${value}`;
-    if (typeof value === 'object' && value instanceof RegExp) return `__REGEXP__: ${value}`;
-    if (value === Infinity) return `__INFINITY__`;
-    return value;
-  });
-}
-
-// Stringify to JSON, removing values which are invalid in JSON,
-// matching `acorn-test262` fixtures.
-function stringifyAcornTest262Style(obj) {
-  let containsInfinity = false;
-  const json = JSON.stringify(obj, (_key, value) => {
-    if (typeof value === 'bigint' || (typeof value === 'object' && value instanceof RegExp)) return null;
-    if (value === Infinity) {
-      containsInfinity = true;
-      return INFINITY_PLACEHOLDER;
-    }
-    return value;
-  }, 2);
-
-  return containsInfinity ? json.replace(INFINITY_REGEXP, '1e+400') : json;
-}
-
-// Remove `null` values, to match what NAPI-RS does
-function clean(obj) {
-  return JSON.parse(JSON.stringify(obj, (_key, value) => value === null ? undefined : value));
-}
-
-describe('`parseAsync`', () => {
+describe.concurrent('`parseAsync`', () => {
   it('matches `parseSync`', async () => {
-    const [filename, sourceText] = benchFixtures[0];
+    const path = benchFixturePaths[0],
+      filename = basename(path),
+      sourceText = await readFile(pathJoin(ROOT_DIR_PATH, path), 'utf8');
     const programStandard = parseSync(filename, sourceText).program;
     // @ts-ignore
     const programRaw = (await parseAsync(filename, sourceText, { experimentalRawTransfer: true })).program;
@@ -408,14 +216,14 @@ describe('`parseAsync`', () => {
   });
 
   it('processes multiple files', async () => {
-    testMultiple(4);
+    await testMultiple(4);
   });
 
   // This is primarily testing the queuing mechanism.
   // At least on Mac OS, this test does not cause out-of-memory without the queue implemented,
   // but the test doesn't complete in a reasonable time (I gave up waiting after 20 minutes).
   it('does not exhaust memory when called huge number of times in succession', async () => {
-    testMultiple(100_000);
+    await testMultiple(10_000);
   });
 
   async function testMultiple(iterations) {
@@ -435,7 +243,7 @@ describe('`parseAsync`', () => {
   }
 });
 
-it('checks semantic', async () => {
+it.concurrent('checks semantic', async () => {
   const code = 'let x; let x;';
 
   // @ts-ignore

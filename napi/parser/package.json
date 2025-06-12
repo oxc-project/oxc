@@ -63,8 +63,9 @@
     "@vitest/browser": "3.2.2",
     "esbuild": "^0.25.0",
     "playwright": "^1.51.0",
-    "vitest": "catalog:",
-    "typescript": "catalog:"
+    "tinypool": "^1.1.0",
+    "typescript": "catalog:",
+    "vitest": "catalog:"
   },
   "napi": {
     "binaryName": "parser",

@@ -103,6 +103,9 @@ importers:
       playwright:
         specifier: ^1.51.0
         version: 1.52.0
+      tinypool:
+        specifier: ^1.1.0
+        version: 1.1.0
       typescript:
         specifier: 'catalog:'
         version: 5.8.3
