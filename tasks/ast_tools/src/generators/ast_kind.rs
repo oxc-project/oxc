@@ -65,7 +65,6 @@ const ENUMS_WHITE_LIST: &[&str] = &[
     "AssignmentTarget",
     "SimpleAssignmentTarget",
     "AssignmentTargetPattern",
-    "ForStatementInit",
     "ModuleDeclaration",
     "TSTypeName",
     "TSModuleReference",

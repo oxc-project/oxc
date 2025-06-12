@@ -76,7 +76,6 @@ pub enum AstNodes<'a> {
     DoWhileStatement(&'a AstNode<'a, DoWhileStatement<'a>>),
     WhileStatement(&'a AstNode<'a, WhileStatement<'a>>),
     ForStatement(&'a AstNode<'a, ForStatement<'a>>),
-    ForStatementInit(&'a AstNode<'a, ForStatementInit<'a>>),
     ForInStatement(&'a AstNode<'a, ForInStatement<'a>>),
     ForOfStatement(&'a AstNode<'a, ForOfStatement<'a>>),
     ContinueStatement(&'a AstNode<'a, ContinueStatement<'a>>),
@@ -254,7 +253,6 @@ impl<'a> AstNodes<'a> {
             Self::DoWhileStatement(n) => n.span(),
             Self::WhileStatement(n) => n.span(),
             Self::ForStatement(n) => n.span(),
-            Self::ForStatementInit(n) => n.span(),
             Self::ForInStatement(n) => n.span(),
             Self::ForOfStatement(n) => n.span(),
             Self::ContinueStatement(n) => n.span(),
@@ -432,7 +430,6 @@ impl<'a> AstNodes<'a> {
             Self::DoWhileStatement(n) => n.parent,
             Self::WhileStatement(n) => n.parent,
             Self::ForStatement(n) => n.parent,
-            Self::ForStatementInit(n) => n.parent,
             Self::ForInStatement(n) => n.parent,
             Self::ForOfStatement(n) => n.parent,
             Self::ContinueStatement(n) => n.parent,
@@ -610,7 +607,6 @@ impl<'a> AstNodes<'a> {
             Self::DoWhileStatement(_) => "DoWhileStatement",
             Self::WhileStatement(_) => "WhileStatement",
             Self::ForStatement(_) => "ForStatement",
-            Self::ForStatementInit(_) => "ForStatementInit",
             Self::ForInStatement(_) => "ForInStatement",
             Self::ForOfStatement(_) => "ForOfStatement",
             Self::ContinueStatement(_) => "ContinueStatement",
@@ -2874,7 +2870,7 @@ impl<'a> AstNode<'a, ForStatement<'a>> {
 impl<'a> AstNode<'a, ForStatementInit<'a>> {
     #[inline]
     pub fn as_ast_nodes(&self) -> &AstNodes<'a> {
-        let parent = self.allocator.alloc(AstNodes::ForStatementInit(transmute_self(self)));
+        let parent = self.parent;
         let node = match self.inner {
             ForStatementInit::VariableDeclaration(s) => {
                 AstNodes::VariableDeclaration(self.allocator.alloc(AstNode {

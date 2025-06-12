@@ -164,7 +164,6 @@ impl AstKind<'_> {
             Self::ForInStatement(_) => "ForInStatement".into(),
             Self::ForOfStatement(_) => "ForOfStatement".into(),
             Self::ForStatement(_) => "ForStatement".into(),
-            Self::ForStatementInit(_) => "ForStatementInit".into(),
             Self::IfStatement(_) => "IfStatement".into(),
             Self::LabeledStatement(l) => format!("LabeledStatement({})", l.label.name).into(),
             Self::ReturnStatement(_) => "ReturnStatement".into(),

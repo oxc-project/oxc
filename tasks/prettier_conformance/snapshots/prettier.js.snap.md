@@ -1,4 +1,4 @@
-js compatibility: 294/699 (42.06%)
+js compatibility: 295/699 (42.20%)
 
 # Failed
 
@@ -47,7 +47,6 @@ js compatibility: 294/699 (42.06%)
 | js/assignment/issue-7961.js | 💥 | 50.00% |
 | js/assignment/issue-8218.js | 💥 | 25.00% |
 | js/assignment/lone-arg.js | 💥 | 73.17% |
-| js/assignment/sequence.js | 💥 | 71.43% |
 | js/assignment/unary.js | 💥 | 0.00% |
 | js/assignment-comments/call.js | 💥 | 85.71% |
 | js/assignment-comments/call2.js | 💥 | 50.00% |

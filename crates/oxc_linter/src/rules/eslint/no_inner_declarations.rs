@@ -74,10 +74,10 @@ impl Rule for NoInnerDeclarations {
             AstKind::VariableDeclaration(decl)
                 if decl.kind.is_var() && self.config == NoInnerDeclarationsConfig::Both =>
             {
-                Span::new(decl.span.start, decl.span.start + 3) // 3 for "var".len()
+                Span::sized(decl.span.start, 3) // 3 for "var".len()
             }
             AstKind::Function(func) if func.is_function_declaration() => {
-                Span::new(func.span.start, func.span.start + 8) // 8 for "function".len()
+                Span::sized(func.span.start, 8) // 8 for "function".len()
             }
             _ => return,
         };
@@ -99,7 +99,7 @@ impl Rule for NoInnerDeclarations {
                     | AstKind::StaticBlock(_)
                     | AstKind::ExportNamedDeclaration(_)
                     | AstKind::ExportDefaultDeclaration(_)
-                    | AstKind::ForStatementInit(_)
+                    | AstKind::ForStatement(_)
                     | AstKind::ForInStatement(_)
                     | AstKind::ForOfStatement(_)
             ) {
@@ -169,6 +169,12 @@ fn test() {
         ("class C { method() { var x; } }", Some(serde_json::json!(["both"]))),
         ("class C { static { function foo() {} } }", Some(serde_json::json!(["both"]))),
         ("class C { static { var x; } }", Some(serde_json::json!(["both"]))),
+        ("for (var x in {}) {}", Some(serde_json::json!(["both"]))),
+        ("for (var x of []) {}", Some(serde_json::json!(["both"]))),
+        ("for (var x = 1; a < 10; a++) {}", Some(serde_json::json!(["both"]))),
+        ("for (const x in {}) { let y = 5; }", Some(serde_json::json!(["both"]))),
+        ("for (const x of []) { let y = 5; }", Some(serde_json::json!(["both"]))),
+        ("for (const x = 1; a < 10; a++) { let y = 5; }", Some(serde_json::json!(["both"]))),
     ];
 
     let fail = vec![
@@ -204,6 +210,9 @@ fn test() {
             "class C { static { if (test) { if (anotherTest) { var foo; } } } }",
             Some(serde_json::json!(["both"])),
         ),
+        ("for (const x in {}) { var y = 5; }", Some(serde_json::json!(["both"]))),
+        ("for (const x of []) { var y = 5; }", Some(serde_json::json!(["both"]))),
+        ("for (const x = 1; a < 10; a++) { var y = 5; }", Some(serde_json::json!(["both"]))),
     ];
 
     Tester::new(NoInnerDeclarations::NAME, NoInnerDeclarations::PLUGIN, pass, fail)
