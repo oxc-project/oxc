@@ -1,10 +1,6 @@
 'use strict';
 
-// Unique token which is not exposed publicly.
-// Used to prevent user calling class constructors.
-const TOKEN = {};
-
-module.exports.TOKEN = TOKEN;
+const { TOKEN, constructorError } = require('./lazy-common.js');
 
 // Mapping from a proxy to the `NodeArray` that it wraps.
 // Used by `slice` method.
@@ -39,7 +35,7 @@ class NodeArray extends Array {
    * @returns {Proxy<NodeArray>} - `NodeArray` wrapped in a `Proxy`
    */
   constructor(pos, length, stride, construct, ast) {
-    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+    if (ast?.token !== TOKEN) constructorError();
 
     super(length);
     this.#internal = { pos, ast, stride, construct };
@@ -91,7 +87,7 @@ class NodeArray extends Array {
 
 NodeArray.prototype[Symbol.iterator] = NodeArray.prototype.values;
 
-module.exports.NodeArray = NodeArray;
+module.exports = NodeArray;
 
 // Iterator over values of a `NodeArray`.
 // Returned by `values` method, and also used as iterator for `for (const value of nodeArray) {}`.
@@ -99,8 +95,8 @@ class NodeArrayValuesIterator {
   #internal;
 
   constructor(arrInternal, length) {
-    const { ast, pos, stride } = arrInternal;
-    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+    const { ast, pos, stride } = arrInternal || {};
+    if (ast?.token !== TOKEN) constructorError();
 
     this.#internal = {
       pos,
@@ -152,8 +148,8 @@ class NodeArrayEntriesIterator {
   #internal;
 
   constructor(arrInternal, length) {
-    const { ast } = arrInternal;
-    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+    const { ast } = arrInternal || {};
+    if (ast?.token !== TOKEN) constructorError();
 
     this.#internal = {
       index: 0,

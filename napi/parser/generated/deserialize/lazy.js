@@ -3,7 +3,8 @@
 
 'use strict';
 
-const { NodeArray, TOKEN } = require('../../raw-transfer/node-array.js');
+const { TOKEN, constructorError } = require('../../raw-transfer/lazy-common.js'),
+  NodeArray = require('../../raw-transfer/node-array.js');
 
 module.exports = { construct, TOKEN };
 
@@ -11,7 +12,7 @@ function construct(ast) {
   // (2 * 1024 * 1024 * 1024 - 16) >> 2
   const metadataPos32 = 536870908;
 
-  return new RawTransferData(ast.buffer.uint32[metadataPos32], ast, TOKEN);
+  return new RawTransferData(ast.buffer.uint32[metadataPos32], ast);
 }
 
 const textDecoder = new TextDecoder('utf-8', { ignoreBOM: true }),
@@ -24,7 +25,7 @@ class Program {
   #internal;
 
   constructor(pos, ast) {
-    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+    if (ast?.token !== TOKEN) constructorError();
 
     const { nodes } = ast;
     const cached = nodes.get(pos);
@@ -177,7 +178,7 @@ class IdentifierName {
   #internal;
 
   constructor(pos, ast) {
-    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+    if (ast?.token !== TOKEN) constructorError();
 
     const { nodes } = ast;
     const cached = nodes.get(pos);
@@ -225,7 +226,7 @@ class IdentifierReference {
   #internal;
 
   constructor(pos, ast) {
-    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+    if (ast?.token !== TOKEN) constructorError();
 
     const { nodes } = ast;
     const cached = nodes.get(pos);
@@ -273,7 +274,7 @@ class BindingIdentifier {
   #internal;
 
   constructor(pos, ast) {
-    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+    if (ast?.token !== TOKEN) constructorError();
 
     const { nodes } = ast;
     const cached = nodes.get(pos);
@@ -321,7 +322,7 @@ class LabelIdentifier {
   #internal;
 
   constructor(pos, ast) {
-    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+    if (ast?.token !== TOKEN) constructorError();
 
     const { nodes } = ast;
     const cached = nodes.get(pos);
@@ -369,7 +370,7 @@ class ThisExpression {
   #internal;
 
   constructor(pos, ast) {
-    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+    if (ast?.token !== TOKEN) constructorError();
 
     const { nodes } = ast;
     const cached = nodes.get(pos);
@@ -409,7 +410,7 @@ class ArrayExpression {
   #internal;
 
   constructor(pos, ast) {
-    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+    if (ast?.token !== TOKEN) constructorError();
 
     const { nodes } = ast;
     const cached = nodes.get(pos);
@@ -554,7 +555,7 @@ class Elision {
   #internal;
 
   constructor(pos, ast) {
-    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+    if (ast?.token !== TOKEN) constructorError();
 
     const { nodes } = ast;
     const cached = nodes.get(pos);
@@ -594,7 +595,7 @@ class ObjectExpression {
   #internal;
 
   constructor(pos, ast) {
-    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+    if (ast?.token !== TOKEN) constructorError();
 
     const { nodes } = ast;
     const cached = nodes.get(pos);
@@ -653,7 +654,7 @@ class ObjectProperty {
   #internal;
 
   constructor(pos, ast) {
-    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+    if (ast?.token !== TOKEN) constructorError();
 
     const { nodes } = ast;
     const cached = nodes.get(pos);
@@ -839,7 +840,7 @@ class TemplateLiteral {
   #internal;
 
   constructor(pos, ast) {
-    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+    if (ast?.token !== TOKEN) constructorError();
 
     const { nodes } = ast;
     const cached = nodes.get(pos);
@@ -895,7 +896,7 @@ class TaggedTemplateExpression {
   #internal;
 
   constructor(pos, ast) {
-    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+    if (ast?.token !== TOKEN) constructorError();
 
     const { nodes } = ast;
     const cached = nodes.get(pos);
@@ -953,7 +954,7 @@ class TemplateElement {
   #internal;
 
   constructor(pos, ast) {
-    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+    if (ast?.token !== TOKEN) constructorError();
 
     const { nodes } = ast;
     const cached = nodes.get(pos);
@@ -1004,7 +1005,7 @@ class TemplateElementValue {
   #internal;
 
   constructor(pos, ast) {
-    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+    if (ast?.token !== TOKEN) constructorError();
 
     const { nodes } = ast;
     const cached = nodes.get(pos);
@@ -1060,7 +1061,7 @@ class ComputedMemberExpression {
   #internal;
 
   constructor(pos, ast) {
-    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+    if (ast?.token !== TOKEN) constructorError();
 
     const { nodes } = ast;
     const cached = nodes.get(pos);
@@ -1118,7 +1119,7 @@ class StaticMemberExpression {
   #internal;
 
   constructor(pos, ast) {
-    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+    if (ast?.token !== TOKEN) constructorError();
 
     const { nodes } = ast;
     const cached = nodes.get(pos);
@@ -1176,7 +1177,7 @@ class PrivateFieldExpression {
   #internal;
 
   constructor(pos, ast) {
-    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+    if (ast?.token !== TOKEN) constructorError();
 
     const { nodes } = ast;
     const cached = nodes.get(pos);
@@ -1234,7 +1235,7 @@ class CallExpression {
   #internal;
 
   constructor(pos, ast) {
-    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+    if (ast?.token !== TOKEN) constructorError();
 
     const { nodes } = ast;
     const cached = nodes.get(pos);
@@ -1300,7 +1301,7 @@ class NewExpression {
   #internal;
 
   constructor(pos, ast) {
-    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+    if (ast?.token !== TOKEN) constructorError();
 
     const { nodes } = ast;
     const cached = nodes.get(pos);
@@ -1360,7 +1361,7 @@ class MetaProperty {
   #internal;
 
   constructor(pos, ast) {
-    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+    if (ast?.token !== TOKEN) constructorError();
 
     const { nodes } = ast;
     const cached = nodes.get(pos);
@@ -1412,7 +1413,7 @@ class SpreadElement {
   #internal;
 
   constructor(pos, ast) {
-    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+    if (ast?.token !== TOKEN) constructorError();
 
     const { nodes } = ast;
     const cached = nodes.get(pos);
@@ -1553,7 +1554,7 @@ class UpdateExpression {
   #internal;
 
   constructor(pos, ast) {
-    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+    if (ast?.token !== TOKEN) constructorError();
 
     const { nodes } = ast;
     const cached = nodes.get(pos);
@@ -1611,7 +1612,7 @@ class UnaryExpression {
   #internal;
 
   constructor(pos, ast) {
-    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+    if (ast?.token !== TOKEN) constructorError();
 
     const { nodes } = ast;
     const cached = nodes.get(pos);
@@ -1663,7 +1664,7 @@ class BinaryExpression {
   #internal;
 
   constructor(pos, ast) {
-    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+    if (ast?.token !== TOKEN) constructorError();
 
     const { nodes } = ast;
     const cached = nodes.get(pos);
@@ -1721,7 +1722,7 @@ class PrivateInExpression {
   #internal;
 
   constructor(pos, ast) {
-    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+    if (ast?.token !== TOKEN) constructorError();
 
     const { nodes } = ast;
     const cached = nodes.get(pos);
@@ -1773,7 +1774,7 @@ class LogicalExpression {
   #internal;
 
   constructor(pos, ast) {
-    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+    if (ast?.token !== TOKEN) constructorError();
 
     const { nodes } = ast;
     const cached = nodes.get(pos);
@@ -1831,7 +1832,7 @@ class ConditionalExpression {
   #internal;
 
   constructor(pos, ast) {
-    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+    if (ast?.token !== TOKEN) constructorError();
 
     const { nodes } = ast;
     const cached = nodes.get(pos);
@@ -1889,7 +1890,7 @@ class AssignmentExpression {
   #internal;
 
   constructor(pos, ast) {
-    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+    if (ast?.token !== TOKEN) constructorError();
 
     const { nodes } = ast;
     const cached = nodes.get(pos);
@@ -2008,7 +2009,7 @@ class ArrayAssignmentTarget {
   #internal;
 
   constructor(pos, ast) {
-    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+    if (ast?.token !== TOKEN) constructorError();
 
     const { nodes } = ast;
     const cached = nodes.get(pos);
@@ -2056,7 +2057,7 @@ class ObjectAssignmentTarget {
   #internal;
 
   constructor(pos, ast) {
-    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+    if (ast?.token !== TOKEN) constructorError();
 
     const { nodes } = ast;
     const cached = nodes.get(pos);
@@ -2104,7 +2105,7 @@ class AssignmentTargetRest {
   #internal;
 
   constructor(pos, ast) {
-    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+    if (ast?.token !== TOKEN) constructorError();
 
     const { nodes } = ast;
     const cached = nodes.get(pos);
@@ -2179,7 +2180,7 @@ class AssignmentTargetWithDefault {
   #internal;
 
   constructor(pos, ast) {
-    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+    if (ast?.token !== TOKEN) constructorError();
 
     const { nodes } = ast;
     const cached = nodes.get(pos);
@@ -2242,7 +2243,7 @@ class AssignmentTargetPropertyIdentifier {
   #internal;
 
   constructor(pos, ast) {
-    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+    if (ast?.token !== TOKEN) constructorError();
 
     const { nodes } = ast;
     const cached = nodes.get(pos);
@@ -2294,7 +2295,7 @@ class AssignmentTargetPropertyProperty {
   #internal;
 
   constructor(pos, ast) {
-    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+    if (ast?.token !== TOKEN) constructorError();
 
     const { nodes } = ast;
     const cached = nodes.get(pos);
@@ -2352,7 +2353,7 @@ class SequenceExpression {
   #internal;
 
   constructor(pos, ast) {
-    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+    if (ast?.token !== TOKEN) constructorError();
 
     const { nodes } = ast;
     const cached = nodes.get(pos);
@@ -2400,7 +2401,7 @@ class Super {
   #internal;
 
   constructor(pos, ast) {
-    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+    if (ast?.token !== TOKEN) constructorError();
 
     const { nodes } = ast;
     const cached = nodes.get(pos);
@@ -2440,7 +2441,7 @@ class AwaitExpression {
   #internal;
 
   constructor(pos, ast) {
-    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+    if (ast?.token !== TOKEN) constructorError();
 
     const { nodes } = ast;
     const cached = nodes.get(pos);
@@ -2486,7 +2487,7 @@ class ChainExpression {
   #internal;
 
   constructor(pos, ast) {
-    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+    if (ast?.token !== TOKEN) constructorError();
 
     const { nodes } = ast;
     const cached = nodes.get(pos);
@@ -2549,7 +2550,7 @@ class ParenthesizedExpression {
   #internal;
 
   constructor(pos, ast) {
-    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+    if (ast?.token !== TOKEN) constructorError();
 
     const { nodes } = ast;
     const cached = nodes.get(pos);
@@ -2666,7 +2667,7 @@ class Directive {
   #internal;
 
   constructor(pos, ast) {
-    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+    if (ast?.token !== TOKEN) constructorError();
 
     const { nodes } = ast;
     const cached = nodes.get(pos);
@@ -2720,7 +2721,7 @@ class Hashbang {
   #internal;
 
   constructor(pos, ast) {
-    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+    if (ast?.token !== TOKEN) constructorError();
 
     const { nodes } = ast;
     const cached = nodes.get(pos);
@@ -2768,7 +2769,7 @@ class BlockStatement {
   #internal;
 
   constructor(pos, ast) {
-    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+    if (ast?.token !== TOKEN) constructorError();
 
     const { nodes } = ast;
     const cached = nodes.get(pos);
@@ -2839,7 +2840,7 @@ class VariableDeclaration {
   #internal;
 
   constructor(pos, ast) {
-    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+    if (ast?.token !== TOKEN) constructorError();
 
     const { nodes } = ast;
     const cached = nodes.get(pos);
@@ -2916,7 +2917,7 @@ class VariableDeclarator {
   #internal;
 
   constructor(pos, ast) {
-    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+    if (ast?.token !== TOKEN) constructorError();
 
     const { nodes } = ast;
     const cached = nodes.get(pos);
@@ -2974,7 +2975,7 @@ class EmptyStatement {
   #internal;
 
   constructor(pos, ast) {
-    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+    if (ast?.token !== TOKEN) constructorError();
 
     const { nodes } = ast;
     const cached = nodes.get(pos);
@@ -3014,7 +3015,7 @@ class ExpressionStatement {
   #internal;
 
   constructor(pos, ast) {
-    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+    if (ast?.token !== TOKEN) constructorError();
 
     const { nodes } = ast;
     const cached = nodes.get(pos);
@@ -3060,7 +3061,7 @@ class IfStatement {
   #internal;
 
   constructor(pos, ast) {
-    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+    if (ast?.token !== TOKEN) constructorError();
 
     const { nodes } = ast;
     const cached = nodes.get(pos);
@@ -3118,7 +3119,7 @@ class DoWhileStatement {
   #internal;
 
   constructor(pos, ast) {
-    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+    if (ast?.token !== TOKEN) constructorError();
 
     const { nodes } = ast;
     const cached = nodes.get(pos);
@@ -3170,7 +3171,7 @@ class WhileStatement {
   #internal;
 
   constructor(pos, ast) {
-    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+    if (ast?.token !== TOKEN) constructorError();
 
     const { nodes } = ast;
     const cached = nodes.get(pos);
@@ -3222,7 +3223,7 @@ class ForStatement {
   #internal;
 
   constructor(pos, ast) {
-    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+    if (ast?.token !== TOKEN) constructorError();
 
     const { nodes } = ast;
     const cached = nodes.get(pos);
@@ -3381,7 +3382,7 @@ class ForInStatement {
   #internal;
 
   constructor(pos, ast) {
-    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+    if (ast?.token !== TOKEN) constructorError();
 
     const { nodes } = ast;
     const cached = nodes.get(pos);
@@ -3468,7 +3469,7 @@ class ForOfStatement {
   #internal;
 
   constructor(pos, ast) {
-    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+    if (ast?.token !== TOKEN) constructorError();
 
     const { nodes } = ast;
     const cached = nodes.get(pos);
@@ -3532,7 +3533,7 @@ class ContinueStatement {
   #internal;
 
   constructor(pos, ast) {
-    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+    if (ast?.token !== TOKEN) constructorError();
 
     const { nodes } = ast;
     const cached = nodes.get(pos);
@@ -3578,7 +3579,7 @@ class BreakStatement {
   #internal;
 
   constructor(pos, ast) {
-    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+    if (ast?.token !== TOKEN) constructorError();
 
     const { nodes } = ast;
     const cached = nodes.get(pos);
@@ -3624,7 +3625,7 @@ class ReturnStatement {
   #internal;
 
   constructor(pos, ast) {
-    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+    if (ast?.token !== TOKEN) constructorError();
 
     const { nodes } = ast;
     const cached = nodes.get(pos);
@@ -3670,7 +3671,7 @@ class WithStatement {
   #internal;
 
   constructor(pos, ast) {
-    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+    if (ast?.token !== TOKEN) constructorError();
 
     const { nodes } = ast;
     const cached = nodes.get(pos);
@@ -3722,7 +3723,7 @@ class SwitchStatement {
   #internal;
 
   constructor(pos, ast) {
-    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+    if (ast?.token !== TOKEN) constructorError();
 
     const { nodes } = ast;
     const cached = nodes.get(pos);
@@ -3776,7 +3777,7 @@ class SwitchCase {
   #internal;
 
   constructor(pos, ast) {
-    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+    if (ast?.token !== TOKEN) constructorError();
 
     const { nodes } = ast;
     const cached = nodes.get(pos);
@@ -3830,7 +3831,7 @@ class LabeledStatement {
   #internal;
 
   constructor(pos, ast) {
-    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+    if (ast?.token !== TOKEN) constructorError();
 
     const { nodes } = ast;
     const cached = nodes.get(pos);
@@ -3882,7 +3883,7 @@ class ThrowStatement {
   #internal;
 
   constructor(pos, ast) {
-    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+    if (ast?.token !== TOKEN) constructorError();
 
     const { nodes } = ast;
     const cached = nodes.get(pos);
@@ -3928,7 +3929,7 @@ class TryStatement {
   #internal;
 
   constructor(pos, ast) {
-    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+    if (ast?.token !== TOKEN) constructorError();
 
     const { nodes } = ast;
     const cached = nodes.get(pos);
@@ -3986,7 +3987,7 @@ class CatchClause {
   #internal;
 
   constructor(pos, ast) {
-    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+    if (ast?.token !== TOKEN) constructorError();
 
     const { nodes } = ast;
     const cached = nodes.get(pos);
@@ -4037,7 +4038,7 @@ class CatchParameter {
   #internal;
 
   constructor(pos, ast) {
-    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+    if (ast?.token !== TOKEN) constructorError();
 
     const { nodes } = ast;
     const cached = nodes.get(pos);
@@ -4070,7 +4071,7 @@ class DebuggerStatement {
   #internal;
 
   constructor(pos, ast) {
-    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+    if (ast?.token !== TOKEN) constructorError();
 
     const { nodes } = ast;
     const cached = nodes.get(pos);
@@ -4109,7 +4110,7 @@ class BindingPattern {
   #internal;
 
   constructor(pos, ast) {
-    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+    if (ast?.token !== TOKEN) constructorError();
 
     const { nodes } = ast;
     const cached = nodes.get(pos);
@@ -4169,7 +4170,7 @@ class AssignmentPattern {
   #internal;
 
   constructor(pos, ast) {
-    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+    if (ast?.token !== TOKEN) constructorError();
 
     const { nodes } = ast;
     const cached = nodes.get(pos);
@@ -4221,7 +4222,7 @@ class ObjectPattern {
   #internal;
 
   constructor(pos, ast) {
-    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+    if (ast?.token !== TOKEN) constructorError();
 
     const { nodes } = ast;
     const cached = nodes.get(pos);
@@ -4269,7 +4270,7 @@ class BindingProperty {
   #internal;
 
   constructor(pos, ast) {
-    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+    if (ast?.token !== TOKEN) constructorError();
 
     const { nodes } = ast;
     const cached = nodes.get(pos);
@@ -4333,7 +4334,7 @@ class ArrayPattern {
   #internal;
 
   constructor(pos, ast) {
-    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+    if (ast?.token !== TOKEN) constructorError();
 
     const { nodes } = ast;
     const cached = nodes.get(pos);
@@ -4381,7 +4382,7 @@ class BindingRestElement {
   #internal;
 
   constructor(pos, ast) {
-    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+    if (ast?.token !== TOKEN) constructorError();
 
     const { nodes } = ast;
     const cached = nodes.get(pos);
@@ -4426,7 +4427,7 @@ class Function {
   #internal;
 
   constructor(pos, ast) {
-    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+    if (ast?.token !== TOKEN) constructorError();
 
     const { nodes } = ast;
     const cached = nodes.get(pos);
@@ -4534,7 +4535,7 @@ class FormalParameters {
   #internal;
 
   constructor(pos, ast) {
-    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+    if (ast?.token !== TOKEN) constructorError();
 
     const { nodes } = ast;
     const cached = nodes.get(pos);
@@ -4587,7 +4588,7 @@ class FormalParameter {
   #internal;
 
   constructor(pos, ast) {
-    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+    if (ast?.token !== TOKEN) constructorError();
 
     const { nodes } = ast;
     const cached = nodes.get(pos);
@@ -4643,7 +4644,7 @@ class FunctionBody {
   #internal;
 
   constructor(pos, ast) {
-    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+    if (ast?.token !== TOKEN) constructorError();
 
     const { nodes } = ast;
     const cached = nodes.get(pos);
@@ -4691,7 +4692,7 @@ class ArrowFunctionExpression {
   #internal;
 
   constructor(pos, ast) {
-    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+    if (ast?.token !== TOKEN) constructorError();
 
     const { nodes } = ast;
     const cached = nodes.get(pos);
@@ -4767,7 +4768,7 @@ class YieldExpression {
   #internal;
 
   constructor(pos, ast) {
-    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+    if (ast?.token !== TOKEN) constructorError();
 
     const { nodes } = ast;
     const cached = nodes.get(pos);
@@ -4818,7 +4819,7 @@ class Class {
   #internal;
 
   constructor(pos, ast) {
-    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+    if (ast?.token !== TOKEN) constructorError();
 
     const { nodes } = ast;
     const cached = nodes.get(pos);
@@ -4932,7 +4933,7 @@ class ClassBody {
   #internal;
 
   constructor(pos, ast) {
-    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+    if (ast?.token !== TOKEN) constructorError();
 
     const { nodes } = ast;
     const cached = nodes.get(pos);
@@ -4996,7 +4997,7 @@ class MethodDefinition {
   #internal;
 
   constructor(pos, ast) {
-    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+    if (ast?.token !== TOKEN) constructorError();
 
     const { nodes } = ast;
     const cached = nodes.get(pos);
@@ -5107,7 +5108,7 @@ class PropertyDefinition {
   #internal;
 
   constructor(pos, ast) {
-    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+    if (ast?.token !== TOKEN) constructorError();
 
     const { nodes } = ast;
     const cached = nodes.get(pos);
@@ -5252,7 +5253,7 @@ class PrivateIdentifier {
   #internal;
 
   constructor(pos, ast) {
-    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+    if (ast?.token !== TOKEN) constructorError();
 
     const { nodes } = ast;
     const cached = nodes.get(pos);
@@ -5300,7 +5301,7 @@ class StaticBlock {
   #internal;
 
   constructor(pos, ast) {
-    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+    if (ast?.token !== TOKEN) constructorError();
 
     const { nodes } = ast;
     const cached = nodes.get(pos);
@@ -5377,7 +5378,7 @@ class AccessorProperty {
   #internal;
 
   constructor(pos, ast) {
-    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+    if (ast?.token !== TOKEN) constructorError();
 
     const { nodes } = ast;
     const cached = nodes.get(pos);
@@ -5478,7 +5479,7 @@ class ImportExpression {
   #internal;
 
   constructor(pos, ast) {
-    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+    if (ast?.token !== TOKEN) constructorError();
 
     const { nodes } = ast;
     const cached = nodes.get(pos);
@@ -5536,7 +5537,7 @@ class ImportDeclaration {
   #internal;
 
   constructor(pos, ast) {
-    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+    if (ast?.token !== TOKEN) constructorError();
 
     const { nodes } = ast;
     const cached = nodes.get(pos);
@@ -5632,7 +5633,7 @@ class ImportSpecifier {
   #internal;
 
   constructor(pos, ast) {
-    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+    if (ast?.token !== TOKEN) constructorError();
 
     const { nodes } = ast;
     const cached = nodes.get(pos);
@@ -5690,7 +5691,7 @@ class ImportDefaultSpecifier {
   #internal;
 
   constructor(pos, ast) {
-    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+    if (ast?.token !== TOKEN) constructorError();
 
     const { nodes } = ast;
     const cached = nodes.get(pos);
@@ -5736,7 +5737,7 @@ class ImportNamespaceSpecifier {
   #internal;
 
   constructor(pos, ast) {
-    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+    if (ast?.token !== TOKEN) constructorError();
 
     const { nodes } = ast;
     const cached = nodes.get(pos);
@@ -5781,7 +5782,7 @@ class WithClause {
   #internal;
 
   constructor(pos, ast) {
-    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+    if (ast?.token !== TOKEN) constructorError();
 
     const { nodes } = ast;
     const cached = nodes.get(pos);
@@ -5816,7 +5817,7 @@ class ImportAttribute {
   #internal;
 
   constructor(pos, ast) {
-    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+    if (ast?.token !== TOKEN) constructorError();
 
     const { nodes } = ast;
     const cached = nodes.get(pos);
@@ -5879,7 +5880,7 @@ class ExportNamedDeclaration {
   #internal;
 
   constructor(pos, ast) {
-    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+    if (ast?.token !== TOKEN) constructorError();
 
     const { nodes } = ast;
     const cached = nodes.get(pos);
@@ -5951,7 +5952,7 @@ class ExportDefaultDeclaration {
   #internal;
 
   constructor(pos, ast) {
-    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+    if (ast?.token !== TOKEN) constructorError();
 
     const { nodes } = ast;
     const cached = nodes.get(pos);
@@ -5997,7 +5998,7 @@ class ExportAllDeclaration {
   #internal;
 
   constructor(pos, ast) {
-    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+    if (ast?.token !== TOKEN) constructorError();
 
     const { nodes } = ast;
     const cached = nodes.get(pos);
@@ -6061,7 +6062,7 @@ class ExportSpecifier {
   #internal;
 
   constructor(pos, ast) {
-    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+    if (ast?.token !== TOKEN) constructorError();
 
     const { nodes } = ast;
     const cached = nodes.get(pos);
@@ -6231,7 +6232,7 @@ class V8IntrinsicExpression {
   #internal;
 
   constructor(pos, ast) {
-    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+    if (ast?.token !== TOKEN) constructorError();
 
     const { nodes } = ast;
     const cached = nodes.get(pos);
@@ -6285,7 +6286,7 @@ class BooleanLiteral {
   #internal;
 
   constructor(pos, ast) {
-    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+    if (ast?.token !== TOKEN) constructorError();
 
     const { nodes } = ast;
     const cached = nodes.get(pos);
@@ -6331,7 +6332,7 @@ class NullLiteral {
   #internal;
 
   constructor(pos, ast) {
-    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+    if (ast?.token !== TOKEN) constructorError();
 
     const { nodes } = ast;
     const cached = nodes.get(pos);
@@ -6371,7 +6372,7 @@ class NumericLiteral {
   #internal;
 
   constructor(pos, ast) {
-    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+    if (ast?.token !== TOKEN) constructorError();
 
     const { nodes } = ast;
     const cached = nodes.get(pos);
@@ -6425,7 +6426,7 @@ class StringLiteral {
   #internal;
 
   constructor(pos, ast) {
-    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+    if (ast?.token !== TOKEN) constructorError();
 
     const { nodes } = ast;
     const cached = nodes.get(pos);
@@ -6481,7 +6482,7 @@ class BigIntLiteral {
   #internal;
 
   constructor(pos, ast) {
-    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+    if (ast?.token !== TOKEN) constructorError();
 
     const { nodes } = ast;
     const cached = nodes.get(pos);
@@ -6537,7 +6538,7 @@ class RegExpLiteral {
   #internal;
 
   constructor(pos, ast) {
-    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+    if (ast?.token !== TOKEN) constructorError();
 
     const { nodes } = ast;
     const cached = nodes.get(pos);
@@ -6590,7 +6591,7 @@ class RegExp {
   #internal;
 
   constructor(pos, ast) {
-    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+    if (ast?.token !== TOKEN) constructorError();
 
     const { nodes } = ast;
     // `pos` would be same as one of fields, so add offset to ensure unique cache key
@@ -6629,7 +6630,7 @@ class RegExpPattern {
   #internal;
 
   constructor(pos, ast) {
-    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+    if (ast?.token !== TOKEN) constructorError();
 
     const { nodes } = ast;
     const cached = nodes.get(pos);
@@ -6664,7 +6665,7 @@ class RegExpFlags {
   #internal;
 
   constructor(pos, ast) {
-    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+    if (ast?.token !== TOKEN) constructorError();
 
     const { nodes } = ast;
     const cached = nodes.get(pos);
@@ -6697,7 +6698,7 @@ class JSXElement {
   #internal;
 
   constructor(pos, ast) {
-    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+    if (ast?.token !== TOKEN) constructorError();
 
     const { nodes } = ast;
     const cached = nodes.get(pos);
@@ -6757,7 +6758,7 @@ class JSXOpeningElement {
   #internal;
 
   constructor(pos, ast) {
-    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+    if (ast?.token !== TOKEN) constructorError();
 
     const { nodes } = ast;
     const cached = nodes.get(pos);
@@ -6817,7 +6818,7 @@ class JSXClosingElement {
   #internal;
 
   constructor(pos, ast) {
-    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+    if (ast?.token !== TOKEN) constructorError();
 
     const { nodes } = ast;
     const cached = nodes.get(pos);
@@ -6863,7 +6864,7 @@ class JSXFragment {
   #internal;
 
   constructor(pos, ast) {
-    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+    if (ast?.token !== TOKEN) constructorError();
 
     const { nodes } = ast;
     const cached = nodes.get(pos);
@@ -6923,7 +6924,7 @@ class JSXOpeningFragment {
   #internal;
 
   constructor(pos, ast) {
-    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+    if (ast?.token !== TOKEN) constructorError();
 
     const { nodes } = ast;
     const cached = nodes.get(pos);
@@ -6963,7 +6964,7 @@ class JSXClosingFragment {
   #internal;
 
   constructor(pos, ast) {
-    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+    if (ast?.token !== TOKEN) constructorError();
 
     const { nodes } = ast;
     const cached = nodes.get(pos);
@@ -7020,7 +7021,7 @@ class JSXNamespacedName {
   #internal;
 
   constructor(pos, ast) {
-    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+    if (ast?.token !== TOKEN) constructorError();
 
     const { nodes } = ast;
     const cached = nodes.get(pos);
@@ -7072,7 +7073,7 @@ class JSXMemberExpression {
   #internal;
 
   constructor(pos, ast) {
-    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+    if (ast?.token !== TOKEN) constructorError();
 
     const { nodes } = ast;
     const cached = nodes.get(pos);
@@ -7137,7 +7138,7 @@ class JSXExpressionContainer {
   #internal;
 
   constructor(pos, ast) {
-    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+    if (ast?.token !== TOKEN) constructorError();
 
     const { nodes } = ast;
     const cached = nodes.get(pos);
@@ -7278,7 +7279,7 @@ class JSXEmptyExpression {
   #internal;
 
   constructor(pos, ast) {
-    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+    if (ast?.token !== TOKEN) constructorError();
 
     const { nodes } = ast;
     const cached = nodes.get(pos);
@@ -7329,7 +7330,7 @@ class JSXAttribute {
   #internal;
 
   constructor(pos, ast) {
-    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+    if (ast?.token !== TOKEN) constructorError();
 
     const { nodes } = ast;
     const cached = nodes.get(pos);
@@ -7381,7 +7382,7 @@ class JSXSpreadAttribute {
   #internal;
 
   constructor(pos, ast) {
-    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+    if (ast?.token !== TOKEN) constructorError();
 
     const { nodes } = ast;
     const cached = nodes.get(pos);
@@ -7453,7 +7454,7 @@ class JSXIdentifier {
   #internal;
 
   constructor(pos, ast) {
-    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+    if (ast?.token !== TOKEN) constructorError();
 
     const { nodes } = ast;
     const cached = nodes.get(pos);
@@ -7518,7 +7519,7 @@ class JSXSpreadChild {
   #internal;
 
   constructor(pos, ast) {
-    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+    if (ast?.token !== TOKEN) constructorError();
 
     const { nodes } = ast;
     const cached = nodes.get(pos);
@@ -7564,7 +7565,7 @@ class JSXText {
   #internal;
 
   constructor(pos, ast) {
-    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+    if (ast?.token !== TOKEN) constructorError();
 
     const { nodes } = ast;
     const cached = nodes.get(pos);
@@ -7620,7 +7621,7 @@ class TSThisParameter {
   #internal;
 
   constructor(pos, ast) {
-    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+    if (ast?.token !== TOKEN) constructorError();
 
     const { nodes } = ast;
     const cached = nodes.get(pos);
@@ -7666,7 +7667,7 @@ class TSEnumDeclaration {
   #internal;
 
   constructor(pos, ast) {
-    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+    if (ast?.token !== TOKEN) constructorError();
 
     const { nodes } = ast;
     const cached = nodes.get(pos);
@@ -7730,7 +7731,7 @@ class TSEnumBody {
   #internal;
 
   constructor(pos, ast) {
-    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+    if (ast?.token !== TOKEN) constructorError();
 
     const { nodes } = ast;
     const cached = nodes.get(pos);
@@ -7778,7 +7779,7 @@ class TSEnumMember {
   #internal;
 
   constructor(pos, ast) {
-    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+    if (ast?.token !== TOKEN) constructorError();
 
     const { nodes } = ast;
     const cached = nodes.get(pos);
@@ -7845,7 +7846,7 @@ class TSTypeAnnotation {
   #internal;
 
   constructor(pos, ast) {
-    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+    if (ast?.token !== TOKEN) constructorError();
 
     const { nodes } = ast;
     const cached = nodes.get(pos);
@@ -7891,7 +7892,7 @@ class TSLiteralType {
   #internal;
 
   constructor(pos, ast) {
-    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+    if (ast?.token !== TOKEN) constructorError();
 
     const { nodes } = ast;
     const cached = nodes.get(pos);
@@ -8037,7 +8038,7 @@ class TSConditionalType {
   #internal;
 
   constructor(pos, ast) {
-    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+    if (ast?.token !== TOKEN) constructorError();
 
     const { nodes } = ast;
     const cached = nodes.get(pos);
@@ -8101,7 +8102,7 @@ class TSUnionType {
   #internal;
 
   constructor(pos, ast) {
-    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+    if (ast?.token !== TOKEN) constructorError();
 
     const { nodes } = ast;
     const cached = nodes.get(pos);
@@ -8149,7 +8150,7 @@ class TSIntersectionType {
   #internal;
 
   constructor(pos, ast) {
-    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+    if (ast?.token !== TOKEN) constructorError();
 
     const { nodes } = ast;
     const cached = nodes.get(pos);
@@ -8197,7 +8198,7 @@ class TSParenthesizedType {
   #internal;
 
   constructor(pos, ast) {
-    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+    if (ast?.token !== TOKEN) constructorError();
 
     const { nodes } = ast;
     const cached = nodes.get(pos);
@@ -8243,7 +8244,7 @@ class TSTypeOperator {
   #internal;
 
   constructor(pos, ast) {
-    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+    if (ast?.token !== TOKEN) constructorError();
 
     const { nodes } = ast;
     const cached = nodes.get(pos);
@@ -8308,7 +8309,7 @@ class TSArrayType {
   #internal;
 
   constructor(pos, ast) {
-    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+    if (ast?.token !== TOKEN) constructorError();
 
     const { nodes } = ast;
     const cached = nodes.get(pos);
@@ -8354,7 +8355,7 @@ class TSIndexedAccessType {
   #internal;
 
   constructor(pos, ast) {
-    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+    if (ast?.token !== TOKEN) constructorError();
 
     const { nodes } = ast;
     const cached = nodes.get(pos);
@@ -8406,7 +8407,7 @@ class TSTupleType {
   #internal;
 
   constructor(pos, ast) {
-    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+    if (ast?.token !== TOKEN) constructorError();
 
     const { nodes } = ast;
     const cached = nodes.get(pos);
@@ -8454,7 +8455,7 @@ class TSNamedTupleMember {
   #internal;
 
   constructor(pos, ast) {
-    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+    if (ast?.token !== TOKEN) constructorError();
 
     const { nodes } = ast;
     const cached = nodes.get(pos);
@@ -8512,7 +8513,7 @@ class TSOptionalType {
   #internal;
 
   constructor(pos, ast) {
-    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+    if (ast?.token !== TOKEN) constructorError();
 
     const { nodes } = ast;
     const cached = nodes.get(pos);
@@ -8558,7 +8559,7 @@ class TSRestType {
   #internal;
 
   constructor(pos, ast) {
-    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+    if (ast?.token !== TOKEN) constructorError();
 
     const { nodes } = ast;
     const cached = nodes.get(pos);
@@ -8689,7 +8690,7 @@ class TSAnyKeyword {
   #internal;
 
   constructor(pos, ast) {
-    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+    if (ast?.token !== TOKEN) constructorError();
 
     const { nodes } = ast;
     const cached = nodes.get(pos);
@@ -8729,7 +8730,7 @@ class TSStringKeyword {
   #internal;
 
   constructor(pos, ast) {
-    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+    if (ast?.token !== TOKEN) constructorError();
 
     const { nodes } = ast;
     const cached = nodes.get(pos);
@@ -8769,7 +8770,7 @@ class TSBooleanKeyword {
   #internal;
 
   constructor(pos, ast) {
-    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+    if (ast?.token !== TOKEN) constructorError();
 
     const { nodes } = ast;
     const cached = nodes.get(pos);
@@ -8809,7 +8810,7 @@ class TSNumberKeyword {
   #internal;
 
   constructor(pos, ast) {
-    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+    if (ast?.token !== TOKEN) constructorError();
 
     const { nodes } = ast;
     const cached = nodes.get(pos);
@@ -8849,7 +8850,7 @@ class TSNeverKeyword {
   #internal;
 
   constructor(pos, ast) {
-    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+    if (ast?.token !== TOKEN) constructorError();
 
     const { nodes } = ast;
     const cached = nodes.get(pos);
@@ -8889,7 +8890,7 @@ class TSIntrinsicKeyword {
   #internal;
 
   constructor(pos, ast) {
-    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+    if (ast?.token !== TOKEN) constructorError();
 
     const { nodes } = ast;
     const cached = nodes.get(pos);
@@ -8929,7 +8930,7 @@ class TSUnknownKeyword {
   #internal;
 
   constructor(pos, ast) {
-    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+    if (ast?.token !== TOKEN) constructorError();
 
     const { nodes } = ast;
     const cached = nodes.get(pos);
@@ -8969,7 +8970,7 @@ class TSNullKeyword {
   #internal;
 
   constructor(pos, ast) {
-    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+    if (ast?.token !== TOKEN) constructorError();
 
     const { nodes } = ast;
     const cached = nodes.get(pos);
@@ -9009,7 +9010,7 @@ class TSUndefinedKeyword {
   #internal;
 
   constructor(pos, ast) {
-    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+    if (ast?.token !== TOKEN) constructorError();
 
     const { nodes } = ast;
     const cached = nodes.get(pos);
@@ -9049,7 +9050,7 @@ class TSVoidKeyword {
   #internal;
 
   constructor(pos, ast) {
-    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+    if (ast?.token !== TOKEN) constructorError();
 
     const { nodes } = ast;
     const cached = nodes.get(pos);
@@ -9089,7 +9090,7 @@ class TSSymbolKeyword {
   #internal;
 
   constructor(pos, ast) {
-    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+    if (ast?.token !== TOKEN) constructorError();
 
     const { nodes } = ast;
     const cached = nodes.get(pos);
@@ -9129,7 +9130,7 @@ class TSThisType {
   #internal;
 
   constructor(pos, ast) {
-    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+    if (ast?.token !== TOKEN) constructorError();
 
     const { nodes } = ast;
     const cached = nodes.get(pos);
@@ -9169,7 +9170,7 @@ class TSObjectKeyword {
   #internal;
 
   constructor(pos, ast) {
-    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+    if (ast?.token !== TOKEN) constructorError();
 
     const { nodes } = ast;
     const cached = nodes.get(pos);
@@ -9209,7 +9210,7 @@ class TSBigIntKeyword {
   #internal;
 
   constructor(pos, ast) {
-    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+    if (ast?.token !== TOKEN) constructorError();
 
     const { nodes } = ast;
     const cached = nodes.get(pos);
@@ -9249,7 +9250,7 @@ class TSTypeReference {
   #internal;
 
   constructor(pos, ast) {
-    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+    if (ast?.token !== TOKEN) constructorError();
 
     const { nodes } = ast;
     const cached = nodes.get(pos);
@@ -9312,7 +9313,7 @@ class TSQualifiedName {
   #internal;
 
   constructor(pos, ast) {
-    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+    if (ast?.token !== TOKEN) constructorError();
 
     const { nodes } = ast;
     const cached = nodes.get(pos);
@@ -9364,7 +9365,7 @@ class TSTypeParameterInstantiation {
   #internal;
 
   constructor(pos, ast) {
-    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+    if (ast?.token !== TOKEN) constructorError();
 
     const { nodes } = ast;
     const cached = nodes.get(pos);
@@ -9412,7 +9413,7 @@ class TSTypeParameter {
   #internal;
 
   constructor(pos, ast) {
-    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+    if (ast?.token !== TOKEN) constructorError();
 
     const { nodes } = ast;
     const cached = nodes.get(pos);
@@ -9488,7 +9489,7 @@ class TSTypeParameterDeclaration {
   #internal;
 
   constructor(pos, ast) {
-    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+    if (ast?.token !== TOKEN) constructorError();
 
     const { nodes } = ast;
     const cached = nodes.get(pos);
@@ -9536,7 +9537,7 @@ class TSTypeAliasDeclaration {
   #internal;
 
   constructor(pos, ast) {
-    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+    if (ast?.token !== TOKEN) constructorError();
 
     const { nodes } = ast;
     const cached = nodes.get(pos);
@@ -9613,7 +9614,7 @@ class TSClassImplements {
   #internal;
 
   constructor(pos, ast) {
-    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+    if (ast?.token !== TOKEN) constructorError();
 
     const { nodes } = ast;
     const cached = nodes.get(pos);
@@ -9665,7 +9666,7 @@ class TSInterfaceDeclaration {
   #internal;
 
   constructor(pos, ast) {
-    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+    if (ast?.token !== TOKEN) constructorError();
 
     const { nodes } = ast;
     const cached = nodes.get(pos);
@@ -9737,7 +9738,7 @@ class TSInterfaceBody {
   #internal;
 
   constructor(pos, ast) {
-    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+    if (ast?.token !== TOKEN) constructorError();
 
     const { nodes } = ast;
     const cached = nodes.get(pos);
@@ -9785,7 +9786,7 @@ class TSPropertySignature {
   #internal;
 
   constructor(pos, ast) {
-    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+    if (ast?.token !== TOKEN) constructorError();
 
     const { nodes } = ast;
     const cached = nodes.get(pos);
@@ -9872,7 +9873,7 @@ class TSIndexSignature {
   #internal;
 
   constructor(pos, ast) {
-    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+    if (ast?.token !== TOKEN) constructorError();
 
     const { nodes } = ast;
     const cached = nodes.get(pos);
@@ -9938,7 +9939,7 @@ class TSCallSignatureDeclaration {
   #internal;
 
   constructor(pos, ast) {
-    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+    if (ast?.token !== TOKEN) constructorError();
 
     const { nodes } = ast;
     const cached = nodes.get(pos);
@@ -10009,7 +10010,7 @@ class TSMethodSignature {
   #internal;
 
   constructor(pos, ast) {
-    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+    if (ast?.token !== TOKEN) constructorError();
 
     const { nodes } = ast;
     const cached = nodes.get(pos);
@@ -10091,7 +10092,7 @@ class TSConstructSignatureDeclaration {
   #internal;
 
   constructor(pos, ast) {
-    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+    if (ast?.token !== TOKEN) constructorError();
 
     const { nodes } = ast;
     const cached = nodes.get(pos);
@@ -10149,7 +10150,7 @@ class TSIndexSignatureName {
   #internal;
 
   constructor(pos, ast) {
-    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+    if (ast?.token !== TOKEN) constructorError();
 
     const { nodes } = ast;
     const cached = nodes.get(pos);
@@ -10203,7 +10204,7 @@ class TSInterfaceHeritage {
   #internal;
 
   constructor(pos, ast) {
-    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+    if (ast?.token !== TOKEN) constructorError();
 
     const { nodes } = ast;
     const cached = nodes.get(pos);
@@ -10255,7 +10256,7 @@ class TSTypePredicate {
   #internal;
 
   constructor(pos, ast) {
-    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+    if (ast?.token !== TOKEN) constructorError();
 
     const { nodes } = ast;
     const cached = nodes.get(pos);
@@ -10324,7 +10325,7 @@ class TSModuleDeclaration {
   #internal;
 
   constructor(pos, ast) {
-    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+    if (ast?.token !== TOKEN) constructorError();
 
     const { nodes } = ast;
     const cached = nodes.get(pos);
@@ -10423,7 +10424,7 @@ class TSModuleBlock {
   #internal;
 
   constructor(pos, ast) {
-    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+    if (ast?.token !== TOKEN) constructorError();
 
     const { nodes } = ast;
     const cached = nodes.get(pos);
@@ -10471,7 +10472,7 @@ class TSTypeLiteral {
   #internal;
 
   constructor(pos, ast) {
-    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+    if (ast?.token !== TOKEN) constructorError();
 
     const { nodes } = ast;
     const cached = nodes.get(pos);
@@ -10519,7 +10520,7 @@ class TSInferType {
   #internal;
 
   constructor(pos, ast) {
-    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+    if (ast?.token !== TOKEN) constructorError();
 
     const { nodes } = ast;
     const cached = nodes.get(pos);
@@ -10565,7 +10566,7 @@ class TSTypeQuery {
   #internal;
 
   constructor(pos, ast) {
-    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+    if (ast?.token !== TOKEN) constructorError();
 
     const { nodes } = ast;
     const cached = nodes.get(pos);
@@ -10630,7 +10631,7 @@ class TSImportType {
   #internal;
 
   constructor(pos, ast) {
-    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+    if (ast?.token !== TOKEN) constructorError();
 
     const { nodes } = ast;
     const cached = nodes.get(pos);
@@ -10694,7 +10695,7 @@ class TSFunctionType {
   #internal;
 
   constructor(pos, ast) {
-    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+    if (ast?.token !== TOKEN) constructorError();
 
     const { nodes } = ast;
     const cached = nodes.get(pos);
@@ -10752,7 +10753,7 @@ class TSConstructorType {
   #internal;
 
   constructor(pos, ast) {
-    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+    if (ast?.token !== TOKEN) constructorError();
 
     const { nodes } = ast;
     const cached = nodes.get(pos);
@@ -10816,7 +10817,7 @@ class TSMappedType {
   #internal;
 
   constructor(pos, ast) {
-    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+    if (ast?.token !== TOKEN) constructorError();
 
     const { nodes } = ast;
     const cached = nodes.get(pos);
@@ -10893,7 +10894,7 @@ class TSTemplateLiteralType {
   #internal;
 
   constructor(pos, ast) {
-    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+    if (ast?.token !== TOKEN) constructorError();
 
     const { nodes } = ast;
     const cached = nodes.get(pos);
@@ -10949,7 +10950,7 @@ class TSAsExpression {
   #internal;
 
   constructor(pos, ast) {
-    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+    if (ast?.token !== TOKEN) constructorError();
 
     const { nodes } = ast;
     const cached = nodes.get(pos);
@@ -11001,7 +11002,7 @@ class TSSatisfiesExpression {
   #internal;
 
   constructor(pos, ast) {
-    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+    if (ast?.token !== TOKEN) constructorError();
 
     const { nodes } = ast;
     const cached = nodes.get(pos);
@@ -11053,7 +11054,7 @@ class TSTypeAssertion {
   #internal;
 
   constructor(pos, ast) {
-    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+    if (ast?.token !== TOKEN) constructorError();
 
     const { nodes } = ast;
     const cached = nodes.get(pos);
@@ -11105,7 +11106,7 @@ class TSImportEqualsDeclaration {
   #internal;
 
   constructor(pos, ast) {
-    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+    if (ast?.token !== TOKEN) constructorError();
 
     const { nodes } = ast;
     const cached = nodes.get(pos);
@@ -11176,7 +11177,7 @@ class TSExternalModuleReference {
   #internal;
 
   constructor(pos, ast) {
-    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+    if (ast?.token !== TOKEN) constructorError();
 
     const { nodes } = ast;
     const cached = nodes.get(pos);
@@ -11222,7 +11223,7 @@ class TSNonNullExpression {
   #internal;
 
   constructor(pos, ast) {
-    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+    if (ast?.token !== TOKEN) constructorError();
 
     const { nodes } = ast;
     const cached = nodes.get(pos);
@@ -11268,7 +11269,7 @@ class Decorator {
   #internal;
 
   constructor(pos, ast) {
-    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+    if (ast?.token !== TOKEN) constructorError();
 
     const { nodes } = ast;
     const cached = nodes.get(pos);
@@ -11314,7 +11315,7 @@ class TSExportAssignment {
   #internal;
 
   constructor(pos, ast) {
-    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+    if (ast?.token !== TOKEN) constructorError();
 
     const { nodes } = ast;
     const cached = nodes.get(pos);
@@ -11360,7 +11361,7 @@ class TSNamespaceExportDeclaration {
   #internal;
 
   constructor(pos, ast) {
-    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+    if (ast?.token !== TOKEN) constructorError();
 
     const { nodes } = ast;
     const cached = nodes.get(pos);
@@ -11406,7 +11407,7 @@ class TSInstantiationExpression {
   #internal;
 
   constructor(pos, ast) {
-    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+    if (ast?.token !== TOKEN) constructorError();
 
     const { nodes } = ast;
     const cached = nodes.get(pos);
@@ -11469,7 +11470,7 @@ class JSDocNullableType {
   #internal;
 
   constructor(pos, ast) {
-    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+    if (ast?.token !== TOKEN) constructorError();
 
     const { nodes } = ast;
     const cached = nodes.get(pos);
@@ -11521,7 +11522,7 @@ class JSDocNonNullableType {
   #internal;
 
   constructor(pos, ast) {
-    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+    if (ast?.token !== TOKEN) constructorError();
 
     const { nodes } = ast;
     const cached = nodes.get(pos);
@@ -11573,7 +11574,7 @@ class JSDocUnknownType {
   #internal;
 
   constructor(pos, ast) {
-    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+    if (ast?.token !== TOKEN) constructorError();
 
     const { nodes } = ast;
     const cached = nodes.get(pos);
@@ -11623,7 +11624,7 @@ class Comment {
   #internal;
 
   constructor(pos, ast) {
-    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+    if (ast?.token !== TOKEN) constructorError();
 
     const { nodes } = ast;
     const cached = nodes.get(pos);
@@ -11667,7 +11668,7 @@ class NameSpan {
   #internal;
 
   constructor(pos, ast) {
-    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+    if (ast?.token !== TOKEN) constructorError();
 
     const { nodes } = ast;
     const cached = nodes.get(pos);
@@ -11713,7 +11714,7 @@ class ImportEntry {
   #internal;
 
   constructor(pos, ast) {
-    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+    if (ast?.token !== TOKEN) constructorError();
 
     const { nodes } = ast;
     const cached = nodes.get(pos);
@@ -11770,7 +11771,7 @@ class ExportEntry {
   #internal;
 
   constructor(pos, ast) {
-    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+    if (ast?.token !== TOKEN) constructorError();
 
     const { nodes } = ast;
     const cached = nodes.get(pos);
@@ -11879,7 +11880,7 @@ class DynamicImport {
   #internal;
 
   constructor(pos, ast) {
-    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+    if (ast?.token !== TOKEN) constructorError();
 
     const { nodes } = ast;
     const cached = nodes.get(pos);
@@ -12058,7 +12059,7 @@ class Span {
   #internal;
 
   constructor(pos, ast) {
-    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+    if (ast?.token !== TOKEN) constructorError();
 
     const { nodes } = ast;
     const cached = nodes.get(pos);
@@ -12096,7 +12097,7 @@ class SourceType {
   #internal;
 
   constructor(pos, ast) {
-    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+    if (ast?.token !== TOKEN) constructorError();
 
     const { nodes } = ast;
     const cached = nodes.get(pos);
@@ -12139,7 +12140,7 @@ class RawTransferData {
   #internal;
 
   constructor(pos, ast) {
-    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+    if (ast?.token !== TOKEN) constructorError();
 
     const { nodes } = ast;
     // `pos` would be same as one of fields, so add offset to ensure unique cache key
@@ -12194,7 +12195,7 @@ class Error {
   #internal;
 
   constructor(pos, ast) {
-    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+    if (ast?.token !== TOKEN) constructorError();
 
     const { nodes } = ast;
     const cached = nodes.get(pos);
@@ -12271,7 +12272,7 @@ class ErrorLabel {
   #internal;
 
   constructor(pos, ast) {
-    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+    if (ast?.token !== TOKEN) constructorError();
 
     const { nodes } = ast;
     const cached = nodes.get(pos);
@@ -12317,7 +12318,7 @@ class EcmaScriptModule {
   #internal;
 
   constructor(pos, ast) {
-    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+    if (ast?.token !== TOKEN) constructorError();
 
     const { nodes } = ast;
     const cached = nodes.get(pos);
@@ -12388,7 +12389,7 @@ class StaticImport {
   #internal;
 
   constructor(pos, ast) {
-    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+    if (ast?.token !== TOKEN) constructorError();
 
     const { nodes } = ast;
     const cached = nodes.get(pos);
@@ -12440,7 +12441,7 @@ class StaticExport {
   #internal;
 
   constructor(pos, ast) {
-    if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+    if (ast?.token !== TOKEN) constructorError();
 
     const { nodes } = ast;
     const cached = nodes.get(pos);

@@ -48,7 +48,8 @@ impl Generator for RawTransferLazyGenerator {
 static PRELUDE: &str = "
     'use strict';
 
-    const { NodeArray, TOKEN } = require('../../raw-transfer/node-array.js');
+    const { TOKEN, constructorError } = require('../../raw-transfer/lazy-common.js'),
+        NodeArray = require('../../raw-transfer/node-array.js');
 
     module.exports = { construct, TOKEN };
 
@@ -56,7 +57,7 @@ static PRELUDE: &str = "
         // (2 * 1024 * 1024 * 1024 - 16) >> 2
         const metadataPos32 = 536870908;
 
-        return new RawTransferData(ast.buffer.uint32[metadataPos32], ast, TOKEN);
+        return new RawTransferData(ast.buffer.uint32[metadataPos32], ast);
     }
 
     const textDecoder = new TextDecoder('utf-8', { ignoreBOM: true }),
@@ -507,7 +508,7 @@ fn generate_struct(
             #internal;
 
             constructor(pos, ast) {{
-                if (ast.token !== TOKEN) throw new Error('Constructor is for internal use only');
+                if (ast?.token !== TOKEN) constructorError();
 
                 const {{ nodes }} = ast; {cache_key_comment}
                 const cached = nodes.get({pos_cache_key});
