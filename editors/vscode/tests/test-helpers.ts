@@ -103,7 +103,6 @@ export async function loadFixture(fixture: string, workspaceDir: Uri = fixturesW
 export async function getDiagnostics(file: string, workspaceDir: Uri = fixturesWorkspaceUri()): Promise<Diagnostic[]> {
   const fileUri = Uri.joinPath(workspaceDir, 'fixtures', file);
   await window.showTextDocument(fileUri);
-  await sleep(500);
   const diagnostics = languages.getDiagnostics(fileUri);
   await commands.executeCommand('workbench.action.closeActiveEditor');
   return diagnostics;

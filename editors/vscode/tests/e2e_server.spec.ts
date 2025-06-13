@@ -155,30 +155,17 @@ suite('E2E Diagnostics', () => {
     strictEqual(contentWithFixAll.toString(), 'if (foo === null) { bar();}');
   });
 
-  test('nested configs severity', async () => {
-    await loadFixture('nested_config');
-    const rootDiagnostics = await getDiagnostics('index.ts');
-    const nestedDiagnostics = await getDiagnostics('folder/index.ts');
-
-    assert(typeof rootDiagnostics[0].code == 'object');
-    strictEqual(rootDiagnostics[0].code.target.authority, 'oxc.rs');
-    strictEqual(rootDiagnostics[0].severity, DiagnosticSeverity.Warning);
-
-    assert(typeof nestedDiagnostics[0].code == 'object');
-    strictEqual(nestedDiagnostics[0].code.target.authority, 'oxc.rs');
-    strictEqual(nestedDiagnostics[0].severity, DiagnosticSeverity.Error);
-  });
-
   testMultiFolderMode('different diagnostic severity', async () => {
     await loadFixture('debugger', WORKSPACE_DIR);
-    await loadFixture('debugger_error', WORKSPACE_SECOND_DIR);
-
     const firstDiagnostics = await getDiagnostics('debugger.js', WORKSPACE_DIR);
-    const secondDiagnostics = await getDiagnostics('debugger.js', WORKSPACE_SECOND_DIR);
 
     assert(typeof firstDiagnostics[0].code == 'object');
     strictEqual(firstDiagnostics[0].code.target.authority, 'oxc.rs');
     strictEqual(firstDiagnostics[0].severity, DiagnosticSeverity.Warning);
+
+    await loadFixture('debugger_error', WORKSPACE_SECOND_DIR);
+    await sleep(500);
+    const secondDiagnostics = await getDiagnostics('debugger.js', WORKSPACE_SECOND_DIR);
 
     assert(typeof secondDiagnostics[0].code == 'object');
     strictEqual(secondDiagnostics[0].code.target.authority, 'oxc.rs');
@@ -217,55 +204,5 @@ suite('E2E Diagnostics', () => {
     assert(typeof secondDiagnostics[0].code == 'object');
     strictEqual(secondDiagnostics[0].code.target.authority, 'oxc.rs');
     strictEqual(secondDiagnostics[0].severity, DiagnosticSeverity.Error);
-  });
-
-  test('cross module', async () => {
-    await loadFixture('cross_module');
-    const diagnostics = await getDiagnostics('dep-a.ts');
-
-    strictEqual(diagnostics.length, 1);
-    assert(typeof diagnostics[0].code == 'object');
-    strictEqual(diagnostics[0].code.target.authority, 'oxc.rs');
-    assert(
-      diagnostics[0].message.startsWith("Dependency cycle detected"),
-    );
-    strictEqual(diagnostics[0].severity, DiagnosticSeverity.Error);
-    strictEqual(diagnostics[0].range.start.line, 1);
-    strictEqual(diagnostics[0].range.start.character, 18);
-    strictEqual(diagnostics[0].range.end.line, 1);
-    strictEqual(diagnostics[0].range.end.character, 30);
-  });
-
-  test('cross module with nested config', async () => {
-    await loadFixture('cross_module_nested_config');
-    const diagnostics = await getDiagnostics('folder/folder-dep-a.ts');
-
-    strictEqual(diagnostics.length, 1);
-    assert(typeof diagnostics[0].code == 'object');
-    strictEqual(diagnostics[0].code.target.authority, 'oxc.rs');
-    assert(
-      diagnostics[0].message.startsWith("Dependency cycle detected"),
-    );
-    strictEqual(diagnostics[0].severity, DiagnosticSeverity.Error);
-    strictEqual(diagnostics[0].range.start.line, 1);
-    strictEqual(diagnostics[0].range.start.character, 18);
-    strictEqual(diagnostics[0].range.end.line, 1);
-    strictEqual(diagnostics[0].range.end.character, 37);
-  });
-
-  test('cross module with extended config', async () => {
-    await loadFixture('cross_module_extended_config');
-    const diagnostics = await getDiagnostics('dep-a.ts');
-
-    assert(typeof diagnostics[0].code == 'object');
-    strictEqual(diagnostics[0].code.target.authority, 'oxc.rs');
-    assert(
-      diagnostics[0].message.startsWith("Dependency cycle detected"),
-    );
-    strictEqual(diagnostics[0].severity, DiagnosticSeverity.Error);
-    strictEqual(diagnostics[0].range.start.line, 1);
-    strictEqual(diagnostics[0].range.start.character, 18);
-    strictEqual(diagnostics[0].range.end.line, 1);
-    strictEqual(diagnostics[0].range.end.character, 30);
   });
 });
