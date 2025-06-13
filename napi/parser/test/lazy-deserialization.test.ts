@@ -10,6 +10,11 @@ function parseSyncLazy(filename, code, options = null) {
   return parseSync(filename, code, { ...options, experimentalLazy: true });
 }
 
+// Get `NodeArray` constructor
+const NodeArray = Object.getPrototypeOf(parseSyncLazy('test.js', '').program.body).constructor;
+expect(NodeArray).not.toBe(Array);
+expect(NodeArray.toString().startsWith('class NodeArray extends Array {')).toBe(true);
+
 it('parses', () => {
   const { program } = parseSyncLazy('test.js', 'let x = y + z;');
   expect(program.type).toBe('Program');
@@ -252,13 +257,128 @@ describe('NodeArray', () => {
       expect(() => body.shift()).toThrow(new TypeError('Cannot redefine property: 0'));
     });
 
-    it('slice', () => {
-      const { body } = parseSyncLazy('test.js', 'let x = 1; x = 2;').program;
-      const slice = body.slice(1);
-      expect(Array.isArray(slice)).toBe(true);
-      expect(Object.getPrototypeOf(slice)).toBe(Array.prototype);
-      expect(slice).toHaveLength(1);
-      expect(slice[0]).toBe(body[1]);
+    describe('slice', () => {
+      class Case {
+        constructor(args, expected) {
+          this.args = args;
+          this.expected = expected;
+        }
+
+        toString() {
+          return `(${this.args.map(arg => JSON.stringify(arg) || 'undefined').join(', ')})`;
+        }
+      }
+
+      it.each([
+        // No args
+        new Case([], { start: 0, length: 3 }),
+        // 1 arg integer
+        new Case([1], { start: 1, length: 2 }),
+        new Case([2], { start: 2, length: 1 }),
+        new Case([3], { start: 0, length: 0 }),
+        new Case([4], { start: 0, length: 0 }),
+        // 1 arg negative integer
+        new Case([-0], { start: 0, length: 3 }),
+        new Case([-1], { start: 2, length: 1 }),
+        new Case([-2], { start: 1, length: 2 }),
+        new Case([-3], { start: 0, length: 3 }),
+        new Case([-4], { start: 0, length: 3 }),
+        // 1 arg undefined/null
+        new Case([undefined], { start: 0, length: 3 }),
+        new Case([null], { start: 0, length: 3 }),
+        // 1 arg non-integer
+        new Case(['0'], { start: 0, length: 3 }),
+        new Case(['2'], { start: 2, length: 1 }),
+        new Case(['-2'], { start: 1, length: 2 }),
+        new Case(['0x2'], { start: 2, length: 1 }),
+        new Case(['oops'], { start: 0, length: 3 }),
+        new Case([false], { start: 0, length: 3 }),
+        new Case([true], { start: 1, length: 2 }),
+        new Case([{ valueOf: () => 1 }], { start: 1, length: 2 }),
+        // 2 args integers
+        new Case([0, 0], { start: 0, length: 0 }),
+        new Case([0, 1], { start: 0, length: 1 }),
+        new Case([0, 2], { start: 0, length: 2 }),
+        new Case([0, 3], { start: 0, length: 3 }),
+        new Case([0, 4], { start: 0, length: 3 }),
+        new Case([1, 2], { start: 1, length: 1 }),
+        new Case([1, 3], { start: 1, length: 2 }),
+        new Case([1, 4], { start: 1, length: 2 }),
+        new Case([3, 3], { start: 0, length: 0 }),
+        new Case([3, 5], { start: 0, length: 0 }),
+        new Case([3, 0], { start: 0, length: 0 }),
+        // 2 args negative integers
+        new Case([-1, 3], { start: 2, length: 1 }),
+        new Case([-2, 3], { start: 1, length: 2 }),
+        new Case([-3, 3], { start: 0, length: 3 }),
+        new Case([-4, 3], { start: 0, length: 3 }),
+        new Case([-2, 5], { start: 1, length: 2 }),
+        new Case([0, -1], { start: 0, length: 2 }),
+        new Case([1, -1], { start: 1, length: 1 }),
+        new Case([2, -1], { start: 0, length: 0 }),
+        new Case([3, -1], { start: 0, length: 0 }),
+        new Case([0, -0], { start: 0, length: 0 }),
+        new Case([-2, -1], { start: 1, length: 1 }),
+        new Case([-3, -1], { start: 0, length: 2 }),
+        new Case([-3, -4], { start: 0, length: 0 }),
+        // 2 args undefined/null
+        new Case([undefined, undefined], { start: 0, length: 3 }),
+        new Case([null, null], { start: 0, length: 0 }),
+        new Case([null, undefined], { start: 0, length: 3 }),
+        new Case([undefined, null], { start: 0, length: 0 }),
+        new Case([undefined, 1], { start: 0, length: 1 }),
+        new Case([undefined, 3], { start: 0, length: 3 }),
+        new Case([undefined, 4], { start: 0, length: 3 }),
+        new Case([undefined, -1], { start: 0, length: 2 }),
+        new Case([undefined, 0], { start: 0, length: 0 }),
+        new Case([null, 1], { start: 0, length: 1 }),
+        new Case([null, 3], { start: 0, length: 3 }),
+        new Case([null, 4], { start: 0, length: 3 }),
+        new Case([null, -1], { start: 0, length: 2 }),
+        new Case([null, 0], { start: 0, length: 0 }),
+        new Case([0, undefined], { start: 0, length: 3 }),
+        new Case([1, undefined], { start: 1, length: 2 }),
+        new Case([2, undefined], { start: 2, length: 1 }),
+        new Case([3, undefined], { start: 0, length: 0 }),
+        new Case([4, undefined], { start: 0, length: 0 }),
+        new Case([-2, undefined], { start: 1, length: 2 }),
+        new Case([-3, undefined], { start: 0, length: 3 }),
+        new Case([-5, undefined], { start: 0, length: 3 }),
+        new Case([0, null], { start: 0, length: 0 }),
+        new Case([1, null], { start: 0, length: 0 }),
+        new Case([3, null], { start: 0, length: 0 }),
+        new Case([-2, null], { start: 0, length: 0 }),
+        new Case([-3, null], { start: 0, length: 0 }),
+        new Case([-5, null], { start: 0, length: 0 }),
+        // 2 args non-integers
+        new Case(['0', '2'], { start: 0, length: 2 }),
+        new Case(['0', '-2'], { start: 0, length: 1 }),
+        new Case(['1', '-1'], { start: 1, length: 1 }),
+        new Case(['0x1', '0x2'], { start: 1, length: 1 }),
+        new Case([0, 'oops'], { start: 0, length: 0 }),
+        new Case([false, true], { start: 0, length: 1 }),
+        new Case([true, true], { start: 0, length: 0 }),
+        new Case([1, { valueOf: () => 2 }], { start: 1, length: 1 }),
+      ])('%s', ({ args, expected }) => {
+        const { body } = parseSyncLazy('test.js', 'let x = 1; x = 2; x = 3;').program;
+        const slice = body.slice(...args);
+        expect(Array.isArray(slice)).toBe(true);
+        expect(Object.getPrototypeOf(slice)).toBe(NodeArray.prototype);
+        expect(slice.length).toBe(expected.length);
+
+        for (let i = 0; i < expected.length; i++) {
+          expect(slice[i]).toBe(body[i + expected.start]);
+        }
+
+        // Check `Array.prototype.slice` behaves the same
+        const arr = [11, 22, 33];
+        const arrSlice = arr.slice(...args);
+        expect(arrSlice.length).toBe(expected.length);
+
+        for (let i = 0; i < expected.length; i++) {
+          expect(arrSlice[i]).toBe(arr[i + expected.start]);
+        }
+      });
     });
 
     it('some', () => {

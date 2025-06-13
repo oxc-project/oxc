@@ -46,7 +46,6 @@ class NodeArray extends Array {
   }
 
   // Allow `arr.filter`, `arr.map` etc.
-  // TODO: Would be better for `slice` method to return a `NodeArray`.
   static [Symbol.species] = Array;
 
   // Override `values` method with a more efficient one that avoids going via proxy for every iteration.
@@ -71,6 +70,46 @@ class NodeArray extends Array {
     // Get actual `NodeArray`. `this` is a proxy.
     const arr = nodeArrays.get(this);
     return new NodeArrayEntriesIterator(arr.#internal, arr.length);
+  }
+
+  // Override `slice` method to return a `NodeArray`.
+  //
+  // The new `NodeArray` references this `NodeArray` so element accesses on the slice will
+  // read/write to this `NodeArray`.
+  //
+  // TODO: Is there any way to avoid the `WeakMap`? Seems necessary because `this` here is a proxy.
+  slice(start, end) {
+    // Get actual `NodeArray`. `this` is a proxy.
+    const arr = nodeArrays.get(this);
+    if (arr === void 0) throw new Error('`slice` called on a value which is not a `NodeArray`');
+
+    start = toInt(start);
+    if (start < 0) {
+      start = arr.length + start;
+      if (start < 0) start = 0;
+    }
+
+    if (end === void 0) {
+      end = arr.length;
+    } else {
+      end = toInt(end);
+      if (end < 0) {
+        end = arr.length + end;
+        if (end < 0) end = 0;
+      } else if (end > arr.length) {
+        end = arr.length;
+      }
+    }
+
+    let length = end - start;
+    if (length <= 0 || start >= arr.length) {
+      start = 0;
+      length = 0;
+    }
+
+    const internal = arr.#internal,
+      { stride } = internal;
+    return new NodeArray(internal.pos + start * stride, length, stride, internal.construct, internal.ast);
   }
 
   // Make `console.log` deserialize all elements.
@@ -271,3 +310,17 @@ function isIndex(key) {
 }
 
 const INDEX_REGEX = /^[1-9]\d*$/;
+
+/**
+ * Convert value to integer.
+ * https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Number#integer_conversion
+ *
+ * @param {*} value - Value to convert to integer.
+ * @returns {number} - Integer
+ */
+function toInt(value) {
+  value = Math.trunc(+value);
+  // `value === 0` check is to convert -0 to 0
+  if (value === 0 || Number.isNaN(value)) return 0;
+  return value;
+}
