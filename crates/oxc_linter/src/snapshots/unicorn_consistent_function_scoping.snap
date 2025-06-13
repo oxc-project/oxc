@@ -3,9 +3,13 @@ source: crates/oxc_linter/src/tester.rs
 ---
   ⚠ eslint-plugin-unicorn(consistent-function-scoping): Function does not capture any variables from the outer scope.
    ╭─[consistent_function_scoping.tsx:3:30]
+ 1 │ function doFoo(foo) {
+   ·          ──┬──
+   ·            ╰── Function `doBar` is declared in this scope
  2 │                 {
  3 │                     function doBar(bar) {
-   ·                              ─────
+   ·                              ──┬──
+   ·                                ╰── It does not capture any variables declared there
  4 │                         return bar;
    ╰────
   help: Move this function to the outer scope.
@@ -44,9 +48,13 @@ source: crates/oxc_linter/src/tester.rs
 
   ⚠ eslint-plugin-unicorn(consistent-function-scoping): Function does not capture any variables from the outer scope.
    ╭─[consistent_function_scoping.tsx:4:34]
+ 2 │ 
  3 │             function outer() {
+   ·                      ──┬──
+   ·                        ╰── Function `inner` is declared in this scope
  4 │                 inner = function inner() {}
-   ·                                  ─────
+   ·                                  ──┬──
+   ·                                    ╰── It does not capture any variables declared there
  5 │             }
    ╰────
   help: Move this function to the outer scope.
@@ -196,7 +204,9 @@ source: crates/oxc_linter/src/tester.rs
   ⚠ eslint-plugin-unicorn(consistent-function-scoping): Function does not capture any variables from the outer scope.
    ╭─[consistent_function_scoping.tsx:1:46]
  1 │ for (let foo = 0; foo < 1; foo++) { function doBar(bar) { return bar; } }
-   ·                                              ─────
+   · ─┬─                                          ──┬──
+   ·  │                                             ╰── It does not capture any variables declared there
+   ·  ╰── Function `doBar` is declared in this scope
    ╰────
   help: Move this function to the outer scope.
 
