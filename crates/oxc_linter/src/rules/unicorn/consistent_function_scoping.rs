@@ -873,6 +873,10 @@ fn test() {
         ("function foo() { const bar = async () => {} }", None),
         ("function doFoo() { const doBar = function(bar) { return bar; }; }", None),
         ("function outer() { const inner = function inner() {}; }", None),
+        (
+            "export namespace Foo { export function outer() { const inner = function inner() {}; } }",
+            None,
+        ),
     ];
 
     Tester::new(ConsistentFunctionScoping::NAME, ConsistentFunctionScoping::PLUGIN, pass, fail)
