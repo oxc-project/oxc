@@ -5,6 +5,8 @@ export const oxlintConfigFileName = '.oxlintrc.json';
 
 export type Trigger = 'onSave' | 'onType';
 
+type UnusedDisableDirectives = 'allow' | 'warn' | 'deny';
+
 /**
  * See `"contributes.configuration"` in `package.json`
  */
@@ -24,6 +26,16 @@ export interface WorkspaceConfigInterface {
    * @default 'onType'
    */
   run: Trigger;
+
+  /**
+   * Define how directive comments like `// oxlint-disable-line` should be reported,
+   * when no errors would have been reported on that line anyway
+   *
+   * `oxc.unusedDisableDirectives`
+   *
+   * @default 'allow'
+   */
+  unusedDisableDirectives: UnusedDisableDirectives;
   /**
    * Additional flags to pass to the LSP binary
    * `oxc.flags`
@@ -36,6 +48,7 @@ export interface WorkspaceConfigInterface {
 export class WorkspaceConfig {
   private _configPath: string | null = null;
   private _runTrigger: Trigger = 'onType';
+  private _unusedDisableDirectives: UnusedDisableDirectives = 'allow';
   private _flags: Record<string, string> = {};
 
   constructor(private readonly workspace: WorkspaceFolder) {
@@ -53,6 +66,8 @@ export class WorkspaceConfig {
     this._runTrigger = this.configuration.get<Trigger>('lint.run') || 'onType';
     this._configPath = this.configuration.get<string | null>('configPath') ||
       (useNestedConfigs ? null : oxlintConfigFileName);
+    this._unusedDisableDirectives = this.configuration.get<UnusedDisableDirectives>('unusedDisableDirectives') ??
+      'allow';
     this._flags = flags;
   }
 
@@ -61,6 +76,9 @@ export class WorkspaceConfig {
       return true;
     }
     if (event.affectsConfiguration(`${ConfigService.namespace}.lint.run`, this.workspace)) {
+      return true;
+    }
+    if (event.affectsConfiguration(`${ConfigService.namespace}.unusedDisableDirectives`, this.workspace)) {
       return true;
     }
     if (event.affectsConfiguration(`${ConfigService.namespace}.flags`, this.workspace)) {
@@ -91,6 +109,15 @@ export class WorkspaceConfig {
     return this.configuration.update('configPath', value, ConfigurationTarget.WorkspaceFolder);
   }
 
+  get unusedDisableDirectives(): UnusedDisableDirectives {
+    return this._unusedDisableDirectives;
+  }
+
+  updateUnusedDisableDirectives(value: UnusedDisableDirectives): PromiseLike<void> {
+    this._unusedDisableDirectives = value;
+    return this.configuration.update('unusedDisableDirectives', value, ConfigurationTarget.WorkspaceFolder);
+  }
+
   get flags(): Record<string, string> {
     return this._flags;
   }
@@ -104,6 +131,7 @@ export class WorkspaceConfig {
     return {
       run: this.runTrigger,
       configPath: this.configPath ?? null,
+      unusedDisableDirectives: this.unusedDisableDirectives,
       flags: this.flags,
     };
   }

@@ -110,6 +110,22 @@
           "default": null,
           "description": "Path to ESlint configuration. Keep it empty to enable nested configuration."
         },
+        "oxc.unusedDisableDirectives": {
+          "type": "string",
+          "scope": "resource",
+          "enum": [
+            "allow",
+            "warn",
+            "deny"
+          ],
+          "enumDescriptions": [
+            "Allow",
+            "Warn",
+            "Deny"
+          ],
+          "default": "allow",
+          "description": "Define how directive comments like `// oxlint-disable-line` should be reported, when no errors would have been reported on that line anyway."
+        },
         "oxc.flags": {
           "type": "object",
           "scope": "resource",
