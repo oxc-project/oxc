@@ -3,9 +3,7 @@
 
 'use strict';
 
-// Unique token which is not exposed publicly.
-// Used to prevent user calling class constructors.
-const TOKEN = {};
+const { NodeArray, TOKEN } = require('../../raw-transfer/node-array.js');
 
 module.exports = { construct, TOKEN };
 
@@ -12517,15 +12515,18 @@ function constructStr(pos, ast) {
 
 function constructVecComment(pos, ast) {
   const { uint32 } = ast.buffer,
-    arr = [],
-    pos32 = pos >> 2,
-    len = uint32[pos32 + 2];
-  pos = uint32[pos32];
-  for (let i = 0; i < len; i++) {
-    arr.push(new Comment(pos, ast));
-    pos += 16;
-  }
-  return arr;
+    pos32 = pos >> 2;
+  return new NodeArray(
+    uint32[pos32],
+    uint32[pos32 + 2],
+    16,
+    constructComment,
+    ast,
+  );
+}
+
+function constructComment(pos, ast) {
+  return new Comment(pos, ast);
 }
 
 function constructOptionHashbang(pos, ast) {
@@ -12535,28 +12536,30 @@ function constructOptionHashbang(pos, ast) {
 
 function constructVecDirective(pos, ast) {
   const { uint32 } = ast.buffer,
-    arr = [],
-    pos32 = pos >> 2,
-    len = uint32[pos32 + 2];
-  pos = uint32[pos32];
-  for (let i = 0; i < len; i++) {
-    arr.push(new Directive(pos, ast));
-    pos += 72;
-  }
-  return arr;
+    pos32 = pos >> 2;
+  return new NodeArray(
+    uint32[pos32],
+    uint32[pos32 + 2],
+    72,
+    constructDirective,
+    ast,
+  );
+}
+
+function constructDirective(pos, ast) {
+  return new Directive(pos, ast);
 }
 
 function constructVecStatement(pos, ast) {
   const { uint32 } = ast.buffer,
-    arr = [],
-    pos32 = pos >> 2,
-    len = uint32[pos32 + 2];
-  pos = uint32[pos32];
-  for (let i = 0; i < len; i++) {
-    arr.push(constructStatement(pos, ast));
-    pos += 16;
-  }
-  return arr;
+    pos32 = pos >> 2;
+  return new NodeArray(
+    uint32[pos32],
+    uint32[pos32 + 2],
+    16,
+    constructStatement,
+    ast,
+  );
 }
 
 function constructBoxBooleanLiteral(pos, ast) {
@@ -12721,15 +12724,14 @@ function constructBoxV8IntrinsicExpression(pos, ast) {
 
 function constructVecArrayExpressionElement(pos, ast) {
   const { uint32 } = ast.buffer,
-    arr = [],
-    pos32 = pos >> 2,
-    len = uint32[pos32 + 2];
-  pos = uint32[pos32];
-  for (let i = 0; i < len; i++) {
-    arr.push(constructArrayExpressionElement(pos, ast));
-    pos += 16;
-  }
-  return arr;
+    pos32 = pos >> 2;
+  return new NodeArray(
+    uint32[pos32],
+    uint32[pos32 + 2],
+    16,
+    constructArrayExpressionElement,
+    ast,
+  );
 }
 
 function constructBoxSpreadElement(pos, ast) {
@@ -12738,15 +12740,14 @@ function constructBoxSpreadElement(pos, ast) {
 
 function constructVecObjectPropertyKind(pos, ast) {
   const { uint32 } = ast.buffer,
-    arr = [],
-    pos32 = pos >> 2,
-    len = uint32[pos32 + 2];
-  pos = uint32[pos32];
-  for (let i = 0; i < len; i++) {
-    arr.push(constructObjectPropertyKind(pos, ast));
-    pos += 16;
-  }
-  return arr;
+    pos32 = pos >> 2;
+  return new NodeArray(
+    uint32[pos32],
+    uint32[pos32 + 2],
+    16,
+    constructObjectPropertyKind,
+    ast,
+  );
 }
 
 function constructBoxObjectProperty(pos, ast) {
@@ -12767,28 +12768,30 @@ function constructBoxPrivateIdentifier(pos, ast) {
 
 function constructVecTemplateElement(pos, ast) {
   const { uint32 } = ast.buffer,
-    arr = [],
-    pos32 = pos >> 2,
-    len = uint32[pos32 + 2];
-  pos = uint32[pos32];
-  for (let i = 0; i < len; i++) {
-    arr.push(new TemplateElement(pos, ast));
-    pos += 48;
-  }
-  return arr;
+    pos32 = pos >> 2;
+  return new NodeArray(
+    uint32[pos32],
+    uint32[pos32 + 2],
+    48,
+    constructTemplateElement,
+    ast,
+  );
+}
+
+function constructTemplateElement(pos, ast) {
+  return new TemplateElement(pos, ast);
 }
 
 function constructVecExpression(pos, ast) {
   const { uint32 } = ast.buffer,
-    arr = [],
-    pos32 = pos >> 2,
-    len = uint32[pos32 + 2];
-  pos = uint32[pos32];
-  for (let i = 0; i < len; i++) {
-    arr.push(constructExpression(pos, ast));
-    pos += 16;
-  }
-  return arr;
+    pos32 = pos >> 2;
+  return new NodeArray(
+    uint32[pos32],
+    uint32[pos32 + 2],
+    16,
+    constructExpression,
+    ast,
+  );
 }
 
 function constructBoxTSTypeParameterInstantiation(pos, ast) {
@@ -12819,15 +12822,14 @@ function constructBoxPrivateFieldExpression(pos, ast) {
 
 function constructVecArgument(pos, ast) {
   const { uint32 } = ast.buffer,
-    arr = [],
-    pos32 = pos >> 2,
-    len = uint32[pos32 + 2];
-  pos = uint32[pos32];
-  for (let i = 0; i < len; i++) {
-    arr.push(constructArgument(pos, ast));
-    pos += 16;
-  }
-  return arr;
+    pos32 = pos >> 2;
+  return new NodeArray(
+    uint32[pos32],
+    uint32[pos32 + 2],
+    16,
+    constructArgument,
+    ast,
+  );
 }
 
 function constructBoxArrayAssignmentTarget(pos, ast) {
@@ -12845,15 +12847,14 @@ function constructOptionAssignmentTargetMaybeDefault(pos, ast) {
 
 function constructVecOptionAssignmentTargetMaybeDefault(pos, ast) {
   const { uint32 } = ast.buffer,
-    arr = [],
-    pos32 = pos >> 2,
-    len = uint32[pos32 + 2];
-  pos = uint32[pos32];
-  for (let i = 0; i < len; i++) {
-    arr.push(constructOptionAssignmentTargetMaybeDefault(pos, ast));
-    pos += 16;
-  }
-  return arr;
+    pos32 = pos >> 2;
+  return new NodeArray(
+    uint32[pos32],
+    uint32[pos32 + 2],
+    16,
+    constructOptionAssignmentTargetMaybeDefault,
+    ast,
+  );
 }
 
 function constructOptionAssignmentTargetRest(pos, ast) {
@@ -12863,15 +12864,14 @@ function constructOptionAssignmentTargetRest(pos, ast) {
 
 function constructVecAssignmentTargetProperty(pos, ast) {
   const { uint32 } = ast.buffer,
-    arr = [],
-    pos32 = pos >> 2,
-    len = uint32[pos32 + 2];
-  pos = uint32[pos32];
-  for (let i = 0; i < len; i++) {
-    arr.push(constructAssignmentTargetProperty(pos, ast));
-    pos += 16;
-  }
-  return arr;
+    pos32 = pos >> 2;
+  return new NodeArray(
+    uint32[pos32],
+    uint32[pos32 + 2],
+    16,
+    constructAssignmentTargetProperty,
+    ast,
+  );
 }
 
 function constructBoxAssignmentTargetWithDefault(pos, ast) {
@@ -12989,15 +12989,18 @@ function constructBoxTSImportEqualsDeclaration(pos, ast) {
 
 function constructVecVariableDeclarator(pos, ast) {
   const { uint32 } = ast.buffer,
-    arr = [],
-    pos32 = pos >> 2,
-    len = uint32[pos32 + 2];
-  pos = uint32[pos32];
-  for (let i = 0; i < len; i++) {
-    arr.push(new VariableDeclarator(pos, ast));
-    pos += 64;
-  }
-  return arr;
+    pos32 = pos >> 2;
+  return new NodeArray(
+    uint32[pos32],
+    uint32[pos32 + 2],
+    64,
+    constructVariableDeclarator,
+    ast,
+  );
+}
+
+function constructVariableDeclarator(pos, ast) {
+  return new VariableDeclarator(pos, ast);
 }
 
 function constructOptionStatement(pos, ast) {
@@ -13017,15 +13020,18 @@ function constructOptionLabelIdentifier(pos, ast) {
 
 function constructVecSwitchCase(pos, ast) {
   const { uint32 } = ast.buffer,
-    arr = [],
-    pos32 = pos >> 2,
-    len = uint32[pos32 + 2];
-  pos = uint32[pos32];
-  for (let i = 0; i < len; i++) {
-    arr.push(new SwitchCase(pos, ast));
-    pos += 48;
-  }
-  return arr;
+    pos32 = pos >> 2;
+  return new NodeArray(
+    uint32[pos32],
+    uint32[pos32 + 2],
+    48,
+    constructSwitchCase,
+    ast,
+  );
+}
+
+function constructSwitchCase(pos, ast) {
+  return new SwitchCase(pos, ast);
 }
 
 function constructBoxCatchClause(pos, ast) {
@@ -13074,15 +13080,18 @@ function constructBoxAssignmentPattern(pos, ast) {
 
 function constructVecBindingProperty(pos, ast) {
   const { uint32 } = ast.buffer,
-    arr = [],
-    pos32 = pos >> 2,
-    len = uint32[pos32 + 2];
-  pos = uint32[pos32];
-  for (let i = 0; i < len; i++) {
-    arr.push(new BindingProperty(pos, ast));
-    pos += 64;
-  }
-  return arr;
+    pos32 = pos >> 2;
+  return new NodeArray(
+    uint32[pos32],
+    uint32[pos32 + 2],
+    64,
+    constructBindingProperty,
+    ast,
+  );
+}
+
+function constructBindingProperty(pos, ast) {
+  return new BindingProperty(pos, ast);
 }
 
 function constructBoxBindingRestElement(pos, ast) {
@@ -13101,15 +13110,14 @@ function constructOptionBindingPattern(pos, ast) {
 
 function constructVecOptionBindingPattern(pos, ast) {
   const { uint32 } = ast.buffer,
-    arr = [],
-    pos32 = pos >> 2,
-    len = uint32[pos32 + 2];
-  pos = uint32[pos32];
-  for (let i = 0; i < len; i++) {
-    arr.push(constructOptionBindingPattern(pos, ast));
-    pos += 32;
-  }
-  return arr;
+    pos32 = pos >> 2;
+  return new NodeArray(
+    uint32[pos32],
+    uint32[pos32 + 2],
+    32,
+    constructOptionBindingPattern,
+    ast,
+  );
 }
 
 function constructOptionBindingIdentifier(pos, ast) {
@@ -13150,28 +13158,34 @@ function constructOptionBoxFunctionBody(pos, ast) {
 
 function constructVecFormalParameter(pos, ast) {
   const { uint32 } = ast.buffer,
-    arr = [],
-    pos32 = pos >> 2,
-    len = uint32[pos32 + 2];
-  pos = uint32[pos32];
-  for (let i = 0; i < len; i++) {
-    arr.push(new FormalParameter(pos, ast));
-    pos += 72;
-  }
-  return arr;
+    pos32 = pos >> 2;
+  return new NodeArray(
+    uint32[pos32],
+    uint32[pos32 + 2],
+    72,
+    constructFormalParameter,
+    ast,
+  );
+}
+
+function constructFormalParameter(pos, ast) {
+  return new FormalParameter(pos, ast);
 }
 
 function constructVecDecorator(pos, ast) {
   const { uint32 } = ast.buffer,
-    arr = [],
-    pos32 = pos >> 2,
-    len = uint32[pos32 + 2];
-  pos = uint32[pos32];
-  for (let i = 0; i < len; i++) {
-    arr.push(new Decorator(pos, ast));
-    pos += 24;
-  }
-  return arr;
+    pos32 = pos >> 2;
+  return new NodeArray(
+    uint32[pos32],
+    uint32[pos32 + 2],
+    24,
+    constructDecorator,
+    ast,
+  );
+}
+
+function constructDecorator(pos, ast) {
+  return new Decorator(pos, ast);
 }
 
 function constructOptionTSAccessibility(pos, ast) {
@@ -13181,15 +13195,18 @@ function constructOptionTSAccessibility(pos, ast) {
 
 function constructVecTSClassImplements(pos, ast) {
   const { uint32 } = ast.buffer,
-    arr = [],
-    pos32 = pos >> 2,
-    len = uint32[pos32 + 2];
-  pos = uint32[pos32];
-  for (let i = 0; i < len; i++) {
-    arr.push(new TSClassImplements(pos, ast));
-    pos += 32;
-  }
-  return arr;
+    pos32 = pos >> 2;
+  return new NodeArray(
+    uint32[pos32],
+    uint32[pos32 + 2],
+    32,
+    constructTSClassImplements,
+    ast,
+  );
+}
+
+function constructTSClassImplements(pos, ast) {
+  return new TSClassImplements(pos, ast);
 }
 
 function constructBoxClassBody(pos, ast) {
@@ -13198,15 +13215,14 @@ function constructBoxClassBody(pos, ast) {
 
 function constructVecClassElement(pos, ast) {
   const { uint32 } = ast.buffer,
-    arr = [],
-    pos32 = pos >> 2,
-    len = uint32[pos32 + 2];
-  pos = uint32[pos32];
-  for (let i = 0; i < len; i++) {
-    arr.push(constructClassElement(pos, ast));
-    pos += 16;
-  }
-  return arr;
+    pos32 = pos >> 2;
+  return new NodeArray(
+    uint32[pos32],
+    uint32[pos32 + 2],
+    16,
+    constructClassElement,
+    ast,
+  );
 }
 
 function constructBoxStaticBlock(pos, ast) {
@@ -13260,15 +13276,14 @@ function constructOptionImportPhase(pos, ast) {
 
 function constructVecImportDeclarationSpecifier(pos, ast) {
   const { uint32 } = ast.buffer,
-    arr = [],
-    pos32 = pos >> 2,
-    len = uint32[pos32 + 2];
-  pos = uint32[pos32];
-  for (let i = 0; i < len; i++) {
-    arr.push(constructImportDeclarationSpecifier(pos, ast));
-    pos += 16;
-  }
-  return arr;
+    pos32 = pos >> 2;
+  return new NodeArray(
+    uint32[pos32],
+    uint32[pos32 + 2],
+    16,
+    constructImportDeclarationSpecifier,
+    ast,
+  );
 }
 
 function constructOptionVecImportDeclarationSpecifier(pos, ast) {
@@ -13299,15 +13314,18 @@ function constructBoxImportNamespaceSpecifier(pos, ast) {
 
 function constructVecImportAttribute(pos, ast) {
   const { uint32 } = ast.buffer,
-    arr = [],
-    pos32 = pos >> 2,
-    len = uint32[pos32 + 2];
-  pos = uint32[pos32];
-  for (let i = 0; i < len; i++) {
-    arr.push(new ImportAttribute(pos, ast));
-    pos += 112;
-  }
-  return arr;
+    pos32 = pos >> 2;
+  return new NodeArray(
+    uint32[pos32],
+    uint32[pos32 + 2],
+    112,
+    constructImportAttribute,
+    ast,
+  );
+}
+
+function constructImportAttribute(pos, ast) {
+  return new ImportAttribute(pos, ast);
 }
 
 function constructOptionDeclaration(pos, ast) {
@@ -13317,15 +13335,18 @@ function constructOptionDeclaration(pos, ast) {
 
 function constructVecExportSpecifier(pos, ast) {
   const { uint32 } = ast.buffer,
-    arr = [],
-    pos32 = pos >> 2,
-    len = uint32[pos32 + 2];
-  pos = uint32[pos32];
-  for (let i = 0; i < len; i++) {
-    arr.push(new ExportSpecifier(pos, ast));
-    pos += 128;
-  }
-  return arr;
+    pos32 = pos >> 2;
+  return new NodeArray(
+    uint32[pos32],
+    uint32[pos32 + 2],
+    128,
+    constructExportSpecifier,
+    ast,
+  );
+}
+
+function constructExportSpecifier(pos, ast) {
+  return new ExportSpecifier(pos, ast);
 }
 
 function constructOptionStringLiteral(pos, ast) {
@@ -13352,15 +13373,14 @@ function constructBoxJSXOpeningElement(pos, ast) {
 
 function constructVecJSXChild(pos, ast) {
   const { uint32 } = ast.buffer,
-    arr = [],
-    pos32 = pos >> 2,
-    len = uint32[pos32 + 2];
-  pos = uint32[pos32];
-  for (let i = 0; i < len; i++) {
-    arr.push(constructJSXChild(pos, ast));
-    pos += 16;
-  }
-  return arr;
+    pos32 = pos >> 2;
+  return new NodeArray(
+    uint32[pos32],
+    uint32[pos32 + 2],
+    16,
+    constructJSXChild,
+    ast,
+  );
 }
 
 function constructBoxJSXClosingElement(pos, ast) {
@@ -13374,15 +13394,14 @@ function constructOptionBoxJSXClosingElement(pos, ast) {
 
 function constructVecJSXAttributeItem(pos, ast) {
   const { uint32 } = ast.buffer,
-    arr = [],
-    pos32 = pos >> 2,
-    len = uint32[pos32 + 2];
-  pos = uint32[pos32];
-  for (let i = 0; i < len; i++) {
-    arr.push(constructJSXAttributeItem(pos, ast));
-    pos += 16;
-  }
-  return arr;
+    pos32 = pos >> 2;
+  return new NodeArray(
+    uint32[pos32],
+    uint32[pos32 + 2],
+    16,
+    constructJSXAttributeItem,
+    ast,
+  );
 }
 
 function constructBoxJSXIdentifier(pos, ast) {
@@ -13424,15 +13443,18 @@ function constructBoxJSXSpreadChild(pos, ast) {
 
 function constructVecTSEnumMember(pos, ast) {
   const { uint32 } = ast.buffer,
-    arr = [],
-    pos32 = pos >> 2,
-    len = uint32[pos32 + 2];
-  pos = uint32[pos32];
-  for (let i = 0; i < len; i++) {
-    arr.push(new TSEnumMember(pos, ast));
-    pos += 40;
-  }
-  return arr;
+    pos32 = pos >> 2;
+  return new NodeArray(
+    uint32[pos32],
+    uint32[pos32 + 2],
+    40,
+    constructTSEnumMember,
+    ast,
+  );
+}
+
+function constructTSEnumMember(pos, ast) {
+  return new TSEnumMember(pos, ast);
 }
 
 function constructBoxTSAnyKeyword(pos, ast) {
@@ -13585,28 +13607,26 @@ function constructBoxJSDocUnknownType(pos, ast) {
 
 function constructVecTSType(pos, ast) {
   const { uint32 } = ast.buffer,
-    arr = [],
-    pos32 = pos >> 2,
-    len = uint32[pos32 + 2];
-  pos = uint32[pos32];
-  for (let i = 0; i < len; i++) {
-    arr.push(constructTSType(pos, ast));
-    pos += 16;
-  }
-  return arr;
+    pos32 = pos >> 2;
+  return new NodeArray(
+    uint32[pos32],
+    uint32[pos32 + 2],
+    16,
+    constructTSType,
+    ast,
+  );
 }
 
 function constructVecTSTupleElement(pos, ast) {
   const { uint32 } = ast.buffer,
-    arr = [],
-    pos32 = pos >> 2,
-    len = uint32[pos32 + 2];
-  pos = uint32[pos32];
-  for (let i = 0; i < len; i++) {
-    arr.push(constructTSTupleElement(pos, ast));
-    pos += 16;
-  }
-  return arr;
+    pos32 = pos >> 2;
+  return new NodeArray(
+    uint32[pos32],
+    uint32[pos32 + 2],
+    16,
+    constructTSTupleElement,
+    ast,
+  );
 }
 
 function constructBoxTSOptionalType(pos, ast) {
@@ -13628,28 +13648,34 @@ function constructOptionTSType(pos, ast) {
 
 function constructVecTSTypeParameter(pos, ast) {
   const { uint32 } = ast.buffer,
-    arr = [],
-    pos32 = pos >> 2,
-    len = uint32[pos32 + 2];
-  pos = uint32[pos32];
-  for (let i = 0; i < len; i++) {
-    arr.push(new TSTypeParameter(pos, ast));
-    pos += 80;
-  }
-  return arr;
+    pos32 = pos >> 2;
+  return new NodeArray(
+    uint32[pos32],
+    uint32[pos32 + 2],
+    80,
+    constructTSTypeParameter,
+    ast,
+  );
+}
+
+function constructTSTypeParameter(pos, ast) {
+  return new TSTypeParameter(pos, ast);
 }
 
 function constructVecTSInterfaceHeritage(pos, ast) {
   const { uint32 } = ast.buffer,
-    arr = [],
-    pos32 = pos >> 2,
-    len = uint32[pos32 + 2];
-  pos = uint32[pos32];
-  for (let i = 0; i < len; i++) {
-    arr.push(new TSInterfaceHeritage(pos, ast));
-    pos += 32;
-  }
-  return arr;
+    pos32 = pos >> 2;
+  return new NodeArray(
+    uint32[pos32],
+    uint32[pos32 + 2],
+    32,
+    constructTSInterfaceHeritage,
+    ast,
+  );
+}
+
+function constructTSInterfaceHeritage(pos, ast) {
+  return new TSInterfaceHeritage(pos, ast);
 }
 
 function constructBoxTSInterfaceBody(pos, ast) {
@@ -13658,15 +13684,14 @@ function constructBoxTSInterfaceBody(pos, ast) {
 
 function constructVecTSSignature(pos, ast) {
   const { uint32 } = ast.buffer,
-    arr = [],
-    pos32 = pos >> 2,
-    len = uint32[pos32 + 2];
-  pos = uint32[pos32];
-  for (let i = 0; i < len; i++) {
-    arr.push(constructTSSignature(pos, ast));
-    pos += 16;
-  }
-  return arr;
+    pos32 = pos >> 2;
+  return new NodeArray(
+    uint32[pos32],
+    uint32[pos32 + 2],
+    16,
+    constructTSSignature,
+    ast,
+  );
 }
 
 function constructBoxTSPropertySignature(pos, ast) {
@@ -13687,15 +13712,18 @@ function constructBoxTSMethodSignature(pos, ast) {
 
 function constructVecTSIndexSignatureName(pos, ast) {
   const { uint32 } = ast.buffer,
-    arr = [],
-    pos32 = pos >> 2,
-    len = uint32[pos32 + 2];
-  pos = uint32[pos32];
-  for (let i = 0; i < len; i++) {
-    arr.push(new TSIndexSignatureName(pos, ast));
-    pos += 32;
-  }
-  return arr;
+    pos32 = pos >> 2;
+  return new NodeArray(
+    uint32[pos32],
+    uint32[pos32 + 2],
+    32,
+    constructTSIndexSignatureName,
+    ast,
+  );
+}
+
+function constructTSIndexSignatureName(pos, ast) {
+  return new TSIndexSignatureName(pos, ast);
 }
 
 function constructOptionTSModuleDeclarationBody(pos, ast) {
@@ -13752,104 +13780,128 @@ function constructOptionU64(pos, ast) {
 
 function constructVecError(pos, ast) {
   const { uint32 } = ast.buffer,
-    arr = [],
-    pos32 = pos >> 2,
-    len = uint32[pos32 + 2];
-  pos = uint32[pos32];
-  for (let i = 0; i < len; i++) {
-    arr.push(new Error(pos, ast));
-    pos += 80;
-  }
-  return arr;
+    pos32 = pos >> 2;
+  return new NodeArray(
+    uint32[pos32],
+    uint32[pos32 + 2],
+    80,
+    constructError,
+    ast,
+  );
+}
+
+function constructError(pos, ast) {
+  return new Error(pos, ast);
 }
 
 function constructVecErrorLabel(pos, ast) {
   const { uint32 } = ast.buffer,
-    arr = [],
-    pos32 = pos >> 2,
-    len = uint32[pos32 + 2];
-  pos = uint32[pos32];
-  for (let i = 0; i < len; i++) {
-    arr.push(new ErrorLabel(pos, ast));
-    pos += 24;
-  }
-  return arr;
+    pos32 = pos >> 2;
+  return new NodeArray(
+    uint32[pos32],
+    uint32[pos32 + 2],
+    24,
+    constructErrorLabel,
+    ast,
+  );
+}
+
+function constructErrorLabel(pos, ast) {
+  return new ErrorLabel(pos, ast);
 }
 
 function constructVecStaticImport(pos, ast) {
   const { uint32 } = ast.buffer,
-    arr = [],
-    pos32 = pos >> 2,
-    len = uint32[pos32 + 2];
-  pos = uint32[pos32];
-  for (let i = 0; i < len; i++) {
-    arr.push(new StaticImport(pos, ast));
-    pos += 56;
-  }
-  return arr;
+    pos32 = pos >> 2;
+  return new NodeArray(
+    uint32[pos32],
+    uint32[pos32 + 2],
+    56,
+    constructStaticImport,
+    ast,
+  );
+}
+
+function constructStaticImport(pos, ast) {
+  return new StaticImport(pos, ast);
 }
 
 function constructVecStaticExport(pos, ast) {
   const { uint32 } = ast.buffer,
-    arr = [],
-    pos32 = pos >> 2,
-    len = uint32[pos32 + 2];
-  pos = uint32[pos32];
-  for (let i = 0; i < len; i++) {
-    arr.push(new StaticExport(pos, ast));
-    pos += 32;
-  }
-  return arr;
+    pos32 = pos >> 2;
+  return new NodeArray(
+    uint32[pos32],
+    uint32[pos32 + 2],
+    32,
+    constructStaticExport,
+    ast,
+  );
+}
+
+function constructStaticExport(pos, ast) {
+  return new StaticExport(pos, ast);
 }
 
 function constructVecDynamicImport(pos, ast) {
   const { uint32 } = ast.buffer,
-    arr = [],
-    pos32 = pos >> 2,
-    len = uint32[pos32 + 2];
-  pos = uint32[pos32];
-  for (let i = 0; i < len; i++) {
-    arr.push(new DynamicImport(pos, ast));
-    pos += 16;
-  }
-  return arr;
+    pos32 = pos >> 2;
+  return new NodeArray(
+    uint32[pos32],
+    uint32[pos32 + 2],
+    16,
+    constructDynamicImport,
+    ast,
+  );
+}
+
+function constructDynamicImport(pos, ast) {
+  return new DynamicImport(pos, ast);
 }
 
 function constructVecSpan(pos, ast) {
   const { uint32 } = ast.buffer,
-    arr = [],
-    pos32 = pos >> 2,
-    len = uint32[pos32 + 2];
-  pos = uint32[pos32];
-  for (let i = 0; i < len; i++) {
-    arr.push(new Span(pos, ast));
-    pos += 8;
-  }
-  return arr;
+    pos32 = pos >> 2;
+  return new NodeArray(
+    uint32[pos32],
+    uint32[pos32 + 2],
+    8,
+    constructSpan,
+    ast,
+  );
+}
+
+function constructSpan(pos, ast) {
+  return new Span(pos, ast);
 }
 
 function constructVecImportEntry(pos, ast) {
   const { uint32 } = ast.buffer,
-    arr = [],
-    pos32 = pos >> 2,
-    len = uint32[pos32 + 2];
-  pos = uint32[pos32];
-  for (let i = 0; i < len; i++) {
-    arr.push(new ImportEntry(pos, ast));
-    pos += 96;
-  }
-  return arr;
+    pos32 = pos >> 2;
+  return new NodeArray(
+    uint32[pos32],
+    uint32[pos32 + 2],
+    96,
+    constructImportEntry,
+    ast,
+  );
+}
+
+function constructImportEntry(pos, ast) {
+  return new ImportEntry(pos, ast);
 }
 
 function constructVecExportEntry(pos, ast) {
   const { uint32 } = ast.buffer,
-    arr = [],
-    pos32 = pos >> 2,
-    len = uint32[pos32 + 2];
-  pos = uint32[pos32];
-  for (let i = 0; i < len; i++) {
-    arr.push(new ExportEntry(pos, ast));
-    pos += 144;
-  }
-  return arr;
+    pos32 = pos >> 2;
+  return new NodeArray(
+    uint32[pos32],
+    uint32[pos32 + 2],
+    144,
+    constructExportEntry,
+    ast,
+  );
+}
+
+function constructExportEntry(pos, ast) {
+  return new ExportEntry(pos, ast);
 }

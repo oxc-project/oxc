@@ -48,7 +48,8 @@
     "generated/deserialize/lazy.js",
     "raw-transfer/index.js",
     "raw-transfer/eager.js",
-    "raw-transfer/lazy.js"
+    "raw-transfer/lazy.js",
+    "raw-transfer/node-array.js"
   ],
   "publishConfig": {
     "registry": "https://registry.npmjs.org/",

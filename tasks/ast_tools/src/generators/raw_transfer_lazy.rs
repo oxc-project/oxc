@@ -48,9 +48,7 @@ impl Generator for RawTransferLazyGenerator {
 static PRELUDE: &str = "
     'use strict';
 
-    // Unique token which is not exposed publicly.
-    // Used to prevent user calling class constructors.
-    const TOKEN = {};
+    const { NodeArray, TOKEN } = require('../../raw-transfer/node-array.js');
 
     module.exports = { construct, TOKEN };
 
@@ -733,28 +731,40 @@ fn generate_vec(vec_def: &VecDef, code: &mut String, estree_derive_id: DeriveId,
     }
 
     let fn_name = vec_def.constructor_name(schema);
-    let inner_fn_name = inner_type.constructor_name(schema);
+    let (construct_fn_name, construct_fn) = match inner_type {
+        TypeDef::Struct(inner_struct) => {
+            let inner_struct_name = inner_struct.name();
+            let construct_fn_name = format!("construct{inner_struct_name}");
+            #[rustfmt::skip]
+            let construct_fn = format!("
+                function {construct_fn_name}(pos, ast) {{
+                    return new {inner_struct_name}(pos, ast);
+                }}
+            ");
+            (construct_fn_name, construct_fn)
+        }
+        _ => (inner_type.constructor_name(schema), String::new()),
+    };
     let inner_type_size = inner_type.layout_64().size;
 
     let ptr_pos32 = pos32_offset(VEC_PTR_FIELD_OFFSET);
     let len_pos32 = pos32_offset(VEC_LEN_FIELD_OFFSET);
 
-    // TODO: Wrap array in a proxy, instead of eagerly deserializing all elements
-
     #[rustfmt::skip]
     write_it!(code, "
         function {fn_name}(pos, ast) {{
             const {{ uint32 }} = ast.buffer,
-                arr = [],
-                pos32 = pos >> 2,
-                len = uint32[{len_pos32}];
-            pos = uint32[{ptr_pos32}];
-            for (let i = 0; i < len; i++) {{
-                arr.push({inner_fn_name}(pos, ast));
-                pos += {inner_type_size};
-            }}
-            return arr;
+                pos32 = pos >> 2;
+            return new NodeArray(
+                uint32[{ptr_pos32}],
+                uint32[{len_pos32}],
+                {inner_type_size},
+                {construct_fn_name},
+                ast,
+            );
         }}
+
+        {construct_fn}
     ");
 }
 
