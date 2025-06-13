@@ -3,7 +3,7 @@ commit: 81c95189
 parser_typescript Summary:
 AST Parsed     : 6530/6537 (99.89%)
 Positive Passed: 6519/6537 (99.72%)
-Negative Passed: 1403/5763 (24.34%)
+Negative Passed: 1399/5763 (24.28%)
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/ClassDeclaration24.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/ExportAssignment7.ts
@@ -4958,6 +4958,8 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/constEnum
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/constEnums/importElisionConstEnumMerge1.ts
 
+Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/controlFlow/assertionTypePredicates1.ts
+
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/controlFlow/controlFlowAliasing.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/controlFlow/controlFlowBindingPatternOrder.ts
@@ -6094,6 +6096,10 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/expressio
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/expressions/typeGuards/typeGuardInClass.ts
 
+Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/expressions/typeGuards/typeGuardOfFormThisMember.ts
+
+Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/expressions/typeGuards/typeGuardOfFormThisMemberErrors.ts
+
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/expressions/typeGuards/typeGuardOfFormTypeOfEqualEqualHasNoEffect.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/expressions/typeGuards/typeGuardOfFormTypeOfNotEqualHasNoEffect.ts
@@ -6111,6 +6117,8 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/expressio
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/expressions/typeGuards/typeGuardsWithInstanceOfByConstructorSignature.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/expressions/typeGuards/typeGuardsWithInstanceOfBySymbolHasInstance.ts
+
+Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/expressions/typeGuards/typePredicateOnVariableDeclaration01.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/expressions/typeSatisfaction/typeSatisfaction.ts
 
@@ -20687,15 +20695,6 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
  9 │ }
    ╰────
 
-  × Expected `,` but found `is`
-     ╭─[typescript/tests/cases/conformance/controlFlow/assertionTypePredicates1.ts:163:20]
- 162 │     get p1(): this is string;
- 163 │     set p1(x: this is string);
-     ·                    ─┬
-     ·                     ╰── `,` expected
- 164 │     get p2(): asserts this is string;
-     ╰────
-
   × TS(1264): Declarations with definite assignment assertions must also have type annotations.
     ╭─[typescript/tests/cases/conformance/controlFlow/definiteAssignmentAssertions.ts:69:10]
  68 │ function f4() {
@@ -24634,31 +24633,6 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
     ·                                                        ▲
  18 │     return true;
     ╰────
-  help: Try insert a semicolon here
-
-  × Expected `;` but found `is`
-   ╭─[typescript/tests/cases/conformance/expressions/typeGuards/typeGuardOfFormThisMember.ts:4:15]
- 3 │     export class FileSystemObject {
- 4 │         isFSO: this is FileSystemObject;
-   ·                     ─┬
-   ·                      ╰── `;` expected
- 5 │         get isFile(): this is File {
-   ╰────
-
-  × Expected `;` but found `is`
-   ╭─[typescript/tests/cases/conformance/expressions/typeGuards/typeGuardOfFormThisMemberErrors.ts:4:15]
- 3 │     export class FileSystemObject {
- 4 │         isFSO: this is FileSystemObject;
-   ·                     ─┬
-   ·                      ╰── `;` expected
- 5 │         get isFile(): this is File {
-   ╰────
-
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-   ╭─[typescript/tests/cases/conformance/expressions/typeGuards/typePredicateOnVariableDeclaration01.ts:1:12]
- 1 │ var x: this is string;
-   ·            ▲
-   ╰────
   help: Try insert a semicolon here
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
