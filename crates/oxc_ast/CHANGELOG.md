@@ -2,6 +2,33 @@
 
 All notable changes to this package will be documented in this file.
 
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
+
+## [0.73.0] - 2025-06-13
+
+### 💥 BREAKING CHANGES
+
+- f3eaefb ast: [**BREAKING**] Add `value` field to `BigIntLiteral` (#11564) (overlookmotel)
+
+### 🚀 Features
+
+- 3b03fd3 parser: Produce correct syntax error for `interface I extends (typeof T)` (#11610) (Boshen)
+
+### 🚜 Refactor
+
+- 8e30c5f ast: Don't generate AstKind for ForStatementInit (#11617) (Ulrich Stark)
+- 9136685 ast: Create AstKinds for jsdoc types (#11597) (Ulrich Stark)
+- d41fb13 ast: Get jsx types out of AstKind exceptions (#11535) (Ulrich Stark)
+
+### ⚡ Performance
+
+- d5866e8 ast/estree: Convert `NumericLiteral` `raw` field to JSON without escaping (#11562) (overlookmotel)
+
+
+# Changelog
+
+All notable changes to this package will be documented in this file.
+
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
 ## [0.72.3] - 2025-06-06
