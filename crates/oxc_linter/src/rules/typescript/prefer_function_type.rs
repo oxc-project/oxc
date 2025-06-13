@@ -158,8 +158,7 @@ fn check_member(member: &TSSignature, node: &AstNode<'_>, ctx: &LintContext<'_>)
                             }
                         }
 
-                        let has_comments =
-                            ctx.has_comments_between(interface_decl.span);
+                        let has_comments = ctx.has_comments_between(interface_decl.span);
 
                         if has_comments {
                             let comments = ctx
@@ -192,11 +191,7 @@ fn check_member(member: &TSSignature, node: &AstNode<'_>, ctx: &LintContext<'_>)
                                 format!(
                                     "{}{}{} = {};",
                                     comments_text,
-                                    if is_parent_exported {
-                                        "export type "
-                                    } else {
-                                        "type "
-                                    },
+                                    if is_parent_exported { "export type " } else { "type " },
                                     &interface_decl.id.name,
                                     &suggestion
                                 ),
@@ -220,37 +215,37 @@ fn check_member(member: &TSSignature, node: &AstNode<'_>, ctx: &LintContext<'_>)
             }
         }
 
-        AstKind::TSTypeAnnotation(ts_type_annotation) => match &ts_type_annotation
-            .type_annotation
-        {
-            TSType::TSUnionType(union_type) => {
-                union_type.types.iter().for_each(|ts_type| {
-                    if let TSType::TSTypeLiteral(literal) = ts_type {
-                        ctx.diagnostic_with_fix(
-                            prefer_function_type_diagnostic(&suggestion, decl.span),
-                            |fixer| {
-                                fixer
-                                    .replace(literal.span, format!("({suggestion})"))
-                                    .with_message(CONVERT_TO_FUNCTION_TYPE)
-                            },
-                        );
-                    }
-                });
-            }
+        AstKind::TSTypeAnnotation(ts_type_annotation) => {
+            match &ts_type_annotation.type_annotation {
+                TSType::TSUnionType(union_type) => {
+                    union_type.types.iter().for_each(|ts_type| {
+                        if let TSType::TSTypeLiteral(literal) = ts_type {
+                            ctx.diagnostic_with_fix(
+                                prefer_function_type_diagnostic(&suggestion, decl.span),
+                                |fixer| {
+                                    fixer
+                                        .replace(literal.span, format!("({suggestion})"))
+                                        .with_message(CONVERT_TO_FUNCTION_TYPE)
+                                },
+                            );
+                        }
+                    });
+                }
 
-            TSType::TSTypeLiteral(literal) => ctx.diagnostic_with_fix(
-                prefer_function_type_diagnostic(&suggestion, decl.span),
-                |fixer| {
-                    fixer
-                        .replace(literal.span, suggestion)
-                        .with_message(CONVERT_TO_FUNCTION_TYPE)
-                },
-            ),
+                TSType::TSTypeLiteral(literal) => ctx.diagnostic_with_fix(
+                    prefer_function_type_diagnostic(&suggestion, decl.span),
+                    |fixer| {
+                        fixer
+                            .replace(literal.span, suggestion)
+                            .with_message(CONVERT_TO_FUNCTION_TYPE)
+                    },
+                ),
 
-            _ => {
-                ctx.diagnostic(prefer_function_type_diagnostic(&suggestion, decl.span));
+                _ => {
+                    ctx.diagnostic(prefer_function_type_diagnostic(&suggestion, decl.span));
+                }
             }
-        },
+        }
 
         AstKind::TSTypeAliasDeclaration(ts_type_alias_decl) => {
             match &ts_type_alias_decl.type_annotation {
@@ -264,16 +259,10 @@ fn check_member(member: &TSSignature, node: &AstNode<'_>, ctx: &LintContext<'_>)
                             return;
                         }
                         ctx.diagnostic_with_fix(
-                            prefer_function_type_diagnostic(
-                                &suggestion,
-                                decl.span,
-                            ),
+                            prefer_function_type_diagnostic(&suggestion, decl.span),
                             |fixer| {
                                 fixer
-                                    .replace(
-                                        literal.span,
-                                        format!("({suggestion})"),
-                                    )
+                                    .replace(literal.span, format!("({suggestion})"))
                                     .with_message(CONVERT_TO_FUNCTION_TYPE)
                             },
                         );
@@ -290,16 +279,10 @@ fn check_member(member: &TSSignature, node: &AstNode<'_>, ctx: &LintContext<'_>)
                             return;
                         }
                         ctx.diagnostic_with_fix(
-                            prefer_function_type_diagnostic(
-                                &suggestion,
-                                decl.span,
-                            ),
+                            prefer_function_type_diagnostic(&suggestion, decl.span),
                             |fixer| {
                                 fixer
-                                    .replace(
-                                        literal.span,
-                                        format!("({suggestion})"),
-                                    )
+                                    .replace(literal.span, format!("({suggestion})"))
                                     .with_message(CONVERT_TO_FUNCTION_TYPE)
                             },
                         );
