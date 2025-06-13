@@ -104,13 +104,16 @@ fn has_one_super_type(decl: &TSInterfaceDeclaration) -> bool {
 }
 
 fn check_member(member: &TSSignature, node: &AstNode<'_>, ctx: &LintContext<'_>) {
-    let TSSignature::TSCallSignatureDeclaration(decl) = member else {
+    let (span, return_type) = match member {
+        TSSignature::TSConstructSignatureDeclaration(decl) => (decl.span, &decl.return_type),
+        TSSignature::TSCallSignatureDeclaration(decl) => (decl.span, &decl.return_type),
+        _ => return,
+    };
+
+    let Some(type_annotation) = &return_type else {
         return;
     };
-    let Some(type_annotation) = &decl.return_type else {
-        return;
-    };
-    let Span { start, end, .. } = decl.span;
+    let Span { start, end, .. } = span;
     let colon_pos = type_annotation.span.start - start;
     let source_code = &ctx.source_text();
     let text: &str = &source_code[start as usize..end as usize];
@@ -128,7 +131,7 @@ fn check_member(member: &TSSignature, node: &AstNode<'_>, ctx: &LintContext<'_>)
         AstKind::TSInterfaceDeclaration(interface_decl) => {
             if let Some(type_parameters) = &interface_decl.type_parameters {
                 ctx.diagnostic_with_fix(
-                    prefer_function_type_diagnostic(&suggestion, decl.span),
+                    prefer_function_type_diagnostic(&suggestion, span),
                     |fixer| {
                         let mut span = interface_decl.id.span;
                         span.end = type_parameters.span.end;
@@ -142,76 +145,71 @@ fn check_member(member: &TSSignature, node: &AstNode<'_>, ctx: &LintContext<'_>)
                     },
                 );
             } else {
-                ctx.diagnostic_with_fix(
-                    prefer_function_type_diagnostic(&suggestion, decl.span),
-                    |_| {
-                        let mut is_parent_exported = false;
-                        let mut node_start = interface_decl.span.start;
-                        let mut node_end = interface_decl.span.end;
-                        if let Some(parent_node) = ctx.nodes().parent_node(node.id()) {
-                            if let AstKind::ExportNamedDeclaration(export_name_decl) =
-                                parent_node.kind()
-                            {
-                                is_parent_exported = true;
-                                node_start = export_name_decl.span.start;
-                                node_end = export_name_decl.span.end;
-                            }
+                ctx.diagnostic_with_fix(prefer_function_type_diagnostic(&suggestion, span), |_| {
+                    let mut is_parent_exported = false;
+                    let mut node_start = interface_decl.span.start;
+                    let mut node_end = interface_decl.span.end;
+                    if let Some(parent_node) = ctx.nodes().parent_node(node.id()) {
+                        if let AstKind::ExportNamedDeclaration(export_name_decl) =
+                            parent_node.kind()
+                        {
+                            is_parent_exported = true;
+                            node_start = export_name_decl.span.start;
+                            node_end = export_name_decl.span.end;
                         }
+                    }
 
-                        let has_comments = ctx.has_comments_between(interface_decl.span);
+                    let has_comments = ctx.has_comments_between(interface_decl.span);
 
-                        if has_comments {
-                            let comments = ctx
-                                .comments_range(node_start..node_end)
-                                .map(|comment| (*comment, comment.content_span()));
+                    if has_comments {
+                        let comments = ctx
+                            .comments_range(node_start..node_end)
+                            .map(|comment| (*comment, comment.content_span()));
 
-                            let comments_text = {
-                                let mut comments_vec: Vec<String> = vec![];
-                                comments.for_each(|(comment_interface, span)| {
-                                    let comment = span.source_text(source_code);
+                        let comments_text = {
+                            let mut comments_vec: Vec<String> = vec![];
+                            comments.for_each(|(comment_interface, span)| {
+                                let comment = span.source_text(source_code);
 
-                                    match comment_interface.kind {
-                                        CommentKind::Line => {
-                                            let single_line_comment: String =
-                                                format!("//{comment}\n");
-                                            comments_vec.push(single_line_comment);
-                                        }
-                                        CommentKind::Block => {
-                                            let multi_line_comment: String =
-                                                format!("/*{comment}*/\n");
-                                            comments_vec.push(multi_line_comment);
-                                        }
+                                match comment_interface.kind {
+                                    CommentKind::Line => {
+                                        let single_line_comment: String = format!("//{comment}\n");
+                                        comments_vec.push(single_line_comment);
                                     }
-                                });
+                                    CommentKind::Block => {
+                                        let multi_line_comment: String = format!("/*{comment}*/\n");
+                                        comments_vec.push(multi_line_comment);
+                                    }
+                                }
+                            });
 
-                                comments_vec.join("")
-                            };
+                            comments_vec.join("")
+                        };
 
-                            return Fix::new(
-                                format!(
-                                    "{}{}{} = {};",
-                                    comments_text,
-                                    if is_parent_exported { "export type " } else { "type " },
-                                    &interface_decl.id.name,
-                                    &suggestion
-                                ),
-                                Span::new(node_start, node_end),
-                            )
-                            .with_message(CONVERT_TO_FUNCTION_TYPE);
-                        }
-
-                        Fix::new(
+                        return Fix::new(
                             format!(
-                                "{} {} = {};",
-                                if is_parent_exported { "export type" } else { "type" },
+                                "{}{}{} = {};",
+                                comments_text,
+                                if is_parent_exported { "export type " } else { "type " },
                                 &interface_decl.id.name,
                                 &suggestion
                             ),
                             Span::new(node_start, node_end),
                         )
-                        .with_message(CONVERT_TO_FUNCTION_TYPE)
-                    },
-                );
+                        .with_message(CONVERT_TO_FUNCTION_TYPE);
+                    }
+
+                    Fix::new(
+                        format!(
+                            "{} {} = {};",
+                            if is_parent_exported { "export type" } else { "type" },
+                            &interface_decl.id.name,
+                            &suggestion
+                        ),
+                        Span::new(node_start, node_end),
+                    )
+                    .with_message(CONVERT_TO_FUNCTION_TYPE)
+                });
             }
         }
 
@@ -221,7 +219,7 @@ fn check_member(member: &TSSignature, node: &AstNode<'_>, ctx: &LintContext<'_>)
                     union_type.types.iter().for_each(|ts_type| {
                         if let TSType::TSTypeLiteral(literal) = ts_type {
                             ctx.diagnostic_with_fix(
-                                prefer_function_type_diagnostic(&suggestion, decl.span),
+                                prefer_function_type_diagnostic(&suggestion, span),
                                 |fixer| {
                                     fixer
                                         .replace(literal.span, format!("({suggestion})"))
@@ -233,7 +231,7 @@ fn check_member(member: &TSSignature, node: &AstNode<'_>, ctx: &LintContext<'_>)
                 }
 
                 TSType::TSTypeLiteral(literal) => ctx.diagnostic_with_fix(
-                    prefer_function_type_diagnostic(&suggestion, decl.span),
+                    prefer_function_type_diagnostic(&suggestion, span),
                     |fixer| {
                         fixer
                             .replace(literal.span, suggestion)
@@ -242,7 +240,7 @@ fn check_member(member: &TSSignature, node: &AstNode<'_>, ctx: &LintContext<'_>)
                 ),
 
                 _ => {
-                    ctx.diagnostic(prefer_function_type_diagnostic(&suggestion, decl.span));
+                    ctx.diagnostic(prefer_function_type_diagnostic(&suggestion, span));
                 }
             }
         }
@@ -259,7 +257,7 @@ fn check_member(member: &TSSignature, node: &AstNode<'_>, ctx: &LintContext<'_>)
                             return;
                         }
                         ctx.diagnostic_with_fix(
-                            prefer_function_type_diagnostic(&suggestion, decl.span),
+                            prefer_function_type_diagnostic(&suggestion, span),
                             |fixer| {
                                 fixer
                                     .replace(literal.span, format!("({suggestion})"))
@@ -279,7 +277,7 @@ fn check_member(member: &TSSignature, node: &AstNode<'_>, ctx: &LintContext<'_>)
                             return;
                         }
                         ctx.diagnostic_with_fix(
-                            prefer_function_type_diagnostic(&suggestion, decl.span),
+                            prefer_function_type_diagnostic(&suggestion, span),
                             |fixer| {
                                 fixer
                                     .replace(literal.span, format!("({suggestion})"))
@@ -290,7 +288,7 @@ fn check_member(member: &TSSignature, node: &AstNode<'_>, ctx: &LintContext<'_>)
                 }
 
                 TSType::TSTypeLiteral(literal) => ctx.diagnostic_with_fix(
-                    prefer_function_type_diagnostic(&suggestion, decl.span),
+                    prefer_function_type_diagnostic(&suggestion, span),
                     |fixer| {
                         fixer
                             .replace(literal.span, suggestion)
@@ -302,7 +300,7 @@ fn check_member(member: &TSSignature, node: &AstNode<'_>, ctx: &LintContext<'_>)
             }
         }
 
-        _ => ctx.diagnostic(prefer_function_type_diagnostic(&suggestion, decl.span)),
+        _ => ctx.diagnostic(prefer_function_type_diagnostic(&suggestion, span)),
     }
 }
 
@@ -502,6 +500,7 @@ fn test() {
               ",
         "type X = {} | { (): void; }",
         "type X = {} & { (): void; };",
+        "type K = { new(): T };",
     ];
 
     let fix = vec![
@@ -720,6 +719,7 @@ type X = {} & (() => void);
             "export type AnyFn = (...args: any[]) => any;",
             None,
         ),
+        ("type K = { new(): T };", "type K = new() => T;", None),
     ];
 
     Tester::new(PreferFunctionType::NAME, PreferFunctionType::PLUGIN, pass, fail)
