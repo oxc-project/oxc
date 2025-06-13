@@ -41,6 +41,14 @@ declare_oxc_lint!(
     /// const arr: number[] = new Array<number>();
     /// ```
     ///
+    /// ```typescript
+    /// /*oxlint array-type: ["error", { "default": "array-simple" }] */
+    /// const a: (string | number)[] = ['a', 'b'];
+    /// const b: { prop: string }[] = [{ prop: 'a' }];
+    /// const c: Array<MyType> = ['a', 'b'];
+    /// const d: Array<string> = ['a', 'b'];
+    /// ```
+    ///
     /// Examples of **correct** code for this rule:
     /// ```typescript
     /// /*oxlint array-type: ["error", { "default": "array" }] */
@@ -51,6 +59,31 @@ declare_oxc_lint!(
     /// /*oxlint array-type: ["error", { "default": "generic" }] */
     /// const arr: Array<number> = new Array<number>();
     /// ```
+    ///
+    /// ```typescript
+    /// /*oxlint array-type: ["error", { "default": "array-simple" }] */
+    /// const a: Array<string | number> = ['a', 'b'];
+    /// const b: Array<{ prop: string }> = [{ prop: 'a' }];
+    /// const c: string[] = ['a', 'b'];
+    /// const d: MyType[] = ['a', 'b'];
+    /// ```
+    ///
+    /// ### Options
+    ///
+    /// ```json
+    /// {
+    ///     "typescript/array-type": ["error", { "default": "array", "readonly": "array"  }]
+    /// }
+    /// ```
+    /// - `default`: The array type expected for mutable cases.
+    /// - `readonly`: The array type expected for readonly cases. If omitted, the value for `default` will be used.
+    ///
+    /// Both `default` and `readonly` can be one of:
+    /// - `"array"`
+    /// - `"generic"`
+    /// - `"array-simple"`
+    ///
+    /// The default config will enforce that all mutable and readonly arrays use the 'array' syntax.
     ArrayType,
     typescript,
     style,
