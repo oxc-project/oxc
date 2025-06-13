@@ -218,7 +218,7 @@ mod test {
     ) -> Option<Vec<JSDoc<'a>>> {
         let semantic = build_semantic(allocator, source_text, source_type);
         let start = u32::try_from(source_text.find(symbol).unwrap_or(0)).unwrap();
-        let span = Span::new(start, start + u32::try_from(symbol.len()).unwrap());
+        let span = Span::sized(start, u32::try_from(symbol.len()).unwrap());
         semantic.jsdoc().get_all_by_span(span)
     }
 
