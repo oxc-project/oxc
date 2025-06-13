@@ -2,6 +2,20 @@
 
 All notable changes to this package will be documented in this file.
 
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
+
+## [0.73.0] - 2025-06-13
+
+### 🚜 Refactor
+
+- bfa05f2 mangler: Use bump allocator for internal storage (#11409) (camchenry)
+- fa4966d mangler: Use external allocator (#11408) (camchenry)
+
+
+# Changelog
+
+All notable changes to this package will be documented in this file.
+
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
 ## [0.71.0] - 2025-05-20
