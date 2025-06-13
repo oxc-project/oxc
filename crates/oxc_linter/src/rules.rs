@@ -11,6 +11,7 @@ mod import {
     pub mod default;
     pub mod export;
     pub mod exports_last;
+    pub mod extensions;
     pub mod first;
     pub mod group_exports;
     pub mod max_dependencies;
@@ -719,6 +720,7 @@ oxc_macros::declare_all_lint_rules! {
     import::default,
     import::export,
     import::exports_last,
+    import::extensions,
     import::first,
     import::group_exports,
     import::no_unassigned_import,
