@@ -368,31 +368,27 @@ impl<'a> ParserImpl<'a> {
             return self.parse_for_loop(span, None, r#await);
         }
 
-        let is_let_of = self.at(Kind::Let)
-            && self.lookahead(|p| {
-                p.bump_any();
-                p.at(Kind::Of)
-            });
-        let is_async_of = self.at(Kind::Async)
-            && !self.cur_token().escaped()
-            && self.lookahead(|p| {
-                p.bump_any();
-                p.at(Kind::Of)
-            });
+        let is_let = self.at(Kind::Let);
+        // `async` is allowed as `for (async of ...)` if `async` is escaped
+        let is_async = self.at(Kind::Async) && !self.cur_token().escaped();
         let expr_span = self.start_span();
 
         let init_expression = self.context(Context::empty(), Context::In, ParserImpl::parse_expr);
 
         // for (a.b in ...), for ([a] in ..), for ({a} in ..)
         if self.at(Kind::In) || self.at(Kind::Of) {
+            if self.at(Kind::Of) && init_expression.is_identifier_reference() {
+                if !r#await && is_async {
+                    // `for (async of ...)` is not allowed
+                    self.error(diagnostics::for_loop_async_of(self.end_span(expr_span)));
+                }
+                if is_let {
+                    // `for (let of ...)` is not allowed
+                    self.error(diagnostics::unexpected_token(self.end_span(expr_span)));
+                }
+            }
             let target = AssignmentTarget::cover(init_expression, self);
             let for_stmt_left = ForStatementLeft::from(target);
-            if !r#await && is_async_of {
-                self.error(diagnostics::for_loop_async_of(self.end_span(expr_span)));
-            }
-            if is_let_of {
-                self.error(diagnostics::unexpected_token(self.end_span(expr_span)));
-            }
             return self.parse_for_in_or_of_loop(span, r#await, for_stmt_left);
         }
 
