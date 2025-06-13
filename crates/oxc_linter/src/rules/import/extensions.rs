@@ -19,7 +19,7 @@ fn extension_should_not_be_included_in_diagnostic(
     let import_or_export = if is_import { "import" } else { "export" };
 
     OxcDiagnostic::warn(format!(
-        "File extension \"{extension}\" should not be included in the {import_or_export} declaration."
+        r#"File extension "{extension}" should not be included in the {import_or_export} declaration."#
     ))
     .with_help(format!("Remove the file extension from this {import_or_export}."))
     .with_label(span)
