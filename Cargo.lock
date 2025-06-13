@@ -1735,7 +1735,6 @@ version = "0.72.3"
 dependencies = [
  "cow-utils",
  "oxc-miette",
- "url",
 ]
 
 [[package]]
