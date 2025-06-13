@@ -161,7 +161,8 @@ impl Rule for ConsistentFunctionScoping {
                         // The bar function scope id is 1. In order to ignore this rule,
                         // its parent's scope id (in this case `foo`'s scope id is 0 and is equal to root scope id)
                         // should be considered.
-                        if parent_scope_id == ctx.scoping().root_scope_id() {
+                        let flags = ctx.scoping().scope_flags(parent_scope_id);
+                        if flags.intersects(ScopeFlags::Top | ScopeFlags::TsModuleBlock) {
                             return;
                         }
                     }
@@ -584,6 +585,35 @@ fn test() {
             None,
         ),
         ("if(f) function f(){}", None),
+        (
+            "
+            export namespace Foo {
+                export function somePublicFn() {
+                    return somePrivateFn();
+                }
+                function somePrivateFn() {
+                    return 'private';
+                }
+            }
+        ",
+            None,
+        ),
+        (
+            "
+            declare namespace Foo {
+                function foo(): void;
+            }
+            ",
+            None,
+        ),
+        (
+            "
+            declare module 'some-package' {
+                function foo(): void;
+            }
+            ",
+            None,
+        ),
     ];
 
     let fail = vec![
