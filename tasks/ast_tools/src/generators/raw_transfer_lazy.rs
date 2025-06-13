@@ -431,7 +431,7 @@ fn generate_struct(
                 write_it!(getters, "
                     get {span_field_name}() {{
                         const internal = this.#internal;
-                        return {value_fn}({pos}, internal.$ast);
+                        return {value_fn}({pos}, internal.ast);
                     }}
                 ");
 
@@ -449,16 +449,23 @@ fn generate_struct(
         let value_fn = field_type.constructor_name(schema);
         let pos = internal_pos_offset(field.offset_64());
 
+        // TODO: Currently we store all internal data in an object, stored as `#internal` property.
+        // This is on assumption that private field access is relatively slow, so we only only want
+        // to incur a single private field fetch to get all the data.
+        // But maybe creating these extra objects is more costly, and we'd be better off having
+        // separate `#pos` and `#ast` private properties.
+        // Benchmark it and find out which is faster.
         if needs_cached_prop {
-            write_it!(extra_props, ", {field_name}: void 0");
+            // Prefix property name with `$`, to avoid clashes with internal properties e.g. `pos`
+            write_it!(extra_props, ", ${field_name}: void 0");
 
             #[rustfmt::skip]
             write_it!(getters, "
                 get {field_name}() {{
                     const internal = this.#internal,
-                        cached = internal.{field_name};
+                        cached = internal.${field_name};
                     if (cached !== void 0) return cached;
-                    return internal.{field_name} = {value_fn}({pos}, internal.$ast);
+                    return internal.${field_name} = {value_fn}({pos}, internal.ast);
                 }}
             ");
         } else {
@@ -466,7 +473,7 @@ fn generate_struct(
             write_it!(getters, "
                 get {field_name}() {{
                     const internal = this.#internal;
-                    return {value_fn}({pos}, internal.$ast);
+                    return {value_fn}({pos}, internal.ast);
                 }}
             ");
         }
@@ -508,7 +515,7 @@ fn generate_struct(
                 const cached = nodes.get({pos_cache_key});
                 if (cached !== void 0) return cached;
 
-                this.#internal = {{ $pos: pos, $ast: ast {extra_props} }};
+                this.#internal = {{ pos, ast {extra_props} }};
                 nodes.set({pos_cache_key}, this);
             }}
 
@@ -753,19 +760,15 @@ fn generate_vec(vec_def: &VecDef, code: &mut String, estree_derive_id: DeriveId,
 
 /// Generate pos offset string.
 ///
-/// * If `offset == 0` -> `internal.$pos`.
-/// * Otherwise -> `internal.$pos + <offset>` (e.g. `internal.$pos + 8`).
+/// * If `offset == 0` -> `internal.pos`.
+/// * Otherwise -> `internal.pos + <offset>` (e.g. `internal.pos + 8`).
 fn internal_pos_offset<O>(offset: O) -> Cow<'static, str>
 where
     O: TryInto<u64>,
     <O as TryInto<u64>>::Error: Debug,
 {
     let offset = offset.try_into().unwrap();
-    if offset == 0 {
-        Cow::Borrowed("internal.$pos")
-    } else {
-        format_cow!("internal.$pos + {offset}")
-    }
+    if offset == 0 { Cow::Borrowed("internal.pos") } else { format_cow!("internal.pos + {offset}") }
 }
 
 /// Trait to get constructor function name for a type.
