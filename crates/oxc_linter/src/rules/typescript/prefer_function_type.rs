@@ -107,10 +107,10 @@ fn check_member(member: &TSSignature, node: &AstNode<'_>, ctx: &LintContext<'_>)
     let TSSignature::TSCallSignatureDeclaration(decl) = member else {
         return;
     };
-    let Span { start, end, .. } = decl.span;
     let Some(type_annotation) = &decl.return_type else {
         return;
     };
+    let Span { start, end, .. } = decl.span;
     let colon_pos = type_annotation.span.start - start;
     let source_code = &ctx.source_text();
     let text: &str = &source_code[start as usize..end as usize];
