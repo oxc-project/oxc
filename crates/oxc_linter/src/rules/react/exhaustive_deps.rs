@@ -792,7 +792,7 @@ fn analyze_property_chain<'a, 'b>(
     expr: &'b Expression<'a>,
     semantic: &'b Semantic<'a>,
 ) -> Result<Option<Dependency<'a>>, ()> {
-    match expr {
+    match expr.get_inner_expression() {
         Expression::Identifier(ident) => Ok(Some(Dependency {
             span: ident.span(),
             name: ident.name,
@@ -2469,6 +2469,8 @@ fn test() {
 "#,
         r"function MyComponent() { const recursive = useCallback((n: number): number => (n <= 0 ? 0 : n + recursive(n - 1)), []); return recursive }",
         r"function Foo2() { useEffect(() => { foo() }, []); const foo = () => { bar() }; function bar () { foo() } }",
+        r"function MyComponent(props) { useEffect(() => { console.log(props.foo!.bar) }, [props.foo!.bar]) }",
+        r"function MyComponent(props) { useEffect(() => { console.log((props.foo).bar) }, [props.foo!.bar]) }",
     ];
 
     let fail = vec![
