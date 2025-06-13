@@ -6,7 +6,6 @@ use std::{
 
 use cow_utils::CowUtils;
 use miette::LabeledSpan;
-use url::Url;
 
 use crate::{
     Error, NamedSource, OxcDiagnostic, Severity,
@@ -137,26 +136,18 @@ impl DiagnosticService {
         diagnostics: Vec<OxcDiagnostic>,
     ) -> Vec<Error> {
         #[cfg(test)]
-        let is_jetbrains_terminal = false;
+        let is_jetbrains = false;
         #[cfg(not(test))]
-        let is_jetbrains_terminal =
+        let is_jetbrains =
             std::env::var("TERMINAL_EMULATOR").is_ok_and(|x| x.eq("JetBrains-JediTerm"));
 
-        // replace windows \ path separator with posix style one
-        // reflects what eslint is outputting
-        let default_path = path
-            .as_ref()
-            .strip_prefix(cwd)
-            .unwrap_or(path.as_ref())
-            .to_string_lossy()
-            .cow_replace('\\', "/")
-            .to_string();
-
-        let file_url = Url::from_file_path(path.as_ref());
-        let path_display = if is_jetbrains_terminal {
-            file_url.map(|x| x.to_string()).unwrap_or(default_path)
+        let path_ref = path.as_ref();
+        let path_display = if is_jetbrains {
+            format!("file://{}", path_ref.to_string_lossy())
         } else {
-            default_path
+            let relative_path = path_ref.strip_prefix(cwd).unwrap_or(path_ref).to_string_lossy();
+            let normalized_path = relative_path.cow_replace('\\', "/");
+            normalized_path.to_string()
         };
 
         let source = Arc::new(NamedSource::new(path_display, source_text.to_owned()));
