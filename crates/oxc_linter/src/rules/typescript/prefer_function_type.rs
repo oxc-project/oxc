@@ -286,22 +286,23 @@ fn check_member(member: &TSSignature, node: &AstNode<'_>, ctx: &LintContext<'_>)
                             return;
                         };
                         let body = &literal.members;
-                        if body.len() == 1 {
-                            ctx.diagnostic_with_fix(
-                                prefer_function_type_diagnostic(
-                                    &suggestion,
-                                    decl.span,
-                                ),
-                                |fixer| {
-                                    fixer
-                                        .replace(
-                                            literal.span,
-                                            format!("({suggestion})"),
-                                        )
-                                        .with_message(CONVERT_TO_FUNCTION_TYPE)
-                                },
-                            );
+                        if body.len() != 1 {
+                            return;
                         }
+                        ctx.diagnostic_with_fix(
+                            prefer_function_type_diagnostic(
+                                &suggestion,
+                                decl.span,
+                            ),
+                            |fixer| {
+                                fixer
+                                    .replace(
+                                        literal.span,
+                                        format!("({suggestion})"),
+                                    )
+                                    .with_message(CONVERT_TO_FUNCTION_TYPE)
+                            },
+                        );
                     });
                 }
 
