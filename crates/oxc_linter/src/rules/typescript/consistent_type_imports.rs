@@ -502,10 +502,9 @@ fn fix_to_type_import_declaration<'a>(options: &FixOptions<'a, '_>) -> FixerResu
             if type_names.len() == import_decl.specifiers.as_ref().map_or(0, |s| s.len()) {
                 // import type Type from 'foo'
                 //        ^^^^^ insert
-                rule_fixes.push(fixer.insert_text_after(
-                    &Span::new(import_decl.span().start, import_decl.span().start + 6),
-                    " type",
-                ));
+                rule_fixes.push(
+                    fixer.insert_text_after(&Span::sized(import_decl.span().start, 6), " type"),
+                );
             } else {
                 let import_text = ctx.source_range(import_decl.span);
                 // import Type, { Foo } from 'foo'
@@ -556,8 +555,7 @@ fn fix_insert_named_specifiers_in_named_specifier_list<'a>(
     let first_non_whitespace_before_close_brace =
         import_text[..close_brace as usize].chars().rev().find(|c| !c.is_whitespace());
 
-    let span =
-        Span::new(import_decl.span().start + close_brace, import_decl.span().start + close_brace);
+    let span = Span::empty(import_decl.span().start + close_brace);
     if first_non_whitespace_before_close_brace.is_some_and(|ch| !matches!(ch, ',' | '{')) {
         Ok(fixer.insert_text_before(&span, format!(",{insert_text}")))
     } else {
@@ -800,9 +798,7 @@ fn fix_insert_type_specifier_for_import_declaration<'a>(
 
     // "import { Foo, Bar } from 'foo'" => "import type { Foo, Bar } from 'foo'"
     //                                             ^^^^ add
-    rule_fixes.push(
-        fixer.replace(Span::new(import_decl.span.start, import_decl.span.start + 6), "import type"),
-    );
+    rule_fixes.push(fixer.replace(Span::sized(import_decl.span.start, 6), "import type"));
 
     if is_default_import {
         if let Ok(_opening_brace_token) = try_find_char(import_source, '{') {

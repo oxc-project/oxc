@@ -126,7 +126,7 @@ impl Rule for ConsistentTypeSpecifierStyle {
                         .find("type")
                         .map(|pos| {
                             let start = import_decl.span.start + pos as u32;
-                            Span::new(start, start + 4)
+                            Span::sized(start, 4)
                         })
                     {
                         let remove_fix = fixer.delete_range(type_token_span);
