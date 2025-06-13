@@ -358,4 +358,25 @@ mod test {
         )
         .test_and_snapshot_single_file("forward_ref.ts");
     }
+
+    // FIXME: framework flags and nested configs are not working together
+    #[test]
+    fn test_rules_behind_framework_flags_nested() {
+        Tester::new("fixtures/linter/framework_flags/jest", None)
+            .test_and_snapshot_single_file("valid_title.ts");
+        Tester::new("fixtures/linter/framework_flags/vitest", None)
+            .test_and_snapshot_single_file("valid_title.ts");
+    }
+
+    // FIXME: framework flags and nested configs are not working together
+    #[test]
+    fn test_rules_behind_framework_flags_with_config_path() {
+        let config =
+            Some(Options { config_path: Some(".oxlintrc.json".to_string()), ..Default::default() });
+
+        Tester::new("fixtures/linter/framework_flags/jest", config.clone())
+            .test_and_snapshot_single_file("valid_title2.ts");
+        Tester::new("fixtures/linter/framework_flags/vitest", config)
+            .test_and_snapshot_single_file("valid_title2.ts");
+    }
 }
