@@ -721,19 +721,28 @@ impl<'a> ParserImpl<'a> {
             }
 
             let mut question_dot = false;
-            let is_property_access = if allow_optional_chain
-                && self.at(Kind::QuestionDot)
-                && self.lookahead(|p| {
-                    p.bump_any();
-                    let kind = p.cur_kind();
-                    kind == Kind::LBrack
-                        || kind.is_identifier_or_keyword()
-                        || kind.is_template_start_of_tagged_template()
-                }) {
+            let is_property_access = if allow_optional_chain && self.at(Kind::QuestionDot) {
+                // ?.
+                let checkpoint = self.checkpoint();
                 self.bump_any();
-                *in_optional_chain = true;
-                question_dot = true;
-                self.cur_kind().is_identifier_or_keyword()
+                let kind = self.cur_kind();
+                let is_identifier_or_keyword = kind.is_identifier_or_keyword();
+                if kind == Kind::LBrack
+                    || is_identifier_or_keyword
+                    || kind.is_template_start_of_tagged_template()
+                {
+                    // ?.[
+                    // ?.something
+                    // ?.template`...`
+                    *in_optional_chain = true;
+                    question_dot = true;
+                    is_identifier_or_keyword
+                } else {
+                    // Should be a cold branch here, as most real-world optional chaining will look like
+                    // `?.something` or `?.[expr]`
+                    self.rewind(checkpoint);
+                    false
+                }
             } else {
                 self.eat(Kind::Dot)
             };
