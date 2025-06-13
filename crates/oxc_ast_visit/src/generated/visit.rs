@@ -1473,8 +1473,7 @@ pub mod walk {
         visitor: &mut V,
         it: &ArrayExpressionElement<'a>,
     ) {
-        let kind = AstKind::ArrayExpressionElement(visitor.alloc(it));
-        visitor.enter_node(kind);
+        // No `AstKind` for this type
         match it {
             ArrayExpressionElement::SpreadElement(it) => visitor.visit_spread_element(it),
             ArrayExpressionElement::Elision(it) => visitor.visit_elision(it),
@@ -1482,7 +1481,6 @@ pub mod walk {
                 visitor.visit_expression(it.to_expression())
             }
         }
-        visitor.leave_node(kind);
     }
 
     #[inline]

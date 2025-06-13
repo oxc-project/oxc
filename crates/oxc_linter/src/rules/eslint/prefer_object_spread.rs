@@ -147,7 +147,7 @@ impl Rule for PreferObjectSpread {
                     ctx.nodes().parent_kind(node.id()),
                     Some(
                         AstKind::VariableDeclarator(_)
-                            | AstKind::ArrayExpressionElement(_)
+                            | AstKind::ArrayExpression(_)
                             | AstKind::ReturnStatement(_)
                             | AstKind::Argument(_)
                             | AstKind::ObjectProperty(_)

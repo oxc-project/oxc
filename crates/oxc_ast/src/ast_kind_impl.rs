@@ -244,7 +244,6 @@ impl AstKind<'_> {
             }
             Self::PropertyKey(p) => format!("PropertyKey({})", p.name().unwrap_or(COMPUTED)).into(),
             Self::Argument(_) => "Argument".into(),
-            Self::ArrayExpressionElement(_) => "ArrayExpressionElement".into(),
             Self::AssignmentTarget(_) => "AssignmentTarget".into(),
             Self::SimpleAssignmentTarget(a) => {
                 format!("SimpleAssignmentTarget({})", a.get_identifier_name().unwrap_or(&UNKNOWN))
