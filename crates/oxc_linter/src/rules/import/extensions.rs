@@ -63,55 +63,32 @@ pub struct ExtensionsConfig {
 }
 
 impl ExtensionsConfig {
-    pub fn get_always_file_types(&self) -> Vec<CompactStr> {
-        let mut result: Vec<CompactStr> = vec![];
-
-        if matches!(self.js, FileExtensionConfig::Always) {
-            result.push(CompactStr::from("js"));
+    pub fn is_always(&self, ext: &str) -> bool {
+        match ext {
+            "js" => matches!(self.js, FileExtensionConfig::Always),
+            "jsx" => matches!(self.jsx, FileExtensionConfig::Always),
+            "ts" => matches!(self.ts, FileExtensionConfig::Always),
+            "tsx" => matches!(self.tsx, FileExtensionConfig::Always),
+            "json" => matches!(self.json, FileExtensionConfig::Always),
+            _ => {
+                self.js != FileExtensionConfig::Always
+                    && self.jsx != FileExtensionConfig::Always
+                    && self.ts != FileExtensionConfig::Always
+                    && self.tsx != FileExtensionConfig::Always
+                    && self.json != FileExtensionConfig::Always
+            }
         }
-
-        if matches!(self.jsx, FileExtensionConfig::Always) {
-            result.push(CompactStr::from("jsx"));
-        }
-
-        if matches!(self.ts, FileExtensionConfig::Always) {
-            result.push(CompactStr::from("ts"));
-        }
-
-        if matches!(self.tsx, FileExtensionConfig::Always) {
-            result.push(CompactStr::from("tsx"));
-        }
-
-        if matches!(self.json, FileExtensionConfig::Always) {
-            result.push(CompactStr::from("json"));
-        }
-
-        result
     }
-    pub fn get_never_file_types(&self) -> Vec<CompactStr> {
-        let mut result: Vec<CompactStr> = vec![];
 
-        if matches!(self.js, FileExtensionConfig::Never) {
-            result.push(CompactStr::from("js"));
+    pub fn is_never(&self, ext: &str) -> bool {
+        match ext {
+            "js" => matches!(self.js, FileExtensionConfig::Never),
+            "jsx" => matches!(self.jsx, FileExtensionConfig::Never),
+            "ts" => matches!(self.ts, FileExtensionConfig::Never),
+            "tsx" => matches!(self.tsx, FileExtensionConfig::Never),
+            "json" => matches!(self.json, FileExtensionConfig::Never),
+            _ => false,
         }
-
-        if matches!(self.jsx, FileExtensionConfig::Never) {
-            result.push(CompactStr::from("jsx"));
-        }
-
-        if matches!(self.ts, FileExtensionConfig::Never) {
-            result.push(CompactStr::from("ts"));
-        }
-
-        if matches!(self.tsx, FileExtensionConfig::Never) {
-            result.push(CompactStr::from("tsx"));
-        }
-
-        if matches!(self.json, FileExtensionConfig::Never) {
-            result.push(CompactStr::from("json"));
-        }
-
-        result
     }
 }
 
@@ -172,7 +149,7 @@ declare_oxc_lint!(
     /// ```
     Extensions,
     import,
-    perf,
+    restriction,
 );
 
 impl Rule for Extensions {
@@ -204,9 +181,6 @@ impl Rule for Extensions {
 
         let config = self.0.clone();
 
-        let always_file_types = self.0.get_always_file_types();
-        let never_file_types = self.0.get_never_file_types();
-
         for node in ctx.nodes().iter() {
             if let AstKind::CallExpression(call_expr) = node.kind() {
                 let Expression::Identifier(ident) = &call_expr.callee else {
@@ -216,24 +190,16 @@ impl Rule for Extensions {
                 let count = call_expr.arguments.len();
 
                 if matches!(func_name, "require") && count > 0 {
-                    process_require_record(
-                        call_expr,
-                        ctx,
-                        &always_file_types,
-                        &never_file_types,
-                        config.require_extension.as_ref(),
-                    );
+                    self.process_require_record(call_expr, ctx, config.require_extension.as_ref());
                 }
             }
         }
 
         for (module_name, module) in &module_record.requested_modules {
             for module_item in module {
-                process_module_record(
+                self.process_module_record(
                     (module_name.clone(), module_item),
                     ctx,
-                    &always_file_types,
-                    &never_file_types,
                     config.require_extension.as_ref(),
                     config.check_type_imports,
                     config.ignore_packages,
@@ -288,97 +254,82 @@ fn build_config(
     config
 }
 
-fn process_module_record(
-    module_record: (CompactStr, &RequestedModule),
-    ctx: &LintContext,
-    always_file_types: &[CompactStr],
-    never_file_types: &[CompactStr],
-    require_extension: Option<&FileExtensionConfig>,
-    check_type_imports: bool,
-    ignore_packages: bool,
-    is_import: bool,
-) {
-    let (module_name, module) = module_record;
+impl Extensions {
+    fn process_module_record(
+        &self,
+        module_record: (CompactStr, &RequestedModule),
+        ctx: &LintContext,
+        require_extension: Option<&FileExtensionConfig>,
+        check_type_imports: bool,
+        ignore_packages: bool,
+        is_import: bool,
+    ) {
+        let config = &self.0;
+        let (module_name, module) = module_record;
 
-    if module.is_type && !check_type_imports {
-        return;
-    }
-
-    let is_builtin_node_module = NODEJS_BUILTINS.binary_search(&module_name.as_str()).is_ok()
-        || ctx.globals().is_enabled(module_name.as_str());
-
-    let is_package = module_name.as_str().starts_with('@')
-        || (!module_name.as_str().starts_with('.') && !module_name.as_str()[1..].contains('/'));
-
-    if is_builtin_node_module || (is_package && ignore_packages) {
-        return;
-    }
-
-    let file_extension = get_file_extension_from_module_name(&module_name);
-
-    let span = module.statement_span;
-
-    if let Some(file_extension) = file_extension {
-        if never_file_types.contains(&file_extension)
-            || (!always_file_types.is_empty() && !always_file_types.contains(&file_extension))
-        // should not have file extension
-        {
-            ctx.diagnostic(extension_should_not_be_included_in_diagnostic(
-                span,
-                &file_extension,
-                is_import,
-            ));
-
-            if file_extension.is_empty() && require_extension == Some(&FileExtensionConfig::Always)
-            {
-                ctx.diagnostic(extension_missing_diagnostic(span, is_import));
-            }
+        if module.is_type && !check_type_imports {
+            return;
         }
-    } else if require_extension == Some(&FileExtensionConfig::Always) {
-        ctx.diagnostic(extension_missing_diagnostic(span, is_import));
+
+        let is_builtin_node_module = NODEJS_BUILTINS.binary_search(&module_name.as_str()).is_ok()
+            || ctx.globals().is_enabled(module_name.as_str());
+
+        let is_package = module_name.as_str().starts_with('@')
+            || (!module_name.as_str().starts_with('.') && !module_name.as_str()[1..].contains('/'));
+
+        if is_builtin_node_module || (is_package && ignore_packages) {
+            return;
+        }
+
+        let file_extension = get_file_extension_from_module_name(&module_name);
+
+        let span = module.statement_span;
+
+        if let Some(file_extension) = file_extension {
+            let ext_str = file_extension.as_str();
+            if config.is_never(ext_str) || !config.is_always(ext_str) {
+                ctx.diagnostic(extension_should_not_be_included_in_diagnostic(
+                    span,
+                    &file_extension,
+                    is_import,
+                ));
+            }
+        } else if require_extension == Some(&FileExtensionConfig::Always) {
+            ctx.diagnostic(extension_missing_diagnostic(span, is_import));
+        }
     }
-}
 
-fn process_require_record(
-    call_expr: &CallExpression<'_>,
-    ctx: &LintContext,
-    always_file_types: &[CompactStr],
-    never_file_types: &[CompactStr],
-    require_extension: Option<&FileExtensionConfig>,
-) {
-    for argument in &call_expr.arguments {
-        if let Argument::StringLiteral(s) = argument {
-            let file_extension = get_file_extension_from_module_name(&s.value.to_compact_str());
-            let span = call_expr.span;
+    fn process_require_record(
+        &self,
+        call_expr: &CallExpression<'_>,
+        ctx: &LintContext,
+        require_extension: Option<&FileExtensionConfig>,
+    ) {
+        let config = &self.0;
+        for argument in &call_expr.arguments {
+            if let Argument::StringLiteral(s) = argument {
+                let file_extension = get_file_extension_from_module_name(&s.value.to_compact_str());
+                let span = call_expr.span;
 
-            if let Some(file_extension) = file_extension {
-                if never_file_types.contains(&file_extension)
-                    || (!always_file_types.is_empty()
-                        && !always_file_types.contains(&file_extension))
-                // should not have file extension
-                {
-                    ctx.diagnostic(extension_should_not_be_included_in_diagnostic(
-                        span,
-                        &file_extension,
-                        true,
-                    ));
-
-                    if file_extension.is_empty()
-                        && require_extension == Some(&FileExtensionConfig::Always)
-                    {
-                        ctx.diagnostic(extension_missing_diagnostic(span, true));
+                if let Some(file_extension) = file_extension {
+                    let ext_str = file_extension.as_str();
+                    if config.is_never(ext_str) || !config.is_always(&file_extension) {
+                        ctx.diagnostic(extension_should_not_be_included_in_diagnostic(
+                            span,
+                            &file_extension,
+                            true,
+                        ));
                     }
+                } else if require_extension == Some(&FileExtensionConfig::Always) {
+                    ctx.diagnostic(extension_missing_diagnostic(span, true));
                 }
-            } else if require_extension == Some(&FileExtensionConfig::Always) {
-                ctx.diagnostic(extension_missing_diagnostic(span, true));
             }
         }
     }
 }
-
 fn get_file_extension_from_module_name(module_name: &CompactStr) -> Option<CompactStr> {
     if let Some((_, extension)) = module_name.rsplit_once('.') {
-        if !extension.starts_with('/') {
+        if !extension.is_empty() && !extension.starts_with('/') {
             return extension.split('?').map(CompactStr::from).next();
         }
     }

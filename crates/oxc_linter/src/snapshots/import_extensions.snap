@@ -121,15 +121,6 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Remove the file extension from this import.
 
-  ⚠ eslint-plugin-import(extensions): File extension "" should not be included in the import declaration.
-   ╭─[extensions.tsx:2:17]
- 1 │ 
- 2 │                 import barjs from ".";
-   ·                 ──────────────────────
- 3 │                 import barjs2 from "..";
-   ╰────
-  help: Remove the file extension from this import.
-
   ⚠ eslint-plugin-import(extensions): Missing file extension in import declaration
    ╭─[extensions.tsx:2:17]
  1 │ 
@@ -138,15 +129,6 @@ source: crates/oxc_linter/src/tester.rs
  3 │                 import barjs2 from "..";
    ╰────
   help: Add a file extension to this import.
-
-  ⚠ eslint-plugin-import(extensions): File extension "" should not be included in the import declaration.
-   ╭─[extensions.tsx:3:17]
- 2 │                 import barjs from ".";
- 3 │                 import barjs2 from "..";
-   ·                 ────────────────────────
- 4 │             
-   ╰────
-  help: Remove the file extension from this import.
 
   ⚠ eslint-plugin-import(extensions): Missing file extension in import declaration
    ╭─[extensions.tsx:3:17]
@@ -396,15 +378,6 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Remove the file extension from this import.
 
-  ⚠ eslint-plugin-import(extensions): File extension "" should not be included in the import declaration.
-   ╭─[extensions.tsx:2:17]
- 1 │ 
- 2 │                 import * as test from ".";
-   ·                 ──────────────────────────
- 3 │             
-   ╰────
-  help: Remove the file extension from this import.
-
   ⚠ eslint-plugin-import(extensions): Missing file extension in import declaration
    ╭─[extensions.tsx:2:17]
  1 │ 
@@ -413,15 +386,6 @@ source: crates/oxc_linter/src/tester.rs
  3 │             
    ╰────
   help: Add a file extension to this import.
-
-  ⚠ eslint-plugin-import(extensions): File extension "" should not be included in the import declaration.
-   ╭─[extensions.tsx:2:17]
- 1 │ 
- 2 │                 import * as test from "..";
-   ·                 ───────────────────────────
- 3 │             
-   ╰────
-  help: Remove the file extension from this import.
 
   ⚠ eslint-plugin-import(extensions): Missing file extension in import declaration
    ╭─[extensions.tsx:2:17]
