@@ -61,7 +61,7 @@ impl Rule for NoAwaitInLoop {
                 Span::new(for_of_stmt.span.start + 4, for_of_stmt.span.start + 9)
             }
             // only highlight the 'await' keyword
-            AstKind::AwaitExpression(expr) => Span::new(expr.span.start, expr.span.start + 5),
+            AstKind::AwaitExpression(expr) => Span::sized(expr.span.start, 5),
             // other node type, return
             _ => return,
         };

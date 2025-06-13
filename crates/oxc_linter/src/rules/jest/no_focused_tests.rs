@@ -93,9 +93,9 @@ fn run<'a>(possible_jest_node: &PossibleJestNode<'a, '_>, ctx: &LintContext<'a>)
 
     if name.starts_with('f') {
         ctx.diagnostic_with_fix(
-            no_focused_tests_diagnostic(Span::new(
+            no_focused_tests_diagnostic(Span::sized(
                 call_expr.span.start,
-                call_expr.span.start + u32::try_from(name.len()).unwrap_or(1),
+                u32::try_from(name.len()).unwrap_or(1),
             )),
             |fixer| fixer.delete_range(Span::sized(call_expr.span.start, 1)),
         );

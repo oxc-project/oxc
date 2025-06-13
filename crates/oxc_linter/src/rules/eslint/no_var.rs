@@ -57,16 +57,10 @@ impl Rule for NoVar {
         if let AstKind::VariableDeclaration(dec) = node.kind() {
             if dec.kind == VariableDeclarationKind::Var {
                 let is_written_to = dec.declarations.iter().any(|v| is_written_to(&v.id, ctx));
-
-                ctx.diagnostic_with_fix(
-                    no_var_diagnostic(Span::new(dec.span.start, dec.span.start + 3)),
-                    |fixer| {
-                        fixer.replace(
-                            Span::new(dec.span.start, dec.span.start + 3),
-                            if is_written_to { "let" } else { "const" },
-                        )
-                    },
-                );
+                let span = Span::sized(dec.span.start, 3);
+                ctx.diagnostic_with_fix(no_var_diagnostic(span), |fixer| {
+                    fixer.replace(span, if is_written_to { "let" } else { "const" })
+                });
             }
         }
     }

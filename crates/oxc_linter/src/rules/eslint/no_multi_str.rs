@@ -46,10 +46,7 @@ impl Rule for NoMultiStr {
                 // character.
                 let multi_span_start =
                     literal.span.start + u32::try_from(position).unwrap_or_default() - 1;
-                ctx.diagnostic(no_multi_str_diagnostic(Span::new(
-                    multi_span_start,
-                    multi_span_start + 1,
-                )));
+                ctx.diagnostic(no_multi_str_diagnostic(Span::sized(multi_span_start, 1)));
             }
         }
     }

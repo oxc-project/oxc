@@ -59,7 +59,7 @@ impl Rule for NoUnescapedEntities {
                     #[expect(clippy::cast_possible_truncation)]
                     let start = jsx_text.span.start + i as u32;
                     ctx.diagnostic(no_unescaped_entities_diagnostic(
-                        Span::new(start, start + 1),
+                        Span::sized(start, 1),
                         byte as char,
                     ));
                 }
