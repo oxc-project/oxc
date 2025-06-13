@@ -7,7 +7,7 @@ suite('WorkspaceConfig', () => {
   setup(async () => {
     const workspaceConfig = workspace.getConfiguration('oxc', WORKSPACE_FOLDER);
     const globalConfig = workspace.getConfiguration('oxc');
-    const keys = ['lint.run', 'configPath', 'flags'];
+    const keys = ['lint.run', 'configPath', 'flags', 'unusedDisableDirectives'];
 
     await Promise.all(keys.map(key => workspaceConfig.update(key, undefined, ConfigurationTarget.WorkspaceFolder)));
     // VSCode will not save different workspace configuration inside a `.code-workspace` file.
@@ -18,7 +18,7 @@ suite('WorkspaceConfig', () => {
   teardown(async () => {
     const workspaceConfig = workspace.getConfiguration('oxc', WORKSPACE_FOLDER);
     const globalConfig = workspace.getConfiguration('oxc');
-    const keys = ['lint.run', 'configPath', 'flags'];
+    const keys = ['lint.run', 'configPath', 'flags', 'unusedDisableDirectives'];
 
     await Promise.all(keys.map(key => workspaceConfig.update(key, undefined, ConfigurationTarget.WorkspaceFolder)));
     // VSCode will not save different workspace configuration inside a `.code-workspace` file.
@@ -30,6 +30,7 @@ suite('WorkspaceConfig', () => {
     const config = new WorkspaceConfig(WORKSPACE_FOLDER);
     strictEqual(config.runTrigger, 'onType');
     strictEqual(config.configPath, null);
+    strictEqual(config.unusedDisableDirectives, 'allow');
     deepStrictEqual(config.flags, {});
   });
 
@@ -61,6 +62,7 @@ suite('WorkspaceConfig', () => {
     await Promise.all([
       config.updateRunTrigger('onSave'),
       config.updateConfigPath('./somewhere'),
+      config.updateUnusedDisableDirectives('deny'),
       config.updateFlags({ test: 'value' }),
     ]);
 
@@ -68,6 +70,7 @@ suite('WorkspaceConfig', () => {
 
     strictEqual(wsConfig.get('lint.run'), 'onSave');
     strictEqual(wsConfig.get('configPath'), './somewhere');
+    strictEqual(wsConfig.get('unusedDisableDirectives'), 'deny');
     deepStrictEqual(wsConfig.get('flags'), { test: 'value' });
   });
 });

@@ -1917,7 +1917,7 @@ impl ESTree for NumericLiteral<'_> {
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
         state.serialize_field("value", &self.value);
-        state.serialize_field("raw", &self.raw);
+        state.serialize_field("raw", &self.raw.map(|s| JsonSafeString(s.as_str())));
         state.end();
     }
 }
@@ -1941,7 +1941,7 @@ impl ESTree for BigIntLiteral<'_> {
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
         state.serialize_field("value", &crate::serialize::literal::BigIntLiteralValue(self));
-        state.serialize_field("raw", &self.raw);
+        state.serialize_field("raw", &self.raw.map(|s| JsonSafeString(s.as_str())));
         state.serialize_field("bigint", &crate::serialize::literal::BigIntLiteralBigint(self));
         state.end();
     }

@@ -540,7 +540,7 @@ pub fn accessibility_modifier_already_seen(modifier: &Modifier) -> OxcDiagnostic
 
 #[cold]
 pub fn modifier_already_seen(modifier: &Modifier) -> OxcDiagnostic {
-    ts_error("1030", format!("{}' modifier already seen.", modifier.kind))
+    ts_error("1030", format!("'{}' modifier already seen.", modifier.kind))
         .with_label(modifier.span)
         .with_help("Remove the duplicate modifier.")
 }
@@ -668,4 +668,90 @@ pub fn as_in_ts(span: Span) -> OxcDiagnostic {
 pub fn satisfies_in_ts(span: Span) -> OxcDiagnostic {
     ts_error("8016", "Type satisfaction expressions can only be used in TypeScript files.")
         .with_label(span)
+}
+
+#[cold]
+pub fn optional_and_rest_tuple_member(span: Span) -> OxcDiagnostic {
+    ts_error("5085", "A tuple member cannot be both optional and rest.").with_label(span)
+}
+
+#[cold]
+pub fn optional_after_tuple_member_name(span: Span) -> OxcDiagnostic {
+    ts_error("5086", "A labeled tuple element is declared as optional with a question mark after the name and before the colon, rather than after the type.").with_label(span)
+}
+
+#[cold]
+pub fn rest_after_tuple_member_name(span: Span) -> OxcDiagnostic {
+    ts_error("5087", "A labeled tuple element is declared as rest with a '...' before the name, rather than before the type.").with_label(span)
+}
+
+#[cold]
+pub fn parameter_modifiers_in_ts(modifier: &Modifier) -> OxcDiagnostic {
+    ts_error("8012", "Parameter modifiers can only be used in TypeScript files.")
+        .with_label(modifier.span)
+}
+
+#[cold]
+pub fn implementation_in_ambient(span: Span) -> OxcDiagnostic {
+    ts_error("1183", "An implementation cannot be declared in ambient contexts.").with_label(span)
+}
+
+#[cold]
+pub fn interface_implements(span: Span) -> OxcDiagnostic {
+    ts_error("1176", "Interface declaration cannot have 'implements' clause.").with_label(span)
+}
+
+#[cold]
+pub fn interface_extend(span: Span) -> OxcDiagnostic {
+    ts_error(
+        "2499",
+        "An interface can only extend an identifier/qualified-name with optional type arguments.",
+    )
+    .with_label(span)
+}
+
+#[cold]
+pub fn reg_exp_flag_u_and_v(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::error(
+        "The 'u' and 'v' regular expression flags cannot be enabled at the same time",
+    )
+    .with_label(span)
+}
+
+#[cold]
+pub fn setter_with_parameters(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::error("A 'set' accessor must have exactly one parameter.").with_label(span)
+}
+
+#[cold]
+pub fn setter_with_rest_parameter(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::error("A 'set' accessor cannot have rest parameter.").with_label(span)
+}
+
+#[cold]
+pub fn getter_parameters(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::error("A 'get' accessor must not have any formal parameters.").with_label(span)
+}
+
+#[cold]
+pub fn variable_declarator_definite(span: Span) -> OxcDiagnostic {
+    ts_error(
+        "1263",
+        "Declarations with initializers cannot also have definite assignment assertions.",
+    )
+    .with_label(span)
+}
+
+#[cold]
+pub fn variable_declarator_definite_type_assertion(span: Span) -> OxcDiagnostic {
+    ts_error(
+        "1264",
+        "Declarations with definite assignment assertions must also have type annotations.",
+    )
+    .with_label(span)
+}
+
+#[cold]
+pub fn invalid_rest_assignment_target(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::error("Invalid rest operator's argument.").with_label(span)
 }

@@ -599,8 +599,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
 
     fn leave_node(&mut self, kind: AstKind<'a>) {
         if self.check_syntax_error {
-            let node = self.nodes.get_node(self.current_node_id);
-            checker::check(node, self);
+            checker::check(kind, self);
         }
         self.leave_kind(kind);
         self.pop_ast_node();

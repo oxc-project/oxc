@@ -75,10 +75,21 @@ impl<'a> CoverGrammar<'a, ArrayExpression<'a>> for ArrayAssignmentTarget<'a> {
                 }
                 ArrayExpressionElement::SpreadElement(elem) => {
                     if i == len - 1 {
-                        rest = Some(p.ast.assignment_target_rest(
-                            elem.span,
-                            AssignmentTarget::cover(elem.unbox().argument, p),
-                        ));
+                        let span = elem.span;
+                        let argument = elem.unbox().argument;
+                        if !matches!(
+                            argument.get_inner_expression(),
+                            Expression::Identifier(_)
+                                | Expression::ArrayExpression(_)
+                                | Expression::ObjectExpression(_)
+                                | Expression::StaticMemberExpression(_)
+                                | Expression::ComputedMemberExpression(_)
+                                | Expression::PrivateFieldExpression(_)
+                        ) {
+                            p.error(diagnostics::invalid_rest_assignment_target(argument.span()));
+                        }
+                        let target = AssignmentTarget::cover(argument, p);
+                        rest = Some(p.ast.assignment_target_rest(span, target));
                         if let Some(span) = p.state.trailing_commas.get(&expr.span.start) {
                             p.error(diagnostics::rest_element_trailing_comma(*span));
                         }
@@ -130,10 +141,19 @@ impl<'a> CoverGrammar<'a, ObjectExpression<'a>> for ObjectAssignmentTarget<'a> {
                 }
                 ObjectPropertyKind::SpreadProperty(spread) => {
                     if i == len - 1 {
-                        rest = Some(p.ast.assignment_target_rest(
-                            spread.span,
-                            AssignmentTarget::cover(spread.unbox().argument, p),
-                        ));
+                        let span = spread.span;
+                        let argument = spread.unbox().argument;
+                        if !matches!(
+                            argument.get_inner_expression(),
+                            Expression::Identifier(_)
+                                | Expression::StaticMemberExpression(_)
+                                | Expression::ComputedMemberExpression(_)
+                                | Expression::PrivateFieldExpression(_)
+                        ) {
+                            p.error(diagnostics::invalid_rest_assignment_target(argument.span()));
+                        }
+                        let target = AssignmentTarget::cover(argument, p);
+                        rest = Some(p.ast.assignment_target_rest(span, target));
                     } else {
                         return p.fatal_error(diagnostics::spread_last_element(spread.span));
                     }

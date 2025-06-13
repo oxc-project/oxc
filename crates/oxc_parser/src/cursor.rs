@@ -1,7 +1,7 @@
 //! Code related to navigating `Token`s from the lexer
 
-use oxc_allocator::{TakeIn, Vec};
-use oxc_ast::ast::{BindingRestElement, Decorator, RegExpFlags};
+use oxc_allocator::Vec;
+use oxc_ast::ast::{BindingRestElement, RegExpFlags};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_span::{GetSpan, Span};
 
@@ -293,32 +293,6 @@ impl<'a> ParserImpl<'a> {
         let result = cb(self);
         self.ctx = ctx;
         result
-    }
-
-    /// Consume all decorators.
-    pub(crate) fn consume_decorators(&mut self) -> Vec<'a, Decorator<'a>> {
-        self.state.decorators.take_in(self.ast)
-    }
-
-    /// Parse and save all decorators.
-    pub(crate) fn parse_and_save_decorators(&mut self) {
-        // For `@dec1 export default @dec2 class {}`
-        for decorator in &mut self.state.decorators {
-            self.errors.push(diagnostics::decorators_in_export_and_class(decorator.span));
-        }
-        while self.at(Kind::At) {
-            let decorator = self.parse_decorator();
-            self.state.decorators.push(decorator);
-        }
-    }
-
-    /// Check for unconsumed decorators.
-    pub(crate) fn check_unconsumed_decorators(&mut self) {
-        if !self.state.decorators.is_empty() {
-            for decorator in self.consume_decorators() {
-                self.error(diagnostics::decorators_are_not_valid_here(decorator.span));
-            }
-        }
     }
 
     pub(crate) fn parse_normal_list<F, T>(&mut self, open: Kind, close: Kind, f: F) -> Vec<'a, T>

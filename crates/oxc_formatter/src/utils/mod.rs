@@ -1,10 +1,12 @@
 pub mod member_chain;
 
+use oxc_allocator::Address;
 use oxc_ast::{AstKind, ast::CallExpression};
 
 use crate::{
     Format, FormatResult, FormatTrailingCommas, format_args,
-    formatter::{Formatter, parent_stack::ParentStack, prelude::soft_line_break_or_space},
+    formatter::{Formatter, prelude::soft_line_break_or_space},
+    generated::ast_nodes::AstNodes,
 };
 
 /// This function is in charge to format the call arguments.
@@ -36,11 +38,11 @@ where
 /// ```javascript
 /// `connect(a, b, c)(d)`
 /// ```
-pub fn is_long_curried_call(parent_stack: &ParentStack<'_>) -> bool {
-    if let AstKind::CallExpression(call) = parent_stack.current() {
-        if let AstKind::CallExpression(parent_call) = parent_stack.parent() {
-            return call.arguments.len() > parent_call.arguments.len()
-                && !parent_call.arguments.is_empty();
+pub fn is_long_curried_call(parent: &AstNodes<'_>) -> bool {
+    if let AstNodes::CallExpression(call) = parent {
+        if let AstNodes::CallExpression(parent_call) = call.parent {
+            return call.arguments().len() > parent_call.arguments().len()
+                && !parent_call.arguments().is_empty();
         }
     }
 

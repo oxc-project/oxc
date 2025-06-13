@@ -1,6 +1,23 @@
 semantic_misc Summary:
-AST Parsed     : 40/40 (100.00%)
-Positive Passed: 25/40 (62.50%)
+AST Parsed     : 43/43 (100.00%)
+Positive Passed: 27/43 (62.79%)
+semantic Error: tasks/coverage/misc/pass/oxc-11593.ts
+Scope children mismatch:
+after transform: ScopeId(0): [ScopeId(1)]
+rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(4)]
+Scope children mismatch:
+after transform: ScopeId(1): [ScopeId(2), ScopeId(4)]
+rebuilt        : ScopeId(1): []
+Scope parent mismatch:
+after transform: ScopeId(2): Some(ScopeId(1))
+rebuilt        : ScopeId(2): Some(ScopeId(0))
+Scope parent mismatch:
+after transform: ScopeId(4): Some(ScopeId(1))
+rebuilt        : ScopeId(4): Some(ScopeId(0))
+Unresolved reference IDs mismatch for "String":
+after transform: [ReferenceId(7), ReferenceId(8)]
+rebuilt        : [ReferenceId(9)]
+
 semantic Error: tasks/coverage/misc/pass/oxc-1288.ts
 Bindings mismatch:
 after transform: ScopeId(0): ["from"]

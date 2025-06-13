@@ -18,6 +18,7 @@ import {
   loadFixture,
   sleep,
   testMultiFolderMode,
+  testSingleFolderMode,
   waitForDiagnosticChange,
   WORKSPACE_DIR,
   WORKSPACE_SECOND_DIR
@@ -51,6 +52,19 @@ suite('E2E Diagnostics', () => {
     strictEqual(diagnostics[0].range.end.line, 0);
     strictEqual(diagnostics[0].range.end.character, 17);
   });
+
+  for (const ext of ['astro', 'cjs', 'cts', 'js', 'jsx', 'mjs', 'mts', 'svelte', 'ts', 'tsx', 'vue']) {
+    testSingleFolderMode(`file extension ${ext}`, async () => {
+      await loadFixture('file_extensions');
+      const diagnostics = await getDiagnostics(`debugger.${ext}`);
+
+      strictEqual(diagnostics.length, 1);
+      assert(typeof diagnostics[0].code == 'object');
+      strictEqual(diagnostics[0].code.target.authority, 'oxc.rs');
+      strictEqual(diagnostics[0].message, '`debugger` statement is not allowed\nhelp: Remove the debugger statement');
+      strictEqual(diagnostics[0].severity, DiagnosticSeverity.Warning);
+    });
+  }
 
   test('empty oxlint configuration behaves like default configuration', async () => {
     await loadFixture('debugger_empty_config');

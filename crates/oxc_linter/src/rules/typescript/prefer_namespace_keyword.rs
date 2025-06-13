@@ -87,7 +87,6 @@ fn test() {
         "namespace foo {}",
         "declare namespace foo {}",
         "declare global {}",
-        "module''.s",
     ];
 
     let fail = vec![
@@ -137,7 +136,6 @@ fn test() {
             ",
             None,
         ),
-        ("module foo.'a'", "namespace foo.'a'", None),
     ];
 
     Tester::new(PreferNamespaceKeyword::NAME, PreferNamespaceKeyword::PLUGIN, pass, fail)

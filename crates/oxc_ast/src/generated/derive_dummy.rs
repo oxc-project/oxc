@@ -1602,6 +1602,7 @@ impl<'a> Dummy<'a> for BigIntLiteral<'a> {
     fn dummy(allocator: &'a Allocator) -> Self {
         Self {
             span: Dummy::dummy(allocator),
+            value: Dummy::dummy(allocator),
             raw: Dummy::dummy(allocator),
             base: Dummy::dummy(allocator),
         }

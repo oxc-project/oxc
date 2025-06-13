@@ -78,6 +78,8 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/allowSynthet
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/ambientEnum1.ts
 
+Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/ambientErrors1.ts
+
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/ambientExportDefaultErrors.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/ambientExternalModuleInAnotherExternalModule.ts
@@ -787,6 +789,8 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/constDeclara
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/constDeclarations-access4.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/constDeclarations-access5.ts
+
+Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/constDeclarations-ambient-errors.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/constDeclarations-useBeforeDefinition.ts
 
@@ -1616,6 +1620,8 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/extendPrivat
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/extendedInterfacesWithDuplicateTypeParameters.ts
 
+Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/externSemantics.ts
+
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/externSyntax.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/externalModuleExportingGenericClass.ts
@@ -2018,10 +2024,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/importDeclTy
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/importDeclWithClassModifiers.ts
 
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/importDeclWithDeclareModifier.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/importDeclWithDeclareModifierInAmbientContext.ts
-
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/importDeclWithExportModifier.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/importDeclWithExportModifierAndExportAssignment.ts
@@ -2279,8 +2281,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/interfaceNam
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/interfacePropertiesWithSameName2.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/interfacePropertiesWithSameName3.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/interfaceWithImplements1.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/interfaceWithMultipleDeclarations.ts
 
@@ -4958,6 +4958,8 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/constEnum
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/constEnums/importElisionConstEnumMerge1.ts
 
+Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/controlFlow/assertionTypePredicates1.ts
+
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/controlFlow/controlFlowAliasing.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/controlFlow/controlFlowBindingPatternOrder.ts
@@ -5876,8 +5878,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/esDecorat
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/esDecorators/esDecorators-arguments.ts
 
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/esDecorators/esDecorators-decoratorExpression.3.ts
-
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/esDecorators/esDecorators-emitDecoratorMetadata.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/expressions/arrayLiterals/arrayLiterals.ts
@@ -6096,6 +6096,10 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/expressio
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/expressions/typeGuards/typeGuardInClass.ts
 
+Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/expressions/typeGuards/typeGuardOfFormThisMember.ts
+
+Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/expressions/typeGuards/typeGuardOfFormThisMemberErrors.ts
+
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/expressions/typeGuards/typeGuardOfFormTypeOfEqualEqualHasNoEffect.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/expressions/typeGuards/typeGuardOfFormTypeOfNotEqualHasNoEffect.ts
@@ -6113,6 +6117,8 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/expressio
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/expressions/typeGuards/typeGuardsWithInstanceOfByConstructorSignature.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/expressions/typeGuards/typeGuardsWithInstanceOfBySymbolHasInstance.ts
+
+Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/expressions/typeGuards/typePredicateOnVariableDeclaration01.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/expressions/typeSatisfaction/typeSatisfaction.ts
 
@@ -6469,8 +6475,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/interface
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/interfaces/interfaceDeclarations/interfaceThatHidesBaseProperty2.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/interfaces/interfaceDeclarations/interfaceThatIndirectlyInheritsFromItself.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/interfaces/interfaceDeclarations/interfaceThatInheritsFromItself.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/interfaces/interfaceDeclarations/interfaceWithAccessibilityModifiers.ts
 
@@ -7260,6 +7264,8 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ec
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/ErrorRecovery/parserModifierOnStatementInBlock1.ts
 
+Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/ErrorRecovery/parserModifierOnStatementInBlock2.ts
+
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/ErrorRecovery/parserModifierOnStatementInBlock3.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/ErrorRecovery/parserModifierOnStatementInBlock4.ts
@@ -7287,8 +7293,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ec
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/FunctionDeclarations/parserFunctionDeclaration1.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/FunctionDeclarations/parserFunctionDeclaration2.d.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/FunctionDeclarations/parserFunctionDeclaration2.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/FunctionDeclarations/parserFunctionDeclaration3.ts
 
@@ -7347,8 +7351,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ec
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/IndexSignatures/parserIndexSignature4.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/IndexSignatures/parserIndexSignature5.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/InterfaceDeclarations/parserInterfaceDeclaration2.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/InterfaceDeclarations/parserInterfaceDeclaration8.ts
 
@@ -8365,8 +8367,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/tup
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/tuple/emptyTuples/emptyTuplesTypeAssertion02.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/tuple/indexerWithTuple.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/tuple/named/namedTupleMembersErrors.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/tuple/optionalTupleElements1.ts
 
@@ -9391,12 +9391,6 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
  4 │         var arguments = [];
    ·             ─────────
  5 │     }
-   ╰────
-
-  × TS(1039): Initializers are not allowed in ambient contexts.
-   ╭─[typescript/tests/cases/compiler/ambientErrors1.ts:1:17]
- 1 │ declare var x = 4;
-   ·                 ─
    ╰────
 
   × Expected `;` but found `:`
@@ -10993,46 +10987,6 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
  22 │ }
     ╰────
 
-  × TS(1039): Initializers are not allowed in ambient contexts.
-   ╭─[typescript/tests/cases/compiler/constDeclarations-ambient-errors.ts:2:29]
- 1 │ // error: no intialization expected in ambient declarations
- 2 │ declare const c1: boolean = true;
-   ·                             ────
- 3 │ declare const c2: number = 0;
-   ╰────
-
-  × TS(1039): Initializers are not allowed in ambient contexts.
-   ╭─[typescript/tests/cases/compiler/constDeclarations-ambient-errors.ts:3:28]
- 2 │ declare const c1: boolean = true;
- 3 │ declare const c2: number = 0;
-   ·                            ─
- 4 │ declare const c3 = null, c4 :string = "", c5: any = 0;
-   ╰────
-
-  × TS(1039): Initializers are not allowed in ambient contexts.
-   ╭─[typescript/tests/cases/compiler/constDeclarations-ambient-errors.ts:4:20]
- 3 │ declare const c2: number = 0;
- 4 │ declare const c3 = null, c4 :string = "", c5: any = 0;
-   ·                    ────
- 5 │ 
-   ╰────
-
-  × TS(1039): Initializers are not allowed in ambient contexts.
-   ╭─[typescript/tests/cases/compiler/constDeclarations-ambient-errors.ts:4:39]
- 3 │ declare const c2: number = 0;
- 4 │ declare const c3 = null, c4 :string = "", c5: any = 0;
-   ·                                       ──
- 5 │ 
-   ╰────
-
-  × TS(1039): Initializers are not allowed in ambient contexts.
-   ╭─[typescript/tests/cases/compiler/constDeclarations-ambient-errors.ts:4:53]
- 3 │ declare const c2: number = 0;
- 4 │ declare const c3 = null, c4 :string = "", c5: any = 0;
-   ·                                                     ─
- 5 │ 
-   ╰────
-
   × Missing initializer in const declaration
    ╭─[typescript/tests/cases/compiler/constDeclarations-errors.ts:2:7]
  1 │ // error, missing intialicer
@@ -11286,7 +11240,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
  3 │     }
    ╰────
 
-  × TS(1028): Accessibility modifier already seen.
+  × TS(1030): 'public' modifier already seen.
    ╭─[typescript/tests/cases/compiler/constructorArgsErrors3.ts:2:25]
  1 │ class foo {
  2 │     constructor (public public a: number) {
@@ -11295,7 +11249,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
    ╰────
   help: Remove the duplicate modifier.
 
-  × TS(1090): 'export' modifier cannot appear on a parameter.
+  × Identifier expected. 'export' is a reserved word that cannot be used here.
    ╭─[typescript/tests/cases/compiler/constructorArgsErrors5.ts:2:18]
  1 │ class foo {
  2 │     constructor (export a: number) {
@@ -11488,7 +11442,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
  2 │ export default Foo
    ╰────
 
-  × TS(1030): declare' modifier already seen.
+  × TS(1030): 'declare' modifier already seen.
    ╭─[typescript/tests/cases/compiler/declareAlreadySeen.ts:2:13]
  1 │ module M {
  2 │     declare declare var x;
@@ -11497,7 +11451,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
    ╰────
   help: Remove the duplicate modifier.
 
-  × TS(1030): declare' modifier already seen.
+  × TS(1030): 'declare' modifier already seen.
    ╭─[typescript/tests/cases/compiler/declareAlreadySeen.ts:3:13]
  2 │     declare declare var x;
  3 │     declare declare function f();
@@ -11506,7 +11460,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
    ╰────
   help: Remove the duplicate modifier.
 
-  × TS(1030): declare' modifier already seen.
+  × TS(1030): 'declare' modifier already seen.
    ╭─[typescript/tests/cases/compiler/declareAlreadySeen.ts:5:13]
  4 │ 
  5 │     declare declare module N { }  
@@ -11515,7 +11469,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
    ╰────
   help: Remove the duplicate modifier.
 
-  × TS(1030): declare' modifier already seen.
+  × TS(1030): 'declare' modifier already seen.
    ╭─[typescript/tests/cases/compiler/declareAlreadySeen.ts:7:13]
  6 │ 
  7 │     declare declare class C { }
@@ -12492,85 +12446,13 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
    ·        ────────────────
    ╰────
 
-  × 'export' modifier cannot be used here.
+  × Unexpected token
    ╭─[typescript/tests/cases/compiler/exportAlreadySeen.ts:2:12]
  1 │ module M {
  2 │     export export var x = 1;
    ·            ──────
  3 │     export export function f() { }
    ╰────
-
-  × 'export' modifier cannot be used here.
-   ╭─[typescript/tests/cases/compiler/exportAlreadySeen.ts:3:12]
- 2 │     export export var x = 1;
- 3 │     export export function f() { }
-   ·            ──────
- 4 │ 
-   ╰────
-
-  × 'export' modifier cannot be used here.
-   ╭─[typescript/tests/cases/compiler/exportAlreadySeen.ts:6:16]
- 5 │     export export module N {
- 6 │         export export class C { }
-   ·                ──────
- 7 │         export export interface I { }
-   ╰────
-
-  × 'export' modifier cannot be used here.
-   ╭─[typescript/tests/cases/compiler/exportAlreadySeen.ts:7:16]
- 6 │         export export class C { }
- 7 │         export export interface I { }
-   ·                ──────
- 8 │     }  
-   ╰────
-
-  × 'export' modifier cannot be used here.
-   ╭─[typescript/tests/cases/compiler/exportAlreadySeen.ts:5:12]
- 4 │ 
- 5 │     export export module N {
-   ·            ──────
- 6 │         export export class C { }
-   ╰────
-
-  × 'export' modifier cannot be used here.
-    ╭─[typescript/tests/cases/compiler/exportAlreadySeen.ts:12:12]
- 11 │ declare module A {
- 12 │     export export var x;
-    ·            ──────
- 13 │     export export function f()
-    ╰────
-
-  × 'export' modifier cannot be used here.
-    ╭─[typescript/tests/cases/compiler/exportAlreadySeen.ts:13:12]
- 12 │     export export var x;
- 13 │     export export function f()
-    ·            ──────
- 14 │ 
-    ╰────
-
-  × 'export' modifier cannot be used here.
-    ╭─[typescript/tests/cases/compiler/exportAlreadySeen.ts:16:16]
- 15 │     export export module N {
- 16 │         export export class C { }
-    ·                ──────
- 17 │         export export interface I { }
-    ╰────
-
-  × 'export' modifier cannot be used here.
-    ╭─[typescript/tests/cases/compiler/exportAlreadySeen.ts:17:16]
- 16 │         export export class C { }
- 17 │         export export interface I { }
-    ·                ──────
- 18 │     }
-    ╰────
-
-  × 'export' modifier cannot be used here.
-    ╭─[typescript/tests/cases/compiler/exportAlreadySeen.ts:15:12]
- 14 │ 
- 15 │     export export module N {
-    ·            ──────
- 16 │         export export class C { }
-    ╰────
 
   × Unexpected token
    ╭─[typescript/tests/cases/compiler/exportAssignmentWithDeclareAndExportModifiers.ts:2:16]
@@ -12725,20 +12607,6 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
  2 │     export class XDate {
    ╰────
   help: Try insert a semicolon here
-
-  × TS(1039): Initializers are not allowed in ambient contexts.
-   ╭─[typescript/tests/cases/compiler/externSemantics.ts:1:15]
- 1 │ declare var x=10;
-   ·               ──
- 2 │ declare var v;
-   ╰────
-
-  × TS(1039): Initializers are not allowed in ambient contexts.
-   ╭─[typescript/tests/cases/compiler/externSemantics.ts:3:22]
- 2 │ declare var v;
- 3 │ declare var y:number=3;
-   ·                      ─
-   ╰────
 
   × Expected `,` but found `=>`
    ╭─[typescript/tests/cases/compiler/fatarrowfunctionsErrors.ts:2:8]
@@ -12923,7 +12791,15 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
  154 │ }
      ╰────
 
-  × 'export' modifier cannot be used here.
+  × TS(1183): An implementation cannot be declared in ambient contexts.
+   ╭─[typescript/tests/cases/compiler/functionsWithModifiersInBlocks1.ts:2:25]
+ 1 │ {
+ 2 │    declare function f() { }
+   ·                         ▲
+ 3 │    export function f() { }
+   ╰────
+
+  × Unexpected token
    ╭─[typescript/tests/cases/compiler/functionsWithModifiersInBlocks1.ts:4:12]
  3 │    export function f() { }
  4 │    declare export function f() { }
@@ -13037,6 +12913,22 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
  1 │ import * as thing1 from "./mod.mjs" assert {field: 0};
    ·                                                    ─
  2 │ 
+   ╰────
+
+  × Unexpected token
+   ╭─[typescript/tests/cases/compiler/importDeclWithDeclareModifier.ts:5:9]
+ 4 │ }
+ 5 │ declare export import a = x.c;
+   ·         ──────
+ 6 │ var b: a;
+   ╰────
+
+  × Unexpected token
+   ╭─[typescript/tests/cases/compiler/importDeclWithDeclareModifierInAmbientContext.ts:6:13]
+ 5 │     }
+ 6 │     declare export import a = x.c;
+   ·             ──────
+ 7 │     var b: a;
    ╰────
 
   × Cannot use import statement outside a module
@@ -13264,6 +13156,14 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
  2 │ interface interface{ }
    ╰────
   help: Try insert a semicolon here
+
+  × TS(1176): Interface declaration cannot have 'implements' clause.
+   ╭─[typescript/tests/cases/compiler/interfaceWithImplements1.ts:3:27]
+ 2 │ 
+ 3 │ interface IBar implements IFoo {
+   ·                           ────
+ 4 │ }
+   ╰────
 
   × Illegal continue statement: no surrounding iteration statement
    ╭─[typescript/tests/cases/compiler/invalidContinueInDownlevelAsync.ts:3:9]
@@ -13494,11 +13394,10 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
    ·             ╰── `,` expected
    ╰────
 
-  × Expected `,` but found `Identifier`
-   ╭─[typescript/tests/cases/compiler/jsFileCompilationPublicParameterModifier.ts:1:30]
+  × TS(8012): Parameter modifiers can only be used in TypeScript files.
+   ╭─[typescript/tests/cases/compiler/jsFileCompilationPublicParameterModifier.ts:1:23]
  1 │ class C { constructor(public x) { }}
-   ·                              ┬
-   ·                              ╰── `,` expected
+   ·                       ──────
    ╰────
 
   × Unexpected token
@@ -14608,7 +14507,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
  2 │     .then((role: Role) =>
    ╰────
 
-  × TS(1030): public' modifier already seen.
+  × TS(1030): 'public' modifier already seen.
    ╭─[typescript/tests/cases/compiler/multipleClassPropertyModifiersErrors.ts:2:9]
  1 │ class C {
  2 │     public public p1;
@@ -14617,7 +14516,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
    ╰────
   help: Remove the duplicate modifier.
 
-  × TS(1030): private' modifier already seen.
+  × TS(1030): 'private' modifier already seen.
    ╭─[typescript/tests/cases/compiler/multipleClassPropertyModifiersErrors.ts:3:10]
  2 │     public public p1;
  3 │     private private p2;
@@ -15845,7 +15744,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
  1 │ if (true) {
    ╰────
 
-  × 'export' modifier cannot be used here.
+  × Unexpected token
      ╭─[typescript/tests/cases/compiler/privacyImportParseErrors.ts:326:9]
  325 │ 
  326 │ declare export module "anotherParseError2" {
@@ -18314,85 +18213,6 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
  12 │     }
     ╰────
 
-  × TS(1039): Initializers are not allowed in ambient contexts.
-    ╭─[typescript/tests/cases/compiler/varBlock.ts:15:17]
- 14 │ 
- 15 │ declare var b = 10;
-    ·                 ──
- 16 │ 
-    ╰────
-
-  × TS(1039): Initializers are not allowed in ambient contexts.
-    ╭─[typescript/tests/cases/compiler/varBlock.ts:21:18]
- 20 │ 
- 21 │ declare var da = 10;
-    ·                  ──
- 22 │ declare var d3, d4 = 10;
-    ╰────
-
-  × TS(1039): Initializers are not allowed in ambient contexts.
-    ╭─[typescript/tests/cases/compiler/varBlock.ts:22:22]
- 21 │ declare var da = 10;
- 22 │ declare var d3, d4 = 10;
-    ·                      ──
- 23 │ 
-    ╰────
-
-  × TS(1039): Initializers are not allowed in ambient contexts.
-    ╭─[typescript/tests/cases/compiler/varBlock.ts:25:21]
- 24 │ module m3 {
- 25 │     declare var d = 10;
-    ·                     ──
- 26 │     declare var d2, d3 = 10, d4 = 10;
-    ╰────
-
-  × TS(1039): Initializers are not allowed in ambient contexts.
-    ╭─[typescript/tests/cases/compiler/varBlock.ts:26:26]
- 25 │     declare var d = 10;
- 26 │     declare var d2, d3 = 10, d4 = 10;
-    ·                          ──
- 27 │     export declare var dE = 10;
-    ╰────
-
-  × TS(1039): Initializers are not allowed in ambient contexts.
-    ╭─[typescript/tests/cases/compiler/varBlock.ts:26:35]
- 25 │     declare var d = 10;
- 26 │     declare var d2, d3 = 10, d4 = 10;
-    ·                                   ──
- 27 │     export declare var dE = 10;
-    ╰────
-
-  × TS(1039): Initializers are not allowed in ambient contexts.
-    ╭─[typescript/tests/cases/compiler/varBlock.ts:27:29]
- 26 │     declare var d2, d3 = 10, d4 = 10;
- 27 │     export declare var dE = 10;
-    ·                             ──
- 28 │     export declare var d2E, d3E = 10, d4E = 10;
-    ╰────
-
-  × TS(1039): Initializers are not allowed in ambient contexts.
-    ╭─[typescript/tests/cases/compiler/varBlock.ts:28:35]
- 27 │     export declare var dE = 10;
- 28 │     export declare var d2E, d3E = 10, d4E = 10;
-    ·                                   ──
- 29 │ }
-    ╰────
-
-  × TS(1039): Initializers are not allowed in ambient contexts.
-    ╭─[typescript/tests/cases/compiler/varBlock.ts:28:45]
- 27 │     export declare var dE = 10;
- 28 │     export declare var d2E, d3E = 10, d4E = 10;
-    ·                                             ──
- 29 │ }
-    ╰────
-
-  × TS(1039): Initializers are not allowed in ambient contexts.
-    ╭─[typescript/tests/cases/compiler/varBlock.ts:39:17]
- 38 │ declare var c;
- 39 │ declare var c = 10;
-    ·                 ──
-    ╰────
-
   × Cannot assign to 'eval' in strict mode
    ╭─[typescript/tests/cases/compiler/variableDeclarationInStrictMode1.ts:2:5]
  1 │ "use strict";
@@ -18448,13 +18268,13 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
  3 │ }
    ╰────
 
-  × TS(1039): Initializers are not allowed in ambient contexts.
-   ╭─[typescript/tests/cases/conformance/ambient/ambientErrors.ts:2:17]
- 1 │ // Ambient variable with an initializer 
- 2 │ declare var x = 4;
-   ·                 ─
- 3 │ 
-   ╰────
+  × TS(1183): An implementation cannot be declared in ambient contexts.
+    ╭─[typescript/tests/cases/conformance/ambient/ambientErrors.ts:20:24]
+ 19 │ // Ambient function with function body
+ 20 │ declare function fn4() { };
+    ·                        ▲
+ 21 │ 
+    ╰────
 
   × Identifier expected. 'debugger' is a reserved word that cannot be used here.
    ╭─[typescript/tests/cases/conformance/ambient/ambientModuleDeclarationWithReservedIdentifierInDottedPath.ts:3:23]
@@ -18645,13 +18465,6 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
    ╰────
 
   × 'async' modifier cannot be used here.
-   ╭─[typescript/tests/cases/conformance/async/es5/asyncModule_es5.ts:1:1]
- 1 │ async module M {
-   · ─────
- 2 │ }
-   ╰────
-
-  × 'async' modifier cannot be used here.
    ╭─[typescript/tests/cases/conformance/async/es5/asyncSetter_es5.ts:2:3]
  1 │ class C {
  2 │   async set foo(value) {
@@ -18774,13 +18587,6 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
   × 'async' modifier cannot be used here.
    ╭─[typescript/tests/cases/conformance/async/es6/asyncInterface_es6.ts:1:1]
  1 │ async interface I {  
-   · ─────
- 2 │ }
-   ╰────
-
-  × 'async' modifier cannot be used here.
-   ╭─[typescript/tests/cases/conformance/async/es6/asyncModule_es6.ts:1:1]
- 1 │ async module M {   
    · ─────
  2 │ }
    ╰────
@@ -19497,7 +19303,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
  4 │ }
    ╰────
 
-  × TS(1030): readonly' modifier already seen.
+  × TS(1030): 'readonly' modifier already seen.
    ╭─[typescript/tests/cases/conformance/classes/constructorDeclarations/constructorParameters/readonlyReadonly.ts:2:14]
  1 │ class C {
  2 │     readonly readonly x: number;
@@ -19506,7 +19312,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
    ╰────
   help: Remove the duplicate modifier.
 
-  × TS(1028): Accessibility modifier already seen.
+  × TS(1030): 'readonly' modifier already seen.
    ╭─[typescript/tests/cases/conformance/classes/constructorDeclarations/constructorParameters/readonlyReadonly.ts:3:26]
  2 │     readonly readonly x: number;
  3 │     constructor(readonly readonly y: number) {}
@@ -20579,7 +20385,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
  3 │ }
    ╰────
 
-  × TS(1030): public' modifier already seen.
+  × TS(1030): 'public' modifier already seen.
     ╭─[typescript/tests/cases/conformance/classes/propertyMemberDeclarations/accessibilityModifiers.ts:42:12]
  41 │     private protected get getter() { return 0; }
  42 │     public public set setter(a: number) { }
@@ -20611,7 +20417,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
  10 │     c
     ╰────
 
-  × TS(1030): accessor' modifier already seen.
+  × TS(1030): 'accessor' modifier already seen.
    ╭─[typescript/tests/cases/conformance/classes/propertyMemberDeclarations/autoAccessorDisallowedModifiers.ts:2:14]
  1 │ abstract class C1 {
  2 │     accessor accessor a: any;
@@ -20674,14 +20480,6 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
  28 │ accessor interface I2 {}
     · ────────
  29 │ accessor namespace N1 {}
-    ╰────
-
-  × 'accessor' modifier cannot be used here.
-    ╭─[typescript/tests/cases/conformance/classes/propertyMemberDeclarations/autoAccessorDisallowedModifiers.ts:29:1]
- 28 │ accessor interface I2 {}
- 29 │ accessor namespace N1 {}
-    · ────────
- 30 │ accessor enum E1 {}
     ╰────
 
   × 'accessor' modifier cannot be used here.
@@ -20897,20 +20695,11 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
  9 │ }
    ╰────
 
-  × Expected `,` but found `is`
-     ╭─[typescript/tests/cases/conformance/controlFlow/assertionTypePredicates1.ts:163:20]
- 162 │     get p1(): this is string;
- 163 │     set p1(x: this is string);
-     ·                    ─┬
-     ·                     ╰── `,` expected
- 164 │     get p2(): asserts this is string;
-     ╰────
-
   × TS(1264): Declarations with definite assignment assertions must also have type annotations.
     ╭─[typescript/tests/cases/conformance/controlFlow/definiteAssignmentAssertions.ts:69:10]
  68 │ function f4() {
  69 │     let a!;
-    ·          ▲
+    ·          ─
  70 │     let b! = 1;
     ╰────
 
@@ -20918,7 +20707,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
     ╭─[typescript/tests/cases/conformance/controlFlow/definiteAssignmentAssertions.ts:70:10]
  69 │     let a!;
  70 │     let b! = 1;
-    ·          ▲
+    ·          ─
  71 │     let c!: number = 1;
     ╰────
 
@@ -20926,7 +20715,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
     ╭─[typescript/tests/cases/conformance/controlFlow/definiteAssignmentAssertions.ts:71:10]
  70 │     let b! = 1;
  71 │     let c!: number = 1;
-    ·          ▲
+    ·          ─
  72 │ }
     ╰────
 
@@ -21034,12 +20823,12 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
  4 │ }
    ╰────
 
-  × Decorators are not valid here.
-   ╭─[typescript/tests/cases/conformance/decorators/invalid/decoratorOnEnum.ts:3:1]
- 2 │ 
+  × Unexpected token
+   ╭─[typescript/tests/cases/conformance/decorators/invalid/decoratorOnEnum.ts:4:1]
  3 │ @dec
-   · ────
  4 │ enum E {
+   · ────
+ 5 │ }
    ╰────
 
   × Unexpected token
@@ -21050,19 +20839,19 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
  5 │ }
    ╰────
 
-  × Decorators are not valid here.
-   ╭─[typescript/tests/cases/conformance/decorators/invalid/decoratorOnFunctionDeclaration.ts:3:1]
- 2 │ 
+  × Unexpected token
+   ╭─[typescript/tests/cases/conformance/decorators/invalid/decoratorOnFunctionDeclaration.ts:4:1]
  3 │ @dec
-   · ────
  4 │ function F() {
+   · ────────
+ 5 │ }
    ╰────
 
-  × Decorators are not valid here.
-   ╭─[typescript/tests/cases/conformance/decorators/invalid/decoratorOnFunctionExpression.ts:3:9]
+  × Unexpected token
+   ╭─[typescript/tests/cases/conformance/decorators/invalid/decoratorOnFunctionExpression.ts:3:14]
  2 │ 
  3 │ var F = @dec function () {
-   ·         ────
+   ·              ────────
  4 │ }
    ╰────
 
@@ -21074,51 +20863,50 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
  6 │ function called(@dec() this: C) { return this.n; }
    ╰────
 
-  × Decorators are not valid here.
-   ╭─[typescript/tests/cases/conformance/decorators/invalid/decoratorOnImportEquals1.ts:8:5]
- 7 │ module M2 {
- 8 │     @dec
-   ·     ────
- 9 │     import X = M1.X;
-   ╰────
+  × Unexpected token
+    ╭─[typescript/tests/cases/conformance/decorators/invalid/decoratorOnImportEquals1.ts:9:5]
+  8 │     @dec
+  9 │     import X = M1.X;
+    ·     ──────
+ 10 │ }
+    ╰────
 
-  × Decorators are not valid here.
-   ╭─[typescript/tests/cases/conformance/decorators/invalid/decoratorOnImportEquals2.ts:1:1]
+  × Unexpected token
+   ╭─[typescript/tests/cases/conformance/decorators/invalid/decoratorOnImportEquals2.ts:2:1]
  1 │ @dec
-   · ────
  2 │ import lib = require('./decoratorOnImportEquals2_0');
+   · ──────
+ 3 │ 
    ╰────
 
-  × Decorators are not valid here.
-   ╭─[typescript/tests/cases/conformance/decorators/invalid/decoratorOnInterface.ts:3:1]
- 2 │ 
+  × Unexpected token
+   ╭─[typescript/tests/cases/conformance/decorators/invalid/decoratorOnInterface.ts:4:1]
  3 │ @dec
-   · ────
  4 │ interface I {
+   · ─────────
+ 5 │ }
    ╰────
 
-  × Decorators are not valid here.
-   ╭─[typescript/tests/cases/conformance/decorators/invalid/decoratorOnInternalModule.ts:3:1]
- 2 │ 
+  × Unexpected token
+   ╭─[typescript/tests/cases/conformance/decorators/invalid/decoratorOnInternalModule.ts:4:1]
  3 │ @dec
-   · ────
  4 │ module M {
+   · ──────
+ 5 │     
    ╰────
 
-  × Decorators are not valid here.
-   ╭─[typescript/tests/cases/conformance/decorators/invalid/decoratorOnTypeAlias.ts:3:1]
- 2 │ 
+  × Unexpected token
+   ╭─[typescript/tests/cases/conformance/decorators/invalid/decoratorOnTypeAlias.ts:4:1]
  3 │ @dec
-   · ────
  4 │ type T = number;
+   · ────
    ╰────
 
-  × Decorators are not valid here.
-   ╭─[typescript/tests/cases/conformance/decorators/invalid/decoratorOnVar.ts:3:1]
- 2 │ 
+  × Unexpected token
+   ╭─[typescript/tests/cases/conformance/decorators/invalid/decoratorOnVar.ts:4:1]
  3 │ @dec
-   · ────
  4 │ var x: number;
+   · ───
    ╰────
 
   × Unexpected token
@@ -21879,11 +21667,33 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
    ·         ─────
    ╰────
 
+  × Invalid rest operator's argument.
+   ╭─[typescript/tests/cases/conformance/es6/destructuring/restElementWithInitializer2.ts:3:5]
+ 2 │ var x: number[];
+ 3 │ [...x = a] = a;  // Error, rest element cannot have initializer
+   ·     ─────
+   ╰────
+
   × Cannot assign to this expression
    ╭─[typescript/tests/cases/conformance/es6/destructuring/restElementWithInitializer2.ts:3:5]
  2 │ var x: number[];
  3 │ [...x = a] = a;  // Error, rest element cannot have initializer
    ·     ─────
+   ╰────
+
+  × Invalid rest operator's argument.
+   ╭─[typescript/tests/cases/conformance/es6/destructuring/restPropertyWithBindingPattern.ts:1:6]
+ 1 │ ({...{}} = {});
+   ·      ──
+ 2 │ ({...({})} = {});
+   ╰────
+
+  × Invalid rest operator's argument.
+   ╭─[typescript/tests/cases/conformance/es6/destructuring/restPropertyWithBindingPattern.ts:2:6]
+ 1 │ ({...{}} = {});
+ 2 │ ({...({})} = {});
+   ·      ────
+ 3 │ ({...[]} = {});
    ╰────
 
   × Cannot assign to this expression
@@ -24312,18 +24122,20 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
  12 │ }
     ╰────
 
-  × 'default' modifier cannot be used here.
-   ╭─[typescript/tests/cases/conformance/esDecorators/classDeclaration/esDecorators-classDeclaration-exportModifier.2.ts:2:13]
+  × Expected `{` but found `class`
+   ╭─[typescript/tests/cases/conformance/esDecorators/classDeclaration/esDecorators-classDeclaration-exportModifier.2.ts:2:21]
  1 │ // error
  2 │ export @dec default class C3 {}
-   ·             ───────
+   ·                     ──┬──
+   ·                       ╰── `{` expected
    ╰────
 
-  × Unexpected token
-   ╭─[typescript/tests/cases/conformance/esDecorators/classDeclaration/esDecorators-classDeclaration-exportModifier.ts:2:13]
+  × Expected `{` but found `class`
+   ╭─[typescript/tests/cases/conformance/esDecorators/classDeclaration/esDecorators-classDeclaration-exportModifier.ts:2:21]
  1 │ // error
  2 │ export @dec default class C3 {}
-   ·             ───────
+   ·                     ──┬──
+   ·                       ╰── `{` expected
    ╰────
 
   × TS(1249): A decorator can only decorate a method implementation, not an overload.
@@ -24413,6 +24225,14 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
     ·              ─────
  38 │ 
     ╰────
+
+  × Unexpected token
+   ╭─[typescript/tests/cases/conformance/esDecorators/esDecorators-decoratorExpression.3.ts:5:5]
+ 4 │ 
+ 5 │ { @g<number> class C {} }
+   ·     ─
+ 6 │ 
+   ╰────
 
   × Private identifier '#foo' is not allowed outside class bodies
    ╭─[typescript/tests/cases/conformance/esDecorators/esDecorators-privateFieldAccess.ts:3:13]
@@ -24813,31 +24633,6 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
     ·                                                        ▲
  18 │     return true;
     ╰────
-  help: Try insert a semicolon here
-
-  × Expected `;` but found `is`
-   ╭─[typescript/tests/cases/conformance/expressions/typeGuards/typeGuardOfFormThisMember.ts:4:15]
- 3 │     export class FileSystemObject {
- 4 │         isFSO: this is FileSystemObject;
-   ·                     ─┬
-   ·                      ╰── `;` expected
- 5 │         get isFile(): this is File {
-   ╰────
-
-  × Expected `;` but found `is`
-   ╭─[typescript/tests/cases/conformance/expressions/typeGuards/typeGuardOfFormThisMemberErrors.ts:4:15]
- 3 │     export class FileSystemObject {
- 4 │         isFSO: this is FileSystemObject;
-   ·                     ─┬
-   ·                      ╰── `;` expected
- 5 │         get isFile(): this is File {
-   ╰────
-
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-   ╭─[typescript/tests/cases/conformance/expressions/typeGuards/typePredicateOnVariableDeclaration01.ts:1:12]
- 1 │ var x: this is string;
-   ·            ▲
-   ╰────
   help: Try insert a semicolon here
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
@@ -25355,10 +25150,10 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
    ╰────
 
   × Unexpected token
-   ╭─[typescript/tests/cases/conformance/externalModules/umd-errors.ts:3:15]
+   ╭─[typescript/tests/cases/conformance/externalModules/umd-errors.ts:3:8]
  2 │ export var p;
  3 │ static export as namespace oo1;
-   ·               ──
+   ·        ──────
  4 │ declare export as namespace oo2;
    ╰────
 
@@ -25540,6 +25335,14 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
    ·                      ────────
    ╰────
 
+  × TS(1176): Interface declaration cannot have 'implements' clause.
+    ╭─[typescript/tests/cases/conformance/interfaces/interfaceDeclarations/interfaceThatInheritsFromItself.ts:10:26]
+  9 │ 
+ 10 │ interface Bar implements Bar { // error
+    ·                          ───
+ 11 │ }
+    ╰────
+
   × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[typescript/tests/cases/conformance/interfaces/interfaceDeclarations/interfacesWithPredefinedTypesAsNames.ts:5:10]
  4 │ interface boolean { }
@@ -25612,14 +25415,6 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
     ╰────
 
   × 'public' modifier cannot be used here.
-    ╭─[typescript/tests/cases/conformance/internalModules/moduleBody/invalidModuleWithStatementsOfEveryKind.ts:19:5]
- 18 │ module Y3 {
- 19 │     public module Module {
-    ·     ──────
- 20 │         class A { s: string }
-    ╰────
-
-  × 'public' modifier cannot be used here.
     ╭─[typescript/tests/cases/conformance/internalModules/moduleBody/invalidModuleWithStatementsOfEveryKind.ts:25:5]
  24 │ module Y4 {
  25 │     public enum Color { Blue, Red }
@@ -25676,14 +25471,6 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
     ╰────
 
   × 'private' modifier cannot be used here.
-    ╭─[typescript/tests/cases/conformance/internalModules/moduleBody/invalidModuleWithStatementsOfEveryKind.ts:44:5]
- 43 │ module YY3 {
- 44 │     private module Module {
-    ·     ───────
- 45 │         class A { s: string }
-    ╰────
-
-  × 'private' modifier cannot be used here.
     ╭─[typescript/tests/cases/conformance/internalModules/moduleBody/invalidModuleWithStatementsOfEveryKind.ts:50:5]
  49 │ module YY4 {
  50 │     private enum Color { Blue, Red }
@@ -25729,14 +25516,6 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
  66 │     static class B extends AA<string> implements I { id: number }
     ·     ──────
  67 │ }
-    ╰────
-
-  × 'static' modifier cannot be used here.
-    ╭─[typescript/tests/cases/conformance/internalModules/moduleBody/invalidModuleWithStatementsOfEveryKind.ts:70:5]
- 69 │ module YYY3 {
- 70 │     static module Module {
-    ·     ──────
- 71 │         class A { s: string }
     ╰────
 
   × 'static' modifier cannot be used here.
@@ -26300,7 +26079,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
  4 │     & import("pkg", [ {"resolution-mode": "import"} ]).ImportInterface;
    ╰────
 
-  × TS(1030): override' modifier already seen.
+  × TS(1030): 'override' modifier already seen.
     ╭─[typescript/tests/cases/conformance/override/override5.ts:22:14]
  21 │ 
  22 │     override override oop: number;
@@ -26309,7 +26088,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
     ╰────
   help: Remove the duplicate modifier.
 
-  × TS(1030): override' modifier already seen.
+  × TS(1030): 'override' modifier already seen.
     ╭─[typescript/tests/cases/conformance/override/override7.ts:19:14]
  18 │ 
  19 │     override override oop: number;
@@ -26694,7 +26473,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
  3 │ }
    ╰────
 
-  × TS(1030): public' modifier already seen.
+  × TS(1030): 'public' modifier already seen.
    ╭─[typescript/tests/cases/conformance/parser/ecmascript5/ConstructorDeclarations/parserConstructorDeclaration6.ts:2:10]
  1 │ class C {
  2 │   public public constructor() { }
@@ -27235,14 +27014,6 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
  5 │             return this.doWhile((item, i) => filter(item, i) ? test(item, index++) : true);
    ╰────
 
-  × TS(1039): Initializers are not allowed in ambient contexts.
-   ╭─[typescript/tests/cases/conformance/parser/ecmascript5/ErrorRecovery/parserModifierOnStatementInBlock2.ts:2:20]
- 1 │ {
- 2 │    declare var x = this;
-   ·                    ────
- 3 │ }
-   ╰────
-
   × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[typescript/tests/cases/conformance/parser/ecmascript5/ErrorRecovery/parserPublicBreak1.ts:1:7]
  1 │ public break;
@@ -27365,6 +27136,13 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
    ╭─[typescript/tests/cases/conformance/parser/ecmascript5/Expressions/parserUnaryExpression7.ts:1:4]
  1 │ ++ new Foo();
    ·    ─────────
+   ╰────
+
+  × TS(1183): An implementation cannot be declared in ambient contexts.
+   ╭─[typescript/tests/cases/conformance/parser/ecmascript5/FunctionDeclarations/parserFunctionDeclaration2.ts:1:24]
+ 1 │ declare function Foo() {
+   ·                        ▲
+ 2 │ }
    ╰────
 
   × Unexpected token
@@ -27597,6 +27375,13 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
  2 │ }
    ╰────
 
+  × TS(1176): Interface declaration cannot have 'implements' clause.
+   ╭─[typescript/tests/cases/conformance/parser/ecmascript5/InterfaceDeclarations/parserInterfaceDeclaration2.ts:1:24]
+ 1 │ interface I implements A {
+   ·                        ─
+ 2 │ }
+   ╰────
+
   × 'public' modifier cannot be used here.
    ╭─[typescript/tests/cases/conformance/parser/ecmascript5/InterfaceDeclarations/parserInterfaceDeclaration3.ts:1:1]
  1 │ public interface I {
@@ -27611,7 +27396,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
  2 │ }
    ╰────
 
-  × 'export' modifier cannot be used here.
+  × Unexpected token
    ╭─[typescript/tests/cases/conformance/parser/ecmascript5/InterfaceDeclarations/parserInterfaceDeclaration6.ts:1:8]
  1 │ export export interface I {
    ·        ──────
@@ -27667,7 +27452,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
  3 │ }
    ╰────
 
-  × TS(1030): public' modifier already seen.
+  × TS(1030): 'public' modifier already seen.
    ╭─[typescript/tests/cases/conformance/parser/ecmascript5/MemberAccessorDeclarations/parserMemberAccessorDeclaration7.ts:2:12]
  1 │ class C {
  2 │     public public get Foo() { }
@@ -27685,7 +27470,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
  3 │ }
    ╰────
 
-  × TS(1030): public' modifier already seen.
+  × TS(1030): 'public' modifier already seen.
    ╭─[typescript/tests/cases/conformance/parser/ecmascript5/MemberFunctionDeclarations/parserMemberFunctionDeclaration1.ts:2:12]
  1 │ class C {
  2 │     public public Foo() { }
@@ -27768,7 +27553,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
  13 │ }
     ╰────
 
-  × TS(1030): public' modifier already seen.
+  × TS(1030): 'public' modifier already seen.
    ╭─[typescript/tests/cases/conformance/parser/ecmascript5/MemberVariableDeclarations/parserMemberVariableDeclaration1.ts:2:10]
  1 │ class C {
  2 │   public public Foo;
@@ -27952,13 +27737,6 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
  2 │ }
    ╰────
 
-  × 'protected' modifier cannot be used here.
-   ╭─[typescript/tests/cases/conformance/parser/ecmascript5/Protected/Protected2.ts:1:1]
- 1 │ protected module M {
-   · ─────────
- 2 │ }
-   ╰────
-
   × Expected a semicolon or an implicit semicolon after a statement, but found none
       ╭─[typescript/tests/cases/conformance/parser/ecmascript5/RealWorld/parserharness.ts:1430:16]
  1429 │         // Regex for parsing options in the format "@Alpha: Value of any sort"
@@ -28063,7 +27841,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
  3 │ }
    ╰────
 
-  × 'export' modifier cannot be used here.
+  × Unexpected token
    ╭─[typescript/tests/cases/conformance/parser/ecmascript5/RegressionTests/parser618973.ts:1:8]
  1 │ export export class Foo {
    ·        ──────
@@ -29603,14 +29381,13 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
  4 │           c = null;
    ╰────
 
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-   ╭─[typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/usingDeclarations.6.ts:2:10]
+  × Using declarations may not have binding patterns.
+   ╭─[typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/usingDeclarations.6.ts:2:11]
  1 │ {
  2 │     using {a} = null;
-   ·          ▲
+   ·           ───
  3 │ }
    ╰────
-  help: Try insert a semicolon here
 
   × Using declarations may not have binding patterns.
    ╭─[typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/usingDeclarations.7.ts:3:11]
@@ -31102,6 +30879,13 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
  10 │ }
     ╰────
 
+  × Invalid rest operator's argument.
+    ╭─[typescript/tests/cases/conformance/types/rest/objectRestNegative.ts:17:9]
+ 16 │ let rest: { b: string }
+ 17 │ ({a, ...rest.b + rest.b} = o);
+    ·         ───────────────
+    ╰────
+
   × Cannot assign to this expression
     ╭─[typescript/tests/cases/conformance/types/rest/objectRestNegative.ts:17:9]
  16 │ let rest: { b: string }
@@ -31200,6 +30984,46 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
  166 │ 
      ╰────
 
+  × TS(5086): A labeled tuple element is declared as optional with a question mark after the name and before the colon, rather than after the type.
+    ╭─[typescript/tests/cases/conformance/types/tuple/named/namedTupleMembersErrors.ts:10:29]
+  9 │ 
+ 10 │ export type Opt = [element: string?]; // question mark on element disallowed
+    ·                             ───────
+ 11 │ 
+    ╰────
+
+  × TS(5087): A labeled tuple element is declared as rest with a '...' before the name, rather than before the type.
+    ╭─[typescript/tests/cases/conformance/types/tuple/named/namedTupleMembersErrors.ts:12:46]
+ 11 │ 
+ 12 │ export type Trailing = [first: string, rest: ...string[]]; // dots on element disallowed
+    ·                                              ───────────
+ 13 │ 
+    ╰────
+
+  × TS(5087): A labeled tuple element is declared as rest with a '...' before the name, rather than before the type.
+    ╭─[typescript/tests/cases/conformance/types/tuple/named/namedTupleMembersErrors.ts:14:49]
+ 13 │ 
+ 14 │ export type OptTrailing = [first: string, rest: ...string[]?]; // dots+question on element disallowed
+    ·                                                 ────────────
+ 15 │ 
+    ╰────
+
+  × TS(5086): A labeled tuple element is declared as optional with a question mark after the name and before the colon, rather than after the type.
+    ╭─[typescript/tests/cases/conformance/types/tuple/named/namedTupleMembersErrors.ts:14:49]
+ 13 │ 
+ 14 │ export type OptTrailing = [first: string, rest: ...string[]?]; // dots+question on element disallowed
+    ·                                                 ────────────
+ 15 │ 
+    ╰────
+
+  × TS(5085): A tuple member cannot be both optional and rest.
+    ╭─[typescript/tests/cases/conformance/types/tuple/named/namedTupleMembersErrors.ts:16:39]
+ 15 │ 
+ 16 │ export type OptRest = [first: string, ...rest?: string[]]; // rest+optional disallowed
+    ·                                       ──────────────────
+ 17 │ 
+    ╰────
+
   × TS(1354): 'readonly' type modifier is only permitted on array and tuple literal types.
     ╭─[typescript/tests/cases/conformance/types/tuple/readonlyArraysAndTuples.ts:9:12]
   8 │ 
@@ -31279,7 +31103,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
  96 │ type T21<in out in T> = T;  // Error
     ╰────
 
-  × TS(1030): in' modifier already seen.
+  × TS(1030): 'in' modifier already seen.
     ╭─[typescript/tests/cases/conformance/types/typeParameters/typeParameterLists/varianceAnnotations.ts:96:17]
  95 │ type T20<public T> = T;  // Error
  96 │ type T21<in out in T> = T;  // Error
@@ -31288,7 +31112,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
     ╰────
   help: Remove the duplicate modifier.
 
-  × TS(1030): out' modifier already seen.
+  × TS(1030): 'out' modifier already seen.
     ╭─[typescript/tests/cases/conformance/types/typeParameters/typeParameterLists/varianceAnnotations.ts:97:17]
  96 │ type T21<in out in T> = T;  // Error
  97 │ type T22<in out out T> = T;  // Error

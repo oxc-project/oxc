@@ -207,8 +207,8 @@ impl Rule for RulesOfHooks {
                 }
             }
             // Hooks can't be called from async function.
-            AstKind::Function(Function { id: Some(id), r#async: true, .. }) => {
-                return ctx.diagnostic(diagnostics::async_component(id.span, id.name.as_str()));
+            AstKind::Function(Function { id: Some(_), r#async: true, .. }) => {
+                return ctx.diagnostic(diagnostics::async_component(span, hook_name));
             }
             // Hooks can't be called from async arrow function.
             AstKind::ArrowFunctionExpression(ArrowFunctionExpression {

@@ -73,79 +73,6 @@ pub fn check_ts_type_annotation(annotation: &TSTypeAnnotation<'_>, ctx: &Semanti
     ));
 }
 
-/// Initializers are not allowed in ambient contexts. ts(1039)
-fn initializer_in_ambient_context(init_span: Span) -> OxcDiagnostic {
-    ts_error("1039", "Initializers are not allowed in ambient contexts.").with_label(init_span)
-}
-
-pub fn check_variable_declaration(decl: &VariableDeclaration, ctx: &SemanticBuilder<'_>) {
-    if decl.declare {
-        for var in &decl.declarations {
-            if let Some(init) = &var.init {
-                ctx.error(initializer_in_ambient_context(init.span()));
-            }
-        }
-    }
-}
-
-fn unexpected_optional(span: Span, type_annotation: Option<&str>) -> OxcDiagnostic {
-    let d = OxcDiagnostic::error("Unexpected `?` operator").with_label(span);
-    if let Some(ty) = type_annotation {
-        d.with_help(format!("If you want an optional type, use `{ty} | undefined` instead."))
-    } else {
-        d
-    }
-}
-
-#[expect(clippy::cast_possible_truncation)]
-fn find_char(span: Span, source_text: &str, c: char) -> Option<Span> {
-    let Some(offset) = span.source_text(source_text).find(c) else {
-        debug_assert!(
-            false,
-            "Flag {c} not found in source text. This is likely indicates a bug in the parser.",
-        );
-        return None;
-    };
-    let offset = span.start + offset as u32;
-    Some(Span::new(offset, offset))
-}
-
-pub fn check_variable_declarator(decl: &VariableDeclarator, ctx: &SemanticBuilder<'_>) {
-    // Check for `let x?: number;`
-    if decl.id.optional {
-        // NOTE: BindingPattern spans cover the identifier _and_ the type annotation.
-        let ty = decl
-            .id
-            .type_annotation
-            .as_ref()
-            .map(|ty| ty.type_annotation.span())
-            .map(|span| &ctx.source_text[span]);
-        if let Some(span) = find_char(decl.span, ctx.source_text, '?') {
-            ctx.error(unexpected_optional(span, ty));
-        }
-    }
-    if decl.definite {
-        // Check for `let x!: number = 1;`
-        //                 ^
-        let Some(span) = find_char(decl.span, ctx.source_text, '!') else { return };
-        if decl.init.is_some() {
-            let error = ts_error(
-                "1263",
-                "Declarations with initializers cannot also have definite assignment assertions.",
-            )
-            .with_label(span);
-            ctx.error(error);
-        } else if decl.id.type_annotation.is_none() {
-            let error = ts_error(
-                "1264",
-                "Declarations with definite assignment assertions must also have type annotations.",
-            )
-            .with_label(span);
-            ctx.error(error);
-        }
-    }
-}
-
 fn required_parameter_after_optional_parameter(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::error("A required parameter cannot follow an optional parameter.")
         .with_label(span)
@@ -157,7 +84,7 @@ fn parameter_property_outside_constructor(span: Span) -> OxcDiagnostic {
 }
 
 pub fn check_formal_parameters(params: &FormalParameters, ctx: &SemanticBuilder<'_>) {
-    if !params.is_empty() && params.kind == FormalParameterKind::Signature {
+    if params.kind == FormalParameterKind::Signature && params.items.len() > 1 {
         check_duplicate_bound_names(params, ctx);
     }
 
@@ -190,29 +117,6 @@ fn check_duplicate_bound_names<'a, T: BoundNames<'a>>(bound_names: &T, ctx: &Sem
     });
 }
 
-fn unexpected_assignment(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::error(
-        "The left-hand side of an assignment expression must be a variable or a property access.",
-    )
-    .with_label(span)
-}
-
-pub fn check_simple_assignment_target<'a>(
-    target: &SimpleAssignmentTarget<'a>,
-    ctx: &SemanticBuilder<'a>,
-) {
-    if let Some(expression) = target.get_expression() {
-        #[expect(clippy::match_same_arms)]
-        match expression.get_inner_expression() {
-            Expression::Identifier(_) => {}
-            match_member_expression!(Expression) => {}
-            _ => {
-                ctx.error(unexpected_assignment(target.span()));
-            }
-        }
-    }
-}
-
 fn unexpected_type_annotation(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::error("Unexpected type annotation").with_label(span)
 }
@@ -223,29 +127,6 @@ pub fn check_array_pattern<'a>(pattern: &ArrayPattern<'a>, ctx: &SemanticBuilder
             if let Some(type_annotation) = &element.type_annotation {
                 ctx.error(unexpected_type_annotation(type_annotation.span));
             }
-        }
-    }
-}
-
-/// An interface can only extend an identifier/qualified-name with optional type arguments.(2499)
-fn invalid_interface_extend(span: Span) -> OxcDiagnostic {
-    ts_error(
-        "2499",
-        "An interface can only extend an identifier/qualified-name with optional type arguments.",
-    )
-    .with_label(span)
-}
-
-pub fn check_ts_interface_declaration<'a>(
-    decl: &TSInterfaceDeclaration<'a>,
-    ctx: &SemanticBuilder<'a>,
-) {
-    for extend in &decl.extends {
-        if !matches!(
-            &extend.expression,
-            Expression::Identifier(_) | Expression::StaticMemberExpression(_),
-        ) {
-            ctx.error(invalid_interface_extend(extend.span));
         }
     }
 }
@@ -556,7 +437,7 @@ pub fn check_jsx_expression_container(
     ctx: &SemanticBuilder<'_>,
 ) {
     if matches!(container.expression, JSXExpression::EmptyExpression(_))
-        && matches!(ctx.nodes.parent_kind(ctx.current_node_id), Some(AstKind::JSXAttributeItem(_)))
+        && matches!(ctx.nodes.parent_kind(ctx.current_node_id), Some(AstKind::JSXAttribute(_)))
     {
         ctx.error(invalid_jsx_attribute_value(container.span()));
     }

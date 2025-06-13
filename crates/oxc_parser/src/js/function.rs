@@ -43,6 +43,7 @@ impl<'a> ParserImpl<'a> {
 
     pub(crate) fn parse_formal_parameters(
         &mut self,
+        func_kind: FunctionKind,
         params_kind: FormalParameterKind,
     ) -> (Option<TSThisParameter<'a>>, Box<'a, FormalParameters<'a>>) {
         let span = self.start_span();
@@ -58,7 +59,7 @@ impl<'a> ParserImpl<'a> {
         };
         let (list, rest) = self.parse_delimited_list_with_rest(
             Kind::RParen,
-            Self::parse_formal_parameter,
+            |p| p.parse_formal_parameter(func_kind),
             diagnostics::rest_parameter_last,
         );
         self.expect(Kind::RParen);
@@ -67,26 +68,31 @@ impl<'a> ParserImpl<'a> {
         (this_param, formal_parameters)
     }
 
-    fn parse_parameter_modifiers(&mut self) -> Modifiers<'a> {
-        let modifiers = self.parse_class_element_modifiers(true);
-        self.verify_modifiers(
-            &modifiers,
-            ModifierFlags::ACCESSIBILITY
-                .union(ModifierFlags::READONLY)
-                .union(ModifierFlags::OVERRIDE),
-            diagnostics::cannot_appear_on_a_parameter,
-        );
-        modifiers
-    }
-
-    fn parse_formal_parameter(&mut self) -> FormalParameter<'a> {
+    fn parse_formal_parameter(&mut self, func_kind: FunctionKind) -> FormalParameter<'a> {
         let span = self.start_span();
-        if self.at(Kind::At) {
-            self.parse_and_save_decorators();
+        let decorators = self.parse_decorators();
+        let modifiers = self.parse_modifiers(false, false);
+        if self.is_ts {
+            self.verify_modifiers(
+                &modifiers,
+                ModifierFlags::ACCESSIBILITY
+                    .union(ModifierFlags::READONLY)
+                    .union(ModifierFlags::OVERRIDE),
+                diagnostics::cannot_appear_on_a_parameter,
+            );
+        } else {
+            self.verify_modifiers(
+                &modifiers,
+                ModifierFlags::empty(),
+                diagnostics::parameter_modifiers_in_ts,
+            );
         }
-        let decorators = self.consume_decorators();
-        let modifiers = self.parse_parameter_modifiers();
         let pattern = self.parse_binding_pattern_with_initializer();
+        if func_kind != FunctionKind::ClassMethod || !self.is_ts {
+            for decorator in &decorators {
+                self.error(diagnostics::decorators_are_not_valid_here(decorator.span));
+            }
+        }
         self.ast.formal_parameter(
             self.end_span(span),
             decorators,
@@ -109,23 +115,16 @@ impl<'a> ParserImpl<'a> {
     ) -> Box<'a, Function<'a>> {
         let ctx = self.ctx;
         self.ctx = self.ctx.and_in(true).and_await(r#async).and_yield(generator);
-
         let type_parameters = self.parse_ts_type_parameters();
-
-        let (this_param, params) = self.parse_formal_parameters(param_kind);
-
+        let (this_param, params) = self.parse_formal_parameters(func_kind, param_kind);
         let return_type =
             self.parse_ts_return_type_annotation(Kind::Colon, /* is_type */ true);
-
         let body = if self.at(Kind::LCurly) { Some(self.parse_function_body()) } else { None };
-
         self.ctx =
             self.ctx.and_in(ctx.has_in()).and_await(ctx.has_await()).and_yield(ctx.has_yield());
-
         if !self.is_ts && body.is_none() {
             return self.unexpected();
         }
-
         let function_type = match func_kind {
             FunctionKind::Declaration | FunctionKind::DefaultExport => {
                 if body.is_none() {
@@ -134,7 +133,7 @@ impl<'a> ParserImpl<'a> {
                     FunctionType::FunctionDeclaration
                 }
             }
-            FunctionKind::Expression => {
+            FunctionKind::Expression | FunctionKind::ClassMethod | FunctionKind::ObjectMethod => {
                 if body.is_none() {
                     FunctionType::TSEmptyBodyFunctionExpression
                 } else {
@@ -150,6 +149,14 @@ impl<'a> ParserImpl<'a> {
             self.asi();
         }
 
+        if ctx.has_ambient() && modifiers.contains_declare() {
+            if let Some(body) = &body {
+                self.error(diagnostics::implementation_in_ambient(Span::new(
+                    body.span.start,
+                    body.span.start,
+                )));
+            }
+        }
         self.verify_modifiers(
             modifiers,
             ModifierFlags::DECLARE | ModifierFlags::ASYNC,
@@ -268,14 +275,19 @@ impl<'a> ParserImpl<'a> {
     ///   async `ClassElementName`
     /// `AsyncGeneratorMethod`
     ///   async * `ClassElementName`
-    pub(crate) fn parse_method(&mut self, r#async: bool, generator: bool) -> Box<'a, Function<'a>> {
+    pub(crate) fn parse_method(
+        &mut self,
+        r#async: bool,
+        generator: bool,
+        func_kind: FunctionKind,
+    ) -> Box<'a, Function<'a>> {
         let span = self.start_span();
         self.parse_function(
             span,
             None,
             r#async,
             generator,
-            FunctionKind::Expression,
+            func_kind,
             FormalParameterKind::UniqueFormalParameters,
             &Modifiers::empty(),
         )

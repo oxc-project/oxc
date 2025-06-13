@@ -2,7 +2,7 @@
   "name": "oxc-vscode",
   "description": "oxc vscode extension",
   "license": "MIT",
-  "version": "0.18.0",
+  "version": "1.1.0",
   "icon": "icon.png",
   "publisher": "oxc",
   "displayName": "Oxc",
@@ -110,6 +110,22 @@
           "default": null,
           "description": "Path to ESlint configuration. Keep it empty to enable nested configuration."
         },
+        "oxc.unusedDisableDirectives": {
+          "type": "string",
+          "scope": "resource",
+          "enum": [
+            "allow",
+            "warn",
+            "deny"
+          ],
+          "enumDescriptions": [
+            "Allow",
+            "Warn",
+            "Deny"
+          ],
+          "default": "allow",
+          "description": "Define how directive comments like `// oxlint-disable-line` should be reported, when no errors would have been reported on that line anyway."
+        },
         "oxc.flags": {
           "type": "object",
           "scope": "resource",
@@ -164,7 +180,7 @@
     "cross-env": "^7.0.3",
     "esbuild": "^0.25.0",
     "ovsx": "^0.10.0",
-    "oxlint": "^0.17.0",
+    "oxlint": "^0.18.0",
     "typescript": "^5.4.5"
   },
   "dependencies": {

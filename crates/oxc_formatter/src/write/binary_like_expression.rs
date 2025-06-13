@@ -1,13 +1,14 @@
 use std::mem::transmute_copy;
 
-use oxc_allocator::CloneIn;
-use oxc_ast::{AstKind, ast::*, precedence};
+use oxc_allocator::{Address, CloneIn, GetAddress};
+use oxc_ast::{ast::*, precedence};
 use oxc_span::GetSpan;
 use oxc_syntax::precedence::{GetPrecedence, Precedence};
 
 use crate::{
     Format,
-    formatter::{FormatResult, Formatter, parent_stack::ParentStack},
+    formatter::{FormatResult, Formatter},
+    generated::ast_nodes::{AstNode, AstNodes},
 };
 
 use crate::{format_args, formatter::prelude::*, write};
@@ -50,26 +51,33 @@ impl BinaryLikeOperator {
     }
 }
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Clone, Copy)]
 pub enum BinaryLikeExpression<'a, 'b> {
-    LogicalExpression(&'b LogicalExpression<'a>),
-    BinaryExpression(&'b BinaryExpression<'a>),
+    LogicalExpression(&'b AstNode<'a, LogicalExpression<'a>>),
+    BinaryExpression(&'b AstNode<'a, BinaryExpression<'a>>),
 }
 
 impl<'a, 'b> BinaryLikeExpression<'a, 'b> {
     /// Returns the left hand side of the binary expression.
-    fn left(&self) -> &'b Expression<'a> {
+    fn left(&self) -> &'b AstNode<'a, Expression<'a>> {
         match self {
-            Self::LogicalExpression(expr) => &expr.left,
-            Self::BinaryExpression(expr) => &expr.left,
+            Self::LogicalExpression(expr) => expr.left(),
+            Self::BinaryExpression(expr) => expr.left(),
         }
     }
 
     /// Returns the right hand side of the binary expression.
-    pub fn right(&self) -> &'b Expression<'a> {
+    pub fn right(&self) -> &'b AstNode<'a, Expression<'a>> {
         match self {
-            Self::LogicalExpression(expr) => &expr.right,
-            Self::BinaryExpression(expr) => &expr.right,
+            Self::LogicalExpression(expr) => expr.right(),
+            Self::BinaryExpression(expr) => expr.right(),
+        }
+    }
+
+    pub fn parent(&self) -> &AstNodes<'a> {
+        match self {
+            Self::LogicalExpression(expr) => expr.parent,
+            Self::BinaryExpression(expr) => expr.parent,
         }
     }
 
@@ -82,27 +90,27 @@ impl<'a, 'b> BinaryLikeExpression<'a, 'b> {
     /// if (true) { a + b } // false
     /// switch (a + b) {} // true
     /// ```
-    fn is_inside_condition(&self, parent: &AstKind<'_>) -> bool {
+    fn is_inside_condition(&self, parent: &AstNodes<'_>) -> bool {
         match parent {
-            AstKind::IfStatement(stmt) => stmt.test.span() == self.span(),
-            AstKind::DoWhileStatement(stmt) => stmt.test.span() == self.span(),
-            AstKind::WhileStatement(stmt) => stmt.test.span() == self.span(),
-            AstKind::SwitchStatement(stmt) => stmt.discriminant.span() == self.span(),
+            AstNodes::IfStatement(stmt) => stmt.test().span() == self.span(),
+            AstNodes::DoWhileStatement(stmt) => stmt.test().span() == self.span(),
+            AstNodes::WhileStatement(stmt) => stmt.test().span() == self.span(),
+            AstNodes::SwitchStatement(stmt) => stmt.discriminant().span() == self.span(),
             _ => false,
         }
     }
 
     pub fn operator(&self) -> BinaryLikeOperator {
         match self {
-            Self::LogicalExpression(expr) => BinaryLikeOperator::from(expr.operator),
-            Self::BinaryExpression(expr) => BinaryLikeOperator::from(expr.operator),
+            Self::LogicalExpression(expr) => BinaryLikeOperator::from(expr.operator()),
+            Self::BinaryExpression(expr) => BinaryLikeOperator::from(expr.operator()),
         }
     }
 
     /// Determines if a binary like expression should be flattened or not. As a rule of thumb, an expression
     /// can be flattened if its left hand side has the same operator-precedence
     fn can_flatten(&self) -> bool {
-        let left_operator = match self.left() {
+        let left_operator = match self.left().as_ref() {
             Expression::BinaryExpression(expr) => BinaryLikeOperator::from(expr.operator),
             Expression::LogicalExpression(expr) => BinaryLikeOperator::from(expr.operator),
             _ => return false,
@@ -115,7 +123,7 @@ impl<'a, 'b> BinaryLikeExpression<'a, 'b> {
         let Self::LogicalExpression(logical) = self else {
             return false;
         };
-        match &logical.right {
+        match &logical.right().as_ref() {
             Expression::ObjectExpression(object) => !object.properties.is_empty(),
             Expression::ArrayExpression(array) => !array.elements.is_empty(),
             Expression::JSXElement(_) | Expression::JSXFragment(_) => true,
@@ -128,30 +136,24 @@ impl<'a, 'b> BinaryLikeExpression<'a, 'b> {
     /// There are some cases where the indentation is done by the parent, so if the parent is already doing
     /// the indentation, then there's no need to do a second indentation.
     /// [Prettier applies]: <https://github.com/prettier/prettier/blob/b0201e01ef99db799eb3716f15b7dfedb0a2e62b/src/language-js/print/binaryish.js#L122-L125>
-    pub fn should_not_indent_if_parent_indents(
-        &self,
-        parent: &AstKind<'_>,
-        parent_stack: &ParentStack<'_>,
-    ) -> bool {
+    pub fn should_not_indent_if_parent_indents(&self, parent: &AstNodes<'a>) -> bool {
         match parent {
-            AstKind::ReturnStatement(_)
-            | AstKind::ThrowStatement(_)
-            | AstKind::ForStatement(_)
-            | AstKind::TemplateLiteral(_) => true,
+            AstNodes::ReturnStatement(_)
+            | AstNodes::ThrowStatement(_)
+            | AstNodes::ForStatement(_)
+            | AstNodes::TemplateLiteral(_) => true,
             // JsSyntaxKind::JSX_EXPRESSION_ATTRIBUTE_VALUE => true,
-            AstKind::ArrowFunctionExpression(arrow) => arrow.body.span == self.span(),
-            AstKind::ConditionalExpression(conditional) => {
-                parent_stack.parent2().is_some_and(|grand_parent| {
-                    matches!(
-                        grand_parent,
-                        AstKind::ReturnStatement(_)
-                            | AstKind::ThrowStatement(_)
-                            | AstKind::CallExpression(_)
-                            | AstKind::ImportExpression(_)
-                            | AstKind::Argument(_)
-                            | AstKind::MetaProperty(_)
-                    )
-                })
+            AstNodes::ArrowFunctionExpression(arrow) => arrow.body().span() == self.span(),
+            AstNodes::ConditionalExpression(conditional) => {
+                matches!(
+                    parent.parent(),
+                    AstNodes::ReturnStatement(_)
+                        | AstNodes::ThrowStatement(_)
+                        | AstNodes::CallExpression(_)
+                        | AstNodes::ImportExpression(_)
+                        | AstNodes::Argument(_)
+                        | AstNodes::MetaProperty(_)
+                )
             }
             _ => false,
         }
@@ -161,19 +163,28 @@ impl<'a, 'b> BinaryLikeExpression<'a, 'b> {
 impl GetSpan for BinaryLikeExpression<'_, '_> {
     fn span(&self) -> oxc_span::Span {
         match self {
-            Self::LogicalExpression(expr) => expr.span,
-            Self::BinaryExpression(expr) => expr.span,
+            Self::LogicalExpression(expr) => expr.span(),
+            Self::BinaryExpression(expr) => expr.span(),
         }
     }
 }
 
-impl<'a, 'b> TryFrom<&'b Expression<'a>> for BinaryLikeExpression<'a, 'b> {
+impl GetAddress for BinaryLikeExpression<'_, '_> {
+    fn address(&self) -> Address {
+        match self {
+            Self::LogicalExpression(expr) => Address::from_ptr(*expr),
+            Self::BinaryExpression(expr) => Address::from_ptr(*expr),
+        }
+    }
+}
+
+impl<'a, 'b> TryFrom<&'b AstNode<'a, Expression<'a>>> for BinaryLikeExpression<'a, 'b> {
     type Error = ();
 
-    fn try_from(value: &'b Expression<'a>) -> Result<Self, Self::Error> {
-        match value {
-            Expression::LogicalExpression(expr) => Ok(Self::LogicalExpression(expr)),
-            Expression::BinaryExpression(expr) => Ok(Self::BinaryExpression(expr)),
+    fn try_from(value: &'b AstNode<'a, Expression<'a>>) -> Result<Self, Self::Error> {
+        match value.as_ast_nodes() {
+            AstNodes::LogicalExpression(expr) => Ok(Self::LogicalExpression(expr)),
+            AstNodes::BinaryExpression(expr) => Ok(Self::BinaryExpression(expr)),
             _ => Err(()),
         }
     }
@@ -181,9 +192,8 @@ impl<'a, 'b> TryFrom<&'b Expression<'a>> for BinaryLikeExpression<'a, 'b> {
 
 impl<'a> Format<'a> for BinaryLikeExpression<'a, '_> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        let parent = f.parent_kind();
-
-        let is_inside_condition = self.is_inside_condition(&parent);
+        let parent = self.parent();
+        let is_inside_condition = self.is_inside_condition(parent);
         let parts = split_into_left_and_right_sides(*self, is_inside_condition);
 
         // Don't indent inside of conditions because conditions add their own indent and grouping.
@@ -193,12 +203,14 @@ impl<'a> Format<'a> for BinaryLikeExpression<'a, '_> {
 
         // Add a group with a soft block indent in cases where it is necessary to parenthesize the binary expression.
         // For example, `(a+b)(call)`, `!(a + b)`, `(a + b).test`.
-        let is_inside_parenthesis = match f.parent_kind() {
-            AstKind::MemberExpression(_) | AstKind::UnaryExpression(_) => true,
-            AstKind::CallExpression(call) => {
-                call.callee.without_parentheses().span() == self.span()
+        let is_inside_parenthesis = match parent {
+            AstNodes::MemberExpression(_) | AstNodes::UnaryExpression(_) => true,
+            AstNodes::CallExpression(call) => {
+                call.callee().without_parentheses().span() == self.span()
             }
-            AstKind::NewExpression(new) => new.callee.without_parentheses().span() == self.span(),
+            AstNodes::NewExpression(new) => {
+                new.callee().without_parentheses().span() == self.span()
+            }
             _ => false,
         };
 
@@ -210,8 +222,8 @@ impl<'a> Format<'a> for BinaryLikeExpression<'a, '_> {
         }
 
         let inline_logical_expression = self.should_inline_logical_expression();
-        let should_indent_if_inlines = should_indent_if_parent_inlines(&parent, f.parent_stack());
-        let should_not_indent = self.should_not_indent_if_parent_indents(&parent, f.parent_stack());
+        let should_indent_if_inlines = should_indent_if_parent_inlines(self.parent());
+        let should_not_indent = self.should_not_indent_if_parent_indents(self.parent());
 
         let flattened = parts.len() > 2;
 
@@ -260,7 +272,6 @@ impl<'a> Format<'a> for BinaryLikeExpression<'a, '_> {
 }
 
 /// Represents the right or left hand side of a binary expression.
-#[derive(Debug)]
 enum BinaryLeftOrRightSide<'a, 'b> {
     /// A terminal left hand side of a binary expression.
     ///
@@ -363,10 +374,16 @@ impl BinaryLeftOrRightSide<'_, '_> {
     fn is_jsx(&self) -> bool {
         match self {
             BinaryLeftOrRightSide::Left { parent } => {
-                matches!(parent.left(), Expression::JSXElement(_) | Expression::JSXFragment(_))
+                matches!(
+                    parent.left().as_ref(),
+                    Expression::JSXElement(_) | Expression::JSXFragment(_)
+                )
             }
             BinaryLeftOrRightSide::Right { parent, .. } => {
-                matches!(parent.right(), Expression::JSXElement(_) | Expression::JSXFragment(_))
+                matches!(
+                    parent.right().as_ref(),
+                    Expression::JSXElement(_) | Expression::JSXFragment(_)
+                )
             }
             _ => false,
         }
@@ -429,20 +446,20 @@ fn split_into_left_and_right_sides<'a, 'b>(
 /// these cases the decide to actually break on a new line and indent it.
 ///
 /// This function checks what the parents adheres to this behaviour
-fn should_indent_if_parent_inlines(parent: &AstKind<'_>, parent_stack: &ParentStack<'_>) -> bool {
-    if matches!(parent, AstKind::AssignmentExpression(_) | AstKind::ObjectProperty(_)) {
+fn should_indent_if_parent_inlines(parent: &AstNodes<'_>) -> bool {
+    if matches!(parent, AstNodes::AssignmentExpression(_) | AstNodes::ObjectProperty(_)) {
         return true;
     }
 
-    parent_stack.parent2().is_some_and(|kind| match kind {
-        AstKind::VariableDeclarator(decl) => {
-            decl.init.as_ref().is_some_and(|init| init.span() == parent.span())
+    match parent.parent() {
+        AstNodes::VariableDeclarator(decl) => {
+            decl.init().as_ref().is_some_and(|init| init.span() == parent.span())
         }
-        AstKind::PropertyDefinition(decl) => {
-            decl.value.as_ref().is_some_and(|value| value.span() == parent.span())
+        AstNodes::PropertyDefinition(decl) => {
+            decl.value().as_ref().is_some_and(|value| value.span() == parent.span())
         }
         _ => false,
-    })
+    }
 }
 
 fn is_same_binary_expression_kind(

@@ -1250,14 +1250,14 @@ mod test {
 
     #[test]
     fn test_coercion_substitution_boxed_number_vs_zero() {
-        test_same("var x = new Number(0);\nif (x != 0) throw 'a';\n");
+        test_same("var x = /* @__PURE__ */ new Number(0);\nif (x != 0) throw 'a';\n");
     }
 
     #[test]
     fn test_coercion_substitution_boxed_primitives() {
-        test_same("var x = new Number(); if (x != null) throw 'a';");
-        test_same("var x = new String(); if (x != null) throw 'a';");
-        test_same("var x = new Boolean();\nif (x != null) throw 'a';");
+        test_same("var x = /* @__PURE__ */ new Number(); if (x != null) throw 'a';");
+        test_same("var x = /* @__PURE__ */ new String(); if (x != null) throw 'a';");
+        test_same("var x = /* @__PURE__ */ new Boolean();\nif (x != null) throw 'a';");
     }
 
     #[test]

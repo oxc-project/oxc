@@ -3,18 +3,19 @@ use oxc_ast::ast::*;
 
 use crate::{
     formatter::{Format, FormatResult, Formatter, separated::FormatSeparatedIter},
+    generated::ast_nodes::AstNode,
     options::{FormatTrailingCommas, TrailingSeparator},
 };
 
 pub struct BindingPropertyList<'a, 'b> {
-    properties: &'b Vec<'a, BindingProperty<'a>>,
-    rest: Option<&'b Box<'a, BindingRestElement<'a>>>,
+    properties: &'b AstNode<'a, Vec<'a, BindingProperty<'a>>>,
+    rest: Option<&'b AstNode<'a, BindingRestElement<'a>>>,
 }
 
 impl<'a, 'b> BindingPropertyList<'a, 'b> {
     pub fn new(
-        properties: &'b Vec<'a, BindingProperty<'a>>,
-        rest: Option<&'b Box<'a, BindingRestElement<'a>>>,
+        properties: &'b AstNode<'a, Vec<'a, BindingProperty<'a>>>,
+        rest: Option<&'b AstNode<'a, BindingRestElement<'a>>>,
     ) -> Self {
         Self { properties, rest }
     }
@@ -34,7 +35,7 @@ impl<'a> Format<'a> for BindingPropertyList<'a, '_> {
             .zip(self.properties.iter());
         let mut join = f.join_nodes_with_soft_line();
         for (format_entry, node) in entries {
-            join.entry(node.span, source_text, &format_entry);
+            join.entry(node.span(), source_text, &format_entry);
         }
         join.finish()
     }

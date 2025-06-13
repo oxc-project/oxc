@@ -37,7 +37,7 @@ fn test() {
         import { AccessorDecorator } from 'decorators';
         export class Foo {
           @AccessorDecorator
-          set bar() {}
+          set bar(_foo) {}
         }
             ",
             None,
@@ -1561,14 +1561,6 @@ fn test() {
           import baz from 'baz';
           export interface Bar extends baz.test {}
                 ",
-            None,
-        ),
-        (
-            "
-          import test from 'test';
-          import baz from 'baz';
-          export interface Bar extends baz().test {}
-          ",
             None,
         ),
         (

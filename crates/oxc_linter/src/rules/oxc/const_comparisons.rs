@@ -16,8 +16,8 @@ fn redundant_left_hand_side(left_span: Span, right_span: Span, help: String) -> 
     OxcDiagnostic::warn("Left-hand side of `&&` operator has no effect.")
         .with_help(help)
         .with_labels([
-            left_span.label("If this evaluates to `true`"),
-            right_span.label("This will always evaluate to true."),
+            right_span.label("If this evaluates to `true`"),
+            left_span.label("This will always evaluate to true."),
         ])
 }
 
@@ -25,8 +25,8 @@ fn redundant_right_hand_side(right_span: Span, left_span: Span, help: String) ->
     OxcDiagnostic::warn("Right-hand side of `&&` operator has no effect.")
         .with_help(help)
         .with_labels([
-            right_span.label("If this evaluates to `true`"),
-            left_span.label("This will always evaluate to true."),
+            left_span.label("If this evaluates to `true`"),
+            right_span.label("This will always evaluate to true."),
         ])
 }
 

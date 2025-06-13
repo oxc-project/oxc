@@ -651,3 +651,24 @@ source: crates/oxc_linter/src/tester.rs
    ·                ────────
    ╰────
   help: Replace `string[]` with `Array<string>`.
+
+  ⚠ typescript-eslint(array-type): Array type using 'Array<number>' is forbidden. Use 'number[]' instead.
+   ╭─[array_type.ts:1:10]
+ 1 │ type x = Array<number>[]
+   ·          ─────────────
+   ╰────
+  help: Replace `Array<number>` with `number[]`.
+
+  ⚠ typescript-eslint(array-type): Array type using 'Array<Array<number>>' is forbidden. Use 'Array<number>[]' instead.
+   ╭─[array_type.ts:1:12]
+ 1 │ const arr: Array<Array<number>>[] = [];
+   ·            ────────────────────
+   ╰────
+  help: Replace `Array<Array<number>>` with `Array<number>[]`.
+
+  ⚠ typescript-eslint(array-type): Array type using 'Array<number>' is forbidden. Use 'number[]' instead.
+   ╭─[array_type.ts:1:26]
+ 1 │ export function fn4(arr: Array<number>[]) { return arr; }
+   ·                          ─────────────
+   ╰────
+  help: Replace `Array<number>` with `number[]`.

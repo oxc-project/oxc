@@ -23,7 +23,8 @@ fn test() {
         .push(ArrayExpressionElement::BooleanLiteral(ast.alloc(ast.boolean_literal(SPAN, true))));
     elements.push(ArrayExpressionElement::BigIntLiteral(ast.alloc(ast.big_int_literal(
         SPAN,
-        "42n",
+        "42",
+        Some(Atom::from("42n")),
         BigintBase::Decimal,
     ))));
     let array = ast.array_expression(SPAN, elements.clone_in(&allocator));

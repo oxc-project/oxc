@@ -19,6 +19,12 @@ fn cases() {
 }
 
 #[test]
+fn decorators() {
+    test_same("@a abstract class C {}\n");
+    test_tsx("@a @b export default abstract class {}", "export default @a @b abstract class {}\n");
+}
+
+#[test]
 fn tsx() {
     test_tsx("<T,>() => {}", "<T,>() => {};\n");
     test_tsx("<T, B>() => {}", "<\n\tT,\n\tB\n>() => {};\n");

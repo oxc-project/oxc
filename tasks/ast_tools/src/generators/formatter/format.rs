@@ -6,11 +6,10 @@ use quote::quote;
 
 use crate::{
     Codegen, Generator,
+    generators::define_generator,
     output::{Output, output_path},
     schema::{Def, Schema, TypeDef},
 };
-
-use super::define_generator;
 
 const FORMATTER_CRATE_PATH: &str = "crates/oxc_formatter";
 
@@ -43,9 +42,7 @@ impl Generator for FormatterFormatGenerator {
             .collect::<TokenStream>();
 
         let output = quote! {
-            #![allow(clippy::undocumented_unsafe_blocks)]
-
-            use oxc_ast::{AstKind, ast::*};
+            use oxc_ast::ast::*;
 
             ///@@line_break
             use crate::{
@@ -54,15 +51,9 @@ impl Generator for FormatterFormatGenerator {
                     trivia::{format_leading_comments, format_trailing_comments},
                 },
                 parentheses::NeedsParentheses,
+                generated::ast_nodes::AstNode,
                 write::FormatWrite,
             };
-
-            ///@@line_break
-            /// A hack for erasing the lifetime requirement.
-            pub fn hack<'ast, T>(t: &T) -> &'ast T {
-                // SAFETY: This is not safe :-)
-                unsafe { std::mem::transmute(t) }
-            }
 
             #impls
         };
@@ -72,8 +63,10 @@ impl Generator for FormatterFormatGenerator {
 }
 
 fn implementation(type_def: &TypeDef, schema: &Schema) -> TokenStream {
-    let type_ident = type_def.ident();
     let type_ty = type_def.ty(schema);
+    let type_ty = quote! {
+        AstNode::<'a, #type_ty>
+    };
 
     let has_kind = match type_def {
         TypeDef::Struct(struct_def) => struct_def.kind.has_kind,
@@ -92,27 +85,11 @@ fn implementation(type_def: &TypeDef, schema: &Schema) -> TokenStream {
         };
     }
 
-    let stack_before = if type_def.name() == "ParenthesizedExpression" {
-        quote! {}
-    } else {
-        quote! {
-            f.state_mut().stack.push(AstKind::#type_ident(hack(self)));
-        }
-    };
-
-    let stack_after = if type_def.name() == "ParenthesizedExpression" {
-        quote! {}
-    } else {
-        quote! {
-            f.state_mut().stack.pop();
-        }
-    };
-
     let leading_comments = if type_def.is_enum() {
         quote! {}
     } else {
         quote! {
-            format_leading_comments(self.span.start).fmt(f)?;
+            format_leading_comments(self.span().start).fmt(f)?;
         }
     };
 
@@ -120,7 +97,7 @@ fn implementation(type_def: &TypeDef, schema: &Schema) -> TokenStream {
         quote! {}
     } else {
         quote! {
-            format_trailing_comments(self.span.end).fmt(f)?;
+            format_trailing_comments(self.span().end).fmt(f)?;
         }
     };
 
@@ -129,7 +106,7 @@ fn implementation(type_def: &TypeDef, schema: &Schema) -> TokenStream {
         type_def_name.ends_with("Expression") || NEEDS_PARENTHESES.contains(&type_def_name);
     let needs_parentheses_before = if needs_parentheses {
         quote! {
-            let needs_parentheses = self.needs_parentheses(&f.state().stack);
+            let needs_parentheses = self.needs_parentheses(f);
             if needs_parentheses {
                 "(".fmt(f)?;
             }
@@ -150,18 +127,26 @@ fn implementation(type_def: &TypeDef, schema: &Schema) -> TokenStream {
         quote! {}
     };
 
+    let implementation = if needs_parentheses_before.is_empty() && trailing_comments.is_empty() {
+        quote! {
+            self.write(f)
+        }
+    } else {
+        quote! {
+            #leading_comments
+            #needs_parentheses_before
+            let result = self.write(f);
+            #needs_parentheses_after
+            #trailing_comments
+            result
+        }
+    };
+
     quote! {
         ///@@line_break
         impl<'a> Format<'a> for #type_ty {
             fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-                #stack_before
-                #leading_comments
-                #needs_parentheses_before
-                let result = self.write(f);
-                #needs_parentheses_after
-                #trailing_comments
-                #stack_after
-                result
+                #implementation
             }
         }
     }

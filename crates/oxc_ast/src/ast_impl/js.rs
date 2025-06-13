@@ -370,6 +370,21 @@ impl<'a> Expression<'a> {
     pub fn is_assignment(&self) -> bool {
         matches!(self, Expression::AssignmentExpression(_))
     }
+
+    /// Is identifier or `a.b` expression where `a` is an identifier.
+    pub fn is_entity_name_expression(&self) -> bool {
+        matches!(self.without_parentheses(), Expression::Identifier(_))
+            || self.is_property_access_entity_name_expression()
+    }
+
+    /// `a.b` expression where `a` is an identifier.
+    pub fn is_property_access_entity_name_expression(&self) -> bool {
+        if let Expression::StaticMemberExpression(e) = self {
+            e.object.is_entity_name_expression()
+        } else {
+            false
+        }
+    }
 }
 
 impl Display for IdentifierName<'_> {
@@ -439,7 +454,7 @@ impl<'a> PropertyKey<'a> {
             Self::StringLiteral(lit) => Some(Cow::Borrowed(lit.value.as_str())),
             Self::RegExpLiteral(lit) => Some(Cow::Owned(lit.regex.to_string())),
             Self::NumericLiteral(lit) => Some(Cow::Owned(lit.value.to_string())),
-            Self::BigIntLiteral(lit) => Some(Cow::Borrowed(lit.raw.as_str())),
+            Self::BigIntLiteral(lit) => Some(Cow::Borrowed(lit.value.as_str())),
             Self::NullLiteral(_) => Some(Cow::Borrowed("null")),
             Self::TemplateLiteral(lit) => {
                 lit.expressions.is_empty().then(|| lit.quasi()).flatten().map(Into::into)

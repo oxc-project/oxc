@@ -2161,13 +2161,11 @@ pub mod walk {
 
     #[inline]
     pub fn walk_for_statement_init<'a, V: Visit<'a>>(visitor: &mut V, it: &ForStatementInit<'a>) {
-        let kind = AstKind::ForStatementInit(visitor.alloc(it));
-        visitor.enter_node(kind);
+        // No `AstKind` for this type
         match it {
             ForStatementInit::VariableDeclaration(it) => visitor.visit_variable_declaration(it),
             match_expression!(ForStatementInit) => visitor.visit_expression(it.to_expression()),
         }
-        visitor.leave_node(kind);
     }
 
     #[inline]
@@ -2969,20 +2967,23 @@ pub mod walk {
 
     #[inline]
     pub fn walk_jsx_opening_fragment<'a, V: Visit<'a>>(visitor: &mut V, it: &JSXOpeningFragment) {
-        // No `AstKind` for this type
+        let kind = AstKind::JSXOpeningFragment(visitor.alloc(it));
+        visitor.enter_node(kind);
         visitor.visit_span(&it.span);
+        visitor.leave_node(kind);
     }
 
     #[inline]
     pub fn walk_jsx_closing_fragment<'a, V: Visit<'a>>(visitor: &mut V, it: &JSXClosingFragment) {
-        // No `AstKind` for this type
+        let kind = AstKind::JSXClosingFragment(visitor.alloc(it));
+        visitor.enter_node(kind);
         visitor.visit_span(&it.span);
+        visitor.leave_node(kind);
     }
 
     #[inline]
     pub fn walk_jsx_element_name<'a, V: Visit<'a>>(visitor: &mut V, it: &JSXElementName<'a>) {
-        let kind = AstKind::JSXElementName(visitor.alloc(it));
-        visitor.enter_node(kind);
+        // No `AstKind` for this type
         match it {
             JSXElementName::Identifier(it) => visitor.visit_jsx_identifier(it),
             JSXElementName::IdentifierReference(it) => visitor.visit_identifier_reference(it),
@@ -2990,7 +2991,6 @@ pub mod walk {
             JSXElementName::MemberExpression(it) => visitor.visit_jsx_member_expression(it),
             JSXElementName::ThisExpression(it) => visitor.visit_this_expression(it),
         }
-        visitor.leave_node(kind);
     }
 
     #[inline]
@@ -3021,8 +3021,7 @@ pub mod walk {
         visitor: &mut V,
         it: &JSXMemberExpressionObject<'a>,
     ) {
-        let kind = AstKind::JSXMemberExpressionObject(visitor.alloc(it));
-        visitor.enter_node(kind);
+        // No `AstKind` for this type
         match it {
             JSXMemberExpressionObject::IdentifierReference(it) => {
                 visitor.visit_identifier_reference(it)
@@ -3032,7 +3031,6 @@ pub mod walk {
             }
             JSXMemberExpressionObject::ThisExpression(it) => visitor.visit_this_expression(it),
         }
-        visitor.leave_node(kind);
     }
 
     #[inline]
@@ -3058,29 +3056,31 @@ pub mod walk {
 
     #[inline]
     pub fn walk_jsx_empty_expression<'a, V: Visit<'a>>(visitor: &mut V, it: &JSXEmptyExpression) {
-        // No `AstKind` for this type
-        visitor.visit_span(&it.span);
-    }
-
-    #[inline]
-    pub fn walk_jsx_attribute_item<'a, V: Visit<'a>>(visitor: &mut V, it: &JSXAttributeItem<'a>) {
-        let kind = AstKind::JSXAttributeItem(visitor.alloc(it));
+        let kind = AstKind::JSXEmptyExpression(visitor.alloc(it));
         visitor.enter_node(kind);
-        match it {
-            JSXAttributeItem::Attribute(it) => visitor.visit_jsx_attribute(it),
-            JSXAttributeItem::SpreadAttribute(it) => visitor.visit_jsx_spread_attribute(it),
-        }
+        visitor.visit_span(&it.span);
         visitor.leave_node(kind);
     }
 
     #[inline]
-    pub fn walk_jsx_attribute<'a, V: Visit<'a>>(visitor: &mut V, it: &JSXAttribute<'a>) {
+    pub fn walk_jsx_attribute_item<'a, V: Visit<'a>>(visitor: &mut V, it: &JSXAttributeItem<'a>) {
         // No `AstKind` for this type
+        match it {
+            JSXAttributeItem::Attribute(it) => visitor.visit_jsx_attribute(it),
+            JSXAttributeItem::SpreadAttribute(it) => visitor.visit_jsx_spread_attribute(it),
+        }
+    }
+
+    #[inline]
+    pub fn walk_jsx_attribute<'a, V: Visit<'a>>(visitor: &mut V, it: &JSXAttribute<'a>) {
+        let kind = AstKind::JSXAttribute(visitor.alloc(it));
+        visitor.enter_node(kind);
         visitor.visit_span(&it.span);
         visitor.visit_jsx_attribute_name(&it.name);
         if let Some(value) = &it.value {
             visitor.visit_jsx_attribute_value(value);
         }
+        visitor.leave_node(kind);
     }
 
     #[inline]
@@ -3139,9 +3139,11 @@ pub mod walk {
 
     #[inline]
     pub fn walk_jsx_spread_child<'a, V: Visit<'a>>(visitor: &mut V, it: &JSXSpreadChild<'a>) {
-        // No `AstKind` for this type
+        let kind = AstKind::JSXSpreadChild(visitor.alloc(it));
+        visitor.enter_node(kind);
         visitor.visit_span(&it.span);
         visitor.visit_expression(&it.expression);
+        visitor.leave_node(kind);
     }
 
     #[inline]
@@ -4099,9 +4101,11 @@ pub mod walk {
         visitor: &mut V,
         it: &JSDocNullableType<'a>,
     ) {
-        // No `AstKind` for this type
+        let kind = AstKind::JSDocNullableType(visitor.alloc(it));
+        visitor.enter_node(kind);
         visitor.visit_span(&it.span);
         visitor.visit_ts_type(&it.type_annotation);
+        visitor.leave_node(kind);
     }
 
     #[inline]
@@ -4109,15 +4113,19 @@ pub mod walk {
         visitor: &mut V,
         it: &JSDocNonNullableType<'a>,
     ) {
-        // No `AstKind` for this type
+        let kind = AstKind::JSDocNonNullableType(visitor.alloc(it));
+        visitor.enter_node(kind);
         visitor.visit_span(&it.span);
         visitor.visit_ts_type(&it.type_annotation);
+        visitor.leave_node(kind);
     }
 
     #[inline]
     pub fn walk_js_doc_unknown_type<'a, V: Visit<'a>>(visitor: &mut V, it: &JSDocUnknownType) {
-        // No `AstKind` for this type
+        let kind = AstKind::JSDocUnknownType(visitor.alloc(it));
+        visitor.enter_node(kind);
         visitor.visit_span(&it.span);
+        visitor.leave_node(kind);
     }
 
     #[inline]
