@@ -372,6 +372,10 @@ impl<'a> ParserImpl<'a> {
 
         let pattern = RegExpPattern { text: Atom::from(pattern_text), pattern };
 
+        if flags.contains(RegExpFlags::U | RegExpFlags::V) {
+            self.error(diagnostics::reg_exp_flag_u_and_v(span));
+        }
+
         self.ast.reg_exp_literal(span, RegExp { pattern, flags }, Some(Atom::from(raw)))
     }
 

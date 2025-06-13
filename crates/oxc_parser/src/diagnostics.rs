@@ -709,3 +709,49 @@ pub fn interface_extend(span: Span) -> OxcDiagnostic {
     )
     .with_label(span)
 }
+
+#[cold]
+pub fn reg_exp_flag_u_and_v(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::error(
+        "The 'u' and 'v' regular expression flags cannot be enabled at the same time",
+    )
+    .with_label(span)
+}
+
+#[cold]
+pub fn setter_with_parameters(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::error("A 'set' accessor must have exactly one parameter.").with_label(span)
+}
+
+#[cold]
+pub fn setter_with_rest_parameter(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::error("A 'set' accessor cannot have rest parameter.").with_label(span)
+}
+
+#[cold]
+pub fn getter_parameters(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::error("A 'get' accessor must not have any formal parameters.").with_label(span)
+}
+
+#[cold]
+pub fn variable_declarator_definite(span: Span) -> OxcDiagnostic {
+    ts_error(
+        "1263",
+        "Declarations with initializers cannot also have definite assignment assertions.",
+    )
+    .with_label(span)
+}
+
+#[cold]
+pub fn variable_declarator_definite_type_assertion(span: Span) -> OxcDiagnostic {
+    ts_error(
+        "1264",
+        "Declarations with definite assignment assertions must also have type annotations.",
+    )
+    .with_label(span)
+}
+
+#[cold]
+pub fn invalid_rest_assignment_target(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::error("Invalid rest operator's argument.").with_label(span)
+}

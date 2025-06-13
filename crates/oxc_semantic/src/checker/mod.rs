@@ -11,47 +11,42 @@ mod typescript;
 use javascript as js;
 use typescript as ts;
 
-use crate::{AstNode, builder::SemanticBuilder};
+use crate::builder::SemanticBuilder;
 
-pub fn check<'a>(node: &AstNode<'a>, ctx: &SemanticBuilder<'a>) {
-    let kind = node.kind();
-
-    let is_typescript = ctx.source_type.is_typescript();
-
+pub fn check<'a>(kind: AstKind<'a>, ctx: &SemanticBuilder<'a>) {
     match kind {
         AstKind::Program(_) => {
             js::check_duplicate_class_elements(ctx);
         }
         AstKind::BindingIdentifier(ident) => {
-            js::check_identifier(&ident.name, ident.span, node, ctx);
-            js::check_binding_identifier(ident, node, ctx);
+            js::check_identifier(&ident.name, ident.span, ctx);
+            js::check_binding_identifier(ident, ctx);
         }
         AstKind::IdentifierReference(ident) => {
-            js::check_identifier(&ident.name, ident.span, node, ctx);
-            js::check_identifier_reference(ident, node, ctx);
+            js::check_identifier(&ident.name, ident.span, ctx);
+            js::check_identifier_reference(ident, ctx);
         }
-        AstKind::LabelIdentifier(ident) => js::check_identifier(&ident.name, ident.span, node, ctx),
+        AstKind::LabelIdentifier(ident) => js::check_identifier(&ident.name, ident.span, ctx),
         AstKind::PrivateIdentifier(ident) => js::check_private_identifier_outside_class(ident, ctx),
         AstKind::NumericLiteral(lit) => js::check_number_literal(lit, ctx),
         AstKind::StringLiteral(lit) => js::check_string_literal(lit, ctx),
-        AstKind::RegExpLiteral(lit) => js::check_regexp_literal(lit, ctx),
 
         AstKind::Directive(dir) => js::check_directive(dir, ctx),
         AstKind::ModuleDeclaration(decl) => {
-            js::check_module_declaration(decl, node, ctx);
+            js::check_module_declaration(decl, ctx);
         }
-        AstKind::MetaProperty(prop) => js::check_meta_property(prop, node, ctx),
+        AstKind::MetaProperty(prop) => js::check_meta_property(prop, ctx),
 
         AstKind::WithStatement(stmt) => {
             js::check_function_declaration(&stmt.body, false, ctx);
             js::check_with_statement(stmt, ctx);
         }
         AstKind::SwitchStatement(stmt) => js::check_switch_statement(stmt, ctx),
-        AstKind::BreakStatement(stmt) => js::check_break_statement(stmt, node, ctx),
-        AstKind::ContinueStatement(stmt) => js::check_continue_statement(stmt, node, ctx),
+        AstKind::BreakStatement(stmt) => js::check_break_statement(stmt, ctx),
+        AstKind::ContinueStatement(stmt) => js::check_continue_statement(stmt, ctx),
         AstKind::LabeledStatement(stmt) => {
-            js::check_labeled_statement(stmt, node, ctx);
-            js::check_function_declaration_in_labeled_statement(&stmt.body, node, ctx);
+            js::check_labeled_statement(stmt, ctx);
+            js::check_function_declaration_in_labeled_statement(&stmt.body, ctx);
         }
         AstKind::ForInStatement(stmt) => {
             js::check_function_declaration(&stmt.body, false, ctx);
@@ -75,25 +70,23 @@ pub fn check<'a>(node: &AstNode<'a>, ctx: &SemanticBuilder<'a>) {
             }
         }
         AstKind::Class(class) => {
-            js::check_class(class, node, ctx);
-            if !is_typescript {
+            js::check_class(class, ctx);
+            if !ctx.source_type.is_typescript() {
                 js::check_class_redeclaration(class, ctx);
             }
             ts::check_class(class, ctx);
         }
-        AstKind::Function(func) if !is_typescript => {
+        AstKind::Function(func) if !ctx.source_type.is_typescript() => {
             js::check_function_redeclaration(func, ctx);
         }
         AstKind::MethodDefinition(method) => {
-            js::check_method_definition(method, ctx);
             ts::check_method_definition(method, ctx);
         }
         AstKind::PropertyDefinition(prop) => ts::check_property_definition(prop, ctx),
         AstKind::ObjectProperty(prop) => {
-            js::check_object_property(prop, ctx);
             ts::check_object_property(prop, ctx);
         }
-        AstKind::Super(sup) => js::check_super(sup, node, ctx),
+        AstKind::Super(sup) => js::check_super(sup, ctx),
 
         AstKind::FormalParameters(params) => {
             ts::check_formal_parameters(params, ctx);
@@ -103,19 +96,16 @@ pub fn check<'a>(node: &AstNode<'a>, ctx: &SemanticBuilder<'a>) {
         }
 
         AstKind::AssignmentExpression(expr) => js::check_assignment_expression(expr, ctx),
-        AstKind::AwaitExpression(expr) => js::check_await_expression(expr, node, ctx),
+        AstKind::AwaitExpression(expr) => js::check_await_expression(expr, ctx),
         AstKind::MemberExpression(expr) => js::check_member_expression(expr, ctx),
         AstKind::ObjectExpression(expr) => js::check_object_expression(expr, ctx),
         AstKind::UnaryExpression(expr) => js::check_unary_expression(expr, ctx),
-        AstKind::YieldExpression(expr) => js::check_yield_expression(expr, node, ctx),
-        AstKind::VariableDeclaration(decl) => ts::check_variable_declaration(decl, ctx),
+        AstKind::YieldExpression(expr) => js::check_yield_expression(expr, ctx),
         AstKind::VariableDeclarator(decl) => {
-            if !is_typescript {
+            if !ctx.source_type.is_typescript() {
                 js::check_variable_declarator_redeclaration(decl, ctx);
             }
-            ts::check_variable_declarator(decl, ctx);
         }
-        AstKind::SimpleAssignmentTarget(target) => ts::check_simple_assignment_target(target, ctx),
         AstKind::TSTypeAnnotation(annot) => ts::check_ts_type_annotation(annot, ctx),
         AstKind::TSTypeParameterDeclaration(declaration) => {
             ts::check_ts_type_parameter_declaration(declaration, ctx);

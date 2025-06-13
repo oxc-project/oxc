@@ -37,7 +37,7 @@ fn test() {
         import { AccessorDecorator } from 'decorators';
         export class Foo {
           @AccessorDecorator
-          set bar() {}
+          set bar(_foo) {}
         }
             ",
             None,

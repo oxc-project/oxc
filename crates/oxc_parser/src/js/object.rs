@@ -202,8 +202,12 @@ impl<'a> ParserImpl<'a> {
         modifiers: &Modifiers<'a>,
     ) -> Box<'a, ObjectProperty<'a>> {
         let (key, computed) = self.parse_property_name();
-        let method = self.parse_method(false, false, FunctionKind::ObjectMethod);
-        let value = Expression::FunctionExpression(method);
+        let function = self.parse_method(false, false, FunctionKind::ObjectMethod);
+        match kind {
+            PropertyKind::Get => self.check_getter(&function),
+            PropertyKind::Set => self.check_setter(&function),
+            PropertyKind::Init => {}
+        }
         self.verify_modifiers(
             modifiers,
             ModifierFlags::empty(),
@@ -213,7 +217,7 @@ impl<'a> ParserImpl<'a> {
             self.end_span(span),
             kind,
             key,
-            value,
+            Expression::FunctionExpression(function),
             /* method */ false,
             /* shorthand */ false,
             /* computed */ computed,

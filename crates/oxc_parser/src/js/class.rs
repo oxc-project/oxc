@@ -591,7 +591,27 @@ impl<'a> ParserImpl<'a> {
         )
     }
 
+    pub(crate) fn check_getter(&mut self, function: &Function<'a>) {
+        if !function.params.items.is_empty() {
+            self.error(diagnostics::getter_parameters(function.params.span));
+        }
+    }
+
+    pub(crate) fn check_setter(&mut self, function: &Function<'a>) {
+        if let Some(rest) = &function.params.rest {
+            self.error(diagnostics::setter_with_rest_parameter(rest.span));
+        } else if function.params.parameters_count() != 1 {
+            self.error(diagnostics::setter_with_parameters(function.params.span));
+        }
+    }
+
     fn check_method_definition(&mut self, method: &MethodDefinition<'a>) {
+        let function = &method.value;
+        match method.kind {
+            MethodDefinitionKind::Get => self.check_getter(function),
+            MethodDefinitionKind::Set => self.check_setter(function),
+            _ => {}
+        }
         if !method.computed {
             if let Some((name, span)) = method.key.prop_name() {
                 if method.r#static && name == "prototype" && !self.ctx.has_ambient() {

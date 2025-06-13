@@ -3,7 +3,7 @@ commit: 81c95189
 parser_typescript Summary:
 AST Parsed     : 6530/6537 (99.89%)
 Positive Passed: 6519/6537 (99.72%)
-Negative Passed: 1407/5763 (24.41%)
+Negative Passed: 1403/5763 (24.34%)
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/ClassDeclaration24.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/ExportAssignment7.ts
@@ -77,6 +77,8 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/allowSynthet
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/allowSyntheticDefaultImports8.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/ambientEnum1.ts
+
+Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/ambientErrors1.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/ambientExportDefaultErrors.ts
 
@@ -787,6 +789,8 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/constDeclara
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/constDeclarations-access4.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/constDeclarations-access5.ts
+
+Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/constDeclarations-ambient-errors.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/constDeclarations-useBeforeDefinition.ts
 
@@ -1615,6 +1619,8 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/extendNonCla
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/extendPrivateConstructorClass.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/extendedInterfacesWithDuplicateTypeParameters.ts
+
+Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/externSemantics.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/externSyntax.ts
 
@@ -7250,6 +7256,8 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ec
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/ErrorRecovery/parserModifierOnStatementInBlock1.ts
 
+Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/ErrorRecovery/parserModifierOnStatementInBlock2.ts
+
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/ErrorRecovery/parserModifierOnStatementInBlock3.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/ErrorRecovery/parserModifierOnStatementInBlock4.ts
@@ -9377,12 +9385,6 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
  5 │     }
    ╰────
 
-  × TS(1039): Initializers are not allowed in ambient contexts.
-   ╭─[typescript/tests/cases/compiler/ambientErrors1.ts:1:17]
- 1 │ declare var x = 4;
-   ·                 ─
-   ╰────
-
   × Expected `;` but found `:`
    ╭─[typescript/tests/cases/compiler/ambientPropertyDeclarationInJs.ts:6:17]
  5 │ 
@@ -10976,46 +10978,6 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
     ·       ╰── It can not be redeclared here
  22 │ }
     ╰────
-
-  × TS(1039): Initializers are not allowed in ambient contexts.
-   ╭─[typescript/tests/cases/compiler/constDeclarations-ambient-errors.ts:2:29]
- 1 │ // error: no intialization expected in ambient declarations
- 2 │ declare const c1: boolean = true;
-   ·                             ────
- 3 │ declare const c2: number = 0;
-   ╰────
-
-  × TS(1039): Initializers are not allowed in ambient contexts.
-   ╭─[typescript/tests/cases/compiler/constDeclarations-ambient-errors.ts:3:28]
- 2 │ declare const c1: boolean = true;
- 3 │ declare const c2: number = 0;
-   ·                            ─
- 4 │ declare const c3 = null, c4 :string = "", c5: any = 0;
-   ╰────
-
-  × TS(1039): Initializers are not allowed in ambient contexts.
-   ╭─[typescript/tests/cases/compiler/constDeclarations-ambient-errors.ts:4:20]
- 3 │ declare const c2: number = 0;
- 4 │ declare const c3 = null, c4 :string = "", c5: any = 0;
-   ·                    ────
- 5 │ 
-   ╰────
-
-  × TS(1039): Initializers are not allowed in ambient contexts.
-   ╭─[typescript/tests/cases/compiler/constDeclarations-ambient-errors.ts:4:39]
- 3 │ declare const c2: number = 0;
- 4 │ declare const c3 = null, c4 :string = "", c5: any = 0;
-   ·                                       ──
- 5 │ 
-   ╰────
-
-  × TS(1039): Initializers are not allowed in ambient contexts.
-   ╭─[typescript/tests/cases/compiler/constDeclarations-ambient-errors.ts:4:53]
- 3 │ declare const c2: number = 0;
- 4 │ declare const c3 = null, c4 :string = "", c5: any = 0;
-   ·                                                     ─
- 5 │ 
-   ╰────
 
   × Missing initializer in const declaration
    ╭─[typescript/tests/cases/compiler/constDeclarations-errors.ts:2:7]
@@ -12637,20 +12599,6 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
  2 │     export class XDate {
    ╰────
   help: Try insert a semicolon here
-
-  × TS(1039): Initializers are not allowed in ambient contexts.
-   ╭─[typescript/tests/cases/compiler/externSemantics.ts:1:15]
- 1 │ declare var x=10;
-   ·               ──
- 2 │ declare var v;
-   ╰────
-
-  × TS(1039): Initializers are not allowed in ambient contexts.
-   ╭─[typescript/tests/cases/compiler/externSemantics.ts:3:22]
- 2 │ declare var v;
- 3 │ declare var y:number=3;
-   ·                      ─
-   ╰────
 
   × Expected `,` but found `=>`
    ╭─[typescript/tests/cases/compiler/fatarrowfunctionsErrors.ts:2:8]
@@ -18257,85 +18205,6 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
  12 │     }
     ╰────
 
-  × TS(1039): Initializers are not allowed in ambient contexts.
-    ╭─[typescript/tests/cases/compiler/varBlock.ts:15:17]
- 14 │ 
- 15 │ declare var b = 10;
-    ·                 ──
- 16 │ 
-    ╰────
-
-  × TS(1039): Initializers are not allowed in ambient contexts.
-    ╭─[typescript/tests/cases/compiler/varBlock.ts:21:18]
- 20 │ 
- 21 │ declare var da = 10;
-    ·                  ──
- 22 │ declare var d3, d4 = 10;
-    ╰────
-
-  × TS(1039): Initializers are not allowed in ambient contexts.
-    ╭─[typescript/tests/cases/compiler/varBlock.ts:22:22]
- 21 │ declare var da = 10;
- 22 │ declare var d3, d4 = 10;
-    ·                      ──
- 23 │ 
-    ╰────
-
-  × TS(1039): Initializers are not allowed in ambient contexts.
-    ╭─[typescript/tests/cases/compiler/varBlock.ts:25:21]
- 24 │ module m3 {
- 25 │     declare var d = 10;
-    ·                     ──
- 26 │     declare var d2, d3 = 10, d4 = 10;
-    ╰────
-
-  × TS(1039): Initializers are not allowed in ambient contexts.
-    ╭─[typescript/tests/cases/compiler/varBlock.ts:26:26]
- 25 │     declare var d = 10;
- 26 │     declare var d2, d3 = 10, d4 = 10;
-    ·                          ──
- 27 │     export declare var dE = 10;
-    ╰────
-
-  × TS(1039): Initializers are not allowed in ambient contexts.
-    ╭─[typescript/tests/cases/compiler/varBlock.ts:26:35]
- 25 │     declare var d = 10;
- 26 │     declare var d2, d3 = 10, d4 = 10;
-    ·                                   ──
- 27 │     export declare var dE = 10;
-    ╰────
-
-  × TS(1039): Initializers are not allowed in ambient contexts.
-    ╭─[typescript/tests/cases/compiler/varBlock.ts:27:29]
- 26 │     declare var d2, d3 = 10, d4 = 10;
- 27 │     export declare var dE = 10;
-    ·                             ──
- 28 │     export declare var d2E, d3E = 10, d4E = 10;
-    ╰────
-
-  × TS(1039): Initializers are not allowed in ambient contexts.
-    ╭─[typescript/tests/cases/compiler/varBlock.ts:28:35]
- 27 │     export declare var dE = 10;
- 28 │     export declare var d2E, d3E = 10, d4E = 10;
-    ·                                   ──
- 29 │ }
-    ╰────
-
-  × TS(1039): Initializers are not allowed in ambient contexts.
-    ╭─[typescript/tests/cases/compiler/varBlock.ts:28:45]
- 27 │     export declare var dE = 10;
- 28 │     export declare var d2E, d3E = 10, d4E = 10;
-    ·                                             ──
- 29 │ }
-    ╰────
-
-  × TS(1039): Initializers are not allowed in ambient contexts.
-    ╭─[typescript/tests/cases/compiler/varBlock.ts:39:17]
- 38 │ declare var c;
- 39 │ declare var c = 10;
-    ·                 ──
-    ╰────
-
   × Cannot assign to 'eval' in strict mode
    ╭─[typescript/tests/cases/compiler/variableDeclarationInStrictMode1.ts:2:5]
  1 │ "use strict";
@@ -18398,14 +18267,6 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
     ·                        ▲
  21 │ 
     ╰────
-
-  × TS(1039): Initializers are not allowed in ambient contexts.
-   ╭─[typescript/tests/cases/conformance/ambient/ambientErrors.ts:2:17]
- 1 │ // Ambient variable with an initializer 
- 2 │ declare var x = 4;
-   ·                 ─
- 3 │ 
-   ╰────
 
   × Identifier expected. 'debugger' is a reserved word that cannot be used here.
    ╭─[typescript/tests/cases/conformance/ambient/ambientModuleDeclarationWithReservedIdentifierInDottedPath.ts:3:23]
@@ -20839,7 +20700,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
     ╭─[typescript/tests/cases/conformance/controlFlow/definiteAssignmentAssertions.ts:69:10]
  68 │ function f4() {
  69 │     let a!;
-    ·          ▲
+    ·          ─
  70 │     let b! = 1;
     ╰────
 
@@ -20847,7 +20708,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
     ╭─[typescript/tests/cases/conformance/controlFlow/definiteAssignmentAssertions.ts:70:10]
  69 │     let a!;
  70 │     let b! = 1;
-    ·          ▲
+    ·          ─
  71 │     let c!: number = 1;
     ╰────
 
@@ -20855,7 +20716,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
     ╭─[typescript/tests/cases/conformance/controlFlow/definiteAssignmentAssertions.ts:71:10]
  70 │     let b! = 1;
  71 │     let c!: number = 1;
-    ·          ▲
+    ·          ─
  72 │ }
     ╰────
 
@@ -21807,11 +21668,33 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
    ·         ─────
    ╰────
 
+  × Invalid rest operator's argument.
+   ╭─[typescript/tests/cases/conformance/es6/destructuring/restElementWithInitializer2.ts:3:5]
+ 2 │ var x: number[];
+ 3 │ [...x = a] = a;  // Error, rest element cannot have initializer
+   ·     ─────
+   ╰────
+
   × Cannot assign to this expression
    ╭─[typescript/tests/cases/conformance/es6/destructuring/restElementWithInitializer2.ts:3:5]
  2 │ var x: number[];
  3 │ [...x = a] = a;  // Error, rest element cannot have initializer
    ·     ─────
+   ╰────
+
+  × Invalid rest operator's argument.
+   ╭─[typescript/tests/cases/conformance/es6/destructuring/restPropertyWithBindingPattern.ts:1:6]
+ 1 │ ({...{}} = {});
+   ·      ──
+ 2 │ ({...({})} = {});
+   ╰────
+
+  × Invalid rest operator's argument.
+   ╭─[typescript/tests/cases/conformance/es6/destructuring/restPropertyWithBindingPattern.ts:2:6]
+ 1 │ ({...{}} = {});
+ 2 │ ({...({})} = {});
+   ·      ────
+ 3 │ ({...[]} = {});
    ╰────
 
   × Cannot assign to this expression
@@ -27157,14 +27040,6 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
  5 │             return this.doWhile((item, i) => filter(item, i) ? test(item, index++) : true);
    ╰────
 
-  × TS(1039): Initializers are not allowed in ambient contexts.
-   ╭─[typescript/tests/cases/conformance/parser/ecmascript5/ErrorRecovery/parserModifierOnStatementInBlock2.ts:2:20]
- 1 │ {
- 2 │    declare var x = this;
-   ·                    ────
- 3 │ }
-   ╰────
-
   × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[typescript/tests/cases/conformance/parser/ecmascript5/ErrorRecovery/parserPublicBreak1.ts:1:7]
  1 │ public break;
@@ -31029,6 +30904,13 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
   9 │ function stillMustBeLast({ ...mustBeLast, a }: { a: number, b: string }): void {
     ·                            ─────────────
  10 │ }
+    ╰────
+
+  × Invalid rest operator's argument.
+    ╭─[typescript/tests/cases/conformance/types/rest/objectRestNegative.ts:17:9]
+ 16 │ let rest: { b: string }
+ 17 │ ({a, ...rest.b + rest.b} = o);
+    ·         ───────────────
     ╰────
 
   × Cannot assign to this expression

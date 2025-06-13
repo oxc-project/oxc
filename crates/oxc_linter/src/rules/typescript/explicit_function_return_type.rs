@@ -766,7 +766,7 @@ fn test() {
         	  get prop(): number {
         	    return 1;
         	  }
-        	  set prop() {}
+        	  set prop(_foo) {}
         	  method(): void {
         	    return;
         	  }
@@ -1312,7 +1312,7 @@ fn test() {
         	  get prop() {
         	    return 1;
         	  }
-        	  set prop() {}
+        	  set prop(_foo) {}
         	  method() {
         	    return;
         	  }
@@ -1604,7 +1604,7 @@ fn test() {
         	  get prop() {
         	    return 1;
         	  }
-        	  set prop() {}
+        	  set prop(_foo) {}
         	  method() {
         	    return;
         	  }
