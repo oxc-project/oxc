@@ -122,8 +122,10 @@ impl Rule for NoCycle {
         let cwd = std::env::current_dir().unwrap();
 
         let mut stack = Vec::new();
+        let mut found_cycles = Vec::new();
+
         let ignore_types = self.ignore_types;
-        let visitor_result = ModuleGraphVisitorBuilder::default()
+        ModuleGraphVisitorBuilder::default()
             .max_depth(self.max_depth)
             .filter(move |(key, val): (&CompactStr, &Arc<ModuleRecord>), parent: &ModuleRecord| {
                 let path = &val.resolved_absolute_path;
@@ -167,36 +169,35 @@ impl Rule for NoCycle {
             .event(|event, (key, val), _| match event {
                 ModuleGraphVisitorEvent::Enter => {
                     stack.push((key.clone(), val.resolved_absolute_path.clone()));
+                    let path = &val.resolved_absolute_path;
+                    if path == needle && !stack.is_empty() {
+                        found_cycles.push(stack.clone());
+                    }
                 }
                 ModuleGraphVisitorEvent::Leave => {
                     stack.pop();
                 }
             })
-            .visit_fold(false, module_record, |_, (_, val), _| {
-                let path = &val.resolved_absolute_path;
-                if path == needle {
-                    VisitFoldWhile::Stop(true)
-                } else {
-                    VisitFoldWhile::Next(false)
-                }
-            });
+            .visit_fold(false, module_record, |_, _, _| VisitFoldWhile::Next(false));
 
-        if visitor_result.result {
-            let span = module_record.requested_modules[&stack[0].0][0].span;
-            let help = stack
-                .iter()
-                .map(|(specifier, path)| {
-                    format!(
-                        "-> {specifier} - {}",
-                        path.strip_prefix(&cwd)
-                            .unwrap_or(path)
-                            .to_string_lossy()
-                            .cow_replace('\\', "/")
-                    )
-                })
-                .collect::<Vec<_>>()
-                .join("\n");
-            ctx.diagnostic(no_cycle_diagnostic(span, &help));
+        for cycle_stack in found_cycles {
+            if cycle_stack.len() > 1 {
+                let span = module_record.requested_modules[&cycle_stack[0].0][0].span;
+                let help = cycle_stack
+                    .iter()
+                    .map(|(specifier, path)| {
+                        format!(
+                            "-> {specifier} - {}",
+                            path.strip_prefix(&cwd)
+                                .unwrap_or(path)
+                                .to_string_lossy()
+                                .cow_replace('\\', "/")
+                        )
+                    })
+                    .collect::<Vec<_>>()
+                    .join("\n");
+                ctx.diagnostic(no_cycle_diagnostic(span, &help));
+            }
         }
     }
 }
@@ -271,6 +272,7 @@ fn test() {
         // (r#"import { bar } from "./flow-types-only-importing-multiple-types""#, None),
         // (r#"import { bar } from "./flow-typeof""#, None),
         (r#"import { foo } from "./typescript/ts-types-re-exporting-type";"#, None),
+        (r"export function Foo() {}; export * from './depth-zero'", None),
     ];
 
     let fail = vec![
