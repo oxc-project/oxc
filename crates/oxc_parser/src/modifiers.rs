@@ -288,6 +288,9 @@ impl std::fmt::Display for ModifierKind {
 impl<'a> ParserImpl<'a> {
     pub(crate) fn eat_modifiers_before_declaration(&mut self) -> Modifiers<'a> {
         let mut flags = ModifierFlags::empty();
+        if !self.at_modifier() {
+            return Modifiers::new(None, flags);
+        }
         let mut modifiers = self.ast.vec();
         while self.at_modifier() {
             let span = self.start_span();
@@ -303,14 +306,13 @@ impl<'a> ParserImpl<'a> {
     }
 
     fn at_modifier(&mut self) -> bool {
+        if !self.cur_kind().is_modifier_kind() {
+            return false;
+        }
         self.lookahead(Self::at_modifier_worker)
     }
 
     fn at_modifier_worker(&mut self) -> bool {
-        if !self.cur_kind().is_modifier_kind() {
-            return false;
-        }
-
         match self.cur_kind() {
             Kind::Const => {
                 self.bump_any();
