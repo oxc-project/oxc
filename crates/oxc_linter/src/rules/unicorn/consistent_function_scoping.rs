@@ -372,7 +372,7 @@ fn get_short_span_for_fn_scope<'a>(ctx: &LintContext<'a>, scope_id: ScopeId) -> 
         } // "while"
         AstKind::IfStatement(ast::IfStatement { span, .. }) => Some(Span::sized(span.start, 2)), // "if"
         AstKind::DoWhileStatement(ast::DoWhileStatement { span, .. }) => {
-            Some(Span::sized(span.start, 3))
+            Some(Span::sized(span.start, 2))
         } // "do"
 
         AstKind::SwitchStatement(ast::SwitchStatement { span, .. }) => {
