@@ -5544,7 +5544,7 @@ class ImportDeclaration {
     const cached = nodes.get(pos);
     if (cached !== void 0) return cached;
 
-    this.#internal = { $pos: pos, $ast: ast };
+    this.#internal = { $pos: pos, $ast: ast, specifiers: void 0 };
     nodes.set(pos, this);
   }
 
@@ -5559,8 +5559,10 @@ class ImportDeclaration {
   }
 
   get specifiers() {
-    const internal = this.#internal;
-    return constructOptionVecImportDeclarationSpecifier(internal.$pos + 8, internal.$ast);
+    const internal = this.#internal,
+      cached = internal.specifiers;
+    if (cached !== void 0) return cached;
+    return internal.specifiers = constructOptionVecImportDeclarationSpecifier(internal.$pos + 8, internal.$ast);
   }
 
   get source() {

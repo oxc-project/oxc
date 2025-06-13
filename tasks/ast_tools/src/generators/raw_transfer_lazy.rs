@@ -71,15 +71,21 @@ static PRELUDE: &str = "
 /// Generate constructor functions for all types.
 fn generate_constructors(schema: &Schema, codegen: &Codegen) -> String {
     let estree_derive_id = codegen.get_derive_id_by_name("ESTree");
+    let span_type_id = schema.type_names["Span"];
 
     // Find any structs which are positioned at offset 0 in another struct.
     // Their position cannot be used as a cache key as the parent and the child
     // both have same memory address.
     // Calculate an offset to add to position which will be unique across all AST nodes.
-    let cache_key_offsets = CacheKeyOffsets::calculate(estree_derive_id, schema);
+    let cache_key_offsets = CacheKeyOffsets::calculate(estree_derive_id, span_type_id, schema);
+
+    // Initialize structure for determining if types need local cache. Used in `generate_struct`.
+    let mut local_cache_types = LocalCacheTypes::new(schema);
 
     // Generate code
     let mut code = PRELUDE.to_string();
+
+    let span_struct_def = schema.struct_def(span_type_id);
 
     for type_def in &schema.types {
         match type_def {
@@ -88,7 +94,9 @@ fn generate_constructors(schema: &Schema, codegen: &Codegen) -> String {
                     struct_def,
                     &mut code,
                     &cache_key_offsets,
+                    &mut local_cache_types,
                     estree_derive_id,
+                    span_struct_def,
                     schema,
                 );
             }
@@ -129,7 +137,11 @@ struct CacheKeyOffsets<'s> {
 
 impl<'s> CacheKeyOffsets<'s> {
     /// Calculate cache key offsets for all structs in AST.
-    fn calculate(estree_derive_id: DeriveId, schema: &'s Schema) -> IndexVec<TypeId, u8> {
+    fn calculate(
+        estree_derive_id: DeriveId,
+        span_type_id: TypeId,
+        schema: &'s Schema,
+    ) -> IndexVec<TypeId, u8> {
         // Create mapping from `TypeId` to cache key offset.
         // Set as `UNCALCULATED` for all structs which are in JS-side AST.
         let mut offsets = schema
@@ -147,7 +159,6 @@ impl<'s> CacheKeyOffsets<'s> {
 
         // `Span` is a special case. It is a struct, but it is not cached.
         // Set cache key offset for `Span` to 0, so it doesn't have to be checked over and over.
-        let span_type_id = schema.type_names["Span"];
         offsets[span_type_id] = 0;
 
         // Calculate cache key offset for all structs
@@ -293,12 +304,98 @@ impl<'s> CacheKeyOffsets<'s> {
     }
 }
 
+/// Structure for determining if value of a node's field needs to be cached locally in the node object.
+///
+/// Purpose of caching is:
+/// 1. Ensure getting property of a node produces same object each time its accessed.
+/// 2. Avoid deserializing strings more than once, because it's expensive.
+///
+/// AST nodes (structs) are cached globally in `nodes` `Map`, so don't need to also be cached locally.
+///
+/// `Vec`s need to be cached, to ensure repeat accesses get same array.
+/// But `Vec`s don't need to be stored in global cache, because they can only be reached via parent node.
+/// So we cache them locally as properties of the node, as that's cheaper - local object property lookup
+/// vs hashmap lookup for global cache.
+///
+/// Strings don't need to be cached for purpose of object equivalence, but we cache them
+/// because deserializing strings is expensive.
+/// They can also be cached locally.
+///
+/// This could just be a free function, but it's fairly expensive to calculate if a type needs caching
+/// or not (especially enums). So once we calculate if a type needs caching, store the result
+/// in an `IndexVec`. The next time, use the result which was already calculated.
+///
+/// TODO: Even though AST nodes are cached at global level, it may be more performant to also
+/// cache them locally, because local cache is cheaper to access.
+struct LocalCacheTypes<'s> {
+    state: IndexVec<TypeId, ShouldHaveLocalCache>,
+    schema: &'s Schema,
+}
+
+#[derive(Clone, Copy)]
+enum ShouldHaveLocalCache {
+    False,
+    True,
+    Uncalculated,
+}
+
+impl<'s> LocalCacheTypes<'s> {
+    fn new(schema: &'s Schema) -> Self {
+        Self { state: index_vec![ShouldHaveLocalCache::Uncalculated; schema.types.len()], schema }
+    }
+
+    /// Determine if a type should be cached locally.
+    /// `true` if type is a `Vec` or a string.
+    ///
+    /// Containers (`Box`, `Option`, `Cell`) containing a `Vec` or string are also cached.
+    /// e.g. `Option<Vec>`, `Option<&str>`, `Option<Box<Vec>>`.
+    ///
+    /// Enums need to be cached if any variant is a `Vec` or a string (or an `Option<Vec>` etc).
+    fn needs_cached_prop(&mut self, type_def: &TypeDef) -> bool {
+        let type_id = type_def.id();
+        match self.state[type_id] {
+            ShouldHaveLocalCache::False => return false,
+            ShouldHaveLocalCache::True => return true,
+            ShouldHaveLocalCache::Uncalculated => {}
+        }
+
+        let should_cache = match type_def {
+            TypeDef::Struct(_) => false,
+            TypeDef::Enum(enum_def) => {
+                if enum_def.is_fieldless() {
+                    false
+                } else {
+                    enum_def.all_variants(self.schema).any(|variant| {
+                        variant
+                            .field_type(self.schema)
+                            .is_some_and(|field_type| self.needs_cached_prop(field_type))
+                    })
+                }
+            }
+            TypeDef::Primitive(primitive_def) => matches!(primitive_def.name(), "&str" | "Atom"),
+            TypeDef::Vec(_) => true,
+            TypeDef::Option(option_def) => {
+                self.needs_cached_prop(option_def.inner_type(self.schema))
+            }
+            TypeDef::Box(box_def) => self.needs_cached_prop(box_def.inner_type(self.schema)),
+            TypeDef::Cell(cell_def) => self.needs_cached_prop(cell_def.inner_type(self.schema)),
+        };
+
+        self.state[type_id] =
+            if should_cache { ShouldHaveLocalCache::True } else { ShouldHaveLocalCache::False };
+
+        should_cache
+    }
+}
+
 /// Generate class for a struct.
 fn generate_struct(
     struct_def: &StructDef,
     code: &mut String,
     cache_key_offsets: &IndexVec<TypeId, u8>,
+    local_cache_types: &mut LocalCacheTypes,
     estree_derive_id: DeriveId,
+    span_struct_def: &StructDef,
     schema: &Schema,
 ) {
     if !struct_def.generates_derive(estree_derive_id) || struct_def.estree.skip {
@@ -318,53 +415,37 @@ fn generate_struct(
         }
 
         let field_name = get_struct_field_name(field);
+
+        // TODO: Don't hard-code this
+        if field.type_id == span_struct_def.id && field_name == "span" {
+            for span_field in &span_struct_def.fields {
+                if span_field.name() == "_align" {
+                    continue;
+                }
+
+                let span_field_name = get_struct_field_name(span_field);
+                let value_fn = span_field.type_def(schema).constructor_name(schema);
+                let pos = internal_pos_offset(field.offset_64() + span_field.offset_64());
+
+                #[rustfmt::skip]
+                write_it!(getters, "
+                    get {span_field_name}() {{
+                        const internal = this.#internal;
+                        return {value_fn}({pos}, internal.$ast);
+                    }}
+                ");
+
+                write_it!(to_json, "{span_field_name}: this.{span_field_name},\n");
+            }
+            continue;
+        }
+
         if field_name == "type" {
             add_type_field = false;
         }
 
         let field_type = field.type_def(schema);
-        let needs_cached_prop = match field_type {
-            TypeDef::Vec(_) => true,
-            TypeDef::Primitive(primitive_def) => {
-                matches!(primitive_def.name(), "&str" | "Atom")
-            }
-            TypeDef::Option(option_def) => {
-                if let TypeDef::Primitive(primitive_def) = option_def.inner_type(schema) {
-                    matches!(primitive_def.name(), "&str" | "Atom")
-                } else {
-                    false
-                }
-            }
-            TypeDef::Struct(struct_def) => {
-                // TODO: Don't hard-code this
-                if field_name == "span" && struct_def.name() == "Span" {
-                    for span_field in &struct_def.fields {
-                        if span_field.name() == "_align" {
-                            continue;
-                        }
-
-                        let span_field_name = get_struct_field_name(span_field);
-                        let value_fn = span_field.type_def(schema).constructor_name(schema);
-                        let pos = internal_pos_offset(field.offset_64() + span_field.offset_64());
-
-                        #[rustfmt::skip]
-                        write_it!(getters, "
-                            get {span_field_name}() {{
-                                const internal = this.#internal;
-                                return {value_fn}({pos}, internal.$ast);
-                            }}
-                        ");
-
-                        write_it!(to_json, "{span_field_name}: this.{span_field_name},\n");
-                    }
-                    continue;
-                }
-
-                false
-            }
-            _ => false,
-        };
-
+        let needs_cached_prop = local_cache_types.needs_cached_prop(field_type);
         let value_fn = field_type.constructor_name(schema);
         let pos = internal_pos_offset(field.offset_64());
 
@@ -390,7 +471,7 @@ fn generate_struct(
             ");
         }
 
-        // Remove this special case for `RegExpFlags`
+        // TODO: Remove this special case for `RegExpFlags`
         if struct_name != "RegExpFlags" {
             write_it!(to_json, "{field_name}: this.{field_name},\n");
         }
