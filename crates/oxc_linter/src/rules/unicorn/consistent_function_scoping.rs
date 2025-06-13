@@ -379,7 +379,7 @@ fn get_short_span_for_fn_scope<'a>(ctx: &LintContext<'a>, scope_id: ScopeId) -> 
             Some(Span::sized(span.start, 6))
         } // "switch"
 
-        AstKind::TryStatement(ast::TryStatement { span, .. }) => Some(Span::sized(span.start, 4)), // "try"
+        AstKind::TryStatement(ast::TryStatement { span, .. }) => Some(Span::sized(span.start, 3)), // "try"
         AstKind::CatchClause(ast::CatchClause { span, .. }) => Some(Span::sized(span.start, 5)), // "catch"
         _ => None,
     }
