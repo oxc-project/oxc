@@ -282,24 +282,25 @@ fn check_member(member: &TSSignature, node: &AstNode<'_>, ctx: &LintContext<'_>)
 
                 TSType::TSIntersectionType(intersection_type) => {
                     intersection_type.types.iter().for_each(|ts_type| {
-                        if let TSType::TSTypeLiteral(literal) = ts_type {
-                            let body = &literal.members;
-                            if body.len() == 1 {
-                                ctx.diagnostic_with_fix(
-                                    prefer_function_type_diagnostic(
-                                        &suggestion,
-                                        decl.span,
-                                    ),
-                                    |fixer| {
-                                        fixer
-                                            .replace(
-                                                literal.span,
-                                                format!("({suggestion})"),
-                                            )
-                                            .with_message(CONVERT_TO_FUNCTION_TYPE)
-                                    },
-                                );
-                            }
+                        let TSType::TSTypeLiteral(literal) = ts_type else {
+                            return;
+                        };
+                        let body = &literal.members;
+                        if body.len() == 1 {
+                            ctx.diagnostic_with_fix(
+                                prefer_function_type_diagnostic(
+                                    &suggestion,
+                                    decl.span,
+                                ),
+                                |fixer| {
+                                    fixer
+                                        .replace(
+                                            literal.span,
+                                            format!("({suggestion})"),
+                                        )
+                                        .with_message(CONVERT_TO_FUNCTION_TYPE)
+                                },
+                            );
                         }
                     });
                 }
