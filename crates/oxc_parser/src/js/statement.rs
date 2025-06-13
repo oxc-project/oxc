@@ -438,7 +438,7 @@ impl<'a> ParserImpl<'a> {
         if disallow_of && self.at(Kind::Of) {
             return false;
         }
-        (self.cur_kind().is_binding_identifier() || self.at(Kind::LParen))
+        (self.cur_kind().is_binding_identifier() || self.at(Kind::LCurly))
             && !self.cur_token().is_on_new_line()
     }
 

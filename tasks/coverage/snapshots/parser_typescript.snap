@@ -29407,14 +29407,13 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
  4 │           c = null;
    ╰────
 
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-   ╭─[typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/usingDeclarations.6.ts:2:10]
+  × Using declarations may not have binding patterns.
+   ╭─[typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/usingDeclarations.6.ts:2:11]
  1 │ {
  2 │     using {a} = null;
-   ·          ▲
+   ·           ───
  3 │ }
    ╰────
-  help: Try insert a semicolon here
 
   × Using declarations may not have binding patterns.
    ╭─[typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/usingDeclarations.7.ts:3:11]

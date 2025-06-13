@@ -1,6 +1,6 @@
 semantic_misc Summary:
-AST Parsed     : 41/41 (100.00%)
-Positive Passed: 25/41 (60.98%)
+AST Parsed     : 42/42 (100.00%)
+Positive Passed: 26/42 (61.90%)
 semantic Error: tasks/coverage/misc/pass/oxc-11593.ts
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1)]
