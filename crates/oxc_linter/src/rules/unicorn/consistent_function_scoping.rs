@@ -161,6 +161,8 @@ impl Rule for ConsistentFunctionScoping {
                         // The bar function scope id is 1. In order to ignore this rule,
                         // its parent's scope id (in this case `foo`'s scope id is 0 and is equal to root scope id)
                         // should be considered.
+                        //
+                        // We also allow functions declared in TS module/namespace blocks.
                         let flags = ctx.scoping().scope_flags(parent_scope_id);
                         if flags.intersects(ScopeFlags::Top | ScopeFlags::TsModuleBlock) {
                             return;
@@ -196,9 +198,10 @@ impl Rule for ConsistentFunctionScoping {
                 _ => return,
             };
 
-        // if the function is declared at the root scope, we don't need to check anything
-        if ctx.scoping().symbol_scope_id(function_declaration_symbol_id)
-            == ctx.scoping().root_scope_id()
+        // if the function is declared at the root scope or in a TS
+        // module/namespace block, we don't need to check anything
+        let scope = ctx.scoping().symbol_scope_id(function_declaration_symbol_id);
+        if ctx.scoping().scope_flags(scope).intersects(ScopeFlags::Top | ScopeFlags::TsModuleBlock)
         {
             return;
         }
@@ -593,6 +596,22 @@ fn test() {
                 }
                 function somePrivateFn() {
                     return 'private';
+                }
+            }
+        ",
+            None,
+        ),
+        (
+            "
+            export namespace Foo {
+                export function somePublicFn() {
+                    return private1() + private2();
+                }
+                const private1 = function private1() {
+                    return 'private1';
+                }
+                const private2 = () => {
+                    return 'private2';
                 }
             }
         ",
