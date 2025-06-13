@@ -107,8 +107,7 @@ fn check_member(member: &TSSignature, node: &AstNode<'_>, ctx: &LintContext<'_>)
     let TSSignature::TSCallSignatureDeclaration(decl) = member else {
         return;
     };
-    let start = decl.span.start;
-    let end: u32 = decl.span.end;
+    let Span { start, end, .. } = decl.span;
     let Some(type_annotation) = &decl.return_type else {
         return;
     };
