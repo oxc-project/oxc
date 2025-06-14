@@ -128,20 +128,30 @@ impl DiagnosticService {
     /// Wrap [diagnostics] with the source code and path, converting them into [Error]s.
     ///
     /// [diagnostics]: OxcDiagnostic
-    pub fn wrap_diagnostics<P: AsRef<Path>>(
+    pub fn wrap_diagnostics<C: AsRef<Path>, P: AsRef<Path>>(
+        cwd: C,
         path: P,
         source_text: &str,
         source_start: u32,
         diagnostics: Vec<OxcDiagnostic>,
-    ) -> (PathBuf, Vec<Error>) {
-        let path = path.as_ref();
-        let path_display = path.to_string_lossy();
-        // replace windows \ path separator with posix style one
-        // reflects what eslint is outputting
-        let path_display = path_display.cow_replace('\\', "/");
+    ) -> Vec<Error> {
+        #[cfg(test)]
+        let is_jetbrains = false;
+        #[cfg(not(test))]
+        let is_jetbrains =
+            std::env::var("TERMINAL_EMULATOR").is_ok_and(|x| x.eq("JetBrains-JediTerm"));
+
+        let path_ref = path.as_ref();
+        let path_display = if is_jetbrains {
+            format!("file://{}", path_ref.to_string_lossy())
+        } else {
+            let relative_path = path_ref.strip_prefix(cwd).unwrap_or(path_ref).to_string_lossy();
+            let normalized_path = relative_path.cow_replace('\\', "/");
+            normalized_path.to_string()
+        };
 
         let source = Arc::new(NamedSource::new(path_display, source_text.to_owned()));
-        let diagnostics = diagnostics
+        diagnostics
             .into_iter()
             .map(|diagnostic| {
                 if source_start == 0 {
@@ -166,8 +176,7 @@ impl DiagnosticService {
                     }
                 }
             })
-            .collect();
-        (path.to_path_buf(), diagnostics)
+            .collect()
     }
 
     /// # Panics
