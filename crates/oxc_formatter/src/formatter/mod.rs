@@ -58,7 +58,7 @@ use oxc_allocator::{Address, GetAddress};
 use oxc_ast::{AstKind, ast::Program};
 use rustc_hash::FxHashMap;
 
-pub use self::comments::{Comments, SourceComment};
+pub use self::comments::Comments;
 use self::printer::Printer;
 pub use self::{
     arguments::{Argument, Arguments},

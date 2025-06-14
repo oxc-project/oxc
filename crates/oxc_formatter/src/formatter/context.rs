@@ -1,4 +1,10 @@
-use oxc_ast::ast::{FunctionBody, Program};
+use std::cell::RefCell;
+
+use oxc_allocator::Allocator;
+use oxc_ast::{
+    Comment,
+    ast::{FunctionBody, Program},
+};
 use oxc_span::{GetSpan, SourceType, Span};
 
 use crate::{formatter::FormatElement, generated::ast_nodes::AstNode, options::FormatOptions};
@@ -6,7 +12,7 @@ use crate::{formatter::FormatElement, generated::ast_nodes::AstNode, options::Fo
 use super::Comments;
 
 /// Context object storing data relevant when formatting an object.
-#[derive(Debug, Clone)]
+#[derive(Clone)]
 pub struct FormatContext<'ast> {
     options: FormatOptions,
 
@@ -14,19 +20,38 @@ pub struct FormatContext<'ast> {
 
     source_type: SourceType,
 
-    comments: Comments,
+    comments: Comments<'ast>,
 
     cached_function_body: Option<(Span, FormatElement)>,
+
+    allocator: &'ast Allocator,
+}
+
+impl std::fmt::Debug for FormatContext<'_> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("FormatContext")
+            .field("options", &self.options)
+            .field("source_text", &self.source_text)
+            .field("source_type", &self.source_type)
+            .field("comments", &self.comments)
+            .field("cached_function_body", &self.cached_function_body)
+            .finish()
+    }
 }
 
 impl<'ast> FormatContext<'ast> {
-    pub fn new(program: &'ast Program<'ast>, options: FormatOptions) -> Self {
+    pub fn new(
+        program: &'ast Program<'ast>,
+        allocator: &'ast Allocator,
+        options: FormatOptions,
+    ) -> Self {
         Self {
             options,
             source_text: program.source_text,
             source_type: program.source_type,
-            comments: Comments::from_oxc_comments(program),
+            comments: Comments::new(program.source_text, &program.comments),
             cached_function_body: None,
+            allocator,
         }
     }
 
@@ -36,7 +61,7 @@ impl<'ast> FormatContext<'ast> {
     }
 
     /// Returns a reference to the program's comments.
-    pub fn comments(&self) -> &Comments {
+    pub fn comments(&self) -> &Comments<'ast> {
         &self.comments
     }
 
@@ -72,5 +97,13 @@ impl<'ast> FormatContext<'ast> {
         formatted: FormatElement,
     ) {
         self.cached_function_body = Some((body.span(), formatted));
+    }
+
+    pub(crate) fn increment_printed_count(&mut self) {
+        self.comments.increment_printed_count();
+    }
+
+    pub fn allocator(&self) -> &'ast Allocator {
+        self.allocator
     }
 }

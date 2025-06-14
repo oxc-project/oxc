@@ -66,17 +66,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, Program<'a>> {
         if f.source_text().chars().next().is_some_and(|c| c == ZWNBSP) {
             write!(f, "\u{feff}");
         }
-        write!(
-            f,
-            [
-                self.hashbang(),
-                format_leading_comments(self.span().start),
-                self.directives(),
-                self.body(),
-                format_leading_comments(self.span().end), // comments before the EOF token
-                hard_line_break()
-            ]
-        )
+        write!(f, [self.hashbang(), self.directives(), self.body(), hard_line_break()])
     }
 }
 
@@ -762,20 +752,21 @@ impl<'a> FormatWrite<'a> for AstNode<'a, IfStatement<'a>> {
             ))
         )?;
         if let Some(alternate) = alternate {
-            let comments = f.context().comments();
-            let dangling_comments = comments.dangling_comments(alternate.span());
-            let dangling_line_comment =
-                dangling_comments.last().is_some_and(|comment| comment.kind().is_line());
-            let has_dangling_comments = !dangling_comments.is_empty();
+            // TODO: https://github.com/prettier/prettier/blob/7584432401a47a26943dd7a9ca9a8e032ead7285/src/language-js/comments/handle-comments.js#L153-L257
+            // let comments = f.context().comments();
+            // let dangling_comments = comments.dangling_comments(alternate.span());
+            // let dangling_line_comment =
+            //     dangling_comments.last().is_some_and(|comment| comment.kind().is_line());
+            // let has_dangling_comments = !dangling_comments.is_empty();
 
-            let trailing_line_comment = comments
-                .trailing_comments(consequent.span().end)
-                .iter()
-                .any(|comment| comment.kind().is_line());
+            // let trailing_line_comment = comments
+            //     .trailing_comments(consequent.span().end)
+            //     .iter()
+            //     .any(|comment| comment.kind().is_line());
 
-            let else_on_same_line = matches!(consequent.as_ref(), Statement::BlockStatement(_))
-                && !trailing_line_comment
-                && !dangling_line_comment;
+            let else_on_same_line = matches!(consequent.as_ref(), Statement::BlockStatement(_));
+            // && !trailing_line_comment
+            // && !dangling_line_comment;
 
             if else_on_same_line {
                 write!(f, space())?;
@@ -783,15 +774,15 @@ impl<'a> FormatWrite<'a> for AstNode<'a, IfStatement<'a>> {
                 write!(f, hard_line_break())?;
             }
 
-            if has_dangling_comments {
-                write!(f, format_dangling_comments(self.span()))?;
+            // if has_dangling_comments {
+            //     write!(f, format_dangling_comments(self.span()))?;
 
-                if trailing_line_comment || dangling_line_comment {
-                    write!(f, hard_line_break())?;
-                } else {
-                    write!(f, space())?;
-                }
-            }
+            //     if trailing_line_comment || dangling_line_comment {
+            //         write!(f, hard_line_break())?;
+            //     } else {
+            //         write!(f, space())?;
+            //     }
+            // }
 
             write!(
                 f,
@@ -1481,20 +1472,21 @@ impl<'a> FormatWrite<'a> for AstNode<'a, ImportNamespaceSpecifier<'a>> {
 impl<'a> FormatWrite<'a> for AstNode<'a, WithClause<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         let should_insert_space_around_brackets = f.options().bracket_spacing.value();
-        let format_comment = format_with(|f| {
-            if self.with_entries().is_empty()
-                && f.comments().has_leading_comments(self.span().end - 1)
-            {
-                write!(f, [space(), format_leading_comments(self.span().end - 1)])
-            } else {
-                Ok(())
-            }
-        });
+        // TODO: leading comments has printed out, but missing a space.
+        // let format_comment = format_with(|f| {
+        //     if self.with_entries().is_empty()
+        //         && (f.comments().has_leading_comments(self.span().end - 1) || true)
+        //     {
+        //         write!(f, [space(), format_leading_comments(self.span().end - 1)])
+        //     } else {
+        //         Ok(())
+        //     }
+        // });
         write!(
             f,
             [
                 space(),
-                format_comment,
+                // format_comment,
                 self.attributes_keyword(),
                 space(),
                 "{",
@@ -2168,9 +2160,10 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TSInterfaceDeclaration<'a>> {
         let extends = self.extends();
         let body = self.body();
 
-        let should_indent_extends_only = type_parameters
-            .as_ref()
-            .is_some_and(|params| !f.comments().has_trailing_line_comment(params.span().end));
+        let should_indent_extends_only = type_parameters.as_ref().is_some_and(|params|
+                // TODO:
+                // !f.comments().has_trailing_line_comment(params.span().end)
+                true);
 
         let type_parameter_group = if should_indent_extends_only && !extends.is_empty() {
             Some(f.group_id("type_parameters"))
@@ -2229,7 +2222,9 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TSInterfaceDeclaration<'a>> {
 
             write!(f, ["interface", space()])?;
 
-            let id_has_trailing_comments = f.comments().has_trailing_comments(id.span().end);
+            // TODO:
+            // let id_has_trailing_comments = f.comments().has_trailing_comments(id.span().end);
+            let id_has_trailing_comments = false;
             if id_has_trailing_comments || !extends.is_empty() {
                 if should_indent_extends_only {
                     write!(f, [group(&format_args!(format_id, indent(&format_extends)))])?;
@@ -2579,7 +2574,6 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TSMappedType<'a>> {
 
         let should_expand = false; // TODO has_line_break_before_property_name(node)?;
 
-        let comments = f.comments().clone();
         let type_annotation_has_leading_comment = false;
         //TODO
         //
@@ -2588,7 +2582,8 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TSMappedType<'a>> {
         // .is_some_and(|annotation| comments.has_leading_comments(annotation.syntax()));
 
         let format_inner = format_with(|f| {
-            write!(f, FormatLeadingComments::Comments(comments.dangling_comments(self.span())))?;
+            // TODO:
+            // write!(f, FormatLeadingComments::Comments(comments.dangling_comments(self.span())))?;
 
             match self.readonly() {
                 Some(TSMappedTypeModifierOperator::True) => write!(f, ["readonly", space()])?,
