@@ -27,11 +27,12 @@ This is the linter for Oxc. The currently supported features are listed below.
 
 Following configuration are supported via `settings.json` and effect the window editor:
 
-| Key                | Default Value | Possible Values                  | Description                                                                 |
-| ------------------ | ------------- | -------------------------------- | --------------------------------------------------------------------------- |
-| `oxc.enable`       | `true`        | `true` \| `false`                | Enables the language server to receive lint diagnostics                     |
-| `oxc.trace.server` | `off`         | `off` \| `messages` \| `verbose` | Traces the communication between VS Code and the language server.           |
-| `oxc.path.server`  | -             | `<string>`                       | Path to Oxc language server binary. Mostly for testing the language server. |
+| Key                 | Default Value | Possible Values                  | Description                                                                                  |
+| ------------------- | ------------- | -------------------------------- | -------------------------------------------------------------------------------------------- |
+| `oxc.enable`        | `true`        | `true` \| `false`                | Enables the language server to receive lint diagnostics                                      |
+| `oxc.requireConfig` | `false`       | `true` \| `false`                | Start the language server only when a `.oxlintrc.json` file exists in one of the workspaces. |
+| `oxc.trace.server`  | `off`         | `off` \| `messages` \| `verbose` | Traces the communication between VS Code and the language server.                            |
+| `oxc.path.server`   | -             | `<string>`                       | Path to Oxc language server binary. Mostly for testing the language server.                  |
 
 ### Workspace Configuration
 
