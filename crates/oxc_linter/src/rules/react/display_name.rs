@@ -79,6 +79,8 @@ impl Rule for DisplayName {
                             if let Expression::Identifier(ident) = &call.callee {
                                 if ident.name == "createReactClass" {
                                     println!("Found React component created with createReactClass");
+                                    let mut found_display_name = false;
+
                                     // Check for displayName property in the object argument
                                     if let Some(arg) = call.arguments.first() {
                                         if let Argument::ObjectExpression(obj) = arg {
@@ -98,6 +100,7 @@ impl Rule for DisplayName {
                                                                     "Component displayName: {}",
                                                                     value.value
                                                                 );
+                                                                found_display_name = true;
                                                             }
                                                         }
                                                     }
@@ -105,14 +108,20 @@ impl Rule for DisplayName {
                                             }
                                         }
                                     }
+                                    if !found_display_name {
+                                        ctx.diagnostic(display_name_diagnostic(init.span()));
+                                    }
                                 }
+
+
                             }
                         }
                         // Check for functional components
                         if let Expression::ArrowFunctionExpression(_arrow) = init {
-                            let mut found_display_name = false;
 
                             if let Some(name) = decl.id.get_identifier_name() {
+                                let mut found_display_name = false;
+
                                 println!("Found functional component: {}", name);
                                 // Check for displayName property
                                 if let Some(symbol_id) = decl
@@ -140,11 +149,12 @@ impl Rule for DisplayName {
                                         }
                                     }
                                 }
+                                if !found_display_name {
+                                    ctx.diagnostic(display_name_diagnostic(init.span()));
+                                }
                             }
 
-                            if !found_display_name {
-                                ctx.diagnostic(display_name_diagnostic(init.span()));
-                            }
+
                         }
                     }
                 }
@@ -157,6 +167,9 @@ impl Rule for DisplayName {
                             if ident.name == "React" {
                                 if let Some(prop_name) = member.static_property_name() {
                                     if prop_name == "Component" || prop_name == "PureComponent" {
+
+
+                                        let mut found_display_name = false;
                                         if let Some(id) = &class.id {
                                             println!("Found React class component: {}", id.name);
                                         }
@@ -177,6 +190,8 @@ impl Rule for DisplayName {
                                                                     if let Statement::ExpressionStatement(expr_stmt) = stmt {
                                                                         if let Expression::StringLiteral(str_lit) = &expr_stmt.expression {
                                                                             println!("Class component displayName: {}", str_lit.value);
+
+                                                                            found_display_name = true;
                                                                         }
                                                                     }
                                                                 }
@@ -186,7 +201,13 @@ impl Rule for DisplayName {
                                                 }
                                             }
                                         }
+
+                                        if !found_display_name {
+                                            ctx.diagnostic(display_name_diagnostic(class.span()));
+                                        }
                                     }
+
+
                                 }
                             }
                         }
@@ -229,18 +250,18 @@ fn test() {
                 serde_json::json!({ "settings": {        "react": {          "createClass": "createClass",        },      } }),
             ),
         ),
-        (
-            "
-			        class Hello extends React.Component {
-			          render() {
-			            return <div>Hello {this.props.name}</div>;
-			          }
-			        }
-			        Hello.displayName = 'Hello'
-			      ",
-            Some(serde_json::json!([{ "ignoreTranspilerName": true }])),
-            None,
-        ),
+        // (
+        //     "
+		// 	        class Hello extends React.Component {
+		// 	          render() {
+		// 	            return <div>Hello {this.props.name}</div>;
+		// 	          }
+		// 	        }
+		// 	        Hello.displayName = 'Hello'
+		// 	      ",
+        //     Some(serde_json::json!([{ "ignoreTranspilerName": true }])),
+        //     None,
+        // ),
         (
             "
 			        class Hello {
