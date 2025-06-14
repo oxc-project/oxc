@@ -1,0 +1,291 @@
+---
+source: crates/oxc_linter/src/tester.rs
+assertion_line: 408
+---
+  ⚠ eslint-plugin-react(display-name): React component is missing a displayName property
+   ╭─[display_name.tsx:2:30]
+ 1 │     
+ 2 │ ╭─▶                     var Hello = createReactClass({
+ 3 │ │                         render: function() {
+ 4 │ │                           return React.createElement("div", {}, "text content");
+ 5 │ │                         }
+ 6 │ ╰─▶                     });
+ 7 │                       
+   ╰────
+  help: Add a displayName property to the component
+
+  ⚠ eslint-plugin-react(display-name): React component is missing a displayName property
+   ╭─[display_name.tsx:2:30]
+ 1 │     
+ 2 │ ╭─▶                     var Hello = createReactClass({
+ 3 │ │                         render: function() {
+ 4 │ │                           return React.createElement("div", {}, "text content");
+ 5 │ │                         }
+ 6 │ ╰─▶                     });
+ 7 │                       
+   ╰────
+  help: Add a displayName property to the component
+
+  ⚠ eslint-plugin-react(display-name): React component is missing a displayName property
+   ╭─[display_name.tsx:2:30]
+ 1 │     
+ 2 │ ╭─▶                     var Hello = createReactClass({
+ 3 │ │                         render: function() {
+ 4 │ │                           return React.createElement("div", {}, "text content");
+ 5 │ │                         }
+ 6 │ ╰─▶                     });
+ 7 │                       
+   ╰────
+  help: Add a displayName property to the component
+
+  ⚠ eslint-plugin-react(display-name): React component is missing a displayName property
+   ╭─[display_name.tsx:2:30]
+ 1 │     
+ 2 │ ╭─▶                     var Hello = createReactClass({
+ 3 │ │                         render: function() {
+ 4 │ │                           return React.createElement("div", {}, "text content");
+ 5 │ │                         }
+ 6 │ ╰─▶                     });
+ 7 │                       
+   ╰────
+  help: Add a displayName property to the component
+
+  ⚠ eslint-plugin-react(display-name): React component is missing a displayName property
+   ╭─[display_name.tsx:2:30]
+ 1 │     
+ 2 │ ╭─▶                     var Hello = createReactClass({
+ 3 │ │                         render: function() {
+ 4 │ │                           return React.createElement("div", {}, "text content");
+ 5 │ │                         }
+ 6 │ ╰─▶                     });
+ 7 │                       
+   ╰────
+  help: Add a displayName property to the component
+
+  ⚠ eslint-plugin-react(display-name): React component is missing a displayName property
+   ╭─[display_name.tsx:2:30]
+ 1 │     
+ 2 │ ╭─▶                     var Hello = createReactClass({
+ 3 │ │                         render: function() {
+ 4 │ │                           return React.createElement("div", {}, "text content");
+ 5 │ │                         }
+ 6 │ ╰─▶                     });
+ 7 │                       
+   ╰────
+  help: Add a displayName property to the component
+
+  ⚠ eslint-plugin-react(display-name): React component is missing a displayName property
+   ╭─[display_name.tsx:2:30]
+ 1 │     
+ 2 │ ╭─▶                     var Hello = createReactClass({
+ 3 │ │                         render: function() {
+ 4 │ │                           return React.createElement("div", {}, "text content");
+ 5 │ │                         }
+ 6 │ ╰─▶                     });
+ 7 │                       
+   ╰────
+  help: Add a displayName property to the component
+
+  ⚠ eslint-plugin-react(display-name): React component is missing a displayName property
+   ╭─[display_name.tsx:2:30]
+ 1 │     
+ 2 │ ╭─▶                     var Hello = createReactClass({
+ 3 │ │                         render: function() {
+ 4 │ │                           return React.createElement("div", {}, "text content");
+ 5 │ │                         }
+ 6 │ ╰─▶                     });
+ 7 │                       
+   ╰────
+  help: Add a displayName property to the component
+
+  ⚠ eslint-plugin-react(display-name): React component is missing a displayName property
+   ╭─[display_name.tsx:2:30]
+ 1 │     
+ 2 │ ╭─▶                     var Hello = createReactClass({
+ 3 │ │                         render: function() {
+ 4 │ │                           return React.createElement("div", {}, "text content");
+ 5 │ │                         }
+ 6 │ ╰─▶                     });
+ 7 │                       
+   ╰────
+  help: Add a displayName property to the component
+
+  ⚠ eslint-plugin-react(display-name): React component is missing a displayName property
+   ╭─[display_name.tsx:2:30]
+ 1 │     
+ 2 │ ╭─▶                     var Hello = createReactClass({
+ 3 │ │                         render: function() {
+ 4 │ │                           return React.createElement("div", {}, "text content");
+ 5 │ │                         }
+ 6 │ ╰─▶                     });
+ 7 │                       
+   ╰────
+  help: Add a displayName property to the component
+
+  ⚠ eslint-plugin-react(display-name): React component is missing a displayName property
+   ╭─[display_name.tsx:2:30]
+ 1 │     
+ 2 │ ╭─▶                     var Hello = createReactClass({
+ 3 │ │                         render: function() {
+ 4 │ │                           return React.createElement("div", {}, "text content");
+ 5 │ │                         }
+ 6 │ ╰─▶                     });
+ 7 │                       
+   ╰────
+  help: Add a displayName property to the component
+
+  ⚠ eslint-plugin-react(display-name): React component is missing a displayName property
+   ╭─[display_name.tsx:2:30]
+ 1 │     
+ 2 │ ╭─▶                     var Hello = createReactClass({
+ 3 │ │                         render: function() {
+ 4 │ │                           return React.createElement("div", {}, "text content");
+ 5 │ │                         }
+ 6 │ ╰─▶                     });
+ 7 │                       
+   ╰────
+  help: Add a displayName property to the component
+
+  ⚠ eslint-plugin-react(display-name): React component is missing a displayName property
+   ╭─[display_name.tsx:2:30]
+ 1 │     
+ 2 │ ╭─▶                     var Hello = createReactClass({
+ 3 │ │                         render: function() {
+ 4 │ │                           return React.createElement("div", {}, "text content");
+ 5 │ │                         }
+ 6 │ ╰─▶                     });
+ 7 │                       
+   ╰────
+  help: Add a displayName property to the component
+
+  ⚠ eslint-plugin-react(display-name): React component is missing a displayName property
+   ╭─[display_name.tsx:2:30]
+ 1 │     
+ 2 │ ╭─▶                     var Hello = createReactClass({
+ 3 │ │                         render: function() {
+ 4 │ │                           return React.createElement("div", {}, "text content");
+ 5 │ │                         }
+ 6 │ ╰─▶                     });
+ 7 │                       
+   ╰────
+  help: Add a displayName property to the component
+
+  ⚠ eslint-plugin-react(display-name): React component is missing a displayName property
+   ╭─[display_name.tsx:2:30]
+ 1 │     
+ 2 │ ╭─▶                     var Hello = createReactClass({
+ 3 │ │                         render: function() {
+ 4 │ │                           return React.createElement("div", {}, "text content");
+ 5 │ │                         }
+ 6 │ ╰─▶                     });
+ 7 │                       
+   ╰────
+  help: Add a displayName property to the component
+
+  ⚠ eslint-plugin-react(display-name): React component is missing a displayName property
+   ╭─[display_name.tsx:2:30]
+ 1 │     
+ 2 │ ╭─▶                     var Hello = createReactClass({
+ 3 │ │                         render: function() {
+ 4 │ │                           return React.createElement("div", {}, "text content");
+ 5 │ │                         }
+ 6 │ ╰─▶                     });
+ 7 │                       
+   ╰────
+  help: Add a displayName property to the component
+
+  ⚠ eslint-plugin-react(display-name): React component is missing a displayName property
+   ╭─[display_name.tsx:2:30]
+ 1 │     
+ 2 │ ╭─▶                     var Hello = createReactClass({
+ 3 │ │                         render: function() {
+ 4 │ │                           return React.createElement("div", {}, "text content");
+ 5 │ │                         }
+ 6 │ ╰─▶                     });
+ 7 │                       
+   ╰────
+  help: Add a displayName property to the component
+
+  ⚠ eslint-plugin-react(display-name): React component is missing a displayName property
+   ╭─[display_name.tsx:2:30]
+ 1 │     
+ 2 │ ╭─▶                     var Hello = createReactClass({
+ 3 │ │                         render: function() {
+ 4 │ │                           return React.createElement("div", {}, "text content");
+ 5 │ │                         }
+ 6 │ ╰─▶                     });
+ 7 │                       
+   ╰────
+  help: Add a displayName property to the component
+
+  ⚠ eslint-plugin-react(display-name): React component is missing a displayName property
+   ╭─[display_name.tsx:2:30]
+ 1 │     
+ 2 │ ╭─▶                     var Hello = createReactClass({
+ 3 │ │                         render: function() {
+ 4 │ │                           return React.createElement("div", {}, "text content");
+ 5 │ │                         }
+ 6 │ ╰─▶                     });
+ 7 │                       
+   ╰────
+  help: Add a displayName property to the component
+
+  ⚠ eslint-plugin-react(display-name): React component is missing a displayName property
+   ╭─[display_name.tsx:2:30]
+ 1 │     
+ 2 │ ╭─▶                     var Hello = createReactClass({
+ 3 │ │                         render: function() {
+ 4 │ │                           return React.createElement("div", {}, "text content");
+ 5 │ │                         }
+ 6 │ ╰─▶                     });
+ 7 │                       
+   ╰────
+  help: Add a displayName property to the component
+
+  ⚠ eslint-plugin-react(display-name): React component is missing a displayName property
+   ╭─[display_name.tsx:2:30]
+ 1 │     
+ 2 │ ╭─▶                     var Hello = createReactClass({
+ 3 │ │                         render: function() {
+ 4 │ │                           return React.createElement("div", {}, "text content");
+ 5 │ │                         }
+ 6 │ ╰─▶                     });
+ 7 │                       
+   ╰────
+  help: Add a displayName property to the component
+
+  ⚠ eslint-plugin-react(display-name): React component is missing a displayName property
+   ╭─[display_name.tsx:2:30]
+ 1 │     
+ 2 │ ╭─▶                     var Hello = createReactClass({
+ 3 │ │                         render: function() {
+ 4 │ │                           return React.createElement("div", {}, "text content");
+ 5 │ │                         }
+ 6 │ ╰─▶                     });
+ 7 │                       
+   ╰────
+  help: Add a displayName property to the component
+
+  ⚠ eslint-plugin-react(display-name): React component is missing a displayName property
+   ╭─[display_name.tsx:2:30]
+ 1 │     
+ 2 │ ╭─▶                     var Hello = createReactClass({
+ 3 │ │                         render: function() {
+ 4 │ │                           return React.createElement("div", {}, "text content");
+ 5 │ │                         }
+ 6 │ ╰─▶                     });
+ 7 │                       
+   ╰────
+  help: Add a displayName property to the component
+
+  ⚠ eslint-plugin-react(display-name): React component is missing a displayName property
+   ╭─[display_name.tsx:2:30]
+ 1 │     
+ 2 │ ╭─▶                     var Hello = createReactClass({
+ 3 │ │                         render: function() {
+ 4 │ │                           return React.createElement("div", {}, "text content");
+ 5 │ │                         }
+ 6 │ ╰─▶                     });
+ 7 │                       
+   ╰────
+  help: Add a displayName property to the component

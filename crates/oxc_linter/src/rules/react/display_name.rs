@@ -126,6 +126,7 @@ impl Rule for DisplayName {
                                         if let Some(name) = decl.id.get_identifier_name() {
                                             // If the class name has a valid identifier, that is considered a displayName
                                             if !ignore_transpiler_name && !name.is_empty() {
+                                                class_names_with_display_names_modified.push(init.span());
                                                 return;
                                             }
                                         }
@@ -154,6 +155,8 @@ impl Rule for DisplayName {
                                                             &prop.key
                                                         {
                                                             if key.name == "displayName" {
+                                                                                                            println!("name line 157: {}", key.name);
+
                                                                 // if let Expression::StringLiteral(value) = &prop.value {
                                                                 found_display_name = true;
                                                                 // }
@@ -164,7 +167,8 @@ impl Rule for DisplayName {
                                             }
                                         }
                                         if !found_display_name {
-                        class_names_with_display_names_modified.push(init.span())
+                                            class_names_initialized_with_no_display_name_property
+                                                .push(init.span())
 
                                             // ctx.diagnostic(display_name_diagnostic(init.span()));
                                         }
@@ -177,6 +181,7 @@ impl Rule for DisplayName {
                                 if let Some(name) = decl.id.get_identifier_name() {
                                     // If the function name has a valid identifier, that is considered a displayName
                                     if !ignore_transpiler_name && !name.is_empty() {
+                                                                                        class_names_with_display_names_modified.push(init.span());
                                         return;
                                     }
                                 }
@@ -195,17 +200,20 @@ impl Rule for DisplayName {
                                         .find(|r| ctx.reference_name(r) == "displayName")
                                     {
                                         let node = ctx.nodes().get_node(display_name.node_id());
-                                        if let AstKind::StringLiteral(_) = node.kind() {
+                                        if let AstKind::StringLiteral(name) = node.kind() {
+
+                                            println!("name line 201: {name}");
                                             found_display_name = true;
                                         }
                                     }
                                 }
-                                if !found_display_name {
-                                                            class_names_with_display_names_modified.push(init.span())
+                                if !found_display_name && !ignore_transpiler_name {
+                                    class_names_initialized_with_no_display_name_property
+                                        .push(init.span())
+                                } else if found_display_name {
+                                                                                    class_names_with_display_names_modified.push(init.span());
 
-                                    // ctx.diagnostic(display_name_diagnostic(init.span()));
                                 }
-                                // }
                             }
                         }
                     }
@@ -218,13 +226,12 @@ impl Rule for DisplayName {
 
                         println!("Class id name: {:?}", id.name);
 
-                        if !id.name.is_empty() {
+                        if !id.name.is_empty() && !ignore_transpiler_name {
+                            class_names_with_display_names_modified.push(class.span);
                             // If the class name has a valid identifier, that is considered a displayName
+
                             return;
                         }
-                        // id.name;
-                        // if let Some(name) = id.span() {
-                        // }
                     }
 
                     if let Some(super_class) = &class.super_class {
@@ -252,9 +259,9 @@ impl Rule for DisplayName {
 
                                                     if key.name == "displayName" {
                                                         found_display_name = true;
-                                                    }
 
-                                                    break;
+                                                        // break;
+                                                    }
                                                 }
 
                                                 if let ClassElement::MethodDefinition(method) =
@@ -302,6 +309,9 @@ impl Rule for DisplayName {
                                                 // ));
 
                                                 class_names_initialized_with_no_display_name_property.push(class.span)
+                                            } else {
+                                                class_names_with_display_names_modified
+                                                    .push(class.span)
                                             }
                                         }
                                     }
@@ -310,17 +320,19 @@ impl Rule for DisplayName {
                         }
                     }
                 }
-                AstKind::ExpressionStatement(expr) => {
-                    println!("Expression statement: {:?}", expr);
+                // AstKind::ExpressionStatement(expr) => {
+                //     println!("Expression statement: {:?}", expr);
 
-                    if let Expression::AssignmentExpression(assign) = &expr.expression {
-                        println!("Assignment expression: {:?}", assign);
+                //     if let Expression::AssignmentExpression(assign) = &expr.expression {
+                //         println!("Assignment expression: {:?}", assign);
 
-                        // if let Some(ident) = assign.left.get_identifier_name() {
-                        class_names_with_display_names_modified.push(assign.span)
-                        // }
-                    }
-                }
+                //         if !ignore_transpiler_name {
+                //         // if let Some(ident) = assign.left.get_identifier_name() {
+                //         class_names_with_display_names_modified.push(assign.span)
+                //         }
+                //         // }
+                //     }
+                // }
                 _ => {}
             }
 
@@ -336,17 +348,24 @@ impl Rule for DisplayName {
             let result: Vec<Span> = class_names_initialized_with_no_display_name_property
                 .iter()
                 .filter(|x| {
-                    // if class_names_with_display_names_modified.contains(x) {
-                    //     println!
-                    // }
-                    class_names_with_display_names_modified.contains(x)
+                    // only consider the class spans that have not had their display names explicitly set later.
+                    !class_names_with_display_names_modified.contains(x)
                 })
                 .map(|x| *x)
                 .collect();
 
-            println!("class_names_initialized_with_no_display_name_property: {class_names_initialized_with_no_display_name_property:?}");
-            println!("class_names_with_display_names_modified: {class_names_with_display_names_modified:?}");
+            println!(
+                "class_names_initialized_with_no_display_name_property: {class_names_initialized_with_no_display_name_property:?}"
+            );
+            println!(
+                "class_names_with_display_names_modified: {class_names_with_display_names_modified:?}"
+            );
             println!("result: {result:?}");
+
+            if let Some(class) = result.first() {
+                ctx.diagnostic(display_name_diagnostic(*class));
+            }
+
             // let classes: Vec<Span> = class_names
             //     .declarations
             //     .iter()
@@ -1266,441 +1285,453 @@ fn test() {
         ),
     ];
 
-    let fail: Vec<(&'static str, Option<Value>, Option<Value>)> = vec![];
+    // let pass: Vec<(&'static str, Option<Value>, Option<Value>)> = vec![];
 
-    // let fail: Vec<_> = vec![
-        // (
-        //     r#"
-        // 	        var Hello = createReactClass({
-        // 	          render: function() {
-        // 	            return React.createElement("div", {}, "text content");
-        // 	          }
-        // 	        });
-        // 	      "#,
-        //     Some(serde_json::json!([{ "ignoreTranspilerName": true }])),
-        //     None,
-        // ),
-        // (
-        //     r#"
-        // 	        var Hello = React.createClass({
-        // 	          render: function() {
-        // 	            return React.createElement("div", {}, "text content");
-        // 	          }
-        // 	        });
-        // 	      "#,
-        //     Some(serde_json::json!([{ "ignoreTranspilerName": true }])),
-        //     Some(
-        //         serde_json::json!({ "settings": {        "react": {          "createClass": "createClass",        },      } }),
-        //     ),
-        // ),
-    //     (
-    //         "
-	// 		        var Hello = createReactClass({
-	// 		          render: function() {
-	// 		            return <div>Hello {this.props.name}</div>;
-	// 		          }
-	// 		        });
-	// 		      ",
-    //         Some(serde_json::json!([{ "ignoreTranspilerName": true }])),
-    //         None,
-    //     ),
-    //     (
-    //         "
-	// 		        class Hello extends React.Component {
-	// 		          render() {
-	// 		            return <div>Hello {this.props.name}</div>;
-	// 		          }
-	// 		        }
-	// 		      ",
-    //         Some(serde_json::json!([{ "ignoreTranspilerName": true }])),
-    //         None,
-    //     ),
-    //     (
-    //         "
-	// 		        function HelloComponent() {
-	// 		          return createReactClass({
-	// 		            render: function() {
-	// 		              return <div>Hello {this.props.name}</div>;
-	// 		            }
-	// 		          });
-	// 		        }
-	// 		        module.exports = HelloComponent();
-	// 		      ",
-    //         Some(serde_json::json!([{ "ignoreTranspilerName": true }])),
-    //         None,
-    //     ),
-    //     (
-    //         "
-	// 		        module.exports = () => {
-	// 		          return <div>Hello {props.name}</div>;
-	// 		        }
-	// 		      ",
-    //         None,
-    //         None,
-    //     ),
-    //     (
-    //         "
-	// 		        module.exports = function() {
-	// 		          return <div>Hello {props.name}</div>;
-	// 		        }
-	// 		      ",
-    //         None,
-    //         None,
-    //     ),
-    //     (
-    //         "
-	// 		        module.exports = createReactClass({
-	// 		          render() {
-	// 		            return <div>Hello {this.props.name}</div>;
-	// 		          }
-	// 		        });
-	// 		      ",
-    //         None,
-    //         None,
-    //     ),
-    //     (
-    //         "
-	// 		        var Hello = createReactClass({
-	// 		          _renderHello: function() {
-	// 		            return <span>Hello {this.props.name}</span>;
-	// 		          },
-	// 		          render: function() {
-	// 		            return <div>{this._renderHello()}</div>;
-	// 		          }
-	// 		        });
-	// 		      ",
-    //         Some(serde_json::json!([{ "ignoreTranspilerName": true }])),
-    //         None,
-    //     ),
-    //     (
-    //         "
-	// 		        var Hello = Foo.createClass({
-	// 		          _renderHello: function() {
-	// 		            return <span>Hello {this.props.name}</span>;
-	// 		          },
-	// 		          render: function() {
-	// 		            return <div>{this._renderHello()}</div>;
-	// 		          }
-	// 		        });
-	// 		      ",
-    //         Some(serde_json::json!([{ "ignoreTranspilerName": true }])),
-    //         Some(
-    //             serde_json::json!({ "settings": {        "react": {          "pragma": "Foo",          "createClass": "createClass",        },      } }),
-    //         ),
-    //     ),
-    //     (
-    //         "
-	// 		        /** @jsx Foo */
-	// 		        var Hello = Foo.createClass({
-	// 		          _renderHello: function() {
-	// 		            return <span>Hello {this.props.name}</span>;
-	// 		          },
-	// 		          render: function() {
-	// 		            return <div>{this._renderHello()}</div>;
-	// 		          }
-	// 		        });
-	// 		      ",
-    //         Some(serde_json::json!([{ "ignoreTranspilerName": true }])),
-    //         Some(
-    //             serde_json::json!({ "settings": {        "react": {          "createClass": "createClass",        },      } }),
-    //         ),
-    //     ),
-    //     (
-    //         "
-	// 		        const Mixin = {
-	// 		          Button() {
-	// 		            return (
-	// 		              <button />
-	// 		            );
-	// 		          }
-	// 		        };
-	// 		      ",
-    //         Some(serde_json::json!([{ "ignoreTranspilerName": true }])),
-    //         None,
-    //     ),
-    //     (
-    //         "
-	// 		        function Hof() {
-	// 		          return function () {
-	// 		            return <div />
-	// 		          }
-	// 		        }
-	// 		      ",
-    //         None,
-    //         None,
-    //     ),
-    //     (
-    //         r#"
-	// 		        import React, { createElement } from "react";
-	// 		        export default (props) => {
-	// 		          return createElement("div", {}, "hello");
-	// 		        };
-	// 		      "#,
-    //         None,
-    //         None,
-    //     ),
-    //     (
-    //         "
-	// 		        import React from 'react'
+    let fail: Vec<_> = vec![
+        (
+            r#"
+        	        var Hello = createReactClass({
+        	          render: function() {
+        	            return React.createElement("div", {}, "text content");
+        	          }
+        	        });
+        	      "#,
+            Some(serde_json::json!([{ "ignoreTranspilerName": true }])),
+            None,
+        ),
+        (
+            r#"
+        	        var Hello = React.createClass({
+        	          render: function() {
+        	            return React.createElement("div", {}, "text content");
+        	          }
+        	        });
+        	      "#,
+            Some(serde_json::json!([{ "ignoreTranspilerName": true }])),
+            Some(
+                serde_json::json!({ "settings": {        "react": {          "createClass": "createClass",        },      } }),
+            ),
+        ),
+        (
+            "
+			        var Hello = createReactClass({
+			          render: function() {
+			            return <div>Hello {this.props.name}</div>;
+			          }
+			        });
+			      ",
+            Some(serde_json::json!([{ "ignoreTranspilerName": true }])),
+            None,
+        ),
+        (
+            "
+			        class Hello extends React.Component {
+			          render() {
+			            return <div>Hello {this.props.name}</div>;
+			          }
+			        }
+			      ",
+            Some(serde_json::json!([{ "ignoreTranspilerName": true }])),
+            None,
+        ),
+        (
+            "
+			        function HelloComponent() {
+			          return createReactClass({
+			            render: function() {
+			              return <div>Hello {this.props.name}</div>;
+			            }
+			          });
+			        }
+			        module.exports = HelloComponent();
+			      ",
+            Some(serde_json::json!([{ "ignoreTranspilerName": true }])),
+            None,
+        ),
+        (
+            "
+			        module.exports = () => {
+			          return <div>Hello {props.name}</div>;
+			        }
+			      ",
+            None,
+            None,
+        ),
+        (
+            "
+			        module.exports = function() {
+			          return <div>Hello {props.name}</div>;
+			        }
+			      ",
+            None,
+            None,
+        ),
+        (
+            "
+			        module.exports = createReactClass({
+			          render() {
+			            return <div>Hello {this.props.name}</div>;
+			          }
+			        });
+			      ",
+            None,
+            None,
+        ),
+        (
+            "
+			        var Hello = createReactClass({
+			          _renderHello: function() {
+			            return <span>Hello {this.props.name}</span>;
+			          },
+			          render: function() {
+			            return <div>{this._renderHello()}</div>;
+			          }
+			        });
+			      ",
+            Some(serde_json::json!([{ "ignoreTranspilerName": true }])),
+            None,
+        ),
+        (
+            "
+			        var Hello = Foo.createClass({
+			          _renderHello: function() {
+			            return <span>Hello {this.props.name}</span>;
+			          },
+			          render: function() {
+			            return <div>{this._renderHello()}</div>;
+			          }
+			        });
+			      ",
+            Some(serde_json::json!([{ "ignoreTranspilerName": true }])),
+            Some(
+                serde_json::json!({ "settings": {        "react": {          "pragma": "Foo",          "createClass": "createClass",        },      } }),
+            ),
+        ),
+        (
+            "
+			        /** @jsx Foo */
+			        var Hello = Foo.createClass({
+			          _renderHello: function() {
+			            return <span>Hello {this.props.name}</span>;
+			          },
+			          render: function() {
+			            return <div>{this._renderHello()}</div>;
+			          }
+			        });
+			      ",
+            Some(serde_json::json!([{ "ignoreTranspilerName": true }])),
+            Some(
+                serde_json::json!({ "settings": {        "react": {          "createClass": "createClass",        },      } }),
+            ),
+        ),
+        (
+            "
+			        const Mixin = {
+			          Button() {
+			            return (
+			              <button />
+			            );
+			          }
+			        };
+			      ",
+            Some(serde_json::json!([{ "ignoreTranspilerName": true }])),
+            None,
+        ),
+        (
+            "
+			        function Hof() {
+			          return function () {
+			            return <div />
+			          }
+			        }
+			      ",
+            None,
+            None,
+        ),
+        (
+            r#"
+			        import React, { createElement } from "react";
+			        export default (props) => {
+			          return createElement("div", {}, "hello");
+			        };
+			      "#,
+            None,
+            None,
+        ),
+        (
+            "
+			        import React from 'react'
 
-	// 		        const ComponentWithMemo = React.memo(({ world }) => {
-	// 		          return <div>Hello {world}</div>
-	// 		        })
-	// 		      ",
-    //         None,
-    //         None,
-    //     ),
-    //     (
-    //         "
-	// 		        import React from 'react'
+			        const ComponentWithMemo = React.memo(({ world }) => {
+			          return <div>Hello {world}</div>
+			        })
+			      ",
+            None,
+            None,
+        ),
+        (
+            "
+			        import React from 'react'
 
-	// 		        const ComponentWithMemo = React.memo(function() {
-	// 		          return <div>Hello {world}</div>
-	// 		        })
-	// 		      ",
-    //         None,
-    //         None,
-    //     ),
-    //     (
-    //         "
-	// 		        import React from 'react'
+			        const ComponentWithMemo = React.memo(function() {
+			          return <div>Hello {world}</div>
+			        })
+			      ",
+            None,
+            None,
+        ),
+        (
+            "
+			        import React from 'react'
 
-	// 		        const ForwardRefComponentLike = React.forwardRef(({ world }, ref) => {
-	// 		          return <div ref={ref}>Hello {world}</div>
-	// 		        })
-	// 		      ",
-    //         None,
-    //         None,
-    //     ),
-    //     (
-    //         "
-	// 		        import React from 'react'
+			        const ForwardRefComponentLike = React.forwardRef(({ world }, ref) => {
+			          return <div ref={ref}>Hello {world}</div>
+			        })
+			      ",
+            None,
+            None,
+        ),
+        (
+            "
+			        import React from 'react'
 
-	// 		        const ForwardRefComponentLike = React.forwardRef(function({ world }, ref) {
-	// 		          return <div ref={ref}>Hello {world}</div>
-	// 		        })
-	// 		      ",
-    //         None,
-    //         None,
-    //     ),
-    //     (
-    //         "
-	// 		        import React from 'react'
+			        const ForwardRefComponentLike = React.forwardRef(function({ world }, ref) {
+			          return <div ref={ref}>Hello {world}</div>
+			        })
+			      ",
+            None,
+            None,
+        ),
+        (
+            "
+			        import React from 'react'
 
-	// 		        const MemoizedForwardRefComponentLike = React.memo(
-	// 		          React.forwardRef(({ world }, ref) => {
-	// 		            return <div ref={ref}>Hello {world}</div>
-	// 		          })
-	// 		        )
-	// 		      ",
-    //         None,
-    //         Some(
-    //             serde_json::json!({ "settings": {        "react": {          "version": "15.6.0",        },      } }),
-    //         ),
-    //     ),
-    //     (
-    //         "
-	// 		        import React from 'react'
+			        const MemoizedForwardRefComponentLike = React.memo(
+			          React.forwardRef(({ world }, ref) => {
+			            return <div ref={ref}>Hello {world}</div>
+			          })
+			        )
+			      ",
+            None,
+            Some(
+                serde_json::json!({ "settings": {        "react": {          "version": "15.6.0",        },      } }),
+            ),
+        ),
+        (
+            "
+			        import React from 'react'
 
-	// 		        const MemoizedForwardRefComponentLike = React.memo(
-	// 		          React.forwardRef(function({ world }, ref) {
-	// 		            return <div ref={ref}>Hello {world}</div>
-	// 		          })
-	// 		        )
-	// 		      ",
-    //         None,
-    //         Some(
-    //             serde_json::json!({ "settings": {        "react": {          "version": "0.14.2",        },      } }),
-    //         ),
-    //     ),
-    //     (
-    //         "
-	// 		        import React from 'react'
+			        const MemoizedForwardRefComponentLike = React.memo(
+			          React.forwardRef(function({ world }, ref) {
+			            return <div ref={ref}>Hello {world}</div>
+			          })
+			        )
+			      ",
+            None,
+            Some(
+                serde_json::json!({ "settings": {        "react": {          "version": "0.14.2",        },      } }),
+            ),
+        ),
+        (
+            "
+			        import React from 'react'
 
-	// 		        const MemoizedForwardRefComponentLike = React.memo(
-	// 		          React.forwardRef(function ComponentLike({ world }, ref) {
-	// 		            return <div ref={ref}>Hello {world}</div>
-	// 		          })
-	// 		        )
-	// 		      ",
-    //         None,
-    //         Some(
-    //             serde_json::json!({ "settings": {        "react": {          "version": "15.0.1",        },      } }),
-    //         ),
-    //     ),
-    //     (
-    //         r#"
-	// 		        import React from "react";
-	// 		        const { createElement } = React;
-	// 		        export default (props) => {
-	// 		          return createElement("div", {}, "hello");
-	// 		        };
-	// 		      "#,
-    //         None,
-    //         None,
-    //     ),
-    //     (
-    //         r#"
-	// 		        import React from "react";
-	// 		        const createElement = React.createElement;
-	// 		        export default (props) => {
-	// 		          return createElement("div", {}, "hello");
-	// 		        };
-	// 		      "#,
-    //         None,
-    //         None,
-    //     ),
-    //     (
-    //         r#"
-	// 		        module.exports = function () {
-	// 		          function a () {}
-	// 		          const b = function b () {}
-	// 		          const c = function () {}
-	// 		          const d = () => {}
-	// 		          const obj = {
-	// 		            a: function a () {},
-	// 		            b: function b () {},
-	// 		            c () {},
-	// 		            d: () => {},
-	// 		          }
-	// 		          return React.createElement("div", {}, "text content");
-	// 		        }
-	// 		      "#,
-    //         None,
-    //         None,
-    //     ),
-    //     (
-    //         r#"
-	// 		        module.exports = () => {
-	// 		          function a () {}
-	// 		          const b = function b () {}
-	// 		          const c = function () {}
-	// 		          const d = () => {}
-	// 		          const obj = {
-	// 		            a: function a () {},
-	// 		            b: function b () {},
-	// 		            c () {},
-	// 		            d: () => {},
-	// 		          }
+			        const MemoizedForwardRefComponentLike = React.memo(
+			          React.forwardRef(function ComponentLike({ world }, ref) {
+			            return <div ref={ref}>Hello {world}</div>
+			          })
+			        )
+			      ",
+            None,
+            Some(
+                serde_json::json!({ "settings": {        "react": {          "version": "15.0.1",        },      } }),
+            ),
+        ),
+        (
+            r#"
+			        import React from "react";
+			        const { createElement } = React;
+			        export default (props) => {
+			          return createElement("div", {}, "hello");
+			        };
+			      "#,
+            None,
+            None,
+        ),
+        (
+            r#"
+			        import React from "react";
+			        const createElement = React.createElement;
+			        export default (props) => {
+			          return createElement("div", {}, "hello");
+			        };
+			      "#,
+            None,
+            None,
+        ),
+        (
+            r#"
+			        module.exports = function () {
+			          function a () {}
+			          const b = function b () {}
+			          const c = function () {}
+			          const d = () => {}
+			          const obj = {
+			            a: function a () {},
+			            b: function b () {},
+			            c () {},
+			            d: () => {},
+			          }
+			          return React.createElement("div", {}, "text content");
+			        }
+			      "#,
+            None,
+            None,
+        ),
+        (
+            r#"
+			        module.exports = () => {
+			          function a () {}
+			          const b = function b () {}
+			          const c = function () {}
+			          const d = () => {}
+			          const obj = {
+			            a: function a () {},
+			            b: function b () {},
+			            c () {},
+			            d: () => {},
+			          }
 
-	// 		          return React.createElement("div", {}, "text content");
-	// 		        }
-	// 		      "#,
-    //         None,
-    //         None,
-    //     ),
-    //     (
-    //         "
-	// 		        export default class extends React.Component {
-	// 		          render() {
-	// 		            function a () {}
-	// 		            const b = function b () {}
-	// 		            const c = function () {}
-	// 		            const d = () => {}
-	// 		            const obj = {
-	// 		              a: function a () {},
-	// 		              b: function b () {},
-	// 		              c () {},
-	// 		              d: () => {},
-	// 		            }
-	// 		            return <div>Hello {this.props.name}</div>;
-	// 		          }
-	// 		        }
-	// 		      ",
-    //         None,
-    //         None,
-    //     ),
-    //     (
-    //         "
-	// 		        export default class extends React.PureComponent {
-	// 		          render() {
-	// 		            return <Card />;
-	// 		          }
-	// 		        }
+			          return React.createElement("div", {}, "text content");
+			        }
+			      "#,
+            None,
+            None,
+        ),
+        (
+            "
+			        export default class extends React.Component {
+			          render() {
+			            function a () {}
+			            const b = function b () {}
+			            const c = function () {}
+			            const d = () => {}
+			            const obj = {
+			              a: function a () {},
+			              b: function b () {},
+			              c () {},
+			              d: () => {},
+			            }
+			            return <div>Hello {this.props.name}</div>;
+			          }
+			        }
+			      ",
+            None,
+            None,
+        ),
+        (
+            "
+			        export default class extends React.PureComponent {
+			          render() {
+			            return <Card />;
+			          }
+			        }
 
-	// 		        const Card = (() => {
-	// 		          return React.memo(({ }) => (
-	// 		            <div />
-	// 		          ));
-	// 		        })();
-	// 		      ",
-    //         None,
-    //         None,
-    //     ),
-    //     (
-    //         "
-	// 		        const renderer = a => listItem => (
-	// 		          <div>{a} {listItem}</div>
-	// 		        );
-	// 		      ",
-    //         None,
-    //         None,
-    //     ),
-    //     (
-    //         "
-	// 		        const processData = (options?: { value: string }) => options?.value || 'no data';
+			        const Card = (() => {
+			          return React.memo(({ }) => (
+			            <div />
+			          ));
+			        })();
+			      ",
+            None,
+            None,
+        ),
+        (
+            "
+			        const renderer = a => listItem => (
+			          <div>{a} {listItem}</div>
+			        );
+			      ",
+            None,
+            None,
+        ),
+        (
+            "
+			        const processData = (options?: { value: string }) => options?.value || 'no data';
 
-	// 		        export const Component = observer(() => {
-	// 		          const data = processData({ value: 'data' });
-	// 		          return <div>{data}</div>;
-	// 		        });
+			        export const Component = observer(() => {
+			          const data = processData({ value: 'data' });
+			          return <div>{data}</div>;
+			        });
 
-	// 		        export const Component2 = observer(() => {
-	// 		          const data = processData();
-	// 		          return <div>{data}</div>;
-	// 		        });
-	// 		      ",
-    //         None,
-    //         Some(serde_json::json!({ "settings": { "componentWrapperFunctions": ["observer"] } })),
-    //     ),
-    //     (
-    //         "
-	// 		        import React from 'react';
+			        export const Component2 = observer(() => {
+			          const data = processData();
+			          return <div>{data}</div>;
+			        });
+			      ",
+            None,
+            Some(serde_json::json!({ "settings": { "componentWrapperFunctions": ["observer"] } })),
+        ),
+        (
+            "
+			        import React from 'react';
 
-	// 		        const Hello = React.createContext();
-	// 		      ",
-    //         Some(serde_json::json!([{ "checkContextObjects": true }])),
-    //         None,
-    //     ),
-    //     (
-    //         "
-	// 		        import * as React from 'react';
+			        const Hello = React.createContext();
+			      ",
+            Some(serde_json::json!([{ "checkContextObjects": true }])),
+            None,
+        ),
+        (
+            "
+			        import * as React from 'react';
 
-	// 		        const Hello = React.createContext();
-	// 		      ",
-    //         Some(serde_json::json!([{ "checkContextObjects": true }])),
-    //         None,
-    //     ),
-    //     (
-    //         "
-	// 		        import { createContext } from 'react';
+			        const Hello = React.createContext();
+			      ",
+            Some(serde_json::json!([{ "checkContextObjects": true }])),
+            None,
+        ),
+        (
+            "
+			        import { createContext } from 'react';
 
-	// 		        const Hello = createContext();
-	// 		      ",
-    //         Some(serde_json::json!([{ "checkContextObjects": true }])),
-    //         None,
-    //     ),
-    //     (
-    //         "
-	// 		        import { createContext } from 'react';
+			        const Hello = createContext();
+			      ",
+            Some(serde_json::json!([{ "checkContextObjects": true }])),
+            None,
+        ),
+        (
+            "
+			        import { createContext } from 'react';
 
-	// 		        var Hello;
-	// 		        Hello = createContext();
-	// 		      ",
-    //         Some(serde_json::json!([{ "checkContextObjects": true }])),
-    //         None,
-    //     ),
-    //     (
-    //         "
-	// 		        import { createContext } from 'react';
+			        var Hello;
+			        Hello = createContext();
+			      ",
+            Some(serde_json::json!([{ "checkContextObjects": true }])),
+            None,
+        ),
+        (
+            "
+			        import { createContext } from 'react';
 
-	// 		        var Hello;
-	// 		        Hello = React.createContext();
-	// 		      ",
-    //         Some(serde_json::json!([{ "checkContextObjects": true }])),
-    //         None,
-    //     ),
-    // ];
+			        var Hello;
+			        Hello = React.createContext();
+			      ",
+            Some(serde_json::json!([{ "checkContextObjects": true }])),
+            None,
+        ),
+    ];
+
+    // let fail: Vec<(&'static str, Option<Value>, Option<Value>)> = vec![        (
+    //     r#"
+    // 	        var Hello = createReactClass({
+    // 	          render: function() {
+    // 	            return React.createElement("div", {}, "text content");
+    // 	          }
+    // 	        });
+    // 	      "#,
+    //     Some(serde_json::json!([{ "ignoreTranspilerName": true }])),
+    //     None,
+    // ),];
 
     Tester::new(DisplayName::NAME, DisplayName::PLUGIN, pass, fail).test_and_snapshot();
 }
