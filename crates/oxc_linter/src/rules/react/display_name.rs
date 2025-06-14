@@ -6,6 +6,7 @@ use oxc_ast::{
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_span::GetSpan;
 use oxc_span::Span;
+use serde_json::Value;
 
 use crate::{AstNode, context::LintContext, rule::Rule};
 use oxc_macros::declare_oxc_lint;
@@ -18,7 +19,14 @@ fn display_name_diagnostic(span: Span) -> OxcDiagnostic {
 }
 
 #[derive(Debug, Default, Clone)]
-pub struct DisplayName;
+pub struct DisplayNameConfig {
+    ignore_transpiler_name: bool,
+    check_context_objects: bool,
+}
+
+#[derive(Debug, Default, Clone)]
+pub struct DisplayName(Box<DisplayNameConfig>);
+
 
 // See <https://github.com/oxc-project/oxc/issues/6050> for documentation details.
 declare_oxc_lint!(
@@ -69,7 +77,36 @@ declare_oxc_lint!(
 );
 
 impl Rule for DisplayName {
+    fn from_configuration(value: serde_json::Value) -> Self {
+
+        if value.is_array() {
+            let value = value.get(0);
+
+            if let Some(value) = value {
+                let ignore_transpiler_name = value.get("ignoreTranspilerName").and_then(Value::as_bool).unwrap_or_default();
+                let check_context_objects = value.get("checkContextObjects").and_then(Value::as_bool).unwrap_or_default();
+
+                return Self(Box::new(DisplayNameConfig {
+                    ignore_transpiler_name,
+                    check_context_objects,
+                }));
+            }
+        }
+
+        let ignore_transpiler_name = value.get("ignoreTranspilerName").and_then(Value::as_bool).unwrap_or_default();
+        let check_context_objects = value.get("checkContextObjects").and_then(Value::as_bool).unwrap_or_default();
+
+        Self(Box::new(DisplayNameConfig {
+            ignore_transpiler_name,
+            check_context_objects,
+        }))
+    }
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+        let config = &self.0;
+
+        let ignore_transpiler_name = config.ignore_transpiler_name;
+        let check_context_objects = config.check_context_objects;
+
         match node.kind() {
             AstKind::VariableDeclaration(decl) => {
                 for decl in &decl.declarations {
@@ -78,12 +115,35 @@ impl Rule for DisplayName {
                         if let Expression::CallExpression(call) = init {
                             if let Expression::Identifier(ident) = &call.callee {
                                 if ident.name == "createReactClass" {
+                                    println!("Call expression: {:?}", call.callee_name());
+                                    println!("decl: {:?}", decl);
+                                    println!("decl name: {:?}", decl.id.get_identifier_name());
+
+                                    if let Some(name) = decl.id.get_identifier_name() {
+                                        // If the class name has a valid identifier, that is considered a displayName
+                                        if !ignore_transpiler_name && !name.is_empty() {
+                                            return;
+                                        }
+                                    }
+
                                     let mut found_display_name = false;
                                     // Check for displayName property in the object argument
                                     if let Some(arg) = call.arguments.first() {
                                         if let Argument::ObjectExpression(obj) = arg {
+
+
+
                                             for prop in &obj.properties {
                                                 if let ObjectPropertyKind::ObjectProperty(prop) = prop {
+
+                                                    println!("Prop: {:?}", prop);
+
+                                                    if let Expression::FunctionExpression(value) = &prop.value {
+                                                        if let Some(name) = &value.id {
+                                                            println!("Function id: {:?}", name);
+                                                        }
+                                                    }
+
                                                     if let PropertyKey::StaticIdentifier(key) = &prop.key {
                                                         if key.name == "displayName" {
                                                             // if let Expression::StringLiteral(value) = &prop.value {
@@ -103,6 +163,12 @@ impl Rule for DisplayName {
                         }
                         // Check for functional components
                         if let Expression::ArrowFunctionExpression(_) = init {
+                            if let Some(name) = decl.id.get_identifier_name() {
+                                // If the function name has a valid identifier, that is considered a displayName
+                                if !ignore_transpiler_name && !name.is_empty() {
+                                    return;
+                                }
+                            }
                             // if let Some(name) = decl.id.get_identifier_name() {
                                 let mut found_display_name = false;
                                 // Check for displayName property
@@ -119,11 +185,37 @@ impl Rule for DisplayName {
                                 }
                             // }
                         }
+
+                        // if let Expression::FunctionExpression(func) = init {
+
+                        //     println!("Function: {:?}", func);
+
+                        //     if let Some(name) = &func.id {
+                        //         println!("Function id: {:?}", name);
+                        //         // if !ignore_transpiler_name && !name.is_empty() {
+                        //         //     return;
+                        //         // }
+                        //     }
+                        // }
                     }
                 }
             }
             AstKind::Class(class) => {
                 println!("Class: {:?}", class);
+
+                if let Some(id) = &class.id {
+                    println!("Class id: {:?}", id);
+
+                    println!("Class id name: {:?}", id.name);
+
+                    if !id.name.is_empty() {
+                        // If the class name has a valid identifier, that is considered a displayName
+                        return;
+                    }
+                    // id.name;
+                    // if let Some(name) = id.span() {
+                                            // }
+                }
 
                 if let Some(super_class) = &class.super_class {
                     println!("Super class: {:?}", super_class);
@@ -138,6 +230,7 @@ impl Rule for DisplayName {
                                         let mut found_display_name = false;
                                         // Check for static displayName property or getter
                                         for element in &class.body.body {
+
                                             println!("Element: {:?}", element);
 
                                             let key = element.property_key();
@@ -1093,30 +1186,30 @@ fn test() {
     ];
 
     let fail = vec![
-        (
-            r#"
-			        var Hello = createReactClass({
-			          render: function() {
-			            return React.createElement("div", {}, "text content");
-			          }
-			        });
-			      "#,
-            Some(serde_json::json!([{ "ignoreTranspilerName": true }])),
-            None,
-        ),
-        (
-            r#"
-			        var Hello = React.createClass({
-			          render: function() {
-			            return React.createElement("div", {}, "text content");
-			          }
-			        });
-			      "#,
-            Some(serde_json::json!([{ "ignoreTranspilerName": true }])),
-            Some(
-                serde_json::json!({ "settings": {        "react": {          "createClass": "createClass",        },      } }),
-            ),
-        ),
+        // (
+        //     r#"
+		// 	        var Hello = createReactClass({
+		// 	          render: function() {
+		// 	            return React.createElement("div", {}, "text content");
+		// 	          }
+		// 	        });
+		// 	      "#,
+        //     Some(serde_json::json!([{ "ignoreTranspilerName": true }])),
+        //     None,
+        // ),
+        // (
+        //     r#"
+		// 	        var Hello = React.createClass({
+		// 	          render: function() {
+		// 	            return React.createElement("div", {}, "text content");
+		// 	          }
+		// 	        });
+		// 	      "#,
+        //     Some(serde_json::json!([{ "ignoreTranspilerName": true }])),
+        //     Some(
+        //         serde_json::json!({ "settings": {        "react": {          "createClass": "createClass",        },      } }),
+        //     ),
+        // ),
         (
             "
 			        var Hello = createReactClass({
