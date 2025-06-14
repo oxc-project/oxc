@@ -170,7 +170,11 @@ impl<'a> ParserImpl<'a> {
         let (params, _) =
             self.parse_delimited_list(Kind::RAngle, Kind::Comma, Self::parse_ts_type_parameter);
         self.expect(Kind::RAngle);
-        Some(self.ast.alloc_ts_type_parameter_declaration(self.end_span(span), params))
+        let span = self.end_span(span);
+        if params.is_empty() {
+            self.error(diagnostics::ts_empty_type_parameter_list(span));
+        }
+        Some(self.ast.alloc_ts_type_parameter_declaration(span, params))
     }
 
     pub(crate) fn parse_ts_implements_clause(&mut self) -> Vec<'a, TSClassImplements<'a>> {

@@ -14,18 +14,6 @@ fn ts_error<M: Into<Cow<'static, str>>>(code: &'static str, message: M) -> OxcDi
     OxcDiagnostic::error(message).with_error_code("TS", code)
 }
 
-fn empty_type_parameter_list(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::error("Type parameter list cannot be empty.").with_label(span)
-}
-
-pub fn check_ts_type_parameter_declaration(
-    declaration: &TSTypeParameterDeclaration<'_>,
-    ctx: &SemanticBuilder<'_>,
-) {
-    if declaration.params.is_empty() {
-        ctx.error(empty_type_parameter_list(declaration.span));
-    }
-}
 /// '?' at the end of a type is not valid TypeScript syntax. Did you mean to write 'number | null | undefined'?(17019)
 fn jsdoc_type_in_annotation(
     modifier: char,
