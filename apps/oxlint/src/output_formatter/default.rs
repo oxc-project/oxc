@@ -5,19 +5,21 @@ use oxc_diagnostics::{
     Error, GraphicalReportHandler,
     reporter::{DiagnosticReporter, DiagnosticResult},
 };
-use oxc_linter::table::RuleTable;
+use oxc_linter::{Config, table::RuleTable};
 
 #[derive(Debug)]
 pub struct DefaultOutputFormatter;
 
 impl InternalFormatter for DefaultOutputFormatter {
-    fn all_rules(&self) -> Option<String> {
+    fn all_rules(&self, config: Option<&Config>) -> Option<String> {
         let mut output = String::new();
-        let table = RuleTable::default();
+        let table = RuleTable::new(None, config);
         for section in table.sections {
             output.push_str(section.render_markdown_table(None).as_str());
             output.push('\n');
         }
+
+        output.push_str(format!("Enabled: {}\n", table.enabled_count).as_str());
         output.push_str(format!("Default: {}\n", table.turned_on_by_default_count).as_str());
         output.push_str(format!("Total: {}\n", table.total).as_str());
         Some(output)
@@ -164,7 +166,7 @@ mod test {
     #[test]
     fn all_rules() {
         let formatter = DefaultOutputFormatter;
-        let result = formatter.all_rules();
+        let result = formatter.all_rules(None);
 
         assert!(result.is_some());
     }

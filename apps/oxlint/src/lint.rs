@@ -41,13 +41,6 @@ impl Runner for LintRunner {
         let format_str = self.options.output_options.format;
         let output_formatter = OutputFormatter::new(format_str);
 
-        if self.options.list_rules {
-            if let Some(output) = output_formatter.all_rules() {
-                print_and_flush_stdout(stdout, &output);
-            }
-            return CliRunResult::None;
-        }
-
         let LintCommand {
             paths,
             filter,
@@ -253,6 +246,13 @@ impl Runner for LintRunner {
             LintServiceOptions::new(self.cwd, paths).with_cross_module(use_cross_module);
 
         let lint_config = config_builder.build();
+
+        if self.options.list_rules {
+            if let Some(output) = output_formatter.all_rules(Some(&lint_config)) {
+                print_and_flush_stdout(stdout, &output);
+            }
+            return CliRunResult::None;
+        }
 
         let report_unused_directives = match inline_config_options.report_unused_directives {
             ReportUnusedDirectives::WithoutSeverity(true) => Some(AllowWarnDeny::Warn),

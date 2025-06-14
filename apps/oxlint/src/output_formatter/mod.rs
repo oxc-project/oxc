@@ -19,6 +19,7 @@ use stylish::StylishOutputFormatter;
 use unix::UnixOutputFormatter;
 
 use oxc_diagnostics::reporter::DiagnosticReporter;
+use oxc_linter::Config;
 
 use crate::output_formatter::{default::DefaultOutputFormatter, json::JsonOutputFormatter};
 
@@ -72,7 +73,7 @@ pub struct LintCommandInfo {
 /// The Formatter is then managed by [`OutputFormatter`].
 trait InternalFormatter {
     /// Print all available rules by oxlint
-    fn all_rules(&self) -> Option<String> {
+    fn all_rules(&self, _config: Option<&Config>) -> Option<String> {
         None
     }
 
@@ -110,8 +111,8 @@ impl OutputFormatter {
 
     /// Print all available rules by oxlint
     /// See [`InternalFormatter::all_rules`] for more details.
-    pub fn all_rules(&self) -> Option<String> {
-        self.internal.all_rules()
+    pub fn all_rules(&self, config: Option<&Config>) -> Option<String> {
+        self.internal.all_rules(config)
     }
 
     /// At the end of the Lint command we may output extra information.

@@ -60,7 +60,7 @@ pub fn print_rules(mut args: Arguments) {
         });
 
     let mut generator = SchemaGenerator::new(SchemaSettings::default());
-    let table = RuleTable::new(Some(&mut generator));
+    let table = RuleTable::new(Some(&mut generator), None);
 
     if let Some(table_path) = table_path {
         let table_path = pwd.join(table_path).canonicalize().unwrap();

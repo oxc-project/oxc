@@ -2,12 +2,13 @@ use std::{borrow::Cow, fmt::Write};
 
 use rustc_hash::{FxHashMap, FxHashSet};
 
-use crate::{RuleCategory, RuleFixMeta, rules::RULES};
+use crate::{Config, RuleCategory, RuleFixMeta, rules::RULES};
 
 pub struct RuleTable {
     pub sections: Vec<RuleTableSection>,
     pub total: usize,
     pub turned_on_by_default_count: usize,
+    pub enabled_count: usize,
 }
 
 pub struct RuleTableSection {
@@ -27,24 +28,31 @@ pub struct RuleTableRow {
     pub schema: Option<schemars::schema::Schema>,
 
     pub turned_on_by_default: bool,
+    pub enabled: bool,
     pub autofix: RuleFixMeta,
 }
 
 impl Default for RuleTable {
     fn default() -> Self {
-        Self::new(None)
+        Self::new(None, None)
     }
 }
 
 impl RuleTable {
     #[expect(clippy::allow_attributes)]
     #[allow(unused, unused_mut)]
-    pub fn new(mut generator: Option<&mut schemars::SchemaGenerator>) -> Self {
+    pub fn new(
+        mut generator: Option<&mut schemars::SchemaGenerator>,
+        config: Option<&Config>,
+    ) -> Self {
         let default_rules = RULES
             .iter()
             .filter(|rule| rule.category() == RuleCategory::Correctness)
             .map(super::rules::RuleEnum::name)
             .collect::<FxHashSet<&str>>();
+
+        let enabled_rules =
+            config.map(|c| c.rules().iter().map(|rule| rule.0.name()).collect::<FxHashSet<&str>>());
 
         let mut rows = RULES
             .iter()
@@ -58,6 +66,7 @@ impl RuleTable {
                     schema: generator.as_mut().and_then(|g| rule.schema(g)),
                     plugin: rule.plugin_name().to_string(),
                     category: rule.category(),
+                    enabled: enabled_rules.as_ref().is_some_and(|e| e.contains(name)),
                     turned_on_by_default: default_rules.contains(name),
                     autofix: rule.fix(),
                 }
@@ -94,7 +103,12 @@ impl RuleTable {
         })
         .collect::<Vec<_>>();
 
-        RuleTable { total, sections, turned_on_by_default_count: 123 }
+        RuleTable {
+            total,
+            sections,
+            turned_on_by_default_count: 123,
+            enabled_count: enabled_rules.map_or(0, |rules| rules.len()),
+        }
     }
 }
 
@@ -106,9 +120,11 @@ impl RuleTableSection {
     pub fn render_markdown_table(&self, link_prefix: Option<&str>) -> String {
         const FIX_EMOJI_COL_WIDTH: usize = 10;
         const DEFAULT_EMOJI_COL_WIDTH: usize = 9;
+        const ENABLED_COL_WIDTH: usize = 10;
         /// text width, leave 2 spaces for padding
         const FIX: usize = FIX_EMOJI_COL_WIDTH - 2;
         const DEFAULT: usize = DEFAULT_EMOJI_COL_WIDTH - 2;
+        const ENABLED: usize = ENABLED_COL_WIDTH - 2;
 
         let mut s = String::new();
         let category = &self.category;
@@ -122,17 +138,22 @@ impl RuleTableSection {
         let x = "";
         writeln!(
             s,
-            "| {:<rule_width$} | {:<plugin_width$} | Default | Fixable? |",
+            "| {:<rule_width$} | {:<plugin_width$} | Enabled? | Default | Fixable? |",
             "Rule name", "Source"
         )
         .unwrap();
-        writeln!(s, "| {x:-<rule_width$} | {x:-<plugin_width$} | {x:-<7} | {x:-<8} |").unwrap();
+        writeln!(s, "| {x:-<rule_width$} | {x:-<plugin_width$} | {x:-<8} | {x:-<7} | {x:-<8} |")
+            .unwrap();
 
         for row in rows {
             let rule_name = row.name;
             let plugin_name = &row.plugin;
             let (default, default_width) =
                 if row.turned_on_by_default { ("✅", DEFAULT - 1) } else { ("", DEFAULT) };
+
+            let (enabled, enabled_width) =
+                if row.enabled { ("✅", ENABLED - 1) } else { ("", ENABLED) };
+
             let rendered_name = if let Some(prefix) = link_prefix {
                 Cow::Owned(format!("[{rule_name}]({prefix}/{plugin_name}/{rule_name}.html)"))
             } else {
@@ -142,7 +163,7 @@ impl RuleTableSection {
                 let len = emoji.len();
                 if len > FIX { (emoji, 0) } else { (emoji, FIX - len) }
             });
-            writeln!(s, "| {rendered_name:<rule_width$} | {plugin_name:<plugin_width$} | {default:<default_width$} | {fix_emoji:<fix_emoji_width$} |").unwrap();
+            writeln!(s, "| {rendered_name:<rule_width$} | {plugin_name:<plugin_width$} | {enabled:<enabled_width$} | {default:<default_width$} | {fix_emoji:<fix_emoji_width$} |").unwrap();
         }
 
         s
