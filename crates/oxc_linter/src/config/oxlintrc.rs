@@ -149,6 +149,9 @@ impl Oxlintrc {
         Ok(config)
     }
 
+    /// # Errors
+    ///
+    /// * Parse Failure
     pub fn from_string(json_string: &str) -> Result<Self, OxcDiagnostic> {
         let json = serde_json::from_str::<serde_json::Value>(json_string)
             .unwrap_or(serde_json::Value::Null);

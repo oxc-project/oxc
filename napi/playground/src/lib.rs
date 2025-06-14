@@ -288,10 +288,10 @@ impl Oxc {
             let semantic = Rc::new(semantic_ret.semantic);
             let lint_config = if linter_options.config.is_some() {
                 let oxlintrc =
-                    Oxlintrc::from_string(&linter_options.config.clone().unwrap().to_string())
+                    Oxlintrc::from_string(&linter_options.config.as_ref().unwrap().to_string())
                         .unwrap_or_default();
                 let config_builder =
-                    ConfigStoreBuilder::from_oxlintrc(false, oxlintrc.clone()).unwrap_or_default();
+                    ConfigStoreBuilder::from_oxlintrc(false, oxlintrc).unwrap_or_default();
                 config_builder.build()
             } else {
                 ConfigStoreBuilder::default().build()
