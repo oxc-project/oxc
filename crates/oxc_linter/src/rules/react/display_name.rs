@@ -5,7 +5,6 @@ use oxc_span::Span;
 use crate::{
     AstNode,
     context::LintContext,
-    fixer::{RuleFix, RuleFixer},
     rule::Rule,
 };
 
@@ -68,7 +67,73 @@ declare_oxc_lint!(
 );
 
 impl Rule for DisplayName {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {}
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+        // Search for React components in the AST
+        if let AstNode::VariableDeclaration(decl) = node {
+            for decl in &decl.declarations {
+                if let Some(init) = &decl.init {
+                    if let AstNode::CallExpression(call) = init {
+                        // Check for createReactClass or React.createClass
+                        if let AstNode::Identifier(ident) = &call.callee {
+                            if ident.name == "createReactClass" {
+                                println!("Found React component created with createReactClass");
+                                // Check for displayName property in the object argument
+                                if let Some(arg) = call.arguments.first() {
+                                    if let AstNode::ObjectExpression(obj) = arg {
+                                        for prop in &obj.properties {
+                                            if let AstNode::ObjectProperty(prop) = prop {
+                                                if let AstNode::Identifier(key) = &prop.key {
+                                                    if key.name == "displayName" {
+                                                        if let AstNode::StringLiteral(value) = &prop.value {
+                                                            println!("Component displayName: {}", value.value);
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        // Check for class components
+        if let AstNode::ClassDeclaration(class) = node {
+            if let Some(super_class) = &class.super_class {
+                if let AstNode::MemberExpression(member) = super_class {
+                    if let AstNode::Identifier(ident) = &member.object {
+                        if ident.name == "React" {
+                            if let AstNode::Identifier(prop) = &member.property {
+                                if prop.name == "Component" || prop.name == "PureComponent" {
+                                    println!("Found React class component: {}", class.id.as_ref().unwrap().name);
+
+                                    // Check for static displayName property
+                                    for element in &class.body.body {
+                                        if let AstNode::ClassProperty(prop) = element {
+                                            if prop.static && prop.key.is_identifier() {
+                                                if let AstNode::Identifier(key) = &prop.key {
+                                                    if key.name == "displayName" {
+                                                        if let Some(value) = &prop.value {
+                                                            if let AstNode::StringLiteral(str_lit) = value {
+                                                                println!("Class component displayName: {}", str_lit.value);
+                                                            }
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
 }
 
 #[test]
