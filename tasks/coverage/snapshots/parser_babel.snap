@@ -12151,6 +12151,12 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ·        ──
    ╰────
 
+  × Type parameter list cannot be empty.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/empty-type-parameters/input.ts:1:8]
+ 1 │ class C<> {}
+   ·        ──
+   ╰────
+
   × Expected `{` but found `EOF`
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/extends-empty/input.ts:3:1]
  2 │ }
@@ -12490,6 +12496,12 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
   help: Remove the duplicate modifier.
 
   × TS(1098): Type parameter list cannot be empty.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/function/empty-type-parameters/input.ts:1:13]
+ 1 │ function foo<>() {}
+   ·             ──
+   ╰────
+
+  × Type parameter list cannot be empty.
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/function/empty-type-parameters/input.ts:1:13]
  1 │ function foo<>() {}
    ·             ──
