@@ -558,10 +558,7 @@ impl<'a> ParserImpl<'a> {
             Some(expr)
         };
         if !self.ctx.has_return() {
-            self.error(diagnostics::return_statement_only_in_function_body(Span::new(
-                span,
-                span + 6,
-            )));
+            self.error(diagnostics::return_statement_only_in_function_body(Span::sized(span, 6)));
         }
         self.ast.statement_return(self.end_span(span), argument)
     }
@@ -638,7 +635,7 @@ impl<'a> ParserImpl<'a> {
         let finalizer = self.eat(Kind::Finally).then(|| self.parse_block());
 
         if handler.is_none() && finalizer.is_none() {
-            let range = Span::new(block.span.end, block.span.end);
+            let range = Span::empty(block.span.end);
             self.error(diagnostics::expect_catch_finally(range));
         }
 
