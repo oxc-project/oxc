@@ -72,6 +72,10 @@ class NodeArray extends Array {
     return new NodeArrayEntriesIterator(arr.#internal, arr.length);
   }
 
+  // This method is overwritten with reference to `values` method below.
+  // Defining dummy method here to prevent the later assignment altering the shape of class prototype.
+  [Symbol.iterator]() {}
+
   // Override `slice` method to return a `NodeArray`.
   //
   // The new `NodeArray` references this `NodeArray` so element accesses on the slice will
