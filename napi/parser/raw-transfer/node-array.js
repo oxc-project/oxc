@@ -260,6 +260,7 @@ const PROXY_HANDLERS = {
       // Cannot return `configurable: false` unfortunately
       return { value: getElement(arr, key), writable: false, enumerable: true, configurable: true };
     }
+    // Cannot return `writable: false` for `length` property unfortunately
     return Reflect.getOwnPropertyDescriptor(arr, key);
   },
 
