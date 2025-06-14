@@ -22,6 +22,7 @@ import { Executable, LanguageClient, LanguageClientOptions, ServerOptions } from
 
 import { join } from 'node:path';
 import { ConfigService } from './ConfigService';
+import { VSCodeConfig } from './VSCodeConfig';
 
 const languageClientName = 'oxc';
 const outputChannelName = 'Oxc';
@@ -42,8 +43,16 @@ let client: LanguageClient | undefined;
 
 let myStatusBarItem: StatusBarItem;
 
+// Global flag to check if the user allows us to start the server.
+// When `oxc.requireConfig` is `true`, make sure one `.oxlintrc.json` file is present.
+let allowedToStartServer: boolean;
+
 export async function activate(context: ExtensionContext) {
   const configService = new ConfigService();
+  allowedToStartServer = configService.vsCodeConfig.requireConfig
+    ? (await workspace.findFiles(`**/.oxlintrc.json`, '**/node_modules/**', 1)).length > 0
+    : true;
+
   const restartCommand = commands.registerCommand(
     OxcCommands.RestartServer,
     async () => {
@@ -77,7 +86,7 @@ export async function activate(context: ExtensionContext) {
     async () => {
       await configService.vsCodeConfig.updateEnable(!configService.vsCodeConfig.enable);
 
-      if (client === undefined) {
+      if (client === undefined || !allowedToStartServer) {
         return;
       }
 
@@ -245,7 +254,7 @@ export async function activate(context: ExtensionContext) {
   context.subscriptions.push(onDidChangeWorkspaceFoldersDispose);
 
   configService.onConfigChange = async function onConfigChange(event) {
-    updateStatsBar(this.vsCodeConfig.enable);
+    updateStatsBar(context, this.vsCodeConfig.enable);
 
     if (client === undefined) {
       return;
@@ -264,29 +273,13 @@ export async function activate(context: ExtensionContext) {
     }
   };
 
-  function updateStatsBar(enable: boolean) {
-    if (!myStatusBarItem) {
-      myStatusBarItem = window.createStatusBarItem(
-        StatusBarAlignment.Right,
-        100,
-      );
-      myStatusBarItem.command = OxcCommands.ToggleEnable;
-      context.subscriptions.push(myStatusBarItem);
-      myStatusBarItem.show();
+  updateStatsBar(context, configService.vsCodeConfig.enable);
+  if (allowedToStartServer) {
+    if (configService.vsCodeConfig.enable) {
+      await client.start();
     }
-    let bgColor = new ThemeColor(
-      enable
-        ? 'statusBarItem.activeBackground'
-        : 'statusBarItem.warningBackground',
-    );
-    myStatusBarItem.text = `oxc: ${enable ? '$(check-all)' : '$(check)'}`;
-
-    myStatusBarItem.backgroundColor = bgColor;
-  }
-
-  updateStatsBar(configService.vsCodeConfig.enable);
-  if (configService.vsCodeConfig.enable) {
-    await client.start();
+  } else {
+    generateActivatorByConfig(configService.vsCodeConfig, context);
   }
 }
 
@@ -296,4 +289,48 @@ export async function deactivate(): Promise<void> {
   }
   await client.stop();
   client = undefined;
+}
+
+function updateStatsBar(
+  context: ExtensionContext,
+  enable: boolean,
+) {
+  if (!myStatusBarItem) {
+    myStatusBarItem = window.createStatusBarItem(
+      StatusBarAlignment.Right,
+      100,
+    );
+    myStatusBarItem.command = OxcCommands.ToggleEnable;
+    context.subscriptions.push(myStatusBarItem);
+    myStatusBarItem.show();
+  }
+  let bgColor: string;
+  let icon: string;
+  if (!allowedToStartServer) {
+    bgColor = 'statusBarItem.offlineBackground';
+    icon = '$(circle-slash)';
+  } else if (!enable) {
+    bgColor = 'statusBarItem.warningBackground';
+    icon = '$(check)';
+  } else {
+    bgColor = 'statusBarItem.activeBackground';
+    icon = '$(check-all)';
+  }
+
+  myStatusBarItem.text = `oxc: ${icon}`;
+  myStatusBarItem.backgroundColor = new ThemeColor(bgColor);
+}
+
+function generateActivatorByConfig(config: VSCodeConfig, context: ExtensionContext): void {
+  const watcher = workspace.createFileSystemWatcher('**/.oxlintrc.json', false, true, true);
+  watcher.onDidCreate(async () => {
+    watcher.dispose();
+    allowedToStartServer = true;
+    updateStatsBar(context, config.enable);
+    if (client && !client.isRunning() && config.enable) {
+      await client.start();
+    }
+  });
+
+  context.subscriptions.push(watcher);
 }
