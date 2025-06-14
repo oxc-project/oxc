@@ -1477,8 +1477,7 @@ pub mod walk_mut {
         visitor: &mut V,
         it: &mut ArrayExpressionElement<'a>,
     ) {
-        let kind = AstType::ArrayExpressionElement;
-        visitor.enter_node(kind);
+        // No `AstType` for this type
         match it {
             ArrayExpressionElement::SpreadElement(it) => visitor.visit_spread_element(it),
             ArrayExpressionElement::Elision(it) => visitor.visit_elision(it),
@@ -1486,7 +1485,6 @@ pub mod walk_mut {
                 visitor.visit_expression(it.to_expression_mut())
             }
         }
-        visitor.leave_node(kind);
     }
 
     #[inline]
