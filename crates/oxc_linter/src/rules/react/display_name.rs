@@ -1,17 +1,19 @@
+use oxc_ast::{
+    AstKind,
+    ast::{Argument, ClassElement, Expression, ObjectPropertyKind, PropertyKey, Statement},
+    match_member_expression,
+};
 use oxc_diagnostics::OxcDiagnostic;
-use oxc_macros::declare_oxc_lint;
+use oxc_span::GetSpan;
 use oxc_span::Span;
 
-use crate::{
-    AstNode,
-    context::LintContext,
-    rule::Rule,
-};
+use crate::{AstNode, context::LintContext, rule::Rule};
+use oxc_macros::declare_oxc_lint;
 
 fn display_name_diagnostic(span: Span) -> OxcDiagnostic {
     // See <https://oxc.rs/docs/contribute/linter/adding-rules.html#diagnostics> for details
-    OxcDiagnostic::warn("Should be an imperative statement about what is wrong")
-        .with_help("Should be a command-like statement that tells the user how to fix the issue")
+    OxcDiagnostic::warn("React component is missing a displayName property")
+        .with_help("Add a displayName property to the component")
         .with_label(span)
 }
 
@@ -68,24 +70,35 @@ declare_oxc_lint!(
 
 impl Rule for DisplayName {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        // Search for React components in the AST
-        if let AstNode::VariableDeclaration(decl) = node {
-            for decl in &decl.declarations {
-                if let Some(init) = &decl.init {
-                    if let AstNode::CallExpression(call) = init {
-                        // Check for createReactClass or React.createClass
-                        if let AstNode::Identifier(ident) = &call.callee {
-                            if ident.name == "createReactClass" {
-                                println!("Found React component created with createReactClass");
-                                // Check for displayName property in the object argument
-                                if let Some(arg) = call.arguments.first() {
-                                    if let AstNode::ObjectExpression(obj) = arg {
-                                        for prop in &obj.properties {
-                                            if let AstNode::ObjectProperty(prop) = prop {
-                                                if let AstNode::Identifier(key) = &prop.key {
-                                                    if key.name == "displayName" {
-                                                        if let AstNode::StringLiteral(value) = &prop.value {
-                                                            println!("Component displayName: {}", value.value);
+        match node.kind() {
+            AstKind::VariableDeclaration(decl) => {
+                for decl in &decl.declarations {
+                    if let Some(init) = &decl.init {
+                        // Check for createReactClass
+                        if let Expression::CallExpression(call) = init {
+                            if let Expression::Identifier(ident) = &call.callee {
+                                if ident.name == "createReactClass" {
+                                    println!("Found React component created with createReactClass");
+                                    // Check for displayName property in the object argument
+                                    if let Some(arg) = call.arguments.first() {
+                                        if let Argument::ObjectExpression(obj) = arg {
+                                            for prop in &obj.properties {
+                                                if let ObjectPropertyKind::ObjectProperty(prop) =
+                                                    prop
+                                                {
+                                                    if let PropertyKey::StaticIdentifier(key) =
+                                                        &prop.key
+                                                    {
+                                                        if key.name == "displayName" {
+                                                            if let Expression::StringLiteral(
+                                                                value,
+                                                            ) = &prop.value
+                                                            {
+                                                                println!(
+                                                                    "Component displayName: {}",
+                                                                    value.value
+                                                                );
+                                                            }
                                                         }
                                                     }
                                                 }
@@ -95,30 +108,78 @@ impl Rule for DisplayName {
                                 }
                             }
                         }
+                        // Check for functional components
+                        if let Expression::ArrowFunctionExpression(_arrow) = init {
+                            let mut found_display_name = false;
+
+                            if let Some(name) = decl.id.get_identifier_name() {
+                                println!("Found functional component: {}", name);
+                                // Check for displayName property
+                                if let Some(symbol_id) = decl
+                                    .id
+                                    .get_binding_identifiers()
+                                    .first()
+                                    .and_then(|id| id.symbol_id.get())
+                                {
+                                    let name = ctx.scoping().symbol_name(symbol_id);
+
+                                    println!("Found functional component: {}", name);
+                                    // Check for displayName property
+                                    if let Some(display_name) = ctx
+                                        .scoping()
+                                        .get_resolved_references(symbol_id)
+                                        .find(|r| ctx.reference_name(r) == "displayName")
+                                    {
+                                        let node = ctx.nodes().get_node(display_name.node_id());
+                                        if let AstKind::StringLiteral(value) = node.kind() {
+                                            println!(
+                                                "Functional component displayName: {}",
+                                                value.value
+                                            );
+                                            found_display_name = true;
+                                        }
+                                    }
+                                }
+                            }
+
+                            if !found_display_name {
+                                ctx.diagnostic(display_name_diagnostic(init.span()));
+                            }
+                        }
                     }
                 }
             }
-        }
+            AstKind::Class(class) => {
+                if let Some(super_class) = &class.super_class {
+                    if let match_member_expression!(Expression) = super_class {
+                        let member = super_class.to_member_expression();
+                        if let Expression::Identifier(ident) = &member.object() {
+                            if ident.name == "React" {
+                                if let Some(prop_name) = member.static_property_name() {
+                                    if prop_name == "Component" || prop_name == "PureComponent" {
+                                        if let Some(id) = &class.id {
+                                            println!("Found React class component: {}", id.name);
+                                        }
 
-        // Check for class components
-        if let AstNode::ClassDeclaration(class) = node {
-            if let Some(super_class) = &class.super_class {
-                if let AstNode::MemberExpression(member) = super_class {
-                    if let AstNode::Identifier(ident) = &member.object {
-                        if ident.name == "React" {
-                            if let AstNode::Identifier(prop) = &member.property {
-                                if prop.name == "Component" || prop.name == "PureComponent" {
-                                    println!("Found React class component: {}", class.id.as_ref().unwrap().name);
-
-                                    // Check for static displayName property
-                                    for element in &class.body.body {
-                                        if let AstNode::ClassProperty(prop) = element {
-                                            if prop.static && prop.key.is_identifier() {
-                                                if let AstNode::Identifier(key) = &prop.key {
-                                                    if key.name == "displayName" {
-                                                        if let Some(value) = &prop.value {
-                                                            if let AstNode::StringLiteral(str_lit) = value {
-                                                                println!("Class component displayName: {}", str_lit.value);
+                                        // Check for static displayName property
+                                        for element in &class.body.body {
+                                            if let ClassElement::MethodDefinition(method) = element
+                                            {
+                                                if method.r#static {
+                                                    if let PropertyKey::StaticIdentifier(key) =
+                                                        &method.key
+                                                    {
+                                                        if key.name == "displayName" {
+                                                            if let Some(body) = &method.value.body {
+                                                                if let Some(stmt) =
+                                                                    body.statements.first()
+                                                                {
+                                                                    if let Statement::ExpressionStatement(expr_stmt) = stmt {
+                                                                        if let Expression::StringLiteral(str_lit) = &expr_stmt.expression {
+                                                                            println!("Class component displayName: {}", str_lit.value);
+                                                                        }
+                                                                    }
+                                                                }
                                                             }
                                                         }
                                                     }
@@ -132,6 +193,7 @@ impl Rule for DisplayName {
                     }
                 }
             }
+            _ => {}
         }
     }
 }
@@ -632,15 +694,16 @@ fn test() {
             None,
             None,
         ),
-        (
-            r#"
-			        import {Component} from "react";
-			        type LinkProps = {...{}};
-			        class Link extends Component<LinkProps> {}
-			      "#,
-            None,
-            None,
-        ),
+        // NOTE: this test throws an unexpected token error.
+        // (
+        //     r#"
+        // 	        import {Component} from "react";
+        // 	        type LinkProps = {...{}};
+        // 	        class Link extends Component<LinkProps> {}
+        // 	      "#,
+        //     None,
+        //     None,
+        // ),
         (
             r#"
 			        const x = {
