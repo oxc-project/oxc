@@ -54,6 +54,7 @@ pub const PLUGINS: &[&str] = &[
     "babel-plugin-transform-react-jsx-self",
     "babel-plugin-transform-react-jsx-source",
     "babel-plugin-transform-react-jsx-development",
+    "babel-plugin-transform-react-pure-annotations",
     // // Proposal
     // "babel-plugin-proposal-decorators",
     "babel-plugin-proposal-explicit-resource-management",
