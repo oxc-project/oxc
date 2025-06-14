@@ -3,6 +3,7 @@ import { deepStrictEqual, strictEqual } from 'assert';
 import {
   CodeAction,
   commands,
+  ConfigurationTarget,
   Position,
   ProviderResult,
   Range,
@@ -19,8 +20,18 @@ import {
 } from './test-helpers';
 import assert = require('assert');
 
-setup(async () => {
+suiteSetup(async () => {
   await activateExtension();
+});
+
+teardown(async () => {
+  const vsConfig = workspace.getConfiguration('oxc');
+  const wsConfig = workspace.getConfiguration('oxc', fixturesWorkspaceUri());
+  await vsConfig.update('unusedDisableDirectives', undefined);
+  await wsConfig.update('flags', undefined, ConfigurationTarget.WorkspaceFolder);
+
+  await workspace.getConfiguration('editor').update('codeActionsOnSave', undefined);
+  await workspace.saveAll();
 });
 
 suite('code actions', () => {
@@ -28,6 +39,7 @@ suite('code actions', () => {
     await loadFixture('debugger');
     const fileUri = Uri.joinPath(fixturesWorkspaceUri(), 'fixtures', 'debugger.js');
     // await window.showTextDocument(fileUri); -- should also work without opening the file
+    await sleep(500); // ¯\_(ツ)_/¯ -- test it again when adding/removing tests
 
     const codeActions: ProviderResult<Array<CodeAction>> = await commands.executeCommand(
       'vscode.executeCodeActionProvider',
@@ -91,12 +103,9 @@ suite('code actions', () => {
     const expected = await workspace.fs.readFile(expectedFile);
 
     strictEqual(content.toString(), expected.toString());
-
-    await workspace.getConfiguration('editor').update('codeActionsOnSave', undefined);
-    await workspace.saveAll();
   });
 
-  test('changing configuration "fix_kind" will reveal more code actions', async () => {
+  test('changing configuration flag "fix_kind" will reveal more code actions', async () => {
     await loadFixture('changing_fix_kind');
     const fileUri = Uri.joinPath(fixturesWorkspaceUri(), 'fixtures', 'for_direction.ts');
     await window.showTextDocument(fileUri);
@@ -115,9 +124,9 @@ suite('code actions', () => {
     );
     strictEqual(quickFixesNoFix.length, 2);
 
-    await workspace.getConfiguration('oxc').update('flags', {
+    await workspace.getConfiguration('oxc', fixturesWorkspaceUri()).update('flags', {
       'fix_kind': 'dangerous_fix',
-    });
+    }, ConfigurationTarget.WorkspaceFolder);
     await workspace.saveAll();
 
     const codeActionsWithFix: ProviderResult<Array<CodeAction>> = await commands.executeCommand(
@@ -134,5 +143,43 @@ suite('code actions', () => {
       (action) => action.kind?.value === 'quickfix',
     );
     strictEqual(quickFixesWithFix.length, 3);
+  });
+
+  test('changing configuration "unusedDisableDirectives" will reveal more code actions', async () => {
+    await loadFixture('changing_unused_disable_directives');
+    const fileUri = Uri.joinPath(fixturesWorkspaceUri(), 'fixtures', 'unused_disable_directives.js');
+    await window.showTextDocument(fileUri);
+    const codeActionsNoFix: ProviderResult<Array<CodeAction>> = await commands.executeCommand(
+      'vscode.executeCodeActionProvider',
+      fileUri,
+      {
+        start: { line: 0, character: 0 },
+        end: { line: 0, character: 10 },
+      },
+    );
+
+    assert(Array.isArray(codeActionsNoFix));
+    const quickFixesNoFix = codeActionsNoFix.filter(
+      (action) => action.kind?.value === 'quickfix',
+    );
+    strictEqual(quickFixesNoFix.length, 0);
+
+    await workspace.getConfiguration('oxc').update('unusedDisableDirectives', "warn");
+    await workspace.saveAll();
+
+    const codeActionsWithFix: ProviderResult<Array<CodeAction>> = await commands.executeCommand(
+      'vscode.executeCodeActionProvider',
+      fileUri,
+      {
+        start: { line: 0, character: 2 },
+        end: { line: 0, character: 10 },
+      },
+    );
+
+    assert(Array.isArray(codeActionsWithFix));
+    const quickFixesWithFix = codeActionsWithFix.filter(
+      (action) => action.kind?.value === 'quickfix',
+    );
+    strictEqual(quickFixesWithFix.length, 1);
   });
 });

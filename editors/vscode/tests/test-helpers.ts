@@ -67,7 +67,7 @@ export async function activateExtension(full: boolean = true): Promise<void> {
 
   if (full) {
     await loadFixture('debugger');
-    const fileUri = Uri.joinPath(WORKSPACE_DIR, 'fixtures', 'debugger.js');
+    const fileUri = Uri.joinPath(fixturesWorkspaceUri(), 'fixtures', 'debugger.js');
     await window.showTextDocument(fileUri);
     // wait for initialized requests
     await sleep(500);
