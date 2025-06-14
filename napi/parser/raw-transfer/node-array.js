@@ -6,10 +6,6 @@ const { TOKEN, constructorError } = require('./lazy-common.js');
 // Used by `slice` method.
 const nodeArrays = new WeakMap();
 
-// Function to get `#internal` property of a `NodeArray`.
-// Initialized in static block in `NodeArray` class.
-let getInternal;
-
 // An array of AST nodes where elements are deserialized lazily upon access.
 //
 // Extends `Array` to make `Array.isArray` return `true` for a `NodeArray`.
@@ -123,10 +119,21 @@ class NodeArray extends Array {
     return values;
   }
 
-  static {
-    getInternal = arr => arr.#internal;
+  /**
+   * Get element of `NodeArray` at index `index`.
+   * `index` must be in bounds (i.e. `< arr.length`).
+   *
+   * @param {NodeArray} arr - `NodeArray` object
+   * @param {number} index - Index of element to get
+   * @returns {*} - Element at index `index`
+   */
+  static getElement(arr, index) {
+    const internal = arr.#internal;
+    return (0, internal.construct)(internal.pos + index * internal.stride, internal.ast);
   }
 }
+
+const { getElement } = NodeArray;
 
 NodeArray.prototype[Symbol.iterator] = NodeArray.prototype.values;
 
@@ -222,19 +229,6 @@ class NodeArrayEntriesIterator {
 
 // Class used for `[Symbol.for('nodejs.util.inspect.custom')]` method (`console.log`).
 const DebugNodeArray = class NodeArray extends Array {};
-
-/**
- * Get element of `NodeArray` at index `index`.
- * `index` must be in bounds (i.e. `< arr.length`).
- *
- * @param {NodeArray} arr - `NodeArray` object
- * @param {number} index - Index of element to get
- * @returns {*} - Element at index `index`
- */
-function getElement(arr, index) {
-  const internal = getInternal(arr);
-  return (0, internal.construct)(internal.pos + index * internal.stride, internal.ast);
-}
 
 // Proxy handlers.
 //
