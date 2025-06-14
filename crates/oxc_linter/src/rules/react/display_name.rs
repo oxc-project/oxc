@@ -78,30 +78,17 @@ impl Rule for DisplayName {
                         if let Expression::CallExpression(call) = init {
                             if let Expression::Identifier(ident) = &call.callee {
                                 if ident.name == "createReactClass" {
-                                    println!("Found React component created with createReactClass");
                                     let mut found_display_name = false;
-
                                     // Check for displayName property in the object argument
                                     if let Some(arg) = call.arguments.first() {
                                         if let Argument::ObjectExpression(obj) = arg {
                                             for prop in &obj.properties {
-                                                if let ObjectPropertyKind::ObjectProperty(prop) =
-                                                    prop
-                                                {
-                                                    if let PropertyKey::StaticIdentifier(key) =
-                                                        &prop.key
-                                                    {
+                                                if let ObjectPropertyKind::ObjectProperty(prop) = prop {
+                                                    if let PropertyKey::StaticIdentifier(key) = &prop.key {
                                                         if key.name == "displayName" {
-                                                            if let Expression::StringLiteral(
-                                                                value,
-                                                            ) = &prop.value
-                                                            {
-                                                                println!(
-                                                                    "Component displayName: {}",
-                                                                    value.value
-                                                                );
+                                                            // if let Expression::StringLiteral(value) = &prop.value {
                                                                 found_display_name = true;
-                                                            }
+                                                            // }
                                                         }
                                                     }
                                                 }
@@ -112,39 +99,17 @@ impl Rule for DisplayName {
                                         ctx.diagnostic(display_name_diagnostic(init.span()));
                                     }
                                 }
-
-
                             }
                         }
                         // Check for functional components
-                        if let Expression::ArrowFunctionExpression(_arrow) = init {
-
-                            if let Some(name) = decl.id.get_identifier_name() {
+                        if let Expression::ArrowFunctionExpression(_) = init {
+                            // if let Some(name) = decl.id.get_identifier_name() {
                                 let mut found_display_name = false;
-
-                                println!("Found functional component: {}", name);
                                 // Check for displayName property
-                                if let Some(symbol_id) = decl
-                                    .id
-                                    .get_binding_identifiers()
-                                    .first()
-                                    .and_then(|id| id.symbol_id.get())
-                                {
-                                    let name = ctx.scoping().symbol_name(symbol_id);
-
-                                    println!("Found functional component: {}", name);
-                                    // Check for displayName property
-                                    if let Some(display_name) = ctx
-                                        .scoping()
-                                        .get_resolved_references(symbol_id)
-                                        .find(|r| ctx.reference_name(r) == "displayName")
-                                    {
+                                if let Some(symbol_id) = decl.id.get_binding_identifiers().first().and_then(|id| id.symbol_id.get()) {
+                                    if let Some(display_name) = ctx.scoping().get_resolved_references(symbol_id).find(|r| ctx.reference_name(r) == "displayName") {
                                         let node = ctx.nodes().get_node(display_name.node_id());
-                                        if let AstKind::StringLiteral(value) = node.kind() {
-                                            println!(
-                                                "Functional component displayName: {}",
-                                                value.value
-                                            );
+                                        if let AstKind::StringLiteral(_) = node.kind() {
                                             found_display_name = true;
                                         }
                                     }
@@ -152,47 +117,67 @@ impl Rule for DisplayName {
                                 if !found_display_name {
                                     ctx.diagnostic(display_name_diagnostic(init.span()));
                                 }
-                            }
-
-
+                            // }
                         }
                     }
                 }
             }
             AstKind::Class(class) => {
+                println!("Class: {:?}", class);
+
                 if let Some(super_class) = &class.super_class {
+                    println!("Super class: {:?}", super_class);
                     if let match_member_expression!(Expression) = super_class {
                         let member = super_class.to_member_expression();
                         if let Expression::Identifier(ident) = &member.object() {
+                            println!("Ident: {:?}", ident);
                             if ident.name == "React" {
                                 if let Some(prop_name) = member.static_property_name() {
+                                    println!("Prop name: {:?}", prop_name);
                                     if prop_name == "Component" || prop_name == "PureComponent" {
-
-
                                         let mut found_display_name = false;
-                                        if let Some(id) = &class.id {
-                                            println!("Found React class component: {}", id.name);
-                                        }
-
-                                        // Check for static displayName property
+                                        // Check for static displayName property or getter
                                         for element in &class.body.body {
-                                            if let ClassElement::MethodDefinition(method) = element
-                                            {
-                                                if method.r#static {
-                                                    if let PropertyKey::StaticIdentifier(key) =
-                                                        &method.key
-                                                    {
-                                                        if key.name == "displayName" {
-                                                            if let Some(body) = &method.value.body {
-                                                                if let Some(stmt) =
-                                                                    body.statements.first()
-                                                                {
-                                                                    if let Statement::ExpressionStatement(expr_stmt) = stmt {
-                                                                        if let Expression::StringLiteral(str_lit) = &expr_stmt.expression {
-                                                                            println!("Class component displayName: {}", str_lit.value);
+                                            println!("Element: {:?}", element);
 
-                                                                            found_display_name = true;
+                                            let key = element.property_key();
+
+                                            if let Some(PropertyKey::StaticIdentifier(key)) = key {
+                                                println!("Key: {:?}", key);
+
+                                                if key.name == "displayName" {
+                                                    found_display_name = true;
+                                                }
+
+                                                break;
+                                            }
+
+
+
+
+                                            if let ClassElement::MethodDefinition(method) = element {
+                                                println!("Method: {:?}", method);
+                                                if method.r#static {
+                                                    println!("Static method: {:?}", method);
+                                                    if let PropertyKey::StaticIdentifier(key) = &method.key {
+                                                        if key.name == "displayName" {
+                                                            // Check for both string literal and getter method
+                                                            if let Some(body) = &method.value.body {
+                                                                if let Some(stmt) = body.statements.first() {
+                                                                    match stmt {
+                                                                        Statement::ExpressionStatement(expr_stmt) => {
+                                                                            if let Expression::StringLiteral(_) = &expr_stmt.expression {
+                                                                                found_display_name = true;
+                                                                            }
                                                                         }
+                                                                        Statement::ReturnStatement(ret_stmt) => {
+                                                                            if let Some(expr) = &ret_stmt.argument {
+                                                                                if let Expression::StringLiteral(_) = expr {
+                                                                                    found_display_name = true;
+                                                                                }
+                                                                            }
+                                                                        }
+                                                                        _ => {}
                                                                     }
                                                                 }
                                                             }
@@ -201,13 +186,10 @@ impl Rule for DisplayName {
                                                 }
                                             }
                                         }
-
                                         if !found_display_name {
                                             ctx.diagnostic(display_name_diagnostic(class.span()));
                                         }
                                     }
-
-
                                 }
                             }
                         }
