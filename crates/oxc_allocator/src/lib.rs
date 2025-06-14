@@ -20,6 +20,7 @@
 //!   Usage of this feature is not advisable, and it will be removed as soon as we're able to.
 
 #![warn(missing_docs)]
+#![cfg_attr(nightly, feature(allocator_api))]
 
 mod accessor;
 mod address;
