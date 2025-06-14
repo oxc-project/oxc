@@ -26,6 +26,10 @@ pub fn check_ts_type_parameter_declaration(
         ctx.error(empty_type_parameter_list(declaration.span));
     }
 }
+pub fn check_ts_type_parameter<'a>(param: &TSTypeParameter<'a>, ctx: &SemanticBuilder<'a>) {
+    check_type_name_is_reserved(&param.name, ctx, "Type parameter");
+}
+
 /// '?' at the end of a type is not valid TypeScript syntax. Did you mean to write 'number | null | undefined'?(17019)
 fn jsdoc_type_in_annotation(
     modifier: char,
@@ -71,6 +75,10 @@ pub fn check_ts_type_annotation(annotation: &TSTypeAnnotation<'_>, ctx: &Semanti
         span_with_illegal_modifier,
         &suggestion,
     ));
+}
+
+pub fn check_ts_type_alias_declaration<'a>(decl: &TSTypeAliasDeclaration<'a>, ctx: &SemanticBuilder<'a>) {
+    check_type_name_is_reserved(&decl.id, ctx, "Type alias");
 }
 
 fn required_parameter_after_optional_parameter(span: Span) -> OxcDiagnostic {
@@ -183,6 +191,8 @@ pub fn check_ts_enum_declaration<'a>(decl: &TSEnumDeclaration<'a>, ctx: &Semanti
             ctx.error(enum_member_must_have_initializer(member.span));
         }
     });
+
+    check_type_name_is_reserved(&decl.id, ctx, "Enum");
 }
 
 /// TS(1392)
@@ -255,6 +265,48 @@ pub fn check_class<'a>(class: &Class<'a>, ctx: &SemanticBuilder<'a>) {
             }
         }
     }
+    if let Some(id) = &class.id {
+        check_type_name_is_reserved(id, ctx, "Class");
+    }
+}
+
+/// ```ts
+/// function checkTypeNameIsReserved(name: Identifier, message: DiagnosticMessage): void {
+///     // TS 1.0 spec (April 2014): 3.6.1
+///     // The predefined type keywords are reserved and cannot be used as names of user defined types.
+///     switch (name.escapedText) {
+///         case "any":
+///         case "unknown":
+///         case "never":
+///         case "number":
+///         case "bigint":
+///         case "boolean":
+///         case "string":
+///         case "symbol":
+///         case "void":
+///         case "object":
+///         case "undefined":
+///             error(name, message, name.escapedText as string);
+///     }
+/// }
+/// ```
+#[allow(dead_code)]
+fn check_type_name_is_reserved<'a>(
+    id: &BindingIdentifier<'a>,
+    ctx: &SemanticBuilder<'a>,
+    syntax_name: &str,
+) {
+    match id.name.as_str() {
+        "any" | "unknown" | "never" | "number" | "bigint" | "boolean" | "string" | "symbol"
+        | "void" | "object" | "undefined" => {
+            ctx.error(reserved_type_name(id.span, id.name.as_str(), syntax_name));
+        }
+        _ => {}
+    }
+}
+#[allow(dead_code)]
+fn reserved_type_name(span: Span, reserved_name: &str, syntax_name: &str) -> OxcDiagnostic {
+    ts_error("2414", format!("{syntax_name} name cannot be '{reserved_name}'")).with_label(span)
 }
 
 fn abstract_element_cannot_have_initializer(
