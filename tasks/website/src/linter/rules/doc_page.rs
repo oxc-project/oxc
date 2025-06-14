@@ -39,6 +39,7 @@ impl Context {
             turned_on_by_default,
             autofix,
             category,
+            enabled: _,
         } = rule;
         let resolved =
             schema.as_ref().map(|schema| self.schemas.dereference(schema).unwrap_or(schema));
