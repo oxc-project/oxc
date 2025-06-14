@@ -225,8 +225,8 @@ js compatibility: 295/699 (42.20%)
 | js/if/trailing_comment.js | 💥 | 58.06% |
 | js/import/comments.js | 💥💥 | 57.14% |
 | js/import/empty-import.js | 💥💥 | 45.45% |
-| js/import-assertions/keyword-detect.js | 💥 | 33.33% |
-| js/import-attributes/keyword-detect.js | 💥 | 33.33% |
+| js/import-assertions/keyword-detect.js | 💥 | 25.00% |
+| js/import-attributes/keyword-detect.js | 💥 | 28.57% |
 | js/import-attributes/long-sources.js | 💥 | 48.48% |
 | js/label/comment.js | 💥 | 66.67% |
 | js/last-argument-expansion/arrow.js | 💥 | 20.51% |
