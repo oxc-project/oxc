@@ -50,7 +50,7 @@ check:
 
 # Run all the tests
 test:
-  cargo test --all-features
+  cargo test -- --nocapture
 
 # Lint the whole project
 lint:
