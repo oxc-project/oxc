@@ -300,7 +300,6 @@ pub fn check_ts_interface_declaration<'a>(
 ///     }
 /// }
 /// ```
-#[allow(dead_code)]
 fn check_type_name_is_reserved<'a>(
     id: &BindingIdentifier<'a>,
     ctx: &SemanticBuilder<'a>,
@@ -314,7 +313,7 @@ fn check_type_name_is_reserved<'a>(
         _ => {}
     }
 }
-#[allow(dead_code)]
+
 fn reserved_type_name(span: Span, reserved_name: &str, syntax_name: &str) -> OxcDiagnostic {
     ts_error("2414", format!("{syntax_name} name cannot be '{reserved_name}'")).with_label(span)
 }
