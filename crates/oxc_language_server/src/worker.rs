@@ -27,6 +27,7 @@ pub struct WorkspaceWorker {
     root_uri: Uri,
     server_linter: RwLock<Option<ServerLinter>>,
     diagnostics_report_map: Arc<ConcurrentHashMap<String, Vec<DiagnosticReport>>>,
+    document_cache: Arc<ConcurrentHashMap<String, String>>,
     options: Mutex<Options>,
 }
 
@@ -36,6 +37,7 @@ impl WorkspaceWorker {
             root_uri,
             server_linter: RwLock::new(None),
             diagnostics_report_map: Arc::new(ConcurrentHashMap::default()),
+            document_cache: Arc::new(ConcurrentHashMap::default()),
             options: Mutex::new(Options::default()),
         }
     }
@@ -54,6 +56,14 @@ impl WorkspaceWorker {
     pub async fn init_linter(&self, options: &Options) {
         *self.options.lock().await = options.clone();
         *self.server_linter.write().await = Some(ServerLinter::new(&self.root_uri, options));
+    }
+
+    pub fn cache_document(&self, uri: &Uri, content: String) {
+        self.document_cache.pin().insert(uri.to_string(), content);
+    }
+
+    pub fn remove_cached_document(&self, uri: &Uri) {
+        self.document_cache.pin().remove(&uri.to_string());
     }
 
     // WARNING: start all programs (linter, formatter) before calling this function
@@ -136,12 +146,8 @@ impl WorkspaceWorker {
         run_level == current_run
     }
 
-    pub async fn lint_file(
-        &self,
-        uri: &Uri,
-        content: Option<String>,
-    ) -> Option<Vec<DiagnosticReport>> {
-        let diagnostics = self.lint_file_internal(uri, content).await;
+    pub async fn lint_file(&self, uri: &Uri) -> Option<Vec<DiagnosticReport>> {
+        let diagnostics = self.lint_file_internal(uri).await;
 
         if let Some(diagnostics) = &diagnostics {
             self.update_diagnostics(uri, diagnostics);
@@ -150,23 +156,22 @@ impl WorkspaceWorker {
         diagnostics
     }
 
-    async fn lint_file_internal(
-        &self,
-        uri: &Uri,
-        content: Option<String>,
-    ) -> Option<Vec<DiagnosticReport>> {
+    async fn lint_file_internal(&self, uri: &Uri) -> Option<Vec<DiagnosticReport>> {
         let Some(server_linter) = &*self.server_linter.read().await else {
             return None;
         };
 
-        server_linter.run_single(uri, content)
+        let cache = self.document_cache.pin();
+        let content = cache.get(&uri.to_string());
+
+        server_linter.run_single(uri, content.cloned())
     }
 
     fn update_diagnostics(&self, uri: &Uri, diagnostics: &[DiagnosticReport]) {
         self.diagnostics_report_map.pin().insert(uri.to_string(), diagnostics.to_owned());
     }
 
-    async fn revalidate_diagnostics(&self) -> ConcurrentHashMap<String, Vec<DiagnosticReport>> {
+    pub async fn revalidate_diagnostics(&self) -> ConcurrentHashMap<String, Vec<DiagnosticReport>> {
         let diagnostics_map = ConcurrentHashMap::with_capacity_and_hasher(
             self.diagnostics_report_map.len(),
             FxBuildHasher,
@@ -209,7 +214,7 @@ impl WorkspaceWorker {
             Some(value) => value,
             // code actions / commands can be requested without opening the file
             // we just internally lint and provide the code actions / commands without refreshing the diagnostic map.
-            None => &self.lint_file_internal(uri, None).await.unwrap_or_default(),
+            None => &self.lint_file_internal(uri).await.unwrap_or_default(),
         };
 
         if value.is_empty() {
@@ -251,7 +256,7 @@ impl WorkspaceWorker {
             Some(value) => value,
             // code actions / commands can be requested without opening the file
             // we just internally lint and provide the code actions / commands without refreshing the diagnostic map.
-            None => &self.lint_file_internal(uri, None).await.unwrap_or_default(),
+            None => &self.lint_file_internal(uri).await.unwrap_or_default(),
         };
 
         if value.is_empty() {
@@ -280,18 +285,20 @@ impl WorkspaceWorker {
         text_edits
     }
 
-    pub async fn did_change_watched_files(
-        &self,
-        _file_event: &FileEvent,
-    ) -> Option<ConcurrentHashMap<String, Vec<DiagnosticReport>>> {
+    pub async fn did_change_watched_files(&self, _file_event: &FileEvent) {
         self.refresh_server_linter().await;
-        Some(self.revalidate_diagnostics().await)
     }
 
+    /// This function is called when the configuration changes.
+    ///
+    /// # Returns
+    /// A tuple containing:
+    /// - A boolean indicating whether the Client needs new diagnostics.
+    /// - An optional `FileSystemWatcher`, replacing the old one if the config path has changed.
     pub async fn did_change_configuration(
         &self,
         changed_options: &Options,
-    ) -> (Option<ConcurrentHashMap<String, Vec<DiagnosticReport>>>, Option<FileSystemWatcher>) {
+    ) -> (bool, Option<FileSystemWatcher>) {
         // clone the current options to avoid locking the mutex
         let current_option = &self.options.lock().await.clone();
 
@@ -310,7 +317,7 @@ impl WorkspaceWorker {
 
             if current_option.config_path != changed_options.config_path {
                 return (
-                    Some(self.revalidate_diagnostics().await),
+                    true,
                     Some(FileSystemWatcher {
                         glob_pattern: GlobPattern::Relative(RelativePattern {
                             base_uri: OneOf::Right(self.root_uri.clone()),
@@ -325,10 +332,10 @@ impl WorkspaceWorker {
                 );
             }
 
-            return (Some(self.revalidate_diagnostics().await), None);
+            return (true, None);
         }
 
-        (None, None)
+        (false, None)
     }
 }
 

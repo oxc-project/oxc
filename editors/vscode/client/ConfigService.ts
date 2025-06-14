@@ -1,4 +1,5 @@
 import { ConfigurationChangeEvent, Uri, workspace, WorkspaceFolder } from 'vscode';
+import { DiagnosticPullMode } from 'vscode-languageclient';
 import { IDisposable } from './types';
 import { VSCodeConfig } from './VSCodeConfig';
 import { WorkspaceConfig, WorkspaceConfigInterface } from './WorkspaceConfig';
@@ -77,6 +78,24 @@ export class ConfigService implements IDisposable {
     if (isConfigChanged) {
       await this.onConfigChange?.(event);
     }
+  }
+
+  public shouldRequestDiagnostics(
+    textDocumentUri: Uri,
+    diagnosticPullMode: DiagnosticPullMode,
+  ): boolean {
+    if (!this.vsCodeConfig.enable) {
+      return false;
+    }
+
+    const textDocumentPath = textDocumentUri.path;
+
+    for (const [workspaceUri, workspaceConfig] of this.workspaceConfigs.entries()) {
+      if (textDocumentPath.startsWith(workspaceUri)) {
+        return workspaceConfig.shouldRequestDiagnostics(diagnosticPullMode);
+      }
+    }
+    return false;
   }
 
   dispose() {
