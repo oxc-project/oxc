@@ -25,4 +25,4 @@ related_information[0].location.range: Range { start: Position { line: 0, charac
 severity: Some(Error)
 source: Some("oxc")
 tags: None
-fixed: None
+fixed: Single(FixedContent { message: Some("remove unused disable directive"), code: "", range: Range { start: Position { line: 0, character: 2 }, end: Position { line: 0, character: 56 } } })
