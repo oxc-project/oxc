@@ -77,7 +77,10 @@ pub fn check_ts_type_annotation(annotation: &TSTypeAnnotation<'_>, ctx: &Semanti
     ));
 }
 
-pub fn check_ts_type_alias_declaration<'a>(decl: &TSTypeAliasDeclaration<'a>, ctx: &SemanticBuilder<'a>) {
+pub fn check_ts_type_alias_declaration<'a>(
+    decl: &TSTypeAliasDeclaration<'a>,
+    ctx: &SemanticBuilder<'a>,
+) {
     check_type_name_is_reserved(&decl.id, ctx, "Type alias");
 }
 
@@ -268,6 +271,13 @@ pub fn check_class<'a>(class: &Class<'a>, ctx: &SemanticBuilder<'a>) {
     if let Some(id) = &class.id {
         check_type_name_is_reserved(id, ctx, "Class");
     }
+}
+
+pub fn check_ts_interface_declaration<'a>(
+    decl: &TSInterfaceDeclaration<'a>,
+    ctx: &SemanticBuilder<'a>,
+) {
+    check_type_name_is_reserved(&decl.id, ctx, "Interface");
 }
 
 /// ```ts
