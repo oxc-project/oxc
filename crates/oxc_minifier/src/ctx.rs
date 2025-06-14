@@ -88,8 +88,8 @@ impl<'a> Ctx<'a, '_> {
                 self.ast.expression_numeric_literal(span, n, None, number_base)
             }
             ConstantValue::BigInt(bigint) => {
-                let raw = format_atom!(self.ast.allocator, "{bigint}n");
-                self.ast.expression_big_int_literal(span, raw, BigintBase::Decimal)
+                let value = format_atom!(self.ast.allocator, "{bigint}");
+                self.ast.expression_big_int_literal(span, value, None, BigintBase::Decimal)
             }
             ConstantValue::String(s) => {
                 self.ast.expression_string_literal(span, self.ast.atom_from_cow(&s), None)

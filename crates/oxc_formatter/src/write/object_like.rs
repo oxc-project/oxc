@@ -6,40 +6,45 @@ use crate::{
         Buffer, Format, FormatResult, Formatter,
         prelude::{format_with, group, soft_block_indent_with_maybe_space},
     },
+    generated::ast_nodes::AstNode,
     options::Expand,
     write,
 };
 
 #[derive(Clone, Copy)]
 pub enum ObjectLike<'a, 'b> {
-    ObjectExpression(&'b ObjectExpression<'a>),
-    TSTypeLiteral(&'b TSTypeLiteral<'a>),
+    ObjectExpression(&'b AstNode<'a, ObjectExpression<'a>>),
+    TSTypeLiteral(&'b AstNode<'a, TSTypeLiteral<'a>>),
 }
 
 impl<'a> ObjectLike<'a, '_> {
     fn members_have_leading_newline(&self, f: &Formatter<'_, 'a>) -> bool {
         // TODO: Polish the code
         match self {
-            Self::ObjectExpression(o) => o.properties.first().is_some_and(|p| {
-                Span::new(o.span.start, p.span().start).source_text(f.source_text()).contains('\n')
+            Self::ObjectExpression(o) => o.as_ref().properties.first().is_some_and(|p| {
+                Span::new(o.span().start, p.span().start)
+                    .source_text(f.source_text())
+                    .contains('\n')
             }),
-            Self::TSTypeLiteral(o) => o.members.first().is_some_and(|p| {
-                Span::new(o.span.start, p.span().start).source_text(f.source_text()).contains('\n')
+            Self::TSTypeLiteral(o) => o.as_ref().members.first().is_some_and(|p| {
+                Span::new(o.span().start, p.span().start)
+                    .source_text(f.source_text())
+                    .contains('\n')
             }),
         }
     }
 
     fn members_are_empty(&self) -> bool {
         match self {
-            Self::ObjectExpression(o) => o.properties.is_empty(),
-            Self::TSTypeLiteral(o) => o.members.is_empty(),
+            Self::ObjectExpression(o) => o.properties().is_empty(),
+            Self::TSTypeLiteral(o) => o.members().is_empty(),
         }
     }
 
     fn write_members(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         match self {
-            Self::ObjectExpression(o) => o.properties.fmt(f),
-            Self::TSTypeLiteral(o) => o.members.fmt(f),
+            Self::ObjectExpression(o) => o.properties().fmt(f),
+            Self::TSTypeLiteral(o) => o.members().fmt(f),
         }
     }
 }

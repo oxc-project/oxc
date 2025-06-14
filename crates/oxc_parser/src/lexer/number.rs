@@ -9,6 +9,9 @@ use cow_utils::CowUtils;
 use num_bigint::BigInt;
 use num_traits::Num;
 
+use oxc_allocator::Allocator;
+use oxc_span::{Atom, format_atom};
+
 use super::kind::Kind;
 
 pub fn parse_int(s: &str, kind: Kind, has_sep: bool) -> Result<f64, &'static str> {
@@ -389,31 +392,31 @@ fn parse_hex_with_underscores_slow(s: &str) -> f64 {
 
 // ==================================== BIGINT ====================================
 
-pub fn parse_big_int(s: &str, kind: Kind, has_sep: bool) -> Result<BigInt, &'static str> {
+pub fn parse_big_int<'a>(
+    s: &'a str,
+    kind: Kind,
+    has_sep: bool,
+    allocator: &'a Allocator,
+) -> Atom<'a> {
     let s = if has_sep { s.cow_replace('_', "") } else { Cow::Borrowed(s) };
     debug_assert!(!s.contains('_'));
-    parse_big_int_without_underscores(&s, kind)
-}
 
-/// This function assumes `s` has had all numeric separators (`_`) removed.
-/// Parsing will fail if this assumption is violated.
-fn parse_big_int_without_underscores(s: &str, kind: Kind) -> Result<BigInt, &'static str> {
-    let s = match kind {
-        Kind::Decimal => s,
-        Kind::Binary | Kind::Octal | Kind::Hex => &s[2..],
-        _ => unreachable!(),
-    };
     let radix = match kind {
-        Kind::Decimal => 10,
+        // Skip parsing with `BigInt` - it's already in decimal form, and underscores are removed
+        Kind::Decimal => return Atom::from_cow_in(&s, allocator),
         Kind::Binary => 2,
         Kind::Octal => 8,
         Kind::Hex => 16,
         _ => unreachable!(),
     };
-    // NOTE: BigInt::from_bytes does a utf8 check, then uses from_str_radix
-    // under the hood. We already have a string, so we can just use that
-    // directly.
-    BigInt::from_str_radix(s, radix).map_err(|_| "invalid bigint")
+
+    let s = &s[2..];
+
+    // NOTE: BigInt::from_bytes does a UTF8 check, then uses from_str_radix under the hood.
+    // We already have a string, so we can just use that directly.
+    // Lexer already checked `s` represents a valid BigInt, so `unwrap` cannot fail.
+    let bigint = BigInt::from_str_radix(s, radix).unwrap();
+    format_atom!(allocator, "{bigint}")
 }
 
 #[cfg(test)]

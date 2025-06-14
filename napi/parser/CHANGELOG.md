@@ -2,6 +2,80 @@
 
 All notable changes to this package will be documented in this file.
 
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
+
+## [0.73.0] - 2025-06-13
+
+### 💥 BREAKING CHANGES
+
+- f3eaefb ast: [**BREAKING**] Add `value` field to `BigIntLiteral` (#11564) (overlookmotel)
+
+### 🚀 Features
+
+- 5860195 napi/parser: Improved `console.log` output for lazy deserialized AST (#11642) (overlookmotel)
+- 5a55a58 napi/parser: Add lazy deserialization (#11595) (overlookmotel)
+- 120b00f napi/parser: Support old versions of NodeJS (#11596) (overlookmotel)
+
+### 🐛 Bug Fixes
+
+- 931fc73 napi/parser: Cache nodes in lazy deserialization (#11637) (overlookmotel)
+
+### 🚜 Refactor
+
+- ff7111c napi/parser: Use "construct" instead of "deserialize" in lazy deserializer (#11616) (overlookmotel)
+- 95ee174 napi/parser: Move raw transfer code into separate directory (#11583) (overlookmotel)
+- 8e74e05 ast/estree: Remove dead code from generated raw transfer deserializer (#11579) (overlookmotel)
+
+### ⚡ Performance
+
+- 5271951 napi/parser: Remove function calls from lazy deserialization (#11615) (overlookmotel)
+- 7c66637 napi/parser: Re-use `TypedArray` objects in raw transfer (#11585) (overlookmotel)
+
+### 🧪 Testing
+
+- 8cab72f napi/parser: Env var to run lazy deserialization tests (#11636) (overlookmotel)
+- 8ad3061 napi/parser: Run raw transfer tests on multiple threads (#11611) (overlookmotel)
+- c0027e0 ast/estree: Benchmark raw transfer deserialization in isolation (#11584) (overlookmotel)
+
+
+## [0.73.0] - 2025-06-13
+
+### 💥 BREAKING CHANGES
+
+- f3eaefb ast: [**BREAKING**] Add `value` field to `BigIntLiteral` (#11564) (overlookmotel)
+
+### 🚀 Features
+
+- 5860195 napi/parser: Improved `console.log` output for lazy deserialized AST (#11642) (overlookmotel)
+- 5a55a58 napi/parser: Add lazy deserialization (#11595) (overlookmotel)
+- 120b00f napi/parser: Support old versions of NodeJS (#11596) (overlookmotel)
+
+### 🐛 Bug Fixes
+
+- 931fc73 napi/parser: Cache nodes in lazy deserialization (#11637) (overlookmotel)
+
+### 🚜 Refactor
+
+- ff7111c napi/parser: Use "construct" instead of "deserialize" in lazy deserializer (#11616) (overlookmotel)
+- 95ee174 napi/parser: Move raw transfer code into separate directory (#11583) (overlookmotel)
+- 8e74e05 ast/estree: Remove dead code from generated raw transfer deserializer (#11579) (overlookmotel)
+
+### ⚡ Performance
+
+- 5271951 napi/parser: Remove function calls from lazy deserialization (#11615) (overlookmotel)
+- 7c66637 napi/parser: Re-use `TypedArray` objects in raw transfer (#11585) (overlookmotel)
+
+### 🧪 Testing
+
+- 8cab72f napi/parser: Env var to run lazy deserialization tests (#11636) (overlookmotel)
+- 8ad3061 napi/parser: Run raw transfer tests on multiple threads (#11611) (overlookmotel)
+- c0027e0 ast/estree: Benchmark raw transfer deserialization in isolation (#11584) (overlookmotel)
+
+
+# Changelog
+
+All notable changes to this package will be documented in this file.
+
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
 ## [0.72.3] - 2025-06-06

@@ -113,10 +113,7 @@ impl Rule for NoImportTypeSideEffects {
                 // import type A from 'foo.js'
                 //        ^^^^ add
                 if raw.starts_with("import") {
-                    fix.push(Fix::new(
-                        "import type",
-                        Span::new(import_decl.span.start, import_decl.span.start + 6),
-                    ));
+                    fix.push(Fix::new("import type", Span::sized(import_decl.span.start, 6)));
                 }
 
                 for specifier in type_specifiers {

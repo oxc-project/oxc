@@ -67,14 +67,7 @@ impl Rule for NoScriptComponentInHead {
         };
 
         for reference in ctx.semantic().symbol_references(default_import.local.symbol_id()) {
-            let Some(node) = ctx.nodes().parent_node(reference.node_id()) else {
-                return;
-            };
-
-            let AstKind::JSXElementName(_) = node.kind() else {
-                continue;
-            };
-            let parent_node = ctx.nodes().parent_node(node.id()).unwrap();
+            let parent_node = ctx.nodes().parent_node(reference.node_id()).unwrap();
             let AstKind::JSXOpeningElement(jsx_opening_element) = parent_node.kind() else {
                 continue;
             };

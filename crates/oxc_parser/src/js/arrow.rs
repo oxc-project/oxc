@@ -3,7 +3,7 @@ use oxc_ast::{NONE, ast::*};
 use oxc_span::GetSpan;
 use oxc_syntax::precedence::Precedence;
 
-use super::Tristate;
+use super::{FunctionKind, Tristate};
 use crate::{ParserImpl, diagnostics, lexer::Kind};
 
 struct ArrowFunctionHead<'a> {
@@ -269,8 +269,10 @@ impl<'a> ParserImpl<'a> {
 
         let type_parameters = self.parse_ts_type_parameters();
 
-        let (this_param, params) =
-            self.parse_formal_parameters(FormalParameterKind::ArrowFormalParameters);
+        let (this_param, params) = self.parse_formal_parameters(
+            FunctionKind::Expression,
+            FormalParameterKind::ArrowFormalParameters,
+        );
 
         if let Some(this_param) = this_param {
             // const x = (this: number) => {};

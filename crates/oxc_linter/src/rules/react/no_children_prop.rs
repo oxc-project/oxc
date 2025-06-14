@@ -1,6 +1,6 @@
 use oxc_ast::{
     AstKind,
-    ast::{Argument, JSXAttributeItem, JSXAttributeName, ObjectPropertyKind},
+    ast::{Argument, JSXAttributeName, ObjectPropertyKind},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -60,7 +60,7 @@ declare_oxc_lint!(
 impl Rule for NoChildrenProp {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         match node.kind() {
-            AstKind::JSXAttributeItem(JSXAttributeItem::Attribute(attr)) => {
+            AstKind::JSXAttribute(attr) => {
                 let JSXAttributeName::Identifier(attr_ident) = &attr.name else {
                     return;
                 };

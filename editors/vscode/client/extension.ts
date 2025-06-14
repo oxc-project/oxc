@@ -161,22 +161,18 @@ export async function activate(context: ExtensionContext) {
     debug: run,
   };
 
+  // see https://github.com/oxc-project/oxc/blob/9b475ad05b750f99762d63094174be6f6fc3c0eb/crates/oxc_linter/src/loader/partial_loader/mod.rs#L17-L20
+  const supportedExtensions = ['astro', 'cjs', 'cts', 'js', 'jsx', 'mjs', 'mts', 'svelte', 'ts', 'tsx', 'vue'];
+
   // If the extension is launched in debug mode then the debug server options are used
   // Otherwise the run options are used
   // Options to control the language client
   let clientOptions: LanguageClientOptions = {
     // Register the server for plain text documents
-    documentSelector: [
-      'typescript',
-      'javascript',
-      'typescriptreact',
-      'javascriptreact',
-      'vue',
-      'svelte',
-    ].map((lang) => ({
-      language: lang,
+    documentSelector: [{
+      pattern: `**/*.{${supportedExtensions.join(',')}}`,
       scheme: 'file',
-    })),
+    }],
     initializationOptions: configService.languageServerConfig,
     outputChannel,
     traceOutputChannel: outputChannel,

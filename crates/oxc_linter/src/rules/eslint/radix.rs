@@ -132,7 +132,7 @@ impl Radix {
                         .unwrap_or(", 10");
 
                     ctx.diagnostic_with_dangerous_fix(missing_radix(call_expr.span), |fixer| {
-                        fixer.insert_text_before_range(Span::new(end - 1, end - 1), insert_param)
+                        fixer.insert_text_before_range(Span::empty(end - 1), insert_param)
                     });
                 }
             }

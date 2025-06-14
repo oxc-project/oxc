@@ -838,8 +838,6 @@ impl<'a> PeepholeOptimizations {
             return None;
         }
         if match name {
-            "Error" | "AggregateError" | "Function" => true,
-            _ if Self::is_native_error_name(name) => true,
             "RegExp" => {
                 let arguments_len = e.arguments.len();
                 arguments_len == 0
@@ -849,18 +847,20 @@ impl<'a> PeepholeOptimizations {
                             !ty.is_undetermined() && !ty.is_object()
                         }))
             }
+            "Error" | "AggregateError" | "Function" => true,
+            _ if Self::is_native_error_name(name) => true,
             _ => unreachable!(),
         } {
-            Some(ctx.ast.expression_call(
+            return Some(ctx.ast.expression_call_with_pure(
                 e.span,
                 e.callee.take_in(ctx.ast),
                 NONE,
                 e.arguments.take_in(ctx.ast),
                 false,
-            ))
-        } else {
-            None
+                e.pure,
+            ));
         }
+        None
     }
 
     /// Whether the name matches any native error name.
@@ -1477,17 +1477,17 @@ mod test {
 
     #[test]
     fn test_fold_new_expressions() {
-        test("new Error()", "Error()");
-        test("new Error('a')", "Error('a')");
-        test("new Error('a', { cause: b })", "Error('a', { cause: b })");
+        test("let _ = new Error()", "let _ = /* @__PURE__ */ Error()");
+        test("let _ = new Error('a')", "let _ = /* @__PURE__ */ Error('a')");
+        test("let _ = new Error('a', { cause: b })", "let _ = Error('a', { cause: b })");
         test_same("var Error; new Error()");
-        test("new EvalError()", "EvalError()");
-        test("new RangeError()", "RangeError()");
-        test("new ReferenceError()", "ReferenceError()");
-        test("new SyntaxError()", "SyntaxError()");
-        test("new TypeError()", "TypeError()");
-        test("new URIError()", "URIError()");
-        test("new AggregateError()", "AggregateError()");
+        test("let _ = new EvalError()", "let _ = /* @__PURE__ */ EvalError()");
+        test("let _ = new RangeError()", "let _ = /* @__PURE__ */ RangeError()");
+        test("let _ = new ReferenceError()", "let _ = /* @__PURE__ */ ReferenceError()");
+        test("let _ = new SyntaxError()", "let _ = /* @__PURE__ */ SyntaxError()");
+        test("let _ = new TypeError()", "let _ = /* @__PURE__ */ TypeError()");
+        test("let _ = new URIError()", "let _ = /* @__PURE__ */ URIError()");
+        test("let _ = new AggregateError('a')", "let _ = /* @__PURE__ */ AggregateError('a')");
 
         test("new Function()", "Function()");
         test(
@@ -1496,13 +1496,13 @@ mod test {
         );
         test_same("var Function; new Function()");
 
-        test("new RegExp()", "RegExp()");
-        test("new RegExp('a')", "RegExp('a')");
-        test("new RegExp(0)", "RegExp(0)");
-        test("new RegExp(null)", "RegExp(null)");
+        test("new RegExp()", "");
+        test("new RegExp('a')", "");
+        test("new RegExp(0)", "");
+        test("new RegExp(null)", "");
         test("new RegExp('a', 'g')", "RegExp('a', 'g')");
         test_same("new RegExp(foo)");
-        test_same("new RegExp(/foo/)");
+        test("new RegExp(/foo/)", "");
     }
 
     #[test]

@@ -6,16 +6,17 @@ use crate::{
         Buffer, Format, FormatResult, Formatter,
         prelude::{indent, soft_line_break_or_space, space},
     },
+    generated::ast_nodes::{AstNode, AstNodes},
     write,
 };
 
 pub struct FormatStatementBody<'a, 'b> {
-    body: &'b Statement<'a>,
+    body: &'b AstNode<'a, Statement<'a>>,
     force_space: bool,
 }
 
 impl<'a, 'b> FormatStatementBody<'a, 'b> {
-    pub fn new(body: &'b Statement<'a>) -> Self {
+    pub fn new(body: &'b AstNode<'a, Statement<'a>>) -> Self {
         Self { body, force_space: false }
     }
 
@@ -29,9 +30,9 @@ impl<'a, 'b> FormatStatementBody<'a, 'b> {
 
 impl<'a> Format<'a> for FormatStatementBody<'a, '_> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        if let Statement::EmptyStatement(empty) = &self.body {
+        if let AstNodes::EmptyStatement(empty) = self.body.as_ast_nodes() {
             write!(f, empty)
-        } else if matches!(&self.body, Statement::BlockStatement(_)) || self.force_space {
+        } else if matches!(self.body.as_ref(), Statement::BlockStatement(_)) || self.force_space {
             write!(f, [space(), self.body])
         } else {
             write!(f, [indent(&format_args!(soft_line_break_or_space(), &self.body))])

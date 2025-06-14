@@ -2,7 +2,57 @@
 
 All notable changes to this package will be documented in this file.
 
-The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
+
+## [1.1.0] - 2025-06-12
+
+### 🚀 Features
+
+- 1181018 linter: Add eslint/no-extra-bind rule (#11588) (yefan)
+- 3b03fd3 parser: Produce correct syntax error for `interface I extends (typeof T)` (#11610) (Boshen)
+- 844a8a8 parser: Produce syntax error for `declare function foo() {}` (#11606) (Boshen)
+
+### 🐛 Bug Fixes
+
+- 0f24366 linter: Correct labels for redundant comparisons (#11620) (Wei Zhu)
+- dd87f93 linter: Stack overflow in react/exhaustive-deps (#11613) (camc314)
+- 4af58e0 linter: Add missing `additional_hooks` option to exhaustive-deps (#11602) (camc314)
+- a6adc0c linter/exhaustive-deps: Handle destructuring inside hooks (#11598) (Don Isaac)
+- 779727f linter: Improve span diagnostic loc within react/rules-of-hooks (#11589) (camc314)
+
+### 🚜 Refactor
+
+- b7b0dc3 parser: Improve `TSModuleDeclaration` parsing (#11605) (Boshen)
+- d29bbb2 linter: Simplify implementation of `eslint/no-lonely-if` (#11550) (Ulrich Stark)
+- d41fb13 ast: Get jsx types out of AstKind exceptions (#11535) (Ulrich Stark)
+
+
+## [1.0.0] - 2025-06-10
+
+## [0.18.1] - 2025-06-09
+
+### 💥 BREAKING CHANGES
+
+- f3eaefb ast: [**BREAKING**] Add `value` field to `BigIntLiteral` (#11564) (overlookmotel)
+
+### 🐛 Bug Fixes
+
+- 6d68568 linter: False negative in typescript/array-type (#11574) (camc314)
+- 6a856a0 linter/no-magic-numbers: Fix typo in error message (#11560) (overlookmotel)
+- 3952e01 linter: False negative in jsx-a11y/aria-role (#11547) (camc314)
+- b0e3e08 linter: Misplaced quote in jsx-curly-brace-presence test case (#11546) (camc314)
+- a833ed1 linter: Misplaced quote in anchor-is-valid test case (#11545) (camc314)
+- 4e53b80 linter: Misplaced backtick in exhaustive-deps test case (#11544) (camc314)
+- e8a04b6 linter: Misplaced backtick in no-object-constructor test case (#11543) (camc314)
+- 65311d0 linter: Remove duplicate rule/scope from diagnostic (#11531) (camc314)
+
+### 🚜 Refactor
+
+- 9b475ad linter: Use one instance of rope per file (#11552) (Sysix)
+
+### 📚 Documentation
+
+- fa924ab linter: Cleanup docs for multiple linter rules (#11551) (Ulrich Stark)
 
 ## [0.18.0] - 2025-06-06
 

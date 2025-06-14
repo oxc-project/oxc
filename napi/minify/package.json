@@ -1,6 +1,6 @@
 {
   "name": "oxc-minify",
-  "version": "0.72.3",
+  "version": "0.73.0",
   "main": "index.js",
   "browser": "browser.js",
   "scripts": {

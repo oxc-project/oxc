@@ -2,6 +2,32 @@
 
 All notable changes to this package will be documented in this file.
 
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
+
+## [0.73.0] - 2025-06-13
+
+### 💥 BREAKING CHANGES
+
+- f3eaefb ast: [**BREAKING**] Add `value` field to `BigIntLiteral` (#11564) (overlookmotel)
+
+### 🐛 Bug Fixes
+
+- 7266200 parser: Parse `@x() @y() export default abstract class {}` (#11630) (Boshen)
+- e4804ba parser: Parse decorator on `abstract class` (#11625) (Boshen)
+
+### 🚜 Refactor
+
+- e9a8832 parser: Rewrite decorator parsing (#11604) (Boshen)
+
+### 📚 Documentation
+
+- 630a17a codegen: Clarify `Codegen::source_map_path` option (#11573) (Boshen)
+
+
+# Changelog
+
+All notable changes to this package will be documented in this file.
+
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
 ## [0.72.3] - 2025-06-06

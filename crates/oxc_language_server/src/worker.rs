@@ -127,6 +127,7 @@ impl WorkspaceWorker {
         old_options.config_path != new_options.config_path
             || old_options.use_nested_configs() != new_options.use_nested_configs()
             || old_options.fix_kind() != new_options.fix_kind()
+            || old_options.unused_disable_directives != new_options.unused_disable_directives
     }
 
     pub async fn should_lint_on_run_type(&self, current_run: Run) -> bool {

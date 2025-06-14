@@ -222,7 +222,7 @@ impl<'a> Lexer<'a> {
         if start_pos.is_end_of(&self.source) {
             return cold_branch(|| {
                 let start = self.offset();
-                self.error(diagnostics::unexpected_end(Span::new(start, start)));
+                self.error(diagnostics::unexpected_end(Span::empty(start)));
                 Kind::Undetermined
             });
         }

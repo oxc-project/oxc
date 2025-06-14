@@ -56,6 +56,7 @@ pub struct NumericLiteral<'a> {
     ///
     /// `None` when this ast node is not constructed from the parser.
     #[content_eq(skip)]
+    #[estree(json_safe)]
     pub raw: Option<Atom<'a>>,
     /// The base representation used by the literal in source code
     #[content_eq(skip)]
@@ -101,15 +102,19 @@ pub struct StringLiteral<'a> {
 #[generate_derive(CloneIn, Dummy, TakeIn, ContentEq, GetSpan, GetSpanMut, ESTree)]
 #[estree(
     rename = "Literal",
-    add_fields(value = BigIntLiteralValue, bigint = BigIntLiteralBigint),
+    add_fields(bigint = BigIntLiteralBigint),
     field_order(span, value, raw, bigint),
 )]
 pub struct BigIntLiteral<'a> {
     /// Node location in source code
     pub span: Span,
+    /// Bigint value in base 10 with no underscores
+    #[estree(via = BigIntLiteralValue)]
+    pub value: Atom<'a>,
     /// The bigint as it appears in source code
-    #[estree(ts_type = "string | null")]
-    pub raw: Atom<'a>,
+    #[content_eq(skip)]
+    #[estree(json_safe)]
+    pub raw: Option<Atom<'a>>,
     /// The base representation used by the literal in source code
     #[content_eq(skip)]
     #[estree(skip)]

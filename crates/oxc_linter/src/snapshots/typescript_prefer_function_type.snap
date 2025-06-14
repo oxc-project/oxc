@@ -174,3 +174,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                 ─────────
    ╰────
   help: The function type form `() => void` is generally preferred when possible for being more succinct.
+
+  ⚠ typescript-eslint(prefer-function-type): Enforce using function types instead of interfaces with call signatures.
+   ╭─[prefer_function_type.tsx:1:12]
+ 1 │ type K = { new(): T };
+   ·            ────────
+   ╰────
+  help: The function type form `new() => T` is generally preferred when possible for being more succinct.

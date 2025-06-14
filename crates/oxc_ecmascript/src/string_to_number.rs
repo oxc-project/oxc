@@ -32,10 +32,13 @@ impl StringToNumber for &str {
         let mut bytes = s.bytes();
 
         if s.len() > 2 && bytes.next() == Some(b'0') {
-            let radix: u32 = match bytes.next() {
-                Some(b'x' | b'X') => 16,
-                Some(b'o' | b'O') => 8,
-                Some(b'b' | b'B') => 2,
+            // `| 32` converts upper case ASCII letters to lower case.
+            // A bit more efficient than testing for `b'x' | b'X'`.
+            // https://godbolt.org/z/Korrhd4TE
+            let radix: u32 = match bytes.next().unwrap() | 32 {
+                b'x' => 16,
+                b'o' => 8,
+                b'b' => 2,
                 _ => 0,
             };
 

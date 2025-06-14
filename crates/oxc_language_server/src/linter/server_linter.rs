@@ -7,13 +7,16 @@ use log::{debug, warn};
 use rustc_hash::{FxBuildHasher, FxHashMap};
 use tower_lsp_server::lsp_types::Uri;
 
-use oxc_linter::{Config, ConfigStore, ConfigStoreBuilder, LintOptions, Linter, Oxlintrc};
+use oxc_linter::{
+    AllowWarnDeny, Config, ConfigStore, ConfigStoreBuilder, LintOptions, Linter, Oxlintrc,
+};
 use tower_lsp_server::UriExt;
 
 use crate::linter::{
     error_with_position::DiagnosticReport,
     isolated_lint_handler::{IsolatedLintHandler, IsolatedLintHandlerOptions},
 };
+use crate::options::UnusedDisableDirectives;
 use crate::{ConcurrentHashMap, Options};
 
 use super::config_walker::ConfigWalker;
@@ -65,7 +68,15 @@ impl ServerLinter {
         extended_paths.extend(config_builder.extended_paths.clone());
         let base_config = config_builder.build();
 
-        let lint_options = LintOptions { fix: options.fix_kind(), ..Default::default() };
+        let lint_options = LintOptions {
+            fix: options.fix_kind(),
+            report_unused_directive: match options.unused_disable_directives {
+                UnusedDisableDirectives::Allow => None, // or AllowWarnDeny::Allow, should be the same?
+                UnusedDisableDirectives::Warn => Some(AllowWarnDeny::Warn),
+                UnusedDisableDirectives::Deny => Some(AllowWarnDeny::Deny),
+            },
+            ..Default::default()
+        };
 
         let config_store = ConfigStore::new(
             base_config,
@@ -357,5 +368,19 @@ mod test {
             }),
         )
         .test_and_snapshot_single_file("forward_ref.ts");
+    }
+
+    #[test]
+    fn test_report_unused_directives() {
+        use crate::options::UnusedDisableDirectives;
+        Tester::new(
+            "fixtures/linter/unused_disabled_directives",
+            Some(Options {
+                unused_disable_directives: UnusedDisableDirectives::Deny,
+                ..Default::default()
+            }),
+        )
+        // ToDo: this should be fixable
+        .test_and_snapshot_single_file("test.js");
     }
 }

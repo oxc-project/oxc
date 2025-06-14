@@ -7,9 +7,9 @@ ts compatibility: 186/573 (32.46%)
 | jsx/attr-element/attr-element.js | 💥 | 0.00% |
 | jsx/binary-expressions/relational-operators.js | 💥 | 78.95% |
 | jsx/comments/eslint-disable.js | 💥 | 0.00% |
-| jsx/comments/in-attributes.js | 💥 | 41.67% |
+| jsx/comments/in-attributes.js | 💥 | 81.48% |
 | jsx/comments/in-end-tag.js | 💥 | 32.18% |
-| jsx/comments/in-tags.js | 💥 | 53.33% |
+| jsx/comments/in-tags.js | 💥 | 48.89% |
 | jsx/comments/jsx-tag-comment-after-prop.js | 💥 | 42.11% |
 | jsx/comments/like-a-comment-in-jsx-text.js | 💥 | 0.00% |
 | jsx/deprecated-jsx-bracket-same-line-option/jsx.js | 💥💥💥💥 | 45.33% |
@@ -19,7 +19,7 @@ ts compatibility: 186/573 (32.46%)
 | jsx/fragment/fragment.js | 💥 | 78.57% |
 | jsx/ignore/jsx_ignore.js | 💥 | 67.31% |
 | jsx/jsx/array-iter.js | 💥💥💥💥 | 25.81% |
-| jsx/jsx/arrow.js | 💥💥💥💥 | 32.61% |
+| jsx/jsx/arrow.js | 💥💥💥💥 | 34.78% |
 | jsx/jsx/attr-comments.js | 💥💥💥💥 | 0.00% |
 | jsx/jsx/await.js | 💥💥💥💥 | 15.00% |
 | jsx/jsx/conditional-expression.js | 💥💥💥💥 | 64.10% |
@@ -264,7 +264,7 @@ ts compatibility: 186/573 (32.46%)
 | typescript/index-signature/static.ts | 💥 | 66.67% |
 | typescript/infer-extends/basic.ts | 💥 | 11.76% |
 | typescript/instantiation-expression/inferface-asi.ts | 💥 | 88.89% |
-| typescript/instantiation-expression/property-access.ts | 💥 | 71.43% |
+| typescript/instantiation-expression/property-access.ts | 💥 | 78.57% |
 | typescript/interface/comments-generic.ts | 💥💥 | 65.52% |
 | typescript/interface/generic.ts | 💥💥 | 75.00% |
 | typescript/interface/ignore.ts | 💥💥 | 84.43% |
@@ -286,7 +286,7 @@ ts compatibility: 186/573 (32.46%)
 | typescript/keywords/keywords.ts | 💥 | 83.33% |
 | typescript/last-argument-expansion/decorated-function.tsx | 💥 | 22.22% |
 | typescript/last-argument-expansion/edge_case.ts | 💥 | 54.55% |
-| typescript/last-argument-expansion/forward-ref.tsx | 💥 | 53.57% |
+| typescript/last-argument-expansion/forward-ref.tsx | 💥 | 60.71% |
 | typescript/mapped-type/intersection.ts | 💥 | 0.00% |
 | typescript/mapped-type/issue-11098.ts | 💥 | 26.09% |
 | typescript/mapped-type/break-mode/break-mode.ts | 💥 | 40.00% |
@@ -345,14 +345,14 @@ ts compatibility: 186/573 (32.46%)
 | typescript/template-literals/as-expression.ts | 💥 | 14.29% |
 | typescript/ternaries/indent.ts | 💥 | 17.58% |
 | typescript/test-declarations/test_declarations.ts | 💥💥 | 50.00% |
-| typescript/trailing-comma/arrow-functions.tsx | 💥💥💥 | 0.00% |
+| typescript/trailing-comma/arrow-functions.tsx | 💥💥💥 | 28.57% |
 | typescript/trailing-comma/trailing.ts | 💥💥💥 | 76.77% |
 | typescript/trailing-comma/type-arguments.ts | 💥💥💥 | 11.11% |
 | typescript/trailing-comma/type-parameters-vs-arguments.ts | 💥💥💥 | 66.67% |
 | typescript/tsx/generic-component.tsx | 💥 | 40.00% |
 | typescript/tsx/member-expression.tsx | 💥 | 20.00% |
 | typescript/tsx/react.tsx | 💥 | 44.44% |
-| typescript/tsx/type-parameters.tsx | 💥 | 80.95% |
+| typescript/tsx/type-parameters.tsx | 💥 | 85.71% |
 | typescript/tsx/url.tsx | 💥 | 58.06% |
 | typescript/tuple/dangling-comments.ts | 💥💥💥 | 27.03% |
 | typescript/tuple/trailing-comma-for-empty-tuples.ts | 💥💥💥 | 20.00% |
@@ -367,7 +367,7 @@ ts compatibility: 186/573 (32.46%)
 | typescript/type-arguments-bit-shift-left-like/4.ts | 💥 | 0.00% |
 | typescript/type-arguments-bit-shift-left-like/5.tsx | 💥 | 0.00% |
 | typescript/typeof/typeof.ts | 💥 | 25.00% |
-| typescript/typeparams/class-method.ts | 💥 | 64.97% |
+| typescript/typeparams/class-method.ts | 💥 | 73.30% |
 | typescript/typeparams/const.ts | 💥 | 67.69% |
 | typescript/typeparams/line-breaking-after-extends-2.ts | 💥 | 23.81% |
 | typescript/typeparams/line-breaking-after-extends.ts | 💥 | 17.14% |

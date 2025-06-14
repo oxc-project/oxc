@@ -114,10 +114,7 @@ impl Rule for RequireArrayJoinSeparator {
                     |fixer| {
                         // after the end of the first argument, insert `","`
                         let first_arg = call_expr.arguments.first().unwrap();
-                        fixer.insert_text_after_range(
-                            Span::new(first_arg.span().end, first_arg.span().end),
-                            r#", ",""#,
-                        )
+                        fixer.insert_text_after_range(Span::empty(first_arg.span().end), r#", ",""#)
                     },
                 );
             }

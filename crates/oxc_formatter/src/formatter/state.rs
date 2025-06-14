@@ -2,7 +2,7 @@ use oxc_ast::{AstKind, ast::Program};
 use oxc_data_structures::stack::NonEmptyStack;
 use oxc_span::Span;
 
-use super::{FormatContext, GroupId, SyntaxNode, UniqueGroupIdBuilder, parent_stack::ParentStack};
+use super::{FormatContext, GroupId, SyntaxNode, UniqueGroupIdBuilder};
 
 /// This structure stores the state that is relevant for the formatting of the whole document.
 ///
@@ -12,8 +12,6 @@ use super::{FormatContext, GroupId, SyntaxNode, UniqueGroupIdBuilder, parent_sta
 pub struct FormatState<'ast> {
     context: FormatContext<'ast>,
     group_id_builder: UniqueGroupIdBuilder,
-
-    pub(crate) stack: ParentStack<'ast>,
     // This is using a RefCell as it only exists in debug mode,
     // the Formatter is still completely immutable in release builds
     // #[cfg(debug_assertions)]
@@ -32,7 +30,6 @@ impl<'ast> FormatState<'ast> {
         Self {
             context,
             group_id_builder: UniqueGroupIdBuilder::default(),
-            stack: ParentStack::new(program),
             // #[cfg(debug_assertions)]
             // printed_tokens: Default::default(),
         }

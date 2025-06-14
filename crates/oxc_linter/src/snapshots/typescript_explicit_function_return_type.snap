@@ -48,7 +48,7 @@ source: crates/oxc_linter/src/tester.rs
 
   ⚠ typescript-eslint(explicit-function-return-type): Missing return type on function.
    ╭─[explicit_function_return_type.tsx:8:12]
- 7 │               set prop() {}
+ 7 │               set prop(_foo) {}
  8 │               method() {
    ·               ──────
  9 │                 return;

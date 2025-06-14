@@ -13,11 +13,21 @@ pub enum Run {
     OnType,
 }
 
+#[derive(Debug, Serialize, Deserialize, Default, PartialEq, Eq, Clone, Copy)]
+#[serde(rename_all = "camelCase")]
+pub enum UnusedDisableDirectives {
+    #[default]
+    Allow,
+    Warn,
+    Deny,
+}
+
 #[derive(Debug, Default, Serialize, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct Options {
     pub run: Run,
     pub config_path: Option<String>,
+    pub unused_disable_directives: UnusedDisableDirectives,
     pub flags: FxHashMap<String, String>,
 }
 
@@ -79,6 +89,13 @@ impl TryFrom<Value> for Options {
                 .get("run")
                 .map(|run| serde_json::from_value::<Run>(run.clone()).unwrap_or_default())
                 .unwrap_or_default(),
+            unused_disable_directives: object
+                .get("unusedDisableDirectives")
+                .map(|key| {
+                    serde_json::from_value::<UnusedDisableDirectives>(key.clone())
+                        .unwrap_or_default()
+                })
+                .unwrap_or_default(),
             config_path: object
                 .get("configPath")
                 .and_then(|config_path| serde_json::from_value::<String>(config_path.clone()).ok()),
@@ -99,13 +116,14 @@ mod test {
     use rustc_hash::FxHashMap;
     use serde_json::json;
 
-    use super::{Options, Run, WorkspaceOption};
+    use super::{Options, Run, UnusedDisableDirectives, WorkspaceOption};
 
     #[test]
     fn test_valid_options_json() {
         let json = json!({
             "run": "onSave",
             "configPath": "./custom.json",
+            "unusedDisableDirectives": "warn",
             "flags": {
                 "disable_nested_config": "true",
                 "fix_kind": "dangerous_fix"
@@ -115,6 +133,7 @@ mod test {
         let options = Options::try_from(json).unwrap();
         assert_eq!(options.run, Run::OnSave);
         assert_eq!(options.config_path, Some("./custom.json".into()));
+        assert_eq!(options.unused_disable_directives, UnusedDisableDirectives::Warn);
         assert_eq!(options.flags.get("disable_nested_config"), Some(&"true".to_string()));
         assert_eq!(options.flags.get("fix_kind"), Some(&"dangerous_fix".to_string()));
     }
@@ -126,6 +145,7 @@ mod test {
         let options = Options::try_from(json).unwrap();
         assert_eq!(options.run, Run::OnType);
         assert_eq!(options.config_path, None);
+        assert_eq!(options.unused_disable_directives, UnusedDisableDirectives::Allow);
         assert!(options.flags.is_empty());
     }
 

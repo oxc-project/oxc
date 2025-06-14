@@ -119,26 +119,43 @@ impl<'a> ParserImpl<'a> {
         let (id, definite) = if self.is_ts {
             // const x!: number = 1
             //        ^ definite
-            let mut definite = false;
-            if binding_kind.is_binding_identifier()
+            let definite = if binding_kind.is_binding_identifier()
                 && !self.cur_token().is_on_new_line()
-                && self.eat(Kind::Bang)
+                && self.at(Kind::Bang)
             {
-                definite = true;
-            }
-            let optional = self.eat(Kind::Question); // not allowed, but checked in checker/typescript.rs
+                let span = self.cur_token().span();
+                self.bump_any();
+                Some(span)
+            } else {
+                None
+            };
+            let optional = if self.at(Kind::Question) {
+                self.error(diagnostics::unexpected_token(self.cur_token().span()));
+                self.bump_any();
+                true
+            } else {
+                false
+            };
             let type_annotation = self.parse_ts_type_annotation();
             if let Some(type_annotation) = &type_annotation {
                 Self::extend_binding_pattern_span_end(type_annotation.span.end, &mut binding_kind);
             }
             (self.ast.binding_pattern(binding_kind, type_annotation, optional), definite)
         } else {
-            (self.ast.binding_pattern(binding_kind, NONE, false), false)
+            (self.ast.binding_pattern(binding_kind, NONE, false), None)
         };
         let init = self.eat(Kind::Eq).then(|| self.parse_assignment_expression_or_higher());
-        let decl = self.ast.variable_declarator(self.end_span(span), kind, id, init, definite);
+        let decl =
+            self.ast.variable_declarator(self.end_span(span), kind, id, init, definite.is_some());
         if decl_parent == VariableDeclarationParent::Statement {
             self.check_missing_initializer(&decl);
+        }
+        if let Some(span) = definite {
+            if decl.init.is_some() {
+                self.error(diagnostics::variable_declarator_definite(span));
+            } else if decl.id.type_annotation.is_none() {
+                self.error(diagnostics::variable_declarator_definite_type_assertion(span));
+            }
         }
         decl
     }

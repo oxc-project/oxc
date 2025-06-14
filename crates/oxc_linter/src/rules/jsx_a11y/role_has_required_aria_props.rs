@@ -47,6 +47,8 @@ declare_oxc_lint!(
 static ROLE_TO_REQUIRED_ARIA_PROPS: phf::Map<&'static str, phf::Set<&'static str>> = phf_map! {
     "checkbox" => phf_set!{"aria-checked"},
     "radio" => phf_set!{"aria-checked"},
+    "menuitemcheckbox" => phf_set!{"aria-checked"},
+    "menuitemradio" => phf_set!{"aria-checked"},
     "combobox" => phf_set!{"aria-controls", "aria-expanded"},
     "tab" => phf_set!{"aria-selected"},
     "slider" => phf_set!{"aria-valuemax", "aria-valuemin", "aria-valuenow"},
@@ -121,6 +123,8 @@ fn test() {
             None,
             Some(settings()),
         ),
+        ("<div role='menuitemradio' aria-checked='false' />", None, None),
+        ("<div role='menuitemcheckbox' aria-checked='false' />", None, None),
     ];
 
     let fail = vec![
@@ -141,6 +145,8 @@ fn test() {
         ("<div role='scrollbar' aria-valuemin aria-valuenow />", None, None),
         ("<div role='heading' />", None, None),
         ("<div role='option' />", None, None),
+        ("<div role='menuitemradio' />", None, None),
+        ("<div role='menuitemcheckbox' />", None, None),
         ("<MyComponent role='combobox' />", None, Some(settings())),
     ];
 

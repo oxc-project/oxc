@@ -332,9 +332,7 @@ fn is_collapsed_one_liner(node: &Statement, ctx: &LintContext) -> bool {
             ctx.nodes()
                 .parent_node(node.id())
                 .filter(|parent| parent.span().start < span.start)
-                .map_or(Span::new(0, 0), |parent| {
-                    Span::new(parent.span().start, parent.span().start)
-                })
+                .map_or(Span::empty(0), |parent| Span::empty(parent.span().start))
         },
         oxc_span::GetSpan::span,
     );

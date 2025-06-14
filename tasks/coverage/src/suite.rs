@@ -97,6 +97,7 @@ pub trait Suite<T: Case> {
                 .into_iter()
                 .filter_map(Result::ok)
                 .filter(|e| !e.file_type().is_dir())
+                .filter(|e| e.file_name() != ".DS_Store")
                 .map(|e| e.path().to_owned())
                 .filter(|path| !self.skip_test_path(path))
                 .filter(|path| filter.is_none_or(|query| path.to_string_lossy().contains(query)))
