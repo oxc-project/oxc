@@ -487,15 +487,34 @@ impl<'s> StructSerializerGenerator<'s> {
             }
         } else if field.estree.json_safe {
             // Wrap value in `JsonSafeString(...)` if field is tagged `#[estree(json_safe)]`
-            match field.type_def(self.schema).name() {
-                "&str" => quote!( JsonSafeString(#self_path.#field_name_ident) ),
-                "Atom" => quote!( JsonSafeString(#self_path.#field_name_ident.as_str()) ),
-                _ => panic!(
+            let value = match field.type_def(self.schema) {
+                TypeDef::Primitive(primitive_def) => match primitive_def.name() {
+                    "&str" => Some(quote!( JsonSafeString(#self_path.#field_name_ident) )),
+                    "Atom" => Some(quote!( JsonSafeString(#self_path.#field_name_ident.as_str()) )),
+                    _ => None,
+                },
+                TypeDef::Option(option_def) => option_def
+                    .inner_type(self.schema)
+                    .as_primitive()
+                    .and_then(|primitive_def| match primitive_def.name() {
+                        "&str" => Some(quote! {
+                            #self_path.#field_name_ident.map(|s| JsonSafeString(s))
+                        }),
+                        "Atom" => Some(quote! {
+                            #self_path.#field_name_ident.map(|s| JsonSafeString(s.as_str()))
+                        }),
+                        _ => None,
+                    }),
+                _ => None,
+            };
+
+            value.unwrap_or_else(|| {
+                panic!(
                     "`#[estree(json_safe)]` is only valid on struct fields containing a `&str` or `Atom`: {}::{}",
                     struct_def.name(),
                     field.name(),
-                ),
-            }
+                )
+            })
         } else {
             quote!( #self_path.#field_name_ident )
         };

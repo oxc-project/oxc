@@ -10,12 +10,16 @@ on:
     paths:
       - "**/*.md"
       - "**/*.html"
+      - ".github/workflows/link_check.yml"
+      - "!**/snapshot/**"
       - "!**/fixtures/**"
   pull_request:
     types: [opened, synchronize]
     paths:
       - "**/*.md"
       - "**/*.html"
+      - ".github/workflows/link_check.yml"
+      - "!**/snapshot/**"
       - "!**/fixtures/**"
 
 concurrency:
@@ -30,15 +34,22 @@ jobs:
       - name: Checkout
         uses: taiki-e/checkout-action@b13d20b7cda4e2f325ef19895128f7ff735c0b3d # v1.3.1
 
+      - name: Restore lychee cache
+        id: restore-cache
+        uses: actions/cache/restore@v4
+        with:
+          path: .lycheecache
+          key: cache-lychee-${{ github.sha }}
+          restore-keys: cache-lychee-
+
       - name: Check Links
         uses: lycheeverse/lychee-action@82202e5e9c2f4ef1a55a3d02563e1cb6041e5332 # v2.4.1
         with:
-          # For parameter description, see https://github.com/lycheeverse/lychee#commandline-parameters
-          # Accept 429 for now due to GitHub rate limit.
-          # See https://github.com/lycheeverse/lychee/issues/634
-          # Exclude twitter links, see https://github.com/lycheeverse/lychee/issues/1108.
-          # Ideally this is built in, by https://github.com/lycheeverse/lychee/pull/1147.
-          # Not sure why it doesn't work, exclude it manually.
-          args: --accept 200,429 --verbose --no-progress --exclude 'https://twitter\.com/*' .
-          # Fail action on broken links
           fail: true
+
+      - name: Save lychee cache
+        uses: actions/cache/save@v4
+        if: ${{ github.ref_name == 'main' }}
+        with:
+          path: .lycheecache
+          key: ${{ steps.restore-cache.outputs.cache-primary-key }}

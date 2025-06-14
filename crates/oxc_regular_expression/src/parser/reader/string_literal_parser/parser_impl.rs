@@ -86,31 +86,23 @@ impl Parser {
         } else if self.eat('\'') {
             ('\'', ast::StringLiteralKind::Single)
         } else {
-            return Err(diagnostics::invalid_input(Span::new(
-                self.options.span_offset,
-                self.options.span_offset,
-            )));
+            return Err(diagnostics::invalid_input(Span::empty(self.options.span_offset)));
         };
 
         let body = self.parse_string_characters(quote_char)?;
 
         if self.eat(quote_char) {
             if self.peek().is_some() {
-                return Err(diagnostics::invalid_input(Span::new(
-                    self.options.span_offset + self.offset(),
+                return Err(diagnostics::invalid_input(Span::empty(
                     self.options.span_offset + self.offset(),
                 )));
             }
 
-            let span =
-                Span::new(self.options.span_offset, self.options.span_offset + self.offset());
+            let span = Span::sized(self.options.span_offset, self.offset());
             return Ok(ast::StringLiteral { span, kind, body });
         }
 
-        Err(diagnostics::invalid_input(Span::new(
-            self.options.span_offset + self.offset(),
-            self.options.span_offset + self.offset(),
-        )))
+        Err(diagnostics::invalid_input(Span::empty(self.options.span_offset + self.offset())))
     }
 
     // ---

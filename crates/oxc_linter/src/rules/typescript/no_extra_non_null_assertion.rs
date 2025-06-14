@@ -99,7 +99,7 @@ impl Rule for NoExtraNonNullAssertion {
 
         if let Some(expr) = expr {
             let end = expr.span.end - 1;
-            ctx.diagnostic(no_extra_non_null_assertion_diagnostic(Span::new(end, end)));
+            ctx.diagnostic(no_extra_non_null_assertion_diagnostic(Span::empty(end)));
         }
     }
 

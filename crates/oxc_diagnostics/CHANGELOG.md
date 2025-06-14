@@ -2,6 +2,19 @@
 
 All notable changes to this package will be documented in this file.
 
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
+
+## [0.73.0] - 2025-06-13
+
+### 💥 BREAKING CHANGES
+
+- bd9dd88 linter: [**BREAKING**] Add more info to json reporter (#11524) (camc314)
+
+
+# Changelog
+
+All notable changes to this package will be documented in this file.
+
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
 ## [0.63.0] - 2025-04-08

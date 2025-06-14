@@ -117,11 +117,7 @@ impl Rule for PreferStringRaw {
                         }
                     }
                 }
-                AstKind::JSXAttributeItem(attr) => {
-                    let Some(attr) = attr.as_attribute() else {
-                        return;
-                    };
-
+                AstKind::JSXAttribute(attr) => {
                     let Some(JSXAttributeValue::StringLiteral(value)) = &attr.value else {
                         return;
                     };

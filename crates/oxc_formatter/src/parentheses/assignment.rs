@@ -6,12 +6,12 @@ use oxc_syntax::{
     precedence::{GetPrecedence, Precedence},
 };
 
-use crate::formatter::parent_stack::ParentStack;
+use crate::{formatter::Formatter, generated::ast_nodes::AstNode};
 
 use super::NeedsParentheses;
 
-impl<'a> NeedsParentheses<'a> for SimpleAssignmentTarget<'a> {
-    fn needs_parentheses(&self, stack: &ParentStack<'a>) -> bool {
+impl<'a> NeedsParentheses<'a> for AstNode<'a, SimpleAssignmentTarget<'a>> {
+    fn needs_parentheses(&self, stack: &Formatter<'_, 'a>) -> bool {
         false
     }
 }

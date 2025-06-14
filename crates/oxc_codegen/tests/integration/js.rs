@@ -451,21 +451,21 @@ fn big_int() {
     test("+0n;", "+0n;\n");
     test("-0n;", "-0n;\n");
 
-    test("0x1_0n;", "0x10n;\n");
-    test("0x10n;", "0x10n;\n");
+    test("0x1_0n;", "16n;\n");
+    test("0x10n;", "16n;\n");
 
-    test("0b1_01n;", "0b101n;\n");
-    test("0b101n;", "0b101n;\n");
-    test("0b101_101n;", "0b101101n;\n");
-    test("0b10_1n", "0b101n;\n");
+    test("0b1_01n;", "5n;\n");
+    test("0b101n;", "5n;\n");
+    test("0b101_101n;", "45n;\n");
+    test("0b10_1n", "5n;\n");
 
-    test("0o13n;", "0o13n;\n");
-    test("0o7n", "0o7n;\n");
+    test("0o13n;", "11n;\n");
+    test("0o7n", "7n;\n");
 
-    test("0x2_0n", "0x20n;\n");
-    test("0xfabn", "0xfabn;\n");
-    test("0xaef_en;", "0xaefen;\n");
-    test("0xaefen;", "0xaefen;\n");
+    test("0x2_0n", "32n;\n");
+    test("0xfabn", "4011n;\n");
+    test("0xaef_en;", "44798n;\n");
+    test("0xaefen;", "44798n;\n");
 
     test("return 1n", "return 1n;\n");
     test_minify("return 1n", "return 1n;");

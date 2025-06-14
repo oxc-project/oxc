@@ -28,7 +28,6 @@ mod format_extensions;
 pub mod formatter;
 pub mod group_id;
 pub mod macros;
-pub mod parent_stack;
 pub mod prelude;
 #[cfg(debug_assertions)]
 pub mod printed_tokens;
@@ -55,7 +54,9 @@ use std::{
 pub use buffer::{Buffer, BufferExtensions, VecBuffer};
 pub use format_element::FormatElement;
 pub use group_id::GroupId;
-use oxc_ast::ast::Program;
+use oxc_allocator::{Address, GetAddress};
+use oxc_ast::{AstKind, ast::Program};
+use rustc_hash::FxHashMap;
 
 pub use self::comments::{Comments, SourceComment};
 use self::printer::Printer;

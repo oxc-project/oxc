@@ -90,7 +90,7 @@ impl Lexer<'_> {
                     cold_branch(|| {
                         let start = self.offset();
                         self.error(diagnostics::unexpected_jsx_end(
-                            Span::new(start, start),
+                            Span::empty(start),
                             next_byte as char,
                             if next_byte == b'}' { "rbrace" } else { "gt" },
                         ));

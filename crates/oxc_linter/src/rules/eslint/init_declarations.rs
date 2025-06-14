@@ -1,8 +1,8 @@
 use oxc_ast::{
     AstKind,
     ast::{
-        BindingPatternKind, ForInStatement, ForOfStatement, ForStatementLeft,
-        VariableDeclarationKind,
+        BindingPatternKind, ForInStatement, ForOfStatement, ForStatement, ForStatementInit,
+        ForStatementLeft, VariableDeclarationKind,
     },
 };
 use oxc_diagnostics::OxcDiagnostic;
@@ -156,7 +156,9 @@ impl Rule for InitDeclarations {
                     // When eslint processes ForStatementInit statements
                     // the default variable is initialized
                     // eg: "for (var a; a < 2; a++)" a is initialized
-                    AstKind::ForStatementInit(_) => true,
+                    AstKind::ForStatement(ForStatement { init, .. }) => {
+                        matches!(init, Some(ForStatementInit::VariableDeclaration(init)) if init.span == decl.span)
+                    }
                     _ => v.init.is_some(),
                 };
 

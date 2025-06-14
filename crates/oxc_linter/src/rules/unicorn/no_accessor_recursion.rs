@@ -403,7 +403,7 @@ fn test() {
     let fail = vec![
         r"
             const foo = {
-                get bar(value) {
+                get bar() {
                     this.bar
                 }
             };

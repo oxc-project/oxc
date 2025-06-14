@@ -253,6 +253,20 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Add missing aria props `aria-selected` to the element with `option` role.
 
+  ⚠ eslint-plugin-jsx-a11y(role-has-required-aria-props): `menuitemradio` role is missing required aria props `aria-checked`.
+   ╭─[role_has_required_aria_props.tsx:1:6]
+ 1 │ <div role='menuitemradio' />
+   ·      ────────────────────
+   ╰────
+  help: Add missing aria props `aria-checked` to the element with `menuitemradio` role.
+
+  ⚠ eslint-plugin-jsx-a11y(role-has-required-aria-props): `menuitemcheckbox` role is missing required aria props `aria-checked`.
+   ╭─[role_has_required_aria_props.tsx:1:6]
+ 1 │ <div role='menuitemcheckbox' />
+   ·      ───────────────────────
+   ╰────
+  help: Add missing aria props `aria-checked` to the element with `menuitemcheckbox` role.
+
   ⚠ eslint-plugin-jsx-a11y(role-has-required-aria-props): `combobox` role is missing required aria props `aria-controls`.
    ╭─[role_has_required_aria_props.tsx:1:14]
  1 │ <MyComponent role='combobox' />

@@ -52,10 +52,7 @@ impl Rule for NoProto {
         };
         if let Some(static_property_name) = member_expression.static_property_name() {
             if static_property_name == "__proto__" {
-                ctx.diagnostic(no_proto_diagnostic(Span::new(
-                    member_expression.span().start,
-                    member_expression.span().end,
-                )));
+                ctx.diagnostic(no_proto_diagnostic(member_expression.span()));
             }
         }
     }

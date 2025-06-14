@@ -689,6 +689,7 @@ mod test {
         test("new WeakSet([])", "");
         test_same("new WeakSet([x])");
         test_same("new WeakSet(x)");
+        test_same("throw new WeakSet()");
         test("new WeakMap()", "");
         test("new WeakMap(null)", "");
         test("new WeakMap(void 0)", "");

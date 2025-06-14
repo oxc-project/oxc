@@ -270,18 +270,4 @@ impl<'a> AstBuilder<'a> {
             NONE,
         ))
     }
-
-    /* ---------- TypeScript ---------- */
-
-    /// Create a [`TSInterfaceHeritage`] that extends from the given list of
-    /// other interfaces.
-    #[inline]
-    pub fn ts_interface_heritages(
-        self,
-        extends: Vec<'a, (Expression<'a>, Option<Box<'a, TSTypeParameterInstantiation<'a>>>, Span)>,
-    ) -> Vec<'a, TSInterfaceHeritage<'a>> {
-        self.vec_from_iter(extends.into_iter().map(|(expression, type_parameters, span)| {
-            TSInterfaceHeritage { span, expression, type_arguments: type_parameters }
-        }))
-    }
 }

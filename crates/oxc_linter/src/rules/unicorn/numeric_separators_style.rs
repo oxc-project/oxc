@@ -109,11 +109,12 @@ impl Rule for NumericSeparatorsStyle {
                 }
             }
             AstKind::BigIntLiteral(number) => {
-                if self.only_if_contains_separator && !number.raw.contains('_') {
+                let raw = number.raw.unwrap().as_str();
+                if self.only_if_contains_separator && !raw.contains('_') {
                     return;
                 }
 
-                let formatted = self.format_bigint(number, &number.raw);
+                let formatted = self.format_bigint(number, raw);
 
                 if formatted.len() != number.span.size() as usize {
                     ctx.diagnostic_with_fix(

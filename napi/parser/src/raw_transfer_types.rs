@@ -117,7 +117,7 @@ impl<'a> FromIn<'a, &LabeledSpan> for ErrorLabel<'a> {
         Self {
             message: label.label().map(|message| Atom::from_in(message, allocator)),
             #[expect(clippy::cast_possible_truncation)]
-            span: Span::new(label.offset() as u32, (label.offset() + label.len()) as u32),
+            span: Span::sized(label.offset() as u32, label.len() as u32),
         }
     }
 }

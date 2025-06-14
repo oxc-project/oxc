@@ -73,7 +73,7 @@ impl Rule for NoEmptyNamedBlocks {
             let Some(end) = source_token_str[start..].find("from") else { return };
 
             let start = span.start + start as u32;
-            let span = Span::new(start, start + end as u32);
+            let span = Span::sized(start, end as u32);
 
             ctx.diagnostic_with_fix(no_empty_named_blocks_diagnostic(import_decl.span), |fixer| {
                 if start == specifier.span.end {

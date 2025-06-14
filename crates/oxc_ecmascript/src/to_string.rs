@@ -1,4 +1,3 @@
-use cow_utils::CowUtils;
 use std::borrow::Cow;
 
 use oxc_ast::ast::*;
@@ -97,9 +96,7 @@ impl<'a> ToJsString<'a> for NumericLiteral<'a> {
 /// <https://tc39.es/ecma262/multipage/numbers-and-dates.html#sec-bigint.prototype.tostring>
 impl<'a> ToJsString<'a> for BigIntLiteral<'a> {
     fn to_js_string(&self, _is_global_reference: &impl IsGlobalReference) -> Option<Cow<'a, str>> {
-        self.base
-            .is_base_10()
-            .then(|| Cow::Owned(self.raw.trim_end_matches('n').cow_replace('_', "").to_string()))
+        Some(Cow::Borrowed(self.value.as_str()))
     }
 }
 

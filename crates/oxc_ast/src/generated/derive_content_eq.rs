@@ -1479,7 +1479,7 @@ impl ContentEq for StringLiteral<'_> {
 
 impl ContentEq for BigIntLiteral<'_> {
     fn content_eq(&self, other: &Self) -> bool {
-        ContentEq::content_eq(&self.raw, &other.raw)
+        ContentEq::content_eq(&self.value, &other.value)
     }
 }
 

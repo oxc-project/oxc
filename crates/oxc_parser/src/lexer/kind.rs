@@ -398,8 +398,8 @@ impl Kind {
     #[rustfmt::skip]
     #[inline]
     pub fn is_modifier_kind(self) -> bool {
-        matches!(self, Abstract | Accessor | Async | Const | Declare | Default
-          | Export | In | Out | Public | Private | Protected | Readonly | Static | Override)
+        matches!(self, Abstract | Accessor | Async | Const | Declare
+          | In | Out | Public | Private | Protected | Readonly | Static | Override)
     }
 
     #[inline]

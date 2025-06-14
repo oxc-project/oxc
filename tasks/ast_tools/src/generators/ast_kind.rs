@@ -38,11 +38,6 @@ const STRUCTS_BLACK_LIST: &[&str] = &[
     "AccessorProperty",
     "WithClause",
     "ImportAttribute",
-    "JSXOpeningFragment",
-    "JSXClosingFragment",
-    "JSXEmptyExpression",
-    "JSXAttribute",
-    "JSXSpreadChild",
     "TSTypeOperator",
     "TSArrayType",
     "TSTupleType",
@@ -56,9 +51,6 @@ const STRUCTS_BLACK_LIST: &[&str] = &[
     "TSFunctionType",
     "TSConstructorType",
     "TSNamespaceExportDeclaration",
-    "JSDocNullableType",
-    "JSDocNonNullableType",
-    "JSDocUnknownType",
     "Span",
 ];
 
@@ -73,11 +65,7 @@ const ENUMS_WHITE_LIST: &[&str] = &[
     "AssignmentTarget",
     "SimpleAssignmentTarget",
     "AssignmentTargetPattern",
-    "ForStatementInit",
     "ModuleDeclaration",
-    "JSXElementName",
-    "JSXMemberExpressionObject",
-    "JSXAttributeItem",
     "TSTypeName",
     "TSModuleReference",
 ];

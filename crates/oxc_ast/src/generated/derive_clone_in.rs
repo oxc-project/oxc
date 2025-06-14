@@ -4861,6 +4861,7 @@ impl<'new_alloc> CloneIn<'new_alloc> for BigIntLiteral<'_> {
     fn clone_in(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {
         BigIntLiteral {
             span: CloneIn::clone_in(&self.span, allocator),
+            value: CloneIn::clone_in(&self.value, allocator),
             raw: CloneIn::clone_in(&self.raw, allocator),
             base: CloneIn::clone_in(&self.base, allocator),
         }
@@ -4869,6 +4870,7 @@ impl<'new_alloc> CloneIn<'new_alloc> for BigIntLiteral<'_> {
     fn clone_in_with_semantic_ids(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {
         BigIntLiteral {
             span: CloneIn::clone_in_with_semantic_ids(&self.span, allocator),
+            value: CloneIn::clone_in_with_semantic_ids(&self.value, allocator),
             raw: CloneIn::clone_in_with_semantic_ids(&self.raw, allocator),
             base: CloneIn::clone_in_with_semantic_ids(&self.base, allocator),
         }

@@ -3827,6 +3827,13 @@ Negative Passed: 4519/4519 (100.00%)
     ·         ─
     ╰────
 
+  × Invalid rest operator's argument.
+    ╭─[test262/test/language/expressions/assignment/dstr/array-rest-init.js:25:8]
+ 24 │ 
+ 25 │ 0, [...x = 1] = [];
+    ·        ─────
+    ╰────
+
   × Cannot assign to this expression
     ╭─[test262/test/language/expressions/assignment/dstr/array-rest-init.js:25:8]
  24 │ 
@@ -17755,6 +17762,13 @@ Negative Passed: 4519/4519 (100.00%)
     ·  ───────────
     ╰────
 
+  × Invalid rest operator's argument.
+    ╭─[test262/test/language/expressions/import.meta/syntax/invalid-assignment-target-array-rest-destructuring-expr.js:31:5]
+ 30 │ 
+ 31 │ [...import.meta] = [];
+    ·     ───────────
+    ╰────
+
   × Cannot assign to this expression
     ╭─[test262/test/language/expressions/import.meta/syntax/invalid-assignment-target-array-rest-destructuring-expr.js:31:5]
  30 │ 
@@ -17795,6 +17809,13 @@ Negative Passed: 4519/4519 (100.00%)
     ╭─[test262/test/language/expressions/import.meta/syntax/invalid-assignment-target-object-destructuring-expr.js:31:6]
  30 │ 
  31 │ ({a: import.meta} = {});
+    ·      ───────────
+    ╰────
+
+  × Invalid rest operator's argument.
+    ╭─[test262/test/language/expressions/import.meta/syntax/invalid-assignment-target-object-rest-destructuring-expr.js:31:6]
+ 30 │ 
+ 31 │ ({...import.meta} = {});
     ·      ───────────
     ╰────
 
@@ -34784,6 +34805,13 @@ Negative Passed: 4519/4519 (100.00%)
     ·           ─
     ╰────
 
+  × Invalid rest operator's argument.
+    ╭─[test262/test/language/statements/for-in/dstr/array-rest-init.js:34:10]
+ 33 │ 
+ 34 │ for ([...x = 1] in [[]]) ;
+    ·          ─────
+    ╰────
+
   × Cannot assign to this expression
     ╭─[test262/test/language/statements/for-in/dstr/array-rest-init.js:34:10]
  33 │ 
@@ -35289,6 +35317,13 @@ Negative Passed: 4519/4519 (100.00%)
  32 │ 
  33 │ for ([...x,] of [[]]) ;
     ·           ─
+    ╰────
+
+  × Invalid rest operator's argument.
+    ╭─[test262/test/language/statements/for-of/dstr/array-rest-init.js:34:10]
+ 33 │ 
+ 34 │ for ([...x = 1] of [[]]) ;
+    ·          ─────
     ╰────
 
   × Cannot assign to this expression

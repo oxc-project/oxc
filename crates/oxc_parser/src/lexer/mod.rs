@@ -252,8 +252,7 @@ impl<'a> Lexer<'a> {
     }
 
     fn current_offset(&self) -> Span {
-        let offset = self.offset();
-        Span::new(offset, offset)
+        Span::empty(self.offset())
     }
 
     /// Return `IllegalCharacter` Error or `UnexpectedEnd` if EOF

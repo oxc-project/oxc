@@ -64,7 +64,9 @@ fn message_with_position_to_lsp_diagnostic(
                         },
                     },
                 },
-                message: span.message().unwrap_or(&Cow::Borrowed("")).to_string(),
+                message: span
+                    .message()
+                    .map_or_else(String::new, |message| message.clone().into_owned()),
             })
             .collect()
     });
@@ -90,10 +92,19 @@ fn message_with_position_to_lsp_diagnostic(
     let code = message.code.to_string();
     let code_description =
         message.url.as_ref().map(|url| CodeDescription { href: Uri::from_str(url).ok().unwrap() });
-    let message = message.help.as_ref().map_or_else(
-        || message.message.to_string(),
-        |help| format!("{}\nhelp: {}", message.message, help),
-    );
+    let message = match &message.help {
+        Some(help) => {
+            let mut msg = String::with_capacity(message.message.len() + help.len() + 7);
+            msg.push_str(message.message.as_ref());
+            msg.push_str("\nhelp: ");
+            msg.push_str(help.as_ref());
+            msg
+        }
+        None => match message.message {
+            Cow::Borrowed(s) => s.to_string(),
+            Cow::Owned(ref s) => s.clone(),
+        },
+    };
 
     lsp_types::Diagnostic {
         range,

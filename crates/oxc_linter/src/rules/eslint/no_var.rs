@@ -4,7 +4,7 @@ use oxc_ast::{
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::Span;
+use oxc_span::{GetSpan, Span};
 
 use crate::{AstNode, context::LintContext, rule::Rule};
 
@@ -49,7 +49,7 @@ declare_oxc_lint!(
     NoVar,
     eslint,
     restriction,
-    fix
+    conditional_fix
 );
 
 impl Rule for NoVar {
@@ -57,16 +57,22 @@ impl Rule for NoVar {
         if let AstKind::VariableDeclaration(dec) = node.kind() {
             if dec.kind == VariableDeclarationKind::Var {
                 let is_written_to = dec.declarations.iter().any(|v| is_written_to(&v.id, ctx));
+                let span = Span::sized(dec.span.start, 3);
+                ctx.diagnostic_with_fix(no_var_diagnostic(span), |fixer| {
+                    let parent_span = ctx.nodes().parent_kind(node.id()).unwrap().span();
+                    if dec.declarations.iter().any(|decl| {
+                        decl.id.get_binding_identifiers().iter().any(|ident| {
+                            ctx.symbol_references(ident.symbol_id()).any(|id| {
+                                !parent_span
+                                    .contains_inclusive(ctx.nodes().get_node(id.node_id()).span())
+                            })
+                        })
+                    }) {
+                        return fixer.noop();
+                    }
 
-                ctx.diagnostic_with_fix(
-                    no_var_diagnostic(Span::new(dec.span.start, dec.span.start + 3)),
-                    |fixer| {
-                        fixer.replace(
-                            Span::new(dec.span.start, dec.span.start + 3),
-                            if is_written_to { "let" } else { "const" },
-                        )
-                    },
-                );
+                    fixer.replace(span, if is_written_to { "let" } else { "const" })
+                });
             }
         }
     }
@@ -158,6 +164,13 @@ fn test() {
         ("var foo,bar; bar = 'que'", "let foo,bar; bar = 'que'"),
         ("var { a } = {}; a = fn()", "let { a } = {}; a = fn()"),
         ("var { a } = {}; let b = a", "const { a } = {}; let b = a"),
+        // TODO: implement a correct fixer for this case.
+        // we need to add a `let a;` to the parent of both scopes
+        // then change `var a = undefined` into `a = undefined`
+        (
+            "function play(index: number) { if (index > 1) { var a = undefined } else { var a = undefined } console.log(a) }",
+            "function play(index: number) { if (index > 1) { var a = undefined } else { var a = undefined } console.log(a) }",
+        ),
     ];
 
     Tester::new(NoVar::NAME, NoVar::PLUGIN, pass, fail).expect_fix(fix).test_and_snapshot();

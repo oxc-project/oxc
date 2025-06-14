@@ -132,7 +132,7 @@ fn check_number_literal(number_literal: &str, raw_span: Span) -> Option<(OxcDiag
     if let Some(index) = number_literal.find('E') {
         let char_position = raw_span.start + index as u32;
         return Some((
-            uppercase_exponential_notation(Span::new(char_position, char_position + 1)),
+            uppercase_exponential_notation(Span::sized(char_position, 1)),
             number_literal.cow_to_ascii_lowercase().into_owned(),
         ));
     }
