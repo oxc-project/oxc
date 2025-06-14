@@ -1,7 +1,6 @@
 import { defineConfig } from 'vitest/config';
 
-const RUN_LAZY_TESTS = process.env.RUN_LAZY_TESTS === 'true' ||
-  process.env.RUN_SIMPLE_LAZY_TESTS === 'true';
+const RUN_LAZY_TESTS = process.env.RUN_LAZY_TESTS === 'true';
 
 export default defineConfig({
   test: {
