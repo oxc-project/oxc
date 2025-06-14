@@ -1,4 +1,9 @@
-use oxc_ast::ast::{FunctionBody, Program};
+use std::cell::RefCell;
+
+use oxc_ast::{
+    Comment,
+    ast::{FunctionBody, Program},
+};
 use oxc_span::{GetSpan, SourceType, Span};
 
 use crate::{formatter::FormatElement, generated::ast_nodes::AstNode, options::FormatOptions};
@@ -16,6 +21,10 @@ pub struct FormatContext<'ast> {
 
     comments: Comments,
 
+    printed_comment_index: usize,
+    // TODO:
+    pub comments_raw: &'ast oxc_allocator::Vec<'ast, Comment>,
+
     cached_function_body: Option<(Span, FormatElement)>,
 }
 
@@ -25,6 +34,8 @@ impl<'ast> FormatContext<'ast> {
             options,
             source_text: program.source_text,
             source_type: program.source_type,
+            printed_comment_index: 0,
+            comments_raw: &program.comments,
             comments: Comments::from_oxc_comments(program),
             cached_function_body: None,
         }
@@ -72,5 +83,17 @@ impl<'ast> FormatContext<'ast> {
         formatted: FormatElement,
     ) {
         self.cached_function_body = Some((body.span(), formatted));
+    }
+
+    pub(crate) fn get_printed_comment_index(&self) -> usize {
+        self.printed_comment_index
+    }
+
+    pub(crate) fn comments_raw(&self) -> &'ast [Comment] {
+        &self.comments_raw[self.printed_comment_index..]
+    }
+
+    pub(crate) fn set_printed_comment_index(&mut self, count: usize) {
+        self.printed_comment_index += count;
     }
 }

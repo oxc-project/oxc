@@ -43,6 +43,13 @@ pub const fn format_leading_comments<'a>(pos: u32) -> FormatLeadingComments<'a> 
     FormatLeadingComments::Node(pos)
 }
 
+/// Formats the leading comments of `node`
+pub const fn format_leading_comments_with_comments<'a>(
+    comments: &'a [SourceComment],
+) -> FormatLeadingComments<'a> {
+    FormatLeadingComments::Comments(comments)
+}
+
 /// Formats the leading comments of a node.
 #[derive(Debug, Copy, Clone)]
 pub enum FormatLeadingComments<'a> {
@@ -53,6 +60,7 @@ pub enum FormatLeadingComments<'a> {
 impl Format<'_> for FormatLeadingComments<'_> {
     fn fmt(&self, f: &mut Formatter) -> FormatResult<()> {
         let comments = f.context().comments().clone();
+        let raw = f.context().comments_raw;
 
         let leading_comments = match self {
             FormatLeadingComments::Node(start) => comments.leading_comments(*start),
@@ -101,6 +109,13 @@ impl Format<'_> for FormatLeadingComments<'_> {
 /// Formats the trailing comments of `node`.
 pub const fn format_trailing_comments<'a>(end: u32) -> FormatTrailingComments<'a> {
     FormatTrailingComments::Node(end)
+}
+
+/// Formats the trailing comments of `node`.
+pub const fn format_trailing_comments_with_comments<'a>(
+    comments: &'a [SourceComment],
+) -> FormatTrailingComments<'a> {
+    FormatTrailingComments::Comments(comments)
 }
 
 /// Formats the trailing comments of `node`

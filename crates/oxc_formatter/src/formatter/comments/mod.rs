@@ -84,7 +84,10 @@ use std::{
     rc::Rc,
 };
 
-use oxc_ast::ast::Program;
+use oxc_ast::{
+    Comment,
+    ast::{self, Program},
+};
 use oxc_span::Span;
 use rustc_hash::FxHashSet;
 
@@ -829,8 +832,7 @@ pub struct Comments {
 impl Comments {
     #[expect(clippy::cast_possible_truncation)]
     pub fn from_oxc_comments<'a>(program: &'a Program<'a>) -> Self {
-        use oxc_ast::ast;
-        let comments = &program.comments;
+        let comments: [&Comment; 0] = [];
         let source_text = program.source_text;
         let mut map = CommentsMap::new();
         for comment in comments {

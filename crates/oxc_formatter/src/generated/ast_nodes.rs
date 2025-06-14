@@ -4,7 +4,7 @@
 #![expect(clippy::elidable_lifetime_names)]
 use std::{fmt, mem::transmute, ops::Deref};
 
-use oxc_allocator::{Allocator, Vec};
+use oxc_allocator::{Allocator, Box, Vec};
 use oxc_ast::ast::*;
 use oxc_span::GetSpan;
 
@@ -199,6 +199,470 @@ pub enum AstNodes<'a> {
     JSDocNullableType(&'a AstNode<'a, JSDocNullableType<'a>>),
     JSDocNonNullableType(&'a AstNode<'a, JSDocNonNullableType<'a>>),
     JSDocUnknownType(&'a AstNode<'a, JSDocUnknownType>),
+}
+pub enum FollowingNode<'a> {
+    Program(&'a Program<'a>),
+    Expression(&'a Expression<'a>),
+    IdentifierName(&'a IdentifierName<'a>),
+    IdentifierReference(&'a IdentifierReference<'a>),
+    BindingIdentifier(&'a BindingIdentifier<'a>),
+    LabelIdentifier(&'a LabelIdentifier<'a>),
+    ThisExpression(&'a ThisExpression),
+    ArrayExpression(&'a ArrayExpression<'a>),
+    ArrayExpressionElement(&'a ArrayExpressionElement<'a>),
+    Elision(&'a Elision),
+    ObjectExpression(&'a ObjectExpression<'a>),
+    ObjectPropertyKind(&'a ObjectPropertyKind<'a>),
+    ObjectProperty(&'a ObjectProperty<'a>),
+    PropertyKey(&'a PropertyKey<'a>),
+    TemplateLiteral(&'a TemplateLiteral<'a>),
+    TaggedTemplateExpression(&'a TaggedTemplateExpression<'a>),
+    TemplateElement(&'a TemplateElement<'a>),
+    MemberExpression(&'a MemberExpression<'a>),
+    ComputedMemberExpression(&'a ComputedMemberExpression<'a>),
+    StaticMemberExpression(&'a StaticMemberExpression<'a>),
+    PrivateFieldExpression(&'a PrivateFieldExpression<'a>),
+    CallExpression(&'a CallExpression<'a>),
+    NewExpression(&'a NewExpression<'a>),
+    MetaProperty(&'a MetaProperty<'a>),
+    SpreadElement(&'a SpreadElement<'a>),
+    Argument(&'a Argument<'a>),
+    UpdateExpression(&'a UpdateExpression<'a>),
+    UnaryExpression(&'a UnaryExpression<'a>),
+    BinaryExpression(&'a BinaryExpression<'a>),
+    PrivateInExpression(&'a PrivateInExpression<'a>),
+    LogicalExpression(&'a LogicalExpression<'a>),
+    ConditionalExpression(&'a ConditionalExpression<'a>),
+    AssignmentExpression(&'a AssignmentExpression<'a>),
+    AssignmentTarget(&'a AssignmentTarget<'a>),
+    SimpleAssignmentTarget(&'a SimpleAssignmentTarget<'a>),
+    AssignmentTargetPattern(&'a AssignmentTargetPattern<'a>),
+    ArrayAssignmentTarget(&'a ArrayAssignmentTarget<'a>),
+    ObjectAssignmentTarget(&'a ObjectAssignmentTarget<'a>),
+    AssignmentTargetRest(&'a AssignmentTargetRest<'a>),
+    AssignmentTargetMaybeDefault(&'a AssignmentTargetMaybeDefault<'a>),
+    AssignmentTargetWithDefault(&'a AssignmentTargetWithDefault<'a>),
+    AssignmentTargetProperty(&'a AssignmentTargetProperty<'a>),
+    AssignmentTargetPropertyIdentifier(&'a AssignmentTargetPropertyIdentifier<'a>),
+    AssignmentTargetPropertyProperty(&'a AssignmentTargetPropertyProperty<'a>),
+    SequenceExpression(&'a SequenceExpression<'a>),
+    Super(&'a Super),
+    AwaitExpression(&'a AwaitExpression<'a>),
+    ChainExpression(&'a ChainExpression<'a>),
+    ChainElement(&'a ChainElement<'a>),
+    ParenthesizedExpression(&'a ParenthesizedExpression<'a>),
+    Statement(&'a Statement<'a>),
+    Directive(&'a Directive<'a>),
+    Hashbang(&'a Hashbang<'a>),
+    BlockStatement(&'a BlockStatement<'a>),
+    Declaration(&'a Declaration<'a>),
+    VariableDeclaration(&'a VariableDeclaration<'a>),
+    VariableDeclarator(&'a VariableDeclarator<'a>),
+    EmptyStatement(&'a EmptyStatement),
+    ExpressionStatement(&'a ExpressionStatement<'a>),
+    IfStatement(&'a IfStatement<'a>),
+    DoWhileStatement(&'a DoWhileStatement<'a>),
+    WhileStatement(&'a WhileStatement<'a>),
+    ForStatement(&'a ForStatement<'a>),
+    ForStatementInit(&'a ForStatementInit<'a>),
+    ForInStatement(&'a ForInStatement<'a>),
+    ForStatementLeft(&'a ForStatementLeft<'a>),
+    ForOfStatement(&'a ForOfStatement<'a>),
+    ContinueStatement(&'a ContinueStatement<'a>),
+    BreakStatement(&'a BreakStatement<'a>),
+    ReturnStatement(&'a ReturnStatement<'a>),
+    WithStatement(&'a WithStatement<'a>),
+    SwitchStatement(&'a SwitchStatement<'a>),
+    SwitchCase(&'a SwitchCase<'a>),
+    LabeledStatement(&'a LabeledStatement<'a>),
+    ThrowStatement(&'a ThrowStatement<'a>),
+    TryStatement(&'a TryStatement<'a>),
+    CatchClause(&'a CatchClause<'a>),
+    CatchParameter(&'a CatchParameter<'a>),
+    DebuggerStatement(&'a DebuggerStatement),
+    BindingPattern(&'a BindingPattern<'a>),
+    BindingPatternKind(&'a BindingPatternKind<'a>),
+    AssignmentPattern(&'a AssignmentPattern<'a>),
+    ObjectPattern(&'a ObjectPattern<'a>),
+    BindingProperty(&'a BindingProperty<'a>),
+    ArrayPattern(&'a ArrayPattern<'a>),
+    BindingRestElement(&'a BindingRestElement<'a>),
+    Function(&'a Function<'a>),
+    FormalParameters(&'a FormalParameters<'a>),
+    FormalParameter(&'a FormalParameter<'a>),
+    FunctionBody(&'a FunctionBody<'a>),
+    ArrowFunctionExpression(&'a ArrowFunctionExpression<'a>),
+    YieldExpression(&'a YieldExpression<'a>),
+    Class(&'a Class<'a>),
+    ClassBody(&'a ClassBody<'a>),
+    ClassElement(&'a ClassElement<'a>),
+    MethodDefinition(&'a MethodDefinition<'a>),
+    PropertyDefinition(&'a PropertyDefinition<'a>),
+    PrivateIdentifier(&'a PrivateIdentifier<'a>),
+    StaticBlock(&'a StaticBlock<'a>),
+    ModuleDeclaration(&'a ModuleDeclaration<'a>),
+    AccessorProperty(&'a AccessorProperty<'a>),
+    ImportExpression(&'a ImportExpression<'a>),
+    ImportDeclaration(&'a ImportDeclaration<'a>),
+    ImportDeclarationSpecifier(&'a ImportDeclarationSpecifier<'a>),
+    ImportSpecifier(&'a ImportSpecifier<'a>),
+    ImportDefaultSpecifier(&'a ImportDefaultSpecifier<'a>),
+    ImportNamespaceSpecifier(&'a ImportNamespaceSpecifier<'a>),
+    WithClause(&'a WithClause<'a>),
+    ImportAttribute(&'a ImportAttribute<'a>),
+    ImportAttributeKey(&'a ImportAttributeKey<'a>),
+    ExportNamedDeclaration(&'a ExportNamedDeclaration<'a>),
+    ExportDefaultDeclaration(&'a ExportDefaultDeclaration<'a>),
+    ExportAllDeclaration(&'a ExportAllDeclaration<'a>),
+    ExportSpecifier(&'a ExportSpecifier<'a>),
+    ExportDefaultDeclarationKind(&'a ExportDefaultDeclarationKind<'a>),
+    ModuleExportName(&'a ModuleExportName<'a>),
+    V8IntrinsicExpression(&'a V8IntrinsicExpression<'a>),
+    BooleanLiteral(&'a BooleanLiteral),
+    NullLiteral(&'a NullLiteral),
+    NumericLiteral(&'a NumericLiteral<'a>),
+    StringLiteral(&'a StringLiteral<'a>),
+    BigIntLiteral(&'a BigIntLiteral<'a>),
+    RegExpLiteral(&'a RegExpLiteral<'a>),
+    JSXElement(&'a JSXElement<'a>),
+    JSXOpeningElement(&'a JSXOpeningElement<'a>),
+    JSXClosingElement(&'a JSXClosingElement<'a>),
+    JSXFragment(&'a JSXFragment<'a>),
+    JSXOpeningFragment(&'a JSXOpeningFragment),
+    JSXClosingFragment(&'a JSXClosingFragment),
+    JSXElementName(&'a JSXElementName<'a>),
+    JSXNamespacedName(&'a JSXNamespacedName<'a>),
+    JSXMemberExpression(&'a JSXMemberExpression<'a>),
+    JSXMemberExpressionObject(&'a JSXMemberExpressionObject<'a>),
+    JSXExpressionContainer(&'a JSXExpressionContainer<'a>),
+    JSXExpression(&'a JSXExpression<'a>),
+    JSXEmptyExpression(&'a JSXEmptyExpression),
+    JSXAttributeItem(&'a JSXAttributeItem<'a>),
+    JSXAttribute(&'a JSXAttribute<'a>),
+    JSXSpreadAttribute(&'a JSXSpreadAttribute<'a>),
+    JSXAttributeName(&'a JSXAttributeName<'a>),
+    JSXAttributeValue(&'a JSXAttributeValue<'a>),
+    JSXIdentifier(&'a JSXIdentifier<'a>),
+    JSXChild(&'a JSXChild<'a>),
+    JSXSpreadChild(&'a JSXSpreadChild<'a>),
+    JSXText(&'a JSXText<'a>),
+    TSThisParameter(&'a TSThisParameter<'a>),
+    TSEnumDeclaration(&'a TSEnumDeclaration<'a>),
+    TSEnumBody(&'a TSEnumBody<'a>),
+    TSEnumMember(&'a TSEnumMember<'a>),
+    TSEnumMemberName(&'a TSEnumMemberName<'a>),
+    TSTypeAnnotation(&'a TSTypeAnnotation<'a>),
+    TSLiteralType(&'a TSLiteralType<'a>),
+    TSLiteral(&'a TSLiteral<'a>),
+    TSType(&'a TSType<'a>),
+    TSConditionalType(&'a TSConditionalType<'a>),
+    TSUnionType(&'a TSUnionType<'a>),
+    TSIntersectionType(&'a TSIntersectionType<'a>),
+    TSParenthesizedType(&'a TSParenthesizedType<'a>),
+    TSTypeOperator(&'a TSTypeOperator<'a>),
+    TSArrayType(&'a TSArrayType<'a>),
+    TSIndexedAccessType(&'a TSIndexedAccessType<'a>),
+    TSTupleType(&'a TSTupleType<'a>),
+    TSNamedTupleMember(&'a TSNamedTupleMember<'a>),
+    TSOptionalType(&'a TSOptionalType<'a>),
+    TSRestType(&'a TSRestType<'a>),
+    TSTupleElement(&'a TSTupleElement<'a>),
+    TSAnyKeyword(&'a TSAnyKeyword),
+    TSStringKeyword(&'a TSStringKeyword),
+    TSBooleanKeyword(&'a TSBooleanKeyword),
+    TSNumberKeyword(&'a TSNumberKeyword),
+    TSNeverKeyword(&'a TSNeverKeyword),
+    TSIntrinsicKeyword(&'a TSIntrinsicKeyword),
+    TSUnknownKeyword(&'a TSUnknownKeyword),
+    TSNullKeyword(&'a TSNullKeyword),
+    TSUndefinedKeyword(&'a TSUndefinedKeyword),
+    TSVoidKeyword(&'a TSVoidKeyword),
+    TSSymbolKeyword(&'a TSSymbolKeyword),
+    TSThisType(&'a TSThisType),
+    TSObjectKeyword(&'a TSObjectKeyword),
+    TSBigIntKeyword(&'a TSBigIntKeyword),
+    TSTypeReference(&'a TSTypeReference<'a>),
+    TSTypeName(&'a TSTypeName<'a>),
+    TSQualifiedName(&'a TSQualifiedName<'a>),
+    TSTypeParameterInstantiation(&'a TSTypeParameterInstantiation<'a>),
+    TSTypeParameter(&'a TSTypeParameter<'a>),
+    TSTypeParameterDeclaration(&'a TSTypeParameterDeclaration<'a>),
+    TSTypeAliasDeclaration(&'a TSTypeAliasDeclaration<'a>),
+    TSClassImplements(&'a TSClassImplements<'a>),
+    TSInterfaceDeclaration(&'a TSInterfaceDeclaration<'a>),
+    TSInterfaceBody(&'a TSInterfaceBody<'a>),
+    TSPropertySignature(&'a TSPropertySignature<'a>),
+    TSSignature(&'a TSSignature<'a>),
+    TSIndexSignature(&'a TSIndexSignature<'a>),
+    TSCallSignatureDeclaration(&'a TSCallSignatureDeclaration<'a>),
+    TSMethodSignature(&'a TSMethodSignature<'a>),
+    TSConstructSignatureDeclaration(&'a TSConstructSignatureDeclaration<'a>),
+    TSIndexSignatureName(&'a TSIndexSignatureName<'a>),
+    TSInterfaceHeritage(&'a TSInterfaceHeritage<'a>),
+    TSTypePredicate(&'a TSTypePredicate<'a>),
+    TSTypePredicateName(&'a TSTypePredicateName<'a>),
+    TSModuleDeclaration(&'a TSModuleDeclaration<'a>),
+    TSModuleDeclarationName(&'a TSModuleDeclarationName<'a>),
+    TSModuleDeclarationBody(&'a TSModuleDeclarationBody<'a>),
+    TSModuleBlock(&'a TSModuleBlock<'a>),
+    TSTypeLiteral(&'a TSTypeLiteral<'a>),
+    TSInferType(&'a TSInferType<'a>),
+    TSTypeQuery(&'a TSTypeQuery<'a>),
+    TSTypeQueryExprName(&'a TSTypeQueryExprName<'a>),
+    TSImportType(&'a TSImportType<'a>),
+    TSFunctionType(&'a TSFunctionType<'a>),
+    TSConstructorType(&'a TSConstructorType<'a>),
+    TSMappedType(&'a TSMappedType<'a>),
+    TSTemplateLiteralType(&'a TSTemplateLiteralType<'a>),
+    TSAsExpression(&'a TSAsExpression<'a>),
+    TSSatisfiesExpression(&'a TSSatisfiesExpression<'a>),
+    TSTypeAssertion(&'a TSTypeAssertion<'a>),
+    TSImportEqualsDeclaration(&'a TSImportEqualsDeclaration<'a>),
+    TSModuleReference(&'a TSModuleReference<'a>),
+    TSExternalModuleReference(&'a TSExternalModuleReference<'a>),
+    TSNonNullExpression(&'a TSNonNullExpression<'a>),
+    Decorator(&'a Decorator<'a>),
+    TSExportAssignment(&'a TSExportAssignment<'a>),
+    TSNamespaceExportDeclaration(&'a TSNamespaceExportDeclaration<'a>),
+    TSInstantiationExpression(&'a TSInstantiationExpression<'a>),
+    JSDocNullableType(&'a JSDocNullableType<'a>),
+    JSDocNonNullableType(&'a JSDocNonNullableType<'a>),
+    JSDocUnknownType(&'a JSDocUnknownType),
+    Span(&'a Span),
+}
+impl FollowingNode<'_> {
+    pub fn span(&self) -> oxc_span::Span {
+        match self {
+            Self::Program(n) => n.span(),
+            Self::Expression(n) => n.span(),
+            Self::IdentifierName(n) => n.span(),
+            Self::IdentifierReference(n) => n.span(),
+            Self::BindingIdentifier(n) => n.span(),
+            Self::LabelIdentifier(n) => n.span(),
+            Self::ThisExpression(n) => n.span(),
+            Self::ArrayExpression(n) => n.span(),
+            Self::ArrayExpressionElement(n) => n.span(),
+            Self::Elision(n) => n.span(),
+            Self::ObjectExpression(n) => n.span(),
+            Self::ObjectPropertyKind(n) => n.span(),
+            Self::ObjectProperty(n) => n.span(),
+            Self::PropertyKey(n) => n.span(),
+            Self::TemplateLiteral(n) => n.span(),
+            Self::TaggedTemplateExpression(n) => n.span(),
+            Self::TemplateElement(n) => n.span(),
+            Self::MemberExpression(n) => n.span(),
+            Self::ComputedMemberExpression(n) => n.span(),
+            Self::StaticMemberExpression(n) => n.span(),
+            Self::PrivateFieldExpression(n) => n.span(),
+            Self::CallExpression(n) => n.span(),
+            Self::NewExpression(n) => n.span(),
+            Self::MetaProperty(n) => n.span(),
+            Self::SpreadElement(n) => n.span(),
+            Self::Argument(n) => n.span(),
+            Self::UpdateExpression(n) => n.span(),
+            Self::UnaryExpression(n) => n.span(),
+            Self::BinaryExpression(n) => n.span(),
+            Self::PrivateInExpression(n) => n.span(),
+            Self::LogicalExpression(n) => n.span(),
+            Self::ConditionalExpression(n) => n.span(),
+            Self::AssignmentExpression(n) => n.span(),
+            Self::AssignmentTarget(n) => n.span(),
+            Self::SimpleAssignmentTarget(n) => n.span(),
+            Self::AssignmentTargetPattern(n) => n.span(),
+            Self::ArrayAssignmentTarget(n) => n.span(),
+            Self::ObjectAssignmentTarget(n) => n.span(),
+            Self::AssignmentTargetRest(n) => n.span(),
+            Self::AssignmentTargetMaybeDefault(n) => n.span(),
+            Self::AssignmentTargetWithDefault(n) => n.span(),
+            Self::AssignmentTargetProperty(n) => n.span(),
+            Self::AssignmentTargetPropertyIdentifier(n) => n.span(),
+            Self::AssignmentTargetPropertyProperty(n) => n.span(),
+            Self::SequenceExpression(n) => n.span(),
+            Self::Super(n) => n.span(),
+            Self::AwaitExpression(n) => n.span(),
+            Self::ChainExpression(n) => n.span(),
+            Self::ChainElement(n) => n.span(),
+            Self::ParenthesizedExpression(n) => n.span(),
+            Self::Statement(n) => n.span(),
+            Self::Directive(n) => n.span(),
+            Self::Hashbang(n) => n.span(),
+            Self::BlockStatement(n) => n.span(),
+            Self::Declaration(n) => n.span(),
+            Self::VariableDeclaration(n) => n.span(),
+            Self::VariableDeclarator(n) => n.span(),
+            Self::EmptyStatement(n) => n.span(),
+            Self::ExpressionStatement(n) => n.span(),
+            Self::IfStatement(n) => n.span(),
+            Self::DoWhileStatement(n) => n.span(),
+            Self::WhileStatement(n) => n.span(),
+            Self::ForStatement(n) => n.span(),
+            Self::ForStatementInit(n) => n.span(),
+            Self::ForInStatement(n) => n.span(),
+            Self::ForStatementLeft(n) => n.span(),
+            Self::ForOfStatement(n) => n.span(),
+            Self::ContinueStatement(n) => n.span(),
+            Self::BreakStatement(n) => n.span(),
+            Self::ReturnStatement(n) => n.span(),
+            Self::WithStatement(n) => n.span(),
+            Self::SwitchStatement(n) => n.span(),
+            Self::SwitchCase(n) => n.span(),
+            Self::LabeledStatement(n) => n.span(),
+            Self::ThrowStatement(n) => n.span(),
+            Self::TryStatement(n) => n.span(),
+            Self::CatchClause(n) => n.span(),
+            Self::CatchParameter(n) => n.span(),
+            Self::DebuggerStatement(n) => n.span(),
+            Self::BindingPattern(n) => n.span(),
+            Self::BindingPatternKind(n) => n.span(),
+            Self::AssignmentPattern(n) => n.span(),
+            Self::ObjectPattern(n) => n.span(),
+            Self::BindingProperty(n) => n.span(),
+            Self::ArrayPattern(n) => n.span(),
+            Self::BindingRestElement(n) => n.span(),
+            Self::Function(n) => n.span(),
+            Self::FormalParameters(n) => n.span(),
+            Self::FormalParameter(n) => n.span(),
+            Self::FunctionBody(n) => n.span(),
+            Self::ArrowFunctionExpression(n) => n.span(),
+            Self::YieldExpression(n) => n.span(),
+            Self::Class(n) => n.span(),
+            Self::ClassBody(n) => n.span(),
+            Self::ClassElement(n) => n.span(),
+            Self::MethodDefinition(n) => n.span(),
+            Self::PropertyDefinition(n) => n.span(),
+            Self::PrivateIdentifier(n) => n.span(),
+            Self::StaticBlock(n) => n.span(),
+            Self::ModuleDeclaration(n) => n.span(),
+            Self::AccessorProperty(n) => n.span(),
+            Self::ImportExpression(n) => n.span(),
+            Self::ImportDeclaration(n) => n.span(),
+            Self::ImportDeclarationSpecifier(n) => n.span(),
+            Self::ImportSpecifier(n) => n.span(),
+            Self::ImportDefaultSpecifier(n) => n.span(),
+            Self::ImportNamespaceSpecifier(n) => n.span(),
+            Self::WithClause(n) => n.span(),
+            Self::ImportAttribute(n) => n.span(),
+            Self::ImportAttributeKey(n) => n.span(),
+            Self::ExportNamedDeclaration(n) => n.span(),
+            Self::ExportDefaultDeclaration(n) => n.span(),
+            Self::ExportAllDeclaration(n) => n.span(),
+            Self::ExportSpecifier(n) => n.span(),
+            Self::ExportDefaultDeclarationKind(n) => n.span(),
+            Self::ModuleExportName(n) => n.span(),
+            Self::V8IntrinsicExpression(n) => n.span(),
+            Self::BooleanLiteral(n) => n.span(),
+            Self::NullLiteral(n) => n.span(),
+            Self::NumericLiteral(n) => n.span(),
+            Self::StringLiteral(n) => n.span(),
+            Self::BigIntLiteral(n) => n.span(),
+            Self::RegExpLiteral(n) => n.span(),
+            Self::JSXElement(n) => n.span(),
+            Self::JSXOpeningElement(n) => n.span(),
+            Self::JSXClosingElement(n) => n.span(),
+            Self::JSXFragment(n) => n.span(),
+            Self::JSXOpeningFragment(n) => n.span(),
+            Self::JSXClosingFragment(n) => n.span(),
+            Self::JSXElementName(n) => n.span(),
+            Self::JSXNamespacedName(n) => n.span(),
+            Self::JSXMemberExpression(n) => n.span(),
+            Self::JSXMemberExpressionObject(n) => n.span(),
+            Self::JSXExpressionContainer(n) => n.span(),
+            Self::JSXExpression(n) => n.span(),
+            Self::JSXEmptyExpression(n) => n.span(),
+            Self::JSXAttributeItem(n) => n.span(),
+            Self::JSXAttribute(n) => n.span(),
+            Self::JSXSpreadAttribute(n) => n.span(),
+            Self::JSXAttributeName(n) => n.span(),
+            Self::JSXAttributeValue(n) => n.span(),
+            Self::JSXIdentifier(n) => n.span(),
+            Self::JSXChild(n) => n.span(),
+            Self::JSXSpreadChild(n) => n.span(),
+            Self::JSXText(n) => n.span(),
+            Self::TSThisParameter(n) => n.span(),
+            Self::TSEnumDeclaration(n) => n.span(),
+            Self::TSEnumBody(n) => n.span(),
+            Self::TSEnumMember(n) => n.span(),
+            Self::TSEnumMemberName(n) => n.span(),
+            Self::TSTypeAnnotation(n) => n.span(),
+            Self::TSLiteralType(n) => n.span(),
+            Self::TSLiteral(n) => n.span(),
+            Self::TSType(n) => n.span(),
+            Self::TSConditionalType(n) => n.span(),
+            Self::TSUnionType(n) => n.span(),
+            Self::TSIntersectionType(n) => n.span(),
+            Self::TSParenthesizedType(n) => n.span(),
+            Self::TSTypeOperator(n) => n.span(),
+            Self::TSArrayType(n) => n.span(),
+            Self::TSIndexedAccessType(n) => n.span(),
+            Self::TSTupleType(n) => n.span(),
+            Self::TSNamedTupleMember(n) => n.span(),
+            Self::TSOptionalType(n) => n.span(),
+            Self::TSRestType(n) => n.span(),
+            Self::TSTupleElement(n) => n.span(),
+            Self::TSAnyKeyword(n) => n.span(),
+            Self::TSStringKeyword(n) => n.span(),
+            Self::TSBooleanKeyword(n) => n.span(),
+            Self::TSNumberKeyword(n) => n.span(),
+            Self::TSNeverKeyword(n) => n.span(),
+            Self::TSIntrinsicKeyword(n) => n.span(),
+            Self::TSUnknownKeyword(n) => n.span(),
+            Self::TSNullKeyword(n) => n.span(),
+            Self::TSUndefinedKeyword(n) => n.span(),
+            Self::TSVoidKeyword(n) => n.span(),
+            Self::TSSymbolKeyword(n) => n.span(),
+            Self::TSThisType(n) => n.span(),
+            Self::TSObjectKeyword(n) => n.span(),
+            Self::TSBigIntKeyword(n) => n.span(),
+            Self::TSTypeReference(n) => n.span(),
+            Self::TSTypeName(n) => n.span(),
+            Self::TSQualifiedName(n) => n.span(),
+            Self::TSTypeParameterInstantiation(n) => n.span(),
+            Self::TSTypeParameter(n) => n.span(),
+            Self::TSTypeParameterDeclaration(n) => n.span(),
+            Self::TSTypeAliasDeclaration(n) => n.span(),
+            Self::TSClassImplements(n) => n.span(),
+            Self::TSInterfaceDeclaration(n) => n.span(),
+            Self::TSInterfaceBody(n) => n.span(),
+            Self::TSPropertySignature(n) => n.span(),
+            Self::TSSignature(n) => n.span(),
+            Self::TSIndexSignature(n) => n.span(),
+            Self::TSCallSignatureDeclaration(n) => n.span(),
+            Self::TSMethodSignature(n) => n.span(),
+            Self::TSConstructSignatureDeclaration(n) => n.span(),
+            Self::TSIndexSignatureName(n) => n.span(),
+            Self::TSInterfaceHeritage(n) => n.span(),
+            Self::TSTypePredicate(n) => n.span(),
+            Self::TSTypePredicateName(n) => n.span(),
+            Self::TSModuleDeclaration(n) => n.span(),
+            Self::TSModuleDeclarationName(n) => n.span(),
+            Self::TSModuleDeclarationBody(n) => n.span(),
+            Self::TSModuleBlock(n) => n.span(),
+            Self::TSTypeLiteral(n) => n.span(),
+            Self::TSInferType(n) => n.span(),
+            Self::TSTypeQuery(n) => n.span(),
+            Self::TSTypeQueryExprName(n) => n.span(),
+            Self::TSImportType(n) => n.span(),
+            Self::TSFunctionType(n) => n.span(),
+            Self::TSConstructorType(n) => n.span(),
+            Self::TSMappedType(n) => n.span(),
+            Self::TSTemplateLiteralType(n) => n.span(),
+            Self::TSAsExpression(n) => n.span(),
+            Self::TSSatisfiesExpression(n) => n.span(),
+            Self::TSTypeAssertion(n) => n.span(),
+            Self::TSImportEqualsDeclaration(n) => n.span(),
+            Self::TSModuleReference(n) => n.span(),
+            Self::TSExternalModuleReference(n) => n.span(),
+            Self::TSNonNullExpression(n) => n.span(),
+            Self::Decorator(n) => n.span(),
+            Self::TSExportAssignment(n) => n.span(),
+            Self::TSNamespaceExportDeclaration(n) => n.span(),
+            Self::TSInstantiationExpression(n) => n.span(),
+            Self::JSDocNullableType(n) => n.span(),
+            Self::JSDocNonNullableType(n) => n.span(),
+            Self::JSDocUnknownType(n) => n.span(),
+            Self::Span(n) => n.span(),
+        }
+    }
 }
 impl<'a> AstNodes<'a> {
     #[inline]
@@ -558,6 +1022,184 @@ impl<'a> AstNodes<'a> {
         }
     }
     #[inline]
+    pub unsafe fn inner_ptr(&self) -> *const u8 {
+        match self {
+            Self::Dummy() => panic!("Should never be called on a dummy node"),
+            Self::Program(n) => n.inner as *const _ as *const u8,
+            Self::IdentifierName(n) => n.inner as *const _ as *const u8,
+            Self::IdentifierReference(n) => n.inner as *const _ as *const u8,
+            Self::BindingIdentifier(n) => n.inner as *const _ as *const u8,
+            Self::LabelIdentifier(n) => n.inner as *const _ as *const u8,
+            Self::ThisExpression(n) => n.inner as *const _ as *const u8,
+            Self::ArrayExpression(n) => n.inner as *const _ as *const u8,
+            Self::ArrayExpressionElement(n) => n.inner as *const _ as *const u8,
+            Self::Elision(n) => n.inner as *const _ as *const u8,
+            Self::ObjectExpression(n) => n.inner as *const _ as *const u8,
+            Self::ObjectProperty(n) => n.inner as *const _ as *const u8,
+            Self::PropertyKey(n) => n.inner as *const _ as *const u8,
+            Self::TemplateLiteral(n) => n.inner as *const _ as *const u8,
+            Self::TaggedTemplateExpression(n) => n.inner as *const _ as *const u8,
+            Self::MemberExpression(n) => n.inner as *const _ as *const u8,
+            Self::CallExpression(n) => n.inner as *const _ as *const u8,
+            Self::NewExpression(n) => n.inner as *const _ as *const u8,
+            Self::MetaProperty(n) => n.inner as *const _ as *const u8,
+            Self::SpreadElement(n) => n.inner as *const _ as *const u8,
+            Self::Argument(n) => n.inner as *const _ as *const u8,
+            Self::UpdateExpression(n) => n.inner as *const _ as *const u8,
+            Self::UnaryExpression(n) => n.inner as *const _ as *const u8,
+            Self::BinaryExpression(n) => n.inner as *const _ as *const u8,
+            Self::PrivateInExpression(n) => n.inner as *const _ as *const u8,
+            Self::LogicalExpression(n) => n.inner as *const _ as *const u8,
+            Self::ConditionalExpression(n) => n.inner as *const _ as *const u8,
+            Self::AssignmentExpression(n) => n.inner as *const _ as *const u8,
+            Self::AssignmentTarget(n) => n.inner as *const _ as *const u8,
+            Self::SimpleAssignmentTarget(n) => n.inner as *const _ as *const u8,
+            Self::AssignmentTargetPattern(n) => n.inner as *const _ as *const u8,
+            Self::ArrayAssignmentTarget(n) => n.inner as *const _ as *const u8,
+            Self::ObjectAssignmentTarget(n) => n.inner as *const _ as *const u8,
+            Self::AssignmentTargetWithDefault(n) => n.inner as *const _ as *const u8,
+            Self::SequenceExpression(n) => n.inner as *const _ as *const u8,
+            Self::Super(n) => n.inner as *const _ as *const u8,
+            Self::AwaitExpression(n) => n.inner as *const _ as *const u8,
+            Self::ChainExpression(n) => n.inner as *const _ as *const u8,
+            Self::ParenthesizedExpression(n) => n.inner as *const _ as *const u8,
+            Self::Directive(n) => n.inner as *const _ as *const u8,
+            Self::Hashbang(n) => n.inner as *const _ as *const u8,
+            Self::BlockStatement(n) => n.inner as *const _ as *const u8,
+            Self::VariableDeclaration(n) => n.inner as *const _ as *const u8,
+            Self::VariableDeclarator(n) => n.inner as *const _ as *const u8,
+            Self::EmptyStatement(n) => n.inner as *const _ as *const u8,
+            Self::ExpressionStatement(n) => n.inner as *const _ as *const u8,
+            Self::IfStatement(n) => n.inner as *const _ as *const u8,
+            Self::DoWhileStatement(n) => n.inner as *const _ as *const u8,
+            Self::WhileStatement(n) => n.inner as *const _ as *const u8,
+            Self::ForStatement(n) => n.inner as *const _ as *const u8,
+            Self::ForStatementInit(n) => n.inner as *const _ as *const u8,
+            Self::ForInStatement(n) => n.inner as *const _ as *const u8,
+            Self::ForOfStatement(n) => n.inner as *const _ as *const u8,
+            Self::ContinueStatement(n) => n.inner as *const _ as *const u8,
+            Self::BreakStatement(n) => n.inner as *const _ as *const u8,
+            Self::ReturnStatement(n) => n.inner as *const _ as *const u8,
+            Self::WithStatement(n) => n.inner as *const _ as *const u8,
+            Self::SwitchStatement(n) => n.inner as *const _ as *const u8,
+            Self::SwitchCase(n) => n.inner as *const _ as *const u8,
+            Self::LabeledStatement(n) => n.inner as *const _ as *const u8,
+            Self::ThrowStatement(n) => n.inner as *const _ as *const u8,
+            Self::TryStatement(n) => n.inner as *const _ as *const u8,
+            Self::CatchClause(n) => n.inner as *const _ as *const u8,
+            Self::CatchParameter(n) => n.inner as *const _ as *const u8,
+            Self::DebuggerStatement(n) => n.inner as *const _ as *const u8,
+            Self::AssignmentPattern(n) => n.inner as *const _ as *const u8,
+            Self::ObjectPattern(n) => n.inner as *const _ as *const u8,
+            Self::ArrayPattern(n) => n.inner as *const _ as *const u8,
+            Self::BindingRestElement(n) => n.inner as *const _ as *const u8,
+            Self::Function(n) => n.inner as *const _ as *const u8,
+            Self::FormalParameters(n) => n.inner as *const _ as *const u8,
+            Self::FormalParameter(n) => n.inner as *const _ as *const u8,
+            Self::FunctionBody(n) => n.inner as *const _ as *const u8,
+            Self::ArrowFunctionExpression(n) => n.inner as *const _ as *const u8,
+            Self::YieldExpression(n) => n.inner as *const _ as *const u8,
+            Self::Class(n) => n.inner as *const _ as *const u8,
+            Self::ClassBody(n) => n.inner as *const _ as *const u8,
+            Self::MethodDefinition(n) => n.inner as *const _ as *const u8,
+            Self::PropertyDefinition(n) => n.inner as *const _ as *const u8,
+            Self::PrivateIdentifier(n) => n.inner as *const _ as *const u8,
+            Self::StaticBlock(n) => n.inner as *const _ as *const u8,
+            Self::ModuleDeclaration(n) => n.inner as *const _ as *const u8,
+            Self::ImportExpression(n) => n.inner as *const _ as *const u8,
+            Self::ImportDeclaration(n) => n.inner as *const _ as *const u8,
+            Self::ImportSpecifier(n) => n.inner as *const _ as *const u8,
+            Self::ImportDefaultSpecifier(n) => n.inner as *const _ as *const u8,
+            Self::ImportNamespaceSpecifier(n) => n.inner as *const _ as *const u8,
+            Self::ExportNamedDeclaration(n) => n.inner as *const _ as *const u8,
+            Self::ExportDefaultDeclaration(n) => n.inner as *const _ as *const u8,
+            Self::ExportAllDeclaration(n) => n.inner as *const _ as *const u8,
+            Self::ExportSpecifier(n) => n.inner as *const _ as *const u8,
+            Self::V8IntrinsicExpression(n) => n.inner as *const _ as *const u8,
+            Self::BooleanLiteral(n) => n.inner as *const _ as *const u8,
+            Self::NullLiteral(n) => n.inner as *const _ as *const u8,
+            Self::NumericLiteral(n) => n.inner as *const _ as *const u8,
+            Self::StringLiteral(n) => n.inner as *const _ as *const u8,
+            Self::BigIntLiteral(n) => n.inner as *const _ as *const u8,
+            Self::RegExpLiteral(n) => n.inner as *const _ as *const u8,
+            Self::JSXElement(n) => n.inner as *const _ as *const u8,
+            Self::JSXOpeningElement(n) => n.inner as *const _ as *const u8,
+            Self::JSXClosingElement(n) => n.inner as *const _ as *const u8,
+            Self::JSXFragment(n) => n.inner as *const _ as *const u8,
+            Self::JSXOpeningFragment(n) => n.inner as *const _ as *const u8,
+            Self::JSXClosingFragment(n) => n.inner as *const _ as *const u8,
+            Self::JSXNamespacedName(n) => n.inner as *const _ as *const u8,
+            Self::JSXMemberExpression(n) => n.inner as *const _ as *const u8,
+            Self::JSXExpressionContainer(n) => n.inner as *const _ as *const u8,
+            Self::JSXEmptyExpression(n) => n.inner as *const _ as *const u8,
+            Self::JSXAttribute(n) => n.inner as *const _ as *const u8,
+            Self::JSXSpreadAttribute(n) => n.inner as *const _ as *const u8,
+            Self::JSXIdentifier(n) => n.inner as *const _ as *const u8,
+            Self::JSXSpreadChild(n) => n.inner as *const _ as *const u8,
+            Self::JSXText(n) => n.inner as *const _ as *const u8,
+            Self::TSThisParameter(n) => n.inner as *const _ as *const u8,
+            Self::TSEnumDeclaration(n) => n.inner as *const _ as *const u8,
+            Self::TSEnumBody(n) => n.inner as *const _ as *const u8,
+            Self::TSEnumMember(n) => n.inner as *const _ as *const u8,
+            Self::TSTypeAnnotation(n) => n.inner as *const _ as *const u8,
+            Self::TSLiteralType(n) => n.inner as *const _ as *const u8,
+            Self::TSConditionalType(n) => n.inner as *const _ as *const u8,
+            Self::TSUnionType(n) => n.inner as *const _ as *const u8,
+            Self::TSIntersectionType(n) => n.inner as *const _ as *const u8,
+            Self::TSParenthesizedType(n) => n.inner as *const _ as *const u8,
+            Self::TSIndexedAccessType(n) => n.inner as *const _ as *const u8,
+            Self::TSNamedTupleMember(n) => n.inner as *const _ as *const u8,
+            Self::TSAnyKeyword(n) => n.inner as *const _ as *const u8,
+            Self::TSStringKeyword(n) => n.inner as *const _ as *const u8,
+            Self::TSBooleanKeyword(n) => n.inner as *const _ as *const u8,
+            Self::TSNumberKeyword(n) => n.inner as *const _ as *const u8,
+            Self::TSNeverKeyword(n) => n.inner as *const _ as *const u8,
+            Self::TSIntrinsicKeyword(n) => n.inner as *const _ as *const u8,
+            Self::TSUnknownKeyword(n) => n.inner as *const _ as *const u8,
+            Self::TSNullKeyword(n) => n.inner as *const _ as *const u8,
+            Self::TSUndefinedKeyword(n) => n.inner as *const _ as *const u8,
+            Self::TSVoidKeyword(n) => n.inner as *const _ as *const u8,
+            Self::TSSymbolKeyword(n) => n.inner as *const _ as *const u8,
+            Self::TSThisType(n) => n.inner as *const _ as *const u8,
+            Self::TSObjectKeyword(n) => n.inner as *const _ as *const u8,
+            Self::TSBigIntKeyword(n) => n.inner as *const _ as *const u8,
+            Self::TSTypeReference(n) => n.inner as *const _ as *const u8,
+            Self::TSTypeName(n) => n.inner as *const _ as *const u8,
+            Self::TSQualifiedName(n) => n.inner as *const _ as *const u8,
+            Self::TSTypeParameterInstantiation(n) => n.inner as *const _ as *const u8,
+            Self::TSTypeParameter(n) => n.inner as *const _ as *const u8,
+            Self::TSTypeParameterDeclaration(n) => n.inner as *const _ as *const u8,
+            Self::TSTypeAliasDeclaration(n) => n.inner as *const _ as *const u8,
+            Self::TSClassImplements(n) => n.inner as *const _ as *const u8,
+            Self::TSInterfaceDeclaration(n) => n.inner as *const _ as *const u8,
+            Self::TSPropertySignature(n) => n.inner as *const _ as *const u8,
+            Self::TSMethodSignature(n) => n.inner as *const _ as *const u8,
+            Self::TSConstructSignatureDeclaration(n) => n.inner as *const _ as *const u8,
+            Self::TSInterfaceHeritage(n) => n.inner as *const _ as *const u8,
+            Self::TSModuleDeclaration(n) => n.inner as *const _ as *const u8,
+            Self::TSModuleBlock(n) => n.inner as *const _ as *const u8,
+            Self::TSTypeLiteral(n) => n.inner as *const _ as *const u8,
+            Self::TSInferType(n) => n.inner as *const _ as *const u8,
+            Self::TSTypeQuery(n) => n.inner as *const _ as *const u8,
+            Self::TSImportType(n) => n.inner as *const _ as *const u8,
+            Self::TSMappedType(n) => n.inner as *const _ as *const u8,
+            Self::TSTemplateLiteralType(n) => n.inner as *const _ as *const u8,
+            Self::TSAsExpression(n) => n.inner as *const _ as *const u8,
+            Self::TSSatisfiesExpression(n) => n.inner as *const _ as *const u8,
+            Self::TSTypeAssertion(n) => n.inner as *const _ as *const u8,
+            Self::TSImportEqualsDeclaration(n) => n.inner as *const _ as *const u8,
+            Self::TSModuleReference(n) => n.inner as *const _ as *const u8,
+            Self::TSExternalModuleReference(n) => n.inner as *const _ as *const u8,
+            Self::TSNonNullExpression(n) => n.inner as *const _ as *const u8,
+            Self::Decorator(n) => n.inner as *const _ as *const u8,
+            Self::TSExportAssignment(n) => n.inner as *const _ as *const u8,
+            Self::TSInstantiationExpression(n) => n.inner as *const _ as *const u8,
+            Self::JSDocNullableType(n) => n.inner as *const _ as *const u8,
+            Self::JSDocNonNullableType(n) => n.inner as *const _ as *const u8,
+            Self::JSDocUnknownType(n) => n.inner as *const _ as *const u8,
+        }
+    }
+    #[inline]
     pub fn debug_name(&self) -> &'static str {
         match self {
             Self::Dummy() => "Dummy",
@@ -836,6 +1478,11 @@ impl<'a, T> IntoIterator for &AstNode<'a, Vec<'a, T>> {
         }
     }
 }
+
+const PROGRAM_OFFSET_HASHBANG: usize = std::mem::offset_of!(Program, hashbang);
+const PROGRAM_OFFSET_DIRECTIVES: usize = std::mem::offset_of!(Program, directives);
+const PROGRAM_OFFSET_BODY: usize = std::mem::offset_of!(Program, body);
+
 impl<'a> AstNode<'a, Program<'a>> {
     #[inline]
     pub fn span(&self) -> Span {
@@ -884,6 +1531,30 @@ impl<'a> AstNode<'a, Program<'a>> {
             allocator: self.allocator,
             parent: self.allocator.alloc(AstNodes::Program(transmute_self(self))),
         })
+    }
+
+    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
+        let inner_ptr = unsafe { self.parent.inner_ptr() };
+        let offset =
+            unsafe { (self.inner as *const _ as *const u8).offset_from_unsigned(inner_ptr) };
+        match offset {
+            PROGRAM_OFFSET_HASHBANG => (unsafe {
+                &*(inner_ptr.add(PROGRAM_OFFSET_DIRECTIVES) as *const Vec<'a, Directive<'a>>)
+            })
+            .first()
+            .as_ref()
+            .copied()
+            .map(FollowingNode::Directive),
+            PROGRAM_OFFSET_DIRECTIVES => {
+                (unsafe { &*(inner_ptr.add(PROGRAM_OFFSET_BODY) as *const Vec<'a, Statement<'a>>) })
+                    .first()
+                    .as_ref()
+                    .copied()
+                    .map(FollowingNode::Statement)
+            }
+            PROGRAM_OFFSET_BODY => None,
+            _ => panic!("Invalid field offset: {}", offset),
+        }
     }
 }
 
@@ -1178,6 +1849,7 @@ impl<'a> GetSpan for AstNode<'a, Expression<'a>> {
         self.inner.span()
     }
 }
+
 impl<'a> AstNode<'a, IdentifierName<'a>> {
     #[inline]
     pub fn span(&self) -> Span {
@@ -1188,7 +1860,12 @@ impl<'a> AstNode<'a, IdentifierName<'a>> {
     pub fn name(&self) -> Atom<'a> {
         self.inner.name
     }
+
+    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
+        None
+    }
 }
+
 impl<'a> AstNode<'a, IdentifierReference<'a>> {
     #[inline]
     pub fn span(&self) -> Span {
@@ -1199,7 +1876,12 @@ impl<'a> AstNode<'a, IdentifierReference<'a>> {
     pub fn name(&self) -> Atom<'a> {
         self.inner.name
     }
+
+    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
+        None
+    }
 }
+
 impl<'a> AstNode<'a, BindingIdentifier<'a>> {
     #[inline]
     pub fn span(&self) -> Span {
@@ -1210,7 +1892,12 @@ impl<'a> AstNode<'a, BindingIdentifier<'a>> {
     pub fn name(&self) -> Atom<'a> {
         self.inner.name
     }
+
+    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
+        None
+    }
 }
+
 impl<'a> AstNode<'a, LabelIdentifier<'a>> {
     #[inline]
     pub fn span(&self) -> Span {
@@ -1221,13 +1908,25 @@ impl<'a> AstNode<'a, LabelIdentifier<'a>> {
     pub fn name(&self) -> Atom<'a> {
         self.inner.name
     }
+
+    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
+        None
+    }
 }
+
 impl<'a> AstNode<'a, ThisExpression> {
     #[inline]
     pub fn span(&self) -> Span {
         self.inner.span
     }
+
+    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
+        None
+    }
 }
+
+const ARRAY_EXPRESSION_OFFSET_ELEMENTS: usize = std::mem::offset_of!(ArrayExpression, elements);
+
 impl<'a> AstNode<'a, ArrayExpression<'a>> {
     #[inline]
     pub fn span(&self) -> Span {
@@ -1241,6 +1940,16 @@ impl<'a> AstNode<'a, ArrayExpression<'a>> {
             allocator: self.allocator,
             parent: self.allocator.alloc(AstNodes::ArrayExpression(transmute_self(self))),
         })
+    }
+
+    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
+        let inner_ptr = unsafe { self.parent.inner_ptr() };
+        let offset =
+            unsafe { (self.inner as *const _ as *const u8).offset_from_unsigned(inner_ptr) };
+        match offset {
+            ARRAY_EXPRESSION_OFFSET_ELEMENTS => None,
+            _ => panic!("Invalid field offset: {}", offset),
+        }
     }
 }
 
@@ -1280,12 +1989,21 @@ impl<'a> GetSpan for AstNode<'a, ArrayExpressionElement<'a>> {
         self.inner.span()
     }
 }
+
 impl<'a> AstNode<'a, Elision> {
     #[inline]
     pub fn span(&self) -> Span {
         self.inner.span
     }
+
+    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
+        None
+    }
 }
+
+const OBJECT_EXPRESSION_OFFSET_PROPERTIES: usize =
+    std::mem::offset_of!(ObjectExpression, properties);
+
 impl<'a> AstNode<'a, ObjectExpression<'a>> {
     #[inline]
     pub fn span(&self) -> Span {
@@ -1299,6 +2017,16 @@ impl<'a> AstNode<'a, ObjectExpression<'a>> {
             allocator: self.allocator,
             parent: self.allocator.alloc(AstNodes::ObjectExpression(transmute_self(self))),
         })
+    }
+
+    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
+        let inner_ptr = unsafe { self.parent.inner_ptr() };
+        let offset =
+            unsafe { (self.inner as *const _ as *const u8).offset_from_unsigned(inner_ptr) };
+        match offset {
+            OBJECT_EXPRESSION_OFFSET_PROPERTIES => None,
+            _ => panic!("Invalid field offset: {}", offset),
+        }
     }
 }
 
@@ -1332,6 +2060,10 @@ impl<'a> GetSpan for AstNode<'a, ObjectPropertyKind<'a>> {
         self.inner.span()
     }
 }
+
+const OBJECT_PROPERTY_OFFSET_KEY: usize = std::mem::offset_of!(ObjectProperty, key);
+const OBJECT_PROPERTY_OFFSET_VALUE: usize = std::mem::offset_of!(ObjectProperty, value);
+
 impl<'a> AstNode<'a, ObjectProperty<'a>> {
     #[inline]
     pub fn span(&self) -> Span {
@@ -1375,6 +2107,19 @@ impl<'a> AstNode<'a, ObjectProperty<'a>> {
     pub fn computed(&self) -> bool {
         self.inner.computed
     }
+
+    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
+        let inner_ptr = unsafe { self.parent.inner_ptr() };
+        let offset =
+            unsafe { (self.inner as *const _ as *const u8).offset_from_unsigned(inner_ptr) };
+        match offset {
+            OBJECT_PROPERTY_OFFSET_KEY => Some(FollowingNode::Expression(unsafe {
+                &*(inner_ptr.add(OBJECT_PROPERTY_OFFSET_VALUE) as *const Expression<'a>)
+            })),
+            OBJECT_PROPERTY_OFFSET_VALUE => None,
+            _ => panic!("Invalid field offset: {}", offset),
+        }
+    }
 }
 
 impl<'a> AstNode<'a, PropertyKey<'a>> {
@@ -1413,6 +2158,11 @@ impl<'a> GetSpan for AstNode<'a, PropertyKey<'a>> {
         self.inner.span()
     }
 }
+
+const TEMPLATE_LITERAL_OFFSET_QUASIS: usize = std::mem::offset_of!(TemplateLiteral, quasis);
+const TEMPLATE_LITERAL_OFFSET_EXPRESSIONS: usize =
+    std::mem::offset_of!(TemplateLiteral, expressions);
+
 impl<'a> AstNode<'a, TemplateLiteral<'a>> {
     #[inline]
     pub fn span(&self) -> Span {
@@ -1436,7 +2186,31 @@ impl<'a> AstNode<'a, TemplateLiteral<'a>> {
             parent: self.allocator.alloc(AstNodes::TemplateLiteral(transmute_self(self))),
         })
     }
+
+    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
+        let inner_ptr = unsafe { self.parent.inner_ptr() };
+        let offset =
+            unsafe { (self.inner as *const _ as *const u8).offset_from_unsigned(inner_ptr) };
+        match offset {
+            TEMPLATE_LITERAL_OFFSET_QUASIS => (unsafe {
+                &*(inner_ptr.add(TEMPLATE_LITERAL_OFFSET_EXPRESSIONS)
+                    as *const Vec<'a, Expression<'a>>)
+            })
+            .first()
+            .as_ref()
+            .copied()
+            .map(FollowingNode::Expression),
+            TEMPLATE_LITERAL_OFFSET_EXPRESSIONS => None,
+            _ => panic!("Invalid field offset: {}", offset),
+        }
+    }
 }
+
+const TAGGED_TEMPLATE_EXPRESSION_OFFSET_TAG: usize =
+    std::mem::offset_of!(TaggedTemplateExpression, tag);
+const TAGGED_TEMPLATE_EXPRESSION_OFFSET_QUASI: usize =
+    std::mem::offset_of!(TaggedTemplateExpression, quasi);
+
 impl<'a> AstNode<'a, TaggedTemplateExpression<'a>> {
     #[inline]
     pub fn span(&self) -> Span {
@@ -1472,7 +2246,22 @@ impl<'a> AstNode<'a, TaggedTemplateExpression<'a>> {
             parent: self.allocator.alloc(AstNodes::TaggedTemplateExpression(transmute_self(self))),
         })
     }
+
+    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
+        let inner_ptr = unsafe { self.parent.inner_ptr() };
+        let offset =
+            unsafe { (self.inner as *const _ as *const u8).offset_from_unsigned(inner_ptr) };
+        match offset {
+            TAGGED_TEMPLATE_EXPRESSION_OFFSET_TAG => Some(FollowingNode::TemplateLiteral(unsafe {
+                &*(inner_ptr.add(TAGGED_TEMPLATE_EXPRESSION_OFFSET_QUASI)
+                    as *const TemplateLiteral<'a>)
+            })),
+            TAGGED_TEMPLATE_EXPRESSION_OFFSET_QUASI => None,
+            _ => panic!("Invalid field offset: {}", offset),
+        }
+    }
 }
+
 impl<'a> AstNode<'a, TemplateElement<'a>> {
     #[inline]
     pub fn span(&self) -> Span {
@@ -1492,6 +2281,10 @@ impl<'a> AstNode<'a, TemplateElement<'a>> {
     #[inline]
     pub fn lone_surrogates(&self) -> bool {
         self.inner.lone_surrogates
+    }
+
+    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
+        None
     }
 }
 
@@ -1526,6 +2319,12 @@ impl<'a> GetSpan for AstNode<'a, MemberExpression<'a>> {
         self.inner.span()
     }
 }
+
+const COMPUTED_MEMBER_EXPRESSION_OFFSET_OBJECT: usize =
+    std::mem::offset_of!(ComputedMemberExpression, object);
+const COMPUTED_MEMBER_EXPRESSION_OFFSET_EXPRESSION: usize =
+    std::mem::offset_of!(ComputedMemberExpression, expression);
+
 impl<'a> AstNode<'a, ComputedMemberExpression<'a>> {
     #[inline]
     pub fn span(&self) -> Span {
@@ -1554,7 +2353,27 @@ impl<'a> AstNode<'a, ComputedMemberExpression<'a>> {
     pub fn optional(&self) -> bool {
         self.inner.optional
     }
+
+    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
+        let inner_ptr = unsafe { self.parent.inner_ptr() };
+        let offset =
+            unsafe { (self.inner as *const _ as *const u8).offset_from_unsigned(inner_ptr) };
+        match offset {
+            COMPUTED_MEMBER_EXPRESSION_OFFSET_OBJECT => Some(FollowingNode::Expression(unsafe {
+                &*(inner_ptr.add(COMPUTED_MEMBER_EXPRESSION_OFFSET_EXPRESSION)
+                    as *const Expression<'a>)
+            })),
+            COMPUTED_MEMBER_EXPRESSION_OFFSET_EXPRESSION => None,
+            _ => panic!("Invalid field offset: {}", offset),
+        }
+    }
 }
+
+const STATIC_MEMBER_EXPRESSION_OFFSET_OBJECT: usize =
+    std::mem::offset_of!(StaticMemberExpression, object);
+const STATIC_MEMBER_EXPRESSION_OFFSET_PROPERTY: usize =
+    std::mem::offset_of!(StaticMemberExpression, property);
+
 impl<'a> AstNode<'a, StaticMemberExpression<'a>> {
     #[inline]
     pub fn span(&self) -> Span {
@@ -1583,7 +2402,27 @@ impl<'a> AstNode<'a, StaticMemberExpression<'a>> {
     pub fn optional(&self) -> bool {
         self.inner.optional
     }
+
+    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
+        let inner_ptr = unsafe { self.parent.inner_ptr() };
+        let offset =
+            unsafe { (self.inner as *const _ as *const u8).offset_from_unsigned(inner_ptr) };
+        match offset {
+            STATIC_MEMBER_EXPRESSION_OFFSET_OBJECT => Some(FollowingNode::IdentifierName(unsafe {
+                &*(inner_ptr.add(STATIC_MEMBER_EXPRESSION_OFFSET_PROPERTY)
+                    as *const IdentifierName<'a>)
+            })),
+            STATIC_MEMBER_EXPRESSION_OFFSET_PROPERTY => None,
+            _ => panic!("Invalid field offset: {}", offset),
+        }
+    }
 }
+
+const PRIVATE_FIELD_EXPRESSION_OFFSET_OBJECT: usize =
+    std::mem::offset_of!(PrivateFieldExpression, object);
+const PRIVATE_FIELD_EXPRESSION_OFFSET_FIELD: usize =
+    std::mem::offset_of!(PrivateFieldExpression, field);
+
 impl<'a> AstNode<'a, PrivateFieldExpression<'a>> {
     #[inline]
     pub fn span(&self) -> Span {
@@ -1612,7 +2451,27 @@ impl<'a> AstNode<'a, PrivateFieldExpression<'a>> {
     pub fn optional(&self) -> bool {
         self.inner.optional
     }
+
+    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
+        let inner_ptr = unsafe { self.parent.inner_ptr() };
+        let offset =
+            unsafe { (self.inner as *const _ as *const u8).offset_from_unsigned(inner_ptr) };
+        match offset {
+            PRIVATE_FIELD_EXPRESSION_OFFSET_OBJECT => {
+                Some(FollowingNode::PrivateIdentifier(unsafe {
+                    &*(inner_ptr.add(PRIVATE_FIELD_EXPRESSION_OFFSET_FIELD)
+                        as *const PrivateIdentifier<'a>)
+                }))
+            }
+            PRIVATE_FIELD_EXPRESSION_OFFSET_FIELD => None,
+            _ => panic!("Invalid field offset: {}", offset),
+        }
+    }
 }
+
+const CALL_EXPRESSION_OFFSET_CALLEE: usize = std::mem::offset_of!(CallExpression, callee);
+const CALL_EXPRESSION_OFFSET_ARGUMENTS: usize = std::mem::offset_of!(CallExpression, arguments);
+
 impl<'a> AstNode<'a, CallExpression<'a>> {
     #[inline]
     pub fn span(&self) -> Span {
@@ -1657,7 +2516,28 @@ impl<'a> AstNode<'a, CallExpression<'a>> {
     pub fn pure(&self) -> bool {
         self.inner.pure
     }
+
+    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
+        let inner_ptr = unsafe { self.parent.inner_ptr() };
+        let offset =
+            unsafe { (self.inner as *const _ as *const u8).offset_from_unsigned(inner_ptr) };
+        match offset {
+            CALL_EXPRESSION_OFFSET_CALLEE => (unsafe {
+                &*(inner_ptr.add(CALL_EXPRESSION_OFFSET_ARGUMENTS) as *const Vec<'a, Argument<'a>>)
+            })
+            .first()
+            .as_ref()
+            .copied()
+            .map(FollowingNode::Argument),
+            CALL_EXPRESSION_OFFSET_ARGUMENTS => None,
+            _ => panic!("Invalid field offset: {}", offset),
+        }
+    }
 }
+
+const NEW_EXPRESSION_OFFSET_CALLEE: usize = std::mem::offset_of!(NewExpression, callee);
+const NEW_EXPRESSION_OFFSET_ARGUMENTS: usize = std::mem::offset_of!(NewExpression, arguments);
+
 impl<'a> AstNode<'a, NewExpression<'a>> {
     #[inline]
     pub fn span(&self) -> Span {
@@ -1697,7 +2577,28 @@ impl<'a> AstNode<'a, NewExpression<'a>> {
     pub fn pure(&self) -> bool {
         self.inner.pure
     }
+
+    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
+        let inner_ptr = unsafe { self.parent.inner_ptr() };
+        let offset =
+            unsafe { (self.inner as *const _ as *const u8).offset_from_unsigned(inner_ptr) };
+        match offset {
+            NEW_EXPRESSION_OFFSET_CALLEE => (unsafe {
+                &*(inner_ptr.add(NEW_EXPRESSION_OFFSET_ARGUMENTS) as *const Vec<'a, Argument<'a>>)
+            })
+            .first()
+            .as_ref()
+            .copied()
+            .map(FollowingNode::Argument),
+            NEW_EXPRESSION_OFFSET_ARGUMENTS => None,
+            _ => panic!("Invalid field offset: {}", offset),
+        }
+    }
 }
+
+const META_PROPERTY_OFFSET_META: usize = std::mem::offset_of!(MetaProperty, meta);
+const META_PROPERTY_OFFSET_PROPERTY: usize = std::mem::offset_of!(MetaProperty, property);
+
 impl<'a> AstNode<'a, MetaProperty<'a>> {
     #[inline]
     pub fn span(&self) -> Span {
@@ -1721,7 +2622,23 @@ impl<'a> AstNode<'a, MetaProperty<'a>> {
             parent: self.allocator.alloc(AstNodes::MetaProperty(transmute_self(self))),
         })
     }
+
+    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
+        let inner_ptr = unsafe { self.parent.inner_ptr() };
+        let offset =
+            unsafe { (self.inner as *const _ as *const u8).offset_from_unsigned(inner_ptr) };
+        match offset {
+            META_PROPERTY_OFFSET_META => Some(FollowingNode::IdentifierName(unsafe {
+                &*(inner_ptr.add(META_PROPERTY_OFFSET_PROPERTY) as *const IdentifierName<'a>)
+            })),
+            META_PROPERTY_OFFSET_PROPERTY => None,
+            _ => panic!("Invalid field offset: {}", offset),
+        }
+    }
 }
+
+const SPREAD_ELEMENT_OFFSET_ARGUMENT: usize = std::mem::offset_of!(SpreadElement, argument);
+
 impl<'a> AstNode<'a, SpreadElement<'a>> {
     #[inline]
     pub fn span(&self) -> Span {
@@ -1735,6 +2652,16 @@ impl<'a> AstNode<'a, SpreadElement<'a>> {
             allocator: self.allocator,
             parent: self.allocator.alloc(AstNodes::SpreadElement(transmute_self(self))),
         })
+    }
+
+    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
+        let inner_ptr = unsafe { self.parent.inner_ptr() };
+        let offset =
+            unsafe { (self.inner as *const _ as *const u8).offset_from_unsigned(inner_ptr) };
+        match offset {
+            SPREAD_ELEMENT_OFFSET_ARGUMENT => None,
+            _ => panic!("Invalid field offset: {}", offset),
+        }
     }
 }
 
@@ -1765,6 +2692,9 @@ impl<'a> GetSpan for AstNode<'a, Argument<'a>> {
         self.inner.span()
     }
 }
+
+const UPDATE_EXPRESSION_OFFSET_ARGUMENT: usize = std::mem::offset_of!(UpdateExpression, argument);
+
 impl<'a> AstNode<'a, UpdateExpression<'a>> {
     #[inline]
     pub fn span(&self) -> Span {
@@ -1789,7 +2719,20 @@ impl<'a> AstNode<'a, UpdateExpression<'a>> {
             parent: self.allocator.alloc(AstNodes::UpdateExpression(transmute_self(self))),
         })
     }
+
+    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
+        let inner_ptr = unsafe { self.parent.inner_ptr() };
+        let offset =
+            unsafe { (self.inner as *const _ as *const u8).offset_from_unsigned(inner_ptr) };
+        match offset {
+            UPDATE_EXPRESSION_OFFSET_ARGUMENT => None,
+            _ => panic!("Invalid field offset: {}", offset),
+        }
+    }
 }
+
+const UNARY_EXPRESSION_OFFSET_ARGUMENT: usize = std::mem::offset_of!(UnaryExpression, argument);
+
 impl<'a> AstNode<'a, UnaryExpression<'a>> {
     #[inline]
     pub fn span(&self) -> Span {
@@ -1809,7 +2752,21 @@ impl<'a> AstNode<'a, UnaryExpression<'a>> {
             parent: self.allocator.alloc(AstNodes::UnaryExpression(transmute_self(self))),
         })
     }
+
+    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
+        let inner_ptr = unsafe { self.parent.inner_ptr() };
+        let offset =
+            unsafe { (self.inner as *const _ as *const u8).offset_from_unsigned(inner_ptr) };
+        match offset {
+            UNARY_EXPRESSION_OFFSET_ARGUMENT => None,
+            _ => panic!("Invalid field offset: {}", offset),
+        }
+    }
 }
+
+const BINARY_EXPRESSION_OFFSET_LEFT: usize = std::mem::offset_of!(BinaryExpression, left);
+const BINARY_EXPRESSION_OFFSET_RIGHT: usize = std::mem::offset_of!(BinaryExpression, right);
+
 impl<'a> AstNode<'a, BinaryExpression<'a>> {
     #[inline]
     pub fn span(&self) -> Span {
@@ -1838,7 +2795,24 @@ impl<'a> AstNode<'a, BinaryExpression<'a>> {
             parent: self.allocator.alloc(AstNodes::BinaryExpression(transmute_self(self))),
         })
     }
+
+    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
+        let inner_ptr = unsafe { self.parent.inner_ptr() };
+        let offset =
+            unsafe { (self.inner as *const _ as *const u8).offset_from_unsigned(inner_ptr) };
+        match offset {
+            BINARY_EXPRESSION_OFFSET_LEFT => Some(FollowingNode::Expression(unsafe {
+                &*(inner_ptr.add(BINARY_EXPRESSION_OFFSET_RIGHT) as *const Expression<'a>)
+            })),
+            BINARY_EXPRESSION_OFFSET_RIGHT => None,
+            _ => panic!("Invalid field offset: {}", offset),
+        }
+    }
 }
+
+const PRIVATE_IN_EXPRESSION_OFFSET_LEFT: usize = std::mem::offset_of!(PrivateInExpression, left);
+const PRIVATE_IN_EXPRESSION_OFFSET_RIGHT: usize = std::mem::offset_of!(PrivateInExpression, right);
+
 impl<'a> AstNode<'a, PrivateInExpression<'a>> {
     #[inline]
     pub fn span(&self) -> Span {
@@ -1862,7 +2836,24 @@ impl<'a> AstNode<'a, PrivateInExpression<'a>> {
             parent: self.allocator.alloc(AstNodes::PrivateInExpression(transmute_self(self))),
         })
     }
+
+    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
+        let inner_ptr = unsafe { self.parent.inner_ptr() };
+        let offset =
+            unsafe { (self.inner as *const _ as *const u8).offset_from_unsigned(inner_ptr) };
+        match offset {
+            PRIVATE_IN_EXPRESSION_OFFSET_LEFT => Some(FollowingNode::Expression(unsafe {
+                &*(inner_ptr.add(PRIVATE_IN_EXPRESSION_OFFSET_RIGHT) as *const Expression<'a>)
+            })),
+            PRIVATE_IN_EXPRESSION_OFFSET_RIGHT => None,
+            _ => panic!("Invalid field offset: {}", offset),
+        }
+    }
 }
+
+const LOGICAL_EXPRESSION_OFFSET_LEFT: usize = std::mem::offset_of!(LogicalExpression, left);
+const LOGICAL_EXPRESSION_OFFSET_RIGHT: usize = std::mem::offset_of!(LogicalExpression, right);
+
 impl<'a> AstNode<'a, LogicalExpression<'a>> {
     #[inline]
     pub fn span(&self) -> Span {
@@ -1891,7 +2882,27 @@ impl<'a> AstNode<'a, LogicalExpression<'a>> {
             parent: self.allocator.alloc(AstNodes::LogicalExpression(transmute_self(self))),
         })
     }
+
+    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
+        let inner_ptr = unsafe { self.parent.inner_ptr() };
+        let offset =
+            unsafe { (self.inner as *const _ as *const u8).offset_from_unsigned(inner_ptr) };
+        match offset {
+            LOGICAL_EXPRESSION_OFFSET_LEFT => Some(FollowingNode::Expression(unsafe {
+                &*(inner_ptr.add(LOGICAL_EXPRESSION_OFFSET_RIGHT) as *const Expression<'a>)
+            })),
+            LOGICAL_EXPRESSION_OFFSET_RIGHT => None,
+            _ => panic!("Invalid field offset: {}", offset),
+        }
+    }
 }
+
+const CONDITIONAL_EXPRESSION_OFFSET_TEST: usize = std::mem::offset_of!(ConditionalExpression, test);
+const CONDITIONAL_EXPRESSION_OFFSET_CONSEQUENT: usize =
+    std::mem::offset_of!(ConditionalExpression, consequent);
+const CONDITIONAL_EXPRESSION_OFFSET_ALTERNATE: usize =
+    std::mem::offset_of!(ConditionalExpression, alternate);
+
 impl<'a> AstNode<'a, ConditionalExpression<'a>> {
     #[inline]
     pub fn span(&self) -> Span {
@@ -1924,7 +2935,27 @@ impl<'a> AstNode<'a, ConditionalExpression<'a>> {
             parent: self.allocator.alloc(AstNodes::ConditionalExpression(transmute_self(self))),
         })
     }
+
+    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
+        let inner_ptr = unsafe { self.parent.inner_ptr() };
+        let offset =
+            unsafe { (self.inner as *const _ as *const u8).offset_from_unsigned(inner_ptr) };
+        match offset {
+            CONDITIONAL_EXPRESSION_OFFSET_TEST => Some(FollowingNode::Expression(unsafe {
+                &*(inner_ptr.add(CONDITIONAL_EXPRESSION_OFFSET_CONSEQUENT) as *const Expression<'a>)
+            })),
+            CONDITIONAL_EXPRESSION_OFFSET_CONSEQUENT => Some(FollowingNode::Expression(unsafe {
+                &*(inner_ptr.add(CONDITIONAL_EXPRESSION_OFFSET_ALTERNATE) as *const Expression<'a>)
+            })),
+            CONDITIONAL_EXPRESSION_OFFSET_ALTERNATE => None,
+            _ => panic!("Invalid field offset: {}", offset),
+        }
+    }
 }
+
+const ASSIGNMENT_EXPRESSION_OFFSET_LEFT: usize = std::mem::offset_of!(AssignmentExpression, left);
+const ASSIGNMENT_EXPRESSION_OFFSET_RIGHT: usize = std::mem::offset_of!(AssignmentExpression, right);
+
 impl<'a> AstNode<'a, AssignmentExpression<'a>> {
     #[inline]
     pub fn span(&self) -> Span {
@@ -1952,6 +2983,19 @@ impl<'a> AstNode<'a, AssignmentExpression<'a>> {
             allocator: self.allocator,
             parent: self.allocator.alloc(AstNodes::AssignmentExpression(transmute_self(self))),
         })
+    }
+
+    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
+        let inner_ptr = unsafe { self.parent.inner_ptr() };
+        let offset =
+            unsafe { (self.inner as *const _ as *const u8).offset_from_unsigned(inner_ptr) };
+        match offset {
+            ASSIGNMENT_EXPRESSION_OFFSET_LEFT => Some(FollowingNode::Expression(unsafe {
+                &*(inner_ptr.add(ASSIGNMENT_EXPRESSION_OFFSET_RIGHT) as *const Expression<'a>)
+            })),
+            ASSIGNMENT_EXPRESSION_OFFSET_RIGHT => None,
+            _ => panic!("Invalid field offset: {}", offset),
+        }
     }
 }
 
@@ -2075,6 +3119,10 @@ impl<'a> GetSpan for AstNode<'a, AssignmentTargetPattern<'a>> {
         self.inner.span()
     }
 }
+
+const ARRAY_ASSIGNMENT_TARGET_OFFSET_REST: usize =
+    std::mem::offset_of!(ArrayAssignmentTarget, rest);
+
 impl<'a> AstNode<'a, ArrayAssignmentTarget<'a>> {
     #[inline]
     pub fn span(&self) -> Span {
@@ -2100,7 +3148,23 @@ impl<'a> AstNode<'a, ArrayAssignmentTarget<'a>> {
             }))
             .as_ref()
     }
+
+    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
+        let inner_ptr = unsafe { self.parent.inner_ptr() };
+        let offset =
+            unsafe { (self.inner as *const _ as *const u8).offset_from_unsigned(inner_ptr) };
+        match offset {
+            ARRAY_ASSIGNMENT_TARGET_OFFSET_REST => None,
+            _ => panic!("Invalid field offset: {}", offset),
+        }
+    }
 }
+
+const OBJECT_ASSIGNMENT_TARGET_OFFSET_PROPERTIES: usize =
+    std::mem::offset_of!(ObjectAssignmentTarget, properties);
+const OBJECT_ASSIGNMENT_TARGET_OFFSET_REST: usize =
+    std::mem::offset_of!(ObjectAssignmentTarget, rest);
+
 impl<'a> AstNode<'a, ObjectAssignmentTarget<'a>> {
     #[inline]
     pub fn span(&self) -> Span {
@@ -2127,7 +3191,27 @@ impl<'a> AstNode<'a, ObjectAssignmentTarget<'a>> {
             }))
             .as_ref()
     }
+
+    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
+        let inner_ptr = unsafe { self.parent.inner_ptr() };
+        let offset =
+            unsafe { (self.inner as *const _ as *const u8).offset_from_unsigned(inner_ptr) };
+        match offset {
+            OBJECT_ASSIGNMENT_TARGET_OFFSET_PROPERTIES => (unsafe {
+                &*(inner_ptr.add(OBJECT_ASSIGNMENT_TARGET_OFFSET_REST)
+                    as *const Option<AssignmentTargetRest<'a>>)
+            })
+            .as_ref()
+            .map(FollowingNode::AssignmentTargetRest),
+            OBJECT_ASSIGNMENT_TARGET_OFFSET_REST => None,
+            _ => panic!("Invalid field offset: {}", offset),
+        }
+    }
 }
+
+const ASSIGNMENT_TARGET_REST_OFFSET_TARGET: usize =
+    std::mem::offset_of!(AssignmentTargetRest, target);
+
 impl<'a> AstNode<'a, AssignmentTargetRest<'a>> {
     #[inline]
     pub fn span(&self) -> Span {
@@ -2141,6 +3225,16 @@ impl<'a> AstNode<'a, AssignmentTargetRest<'a>> {
             allocator: self.allocator,
             parent: self.parent,
         })
+    }
+
+    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
+        let inner_ptr = unsafe { self.parent.inner_ptr() };
+        let offset =
+            unsafe { (self.inner as *const _ as *const u8).offset_from_unsigned(inner_ptr) };
+        match offset {
+            ASSIGNMENT_TARGET_REST_OFFSET_TARGET => None,
+            _ => panic!("Invalid field offset: {}", offset),
+        }
     }
 }
 
@@ -2174,6 +3268,12 @@ impl<'a> GetSpan for AstNode<'a, AssignmentTargetMaybeDefault<'a>> {
         self.inner.span()
     }
 }
+
+const ASSIGNMENT_TARGET_WITH_DEFAULT_OFFSET_BINDING: usize =
+    std::mem::offset_of!(AssignmentTargetWithDefault, binding);
+const ASSIGNMENT_TARGET_WITH_DEFAULT_OFFSET_INIT: usize =
+    std::mem::offset_of!(AssignmentTargetWithDefault, init);
+
 impl<'a> AstNode<'a, AssignmentTargetWithDefault<'a>> {
     #[inline]
     pub fn span(&self) -> Span {
@@ -2200,6 +3300,22 @@ impl<'a> AstNode<'a, AssignmentTargetWithDefault<'a>> {
                 .allocator
                 .alloc(AstNodes::AssignmentTargetWithDefault(transmute_self(self))),
         })
+    }
+
+    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
+        let inner_ptr = unsafe { self.parent.inner_ptr() };
+        let offset =
+            unsafe { (self.inner as *const _ as *const u8).offset_from_unsigned(inner_ptr) };
+        match offset {
+            ASSIGNMENT_TARGET_WITH_DEFAULT_OFFSET_BINDING => {
+                Some(FollowingNode::Expression(unsafe {
+                    &*(inner_ptr.add(ASSIGNMENT_TARGET_WITH_DEFAULT_OFFSET_INIT)
+                        as *const Expression<'a>)
+                }))
+            }
+            ASSIGNMENT_TARGET_WITH_DEFAULT_OFFSET_INIT => None,
+            _ => panic!("Invalid field offset: {}", offset),
+        }
     }
 }
 
@@ -2229,6 +3345,12 @@ impl<'a> GetSpan for AstNode<'a, AssignmentTargetProperty<'a>> {
         self.inner.span()
     }
 }
+
+const ASSIGNMENT_TARGET_PROPERTY_IDENTIFIER_OFFSET_BINDING: usize =
+    std::mem::offset_of!(AssignmentTargetPropertyIdentifier, binding);
+const ASSIGNMENT_TARGET_PROPERTY_IDENTIFIER_OFFSET_INIT: usize =
+    std::mem::offset_of!(AssignmentTargetPropertyIdentifier, init);
+
 impl<'a> AstNode<'a, AssignmentTargetPropertyIdentifier<'a>> {
     #[inline]
     pub fn span(&self) -> Span {
@@ -2254,7 +3376,29 @@ impl<'a> AstNode<'a, AssignmentTargetPropertyIdentifier<'a>> {
             }))
             .as_ref()
     }
+
+    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
+        let inner_ptr = unsafe { self.parent.inner_ptr() };
+        let offset =
+            unsafe { (self.inner as *const _ as *const u8).offset_from_unsigned(inner_ptr) };
+        match offset {
+            ASSIGNMENT_TARGET_PROPERTY_IDENTIFIER_OFFSET_BINDING => (unsafe {
+                &*(inner_ptr.add(ASSIGNMENT_TARGET_PROPERTY_IDENTIFIER_OFFSET_INIT)
+                    as *const Option<Expression<'a>>)
+            })
+            .as_ref()
+            .map(FollowingNode::Expression),
+            ASSIGNMENT_TARGET_PROPERTY_IDENTIFIER_OFFSET_INIT => None,
+            _ => panic!("Invalid field offset: {}", offset),
+        }
+    }
 }
+
+const ASSIGNMENT_TARGET_PROPERTY_PROPERTY_OFFSET_NAME: usize =
+    std::mem::offset_of!(AssignmentTargetPropertyProperty, name);
+const ASSIGNMENT_TARGET_PROPERTY_PROPERTY_OFFSET_BINDING: usize =
+    std::mem::offset_of!(AssignmentTargetPropertyProperty, binding);
+
 impl<'a> AstNode<'a, AssignmentTargetPropertyProperty<'a>> {
     #[inline]
     pub fn span(&self) -> Span {
@@ -2283,7 +3427,27 @@ impl<'a> AstNode<'a, AssignmentTargetPropertyProperty<'a>> {
     pub fn computed(&self) -> bool {
         self.inner.computed
     }
+
+    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
+        let inner_ptr = unsafe { self.parent.inner_ptr() };
+        let offset =
+            unsafe { (self.inner as *const _ as *const u8).offset_from_unsigned(inner_ptr) };
+        match offset {
+            ASSIGNMENT_TARGET_PROPERTY_PROPERTY_OFFSET_NAME => {
+                Some(FollowingNode::AssignmentTargetMaybeDefault(unsafe {
+                    &*(inner_ptr.add(ASSIGNMENT_TARGET_PROPERTY_PROPERTY_OFFSET_BINDING)
+                        as *const AssignmentTargetMaybeDefault<'a>)
+                }))
+            }
+            ASSIGNMENT_TARGET_PROPERTY_PROPERTY_OFFSET_BINDING => None,
+            _ => panic!("Invalid field offset: {}", offset),
+        }
+    }
 }
+
+const SEQUENCE_EXPRESSION_OFFSET_EXPRESSIONS: usize =
+    std::mem::offset_of!(SequenceExpression, expressions);
+
 impl<'a> AstNode<'a, SequenceExpression<'a>> {
     #[inline]
     pub fn span(&self) -> Span {
@@ -2298,13 +3462,31 @@ impl<'a> AstNode<'a, SequenceExpression<'a>> {
             parent: self.allocator.alloc(AstNodes::SequenceExpression(transmute_self(self))),
         })
     }
+
+    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
+        let inner_ptr = unsafe { self.parent.inner_ptr() };
+        let offset =
+            unsafe { (self.inner as *const _ as *const u8).offset_from_unsigned(inner_ptr) };
+        match offset {
+            SEQUENCE_EXPRESSION_OFFSET_EXPRESSIONS => None,
+            _ => panic!("Invalid field offset: {}", offset),
+        }
+    }
 }
+
 impl<'a> AstNode<'a, Super> {
     #[inline]
     pub fn span(&self) -> Span {
         self.inner.span
     }
+
+    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
+        None
+    }
 }
+
+const AWAIT_EXPRESSION_OFFSET_ARGUMENT: usize = std::mem::offset_of!(AwaitExpression, argument);
+
 impl<'a> AstNode<'a, AwaitExpression<'a>> {
     #[inline]
     pub fn span(&self) -> Span {
@@ -2319,7 +3501,20 @@ impl<'a> AstNode<'a, AwaitExpression<'a>> {
             parent: self.allocator.alloc(AstNodes::AwaitExpression(transmute_self(self))),
         })
     }
+
+    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
+        let inner_ptr = unsafe { self.parent.inner_ptr() };
+        let offset =
+            unsafe { (self.inner as *const _ as *const u8).offset_from_unsigned(inner_ptr) };
+        match offset {
+            AWAIT_EXPRESSION_OFFSET_ARGUMENT => None,
+            _ => panic!("Invalid field offset: {}", offset),
+        }
+    }
 }
+
+const CHAIN_EXPRESSION_OFFSET_EXPRESSION: usize = std::mem::offset_of!(ChainExpression, expression);
+
 impl<'a> AstNode<'a, ChainExpression<'a>> {
     #[inline]
     pub fn span(&self) -> Span {
@@ -2333,6 +3528,16 @@ impl<'a> AstNode<'a, ChainExpression<'a>> {
             allocator: self.allocator,
             parent: self.allocator.alloc(AstNodes::ChainExpression(transmute_self(self))),
         })
+    }
+
+    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
+        let inner_ptr = unsafe { self.parent.inner_ptr() };
+        let offset =
+            unsafe { (self.inner as *const _ as *const u8).offset_from_unsigned(inner_ptr) };
+        match offset {
+            CHAIN_EXPRESSION_OFFSET_EXPRESSION => None,
+            _ => panic!("Invalid field offset: {}", offset),
+        }
     }
 }
 
@@ -2373,6 +3578,10 @@ impl<'a> GetSpan for AstNode<'a, ChainElement<'a>> {
         self.inner.span()
     }
 }
+
+const PARENTHESIZED_EXPRESSION_OFFSET_EXPRESSION: usize =
+    std::mem::offset_of!(ParenthesizedExpression, expression);
+
 impl<'a> AstNode<'a, ParenthesizedExpression<'a>> {
     #[inline]
     pub fn span(&self) -> Span {
@@ -2386,6 +3595,16 @@ impl<'a> AstNode<'a, ParenthesizedExpression<'a>> {
             allocator: self.allocator,
             parent: self.allocator.alloc(AstNodes::ParenthesizedExpression(transmute_self(self))),
         })
+    }
+
+    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
+        let inner_ptr = unsafe { self.parent.inner_ptr() };
+        let offset =
+            unsafe { (self.inner as *const _ as *const u8).offset_from_unsigned(inner_ptr) };
+        match offset {
+            PARENTHESIZED_EXPRESSION_OFFSET_EXPRESSION => None,
+            _ => panic!("Invalid field offset: {}", offset),
+        }
     }
 }
 
@@ -2540,6 +3759,9 @@ impl<'a> GetSpan for AstNode<'a, Statement<'a>> {
         self.inner.span()
     }
 }
+
+const DIRECTIVE_OFFSET_EXPRESSION: usize = std::mem::offset_of!(Directive, expression);
+
 impl<'a> AstNode<'a, Directive<'a>> {
     #[inline]
     pub fn span(&self) -> Span {
@@ -2559,7 +3781,18 @@ impl<'a> AstNode<'a, Directive<'a>> {
     pub fn directive(&self) -> Atom<'a> {
         self.inner.directive
     }
+
+    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
+        let inner_ptr = unsafe { self.parent.inner_ptr() };
+        let offset =
+            unsafe { (self.inner as *const _ as *const u8).offset_from_unsigned(inner_ptr) };
+        match offset {
+            DIRECTIVE_OFFSET_EXPRESSION => None,
+            _ => panic!("Invalid field offset: {}", offset),
+        }
+    }
 }
+
 impl<'a> AstNode<'a, Hashbang<'a>> {
     #[inline]
     pub fn span(&self) -> Span {
@@ -2570,7 +3803,14 @@ impl<'a> AstNode<'a, Hashbang<'a>> {
     pub fn value(&self) -> Atom<'a> {
         self.inner.value
     }
+
+    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
+        None
+    }
 }
+
+const BLOCK_STATEMENT_OFFSET_BODY: usize = std::mem::offset_of!(BlockStatement, body);
+
 impl<'a> AstNode<'a, BlockStatement<'a>> {
     #[inline]
     pub fn span(&self) -> Span {
@@ -2584,6 +3824,16 @@ impl<'a> AstNode<'a, BlockStatement<'a>> {
             allocator: self.allocator,
             parent: self.allocator.alloc(AstNodes::BlockStatement(transmute_self(self))),
         })
+    }
+
+    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
+        let inner_ptr = unsafe { self.parent.inner_ptr() };
+        let offset =
+            unsafe { (self.inner as *const _ as *const u8).offset_from_unsigned(inner_ptr) };
+        match offset {
+            BLOCK_STATEMENT_OFFSET_BODY => None,
+            _ => panic!("Invalid field offset: {}", offset),
+        }
     }
 }
 
@@ -2657,6 +3907,10 @@ impl<'a> GetSpan for AstNode<'a, Declaration<'a>> {
         self.inner.span()
     }
 }
+
+const VARIABLE_DECLARATION_OFFSET_DECLARATIONS: usize =
+    std::mem::offset_of!(VariableDeclaration, declarations);
+
 impl<'a> AstNode<'a, VariableDeclaration<'a>> {
     #[inline]
     pub fn span(&self) -> Span {
@@ -2681,7 +3935,21 @@ impl<'a> AstNode<'a, VariableDeclaration<'a>> {
     pub fn declare(&self) -> bool {
         self.inner.declare
     }
+
+    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
+        let inner_ptr = unsafe { self.parent.inner_ptr() };
+        let offset =
+            unsafe { (self.inner as *const _ as *const u8).offset_from_unsigned(inner_ptr) };
+        match offset {
+            VARIABLE_DECLARATION_OFFSET_DECLARATIONS => None,
+            _ => panic!("Invalid field offset: {}", offset),
+        }
+    }
 }
+
+const VARIABLE_DECLARATOR_OFFSET_ID: usize = std::mem::offset_of!(VariableDeclarator, id);
+const VARIABLE_DECLARATOR_OFFSET_INIT: usize = std::mem::offset_of!(VariableDeclarator, init);
+
 impl<'a> AstNode<'a, VariableDeclarator<'a>> {
     #[inline]
     pub fn span(&self) -> Span {
@@ -2717,13 +3985,37 @@ impl<'a> AstNode<'a, VariableDeclarator<'a>> {
     pub fn definite(&self) -> bool {
         self.inner.definite
     }
+
+    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
+        let inner_ptr = unsafe { self.parent.inner_ptr() };
+        let offset =
+            unsafe { (self.inner as *const _ as *const u8).offset_from_unsigned(inner_ptr) };
+        match offset {
+            VARIABLE_DECLARATOR_OFFSET_ID => (unsafe {
+                &*(inner_ptr.add(VARIABLE_DECLARATOR_OFFSET_INIT) as *const Option<Expression<'a>>)
+            })
+            .as_ref()
+            .map(FollowingNode::Expression),
+            VARIABLE_DECLARATOR_OFFSET_INIT => None,
+            _ => panic!("Invalid field offset: {}", offset),
+        }
+    }
 }
+
 impl<'a> AstNode<'a, EmptyStatement> {
     #[inline]
     pub fn span(&self) -> Span {
         self.inner.span
     }
+
+    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
+        None
+    }
 }
+
+const EXPRESSION_STATEMENT_OFFSET_EXPRESSION: usize =
+    std::mem::offset_of!(ExpressionStatement, expression);
+
 impl<'a> AstNode<'a, ExpressionStatement<'a>> {
     #[inline]
     pub fn span(&self) -> Span {
@@ -2738,7 +4030,22 @@ impl<'a> AstNode<'a, ExpressionStatement<'a>> {
             parent: self.allocator.alloc(AstNodes::ExpressionStatement(transmute_self(self))),
         })
     }
+
+    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
+        let inner_ptr = unsafe { self.parent.inner_ptr() };
+        let offset =
+            unsafe { (self.inner as *const _ as *const u8).offset_from_unsigned(inner_ptr) };
+        match offset {
+            EXPRESSION_STATEMENT_OFFSET_EXPRESSION => None,
+            _ => panic!("Invalid field offset: {}", offset),
+        }
+    }
 }
+
+const IF_STATEMENT_OFFSET_TEST: usize = std::mem::offset_of!(IfStatement, test);
+const IF_STATEMENT_OFFSET_CONSEQUENT: usize = std::mem::offset_of!(IfStatement, consequent);
+const IF_STATEMENT_OFFSET_ALTERNATE: usize = std::mem::offset_of!(IfStatement, alternate);
+
 impl<'a> AstNode<'a, IfStatement<'a>> {
     #[inline]
     pub fn span(&self) -> Span {
@@ -2773,7 +4080,29 @@ impl<'a> AstNode<'a, IfStatement<'a>> {
             }))
             .as_ref()
     }
+
+    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
+        let inner_ptr = unsafe { self.parent.inner_ptr() };
+        let offset =
+            unsafe { (self.inner as *const _ as *const u8).offset_from_unsigned(inner_ptr) };
+        match offset {
+            IF_STATEMENT_OFFSET_TEST => Some(FollowingNode::Statement(unsafe {
+                &*(inner_ptr.add(IF_STATEMENT_OFFSET_CONSEQUENT) as *const Statement<'a>)
+            })),
+            IF_STATEMENT_OFFSET_CONSEQUENT => (unsafe {
+                &*(inner_ptr.add(IF_STATEMENT_OFFSET_ALTERNATE) as *const Option<Statement<'a>>)
+            })
+            .as_ref()
+            .map(FollowingNode::Statement),
+            IF_STATEMENT_OFFSET_ALTERNATE => None,
+            _ => panic!("Invalid field offset: {}", offset),
+        }
+    }
 }
+
+const DO_WHILE_STATEMENT_OFFSET_BODY: usize = std::mem::offset_of!(DoWhileStatement, body);
+const DO_WHILE_STATEMENT_OFFSET_TEST: usize = std::mem::offset_of!(DoWhileStatement, test);
+
 impl<'a> AstNode<'a, DoWhileStatement<'a>> {
     #[inline]
     pub fn span(&self) -> Span {
@@ -2797,7 +4126,24 @@ impl<'a> AstNode<'a, DoWhileStatement<'a>> {
             parent: self.allocator.alloc(AstNodes::DoWhileStatement(transmute_self(self))),
         })
     }
+
+    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
+        let inner_ptr = unsafe { self.parent.inner_ptr() };
+        let offset =
+            unsafe { (self.inner as *const _ as *const u8).offset_from_unsigned(inner_ptr) };
+        match offset {
+            DO_WHILE_STATEMENT_OFFSET_BODY => Some(FollowingNode::Expression(unsafe {
+                &*(inner_ptr.add(DO_WHILE_STATEMENT_OFFSET_TEST) as *const Expression<'a>)
+            })),
+            DO_WHILE_STATEMENT_OFFSET_TEST => None,
+            _ => panic!("Invalid field offset: {}", offset),
+        }
+    }
 }
+
+const WHILE_STATEMENT_OFFSET_TEST: usize = std::mem::offset_of!(WhileStatement, test);
+const WHILE_STATEMENT_OFFSET_BODY: usize = std::mem::offset_of!(WhileStatement, body);
+
 impl<'a> AstNode<'a, WhileStatement<'a>> {
     #[inline]
     pub fn span(&self) -> Span {
@@ -2821,7 +4167,26 @@ impl<'a> AstNode<'a, WhileStatement<'a>> {
             parent: self.allocator.alloc(AstNodes::WhileStatement(transmute_self(self))),
         })
     }
+
+    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
+        let inner_ptr = unsafe { self.parent.inner_ptr() };
+        let offset =
+            unsafe { (self.inner as *const _ as *const u8).offset_from_unsigned(inner_ptr) };
+        match offset {
+            WHILE_STATEMENT_OFFSET_TEST => Some(FollowingNode::Statement(unsafe {
+                &*(inner_ptr.add(WHILE_STATEMENT_OFFSET_BODY) as *const Statement<'a>)
+            })),
+            WHILE_STATEMENT_OFFSET_BODY => None,
+            _ => panic!("Invalid field offset: {}", offset),
+        }
+    }
 }
+
+const FOR_STATEMENT_OFFSET_INIT: usize = std::mem::offset_of!(ForStatement, init);
+const FOR_STATEMENT_OFFSET_TEST: usize = std::mem::offset_of!(ForStatement, test);
+const FOR_STATEMENT_OFFSET_UPDATE: usize = std::mem::offset_of!(ForStatement, update);
+const FOR_STATEMENT_OFFSET_BODY: usize = std::mem::offset_of!(ForStatement, body);
+
 impl<'a> AstNode<'a, ForStatement<'a>> {
     #[inline]
     pub fn span(&self) -> Span {
@@ -2869,6 +4234,29 @@ impl<'a> AstNode<'a, ForStatement<'a>> {
             parent: self.allocator.alloc(AstNodes::ForStatement(transmute_self(self))),
         })
     }
+
+    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
+        let inner_ptr = unsafe { self.parent.inner_ptr() };
+        let offset =
+            unsafe { (self.inner as *const _ as *const u8).offset_from_unsigned(inner_ptr) };
+        match offset {
+            FOR_STATEMENT_OFFSET_INIT => (unsafe {
+                &*(inner_ptr.add(FOR_STATEMENT_OFFSET_TEST) as *const Option<Expression<'a>>)
+            })
+            .as_ref()
+            .map(FollowingNode::Expression),
+            FOR_STATEMENT_OFFSET_TEST => (unsafe {
+                &*(inner_ptr.add(FOR_STATEMENT_OFFSET_UPDATE) as *const Option<Expression<'a>>)
+            })
+            .as_ref()
+            .map(FollowingNode::Expression),
+            FOR_STATEMENT_OFFSET_UPDATE => Some(FollowingNode::Statement(unsafe {
+                &*(inner_ptr.add(FOR_STATEMENT_OFFSET_BODY) as *const Statement<'a>)
+            })),
+            FOR_STATEMENT_OFFSET_BODY => None,
+            _ => panic!("Invalid field offset: {}", offset),
+        }
+    }
 }
 
 impl<'a> AstNode<'a, ForStatementInit<'a>> {
@@ -2900,6 +4288,11 @@ impl<'a> GetSpan for AstNode<'a, ForStatementInit<'a>> {
         self.inner.span()
     }
 }
+
+const FOR_IN_STATEMENT_OFFSET_LEFT: usize = std::mem::offset_of!(ForInStatement, left);
+const FOR_IN_STATEMENT_OFFSET_RIGHT: usize = std::mem::offset_of!(ForInStatement, right);
+const FOR_IN_STATEMENT_OFFSET_BODY: usize = std::mem::offset_of!(ForInStatement, body);
+
 impl<'a> AstNode<'a, ForInStatement<'a>> {
     #[inline]
     pub fn span(&self) -> Span {
@@ -2931,6 +4324,22 @@ impl<'a> AstNode<'a, ForInStatement<'a>> {
             allocator: self.allocator,
             parent: self.allocator.alloc(AstNodes::ForInStatement(transmute_self(self))),
         })
+    }
+
+    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
+        let inner_ptr = unsafe { self.parent.inner_ptr() };
+        let offset =
+            unsafe { (self.inner as *const _ as *const u8).offset_from_unsigned(inner_ptr) };
+        match offset {
+            FOR_IN_STATEMENT_OFFSET_LEFT => Some(FollowingNode::Expression(unsafe {
+                &*(inner_ptr.add(FOR_IN_STATEMENT_OFFSET_RIGHT) as *const Expression<'a>)
+            })),
+            FOR_IN_STATEMENT_OFFSET_RIGHT => Some(FollowingNode::Statement(unsafe {
+                &*(inner_ptr.add(FOR_IN_STATEMENT_OFFSET_BODY) as *const Statement<'a>)
+            })),
+            FOR_IN_STATEMENT_OFFSET_BODY => None,
+            _ => panic!("Invalid field offset: {}", offset),
+        }
     }
 }
 
@@ -2964,6 +4373,11 @@ impl<'a> GetSpan for AstNode<'a, ForStatementLeft<'a>> {
         self.inner.span()
     }
 }
+
+const FOR_OF_STATEMENT_OFFSET_LEFT: usize = std::mem::offset_of!(ForOfStatement, left);
+const FOR_OF_STATEMENT_OFFSET_RIGHT: usize = std::mem::offset_of!(ForOfStatement, right);
+const FOR_OF_STATEMENT_OFFSET_BODY: usize = std::mem::offset_of!(ForOfStatement, body);
+
 impl<'a> AstNode<'a, ForOfStatement<'a>> {
     #[inline]
     pub fn span(&self) -> Span {
@@ -3001,7 +4415,26 @@ impl<'a> AstNode<'a, ForOfStatement<'a>> {
             parent: self.allocator.alloc(AstNodes::ForOfStatement(transmute_self(self))),
         })
     }
+
+    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
+        let inner_ptr = unsafe { self.parent.inner_ptr() };
+        let offset =
+            unsafe { (self.inner as *const _ as *const u8).offset_from_unsigned(inner_ptr) };
+        match offset {
+            FOR_OF_STATEMENT_OFFSET_LEFT => Some(FollowingNode::Expression(unsafe {
+                &*(inner_ptr.add(FOR_OF_STATEMENT_OFFSET_RIGHT) as *const Expression<'a>)
+            })),
+            FOR_OF_STATEMENT_OFFSET_RIGHT => Some(FollowingNode::Statement(unsafe {
+                &*(inner_ptr.add(FOR_OF_STATEMENT_OFFSET_BODY) as *const Statement<'a>)
+            })),
+            FOR_OF_STATEMENT_OFFSET_BODY => None,
+            _ => panic!("Invalid field offset: {}", offset),
+        }
+    }
 }
+
+const CONTINUE_STATEMENT_OFFSET_LABEL: usize = std::mem::offset_of!(ContinueStatement, label);
+
 impl<'a> AstNode<'a, ContinueStatement<'a>> {
     #[inline]
     pub fn span(&self) -> Span {
@@ -3018,7 +4451,20 @@ impl<'a> AstNode<'a, ContinueStatement<'a>> {
             }))
             .as_ref()
     }
+
+    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
+        let inner_ptr = unsafe { self.parent.inner_ptr() };
+        let offset =
+            unsafe { (self.inner as *const _ as *const u8).offset_from_unsigned(inner_ptr) };
+        match offset {
+            CONTINUE_STATEMENT_OFFSET_LABEL => None,
+            _ => panic!("Invalid field offset: {}", offset),
+        }
+    }
 }
+
+const BREAK_STATEMENT_OFFSET_LABEL: usize = std::mem::offset_of!(BreakStatement, label);
+
 impl<'a> AstNode<'a, BreakStatement<'a>> {
     #[inline]
     pub fn span(&self) -> Span {
@@ -3035,7 +4481,20 @@ impl<'a> AstNode<'a, BreakStatement<'a>> {
             }))
             .as_ref()
     }
+
+    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
+        let inner_ptr = unsafe { self.parent.inner_ptr() };
+        let offset =
+            unsafe { (self.inner as *const _ as *const u8).offset_from_unsigned(inner_ptr) };
+        match offset {
+            BREAK_STATEMENT_OFFSET_LABEL => None,
+            _ => panic!("Invalid field offset: {}", offset),
+        }
+    }
 }
+
+const RETURN_STATEMENT_OFFSET_ARGUMENT: usize = std::mem::offset_of!(ReturnStatement, argument);
+
 impl<'a> AstNode<'a, ReturnStatement<'a>> {
     #[inline]
     pub fn span(&self) -> Span {
@@ -3052,7 +4511,21 @@ impl<'a> AstNode<'a, ReturnStatement<'a>> {
             }))
             .as_ref()
     }
+
+    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
+        let inner_ptr = unsafe { self.parent.inner_ptr() };
+        let offset =
+            unsafe { (self.inner as *const _ as *const u8).offset_from_unsigned(inner_ptr) };
+        match offset {
+            RETURN_STATEMENT_OFFSET_ARGUMENT => None,
+            _ => panic!("Invalid field offset: {}", offset),
+        }
+    }
 }
+
+const WITH_STATEMENT_OFFSET_OBJECT: usize = std::mem::offset_of!(WithStatement, object);
+const WITH_STATEMENT_OFFSET_BODY: usize = std::mem::offset_of!(WithStatement, body);
+
 impl<'a> AstNode<'a, WithStatement<'a>> {
     #[inline]
     pub fn span(&self) -> Span {
@@ -3076,7 +4549,25 @@ impl<'a> AstNode<'a, WithStatement<'a>> {
             parent: self.allocator.alloc(AstNodes::WithStatement(transmute_self(self))),
         })
     }
+
+    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
+        let inner_ptr = unsafe { self.parent.inner_ptr() };
+        let offset =
+            unsafe { (self.inner as *const _ as *const u8).offset_from_unsigned(inner_ptr) };
+        match offset {
+            WITH_STATEMENT_OFFSET_OBJECT => Some(FollowingNode::Statement(unsafe {
+                &*(inner_ptr.add(WITH_STATEMENT_OFFSET_BODY) as *const Statement<'a>)
+            })),
+            WITH_STATEMENT_OFFSET_BODY => None,
+            _ => panic!("Invalid field offset: {}", offset),
+        }
+    }
 }
+
+const SWITCH_STATEMENT_OFFSET_DISCRIMINANT: usize =
+    std::mem::offset_of!(SwitchStatement, discriminant);
+const SWITCH_STATEMENT_OFFSET_CASES: usize = std::mem::offset_of!(SwitchStatement, cases);
+
 impl<'a> AstNode<'a, SwitchStatement<'a>> {
     #[inline]
     pub fn span(&self) -> Span {
@@ -3100,7 +4591,28 @@ impl<'a> AstNode<'a, SwitchStatement<'a>> {
             parent: self.allocator.alloc(AstNodes::SwitchStatement(transmute_self(self))),
         })
     }
+
+    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
+        let inner_ptr = unsafe { self.parent.inner_ptr() };
+        let offset =
+            unsafe { (self.inner as *const _ as *const u8).offset_from_unsigned(inner_ptr) };
+        match offset {
+            SWITCH_STATEMENT_OFFSET_DISCRIMINANT => (unsafe {
+                &*(inner_ptr.add(SWITCH_STATEMENT_OFFSET_CASES) as *const Vec<'a, SwitchCase<'a>>)
+            })
+            .first()
+            .as_ref()
+            .copied()
+            .map(FollowingNode::SwitchCase),
+            SWITCH_STATEMENT_OFFSET_CASES => None,
+            _ => panic!("Invalid field offset: {}", offset),
+        }
+    }
 }
+
+const SWITCH_CASE_OFFSET_TEST: usize = std::mem::offset_of!(SwitchCase, test);
+const SWITCH_CASE_OFFSET_CONSEQUENT: usize = std::mem::offset_of!(SwitchCase, consequent);
+
 impl<'a> AstNode<'a, SwitchCase<'a>> {
     #[inline]
     pub fn span(&self) -> Span {
@@ -3126,7 +4638,28 @@ impl<'a> AstNode<'a, SwitchCase<'a>> {
             parent: self.allocator.alloc(AstNodes::SwitchCase(transmute_self(self))),
         })
     }
+
+    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
+        let inner_ptr = unsafe { self.parent.inner_ptr() };
+        let offset =
+            unsafe { (self.inner as *const _ as *const u8).offset_from_unsigned(inner_ptr) };
+        match offset {
+            SWITCH_CASE_OFFSET_TEST => (unsafe {
+                &*(inner_ptr.add(SWITCH_CASE_OFFSET_CONSEQUENT) as *const Vec<'a, Statement<'a>>)
+            })
+            .first()
+            .as_ref()
+            .copied()
+            .map(FollowingNode::Statement),
+            SWITCH_CASE_OFFSET_CONSEQUENT => None,
+            _ => panic!("Invalid field offset: {}", offset),
+        }
+    }
 }
+
+const LABELED_STATEMENT_OFFSET_LABEL: usize = std::mem::offset_of!(LabeledStatement, label);
+const LABELED_STATEMENT_OFFSET_BODY: usize = std::mem::offset_of!(LabeledStatement, body);
+
 impl<'a> AstNode<'a, LabeledStatement<'a>> {
     #[inline]
     pub fn span(&self) -> Span {
@@ -3150,7 +4683,23 @@ impl<'a> AstNode<'a, LabeledStatement<'a>> {
             parent: self.allocator.alloc(AstNodes::LabeledStatement(transmute_self(self))),
         })
     }
+
+    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
+        let inner_ptr = unsafe { self.parent.inner_ptr() };
+        let offset =
+            unsafe { (self.inner as *const _ as *const u8).offset_from_unsigned(inner_ptr) };
+        match offset {
+            LABELED_STATEMENT_OFFSET_LABEL => Some(FollowingNode::Statement(unsafe {
+                &*(inner_ptr.add(LABELED_STATEMENT_OFFSET_BODY) as *const Statement<'a>)
+            })),
+            LABELED_STATEMENT_OFFSET_BODY => None,
+            _ => panic!("Invalid field offset: {}", offset),
+        }
+    }
 }
+
+const THROW_STATEMENT_OFFSET_ARGUMENT: usize = std::mem::offset_of!(ThrowStatement, argument);
+
 impl<'a> AstNode<'a, ThrowStatement<'a>> {
     #[inline]
     pub fn span(&self) -> Span {
@@ -3165,7 +4714,20 @@ impl<'a> AstNode<'a, ThrowStatement<'a>> {
             parent: self.allocator.alloc(AstNodes::ThrowStatement(transmute_self(self))),
         })
     }
+
+    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
+        let inner_ptr = unsafe { self.parent.inner_ptr() };
+        let offset =
+            unsafe { (self.inner as *const _ as *const u8).offset_from_unsigned(inner_ptr) };
+        match offset {
+            THROW_STATEMENT_OFFSET_ARGUMENT => None,
+            _ => panic!("Invalid field offset: {}", offset),
+        }
+    }
 }
+
+const TRY_STATEMENT_OFFSET_BLOCK: usize = std::mem::offset_of!(TryStatement, block);
+
 impl<'a> AstNode<'a, TryStatement<'a>> {
     #[inline]
     pub fn span(&self) -> Span {
@@ -3202,7 +4764,21 @@ impl<'a> AstNode<'a, TryStatement<'a>> {
             }))
             .as_ref()
     }
+
+    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
+        let inner_ptr = unsafe { self.parent.inner_ptr() };
+        let offset =
+            unsafe { (self.inner as *const _ as *const u8).offset_from_unsigned(inner_ptr) };
+        match offset {
+            TRY_STATEMENT_OFFSET_BLOCK => None,
+            _ => panic!("Invalid field offset: {}", offset),
+        }
+    }
 }
+
+const CATCH_CLAUSE_OFFSET_PARAM: usize = std::mem::offset_of!(CatchClause, param);
+const CATCH_CLAUSE_OFFSET_BODY: usize = std::mem::offset_of!(CatchClause, body);
+
 impl<'a> AstNode<'a, CatchClause<'a>> {
     #[inline]
     pub fn span(&self) -> Span {
@@ -3228,7 +4804,27 @@ impl<'a> AstNode<'a, CatchClause<'a>> {
             parent: self.allocator.alloc(AstNodes::CatchClause(transmute_self(self))),
         })
     }
+
+    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
+        let inner_ptr = unsafe { self.parent.inner_ptr() };
+        let offset =
+            unsafe { (self.inner as *const _ as *const u8).offset_from_unsigned(inner_ptr) };
+        match offset {
+            CATCH_CLAUSE_OFFSET_PARAM => Some(FollowingNode::BlockStatement(
+                unsafe {
+                    &*(inner_ptr.add(CATCH_CLAUSE_OFFSET_BODY)
+                        as *const Box<'a, BlockStatement<'a>>)
+                }
+                .as_ref(),
+            )),
+            CATCH_CLAUSE_OFFSET_BODY => None,
+            _ => panic!("Invalid field offset: {}", offset),
+        }
+    }
 }
+
+const CATCH_PARAMETER_OFFSET_PATTERN: usize = std::mem::offset_of!(CatchParameter, pattern);
+
 impl<'a> AstNode<'a, CatchParameter<'a>> {
     #[inline]
     pub fn span(&self) -> Span {
@@ -3243,13 +4839,31 @@ impl<'a> AstNode<'a, CatchParameter<'a>> {
             parent: self.allocator.alloc(AstNodes::CatchParameter(transmute_self(self))),
         })
     }
+
+    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
+        let inner_ptr = unsafe { self.parent.inner_ptr() };
+        let offset =
+            unsafe { (self.inner as *const _ as *const u8).offset_from_unsigned(inner_ptr) };
+        match offset {
+            CATCH_PARAMETER_OFFSET_PATTERN => None,
+            _ => panic!("Invalid field offset: {}", offset),
+        }
+    }
 }
+
 impl<'a> AstNode<'a, DebuggerStatement> {
     #[inline]
     pub fn span(&self) -> Span {
         self.inner.span
     }
+
+    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
+        None
+    }
 }
+
+const BINDING_PATTERN_OFFSET_KIND: usize = std::mem::offset_of!(BindingPattern, kind);
+
 impl<'a> AstNode<'a, BindingPattern<'a>> {
     #[inline]
     pub fn kind(&self) -> &AstNode<'a, BindingPatternKind<'a>> {
@@ -3274,6 +4888,16 @@ impl<'a> AstNode<'a, BindingPattern<'a>> {
     #[inline]
     pub fn optional(&self) -> bool {
         self.inner.optional
+    }
+
+    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
+        let inner_ptr = unsafe { self.parent.inner_ptr() };
+        let offset =
+            unsafe { (self.inner as *const _ as *const u8).offset_from_unsigned(inner_ptr) };
+        match offset {
+            BINDING_PATTERN_OFFSET_KIND => None,
+            _ => panic!("Invalid field offset: {}", offset),
+        }
     }
 }
 
@@ -3321,6 +4945,10 @@ impl<'a> GetSpan for AstNode<'a, BindingPatternKind<'a>> {
         self.inner.span()
     }
 }
+
+const ASSIGNMENT_PATTERN_OFFSET_LEFT: usize = std::mem::offset_of!(AssignmentPattern, left);
+const ASSIGNMENT_PATTERN_OFFSET_RIGHT: usize = std::mem::offset_of!(AssignmentPattern, right);
+
 impl<'a> AstNode<'a, AssignmentPattern<'a>> {
     #[inline]
     pub fn span(&self) -> Span {
@@ -3344,7 +4972,23 @@ impl<'a> AstNode<'a, AssignmentPattern<'a>> {
             parent: self.allocator.alloc(AstNodes::AssignmentPattern(transmute_self(self))),
         })
     }
+
+    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
+        let inner_ptr = unsafe { self.parent.inner_ptr() };
+        let offset =
+            unsafe { (self.inner as *const _ as *const u8).offset_from_unsigned(inner_ptr) };
+        match offset {
+            ASSIGNMENT_PATTERN_OFFSET_LEFT => Some(FollowingNode::Expression(unsafe {
+                &*(inner_ptr.add(ASSIGNMENT_PATTERN_OFFSET_RIGHT) as *const Expression<'a>)
+            })),
+            ASSIGNMENT_PATTERN_OFFSET_RIGHT => None,
+            _ => panic!("Invalid field offset: {}", offset),
+        }
+    }
 }
+
+const OBJECT_PATTERN_OFFSET_PROPERTIES: usize = std::mem::offset_of!(ObjectPattern, properties);
+
 impl<'a> AstNode<'a, ObjectPattern<'a>> {
     #[inline]
     pub fn span(&self) -> Span {
@@ -3370,7 +5014,21 @@ impl<'a> AstNode<'a, ObjectPattern<'a>> {
             }))
             .as_ref()
     }
+
+    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
+        let inner_ptr = unsafe { self.parent.inner_ptr() };
+        let offset =
+            unsafe { (self.inner as *const _ as *const u8).offset_from_unsigned(inner_ptr) };
+        match offset {
+            OBJECT_PATTERN_OFFSET_PROPERTIES => None,
+            _ => panic!("Invalid field offset: {}", offset),
+        }
+    }
 }
+
+const BINDING_PROPERTY_OFFSET_KEY: usize = std::mem::offset_of!(BindingProperty, key);
+const BINDING_PROPERTY_OFFSET_VALUE: usize = std::mem::offset_of!(BindingProperty, value);
+
 impl<'a> AstNode<'a, BindingProperty<'a>> {
     #[inline]
     pub fn span(&self) -> Span {
@@ -3404,7 +5062,21 @@ impl<'a> AstNode<'a, BindingProperty<'a>> {
     pub fn computed(&self) -> bool {
         self.inner.computed
     }
+
+    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
+        let inner_ptr = unsafe { self.parent.inner_ptr() };
+        let offset =
+            unsafe { (self.inner as *const _ as *const u8).offset_from_unsigned(inner_ptr) };
+        match offset {
+            BINDING_PROPERTY_OFFSET_KEY => Some(FollowingNode::BindingPattern(unsafe {
+                &*(inner_ptr.add(BINDING_PROPERTY_OFFSET_VALUE) as *const BindingPattern<'a>)
+            })),
+            BINDING_PROPERTY_OFFSET_VALUE => None,
+            _ => panic!("Invalid field offset: {}", offset),
+        }
+    }
 }
+
 impl<'a> AstNode<'a, ArrayPattern<'a>> {
     #[inline]
     pub fn span(&self) -> Span {
@@ -3430,7 +5102,15 @@ impl<'a> AstNode<'a, ArrayPattern<'a>> {
             }))
             .as_ref()
     }
+
+    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
+        None
+    }
 }
+
+const BINDING_REST_ELEMENT_OFFSET_ARGUMENT: usize =
+    std::mem::offset_of!(BindingRestElement, argument);
+
 impl<'a> AstNode<'a, BindingRestElement<'a>> {
     #[inline]
     pub fn span(&self) -> Span {
@@ -3445,7 +5125,21 @@ impl<'a> AstNode<'a, BindingRestElement<'a>> {
             parent: self.allocator.alloc(AstNodes::BindingRestElement(transmute_self(self))),
         })
     }
+
+    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
+        let inner_ptr = unsafe { self.parent.inner_ptr() };
+        let offset =
+            unsafe { (self.inner as *const _ as *const u8).offset_from_unsigned(inner_ptr) };
+        match offset {
+            BINDING_REST_ELEMENT_OFFSET_ARGUMENT => None,
+            _ => panic!("Invalid field offset: {}", offset),
+        }
+    }
 }
+
+const FUNCTION_OFFSET_ID: usize = std::mem::offset_of!(Function, id);
+const FUNCTION_OFFSET_PARAMS: usize = std::mem::offset_of!(Function, params);
+
 impl<'a> AstNode<'a, Function<'a>> {
     #[inline]
     pub fn span(&self) -> Span {
@@ -3540,7 +5234,27 @@ impl<'a> AstNode<'a, Function<'a>> {
     pub fn pure(&self) -> bool {
         self.inner.pure
     }
+
+    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
+        let inner_ptr = unsafe { self.parent.inner_ptr() };
+        let offset =
+            unsafe { (self.inner as *const _ as *const u8).offset_from_unsigned(inner_ptr) };
+        match offset {
+            FUNCTION_OFFSET_ID => Some(FollowingNode::FormalParameters(
+                unsafe {
+                    &*(inner_ptr.add(FUNCTION_OFFSET_PARAMS)
+                        as *const Box<'a, FormalParameters<'a>>)
+                }
+                .as_ref(),
+            )),
+            FUNCTION_OFFSET_PARAMS => None,
+            _ => panic!("Invalid field offset: {}", offset),
+        }
+    }
 }
+
+const FORMAL_PARAMETERS_OFFSET_ITEMS: usize = std::mem::offset_of!(FormalParameters, items);
+
 impl<'a> AstNode<'a, FormalParameters<'a>> {
     #[inline]
     pub fn span(&self) -> Span {
@@ -3571,7 +5285,21 @@ impl<'a> AstNode<'a, FormalParameters<'a>> {
             }))
             .as_ref()
     }
+
+    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
+        let inner_ptr = unsafe { self.parent.inner_ptr() };
+        let offset =
+            unsafe { (self.inner as *const _ as *const u8).offset_from_unsigned(inner_ptr) };
+        match offset {
+            FORMAL_PARAMETERS_OFFSET_ITEMS => None,
+            _ => panic!("Invalid field offset: {}", offset),
+        }
+    }
 }
+
+const FORMAL_PARAMETER_OFFSET_DECORATORS: usize = std::mem::offset_of!(FormalParameter, decorators);
+const FORMAL_PARAMETER_OFFSET_PATTERN: usize = std::mem::offset_of!(FormalParameter, pattern);
+
 impl<'a> AstNode<'a, FormalParameter<'a>> {
     #[inline]
     pub fn span(&self) -> Span {
@@ -3610,7 +5338,24 @@ impl<'a> AstNode<'a, FormalParameter<'a>> {
     pub fn r#override(&self) -> bool {
         self.inner.r#override
     }
+
+    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
+        let inner_ptr = unsafe { self.parent.inner_ptr() };
+        let offset =
+            unsafe { (self.inner as *const _ as *const u8).offset_from_unsigned(inner_ptr) };
+        match offset {
+            FORMAL_PARAMETER_OFFSET_DECORATORS => Some(FollowingNode::BindingPattern(unsafe {
+                &*(inner_ptr.add(FORMAL_PARAMETER_OFFSET_PATTERN) as *const BindingPattern<'a>)
+            })),
+            FORMAL_PARAMETER_OFFSET_PATTERN => None,
+            _ => panic!("Invalid field offset: {}", offset),
+        }
+    }
 }
+
+const FUNCTION_BODY_OFFSET_DIRECTIVES: usize = std::mem::offset_of!(FunctionBody, directives);
+const FUNCTION_BODY_OFFSET_STATEMENTS: usize = std::mem::offset_of!(FunctionBody, statements);
+
 impl<'a> AstNode<'a, FunctionBody<'a>> {
     #[inline]
     pub fn span(&self) -> Span {
@@ -3634,7 +5379,30 @@ impl<'a> AstNode<'a, FunctionBody<'a>> {
             parent: self.allocator.alloc(AstNodes::FunctionBody(transmute_self(self))),
         })
     }
+
+    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
+        let inner_ptr = unsafe { self.parent.inner_ptr() };
+        let offset =
+            unsafe { (self.inner as *const _ as *const u8).offset_from_unsigned(inner_ptr) };
+        match offset {
+            FUNCTION_BODY_OFFSET_DIRECTIVES => (unsafe {
+                &*(inner_ptr.add(FUNCTION_BODY_OFFSET_STATEMENTS) as *const Vec<'a, Statement<'a>>)
+            })
+            .first()
+            .as_ref()
+            .copied()
+            .map(FollowingNode::Statement),
+            FUNCTION_BODY_OFFSET_STATEMENTS => None,
+            _ => panic!("Invalid field offset: {}", offset),
+        }
+    }
 }
+
+const ARROW_FUNCTION_EXPRESSION_OFFSET_PARAMS: usize =
+    std::mem::offset_of!(ArrowFunctionExpression, params);
+const ARROW_FUNCTION_EXPRESSION_OFFSET_BODY: usize =
+    std::mem::offset_of!(ArrowFunctionExpression, body);
+
 impl<'a> AstNode<'a, ArrowFunctionExpression<'a>> {
     #[inline]
     pub fn span(&self) -> Span {
@@ -3697,7 +5465,27 @@ impl<'a> AstNode<'a, ArrowFunctionExpression<'a>> {
     pub fn pure(&self) -> bool {
         self.inner.pure
     }
+
+    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
+        let inner_ptr = unsafe { self.parent.inner_ptr() };
+        let offset =
+            unsafe { (self.inner as *const _ as *const u8).offset_from_unsigned(inner_ptr) };
+        match offset {
+            ARROW_FUNCTION_EXPRESSION_OFFSET_PARAMS => Some(FollowingNode::FunctionBody(
+                unsafe {
+                    &*(inner_ptr.add(ARROW_FUNCTION_EXPRESSION_OFFSET_BODY)
+                        as *const Box<'a, FunctionBody<'a>>)
+                }
+                .as_ref(),
+            )),
+            ARROW_FUNCTION_EXPRESSION_OFFSET_BODY => None,
+            _ => panic!("Invalid field offset: {}", offset),
+        }
+    }
 }
+
+const YIELD_EXPRESSION_OFFSET_ARGUMENT: usize = std::mem::offset_of!(YieldExpression, argument);
+
 impl<'a> AstNode<'a, YieldExpression<'a>> {
     #[inline]
     pub fn span(&self) -> Span {
@@ -3719,7 +5507,24 @@ impl<'a> AstNode<'a, YieldExpression<'a>> {
             }))
             .as_ref()
     }
+
+    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
+        let inner_ptr = unsafe { self.parent.inner_ptr() };
+        let offset =
+            unsafe { (self.inner as *const _ as *const u8).offset_from_unsigned(inner_ptr) };
+        match offset {
+            YIELD_EXPRESSION_OFFSET_ARGUMENT => None,
+            _ => panic!("Invalid field offset: {}", offset),
+        }
+    }
 }
+
+const CLASS_OFFSET_DECORATORS: usize = std::mem::offset_of!(Class, decorators);
+const CLASS_OFFSET_ID: usize = std::mem::offset_of!(Class, id);
+const CLASS_OFFSET_SUPERCLASS: usize = std::mem::offset_of!(Class, super_class);
+const CLASS_OFFSET_IMPLEMENTS: usize = std::mem::offset_of!(Class, implements);
+const CLASS_OFFSET_BODY: usize = std::mem::offset_of!(Class, body);
+
 impl<'a> AstNode<'a, Class<'a>> {
     #[inline]
     pub fn span(&self) -> Span {
@@ -3811,7 +5616,41 @@ impl<'a> AstNode<'a, Class<'a>> {
     pub fn declare(&self) -> bool {
         self.inner.declare
     }
+
+    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
+        let inner_ptr = unsafe { self.parent.inner_ptr() };
+        let offset =
+            unsafe { (self.inner as *const _ as *const u8).offset_from_unsigned(inner_ptr) };
+        match offset {
+            CLASS_OFFSET_DECORATORS => (unsafe {
+                &*(inner_ptr.add(CLASS_OFFSET_ID) as *const Option<BindingIdentifier<'a>>)
+            })
+            .as_ref()
+            .map(FollowingNode::BindingIdentifier),
+            CLASS_OFFSET_ID => (unsafe {
+                &*(inner_ptr.add(CLASS_OFFSET_SUPERCLASS) as *const Option<Expression<'a>>)
+            })
+            .as_ref()
+            .map(FollowingNode::Expression),
+            CLASS_OFFSET_SUPERCLASS => (unsafe {
+                &*(inner_ptr.add(CLASS_OFFSET_IMPLEMENTS) as *const Vec<'a, TSClassImplements<'a>>)
+            })
+            .first()
+            .as_ref()
+            .copied()
+            .map(FollowingNode::TSClassImplements),
+            CLASS_OFFSET_IMPLEMENTS => Some(FollowingNode::ClassBody(
+                unsafe { &*(inner_ptr.add(CLASS_OFFSET_BODY) as *const Box<'a, ClassBody<'a>>) }
+                    .as_ref(),
+            )),
+            CLASS_OFFSET_BODY => None,
+            _ => panic!("Invalid field offset: {}", offset),
+        }
+    }
 }
+
+const CLASS_BODY_OFFSET_BODY: usize = std::mem::offset_of!(ClassBody, body);
+
 impl<'a> AstNode<'a, ClassBody<'a>> {
     #[inline]
     pub fn span(&self) -> Span {
@@ -3825,6 +5664,16 @@ impl<'a> AstNode<'a, ClassBody<'a>> {
             allocator: self.allocator,
             parent: self.allocator.alloc(AstNodes::ClassBody(transmute_self(self))),
         })
+    }
+
+    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
+        let inner_ptr = unsafe { self.parent.inner_ptr() };
+        let offset =
+            unsafe { (self.inner as *const _ as *const u8).offset_from_unsigned(inner_ptr) };
+        match offset {
+            CLASS_BODY_OFFSET_BODY => None,
+            _ => panic!("Invalid field offset: {}", offset),
+        }
     }
 }
 
@@ -3873,6 +5722,12 @@ impl<'a> GetSpan for AstNode<'a, ClassElement<'a>> {
         self.inner.span()
     }
 }
+
+const METHOD_DEFINITION_OFFSET_DECORATORS: usize =
+    std::mem::offset_of!(MethodDefinition, decorators);
+const METHOD_DEFINITION_OFFSET_KEY: usize = std::mem::offset_of!(MethodDefinition, key);
+const METHOD_DEFINITION_OFFSET_VALUE: usize = std::mem::offset_of!(MethodDefinition, value);
+
 impl<'a> AstNode<'a, MethodDefinition<'a>> {
     #[inline]
     pub fn span(&self) -> Span {
@@ -3940,7 +5795,33 @@ impl<'a> AstNode<'a, MethodDefinition<'a>> {
     pub fn accessibility(&self) -> Option<TSAccessibility> {
         self.inner.accessibility
     }
+
+    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
+        let inner_ptr = unsafe { self.parent.inner_ptr() };
+        let offset =
+            unsafe { (self.inner as *const _ as *const u8).offset_from_unsigned(inner_ptr) };
+        match offset {
+            METHOD_DEFINITION_OFFSET_DECORATORS => Some(FollowingNode::PropertyKey(unsafe {
+                &*(inner_ptr.add(METHOD_DEFINITION_OFFSET_KEY) as *const PropertyKey<'a>)
+            })),
+            METHOD_DEFINITION_OFFSET_KEY => Some(FollowingNode::Function(
+                unsafe {
+                    &*(inner_ptr.add(METHOD_DEFINITION_OFFSET_VALUE)
+                        as *const Box<'a, Function<'a>>)
+                }
+                .as_ref(),
+            )),
+            METHOD_DEFINITION_OFFSET_VALUE => None,
+            _ => panic!("Invalid field offset: {}", offset),
+        }
+    }
 }
+
+const PROPERTY_DEFINITION_OFFSET_DECORATORS: usize =
+    std::mem::offset_of!(PropertyDefinition, decorators);
+const PROPERTY_DEFINITION_OFFSET_KEY: usize = std::mem::offset_of!(PropertyDefinition, key);
+const PROPERTY_DEFINITION_OFFSET_VALUE: usize = std::mem::offset_of!(PropertyDefinition, value);
+
 impl<'a> AstNode<'a, PropertyDefinition<'a>> {
     #[inline]
     pub fn span(&self) -> Span {
@@ -4031,7 +5912,26 @@ impl<'a> AstNode<'a, PropertyDefinition<'a>> {
     pub fn accessibility(&self) -> Option<TSAccessibility> {
         self.inner.accessibility
     }
+
+    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
+        let inner_ptr = unsafe { self.parent.inner_ptr() };
+        let offset =
+            unsafe { (self.inner as *const _ as *const u8).offset_from_unsigned(inner_ptr) };
+        match offset {
+            PROPERTY_DEFINITION_OFFSET_DECORATORS => Some(FollowingNode::PropertyKey(unsafe {
+                &*(inner_ptr.add(PROPERTY_DEFINITION_OFFSET_KEY) as *const PropertyKey<'a>)
+            })),
+            PROPERTY_DEFINITION_OFFSET_KEY => (unsafe {
+                &*(inner_ptr.add(PROPERTY_DEFINITION_OFFSET_VALUE) as *const Option<Expression<'a>>)
+            })
+            .as_ref()
+            .map(FollowingNode::Expression),
+            PROPERTY_DEFINITION_OFFSET_VALUE => None,
+            _ => panic!("Invalid field offset: {}", offset),
+        }
+    }
 }
+
 impl<'a> AstNode<'a, PrivateIdentifier<'a>> {
     #[inline]
     pub fn span(&self) -> Span {
@@ -4042,7 +5942,14 @@ impl<'a> AstNode<'a, PrivateIdentifier<'a>> {
     pub fn name(&self) -> Atom<'a> {
         self.inner.name
     }
+
+    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
+        None
+    }
 }
+
+const STATIC_BLOCK_OFFSET_BODY: usize = std::mem::offset_of!(StaticBlock, body);
+
 impl<'a> AstNode<'a, StaticBlock<'a>> {
     #[inline]
     pub fn span(&self) -> Span {
@@ -4056,6 +5963,16 @@ impl<'a> AstNode<'a, StaticBlock<'a>> {
             allocator: self.allocator,
             parent: self.allocator.alloc(AstNodes::StaticBlock(transmute_self(self))),
         })
+    }
+
+    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
+        let inner_ptr = unsafe { self.parent.inner_ptr() };
+        let offset =
+            unsafe { (self.inner as *const _ as *const u8).offset_from_unsigned(inner_ptr) };
+        match offset {
+            STATIC_BLOCK_OFFSET_BODY => None,
+            _ => panic!("Invalid field offset: {}", offset),
+        }
     }
 }
 
@@ -4115,6 +6032,12 @@ impl<'a> GetSpan for AstNode<'a, ModuleDeclaration<'a>> {
         self.inner.span()
     }
 }
+
+const ACCESSOR_PROPERTY_OFFSET_DECORATORS: usize =
+    std::mem::offset_of!(AccessorProperty, decorators);
+const ACCESSOR_PROPERTY_OFFSET_KEY: usize = std::mem::offset_of!(AccessorProperty, key);
+const ACCESSOR_PROPERTY_OFFSET_VALUE: usize = std::mem::offset_of!(AccessorProperty, value);
+
 impl<'a> AstNode<'a, AccessorProperty<'a>> {
     #[inline]
     pub fn span(&self) -> Span {
@@ -4190,7 +6113,29 @@ impl<'a> AstNode<'a, AccessorProperty<'a>> {
     pub fn accessibility(&self) -> Option<TSAccessibility> {
         self.inner.accessibility
     }
+
+    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
+        let inner_ptr = unsafe { self.parent.inner_ptr() };
+        let offset =
+            unsafe { (self.inner as *const _ as *const u8).offset_from_unsigned(inner_ptr) };
+        match offset {
+            ACCESSOR_PROPERTY_OFFSET_DECORATORS => Some(FollowingNode::PropertyKey(unsafe {
+                &*(inner_ptr.add(ACCESSOR_PROPERTY_OFFSET_KEY) as *const PropertyKey<'a>)
+            })),
+            ACCESSOR_PROPERTY_OFFSET_KEY => (unsafe {
+                &*(inner_ptr.add(ACCESSOR_PROPERTY_OFFSET_VALUE) as *const Option<Expression<'a>>)
+            })
+            .as_ref()
+            .map(FollowingNode::Expression),
+            ACCESSOR_PROPERTY_OFFSET_VALUE => None,
+            _ => panic!("Invalid field offset: {}", offset),
+        }
+    }
 }
+
+const IMPORT_EXPRESSION_OFFSET_SOURCE: usize = std::mem::offset_of!(ImportExpression, source);
+const IMPORT_EXPRESSION_OFFSET_OPTIONS: usize = std::mem::offset_of!(ImportExpression, options);
+
 impl<'a> AstNode<'a, ImportExpression<'a>> {
     #[inline]
     pub fn span(&self) -> Span {
@@ -4221,7 +6166,25 @@ impl<'a> AstNode<'a, ImportExpression<'a>> {
     pub fn phase(&self) -> Option<ImportPhase> {
         self.inner.phase
     }
+
+    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
+        let inner_ptr = unsafe { self.parent.inner_ptr() };
+        let offset =
+            unsafe { (self.inner as *const _ as *const u8).offset_from_unsigned(inner_ptr) };
+        match offset {
+            IMPORT_EXPRESSION_OFFSET_SOURCE => (unsafe {
+                &*(inner_ptr.add(IMPORT_EXPRESSION_OFFSET_OPTIONS) as *const Option<Expression<'a>>)
+            })
+            .as_ref()
+            .map(FollowingNode::Expression),
+            IMPORT_EXPRESSION_OFFSET_OPTIONS => None,
+            _ => panic!("Invalid field offset: {}", offset),
+        }
+    }
 }
+
+const IMPORT_DECLARATION_OFFSET_SOURCE: usize = std::mem::offset_of!(ImportDeclaration, source);
+
 impl<'a> AstNode<'a, ImportDeclaration<'a>> {
     #[inline]
     pub fn span(&self) -> Span {
@@ -4268,6 +6231,16 @@ impl<'a> AstNode<'a, ImportDeclaration<'a>> {
     pub fn import_kind(&self) -> ImportOrExportKind {
         self.inner.import_kind
     }
+
+    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
+        let inner_ptr = unsafe { self.parent.inner_ptr() };
+        let offset =
+            unsafe { (self.inner as *const _ as *const u8).offset_from_unsigned(inner_ptr) };
+        match offset {
+            IMPORT_DECLARATION_OFFSET_SOURCE => None,
+            _ => panic!("Invalid field offset: {}", offset),
+        }
+    }
 }
 
 impl<'a> AstNode<'a, ImportDeclarationSpecifier<'a>> {
@@ -4307,6 +6280,10 @@ impl<'a> GetSpan for AstNode<'a, ImportDeclarationSpecifier<'a>> {
         self.inner.span()
     }
 }
+
+const IMPORT_SPECIFIER_OFFSET_IMPORTED: usize = std::mem::offset_of!(ImportSpecifier, imported);
+const IMPORT_SPECIFIER_OFFSET_LOCAL: usize = std::mem::offset_of!(ImportSpecifier, local);
+
 impl<'a> AstNode<'a, ImportSpecifier<'a>> {
     #[inline]
     pub fn span(&self) -> Span {
@@ -4335,7 +6312,24 @@ impl<'a> AstNode<'a, ImportSpecifier<'a>> {
     pub fn import_kind(&self) -> ImportOrExportKind {
         self.inner.import_kind
     }
+
+    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
+        let inner_ptr = unsafe { self.parent.inner_ptr() };
+        let offset =
+            unsafe { (self.inner as *const _ as *const u8).offset_from_unsigned(inner_ptr) };
+        match offset {
+            IMPORT_SPECIFIER_OFFSET_IMPORTED => Some(FollowingNode::BindingIdentifier(unsafe {
+                &*(inner_ptr.add(IMPORT_SPECIFIER_OFFSET_LOCAL) as *const BindingIdentifier<'a>)
+            })),
+            IMPORT_SPECIFIER_OFFSET_LOCAL => None,
+            _ => panic!("Invalid field offset: {}", offset),
+        }
+    }
 }
+
+const IMPORT_DEFAULT_SPECIFIER_OFFSET_LOCAL: usize =
+    std::mem::offset_of!(ImportDefaultSpecifier, local);
+
 impl<'a> AstNode<'a, ImportDefaultSpecifier<'a>> {
     #[inline]
     pub fn span(&self) -> Span {
@@ -4350,7 +6344,21 @@ impl<'a> AstNode<'a, ImportDefaultSpecifier<'a>> {
             parent: self.allocator.alloc(AstNodes::ImportDefaultSpecifier(transmute_self(self))),
         })
     }
+
+    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
+        let inner_ptr = unsafe { self.parent.inner_ptr() };
+        let offset =
+            unsafe { (self.inner as *const _ as *const u8).offset_from_unsigned(inner_ptr) };
+        match offset {
+            IMPORT_DEFAULT_SPECIFIER_OFFSET_LOCAL => None,
+            _ => panic!("Invalid field offset: {}", offset),
+        }
+    }
 }
+
+const IMPORT_NAMESPACE_SPECIFIER_OFFSET_LOCAL: usize =
+    std::mem::offset_of!(ImportNamespaceSpecifier, local);
+
 impl<'a> AstNode<'a, ImportNamespaceSpecifier<'a>> {
     #[inline]
     pub fn span(&self) -> Span {
@@ -4365,7 +6373,22 @@ impl<'a> AstNode<'a, ImportNamespaceSpecifier<'a>> {
             parent: self.allocator.alloc(AstNodes::ImportNamespaceSpecifier(transmute_self(self))),
         })
     }
+
+    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
+        let inner_ptr = unsafe { self.parent.inner_ptr() };
+        let offset =
+            unsafe { (self.inner as *const _ as *const u8).offset_from_unsigned(inner_ptr) };
+        match offset {
+            IMPORT_NAMESPACE_SPECIFIER_OFFSET_LOCAL => None,
+            _ => panic!("Invalid field offset: {}", offset),
+        }
+    }
 }
+
+const WITH_CLAUSE_OFFSET_ATTRIBUTESKEYWORD: usize =
+    std::mem::offset_of!(WithClause, attributes_keyword);
+const WITH_CLAUSE_OFFSET_WITHENTRIES: usize = std::mem::offset_of!(WithClause, with_entries);
+
 impl<'a> AstNode<'a, WithClause<'a>> {
     #[inline]
     pub fn span(&self) -> Span {
@@ -4389,7 +6412,29 @@ impl<'a> AstNode<'a, WithClause<'a>> {
             parent: self.parent,
         })
     }
+
+    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
+        let inner_ptr = unsafe { self.parent.inner_ptr() };
+        let offset =
+            unsafe { (self.inner as *const _ as *const u8).offset_from_unsigned(inner_ptr) };
+        match offset {
+            WITH_CLAUSE_OFFSET_ATTRIBUTESKEYWORD => (unsafe {
+                &*(inner_ptr.add(WITH_CLAUSE_OFFSET_WITHENTRIES)
+                    as *const Vec<'a, ImportAttribute<'a>>)
+            })
+            .first()
+            .as_ref()
+            .copied()
+            .map(FollowingNode::ImportAttribute),
+            WITH_CLAUSE_OFFSET_WITHENTRIES => None,
+            _ => panic!("Invalid field offset: {}", offset),
+        }
+    }
 }
+
+const IMPORT_ATTRIBUTE_OFFSET_KEY: usize = std::mem::offset_of!(ImportAttribute, key);
+const IMPORT_ATTRIBUTE_OFFSET_VALUE: usize = std::mem::offset_of!(ImportAttribute, value);
+
 impl<'a> AstNode<'a, ImportAttribute<'a>> {
     #[inline]
     pub fn span(&self) -> Span {
@@ -4412,6 +6457,19 @@ impl<'a> AstNode<'a, ImportAttribute<'a>> {
             allocator: self.allocator,
             parent: self.parent,
         })
+    }
+
+    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
+        let inner_ptr = unsafe { self.parent.inner_ptr() };
+        let offset =
+            unsafe { (self.inner as *const _ as *const u8).offset_from_unsigned(inner_ptr) };
+        match offset {
+            IMPORT_ATTRIBUTE_OFFSET_KEY => Some(FollowingNode::StringLiteral(unsafe {
+                &*(inner_ptr.add(IMPORT_ATTRIBUTE_OFFSET_VALUE) as *const StringLiteral<'a>)
+            })),
+            IMPORT_ATTRIBUTE_OFFSET_VALUE => None,
+            _ => panic!("Invalid field offset: {}", offset),
+        }
     }
 }
 
@@ -4445,6 +6503,14 @@ impl<'a> GetSpan for AstNode<'a, ImportAttributeKey<'a>> {
         self.inner.span()
     }
 }
+
+const EXPORT_NAMED_DECLARATION_OFFSET_DECLARATION: usize =
+    std::mem::offset_of!(ExportNamedDeclaration, declaration);
+const EXPORT_NAMED_DECLARATION_OFFSET_SPECIFIERS: usize =
+    std::mem::offset_of!(ExportNamedDeclaration, specifiers);
+const EXPORT_NAMED_DECLARATION_OFFSET_SOURCE: usize =
+    std::mem::offset_of!(ExportNamedDeclaration, source);
+
 impl<'a> AstNode<'a, ExportNamedDeclaration<'a>> {
     #[inline]
     pub fn span(&self) -> Span {
@@ -4500,7 +6566,37 @@ impl<'a> AstNode<'a, ExportNamedDeclaration<'a>> {
             }))
             .as_ref()
     }
+
+    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
+        let inner_ptr = unsafe { self.parent.inner_ptr() };
+        let offset =
+            unsafe { (self.inner as *const _ as *const u8).offset_from_unsigned(inner_ptr) };
+        match offset {
+            EXPORT_NAMED_DECLARATION_OFFSET_DECLARATION => (unsafe {
+                &*(inner_ptr.add(EXPORT_NAMED_DECLARATION_OFFSET_SPECIFIERS)
+                    as *const Vec<'a, ExportSpecifier<'a>>)
+            })
+            .first()
+            .as_ref()
+            .copied()
+            .map(FollowingNode::ExportSpecifier),
+            EXPORT_NAMED_DECLARATION_OFFSET_SPECIFIERS => (unsafe {
+                &*(inner_ptr.add(EXPORT_NAMED_DECLARATION_OFFSET_SOURCE)
+                    as *const Option<StringLiteral<'a>>)
+            })
+            .as_ref()
+            .map(FollowingNode::StringLiteral),
+            EXPORT_NAMED_DECLARATION_OFFSET_SOURCE => None,
+            _ => panic!("Invalid field offset: {}", offset),
+        }
+    }
 }
+
+const EXPORT_DEFAULT_DECLARATION_OFFSET_EXPORTED: usize =
+    std::mem::offset_of!(ExportDefaultDeclaration, exported);
+const EXPORT_DEFAULT_DECLARATION_OFFSET_DECLARATION: usize =
+    std::mem::offset_of!(ExportDefaultDeclaration, declaration);
+
 impl<'a> AstNode<'a, ExportDefaultDeclaration<'a>> {
     #[inline]
     pub fn span(&self) -> Span {
@@ -4524,7 +6620,29 @@ impl<'a> AstNode<'a, ExportDefaultDeclaration<'a>> {
             parent: self.allocator.alloc(AstNodes::ExportDefaultDeclaration(transmute_self(self))),
         })
     }
+
+    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
+        let inner_ptr = unsafe { self.parent.inner_ptr() };
+        let offset =
+            unsafe { (self.inner as *const _ as *const u8).offset_from_unsigned(inner_ptr) };
+        match offset {
+            EXPORT_DEFAULT_DECLARATION_OFFSET_EXPORTED => {
+                Some(FollowingNode::ExportDefaultDeclarationKind(unsafe {
+                    &*(inner_ptr.add(EXPORT_DEFAULT_DECLARATION_OFFSET_DECLARATION)
+                        as *const ExportDefaultDeclarationKind<'a>)
+                }))
+            }
+            EXPORT_DEFAULT_DECLARATION_OFFSET_DECLARATION => None,
+            _ => panic!("Invalid field offset: {}", offset),
+        }
+    }
 }
+
+const EXPORT_ALL_DECLARATION_OFFSET_EXPORTED: usize =
+    std::mem::offset_of!(ExportAllDeclaration, exported);
+const EXPORT_ALL_DECLARATION_OFFSET_SOURCE: usize =
+    std::mem::offset_of!(ExportAllDeclaration, source);
+
 impl<'a> AstNode<'a, ExportAllDeclaration<'a>> {
     #[inline]
     pub fn span(&self) -> Span {
@@ -4566,7 +6684,24 @@ impl<'a> AstNode<'a, ExportAllDeclaration<'a>> {
     pub fn export_kind(&self) -> ImportOrExportKind {
         self.inner.export_kind
     }
+
+    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
+        let inner_ptr = unsafe { self.parent.inner_ptr() };
+        let offset =
+            unsafe { (self.inner as *const _ as *const u8).offset_from_unsigned(inner_ptr) };
+        match offset {
+            EXPORT_ALL_DECLARATION_OFFSET_EXPORTED => Some(FollowingNode::StringLiteral(unsafe {
+                &*(inner_ptr.add(EXPORT_ALL_DECLARATION_OFFSET_SOURCE) as *const StringLiteral<'a>)
+            })),
+            EXPORT_ALL_DECLARATION_OFFSET_SOURCE => None,
+            _ => panic!("Invalid field offset: {}", offset),
+        }
+    }
 }
+
+const EXPORT_SPECIFIER_OFFSET_LOCAL: usize = std::mem::offset_of!(ExportSpecifier, local);
+const EXPORT_SPECIFIER_OFFSET_EXPORTED: usize = std::mem::offset_of!(ExportSpecifier, exported);
+
 impl<'a> AstNode<'a, ExportSpecifier<'a>> {
     #[inline]
     pub fn span(&self) -> Span {
@@ -4594,6 +6729,19 @@ impl<'a> AstNode<'a, ExportSpecifier<'a>> {
     #[inline]
     pub fn export_kind(&self) -> ImportOrExportKind {
         self.inner.export_kind
+    }
+
+    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
+        let inner_ptr = unsafe { self.parent.inner_ptr() };
+        let offset =
+            unsafe { (self.inner as *const _ as *const u8).offset_from_unsigned(inner_ptr) };
+        match offset {
+            EXPORT_SPECIFIER_OFFSET_LOCAL => Some(FollowingNode::ModuleExportName(unsafe {
+                &*(inner_ptr.add(EXPORT_SPECIFIER_OFFSET_EXPORTED) as *const ModuleExportName<'a>)
+            })),
+            EXPORT_SPECIFIER_OFFSET_EXPORTED => None,
+            _ => panic!("Invalid field offset: {}", offset),
+        }
     }
 }
 
@@ -4678,6 +6826,12 @@ impl<'a> GetSpan for AstNode<'a, ModuleExportName<'a>> {
         self.inner.span()
     }
 }
+
+const V_8_INTRINSIC_EXPRESSION_OFFSET_NAME: usize =
+    std::mem::offset_of!(V8IntrinsicExpression, name);
+const V_8_INTRINSIC_EXPRESSION_OFFSET_ARGUMENTS: usize =
+    std::mem::offset_of!(V8IntrinsicExpression, arguments);
+
 impl<'a> AstNode<'a, V8IntrinsicExpression<'a>> {
     #[inline]
     pub fn span(&self) -> Span {
@@ -4701,7 +6855,26 @@ impl<'a> AstNode<'a, V8IntrinsicExpression<'a>> {
             parent: self.allocator.alloc(AstNodes::V8IntrinsicExpression(transmute_self(self))),
         })
     }
+
+    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
+        let inner_ptr = unsafe { self.parent.inner_ptr() };
+        let offset =
+            unsafe { (self.inner as *const _ as *const u8).offset_from_unsigned(inner_ptr) };
+        match offset {
+            V_8_INTRINSIC_EXPRESSION_OFFSET_NAME => (unsafe {
+                &*(inner_ptr.add(V_8_INTRINSIC_EXPRESSION_OFFSET_ARGUMENTS)
+                    as *const Vec<'a, Argument<'a>>)
+            })
+            .first()
+            .as_ref()
+            .copied()
+            .map(FollowingNode::Argument),
+            V_8_INTRINSIC_EXPRESSION_OFFSET_ARGUMENTS => None,
+            _ => panic!("Invalid field offset: {}", offset),
+        }
+    }
 }
+
 impl<'a> AstNode<'a, BooleanLiteral> {
     #[inline]
     pub fn span(&self) -> Span {
@@ -4712,13 +6885,23 @@ impl<'a> AstNode<'a, BooleanLiteral> {
     pub fn value(&self) -> bool {
         self.inner.value
     }
+
+    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
+        None
+    }
 }
+
 impl<'a> AstNode<'a, NullLiteral> {
     #[inline]
     pub fn span(&self) -> Span {
         self.inner.span
     }
+
+    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
+        None
+    }
 }
+
 impl<'a> AstNode<'a, NumericLiteral<'a>> {
     #[inline]
     pub fn span(&self) -> Span {
@@ -4739,7 +6922,12 @@ impl<'a> AstNode<'a, NumericLiteral<'a>> {
     pub fn base(&self) -> NumberBase {
         self.inner.base
     }
+
+    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
+        None
+    }
 }
+
 impl<'a> AstNode<'a, StringLiteral<'a>> {
     #[inline]
     pub fn span(&self) -> Span {
@@ -4760,7 +6948,12 @@ impl<'a> AstNode<'a, StringLiteral<'a>> {
     pub fn lone_surrogates(&self) -> bool {
         self.inner.lone_surrogates
     }
+
+    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
+        None
+    }
 }
+
 impl<'a> AstNode<'a, BigIntLiteral<'a>> {
     #[inline]
     pub fn span(&self) -> Span {
@@ -4781,7 +6974,12 @@ impl<'a> AstNode<'a, BigIntLiteral<'a>> {
     pub fn base(&self) -> BigintBase {
         self.inner.base
     }
+
+    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
+        None
+    }
 }
+
 impl<'a> AstNode<'a, RegExpLiteral<'a>> {
     #[inline]
     pub fn span(&self) -> Span {
@@ -4797,7 +6995,15 @@ impl<'a> AstNode<'a, RegExpLiteral<'a>> {
     pub fn raw(&self) -> Option<Atom<'a>> {
         self.inner.raw
     }
+
+    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
+        None
+    }
 }
+
+const JSX_ELEMENT_OFFSET_OPENINGELEMENT: usize = std::mem::offset_of!(JSXElement, opening_element);
+const JSX_ELEMENT_OFFSET_CHILDREN: usize = std::mem::offset_of!(JSXElement, children);
+
 impl<'a> AstNode<'a, JSXElement<'a>> {
     #[inline]
     pub fn span(&self) -> Span {
@@ -4832,7 +7038,29 @@ impl<'a> AstNode<'a, JSXElement<'a>> {
             }))
             .as_ref()
     }
+
+    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
+        let inner_ptr = unsafe { self.parent.inner_ptr() };
+        let offset =
+            unsafe { (self.inner as *const _ as *const u8).offset_from_unsigned(inner_ptr) };
+        match offset {
+            JSX_ELEMENT_OFFSET_OPENINGELEMENT => (unsafe {
+                &*(inner_ptr.add(JSX_ELEMENT_OFFSET_CHILDREN) as *const Vec<'a, JSXChild<'a>>)
+            })
+            .first()
+            .as_ref()
+            .copied()
+            .map(FollowingNode::JSXChild),
+            JSX_ELEMENT_OFFSET_CHILDREN => None,
+            _ => panic!("Invalid field offset: {}", offset),
+        }
+    }
 }
+
+const JSX_OPENING_ELEMENT_OFFSET_NAME: usize = std::mem::offset_of!(JSXOpeningElement, name);
+const JSX_OPENING_ELEMENT_OFFSET_ATTRIBUTES: usize =
+    std::mem::offset_of!(JSXOpeningElement, attributes);
+
 impl<'a> AstNode<'a, JSXOpeningElement<'a>> {
     #[inline]
     pub fn span(&self) -> Span {
@@ -4867,7 +7095,28 @@ impl<'a> AstNode<'a, JSXOpeningElement<'a>> {
             parent: self.allocator.alloc(AstNodes::JSXOpeningElement(transmute_self(self))),
         })
     }
+
+    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
+        let inner_ptr = unsafe { self.parent.inner_ptr() };
+        let offset =
+            unsafe { (self.inner as *const _ as *const u8).offset_from_unsigned(inner_ptr) };
+        match offset {
+            JSX_OPENING_ELEMENT_OFFSET_NAME => (unsafe {
+                &*(inner_ptr.add(JSX_OPENING_ELEMENT_OFFSET_ATTRIBUTES)
+                    as *const Vec<'a, JSXAttributeItem<'a>>)
+            })
+            .first()
+            .as_ref()
+            .copied()
+            .map(FollowingNode::JSXAttributeItem),
+            JSX_OPENING_ELEMENT_OFFSET_ATTRIBUTES => None,
+            _ => panic!("Invalid field offset: {}", offset),
+        }
+    }
 }
+
+const JSX_CLOSING_ELEMENT_OFFSET_NAME: usize = std::mem::offset_of!(JSXClosingElement, name);
+
 impl<'a> AstNode<'a, JSXClosingElement<'a>> {
     #[inline]
     pub fn span(&self) -> Span {
@@ -4882,7 +7131,24 @@ impl<'a> AstNode<'a, JSXClosingElement<'a>> {
             parent: self.allocator.alloc(AstNodes::JSXClosingElement(transmute_self(self))),
         })
     }
+
+    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
+        let inner_ptr = unsafe { self.parent.inner_ptr() };
+        let offset =
+            unsafe { (self.inner as *const _ as *const u8).offset_from_unsigned(inner_ptr) };
+        match offset {
+            JSX_CLOSING_ELEMENT_OFFSET_NAME => None,
+            _ => panic!("Invalid field offset: {}", offset),
+        }
+    }
 }
+
+const JSX_FRAGMENT_OFFSET_OPENINGFRAGMENT: usize =
+    std::mem::offset_of!(JSXFragment, opening_fragment);
+const JSX_FRAGMENT_OFFSET_CHILDREN: usize = std::mem::offset_of!(JSXFragment, children);
+const JSX_FRAGMENT_OFFSET_CLOSINGFRAGMENT: usize =
+    std::mem::offset_of!(JSXFragment, closing_fragment);
+
 impl<'a> AstNode<'a, JSXFragment<'a>> {
     #[inline]
     pub fn span(&self) -> Span {
@@ -4915,17 +7181,47 @@ impl<'a> AstNode<'a, JSXFragment<'a>> {
             parent: self.allocator.alloc(AstNodes::JSXFragment(transmute_self(self))),
         })
     }
+
+    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
+        let inner_ptr = unsafe { self.parent.inner_ptr() };
+        let offset =
+            unsafe { (self.inner as *const _ as *const u8).offset_from_unsigned(inner_ptr) };
+        match offset {
+            JSX_FRAGMENT_OFFSET_OPENINGFRAGMENT => (unsafe {
+                &*(inner_ptr.add(JSX_FRAGMENT_OFFSET_CHILDREN) as *const Vec<'a, JSXChild<'a>>)
+            })
+            .first()
+            .as_ref()
+            .copied()
+            .map(FollowingNode::JSXChild),
+            JSX_FRAGMENT_OFFSET_CHILDREN => Some(FollowingNode::JSXClosingFragment(unsafe {
+                &*(inner_ptr.add(JSX_FRAGMENT_OFFSET_CLOSINGFRAGMENT) as *const JSXClosingFragment)
+            })),
+            JSX_FRAGMENT_OFFSET_CLOSINGFRAGMENT => None,
+            _ => panic!("Invalid field offset: {}", offset),
+        }
+    }
 }
+
 impl<'a> AstNode<'a, JSXOpeningFragment> {
     #[inline]
     pub fn span(&self) -> Span {
         self.inner.span
     }
+
+    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
+        None
+    }
 }
+
 impl<'a> AstNode<'a, JSXClosingFragment> {
     #[inline]
     pub fn span(&self) -> Span {
         self.inner.span
+    }
+
+    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
+        None
     }
 }
 
@@ -4980,6 +7276,11 @@ impl<'a> GetSpan for AstNode<'a, JSXElementName<'a>> {
         self.inner.span()
     }
 }
+
+const JSX_NAMESPACED_NAME_OFFSET_NAMESPACE: usize =
+    std::mem::offset_of!(JSXNamespacedName, namespace);
+const JSX_NAMESPACED_NAME_OFFSET_NAME: usize = std::mem::offset_of!(JSXNamespacedName, name);
+
 impl<'a> AstNode<'a, JSXNamespacedName<'a>> {
     #[inline]
     pub fn span(&self) -> Span {
@@ -5003,7 +7304,26 @@ impl<'a> AstNode<'a, JSXNamespacedName<'a>> {
             parent: self.allocator.alloc(AstNodes::JSXNamespacedName(transmute_self(self))),
         })
     }
+
+    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
+        let inner_ptr = unsafe { self.parent.inner_ptr() };
+        let offset =
+            unsafe { (self.inner as *const _ as *const u8).offset_from_unsigned(inner_ptr) };
+        match offset {
+            JSX_NAMESPACED_NAME_OFFSET_NAMESPACE => Some(FollowingNode::JSXIdentifier(unsafe {
+                &*(inner_ptr.add(JSX_NAMESPACED_NAME_OFFSET_NAME) as *const JSXIdentifier<'a>)
+            })),
+            JSX_NAMESPACED_NAME_OFFSET_NAME => None,
+            _ => panic!("Invalid field offset: {}", offset),
+        }
+    }
 }
+
+const JSX_MEMBER_EXPRESSION_OFFSET_OBJECT: usize =
+    std::mem::offset_of!(JSXMemberExpression, object);
+const JSX_MEMBER_EXPRESSION_OFFSET_PROPERTY: usize =
+    std::mem::offset_of!(JSXMemberExpression, property);
+
 impl<'a> AstNode<'a, JSXMemberExpression<'a>> {
     #[inline]
     pub fn span(&self) -> Span {
@@ -5026,6 +7346,19 @@ impl<'a> AstNode<'a, JSXMemberExpression<'a>> {
             allocator: self.allocator,
             parent: self.allocator.alloc(AstNodes::JSXMemberExpression(transmute_self(self))),
         })
+    }
+
+    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
+        let inner_ptr = unsafe { self.parent.inner_ptr() };
+        let offset =
+            unsafe { (self.inner as *const _ as *const u8).offset_from_unsigned(inner_ptr) };
+        match offset {
+            JSX_MEMBER_EXPRESSION_OFFSET_OBJECT => Some(FollowingNode::JSXIdentifier(unsafe {
+                &*(inner_ptr.add(JSX_MEMBER_EXPRESSION_OFFSET_PROPERTY) as *const JSXIdentifier<'a>)
+            })),
+            JSX_MEMBER_EXPRESSION_OFFSET_PROPERTY => None,
+            _ => panic!("Invalid field offset: {}", offset),
+        }
     }
 }
 
@@ -5066,6 +7399,10 @@ impl<'a> GetSpan for AstNode<'a, JSXMemberExpressionObject<'a>> {
         self.inner.span()
     }
 }
+
+const JSX_EXPRESSION_CONTAINER_OFFSET_EXPRESSION: usize =
+    std::mem::offset_of!(JSXExpressionContainer, expression);
+
 impl<'a> AstNode<'a, JSXExpressionContainer<'a>> {
     #[inline]
     pub fn span(&self) -> Span {
@@ -5079,6 +7416,16 @@ impl<'a> AstNode<'a, JSXExpressionContainer<'a>> {
             allocator: self.allocator,
             parent: self.allocator.alloc(AstNodes::JSXExpressionContainer(transmute_self(self))),
         })
+    }
+
+    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
+        let inner_ptr = unsafe { self.parent.inner_ptr() };
+        let offset =
+            unsafe { (self.inner as *const _ as *const u8).offset_from_unsigned(inner_ptr) };
+        match offset {
+            JSX_EXPRESSION_CONTAINER_OFFSET_EXPRESSION => None,
+            _ => panic!("Invalid field offset: {}", offset),
+        }
     }
 }
 
@@ -5111,10 +7458,15 @@ impl<'a> GetSpan for AstNode<'a, JSXExpression<'a>> {
         self.inner.span()
     }
 }
+
 impl<'a> AstNode<'a, JSXEmptyExpression> {
     #[inline]
     pub fn span(&self) -> Span {
         self.inner.span
+    }
+
+    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
+        None
     }
 }
 
@@ -5148,6 +7500,10 @@ impl<'a> GetSpan for AstNode<'a, JSXAttributeItem<'a>> {
         self.inner.span()
     }
 }
+
+const JSX_ATTRIBUTE_OFFSET_NAME: usize = std::mem::offset_of!(JSXAttribute, name);
+const JSX_ATTRIBUTE_OFFSET_VALUE: usize = std::mem::offset_of!(JSXAttribute, value);
+
 impl<'a> AstNode<'a, JSXAttribute<'a>> {
     #[inline]
     pub fn span(&self) -> Span {
@@ -5173,7 +7529,27 @@ impl<'a> AstNode<'a, JSXAttribute<'a>> {
             }))
             .as_ref()
     }
+
+    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
+        let inner_ptr = unsafe { self.parent.inner_ptr() };
+        let offset =
+            unsafe { (self.inner as *const _ as *const u8).offset_from_unsigned(inner_ptr) };
+        match offset {
+            JSX_ATTRIBUTE_OFFSET_NAME => (unsafe {
+                &*(inner_ptr.add(JSX_ATTRIBUTE_OFFSET_VALUE)
+                    as *const Option<JSXAttributeValue<'a>>)
+            })
+            .as_ref()
+            .map(FollowingNode::JSXAttributeValue),
+            JSX_ATTRIBUTE_OFFSET_VALUE => None,
+            _ => panic!("Invalid field offset: {}", offset),
+        }
+    }
 }
+
+const JSX_SPREAD_ATTRIBUTE_OFFSET_ARGUMENT: usize =
+    std::mem::offset_of!(JSXSpreadAttribute, argument);
+
 impl<'a> AstNode<'a, JSXSpreadAttribute<'a>> {
     #[inline]
     pub fn span(&self) -> Span {
@@ -5187,6 +7563,16 @@ impl<'a> AstNode<'a, JSXSpreadAttribute<'a>> {
             allocator: self.allocator,
             parent: self.allocator.alloc(AstNodes::JSXSpreadAttribute(transmute_self(self))),
         })
+    }
+
+    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
+        let inner_ptr = unsafe { self.parent.inner_ptr() };
+        let offset =
+            unsafe { (self.inner as *const _ as *const u8).offset_from_unsigned(inner_ptr) };
+        match offset {
+            JSX_SPREAD_ATTRIBUTE_OFFSET_ARGUMENT => None,
+            _ => panic!("Invalid field offset: {}", offset),
+        }
     }
 }
 
@@ -5263,6 +7649,7 @@ impl<'a> GetSpan for AstNode<'a, JSXAttributeValue<'a>> {
         self.inner.span()
     }
 }
+
 impl<'a> AstNode<'a, JSXIdentifier<'a>> {
     #[inline]
     pub fn span(&self) -> Span {
@@ -5272,6 +7659,10 @@ impl<'a> AstNode<'a, JSXIdentifier<'a>> {
     #[inline]
     pub fn name(&self) -> Atom<'a> {
         self.inner.name
+    }
+
+    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
+        None
     }
 }
 
@@ -5318,6 +7709,9 @@ impl<'a> GetSpan for AstNode<'a, JSXChild<'a>> {
         self.inner.span()
     }
 }
+
+const JSX_SPREAD_CHILD_OFFSET_EXPRESSION: usize = std::mem::offset_of!(JSXSpreadChild, expression);
+
 impl<'a> AstNode<'a, JSXSpreadChild<'a>> {
     #[inline]
     pub fn span(&self) -> Span {
@@ -5332,7 +7726,18 @@ impl<'a> AstNode<'a, JSXSpreadChild<'a>> {
             parent: self.allocator.alloc(AstNodes::JSXSpreadChild(transmute_self(self))),
         })
     }
+
+    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
+        let inner_ptr = unsafe { self.parent.inner_ptr() };
+        let offset =
+            unsafe { (self.inner as *const _ as *const u8).offset_from_unsigned(inner_ptr) };
+        match offset {
+            JSX_SPREAD_CHILD_OFFSET_EXPRESSION => None,
+            _ => panic!("Invalid field offset: {}", offset),
+        }
+    }
 }
+
 impl<'a> AstNode<'a, JSXText<'a>> {
     #[inline]
     pub fn span(&self) -> Span {
@@ -5348,7 +7753,12 @@ impl<'a> AstNode<'a, JSXText<'a>> {
     pub fn raw(&self) -> Option<Atom<'a>> {
         self.inner.raw
     }
+
+    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
+        None
+    }
 }
+
 impl<'a> AstNode<'a, TSThisParameter<'a>> {
     #[inline]
     pub fn span(&self) -> Span {
@@ -5370,7 +7780,15 @@ impl<'a> AstNode<'a, TSThisParameter<'a>> {
             }))
             .as_ref()
     }
+
+    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
+        None
+    }
 }
+
+const TS_ENUM_DECLARATION_OFFSET_ID: usize = std::mem::offset_of!(TSEnumDeclaration, id);
+const TS_ENUM_DECLARATION_OFFSET_BODY: usize = std::mem::offset_of!(TSEnumDeclaration, body);
+
 impl<'a> AstNode<'a, TSEnumDeclaration<'a>> {
     #[inline]
     pub fn span(&self) -> Span {
@@ -5404,7 +7822,23 @@ impl<'a> AstNode<'a, TSEnumDeclaration<'a>> {
     pub fn declare(&self) -> bool {
         self.inner.declare
     }
+
+    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
+        let inner_ptr = unsafe { self.parent.inner_ptr() };
+        let offset =
+            unsafe { (self.inner as *const _ as *const u8).offset_from_unsigned(inner_ptr) };
+        match offset {
+            TS_ENUM_DECLARATION_OFFSET_ID => Some(FollowingNode::TSEnumBody(unsafe {
+                &*(inner_ptr.add(TS_ENUM_DECLARATION_OFFSET_BODY) as *const TSEnumBody<'a>)
+            })),
+            TS_ENUM_DECLARATION_OFFSET_BODY => None,
+            _ => panic!("Invalid field offset: {}", offset),
+        }
+    }
 }
+
+const TS_ENUM_BODY_OFFSET_MEMBERS: usize = std::mem::offset_of!(TSEnumBody, members);
+
 impl<'a> AstNode<'a, TSEnumBody<'a>> {
     #[inline]
     pub fn span(&self) -> Span {
@@ -5419,7 +7853,21 @@ impl<'a> AstNode<'a, TSEnumBody<'a>> {
             parent: self.allocator.alloc(AstNodes::TSEnumBody(transmute_self(self))),
         })
     }
+
+    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
+        let inner_ptr = unsafe { self.parent.inner_ptr() };
+        let offset =
+            unsafe { (self.inner as *const _ as *const u8).offset_from_unsigned(inner_ptr) };
+        match offset {
+            TS_ENUM_BODY_OFFSET_MEMBERS => None,
+            _ => panic!("Invalid field offset: {}", offset),
+        }
+    }
 }
+
+const TS_ENUM_MEMBER_OFFSET_ID: usize = std::mem::offset_of!(TSEnumMember, id);
+const TS_ENUM_MEMBER_OFFSET_INITIALIZER: usize = std::mem::offset_of!(TSEnumMember, initializer);
+
 impl<'a> AstNode<'a, TSEnumMember<'a>> {
     #[inline]
     pub fn span(&self) -> Span {
@@ -5444,6 +7892,22 @@ impl<'a> AstNode<'a, TSEnumMember<'a>> {
                 parent: self.allocator.alloc(AstNodes::TSEnumMember(transmute_self(self))),
             }))
             .as_ref()
+    }
+
+    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
+        let inner_ptr = unsafe { self.parent.inner_ptr() };
+        let offset =
+            unsafe { (self.inner as *const _ as *const u8).offset_from_unsigned(inner_ptr) };
+        match offset {
+            TS_ENUM_MEMBER_OFFSET_ID => (unsafe {
+                &*(inner_ptr.add(TS_ENUM_MEMBER_OFFSET_INITIALIZER)
+                    as *const Option<Expression<'a>>)
+            })
+            .as_ref()
+            .map(FollowingNode::Expression),
+            TS_ENUM_MEMBER_OFFSET_INITIALIZER => None,
+            _ => panic!("Invalid field offset: {}", offset),
+        }
     }
 }
 
@@ -5489,6 +7953,10 @@ impl<'a> GetSpan for AstNode<'a, TSEnumMemberName<'a>> {
         self.inner.span()
     }
 }
+
+const TS_TYPE_ANNOTATION_OFFSET_TYPEANNOTATION: usize =
+    std::mem::offset_of!(TSTypeAnnotation, type_annotation);
+
 impl<'a> AstNode<'a, TSTypeAnnotation<'a>> {
     #[inline]
     pub fn span(&self) -> Span {
@@ -5503,7 +7971,20 @@ impl<'a> AstNode<'a, TSTypeAnnotation<'a>> {
             parent: self.allocator.alloc(AstNodes::TSTypeAnnotation(transmute_self(self))),
         })
     }
+
+    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
+        let inner_ptr = unsafe { self.parent.inner_ptr() };
+        let offset =
+            unsafe { (self.inner as *const _ as *const u8).offset_from_unsigned(inner_ptr) };
+        match offset {
+            TS_TYPE_ANNOTATION_OFFSET_TYPEANNOTATION => None,
+            _ => panic!("Invalid field offset: {}", offset),
+        }
+    }
 }
+
+const TS_LITERAL_TYPE_OFFSET_LITERAL: usize = std::mem::offset_of!(TSLiteralType, literal);
+
 impl<'a> AstNode<'a, TSLiteralType<'a>> {
     #[inline]
     pub fn span(&self) -> Span {
@@ -5517,6 +7998,16 @@ impl<'a> AstNode<'a, TSLiteralType<'a>> {
             allocator: self.allocator,
             parent: self.allocator.alloc(AstNodes::TSLiteralType(transmute_self(self))),
         })
+    }
+
+    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
+        let inner_ptr = unsafe { self.parent.inner_ptr() };
+        let offset =
+            unsafe { (self.inner as *const _ as *const u8).offset_from_unsigned(inner_ptr) };
+        match offset {
+            TS_LITERAL_TYPE_OFFSET_LITERAL => None,
+            _ => panic!("Invalid field offset: {}", offset),
+        }
     }
 }
 
@@ -5814,6 +8305,16 @@ impl<'a> GetSpan for AstNode<'a, TSType<'a>> {
         self.inner.span()
     }
 }
+
+const TS_CONDITIONAL_TYPE_OFFSET_CHECKTYPE: usize =
+    std::mem::offset_of!(TSConditionalType, check_type);
+const TS_CONDITIONAL_TYPE_OFFSET_EXTENDSTYPE: usize =
+    std::mem::offset_of!(TSConditionalType, extends_type);
+const TS_CONDITIONAL_TYPE_OFFSET_TRUETYPE: usize =
+    std::mem::offset_of!(TSConditionalType, true_type);
+const TS_CONDITIONAL_TYPE_OFFSET_FALSETYPE: usize =
+    std::mem::offset_of!(TSConditionalType, false_type);
+
 impl<'a> AstNode<'a, TSConditionalType<'a>> {
     #[inline]
     pub fn span(&self) -> Span {
@@ -5855,7 +8356,29 @@ impl<'a> AstNode<'a, TSConditionalType<'a>> {
             parent: self.allocator.alloc(AstNodes::TSConditionalType(transmute_self(self))),
         })
     }
+
+    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
+        let inner_ptr = unsafe { self.parent.inner_ptr() };
+        let offset =
+            unsafe { (self.inner as *const _ as *const u8).offset_from_unsigned(inner_ptr) };
+        match offset {
+            TS_CONDITIONAL_TYPE_OFFSET_CHECKTYPE => Some(FollowingNode::TSType(unsafe {
+                &*(inner_ptr.add(TS_CONDITIONAL_TYPE_OFFSET_EXTENDSTYPE) as *const TSType<'a>)
+            })),
+            TS_CONDITIONAL_TYPE_OFFSET_EXTENDSTYPE => Some(FollowingNode::TSType(unsafe {
+                &*(inner_ptr.add(TS_CONDITIONAL_TYPE_OFFSET_TRUETYPE) as *const TSType<'a>)
+            })),
+            TS_CONDITIONAL_TYPE_OFFSET_TRUETYPE => Some(FollowingNode::TSType(unsafe {
+                &*(inner_ptr.add(TS_CONDITIONAL_TYPE_OFFSET_FALSETYPE) as *const TSType<'a>)
+            })),
+            TS_CONDITIONAL_TYPE_OFFSET_FALSETYPE => None,
+            _ => panic!("Invalid field offset: {}", offset),
+        }
+    }
 }
+
+const TS_UNION_TYPE_OFFSET_TYPES: usize = std::mem::offset_of!(TSUnionType, types);
+
 impl<'a> AstNode<'a, TSUnionType<'a>> {
     #[inline]
     pub fn span(&self) -> Span {
@@ -5870,7 +8393,20 @@ impl<'a> AstNode<'a, TSUnionType<'a>> {
             parent: self.allocator.alloc(AstNodes::TSUnionType(transmute_self(self))),
         })
     }
+
+    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
+        let inner_ptr = unsafe { self.parent.inner_ptr() };
+        let offset =
+            unsafe { (self.inner as *const _ as *const u8).offset_from_unsigned(inner_ptr) };
+        match offset {
+            TS_UNION_TYPE_OFFSET_TYPES => None,
+            _ => panic!("Invalid field offset: {}", offset),
+        }
+    }
 }
+
+const TS_INTERSECTION_TYPE_OFFSET_TYPES: usize = std::mem::offset_of!(TSIntersectionType, types);
+
 impl<'a> AstNode<'a, TSIntersectionType<'a>> {
     #[inline]
     pub fn span(&self) -> Span {
@@ -5885,7 +8421,21 @@ impl<'a> AstNode<'a, TSIntersectionType<'a>> {
             parent: self.allocator.alloc(AstNodes::TSIntersectionType(transmute_self(self))),
         })
     }
+
+    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
+        let inner_ptr = unsafe { self.parent.inner_ptr() };
+        let offset =
+            unsafe { (self.inner as *const _ as *const u8).offset_from_unsigned(inner_ptr) };
+        match offset {
+            TS_INTERSECTION_TYPE_OFFSET_TYPES => None,
+            _ => panic!("Invalid field offset: {}", offset),
+        }
+    }
 }
+
+const TS_PARENTHESIZED_TYPE_OFFSET_TYPEANNOTATION: usize =
+    std::mem::offset_of!(TSParenthesizedType, type_annotation);
+
 impl<'a> AstNode<'a, TSParenthesizedType<'a>> {
     #[inline]
     pub fn span(&self) -> Span {
@@ -5900,7 +8450,21 @@ impl<'a> AstNode<'a, TSParenthesizedType<'a>> {
             parent: self.allocator.alloc(AstNodes::TSParenthesizedType(transmute_self(self))),
         })
     }
+
+    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
+        let inner_ptr = unsafe { self.parent.inner_ptr() };
+        let offset =
+            unsafe { (self.inner as *const _ as *const u8).offset_from_unsigned(inner_ptr) };
+        match offset {
+            TS_PARENTHESIZED_TYPE_OFFSET_TYPEANNOTATION => None,
+            _ => panic!("Invalid field offset: {}", offset),
+        }
+    }
 }
+
+const TS_TYPE_OPERATOR_OFFSET_TYPEANNOTATION: usize =
+    std::mem::offset_of!(TSTypeOperator, type_annotation);
+
 impl<'a> AstNode<'a, TSTypeOperator<'a>> {
     #[inline]
     pub fn span(&self) -> Span {
@@ -5920,7 +8484,20 @@ impl<'a> AstNode<'a, TSTypeOperator<'a>> {
             parent: self.parent,
         })
     }
+
+    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
+        let inner_ptr = unsafe { self.parent.inner_ptr() };
+        let offset =
+            unsafe { (self.inner as *const _ as *const u8).offset_from_unsigned(inner_ptr) };
+        match offset {
+            TS_TYPE_OPERATOR_OFFSET_TYPEANNOTATION => None,
+            _ => panic!("Invalid field offset: {}", offset),
+        }
+    }
 }
+
+const TS_ARRAY_TYPE_OFFSET_ELEMENTTYPE: usize = std::mem::offset_of!(TSArrayType, element_type);
+
 impl<'a> AstNode<'a, TSArrayType<'a>> {
     #[inline]
     pub fn span(&self) -> Span {
@@ -5935,7 +8512,23 @@ impl<'a> AstNode<'a, TSArrayType<'a>> {
             parent: self.parent,
         })
     }
+
+    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
+        let inner_ptr = unsafe { self.parent.inner_ptr() };
+        let offset =
+            unsafe { (self.inner as *const _ as *const u8).offset_from_unsigned(inner_ptr) };
+        match offset {
+            TS_ARRAY_TYPE_OFFSET_ELEMENTTYPE => None,
+            _ => panic!("Invalid field offset: {}", offset),
+        }
+    }
 }
+
+const TS_INDEXED_ACCESS_TYPE_OFFSET_OBJECTTYPE: usize =
+    std::mem::offset_of!(TSIndexedAccessType, object_type);
+const TS_INDEXED_ACCESS_TYPE_OFFSET_INDEXTYPE: usize =
+    std::mem::offset_of!(TSIndexedAccessType, index_type);
+
 impl<'a> AstNode<'a, TSIndexedAccessType<'a>> {
     #[inline]
     pub fn span(&self) -> Span {
@@ -5959,7 +8552,23 @@ impl<'a> AstNode<'a, TSIndexedAccessType<'a>> {
             parent: self.allocator.alloc(AstNodes::TSIndexedAccessType(transmute_self(self))),
         })
     }
+
+    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
+        let inner_ptr = unsafe { self.parent.inner_ptr() };
+        let offset =
+            unsafe { (self.inner as *const _ as *const u8).offset_from_unsigned(inner_ptr) };
+        match offset {
+            TS_INDEXED_ACCESS_TYPE_OFFSET_OBJECTTYPE => Some(FollowingNode::TSType(unsafe {
+                &*(inner_ptr.add(TS_INDEXED_ACCESS_TYPE_OFFSET_INDEXTYPE) as *const TSType<'a>)
+            })),
+            TS_INDEXED_ACCESS_TYPE_OFFSET_INDEXTYPE => None,
+            _ => panic!("Invalid field offset: {}", offset),
+        }
+    }
 }
+
+const TS_TUPLE_TYPE_OFFSET_ELEMENTTYPES: usize = std::mem::offset_of!(TSTupleType, element_types);
+
 impl<'a> AstNode<'a, TSTupleType<'a>> {
     #[inline]
     pub fn span(&self) -> Span {
@@ -5974,7 +8583,22 @@ impl<'a> AstNode<'a, TSTupleType<'a>> {
             parent: self.parent,
         })
     }
+
+    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
+        let inner_ptr = unsafe { self.parent.inner_ptr() };
+        let offset =
+            unsafe { (self.inner as *const _ as *const u8).offset_from_unsigned(inner_ptr) };
+        match offset {
+            TS_TUPLE_TYPE_OFFSET_ELEMENTTYPES => None,
+            _ => panic!("Invalid field offset: {}", offset),
+        }
+    }
 }
+
+const TS_NAMED_TUPLE_MEMBER_OFFSET_LABEL: usize = std::mem::offset_of!(TSNamedTupleMember, label);
+const TS_NAMED_TUPLE_MEMBER_OFFSET_ELEMENTTYPE: usize =
+    std::mem::offset_of!(TSNamedTupleMember, element_type);
+
 impl<'a> AstNode<'a, TSNamedTupleMember<'a>> {
     #[inline]
     pub fn span(&self) -> Span {
@@ -6003,7 +8627,25 @@ impl<'a> AstNode<'a, TSNamedTupleMember<'a>> {
     pub fn optional(&self) -> bool {
         self.inner.optional
     }
+
+    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
+        let inner_ptr = unsafe { self.parent.inner_ptr() };
+        let offset =
+            unsafe { (self.inner as *const _ as *const u8).offset_from_unsigned(inner_ptr) };
+        match offset {
+            TS_NAMED_TUPLE_MEMBER_OFFSET_LABEL => Some(FollowingNode::TSTupleElement(unsafe {
+                &*(inner_ptr.add(TS_NAMED_TUPLE_MEMBER_OFFSET_ELEMENTTYPE)
+                    as *const TSTupleElement<'a>)
+            })),
+            TS_NAMED_TUPLE_MEMBER_OFFSET_ELEMENTTYPE => None,
+            _ => panic!("Invalid field offset: {}", offset),
+        }
+    }
 }
+
+const TS_OPTIONAL_TYPE_OFFSET_TYPEANNOTATION: usize =
+    std::mem::offset_of!(TSOptionalType, type_annotation);
+
 impl<'a> AstNode<'a, TSOptionalType<'a>> {
     #[inline]
     pub fn span(&self) -> Span {
@@ -6018,7 +8660,20 @@ impl<'a> AstNode<'a, TSOptionalType<'a>> {
             parent: self.parent,
         })
     }
+
+    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
+        let inner_ptr = unsafe { self.parent.inner_ptr() };
+        let offset =
+            unsafe { (self.inner as *const _ as *const u8).offset_from_unsigned(inner_ptr) };
+        match offset {
+            TS_OPTIONAL_TYPE_OFFSET_TYPEANNOTATION => None,
+            _ => panic!("Invalid field offset: {}", offset),
+        }
+    }
 }
+
+const TS_REST_TYPE_OFFSET_TYPEANNOTATION: usize = std::mem::offset_of!(TSRestType, type_annotation);
+
 impl<'a> AstNode<'a, TSRestType<'a>> {
     #[inline]
     pub fn span(&self) -> Span {
@@ -6032,6 +8687,16 @@ impl<'a> AstNode<'a, TSRestType<'a>> {
             allocator: self.allocator,
             parent: self.parent,
         })
+    }
+
+    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
+        let inner_ptr = unsafe { self.parent.inner_ptr() };
+        let offset =
+            unsafe { (self.inner as *const _ as *const u8).offset_from_unsigned(inner_ptr) };
+        match offset {
+            TS_REST_TYPE_OFFSET_TYPEANNOTATION => None,
+            _ => panic!("Invalid field offset: {}", offset),
+        }
     }
 }
 
@@ -6067,90 +8732,163 @@ impl<'a> GetSpan for AstNode<'a, TSTupleElement<'a>> {
         self.inner.span()
     }
 }
+
 impl<'a> AstNode<'a, TSAnyKeyword> {
     #[inline]
     pub fn span(&self) -> Span {
         self.inner.span
     }
+
+    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
+        None
+    }
 }
+
 impl<'a> AstNode<'a, TSStringKeyword> {
     #[inline]
     pub fn span(&self) -> Span {
         self.inner.span
     }
+
+    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
+        None
+    }
 }
+
 impl<'a> AstNode<'a, TSBooleanKeyword> {
     #[inline]
     pub fn span(&self) -> Span {
         self.inner.span
     }
+
+    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
+        None
+    }
 }
+
 impl<'a> AstNode<'a, TSNumberKeyword> {
     #[inline]
     pub fn span(&self) -> Span {
         self.inner.span
     }
+
+    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
+        None
+    }
 }
+
 impl<'a> AstNode<'a, TSNeverKeyword> {
     #[inline]
     pub fn span(&self) -> Span {
         self.inner.span
     }
+
+    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
+        None
+    }
 }
+
 impl<'a> AstNode<'a, TSIntrinsicKeyword> {
     #[inline]
     pub fn span(&self) -> Span {
         self.inner.span
     }
+
+    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
+        None
+    }
 }
+
 impl<'a> AstNode<'a, TSUnknownKeyword> {
     #[inline]
     pub fn span(&self) -> Span {
         self.inner.span
     }
+
+    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
+        None
+    }
 }
+
 impl<'a> AstNode<'a, TSNullKeyword> {
     #[inline]
     pub fn span(&self) -> Span {
         self.inner.span
     }
+
+    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
+        None
+    }
 }
+
 impl<'a> AstNode<'a, TSUndefinedKeyword> {
     #[inline]
     pub fn span(&self) -> Span {
         self.inner.span
     }
+
+    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
+        None
+    }
 }
+
 impl<'a> AstNode<'a, TSVoidKeyword> {
     #[inline]
     pub fn span(&self) -> Span {
         self.inner.span
     }
+
+    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
+        None
+    }
 }
+
 impl<'a> AstNode<'a, TSSymbolKeyword> {
     #[inline]
     pub fn span(&self) -> Span {
         self.inner.span
     }
+
+    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
+        None
+    }
 }
+
 impl<'a> AstNode<'a, TSThisType> {
     #[inline]
     pub fn span(&self) -> Span {
         self.inner.span
     }
+
+    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
+        None
+    }
 }
+
 impl<'a> AstNode<'a, TSObjectKeyword> {
     #[inline]
     pub fn span(&self) -> Span {
         self.inner.span
     }
+
+    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
+        None
+    }
 }
+
 impl<'a> AstNode<'a, TSBigIntKeyword> {
     #[inline]
     pub fn span(&self) -> Span {
         self.inner.span
     }
+
+    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
+        None
+    }
 }
+
+const TS_TYPE_REFERENCE_OFFSET_TYPENAME: usize = std::mem::offset_of!(TSTypeReference, type_name);
+
 impl<'a> AstNode<'a, TSTypeReference<'a>> {
     #[inline]
     pub fn span(&self) -> Span {
@@ -6175,6 +8913,16 @@ impl<'a> AstNode<'a, TSTypeReference<'a>> {
                 parent: self.allocator.alloc(AstNodes::TSTypeReference(transmute_self(self))),
             }))
             .as_ref()
+    }
+
+    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
+        let inner_ptr = unsafe { self.parent.inner_ptr() };
+        let offset =
+            unsafe { (self.inner as *const _ as *const u8).offset_from_unsigned(inner_ptr) };
+        match offset {
+            TS_TYPE_REFERENCE_OFFSET_TYPENAME => None,
+            _ => panic!("Invalid field offset: {}", offset),
+        }
     }
 }
 
@@ -6208,6 +8956,10 @@ impl<'a> GetSpan for AstNode<'a, TSTypeName<'a>> {
         self.inner.span()
     }
 }
+
+const TS_QUALIFIED_NAME_OFFSET_LEFT: usize = std::mem::offset_of!(TSQualifiedName, left);
+const TS_QUALIFIED_NAME_OFFSET_RIGHT: usize = std::mem::offset_of!(TSQualifiedName, right);
+
 impl<'a> AstNode<'a, TSQualifiedName<'a>> {
     #[inline]
     pub fn span(&self) -> Span {
@@ -6231,7 +8983,24 @@ impl<'a> AstNode<'a, TSQualifiedName<'a>> {
             parent: self.allocator.alloc(AstNodes::TSQualifiedName(transmute_self(self))),
         })
     }
+
+    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
+        let inner_ptr = unsafe { self.parent.inner_ptr() };
+        let offset =
+            unsafe { (self.inner as *const _ as *const u8).offset_from_unsigned(inner_ptr) };
+        match offset {
+            TS_QUALIFIED_NAME_OFFSET_LEFT => Some(FollowingNode::IdentifierName(unsafe {
+                &*(inner_ptr.add(TS_QUALIFIED_NAME_OFFSET_RIGHT) as *const IdentifierName<'a>)
+            })),
+            TS_QUALIFIED_NAME_OFFSET_RIGHT => None,
+            _ => panic!("Invalid field offset: {}", offset),
+        }
+    }
 }
+
+const TS_TYPE_PARAMETER_INSTANTIATION_OFFSET_PARAMS: usize =
+    std::mem::offset_of!(TSTypeParameterInstantiation, params);
+
 impl<'a> AstNode<'a, TSTypeParameterInstantiation<'a>> {
     #[inline]
     pub fn span(&self) -> Span {
@@ -6248,7 +9017,23 @@ impl<'a> AstNode<'a, TSTypeParameterInstantiation<'a>> {
                 .alloc(AstNodes::TSTypeParameterInstantiation(transmute_self(self))),
         })
     }
+
+    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
+        let inner_ptr = unsafe { self.parent.inner_ptr() };
+        let offset =
+            unsafe { (self.inner as *const _ as *const u8).offset_from_unsigned(inner_ptr) };
+        match offset {
+            TS_TYPE_PARAMETER_INSTANTIATION_OFFSET_PARAMS => None,
+            _ => panic!("Invalid field offset: {}", offset),
+        }
+    }
 }
+
+const TS_TYPE_PARAMETER_OFFSET_NAME: usize = std::mem::offset_of!(TSTypeParameter, name);
+const TS_TYPE_PARAMETER_OFFSET_CONSTRAINT: usize =
+    std::mem::offset_of!(TSTypeParameter, constraint);
+const TS_TYPE_PARAMETER_OFFSET_DEFAULT: usize = std::mem::offset_of!(TSTypeParameter, default);
+
 impl<'a> AstNode<'a, TSTypeParameter<'a>> {
     #[inline]
     pub fn span(&self) -> Span {
@@ -6300,7 +9085,31 @@ impl<'a> AstNode<'a, TSTypeParameter<'a>> {
     pub fn r#const(&self) -> bool {
         self.inner.r#const
     }
+
+    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
+        let inner_ptr = unsafe { self.parent.inner_ptr() };
+        let offset =
+            unsafe { (self.inner as *const _ as *const u8).offset_from_unsigned(inner_ptr) };
+        match offset {
+            TS_TYPE_PARAMETER_OFFSET_NAME => (unsafe {
+                &*(inner_ptr.add(TS_TYPE_PARAMETER_OFFSET_CONSTRAINT) as *const Option<TSType<'a>>)
+            })
+            .as_ref()
+            .map(FollowingNode::TSType),
+            TS_TYPE_PARAMETER_OFFSET_CONSTRAINT => (unsafe {
+                &*(inner_ptr.add(TS_TYPE_PARAMETER_OFFSET_DEFAULT) as *const Option<TSType<'a>>)
+            })
+            .as_ref()
+            .map(FollowingNode::TSType),
+            TS_TYPE_PARAMETER_OFFSET_DEFAULT => None,
+            _ => panic!("Invalid field offset: {}", offset),
+        }
+    }
 }
+
+const TS_TYPE_PARAMETER_DECLARATION_OFFSET_PARAMS: usize =
+    std::mem::offset_of!(TSTypeParameterDeclaration, params);
+
 impl<'a> AstNode<'a, TSTypeParameterDeclaration<'a>> {
     #[inline]
     pub fn span(&self) -> Span {
@@ -6317,7 +9126,22 @@ impl<'a> AstNode<'a, TSTypeParameterDeclaration<'a>> {
                 .alloc(AstNodes::TSTypeParameterDeclaration(transmute_self(self))),
         })
     }
+
+    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
+        let inner_ptr = unsafe { self.parent.inner_ptr() };
+        let offset =
+            unsafe { (self.inner as *const _ as *const u8).offset_from_unsigned(inner_ptr) };
+        match offset {
+            TS_TYPE_PARAMETER_DECLARATION_OFFSET_PARAMS => None,
+            _ => panic!("Invalid field offset: {}", offset),
+        }
+    }
 }
+
+const TS_TYPE_ALIAS_DECLARATION_OFFSET_ID: usize = std::mem::offset_of!(TSTypeAliasDeclaration, id);
+const TS_TYPE_ALIAS_DECLARATION_OFFSET_TYPEANNOTATION: usize =
+    std::mem::offset_of!(TSTypeAliasDeclaration, type_annotation);
+
 impl<'a> AstNode<'a, TSTypeAliasDeclaration<'a>> {
     #[inline]
     pub fn span(&self) -> Span {
@@ -6358,7 +9182,25 @@ impl<'a> AstNode<'a, TSTypeAliasDeclaration<'a>> {
     pub fn declare(&self) -> bool {
         self.inner.declare
     }
+
+    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
+        let inner_ptr = unsafe { self.parent.inner_ptr() };
+        let offset =
+            unsafe { (self.inner as *const _ as *const u8).offset_from_unsigned(inner_ptr) };
+        match offset {
+            TS_TYPE_ALIAS_DECLARATION_OFFSET_ID => Some(FollowingNode::TSType(unsafe {
+                &*(inner_ptr.add(TS_TYPE_ALIAS_DECLARATION_OFFSET_TYPEANNOTATION)
+                    as *const TSType<'a>)
+            })),
+            TS_TYPE_ALIAS_DECLARATION_OFFSET_TYPEANNOTATION => None,
+            _ => panic!("Invalid field offset: {}", offset),
+        }
+    }
 }
+
+const TS_CLASS_IMPLEMENTS_OFFSET_EXPRESSION: usize =
+    std::mem::offset_of!(TSClassImplements, expression);
+
 impl<'a> AstNode<'a, TSClassImplements<'a>> {
     #[inline]
     pub fn span(&self) -> Span {
@@ -6384,7 +9226,24 @@ impl<'a> AstNode<'a, TSClassImplements<'a>> {
             }))
             .as_ref()
     }
+
+    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
+        let inner_ptr = unsafe { self.parent.inner_ptr() };
+        let offset =
+            unsafe { (self.inner as *const _ as *const u8).offset_from_unsigned(inner_ptr) };
+        match offset {
+            TS_CLASS_IMPLEMENTS_OFFSET_EXPRESSION => None,
+            _ => panic!("Invalid field offset: {}", offset),
+        }
+    }
 }
+
+const TS_INTERFACE_DECLARATION_OFFSET_ID: usize = std::mem::offset_of!(TSInterfaceDeclaration, id);
+const TS_INTERFACE_DECLARATION_OFFSET_EXTENDS: usize =
+    std::mem::offset_of!(TSInterfaceDeclaration, extends);
+const TS_INTERFACE_DECLARATION_OFFSET_BODY: usize =
+    std::mem::offset_of!(TSInterfaceDeclaration, body);
+
 impl<'a> AstNode<'a, TSInterfaceDeclaration<'a>> {
     #[inline]
     pub fn span(&self) -> Span {
@@ -6434,7 +9293,35 @@ impl<'a> AstNode<'a, TSInterfaceDeclaration<'a>> {
     pub fn declare(&self) -> bool {
         self.inner.declare
     }
+
+    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
+        let inner_ptr = unsafe { self.parent.inner_ptr() };
+        let offset =
+            unsafe { (self.inner as *const _ as *const u8).offset_from_unsigned(inner_ptr) };
+        match offset {
+            TS_INTERFACE_DECLARATION_OFFSET_ID => (unsafe {
+                &*(inner_ptr.add(TS_INTERFACE_DECLARATION_OFFSET_EXTENDS)
+                    as *const Vec<'a, TSInterfaceHeritage<'a>>)
+            })
+            .first()
+            .as_ref()
+            .copied()
+            .map(FollowingNode::TSInterfaceHeritage),
+            TS_INTERFACE_DECLARATION_OFFSET_EXTENDS => Some(FollowingNode::TSInterfaceBody(
+                unsafe {
+                    &*(inner_ptr.add(TS_INTERFACE_DECLARATION_OFFSET_BODY)
+                        as *const Box<'a, TSInterfaceBody<'a>>)
+                }
+                .as_ref(),
+            )),
+            TS_INTERFACE_DECLARATION_OFFSET_BODY => None,
+            _ => panic!("Invalid field offset: {}", offset),
+        }
+    }
 }
+
+const TS_INTERFACE_BODY_OFFSET_BODY: usize = std::mem::offset_of!(TSInterfaceBody, body);
+
 impl<'a> AstNode<'a, TSInterfaceBody<'a>> {
     #[inline]
     pub fn span(&self) -> Span {
@@ -6449,7 +9336,20 @@ impl<'a> AstNode<'a, TSInterfaceBody<'a>> {
             parent: self.parent,
         })
     }
+
+    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
+        let inner_ptr = unsafe { self.parent.inner_ptr() };
+        let offset =
+            unsafe { (self.inner as *const _ as *const u8).offset_from_unsigned(inner_ptr) };
+        match offset {
+            TS_INTERFACE_BODY_OFFSET_BODY => None,
+            _ => panic!("Invalid field offset: {}", offset),
+        }
+    }
 }
+
+const TS_PROPERTY_SIGNATURE_OFFSET_KEY: usize = std::mem::offset_of!(TSPropertySignature, key);
+
 impl<'a> AstNode<'a, TSPropertySignature<'a>> {
     #[inline]
     pub fn span(&self) -> Span {
@@ -6489,6 +9389,16 @@ impl<'a> AstNode<'a, TSPropertySignature<'a>> {
                 parent: self.allocator.alloc(AstNodes::TSPropertySignature(transmute_self(self))),
             }))
             .as_ref()
+    }
+
+    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
+        let inner_ptr = unsafe { self.parent.inner_ptr() };
+        let offset =
+            unsafe { (self.inner as *const _ as *const u8).offset_from_unsigned(inner_ptr) };
+        match offset {
+            TS_PROPERTY_SIGNATURE_OFFSET_KEY => None,
+            _ => panic!("Invalid field offset: {}", offset),
+        }
     }
 }
 
@@ -6539,6 +9449,12 @@ impl<'a> GetSpan for AstNode<'a, TSSignature<'a>> {
         self.inner.span()
     }
 }
+
+const TS_INDEX_SIGNATURE_OFFSET_PARAMETERS: usize =
+    std::mem::offset_of!(TSIndexSignature, parameters);
+const TS_INDEX_SIGNATURE_OFFSET_TYPEANNOTATION: usize =
+    std::mem::offset_of!(TSIndexSignature, type_annotation);
+
 impl<'a> AstNode<'a, TSIndexSignature<'a>> {
     #[inline]
     pub fn span(&self) -> Span {
@@ -6572,7 +9488,28 @@ impl<'a> AstNode<'a, TSIndexSignature<'a>> {
     pub fn r#static(&self) -> bool {
         self.inner.r#static
     }
+
+    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
+        let inner_ptr = unsafe { self.parent.inner_ptr() };
+        let offset =
+            unsafe { (self.inner as *const _ as *const u8).offset_from_unsigned(inner_ptr) };
+        match offset {
+            TS_INDEX_SIGNATURE_OFFSET_PARAMETERS => Some(FollowingNode::TSTypeAnnotation(
+                unsafe {
+                    &*(inner_ptr.add(TS_INDEX_SIGNATURE_OFFSET_TYPEANNOTATION)
+                        as *const Box<'a, TSTypeAnnotation<'a>>)
+                }
+                .as_ref(),
+            )),
+            TS_INDEX_SIGNATURE_OFFSET_TYPEANNOTATION => None,
+            _ => panic!("Invalid field offset: {}", offset),
+        }
+    }
 }
+
+const TS_CALL_SIGNATURE_DECLARATION_OFFSET_PARAMS: usize =
+    std::mem::offset_of!(TSCallSignatureDeclaration, params);
+
 impl<'a> AstNode<'a, TSCallSignatureDeclaration<'a>> {
     #[inline]
     pub fn span(&self) -> Span {
@@ -6620,7 +9557,21 @@ impl<'a> AstNode<'a, TSCallSignatureDeclaration<'a>> {
             }))
             .as_ref()
     }
+
+    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
+        let inner_ptr = unsafe { self.parent.inner_ptr() };
+        let offset =
+            unsafe { (self.inner as *const _ as *const u8).offset_from_unsigned(inner_ptr) };
+        match offset {
+            TS_CALL_SIGNATURE_DECLARATION_OFFSET_PARAMS => None,
+            _ => panic!("Invalid field offset: {}", offset),
+        }
+    }
 }
+
+const TS_METHOD_SIGNATURE_OFFSET_KEY: usize = std::mem::offset_of!(TSMethodSignature, key);
+const TS_METHOD_SIGNATURE_OFFSET_PARAMS: usize = std::mem::offset_of!(TSMethodSignature, params);
+
 impl<'a> AstNode<'a, TSMethodSignature<'a>> {
     #[inline]
     pub fn span(&self) -> Span {
@@ -6692,7 +9643,28 @@ impl<'a> AstNode<'a, TSMethodSignature<'a>> {
             }))
             .as_ref()
     }
+
+    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
+        let inner_ptr = unsafe { self.parent.inner_ptr() };
+        let offset =
+            unsafe { (self.inner as *const _ as *const u8).offset_from_unsigned(inner_ptr) };
+        match offset {
+            TS_METHOD_SIGNATURE_OFFSET_KEY => Some(FollowingNode::FormalParameters(
+                unsafe {
+                    &*(inner_ptr.add(TS_METHOD_SIGNATURE_OFFSET_PARAMS)
+                        as *const Box<'a, FormalParameters<'a>>)
+                }
+                .as_ref(),
+            )),
+            TS_METHOD_SIGNATURE_OFFSET_PARAMS => None,
+            _ => panic!("Invalid field offset: {}", offset),
+        }
+    }
 }
+
+const TS_CONSTRUCT_SIGNATURE_DECLARATION_OFFSET_PARAMS: usize =
+    std::mem::offset_of!(TSConstructSignatureDeclaration, params);
+
 impl<'a> AstNode<'a, TSConstructSignatureDeclaration<'a>> {
     #[inline]
     pub fn span(&self) -> Span {
@@ -6739,7 +9711,21 @@ impl<'a> AstNode<'a, TSConstructSignatureDeclaration<'a>> {
             }))
             .as_ref()
     }
+
+    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
+        let inner_ptr = unsafe { self.parent.inner_ptr() };
+        let offset =
+            unsafe { (self.inner as *const _ as *const u8).offset_from_unsigned(inner_ptr) };
+        match offset {
+            TS_CONSTRUCT_SIGNATURE_DECLARATION_OFFSET_PARAMS => None,
+            _ => panic!("Invalid field offset: {}", offset),
+        }
+    }
 }
+
+const TS_INDEX_SIGNATURE_NAME_OFFSET_TYPEANNOTATION: usize =
+    std::mem::offset_of!(TSIndexSignatureName, type_annotation);
+
 impl<'a> AstNode<'a, TSIndexSignatureName<'a>> {
     #[inline]
     pub fn span(&self) -> Span {
@@ -6759,7 +9745,21 @@ impl<'a> AstNode<'a, TSIndexSignatureName<'a>> {
             parent: self.parent,
         })
     }
+
+    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
+        let inner_ptr = unsafe { self.parent.inner_ptr() };
+        let offset =
+            unsafe { (self.inner as *const _ as *const u8).offset_from_unsigned(inner_ptr) };
+        match offset {
+            TS_INDEX_SIGNATURE_NAME_OFFSET_TYPEANNOTATION => None,
+            _ => panic!("Invalid field offset: {}", offset),
+        }
+    }
 }
+
+const TS_INTERFACE_HERITAGE_OFFSET_EXPRESSION: usize =
+    std::mem::offset_of!(TSInterfaceHeritage, expression);
+
 impl<'a> AstNode<'a, TSInterfaceHeritage<'a>> {
     #[inline]
     pub fn span(&self) -> Span {
@@ -6785,7 +9785,21 @@ impl<'a> AstNode<'a, TSInterfaceHeritage<'a>> {
             }))
             .as_ref()
     }
+
+    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
+        let inner_ptr = unsafe { self.parent.inner_ptr() };
+        let offset =
+            unsafe { (self.inner as *const _ as *const u8).offset_from_unsigned(inner_ptr) };
+        match offset {
+            TS_INTERFACE_HERITAGE_OFFSET_EXPRESSION => None,
+            _ => panic!("Invalid field offset: {}", offset),
+        }
+    }
 }
+
+const TS_TYPE_PREDICATE_OFFSET_PARAMETERNAME: usize =
+    std::mem::offset_of!(TSTypePredicate, parameter_name);
+
 impl<'a> AstNode<'a, TSTypePredicate<'a>> {
     #[inline]
     pub fn span(&self) -> Span {
@@ -6815,6 +9829,16 @@ impl<'a> AstNode<'a, TSTypePredicate<'a>> {
                 parent: self.parent,
             }))
             .as_ref()
+    }
+
+    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
+        let inner_ptr = unsafe { self.parent.inner_ptr() };
+        let offset =
+            unsafe { (self.inner as *const _ as *const u8).offset_from_unsigned(inner_ptr) };
+        match offset {
+            TS_TYPE_PREDICATE_OFFSET_PARAMETERNAME => None,
+            _ => panic!("Invalid field offset: {}", offset),
+        }
     }
 }
 
@@ -6846,6 +9870,10 @@ impl<'a> GetSpan for AstNode<'a, TSTypePredicateName<'a>> {
         self.inner.span()
     }
 }
+
+const TS_MODULE_DECLARATION_OFFSET_ID: usize = std::mem::offset_of!(TSModuleDeclaration, id);
+const TS_MODULE_DECLARATION_OFFSET_BODY: usize = std::mem::offset_of!(TSModuleDeclaration, body);
+
 impl<'a> AstNode<'a, TSModuleDeclaration<'a>> {
     #[inline]
     pub fn span(&self) -> Span {
@@ -6880,6 +9908,22 @@ impl<'a> AstNode<'a, TSModuleDeclaration<'a>> {
     #[inline]
     pub fn declare(&self) -> bool {
         self.inner.declare
+    }
+
+    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
+        let inner_ptr = unsafe { self.parent.inner_ptr() };
+        let offset =
+            unsafe { (self.inner as *const _ as *const u8).offset_from_unsigned(inner_ptr) };
+        match offset {
+            TS_MODULE_DECLARATION_OFFSET_ID => (unsafe {
+                &*(inner_ptr.add(TS_MODULE_DECLARATION_OFFSET_BODY)
+                    as *const Option<TSModuleDeclarationBody<'a>>)
+            })
+            .as_ref()
+            .map(FollowingNode::TSModuleDeclarationBody),
+            TS_MODULE_DECLARATION_OFFSET_BODY => None,
+            _ => panic!("Invalid field offset: {}", offset),
+        }
     }
 }
 
@@ -6944,6 +9988,10 @@ impl<'a> GetSpan for AstNode<'a, TSModuleDeclarationBody<'a>> {
         self.inner.span()
     }
 }
+
+const TS_MODULE_BLOCK_OFFSET_DIRECTIVES: usize = std::mem::offset_of!(TSModuleBlock, directives);
+const TS_MODULE_BLOCK_OFFSET_BODY: usize = std::mem::offset_of!(TSModuleBlock, body);
+
 impl<'a> AstNode<'a, TSModuleBlock<'a>> {
     #[inline]
     pub fn span(&self) -> Span {
@@ -6967,7 +10015,27 @@ impl<'a> AstNode<'a, TSModuleBlock<'a>> {
             parent: self.allocator.alloc(AstNodes::TSModuleBlock(transmute_self(self))),
         })
     }
+
+    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
+        let inner_ptr = unsafe { self.parent.inner_ptr() };
+        let offset =
+            unsafe { (self.inner as *const _ as *const u8).offset_from_unsigned(inner_ptr) };
+        match offset {
+            TS_MODULE_BLOCK_OFFSET_DIRECTIVES => (unsafe {
+                &*(inner_ptr.add(TS_MODULE_BLOCK_OFFSET_BODY) as *const Vec<'a, Statement<'a>>)
+            })
+            .first()
+            .as_ref()
+            .copied()
+            .map(FollowingNode::Statement),
+            TS_MODULE_BLOCK_OFFSET_BODY => None,
+            _ => panic!("Invalid field offset: {}", offset),
+        }
+    }
 }
+
+const TS_TYPE_LITERAL_OFFSET_MEMBERS: usize = std::mem::offset_of!(TSTypeLiteral, members);
+
 impl<'a> AstNode<'a, TSTypeLiteral<'a>> {
     #[inline]
     pub fn span(&self) -> Span {
@@ -6982,7 +10050,20 @@ impl<'a> AstNode<'a, TSTypeLiteral<'a>> {
             parent: self.allocator.alloc(AstNodes::TSTypeLiteral(transmute_self(self))),
         })
     }
+
+    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
+        let inner_ptr = unsafe { self.parent.inner_ptr() };
+        let offset =
+            unsafe { (self.inner as *const _ as *const u8).offset_from_unsigned(inner_ptr) };
+        match offset {
+            TS_TYPE_LITERAL_OFFSET_MEMBERS => None,
+            _ => panic!("Invalid field offset: {}", offset),
+        }
+    }
 }
+
+const TS_INFER_TYPE_OFFSET_TYPEPARAMETER: usize = std::mem::offset_of!(TSInferType, type_parameter);
+
 impl<'a> AstNode<'a, TSInferType<'a>> {
     #[inline]
     pub fn span(&self) -> Span {
@@ -6997,7 +10078,20 @@ impl<'a> AstNode<'a, TSInferType<'a>> {
             parent: self.allocator.alloc(AstNodes::TSInferType(transmute_self(self))),
         })
     }
+
+    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
+        let inner_ptr = unsafe { self.parent.inner_ptr() };
+        let offset =
+            unsafe { (self.inner as *const _ as *const u8).offset_from_unsigned(inner_ptr) };
+        match offset {
+            TS_INFER_TYPE_OFFSET_TYPEPARAMETER => None,
+            _ => panic!("Invalid field offset: {}", offset),
+        }
+    }
 }
+
+const TS_TYPE_QUERY_OFFSET_EXPRNAME: usize = std::mem::offset_of!(TSTypeQuery, expr_name);
+
 impl<'a> AstNode<'a, TSTypeQuery<'a>> {
     #[inline]
     pub fn span(&self) -> Span {
@@ -7022,6 +10116,16 @@ impl<'a> AstNode<'a, TSTypeQuery<'a>> {
                 parent: self.allocator.alloc(AstNodes::TSTypeQuery(transmute_self(self))),
             }))
             .as_ref()
+    }
+
+    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
+        let inner_ptr = unsafe { self.parent.inner_ptr() };
+        let offset =
+            unsafe { (self.inner as *const _ as *const u8).offset_from_unsigned(inner_ptr) };
+        match offset {
+            TS_TYPE_QUERY_OFFSET_EXPRNAME => None,
+            _ => panic!("Invalid field offset: {}", offset),
+        }
     }
 }
 
@@ -7055,6 +10159,10 @@ impl<'a> GetSpan for AstNode<'a, TSTypeQueryExprName<'a>> {
         self.inner.span()
     }
 }
+
+const TS_IMPORT_TYPE_OFFSET_ARGUMENT: usize = std::mem::offset_of!(TSImportType, argument);
+const TS_IMPORT_TYPE_OFFSET_QUALIFIER: usize = std::mem::offset_of!(TSImportType, qualifier);
+
 impl<'a> AstNode<'a, TSImportType<'a>> {
     #[inline]
     pub fn span(&self) -> Span {
@@ -7102,7 +10210,26 @@ impl<'a> AstNode<'a, TSImportType<'a>> {
             }))
             .as_ref()
     }
+
+    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
+        let inner_ptr = unsafe { self.parent.inner_ptr() };
+        let offset =
+            unsafe { (self.inner as *const _ as *const u8).offset_from_unsigned(inner_ptr) };
+        match offset {
+            TS_IMPORT_TYPE_OFFSET_ARGUMENT => (unsafe {
+                &*(inner_ptr.add(TS_IMPORT_TYPE_OFFSET_QUALIFIER) as *const Option<TSTypeName<'a>>)
+            })
+            .as_ref()
+            .map(FollowingNode::TSTypeName),
+            TS_IMPORT_TYPE_OFFSET_QUALIFIER => None,
+            _ => panic!("Invalid field offset: {}", offset),
+        }
+    }
 }
+
+const TS_FUNCTION_TYPE_OFFSET_PARAMS: usize = std::mem::offset_of!(TSFunctionType, params);
+const TS_FUNCTION_TYPE_OFFSET_RETURNTYPE: usize = std::mem::offset_of!(TSFunctionType, return_type);
+
 impl<'a> AstNode<'a, TSFunctionType<'a>> {
     #[inline]
     pub fn span(&self) -> Span {
@@ -7148,7 +10275,29 @@ impl<'a> AstNode<'a, TSFunctionType<'a>> {
             parent: self.parent,
         })
     }
+
+    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
+        let inner_ptr = unsafe { self.parent.inner_ptr() };
+        let offset =
+            unsafe { (self.inner as *const _ as *const u8).offset_from_unsigned(inner_ptr) };
+        match offset {
+            TS_FUNCTION_TYPE_OFFSET_PARAMS => Some(FollowingNode::TSTypeAnnotation(
+                unsafe {
+                    &*(inner_ptr.add(TS_FUNCTION_TYPE_OFFSET_RETURNTYPE)
+                        as *const Box<'a, TSTypeAnnotation<'a>>)
+                }
+                .as_ref(),
+            )),
+            TS_FUNCTION_TYPE_OFFSET_RETURNTYPE => None,
+            _ => panic!("Invalid field offset: {}", offset),
+        }
+    }
 }
+
+const TS_CONSTRUCTOR_TYPE_OFFSET_PARAMS: usize = std::mem::offset_of!(TSConstructorType, params);
+const TS_CONSTRUCTOR_TYPE_OFFSET_RETURNTYPE: usize =
+    std::mem::offset_of!(TSConstructorType, return_type);
+
 impl<'a> AstNode<'a, TSConstructorType<'a>> {
     #[inline]
     pub fn span(&self) -> Span {
@@ -7188,7 +10337,31 @@ impl<'a> AstNode<'a, TSConstructorType<'a>> {
             parent: self.parent,
         })
     }
+
+    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
+        let inner_ptr = unsafe { self.parent.inner_ptr() };
+        let offset =
+            unsafe { (self.inner as *const _ as *const u8).offset_from_unsigned(inner_ptr) };
+        match offset {
+            TS_CONSTRUCTOR_TYPE_OFFSET_PARAMS => Some(FollowingNode::TSTypeAnnotation(
+                unsafe {
+                    &*(inner_ptr.add(TS_CONSTRUCTOR_TYPE_OFFSET_RETURNTYPE)
+                        as *const Box<'a, TSTypeAnnotation<'a>>)
+                }
+                .as_ref(),
+            )),
+            TS_CONSTRUCTOR_TYPE_OFFSET_RETURNTYPE => None,
+            _ => panic!("Invalid field offset: {}", offset),
+        }
+    }
 }
+
+const TS_MAPPED_TYPE_OFFSET_TYPEPARAMETER: usize =
+    std::mem::offset_of!(TSMappedType, type_parameter);
+const TS_MAPPED_TYPE_OFFSET_NAMETYPE: usize = std::mem::offset_of!(TSMappedType, name_type);
+const TS_MAPPED_TYPE_OFFSET_TYPEANNOTATION: usize =
+    std::mem::offset_of!(TSMappedType, type_annotation);
+
 impl<'a> AstNode<'a, TSMappedType<'a>> {
     #[inline]
     pub fn span(&self) -> Span {
@@ -7235,7 +10408,33 @@ impl<'a> AstNode<'a, TSMappedType<'a>> {
     pub fn readonly(&self) -> Option<TSMappedTypeModifierOperator> {
         self.inner.readonly
     }
+
+    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
+        let inner_ptr = unsafe { self.parent.inner_ptr() };
+        let offset =
+            unsafe { (self.inner as *const _ as *const u8).offset_from_unsigned(inner_ptr) };
+        match offset {
+            TS_MAPPED_TYPE_OFFSET_TYPEPARAMETER => (unsafe {
+                &*(inner_ptr.add(TS_MAPPED_TYPE_OFFSET_NAMETYPE) as *const Option<TSType<'a>>)
+            })
+            .as_ref()
+            .map(FollowingNode::TSType),
+            TS_MAPPED_TYPE_OFFSET_NAMETYPE => (unsafe {
+                &*(inner_ptr.add(TS_MAPPED_TYPE_OFFSET_TYPEANNOTATION) as *const Option<TSType<'a>>)
+            })
+            .as_ref()
+            .map(FollowingNode::TSType),
+            TS_MAPPED_TYPE_OFFSET_TYPEANNOTATION => None,
+            _ => panic!("Invalid field offset: {}", offset),
+        }
+    }
 }
+
+const TS_TEMPLATE_LITERAL_TYPE_OFFSET_QUASIS: usize =
+    std::mem::offset_of!(TSTemplateLiteralType, quasis);
+const TS_TEMPLATE_LITERAL_TYPE_OFFSET_TYPES: usize =
+    std::mem::offset_of!(TSTemplateLiteralType, types);
+
 impl<'a> AstNode<'a, TSTemplateLiteralType<'a>> {
     #[inline]
     pub fn span(&self) -> Span {
@@ -7259,7 +10458,30 @@ impl<'a> AstNode<'a, TSTemplateLiteralType<'a>> {
             parent: self.allocator.alloc(AstNodes::TSTemplateLiteralType(transmute_self(self))),
         })
     }
+
+    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
+        let inner_ptr = unsafe { self.parent.inner_ptr() };
+        let offset =
+            unsafe { (self.inner as *const _ as *const u8).offset_from_unsigned(inner_ptr) };
+        match offset {
+            TS_TEMPLATE_LITERAL_TYPE_OFFSET_QUASIS => (unsafe {
+                &*(inner_ptr.add(TS_TEMPLATE_LITERAL_TYPE_OFFSET_TYPES)
+                    as *const Vec<'a, TSType<'a>>)
+            })
+            .first()
+            .as_ref()
+            .copied()
+            .map(FollowingNode::TSType),
+            TS_TEMPLATE_LITERAL_TYPE_OFFSET_TYPES => None,
+            _ => panic!("Invalid field offset: {}", offset),
+        }
+    }
 }
+
+const TS_AS_EXPRESSION_OFFSET_EXPRESSION: usize = std::mem::offset_of!(TSAsExpression, expression);
+const TS_AS_EXPRESSION_OFFSET_TYPEANNOTATION: usize =
+    std::mem::offset_of!(TSAsExpression, type_annotation);
+
 impl<'a> AstNode<'a, TSAsExpression<'a>> {
     #[inline]
     pub fn span(&self) -> Span {
@@ -7283,7 +10505,26 @@ impl<'a> AstNode<'a, TSAsExpression<'a>> {
             parent: self.allocator.alloc(AstNodes::TSAsExpression(transmute_self(self))),
         })
     }
+
+    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
+        let inner_ptr = unsafe { self.parent.inner_ptr() };
+        let offset =
+            unsafe { (self.inner as *const _ as *const u8).offset_from_unsigned(inner_ptr) };
+        match offset {
+            TS_AS_EXPRESSION_OFFSET_EXPRESSION => Some(FollowingNode::TSType(unsafe {
+                &*(inner_ptr.add(TS_AS_EXPRESSION_OFFSET_TYPEANNOTATION) as *const TSType<'a>)
+            })),
+            TS_AS_EXPRESSION_OFFSET_TYPEANNOTATION => None,
+            _ => panic!("Invalid field offset: {}", offset),
+        }
+    }
 }
+
+const TS_SATISFIES_EXPRESSION_OFFSET_EXPRESSION: usize =
+    std::mem::offset_of!(TSSatisfiesExpression, expression);
+const TS_SATISFIES_EXPRESSION_OFFSET_TYPEANNOTATION: usize =
+    std::mem::offset_of!(TSSatisfiesExpression, type_annotation);
+
 impl<'a> AstNode<'a, TSSatisfiesExpression<'a>> {
     #[inline]
     pub fn span(&self) -> Span {
@@ -7307,7 +10548,27 @@ impl<'a> AstNode<'a, TSSatisfiesExpression<'a>> {
             parent: self.allocator.alloc(AstNodes::TSSatisfiesExpression(transmute_self(self))),
         })
     }
+
+    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
+        let inner_ptr = unsafe { self.parent.inner_ptr() };
+        let offset =
+            unsafe { (self.inner as *const _ as *const u8).offset_from_unsigned(inner_ptr) };
+        match offset {
+            TS_SATISFIES_EXPRESSION_OFFSET_EXPRESSION => Some(FollowingNode::TSType(unsafe {
+                &*(inner_ptr.add(TS_SATISFIES_EXPRESSION_OFFSET_TYPEANNOTATION)
+                    as *const TSType<'a>)
+            })),
+            TS_SATISFIES_EXPRESSION_OFFSET_TYPEANNOTATION => None,
+            _ => panic!("Invalid field offset: {}", offset),
+        }
+    }
 }
+
+const TS_TYPE_ASSERTION_OFFSET_TYPEANNOTATION: usize =
+    std::mem::offset_of!(TSTypeAssertion, type_annotation);
+const TS_TYPE_ASSERTION_OFFSET_EXPRESSION: usize =
+    std::mem::offset_of!(TSTypeAssertion, expression);
+
 impl<'a> AstNode<'a, TSTypeAssertion<'a>> {
     #[inline]
     pub fn span(&self) -> Span {
@@ -7331,7 +10592,26 @@ impl<'a> AstNode<'a, TSTypeAssertion<'a>> {
             parent: self.allocator.alloc(AstNodes::TSTypeAssertion(transmute_self(self))),
         })
     }
+
+    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
+        let inner_ptr = unsafe { self.parent.inner_ptr() };
+        let offset =
+            unsafe { (self.inner as *const _ as *const u8).offset_from_unsigned(inner_ptr) };
+        match offset {
+            TS_TYPE_ASSERTION_OFFSET_TYPEANNOTATION => Some(FollowingNode::Expression(unsafe {
+                &*(inner_ptr.add(TS_TYPE_ASSERTION_OFFSET_EXPRESSION) as *const Expression<'a>)
+            })),
+            TS_TYPE_ASSERTION_OFFSET_EXPRESSION => None,
+            _ => panic!("Invalid field offset: {}", offset),
+        }
+    }
 }
+
+const TS_IMPORT_EQUALS_DECLARATION_OFFSET_ID: usize =
+    std::mem::offset_of!(TSImportEqualsDeclaration, id);
+const TS_IMPORT_EQUALS_DECLARATION_OFFSET_MODULEREFERENCE: usize =
+    std::mem::offset_of!(TSImportEqualsDeclaration, module_reference);
+
 impl<'a> AstNode<'a, TSImportEqualsDeclaration<'a>> {
     #[inline]
     pub fn span(&self) -> Span {
@@ -7359,6 +10639,22 @@ impl<'a> AstNode<'a, TSImportEqualsDeclaration<'a>> {
     #[inline]
     pub fn import_kind(&self) -> ImportOrExportKind {
         self.inner.import_kind
+    }
+
+    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
+        let inner_ptr = unsafe { self.parent.inner_ptr() };
+        let offset =
+            unsafe { (self.inner as *const _ as *const u8).offset_from_unsigned(inner_ptr) };
+        match offset {
+            TS_IMPORT_EQUALS_DECLARATION_OFFSET_ID => {
+                Some(FollowingNode::TSModuleReference(unsafe {
+                    &*(inner_ptr.add(TS_IMPORT_EQUALS_DECLARATION_OFFSET_MODULEREFERENCE)
+                        as *const TSModuleReference<'a>)
+                }))
+            }
+            TS_IMPORT_EQUALS_DECLARATION_OFFSET_MODULEREFERENCE => None,
+            _ => panic!("Invalid field offset: {}", offset),
+        }
     }
 }
 
@@ -7392,6 +10688,10 @@ impl<'a> GetSpan for AstNode<'a, TSModuleReference<'a>> {
         self.inner.span()
     }
 }
+
+const TS_EXTERNAL_MODULE_REFERENCE_OFFSET_EXPRESSION: usize =
+    std::mem::offset_of!(TSExternalModuleReference, expression);
+
 impl<'a> AstNode<'a, TSExternalModuleReference<'a>> {
     #[inline]
     pub fn span(&self) -> Span {
@@ -7406,7 +10706,21 @@ impl<'a> AstNode<'a, TSExternalModuleReference<'a>> {
             parent: self.allocator.alloc(AstNodes::TSExternalModuleReference(transmute_self(self))),
         })
     }
+
+    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
+        let inner_ptr = unsafe { self.parent.inner_ptr() };
+        let offset =
+            unsafe { (self.inner as *const _ as *const u8).offset_from_unsigned(inner_ptr) };
+        match offset {
+            TS_EXTERNAL_MODULE_REFERENCE_OFFSET_EXPRESSION => None,
+            _ => panic!("Invalid field offset: {}", offset),
+        }
+    }
 }
+
+const TS_NON_NULL_EXPRESSION_OFFSET_EXPRESSION: usize =
+    std::mem::offset_of!(TSNonNullExpression, expression);
+
 impl<'a> AstNode<'a, TSNonNullExpression<'a>> {
     #[inline]
     pub fn span(&self) -> Span {
@@ -7421,7 +10735,20 @@ impl<'a> AstNode<'a, TSNonNullExpression<'a>> {
             parent: self.allocator.alloc(AstNodes::TSNonNullExpression(transmute_self(self))),
         })
     }
+
+    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
+        let inner_ptr = unsafe { self.parent.inner_ptr() };
+        let offset =
+            unsafe { (self.inner as *const _ as *const u8).offset_from_unsigned(inner_ptr) };
+        match offset {
+            TS_NON_NULL_EXPRESSION_OFFSET_EXPRESSION => None,
+            _ => panic!("Invalid field offset: {}", offset),
+        }
+    }
 }
+
+const DECORATOR_OFFSET_EXPRESSION: usize = std::mem::offset_of!(Decorator, expression);
+
 impl<'a> AstNode<'a, Decorator<'a>> {
     #[inline]
     pub fn span(&self) -> Span {
@@ -7436,7 +10763,21 @@ impl<'a> AstNode<'a, Decorator<'a>> {
             parent: self.allocator.alloc(AstNodes::Decorator(transmute_self(self))),
         })
     }
+
+    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
+        let inner_ptr = unsafe { self.parent.inner_ptr() };
+        let offset =
+            unsafe { (self.inner as *const _ as *const u8).offset_from_unsigned(inner_ptr) };
+        match offset {
+            DECORATOR_OFFSET_EXPRESSION => None,
+            _ => panic!("Invalid field offset: {}", offset),
+        }
+    }
 }
+
+const TS_EXPORT_ASSIGNMENT_OFFSET_EXPRESSION: usize =
+    std::mem::offset_of!(TSExportAssignment, expression);
+
 impl<'a> AstNode<'a, TSExportAssignment<'a>> {
     #[inline]
     pub fn span(&self) -> Span {
@@ -7451,7 +10792,21 @@ impl<'a> AstNode<'a, TSExportAssignment<'a>> {
             parent: self.allocator.alloc(AstNodes::TSExportAssignment(transmute_self(self))),
         })
     }
+
+    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
+        let inner_ptr = unsafe { self.parent.inner_ptr() };
+        let offset =
+            unsafe { (self.inner as *const _ as *const u8).offset_from_unsigned(inner_ptr) };
+        match offset {
+            TS_EXPORT_ASSIGNMENT_OFFSET_EXPRESSION => None,
+            _ => panic!("Invalid field offset: {}", offset),
+        }
+    }
 }
+
+const TS_NAMESPACE_EXPORT_DECLARATION_OFFSET_ID: usize =
+    std::mem::offset_of!(TSNamespaceExportDeclaration, id);
+
 impl<'a> AstNode<'a, TSNamespaceExportDeclaration<'a>> {
     #[inline]
     pub fn span(&self) -> Span {
@@ -7466,7 +10821,23 @@ impl<'a> AstNode<'a, TSNamespaceExportDeclaration<'a>> {
             parent: self.parent,
         })
     }
+
+    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
+        let inner_ptr = unsafe { self.parent.inner_ptr() };
+        let offset =
+            unsafe { (self.inner as *const _ as *const u8).offset_from_unsigned(inner_ptr) };
+        match offset {
+            TS_NAMESPACE_EXPORT_DECLARATION_OFFSET_ID => None,
+            _ => panic!("Invalid field offset: {}", offset),
+        }
+    }
 }
+
+const TS_INSTANTIATION_EXPRESSION_OFFSET_EXPRESSION: usize =
+    std::mem::offset_of!(TSInstantiationExpression, expression);
+const TS_INSTANTIATION_EXPRESSION_OFFSET_TYPEARGUMENTS: usize =
+    std::mem::offset_of!(TSInstantiationExpression, type_arguments);
+
 impl<'a> AstNode<'a, TSInstantiationExpression<'a>> {
     #[inline]
     pub fn span(&self) -> Span {
@@ -7490,7 +10861,30 @@ impl<'a> AstNode<'a, TSInstantiationExpression<'a>> {
             parent: self.allocator.alloc(AstNodes::TSInstantiationExpression(transmute_self(self))),
         })
     }
+
+    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
+        let inner_ptr = unsafe { self.parent.inner_ptr() };
+        let offset =
+            unsafe { (self.inner as *const _ as *const u8).offset_from_unsigned(inner_ptr) };
+        match offset {
+            TS_INSTANTIATION_EXPRESSION_OFFSET_EXPRESSION => {
+                Some(FollowingNode::TSTypeParameterInstantiation(
+                    unsafe {
+                        &*(inner_ptr.add(TS_INSTANTIATION_EXPRESSION_OFFSET_TYPEARGUMENTS)
+                            as *const Box<'a, TSTypeParameterInstantiation<'a>>)
+                    }
+                    .as_ref(),
+                ))
+            }
+            TS_INSTANTIATION_EXPRESSION_OFFSET_TYPEARGUMENTS => None,
+            _ => panic!("Invalid field offset: {}", offset),
+        }
+    }
 }
+
+const JS_DOC_NULLABLE_TYPE_OFFSET_TYPEANNOTATION: usize =
+    std::mem::offset_of!(JSDocNullableType, type_annotation);
+
 impl<'a> AstNode<'a, JSDocNullableType<'a>> {
     #[inline]
     pub fn span(&self) -> Span {
@@ -7510,7 +10904,21 @@ impl<'a> AstNode<'a, JSDocNullableType<'a>> {
     pub fn postfix(&self) -> bool {
         self.inner.postfix
     }
+
+    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
+        let inner_ptr = unsafe { self.parent.inner_ptr() };
+        let offset =
+            unsafe { (self.inner as *const _ as *const u8).offset_from_unsigned(inner_ptr) };
+        match offset {
+            JS_DOC_NULLABLE_TYPE_OFFSET_TYPEANNOTATION => None,
+            _ => panic!("Invalid field offset: {}", offset),
+        }
+    }
 }
+
+const JS_DOC_NON_NULLABLE_TYPE_OFFSET_TYPEANNOTATION: usize =
+    std::mem::offset_of!(JSDocNonNullableType, type_annotation);
+
 impl<'a> AstNode<'a, JSDocNonNullableType<'a>> {
     #[inline]
     pub fn span(&self) -> Span {
@@ -7530,10 +10938,25 @@ impl<'a> AstNode<'a, JSDocNonNullableType<'a>> {
     pub fn postfix(&self) -> bool {
         self.inner.postfix
     }
+
+    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
+        let inner_ptr = unsafe { self.parent.inner_ptr() };
+        let offset =
+            unsafe { (self.inner as *const _ as *const u8).offset_from_unsigned(inner_ptr) };
+        match offset {
+            JS_DOC_NON_NULLABLE_TYPE_OFFSET_TYPEANNOTATION => None,
+            _ => panic!("Invalid field offset: {}", offset),
+        }
+    }
 }
+
 impl<'a> AstNode<'a, JSDocUnknownType> {
     #[inline]
     pub fn span(&self) -> Span {
         self.inner.span
+    }
+
+    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
+        None
     }
 }

@@ -59,6 +59,36 @@ impl Generator for FormatterAstNodesGenerator {
             }
         });
 
+        let following_node_name_with_param = schema
+            .types
+            .iter()
+            .filter_map(|type_def| {
+                let (name, param) = match type_def {
+                    TypeDef::Struct(struct_def) if struct_def.visit.has_visitor() => {
+                        let name = struct_def.ident();
+                        let param = struct_def.ty_with_lifetime(schema, false);
+                        (name, param)
+                    }
+                    TypeDef::Enum(enum_def) if enum_def.visit.has_visitor() => {
+                        let name = enum_def.ident();
+                        let param = enum_def.ty_with_lifetime(schema, false);
+                        (name, param)
+                    }
+                    _ => return None,
+                };
+                Some((name, param))
+            })
+            .collect::<Vec<_>>();
+
+        let following_node_variants = following_node_name_with_param.iter().map(|(name, param)| {
+            quote! { #name(&'a #param), }
+        });
+
+        let following_node_span_match_arms =
+            following_node_name_with_param.iter().map(|(name, _)| {
+                quote! { Self::#name(n) => n.span(), }
+            });
+
         let dummy_variant = quote! {
             Self::Dummy() => panic!("Should never be called on a dummy node"),
         };
@@ -69,6 +99,10 @@ impl Generator for FormatterAstNodesGenerator {
 
         let parent_match_arms = ast_nodes_names.iter().map(|(name, _)| {
             quote! { Self::#name(n) => n.parent, }
+        });
+
+        let inner_ptr_match_arms = ast_nodes_names.iter().map(|(name, _)| {
+            quote! { Self::#name(n) => n.inner as *const _ as *const u8, }
         });
 
         let ast_nodes_debug_names = ast_nodes_names.iter().map(|(name, _)| {
@@ -94,7 +128,7 @@ impl Generator for FormatterAstNodesGenerator {
             use std::{mem::transmute, ops::Deref, fmt};
             ///@@line_break
             use oxc_ast::ast::*;
-            use oxc_allocator::{Allocator, Vec};
+            use oxc_allocator::{Allocator, Vec, Box};
             use oxc_span::GetSpan;
 
             ///@@line_break
@@ -116,6 +150,19 @@ impl Generator for FormatterAstNodesGenerator {
                 #(#ast_nodes_variants)*
             }
 
+            pub enum FollowingNode<'a> {
+                #(#following_node_variants)*
+            }
+
+            impl FollowingNode<'_> {
+                ///@@line_break
+                pub fn span(&self) -> oxc_span::Span {
+                    match self {
+                        #(#following_node_span_match_arms)*
+                    }
+                }
+            }
+
             impl <'a> AstNodes<'a> {
                 #[inline]
                 pub fn span(&self) -> Span {
@@ -130,6 +177,14 @@ impl Generator for FormatterAstNodesGenerator {
                     match self {
                         #dummy_variant
                         #(#parent_match_arms)*
+                    }
+                }
+
+                #[inline]
+                pub unsafe fn inner_ptr(&self) -> *const u8 {
+                    match self {
+                        #dummy_variant
+                        #(#inner_ptr_match_arms)*
                     }
                 }
 
@@ -271,10 +326,107 @@ fn generate_struct_impls(struct_def: &StructDef, schema: &Schema) -> TokenStream
         })
         .collect::<TokenStream>();
 
+    let offset_fields = struct_def
+        .fields
+        .iter()
+        .filter_map(|field| {
+            let field_type = field.type_def(schema);
+            // TODO: optimize this check
+            match field_type.maybe_inner_type(schema).unwrap_or(field_type) {
+                TypeDef::Struct(struct_def)
+                    if struct_def.visit.has_visitor() && struct_def.name != "Span" => {}
+                TypeDef::Enum(enum_def) if enum_def.visit.has_visitor() => {}
+                _ => return None,
+            }
+
+            Some((
+                field,
+                format_ident!(
+                    "{}_OFFSET_{}",
+                    struct_def.snake_name().to_uppercase(),
+                    field.camel_name().to_string().to_uppercase()
+                ),
+            ))
+        })
+        .collect::<Vec<_>>();
+
+    // 生成字段偏移量常量
+    let field_offsets = offset_fields.iter().filter_map(|(field, offset_name)| {
+        let field_name = field.ident();
+        let offset = quote! {
+            const #offset_name: usize = std::mem::offset_of!(#struct_name, #field_name);
+        };
+        Some(offset)
+    });
+
+    let offset_match_arms = offset_fields.iter().enumerate().map(|(i, (field, offset_name))| {
+        let next_offset_field = offset_fields.get(i + 1);
+
+        let implementation = if let Some((next_offset_field, next_offset_name)) = next_offset_field
+        {
+            let next_field_type = next_offset_field.type_def(schema);
+            let next_field_type_token = next_field_type.ty(schema);
+            let as_type =  quote! { unsafe { &*(inner_ptr.add(#next_offset_name) as *const #next_field_type_token) } };
+            match next_field_type {
+                TypeDef::Option(option_def) => {
+                    let inner_ident = option_def.inner_type(schema).ident();
+                    quote!{ (#as_type).as_ref().map(FollowingNode::#inner_ident) }
+                },
+                TypeDef::Box(box_def) => {
+                    let inner_ident = box_def.inner_type(schema).ident();
+                     quote! { Some(FollowingNode::#inner_ident(#as_type.as_ref())) }
+                },
+                TypeDef::Vec(vec_def) => {
+                    let inner_ident = vec_def.inner_type(schema).ident();
+                    quote! { (#as_type).first().as_ref().copied().map(FollowingNode::#inner_ident) }
+                },
+                _ => {
+                    let next_field_ident = next_field_type.ident();
+                    quote! { Some(FollowingNode::#next_field_ident(#as_type)) }
+                }
+            }
+        } else {
+            quote! {
+                None
+            }
+        };
+
+        quote! {
+            #offset_name => #implementation,
+        }
+    });
+
+    let implementation = if offset_fields.is_empty() {
+        quote! { None }
+    } else {
+        quote! {
+            let inner_ptr = unsafe { self.parent.inner_ptr() };
+            let offset = unsafe { (self.inner as *const _ as *const u8).offset_from_unsigned(inner_ptr) };
+            match offset {
+                #(#offset_match_arms)*
+                _ => panic!("Invalid field offset: {}", offset)
+            }
+        }
+    };
+
+    let next_field_fn = quote! {
+        ///@@line_break
+        pub fn next_field(&self) -> Option<FollowingNode<'a>> {
+            #implementation
+        }
+    };
+
     quote! {
+        ///@@line_break
+        #(#field_offsets)*
+
+        ///@@line_break
         impl<'a> AstNode<'a, #type_ty> {
             #methods
+            //@@line_break
+            #next_field_fn
         }
+
     }
 }
 
@@ -498,3 +650,100 @@ fn ast_node_and_ast_nodes_impls() -> TokenStream {
         }
     }
 }
+
+// fn generate_field_offset_methods(struct_def: &StructDef, schema: &Schema) -> TokenStream {
+//     let struct_name = struct_def.ident();
+//     let type_ty = struct_def.ty(schema);
+//     let fields: Vec<_> = struct_def.fields.iter().collect();
+
+//     // 生成字段偏移量常量
+//     let field_offsets = fields.iter().map(|field| {
+//         let field_name = field.ident();
+//         let const_name = format_ident!("{}_OFFSET", field_name.to_string().to_uppercase());
+
+//         quote! {
+//             const #const_name: usize = std::mem::offset_of!(#type_ty, #field_name);
+//         }
+//     });
+
+//     // 生成下一个字段的快速访问方法
+//     let next_field_methods = fields.windows(2).map(|window| {
+//         let current_field = &window[0];
+//         let next_field = &window[1];
+
+//         let current_field_name = current_field.ident();
+//         let next_field_name = next_field.ident();
+//         let next_field_type_def = next_field.type_def(schema);
+//         let next_field_type = next_field_type_def.ty(schema);
+
+//         let method_name = quote!( next_after_ #current_field_name );
+//         let next_offset_const = quote!("{}_OFFSET", next_field_name.to_string().to_uppercase());
+
+//         // 检查是否是 AST 节点
+//         let is_ast_node = match next_field_type_def {
+//             TypeDef::Struct(s) => s.visit.has_visitor(),
+//             TypeDef::Enum(e) => e.visit.has_visitor(),
+//             _ => false,
+//         };
+
+//         if is_ast_node {
+//             let return_type = if next_field_type_def.is_option() {
+//                 quote! { Option<&'a AstNode<'a, #next_field_type>> }
+//             } else {
+//                 quote! { &'a AstNode<'a, #next_field_type> }
+//             };
+
+//             let parent_expr = if struct_def.kind.has_kind {
+//                 quote! { self.allocator.alloc(AstNodes::#struct_name(transmute_self(self))) }
+//             } else {
+//                 quote! { self.parent }
+//             };
+
+//             quote! {
+//                 ///@@line_break
+//                 #[inline]
+//                 pub fn #method_name(&self) -> #return_type {
+//                     unsafe {
+//                         let base_ptr = self.inner as *const _ as *const u8;
+//                         let next_field_ptr = base_ptr.add(Self::#next_offset_const) as *const #next_field_type;
+
+//                         self.allocator.alloc(AstNode {
+//                             inner: &*next_field_ptr,
+//                             parent: #parent_expr,
+//                             allocator: self.allocator,
+//                         })
+//                     }
+//                 }
+//             }
+//         } else {
+//             quote! {}
+//         }
+//     });
+
+//     // 生成通用的字段导航方法
+//     let field_navigator = quote! {
+//         ///@@line_break
+//         #[inline]
+//         pub fn field_at_offset<T>(&self, offset: usize) -> &'a AstNode<'a, T> {
+//             unsafe {
+//                 let base_ptr = self.inner as *const _ as *const u8;
+//                 let field_ptr = base_ptr.add(offset) as *const T;
+
+//                 self.allocator.alloc(AstNode {
+//                     inner: &*field_ptr,
+//                     parent: self.parent,
+//                     allocator: self.allocator,
+//                 })
+//             }
+//         }
+//     };
+
+//     quote! {
+//         impl<'a> AstNode<'a, #type_ty> {
+//             #(#field_offsets)*
+
+//             #field_navigator
+//             #(#next_field_methods)*
+//         }
+//     }
+// }

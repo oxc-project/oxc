@@ -46,6 +46,7 @@ impl Generator for FormatterFormatGenerator {
 
             ///@@line_break
             use crate::{
+                comments::{print_leading_comments, print_trailing_comments},
                 formatter::{
                     Buffer, Format, FormatResult, Formatter,
                     trivia::{format_leading_comments, format_trailing_comments},
@@ -89,7 +90,7 @@ fn implementation(type_def: &TypeDef, schema: &Schema) -> TokenStream {
         quote! {}
     } else {
         quote! {
-            format_leading_comments(self.span().start).fmt(f)?;
+            print_leading_comments(self.span, f, self.allocator)?;
         }
     };
 
@@ -97,7 +98,7 @@ fn implementation(type_def: &TypeDef, schema: &Schema) -> TokenStream {
         quote! {}
     } else {
         quote! {
-            format_trailing_comments(self.span().end).fmt(f)?;
+            print_trailing_comments(self.span, self.next_field(), f, self.allocator)?;
         }
     };
 
