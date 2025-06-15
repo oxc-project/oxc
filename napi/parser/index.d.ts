@@ -190,6 +190,22 @@ export interface ParserOptions {
    */
   astType?: 'js' | 'ts'
   /**
+   * Controls whether the `range` property is included on AST nodes.
+   * The `range` property is a [number, number] which indicates the start/end index of the node in the file contents.
+   * This is similar to the `loc` property, except it is line/column relative.
+   *
+   * @default false
+   */
+  range?: boolean
+  /**
+   * Controls whether the `loc` information is included to each node.
+   * The `loc` property is an object which contains the exact line/column the node starts/ends on.
+   * This is similar to the `range` property, except it is line/column relative.
+   *
+   * @default false
+   */
+  loc?: boolean
+  /**
    * Emit `ParenthesizedExpression` and `TSParenthesizedType` in AST.
    *
    * If this option is true, parenthesized expressions are represented by
@@ -240,12 +256,36 @@ export declare function parseSync(filename: string, sourceText: string, options?
  */
 export declare function parseSyncRaw(filename: string, buffer: Uint8Array, sourceLen: number, options?: ParserOptions | undefined | null): void
 
+/** ESTree Position - line/column information for a single point in source */
+export interface Position {
+  /** Line number (1-indexed) */
+  line: number
+  /** Column number on the line (0-indexed) */
+  column: number
+}
+
 /** Returns `true` if raw transfer is supported on this platform. */
 export declare function rawTransferSupported(): boolean
+
+/** ESTree SourceLocation - start/end position information   */
+export interface SourceLocation {
+  /** The position of the first character of the parsed source region */
+  start: Position
+  /** The position of the first character after the parsed source region */
+  end: Position
+}
 
 export interface Span {
   start: number
   end: number
+  /**
+   * An array of two numbers.
+   * Both numbers are a 0-based index which is the position in the array of source code characters.
+   * The first is the start position of the node, the second is the end position of the node.
+   */
+  range?: [number, number]
+  /** ESTree loc field - line/column info when loc option is enabled */
+  loc?: SourceLocation
 }
 
 export interface StaticExport {

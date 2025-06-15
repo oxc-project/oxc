@@ -4,8 +4,7 @@
 use std::mem;
 
 use itoa::Buffer as ItoaBuffer;
-
-use oxc_data_structures::{code_buffer::CodeBuffer, stack::NonEmptyStack};
+use oxc_data_structures::{code_buffer::CodeBuffer, stack::NonEmptyStack, rope::{Rope, get_line_column}};
 
 mod blanket;
 mod concat;
@@ -21,6 +20,7 @@ use sequences::ESTreeSequenceSerializer;
 use structs::ESTreeStructSerializer;
 
 pub use concat::{Concat2, Concat3, ConcatElement};
+pub use primitives::Range;
 pub use sequences::SequenceSerializer;
 pub use strings::{JsonSafeString, LoneSurrogatesString};
 pub use structs::{FlatStructSerializer, StructSerializer};
@@ -43,6 +43,13 @@ pub trait Serializer: SerializerPrivate {
     type StructSerializer: StructSerializer;
     /// Type of sequence serializer this serializer uses.
     type SequenceSerializer: SequenceSerializer;
+
+    fn range(&self) -> bool;
+
+    fn loc(&self) -> bool;
+
+    /// Get line and column position from byte offset
+    fn get_line_column(&self, offset: u32) -> Option<(u32, u32)>;
 
     /// Serialize struct.
     fn serialize_struct(self) -> Self::StructSerializer;
@@ -94,12 +101,21 @@ pub type PrettyFixesTSSerializer = ESTreeSerializer<ConfigFixesTS, PrettyFormatt
 /// ESTree serializer which produces pretty JSON, excluding TypeScript fields.
 pub type PrettyFixesJSSerializer = ESTreeSerializer<ConfigFixesJS, PrettyFormatter>;
 
+#[derive(Clone, Copy, Default)]
+pub struct RuntimeOptions {
+    pub range: bool,
+    pub loc: bool,
+}
+
 /// ESTree serializer.
 pub struct ESTreeSerializer<C: Config, F: Formatter> {
     buffer: CodeBuffer,
     formatter: F,
     trace_path: NonEmptyStack<TracePathPart>,
     fixes_buffer: CodeBuffer,
+    options: RuntimeOptions,
+    source_text: Option<&'static str>,
+    rope: Option<Rope>,
     #[expect(unused)]
     config: C,
 }
@@ -112,6 +128,9 @@ impl<C: Config, F: Formatter> ESTreeSerializer<C, F> {
             formatter: F::new(),
             trace_path: NonEmptyStack::new(TracePathPart::Index(0)),
             fixes_buffer: CodeBuffer::new(),
+            options: RuntimeOptions::default(),
+            source_text: None,
+            rope: None,
             config: C::new(),
         }
     }
@@ -123,7 +142,34 @@ impl<C: Config, F: Formatter> ESTreeSerializer<C, F> {
             formatter: F::new(),
             trace_path: NonEmptyStack::new(TracePathPart::Index(0)),
             fixes_buffer: CodeBuffer::new(),
+            options: RuntimeOptions::default(),
+            source_text: None,
+            rope: None,
             config: C::new(),
+        }
+    }
+
+    pub fn with_options(mut self, options: RuntimeOptions) -> Self {
+        self.options = options;
+        self
+    }
+
+    pub fn with_source_text(mut self, source_text: &'static str) -> Self {
+        self.source_text = Some(source_text);
+        if self.options.loc {
+            self.rope = Some(Rope::from_str(source_text));
+        }
+        self
+    }
+
+    /// Calculate line and column position from byte offset
+    pub fn get_line_column(&self, offset: u32) -> Option<(u32, u32)> {
+        if let (Some(source_text), Some(rope)) = (self.source_text, &self.rope) {
+            let (line, column) = get_line_column(rope, offset, source_text);
+            // ESTree uses 1-indexed lines and 0-indexed columns
+            Some((line + 1, column))
+        } else {
+            None
         }
     }
 
@@ -178,6 +224,25 @@ impl<'s, C: Config, F: Formatter> Serializer for &'s mut ESTreeSerializer<C, F> 
 
     type StructSerializer = ESTreeStructSerializer<'s, C, F>;
     type SequenceSerializer = ESTreeSequenceSerializer<'s, C, F>;
+
+    fn range(&self) -> bool {
+        self.options.range
+    }
+
+    fn loc(&self) -> bool {
+        self.options.loc
+    }
+
+    /// Get line and column position from byte offset
+    fn get_line_column(&self, offset: u32) -> Option<(u32, u32)> {
+        if let (Some(source_text), Some(rope)) = (self.source_text, &self.rope) {
+            let (line, column) = get_line_column(rope, offset, source_text);
+            // ESTree uses 1-indexed lines and 0-indexed columns
+            Some((line + 1, column))
+        } else {
+            None
+        }
+    }
 
     /// Serialize struct.
     #[inline(always)]
@@ -253,4 +318,36 @@ pub enum TracePathPart {
 
 impl TracePathPart {
     pub const DUMMY: Self = TracePathPart::Index(0);
+}
+
+/// Position information for ESTree loc field
+#[derive(Clone, Copy)]
+pub struct Position {
+    pub line: u32,
+    pub column: u32,
+}
+
+impl ESTree for Position {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        let mut state = serializer.serialize_struct();
+        state.serialize_field("line", &self.line);
+        state.serialize_field("column", &self.column);
+        state.end();
+    }
+}
+
+/// Source location information for ESTree loc field
+#[derive(Clone, Copy)]
+pub struct SourceLocation {
+    pub start: Position,
+    pub end: Position,
+}
+
+impl ESTree for SourceLocation {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        let mut state = serializer.serialize_struct();
+        state.serialize_field("start", &self.start);
+        state.serialize_field("end", &self.end);
+        state.end();
+    }
 }

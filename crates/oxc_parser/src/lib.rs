@@ -221,6 +221,20 @@ pub struct ParseOptions {
     ///
     /// [`V8IntrinsicExpression`]: oxc_ast::ast::V8IntrinsicExpression
     pub allow_v8_intrinsics: bool,
+
+    /// Controls whether the `range` information is included to each node.
+    /// The `range` property is a [number, number] which indicates the start/end index of the node in the file contents.
+    /// This is similar to the `loc` property, except this is the absolute index.
+    ///
+    /// Default: `false`
+    pub range: bool,
+
+    /// Controls whether the `loc` information is included to each node.
+    /// The `loc` property is an object which contains the exact line/column the node starts/ends on.
+    /// This is similar to the `range` property, except it is line/column relative.
+    ///
+    /// Default: `false`
+    pub loc: bool,
 }
 
 impl Default for ParseOptions {
@@ -231,6 +245,8 @@ impl Default for ParseOptions {
             allow_return_outside_function: false,
             preserve_parens: true,
             allow_v8_intrinsics: false,
+            range: false,
+            loc: false,
         }
     }
 }

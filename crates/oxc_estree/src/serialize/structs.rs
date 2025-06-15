@@ -39,6 +39,15 @@ pub trait StructSerializer {
 
     /// Finish serializing struct.
     fn end(self);
+
+    /// Whether to include range information in the serialized output
+    fn range(&self) -> bool;
+
+    /// Whether to include loc information in the serialized output
+    fn loc(&self) -> bool;
+
+    /// Get line and column position from byte offset
+    fn get_line_column(&self, offset: u32) -> Option<(u32, u32)>;
 }
 
 /// Serializer for structs.
@@ -146,6 +155,19 @@ impl<C: Config, F: Formatter> StructSerializer for ESTreeStructSerializer<'_, C,
         }
         buffer.print_ascii_byte(b'}');
     }
+
+    fn range(&self) -> bool {
+        self.serializer.options.range
+    }
+
+    fn loc(&self) -> bool {
+        self.serializer.options.loc
+    }
+
+    /// Get line and column position from byte offset
+    fn get_line_column(&self, offset: u32) -> Option<(u32, u32)> {
+        self.serializer.get_line_column(offset)
+    }
 }
 
 /// State of [`StructSerializer`].
@@ -215,6 +237,19 @@ impl<'p, P: StructSerializer> Serializer for FlatStructSerializer<'p, P> {
             panic!("Cannot call `record_fix_path` on a `FlatStructSerializer`");
         }
     }
+
+    fn range(&self) -> bool {
+        self.0.range()
+    }   
+
+    fn loc(&self) -> bool {
+        self.0.loc()
+    }
+
+    /// Get line and column position from byte offset
+    fn get_line_column(&self, offset: u32) -> Option<(u32, u32)> {
+        self.0.get_line_column(offset)
+    }
 }
 
 impl<P: StructSerializer> SerializerPrivate for FlatStructSerializer<'_, P> {
@@ -279,6 +314,19 @@ impl<P: StructSerializer> StructSerializer for FlatStructSerializer<'_, P> {
     /// Finish serializing struct.
     fn end(self) {
         // No-op - there may be more fields to be added to the struct in the parent
+    }
+
+    fn range(&self) -> bool {
+        self.0.range()
+    }
+
+    fn loc(&self) -> bool {
+        self.0.loc()
+    }
+
+    /// Get line and column position from byte offset
+    fn get_line_column(&self, offset: u32) -> Option<(u32, u32)> {
+        self.0.get_line_column(offset)
     }
 }
 

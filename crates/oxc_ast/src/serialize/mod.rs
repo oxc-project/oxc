@@ -4,11 +4,24 @@ use oxc_ast_macros::ast_meta;
 use oxc_estree::{
     CompactFixesJSSerializer, CompactFixesTSSerializer, CompactJSSerializer, CompactTSSerializer,
     Concat2, ESTree, JsonSafeString, PrettyFixesJSSerializer, PrettyFixesTSSerializer,
-    PrettyJSSerializer, PrettyTSSerializer, Serializer, StructSerializer,
+    PrettyJSSerializer, PrettyTSSerializer, RuntimeOptions, Serializer, StructSerializer,
 };
 use oxc_span::GetSpan;
 
 use crate::ast::*;
+use crate::{
+    ast::{ExportDefaultDeclarationKind, Statement},
+    ast::{Declaration, Program},
+};
+
+/// Options for ESTree serialization
+#[derive(Clone, Copy)]
+pub struct SerializationOptions {
+    /// Include range field [start, end] in each node
+    pub range: bool,
+    /// Include loc field with line/column information in each node
+    pub loc: bool,
+}
 
 pub mod basic;
 pub mod js;
@@ -80,15 +93,37 @@ impl Program<'_> {
 
     /// Serialize AST to ESTree JSON, including TypeScript fields, with list of fixes.
     pub fn to_estree_ts_json_with_fixes(&self) -> String {
-        let capacity = self.source_text.len() * JSON_CAPACITY_RATIO_COMPACT;
-        let serializer = CompactFixesTSSerializer::with_capacity(capacity);
-        serializer.serialize_with_fixes(self)
+        self.to_estree_ts_json_with_fixes_and_options(None)
     }
 
     /// Serialize AST to ESTree JSON, without TypeScript fields, with list of fixes.
     pub fn to_estree_js_json_with_fixes(&self) -> String {
+        self.to_estree_js_json_with_fixes_and_options(None)
+    }
+
+    /// Serialize AST to ESTree JSON, including TypeScript fields, with list of fixes and serialization options.
+    pub fn to_estree_ts_json_with_fixes_and_options(&self, options: Option<&SerializationOptions>) -> String {
         let capacity = self.source_text.len() * JSON_CAPACITY_RATIO_COMPACT;
-        let serializer = CompactFixesJSSerializer::with_capacity(capacity);
+        let runtime_options = options.map_or_else(RuntimeOptions::default, |o| RuntimeOptions { range: o.range, loc: o.loc });
+        let mut serializer = CompactFixesTSSerializer::with_capacity(capacity).with_options(runtime_options);
+        if runtime_options.loc {
+            // SAFETY: source_text lives as long as the Program, and serialization is synchronous
+            let source_text_static: &'static str = unsafe { std::mem::transmute(self.source_text) };
+            serializer = serializer.with_source_text(source_text_static);
+        }
+        serializer.serialize_with_fixes(self)
+    }
+
+    /// Serialize AST to ESTree JSON, without TypeScript fields, with list of fixes and serialization options.
+    pub fn to_estree_js_json_with_fixes_and_options(&self, options: Option<&SerializationOptions>) -> String {
+        let capacity = self.source_text.len() * JSON_CAPACITY_RATIO_COMPACT;
+        let runtime_options = options.map_or_else(RuntimeOptions::default, |o| RuntimeOptions { range: o.range, loc: o.loc });
+        let mut serializer = CompactFixesJSSerializer::with_capacity(capacity).with_options(runtime_options);
+        if runtime_options.loc {
+            // SAFETY: source_text lives as long as the Program, and serialization is synchronous
+            let source_text_static: &'static str = unsafe { std::mem::transmute(self.source_text) };
+            serializer = serializer.with_source_text(source_text_static);
+        }
         serializer.serialize_with_fixes(self)
     }
 

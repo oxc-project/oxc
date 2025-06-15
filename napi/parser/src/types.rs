@@ -23,6 +23,22 @@ pub struct ParserOptions {
     #[napi(ts_type = "'js' | 'ts'")]
     pub ast_type: Option<String>,
 
+    /// Controls whether the `range` property is included on AST nodes.
+    /// The `range` property is a [number, number] which indicates the start/end index of the node in the file contents.
+    /// This is similar to the `loc` property, except it is line/column relative.
+    ///
+    /// @default false
+    #[napi(ts_type = "boolean")]
+    pub range: Option<bool>,
+
+    /// Controls whether the `loc` information is included to each node.
+    /// The `loc` property is an object which contains the exact line/column the node starts/ends on.
+    /// This is similar to the `range` property, except it is line/column relative.
+    ///
+    /// @default false
+    #[napi(ts_type = "boolean")]
+    pub loc: Option<bool>,
+
     /// Emit `ParenthesizedExpression` and `TSParenthesizedType` in AST.
     ///
     /// If this option is true, parenthesized expressions are represented by
@@ -94,6 +110,13 @@ pub struct EcmaScriptModule {
 pub struct Span {
     pub start: u32,
     pub end: u32,
+    /// An array of two numbers.
+    /// Both numbers are a 0-based index which is the position in the array of source code characters.
+    /// The first is the start position of the node, the second is the end position of the node.
+    #[napi(ts_type = "[number, number]")]
+    pub range: Option<Vec<u32>>,
+    /// ESTree loc field - line/column info when loc option is enabled
+    pub loc: Option<SourceLocation>,
 }
 
 #[napi(object)]
@@ -264,4 +287,20 @@ pub struct DynamicImport {
     pub start: u32,
     pub end: u32,
     pub module_request: Span,
+}
+
+#[napi(object)]
+pub struct Position {
+    /// Line number (1-indexed)
+    pub line: u32,
+    /// Column number on the line (0-indexed)
+    pub column: u32,
+}
+
+#[napi(object)]
+pub struct SourceLocation {
+    /// The position of the first character of the parsed source region
+    pub start: Position,
+    /// The position of the first character after the parsed source region
+    pub end: Position,
 }
