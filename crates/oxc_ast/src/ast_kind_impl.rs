@@ -175,6 +175,7 @@ impl AstKind<'_> {
 
             Self::SwitchCase(_) => "SwitchCase".into(),
             Self::CatchClause(_) => "CatchClause".into(),
+            Self::WithClause(_) => "WithClause".into(),
 
             Self::VariableDeclaration(_) => "VariableDeclaration".into(),
             Self::VariableDeclarator(v) => format!(

@@ -2739,10 +2739,12 @@ pub mod walk {
 
     #[inline]
     pub fn walk_with_clause<'a, V: Visit<'a>>(visitor: &mut V, it: &WithClause<'a>) {
-        // No `AstKind` for this type
+        let kind = AstKind::WithClause(visitor.alloc(it));
+        visitor.enter_node(kind);
         visitor.visit_span(&it.span);
         visitor.visit_identifier_name(&it.attributes_keyword);
         visitor.visit_import_attributes(&it.with_entries);
+        visitor.leave_node(kind);
     }
 
     #[inline]
