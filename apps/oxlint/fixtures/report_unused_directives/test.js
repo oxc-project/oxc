@@ -20,3 +20,7 @@ function testFunction() {
 testFunction();
 
 // eslint-enable
+
+
+// oxlint-disable no-debugger no-console -- ToDo: should report no-console
+(() => { debugger; })();

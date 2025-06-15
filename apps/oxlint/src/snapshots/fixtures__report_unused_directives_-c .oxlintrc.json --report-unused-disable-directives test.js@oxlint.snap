@@ -36,6 +36,7 @@ working directory: fixtures/report_unused_directives
  21 | 
  22 | // eslint-enable
     :   ^^^^^^^^^^^^^^
+ 23 | 
     `----
 
 Found 4 warnings and 0 errors.

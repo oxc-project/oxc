@@ -8,7 +8,7 @@ use crate::{
     AllowWarnDeny, FrameworkFlags,
     config::{LintConfig, LintPlugins},
     disable_directives::{DisableDirectives, DisableDirectivesBuilder},
-    fixer::{FixKind, Message, PossibleFixes},
+    fixer::{Fix, FixKind, Message, PossibleFixes},
     frameworks,
     module_record::ModuleRecord,
     options::LintOptions,
@@ -209,8 +209,13 @@ impl<'a> ContextHost<'a> {
                     Message::new(
                         OxcDiagnostic::error(message).with_label(span).with_severity(rule_severity),
                         // TODO: fixer
-                        // if all rules in the same directive are unused, fixer should remove the entire comment
-                        PossibleFixes::None,
+                        // atm unused directives will not report for parts, example:
+                        // `// oxlint-disable-next-line no-debugger no-console`
+                        // will not report no-console when only no-debugger is needed.
+                        // when changing `with_message`, change the language part too for code actions.
+                        PossibleFixes::Single(
+                            Fix::new("", span).with_message("remove unused disable directive"),
+                        ),
                     )
                 })
                 .collect(),
