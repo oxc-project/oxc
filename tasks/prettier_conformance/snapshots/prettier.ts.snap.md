@@ -84,7 +84,7 @@ ts compatibility: 186/573 (32.46%)
 | typescript/assignment/issue-6783.ts | 💥 | 0.00% |
 | typescript/assignment/issue-8619.ts | 💥 | 80.00% |
 | typescript/assignment/issue-9172.ts | 💥 | 0.00% |
-| typescript/call-signature/call-signature.ts | 💥 | 66.10% |
+| typescript/call-signature/call-signature.ts | 💥 | 79.66% |
 | typescript/cast/as-const.ts | 💥 | 60.00% |
 | typescript/cast/assert-and-assign.ts | 💥 | 50.00% |
 | typescript/cast/generic-cast.ts | 💥 | 42.51% |
@@ -248,7 +248,7 @@ ts compatibility: 186/573 (32.46%)
 | typescript/export/export.ts | 💥 | 85.71% |
 | typescript/export-default/function_as.ts | 💥 | 0.00% |
 | typescript/function/single_expand.ts | 💥 | 30.00% |
-| typescript/function-type/consistent.ts | 💥 | 85.71% |
+| typescript/function-type/consistent.ts | 💥 | 70.83% |
 | typescript/function-type/single-parameter.ts | 💥 | 0.00% |
 | typescript/function-type/type-annotation.ts | 💥 | 0.00% |
 | typescript/functional-composition/pipe-function-calls-with-comments.ts | 💥 | 77.08% |
@@ -298,7 +298,7 @@ ts compatibility: 186/573 (32.46%)
 | typescript/module/global.ts | 💥 | 75.00% |
 | typescript/module/namespace_function.ts | 💥 | 66.67% |
 | typescript/multiparser-css/issue-6259.ts | 💥 | 15.38% |
-| typescript/new/new-signature.ts | 💥 | 90.91% |
+| typescript/new/new-signature.ts | 💥 | 93.85% |
 | typescript/no-semi/no-semi.ts | 💥✨ | 45.45% |
 | typescript/no-semi/non-null.ts | 💥💥 | 66.67% |
 | typescript/non-null/braces.ts | 💥 | 70.59% |
