@@ -256,7 +256,6 @@ export declare function parseSync(filename: string, sourceText: string, options?
  */
 export declare function parseSyncRaw(filename: string, buffer: Uint8Array, sourceLen: number, options?: ParserOptions | undefined | null): void
 
-/** ESTree Position - line/column information for a single point in source */
 export interface Position {
   /** Line number (1-indexed) */
   line: number
@@ -267,7 +266,6 @@ export interface Position {
 /** Returns `true` if raw transfer is supported on this platform. */
 export declare function rawTransferSupported(): boolean
 
-/** ESTree SourceLocation - start/end position information   */
 export interface SourceLocation {
   /** The position of the first character of the parsed source region */
   start: Position
