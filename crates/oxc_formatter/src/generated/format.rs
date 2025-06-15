@@ -18,7 +18,13 @@ impl<'a> Format<'a> for AstNode<'a, Program<'a>> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         print_leading_comments(self.span, f, self.allocator)?;
         let result = self.write(f);
-        print_trailing_comments(self.span, self.following_node.as_ref(), f, self.allocator)?;
+        print_trailing_comments(
+            self.span,
+            self.parent.span(),
+            self.following_node.as_ref(),
+            f,
+            self.allocator,
+        )?;
         result
     }
 }
@@ -33,7 +39,13 @@ impl<'a> Format<'a> for AstNode<'a, IdentifierName<'a>> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         print_leading_comments(self.span, f, self.allocator)?;
         let result = self.write(f);
-        print_trailing_comments(self.span, self.following_node.as_ref(), f, self.allocator)?;
+        print_trailing_comments(
+            self.span,
+            self.parent.span(),
+            self.following_node.as_ref(),
+            f,
+            self.allocator,
+        )?;
         result
     }
 }
@@ -42,7 +54,13 @@ impl<'a> Format<'a> for AstNode<'a, IdentifierReference<'a>> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         print_leading_comments(self.span, f, self.allocator)?;
         let result = self.write(f);
-        print_trailing_comments(self.span, self.following_node.as_ref(), f, self.allocator)?;
+        print_trailing_comments(
+            self.span,
+            self.parent.span(),
+            self.following_node.as_ref(),
+            f,
+            self.allocator,
+        )?;
         result
     }
 }
@@ -51,7 +69,13 @@ impl<'a> Format<'a> for AstNode<'a, BindingIdentifier<'a>> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         print_leading_comments(self.span, f, self.allocator)?;
         let result = self.write(f);
-        print_trailing_comments(self.span, self.following_node.as_ref(), f, self.allocator)?;
+        print_trailing_comments(
+            self.span,
+            self.parent.span(),
+            self.following_node.as_ref(),
+            f,
+            self.allocator,
+        )?;
         result
     }
 }
@@ -60,7 +84,13 @@ impl<'a> Format<'a> for AstNode<'a, LabelIdentifier<'a>> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         print_leading_comments(self.span, f, self.allocator)?;
         let result = self.write(f);
-        print_trailing_comments(self.span, self.following_node.as_ref(), f, self.allocator)?;
+        print_trailing_comments(
+            self.span,
+            self.parent.span(),
+            self.following_node.as_ref(),
+            f,
+            self.allocator,
+        )?;
         result
     }
 }
@@ -76,7 +106,13 @@ impl<'a> Format<'a> for AstNode<'a, ThisExpression> {
         if needs_parentheses {
             ")".fmt(f)?;
         }
-        print_trailing_comments(self.span, self.following_node.as_ref(), f, self.allocator)?;
+        print_trailing_comments(
+            self.span,
+            self.parent.span(),
+            self.following_node.as_ref(),
+            f,
+            self.allocator,
+        )?;
         result
     }
 }
@@ -92,7 +128,13 @@ impl<'a> Format<'a> for AstNode<'a, ArrayExpression<'a>> {
         if needs_parentheses {
             ")".fmt(f)?;
         }
-        print_trailing_comments(self.span, self.following_node.as_ref(), f, self.allocator)?;
+        print_trailing_comments(
+            self.span,
+            self.parent.span(),
+            self.following_node.as_ref(),
+            f,
+            self.allocator,
+        )?;
         result
     }
 }
@@ -107,7 +149,13 @@ impl<'a> Format<'a> for AstNode<'a, Elision> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         print_leading_comments(self.span, f, self.allocator)?;
         let result = self.write(f);
-        print_trailing_comments(self.span, self.following_node.as_ref(), f, self.allocator)?;
+        print_trailing_comments(
+            self.span,
+            self.parent.span(),
+            self.following_node.as_ref(),
+            f,
+            self.allocator,
+        )?;
         result
     }
 }
@@ -123,7 +171,13 @@ impl<'a> Format<'a> for AstNode<'a, ObjectExpression<'a>> {
         if needs_parentheses {
             ")".fmt(f)?;
         }
-        print_trailing_comments(self.span, self.following_node.as_ref(), f, self.allocator)?;
+        print_trailing_comments(
+            self.span,
+            self.parent.span(),
+            self.following_node.as_ref(),
+            f,
+            self.allocator,
+        )?;
         result
     }
 }
@@ -138,7 +192,13 @@ impl<'a> Format<'a> for AstNode<'a, ObjectProperty<'a>> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         print_leading_comments(self.span, f, self.allocator)?;
         let result = self.write(f);
-        print_trailing_comments(self.span, self.following_node.as_ref(), f, self.allocator)?;
+        print_trailing_comments(
+            self.span,
+            self.parent.span(),
+            self.following_node.as_ref(),
+            f,
+            self.allocator,
+        )?;
         result
     }
 }
@@ -153,7 +213,13 @@ impl<'a> Format<'a> for AstNode<'a, TemplateLiteral<'a>> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         print_leading_comments(self.span, f, self.allocator)?;
         let result = self.write(f);
-        print_trailing_comments(self.span, self.following_node.as_ref(), f, self.allocator)?;
+        print_trailing_comments(
+            self.span,
+            self.parent.span(),
+            self.following_node.as_ref(),
+            f,
+            self.allocator,
+        )?;
         result
     }
 }
@@ -169,7 +235,13 @@ impl<'a> Format<'a> for AstNode<'a, TaggedTemplateExpression<'a>> {
         if needs_parentheses {
             ")".fmt(f)?;
         }
-        print_trailing_comments(self.span, self.following_node.as_ref(), f, self.allocator)?;
+        print_trailing_comments(
+            self.span,
+            self.parent.span(),
+            self.following_node.as_ref(),
+            f,
+            self.allocator,
+        )?;
         result
     }
 }
@@ -223,7 +295,13 @@ impl<'a> Format<'a> for AstNode<'a, CallExpression<'a>> {
         if needs_parentheses {
             ")".fmt(f)?;
         }
-        print_trailing_comments(self.span, self.following_node.as_ref(), f, self.allocator)?;
+        print_trailing_comments(
+            self.span,
+            self.parent.span(),
+            self.following_node.as_ref(),
+            f,
+            self.allocator,
+        )?;
         result
     }
 }
@@ -239,7 +317,13 @@ impl<'a> Format<'a> for AstNode<'a, NewExpression<'a>> {
         if needs_parentheses {
             ")".fmt(f)?;
         }
-        print_trailing_comments(self.span, self.following_node.as_ref(), f, self.allocator)?;
+        print_trailing_comments(
+            self.span,
+            self.parent.span(),
+            self.following_node.as_ref(),
+            f,
+            self.allocator,
+        )?;
         result
     }
 }
@@ -248,7 +332,13 @@ impl<'a> Format<'a> for AstNode<'a, MetaProperty<'a>> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         print_leading_comments(self.span, f, self.allocator)?;
         let result = self.write(f);
-        print_trailing_comments(self.span, self.following_node.as_ref(), f, self.allocator)?;
+        print_trailing_comments(
+            self.span,
+            self.parent.span(),
+            self.following_node.as_ref(),
+            f,
+            self.allocator,
+        )?;
         result
     }
 }
@@ -257,7 +347,13 @@ impl<'a> Format<'a> for AstNode<'a, SpreadElement<'a>> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         print_leading_comments(self.span, f, self.allocator)?;
         let result = self.write(f);
-        print_trailing_comments(self.span, self.following_node.as_ref(), f, self.allocator)?;
+        print_trailing_comments(
+            self.span,
+            self.parent.span(),
+            self.following_node.as_ref(),
+            f,
+            self.allocator,
+        )?;
         result
     }
 }
@@ -279,7 +375,13 @@ impl<'a> Format<'a> for AstNode<'a, UpdateExpression<'a>> {
         if needs_parentheses {
             ")".fmt(f)?;
         }
-        print_trailing_comments(self.span, self.following_node.as_ref(), f, self.allocator)?;
+        print_trailing_comments(
+            self.span,
+            self.parent.span(),
+            self.following_node.as_ref(),
+            f,
+            self.allocator,
+        )?;
         result
     }
 }
@@ -295,7 +397,13 @@ impl<'a> Format<'a> for AstNode<'a, UnaryExpression<'a>> {
         if needs_parentheses {
             ")".fmt(f)?;
         }
-        print_trailing_comments(self.span, self.following_node.as_ref(), f, self.allocator)?;
+        print_trailing_comments(
+            self.span,
+            self.parent.span(),
+            self.following_node.as_ref(),
+            f,
+            self.allocator,
+        )?;
         result
     }
 }
@@ -311,7 +419,13 @@ impl<'a> Format<'a> for AstNode<'a, BinaryExpression<'a>> {
         if needs_parentheses {
             ")".fmt(f)?;
         }
-        print_trailing_comments(self.span, self.following_node.as_ref(), f, self.allocator)?;
+        print_trailing_comments(
+            self.span,
+            self.parent.span(),
+            self.following_node.as_ref(),
+            f,
+            self.allocator,
+        )?;
         result
     }
 }
@@ -327,7 +441,13 @@ impl<'a> Format<'a> for AstNode<'a, PrivateInExpression<'a>> {
         if needs_parentheses {
             ")".fmt(f)?;
         }
-        print_trailing_comments(self.span, self.following_node.as_ref(), f, self.allocator)?;
+        print_trailing_comments(
+            self.span,
+            self.parent.span(),
+            self.following_node.as_ref(),
+            f,
+            self.allocator,
+        )?;
         result
     }
 }
@@ -343,7 +463,13 @@ impl<'a> Format<'a> for AstNode<'a, LogicalExpression<'a>> {
         if needs_parentheses {
             ")".fmt(f)?;
         }
-        print_trailing_comments(self.span, self.following_node.as_ref(), f, self.allocator)?;
+        print_trailing_comments(
+            self.span,
+            self.parent.span(),
+            self.following_node.as_ref(),
+            f,
+            self.allocator,
+        )?;
         result
     }
 }
@@ -359,7 +485,13 @@ impl<'a> Format<'a> for AstNode<'a, ConditionalExpression<'a>> {
         if needs_parentheses {
             ")".fmt(f)?;
         }
-        print_trailing_comments(self.span, self.following_node.as_ref(), f, self.allocator)?;
+        print_trailing_comments(
+            self.span,
+            self.parent.span(),
+            self.following_node.as_ref(),
+            f,
+            self.allocator,
+        )?;
         result
     }
 }
@@ -375,7 +507,13 @@ impl<'a> Format<'a> for AstNode<'a, AssignmentExpression<'a>> {
         if needs_parentheses {
             ")".fmt(f)?;
         }
-        print_trailing_comments(self.span, self.following_node.as_ref(), f, self.allocator)?;
+        print_trailing_comments(
+            self.span,
+            self.parent.span(),
+            self.following_node.as_ref(),
+            f,
+            self.allocator,
+        )?;
         result
     }
 }
@@ -410,7 +548,13 @@ impl<'a> Format<'a> for AstNode<'a, ArrayAssignmentTarget<'a>> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         print_leading_comments(self.span, f, self.allocator)?;
         let result = self.write(f);
-        print_trailing_comments(self.span, self.following_node.as_ref(), f, self.allocator)?;
+        print_trailing_comments(
+            self.span,
+            self.parent.span(),
+            self.following_node.as_ref(),
+            f,
+            self.allocator,
+        )?;
         result
     }
 }
@@ -419,7 +563,13 @@ impl<'a> Format<'a> for AstNode<'a, ObjectAssignmentTarget<'a>> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         print_leading_comments(self.span, f, self.allocator)?;
         let result = self.write(f);
-        print_trailing_comments(self.span, self.following_node.as_ref(), f, self.allocator)?;
+        print_trailing_comments(
+            self.span,
+            self.parent.span(),
+            self.following_node.as_ref(),
+            f,
+            self.allocator,
+        )?;
         result
     }
 }
@@ -440,7 +590,13 @@ impl<'a> Format<'a> for AstNode<'a, AssignmentTargetWithDefault<'a>> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         print_leading_comments(self.span, f, self.allocator)?;
         let result = self.write(f);
-        print_trailing_comments(self.span, self.following_node.as_ref(), f, self.allocator)?;
+        print_trailing_comments(
+            self.span,
+            self.parent.span(),
+            self.following_node.as_ref(),
+            f,
+            self.allocator,
+        )?;
         result
     }
 }
@@ -474,7 +630,13 @@ impl<'a> Format<'a> for AstNode<'a, SequenceExpression<'a>> {
         if needs_parentheses {
             ")".fmt(f)?;
         }
-        print_trailing_comments(self.span, self.following_node.as_ref(), f, self.allocator)?;
+        print_trailing_comments(
+            self.span,
+            self.parent.span(),
+            self.following_node.as_ref(),
+            f,
+            self.allocator,
+        )?;
         result
     }
 }
@@ -483,7 +645,13 @@ impl<'a> Format<'a> for AstNode<'a, Super> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         print_leading_comments(self.span, f, self.allocator)?;
         let result = self.write(f);
-        print_trailing_comments(self.span, self.following_node.as_ref(), f, self.allocator)?;
+        print_trailing_comments(
+            self.span,
+            self.parent.span(),
+            self.following_node.as_ref(),
+            f,
+            self.allocator,
+        )?;
         result
     }
 }
@@ -499,7 +667,13 @@ impl<'a> Format<'a> for AstNode<'a, AwaitExpression<'a>> {
         if needs_parentheses {
             ")".fmt(f)?;
         }
-        print_trailing_comments(self.span, self.following_node.as_ref(), f, self.allocator)?;
+        print_trailing_comments(
+            self.span,
+            self.parent.span(),
+            self.following_node.as_ref(),
+            f,
+            self.allocator,
+        )?;
         result
     }
 }
@@ -515,7 +689,13 @@ impl<'a> Format<'a> for AstNode<'a, ChainExpression<'a>> {
         if needs_parentheses {
             ")".fmt(f)?;
         }
-        print_trailing_comments(self.span, self.following_node.as_ref(), f, self.allocator)?;
+        print_trailing_comments(
+            self.span,
+            self.parent.span(),
+            self.following_node.as_ref(),
+            f,
+            self.allocator,
+        )?;
         result
     }
 }
@@ -537,7 +717,13 @@ impl<'a> Format<'a> for AstNode<'a, ParenthesizedExpression<'a>> {
         if needs_parentheses {
             ")".fmt(f)?;
         }
-        print_trailing_comments(self.span, self.following_node.as_ref(), f, self.allocator)?;
+        print_trailing_comments(
+            self.span,
+            self.parent.span(),
+            self.following_node.as_ref(),
+            f,
+            self.allocator,
+        )?;
         result
     }
 }
@@ -552,7 +738,13 @@ impl<'a> Format<'a> for AstNode<'a, Directive<'a>> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         print_leading_comments(self.span, f, self.allocator)?;
         let result = self.write(f);
-        print_trailing_comments(self.span, self.following_node.as_ref(), f, self.allocator)?;
+        print_trailing_comments(
+            self.span,
+            self.parent.span(),
+            self.following_node.as_ref(),
+            f,
+            self.allocator,
+        )?;
         result
     }
 }
@@ -561,7 +753,13 @@ impl<'a> Format<'a> for AstNode<'a, Hashbang<'a>> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         print_leading_comments(self.span, f, self.allocator)?;
         let result = self.write(f);
-        print_trailing_comments(self.span, self.following_node.as_ref(), f, self.allocator)?;
+        print_trailing_comments(
+            self.span,
+            self.parent.span(),
+            self.following_node.as_ref(),
+            f,
+            self.allocator,
+        )?;
         result
     }
 }
@@ -570,7 +768,13 @@ impl<'a> Format<'a> for AstNode<'a, BlockStatement<'a>> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         print_leading_comments(self.span, f, self.allocator)?;
         let result = self.write(f);
-        print_trailing_comments(self.span, self.following_node.as_ref(), f, self.allocator)?;
+        print_trailing_comments(
+            self.span,
+            self.parent.span(),
+            self.following_node.as_ref(),
+            f,
+            self.allocator,
+        )?;
         result
     }
 }
@@ -585,7 +789,13 @@ impl<'a> Format<'a> for AstNode<'a, VariableDeclaration<'a>> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         print_leading_comments(self.span, f, self.allocator)?;
         let result = self.write(f);
-        print_trailing_comments(self.span, self.following_node.as_ref(), f, self.allocator)?;
+        print_trailing_comments(
+            self.span,
+            self.parent.span(),
+            self.following_node.as_ref(),
+            f,
+            self.allocator,
+        )?;
         result
     }
 }
@@ -594,7 +804,13 @@ impl<'a> Format<'a> for AstNode<'a, VariableDeclarator<'a>> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         print_leading_comments(self.span, f, self.allocator)?;
         let result = self.write(f);
-        print_trailing_comments(self.span, self.following_node.as_ref(), f, self.allocator)?;
+        print_trailing_comments(
+            self.span,
+            self.parent.span(),
+            self.following_node.as_ref(),
+            f,
+            self.allocator,
+        )?;
         result
     }
 }
@@ -603,7 +819,13 @@ impl<'a> Format<'a> for AstNode<'a, EmptyStatement> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         print_leading_comments(self.span, f, self.allocator)?;
         let result = self.write(f);
-        print_trailing_comments(self.span, self.following_node.as_ref(), f, self.allocator)?;
+        print_trailing_comments(
+            self.span,
+            self.parent.span(),
+            self.following_node.as_ref(),
+            f,
+            self.allocator,
+        )?;
         result
     }
 }
@@ -612,7 +834,13 @@ impl<'a> Format<'a> for AstNode<'a, ExpressionStatement<'a>> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         print_leading_comments(self.span, f, self.allocator)?;
         let result = self.write(f);
-        print_trailing_comments(self.span, self.following_node.as_ref(), f, self.allocator)?;
+        print_trailing_comments(
+            self.span,
+            self.parent.span(),
+            self.following_node.as_ref(),
+            f,
+            self.allocator,
+        )?;
         result
     }
 }
@@ -621,7 +849,13 @@ impl<'a> Format<'a> for AstNode<'a, IfStatement<'a>> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         print_leading_comments(self.span, f, self.allocator)?;
         let result = self.write(f);
-        print_trailing_comments(self.span, self.following_node.as_ref(), f, self.allocator)?;
+        print_trailing_comments(
+            self.span,
+            self.parent.span(),
+            self.following_node.as_ref(),
+            f,
+            self.allocator,
+        )?;
         result
     }
 }
@@ -630,7 +864,13 @@ impl<'a> Format<'a> for AstNode<'a, DoWhileStatement<'a>> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         print_leading_comments(self.span, f, self.allocator)?;
         let result = self.write(f);
-        print_trailing_comments(self.span, self.following_node.as_ref(), f, self.allocator)?;
+        print_trailing_comments(
+            self.span,
+            self.parent.span(),
+            self.following_node.as_ref(),
+            f,
+            self.allocator,
+        )?;
         result
     }
 }
@@ -639,7 +879,13 @@ impl<'a> Format<'a> for AstNode<'a, WhileStatement<'a>> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         print_leading_comments(self.span, f, self.allocator)?;
         let result = self.write(f);
-        print_trailing_comments(self.span, self.following_node.as_ref(), f, self.allocator)?;
+        print_trailing_comments(
+            self.span,
+            self.parent.span(),
+            self.following_node.as_ref(),
+            f,
+            self.allocator,
+        )?;
         result
     }
 }
@@ -648,7 +894,13 @@ impl<'a> Format<'a> for AstNode<'a, ForStatement<'a>> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         print_leading_comments(self.span, f, self.allocator)?;
         let result = self.write(f);
-        print_trailing_comments(self.span, self.following_node.as_ref(), f, self.allocator)?;
+        print_trailing_comments(
+            self.span,
+            self.parent.span(),
+            self.following_node.as_ref(),
+            f,
+            self.allocator,
+        )?;
         result
     }
 }
@@ -663,7 +915,13 @@ impl<'a> Format<'a> for AstNode<'a, ForInStatement<'a>> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         print_leading_comments(self.span, f, self.allocator)?;
         let result = self.write(f);
-        print_trailing_comments(self.span, self.following_node.as_ref(), f, self.allocator)?;
+        print_trailing_comments(
+            self.span,
+            self.parent.span(),
+            self.following_node.as_ref(),
+            f,
+            self.allocator,
+        )?;
         result
     }
 }
@@ -678,7 +936,13 @@ impl<'a> Format<'a> for AstNode<'a, ForOfStatement<'a>> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         print_leading_comments(self.span, f, self.allocator)?;
         let result = self.write(f);
-        print_trailing_comments(self.span, self.following_node.as_ref(), f, self.allocator)?;
+        print_trailing_comments(
+            self.span,
+            self.parent.span(),
+            self.following_node.as_ref(),
+            f,
+            self.allocator,
+        )?;
         result
     }
 }
@@ -687,7 +951,13 @@ impl<'a> Format<'a> for AstNode<'a, ContinueStatement<'a>> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         print_leading_comments(self.span, f, self.allocator)?;
         let result = self.write(f);
-        print_trailing_comments(self.span, self.following_node.as_ref(), f, self.allocator)?;
+        print_trailing_comments(
+            self.span,
+            self.parent.span(),
+            self.following_node.as_ref(),
+            f,
+            self.allocator,
+        )?;
         result
     }
 }
@@ -696,7 +966,13 @@ impl<'a> Format<'a> for AstNode<'a, BreakStatement<'a>> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         print_leading_comments(self.span, f, self.allocator)?;
         let result = self.write(f);
-        print_trailing_comments(self.span, self.following_node.as_ref(), f, self.allocator)?;
+        print_trailing_comments(
+            self.span,
+            self.parent.span(),
+            self.following_node.as_ref(),
+            f,
+            self.allocator,
+        )?;
         result
     }
 }
@@ -705,7 +981,13 @@ impl<'a> Format<'a> for AstNode<'a, ReturnStatement<'a>> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         print_leading_comments(self.span, f, self.allocator)?;
         let result = self.write(f);
-        print_trailing_comments(self.span, self.following_node.as_ref(), f, self.allocator)?;
+        print_trailing_comments(
+            self.span,
+            self.parent.span(),
+            self.following_node.as_ref(),
+            f,
+            self.allocator,
+        )?;
         result
     }
 }
@@ -714,7 +996,13 @@ impl<'a> Format<'a> for AstNode<'a, WithStatement<'a>> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         print_leading_comments(self.span, f, self.allocator)?;
         let result = self.write(f);
-        print_trailing_comments(self.span, self.following_node.as_ref(), f, self.allocator)?;
+        print_trailing_comments(
+            self.span,
+            self.parent.span(),
+            self.following_node.as_ref(),
+            f,
+            self.allocator,
+        )?;
         result
     }
 }
@@ -723,7 +1011,13 @@ impl<'a> Format<'a> for AstNode<'a, SwitchStatement<'a>> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         print_leading_comments(self.span, f, self.allocator)?;
         let result = self.write(f);
-        print_trailing_comments(self.span, self.following_node.as_ref(), f, self.allocator)?;
+        print_trailing_comments(
+            self.span,
+            self.parent.span(),
+            self.following_node.as_ref(),
+            f,
+            self.allocator,
+        )?;
         result
     }
 }
@@ -732,7 +1026,13 @@ impl<'a> Format<'a> for AstNode<'a, SwitchCase<'a>> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         print_leading_comments(self.span, f, self.allocator)?;
         let result = self.write(f);
-        print_trailing_comments(self.span, self.following_node.as_ref(), f, self.allocator)?;
+        print_trailing_comments(
+            self.span,
+            self.parent.span(),
+            self.following_node.as_ref(),
+            f,
+            self.allocator,
+        )?;
         result
     }
 }
@@ -741,7 +1041,13 @@ impl<'a> Format<'a> for AstNode<'a, LabeledStatement<'a>> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         print_leading_comments(self.span, f, self.allocator)?;
         let result = self.write(f);
-        print_trailing_comments(self.span, self.following_node.as_ref(), f, self.allocator)?;
+        print_trailing_comments(
+            self.span,
+            self.parent.span(),
+            self.following_node.as_ref(),
+            f,
+            self.allocator,
+        )?;
         result
     }
 }
@@ -750,7 +1056,13 @@ impl<'a> Format<'a> for AstNode<'a, ThrowStatement<'a>> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         print_leading_comments(self.span, f, self.allocator)?;
         let result = self.write(f);
-        print_trailing_comments(self.span, self.following_node.as_ref(), f, self.allocator)?;
+        print_trailing_comments(
+            self.span,
+            self.parent.span(),
+            self.following_node.as_ref(),
+            f,
+            self.allocator,
+        )?;
         result
     }
 }
@@ -759,7 +1071,13 @@ impl<'a> Format<'a> for AstNode<'a, TryStatement<'a>> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         print_leading_comments(self.span, f, self.allocator)?;
         let result = self.write(f);
-        print_trailing_comments(self.span, self.following_node.as_ref(), f, self.allocator)?;
+        print_trailing_comments(
+            self.span,
+            self.parent.span(),
+            self.following_node.as_ref(),
+            f,
+            self.allocator,
+        )?;
         result
     }
 }
@@ -768,7 +1086,13 @@ impl<'a> Format<'a> for AstNode<'a, CatchClause<'a>> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         print_leading_comments(self.span, f, self.allocator)?;
         let result = self.write(f);
-        print_trailing_comments(self.span, self.following_node.as_ref(), f, self.allocator)?;
+        print_trailing_comments(
+            self.span,
+            self.parent.span(),
+            self.following_node.as_ref(),
+            f,
+            self.allocator,
+        )?;
         result
     }
 }
@@ -777,7 +1101,13 @@ impl<'a> Format<'a> for AstNode<'a, CatchParameter<'a>> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         print_leading_comments(self.span, f, self.allocator)?;
         let result = self.write(f);
-        print_trailing_comments(self.span, self.following_node.as_ref(), f, self.allocator)?;
+        print_trailing_comments(
+            self.span,
+            self.parent.span(),
+            self.following_node.as_ref(),
+            f,
+            self.allocator,
+        )?;
         result
     }
 }
@@ -786,7 +1116,13 @@ impl<'a> Format<'a> for AstNode<'a, DebuggerStatement> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         print_leading_comments(self.span, f, self.allocator)?;
         let result = self.write(f);
-        print_trailing_comments(self.span, self.following_node.as_ref(), f, self.allocator)?;
+        print_trailing_comments(
+            self.span,
+            self.parent.span(),
+            self.following_node.as_ref(),
+            f,
+            self.allocator,
+        )?;
         result
     }
 }
@@ -807,7 +1143,13 @@ impl<'a> Format<'a> for AstNode<'a, AssignmentPattern<'a>> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         print_leading_comments(self.span, f, self.allocator)?;
         let result = self.write(f);
-        print_trailing_comments(self.span, self.following_node.as_ref(), f, self.allocator)?;
+        print_trailing_comments(
+            self.span,
+            self.parent.span(),
+            self.following_node.as_ref(),
+            f,
+            self.allocator,
+        )?;
         result
     }
 }
@@ -816,7 +1158,13 @@ impl<'a> Format<'a> for AstNode<'a, ObjectPattern<'a>> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         print_leading_comments(self.span, f, self.allocator)?;
         let result = self.write(f);
-        print_trailing_comments(self.span, self.following_node.as_ref(), f, self.allocator)?;
+        print_trailing_comments(
+            self.span,
+            self.parent.span(),
+            self.following_node.as_ref(),
+            f,
+            self.allocator,
+        )?;
         result
     }
 }
@@ -831,7 +1179,13 @@ impl<'a> Format<'a> for AstNode<'a, ArrayPattern<'a>> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         print_leading_comments(self.span, f, self.allocator)?;
         let result = self.write(f);
-        print_trailing_comments(self.span, self.following_node.as_ref(), f, self.allocator)?;
+        print_trailing_comments(
+            self.span,
+            self.parent.span(),
+            self.following_node.as_ref(),
+            f,
+            self.allocator,
+        )?;
         result
     }
 }
@@ -840,7 +1194,13 @@ impl<'a> Format<'a> for AstNode<'a, BindingRestElement<'a>> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         print_leading_comments(self.span, f, self.allocator)?;
         let result = self.write(f);
-        print_trailing_comments(self.span, self.following_node.as_ref(), f, self.allocator)?;
+        print_trailing_comments(
+            self.span,
+            self.parent.span(),
+            self.following_node.as_ref(),
+            f,
+            self.allocator,
+        )?;
         result
     }
 }
@@ -856,7 +1216,13 @@ impl<'a> Format<'a> for AstNode<'a, Function<'a>> {
         if needs_parentheses {
             ")".fmt(f)?;
         }
-        print_trailing_comments(self.span, self.following_node.as_ref(), f, self.allocator)?;
+        print_trailing_comments(
+            self.span,
+            self.parent.span(),
+            self.following_node.as_ref(),
+            f,
+            self.allocator,
+        )?;
         result
     }
 }
@@ -865,7 +1231,13 @@ impl<'a> Format<'a> for AstNode<'a, FormalParameters<'a>> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         print_leading_comments(self.span, f, self.allocator)?;
         let result = self.write(f);
-        print_trailing_comments(self.span, self.following_node.as_ref(), f, self.allocator)?;
+        print_trailing_comments(
+            self.span,
+            self.parent.span(),
+            self.following_node.as_ref(),
+            f,
+            self.allocator,
+        )?;
         result
     }
 }
@@ -874,7 +1246,13 @@ impl<'a> Format<'a> for AstNode<'a, FormalParameter<'a>> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         print_leading_comments(self.span, f, self.allocator)?;
         let result = self.write(f);
-        print_trailing_comments(self.span, self.following_node.as_ref(), f, self.allocator)?;
+        print_trailing_comments(
+            self.span,
+            self.parent.span(),
+            self.following_node.as_ref(),
+            f,
+            self.allocator,
+        )?;
         result
     }
 }
@@ -883,7 +1261,13 @@ impl<'a> Format<'a> for AstNode<'a, FunctionBody<'a>> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         print_leading_comments(self.span, f, self.allocator)?;
         let result = self.write(f);
-        print_trailing_comments(self.span, self.following_node.as_ref(), f, self.allocator)?;
+        print_trailing_comments(
+            self.span,
+            self.parent.span(),
+            self.following_node.as_ref(),
+            f,
+            self.allocator,
+        )?;
         result
     }
 }
@@ -899,7 +1283,13 @@ impl<'a> Format<'a> for AstNode<'a, ArrowFunctionExpression<'a>> {
         if needs_parentheses {
             ")".fmt(f)?;
         }
-        print_trailing_comments(self.span, self.following_node.as_ref(), f, self.allocator)?;
+        print_trailing_comments(
+            self.span,
+            self.parent.span(),
+            self.following_node.as_ref(),
+            f,
+            self.allocator,
+        )?;
         result
     }
 }
@@ -915,7 +1305,13 @@ impl<'a> Format<'a> for AstNode<'a, YieldExpression<'a>> {
         if needs_parentheses {
             ")".fmt(f)?;
         }
-        print_trailing_comments(self.span, self.following_node.as_ref(), f, self.allocator)?;
+        print_trailing_comments(
+            self.span,
+            self.parent.span(),
+            self.following_node.as_ref(),
+            f,
+            self.allocator,
+        )?;
         result
     }
 }
@@ -931,7 +1327,13 @@ impl<'a> Format<'a> for AstNode<'a, Class<'a>> {
         if needs_parentheses {
             ")".fmt(f)?;
         }
-        print_trailing_comments(self.span, self.following_node.as_ref(), f, self.allocator)?;
+        print_trailing_comments(
+            self.span,
+            self.parent.span(),
+            self.following_node.as_ref(),
+            f,
+            self.allocator,
+        )?;
         result
     }
 }
@@ -940,7 +1342,13 @@ impl<'a> Format<'a> for AstNode<'a, ClassBody<'a>> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         print_leading_comments(self.span, f, self.allocator)?;
         let result = self.write(f);
-        print_trailing_comments(self.span, self.following_node.as_ref(), f, self.allocator)?;
+        print_trailing_comments(
+            self.span,
+            self.parent.span(),
+            self.following_node.as_ref(),
+            f,
+            self.allocator,
+        )?;
         result
     }
 }
@@ -955,7 +1363,13 @@ impl<'a> Format<'a> for AstNode<'a, MethodDefinition<'a>> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         print_leading_comments(self.span, f, self.allocator)?;
         let result = self.write(f);
-        print_trailing_comments(self.span, self.following_node.as_ref(), f, self.allocator)?;
+        print_trailing_comments(
+            self.span,
+            self.parent.span(),
+            self.following_node.as_ref(),
+            f,
+            self.allocator,
+        )?;
         result
     }
 }
@@ -964,7 +1378,13 @@ impl<'a> Format<'a> for AstNode<'a, PropertyDefinition<'a>> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         print_leading_comments(self.span, f, self.allocator)?;
         let result = self.write(f);
-        print_trailing_comments(self.span, self.following_node.as_ref(), f, self.allocator)?;
+        print_trailing_comments(
+            self.span,
+            self.parent.span(),
+            self.following_node.as_ref(),
+            f,
+            self.allocator,
+        )?;
         result
     }
 }
@@ -973,7 +1393,13 @@ impl<'a> Format<'a> for AstNode<'a, PrivateIdentifier<'a>> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         print_leading_comments(self.span, f, self.allocator)?;
         let result = self.write(f);
-        print_trailing_comments(self.span, self.following_node.as_ref(), f, self.allocator)?;
+        print_trailing_comments(
+            self.span,
+            self.parent.span(),
+            self.following_node.as_ref(),
+            f,
+            self.allocator,
+        )?;
         result
     }
 }
@@ -982,7 +1408,13 @@ impl<'a> Format<'a> for AstNode<'a, StaticBlock<'a>> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         print_leading_comments(self.span, f, self.allocator)?;
         let result = self.write(f);
-        print_trailing_comments(self.span, self.following_node.as_ref(), f, self.allocator)?;
+        print_trailing_comments(
+            self.span,
+            self.parent.span(),
+            self.following_node.as_ref(),
+            f,
+            self.allocator,
+        )?;
         result
     }
 }
@@ -1010,7 +1442,13 @@ impl<'a> Format<'a> for AstNode<'a, ImportExpression<'a>> {
         if needs_parentheses {
             ")".fmt(f)?;
         }
-        print_trailing_comments(self.span, self.following_node.as_ref(), f, self.allocator)?;
+        print_trailing_comments(
+            self.span,
+            self.parent.span(),
+            self.following_node.as_ref(),
+            f,
+            self.allocator,
+        )?;
         result
     }
 }
@@ -1019,7 +1457,13 @@ impl<'a> Format<'a> for AstNode<'a, ImportDeclaration<'a>> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         print_leading_comments(self.span, f, self.allocator)?;
         let result = self.write(f);
-        print_trailing_comments(self.span, self.following_node.as_ref(), f, self.allocator)?;
+        print_trailing_comments(
+            self.span,
+            self.parent.span(),
+            self.following_node.as_ref(),
+            f,
+            self.allocator,
+        )?;
         result
     }
 }
@@ -1034,7 +1478,13 @@ impl<'a> Format<'a> for AstNode<'a, ImportSpecifier<'a>> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         print_leading_comments(self.span, f, self.allocator)?;
         let result = self.write(f);
-        print_trailing_comments(self.span, self.following_node.as_ref(), f, self.allocator)?;
+        print_trailing_comments(
+            self.span,
+            self.parent.span(),
+            self.following_node.as_ref(),
+            f,
+            self.allocator,
+        )?;
         result
     }
 }
@@ -1043,7 +1493,13 @@ impl<'a> Format<'a> for AstNode<'a, ImportDefaultSpecifier<'a>> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         print_leading_comments(self.span, f, self.allocator)?;
         let result = self.write(f);
-        print_trailing_comments(self.span, self.following_node.as_ref(), f, self.allocator)?;
+        print_trailing_comments(
+            self.span,
+            self.parent.span(),
+            self.following_node.as_ref(),
+            f,
+            self.allocator,
+        )?;
         result
     }
 }
@@ -1052,7 +1508,13 @@ impl<'a> Format<'a> for AstNode<'a, ImportNamespaceSpecifier<'a>> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         print_leading_comments(self.span, f, self.allocator)?;
         let result = self.write(f);
-        print_trailing_comments(self.span, self.following_node.as_ref(), f, self.allocator)?;
+        print_trailing_comments(
+            self.span,
+            self.parent.span(),
+            self.following_node.as_ref(),
+            f,
+            self.allocator,
+        )?;
         result
     }
 }
@@ -1079,7 +1541,13 @@ impl<'a> Format<'a> for AstNode<'a, ExportNamedDeclaration<'a>> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         print_leading_comments(self.span, f, self.allocator)?;
         let result = self.write(f);
-        print_trailing_comments(self.span, self.following_node.as_ref(), f, self.allocator)?;
+        print_trailing_comments(
+            self.span,
+            self.parent.span(),
+            self.following_node.as_ref(),
+            f,
+            self.allocator,
+        )?;
         result
     }
 }
@@ -1088,7 +1556,13 @@ impl<'a> Format<'a> for AstNode<'a, ExportDefaultDeclaration<'a>> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         print_leading_comments(self.span, f, self.allocator)?;
         let result = self.write(f);
-        print_trailing_comments(self.span, self.following_node.as_ref(), f, self.allocator)?;
+        print_trailing_comments(
+            self.span,
+            self.parent.span(),
+            self.following_node.as_ref(),
+            f,
+            self.allocator,
+        )?;
         result
     }
 }
@@ -1097,7 +1571,13 @@ impl<'a> Format<'a> for AstNode<'a, ExportAllDeclaration<'a>> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         print_leading_comments(self.span, f, self.allocator)?;
         let result = self.write(f);
-        print_trailing_comments(self.span, self.following_node.as_ref(), f, self.allocator)?;
+        print_trailing_comments(
+            self.span,
+            self.parent.span(),
+            self.following_node.as_ref(),
+            f,
+            self.allocator,
+        )?;
         result
     }
 }
@@ -1106,7 +1586,13 @@ impl<'a> Format<'a> for AstNode<'a, ExportSpecifier<'a>> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         print_leading_comments(self.span, f, self.allocator)?;
         let result = self.write(f);
-        print_trailing_comments(self.span, self.following_node.as_ref(), f, self.allocator)?;
+        print_trailing_comments(
+            self.span,
+            self.parent.span(),
+            self.following_node.as_ref(),
+            f,
+            self.allocator,
+        )?;
         result
     }
 }
@@ -1134,7 +1620,13 @@ impl<'a> Format<'a> for AstNode<'a, V8IntrinsicExpression<'a>> {
         if needs_parentheses {
             ")".fmt(f)?;
         }
-        print_trailing_comments(self.span, self.following_node.as_ref(), f, self.allocator)?;
+        print_trailing_comments(
+            self.span,
+            self.parent.span(),
+            self.following_node.as_ref(),
+            f,
+            self.allocator,
+        )?;
         result
     }
 }
@@ -1143,7 +1635,13 @@ impl<'a> Format<'a> for AstNode<'a, BooleanLiteral> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         print_leading_comments(self.span, f, self.allocator)?;
         let result = self.write(f);
-        print_trailing_comments(self.span, self.following_node.as_ref(), f, self.allocator)?;
+        print_trailing_comments(
+            self.span,
+            self.parent.span(),
+            self.following_node.as_ref(),
+            f,
+            self.allocator,
+        )?;
         result
     }
 }
@@ -1152,7 +1650,13 @@ impl<'a> Format<'a> for AstNode<'a, NullLiteral> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         print_leading_comments(self.span, f, self.allocator)?;
         let result = self.write(f);
-        print_trailing_comments(self.span, self.following_node.as_ref(), f, self.allocator)?;
+        print_trailing_comments(
+            self.span,
+            self.parent.span(),
+            self.following_node.as_ref(),
+            f,
+            self.allocator,
+        )?;
         result
     }
 }
@@ -1168,7 +1672,13 @@ impl<'a> Format<'a> for AstNode<'a, NumericLiteral<'a>> {
         if needs_parentheses {
             ")".fmt(f)?;
         }
-        print_trailing_comments(self.span, self.following_node.as_ref(), f, self.allocator)?;
+        print_trailing_comments(
+            self.span,
+            self.parent.span(),
+            self.following_node.as_ref(),
+            f,
+            self.allocator,
+        )?;
         result
     }
 }
@@ -1184,7 +1694,13 @@ impl<'a> Format<'a> for AstNode<'a, StringLiteral<'a>> {
         if needs_parentheses {
             ")".fmt(f)?;
         }
-        print_trailing_comments(self.span, self.following_node.as_ref(), f, self.allocator)?;
+        print_trailing_comments(
+            self.span,
+            self.parent.span(),
+            self.following_node.as_ref(),
+            f,
+            self.allocator,
+        )?;
         result
     }
 }
@@ -1193,7 +1709,13 @@ impl<'a> Format<'a> for AstNode<'a, BigIntLiteral<'a>> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         print_leading_comments(self.span, f, self.allocator)?;
         let result = self.write(f);
-        print_trailing_comments(self.span, self.following_node.as_ref(), f, self.allocator)?;
+        print_trailing_comments(
+            self.span,
+            self.parent.span(),
+            self.following_node.as_ref(),
+            f,
+            self.allocator,
+        )?;
         result
     }
 }
@@ -1202,7 +1724,13 @@ impl<'a> Format<'a> for AstNode<'a, RegExpLiteral<'a>> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         print_leading_comments(self.span, f, self.allocator)?;
         let result = self.write(f);
-        print_trailing_comments(self.span, self.following_node.as_ref(), f, self.allocator)?;
+        print_trailing_comments(
+            self.span,
+            self.parent.span(),
+            self.following_node.as_ref(),
+            f,
+            self.allocator,
+        )?;
         result
     }
 }
@@ -1211,7 +1739,13 @@ impl<'a> Format<'a> for AstNode<'a, JSXElement<'a>> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         print_leading_comments(self.span, f, self.allocator)?;
         let result = self.write(f);
-        print_trailing_comments(self.span, self.following_node.as_ref(), f, self.allocator)?;
+        print_trailing_comments(
+            self.span,
+            self.parent.span(),
+            self.following_node.as_ref(),
+            f,
+            self.allocator,
+        )?;
         result
     }
 }
@@ -1220,7 +1754,13 @@ impl<'a> Format<'a> for AstNode<'a, JSXOpeningElement<'a>> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         print_leading_comments(self.span, f, self.allocator)?;
         let result = self.write(f);
-        print_trailing_comments(self.span, self.following_node.as_ref(), f, self.allocator)?;
+        print_trailing_comments(
+            self.span,
+            self.parent.span(),
+            self.following_node.as_ref(),
+            f,
+            self.allocator,
+        )?;
         result
     }
 }
@@ -1229,7 +1769,13 @@ impl<'a> Format<'a> for AstNode<'a, JSXClosingElement<'a>> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         print_leading_comments(self.span, f, self.allocator)?;
         let result = self.write(f);
-        print_trailing_comments(self.span, self.following_node.as_ref(), f, self.allocator)?;
+        print_trailing_comments(
+            self.span,
+            self.parent.span(),
+            self.following_node.as_ref(),
+            f,
+            self.allocator,
+        )?;
         result
     }
 }
@@ -1238,7 +1784,13 @@ impl<'a> Format<'a> for AstNode<'a, JSXFragment<'a>> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         print_leading_comments(self.span, f, self.allocator)?;
         let result = self.write(f);
-        print_trailing_comments(self.span, self.following_node.as_ref(), f, self.allocator)?;
+        print_trailing_comments(
+            self.span,
+            self.parent.span(),
+            self.following_node.as_ref(),
+            f,
+            self.allocator,
+        )?;
         result
     }
 }
@@ -1247,7 +1799,13 @@ impl<'a> Format<'a> for AstNode<'a, JSXOpeningFragment> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         print_leading_comments(self.span, f, self.allocator)?;
         let result = self.write(f);
-        print_trailing_comments(self.span, self.following_node.as_ref(), f, self.allocator)?;
+        print_trailing_comments(
+            self.span,
+            self.parent.span(),
+            self.following_node.as_ref(),
+            f,
+            self.allocator,
+        )?;
         result
     }
 }
@@ -1256,7 +1814,13 @@ impl<'a> Format<'a> for AstNode<'a, JSXClosingFragment> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         print_leading_comments(self.span, f, self.allocator)?;
         let result = self.write(f);
-        print_trailing_comments(self.span, self.following_node.as_ref(), f, self.allocator)?;
+        print_trailing_comments(
+            self.span,
+            self.parent.span(),
+            self.following_node.as_ref(),
+            f,
+            self.allocator,
+        )?;
         result
     }
 }
@@ -1271,7 +1835,13 @@ impl<'a> Format<'a> for AstNode<'a, JSXNamespacedName<'a>> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         print_leading_comments(self.span, f, self.allocator)?;
         let result = self.write(f);
-        print_trailing_comments(self.span, self.following_node.as_ref(), f, self.allocator)?;
+        print_trailing_comments(
+            self.span,
+            self.parent.span(),
+            self.following_node.as_ref(),
+            f,
+            self.allocator,
+        )?;
         result
     }
 }
@@ -1287,7 +1857,13 @@ impl<'a> Format<'a> for AstNode<'a, JSXMemberExpression<'a>> {
         if needs_parentheses {
             ")".fmt(f)?;
         }
-        print_trailing_comments(self.span, self.following_node.as_ref(), f, self.allocator)?;
+        print_trailing_comments(
+            self.span,
+            self.parent.span(),
+            self.following_node.as_ref(),
+            f,
+            self.allocator,
+        )?;
         result
     }
 }
@@ -1302,7 +1878,13 @@ impl<'a> Format<'a> for AstNode<'a, JSXExpressionContainer<'a>> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         print_leading_comments(self.span, f, self.allocator)?;
         let result = self.write(f);
-        print_trailing_comments(self.span, self.following_node.as_ref(), f, self.allocator)?;
+        print_trailing_comments(
+            self.span,
+            self.parent.span(),
+            self.following_node.as_ref(),
+            f,
+            self.allocator,
+        )?;
         result
     }
 }
@@ -1324,7 +1906,13 @@ impl<'a> Format<'a> for AstNode<'a, JSXEmptyExpression> {
         if needs_parentheses {
             ")".fmt(f)?;
         }
-        print_trailing_comments(self.span, self.following_node.as_ref(), f, self.allocator)?;
+        print_trailing_comments(
+            self.span,
+            self.parent.span(),
+            self.following_node.as_ref(),
+            f,
+            self.allocator,
+        )?;
         result
     }
 }
@@ -1339,7 +1927,13 @@ impl<'a> Format<'a> for AstNode<'a, JSXAttribute<'a>> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         print_leading_comments(self.span, f, self.allocator)?;
         let result = self.write(f);
-        print_trailing_comments(self.span, self.following_node.as_ref(), f, self.allocator)?;
+        print_trailing_comments(
+            self.span,
+            self.parent.span(),
+            self.following_node.as_ref(),
+            f,
+            self.allocator,
+        )?;
         result
     }
 }
@@ -1348,7 +1942,13 @@ impl<'a> Format<'a> for AstNode<'a, JSXSpreadAttribute<'a>> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         print_leading_comments(self.span, f, self.allocator)?;
         let result = self.write(f);
-        print_trailing_comments(self.span, self.following_node.as_ref(), f, self.allocator)?;
+        print_trailing_comments(
+            self.span,
+            self.parent.span(),
+            self.following_node.as_ref(),
+            f,
+            self.allocator,
+        )?;
         result
     }
 }
@@ -1369,7 +1969,13 @@ impl<'a> Format<'a> for AstNode<'a, JSXIdentifier<'a>> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         print_leading_comments(self.span, f, self.allocator)?;
         let result = self.write(f);
-        print_trailing_comments(self.span, self.following_node.as_ref(), f, self.allocator)?;
+        print_trailing_comments(
+            self.span,
+            self.parent.span(),
+            self.following_node.as_ref(),
+            f,
+            self.allocator,
+        )?;
         result
     }
 }
@@ -1384,7 +1990,13 @@ impl<'a> Format<'a> for AstNode<'a, JSXSpreadChild<'a>> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         print_leading_comments(self.span, f, self.allocator)?;
         let result = self.write(f);
-        print_trailing_comments(self.span, self.following_node.as_ref(), f, self.allocator)?;
+        print_trailing_comments(
+            self.span,
+            self.parent.span(),
+            self.following_node.as_ref(),
+            f,
+            self.allocator,
+        )?;
         result
     }
 }
@@ -1393,7 +2005,13 @@ impl<'a> Format<'a> for AstNode<'a, JSXText<'a>> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         print_leading_comments(self.span, f, self.allocator)?;
         let result = self.write(f);
-        print_trailing_comments(self.span, self.following_node.as_ref(), f, self.allocator)?;
+        print_trailing_comments(
+            self.span,
+            self.parent.span(),
+            self.following_node.as_ref(),
+            f,
+            self.allocator,
+        )?;
         result
     }
 }
@@ -1402,7 +2020,13 @@ impl<'a> Format<'a> for AstNode<'a, TSThisParameter<'a>> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         print_leading_comments(self.span, f, self.allocator)?;
         let result = self.write(f);
-        print_trailing_comments(self.span, self.following_node.as_ref(), f, self.allocator)?;
+        print_trailing_comments(
+            self.span,
+            self.parent.span(),
+            self.following_node.as_ref(),
+            f,
+            self.allocator,
+        )?;
         result
     }
 }
@@ -1411,7 +2035,13 @@ impl<'a> Format<'a> for AstNode<'a, TSEnumDeclaration<'a>> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         print_leading_comments(self.span, f, self.allocator)?;
         let result = self.write(f);
-        print_trailing_comments(self.span, self.following_node.as_ref(), f, self.allocator)?;
+        print_trailing_comments(
+            self.span,
+            self.parent.span(),
+            self.following_node.as_ref(),
+            f,
+            self.allocator,
+        )?;
         result
     }
 }
@@ -1420,7 +2050,13 @@ impl<'a> Format<'a> for AstNode<'a, TSEnumBody<'a>> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         print_leading_comments(self.span, f, self.allocator)?;
         let result = self.write(f);
-        print_trailing_comments(self.span, self.following_node.as_ref(), f, self.allocator)?;
+        print_trailing_comments(
+            self.span,
+            self.parent.span(),
+            self.following_node.as_ref(),
+            f,
+            self.allocator,
+        )?;
         result
     }
 }
@@ -1429,7 +2065,13 @@ impl<'a> Format<'a> for AstNode<'a, TSEnumMember<'a>> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         print_leading_comments(self.span, f, self.allocator)?;
         let result = self.write(f);
-        print_trailing_comments(self.span, self.following_node.as_ref(), f, self.allocator)?;
+        print_trailing_comments(
+            self.span,
+            self.parent.span(),
+            self.following_node.as_ref(),
+            f,
+            self.allocator,
+        )?;
         result
     }
 }
@@ -1444,7 +2086,13 @@ impl<'a> Format<'a> for AstNode<'a, TSTypeAnnotation<'a>> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         print_leading_comments(self.span, f, self.allocator)?;
         let result = self.write(f);
-        print_trailing_comments(self.span, self.following_node.as_ref(), f, self.allocator)?;
+        print_trailing_comments(
+            self.span,
+            self.parent.span(),
+            self.following_node.as_ref(),
+            f,
+            self.allocator,
+        )?;
         result
     }
 }
@@ -1453,7 +2101,13 @@ impl<'a> Format<'a> for AstNode<'a, TSLiteralType<'a>> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         print_leading_comments(self.span, f, self.allocator)?;
         let result = self.write(f);
-        print_trailing_comments(self.span, self.following_node.as_ref(), f, self.allocator)?;
+        print_trailing_comments(
+            self.span,
+            self.parent.span(),
+            self.following_node.as_ref(),
+            f,
+            self.allocator,
+        )?;
         result
     }
 }
@@ -1474,7 +2128,13 @@ impl<'a> Format<'a> for AstNode<'a, TSConditionalType<'a>> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         print_leading_comments(self.span, f, self.allocator)?;
         let result = self.write(f);
-        print_trailing_comments(self.span, self.following_node.as_ref(), f, self.allocator)?;
+        print_trailing_comments(
+            self.span,
+            self.parent.span(),
+            self.following_node.as_ref(),
+            f,
+            self.allocator,
+        )?;
         result
     }
 }
@@ -1483,7 +2143,13 @@ impl<'a> Format<'a> for AstNode<'a, TSUnionType<'a>> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         print_leading_comments(self.span, f, self.allocator)?;
         let result = self.write(f);
-        print_trailing_comments(self.span, self.following_node.as_ref(), f, self.allocator)?;
+        print_trailing_comments(
+            self.span,
+            self.parent.span(),
+            self.following_node.as_ref(),
+            f,
+            self.allocator,
+        )?;
         result
     }
 }
@@ -1492,7 +2158,13 @@ impl<'a> Format<'a> for AstNode<'a, TSIntersectionType<'a>> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         print_leading_comments(self.span, f, self.allocator)?;
         let result = self.write(f);
-        print_trailing_comments(self.span, self.following_node.as_ref(), f, self.allocator)?;
+        print_trailing_comments(
+            self.span,
+            self.parent.span(),
+            self.following_node.as_ref(),
+            f,
+            self.allocator,
+        )?;
         result
     }
 }
@@ -1501,7 +2173,13 @@ impl<'a> Format<'a> for AstNode<'a, TSParenthesizedType<'a>> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         print_leading_comments(self.span, f, self.allocator)?;
         let result = self.write(f);
-        print_trailing_comments(self.span, self.following_node.as_ref(), f, self.allocator)?;
+        print_trailing_comments(
+            self.span,
+            self.parent.span(),
+            self.following_node.as_ref(),
+            f,
+            self.allocator,
+        )?;
         result
     }
 }
@@ -1522,7 +2200,13 @@ impl<'a> Format<'a> for AstNode<'a, TSIndexedAccessType<'a>> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         print_leading_comments(self.span, f, self.allocator)?;
         let result = self.write(f);
-        print_trailing_comments(self.span, self.following_node.as_ref(), f, self.allocator)?;
+        print_trailing_comments(
+            self.span,
+            self.parent.span(),
+            self.following_node.as_ref(),
+            f,
+            self.allocator,
+        )?;
         result
     }
 }
@@ -1537,7 +2221,13 @@ impl<'a> Format<'a> for AstNode<'a, TSNamedTupleMember<'a>> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         print_leading_comments(self.span, f, self.allocator)?;
         let result = self.write(f);
-        print_trailing_comments(self.span, self.following_node.as_ref(), f, self.allocator)?;
+        print_trailing_comments(
+            self.span,
+            self.parent.span(),
+            self.following_node.as_ref(),
+            f,
+            self.allocator,
+        )?;
         result
     }
 }
@@ -1564,7 +2254,13 @@ impl<'a> Format<'a> for AstNode<'a, TSAnyKeyword> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         print_leading_comments(self.span, f, self.allocator)?;
         let result = self.write(f);
-        print_trailing_comments(self.span, self.following_node.as_ref(), f, self.allocator)?;
+        print_trailing_comments(
+            self.span,
+            self.parent.span(),
+            self.following_node.as_ref(),
+            f,
+            self.allocator,
+        )?;
         result
     }
 }
@@ -1573,7 +2269,13 @@ impl<'a> Format<'a> for AstNode<'a, TSStringKeyword> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         print_leading_comments(self.span, f, self.allocator)?;
         let result = self.write(f);
-        print_trailing_comments(self.span, self.following_node.as_ref(), f, self.allocator)?;
+        print_trailing_comments(
+            self.span,
+            self.parent.span(),
+            self.following_node.as_ref(),
+            f,
+            self.allocator,
+        )?;
         result
     }
 }
@@ -1582,7 +2284,13 @@ impl<'a> Format<'a> for AstNode<'a, TSBooleanKeyword> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         print_leading_comments(self.span, f, self.allocator)?;
         let result = self.write(f);
-        print_trailing_comments(self.span, self.following_node.as_ref(), f, self.allocator)?;
+        print_trailing_comments(
+            self.span,
+            self.parent.span(),
+            self.following_node.as_ref(),
+            f,
+            self.allocator,
+        )?;
         result
     }
 }
@@ -1591,7 +2299,13 @@ impl<'a> Format<'a> for AstNode<'a, TSNumberKeyword> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         print_leading_comments(self.span, f, self.allocator)?;
         let result = self.write(f);
-        print_trailing_comments(self.span, self.following_node.as_ref(), f, self.allocator)?;
+        print_trailing_comments(
+            self.span,
+            self.parent.span(),
+            self.following_node.as_ref(),
+            f,
+            self.allocator,
+        )?;
         result
     }
 }
@@ -1600,7 +2314,13 @@ impl<'a> Format<'a> for AstNode<'a, TSNeverKeyword> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         print_leading_comments(self.span, f, self.allocator)?;
         let result = self.write(f);
-        print_trailing_comments(self.span, self.following_node.as_ref(), f, self.allocator)?;
+        print_trailing_comments(
+            self.span,
+            self.parent.span(),
+            self.following_node.as_ref(),
+            f,
+            self.allocator,
+        )?;
         result
     }
 }
@@ -1609,7 +2329,13 @@ impl<'a> Format<'a> for AstNode<'a, TSIntrinsicKeyword> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         print_leading_comments(self.span, f, self.allocator)?;
         let result = self.write(f);
-        print_trailing_comments(self.span, self.following_node.as_ref(), f, self.allocator)?;
+        print_trailing_comments(
+            self.span,
+            self.parent.span(),
+            self.following_node.as_ref(),
+            f,
+            self.allocator,
+        )?;
         result
     }
 }
@@ -1618,7 +2344,13 @@ impl<'a> Format<'a> for AstNode<'a, TSUnknownKeyword> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         print_leading_comments(self.span, f, self.allocator)?;
         let result = self.write(f);
-        print_trailing_comments(self.span, self.following_node.as_ref(), f, self.allocator)?;
+        print_trailing_comments(
+            self.span,
+            self.parent.span(),
+            self.following_node.as_ref(),
+            f,
+            self.allocator,
+        )?;
         result
     }
 }
@@ -1627,7 +2359,13 @@ impl<'a> Format<'a> for AstNode<'a, TSNullKeyword> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         print_leading_comments(self.span, f, self.allocator)?;
         let result = self.write(f);
-        print_trailing_comments(self.span, self.following_node.as_ref(), f, self.allocator)?;
+        print_trailing_comments(
+            self.span,
+            self.parent.span(),
+            self.following_node.as_ref(),
+            f,
+            self.allocator,
+        )?;
         result
     }
 }
@@ -1636,7 +2374,13 @@ impl<'a> Format<'a> for AstNode<'a, TSUndefinedKeyword> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         print_leading_comments(self.span, f, self.allocator)?;
         let result = self.write(f);
-        print_trailing_comments(self.span, self.following_node.as_ref(), f, self.allocator)?;
+        print_trailing_comments(
+            self.span,
+            self.parent.span(),
+            self.following_node.as_ref(),
+            f,
+            self.allocator,
+        )?;
         result
     }
 }
@@ -1645,7 +2389,13 @@ impl<'a> Format<'a> for AstNode<'a, TSVoidKeyword> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         print_leading_comments(self.span, f, self.allocator)?;
         let result = self.write(f);
-        print_trailing_comments(self.span, self.following_node.as_ref(), f, self.allocator)?;
+        print_trailing_comments(
+            self.span,
+            self.parent.span(),
+            self.following_node.as_ref(),
+            f,
+            self.allocator,
+        )?;
         result
     }
 }
@@ -1654,7 +2404,13 @@ impl<'a> Format<'a> for AstNode<'a, TSSymbolKeyword> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         print_leading_comments(self.span, f, self.allocator)?;
         let result = self.write(f);
-        print_trailing_comments(self.span, self.following_node.as_ref(), f, self.allocator)?;
+        print_trailing_comments(
+            self.span,
+            self.parent.span(),
+            self.following_node.as_ref(),
+            f,
+            self.allocator,
+        )?;
         result
     }
 }
@@ -1663,7 +2419,13 @@ impl<'a> Format<'a> for AstNode<'a, TSThisType> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         print_leading_comments(self.span, f, self.allocator)?;
         let result = self.write(f);
-        print_trailing_comments(self.span, self.following_node.as_ref(), f, self.allocator)?;
+        print_trailing_comments(
+            self.span,
+            self.parent.span(),
+            self.following_node.as_ref(),
+            f,
+            self.allocator,
+        )?;
         result
     }
 }
@@ -1672,7 +2434,13 @@ impl<'a> Format<'a> for AstNode<'a, TSObjectKeyword> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         print_leading_comments(self.span, f, self.allocator)?;
         let result = self.write(f);
-        print_trailing_comments(self.span, self.following_node.as_ref(), f, self.allocator)?;
+        print_trailing_comments(
+            self.span,
+            self.parent.span(),
+            self.following_node.as_ref(),
+            f,
+            self.allocator,
+        )?;
         result
     }
 }
@@ -1681,7 +2449,13 @@ impl<'a> Format<'a> for AstNode<'a, TSBigIntKeyword> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         print_leading_comments(self.span, f, self.allocator)?;
         let result = self.write(f);
-        print_trailing_comments(self.span, self.following_node.as_ref(), f, self.allocator)?;
+        print_trailing_comments(
+            self.span,
+            self.parent.span(),
+            self.following_node.as_ref(),
+            f,
+            self.allocator,
+        )?;
         result
     }
 }
@@ -1690,7 +2464,13 @@ impl<'a> Format<'a> for AstNode<'a, TSTypeReference<'a>> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         print_leading_comments(self.span, f, self.allocator)?;
         let result = self.write(f);
-        print_trailing_comments(self.span, self.following_node.as_ref(), f, self.allocator)?;
+        print_trailing_comments(
+            self.span,
+            self.parent.span(),
+            self.following_node.as_ref(),
+            f,
+            self.allocator,
+        )?;
         result
     }
 }
@@ -1705,7 +2485,13 @@ impl<'a> Format<'a> for AstNode<'a, TSQualifiedName<'a>> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         print_leading_comments(self.span, f, self.allocator)?;
         let result = self.write(f);
-        print_trailing_comments(self.span, self.following_node.as_ref(), f, self.allocator)?;
+        print_trailing_comments(
+            self.span,
+            self.parent.span(),
+            self.following_node.as_ref(),
+            f,
+            self.allocator,
+        )?;
         result
     }
 }
@@ -1714,7 +2500,13 @@ impl<'a> Format<'a> for AstNode<'a, TSTypeParameterInstantiation<'a>> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         print_leading_comments(self.span, f, self.allocator)?;
         let result = self.write(f);
-        print_trailing_comments(self.span, self.following_node.as_ref(), f, self.allocator)?;
+        print_trailing_comments(
+            self.span,
+            self.parent.span(),
+            self.following_node.as_ref(),
+            f,
+            self.allocator,
+        )?;
         result
     }
 }
@@ -1723,7 +2515,13 @@ impl<'a> Format<'a> for AstNode<'a, TSTypeParameter<'a>> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         print_leading_comments(self.span, f, self.allocator)?;
         let result = self.write(f);
-        print_trailing_comments(self.span, self.following_node.as_ref(), f, self.allocator)?;
+        print_trailing_comments(
+            self.span,
+            self.parent.span(),
+            self.following_node.as_ref(),
+            f,
+            self.allocator,
+        )?;
         result
     }
 }
@@ -1732,7 +2530,13 @@ impl<'a> Format<'a> for AstNode<'a, TSTypeParameterDeclaration<'a>> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         print_leading_comments(self.span, f, self.allocator)?;
         let result = self.write(f);
-        print_trailing_comments(self.span, self.following_node.as_ref(), f, self.allocator)?;
+        print_trailing_comments(
+            self.span,
+            self.parent.span(),
+            self.following_node.as_ref(),
+            f,
+            self.allocator,
+        )?;
         result
     }
 }
@@ -1741,7 +2545,13 @@ impl<'a> Format<'a> for AstNode<'a, TSTypeAliasDeclaration<'a>> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         print_leading_comments(self.span, f, self.allocator)?;
         let result = self.write(f);
-        print_trailing_comments(self.span, self.following_node.as_ref(), f, self.allocator)?;
+        print_trailing_comments(
+            self.span,
+            self.parent.span(),
+            self.following_node.as_ref(),
+            f,
+            self.allocator,
+        )?;
         result
     }
 }
@@ -1750,7 +2560,13 @@ impl<'a> Format<'a> for AstNode<'a, TSClassImplements<'a>> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         print_leading_comments(self.span, f, self.allocator)?;
         let result = self.write(f);
-        print_trailing_comments(self.span, self.following_node.as_ref(), f, self.allocator)?;
+        print_trailing_comments(
+            self.span,
+            self.parent.span(),
+            self.following_node.as_ref(),
+            f,
+            self.allocator,
+        )?;
         result
     }
 }
@@ -1759,7 +2575,13 @@ impl<'a> Format<'a> for AstNode<'a, TSInterfaceDeclaration<'a>> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         print_leading_comments(self.span, f, self.allocator)?;
         let result = self.write(f);
-        print_trailing_comments(self.span, self.following_node.as_ref(), f, self.allocator)?;
+        print_trailing_comments(
+            self.span,
+            self.parent.span(),
+            self.following_node.as_ref(),
+            f,
+            self.allocator,
+        )?;
         result
     }
 }
@@ -1774,7 +2596,13 @@ impl<'a> Format<'a> for AstNode<'a, TSPropertySignature<'a>> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         print_leading_comments(self.span, f, self.allocator)?;
         let result = self.write(f);
-        print_trailing_comments(self.span, self.following_node.as_ref(), f, self.allocator)?;
+        print_trailing_comments(
+            self.span,
+            self.parent.span(),
+            self.following_node.as_ref(),
+            f,
+            self.allocator,
+        )?;
         result
     }
 }
@@ -1801,7 +2629,13 @@ impl<'a> Format<'a> for AstNode<'a, TSMethodSignature<'a>> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         print_leading_comments(self.span, f, self.allocator)?;
         let result = self.write(f);
-        print_trailing_comments(self.span, self.following_node.as_ref(), f, self.allocator)?;
+        print_trailing_comments(
+            self.span,
+            self.parent.span(),
+            self.following_node.as_ref(),
+            f,
+            self.allocator,
+        )?;
         result
     }
 }
@@ -1810,7 +2644,13 @@ impl<'a> Format<'a> for AstNode<'a, TSConstructSignatureDeclaration<'a>> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         print_leading_comments(self.span, f, self.allocator)?;
         let result = self.write(f);
-        print_trailing_comments(self.span, self.following_node.as_ref(), f, self.allocator)?;
+        print_trailing_comments(
+            self.span,
+            self.parent.span(),
+            self.following_node.as_ref(),
+            f,
+            self.allocator,
+        )?;
         result
     }
 }
@@ -1825,7 +2665,13 @@ impl<'a> Format<'a> for AstNode<'a, TSInterfaceHeritage<'a>> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         print_leading_comments(self.span, f, self.allocator)?;
         let result = self.write(f);
-        print_trailing_comments(self.span, self.following_node.as_ref(), f, self.allocator)?;
+        print_trailing_comments(
+            self.span,
+            self.parent.span(),
+            self.following_node.as_ref(),
+            f,
+            self.allocator,
+        )?;
         result
     }
 }
@@ -1846,7 +2692,13 @@ impl<'a> Format<'a> for AstNode<'a, TSModuleDeclaration<'a>> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         print_leading_comments(self.span, f, self.allocator)?;
         let result = self.write(f);
-        print_trailing_comments(self.span, self.following_node.as_ref(), f, self.allocator)?;
+        print_trailing_comments(
+            self.span,
+            self.parent.span(),
+            self.following_node.as_ref(),
+            f,
+            self.allocator,
+        )?;
         result
     }
 }
@@ -1867,7 +2719,13 @@ impl<'a> Format<'a> for AstNode<'a, TSModuleBlock<'a>> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         print_leading_comments(self.span, f, self.allocator)?;
         let result = self.write(f);
-        print_trailing_comments(self.span, self.following_node.as_ref(), f, self.allocator)?;
+        print_trailing_comments(
+            self.span,
+            self.parent.span(),
+            self.following_node.as_ref(),
+            f,
+            self.allocator,
+        )?;
         result
     }
 }
@@ -1876,7 +2734,13 @@ impl<'a> Format<'a> for AstNode<'a, TSTypeLiteral<'a>> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         print_leading_comments(self.span, f, self.allocator)?;
         let result = self.write(f);
-        print_trailing_comments(self.span, self.following_node.as_ref(), f, self.allocator)?;
+        print_trailing_comments(
+            self.span,
+            self.parent.span(),
+            self.following_node.as_ref(),
+            f,
+            self.allocator,
+        )?;
         result
     }
 }
@@ -1885,7 +2749,13 @@ impl<'a> Format<'a> for AstNode<'a, TSInferType<'a>> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         print_leading_comments(self.span, f, self.allocator)?;
         let result = self.write(f);
-        print_trailing_comments(self.span, self.following_node.as_ref(), f, self.allocator)?;
+        print_trailing_comments(
+            self.span,
+            self.parent.span(),
+            self.following_node.as_ref(),
+            f,
+            self.allocator,
+        )?;
         result
     }
 }
@@ -1894,7 +2764,13 @@ impl<'a> Format<'a> for AstNode<'a, TSTypeQuery<'a>> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         print_leading_comments(self.span, f, self.allocator)?;
         let result = self.write(f);
-        print_trailing_comments(self.span, self.following_node.as_ref(), f, self.allocator)?;
+        print_trailing_comments(
+            self.span,
+            self.parent.span(),
+            self.following_node.as_ref(),
+            f,
+            self.allocator,
+        )?;
         result
     }
 }
@@ -1909,7 +2785,13 @@ impl<'a> Format<'a> for AstNode<'a, TSImportType<'a>> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         print_leading_comments(self.span, f, self.allocator)?;
         let result = self.write(f);
-        print_trailing_comments(self.span, self.following_node.as_ref(), f, self.allocator)?;
+        print_trailing_comments(
+            self.span,
+            self.parent.span(),
+            self.following_node.as_ref(),
+            f,
+            self.allocator,
+        )?;
         result
     }
 }
@@ -1930,7 +2812,13 @@ impl<'a> Format<'a> for AstNode<'a, TSMappedType<'a>> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         print_leading_comments(self.span, f, self.allocator)?;
         let result = self.write(f);
-        print_trailing_comments(self.span, self.following_node.as_ref(), f, self.allocator)?;
+        print_trailing_comments(
+            self.span,
+            self.parent.span(),
+            self.following_node.as_ref(),
+            f,
+            self.allocator,
+        )?;
         result
     }
 }
@@ -1939,7 +2827,13 @@ impl<'a> Format<'a> for AstNode<'a, TSTemplateLiteralType<'a>> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         print_leading_comments(self.span, f, self.allocator)?;
         let result = self.write(f);
-        print_trailing_comments(self.span, self.following_node.as_ref(), f, self.allocator)?;
+        print_trailing_comments(
+            self.span,
+            self.parent.span(),
+            self.following_node.as_ref(),
+            f,
+            self.allocator,
+        )?;
         result
     }
 }
@@ -1955,7 +2849,13 @@ impl<'a> Format<'a> for AstNode<'a, TSAsExpression<'a>> {
         if needs_parentheses {
             ")".fmt(f)?;
         }
-        print_trailing_comments(self.span, self.following_node.as_ref(), f, self.allocator)?;
+        print_trailing_comments(
+            self.span,
+            self.parent.span(),
+            self.following_node.as_ref(),
+            f,
+            self.allocator,
+        )?;
         result
     }
 }
@@ -1971,7 +2871,13 @@ impl<'a> Format<'a> for AstNode<'a, TSSatisfiesExpression<'a>> {
         if needs_parentheses {
             ")".fmt(f)?;
         }
-        print_trailing_comments(self.span, self.following_node.as_ref(), f, self.allocator)?;
+        print_trailing_comments(
+            self.span,
+            self.parent.span(),
+            self.following_node.as_ref(),
+            f,
+            self.allocator,
+        )?;
         result
     }
 }
@@ -1987,7 +2893,13 @@ impl<'a> Format<'a> for AstNode<'a, TSTypeAssertion<'a>> {
         if needs_parentheses {
             ")".fmt(f)?;
         }
-        print_trailing_comments(self.span, self.following_node.as_ref(), f, self.allocator)?;
+        print_trailing_comments(
+            self.span,
+            self.parent.span(),
+            self.following_node.as_ref(),
+            f,
+            self.allocator,
+        )?;
         result
     }
 }
@@ -1996,7 +2908,13 @@ impl<'a> Format<'a> for AstNode<'a, TSImportEqualsDeclaration<'a>> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         print_leading_comments(self.span, f, self.allocator)?;
         let result = self.write(f);
-        print_trailing_comments(self.span, self.following_node.as_ref(), f, self.allocator)?;
+        print_trailing_comments(
+            self.span,
+            self.parent.span(),
+            self.following_node.as_ref(),
+            f,
+            self.allocator,
+        )?;
         result
     }
 }
@@ -2011,7 +2929,13 @@ impl<'a> Format<'a> for AstNode<'a, TSExternalModuleReference<'a>> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         print_leading_comments(self.span, f, self.allocator)?;
         let result = self.write(f);
-        print_trailing_comments(self.span, self.following_node.as_ref(), f, self.allocator)?;
+        print_trailing_comments(
+            self.span,
+            self.parent.span(),
+            self.following_node.as_ref(),
+            f,
+            self.allocator,
+        )?;
         result
     }
 }
@@ -2027,7 +2951,13 @@ impl<'a> Format<'a> for AstNode<'a, TSNonNullExpression<'a>> {
         if needs_parentheses {
             ")".fmt(f)?;
         }
-        print_trailing_comments(self.span, self.following_node.as_ref(), f, self.allocator)?;
+        print_trailing_comments(
+            self.span,
+            self.parent.span(),
+            self.following_node.as_ref(),
+            f,
+            self.allocator,
+        )?;
         result
     }
 }
@@ -2036,7 +2966,13 @@ impl<'a> Format<'a> for AstNode<'a, Decorator<'a>> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         print_leading_comments(self.span, f, self.allocator)?;
         let result = self.write(f);
-        print_trailing_comments(self.span, self.following_node.as_ref(), f, self.allocator)?;
+        print_trailing_comments(
+            self.span,
+            self.parent.span(),
+            self.following_node.as_ref(),
+            f,
+            self.allocator,
+        )?;
         result
     }
 }
@@ -2045,7 +2981,13 @@ impl<'a> Format<'a> for AstNode<'a, TSExportAssignment<'a>> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         print_leading_comments(self.span, f, self.allocator)?;
         let result = self.write(f);
-        print_trailing_comments(self.span, self.following_node.as_ref(), f, self.allocator)?;
+        print_trailing_comments(
+            self.span,
+            self.parent.span(),
+            self.following_node.as_ref(),
+            f,
+            self.allocator,
+        )?;
         result
     }
 }
@@ -2067,7 +3009,13 @@ impl<'a> Format<'a> for AstNode<'a, TSInstantiationExpression<'a>> {
         if needs_parentheses {
             ")".fmt(f)?;
         }
-        print_trailing_comments(self.span, self.following_node.as_ref(), f, self.allocator)?;
+        print_trailing_comments(
+            self.span,
+            self.parent.span(),
+            self.following_node.as_ref(),
+            f,
+            self.allocator,
+        )?;
         result
     }
 }
@@ -2076,7 +3024,13 @@ impl<'a> Format<'a> for AstNode<'a, JSDocNullableType<'a>> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         print_leading_comments(self.span, f, self.allocator)?;
         let result = self.write(f);
-        print_trailing_comments(self.span, self.following_node.as_ref(), f, self.allocator)?;
+        print_trailing_comments(
+            self.span,
+            self.parent.span(),
+            self.following_node.as_ref(),
+            f,
+            self.allocator,
+        )?;
         result
     }
 }
@@ -2085,7 +3039,13 @@ impl<'a> Format<'a> for AstNode<'a, JSDocNonNullableType<'a>> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         print_leading_comments(self.span, f, self.allocator)?;
         let result = self.write(f);
-        print_trailing_comments(self.span, self.following_node.as_ref(), f, self.allocator)?;
+        print_trailing_comments(
+            self.span,
+            self.parent.span(),
+            self.following_node.as_ref(),
+            f,
+            self.allocator,
+        )?;
         result
     }
 }
@@ -2094,7 +3054,13 @@ impl<'a> Format<'a> for AstNode<'a, JSDocUnknownType> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         print_leading_comments(self.span, f, self.allocator)?;
         let result = self.write(f);
-        print_trailing_comments(self.span, self.following_node.as_ref(), f, self.allocator)?;
+        print_trailing_comments(
+            self.span,
+            self.parent.span(),
+            self.following_node.as_ref(),
+            f,
+            self.allocator,
+        )?;
         result
     }
 }

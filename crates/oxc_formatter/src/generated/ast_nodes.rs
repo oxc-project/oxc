@@ -6,7 +6,7 @@ use std::{fmt, mem::transmute, ops::Deref};
 
 use oxc_allocator::{Allocator, Box, Vec};
 use oxc_ast::ast::*;
-use oxc_span::GetSpan;
+use oxc_span::{GetSpan, SPAN};
 
 use crate::{
     formatter::{
@@ -669,7 +669,7 @@ impl<'a> AstNodes<'a> {
     #[inline]
     pub fn span(&self) -> Span {
         match self {
-            Self::Dummy() => panic!("Should never be called on a dummy node"),
+            Self::Dummy() => SPAN,
             Self::Program(n) => n.span(),
             Self::IdentifierName(n) => n.span(),
             Self::IdentifierReference(n) => n.span(),
@@ -1462,7 +1462,7 @@ impl<'a> AstNode<'a, Program<'a>> {
         .first()
         .as_ref()
         .copied()
-        .map(FollowingNode::Directive);
+        .map(|t| FollowingNode::Directive(t));
         self.allocator
             .alloc(self.inner.hashbang.as_ref().map(|inner| AstNode {
                 inner,
@@ -1482,7 +1482,7 @@ impl<'a> AstNode<'a, Program<'a>> {
         .first()
         .as_ref()
         .copied()
-        .map(FollowingNode::Statement);
+        .map(|t| FollowingNode::Statement(t));
         self.allocator.alloc(AstNode {
             inner: &self.inner.directives,
             allocator: self.allocator,
@@ -2136,7 +2136,7 @@ impl<'a> AstNode<'a, TemplateLiteral<'a>> {
         .first()
         .as_ref()
         .copied()
-        .map(FollowingNode::Expression);
+        .map(|t| FollowingNode::Expression(t));
         self.allocator.alloc(AstNode {
             inner: &self.inner.quasis,
             allocator: self.allocator,
@@ -2159,6 +2159,8 @@ impl<'a> AstNode<'a, TemplateLiteral<'a>> {
 
 const TAGGED_TEMPLATE_EXPRESSION_OFFSET_TAG: usize =
     std::mem::offset_of!(TaggedTemplateExpression, tag);
+const TAGGED_TEMPLATE_EXPRESSION_OFFSET_TYPEARGUMENTS: usize =
+    std::mem::offset_of!(TaggedTemplateExpression, type_arguments);
 const TAGGED_TEMPLATE_EXPRESSION_OFFSET_QUASI: usize =
     std::mem::offset_of!(TaggedTemplateExpression, quasi);
 
@@ -2170,12 +2172,15 @@ impl<'a> AstNode<'a, TaggedTemplateExpression<'a>> {
 
     #[inline]
     pub fn tag(&self) -> &AstNode<'a, Expression<'a>> {
-        let following_node = Some(FollowingNode::TemplateLiteral({
+        let following_node = ({
             let ptr = self.inner as *const _ as *const u8;
             unsafe {
-                &*(ptr.add(TAGGED_TEMPLATE_EXPRESSION_OFFSET_QUASI) as *const TemplateLiteral<'a>)
+                &*(ptr.add(TAGGED_TEMPLATE_EXPRESSION_OFFSET_TYPEARGUMENTS)
+                    as *const Option<Box<'a, TSTypeParameterInstantiation<'a>>>)
             }
-        }));
+        })
+        .as_ref()
+        .map(|t| FollowingNode::TSTypeParameterInstantiation(t));
         self.allocator.alloc(AstNode {
             inner: &self.inner.tag,
             allocator: self.allocator,
@@ -2186,7 +2191,12 @@ impl<'a> AstNode<'a, TaggedTemplateExpression<'a>> {
 
     #[inline]
     pub fn type_arguments(&self) -> Option<&AstNode<'a, TSTypeParameterInstantiation<'a>>> {
-        let following_node = self.following_node.clone();
+        let following_node = Some(FollowingNode::TemplateLiteral({
+            let ptr = self.inner as *const _ as *const u8;
+            unsafe {
+                &*(ptr.add(TAGGED_TEMPLATE_EXPRESSION_OFFSET_QUASI) as *const TemplateLiteral<'a>)
+            }
+        }));
         self.allocator
             .alloc(self.inner.type_arguments.as_ref().map(|inner| AstNode {
                 inner: inner.as_ref(),
@@ -2397,6 +2407,8 @@ impl<'a> AstNode<'a, PrivateFieldExpression<'a>> {
 }
 
 const CALL_EXPRESSION_OFFSET_CALLEE: usize = std::mem::offset_of!(CallExpression, callee);
+const CALL_EXPRESSION_OFFSET_TYPEARGUMENTS: usize =
+    std::mem::offset_of!(CallExpression, type_arguments);
 const CALL_EXPRESSION_OFFSET_ARGUMENTS: usize = std::mem::offset_of!(CallExpression, arguments);
 
 impl<'a> AstNode<'a, CallExpression<'a>> {
@@ -2409,12 +2421,13 @@ impl<'a> AstNode<'a, CallExpression<'a>> {
     pub fn callee(&self) -> &AstNode<'a, Expression<'a>> {
         let following_node = ({
             let ptr = self.inner as *const _ as *const u8;
-            unsafe { &*(ptr.add(CALL_EXPRESSION_OFFSET_ARGUMENTS) as *const Vec<'a, Argument<'a>>) }
+            unsafe {
+                &*(ptr.add(CALL_EXPRESSION_OFFSET_TYPEARGUMENTS)
+                    as *const Option<Box<'a, TSTypeParameterInstantiation<'a>>>)
+            }
         })
-        .first()
         .as_ref()
-        .copied()
-        .map(FollowingNode::Argument);
+        .map(|t| FollowingNode::TSTypeParameterInstantiation(t));
         self.allocator.alloc(AstNode {
             inner: &self.inner.callee,
             allocator: self.allocator,
@@ -2425,7 +2438,14 @@ impl<'a> AstNode<'a, CallExpression<'a>> {
 
     #[inline]
     pub fn type_arguments(&self) -> Option<&AstNode<'a, TSTypeParameterInstantiation<'a>>> {
-        let following_node = self.following_node.clone();
+        let following_node = ({
+            let ptr = self.inner as *const _ as *const u8;
+            unsafe { &*(ptr.add(CALL_EXPRESSION_OFFSET_ARGUMENTS) as *const Vec<'a, Argument<'a>>) }
+        })
+        .first()
+        .as_ref()
+        .copied()
+        .map(|t| FollowingNode::Argument(t));
         self.allocator
             .alloc(self.inner.type_arguments.as_ref().map(|inner| AstNode {
                 inner: inner.as_ref(),
@@ -2459,6 +2479,8 @@ impl<'a> AstNode<'a, CallExpression<'a>> {
 }
 
 const NEW_EXPRESSION_OFFSET_CALLEE: usize = std::mem::offset_of!(NewExpression, callee);
+const NEW_EXPRESSION_OFFSET_TYPEARGUMENTS: usize =
+    std::mem::offset_of!(NewExpression, type_arguments);
 const NEW_EXPRESSION_OFFSET_ARGUMENTS: usize = std::mem::offset_of!(NewExpression, arguments);
 
 impl<'a> AstNode<'a, NewExpression<'a>> {
@@ -2471,12 +2493,13 @@ impl<'a> AstNode<'a, NewExpression<'a>> {
     pub fn callee(&self) -> &AstNode<'a, Expression<'a>> {
         let following_node = ({
             let ptr = self.inner as *const _ as *const u8;
-            unsafe { &*(ptr.add(NEW_EXPRESSION_OFFSET_ARGUMENTS) as *const Vec<'a, Argument<'a>>) }
+            unsafe {
+                &*(ptr.add(NEW_EXPRESSION_OFFSET_TYPEARGUMENTS)
+                    as *const Option<Box<'a, TSTypeParameterInstantiation<'a>>>)
+            }
         })
-        .first()
         .as_ref()
-        .copied()
-        .map(FollowingNode::Argument);
+        .map(|t| FollowingNode::TSTypeParameterInstantiation(t));
         self.allocator.alloc(AstNode {
             inner: &self.inner.callee,
             allocator: self.allocator,
@@ -2487,7 +2510,14 @@ impl<'a> AstNode<'a, NewExpression<'a>> {
 
     #[inline]
     pub fn type_arguments(&self) -> Option<&AstNode<'a, TSTypeParameterInstantiation<'a>>> {
-        let following_node = self.following_node.clone();
+        let following_node = ({
+            let ptr = self.inner as *const _ as *const u8;
+            unsafe { &*(ptr.add(NEW_EXPRESSION_OFFSET_ARGUMENTS) as *const Vec<'a, Argument<'a>>) }
+        })
+        .first()
+        .as_ref()
+        .copied()
+        .map(|t| FollowingNode::Argument(t));
         self.allocator
             .alloc(self.inner.type_arguments.as_ref().map(|inner| AstNode {
                 inner: inner.as_ref(),
@@ -2999,6 +3029,8 @@ impl<'a> GetSpan for AstNode<'a, AssignmentTargetPattern<'a>> {
     }
 }
 
+const ARRAY_ASSIGNMENT_TARGET_OFFSET_ELEMENTS: usize =
+    std::mem::offset_of!(ArrayAssignmentTarget, elements);
 const ARRAY_ASSIGNMENT_TARGET_OFFSET_REST: usize =
     std::mem::offset_of!(ArrayAssignmentTarget, rest);
 
@@ -3010,7 +3042,15 @@ impl<'a> AstNode<'a, ArrayAssignmentTarget<'a>> {
 
     #[inline]
     pub fn elements(&self) -> &AstNode<'a, Vec<'a, Option<AssignmentTargetMaybeDefault<'a>>>> {
-        let following_node = self.following_node.clone();
+        let following_node = ({
+            let ptr = self.inner as *const _ as *const u8;
+            unsafe {
+                &*(ptr.add(ARRAY_ASSIGNMENT_TARGET_OFFSET_REST)
+                    as *const Option<AssignmentTargetRest<'a>>)
+            }
+        })
+        .as_ref()
+        .map(|t| FollowingNode::AssignmentTargetRest(t));
         self.allocator.alloc(AstNode {
             inner: &self.inner.elements,
             allocator: self.allocator,
@@ -3054,7 +3094,7 @@ impl<'a> AstNode<'a, ObjectAssignmentTarget<'a>> {
             }
         })
         .as_ref()
-        .map(FollowingNode::AssignmentTargetRest);
+        .map(|t| FollowingNode::AssignmentTargetRest(t));
         self.allocator.alloc(AstNode {
             inner: &self.inner.properties,
             allocator: self.allocator,
@@ -3223,7 +3263,7 @@ impl<'a> AstNode<'a, AssignmentTargetPropertyIdentifier<'a>> {
             }
         })
         .as_ref()
-        .map(FollowingNode::Expression);
+        .map(|t| FollowingNode::Expression(t));
         self.allocator.alloc(AstNode {
             inner: &self.inner.binding,
             allocator: self.allocator,
@@ -3781,7 +3821,7 @@ impl<'a> AstNode<'a, VariableDeclarator<'a>> {
             unsafe { &*(ptr.add(VARIABLE_DECLARATOR_OFFSET_INIT) as *const Option<Expression<'a>>) }
         })
         .as_ref()
-        .map(FollowingNode::Expression);
+        .map(|t| FollowingNode::Expression(t));
         self.allocator.alloc(AstNode {
             inner: &self.inner.id,
             allocator: self.allocator,
@@ -3868,7 +3908,7 @@ impl<'a> AstNode<'a, IfStatement<'a>> {
             unsafe { &*(ptr.add(IF_STATEMENT_OFFSET_ALTERNATE) as *const Option<Statement<'a>>) }
         })
         .as_ref()
-        .map(FollowingNode::Statement);
+        .map(|t| FollowingNode::Statement(t));
         self.allocator.alloc(AstNode {
             inner: &self.inner.consequent,
             allocator: self.allocator,
@@ -3979,7 +4019,7 @@ impl<'a> AstNode<'a, ForStatement<'a>> {
             unsafe { &*(ptr.add(FOR_STATEMENT_OFFSET_TEST) as *const Option<Expression<'a>>) }
         })
         .as_ref()
-        .map(FollowingNode::Expression);
+        .map(|t| FollowingNode::Expression(t));
         self.allocator
             .alloc(self.inner.init.as_ref().map(|inner| AstNode {
                 inner,
@@ -3997,7 +4037,7 @@ impl<'a> AstNode<'a, ForStatement<'a>> {
             unsafe { &*(ptr.add(FOR_STATEMENT_OFFSET_UPDATE) as *const Option<Expression<'a>>) }
         })
         .as_ref()
-        .map(FollowingNode::Expression);
+        .map(|t| FollowingNode::Expression(t));
         self.allocator
             .alloc(self.inner.test.as_ref().map(|inner| AstNode {
                 inner,
@@ -4330,7 +4370,7 @@ impl<'a> AstNode<'a, SwitchStatement<'a>> {
         .first()
         .as_ref()
         .copied()
-        .map(FollowingNode::SwitchCase);
+        .map(|t| FollowingNode::SwitchCase(t));
         self.allocator.alloc(AstNode {
             inner: &self.inner.discriminant,
             allocator: self.allocator,
@@ -4369,7 +4409,7 @@ impl<'a> AstNode<'a, SwitchCase<'a>> {
         .first()
         .as_ref()
         .copied()
-        .map(FollowingNode::Statement);
+        .map(|t| FollowingNode::Statement(t));
         self.allocator
             .alloc(self.inner.test.as_ref().map(|inner| AstNode {
                 inner,
@@ -4448,6 +4488,8 @@ impl<'a> AstNode<'a, ThrowStatement<'a>> {
 }
 
 const TRY_STATEMENT_OFFSET_BLOCK: usize = std::mem::offset_of!(TryStatement, block);
+const TRY_STATEMENT_OFFSET_HANDLER: usize = std::mem::offset_of!(TryStatement, handler);
+const TRY_STATEMENT_OFFSET_FINALIZER: usize = std::mem::offset_of!(TryStatement, finalizer);
 
 impl<'a> AstNode<'a, TryStatement<'a>> {
     #[inline]
@@ -4457,7 +4499,14 @@ impl<'a> AstNode<'a, TryStatement<'a>> {
 
     #[inline]
     pub fn block(&self) -> &AstNode<'a, BlockStatement<'a>> {
-        let following_node = self.following_node.clone();
+        let following_node = ({
+            let ptr = self.inner as *const _ as *const u8;
+            unsafe {
+                &*(ptr.add(TRY_STATEMENT_OFFSET_HANDLER) as *const Option<Box<'a, CatchClause<'a>>>)
+            }
+        })
+        .as_ref()
+        .map(|t| FollowingNode::CatchClause(t));
         self.allocator.alloc(AstNode {
             inner: self.inner.block.as_ref(),
             allocator: self.allocator,
@@ -4468,7 +4517,15 @@ impl<'a> AstNode<'a, TryStatement<'a>> {
 
     #[inline]
     pub fn handler(&self) -> Option<&AstNode<'a, CatchClause<'a>>> {
-        let following_node = self.following_node.clone();
+        let following_node = ({
+            let ptr = self.inner as *const _ as *const u8;
+            unsafe {
+                &*(ptr.add(TRY_STATEMENT_OFFSET_FINALIZER)
+                    as *const Option<Box<'a, BlockStatement<'a>>>)
+            }
+        })
+        .as_ref()
+        .map(|t| FollowingNode::BlockStatement(t));
         self.allocator
             .alloc(self.inner.handler.as_ref().map(|inner| AstNode {
                 inner: inner.as_ref(),
@@ -4563,11 +4620,21 @@ impl<'a> AstNode<'a, DebuggerStatement> {
 }
 
 const BINDING_PATTERN_OFFSET_KIND: usize = std::mem::offset_of!(BindingPattern, kind);
+const BINDING_PATTERN_OFFSET_TYPEANNOTATION: usize =
+    std::mem::offset_of!(BindingPattern, type_annotation);
 
 impl<'a> AstNode<'a, BindingPattern<'a>> {
     #[inline]
     pub fn kind(&self) -> &AstNode<'a, BindingPatternKind<'a>> {
-        let following_node = self.following_node.clone();
+        let following_node = ({
+            let ptr = self.inner as *const _ as *const u8;
+            unsafe {
+                &*(ptr.add(BINDING_PATTERN_OFFSET_TYPEANNOTATION)
+                    as *const Option<Box<'a, TSTypeAnnotation<'a>>>)
+            }
+        })
+        .as_ref()
+        .map(|t| FollowingNode::TSTypeAnnotation(t));
         self.allocator.alloc(AstNode {
             inner: &self.inner.kind,
             allocator: self.allocator,
@@ -4680,6 +4747,7 @@ impl<'a> AstNode<'a, AssignmentPattern<'a>> {
 }
 
 const OBJECT_PATTERN_OFFSET_PROPERTIES: usize = std::mem::offset_of!(ObjectPattern, properties);
+const OBJECT_PATTERN_OFFSET_REST: usize = std::mem::offset_of!(ObjectPattern, rest);
 
 impl<'a> AstNode<'a, ObjectPattern<'a>> {
     #[inline]
@@ -4689,7 +4757,15 @@ impl<'a> AstNode<'a, ObjectPattern<'a>> {
 
     #[inline]
     pub fn properties(&self) -> &AstNode<'a, Vec<'a, BindingProperty<'a>>> {
-        let following_node = self.following_node.clone();
+        let following_node = ({
+            let ptr = self.inner as *const _ as *const u8;
+            unsafe {
+                &*(ptr.add(OBJECT_PATTERN_OFFSET_REST)
+                    as *const Option<Box<'a, BindingRestElement<'a>>>)
+            }
+        })
+        .as_ref()
+        .map(|t| FollowingNode::BindingRestElement(t));
         self.allocator.alloc(AstNode {
             inner: &self.inner.properties,
             allocator: self.allocator,
@@ -4757,6 +4833,9 @@ impl<'a> AstNode<'a, BindingProperty<'a>> {
     }
 }
 
+const ARRAY_PATTERN_OFFSET_ELEMENTS: usize = std::mem::offset_of!(ArrayPattern, elements);
+const ARRAY_PATTERN_OFFSET_REST: usize = std::mem::offset_of!(ArrayPattern, rest);
+
 impl<'a> AstNode<'a, ArrayPattern<'a>> {
     #[inline]
     pub fn span(&self) -> Span {
@@ -4765,7 +4844,15 @@ impl<'a> AstNode<'a, ArrayPattern<'a>> {
 
     #[inline]
     pub fn elements(&self) -> &AstNode<'a, Vec<'a, Option<BindingPattern<'a>>>> {
-        let following_node = self.following_node.clone();
+        let following_node = ({
+            let ptr = self.inner as *const _ as *const u8;
+            unsafe {
+                &*(ptr.add(ARRAY_PATTERN_OFFSET_REST)
+                    as *const Option<Box<'a, BindingRestElement<'a>>>)
+            }
+        })
+        .as_ref()
+        .map(|t| FollowingNode::BindingRestElement(t));
         self.allocator.alloc(AstNode {
             inner: &self.inner.elements,
             allocator: self.allocator,
@@ -4810,7 +4897,11 @@ impl<'a> AstNode<'a, BindingRestElement<'a>> {
 }
 
 const FUNCTION_OFFSET_ID: usize = std::mem::offset_of!(Function, id);
+const FUNCTION_OFFSET_TYPEPARAMETERS: usize = std::mem::offset_of!(Function, type_parameters);
+const FUNCTION_OFFSET_THISPARAM: usize = std::mem::offset_of!(Function, this_param);
 const FUNCTION_OFFSET_PARAMS: usize = std::mem::offset_of!(Function, params);
+const FUNCTION_OFFSET_RETURNTYPE: usize = std::mem::offset_of!(Function, return_type);
+const FUNCTION_OFFSET_BODY: usize = std::mem::offset_of!(Function, body);
 
 impl<'a> AstNode<'a, Function<'a>> {
     #[inline]
@@ -4825,15 +4916,15 @@ impl<'a> AstNode<'a, Function<'a>> {
 
     #[inline]
     pub fn id(&self) -> Option<&AstNode<'a, BindingIdentifier<'a>>> {
-        let following_node = Some(FollowingNode::FormalParameters(
-            {
-                let ptr = self.inner as *const _ as *const u8;
-                unsafe {
-                    &*(ptr.add(FUNCTION_OFFSET_PARAMS) as *const Box<'a, FormalParameters<'a>>)
-                }
+        let following_node = ({
+            let ptr = self.inner as *const _ as *const u8;
+            unsafe {
+                &*(ptr.add(FUNCTION_OFFSET_TYPEPARAMETERS)
+                    as *const Option<Box<'a, TSTypeParameterDeclaration<'a>>>)
             }
-            .as_ref(),
-        ));
+        })
+        .as_ref()
+        .map(|t| FollowingNode::TSTypeParameterDeclaration(t));
         self.allocator
             .alloc(self.inner.id.as_ref().map(|inner| AstNode {
                 inner,
@@ -4861,7 +4952,15 @@ impl<'a> AstNode<'a, Function<'a>> {
 
     #[inline]
     pub fn type_parameters(&self) -> Option<&AstNode<'a, TSTypeParameterDeclaration<'a>>> {
-        let following_node = self.following_node.clone();
+        let following_node = ({
+            let ptr = self.inner as *const _ as *const u8;
+            unsafe {
+                &*(ptr.add(FUNCTION_OFFSET_THISPARAM)
+                    as *const Option<Box<'a, TSThisParameter<'a>>>)
+            }
+        })
+        .as_ref()
+        .map(|t| FollowingNode::TSThisParameter(t));
         self.allocator
             .alloc(self.inner.type_parameters.as_ref().map(|inner| AstNode {
                 inner: inner.as_ref(),
@@ -4874,7 +4973,15 @@ impl<'a> AstNode<'a, Function<'a>> {
 
     #[inline]
     pub fn this_param(&self) -> Option<&AstNode<'a, TSThisParameter<'a>>> {
-        let following_node = self.following_node.clone();
+        let following_node = Some(FollowingNode::FormalParameters(
+            {
+                let ptr = self.inner as *const _ as *const u8;
+                unsafe {
+                    &*(ptr.add(FUNCTION_OFFSET_PARAMS) as *const Box<'a, FormalParameters<'a>>)
+                }
+            }
+            .as_ref(),
+        ));
         self.allocator
             .alloc(self.inner.this_param.as_ref().map(|inner| AstNode {
                 inner: inner.as_ref(),
@@ -4887,7 +4994,15 @@ impl<'a> AstNode<'a, Function<'a>> {
 
     #[inline]
     pub fn params(&self) -> &AstNode<'a, FormalParameters<'a>> {
-        let following_node = self.following_node.clone();
+        let following_node = ({
+            let ptr = self.inner as *const _ as *const u8;
+            unsafe {
+                &*(ptr.add(FUNCTION_OFFSET_RETURNTYPE)
+                    as *const Option<Box<'a, TSTypeAnnotation<'a>>>)
+            }
+        })
+        .as_ref()
+        .map(|t| FollowingNode::TSTypeAnnotation(t));
         self.allocator.alloc(AstNode {
             inner: self.inner.params.as_ref(),
             allocator: self.allocator,
@@ -4898,7 +5013,12 @@ impl<'a> AstNode<'a, Function<'a>> {
 
     #[inline]
     pub fn return_type(&self) -> Option<&AstNode<'a, TSTypeAnnotation<'a>>> {
-        let following_node = self.following_node.clone();
+        let following_node = ({
+            let ptr = self.inner as *const _ as *const u8;
+            unsafe { &*(ptr.add(FUNCTION_OFFSET_BODY) as *const Option<Box<'a, FunctionBody<'a>>>) }
+        })
+        .as_ref()
+        .map(|t| FollowingNode::FunctionBody(t));
         self.allocator
             .alloc(self.inner.return_type.as_ref().map(|inner| AstNode {
                 inner: inner.as_ref(),
@@ -4929,6 +5049,7 @@ impl<'a> AstNode<'a, Function<'a>> {
 }
 
 const FORMAL_PARAMETERS_OFFSET_ITEMS: usize = std::mem::offset_of!(FormalParameters, items);
+const FORMAL_PARAMETERS_OFFSET_REST: usize = std::mem::offset_of!(FormalParameters, rest);
 
 impl<'a> AstNode<'a, FormalParameters<'a>> {
     #[inline]
@@ -4943,7 +5064,15 @@ impl<'a> AstNode<'a, FormalParameters<'a>> {
 
     #[inline]
     pub fn items(&self) -> &AstNode<'a, Vec<'a, FormalParameter<'a>>> {
-        let following_node = self.following_node.clone();
+        let following_node = ({
+            let ptr = self.inner as *const _ as *const u8;
+            unsafe {
+                &*(ptr.add(FORMAL_PARAMETERS_OFFSET_REST)
+                    as *const Option<Box<'a, BindingRestElement<'a>>>)
+            }
+        })
+        .as_ref()
+        .map(|t| FollowingNode::BindingRestElement(t));
         self.allocator.alloc(AstNode {
             inner: &self.inner.items,
             allocator: self.allocator,
@@ -5034,7 +5163,7 @@ impl<'a> AstNode<'a, FunctionBody<'a>> {
         .first()
         .as_ref()
         .copied()
-        .map(FollowingNode::Statement);
+        .map(|t| FollowingNode::Statement(t));
         self.allocator.alloc(AstNode {
             inner: &self.inner.directives,
             allocator: self.allocator,
@@ -5055,8 +5184,12 @@ impl<'a> AstNode<'a, FunctionBody<'a>> {
     }
 }
 
+const ARROW_FUNCTION_EXPRESSION_OFFSET_TYPEPARAMETERS: usize =
+    std::mem::offset_of!(ArrowFunctionExpression, type_parameters);
 const ARROW_FUNCTION_EXPRESSION_OFFSET_PARAMS: usize =
     std::mem::offset_of!(ArrowFunctionExpression, params);
+const ARROW_FUNCTION_EXPRESSION_OFFSET_RETURNTYPE: usize =
+    std::mem::offset_of!(ArrowFunctionExpression, return_type);
 const ARROW_FUNCTION_EXPRESSION_OFFSET_BODY: usize =
     std::mem::offset_of!(ArrowFunctionExpression, body);
 
@@ -5078,12 +5211,12 @@ impl<'a> AstNode<'a, ArrowFunctionExpression<'a>> {
 
     #[inline]
     pub fn type_parameters(&self) -> Option<&AstNode<'a, TSTypeParameterDeclaration<'a>>> {
-        let following_node = Some(FollowingNode::FunctionBody(
+        let following_node = Some(FollowingNode::FormalParameters(
             {
                 let ptr = self.inner as *const _ as *const u8;
                 unsafe {
-                    &*(ptr.add(ARROW_FUNCTION_EXPRESSION_OFFSET_BODY)
-                        as *const Box<'a, FunctionBody<'a>>)
+                    &*(ptr.add(ARROW_FUNCTION_EXPRESSION_OFFSET_PARAMS)
+                        as *const Box<'a, FormalParameters<'a>>)
                 }
             }
             .as_ref(),
@@ -5101,7 +5234,15 @@ impl<'a> AstNode<'a, ArrowFunctionExpression<'a>> {
 
     #[inline]
     pub fn params(&self) -> &AstNode<'a, FormalParameters<'a>> {
-        let following_node = self.following_node.clone();
+        let following_node = ({
+            let ptr = self.inner as *const _ as *const u8;
+            unsafe {
+                &*(ptr.add(ARROW_FUNCTION_EXPRESSION_OFFSET_RETURNTYPE)
+                    as *const Option<Box<'a, TSTypeAnnotation<'a>>>)
+            }
+        })
+        .as_ref()
+        .map(|t| FollowingNode::TSTypeAnnotation(t));
         self.allocator.alloc(AstNode {
             inner: self.inner.params.as_ref(),
             allocator: self.allocator,
@@ -5112,7 +5253,16 @@ impl<'a> AstNode<'a, ArrowFunctionExpression<'a>> {
 
     #[inline]
     pub fn return_type(&self) -> Option<&AstNode<'a, TSTypeAnnotation<'a>>> {
-        let following_node = self.following_node.clone();
+        let following_node = Some(FollowingNode::FunctionBody(
+            {
+                let ptr = self.inner as *const _ as *const u8;
+                unsafe {
+                    &*(ptr.add(ARROW_FUNCTION_EXPRESSION_OFFSET_BODY)
+                        as *const Box<'a, FunctionBody<'a>>)
+                }
+            }
+            .as_ref(),
+        ));
         self.allocator
             .alloc(self.inner.return_type.as_ref().map(|inner| AstNode {
                 inner: inner.as_ref(),
@@ -5170,7 +5320,9 @@ impl<'a> AstNode<'a, YieldExpression<'a>> {
 
 const CLASS_OFFSET_DECORATORS: usize = std::mem::offset_of!(Class, decorators);
 const CLASS_OFFSET_ID: usize = std::mem::offset_of!(Class, id);
+const CLASS_OFFSET_TYPEPARAMETERS: usize = std::mem::offset_of!(Class, type_parameters);
 const CLASS_OFFSET_SUPERCLASS: usize = std::mem::offset_of!(Class, super_class);
+const CLASS_OFFSET_SUPERTYPEARGUMENTS: usize = std::mem::offset_of!(Class, super_type_arguments);
 const CLASS_OFFSET_IMPLEMENTS: usize = std::mem::offset_of!(Class, implements);
 const CLASS_OFFSET_BODY: usize = std::mem::offset_of!(Class, body);
 
@@ -5192,7 +5344,7 @@ impl<'a> AstNode<'a, Class<'a>> {
             unsafe { &*(ptr.add(CLASS_OFFSET_ID) as *const Option<BindingIdentifier<'a>>) }
         })
         .as_ref()
-        .map(FollowingNode::BindingIdentifier);
+        .map(|t| FollowingNode::BindingIdentifier(t));
         self.allocator.alloc(AstNode {
             inner: &self.inner.decorators,
             allocator: self.allocator,
@@ -5205,10 +5357,13 @@ impl<'a> AstNode<'a, Class<'a>> {
     pub fn id(&self) -> Option<&AstNode<'a, BindingIdentifier<'a>>> {
         let following_node = ({
             let ptr = self.inner as *const _ as *const u8;
-            unsafe { &*(ptr.add(CLASS_OFFSET_SUPERCLASS) as *const Option<Expression<'a>>) }
+            unsafe {
+                &*(ptr.add(CLASS_OFFSET_TYPEPARAMETERS)
+                    as *const Option<Box<'a, TSTypeParameterDeclaration<'a>>>)
+            }
         })
         .as_ref()
-        .map(FollowingNode::Expression);
+        .map(|t| FollowingNode::TSTypeParameterDeclaration(t));
         self.allocator
             .alloc(self.inner.id.as_ref().map(|inner| AstNode {
                 inner,
@@ -5223,12 +5378,10 @@ impl<'a> AstNode<'a, Class<'a>> {
     pub fn type_parameters(&self) -> Option<&AstNode<'a, TSTypeParameterDeclaration<'a>>> {
         let following_node = ({
             let ptr = self.inner as *const _ as *const u8;
-            unsafe { &*(ptr.add(CLASS_OFFSET_IMPLEMENTS) as *const Vec<'a, TSClassImplements<'a>>) }
+            unsafe { &*(ptr.add(CLASS_OFFSET_SUPERCLASS) as *const Option<Expression<'a>>) }
         })
-        .first()
         .as_ref()
-        .copied()
-        .map(FollowingNode::TSClassImplements);
+        .map(|t| FollowingNode::Expression(t));
         self.allocator
             .alloc(self.inner.type_parameters.as_ref().map(|inner| AstNode {
                 inner: inner.as_ref(),
@@ -5241,13 +5394,15 @@ impl<'a> AstNode<'a, Class<'a>> {
 
     #[inline]
     pub fn super_class(&self) -> Option<&AstNode<'a, Expression<'a>>> {
-        let following_node = Some(FollowingNode::ClassBody(
-            {
-                let ptr = self.inner as *const _ as *const u8;
-                unsafe { &*(ptr.add(CLASS_OFFSET_BODY) as *const Box<'a, ClassBody<'a>>) }
+        let following_node = ({
+            let ptr = self.inner as *const _ as *const u8;
+            unsafe {
+                &*(ptr.add(CLASS_OFFSET_SUPERTYPEARGUMENTS)
+                    as *const Option<Box<'a, TSTypeParameterInstantiation<'a>>>)
             }
-            .as_ref(),
-        ));
+        })
+        .as_ref()
+        .map(|t| FollowingNode::TSTypeParameterInstantiation(t));
         self.allocator
             .alloc(self.inner.super_class.as_ref().map(|inner| AstNode {
                 inner,
@@ -5260,7 +5415,14 @@ impl<'a> AstNode<'a, Class<'a>> {
 
     #[inline]
     pub fn super_type_arguments(&self) -> Option<&AstNode<'a, TSTypeParameterInstantiation<'a>>> {
-        let following_node = self.following_node.clone();
+        let following_node = ({
+            let ptr = self.inner as *const _ as *const u8;
+            unsafe { &*(ptr.add(CLASS_OFFSET_IMPLEMENTS) as *const Vec<'a, TSClassImplements<'a>>) }
+        })
+        .first()
+        .as_ref()
+        .copied()
+        .map(|t| FollowingNode::TSClassImplements(t));
         self.allocator
             .alloc(self.inner.super_type_arguments.as_ref().map(|inner| AstNode {
                 inner: inner.as_ref(),
@@ -5273,7 +5435,13 @@ impl<'a> AstNode<'a, Class<'a>> {
 
     #[inline]
     pub fn implements(&self) -> &AstNode<'a, Vec<'a, TSClassImplements<'a>>> {
-        let following_node = self.following_node.clone();
+        let following_node = Some(FollowingNode::ClassBody(
+            {
+                let ptr = self.inner as *const _ as *const u8;
+                unsafe { &*(ptr.add(CLASS_OFFSET_BODY) as *const Box<'a, ClassBody<'a>>) }
+            }
+            .as_ref(),
+        ));
         self.allocator.alloc(AstNode {
             inner: &self.inner.implements,
             allocator: self.allocator,
@@ -5467,6 +5635,8 @@ impl<'a> AstNode<'a, MethodDefinition<'a>> {
 const PROPERTY_DEFINITION_OFFSET_DECORATORS: usize =
     std::mem::offset_of!(PropertyDefinition, decorators);
 const PROPERTY_DEFINITION_OFFSET_KEY: usize = std::mem::offset_of!(PropertyDefinition, key);
+const PROPERTY_DEFINITION_OFFSET_TYPEANNOTATION: usize =
+    std::mem::offset_of!(PropertyDefinition, type_annotation);
 const PROPERTY_DEFINITION_OFFSET_VALUE: usize = std::mem::offset_of!(PropertyDefinition, value);
 
 impl<'a> AstNode<'a, PropertyDefinition<'a>> {
@@ -5499,11 +5669,12 @@ impl<'a> AstNode<'a, PropertyDefinition<'a>> {
         let following_node = ({
             let ptr = self.inner as *const _ as *const u8;
             unsafe {
-                &*(ptr.add(PROPERTY_DEFINITION_OFFSET_VALUE) as *const Option<Expression<'a>>)
+                &*(ptr.add(PROPERTY_DEFINITION_OFFSET_TYPEANNOTATION)
+                    as *const Option<Box<'a, TSTypeAnnotation<'a>>>)
             }
         })
         .as_ref()
-        .map(FollowingNode::Expression);
+        .map(|t| FollowingNode::TSTypeAnnotation(t));
         self.allocator.alloc(AstNode {
             inner: &self.inner.key,
             allocator: self.allocator,
@@ -5514,7 +5685,14 @@ impl<'a> AstNode<'a, PropertyDefinition<'a>> {
 
     #[inline]
     pub fn type_annotation(&self) -> Option<&AstNode<'a, TSTypeAnnotation<'a>>> {
-        let following_node = self.following_node.clone();
+        let following_node = ({
+            let ptr = self.inner as *const _ as *const u8;
+            unsafe {
+                &*(ptr.add(PROPERTY_DEFINITION_OFFSET_VALUE) as *const Option<Expression<'a>>)
+            }
+        })
+        .as_ref()
+        .map(|t| FollowingNode::Expression(t));
         self.allocator
             .alloc(self.inner.type_annotation.as_ref().map(|inner| AstNode {
                 inner: inner.as_ref(),
@@ -5676,6 +5854,8 @@ impl<'a> GetSpan for AstNode<'a, ModuleDeclaration<'a>> {
 const ACCESSOR_PROPERTY_OFFSET_DECORATORS: usize =
     std::mem::offset_of!(AccessorProperty, decorators);
 const ACCESSOR_PROPERTY_OFFSET_KEY: usize = std::mem::offset_of!(AccessorProperty, key);
+const ACCESSOR_PROPERTY_OFFSET_TYPEANNOTATION: usize =
+    std::mem::offset_of!(AccessorProperty, type_annotation);
 const ACCESSOR_PROPERTY_OFFSET_VALUE: usize = std::mem::offset_of!(AccessorProperty, value);
 
 impl<'a> AstNode<'a, AccessorProperty<'a>> {
@@ -5707,10 +5887,13 @@ impl<'a> AstNode<'a, AccessorProperty<'a>> {
     pub fn key(&self) -> &AstNode<'a, PropertyKey<'a>> {
         let following_node = ({
             let ptr = self.inner as *const _ as *const u8;
-            unsafe { &*(ptr.add(ACCESSOR_PROPERTY_OFFSET_VALUE) as *const Option<Expression<'a>>) }
+            unsafe {
+                &*(ptr.add(ACCESSOR_PROPERTY_OFFSET_TYPEANNOTATION)
+                    as *const Option<Box<'a, TSTypeAnnotation<'a>>>)
+            }
         })
         .as_ref()
-        .map(FollowingNode::Expression);
+        .map(|t| FollowingNode::TSTypeAnnotation(t));
         self.allocator.alloc(AstNode {
             inner: &self.inner.key,
             allocator: self.allocator,
@@ -5721,7 +5904,12 @@ impl<'a> AstNode<'a, AccessorProperty<'a>> {
 
     #[inline]
     pub fn type_annotation(&self) -> Option<&AstNode<'a, TSTypeAnnotation<'a>>> {
-        let following_node = self.following_node.clone();
+        let following_node = ({
+            let ptr = self.inner as *const _ as *const u8;
+            unsafe { &*(ptr.add(ACCESSOR_PROPERTY_OFFSET_VALUE) as *const Option<Expression<'a>>) }
+        })
+        .as_ref()
+        .map(|t| FollowingNode::Expression(t));
         self.allocator
             .alloc(self.inner.type_annotation.as_ref().map(|inner| AstNode {
                 inner: inner.as_ref(),
@@ -5789,7 +5977,7 @@ impl<'a> AstNode<'a, ImportExpression<'a>> {
             }
         })
         .as_ref()
-        .map(FollowingNode::Expression);
+        .map(|t| FollowingNode::Expression(t));
         self.allocator.alloc(AstNode {
             inner: &self.inner.source,
             allocator: self.allocator,
@@ -5817,7 +6005,11 @@ impl<'a> AstNode<'a, ImportExpression<'a>> {
     }
 }
 
+const IMPORT_DECLARATION_OFFSET_SPECIFIERS: usize =
+    std::mem::offset_of!(ImportDeclaration, specifiers);
 const IMPORT_DECLARATION_OFFSET_SOURCE: usize = std::mem::offset_of!(ImportDeclaration, source);
+const IMPORT_DECLARATION_OFFSET_WITHCLAUSE: usize =
+    std::mem::offset_of!(ImportDeclaration, with_clause);
 
 impl<'a> AstNode<'a, ImportDeclaration<'a>> {
     #[inline]
@@ -5827,7 +6019,10 @@ impl<'a> AstNode<'a, ImportDeclaration<'a>> {
 
     #[inline]
     pub fn specifiers(&self) -> Option<&AstNode<'a, Vec<'a, ImportDeclarationSpecifier<'a>>>> {
-        let following_node = self.following_node.clone();
+        let following_node = Some(FollowingNode::StringLiteral({
+            let ptr = self.inner as *const _ as *const u8;
+            unsafe { &*(ptr.add(IMPORT_DECLARATION_OFFSET_SOURCE) as *const StringLiteral<'a>) }
+        }));
         self.allocator
             .alloc(self.inner.specifiers.as_ref().map(|inner| AstNode {
                 inner,
@@ -5840,7 +6035,15 @@ impl<'a> AstNode<'a, ImportDeclaration<'a>> {
 
     #[inline]
     pub fn source(&self) -> &AstNode<'a, StringLiteral<'a>> {
-        let following_node = self.following_node.clone();
+        let following_node = ({
+            let ptr = self.inner as *const _ as *const u8;
+            unsafe {
+                &*(ptr.add(IMPORT_DECLARATION_OFFSET_WITHCLAUSE)
+                    as *const Option<Box<'a, WithClause<'a>>>)
+            }
+        })
+        .as_ref()
+        .map(|t| FollowingNode::WithClause(t));
         self.allocator.alloc(AstNode {
             inner: &self.inner.source,
             allocator: self.allocator,
@@ -6017,7 +6220,7 @@ impl<'a> AstNode<'a, WithClause<'a>> {
         .first()
         .as_ref()
         .copied()
-        .map(FollowingNode::ImportAttribute);
+        .map(|t| FollowingNode::ImportAttribute(t));
         self.allocator.alloc(AstNode {
             inner: &self.inner.attributes_keyword,
             allocator: self.allocator,
@@ -6112,6 +6315,8 @@ const EXPORT_NAMED_DECLARATION_OFFSET_SPECIFIERS: usize =
     std::mem::offset_of!(ExportNamedDeclaration, specifiers);
 const EXPORT_NAMED_DECLARATION_OFFSET_SOURCE: usize =
     std::mem::offset_of!(ExportNamedDeclaration, source);
+const EXPORT_NAMED_DECLARATION_OFFSET_WITHCLAUSE: usize =
+    std::mem::offset_of!(ExportNamedDeclaration, with_clause);
 
 impl<'a> AstNode<'a, ExportNamedDeclaration<'a>> {
     #[inline]
@@ -6131,7 +6336,7 @@ impl<'a> AstNode<'a, ExportNamedDeclaration<'a>> {
         .first()
         .as_ref()
         .copied()
-        .map(FollowingNode::ExportSpecifier);
+        .map(|t| FollowingNode::ExportSpecifier(t));
         self.allocator
             .alloc(self.inner.declaration.as_ref().map(|inner| AstNode {
                 inner,
@@ -6153,7 +6358,7 @@ impl<'a> AstNode<'a, ExportNamedDeclaration<'a>> {
             }
         })
         .as_ref()
-        .map(FollowingNode::StringLiteral);
+        .map(|t| FollowingNode::StringLiteral(t));
         self.allocator.alloc(AstNode {
             inner: &self.inner.specifiers,
             allocator: self.allocator,
@@ -6164,7 +6369,15 @@ impl<'a> AstNode<'a, ExportNamedDeclaration<'a>> {
 
     #[inline]
     pub fn source(&self) -> Option<&AstNode<'a, StringLiteral<'a>>> {
-        let following_node = self.following_node.clone();
+        let following_node = ({
+            let ptr = self.inner as *const _ as *const u8;
+            unsafe {
+                &*(ptr.add(EXPORT_NAMED_DECLARATION_OFFSET_WITHCLAUSE)
+                    as *const Option<Box<'a, WithClause<'a>>>)
+            }
+        })
+        .as_ref()
+        .map(|t| FollowingNode::WithClause(t));
         self.allocator
             .alloc(self.inner.source.as_ref().map(|inner| AstNode {
                 inner,
@@ -6240,6 +6453,8 @@ const EXPORT_ALL_DECLARATION_OFFSET_EXPORTED: usize =
     std::mem::offset_of!(ExportAllDeclaration, exported);
 const EXPORT_ALL_DECLARATION_OFFSET_SOURCE: usize =
     std::mem::offset_of!(ExportAllDeclaration, source);
+const EXPORT_ALL_DECLARATION_OFFSET_WITHCLAUSE: usize =
+    std::mem::offset_of!(ExportAllDeclaration, with_clause);
 
 impl<'a> AstNode<'a, ExportAllDeclaration<'a>> {
     #[inline]
@@ -6265,7 +6480,15 @@ impl<'a> AstNode<'a, ExportAllDeclaration<'a>> {
 
     #[inline]
     pub fn source(&self) -> &AstNode<'a, StringLiteral<'a>> {
-        let following_node = self.following_node.clone();
+        let following_node = ({
+            let ptr = self.inner as *const _ as *const u8;
+            unsafe {
+                &*(ptr.add(EXPORT_ALL_DECLARATION_OFFSET_WITHCLAUSE)
+                    as *const Option<Box<'a, WithClause<'a>>>)
+            }
+        })
+        .as_ref()
+        .map(|t| FollowingNode::WithClause(t));
         self.allocator.alloc(AstNode {
             inner: &self.inner.source,
             allocator: self.allocator,
@@ -6449,7 +6672,7 @@ impl<'a> AstNode<'a, V8IntrinsicExpression<'a>> {
         .first()
         .as_ref()
         .copied()
-        .map(FollowingNode::Argument);
+        .map(|t| FollowingNode::Argument(t));
         self.allocator.alloc(AstNode {
             inner: &self.inner.name,
             allocator: self.allocator,
@@ -6574,6 +6797,7 @@ impl<'a> AstNode<'a, RegExpLiteral<'a>> {
 
 const JSX_ELEMENT_OFFSET_OPENINGELEMENT: usize = std::mem::offset_of!(JSXElement, opening_element);
 const JSX_ELEMENT_OFFSET_CHILDREN: usize = std::mem::offset_of!(JSXElement, children);
+const JSX_ELEMENT_OFFSET_CLOSINGELEMENT: usize = std::mem::offset_of!(JSXElement, closing_element);
 
 impl<'a> AstNode<'a, JSXElement<'a>> {
     #[inline]
@@ -6590,7 +6814,7 @@ impl<'a> AstNode<'a, JSXElement<'a>> {
         .first()
         .as_ref()
         .copied()
-        .map(FollowingNode::JSXChild);
+        .map(|t| FollowingNode::JSXChild(t));
         self.allocator.alloc(AstNode {
             inner: self.inner.opening_element.as_ref(),
             allocator: self.allocator,
@@ -6601,7 +6825,15 @@ impl<'a> AstNode<'a, JSXElement<'a>> {
 
     #[inline]
     pub fn children(&self) -> &AstNode<'a, Vec<'a, JSXChild<'a>>> {
-        let following_node = self.following_node.clone();
+        let following_node = ({
+            let ptr = self.inner as *const _ as *const u8;
+            unsafe {
+                &*(ptr.add(JSX_ELEMENT_OFFSET_CLOSINGELEMENT)
+                    as *const Option<Box<'a, JSXClosingElement<'a>>>)
+            }
+        })
+        .as_ref()
+        .map(|t| FollowingNode::JSXClosingElement(t));
         self.allocator.alloc(AstNode {
             inner: &self.inner.children,
             allocator: self.allocator,
@@ -6625,6 +6857,8 @@ impl<'a> AstNode<'a, JSXElement<'a>> {
 }
 
 const JSX_OPENING_ELEMENT_OFFSET_NAME: usize = std::mem::offset_of!(JSXOpeningElement, name);
+const JSX_OPENING_ELEMENT_OFFSET_TYPEARGUMENTS: usize =
+    std::mem::offset_of!(JSXOpeningElement, type_arguments);
 const JSX_OPENING_ELEMENT_OFFSET_ATTRIBUTES: usize =
     std::mem::offset_of!(JSXOpeningElement, attributes);
 
@@ -6639,14 +6873,12 @@ impl<'a> AstNode<'a, JSXOpeningElement<'a>> {
         let following_node = ({
             let ptr = self.inner as *const _ as *const u8;
             unsafe {
-                &*(ptr.add(JSX_OPENING_ELEMENT_OFFSET_ATTRIBUTES)
-                    as *const Vec<'a, JSXAttributeItem<'a>>)
+                &*(ptr.add(JSX_OPENING_ELEMENT_OFFSET_TYPEARGUMENTS)
+                    as *const Option<Box<'a, TSTypeParameterInstantiation<'a>>>)
             }
         })
-        .first()
         .as_ref()
-        .copied()
-        .map(FollowingNode::JSXAttributeItem);
+        .map(|t| FollowingNode::TSTypeParameterInstantiation(t));
         self.allocator.alloc(AstNode {
             inner: &self.inner.name,
             allocator: self.allocator,
@@ -6657,7 +6889,17 @@ impl<'a> AstNode<'a, JSXOpeningElement<'a>> {
 
     #[inline]
     pub fn type_arguments(&self) -> Option<&AstNode<'a, TSTypeParameterInstantiation<'a>>> {
-        let following_node = self.following_node.clone();
+        let following_node = ({
+            let ptr = self.inner as *const _ as *const u8;
+            unsafe {
+                &*(ptr.add(JSX_OPENING_ELEMENT_OFFSET_ATTRIBUTES)
+                    as *const Vec<'a, JSXAttributeItem<'a>>)
+            }
+        })
+        .first()
+        .as_ref()
+        .copied()
+        .map(|t| FollowingNode::JSXAttributeItem(t));
         self.allocator
             .alloc(self.inner.type_arguments.as_ref().map(|inner| AstNode {
                 inner: inner.as_ref(),
@@ -6721,7 +6963,7 @@ impl<'a> AstNode<'a, JSXFragment<'a>> {
         .first()
         .as_ref()
         .copied()
-        .map(FollowingNode::JSXChild);
+        .map(|t| FollowingNode::JSXChild(t));
         self.allocator.alloc(AstNode {
             inner: &self.inner.opening_fragment,
             allocator: self.allocator,
@@ -7058,7 +7300,7 @@ impl<'a> AstNode<'a, JSXAttribute<'a>> {
             }
         })
         .as_ref()
-        .map(FollowingNode::JSXAttributeValue);
+        .map(|t| FollowingNode::JSXAttributeValue(t));
         self.allocator.alloc(AstNode {
             inner: &self.inner.name,
             allocator: self.allocator,
@@ -7280,6 +7522,9 @@ impl<'a> AstNode<'a, JSXText<'a>> {
     }
 }
 
+const TS_THIS_PARAMETER_OFFSET_TYPEANNOTATION: usize =
+    std::mem::offset_of!(TSThisParameter, type_annotation);
+
 impl<'a> AstNode<'a, TSThisParameter<'a>> {
     #[inline]
     pub fn span(&self) -> Span {
@@ -7388,7 +7633,7 @@ impl<'a> AstNode<'a, TSEnumMember<'a>> {
             }
         })
         .as_ref()
-        .map(FollowingNode::Expression);
+        .map(|t| FollowingNode::Expression(t));
         self.allocator.alloc(AstNode {
             inner: &self.inner.id,
             allocator: self.allocator,
@@ -8285,6 +8530,8 @@ impl<'a> AstNode<'a, TSBigIntKeyword> {
 }
 
 const TS_TYPE_REFERENCE_OFFSET_TYPENAME: usize = std::mem::offset_of!(TSTypeReference, type_name);
+const TS_TYPE_REFERENCE_OFFSET_TYPEARGUMENTS: usize =
+    std::mem::offset_of!(TSTypeReference, type_arguments);
 
 impl<'a> AstNode<'a, TSTypeReference<'a>> {
     #[inline]
@@ -8294,7 +8541,15 @@ impl<'a> AstNode<'a, TSTypeReference<'a>> {
 
     #[inline]
     pub fn type_name(&self) -> &AstNode<'a, TSTypeName<'a>> {
-        let following_node = self.following_node.clone();
+        let following_node = ({
+            let ptr = self.inner as *const _ as *const u8;
+            unsafe {
+                &*(ptr.add(TS_TYPE_REFERENCE_OFFSET_TYPEARGUMENTS)
+                    as *const Option<Box<'a, TSTypeParameterInstantiation<'a>>>)
+            }
+        })
+        .as_ref()
+        .map(|t| FollowingNode::TSTypeParameterInstantiation(t));
         self.allocator.alloc(AstNode {
             inner: &self.inner.type_name,
             allocator: self.allocator,
@@ -8426,7 +8681,7 @@ impl<'a> AstNode<'a, TSTypeParameter<'a>> {
             unsafe { &*(ptr.add(TS_TYPE_PARAMETER_OFFSET_CONSTRAINT) as *const Option<TSType<'a>>) }
         })
         .as_ref()
-        .map(FollowingNode::TSType);
+        .map(|t| FollowingNode::TSType(t));
         self.allocator.alloc(AstNode {
             inner: &self.inner.name,
             allocator: self.allocator,
@@ -8442,7 +8697,7 @@ impl<'a> AstNode<'a, TSTypeParameter<'a>> {
             unsafe { &*(ptr.add(TS_TYPE_PARAMETER_OFFSET_DEFAULT) as *const Option<TSType<'a>>) }
         })
         .as_ref()
-        .map(FollowingNode::TSType);
+        .map(|t| FollowingNode::TSType(t));
         self.allocator
             .alloc(self.inner.constraint.as_ref().map(|inner| AstNode {
                 inner,
@@ -8506,6 +8761,8 @@ impl<'a> AstNode<'a, TSTypeParameterDeclaration<'a>> {
 }
 
 const TS_TYPE_ALIAS_DECLARATION_OFFSET_ID: usize = std::mem::offset_of!(TSTypeAliasDeclaration, id);
+const TS_TYPE_ALIAS_DECLARATION_OFFSET_TYPEPARAMETERS: usize =
+    std::mem::offset_of!(TSTypeAliasDeclaration, type_parameters);
 const TS_TYPE_ALIAS_DECLARATION_OFFSET_TYPEANNOTATION: usize =
     std::mem::offset_of!(TSTypeAliasDeclaration, type_annotation);
 
@@ -8517,12 +8774,15 @@ impl<'a> AstNode<'a, TSTypeAliasDeclaration<'a>> {
 
     #[inline]
     pub fn id(&self) -> &AstNode<'a, BindingIdentifier<'a>> {
-        let following_node = Some(FollowingNode::TSType({
+        let following_node = ({
             let ptr = self.inner as *const _ as *const u8;
             unsafe {
-                &*(ptr.add(TS_TYPE_ALIAS_DECLARATION_OFFSET_TYPEANNOTATION) as *const TSType<'a>)
+                &*(ptr.add(TS_TYPE_ALIAS_DECLARATION_OFFSET_TYPEPARAMETERS)
+                    as *const Option<Box<'a, TSTypeParameterDeclaration<'a>>>)
             }
-        }));
+        })
+        .as_ref()
+        .map(|t| FollowingNode::TSTypeParameterDeclaration(t));
         self.allocator.alloc(AstNode {
             inner: &self.inner.id,
             allocator: self.allocator,
@@ -8533,7 +8793,12 @@ impl<'a> AstNode<'a, TSTypeAliasDeclaration<'a>> {
 
     #[inline]
     pub fn type_parameters(&self) -> Option<&AstNode<'a, TSTypeParameterDeclaration<'a>>> {
-        let following_node = self.following_node.clone();
+        let following_node = Some(FollowingNode::TSType({
+            let ptr = self.inner as *const _ as *const u8;
+            unsafe {
+                &*(ptr.add(TS_TYPE_ALIAS_DECLARATION_OFFSET_TYPEANNOTATION) as *const TSType<'a>)
+            }
+        }));
         self.allocator
             .alloc(self.inner.type_parameters.as_ref().map(|inner| AstNode {
                 inner: inner.as_ref(),
@@ -8564,6 +8829,8 @@ impl<'a> AstNode<'a, TSTypeAliasDeclaration<'a>> {
 
 const TS_CLASS_IMPLEMENTS_OFFSET_EXPRESSION: usize =
     std::mem::offset_of!(TSClassImplements, expression);
+const TS_CLASS_IMPLEMENTS_OFFSET_TYPEARGUMENTS: usize =
+    std::mem::offset_of!(TSClassImplements, type_arguments);
 
 impl<'a> AstNode<'a, TSClassImplements<'a>> {
     #[inline]
@@ -8573,7 +8840,15 @@ impl<'a> AstNode<'a, TSClassImplements<'a>> {
 
     #[inline]
     pub fn expression(&self) -> &AstNode<'a, TSTypeName<'a>> {
-        let following_node = self.following_node.clone();
+        let following_node = ({
+            let ptr = self.inner as *const _ as *const u8;
+            unsafe {
+                &*(ptr.add(TS_CLASS_IMPLEMENTS_OFFSET_TYPEARGUMENTS)
+                    as *const Option<Box<'a, TSTypeParameterInstantiation<'a>>>)
+            }
+        })
+        .as_ref()
+        .map(|t| FollowingNode::TSTypeParameterInstantiation(t));
         self.allocator.alloc(AstNode {
             inner: &self.inner.expression,
             allocator: self.allocator,
@@ -8597,6 +8872,8 @@ impl<'a> AstNode<'a, TSClassImplements<'a>> {
 }
 
 const TS_INTERFACE_DECLARATION_OFFSET_ID: usize = std::mem::offset_of!(TSInterfaceDeclaration, id);
+const TS_INTERFACE_DECLARATION_OFFSET_TYPEPARAMETERS: usize =
+    std::mem::offset_of!(TSInterfaceDeclaration, type_parameters);
 const TS_INTERFACE_DECLARATION_OFFSET_EXTENDS: usize =
     std::mem::offset_of!(TSInterfaceDeclaration, extends);
 const TS_INTERFACE_DECLARATION_OFFSET_BODY: usize =
@@ -8613,14 +8890,12 @@ impl<'a> AstNode<'a, TSInterfaceDeclaration<'a>> {
         let following_node = ({
             let ptr = self.inner as *const _ as *const u8;
             unsafe {
-                &*(ptr.add(TS_INTERFACE_DECLARATION_OFFSET_EXTENDS)
-                    as *const Vec<'a, TSInterfaceHeritage<'a>>)
+                &*(ptr.add(TS_INTERFACE_DECLARATION_OFFSET_TYPEPARAMETERS)
+                    as *const Option<Box<'a, TSTypeParameterDeclaration<'a>>>)
             }
         })
-        .first()
         .as_ref()
-        .copied()
-        .map(FollowingNode::TSInterfaceHeritage);
+        .map(|t| FollowingNode::TSTypeParameterDeclaration(t));
         self.allocator.alloc(AstNode {
             inner: &self.inner.id,
             allocator: self.allocator,
@@ -8631,16 +8906,17 @@ impl<'a> AstNode<'a, TSInterfaceDeclaration<'a>> {
 
     #[inline]
     pub fn type_parameters(&self) -> Option<&AstNode<'a, TSTypeParameterDeclaration<'a>>> {
-        let following_node = Some(FollowingNode::TSInterfaceBody(
-            {
-                let ptr = self.inner as *const _ as *const u8;
-                unsafe {
-                    &*(ptr.add(TS_INTERFACE_DECLARATION_OFFSET_BODY)
-                        as *const Box<'a, TSInterfaceBody<'a>>)
-                }
+        let following_node = ({
+            let ptr = self.inner as *const _ as *const u8;
+            unsafe {
+                &*(ptr.add(TS_INTERFACE_DECLARATION_OFFSET_EXTENDS)
+                    as *const Vec<'a, TSInterfaceHeritage<'a>>)
             }
-            .as_ref(),
-        ));
+        })
+        .first()
+        .as_ref()
+        .copied()
+        .map(|t| FollowingNode::TSInterfaceHeritage(t));
         self.allocator
             .alloc(self.inner.type_parameters.as_ref().map(|inner| AstNode {
                 inner: inner.as_ref(),
@@ -8654,7 +8930,16 @@ impl<'a> AstNode<'a, TSInterfaceDeclaration<'a>> {
 
     #[inline]
     pub fn extends(&self) -> &AstNode<'a, Vec<'a, TSInterfaceHeritage<'a>>> {
-        let following_node = self.following_node.clone();
+        let following_node = Some(FollowingNode::TSInterfaceBody(
+            {
+                let ptr = self.inner as *const _ as *const u8;
+                unsafe {
+                    &*(ptr.add(TS_INTERFACE_DECLARATION_OFFSET_BODY)
+                        as *const Box<'a, TSInterfaceBody<'a>>)
+                }
+            }
+            .as_ref(),
+        ));
         self.allocator.alloc(AstNode {
             inner: &self.inner.extends,
             allocator: self.allocator,
@@ -8701,6 +8986,8 @@ impl<'a> AstNode<'a, TSInterfaceBody<'a>> {
 }
 
 const TS_PROPERTY_SIGNATURE_OFFSET_KEY: usize = std::mem::offset_of!(TSPropertySignature, key);
+const TS_PROPERTY_SIGNATURE_OFFSET_TYPEANNOTATION: usize =
+    std::mem::offset_of!(TSPropertySignature, type_annotation);
 
 impl<'a> AstNode<'a, TSPropertySignature<'a>> {
     #[inline]
@@ -8725,7 +9012,15 @@ impl<'a> AstNode<'a, TSPropertySignature<'a>> {
 
     #[inline]
     pub fn key(&self) -> &AstNode<'a, PropertyKey<'a>> {
-        let following_node = self.following_node.clone();
+        let following_node = ({
+            let ptr = self.inner as *const _ as *const u8;
+            unsafe {
+                &*(ptr.add(TS_PROPERTY_SIGNATURE_OFFSET_TYPEANNOTATION)
+                    as *const Option<Box<'a, TSTypeAnnotation<'a>>>)
+            }
+        })
+        .as_ref()
+        .map(|t| FollowingNode::TSTypeAnnotation(t));
         self.allocator.alloc(AstNode {
             inner: &self.inner.key,
             allocator: self.allocator,
@@ -8852,8 +9147,14 @@ impl<'a> AstNode<'a, TSIndexSignature<'a>> {
     }
 }
 
+const TS_CALL_SIGNATURE_DECLARATION_OFFSET_TYPEPARAMETERS: usize =
+    std::mem::offset_of!(TSCallSignatureDeclaration, type_parameters);
+const TS_CALL_SIGNATURE_DECLARATION_OFFSET_THISPARAM: usize =
+    std::mem::offset_of!(TSCallSignatureDeclaration, this_param);
 const TS_CALL_SIGNATURE_DECLARATION_OFFSET_PARAMS: usize =
     std::mem::offset_of!(TSCallSignatureDeclaration, params);
+const TS_CALL_SIGNATURE_DECLARATION_OFFSET_RETURNTYPE: usize =
+    std::mem::offset_of!(TSCallSignatureDeclaration, return_type);
 
 impl<'a> AstNode<'a, TSCallSignatureDeclaration<'a>> {
     #[inline]
@@ -8863,7 +9164,15 @@ impl<'a> AstNode<'a, TSCallSignatureDeclaration<'a>> {
 
     #[inline]
     pub fn type_parameters(&self) -> Option<&AstNode<'a, TSTypeParameterDeclaration<'a>>> {
-        let following_node = self.following_node.clone();
+        let following_node = ({
+            let ptr = self.inner as *const _ as *const u8;
+            unsafe {
+                &*(ptr.add(TS_CALL_SIGNATURE_DECLARATION_OFFSET_THISPARAM)
+                    as *const Option<Box<'a, TSThisParameter<'a>>>)
+            }
+        })
+        .as_ref()
+        .map(|t| FollowingNode::TSThisParameter(t));
         self.allocator
             .alloc(self.inner.type_parameters.as_ref().map(|inner| AstNode {
                 inner: inner.as_ref(),
@@ -8876,7 +9185,16 @@ impl<'a> AstNode<'a, TSCallSignatureDeclaration<'a>> {
 
     #[inline]
     pub fn this_param(&self) -> Option<&AstNode<'a, TSThisParameter<'a>>> {
-        let following_node = self.following_node.clone();
+        let following_node = Some(FollowingNode::FormalParameters(
+            {
+                let ptr = self.inner as *const _ as *const u8;
+                unsafe {
+                    &*(ptr.add(TS_CALL_SIGNATURE_DECLARATION_OFFSET_PARAMS)
+                        as *const Box<'a, FormalParameters<'a>>)
+                }
+            }
+            .as_ref(),
+        ));
         self.allocator
             .alloc(self.inner.this_param.as_ref().map(|inner| AstNode {
                 inner: inner.as_ref(),
@@ -8889,7 +9207,15 @@ impl<'a> AstNode<'a, TSCallSignatureDeclaration<'a>> {
 
     #[inline]
     pub fn params(&self) -> &AstNode<'a, FormalParameters<'a>> {
-        let following_node = self.following_node.clone();
+        let following_node = ({
+            let ptr = self.inner as *const _ as *const u8;
+            unsafe {
+                &*(ptr.add(TS_CALL_SIGNATURE_DECLARATION_OFFSET_RETURNTYPE)
+                    as *const Option<Box<'a, TSTypeAnnotation<'a>>>)
+            }
+        })
+        .as_ref()
+        .map(|t| FollowingNode::TSTypeAnnotation(t));
         self.allocator.alloc(AstNode {
             inner: self.inner.params.as_ref(),
             allocator: self.allocator,
@@ -8913,7 +9239,13 @@ impl<'a> AstNode<'a, TSCallSignatureDeclaration<'a>> {
 }
 
 const TS_METHOD_SIGNATURE_OFFSET_KEY: usize = std::mem::offset_of!(TSMethodSignature, key);
+const TS_METHOD_SIGNATURE_OFFSET_TYPEPARAMETERS: usize =
+    std::mem::offset_of!(TSMethodSignature, type_parameters);
+const TS_METHOD_SIGNATURE_OFFSET_THISPARAM: usize =
+    std::mem::offset_of!(TSMethodSignature, this_param);
 const TS_METHOD_SIGNATURE_OFFSET_PARAMS: usize = std::mem::offset_of!(TSMethodSignature, params);
+const TS_METHOD_SIGNATURE_OFFSET_RETURNTYPE: usize =
+    std::mem::offset_of!(TSMethodSignature, return_type);
 
 impl<'a> AstNode<'a, TSMethodSignature<'a>> {
     #[inline]
@@ -8923,16 +9255,15 @@ impl<'a> AstNode<'a, TSMethodSignature<'a>> {
 
     #[inline]
     pub fn key(&self) -> &AstNode<'a, PropertyKey<'a>> {
-        let following_node = Some(FollowingNode::FormalParameters(
-            {
-                let ptr = self.inner as *const _ as *const u8;
-                unsafe {
-                    &*(ptr.add(TS_METHOD_SIGNATURE_OFFSET_PARAMS)
-                        as *const Box<'a, FormalParameters<'a>>)
-                }
+        let following_node = ({
+            let ptr = self.inner as *const _ as *const u8;
+            unsafe {
+                &*(ptr.add(TS_METHOD_SIGNATURE_OFFSET_TYPEPARAMETERS)
+                    as *const Option<Box<'a, TSTypeParameterDeclaration<'a>>>)
             }
-            .as_ref(),
-        ));
+        })
+        .as_ref()
+        .map(|t| FollowingNode::TSTypeParameterDeclaration(t));
         self.allocator.alloc(AstNode {
             inner: &self.inner.key,
             allocator: self.allocator,
@@ -8958,7 +9289,15 @@ impl<'a> AstNode<'a, TSMethodSignature<'a>> {
 
     #[inline]
     pub fn type_parameters(&self) -> Option<&AstNode<'a, TSTypeParameterDeclaration<'a>>> {
-        let following_node = self.following_node.clone();
+        let following_node = ({
+            let ptr = self.inner as *const _ as *const u8;
+            unsafe {
+                &*(ptr.add(TS_METHOD_SIGNATURE_OFFSET_THISPARAM)
+                    as *const Option<Box<'a, TSThisParameter<'a>>>)
+            }
+        })
+        .as_ref()
+        .map(|t| FollowingNode::TSThisParameter(t));
         self.allocator
             .alloc(self.inner.type_parameters.as_ref().map(|inner| AstNode {
                 inner: inner.as_ref(),
@@ -8971,7 +9310,16 @@ impl<'a> AstNode<'a, TSMethodSignature<'a>> {
 
     #[inline]
     pub fn this_param(&self) -> Option<&AstNode<'a, TSThisParameter<'a>>> {
-        let following_node = self.following_node.clone();
+        let following_node = Some(FollowingNode::FormalParameters(
+            {
+                let ptr = self.inner as *const _ as *const u8;
+                unsafe {
+                    &*(ptr.add(TS_METHOD_SIGNATURE_OFFSET_PARAMS)
+                        as *const Box<'a, FormalParameters<'a>>)
+                }
+            }
+            .as_ref(),
+        ));
         self.allocator
             .alloc(self.inner.this_param.as_ref().map(|inner| AstNode {
                 inner: inner.as_ref(),
@@ -8984,7 +9332,15 @@ impl<'a> AstNode<'a, TSMethodSignature<'a>> {
 
     #[inline]
     pub fn params(&self) -> &AstNode<'a, FormalParameters<'a>> {
-        let following_node = self.following_node.clone();
+        let following_node = ({
+            let ptr = self.inner as *const _ as *const u8;
+            unsafe {
+                &*(ptr.add(TS_METHOD_SIGNATURE_OFFSET_RETURNTYPE)
+                    as *const Option<Box<'a, TSTypeAnnotation<'a>>>)
+            }
+        })
+        .as_ref()
+        .map(|t| FollowingNode::TSTypeAnnotation(t));
         self.allocator.alloc(AstNode {
             inner: self.inner.params.as_ref(),
             allocator: self.allocator,
@@ -9007,8 +9363,12 @@ impl<'a> AstNode<'a, TSMethodSignature<'a>> {
     }
 }
 
+const TS_CONSTRUCT_SIGNATURE_DECLARATION_OFFSET_TYPEPARAMETERS: usize =
+    std::mem::offset_of!(TSConstructSignatureDeclaration, type_parameters);
 const TS_CONSTRUCT_SIGNATURE_DECLARATION_OFFSET_PARAMS: usize =
     std::mem::offset_of!(TSConstructSignatureDeclaration, params);
+const TS_CONSTRUCT_SIGNATURE_DECLARATION_OFFSET_RETURNTYPE: usize =
+    std::mem::offset_of!(TSConstructSignatureDeclaration, return_type);
 
 impl<'a> AstNode<'a, TSConstructSignatureDeclaration<'a>> {
     #[inline]
@@ -9018,7 +9378,16 @@ impl<'a> AstNode<'a, TSConstructSignatureDeclaration<'a>> {
 
     #[inline]
     pub fn type_parameters(&self) -> Option<&AstNode<'a, TSTypeParameterDeclaration<'a>>> {
-        let following_node = self.following_node.clone();
+        let following_node = Some(FollowingNode::FormalParameters(
+            {
+                let ptr = self.inner as *const _ as *const u8;
+                unsafe {
+                    &*(ptr.add(TS_CONSTRUCT_SIGNATURE_DECLARATION_OFFSET_PARAMS)
+                        as *const Box<'a, FormalParameters<'a>>)
+                }
+            }
+            .as_ref(),
+        ));
         self.allocator
             .alloc(self.inner.type_parameters.as_ref().map(|inner| {
                 AstNode {
@@ -9035,7 +9404,15 @@ impl<'a> AstNode<'a, TSConstructSignatureDeclaration<'a>> {
 
     #[inline]
     pub fn params(&self) -> &AstNode<'a, FormalParameters<'a>> {
-        let following_node = self.following_node.clone();
+        let following_node = ({
+            let ptr = self.inner as *const _ as *const u8;
+            unsafe {
+                &*(ptr.add(TS_CONSTRUCT_SIGNATURE_DECLARATION_OFFSET_RETURNTYPE)
+                    as *const Option<Box<'a, TSTypeAnnotation<'a>>>)
+            }
+        })
+        .as_ref()
+        .map(|t| FollowingNode::TSTypeAnnotation(t));
         self.allocator.alloc(AstNode {
             inner: self.inner.params.as_ref(),
             allocator: self.allocator,
@@ -9092,6 +9469,8 @@ impl<'a> AstNode<'a, TSIndexSignatureName<'a>> {
 
 const TS_INTERFACE_HERITAGE_OFFSET_EXPRESSION: usize =
     std::mem::offset_of!(TSInterfaceHeritage, expression);
+const TS_INTERFACE_HERITAGE_OFFSET_TYPEARGUMENTS: usize =
+    std::mem::offset_of!(TSInterfaceHeritage, type_arguments);
 
 impl<'a> AstNode<'a, TSInterfaceHeritage<'a>> {
     #[inline]
@@ -9101,7 +9480,15 @@ impl<'a> AstNode<'a, TSInterfaceHeritage<'a>> {
 
     #[inline]
     pub fn expression(&self) -> &AstNode<'a, Expression<'a>> {
-        let following_node = self.following_node.clone();
+        let following_node = ({
+            let ptr = self.inner as *const _ as *const u8;
+            unsafe {
+                &*(ptr.add(TS_INTERFACE_HERITAGE_OFFSET_TYPEARGUMENTS)
+                    as *const Option<Box<'a, TSTypeParameterInstantiation<'a>>>)
+            }
+        })
+        .as_ref()
+        .map(|t| FollowingNode::TSTypeParameterInstantiation(t));
         self.allocator.alloc(AstNode {
             inner: &self.inner.expression,
             allocator: self.allocator,
@@ -9126,6 +9513,8 @@ impl<'a> AstNode<'a, TSInterfaceHeritage<'a>> {
 
 const TS_TYPE_PREDICATE_OFFSET_PARAMETERNAME: usize =
     std::mem::offset_of!(TSTypePredicate, parameter_name);
+const TS_TYPE_PREDICATE_OFFSET_TYPEANNOTATION: usize =
+    std::mem::offset_of!(TSTypePredicate, type_annotation);
 
 impl<'a> AstNode<'a, TSTypePredicate<'a>> {
     #[inline]
@@ -9135,7 +9524,15 @@ impl<'a> AstNode<'a, TSTypePredicate<'a>> {
 
     #[inline]
     pub fn parameter_name(&self) -> &AstNode<'a, TSTypePredicateName<'a>> {
-        let following_node = self.following_node.clone();
+        let following_node = ({
+            let ptr = self.inner as *const _ as *const u8;
+            unsafe {
+                &*(ptr.add(TS_TYPE_PREDICATE_OFFSET_TYPEANNOTATION)
+                    as *const Option<Box<'a, TSTypeAnnotation<'a>>>)
+            }
+        })
+        .as_ref()
+        .map(|t| FollowingNode::TSTypeAnnotation(t));
         self.allocator.alloc(AstNode {
             inner: &self.inner.parameter_name,
             allocator: self.allocator,
@@ -9213,7 +9610,7 @@ impl<'a> AstNode<'a, TSModuleDeclaration<'a>> {
             }
         })
         .as_ref()
-        .map(FollowingNode::TSModuleDeclarationBody);
+        .map(|t| FollowingNode::TSModuleDeclarationBody(t));
         self.allocator.alloc(AstNode {
             inner: &self.inner.id,
             allocator: self.allocator,
@@ -9330,7 +9727,7 @@ impl<'a> AstNode<'a, TSModuleBlock<'a>> {
         .first()
         .as_ref()
         .copied()
-        .map(FollowingNode::Statement);
+        .map(|t| FollowingNode::Statement(t));
         self.allocator.alloc(AstNode {
             inner: &self.inner.directives,
             allocator: self.allocator,
@@ -9392,6 +9789,7 @@ impl<'a> AstNode<'a, TSInferType<'a>> {
 }
 
 const TS_TYPE_QUERY_OFFSET_EXPRNAME: usize = std::mem::offset_of!(TSTypeQuery, expr_name);
+const TS_TYPE_QUERY_OFFSET_TYPEARGUMENTS: usize = std::mem::offset_of!(TSTypeQuery, type_arguments);
 
 impl<'a> AstNode<'a, TSTypeQuery<'a>> {
     #[inline]
@@ -9401,7 +9799,15 @@ impl<'a> AstNode<'a, TSTypeQuery<'a>> {
 
     #[inline]
     pub fn expr_name(&self) -> &AstNode<'a, TSTypeQueryExprName<'a>> {
-        let following_node = self.following_node.clone();
+        let following_node = ({
+            let ptr = self.inner as *const _ as *const u8;
+            unsafe {
+                &*(ptr.add(TS_TYPE_QUERY_OFFSET_TYPEARGUMENTS)
+                    as *const Option<Box<'a, TSTypeParameterInstantiation<'a>>>)
+            }
+        })
+        .as_ref()
+        .map(|t| FollowingNode::TSTypeParameterInstantiation(t));
         self.allocator.alloc(AstNode {
             inner: &self.inner.expr_name,
             allocator: self.allocator,
@@ -9458,7 +9864,10 @@ impl<'a> GetSpan for AstNode<'a, TSTypeQueryExprName<'a>> {
 }
 
 const TS_IMPORT_TYPE_OFFSET_ARGUMENT: usize = std::mem::offset_of!(TSImportType, argument);
+const TS_IMPORT_TYPE_OFFSET_OPTIONS: usize = std::mem::offset_of!(TSImportType, options);
 const TS_IMPORT_TYPE_OFFSET_QUALIFIER: usize = std::mem::offset_of!(TSImportType, qualifier);
+const TS_IMPORT_TYPE_OFFSET_TYPEARGUMENTS: usize =
+    std::mem::offset_of!(TSImportType, type_arguments);
 
 impl<'a> AstNode<'a, TSImportType<'a>> {
     #[inline]
@@ -9470,10 +9879,13 @@ impl<'a> AstNode<'a, TSImportType<'a>> {
     pub fn argument(&self) -> &AstNode<'a, TSType<'a>> {
         let following_node = ({
             let ptr = self.inner as *const _ as *const u8;
-            unsafe { &*(ptr.add(TS_IMPORT_TYPE_OFFSET_QUALIFIER) as *const Option<TSTypeName<'a>>) }
+            unsafe {
+                &*(ptr.add(TS_IMPORT_TYPE_OFFSET_OPTIONS)
+                    as *const Option<Box<'a, ObjectExpression<'a>>>)
+            }
         })
         .as_ref()
-        .map(FollowingNode::TSTypeName);
+        .map(|t| FollowingNode::ObjectExpression(t));
         self.allocator.alloc(AstNode {
             inner: &self.inner.argument,
             allocator: self.allocator,
@@ -9484,7 +9896,12 @@ impl<'a> AstNode<'a, TSImportType<'a>> {
 
     #[inline]
     pub fn options(&self) -> Option<&AstNode<'a, ObjectExpression<'a>>> {
-        let following_node = self.following_node.clone();
+        let following_node = ({
+            let ptr = self.inner as *const _ as *const u8;
+            unsafe { &*(ptr.add(TS_IMPORT_TYPE_OFFSET_QUALIFIER) as *const Option<TSTypeName<'a>>) }
+        })
+        .as_ref()
+        .map(|t| FollowingNode::TSTypeName(t));
         self.allocator
             .alloc(self.inner.options.as_ref().map(|inner| AstNode {
                 inner: inner.as_ref(),
@@ -9497,7 +9914,15 @@ impl<'a> AstNode<'a, TSImportType<'a>> {
 
     #[inline]
     pub fn qualifier(&self) -> Option<&AstNode<'a, TSTypeName<'a>>> {
-        let following_node = self.following_node.clone();
+        let following_node = ({
+            let ptr = self.inner as *const _ as *const u8;
+            unsafe {
+                &*(ptr.add(TS_IMPORT_TYPE_OFFSET_TYPEARGUMENTS)
+                    as *const Option<Box<'a, TSTypeParameterInstantiation<'a>>>)
+            }
+        })
+        .as_ref()
+        .map(|t| FollowingNode::TSTypeParameterInstantiation(t));
         self.allocator
             .alloc(self.inner.qualifier.as_ref().map(|inner| AstNode {
                 inner,
@@ -9522,6 +9947,9 @@ impl<'a> AstNode<'a, TSImportType<'a>> {
     }
 }
 
+const TS_FUNCTION_TYPE_OFFSET_TYPEPARAMETERS: usize =
+    std::mem::offset_of!(TSFunctionType, type_parameters);
+const TS_FUNCTION_TYPE_OFFSET_THISPARAM: usize = std::mem::offset_of!(TSFunctionType, this_param);
 const TS_FUNCTION_TYPE_OFFSET_PARAMS: usize = std::mem::offset_of!(TSFunctionType, params);
 const TS_FUNCTION_TYPE_OFFSET_RETURNTYPE: usize = std::mem::offset_of!(TSFunctionType, return_type);
 
@@ -9533,16 +9961,15 @@ impl<'a> AstNode<'a, TSFunctionType<'a>> {
 
     #[inline]
     pub fn type_parameters(&self) -> Option<&AstNode<'a, TSTypeParameterDeclaration<'a>>> {
-        let following_node = Some(FollowingNode::TSTypeAnnotation(
-            {
-                let ptr = self.inner as *const _ as *const u8;
-                unsafe {
-                    &*(ptr.add(TS_FUNCTION_TYPE_OFFSET_RETURNTYPE)
-                        as *const Box<'a, TSTypeAnnotation<'a>>)
-                }
+        let following_node = ({
+            let ptr = self.inner as *const _ as *const u8;
+            unsafe {
+                &*(ptr.add(TS_FUNCTION_TYPE_OFFSET_THISPARAM)
+                    as *const Option<Box<'a, TSThisParameter<'a>>>)
             }
-            .as_ref(),
-        ));
+        })
+        .as_ref()
+        .map(|t| FollowingNode::TSThisParameter(t));
         self.allocator
             .alloc(self.inner.type_parameters.as_ref().map(|inner| AstNode {
                 inner: inner.as_ref(),
@@ -9555,7 +9982,16 @@ impl<'a> AstNode<'a, TSFunctionType<'a>> {
 
     #[inline]
     pub fn this_param(&self) -> Option<&AstNode<'a, TSThisParameter<'a>>> {
-        let following_node = self.following_node.clone();
+        let following_node = Some(FollowingNode::FormalParameters(
+            {
+                let ptr = self.inner as *const _ as *const u8;
+                unsafe {
+                    &*(ptr.add(TS_FUNCTION_TYPE_OFFSET_PARAMS)
+                        as *const Box<'a, FormalParameters<'a>>)
+                }
+            }
+            .as_ref(),
+        ));
         self.allocator
             .alloc(self.inner.this_param.as_ref().map(|inner| AstNode {
                 inner: inner.as_ref(),
@@ -9568,7 +10004,16 @@ impl<'a> AstNode<'a, TSFunctionType<'a>> {
 
     #[inline]
     pub fn params(&self) -> &AstNode<'a, FormalParameters<'a>> {
-        let following_node = self.following_node.clone();
+        let following_node = Some(FollowingNode::TSTypeAnnotation(
+            {
+                let ptr = self.inner as *const _ as *const u8;
+                unsafe {
+                    &*(ptr.add(TS_FUNCTION_TYPE_OFFSET_RETURNTYPE)
+                        as *const Box<'a, TSTypeAnnotation<'a>>)
+                }
+            }
+            .as_ref(),
+        ));
         self.allocator.alloc(AstNode {
             inner: self.inner.params.as_ref(),
             allocator: self.allocator,
@@ -9589,6 +10034,8 @@ impl<'a> AstNode<'a, TSFunctionType<'a>> {
     }
 }
 
+const TS_CONSTRUCTOR_TYPE_OFFSET_TYPEPARAMETERS: usize =
+    std::mem::offset_of!(TSConstructorType, type_parameters);
 const TS_CONSTRUCTOR_TYPE_OFFSET_PARAMS: usize = std::mem::offset_of!(TSConstructorType, params);
 const TS_CONSTRUCTOR_TYPE_OFFSET_RETURNTYPE: usize =
     std::mem::offset_of!(TSConstructorType, return_type);
@@ -9606,12 +10053,12 @@ impl<'a> AstNode<'a, TSConstructorType<'a>> {
 
     #[inline]
     pub fn type_parameters(&self) -> Option<&AstNode<'a, TSTypeParameterDeclaration<'a>>> {
-        let following_node = Some(FollowingNode::TSTypeAnnotation(
+        let following_node = Some(FollowingNode::FormalParameters(
             {
                 let ptr = self.inner as *const _ as *const u8;
                 unsafe {
-                    &*(ptr.add(TS_CONSTRUCTOR_TYPE_OFFSET_RETURNTYPE)
-                        as *const Box<'a, TSTypeAnnotation<'a>>)
+                    &*(ptr.add(TS_CONSTRUCTOR_TYPE_OFFSET_PARAMS)
+                        as *const Box<'a, FormalParameters<'a>>)
                 }
             }
             .as_ref(),
@@ -9628,7 +10075,16 @@ impl<'a> AstNode<'a, TSConstructorType<'a>> {
 
     #[inline]
     pub fn params(&self) -> &AstNode<'a, FormalParameters<'a>> {
-        let following_node = self.following_node.clone();
+        let following_node = Some(FollowingNode::TSTypeAnnotation(
+            {
+                let ptr = self.inner as *const _ as *const u8;
+                unsafe {
+                    &*(ptr.add(TS_CONSTRUCTOR_TYPE_OFFSET_RETURNTYPE)
+                        as *const Box<'a, TSTypeAnnotation<'a>>)
+                }
+            }
+            .as_ref(),
+        ));
         self.allocator.alloc(AstNode {
             inner: self.inner.params.as_ref(),
             allocator: self.allocator,
@@ -9668,7 +10124,7 @@ impl<'a> AstNode<'a, TSMappedType<'a>> {
             unsafe { &*(ptr.add(TS_MAPPED_TYPE_OFFSET_NAMETYPE) as *const Option<TSType<'a>>) }
         })
         .as_ref()
-        .map(FollowingNode::TSType);
+        .map(|t| FollowingNode::TSType(t));
         self.allocator.alloc(AstNode {
             inner: self.inner.type_parameter.as_ref(),
             allocator: self.allocator,
@@ -9686,7 +10142,7 @@ impl<'a> AstNode<'a, TSMappedType<'a>> {
             }
         })
         .as_ref()
-        .map(FollowingNode::TSType);
+        .map(|t| FollowingNode::TSType(t));
         self.allocator
             .alloc(self.inner.name_type.as_ref().map(|inner| AstNode {
                 inner,
@@ -9743,7 +10199,7 @@ impl<'a> AstNode<'a, TSTemplateLiteralType<'a>> {
         .first()
         .as_ref()
         .copied()
-        .map(FollowingNode::TSType);
+        .map(|t| FollowingNode::TSType(t));
         self.allocator.alloc(AstNode {
             inner: &self.inner.quasis,
             allocator: self.allocator,

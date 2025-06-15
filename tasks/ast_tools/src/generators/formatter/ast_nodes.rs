@@ -1,6 +1,7 @@
 //! Generator for `oxc_formatter`.
 //! Generates the `AstNodes` and `AstNode` types.
 
+use itertools::Itertools;
 use proc_macro2::TokenStream;
 use quote::{format_ident, quote};
 
@@ -130,7 +131,7 @@ impl Generator for FormatterAstNodesGenerator {
             ///@@line_break
             use oxc_ast::ast::*;
             use oxc_allocator::{Allocator, Vec, Box};
-            use oxc_span::GetSpan;
+            use oxc_span::{GetSpan, SPAN};
 
             ///@@line_break
             use crate::{
@@ -169,7 +170,7 @@ impl Generator for FormatterAstNodesGenerator {
                 #[inline]
                 pub fn span(&self) -> Span {
                     match self {
-                        #dummy_variant
+                        Self::Dummy() => SPAN,
                         #(#span_match_arms)*
                     }
                 }
@@ -227,13 +228,15 @@ fn generate_struct_impls(struct_def: &StructDef, schema: &Schema) -> TokenStream
         .fields
         .iter()
         .filter_map(|field| {
-            let field_type = field.type_def(schema);
+            let field_type = field.type_def(schema).innermost_type(schema);
             // TODO: optimize this check
-            match field_type.maybe_inner_type(schema).unwrap_or(field_type) {
+            match field_type.innermost_type(schema) {
                 TypeDef::Struct(struct_def)
                     if struct_def.visit.has_visitor() && struct_def.name != "Span" => {}
                 TypeDef::Enum(enum_def) if enum_def.visit.has_visitor() => {}
-                _ => return None,
+                _ => {
+                    return None;
+                }
             }
 
             Some((
@@ -329,16 +332,16 @@ fn generate_struct_impls(struct_def: &StructDef, schema: &Schema) -> TokenStream
                         };
                         match next_field_type {
                             TypeDef::Option(option_def) => {
-                                let inner_ident = option_def.inner_type(schema).ident();
-                                quote!{ (#as_type).as_ref().map(FollowingNode::#inner_ident) }
+                                let inner_ident = option_def.innermost_type(schema).ident();
+                                quote!{ (#as_type).as_ref().map(|t| FollowingNode::#inner_ident(t)) }
                             },
                             TypeDef::Box(box_def) => {
-                                let inner_ident = box_def.inner_type(schema).ident();
+                                let inner_ident = box_def.innermost_type(schema).ident();
                                 quote! { Some(FollowingNode::#inner_ident(#as_type.as_ref())) }
                             },
                             TypeDef::Vec(vec_def) => {
-                                let inner_ident = vec_def.inner_type(schema).ident();
-                                quote! { (#as_type).first().as_ref().copied().map(FollowingNode::#inner_ident) }
+                                let inner_ident = vec_def.innermost_type(schema).ident();
+                                quote! { (#as_type).first().as_ref().copied().map(|t| FollowingNode::#inner_ident(t)) }
                             },
                             _ => {
                                 let next_field_ident = next_field_type.ident();
@@ -396,83 +399,6 @@ fn generate_struct_impls(struct_def: &StructDef, schema: &Schema) -> TokenStream
         })
         .collect::<TokenStream>();
 
-    let offset_match_arms = offset_fields.iter().enumerate().map(|(i, (field, offset_name))| {
-        let next_offset_field = offset_fields.get(i + 1);
-
-        let implementation = if let Some((next_offset_field, next_offset_name)) = next_offset_field
-        {
-            let next_field_type = next_offset_field.type_def(schema);
-            let next_field_type_token = next_field_type.ty(schema);
-            let as_type =  quote! { unsafe { &*(inner_ptr.add(#next_offset_name) as *const #next_field_type_token) } };
-            match next_field_type {
-                TypeDef::Option(option_def) => {
-                    let inner_ident = option_def.inner_type(schema).ident();
-                    quote!{ (#as_type).as_ref().map(FollowingNode::#inner_ident) }
-                },
-                TypeDef::Box(box_def) => {
-                    let inner_ident = box_def.inner_type(schema).ident();
-                     quote! { Some(FollowingNode::#inner_ident(#as_type.as_ref())) }
-                },
-                TypeDef::Vec(vec_def) => {
-                    let inner_ident = vec_def.inner_type(schema).ident();
-                    quote! { (#as_type).first().as_ref().copied().map(FollowingNode::#inner_ident) }
-                },
-                _ => {
-                    let next_field_ident = next_field_type.ident();
-                    quote! { Some(FollowingNode::#next_field_ident(#as_type)) }
-                }
-            }
-        } else {
-            quote! {
-                None
-            }
-        };
-
-        quote! {
-            #offset_name => #implementation,
-        }
-    });
-
-    let handle_vec_field = offset_fields
-        .iter()
-        .filter_map(|(field, _)| {
-            if let TypeDef::Vec(vec_def) = field.type_def(schema) {
-                let inner_type = vec_def.inner_type(schema);
-                dbg!(inner_type.ident(), struct_def.ident());
-                if inner_type.ident() == struct_def.ident() {
-                    Some(quote! { panic() })
-                } else {
-                    None
-                }
-            } else {
-                None
-            }
-        })
-        .last();
-
-    let implementation = if offset_fields.is_empty() {
-        quote! { None }
-    } else {
-        quote! {
-            let inner_ptr = unsafe { self.parent.inner_ptr() };
-            let offset = unsafe { (self.inner as *const _ as *const u8).offset_from_unsigned(inner_ptr) };
-            match offset {
-                #(#offset_match_arms)*
-                _ => {
-                    #handle_vec_field
-                    // This field is inside a Vec
-                }
-            }
-        }
-    };
-
-    let next_field_fn = quote! {
-        ///@@line_break
-        pub fn next_field(&self) -> Option<FollowingNode<'a>> {
-            #implementation
-        }
-    };
-
     // 生成字段偏移量常量
     let field_offsets = offset_fields.iter().filter_map(|(field, offset_name)| {
         let field_name = field.ident();
@@ -489,8 +415,6 @@ fn generate_struct_impls(struct_def: &StructDef, schema: &Schema) -> TokenStream
         ///@@line_break
         impl<'a> AstNode<'a, #type_ty> {
             #methods
-            //@@line_break
-            // #next_field_fn
         }
 
     }
@@ -704,7 +628,7 @@ fn ast_node_iterator_impls(schema: &Schema) -> TokenStream {
             }
         })
         .flatten()
-        .sorted()
+        .sorted_unstable()
         .dedup()
         .collect::<Vec<_>>();
 
