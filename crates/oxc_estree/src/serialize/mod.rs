@@ -235,13 +235,7 @@ impl<'s, C: Config, F: Formatter> Serializer for &'s mut ESTreeSerializer<C, F> 
 
     /// Get line and column position from byte offset
     fn get_line_column(&self, offset: u32) -> Option<(u32, u32)> {
-        if let (Some(source_text), Some(rope)) = (self.source_text, &self.rope) {
-            let (line, column) = get_line_column(rope, offset, source_text);
-            // ESTree uses 1-indexed lines and 0-indexed columns
-            Some((line + 1, column))
-        } else {
-            None
-        }
+        (**self).get_line_column(offset)
     }
 
     /// Serialize struct.

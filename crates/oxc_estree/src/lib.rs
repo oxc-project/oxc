@@ -1,4 +1,3 @@
-// When serialize feature is enabled, expose all serialization functionality
 #[cfg(feature = "serialize")]
 pub mod serialize;
 

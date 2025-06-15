@@ -326,7 +326,8 @@ impl<P: StructSerializer> StructSerializer for FlatStructSerializer<'_, P> {
 
     /// Get line and column position from byte offset
     fn get_line_column(&self, offset: u32) -> Option<(u32, u32)> {
-        self.0.get_line_column(offset)
+        use super::Serializer;
+        Serializer::get_line_column(self, offset)
     }
 }
 

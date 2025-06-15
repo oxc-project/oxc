@@ -107,7 +107,6 @@ impl Program<'_> {
         let runtime_options = options.map_or_else(RuntimeOptions::default, |o| RuntimeOptions { range: o.range, loc: o.loc });
         let mut serializer = CompactFixesTSSerializer::with_capacity(capacity).with_options(runtime_options);
         if runtime_options.loc {
-            // SAFETY: source_text lives as long as the Program, and serialization is synchronous
             let source_text_static: &'static str = unsafe { std::mem::transmute(self.source_text) };
             serializer = serializer.with_source_text(source_text_static);
         }
@@ -120,7 +119,6 @@ impl Program<'_> {
         let runtime_options = options.map_or_else(RuntimeOptions::default, |o| RuntimeOptions { range: o.range, loc: o.loc });
         let mut serializer = CompactFixesJSSerializer::with_capacity(capacity).with_options(runtime_options);
         if runtime_options.loc {
-            // SAFETY: source_text lives as long as the Program, and serialization is synchronous
             let source_text_static: &'static str = unsafe { std::mem::transmute(self.source_text) };
             serializer = serializer.with_source_text(source_text_static);
         }
