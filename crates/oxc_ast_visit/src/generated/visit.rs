@@ -3744,9 +3744,11 @@ pub mod walk {
         visitor: &mut V,
         it: &TSIndexSignatureName<'a>,
     ) {
-        // No `AstKind` for this type
+        let kind = AstKind::TSIndexSignatureName(visitor.alloc(it));
+        visitor.enter_node(kind);
         visitor.visit_span(&it.span);
         visitor.visit_ts_type_annotation(&it.type_annotation);
+        visitor.leave_node(kind);
     }
 
     #[inline]
