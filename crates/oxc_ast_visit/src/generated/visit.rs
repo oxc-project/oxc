@@ -3770,12 +3770,14 @@ pub mod walk {
 
     #[inline]
     pub fn walk_ts_type_predicate<'a, V: Visit<'a>>(visitor: &mut V, it: &TSTypePredicate<'a>) {
-        // No `AstKind` for this type
+        let kind = AstKind::TSTypePredicate(visitor.alloc(it));
+        visitor.enter_node(kind);
         visitor.visit_span(&it.span);
         visitor.visit_ts_type_predicate_name(&it.parameter_name);
         if let Some(type_annotation) = &it.type_annotation {
             visitor.visit_ts_type_annotation(type_annotation);
         }
+        visitor.leave_node(kind);
     }
 
     #[inline]
