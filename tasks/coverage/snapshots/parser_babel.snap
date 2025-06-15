@@ -12088,6 +12088,22 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
  3 │ }
    ╰────
 
+  × 'declare' modifier cannot be used here.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/declare-accessor/input.ts:2:3]
+ 1 │ class Foo {
+ 2 │   declare get foo()
+   ·   ───────
+ 3 │   declare set foo(v)
+   ╰────
+
+  × 'declare' modifier cannot be used here.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/declare-accessor/input.ts:3:3]
+ 2 │   declare get foo()
+ 3 │   declare set foo(v)
+   ·   ───────
+ 4 │ }
+   ╰────
+
   × Getters and setters must have an implementation.
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/declare-accessor/input.ts:2:15]
  1 │ class Foo {

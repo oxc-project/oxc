@@ -387,7 +387,7 @@ impl<'a> ParserImpl<'a> {
         self.check_method_definition(&method_definition);
         self.verify_modifiers(
             modifiers,
-            ModifierFlags::all() - ModifierFlags::ASYNC,
+            ModifierFlags::all() - ModifierFlags::ASYNC - ModifierFlags::DECLARE,
             diagnostics::modifier_cannot_be_used_here,
         );
         ClassElement::MethodDefinition(method_definition)
