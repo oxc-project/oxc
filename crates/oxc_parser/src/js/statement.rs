@@ -353,14 +353,11 @@ impl<'a> ParserImpl<'a> {
         }
 
         // [+Using] using [no LineTerminator here] ForBinding[?Yield, ?Await, ~Pattern]
-        if self.at(Kind::Using)
-            && self.lookahead(|p| {
-                p.bump_any();
-                !p.cur_token().is_on_new_line()
-                    && !p.at(Kind::Of)
-                    && p.cur_kind().is_binding_identifier()
-            })
-        {
+        if self.at(Kind::Using) && {
+            let token = self.lexer.peek_token();
+            let kind = token.kind();
+            !token.is_on_new_line() && kind != Kind::Of && kind.is_binding_identifier()
+        } {
             return self.parse_using_declaration_for_statement(span, r#await);
         }
 

@@ -233,7 +233,9 @@ impl<'a> ParserImpl<'a> {
             return self.parse_signature_member(CallOrConstructorSignature::Call);
         }
 
-        if kind == Kind::New && self.lookahead(Self::is_next_token_open_paren_or_angle_bracket) {
+        if kind == Kind::New
+            && matches!(self.lexer.peek_token().kind(), Kind::LParen | Kind::LAngle)
+        {
             return self.parse_signature_member(CallOrConstructorSignature::Constructor);
         }
 
@@ -257,11 +259,6 @@ impl<'a> ParserImpl<'a> {
         }
 
         self.parse_property_or_method_signature(span, &modifiers)
-    }
-
-    fn is_next_token_open_paren_or_angle_bracket(&mut self) -> bool {
-        self.bump_any();
-        matches!(self.cur_kind(), Kind::LParen | Kind::LAngle)
     }
 
     pub(crate) fn is_index_signature(&mut self) -> bool {
