@@ -98,7 +98,7 @@ fn implementation(type_def: &TypeDef, schema: &Schema) -> TokenStream {
         quote! {}
     } else {
         quote! {
-            print_trailing_comments(self.span, self.next_field(), f, self.allocator)?;
+            print_trailing_comments(self.span, self.following_node.as_ref(), f, self.allocator)?;
         }
     };
 

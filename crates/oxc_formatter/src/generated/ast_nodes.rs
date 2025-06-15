@@ -200,6 +200,7 @@ pub enum AstNodes<'a> {
     JSDocNonNullableType(&'a AstNode<'a, JSDocNonNullableType<'a>>),
     JSDocUnknownType(&'a AstNode<'a, JSDocUnknownType>),
 }
+#[derive(Clone)]
 pub enum FollowingNode<'a> {
     Program(&'a Program<'a>),
     Expression(&'a Expression<'a>),
@@ -1022,181 +1023,181 @@ impl<'a> AstNodes<'a> {
         }
     }
     #[inline]
-    pub unsafe fn inner_ptr(&self) -> *const u8 {
+    pub fn following_node(&self) -> Option<&FollowingNode<'a>> {
         match self {
-            Self::Dummy() => panic!("Should never be called on a dummy node"),
-            Self::Program(n) => n.inner as *const _ as *const u8,
-            Self::IdentifierName(n) => n.inner as *const _ as *const u8,
-            Self::IdentifierReference(n) => n.inner as *const _ as *const u8,
-            Self::BindingIdentifier(n) => n.inner as *const _ as *const u8,
-            Self::LabelIdentifier(n) => n.inner as *const _ as *const u8,
-            Self::ThisExpression(n) => n.inner as *const _ as *const u8,
-            Self::ArrayExpression(n) => n.inner as *const _ as *const u8,
-            Self::ArrayExpressionElement(n) => n.inner as *const _ as *const u8,
-            Self::Elision(n) => n.inner as *const _ as *const u8,
-            Self::ObjectExpression(n) => n.inner as *const _ as *const u8,
-            Self::ObjectProperty(n) => n.inner as *const _ as *const u8,
-            Self::PropertyKey(n) => n.inner as *const _ as *const u8,
-            Self::TemplateLiteral(n) => n.inner as *const _ as *const u8,
-            Self::TaggedTemplateExpression(n) => n.inner as *const _ as *const u8,
-            Self::MemberExpression(n) => n.inner as *const _ as *const u8,
-            Self::CallExpression(n) => n.inner as *const _ as *const u8,
-            Self::NewExpression(n) => n.inner as *const _ as *const u8,
-            Self::MetaProperty(n) => n.inner as *const _ as *const u8,
-            Self::SpreadElement(n) => n.inner as *const _ as *const u8,
-            Self::Argument(n) => n.inner as *const _ as *const u8,
-            Self::UpdateExpression(n) => n.inner as *const _ as *const u8,
-            Self::UnaryExpression(n) => n.inner as *const _ as *const u8,
-            Self::BinaryExpression(n) => n.inner as *const _ as *const u8,
-            Self::PrivateInExpression(n) => n.inner as *const _ as *const u8,
-            Self::LogicalExpression(n) => n.inner as *const _ as *const u8,
-            Self::ConditionalExpression(n) => n.inner as *const _ as *const u8,
-            Self::AssignmentExpression(n) => n.inner as *const _ as *const u8,
-            Self::AssignmentTarget(n) => n.inner as *const _ as *const u8,
-            Self::SimpleAssignmentTarget(n) => n.inner as *const _ as *const u8,
-            Self::AssignmentTargetPattern(n) => n.inner as *const _ as *const u8,
-            Self::ArrayAssignmentTarget(n) => n.inner as *const _ as *const u8,
-            Self::ObjectAssignmentTarget(n) => n.inner as *const _ as *const u8,
-            Self::AssignmentTargetWithDefault(n) => n.inner as *const _ as *const u8,
-            Self::SequenceExpression(n) => n.inner as *const _ as *const u8,
-            Self::Super(n) => n.inner as *const _ as *const u8,
-            Self::AwaitExpression(n) => n.inner as *const _ as *const u8,
-            Self::ChainExpression(n) => n.inner as *const _ as *const u8,
-            Self::ParenthesizedExpression(n) => n.inner as *const _ as *const u8,
-            Self::Directive(n) => n.inner as *const _ as *const u8,
-            Self::Hashbang(n) => n.inner as *const _ as *const u8,
-            Self::BlockStatement(n) => n.inner as *const _ as *const u8,
-            Self::VariableDeclaration(n) => n.inner as *const _ as *const u8,
-            Self::VariableDeclarator(n) => n.inner as *const _ as *const u8,
-            Self::EmptyStatement(n) => n.inner as *const _ as *const u8,
-            Self::ExpressionStatement(n) => n.inner as *const _ as *const u8,
-            Self::IfStatement(n) => n.inner as *const _ as *const u8,
-            Self::DoWhileStatement(n) => n.inner as *const _ as *const u8,
-            Self::WhileStatement(n) => n.inner as *const _ as *const u8,
-            Self::ForStatement(n) => n.inner as *const _ as *const u8,
-            Self::ForStatementInit(n) => n.inner as *const _ as *const u8,
-            Self::ForInStatement(n) => n.inner as *const _ as *const u8,
-            Self::ForOfStatement(n) => n.inner as *const _ as *const u8,
-            Self::ContinueStatement(n) => n.inner as *const _ as *const u8,
-            Self::BreakStatement(n) => n.inner as *const _ as *const u8,
-            Self::ReturnStatement(n) => n.inner as *const _ as *const u8,
-            Self::WithStatement(n) => n.inner as *const _ as *const u8,
-            Self::SwitchStatement(n) => n.inner as *const _ as *const u8,
-            Self::SwitchCase(n) => n.inner as *const _ as *const u8,
-            Self::LabeledStatement(n) => n.inner as *const _ as *const u8,
-            Self::ThrowStatement(n) => n.inner as *const _ as *const u8,
-            Self::TryStatement(n) => n.inner as *const _ as *const u8,
-            Self::CatchClause(n) => n.inner as *const _ as *const u8,
-            Self::CatchParameter(n) => n.inner as *const _ as *const u8,
-            Self::DebuggerStatement(n) => n.inner as *const _ as *const u8,
-            Self::AssignmentPattern(n) => n.inner as *const _ as *const u8,
-            Self::ObjectPattern(n) => n.inner as *const _ as *const u8,
-            Self::ArrayPattern(n) => n.inner as *const _ as *const u8,
-            Self::BindingRestElement(n) => n.inner as *const _ as *const u8,
-            Self::Function(n) => n.inner as *const _ as *const u8,
-            Self::FormalParameters(n) => n.inner as *const _ as *const u8,
-            Self::FormalParameter(n) => n.inner as *const _ as *const u8,
-            Self::FunctionBody(n) => n.inner as *const _ as *const u8,
-            Self::ArrowFunctionExpression(n) => n.inner as *const _ as *const u8,
-            Self::YieldExpression(n) => n.inner as *const _ as *const u8,
-            Self::Class(n) => n.inner as *const _ as *const u8,
-            Self::ClassBody(n) => n.inner as *const _ as *const u8,
-            Self::MethodDefinition(n) => n.inner as *const _ as *const u8,
-            Self::PropertyDefinition(n) => n.inner as *const _ as *const u8,
-            Self::PrivateIdentifier(n) => n.inner as *const _ as *const u8,
-            Self::StaticBlock(n) => n.inner as *const _ as *const u8,
-            Self::ModuleDeclaration(n) => n.inner as *const _ as *const u8,
-            Self::ImportExpression(n) => n.inner as *const _ as *const u8,
-            Self::ImportDeclaration(n) => n.inner as *const _ as *const u8,
-            Self::ImportSpecifier(n) => n.inner as *const _ as *const u8,
-            Self::ImportDefaultSpecifier(n) => n.inner as *const _ as *const u8,
-            Self::ImportNamespaceSpecifier(n) => n.inner as *const _ as *const u8,
-            Self::ExportNamedDeclaration(n) => n.inner as *const _ as *const u8,
-            Self::ExportDefaultDeclaration(n) => n.inner as *const _ as *const u8,
-            Self::ExportAllDeclaration(n) => n.inner as *const _ as *const u8,
-            Self::ExportSpecifier(n) => n.inner as *const _ as *const u8,
-            Self::V8IntrinsicExpression(n) => n.inner as *const _ as *const u8,
-            Self::BooleanLiteral(n) => n.inner as *const _ as *const u8,
-            Self::NullLiteral(n) => n.inner as *const _ as *const u8,
-            Self::NumericLiteral(n) => n.inner as *const _ as *const u8,
-            Self::StringLiteral(n) => n.inner as *const _ as *const u8,
-            Self::BigIntLiteral(n) => n.inner as *const _ as *const u8,
-            Self::RegExpLiteral(n) => n.inner as *const _ as *const u8,
-            Self::JSXElement(n) => n.inner as *const _ as *const u8,
-            Self::JSXOpeningElement(n) => n.inner as *const _ as *const u8,
-            Self::JSXClosingElement(n) => n.inner as *const _ as *const u8,
-            Self::JSXFragment(n) => n.inner as *const _ as *const u8,
-            Self::JSXOpeningFragment(n) => n.inner as *const _ as *const u8,
-            Self::JSXClosingFragment(n) => n.inner as *const _ as *const u8,
-            Self::JSXNamespacedName(n) => n.inner as *const _ as *const u8,
-            Self::JSXMemberExpression(n) => n.inner as *const _ as *const u8,
-            Self::JSXExpressionContainer(n) => n.inner as *const _ as *const u8,
-            Self::JSXEmptyExpression(n) => n.inner as *const _ as *const u8,
-            Self::JSXAttribute(n) => n.inner as *const _ as *const u8,
-            Self::JSXSpreadAttribute(n) => n.inner as *const _ as *const u8,
-            Self::JSXIdentifier(n) => n.inner as *const _ as *const u8,
-            Self::JSXSpreadChild(n) => n.inner as *const _ as *const u8,
-            Self::JSXText(n) => n.inner as *const _ as *const u8,
-            Self::TSThisParameter(n) => n.inner as *const _ as *const u8,
-            Self::TSEnumDeclaration(n) => n.inner as *const _ as *const u8,
-            Self::TSEnumBody(n) => n.inner as *const _ as *const u8,
-            Self::TSEnumMember(n) => n.inner as *const _ as *const u8,
-            Self::TSTypeAnnotation(n) => n.inner as *const _ as *const u8,
-            Self::TSLiteralType(n) => n.inner as *const _ as *const u8,
-            Self::TSConditionalType(n) => n.inner as *const _ as *const u8,
-            Self::TSUnionType(n) => n.inner as *const _ as *const u8,
-            Self::TSIntersectionType(n) => n.inner as *const _ as *const u8,
-            Self::TSParenthesizedType(n) => n.inner as *const _ as *const u8,
-            Self::TSIndexedAccessType(n) => n.inner as *const _ as *const u8,
-            Self::TSNamedTupleMember(n) => n.inner as *const _ as *const u8,
-            Self::TSAnyKeyword(n) => n.inner as *const _ as *const u8,
-            Self::TSStringKeyword(n) => n.inner as *const _ as *const u8,
-            Self::TSBooleanKeyword(n) => n.inner as *const _ as *const u8,
-            Self::TSNumberKeyword(n) => n.inner as *const _ as *const u8,
-            Self::TSNeverKeyword(n) => n.inner as *const _ as *const u8,
-            Self::TSIntrinsicKeyword(n) => n.inner as *const _ as *const u8,
-            Self::TSUnknownKeyword(n) => n.inner as *const _ as *const u8,
-            Self::TSNullKeyword(n) => n.inner as *const _ as *const u8,
-            Self::TSUndefinedKeyword(n) => n.inner as *const _ as *const u8,
-            Self::TSVoidKeyword(n) => n.inner as *const _ as *const u8,
-            Self::TSSymbolKeyword(n) => n.inner as *const _ as *const u8,
-            Self::TSThisType(n) => n.inner as *const _ as *const u8,
-            Self::TSObjectKeyword(n) => n.inner as *const _ as *const u8,
-            Self::TSBigIntKeyword(n) => n.inner as *const _ as *const u8,
-            Self::TSTypeReference(n) => n.inner as *const _ as *const u8,
-            Self::TSTypeName(n) => n.inner as *const _ as *const u8,
-            Self::TSQualifiedName(n) => n.inner as *const _ as *const u8,
-            Self::TSTypeParameterInstantiation(n) => n.inner as *const _ as *const u8,
-            Self::TSTypeParameter(n) => n.inner as *const _ as *const u8,
-            Self::TSTypeParameterDeclaration(n) => n.inner as *const _ as *const u8,
-            Self::TSTypeAliasDeclaration(n) => n.inner as *const _ as *const u8,
-            Self::TSClassImplements(n) => n.inner as *const _ as *const u8,
-            Self::TSInterfaceDeclaration(n) => n.inner as *const _ as *const u8,
-            Self::TSPropertySignature(n) => n.inner as *const _ as *const u8,
-            Self::TSMethodSignature(n) => n.inner as *const _ as *const u8,
-            Self::TSConstructSignatureDeclaration(n) => n.inner as *const _ as *const u8,
-            Self::TSInterfaceHeritage(n) => n.inner as *const _ as *const u8,
-            Self::TSModuleDeclaration(n) => n.inner as *const _ as *const u8,
-            Self::TSModuleBlock(n) => n.inner as *const _ as *const u8,
-            Self::TSTypeLiteral(n) => n.inner as *const _ as *const u8,
-            Self::TSInferType(n) => n.inner as *const _ as *const u8,
-            Self::TSTypeQuery(n) => n.inner as *const _ as *const u8,
-            Self::TSImportType(n) => n.inner as *const _ as *const u8,
-            Self::TSMappedType(n) => n.inner as *const _ as *const u8,
-            Self::TSTemplateLiteralType(n) => n.inner as *const _ as *const u8,
-            Self::TSAsExpression(n) => n.inner as *const _ as *const u8,
-            Self::TSSatisfiesExpression(n) => n.inner as *const _ as *const u8,
-            Self::TSTypeAssertion(n) => n.inner as *const _ as *const u8,
-            Self::TSImportEqualsDeclaration(n) => n.inner as *const _ as *const u8,
-            Self::TSModuleReference(n) => n.inner as *const _ as *const u8,
-            Self::TSExternalModuleReference(n) => n.inner as *const _ as *const u8,
-            Self::TSNonNullExpression(n) => n.inner as *const _ as *const u8,
-            Self::Decorator(n) => n.inner as *const _ as *const u8,
-            Self::TSExportAssignment(n) => n.inner as *const _ as *const u8,
-            Self::TSInstantiationExpression(n) => n.inner as *const _ as *const u8,
-            Self::JSDocNullableType(n) => n.inner as *const _ as *const u8,
-            Self::JSDocNonNullableType(n) => n.inner as *const _ as *const u8,
-            Self::JSDocUnknownType(n) => n.inner as *const _ as *const u8,
+            Self::Dummy() => None,
+            Self::Program(n) => n.following_node.as_ref(),
+            Self::IdentifierName(n) => n.following_node.as_ref(),
+            Self::IdentifierReference(n) => n.following_node.as_ref(),
+            Self::BindingIdentifier(n) => n.following_node.as_ref(),
+            Self::LabelIdentifier(n) => n.following_node.as_ref(),
+            Self::ThisExpression(n) => n.following_node.as_ref(),
+            Self::ArrayExpression(n) => n.following_node.as_ref(),
+            Self::ArrayExpressionElement(n) => n.following_node.as_ref(),
+            Self::Elision(n) => n.following_node.as_ref(),
+            Self::ObjectExpression(n) => n.following_node.as_ref(),
+            Self::ObjectProperty(n) => n.following_node.as_ref(),
+            Self::PropertyKey(n) => n.following_node.as_ref(),
+            Self::TemplateLiteral(n) => n.following_node.as_ref(),
+            Self::TaggedTemplateExpression(n) => n.following_node.as_ref(),
+            Self::MemberExpression(n) => n.following_node.as_ref(),
+            Self::CallExpression(n) => n.following_node.as_ref(),
+            Self::NewExpression(n) => n.following_node.as_ref(),
+            Self::MetaProperty(n) => n.following_node.as_ref(),
+            Self::SpreadElement(n) => n.following_node.as_ref(),
+            Self::Argument(n) => n.following_node.as_ref(),
+            Self::UpdateExpression(n) => n.following_node.as_ref(),
+            Self::UnaryExpression(n) => n.following_node.as_ref(),
+            Self::BinaryExpression(n) => n.following_node.as_ref(),
+            Self::PrivateInExpression(n) => n.following_node.as_ref(),
+            Self::LogicalExpression(n) => n.following_node.as_ref(),
+            Self::ConditionalExpression(n) => n.following_node.as_ref(),
+            Self::AssignmentExpression(n) => n.following_node.as_ref(),
+            Self::AssignmentTarget(n) => n.following_node.as_ref(),
+            Self::SimpleAssignmentTarget(n) => n.following_node.as_ref(),
+            Self::AssignmentTargetPattern(n) => n.following_node.as_ref(),
+            Self::ArrayAssignmentTarget(n) => n.following_node.as_ref(),
+            Self::ObjectAssignmentTarget(n) => n.following_node.as_ref(),
+            Self::AssignmentTargetWithDefault(n) => n.following_node.as_ref(),
+            Self::SequenceExpression(n) => n.following_node.as_ref(),
+            Self::Super(n) => n.following_node.as_ref(),
+            Self::AwaitExpression(n) => n.following_node.as_ref(),
+            Self::ChainExpression(n) => n.following_node.as_ref(),
+            Self::ParenthesizedExpression(n) => n.following_node.as_ref(),
+            Self::Directive(n) => n.following_node.as_ref(),
+            Self::Hashbang(n) => n.following_node.as_ref(),
+            Self::BlockStatement(n) => n.following_node.as_ref(),
+            Self::VariableDeclaration(n) => n.following_node.as_ref(),
+            Self::VariableDeclarator(n) => n.following_node.as_ref(),
+            Self::EmptyStatement(n) => n.following_node.as_ref(),
+            Self::ExpressionStatement(n) => n.following_node.as_ref(),
+            Self::IfStatement(n) => n.following_node.as_ref(),
+            Self::DoWhileStatement(n) => n.following_node.as_ref(),
+            Self::WhileStatement(n) => n.following_node.as_ref(),
+            Self::ForStatement(n) => n.following_node.as_ref(),
+            Self::ForStatementInit(n) => n.following_node.as_ref(),
+            Self::ForInStatement(n) => n.following_node.as_ref(),
+            Self::ForOfStatement(n) => n.following_node.as_ref(),
+            Self::ContinueStatement(n) => n.following_node.as_ref(),
+            Self::BreakStatement(n) => n.following_node.as_ref(),
+            Self::ReturnStatement(n) => n.following_node.as_ref(),
+            Self::WithStatement(n) => n.following_node.as_ref(),
+            Self::SwitchStatement(n) => n.following_node.as_ref(),
+            Self::SwitchCase(n) => n.following_node.as_ref(),
+            Self::LabeledStatement(n) => n.following_node.as_ref(),
+            Self::ThrowStatement(n) => n.following_node.as_ref(),
+            Self::TryStatement(n) => n.following_node.as_ref(),
+            Self::CatchClause(n) => n.following_node.as_ref(),
+            Self::CatchParameter(n) => n.following_node.as_ref(),
+            Self::DebuggerStatement(n) => n.following_node.as_ref(),
+            Self::AssignmentPattern(n) => n.following_node.as_ref(),
+            Self::ObjectPattern(n) => n.following_node.as_ref(),
+            Self::ArrayPattern(n) => n.following_node.as_ref(),
+            Self::BindingRestElement(n) => n.following_node.as_ref(),
+            Self::Function(n) => n.following_node.as_ref(),
+            Self::FormalParameters(n) => n.following_node.as_ref(),
+            Self::FormalParameter(n) => n.following_node.as_ref(),
+            Self::FunctionBody(n) => n.following_node.as_ref(),
+            Self::ArrowFunctionExpression(n) => n.following_node.as_ref(),
+            Self::YieldExpression(n) => n.following_node.as_ref(),
+            Self::Class(n) => n.following_node.as_ref(),
+            Self::ClassBody(n) => n.following_node.as_ref(),
+            Self::MethodDefinition(n) => n.following_node.as_ref(),
+            Self::PropertyDefinition(n) => n.following_node.as_ref(),
+            Self::PrivateIdentifier(n) => n.following_node.as_ref(),
+            Self::StaticBlock(n) => n.following_node.as_ref(),
+            Self::ModuleDeclaration(n) => n.following_node.as_ref(),
+            Self::ImportExpression(n) => n.following_node.as_ref(),
+            Self::ImportDeclaration(n) => n.following_node.as_ref(),
+            Self::ImportSpecifier(n) => n.following_node.as_ref(),
+            Self::ImportDefaultSpecifier(n) => n.following_node.as_ref(),
+            Self::ImportNamespaceSpecifier(n) => n.following_node.as_ref(),
+            Self::ExportNamedDeclaration(n) => n.following_node.as_ref(),
+            Self::ExportDefaultDeclaration(n) => n.following_node.as_ref(),
+            Self::ExportAllDeclaration(n) => n.following_node.as_ref(),
+            Self::ExportSpecifier(n) => n.following_node.as_ref(),
+            Self::V8IntrinsicExpression(n) => n.following_node.as_ref(),
+            Self::BooleanLiteral(n) => n.following_node.as_ref(),
+            Self::NullLiteral(n) => n.following_node.as_ref(),
+            Self::NumericLiteral(n) => n.following_node.as_ref(),
+            Self::StringLiteral(n) => n.following_node.as_ref(),
+            Self::BigIntLiteral(n) => n.following_node.as_ref(),
+            Self::RegExpLiteral(n) => n.following_node.as_ref(),
+            Self::JSXElement(n) => n.following_node.as_ref(),
+            Self::JSXOpeningElement(n) => n.following_node.as_ref(),
+            Self::JSXClosingElement(n) => n.following_node.as_ref(),
+            Self::JSXFragment(n) => n.following_node.as_ref(),
+            Self::JSXOpeningFragment(n) => n.following_node.as_ref(),
+            Self::JSXClosingFragment(n) => n.following_node.as_ref(),
+            Self::JSXNamespacedName(n) => n.following_node.as_ref(),
+            Self::JSXMemberExpression(n) => n.following_node.as_ref(),
+            Self::JSXExpressionContainer(n) => n.following_node.as_ref(),
+            Self::JSXEmptyExpression(n) => n.following_node.as_ref(),
+            Self::JSXAttribute(n) => n.following_node.as_ref(),
+            Self::JSXSpreadAttribute(n) => n.following_node.as_ref(),
+            Self::JSXIdentifier(n) => n.following_node.as_ref(),
+            Self::JSXSpreadChild(n) => n.following_node.as_ref(),
+            Self::JSXText(n) => n.following_node.as_ref(),
+            Self::TSThisParameter(n) => n.following_node.as_ref(),
+            Self::TSEnumDeclaration(n) => n.following_node.as_ref(),
+            Self::TSEnumBody(n) => n.following_node.as_ref(),
+            Self::TSEnumMember(n) => n.following_node.as_ref(),
+            Self::TSTypeAnnotation(n) => n.following_node.as_ref(),
+            Self::TSLiteralType(n) => n.following_node.as_ref(),
+            Self::TSConditionalType(n) => n.following_node.as_ref(),
+            Self::TSUnionType(n) => n.following_node.as_ref(),
+            Self::TSIntersectionType(n) => n.following_node.as_ref(),
+            Self::TSParenthesizedType(n) => n.following_node.as_ref(),
+            Self::TSIndexedAccessType(n) => n.following_node.as_ref(),
+            Self::TSNamedTupleMember(n) => n.following_node.as_ref(),
+            Self::TSAnyKeyword(n) => n.following_node.as_ref(),
+            Self::TSStringKeyword(n) => n.following_node.as_ref(),
+            Self::TSBooleanKeyword(n) => n.following_node.as_ref(),
+            Self::TSNumberKeyword(n) => n.following_node.as_ref(),
+            Self::TSNeverKeyword(n) => n.following_node.as_ref(),
+            Self::TSIntrinsicKeyword(n) => n.following_node.as_ref(),
+            Self::TSUnknownKeyword(n) => n.following_node.as_ref(),
+            Self::TSNullKeyword(n) => n.following_node.as_ref(),
+            Self::TSUndefinedKeyword(n) => n.following_node.as_ref(),
+            Self::TSVoidKeyword(n) => n.following_node.as_ref(),
+            Self::TSSymbolKeyword(n) => n.following_node.as_ref(),
+            Self::TSThisType(n) => n.following_node.as_ref(),
+            Self::TSObjectKeyword(n) => n.following_node.as_ref(),
+            Self::TSBigIntKeyword(n) => n.following_node.as_ref(),
+            Self::TSTypeReference(n) => n.following_node.as_ref(),
+            Self::TSTypeName(n) => n.following_node.as_ref(),
+            Self::TSQualifiedName(n) => n.following_node.as_ref(),
+            Self::TSTypeParameterInstantiation(n) => n.following_node.as_ref(),
+            Self::TSTypeParameter(n) => n.following_node.as_ref(),
+            Self::TSTypeParameterDeclaration(n) => n.following_node.as_ref(),
+            Self::TSTypeAliasDeclaration(n) => n.following_node.as_ref(),
+            Self::TSClassImplements(n) => n.following_node.as_ref(),
+            Self::TSInterfaceDeclaration(n) => n.following_node.as_ref(),
+            Self::TSPropertySignature(n) => n.following_node.as_ref(),
+            Self::TSMethodSignature(n) => n.following_node.as_ref(),
+            Self::TSConstructSignatureDeclaration(n) => n.following_node.as_ref(),
+            Self::TSInterfaceHeritage(n) => n.following_node.as_ref(),
+            Self::TSModuleDeclaration(n) => n.following_node.as_ref(),
+            Self::TSModuleBlock(n) => n.following_node.as_ref(),
+            Self::TSTypeLiteral(n) => n.following_node.as_ref(),
+            Self::TSInferType(n) => n.following_node.as_ref(),
+            Self::TSTypeQuery(n) => n.following_node.as_ref(),
+            Self::TSImportType(n) => n.following_node.as_ref(),
+            Self::TSMappedType(n) => n.following_node.as_ref(),
+            Self::TSTemplateLiteralType(n) => n.following_node.as_ref(),
+            Self::TSAsExpression(n) => n.following_node.as_ref(),
+            Self::TSSatisfiesExpression(n) => n.following_node.as_ref(),
+            Self::TSTypeAssertion(n) => n.following_node.as_ref(),
+            Self::TSImportEqualsDeclaration(n) => n.following_node.as_ref(),
+            Self::TSModuleReference(n) => n.following_node.as_ref(),
+            Self::TSExternalModuleReference(n) => n.following_node.as_ref(),
+            Self::TSNonNullExpression(n) => n.following_node.as_ref(),
+            Self::Decorator(n) => n.following_node.as_ref(),
+            Self::TSExportAssignment(n) => n.following_node.as_ref(),
+            Self::TSInstantiationExpression(n) => n.following_node.as_ref(),
+            Self::JSDocNullableType(n) => n.following_node.as_ref(),
+            Self::JSDocNonNullableType(n) => n.following_node.as_ref(),
+            Self::JSDocUnknownType(n) => n.following_node.as_ref(),
         }
     }
     #[inline]
@@ -1383,6 +1384,7 @@ pub struct AstNode<'a, T> {
     pub(super) inner: &'a T,
     pub parent: &'a AstNodes<'a>,
     pub(super) allocator: &'a Allocator,
+    pub(super) following_node: Option<FollowingNode<'a>>,
 }
 
 impl<'a, T: fmt::Debug> fmt::Debug for AstNode<'a, T> {
@@ -1409,7 +1411,7 @@ impl<'a, T> AsRef<T> for AstNode<'a, T> {
 
 impl<'a> AstNode<'a, Program<'a>> {
     pub fn new(inner: &'a Program<'a>, parent: &'a AstNodes<'a>, allocator: &'a Allocator) -> Self {
-        AstNode { inner, parent, allocator }
+        AstNode { inner, parent, allocator, following_node: None }
     }
 }
 
@@ -1420,62 +1422,9 @@ impl<'a, T> AstNode<'a, Option<T>> {
                 inner,
                 parent: self.parent,
                 allocator: self.allocator,
+                following_node: self.following_node.clone(),
             }))
             .as_ref()
-    }
-}
-
-impl<'a, T> AstNode<'a, Vec<'a, T>> {
-    pub fn iter(&self) -> AstNodeIterator<'a, T> {
-        AstNodeIterator { inner: self.inner.iter(), parent: self.parent, allocator: self.allocator }
-    }
-
-    pub fn first(&self) -> Option<&'a AstNode<'a, T>> {
-        self.allocator
-            .alloc(self.inner.first().map(|inner| AstNode {
-                inner,
-                parent: self.parent,
-                allocator: self.allocator,
-            }))
-            .as_ref()
-    }
-
-    pub fn last(&self) -> Option<&'a AstNode<'a, T>> {
-        self.allocator
-            .alloc(self.inner.last().map(|inner| AstNode {
-                inner,
-                parent: self.parent,
-                allocator: self.allocator,
-            }))
-            .as_ref()
-    }
-}
-
-pub struct AstNodeIterator<'a, T> {
-    inner: std::slice::Iter<'a, T>,
-    parent: &'a AstNodes<'a>,
-    allocator: &'a Allocator,
-}
-
-impl<'a, T> Iterator for AstNodeIterator<'a, T> {
-    type Item = &'a AstNode<'a, T>;
-    fn next(&mut self) -> Option<Self::Item> {
-        let allocator = self.allocator;
-        allocator
-            .alloc(self.inner.next().map(|inner| AstNode { parent: self.parent, inner, allocator }))
-            .as_ref()
-    }
-}
-
-impl<'a, T> IntoIterator for &AstNode<'a, Vec<'a, T>> {
-    type Item = &'a AstNode<'a, T>;
-    type IntoIter = AstNodeIterator<'a, T>;
-    fn into_iter(self) -> Self::IntoIter {
-        AstNodeIterator::<T> {
-            inner: self.inner.iter(),
-            parent: self.parent,
-            allocator: self.allocator,
-        }
     }
 }
 
@@ -1506,55 +1455,51 @@ impl<'a> AstNode<'a, Program<'a>> {
 
     #[inline]
     pub fn hashbang(&self) -> Option<&AstNode<'a, Hashbang<'a>>> {
+        let following_node = ({
+            let ptr = self.inner as *const _ as *const u8;
+            unsafe { &*(ptr.add(PROGRAM_OFFSET_DIRECTIVES) as *const Vec<'a, Directive<'a>>) }
+        })
+        .first()
+        .as_ref()
+        .copied()
+        .map(FollowingNode::Directive);
         self.allocator
             .alloc(self.inner.hashbang.as_ref().map(|inner| AstNode {
                 inner,
                 allocator: self.allocator,
                 parent: self.allocator.alloc(AstNodes::Program(transmute_self(self))),
+                following_node,
             }))
             .as_ref()
     }
 
     #[inline]
     pub fn directives(&self) -> &AstNode<'a, Vec<'a, Directive<'a>>> {
+        let following_node = ({
+            let ptr = self.inner as *const _ as *const u8;
+            unsafe { &*(ptr.add(PROGRAM_OFFSET_BODY) as *const Vec<'a, Statement<'a>>) }
+        })
+        .first()
+        .as_ref()
+        .copied()
+        .map(FollowingNode::Statement);
         self.allocator.alloc(AstNode {
             inner: &self.inner.directives,
             allocator: self.allocator,
             parent: self.allocator.alloc(AstNodes::Program(transmute_self(self))),
+            following_node,
         })
     }
 
     #[inline]
     pub fn body(&self) -> &AstNode<'a, Vec<'a, Statement<'a>>> {
+        let following_node = self.following_node.clone();
         self.allocator.alloc(AstNode {
             inner: &self.inner.body,
             allocator: self.allocator,
             parent: self.allocator.alloc(AstNodes::Program(transmute_self(self))),
+            following_node,
         })
-    }
-
-    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
-        let inner_ptr = unsafe { self.parent.inner_ptr() };
-        let offset =
-            unsafe { (self.inner as *const _ as *const u8).offset_from_unsigned(inner_ptr) };
-        match offset {
-            PROGRAM_OFFSET_HASHBANG => (unsafe {
-                &*(inner_ptr.add(PROGRAM_OFFSET_DIRECTIVES) as *const Vec<'a, Directive<'a>>)
-            })
-            .first()
-            .as_ref()
-            .copied()
-            .map(FollowingNode::Directive),
-            PROGRAM_OFFSET_DIRECTIVES => {
-                (unsafe { &*(inner_ptr.add(PROGRAM_OFFSET_BODY) as *const Vec<'a, Statement<'a>>) })
-                    .first()
-                    .as_ref()
-                    .copied()
-                    .map(FollowingNode::Statement)
-            }
-            PROGRAM_OFFSET_BODY => None,
-            _ => panic!("Invalid field offset: {}", offset),
-        }
     }
 }
 
@@ -1568,18 +1513,21 @@ impl<'a> AstNode<'a, Expression<'a>> {
                     inner: s.as_ref(),
                     parent,
                     allocator: self.allocator,
+                    following_node: self.following_node.clone(),
                 }))
             }
             Expression::NullLiteral(s) => AstNodes::NullLiteral(self.allocator.alloc(AstNode {
                 inner: s.as_ref(),
                 parent,
                 allocator: self.allocator,
+                following_node: self.following_node.clone(),
             })),
             Expression::NumericLiteral(s) => {
                 AstNodes::NumericLiteral(self.allocator.alloc(AstNode {
                     inner: s.as_ref(),
                     parent,
                     allocator: self.allocator,
+                    following_node: self.following_node.clone(),
                 }))
             }
             Expression::BigIntLiteral(s) => {
@@ -1587,6 +1535,7 @@ impl<'a> AstNode<'a, Expression<'a>> {
                     inner: s.as_ref(),
                     parent,
                     allocator: self.allocator,
+                    following_node: self.following_node.clone(),
                 }))
             }
             Expression::RegExpLiteral(s) => {
@@ -1594,6 +1543,7 @@ impl<'a> AstNode<'a, Expression<'a>> {
                     inner: s.as_ref(),
                     parent,
                     allocator: self.allocator,
+                    following_node: self.following_node.clone(),
                 }))
             }
             Expression::StringLiteral(s) => {
@@ -1601,6 +1551,7 @@ impl<'a> AstNode<'a, Expression<'a>> {
                     inner: s.as_ref(),
                     parent,
                     allocator: self.allocator,
+                    following_node: self.following_node.clone(),
                 }))
             }
             Expression::TemplateLiteral(s) => {
@@ -1608,6 +1559,7 @@ impl<'a> AstNode<'a, Expression<'a>> {
                     inner: s.as_ref(),
                     parent,
                     allocator: self.allocator,
+                    following_node: self.following_node.clone(),
                 }))
             }
             Expression::Identifier(s) => {
@@ -1615,23 +1567,27 @@ impl<'a> AstNode<'a, Expression<'a>> {
                     inner: s.as_ref(),
                     parent,
                     allocator: self.allocator,
+                    following_node: self.following_node.clone(),
                 }))
             }
             Expression::MetaProperty(s) => AstNodes::MetaProperty(self.allocator.alloc(AstNode {
                 inner: s.as_ref(),
                 parent,
                 allocator: self.allocator,
+                following_node: self.following_node.clone(),
             })),
             Expression::Super(s) => AstNodes::Super(self.allocator.alloc(AstNode {
                 inner: s.as_ref(),
                 parent,
                 allocator: self.allocator,
+                following_node: self.following_node.clone(),
             })),
             Expression::ArrayExpression(s) => {
                 AstNodes::ArrayExpression(self.allocator.alloc(AstNode {
                     inner: s.as_ref(),
                     parent,
                     allocator: self.allocator,
+                    following_node: self.following_node.clone(),
                 }))
             }
             Expression::ArrowFunctionExpression(s) => {
@@ -1639,6 +1595,7 @@ impl<'a> AstNode<'a, Expression<'a>> {
                     inner: s.as_ref(),
                     parent,
                     allocator: self.allocator,
+                    following_node: self.following_node.clone(),
                 }))
             }
             Expression::AssignmentExpression(s) => {
@@ -1646,6 +1603,7 @@ impl<'a> AstNode<'a, Expression<'a>> {
                     inner: s.as_ref(),
                     parent,
                     allocator: self.allocator,
+                    following_node: self.following_node.clone(),
                 }))
             }
             Expression::AwaitExpression(s) => {
@@ -1653,6 +1611,7 @@ impl<'a> AstNode<'a, Expression<'a>> {
                     inner: s.as_ref(),
                     parent,
                     allocator: self.allocator,
+                    following_node: self.following_node.clone(),
                 }))
             }
             Expression::BinaryExpression(s) => {
@@ -1660,6 +1619,7 @@ impl<'a> AstNode<'a, Expression<'a>> {
                     inner: s.as_ref(),
                     parent,
                     allocator: self.allocator,
+                    following_node: self.following_node.clone(),
                 }))
             }
             Expression::CallExpression(s) => {
@@ -1667,6 +1627,7 @@ impl<'a> AstNode<'a, Expression<'a>> {
                     inner: s.as_ref(),
                     parent,
                     allocator: self.allocator,
+                    following_node: self.following_node.clone(),
                 }))
             }
             Expression::ChainExpression(s) => {
@@ -1674,18 +1635,21 @@ impl<'a> AstNode<'a, Expression<'a>> {
                     inner: s.as_ref(),
                     parent,
                     allocator: self.allocator,
+                    following_node: self.following_node.clone(),
                 }))
             }
             Expression::ClassExpression(s) => AstNodes::Class(self.allocator.alloc(AstNode {
                 inner: s.as_ref(),
                 parent,
                 allocator: self.allocator,
+                following_node: self.following_node.clone(),
             })),
             Expression::ConditionalExpression(s) => {
                 AstNodes::ConditionalExpression(self.allocator.alloc(AstNode {
                     inner: s.as_ref(),
                     parent,
                     allocator: self.allocator,
+                    following_node: self.following_node.clone(),
                 }))
             }
             Expression::FunctionExpression(s) => {
@@ -1693,6 +1657,7 @@ impl<'a> AstNode<'a, Expression<'a>> {
                     inner: s.as_ref(),
                     parent,
                     allocator: self.allocator,
+                    following_node: self.following_node.clone(),
                 }))
             }
             Expression::ImportExpression(s) => {
@@ -1700,6 +1665,7 @@ impl<'a> AstNode<'a, Expression<'a>> {
                     inner: s.as_ref(),
                     parent,
                     allocator: self.allocator,
+                    following_node: self.following_node.clone(),
                 }))
             }
             Expression::LogicalExpression(s) => {
@@ -1707,6 +1673,7 @@ impl<'a> AstNode<'a, Expression<'a>> {
                     inner: s.as_ref(),
                     parent,
                     allocator: self.allocator,
+                    following_node: self.following_node.clone(),
                 }))
             }
             Expression::NewExpression(s) => {
@@ -1714,6 +1681,7 @@ impl<'a> AstNode<'a, Expression<'a>> {
                     inner: s.as_ref(),
                     parent,
                     allocator: self.allocator,
+                    following_node: self.following_node.clone(),
                 }))
             }
             Expression::ObjectExpression(s) => {
@@ -1721,6 +1689,7 @@ impl<'a> AstNode<'a, Expression<'a>> {
                     inner: s.as_ref(),
                     parent,
                     allocator: self.allocator,
+                    following_node: self.following_node.clone(),
                 }))
             }
             Expression::ParenthesizedExpression(s) => {
@@ -1728,6 +1697,7 @@ impl<'a> AstNode<'a, Expression<'a>> {
                     inner: s.as_ref(),
                     parent,
                     allocator: self.allocator,
+                    following_node: self.following_node.clone(),
                 }))
             }
             Expression::SequenceExpression(s) => {
@@ -1735,6 +1705,7 @@ impl<'a> AstNode<'a, Expression<'a>> {
                     inner: s.as_ref(),
                     parent,
                     allocator: self.allocator,
+                    following_node: self.following_node.clone(),
                 }))
             }
             Expression::TaggedTemplateExpression(s) => {
@@ -1742,6 +1713,7 @@ impl<'a> AstNode<'a, Expression<'a>> {
                     inner: s.as_ref(),
                     parent,
                     allocator: self.allocator,
+                    following_node: self.following_node.clone(),
                 }))
             }
             Expression::ThisExpression(s) => {
@@ -1749,6 +1721,7 @@ impl<'a> AstNode<'a, Expression<'a>> {
                     inner: s.as_ref(),
                     parent,
                     allocator: self.allocator,
+                    following_node: self.following_node.clone(),
                 }))
             }
             Expression::UnaryExpression(s) => {
@@ -1756,6 +1729,7 @@ impl<'a> AstNode<'a, Expression<'a>> {
                     inner: s.as_ref(),
                     parent,
                     allocator: self.allocator,
+                    following_node: self.following_node.clone(),
                 }))
             }
             Expression::UpdateExpression(s) => {
@@ -1763,6 +1737,7 @@ impl<'a> AstNode<'a, Expression<'a>> {
                     inner: s.as_ref(),
                     parent,
                     allocator: self.allocator,
+                    following_node: self.following_node.clone(),
                 }))
             }
             Expression::YieldExpression(s) => {
@@ -1770,6 +1745,7 @@ impl<'a> AstNode<'a, Expression<'a>> {
                     inner: s.as_ref(),
                     parent,
                     allocator: self.allocator,
+                    following_node: self.following_node.clone(),
                 }))
             }
             Expression::PrivateInExpression(s) => {
@@ -1777,23 +1753,27 @@ impl<'a> AstNode<'a, Expression<'a>> {
                     inner: s.as_ref(),
                     parent,
                     allocator: self.allocator,
+                    following_node: self.following_node.clone(),
                 }))
             }
             Expression::JSXElement(s) => AstNodes::JSXElement(self.allocator.alloc(AstNode {
                 inner: s.as_ref(),
                 parent,
                 allocator: self.allocator,
+                following_node: self.following_node.clone(),
             })),
             Expression::JSXFragment(s) => AstNodes::JSXFragment(self.allocator.alloc(AstNode {
                 inner: s.as_ref(),
                 parent,
                 allocator: self.allocator,
+                following_node: self.following_node.clone(),
             })),
             Expression::TSAsExpression(s) => {
                 AstNodes::TSAsExpression(self.allocator.alloc(AstNode {
                     inner: s.as_ref(),
                     parent,
                     allocator: self.allocator,
+                    following_node: self.following_node.clone(),
                 }))
             }
             Expression::TSSatisfiesExpression(s) => {
@@ -1801,6 +1781,7 @@ impl<'a> AstNode<'a, Expression<'a>> {
                     inner: s.as_ref(),
                     parent,
                     allocator: self.allocator,
+                    following_node: self.following_node.clone(),
                 }))
             }
             Expression::TSTypeAssertion(s) => {
@@ -1808,6 +1789,7 @@ impl<'a> AstNode<'a, Expression<'a>> {
                     inner: s.as_ref(),
                     parent,
                     allocator: self.allocator,
+                    following_node: self.following_node.clone(),
                 }))
             }
             Expression::TSNonNullExpression(s) => {
@@ -1815,6 +1797,7 @@ impl<'a> AstNode<'a, Expression<'a>> {
                     inner: s.as_ref(),
                     parent,
                     allocator: self.allocator,
+                    following_node: self.following_node.clone(),
                 }))
             }
             Expression::TSInstantiationExpression(s) => {
@@ -1822,6 +1805,7 @@ impl<'a> AstNode<'a, Expression<'a>> {
                     inner: s.as_ref(),
                     parent,
                     allocator: self.allocator,
+                    following_node: self.following_node.clone(),
                 }))
             }
             Expression::V8IntrinsicExpression(s) => {
@@ -1829,6 +1813,7 @@ impl<'a> AstNode<'a, Expression<'a>> {
                     inner: s.as_ref(),
                     parent,
                     allocator: self.allocator,
+                    following_node: self.following_node.clone(),
                 }))
             }
             it @ match_member_expression!(Expression) => {
@@ -1836,6 +1821,7 @@ impl<'a> AstNode<'a, Expression<'a>> {
                     inner: it.to_member_expression(),
                     parent,
                     allocator: self.allocator,
+                    following_node: self.following_node.clone(),
                 }))
             }
         };
@@ -1860,10 +1846,6 @@ impl<'a> AstNode<'a, IdentifierName<'a>> {
     pub fn name(&self) -> Atom<'a> {
         self.inner.name
     }
-
-    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
-        None
-    }
 }
 
 impl<'a> AstNode<'a, IdentifierReference<'a>> {
@@ -1875,10 +1857,6 @@ impl<'a> AstNode<'a, IdentifierReference<'a>> {
     #[inline]
     pub fn name(&self) -> Atom<'a> {
         self.inner.name
-    }
-
-    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
-        None
     }
 }
 
@@ -1892,10 +1870,6 @@ impl<'a> AstNode<'a, BindingIdentifier<'a>> {
     pub fn name(&self) -> Atom<'a> {
         self.inner.name
     }
-
-    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
-        None
-    }
 }
 
 impl<'a> AstNode<'a, LabelIdentifier<'a>> {
@@ -1908,20 +1882,12 @@ impl<'a> AstNode<'a, LabelIdentifier<'a>> {
     pub fn name(&self) -> Atom<'a> {
         self.inner.name
     }
-
-    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
-        None
-    }
 }
 
 impl<'a> AstNode<'a, ThisExpression> {
     #[inline]
     pub fn span(&self) -> Span {
         self.inner.span
-    }
-
-    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
-        None
     }
 }
 
@@ -1935,21 +1901,13 @@ impl<'a> AstNode<'a, ArrayExpression<'a>> {
 
     #[inline]
     pub fn elements(&self) -> &AstNode<'a, Vec<'a, ArrayExpressionElement<'a>>> {
+        let following_node = self.following_node.clone();
         self.allocator.alloc(AstNode {
             inner: &self.inner.elements,
             allocator: self.allocator,
             parent: self.allocator.alloc(AstNodes::ArrayExpression(transmute_self(self))),
+            following_node,
         })
-    }
-
-    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
-        let inner_ptr = unsafe { self.parent.inner_ptr() };
-        let offset =
-            unsafe { (self.inner as *const _ as *const u8).offset_from_unsigned(inner_ptr) };
-        match offset {
-            ARRAY_EXPRESSION_OFFSET_ELEMENTS => None,
-            _ => panic!("Invalid field offset: {}", offset),
-        }
     }
 }
 
@@ -1963,6 +1921,7 @@ impl<'a> AstNode<'a, ArrayExpressionElement<'a>> {
                     inner: s.as_ref(),
                     parent,
                     allocator: self.allocator,
+                    following_node: self.following_node.clone(),
                 }))
             }
             ArrayExpressionElement::Elision(s) => {
@@ -1970,12 +1929,18 @@ impl<'a> AstNode<'a, ArrayExpressionElement<'a>> {
                     inner: s,
                     parent,
                     allocator: self.allocator,
+                    following_node: self.following_node.clone(),
                 }))
             }
             it @ match_expression!(ArrayExpressionElement) => {
                 return self
                     .allocator
-                    .alloc(AstNode { inner: it.to_expression(), parent, allocator: self.allocator })
+                    .alloc(AstNode {
+                        inner: it.to_expression(),
+                        parent,
+                        allocator: self.allocator,
+                        following_node: self.following_node.clone(),
+                    })
                     .as_ast_nodes();
             }
         };
@@ -1995,10 +1960,6 @@ impl<'a> AstNode<'a, Elision> {
     pub fn span(&self) -> Span {
         self.inner.span
     }
-
-    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
-        None
-    }
 }
 
 const OBJECT_EXPRESSION_OFFSET_PROPERTIES: usize =
@@ -2012,21 +1973,13 @@ impl<'a> AstNode<'a, ObjectExpression<'a>> {
 
     #[inline]
     pub fn properties(&self) -> &AstNode<'a, Vec<'a, ObjectPropertyKind<'a>>> {
+        let following_node = self.following_node.clone();
         self.allocator.alloc(AstNode {
             inner: &self.inner.properties,
             allocator: self.allocator,
             parent: self.allocator.alloc(AstNodes::ObjectExpression(transmute_self(self))),
+            following_node,
         })
-    }
-
-    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
-        let inner_ptr = unsafe { self.parent.inner_ptr() };
-        let offset =
-            unsafe { (self.inner as *const _ as *const u8).offset_from_unsigned(inner_ptr) };
-        match offset {
-            OBJECT_EXPRESSION_OFFSET_PROPERTIES => None,
-            _ => panic!("Invalid field offset: {}", offset),
-        }
     }
 }
 
@@ -2040,6 +1993,7 @@ impl<'a> AstNode<'a, ObjectPropertyKind<'a>> {
                     inner: s.as_ref(),
                     parent,
                     allocator: self.allocator,
+                    following_node: self.following_node.clone(),
                 }))
             }
             ObjectPropertyKind::SpreadProperty(s) => {
@@ -2047,6 +2001,7 @@ impl<'a> AstNode<'a, ObjectPropertyKind<'a>> {
                     inner: s.as_ref(),
                     parent,
                     allocator: self.allocator,
+                    following_node: self.following_node.clone(),
                 }))
             }
         };
@@ -2077,19 +2032,26 @@ impl<'a> AstNode<'a, ObjectProperty<'a>> {
 
     #[inline]
     pub fn key(&self) -> &AstNode<'a, PropertyKey<'a>> {
+        let following_node = Some(FollowingNode::Expression({
+            let ptr = self.inner as *const _ as *const u8;
+            unsafe { &*(ptr.add(OBJECT_PROPERTY_OFFSET_VALUE) as *const Expression<'a>) }
+        }));
         self.allocator.alloc(AstNode {
             inner: &self.inner.key,
             allocator: self.allocator,
             parent: self.allocator.alloc(AstNodes::ObjectProperty(transmute_self(self))),
+            following_node,
         })
     }
 
     #[inline]
     pub fn value(&self) -> &AstNode<'a, Expression<'a>> {
+        let following_node = self.following_node.clone();
         self.allocator.alloc(AstNode {
             inner: &self.inner.value,
             allocator: self.allocator,
             parent: self.allocator.alloc(AstNodes::ObjectProperty(transmute_self(self))),
+            following_node,
         })
     }
 
@@ -2107,19 +2069,6 @@ impl<'a> AstNode<'a, ObjectProperty<'a>> {
     pub fn computed(&self) -> bool {
         self.inner.computed
     }
-
-    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
-        let inner_ptr = unsafe { self.parent.inner_ptr() };
-        let offset =
-            unsafe { (self.inner as *const _ as *const u8).offset_from_unsigned(inner_ptr) };
-        match offset {
-            OBJECT_PROPERTY_OFFSET_KEY => Some(FollowingNode::Expression(unsafe {
-                &*(inner_ptr.add(OBJECT_PROPERTY_OFFSET_VALUE) as *const Expression<'a>)
-            })),
-            OBJECT_PROPERTY_OFFSET_VALUE => None,
-            _ => panic!("Invalid field offset: {}", offset),
-        }
-    }
 }
 
 impl<'a> AstNode<'a, PropertyKey<'a>> {
@@ -2132,6 +2081,7 @@ impl<'a> AstNode<'a, PropertyKey<'a>> {
                     inner: s.as_ref(),
                     parent,
                     allocator: self.allocator,
+                    following_node: self.following_node.clone(),
                 }))
             }
             PropertyKey::PrivateIdentifier(s) => {
@@ -2139,12 +2089,18 @@ impl<'a> AstNode<'a, PropertyKey<'a>> {
                     inner: s.as_ref(),
                     parent,
                     allocator: self.allocator,
+                    following_node: self.following_node.clone(),
                 }))
             }
             it @ match_expression!(PropertyKey) => {
                 return self
                     .allocator
-                    .alloc(AstNode { inner: it.to_expression(), parent, allocator: self.allocator })
+                    .alloc(AstNode {
+                        inner: it.to_expression(),
+                        parent,
+                        allocator: self.allocator,
+                        following_node: self.following_node.clone(),
+                    })
                     .as_ast_nodes();
             }
         };
@@ -2171,38 +2127,33 @@ impl<'a> AstNode<'a, TemplateLiteral<'a>> {
 
     #[inline]
     pub fn quasis(&self) -> &AstNode<'a, Vec<'a, TemplateElement<'a>>> {
+        let following_node = ({
+            let ptr = self.inner as *const _ as *const u8;
+            unsafe {
+                &*(ptr.add(TEMPLATE_LITERAL_OFFSET_EXPRESSIONS) as *const Vec<'a, Expression<'a>>)
+            }
+        })
+        .first()
+        .as_ref()
+        .copied()
+        .map(FollowingNode::Expression);
         self.allocator.alloc(AstNode {
             inner: &self.inner.quasis,
             allocator: self.allocator,
             parent: self.allocator.alloc(AstNodes::TemplateLiteral(transmute_self(self))),
+            following_node,
         })
     }
 
     #[inline]
     pub fn expressions(&self) -> &AstNode<'a, Vec<'a, Expression<'a>>> {
+        let following_node = self.following_node.clone();
         self.allocator.alloc(AstNode {
             inner: &self.inner.expressions,
             allocator: self.allocator,
             parent: self.allocator.alloc(AstNodes::TemplateLiteral(transmute_self(self))),
+            following_node,
         })
-    }
-
-    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
-        let inner_ptr = unsafe { self.parent.inner_ptr() };
-        let offset =
-            unsafe { (self.inner as *const _ as *const u8).offset_from_unsigned(inner_ptr) };
-        match offset {
-            TEMPLATE_LITERAL_OFFSET_QUASIS => (unsafe {
-                &*(inner_ptr.add(TEMPLATE_LITERAL_OFFSET_EXPRESSIONS)
-                    as *const Vec<'a, Expression<'a>>)
-            })
-            .first()
-            .as_ref()
-            .copied()
-            .map(FollowingNode::Expression),
-            TEMPLATE_LITERAL_OFFSET_EXPRESSIONS => None,
-            _ => panic!("Invalid field offset: {}", offset),
-        }
     }
 }
 
@@ -2219,46 +2170,43 @@ impl<'a> AstNode<'a, TaggedTemplateExpression<'a>> {
 
     #[inline]
     pub fn tag(&self) -> &AstNode<'a, Expression<'a>> {
+        let following_node = Some(FollowingNode::TemplateLiteral({
+            let ptr = self.inner as *const _ as *const u8;
+            unsafe {
+                &*(ptr.add(TAGGED_TEMPLATE_EXPRESSION_OFFSET_QUASI) as *const TemplateLiteral<'a>)
+            }
+        }));
         self.allocator.alloc(AstNode {
             inner: &self.inner.tag,
             allocator: self.allocator,
             parent: self.allocator.alloc(AstNodes::TaggedTemplateExpression(transmute_self(self))),
+            following_node,
         })
     }
 
     #[inline]
     pub fn type_arguments(&self) -> Option<&AstNode<'a, TSTypeParameterInstantiation<'a>>> {
+        let following_node = self.following_node.clone();
         self.allocator
             .alloc(self.inner.type_arguments.as_ref().map(|inner| AstNode {
                 inner: inner.as_ref(),
                 allocator: self.allocator,
                 parent:
                     self.allocator.alloc(AstNodes::TaggedTemplateExpression(transmute_self(self))),
+                following_node,
             }))
             .as_ref()
     }
 
     #[inline]
     pub fn quasi(&self) -> &AstNode<'a, TemplateLiteral<'a>> {
+        let following_node = self.following_node.clone();
         self.allocator.alloc(AstNode {
             inner: &self.inner.quasi,
             allocator: self.allocator,
             parent: self.allocator.alloc(AstNodes::TaggedTemplateExpression(transmute_self(self))),
+            following_node,
         })
-    }
-
-    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
-        let inner_ptr = unsafe { self.parent.inner_ptr() };
-        let offset =
-            unsafe { (self.inner as *const _ as *const u8).offset_from_unsigned(inner_ptr) };
-        match offset {
-            TAGGED_TEMPLATE_EXPRESSION_OFFSET_TAG => Some(FollowingNode::TemplateLiteral(unsafe {
-                &*(inner_ptr.add(TAGGED_TEMPLATE_EXPRESSION_OFFSET_QUASI)
-                    as *const TemplateLiteral<'a>)
-            })),
-            TAGGED_TEMPLATE_EXPRESSION_OFFSET_QUASI => None,
-            _ => panic!("Invalid field offset: {}", offset),
-        }
     }
 }
 
@@ -2281,10 +2229,6 @@ impl<'a> AstNode<'a, TemplateElement<'a>> {
     #[inline]
     pub fn lone_surrogates(&self) -> bool {
         self.inner.lone_surrogates
-    }
-
-    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
-        None
     }
 }
 
@@ -2333,39 +2277,34 @@ impl<'a> AstNode<'a, ComputedMemberExpression<'a>> {
 
     #[inline]
     pub fn object(&self) -> &AstNode<'a, Expression<'a>> {
+        let following_node = Some(FollowingNode::Expression({
+            let ptr = self.inner as *const _ as *const u8;
+            unsafe {
+                &*(ptr.add(COMPUTED_MEMBER_EXPRESSION_OFFSET_EXPRESSION) as *const Expression<'a>)
+            }
+        }));
         self.allocator.alloc(AstNode {
             inner: &self.inner.object,
             allocator: self.allocator,
             parent: self.parent,
+            following_node,
         })
     }
 
     #[inline]
     pub fn expression(&self) -> &AstNode<'a, Expression<'a>> {
+        let following_node = self.following_node.clone();
         self.allocator.alloc(AstNode {
             inner: &self.inner.expression,
             allocator: self.allocator,
             parent: self.parent,
+            following_node,
         })
     }
 
     #[inline]
     pub fn optional(&self) -> bool {
         self.inner.optional
-    }
-
-    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
-        let inner_ptr = unsafe { self.parent.inner_ptr() };
-        let offset =
-            unsafe { (self.inner as *const _ as *const u8).offset_from_unsigned(inner_ptr) };
-        match offset {
-            COMPUTED_MEMBER_EXPRESSION_OFFSET_OBJECT => Some(FollowingNode::Expression(unsafe {
-                &*(inner_ptr.add(COMPUTED_MEMBER_EXPRESSION_OFFSET_EXPRESSION)
-                    as *const Expression<'a>)
-            })),
-            COMPUTED_MEMBER_EXPRESSION_OFFSET_EXPRESSION => None,
-            _ => panic!("Invalid field offset: {}", offset),
-        }
     }
 }
 
@@ -2382,39 +2321,34 @@ impl<'a> AstNode<'a, StaticMemberExpression<'a>> {
 
     #[inline]
     pub fn object(&self) -> &AstNode<'a, Expression<'a>> {
+        let following_node = Some(FollowingNode::IdentifierName({
+            let ptr = self.inner as *const _ as *const u8;
+            unsafe {
+                &*(ptr.add(STATIC_MEMBER_EXPRESSION_OFFSET_PROPERTY) as *const IdentifierName<'a>)
+            }
+        }));
         self.allocator.alloc(AstNode {
             inner: &self.inner.object,
             allocator: self.allocator,
             parent: self.parent,
+            following_node,
         })
     }
 
     #[inline]
     pub fn property(&self) -> &AstNode<'a, IdentifierName<'a>> {
+        let following_node = self.following_node.clone();
         self.allocator.alloc(AstNode {
             inner: &self.inner.property,
             allocator: self.allocator,
             parent: self.parent,
+            following_node,
         })
     }
 
     #[inline]
     pub fn optional(&self) -> bool {
         self.inner.optional
-    }
-
-    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
-        let inner_ptr = unsafe { self.parent.inner_ptr() };
-        let offset =
-            unsafe { (self.inner as *const _ as *const u8).offset_from_unsigned(inner_ptr) };
-        match offset {
-            STATIC_MEMBER_EXPRESSION_OFFSET_OBJECT => Some(FollowingNode::IdentifierName(unsafe {
-                &*(inner_ptr.add(STATIC_MEMBER_EXPRESSION_OFFSET_PROPERTY)
-                    as *const IdentifierName<'a>)
-            })),
-            STATIC_MEMBER_EXPRESSION_OFFSET_PROPERTY => None,
-            _ => panic!("Invalid field offset: {}", offset),
-        }
     }
 }
 
@@ -2431,41 +2365,34 @@ impl<'a> AstNode<'a, PrivateFieldExpression<'a>> {
 
     #[inline]
     pub fn object(&self) -> &AstNode<'a, Expression<'a>> {
+        let following_node = Some(FollowingNode::PrivateIdentifier({
+            let ptr = self.inner as *const _ as *const u8;
+            unsafe {
+                &*(ptr.add(PRIVATE_FIELD_EXPRESSION_OFFSET_FIELD) as *const PrivateIdentifier<'a>)
+            }
+        }));
         self.allocator.alloc(AstNode {
             inner: &self.inner.object,
             allocator: self.allocator,
             parent: self.parent,
+            following_node,
         })
     }
 
     #[inline]
     pub fn field(&self) -> &AstNode<'a, PrivateIdentifier<'a>> {
+        let following_node = self.following_node.clone();
         self.allocator.alloc(AstNode {
             inner: &self.inner.field,
             allocator: self.allocator,
             parent: self.parent,
+            following_node,
         })
     }
 
     #[inline]
     pub fn optional(&self) -> bool {
         self.inner.optional
-    }
-
-    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
-        let inner_ptr = unsafe { self.parent.inner_ptr() };
-        let offset =
-            unsafe { (self.inner as *const _ as *const u8).offset_from_unsigned(inner_ptr) };
-        match offset {
-            PRIVATE_FIELD_EXPRESSION_OFFSET_OBJECT => {
-                Some(FollowingNode::PrivateIdentifier(unsafe {
-                    &*(inner_ptr.add(PRIVATE_FIELD_EXPRESSION_OFFSET_FIELD)
-                        as *const PrivateIdentifier<'a>)
-                }))
-            }
-            PRIVATE_FIELD_EXPRESSION_OFFSET_FIELD => None,
-            _ => panic!("Invalid field offset: {}", offset),
-        }
     }
 }
 
@@ -2480,30 +2407,43 @@ impl<'a> AstNode<'a, CallExpression<'a>> {
 
     #[inline]
     pub fn callee(&self) -> &AstNode<'a, Expression<'a>> {
+        let following_node = ({
+            let ptr = self.inner as *const _ as *const u8;
+            unsafe { &*(ptr.add(CALL_EXPRESSION_OFFSET_ARGUMENTS) as *const Vec<'a, Argument<'a>>) }
+        })
+        .first()
+        .as_ref()
+        .copied()
+        .map(FollowingNode::Argument);
         self.allocator.alloc(AstNode {
             inner: &self.inner.callee,
             allocator: self.allocator,
             parent: self.allocator.alloc(AstNodes::CallExpression(transmute_self(self))),
+            following_node,
         })
     }
 
     #[inline]
     pub fn type_arguments(&self) -> Option<&AstNode<'a, TSTypeParameterInstantiation<'a>>> {
+        let following_node = self.following_node.clone();
         self.allocator
             .alloc(self.inner.type_arguments.as_ref().map(|inner| AstNode {
                 inner: inner.as_ref(),
                 allocator: self.allocator,
                 parent: self.allocator.alloc(AstNodes::CallExpression(transmute_self(self))),
+                following_node,
             }))
             .as_ref()
     }
 
     #[inline]
     pub fn arguments(&self) -> &AstNode<'a, Vec<'a, Argument<'a>>> {
+        let following_node = self.following_node.clone();
         self.allocator.alloc(AstNode {
             inner: &self.inner.arguments,
             allocator: self.allocator,
             parent: self.allocator.alloc(AstNodes::CallExpression(transmute_self(self))),
+            following_node,
         })
     }
 
@@ -2515,23 +2455,6 @@ impl<'a> AstNode<'a, CallExpression<'a>> {
     #[inline]
     pub fn pure(&self) -> bool {
         self.inner.pure
-    }
-
-    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
-        let inner_ptr = unsafe { self.parent.inner_ptr() };
-        let offset =
-            unsafe { (self.inner as *const _ as *const u8).offset_from_unsigned(inner_ptr) };
-        match offset {
-            CALL_EXPRESSION_OFFSET_CALLEE => (unsafe {
-                &*(inner_ptr.add(CALL_EXPRESSION_OFFSET_ARGUMENTS) as *const Vec<'a, Argument<'a>>)
-            })
-            .first()
-            .as_ref()
-            .copied()
-            .map(FollowingNode::Argument),
-            CALL_EXPRESSION_OFFSET_ARGUMENTS => None,
-            _ => panic!("Invalid field offset: {}", offset),
-        }
     }
 }
 
@@ -2546,53 +2469,49 @@ impl<'a> AstNode<'a, NewExpression<'a>> {
 
     #[inline]
     pub fn callee(&self) -> &AstNode<'a, Expression<'a>> {
+        let following_node = ({
+            let ptr = self.inner as *const _ as *const u8;
+            unsafe { &*(ptr.add(NEW_EXPRESSION_OFFSET_ARGUMENTS) as *const Vec<'a, Argument<'a>>) }
+        })
+        .first()
+        .as_ref()
+        .copied()
+        .map(FollowingNode::Argument);
         self.allocator.alloc(AstNode {
             inner: &self.inner.callee,
             allocator: self.allocator,
             parent: self.allocator.alloc(AstNodes::NewExpression(transmute_self(self))),
+            following_node,
         })
     }
 
     #[inline]
     pub fn type_arguments(&self) -> Option<&AstNode<'a, TSTypeParameterInstantiation<'a>>> {
+        let following_node = self.following_node.clone();
         self.allocator
             .alloc(self.inner.type_arguments.as_ref().map(|inner| AstNode {
                 inner: inner.as_ref(),
                 allocator: self.allocator,
                 parent: self.allocator.alloc(AstNodes::NewExpression(transmute_self(self))),
+                following_node,
             }))
             .as_ref()
     }
 
     #[inline]
     pub fn arguments(&self) -> &AstNode<'a, Vec<'a, Argument<'a>>> {
+        let following_node = self.following_node.clone();
         self.allocator.alloc(AstNode {
             inner: &self.inner.arguments,
             allocator: self.allocator,
             parent: self.allocator.alloc(AstNodes::NewExpression(transmute_self(self))),
+            following_node,
         })
     }
 
     #[inline]
     pub fn pure(&self) -> bool {
         self.inner.pure
-    }
-
-    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
-        let inner_ptr = unsafe { self.parent.inner_ptr() };
-        let offset =
-            unsafe { (self.inner as *const _ as *const u8).offset_from_unsigned(inner_ptr) };
-        match offset {
-            NEW_EXPRESSION_OFFSET_CALLEE => (unsafe {
-                &*(inner_ptr.add(NEW_EXPRESSION_OFFSET_ARGUMENTS) as *const Vec<'a, Argument<'a>>)
-            })
-            .first()
-            .as_ref()
-            .copied()
-            .map(FollowingNode::Argument),
-            NEW_EXPRESSION_OFFSET_ARGUMENTS => None,
-            _ => panic!("Invalid field offset: {}", offset),
-        }
     }
 }
 
@@ -2607,33 +2526,27 @@ impl<'a> AstNode<'a, MetaProperty<'a>> {
 
     #[inline]
     pub fn meta(&self) -> &AstNode<'a, IdentifierName<'a>> {
+        let following_node = Some(FollowingNode::IdentifierName({
+            let ptr = self.inner as *const _ as *const u8;
+            unsafe { &*(ptr.add(META_PROPERTY_OFFSET_PROPERTY) as *const IdentifierName<'a>) }
+        }));
         self.allocator.alloc(AstNode {
             inner: &self.inner.meta,
             allocator: self.allocator,
             parent: self.allocator.alloc(AstNodes::MetaProperty(transmute_self(self))),
+            following_node,
         })
     }
 
     #[inline]
     pub fn property(&self) -> &AstNode<'a, IdentifierName<'a>> {
+        let following_node = self.following_node.clone();
         self.allocator.alloc(AstNode {
             inner: &self.inner.property,
             allocator: self.allocator,
             parent: self.allocator.alloc(AstNodes::MetaProperty(transmute_self(self))),
+            following_node,
         })
-    }
-
-    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
-        let inner_ptr = unsafe { self.parent.inner_ptr() };
-        let offset =
-            unsafe { (self.inner as *const _ as *const u8).offset_from_unsigned(inner_ptr) };
-        match offset {
-            META_PROPERTY_OFFSET_META => Some(FollowingNode::IdentifierName(unsafe {
-                &*(inner_ptr.add(META_PROPERTY_OFFSET_PROPERTY) as *const IdentifierName<'a>)
-            })),
-            META_PROPERTY_OFFSET_PROPERTY => None,
-            _ => panic!("Invalid field offset: {}", offset),
-        }
     }
 }
 
@@ -2647,21 +2560,13 @@ impl<'a> AstNode<'a, SpreadElement<'a>> {
 
     #[inline]
     pub fn argument(&self) -> &AstNode<'a, Expression<'a>> {
+        let following_node = self.following_node.clone();
         self.allocator.alloc(AstNode {
             inner: &self.inner.argument,
             allocator: self.allocator,
             parent: self.allocator.alloc(AstNodes::SpreadElement(transmute_self(self))),
+            following_node,
         })
-    }
-
-    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
-        let inner_ptr = unsafe { self.parent.inner_ptr() };
-        let offset =
-            unsafe { (self.inner as *const _ as *const u8).offset_from_unsigned(inner_ptr) };
-        match offset {
-            SPREAD_ELEMENT_OFFSET_ARGUMENT => None,
-            _ => panic!("Invalid field offset: {}", offset),
-        }
     }
 }
 
@@ -2674,11 +2579,17 @@ impl<'a> AstNode<'a, Argument<'a>> {
                 inner: s.as_ref(),
                 parent,
                 allocator: self.allocator,
+                following_node: self.following_node.clone(),
             })),
             it @ match_expression!(Argument) => {
                 return self
                     .allocator
-                    .alloc(AstNode { inner: it.to_expression(), parent, allocator: self.allocator })
+                    .alloc(AstNode {
+                        inner: it.to_expression(),
+                        parent,
+                        allocator: self.allocator,
+                        following_node: self.following_node.clone(),
+                    })
                     .as_ast_nodes();
             }
         };
@@ -2713,21 +2624,13 @@ impl<'a> AstNode<'a, UpdateExpression<'a>> {
 
     #[inline]
     pub fn argument(&self) -> &AstNode<'a, SimpleAssignmentTarget<'a>> {
+        let following_node = self.following_node.clone();
         self.allocator.alloc(AstNode {
             inner: &self.inner.argument,
             allocator: self.allocator,
             parent: self.allocator.alloc(AstNodes::UpdateExpression(transmute_self(self))),
+            following_node,
         })
-    }
-
-    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
-        let inner_ptr = unsafe { self.parent.inner_ptr() };
-        let offset =
-            unsafe { (self.inner as *const _ as *const u8).offset_from_unsigned(inner_ptr) };
-        match offset {
-            UPDATE_EXPRESSION_OFFSET_ARGUMENT => None,
-            _ => panic!("Invalid field offset: {}", offset),
-        }
     }
 }
 
@@ -2746,21 +2649,13 @@ impl<'a> AstNode<'a, UnaryExpression<'a>> {
 
     #[inline]
     pub fn argument(&self) -> &AstNode<'a, Expression<'a>> {
+        let following_node = self.following_node.clone();
         self.allocator.alloc(AstNode {
             inner: &self.inner.argument,
             allocator: self.allocator,
             parent: self.allocator.alloc(AstNodes::UnaryExpression(transmute_self(self))),
+            following_node,
         })
-    }
-
-    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
-        let inner_ptr = unsafe { self.parent.inner_ptr() };
-        let offset =
-            unsafe { (self.inner as *const _ as *const u8).offset_from_unsigned(inner_ptr) };
-        match offset {
-            UNARY_EXPRESSION_OFFSET_ARGUMENT => None,
-            _ => panic!("Invalid field offset: {}", offset),
-        }
     }
 }
 
@@ -2775,10 +2670,15 @@ impl<'a> AstNode<'a, BinaryExpression<'a>> {
 
     #[inline]
     pub fn left(&self) -> &AstNode<'a, Expression<'a>> {
+        let following_node = Some(FollowingNode::Expression({
+            let ptr = self.inner as *const _ as *const u8;
+            unsafe { &*(ptr.add(BINARY_EXPRESSION_OFFSET_RIGHT) as *const Expression<'a>) }
+        }));
         self.allocator.alloc(AstNode {
             inner: &self.inner.left,
             allocator: self.allocator,
             parent: self.allocator.alloc(AstNodes::BinaryExpression(transmute_self(self))),
+            following_node,
         })
     }
 
@@ -2789,24 +2689,13 @@ impl<'a> AstNode<'a, BinaryExpression<'a>> {
 
     #[inline]
     pub fn right(&self) -> &AstNode<'a, Expression<'a>> {
+        let following_node = self.following_node.clone();
         self.allocator.alloc(AstNode {
             inner: &self.inner.right,
             allocator: self.allocator,
             parent: self.allocator.alloc(AstNodes::BinaryExpression(transmute_self(self))),
+            following_node,
         })
-    }
-
-    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
-        let inner_ptr = unsafe { self.parent.inner_ptr() };
-        let offset =
-            unsafe { (self.inner as *const _ as *const u8).offset_from_unsigned(inner_ptr) };
-        match offset {
-            BINARY_EXPRESSION_OFFSET_LEFT => Some(FollowingNode::Expression(unsafe {
-                &*(inner_ptr.add(BINARY_EXPRESSION_OFFSET_RIGHT) as *const Expression<'a>)
-            })),
-            BINARY_EXPRESSION_OFFSET_RIGHT => None,
-            _ => panic!("Invalid field offset: {}", offset),
-        }
     }
 }
 
@@ -2821,33 +2710,27 @@ impl<'a> AstNode<'a, PrivateInExpression<'a>> {
 
     #[inline]
     pub fn left(&self) -> &AstNode<'a, PrivateIdentifier<'a>> {
+        let following_node = Some(FollowingNode::Expression({
+            let ptr = self.inner as *const _ as *const u8;
+            unsafe { &*(ptr.add(PRIVATE_IN_EXPRESSION_OFFSET_RIGHT) as *const Expression<'a>) }
+        }));
         self.allocator.alloc(AstNode {
             inner: &self.inner.left,
             allocator: self.allocator,
             parent: self.allocator.alloc(AstNodes::PrivateInExpression(transmute_self(self))),
+            following_node,
         })
     }
 
     #[inline]
     pub fn right(&self) -> &AstNode<'a, Expression<'a>> {
+        let following_node = self.following_node.clone();
         self.allocator.alloc(AstNode {
             inner: &self.inner.right,
             allocator: self.allocator,
             parent: self.allocator.alloc(AstNodes::PrivateInExpression(transmute_self(self))),
+            following_node,
         })
-    }
-
-    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
-        let inner_ptr = unsafe { self.parent.inner_ptr() };
-        let offset =
-            unsafe { (self.inner as *const _ as *const u8).offset_from_unsigned(inner_ptr) };
-        match offset {
-            PRIVATE_IN_EXPRESSION_OFFSET_LEFT => Some(FollowingNode::Expression(unsafe {
-                &*(inner_ptr.add(PRIVATE_IN_EXPRESSION_OFFSET_RIGHT) as *const Expression<'a>)
-            })),
-            PRIVATE_IN_EXPRESSION_OFFSET_RIGHT => None,
-            _ => panic!("Invalid field offset: {}", offset),
-        }
     }
 }
 
@@ -2862,10 +2745,15 @@ impl<'a> AstNode<'a, LogicalExpression<'a>> {
 
     #[inline]
     pub fn left(&self) -> &AstNode<'a, Expression<'a>> {
+        let following_node = Some(FollowingNode::Expression({
+            let ptr = self.inner as *const _ as *const u8;
+            unsafe { &*(ptr.add(LOGICAL_EXPRESSION_OFFSET_RIGHT) as *const Expression<'a>) }
+        }));
         self.allocator.alloc(AstNode {
             inner: &self.inner.left,
             allocator: self.allocator,
             parent: self.allocator.alloc(AstNodes::LogicalExpression(transmute_self(self))),
+            following_node,
         })
     }
 
@@ -2876,24 +2764,13 @@ impl<'a> AstNode<'a, LogicalExpression<'a>> {
 
     #[inline]
     pub fn right(&self) -> &AstNode<'a, Expression<'a>> {
+        let following_node = self.following_node.clone();
         self.allocator.alloc(AstNode {
             inner: &self.inner.right,
             allocator: self.allocator,
             parent: self.allocator.alloc(AstNodes::LogicalExpression(transmute_self(self))),
+            following_node,
         })
-    }
-
-    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
-        let inner_ptr = unsafe { self.parent.inner_ptr() };
-        let offset =
-            unsafe { (self.inner as *const _ as *const u8).offset_from_unsigned(inner_ptr) };
-        match offset {
-            LOGICAL_EXPRESSION_OFFSET_LEFT => Some(FollowingNode::Expression(unsafe {
-                &*(inner_ptr.add(LOGICAL_EXPRESSION_OFFSET_RIGHT) as *const Expression<'a>)
-            })),
-            LOGICAL_EXPRESSION_OFFSET_RIGHT => None,
-            _ => panic!("Invalid field offset: {}", offset),
-        }
     }
 }
 
@@ -2911,45 +2788,43 @@ impl<'a> AstNode<'a, ConditionalExpression<'a>> {
 
     #[inline]
     pub fn test(&self) -> &AstNode<'a, Expression<'a>> {
+        let following_node = Some(FollowingNode::Expression({
+            let ptr = self.inner as *const _ as *const u8;
+            unsafe {
+                &*(ptr.add(CONDITIONAL_EXPRESSION_OFFSET_CONSEQUENT) as *const Expression<'a>)
+            }
+        }));
         self.allocator.alloc(AstNode {
             inner: &self.inner.test,
             allocator: self.allocator,
             parent: self.allocator.alloc(AstNodes::ConditionalExpression(transmute_self(self))),
+            following_node,
         })
     }
 
     #[inline]
     pub fn consequent(&self) -> &AstNode<'a, Expression<'a>> {
+        let following_node = Some(FollowingNode::Expression({
+            let ptr = self.inner as *const _ as *const u8;
+            unsafe { &*(ptr.add(CONDITIONAL_EXPRESSION_OFFSET_ALTERNATE) as *const Expression<'a>) }
+        }));
         self.allocator.alloc(AstNode {
             inner: &self.inner.consequent,
             allocator: self.allocator,
             parent: self.allocator.alloc(AstNodes::ConditionalExpression(transmute_self(self))),
+            following_node,
         })
     }
 
     #[inline]
     pub fn alternate(&self) -> &AstNode<'a, Expression<'a>> {
+        let following_node = self.following_node.clone();
         self.allocator.alloc(AstNode {
             inner: &self.inner.alternate,
             allocator: self.allocator,
             parent: self.allocator.alloc(AstNodes::ConditionalExpression(transmute_self(self))),
+            following_node,
         })
-    }
-
-    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
-        let inner_ptr = unsafe { self.parent.inner_ptr() };
-        let offset =
-            unsafe { (self.inner as *const _ as *const u8).offset_from_unsigned(inner_ptr) };
-        match offset {
-            CONDITIONAL_EXPRESSION_OFFSET_TEST => Some(FollowingNode::Expression(unsafe {
-                &*(inner_ptr.add(CONDITIONAL_EXPRESSION_OFFSET_CONSEQUENT) as *const Expression<'a>)
-            })),
-            CONDITIONAL_EXPRESSION_OFFSET_CONSEQUENT => Some(FollowingNode::Expression(unsafe {
-                &*(inner_ptr.add(CONDITIONAL_EXPRESSION_OFFSET_ALTERNATE) as *const Expression<'a>)
-            })),
-            CONDITIONAL_EXPRESSION_OFFSET_ALTERNATE => None,
-            _ => panic!("Invalid field offset: {}", offset),
-        }
     }
 }
 
@@ -2969,33 +2844,27 @@ impl<'a> AstNode<'a, AssignmentExpression<'a>> {
 
     #[inline]
     pub fn left(&self) -> &AstNode<'a, AssignmentTarget<'a>> {
+        let following_node = Some(FollowingNode::Expression({
+            let ptr = self.inner as *const _ as *const u8;
+            unsafe { &*(ptr.add(ASSIGNMENT_EXPRESSION_OFFSET_RIGHT) as *const Expression<'a>) }
+        }));
         self.allocator.alloc(AstNode {
             inner: &self.inner.left,
             allocator: self.allocator,
             parent: self.allocator.alloc(AstNodes::AssignmentExpression(transmute_self(self))),
+            following_node,
         })
     }
 
     #[inline]
     pub fn right(&self) -> &AstNode<'a, Expression<'a>> {
+        let following_node = self.following_node.clone();
         self.allocator.alloc(AstNode {
             inner: &self.inner.right,
             allocator: self.allocator,
             parent: self.allocator.alloc(AstNodes::AssignmentExpression(transmute_self(self))),
+            following_node,
         })
-    }
-
-    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
-        let inner_ptr = unsafe { self.parent.inner_ptr() };
-        let offset =
-            unsafe { (self.inner as *const _ as *const u8).offset_from_unsigned(inner_ptr) };
-        match offset {
-            ASSIGNMENT_EXPRESSION_OFFSET_LEFT => Some(FollowingNode::Expression(unsafe {
-                &*(inner_ptr.add(ASSIGNMENT_EXPRESSION_OFFSET_RIGHT) as *const Expression<'a>)
-            })),
-            ASSIGNMENT_EXPRESSION_OFFSET_RIGHT => None,
-            _ => panic!("Invalid field offset: {}", offset),
-        }
     }
 }
 
@@ -3009,6 +2878,7 @@ impl<'a> AstNode<'a, AssignmentTarget<'a>> {
                     inner: it.to_simple_assignment_target(),
                     parent,
                     allocator: self.allocator,
+                    following_node: self.following_node.clone(),
                 }))
             }
             it @ match_assignment_target_pattern!(AssignmentTarget) => {
@@ -3016,6 +2886,7 @@ impl<'a> AstNode<'a, AssignmentTarget<'a>> {
                     inner: it.to_assignment_target_pattern(),
                     parent,
                     allocator: self.allocator,
+                    following_node: self.following_node.clone(),
                 }))
             }
         };
@@ -3040,6 +2911,7 @@ impl<'a> AstNode<'a, SimpleAssignmentTarget<'a>> {
                     inner: s.as_ref(),
                     parent,
                     allocator: self.allocator,
+                    following_node: self.following_node.clone(),
                 }))
             }
             SimpleAssignmentTarget::TSAsExpression(s) => {
@@ -3047,6 +2919,7 @@ impl<'a> AstNode<'a, SimpleAssignmentTarget<'a>> {
                     inner: s.as_ref(),
                     parent,
                     allocator: self.allocator,
+                    following_node: self.following_node.clone(),
                 }))
             }
             SimpleAssignmentTarget::TSSatisfiesExpression(s) => {
@@ -3054,6 +2927,7 @@ impl<'a> AstNode<'a, SimpleAssignmentTarget<'a>> {
                     inner: s.as_ref(),
                     parent,
                     allocator: self.allocator,
+                    following_node: self.following_node.clone(),
                 }))
             }
             SimpleAssignmentTarget::TSNonNullExpression(s) => {
@@ -3061,6 +2935,7 @@ impl<'a> AstNode<'a, SimpleAssignmentTarget<'a>> {
                     inner: s.as_ref(),
                     parent,
                     allocator: self.allocator,
+                    following_node: self.following_node.clone(),
                 }))
             }
             SimpleAssignmentTarget::TSTypeAssertion(s) => {
@@ -3068,6 +2943,7 @@ impl<'a> AstNode<'a, SimpleAssignmentTarget<'a>> {
                     inner: s.as_ref(),
                     parent,
                     allocator: self.allocator,
+                    following_node: self.following_node.clone(),
                 }))
             }
             it @ match_member_expression!(SimpleAssignmentTarget) => {
@@ -3075,6 +2951,7 @@ impl<'a> AstNode<'a, SimpleAssignmentTarget<'a>> {
                     inner: it.to_member_expression(),
                     parent,
                     allocator: self.allocator,
+                    following_node: self.following_node.clone(),
                 }))
             }
         };
@@ -3099,6 +2976,7 @@ impl<'a> AstNode<'a, AssignmentTargetPattern<'a>> {
                     inner: s.as_ref(),
                     parent,
                     allocator: self.allocator,
+                    following_node: self.following_node.clone(),
                 }))
             }
             AssignmentTargetPattern::ObjectAssignmentTarget(s) => {
@@ -3106,6 +2984,7 @@ impl<'a> AstNode<'a, AssignmentTargetPattern<'a>> {
                     inner: s.as_ref(),
                     parent,
                     allocator: self.allocator,
+                    following_node: self.following_node.clone(),
                 }))
             }
         };
@@ -3131,32 +3010,26 @@ impl<'a> AstNode<'a, ArrayAssignmentTarget<'a>> {
 
     #[inline]
     pub fn elements(&self) -> &AstNode<'a, Vec<'a, Option<AssignmentTargetMaybeDefault<'a>>>> {
+        let following_node = self.following_node.clone();
         self.allocator.alloc(AstNode {
             inner: &self.inner.elements,
             allocator: self.allocator,
             parent: self.allocator.alloc(AstNodes::ArrayAssignmentTarget(transmute_self(self))),
+            following_node,
         })
     }
 
     #[inline]
     pub fn rest(&self) -> Option<&AstNode<'a, AssignmentTargetRest<'a>>> {
+        let following_node = self.following_node.clone();
         self.allocator
             .alloc(self.inner.rest.as_ref().map(|inner| AstNode {
                 inner,
                 allocator: self.allocator,
                 parent: self.allocator.alloc(AstNodes::ArrayAssignmentTarget(transmute_self(self))),
+                following_node,
             }))
             .as_ref()
-    }
-
-    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
-        let inner_ptr = unsafe { self.parent.inner_ptr() };
-        let offset =
-            unsafe { (self.inner as *const _ as *const u8).offset_from_unsigned(inner_ptr) };
-        match offset {
-            ARRAY_ASSIGNMENT_TARGET_OFFSET_REST => None,
-            _ => panic!("Invalid field offset: {}", offset),
-        }
     }
 }
 
@@ -3173,39 +3046,35 @@ impl<'a> AstNode<'a, ObjectAssignmentTarget<'a>> {
 
     #[inline]
     pub fn properties(&self) -> &AstNode<'a, Vec<'a, AssignmentTargetProperty<'a>>> {
+        let following_node = ({
+            let ptr = self.inner as *const _ as *const u8;
+            unsafe {
+                &*(ptr.add(OBJECT_ASSIGNMENT_TARGET_OFFSET_REST)
+                    as *const Option<AssignmentTargetRest<'a>>)
+            }
+        })
+        .as_ref()
+        .map(FollowingNode::AssignmentTargetRest);
         self.allocator.alloc(AstNode {
             inner: &self.inner.properties,
             allocator: self.allocator,
             parent: self.allocator.alloc(AstNodes::ObjectAssignmentTarget(transmute_self(self))),
+            following_node,
         })
     }
 
     #[inline]
     pub fn rest(&self) -> Option<&AstNode<'a, AssignmentTargetRest<'a>>> {
+        let following_node = self.following_node.clone();
         self.allocator
             .alloc(self.inner.rest.as_ref().map(|inner| AstNode {
                 inner,
                 allocator: self.allocator,
                 parent:
                     self.allocator.alloc(AstNodes::ObjectAssignmentTarget(transmute_self(self))),
+                following_node,
             }))
             .as_ref()
-    }
-
-    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
-        let inner_ptr = unsafe { self.parent.inner_ptr() };
-        let offset =
-            unsafe { (self.inner as *const _ as *const u8).offset_from_unsigned(inner_ptr) };
-        match offset {
-            OBJECT_ASSIGNMENT_TARGET_OFFSET_PROPERTIES => (unsafe {
-                &*(inner_ptr.add(OBJECT_ASSIGNMENT_TARGET_OFFSET_REST)
-                    as *const Option<AssignmentTargetRest<'a>>)
-            })
-            .as_ref()
-            .map(FollowingNode::AssignmentTargetRest),
-            OBJECT_ASSIGNMENT_TARGET_OFFSET_REST => None,
-            _ => panic!("Invalid field offset: {}", offset),
-        }
     }
 }
 
@@ -3220,21 +3089,13 @@ impl<'a> AstNode<'a, AssignmentTargetRest<'a>> {
 
     #[inline]
     pub fn target(&self) -> &AstNode<'a, AssignmentTarget<'a>> {
+        let following_node = self.following_node.clone();
         self.allocator.alloc(AstNode {
             inner: &self.inner.target,
             allocator: self.allocator,
             parent: self.parent,
+            following_node,
         })
-    }
-
-    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
-        let inner_ptr = unsafe { self.parent.inner_ptr() };
-        let offset =
-            unsafe { (self.inner as *const _ as *const u8).offset_from_unsigned(inner_ptr) };
-        match offset {
-            ASSIGNMENT_TARGET_REST_OFFSET_TARGET => None,
-            _ => panic!("Invalid field offset: {}", offset),
-        }
     }
 }
 
@@ -3248,6 +3109,7 @@ impl<'a> AstNode<'a, AssignmentTargetMaybeDefault<'a>> {
                     inner: s.as_ref(),
                     parent,
                     allocator: self.allocator,
+                    following_node: self.following_node.clone(),
                 }))
             }
             it @ match_assignment_target!(AssignmentTargetMaybeDefault) => {
@@ -3255,6 +3117,7 @@ impl<'a> AstNode<'a, AssignmentTargetMaybeDefault<'a>> {
                     inner: it.to_assignment_target(),
                     parent,
                     allocator: self.allocator,
+                    following_node: self.following_node.clone(),
                 }))
             }
         };
@@ -3282,40 +3145,33 @@ impl<'a> AstNode<'a, AssignmentTargetWithDefault<'a>> {
 
     #[inline]
     pub fn binding(&self) -> &AstNode<'a, AssignmentTarget<'a>> {
+        let following_node = Some(FollowingNode::Expression({
+            let ptr = self.inner as *const _ as *const u8;
+            unsafe {
+                &*(ptr.add(ASSIGNMENT_TARGET_WITH_DEFAULT_OFFSET_INIT) as *const Expression<'a>)
+            }
+        }));
         self.allocator.alloc(AstNode {
             inner: &self.inner.binding,
             allocator: self.allocator,
             parent: self
                 .allocator
                 .alloc(AstNodes::AssignmentTargetWithDefault(transmute_self(self))),
+            following_node,
         })
     }
 
     #[inline]
     pub fn init(&self) -> &AstNode<'a, Expression<'a>> {
+        let following_node = self.following_node.clone();
         self.allocator.alloc(AstNode {
             inner: &self.inner.init,
             allocator: self.allocator,
             parent: self
                 .allocator
                 .alloc(AstNodes::AssignmentTargetWithDefault(transmute_self(self))),
+            following_node,
         })
-    }
-
-    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
-        let inner_ptr = unsafe { self.parent.inner_ptr() };
-        let offset =
-            unsafe { (self.inner as *const _ as *const u8).offset_from_unsigned(inner_ptr) };
-        match offset {
-            ASSIGNMENT_TARGET_WITH_DEFAULT_OFFSET_BINDING => {
-                Some(FollowingNode::Expression(unsafe {
-                    &*(inner_ptr.add(ASSIGNMENT_TARGET_WITH_DEFAULT_OFFSET_INIT)
-                        as *const Expression<'a>)
-                }))
-            }
-            ASSIGNMENT_TARGET_WITH_DEFAULT_OFFSET_INIT => None,
-            _ => panic!("Invalid field offset: {}", offset),
-        }
     }
 }
 
@@ -3359,38 +3215,34 @@ impl<'a> AstNode<'a, AssignmentTargetPropertyIdentifier<'a>> {
 
     #[inline]
     pub fn binding(&self) -> &AstNode<'a, IdentifierReference<'a>> {
+        let following_node = ({
+            let ptr = self.inner as *const _ as *const u8;
+            unsafe {
+                &*(ptr.add(ASSIGNMENT_TARGET_PROPERTY_IDENTIFIER_OFFSET_INIT)
+                    as *const Option<Expression<'a>>)
+            }
+        })
+        .as_ref()
+        .map(FollowingNode::Expression);
         self.allocator.alloc(AstNode {
             inner: &self.inner.binding,
             allocator: self.allocator,
             parent: self.parent,
+            following_node,
         })
     }
 
     #[inline]
     pub fn init(&self) -> Option<&AstNode<'a, Expression<'a>>> {
+        let following_node = self.following_node.clone();
         self.allocator
             .alloc(self.inner.init.as_ref().map(|inner| AstNode {
                 inner,
                 allocator: self.allocator,
                 parent: self.parent,
+                following_node,
             }))
             .as_ref()
-    }
-
-    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
-        let inner_ptr = unsafe { self.parent.inner_ptr() };
-        let offset =
-            unsafe { (self.inner as *const _ as *const u8).offset_from_unsigned(inner_ptr) };
-        match offset {
-            ASSIGNMENT_TARGET_PROPERTY_IDENTIFIER_OFFSET_BINDING => (unsafe {
-                &*(inner_ptr.add(ASSIGNMENT_TARGET_PROPERTY_IDENTIFIER_OFFSET_INIT)
-                    as *const Option<Expression<'a>>)
-            })
-            .as_ref()
-            .map(FollowingNode::Expression),
-            ASSIGNMENT_TARGET_PROPERTY_IDENTIFIER_OFFSET_INIT => None,
-            _ => panic!("Invalid field offset: {}", offset),
-        }
     }
 }
 
@@ -3407,41 +3259,35 @@ impl<'a> AstNode<'a, AssignmentTargetPropertyProperty<'a>> {
 
     #[inline]
     pub fn name(&self) -> &AstNode<'a, PropertyKey<'a>> {
+        let following_node = Some(FollowingNode::AssignmentTargetMaybeDefault({
+            let ptr = self.inner as *const _ as *const u8;
+            unsafe {
+                &*(ptr.add(ASSIGNMENT_TARGET_PROPERTY_PROPERTY_OFFSET_BINDING)
+                    as *const AssignmentTargetMaybeDefault<'a>)
+            }
+        }));
         self.allocator.alloc(AstNode {
             inner: &self.inner.name,
             allocator: self.allocator,
             parent: self.parent,
+            following_node,
         })
     }
 
     #[inline]
     pub fn binding(&self) -> &AstNode<'a, AssignmentTargetMaybeDefault<'a>> {
+        let following_node = self.following_node.clone();
         self.allocator.alloc(AstNode {
             inner: &self.inner.binding,
             allocator: self.allocator,
             parent: self.parent,
+            following_node,
         })
     }
 
     #[inline]
     pub fn computed(&self) -> bool {
         self.inner.computed
-    }
-
-    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
-        let inner_ptr = unsafe { self.parent.inner_ptr() };
-        let offset =
-            unsafe { (self.inner as *const _ as *const u8).offset_from_unsigned(inner_ptr) };
-        match offset {
-            ASSIGNMENT_TARGET_PROPERTY_PROPERTY_OFFSET_NAME => {
-                Some(FollowingNode::AssignmentTargetMaybeDefault(unsafe {
-                    &*(inner_ptr.add(ASSIGNMENT_TARGET_PROPERTY_PROPERTY_OFFSET_BINDING)
-                        as *const AssignmentTargetMaybeDefault<'a>)
-                }))
-            }
-            ASSIGNMENT_TARGET_PROPERTY_PROPERTY_OFFSET_BINDING => None,
-            _ => panic!("Invalid field offset: {}", offset),
-        }
     }
 }
 
@@ -3456,21 +3302,13 @@ impl<'a> AstNode<'a, SequenceExpression<'a>> {
 
     #[inline]
     pub fn expressions(&self) -> &AstNode<'a, Vec<'a, Expression<'a>>> {
+        let following_node = self.following_node.clone();
         self.allocator.alloc(AstNode {
             inner: &self.inner.expressions,
             allocator: self.allocator,
             parent: self.allocator.alloc(AstNodes::SequenceExpression(transmute_self(self))),
+            following_node,
         })
-    }
-
-    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
-        let inner_ptr = unsafe { self.parent.inner_ptr() };
-        let offset =
-            unsafe { (self.inner as *const _ as *const u8).offset_from_unsigned(inner_ptr) };
-        match offset {
-            SEQUENCE_EXPRESSION_OFFSET_EXPRESSIONS => None,
-            _ => panic!("Invalid field offset: {}", offset),
-        }
     }
 }
 
@@ -3478,10 +3316,6 @@ impl<'a> AstNode<'a, Super> {
     #[inline]
     pub fn span(&self) -> Span {
         self.inner.span
-    }
-
-    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
-        None
     }
 }
 
@@ -3495,21 +3329,13 @@ impl<'a> AstNode<'a, AwaitExpression<'a>> {
 
     #[inline]
     pub fn argument(&self) -> &AstNode<'a, Expression<'a>> {
+        let following_node = self.following_node.clone();
         self.allocator.alloc(AstNode {
             inner: &self.inner.argument,
             allocator: self.allocator,
             parent: self.allocator.alloc(AstNodes::AwaitExpression(transmute_self(self))),
+            following_node,
         })
-    }
-
-    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
-        let inner_ptr = unsafe { self.parent.inner_ptr() };
-        let offset =
-            unsafe { (self.inner as *const _ as *const u8).offset_from_unsigned(inner_ptr) };
-        match offset {
-            AWAIT_EXPRESSION_OFFSET_ARGUMENT => None,
-            _ => panic!("Invalid field offset: {}", offset),
-        }
     }
 }
 
@@ -3523,21 +3349,13 @@ impl<'a> AstNode<'a, ChainExpression<'a>> {
 
     #[inline]
     pub fn expression(&self) -> &AstNode<'a, ChainElement<'a>> {
+        let following_node = self.following_node.clone();
         self.allocator.alloc(AstNode {
             inner: &self.inner.expression,
             allocator: self.allocator,
             parent: self.allocator.alloc(AstNodes::ChainExpression(transmute_self(self))),
+            following_node,
         })
-    }
-
-    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
-        let inner_ptr = unsafe { self.parent.inner_ptr() };
-        let offset =
-            unsafe { (self.inner as *const _ as *const u8).offset_from_unsigned(inner_ptr) };
-        match offset {
-            CHAIN_EXPRESSION_OFFSET_EXPRESSION => None,
-            _ => panic!("Invalid field offset: {}", offset),
-        }
     }
 }
 
@@ -3551,6 +3369,7 @@ impl<'a> AstNode<'a, ChainElement<'a>> {
                     inner: s.as_ref(),
                     parent,
                     allocator: self.allocator,
+                    following_node: self.following_node.clone(),
                 }))
             }
             ChainElement::TSNonNullExpression(s) => {
@@ -3558,6 +3377,7 @@ impl<'a> AstNode<'a, ChainElement<'a>> {
                     inner: s.as_ref(),
                     parent,
                     allocator: self.allocator,
+                    following_node: self.following_node.clone(),
                 }))
             }
             it @ match_member_expression!(ChainElement) => {
@@ -3565,6 +3385,7 @@ impl<'a> AstNode<'a, ChainElement<'a>> {
                     inner: it.to_member_expression(),
                     parent,
                     allocator: self.allocator,
+                    following_node: self.following_node.clone(),
                 }))
             }
         };
@@ -3590,21 +3411,13 @@ impl<'a> AstNode<'a, ParenthesizedExpression<'a>> {
 
     #[inline]
     pub fn expression(&self) -> &AstNode<'a, Expression<'a>> {
+        let following_node = self.following_node.clone();
         self.allocator.alloc(AstNode {
             inner: &self.inner.expression,
             allocator: self.allocator,
             parent: self.allocator.alloc(AstNodes::ParenthesizedExpression(transmute_self(self))),
+            following_node,
         })
-    }
-
-    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
-        let inner_ptr = unsafe { self.parent.inner_ptr() };
-        let offset =
-            unsafe { (self.inner as *const _ as *const u8).offset_from_unsigned(inner_ptr) };
-        match offset {
-            PARENTHESIZED_EXPRESSION_OFFSET_EXPRESSION => None,
-            _ => panic!("Invalid field offset: {}", offset),
-        }
     }
 }
 
@@ -3618,6 +3431,7 @@ impl<'a> AstNode<'a, Statement<'a>> {
                     inner: s.as_ref(),
                     parent,
                     allocator: self.allocator,
+                    following_node: self.following_node.clone(),
                 }))
             }
             Statement::BreakStatement(s) => {
@@ -3625,6 +3439,7 @@ impl<'a> AstNode<'a, Statement<'a>> {
                     inner: s.as_ref(),
                     parent,
                     allocator: self.allocator,
+                    following_node: self.following_node.clone(),
                 }))
             }
             Statement::ContinueStatement(s) => {
@@ -3632,6 +3447,7 @@ impl<'a> AstNode<'a, Statement<'a>> {
                     inner: s.as_ref(),
                     parent,
                     allocator: self.allocator,
+                    following_node: self.following_node.clone(),
                 }))
             }
             Statement::DebuggerStatement(s) => {
@@ -3639,6 +3455,7 @@ impl<'a> AstNode<'a, Statement<'a>> {
                     inner: s.as_ref(),
                     parent,
                     allocator: self.allocator,
+                    following_node: self.following_node.clone(),
                 }))
             }
             Statement::DoWhileStatement(s) => {
@@ -3646,6 +3463,7 @@ impl<'a> AstNode<'a, Statement<'a>> {
                     inner: s.as_ref(),
                     parent,
                     allocator: self.allocator,
+                    following_node: self.following_node.clone(),
                 }))
             }
             Statement::EmptyStatement(s) => {
@@ -3653,6 +3471,7 @@ impl<'a> AstNode<'a, Statement<'a>> {
                     inner: s.as_ref(),
                     parent,
                     allocator: self.allocator,
+                    following_node: self.following_node.clone(),
                 }))
             }
             Statement::ExpressionStatement(s) => {
@@ -3660,6 +3479,7 @@ impl<'a> AstNode<'a, Statement<'a>> {
                     inner: s.as_ref(),
                     parent,
                     allocator: self.allocator,
+                    following_node: self.following_node.clone(),
                 }))
             }
             Statement::ForInStatement(s) => {
@@ -3667,6 +3487,7 @@ impl<'a> AstNode<'a, Statement<'a>> {
                     inner: s.as_ref(),
                     parent,
                     allocator: self.allocator,
+                    following_node: self.following_node.clone(),
                 }))
             }
             Statement::ForOfStatement(s) => {
@@ -3674,23 +3495,27 @@ impl<'a> AstNode<'a, Statement<'a>> {
                     inner: s.as_ref(),
                     parent,
                     allocator: self.allocator,
+                    following_node: self.following_node.clone(),
                 }))
             }
             Statement::ForStatement(s) => AstNodes::ForStatement(self.allocator.alloc(AstNode {
                 inner: s.as_ref(),
                 parent,
                 allocator: self.allocator,
+                following_node: self.following_node.clone(),
             })),
             Statement::IfStatement(s) => AstNodes::IfStatement(self.allocator.alloc(AstNode {
                 inner: s.as_ref(),
                 parent,
                 allocator: self.allocator,
+                following_node: self.following_node.clone(),
             })),
             Statement::LabeledStatement(s) => {
                 AstNodes::LabeledStatement(self.allocator.alloc(AstNode {
                     inner: s.as_ref(),
                     parent,
                     allocator: self.allocator,
+                    following_node: self.following_node.clone(),
                 }))
             }
             Statement::ReturnStatement(s) => {
@@ -3698,6 +3523,7 @@ impl<'a> AstNode<'a, Statement<'a>> {
                     inner: s.as_ref(),
                     parent,
                     allocator: self.allocator,
+                    following_node: self.following_node.clone(),
                 }))
             }
             Statement::SwitchStatement(s) => {
@@ -3705,6 +3531,7 @@ impl<'a> AstNode<'a, Statement<'a>> {
                     inner: s.as_ref(),
                     parent,
                     allocator: self.allocator,
+                    following_node: self.following_node.clone(),
                 }))
             }
             Statement::ThrowStatement(s) => {
@@ -3712,24 +3539,28 @@ impl<'a> AstNode<'a, Statement<'a>> {
                     inner: s.as_ref(),
                     parent,
                     allocator: self.allocator,
+                    following_node: self.following_node.clone(),
                 }))
             }
             Statement::TryStatement(s) => AstNodes::TryStatement(self.allocator.alloc(AstNode {
                 inner: s.as_ref(),
                 parent,
                 allocator: self.allocator,
+                following_node: self.following_node.clone(),
             })),
             Statement::WhileStatement(s) => {
                 AstNodes::WhileStatement(self.allocator.alloc(AstNode {
                     inner: s.as_ref(),
                     parent,
                     allocator: self.allocator,
+                    following_node: self.following_node.clone(),
                 }))
             }
             Statement::WithStatement(s) => AstNodes::WithStatement(self.allocator.alloc(AstNode {
                 inner: s.as_ref(),
                 parent,
                 allocator: self.allocator,
+                following_node: self.following_node.clone(),
             })),
             it @ match_declaration!(Statement) => {
                 return self
@@ -3738,6 +3569,7 @@ impl<'a> AstNode<'a, Statement<'a>> {
                         inner: it.to_declaration(),
                         parent,
                         allocator: self.allocator,
+                        following_node: self.following_node.clone(),
                     })
                     .as_ast_nodes();
             }
@@ -3746,6 +3578,7 @@ impl<'a> AstNode<'a, Statement<'a>> {
                     inner: it.to_module_declaration(),
                     parent,
                     allocator: self.allocator,
+                    following_node: self.following_node.clone(),
                 }))
             }
         };
@@ -3770,26 +3603,18 @@ impl<'a> AstNode<'a, Directive<'a>> {
 
     #[inline]
     pub fn expression(&self) -> &AstNode<'a, StringLiteral<'a>> {
+        let following_node = self.following_node.clone();
         self.allocator.alloc(AstNode {
             inner: &self.inner.expression,
             allocator: self.allocator,
             parent: self.allocator.alloc(AstNodes::Directive(transmute_self(self))),
+            following_node,
         })
     }
 
     #[inline]
     pub fn directive(&self) -> Atom<'a> {
         self.inner.directive
-    }
-
-    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
-        let inner_ptr = unsafe { self.parent.inner_ptr() };
-        let offset =
-            unsafe { (self.inner as *const _ as *const u8).offset_from_unsigned(inner_ptr) };
-        match offset {
-            DIRECTIVE_OFFSET_EXPRESSION => None,
-            _ => panic!("Invalid field offset: {}", offset),
-        }
     }
 }
 
@@ -3803,10 +3628,6 @@ impl<'a> AstNode<'a, Hashbang<'a>> {
     pub fn value(&self) -> Atom<'a> {
         self.inner.value
     }
-
-    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
-        None
-    }
 }
 
 const BLOCK_STATEMENT_OFFSET_BODY: usize = std::mem::offset_of!(BlockStatement, body);
@@ -3819,21 +3640,13 @@ impl<'a> AstNode<'a, BlockStatement<'a>> {
 
     #[inline]
     pub fn body(&self) -> &AstNode<'a, Vec<'a, Statement<'a>>> {
+        let following_node = self.following_node.clone();
         self.allocator.alloc(AstNode {
             inner: &self.inner.body,
             allocator: self.allocator,
             parent: self.allocator.alloc(AstNodes::BlockStatement(transmute_self(self))),
+            following_node,
         })
-    }
-
-    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
-        let inner_ptr = unsafe { self.parent.inner_ptr() };
-        let offset =
-            unsafe { (self.inner as *const _ as *const u8).offset_from_unsigned(inner_ptr) };
-        match offset {
-            BLOCK_STATEMENT_OFFSET_BODY => None,
-            _ => panic!("Invalid field offset: {}", offset),
-        }
     }
 }
 
@@ -3847,6 +3660,7 @@ impl<'a> AstNode<'a, Declaration<'a>> {
                     inner: s.as_ref(),
                     parent,
                     allocator: self.allocator,
+                    following_node: self.following_node.clone(),
                 }))
             }
             Declaration::FunctionDeclaration(s) => {
@@ -3854,18 +3668,21 @@ impl<'a> AstNode<'a, Declaration<'a>> {
                     inner: s.as_ref(),
                     parent,
                     allocator: self.allocator,
+                    following_node: self.following_node.clone(),
                 }))
             }
             Declaration::ClassDeclaration(s) => AstNodes::Class(self.allocator.alloc(AstNode {
                 inner: s.as_ref(),
                 parent,
                 allocator: self.allocator,
+                following_node: self.following_node.clone(),
             })),
             Declaration::TSTypeAliasDeclaration(s) => {
                 AstNodes::TSTypeAliasDeclaration(self.allocator.alloc(AstNode {
                     inner: s.as_ref(),
                     parent,
                     allocator: self.allocator,
+                    following_node: self.following_node.clone(),
                 }))
             }
             Declaration::TSInterfaceDeclaration(s) => {
@@ -3873,6 +3690,7 @@ impl<'a> AstNode<'a, Declaration<'a>> {
                     inner: s.as_ref(),
                     parent,
                     allocator: self.allocator,
+                    following_node: self.following_node.clone(),
                 }))
             }
             Declaration::TSEnumDeclaration(s) => {
@@ -3880,6 +3698,7 @@ impl<'a> AstNode<'a, Declaration<'a>> {
                     inner: s.as_ref(),
                     parent,
                     allocator: self.allocator,
+                    following_node: self.following_node.clone(),
                 }))
             }
             Declaration::TSModuleDeclaration(s) => {
@@ -3887,6 +3706,7 @@ impl<'a> AstNode<'a, Declaration<'a>> {
                     inner: s.as_ref(),
                     parent,
                     allocator: self.allocator,
+                    following_node: self.following_node.clone(),
                 }))
             }
             Declaration::TSImportEqualsDeclaration(s) => {
@@ -3894,6 +3714,7 @@ impl<'a> AstNode<'a, Declaration<'a>> {
                     inner: s.as_ref(),
                     parent,
                     allocator: self.allocator,
+                    following_node: self.following_node.clone(),
                 }))
             }
         };
@@ -3924,26 +3745,18 @@ impl<'a> AstNode<'a, VariableDeclaration<'a>> {
 
     #[inline]
     pub fn declarations(&self) -> &AstNode<'a, Vec<'a, VariableDeclarator<'a>>> {
+        let following_node = self.following_node.clone();
         self.allocator.alloc(AstNode {
             inner: &self.inner.declarations,
             allocator: self.allocator,
             parent: self.allocator.alloc(AstNodes::VariableDeclaration(transmute_self(self))),
+            following_node,
         })
     }
 
     #[inline]
     pub fn declare(&self) -> bool {
         self.inner.declare
-    }
-
-    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
-        let inner_ptr = unsafe { self.parent.inner_ptr() };
-        let offset =
-            unsafe { (self.inner as *const _ as *const u8).offset_from_unsigned(inner_ptr) };
-        match offset {
-            VARIABLE_DECLARATION_OFFSET_DECLARATIONS => None,
-            _ => panic!("Invalid field offset: {}", offset),
-        }
     }
 }
 
@@ -3963,20 +3776,29 @@ impl<'a> AstNode<'a, VariableDeclarator<'a>> {
 
     #[inline]
     pub fn id(&self) -> &AstNode<'a, BindingPattern<'a>> {
+        let following_node = ({
+            let ptr = self.inner as *const _ as *const u8;
+            unsafe { &*(ptr.add(VARIABLE_DECLARATOR_OFFSET_INIT) as *const Option<Expression<'a>>) }
+        })
+        .as_ref()
+        .map(FollowingNode::Expression);
         self.allocator.alloc(AstNode {
             inner: &self.inner.id,
             allocator: self.allocator,
             parent: self.allocator.alloc(AstNodes::VariableDeclarator(transmute_self(self))),
+            following_node,
         })
     }
 
     #[inline]
     pub fn init(&self) -> Option<&AstNode<'a, Expression<'a>>> {
+        let following_node = self.following_node.clone();
         self.allocator
             .alloc(self.inner.init.as_ref().map(|inner| AstNode {
                 inner,
                 allocator: self.allocator,
                 parent: self.allocator.alloc(AstNodes::VariableDeclarator(transmute_self(self))),
+                following_node,
             }))
             .as_ref()
     }
@@ -3985,31 +3807,12 @@ impl<'a> AstNode<'a, VariableDeclarator<'a>> {
     pub fn definite(&self) -> bool {
         self.inner.definite
     }
-
-    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
-        let inner_ptr = unsafe { self.parent.inner_ptr() };
-        let offset =
-            unsafe { (self.inner as *const _ as *const u8).offset_from_unsigned(inner_ptr) };
-        match offset {
-            VARIABLE_DECLARATOR_OFFSET_ID => (unsafe {
-                &*(inner_ptr.add(VARIABLE_DECLARATOR_OFFSET_INIT) as *const Option<Expression<'a>>)
-            })
-            .as_ref()
-            .map(FollowingNode::Expression),
-            VARIABLE_DECLARATOR_OFFSET_INIT => None,
-            _ => panic!("Invalid field offset: {}", offset),
-        }
-    }
 }
 
 impl<'a> AstNode<'a, EmptyStatement> {
     #[inline]
     pub fn span(&self) -> Span {
         self.inner.span
-    }
-
-    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
-        None
     }
 }
 
@@ -4024,21 +3827,13 @@ impl<'a> AstNode<'a, ExpressionStatement<'a>> {
 
     #[inline]
     pub fn expression(&self) -> &AstNode<'a, Expression<'a>> {
+        let following_node = self.following_node.clone();
         self.allocator.alloc(AstNode {
             inner: &self.inner.expression,
             allocator: self.allocator,
             parent: self.allocator.alloc(AstNodes::ExpressionStatement(transmute_self(self))),
+            following_node,
         })
-    }
-
-    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
-        let inner_ptr = unsafe { self.parent.inner_ptr() };
-        let offset =
-            unsafe { (self.inner as *const _ as *const u8).offset_from_unsigned(inner_ptr) };
-        match offset {
-            EXPRESSION_STATEMENT_OFFSET_EXPRESSION => None,
-            _ => panic!("Invalid field offset: {}", offset),
-        }
     }
 }
 
@@ -4054,49 +3849,45 @@ impl<'a> AstNode<'a, IfStatement<'a>> {
 
     #[inline]
     pub fn test(&self) -> &AstNode<'a, Expression<'a>> {
+        let following_node = Some(FollowingNode::Statement({
+            let ptr = self.inner as *const _ as *const u8;
+            unsafe { &*(ptr.add(IF_STATEMENT_OFFSET_CONSEQUENT) as *const Statement<'a>) }
+        }));
         self.allocator.alloc(AstNode {
             inner: &self.inner.test,
             allocator: self.allocator,
             parent: self.allocator.alloc(AstNodes::IfStatement(transmute_self(self))),
+            following_node,
         })
     }
 
     #[inline]
     pub fn consequent(&self) -> &AstNode<'a, Statement<'a>> {
+        let following_node = ({
+            let ptr = self.inner as *const _ as *const u8;
+            unsafe { &*(ptr.add(IF_STATEMENT_OFFSET_ALTERNATE) as *const Option<Statement<'a>>) }
+        })
+        .as_ref()
+        .map(FollowingNode::Statement);
         self.allocator.alloc(AstNode {
             inner: &self.inner.consequent,
             allocator: self.allocator,
             parent: self.allocator.alloc(AstNodes::IfStatement(transmute_self(self))),
+            following_node,
         })
     }
 
     #[inline]
     pub fn alternate(&self) -> Option<&AstNode<'a, Statement<'a>>> {
+        let following_node = self.following_node.clone();
         self.allocator
             .alloc(self.inner.alternate.as_ref().map(|inner| AstNode {
                 inner,
                 allocator: self.allocator,
                 parent: self.allocator.alloc(AstNodes::IfStatement(transmute_self(self))),
+                following_node,
             }))
             .as_ref()
-    }
-
-    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
-        let inner_ptr = unsafe { self.parent.inner_ptr() };
-        let offset =
-            unsafe { (self.inner as *const _ as *const u8).offset_from_unsigned(inner_ptr) };
-        match offset {
-            IF_STATEMENT_OFFSET_TEST => Some(FollowingNode::Statement(unsafe {
-                &*(inner_ptr.add(IF_STATEMENT_OFFSET_CONSEQUENT) as *const Statement<'a>)
-            })),
-            IF_STATEMENT_OFFSET_CONSEQUENT => (unsafe {
-                &*(inner_ptr.add(IF_STATEMENT_OFFSET_ALTERNATE) as *const Option<Statement<'a>>)
-            })
-            .as_ref()
-            .map(FollowingNode::Statement),
-            IF_STATEMENT_OFFSET_ALTERNATE => None,
-            _ => panic!("Invalid field offset: {}", offset),
-        }
     }
 }
 
@@ -4111,33 +3902,27 @@ impl<'a> AstNode<'a, DoWhileStatement<'a>> {
 
     #[inline]
     pub fn body(&self) -> &AstNode<'a, Statement<'a>> {
+        let following_node = Some(FollowingNode::Expression({
+            let ptr = self.inner as *const _ as *const u8;
+            unsafe { &*(ptr.add(DO_WHILE_STATEMENT_OFFSET_TEST) as *const Expression<'a>) }
+        }));
         self.allocator.alloc(AstNode {
             inner: &self.inner.body,
             allocator: self.allocator,
             parent: self.allocator.alloc(AstNodes::DoWhileStatement(transmute_self(self))),
+            following_node,
         })
     }
 
     #[inline]
     pub fn test(&self) -> &AstNode<'a, Expression<'a>> {
+        let following_node = self.following_node.clone();
         self.allocator.alloc(AstNode {
             inner: &self.inner.test,
             allocator: self.allocator,
             parent: self.allocator.alloc(AstNodes::DoWhileStatement(transmute_self(self))),
+            following_node,
         })
-    }
-
-    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
-        let inner_ptr = unsafe { self.parent.inner_ptr() };
-        let offset =
-            unsafe { (self.inner as *const _ as *const u8).offset_from_unsigned(inner_ptr) };
-        match offset {
-            DO_WHILE_STATEMENT_OFFSET_BODY => Some(FollowingNode::Expression(unsafe {
-                &*(inner_ptr.add(DO_WHILE_STATEMENT_OFFSET_TEST) as *const Expression<'a>)
-            })),
-            DO_WHILE_STATEMENT_OFFSET_TEST => None,
-            _ => panic!("Invalid field offset: {}", offset),
-        }
     }
 }
 
@@ -4152,33 +3937,27 @@ impl<'a> AstNode<'a, WhileStatement<'a>> {
 
     #[inline]
     pub fn test(&self) -> &AstNode<'a, Expression<'a>> {
+        let following_node = Some(FollowingNode::Statement({
+            let ptr = self.inner as *const _ as *const u8;
+            unsafe { &*(ptr.add(WHILE_STATEMENT_OFFSET_BODY) as *const Statement<'a>) }
+        }));
         self.allocator.alloc(AstNode {
             inner: &self.inner.test,
             allocator: self.allocator,
             parent: self.allocator.alloc(AstNodes::WhileStatement(transmute_self(self))),
+            following_node,
         })
     }
 
     #[inline]
     pub fn body(&self) -> &AstNode<'a, Statement<'a>> {
+        let following_node = self.following_node.clone();
         self.allocator.alloc(AstNode {
             inner: &self.inner.body,
             allocator: self.allocator,
             parent: self.allocator.alloc(AstNodes::WhileStatement(transmute_self(self))),
+            following_node,
         })
-    }
-
-    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
-        let inner_ptr = unsafe { self.parent.inner_ptr() };
-        let offset =
-            unsafe { (self.inner as *const _ as *const u8).offset_from_unsigned(inner_ptr) };
-        match offset {
-            WHILE_STATEMENT_OFFSET_TEST => Some(FollowingNode::Statement(unsafe {
-                &*(inner_ptr.add(WHILE_STATEMENT_OFFSET_BODY) as *const Statement<'a>)
-            })),
-            WHILE_STATEMENT_OFFSET_BODY => None,
-            _ => panic!("Invalid field offset: {}", offset),
-        }
     }
 }
 
@@ -4195,67 +3974,65 @@ impl<'a> AstNode<'a, ForStatement<'a>> {
 
     #[inline]
     pub fn init(&self) -> Option<&AstNode<'a, ForStatementInit<'a>>> {
+        let following_node = ({
+            let ptr = self.inner as *const _ as *const u8;
+            unsafe { &*(ptr.add(FOR_STATEMENT_OFFSET_TEST) as *const Option<Expression<'a>>) }
+        })
+        .as_ref()
+        .map(FollowingNode::Expression);
         self.allocator
             .alloc(self.inner.init.as_ref().map(|inner| AstNode {
                 inner,
                 allocator: self.allocator,
                 parent: self.allocator.alloc(AstNodes::ForStatement(transmute_self(self))),
+                following_node,
             }))
             .as_ref()
     }
 
     #[inline]
     pub fn test(&self) -> Option<&AstNode<'a, Expression<'a>>> {
+        let following_node = ({
+            let ptr = self.inner as *const _ as *const u8;
+            unsafe { &*(ptr.add(FOR_STATEMENT_OFFSET_UPDATE) as *const Option<Expression<'a>>) }
+        })
+        .as_ref()
+        .map(FollowingNode::Expression);
         self.allocator
             .alloc(self.inner.test.as_ref().map(|inner| AstNode {
                 inner,
                 allocator: self.allocator,
                 parent: self.allocator.alloc(AstNodes::ForStatement(transmute_self(self))),
+                following_node,
             }))
             .as_ref()
     }
 
     #[inline]
     pub fn update(&self) -> Option<&AstNode<'a, Expression<'a>>> {
+        let following_node = Some(FollowingNode::Statement({
+            let ptr = self.inner as *const _ as *const u8;
+            unsafe { &*(ptr.add(FOR_STATEMENT_OFFSET_BODY) as *const Statement<'a>) }
+        }));
         self.allocator
             .alloc(self.inner.update.as_ref().map(|inner| AstNode {
                 inner,
                 allocator: self.allocator,
                 parent: self.allocator.alloc(AstNodes::ForStatement(transmute_self(self))),
+                following_node,
             }))
             .as_ref()
     }
 
     #[inline]
     pub fn body(&self) -> &AstNode<'a, Statement<'a>> {
+        let following_node = self.following_node.clone();
         self.allocator.alloc(AstNode {
             inner: &self.inner.body,
             allocator: self.allocator,
             parent: self.allocator.alloc(AstNodes::ForStatement(transmute_self(self))),
+            following_node,
         })
-    }
-
-    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
-        let inner_ptr = unsafe { self.parent.inner_ptr() };
-        let offset =
-            unsafe { (self.inner as *const _ as *const u8).offset_from_unsigned(inner_ptr) };
-        match offset {
-            FOR_STATEMENT_OFFSET_INIT => (unsafe {
-                &*(inner_ptr.add(FOR_STATEMENT_OFFSET_TEST) as *const Option<Expression<'a>>)
-            })
-            .as_ref()
-            .map(FollowingNode::Expression),
-            FOR_STATEMENT_OFFSET_TEST => (unsafe {
-                &*(inner_ptr.add(FOR_STATEMENT_OFFSET_UPDATE) as *const Option<Expression<'a>>)
-            })
-            .as_ref()
-            .map(FollowingNode::Expression),
-            FOR_STATEMENT_OFFSET_UPDATE => Some(FollowingNode::Statement(unsafe {
-                &*(inner_ptr.add(FOR_STATEMENT_OFFSET_BODY) as *const Statement<'a>)
-            })),
-            FOR_STATEMENT_OFFSET_BODY => None,
-            _ => panic!("Invalid field offset: {}", offset),
-        }
     }
 }
 
@@ -4269,12 +4046,18 @@ impl<'a> AstNode<'a, ForStatementInit<'a>> {
                     inner: s.as_ref(),
                     parent,
                     allocator: self.allocator,
+                    following_node: self.following_node.clone(),
                 }))
             }
             it @ match_expression!(ForStatementInit) => {
                 return self
                     .allocator
-                    .alloc(AstNode { inner: it.to_expression(), parent, allocator: self.allocator })
+                    .alloc(AstNode {
+                        inner: it.to_expression(),
+                        parent,
+                        allocator: self.allocator,
+                        following_node: self.following_node.clone(),
+                    })
                     .as_ast_nodes();
             }
         };
@@ -4301,45 +4084,41 @@ impl<'a> AstNode<'a, ForInStatement<'a>> {
 
     #[inline]
     pub fn left(&self) -> &AstNode<'a, ForStatementLeft<'a>> {
+        let following_node = Some(FollowingNode::Expression({
+            let ptr = self.inner as *const _ as *const u8;
+            unsafe { &*(ptr.add(FOR_IN_STATEMENT_OFFSET_RIGHT) as *const Expression<'a>) }
+        }));
         self.allocator.alloc(AstNode {
             inner: &self.inner.left,
             allocator: self.allocator,
             parent: self.allocator.alloc(AstNodes::ForInStatement(transmute_self(self))),
+            following_node,
         })
     }
 
     #[inline]
     pub fn right(&self) -> &AstNode<'a, Expression<'a>> {
+        let following_node = Some(FollowingNode::Statement({
+            let ptr = self.inner as *const _ as *const u8;
+            unsafe { &*(ptr.add(FOR_IN_STATEMENT_OFFSET_BODY) as *const Statement<'a>) }
+        }));
         self.allocator.alloc(AstNode {
             inner: &self.inner.right,
             allocator: self.allocator,
             parent: self.allocator.alloc(AstNodes::ForInStatement(transmute_self(self))),
+            following_node,
         })
     }
 
     #[inline]
     pub fn body(&self) -> &AstNode<'a, Statement<'a>> {
+        let following_node = self.following_node.clone();
         self.allocator.alloc(AstNode {
             inner: &self.inner.body,
             allocator: self.allocator,
             parent: self.allocator.alloc(AstNodes::ForInStatement(transmute_self(self))),
+            following_node,
         })
-    }
-
-    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
-        let inner_ptr = unsafe { self.parent.inner_ptr() };
-        let offset =
-            unsafe { (self.inner as *const _ as *const u8).offset_from_unsigned(inner_ptr) };
-        match offset {
-            FOR_IN_STATEMENT_OFFSET_LEFT => Some(FollowingNode::Expression(unsafe {
-                &*(inner_ptr.add(FOR_IN_STATEMENT_OFFSET_RIGHT) as *const Expression<'a>)
-            })),
-            FOR_IN_STATEMENT_OFFSET_RIGHT => Some(FollowingNode::Statement(unsafe {
-                &*(inner_ptr.add(FOR_IN_STATEMENT_OFFSET_BODY) as *const Statement<'a>)
-            })),
-            FOR_IN_STATEMENT_OFFSET_BODY => None,
-            _ => panic!("Invalid field offset: {}", offset),
-        }
     }
 }
 
@@ -4353,6 +4132,7 @@ impl<'a> AstNode<'a, ForStatementLeft<'a>> {
                     inner: s.as_ref(),
                     parent,
                     allocator: self.allocator,
+                    following_node: self.following_node.clone(),
                 }))
             }
             it @ match_assignment_target!(ForStatementLeft) => {
@@ -4360,6 +4140,7 @@ impl<'a> AstNode<'a, ForStatementLeft<'a>> {
                     inner: it.to_assignment_target(),
                     parent,
                     allocator: self.allocator,
+                    following_node: self.following_node.clone(),
                 }))
             }
         };
@@ -4391,45 +4172,41 @@ impl<'a> AstNode<'a, ForOfStatement<'a>> {
 
     #[inline]
     pub fn left(&self) -> &AstNode<'a, ForStatementLeft<'a>> {
+        let following_node = Some(FollowingNode::Expression({
+            let ptr = self.inner as *const _ as *const u8;
+            unsafe { &*(ptr.add(FOR_OF_STATEMENT_OFFSET_RIGHT) as *const Expression<'a>) }
+        }));
         self.allocator.alloc(AstNode {
             inner: &self.inner.left,
             allocator: self.allocator,
             parent: self.allocator.alloc(AstNodes::ForOfStatement(transmute_self(self))),
+            following_node,
         })
     }
 
     #[inline]
     pub fn right(&self) -> &AstNode<'a, Expression<'a>> {
+        let following_node = Some(FollowingNode::Statement({
+            let ptr = self.inner as *const _ as *const u8;
+            unsafe { &*(ptr.add(FOR_OF_STATEMENT_OFFSET_BODY) as *const Statement<'a>) }
+        }));
         self.allocator.alloc(AstNode {
             inner: &self.inner.right,
             allocator: self.allocator,
             parent: self.allocator.alloc(AstNodes::ForOfStatement(transmute_self(self))),
+            following_node,
         })
     }
 
     #[inline]
     pub fn body(&self) -> &AstNode<'a, Statement<'a>> {
+        let following_node = self.following_node.clone();
         self.allocator.alloc(AstNode {
             inner: &self.inner.body,
             allocator: self.allocator,
             parent: self.allocator.alloc(AstNodes::ForOfStatement(transmute_self(self))),
+            following_node,
         })
-    }
-
-    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
-        let inner_ptr = unsafe { self.parent.inner_ptr() };
-        let offset =
-            unsafe { (self.inner as *const _ as *const u8).offset_from_unsigned(inner_ptr) };
-        match offset {
-            FOR_OF_STATEMENT_OFFSET_LEFT => Some(FollowingNode::Expression(unsafe {
-                &*(inner_ptr.add(FOR_OF_STATEMENT_OFFSET_RIGHT) as *const Expression<'a>)
-            })),
-            FOR_OF_STATEMENT_OFFSET_RIGHT => Some(FollowingNode::Statement(unsafe {
-                &*(inner_ptr.add(FOR_OF_STATEMENT_OFFSET_BODY) as *const Statement<'a>)
-            })),
-            FOR_OF_STATEMENT_OFFSET_BODY => None,
-            _ => panic!("Invalid field offset: {}", offset),
-        }
     }
 }
 
@@ -4443,23 +4220,15 @@ impl<'a> AstNode<'a, ContinueStatement<'a>> {
 
     #[inline]
     pub fn label(&self) -> Option<&AstNode<'a, LabelIdentifier<'a>>> {
+        let following_node = self.following_node.clone();
         self.allocator
             .alloc(self.inner.label.as_ref().map(|inner| AstNode {
                 inner,
                 allocator: self.allocator,
                 parent: self.allocator.alloc(AstNodes::ContinueStatement(transmute_self(self))),
+                following_node,
             }))
             .as_ref()
-    }
-
-    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
-        let inner_ptr = unsafe { self.parent.inner_ptr() };
-        let offset =
-            unsafe { (self.inner as *const _ as *const u8).offset_from_unsigned(inner_ptr) };
-        match offset {
-            CONTINUE_STATEMENT_OFFSET_LABEL => None,
-            _ => panic!("Invalid field offset: {}", offset),
-        }
     }
 }
 
@@ -4473,23 +4242,15 @@ impl<'a> AstNode<'a, BreakStatement<'a>> {
 
     #[inline]
     pub fn label(&self) -> Option<&AstNode<'a, LabelIdentifier<'a>>> {
+        let following_node = self.following_node.clone();
         self.allocator
             .alloc(self.inner.label.as_ref().map(|inner| AstNode {
                 inner,
                 allocator: self.allocator,
                 parent: self.allocator.alloc(AstNodes::BreakStatement(transmute_self(self))),
+                following_node,
             }))
             .as_ref()
-    }
-
-    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
-        let inner_ptr = unsafe { self.parent.inner_ptr() };
-        let offset =
-            unsafe { (self.inner as *const _ as *const u8).offset_from_unsigned(inner_ptr) };
-        match offset {
-            BREAK_STATEMENT_OFFSET_LABEL => None,
-            _ => panic!("Invalid field offset: {}", offset),
-        }
     }
 }
 
@@ -4503,23 +4264,15 @@ impl<'a> AstNode<'a, ReturnStatement<'a>> {
 
     #[inline]
     pub fn argument(&self) -> Option<&AstNode<'a, Expression<'a>>> {
+        let following_node = self.following_node.clone();
         self.allocator
             .alloc(self.inner.argument.as_ref().map(|inner| AstNode {
                 inner,
                 allocator: self.allocator,
                 parent: self.allocator.alloc(AstNodes::ReturnStatement(transmute_self(self))),
+                following_node,
             }))
             .as_ref()
-    }
-
-    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
-        let inner_ptr = unsafe { self.parent.inner_ptr() };
-        let offset =
-            unsafe { (self.inner as *const _ as *const u8).offset_from_unsigned(inner_ptr) };
-        match offset {
-            RETURN_STATEMENT_OFFSET_ARGUMENT => None,
-            _ => panic!("Invalid field offset: {}", offset),
-        }
     }
 }
 
@@ -4534,33 +4287,27 @@ impl<'a> AstNode<'a, WithStatement<'a>> {
 
     #[inline]
     pub fn object(&self) -> &AstNode<'a, Expression<'a>> {
+        let following_node = Some(FollowingNode::Statement({
+            let ptr = self.inner as *const _ as *const u8;
+            unsafe { &*(ptr.add(WITH_STATEMENT_OFFSET_BODY) as *const Statement<'a>) }
+        }));
         self.allocator.alloc(AstNode {
             inner: &self.inner.object,
             allocator: self.allocator,
             parent: self.allocator.alloc(AstNodes::WithStatement(transmute_self(self))),
+            following_node,
         })
     }
 
     #[inline]
     pub fn body(&self) -> &AstNode<'a, Statement<'a>> {
+        let following_node = self.following_node.clone();
         self.allocator.alloc(AstNode {
             inner: &self.inner.body,
             allocator: self.allocator,
             parent: self.allocator.alloc(AstNodes::WithStatement(transmute_self(self))),
+            following_node,
         })
-    }
-
-    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
-        let inner_ptr = unsafe { self.parent.inner_ptr() };
-        let offset =
-            unsafe { (self.inner as *const _ as *const u8).offset_from_unsigned(inner_ptr) };
-        match offset {
-            WITH_STATEMENT_OFFSET_OBJECT => Some(FollowingNode::Statement(unsafe {
-                &*(inner_ptr.add(WITH_STATEMENT_OFFSET_BODY) as *const Statement<'a>)
-            })),
-            WITH_STATEMENT_OFFSET_BODY => None,
-            _ => panic!("Invalid field offset: {}", offset),
-        }
     }
 }
 
@@ -4576,37 +4323,31 @@ impl<'a> AstNode<'a, SwitchStatement<'a>> {
 
     #[inline]
     pub fn discriminant(&self) -> &AstNode<'a, Expression<'a>> {
+        let following_node = ({
+            let ptr = self.inner as *const _ as *const u8;
+            unsafe { &*(ptr.add(SWITCH_STATEMENT_OFFSET_CASES) as *const Vec<'a, SwitchCase<'a>>) }
+        })
+        .first()
+        .as_ref()
+        .copied()
+        .map(FollowingNode::SwitchCase);
         self.allocator.alloc(AstNode {
             inner: &self.inner.discriminant,
             allocator: self.allocator,
             parent: self.allocator.alloc(AstNodes::SwitchStatement(transmute_self(self))),
+            following_node,
         })
     }
 
     #[inline]
     pub fn cases(&self) -> &AstNode<'a, Vec<'a, SwitchCase<'a>>> {
+        let following_node = self.following_node.clone();
         self.allocator.alloc(AstNode {
             inner: &self.inner.cases,
             allocator: self.allocator,
             parent: self.allocator.alloc(AstNodes::SwitchStatement(transmute_self(self))),
+            following_node,
         })
-    }
-
-    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
-        let inner_ptr = unsafe { self.parent.inner_ptr() };
-        let offset =
-            unsafe { (self.inner as *const _ as *const u8).offset_from_unsigned(inner_ptr) };
-        match offset {
-            SWITCH_STATEMENT_OFFSET_DISCRIMINANT => (unsafe {
-                &*(inner_ptr.add(SWITCH_STATEMENT_OFFSET_CASES) as *const Vec<'a, SwitchCase<'a>>)
-            })
-            .first()
-            .as_ref()
-            .copied()
-            .map(FollowingNode::SwitchCase),
-            SWITCH_STATEMENT_OFFSET_CASES => None,
-            _ => panic!("Invalid field offset: {}", offset),
-        }
     }
 }
 
@@ -4621,39 +4362,33 @@ impl<'a> AstNode<'a, SwitchCase<'a>> {
 
     #[inline]
     pub fn test(&self) -> Option<&AstNode<'a, Expression<'a>>> {
+        let following_node = ({
+            let ptr = self.inner as *const _ as *const u8;
+            unsafe { &*(ptr.add(SWITCH_CASE_OFFSET_CONSEQUENT) as *const Vec<'a, Statement<'a>>) }
+        })
+        .first()
+        .as_ref()
+        .copied()
+        .map(FollowingNode::Statement);
         self.allocator
             .alloc(self.inner.test.as_ref().map(|inner| AstNode {
                 inner,
                 allocator: self.allocator,
                 parent: self.allocator.alloc(AstNodes::SwitchCase(transmute_self(self))),
+                following_node,
             }))
             .as_ref()
     }
 
     #[inline]
     pub fn consequent(&self) -> &AstNode<'a, Vec<'a, Statement<'a>>> {
+        let following_node = self.following_node.clone();
         self.allocator.alloc(AstNode {
             inner: &self.inner.consequent,
             allocator: self.allocator,
             parent: self.allocator.alloc(AstNodes::SwitchCase(transmute_self(self))),
+            following_node,
         })
-    }
-
-    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
-        let inner_ptr = unsafe { self.parent.inner_ptr() };
-        let offset =
-            unsafe { (self.inner as *const _ as *const u8).offset_from_unsigned(inner_ptr) };
-        match offset {
-            SWITCH_CASE_OFFSET_TEST => (unsafe {
-                &*(inner_ptr.add(SWITCH_CASE_OFFSET_CONSEQUENT) as *const Vec<'a, Statement<'a>>)
-            })
-            .first()
-            .as_ref()
-            .copied()
-            .map(FollowingNode::Statement),
-            SWITCH_CASE_OFFSET_CONSEQUENT => None,
-            _ => panic!("Invalid field offset: {}", offset),
-        }
     }
 }
 
@@ -4668,33 +4403,27 @@ impl<'a> AstNode<'a, LabeledStatement<'a>> {
 
     #[inline]
     pub fn label(&self) -> &AstNode<'a, LabelIdentifier<'a>> {
+        let following_node = Some(FollowingNode::Statement({
+            let ptr = self.inner as *const _ as *const u8;
+            unsafe { &*(ptr.add(LABELED_STATEMENT_OFFSET_BODY) as *const Statement<'a>) }
+        }));
         self.allocator.alloc(AstNode {
             inner: &self.inner.label,
             allocator: self.allocator,
             parent: self.allocator.alloc(AstNodes::LabeledStatement(transmute_self(self))),
+            following_node,
         })
     }
 
     #[inline]
     pub fn body(&self) -> &AstNode<'a, Statement<'a>> {
+        let following_node = self.following_node.clone();
         self.allocator.alloc(AstNode {
             inner: &self.inner.body,
             allocator: self.allocator,
             parent: self.allocator.alloc(AstNodes::LabeledStatement(transmute_self(self))),
+            following_node,
         })
-    }
-
-    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
-        let inner_ptr = unsafe { self.parent.inner_ptr() };
-        let offset =
-            unsafe { (self.inner as *const _ as *const u8).offset_from_unsigned(inner_ptr) };
-        match offset {
-            LABELED_STATEMENT_OFFSET_LABEL => Some(FollowingNode::Statement(unsafe {
-                &*(inner_ptr.add(LABELED_STATEMENT_OFFSET_BODY) as *const Statement<'a>)
-            })),
-            LABELED_STATEMENT_OFFSET_BODY => None,
-            _ => panic!("Invalid field offset: {}", offset),
-        }
     }
 }
 
@@ -4708,21 +4437,13 @@ impl<'a> AstNode<'a, ThrowStatement<'a>> {
 
     #[inline]
     pub fn argument(&self) -> &AstNode<'a, Expression<'a>> {
+        let following_node = self.following_node.clone();
         self.allocator.alloc(AstNode {
             inner: &self.inner.argument,
             allocator: self.allocator,
             parent: self.allocator.alloc(AstNodes::ThrowStatement(transmute_self(self))),
+            following_node,
         })
-    }
-
-    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
-        let inner_ptr = unsafe { self.parent.inner_ptr() };
-        let offset =
-            unsafe { (self.inner as *const _ as *const u8).offset_from_unsigned(inner_ptr) };
-        match offset {
-            THROW_STATEMENT_OFFSET_ARGUMENT => None,
-            _ => panic!("Invalid field offset: {}", offset),
-        }
     }
 }
 
@@ -4736,43 +4457,39 @@ impl<'a> AstNode<'a, TryStatement<'a>> {
 
     #[inline]
     pub fn block(&self) -> &AstNode<'a, BlockStatement<'a>> {
+        let following_node = self.following_node.clone();
         self.allocator.alloc(AstNode {
             inner: self.inner.block.as_ref(),
             allocator: self.allocator,
             parent: self.allocator.alloc(AstNodes::TryStatement(transmute_self(self))),
+            following_node,
         })
     }
 
     #[inline]
     pub fn handler(&self) -> Option<&AstNode<'a, CatchClause<'a>>> {
+        let following_node = self.following_node.clone();
         self.allocator
             .alloc(self.inner.handler.as_ref().map(|inner| AstNode {
                 inner: inner.as_ref(),
                 allocator: self.allocator,
                 parent: self.allocator.alloc(AstNodes::TryStatement(transmute_self(self))),
+                following_node,
             }))
             .as_ref()
     }
 
     #[inline]
     pub fn finalizer(&self) -> Option<&AstNode<'a, BlockStatement<'a>>> {
+        let following_node = self.following_node.clone();
         self.allocator
             .alloc(self.inner.finalizer.as_ref().map(|inner| AstNode {
                 inner: inner.as_ref(),
                 allocator: self.allocator,
                 parent: self.allocator.alloc(AstNodes::TryStatement(transmute_self(self))),
+                following_node,
             }))
             .as_ref()
-    }
-
-    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
-        let inner_ptr = unsafe { self.parent.inner_ptr() };
-        let offset =
-            unsafe { (self.inner as *const _ as *const u8).offset_from_unsigned(inner_ptr) };
-        match offset {
-            TRY_STATEMENT_OFFSET_BLOCK => None,
-            _ => panic!("Invalid field offset: {}", offset),
-        }
     }
 }
 
@@ -4787,39 +4504,34 @@ impl<'a> AstNode<'a, CatchClause<'a>> {
 
     #[inline]
     pub fn param(&self) -> Option<&AstNode<'a, CatchParameter<'a>>> {
+        let following_node = Some(FollowingNode::BlockStatement(
+            {
+                let ptr = self.inner as *const _ as *const u8;
+                unsafe {
+                    &*(ptr.add(CATCH_CLAUSE_OFFSET_BODY) as *const Box<'a, BlockStatement<'a>>)
+                }
+            }
+            .as_ref(),
+        ));
         self.allocator
             .alloc(self.inner.param.as_ref().map(|inner| AstNode {
                 inner,
                 allocator: self.allocator,
                 parent: self.allocator.alloc(AstNodes::CatchClause(transmute_self(self))),
+                following_node,
             }))
             .as_ref()
     }
 
     #[inline]
     pub fn body(&self) -> &AstNode<'a, BlockStatement<'a>> {
+        let following_node = self.following_node.clone();
         self.allocator.alloc(AstNode {
             inner: self.inner.body.as_ref(),
             allocator: self.allocator,
             parent: self.allocator.alloc(AstNodes::CatchClause(transmute_self(self))),
+            following_node,
         })
-    }
-
-    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
-        let inner_ptr = unsafe { self.parent.inner_ptr() };
-        let offset =
-            unsafe { (self.inner as *const _ as *const u8).offset_from_unsigned(inner_ptr) };
-        match offset {
-            CATCH_CLAUSE_OFFSET_PARAM => Some(FollowingNode::BlockStatement(
-                unsafe {
-                    &*(inner_ptr.add(CATCH_CLAUSE_OFFSET_BODY)
-                        as *const Box<'a, BlockStatement<'a>>)
-                }
-                .as_ref(),
-            )),
-            CATCH_CLAUSE_OFFSET_BODY => None,
-            _ => panic!("Invalid field offset: {}", offset),
-        }
     }
 }
 
@@ -4833,21 +4545,13 @@ impl<'a> AstNode<'a, CatchParameter<'a>> {
 
     #[inline]
     pub fn pattern(&self) -> &AstNode<'a, BindingPattern<'a>> {
+        let following_node = self.following_node.clone();
         self.allocator.alloc(AstNode {
             inner: &self.inner.pattern,
             allocator: self.allocator,
             parent: self.allocator.alloc(AstNodes::CatchParameter(transmute_self(self))),
+            following_node,
         })
-    }
-
-    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
-        let inner_ptr = unsafe { self.parent.inner_ptr() };
-        let offset =
-            unsafe { (self.inner as *const _ as *const u8).offset_from_unsigned(inner_ptr) };
-        match offset {
-            CATCH_PARAMETER_OFFSET_PATTERN => None,
-            _ => panic!("Invalid field offset: {}", offset),
-        }
     }
 }
 
@@ -4856,10 +4560,6 @@ impl<'a> AstNode<'a, DebuggerStatement> {
     pub fn span(&self) -> Span {
         self.inner.span
     }
-
-    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
-        None
-    }
 }
 
 const BINDING_PATTERN_OFFSET_KIND: usize = std::mem::offset_of!(BindingPattern, kind);
@@ -4867,20 +4567,24 @@ const BINDING_PATTERN_OFFSET_KIND: usize = std::mem::offset_of!(BindingPattern, 
 impl<'a> AstNode<'a, BindingPattern<'a>> {
     #[inline]
     pub fn kind(&self) -> &AstNode<'a, BindingPatternKind<'a>> {
+        let following_node = self.following_node.clone();
         self.allocator.alloc(AstNode {
             inner: &self.inner.kind,
             allocator: self.allocator,
             parent: self.parent,
+            following_node,
         })
     }
 
     #[inline]
     pub fn type_annotation(&self) -> Option<&AstNode<'a, TSTypeAnnotation<'a>>> {
+        let following_node = self.following_node.clone();
         self.allocator
             .alloc(self.inner.type_annotation.as_ref().map(|inner| AstNode {
                 inner: inner.as_ref(),
                 allocator: self.allocator,
                 parent: self.parent,
+                following_node,
             }))
             .as_ref()
     }
@@ -4888,16 +4592,6 @@ impl<'a> AstNode<'a, BindingPattern<'a>> {
     #[inline]
     pub fn optional(&self) -> bool {
         self.inner.optional
-    }
-
-    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
-        let inner_ptr = unsafe { self.parent.inner_ptr() };
-        let offset =
-            unsafe { (self.inner as *const _ as *const u8).offset_from_unsigned(inner_ptr) };
-        match offset {
-            BINDING_PATTERN_OFFSET_KIND => None,
-            _ => panic!("Invalid field offset: {}", offset),
-        }
     }
 }
 
@@ -4911,6 +4605,7 @@ impl<'a> AstNode<'a, BindingPatternKind<'a>> {
                     inner: s.as_ref(),
                     parent,
                     allocator: self.allocator,
+                    following_node: self.following_node.clone(),
                 }))
             }
             BindingPatternKind::ObjectPattern(s) => {
@@ -4918,6 +4613,7 @@ impl<'a> AstNode<'a, BindingPatternKind<'a>> {
                     inner: s.as_ref(),
                     parent,
                     allocator: self.allocator,
+                    following_node: self.following_node.clone(),
                 }))
             }
             BindingPatternKind::ArrayPattern(s) => {
@@ -4925,6 +4621,7 @@ impl<'a> AstNode<'a, BindingPatternKind<'a>> {
                     inner: s.as_ref(),
                     parent,
                     allocator: self.allocator,
+                    following_node: self.following_node.clone(),
                 }))
             }
             BindingPatternKind::AssignmentPattern(s) => {
@@ -4932,6 +4629,7 @@ impl<'a> AstNode<'a, BindingPatternKind<'a>> {
                     inner: s.as_ref(),
                     parent,
                     allocator: self.allocator,
+                    following_node: self.following_node.clone(),
                 }))
             }
         };
@@ -4957,33 +4655,27 @@ impl<'a> AstNode<'a, AssignmentPattern<'a>> {
 
     #[inline]
     pub fn left(&self) -> &AstNode<'a, BindingPattern<'a>> {
+        let following_node = Some(FollowingNode::Expression({
+            let ptr = self.inner as *const _ as *const u8;
+            unsafe { &*(ptr.add(ASSIGNMENT_PATTERN_OFFSET_RIGHT) as *const Expression<'a>) }
+        }));
         self.allocator.alloc(AstNode {
             inner: &self.inner.left,
             allocator: self.allocator,
             parent: self.allocator.alloc(AstNodes::AssignmentPattern(transmute_self(self))),
+            following_node,
         })
     }
 
     #[inline]
     pub fn right(&self) -> &AstNode<'a, Expression<'a>> {
+        let following_node = self.following_node.clone();
         self.allocator.alloc(AstNode {
             inner: &self.inner.right,
             allocator: self.allocator,
             parent: self.allocator.alloc(AstNodes::AssignmentPattern(transmute_self(self))),
+            following_node,
         })
-    }
-
-    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
-        let inner_ptr = unsafe { self.parent.inner_ptr() };
-        let offset =
-            unsafe { (self.inner as *const _ as *const u8).offset_from_unsigned(inner_ptr) };
-        match offset {
-            ASSIGNMENT_PATTERN_OFFSET_LEFT => Some(FollowingNode::Expression(unsafe {
-                &*(inner_ptr.add(ASSIGNMENT_PATTERN_OFFSET_RIGHT) as *const Expression<'a>)
-            })),
-            ASSIGNMENT_PATTERN_OFFSET_RIGHT => None,
-            _ => panic!("Invalid field offset: {}", offset),
-        }
     }
 }
 
@@ -4997,32 +4689,26 @@ impl<'a> AstNode<'a, ObjectPattern<'a>> {
 
     #[inline]
     pub fn properties(&self) -> &AstNode<'a, Vec<'a, BindingProperty<'a>>> {
+        let following_node = self.following_node.clone();
         self.allocator.alloc(AstNode {
             inner: &self.inner.properties,
             allocator: self.allocator,
             parent: self.allocator.alloc(AstNodes::ObjectPattern(transmute_self(self))),
+            following_node,
         })
     }
 
     #[inline]
     pub fn rest(&self) -> Option<&AstNode<'a, BindingRestElement<'a>>> {
+        let following_node = self.following_node.clone();
         self.allocator
             .alloc(self.inner.rest.as_ref().map(|inner| AstNode {
                 inner: inner.as_ref(),
                 allocator: self.allocator,
                 parent: self.allocator.alloc(AstNodes::ObjectPattern(transmute_self(self))),
+                following_node,
             }))
             .as_ref()
-    }
-
-    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
-        let inner_ptr = unsafe { self.parent.inner_ptr() };
-        let offset =
-            unsafe { (self.inner as *const _ as *const u8).offset_from_unsigned(inner_ptr) };
-        match offset {
-            OBJECT_PATTERN_OFFSET_PROPERTIES => None,
-            _ => panic!("Invalid field offset: {}", offset),
-        }
     }
 }
 
@@ -5037,19 +4723,26 @@ impl<'a> AstNode<'a, BindingProperty<'a>> {
 
     #[inline]
     pub fn key(&self) -> &AstNode<'a, PropertyKey<'a>> {
+        let following_node = Some(FollowingNode::BindingPattern({
+            let ptr = self.inner as *const _ as *const u8;
+            unsafe { &*(ptr.add(BINDING_PROPERTY_OFFSET_VALUE) as *const BindingPattern<'a>) }
+        }));
         self.allocator.alloc(AstNode {
             inner: &self.inner.key,
             allocator: self.allocator,
             parent: self.parent,
+            following_node,
         })
     }
 
     #[inline]
     pub fn value(&self) -> &AstNode<'a, BindingPattern<'a>> {
+        let following_node = self.following_node.clone();
         self.allocator.alloc(AstNode {
             inner: &self.inner.value,
             allocator: self.allocator,
             parent: self.parent,
+            following_node,
         })
     }
 
@@ -5062,19 +4755,6 @@ impl<'a> AstNode<'a, BindingProperty<'a>> {
     pub fn computed(&self) -> bool {
         self.inner.computed
     }
-
-    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
-        let inner_ptr = unsafe { self.parent.inner_ptr() };
-        let offset =
-            unsafe { (self.inner as *const _ as *const u8).offset_from_unsigned(inner_ptr) };
-        match offset {
-            BINDING_PROPERTY_OFFSET_KEY => Some(FollowingNode::BindingPattern(unsafe {
-                &*(inner_ptr.add(BINDING_PROPERTY_OFFSET_VALUE) as *const BindingPattern<'a>)
-            })),
-            BINDING_PROPERTY_OFFSET_VALUE => None,
-            _ => panic!("Invalid field offset: {}", offset),
-        }
-    }
 }
 
 impl<'a> AstNode<'a, ArrayPattern<'a>> {
@@ -5085,26 +4765,26 @@ impl<'a> AstNode<'a, ArrayPattern<'a>> {
 
     #[inline]
     pub fn elements(&self) -> &AstNode<'a, Vec<'a, Option<BindingPattern<'a>>>> {
+        let following_node = self.following_node.clone();
         self.allocator.alloc(AstNode {
             inner: &self.inner.elements,
             allocator: self.allocator,
             parent: self.allocator.alloc(AstNodes::ArrayPattern(transmute_self(self))),
+            following_node,
         })
     }
 
     #[inline]
     pub fn rest(&self) -> Option<&AstNode<'a, BindingRestElement<'a>>> {
+        let following_node = self.following_node.clone();
         self.allocator
             .alloc(self.inner.rest.as_ref().map(|inner| AstNode {
                 inner: inner.as_ref(),
                 allocator: self.allocator,
                 parent: self.allocator.alloc(AstNodes::ArrayPattern(transmute_self(self))),
+                following_node,
             }))
             .as_ref()
-    }
-
-    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
-        None
     }
 }
 
@@ -5119,21 +4799,13 @@ impl<'a> AstNode<'a, BindingRestElement<'a>> {
 
     #[inline]
     pub fn argument(&self) -> &AstNode<'a, BindingPattern<'a>> {
+        let following_node = self.following_node.clone();
         self.allocator.alloc(AstNode {
             inner: &self.inner.argument,
             allocator: self.allocator,
             parent: self.allocator.alloc(AstNodes::BindingRestElement(transmute_self(self))),
+            following_node,
         })
-    }
-
-    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
-        let inner_ptr = unsafe { self.parent.inner_ptr() };
-        let offset =
-            unsafe { (self.inner as *const _ as *const u8).offset_from_unsigned(inner_ptr) };
-        match offset {
-            BINDING_REST_ELEMENT_OFFSET_ARGUMENT => None,
-            _ => panic!("Invalid field offset: {}", offset),
-        }
     }
 }
 
@@ -5153,11 +4825,21 @@ impl<'a> AstNode<'a, Function<'a>> {
 
     #[inline]
     pub fn id(&self) -> Option<&AstNode<'a, BindingIdentifier<'a>>> {
+        let following_node = Some(FollowingNode::FormalParameters(
+            {
+                let ptr = self.inner as *const _ as *const u8;
+                unsafe {
+                    &*(ptr.add(FUNCTION_OFFSET_PARAMS) as *const Box<'a, FormalParameters<'a>>)
+                }
+            }
+            .as_ref(),
+        ));
         self.allocator
             .alloc(self.inner.id.as_ref().map(|inner| AstNode {
                 inner,
                 allocator: self.allocator,
                 parent: self.allocator.alloc(AstNodes::Function(transmute_self(self))),
+                following_node,
             }))
             .as_ref()
     }
@@ -5179,53 +4861,63 @@ impl<'a> AstNode<'a, Function<'a>> {
 
     #[inline]
     pub fn type_parameters(&self) -> Option<&AstNode<'a, TSTypeParameterDeclaration<'a>>> {
+        let following_node = self.following_node.clone();
         self.allocator
             .alloc(self.inner.type_parameters.as_ref().map(|inner| AstNode {
                 inner: inner.as_ref(),
                 allocator: self.allocator,
                 parent: self.allocator.alloc(AstNodes::Function(transmute_self(self))),
+                following_node,
             }))
             .as_ref()
     }
 
     #[inline]
     pub fn this_param(&self) -> Option<&AstNode<'a, TSThisParameter<'a>>> {
+        let following_node = self.following_node.clone();
         self.allocator
             .alloc(self.inner.this_param.as_ref().map(|inner| AstNode {
                 inner: inner.as_ref(),
                 allocator: self.allocator,
                 parent: self.allocator.alloc(AstNodes::Function(transmute_self(self))),
+                following_node,
             }))
             .as_ref()
     }
 
     #[inline]
     pub fn params(&self) -> &AstNode<'a, FormalParameters<'a>> {
+        let following_node = self.following_node.clone();
         self.allocator.alloc(AstNode {
             inner: self.inner.params.as_ref(),
             allocator: self.allocator,
             parent: self.allocator.alloc(AstNodes::Function(transmute_self(self))),
+            following_node,
         })
     }
 
     #[inline]
     pub fn return_type(&self) -> Option<&AstNode<'a, TSTypeAnnotation<'a>>> {
+        let following_node = self.following_node.clone();
         self.allocator
             .alloc(self.inner.return_type.as_ref().map(|inner| AstNode {
                 inner: inner.as_ref(),
                 allocator: self.allocator,
                 parent: self.allocator.alloc(AstNodes::Function(transmute_self(self))),
+                following_node,
             }))
             .as_ref()
     }
 
     #[inline]
     pub fn body(&self) -> Option<&AstNode<'a, FunctionBody<'a>>> {
+        let following_node = self.following_node.clone();
         self.allocator
             .alloc(self.inner.body.as_ref().map(|inner| AstNode {
                 inner: inner.as_ref(),
                 allocator: self.allocator,
                 parent: self.allocator.alloc(AstNodes::Function(transmute_self(self))),
+                following_node,
             }))
             .as_ref()
     }
@@ -5233,23 +4925,6 @@ impl<'a> AstNode<'a, Function<'a>> {
     #[inline]
     pub fn pure(&self) -> bool {
         self.inner.pure
-    }
-
-    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
-        let inner_ptr = unsafe { self.parent.inner_ptr() };
-        let offset =
-            unsafe { (self.inner as *const _ as *const u8).offset_from_unsigned(inner_ptr) };
-        match offset {
-            FUNCTION_OFFSET_ID => Some(FollowingNode::FormalParameters(
-                unsafe {
-                    &*(inner_ptr.add(FUNCTION_OFFSET_PARAMS)
-                        as *const Box<'a, FormalParameters<'a>>)
-                }
-                .as_ref(),
-            )),
-            FUNCTION_OFFSET_PARAMS => None,
-            _ => panic!("Invalid field offset: {}", offset),
-        }
     }
 }
 
@@ -5268,32 +4943,26 @@ impl<'a> AstNode<'a, FormalParameters<'a>> {
 
     #[inline]
     pub fn items(&self) -> &AstNode<'a, Vec<'a, FormalParameter<'a>>> {
+        let following_node = self.following_node.clone();
         self.allocator.alloc(AstNode {
             inner: &self.inner.items,
             allocator: self.allocator,
             parent: self.allocator.alloc(AstNodes::FormalParameters(transmute_self(self))),
+            following_node,
         })
     }
 
     #[inline]
     pub fn rest(&self) -> Option<&AstNode<'a, BindingRestElement<'a>>> {
+        let following_node = self.following_node.clone();
         self.allocator
             .alloc(self.inner.rest.as_ref().map(|inner| AstNode {
                 inner: inner.as_ref(),
                 allocator: self.allocator,
                 parent: self.allocator.alloc(AstNodes::FormalParameters(transmute_self(self))),
+                following_node,
             }))
             .as_ref()
-    }
-
-    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
-        let inner_ptr = unsafe { self.parent.inner_ptr() };
-        let offset =
-            unsafe { (self.inner as *const _ as *const u8).offset_from_unsigned(inner_ptr) };
-        match offset {
-            FORMAL_PARAMETERS_OFFSET_ITEMS => None,
-            _ => panic!("Invalid field offset: {}", offset),
-        }
     }
 }
 
@@ -5308,19 +4977,26 @@ impl<'a> AstNode<'a, FormalParameter<'a>> {
 
     #[inline]
     pub fn decorators(&self) -> &AstNode<'a, Vec<'a, Decorator<'a>>> {
+        let following_node = Some(FollowingNode::BindingPattern({
+            let ptr = self.inner as *const _ as *const u8;
+            unsafe { &*(ptr.add(FORMAL_PARAMETER_OFFSET_PATTERN) as *const BindingPattern<'a>) }
+        }));
         self.allocator.alloc(AstNode {
             inner: &self.inner.decorators,
             allocator: self.allocator,
             parent: self.allocator.alloc(AstNodes::FormalParameter(transmute_self(self))),
+            following_node,
         })
     }
 
     #[inline]
     pub fn pattern(&self) -> &AstNode<'a, BindingPattern<'a>> {
+        let following_node = self.following_node.clone();
         self.allocator.alloc(AstNode {
             inner: &self.inner.pattern,
             allocator: self.allocator,
             parent: self.allocator.alloc(AstNodes::FormalParameter(transmute_self(self))),
+            following_node,
         })
     }
 
@@ -5338,19 +5014,6 @@ impl<'a> AstNode<'a, FormalParameter<'a>> {
     pub fn r#override(&self) -> bool {
         self.inner.r#override
     }
-
-    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
-        let inner_ptr = unsafe { self.parent.inner_ptr() };
-        let offset =
-            unsafe { (self.inner as *const _ as *const u8).offset_from_unsigned(inner_ptr) };
-        match offset {
-            FORMAL_PARAMETER_OFFSET_DECORATORS => Some(FollowingNode::BindingPattern(unsafe {
-                &*(inner_ptr.add(FORMAL_PARAMETER_OFFSET_PATTERN) as *const BindingPattern<'a>)
-            })),
-            FORMAL_PARAMETER_OFFSET_PATTERN => None,
-            _ => panic!("Invalid field offset: {}", offset),
-        }
-    }
 }
 
 const FUNCTION_BODY_OFFSET_DIRECTIVES: usize = std::mem::offset_of!(FunctionBody, directives);
@@ -5364,37 +5027,31 @@ impl<'a> AstNode<'a, FunctionBody<'a>> {
 
     #[inline]
     pub fn directives(&self) -> &AstNode<'a, Vec<'a, Directive<'a>>> {
+        let following_node = ({
+            let ptr = self.inner as *const _ as *const u8;
+            unsafe { &*(ptr.add(FUNCTION_BODY_OFFSET_STATEMENTS) as *const Vec<'a, Statement<'a>>) }
+        })
+        .first()
+        .as_ref()
+        .copied()
+        .map(FollowingNode::Statement);
         self.allocator.alloc(AstNode {
             inner: &self.inner.directives,
             allocator: self.allocator,
             parent: self.allocator.alloc(AstNodes::FunctionBody(transmute_self(self))),
+            following_node,
         })
     }
 
     #[inline]
     pub fn statements(&self) -> &AstNode<'a, Vec<'a, Statement<'a>>> {
+        let following_node = self.following_node.clone();
         self.allocator.alloc(AstNode {
             inner: &self.inner.statements,
             allocator: self.allocator,
             parent: self.allocator.alloc(AstNodes::FunctionBody(transmute_self(self))),
+            following_node,
         })
-    }
-
-    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
-        let inner_ptr = unsafe { self.parent.inner_ptr() };
-        let offset =
-            unsafe { (self.inner as *const _ as *const u8).offset_from_unsigned(inner_ptr) };
-        match offset {
-            FUNCTION_BODY_OFFSET_DIRECTIVES => (unsafe {
-                &*(inner_ptr.add(FUNCTION_BODY_OFFSET_STATEMENTS) as *const Vec<'a, Statement<'a>>)
-            })
-            .first()
-            .as_ref()
-            .copied()
-            .map(FollowingNode::Statement),
-            FUNCTION_BODY_OFFSET_STATEMENTS => None,
-            _ => panic!("Invalid field offset: {}", offset),
-        }
     }
 }
 
@@ -5421,66 +5078,66 @@ impl<'a> AstNode<'a, ArrowFunctionExpression<'a>> {
 
     #[inline]
     pub fn type_parameters(&self) -> Option<&AstNode<'a, TSTypeParameterDeclaration<'a>>> {
+        let following_node = Some(FollowingNode::FunctionBody(
+            {
+                let ptr = self.inner as *const _ as *const u8;
+                unsafe {
+                    &*(ptr.add(ARROW_FUNCTION_EXPRESSION_OFFSET_BODY)
+                        as *const Box<'a, FunctionBody<'a>>)
+                }
+            }
+            .as_ref(),
+        ));
         self.allocator
             .alloc(self.inner.type_parameters.as_ref().map(|inner| AstNode {
                 inner: inner.as_ref(),
                 allocator: self.allocator,
                 parent:
                     self.allocator.alloc(AstNodes::ArrowFunctionExpression(transmute_self(self))),
+                following_node,
             }))
             .as_ref()
     }
 
     #[inline]
     pub fn params(&self) -> &AstNode<'a, FormalParameters<'a>> {
+        let following_node = self.following_node.clone();
         self.allocator.alloc(AstNode {
             inner: self.inner.params.as_ref(),
             allocator: self.allocator,
             parent: self.allocator.alloc(AstNodes::ArrowFunctionExpression(transmute_self(self))),
+            following_node,
         })
     }
 
     #[inline]
     pub fn return_type(&self) -> Option<&AstNode<'a, TSTypeAnnotation<'a>>> {
+        let following_node = self.following_node.clone();
         self.allocator
             .alloc(self.inner.return_type.as_ref().map(|inner| AstNode {
                 inner: inner.as_ref(),
                 allocator: self.allocator,
                 parent:
                     self.allocator.alloc(AstNodes::ArrowFunctionExpression(transmute_self(self))),
+                following_node,
             }))
             .as_ref()
     }
 
     #[inline]
     pub fn body(&self) -> &AstNode<'a, FunctionBody<'a>> {
+        let following_node = self.following_node.clone();
         self.allocator.alloc(AstNode {
             inner: self.inner.body.as_ref(),
             allocator: self.allocator,
             parent: self.allocator.alloc(AstNodes::ArrowFunctionExpression(transmute_self(self))),
+            following_node,
         })
     }
 
     #[inline]
     pub fn pure(&self) -> bool {
         self.inner.pure
-    }
-
-    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
-        let inner_ptr = unsafe { self.parent.inner_ptr() };
-        let offset =
-            unsafe { (self.inner as *const _ as *const u8).offset_from_unsigned(inner_ptr) };
-        match offset {
-            ARROW_FUNCTION_EXPRESSION_OFFSET_PARAMS => Some(FollowingNode::FunctionBody(
-                unsafe {
-                    &*(inner_ptr.add(ARROW_FUNCTION_EXPRESSION_OFFSET_BODY)
-                        as *const Box<'a, FunctionBody<'a>>)
-                }
-                .as_ref(),
-            )),
-            ARROW_FUNCTION_EXPRESSION_OFFSET_BODY => None,
-            _ => panic!("Invalid field offset: {}", offset),
-        }
     }
 }
 
@@ -5499,23 +5156,15 @@ impl<'a> AstNode<'a, YieldExpression<'a>> {
 
     #[inline]
     pub fn argument(&self) -> Option<&AstNode<'a, Expression<'a>>> {
+        let following_node = self.following_node.clone();
         self.allocator
             .alloc(self.inner.argument.as_ref().map(|inner| AstNode {
                 inner,
                 allocator: self.allocator,
                 parent: self.allocator.alloc(AstNodes::YieldExpression(transmute_self(self))),
+                following_node,
             }))
             .as_ref()
-    }
-
-    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
-        let inner_ptr = unsafe { self.parent.inner_ptr() };
-        let offset =
-            unsafe { (self.inner as *const _ as *const u8).offset_from_unsigned(inner_ptr) };
-        match offset {
-            YIELD_EXPRESSION_OFFSET_ARGUMENT => None,
-            _ => panic!("Invalid field offset: {}", offset),
-        }
     }
 }
 
@@ -5538,72 +5187,109 @@ impl<'a> AstNode<'a, Class<'a>> {
 
     #[inline]
     pub fn decorators(&self) -> &AstNode<'a, Vec<'a, Decorator<'a>>> {
+        let following_node = ({
+            let ptr = self.inner as *const _ as *const u8;
+            unsafe { &*(ptr.add(CLASS_OFFSET_ID) as *const Option<BindingIdentifier<'a>>) }
+        })
+        .as_ref()
+        .map(FollowingNode::BindingIdentifier);
         self.allocator.alloc(AstNode {
             inner: &self.inner.decorators,
             allocator: self.allocator,
             parent: self.allocator.alloc(AstNodes::Class(transmute_self(self))),
+            following_node,
         })
     }
 
     #[inline]
     pub fn id(&self) -> Option<&AstNode<'a, BindingIdentifier<'a>>> {
+        let following_node = ({
+            let ptr = self.inner as *const _ as *const u8;
+            unsafe { &*(ptr.add(CLASS_OFFSET_SUPERCLASS) as *const Option<Expression<'a>>) }
+        })
+        .as_ref()
+        .map(FollowingNode::Expression);
         self.allocator
             .alloc(self.inner.id.as_ref().map(|inner| AstNode {
                 inner,
                 allocator: self.allocator,
                 parent: self.allocator.alloc(AstNodes::Class(transmute_self(self))),
+                following_node,
             }))
             .as_ref()
     }
 
     #[inline]
     pub fn type_parameters(&self) -> Option<&AstNode<'a, TSTypeParameterDeclaration<'a>>> {
+        let following_node = ({
+            let ptr = self.inner as *const _ as *const u8;
+            unsafe { &*(ptr.add(CLASS_OFFSET_IMPLEMENTS) as *const Vec<'a, TSClassImplements<'a>>) }
+        })
+        .first()
+        .as_ref()
+        .copied()
+        .map(FollowingNode::TSClassImplements);
         self.allocator
             .alloc(self.inner.type_parameters.as_ref().map(|inner| AstNode {
                 inner: inner.as_ref(),
                 allocator: self.allocator,
                 parent: self.allocator.alloc(AstNodes::Class(transmute_self(self))),
+                following_node,
             }))
             .as_ref()
     }
 
     #[inline]
     pub fn super_class(&self) -> Option<&AstNode<'a, Expression<'a>>> {
+        let following_node = Some(FollowingNode::ClassBody(
+            {
+                let ptr = self.inner as *const _ as *const u8;
+                unsafe { &*(ptr.add(CLASS_OFFSET_BODY) as *const Box<'a, ClassBody<'a>>) }
+            }
+            .as_ref(),
+        ));
         self.allocator
             .alloc(self.inner.super_class.as_ref().map(|inner| AstNode {
                 inner,
                 allocator: self.allocator,
                 parent: self.allocator.alloc(AstNodes::Class(transmute_self(self))),
+                following_node,
             }))
             .as_ref()
     }
 
     #[inline]
     pub fn super_type_arguments(&self) -> Option<&AstNode<'a, TSTypeParameterInstantiation<'a>>> {
+        let following_node = self.following_node.clone();
         self.allocator
             .alloc(self.inner.super_type_arguments.as_ref().map(|inner| AstNode {
                 inner: inner.as_ref(),
                 allocator: self.allocator,
                 parent: self.allocator.alloc(AstNodes::Class(transmute_self(self))),
+                following_node,
             }))
             .as_ref()
     }
 
     #[inline]
     pub fn implements(&self) -> &AstNode<'a, Vec<'a, TSClassImplements<'a>>> {
+        let following_node = self.following_node.clone();
         self.allocator.alloc(AstNode {
             inner: &self.inner.implements,
             allocator: self.allocator,
             parent: self.allocator.alloc(AstNodes::Class(transmute_self(self))),
+            following_node,
         })
     }
 
     #[inline]
     pub fn body(&self) -> &AstNode<'a, ClassBody<'a>> {
+        let following_node = self.following_node.clone();
         self.allocator.alloc(AstNode {
             inner: self.inner.body.as_ref(),
             allocator: self.allocator,
             parent: self.allocator.alloc(AstNodes::Class(transmute_self(self))),
+            following_node,
         })
     }
 
@@ -5615,37 +5301,6 @@ impl<'a> AstNode<'a, Class<'a>> {
     #[inline]
     pub fn declare(&self) -> bool {
         self.inner.declare
-    }
-
-    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
-        let inner_ptr = unsafe { self.parent.inner_ptr() };
-        let offset =
-            unsafe { (self.inner as *const _ as *const u8).offset_from_unsigned(inner_ptr) };
-        match offset {
-            CLASS_OFFSET_DECORATORS => (unsafe {
-                &*(inner_ptr.add(CLASS_OFFSET_ID) as *const Option<BindingIdentifier<'a>>)
-            })
-            .as_ref()
-            .map(FollowingNode::BindingIdentifier),
-            CLASS_OFFSET_ID => (unsafe {
-                &*(inner_ptr.add(CLASS_OFFSET_SUPERCLASS) as *const Option<Expression<'a>>)
-            })
-            .as_ref()
-            .map(FollowingNode::Expression),
-            CLASS_OFFSET_SUPERCLASS => (unsafe {
-                &*(inner_ptr.add(CLASS_OFFSET_IMPLEMENTS) as *const Vec<'a, TSClassImplements<'a>>)
-            })
-            .first()
-            .as_ref()
-            .copied()
-            .map(FollowingNode::TSClassImplements),
-            CLASS_OFFSET_IMPLEMENTS => Some(FollowingNode::ClassBody(
-                unsafe { &*(inner_ptr.add(CLASS_OFFSET_BODY) as *const Box<'a, ClassBody<'a>>) }
-                    .as_ref(),
-            )),
-            CLASS_OFFSET_BODY => None,
-            _ => panic!("Invalid field offset: {}", offset),
-        }
     }
 }
 
@@ -5659,21 +5314,13 @@ impl<'a> AstNode<'a, ClassBody<'a>> {
 
     #[inline]
     pub fn body(&self) -> &AstNode<'a, Vec<'a, ClassElement<'a>>> {
+        let following_node = self.following_node.clone();
         self.allocator.alloc(AstNode {
             inner: &self.inner.body,
             allocator: self.allocator,
             parent: self.allocator.alloc(AstNodes::ClassBody(transmute_self(self))),
+            following_node,
         })
-    }
-
-    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
-        let inner_ptr = unsafe { self.parent.inner_ptr() };
-        let offset =
-            unsafe { (self.inner as *const _ as *const u8).offset_from_unsigned(inner_ptr) };
-        match offset {
-            CLASS_BODY_OFFSET_BODY => None,
-            _ => panic!("Invalid field offset: {}", offset),
-        }
     }
 }
 
@@ -5686,12 +5333,14 @@ impl<'a> AstNode<'a, ClassElement<'a>> {
                 inner: s.as_ref(),
                 parent,
                 allocator: self.allocator,
+                following_node: self.following_node.clone(),
             })),
             ClassElement::MethodDefinition(s) => {
                 AstNodes::MethodDefinition(self.allocator.alloc(AstNode {
                     inner: s.as_ref(),
                     parent,
                     allocator: self.allocator,
+                    following_node: self.following_node.clone(),
                 }))
             }
             ClassElement::PropertyDefinition(s) => {
@@ -5699,6 +5348,7 @@ impl<'a> AstNode<'a, ClassElement<'a>> {
                     inner: s.as_ref(),
                     parent,
                     allocator: self.allocator,
+                    following_node: self.following_node.clone(),
                 }))
             }
             ClassElement::AccessorProperty(s) => {
@@ -5741,28 +5391,45 @@ impl<'a> AstNode<'a, MethodDefinition<'a>> {
 
     #[inline]
     pub fn decorators(&self) -> &AstNode<'a, Vec<'a, Decorator<'a>>> {
+        let following_node = Some(FollowingNode::PropertyKey({
+            let ptr = self.inner as *const _ as *const u8;
+            unsafe { &*(ptr.add(METHOD_DEFINITION_OFFSET_KEY) as *const PropertyKey<'a>) }
+        }));
         self.allocator.alloc(AstNode {
             inner: &self.inner.decorators,
             allocator: self.allocator,
             parent: self.allocator.alloc(AstNodes::MethodDefinition(transmute_self(self))),
+            following_node,
         })
     }
 
     #[inline]
     pub fn key(&self) -> &AstNode<'a, PropertyKey<'a>> {
+        let following_node = Some(FollowingNode::Function(
+            {
+                let ptr = self.inner as *const _ as *const u8;
+                unsafe {
+                    &*(ptr.add(METHOD_DEFINITION_OFFSET_VALUE) as *const Box<'a, Function<'a>>)
+                }
+            }
+            .as_ref(),
+        ));
         self.allocator.alloc(AstNode {
             inner: &self.inner.key,
             allocator: self.allocator,
             parent: self.allocator.alloc(AstNodes::MethodDefinition(transmute_self(self))),
+            following_node,
         })
     }
 
     #[inline]
     pub fn value(&self) -> &AstNode<'a, Function<'a>> {
+        let following_node = self.following_node.clone();
         self.allocator.alloc(AstNode {
             inner: self.inner.value.as_ref(),
             allocator: self.allocator,
             parent: self.allocator.alloc(AstNodes::MethodDefinition(transmute_self(self))),
+            following_node,
         })
     }
 
@@ -5795,26 +5462,6 @@ impl<'a> AstNode<'a, MethodDefinition<'a>> {
     pub fn accessibility(&self) -> Option<TSAccessibility> {
         self.inner.accessibility
     }
-
-    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
-        let inner_ptr = unsafe { self.parent.inner_ptr() };
-        let offset =
-            unsafe { (self.inner as *const _ as *const u8).offset_from_unsigned(inner_ptr) };
-        match offset {
-            METHOD_DEFINITION_OFFSET_DECORATORS => Some(FollowingNode::PropertyKey(unsafe {
-                &*(inner_ptr.add(METHOD_DEFINITION_OFFSET_KEY) as *const PropertyKey<'a>)
-            })),
-            METHOD_DEFINITION_OFFSET_KEY => Some(FollowingNode::Function(
-                unsafe {
-                    &*(inner_ptr.add(METHOD_DEFINITION_OFFSET_VALUE)
-                        as *const Box<'a, Function<'a>>)
-                }
-                .as_ref(),
-            )),
-            METHOD_DEFINITION_OFFSET_VALUE => None,
-            _ => panic!("Invalid field offset: {}", offset),
-        }
-    }
 }
 
 const PROPERTY_DEFINITION_OFFSET_DECORATORS: usize =
@@ -5835,40 +5482,58 @@ impl<'a> AstNode<'a, PropertyDefinition<'a>> {
 
     #[inline]
     pub fn decorators(&self) -> &AstNode<'a, Vec<'a, Decorator<'a>>> {
+        let following_node = Some(FollowingNode::PropertyKey({
+            let ptr = self.inner as *const _ as *const u8;
+            unsafe { &*(ptr.add(PROPERTY_DEFINITION_OFFSET_KEY) as *const PropertyKey<'a>) }
+        }));
         self.allocator.alloc(AstNode {
             inner: &self.inner.decorators,
             allocator: self.allocator,
             parent: self.allocator.alloc(AstNodes::PropertyDefinition(transmute_self(self))),
+            following_node,
         })
     }
 
     #[inline]
     pub fn key(&self) -> &AstNode<'a, PropertyKey<'a>> {
+        let following_node = ({
+            let ptr = self.inner as *const _ as *const u8;
+            unsafe {
+                &*(ptr.add(PROPERTY_DEFINITION_OFFSET_VALUE) as *const Option<Expression<'a>>)
+            }
+        })
+        .as_ref()
+        .map(FollowingNode::Expression);
         self.allocator.alloc(AstNode {
             inner: &self.inner.key,
             allocator: self.allocator,
             parent: self.allocator.alloc(AstNodes::PropertyDefinition(transmute_self(self))),
+            following_node,
         })
     }
 
     #[inline]
     pub fn type_annotation(&self) -> Option<&AstNode<'a, TSTypeAnnotation<'a>>> {
+        let following_node = self.following_node.clone();
         self.allocator
             .alloc(self.inner.type_annotation.as_ref().map(|inner| AstNode {
                 inner: inner.as_ref(),
                 allocator: self.allocator,
                 parent: self.allocator.alloc(AstNodes::PropertyDefinition(transmute_self(self))),
+                following_node,
             }))
             .as_ref()
     }
 
     #[inline]
     pub fn value(&self) -> Option<&AstNode<'a, Expression<'a>>> {
+        let following_node = self.following_node.clone();
         self.allocator
             .alloc(self.inner.value.as_ref().map(|inner| AstNode {
                 inner,
                 allocator: self.allocator,
                 parent: self.allocator.alloc(AstNodes::PropertyDefinition(transmute_self(self))),
+                following_node,
             }))
             .as_ref()
     }
@@ -5912,24 +5577,6 @@ impl<'a> AstNode<'a, PropertyDefinition<'a>> {
     pub fn accessibility(&self) -> Option<TSAccessibility> {
         self.inner.accessibility
     }
-
-    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
-        let inner_ptr = unsafe { self.parent.inner_ptr() };
-        let offset =
-            unsafe { (self.inner as *const _ as *const u8).offset_from_unsigned(inner_ptr) };
-        match offset {
-            PROPERTY_DEFINITION_OFFSET_DECORATORS => Some(FollowingNode::PropertyKey(unsafe {
-                &*(inner_ptr.add(PROPERTY_DEFINITION_OFFSET_KEY) as *const PropertyKey<'a>)
-            })),
-            PROPERTY_DEFINITION_OFFSET_KEY => (unsafe {
-                &*(inner_ptr.add(PROPERTY_DEFINITION_OFFSET_VALUE) as *const Option<Expression<'a>>)
-            })
-            .as_ref()
-            .map(FollowingNode::Expression),
-            PROPERTY_DEFINITION_OFFSET_VALUE => None,
-            _ => panic!("Invalid field offset: {}", offset),
-        }
-    }
 }
 
 impl<'a> AstNode<'a, PrivateIdentifier<'a>> {
@@ -5941,10 +5588,6 @@ impl<'a> AstNode<'a, PrivateIdentifier<'a>> {
     #[inline]
     pub fn name(&self) -> Atom<'a> {
         self.inner.name
-    }
-
-    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
-        None
     }
 }
 
@@ -5958,21 +5601,13 @@ impl<'a> AstNode<'a, StaticBlock<'a>> {
 
     #[inline]
     pub fn body(&self) -> &AstNode<'a, Vec<'a, Statement<'a>>> {
+        let following_node = self.following_node.clone();
         self.allocator.alloc(AstNode {
             inner: &self.inner.body,
             allocator: self.allocator,
             parent: self.allocator.alloc(AstNodes::StaticBlock(transmute_self(self))),
+            following_node,
         })
-    }
-
-    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
-        let inner_ptr = unsafe { self.parent.inner_ptr() };
-        let offset =
-            unsafe { (self.inner as *const _ as *const u8).offset_from_unsigned(inner_ptr) };
-        match offset {
-            STATIC_BLOCK_OFFSET_BODY => None,
-            _ => panic!("Invalid field offset: {}", offset),
-        }
     }
 }
 
@@ -5986,6 +5621,7 @@ impl<'a> AstNode<'a, ModuleDeclaration<'a>> {
                     inner: s.as_ref(),
                     parent,
                     allocator: self.allocator,
+                    following_node: self.following_node.clone(),
                 }))
             }
             ModuleDeclaration::ExportAllDeclaration(s) => {
@@ -5993,6 +5629,7 @@ impl<'a> AstNode<'a, ModuleDeclaration<'a>> {
                     inner: s.as_ref(),
                     parent,
                     allocator: self.allocator,
+                    following_node: self.following_node.clone(),
                 }))
             }
             ModuleDeclaration::ExportDefaultDeclaration(s) => {
@@ -6000,6 +5637,7 @@ impl<'a> AstNode<'a, ModuleDeclaration<'a>> {
                     inner: s.as_ref(),
                     parent,
                     allocator: self.allocator,
+                    following_node: self.following_node.clone(),
                 }))
             }
             ModuleDeclaration::ExportNamedDeclaration(s) => {
@@ -6007,6 +5645,7 @@ impl<'a> AstNode<'a, ModuleDeclaration<'a>> {
                     inner: s.as_ref(),
                     parent,
                     allocator: self.allocator,
+                    following_node: self.following_node.clone(),
                 }))
             }
             ModuleDeclaration::TSExportAssignment(s) => {
@@ -6014,6 +5653,7 @@ impl<'a> AstNode<'a, ModuleDeclaration<'a>> {
                     inner: s.as_ref(),
                     parent,
                     allocator: self.allocator,
+                    following_node: self.following_node.clone(),
                 }))
             }
             ModuleDeclaration::TSNamespaceExportDeclaration(s) => {
@@ -6051,40 +5691,56 @@ impl<'a> AstNode<'a, AccessorProperty<'a>> {
 
     #[inline]
     pub fn decorators(&self) -> &AstNode<'a, Vec<'a, Decorator<'a>>> {
+        let following_node = Some(FollowingNode::PropertyKey({
+            let ptr = self.inner as *const _ as *const u8;
+            unsafe { &*(ptr.add(ACCESSOR_PROPERTY_OFFSET_KEY) as *const PropertyKey<'a>) }
+        }));
         self.allocator.alloc(AstNode {
             inner: &self.inner.decorators,
             allocator: self.allocator,
             parent: self.parent,
+            following_node,
         })
     }
 
     #[inline]
     pub fn key(&self) -> &AstNode<'a, PropertyKey<'a>> {
+        let following_node = ({
+            let ptr = self.inner as *const _ as *const u8;
+            unsafe { &*(ptr.add(ACCESSOR_PROPERTY_OFFSET_VALUE) as *const Option<Expression<'a>>) }
+        })
+        .as_ref()
+        .map(FollowingNode::Expression);
         self.allocator.alloc(AstNode {
             inner: &self.inner.key,
             allocator: self.allocator,
             parent: self.parent,
+            following_node,
         })
     }
 
     #[inline]
     pub fn type_annotation(&self) -> Option<&AstNode<'a, TSTypeAnnotation<'a>>> {
+        let following_node = self.following_node.clone();
         self.allocator
             .alloc(self.inner.type_annotation.as_ref().map(|inner| AstNode {
                 inner: inner.as_ref(),
                 allocator: self.allocator,
                 parent: self.parent,
+                following_node,
             }))
             .as_ref()
     }
 
     #[inline]
     pub fn value(&self) -> Option<&AstNode<'a, Expression<'a>>> {
+        let following_node = self.following_node.clone();
         self.allocator
             .alloc(self.inner.value.as_ref().map(|inner| AstNode {
                 inner,
                 allocator: self.allocator,
                 parent: self.parent,
+                following_node,
             }))
             .as_ref()
     }
@@ -6113,24 +5769,6 @@ impl<'a> AstNode<'a, AccessorProperty<'a>> {
     pub fn accessibility(&self) -> Option<TSAccessibility> {
         self.inner.accessibility
     }
-
-    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
-        let inner_ptr = unsafe { self.parent.inner_ptr() };
-        let offset =
-            unsafe { (self.inner as *const _ as *const u8).offset_from_unsigned(inner_ptr) };
-        match offset {
-            ACCESSOR_PROPERTY_OFFSET_DECORATORS => Some(FollowingNode::PropertyKey(unsafe {
-                &*(inner_ptr.add(ACCESSOR_PROPERTY_OFFSET_KEY) as *const PropertyKey<'a>)
-            })),
-            ACCESSOR_PROPERTY_OFFSET_KEY => (unsafe {
-                &*(inner_ptr.add(ACCESSOR_PROPERTY_OFFSET_VALUE) as *const Option<Expression<'a>>)
-            })
-            .as_ref()
-            .map(FollowingNode::Expression),
-            ACCESSOR_PROPERTY_OFFSET_VALUE => None,
-            _ => panic!("Invalid field offset: {}", offset),
-        }
-    }
 }
 
 const IMPORT_EXPRESSION_OFFSET_SOURCE: usize = std::mem::offset_of!(ImportExpression, source);
@@ -6144,20 +5782,31 @@ impl<'a> AstNode<'a, ImportExpression<'a>> {
 
     #[inline]
     pub fn source(&self) -> &AstNode<'a, Expression<'a>> {
+        let following_node = ({
+            let ptr = self.inner as *const _ as *const u8;
+            unsafe {
+                &*(ptr.add(IMPORT_EXPRESSION_OFFSET_OPTIONS) as *const Option<Expression<'a>>)
+            }
+        })
+        .as_ref()
+        .map(FollowingNode::Expression);
         self.allocator.alloc(AstNode {
             inner: &self.inner.source,
             allocator: self.allocator,
             parent: self.allocator.alloc(AstNodes::ImportExpression(transmute_self(self))),
+            following_node,
         })
     }
 
     #[inline]
     pub fn options(&self) -> Option<&AstNode<'a, Expression<'a>>> {
+        let following_node = self.following_node.clone();
         self.allocator
             .alloc(self.inner.options.as_ref().map(|inner| AstNode {
                 inner,
                 allocator: self.allocator,
                 parent: self.allocator.alloc(AstNodes::ImportExpression(transmute_self(self))),
+                following_node,
             }))
             .as_ref()
     }
@@ -6165,21 +5814,6 @@ impl<'a> AstNode<'a, ImportExpression<'a>> {
     #[inline]
     pub fn phase(&self) -> Option<ImportPhase> {
         self.inner.phase
-    }
-
-    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
-        let inner_ptr = unsafe { self.parent.inner_ptr() };
-        let offset =
-            unsafe { (self.inner as *const _ as *const u8).offset_from_unsigned(inner_ptr) };
-        match offset {
-            IMPORT_EXPRESSION_OFFSET_SOURCE => (unsafe {
-                &*(inner_ptr.add(IMPORT_EXPRESSION_OFFSET_OPTIONS) as *const Option<Expression<'a>>)
-            })
-            .as_ref()
-            .map(FollowingNode::Expression),
-            IMPORT_EXPRESSION_OFFSET_OPTIONS => None,
-            _ => panic!("Invalid field offset: {}", offset),
-        }
     }
 }
 
@@ -6193,21 +5827,25 @@ impl<'a> AstNode<'a, ImportDeclaration<'a>> {
 
     #[inline]
     pub fn specifiers(&self) -> Option<&AstNode<'a, Vec<'a, ImportDeclarationSpecifier<'a>>>> {
+        let following_node = self.following_node.clone();
         self.allocator
             .alloc(self.inner.specifiers.as_ref().map(|inner| AstNode {
                 inner,
                 allocator: self.allocator,
                 parent: self.allocator.alloc(AstNodes::ImportDeclaration(transmute_self(self))),
+                following_node,
             }))
             .as_ref()
     }
 
     #[inline]
     pub fn source(&self) -> &AstNode<'a, StringLiteral<'a>> {
+        let following_node = self.following_node.clone();
         self.allocator.alloc(AstNode {
             inner: &self.inner.source,
             allocator: self.allocator,
             parent: self.allocator.alloc(AstNodes::ImportDeclaration(transmute_self(self))),
+            following_node,
         })
     }
 
@@ -6218,11 +5856,13 @@ impl<'a> AstNode<'a, ImportDeclaration<'a>> {
 
     #[inline]
     pub fn with_clause(&self) -> Option<&AstNode<'a, WithClause<'a>>> {
+        let following_node = self.following_node.clone();
         self.allocator
             .alloc(self.inner.with_clause.as_ref().map(|inner| AstNode {
                 inner: inner.as_ref(),
                 allocator: self.allocator,
                 parent: self.allocator.alloc(AstNodes::ImportDeclaration(transmute_self(self))),
+                following_node,
             }))
             .as_ref()
     }
@@ -6230,16 +5870,6 @@ impl<'a> AstNode<'a, ImportDeclaration<'a>> {
     #[inline]
     pub fn import_kind(&self) -> ImportOrExportKind {
         self.inner.import_kind
-    }
-
-    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
-        let inner_ptr = unsafe { self.parent.inner_ptr() };
-        let offset =
-            unsafe { (self.inner as *const _ as *const u8).offset_from_unsigned(inner_ptr) };
-        match offset {
-            IMPORT_DECLARATION_OFFSET_SOURCE => None,
-            _ => panic!("Invalid field offset: {}", offset),
-        }
     }
 }
 
@@ -6253,6 +5883,7 @@ impl<'a> AstNode<'a, ImportDeclarationSpecifier<'a>> {
                     inner: s.as_ref(),
                     parent,
                     allocator: self.allocator,
+                    following_node: self.following_node.clone(),
                 }))
             }
             ImportDeclarationSpecifier::ImportDefaultSpecifier(s) => {
@@ -6260,6 +5891,7 @@ impl<'a> AstNode<'a, ImportDeclarationSpecifier<'a>> {
                     inner: s.as_ref(),
                     parent,
                     allocator: self.allocator,
+                    following_node: self.following_node.clone(),
                 }))
             }
             ImportDeclarationSpecifier::ImportNamespaceSpecifier(s) => {
@@ -6267,6 +5899,7 @@ impl<'a> AstNode<'a, ImportDeclarationSpecifier<'a>> {
                     inner: s.as_ref(),
                     parent,
                     allocator: self.allocator,
+                    following_node: self.following_node.clone(),
                 }))
             }
         };
@@ -6292,38 +5925,32 @@ impl<'a> AstNode<'a, ImportSpecifier<'a>> {
 
     #[inline]
     pub fn imported(&self) -> &AstNode<'a, ModuleExportName<'a>> {
+        let following_node = Some(FollowingNode::BindingIdentifier({
+            let ptr = self.inner as *const _ as *const u8;
+            unsafe { &*(ptr.add(IMPORT_SPECIFIER_OFFSET_LOCAL) as *const BindingIdentifier<'a>) }
+        }));
         self.allocator.alloc(AstNode {
             inner: &self.inner.imported,
             allocator: self.allocator,
             parent: self.allocator.alloc(AstNodes::ImportSpecifier(transmute_self(self))),
+            following_node,
         })
     }
 
     #[inline]
     pub fn local(&self) -> &AstNode<'a, BindingIdentifier<'a>> {
+        let following_node = self.following_node.clone();
         self.allocator.alloc(AstNode {
             inner: &self.inner.local,
             allocator: self.allocator,
             parent: self.allocator.alloc(AstNodes::ImportSpecifier(transmute_self(self))),
+            following_node,
         })
     }
 
     #[inline]
     pub fn import_kind(&self) -> ImportOrExportKind {
         self.inner.import_kind
-    }
-
-    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
-        let inner_ptr = unsafe { self.parent.inner_ptr() };
-        let offset =
-            unsafe { (self.inner as *const _ as *const u8).offset_from_unsigned(inner_ptr) };
-        match offset {
-            IMPORT_SPECIFIER_OFFSET_IMPORTED => Some(FollowingNode::BindingIdentifier(unsafe {
-                &*(inner_ptr.add(IMPORT_SPECIFIER_OFFSET_LOCAL) as *const BindingIdentifier<'a>)
-            })),
-            IMPORT_SPECIFIER_OFFSET_LOCAL => None,
-            _ => panic!("Invalid field offset: {}", offset),
-        }
     }
 }
 
@@ -6338,21 +5965,13 @@ impl<'a> AstNode<'a, ImportDefaultSpecifier<'a>> {
 
     #[inline]
     pub fn local(&self) -> &AstNode<'a, BindingIdentifier<'a>> {
+        let following_node = self.following_node.clone();
         self.allocator.alloc(AstNode {
             inner: &self.inner.local,
             allocator: self.allocator,
             parent: self.allocator.alloc(AstNodes::ImportDefaultSpecifier(transmute_self(self))),
+            following_node,
         })
-    }
-
-    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
-        let inner_ptr = unsafe { self.parent.inner_ptr() };
-        let offset =
-            unsafe { (self.inner as *const _ as *const u8).offset_from_unsigned(inner_ptr) };
-        match offset {
-            IMPORT_DEFAULT_SPECIFIER_OFFSET_LOCAL => None,
-            _ => panic!("Invalid field offset: {}", offset),
-        }
     }
 }
 
@@ -6367,21 +5986,13 @@ impl<'a> AstNode<'a, ImportNamespaceSpecifier<'a>> {
 
     #[inline]
     pub fn local(&self) -> &AstNode<'a, BindingIdentifier<'a>> {
+        let following_node = self.following_node.clone();
         self.allocator.alloc(AstNode {
             inner: &self.inner.local,
             allocator: self.allocator,
             parent: self.allocator.alloc(AstNodes::ImportNamespaceSpecifier(transmute_self(self))),
+            following_node,
         })
-    }
-
-    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
-        let inner_ptr = unsafe { self.parent.inner_ptr() };
-        let offset =
-            unsafe { (self.inner as *const _ as *const u8).offset_from_unsigned(inner_ptr) };
-        match offset {
-            IMPORT_NAMESPACE_SPECIFIER_OFFSET_LOCAL => None,
-            _ => panic!("Invalid field offset: {}", offset),
-        }
     }
 }
 
@@ -6397,38 +6008,33 @@ impl<'a> AstNode<'a, WithClause<'a>> {
 
     #[inline]
     pub fn attributes_keyword(&self) -> &AstNode<'a, IdentifierName<'a>> {
+        let following_node = ({
+            let ptr = self.inner as *const _ as *const u8;
+            unsafe {
+                &*(ptr.add(WITH_CLAUSE_OFFSET_WITHENTRIES) as *const Vec<'a, ImportAttribute<'a>>)
+            }
+        })
+        .first()
+        .as_ref()
+        .copied()
+        .map(FollowingNode::ImportAttribute);
         self.allocator.alloc(AstNode {
             inner: &self.inner.attributes_keyword,
             allocator: self.allocator,
             parent: self.parent,
+            following_node,
         })
     }
 
     #[inline]
     pub fn with_entries(&self) -> &AstNode<'a, Vec<'a, ImportAttribute<'a>>> {
+        let following_node = self.following_node.clone();
         self.allocator.alloc(AstNode {
             inner: &self.inner.with_entries,
             allocator: self.allocator,
             parent: self.parent,
+            following_node,
         })
-    }
-
-    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
-        let inner_ptr = unsafe { self.parent.inner_ptr() };
-        let offset =
-            unsafe { (self.inner as *const _ as *const u8).offset_from_unsigned(inner_ptr) };
-        match offset {
-            WITH_CLAUSE_OFFSET_ATTRIBUTESKEYWORD => (unsafe {
-                &*(inner_ptr.add(WITH_CLAUSE_OFFSET_WITHENTRIES)
-                    as *const Vec<'a, ImportAttribute<'a>>)
-            })
-            .first()
-            .as_ref()
-            .copied()
-            .map(FollowingNode::ImportAttribute),
-            WITH_CLAUSE_OFFSET_WITHENTRIES => None,
-            _ => panic!("Invalid field offset: {}", offset),
-        }
     }
 }
 
@@ -6443,33 +6049,27 @@ impl<'a> AstNode<'a, ImportAttribute<'a>> {
 
     #[inline]
     pub fn key(&self) -> &AstNode<'a, ImportAttributeKey<'a>> {
+        let following_node = Some(FollowingNode::StringLiteral({
+            let ptr = self.inner as *const _ as *const u8;
+            unsafe { &*(ptr.add(IMPORT_ATTRIBUTE_OFFSET_VALUE) as *const StringLiteral<'a>) }
+        }));
         self.allocator.alloc(AstNode {
             inner: &self.inner.key,
             allocator: self.allocator,
             parent: self.parent,
+            following_node,
         })
     }
 
     #[inline]
     pub fn value(&self) -> &AstNode<'a, StringLiteral<'a>> {
+        let following_node = self.following_node.clone();
         self.allocator.alloc(AstNode {
             inner: &self.inner.value,
             allocator: self.allocator,
             parent: self.parent,
+            following_node,
         })
-    }
-
-    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
-        let inner_ptr = unsafe { self.parent.inner_ptr() };
-        let offset =
-            unsafe { (self.inner as *const _ as *const u8).offset_from_unsigned(inner_ptr) };
-        match offset {
-            IMPORT_ATTRIBUTE_OFFSET_KEY => Some(FollowingNode::StringLiteral(unsafe {
-                &*(inner_ptr.add(IMPORT_ATTRIBUTE_OFFSET_VALUE) as *const StringLiteral<'a>)
-            })),
-            IMPORT_ATTRIBUTE_OFFSET_VALUE => None,
-            _ => panic!("Invalid field offset: {}", offset),
-        }
     }
 }
 
@@ -6483,6 +6083,7 @@ impl<'a> AstNode<'a, ImportAttributeKey<'a>> {
                     inner: s,
                     parent,
                     allocator: self.allocator,
+                    following_node: self.following_node.clone(),
                 }))
             }
             ImportAttributeKey::StringLiteral(s) => {
@@ -6490,6 +6091,7 @@ impl<'a> AstNode<'a, ImportAttributeKey<'a>> {
                     inner: s,
                     parent,
                     allocator: self.allocator,
+                    following_node: self.following_node.clone(),
                 }))
             }
         };
@@ -6519,33 +6121,57 @@ impl<'a> AstNode<'a, ExportNamedDeclaration<'a>> {
 
     #[inline]
     pub fn declaration(&self) -> Option<&AstNode<'a, Declaration<'a>>> {
+        let following_node = ({
+            let ptr = self.inner as *const _ as *const u8;
+            unsafe {
+                &*(ptr.add(EXPORT_NAMED_DECLARATION_OFFSET_SPECIFIERS)
+                    as *const Vec<'a, ExportSpecifier<'a>>)
+            }
+        })
+        .first()
+        .as_ref()
+        .copied()
+        .map(FollowingNode::ExportSpecifier);
         self.allocator
             .alloc(self.inner.declaration.as_ref().map(|inner| AstNode {
                 inner,
                 allocator: self.allocator,
                 parent:
                     self.allocator.alloc(AstNodes::ExportNamedDeclaration(transmute_self(self))),
+                following_node,
             }))
             .as_ref()
     }
 
     #[inline]
     pub fn specifiers(&self) -> &AstNode<'a, Vec<'a, ExportSpecifier<'a>>> {
+        let following_node = ({
+            let ptr = self.inner as *const _ as *const u8;
+            unsafe {
+                &*(ptr.add(EXPORT_NAMED_DECLARATION_OFFSET_SOURCE)
+                    as *const Option<StringLiteral<'a>>)
+            }
+        })
+        .as_ref()
+        .map(FollowingNode::StringLiteral);
         self.allocator.alloc(AstNode {
             inner: &self.inner.specifiers,
             allocator: self.allocator,
             parent: self.allocator.alloc(AstNodes::ExportNamedDeclaration(transmute_self(self))),
+            following_node,
         })
     }
 
     #[inline]
     pub fn source(&self) -> Option<&AstNode<'a, StringLiteral<'a>>> {
+        let following_node = self.following_node.clone();
         self.allocator
             .alloc(self.inner.source.as_ref().map(|inner| AstNode {
                 inner,
                 allocator: self.allocator,
                 parent:
                     self.allocator.alloc(AstNodes::ExportNamedDeclaration(transmute_self(self))),
+                following_node,
             }))
             .as_ref()
     }
@@ -6557,38 +6183,16 @@ impl<'a> AstNode<'a, ExportNamedDeclaration<'a>> {
 
     #[inline]
     pub fn with_clause(&self) -> Option<&AstNode<'a, WithClause<'a>>> {
+        let following_node = self.following_node.clone();
         self.allocator
             .alloc(self.inner.with_clause.as_ref().map(|inner| AstNode {
                 inner: inner.as_ref(),
                 allocator: self.allocator,
                 parent:
                     self.allocator.alloc(AstNodes::ExportNamedDeclaration(transmute_self(self))),
+                following_node,
             }))
             .as_ref()
-    }
-
-    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
-        let inner_ptr = unsafe { self.parent.inner_ptr() };
-        let offset =
-            unsafe { (self.inner as *const _ as *const u8).offset_from_unsigned(inner_ptr) };
-        match offset {
-            EXPORT_NAMED_DECLARATION_OFFSET_DECLARATION => (unsafe {
-                &*(inner_ptr.add(EXPORT_NAMED_DECLARATION_OFFSET_SPECIFIERS)
-                    as *const Vec<'a, ExportSpecifier<'a>>)
-            })
-            .first()
-            .as_ref()
-            .copied()
-            .map(FollowingNode::ExportSpecifier),
-            EXPORT_NAMED_DECLARATION_OFFSET_SPECIFIERS => (unsafe {
-                &*(inner_ptr.add(EXPORT_NAMED_DECLARATION_OFFSET_SOURCE)
-                    as *const Option<StringLiteral<'a>>)
-            })
-            .as_ref()
-            .map(FollowingNode::StringLiteral),
-            EXPORT_NAMED_DECLARATION_OFFSET_SOURCE => None,
-            _ => panic!("Invalid field offset: {}", offset),
-        }
     }
 }
 
@@ -6605,36 +6209,30 @@ impl<'a> AstNode<'a, ExportDefaultDeclaration<'a>> {
 
     #[inline]
     pub fn exported(&self) -> &AstNode<'a, ModuleExportName<'a>> {
+        let following_node = Some(FollowingNode::ExportDefaultDeclarationKind({
+            let ptr = self.inner as *const _ as *const u8;
+            unsafe {
+                &*(ptr.add(EXPORT_DEFAULT_DECLARATION_OFFSET_DECLARATION)
+                    as *const ExportDefaultDeclarationKind<'a>)
+            }
+        }));
         self.allocator.alloc(AstNode {
             inner: &self.inner.exported,
             allocator: self.allocator,
             parent: self.allocator.alloc(AstNodes::ExportDefaultDeclaration(transmute_self(self))),
+            following_node,
         })
     }
 
     #[inline]
     pub fn declaration(&self) -> &AstNode<'a, ExportDefaultDeclarationKind<'a>> {
+        let following_node = self.following_node.clone();
         self.allocator.alloc(AstNode {
             inner: &self.inner.declaration,
             allocator: self.allocator,
             parent: self.allocator.alloc(AstNodes::ExportDefaultDeclaration(transmute_self(self))),
+            following_node,
         })
-    }
-
-    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
-        let inner_ptr = unsafe { self.parent.inner_ptr() };
-        let offset =
-            unsafe { (self.inner as *const _ as *const u8).offset_from_unsigned(inner_ptr) };
-        match offset {
-            EXPORT_DEFAULT_DECLARATION_OFFSET_EXPORTED => {
-                Some(FollowingNode::ExportDefaultDeclarationKind(unsafe {
-                    &*(inner_ptr.add(EXPORT_DEFAULT_DECLARATION_OFFSET_DECLARATION)
-                        as *const ExportDefaultDeclarationKind<'a>)
-                }))
-            }
-            EXPORT_DEFAULT_DECLARATION_OFFSET_DECLARATION => None,
-            _ => panic!("Invalid field offset: {}", offset),
-        }
     }
 }
 
@@ -6651,31 +6249,40 @@ impl<'a> AstNode<'a, ExportAllDeclaration<'a>> {
 
     #[inline]
     pub fn exported(&self) -> Option<&AstNode<'a, ModuleExportName<'a>>> {
+        let following_node = Some(FollowingNode::StringLiteral({
+            let ptr = self.inner as *const _ as *const u8;
+            unsafe { &*(ptr.add(EXPORT_ALL_DECLARATION_OFFSET_SOURCE) as *const StringLiteral<'a>) }
+        }));
         self.allocator
             .alloc(self.inner.exported.as_ref().map(|inner| AstNode {
                 inner,
                 allocator: self.allocator,
                 parent: self.allocator.alloc(AstNodes::ExportAllDeclaration(transmute_self(self))),
+                following_node,
             }))
             .as_ref()
     }
 
     #[inline]
     pub fn source(&self) -> &AstNode<'a, StringLiteral<'a>> {
+        let following_node = self.following_node.clone();
         self.allocator.alloc(AstNode {
             inner: &self.inner.source,
             allocator: self.allocator,
             parent: self.allocator.alloc(AstNodes::ExportAllDeclaration(transmute_self(self))),
+            following_node,
         })
     }
 
     #[inline]
     pub fn with_clause(&self) -> Option<&AstNode<'a, WithClause<'a>>> {
+        let following_node = self.following_node.clone();
         self.allocator
             .alloc(self.inner.with_clause.as_ref().map(|inner| AstNode {
                 inner: inner.as_ref(),
                 allocator: self.allocator,
                 parent: self.allocator.alloc(AstNodes::ExportAllDeclaration(transmute_self(self))),
+                following_node,
             }))
             .as_ref()
     }
@@ -6683,19 +6290,6 @@ impl<'a> AstNode<'a, ExportAllDeclaration<'a>> {
     #[inline]
     pub fn export_kind(&self) -> ImportOrExportKind {
         self.inner.export_kind
-    }
-
-    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
-        let inner_ptr = unsafe { self.parent.inner_ptr() };
-        let offset =
-            unsafe { (self.inner as *const _ as *const u8).offset_from_unsigned(inner_ptr) };
-        match offset {
-            EXPORT_ALL_DECLARATION_OFFSET_EXPORTED => Some(FollowingNode::StringLiteral(unsafe {
-                &*(inner_ptr.add(EXPORT_ALL_DECLARATION_OFFSET_SOURCE) as *const StringLiteral<'a>)
-            })),
-            EXPORT_ALL_DECLARATION_OFFSET_SOURCE => None,
-            _ => panic!("Invalid field offset: {}", offset),
-        }
     }
 }
 
@@ -6710,38 +6304,32 @@ impl<'a> AstNode<'a, ExportSpecifier<'a>> {
 
     #[inline]
     pub fn local(&self) -> &AstNode<'a, ModuleExportName<'a>> {
+        let following_node = Some(FollowingNode::ModuleExportName({
+            let ptr = self.inner as *const _ as *const u8;
+            unsafe { &*(ptr.add(EXPORT_SPECIFIER_OFFSET_EXPORTED) as *const ModuleExportName<'a>) }
+        }));
         self.allocator.alloc(AstNode {
             inner: &self.inner.local,
             allocator: self.allocator,
             parent: self.allocator.alloc(AstNodes::ExportSpecifier(transmute_self(self))),
+            following_node,
         })
     }
 
     #[inline]
     pub fn exported(&self) -> &AstNode<'a, ModuleExportName<'a>> {
+        let following_node = self.following_node.clone();
         self.allocator.alloc(AstNode {
             inner: &self.inner.exported,
             allocator: self.allocator,
             parent: self.allocator.alloc(AstNodes::ExportSpecifier(transmute_self(self))),
+            following_node,
         })
     }
 
     #[inline]
     pub fn export_kind(&self) -> ImportOrExportKind {
         self.inner.export_kind
-    }
-
-    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
-        let inner_ptr = unsafe { self.parent.inner_ptr() };
-        let offset =
-            unsafe { (self.inner as *const _ as *const u8).offset_from_unsigned(inner_ptr) };
-        match offset {
-            EXPORT_SPECIFIER_OFFSET_LOCAL => Some(FollowingNode::ModuleExportName(unsafe {
-                &*(inner_ptr.add(EXPORT_SPECIFIER_OFFSET_EXPORTED) as *const ModuleExportName<'a>)
-            })),
-            EXPORT_SPECIFIER_OFFSET_EXPORTED => None,
-            _ => panic!("Invalid field offset: {}", offset),
-        }
     }
 }
 
@@ -6755,6 +6343,7 @@ impl<'a> AstNode<'a, ExportDefaultDeclarationKind<'a>> {
                     inner: s.as_ref(),
                     parent,
                     allocator: self.allocator,
+                    following_node: self.following_node.clone(),
                 }))
             }
             ExportDefaultDeclarationKind::ClassDeclaration(s) => {
@@ -6762,6 +6351,7 @@ impl<'a> AstNode<'a, ExportDefaultDeclarationKind<'a>> {
                     inner: s.as_ref(),
                     parent,
                     allocator: self.allocator,
+                    following_node: self.following_node.clone(),
                 }))
             }
             ExportDefaultDeclarationKind::TSInterfaceDeclaration(s) => {
@@ -6769,12 +6359,18 @@ impl<'a> AstNode<'a, ExportDefaultDeclarationKind<'a>> {
                     inner: s.as_ref(),
                     parent,
                     allocator: self.allocator,
+                    following_node: self.following_node.clone(),
                 }))
             }
             it @ match_expression!(ExportDefaultDeclarationKind) => {
                 return self
                     .allocator
-                    .alloc(AstNode { inner: it.to_expression(), parent, allocator: self.allocator })
+                    .alloc(AstNode {
+                        inner: it.to_expression(),
+                        parent,
+                        allocator: self.allocator,
+                        following_node: self.following_node.clone(),
+                    })
                     .as_ast_nodes();
             }
         };
@@ -6799,6 +6395,7 @@ impl<'a> AstNode<'a, ModuleExportName<'a>> {
                     inner: s,
                     parent,
                     allocator: self.allocator,
+                    following_node: self.following_node.clone(),
                 }))
             }
             ModuleExportName::IdentifierReference(s) => {
@@ -6806,6 +6403,7 @@ impl<'a> AstNode<'a, ModuleExportName<'a>> {
                     inner: s,
                     parent,
                     allocator: self.allocator,
+                    following_node: self.following_node.clone(),
                 }))
             }
             ModuleExportName::StringLiteral(s) => {
@@ -6813,6 +6411,7 @@ impl<'a> AstNode<'a, ModuleExportName<'a>> {
                     inner: s,
                     parent,
                     allocator: self.allocator,
+                    following_node: self.following_node.clone(),
                 }))
             }
         };
@@ -6840,38 +6439,34 @@ impl<'a> AstNode<'a, V8IntrinsicExpression<'a>> {
 
     #[inline]
     pub fn name(&self) -> &AstNode<'a, IdentifierName<'a>> {
+        let following_node = ({
+            let ptr = self.inner as *const _ as *const u8;
+            unsafe {
+                &*(ptr.add(V_8_INTRINSIC_EXPRESSION_OFFSET_ARGUMENTS)
+                    as *const Vec<'a, Argument<'a>>)
+            }
+        })
+        .first()
+        .as_ref()
+        .copied()
+        .map(FollowingNode::Argument);
         self.allocator.alloc(AstNode {
             inner: &self.inner.name,
             allocator: self.allocator,
             parent: self.allocator.alloc(AstNodes::V8IntrinsicExpression(transmute_self(self))),
+            following_node,
         })
     }
 
     #[inline]
     pub fn arguments(&self) -> &AstNode<'a, Vec<'a, Argument<'a>>> {
+        let following_node = self.following_node.clone();
         self.allocator.alloc(AstNode {
             inner: &self.inner.arguments,
             allocator: self.allocator,
             parent: self.allocator.alloc(AstNodes::V8IntrinsicExpression(transmute_self(self))),
+            following_node,
         })
-    }
-
-    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
-        let inner_ptr = unsafe { self.parent.inner_ptr() };
-        let offset =
-            unsafe { (self.inner as *const _ as *const u8).offset_from_unsigned(inner_ptr) };
-        match offset {
-            V_8_INTRINSIC_EXPRESSION_OFFSET_NAME => (unsafe {
-                &*(inner_ptr.add(V_8_INTRINSIC_EXPRESSION_OFFSET_ARGUMENTS)
-                    as *const Vec<'a, Argument<'a>>)
-            })
-            .first()
-            .as_ref()
-            .copied()
-            .map(FollowingNode::Argument),
-            V_8_INTRINSIC_EXPRESSION_OFFSET_ARGUMENTS => None,
-            _ => panic!("Invalid field offset: {}", offset),
-        }
     }
 }
 
@@ -6885,20 +6480,12 @@ impl<'a> AstNode<'a, BooleanLiteral> {
     pub fn value(&self) -> bool {
         self.inner.value
     }
-
-    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
-        None
-    }
 }
 
 impl<'a> AstNode<'a, NullLiteral> {
     #[inline]
     pub fn span(&self) -> Span {
         self.inner.span
-    }
-
-    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
-        None
     }
 }
 
@@ -6922,10 +6509,6 @@ impl<'a> AstNode<'a, NumericLiteral<'a>> {
     pub fn base(&self) -> NumberBase {
         self.inner.base
     }
-
-    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
-        None
-    }
 }
 
 impl<'a> AstNode<'a, StringLiteral<'a>> {
@@ -6947,10 +6530,6 @@ impl<'a> AstNode<'a, StringLiteral<'a>> {
     #[inline]
     pub fn lone_surrogates(&self) -> bool {
         self.inner.lone_surrogates
-    }
-
-    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
-        None
     }
 }
 
@@ -6974,10 +6553,6 @@ impl<'a> AstNode<'a, BigIntLiteral<'a>> {
     pub fn base(&self) -> BigintBase {
         self.inner.base
     }
-
-    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
-        None
-    }
 }
 
 impl<'a> AstNode<'a, RegExpLiteral<'a>> {
@@ -6995,10 +6570,6 @@ impl<'a> AstNode<'a, RegExpLiteral<'a>> {
     pub fn raw(&self) -> Option<Atom<'a>> {
         self.inner.raw
     }
-
-    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
-        None
-    }
 }
 
 const JSX_ELEMENT_OFFSET_OPENINGELEMENT: usize = std::mem::offset_of!(JSXElement, opening_element);
@@ -7012,48 +6583,44 @@ impl<'a> AstNode<'a, JSXElement<'a>> {
 
     #[inline]
     pub fn opening_element(&self) -> &AstNode<'a, JSXOpeningElement<'a>> {
+        let following_node = ({
+            let ptr = self.inner as *const _ as *const u8;
+            unsafe { &*(ptr.add(JSX_ELEMENT_OFFSET_CHILDREN) as *const Vec<'a, JSXChild<'a>>) }
+        })
+        .first()
+        .as_ref()
+        .copied()
+        .map(FollowingNode::JSXChild);
         self.allocator.alloc(AstNode {
             inner: self.inner.opening_element.as_ref(),
             allocator: self.allocator,
             parent: self.allocator.alloc(AstNodes::JSXElement(transmute_self(self))),
+            following_node,
         })
     }
 
     #[inline]
     pub fn children(&self) -> &AstNode<'a, Vec<'a, JSXChild<'a>>> {
+        let following_node = self.following_node.clone();
         self.allocator.alloc(AstNode {
             inner: &self.inner.children,
             allocator: self.allocator,
             parent: self.allocator.alloc(AstNodes::JSXElement(transmute_self(self))),
+            following_node,
         })
     }
 
     #[inline]
     pub fn closing_element(&self) -> Option<&AstNode<'a, JSXClosingElement<'a>>> {
+        let following_node = self.following_node.clone();
         self.allocator
             .alloc(self.inner.closing_element.as_ref().map(|inner| AstNode {
                 inner: inner.as_ref(),
                 allocator: self.allocator,
                 parent: self.allocator.alloc(AstNodes::JSXElement(transmute_self(self))),
+                following_node,
             }))
             .as_ref()
-    }
-
-    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
-        let inner_ptr = unsafe { self.parent.inner_ptr() };
-        let offset =
-            unsafe { (self.inner as *const _ as *const u8).offset_from_unsigned(inner_ptr) };
-        match offset {
-            JSX_ELEMENT_OFFSET_OPENINGELEMENT => (unsafe {
-                &*(inner_ptr.add(JSX_ELEMENT_OFFSET_CHILDREN) as *const Vec<'a, JSXChild<'a>>)
-            })
-            .first()
-            .as_ref()
-            .copied()
-            .map(FollowingNode::JSXChild),
-            JSX_ELEMENT_OFFSET_CHILDREN => None,
-            _ => panic!("Invalid field offset: {}", offset),
-        }
     }
 }
 
@@ -7069,49 +6636,47 @@ impl<'a> AstNode<'a, JSXOpeningElement<'a>> {
 
     #[inline]
     pub fn name(&self) -> &AstNode<'a, JSXElementName<'a>> {
+        let following_node = ({
+            let ptr = self.inner as *const _ as *const u8;
+            unsafe {
+                &*(ptr.add(JSX_OPENING_ELEMENT_OFFSET_ATTRIBUTES)
+                    as *const Vec<'a, JSXAttributeItem<'a>>)
+            }
+        })
+        .first()
+        .as_ref()
+        .copied()
+        .map(FollowingNode::JSXAttributeItem);
         self.allocator.alloc(AstNode {
             inner: &self.inner.name,
             allocator: self.allocator,
             parent: self.allocator.alloc(AstNodes::JSXOpeningElement(transmute_self(self))),
+            following_node,
         })
     }
 
     #[inline]
     pub fn type_arguments(&self) -> Option<&AstNode<'a, TSTypeParameterInstantiation<'a>>> {
+        let following_node = self.following_node.clone();
         self.allocator
             .alloc(self.inner.type_arguments.as_ref().map(|inner| AstNode {
                 inner: inner.as_ref(),
                 allocator: self.allocator,
                 parent: self.allocator.alloc(AstNodes::JSXOpeningElement(transmute_self(self))),
+                following_node,
             }))
             .as_ref()
     }
 
     #[inline]
     pub fn attributes(&self) -> &AstNode<'a, Vec<'a, JSXAttributeItem<'a>>> {
+        let following_node = self.following_node.clone();
         self.allocator.alloc(AstNode {
             inner: &self.inner.attributes,
             allocator: self.allocator,
             parent: self.allocator.alloc(AstNodes::JSXOpeningElement(transmute_self(self))),
+            following_node,
         })
-    }
-
-    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
-        let inner_ptr = unsafe { self.parent.inner_ptr() };
-        let offset =
-            unsafe { (self.inner as *const _ as *const u8).offset_from_unsigned(inner_ptr) };
-        match offset {
-            JSX_OPENING_ELEMENT_OFFSET_NAME => (unsafe {
-                &*(inner_ptr.add(JSX_OPENING_ELEMENT_OFFSET_ATTRIBUTES)
-                    as *const Vec<'a, JSXAttributeItem<'a>>)
-            })
-            .first()
-            .as_ref()
-            .copied()
-            .map(FollowingNode::JSXAttributeItem),
-            JSX_OPENING_ELEMENT_OFFSET_ATTRIBUTES => None,
-            _ => panic!("Invalid field offset: {}", offset),
-        }
     }
 }
 
@@ -7125,21 +6690,13 @@ impl<'a> AstNode<'a, JSXClosingElement<'a>> {
 
     #[inline]
     pub fn name(&self) -> &AstNode<'a, JSXElementName<'a>> {
+        let following_node = self.following_node.clone();
         self.allocator.alloc(AstNode {
             inner: &self.inner.name,
             allocator: self.allocator,
             parent: self.allocator.alloc(AstNodes::JSXClosingElement(transmute_self(self))),
+            following_node,
         })
-    }
-
-    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
-        let inner_ptr = unsafe { self.parent.inner_ptr() };
-        let offset =
-            unsafe { (self.inner as *const _ as *const u8).offset_from_unsigned(inner_ptr) };
-        match offset {
-            JSX_CLOSING_ELEMENT_OFFSET_NAME => None,
-            _ => panic!("Invalid field offset: {}", offset),
-        }
     }
 }
 
@@ -7157,49 +6714,45 @@ impl<'a> AstNode<'a, JSXFragment<'a>> {
 
     #[inline]
     pub fn opening_fragment(&self) -> &AstNode<'a, JSXOpeningFragment> {
+        let following_node = ({
+            let ptr = self.inner as *const _ as *const u8;
+            unsafe { &*(ptr.add(JSX_FRAGMENT_OFFSET_CHILDREN) as *const Vec<'a, JSXChild<'a>>) }
+        })
+        .first()
+        .as_ref()
+        .copied()
+        .map(FollowingNode::JSXChild);
         self.allocator.alloc(AstNode {
             inner: &self.inner.opening_fragment,
             allocator: self.allocator,
             parent: self.allocator.alloc(AstNodes::JSXFragment(transmute_self(self))),
+            following_node,
         })
     }
 
     #[inline]
     pub fn children(&self) -> &AstNode<'a, Vec<'a, JSXChild<'a>>> {
+        let following_node = Some(FollowingNode::JSXClosingFragment({
+            let ptr = self.inner as *const _ as *const u8;
+            unsafe { &*(ptr.add(JSX_FRAGMENT_OFFSET_CLOSINGFRAGMENT) as *const JSXClosingFragment) }
+        }));
         self.allocator.alloc(AstNode {
             inner: &self.inner.children,
             allocator: self.allocator,
             parent: self.allocator.alloc(AstNodes::JSXFragment(transmute_self(self))),
+            following_node,
         })
     }
 
     #[inline]
     pub fn closing_fragment(&self) -> &AstNode<'a, JSXClosingFragment> {
+        let following_node = self.following_node.clone();
         self.allocator.alloc(AstNode {
             inner: &self.inner.closing_fragment,
             allocator: self.allocator,
             parent: self.allocator.alloc(AstNodes::JSXFragment(transmute_self(self))),
+            following_node,
         })
-    }
-
-    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
-        let inner_ptr = unsafe { self.parent.inner_ptr() };
-        let offset =
-            unsafe { (self.inner as *const _ as *const u8).offset_from_unsigned(inner_ptr) };
-        match offset {
-            JSX_FRAGMENT_OFFSET_OPENINGFRAGMENT => (unsafe {
-                &*(inner_ptr.add(JSX_FRAGMENT_OFFSET_CHILDREN) as *const Vec<'a, JSXChild<'a>>)
-            })
-            .first()
-            .as_ref()
-            .copied()
-            .map(FollowingNode::JSXChild),
-            JSX_FRAGMENT_OFFSET_CHILDREN => Some(FollowingNode::JSXClosingFragment(unsafe {
-                &*(inner_ptr.add(JSX_FRAGMENT_OFFSET_CLOSINGFRAGMENT) as *const JSXClosingFragment)
-            })),
-            JSX_FRAGMENT_OFFSET_CLOSINGFRAGMENT => None,
-            _ => panic!("Invalid field offset: {}", offset),
-        }
     }
 }
 
@@ -7208,20 +6761,12 @@ impl<'a> AstNode<'a, JSXOpeningFragment> {
     pub fn span(&self) -> Span {
         self.inner.span
     }
-
-    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
-        None
-    }
 }
 
 impl<'a> AstNode<'a, JSXClosingFragment> {
     #[inline]
     pub fn span(&self) -> Span {
         self.inner.span
-    }
-
-    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
-        None
     }
 }
 
@@ -7235,6 +6780,7 @@ impl<'a> AstNode<'a, JSXElementName<'a>> {
                     inner: s.as_ref(),
                     parent,
                     allocator: self.allocator,
+                    following_node: self.following_node.clone(),
                 }))
             }
             JSXElementName::IdentifierReference(s) => {
@@ -7242,6 +6788,7 @@ impl<'a> AstNode<'a, JSXElementName<'a>> {
                     inner: s.as_ref(),
                     parent,
                     allocator: self.allocator,
+                    following_node: self.following_node.clone(),
                 }))
             }
             JSXElementName::NamespacedName(s) => {
@@ -7249,6 +6796,7 @@ impl<'a> AstNode<'a, JSXElementName<'a>> {
                     inner: s.as_ref(),
                     parent,
                     allocator: self.allocator,
+                    following_node: self.following_node.clone(),
                 }))
             }
             JSXElementName::MemberExpression(s) => {
@@ -7256,6 +6804,7 @@ impl<'a> AstNode<'a, JSXElementName<'a>> {
                     inner: s.as_ref(),
                     parent,
                     allocator: self.allocator,
+                    following_node: self.following_node.clone(),
                 }))
             }
             JSXElementName::ThisExpression(s) => {
@@ -7263,6 +6812,7 @@ impl<'a> AstNode<'a, JSXElementName<'a>> {
                     inner: s.as_ref(),
                     parent,
                     allocator: self.allocator,
+                    following_node: self.following_node.clone(),
                 }))
             }
         };
@@ -7289,33 +6839,27 @@ impl<'a> AstNode<'a, JSXNamespacedName<'a>> {
 
     #[inline]
     pub fn namespace(&self) -> &AstNode<'a, JSXIdentifier<'a>> {
+        let following_node = Some(FollowingNode::JSXIdentifier({
+            let ptr = self.inner as *const _ as *const u8;
+            unsafe { &*(ptr.add(JSX_NAMESPACED_NAME_OFFSET_NAME) as *const JSXIdentifier<'a>) }
+        }));
         self.allocator.alloc(AstNode {
             inner: &self.inner.namespace,
             allocator: self.allocator,
             parent: self.allocator.alloc(AstNodes::JSXNamespacedName(transmute_self(self))),
+            following_node,
         })
     }
 
     #[inline]
     pub fn name(&self) -> &AstNode<'a, JSXIdentifier<'a>> {
+        let following_node = self.following_node.clone();
         self.allocator.alloc(AstNode {
             inner: &self.inner.name,
             allocator: self.allocator,
             parent: self.allocator.alloc(AstNodes::JSXNamespacedName(transmute_self(self))),
+            following_node,
         })
-    }
-
-    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
-        let inner_ptr = unsafe { self.parent.inner_ptr() };
-        let offset =
-            unsafe { (self.inner as *const _ as *const u8).offset_from_unsigned(inner_ptr) };
-        match offset {
-            JSX_NAMESPACED_NAME_OFFSET_NAMESPACE => Some(FollowingNode::JSXIdentifier(unsafe {
-                &*(inner_ptr.add(JSX_NAMESPACED_NAME_OFFSET_NAME) as *const JSXIdentifier<'a>)
-            })),
-            JSX_NAMESPACED_NAME_OFFSET_NAME => None,
-            _ => panic!("Invalid field offset: {}", offset),
-        }
     }
 }
 
@@ -7332,33 +6876,29 @@ impl<'a> AstNode<'a, JSXMemberExpression<'a>> {
 
     #[inline]
     pub fn object(&self) -> &AstNode<'a, JSXMemberExpressionObject<'a>> {
+        let following_node = Some(FollowingNode::JSXIdentifier({
+            let ptr = self.inner as *const _ as *const u8;
+            unsafe {
+                &*(ptr.add(JSX_MEMBER_EXPRESSION_OFFSET_PROPERTY) as *const JSXIdentifier<'a>)
+            }
+        }));
         self.allocator.alloc(AstNode {
             inner: &self.inner.object,
             allocator: self.allocator,
             parent: self.allocator.alloc(AstNodes::JSXMemberExpression(transmute_self(self))),
+            following_node,
         })
     }
 
     #[inline]
     pub fn property(&self) -> &AstNode<'a, JSXIdentifier<'a>> {
+        let following_node = self.following_node.clone();
         self.allocator.alloc(AstNode {
             inner: &self.inner.property,
             allocator: self.allocator,
             parent: self.allocator.alloc(AstNodes::JSXMemberExpression(transmute_self(self))),
+            following_node,
         })
-    }
-
-    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
-        let inner_ptr = unsafe { self.parent.inner_ptr() };
-        let offset =
-            unsafe { (self.inner as *const _ as *const u8).offset_from_unsigned(inner_ptr) };
-        match offset {
-            JSX_MEMBER_EXPRESSION_OFFSET_OBJECT => Some(FollowingNode::JSXIdentifier(unsafe {
-                &*(inner_ptr.add(JSX_MEMBER_EXPRESSION_OFFSET_PROPERTY) as *const JSXIdentifier<'a>)
-            })),
-            JSX_MEMBER_EXPRESSION_OFFSET_PROPERTY => None,
-            _ => panic!("Invalid field offset: {}", offset),
-        }
     }
 }
 
@@ -7372,6 +6912,7 @@ impl<'a> AstNode<'a, JSXMemberExpressionObject<'a>> {
                     inner: s.as_ref(),
                     parent,
                     allocator: self.allocator,
+                    following_node: self.following_node.clone(),
                 }))
             }
             JSXMemberExpressionObject::MemberExpression(s) => {
@@ -7379,6 +6920,7 @@ impl<'a> AstNode<'a, JSXMemberExpressionObject<'a>> {
                     inner: s.as_ref(),
                     parent,
                     allocator: self.allocator,
+                    following_node: self.following_node.clone(),
                 }))
             }
             JSXMemberExpressionObject::ThisExpression(s) => {
@@ -7386,6 +6928,7 @@ impl<'a> AstNode<'a, JSXMemberExpressionObject<'a>> {
                     inner: s.as_ref(),
                     parent,
                     allocator: self.allocator,
+                    following_node: self.following_node.clone(),
                 }))
             }
         };
@@ -7411,21 +6954,13 @@ impl<'a> AstNode<'a, JSXExpressionContainer<'a>> {
 
     #[inline]
     pub fn expression(&self) -> &AstNode<'a, JSXExpression<'a>> {
+        let following_node = self.following_node.clone();
         self.allocator.alloc(AstNode {
             inner: &self.inner.expression,
             allocator: self.allocator,
             parent: self.allocator.alloc(AstNodes::JSXExpressionContainer(transmute_self(self))),
+            following_node,
         })
-    }
-
-    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
-        let inner_ptr = unsafe { self.parent.inner_ptr() };
-        let offset =
-            unsafe { (self.inner as *const _ as *const u8).offset_from_unsigned(inner_ptr) };
-        match offset {
-            JSX_EXPRESSION_CONTAINER_OFFSET_EXPRESSION => None,
-            _ => panic!("Invalid field offset: {}", offset),
-        }
     }
 }
 
@@ -7439,12 +6974,18 @@ impl<'a> AstNode<'a, JSXExpression<'a>> {
                     inner: s,
                     parent,
                     allocator: self.allocator,
+                    following_node: self.following_node.clone(),
                 }))
             }
             it @ match_expression!(JSXExpression) => {
                 return self
                     .allocator
-                    .alloc(AstNode { inner: it.to_expression(), parent, allocator: self.allocator })
+                    .alloc(AstNode {
+                        inner: it.to_expression(),
+                        parent,
+                        allocator: self.allocator,
+                        following_node: self.following_node.clone(),
+                    })
                     .as_ast_nodes();
             }
         };
@@ -7464,10 +7005,6 @@ impl<'a> AstNode<'a, JSXEmptyExpression> {
     pub fn span(&self) -> Span {
         self.inner.span
     }
-
-    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
-        None
-    }
 }
 
 impl<'a> AstNode<'a, JSXAttributeItem<'a>> {
@@ -7480,6 +7017,7 @@ impl<'a> AstNode<'a, JSXAttributeItem<'a>> {
                     inner: s.as_ref(),
                     parent,
                     allocator: self.allocator,
+                    following_node: self.following_node.clone(),
                 }))
             }
             JSXAttributeItem::SpreadAttribute(s) => {
@@ -7487,6 +7025,7 @@ impl<'a> AstNode<'a, JSXAttributeItem<'a>> {
                     inner: s.as_ref(),
                     parent,
                     allocator: self.allocator,
+                    following_node: self.following_node.clone(),
                 }))
             }
         };
@@ -7512,38 +7051,33 @@ impl<'a> AstNode<'a, JSXAttribute<'a>> {
 
     #[inline]
     pub fn name(&self) -> &AstNode<'a, JSXAttributeName<'a>> {
+        let following_node = ({
+            let ptr = self.inner as *const _ as *const u8;
+            unsafe {
+                &*(ptr.add(JSX_ATTRIBUTE_OFFSET_VALUE) as *const Option<JSXAttributeValue<'a>>)
+            }
+        })
+        .as_ref()
+        .map(FollowingNode::JSXAttributeValue);
         self.allocator.alloc(AstNode {
             inner: &self.inner.name,
             allocator: self.allocator,
             parent: self.allocator.alloc(AstNodes::JSXAttribute(transmute_self(self))),
+            following_node,
         })
     }
 
     #[inline]
     pub fn value(&self) -> Option<&AstNode<'a, JSXAttributeValue<'a>>> {
+        let following_node = self.following_node.clone();
         self.allocator
             .alloc(self.inner.value.as_ref().map(|inner| AstNode {
                 inner,
                 allocator: self.allocator,
                 parent: self.allocator.alloc(AstNodes::JSXAttribute(transmute_self(self))),
+                following_node,
             }))
             .as_ref()
-    }
-
-    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
-        let inner_ptr = unsafe { self.parent.inner_ptr() };
-        let offset =
-            unsafe { (self.inner as *const _ as *const u8).offset_from_unsigned(inner_ptr) };
-        match offset {
-            JSX_ATTRIBUTE_OFFSET_NAME => (unsafe {
-                &*(inner_ptr.add(JSX_ATTRIBUTE_OFFSET_VALUE)
-                    as *const Option<JSXAttributeValue<'a>>)
-            })
-            .as_ref()
-            .map(FollowingNode::JSXAttributeValue),
-            JSX_ATTRIBUTE_OFFSET_VALUE => None,
-            _ => panic!("Invalid field offset: {}", offset),
-        }
     }
 }
 
@@ -7558,21 +7092,13 @@ impl<'a> AstNode<'a, JSXSpreadAttribute<'a>> {
 
     #[inline]
     pub fn argument(&self) -> &AstNode<'a, Expression<'a>> {
+        let following_node = self.following_node.clone();
         self.allocator.alloc(AstNode {
             inner: &self.inner.argument,
             allocator: self.allocator,
             parent: self.allocator.alloc(AstNodes::JSXSpreadAttribute(transmute_self(self))),
+            following_node,
         })
-    }
-
-    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
-        let inner_ptr = unsafe { self.parent.inner_ptr() };
-        let offset =
-            unsafe { (self.inner as *const _ as *const u8).offset_from_unsigned(inner_ptr) };
-        match offset {
-            JSX_SPREAD_ATTRIBUTE_OFFSET_ARGUMENT => None,
-            _ => panic!("Invalid field offset: {}", offset),
-        }
     }
 }
 
@@ -7586,6 +7112,7 @@ impl<'a> AstNode<'a, JSXAttributeName<'a>> {
                     inner: s.as_ref(),
                     parent,
                     allocator: self.allocator,
+                    following_node: self.following_node.clone(),
                 }))
             }
             JSXAttributeName::NamespacedName(s) => {
@@ -7593,6 +7120,7 @@ impl<'a> AstNode<'a, JSXAttributeName<'a>> {
                     inner: s.as_ref(),
                     parent,
                     allocator: self.allocator,
+                    following_node: self.following_node.clone(),
                 }))
             }
         };
@@ -7617,6 +7145,7 @@ impl<'a> AstNode<'a, JSXAttributeValue<'a>> {
                     inner: s.as_ref(),
                     parent,
                     allocator: self.allocator,
+                    following_node: self.following_node.clone(),
                 }))
             }
             JSXAttributeValue::ExpressionContainer(s) => {
@@ -7624,18 +7153,21 @@ impl<'a> AstNode<'a, JSXAttributeValue<'a>> {
                     inner: s.as_ref(),
                     parent,
                     allocator: self.allocator,
+                    following_node: self.following_node.clone(),
                 }))
             }
             JSXAttributeValue::Element(s) => AstNodes::JSXElement(self.allocator.alloc(AstNode {
                 inner: s.as_ref(),
                 parent,
                 allocator: self.allocator,
+                following_node: self.following_node.clone(),
             })),
             JSXAttributeValue::Fragment(s) => {
                 AstNodes::JSXFragment(self.allocator.alloc(AstNode {
                     inner: s.as_ref(),
                     parent,
                     allocator: self.allocator,
+                    following_node: self.following_node.clone(),
                 }))
             }
         };
@@ -7660,10 +7192,6 @@ impl<'a> AstNode<'a, JSXIdentifier<'a>> {
     pub fn name(&self) -> Atom<'a> {
         self.inner.name
     }
-
-    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
-        None
-    }
 }
 
 impl<'a> AstNode<'a, JSXChild<'a>> {
@@ -7675,28 +7203,33 @@ impl<'a> AstNode<'a, JSXChild<'a>> {
                 inner: s.as_ref(),
                 parent,
                 allocator: self.allocator,
+                following_node: self.following_node.clone(),
             })),
             JSXChild::Element(s) => AstNodes::JSXElement(self.allocator.alloc(AstNode {
                 inner: s.as_ref(),
                 parent,
                 allocator: self.allocator,
+                following_node: self.following_node.clone(),
             })),
             JSXChild::Fragment(s) => AstNodes::JSXFragment(self.allocator.alloc(AstNode {
                 inner: s.as_ref(),
                 parent,
                 allocator: self.allocator,
+                following_node: self.following_node.clone(),
             })),
             JSXChild::ExpressionContainer(s) => {
                 AstNodes::JSXExpressionContainer(self.allocator.alloc(AstNode {
                     inner: s.as_ref(),
                     parent,
                     allocator: self.allocator,
+                    following_node: self.following_node.clone(),
                 }))
             }
             JSXChild::Spread(s) => AstNodes::JSXSpreadChild(self.allocator.alloc(AstNode {
                 inner: s.as_ref(),
                 parent,
                 allocator: self.allocator,
+                following_node: self.following_node.clone(),
             })),
         };
         self.allocator.alloc(node)
@@ -7720,21 +7253,13 @@ impl<'a> AstNode<'a, JSXSpreadChild<'a>> {
 
     #[inline]
     pub fn expression(&self) -> &AstNode<'a, Expression<'a>> {
+        let following_node = self.following_node.clone();
         self.allocator.alloc(AstNode {
             inner: &self.inner.expression,
             allocator: self.allocator,
             parent: self.allocator.alloc(AstNodes::JSXSpreadChild(transmute_self(self))),
+            following_node,
         })
-    }
-
-    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
-        let inner_ptr = unsafe { self.parent.inner_ptr() };
-        let offset =
-            unsafe { (self.inner as *const _ as *const u8).offset_from_unsigned(inner_ptr) };
-        match offset {
-            JSX_SPREAD_CHILD_OFFSET_EXPRESSION => None,
-            _ => panic!("Invalid field offset: {}", offset),
-        }
     }
 }
 
@@ -7753,10 +7278,6 @@ impl<'a> AstNode<'a, JSXText<'a>> {
     pub fn raw(&self) -> Option<Atom<'a>> {
         self.inner.raw
     }
-
-    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
-        None
-    }
 }
 
 impl<'a> AstNode<'a, TSThisParameter<'a>> {
@@ -7772,17 +7293,15 @@ impl<'a> AstNode<'a, TSThisParameter<'a>> {
 
     #[inline]
     pub fn type_annotation(&self) -> Option<&AstNode<'a, TSTypeAnnotation<'a>>> {
+        let following_node = self.following_node.clone();
         self.allocator
             .alloc(self.inner.type_annotation.as_ref().map(|inner| AstNode {
                 inner: inner.as_ref(),
                 allocator: self.allocator,
                 parent: self.allocator.alloc(AstNodes::TSThisParameter(transmute_self(self))),
+                following_node,
             }))
             .as_ref()
-    }
-
-    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
-        None
     }
 }
 
@@ -7797,19 +7316,26 @@ impl<'a> AstNode<'a, TSEnumDeclaration<'a>> {
 
     #[inline]
     pub fn id(&self) -> &AstNode<'a, BindingIdentifier<'a>> {
+        let following_node = Some(FollowingNode::TSEnumBody({
+            let ptr = self.inner as *const _ as *const u8;
+            unsafe { &*(ptr.add(TS_ENUM_DECLARATION_OFFSET_BODY) as *const TSEnumBody<'a>) }
+        }));
         self.allocator.alloc(AstNode {
             inner: &self.inner.id,
             allocator: self.allocator,
             parent: self.allocator.alloc(AstNodes::TSEnumDeclaration(transmute_self(self))),
+            following_node,
         })
     }
 
     #[inline]
     pub fn body(&self) -> &AstNode<'a, TSEnumBody<'a>> {
+        let following_node = self.following_node.clone();
         self.allocator.alloc(AstNode {
             inner: &self.inner.body,
             allocator: self.allocator,
             parent: self.allocator.alloc(AstNodes::TSEnumDeclaration(transmute_self(self))),
+            following_node,
         })
     }
 
@@ -7821,19 +7347,6 @@ impl<'a> AstNode<'a, TSEnumDeclaration<'a>> {
     #[inline]
     pub fn declare(&self) -> bool {
         self.inner.declare
-    }
-
-    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
-        let inner_ptr = unsafe { self.parent.inner_ptr() };
-        let offset =
-            unsafe { (self.inner as *const _ as *const u8).offset_from_unsigned(inner_ptr) };
-        match offset {
-            TS_ENUM_DECLARATION_OFFSET_ID => Some(FollowingNode::TSEnumBody(unsafe {
-                &*(inner_ptr.add(TS_ENUM_DECLARATION_OFFSET_BODY) as *const TSEnumBody<'a>)
-            })),
-            TS_ENUM_DECLARATION_OFFSET_BODY => None,
-            _ => panic!("Invalid field offset: {}", offset),
-        }
     }
 }
 
@@ -7847,21 +7360,13 @@ impl<'a> AstNode<'a, TSEnumBody<'a>> {
 
     #[inline]
     pub fn members(&self) -> &AstNode<'a, Vec<'a, TSEnumMember<'a>>> {
+        let following_node = self.following_node.clone();
         self.allocator.alloc(AstNode {
             inner: &self.inner.members,
             allocator: self.allocator,
             parent: self.allocator.alloc(AstNodes::TSEnumBody(transmute_self(self))),
+            following_node,
         })
-    }
-
-    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
-        let inner_ptr = unsafe { self.parent.inner_ptr() };
-        let offset =
-            unsafe { (self.inner as *const _ as *const u8).offset_from_unsigned(inner_ptr) };
-        match offset {
-            TS_ENUM_BODY_OFFSET_MEMBERS => None,
-            _ => panic!("Invalid field offset: {}", offset),
-        }
     }
 }
 
@@ -7876,38 +7381,33 @@ impl<'a> AstNode<'a, TSEnumMember<'a>> {
 
     #[inline]
     pub fn id(&self) -> &AstNode<'a, TSEnumMemberName<'a>> {
+        let following_node = ({
+            let ptr = self.inner as *const _ as *const u8;
+            unsafe {
+                &*(ptr.add(TS_ENUM_MEMBER_OFFSET_INITIALIZER) as *const Option<Expression<'a>>)
+            }
+        })
+        .as_ref()
+        .map(FollowingNode::Expression);
         self.allocator.alloc(AstNode {
             inner: &self.inner.id,
             allocator: self.allocator,
             parent: self.allocator.alloc(AstNodes::TSEnumMember(transmute_self(self))),
+            following_node,
         })
     }
 
     #[inline]
     pub fn initializer(&self) -> Option<&AstNode<'a, Expression<'a>>> {
+        let following_node = self.following_node.clone();
         self.allocator
             .alloc(self.inner.initializer.as_ref().map(|inner| AstNode {
                 inner,
                 allocator: self.allocator,
                 parent: self.allocator.alloc(AstNodes::TSEnumMember(transmute_self(self))),
+                following_node,
             }))
             .as_ref()
-    }
-
-    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
-        let inner_ptr = unsafe { self.parent.inner_ptr() };
-        let offset =
-            unsafe { (self.inner as *const _ as *const u8).offset_from_unsigned(inner_ptr) };
-        match offset {
-            TS_ENUM_MEMBER_OFFSET_ID => (unsafe {
-                &*(inner_ptr.add(TS_ENUM_MEMBER_OFFSET_INITIALIZER)
-                    as *const Option<Expression<'a>>)
-            })
-            .as_ref()
-            .map(FollowingNode::Expression),
-            TS_ENUM_MEMBER_OFFSET_INITIALIZER => None,
-            _ => panic!("Invalid field offset: {}", offset),
-        }
     }
 }
 
@@ -7921,18 +7421,21 @@ impl<'a> AstNode<'a, TSEnumMemberName<'a>> {
                     inner: s.as_ref(),
                     parent,
                     allocator: self.allocator,
+                    following_node: self.following_node.clone(),
                 }))
             }
             TSEnumMemberName::String(s) => AstNodes::StringLiteral(self.allocator.alloc(AstNode {
                 inner: s.as_ref(),
                 parent,
                 allocator: self.allocator,
+                following_node: self.following_node.clone(),
             })),
             TSEnumMemberName::ComputedString(s) => {
                 AstNodes::StringLiteral(self.allocator.alloc(AstNode {
                     inner: s.as_ref(),
                     parent,
                     allocator: self.allocator,
+                    following_node: self.following_node.clone(),
                 }))
             }
             TSEnumMemberName::ComputedTemplateString(s) => {
@@ -7940,6 +7443,7 @@ impl<'a> AstNode<'a, TSEnumMemberName<'a>> {
                     inner: s.as_ref(),
                     parent,
                     allocator: self.allocator,
+                    following_node: self.following_node.clone(),
                 }))
             }
         };
@@ -7965,21 +7469,13 @@ impl<'a> AstNode<'a, TSTypeAnnotation<'a>> {
 
     #[inline]
     pub fn type_annotation(&self) -> &AstNode<'a, TSType<'a>> {
+        let following_node = self.following_node.clone();
         self.allocator.alloc(AstNode {
             inner: &self.inner.type_annotation,
             allocator: self.allocator,
             parent: self.allocator.alloc(AstNodes::TSTypeAnnotation(transmute_self(self))),
+            following_node,
         })
-    }
-
-    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
-        let inner_ptr = unsafe { self.parent.inner_ptr() };
-        let offset =
-            unsafe { (self.inner as *const _ as *const u8).offset_from_unsigned(inner_ptr) };
-        match offset {
-            TS_TYPE_ANNOTATION_OFFSET_TYPEANNOTATION => None,
-            _ => panic!("Invalid field offset: {}", offset),
-        }
     }
 }
 
@@ -7993,21 +7489,13 @@ impl<'a> AstNode<'a, TSLiteralType<'a>> {
 
     #[inline]
     pub fn literal(&self) -> &AstNode<'a, TSLiteral<'a>> {
+        let following_node = self.following_node.clone();
         self.allocator.alloc(AstNode {
             inner: &self.inner.literal,
             allocator: self.allocator,
             parent: self.allocator.alloc(AstNodes::TSLiteralType(transmute_self(self))),
+            following_node,
         })
-    }
-
-    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
-        let inner_ptr = unsafe { self.parent.inner_ptr() };
-        let offset =
-            unsafe { (self.inner as *const _ as *const u8).offset_from_unsigned(inner_ptr) };
-        match offset {
-            TS_LITERAL_TYPE_OFFSET_LITERAL => None,
-            _ => panic!("Invalid field offset: {}", offset),
-        }
     }
 }
 
@@ -8021,6 +7509,7 @@ impl<'a> AstNode<'a, TSLiteral<'a>> {
                     inner: s.as_ref(),
                     parent,
                     allocator: self.allocator,
+                    following_node: self.following_node.clone(),
                 }))
             }
             TSLiteral::NumericLiteral(s) => {
@@ -8028,23 +7517,27 @@ impl<'a> AstNode<'a, TSLiteral<'a>> {
                     inner: s.as_ref(),
                     parent,
                     allocator: self.allocator,
+                    following_node: self.following_node.clone(),
                 }))
             }
             TSLiteral::BigIntLiteral(s) => AstNodes::BigIntLiteral(self.allocator.alloc(AstNode {
                 inner: s.as_ref(),
                 parent,
                 allocator: self.allocator,
+                following_node: self.following_node.clone(),
             })),
             TSLiteral::StringLiteral(s) => AstNodes::StringLiteral(self.allocator.alloc(AstNode {
                 inner: s.as_ref(),
                 parent,
                 allocator: self.allocator,
+                following_node: self.following_node.clone(),
             })),
             TSLiteral::TemplateLiteral(s) => {
                 AstNodes::TemplateLiteral(self.allocator.alloc(AstNode {
                     inner: s.as_ref(),
                     parent,
                     allocator: self.allocator,
+                    following_node: self.following_node.clone(),
                 }))
             }
             TSLiteral::UnaryExpression(s) => {
@@ -8052,6 +7545,7 @@ impl<'a> AstNode<'a, TSLiteral<'a>> {
                     inner: s.as_ref(),
                     parent,
                     allocator: self.allocator,
+                    following_node: self.following_node.clone(),
                 }))
             }
         };
@@ -8075,12 +7569,14 @@ impl<'a> AstNode<'a, TSType<'a>> {
                 inner: s.as_ref(),
                 parent,
                 allocator: self.allocator,
+                following_node: self.following_node.clone(),
             })),
             TSType::TSBigIntKeyword(s) => {
                 AstNodes::TSBigIntKeyword(self.allocator.alloc(AstNode {
                     inner: s.as_ref(),
                     parent,
                     allocator: self.allocator,
+                    following_node: self.following_node.clone(),
                 }))
             }
             TSType::TSBooleanKeyword(s) => {
@@ -8088,6 +7584,7 @@ impl<'a> AstNode<'a, TSType<'a>> {
                     inner: s.as_ref(),
                     parent,
                     allocator: self.allocator,
+                    following_node: self.following_node.clone(),
                 }))
             }
             TSType::TSIntrinsicKeyword(s) => {
@@ -8095,23 +7592,27 @@ impl<'a> AstNode<'a, TSType<'a>> {
                     inner: s.as_ref(),
                     parent,
                     allocator: self.allocator,
+                    following_node: self.following_node.clone(),
                 }))
             }
             TSType::TSNeverKeyword(s) => AstNodes::TSNeverKeyword(self.allocator.alloc(AstNode {
                 inner: s.as_ref(),
                 parent,
                 allocator: self.allocator,
+                following_node: self.following_node.clone(),
             })),
             TSType::TSNullKeyword(s) => AstNodes::TSNullKeyword(self.allocator.alloc(AstNode {
                 inner: s.as_ref(),
                 parent,
                 allocator: self.allocator,
+                following_node: self.following_node.clone(),
             })),
             TSType::TSNumberKeyword(s) => {
                 AstNodes::TSNumberKeyword(self.allocator.alloc(AstNode {
                     inner: s.as_ref(),
                     parent,
                     allocator: self.allocator,
+                    following_node: self.following_node.clone(),
                 }))
             }
             TSType::TSObjectKeyword(s) => {
@@ -8119,6 +7620,7 @@ impl<'a> AstNode<'a, TSType<'a>> {
                     inner: s.as_ref(),
                     parent,
                     allocator: self.allocator,
+                    following_node: self.following_node.clone(),
                 }))
             }
             TSType::TSStringKeyword(s) => {
@@ -8126,6 +7628,7 @@ impl<'a> AstNode<'a, TSType<'a>> {
                     inner: s.as_ref(),
                     parent,
                     allocator: self.allocator,
+                    following_node: self.following_node.clone(),
                 }))
             }
             TSType::TSSymbolKeyword(s) => {
@@ -8133,6 +7636,7 @@ impl<'a> AstNode<'a, TSType<'a>> {
                     inner: s.as_ref(),
                     parent,
                     allocator: self.allocator,
+                    following_node: self.following_node.clone(),
                 }))
             }
             TSType::TSUndefinedKeyword(s) => {
@@ -8140,6 +7644,7 @@ impl<'a> AstNode<'a, TSType<'a>> {
                     inner: s.as_ref(),
                     parent,
                     allocator: self.allocator,
+                    following_node: self.following_node.clone(),
                 }))
             }
             TSType::TSUnknownKeyword(s) => {
@@ -8147,12 +7652,14 @@ impl<'a> AstNode<'a, TSType<'a>> {
                     inner: s.as_ref(),
                     parent,
                     allocator: self.allocator,
+                    following_node: self.following_node.clone(),
                 }))
             }
             TSType::TSVoidKeyword(s) => AstNodes::TSVoidKeyword(self.allocator.alloc(AstNode {
                 inner: s.as_ref(),
                 parent,
                 allocator: self.allocator,
+                following_node: self.following_node.clone(),
             })),
             TSType::TSArrayType(s) => {
                 panic!(
@@ -8164,6 +7671,7 @@ impl<'a> AstNode<'a, TSType<'a>> {
                     inner: s.as_ref(),
                     parent,
                     allocator: self.allocator,
+                    following_node: self.following_node.clone(),
                 }))
             }
             TSType::TSConstructorType(s) => {
@@ -8180,41 +7688,48 @@ impl<'a> AstNode<'a, TSType<'a>> {
                 inner: s.as_ref(),
                 parent,
                 allocator: self.allocator,
+                following_node: self.following_node.clone(),
             })),
             TSType::TSIndexedAccessType(s) => {
                 AstNodes::TSIndexedAccessType(self.allocator.alloc(AstNode {
                     inner: s.as_ref(),
                     parent,
                     allocator: self.allocator,
+                    following_node: self.following_node.clone(),
                 }))
             }
             TSType::TSInferType(s) => AstNodes::TSInferType(self.allocator.alloc(AstNode {
                 inner: s.as_ref(),
                 parent,
                 allocator: self.allocator,
+                following_node: self.following_node.clone(),
             })),
             TSType::TSIntersectionType(s) => {
                 AstNodes::TSIntersectionType(self.allocator.alloc(AstNode {
                     inner: s.as_ref(),
                     parent,
                     allocator: self.allocator,
+                    following_node: self.following_node.clone(),
                 }))
             }
             TSType::TSLiteralType(s) => AstNodes::TSLiteralType(self.allocator.alloc(AstNode {
                 inner: s.as_ref(),
                 parent,
                 allocator: self.allocator,
+                following_node: self.following_node.clone(),
             })),
             TSType::TSMappedType(s) => AstNodes::TSMappedType(self.allocator.alloc(AstNode {
                 inner: s.as_ref(),
                 parent,
                 allocator: self.allocator,
+                following_node: self.following_node.clone(),
             })),
             TSType::TSNamedTupleMember(s) => {
                 AstNodes::TSNamedTupleMember(self.allocator.alloc(AstNode {
                     inner: s.as_ref(),
                     parent,
                     allocator: self.allocator,
+                    following_node: self.following_node.clone(),
                 }))
             }
             TSType::TSTemplateLiteralType(s) => {
@@ -8222,12 +7737,14 @@ impl<'a> AstNode<'a, TSType<'a>> {
                     inner: s.as_ref(),
                     parent,
                     allocator: self.allocator,
+                    following_node: self.following_node.clone(),
                 }))
             }
             TSType::TSThisType(s) => AstNodes::TSThisType(self.allocator.alloc(AstNode {
                 inner: s.as_ref(),
                 parent,
                 allocator: self.allocator,
+                following_node: self.following_node.clone(),
             })),
             TSType::TSTupleType(s) => {
                 panic!(
@@ -8238,6 +7755,7 @@ impl<'a> AstNode<'a, TSType<'a>> {
                 inner: s.as_ref(),
                 parent,
                 allocator: self.allocator,
+                following_node: self.following_node.clone(),
             })),
             TSType::TSTypeOperatorType(s) => {
                 panic!(
@@ -8253,24 +7771,28 @@ impl<'a> AstNode<'a, TSType<'a>> {
                 inner: s.as_ref(),
                 parent,
                 allocator: self.allocator,
+                following_node: self.following_node.clone(),
             })),
             TSType::TSTypeReference(s) => {
                 AstNodes::TSTypeReference(self.allocator.alloc(AstNode {
                     inner: s.as_ref(),
                     parent,
                     allocator: self.allocator,
+                    following_node: self.following_node.clone(),
                 }))
             }
             TSType::TSUnionType(s) => AstNodes::TSUnionType(self.allocator.alloc(AstNode {
                 inner: s.as_ref(),
                 parent,
                 allocator: self.allocator,
+                following_node: self.following_node.clone(),
             })),
             TSType::TSParenthesizedType(s) => {
                 AstNodes::TSParenthesizedType(self.allocator.alloc(AstNode {
                     inner: s.as_ref(),
                     parent,
                     allocator: self.allocator,
+                    following_node: self.following_node.clone(),
                 }))
             }
             TSType::JSDocNullableType(s) => {
@@ -8278,6 +7800,7 @@ impl<'a> AstNode<'a, TSType<'a>> {
                     inner: s.as_ref(),
                     parent,
                     allocator: self.allocator,
+                    following_node: self.following_node.clone(),
                 }))
             }
             TSType::JSDocNonNullableType(s) => {
@@ -8285,6 +7808,7 @@ impl<'a> AstNode<'a, TSType<'a>> {
                     inner: s.as_ref(),
                     parent,
                     allocator: self.allocator,
+                    following_node: self.following_node.clone(),
                 }))
             }
             TSType::JSDocUnknownType(s) => {
@@ -8292,6 +7816,7 @@ impl<'a> AstNode<'a, TSType<'a>> {
                     inner: s.as_ref(),
                     parent,
                     allocator: self.allocator,
+                    following_node: self.following_node.clone(),
                 }))
             }
         };
@@ -8323,57 +7848,55 @@ impl<'a> AstNode<'a, TSConditionalType<'a>> {
 
     #[inline]
     pub fn check_type(&self) -> &AstNode<'a, TSType<'a>> {
+        let following_node = Some(FollowingNode::TSType({
+            let ptr = self.inner as *const _ as *const u8;
+            unsafe { &*(ptr.add(TS_CONDITIONAL_TYPE_OFFSET_EXTENDSTYPE) as *const TSType<'a>) }
+        }));
         self.allocator.alloc(AstNode {
             inner: &self.inner.check_type,
             allocator: self.allocator,
             parent: self.allocator.alloc(AstNodes::TSConditionalType(transmute_self(self))),
+            following_node,
         })
     }
 
     #[inline]
     pub fn extends_type(&self) -> &AstNode<'a, TSType<'a>> {
+        let following_node = Some(FollowingNode::TSType({
+            let ptr = self.inner as *const _ as *const u8;
+            unsafe { &*(ptr.add(TS_CONDITIONAL_TYPE_OFFSET_TRUETYPE) as *const TSType<'a>) }
+        }));
         self.allocator.alloc(AstNode {
             inner: &self.inner.extends_type,
             allocator: self.allocator,
             parent: self.allocator.alloc(AstNodes::TSConditionalType(transmute_self(self))),
+            following_node,
         })
     }
 
     #[inline]
     pub fn true_type(&self) -> &AstNode<'a, TSType<'a>> {
+        let following_node = Some(FollowingNode::TSType({
+            let ptr = self.inner as *const _ as *const u8;
+            unsafe { &*(ptr.add(TS_CONDITIONAL_TYPE_OFFSET_FALSETYPE) as *const TSType<'a>) }
+        }));
         self.allocator.alloc(AstNode {
             inner: &self.inner.true_type,
             allocator: self.allocator,
             parent: self.allocator.alloc(AstNodes::TSConditionalType(transmute_self(self))),
+            following_node,
         })
     }
 
     #[inline]
     pub fn false_type(&self) -> &AstNode<'a, TSType<'a>> {
+        let following_node = self.following_node.clone();
         self.allocator.alloc(AstNode {
             inner: &self.inner.false_type,
             allocator: self.allocator,
             parent: self.allocator.alloc(AstNodes::TSConditionalType(transmute_self(self))),
+            following_node,
         })
-    }
-
-    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
-        let inner_ptr = unsafe { self.parent.inner_ptr() };
-        let offset =
-            unsafe { (self.inner as *const _ as *const u8).offset_from_unsigned(inner_ptr) };
-        match offset {
-            TS_CONDITIONAL_TYPE_OFFSET_CHECKTYPE => Some(FollowingNode::TSType(unsafe {
-                &*(inner_ptr.add(TS_CONDITIONAL_TYPE_OFFSET_EXTENDSTYPE) as *const TSType<'a>)
-            })),
-            TS_CONDITIONAL_TYPE_OFFSET_EXTENDSTYPE => Some(FollowingNode::TSType(unsafe {
-                &*(inner_ptr.add(TS_CONDITIONAL_TYPE_OFFSET_TRUETYPE) as *const TSType<'a>)
-            })),
-            TS_CONDITIONAL_TYPE_OFFSET_TRUETYPE => Some(FollowingNode::TSType(unsafe {
-                &*(inner_ptr.add(TS_CONDITIONAL_TYPE_OFFSET_FALSETYPE) as *const TSType<'a>)
-            })),
-            TS_CONDITIONAL_TYPE_OFFSET_FALSETYPE => None,
-            _ => panic!("Invalid field offset: {}", offset),
-        }
     }
 }
 
@@ -8387,21 +7910,13 @@ impl<'a> AstNode<'a, TSUnionType<'a>> {
 
     #[inline]
     pub fn types(&self) -> &AstNode<'a, Vec<'a, TSType<'a>>> {
+        let following_node = self.following_node.clone();
         self.allocator.alloc(AstNode {
             inner: &self.inner.types,
             allocator: self.allocator,
             parent: self.allocator.alloc(AstNodes::TSUnionType(transmute_self(self))),
+            following_node,
         })
-    }
-
-    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
-        let inner_ptr = unsafe { self.parent.inner_ptr() };
-        let offset =
-            unsafe { (self.inner as *const _ as *const u8).offset_from_unsigned(inner_ptr) };
-        match offset {
-            TS_UNION_TYPE_OFFSET_TYPES => None,
-            _ => panic!("Invalid field offset: {}", offset),
-        }
     }
 }
 
@@ -8415,21 +7930,13 @@ impl<'a> AstNode<'a, TSIntersectionType<'a>> {
 
     #[inline]
     pub fn types(&self) -> &AstNode<'a, Vec<'a, TSType<'a>>> {
+        let following_node = self.following_node.clone();
         self.allocator.alloc(AstNode {
             inner: &self.inner.types,
             allocator: self.allocator,
             parent: self.allocator.alloc(AstNodes::TSIntersectionType(transmute_self(self))),
+            following_node,
         })
-    }
-
-    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
-        let inner_ptr = unsafe { self.parent.inner_ptr() };
-        let offset =
-            unsafe { (self.inner as *const _ as *const u8).offset_from_unsigned(inner_ptr) };
-        match offset {
-            TS_INTERSECTION_TYPE_OFFSET_TYPES => None,
-            _ => panic!("Invalid field offset: {}", offset),
-        }
     }
 }
 
@@ -8444,21 +7951,13 @@ impl<'a> AstNode<'a, TSParenthesizedType<'a>> {
 
     #[inline]
     pub fn type_annotation(&self) -> &AstNode<'a, TSType<'a>> {
+        let following_node = self.following_node.clone();
         self.allocator.alloc(AstNode {
             inner: &self.inner.type_annotation,
             allocator: self.allocator,
             parent: self.allocator.alloc(AstNodes::TSParenthesizedType(transmute_self(self))),
+            following_node,
         })
-    }
-
-    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
-        let inner_ptr = unsafe { self.parent.inner_ptr() };
-        let offset =
-            unsafe { (self.inner as *const _ as *const u8).offset_from_unsigned(inner_ptr) };
-        match offset {
-            TS_PARENTHESIZED_TYPE_OFFSET_TYPEANNOTATION => None,
-            _ => panic!("Invalid field offset: {}", offset),
-        }
     }
 }
 
@@ -8478,21 +7977,13 @@ impl<'a> AstNode<'a, TSTypeOperator<'a>> {
 
     #[inline]
     pub fn type_annotation(&self) -> &AstNode<'a, TSType<'a>> {
+        let following_node = self.following_node.clone();
         self.allocator.alloc(AstNode {
             inner: &self.inner.type_annotation,
             allocator: self.allocator,
             parent: self.parent,
+            following_node,
         })
-    }
-
-    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
-        let inner_ptr = unsafe { self.parent.inner_ptr() };
-        let offset =
-            unsafe { (self.inner as *const _ as *const u8).offset_from_unsigned(inner_ptr) };
-        match offset {
-            TS_TYPE_OPERATOR_OFFSET_TYPEANNOTATION => None,
-            _ => panic!("Invalid field offset: {}", offset),
-        }
     }
 }
 
@@ -8506,21 +7997,13 @@ impl<'a> AstNode<'a, TSArrayType<'a>> {
 
     #[inline]
     pub fn element_type(&self) -> &AstNode<'a, TSType<'a>> {
+        let following_node = self.following_node.clone();
         self.allocator.alloc(AstNode {
             inner: &self.inner.element_type,
             allocator: self.allocator,
             parent: self.parent,
+            following_node,
         })
-    }
-
-    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
-        let inner_ptr = unsafe { self.parent.inner_ptr() };
-        let offset =
-            unsafe { (self.inner as *const _ as *const u8).offset_from_unsigned(inner_ptr) };
-        match offset {
-            TS_ARRAY_TYPE_OFFSET_ELEMENTTYPE => None,
-            _ => panic!("Invalid field offset: {}", offset),
-        }
     }
 }
 
@@ -8537,33 +8020,27 @@ impl<'a> AstNode<'a, TSIndexedAccessType<'a>> {
 
     #[inline]
     pub fn object_type(&self) -> &AstNode<'a, TSType<'a>> {
+        let following_node = Some(FollowingNode::TSType({
+            let ptr = self.inner as *const _ as *const u8;
+            unsafe { &*(ptr.add(TS_INDEXED_ACCESS_TYPE_OFFSET_INDEXTYPE) as *const TSType<'a>) }
+        }));
         self.allocator.alloc(AstNode {
             inner: &self.inner.object_type,
             allocator: self.allocator,
             parent: self.allocator.alloc(AstNodes::TSIndexedAccessType(transmute_self(self))),
+            following_node,
         })
     }
 
     #[inline]
     pub fn index_type(&self) -> &AstNode<'a, TSType<'a>> {
+        let following_node = self.following_node.clone();
         self.allocator.alloc(AstNode {
             inner: &self.inner.index_type,
             allocator: self.allocator,
             parent: self.allocator.alloc(AstNodes::TSIndexedAccessType(transmute_self(self))),
+            following_node,
         })
-    }
-
-    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
-        let inner_ptr = unsafe { self.parent.inner_ptr() };
-        let offset =
-            unsafe { (self.inner as *const _ as *const u8).offset_from_unsigned(inner_ptr) };
-        match offset {
-            TS_INDEXED_ACCESS_TYPE_OFFSET_OBJECTTYPE => Some(FollowingNode::TSType(unsafe {
-                &*(inner_ptr.add(TS_INDEXED_ACCESS_TYPE_OFFSET_INDEXTYPE) as *const TSType<'a>)
-            })),
-            TS_INDEXED_ACCESS_TYPE_OFFSET_INDEXTYPE => None,
-            _ => panic!("Invalid field offset: {}", offset),
-        }
     }
 }
 
@@ -8577,21 +8054,13 @@ impl<'a> AstNode<'a, TSTupleType<'a>> {
 
     #[inline]
     pub fn element_types(&self) -> &AstNode<'a, Vec<'a, TSTupleElement<'a>>> {
+        let following_node = self.following_node.clone();
         self.allocator.alloc(AstNode {
             inner: &self.inner.element_types,
             allocator: self.allocator,
             parent: self.parent,
+            following_node,
         })
-    }
-
-    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
-        let inner_ptr = unsafe { self.parent.inner_ptr() };
-        let offset =
-            unsafe { (self.inner as *const _ as *const u8).offset_from_unsigned(inner_ptr) };
-        match offset {
-            TS_TUPLE_TYPE_OFFSET_ELEMENTTYPES => None,
-            _ => panic!("Invalid field offset: {}", offset),
-        }
     }
 }
 
@@ -8607,39 +8076,34 @@ impl<'a> AstNode<'a, TSNamedTupleMember<'a>> {
 
     #[inline]
     pub fn label(&self) -> &AstNode<'a, IdentifierName<'a>> {
+        let following_node = Some(FollowingNode::TSTupleElement({
+            let ptr = self.inner as *const _ as *const u8;
+            unsafe {
+                &*(ptr.add(TS_NAMED_TUPLE_MEMBER_OFFSET_ELEMENTTYPE) as *const TSTupleElement<'a>)
+            }
+        }));
         self.allocator.alloc(AstNode {
             inner: &self.inner.label,
             allocator: self.allocator,
             parent: self.allocator.alloc(AstNodes::TSNamedTupleMember(transmute_self(self))),
+            following_node,
         })
     }
 
     #[inline]
     pub fn element_type(&self) -> &AstNode<'a, TSTupleElement<'a>> {
+        let following_node = self.following_node.clone();
         self.allocator.alloc(AstNode {
             inner: &self.inner.element_type,
             allocator: self.allocator,
             parent: self.allocator.alloc(AstNodes::TSNamedTupleMember(transmute_self(self))),
+            following_node,
         })
     }
 
     #[inline]
     pub fn optional(&self) -> bool {
         self.inner.optional
-    }
-
-    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
-        let inner_ptr = unsafe { self.parent.inner_ptr() };
-        let offset =
-            unsafe { (self.inner as *const _ as *const u8).offset_from_unsigned(inner_ptr) };
-        match offset {
-            TS_NAMED_TUPLE_MEMBER_OFFSET_LABEL => Some(FollowingNode::TSTupleElement(unsafe {
-                &*(inner_ptr.add(TS_NAMED_TUPLE_MEMBER_OFFSET_ELEMENTTYPE)
-                    as *const TSTupleElement<'a>)
-            })),
-            TS_NAMED_TUPLE_MEMBER_OFFSET_ELEMENTTYPE => None,
-            _ => panic!("Invalid field offset: {}", offset),
-        }
     }
 }
 
@@ -8654,21 +8118,13 @@ impl<'a> AstNode<'a, TSOptionalType<'a>> {
 
     #[inline]
     pub fn type_annotation(&self) -> &AstNode<'a, TSType<'a>> {
+        let following_node = self.following_node.clone();
         self.allocator.alloc(AstNode {
             inner: &self.inner.type_annotation,
             allocator: self.allocator,
             parent: self.parent,
+            following_node,
         })
-    }
-
-    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
-        let inner_ptr = unsafe { self.parent.inner_ptr() };
-        let offset =
-            unsafe { (self.inner as *const _ as *const u8).offset_from_unsigned(inner_ptr) };
-        match offset {
-            TS_OPTIONAL_TYPE_OFFSET_TYPEANNOTATION => None,
-            _ => panic!("Invalid field offset: {}", offset),
-        }
     }
 }
 
@@ -8682,21 +8138,13 @@ impl<'a> AstNode<'a, TSRestType<'a>> {
 
     #[inline]
     pub fn type_annotation(&self) -> &AstNode<'a, TSType<'a>> {
+        let following_node = self.following_node.clone();
         self.allocator.alloc(AstNode {
             inner: &self.inner.type_annotation,
             allocator: self.allocator,
             parent: self.parent,
+            following_node,
         })
-    }
-
-    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
-        let inner_ptr = unsafe { self.parent.inner_ptr() };
-        let offset =
-            unsafe { (self.inner as *const _ as *const u8).offset_from_unsigned(inner_ptr) };
-        match offset {
-            TS_REST_TYPE_OFFSET_TYPEANNOTATION => None,
-            _ => panic!("Invalid field offset: {}", offset),
-        }
     }
 }
 
@@ -8718,7 +8166,12 @@ impl<'a> AstNode<'a, TSTupleElement<'a>> {
             it @ match_ts_type!(TSTupleElement) => {
                 return self
                     .allocator
-                    .alloc(AstNode { inner: it.to_ts_type(), parent, allocator: self.allocator })
+                    .alloc(AstNode {
+                        inner: it.to_ts_type(),
+                        parent,
+                        allocator: self.allocator,
+                        following_node: self.following_node.clone(),
+                    })
                     .as_ast_nodes();
             }
         };
@@ -8738,20 +8191,12 @@ impl<'a> AstNode<'a, TSAnyKeyword> {
     pub fn span(&self) -> Span {
         self.inner.span
     }
-
-    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
-        None
-    }
 }
 
 impl<'a> AstNode<'a, TSStringKeyword> {
     #[inline]
     pub fn span(&self) -> Span {
         self.inner.span
-    }
-
-    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
-        None
     }
 }
 
@@ -8760,20 +8205,12 @@ impl<'a> AstNode<'a, TSBooleanKeyword> {
     pub fn span(&self) -> Span {
         self.inner.span
     }
-
-    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
-        None
-    }
 }
 
 impl<'a> AstNode<'a, TSNumberKeyword> {
     #[inline]
     pub fn span(&self) -> Span {
         self.inner.span
-    }
-
-    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
-        None
     }
 }
 
@@ -8782,20 +8219,12 @@ impl<'a> AstNode<'a, TSNeverKeyword> {
     pub fn span(&self) -> Span {
         self.inner.span
     }
-
-    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
-        None
-    }
 }
 
 impl<'a> AstNode<'a, TSIntrinsicKeyword> {
     #[inline]
     pub fn span(&self) -> Span {
         self.inner.span
-    }
-
-    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
-        None
     }
 }
 
@@ -8804,20 +8233,12 @@ impl<'a> AstNode<'a, TSUnknownKeyword> {
     pub fn span(&self) -> Span {
         self.inner.span
     }
-
-    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
-        None
-    }
 }
 
 impl<'a> AstNode<'a, TSNullKeyword> {
     #[inline]
     pub fn span(&self) -> Span {
         self.inner.span
-    }
-
-    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
-        None
     }
 }
 
@@ -8826,20 +8247,12 @@ impl<'a> AstNode<'a, TSUndefinedKeyword> {
     pub fn span(&self) -> Span {
         self.inner.span
     }
-
-    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
-        None
-    }
 }
 
 impl<'a> AstNode<'a, TSVoidKeyword> {
     #[inline]
     pub fn span(&self) -> Span {
         self.inner.span
-    }
-
-    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
-        None
     }
 }
 
@@ -8848,20 +8261,12 @@ impl<'a> AstNode<'a, TSSymbolKeyword> {
     pub fn span(&self) -> Span {
         self.inner.span
     }
-
-    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
-        None
-    }
 }
 
 impl<'a> AstNode<'a, TSThisType> {
     #[inline]
     pub fn span(&self) -> Span {
         self.inner.span
-    }
-
-    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
-        None
     }
 }
 
@@ -8870,20 +8275,12 @@ impl<'a> AstNode<'a, TSObjectKeyword> {
     pub fn span(&self) -> Span {
         self.inner.span
     }
-
-    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
-        None
-    }
 }
 
 impl<'a> AstNode<'a, TSBigIntKeyword> {
     #[inline]
     pub fn span(&self) -> Span {
         self.inner.span
-    }
-
-    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
-        None
     }
 }
 
@@ -8897,32 +8294,26 @@ impl<'a> AstNode<'a, TSTypeReference<'a>> {
 
     #[inline]
     pub fn type_name(&self) -> &AstNode<'a, TSTypeName<'a>> {
+        let following_node = self.following_node.clone();
         self.allocator.alloc(AstNode {
             inner: &self.inner.type_name,
             allocator: self.allocator,
             parent: self.allocator.alloc(AstNodes::TSTypeReference(transmute_self(self))),
+            following_node,
         })
     }
 
     #[inline]
     pub fn type_arguments(&self) -> Option<&AstNode<'a, TSTypeParameterInstantiation<'a>>> {
+        let following_node = self.following_node.clone();
         self.allocator
             .alloc(self.inner.type_arguments.as_ref().map(|inner| AstNode {
                 inner: inner.as_ref(),
                 allocator: self.allocator,
                 parent: self.allocator.alloc(AstNodes::TSTypeReference(transmute_self(self))),
+                following_node,
             }))
             .as_ref()
-    }
-
-    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
-        let inner_ptr = unsafe { self.parent.inner_ptr() };
-        let offset =
-            unsafe { (self.inner as *const _ as *const u8).offset_from_unsigned(inner_ptr) };
-        match offset {
-            TS_TYPE_REFERENCE_OFFSET_TYPENAME => None,
-            _ => panic!("Invalid field offset: {}", offset),
-        }
     }
 }
 
@@ -8936,6 +8327,7 @@ impl<'a> AstNode<'a, TSTypeName<'a>> {
                     inner: s.as_ref(),
                     parent,
                     allocator: self.allocator,
+                    following_node: self.following_node.clone(),
                 }))
             }
             TSTypeName::QualifiedName(s) => {
@@ -8943,6 +8335,7 @@ impl<'a> AstNode<'a, TSTypeName<'a>> {
                     inner: s.as_ref(),
                     parent,
                     allocator: self.allocator,
+                    following_node: self.following_node.clone(),
                 }))
             }
         };
@@ -8968,33 +8361,27 @@ impl<'a> AstNode<'a, TSQualifiedName<'a>> {
 
     #[inline]
     pub fn left(&self) -> &AstNode<'a, TSTypeName<'a>> {
+        let following_node = Some(FollowingNode::IdentifierName({
+            let ptr = self.inner as *const _ as *const u8;
+            unsafe { &*(ptr.add(TS_QUALIFIED_NAME_OFFSET_RIGHT) as *const IdentifierName<'a>) }
+        }));
         self.allocator.alloc(AstNode {
             inner: &self.inner.left,
             allocator: self.allocator,
             parent: self.allocator.alloc(AstNodes::TSQualifiedName(transmute_self(self))),
+            following_node,
         })
     }
 
     #[inline]
     pub fn right(&self) -> &AstNode<'a, IdentifierName<'a>> {
+        let following_node = self.following_node.clone();
         self.allocator.alloc(AstNode {
             inner: &self.inner.right,
             allocator: self.allocator,
             parent: self.allocator.alloc(AstNodes::TSQualifiedName(transmute_self(self))),
+            following_node,
         })
-    }
-
-    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
-        let inner_ptr = unsafe { self.parent.inner_ptr() };
-        let offset =
-            unsafe { (self.inner as *const _ as *const u8).offset_from_unsigned(inner_ptr) };
-        match offset {
-            TS_QUALIFIED_NAME_OFFSET_LEFT => Some(FollowingNode::IdentifierName(unsafe {
-                &*(inner_ptr.add(TS_QUALIFIED_NAME_OFFSET_RIGHT) as *const IdentifierName<'a>)
-            })),
-            TS_QUALIFIED_NAME_OFFSET_RIGHT => None,
-            _ => panic!("Invalid field offset: {}", offset),
-        }
     }
 }
 
@@ -9009,23 +8396,15 @@ impl<'a> AstNode<'a, TSTypeParameterInstantiation<'a>> {
 
     #[inline]
     pub fn params(&self) -> &AstNode<'a, Vec<'a, TSType<'a>>> {
+        let following_node = self.following_node.clone();
         self.allocator.alloc(AstNode {
             inner: &self.inner.params,
             allocator: self.allocator,
             parent: self
                 .allocator
                 .alloc(AstNodes::TSTypeParameterInstantiation(transmute_self(self))),
+            following_node,
         })
-    }
-
-    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
-        let inner_ptr = unsafe { self.parent.inner_ptr() };
-        let offset =
-            unsafe { (self.inner as *const _ as *const u8).offset_from_unsigned(inner_ptr) };
-        match offset {
-            TS_TYPE_PARAMETER_INSTANTIATION_OFFSET_PARAMS => None,
-            _ => panic!("Invalid field offset: {}", offset),
-        }
     }
 }
 
@@ -9042,31 +8421,47 @@ impl<'a> AstNode<'a, TSTypeParameter<'a>> {
 
     #[inline]
     pub fn name(&self) -> &AstNode<'a, BindingIdentifier<'a>> {
+        let following_node = ({
+            let ptr = self.inner as *const _ as *const u8;
+            unsafe { &*(ptr.add(TS_TYPE_PARAMETER_OFFSET_CONSTRAINT) as *const Option<TSType<'a>>) }
+        })
+        .as_ref()
+        .map(FollowingNode::TSType);
         self.allocator.alloc(AstNode {
             inner: &self.inner.name,
             allocator: self.allocator,
             parent: self.allocator.alloc(AstNodes::TSTypeParameter(transmute_self(self))),
+            following_node,
         })
     }
 
     #[inline]
     pub fn constraint(&self) -> Option<&AstNode<'a, TSType<'a>>> {
+        let following_node = ({
+            let ptr = self.inner as *const _ as *const u8;
+            unsafe { &*(ptr.add(TS_TYPE_PARAMETER_OFFSET_DEFAULT) as *const Option<TSType<'a>>) }
+        })
+        .as_ref()
+        .map(FollowingNode::TSType);
         self.allocator
             .alloc(self.inner.constraint.as_ref().map(|inner| AstNode {
                 inner,
                 allocator: self.allocator,
                 parent: self.allocator.alloc(AstNodes::TSTypeParameter(transmute_self(self))),
+                following_node,
             }))
             .as_ref()
     }
 
     #[inline]
     pub fn default(&self) -> Option<&AstNode<'a, TSType<'a>>> {
+        let following_node = self.following_node.clone();
         self.allocator
             .alloc(self.inner.default.as_ref().map(|inner| AstNode {
                 inner,
                 allocator: self.allocator,
                 parent: self.allocator.alloc(AstNodes::TSTypeParameter(transmute_self(self))),
+                following_node,
             }))
             .as_ref()
     }
@@ -9085,26 +8480,6 @@ impl<'a> AstNode<'a, TSTypeParameter<'a>> {
     pub fn r#const(&self) -> bool {
         self.inner.r#const
     }
-
-    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
-        let inner_ptr = unsafe { self.parent.inner_ptr() };
-        let offset =
-            unsafe { (self.inner as *const _ as *const u8).offset_from_unsigned(inner_ptr) };
-        match offset {
-            TS_TYPE_PARAMETER_OFFSET_NAME => (unsafe {
-                &*(inner_ptr.add(TS_TYPE_PARAMETER_OFFSET_CONSTRAINT) as *const Option<TSType<'a>>)
-            })
-            .as_ref()
-            .map(FollowingNode::TSType),
-            TS_TYPE_PARAMETER_OFFSET_CONSTRAINT => (unsafe {
-                &*(inner_ptr.add(TS_TYPE_PARAMETER_OFFSET_DEFAULT) as *const Option<TSType<'a>>)
-            })
-            .as_ref()
-            .map(FollowingNode::TSType),
-            TS_TYPE_PARAMETER_OFFSET_DEFAULT => None,
-            _ => panic!("Invalid field offset: {}", offset),
-        }
-    }
 }
 
 const TS_TYPE_PARAMETER_DECLARATION_OFFSET_PARAMS: usize =
@@ -9118,23 +8493,15 @@ impl<'a> AstNode<'a, TSTypeParameterDeclaration<'a>> {
 
     #[inline]
     pub fn params(&self) -> &AstNode<'a, Vec<'a, TSTypeParameter<'a>>> {
+        let following_node = self.following_node.clone();
         self.allocator.alloc(AstNode {
             inner: &self.inner.params,
             allocator: self.allocator,
             parent: self
                 .allocator
                 .alloc(AstNodes::TSTypeParameterDeclaration(transmute_self(self))),
+            following_node,
         })
-    }
-
-    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
-        let inner_ptr = unsafe { self.parent.inner_ptr() };
-        let offset =
-            unsafe { (self.inner as *const _ as *const u8).offset_from_unsigned(inner_ptr) };
-        match offset {
-            TS_TYPE_PARAMETER_DECLARATION_OFFSET_PARAMS => None,
-            _ => panic!("Invalid field offset: {}", offset),
-        }
     }
 }
 
@@ -9150,51 +8517,48 @@ impl<'a> AstNode<'a, TSTypeAliasDeclaration<'a>> {
 
     #[inline]
     pub fn id(&self) -> &AstNode<'a, BindingIdentifier<'a>> {
+        let following_node = Some(FollowingNode::TSType({
+            let ptr = self.inner as *const _ as *const u8;
+            unsafe {
+                &*(ptr.add(TS_TYPE_ALIAS_DECLARATION_OFFSET_TYPEANNOTATION) as *const TSType<'a>)
+            }
+        }));
         self.allocator.alloc(AstNode {
             inner: &self.inner.id,
             allocator: self.allocator,
             parent: self.allocator.alloc(AstNodes::TSTypeAliasDeclaration(transmute_self(self))),
+            following_node,
         })
     }
 
     #[inline]
     pub fn type_parameters(&self) -> Option<&AstNode<'a, TSTypeParameterDeclaration<'a>>> {
+        let following_node = self.following_node.clone();
         self.allocator
             .alloc(self.inner.type_parameters.as_ref().map(|inner| AstNode {
                 inner: inner.as_ref(),
                 allocator: self.allocator,
                 parent:
                     self.allocator.alloc(AstNodes::TSTypeAliasDeclaration(transmute_self(self))),
+                following_node,
             }))
             .as_ref()
     }
 
     #[inline]
     pub fn type_annotation(&self) -> &AstNode<'a, TSType<'a>> {
+        let following_node = self.following_node.clone();
         self.allocator.alloc(AstNode {
             inner: &self.inner.type_annotation,
             allocator: self.allocator,
             parent: self.allocator.alloc(AstNodes::TSTypeAliasDeclaration(transmute_self(self))),
+            following_node,
         })
     }
 
     #[inline]
     pub fn declare(&self) -> bool {
         self.inner.declare
-    }
-
-    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
-        let inner_ptr = unsafe { self.parent.inner_ptr() };
-        let offset =
-            unsafe { (self.inner as *const _ as *const u8).offset_from_unsigned(inner_ptr) };
-        match offset {
-            TS_TYPE_ALIAS_DECLARATION_OFFSET_ID => Some(FollowingNode::TSType(unsafe {
-                &*(inner_ptr.add(TS_TYPE_ALIAS_DECLARATION_OFFSET_TYPEANNOTATION)
-                    as *const TSType<'a>)
-            })),
-            TS_TYPE_ALIAS_DECLARATION_OFFSET_TYPEANNOTATION => None,
-            _ => panic!("Invalid field offset: {}", offset),
-        }
     }
 }
 
@@ -9209,32 +8573,26 @@ impl<'a> AstNode<'a, TSClassImplements<'a>> {
 
     #[inline]
     pub fn expression(&self) -> &AstNode<'a, TSTypeName<'a>> {
+        let following_node = self.following_node.clone();
         self.allocator.alloc(AstNode {
             inner: &self.inner.expression,
             allocator: self.allocator,
             parent: self.allocator.alloc(AstNodes::TSClassImplements(transmute_self(self))),
+            following_node,
         })
     }
 
     #[inline]
     pub fn type_arguments(&self) -> Option<&AstNode<'a, TSTypeParameterInstantiation<'a>>> {
+        let following_node = self.following_node.clone();
         self.allocator
             .alloc(self.inner.type_arguments.as_ref().map(|inner| AstNode {
                 inner: inner.as_ref(),
                 allocator: self.allocator,
                 parent: self.allocator.alloc(AstNodes::TSClassImplements(transmute_self(self))),
+                following_node,
             }))
             .as_ref()
-    }
-
-    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
-        let inner_ptr = unsafe { self.parent.inner_ptr() };
-        let offset =
-            unsafe { (self.inner as *const _ as *const u8).offset_from_unsigned(inner_ptr) };
-        match offset {
-            TS_CLASS_IMPLEMENTS_OFFSET_EXPRESSION => None,
-            _ => panic!("Invalid field offset: {}", offset),
-        }
     }
 }
 
@@ -9252,71 +8610,73 @@ impl<'a> AstNode<'a, TSInterfaceDeclaration<'a>> {
 
     #[inline]
     pub fn id(&self) -> &AstNode<'a, BindingIdentifier<'a>> {
+        let following_node = ({
+            let ptr = self.inner as *const _ as *const u8;
+            unsafe {
+                &*(ptr.add(TS_INTERFACE_DECLARATION_OFFSET_EXTENDS)
+                    as *const Vec<'a, TSInterfaceHeritage<'a>>)
+            }
+        })
+        .first()
+        .as_ref()
+        .copied()
+        .map(FollowingNode::TSInterfaceHeritage);
         self.allocator.alloc(AstNode {
             inner: &self.inner.id,
             allocator: self.allocator,
             parent: self.allocator.alloc(AstNodes::TSInterfaceDeclaration(transmute_self(self))),
+            following_node,
         })
     }
 
     #[inline]
     pub fn type_parameters(&self) -> Option<&AstNode<'a, TSTypeParameterDeclaration<'a>>> {
+        let following_node = Some(FollowingNode::TSInterfaceBody(
+            {
+                let ptr = self.inner as *const _ as *const u8;
+                unsafe {
+                    &*(ptr.add(TS_INTERFACE_DECLARATION_OFFSET_BODY)
+                        as *const Box<'a, TSInterfaceBody<'a>>)
+                }
+            }
+            .as_ref(),
+        ));
         self.allocator
             .alloc(self.inner.type_parameters.as_ref().map(|inner| AstNode {
                 inner: inner.as_ref(),
                 allocator: self.allocator,
                 parent:
                     self.allocator.alloc(AstNodes::TSInterfaceDeclaration(transmute_self(self))),
+                following_node,
             }))
             .as_ref()
     }
 
     #[inline]
     pub fn extends(&self) -> &AstNode<'a, Vec<'a, TSInterfaceHeritage<'a>>> {
+        let following_node = self.following_node.clone();
         self.allocator.alloc(AstNode {
             inner: &self.inner.extends,
             allocator: self.allocator,
             parent: self.allocator.alloc(AstNodes::TSInterfaceDeclaration(transmute_self(self))),
+            following_node,
         })
     }
 
     #[inline]
     pub fn body(&self) -> &AstNode<'a, TSInterfaceBody<'a>> {
+        let following_node = self.following_node.clone();
         self.allocator.alloc(AstNode {
             inner: self.inner.body.as_ref(),
             allocator: self.allocator,
             parent: self.allocator.alloc(AstNodes::TSInterfaceDeclaration(transmute_self(self))),
+            following_node,
         })
     }
 
     #[inline]
     pub fn declare(&self) -> bool {
         self.inner.declare
-    }
-
-    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
-        let inner_ptr = unsafe { self.parent.inner_ptr() };
-        let offset =
-            unsafe { (self.inner as *const _ as *const u8).offset_from_unsigned(inner_ptr) };
-        match offset {
-            TS_INTERFACE_DECLARATION_OFFSET_ID => (unsafe {
-                &*(inner_ptr.add(TS_INTERFACE_DECLARATION_OFFSET_EXTENDS)
-                    as *const Vec<'a, TSInterfaceHeritage<'a>>)
-            })
-            .first()
-            .as_ref()
-            .copied()
-            .map(FollowingNode::TSInterfaceHeritage),
-            TS_INTERFACE_DECLARATION_OFFSET_EXTENDS => Some(FollowingNode::TSInterfaceBody(
-                unsafe {
-                    &*(inner_ptr.add(TS_INTERFACE_DECLARATION_OFFSET_BODY)
-                        as *const Box<'a, TSInterfaceBody<'a>>)
-                }
-                .as_ref(),
-            )),
-            TS_INTERFACE_DECLARATION_OFFSET_BODY => None,
-            _ => panic!("Invalid field offset: {}", offset),
-        }
     }
 }
 
@@ -9330,21 +8690,13 @@ impl<'a> AstNode<'a, TSInterfaceBody<'a>> {
 
     #[inline]
     pub fn body(&self) -> &AstNode<'a, Vec<'a, TSSignature<'a>>> {
+        let following_node = self.following_node.clone();
         self.allocator.alloc(AstNode {
             inner: &self.inner.body,
             allocator: self.allocator,
             parent: self.parent,
+            following_node,
         })
-    }
-
-    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
-        let inner_ptr = unsafe { self.parent.inner_ptr() };
-        let offset =
-            unsafe { (self.inner as *const _ as *const u8).offset_from_unsigned(inner_ptr) };
-        match offset {
-            TS_INTERFACE_BODY_OFFSET_BODY => None,
-            _ => panic!("Invalid field offset: {}", offset),
-        }
     }
 }
 
@@ -9373,32 +8725,26 @@ impl<'a> AstNode<'a, TSPropertySignature<'a>> {
 
     #[inline]
     pub fn key(&self) -> &AstNode<'a, PropertyKey<'a>> {
+        let following_node = self.following_node.clone();
         self.allocator.alloc(AstNode {
             inner: &self.inner.key,
             allocator: self.allocator,
             parent: self.allocator.alloc(AstNodes::TSPropertySignature(transmute_self(self))),
+            following_node,
         })
     }
 
     #[inline]
     pub fn type_annotation(&self) -> Option<&AstNode<'a, TSTypeAnnotation<'a>>> {
+        let following_node = self.following_node.clone();
         self.allocator
             .alloc(self.inner.type_annotation.as_ref().map(|inner| AstNode {
                 inner: inner.as_ref(),
                 allocator: self.allocator,
                 parent: self.allocator.alloc(AstNodes::TSPropertySignature(transmute_self(self))),
+                following_node,
             }))
             .as_ref()
-    }
-
-    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
-        let inner_ptr = unsafe { self.parent.inner_ptr() };
-        let offset =
-            unsafe { (self.inner as *const _ as *const u8).offset_from_unsigned(inner_ptr) };
-        match offset {
-            TS_PROPERTY_SIGNATURE_OFFSET_KEY => None,
-            _ => panic!("Invalid field offset: {}", offset),
-        }
     }
 }
 
@@ -9417,6 +8763,7 @@ impl<'a> AstNode<'a, TSSignature<'a>> {
                     inner: s.as_ref(),
                     parent,
                     allocator: self.allocator,
+                    following_node: self.following_node.clone(),
                 }))
             }
             TSSignature::TSCallSignatureDeclaration(s) => {
@@ -9429,6 +8776,7 @@ impl<'a> AstNode<'a, TSSignature<'a>> {
                     inner: s.as_ref(),
                     parent,
                     allocator: self.allocator,
+                    following_node: self.following_node.clone(),
                 }))
             }
             TSSignature::TSMethodSignature(s) => {
@@ -9436,6 +8784,7 @@ impl<'a> AstNode<'a, TSSignature<'a>> {
                     inner: s.as_ref(),
                     parent,
                     allocator: self.allocator,
+                    following_node: self.following_node.clone(),
                 }))
             }
         };
@@ -9463,19 +8812,32 @@ impl<'a> AstNode<'a, TSIndexSignature<'a>> {
 
     #[inline]
     pub fn parameters(&self) -> &AstNode<'a, Vec<'a, TSIndexSignatureName<'a>>> {
+        let following_node = Some(FollowingNode::TSTypeAnnotation(
+            {
+                let ptr = self.inner as *const _ as *const u8;
+                unsafe {
+                    &*(ptr.add(TS_INDEX_SIGNATURE_OFFSET_TYPEANNOTATION)
+                        as *const Box<'a, TSTypeAnnotation<'a>>)
+                }
+            }
+            .as_ref(),
+        ));
         self.allocator.alloc(AstNode {
             inner: &self.inner.parameters,
             allocator: self.allocator,
             parent: self.parent,
+            following_node,
         })
     }
 
     #[inline]
     pub fn type_annotation(&self) -> &AstNode<'a, TSTypeAnnotation<'a>> {
+        let following_node = self.following_node.clone();
         self.allocator.alloc(AstNode {
             inner: self.inner.type_annotation.as_ref(),
             allocator: self.allocator,
             parent: self.parent,
+            following_node,
         })
     }
 
@@ -9487,23 +8849,6 @@ impl<'a> AstNode<'a, TSIndexSignature<'a>> {
     #[inline]
     pub fn r#static(&self) -> bool {
         self.inner.r#static
-    }
-
-    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
-        let inner_ptr = unsafe { self.parent.inner_ptr() };
-        let offset =
-            unsafe { (self.inner as *const _ as *const u8).offset_from_unsigned(inner_ptr) };
-        match offset {
-            TS_INDEX_SIGNATURE_OFFSET_PARAMETERS => Some(FollowingNode::TSTypeAnnotation(
-                unsafe {
-                    &*(inner_ptr.add(TS_INDEX_SIGNATURE_OFFSET_TYPEANNOTATION)
-                        as *const Box<'a, TSTypeAnnotation<'a>>)
-                }
-                .as_ref(),
-            )),
-            TS_INDEX_SIGNATURE_OFFSET_TYPEANNOTATION => None,
-            _ => panic!("Invalid field offset: {}", offset),
-        }
     }
 }
 
@@ -9518,54 +8863,52 @@ impl<'a> AstNode<'a, TSCallSignatureDeclaration<'a>> {
 
     #[inline]
     pub fn type_parameters(&self) -> Option<&AstNode<'a, TSTypeParameterDeclaration<'a>>> {
+        let following_node = self.following_node.clone();
         self.allocator
             .alloc(self.inner.type_parameters.as_ref().map(|inner| AstNode {
                 inner: inner.as_ref(),
                 allocator: self.allocator,
                 parent: self.parent,
+                following_node,
             }))
             .as_ref()
     }
 
     #[inline]
     pub fn this_param(&self) -> Option<&AstNode<'a, TSThisParameter<'a>>> {
+        let following_node = self.following_node.clone();
         self.allocator
             .alloc(self.inner.this_param.as_ref().map(|inner| AstNode {
                 inner: inner.as_ref(),
                 allocator: self.allocator,
                 parent: self.parent,
+                following_node,
             }))
             .as_ref()
     }
 
     #[inline]
     pub fn params(&self) -> &AstNode<'a, FormalParameters<'a>> {
+        let following_node = self.following_node.clone();
         self.allocator.alloc(AstNode {
             inner: self.inner.params.as_ref(),
             allocator: self.allocator,
             parent: self.parent,
+            following_node,
         })
     }
 
     #[inline]
     pub fn return_type(&self) -> Option<&AstNode<'a, TSTypeAnnotation<'a>>> {
+        let following_node = self.following_node.clone();
         self.allocator
             .alloc(self.inner.return_type.as_ref().map(|inner| AstNode {
                 inner: inner.as_ref(),
                 allocator: self.allocator,
                 parent: self.parent,
+                following_node,
             }))
             .as_ref()
-    }
-
-    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
-        let inner_ptr = unsafe { self.parent.inner_ptr() };
-        let offset =
-            unsafe { (self.inner as *const _ as *const u8).offset_from_unsigned(inner_ptr) };
-        match offset {
-            TS_CALL_SIGNATURE_DECLARATION_OFFSET_PARAMS => None,
-            _ => panic!("Invalid field offset: {}", offset),
-        }
     }
 }
 
@@ -9580,10 +8923,21 @@ impl<'a> AstNode<'a, TSMethodSignature<'a>> {
 
     #[inline]
     pub fn key(&self) -> &AstNode<'a, PropertyKey<'a>> {
+        let following_node = Some(FollowingNode::FormalParameters(
+            {
+                let ptr = self.inner as *const _ as *const u8;
+                unsafe {
+                    &*(ptr.add(TS_METHOD_SIGNATURE_OFFSET_PARAMS)
+                        as *const Box<'a, FormalParameters<'a>>)
+                }
+            }
+            .as_ref(),
+        ));
         self.allocator.alloc(AstNode {
             inner: &self.inner.key,
             allocator: self.allocator,
             parent: self.allocator.alloc(AstNodes::TSMethodSignature(transmute_self(self))),
+            following_node,
         })
     }
 
@@ -9604,61 +8958,52 @@ impl<'a> AstNode<'a, TSMethodSignature<'a>> {
 
     #[inline]
     pub fn type_parameters(&self) -> Option<&AstNode<'a, TSTypeParameterDeclaration<'a>>> {
+        let following_node = self.following_node.clone();
         self.allocator
             .alloc(self.inner.type_parameters.as_ref().map(|inner| AstNode {
                 inner: inner.as_ref(),
                 allocator: self.allocator,
                 parent: self.allocator.alloc(AstNodes::TSMethodSignature(transmute_self(self))),
+                following_node,
             }))
             .as_ref()
     }
 
     #[inline]
     pub fn this_param(&self) -> Option<&AstNode<'a, TSThisParameter<'a>>> {
+        let following_node = self.following_node.clone();
         self.allocator
             .alloc(self.inner.this_param.as_ref().map(|inner| AstNode {
                 inner: inner.as_ref(),
                 allocator: self.allocator,
                 parent: self.allocator.alloc(AstNodes::TSMethodSignature(transmute_self(self))),
+                following_node,
             }))
             .as_ref()
     }
 
     #[inline]
     pub fn params(&self) -> &AstNode<'a, FormalParameters<'a>> {
+        let following_node = self.following_node.clone();
         self.allocator.alloc(AstNode {
             inner: self.inner.params.as_ref(),
             allocator: self.allocator,
             parent: self.allocator.alloc(AstNodes::TSMethodSignature(transmute_self(self))),
+            following_node,
         })
     }
 
     #[inline]
     pub fn return_type(&self) -> Option<&AstNode<'a, TSTypeAnnotation<'a>>> {
+        let following_node = self.following_node.clone();
         self.allocator
             .alloc(self.inner.return_type.as_ref().map(|inner| AstNode {
                 inner: inner.as_ref(),
                 allocator: self.allocator,
                 parent: self.allocator.alloc(AstNodes::TSMethodSignature(transmute_self(self))),
+                following_node,
             }))
             .as_ref()
-    }
-
-    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
-        let inner_ptr = unsafe { self.parent.inner_ptr() };
-        let offset =
-            unsafe { (self.inner as *const _ as *const u8).offset_from_unsigned(inner_ptr) };
-        match offset {
-            TS_METHOD_SIGNATURE_OFFSET_KEY => Some(FollowingNode::FormalParameters(
-                unsafe {
-                    &*(inner_ptr.add(TS_METHOD_SIGNATURE_OFFSET_PARAMS)
-                        as *const Box<'a, FormalParameters<'a>>)
-                }
-                .as_ref(),
-            )),
-            TS_METHOD_SIGNATURE_OFFSET_PARAMS => None,
-            _ => panic!("Invalid field offset: {}", offset),
-        }
     }
 }
 
@@ -9673,6 +9018,7 @@ impl<'a> AstNode<'a, TSConstructSignatureDeclaration<'a>> {
 
     #[inline]
     pub fn type_parameters(&self) -> Option<&AstNode<'a, TSTypeParameterDeclaration<'a>>> {
+        let following_node = self.following_node.clone();
         self.allocator
             .alloc(self.inner.type_parameters.as_ref().map(|inner| {
                 AstNode {
@@ -9681,6 +9027,7 @@ impl<'a> AstNode<'a, TSConstructSignatureDeclaration<'a>> {
                     parent: self
                         .allocator
                         .alloc(AstNodes::TSConstructSignatureDeclaration(transmute_self(self))),
+                    following_node,
                 }
             }))
             .as_ref()
@@ -9688,17 +9035,20 @@ impl<'a> AstNode<'a, TSConstructSignatureDeclaration<'a>> {
 
     #[inline]
     pub fn params(&self) -> &AstNode<'a, FormalParameters<'a>> {
+        let following_node = self.following_node.clone();
         self.allocator.alloc(AstNode {
             inner: self.inner.params.as_ref(),
             allocator: self.allocator,
             parent: self
                 .allocator
                 .alloc(AstNodes::TSConstructSignatureDeclaration(transmute_self(self))),
+            following_node,
         })
     }
 
     #[inline]
     pub fn return_type(&self) -> Option<&AstNode<'a, TSTypeAnnotation<'a>>> {
+        let following_node = self.following_node.clone();
         self.allocator
             .alloc(self.inner.return_type.as_ref().map(|inner| {
                 AstNode {
@@ -9707,19 +9057,10 @@ impl<'a> AstNode<'a, TSConstructSignatureDeclaration<'a>> {
                     parent: self
                         .allocator
                         .alloc(AstNodes::TSConstructSignatureDeclaration(transmute_self(self))),
+                    following_node,
                 }
             }))
             .as_ref()
-    }
-
-    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
-        let inner_ptr = unsafe { self.parent.inner_ptr() };
-        let offset =
-            unsafe { (self.inner as *const _ as *const u8).offset_from_unsigned(inner_ptr) };
-        match offset {
-            TS_CONSTRUCT_SIGNATURE_DECLARATION_OFFSET_PARAMS => None,
-            _ => panic!("Invalid field offset: {}", offset),
-        }
     }
 }
 
@@ -9739,21 +9080,13 @@ impl<'a> AstNode<'a, TSIndexSignatureName<'a>> {
 
     #[inline]
     pub fn type_annotation(&self) -> &AstNode<'a, TSTypeAnnotation<'a>> {
+        let following_node = self.following_node.clone();
         self.allocator.alloc(AstNode {
             inner: self.inner.type_annotation.as_ref(),
             allocator: self.allocator,
             parent: self.parent,
+            following_node,
         })
-    }
-
-    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
-        let inner_ptr = unsafe { self.parent.inner_ptr() };
-        let offset =
-            unsafe { (self.inner as *const _ as *const u8).offset_from_unsigned(inner_ptr) };
-        match offset {
-            TS_INDEX_SIGNATURE_NAME_OFFSET_TYPEANNOTATION => None,
-            _ => panic!("Invalid field offset: {}", offset),
-        }
     }
 }
 
@@ -9768,32 +9101,26 @@ impl<'a> AstNode<'a, TSInterfaceHeritage<'a>> {
 
     #[inline]
     pub fn expression(&self) -> &AstNode<'a, Expression<'a>> {
+        let following_node = self.following_node.clone();
         self.allocator.alloc(AstNode {
             inner: &self.inner.expression,
             allocator: self.allocator,
             parent: self.allocator.alloc(AstNodes::TSInterfaceHeritage(transmute_self(self))),
+            following_node,
         })
     }
 
     #[inline]
     pub fn type_arguments(&self) -> Option<&AstNode<'a, TSTypeParameterInstantiation<'a>>> {
+        let following_node = self.following_node.clone();
         self.allocator
             .alloc(self.inner.type_arguments.as_ref().map(|inner| AstNode {
                 inner: inner.as_ref(),
                 allocator: self.allocator,
                 parent: self.allocator.alloc(AstNodes::TSInterfaceHeritage(transmute_self(self))),
+                following_node,
             }))
             .as_ref()
-    }
-
-    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
-        let inner_ptr = unsafe { self.parent.inner_ptr() };
-        let offset =
-            unsafe { (self.inner as *const _ as *const u8).offset_from_unsigned(inner_ptr) };
-        match offset {
-            TS_INTERFACE_HERITAGE_OFFSET_EXPRESSION => None,
-            _ => panic!("Invalid field offset: {}", offset),
-        }
     }
 }
 
@@ -9808,10 +9135,12 @@ impl<'a> AstNode<'a, TSTypePredicate<'a>> {
 
     #[inline]
     pub fn parameter_name(&self) -> &AstNode<'a, TSTypePredicateName<'a>> {
+        let following_node = self.following_node.clone();
         self.allocator.alloc(AstNode {
             inner: &self.inner.parameter_name,
             allocator: self.allocator,
             parent: self.parent,
+            following_node,
         })
     }
 
@@ -9822,23 +9151,15 @@ impl<'a> AstNode<'a, TSTypePredicate<'a>> {
 
     #[inline]
     pub fn type_annotation(&self) -> Option<&AstNode<'a, TSTypeAnnotation<'a>>> {
+        let following_node = self.following_node.clone();
         self.allocator
             .alloc(self.inner.type_annotation.as_ref().map(|inner| AstNode {
                 inner: inner.as_ref(),
                 allocator: self.allocator,
                 parent: self.parent,
+                following_node,
             }))
             .as_ref()
-    }
-
-    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
-        let inner_ptr = unsafe { self.parent.inner_ptr() };
-        let offset =
-            unsafe { (self.inner as *const _ as *const u8).offset_from_unsigned(inner_ptr) };
-        match offset {
-            TS_TYPE_PREDICATE_OFFSET_PARAMETERNAME => None,
-            _ => panic!("Invalid field offset: {}", offset),
-        }
     }
 }
 
@@ -9852,12 +9173,14 @@ impl<'a> AstNode<'a, TSTypePredicateName<'a>> {
                     inner: s.as_ref(),
                     parent,
                     allocator: self.allocator,
+                    following_node: self.following_node.clone(),
                 }))
             }
             TSTypePredicateName::This(s) => AstNodes::TSThisType(self.allocator.alloc(AstNode {
                 inner: s,
                 parent,
                 allocator: self.allocator,
+                following_node: self.following_node.clone(),
             })),
         };
         self.allocator.alloc(node)
@@ -9882,20 +9205,32 @@ impl<'a> AstNode<'a, TSModuleDeclaration<'a>> {
 
     #[inline]
     pub fn id(&self) -> &AstNode<'a, TSModuleDeclarationName<'a>> {
+        let following_node = ({
+            let ptr = self.inner as *const _ as *const u8;
+            unsafe {
+                &*(ptr.add(TS_MODULE_DECLARATION_OFFSET_BODY)
+                    as *const Option<TSModuleDeclarationBody<'a>>)
+            }
+        })
+        .as_ref()
+        .map(FollowingNode::TSModuleDeclarationBody);
         self.allocator.alloc(AstNode {
             inner: &self.inner.id,
             allocator: self.allocator,
             parent: self.allocator.alloc(AstNodes::TSModuleDeclaration(transmute_self(self))),
+            following_node,
         })
     }
 
     #[inline]
     pub fn body(&self) -> Option<&AstNode<'a, TSModuleDeclarationBody<'a>>> {
+        let following_node = self.following_node.clone();
         self.allocator
             .alloc(self.inner.body.as_ref().map(|inner| AstNode {
                 inner,
                 allocator: self.allocator,
                 parent: self.allocator.alloc(AstNodes::TSModuleDeclaration(transmute_self(self))),
+                following_node,
             }))
             .as_ref()
     }
@@ -9909,22 +9244,6 @@ impl<'a> AstNode<'a, TSModuleDeclaration<'a>> {
     pub fn declare(&self) -> bool {
         self.inner.declare
     }
-
-    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
-        let inner_ptr = unsafe { self.parent.inner_ptr() };
-        let offset =
-            unsafe { (self.inner as *const _ as *const u8).offset_from_unsigned(inner_ptr) };
-        match offset {
-            TS_MODULE_DECLARATION_OFFSET_ID => (unsafe {
-                &*(inner_ptr.add(TS_MODULE_DECLARATION_OFFSET_BODY)
-                    as *const Option<TSModuleDeclarationBody<'a>>)
-            })
-            .as_ref()
-            .map(FollowingNode::TSModuleDeclarationBody),
-            TS_MODULE_DECLARATION_OFFSET_BODY => None,
-            _ => panic!("Invalid field offset: {}", offset),
-        }
-    }
 }
 
 impl<'a> AstNode<'a, TSModuleDeclarationName<'a>> {
@@ -9937,6 +9256,7 @@ impl<'a> AstNode<'a, TSModuleDeclarationName<'a>> {
                     inner: s,
                     parent,
                     allocator: self.allocator,
+                    following_node: self.following_node.clone(),
                 }))
             }
             TSModuleDeclarationName::StringLiteral(s) => {
@@ -9944,6 +9264,7 @@ impl<'a> AstNode<'a, TSModuleDeclarationName<'a>> {
                     inner: s,
                     parent,
                     allocator: self.allocator,
+                    following_node: self.following_node.clone(),
                 }))
             }
         };
@@ -9968,6 +9289,7 @@ impl<'a> AstNode<'a, TSModuleDeclarationBody<'a>> {
                     inner: s.as_ref(),
                     parent,
                     allocator: self.allocator,
+                    following_node: self.following_node.clone(),
                 }))
             }
             TSModuleDeclarationBody::TSModuleBlock(s) => {
@@ -9975,6 +9297,7 @@ impl<'a> AstNode<'a, TSModuleDeclarationBody<'a>> {
                     inner: s.as_ref(),
                     parent,
                     allocator: self.allocator,
+                    following_node: self.following_node.clone(),
                 }))
             }
         };
@@ -10000,37 +9323,31 @@ impl<'a> AstNode<'a, TSModuleBlock<'a>> {
 
     #[inline]
     pub fn directives(&self) -> &AstNode<'a, Vec<'a, Directive<'a>>> {
+        let following_node = ({
+            let ptr = self.inner as *const _ as *const u8;
+            unsafe { &*(ptr.add(TS_MODULE_BLOCK_OFFSET_BODY) as *const Vec<'a, Statement<'a>>) }
+        })
+        .first()
+        .as_ref()
+        .copied()
+        .map(FollowingNode::Statement);
         self.allocator.alloc(AstNode {
             inner: &self.inner.directives,
             allocator: self.allocator,
             parent: self.allocator.alloc(AstNodes::TSModuleBlock(transmute_self(self))),
+            following_node,
         })
     }
 
     #[inline]
     pub fn body(&self) -> &AstNode<'a, Vec<'a, Statement<'a>>> {
+        let following_node = self.following_node.clone();
         self.allocator.alloc(AstNode {
             inner: &self.inner.body,
             allocator: self.allocator,
             parent: self.allocator.alloc(AstNodes::TSModuleBlock(transmute_self(self))),
+            following_node,
         })
-    }
-
-    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
-        let inner_ptr = unsafe { self.parent.inner_ptr() };
-        let offset =
-            unsafe { (self.inner as *const _ as *const u8).offset_from_unsigned(inner_ptr) };
-        match offset {
-            TS_MODULE_BLOCK_OFFSET_DIRECTIVES => (unsafe {
-                &*(inner_ptr.add(TS_MODULE_BLOCK_OFFSET_BODY) as *const Vec<'a, Statement<'a>>)
-            })
-            .first()
-            .as_ref()
-            .copied()
-            .map(FollowingNode::Statement),
-            TS_MODULE_BLOCK_OFFSET_BODY => None,
-            _ => panic!("Invalid field offset: {}", offset),
-        }
     }
 }
 
@@ -10044,21 +9361,13 @@ impl<'a> AstNode<'a, TSTypeLiteral<'a>> {
 
     #[inline]
     pub fn members(&self) -> &AstNode<'a, Vec<'a, TSSignature<'a>>> {
+        let following_node = self.following_node.clone();
         self.allocator.alloc(AstNode {
             inner: &self.inner.members,
             allocator: self.allocator,
             parent: self.allocator.alloc(AstNodes::TSTypeLiteral(transmute_self(self))),
+            following_node,
         })
-    }
-
-    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
-        let inner_ptr = unsafe { self.parent.inner_ptr() };
-        let offset =
-            unsafe { (self.inner as *const _ as *const u8).offset_from_unsigned(inner_ptr) };
-        match offset {
-            TS_TYPE_LITERAL_OFFSET_MEMBERS => None,
-            _ => panic!("Invalid field offset: {}", offset),
-        }
     }
 }
 
@@ -10072,21 +9381,13 @@ impl<'a> AstNode<'a, TSInferType<'a>> {
 
     #[inline]
     pub fn type_parameter(&self) -> &AstNode<'a, TSTypeParameter<'a>> {
+        let following_node = self.following_node.clone();
         self.allocator.alloc(AstNode {
             inner: self.inner.type_parameter.as_ref(),
             allocator: self.allocator,
             parent: self.allocator.alloc(AstNodes::TSInferType(transmute_self(self))),
+            following_node,
         })
-    }
-
-    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
-        let inner_ptr = unsafe { self.parent.inner_ptr() };
-        let offset =
-            unsafe { (self.inner as *const _ as *const u8).offset_from_unsigned(inner_ptr) };
-        match offset {
-            TS_INFER_TYPE_OFFSET_TYPEPARAMETER => None,
-            _ => panic!("Invalid field offset: {}", offset),
-        }
     }
 }
 
@@ -10100,32 +9401,26 @@ impl<'a> AstNode<'a, TSTypeQuery<'a>> {
 
     #[inline]
     pub fn expr_name(&self) -> &AstNode<'a, TSTypeQueryExprName<'a>> {
+        let following_node = self.following_node.clone();
         self.allocator.alloc(AstNode {
             inner: &self.inner.expr_name,
             allocator: self.allocator,
             parent: self.allocator.alloc(AstNodes::TSTypeQuery(transmute_self(self))),
+            following_node,
         })
     }
 
     #[inline]
     pub fn type_arguments(&self) -> Option<&AstNode<'a, TSTypeParameterInstantiation<'a>>> {
+        let following_node = self.following_node.clone();
         self.allocator
             .alloc(self.inner.type_arguments.as_ref().map(|inner| AstNode {
                 inner: inner.as_ref(),
                 allocator: self.allocator,
                 parent: self.allocator.alloc(AstNodes::TSTypeQuery(transmute_self(self))),
+                following_node,
             }))
             .as_ref()
-    }
-
-    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
-        let inner_ptr = unsafe { self.parent.inner_ptr() };
-        let offset =
-            unsafe { (self.inner as *const _ as *const u8).offset_from_unsigned(inner_ptr) };
-        match offset {
-            TS_TYPE_QUERY_OFFSET_EXPRNAME => None,
-            _ => panic!("Invalid field offset: {}", offset),
-        }
     }
 }
 
@@ -10139,6 +9434,7 @@ impl<'a> AstNode<'a, TSTypeQueryExprName<'a>> {
                     inner: s.as_ref(),
                     parent,
                     allocator: self.allocator,
+                    following_node: self.following_node.clone(),
                 }))
             }
             it @ match_ts_type_name!(TSTypeQueryExprName) => {
@@ -10146,6 +9442,7 @@ impl<'a> AstNode<'a, TSTypeQueryExprName<'a>> {
                     inner: it.to_ts_type_name(),
                     parent,
                     allocator: self.allocator,
+                    following_node: self.following_node.clone(),
                 }))
             }
         };
@@ -10171,59 +9468,57 @@ impl<'a> AstNode<'a, TSImportType<'a>> {
 
     #[inline]
     pub fn argument(&self) -> &AstNode<'a, TSType<'a>> {
+        let following_node = ({
+            let ptr = self.inner as *const _ as *const u8;
+            unsafe { &*(ptr.add(TS_IMPORT_TYPE_OFFSET_QUALIFIER) as *const Option<TSTypeName<'a>>) }
+        })
+        .as_ref()
+        .map(FollowingNode::TSTypeName);
         self.allocator.alloc(AstNode {
             inner: &self.inner.argument,
             allocator: self.allocator,
             parent: self.allocator.alloc(AstNodes::TSImportType(transmute_self(self))),
+            following_node,
         })
     }
 
     #[inline]
     pub fn options(&self) -> Option<&AstNode<'a, ObjectExpression<'a>>> {
+        let following_node = self.following_node.clone();
         self.allocator
             .alloc(self.inner.options.as_ref().map(|inner| AstNode {
                 inner: inner.as_ref(),
                 allocator: self.allocator,
                 parent: self.allocator.alloc(AstNodes::TSImportType(transmute_self(self))),
+                following_node,
             }))
             .as_ref()
     }
 
     #[inline]
     pub fn qualifier(&self) -> Option<&AstNode<'a, TSTypeName<'a>>> {
+        let following_node = self.following_node.clone();
         self.allocator
             .alloc(self.inner.qualifier.as_ref().map(|inner| AstNode {
                 inner,
                 allocator: self.allocator,
                 parent: self.allocator.alloc(AstNodes::TSImportType(transmute_self(self))),
+                following_node,
             }))
             .as_ref()
     }
 
     #[inline]
     pub fn type_arguments(&self) -> Option<&AstNode<'a, TSTypeParameterInstantiation<'a>>> {
+        let following_node = self.following_node.clone();
         self.allocator
             .alloc(self.inner.type_arguments.as_ref().map(|inner| AstNode {
                 inner: inner.as_ref(),
                 allocator: self.allocator,
                 parent: self.allocator.alloc(AstNodes::TSImportType(transmute_self(self))),
+                following_node,
             }))
             .as_ref()
-    }
-
-    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
-        let inner_ptr = unsafe { self.parent.inner_ptr() };
-        let offset =
-            unsafe { (self.inner as *const _ as *const u8).offset_from_unsigned(inner_ptr) };
-        match offset {
-            TS_IMPORT_TYPE_OFFSET_ARGUMENT => (unsafe {
-                &*(inner_ptr.add(TS_IMPORT_TYPE_OFFSET_QUALIFIER) as *const Option<TSTypeName<'a>>)
-            })
-            .as_ref()
-            .map(FollowingNode::TSTypeName),
-            TS_IMPORT_TYPE_OFFSET_QUALIFIER => None,
-            _ => panic!("Invalid field offset: {}", offset),
-        }
     }
 }
 
@@ -10238,59 +9533,59 @@ impl<'a> AstNode<'a, TSFunctionType<'a>> {
 
     #[inline]
     pub fn type_parameters(&self) -> Option<&AstNode<'a, TSTypeParameterDeclaration<'a>>> {
+        let following_node = Some(FollowingNode::TSTypeAnnotation(
+            {
+                let ptr = self.inner as *const _ as *const u8;
+                unsafe {
+                    &*(ptr.add(TS_FUNCTION_TYPE_OFFSET_RETURNTYPE)
+                        as *const Box<'a, TSTypeAnnotation<'a>>)
+                }
+            }
+            .as_ref(),
+        ));
         self.allocator
             .alloc(self.inner.type_parameters.as_ref().map(|inner| AstNode {
                 inner: inner.as_ref(),
                 allocator: self.allocator,
                 parent: self.parent,
+                following_node,
             }))
             .as_ref()
     }
 
     #[inline]
     pub fn this_param(&self) -> Option<&AstNode<'a, TSThisParameter<'a>>> {
+        let following_node = self.following_node.clone();
         self.allocator
             .alloc(self.inner.this_param.as_ref().map(|inner| AstNode {
                 inner: inner.as_ref(),
                 allocator: self.allocator,
                 parent: self.parent,
+                following_node,
             }))
             .as_ref()
     }
 
     #[inline]
     pub fn params(&self) -> &AstNode<'a, FormalParameters<'a>> {
+        let following_node = self.following_node.clone();
         self.allocator.alloc(AstNode {
             inner: self.inner.params.as_ref(),
             allocator: self.allocator,
             parent: self.parent,
+            following_node,
         })
     }
 
     #[inline]
     pub fn return_type(&self) -> &AstNode<'a, TSTypeAnnotation<'a>> {
+        let following_node = self.following_node.clone();
         self.allocator.alloc(AstNode {
             inner: self.inner.return_type.as_ref(),
             allocator: self.allocator,
             parent: self.parent,
+            following_node,
         })
-    }
-
-    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
-        let inner_ptr = unsafe { self.parent.inner_ptr() };
-        let offset =
-            unsafe { (self.inner as *const _ as *const u8).offset_from_unsigned(inner_ptr) };
-        match offset {
-            TS_FUNCTION_TYPE_OFFSET_PARAMS => Some(FollowingNode::TSTypeAnnotation(
-                unsafe {
-                    &*(inner_ptr.add(TS_FUNCTION_TYPE_OFFSET_RETURNTYPE)
-                        as *const Box<'a, TSTypeAnnotation<'a>>)
-                }
-                .as_ref(),
-            )),
-            TS_FUNCTION_TYPE_OFFSET_RETURNTYPE => None,
-            _ => panic!("Invalid field offset: {}", offset),
-        }
     }
 }
 
@@ -10311,48 +9606,46 @@ impl<'a> AstNode<'a, TSConstructorType<'a>> {
 
     #[inline]
     pub fn type_parameters(&self) -> Option<&AstNode<'a, TSTypeParameterDeclaration<'a>>> {
+        let following_node = Some(FollowingNode::TSTypeAnnotation(
+            {
+                let ptr = self.inner as *const _ as *const u8;
+                unsafe {
+                    &*(ptr.add(TS_CONSTRUCTOR_TYPE_OFFSET_RETURNTYPE)
+                        as *const Box<'a, TSTypeAnnotation<'a>>)
+                }
+            }
+            .as_ref(),
+        ));
         self.allocator
             .alloc(self.inner.type_parameters.as_ref().map(|inner| AstNode {
                 inner: inner.as_ref(),
                 allocator: self.allocator,
                 parent: self.parent,
+                following_node,
             }))
             .as_ref()
     }
 
     #[inline]
     pub fn params(&self) -> &AstNode<'a, FormalParameters<'a>> {
+        let following_node = self.following_node.clone();
         self.allocator.alloc(AstNode {
             inner: self.inner.params.as_ref(),
             allocator: self.allocator,
             parent: self.parent,
+            following_node,
         })
     }
 
     #[inline]
     pub fn return_type(&self) -> &AstNode<'a, TSTypeAnnotation<'a>> {
+        let following_node = self.following_node.clone();
         self.allocator.alloc(AstNode {
             inner: self.inner.return_type.as_ref(),
             allocator: self.allocator,
             parent: self.parent,
+            following_node,
         })
-    }
-
-    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
-        let inner_ptr = unsafe { self.parent.inner_ptr() };
-        let offset =
-            unsafe { (self.inner as *const _ as *const u8).offset_from_unsigned(inner_ptr) };
-        match offset {
-            TS_CONSTRUCTOR_TYPE_OFFSET_PARAMS => Some(FollowingNode::TSTypeAnnotation(
-                unsafe {
-                    &*(inner_ptr.add(TS_CONSTRUCTOR_TYPE_OFFSET_RETURNTYPE)
-                        as *const Box<'a, TSTypeAnnotation<'a>>)
-                }
-                .as_ref(),
-            )),
-            TS_CONSTRUCTOR_TYPE_OFFSET_RETURNTYPE => None,
-            _ => panic!("Invalid field offset: {}", offset),
-        }
     }
 }
 
@@ -10370,31 +9663,49 @@ impl<'a> AstNode<'a, TSMappedType<'a>> {
 
     #[inline]
     pub fn type_parameter(&self) -> &AstNode<'a, TSTypeParameter<'a>> {
+        let following_node = ({
+            let ptr = self.inner as *const _ as *const u8;
+            unsafe { &*(ptr.add(TS_MAPPED_TYPE_OFFSET_NAMETYPE) as *const Option<TSType<'a>>) }
+        })
+        .as_ref()
+        .map(FollowingNode::TSType);
         self.allocator.alloc(AstNode {
             inner: self.inner.type_parameter.as_ref(),
             allocator: self.allocator,
             parent: self.allocator.alloc(AstNodes::TSMappedType(transmute_self(self))),
+            following_node,
         })
     }
 
     #[inline]
     pub fn name_type(&self) -> Option<&AstNode<'a, TSType<'a>>> {
+        let following_node = ({
+            let ptr = self.inner as *const _ as *const u8;
+            unsafe {
+                &*(ptr.add(TS_MAPPED_TYPE_OFFSET_TYPEANNOTATION) as *const Option<TSType<'a>>)
+            }
+        })
+        .as_ref()
+        .map(FollowingNode::TSType);
         self.allocator
             .alloc(self.inner.name_type.as_ref().map(|inner| AstNode {
                 inner,
                 allocator: self.allocator,
                 parent: self.allocator.alloc(AstNodes::TSMappedType(transmute_self(self))),
+                following_node,
             }))
             .as_ref()
     }
 
     #[inline]
     pub fn type_annotation(&self) -> Option<&AstNode<'a, TSType<'a>>> {
+        let following_node = self.following_node.clone();
         self.allocator
             .alloc(self.inner.type_annotation.as_ref().map(|inner| AstNode {
                 inner,
                 allocator: self.allocator,
                 parent: self.allocator.alloc(AstNodes::TSMappedType(transmute_self(self))),
+                following_node,
             }))
             .as_ref()
     }
@@ -10407,26 +9718,6 @@ impl<'a> AstNode<'a, TSMappedType<'a>> {
     #[inline]
     pub fn readonly(&self) -> Option<TSMappedTypeModifierOperator> {
         self.inner.readonly
-    }
-
-    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
-        let inner_ptr = unsafe { self.parent.inner_ptr() };
-        let offset =
-            unsafe { (self.inner as *const _ as *const u8).offset_from_unsigned(inner_ptr) };
-        match offset {
-            TS_MAPPED_TYPE_OFFSET_TYPEPARAMETER => (unsafe {
-                &*(inner_ptr.add(TS_MAPPED_TYPE_OFFSET_NAMETYPE) as *const Option<TSType<'a>>)
-            })
-            .as_ref()
-            .map(FollowingNode::TSType),
-            TS_MAPPED_TYPE_OFFSET_NAMETYPE => (unsafe {
-                &*(inner_ptr.add(TS_MAPPED_TYPE_OFFSET_TYPEANNOTATION) as *const Option<TSType<'a>>)
-            })
-            .as_ref()
-            .map(FollowingNode::TSType),
-            TS_MAPPED_TYPE_OFFSET_TYPEANNOTATION => None,
-            _ => panic!("Invalid field offset: {}", offset),
-        }
     }
 }
 
@@ -10443,38 +9734,33 @@ impl<'a> AstNode<'a, TSTemplateLiteralType<'a>> {
 
     #[inline]
     pub fn quasis(&self) -> &AstNode<'a, Vec<'a, TemplateElement<'a>>> {
+        let following_node = ({
+            let ptr = self.inner as *const _ as *const u8;
+            unsafe {
+                &*(ptr.add(TS_TEMPLATE_LITERAL_TYPE_OFFSET_TYPES) as *const Vec<'a, TSType<'a>>)
+            }
+        })
+        .first()
+        .as_ref()
+        .copied()
+        .map(FollowingNode::TSType);
         self.allocator.alloc(AstNode {
             inner: &self.inner.quasis,
             allocator: self.allocator,
             parent: self.allocator.alloc(AstNodes::TSTemplateLiteralType(transmute_self(self))),
+            following_node,
         })
     }
 
     #[inline]
     pub fn types(&self) -> &AstNode<'a, Vec<'a, TSType<'a>>> {
+        let following_node = self.following_node.clone();
         self.allocator.alloc(AstNode {
             inner: &self.inner.types,
             allocator: self.allocator,
             parent: self.allocator.alloc(AstNodes::TSTemplateLiteralType(transmute_self(self))),
+            following_node,
         })
-    }
-
-    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
-        let inner_ptr = unsafe { self.parent.inner_ptr() };
-        let offset =
-            unsafe { (self.inner as *const _ as *const u8).offset_from_unsigned(inner_ptr) };
-        match offset {
-            TS_TEMPLATE_LITERAL_TYPE_OFFSET_QUASIS => (unsafe {
-                &*(inner_ptr.add(TS_TEMPLATE_LITERAL_TYPE_OFFSET_TYPES)
-                    as *const Vec<'a, TSType<'a>>)
-            })
-            .first()
-            .as_ref()
-            .copied()
-            .map(FollowingNode::TSType),
-            TS_TEMPLATE_LITERAL_TYPE_OFFSET_TYPES => None,
-            _ => panic!("Invalid field offset: {}", offset),
-        }
     }
 }
 
@@ -10490,33 +9776,27 @@ impl<'a> AstNode<'a, TSAsExpression<'a>> {
 
     #[inline]
     pub fn expression(&self) -> &AstNode<'a, Expression<'a>> {
+        let following_node = Some(FollowingNode::TSType({
+            let ptr = self.inner as *const _ as *const u8;
+            unsafe { &*(ptr.add(TS_AS_EXPRESSION_OFFSET_TYPEANNOTATION) as *const TSType<'a>) }
+        }));
         self.allocator.alloc(AstNode {
             inner: &self.inner.expression,
             allocator: self.allocator,
             parent: self.allocator.alloc(AstNodes::TSAsExpression(transmute_self(self))),
+            following_node,
         })
     }
 
     #[inline]
     pub fn type_annotation(&self) -> &AstNode<'a, TSType<'a>> {
+        let following_node = self.following_node.clone();
         self.allocator.alloc(AstNode {
             inner: &self.inner.type_annotation,
             allocator: self.allocator,
             parent: self.allocator.alloc(AstNodes::TSAsExpression(transmute_self(self))),
+            following_node,
         })
-    }
-
-    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
-        let inner_ptr = unsafe { self.parent.inner_ptr() };
-        let offset =
-            unsafe { (self.inner as *const _ as *const u8).offset_from_unsigned(inner_ptr) };
-        match offset {
-            TS_AS_EXPRESSION_OFFSET_EXPRESSION => Some(FollowingNode::TSType(unsafe {
-                &*(inner_ptr.add(TS_AS_EXPRESSION_OFFSET_TYPEANNOTATION) as *const TSType<'a>)
-            })),
-            TS_AS_EXPRESSION_OFFSET_TYPEANNOTATION => None,
-            _ => panic!("Invalid field offset: {}", offset),
-        }
     }
 }
 
@@ -10533,34 +9813,29 @@ impl<'a> AstNode<'a, TSSatisfiesExpression<'a>> {
 
     #[inline]
     pub fn expression(&self) -> &AstNode<'a, Expression<'a>> {
+        let following_node = Some(FollowingNode::TSType({
+            let ptr = self.inner as *const _ as *const u8;
+            unsafe {
+                &*(ptr.add(TS_SATISFIES_EXPRESSION_OFFSET_TYPEANNOTATION) as *const TSType<'a>)
+            }
+        }));
         self.allocator.alloc(AstNode {
             inner: &self.inner.expression,
             allocator: self.allocator,
             parent: self.allocator.alloc(AstNodes::TSSatisfiesExpression(transmute_self(self))),
+            following_node,
         })
     }
 
     #[inline]
     pub fn type_annotation(&self) -> &AstNode<'a, TSType<'a>> {
+        let following_node = self.following_node.clone();
         self.allocator.alloc(AstNode {
             inner: &self.inner.type_annotation,
             allocator: self.allocator,
             parent: self.allocator.alloc(AstNodes::TSSatisfiesExpression(transmute_self(self))),
+            following_node,
         })
-    }
-
-    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
-        let inner_ptr = unsafe { self.parent.inner_ptr() };
-        let offset =
-            unsafe { (self.inner as *const _ as *const u8).offset_from_unsigned(inner_ptr) };
-        match offset {
-            TS_SATISFIES_EXPRESSION_OFFSET_EXPRESSION => Some(FollowingNode::TSType(unsafe {
-                &*(inner_ptr.add(TS_SATISFIES_EXPRESSION_OFFSET_TYPEANNOTATION)
-                    as *const TSType<'a>)
-            })),
-            TS_SATISFIES_EXPRESSION_OFFSET_TYPEANNOTATION => None,
-            _ => panic!("Invalid field offset: {}", offset),
-        }
     }
 }
 
@@ -10577,33 +9852,27 @@ impl<'a> AstNode<'a, TSTypeAssertion<'a>> {
 
     #[inline]
     pub fn type_annotation(&self) -> &AstNode<'a, TSType<'a>> {
+        let following_node = Some(FollowingNode::Expression({
+            let ptr = self.inner as *const _ as *const u8;
+            unsafe { &*(ptr.add(TS_TYPE_ASSERTION_OFFSET_EXPRESSION) as *const Expression<'a>) }
+        }));
         self.allocator.alloc(AstNode {
             inner: &self.inner.type_annotation,
             allocator: self.allocator,
             parent: self.allocator.alloc(AstNodes::TSTypeAssertion(transmute_self(self))),
+            following_node,
         })
     }
 
     #[inline]
     pub fn expression(&self) -> &AstNode<'a, Expression<'a>> {
+        let following_node = self.following_node.clone();
         self.allocator.alloc(AstNode {
             inner: &self.inner.expression,
             allocator: self.allocator,
             parent: self.allocator.alloc(AstNodes::TSTypeAssertion(transmute_self(self))),
+            following_node,
         })
-    }
-
-    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
-        let inner_ptr = unsafe { self.parent.inner_ptr() };
-        let offset =
-            unsafe { (self.inner as *const _ as *const u8).offset_from_unsigned(inner_ptr) };
-        match offset {
-            TS_TYPE_ASSERTION_OFFSET_TYPEANNOTATION => Some(FollowingNode::Expression(unsafe {
-                &*(inner_ptr.add(TS_TYPE_ASSERTION_OFFSET_EXPRESSION) as *const Expression<'a>)
-            })),
-            TS_TYPE_ASSERTION_OFFSET_EXPRESSION => None,
-            _ => panic!("Invalid field offset: {}", offset),
-        }
     }
 }
 
@@ -10620,41 +9889,35 @@ impl<'a> AstNode<'a, TSImportEqualsDeclaration<'a>> {
 
     #[inline]
     pub fn id(&self) -> &AstNode<'a, BindingIdentifier<'a>> {
+        let following_node = Some(FollowingNode::TSModuleReference({
+            let ptr = self.inner as *const _ as *const u8;
+            unsafe {
+                &*(ptr.add(TS_IMPORT_EQUALS_DECLARATION_OFFSET_MODULEREFERENCE)
+                    as *const TSModuleReference<'a>)
+            }
+        }));
         self.allocator.alloc(AstNode {
             inner: &self.inner.id,
             allocator: self.allocator,
             parent: self.allocator.alloc(AstNodes::TSImportEqualsDeclaration(transmute_self(self))),
+            following_node,
         })
     }
 
     #[inline]
     pub fn module_reference(&self) -> &AstNode<'a, TSModuleReference<'a>> {
+        let following_node = self.following_node.clone();
         self.allocator.alloc(AstNode {
             inner: &self.inner.module_reference,
             allocator: self.allocator,
             parent: self.allocator.alloc(AstNodes::TSImportEqualsDeclaration(transmute_self(self))),
+            following_node,
         })
     }
 
     #[inline]
     pub fn import_kind(&self) -> ImportOrExportKind {
         self.inner.import_kind
-    }
-
-    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
-        let inner_ptr = unsafe { self.parent.inner_ptr() };
-        let offset =
-            unsafe { (self.inner as *const _ as *const u8).offset_from_unsigned(inner_ptr) };
-        match offset {
-            TS_IMPORT_EQUALS_DECLARATION_OFFSET_ID => {
-                Some(FollowingNode::TSModuleReference(unsafe {
-                    &*(inner_ptr.add(TS_IMPORT_EQUALS_DECLARATION_OFFSET_MODULEREFERENCE)
-                        as *const TSModuleReference<'a>)
-                }))
-            }
-            TS_IMPORT_EQUALS_DECLARATION_OFFSET_MODULEREFERENCE => None,
-            _ => panic!("Invalid field offset: {}", offset),
-        }
     }
 }
 
@@ -10668,6 +9931,7 @@ impl<'a> AstNode<'a, TSModuleReference<'a>> {
                     inner: s.as_ref(),
                     parent,
                     allocator: self.allocator,
+                    following_node: self.following_node.clone(),
                 }))
             }
             it @ match_ts_type_name!(TSModuleReference) => {
@@ -10675,6 +9939,7 @@ impl<'a> AstNode<'a, TSModuleReference<'a>> {
                     inner: it.to_ts_type_name(),
                     parent,
                     allocator: self.allocator,
+                    following_node: self.following_node.clone(),
                 }))
             }
         };
@@ -10700,21 +9965,13 @@ impl<'a> AstNode<'a, TSExternalModuleReference<'a>> {
 
     #[inline]
     pub fn expression(&self) -> &AstNode<'a, StringLiteral<'a>> {
+        let following_node = self.following_node.clone();
         self.allocator.alloc(AstNode {
             inner: &self.inner.expression,
             allocator: self.allocator,
             parent: self.allocator.alloc(AstNodes::TSExternalModuleReference(transmute_self(self))),
+            following_node,
         })
-    }
-
-    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
-        let inner_ptr = unsafe { self.parent.inner_ptr() };
-        let offset =
-            unsafe { (self.inner as *const _ as *const u8).offset_from_unsigned(inner_ptr) };
-        match offset {
-            TS_EXTERNAL_MODULE_REFERENCE_OFFSET_EXPRESSION => None,
-            _ => panic!("Invalid field offset: {}", offset),
-        }
     }
 }
 
@@ -10729,21 +9986,13 @@ impl<'a> AstNode<'a, TSNonNullExpression<'a>> {
 
     #[inline]
     pub fn expression(&self) -> &AstNode<'a, Expression<'a>> {
+        let following_node = self.following_node.clone();
         self.allocator.alloc(AstNode {
             inner: &self.inner.expression,
             allocator: self.allocator,
             parent: self.allocator.alloc(AstNodes::TSNonNullExpression(transmute_self(self))),
+            following_node,
         })
-    }
-
-    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
-        let inner_ptr = unsafe { self.parent.inner_ptr() };
-        let offset =
-            unsafe { (self.inner as *const _ as *const u8).offset_from_unsigned(inner_ptr) };
-        match offset {
-            TS_NON_NULL_EXPRESSION_OFFSET_EXPRESSION => None,
-            _ => panic!("Invalid field offset: {}", offset),
-        }
     }
 }
 
@@ -10757,21 +10006,13 @@ impl<'a> AstNode<'a, Decorator<'a>> {
 
     #[inline]
     pub fn expression(&self) -> &AstNode<'a, Expression<'a>> {
+        let following_node = self.following_node.clone();
         self.allocator.alloc(AstNode {
             inner: &self.inner.expression,
             allocator: self.allocator,
             parent: self.allocator.alloc(AstNodes::Decorator(transmute_self(self))),
+            following_node,
         })
-    }
-
-    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
-        let inner_ptr = unsafe { self.parent.inner_ptr() };
-        let offset =
-            unsafe { (self.inner as *const _ as *const u8).offset_from_unsigned(inner_ptr) };
-        match offset {
-            DECORATOR_OFFSET_EXPRESSION => None,
-            _ => panic!("Invalid field offset: {}", offset),
-        }
     }
 }
 
@@ -10786,21 +10027,13 @@ impl<'a> AstNode<'a, TSExportAssignment<'a>> {
 
     #[inline]
     pub fn expression(&self) -> &AstNode<'a, Expression<'a>> {
+        let following_node = self.following_node.clone();
         self.allocator.alloc(AstNode {
             inner: &self.inner.expression,
             allocator: self.allocator,
             parent: self.allocator.alloc(AstNodes::TSExportAssignment(transmute_self(self))),
+            following_node,
         })
-    }
-
-    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
-        let inner_ptr = unsafe { self.parent.inner_ptr() };
-        let offset =
-            unsafe { (self.inner as *const _ as *const u8).offset_from_unsigned(inner_ptr) };
-        match offset {
-            TS_EXPORT_ASSIGNMENT_OFFSET_EXPRESSION => None,
-            _ => panic!("Invalid field offset: {}", offset),
-        }
     }
 }
 
@@ -10815,21 +10048,13 @@ impl<'a> AstNode<'a, TSNamespaceExportDeclaration<'a>> {
 
     #[inline]
     pub fn id(&self) -> &AstNode<'a, IdentifierName<'a>> {
+        let following_node = self.following_node.clone();
         self.allocator.alloc(AstNode {
             inner: &self.inner.id,
             allocator: self.allocator,
             parent: self.parent,
+            following_node,
         })
-    }
-
-    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
-        let inner_ptr = unsafe { self.parent.inner_ptr() };
-        let offset =
-            unsafe { (self.inner as *const _ as *const u8).offset_from_unsigned(inner_ptr) };
-        match offset {
-            TS_NAMESPACE_EXPORT_DECLARATION_OFFSET_ID => None,
-            _ => panic!("Invalid field offset: {}", offset),
-        }
     }
 }
 
@@ -10846,39 +10071,33 @@ impl<'a> AstNode<'a, TSInstantiationExpression<'a>> {
 
     #[inline]
     pub fn expression(&self) -> &AstNode<'a, Expression<'a>> {
+        let following_node = Some(FollowingNode::TSTypeParameterInstantiation(
+            {
+                let ptr = self.inner as *const _ as *const u8;
+                unsafe {
+                    &*(ptr.add(TS_INSTANTIATION_EXPRESSION_OFFSET_TYPEARGUMENTS)
+                        as *const Box<'a, TSTypeParameterInstantiation<'a>>)
+                }
+            }
+            .as_ref(),
+        ));
         self.allocator.alloc(AstNode {
             inner: &self.inner.expression,
             allocator: self.allocator,
             parent: self.allocator.alloc(AstNodes::TSInstantiationExpression(transmute_self(self))),
+            following_node,
         })
     }
 
     #[inline]
     pub fn type_arguments(&self) -> &AstNode<'a, TSTypeParameterInstantiation<'a>> {
+        let following_node = self.following_node.clone();
         self.allocator.alloc(AstNode {
             inner: self.inner.type_arguments.as_ref(),
             allocator: self.allocator,
             parent: self.allocator.alloc(AstNodes::TSInstantiationExpression(transmute_self(self))),
+            following_node,
         })
-    }
-
-    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
-        let inner_ptr = unsafe { self.parent.inner_ptr() };
-        let offset =
-            unsafe { (self.inner as *const _ as *const u8).offset_from_unsigned(inner_ptr) };
-        match offset {
-            TS_INSTANTIATION_EXPRESSION_OFFSET_EXPRESSION => {
-                Some(FollowingNode::TSTypeParameterInstantiation(
-                    unsafe {
-                        &*(inner_ptr.add(TS_INSTANTIATION_EXPRESSION_OFFSET_TYPEARGUMENTS)
-                            as *const Box<'a, TSTypeParameterInstantiation<'a>>)
-                    }
-                    .as_ref(),
-                ))
-            }
-            TS_INSTANTIATION_EXPRESSION_OFFSET_TYPEARGUMENTS => None,
-            _ => panic!("Invalid field offset: {}", offset),
-        }
     }
 }
 
@@ -10893,26 +10112,18 @@ impl<'a> AstNode<'a, JSDocNullableType<'a>> {
 
     #[inline]
     pub fn type_annotation(&self) -> &AstNode<'a, TSType<'a>> {
+        let following_node = self.following_node.clone();
         self.allocator.alloc(AstNode {
             inner: &self.inner.type_annotation,
             allocator: self.allocator,
             parent: self.allocator.alloc(AstNodes::JSDocNullableType(transmute_self(self))),
+            following_node,
         })
     }
 
     #[inline]
     pub fn postfix(&self) -> bool {
         self.inner.postfix
-    }
-
-    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
-        let inner_ptr = unsafe { self.parent.inner_ptr() };
-        let offset =
-            unsafe { (self.inner as *const _ as *const u8).offset_from_unsigned(inner_ptr) };
-        match offset {
-            JS_DOC_NULLABLE_TYPE_OFFSET_TYPEANNOTATION => None,
-            _ => panic!("Invalid field offset: {}", offset),
-        }
     }
 }
 
@@ -10927,26 +10138,18 @@ impl<'a> AstNode<'a, JSDocNonNullableType<'a>> {
 
     #[inline]
     pub fn type_annotation(&self) -> &AstNode<'a, TSType<'a>> {
+        let following_node = self.following_node.clone();
         self.allocator.alloc(AstNode {
             inner: &self.inner.type_annotation,
             allocator: self.allocator,
             parent: self.allocator.alloc(AstNodes::JSDocNonNullableType(transmute_self(self))),
+            following_node,
         })
     }
 
     #[inline]
     pub fn postfix(&self) -> bool {
         self.inner.postfix
-    }
-
-    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
-        let inner_ptr = unsafe { self.parent.inner_ptr() };
-        let offset =
-            unsafe { (self.inner as *const _ as *const u8).offset_from_unsigned(inner_ptr) };
-        match offset {
-            JS_DOC_NON_NULLABLE_TYPE_OFFSET_TYPEANNOTATION => None,
-            _ => panic!("Invalid field offset: {}", offset),
-        }
     }
 }
 
@@ -10955,8 +10158,1986 @@ impl<'a> AstNode<'a, JSDocUnknownType> {
     pub fn span(&self) -> Span {
         self.inner.span
     }
-
-    pub fn next_field(&self) -> Option<FollowingNode<'a>> {
-        None
+}
+pub struct AstNodeIterator<'a, T> {
+    inner: std::iter::Peekable<std::slice::Iter<'a, T>>,
+    parent: &'a AstNodes<'a>,
+    following_node: Option<FollowingNode<'a>>,
+    allocator: &'a Allocator,
+}
+impl<'a> AstNode<'a, Vec<'a, Expression<'a>>> {
+    pub fn iter(&self) -> AstNodeIterator<'a, Expression<'a>> {
+        AstNodeIterator {
+            inner: self.inner.iter().peekable(),
+            parent: self.parent,
+            following_node: self.following_node.clone(),
+            allocator: self.allocator,
+        }
+    }
+    pub fn first(&self) -> Option<&'a AstNode<'a, Expression<'a>>> {
+        let mut inner_iter = self.inner.iter();
+        self.allocator
+            .alloc(inner_iter.next().map(|inner| {
+                AstNode {
+                    inner,
+                    parent: self.parent,
+                    allocator: self.allocator,
+                    following_node: inner_iter
+                        .next()
+                        .map(|t| FollowingNode::Expression(t))
+                        .or_else(|| self.following_node.clone()),
+                }
+            }))
+            .as_ref()
+    }
+    pub fn last(&self) -> Option<&'a AstNode<'a, Expression<'a>>> {
+        self.allocator
+            .alloc(self.inner.last().map(|inner| AstNode {
+                inner,
+                parent: self.parent,
+                allocator: self.allocator,
+                following_node: self.following_node.clone(),
+            }))
+            .as_ref()
+    }
+}
+impl<'a> Iterator for AstNodeIterator<'a, Expression<'a>> {
+    type Item = &'a AstNode<'a, Expression<'a>>;
+    fn next(&mut self) -> Option<Self::Item> {
+        let allocator = self.allocator;
+        allocator
+            .alloc(self.inner.next().map(|inner| {
+                AstNode {
+                    parent: self.parent,
+                    inner,
+                    allocator,
+                    following_node: self
+                        .inner
+                        .peek()
+                        .map(|t| FollowingNode::Expression(t))
+                        .or_else(|| self.following_node.clone()),
+                }
+            }))
+            .as_ref()
+    }
+}
+impl<'a> IntoIterator for &AstNode<'a, Vec<'a, Expression<'a>>> {
+    type Item = &'a AstNode<'a, Expression<'a>>;
+    type IntoIter = AstNodeIterator<'a, Expression<'a>>;
+    fn into_iter(self) -> Self::IntoIter {
+        AstNodeIterator::<Expression<'a>> {
+            inner: self.inner.iter().peekable(),
+            parent: self.parent,
+            following_node: self.following_node.clone(),
+            allocator: self.allocator,
+        }
+    }
+}
+impl<'a> AstNode<'a, Vec<'a, ArrayExpressionElement<'a>>> {
+    pub fn iter(&self) -> AstNodeIterator<'a, ArrayExpressionElement<'a>> {
+        AstNodeIterator {
+            inner: self.inner.iter().peekable(),
+            parent: self.parent,
+            following_node: self.following_node.clone(),
+            allocator: self.allocator,
+        }
+    }
+    pub fn first(&self) -> Option<&'a AstNode<'a, ArrayExpressionElement<'a>>> {
+        let mut inner_iter = self.inner.iter();
+        self.allocator
+            .alloc(inner_iter.next().map(|inner| {
+                AstNode {
+                    inner,
+                    parent: self.parent,
+                    allocator: self.allocator,
+                    following_node: inner_iter
+                        .next()
+                        .map(|t| FollowingNode::ArrayExpressionElement(t))
+                        .or_else(|| self.following_node.clone()),
+                }
+            }))
+            .as_ref()
+    }
+    pub fn last(&self) -> Option<&'a AstNode<'a, ArrayExpressionElement<'a>>> {
+        self.allocator
+            .alloc(self.inner.last().map(|inner| AstNode {
+                inner,
+                parent: self.parent,
+                allocator: self.allocator,
+                following_node: self.following_node.clone(),
+            }))
+            .as_ref()
+    }
+}
+impl<'a> Iterator for AstNodeIterator<'a, ArrayExpressionElement<'a>> {
+    type Item = &'a AstNode<'a, ArrayExpressionElement<'a>>;
+    fn next(&mut self) -> Option<Self::Item> {
+        let allocator = self.allocator;
+        allocator
+            .alloc(self.inner.next().map(|inner| {
+                AstNode {
+                    parent: self.parent,
+                    inner,
+                    allocator,
+                    following_node: self
+                        .inner
+                        .peek()
+                        .map(|t| FollowingNode::ArrayExpressionElement(t))
+                        .or_else(|| self.following_node.clone()),
+                }
+            }))
+            .as_ref()
+    }
+}
+impl<'a> IntoIterator for &AstNode<'a, Vec<'a, ArrayExpressionElement<'a>>> {
+    type Item = &'a AstNode<'a, ArrayExpressionElement<'a>>;
+    type IntoIter = AstNodeIterator<'a, ArrayExpressionElement<'a>>;
+    fn into_iter(self) -> Self::IntoIter {
+        AstNodeIterator::<ArrayExpressionElement<'a>> {
+            inner: self.inner.iter().peekable(),
+            parent: self.parent,
+            following_node: self.following_node.clone(),
+            allocator: self.allocator,
+        }
+    }
+}
+impl<'a> AstNode<'a, Vec<'a, ObjectPropertyKind<'a>>> {
+    pub fn iter(&self) -> AstNodeIterator<'a, ObjectPropertyKind<'a>> {
+        AstNodeIterator {
+            inner: self.inner.iter().peekable(),
+            parent: self.parent,
+            following_node: self.following_node.clone(),
+            allocator: self.allocator,
+        }
+    }
+    pub fn first(&self) -> Option<&'a AstNode<'a, ObjectPropertyKind<'a>>> {
+        let mut inner_iter = self.inner.iter();
+        self.allocator
+            .alloc(inner_iter.next().map(|inner| {
+                AstNode {
+                    inner,
+                    parent: self.parent,
+                    allocator: self.allocator,
+                    following_node: inner_iter
+                        .next()
+                        .map(|t| FollowingNode::ObjectPropertyKind(t))
+                        .or_else(|| self.following_node.clone()),
+                }
+            }))
+            .as_ref()
+    }
+    pub fn last(&self) -> Option<&'a AstNode<'a, ObjectPropertyKind<'a>>> {
+        self.allocator
+            .alloc(self.inner.last().map(|inner| AstNode {
+                inner,
+                parent: self.parent,
+                allocator: self.allocator,
+                following_node: self.following_node.clone(),
+            }))
+            .as_ref()
+    }
+}
+impl<'a> Iterator for AstNodeIterator<'a, ObjectPropertyKind<'a>> {
+    type Item = &'a AstNode<'a, ObjectPropertyKind<'a>>;
+    fn next(&mut self) -> Option<Self::Item> {
+        let allocator = self.allocator;
+        allocator
+            .alloc(self.inner.next().map(|inner| {
+                AstNode {
+                    parent: self.parent,
+                    inner,
+                    allocator,
+                    following_node: self
+                        .inner
+                        .peek()
+                        .map(|t| FollowingNode::ObjectPropertyKind(t))
+                        .or_else(|| self.following_node.clone()),
+                }
+            }))
+            .as_ref()
+    }
+}
+impl<'a> IntoIterator for &AstNode<'a, Vec<'a, ObjectPropertyKind<'a>>> {
+    type Item = &'a AstNode<'a, ObjectPropertyKind<'a>>;
+    type IntoIter = AstNodeIterator<'a, ObjectPropertyKind<'a>>;
+    fn into_iter(self) -> Self::IntoIter {
+        AstNodeIterator::<ObjectPropertyKind<'a>> {
+            inner: self.inner.iter().peekable(),
+            parent: self.parent,
+            following_node: self.following_node.clone(),
+            allocator: self.allocator,
+        }
+    }
+}
+impl<'a> AstNode<'a, Vec<'a, TemplateElement<'a>>> {
+    pub fn iter(&self) -> AstNodeIterator<'a, TemplateElement<'a>> {
+        AstNodeIterator {
+            inner: self.inner.iter().peekable(),
+            parent: self.parent,
+            following_node: self.following_node.clone(),
+            allocator: self.allocator,
+        }
+    }
+    pub fn first(&self) -> Option<&'a AstNode<'a, TemplateElement<'a>>> {
+        let mut inner_iter = self.inner.iter();
+        self.allocator
+            .alloc(inner_iter.next().map(|inner| {
+                AstNode {
+                    inner,
+                    parent: self.parent,
+                    allocator: self.allocator,
+                    following_node: inner_iter
+                        .next()
+                        .map(|t| FollowingNode::TemplateElement(t))
+                        .or_else(|| self.following_node.clone()),
+                }
+            }))
+            .as_ref()
+    }
+    pub fn last(&self) -> Option<&'a AstNode<'a, TemplateElement<'a>>> {
+        self.allocator
+            .alloc(self.inner.last().map(|inner| AstNode {
+                inner,
+                parent: self.parent,
+                allocator: self.allocator,
+                following_node: self.following_node.clone(),
+            }))
+            .as_ref()
+    }
+}
+impl<'a> Iterator for AstNodeIterator<'a, TemplateElement<'a>> {
+    type Item = &'a AstNode<'a, TemplateElement<'a>>;
+    fn next(&mut self) -> Option<Self::Item> {
+        let allocator = self.allocator;
+        allocator
+            .alloc(self.inner.next().map(|inner| {
+                AstNode {
+                    parent: self.parent,
+                    inner,
+                    allocator,
+                    following_node: self
+                        .inner
+                        .peek()
+                        .map(|t| FollowingNode::TemplateElement(t))
+                        .or_else(|| self.following_node.clone()),
+                }
+            }))
+            .as_ref()
+    }
+}
+impl<'a> IntoIterator for &AstNode<'a, Vec<'a, TemplateElement<'a>>> {
+    type Item = &'a AstNode<'a, TemplateElement<'a>>;
+    type IntoIter = AstNodeIterator<'a, TemplateElement<'a>>;
+    fn into_iter(self) -> Self::IntoIter {
+        AstNodeIterator::<TemplateElement<'a>> {
+            inner: self.inner.iter().peekable(),
+            parent: self.parent,
+            following_node: self.following_node.clone(),
+            allocator: self.allocator,
+        }
+    }
+}
+impl<'a> AstNode<'a, Vec<'a, Argument<'a>>> {
+    pub fn iter(&self) -> AstNodeIterator<'a, Argument<'a>> {
+        AstNodeIterator {
+            inner: self.inner.iter().peekable(),
+            parent: self.parent,
+            following_node: self.following_node.clone(),
+            allocator: self.allocator,
+        }
+    }
+    pub fn first(&self) -> Option<&'a AstNode<'a, Argument<'a>>> {
+        let mut inner_iter = self.inner.iter();
+        self.allocator
+            .alloc(inner_iter.next().map(|inner| {
+                AstNode {
+                    inner,
+                    parent: self.parent,
+                    allocator: self.allocator,
+                    following_node: inner_iter
+                        .next()
+                        .map(|t| FollowingNode::Argument(t))
+                        .or_else(|| self.following_node.clone()),
+                }
+            }))
+            .as_ref()
+    }
+    pub fn last(&self) -> Option<&'a AstNode<'a, Argument<'a>>> {
+        self.allocator
+            .alloc(self.inner.last().map(|inner| AstNode {
+                inner,
+                parent: self.parent,
+                allocator: self.allocator,
+                following_node: self.following_node.clone(),
+            }))
+            .as_ref()
+    }
+}
+impl<'a> Iterator for AstNodeIterator<'a, Argument<'a>> {
+    type Item = &'a AstNode<'a, Argument<'a>>;
+    fn next(&mut self) -> Option<Self::Item> {
+        let allocator = self.allocator;
+        allocator
+            .alloc(self.inner.next().map(|inner| {
+                AstNode {
+                    parent: self.parent,
+                    inner,
+                    allocator,
+                    following_node: self
+                        .inner
+                        .peek()
+                        .map(|t| FollowingNode::Argument(t))
+                        .or_else(|| self.following_node.clone()),
+                }
+            }))
+            .as_ref()
+    }
+}
+impl<'a> IntoIterator for &AstNode<'a, Vec<'a, Argument<'a>>> {
+    type Item = &'a AstNode<'a, Argument<'a>>;
+    type IntoIter = AstNodeIterator<'a, Argument<'a>>;
+    fn into_iter(self) -> Self::IntoIter {
+        AstNodeIterator::<Argument<'a>> {
+            inner: self.inner.iter().peekable(),
+            parent: self.parent,
+            following_node: self.following_node.clone(),
+            allocator: self.allocator,
+        }
+    }
+}
+impl<'a> AstNode<'a, Vec<'a, AssignmentTargetProperty<'a>>> {
+    pub fn iter(&self) -> AstNodeIterator<'a, AssignmentTargetProperty<'a>> {
+        AstNodeIterator {
+            inner: self.inner.iter().peekable(),
+            parent: self.parent,
+            following_node: self.following_node.clone(),
+            allocator: self.allocator,
+        }
+    }
+    pub fn first(&self) -> Option<&'a AstNode<'a, AssignmentTargetProperty<'a>>> {
+        let mut inner_iter = self.inner.iter();
+        self.allocator
+            .alloc(inner_iter.next().map(|inner| {
+                AstNode {
+                    inner,
+                    parent: self.parent,
+                    allocator: self.allocator,
+                    following_node: inner_iter
+                        .next()
+                        .map(|t| FollowingNode::AssignmentTargetProperty(t))
+                        .or_else(|| self.following_node.clone()),
+                }
+            }))
+            .as_ref()
+    }
+    pub fn last(&self) -> Option<&'a AstNode<'a, AssignmentTargetProperty<'a>>> {
+        self.allocator
+            .alloc(self.inner.last().map(|inner| AstNode {
+                inner,
+                parent: self.parent,
+                allocator: self.allocator,
+                following_node: self.following_node.clone(),
+            }))
+            .as_ref()
+    }
+}
+impl<'a> Iterator for AstNodeIterator<'a, AssignmentTargetProperty<'a>> {
+    type Item = &'a AstNode<'a, AssignmentTargetProperty<'a>>;
+    fn next(&mut self) -> Option<Self::Item> {
+        let allocator = self.allocator;
+        allocator
+            .alloc(self.inner.next().map(|inner| {
+                AstNode {
+                    parent: self.parent,
+                    inner,
+                    allocator,
+                    following_node: self
+                        .inner
+                        .peek()
+                        .map(|t| FollowingNode::AssignmentTargetProperty(t))
+                        .or_else(|| self.following_node.clone()),
+                }
+            }))
+            .as_ref()
+    }
+}
+impl<'a> IntoIterator for &AstNode<'a, Vec<'a, AssignmentTargetProperty<'a>>> {
+    type Item = &'a AstNode<'a, AssignmentTargetProperty<'a>>;
+    type IntoIter = AstNodeIterator<'a, AssignmentTargetProperty<'a>>;
+    fn into_iter(self) -> Self::IntoIter {
+        AstNodeIterator::<AssignmentTargetProperty<'a>> {
+            inner: self.inner.iter().peekable(),
+            parent: self.parent,
+            following_node: self.following_node.clone(),
+            allocator: self.allocator,
+        }
+    }
+}
+impl<'a> AstNode<'a, Vec<'a, Statement<'a>>> {
+    pub fn iter(&self) -> AstNodeIterator<'a, Statement<'a>> {
+        AstNodeIterator {
+            inner: self.inner.iter().peekable(),
+            parent: self.parent,
+            following_node: self.following_node.clone(),
+            allocator: self.allocator,
+        }
+    }
+    pub fn first(&self) -> Option<&'a AstNode<'a, Statement<'a>>> {
+        let mut inner_iter = self.inner.iter();
+        self.allocator
+            .alloc(inner_iter.next().map(|inner| {
+                AstNode {
+                    inner,
+                    parent: self.parent,
+                    allocator: self.allocator,
+                    following_node: inner_iter
+                        .next()
+                        .map(|t| FollowingNode::Statement(t))
+                        .or_else(|| self.following_node.clone()),
+                }
+            }))
+            .as_ref()
+    }
+    pub fn last(&self) -> Option<&'a AstNode<'a, Statement<'a>>> {
+        self.allocator
+            .alloc(self.inner.last().map(|inner| AstNode {
+                inner,
+                parent: self.parent,
+                allocator: self.allocator,
+                following_node: self.following_node.clone(),
+            }))
+            .as_ref()
+    }
+}
+impl<'a> Iterator for AstNodeIterator<'a, Statement<'a>> {
+    type Item = &'a AstNode<'a, Statement<'a>>;
+    fn next(&mut self) -> Option<Self::Item> {
+        let allocator = self.allocator;
+        allocator
+            .alloc(self.inner.next().map(|inner| {
+                AstNode {
+                    parent: self.parent,
+                    inner,
+                    allocator,
+                    following_node: self
+                        .inner
+                        .peek()
+                        .map(|t| FollowingNode::Statement(t))
+                        .or_else(|| self.following_node.clone()),
+                }
+            }))
+            .as_ref()
+    }
+}
+impl<'a> IntoIterator for &AstNode<'a, Vec<'a, Statement<'a>>> {
+    type Item = &'a AstNode<'a, Statement<'a>>;
+    type IntoIter = AstNodeIterator<'a, Statement<'a>>;
+    fn into_iter(self) -> Self::IntoIter {
+        AstNodeIterator::<Statement<'a>> {
+            inner: self.inner.iter().peekable(),
+            parent: self.parent,
+            following_node: self.following_node.clone(),
+            allocator: self.allocator,
+        }
+    }
+}
+impl<'a> AstNode<'a, Vec<'a, Directive<'a>>> {
+    pub fn iter(&self) -> AstNodeIterator<'a, Directive<'a>> {
+        AstNodeIterator {
+            inner: self.inner.iter().peekable(),
+            parent: self.parent,
+            following_node: self.following_node.clone(),
+            allocator: self.allocator,
+        }
+    }
+    pub fn first(&self) -> Option<&'a AstNode<'a, Directive<'a>>> {
+        let mut inner_iter = self.inner.iter();
+        self.allocator
+            .alloc(inner_iter.next().map(|inner| {
+                AstNode {
+                    inner,
+                    parent: self.parent,
+                    allocator: self.allocator,
+                    following_node: inner_iter
+                        .next()
+                        .map(|t| FollowingNode::Directive(t))
+                        .or_else(|| self.following_node.clone()),
+                }
+            }))
+            .as_ref()
+    }
+    pub fn last(&self) -> Option<&'a AstNode<'a, Directive<'a>>> {
+        self.allocator
+            .alloc(self.inner.last().map(|inner| AstNode {
+                inner,
+                parent: self.parent,
+                allocator: self.allocator,
+                following_node: self.following_node.clone(),
+            }))
+            .as_ref()
+    }
+}
+impl<'a> Iterator for AstNodeIterator<'a, Directive<'a>> {
+    type Item = &'a AstNode<'a, Directive<'a>>;
+    fn next(&mut self) -> Option<Self::Item> {
+        let allocator = self.allocator;
+        allocator
+            .alloc(self.inner.next().map(|inner| {
+                AstNode {
+                    parent: self.parent,
+                    inner,
+                    allocator,
+                    following_node: self
+                        .inner
+                        .peek()
+                        .map(|t| FollowingNode::Directive(t))
+                        .or_else(|| self.following_node.clone()),
+                }
+            }))
+            .as_ref()
+    }
+}
+impl<'a> IntoIterator for &AstNode<'a, Vec<'a, Directive<'a>>> {
+    type Item = &'a AstNode<'a, Directive<'a>>;
+    type IntoIter = AstNodeIterator<'a, Directive<'a>>;
+    fn into_iter(self) -> Self::IntoIter {
+        AstNodeIterator::<Directive<'a>> {
+            inner: self.inner.iter().peekable(),
+            parent: self.parent,
+            following_node: self.following_node.clone(),
+            allocator: self.allocator,
+        }
+    }
+}
+impl<'a> AstNode<'a, Vec<'a, VariableDeclarator<'a>>> {
+    pub fn iter(&self) -> AstNodeIterator<'a, VariableDeclarator<'a>> {
+        AstNodeIterator {
+            inner: self.inner.iter().peekable(),
+            parent: self.parent,
+            following_node: self.following_node.clone(),
+            allocator: self.allocator,
+        }
+    }
+    pub fn first(&self) -> Option<&'a AstNode<'a, VariableDeclarator<'a>>> {
+        let mut inner_iter = self.inner.iter();
+        self.allocator
+            .alloc(inner_iter.next().map(|inner| {
+                AstNode {
+                    inner,
+                    parent: self.parent,
+                    allocator: self.allocator,
+                    following_node: inner_iter
+                        .next()
+                        .map(|t| FollowingNode::VariableDeclarator(t))
+                        .or_else(|| self.following_node.clone()),
+                }
+            }))
+            .as_ref()
+    }
+    pub fn last(&self) -> Option<&'a AstNode<'a, VariableDeclarator<'a>>> {
+        self.allocator
+            .alloc(self.inner.last().map(|inner| AstNode {
+                inner,
+                parent: self.parent,
+                allocator: self.allocator,
+                following_node: self.following_node.clone(),
+            }))
+            .as_ref()
+    }
+}
+impl<'a> Iterator for AstNodeIterator<'a, VariableDeclarator<'a>> {
+    type Item = &'a AstNode<'a, VariableDeclarator<'a>>;
+    fn next(&mut self) -> Option<Self::Item> {
+        let allocator = self.allocator;
+        allocator
+            .alloc(self.inner.next().map(|inner| {
+                AstNode {
+                    parent: self.parent,
+                    inner,
+                    allocator,
+                    following_node: self
+                        .inner
+                        .peek()
+                        .map(|t| FollowingNode::VariableDeclarator(t))
+                        .or_else(|| self.following_node.clone()),
+                }
+            }))
+            .as_ref()
+    }
+}
+impl<'a> IntoIterator for &AstNode<'a, Vec<'a, VariableDeclarator<'a>>> {
+    type Item = &'a AstNode<'a, VariableDeclarator<'a>>;
+    type IntoIter = AstNodeIterator<'a, VariableDeclarator<'a>>;
+    fn into_iter(self) -> Self::IntoIter {
+        AstNodeIterator::<VariableDeclarator<'a>> {
+            inner: self.inner.iter().peekable(),
+            parent: self.parent,
+            following_node: self.following_node.clone(),
+            allocator: self.allocator,
+        }
+    }
+}
+impl<'a> AstNode<'a, Vec<'a, SwitchCase<'a>>> {
+    pub fn iter(&self) -> AstNodeIterator<'a, SwitchCase<'a>> {
+        AstNodeIterator {
+            inner: self.inner.iter().peekable(),
+            parent: self.parent,
+            following_node: self.following_node.clone(),
+            allocator: self.allocator,
+        }
+    }
+    pub fn first(&self) -> Option<&'a AstNode<'a, SwitchCase<'a>>> {
+        let mut inner_iter = self.inner.iter();
+        self.allocator
+            .alloc(inner_iter.next().map(|inner| {
+                AstNode {
+                    inner,
+                    parent: self.parent,
+                    allocator: self.allocator,
+                    following_node: inner_iter
+                        .next()
+                        .map(|t| FollowingNode::SwitchCase(t))
+                        .or_else(|| self.following_node.clone()),
+                }
+            }))
+            .as_ref()
+    }
+    pub fn last(&self) -> Option<&'a AstNode<'a, SwitchCase<'a>>> {
+        self.allocator
+            .alloc(self.inner.last().map(|inner| AstNode {
+                inner,
+                parent: self.parent,
+                allocator: self.allocator,
+                following_node: self.following_node.clone(),
+            }))
+            .as_ref()
+    }
+}
+impl<'a> Iterator for AstNodeIterator<'a, SwitchCase<'a>> {
+    type Item = &'a AstNode<'a, SwitchCase<'a>>;
+    fn next(&mut self) -> Option<Self::Item> {
+        let allocator = self.allocator;
+        allocator
+            .alloc(self.inner.next().map(|inner| {
+                AstNode {
+                    parent: self.parent,
+                    inner,
+                    allocator,
+                    following_node: self
+                        .inner
+                        .peek()
+                        .map(|t| FollowingNode::SwitchCase(t))
+                        .or_else(|| self.following_node.clone()),
+                }
+            }))
+            .as_ref()
+    }
+}
+impl<'a> IntoIterator for &AstNode<'a, Vec<'a, SwitchCase<'a>>> {
+    type Item = &'a AstNode<'a, SwitchCase<'a>>;
+    type IntoIter = AstNodeIterator<'a, SwitchCase<'a>>;
+    fn into_iter(self) -> Self::IntoIter {
+        AstNodeIterator::<SwitchCase<'a>> {
+            inner: self.inner.iter().peekable(),
+            parent: self.parent,
+            following_node: self.following_node.clone(),
+            allocator: self.allocator,
+        }
+    }
+}
+impl<'a> AstNode<'a, Vec<'a, BindingProperty<'a>>> {
+    pub fn iter(&self) -> AstNodeIterator<'a, BindingProperty<'a>> {
+        AstNodeIterator {
+            inner: self.inner.iter().peekable(),
+            parent: self.parent,
+            following_node: self.following_node.clone(),
+            allocator: self.allocator,
+        }
+    }
+    pub fn first(&self) -> Option<&'a AstNode<'a, BindingProperty<'a>>> {
+        let mut inner_iter = self.inner.iter();
+        self.allocator
+            .alloc(inner_iter.next().map(|inner| {
+                AstNode {
+                    inner,
+                    parent: self.parent,
+                    allocator: self.allocator,
+                    following_node: inner_iter
+                        .next()
+                        .map(|t| FollowingNode::BindingProperty(t))
+                        .or_else(|| self.following_node.clone()),
+                }
+            }))
+            .as_ref()
+    }
+    pub fn last(&self) -> Option<&'a AstNode<'a, BindingProperty<'a>>> {
+        self.allocator
+            .alloc(self.inner.last().map(|inner| AstNode {
+                inner,
+                parent: self.parent,
+                allocator: self.allocator,
+                following_node: self.following_node.clone(),
+            }))
+            .as_ref()
+    }
+}
+impl<'a> Iterator for AstNodeIterator<'a, BindingProperty<'a>> {
+    type Item = &'a AstNode<'a, BindingProperty<'a>>;
+    fn next(&mut self) -> Option<Self::Item> {
+        let allocator = self.allocator;
+        allocator
+            .alloc(self.inner.next().map(|inner| {
+                AstNode {
+                    parent: self.parent,
+                    inner,
+                    allocator,
+                    following_node: self
+                        .inner
+                        .peek()
+                        .map(|t| FollowingNode::BindingProperty(t))
+                        .or_else(|| self.following_node.clone()),
+                }
+            }))
+            .as_ref()
+    }
+}
+impl<'a> IntoIterator for &AstNode<'a, Vec<'a, BindingProperty<'a>>> {
+    type Item = &'a AstNode<'a, BindingProperty<'a>>;
+    type IntoIter = AstNodeIterator<'a, BindingProperty<'a>>;
+    fn into_iter(self) -> Self::IntoIter {
+        AstNodeIterator::<BindingProperty<'a>> {
+            inner: self.inner.iter().peekable(),
+            parent: self.parent,
+            following_node: self.following_node.clone(),
+            allocator: self.allocator,
+        }
+    }
+}
+impl<'a> AstNode<'a, Vec<'a, FormalParameter<'a>>> {
+    pub fn iter(&self) -> AstNodeIterator<'a, FormalParameter<'a>> {
+        AstNodeIterator {
+            inner: self.inner.iter().peekable(),
+            parent: self.parent,
+            following_node: self.following_node.clone(),
+            allocator: self.allocator,
+        }
+    }
+    pub fn first(&self) -> Option<&'a AstNode<'a, FormalParameter<'a>>> {
+        let mut inner_iter = self.inner.iter();
+        self.allocator
+            .alloc(inner_iter.next().map(|inner| {
+                AstNode {
+                    inner,
+                    parent: self.parent,
+                    allocator: self.allocator,
+                    following_node: inner_iter
+                        .next()
+                        .map(|t| FollowingNode::FormalParameter(t))
+                        .or_else(|| self.following_node.clone()),
+                }
+            }))
+            .as_ref()
+    }
+    pub fn last(&self) -> Option<&'a AstNode<'a, FormalParameter<'a>>> {
+        self.allocator
+            .alloc(self.inner.last().map(|inner| AstNode {
+                inner,
+                parent: self.parent,
+                allocator: self.allocator,
+                following_node: self.following_node.clone(),
+            }))
+            .as_ref()
+    }
+}
+impl<'a> Iterator for AstNodeIterator<'a, FormalParameter<'a>> {
+    type Item = &'a AstNode<'a, FormalParameter<'a>>;
+    fn next(&mut self) -> Option<Self::Item> {
+        let allocator = self.allocator;
+        allocator
+            .alloc(self.inner.next().map(|inner| {
+                AstNode {
+                    parent: self.parent,
+                    inner,
+                    allocator,
+                    following_node: self
+                        .inner
+                        .peek()
+                        .map(|t| FollowingNode::FormalParameter(t))
+                        .or_else(|| self.following_node.clone()),
+                }
+            }))
+            .as_ref()
+    }
+}
+impl<'a> IntoIterator for &AstNode<'a, Vec<'a, FormalParameter<'a>>> {
+    type Item = &'a AstNode<'a, FormalParameter<'a>>;
+    type IntoIter = AstNodeIterator<'a, FormalParameter<'a>>;
+    fn into_iter(self) -> Self::IntoIter {
+        AstNodeIterator::<FormalParameter<'a>> {
+            inner: self.inner.iter().peekable(),
+            parent: self.parent,
+            following_node: self.following_node.clone(),
+            allocator: self.allocator,
+        }
+    }
+}
+impl<'a> AstNode<'a, Vec<'a, ClassElement<'a>>> {
+    pub fn iter(&self) -> AstNodeIterator<'a, ClassElement<'a>> {
+        AstNodeIterator {
+            inner: self.inner.iter().peekable(),
+            parent: self.parent,
+            following_node: self.following_node.clone(),
+            allocator: self.allocator,
+        }
+    }
+    pub fn first(&self) -> Option<&'a AstNode<'a, ClassElement<'a>>> {
+        let mut inner_iter = self.inner.iter();
+        self.allocator
+            .alloc(inner_iter.next().map(|inner| {
+                AstNode {
+                    inner,
+                    parent: self.parent,
+                    allocator: self.allocator,
+                    following_node: inner_iter
+                        .next()
+                        .map(|t| FollowingNode::ClassElement(t))
+                        .or_else(|| self.following_node.clone()),
+                }
+            }))
+            .as_ref()
+    }
+    pub fn last(&self) -> Option<&'a AstNode<'a, ClassElement<'a>>> {
+        self.allocator
+            .alloc(self.inner.last().map(|inner| AstNode {
+                inner,
+                parent: self.parent,
+                allocator: self.allocator,
+                following_node: self.following_node.clone(),
+            }))
+            .as_ref()
+    }
+}
+impl<'a> Iterator for AstNodeIterator<'a, ClassElement<'a>> {
+    type Item = &'a AstNode<'a, ClassElement<'a>>;
+    fn next(&mut self) -> Option<Self::Item> {
+        let allocator = self.allocator;
+        allocator
+            .alloc(self.inner.next().map(|inner| {
+                AstNode {
+                    parent: self.parent,
+                    inner,
+                    allocator,
+                    following_node: self
+                        .inner
+                        .peek()
+                        .map(|t| FollowingNode::ClassElement(t))
+                        .or_else(|| self.following_node.clone()),
+                }
+            }))
+            .as_ref()
+    }
+}
+impl<'a> IntoIterator for &AstNode<'a, Vec<'a, ClassElement<'a>>> {
+    type Item = &'a AstNode<'a, ClassElement<'a>>;
+    type IntoIter = AstNodeIterator<'a, ClassElement<'a>>;
+    fn into_iter(self) -> Self::IntoIter {
+        AstNodeIterator::<ClassElement<'a>> {
+            inner: self.inner.iter().peekable(),
+            parent: self.parent,
+            following_node: self.following_node.clone(),
+            allocator: self.allocator,
+        }
+    }
+}
+impl<'a> AstNode<'a, Vec<'a, ImportDeclarationSpecifier<'a>>> {
+    pub fn iter(&self) -> AstNodeIterator<'a, ImportDeclarationSpecifier<'a>> {
+        AstNodeIterator {
+            inner: self.inner.iter().peekable(),
+            parent: self.parent,
+            following_node: self.following_node.clone(),
+            allocator: self.allocator,
+        }
+    }
+    pub fn first(&self) -> Option<&'a AstNode<'a, ImportDeclarationSpecifier<'a>>> {
+        let mut inner_iter = self.inner.iter();
+        self.allocator
+            .alloc(inner_iter.next().map(|inner| {
+                AstNode {
+                    inner,
+                    parent: self.parent,
+                    allocator: self.allocator,
+                    following_node: inner_iter
+                        .next()
+                        .map(|t| FollowingNode::ImportDeclarationSpecifier(t))
+                        .or_else(|| self.following_node.clone()),
+                }
+            }))
+            .as_ref()
+    }
+    pub fn last(&self) -> Option<&'a AstNode<'a, ImportDeclarationSpecifier<'a>>> {
+        self.allocator
+            .alloc(self.inner.last().map(|inner| AstNode {
+                inner,
+                parent: self.parent,
+                allocator: self.allocator,
+                following_node: self.following_node.clone(),
+            }))
+            .as_ref()
+    }
+}
+impl<'a> Iterator for AstNodeIterator<'a, ImportDeclarationSpecifier<'a>> {
+    type Item = &'a AstNode<'a, ImportDeclarationSpecifier<'a>>;
+    fn next(&mut self) -> Option<Self::Item> {
+        let allocator = self.allocator;
+        allocator
+            .alloc(self.inner.next().map(|inner| {
+                AstNode {
+                    parent: self.parent,
+                    inner,
+                    allocator,
+                    following_node: self
+                        .inner
+                        .peek()
+                        .map(|t| FollowingNode::ImportDeclarationSpecifier(t))
+                        .or_else(|| self.following_node.clone()),
+                }
+            }))
+            .as_ref()
+    }
+}
+impl<'a> IntoIterator for &AstNode<'a, Vec<'a, ImportDeclarationSpecifier<'a>>> {
+    type Item = &'a AstNode<'a, ImportDeclarationSpecifier<'a>>;
+    type IntoIter = AstNodeIterator<'a, ImportDeclarationSpecifier<'a>>;
+    fn into_iter(self) -> Self::IntoIter {
+        AstNodeIterator::<ImportDeclarationSpecifier<'a>> {
+            inner: self.inner.iter().peekable(),
+            parent: self.parent,
+            following_node: self.following_node.clone(),
+            allocator: self.allocator,
+        }
+    }
+}
+impl<'a> AstNode<'a, Vec<'a, ImportAttribute<'a>>> {
+    pub fn iter(&self) -> AstNodeIterator<'a, ImportAttribute<'a>> {
+        AstNodeIterator {
+            inner: self.inner.iter().peekable(),
+            parent: self.parent,
+            following_node: self.following_node.clone(),
+            allocator: self.allocator,
+        }
+    }
+    pub fn first(&self) -> Option<&'a AstNode<'a, ImportAttribute<'a>>> {
+        let mut inner_iter = self.inner.iter();
+        self.allocator
+            .alloc(inner_iter.next().map(|inner| {
+                AstNode {
+                    inner,
+                    parent: self.parent,
+                    allocator: self.allocator,
+                    following_node: inner_iter
+                        .next()
+                        .map(|t| FollowingNode::ImportAttribute(t))
+                        .or_else(|| self.following_node.clone()),
+                }
+            }))
+            .as_ref()
+    }
+    pub fn last(&self) -> Option<&'a AstNode<'a, ImportAttribute<'a>>> {
+        self.allocator
+            .alloc(self.inner.last().map(|inner| AstNode {
+                inner,
+                parent: self.parent,
+                allocator: self.allocator,
+                following_node: self.following_node.clone(),
+            }))
+            .as_ref()
+    }
+}
+impl<'a> Iterator for AstNodeIterator<'a, ImportAttribute<'a>> {
+    type Item = &'a AstNode<'a, ImportAttribute<'a>>;
+    fn next(&mut self) -> Option<Self::Item> {
+        let allocator = self.allocator;
+        allocator
+            .alloc(self.inner.next().map(|inner| {
+                AstNode {
+                    parent: self.parent,
+                    inner,
+                    allocator,
+                    following_node: self
+                        .inner
+                        .peek()
+                        .map(|t| FollowingNode::ImportAttribute(t))
+                        .or_else(|| self.following_node.clone()),
+                }
+            }))
+            .as_ref()
+    }
+}
+impl<'a> IntoIterator for &AstNode<'a, Vec<'a, ImportAttribute<'a>>> {
+    type Item = &'a AstNode<'a, ImportAttribute<'a>>;
+    type IntoIter = AstNodeIterator<'a, ImportAttribute<'a>>;
+    fn into_iter(self) -> Self::IntoIter {
+        AstNodeIterator::<ImportAttribute<'a>> {
+            inner: self.inner.iter().peekable(),
+            parent: self.parent,
+            following_node: self.following_node.clone(),
+            allocator: self.allocator,
+        }
+    }
+}
+impl<'a> AstNode<'a, Vec<'a, ExportSpecifier<'a>>> {
+    pub fn iter(&self) -> AstNodeIterator<'a, ExportSpecifier<'a>> {
+        AstNodeIterator {
+            inner: self.inner.iter().peekable(),
+            parent: self.parent,
+            following_node: self.following_node.clone(),
+            allocator: self.allocator,
+        }
+    }
+    pub fn first(&self) -> Option<&'a AstNode<'a, ExportSpecifier<'a>>> {
+        let mut inner_iter = self.inner.iter();
+        self.allocator
+            .alloc(inner_iter.next().map(|inner| {
+                AstNode {
+                    inner,
+                    parent: self.parent,
+                    allocator: self.allocator,
+                    following_node: inner_iter
+                        .next()
+                        .map(|t| FollowingNode::ExportSpecifier(t))
+                        .or_else(|| self.following_node.clone()),
+                }
+            }))
+            .as_ref()
+    }
+    pub fn last(&self) -> Option<&'a AstNode<'a, ExportSpecifier<'a>>> {
+        self.allocator
+            .alloc(self.inner.last().map(|inner| AstNode {
+                inner,
+                parent: self.parent,
+                allocator: self.allocator,
+                following_node: self.following_node.clone(),
+            }))
+            .as_ref()
+    }
+}
+impl<'a> Iterator for AstNodeIterator<'a, ExportSpecifier<'a>> {
+    type Item = &'a AstNode<'a, ExportSpecifier<'a>>;
+    fn next(&mut self) -> Option<Self::Item> {
+        let allocator = self.allocator;
+        allocator
+            .alloc(self.inner.next().map(|inner| {
+                AstNode {
+                    parent: self.parent,
+                    inner,
+                    allocator,
+                    following_node: self
+                        .inner
+                        .peek()
+                        .map(|t| FollowingNode::ExportSpecifier(t))
+                        .or_else(|| self.following_node.clone()),
+                }
+            }))
+            .as_ref()
+    }
+}
+impl<'a> IntoIterator for &AstNode<'a, Vec<'a, ExportSpecifier<'a>>> {
+    type Item = &'a AstNode<'a, ExportSpecifier<'a>>;
+    type IntoIter = AstNodeIterator<'a, ExportSpecifier<'a>>;
+    fn into_iter(self) -> Self::IntoIter {
+        AstNodeIterator::<ExportSpecifier<'a>> {
+            inner: self.inner.iter().peekable(),
+            parent: self.parent,
+            following_node: self.following_node.clone(),
+            allocator: self.allocator,
+        }
+    }
+}
+impl<'a> AstNode<'a, Vec<'a, JSXAttributeItem<'a>>> {
+    pub fn iter(&self) -> AstNodeIterator<'a, JSXAttributeItem<'a>> {
+        AstNodeIterator {
+            inner: self.inner.iter().peekable(),
+            parent: self.parent,
+            following_node: self.following_node.clone(),
+            allocator: self.allocator,
+        }
+    }
+    pub fn first(&self) -> Option<&'a AstNode<'a, JSXAttributeItem<'a>>> {
+        let mut inner_iter = self.inner.iter();
+        self.allocator
+            .alloc(inner_iter.next().map(|inner| {
+                AstNode {
+                    inner,
+                    parent: self.parent,
+                    allocator: self.allocator,
+                    following_node: inner_iter
+                        .next()
+                        .map(|t| FollowingNode::JSXAttributeItem(t))
+                        .or_else(|| self.following_node.clone()),
+                }
+            }))
+            .as_ref()
+    }
+    pub fn last(&self) -> Option<&'a AstNode<'a, JSXAttributeItem<'a>>> {
+        self.allocator
+            .alloc(self.inner.last().map(|inner| AstNode {
+                inner,
+                parent: self.parent,
+                allocator: self.allocator,
+                following_node: self.following_node.clone(),
+            }))
+            .as_ref()
+    }
+}
+impl<'a> Iterator for AstNodeIterator<'a, JSXAttributeItem<'a>> {
+    type Item = &'a AstNode<'a, JSXAttributeItem<'a>>;
+    fn next(&mut self) -> Option<Self::Item> {
+        let allocator = self.allocator;
+        allocator
+            .alloc(self.inner.next().map(|inner| {
+                AstNode {
+                    parent: self.parent,
+                    inner,
+                    allocator,
+                    following_node: self
+                        .inner
+                        .peek()
+                        .map(|t| FollowingNode::JSXAttributeItem(t))
+                        .or_else(|| self.following_node.clone()),
+                }
+            }))
+            .as_ref()
+    }
+}
+impl<'a> IntoIterator for &AstNode<'a, Vec<'a, JSXAttributeItem<'a>>> {
+    type Item = &'a AstNode<'a, JSXAttributeItem<'a>>;
+    type IntoIter = AstNodeIterator<'a, JSXAttributeItem<'a>>;
+    fn into_iter(self) -> Self::IntoIter {
+        AstNodeIterator::<JSXAttributeItem<'a>> {
+            inner: self.inner.iter().peekable(),
+            parent: self.parent,
+            following_node: self.following_node.clone(),
+            allocator: self.allocator,
+        }
+    }
+}
+impl<'a> AstNode<'a, Vec<'a, JSXChild<'a>>> {
+    pub fn iter(&self) -> AstNodeIterator<'a, JSXChild<'a>> {
+        AstNodeIterator {
+            inner: self.inner.iter().peekable(),
+            parent: self.parent,
+            following_node: self.following_node.clone(),
+            allocator: self.allocator,
+        }
+    }
+    pub fn first(&self) -> Option<&'a AstNode<'a, JSXChild<'a>>> {
+        let mut inner_iter = self.inner.iter();
+        self.allocator
+            .alloc(inner_iter.next().map(|inner| {
+                AstNode {
+                    inner,
+                    parent: self.parent,
+                    allocator: self.allocator,
+                    following_node: inner_iter
+                        .next()
+                        .map(|t| FollowingNode::JSXChild(t))
+                        .or_else(|| self.following_node.clone()),
+                }
+            }))
+            .as_ref()
+    }
+    pub fn last(&self) -> Option<&'a AstNode<'a, JSXChild<'a>>> {
+        self.allocator
+            .alloc(self.inner.last().map(|inner| AstNode {
+                inner,
+                parent: self.parent,
+                allocator: self.allocator,
+                following_node: self.following_node.clone(),
+            }))
+            .as_ref()
+    }
+}
+impl<'a> Iterator for AstNodeIterator<'a, JSXChild<'a>> {
+    type Item = &'a AstNode<'a, JSXChild<'a>>;
+    fn next(&mut self) -> Option<Self::Item> {
+        let allocator = self.allocator;
+        allocator
+            .alloc(self.inner.next().map(|inner| {
+                AstNode {
+                    parent: self.parent,
+                    inner,
+                    allocator,
+                    following_node: self
+                        .inner
+                        .peek()
+                        .map(|t| FollowingNode::JSXChild(t))
+                        .or_else(|| self.following_node.clone()),
+                }
+            }))
+            .as_ref()
+    }
+}
+impl<'a> IntoIterator for &AstNode<'a, Vec<'a, JSXChild<'a>>> {
+    type Item = &'a AstNode<'a, JSXChild<'a>>;
+    type IntoIter = AstNodeIterator<'a, JSXChild<'a>>;
+    fn into_iter(self) -> Self::IntoIter {
+        AstNodeIterator::<JSXChild<'a>> {
+            inner: self.inner.iter().peekable(),
+            parent: self.parent,
+            following_node: self.following_node.clone(),
+            allocator: self.allocator,
+        }
+    }
+}
+impl<'a> AstNode<'a, Vec<'a, TSEnumMember<'a>>> {
+    pub fn iter(&self) -> AstNodeIterator<'a, TSEnumMember<'a>> {
+        AstNodeIterator {
+            inner: self.inner.iter().peekable(),
+            parent: self.parent,
+            following_node: self.following_node.clone(),
+            allocator: self.allocator,
+        }
+    }
+    pub fn first(&self) -> Option<&'a AstNode<'a, TSEnumMember<'a>>> {
+        let mut inner_iter = self.inner.iter();
+        self.allocator
+            .alloc(inner_iter.next().map(|inner| {
+                AstNode {
+                    inner,
+                    parent: self.parent,
+                    allocator: self.allocator,
+                    following_node: inner_iter
+                        .next()
+                        .map(|t| FollowingNode::TSEnumMember(t))
+                        .or_else(|| self.following_node.clone()),
+                }
+            }))
+            .as_ref()
+    }
+    pub fn last(&self) -> Option<&'a AstNode<'a, TSEnumMember<'a>>> {
+        self.allocator
+            .alloc(self.inner.last().map(|inner| AstNode {
+                inner,
+                parent: self.parent,
+                allocator: self.allocator,
+                following_node: self.following_node.clone(),
+            }))
+            .as_ref()
+    }
+}
+impl<'a> Iterator for AstNodeIterator<'a, TSEnumMember<'a>> {
+    type Item = &'a AstNode<'a, TSEnumMember<'a>>;
+    fn next(&mut self) -> Option<Self::Item> {
+        let allocator = self.allocator;
+        allocator
+            .alloc(self.inner.next().map(|inner| {
+                AstNode {
+                    parent: self.parent,
+                    inner,
+                    allocator,
+                    following_node: self
+                        .inner
+                        .peek()
+                        .map(|t| FollowingNode::TSEnumMember(t))
+                        .or_else(|| self.following_node.clone()),
+                }
+            }))
+            .as_ref()
+    }
+}
+impl<'a> IntoIterator for &AstNode<'a, Vec<'a, TSEnumMember<'a>>> {
+    type Item = &'a AstNode<'a, TSEnumMember<'a>>;
+    type IntoIter = AstNodeIterator<'a, TSEnumMember<'a>>;
+    fn into_iter(self) -> Self::IntoIter {
+        AstNodeIterator::<TSEnumMember<'a>> {
+            inner: self.inner.iter().peekable(),
+            parent: self.parent,
+            following_node: self.following_node.clone(),
+            allocator: self.allocator,
+        }
+    }
+}
+impl<'a> AstNode<'a, Vec<'a, TSType<'a>>> {
+    pub fn iter(&self) -> AstNodeIterator<'a, TSType<'a>> {
+        AstNodeIterator {
+            inner: self.inner.iter().peekable(),
+            parent: self.parent,
+            following_node: self.following_node.clone(),
+            allocator: self.allocator,
+        }
+    }
+    pub fn first(&self) -> Option<&'a AstNode<'a, TSType<'a>>> {
+        let mut inner_iter = self.inner.iter();
+        self.allocator
+            .alloc(inner_iter.next().map(|inner| {
+                AstNode {
+                    inner,
+                    parent: self.parent,
+                    allocator: self.allocator,
+                    following_node: inner_iter
+                        .next()
+                        .map(|t| FollowingNode::TSType(t))
+                        .or_else(|| self.following_node.clone()),
+                }
+            }))
+            .as_ref()
+    }
+    pub fn last(&self) -> Option<&'a AstNode<'a, TSType<'a>>> {
+        self.allocator
+            .alloc(self.inner.last().map(|inner| AstNode {
+                inner,
+                parent: self.parent,
+                allocator: self.allocator,
+                following_node: self.following_node.clone(),
+            }))
+            .as_ref()
+    }
+}
+impl<'a> Iterator for AstNodeIterator<'a, TSType<'a>> {
+    type Item = &'a AstNode<'a, TSType<'a>>;
+    fn next(&mut self) -> Option<Self::Item> {
+        let allocator = self.allocator;
+        allocator
+            .alloc(self.inner.next().map(|inner| {
+                AstNode {
+                    parent: self.parent,
+                    inner,
+                    allocator,
+                    following_node: self
+                        .inner
+                        .peek()
+                        .map(|t| FollowingNode::TSType(t))
+                        .or_else(|| self.following_node.clone()),
+                }
+            }))
+            .as_ref()
+    }
+}
+impl<'a> IntoIterator for &AstNode<'a, Vec<'a, TSType<'a>>> {
+    type Item = &'a AstNode<'a, TSType<'a>>;
+    type IntoIter = AstNodeIterator<'a, TSType<'a>>;
+    fn into_iter(self) -> Self::IntoIter {
+        AstNodeIterator::<TSType<'a>> {
+            inner: self.inner.iter().peekable(),
+            parent: self.parent,
+            following_node: self.following_node.clone(),
+            allocator: self.allocator,
+        }
+    }
+}
+impl<'a> AstNode<'a, Vec<'a, TSTupleElement<'a>>> {
+    pub fn iter(&self) -> AstNodeIterator<'a, TSTupleElement<'a>> {
+        AstNodeIterator {
+            inner: self.inner.iter().peekable(),
+            parent: self.parent,
+            following_node: self.following_node.clone(),
+            allocator: self.allocator,
+        }
+    }
+    pub fn first(&self) -> Option<&'a AstNode<'a, TSTupleElement<'a>>> {
+        let mut inner_iter = self.inner.iter();
+        self.allocator
+            .alloc(inner_iter.next().map(|inner| {
+                AstNode {
+                    inner,
+                    parent: self.parent,
+                    allocator: self.allocator,
+                    following_node: inner_iter
+                        .next()
+                        .map(|t| FollowingNode::TSTupleElement(t))
+                        .or_else(|| self.following_node.clone()),
+                }
+            }))
+            .as_ref()
+    }
+    pub fn last(&self) -> Option<&'a AstNode<'a, TSTupleElement<'a>>> {
+        self.allocator
+            .alloc(self.inner.last().map(|inner| AstNode {
+                inner,
+                parent: self.parent,
+                allocator: self.allocator,
+                following_node: self.following_node.clone(),
+            }))
+            .as_ref()
+    }
+}
+impl<'a> Iterator for AstNodeIterator<'a, TSTupleElement<'a>> {
+    type Item = &'a AstNode<'a, TSTupleElement<'a>>;
+    fn next(&mut self) -> Option<Self::Item> {
+        let allocator = self.allocator;
+        allocator
+            .alloc(self.inner.next().map(|inner| {
+                AstNode {
+                    parent: self.parent,
+                    inner,
+                    allocator,
+                    following_node: self
+                        .inner
+                        .peek()
+                        .map(|t| FollowingNode::TSTupleElement(t))
+                        .or_else(|| self.following_node.clone()),
+                }
+            }))
+            .as_ref()
+    }
+}
+impl<'a> IntoIterator for &AstNode<'a, Vec<'a, TSTupleElement<'a>>> {
+    type Item = &'a AstNode<'a, TSTupleElement<'a>>;
+    type IntoIter = AstNodeIterator<'a, TSTupleElement<'a>>;
+    fn into_iter(self) -> Self::IntoIter {
+        AstNodeIterator::<TSTupleElement<'a>> {
+            inner: self.inner.iter().peekable(),
+            parent: self.parent,
+            following_node: self.following_node.clone(),
+            allocator: self.allocator,
+        }
+    }
+}
+impl<'a> AstNode<'a, Vec<'a, TSTypeParameter<'a>>> {
+    pub fn iter(&self) -> AstNodeIterator<'a, TSTypeParameter<'a>> {
+        AstNodeIterator {
+            inner: self.inner.iter().peekable(),
+            parent: self.parent,
+            following_node: self.following_node.clone(),
+            allocator: self.allocator,
+        }
+    }
+    pub fn first(&self) -> Option<&'a AstNode<'a, TSTypeParameter<'a>>> {
+        let mut inner_iter = self.inner.iter();
+        self.allocator
+            .alloc(inner_iter.next().map(|inner| {
+                AstNode {
+                    inner,
+                    parent: self.parent,
+                    allocator: self.allocator,
+                    following_node: inner_iter
+                        .next()
+                        .map(|t| FollowingNode::TSTypeParameter(t))
+                        .or_else(|| self.following_node.clone()),
+                }
+            }))
+            .as_ref()
+    }
+    pub fn last(&self) -> Option<&'a AstNode<'a, TSTypeParameter<'a>>> {
+        self.allocator
+            .alloc(self.inner.last().map(|inner| AstNode {
+                inner,
+                parent: self.parent,
+                allocator: self.allocator,
+                following_node: self.following_node.clone(),
+            }))
+            .as_ref()
+    }
+}
+impl<'a> Iterator for AstNodeIterator<'a, TSTypeParameter<'a>> {
+    type Item = &'a AstNode<'a, TSTypeParameter<'a>>;
+    fn next(&mut self) -> Option<Self::Item> {
+        let allocator = self.allocator;
+        allocator
+            .alloc(self.inner.next().map(|inner| {
+                AstNode {
+                    parent: self.parent,
+                    inner,
+                    allocator,
+                    following_node: self
+                        .inner
+                        .peek()
+                        .map(|t| FollowingNode::TSTypeParameter(t))
+                        .or_else(|| self.following_node.clone()),
+                }
+            }))
+            .as_ref()
+    }
+}
+impl<'a> IntoIterator for &AstNode<'a, Vec<'a, TSTypeParameter<'a>>> {
+    type Item = &'a AstNode<'a, TSTypeParameter<'a>>;
+    type IntoIter = AstNodeIterator<'a, TSTypeParameter<'a>>;
+    fn into_iter(self) -> Self::IntoIter {
+        AstNodeIterator::<TSTypeParameter<'a>> {
+            inner: self.inner.iter().peekable(),
+            parent: self.parent,
+            following_node: self.following_node.clone(),
+            allocator: self.allocator,
+        }
+    }
+}
+impl<'a> AstNode<'a, Vec<'a, TSClassImplements<'a>>> {
+    pub fn iter(&self) -> AstNodeIterator<'a, TSClassImplements<'a>> {
+        AstNodeIterator {
+            inner: self.inner.iter().peekable(),
+            parent: self.parent,
+            following_node: self.following_node.clone(),
+            allocator: self.allocator,
+        }
+    }
+    pub fn first(&self) -> Option<&'a AstNode<'a, TSClassImplements<'a>>> {
+        let mut inner_iter = self.inner.iter();
+        self.allocator
+            .alloc(inner_iter.next().map(|inner| {
+                AstNode {
+                    inner,
+                    parent: self.parent,
+                    allocator: self.allocator,
+                    following_node: inner_iter
+                        .next()
+                        .map(|t| FollowingNode::TSClassImplements(t))
+                        .or_else(|| self.following_node.clone()),
+                }
+            }))
+            .as_ref()
+    }
+    pub fn last(&self) -> Option<&'a AstNode<'a, TSClassImplements<'a>>> {
+        self.allocator
+            .alloc(self.inner.last().map(|inner| AstNode {
+                inner,
+                parent: self.parent,
+                allocator: self.allocator,
+                following_node: self.following_node.clone(),
+            }))
+            .as_ref()
+    }
+}
+impl<'a> Iterator for AstNodeIterator<'a, TSClassImplements<'a>> {
+    type Item = &'a AstNode<'a, TSClassImplements<'a>>;
+    fn next(&mut self) -> Option<Self::Item> {
+        let allocator = self.allocator;
+        allocator
+            .alloc(self.inner.next().map(|inner| {
+                AstNode {
+                    parent: self.parent,
+                    inner,
+                    allocator,
+                    following_node: self
+                        .inner
+                        .peek()
+                        .map(|t| FollowingNode::TSClassImplements(t))
+                        .or_else(|| self.following_node.clone()),
+                }
+            }))
+            .as_ref()
+    }
+}
+impl<'a> IntoIterator for &AstNode<'a, Vec<'a, TSClassImplements<'a>>> {
+    type Item = &'a AstNode<'a, TSClassImplements<'a>>;
+    type IntoIter = AstNodeIterator<'a, TSClassImplements<'a>>;
+    fn into_iter(self) -> Self::IntoIter {
+        AstNodeIterator::<TSClassImplements<'a>> {
+            inner: self.inner.iter().peekable(),
+            parent: self.parent,
+            following_node: self.following_node.clone(),
+            allocator: self.allocator,
+        }
+    }
+}
+impl<'a> AstNode<'a, Vec<'a, TSSignature<'a>>> {
+    pub fn iter(&self) -> AstNodeIterator<'a, TSSignature<'a>> {
+        AstNodeIterator {
+            inner: self.inner.iter().peekable(),
+            parent: self.parent,
+            following_node: self.following_node.clone(),
+            allocator: self.allocator,
+        }
+    }
+    pub fn first(&self) -> Option<&'a AstNode<'a, TSSignature<'a>>> {
+        let mut inner_iter = self.inner.iter();
+        self.allocator
+            .alloc(inner_iter.next().map(|inner| {
+                AstNode {
+                    inner,
+                    parent: self.parent,
+                    allocator: self.allocator,
+                    following_node: inner_iter
+                        .next()
+                        .map(|t| FollowingNode::TSSignature(t))
+                        .or_else(|| self.following_node.clone()),
+                }
+            }))
+            .as_ref()
+    }
+    pub fn last(&self) -> Option<&'a AstNode<'a, TSSignature<'a>>> {
+        self.allocator
+            .alloc(self.inner.last().map(|inner| AstNode {
+                inner,
+                parent: self.parent,
+                allocator: self.allocator,
+                following_node: self.following_node.clone(),
+            }))
+            .as_ref()
+    }
+}
+impl<'a> Iterator for AstNodeIterator<'a, TSSignature<'a>> {
+    type Item = &'a AstNode<'a, TSSignature<'a>>;
+    fn next(&mut self) -> Option<Self::Item> {
+        let allocator = self.allocator;
+        allocator
+            .alloc(self.inner.next().map(|inner| {
+                AstNode {
+                    parent: self.parent,
+                    inner,
+                    allocator,
+                    following_node: self
+                        .inner
+                        .peek()
+                        .map(|t| FollowingNode::TSSignature(t))
+                        .or_else(|| self.following_node.clone()),
+                }
+            }))
+            .as_ref()
+    }
+}
+impl<'a> IntoIterator for &AstNode<'a, Vec<'a, TSSignature<'a>>> {
+    type Item = &'a AstNode<'a, TSSignature<'a>>;
+    type IntoIter = AstNodeIterator<'a, TSSignature<'a>>;
+    fn into_iter(self) -> Self::IntoIter {
+        AstNodeIterator::<TSSignature<'a>> {
+            inner: self.inner.iter().peekable(),
+            parent: self.parent,
+            following_node: self.following_node.clone(),
+            allocator: self.allocator,
+        }
+    }
+}
+impl<'a> AstNode<'a, Vec<'a, TSIndexSignatureName<'a>>> {
+    pub fn iter(&self) -> AstNodeIterator<'a, TSIndexSignatureName<'a>> {
+        AstNodeIterator {
+            inner: self.inner.iter().peekable(),
+            parent: self.parent,
+            following_node: self.following_node.clone(),
+            allocator: self.allocator,
+        }
+    }
+    pub fn first(&self) -> Option<&'a AstNode<'a, TSIndexSignatureName<'a>>> {
+        let mut inner_iter = self.inner.iter();
+        self.allocator
+            .alloc(inner_iter.next().map(|inner| {
+                AstNode {
+                    inner,
+                    parent: self.parent,
+                    allocator: self.allocator,
+                    following_node: inner_iter
+                        .next()
+                        .map(|t| FollowingNode::TSIndexSignatureName(t))
+                        .or_else(|| self.following_node.clone()),
+                }
+            }))
+            .as_ref()
+    }
+    pub fn last(&self) -> Option<&'a AstNode<'a, TSIndexSignatureName<'a>>> {
+        self.allocator
+            .alloc(self.inner.last().map(|inner| AstNode {
+                inner,
+                parent: self.parent,
+                allocator: self.allocator,
+                following_node: self.following_node.clone(),
+            }))
+            .as_ref()
+    }
+}
+impl<'a> Iterator for AstNodeIterator<'a, TSIndexSignatureName<'a>> {
+    type Item = &'a AstNode<'a, TSIndexSignatureName<'a>>;
+    fn next(&mut self) -> Option<Self::Item> {
+        let allocator = self.allocator;
+        allocator
+            .alloc(self.inner.next().map(|inner| {
+                AstNode {
+                    parent: self.parent,
+                    inner,
+                    allocator,
+                    following_node: self
+                        .inner
+                        .peek()
+                        .map(|t| FollowingNode::TSIndexSignatureName(t))
+                        .or_else(|| self.following_node.clone()),
+                }
+            }))
+            .as_ref()
+    }
+}
+impl<'a> IntoIterator for &AstNode<'a, Vec<'a, TSIndexSignatureName<'a>>> {
+    type Item = &'a AstNode<'a, TSIndexSignatureName<'a>>;
+    type IntoIter = AstNodeIterator<'a, TSIndexSignatureName<'a>>;
+    fn into_iter(self) -> Self::IntoIter {
+        AstNodeIterator::<TSIndexSignatureName<'a>> {
+            inner: self.inner.iter().peekable(),
+            parent: self.parent,
+            following_node: self.following_node.clone(),
+            allocator: self.allocator,
+        }
+    }
+}
+impl<'a> AstNode<'a, Vec<'a, TSInterfaceHeritage<'a>>> {
+    pub fn iter(&self) -> AstNodeIterator<'a, TSInterfaceHeritage<'a>> {
+        AstNodeIterator {
+            inner: self.inner.iter().peekable(),
+            parent: self.parent,
+            following_node: self.following_node.clone(),
+            allocator: self.allocator,
+        }
+    }
+    pub fn first(&self) -> Option<&'a AstNode<'a, TSInterfaceHeritage<'a>>> {
+        let mut inner_iter = self.inner.iter();
+        self.allocator
+            .alloc(inner_iter.next().map(|inner| {
+                AstNode {
+                    inner,
+                    parent: self.parent,
+                    allocator: self.allocator,
+                    following_node: inner_iter
+                        .next()
+                        .map(|t| FollowingNode::TSInterfaceHeritage(t))
+                        .or_else(|| self.following_node.clone()),
+                }
+            }))
+            .as_ref()
+    }
+    pub fn last(&self) -> Option<&'a AstNode<'a, TSInterfaceHeritage<'a>>> {
+        self.allocator
+            .alloc(self.inner.last().map(|inner| AstNode {
+                inner,
+                parent: self.parent,
+                allocator: self.allocator,
+                following_node: self.following_node.clone(),
+            }))
+            .as_ref()
+    }
+}
+impl<'a> Iterator for AstNodeIterator<'a, TSInterfaceHeritage<'a>> {
+    type Item = &'a AstNode<'a, TSInterfaceHeritage<'a>>;
+    fn next(&mut self) -> Option<Self::Item> {
+        let allocator = self.allocator;
+        allocator
+            .alloc(self.inner.next().map(|inner| {
+                AstNode {
+                    parent: self.parent,
+                    inner,
+                    allocator,
+                    following_node: self
+                        .inner
+                        .peek()
+                        .map(|t| FollowingNode::TSInterfaceHeritage(t))
+                        .or_else(|| self.following_node.clone()),
+                }
+            }))
+            .as_ref()
+    }
+}
+impl<'a> IntoIterator for &AstNode<'a, Vec<'a, TSInterfaceHeritage<'a>>> {
+    type Item = &'a AstNode<'a, TSInterfaceHeritage<'a>>;
+    type IntoIter = AstNodeIterator<'a, TSInterfaceHeritage<'a>>;
+    fn into_iter(self) -> Self::IntoIter {
+        AstNodeIterator::<TSInterfaceHeritage<'a>> {
+            inner: self.inner.iter().peekable(),
+            parent: self.parent,
+            following_node: self.following_node.clone(),
+            allocator: self.allocator,
+        }
+    }
+}
+impl<'a> AstNode<'a, Vec<'a, Decorator<'a>>> {
+    pub fn iter(&self) -> AstNodeIterator<'a, Decorator<'a>> {
+        AstNodeIterator {
+            inner: self.inner.iter().peekable(),
+            parent: self.parent,
+            following_node: self.following_node.clone(),
+            allocator: self.allocator,
+        }
+    }
+    pub fn first(&self) -> Option<&'a AstNode<'a, Decorator<'a>>> {
+        let mut inner_iter = self.inner.iter();
+        self.allocator
+            .alloc(inner_iter.next().map(|inner| {
+                AstNode {
+                    inner,
+                    parent: self.parent,
+                    allocator: self.allocator,
+                    following_node: inner_iter
+                        .next()
+                        .map(|t| FollowingNode::Decorator(t))
+                        .or_else(|| self.following_node.clone()),
+                }
+            }))
+            .as_ref()
+    }
+    pub fn last(&self) -> Option<&'a AstNode<'a, Decorator<'a>>> {
+        self.allocator
+            .alloc(self.inner.last().map(|inner| AstNode {
+                inner,
+                parent: self.parent,
+                allocator: self.allocator,
+                following_node: self.following_node.clone(),
+            }))
+            .as_ref()
+    }
+}
+impl<'a> Iterator for AstNodeIterator<'a, Decorator<'a>> {
+    type Item = &'a AstNode<'a, Decorator<'a>>;
+    fn next(&mut self) -> Option<Self::Item> {
+        let allocator = self.allocator;
+        allocator
+            .alloc(self.inner.next().map(|inner| {
+                AstNode {
+                    parent: self.parent,
+                    inner,
+                    allocator,
+                    following_node: self
+                        .inner
+                        .peek()
+                        .map(|t| FollowingNode::Decorator(t))
+                        .or_else(|| self.following_node.clone()),
+                }
+            }))
+            .as_ref()
+    }
+}
+impl<'a> IntoIterator for &AstNode<'a, Vec<'a, Decorator<'a>>> {
+    type Item = &'a AstNode<'a, Decorator<'a>>;
+    type IntoIter = AstNodeIterator<'a, Decorator<'a>>;
+    fn into_iter(self) -> Self::IntoIter {
+        AstNodeIterator::<Decorator<'a>> {
+            inner: self.inner.iter().peekable(),
+            parent: self.parent,
+            following_node: self.following_node.clone(),
+            allocator: self.allocator,
+        }
+    }
+}
+impl<'a> AstNode<'a, Vec<'a, Option<AssignmentTargetMaybeDefault<'a>>>> {
+    pub fn iter(&self) -> AstNodeIterator<'a, Option<AssignmentTargetMaybeDefault<'a>>> {
+        AstNodeIterator {
+            inner: self.inner.iter().peekable(),
+            parent: self.parent,
+            following_node: self.following_node.clone(),
+            allocator: self.allocator,
+        }
+    }
+    pub fn first(&self) -> Option<&'a AstNode<'a, Option<AssignmentTargetMaybeDefault<'a>>>> {
+        let mut inner_iter = self.inner.iter();
+        self.allocator
+            .alloc(inner_iter.next().map(|inner| {
+                AstNode {
+                    inner,
+                    parent: self.parent,
+                    allocator: self.allocator,
+                    following_node: inner_iter
+                        .next()
+                        .map(|next| next.as_ref().map(FollowingNode::AssignmentTargetMaybeDefault))
+                        .unwrap_or_default()
+                        .or_else(|| self.following_node.clone()),
+                }
+            }))
+            .as_ref()
+    }
+    pub fn last(&self) -> Option<&'a AstNode<'a, Option<AssignmentTargetMaybeDefault<'a>>>> {
+        self.allocator
+            .alloc(self.inner.last().map(|inner| AstNode {
+                inner,
+                parent: self.parent,
+                allocator: self.allocator,
+                following_node: self.following_node.clone(),
+            }))
+            .as_ref()
+    }
+}
+impl<'a> Iterator for AstNodeIterator<'a, Option<AssignmentTargetMaybeDefault<'a>>> {
+    type Item = &'a AstNode<'a, Option<AssignmentTargetMaybeDefault<'a>>>;
+    fn next(&mut self) -> Option<Self::Item> {
+        let allocator = self.allocator;
+        allocator
+            .alloc(self.inner.next().map(|inner| {
+                AstNode {
+                    parent: self.parent,
+                    inner,
+                    allocator,
+                    following_node: self
+                        .inner
+                        .peek()
+                        .map(|next| next.as_ref().map(FollowingNode::AssignmentTargetMaybeDefault))
+                        .unwrap_or_default()
+                        .or_else(|| self.following_node.clone()),
+                }
+            }))
+            .as_ref()
+    }
+}
+impl<'a> IntoIterator for &AstNode<'a, Vec<'a, Option<AssignmentTargetMaybeDefault<'a>>>> {
+    type Item = &'a AstNode<'a, Option<AssignmentTargetMaybeDefault<'a>>>;
+    type IntoIter = AstNodeIterator<'a, Option<AssignmentTargetMaybeDefault<'a>>>;
+    fn into_iter(self) -> Self::IntoIter {
+        AstNodeIterator::<Option<AssignmentTargetMaybeDefault<'a>>> {
+            inner: self.inner.iter().peekable(),
+            parent: self.parent,
+            following_node: self.following_node.clone(),
+            allocator: self.allocator,
+        }
+    }
+}
+impl<'a> AstNode<'a, Vec<'a, Option<BindingPattern<'a>>>> {
+    pub fn iter(&self) -> AstNodeIterator<'a, Option<BindingPattern<'a>>> {
+        AstNodeIterator {
+            inner: self.inner.iter().peekable(),
+            parent: self.parent,
+            following_node: self.following_node.clone(),
+            allocator: self.allocator,
+        }
+    }
+    pub fn first(&self) -> Option<&'a AstNode<'a, Option<BindingPattern<'a>>>> {
+        let mut inner_iter = self.inner.iter();
+        self.allocator
+            .alloc(inner_iter.next().map(|inner| {
+                AstNode {
+                    inner,
+                    parent: self.parent,
+                    allocator: self.allocator,
+                    following_node: inner_iter
+                        .next()
+                        .map(|next| next.as_ref().map(FollowingNode::BindingPattern))
+                        .unwrap_or_default()
+                        .or_else(|| self.following_node.clone()),
+                }
+            }))
+            .as_ref()
+    }
+    pub fn last(&self) -> Option<&'a AstNode<'a, Option<BindingPattern<'a>>>> {
+        self.allocator
+            .alloc(self.inner.last().map(|inner| AstNode {
+                inner,
+                parent: self.parent,
+                allocator: self.allocator,
+                following_node: self.following_node.clone(),
+            }))
+            .as_ref()
+    }
+}
+impl<'a> Iterator for AstNodeIterator<'a, Option<BindingPattern<'a>>> {
+    type Item = &'a AstNode<'a, Option<BindingPattern<'a>>>;
+    fn next(&mut self) -> Option<Self::Item> {
+        let allocator = self.allocator;
+        allocator
+            .alloc(self.inner.next().map(|inner| {
+                AstNode {
+                    parent: self.parent,
+                    inner,
+                    allocator,
+                    following_node: self
+                        .inner
+                        .peek()
+                        .map(|next| next.as_ref().map(FollowingNode::BindingPattern))
+                        .unwrap_or_default()
+                        .or_else(|| self.following_node.clone()),
+                }
+            }))
+            .as_ref()
+    }
+}
+impl<'a> IntoIterator for &AstNode<'a, Vec<'a, Option<BindingPattern<'a>>>> {
+    type Item = &'a AstNode<'a, Option<BindingPattern<'a>>>;
+    type IntoIter = AstNodeIterator<'a, Option<BindingPattern<'a>>>;
+    fn into_iter(self) -> Self::IntoIter {
+        AstNodeIterator::<Option<BindingPattern<'a>>> {
+            inner: self.inner.iter().peekable(),
+            parent: self.parent,
+            following_node: self.following_node.clone(),
+            allocator: self.allocator,
+        }
     }
 }

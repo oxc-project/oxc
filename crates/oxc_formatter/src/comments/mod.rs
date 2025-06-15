@@ -96,15 +96,15 @@ pub fn print_leading_comments(
 
 pub fn print_trailing_comments(
     span: Span,
-    following_node: Option<FollowingNode<'_>>,
+    following_node: Option<&FollowingNode<'_>>,
     f: &mut Formatter<'_, '_>,
     allocator: &oxc_allocator::Allocator,
 ) -> FormatResult<()> {
     let following_span = following_node.map(|node| node.span());
-    println!("{:?}", following_span);
     let source_text = f.context().source_text();
-    let comments_raw = f.context().comments_raw();
-    let last_comment_index = comments_raw
+
+    let Some(((last_comment_index, _))) = f.context()
+        .comments_raw()
         .iter()
         .enumerate()
         .take_while(|(index, comment)| {
@@ -112,44 +112,66 @@ pub fn print_trailing_comments(
             span.end <= comment.span.start
                 // Skip comments that are after the following node
                 && following_span.is_none_or(|following_span| comment.span.end <= following_span.start)
-                && (is_own_line_comment(comment, source_text)
-                    || is_end_of_line_comment(comment, source_text)
-                    || true)
-        })
-        .last();
-
-    if let Some((mut last_comment_index, _)) = last_comment_index {
-        if let Some(following_span) = following_span {
-            let mut gap_end = following_span.start;
-            for cur_index in last_comment_index..0 {
-                let comment = &comments_raw[last_comment_index];
-                let gap_str = Span::new(comment.span.end, gap_end).source_text(source_text);
-                if gap_str.as_bytes().iter().all(|&b| matches!(b, b' ' | b'(')) {
-                    gap_end = comment.span.start;
-                } else {
-                    // If there is a non-whitespace character, we stop here
-                    break;
-                }
-            }
+        }).last() else {
+            return Ok(())
         };
 
-        let trailing_comments = oxc_allocator::Vec::from_iter_in(
+    let comments_raw = f.context().comments_raw();
+    let remaining_position = (0..last_comment_index).find(|&index| {
+        let comment = &comments_raw[index];
+        // We are looking for comments that are not own line or end of line comments
+        !(is_own_line_comment(comment, source_text) && is_end_of_line_comment(comment, source_text))
+    });
+
+    if let Some(remaining_position) = remaining_position {
+        if remaining_position != 0 {
+            let comments = oxc_allocator::Vec::from_iter_in(
+                comments_raw[..remaining_position - 1]
+                    .iter()
+                    .map(|comment| SourceComment::from_comment(comment, source_text)),
+                allocator,
+            );
+
+            format_leading_comments_with_comments(&comments).fmt(f)
+        } else {
+            if let Some(following_span) = following_span {
+                let mut gap_end = following_span.start;
+                for cur_index in last_comment_index..0 {
+                    let comment = &comments_raw[last_comment_index];
+                    let gap_str = Span::new(comment.span.end, gap_end).source_text(source_text);
+                    if gap_str.as_bytes().iter().all(|&b| matches!(b, b' ' | b'(')) {
+                        gap_end = comment.span.start;
+                    } else {
+                        // If there is a non-whitespace character, we stop here
+                        break;
+                    }
+                }
+            };
+
+            let trailing_comments = oxc_allocator::Vec::from_iter_in(
+                comments_raw[..last_comment_index]
+                    .iter()
+                    .map(|comment| SourceComment::from_comment(comment, source_text)),
+                allocator,
+            );
+
+            if trailing_comments.is_empty() {
+                return Ok(());
+            }
+
+            f.context_mut().set_printed_comment_index(trailing_comments.len());
+
+            format_trailing_comments_with_comments(&trailing_comments).fmt(f)
+        }
+    } else {
+        let comments = oxc_allocator::Vec::from_iter_in(
             comments_raw[..last_comment_index]
                 .iter()
                 .map(|comment| SourceComment::from_comment(comment, source_text)),
             allocator,
         );
 
-        if trailing_comments.is_empty() {
-            return Ok(());
-        }
-
-        f.context_mut().set_printed_comment_index(trailing_comments.len());
-        dbg!(&trailing_comments);
-
-        format_trailing_comments_with_comments(&trailing_comments).fmt(f)
-    } else {
-        Ok(())
+        format_leading_comments_with_comments(&comments).fmt(f)
     }
 }
 
