@@ -54,7 +54,7 @@ impl Rule for NoUndef {
                 let reference = symbol_table.get_reference(reference_id);
 
                 if reference.is_type() {
-                    return;
+                    continue;
                 }
 
                 let name = ctx.semantic().reference_name(reference);
@@ -203,6 +203,7 @@ fn test() {
         ("class C { static { var a; } } a;", None, None),
         ("toString()", None, None),
         ("hasOwnProperty()", None, None),
+        ("export class Foo{ bar: notDefined; }; const t = r + 1;", None, None),
     ];
 
     Tester::new(NoUndef::NAME, NoUndef::PLUGIN, pass, fail).test_and_snapshot();
