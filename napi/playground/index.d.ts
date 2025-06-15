@@ -69,7 +69,7 @@ export interface OxcControlFlowOptions {
 }
 
 export interface OxcLinterOptions {
-
+  config?: string
 }
 
 export interface OxcMinifierOptions {
