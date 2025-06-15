@@ -218,6 +218,9 @@ impl<'a> ParserImpl<'a> {
             for decorator in decorators {
                 self.error(diagnostics::decorators_are_not_valid_here(decorator.span));
             }
+            for modifier in modifiers.iter() {
+                self.error(diagnostics::modifiers_cannot_appear_here(modifier.span));
+            }
             return self.parse_class_static_block(span);
         }
 
