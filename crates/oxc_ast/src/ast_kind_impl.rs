@@ -359,6 +359,7 @@ impl AstKind<'_> {
             Self::TSTypeParameter(t) => format!("TSTypeParameter({})", t.name).into(),
             Self::TSTypeParameterDeclaration(_) => "TSTypeParameterDeclaration".into(),
             Self::TSTypeParameterInstantiation(_) => "TSTypeParameterInstantiation".into(),
+            Self::TSTypePredicate(_) => "TSTypePredicate".into(),
             Self::TSImportType(_) => "TSImportType".into(),
             Self::TSNamedTupleMember(_) => "TSNamedTupleMember".into(),
 

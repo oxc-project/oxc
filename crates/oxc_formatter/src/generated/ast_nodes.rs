@@ -179,6 +179,7 @@ pub enum AstNodes<'a> {
     TSConstructSignatureDeclaration(&'a AstNode<'a, TSConstructSignatureDeclaration<'a>>),
     TSIndexSignatureName(&'a AstNode<'a, TSIndexSignatureName<'a>>),
     TSInterfaceHeritage(&'a AstNode<'a, TSInterfaceHeritage<'a>>),
+    TSTypePredicate(&'a AstNode<'a, TSTypePredicate<'a>>),
     TSModuleDeclaration(&'a AstNode<'a, TSModuleDeclaration<'a>>),
     TSModuleBlock(&'a AstNode<'a, TSModuleBlock<'a>>),
     TSTypeLiteral(&'a AstNode<'a, TSTypeLiteral<'a>>),
@@ -358,6 +359,7 @@ impl<'a> AstNodes<'a> {
             Self::TSConstructSignatureDeclaration(n) => n.span(),
             Self::TSIndexSignatureName(n) => n.span(),
             Self::TSInterfaceHeritage(n) => n.span(),
+            Self::TSTypePredicate(n) => n.span(),
             Self::TSModuleDeclaration(n) => n.span(),
             Self::TSModuleBlock(n) => n.span(),
             Self::TSTypeLiteral(n) => n.span(),
@@ -537,6 +539,7 @@ impl<'a> AstNodes<'a> {
             Self::TSConstructSignatureDeclaration(n) => n.parent,
             Self::TSIndexSignatureName(n) => n.parent,
             Self::TSInterfaceHeritage(n) => n.parent,
+            Self::TSTypePredicate(n) => n.parent,
             Self::TSModuleDeclaration(n) => n.parent,
             Self::TSModuleBlock(n) => n.parent,
             Self::TSTypeLiteral(n) => n.parent,
@@ -716,6 +719,7 @@ impl<'a> AstNodes<'a> {
             Self::TSConstructSignatureDeclaration(_) => "TSConstructSignatureDeclaration",
             Self::TSIndexSignatureName(_) => "TSIndexSignatureName",
             Self::TSInterfaceHeritage(_) => "TSInterfaceHeritage",
+            Self::TSTypePredicate(_) => "TSTypePredicate",
             Self::TSModuleDeclaration(_) => "TSModuleDeclaration",
             Self::TSModuleBlock(_) => "TSModuleBlock",
             Self::TSTypeLiteral(_) => "TSTypeLiteral",
@@ -5758,9 +5762,11 @@ impl<'a> AstNode<'a, TSType<'a>> {
                 )
             }
             TSType::TSTypePredicate(s) => {
-                panic!(
-                    "No kind for current enum variant yet, please see `tasks/ast_tools/src/generators/ast_kind.rs`"
-                )
+                AstNodes::TSTypePredicate(self.allocator.alloc(AstNode {
+                    inner: s.as_ref(),
+                    parent,
+                    allocator: self.allocator,
+                }))
             }
             TSType::TSTypeQuery(s) => AstNodes::TSTypeQuery(self.allocator.alloc(AstNode {
                 inner: s.as_ref(),
@@ -6817,7 +6823,7 @@ impl<'a> AstNode<'a, TSTypePredicate<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.parameter_name,
             allocator: self.allocator,
-            parent: self.parent,
+            parent: self.allocator.alloc(AstNodes::TSTypePredicate(transmute_self(self))),
         })
     }
 
@@ -6832,7 +6838,7 @@ impl<'a> AstNode<'a, TSTypePredicate<'a>> {
             .alloc(self.inner.type_annotation.as_ref().map(|inner| AstNode {
                 inner: inner.as_ref(),
                 allocator: self.allocator,
-                parent: self.parent,
+                parent: self.allocator.alloc(AstNodes::TSTypePredicate(transmute_self(self))),
             }))
             .as_ref()
     }

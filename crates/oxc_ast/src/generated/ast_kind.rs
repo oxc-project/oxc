@@ -165,27 +165,28 @@ pub enum AstType {
     TSConstructSignatureDeclaration = 149,
     TSIndexSignatureName = 150,
     TSInterfaceHeritage = 151,
-    TSModuleDeclaration = 152,
-    TSModuleBlock = 153,
-    TSTypeLiteral = 154,
-    TSInferType = 155,
-    TSTypeQuery = 156,
-    TSImportType = 157,
-    TSMappedType = 158,
-    TSTemplateLiteralType = 159,
-    TSAsExpression = 160,
-    TSSatisfiesExpression = 161,
-    TSTypeAssertion = 162,
-    TSImportEqualsDeclaration = 163,
-    TSModuleReference = 164,
-    TSExternalModuleReference = 165,
-    TSNonNullExpression = 166,
-    Decorator = 167,
-    TSExportAssignment = 168,
-    TSInstantiationExpression = 169,
-    JSDocNullableType = 170,
-    JSDocNonNullableType = 171,
-    JSDocUnknownType = 172,
+    TSTypePredicate = 152,
+    TSModuleDeclaration = 153,
+    TSModuleBlock = 154,
+    TSTypeLiteral = 155,
+    TSInferType = 156,
+    TSTypeQuery = 157,
+    TSImportType = 158,
+    TSMappedType = 159,
+    TSTemplateLiteralType = 160,
+    TSAsExpression = 161,
+    TSSatisfiesExpression = 162,
+    TSTypeAssertion = 163,
+    TSImportEqualsDeclaration = 164,
+    TSModuleReference = 165,
+    TSExternalModuleReference = 166,
+    TSNonNullExpression = 167,
+    Decorator = 168,
+    TSExportAssignment = 169,
+    TSInstantiationExpression = 170,
+    JSDocNullableType = 171,
+    JSDocNonNullableType = 172,
+    JSDocUnknownType = 173,
 }
 
 /// Untyped AST Node Kind
@@ -355,6 +356,7 @@ pub enum AstKind<'a> {
         AstType::TSConstructSignatureDeclaration as u8,
     TSIndexSignatureName(&'a TSIndexSignatureName<'a>) = AstType::TSIndexSignatureName as u8,
     TSInterfaceHeritage(&'a TSInterfaceHeritage<'a>) = AstType::TSInterfaceHeritage as u8,
+    TSTypePredicate(&'a TSTypePredicate<'a>) = AstType::TSTypePredicate as u8,
     TSModuleDeclaration(&'a TSModuleDeclaration<'a>) = AstType::TSModuleDeclaration as u8,
     TSModuleBlock(&'a TSModuleBlock<'a>) = AstType::TSModuleBlock as u8,
     TSTypeLiteral(&'a TSTypeLiteral<'a>) = AstType::TSTypeLiteral as u8,
@@ -548,6 +550,7 @@ impl GetSpan for AstKind<'_> {
             Self::TSConstructSignatureDeclaration(it) => it.span(),
             Self::TSIndexSignatureName(it) => it.span(),
             Self::TSInterfaceHeritage(it) => it.span(),
+            Self::TSTypePredicate(it) => it.span(),
             Self::TSModuleDeclaration(it) => it.span(),
             Self::TSModuleBlock(it) => it.span(),
             Self::TSTypeLiteral(it) => it.span(),
@@ -1336,6 +1339,11 @@ impl<'a> AstKind<'a> {
     #[inline]
     pub fn as_ts_interface_heritage(self) -> Option<&'a TSInterfaceHeritage<'a>> {
         if let Self::TSInterfaceHeritage(v) = self { Some(v) } else { None }
+    }
+
+    #[inline]
+    pub fn as_ts_type_predicate(self) -> Option<&'a TSTypePredicate<'a>> {
+        if let Self::TSTypePredicate(v) = self { Some(v) } else { None }
     }
 
     #[inline]

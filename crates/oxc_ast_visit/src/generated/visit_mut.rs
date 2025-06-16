@@ -3979,12 +3979,14 @@ pub mod walk_mut {
         visitor: &mut V,
         it: &mut TSTypePredicate<'a>,
     ) {
-        // No `AstType` for this type
+        let kind = AstType::TSTypePredicate;
+        visitor.enter_node(kind);
         visitor.visit_span(&mut it.span);
         visitor.visit_ts_type_predicate_name(&mut it.parameter_name);
         if let Some(type_annotation) = &mut it.type_annotation {
             visitor.visit_ts_type_annotation(type_annotation);
         }
+        visitor.leave_node(kind);
     }
 
     #[inline]
