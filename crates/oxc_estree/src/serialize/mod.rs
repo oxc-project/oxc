@@ -112,7 +112,6 @@ pub struct ESTreeSerializer<C: Config, F: Formatter> {
     fixes_buffer: CodeBuffer,
     options: RuntimeOptions,
     source_text: Option<&'static str>,
-    #[expect(unused)]
     config: C,
 }
 
@@ -211,7 +210,7 @@ impl<'s, C: Config, F: Formatter> Serializer for &'s mut ESTreeSerializer<C, F> 
     type SequenceSerializer = ESTreeSequenceSerializer<'s, C, F>;
 
     fn range(&self) -> bool {
-        self.options.range
+        self.config.ranges()
     }
 
     /// Serialize struct.
