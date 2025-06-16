@@ -47,16 +47,16 @@ pub struct Runtime<'l> {
 }
 
 /// Output of `Runtime::process_path`
-struct ModuleProcessOutput {
+struct ModuleProcessOutput<'alloc_pool> {
     /// All paths in `Runtime` are stored as `OsStr`, because `OsStr` hash is faster
     /// than `Path` - go checkout their source code.
     path: Arc<OsStr>,
-    processed_module: ProcessedModule,
+    processed_module: ProcessedModule<'alloc_pool>,
 }
 
 /// A module processed from a path
 #[derive(Default)]
-struct ProcessedModule {
+struct ProcessedModule<'alloc_pool> {
     /// Module records of source sections, or diagnostics if parsing failed on that section.
     ///
     /// Modules with special extensions such as .vue could contain multiple source sections (see `PartialLoader::PartialLoader`).
@@ -71,7 +71,7 @@ struct ProcessedModule {
     ///
     /// Note that `content` is `Some` even if parsing is unsuccessful as long as the source to lint is valid utf-8.
     /// It is designed this way to cover the case where some but not all the sections fail to parse.
-    content: Option<ModuleContent>,
+    content: Option<ModuleContent<'alloc_pool>>,
 }
 
 struct ResolvedModuleRequest {
@@ -86,18 +86,18 @@ struct ResolvedModuleRecord {
 }
 
 self_cell! {
-    struct ModuleContent {
-        owner: ModuleContentOwner,
+    struct ModuleContent<'alloc_pool> {
+        owner: ModuleContentOwner<'alloc_pool>,
         #[not_covariant]
         dependent: SectionContents,
     }
 }
 // Safety: dependent borrows from owner. They're safe to be sent together.
-unsafe impl Send for ModuleContent {}
+unsafe impl Send for ModuleContent<'_> {}
 
-struct ModuleContentOwner {
+struct ModuleContentOwner<'alloc_pool> {
     source_text: String,
-    allocator: AllocatorGuard,
+    allocator: AllocatorGuard<'alloc_pool>,
 }
 
 /// source text and semantic for each source section. They are in the same order as `ProcessedModule.section_module_records`
@@ -113,13 +113,16 @@ struct SectionContent<'a> {
 ///
 /// A `ModuleWithContent` is generated for each path in `runtime.paths`. It's basically the same
 /// as `ProcessedModule`, except `content` is non-Option.
-struct ModuleToLint {
+struct ModuleToLint<'alloc_pool> {
     path: Arc<OsStr>,
     section_module_records: SmallVec<[Result<Arc<ModuleRecord>, Vec<OxcDiagnostic>>; 1]>,
-    content: ModuleContent,
+    content: ModuleContent<'alloc_pool>,
 }
-impl ModuleToLint {
-    fn from_processed_module(path: Arc<OsStr>, processed_module: ProcessedModule) -> Option<Self> {
+impl<'alloc_pool> ModuleToLint<'alloc_pool> {
+    fn from_processed_module(
+        path: Arc<OsStr>,
+        processed_module: ProcessedModule<'alloc_pool>,
+    ) -> Option<Self> {
         processed_module.content.map(|content| Self {
             path,
             section_module_records: processed_module
