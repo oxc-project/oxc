@@ -346,25 +346,21 @@ impl<'a> ParserImpl<'a> {
         F: Fn(&mut Self) -> T,
     {
         let mut list = self.ast.vec();
-        let mut first = true;
-        let mut trailing_separator = None;
+        if self.at(close) || self.has_fatal_error() {
+            return (list, None);
+        }
+        list.push(f(self));
         loop {
-            if self.cur_kind() == close || self.has_fatal_error() {
-                break;
+            if self.at(close) || self.has_fatal_error() {
+                return (list, None);
             }
-            if first {
-                first = false;
-            } else {
-                let separator_span = self.start_span();
-                self.expect(separator);
-                if self.at(close) {
-                    trailing_separator = Some(separator_span);
-                    break;
-                }
+            self.expect(separator);
+            if self.at(close) {
+                let trailing_separator = self.prev_token_end - 1;
+                return (list, Some(trailing_separator));
             }
             list.push(f(self));
         }
-        (list, trailing_separator)
     }
 
     pub(crate) fn parse_delimited_list_with_rest<E, A, D>(

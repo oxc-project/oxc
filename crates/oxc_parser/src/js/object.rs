@@ -26,7 +26,6 @@ impl<'a> ParserImpl<'a> {
                 Self::parse_object_expression_property,
             )
         });
-        self.bump(Kind::Comma); // Trailing Comma
         self.expect(Kind::RCurly);
         self.ast.alloc_object_expression(self.end_span(span), object_expression_properties)
     }
