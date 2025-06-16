@@ -3,7 +3,6 @@ use oxc_estree::{
     Concat2, ConcatElement, ESTree, JsonSafeString, SequenceSerializer, Serializer,
     StructSerializer,
 };
-use oxc_span::GetSpan;
 
 use crate::ast::*;
 
@@ -379,52 +378,6 @@ impl ESTree for ExportAllDeclarationWithClause<'_, '_> {
 // ----------------------------------------
 // Misc
 // ----------------------------------------
-
-/// Serializer for `key` field of `MethodDefinition`.
-///
-/// In TS-ESTree `"constructor"` in `class C { "constructor"() {} }`
-/// is represented as an `Identifier`.
-/// In Acorn and Espree, it's a `Literal`.
-/// <https://github.com/typescript-eslint/typescript-eslint/issues/11084>
-#[ast_meta]
-#[estree(
-    ts_type = "PropertyKey",
-    raw_deser = "
-        /* IF_JS */
-        DESER[PropertyKey](POS_OFFSET.key)
-        /* END_IF_JS */
-
-        /* IF_TS */
-        let key = DESER[PropertyKey](POS_OFFSET.key);
-        if (THIS.kind === 'constructor') {
-            key = {
-                type: 'Identifier',
-                start: key.start,
-                end: key.end,
-                decorators: [],
-                name: 'constructor',
-                optional: false,
-                typeAnnotation: null,
-            };
-        }
-        key
-        /* END_IF_TS */
-    "
-)]
-pub struct MethodDefinitionKey<'a, 'b>(pub &'b MethodDefinition<'a>);
-
-impl ESTree for MethodDefinitionKey<'_, '_> {
-    fn serialize<S: Serializer>(&self, serializer: S) {
-        let method = self.0;
-        if S::INCLUDE_TS_FIELDS && method.kind == MethodDefinitionKind::Constructor {
-            // `key` can only be either an identifier `constructor`, or string `"constructor"`
-            let span = method.key.span();
-            IdentifierName { span, name: Atom::from("constructor") }.serialize(serializer);
-        } else {
-            method.key.serialize(serializer);
-        }
-    }
-}
 
 /// Serializer for `body` field of `ArrowFunctionExpression`.
 ///
