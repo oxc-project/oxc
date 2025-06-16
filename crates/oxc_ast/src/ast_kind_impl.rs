@@ -288,6 +288,7 @@ impl AstKind<'_> {
             Self::ExportSpecifier(e) => format!("ExportSpecifier({})", e.local.name()).into(),
             Self::ImportDefaultSpecifier(_) => "ImportDefaultSpecifier".into(),
             Self::ImportNamespaceSpecifier(_) => "ImportNamespaceSpecifier".into(),
+            Self::ImportAttribute(_) => "ImportAttribute".into(),
             Self::ExportDefaultDeclaration(_) => "ExportDefaultDeclaration".into(),
             Self::ExportNamedDeclaration(_) => "ExportNamedDeclaration".into(),
             Self::ExportAllDeclaration(_) => "ExportAllDeclaration".into(),
