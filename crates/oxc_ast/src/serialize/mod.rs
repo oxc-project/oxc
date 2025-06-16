@@ -19,8 +19,6 @@ use crate::{
 pub struct SerializationOptions {
     /// Include range field [start, end] in each node
     pub range: bool,
-    /// Include loc field with line/column information in each node
-    pub loc: bool,
 }
 
 pub mod basic;
@@ -109,14 +107,9 @@ impl Program<'_> {
         let capacity = self.source_text.len() * JSON_CAPACITY_RATIO_COMPACT;
         let runtime_options = options.map_or_else(RuntimeOptions::default, |o| RuntimeOptions {
             range: o.range,
-            loc: o.loc,
         });
-        let mut serializer =
+        let serializer =
             CompactFixesTSSerializer::with_capacity(capacity).with_options(runtime_options);
-        if runtime_options.loc {
-            let source_text_static: &'static str = unsafe { std::mem::transmute(self.source_text) };
-            serializer = serializer.with_source_text(source_text_static);
-        }
         serializer.serialize_with_fixes(self)
     }
 
@@ -128,14 +121,9 @@ impl Program<'_> {
         let capacity = self.source_text.len() * JSON_CAPACITY_RATIO_COMPACT;
         let runtime_options = options.map_or_else(RuntimeOptions::default, |o| RuntimeOptions {
             range: o.range,
-            loc: o.loc,
         });
-        let mut serializer =
+        let serializer =
             CompactFixesJSSerializer::with_capacity(capacity).with_options(runtime_options);
-        if runtime_options.loc {
-            let source_text_static: &'static str = unsafe { std::mem::transmute(self.source_text) };
-            serializer = serializer.with_source_text(source_text_static);
-        }
         serializer.serialize_with_fixes(self)
     }
 

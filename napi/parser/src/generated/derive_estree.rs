@@ -51,17 +51,6 @@ impl ESTree for ErrorLabel<'_> {
             let range = oxc_estree::Range::new(self.span.start, self.span.end);
             state.serialize_field("range", &range);
         }
-        if state.loc() {
-            if let (Some(start_pos), Some(end_pos)) =
-                (state.get_line_column(self.span.start), state.get_line_column(self.span.end))
-            {
-                let loc = oxc_estree::SourceLocation {
-                    start: oxc_estree::Position { line: start_pos.0, column: start_pos.1 },
-                    end: oxc_estree::Position { line: end_pos.0, column: end_pos.1 },
-                };
-                state.serialize_field("loc", &loc);
-            }
-        }
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
         state.end();
@@ -87,17 +76,6 @@ impl ESTree for StaticImport<'_> {
             let range = oxc_estree::Range::new(self.span.start, self.span.end);
             state.serialize_field("range", &range);
         }
-        if state.loc() {
-            if let (Some(start_pos), Some(end_pos)) =
-                (state.get_line_column(self.span.start), state.get_line_column(self.span.end))
-            {
-                let loc = oxc_estree::SourceLocation {
-                    start: oxc_estree::Position { line: start_pos.0, column: start_pos.1 },
-                    end: oxc_estree::Position { line: end_pos.0, column: end_pos.1 },
-                };
-                state.serialize_field("loc", &loc);
-            }
-        }
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
         state.serialize_field("moduleRequest", &self.module_request);
@@ -112,17 +90,6 @@ impl ESTree for StaticExport<'_> {
         if state.range() {
             let range = oxc_estree::Range::new(self.span.start, self.span.end);
             state.serialize_field("range", &range);
-        }
-        if state.loc() {
-            if let (Some(start_pos), Some(end_pos)) =
-                (state.get_line_column(self.span.start), state.get_line_column(self.span.end))
-            {
-                let loc = oxc_estree::SourceLocation {
-                    start: oxc_estree::Position { line: start_pos.0, column: start_pos.1 },
-                    end: oxc_estree::Position { line: end_pos.0, column: end_pos.1 },
-                };
-                state.serialize_field("loc", &loc);
-            }
         }
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);

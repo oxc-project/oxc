@@ -83,7 +83,6 @@ impl From<&oxc::span::Span> for Span {
             start: span.start,
             end: span.end,
             range: None, // Will be populated later based on parser options
-            loc: None,   // Will be populated later based on parser options
         }
     }
 }

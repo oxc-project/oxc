@@ -198,14 +198,6 @@ export interface ParserOptions {
    */
   range?: boolean
   /**
-   * Controls whether the `loc` information is included to each node.
-   * The `loc` property is an object which contains the exact line/column the node starts/ends on.
-   * This is similar to the `range` property, except it is line/column relative.
-   *
-   * @default false
-   */
-  loc?: boolean
-  /**
    * Emit `ParenthesizedExpression` and `TSParenthesizedType` in AST.
    *
    * If this option is true, parenthesized expressions are represented by
@@ -256,22 +248,8 @@ export declare function parseSync(filename: string, sourceText: string, options?
  */
 export declare function parseSyncRaw(filename: string, buffer: Uint8Array, sourceLen: number, options?: ParserOptions | undefined | null): void
 
-export interface Position {
-  /** Line number (1-indexed) */
-  line: number
-  /** Column number on the line (0-indexed) */
-  column: number
-}
-
 /** Returns `true` if raw transfer is supported on this platform. */
 export declare function rawTransferSupported(): boolean
-
-export interface SourceLocation {
-  /** The position of the first character of the parsed source region */
-  start: Position
-  /** The position of the first character after the parsed source region */
-  end: Position
-}
 
 export interface Span {
   start: number
@@ -282,8 +260,6 @@ export interface Span {
    * The first is the start position of the node, the second is the end position of the node.
    */
   range?: [number, number]
-  /** ESTree loc field - line/column info when loc option is enabled */
-  loc?: SourceLocation
 }
 
 export interface StaticExport {

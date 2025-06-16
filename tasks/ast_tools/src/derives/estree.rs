@@ -445,18 +445,6 @@ impl<'s> StructSerializerGenerator<'s> {
                         let range = oxc_estree::Range::new(#self_path.#field_name_ident.start, #self_path.#field_name_ident.end);
                         state.serialize_field("range", &range);
                     }
-                    if state.loc() {
-                        if let (Some(start_pos), Some(end_pos)) = (
-                            state.get_line_column(#self_path.#field_name_ident.start),
-                            state.get_line_column(#self_path.#field_name_ident.end)
-                        ) {
-                            let loc = oxc_estree::SourceLocation {
-                                start: oxc_estree::Position { line: start_pos.0, column: start_pos.1 },
-                                end: oxc_estree::Position { line: end_pos.0, column: end_pos.1 },
-                            };
-                            state.serialize_field("loc", &loc);
-                        }
-                    }
                     state.serialize_field("start", &#self_path.#field_name_ident.start);
                     state.serialize_field("end", &#self_path.#field_name_ident.end);
                 });

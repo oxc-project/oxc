@@ -228,13 +228,6 @@ pub struct ParseOptions {
     ///
     /// Default: `false`
     pub range: bool,
-
-    /// Controls whether the `loc` information is included to each node.
-    /// The `loc` property is an object which contains the exact line/column the node starts/ends on.
-    /// This is similar to the `range` property, except it is line/column relative.
-    ///
-    /// Default: `false`
-    pub loc: bool,
 }
 
 impl Default for ParseOptions {
@@ -246,7 +239,6 @@ impl Default for ParseOptions {
             preserve_parens: true,
             allow_v8_intrinsics: false,
             range: false,
-            loc: false,
         }
     }
 }
