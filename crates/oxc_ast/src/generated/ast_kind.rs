@@ -163,27 +163,28 @@ pub enum AstType {
     TSMethodSignature = 147,
     TSConstructSignatureDeclaration = 148,
     TSInterfaceHeritage = 149,
-    TSModuleDeclaration = 150,
-    TSModuleBlock = 151,
-    TSTypeLiteral = 152,
-    TSInferType = 153,
-    TSTypeQuery = 154,
-    TSImportType = 155,
-    TSMappedType = 156,
-    TSTemplateLiteralType = 157,
-    TSAsExpression = 158,
-    TSSatisfiesExpression = 159,
-    TSTypeAssertion = 160,
-    TSImportEqualsDeclaration = 161,
-    TSModuleReference = 162,
-    TSExternalModuleReference = 163,
-    TSNonNullExpression = 164,
-    Decorator = 165,
-    TSExportAssignment = 166,
-    TSInstantiationExpression = 167,
-    JSDocNullableType = 168,
-    JSDocNonNullableType = 169,
-    JSDocUnknownType = 170,
+    TSTypePredicate = 150,
+    TSModuleDeclaration = 151,
+    TSModuleBlock = 152,
+    TSTypeLiteral = 153,
+    TSInferType = 154,
+    TSTypeQuery = 155,
+    TSImportType = 156,
+    TSMappedType = 157,
+    TSTemplateLiteralType = 158,
+    TSAsExpression = 159,
+    TSSatisfiesExpression = 160,
+    TSTypeAssertion = 161,
+    TSImportEqualsDeclaration = 162,
+    TSModuleReference = 163,
+    TSExternalModuleReference = 164,
+    TSNonNullExpression = 165,
+    Decorator = 166,
+    TSExportAssignment = 167,
+    TSInstantiationExpression = 168,
+    JSDocNullableType = 169,
+    JSDocNonNullableType = 170,
+    JSDocUnknownType = 171,
 }
 
 /// Untyped AST Node Kind
@@ -350,6 +351,7 @@ pub enum AstKind<'a> {
     TSConstructSignatureDeclaration(&'a TSConstructSignatureDeclaration<'a>) =
         AstType::TSConstructSignatureDeclaration as u8,
     TSInterfaceHeritage(&'a TSInterfaceHeritage<'a>) = AstType::TSInterfaceHeritage as u8,
+    TSTypePredicate(&'a TSTypePredicate<'a>) = AstType::TSTypePredicate as u8,
     TSModuleDeclaration(&'a TSModuleDeclaration<'a>) = AstType::TSModuleDeclaration as u8,
     TSModuleBlock(&'a TSModuleBlock<'a>) = AstType::TSModuleBlock as u8,
     TSTypeLiteral(&'a TSTypeLiteral<'a>) = AstType::TSTypeLiteral as u8,
@@ -541,6 +543,7 @@ impl GetSpan for AstKind<'_> {
             Self::TSMethodSignature(it) => it.span(),
             Self::TSConstructSignatureDeclaration(it) => it.span(),
             Self::TSInterfaceHeritage(it) => it.span(),
+            Self::TSTypePredicate(it) => it.span(),
             Self::TSModuleDeclaration(it) => it.span(),
             Self::TSModuleBlock(it) => it.span(),
             Self::TSTypeLiteral(it) => it.span(),
@@ -1319,6 +1322,11 @@ impl<'a> AstKind<'a> {
     #[inline]
     pub fn as_ts_interface_heritage(self) -> Option<&'a TSInterfaceHeritage<'a>> {
         if let Self::TSInterfaceHeritage(v) = self { Some(v) } else { None }
+    }
+
+    #[inline]
+    pub fn as_ts_type_predicate(self) -> Option<&'a TSTypePredicate<'a>> {
+        if let Self::TSTypePredicate(v) = self { Some(v) } else { None }
     }
 
     #[inline]
