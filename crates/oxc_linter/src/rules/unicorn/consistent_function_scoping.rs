@@ -237,8 +237,8 @@ impl Rule for ConsistentFunctionScoping {
                 _ => return,
             };
 
-        // if the function is declared at the root scope, we don't need to check anything
-        let scope = ctx.scoping().symbol_scope_id(function_declaration_symbol_id);
+        // if the function is declared at the root scope or in a TS
+        // module/namespace block, we don't need to check anything        let scope = ctx.scoping().symbol_scope_id(function_declaration_symbol_id);
         if ctx.scoping().scope_flags(scope).intersects(ScopeFlags::Top | ScopeFlags::TsModuleBlock)
         {
             return;
