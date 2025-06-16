@@ -124,6 +124,8 @@ impl Oxc {
             allow_v8_intrinsics: parser_options
                 .allow_v8_intrinsics
                 .unwrap_or(default_parser_options.allow_v8_intrinsics),
+            range: false,
+            loc: false,
         };
         let ParserReturn { mut program, errors, mut module_record, .. } =
             Parser::new(&allocator, &source_text, source_type)

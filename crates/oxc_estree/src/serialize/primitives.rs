@@ -1,7 +1,7 @@
 use itoa::Buffer as ItoaBuffer;
 use ryu_js::Buffer as RyuBuffer;
 
-use super::{ESTree, Serializer};
+use super::{ESTree, Serializer, SequenceSerializer};
 
 /// [`ESTree`] implementation for `bool`.
 impl ESTree for bool {
@@ -68,6 +68,28 @@ impl_integer!(isize);
 impl ESTree for () {
     fn serialize<S: Serializer>(&self, mut serializer: S) {
         serializer.buffer_mut().print_str("null");
+    }
+}
+
+/// ESTree range type - represents [start, end] positions in source code
+#[derive(Debug, Copy, Clone)]
+pub struct Range {
+    pub start: u32,
+    pub end: u32,
+}
+
+impl Range {
+    pub fn new(start: u32, end: u32) -> Self {
+        Self { start, end }
+    }
+}
+
+impl ESTree for Range {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        let mut seq = serializer.serialize_sequence();
+        seq.serialize_element(&self.start);
+        seq.serialize_element(&self.end);
+        seq.end();
     }
 }
 

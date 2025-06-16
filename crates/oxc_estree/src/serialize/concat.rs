@@ -1,4 +1,4 @@
-use crate::{ESTree, SequenceSerializer, Serializer};
+use super::{ESTree, SequenceSerializer, Serializer};
 
 /// Trait for types which can be concatenated.
 ///

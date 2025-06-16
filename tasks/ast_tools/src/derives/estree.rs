@@ -74,7 +74,7 @@ impl Derive for DeriveESTree {
             ///@@line_break
             use oxc_estree::{
                 Concat2, Concat3, ESTree, FlatStructSerializer,
-                JsonSafeString, Serializer, StructSerializer,
+                JsonSafeString, Range, Serializer, StructSerializer,
             };
         }
     }
@@ -412,7 +412,9 @@ impl<'s> StructSerializerGenerator<'s> {
     fn generate_stmts_for_struct(&mut self, struct_def: &StructDef, self_path: &TokenStream) {
         for &field_index in &struct_def.estree.field_indices {
             let field_index = field_index as usize;
-            if let Some(field) = struct_def.fields.get(field_index) {
+            if field_index < struct_def.fields.len() {
+                // Real field
+                let field = &struct_def.fields[field_index];
                 self.generate_stmts_for_field(field, struct_def, self_path);
             } else {
                 let (field_name, converter_name) =
@@ -435,9 +437,37 @@ impl<'s> StructSerializerGenerator<'s> {
 
         let field_name_ident = field.ident();
 
+        // Special case for `Span` fields - add conditional range and loc serialization
+        if let TypeDef::Struct(inner_struct_def) = field.type_def(self.schema) {
+            if inner_struct_def.name() == "Span" && field.name() == "span" {
+                self.stmts.extend(quote! {
+                    if state.range() {
+                        let range = oxc_estree::Range::new(#self_path.#field_name_ident.start, #self_path.#field_name_ident.end);
+                        state.serialize_field("range", &range);
+                    }
+                    if state.loc() {
+                        if let (Some(start_pos), Some(end_pos)) = (
+                            state.get_line_column(#self_path.#field_name_ident.start),
+                            state.get_line_column(#self_path.#field_name_ident.end)
+                        ) {
+                            let loc = oxc_estree::SourceLocation {
+                                start: oxc_estree::Position { line: start_pos.0, column: start_pos.1 },
+                                end: oxc_estree::Position { line: end_pos.0, column: end_pos.1 },
+                            };
+                            state.serialize_field("loc", &loc);
+                        }
+                    }
+                    state.serialize_field("start", &#self_path.#field_name_ident.start);
+                    state.serialize_field("end", &#self_path.#field_name_ident.end);
+                });
+                return;
+            }
+        }
+
         if should_flatten_field(field, self.schema) {
             if can_flatten_field_inline(field, self.krate, self.schema) {
                 let inner_struct_def = field.type_def(self.schema).as_struct().unwrap();
+                
                 self.generate_stmts_for_struct(
                     inner_struct_def,
                     &quote!(#self_path.#field_name_ident),
