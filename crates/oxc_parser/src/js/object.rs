@@ -46,13 +46,12 @@ impl<'a> ParserImpl<'a> {
             /* stop_on_start_of_class_static_block */ false,
         );
 
-        let kind = self.cur_kind();
-        if self.parse_contextual_modifier(Kind::Get) || self.parse_contextual_modifier(Kind::Set) {
-            return match kind {
-                Kind::Get => self.parse_method_getter_setter(span, PropertyKind::Get, &modifiers),
-                Kind::Set => self.parse_method_getter_setter(span, PropertyKind::Set, &modifiers),
-                _ => unreachable!(),
-            };
+        if self.parse_contextual_modifier(Kind::Get) {
+            return self.parse_method_getter_setter(span, PropertyKind::Get, &modifiers);
+        }
+
+        if self.parse_contextual_modifier(Kind::Set) {
+            return self.parse_method_getter_setter(span, PropertyKind::Set, &modifiers);
         }
 
         let asterisk_token = self.eat(Kind::Star);
