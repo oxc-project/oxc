@@ -34,7 +34,6 @@ pub enum AstNodes<'a> {
     LabelIdentifier(&'a AstNode<'a, LabelIdentifier<'a>>),
     ThisExpression(&'a AstNode<'a, ThisExpression>),
     ArrayExpression(&'a AstNode<'a, ArrayExpression<'a>>),
-    ArrayExpressionElement(&'a AstNode<'a, ArrayExpressionElement<'a>>),
     Elision(&'a AstNode<'a, Elision>),
     ObjectExpression(&'a AstNode<'a, ObjectExpression<'a>>),
     ObjectProperty(&'a AstNode<'a, ObjectProperty<'a>>),
@@ -211,7 +210,6 @@ impl<'a> AstNodes<'a> {
             Self::LabelIdentifier(n) => n.span(),
             Self::ThisExpression(n) => n.span(),
             Self::ArrayExpression(n) => n.span(),
-            Self::ArrayExpressionElement(n) => n.span(),
             Self::Elision(n) => n.span(),
             Self::ObjectExpression(n) => n.span(),
             Self::ObjectProperty(n) => n.span(),
@@ -388,7 +386,6 @@ impl<'a> AstNodes<'a> {
             Self::LabelIdentifier(n) => n.parent,
             Self::ThisExpression(n) => n.parent,
             Self::ArrayExpression(n) => n.parent,
-            Self::ArrayExpressionElement(n) => n.parent,
             Self::Elision(n) => n.parent,
             Self::ObjectExpression(n) => n.parent,
             Self::ObjectProperty(n) => n.parent,
@@ -565,7 +562,6 @@ impl<'a> AstNodes<'a> {
             Self::LabelIdentifier(_) => "LabelIdentifier",
             Self::ThisExpression(_) => "ThisExpression",
             Self::ArrayExpression(_) => "ArrayExpression",
-            Self::ArrayExpressionElement(_) => "ArrayExpressionElement",
             Self::Elision(_) => "Elision",
             Self::ObjectExpression(_) => "ObjectExpression",
             Self::ObjectProperty(_) => "ObjectProperty",
@@ -1243,7 +1239,7 @@ impl<'a> AstNode<'a, ArrayExpression<'a>> {
 impl<'a> AstNode<'a, ArrayExpressionElement<'a>> {
     #[inline]
     pub fn as_ast_nodes(&self) -> &AstNodes<'a> {
-        let parent = self.allocator.alloc(AstNodes::ArrayExpressionElement(transmute_self(self)));
+        let parent = self.parent;
         let node = match self.inner {
             ArrayExpressionElement::SpreadElement(s) => {
                 AstNodes::SpreadElement(self.allocator.alloc(AstNode {
