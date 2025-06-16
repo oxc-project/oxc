@@ -106,6 +106,7 @@ pub enum AstNodes<'a> {
     PrivateIdentifier(&'a AstNode<'a, PrivateIdentifier<'a>>),
     StaticBlock(&'a AstNode<'a, StaticBlock<'a>>),
     ModuleDeclaration(&'a AstNode<'a, ModuleDeclaration<'a>>),
+    AccessorProperty(&'a AstNode<'a, AccessorProperty<'a>>),
     ImportExpression(&'a AstNode<'a, ImportExpression<'a>>),
     ImportDeclaration(&'a AstNode<'a, ImportDeclaration<'a>>),
     ImportSpecifier(&'a AstNode<'a, ImportSpecifier<'a>>),
@@ -291,6 +292,7 @@ impl<'a> AstNodes<'a> {
             Self::PrivateIdentifier(n) => n.span(),
             Self::StaticBlock(n) => n.span(),
             Self::ModuleDeclaration(n) => n.span(),
+            Self::AccessorProperty(n) => n.span(),
             Self::ImportExpression(n) => n.span(),
             Self::ImportDeclaration(n) => n.span(),
             Self::ImportSpecifier(n) => n.span(),
@@ -476,6 +478,7 @@ impl<'a> AstNodes<'a> {
             Self::PrivateIdentifier(n) => n.parent,
             Self::StaticBlock(n) => n.parent,
             Self::ModuleDeclaration(n) => n.parent,
+            Self::AccessorProperty(n) => n.parent,
             Self::ImportExpression(n) => n.parent,
             Self::ImportDeclaration(n) => n.parent,
             Self::ImportSpecifier(n) => n.parent,
@@ -661,6 +664,7 @@ impl<'a> AstNodes<'a> {
             Self::PrivateIdentifier(_) => "PrivateIdentifier",
             Self::StaticBlock(_) => "StaticBlock",
             Self::ModuleDeclaration(_) => "ModuleDeclaration",
+            Self::AccessorProperty(_) => "AccessorProperty",
             Self::ImportExpression(_) => "ImportExpression",
             Self::ImportDeclaration(_) => "ImportDeclaration",
             Self::ImportSpecifier(_) => "ImportSpecifier",
@@ -3881,9 +3885,11 @@ impl<'a> AstNode<'a, ClassElement<'a>> {
                 }))
             }
             ClassElement::AccessorProperty(s) => {
-                panic!(
-                    "No kind for current enum variant yet, please see `tasks/ast_tools/src/generators/ast_kind.rs`"
-                )
+                AstNodes::AccessorProperty(self.allocator.alloc(AstNode {
+                    inner: s.as_ref(),
+                    parent,
+                    allocator: self.allocator,
+                }))
             }
             ClassElement::TSIndexSignature(s) => {
                 panic!(
@@ -4161,7 +4167,7 @@ impl<'a> AstNode<'a, AccessorProperty<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.decorators,
             allocator: self.allocator,
-            parent: self.parent,
+            parent: self.allocator.alloc(AstNodes::AccessorProperty(transmute_self(self))),
         })
     }
 
@@ -4170,7 +4176,7 @@ impl<'a> AstNode<'a, AccessorProperty<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.key,
             allocator: self.allocator,
-            parent: self.parent,
+            parent: self.allocator.alloc(AstNodes::AccessorProperty(transmute_self(self))),
         })
     }
 
@@ -4180,7 +4186,7 @@ impl<'a> AstNode<'a, AccessorProperty<'a>> {
             .alloc(self.inner.type_annotation.as_ref().map(|inner| AstNode {
                 inner: inner.as_ref(),
                 allocator: self.allocator,
-                parent: self.parent,
+                parent: self.allocator.alloc(AstNodes::AccessorProperty(transmute_self(self))),
             }))
             .as_ref()
     }
@@ -4191,7 +4197,7 @@ impl<'a> AstNode<'a, AccessorProperty<'a>> {
             .alloc(self.inner.value.as_ref().map(|inner| AstNode {
                 inner,
                 allocator: self.allocator,
-                parent: self.parent,
+                parent: self.allocator.alloc(AstNodes::AccessorProperty(transmute_self(self))),
             }))
             .as_ref()
     }

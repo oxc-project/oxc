@@ -994,7 +994,10 @@ impl<'a> Format<'a> for AstNode<'a, ModuleDeclaration<'a>> {
 
 impl<'a> Format<'a> for AstNode<'a, AccessorProperty<'a>> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        self.write(f)
+        format_leading_comments(self.span().start).fmt(f)?;
+        let result = self.write(f);
+        format_trailing_comments(self.span().end).fmt(f)?;
+        result
     }
 }
 
