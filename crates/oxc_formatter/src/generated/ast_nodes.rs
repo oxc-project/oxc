@@ -176,6 +176,7 @@ pub enum AstNodes<'a> {
     TSPropertySignature(&'a AstNode<'a, TSPropertySignature<'a>>),
     TSMethodSignature(&'a AstNode<'a, TSMethodSignature<'a>>),
     TSConstructSignatureDeclaration(&'a AstNode<'a, TSConstructSignatureDeclaration<'a>>),
+    TSIndexSignatureName(&'a AstNode<'a, TSIndexSignatureName<'a>>),
     TSInterfaceHeritage(&'a AstNode<'a, TSInterfaceHeritage<'a>>),
     TSModuleDeclaration(&'a AstNode<'a, TSModuleDeclaration<'a>>),
     TSModuleBlock(&'a AstNode<'a, TSModuleBlock<'a>>),
@@ -353,6 +354,7 @@ impl<'a> AstNodes<'a> {
             Self::TSPropertySignature(n) => n.span(),
             Self::TSMethodSignature(n) => n.span(),
             Self::TSConstructSignatureDeclaration(n) => n.span(),
+            Self::TSIndexSignatureName(n) => n.span(),
             Self::TSInterfaceHeritage(n) => n.span(),
             Self::TSModuleDeclaration(n) => n.span(),
             Self::TSModuleBlock(n) => n.span(),
@@ -530,6 +532,7 @@ impl<'a> AstNodes<'a> {
             Self::TSPropertySignature(n) => n.parent,
             Self::TSMethodSignature(n) => n.parent,
             Self::TSConstructSignatureDeclaration(n) => n.parent,
+            Self::TSIndexSignatureName(n) => n.parent,
             Self::TSInterfaceHeritage(n) => n.parent,
             Self::TSModuleDeclaration(n) => n.parent,
             Self::TSModuleBlock(n) => n.parent,
@@ -707,6 +710,7 @@ impl<'a> AstNodes<'a> {
             Self::TSPropertySignature(_) => "TSPropertySignature",
             Self::TSMethodSignature(_) => "TSMethodSignature",
             Self::TSConstructSignatureDeclaration(_) => "TSConstructSignatureDeclaration",
+            Self::TSIndexSignatureName(_) => "TSIndexSignatureName",
             Self::TSInterfaceHeritage(_) => "TSInterfaceHeritage",
             Self::TSModuleDeclaration(_) => "TSModuleDeclaration",
             Self::TSModuleBlock(_) => "TSModuleBlock",
@@ -6752,7 +6756,7 @@ impl<'a> AstNode<'a, TSIndexSignatureName<'a>> {
         self.allocator.alloc(AstNode {
             inner: self.inner.type_annotation.as_ref(),
             allocator: self.allocator,
-            parent: self.parent,
+            parent: self.allocator.alloc(AstNodes::TSIndexSignatureName(transmute_self(self))),
         })
     }
 }
