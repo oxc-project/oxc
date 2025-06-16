@@ -1,4 +1,5 @@
 use std::{
+    borrow::Cow,
     io::{ErrorKind, Write},
     path::{Path, PathBuf},
     sync::{Arc, mpsc},
@@ -6,6 +7,9 @@ use std::{
 
 use cow_utils::CowUtils;
 use miette::LabeledSpan;
+use percent_encoding::AsciiSet;
+#[cfg(not(windows))]
+use std::fs::canonicalize as strict_canonicalize;
 
 use crate::{
     Error, NamedSource, OxcDiagnostic, Severity,
@@ -142,13 +146,12 @@ impl DiagnosticService {
             std::env::var("TERMINAL_EMULATOR").is_ok_and(|x| x.eq("JetBrains-JediTerm"));
 
         let path_ref = path.as_ref();
-        let path_display = if is_jetbrains {
-            format!("file://{}", path_ref.to_string_lossy())
-        } else {
+        let path_display = if is_jetbrains { from_file_path(path_ref) } else { None };
+        let path_display = path_display.unwrap_or_else(|| {
             let relative_path = path_ref.strip_prefix(cwd).unwrap_or(path_ref).to_string_lossy();
             let normalized_path = relative_path.cow_replace('\\', "/");
             normalized_path.to_string()
-        };
+        });
 
         let source = Arc::new(NamedSource::new(path_display, source_text.to_owned()));
         diagnostics
@@ -268,4 +271,82 @@ impl DiagnosticService {
             Err(error)
         }
     }
+}
+
+// The following from_file_path and strict_canonicalize implementations are from tower-lsp-community/tower-lsp-server
+// available under the MIT License or Apache 2.0 License.
+//
+// Copyright (c) 2023 Eyal Kalderon
+// https://github.com/tower-lsp-community/tower-lsp-server/blob/85506ddcbd108c514438e0b62e0eb858c812adcf/src/uri_ext.rs
+
+const ASCII_SET: AsciiSet =
+    // RFC3986 allows only alphanumeric characters, `-`, `.`, `_`, and `~` in the path.
+    percent_encoding::NON_ALPHANUMERIC
+        .remove(b'-')
+        .remove(b'.')
+        .remove(b'_')
+        .remove(b'~')
+        // we do not want path separators to be percent-encoded
+        .remove(b'/');
+
+fn from_file_path<A: AsRef<Path>>(path: A) -> Option<String> {
+    let path = path.as_ref();
+
+    let fragment = if path.is_absolute() {
+        Cow::Borrowed(path)
+    } else {
+        match strict_canonicalize(path) {
+            Ok(path) => Cow::Owned(path),
+            Err(_) => return None,
+        }
+    };
+
+    if cfg!(windows) {
+        // we want to parse a triple-slash path for Windows paths
+        // it's a shorthand for `file://localhost/C:/Windows` with the `localhost` omitted.
+        // We encode the driver Letter `C:` as well. LSP Specification allows it.
+        // https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#uri
+        Some(format!(
+            "file:///{}",
+            percent_encoding::utf8_percent_encode(
+                &fragment.to_string_lossy().cow_replace('\\', "/"),
+                &ASCII_SET
+            )
+        ))
+    } else {
+        Some(format!(
+            "file://{}",
+            percent_encoding::utf8_percent_encode(&fragment.to_string_lossy(), &ASCII_SET)
+        ))
+    }
+}
+
+/// On Windows, rewrites the wide path prefix `\\?\C:` to `C:`
+/// Source: https://stackoverflow.com/a/70970317
+#[inline]
+#[cfg(windows)]
+fn strict_canonicalize<P: AsRef<Path>>(path: P) -> std::io::Result<PathBuf> {
+    use std::io;
+
+    fn impl_(path: PathBuf) -> std::io::Result<PathBuf> {
+        let head = path.components().next().ok_or(io::Error::other("empty path"))?;
+        let disk_;
+        let head = if let std::path::Component::Prefix(prefix) = head {
+            if let std::path::Prefix::VerbatimDisk(disk) = prefix.kind() {
+                disk_ = format!("{}:", disk as char);
+                Path::new(&disk_)
+                    .components()
+                    .next()
+                    .ok_or(io::Error::other("failed to parse disk component"))?
+            } else {
+                head
+            }
+        } else {
+            head
+        };
+        Ok(std::iter::once(head).chain(path.components().skip(1)).collect())
+    }
+
+    let canon = std::fs::canonicalize(path)?;
+    impl_(canon)
 }

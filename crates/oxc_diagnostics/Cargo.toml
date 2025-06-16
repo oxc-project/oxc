@@ -21,3 +21,4 @@ doctest = false
 [dependencies]
 cow-utils = { workspace = true }
 miette = { workspace = true }
+percent-encoding = { workspace = true }
