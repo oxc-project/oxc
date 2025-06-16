@@ -192,7 +192,6 @@ pub enum AstNodes<'a> {
     TSSatisfiesExpression(&'a AstNode<'a, TSSatisfiesExpression<'a>>),
     TSTypeAssertion(&'a AstNode<'a, TSTypeAssertion<'a>>),
     TSImportEqualsDeclaration(&'a AstNode<'a, TSImportEqualsDeclaration<'a>>),
-    TSModuleReference(&'a AstNode<'a, TSModuleReference<'a>>),
     TSExternalModuleReference(&'a AstNode<'a, TSExternalModuleReference<'a>>),
     TSNonNullExpression(&'a AstNode<'a, TSNonNullExpression<'a>>),
     Decorator(&'a AstNode<'a, Decorator<'a>>),
@@ -372,7 +371,6 @@ impl<'a> AstNodes<'a> {
             Self::TSSatisfiesExpression(n) => n.span(),
             Self::TSTypeAssertion(n) => n.span(),
             Self::TSImportEqualsDeclaration(n) => n.span(),
-            Self::TSModuleReference(n) => n.span(),
             Self::TSExternalModuleReference(n) => n.span(),
             Self::TSNonNullExpression(n) => n.span(),
             Self::Decorator(n) => n.span(),
@@ -552,7 +550,6 @@ impl<'a> AstNodes<'a> {
             Self::TSSatisfiesExpression(n) => n.parent,
             Self::TSTypeAssertion(n) => n.parent,
             Self::TSImportEqualsDeclaration(n) => n.parent,
-            Self::TSModuleReference(n) => n.parent,
             Self::TSExternalModuleReference(n) => n.parent,
             Self::TSNonNullExpression(n) => n.parent,
             Self::Decorator(n) => n.parent,
@@ -732,7 +729,6 @@ impl<'a> AstNodes<'a> {
             Self::TSSatisfiesExpression(_) => "TSSatisfiesExpression",
             Self::TSTypeAssertion(_) => "TSTypeAssertion",
             Self::TSImportEqualsDeclaration(_) => "TSImportEqualsDeclaration",
-            Self::TSModuleReference(_) => "TSModuleReference",
             Self::TSExternalModuleReference(_) => "TSExternalModuleReference",
             Self::TSNonNullExpression(_) => "TSNonNullExpression",
             Self::Decorator(_) => "Decorator",
@@ -7391,7 +7387,7 @@ impl<'a> AstNode<'a, TSImportEqualsDeclaration<'a>> {
 impl<'a> AstNode<'a, TSModuleReference<'a>> {
     #[inline]
     pub fn as_ast_nodes(&self) -> &AstNodes<'a> {
-        let parent = self.allocator.alloc(AstNodes::TSModuleReference(transmute_self(self)));
+        let parent = self.parent;
         let node = match self.inner {
             TSModuleReference::ExternalModuleReference(s) => {
                 AstNodes::TSExternalModuleReference(self.allocator.alloc(AstNode {

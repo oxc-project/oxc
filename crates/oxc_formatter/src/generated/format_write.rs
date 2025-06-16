@@ -1095,7 +1095,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TSModuleReference<'a>> {
     #[inline]
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         let allocator = self.allocator;
-        let parent = allocator.alloc(AstNodes::TSModuleReference(transmute_self(self)));
+        let parent = self.parent;
         match self.inner {
             TSModuleReference::ExternalModuleReference(inner) => allocator
                 .alloc(AstNode::<TSExternalModuleReference> { inner, parent, allocator })

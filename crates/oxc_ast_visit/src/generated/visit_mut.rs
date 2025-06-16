@@ -4245,8 +4245,7 @@ pub mod walk_mut {
         visitor: &mut V,
         it: &mut TSModuleReference<'a>,
     ) {
-        let kind = AstType::TSModuleReference;
-        visitor.enter_node(kind);
+        // No `AstType` for this type
         match it {
             TSModuleReference::ExternalModuleReference(it) => {
                 visitor.visit_ts_external_module_reference(it)
@@ -4255,7 +4254,6 @@ pub mod walk_mut {
                 visitor.visit_ts_type_name(it.to_ts_type_name_mut())
             }
         }
-        visitor.leave_node(kind);
     }
 
     #[inline]

@@ -368,7 +368,6 @@ impl AstKind<'_> {
             Self::TSConditionalType(_) => "TSConditionalType".into(),
             Self::TSMappedType(_) => "TSMappedType".into(),
             Self::TSConstructSignatureDeclaration(_) => "TSConstructSignatureDeclaration".into(),
-            Self::TSModuleReference(_) => "TSModuleReference".into(),
             Self::TSExportAssignment(_) => "TSExportAssignment".into(),
             Self::V8IntrinsicExpression(_) => "V8IntrinsicExpression".into(),
 
