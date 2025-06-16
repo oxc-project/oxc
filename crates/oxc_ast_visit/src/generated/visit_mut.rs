@@ -3530,9 +3530,11 @@ pub mod walk_mut {
 
     #[inline]
     pub fn walk_ts_tuple_type<'a, V: VisitMut<'a>>(visitor: &mut V, it: &mut TSTupleType<'a>) {
-        // No `AstType` for this type
+        let kind = AstType::TSTupleType;
+        visitor.enter_node(kind);
         visitor.visit_span(&mut it.span);
         visitor.visit_ts_tuple_elements(&mut it.element_types);
+        visitor.leave_node(kind);
     }
 
     #[inline]

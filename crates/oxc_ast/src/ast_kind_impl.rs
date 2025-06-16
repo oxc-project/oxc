@@ -308,6 +308,7 @@ impl AstKind<'_> {
 
             Self::TSModuleBlock(_) => "TSModuleBlock".into(),
 
+            Self::TSTupleType(_) => "TSTupleType".into(),
             Self::TSAnyKeyword(_) => "TSAnyKeyword".into(),
             Self::TSIntersectionType(_) => "TSIntersectionType".into(),
             Self::TSLiteralType(_) => "TSLiteralType".into(),
