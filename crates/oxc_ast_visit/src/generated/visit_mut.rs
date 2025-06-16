@@ -3499,9 +3499,11 @@ pub mod walk_mut {
         visitor: &mut V,
         it: &mut TSTypeOperator<'a>,
     ) {
-        // No `AstType` for this type
+        let kind = AstType::TSTypeOperator;
+        visitor.enter_node(kind);
         visitor.visit_span(&mut it.span);
         visitor.visit_ts_type(&mut it.type_annotation);
+        visitor.leave_node(kind);
     }
 
     #[inline]

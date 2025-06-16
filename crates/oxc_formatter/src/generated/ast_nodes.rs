@@ -148,6 +148,7 @@ pub enum AstNodes<'a> {
     TSUnionType(&'a AstNode<'a, TSUnionType<'a>>),
     TSIntersectionType(&'a AstNode<'a, TSIntersectionType<'a>>),
     TSParenthesizedType(&'a AstNode<'a, TSParenthesizedType<'a>>),
+    TSTypeOperator(&'a AstNode<'a, TSTypeOperator<'a>>),
     TSArrayType(&'a AstNode<'a, TSArrayType<'a>>),
     TSIndexedAccessType(&'a AstNode<'a, TSIndexedAccessType<'a>>),
     TSNamedTupleMember(&'a AstNode<'a, TSNamedTupleMember<'a>>),
@@ -328,6 +329,7 @@ impl<'a> AstNodes<'a> {
             Self::TSUnionType(n) => n.span(),
             Self::TSIntersectionType(n) => n.span(),
             Self::TSParenthesizedType(n) => n.span(),
+            Self::TSTypeOperator(n) => n.span(),
             Self::TSArrayType(n) => n.span(),
             Self::TSIndexedAccessType(n) => n.span(),
             Self::TSNamedTupleMember(n) => n.span(),
@@ -508,6 +510,7 @@ impl<'a> AstNodes<'a> {
             Self::TSUnionType(n) => n.parent,
             Self::TSIntersectionType(n) => n.parent,
             Self::TSParenthesizedType(n) => n.parent,
+            Self::TSTypeOperator(n) => n.parent,
             Self::TSArrayType(n) => n.parent,
             Self::TSIndexedAccessType(n) => n.parent,
             Self::TSNamedTupleMember(n) => n.parent,
@@ -688,6 +691,7 @@ impl<'a> AstNodes<'a> {
             Self::TSUnionType(_) => "TSUnionType",
             Self::TSIntersectionType(_) => "TSIntersectionType",
             Self::TSParenthesizedType(_) => "TSParenthesizedType",
+            Self::TSTypeOperator(_) => "TSTypeOperator",
             Self::TSArrayType(_) => "TSArrayType",
             Self::TSIndexedAccessType(_) => "TSIndexedAccessType",
             Self::TSNamedTupleMember(_) => "TSNamedTupleMember",
@@ -5757,9 +5761,11 @@ impl<'a> AstNode<'a, TSType<'a>> {
                 allocator: self.allocator,
             })),
             TSType::TSTypeOperatorType(s) => {
-                panic!(
-                    "No kind for current enum variant yet, please see `tasks/ast_tools/src/generators/ast_kind.rs`"
-                )
+                AstNodes::TSTypeOperator(self.allocator.alloc(AstNode {
+                    inner: s.as_ref(),
+                    parent,
+                    allocator: self.allocator,
+                }))
             }
             TSType::TSTypePredicate(s) => {
                 AstNodes::TSTypePredicate(self.allocator.alloc(AstNode {
@@ -5927,7 +5933,7 @@ impl<'a> AstNode<'a, TSTypeOperator<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.type_annotation,
             allocator: self.allocator,
-            parent: self.parent,
+            parent: self.allocator.alloc(AstNodes::TSTypeOperator(transmute_self(self))),
         })
     }
 }

@@ -332,6 +332,7 @@ impl AstKind<'_> {
             Self::TSInferType(_) => "TSInferType".into(),
             Self::TSTemplateLiteralType(_) => "TSTemplateLiteralType".into(),
             Self::TSArrayType(_) => "TSArrayType".into(),
+            Self::TSTypeOperator(_) => "TSTypeOperator".into(),
 
             Self::TSIndexedAccessType(_) => "TSIndexedAccessType".into(),
 
