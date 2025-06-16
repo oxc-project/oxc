@@ -3564,9 +3564,11 @@ pub mod walk_mut {
 
     #[inline]
     pub fn walk_ts_rest_type<'a, V: VisitMut<'a>>(visitor: &mut V, it: &mut TSRestType<'a>) {
-        // No `AstType` for this type
+        let kind = AstType::TSRestType;
+        visitor.enter_node(kind);
         visitor.visit_span(&mut it.span);
         visitor.visit_ts_type(&mut it.type_annotation);
+        visitor.leave_node(kind);
     }
 
     #[inline]
