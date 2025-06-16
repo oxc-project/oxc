@@ -10,7 +10,7 @@ use tower_lsp_server::{
     lsp_types::{self, DiagnosticRelatedInformation, DiagnosticSeverity, Uri},
 };
 
-use oxc_allocator::Allocator;
+use oxc_allocator::{Allocator, AllocatorPool};
 use oxc_linter::RuntimeFileSystem;
 use oxc_linter::{
     LINTABLE_EXTENSIONS, LintService, LintServiceOptions, Linter, MessageWithPosition,
@@ -110,6 +110,7 @@ impl IsolatedLintHandler {
                             data: None,
                         },
                         fixed_content: PossibleFixContent::None,
+                        rule_name: None,
                     });
                 }
             }
@@ -139,9 +140,11 @@ impl IsolatedLintHandler {
         .with_cross_module(self.options.use_cross_module);
 
         let mut lint_service =
-            LintService::new(&self.linter, lint_service_options).with_file_system(Box::new(
-                IsolatedLintHandlerFileSystem::new(path.to_path_buf(), source_text),
-            ));
+            LintService::new(&self.linter, AllocatorPool::default(), lint_service_options)
+                .with_file_system(Box::new(IsolatedLintHandlerFileSystem::new(
+                    path.to_path_buf(),
+                    source_text,
+                )));
         let result = lint_service.run_source(allocator);
 
         Some(result)

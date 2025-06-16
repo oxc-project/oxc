@@ -106,12 +106,14 @@ pub enum AstNodes<'a> {
     PrivateIdentifier(&'a AstNode<'a, PrivateIdentifier<'a>>),
     StaticBlock(&'a AstNode<'a, StaticBlock<'a>>),
     ModuleDeclaration(&'a AstNode<'a, ModuleDeclaration<'a>>),
+    AccessorProperty(&'a AstNode<'a, AccessorProperty<'a>>),
     ImportExpression(&'a AstNode<'a, ImportExpression<'a>>),
     ImportDeclaration(&'a AstNode<'a, ImportDeclaration<'a>>),
     ImportSpecifier(&'a AstNode<'a, ImportSpecifier<'a>>),
     ImportDefaultSpecifier(&'a AstNode<'a, ImportDefaultSpecifier<'a>>),
     ImportNamespaceSpecifier(&'a AstNode<'a, ImportNamespaceSpecifier<'a>>),
     WithClause(&'a AstNode<'a, WithClause<'a>>),
+    ImportAttribute(&'a AstNode<'a, ImportAttribute<'a>>),
     ExportNamedDeclaration(&'a AstNode<'a, ExportNamedDeclaration<'a>>),
     ExportDefaultDeclaration(&'a AstNode<'a, ExportDefaultDeclaration<'a>>),
     ExportAllDeclaration(&'a AstNode<'a, ExportAllDeclaration<'a>>),
@@ -148,8 +150,13 @@ pub enum AstNodes<'a> {
     TSUnionType(&'a AstNode<'a, TSUnionType<'a>>),
     TSIntersectionType(&'a AstNode<'a, TSIntersectionType<'a>>),
     TSParenthesizedType(&'a AstNode<'a, TSParenthesizedType<'a>>),
+    TSTypeOperator(&'a AstNode<'a, TSTypeOperator<'a>>),
+    TSArrayType(&'a AstNode<'a, TSArrayType<'a>>),
     TSIndexedAccessType(&'a AstNode<'a, TSIndexedAccessType<'a>>),
+    TSTupleType(&'a AstNode<'a, TSTupleType<'a>>),
     TSNamedTupleMember(&'a AstNode<'a, TSNamedTupleMember<'a>>),
+    TSOptionalType(&'a AstNode<'a, TSOptionalType<'a>>),
+    TSRestType(&'a AstNode<'a, TSRestType<'a>>),
     TSAnyKeyword(&'a AstNode<'a, TSAnyKeyword>),
     TSStringKeyword(&'a AstNode<'a, TSStringKeyword>),
     TSBooleanKeyword(&'a AstNode<'a, TSBooleanKeyword>),
@@ -196,6 +203,7 @@ pub enum AstNodes<'a> {
     TSNonNullExpression(&'a AstNode<'a, TSNonNullExpression<'a>>),
     Decorator(&'a AstNode<'a, Decorator<'a>>),
     TSExportAssignment(&'a AstNode<'a, TSExportAssignment<'a>>),
+    TSNamespaceExportDeclaration(&'a AstNode<'a, TSNamespaceExportDeclaration<'a>>),
     TSInstantiationExpression(&'a AstNode<'a, TSInstantiationExpression<'a>>),
     JSDocNullableType(&'a AstNode<'a, JSDocNullableType<'a>>),
     JSDocNonNullableType(&'a AstNode<'a, JSDocNonNullableType<'a>>),
@@ -285,12 +293,14 @@ impl<'a> AstNodes<'a> {
             Self::PrivateIdentifier(n) => n.span(),
             Self::StaticBlock(n) => n.span(),
             Self::ModuleDeclaration(n) => n.span(),
+            Self::AccessorProperty(n) => n.span(),
             Self::ImportExpression(n) => n.span(),
             Self::ImportDeclaration(n) => n.span(),
             Self::ImportSpecifier(n) => n.span(),
             Self::ImportDefaultSpecifier(n) => n.span(),
             Self::ImportNamespaceSpecifier(n) => n.span(),
             Self::WithClause(n) => n.span(),
+            Self::ImportAttribute(n) => n.span(),
             Self::ExportNamedDeclaration(n) => n.span(),
             Self::ExportDefaultDeclaration(n) => n.span(),
             Self::ExportAllDeclaration(n) => n.span(),
@@ -327,8 +337,13 @@ impl<'a> AstNodes<'a> {
             Self::TSUnionType(n) => n.span(),
             Self::TSIntersectionType(n) => n.span(),
             Self::TSParenthesizedType(n) => n.span(),
+            Self::TSTypeOperator(n) => n.span(),
+            Self::TSArrayType(n) => n.span(),
             Self::TSIndexedAccessType(n) => n.span(),
+            Self::TSTupleType(n) => n.span(),
             Self::TSNamedTupleMember(n) => n.span(),
+            Self::TSOptionalType(n) => n.span(),
+            Self::TSRestType(n) => n.span(),
             Self::TSAnyKeyword(n) => n.span(),
             Self::TSStringKeyword(n) => n.span(),
             Self::TSBooleanKeyword(n) => n.span(),
@@ -375,6 +390,7 @@ impl<'a> AstNodes<'a> {
             Self::TSNonNullExpression(n) => n.span(),
             Self::Decorator(n) => n.span(),
             Self::TSExportAssignment(n) => n.span(),
+            Self::TSNamespaceExportDeclaration(n) => n.span(),
             Self::TSInstantiationExpression(n) => n.span(),
             Self::JSDocNullableType(n) => n.span(),
             Self::JSDocNonNullableType(n) => n.span(),
@@ -464,12 +480,14 @@ impl<'a> AstNodes<'a> {
             Self::PrivateIdentifier(n) => n.parent,
             Self::StaticBlock(n) => n.parent,
             Self::ModuleDeclaration(n) => n.parent,
+            Self::AccessorProperty(n) => n.parent,
             Self::ImportExpression(n) => n.parent,
             Self::ImportDeclaration(n) => n.parent,
             Self::ImportSpecifier(n) => n.parent,
             Self::ImportDefaultSpecifier(n) => n.parent,
             Self::ImportNamespaceSpecifier(n) => n.parent,
             Self::WithClause(n) => n.parent,
+            Self::ImportAttribute(n) => n.parent,
             Self::ExportNamedDeclaration(n) => n.parent,
             Self::ExportDefaultDeclaration(n) => n.parent,
             Self::ExportAllDeclaration(n) => n.parent,
@@ -506,8 +524,13 @@ impl<'a> AstNodes<'a> {
             Self::TSUnionType(n) => n.parent,
             Self::TSIntersectionType(n) => n.parent,
             Self::TSParenthesizedType(n) => n.parent,
+            Self::TSTypeOperator(n) => n.parent,
+            Self::TSArrayType(n) => n.parent,
             Self::TSIndexedAccessType(n) => n.parent,
+            Self::TSTupleType(n) => n.parent,
             Self::TSNamedTupleMember(n) => n.parent,
+            Self::TSOptionalType(n) => n.parent,
+            Self::TSRestType(n) => n.parent,
             Self::TSAnyKeyword(n) => n.parent,
             Self::TSStringKeyword(n) => n.parent,
             Self::TSBooleanKeyword(n) => n.parent,
@@ -554,6 +577,7 @@ impl<'a> AstNodes<'a> {
             Self::TSNonNullExpression(n) => n.parent,
             Self::Decorator(n) => n.parent,
             Self::TSExportAssignment(n) => n.parent,
+            Self::TSNamespaceExportDeclaration(n) => n.parent,
             Self::TSInstantiationExpression(n) => n.parent,
             Self::JSDocNullableType(n) => n.parent,
             Self::JSDocNonNullableType(n) => n.parent,
@@ -643,12 +667,14 @@ impl<'a> AstNodes<'a> {
             Self::PrivateIdentifier(_) => "PrivateIdentifier",
             Self::StaticBlock(_) => "StaticBlock",
             Self::ModuleDeclaration(_) => "ModuleDeclaration",
+            Self::AccessorProperty(_) => "AccessorProperty",
             Self::ImportExpression(_) => "ImportExpression",
             Self::ImportDeclaration(_) => "ImportDeclaration",
             Self::ImportSpecifier(_) => "ImportSpecifier",
             Self::ImportDefaultSpecifier(_) => "ImportDefaultSpecifier",
             Self::ImportNamespaceSpecifier(_) => "ImportNamespaceSpecifier",
             Self::WithClause(_) => "WithClause",
+            Self::ImportAttribute(_) => "ImportAttribute",
             Self::ExportNamedDeclaration(_) => "ExportNamedDeclaration",
             Self::ExportDefaultDeclaration(_) => "ExportDefaultDeclaration",
             Self::ExportAllDeclaration(_) => "ExportAllDeclaration",
@@ -685,8 +711,13 @@ impl<'a> AstNodes<'a> {
             Self::TSUnionType(_) => "TSUnionType",
             Self::TSIntersectionType(_) => "TSIntersectionType",
             Self::TSParenthesizedType(_) => "TSParenthesizedType",
+            Self::TSTypeOperator(_) => "TSTypeOperator",
+            Self::TSArrayType(_) => "TSArrayType",
             Self::TSIndexedAccessType(_) => "TSIndexedAccessType",
+            Self::TSTupleType(_) => "TSTupleType",
             Self::TSNamedTupleMember(_) => "TSNamedTupleMember",
+            Self::TSOptionalType(_) => "TSOptionalType",
+            Self::TSRestType(_) => "TSRestType",
             Self::TSAnyKeyword(_) => "TSAnyKeyword",
             Self::TSStringKeyword(_) => "TSStringKeyword",
             Self::TSBooleanKeyword(_) => "TSBooleanKeyword",
@@ -733,6 +764,7 @@ impl<'a> AstNodes<'a> {
             Self::TSNonNullExpression(_) => "TSNonNullExpression",
             Self::Decorator(_) => "Decorator",
             Self::TSExportAssignment(_) => "TSExportAssignment",
+            Self::TSNamespaceExportDeclaration(_) => "TSNamespaceExportDeclaration",
             Self::TSInstantiationExpression(_) => "TSInstantiationExpression",
             Self::JSDocNullableType(_) => "JSDocNullableType",
             Self::JSDocNonNullableType(_) => "JSDocNonNullableType",
@@ -3857,9 +3889,11 @@ impl<'a> AstNode<'a, ClassElement<'a>> {
                 }))
             }
             ClassElement::AccessorProperty(s) => {
-                panic!(
-                    "No kind for current enum variant yet, please see `tasks/ast_tools/src/generators/ast_kind.rs`"
-                )
+                AstNodes::AccessorProperty(self.allocator.alloc(AstNode {
+                    inner: s.as_ref(),
+                    parent,
+                    allocator: self.allocator,
+                }))
             }
             ClassElement::TSIndexSignature(s) => {
                 panic!(
@@ -4104,9 +4138,11 @@ impl<'a> AstNode<'a, ModuleDeclaration<'a>> {
                 }))
             }
             ModuleDeclaration::TSNamespaceExportDeclaration(s) => {
-                panic!(
-                    "No kind for current enum variant yet, please see `tasks/ast_tools/src/generators/ast_kind.rs`"
-                )
+                AstNodes::TSNamespaceExportDeclaration(self.allocator.alloc(AstNode {
+                    inner: s.as_ref(),
+                    parent,
+                    allocator: self.allocator,
+                }))
             }
         };
         self.allocator.alloc(node)
@@ -4135,7 +4171,7 @@ impl<'a> AstNode<'a, AccessorProperty<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.decorators,
             allocator: self.allocator,
-            parent: self.parent,
+            parent: self.allocator.alloc(AstNodes::AccessorProperty(transmute_self(self))),
         })
     }
 
@@ -4144,7 +4180,7 @@ impl<'a> AstNode<'a, AccessorProperty<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.key,
             allocator: self.allocator,
-            parent: self.parent,
+            parent: self.allocator.alloc(AstNodes::AccessorProperty(transmute_self(self))),
         })
     }
 
@@ -4154,7 +4190,7 @@ impl<'a> AstNode<'a, AccessorProperty<'a>> {
             .alloc(self.inner.type_annotation.as_ref().map(|inner| AstNode {
                 inner: inner.as_ref(),
                 allocator: self.allocator,
-                parent: self.parent,
+                parent: self.allocator.alloc(AstNodes::AccessorProperty(transmute_self(self))),
             }))
             .as_ref()
     }
@@ -4165,7 +4201,7 @@ impl<'a> AstNode<'a, AccessorProperty<'a>> {
             .alloc(self.inner.value.as_ref().map(|inner| AstNode {
                 inner,
                 allocator: self.allocator,
-                parent: self.parent,
+                parent: self.allocator.alloc(AstNodes::AccessorProperty(transmute_self(self))),
             }))
             .as_ref()
     }
@@ -4405,7 +4441,7 @@ impl<'a> AstNode<'a, ImportAttribute<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.key,
             allocator: self.allocator,
-            parent: self.parent,
+            parent: self.allocator.alloc(AstNodes::ImportAttribute(transmute_self(self))),
         })
     }
 
@@ -4414,7 +4450,7 @@ impl<'a> AstNode<'a, ImportAttribute<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.value,
             allocator: self.allocator,
-            parent: self.parent,
+            parent: self.allocator.alloc(AstNodes::ImportAttribute(transmute_self(self))),
         })
     }
 }
@@ -5667,11 +5703,11 @@ impl<'a> AstNode<'a, TSType<'a>> {
                 parent,
                 allocator: self.allocator,
             })),
-            TSType::TSArrayType(s) => {
-                panic!(
-                    "No kind for current enum variant yet, please see `tasks/ast_tools/src/generators/ast_kind.rs`"
-                )
-            }
+            TSType::TSArrayType(s) => AstNodes::TSArrayType(self.allocator.alloc(AstNode {
+                inner: s.as_ref(),
+                parent,
+                allocator: self.allocator,
+            })),
             TSType::TSConditionalType(s) => {
                 AstNodes::TSConditionalType(self.allocator.alloc(AstNode {
                     inner: s.as_ref(),
@@ -5742,20 +5778,22 @@ impl<'a> AstNode<'a, TSType<'a>> {
                 parent,
                 allocator: self.allocator,
             })),
-            TSType::TSTupleType(s) => {
-                panic!(
-                    "No kind for current enum variant yet, please see `tasks/ast_tools/src/generators/ast_kind.rs`"
-                )
-            }
+            TSType::TSTupleType(s) => AstNodes::TSTupleType(self.allocator.alloc(AstNode {
+                inner: s.as_ref(),
+                parent,
+                allocator: self.allocator,
+            })),
             TSType::TSTypeLiteral(s) => AstNodes::TSTypeLiteral(self.allocator.alloc(AstNode {
                 inner: s.as_ref(),
                 parent,
                 allocator: self.allocator,
             })),
             TSType::TSTypeOperatorType(s) => {
-                panic!(
-                    "No kind for current enum variant yet, please see `tasks/ast_tools/src/generators/ast_kind.rs`"
-                )
+                AstNodes::TSTypeOperator(self.allocator.alloc(AstNode {
+                    inner: s.as_ref(),
+                    parent,
+                    allocator: self.allocator,
+                }))
             }
             TSType::TSTypePredicate(s) => {
                 AstNodes::TSTypePredicate(self.allocator.alloc(AstNode {
@@ -5923,7 +5961,7 @@ impl<'a> AstNode<'a, TSTypeOperator<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.type_annotation,
             allocator: self.allocator,
-            parent: self.parent,
+            parent: self.allocator.alloc(AstNodes::TSTypeOperator(transmute_self(self))),
         })
     }
 }
@@ -5938,7 +5976,7 @@ impl<'a> AstNode<'a, TSArrayType<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.element_type,
             allocator: self.allocator,
-            parent: self.parent,
+            parent: self.allocator.alloc(AstNodes::TSArrayType(transmute_self(self))),
         })
     }
 }
@@ -5977,7 +6015,7 @@ impl<'a> AstNode<'a, TSTupleType<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.element_types,
             allocator: self.allocator,
-            parent: self.parent,
+            parent: self.allocator.alloc(AstNodes::TSTupleType(transmute_self(self))),
         })
     }
 }
@@ -6021,7 +6059,7 @@ impl<'a> AstNode<'a, TSOptionalType<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.type_annotation,
             allocator: self.allocator,
-            parent: self.parent,
+            parent: self.allocator.alloc(AstNodes::TSOptionalType(transmute_self(self))),
         })
     }
 }
@@ -6036,7 +6074,7 @@ impl<'a> AstNode<'a, TSRestType<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.type_annotation,
             allocator: self.allocator,
-            parent: self.parent,
+            parent: self.allocator.alloc(AstNodes::TSRestType(transmute_self(self))),
         })
     }
 }
@@ -6047,15 +6085,17 @@ impl<'a> AstNode<'a, TSTupleElement<'a>> {
         let parent = self.parent;
         let node = match self.inner {
             TSTupleElement::TSOptionalType(s) => {
-                panic!(
-                    "No kind for current enum variant yet, please see `tasks/ast_tools/src/generators/ast_kind.rs`"
-                )
+                AstNodes::TSOptionalType(self.allocator.alloc(AstNode {
+                    inner: s.as_ref(),
+                    parent,
+                    allocator: self.allocator,
+                }))
             }
-            TSTupleElement::TSRestType(s) => {
-                panic!(
-                    "No kind for current enum variant yet, please see `tasks/ast_tools/src/generators/ast_kind.rs`"
-                )
-            }
+            TSTupleElement::TSRestType(s) => AstNodes::TSRestType(self.allocator.alloc(AstNode {
+                inner: s.as_ref(),
+                parent,
+                allocator: self.allocator,
+            })),
             it @ match_ts_type!(TSTupleElement) => {
                 return self
                     .allocator
@@ -7485,7 +7525,9 @@ impl<'a> AstNode<'a, TSNamespaceExportDeclaration<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.id,
             allocator: self.allocator,
-            parent: self.parent,
+            parent: self
+                .allocator
+                .alloc(AstNodes::TSNamespaceExportDeclaration(transmute_self(self))),
         })
     }
 }

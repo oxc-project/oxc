@@ -2097,7 +2097,6 @@ pub struct MethodDefinition<'a> {
     /// This will always be true when an `abstract` modifier is used on the method.
     pub r#type: MethodDefinitionType,
     pub decorators: Vec<'a, Decorator<'a>>,
-    #[estree(via = MethodDefinitionKey)]
     pub key: PropertyKey<'a>,
     #[visit(args(flags = match self.kind {
         MethodDefinitionKind::Get => ScopeFlags::Function | ScopeFlags::GetAccessor,

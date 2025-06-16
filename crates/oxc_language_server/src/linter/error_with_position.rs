@@ -15,6 +15,7 @@ const LSP_MAX_INT: u32 = 2u32.pow(31) - 1;
 pub struct DiagnosticReport {
     pub diagnostic: lsp_types::Diagnostic,
     pub fixed_content: PossibleFixContent,
+    pub rule_name: Option<String>,
 }
 
 #[derive(Debug, Clone)]
@@ -145,5 +146,6 @@ pub fn message_with_position_to_lsp_diagnostic_report(
                 fixes.iter().map(fix_with_position_to_fix_content).collect(),
             ),
         },
+        rule_name: message.code.number.as_ref().map(std::string::ToString::to_string),
     }
 }

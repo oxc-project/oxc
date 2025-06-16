@@ -2645,7 +2645,8 @@ pub mod walk {
 
     #[inline]
     pub fn walk_accessor_property<'a, V: Visit<'a>>(visitor: &mut V, it: &AccessorProperty<'a>) {
-        // No `AstKind` for this type
+        let kind = AstKind::AccessorProperty(visitor.alloc(it));
+        visitor.enter_node(kind);
         visitor.visit_span(&it.span);
         visitor.visit_decorators(&it.decorators);
         visitor.visit_property_key(&it.key);
@@ -2655,6 +2656,7 @@ pub mod walk {
         if let Some(value) = &it.value {
             visitor.visit_expression(value);
         }
+        visitor.leave_node(kind);
     }
 
     #[inline]
@@ -2747,10 +2749,12 @@ pub mod walk {
 
     #[inline]
     pub fn walk_import_attribute<'a, V: Visit<'a>>(visitor: &mut V, it: &ImportAttribute<'a>) {
-        // No `AstKind` for this type
+        let kind = AstKind::ImportAttribute(visitor.alloc(it));
+        visitor.enter_node(kind);
         visitor.visit_span(&it.span);
         visitor.visit_import_attribute_key(&it.key);
         visitor.visit_string_literal(&it.value);
+        visitor.leave_node(kind);
     }
 
     #[inline]
@@ -3332,16 +3336,20 @@ pub mod walk {
 
     #[inline]
     pub fn walk_ts_type_operator<'a, V: Visit<'a>>(visitor: &mut V, it: &TSTypeOperator<'a>) {
-        // No `AstKind` for this type
+        let kind = AstKind::TSTypeOperator(visitor.alloc(it));
+        visitor.enter_node(kind);
         visitor.visit_span(&it.span);
         visitor.visit_ts_type(&it.type_annotation);
+        visitor.leave_node(kind);
     }
 
     #[inline]
     pub fn walk_ts_array_type<'a, V: Visit<'a>>(visitor: &mut V, it: &TSArrayType<'a>) {
-        // No `AstKind` for this type
+        let kind = AstKind::TSArrayType(visitor.alloc(it));
+        visitor.enter_node(kind);
         visitor.visit_span(&it.span);
         visitor.visit_ts_type(&it.element_type);
+        visitor.leave_node(kind);
     }
 
     #[inline]
@@ -3359,9 +3367,11 @@ pub mod walk {
 
     #[inline]
     pub fn walk_ts_tuple_type<'a, V: Visit<'a>>(visitor: &mut V, it: &TSTupleType<'a>) {
-        // No `AstKind` for this type
+        let kind = AstKind::TSTupleType(visitor.alloc(it));
+        visitor.enter_node(kind);
         visitor.visit_span(&it.span);
         visitor.visit_ts_tuple_elements(&it.element_types);
+        visitor.leave_node(kind);
     }
 
     #[inline]
@@ -3379,16 +3389,20 @@ pub mod walk {
 
     #[inline]
     pub fn walk_ts_optional_type<'a, V: Visit<'a>>(visitor: &mut V, it: &TSOptionalType<'a>) {
-        // No `AstKind` for this type
+        let kind = AstKind::TSOptionalType(visitor.alloc(it));
+        visitor.enter_node(kind);
         visitor.visit_span(&it.span);
         visitor.visit_ts_type(&it.type_annotation);
+        visitor.leave_node(kind);
     }
 
     #[inline]
     pub fn walk_ts_rest_type<'a, V: Visit<'a>>(visitor: &mut V, it: &TSRestType<'a>) {
-        // No `AstKind` for this type
+        let kind = AstKind::TSRestType(visitor.alloc(it));
+        visitor.enter_node(kind);
         visitor.visit_span(&it.span);
         visitor.visit_ts_type(&it.type_annotation);
+        visitor.leave_node(kind);
     }
 
     #[inline]
@@ -4082,9 +4096,11 @@ pub mod walk {
         visitor: &mut V,
         it: &TSNamespaceExportDeclaration<'a>,
     ) {
-        // No `AstKind` for this type
+        let kind = AstKind::TSNamespaceExportDeclaration(visitor.alloc(it));
+        visitor.enter_node(kind);
         visitor.visit_span(&it.span);
         visitor.visit_identifier_name(&it.id);
+        visitor.leave_node(kind);
     }
 
     #[inline]

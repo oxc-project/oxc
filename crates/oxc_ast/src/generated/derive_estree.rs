@@ -1784,7 +1784,7 @@ impl ESTree for MethodDefinition<'_> {
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
         state.serialize_field("decorators", &self.decorators);
-        state.serialize_field("key", &crate::serialize::js::MethodDefinitionKey(self));
+        state.serialize_field("key", &self.key);
         state.serialize_field("value", &self.value);
         state.serialize_field("kind", &self.kind);
         state.serialize_field("computed", &self.computed);

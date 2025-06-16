@@ -70,34 +70,31 @@ impl Rule for NoInnerDeclarations {
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        let kind = node.kind();
-        let span = match kind {
-            AstKind::VariableDeclaration(decl)
-                if decl.kind.is_var() && self.config == NoInnerDeclarationsConfig::Both =>
-            {
-                Span::sized(decl.span.start, 3) // 3 for "var".len()
+        match node.kind() {
+            AstKind::VariableDeclaration(decl) => {
+                if self.config == NoInnerDeclarationsConfig::Functions || !decl.kind.is_var() {
+                    return;
+                }
             }
-            AstKind::Function(func) if func.is_function_declaration() => {
-                Span::sized(func.span.start, 8) // 8 for "function".len()
+            AstKind::Function(func) => {
+                if !func.is_function_declaration() {
+                    return;
+                }
             }
             _ => return,
-        };
-
-        let parent_node = ctx.nodes().parent_node(node.id()).unwrap();
-        match parent_node.kind() {
-            AstKind::Program(_)
-            | AstKind::FunctionBody(_)
-            | AstKind::StaticBlock(_)
-            | AstKind::ExportNamedDeclaration(_)
-            | AstKind::ExportDefaultDeclaration(_) => return,
-            _ => {}
         }
 
-        let decl_type = match node.kind() {
-            AstKind::VariableDeclaration(_) => "variable",
-            AstKind::Function(_) => "function",
-            _ => unreachable!(),
-        };
+        let parent_node = ctx.nodes().parent_node(node.id()).unwrap();
+        if matches!(
+            parent_node.kind(),
+            AstKind::Program(_)
+                | AstKind::FunctionBody(_)
+                | AstKind::StaticBlock(_)
+                | AstKind::ExportNamedDeclaration(_)
+                | AstKind::ExportDefaultDeclaration(_)
+        ) {
+            return;
+        }
 
         let mut body = "program";
         let mut parent = ctx.nodes().parent_node(parent_node.id());
@@ -115,6 +112,18 @@ impl Rule for NoInnerDeclarations {
                 _ => parent = ctx.nodes().parent_node(parent_node.id()),
             }
         }
+
+        let (decl_type, span) = match node.kind() {
+            AstKind::VariableDeclaration(decl) => {
+                let span = Span::sized(decl.span.start, 3); // 3 for "var".len()
+                ("variable", span)
+            }
+            AstKind::Function(func) => {
+                let span = Span::sized(func.span.start, 8); // 8 for "function".len()
+                ("function", span)
+            }
+            _ => unreachable!(),
+        };
 
         ctx.diagnostic(no_inner_declarations_diagnostic(decl_type, body, span));
     }

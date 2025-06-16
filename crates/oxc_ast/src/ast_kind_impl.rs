@@ -204,6 +204,8 @@ impl AstKind<'_> {
             Self::MetaProperty(_) => "MetaProperty".into(),
             Self::Super(_) => "Super".into(),
 
+            Self::AccessorProperty(_) => "AccessorProperty".into(),
+
             Self::ArrayExpression(_) => "ArrayExpression".into(),
             Self::ArrowFunctionExpression(_) => "ArrowFunctionExpression".into(),
             Self::AssignmentExpression(_) => "AssignmentExpression".into(),
@@ -286,6 +288,7 @@ impl AstKind<'_> {
             Self::ExportSpecifier(e) => format!("ExportSpecifier({})", e.local.name()).into(),
             Self::ImportDefaultSpecifier(_) => "ImportDefaultSpecifier".into(),
             Self::ImportNamespaceSpecifier(_) => "ImportNamespaceSpecifier".into(),
+            Self::ImportAttribute(_) => "ImportAttribute".into(),
             Self::ExportDefaultDeclaration(_) => "ExportDefaultDeclaration".into(),
             Self::ExportNamedDeclaration(_) => "ExportNamedDeclaration".into(),
             Self::ExportAllDeclaration(_) => "ExportAllDeclaration".into(),
@@ -308,6 +311,7 @@ impl AstKind<'_> {
 
             Self::TSModuleBlock(_) => "TSModuleBlock".into(),
 
+            Self::TSTupleType(_) => "TSTupleType".into(),
             Self::TSAnyKeyword(_) => "TSAnyKeyword".into(),
             Self::TSIntersectionType(_) => "TSIntersectionType".into(),
             Self::TSLiteralType(_) => "TSLiteralType".into(),
@@ -331,8 +335,13 @@ impl AstKind<'_> {
             Self::TSUnknownKeyword(_) => "TSUnknownKeyword".into(),
             Self::TSInferType(_) => "TSInferType".into(),
             Self::TSTemplateLiteralType(_) => "TSTemplateLiteralType".into(),
+            Self::TSArrayType(_) => "TSArrayType".into(),
+            Self::TSOptionalType(_) => "TSOptionalType".into(),
+            Self::TSTypeOperator(_) => "TSTypeOperator".into(),
 
             Self::TSIndexedAccessType(_) => "TSIndexedAccessType".into(),
+
+            Self::TSRestType(_) => "TSRestType".into(),
 
             Self::TSAsExpression(_) => "TSAsExpression".into(),
             Self::TSSatisfiesExpression(_) => "TSSatisfiesExpression".into(),
@@ -343,6 +352,7 @@ impl AstKind<'_> {
             Self::TSEnumBody(_) => "TSEnumBody".into(),
             Self::TSEnumMember(_) => "TSEnumMember".into(),
 
+            Self::TSNamespaceExportDeclaration(_) => "TSNamespaceExportDeclaration".into(),
             Self::TSImportEqualsDeclaration(_) => "TSImportEqualsDeclaration".into(),
             Self::TSCallSignatureDeclaration(_) => "TSCallSignatureDeclaration".into(),
             Self::TSTypeName(n) => format!("TSTypeName({n})").into(),
