@@ -140,9 +140,10 @@ impl<'a> ParserImpl<'a> {
             self.bump_any();
             if self.at(Kind::Dot) {
                 // `type something = intrinsic. ...`
-                let intrinsic_ident = self
-                    .ast
-                    .alloc_identifier_reference(intrinsic_token.span(), Kind::Intrinsic.to_str());
+                let intrinsic_ident = self.ast.alloc_identifier_reference(
+                    intrinsic_token.span(),
+                    self.token_source(&intrinsic_token),
+                );
                 let type_name = self.parse_ts_qualified_type_name(
                     intrinsic_token.start(),
                     TSTypeName::IdentifierReference(intrinsic_ident),
