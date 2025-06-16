@@ -45,7 +45,6 @@ const STRUCTS_BLACK_LIST: &[&str] = &[
     "TSRestType",
     "TSInterfaceBody",
     "TSIndexSignature",
-    "TSCallSignatureDeclaration",
     "TSIndexSignatureName",
     "TSTypePredicate",
     "TSFunctionType",
