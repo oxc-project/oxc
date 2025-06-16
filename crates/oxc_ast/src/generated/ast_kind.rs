@@ -175,15 +175,14 @@ pub enum AstType {
     TSSatisfiesExpression = 159,
     TSTypeAssertion = 160,
     TSImportEqualsDeclaration = 161,
-    TSModuleReference = 162,
-    TSExternalModuleReference = 163,
-    TSNonNullExpression = 164,
-    Decorator = 165,
-    TSExportAssignment = 166,
-    TSInstantiationExpression = 167,
-    JSDocNullableType = 168,
-    JSDocNonNullableType = 169,
-    JSDocUnknownType = 170,
+    TSExternalModuleReference = 162,
+    TSNonNullExpression = 163,
+    Decorator = 164,
+    TSExportAssignment = 165,
+    TSInstantiationExpression = 166,
+    JSDocNullableType = 167,
+    JSDocNonNullableType = 168,
+    JSDocUnknownType = 169,
 }
 
 /// Untyped AST Node Kind
@@ -363,7 +362,6 @@ pub enum AstKind<'a> {
     TSTypeAssertion(&'a TSTypeAssertion<'a>) = AstType::TSTypeAssertion as u8,
     TSImportEqualsDeclaration(&'a TSImportEqualsDeclaration<'a>) =
         AstType::TSImportEqualsDeclaration as u8,
-    TSModuleReference(&'a TSModuleReference<'a>) = AstType::TSModuleReference as u8,
     TSExternalModuleReference(&'a TSExternalModuleReference<'a>) =
         AstType::TSExternalModuleReference as u8,
     TSNonNullExpression(&'a TSNonNullExpression<'a>) = AstType::TSNonNullExpression as u8,
@@ -553,7 +551,6 @@ impl GetSpan for AstKind<'_> {
             Self::TSSatisfiesExpression(it) => it.span(),
             Self::TSTypeAssertion(it) => it.span(),
             Self::TSImportEqualsDeclaration(it) => it.span(),
-            Self::TSModuleReference(it) => it.span(),
             Self::TSExternalModuleReference(it) => it.span(),
             Self::TSNonNullExpression(it) => it.span(),
             Self::Decorator(it) => it.span(),
@@ -1379,11 +1376,6 @@ impl<'a> AstKind<'a> {
     #[inline]
     pub fn as_ts_import_equals_declaration(self) -> Option<&'a TSImportEqualsDeclaration<'a>> {
         if let Self::TSImportEqualsDeclaration(v) = self { Some(v) } else { None }
-    }
-
-    #[inline]
-    pub fn as_ts_module_reference(self) -> Option<&'a TSModuleReference<'a>> {
-        if let Self::TSModuleReference(v) = self { Some(v) } else { None }
     }
 
     #[inline]

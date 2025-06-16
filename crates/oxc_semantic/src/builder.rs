@@ -2041,7 +2041,7 @@ impl<'a> SemanticBuilder<'a> {
                     Some(
                         // import A = a;
                         //            ^
-                        AstKind::TSModuleReference(_),
+                        AstKind::TSImportEqualsDeclaration(_),
                     ) => {
                         self.current_reference_flags = ReferenceFlags::Read;
                     }
