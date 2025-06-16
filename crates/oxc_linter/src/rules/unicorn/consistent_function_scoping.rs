@@ -298,11 +298,6 @@ impl Rule for ConsistentFunctionScoping {
             function_name,
         ));
     }
-
-    fn should_run(&self, ctx: &crate::context::ContextHost) -> bool {
-        // .d.ts files are never run, so there are no perf considerations for them.
-        !ctx.source_type().is_typescript_definition()
-    }
 }
 
 #[derive(Default)]
