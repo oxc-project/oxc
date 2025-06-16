@@ -2859,10 +2859,12 @@ pub mod walk_mut {
         visitor: &mut V,
         it: &mut ImportAttribute<'a>,
     ) {
-        // No `AstType` for this type
+        let kind = AstType::ImportAttribute;
+        visitor.enter_node(kind);
         visitor.visit_span(&mut it.span);
         visitor.visit_import_attribute_key(&mut it.key);
         visitor.visit_string_literal(&mut it.value);
+        visitor.leave_node(kind);
     }
 
     #[inline]

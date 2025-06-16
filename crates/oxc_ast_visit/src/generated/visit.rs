@@ -2749,10 +2749,12 @@ pub mod walk {
 
     #[inline]
     pub fn walk_import_attribute<'a, V: Visit<'a>>(visitor: &mut V, it: &ImportAttribute<'a>) {
-        // No `AstKind` for this type
+        let kind = AstKind::ImportAttribute(visitor.alloc(it));
+        visitor.enter_node(kind);
         visitor.visit_span(&it.span);
         visitor.visit_import_attribute_key(&it.key);
         visitor.visit_string_literal(&it.value);
+        visitor.leave_node(kind);
     }
 
     #[inline]

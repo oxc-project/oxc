@@ -113,6 +113,7 @@ pub enum AstNodes<'a> {
     ImportDefaultSpecifier(&'a AstNode<'a, ImportDefaultSpecifier<'a>>),
     ImportNamespaceSpecifier(&'a AstNode<'a, ImportNamespaceSpecifier<'a>>),
     WithClause(&'a AstNode<'a, WithClause<'a>>),
+    ImportAttribute(&'a AstNode<'a, ImportAttribute<'a>>),
     ExportNamedDeclaration(&'a AstNode<'a, ExportNamedDeclaration<'a>>),
     ExportDefaultDeclaration(&'a AstNode<'a, ExportDefaultDeclaration<'a>>),
     ExportAllDeclaration(&'a AstNode<'a, ExportAllDeclaration<'a>>),
@@ -299,6 +300,7 @@ impl<'a> AstNodes<'a> {
             Self::ImportDefaultSpecifier(n) => n.span(),
             Self::ImportNamespaceSpecifier(n) => n.span(),
             Self::WithClause(n) => n.span(),
+            Self::ImportAttribute(n) => n.span(),
             Self::ExportNamedDeclaration(n) => n.span(),
             Self::ExportDefaultDeclaration(n) => n.span(),
             Self::ExportAllDeclaration(n) => n.span(),
@@ -485,6 +487,7 @@ impl<'a> AstNodes<'a> {
             Self::ImportDefaultSpecifier(n) => n.parent,
             Self::ImportNamespaceSpecifier(n) => n.parent,
             Self::WithClause(n) => n.parent,
+            Self::ImportAttribute(n) => n.parent,
             Self::ExportNamedDeclaration(n) => n.parent,
             Self::ExportDefaultDeclaration(n) => n.parent,
             Self::ExportAllDeclaration(n) => n.parent,
@@ -671,6 +674,7 @@ impl<'a> AstNodes<'a> {
             Self::ImportDefaultSpecifier(_) => "ImportDefaultSpecifier",
             Self::ImportNamespaceSpecifier(_) => "ImportNamespaceSpecifier",
             Self::WithClause(_) => "WithClause",
+            Self::ImportAttribute(_) => "ImportAttribute",
             Self::ExportNamedDeclaration(_) => "ExportNamedDeclaration",
             Self::ExportDefaultDeclaration(_) => "ExportDefaultDeclaration",
             Self::ExportAllDeclaration(_) => "ExportAllDeclaration",
@@ -4437,7 +4441,7 @@ impl<'a> AstNode<'a, ImportAttribute<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.key,
             allocator: self.allocator,
-            parent: self.parent,
+            parent: self.allocator.alloc(AstNodes::ImportAttribute(transmute_self(self))),
         })
     }
 
@@ -4446,7 +4450,7 @@ impl<'a> AstNode<'a, ImportAttribute<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.value,
             allocator: self.allocator,
-            parent: self.parent,
+            parent: self.allocator.alloc(AstNodes::ImportAttribute(transmute_self(self))),
         })
     }
 }
