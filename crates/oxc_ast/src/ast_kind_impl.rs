@@ -338,6 +338,8 @@ impl AstKind<'_> {
 
             Self::TSIndexedAccessType(_) => "TSIndexedAccessType".into(),
 
+            Self::TSRestType(_) => "TSRestType".into(),
+
             Self::TSAsExpression(_) => "TSAsExpression".into(),
             Self::TSSatisfiesExpression(_) => "TSSatisfiesExpression".into(),
             Self::TSNonNullExpression(_) => "TSNonNullExpression".into(),

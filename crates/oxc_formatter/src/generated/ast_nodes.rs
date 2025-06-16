@@ -154,6 +154,7 @@ pub enum AstNodes<'a> {
     TSTupleType(&'a AstNode<'a, TSTupleType<'a>>),
     TSNamedTupleMember(&'a AstNode<'a, TSNamedTupleMember<'a>>),
     TSOptionalType(&'a AstNode<'a, TSOptionalType<'a>>),
+    TSRestType(&'a AstNode<'a, TSRestType<'a>>),
     TSAnyKeyword(&'a AstNode<'a, TSAnyKeyword>),
     TSStringKeyword(&'a AstNode<'a, TSStringKeyword>),
     TSBooleanKeyword(&'a AstNode<'a, TSBooleanKeyword>),
@@ -337,6 +338,7 @@ impl<'a> AstNodes<'a> {
             Self::TSTupleType(n) => n.span(),
             Self::TSNamedTupleMember(n) => n.span(),
             Self::TSOptionalType(n) => n.span(),
+            Self::TSRestType(n) => n.span(),
             Self::TSAnyKeyword(n) => n.span(),
             Self::TSStringKeyword(n) => n.span(),
             Self::TSBooleanKeyword(n) => n.span(),
@@ -520,6 +522,7 @@ impl<'a> AstNodes<'a> {
             Self::TSTupleType(n) => n.parent,
             Self::TSNamedTupleMember(n) => n.parent,
             Self::TSOptionalType(n) => n.parent,
+            Self::TSRestType(n) => n.parent,
             Self::TSAnyKeyword(n) => n.parent,
             Self::TSStringKeyword(n) => n.parent,
             Self::TSBooleanKeyword(n) => n.parent,
@@ -703,6 +706,7 @@ impl<'a> AstNodes<'a> {
             Self::TSTupleType(_) => "TSTupleType",
             Self::TSNamedTupleMember(_) => "TSNamedTupleMember",
             Self::TSOptionalType(_) => "TSOptionalType",
+            Self::TSRestType(_) => "TSRestType",
             Self::TSAnyKeyword(_) => "TSAnyKeyword",
             Self::TSStringKeyword(_) => "TSStringKeyword",
             Self::TSBooleanKeyword(_) => "TSBooleanKeyword",
@@ -6054,7 +6058,7 @@ impl<'a> AstNode<'a, TSRestType<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.type_annotation,
             allocator: self.allocator,
-            parent: self.parent,
+            parent: self.allocator.alloc(AstNodes::TSRestType(transmute_self(self))),
         })
     }
 }
@@ -6071,11 +6075,11 @@ impl<'a> AstNode<'a, TSTupleElement<'a>> {
                     allocator: self.allocator,
                 }))
             }
-            TSTupleElement::TSRestType(s) => {
-                panic!(
-                    "No kind for current enum variant yet, please see `tasks/ast_tools/src/generators/ast_kind.rs`"
-                )
-            }
+            TSTupleElement::TSRestType(s) => AstNodes::TSRestType(self.allocator.alloc(AstNode {
+                inner: s.as_ref(),
+                parent,
+                allocator: self.allocator,
+            })),
             it @ match_ts_type!(TSTupleElement) => {
                 return self
                     .allocator
