@@ -168,7 +168,7 @@ bpaf = "0.9.20"
 # `Allocator::from_raw_parts` (used in raw transfer) depends on internal implementation details
 # of `bumpalo` which may change in a future version.
 # This is a temporary situation - we'll replace `bumpalo` with our own allocator.
-bumpalo = "=3.17.0"
+bumpalo = "=3.18.1"
 compact_str = "0.9.0"
 console = "0.15.11"
 constcat = "0.6.1"
@@ -214,7 +214,7 @@ rayon = "1.10.0"
 ropey = "1.6.1"
 rust-lapper = "1.1.0"
 ryu-js = "1.0.2"
-saphyr = "0.0.4"
+saphyr = "0.0.6"
 schemars = { package = "oxc-schemars", version = "0.8.25" }
 self_cell = "1.2.0"
 seq-macro = "0.3.6"
