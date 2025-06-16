@@ -1,5 +1,8 @@
-use std::mem::ManuallyDrop;
-use std::sync::{Arc, Mutex};
+use std::{
+    mem::ManuallyDrop,
+    ops::{Deref, DerefMut},
+    sync::{Arc, Mutex},
+};
 
 use crate::Allocator;
 
@@ -9,14 +12,6 @@ use crate::Allocator;
 #[derive(Default)]
 pub struct AllocatorPool {
     allocators: Arc<Mutex<Vec<Allocator>>>,
-}
-
-/// A guard object representing exclusive access to an `Allocator` from the pool.
-///
-/// On drop, the `Allocator` is reset and returned to the pool.
-pub struct AllocatorGuard {
-    allocator: ManuallyDrop<Allocator>,
-    pool: Arc<Mutex<Vec<Allocator>>>,
 }
 
 impl AllocatorPool {
@@ -46,7 +41,15 @@ impl AllocatorPool {
     }
 }
 
-impl std::ops::Deref for AllocatorGuard {
+/// A guard object representing exclusive access to an `Allocator` from the pool.
+///
+/// On drop, the `Allocator` is reset and returned to the pool.
+pub struct AllocatorGuard {
+    allocator: ManuallyDrop<Allocator>,
+    pool: Arc<Mutex<Vec<Allocator>>>,
+}
+
+impl Deref for AllocatorGuard {
     type Target = Allocator;
 
     fn deref(&self) -> &Self::Target {
@@ -54,7 +57,7 @@ impl std::ops::Deref for AllocatorGuard {
     }
 }
 
-impl std::ops::DerefMut for AllocatorGuard {
+impl DerefMut for AllocatorGuard {
     fn deref_mut(&mut self) -> &mut Self::Target {
         &mut self.allocator
     }
