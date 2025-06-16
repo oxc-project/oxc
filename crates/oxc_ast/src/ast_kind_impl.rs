@@ -334,6 +334,7 @@ impl AstKind<'_> {
             Self::TSTemplateLiteralType(_) => "TSTemplateLiteralType".into(),
             Self::TSArrayType(_) => "TSArrayType".into(),
             Self::TSTypeOperator(_) => "TSTypeOperator".into(),
+            Self::TSTupleType(_) => "TSTupleType".into(),
 
             Self::TSIndexedAccessType(_) => "TSIndexedAccessType".into(),
 
