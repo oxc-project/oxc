@@ -2645,7 +2645,8 @@ pub mod walk {
 
     #[inline]
     pub fn walk_accessor_property<'a, V: Visit<'a>>(visitor: &mut V, it: &AccessorProperty<'a>) {
-        // No `AstKind` for this type
+        let kind = AstKind::AccessorProperty(visitor.alloc(it));
+        visitor.enter_node(kind);
         visitor.visit_span(&it.span);
         visitor.visit_decorators(&it.decorators);
         visitor.visit_property_key(&it.key);
@@ -2655,6 +2656,7 @@ pub mod walk {
         if let Some(value) = &it.value {
             visitor.visit_expression(value);
         }
+        visitor.leave_node(kind);
     }
 
     #[inline]

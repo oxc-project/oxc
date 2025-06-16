@@ -204,6 +204,8 @@ impl AstKind<'_> {
             Self::MetaProperty(_) => "MetaProperty".into(),
             Self::Super(_) => "Super".into(),
 
+            Self::AccessorProperty(_) => "AccessorProperty".into(),
+
             Self::ArrayExpression(_) => "ArrayExpression".into(),
             Self::ArrowFunctionExpression(_) => "ArrowFunctionExpression".into(),
             Self::AssignmentExpression(_) => "AssignmentExpression".into(),
