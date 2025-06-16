@@ -2846,10 +2846,12 @@ pub mod walk_mut {
 
     #[inline]
     pub fn walk_with_clause<'a, V: VisitMut<'a>>(visitor: &mut V, it: &mut WithClause<'a>) {
-        // No `AstType` for this type
+        let kind = AstType::WithClause;
+        visitor.enter_node(kind);
         visitor.visit_span(&mut it.span);
         visitor.visit_identifier_name(&mut it.attributes_keyword);
         visitor.visit_import_attributes(&mut it.with_entries);
+        visitor.leave_node(kind);
     }
 
     #[inline]
