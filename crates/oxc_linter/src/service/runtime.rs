@@ -15,7 +15,7 @@ use rustc_hash::{FxBuildHasher, FxHashMap, FxHashSet};
 use self_cell::self_cell;
 use smallvec::SmallVec;
 
-use oxc_allocator::Allocator;
+use oxc_allocator::{Allocator, AllocatorGuard, AllocatorPool};
 use oxc_diagnostics::{DiagnosticSender, DiagnosticService, Error, OxcDiagnostic};
 use oxc_parser::{ParseOptions, Parser};
 use oxc_resolver::Resolver;
@@ -42,6 +42,8 @@ pub struct Runtime<'l> {
     resolver: Option<Resolver>,
 
     pub(super) file_system: Box<dyn RuntimeFileSystem + Sync + Send>,
+
+    allocator_pool: AllocatorPool,
 }
 
 /// Output of `Runtime::process_path`
@@ -95,7 +97,7 @@ unsafe impl Send for ModuleContent {}
 
 struct ModuleContentOwner {
     source_text: String,
-    allocator: Allocator,
+    allocator: AllocatorGuard,
 }
 
 /// source text and semantic for each source section. They are in the same order as `ProcessedModule.section_module_records`
@@ -160,11 +162,16 @@ impl RuntimeFileSystem for OsFileSystem {
 }
 
 impl<'l> Runtime<'l> {
-    pub(super) fn new(linter: &'l Linter, options: LintServiceOptions) -> Self {
+    pub(super) fn new(
+        linter: &'l Linter,
+        allocator_pool: AllocatorPool,
+        options: LintServiceOptions,
+    ) -> Self {
         let resolver = options.cross_module.then(|| {
             Self::get_resolver(options.tsconfig.or_else(|| Some(options.cwd.join("tsconfig.json"))))
         });
         Self {
+            allocator_pool,
             cwd: options.cwd,
             paths: options.paths.iter().cloned().collect(),
             linter,
@@ -771,7 +778,9 @@ impl<'l> Runtime<'l> {
         };
         let mut records = SmallVec::<[Result<ResolvedModuleRecord, Vec<OxcDiagnostic>>; 1]>::new();
         let mut module_content: Option<ModuleContent> = None;
-        let allocator = Allocator::default();
+
+        let allocator = self.allocator_pool.get();
+
         if self.paths.contains(path) {
             module_content =
                 Some(ModuleContent::new(ModuleContentOwner { source_text, allocator }, |owner| {

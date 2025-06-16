@@ -10,6 +10,7 @@ use std::{
 
 use cow_utils::CowUtils;
 use ignore::{gitignore::Gitignore, overrides::OverrideBuilder};
+use oxc_allocator::AllocatorPool;
 use oxc_diagnostics::{DiagnosticService, GraphicalReportHandler, OxcDiagnostic};
 use oxc_linter::{
     AllowWarnDeny, Config, ConfigStore, ConfigStoreBuilder, InvalidFilterKind, LintFilter,
@@ -290,9 +291,11 @@ impl Runner for LintRunner {
 
         let number_of_rules = linter.number_of_rules();
 
+        let allocator_pool = AllocatorPool::new(rayon::current_num_threads());
+
         // Spawn linting in another thread so diagnostics can be printed immediately from diagnostic_service.run.
         rayon::spawn(move || {
-            let mut lint_service = LintService::new(&linter, options);
+            let mut lint_service = LintService::new(&linter, allocator_pool, options);
             lint_service.run(&tx_error);
         });
 

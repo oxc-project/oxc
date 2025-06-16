@@ -2301,6 +2301,7 @@ dependencies = [
  "lazy-regex",
  "mimalloc-safe",
  "oxc-miette",
+ "oxc_allocator",
  "oxc_diagnostics",
  "oxc_linter",
  "oxc_span",
