@@ -111,10 +111,7 @@ pub fn parse_jsdoc(source_text: &str, jsdoc_span_start: u32) -> (JSDocCommentPar
         }
     }
 
-    (
-        comment.unwrap_or(JSDocCommentPart::new("", Span::new(jsdoc_span_start, jsdoc_span_start))),
-        tags,
-    )
+    (comment.unwrap_or(JSDocCommentPart::new("", Span::empty(jsdoc_span_start))), tags)
 }
 
 /// tag_content: Starts with `@`, may be multiline

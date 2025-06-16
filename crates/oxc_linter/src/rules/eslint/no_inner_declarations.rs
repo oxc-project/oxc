@@ -1,7 +1,7 @@
 use oxc_ast::AstKind;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::{GetSpan, Span};
+use oxc_span::Span;
 
 use crate::{AstNode, context::LintContext, rule::Rule};
 
@@ -90,17 +90,6 @@ impl Rule for NoInnerDeclarations {
             | AstKind::StaticBlock(_)
             | AstKind::ExportNamedDeclaration(_)
             | AstKind::ExportDefaultDeclaration(_) => return,
-            AstKind::ForStatement(for_stmt) => {
-                if for_stmt.init.as_ref().is_some_and(|init| init.span() == kind.span()) {
-                    return;
-                }
-            }
-            AstKind::ForInStatement(for_stmt) if for_stmt.left.span() == kind.span() => {
-                return;
-            }
-            AstKind::ForOfStatement(for_stmt) if for_stmt.left.span() == kind.span() => {
-                return;
-            }
             _ => {}
         }
 
@@ -167,9 +156,6 @@ fn test() {
         ("class C { method() { var x; } }", Some(serde_json::json!(["both"]))),
         ("class C { static { function foo() {} } }", Some(serde_json::json!(["both"]))),
         ("class C { static { var x; } }", Some(serde_json::json!(["both"]))),
-        ("for (var x in {}) {}", Some(serde_json::json!(["both"]))),
-        ("for (var x of []) {}", Some(serde_json::json!(["both"]))),
-        ("for (var x = 1; a < 10; a++) {}", Some(serde_json::json!(["both"]))),
         ("for (const x in {}) { let y = 5; }", Some(serde_json::json!(["both"]))),
         ("for (const x of []) { let y = 5; }", Some(serde_json::json!(["both"]))),
         ("for (const x = 1; a < 10; a++) { let y = 5; }", Some(serde_json::json!(["both"]))),
@@ -214,6 +200,9 @@ fn test() {
         ("for (const x in {}) var y = 5;", Some(serde_json::json!(["both"]))),
         ("for (const x of []) var y = 5;", Some(serde_json::json!(["both"]))),
         ("for (const x = 1; a < 10; a++) var y = 5;", Some(serde_json::json!(["both"]))),
+        ("for (var x in {}) {}", Some(serde_json::json!(["both"]))),
+        ("for (var x of []) {}", Some(serde_json::json!(["both"]))),
+        ("for (var x = 1; a < 10; a++) {}", Some(serde_json::json!(["both"]))),
     ];
 
     Tester::new(NoInnerDeclarations::NAME, NoInnerDeclarations::PLUGIN, pass, fail)

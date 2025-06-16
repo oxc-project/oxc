@@ -168,7 +168,7 @@ impl GetMethod for TSSignature<'_> {
                 r#static: false,
                 call_signature: false,
                 kind: MethodKind::Normal,
-                span: Span::new(decl.span.start, decl.span.start + 3),
+                span: Span::sized(decl.span.start, 3),
             }),
             _ => None,
         }

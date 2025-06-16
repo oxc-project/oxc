@@ -178,7 +178,7 @@ impl<'c, 'a: 'c> RuleFixer<'c, 'a> {
 
     /// Creates a fix command that inserts text at the specified index in the source text.
     fn insert_text_at(&self, index: u32, text: Cow<'a, str>) -> RuleFix<'a> {
-        let fix = Fix::new(text, Span::new(index, index));
+        let fix = Fix::new(text, Span::empty(index));
         let content = self.possibly_truncate_snippet(&fix.content);
         let message = self.auto_message.then(|| Cow::Owned(format!("Insert `{content}`")));
         self.new_fix(CompositeFix::Single(fix), message)

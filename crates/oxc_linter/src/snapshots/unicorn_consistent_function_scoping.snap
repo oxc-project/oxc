@@ -420,3 +420,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                                           ─────
    ╰────
   help: Move this function to the outer scope.
+
+  ⚠ eslint-plugin-unicorn(consistent-function-scoping): Function does not capture any variables from the outer scope.
+   ╭─[consistent_function_scoping.tsx:1:73]
+ 1 │ export namespace Foo { export function outer() { const inner = function inner() {}; } }
+   ·                                                                         ─────
+   ╰────
+  help: Move this function to the outer scope.

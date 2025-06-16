@@ -47,7 +47,7 @@ impl<'a> JSDocCommentPart<'a> {
     // It may not be perfect for multiline, but for single line, which is probably the majority, it is enough.
     pub fn span_trimmed_first_line(&self) -> Span {
         if self.raw.trim().is_empty() {
-            return Span::new(self.span.start, self.span.start);
+            return Span::empty(self.span.start);
         }
 
         let base_len = self.raw.len();

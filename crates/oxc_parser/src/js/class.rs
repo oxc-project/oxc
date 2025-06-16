@@ -218,6 +218,9 @@ impl<'a> ParserImpl<'a> {
             for decorator in decorators {
                 self.error(diagnostics::decorators_are_not_valid_here(decorator.span));
             }
+            for modifier in modifiers.iter() {
+                self.error(diagnostics::modifiers_cannot_appear_here(modifier.span));
+            }
             return self.parse_class_static_block(span);
         }
 
@@ -387,7 +390,7 @@ impl<'a> ParserImpl<'a> {
         self.check_method_definition(&method_definition);
         self.verify_modifiers(
             modifiers,
-            ModifierFlags::all() - ModifierFlags::ASYNC,
+            ModifierFlags::all() - ModifierFlags::ASYNC - ModifierFlags::DECLARE,
             diagnostics::modifier_cannot_be_used_here,
         );
         ClassElement::MethodDefinition(method_definition)

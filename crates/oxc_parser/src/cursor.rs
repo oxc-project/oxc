@@ -132,7 +132,7 @@ impl<'a> ParserImpl<'a> {
         if self.eat(Kind::Semicolon) || self.can_insert_semicolon() {
             /* no op */
         } else {
-            let span = Span::new(self.prev_token_end, self.prev_token_end);
+            let span = Span::empty(self.prev_token_end);
             let error = diagnostics::auto_semicolon_insertion(span);
             self.set_fatal_error(error);
         }

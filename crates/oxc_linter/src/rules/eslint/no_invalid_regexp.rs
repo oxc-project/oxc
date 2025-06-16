@@ -108,28 +108,28 @@ impl Rule for NoInvalidRegexp {
                 if ch == 'u' {
                     if v_flag_found {
                         return ctx
-                            .diagnostic(invalid_unicode_flags_diagnostic(Span::new(start, start)));
+                            .diagnostic(invalid_unicode_flags_diagnostic(Span::empty(start)));
                     }
                     u_flag_found = true;
                 }
                 if ch == 'v' {
                     if u_flag_found {
                         return ctx
-                            .diagnostic(invalid_unicode_flags_diagnostic(Span::new(start, start)));
+                            .diagnostic(invalid_unicode_flags_diagnostic(Span::empty(start)));
                     }
                     v_flag_found = true;
                 }
 
                 // Duplicated: user defined, invalid or valid
                 if !unique_flags.insert(ch) {
-                    return ctx.diagnostic(duplicated_flag_diagnostic(Span::new(start, start)));
+                    return ctx.diagnostic(duplicated_flag_diagnostic(Span::empty(start)));
                 }
 
                 // Unknown: not valid, not user defined
                 if !(matches!(ch, 'd' | 'g' | 'i' | 'm' | 's' | 'u' | 'v' | 'y')
                     || self.0.allow_constructor_flags.contains(&ch))
                 {
-                    return ctx.diagnostic(unknown_flag_diagnostic(Span::new(start, start)));
+                    return ctx.diagnostic(unknown_flag_diagnostic(Span::empty(start)));
                 }
             }
         }

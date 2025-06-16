@@ -408,6 +408,11 @@ pub fn ts_arrow_function_this_parameter(span: Span) -> OxcDiagnostic {
 }
 
 #[cold]
+pub fn ts_empty_type_parameter_list(span: Span) -> OxcDiagnostic {
+    ts_error("1098", "Type parameter list cannot be empty.").with_label(span)
+}
+
+#[cold]
 pub fn unexpected_super(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::error("'super' can only be used with function calls or in property accesses")
         .with_help("replace with `super()` or `super.prop` or `super[prop]`")
@@ -754,4 +759,9 @@ pub fn variable_declarator_definite_type_assertion(span: Span) -> OxcDiagnostic 
 #[cold]
 pub fn invalid_rest_assignment_target(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::error("Invalid rest operator's argument.").with_label(span)
+}
+
+#[cold]
+pub fn modifiers_cannot_appear_here(span: Span) -> OxcDiagnostic {
+    ts_error("1184", "Modifiers cannot appear here.").with_label(span)
 }

@@ -1473,8 +1473,7 @@ pub mod walk {
         visitor: &mut V,
         it: &ArrayExpressionElement<'a>,
     ) {
-        let kind = AstKind::ArrayExpressionElement(visitor.alloc(it));
-        visitor.enter_node(kind);
+        // No `AstKind` for this type
         match it {
             ArrayExpressionElement::SpreadElement(it) => visitor.visit_spread_element(it),
             ArrayExpressionElement::Elision(it) => visitor.visit_elision(it),
@@ -1482,7 +1481,6 @@ pub mod walk {
                 visitor.visit_expression(it.to_expression())
             }
         }
-        visitor.leave_node(kind);
     }
 
     #[inline]
@@ -2739,10 +2737,12 @@ pub mod walk {
 
     #[inline]
     pub fn walk_with_clause<'a, V: Visit<'a>>(visitor: &mut V, it: &WithClause<'a>) {
-        // No `AstKind` for this type
+        let kind = AstKind::WithClause(visitor.alloc(it));
+        visitor.enter_node(kind);
         visitor.visit_span(&it.span);
         visitor.visit_identifier_name(&it.attributes_keyword);
         visitor.visit_import_attributes(&it.with_entries);
+        visitor.leave_node(kind);
     }
 
     #[inline]
@@ -3685,7 +3685,8 @@ pub mod walk {
         visitor: &mut V,
         it: &TSCallSignatureDeclaration<'a>,
     ) {
-        // No `AstKind` for this type
+        let kind = AstKind::TSCallSignatureDeclaration(visitor.alloc(it));
+        visitor.enter_node(kind);
         visitor.visit_span(&it.span);
         if let Some(type_parameters) = &it.type_parameters {
             visitor.visit_ts_type_parameter_declaration(type_parameters);
@@ -3697,6 +3698,7 @@ pub mod walk {
         if let Some(return_type) = &it.return_type {
             visitor.visit_ts_type_annotation(return_type);
         }
+        visitor.leave_node(kind);
     }
 
     pub fn walk_ts_method_signature<'a, V: Visit<'a>>(visitor: &mut V, it: &TSMethodSignature<'a>) {
@@ -3744,9 +3746,11 @@ pub mod walk {
         visitor: &mut V,
         it: &TSIndexSignatureName<'a>,
     ) {
-        // No `AstKind` for this type
+        let kind = AstKind::TSIndexSignatureName(visitor.alloc(it));
+        visitor.enter_node(kind);
         visitor.visit_span(&it.span);
         visitor.visit_ts_type_annotation(&it.type_annotation);
+        visitor.leave_node(kind);
     }
 
     #[inline]
@@ -3766,12 +3770,14 @@ pub mod walk {
 
     #[inline]
     pub fn walk_ts_type_predicate<'a, V: Visit<'a>>(visitor: &mut V, it: &TSTypePredicate<'a>) {
-        // No `AstKind` for this type
+        let kind = AstKind::TSTypePredicate(visitor.alloc(it));
+        visitor.enter_node(kind);
         visitor.visit_span(&it.span);
         visitor.visit_ts_type_predicate_name(&it.parameter_name);
         if let Some(type_annotation) = &it.type_annotation {
             visitor.visit_ts_type_annotation(type_annotation);
         }
+        visitor.leave_node(kind);
     }
 
     #[inline]
@@ -4015,8 +4021,7 @@ pub mod walk {
 
     #[inline]
     pub fn walk_ts_module_reference<'a, V: Visit<'a>>(visitor: &mut V, it: &TSModuleReference<'a>) {
-        let kind = AstKind::TSModuleReference(visitor.alloc(it));
-        visitor.enter_node(kind);
+        // No `AstKind` for this type
         match it {
             TSModuleReference::ExternalModuleReference(it) => {
                 visitor.visit_ts_external_module_reference(it)
@@ -4025,7 +4030,6 @@ pub mod walk {
                 visitor.visit_ts_type_name(it.to_ts_type_name())
             }
         }
-        visitor.leave_node(kind);
     }
 
     #[inline]

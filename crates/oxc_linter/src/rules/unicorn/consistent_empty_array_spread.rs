@@ -74,7 +74,7 @@ impl Rule for ConsistentEmptyArraySpread {
             return;
         };
 
-        let AstKind::ArrayExpressionElement(_) = parent.kind() else {
+        let AstKind::ArrayExpression(_) = parent.kind() else {
             return;
         };
 

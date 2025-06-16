@@ -275,7 +275,8 @@ impl Extensions {
             || ctx.globals().is_enabled(module_name.as_str());
 
         let is_package = module_name.as_str().starts_with('@')
-            || (!module_name.as_str().starts_with('.') && !module_name.as_str()[1..].contains('/'));
+            || (!module_name.as_str().starts_with('.')
+                && !module_name.as_str().get(1..).is_some_and(|v| v.contains('/')));
 
         if is_builtin_node_module || (is_package && ignore_packages) {
             return;
@@ -486,6 +487,8 @@ fn test() {
             "#,
             Some(json!(["always", {"checkTypeImports": true}])),
         ),
+        (r"import''", None),
+        (r"export *from 'íìc'", None),
     ];
 
     let fail = vec![

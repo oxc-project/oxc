@@ -183,7 +183,7 @@ impl Rule for ConsistentTypeDefinitions {
                         consistent_type_definitions_diagnostic(
                             "type",
                             "interface",
-                            Span::new(decl.span.start, decl.span.start + 9),
+                            Span::sized(decl.span.start, 9),
                         ),
                         |fixer| {
                             fixer.replace(
@@ -229,7 +229,7 @@ impl Rule for ConsistentTypeDefinitions {
                     consistent_type_definitions_diagnostic(
                         "type",
                         "interface",
-                        Span::new(start, start + 9),
+                        Span::sized(start, 9),
                     ),
                     |fixer| {
                         fixer.replace(

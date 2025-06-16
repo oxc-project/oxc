@@ -151,10 +151,7 @@ impl<'a> ParserImpl<'a> {
 
         if ctx.has_ambient() && modifiers.contains_declare() {
             if let Some(body) = &body {
-                self.error(diagnostics::implementation_in_ambient(Span::new(
-                    body.span.start,
-                    body.span.start,
-                )));
+                self.error(diagnostics::implementation_in_ambient(Span::empty(body.span.start)));
             }
         }
         self.verify_modifiers(
@@ -303,7 +300,7 @@ impl<'a> ParserImpl<'a> {
 
         let has_yield = self.ctx.has_yield();
         if !has_yield {
-            self.error(diagnostics::yield_expression(Span::new(span, span + 5)));
+            self.error(diagnostics::yield_expression(Span::sized(span, 5)));
         }
 
         let mut delegate = false;

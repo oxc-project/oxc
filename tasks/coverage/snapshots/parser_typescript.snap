@@ -3,7 +3,7 @@ commit: 81c95189
 parser_typescript Summary:
 AST Parsed     : 6530/6537 (99.89%)
 Positive Passed: 6519/6537 (99.72%)
-Negative Passed: 1399/5763 (24.28%)
+Negative Passed: 1401/5763 (24.31%)
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/ClassDeclaration24.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/ExportAssignment7.ts
@@ -4628,8 +4628,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/classes/c
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/classes/classExpressions/classWithStaticFieldInParameterInitializer.2.ts
 
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/classes/classStaticBlock/classStaticBlock20.ts
-
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/classes/classStaticBlock/classStaticBlock23.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/classes/classStaticBlock/classStaticBlock3.ts
@@ -7357,8 +7355,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ec
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/MemberAccessorDeclarations/parserMemberAccessor1.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/MemberAccessorDeclarations/parserMemberAccessorDeclaration1.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/MemberAccessorDeclarations/parserMemberAccessorDeclaration11.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/MemberAccessorDeclarations/parserMemberAccessorDeclaration16.ts
 
@@ -10332,7 +10328,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
  12 │ }
     ╰────
 
-  × Type parameter list cannot be empty.
+  × TS(1098): Type parameter list cannot be empty.
    ╭─[typescript/tests/cases/compiler/classWithEmptyTypeParameter.ts:1:8]
  1 │ class C<> {
    ·        ──
@@ -15579,12 +15575,28 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
    ·  ─
    ╰────
 
+  × TS(1098): Type parameter list cannot be empty.
+   ╭─[typescript/tests/cases/compiler/parserConstructorDeclaration12.ts:2:14]
+ 1 │ class C {
+ 2 │   constructor<>() { }
+   ·              ──
+ 3 │   constructor<> () { }
+   ╰────
+
   × TS(1092): Type parameters cannot appear on a constructor declaration
    ╭─[typescript/tests/cases/compiler/parserConstructorDeclaration12.ts:2:14]
  1 │ class C {
  2 │   constructor<>() { }
    ·              ──
  3 │   constructor<> () { }
+   ╰────
+
+  × TS(1098): Type parameter list cannot be empty.
+   ╭─[typescript/tests/cases/compiler/parserConstructorDeclaration12.ts:3:14]
+ 2 │   constructor<>() { }
+ 3 │   constructor<> () { }
+   ·              ──
+ 4 │   constructor <>() { }
    ╰────
 
   × TS(1092): Type parameters cannot appear on a constructor declaration
@@ -15595,12 +15607,28 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
  4 │   constructor <>() { }
    ╰────
 
+  × TS(1098): Type parameter list cannot be empty.
+   ╭─[typescript/tests/cases/compiler/parserConstructorDeclaration12.ts:4:15]
+ 3 │   constructor<> () { }
+ 4 │   constructor <>() { }
+   ·               ──
+ 5 │   constructor <> () { }
+   ╰────
+
   × TS(1092): Type parameters cannot appear on a constructor declaration
    ╭─[typescript/tests/cases/compiler/parserConstructorDeclaration12.ts:4:15]
  3 │   constructor<> () { }
  4 │   constructor <>() { }
    ·               ──
  5 │   constructor <> () { }
+   ╰────
+
+  × TS(1098): Type parameter list cannot be empty.
+   ╭─[typescript/tests/cases/compiler/parserConstructorDeclaration12.ts:5:15]
+ 4 │   constructor <>() { }
+ 5 │   constructor <> () { }
+   ·               ──
+ 6 │   constructor< >() { }
    ╰────
 
   × TS(1092): Type parameters cannot appear on a constructor declaration
@@ -15611,12 +15639,28 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
  6 │   constructor< >() { }
    ╰────
 
+  × TS(1098): Type parameter list cannot be empty.
+   ╭─[typescript/tests/cases/compiler/parserConstructorDeclaration12.ts:6:14]
+ 5 │   constructor <> () { }
+ 6 │   constructor< >() { }
+   ·              ───
+ 7 │   constructor< > () { }
+   ╰────
+
   × TS(1092): Type parameters cannot appear on a constructor declaration
    ╭─[typescript/tests/cases/compiler/parserConstructorDeclaration12.ts:6:14]
  5 │   constructor <> () { }
  6 │   constructor< >() { }
    ·              ───
  7 │   constructor< > () { }
+   ╰────
+
+  × TS(1098): Type parameter list cannot be empty.
+   ╭─[typescript/tests/cases/compiler/parserConstructorDeclaration12.ts:7:14]
+ 6 │   constructor< >() { }
+ 7 │   constructor< > () { }
+   ·              ───
+ 8 │   constructor < >() { }
    ╰────
 
   × TS(1092): Type parameters cannot appear on a constructor declaration
@@ -15627,7 +15671,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
  8 │   constructor < >() { }
    ╰────
 
-  × TS(1092): Type parameters cannot appear on a constructor declaration
+  × TS(1098): Type parameter list cannot be empty.
    ╭─[typescript/tests/cases/compiler/parserConstructorDeclaration12.ts:8:15]
  7 │   constructor< > () { }
  8 │   constructor < >() { }
@@ -15636,6 +15680,14 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
    ╰────
 
   × TS(1092): Type parameters cannot appear on a constructor declaration
+   ╭─[typescript/tests/cases/compiler/parserConstructorDeclaration12.ts:8:15]
+ 7 │   constructor< > () { }
+ 8 │   constructor < >() { }
+   ·               ───
+ 9 │   constructor < > () { }
+   ╰────
+
+  × TS(1098): Type parameter list cannot be empty.
     ╭─[typescript/tests/cases/compiler/parserConstructorDeclaration12.ts:9:15]
   8 │   constructor < >() { }
   9 │   constructor < > () { }
@@ -15643,63 +15695,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
  10 │ }
     ╰────
 
-  × Type parameter list cannot be empty.
-   ╭─[typescript/tests/cases/compiler/parserConstructorDeclaration12.ts:2:14]
- 1 │ class C {
- 2 │   constructor<>() { }
-   ·              ──
- 3 │   constructor<> () { }
-   ╰────
-
-  × Type parameter list cannot be empty.
-   ╭─[typescript/tests/cases/compiler/parserConstructorDeclaration12.ts:3:14]
- 2 │   constructor<>() { }
- 3 │   constructor<> () { }
-   ·              ──
- 4 │   constructor <>() { }
-   ╰────
-
-  × Type parameter list cannot be empty.
-   ╭─[typescript/tests/cases/compiler/parserConstructorDeclaration12.ts:4:15]
- 3 │   constructor<> () { }
- 4 │   constructor <>() { }
-   ·               ──
- 5 │   constructor <> () { }
-   ╰────
-
-  × Type parameter list cannot be empty.
-   ╭─[typescript/tests/cases/compiler/parserConstructorDeclaration12.ts:5:15]
- 4 │   constructor <>() { }
- 5 │   constructor <> () { }
-   ·               ──
- 6 │   constructor< >() { }
-   ╰────
-
-  × Type parameter list cannot be empty.
-   ╭─[typescript/tests/cases/compiler/parserConstructorDeclaration12.ts:6:14]
- 5 │   constructor <> () { }
- 6 │   constructor< >() { }
-   ·              ───
- 7 │   constructor< > () { }
-   ╰────
-
-  × Type parameter list cannot be empty.
-   ╭─[typescript/tests/cases/compiler/parserConstructorDeclaration12.ts:7:14]
- 6 │   constructor< >() { }
- 7 │   constructor< > () { }
-   ·              ───
- 8 │   constructor < >() { }
-   ╰────
-
-  × Type parameter list cannot be empty.
-   ╭─[typescript/tests/cases/compiler/parserConstructorDeclaration12.ts:8:15]
- 7 │   constructor< > () { }
- 8 │   constructor < >() { }
-   ·               ───
- 9 │   constructor < > () { }
-   ╰────
-
-  × Type parameter list cannot be empty.
+  × TS(1092): Type parameters cannot appear on a constructor declaration
     ╭─[typescript/tests/cases/compiler/parserConstructorDeclaration12.ts:9:15]
   8 │   constructor < >() { }
   9 │   constructor < > () { }
@@ -19093,6 +19089,38 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
  3 │     static {
    ╰────
 
+  × TS(1184): Modifiers cannot appear here.
+   ╭─[typescript/tests/cases/conformance/classes/classStaticBlock/classStaticBlock20.ts:2:5]
+ 1 │ class C {
+ 2 │     async static {
+   ·     ─────
+ 3 │         // something
+   ╰────
+
+  × TS(1184): Modifiers cannot appear here.
+   ╭─[typescript/tests/cases/conformance/classes/classStaticBlock/classStaticBlock20.ts:6:5]
+ 5 │ 
+ 6 │     public static {
+   ·     ──────
+ 7 │         // something
+   ╰────
+
+  × TS(1184): Modifiers cannot appear here.
+    ╭─[typescript/tests/cases/conformance/classes/classStaticBlock/classStaticBlock20.ts:10:5]
+  9 │ 
+ 10 │     readonly private static {
+    ·     ────────
+ 11 │         // something
+    ╰────
+
+  × TS(1184): Modifiers cannot appear here.
+    ╭─[typescript/tests/cases/conformance/classes/classStaticBlock/classStaticBlock20.ts:10:14]
+  9 │ 
+ 10 │     readonly private static {
+    ·              ───────
+ 11 │         // something
+    ╰────
+
   × Cannot use `await` as an identifier in an async context
    ╭─[typescript/tests/cases/conformance/classes/classStaticBlock/classStaticBlock22.ts:4:9]
  3 │   static {
@@ -20296,6 +20324,22 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
  22 │     protected set #bazProp(value: number) {  }   // Error
     ·     ─────────
  23 │     readonly get #quxProp() { return  3; }       // Error
+    ╰────
+
+  × 'declare' modifier cannot be used here.
+    ╭─[typescript/tests/cases/conformance/classes/members/privateNames/privateNamesIncompatibleModifiers.ts:25:5]
+ 24 │     readonly set #quxProp(value: number) {  }    // Error
+ 25 │     declare get #whatProp()                      // Error
+    ·     ───────
+ 26 │     declare set #whatProp(value: number)         // Error
+    ╰────
+
+  × 'declare' modifier cannot be used here.
+    ╭─[typescript/tests/cases/conformance/classes/members/privateNames/privateNamesIncompatibleModifiers.ts:26:5]
+ 25 │     declare get #whatProp()                      // Error
+ 26 │     declare set #whatProp(value: number)         // Error
+    ·     ───────
+ 27 │     async get #asyncProp() { return 1; }         // Error
     ╰────
 
   × 'async' modifier cannot be used here.
@@ -26448,7 +26492,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
  3 │ }
    ╰────
 
-  × TS(1092): Type parameters cannot appear on a constructor declaration
+  × TS(1098): Type parameter list cannot be empty.
    ╭─[typescript/tests/cases/conformance/parser/ecmascript5/ConstructorDeclarations/parserConstructorDeclaration11.ts:2:14]
  1 │ class C {
  2 │   constructor<>() { }
@@ -26456,7 +26500,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
  3 │ }
    ╰────
 
-  × Type parameter list cannot be empty.
+  × TS(1092): Type parameters cannot appear on a constructor declaration
    ╭─[typescript/tests/cases/conformance/parser/ecmascript5/ConstructorDeclarations/parserConstructorDeclaration11.ts:2:14]
  1 │ class C {
  2 │   constructor<>() { }
@@ -27409,6 +27453,14 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
  2 │     export get Foo() { }
    ·            ─┬─
    ·             ╰── `;` expected
+ 3 │ }
+   ╰────
+
+  × 'declare' modifier cannot be used here.
+   ╭─[typescript/tests/cases/conformance/parser/ecmascript5/MemberAccessorDeclarations/parserMemberAccessorDeclaration11.ts:2:5]
+ 1 │ class C {
+ 2 │     declare get Foo() { }
+   ·     ───────
  3 │ }
    ╰────
 
