@@ -139,11 +139,9 @@ impl DiagnosticService {
         source_start: u32,
         diagnostics: Vec<OxcDiagnostic>,
     ) -> Vec<Error> {
-        let is_jetbrains = if cfg!(test) {
-            false
-        } else {
-            std::env::var("TERMINAL_EMULATOR").is_ok_and(|x| x.eq("JetBrains-JediTerm"))
-        };
+        // TODO: This causes snapshots to fail when running tests through a JetBrains terminal.
+        let is_jetbrains =
+            std::env::var("TERMINAL_EMULATOR").is_ok_and(|x| x.eq("JetBrains-JediTerm"));
 
         let path_ref = path.as_ref();
         let path_display = if is_jetbrains { from_file_path(path_ref) } else { None }
