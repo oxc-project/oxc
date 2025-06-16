@@ -3950,9 +3950,11 @@ pub mod walk_mut {
         visitor: &mut V,
         it: &mut TSIndexSignatureName<'a>,
     ) {
-        // No `AstType` for this type
+        let kind = AstType::TSIndexSignatureName;
+        visitor.enter_node(kind);
         visitor.visit_span(&mut it.span);
         visitor.visit_ts_type_annotation(&mut it.type_annotation);
+        visitor.leave_node(kind);
     }
 
     #[inline]
