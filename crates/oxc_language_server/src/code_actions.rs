@@ -1,24 +1,11 @@
 use tower_lsp_server::lsp_types::{
-    CodeAction, CodeActionKind, Diagnostic, NumberOrString, Position, Range, TextEdit, Uri,
-    WorkspaceEdit,
+    CodeAction, CodeActionKind, Position, Range, TextEdit, Uri, WorkspaceEdit,
 };
 
 use crate::linter::error_with_position::{DiagnosticReport, FixedContent, PossibleFixContent};
 
 pub const CODE_ACTION_KIND_SOURCE_FIX_ALL_OXC: CodeActionKind =
     CodeActionKind::new("source.fixAll.oxc");
-
-// TODO: Would be better if we had exact rule name from the diagnostic instead of having to parse it.
-fn get_rule_name(diagnostic: &Diagnostic) -> Option<String> {
-    if let Some(NumberOrString::String(code)) = &diagnostic.code {
-        let open_paren = code.chars().position(|c| c == '(')?;
-        let close_paren = code.chars().position(|c| c == ')')?;
-
-        return Some(code[(open_paren + 1)..close_paren].to_string());
-    }
-
-    None
-}
 
 fn fix_content_to_code_action(
     fixed_content: &FixedContent,
@@ -123,7 +110,7 @@ pub fn apply_all_fix_code_action<'a>(
 }
 
 pub fn ignore_this_line_code_action(report: &DiagnosticReport, uri: &Uri) -> CodeAction {
-    let rule_name = get_rule_name(&report.diagnostic);
+    let rule_name = report.rule_name.as_ref();
 
     // TODO: This CodeAction doesn't support disabling multiple rules by name for a given line.
     //  To do that, we need to read `report.diagnostic.range.start.line` and check if a disable comment already exists.
@@ -168,7 +155,7 @@ pub fn ignore_this_line_code_action(report: &DiagnosticReport, uri: &Uri) -> Cod
 }
 
 pub fn ignore_this_rule_code_action(report: &DiagnosticReport, uri: &Uri) -> CodeAction {
-    let rule_name = get_rule_name(&report.diagnostic);
+    let rule_name = report.rule_name.as_ref();
 
     CodeAction {
         title: rule_name.as_ref().map_or_else(
