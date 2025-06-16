@@ -4092,9 +4092,11 @@ pub mod walk {
         visitor: &mut V,
         it: &TSNamespaceExportDeclaration<'a>,
     ) {
-        // No `AstKind` for this type
+        let kind = AstKind::TSNamespaceExportDeclaration(visitor.alloc(it));
+        visitor.enter_node(kind);
         visitor.visit_span(&it.span);
         visitor.visit_identifier_name(&it.id);
+        visitor.leave_node(kind);
     }
 
     #[inline]

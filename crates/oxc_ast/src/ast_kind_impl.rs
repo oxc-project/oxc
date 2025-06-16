@@ -349,6 +349,7 @@ impl AstKind<'_> {
             Self::TSEnumBody(_) => "TSEnumBody".into(),
             Self::TSEnumMember(_) => "TSEnumMember".into(),
 
+            Self::TSNamespaceExportDeclaration(_) => "TSNamespaceExportDeclaration".into(),
             Self::TSImportEqualsDeclaration(_) => "TSImportEqualsDeclaration".into(),
             Self::TSCallSignatureDeclaration(_) => "TSCallSignatureDeclaration".into(),
             Self::TSTypeName(n) => format!("TSTypeName({n})").into(),

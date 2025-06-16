@@ -187,10 +187,11 @@ pub enum AstType {
     TSNonNullExpression = 171,
     Decorator = 172,
     TSExportAssignment = 173,
-    TSInstantiationExpression = 174,
-    JSDocNullableType = 175,
-    JSDocNonNullableType = 176,
-    JSDocUnknownType = 177,
+    TSNamespaceExportDeclaration = 174,
+    TSInstantiationExpression = 175,
+    JSDocNullableType = 176,
+    JSDocNonNullableType = 177,
+    JSDocUnknownType = 178,
 }
 
 /// Untyped AST Node Kind
@@ -384,6 +385,8 @@ pub enum AstKind<'a> {
     TSNonNullExpression(&'a TSNonNullExpression<'a>) = AstType::TSNonNullExpression as u8,
     Decorator(&'a Decorator<'a>) = AstType::Decorator as u8,
     TSExportAssignment(&'a TSExportAssignment<'a>) = AstType::TSExportAssignment as u8,
+    TSNamespaceExportDeclaration(&'a TSNamespaceExportDeclaration<'a>) =
+        AstType::TSNamespaceExportDeclaration as u8,
     TSInstantiationExpression(&'a TSInstantiationExpression<'a>) =
         AstType::TSInstantiationExpression as u8,
     JSDocNullableType(&'a JSDocNullableType<'a>) = AstType::JSDocNullableType as u8,
@@ -580,6 +583,7 @@ impl GetSpan for AstKind<'_> {
             Self::TSNonNullExpression(it) => it.span(),
             Self::Decorator(it) => it.span(),
             Self::TSExportAssignment(it) => it.span(),
+            Self::TSNamespaceExportDeclaration(it) => it.span(),
             Self::TSInstantiationExpression(it) => it.span(),
             Self::JSDocNullableType(it) => it.span(),
             Self::JSDocNonNullableType(it) => it.span(),
@@ -1461,6 +1465,13 @@ impl<'a> AstKind<'a> {
     #[inline]
     pub fn as_ts_export_assignment(self) -> Option<&'a TSExportAssignment<'a>> {
         if let Self::TSExportAssignment(v) = self { Some(v) } else { None }
+    }
+
+    #[inline]
+    pub fn as_ts_namespace_export_declaration(
+        self,
+    ) -> Option<&'a TSNamespaceExportDeclaration<'a>> {
+        if let Self::TSNamespaceExportDeclaration(v) = self { Some(v) } else { None }
     }
 
     #[inline]

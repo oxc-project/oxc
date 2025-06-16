@@ -201,6 +201,7 @@ pub enum AstNodes<'a> {
     TSNonNullExpression(&'a AstNode<'a, TSNonNullExpression<'a>>),
     Decorator(&'a AstNode<'a, Decorator<'a>>),
     TSExportAssignment(&'a AstNode<'a, TSExportAssignment<'a>>),
+    TSNamespaceExportDeclaration(&'a AstNode<'a, TSNamespaceExportDeclaration<'a>>),
     TSInstantiationExpression(&'a AstNode<'a, TSInstantiationExpression<'a>>),
     JSDocNullableType(&'a AstNode<'a, JSDocNullableType<'a>>),
     JSDocNonNullableType(&'a AstNode<'a, JSDocNonNullableType<'a>>),
@@ -385,6 +386,7 @@ impl<'a> AstNodes<'a> {
             Self::TSNonNullExpression(n) => n.span(),
             Self::Decorator(n) => n.span(),
             Self::TSExportAssignment(n) => n.span(),
+            Self::TSNamespaceExportDeclaration(n) => n.span(),
             Self::TSInstantiationExpression(n) => n.span(),
             Self::JSDocNullableType(n) => n.span(),
             Self::JSDocNonNullableType(n) => n.span(),
@@ -569,6 +571,7 @@ impl<'a> AstNodes<'a> {
             Self::TSNonNullExpression(n) => n.parent,
             Self::Decorator(n) => n.parent,
             Self::TSExportAssignment(n) => n.parent,
+            Self::TSNamespaceExportDeclaration(n) => n.parent,
             Self::TSInstantiationExpression(n) => n.parent,
             Self::JSDocNullableType(n) => n.parent,
             Self::JSDocNonNullableType(n) => n.parent,
@@ -753,6 +756,7 @@ impl<'a> AstNodes<'a> {
             Self::TSNonNullExpression(_) => "TSNonNullExpression",
             Self::Decorator(_) => "Decorator",
             Self::TSExportAssignment(_) => "TSExportAssignment",
+            Self::TSNamespaceExportDeclaration(_) => "TSNamespaceExportDeclaration",
             Self::TSInstantiationExpression(_) => "TSInstantiationExpression",
             Self::JSDocNullableType(_) => "JSDocNullableType",
             Self::JSDocNonNullableType(_) => "JSDocNonNullableType",
@@ -4124,9 +4128,11 @@ impl<'a> AstNode<'a, ModuleDeclaration<'a>> {
                 }))
             }
             ModuleDeclaration::TSNamespaceExportDeclaration(s) => {
-                panic!(
-                    "No kind for current enum variant yet, please see `tasks/ast_tools/src/generators/ast_kind.rs`"
-                )
+                AstNodes::TSNamespaceExportDeclaration(self.allocator.alloc(AstNode {
+                    inner: s.as_ref(),
+                    parent,
+                    allocator: self.allocator,
+                }))
             }
         };
         self.allocator.alloc(node)
@@ -7509,7 +7515,9 @@ impl<'a> AstNode<'a, TSNamespaceExportDeclaration<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.id,
             allocator: self.allocator,
-            parent: self.parent,
+            parent: self
+                .allocator
+                .alloc(AstNodes::TSNamespaceExportDeclaration(transmute_self(self))),
         })
     }
 }
