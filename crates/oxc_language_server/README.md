@@ -14,17 +14,34 @@ This crate provides an [LSP](https://microsoft.github.io/language-server-protoco
   - `quickfix`
   - `source.fixAll.oxc`, behaves the same as `quickfix` only used when the `CodeActionContext#only` contains
     `source.fixAll.oxc`.
+- [Diagnostic Provider](https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#textDocument_pullDiagnostics)
+  - Only when [Diagnostics Refresh](https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#diagnostic_refresh) is supported by your client
 
 ## Workspace Options
 
 These options can be passed with [initialize](#initialize), [workspace/didChangeConfiguration](#workspace/didChangeConfiguration) and [workspace/configuration](#workspace/configuration).
 
-| Option Key                | Value(s)                       | Default    | Description                                                                                                                                 |
-| ------------------------- | ------------------------------ | ---------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
-| `run`                     | `"onSave" \| "onType"`         | `"onType"` | Should the server lint the files when the user is typing or saving                                                                          |
-| `configPath`              | `<string>` \| `null`           | `null`     | Path to a oxlint configuration file, passing a string will disable nested configuration                                                     |
-| `unusedDisableDirectives` | `"allow" \| "warn"` \| "deny"` | `"allow"`  | Define how directive comments like `// oxlint-disable-line` should be reported, when no errors would have been reported on that line anyway |
-| `flags`                   | `Map<string, string>`          | `<empty>`  | Special oxc language server flags, currently only one flag key is supported: `disable_nested_config`                                        |
+| Option Key                | Value(s)                       | Default   | Description                                                                                                                                 |
+| ------------------------- | ------------------------------ | --------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
+| `configPath`              | `<string>` \| `null`           | `null`    | Path to a oxlint configuration file, passing a string will disable nested configuration                                                     |
+| `unusedDisableDirectives` | `"allow" \| "warn"` \| "deny"` | `"allow"` | Define how directive comments like `// oxlint-disable-line` should be reported, when no errors would have been reported on that line anyway |
+| `flags`                   | `Map<string, string>`          | `<empty>` | Special oxc language server flags, currently only one flag key is supported: `disable_nested_config`                                        |
+
+### Flags
+
+- `key: disable_nested_config`: Disabled nested configuration and searches only for `configPath`
+- `key: fix_kind`: default: `"safe_fix"`, possible values `"safe_fix" | "safe_fix_or_suggestion" | "dangerous_fix" | "dangerous_fix_or_suggestion" | "none" | "all"`
+
+### Workspace Options without Diagnostic Provider
+
+| Option Key | Value(s)               | Default    | Description                                                        |
+| ---------- | ---------------------- | ---------- | ------------------------------------------------------------------ |
+| `run`      | `"onSave" \| "onType"` | `"onType"` | Should the server lint the files when the user is typing or saving |
+
+## Diagnostics Modes
+
+Depending on the client, the server will push diagnostics, or will wait for a pull request from the client.
+The server will prefer pull diagnostics when the client supports it and able to support [textDocument/diagnostic/refresh](#textdocumentdiagnosticrefresh).
 
 ## Supported LSP Specifications from Server
 
@@ -46,11 +63,6 @@ The client can pass the workspace options like following:
   }]
 }
 ```
-
-#### Flags
-
-- `key: disable_nested_config`: Disabled nested configuration and searches only for `configPath`
-- `key: fix_kind`: default: `"safe_fix"`, possible values `"safe_fix" | "safe_fix_or_suggestion" | "dangerous_fix" | "dangerous_fix_or_suggestion" | "none" | "all"`
 
 ### [initialized](https://microsoft.github.io/language-server-protocol/specification#initialized)
 
@@ -110,31 +122,39 @@ Executes a [Command](https://microsoft.github.io/language-server-protocol/specif
 
 #### [textDocument/didOpen](https://microsoft.github.io/language-server-protocol/specification#textDocument_didOpen)
 
-The server will validate the file content and send a [textDocument/publishDiagnostics](#textdocumentpublishdiagnostics) request to the client.
+The server will cache the internal content of the text document.
+When the server is using [Push Mode](#diagnostics-modes),
+the server will validate the text document and send a [textDocument/publishDiagnostics](#textdocumentpublishdiagnostics) request to the client.
 
 #### [textDocument/didSave](https://microsoft.github.io/language-server-protocol/specification#textDocument_didSave)
 
-When the configuration `run` is set to `onSave`, the server will validate the file content and send a [textDocument/publishDiagnostics](#textdocumentpublishdiagnostics) request to the client.
+The server will cache the internal content of the text document.
+When the server is using [Push Mode](#diagnostics-modes) and configuration `run` is set to `onSave`,
+the server will validate the text document and send a [textDocument/publishDiagnostics](#textdocumentpublishdiagnostics) request to the client.
 
 #### [textDocument/didChange](https://microsoft.github.io/language-server-protocol/specification#textDocument_didChange)
 
-When the configuration `run` is set to `onType`, the server will validate the file content and send a [textDocument/publishDiagnostics](#textdocumentpublishdiagnostics) request to the client.
+The server will cache the internal content of the text document.
+When the server is using [Push Mode](#diagnostics-modes) and configuration `run` is set to `onType`,
+the server will validate the text document and send a [textDocument/publishDiagnostics](#textdocumentpublishdiagnostics) request to the client.
 
 #### [textDocument/didClose](https://microsoft.github.io/language-server-protocol/specification#textDocument_didClose)
 
 It will remove the reference internal.
 
+#### [textDocument/diagnostics](https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#workspace_diagnostic)
+
+Should only be used when the server is using the [Pull Mode](#diagnostics-modes) for diagnostics.
+The server will lint the file and report the diagnostics back to the client.
+
+#### [textDocument/diagnostic/refresh](https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#diagnostic_refresh)
+
+When the server is using the [Pull Mode](#diagnostics-modes) it will request the client sometimes to re-pull the diagnostics.
+This will happen when changing watched files or specific server configurations.
+
 #### [textDocument/codeAction](https://microsoft.github.io/language-server-protocol/specification#textDocument_codeAction)
 
 Returns a list of [CodeAction](https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#textDocument_codeAction)
-
-## Expected LSP Specification from Client
-
-### TextDocument
-
-#### [textDocument/publishDiagnostics](https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#textDocument_publishDiagnostics)
-
-Returns a [PublishDiagnostic object](https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#publishDiagnosticsParams)
 
 ## Optional LSP Specifications from Client
 
@@ -147,6 +167,13 @@ The server will send this request to watch for specific files. The method `works
 #### [client/unregisterCapability](https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#client_unregisterCapability)
 
 The server will send this request to stop watching for specific files. The `id` will match from [client/registerCapability](#clientregistercapability).
+
+### TextDocument
+
+#### [textDocument/publishDiagnostics](https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#textDocument_publishDiagnostics)
+
+When the server is using [Push Mode](#diagnostics-modes) it will lint the file [onOpen](#textdocumentdidopen) and [onChange](#textdocumentdidchange) or [onSave](#textdocumentdidsave)
+(depending on the configuration the client passed).
 
 ### Workspace
 

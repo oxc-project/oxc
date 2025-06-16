@@ -1,23 +1,40 @@
 use tower_lsp_server::lsp_types::{
     ClientCapabilities, CodeActionKind, CodeActionOptions, CodeActionProviderCapability,
-    ExecuteCommandOptions, OneOf, SaveOptions, ServerCapabilities, TextDocumentSyncCapability,
-    TextDocumentSyncKind, TextDocumentSyncOptions, TextDocumentSyncSaveOptions,
-    WorkDoneProgressOptions, WorkspaceFoldersServerCapabilities, WorkspaceServerCapabilities,
+    DiagnosticOptions, DiagnosticServerCapabilities, ExecuteCommandOptions, OneOf, SaveOptions,
+    ServerCapabilities, TextDocumentSyncCapability, TextDocumentSyncKind, TextDocumentSyncOptions,
+    TextDocumentSyncSaveOptions, WorkDoneProgressOptions, WorkspaceFoldersServerCapabilities,
+    WorkspaceServerCapabilities,
 };
 
 use crate::{code_actions::CODE_ACTION_KIND_SOURCE_FIX_ALL_OXC, commands::FIX_ALL_COMMAND_ID};
 
-#[derive(Clone, Default)]
+/// Represents the capabilities of the client that the server can use to determine
+/// which features to enable or disable.
+#[derive(Clone, Default, Debug)]
 pub struct Capabilities {
     pub code_action_provider: bool,
     pub workspace_apply_edit: bool,
     pub workspace_execute_command: bool,
     pub workspace_configuration: bool,
+    /// Whether the client supports dynamic registration of file watchers.
     pub dynamic_watchers: bool,
+    /// Whether the client supports pull diagnostics.
+    pull_diagnostics: bool,
+    /// Whether the client supports the `workspace/diagnostic/refresh` request.
+    refresh_diagnostics: bool,
 }
 
-impl From<ClientCapabilities> for Capabilities {
-    fn from(value: ClientCapabilities) -> Self {
+impl Capabilities {
+    /// The server supports pull and push diagnostics.
+    /// Only use push diagnostics if the client does not support pull diagnostics,
+    /// or we cannot ask the client to refresh diagnostics.
+    pub fn use_push_diagnostics(&self) -> bool {
+        !self.pull_diagnostics || !self.refresh_diagnostics
+    }
+}
+
+impl From<&ClientCapabilities> for Capabilities {
+    fn from(value: &ClientCapabilities) -> Self {
         // check if the client support some code action literal support
         let code_action_provider = value.text_document.as_ref().is_some_and(|capability| {
             capability.code_action.as_ref().is_some_and(|code_action| {
@@ -34,9 +51,20 @@ impl From<ClientCapabilities> for Capabilities {
             .workspace
             .as_ref()
             .is_some_and(|workspace| workspace.configuration.is_some_and(|config| config));
-        let dynamic_watchers = value.workspace.is_some_and(|workspace| {
-            workspace.did_change_watched_files.is_some_and(|watched_files| {
-                watched_files.dynamic_registration.is_some_and(|dynamic| dynamic)
+        let dynamic_watchers = value.workspace.as_ref().is_some_and(|workspace| {
+            workspace.did_change_watched_files.as_ref().is_some_and(|watched_files| {
+                watched_files.dynamic_registration.as_ref().is_some_and(|dynamic| *dynamic)
+            })
+        });
+
+        let pull_diagnostics = value
+            .text_document
+            .as_ref()
+            .is_some_and(|text_document| text_document.diagnostic.is_some());
+
+        let refresh_diagnostics = value.workspace.as_ref().is_some_and(|workspace| {
+            workspace.diagnostics.as_ref().is_some_and(|diagnostics| {
+                diagnostics.refresh_support.is_some_and(|refresh| refresh)
             })
         });
 
@@ -46,6 +74,8 @@ impl From<ClientCapabilities> for Capabilities {
             workspace_execute_command,
             workspace_configuration,
             dynamic_watchers,
+            pull_diagnostics,
+            refresh_diagnostics,
         }
     }
 }
@@ -92,6 +122,11 @@ impl From<Capabilities> for ServerCapabilities {
             } else {
                 None
             },
+            diagnostic_provider: if value.use_push_diagnostics() {
+                None
+            } else {
+                Some(DiagnosticServerCapabilities::Options(DiagnosticOptions::default()))
+            },
             ..ServerCapabilities::default()
         }
     }
@@ -107,6 +142,37 @@ mod test {
     };
 
     use super::Capabilities;
+
+    #[test]
+    fn test_use_push_diagnostics() {
+        let capabilities = Capabilities {
+            pull_diagnostics: true,
+            refresh_diagnostics: true,
+            ..Default::default()
+        };
+        assert!(!capabilities.use_push_diagnostics());
+
+        let capabilities = Capabilities {
+            pull_diagnostics: false,
+            refresh_diagnostics: true,
+            ..Default::default()
+        };
+        assert!(capabilities.use_push_diagnostics());
+
+        let capabilities = Capabilities {
+            pull_diagnostics: true,
+            refresh_diagnostics: false,
+            ..Default::default()
+        };
+        assert!(capabilities.use_push_diagnostics());
+
+        let capabilities = Capabilities {
+            pull_diagnostics: false,
+            refresh_diagnostics: false,
+            ..Default::default()
+        };
+        assert!(capabilities.use_push_diagnostics());
+    }
 
     #[test]
     fn test_code_action_provider_vscode() {
@@ -138,7 +204,7 @@ mod test {
             ..ClientCapabilities::default()
         };
 
-        let capabilities = Capabilities::from(client_capabilities);
+        let capabilities = Capabilities::from(&client_capabilities);
 
         assert!(capabilities.code_action_provider);
     }
@@ -168,7 +234,7 @@ mod test {
             ..ClientCapabilities::default()
         };
 
-        let capabilities = Capabilities::from(client_capabilities);
+        let capabilities = Capabilities::from(&client_capabilities);
 
         assert!(capabilities.code_action_provider);
     }
@@ -201,7 +267,7 @@ mod test {
             ..ClientCapabilities::default()
         };
 
-        let capabilities = Capabilities::from(client_capabilities);
+        let capabilities = Capabilities::from(&client_capabilities);
 
         assert!(capabilities.code_action_provider);
     }
@@ -219,7 +285,7 @@ mod test {
             ..ClientCapabilities::default()
         };
 
-        let capabilities = Capabilities::from(client_capabilities);
+        let capabilities = Capabilities::from(&client_capabilities);
 
         assert!(capabilities.workspace_execute_command);
     }
@@ -235,7 +301,7 @@ mod test {
             ..ClientCapabilities::default()
         };
 
-        let capabilities = Capabilities::from(client_capabilities);
+        let capabilities = Capabilities::from(&client_capabilities);
 
         assert!(capabilities.workspace_apply_edit);
     }
@@ -253,7 +319,7 @@ mod test {
             ..Default::default()
         };
 
-        let capabilities = Capabilities::from(client_capabilities);
+        let capabilities = Capabilities::from(&client_capabilities);
         assert!(capabilities.dynamic_watchers);
     }
 
@@ -270,7 +336,7 @@ mod test {
             ..Default::default()
         };
 
-        let capabilities = Capabilities::from(client_capabilities);
+        let capabilities = Capabilities::from(&client_capabilities);
         assert!(capabilities.dynamic_watchers);
     }
 }
