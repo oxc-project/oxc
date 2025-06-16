@@ -244,7 +244,6 @@ impl AstKind<'_> {
             }
             Self::PropertyKey(p) => format!("PropertyKey({})", p.name().unwrap_or(COMPUTED)).into(),
             Self::Argument(_) => "Argument".into(),
-            Self::ArrayExpressionElement(_) => "ArrayExpressionElement".into(),
             Self::AssignmentTarget(_) => "AssignmentTarget".into(),
             Self::SimpleAssignmentTarget(a) => {
                 format!("SimpleAssignmentTarget({})", a.get_identifier_name().unwrap_or(&UNKNOWN))
@@ -290,6 +289,7 @@ impl AstKind<'_> {
             Self::ExportDefaultDeclaration(_) => "ExportDefaultDeclaration".into(),
             Self::ExportNamedDeclaration(_) => "ExportNamedDeclaration".into(),
             Self::ExportAllDeclaration(_) => "ExportAllDeclaration".into(),
+            Self::WithClause(_) => "WithClause".into(),
             Self::JSXOpeningElement(_) => "JSXOpeningElement".into(),
             Self::JSXClosingElement(_) => "JSXClosingElement".into(),
             Self::JSXElement(_) => "JSXElement".into(),
@@ -344,6 +344,7 @@ impl AstKind<'_> {
             Self::TSEnumMember(_) => "TSEnumMember".into(),
 
             Self::TSImportEqualsDeclaration(_) => "TSImportEqualsDeclaration".into(),
+            Self::TSCallSignatureDeclaration(_) => "TSCallSignatureDeclaration".into(),
             Self::TSTypeName(n) => format!("TSTypeName({n})").into(),
             Self::TSExternalModuleReference(_) => "TSExternalModuleReference".into(),
             Self::TSQualifiedName(n) => format!("TSQualifiedName({n})").into(),
@@ -358,14 +359,15 @@ impl AstKind<'_> {
             Self::TSTypeParameter(t) => format!("TSTypeParameter({})", t.name).into(),
             Self::TSTypeParameterDeclaration(_) => "TSTypeParameterDeclaration".into(),
             Self::TSTypeParameterInstantiation(_) => "TSTypeParameterInstantiation".into(),
+            Self::TSTypePredicate(_) => "TSTypePredicate".into(),
             Self::TSImportType(_) => "TSImportType".into(),
             Self::TSNamedTupleMember(_) => "TSNamedTupleMember".into(),
 
             Self::TSPropertySignature(_) => "TSPropertySignature".into(),
+            Self::TSIndexSignatureName(_) => "TSIndexSignatureName".into(),
             Self::TSConditionalType(_) => "TSConditionalType".into(),
             Self::TSMappedType(_) => "TSMappedType".into(),
             Self::TSConstructSignatureDeclaration(_) => "TSConstructSignatureDeclaration".into(),
-            Self::TSModuleReference(_) => "TSModuleReference".into(),
             Self::TSExportAssignment(_) => "TSExportAssignment".into(),
             Self::V8IntrinsicExpression(_) => "V8IntrinsicExpression".into(),
 

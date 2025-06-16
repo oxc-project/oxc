@@ -3,7 +3,7 @@ commit: 81c95189
 parser_typescript Summary:
 AST Parsed     : 6530/6537 (99.89%)
 Positive Passed: 6519/6537 (99.72%)
-Negative Passed: 1400/5763 (24.29%)
+Negative Passed: 1401/5763 (24.31%)
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/ClassDeclaration24.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/ExportAssignment7.ts
@@ -4627,8 +4627,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/classes/c
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/classes/classExpressions/classWithStaticFieldInParameterBindingPattern.2.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/classes/classExpressions/classWithStaticFieldInParameterInitializer.2.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/classes/classStaticBlock/classStaticBlock20.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/classes/classStaticBlock/classStaticBlock23.ts
 
@@ -19090,6 +19088,38 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
    ·     ──────────
  3 │     static {
    ╰────
+
+  × TS(1184): Modifiers cannot appear here.
+   ╭─[typescript/tests/cases/conformance/classes/classStaticBlock/classStaticBlock20.ts:2:5]
+ 1 │ class C {
+ 2 │     async static {
+   ·     ─────
+ 3 │         // something
+   ╰────
+
+  × TS(1184): Modifiers cannot appear here.
+   ╭─[typescript/tests/cases/conformance/classes/classStaticBlock/classStaticBlock20.ts:6:5]
+ 5 │ 
+ 6 │     public static {
+   ·     ──────
+ 7 │         // something
+   ╰────
+
+  × TS(1184): Modifiers cannot appear here.
+    ╭─[typescript/tests/cases/conformance/classes/classStaticBlock/classStaticBlock20.ts:10:5]
+  9 │ 
+ 10 │     readonly private static {
+    ·     ────────
+ 11 │         // something
+    ╰────
+
+  × TS(1184): Modifiers cannot appear here.
+    ╭─[typescript/tests/cases/conformance/classes/classStaticBlock/classStaticBlock20.ts:10:14]
+  9 │ 
+ 10 │     readonly private static {
+    ·              ───────
+ 11 │         // something
+    ╰────
 
   × Cannot use `await` as an identifier in an async context
    ╭─[typescript/tests/cases/conformance/classes/classStaticBlock/classStaticBlock22.ts:4:9]

@@ -36,7 +36,6 @@ const STRUCTS_BLACK_LIST: &[&str] = &[
     "BindingPattern",
     "BindingProperty",
     "AccessorProperty",
-    "WithClause",
     "ImportAttribute",
     "TSTypeOperator",
     "TSArrayType",
@@ -45,9 +44,6 @@ const STRUCTS_BLACK_LIST: &[&str] = &[
     "TSRestType",
     "TSInterfaceBody",
     "TSIndexSignature",
-    "TSCallSignatureDeclaration",
-    "TSIndexSignatureName",
-    "TSTypePredicate",
     "TSFunctionType",
     "TSConstructorType",
     "TSNamespaceExportDeclaration",
@@ -58,7 +54,6 @@ const STRUCTS_BLACK_LIST: &[&str] = &[
 ///
 /// Apart from this list, enums don't have `AstKind`s.
 const ENUMS_WHITE_LIST: &[&str] = &[
-    "ArrayExpressionElement",
     "PropertyKey",
     "MemberExpression",
     "Argument",
@@ -67,7 +62,6 @@ const ENUMS_WHITE_LIST: &[&str] = &[
     "AssignmentTargetPattern",
     "ModuleDeclaration",
     "TSTypeName",
-    "TSModuleReference",
 ];
 
 /// Generator for `AstKind`, `AstType`, and related code.

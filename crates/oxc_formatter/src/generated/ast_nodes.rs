@@ -34,7 +34,6 @@ pub enum AstNodes<'a> {
     LabelIdentifier(&'a AstNode<'a, LabelIdentifier<'a>>),
     ThisExpression(&'a AstNode<'a, ThisExpression>),
     ArrayExpression(&'a AstNode<'a, ArrayExpression<'a>>),
-    ArrayExpressionElement(&'a AstNode<'a, ArrayExpressionElement<'a>>),
     Elision(&'a AstNode<'a, Elision>),
     ObjectExpression(&'a AstNode<'a, ObjectExpression<'a>>),
     ObjectProperty(&'a AstNode<'a, ObjectProperty<'a>>),
@@ -112,6 +111,7 @@ pub enum AstNodes<'a> {
     ImportSpecifier(&'a AstNode<'a, ImportSpecifier<'a>>),
     ImportDefaultSpecifier(&'a AstNode<'a, ImportDefaultSpecifier<'a>>),
     ImportNamespaceSpecifier(&'a AstNode<'a, ImportNamespaceSpecifier<'a>>),
+    WithClause(&'a AstNode<'a, WithClause<'a>>),
     ExportNamedDeclaration(&'a AstNode<'a, ExportNamedDeclaration<'a>>),
     ExportDefaultDeclaration(&'a AstNode<'a, ExportDefaultDeclaration<'a>>),
     ExportAllDeclaration(&'a AstNode<'a, ExportAllDeclaration<'a>>),
@@ -174,9 +174,12 @@ pub enum AstNodes<'a> {
     TSClassImplements(&'a AstNode<'a, TSClassImplements<'a>>),
     TSInterfaceDeclaration(&'a AstNode<'a, TSInterfaceDeclaration<'a>>),
     TSPropertySignature(&'a AstNode<'a, TSPropertySignature<'a>>),
+    TSCallSignatureDeclaration(&'a AstNode<'a, TSCallSignatureDeclaration<'a>>),
     TSMethodSignature(&'a AstNode<'a, TSMethodSignature<'a>>),
     TSConstructSignatureDeclaration(&'a AstNode<'a, TSConstructSignatureDeclaration<'a>>),
+    TSIndexSignatureName(&'a AstNode<'a, TSIndexSignatureName<'a>>),
     TSInterfaceHeritage(&'a AstNode<'a, TSInterfaceHeritage<'a>>),
+    TSTypePredicate(&'a AstNode<'a, TSTypePredicate<'a>>),
     TSModuleDeclaration(&'a AstNode<'a, TSModuleDeclaration<'a>>),
     TSModuleBlock(&'a AstNode<'a, TSModuleBlock<'a>>),
     TSTypeLiteral(&'a AstNode<'a, TSTypeLiteral<'a>>),
@@ -189,7 +192,6 @@ pub enum AstNodes<'a> {
     TSSatisfiesExpression(&'a AstNode<'a, TSSatisfiesExpression<'a>>),
     TSTypeAssertion(&'a AstNode<'a, TSTypeAssertion<'a>>),
     TSImportEqualsDeclaration(&'a AstNode<'a, TSImportEqualsDeclaration<'a>>),
-    TSModuleReference(&'a AstNode<'a, TSModuleReference<'a>>),
     TSExternalModuleReference(&'a AstNode<'a, TSExternalModuleReference<'a>>),
     TSNonNullExpression(&'a AstNode<'a, TSNonNullExpression<'a>>),
     Decorator(&'a AstNode<'a, Decorator<'a>>),
@@ -211,7 +213,6 @@ impl<'a> AstNodes<'a> {
             Self::LabelIdentifier(n) => n.span(),
             Self::ThisExpression(n) => n.span(),
             Self::ArrayExpression(n) => n.span(),
-            Self::ArrayExpressionElement(n) => n.span(),
             Self::Elision(n) => n.span(),
             Self::ObjectExpression(n) => n.span(),
             Self::ObjectProperty(n) => n.span(),
@@ -289,6 +290,7 @@ impl<'a> AstNodes<'a> {
             Self::ImportSpecifier(n) => n.span(),
             Self::ImportDefaultSpecifier(n) => n.span(),
             Self::ImportNamespaceSpecifier(n) => n.span(),
+            Self::WithClause(n) => n.span(),
             Self::ExportNamedDeclaration(n) => n.span(),
             Self::ExportDefaultDeclaration(n) => n.span(),
             Self::ExportAllDeclaration(n) => n.span(),
@@ -351,9 +353,12 @@ impl<'a> AstNodes<'a> {
             Self::TSClassImplements(n) => n.span(),
             Self::TSInterfaceDeclaration(n) => n.span(),
             Self::TSPropertySignature(n) => n.span(),
+            Self::TSCallSignatureDeclaration(n) => n.span(),
             Self::TSMethodSignature(n) => n.span(),
             Self::TSConstructSignatureDeclaration(n) => n.span(),
+            Self::TSIndexSignatureName(n) => n.span(),
             Self::TSInterfaceHeritage(n) => n.span(),
+            Self::TSTypePredicate(n) => n.span(),
             Self::TSModuleDeclaration(n) => n.span(),
             Self::TSModuleBlock(n) => n.span(),
             Self::TSTypeLiteral(n) => n.span(),
@@ -366,7 +371,6 @@ impl<'a> AstNodes<'a> {
             Self::TSSatisfiesExpression(n) => n.span(),
             Self::TSTypeAssertion(n) => n.span(),
             Self::TSImportEqualsDeclaration(n) => n.span(),
-            Self::TSModuleReference(n) => n.span(),
             Self::TSExternalModuleReference(n) => n.span(),
             Self::TSNonNullExpression(n) => n.span(),
             Self::Decorator(n) => n.span(),
@@ -388,7 +392,6 @@ impl<'a> AstNodes<'a> {
             Self::LabelIdentifier(n) => n.parent,
             Self::ThisExpression(n) => n.parent,
             Self::ArrayExpression(n) => n.parent,
-            Self::ArrayExpressionElement(n) => n.parent,
             Self::Elision(n) => n.parent,
             Self::ObjectExpression(n) => n.parent,
             Self::ObjectProperty(n) => n.parent,
@@ -466,6 +469,7 @@ impl<'a> AstNodes<'a> {
             Self::ImportSpecifier(n) => n.parent,
             Self::ImportDefaultSpecifier(n) => n.parent,
             Self::ImportNamespaceSpecifier(n) => n.parent,
+            Self::WithClause(n) => n.parent,
             Self::ExportNamedDeclaration(n) => n.parent,
             Self::ExportDefaultDeclaration(n) => n.parent,
             Self::ExportAllDeclaration(n) => n.parent,
@@ -528,9 +532,12 @@ impl<'a> AstNodes<'a> {
             Self::TSClassImplements(n) => n.parent,
             Self::TSInterfaceDeclaration(n) => n.parent,
             Self::TSPropertySignature(n) => n.parent,
+            Self::TSCallSignatureDeclaration(n) => n.parent,
             Self::TSMethodSignature(n) => n.parent,
             Self::TSConstructSignatureDeclaration(n) => n.parent,
+            Self::TSIndexSignatureName(n) => n.parent,
             Self::TSInterfaceHeritage(n) => n.parent,
+            Self::TSTypePredicate(n) => n.parent,
             Self::TSModuleDeclaration(n) => n.parent,
             Self::TSModuleBlock(n) => n.parent,
             Self::TSTypeLiteral(n) => n.parent,
@@ -543,7 +550,6 @@ impl<'a> AstNodes<'a> {
             Self::TSSatisfiesExpression(n) => n.parent,
             Self::TSTypeAssertion(n) => n.parent,
             Self::TSImportEqualsDeclaration(n) => n.parent,
-            Self::TSModuleReference(n) => n.parent,
             Self::TSExternalModuleReference(n) => n.parent,
             Self::TSNonNullExpression(n) => n.parent,
             Self::Decorator(n) => n.parent,
@@ -565,7 +571,6 @@ impl<'a> AstNodes<'a> {
             Self::LabelIdentifier(_) => "LabelIdentifier",
             Self::ThisExpression(_) => "ThisExpression",
             Self::ArrayExpression(_) => "ArrayExpression",
-            Self::ArrayExpressionElement(_) => "ArrayExpressionElement",
             Self::Elision(_) => "Elision",
             Self::ObjectExpression(_) => "ObjectExpression",
             Self::ObjectProperty(_) => "ObjectProperty",
@@ -643,6 +648,7 @@ impl<'a> AstNodes<'a> {
             Self::ImportSpecifier(_) => "ImportSpecifier",
             Self::ImportDefaultSpecifier(_) => "ImportDefaultSpecifier",
             Self::ImportNamespaceSpecifier(_) => "ImportNamespaceSpecifier",
+            Self::WithClause(_) => "WithClause",
             Self::ExportNamedDeclaration(_) => "ExportNamedDeclaration",
             Self::ExportDefaultDeclaration(_) => "ExportDefaultDeclaration",
             Self::ExportAllDeclaration(_) => "ExportAllDeclaration",
@@ -705,9 +711,12 @@ impl<'a> AstNodes<'a> {
             Self::TSClassImplements(_) => "TSClassImplements",
             Self::TSInterfaceDeclaration(_) => "TSInterfaceDeclaration",
             Self::TSPropertySignature(_) => "TSPropertySignature",
+            Self::TSCallSignatureDeclaration(_) => "TSCallSignatureDeclaration",
             Self::TSMethodSignature(_) => "TSMethodSignature",
             Self::TSConstructSignatureDeclaration(_) => "TSConstructSignatureDeclaration",
+            Self::TSIndexSignatureName(_) => "TSIndexSignatureName",
             Self::TSInterfaceHeritage(_) => "TSInterfaceHeritage",
+            Self::TSTypePredicate(_) => "TSTypePredicate",
             Self::TSModuleDeclaration(_) => "TSModuleDeclaration",
             Self::TSModuleBlock(_) => "TSModuleBlock",
             Self::TSTypeLiteral(_) => "TSTypeLiteral",
@@ -720,7 +729,6 @@ impl<'a> AstNodes<'a> {
             Self::TSSatisfiesExpression(_) => "TSSatisfiesExpression",
             Self::TSTypeAssertion(_) => "TSTypeAssertion",
             Self::TSImportEqualsDeclaration(_) => "TSImportEqualsDeclaration",
-            Self::TSModuleReference(_) => "TSModuleReference",
             Self::TSExternalModuleReference(_) => "TSExternalModuleReference",
             Self::TSNonNullExpression(_) => "TSNonNullExpression",
             Self::Decorator(_) => "Decorator",
@@ -1243,7 +1251,7 @@ impl<'a> AstNode<'a, ArrayExpression<'a>> {
 impl<'a> AstNode<'a, ArrayExpressionElement<'a>> {
     #[inline]
     pub fn as_ast_nodes(&self) -> &AstNodes<'a> {
-        let parent = self.allocator.alloc(AstNodes::ArrayExpressionElement(transmute_self(self)));
+        let parent = self.parent;
         let node = match self.inner {
             ArrayExpressionElement::SpreadElement(s) => {
                 AstNodes::SpreadElement(self.allocator.alloc(AstNode {
@@ -4373,7 +4381,7 @@ impl<'a> AstNode<'a, WithClause<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.attributes_keyword,
             allocator: self.allocator,
-            parent: self.parent,
+            parent: self.allocator.alloc(AstNodes::WithClause(transmute_self(self))),
         })
     }
 
@@ -4382,7 +4390,7 @@ impl<'a> AstNode<'a, WithClause<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.with_entries,
             allocator: self.allocator,
-            parent: self.parent,
+            parent: self.allocator.alloc(AstNodes::WithClause(transmute_self(self))),
         })
     }
 }
@@ -5750,9 +5758,11 @@ impl<'a> AstNode<'a, TSType<'a>> {
                 )
             }
             TSType::TSTypePredicate(s) => {
-                panic!(
-                    "No kind for current enum variant yet, please see `tasks/ast_tools/src/generators/ast_kind.rs`"
-                )
+                AstNodes::TSTypePredicate(self.allocator.alloc(AstNode {
+                    inner: s.as_ref(),
+                    parent,
+                    allocator: self.allocator,
+                }))
             }
             TSType::TSTypeQuery(s) => AstNodes::TSTypeQuery(self.allocator.alloc(AstNode {
                 inner: s.as_ref(),
@@ -6506,9 +6516,11 @@ impl<'a> AstNode<'a, TSSignature<'a>> {
                 }))
             }
             TSSignature::TSCallSignatureDeclaration(s) => {
-                panic!(
-                    "No kind for current enum variant yet, please see `tasks/ast_tools/src/generators/ast_kind.rs`"
-                )
+                AstNodes::TSCallSignatureDeclaration(self.allocator.alloc(AstNode {
+                    inner: s.as_ref(),
+                    parent,
+                    allocator: self.allocator,
+                }))
             }
             TSSignature::TSConstructSignatureDeclaration(s) => {
                 AstNodes::TSConstructSignatureDeclaration(self.allocator.alloc(AstNode {
@@ -6578,22 +6590,30 @@ impl<'a> AstNode<'a, TSCallSignatureDeclaration<'a>> {
     #[inline]
     pub fn type_parameters(&self) -> Option<&AstNode<'a, TSTypeParameterDeclaration<'a>>> {
         self.allocator
-            .alloc(self.inner.type_parameters.as_ref().map(|inner| AstNode {
-                inner: inner.as_ref(),
-                allocator: self.allocator,
-                parent: self.parent,
-            }))
+            .alloc(
+                self.inner.type_parameters.as_ref().map(|inner| AstNode {
+                    inner: inner.as_ref(),
+                    allocator: self.allocator,
+                    parent: self
+                        .allocator
+                        .alloc(AstNodes::TSCallSignatureDeclaration(transmute_self(self))),
+                }),
+            )
             .as_ref()
     }
 
     #[inline]
     pub fn this_param(&self) -> Option<&AstNode<'a, TSThisParameter<'a>>> {
         self.allocator
-            .alloc(self.inner.this_param.as_ref().map(|inner| AstNode {
-                inner: inner.as_ref(),
-                allocator: self.allocator,
-                parent: self.parent,
-            }))
+            .alloc(
+                self.inner.this_param.as_ref().map(|inner| AstNode {
+                    inner: inner.as_ref(),
+                    allocator: self.allocator,
+                    parent: self
+                        .allocator
+                        .alloc(AstNodes::TSCallSignatureDeclaration(transmute_self(self))),
+                }),
+            )
             .as_ref()
     }
 
@@ -6602,18 +6622,24 @@ impl<'a> AstNode<'a, TSCallSignatureDeclaration<'a>> {
         self.allocator.alloc(AstNode {
             inner: self.inner.params.as_ref(),
             allocator: self.allocator,
-            parent: self.parent,
+            parent: self
+                .allocator
+                .alloc(AstNodes::TSCallSignatureDeclaration(transmute_self(self))),
         })
     }
 
     #[inline]
     pub fn return_type(&self) -> Option<&AstNode<'a, TSTypeAnnotation<'a>>> {
         self.allocator
-            .alloc(self.inner.return_type.as_ref().map(|inner| AstNode {
-                inner: inner.as_ref(),
-                allocator: self.allocator,
-                parent: self.parent,
-            }))
+            .alloc(
+                self.inner.return_type.as_ref().map(|inner| AstNode {
+                    inner: inner.as_ref(),
+                    allocator: self.allocator,
+                    parent: self
+                        .allocator
+                        .alloc(AstNodes::TSCallSignatureDeclaration(transmute_self(self))),
+                }),
+            )
             .as_ref()
     }
 }
@@ -6752,7 +6778,7 @@ impl<'a> AstNode<'a, TSIndexSignatureName<'a>> {
         self.allocator.alloc(AstNode {
             inner: self.inner.type_annotation.as_ref(),
             allocator: self.allocator,
-            parent: self.parent,
+            parent: self.allocator.alloc(AstNodes::TSIndexSignatureName(transmute_self(self))),
         })
     }
 }
@@ -6793,7 +6819,7 @@ impl<'a> AstNode<'a, TSTypePredicate<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.parameter_name,
             allocator: self.allocator,
-            parent: self.parent,
+            parent: self.allocator.alloc(AstNodes::TSTypePredicate(transmute_self(self))),
         })
     }
 
@@ -6808,7 +6834,7 @@ impl<'a> AstNode<'a, TSTypePredicate<'a>> {
             .alloc(self.inner.type_annotation.as_ref().map(|inner| AstNode {
                 inner: inner.as_ref(),
                 allocator: self.allocator,
-                parent: self.parent,
+                parent: self.allocator.alloc(AstNodes::TSTypePredicate(transmute_self(self))),
             }))
             .as_ref()
     }
@@ -7361,7 +7387,7 @@ impl<'a> AstNode<'a, TSImportEqualsDeclaration<'a>> {
 impl<'a> AstNode<'a, TSModuleReference<'a>> {
     #[inline]
     pub fn as_ast_nodes(&self) -> &AstNodes<'a> {
-        let parent = self.allocator.alloc(AstNodes::TSModuleReference(transmute_self(self)));
+        let parent = self.parent;
         let node = match self.inner {
             TSModuleReference::ExternalModuleReference(s) => {
                 AstNodes::TSExternalModuleReference(self.allocator.alloc(AstNode {

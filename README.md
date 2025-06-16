@@ -285,7 +285,7 @@ Oxc ports or copies code from other open source projects, their licenses are lis
 [npm-url]: https://www.npmjs.com/package/oxlint/v/latest
 [code-size-badge]: https://img.shields.io/github/languages/code-size/oxc-project/oxc
 [code-size-url]: https://github.com/oxc-project/oxc
-[code-coverage-badge]: https://codecov.io/github/oxc-project/oxc/branch/main/graph/badge.svg
+[code-coverage-badge]: https://codecov.io/gh/oxc-project/oxc/graph/badge.svg?token=FVHEH0BQLJ
 [code-coverage-url]: https://codecov.io/gh/oxc-project/oxc
 [sponsors-badge]: https://img.shields.io/github/sponsors/Boshen
 [sponsors-url]: https://github.com/sponsors/Boshen

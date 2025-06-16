@@ -758,11 +758,10 @@ impl<'a> ParserImpl<'a> {
                         can_parse_as_keyword = false;
                     } else {
                         // { type as as }
-                        property_name =
-                            Some(self.ast.module_export_name_identifier_name(
-                                type_or_name_token.span(),
-                                "type",
-                            ));
+                        property_name = Some(self.ast.module_export_name_identifier_name(
+                            type_or_name_token.span(),
+                            self.token_source(&type_or_name_token),
+                        ));
                         name = self
                             .ast
                             .module_export_name_identifier_name(second_as.span, second_as.name);

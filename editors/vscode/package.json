@@ -80,6 +80,12 @@
           "scope": "window",
           "description": "enable oxc language server"
         },
+        "oxc.requireConfig": {
+          "scope": "resource",
+          "type": "boolean",
+          "default": false,
+          "description": "Start the language server only when a `.oxlintrc.json` file exists in one of the workspaces."
+        },
         "oxc.trace.server": {
           "type": "string",
           "scope": "window",
