@@ -139,19 +139,20 @@ impl DiagnosticService {
         source_start: u32,
         diagnostics: Vec<OxcDiagnostic>,
     ) -> Vec<Error> {
-        #[cfg(test)]
-        let is_jetbrains = false;
-        #[cfg(not(test))]
-        let is_jetbrains =
-            std::env::var("TERMINAL_EMULATOR").is_ok_and(|x| x.eq("JetBrains-JediTerm"));
+        let is_jetbrains = if cfg!(test) {
+            false
+        } else {
+            std::env::var("TERMINAL_EMULATOR").is_ok_and(|x| x.eq("JetBrains-JediTerm"))
+        };
 
         let path_ref = path.as_ref();
-        let path_display = if is_jetbrains { from_file_path(path_ref) } else { None };
-        let path_display = path_display.unwrap_or_else(|| {
-            let relative_path = path_ref.strip_prefix(cwd).unwrap_or(path_ref).to_string_lossy();
-            let normalized_path = relative_path.cow_replace('\\', "/");
-            normalized_path.to_string()
-        });
+        let path_display = if is_jetbrains { from_file_path(path_ref) } else { None }
+            .unwrap_or_else(|| {
+                let relative_path =
+                    path_ref.strip_prefix(cwd).unwrap_or(path_ref).to_string_lossy();
+                let normalized_path = relative_path.cow_replace('\\', "/");
+                normalized_path.to_string()
+            });
 
         let source = Arc::new(NamedSource::new(path_display, source_text.to_owned()));
         diagnostics
@@ -302,14 +303,17 @@ fn from_file_path<A: AsRef<Path>>(path: A) -> Option<String> {
     };
 
     if cfg!(windows) {
-        // we want to parse a triple-slash path for Windows paths
+        // we want to write a triple-slash path for Windows paths
         // it's a shorthand for `file://localhost/C:/Windows` with the `localhost` omitted.
-        // We encode the driver Letter `C:` as well. LSP Specification allows it.
-        // https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#uri
+        let mut components = fragment.components();
+        let drive = components.next();
+
         Some(format!(
-            "file:///{}",
+            "file:///{:?}:/{}",
+            drive.unwrap().as_os_str().to_string_lossy(),
             percent_encoding::utf8_percent_encode(
-                &fragment.to_string_lossy().cow_replace('\\', "/"),
+                // Skip the drive character.
+                &components.collect::<PathBuf>().to_string_lossy().cow_replace('\\', "/"),
                 &ASCII_SET
             )
         ))
@@ -349,4 +353,73 @@ fn strict_canonicalize<P: AsRef<Path>>(path: P) -> std::io::Result<PathBuf> {
 
     let canon = std::fs::canonicalize(path)?;
     impl_(canon)
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::service::from_file_path;
+    use std::path::PathBuf;
+
+    fn with_schema(path: &str) -> String {
+        const EXPECTED_SCHEMA: &str = if cfg!(windows) { "file:///" } else { "file://" };
+        format!("{EXPECTED_SCHEMA}{path}")
+    }
+
+    #[test]
+    #[cfg(windows)]
+    fn test_idempotent_canonicalization() {
+        let lhs = strict_canonicalize(Path::new(".")).unwrap();
+        let rhs = strict_canonicalize(&lhs).unwrap();
+        assert_eq!(lhs, rhs);
+    }
+
+    #[test]
+    #[cfg(unix)]
+    fn test_path_to_uri() {
+        let paths = [
+            PathBuf::from("/some/path/to/file.txt"),
+            PathBuf::from("/some/path/to/file with spaces.txt"),
+            PathBuf::from("/some/path/[[...rest]]/file.txt"),
+            PathBuf::from("/some/path/to/файл.txt"),
+            PathBuf::from("/some/path/to/文件.txt"),
+        ];
+
+        let expected = [
+            with_schema("/some/path/to/file.txt"),
+            with_schema("/some/path/to/file%20with%20spaces.txt"),
+            with_schema("/some/path/%5B%5B...rest%5D%5D/file.txt"),
+            with_schema("/some/path/to/%D1%84%D0%B0%D0%B9%D0%BB.txt"),
+            with_schema("/some/path/to/%E6%96%87%E4%BB%B6.txt"),
+        ];
+
+        for (path, expected) in paths.iter().zip(expected) {
+            let uri = from_file_path(path).unwrap();
+            assert_eq!(uri.to_string(), expected);
+        }
+    }
+
+    #[test]
+    #[cfg(windows)]
+    fn test_path_to_uri_windows() {
+        let paths = [
+            PathBuf::from("C:\\some\\path\\to\\file.txt"),
+            PathBuf::from("C:\\some\\path\\to\\file with spaces.txt"),
+            PathBuf::from("C:\\some\\path\\[[...rest]]\\file.txt"),
+            PathBuf::from("C:\\some\\path\\to\\файл.txt"),
+            PathBuf::from("C:\\some\\path\\to\\文件.txt"),
+        ];
+
+        let expected = [
+            with_schema("C:/some/path/to/file.txt"),
+            with_schema("C:/some/path/to/file%20with%20spaces.txt"),
+            with_schema("C:/some/path/%5B%5B...rest%5D%5D/file.txt"),
+            with_schema("C:/some/path/to/%D1%84%D0%B0%D0%B9%D0%BB.txt"),
+            with_schema("C:/some/path/to/%E6%96%87%E4%BB%B6.txt"),
+        ];
+
+        for (path, expected) in paths.iter().zip(expected) {
+            let uri = Uri::from_file_path(path).unwrap();
+            assert_eq!(uri.to_string(), expected);
+        }
+    }
 }
