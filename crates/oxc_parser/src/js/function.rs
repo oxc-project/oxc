@@ -22,11 +22,10 @@ impl FunctionKind {
 impl<'a> ParserImpl<'a> {
     pub(crate) fn at_function_with_async(&mut self) -> bool {
         self.at(Kind::Function)
-            || self.at(Kind::Async)
-                && self.lookahead(|p| {
-                    p.bump_any();
-                    p.at(Kind::Function) && !p.token.is_on_new_line()
-                })
+            || self.at(Kind::Async) && {
+                let token = self.lexer.peek_token();
+                token.kind() == Kind::Function && !token.is_on_new_line()
+            }
     }
 
     pub(crate) fn parse_function_body(&mut self) -> Box<'a, FunctionBody<'a>> {
