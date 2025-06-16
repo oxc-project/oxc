@@ -148,6 +148,7 @@ pub enum AstNodes<'a> {
     TSUnionType(&'a AstNode<'a, TSUnionType<'a>>),
     TSIntersectionType(&'a AstNode<'a, TSIntersectionType<'a>>),
     TSParenthesizedType(&'a AstNode<'a, TSParenthesizedType<'a>>),
+    TSArrayType(&'a AstNode<'a, TSArrayType<'a>>),
     TSIndexedAccessType(&'a AstNode<'a, TSIndexedAccessType<'a>>),
     TSNamedTupleMember(&'a AstNode<'a, TSNamedTupleMember<'a>>),
     TSAnyKeyword(&'a AstNode<'a, TSAnyKeyword>),
@@ -327,6 +328,7 @@ impl<'a> AstNodes<'a> {
             Self::TSUnionType(n) => n.span(),
             Self::TSIntersectionType(n) => n.span(),
             Self::TSParenthesizedType(n) => n.span(),
+            Self::TSArrayType(n) => n.span(),
             Self::TSIndexedAccessType(n) => n.span(),
             Self::TSNamedTupleMember(n) => n.span(),
             Self::TSAnyKeyword(n) => n.span(),
@@ -506,6 +508,7 @@ impl<'a> AstNodes<'a> {
             Self::TSUnionType(n) => n.parent,
             Self::TSIntersectionType(n) => n.parent,
             Self::TSParenthesizedType(n) => n.parent,
+            Self::TSArrayType(n) => n.parent,
             Self::TSIndexedAccessType(n) => n.parent,
             Self::TSNamedTupleMember(n) => n.parent,
             Self::TSAnyKeyword(n) => n.parent,
@@ -685,6 +688,7 @@ impl<'a> AstNodes<'a> {
             Self::TSUnionType(_) => "TSUnionType",
             Self::TSIntersectionType(_) => "TSIntersectionType",
             Self::TSParenthesizedType(_) => "TSParenthesizedType",
+            Self::TSArrayType(_) => "TSArrayType",
             Self::TSIndexedAccessType(_) => "TSIndexedAccessType",
             Self::TSNamedTupleMember(_) => "TSNamedTupleMember",
             Self::TSAnyKeyword(_) => "TSAnyKeyword",
@@ -5667,11 +5671,11 @@ impl<'a> AstNode<'a, TSType<'a>> {
                 parent,
                 allocator: self.allocator,
             })),
-            TSType::TSArrayType(s) => {
-                panic!(
-                    "No kind for current enum variant yet, please see `tasks/ast_tools/src/generators/ast_kind.rs`"
-                )
-            }
+            TSType::TSArrayType(s) => AstNodes::TSArrayType(self.allocator.alloc(AstNode {
+                inner: s.as_ref(),
+                parent,
+                allocator: self.allocator,
+            })),
             TSType::TSConditionalType(s) => {
                 AstNodes::TSConditionalType(self.allocator.alloc(AstNode {
                     inner: s.as_ref(),
@@ -5938,7 +5942,7 @@ impl<'a> AstNode<'a, TSArrayType<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.element_type,
             allocator: self.allocator,
-            parent: self.parent,
+            parent: self.allocator.alloc(AstNodes::TSArrayType(transmute_self(self))),
         })
     }
 }

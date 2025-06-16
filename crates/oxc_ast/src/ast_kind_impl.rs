@@ -331,6 +331,7 @@ impl AstKind<'_> {
             Self::TSUnknownKeyword(_) => "TSUnknownKeyword".into(),
             Self::TSInferType(_) => "TSInferType".into(),
             Self::TSTemplateLiteralType(_) => "TSTemplateLiteralType".into(),
+            Self::TSArrayType(_) => "TSArrayType".into(),
 
             Self::TSIndexedAccessType(_) => "TSIndexedAccessType".into(),
 

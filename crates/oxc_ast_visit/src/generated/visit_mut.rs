@@ -3506,9 +3506,11 @@ pub mod walk_mut {
 
     #[inline]
     pub fn walk_ts_array_type<'a, V: VisitMut<'a>>(visitor: &mut V, it: &mut TSArrayType<'a>) {
-        // No `AstType` for this type
+        let kind = AstType::TSArrayType;
+        visitor.enter_node(kind);
         visitor.visit_span(&mut it.span);
         visitor.visit_ts_type(&mut it.element_type);
+        visitor.leave_node(kind);
     }
 
     #[inline]
