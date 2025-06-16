@@ -3363,9 +3363,11 @@ pub mod walk {
 
     #[inline]
     pub fn walk_ts_tuple_type<'a, V: Visit<'a>>(visitor: &mut V, it: &TSTupleType<'a>) {
-        // No `AstKind` for this type
+        let kind = AstKind::TSTupleType(visitor.alloc(it));
+        visitor.enter_node(kind);
         visitor.visit_span(&it.span);
         visitor.visit_ts_tuple_elements(&it.element_types);
+        visitor.leave_node(kind);
     }
 
     #[inline]

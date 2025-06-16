@@ -151,6 +151,7 @@ pub enum AstNodes<'a> {
     TSTypeOperator(&'a AstNode<'a, TSTypeOperator<'a>>),
     TSArrayType(&'a AstNode<'a, TSArrayType<'a>>),
     TSIndexedAccessType(&'a AstNode<'a, TSIndexedAccessType<'a>>),
+    TSTupleType(&'a AstNode<'a, TSTupleType<'a>>),
     TSNamedTupleMember(&'a AstNode<'a, TSNamedTupleMember<'a>>),
     TSAnyKeyword(&'a AstNode<'a, TSAnyKeyword>),
     TSStringKeyword(&'a AstNode<'a, TSStringKeyword>),
@@ -332,6 +333,7 @@ impl<'a> AstNodes<'a> {
             Self::TSTypeOperator(n) => n.span(),
             Self::TSArrayType(n) => n.span(),
             Self::TSIndexedAccessType(n) => n.span(),
+            Self::TSTupleType(n) => n.span(),
             Self::TSNamedTupleMember(n) => n.span(),
             Self::TSAnyKeyword(n) => n.span(),
             Self::TSStringKeyword(n) => n.span(),
@@ -513,6 +515,7 @@ impl<'a> AstNodes<'a> {
             Self::TSTypeOperator(n) => n.parent,
             Self::TSArrayType(n) => n.parent,
             Self::TSIndexedAccessType(n) => n.parent,
+            Self::TSTupleType(n) => n.parent,
             Self::TSNamedTupleMember(n) => n.parent,
             Self::TSAnyKeyword(n) => n.parent,
             Self::TSStringKeyword(n) => n.parent,
@@ -694,6 +697,7 @@ impl<'a> AstNodes<'a> {
             Self::TSTypeOperator(_) => "TSTypeOperator",
             Self::TSArrayType(_) => "TSArrayType",
             Self::TSIndexedAccessType(_) => "TSIndexedAccessType",
+            Self::TSTupleType(_) => "TSTupleType",
             Self::TSNamedTupleMember(_) => "TSNamedTupleMember",
             Self::TSAnyKeyword(_) => "TSAnyKeyword",
             Self::TSStringKeyword(_) => "TSStringKeyword",
@@ -5750,11 +5754,11 @@ impl<'a> AstNode<'a, TSType<'a>> {
                 parent,
                 allocator: self.allocator,
             })),
-            TSType::TSTupleType(s) => {
-                panic!(
-                    "No kind for current enum variant yet, please see `tasks/ast_tools/src/generators/ast_kind.rs`"
-                )
-            }
+            TSType::TSTupleType(s) => AstNodes::TSTupleType(self.allocator.alloc(AstNode {
+                inner: s.as_ref(),
+                parent,
+                allocator: self.allocator,
+            })),
             TSType::TSTypeLiteral(s) => AstNodes::TSTypeLiteral(self.allocator.alloc(AstNode {
                 inner: s.as_ref(),
                 parent,
@@ -5987,7 +5991,7 @@ impl<'a> AstNode<'a, TSTupleType<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.element_types,
             allocator: self.allocator,
-            parent: self.parent,
+            parent: self.allocator.alloc(AstNodes::TSTupleType(transmute_self(self))),
         })
     }
 }

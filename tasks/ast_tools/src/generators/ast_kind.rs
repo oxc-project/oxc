@@ -37,7 +37,7 @@ const STRUCTS_BLACK_LIST: &[&str] = &[
     "BindingProperty",
     "AccessorProperty",
     "ImportAttribute",
-    "TSTupleType",
+    //"TSTupleType",
     "TSOptionalType",
     "TSRestType",
     "TSInterfaceBody",
