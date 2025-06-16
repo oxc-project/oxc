@@ -1,7 +1,7 @@
 use itoa::Buffer as ItoaBuffer;
 use ryu_js::Buffer as RyuBuffer;
 
-use super::{ESTree, Serializer, SequenceSerializer};
+use super::{ESTree, SequenceSerializer, Serializer};
 
 /// [`ESTree`] implementation for `bool`.
 impl ESTree for bool {

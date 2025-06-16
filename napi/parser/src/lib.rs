@@ -109,24 +109,20 @@ fn parse_with_return(filename: &str, source_text: String, options: &ParserOption
                 );
             }
 
-            program.to_estree_js_json_with_fixes_and_options(
-                Some(&SerializationOptions {
-                    range: options.range.unwrap_or(false),
-                    loc: options.loc.unwrap_or(false),
-                })
-            )
+            program.to_estree_js_json_with_fixes_and_options(Some(&SerializationOptions {
+                range: options.range.unwrap_or(false),
+                loc: options.loc.unwrap_or(false),
+            }))
         }
         AstType::TypeScript => {
             // Note: `@typescript-eslint/parser` ignores hashbangs,
             // despite appearances to the contrary in AST explorers.
             // So we ignore them too.
             // See: https://github.com/typescript-eslint/typescript-eslint/issues/6500
-            program.to_estree_ts_json_with_fixes_and_options(
-                Some(&SerializationOptions {
-                    range: options.range.unwrap_or(false),
-                    loc: options.loc.unwrap_or(false),
-                })
-            )
+            program.to_estree_ts_json_with_fixes_and_options(Some(&SerializationOptions {
+                range: options.range.unwrap_or(false),
+                loc: options.loc.unwrap_or(false),
+            }))
         }
     };
 

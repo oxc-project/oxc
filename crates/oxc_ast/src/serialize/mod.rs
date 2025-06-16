@@ -10,8 +10,8 @@ use oxc_span::GetSpan;
 
 use crate::ast::*;
 use crate::{
-    ast::{ExportDefaultDeclarationKind, Statement},
     ast::{Declaration, Program},
+    ast::{ExportDefaultDeclarationKind, Statement},
 };
 
 /// Options for ESTree serialization
@@ -102,10 +102,17 @@ impl Program<'_> {
     }
 
     /// Serialize AST to ESTree JSON, including TypeScript fields, with list of fixes and serialization options.
-    pub fn to_estree_ts_json_with_fixes_and_options(&self, options: Option<&SerializationOptions>) -> String {
+    pub fn to_estree_ts_json_with_fixes_and_options(
+        &self,
+        options: Option<&SerializationOptions>,
+    ) -> String {
         let capacity = self.source_text.len() * JSON_CAPACITY_RATIO_COMPACT;
-        let runtime_options = options.map_or_else(RuntimeOptions::default, |o| RuntimeOptions { range: o.range, loc: o.loc });
-        let mut serializer = CompactFixesTSSerializer::with_capacity(capacity).with_options(runtime_options);
+        let runtime_options = options.map_or_else(RuntimeOptions::default, |o| RuntimeOptions {
+            range: o.range,
+            loc: o.loc,
+        });
+        let mut serializer =
+            CompactFixesTSSerializer::with_capacity(capacity).with_options(runtime_options);
         if runtime_options.loc {
             let source_text_static: &'static str = unsafe { std::mem::transmute(self.source_text) };
             serializer = serializer.with_source_text(source_text_static);
@@ -114,10 +121,17 @@ impl Program<'_> {
     }
 
     /// Serialize AST to ESTree JSON, without TypeScript fields, with list of fixes and serialization options.
-    pub fn to_estree_js_json_with_fixes_and_options(&self, options: Option<&SerializationOptions>) -> String {
+    pub fn to_estree_js_json_with_fixes_and_options(
+        &self,
+        options: Option<&SerializationOptions>,
+    ) -> String {
         let capacity = self.source_text.len() * JSON_CAPACITY_RATIO_COMPACT;
-        let runtime_options = options.map_or_else(RuntimeOptions::default, |o| RuntimeOptions { range: o.range, loc: o.loc });
-        let mut serializer = CompactFixesJSSerializer::with_capacity(capacity).with_options(runtime_options);
+        let runtime_options = options.map_or_else(RuntimeOptions::default, |o| RuntimeOptions {
+            range: o.range,
+            loc: o.loc,
+        });
+        let mut serializer =
+            CompactFixesJSSerializer::with_capacity(capacity).with_options(runtime_options);
         if runtime_options.loc {
             let source_text_static: &'static str = unsafe { std::mem::transmute(self.source_text) };
             serializer = serializer.with_source_text(source_text_static);

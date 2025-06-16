@@ -467,7 +467,7 @@ impl<'s> StructSerializerGenerator<'s> {
         if should_flatten_field(field, self.schema) {
             if can_flatten_field_inline(field, self.krate, self.schema) {
                 let inner_struct_def = field.type_def(self.schema).as_struct().unwrap();
-                
+
                 self.generate_stmts_for_struct(
                     inner_struct_def,
                     &quote!(#self_path.#field_name_ident),

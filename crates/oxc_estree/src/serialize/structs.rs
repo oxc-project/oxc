@@ -240,7 +240,7 @@ impl<'p, P: StructSerializer> Serializer for FlatStructSerializer<'p, P> {
 
     fn range(&self) -> bool {
         self.0.range()
-    }   
+    }
 
     fn loc(&self) -> bool {
         self.0.loc()

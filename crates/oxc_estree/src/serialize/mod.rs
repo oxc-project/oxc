@@ -4,7 +4,11 @@
 use std::mem;
 
 use itoa::Buffer as ItoaBuffer;
-use oxc_data_structures::{code_buffer::CodeBuffer, stack::NonEmptyStack, rope::{Rope, get_line_column}};
+use oxc_data_structures::{
+    code_buffer::CodeBuffer,
+    rope::{Rope, get_line_column},
+    stack::NonEmptyStack,
+};
 
 mod blanket;
 mod concat;

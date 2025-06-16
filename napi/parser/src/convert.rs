@@ -79,11 +79,11 @@ impl From<&ModuleRecord<'_>> for EcmaScriptModule {
 
 impl From<&oxc::span::Span> for Span {
     fn from(span: &oxc::span::Span) -> Self {
-        Self { 
-            start: span.start, 
+        Self {
+            start: span.start,
             end: span.end,
-            range: None,  // Will be populated later based on parser options
-            loc: None,    // Will be populated later based on parser options
+            range: None, // Will be populated later based on parser options
+            loc: None,   // Will be populated later based on parser options
         }
     }
 }
