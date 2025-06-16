@@ -174,6 +174,7 @@ pub enum AstNodes<'a> {
     TSClassImplements(&'a AstNode<'a, TSClassImplements<'a>>),
     TSInterfaceDeclaration(&'a AstNode<'a, TSInterfaceDeclaration<'a>>),
     TSPropertySignature(&'a AstNode<'a, TSPropertySignature<'a>>),
+    TSCallSignatureDeclaration(&'a AstNode<'a, TSCallSignatureDeclaration<'a>>),
     TSMethodSignature(&'a AstNode<'a, TSMethodSignature<'a>>),
     TSConstructSignatureDeclaration(&'a AstNode<'a, TSConstructSignatureDeclaration<'a>>),
     TSIndexSignatureName(&'a AstNode<'a, TSIndexSignatureName<'a>>),
@@ -352,6 +353,7 @@ impl<'a> AstNodes<'a> {
             Self::TSClassImplements(n) => n.span(),
             Self::TSInterfaceDeclaration(n) => n.span(),
             Self::TSPropertySignature(n) => n.span(),
+            Self::TSCallSignatureDeclaration(n) => n.span(),
             Self::TSMethodSignature(n) => n.span(),
             Self::TSConstructSignatureDeclaration(n) => n.span(),
             Self::TSIndexSignatureName(n) => n.span(),
@@ -530,6 +532,7 @@ impl<'a> AstNodes<'a> {
             Self::TSClassImplements(n) => n.parent,
             Self::TSInterfaceDeclaration(n) => n.parent,
             Self::TSPropertySignature(n) => n.parent,
+            Self::TSCallSignatureDeclaration(n) => n.parent,
             Self::TSMethodSignature(n) => n.parent,
             Self::TSConstructSignatureDeclaration(n) => n.parent,
             Self::TSIndexSignatureName(n) => n.parent,
@@ -708,6 +711,7 @@ impl<'a> AstNodes<'a> {
             Self::TSClassImplements(_) => "TSClassImplements",
             Self::TSInterfaceDeclaration(_) => "TSInterfaceDeclaration",
             Self::TSPropertySignature(_) => "TSPropertySignature",
+            Self::TSCallSignatureDeclaration(_) => "TSCallSignatureDeclaration",
             Self::TSMethodSignature(_) => "TSMethodSignature",
             Self::TSConstructSignatureDeclaration(_) => "TSConstructSignatureDeclaration",
             Self::TSIndexSignatureName(_) => "TSIndexSignatureName",
@@ -6510,9 +6514,11 @@ impl<'a> AstNode<'a, TSSignature<'a>> {
                 }))
             }
             TSSignature::TSCallSignatureDeclaration(s) => {
-                panic!(
-                    "No kind for current enum variant yet, please see `tasks/ast_tools/src/generators/ast_kind.rs`"
-                )
+                AstNodes::TSCallSignatureDeclaration(self.allocator.alloc(AstNode {
+                    inner: s.as_ref(),
+                    parent,
+                    allocator: self.allocator,
+                }))
             }
             TSSignature::TSConstructSignatureDeclaration(s) => {
                 AstNodes::TSConstructSignatureDeclaration(self.allocator.alloc(AstNode {
@@ -6582,22 +6588,30 @@ impl<'a> AstNode<'a, TSCallSignatureDeclaration<'a>> {
     #[inline]
     pub fn type_parameters(&self) -> Option<&AstNode<'a, TSTypeParameterDeclaration<'a>>> {
         self.allocator
-            .alloc(self.inner.type_parameters.as_ref().map(|inner| AstNode {
-                inner: inner.as_ref(),
-                allocator: self.allocator,
-                parent: self.parent,
-            }))
+            .alloc(
+                self.inner.type_parameters.as_ref().map(|inner| AstNode {
+                    inner: inner.as_ref(),
+                    allocator: self.allocator,
+                    parent: self
+                        .allocator
+                        .alloc(AstNodes::TSCallSignatureDeclaration(transmute_self(self))),
+                }),
+            )
             .as_ref()
     }
 
     #[inline]
     pub fn this_param(&self) -> Option<&AstNode<'a, TSThisParameter<'a>>> {
         self.allocator
-            .alloc(self.inner.this_param.as_ref().map(|inner| AstNode {
-                inner: inner.as_ref(),
-                allocator: self.allocator,
-                parent: self.parent,
-            }))
+            .alloc(
+                self.inner.this_param.as_ref().map(|inner| AstNode {
+                    inner: inner.as_ref(),
+                    allocator: self.allocator,
+                    parent: self
+                        .allocator
+                        .alloc(AstNodes::TSCallSignatureDeclaration(transmute_self(self))),
+                }),
+            )
             .as_ref()
     }
 
@@ -6606,18 +6620,24 @@ impl<'a> AstNode<'a, TSCallSignatureDeclaration<'a>> {
         self.allocator.alloc(AstNode {
             inner: self.inner.params.as_ref(),
             allocator: self.allocator,
-            parent: self.parent,
+            parent: self
+                .allocator
+                .alloc(AstNodes::TSCallSignatureDeclaration(transmute_self(self))),
         })
     }
 
     #[inline]
     pub fn return_type(&self) -> Option<&AstNode<'a, TSTypeAnnotation<'a>>> {
         self.allocator
-            .alloc(self.inner.return_type.as_ref().map(|inner| AstNode {
-                inner: inner.as_ref(),
-                allocator: self.allocator,
-                parent: self.parent,
-            }))
+            .alloc(
+                self.inner.return_type.as_ref().map(|inner| AstNode {
+                    inner: inner.as_ref(),
+                    allocator: self.allocator,
+                    parent: self
+                        .allocator
+                        .alloc(AstNodes::TSCallSignatureDeclaration(transmute_self(self))),
+                }),
+            )
             .as_ref()
     }
 }
