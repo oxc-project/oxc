@@ -289,6 +289,7 @@ impl AstKind<'_> {
             Self::ExportDefaultDeclaration(_) => "ExportDefaultDeclaration".into(),
             Self::ExportNamedDeclaration(_) => "ExportNamedDeclaration".into(),
             Self::ExportAllDeclaration(_) => "ExportAllDeclaration".into(),
+            Self::WithClause(_) => "WithClause".into(),
             Self::JSXOpeningElement(_) => "JSXOpeningElement".into(),
             Self::JSXClosingElement(_) => "JSXClosingElement".into(),
             Self::JSXElement(_) => "JSXElement".into(),
