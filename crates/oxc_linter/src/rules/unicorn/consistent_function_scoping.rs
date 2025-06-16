@@ -1,14 +1,11 @@
 use rustc_hash::FxHashSet;
 
-use oxc_ast::{
-    AstKind,
-    ast::{self, Function, IdentifierReference, JSXElementName, ThisExpression},
-};
+use oxc_ast::{AstKind, ast::*};
 use oxc_ast_visit::{Visit, walk};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_semantic::{ReferenceId, ScopeFlags, ScopeId};
-use oxc_span::{GetSpan, Span};
+use oxc_semantic::{ReferenceId, ScopeFlags, ScopeId, SymbolId};
+use oxc_span::{Atom, GetSpan, Span};
 
 use crate::{
     AstNode,
@@ -21,24 +18,37 @@ use crate::{
 fn consistent_function_scoping(
     fn_span: Span,
     parent_scope_span: Option<Span>,
-    function_name: Option<ast::Atom<'_>>,
+    parent_scope_kind: Option<&'static str>,
+    function_name: Option<Atom<'_>>,
 ) -> OxcDiagnostic {
-    let d = OxcDiagnostic::warn("Function does not capture any variables from the outer scope.")
-        .with_help("Move this function to the outer scope.");
-
-    if let Some(parent) = parent_scope_span {
-        let parent_label = if let Some(function_name) = function_name {
-            parent.label(format!("Function `{}` is declared in this scope", function_name))
-        } else {
-            parent.label("Function is declared in this scope")
-        };
-
-        d.with_labels([
-            parent_label,
-            fn_span.primary_label("It does not capture any variables declared there"),
-        ])
+    debug_assert!(Some(fn_span) != parent_scope_span);
+    let function_label = if let Some(name) = function_name {
+        format!("Function `{name}` does not capture any variables from its parent scope")
     } else {
-        d.with_label(fn_span)
+        "This function does not use any variables from its parent scope".into()
+    };
+
+    let d = OxcDiagnostic::warn(function_label).with_help(match function_name {
+        Some(name) => {
+            format!("Move `{name}` to the outer scope to avoid recreating it on every call.")
+        }
+        None => {
+            "Move this function to the outer scope to avoid recreating it on every call.".into()
+        }
+    });
+
+    match parent_scope_span {
+        Some(parent) => d.with_labels([
+            parent.label("Outer scope where this function is defined"),
+            fn_span.primary_label(if let Some(parent_scope_kind) = parent_scope_kind {
+                format!(
+                    "This function does not use any variables from the parent {parent_scope_kind}"
+                )
+            } else {
+                "This function does not use any variables from here".into()
+            }),
+        ]),
+        None => d.with_label(fn_span),
     }
 }
 
@@ -277,11 +287,14 @@ impl Rule for ConsistentFunctionScoping {
             }
         }
 
-        let maybe_parent_scope_span = get_short_span_for_fn_scope(ctx, scope);
+        let (maybe_parent_scope_span, maybe_parent_scope_type) =
+            get_short_span_for_fn_scope(ctx, function_declaration_symbol_id, scope)
+                .map_or((None, None), |(span, rtype)| (Some(span), Some(rtype)));
 
         ctx.diagnostic(consistent_function_scoping(
             reporter_span,
             maybe_parent_scope_span,
+            maybe_parent_scope_type,
             function_name,
         ));
     }
@@ -350,41 +363,60 @@ fn is_in_react_hook<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) -> bool {
     false
 }
 
-fn get_short_span_for_fn_scope<'a>(ctx: &LintContext<'a>, scope_id: ScopeId) -> Option<Span> {
+fn get_short_span_for_fn_scope(
+    ctx: &LintContext<'_>,
+    function_symbol_id: SymbolId,
+    scope_id: ScopeId,
+) -> Option<(Span, &'static str)> {
     let scoping = ctx.scoping();
 
     debug_assert!(!scoping.scope_flags(scope_id).contains(ScopeFlags::Top));
-    let parent_scope = scoping.scope_parent_id(scope_id)?;
-    let node_creating_parent_scope = ctx.nodes().get_node(scoping.get_node_id(parent_scope));
+
+    let scope_id =
+        match ctx.nodes().parent_kind(ctx.scoping().symbol_declaration(function_symbol_id)) {
+            Some(AstKind::AssignmentExpression(_)) => {
+                ctx.scoping().scope_parent_id(scope_id).unwrap_or(scope_id)
+            }
+            _ => scope_id,
+        };
+
+    let node_creating_parent_scope = ctx.nodes().get_node(scoping.get_node_id(scope_id));
+
     match node_creating_parent_scope.kind() {
-        AstKind::Function(f) => f.id.as_ref().map(GetSpan::span),
+        AstKind::Function(f) => f.id.as_ref().map(|id| (id.span(), "function")),
         AstKind::ArrowFunctionExpression(_) => {
             let parent = ctx.nodes().parent_kind(node_creating_parent_scope.id())?;
             match parent {
-                AstKind::VariableDeclarator(v) => Some(v.id.span()),
-                AstKind::AssignmentExpression(a) => Some(a.left.span()),
+                AstKind::VariableDeclarator(v) => Some((v.id.span(), "arrow function")),
+                AstKind::AssignmentExpression(a) => Some((a.left.span(), "arrow function")),
                 _ => None,
             }
         }
-        AstKind::Class(c) => c.id.as_ref().map(GetSpan::span),
+        AstKind::Class(c) => c.id.as_ref().map(|id| (id.span(), "class")),
         // only cover keywords of control flow statements
-        AstKind::ForInStatement(ast::ForInStatement { span, .. })
-        | AstKind::ForOfStatement(ast::ForOfStatement { span, .. })
-        | AstKind::ForStatement(ast::ForStatement { span, .. }) => Some(Span::sized(span.start, 3)), // "for"
-        AstKind::WhileStatement(ast::WhileStatement { span, .. }) => {
-            Some(Span::sized(span.start, 5))
-        } // "while"
-        AstKind::IfStatement(ast::IfStatement { span, .. }) => Some(Span::sized(span.start, 2)), // "if"
-        AstKind::DoWhileStatement(ast::DoWhileStatement { span, .. }) => {
-            Some(Span::sized(span.start, 2))
-        } // "do"
-
-        AstKind::SwitchStatement(ast::SwitchStatement { span, .. }) => {
-            Some(Span::sized(span.start, 6))
-        } // "switch"
-
-        AstKind::TryStatement(ast::TryStatement { span, .. }) => Some(Span::sized(span.start, 3)), // "try"
-        AstKind::CatchClause(ast::CatchClause { span, .. }) => Some(Span::sized(span.start, 5)), // "catch"
+        AstKind::ForInStatement(ForInStatement { span, .. })
+        | AstKind::ForOfStatement(ForOfStatement { span, .. })
+        | AstKind::ForStatement(ForStatement { span, .. }) => {
+            Some((Span::sized(span.start, 3), "for loop"))
+        }
+        AstKind::TryStatement(TryStatement { span, .. }) => {
+            Some((Span::sized(span.start, 3), "try statement"))
+        }
+        AstKind::IfStatement(IfStatement { span, .. }) => {
+            Some((Span::sized(span.start, 2), "if statement"))
+        }
+        AstKind::DoWhileStatement(DoWhileStatement { span, .. }) => {
+            Some((Span::sized(span.start, 2), "do while statement"))
+        }
+        AstKind::SwitchStatement(SwitchStatement { span, .. }) => {
+            Some((Span::sized(span.start, 6), "switch statement"))
+        }
+        AstKind::WhileStatement(WhileStatement { span, .. }) => {
+            Some((Span::sized(span.start, 5), "while statement"))
+        }
+        AstKind::CatchClause(CatchClause { span, .. }) => {
+            Some((Span::sized(span.start, 5), "catch block"))
+        }
         _ => None,
     }
 }
