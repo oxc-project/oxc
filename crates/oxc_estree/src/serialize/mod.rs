@@ -102,7 +102,7 @@ pub struct ESTreeSerializer<C: Config, F: Formatter> {
     formatter: F,
     trace_path: NonEmptyStack<TracePathPart>,
     fixes_buffer: CodeBuffer,
-    source_text: Option<&'static str>,
+    #[expect(unused)]
     config: C,
 }
 
@@ -114,7 +114,6 @@ impl<C: Config, F: Formatter> ESTreeSerializer<C, F> {
             formatter: F::new(),
             trace_path: NonEmptyStack::new(TracePathPart::Index(0)),
             fixes_buffer: CodeBuffer::new(),
-            source_text: None,
             config: C::new(),
         }
     }
@@ -126,7 +125,6 @@ impl<C: Config, F: Formatter> ESTreeSerializer<C, F> {
             formatter: F::new(),
             trace_path: NonEmptyStack::new(TracePathPart::Index(0)),
             fixes_buffer: CodeBuffer::new(),
-            source_text: None,
             config: C::new(),
         }
     }
@@ -138,19 +136,8 @@ impl<C: Config, F: Formatter> ESTreeSerializer<C, F> {
             formatter: F::new(),
             trace_path: NonEmptyStack::new(TracePathPart::Index(0)),
             fixes_buffer: CodeBuffer::new(),
-            source_text: None,
             config,
         }
-    }
-
-    pub fn with_source_text(mut self, source_text: &'static str) -> Self {
-        self.source_text = Some(source_text);
-        self
-    }
-
-    /// Calculate line and column position from byte offset
-    pub fn get_line_column(&self, _offset: u32) -> Option<(u32, u32)> {
-        None
     }
 
     /// Serialize `node` and output a `JSON` string containing

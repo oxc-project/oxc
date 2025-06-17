@@ -1,6 +1,5 @@
 #[cfg(feature = "serialize")]
 mod serialize;
-
 #[cfg(feature = "serialize")]
 pub use serialize::*;
 
