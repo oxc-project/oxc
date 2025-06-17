@@ -4,6 +4,68 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.73.1] - 2025-06-17
+
+### 🚀 Features
+
+- 81ef443 napi: Add `aarch64-linux-android` target (#11769) (LongYinan)
+- dfdebc2 napi/parser: Lazy deserializer `NodeArray` `slice` method (#11680) (overlookmotel)
+
+### 🐛 Bug Fixes
+
+- 6feab7e ast/estree: Remove custom serializer for `MethodDefinition` `key` field (#11763) (overlookmotel)
+- fcb3084 napi/parser: Lazy deser: remove outdated comments (#11699) (overlookmotel)
+- 2749931 napi/parser: Lazy deserializer block class constructors correctly (#11679) (overlookmotel)
+- e523d86 napi/parser: Lazy deserializer locally cache all `Vec`s and strings (#11667) (overlookmotel)
+
+### 🚜 Refactor
+
+- d057652 regular-expression: Shorten Span construction (#11689) (Ulrich Stark)
+- f1f3c30 napi/parser: Lazy deserializer: prefix local cache property keys with `$` (#11673) (overlookmotel)
+
+### ⚡ Performance
+
+- d136acd napi/parser: Lazy deser: remove `getInternal` function in `NodeArray` (#11698) (overlookmotel)
+- a6a82f9 napi/parser: Lazy deser: avoid changing shape of `NodeArray` prototype (#11697) (overlookmotel)
+- 60f754e napi/parser: Lazily deserialize `Vec`s (#11678) (overlookmotel)
+
+### 🧪 Testing
+
+- 20efcd4 napi/parser: Remove unnecessary `RUN_SIMPLE_LAZY_TESTS` env var (#11703) (overlookmotel)
+- 6848b24 napi/parser: Lazy deser: tests for introspection of `NodeArray`s (#11702) (overlookmotel)
+
+
+## [0.73.1] - 2025-06-17
+
+### 🚀 Features
+
+- 81ef443 napi: Add `aarch64-linux-android` target (#11769) (LongYinan)
+- dfdebc2 napi/parser: Lazy deserializer `NodeArray` `slice` method (#11680) (overlookmotel)
+
+### 🐛 Bug Fixes
+
+- 6feab7e ast/estree: Remove custom serializer for `MethodDefinition` `key` field (#11763) (overlookmotel)
+- fcb3084 napi/parser: Lazy deser: remove outdated comments (#11699) (overlookmotel)
+- 2749931 napi/parser: Lazy deserializer block class constructors correctly (#11679) (overlookmotel)
+- e523d86 napi/parser: Lazy deserializer locally cache all `Vec`s and strings (#11667) (overlookmotel)
+
+### 🚜 Refactor
+
+- d057652 regular-expression: Shorten Span construction (#11689) (Ulrich Stark)
+- f1f3c30 napi/parser: Lazy deserializer: prefix local cache property keys with `$` (#11673) (overlookmotel)
+
+### ⚡ Performance
+
+- d136acd napi/parser: Lazy deser: remove `getInternal` function in `NodeArray` (#11698) (overlookmotel)
+- a6a82f9 napi/parser: Lazy deser: avoid changing shape of `NodeArray` prototype (#11697) (overlookmotel)
+- 60f754e napi/parser: Lazily deserialize `Vec`s (#11678) (overlookmotel)
+
+### 🧪 Testing
+
+- 20efcd4 napi/parser: Remove unnecessary `RUN_SIMPLE_LAZY_TESTS` env var (#11703) (overlookmotel)
+- 6848b24 napi/parser: Lazy deser: tests for introspection of `NodeArray`s (#11702) (overlookmotel)
+
+
 ## [0.73.0] - 2025-06-13
 
 ### 💥 BREAKING CHANGES
