@@ -5,7 +5,7 @@ use quote::ToTokens;
 use rustc_hash::FxHashMap;
 use syn::{
     AttrStyle, Attribute, Expr, ExprLit, Field, Fields, GenericArgument, Generics, Ident, ItemEnum,
-    ItemStruct, Lit, Meta, MetaList, PathArguments, PathSegment, Type, TypePath, TypeReference,
+    ItemStruct, Lit, Meta, MetaList, PathArguments, PathSegment, Type, TypeArray, TypePath, TypeReference,
     Variant, Visibility as SynVisibility, punctuated::Punctuated, token::Comma,
 };
 
@@ -226,6 +226,7 @@ impl<'c> Parser<'c> {
             // TODO: Remove the need for this by adding
             // `#[cfg_attr(target_pointer_width = "64", repr(align(8)))]` to all AST types
             "PointerAlign" => primitive("PointerAlign"),
+            "ArrayType" => primitive("ArrayType"),
             _ => panic!("Unknown type: {name}"),
         };
         self.create_new_type(type_def)
@@ -501,6 +502,7 @@ impl<'c> Parser<'c> {
         match ty {
             Type::Path(type_path) => self.parse_type_path(type_path),
             Type::Reference(type_ref) => self.parse_type_reference(type_ref),
+            Type::Array(type_array) => self.parse_type_array(type_array),
             _ => None,
         }
     }
@@ -581,6 +583,12 @@ impl<'c> Parser<'c> {
             return None;
         }
         Some(self.type_id("&str"))
+    }
+
+    fn parse_type_array(&mut self, _type_array: &TypeArray) -> Option<TypeId> {
+        // For array types like [i32; 2], we'll create a special primitive type
+        // The exact name doesn't matter since the field will be skipped in ESTree
+        Some(self.type_id("ArrayType"))
     }
 
     /// Parse attributes on struct or enum with parsers provided by [`Derive`]s and [`Generator`]s.

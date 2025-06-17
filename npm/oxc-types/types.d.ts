@@ -1515,6 +1515,7 @@ export type UpdateOperator = '++' | '--';
 export interface Span {
   start: number;
   end: number;
+  range: [number, number] | null;
 }
 
 export type ModuleKind = 'script' | 'module';

@@ -82,7 +82,7 @@ impl From<&oxc::span::Span> for Span {
         Self {
             start: span.start,
             end: span.end,
-            range: None, // Will be populated later based on parser options
+            range: span.range.map(|arr| vec![arr[0], arr[1]]),
         }
     }
 }

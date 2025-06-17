@@ -444,7 +444,9 @@ impl<'s> StructSerializerGenerator<'s> {
                     state.serialize_field("start", &#self_path.#field_name_ident.start);
                     state.serialize_field("end", &#self_path.#field_name_ident.end);
                     if state.range() {
-                        state.serialize_field("range", &[#self_path.#field_name_ident.start, #self_path.#field_name_ident.end]);
+                        if let Some(range) = &#self_path.#field_name_ident.range {
+                            state.serialize_field("range", range);
+                        }
                     }
                 });
                 return;
@@ -480,6 +482,24 @@ impl<'s> StructSerializerGenerator<'s> {
 
         if field_camel_name == "type" {
             self.add_type_field = false;
+        }
+
+        // Special case for range field - only serialize when range() is enabled
+        if field_camel_name == "range" {
+            if let TypeDef::Option(option_def) = field.type_def(self.schema) {
+                if let TypeDef::Primitive(primitive_def) = option_def.inner_type(self.schema) {
+                    if primitive_def.name() == "ArrayType" {
+                        self.stmts.extend(quote! {
+                            if state.range() {
+                                if let Some(range) = &#self_path.#field_name_ident {
+                                    state.serialize_field(#field_camel_name, range);
+                                }
+                            }
+                        });
+                        return;
+                    }
+                }
+            }
         }
 
         let value = if let Some(converter_name) = &field.estree.via {
