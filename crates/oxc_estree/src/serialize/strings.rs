@@ -475,6 +475,7 @@ mod tests {
                 "\x10\x11\x12\x13\x14\x15\x16\x17\x18\x19\x1A\x1B\x1C\x1D\x1E\x1F",
                 r#""\u0010\u0011\u0012\u0013\u0014\u0015\u0016\u0017\u0018\u0019\u001a\u001b\u001c\u001d\u001e\u001f""#,
             ),
+            (r"\r\n\q", r#""\\r\\n\\q""#),
             (
                 r#"They call me "Bob" but I prefer "Dennis", innit?"#,
                 r#""They call me \"Bob\" but I prefer \"Dennis\", innit?""#,
@@ -523,8 +524,8 @@ mod tests {
             ("\u{FFFD}d834\u{FFFD}d835_y_", r#""\ud834\ud835_y_""#),
             ("_x_\u{FFFD}d834_y_\u{FFFD}d835_z_", r#""_x_\ud834_y_\ud835_z_""#),
             (
-                "They call me \"Bob\" but I prefer \"Den\u{FFFD}d834nis\", innit?",
-                r#""They call me \"Bob\" but I prefer \"Den\ud834nis\", innit?""#,
+                "They call me \"Bob\" but I prefer \"Den\u{FFFD}d834\\qnis\", innit?",
+                r#""They call me \"Bob\" but I prefer \"Den\ud834\\qnis\", innit?""#,
             ),
         ];
 
