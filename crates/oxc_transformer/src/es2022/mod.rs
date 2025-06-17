@@ -1,10 +1,7 @@
 use oxc_ast::ast::*;
 use oxc_traverse::Traverse;
 
-use crate::{
-    context::{TransformCtx, TraverseCtx},
-    state::TransformState,
-};
+use crate::context::{TransformState, TraverseCtx};
 
 mod class_properties;
 mod class_static_block;
@@ -25,7 +22,7 @@ impl<'a, 'ctx> ES2022<'a, 'ctx> {
     pub fn new(
         options: ES2022Options,
         remove_class_fields_without_initializer: bool,
-        ctx: &'ctx TransformCtx<'a>,
+        ctx: &'ctx TransformState<'a>,
     ) -> Self {
         // Class properties transform performs the static block transform differently.
         // So only enable static block transform if class properties transform is disabled.

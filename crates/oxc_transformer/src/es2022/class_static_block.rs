@@ -48,7 +48,7 @@ use oxc_syntax::scope::{ScopeFlags, ScopeId};
 use oxc_traverse::Traverse;
 
 use crate::{
-    context::TraverseCtx, state::TransformState,
+    context::{TransformState, TraverseCtx},
     utils::ast_builder::wrap_statements_in_arrow_function_iife,
 };
 
@@ -266,8 +266,9 @@ mod test {
     use oxc_allocator::Allocator;
     use oxc_semantic::Scoping;
     use oxc_traverse::ReusableTraverseCtx;
+    use std::path::Path;
 
-    use crate::state::TransformState;
+    use crate::{TransformOptions, TransformState};
 
     use super::Keys;
 
@@ -275,7 +276,7 @@ mod test {
         ($ctx:ident) => {
             let allocator = Allocator::default();
             let scoping = Scoping::default();
-            let state = TransformState::default();
+            let state = TransformState::new(Path::new(""), &TransformOptions::default());
             let ctx = ReusableTraverseCtx::new(state, scoping, &allocator);
             // SAFETY: Macro user only gets a `&mut TransCtx`, which cannot be abused
             let mut ctx = unsafe { ctx.unwrap() };

@@ -57,8 +57,7 @@ use oxc_traverse::{Ancestor, BoundIdentifier, Traverse};
 
 use crate::{
     Helper,
-    context::{TransformCtx, TraverseCtx},
-    state::TransformState,
+    context::{TransformState, TraverseCtx},
     utils::ast_builder::{create_assignment, create_prototype_member},
 };
 use metadata::LegacyDecoratorMetadata;
@@ -92,11 +91,11 @@ pub struct LegacyDecorator<'a, 'ctx> {
     /// we have to transforms decorators to `exit_class` otherwise after class is being transformed by
     /// `class-properties` plugin, the decorators' nodes might be lost.
     class_decorated_data: Option<ClassDecoratedData<'a>>,
-    ctx: &'ctx TransformCtx<'a>,
+    ctx: &'ctx TransformState<'a>,
 }
 
 impl<'a, 'ctx> LegacyDecorator<'a, 'ctx> {
-    pub fn new(emit_decorator_metadata: bool, ctx: &'ctx TransformCtx<'a>) -> Self {
+    pub fn new(emit_decorator_metadata: bool, ctx: &'ctx TransformState<'a>) -> Self {
         Self {
             emit_decorator_metadata,
             metadata: LegacyDecoratorMetadata::new(ctx),
@@ -1092,14 +1091,14 @@ struct ClassReferenceChanger<'a, 'ctx> {
     // `Some` if there are references to the class inside the class body
     class_alias_binding: Option<BoundIdentifier<'a>>,
     ctx: &'ctx mut TraverseCtx<'a>,
-    transformer_ctx: &'ctx TransformCtx<'a>,
+    transformer_ctx: &'ctx TransformState<'a>,
 }
 
 impl<'a, 'ctx> ClassReferenceChanger<'a, 'ctx> {
     fn new(
         class_binding: BoundIdentifier<'a>,
         ctx: &'ctx mut TraverseCtx<'a>,
-        transformer_ctx: &'ctx TransformCtx<'a>,
+        transformer_ctx: &'ctx TransformState<'a>,
     ) -> Self {
         Self { class_binding, class_alias_binding: None, ctx, transformer_ctx }
     }

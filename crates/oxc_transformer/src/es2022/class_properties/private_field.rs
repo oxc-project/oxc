@@ -11,7 +11,7 @@ use oxc_traverse::{Ancestor, BoundIdentifier, ast_operations::get_var_name_from_
 
 use crate::{
     common::helper_loader::Helper,
-    context::{TransformCtx, TraverseCtx},
+    context::{TransformState, TraverseCtx},
     utils::ast_builder::{
         create_assignment, create_bind_call, create_call_call, create_member_callee,
     },
@@ -1927,7 +1927,7 @@ impl<'a> ClassProperties<'a, '_> {
         object: Expression<'a>,
         prop_binding: &BoundIdentifier<'a>,
         span: Span,
-        transform_ctx: &TransformCtx<'a>,
+        transform_ctx: &TransformState<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) -> MemberExpression<'a> {
         let call_expr = transform_ctx.helper_call_expr(

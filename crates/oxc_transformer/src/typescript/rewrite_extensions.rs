@@ -11,7 +11,10 @@ use oxc_ast::ast::{
 use oxc_span::Atom;
 use oxc_traverse::Traverse;
 
-use crate::{TypeScriptOptions, context::TraverseCtx, state::TransformState};
+use crate::{
+    TypeScriptOptions,
+    context::{TransformState, TraverseCtx},
+};
 
 use super::options::RewriteExtensionsMode;
 

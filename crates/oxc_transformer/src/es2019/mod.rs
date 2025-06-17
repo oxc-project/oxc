@@ -1,7 +1,7 @@
 use oxc_ast::ast::*;
 use oxc_traverse::Traverse;
 
-use crate::{context::TraverseCtx, state::TransformState};
+use crate::context::TraverseCtx;
 
 mod optional_catch_binding;
 mod options;

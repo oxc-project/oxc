@@ -38,7 +38,7 @@ use oxc_semantic::SymbolFlags;
 use oxc_span::SPAN;
 use oxc_traverse::Traverse;
 
-use crate::{context::TraverseCtx, state::TransformState};
+use crate::context::{TransformState, TraverseCtx};
 
 pub struct OptionalCatchBinding;
 

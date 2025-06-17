@@ -2,10 +2,7 @@ use oxc_ast::ast::*;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_traverse::Traverse;
 
-use crate::{
-    context::{TransformCtx, TraverseCtx},
-    state::TransformState,
-};
+use crate::context::{TransformState, TraverseCtx};
 
 mod nullish_coalescing_operator;
 mod optional_chaining;
@@ -15,7 +12,7 @@ pub use optional_chaining::OptionalChaining;
 pub use options::ES2020Options;
 
 pub struct ES2020<'a, 'ctx> {
-    ctx: &'ctx TransformCtx<'a>,
+    ctx: &'ctx TransformState<'a>,
     options: ES2020Options,
 
     // Plugins
@@ -24,7 +21,7 @@ pub struct ES2020<'a, 'ctx> {
 }
 
 impl<'a, 'ctx> ES2020<'a, 'ctx> {
-    pub fn new(options: ES2020Options, ctx: &'ctx TransformCtx<'a>) -> Self {
+    pub fn new(options: ES2020Options, ctx: &'ctx TransformState<'a>) -> Self {
         Self {
             ctx,
             options,

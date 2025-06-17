@@ -1,10 +1,7 @@
 use oxc_ast::ast::*;
 use oxc_traverse::Traverse;
 
-use crate::{
-    context::{TransformCtx, TraverseCtx},
-    state::TransformState,
-};
+use crate::context::{TransformState, TraverseCtx};
 
 mod logical_assignment_operators;
 mod options;
@@ -20,7 +17,7 @@ pub struct ES2021<'a, 'ctx> {
 }
 
 impl<'a, 'ctx> ES2021<'a, 'ctx> {
-    pub fn new(options: ES2021Options, ctx: &'ctx TransformCtx<'a>) -> Self {
+    pub fn new(options: ES2021Options, ctx: &'ctx TransformState<'a>) -> Self {
         Self { logical_assignment_operators: LogicalAssignmentOperators::new(ctx), options }
     }
 }

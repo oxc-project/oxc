@@ -4,10 +4,7 @@ mod options;
 use oxc_ast::ast::*;
 use oxc_traverse::Traverse;
 
-use crate::{
-    context::{TransformCtx, TraverseCtx},
-    state::TransformState,
-};
+use crate::context::{TransformState, TraverseCtx};
 
 use legacy::LegacyDecorator;
 pub use options::DecoratorOptions;
@@ -20,7 +17,7 @@ pub struct Decorator<'a, 'ctx> {
 }
 
 impl<'a, 'ctx> Decorator<'a, 'ctx> {
-    pub fn new(options: DecoratorOptions, ctx: &'ctx TransformCtx<'a>) -> Self {
+    pub fn new(options: DecoratorOptions, ctx: &'ctx TransformState<'a>) -> Self {
         Self {
             legacy_decorator: LegacyDecorator::new(options.emit_decorator_metadata, ctx),
             options,

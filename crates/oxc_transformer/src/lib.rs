@@ -19,7 +19,6 @@ mod common;
 mod compiler_assumptions;
 mod context;
 mod options;
-mod state;
 mod utils;
 
 // Presets: <https://babel.dev/docs/presets>
@@ -39,7 +38,7 @@ mod typescript;
 mod decorator;
 
 use common::Common;
-use context::{TransformCtx, TraverseCtx};
+use context::{TransformState, TraverseCtx};
 use decorator::Decorator;
 use es2015::ES2015;
 use es2016::ES2016;
@@ -53,7 +52,6 @@ use jsx::Jsx;
 use proposals::ExplicitResourceManagement;
 use regexp::RegExp;
 use rustc_hash::FxHashMap;
-use state::TransformState;
 use typescript::TypeScript;
 
 pub use crate::{
@@ -87,7 +85,7 @@ pub struct TransformerReturn {
 }
 
 pub struct Transformer<'a> {
-    ctx: TransformCtx<'a>,
+    ctx: TransformState<'a>,
     allocator: &'a Allocator,
 
     typescript: TypeScriptOptions,
@@ -99,7 +97,7 @@ pub struct Transformer<'a> {
 
 impl<'a> Transformer<'a> {
     pub fn new(allocator: &'a Allocator, source_path: &Path, options: &TransformOptions) -> Self {
-        let ctx = TransformCtx::new(source_path, options);
+        let ctx = TransformState::new(source_path, options);
         Self {
             ctx,
             allocator,
@@ -159,7 +157,7 @@ impl<'a> Transformer<'a> {
             x4_regexp: RegExp::new(self.env.regexp, &self.ctx),
         };
 
-        let state = TransformState::default();
+        let state = TransformState::new();
         let scoping = traverse_mut(&mut transformer, allocator, program, scoping, state);
         let helpers_used = self.ctx.helper_loader.used_helpers.borrow_mut().drain().collect();
         #[expect(deprecated)]

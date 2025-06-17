@@ -103,8 +103,8 @@ use oxc_syntax::{
 };
 use oxc_traverse::{Ancestor, BoundIdentifier, Traverse};
 
+use crate::context::{TransformState, TraverseCtx};
 use crate::{EnvOptions, utils::ast_builder::wrap_expression_in_arrow_function_iife};
-use crate::{context::TraverseCtx, state::TransformState};
 
 type FxIndexMap<K, V> = IndexMap<K, V, FxBuildHasher>;
 
