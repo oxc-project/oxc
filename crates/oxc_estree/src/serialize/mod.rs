@@ -17,13 +17,13 @@ mod primitives;
 mod sequences;
 mod strings;
 mod structs;
-use config::{Config, ConfigFixesJS, ConfigFixesTS, ConfigJS, ConfigTS};
 use formatter::{CompactFormatter, Formatter, PrettyFormatter};
 use sequences::ESTreeSequenceSerializer;
 use structs::ESTreeStructSerializer;
 
 pub use concat::{Concat2, Concat3, ConcatElement};
-pub use primitives::Range;
+pub use config::{Config, ConfigFixesJS, ConfigFixesTS, ConfigJS, ConfigTS};
+
 pub use sequences::SequenceSerializer;
 pub use strings::{JsonSafeString, LoneSurrogatesString};
 pub use structs::{FlatStructSerializer, StructSerializer};
@@ -99,18 +99,12 @@ pub type PrettyFixesTSSerializer = ESTreeSerializer<ConfigFixesTS, PrettyFormatt
 /// ESTree serializer which produces pretty JSON, excluding TypeScript fields.
 pub type PrettyFixesJSSerializer = ESTreeSerializer<ConfigFixesJS, PrettyFormatter>;
 
-#[derive(Clone, Copy, Default)]
-pub struct RuntimeOptions {
-    pub range: bool,
-}
-
 /// ESTree serializer.
 pub struct ESTreeSerializer<C: Config, F: Formatter> {
     buffer: CodeBuffer,
     formatter: F,
     trace_path: NonEmptyStack<TracePathPart>,
     fixes_buffer: CodeBuffer,
-    options: RuntimeOptions,
     source_text: Option<&'static str>,
     config: C,
 }
@@ -123,7 +117,6 @@ impl<C: Config, F: Formatter> ESTreeSerializer<C, F> {
             formatter: F::new(),
             trace_path: NonEmptyStack::new(TracePathPart::Index(0)),
             fixes_buffer: CodeBuffer::new(),
-            options: RuntimeOptions::default(),
             source_text: None,
             config: C::new(),
         }
@@ -136,15 +129,21 @@ impl<C: Config, F: Formatter> ESTreeSerializer<C, F> {
             formatter: F::new(),
             trace_path: NonEmptyStack::new(TracePathPart::Index(0)),
             fixes_buffer: CodeBuffer::new(),
-            options: RuntimeOptions::default(),
             source_text: None,
             config: C::new(),
         }
     }
 
-    pub fn with_options(mut self, options: RuntimeOptions) -> Self {
-        self.options = options;
-        self
+    /// Create new [`ESTreeSerializer`] with specified config and buffer capacity.
+    pub fn with_config_and_capacity(config: C, capacity: usize) -> Self {
+        Self {
+            buffer: CodeBuffer::with_capacity(capacity),
+            formatter: F::new(),
+            trace_path: NonEmptyStack::new(TracePathPart::Index(0)),
+            fixes_buffer: CodeBuffer::new(),
+            source_text: None,
+            config,
+        }
     }
 
     pub fn with_source_text(mut self, source_text: &'static str) -> Self {

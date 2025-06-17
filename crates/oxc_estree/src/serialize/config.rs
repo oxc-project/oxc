@@ -16,6 +16,14 @@ pub struct ConfigTS {
     ranges: bool,
 }
 
+impl ConfigTS {
+    /// Create a new ConfigTS with the specified ranges setting
+    #[inline(always)]
+    pub fn with_ranges(ranges: bool) -> Self {
+        Self { ranges }
+    }
+}
+
 impl Config for ConfigTS {
     const INCLUDE_TS_FIELDS: bool = true;
     const FIXES: bool = false;
@@ -34,6 +42,14 @@ impl Config for ConfigTS {
 /// Config for serializing AST without TypeScript fields.
 pub struct ConfigJS {
     ranges: bool,
+}
+
+impl ConfigJS {
+    /// Create a new ConfigJS with the specified ranges setting
+    #[inline(always)]
+    pub fn with_ranges(ranges: bool) -> Self {
+        Self { ranges }
+    }
 }
 
 impl Config for ConfigJS {
@@ -56,6 +72,14 @@ pub struct ConfigFixesTS {
     ranges: bool,
 }
 
+impl ConfigFixesTS {
+    /// Create a new ConfigFixesTS with the specified ranges setting
+    #[inline(always)]
+    pub fn with_ranges(ranges: bool) -> Self {
+        Self { ranges }
+    }
+}
+
 impl Config for ConfigFixesTS {
     const INCLUDE_TS_FIELDS: bool = true;
     const FIXES: bool = true;
@@ -74,6 +98,14 @@ impl Config for ConfigFixesTS {
 /// Config for serializing AST without TypeScript fields, with fixes.
 pub struct ConfigFixesJS {
     ranges: bool,
+}
+
+impl ConfigFixesJS {
+    /// Create a new ConfigFixesJS with the specified ranges setting
+    #[inline(always)]
+    pub fn with_ranges(ranges: bool) -> Self {
+        Self { ranges }
+    }
 }
 
 impl Config for ConfigFixesJS {

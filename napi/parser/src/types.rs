@@ -25,7 +25,6 @@ pub struct ParserOptions {
 
     /// Controls whether the `range` property is included on AST nodes.
     /// The `range` property is a [number, number] which indicates the start/end index of the node in the file contents.
-    /// This is similar to the `loc` property, except it is line/column relative.
     ///
     /// @default false
     #[napi(ts_type = "boolean")]

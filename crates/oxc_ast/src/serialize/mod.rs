@@ -3,8 +3,8 @@ use std::cmp;
 use oxc_ast_macros::ast_meta;
 use oxc_estree::{
     CompactFixesJSSerializer, CompactFixesTSSerializer, CompactJSSerializer, CompactTSSerializer,
-    Concat2, ESTree, JsonSafeString, PrettyFixesJSSerializer, PrettyFixesTSSerializer,
-    PrettyJSSerializer, PrettyTSSerializer, RuntimeOptions, Serializer, StructSerializer,
+    Concat2, ConfigFixesJS, ConfigFixesTS, ESTree, JsonSafeString, PrettyFixesJSSerializer, PrettyFixesTSSerializer,
+    PrettyJSSerializer, PrettyTSSerializer, Serializer, StructSerializer,
 };
 use oxc_span::GetSpan;
 
@@ -105,11 +105,9 @@ impl Program<'_> {
         options: Option<&SerializationOptions>,
     ) -> String {
         let capacity = self.source_text.len() * JSON_CAPACITY_RATIO_COMPACT;
-        let runtime_options = options.map_or_else(RuntimeOptions::default, |o| RuntimeOptions {
-            range: o.range,
-        });
-        let serializer =
-            CompactFixesTSSerializer::with_capacity(capacity).with_options(runtime_options);
+        let range = options.map_or(false, |opts| opts.range);
+        let config = ConfigFixesTS::with_ranges(range);
+        let serializer = CompactFixesTSSerializer::with_config_and_capacity(config, capacity);
         serializer.serialize_with_fixes(self)
     }
 
@@ -119,11 +117,9 @@ impl Program<'_> {
         options: Option<&SerializationOptions>,
     ) -> String {
         let capacity = self.source_text.len() * JSON_CAPACITY_RATIO_COMPACT;
-        let runtime_options = options.map_or_else(RuntimeOptions::default, |o| RuntimeOptions {
-            range: o.range,
-        });
-        let serializer =
-            CompactFixesJSSerializer::with_capacity(capacity).with_options(runtime_options);
+        let range = options.map_or(false, |opts| opts.range);
+        let config = ConfigFixesJS::with_ranges(range);
+        let serializer = CompactFixesJSSerializer::with_config_and_capacity(config, capacity);
         serializer.serialize_with_fixes(self)
     }
 

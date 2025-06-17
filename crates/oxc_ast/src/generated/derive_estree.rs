@@ -4,8 +4,7 @@
 #![allow(unused_imports, clippy::match_same_arms, clippy::semicolon_if_nothing_returned)]
 
 use oxc_estree::{
-    Concat2, Concat3, ESTree, FlatStructSerializer, JsonSafeString, Range, Serializer,
-    StructSerializer,
+    Concat2, Concat3, ESTree, FlatStructSerializer, JsonSafeString, Serializer, StructSerializer,
 };
 
 use crate::ast::comment::*;
@@ -74,12 +73,11 @@ impl ESTree for IdentifierName<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
         state.serialize_field("type", &JsonSafeString("Identifier"));
-        if state.range() {
-            let range = oxc_estree::Range::new(self.span.start, self.span.end);
-            state.serialize_field("range", &range);
-        }
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
+        if state.range() {
+            state.serialize_field("range", &[self.span.start, self.span.end]);
+        }
         state.serialize_ts_field("decorators", &crate::serialize::basic::TsEmptyArray(self));
         state.serialize_field("name", &JsonSafeString(self.name.as_str()));
         state.serialize_ts_field("optional", &crate::serialize::basic::TsFalse(self));
@@ -92,12 +90,11 @@ impl ESTree for IdentifierReference<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
         state.serialize_field("type", &JsonSafeString("Identifier"));
-        if state.range() {
-            let range = oxc_estree::Range::new(self.span.start, self.span.end);
-            state.serialize_field("range", &range);
-        }
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
+        if state.range() {
+            state.serialize_field("range", &[self.span.start, self.span.end]);
+        }
         state.serialize_ts_field("decorators", &crate::serialize::basic::TsEmptyArray(self));
         state.serialize_field("name", &JsonSafeString(self.name.as_str()));
         state.serialize_ts_field("optional", &crate::serialize::basic::TsFalse(self));
@@ -110,12 +107,11 @@ impl ESTree for BindingIdentifier<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
         state.serialize_field("type", &JsonSafeString("Identifier"));
-        if state.range() {
-            let range = oxc_estree::Range::new(self.span.start, self.span.end);
-            state.serialize_field("range", &range);
-        }
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
+        if state.range() {
+            state.serialize_field("range", &[self.span.start, self.span.end]);
+        }
         state.serialize_ts_field("decorators", &crate::serialize::basic::TsEmptyArray(self));
         state.serialize_field("name", &JsonSafeString(self.name.as_str()));
         state.serialize_ts_field("optional", &crate::serialize::basic::TsFalse(self));
@@ -128,12 +124,11 @@ impl ESTree for LabelIdentifier<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
         state.serialize_field("type", &JsonSafeString("Identifier"));
-        if state.range() {
-            let range = oxc_estree::Range::new(self.span.start, self.span.end);
-            state.serialize_field("range", &range);
-        }
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
+        if state.range() {
+            state.serialize_field("range", &[self.span.start, self.span.end]);
+        }
         state.serialize_ts_field("decorators", &crate::serialize::basic::TsEmptyArray(self));
         state.serialize_field("name", &JsonSafeString(self.name.as_str()));
         state.serialize_ts_field("optional", &crate::serialize::basic::TsFalse(self));
@@ -146,12 +141,11 @@ impl ESTree for ThisExpression {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
         state.serialize_field("type", &JsonSafeString("ThisExpression"));
-        if state.range() {
-            let range = oxc_estree::Range::new(self.span.start, self.span.end);
-            state.serialize_field("range", &range);
-        }
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
+        if state.range() {
+            state.serialize_field("range", &[self.span.start, self.span.end]);
+        }
         state.end();
     }
 }
@@ -160,12 +154,11 @@ impl ESTree for ArrayExpression<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
         state.serialize_field("type", &JsonSafeString("ArrayExpression"));
-        if state.range() {
-            let range = oxc_estree::Range::new(self.span.start, self.span.end);
-            state.serialize_field("range", &range);
-        }
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
+        if state.range() {
+            state.serialize_field("range", &[self.span.start, self.span.end]);
+        }
         state.serialize_field("elements", &self.elements);
         state.end();
     }
@@ -233,12 +226,11 @@ impl ESTree for ObjectExpression<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
         state.serialize_field("type", &JsonSafeString("ObjectExpression"));
-        if state.range() {
-            let range = oxc_estree::Range::new(self.span.start, self.span.end);
-            state.serialize_field("range", &range);
-        }
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
+        if state.range() {
+            state.serialize_field("range", &[self.span.start, self.span.end]);
+        }
         state.serialize_field("properties", &self.properties);
         state.end();
     }
@@ -257,12 +249,11 @@ impl ESTree for ObjectProperty<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
         state.serialize_field("type", &JsonSafeString("Property"));
-        if state.range() {
-            let range = oxc_estree::Range::new(self.span.start, self.span.end);
-            state.serialize_field("range", &range);
-        }
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
+        if state.range() {
+            state.serialize_field("range", &[self.span.start, self.span.end]);
+        }
         state.serialize_field("kind", &self.kind);
         state.serialize_field("key", &self.key);
         state.serialize_field("value", &self.value);
@@ -340,12 +331,11 @@ impl ESTree for TemplateLiteral<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
         state.serialize_field("type", &JsonSafeString("TemplateLiteral"));
-        if state.range() {
-            let range = oxc_estree::Range::new(self.span.start, self.span.end);
-            state.serialize_field("range", &range);
-        }
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
+        if state.range() {
+            state.serialize_field("range", &[self.span.start, self.span.end]);
+        }
         state.serialize_field("quasis", &self.quasis);
         state.serialize_field("expressions", &self.expressions);
         state.end();
@@ -356,12 +346,11 @@ impl ESTree for TaggedTemplateExpression<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
         state.serialize_field("type", &JsonSafeString("TaggedTemplateExpression"));
-        if state.range() {
-            let range = oxc_estree::Range::new(self.span.start, self.span.end);
-            state.serialize_field("range", &range);
-        }
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
+        if state.range() {
+            state.serialize_field("range", &[self.span.start, self.span.end]);
+        }
         state.serialize_field("tag", &self.tag);
         state.serialize_ts_field("typeArguments", &self.type_arguments);
         state.serialize_field("quasi", &self.quasi);
@@ -398,12 +387,11 @@ impl ESTree for ComputedMemberExpression<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
         state.serialize_field("type", &JsonSafeString("MemberExpression"));
-        if state.range() {
-            let range = oxc_estree::Range::new(self.span.start, self.span.end);
-            state.serialize_field("range", &range);
-        }
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
+        if state.range() {
+            state.serialize_field("range", &[self.span.start, self.span.end]);
+        }
         state.serialize_field("object", &self.object);
         state.serialize_field("property", &self.expression);
         state.serialize_field("optional", &self.optional);
@@ -416,12 +404,11 @@ impl ESTree for StaticMemberExpression<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
         state.serialize_field("type", &JsonSafeString("MemberExpression"));
-        if state.range() {
-            let range = oxc_estree::Range::new(self.span.start, self.span.end);
-            state.serialize_field("range", &range);
-        }
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
+        if state.range() {
+            state.serialize_field("range", &[self.span.start, self.span.end]);
+        }
         state.serialize_field("object", &self.object);
         state.serialize_field("property", &self.property);
         state.serialize_field("optional", &self.optional);
@@ -434,12 +421,11 @@ impl ESTree for PrivateFieldExpression<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
         state.serialize_field("type", &JsonSafeString("MemberExpression"));
-        if state.range() {
-            let range = oxc_estree::Range::new(self.span.start, self.span.end);
-            state.serialize_field("range", &range);
-        }
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
+        if state.range() {
+            state.serialize_field("range", &[self.span.start, self.span.end]);
+        }
         state.serialize_field("object", &self.object);
         state.serialize_field("property", &self.field);
         state.serialize_field("optional", &self.optional);
@@ -452,12 +438,11 @@ impl ESTree for CallExpression<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
         state.serialize_field("type", &JsonSafeString("CallExpression"));
-        if state.range() {
-            let range = oxc_estree::Range::new(self.span.start, self.span.end);
-            state.serialize_field("range", &range);
-        }
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
+        if state.range() {
+            state.serialize_field("range", &[self.span.start, self.span.end]);
+        }
         state.serialize_field("callee", &self.callee);
         state.serialize_ts_field("typeArguments", &self.type_arguments);
         state.serialize_field("arguments", &self.arguments);
@@ -470,12 +455,11 @@ impl ESTree for NewExpression<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
         state.serialize_field("type", &JsonSafeString("NewExpression"));
-        if state.range() {
-            let range = oxc_estree::Range::new(self.span.start, self.span.end);
-            state.serialize_field("range", &range);
-        }
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
+        if state.range() {
+            state.serialize_field("range", &[self.span.start, self.span.end]);
+        }
         state.serialize_field("callee", &self.callee);
         state.serialize_ts_field("typeArguments", &self.type_arguments);
         state.serialize_field("arguments", &self.arguments);
@@ -487,12 +471,11 @@ impl ESTree for MetaProperty<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
         state.serialize_field("type", &JsonSafeString("MetaProperty"));
-        if state.range() {
-            let range = oxc_estree::Range::new(self.span.start, self.span.end);
-            state.serialize_field("range", &range);
-        }
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
+        if state.range() {
+            state.serialize_field("range", &[self.span.start, self.span.end]);
+        }
         state.serialize_field("meta", &self.meta);
         state.serialize_field("property", &self.property);
         state.end();
@@ -503,12 +486,11 @@ impl ESTree for SpreadElement<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
         state.serialize_field("type", &JsonSafeString("SpreadElement"));
-        if state.range() {
-            let range = oxc_estree::Range::new(self.span.start, self.span.end);
-            state.serialize_field("range", &range);
-        }
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
+        if state.range() {
+            state.serialize_field("range", &[self.span.start, self.span.end]);
+        }
         state.serialize_field("argument", &self.argument);
         state.end();
     }
@@ -569,12 +551,11 @@ impl ESTree for UpdateExpression<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
         state.serialize_field("type", &JsonSafeString("UpdateExpression"));
-        if state.range() {
-            let range = oxc_estree::Range::new(self.span.start, self.span.end);
-            state.serialize_field("range", &range);
-        }
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
+        if state.range() {
+            state.serialize_field("range", &[self.span.start, self.span.end]);
+        }
         state.serialize_field("operator", &self.operator);
         state.serialize_field("prefix", &self.prefix);
         state.serialize_field("argument", &self.argument);
@@ -586,12 +567,11 @@ impl ESTree for UnaryExpression<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
         state.serialize_field("type", &JsonSafeString("UnaryExpression"));
-        if state.range() {
-            let range = oxc_estree::Range::new(self.span.start, self.span.end);
-            state.serialize_field("range", &range);
-        }
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
+        if state.range() {
+            state.serialize_field("range", &[self.span.start, self.span.end]);
+        }
         state.serialize_field("operator", &self.operator);
         state.serialize_field("argument", &self.argument);
         state.serialize_field("prefix", &crate::serialize::basic::True(self));
@@ -603,12 +583,11 @@ impl ESTree for BinaryExpression<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
         state.serialize_field("type", &JsonSafeString("BinaryExpression"));
-        if state.range() {
-            let range = oxc_estree::Range::new(self.span.start, self.span.end);
-            state.serialize_field("range", &range);
-        }
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
+        if state.range() {
+            state.serialize_field("range", &[self.span.start, self.span.end]);
+        }
         state.serialize_field("left", &self.left);
         state.serialize_field("operator", &self.operator);
         state.serialize_field("right", &self.right);
@@ -620,12 +599,11 @@ impl ESTree for PrivateInExpression<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
         state.serialize_field("type", &JsonSafeString("BinaryExpression"));
-        if state.range() {
-            let range = oxc_estree::Range::new(self.span.start, self.span.end);
-            state.serialize_field("range", &range);
-        }
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
+        if state.range() {
+            state.serialize_field("range", &[self.span.start, self.span.end]);
+        }
         state.serialize_field("left", &self.left);
         state.serialize_field("operator", &crate::serialize::basic::In(self));
         state.serialize_field("right", &self.right);
@@ -637,12 +615,11 @@ impl ESTree for LogicalExpression<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
         state.serialize_field("type", &JsonSafeString("LogicalExpression"));
-        if state.range() {
-            let range = oxc_estree::Range::new(self.span.start, self.span.end);
-            state.serialize_field("range", &range);
-        }
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
+        if state.range() {
+            state.serialize_field("range", &[self.span.start, self.span.end]);
+        }
         state.serialize_field("left", &self.left);
         state.serialize_field("operator", &self.operator);
         state.serialize_field("right", &self.right);
@@ -654,12 +631,11 @@ impl ESTree for ConditionalExpression<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
         state.serialize_field("type", &JsonSafeString("ConditionalExpression"));
-        if state.range() {
-            let range = oxc_estree::Range::new(self.span.start, self.span.end);
-            state.serialize_field("range", &range);
-        }
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
+        if state.range() {
+            state.serialize_field("range", &[self.span.start, self.span.end]);
+        }
         state.serialize_field("test", &self.test);
         state.serialize_field("consequent", &self.consequent);
         state.serialize_field("alternate", &self.alternate);
@@ -671,12 +647,11 @@ impl ESTree for AssignmentExpression<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
         state.serialize_field("type", &JsonSafeString("AssignmentExpression"));
-        if state.range() {
-            let range = oxc_estree::Range::new(self.span.start, self.span.end);
-            state.serialize_field("range", &range);
-        }
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
+        if state.range() {
+            state.serialize_field("range", &[self.span.start, self.span.end]);
+        }
         state.serialize_field("operator", &self.operator);
         state.serialize_field("left", &self.left);
         state.serialize_field("right", &self.right);
@@ -729,12 +704,11 @@ impl ESTree for ArrayAssignmentTarget<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
         state.serialize_field("type", &JsonSafeString("ArrayPattern"));
-        if state.range() {
-            let range = oxc_estree::Range::new(self.span.start, self.span.end);
-            state.serialize_field("range", &range);
-        }
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
+        if state.range() {
+            state.serialize_field("range", &[self.span.start, self.span.end]);
+        }
         state.serialize_ts_field("decorators", &crate::serialize::basic::TsEmptyArray(self));
         state.serialize_field("elements", &Concat2(&self.elements, &self.rest));
         state.serialize_ts_field("optional", &crate::serialize::basic::TsFalse(self));
@@ -747,12 +721,11 @@ impl ESTree for ObjectAssignmentTarget<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
         state.serialize_field("type", &JsonSafeString("ObjectPattern"));
-        if state.range() {
-            let range = oxc_estree::Range::new(self.span.start, self.span.end);
-            state.serialize_field("range", &range);
-        }
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
+        if state.range() {
+            state.serialize_field("range", &[self.span.start, self.span.end]);
+        }
         state.serialize_ts_field("decorators", &crate::serialize::basic::TsEmptyArray(self));
         state.serialize_field("properties", &Concat2(&self.properties, &self.rest));
         state.serialize_ts_field("optional", &crate::serialize::basic::TsFalse(self));
@@ -765,12 +738,11 @@ impl ESTree for AssignmentTargetRest<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
         state.serialize_field("type", &JsonSafeString("RestElement"));
-        if state.range() {
-            let range = oxc_estree::Range::new(self.span.start, self.span.end);
-            state.serialize_field("range", &range);
-        }
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
+        if state.range() {
+            state.serialize_field("range", &[self.span.start, self.span.end]);
+        }
         state.serialize_ts_field("decorators", &crate::serialize::basic::TsEmptyArray(self));
         state.serialize_field("argument", &self.target);
         state.serialize_ts_field("optional", &crate::serialize::basic::TsFalse(self));
@@ -802,12 +774,11 @@ impl ESTree for AssignmentTargetWithDefault<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
         state.serialize_field("type", &JsonSafeString("AssignmentPattern"));
-        if state.range() {
-            let range = oxc_estree::Range::new(self.span.start, self.span.end);
-            state.serialize_field("range", &range);
-        }
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
+        if state.range() {
+            state.serialize_field("range", &[self.span.start, self.span.end]);
+        }
         state.serialize_ts_field("decorators", &crate::serialize::basic::TsEmptyArray(self));
         state.serialize_field("left", &self.binding);
         state.serialize_field("right", &self.init);
@@ -830,12 +801,11 @@ impl ESTree for AssignmentTargetPropertyIdentifier<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
         state.serialize_field("type", &JsonSafeString("Property"));
-        if state.range() {
-            let range = oxc_estree::Range::new(self.span.start, self.span.end);
-            state.serialize_field("range", &range);
-        }
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
+        if state.range() {
+            state.serialize_field("range", &[self.span.start, self.span.end]);
+        }
         state.serialize_field("kind", &crate::serialize::basic::Init(self));
         state.serialize_field("key", &self.binding);
         state.serialize_field(
@@ -854,12 +824,11 @@ impl ESTree for AssignmentTargetPropertyProperty<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
         state.serialize_field("type", &JsonSafeString("Property"));
-        if state.range() {
-            let range = oxc_estree::Range::new(self.span.start, self.span.end);
-            state.serialize_field("range", &range);
-        }
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
+        if state.range() {
+            state.serialize_field("range", &[self.span.start, self.span.end]);
+        }
         state.serialize_field("kind", &crate::serialize::basic::Init(self));
         state.serialize_field("key", &self.name);
         state.serialize_field("value", &self.binding);
@@ -875,12 +844,11 @@ impl ESTree for SequenceExpression<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
         state.serialize_field("type", &JsonSafeString("SequenceExpression"));
-        if state.range() {
-            let range = oxc_estree::Range::new(self.span.start, self.span.end);
-            state.serialize_field("range", &range);
-        }
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
+        if state.range() {
+            state.serialize_field("range", &[self.span.start, self.span.end]);
+        }
         state.serialize_field("expressions", &self.expressions);
         state.end();
     }
@@ -890,12 +858,11 @@ impl ESTree for Super {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
         state.serialize_field("type", &JsonSafeString("Super"));
-        if state.range() {
-            let range = oxc_estree::Range::new(self.span.start, self.span.end);
-            state.serialize_field("range", &range);
-        }
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
+        if state.range() {
+            state.serialize_field("range", &[self.span.start, self.span.end]);
+        }
         state.end();
     }
 }
@@ -904,12 +871,11 @@ impl ESTree for AwaitExpression<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
         state.serialize_field("type", &JsonSafeString("AwaitExpression"));
-        if state.range() {
-            let range = oxc_estree::Range::new(self.span.start, self.span.end);
-            state.serialize_field("range", &range);
-        }
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
+        if state.range() {
+            state.serialize_field("range", &[self.span.start, self.span.end]);
+        }
         state.serialize_field("argument", &self.argument);
         state.end();
     }
@@ -919,12 +885,11 @@ impl ESTree for ChainExpression<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
         state.serialize_field("type", &JsonSafeString("ChainExpression"));
-        if state.range() {
-            let range = oxc_estree::Range::new(self.span.start, self.span.end);
-            state.serialize_field("range", &range);
-        }
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
+        if state.range() {
+            state.serialize_field("range", &[self.span.start, self.span.end]);
+        }
         state.serialize_field("expression", &self.expression);
         state.end();
     }
@@ -946,12 +911,11 @@ impl ESTree for ParenthesizedExpression<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
         state.serialize_field("type", &JsonSafeString("ParenthesizedExpression"));
-        if state.range() {
-            let range = oxc_estree::Range::new(self.span.start, self.span.end);
-            state.serialize_field("range", &range);
-        }
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
+        if state.range() {
+            state.serialize_field("range", &[self.span.start, self.span.end]);
+        }
         state.serialize_field("expression", &self.expression);
         state.end();
     }
@@ -1000,12 +964,11 @@ impl ESTree for Directive<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
         state.serialize_field("type", &JsonSafeString("ExpressionStatement"));
-        if state.range() {
-            let range = oxc_estree::Range::new(self.span.start, self.span.end);
-            state.serialize_field("range", &range);
-        }
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
+        if state.range() {
+            state.serialize_field("range", &[self.span.start, self.span.end]);
+        }
         state.serialize_field("expression", &self.expression);
         state.serialize_field("directive", &self.directive);
         state.end();
@@ -1016,12 +979,11 @@ impl ESTree for Hashbang<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
         state.serialize_field("type", &JsonSafeString("Hashbang"));
-        if state.range() {
-            let range = oxc_estree::Range::new(self.span.start, self.span.end);
-            state.serialize_field("range", &range);
-        }
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
+        if state.range() {
+            state.serialize_field("range", &[self.span.start, self.span.end]);
+        }
         state.serialize_field("value", &self.value);
         state.end();
     }
@@ -1031,12 +993,11 @@ impl ESTree for BlockStatement<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
         state.serialize_field("type", &JsonSafeString("BlockStatement"));
-        if state.range() {
-            let range = oxc_estree::Range::new(self.span.start, self.span.end);
-            state.serialize_field("range", &range);
-        }
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
+        if state.range() {
+            state.serialize_field("range", &[self.span.start, self.span.end]);
+        }
         state.serialize_field("body", &self.body);
         state.end();
     }
@@ -1061,12 +1022,11 @@ impl ESTree for VariableDeclaration<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
         state.serialize_field("type", &JsonSafeString("VariableDeclaration"));
-        if state.range() {
-            let range = oxc_estree::Range::new(self.span.start, self.span.end);
-            state.serialize_field("range", &range);
-        }
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
+        if state.range() {
+            state.serialize_field("range", &[self.span.start, self.span.end]);
+        }
         state.serialize_field("kind", &self.kind);
         state.serialize_field("declarations", &self.declarations);
         state.serialize_ts_field("declare", &self.declare);
@@ -1090,12 +1050,11 @@ impl ESTree for VariableDeclarator<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
         state.serialize_field("type", &JsonSafeString("VariableDeclarator"));
-        if state.range() {
-            let range = oxc_estree::Range::new(self.span.start, self.span.end);
-            state.serialize_field("range", &range);
-        }
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
+        if state.range() {
+            state.serialize_field("range", &[self.span.start, self.span.end]);
+        }
         state.serialize_field("id", &self.id);
         state.serialize_field("init", &self.init);
         state.serialize_ts_field("definite", &self.definite);
@@ -1107,12 +1066,11 @@ impl ESTree for EmptyStatement {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
         state.serialize_field("type", &JsonSafeString("EmptyStatement"));
-        if state.range() {
-            let range = oxc_estree::Range::new(self.span.start, self.span.end);
-            state.serialize_field("range", &range);
-        }
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
+        if state.range() {
+            state.serialize_field("range", &[self.span.start, self.span.end]);
+        }
         state.end();
     }
 }
@@ -1121,12 +1079,11 @@ impl ESTree for ExpressionStatement<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
         state.serialize_field("type", &JsonSafeString("ExpressionStatement"));
-        if state.range() {
-            let range = oxc_estree::Range::new(self.span.start, self.span.end);
-            state.serialize_field("range", &range);
-        }
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
+        if state.range() {
+            state.serialize_field("range", &[self.span.start, self.span.end]);
+        }
         state.serialize_field("expression", &self.expression);
         state.serialize_ts_field(
             "directive",
@@ -1140,12 +1097,11 @@ impl ESTree for IfStatement<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
         state.serialize_field("type", &JsonSafeString("IfStatement"));
-        if state.range() {
-            let range = oxc_estree::Range::new(self.span.start, self.span.end);
-            state.serialize_field("range", &range);
-        }
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
+        if state.range() {
+            state.serialize_field("range", &[self.span.start, self.span.end]);
+        }
         state.serialize_field("test", &self.test);
         state.serialize_field("consequent", &self.consequent);
         state.serialize_field("alternate", &self.alternate);
@@ -1157,12 +1113,11 @@ impl ESTree for DoWhileStatement<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
         state.serialize_field("type", &JsonSafeString("DoWhileStatement"));
-        if state.range() {
-            let range = oxc_estree::Range::new(self.span.start, self.span.end);
-            state.serialize_field("range", &range);
-        }
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
+        if state.range() {
+            state.serialize_field("range", &[self.span.start, self.span.end]);
+        }
         state.serialize_field("body", &self.body);
         state.serialize_field("test", &self.test);
         state.end();
@@ -1173,12 +1128,11 @@ impl ESTree for WhileStatement<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
         state.serialize_field("type", &JsonSafeString("WhileStatement"));
-        if state.range() {
-            let range = oxc_estree::Range::new(self.span.start, self.span.end);
-            state.serialize_field("range", &range);
-        }
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
+        if state.range() {
+            state.serialize_field("range", &[self.span.start, self.span.end]);
+        }
         state.serialize_field("test", &self.test);
         state.serialize_field("body", &self.body);
         state.end();
@@ -1189,12 +1143,11 @@ impl ESTree for ForStatement<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
         state.serialize_field("type", &JsonSafeString("ForStatement"));
-        if state.range() {
-            let range = oxc_estree::Range::new(self.span.start, self.span.end);
-            state.serialize_field("range", &range);
-        }
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
+        if state.range() {
+            state.serialize_field("range", &[self.span.start, self.span.end]);
+        }
         state.serialize_field("init", &self.init);
         state.serialize_field("test", &self.test);
         state.serialize_field("update", &self.update);
@@ -1258,12 +1211,11 @@ impl ESTree for ForInStatement<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
         state.serialize_field("type", &JsonSafeString("ForInStatement"));
-        if state.range() {
-            let range = oxc_estree::Range::new(self.span.start, self.span.end);
-            state.serialize_field("range", &range);
-        }
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
+        if state.range() {
+            state.serialize_field("range", &[self.span.start, self.span.end]);
+        }
         state.serialize_field("left", &self.left);
         state.serialize_field("right", &self.right);
         state.serialize_field("body", &self.body);
@@ -1293,12 +1245,11 @@ impl ESTree for ForOfStatement<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
         state.serialize_field("type", &JsonSafeString("ForOfStatement"));
-        if state.range() {
-            let range = oxc_estree::Range::new(self.span.start, self.span.end);
-            state.serialize_field("range", &range);
-        }
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
+        if state.range() {
+            state.serialize_field("range", &[self.span.start, self.span.end]);
+        }
         state.serialize_field("await", &self.r#await);
         state.serialize_field("left", &self.left);
         state.serialize_field("right", &self.right);
@@ -1311,12 +1262,11 @@ impl ESTree for ContinueStatement<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
         state.serialize_field("type", &JsonSafeString("ContinueStatement"));
-        if state.range() {
-            let range = oxc_estree::Range::new(self.span.start, self.span.end);
-            state.serialize_field("range", &range);
-        }
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
+        if state.range() {
+            state.serialize_field("range", &[self.span.start, self.span.end]);
+        }
         state.serialize_field("label", &self.label);
         state.end();
     }
@@ -1326,12 +1276,11 @@ impl ESTree for BreakStatement<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
         state.serialize_field("type", &JsonSafeString("BreakStatement"));
-        if state.range() {
-            let range = oxc_estree::Range::new(self.span.start, self.span.end);
-            state.serialize_field("range", &range);
-        }
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
+        if state.range() {
+            state.serialize_field("range", &[self.span.start, self.span.end]);
+        }
         state.serialize_field("label", &self.label);
         state.end();
     }
@@ -1341,12 +1290,11 @@ impl ESTree for ReturnStatement<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
         state.serialize_field("type", &JsonSafeString("ReturnStatement"));
-        if state.range() {
-            let range = oxc_estree::Range::new(self.span.start, self.span.end);
-            state.serialize_field("range", &range);
-        }
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
+        if state.range() {
+            state.serialize_field("range", &[self.span.start, self.span.end]);
+        }
         state.serialize_field("argument", &self.argument);
         state.end();
     }
@@ -1356,12 +1304,11 @@ impl ESTree for WithStatement<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
         state.serialize_field("type", &JsonSafeString("WithStatement"));
-        if state.range() {
-            let range = oxc_estree::Range::new(self.span.start, self.span.end);
-            state.serialize_field("range", &range);
-        }
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
+        if state.range() {
+            state.serialize_field("range", &[self.span.start, self.span.end]);
+        }
         state.serialize_field("object", &self.object);
         state.serialize_field("body", &self.body);
         state.end();
@@ -1372,12 +1319,11 @@ impl ESTree for SwitchStatement<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
         state.serialize_field("type", &JsonSafeString("SwitchStatement"));
-        if state.range() {
-            let range = oxc_estree::Range::new(self.span.start, self.span.end);
-            state.serialize_field("range", &range);
-        }
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
+        if state.range() {
+            state.serialize_field("range", &[self.span.start, self.span.end]);
+        }
         state.serialize_field("discriminant", &self.discriminant);
         state.serialize_field("cases", &self.cases);
         state.end();
@@ -1388,12 +1334,11 @@ impl ESTree for SwitchCase<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
         state.serialize_field("type", &JsonSafeString("SwitchCase"));
-        if state.range() {
-            let range = oxc_estree::Range::new(self.span.start, self.span.end);
-            state.serialize_field("range", &range);
-        }
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
+        if state.range() {
+            state.serialize_field("range", &[self.span.start, self.span.end]);
+        }
         state.serialize_field("test", &self.test);
         state.serialize_field("consequent", &self.consequent);
         state.end();
@@ -1404,12 +1349,11 @@ impl ESTree for LabeledStatement<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
         state.serialize_field("type", &JsonSafeString("LabeledStatement"));
-        if state.range() {
-            let range = oxc_estree::Range::new(self.span.start, self.span.end);
-            state.serialize_field("range", &range);
-        }
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
+        if state.range() {
+            state.serialize_field("range", &[self.span.start, self.span.end]);
+        }
         state.serialize_field("label", &self.label);
         state.serialize_field("body", &self.body);
         state.end();
@@ -1420,12 +1364,11 @@ impl ESTree for ThrowStatement<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
         state.serialize_field("type", &JsonSafeString("ThrowStatement"));
-        if state.range() {
-            let range = oxc_estree::Range::new(self.span.start, self.span.end);
-            state.serialize_field("range", &range);
-        }
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
+        if state.range() {
+            state.serialize_field("range", &[self.span.start, self.span.end]);
+        }
         state.serialize_field("argument", &self.argument);
         state.end();
     }
@@ -1435,12 +1378,11 @@ impl ESTree for TryStatement<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
         state.serialize_field("type", &JsonSafeString("TryStatement"));
-        if state.range() {
-            let range = oxc_estree::Range::new(self.span.start, self.span.end);
-            state.serialize_field("range", &range);
-        }
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
+        if state.range() {
+            state.serialize_field("range", &[self.span.start, self.span.end]);
+        }
         state.serialize_field("block", &self.block);
         state.serialize_field("handler", &self.handler);
         state.serialize_field("finalizer", &self.finalizer);
@@ -1452,12 +1394,11 @@ impl ESTree for CatchClause<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
         state.serialize_field("type", &JsonSafeString("CatchClause"));
-        if state.range() {
-            let range = oxc_estree::Range::new(self.span.start, self.span.end);
-            state.serialize_field("range", &range);
-        }
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
+        if state.range() {
+            state.serialize_field("range", &[self.span.start, self.span.end]);
+        }
         state.serialize_field("param", &self.param);
         state.serialize_field("body", &self.body);
         state.end();
@@ -1474,12 +1415,11 @@ impl ESTree for DebuggerStatement {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
         state.serialize_field("type", &JsonSafeString("DebuggerStatement"));
-        if state.range() {
-            let range = oxc_estree::Range::new(self.span.start, self.span.end);
-            state.serialize_field("range", &range);
-        }
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
+        if state.range() {
+            state.serialize_field("range", &[self.span.start, self.span.end]);
+        }
         state.end();
     }
 }
@@ -1505,12 +1445,11 @@ impl ESTree for AssignmentPattern<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
         state.serialize_field("type", &JsonSafeString("AssignmentPattern"));
-        if state.range() {
-            let range = oxc_estree::Range::new(self.span.start, self.span.end);
-            state.serialize_field("range", &range);
-        }
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
+        if state.range() {
+            state.serialize_field("range", &[self.span.start, self.span.end]);
+        }
         state.serialize_ts_field("decorators", &crate::serialize::basic::TsEmptyArray(self));
         state.serialize_field("left", &self.left);
         state.serialize_field("right", &self.right);
@@ -1524,12 +1463,11 @@ impl ESTree for ObjectPattern<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
         state.serialize_field("type", &JsonSafeString("ObjectPattern"));
-        if state.range() {
-            let range = oxc_estree::Range::new(self.span.start, self.span.end);
-            state.serialize_field("range", &range);
-        }
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
+        if state.range() {
+            state.serialize_field("range", &[self.span.start, self.span.end]);
+        }
         state.serialize_ts_field("decorators", &crate::serialize::basic::TsEmptyArray(self));
         state.serialize_field("properties", &Concat2(&self.properties, &self.rest));
         state.serialize_ts_field("optional", &crate::serialize::basic::TsFalse(self));
@@ -1542,12 +1480,11 @@ impl ESTree for BindingProperty<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
         state.serialize_field("type", &JsonSafeString("Property"));
-        if state.range() {
-            let range = oxc_estree::Range::new(self.span.start, self.span.end);
-            state.serialize_field("range", &range);
-        }
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
+        if state.range() {
+            state.serialize_field("range", &[self.span.start, self.span.end]);
+        }
         state.serialize_field("kind", &crate::serialize::basic::Init(self));
         state.serialize_field("key", &self.key);
         state.serialize_field("value", &self.value);
@@ -1563,12 +1500,11 @@ impl ESTree for ArrayPattern<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
         state.serialize_field("type", &JsonSafeString("ArrayPattern"));
-        if state.range() {
-            let range = oxc_estree::Range::new(self.span.start, self.span.end);
-            state.serialize_field("range", &range);
-        }
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
+        if state.range() {
+            state.serialize_field("range", &[self.span.start, self.span.end]);
+        }
         state.serialize_ts_field("decorators", &crate::serialize::basic::TsEmptyArray(self));
         state.serialize_field("elements", &Concat2(&self.elements, &self.rest));
         state.serialize_ts_field("optional", &crate::serialize::basic::TsFalse(self));
@@ -1581,12 +1517,11 @@ impl ESTree for BindingRestElement<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
         state.serialize_field("type", &JsonSafeString("RestElement"));
-        if state.range() {
-            let range = oxc_estree::Range::new(self.span.start, self.span.end);
-            state.serialize_field("range", &range);
-        }
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
+        if state.range() {
+            state.serialize_field("range", &[self.span.start, self.span.end]);
+        }
         state.serialize_ts_field("decorators", &crate::serialize::basic::TsEmptyArray(self));
         state.serialize_field("argument", &self.argument);
         state.serialize_ts_field("optional", &crate::serialize::basic::TsFalse(self));
@@ -1600,12 +1535,11 @@ impl ESTree for Function<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
         state.serialize_field("type", &self.r#type);
-        if state.range() {
-            let range = oxc_estree::Range::new(self.span.start, self.span.end);
-            state.serialize_field("range", &range);
-        }
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
+        if state.range() {
+            state.serialize_field("range", &[self.span.start, self.span.end]);
+        }
         state.serialize_field("id", &self.id);
         state.serialize_field("generator", &self.generator);
         state.serialize_field("async", &self.r#async);
@@ -1665,12 +1599,11 @@ impl ESTree for FunctionBody<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
         state.serialize_field("type", &JsonSafeString("BlockStatement"));
-        if state.range() {
-            let range = oxc_estree::Range::new(self.span.start, self.span.end);
-            state.serialize_field("range", &range);
-        }
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
+        if state.range() {
+            state.serialize_field("range", &[self.span.start, self.span.end]);
+        }
         state.serialize_field("body", &Concat2(&self.directives, &self.statements));
         state.end();
     }
@@ -1680,12 +1613,11 @@ impl ESTree for ArrowFunctionExpression<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
         state.serialize_field("type", &JsonSafeString("ArrowFunctionExpression"));
-        if state.range() {
-            let range = oxc_estree::Range::new(self.span.start, self.span.end);
-            state.serialize_field("range", &range);
-        }
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
+        if state.range() {
+            state.serialize_field("range", &[self.span.start, self.span.end]);
+        }
         state.serialize_field("expression", &self.expression);
         state.serialize_field("async", &self.r#async);
         state.serialize_ts_field("typeParameters", &self.type_parameters);
@@ -1702,12 +1634,11 @@ impl ESTree for YieldExpression<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
         state.serialize_field("type", &JsonSafeString("YieldExpression"));
-        if state.range() {
-            let range = oxc_estree::Range::new(self.span.start, self.span.end);
-            state.serialize_field("range", &range);
-        }
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
+        if state.range() {
+            state.serialize_field("range", &[self.span.start, self.span.end]);
+        }
         state.serialize_field("delegate", &self.delegate);
         state.serialize_field("argument", &self.argument);
         state.end();
@@ -1718,12 +1649,11 @@ impl ESTree for Class<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
         state.serialize_field("type", &self.r#type);
-        if state.range() {
-            let range = oxc_estree::Range::new(self.span.start, self.span.end);
-            state.serialize_field("range", &range);
-        }
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
+        if state.range() {
+            state.serialize_field("range", &[self.span.start, self.span.end]);
+        }
         state.serialize_field("decorators", &self.decorators);
         state.serialize_field("id", &self.id);
         state.serialize_ts_field("typeParameters", &self.type_parameters);
@@ -1750,12 +1680,11 @@ impl ESTree for ClassBody<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
         state.serialize_field("type", &JsonSafeString("ClassBody"));
-        if state.range() {
-            let range = oxc_estree::Range::new(self.span.start, self.span.end);
-            state.serialize_field("range", &range);
-        }
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
+        if state.range() {
+            state.serialize_field("range", &[self.span.start, self.span.end]);
+        }
         state.serialize_field("body", &self.body);
         state.end();
     }
@@ -1777,12 +1706,11 @@ impl ESTree for MethodDefinition<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
         state.serialize_field("type", &self.r#type);
-        if state.range() {
-            let range = oxc_estree::Range::new(self.span.start, self.span.end);
-            state.serialize_field("range", &range);
-        }
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
+        if state.range() {
+            state.serialize_field("range", &[self.span.start, self.span.end]);
+        }
         state.serialize_field("decorators", &self.decorators);
         state.serialize_field("key", &self.key);
         state.serialize_field("value", &self.value);
@@ -1811,12 +1739,11 @@ impl ESTree for PropertyDefinition<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
         state.serialize_field("type", &self.r#type);
-        if state.range() {
-            let range = oxc_estree::Range::new(self.span.start, self.span.end);
-            state.serialize_field("range", &range);
-        }
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
+        if state.range() {
+            state.serialize_field("range", &[self.span.start, self.span.end]);
+        }
         state.serialize_field("decorators", &self.decorators);
         state.serialize_field("key", &self.key);
         state.serialize_ts_field("typeAnnotation", &self.type_annotation);
@@ -1859,12 +1786,11 @@ impl ESTree for PrivateIdentifier<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
         state.serialize_field("type", &JsonSafeString("PrivateIdentifier"));
-        if state.range() {
-            let range = oxc_estree::Range::new(self.span.start, self.span.end);
-            state.serialize_field("range", &range);
-        }
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
+        if state.range() {
+            state.serialize_field("range", &[self.span.start, self.span.end]);
+        }
         state.serialize_field("name", &self.name);
         state.end();
     }
@@ -1874,12 +1800,11 @@ impl ESTree for StaticBlock<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
         state.serialize_field("type", &JsonSafeString("StaticBlock"));
-        if state.range() {
-            let range = oxc_estree::Range::new(self.span.start, self.span.end);
-            state.serialize_field("range", &range);
-        }
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
+        if state.range() {
+            state.serialize_field("range", &[self.span.start, self.span.end]);
+        }
         state.serialize_field("body", &self.body);
         state.end();
     }
@@ -1913,12 +1838,11 @@ impl ESTree for AccessorProperty<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
         state.serialize_field("type", &self.r#type);
-        if state.range() {
-            let range = oxc_estree::Range::new(self.span.start, self.span.end);
-            state.serialize_field("range", &range);
-        }
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
+        if state.range() {
+            state.serialize_field("range", &[self.span.start, self.span.end]);
+        }
         state.serialize_field("decorators", &self.decorators);
         state.serialize_field("key", &self.key);
         state.serialize_ts_field("typeAnnotation", &self.type_annotation);
@@ -1939,12 +1863,11 @@ impl ESTree for ImportExpression<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
         state.serialize_field("type", &JsonSafeString("ImportExpression"));
-        if state.range() {
-            let range = oxc_estree::Range::new(self.span.start, self.span.end);
-            state.serialize_field("range", &range);
-        }
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
+        if state.range() {
+            state.serialize_field("range", &[self.span.start, self.span.end]);
+        }
         state.serialize_field("source", &self.source);
         state.serialize_field("options", &self.options);
         state.serialize_field("phase", &self.phase);
@@ -1956,12 +1879,11 @@ impl ESTree for ImportDeclaration<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
         state.serialize_field("type", &JsonSafeString("ImportDeclaration"));
-        if state.range() {
-            let range = oxc_estree::Range::new(self.span.start, self.span.end);
-            state.serialize_field("range", &range);
-        }
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
+        if state.range() {
+            state.serialize_field("range", &[self.span.start, self.span.end]);
+        }
         state.serialize_field(
             "specifiers",
             &crate::serialize::js::ImportDeclarationSpecifiers(self),
@@ -2000,12 +1922,11 @@ impl ESTree for ImportSpecifier<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
         state.serialize_field("type", &JsonSafeString("ImportSpecifier"));
-        if state.range() {
-            let range = oxc_estree::Range::new(self.span.start, self.span.end);
-            state.serialize_field("range", &range);
-        }
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
+        if state.range() {
+            state.serialize_field("range", &[self.span.start, self.span.end]);
+        }
         state.serialize_field("imported", &self.imported);
         state.serialize_field("local", &self.local);
         state.serialize_ts_field("importKind", &self.import_kind);
@@ -2017,12 +1938,11 @@ impl ESTree for ImportDefaultSpecifier<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
         state.serialize_field("type", &JsonSafeString("ImportDefaultSpecifier"));
-        if state.range() {
-            let range = oxc_estree::Range::new(self.span.start, self.span.end);
-            state.serialize_field("range", &range);
-        }
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
+        if state.range() {
+            state.serialize_field("range", &[self.span.start, self.span.end]);
+        }
         state.serialize_field("local", &self.local);
         state.end();
     }
@@ -2032,12 +1952,11 @@ impl ESTree for ImportNamespaceSpecifier<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
         state.serialize_field("type", &JsonSafeString("ImportNamespaceSpecifier"));
-        if state.range() {
-            let range = oxc_estree::Range::new(self.span.start, self.span.end);
-            state.serialize_field("range", &range);
-        }
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
+        if state.range() {
+            state.serialize_field("range", &[self.span.start, self.span.end]);
+        }
         state.serialize_field("local", &self.local);
         state.end();
     }
@@ -2055,12 +1974,11 @@ impl ESTree for ImportAttribute<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
         state.serialize_field("type", &JsonSafeString("ImportAttribute"));
-        if state.range() {
-            let range = oxc_estree::Range::new(self.span.start, self.span.end);
-            state.serialize_field("range", &range);
-        }
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
+        if state.range() {
+            state.serialize_field("range", &[self.span.start, self.span.end]);
+        }
         state.serialize_field("key", &self.key);
         state.serialize_field("value", &self.value);
         state.end();
@@ -2080,12 +1998,11 @@ impl ESTree for ExportNamedDeclaration<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
         state.serialize_field("type", &JsonSafeString("ExportNamedDeclaration"));
-        if state.range() {
-            let range = oxc_estree::Range::new(self.span.start, self.span.end);
-            state.serialize_field("range", &range);
-        }
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
+        if state.range() {
+            state.serialize_field("range", &[self.span.start, self.span.end]);
+        }
         state.serialize_field("declaration", &self.declaration);
         state.serialize_field("specifiers", &self.specifiers);
         state.serialize_field("source", &self.source);
@@ -2102,12 +2019,11 @@ impl ESTree for ExportDefaultDeclaration<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
         state.serialize_field("type", &JsonSafeString("ExportDefaultDeclaration"));
-        if state.range() {
-            let range = oxc_estree::Range::new(self.span.start, self.span.end);
-            state.serialize_field("range", &range);
-        }
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
+        if state.range() {
+            state.serialize_field("range", &[self.span.start, self.span.end]);
+        }
         state.serialize_field("declaration", &self.declaration);
         state.serialize_ts_field("exportKind", &crate::serialize::basic::TsValue(self));
         state.end();
@@ -2118,12 +2034,11 @@ impl ESTree for ExportAllDeclaration<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
         state.serialize_field("type", &JsonSafeString("ExportAllDeclaration"));
-        if state.range() {
-            let range = oxc_estree::Range::new(self.span.start, self.span.end);
-            state.serialize_field("range", &range);
-        }
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
+        if state.range() {
+            state.serialize_field("range", &[self.span.start, self.span.end]);
+        }
         state.serialize_field("exported", &self.exported);
         state.serialize_field("source", &self.source);
         state.serialize_field(
@@ -2139,12 +2054,11 @@ impl ESTree for ExportSpecifier<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
         state.serialize_field("type", &JsonSafeString("ExportSpecifier"));
-        if state.range() {
-            let range = oxc_estree::Range::new(self.span.start, self.span.end);
-            state.serialize_field("range", &range);
-        }
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
+        if state.range() {
+            state.serialize_field("range", &[self.span.start, self.span.end]);
+        }
         state.serialize_field("local", &self.local);
         state.serialize_field("exported", &self.exported);
         state.serialize_ts_field("exportKind", &self.export_kind);
@@ -2219,12 +2133,11 @@ impl ESTree for V8IntrinsicExpression<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
         state.serialize_field("type", &JsonSafeString("V8IntrinsicExpression"));
-        if state.range() {
-            let range = oxc_estree::Range::new(self.span.start, self.span.end);
-            state.serialize_field("range", &range);
-        }
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
+        if state.range() {
+            state.serialize_field("range", &[self.span.start, self.span.end]);
+        }
         state.serialize_field("name", &self.name);
         state.serialize_field("arguments", &self.arguments);
         state.end();
@@ -2235,12 +2148,11 @@ impl ESTree for BooleanLiteral {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
         state.serialize_field("type", &JsonSafeString("Literal"));
-        if state.range() {
-            let range = oxc_estree::Range::new(self.span.start, self.span.end);
-            state.serialize_field("range", &range);
-        }
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
+        if state.range() {
+            state.serialize_field("range", &[self.span.start, self.span.end]);
+        }
         state.serialize_field("value", &self.value);
         state.serialize_field("raw", &crate::serialize::literal::BooleanLiteralRaw(self));
         state.end();
@@ -2251,12 +2163,11 @@ impl ESTree for NullLiteral {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
         state.serialize_field("type", &JsonSafeString("Literal"));
-        if state.range() {
-            let range = oxc_estree::Range::new(self.span.start, self.span.end);
-            state.serialize_field("range", &range);
-        }
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
+        if state.range() {
+            state.serialize_field("range", &[self.span.start, self.span.end]);
+        }
         state.serialize_field("value", &crate::serialize::basic::Null(self));
         state.serialize_field("raw", &crate::serialize::literal::NullLiteralRaw(self));
         state.end();
@@ -2267,12 +2178,11 @@ impl ESTree for NumericLiteral<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
         state.serialize_field("type", &JsonSafeString("Literal"));
-        if state.range() {
-            let range = oxc_estree::Range::new(self.span.start, self.span.end);
-            state.serialize_field("range", &range);
-        }
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
+        if state.range() {
+            state.serialize_field("range", &[self.span.start, self.span.end]);
+        }
         state.serialize_field("value", &self.value);
         state.serialize_field("raw", &self.raw.map(|s| JsonSafeString(s.as_str())));
         state.end();
@@ -2283,12 +2193,11 @@ impl ESTree for StringLiteral<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
         state.serialize_field("type", &JsonSafeString("Literal"));
-        if state.range() {
-            let range = oxc_estree::Range::new(self.span.start, self.span.end);
-            state.serialize_field("range", &range);
-        }
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
+        if state.range() {
+            state.serialize_field("range", &[self.span.start, self.span.end]);
+        }
         state.serialize_field("value", &crate::serialize::literal::StringLiteralValue(self));
         state.serialize_field("raw", &self.raw);
         state.end();
@@ -2299,12 +2208,11 @@ impl ESTree for BigIntLiteral<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
         state.serialize_field("type", &JsonSafeString("Literal"));
-        if state.range() {
-            let range = oxc_estree::Range::new(self.span.start, self.span.end);
-            state.serialize_field("range", &range);
-        }
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
+        if state.range() {
+            state.serialize_field("range", &[self.span.start, self.span.end]);
+        }
         state.serialize_field("value", &crate::serialize::literal::BigIntLiteralValue(self));
         state.serialize_field("raw", &self.raw.map(|s| JsonSafeString(s.as_str())));
         state.serialize_field("bigint", &crate::serialize::literal::BigIntLiteralBigint(self));
@@ -2316,12 +2224,11 @@ impl ESTree for RegExpLiteral<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
         state.serialize_field("type", &JsonSafeString("Literal"));
-        if state.range() {
-            let range = oxc_estree::Range::new(self.span.start, self.span.end);
-            state.serialize_field("range", &range);
-        }
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
+        if state.range() {
+            state.serialize_field("range", &[self.span.start, self.span.end]);
+        }
         state.serialize_field("value", &crate::serialize::literal::RegExpLiteralValue(self));
         state.serialize_field("raw", &self.raw);
         state.serialize_field("regex", &self.regex);
@@ -2356,12 +2263,11 @@ impl ESTree for JSXElement<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
         state.serialize_field("type", &JsonSafeString("JSXElement"));
-        if state.range() {
-            let range = oxc_estree::Range::new(self.span.start, self.span.end);
-            state.serialize_field("range", &range);
-        }
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
+        if state.range() {
+            state.serialize_field("range", &[self.span.start, self.span.end]);
+        }
         state.serialize_field(
             "openingElement",
             &crate::serialize::jsx::JSXElementOpeningElement(self),
@@ -2376,12 +2282,11 @@ impl ESTree for JSXOpeningElement<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
         state.serialize_field("type", &JsonSafeString("JSXOpeningElement"));
-        if state.range() {
-            let range = oxc_estree::Range::new(self.span.start, self.span.end);
-            state.serialize_field("range", &range);
-        }
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
+        if state.range() {
+            state.serialize_field("range", &[self.span.start, self.span.end]);
+        }
         state.serialize_field("name", &self.name);
         state.serialize_ts_field("typeArguments", &self.type_arguments);
         state.serialize_field("attributes", &self.attributes);
@@ -2397,12 +2302,11 @@ impl ESTree for JSXClosingElement<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
         state.serialize_field("type", &JsonSafeString("JSXClosingElement"));
-        if state.range() {
-            let range = oxc_estree::Range::new(self.span.start, self.span.end);
-            state.serialize_field("range", &range);
-        }
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
+        if state.range() {
+            state.serialize_field("range", &[self.span.start, self.span.end]);
+        }
         state.serialize_field("name", &self.name);
         state.end();
     }
@@ -2412,12 +2316,11 @@ impl ESTree for JSXFragment<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
         state.serialize_field("type", &JsonSafeString("JSXFragment"));
-        if state.range() {
-            let range = oxc_estree::Range::new(self.span.start, self.span.end);
-            state.serialize_field("range", &range);
-        }
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
+        if state.range() {
+            state.serialize_field("range", &[self.span.start, self.span.end]);
+        }
         state.serialize_field("openingFragment", &self.opening_fragment);
         state.serialize_field("children", &self.children);
         state.serialize_field("closingFragment", &self.closing_fragment);
@@ -2429,12 +2332,11 @@ impl ESTree for JSXOpeningFragment {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
         state.serialize_field("type", &JsonSafeString("JSXOpeningFragment"));
-        if state.range() {
-            let range = oxc_estree::Range::new(self.span.start, self.span.end);
-            state.serialize_field("range", &range);
-        }
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
+        if state.range() {
+            state.serialize_field("range", &[self.span.start, self.span.end]);
+        }
         state.serialize_js_field("attributes", &crate::serialize::basic::JsEmptyArray(self));
         state.serialize_js_field("selfClosing", &crate::serialize::basic::JsFalse(self));
         state.end();
@@ -2445,12 +2347,11 @@ impl ESTree for JSXClosingFragment {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
         state.serialize_field("type", &JsonSafeString("JSXClosingFragment"));
-        if state.range() {
-            let range = oxc_estree::Range::new(self.span.start, self.span.end);
-            state.serialize_field("range", &range);
-        }
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
+        if state.range() {
+            state.serialize_field("range", &[self.span.start, self.span.end]);
+        }
         state.end();
     }
 }
@@ -2475,12 +2376,11 @@ impl ESTree for JSXNamespacedName<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
         state.serialize_field("type", &JsonSafeString("JSXNamespacedName"));
-        if state.range() {
-            let range = oxc_estree::Range::new(self.span.start, self.span.end);
-            state.serialize_field("range", &range);
-        }
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
+        if state.range() {
+            state.serialize_field("range", &[self.span.start, self.span.end]);
+        }
         state.serialize_field("namespace", &self.namespace);
         state.serialize_field("name", &self.name);
         state.end();
@@ -2491,12 +2391,11 @@ impl ESTree for JSXMemberExpression<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
         state.serialize_field("type", &JsonSafeString("JSXMemberExpression"));
-        if state.range() {
-            let range = oxc_estree::Range::new(self.span.start, self.span.end);
-            state.serialize_field("range", &range);
-        }
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
+        if state.range() {
+            state.serialize_field("range", &[self.span.start, self.span.end]);
+        }
         state.serialize_field("object", &self.object);
         state.serialize_field("property", &self.property);
         state.end();
@@ -2521,12 +2420,11 @@ impl ESTree for JSXExpressionContainer<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
         state.serialize_field("type", &JsonSafeString("JSXExpressionContainer"));
-        if state.range() {
-            let range = oxc_estree::Range::new(self.span.start, self.span.end);
-            state.serialize_field("range", &range);
-        }
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
+        if state.range() {
+            state.serialize_field("range", &[self.span.start, self.span.end]);
+        }
         state.serialize_field("expression", &self.expression);
         state.end();
     }
@@ -2587,12 +2485,11 @@ impl ESTree for JSXEmptyExpression {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
         state.serialize_field("type", &JsonSafeString("JSXEmptyExpression"));
-        if state.range() {
-            let range = oxc_estree::Range::new(self.span.start, self.span.end);
-            state.serialize_field("range", &range);
-        }
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
+        if state.range() {
+            state.serialize_field("range", &[self.span.start, self.span.end]);
+        }
         state.end();
     }
 }
@@ -2610,12 +2507,11 @@ impl ESTree for JSXAttribute<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
         state.serialize_field("type", &JsonSafeString("JSXAttribute"));
-        if state.range() {
-            let range = oxc_estree::Range::new(self.span.start, self.span.end);
-            state.serialize_field("range", &range);
-        }
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
+        if state.range() {
+            state.serialize_field("range", &[self.span.start, self.span.end]);
+        }
         state.serialize_field("name", &self.name);
         state.serialize_field("value", &self.value);
         state.end();
@@ -2626,12 +2522,11 @@ impl ESTree for JSXSpreadAttribute<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
         state.serialize_field("type", &JsonSafeString("JSXSpreadAttribute"));
-        if state.range() {
-            let range = oxc_estree::Range::new(self.span.start, self.span.end);
-            state.serialize_field("range", &range);
-        }
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
+        if state.range() {
+            state.serialize_field("range", &[self.span.start, self.span.end]);
+        }
         state.serialize_field("argument", &self.argument);
         state.end();
     }
@@ -2661,12 +2556,11 @@ impl ESTree for JSXIdentifier<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
         state.serialize_field("type", &JsonSafeString("JSXIdentifier"));
-        if state.range() {
-            let range = oxc_estree::Range::new(self.span.start, self.span.end);
-            state.serialize_field("range", &range);
-        }
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
+        if state.range() {
+            state.serialize_field("range", &[self.span.start, self.span.end]);
+        }
         state.serialize_field("name", &JsonSafeString(self.name.as_str()));
         state.end();
     }
@@ -2688,12 +2582,11 @@ impl ESTree for JSXSpreadChild<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
         state.serialize_field("type", &JsonSafeString("JSXSpreadChild"));
-        if state.range() {
-            let range = oxc_estree::Range::new(self.span.start, self.span.end);
-            state.serialize_field("range", &range);
-        }
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
+        if state.range() {
+            state.serialize_field("range", &[self.span.start, self.span.end]);
+        }
         state.serialize_field("expression", &self.expression);
         state.end();
     }
@@ -2703,12 +2596,11 @@ impl ESTree for JSXText<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
         state.serialize_field("type", &JsonSafeString("JSXText"));
-        if state.range() {
-            let range = oxc_estree::Range::new(self.span.start, self.span.end);
-            state.serialize_field("range", &range);
-        }
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
+        if state.range() {
+            state.serialize_field("range", &[self.span.start, self.span.end]);
+        }
         state.serialize_field("value", &self.value);
         state.serialize_field("raw", &self.raw);
         state.end();
@@ -2719,12 +2611,11 @@ impl ESTree for TSThisParameter<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
         state.serialize_field("type", &JsonSafeString("Identifier"));
-        if state.range() {
-            let range = oxc_estree::Range::new(self.span.start, self.span.end);
-            state.serialize_field("range", &range);
-        }
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
+        if state.range() {
+            state.serialize_field("range", &[self.span.start, self.span.end]);
+        }
         state.serialize_field("decorators", &crate::serialize::basic::EmptyArray(self));
         state.serialize_field("name", &crate::serialize::basic::This(self));
         state.serialize_field("optional", &crate::serialize::basic::False(self));
@@ -2737,12 +2628,11 @@ impl ESTree for TSEnumDeclaration<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
         state.serialize_field("type", &JsonSafeString("TSEnumDeclaration"));
-        if state.range() {
-            let range = oxc_estree::Range::new(self.span.start, self.span.end);
-            state.serialize_field("range", &range);
-        }
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
+        if state.range() {
+            state.serialize_field("range", &[self.span.start, self.span.end]);
+        }
         state.serialize_field("id", &self.id);
         state.serialize_field("body", &self.body);
         state.serialize_field("const", &self.r#const);
@@ -2755,12 +2645,11 @@ impl ESTree for TSEnumBody<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
         state.serialize_field("type", &JsonSafeString("TSEnumBody"));
-        if state.range() {
-            let range = oxc_estree::Range::new(self.span.start, self.span.end);
-            state.serialize_field("range", &range);
-        }
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
+        if state.range() {
+            state.serialize_field("range", &[self.span.start, self.span.end]);
+        }
         state.serialize_field("members", &self.members);
         state.end();
     }
@@ -2770,12 +2659,11 @@ impl ESTree for TSEnumMember<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
         state.serialize_field("type", &JsonSafeString("TSEnumMember"));
-        if state.range() {
-            let range = oxc_estree::Range::new(self.span.start, self.span.end);
-            state.serialize_field("range", &range);
-        }
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
+        if state.range() {
+            state.serialize_field("range", &[self.span.start, self.span.end]);
+        }
         state.serialize_field("id", &self.id);
         state.serialize_field("initializer", &self.initializer);
         state.serialize_field("computed", &crate::serialize::ts::TSEnumMemberComputed(self));
@@ -2798,12 +2686,11 @@ impl ESTree for TSTypeAnnotation<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
         state.serialize_field("type", &JsonSafeString("TSTypeAnnotation"));
-        if state.range() {
-            let range = oxc_estree::Range::new(self.span.start, self.span.end);
-            state.serialize_field("range", &range);
-        }
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
+        if state.range() {
+            state.serialize_field("range", &[self.span.start, self.span.end]);
+        }
         state.serialize_field("typeAnnotation", &self.type_annotation);
         state.end();
     }
@@ -2813,12 +2700,11 @@ impl ESTree for TSLiteralType<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
         state.serialize_field("type", &JsonSafeString("TSLiteralType"));
-        if state.range() {
-            let range = oxc_estree::Range::new(self.span.start, self.span.end);
-            state.serialize_field("range", &range);
-        }
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
+        if state.range() {
+            state.serialize_field("range", &[self.span.start, self.span.end]);
+        }
         state.serialize_field("literal", &self.literal);
         state.end();
     }
@@ -2885,12 +2771,11 @@ impl ESTree for TSConditionalType<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
         state.serialize_field("type", &JsonSafeString("TSConditionalType"));
-        if state.range() {
-            let range = oxc_estree::Range::new(self.span.start, self.span.end);
-            state.serialize_field("range", &range);
-        }
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
+        if state.range() {
+            state.serialize_field("range", &[self.span.start, self.span.end]);
+        }
         state.serialize_field("checkType", &self.check_type);
         state.serialize_field("extendsType", &self.extends_type);
         state.serialize_field("trueType", &self.true_type);
@@ -2903,12 +2788,11 @@ impl ESTree for TSUnionType<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
         state.serialize_field("type", &JsonSafeString("TSUnionType"));
-        if state.range() {
-            let range = oxc_estree::Range::new(self.span.start, self.span.end);
-            state.serialize_field("range", &range);
-        }
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
+        if state.range() {
+            state.serialize_field("range", &[self.span.start, self.span.end]);
+        }
         state.serialize_field("types", &self.types);
         state.end();
     }
@@ -2918,12 +2802,11 @@ impl ESTree for TSIntersectionType<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
         state.serialize_field("type", &JsonSafeString("TSIntersectionType"));
-        if state.range() {
-            let range = oxc_estree::Range::new(self.span.start, self.span.end);
-            state.serialize_field("range", &range);
-        }
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
+        if state.range() {
+            state.serialize_field("range", &[self.span.start, self.span.end]);
+        }
         state.serialize_field("types", &self.types);
         state.end();
     }
@@ -2933,12 +2816,11 @@ impl ESTree for TSParenthesizedType<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
         state.serialize_field("type", &JsonSafeString("TSParenthesizedType"));
-        if state.range() {
-            let range = oxc_estree::Range::new(self.span.start, self.span.end);
-            state.serialize_field("range", &range);
-        }
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
+        if state.range() {
+            state.serialize_field("range", &[self.span.start, self.span.end]);
+        }
         state.serialize_field("typeAnnotation", &self.type_annotation);
         state.end();
     }
@@ -2948,12 +2830,11 @@ impl ESTree for TSTypeOperator<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
         state.serialize_field("type", &JsonSafeString("TSTypeOperator"));
-        if state.range() {
-            let range = oxc_estree::Range::new(self.span.start, self.span.end);
-            state.serialize_field("range", &range);
-        }
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
+        if state.range() {
+            state.serialize_field("range", &[self.span.start, self.span.end]);
+        }
         state.serialize_field("operator", &self.operator);
         state.serialize_field("typeAnnotation", &self.type_annotation);
         state.end();
@@ -2974,12 +2855,11 @@ impl ESTree for TSArrayType<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
         state.serialize_field("type", &JsonSafeString("TSArrayType"));
-        if state.range() {
-            let range = oxc_estree::Range::new(self.span.start, self.span.end);
-            state.serialize_field("range", &range);
-        }
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
+        if state.range() {
+            state.serialize_field("range", &[self.span.start, self.span.end]);
+        }
         state.serialize_field("elementType", &self.element_type);
         state.end();
     }
@@ -2989,12 +2869,11 @@ impl ESTree for TSIndexedAccessType<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
         state.serialize_field("type", &JsonSafeString("TSIndexedAccessType"));
-        if state.range() {
-            let range = oxc_estree::Range::new(self.span.start, self.span.end);
-            state.serialize_field("range", &range);
-        }
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
+        if state.range() {
+            state.serialize_field("range", &[self.span.start, self.span.end]);
+        }
         state.serialize_field("objectType", &self.object_type);
         state.serialize_field("indexType", &self.index_type);
         state.end();
@@ -3005,12 +2884,11 @@ impl ESTree for TSTupleType<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
         state.serialize_field("type", &JsonSafeString("TSTupleType"));
-        if state.range() {
-            let range = oxc_estree::Range::new(self.span.start, self.span.end);
-            state.serialize_field("range", &range);
-        }
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
+        if state.range() {
+            state.serialize_field("range", &[self.span.start, self.span.end]);
+        }
         state.serialize_field("elementTypes", &self.element_types);
         state.end();
     }
@@ -3020,12 +2898,11 @@ impl ESTree for TSNamedTupleMember<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
         state.serialize_field("type", &JsonSafeString("TSNamedTupleMember"));
-        if state.range() {
-            let range = oxc_estree::Range::new(self.span.start, self.span.end);
-            state.serialize_field("range", &range);
-        }
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
+        if state.range() {
+            state.serialize_field("range", &[self.span.start, self.span.end]);
+        }
         state.serialize_field("label", &self.label);
         state.serialize_field("elementType", &self.element_type);
         state.serialize_field("optional", &self.optional);
@@ -3037,12 +2914,11 @@ impl ESTree for TSOptionalType<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
         state.serialize_field("type", &JsonSafeString("TSOptionalType"));
-        if state.range() {
-            let range = oxc_estree::Range::new(self.span.start, self.span.end);
-            state.serialize_field("range", &range);
-        }
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
+        if state.range() {
+            state.serialize_field("range", &[self.span.start, self.span.end]);
+        }
         state.serialize_field("typeAnnotation", &self.type_annotation);
         state.end();
     }
@@ -3052,12 +2928,11 @@ impl ESTree for TSRestType<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
         state.serialize_field("type", &JsonSafeString("TSRestType"));
-        if state.range() {
-            let range = oxc_estree::Range::new(self.span.start, self.span.end);
-            state.serialize_field("range", &range);
-        }
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
+        if state.range() {
+            state.serialize_field("range", &[self.span.start, self.span.end]);
+        }
         state.serialize_field("typeAnnotation", &self.type_annotation);
         state.end();
     }
@@ -3113,12 +2988,11 @@ impl ESTree for TSAnyKeyword {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
         state.serialize_field("type", &JsonSafeString("TSAnyKeyword"));
-        if state.range() {
-            let range = oxc_estree::Range::new(self.span.start, self.span.end);
-            state.serialize_field("range", &range);
-        }
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
+        if state.range() {
+            state.serialize_field("range", &[self.span.start, self.span.end]);
+        }
         state.end();
     }
 }
@@ -3127,12 +3001,11 @@ impl ESTree for TSStringKeyword {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
         state.serialize_field("type", &JsonSafeString("TSStringKeyword"));
-        if state.range() {
-            let range = oxc_estree::Range::new(self.span.start, self.span.end);
-            state.serialize_field("range", &range);
-        }
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
+        if state.range() {
+            state.serialize_field("range", &[self.span.start, self.span.end]);
+        }
         state.end();
     }
 }
@@ -3141,12 +3014,11 @@ impl ESTree for TSBooleanKeyword {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
         state.serialize_field("type", &JsonSafeString("TSBooleanKeyword"));
-        if state.range() {
-            let range = oxc_estree::Range::new(self.span.start, self.span.end);
-            state.serialize_field("range", &range);
-        }
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
+        if state.range() {
+            state.serialize_field("range", &[self.span.start, self.span.end]);
+        }
         state.end();
     }
 }
@@ -3155,12 +3027,11 @@ impl ESTree for TSNumberKeyword {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
         state.serialize_field("type", &JsonSafeString("TSNumberKeyword"));
-        if state.range() {
-            let range = oxc_estree::Range::new(self.span.start, self.span.end);
-            state.serialize_field("range", &range);
-        }
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
+        if state.range() {
+            state.serialize_field("range", &[self.span.start, self.span.end]);
+        }
         state.end();
     }
 }
@@ -3169,12 +3040,11 @@ impl ESTree for TSNeverKeyword {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
         state.serialize_field("type", &JsonSafeString("TSNeverKeyword"));
-        if state.range() {
-            let range = oxc_estree::Range::new(self.span.start, self.span.end);
-            state.serialize_field("range", &range);
-        }
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
+        if state.range() {
+            state.serialize_field("range", &[self.span.start, self.span.end]);
+        }
         state.end();
     }
 }
@@ -3183,12 +3053,11 @@ impl ESTree for TSIntrinsicKeyword {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
         state.serialize_field("type", &JsonSafeString("TSIntrinsicKeyword"));
-        if state.range() {
-            let range = oxc_estree::Range::new(self.span.start, self.span.end);
-            state.serialize_field("range", &range);
-        }
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
+        if state.range() {
+            state.serialize_field("range", &[self.span.start, self.span.end]);
+        }
         state.end();
     }
 }
@@ -3197,12 +3066,11 @@ impl ESTree for TSUnknownKeyword {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
         state.serialize_field("type", &JsonSafeString("TSUnknownKeyword"));
-        if state.range() {
-            let range = oxc_estree::Range::new(self.span.start, self.span.end);
-            state.serialize_field("range", &range);
-        }
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
+        if state.range() {
+            state.serialize_field("range", &[self.span.start, self.span.end]);
+        }
         state.end();
     }
 }
@@ -3211,12 +3079,11 @@ impl ESTree for TSNullKeyword {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
         state.serialize_field("type", &JsonSafeString("TSNullKeyword"));
-        if state.range() {
-            let range = oxc_estree::Range::new(self.span.start, self.span.end);
-            state.serialize_field("range", &range);
-        }
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
+        if state.range() {
+            state.serialize_field("range", &[self.span.start, self.span.end]);
+        }
         state.end();
     }
 }
@@ -3225,12 +3092,11 @@ impl ESTree for TSUndefinedKeyword {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
         state.serialize_field("type", &JsonSafeString("TSUndefinedKeyword"));
-        if state.range() {
-            let range = oxc_estree::Range::new(self.span.start, self.span.end);
-            state.serialize_field("range", &range);
-        }
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
+        if state.range() {
+            state.serialize_field("range", &[self.span.start, self.span.end]);
+        }
         state.end();
     }
 }
@@ -3239,12 +3105,11 @@ impl ESTree for TSVoidKeyword {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
         state.serialize_field("type", &JsonSafeString("TSVoidKeyword"));
-        if state.range() {
-            let range = oxc_estree::Range::new(self.span.start, self.span.end);
-            state.serialize_field("range", &range);
-        }
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
+        if state.range() {
+            state.serialize_field("range", &[self.span.start, self.span.end]);
+        }
         state.end();
     }
 }
@@ -3253,12 +3118,11 @@ impl ESTree for TSSymbolKeyword {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
         state.serialize_field("type", &JsonSafeString("TSSymbolKeyword"));
-        if state.range() {
-            let range = oxc_estree::Range::new(self.span.start, self.span.end);
-            state.serialize_field("range", &range);
-        }
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
+        if state.range() {
+            state.serialize_field("range", &[self.span.start, self.span.end]);
+        }
         state.end();
     }
 }
@@ -3267,12 +3131,11 @@ impl ESTree for TSThisType {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
         state.serialize_field("type", &JsonSafeString("TSThisType"));
-        if state.range() {
-            let range = oxc_estree::Range::new(self.span.start, self.span.end);
-            state.serialize_field("range", &range);
-        }
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
+        if state.range() {
+            state.serialize_field("range", &[self.span.start, self.span.end]);
+        }
         state.end();
     }
 }
@@ -3281,12 +3144,11 @@ impl ESTree for TSObjectKeyword {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
         state.serialize_field("type", &JsonSafeString("TSObjectKeyword"));
-        if state.range() {
-            let range = oxc_estree::Range::new(self.span.start, self.span.end);
-            state.serialize_field("range", &range);
-        }
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
+        if state.range() {
+            state.serialize_field("range", &[self.span.start, self.span.end]);
+        }
         state.end();
     }
 }
@@ -3295,12 +3157,11 @@ impl ESTree for TSBigIntKeyword {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
         state.serialize_field("type", &JsonSafeString("TSBigIntKeyword"));
-        if state.range() {
-            let range = oxc_estree::Range::new(self.span.start, self.span.end);
-            state.serialize_field("range", &range);
-        }
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
+        if state.range() {
+            state.serialize_field("range", &[self.span.start, self.span.end]);
+        }
         state.end();
     }
 }
@@ -3309,12 +3170,11 @@ impl ESTree for TSTypeReference<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
         state.serialize_field("type", &JsonSafeString("TSTypeReference"));
-        if state.range() {
-            let range = oxc_estree::Range::new(self.span.start, self.span.end);
-            state.serialize_field("range", &range);
-        }
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
+        if state.range() {
+            state.serialize_field("range", &[self.span.start, self.span.end]);
+        }
         state.serialize_field("typeName", &self.type_name);
         state.serialize_field("typeArguments", &self.type_arguments);
         state.end();
@@ -3336,12 +3196,11 @@ impl ESTree for TSQualifiedName<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
         state.serialize_field("type", &JsonSafeString("TSQualifiedName"));
-        if state.range() {
-            let range = oxc_estree::Range::new(self.span.start, self.span.end);
-            state.serialize_field("range", &range);
-        }
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
+        if state.range() {
+            state.serialize_field("range", &[self.span.start, self.span.end]);
+        }
         state.serialize_field("left", &self.left);
         state.serialize_field("right", &self.right);
         state.end();
@@ -3352,12 +3211,11 @@ impl ESTree for TSTypeParameterInstantiation<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
         state.serialize_field("type", &JsonSafeString("TSTypeParameterInstantiation"));
-        if state.range() {
-            let range = oxc_estree::Range::new(self.span.start, self.span.end);
-            state.serialize_field("range", &range);
-        }
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
+        if state.range() {
+            state.serialize_field("range", &[self.span.start, self.span.end]);
+        }
         state.serialize_field("params", &self.params);
         state.end();
     }
@@ -3367,12 +3225,11 @@ impl ESTree for TSTypeParameter<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
         state.serialize_field("type", &JsonSafeString("TSTypeParameter"));
-        if state.range() {
-            let range = oxc_estree::Range::new(self.span.start, self.span.end);
-            state.serialize_field("range", &range);
-        }
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
+        if state.range() {
+            state.serialize_field("range", &[self.span.start, self.span.end]);
+        }
         state.serialize_field("name", &self.name);
         state.serialize_field("constraint", &self.constraint);
         state.serialize_field("default", &self.default);
@@ -3387,12 +3244,11 @@ impl ESTree for TSTypeParameterDeclaration<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
         state.serialize_field("type", &JsonSafeString("TSTypeParameterDeclaration"));
-        if state.range() {
-            let range = oxc_estree::Range::new(self.span.start, self.span.end);
-            state.serialize_field("range", &range);
-        }
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
+        if state.range() {
+            state.serialize_field("range", &[self.span.start, self.span.end]);
+        }
         state.serialize_field("params", &self.params);
         state.end();
     }
@@ -3402,12 +3258,11 @@ impl ESTree for TSTypeAliasDeclaration<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
         state.serialize_field("type", &JsonSafeString("TSTypeAliasDeclaration"));
-        if state.range() {
-            let range = oxc_estree::Range::new(self.span.start, self.span.end);
-            state.serialize_field("range", &range);
-        }
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
+        if state.range() {
+            state.serialize_field("range", &[self.span.start, self.span.end]);
+        }
         state.serialize_field("id", &self.id);
         state.serialize_field("typeParameters", &self.type_parameters);
         state.serialize_field("typeAnnotation", &self.type_annotation);
@@ -3430,12 +3285,11 @@ impl ESTree for TSClassImplements<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
         state.serialize_field("type", &JsonSafeString("TSClassImplements"));
-        if state.range() {
-            let range = oxc_estree::Range::new(self.span.start, self.span.end);
-            state.serialize_field("range", &range);
-        }
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
+        if state.range() {
+            state.serialize_field("range", &[self.span.start, self.span.end]);
+        }
         state.serialize_field(
             "expression",
             &crate::serialize::ts::TSClassImplementsExpression(self),
@@ -3449,12 +3303,11 @@ impl ESTree for TSInterfaceDeclaration<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
         state.serialize_field("type", &JsonSafeString("TSInterfaceDeclaration"));
-        if state.range() {
-            let range = oxc_estree::Range::new(self.span.start, self.span.end);
-            state.serialize_field("range", &range);
-        }
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
+        if state.range() {
+            state.serialize_field("range", &[self.span.start, self.span.end]);
+        }
         state.serialize_field("id", &self.id);
         state.serialize_field("typeParameters", &self.type_parameters);
         state.serialize_field("extends", &self.extends);
@@ -3468,12 +3321,11 @@ impl ESTree for TSInterfaceBody<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
         state.serialize_field("type", &JsonSafeString("TSInterfaceBody"));
-        if state.range() {
-            let range = oxc_estree::Range::new(self.span.start, self.span.end);
-            state.serialize_field("range", &range);
-        }
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
+        if state.range() {
+            state.serialize_field("range", &[self.span.start, self.span.end]);
+        }
         state.serialize_field("body", &self.body);
         state.end();
     }
@@ -3483,12 +3335,11 @@ impl ESTree for TSPropertySignature<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
         state.serialize_field("type", &JsonSafeString("TSPropertySignature"));
-        if state.range() {
-            let range = oxc_estree::Range::new(self.span.start, self.span.end);
-            state.serialize_field("range", &range);
-        }
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
+        if state.range() {
+            state.serialize_field("range", &[self.span.start, self.span.end]);
+        }
         state.serialize_field("computed", &self.computed);
         state.serialize_field("optional", &self.optional);
         state.serialize_field("readonly", &self.readonly);
@@ -3516,12 +3367,11 @@ impl ESTree for TSIndexSignature<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
         state.serialize_field("type", &JsonSafeString("TSIndexSignature"));
-        if state.range() {
-            let range = oxc_estree::Range::new(self.span.start, self.span.end);
-            state.serialize_field("range", &range);
-        }
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
+        if state.range() {
+            state.serialize_field("range", &[self.span.start, self.span.end]);
+        }
         state.serialize_field("parameters", &self.parameters);
         state.serialize_field("typeAnnotation", &self.type_annotation);
         state.serialize_field("readonly", &self.readonly);
@@ -3535,12 +3385,11 @@ impl ESTree for TSCallSignatureDeclaration<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
         state.serialize_field("type", &JsonSafeString("TSCallSignatureDeclaration"));
-        if state.range() {
-            let range = oxc_estree::Range::new(self.span.start, self.span.end);
-            state.serialize_field("range", &range);
-        }
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
+        if state.range() {
+            state.serialize_field("range", &[self.span.start, self.span.end]);
+        }
         state.serialize_field("typeParameters", &self.type_parameters);
         state.serialize_field(
             "params",
@@ -3565,12 +3414,11 @@ impl ESTree for TSMethodSignature<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
         state.serialize_field("type", &JsonSafeString("TSMethodSignature"));
-        if state.range() {
-            let range = oxc_estree::Range::new(self.span.start, self.span.end);
-            state.serialize_field("range", &range);
-        }
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
+        if state.range() {
+            state.serialize_field("range", &[self.span.start, self.span.end]);
+        }
         state.serialize_field("key", &self.key);
         state.serialize_field("computed", &self.computed);
         state.serialize_field("optional", &self.optional);
@@ -3589,12 +3437,11 @@ impl ESTree for TSConstructSignatureDeclaration<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
         state.serialize_field("type", &JsonSafeString("TSConstructSignatureDeclaration"));
-        if state.range() {
-            let range = oxc_estree::Range::new(self.span.start, self.span.end);
-            state.serialize_field("range", &range);
-        }
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
+        if state.range() {
+            state.serialize_field("range", &[self.span.start, self.span.end]);
+        }
         state.serialize_field("typeParameters", &self.type_parameters);
         state.serialize_field("params", &self.params);
         state.serialize_field("returnType", &self.return_type);
@@ -3606,12 +3453,11 @@ impl ESTree for TSIndexSignatureName<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
         state.serialize_field("type", &JsonSafeString("Identifier"));
-        if state.range() {
-            let range = oxc_estree::Range::new(self.span.start, self.span.end);
-            state.serialize_field("range", &range);
-        }
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
+        if state.range() {
+            state.serialize_field("range", &[self.span.start, self.span.end]);
+        }
         state.serialize_field("decorators", &crate::serialize::basic::EmptyArray(self));
         state.serialize_field("name", &JsonSafeString(self.name.as_str()));
         state.serialize_field("optional", &crate::serialize::basic::False(self));
@@ -3624,12 +3470,11 @@ impl ESTree for TSInterfaceHeritage<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
         state.serialize_field("type", &JsonSafeString("TSInterfaceHeritage"));
-        if state.range() {
-            let range = oxc_estree::Range::new(self.span.start, self.span.end);
-            state.serialize_field("range", &range);
-        }
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
+        if state.range() {
+            state.serialize_field("range", &[self.span.start, self.span.end]);
+        }
         state.serialize_field("expression", &self.expression);
         state.serialize_field("typeArguments", &self.type_arguments);
         state.end();
@@ -3640,12 +3485,11 @@ impl ESTree for TSTypePredicate<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
         state.serialize_field("type", &JsonSafeString("TSTypePredicate"));
-        if state.range() {
-            let range = oxc_estree::Range::new(self.span.start, self.span.end);
-            state.serialize_field("range", &range);
-        }
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
+        if state.range() {
+            state.serialize_field("range", &[self.span.start, self.span.end]);
+        }
         state.serialize_field("parameterName", &self.parameter_name);
         state.serialize_field("asserts", &self.asserts);
         state.serialize_field("typeAnnotation", &self.type_annotation);
@@ -3700,12 +3544,11 @@ impl ESTree for TSModuleBlock<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
         state.serialize_field("type", &JsonSafeString("TSModuleBlock"));
-        if state.range() {
-            let range = oxc_estree::Range::new(self.span.start, self.span.end);
-            state.serialize_field("range", &range);
-        }
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
+        if state.range() {
+            state.serialize_field("range", &[self.span.start, self.span.end]);
+        }
         state.serialize_field("body", &Concat2(&self.directives, &self.body));
         state.end();
     }
@@ -3715,12 +3558,11 @@ impl ESTree for TSTypeLiteral<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
         state.serialize_field("type", &JsonSafeString("TSTypeLiteral"));
-        if state.range() {
-            let range = oxc_estree::Range::new(self.span.start, self.span.end);
-            state.serialize_field("range", &range);
-        }
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
+        if state.range() {
+            state.serialize_field("range", &[self.span.start, self.span.end]);
+        }
         state.serialize_field("members", &self.members);
         state.end();
     }
@@ -3730,12 +3572,11 @@ impl ESTree for TSInferType<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
         state.serialize_field("type", &JsonSafeString("TSInferType"));
-        if state.range() {
-            let range = oxc_estree::Range::new(self.span.start, self.span.end);
-            state.serialize_field("range", &range);
-        }
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
+        if state.range() {
+            state.serialize_field("range", &[self.span.start, self.span.end]);
+        }
         state.serialize_field("typeParameter", &self.type_parameter);
         state.end();
     }
@@ -3745,12 +3586,11 @@ impl ESTree for TSTypeQuery<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
         state.serialize_field("type", &JsonSafeString("TSTypeQuery"));
-        if state.range() {
-            let range = oxc_estree::Range::new(self.span.start, self.span.end);
-            state.serialize_field("range", &range);
-        }
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
+        if state.range() {
+            state.serialize_field("range", &[self.span.start, self.span.end]);
+        }
         state.serialize_field("exprName", &self.expr_name);
         state.serialize_field("typeArguments", &self.type_arguments);
         state.end();
@@ -3773,12 +3613,11 @@ impl ESTree for TSImportType<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
         state.serialize_field("type", &JsonSafeString("TSImportType"));
-        if state.range() {
-            let range = oxc_estree::Range::new(self.span.start, self.span.end);
-            state.serialize_field("range", &range);
-        }
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
+        if state.range() {
+            state.serialize_field("range", &[self.span.start, self.span.end]);
+        }
         state.serialize_field("argument", &self.argument);
         state.serialize_field("options", &self.options);
         state.serialize_field("qualifier", &self.qualifier);
@@ -3791,12 +3630,11 @@ impl ESTree for TSFunctionType<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
         state.serialize_field("type", &JsonSafeString("TSFunctionType"));
-        if state.range() {
-            let range = oxc_estree::Range::new(self.span.start, self.span.end);
-            state.serialize_field("range", &range);
-        }
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
+        if state.range() {
+            state.serialize_field("range", &[self.span.start, self.span.end]);
+        }
         state.serialize_field("typeParameters", &self.type_parameters);
         state.serialize_field("params", &crate::serialize::ts::TSFunctionTypeParams(self));
         state.serialize_field("returnType", &self.return_type);
@@ -3808,12 +3646,11 @@ impl ESTree for TSConstructorType<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
         state.serialize_field("type", &JsonSafeString("TSConstructorType"));
-        if state.range() {
-            let range = oxc_estree::Range::new(self.span.start, self.span.end);
-            state.serialize_field("range", &range);
-        }
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
+        if state.range() {
+            state.serialize_field("range", &[self.span.start, self.span.end]);
+        }
         state.serialize_field("abstract", &self.r#abstract);
         state.serialize_field("typeParameters", &self.type_parameters);
         state.serialize_field("params", &self.params);
@@ -3826,12 +3663,11 @@ impl ESTree for TSMappedType<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
         state.serialize_field("type", &JsonSafeString("TSMappedType"));
-        if state.range() {
-            let range = oxc_estree::Range::new(self.span.start, self.span.end);
-            state.serialize_field("range", &range);
-        }
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
+        if state.range() {
+            state.serialize_field("range", &[self.span.start, self.span.end]);
+        }
         state.serialize_field("key", &crate::serialize::ts::TSMappedTypeKey(self));
         state.serialize_field("constraint", &crate::serialize::ts::TSMappedTypeConstraint(self));
         state.serialize_field("nameType", &self.name_type);
@@ -3856,12 +3692,11 @@ impl ESTree for TSTemplateLiteralType<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
         state.serialize_field("type", &JsonSafeString("TSTemplateLiteralType"));
-        if state.range() {
-            let range = oxc_estree::Range::new(self.span.start, self.span.end);
-            state.serialize_field("range", &range);
-        }
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
+        if state.range() {
+            state.serialize_field("range", &[self.span.start, self.span.end]);
+        }
         state.serialize_field("quasis", &self.quasis);
         state.serialize_field("types", &self.types);
         state.end();
@@ -3872,12 +3707,11 @@ impl ESTree for TSAsExpression<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
         state.serialize_field("type", &JsonSafeString("TSAsExpression"));
-        if state.range() {
-            let range = oxc_estree::Range::new(self.span.start, self.span.end);
-            state.serialize_field("range", &range);
-        }
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
+        if state.range() {
+            state.serialize_field("range", &[self.span.start, self.span.end]);
+        }
         state.serialize_field("expression", &self.expression);
         state.serialize_field("typeAnnotation", &self.type_annotation);
         state.end();
@@ -3888,12 +3722,11 @@ impl ESTree for TSSatisfiesExpression<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
         state.serialize_field("type", &JsonSafeString("TSSatisfiesExpression"));
-        if state.range() {
-            let range = oxc_estree::Range::new(self.span.start, self.span.end);
-            state.serialize_field("range", &range);
-        }
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
+        if state.range() {
+            state.serialize_field("range", &[self.span.start, self.span.end]);
+        }
         state.serialize_field("expression", &self.expression);
         state.serialize_field("typeAnnotation", &self.type_annotation);
         state.end();
@@ -3904,12 +3737,11 @@ impl ESTree for TSTypeAssertion<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
         state.serialize_field("type", &JsonSafeString("TSTypeAssertion"));
-        if state.range() {
-            let range = oxc_estree::Range::new(self.span.start, self.span.end);
-            state.serialize_field("range", &range);
-        }
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
+        if state.range() {
+            state.serialize_field("range", &[self.span.start, self.span.end]);
+        }
         state.serialize_field("typeAnnotation", &self.type_annotation);
         state.serialize_field("expression", &self.expression);
         state.end();
@@ -3920,12 +3752,11 @@ impl ESTree for TSImportEqualsDeclaration<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
         state.serialize_field("type", &JsonSafeString("TSImportEqualsDeclaration"));
-        if state.range() {
-            let range = oxc_estree::Range::new(self.span.start, self.span.end);
-            state.serialize_field("range", &range);
-        }
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
+        if state.range() {
+            state.serialize_field("range", &[self.span.start, self.span.end]);
+        }
         state.serialize_field("id", &self.id);
         state.serialize_field("moduleReference", &self.module_reference);
         state.serialize_field("importKind", &self.import_kind);
@@ -3949,12 +3780,11 @@ impl ESTree for TSExternalModuleReference<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
         state.serialize_field("type", &JsonSafeString("TSExternalModuleReference"));
-        if state.range() {
-            let range = oxc_estree::Range::new(self.span.start, self.span.end);
-            state.serialize_field("range", &range);
-        }
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
+        if state.range() {
+            state.serialize_field("range", &[self.span.start, self.span.end]);
+        }
         state.serialize_field("expression", &self.expression);
         state.end();
     }
@@ -3964,12 +3794,11 @@ impl ESTree for TSNonNullExpression<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
         state.serialize_field("type", &JsonSafeString("TSNonNullExpression"));
-        if state.range() {
-            let range = oxc_estree::Range::new(self.span.start, self.span.end);
-            state.serialize_field("range", &range);
-        }
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
+        if state.range() {
+            state.serialize_field("range", &[self.span.start, self.span.end]);
+        }
         state.serialize_field("expression", &self.expression);
         state.end();
     }
@@ -3979,12 +3808,11 @@ impl ESTree for Decorator<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
         state.serialize_field("type", &JsonSafeString("Decorator"));
-        if state.range() {
-            let range = oxc_estree::Range::new(self.span.start, self.span.end);
-            state.serialize_field("range", &range);
-        }
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
+        if state.range() {
+            state.serialize_field("range", &[self.span.start, self.span.end]);
+        }
         state.serialize_field("expression", &self.expression);
         state.end();
     }
@@ -3994,12 +3822,11 @@ impl ESTree for TSExportAssignment<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
         state.serialize_field("type", &JsonSafeString("TSExportAssignment"));
-        if state.range() {
-            let range = oxc_estree::Range::new(self.span.start, self.span.end);
-            state.serialize_field("range", &range);
-        }
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
+        if state.range() {
+            state.serialize_field("range", &[self.span.start, self.span.end]);
+        }
         state.serialize_field("expression", &self.expression);
         state.end();
     }
@@ -4009,12 +3836,11 @@ impl ESTree for TSNamespaceExportDeclaration<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
         state.serialize_field("type", &JsonSafeString("TSNamespaceExportDeclaration"));
-        if state.range() {
-            let range = oxc_estree::Range::new(self.span.start, self.span.end);
-            state.serialize_field("range", &range);
-        }
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
+        if state.range() {
+            state.serialize_field("range", &[self.span.start, self.span.end]);
+        }
         state.serialize_field("id", &self.id);
         state.end();
     }
@@ -4024,12 +3850,11 @@ impl ESTree for TSInstantiationExpression<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
         state.serialize_field("type", &JsonSafeString("TSInstantiationExpression"));
-        if state.range() {
-            let range = oxc_estree::Range::new(self.span.start, self.span.end);
-            state.serialize_field("range", &range);
-        }
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
+        if state.range() {
+            state.serialize_field("range", &[self.span.start, self.span.end]);
+        }
         state.serialize_field("expression", &self.expression);
         state.serialize_field("typeArguments", &self.type_arguments);
         state.end();
@@ -4049,12 +3874,11 @@ impl ESTree for JSDocNullableType<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
         state.serialize_field("type", &JsonSafeString("TSJSDocNullableType"));
-        if state.range() {
-            let range = oxc_estree::Range::new(self.span.start, self.span.end);
-            state.serialize_field("range", &range);
-        }
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
+        if state.range() {
+            state.serialize_field("range", &[self.span.start, self.span.end]);
+        }
         state.serialize_field("typeAnnotation", &self.type_annotation);
         state.serialize_field("postfix", &self.postfix);
         state.end();
@@ -4065,12 +3889,11 @@ impl ESTree for JSDocNonNullableType<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
         state.serialize_field("type", &JsonSafeString("TSJSDocNonNullableType"));
-        if state.range() {
-            let range = oxc_estree::Range::new(self.span.start, self.span.end);
-            state.serialize_field("range", &range);
-        }
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
+        if state.range() {
+            state.serialize_field("range", &[self.span.start, self.span.end]);
+        }
         state.serialize_field("typeAnnotation", &self.type_annotation);
         state.serialize_field("postfix", &self.postfix);
         state.end();
@@ -4081,12 +3904,11 @@ impl ESTree for JSDocUnknownType {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
         state.serialize_field("type", &JsonSafeString("TSJSDocUnknownType"));
-        if state.range() {
-            let range = oxc_estree::Range::new(self.span.start, self.span.end);
-            state.serialize_field("range", &range);
-        }
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
+        if state.range() {
+            state.serialize_field("range", &[self.span.start, self.span.end]);
+        }
         state.end();
     }
 }
@@ -4105,12 +3927,11 @@ impl ESTree for Comment {
         let mut state = serializer.serialize_struct();
         state.serialize_field("type", &self.kind);
         state.serialize_field("value", &crate::serialize::CommentValue(self));
-        if state.range() {
-            let range = oxc_estree::Range::new(self.span.start, self.span.end);
-            state.serialize_field("range", &range);
-        }
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
+        if state.range() {
+            state.serialize_field("range", &[self.span.start, self.span.end]);
+        }
         state.end();
     }
 }

@@ -73,9 +73,9 @@ impl Derive for DeriveESTree {
 
             ///@@line_break
             use oxc_estree::{
-                Concat2, Concat3, ESTree, FlatStructSerializer,
-                JsonSafeString, Range, Serializer, StructSerializer,
-            };
+    Concat2, Concat3, ESTree, FlatStructSerializer,
+    JsonSafeString, Serializer, StructSerializer,
+};
         }
     }
 
@@ -441,12 +441,11 @@ impl<'s> StructSerializerGenerator<'s> {
         if let TypeDef::Struct(inner_struct_def) = field.type_def(self.schema) {
             if inner_struct_def.name() == "Span" && field.name() == "span" {
                 self.stmts.extend(quote! {
-                    if state.range() {
-                        let range = oxc_estree::Range::new(#self_path.#field_name_ident.start, #self_path.#field_name_ident.end);
-                        state.serialize_field("range", &range);
-                    }
                     state.serialize_field("start", &#self_path.#field_name_ident.start);
                     state.serialize_field("end", &#self_path.#field_name_ident.end);
+                    if state.range() {
+                        state.serialize_field("range", &[#self_path.#field_name_ident.start, #self_path.#field_name_ident.end]);
+                    }
                 });
                 return;
             }

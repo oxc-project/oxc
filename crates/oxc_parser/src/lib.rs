@@ -224,7 +224,6 @@ pub struct ParseOptions {
 
     /// Controls whether the `range` information is included to each node.
     /// The `range` property is a [number, number] which indicates the start/end index of the node in the file contents.
-    /// This is similar to the `loc` property, except this is the absolute index.
     ///
     /// Default: `false`
     pub range: bool,

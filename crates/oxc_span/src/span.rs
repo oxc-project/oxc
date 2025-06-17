@@ -85,6 +85,10 @@ pub struct Span {
     /// The zero-based end offset of the span. This may be equal to [`start`](Span::start) if
     /// the span is empty, but should not be less than it.
     pub end: u32,
+
+    /// A [number, number] which indicates the start/end index of the node in the file contents.
+    pub range: Option<[u32; 2]>,
+
     /// Align `Span` on 8 on 64-bit platforms
     #[estree(skip)]
     _align: PointerAlign,

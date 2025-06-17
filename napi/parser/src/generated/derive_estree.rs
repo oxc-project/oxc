@@ -4,8 +4,7 @@
 #![allow(unused_imports, clippy::match_same_arms, clippy::semicolon_if_nothing_returned)]
 
 use oxc_estree::{
-    Concat2, Concat3, ESTree, FlatStructSerializer, JsonSafeString, Range, Serializer,
-    StructSerializer,
+    Concat2, Concat3, ESTree, FlatStructSerializer, JsonSafeString, Serializer, StructSerializer,
 };
 
 use crate::raw_transfer_types::*;
@@ -47,12 +46,11 @@ impl ESTree for ErrorLabel<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
         state.serialize_field("message", &self.message);
-        if state.range() {
-            let range = oxc_estree::Range::new(self.span.start, self.span.end);
-            state.serialize_field("range", &range);
-        }
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
+        if state.range() {
+            state.serialize_field("range", &[self.span.start, self.span.end]);
+        }
         state.end();
     }
 }
@@ -72,12 +70,11 @@ impl ESTree for EcmaScriptModule<'_> {
 impl ESTree for StaticImport<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
-        if state.range() {
-            let range = oxc_estree::Range::new(self.span.start, self.span.end);
-            state.serialize_field("range", &range);
-        }
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
+        if state.range() {
+            state.serialize_field("range", &[self.span.start, self.span.end]);
+        }
         state.serialize_field("moduleRequest", &self.module_request);
         state.serialize_field("entries", &self.entries);
         state.end();
@@ -87,12 +84,11 @@ impl ESTree for StaticImport<'_> {
 impl ESTree for StaticExport<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
-        if state.range() {
-            let range = oxc_estree::Range::new(self.span.start, self.span.end);
-            state.serialize_field("range", &range);
-        }
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
+        if state.range() {
+            state.serialize_field("range", &[self.span.start, self.span.end]);
+        }
         state.serialize_field("entries", &self.entries);
         state.end();
     }
