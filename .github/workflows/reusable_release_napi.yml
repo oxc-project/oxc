@@ -113,6 +113,10 @@ jobs:
               pnpm build --target s390x-unknown-linux-gnu --use-napi-cross
 
           - os: ubuntu-latest
+            target: aarch64-linux-android
+            build: pnpm build --target aarch64-linux-android
+
+          - os: ubuntu-latest
             target: riscv64gc-unknown-linux-gnu
             build: |
               sudo apt-get update
@@ -162,7 +166,7 @@ jobs:
           RUSTUP_IO_THREADS: 1
         with:
           operating_system: freebsd
-          version: "14.0"
+          version: "14.2"
           memory: 8G
           cpu_count: 3
           environment_variables: "DEBUG RUSTUP_IO_THREADS"
