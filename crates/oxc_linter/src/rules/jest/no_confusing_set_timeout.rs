@@ -1,5 +1,5 @@
 use cow_utils::CowUtils;
-use oxc_ast::{AstKind, ast::MemberExpression};
+use oxc_ast::AstKind;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::{AstNode, NodeId, ReferenceId};
@@ -140,10 +140,10 @@ fn collect_jest_reference_id(
         let Some(parent_node) = nodes.parent_node(reference.node_id()) else {
             continue;
         };
-        let AstKind::MemberExpression(member_expr) = parent_node.kind() else {
+        if !parent_node.kind().is_member_expression_kind() {
             continue;
-        };
-        jest_reference_list.push((reference_id, member_expr.span()));
+        }
+        jest_reference_list.push((reference_id, parent_node.kind().span()));
     }
 }
 
@@ -176,21 +176,17 @@ fn handle_jest_set_time_out<'a>(
             continue;
         }
 
-        let AstKind::MemberExpression(member_expr) = parent_node.kind() else {
-            continue;
-        };
-
-        let MemberExpression::StaticMemberExpression(expr) = member_expr else {
+        let AstKind::StaticMemberExpression(expr) = parent_node.kind() else {
             continue;
         };
 
         if expr.property.name == "setTimeout" {
             if !scopes.scope_flags(parent_node.scope_id()).is_top() {
-                ctx.diagnostic(no_global_set_timeout_diagnostic(member_expr.span()));
+                ctx.diagnostic(no_global_set_timeout_diagnostic(expr.span));
             }
 
             if *seen_jest_set_timeout {
-                ctx.diagnostic(no_multiple_set_timeouts_diagnostic(member_expr.span()));
+                ctx.diagnostic(no_multiple_set_timeouts_diagnostic(expr.span));
             } else {
                 *seen_jest_set_timeout = true;
             }
@@ -210,10 +206,9 @@ fn is_jest_fn_call<'a>(
             let parent_kind = parent.kind();
             if matches!(
                 parent_kind,
-                AstKind::CallExpression(_)
-                    | AstKind::MemberExpression(_)
-                    | AstKind::TaggedTemplateExpression(_)
-            ) {
+                AstKind::CallExpression(_) | AstKind::TaggedTemplateExpression(_)
+            ) || parent_kind.is_member_expression_kind()
+            {
                 id = parent.id();
             } else {
                 break;

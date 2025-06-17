@@ -719,9 +719,14 @@ pub fn is_default_this_binding<'a>(
 
                 return !is_constructor;
             }
-            AstKind::MemberExpression(mem_expr) => {
-                if mem_expr.object().span() == current_node.span()
-                    && matches!(mem_expr.static_property_name(), Some("apply" | "bind" | "call"))
+            mem_expr if mem_expr.is_member_expression_kind() => {
+                let Some(member_expr_kind) = mem_expr.as_member_expression_kind() else {
+                    return false;
+                };
+                if member_expr_kind.object().span() == current_node.span()
+                    && member_expr_kind
+                        .static_property_name()
+                        .is_some_and(|name| name == "apply" || name == "bind" || name == "call")
                 {
                     let node = outermost_paren_parent(parent, semantic).unwrap();
                     if let AstKind::CallExpression(call_expr) = node.kind() {

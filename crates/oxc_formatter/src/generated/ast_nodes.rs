@@ -40,8 +40,9 @@ pub enum AstNodes<'a> {
     PropertyKey(&'a AstNode<'a, PropertyKey<'a>>),
     TemplateLiteral(&'a AstNode<'a, TemplateLiteral<'a>>),
     TaggedTemplateExpression(&'a AstNode<'a, TaggedTemplateExpression<'a>>),
-    MemberExpression(&'a AstNode<'a, MemberExpression<'a>>),
     ComputedMemberExpression(&'a AstNode<'a, ComputedMemberExpression<'a>>),
+    StaticMemberExpression(&'a AstNode<'a, StaticMemberExpression<'a>>),
+    PrivateFieldExpression(&'a AstNode<'a, PrivateFieldExpression<'a>>),
     CallExpression(&'a AstNode<'a, CallExpression<'a>>),
     NewExpression(&'a AstNode<'a, NewExpression<'a>>),
     MetaProperty(&'a AstNode<'a, MetaProperty<'a>>),
@@ -228,8 +229,9 @@ impl<'a> AstNodes<'a> {
             Self::PropertyKey(n) => n.span(),
             Self::TemplateLiteral(n) => n.span(),
             Self::TaggedTemplateExpression(n) => n.span(),
-            Self::MemberExpression(n) => n.span(),
             Self::ComputedMemberExpression(n) => n.span(),
+            Self::StaticMemberExpression(n) => n.span(),
+            Self::PrivateFieldExpression(n) => n.span(),
             Self::CallExpression(n) => n.span(),
             Self::NewExpression(n) => n.span(),
             Self::MetaProperty(n) => n.span(),
@@ -416,8 +418,9 @@ impl<'a> AstNodes<'a> {
             Self::PropertyKey(n) => n.parent,
             Self::TemplateLiteral(n) => n.parent,
             Self::TaggedTemplateExpression(n) => n.parent,
-            Self::MemberExpression(n) => n.parent,
             Self::ComputedMemberExpression(n) => n.parent,
+            Self::StaticMemberExpression(n) => n.parent,
+            Self::PrivateFieldExpression(n) => n.parent,
             Self::CallExpression(n) => n.parent,
             Self::NewExpression(n) => n.parent,
             Self::MetaProperty(n) => n.parent,
@@ -604,8 +607,9 @@ impl<'a> AstNodes<'a> {
             Self::PropertyKey(_) => "PropertyKey",
             Self::TemplateLiteral(_) => "TemplateLiteral",
             Self::TaggedTemplateExpression(_) => "TaggedTemplateExpression",
-            Self::MemberExpression(_) => "MemberExpression",
             Self::ComputedMemberExpression(_) => "ComputedMemberExpression",
+            Self::StaticMemberExpression(_) => "StaticMemberExpression",
+            Self::PrivateFieldExpression(_) => "PrivateFieldExpression",
             Self::CallExpression(_) => "CallExpression",
             Self::NewExpression(_) => "NewExpression",
             Self::MetaProperty(_) => "MetaProperty",
@@ -1201,11 +1205,14 @@ impl<'a> AstNode<'a, Expression<'a>> {
                 }))
             }
             it @ match_member_expression!(Expression) => {
-                AstNodes::MemberExpression(self.allocator.alloc(AstNode {
-                    inner: it.to_member_expression(),
-                    parent,
-                    allocator: self.allocator,
-                }))
+                return self
+                    .allocator
+                    .alloc(AstNode {
+                        inner: it.to_member_expression(),
+                        parent,
+                        allocator: self.allocator,
+                    })
+                    .as_ast_nodes();
             }
         };
         self.allocator.alloc(node)
@@ -1538,7 +1545,7 @@ impl<'a> AstNode<'a, TemplateElement<'a>> {
 impl<'a> AstNode<'a, MemberExpression<'a>> {
     #[inline]
     pub fn as_ast_nodes(&self) -> &AstNodes<'a> {
-        let parent = self.allocator.alloc(AstNodes::MemberExpression(transmute_self(self)));
+        let parent = self.parent;
         let node = match self.inner {
             MemberExpression::ComputedMemberExpression(s) => {
                 AstNodes::ComputedMemberExpression(self.allocator.alloc(AstNode {
@@ -1548,14 +1555,18 @@ impl<'a> AstNode<'a, MemberExpression<'a>> {
                 }))
             }
             MemberExpression::StaticMemberExpression(s) => {
-                panic!(
-                    "No kind for current enum variant yet, please see `tasks/ast_tools/src/generators/ast_kind.rs`"
-                )
+                AstNodes::StaticMemberExpression(self.allocator.alloc(AstNode {
+                    inner: s.as_ref(),
+                    parent,
+                    allocator: self.allocator,
+                }))
             }
             MemberExpression::PrivateFieldExpression(s) => {
-                panic!(
-                    "No kind for current enum variant yet, please see `tasks/ast_tools/src/generators/ast_kind.rs`"
-                )
+                AstNodes::PrivateFieldExpression(self.allocator.alloc(AstNode {
+                    inner: s.as_ref(),
+                    parent,
+                    allocator: self.allocator,
+                }))
             }
         };
         self.allocator.alloc(node)
@@ -1608,7 +1619,7 @@ impl<'a> AstNode<'a, StaticMemberExpression<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.object,
             allocator: self.allocator,
-            parent: self.parent,
+            parent: self.allocator.alloc(AstNodes::StaticMemberExpression(transmute_self(self))),
         })
     }
 
@@ -1617,7 +1628,7 @@ impl<'a> AstNode<'a, StaticMemberExpression<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.property,
             allocator: self.allocator,
-            parent: self.parent,
+            parent: self.allocator.alloc(AstNodes::StaticMemberExpression(transmute_self(self))),
         })
     }
 
@@ -1637,7 +1648,7 @@ impl<'a> AstNode<'a, PrivateFieldExpression<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.object,
             allocator: self.allocator,
-            parent: self.parent,
+            parent: self.allocator.alloc(AstNodes::PrivateFieldExpression(transmute_self(self))),
         })
     }
 
@@ -1646,7 +1657,7 @@ impl<'a> AstNode<'a, PrivateFieldExpression<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.field,
             allocator: self.allocator,
-            parent: self.parent,
+            parent: self.allocator.alloc(AstNodes::PrivateFieldExpression(transmute_self(self))),
         })
     }
 
@@ -2069,11 +2080,14 @@ impl<'a> AstNode<'a, SimpleAssignmentTarget<'a>> {
                 }))
             }
             it @ match_member_expression!(SimpleAssignmentTarget) => {
-                AstNodes::MemberExpression(self.allocator.alloc(AstNode {
-                    inner: it.to_member_expression(),
-                    parent,
-                    allocator: self.allocator,
-                }))
+                return self
+                    .allocator
+                    .alloc(AstNode {
+                        inner: it.to_member_expression(),
+                        parent,
+                        allocator: self.allocator,
+                    })
+                    .as_ast_nodes();
             }
         };
         self.allocator.alloc(node)
@@ -2398,11 +2412,14 @@ impl<'a> AstNode<'a, ChainElement<'a>> {
                 }))
             }
             it @ match_member_expression!(ChainElement) => {
-                AstNodes::MemberExpression(self.allocator.alloc(AstNode {
-                    inner: it.to_member_expression(),
-                    parent,
-                    allocator: self.allocator,
-                }))
+                return self
+                    .allocator
+                    .alloc(AstNode {
+                        inner: it.to_member_expression(),
+                        parent,
+                        allocator: self.allocator,
+                    })
+                    .as_ast_nodes();
             }
         };
         self.allocator.alloc(node)
