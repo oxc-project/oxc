@@ -60,6 +60,7 @@
       "riscv64gc-unknown-linux-gnu",
       "x86_64-apple-darwin",
       "aarch64-apple-darwin",
+      "aarch64-linux-android",
       "wasm32-wasip1-threads"
     ],
     "wasm": {
