@@ -5,8 +5,8 @@ use quote::ToTokens;
 use rustc_hash::FxHashMap;
 use syn::{
     AttrStyle, Attribute, Expr, ExprLit, Field, Fields, GenericArgument, Generics, Ident, ItemEnum,
-    ItemStruct, Lit, Meta, MetaList, PathArguments, PathSegment, Type, TypeArray, TypePath, TypeReference,
-    Variant, Visibility as SynVisibility, punctuated::Punctuated, token::Comma,
+    ItemStruct, Lit, Meta, MetaList, PathArguments, PathSegment, Type, TypeArray, TypePath,
+    TypeReference, Variant, Visibility as SynVisibility, punctuated::Punctuated, token::Comma,
 };
 
 use crate::{

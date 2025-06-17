@@ -4,10 +4,7 @@
 use std::mem;
 
 use itoa::Buffer as ItoaBuffer;
-use oxc_data_structures::{
-    code_buffer::CodeBuffer,
-    stack::NonEmptyStack,
-};
+use oxc_data_structures::{code_buffer::CodeBuffer, stack::NonEmptyStack};
 
 mod blanket;
 mod concat;
@@ -287,5 +284,3 @@ pub enum TracePathPart {
 impl TracePathPart {
     pub const DUMMY: Self = TracePathPart::Index(0);
 }
-
-

@@ -87,7 +87,7 @@ pub struct Span {
     pub end: u32,
 
     /// A [number, number] which indicates the start/end index of the node in the file contents.
-    pub range: Option<[i32;2]>,
+    pub range: Option<[i32; 2]>,
 
     /// Align `Span` on 8 on 64-bit platforms
     #[estree(skip)]

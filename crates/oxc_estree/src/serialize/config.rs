@@ -6,7 +6,7 @@ pub trait Config {
     const FIXES: bool;
 
     fn new() -> Self;
-    
+
     /// Whether to include range information in the serialized output
     fn ranges(&self) -> bool;
 }
@@ -32,7 +32,7 @@ impl Config for ConfigTS {
     fn new() -> Self {
         Self { ranges: false }
     }
-    
+
     #[inline]
     fn ranges(&self) -> bool {
         self.ranges
@@ -60,7 +60,7 @@ impl Config for ConfigJS {
     fn new() -> Self {
         Self { ranges: false }
     }
-    
+
     #[inline]
     fn ranges(&self) -> bool {
         self.ranges
@@ -88,7 +88,7 @@ impl Config for ConfigFixesTS {
     fn new() -> Self {
         Self { ranges: false }
     }
-    
+
     #[inline]
     fn ranges(&self) -> bool {
         self.ranges
@@ -116,7 +116,7 @@ impl Config for ConfigFixesJS {
     fn new() -> Self {
         Self { ranges: false }
     }
-    
+
     #[inline]
     fn ranges(&self) -> bool {
         self.ranges

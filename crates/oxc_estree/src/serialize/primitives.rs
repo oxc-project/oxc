@@ -71,8 +71,6 @@ impl ESTree for () {
     }
 }
 
-
-
 #[cfg(test)]
 mod tests {
     use super::super::CompactTSSerializer;
