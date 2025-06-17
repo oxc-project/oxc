@@ -84,29 +84,19 @@ pub struct TransformerReturn {
     pub helpers_used: FxHashMap<Helper, String>,
 }
 
-pub struct Transformer<'a> {
-    ctx: TransformState<'a>,
+pub struct Transformer<'a, 'b> {
     allocator: &'a Allocator,
-
-    typescript: TypeScriptOptions,
-    decorator: DecoratorOptions,
-    jsx: JsxOptions,
-    env: EnvOptions,
-    proposals: ProposalOptions,
+    source_path: &'b Path,
+    options: &'b TransformOptions,
 }
 
-impl<'a> Transformer<'a> {
-    pub fn new(allocator: &'a Allocator, source_path: &Path, options: &TransformOptions) -> Self {
-        let ctx = TransformState::new(source_path, options);
-        Self {
-            ctx,
-            allocator,
-            typescript: options.typescript.clone(),
-            decorator: options.decorator,
-            jsx: options.jsx.clone(),
-            env: options.env,
-            proposals: options.proposals,
-        }
+impl<'a, 'b> Transformer<'a, 'b> {
+    pub fn new(
+        allocator: &'a Allocator,
+        source_path: &'b Path,
+        options: &'b TransformOptions,
+    ) -> Self {
+        Self { allocator, source_path, options }
     }
 
     pub fn build_with_scoping(
@@ -114,54 +104,49 @@ impl<'a> Transformer<'a> {
         scoping: Scoping,
         program: &mut Program<'a>,
     ) -> TransformerReturn {
+        let TransformOptions { env, jsx, typescript, .. } = &self.options;
         let allocator = self.allocator;
         let ast_builder = AstBuilder::new(allocator);
 
-        self.ctx.source_type = program.source_type;
-        self.ctx.source_text = program.source_text;
+        let state = TransformState::new(self.source_path, &self.options);
 
         if program.source_type.is_jsx() {
             jsx::update_options_with_comments(
                 &program.comments,
-                &mut self.typescript,
-                &mut self.jsx,
-                &self.ctx,
+                &mut self.options.typescript,
+                &mut self.options.jsx,
+                &state,
             );
         }
 
         let mut transformer = TransformerImpl {
-            common: Common::new(&self.env, &self.ctx),
-            decorator: Decorator::new(self.decorator, &self.ctx),
+            common: Common::new(&self.options.env, &state),
+            decorator: Decorator::new(self.options.decorator, &state),
             explicit_resource_management: self
                 .proposals
                 .explicit_resource_management
-                .then(|| ExplicitResourceManagement::new(&self.ctx)),
-            x0_typescript: program
-                .source_type
-                .is_typescript()
-                .then(|| TypeScript::new(&self.typescript, &self.ctx)),
-            x1_jsx: Jsx::new(self.jsx, self.env.es2018.object_rest_spread, ast_builder, &self.ctx),
+                .then(|| ExplicitResourceManagement::new()),
+            x0_typescript: program.source_type.is_typescript().then(|| TypeScript::new(typescript)),
+            x1_jsx: Jsx::new(jsx, env.es2018.object_rest_spread, ast_builder),
             x2_es2022: ES2022::new(
-                self.env.es2022,
-                !self.typescript.allow_declare_fields
-                    || self.typescript.remove_class_fields_without_initializer,
-                &self.ctx,
+                env.es2022,
+                !typescript.allow_declare_fields
+                    || typescript.remove_class_fields_without_initializer,
             ),
-            x2_es2021: ES2021::new(self.env.es2021, &self.ctx),
-            x2_es2020: ES2020::new(self.env.es2020, &self.ctx),
-            x2_es2019: ES2019::new(self.env.es2019),
-            x2_es2018: ES2018::new(self.env.es2018, &self.ctx),
-            x2_es2016: ES2016::new(self.env.es2016, &self.ctx),
-            x2_es2017: ES2017::new(self.env.es2017, &self.ctx),
-            x3_es2015: ES2015::new(self.env.es2015, &self.ctx),
-            x4_regexp: RegExp::new(self.env.regexp, &self.ctx),
+            x2_es2021: ES2021::new(&env.es2021),
+            x2_es2020: ES2020::new(&env.es2020),
+            x2_es2019: ES2019::new(&env.es2019),
+            x2_es2018: ES2018::new(&env.es2018),
+            x2_es2016: ES2016::new(&env.es2016),
+            x2_es2017: ES2017::new(&env.es2017),
+            x3_es2015: ES2015::new(&env.es2015),
+            x4_regexp: RegExp::new(&env.regexp),
         };
 
-        let state = TransformState::new();
-        let scoping = traverse_mut(&mut transformer, allocator, program, scoping, state);
-        let helpers_used = self.ctx.helper_loader.used_helpers.borrow_mut().drain().collect();
+        let (scoping, state) = traverse_mut(&mut transformer, allocator, program, scoping, state);
+        let helpers_used = state.helper_loader.used_helpers.borrow_mut().drain().collect();
         #[expect(deprecated)]
-        TransformerReturn { errors: self.ctx.take_errors(), scoping, helpers_used }
+        TransformerReturn { errors: state.take_errors(), scoping, helpers_used }
     }
 }
 

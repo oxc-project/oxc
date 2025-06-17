@@ -153,10 +153,10 @@ pub fn traverse_mut<'a, State, Tr: Traverse<'a, State>>(
     program: &mut Program<'a>,
     scoping: Scoping,
     state: State,
-) -> Scoping {
+) -> (Scoping, State) {
     let mut ctx = ReusableTraverseCtx::new(state, scoping, allocator);
     traverse_mut_with_ctx(traverser, program, &mut ctx);
-    ctx.into_scoping()
+    ctx.into_scoping_and_state()
 }
 
 /// Traverse AST with a [`Traverse`] impl, reusing an existing [`ReusableTraverseCtx`].

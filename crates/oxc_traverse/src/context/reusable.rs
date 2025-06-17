@@ -29,6 +29,11 @@ impl<'a, State> ReusableTraverseCtx<'a, State> {
         self.0.scoping.into_scoping()
     }
 
+    /// Consume [`ReusableTraverseCtx`] and return [`Scoping`] and `State`.
+    pub fn into_scoping_and_state(self) -> (Scoping, State) {
+        (self.0.scoping.into_scoping(), self.0.state)
+    }
+
     /// Unwrap [`TraverseCtx`] in a [`ReusableTraverseCtx`].
     ///
     /// Only for use in tests. Allows circumventing the safety invariants of [`TraverseAncestry`].
