@@ -1,0 +1,49 @@
+{
+  "name": "oxlint",
+  "version": "1.1.0",
+  "description": "Linter for the JavaScript Oxidation Compiler",
+  "keywords": [],
+  "author": "Boshen and oxc contributors",
+  "license": "MIT",
+  "homepage": "https://oxc.rs",
+  "bugs": "https://github.com/oxc-project/oxc/issues",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/oxc-project/oxc",
+    "directory": "npm/oxlint"
+  },
+  "type": "module",
+  "bin": {
+    "oxlint": "dist/cli.js",
+    "oxc_language_server": "bin/oxc_language_server"
+  },
+  "funding": {
+    "url": "https://github.com/sponsors/Boshen"
+  },
+  "engines": {
+    "node": ">=8.*"
+  },
+  "scripts": {
+    "build-binding": "oxnode ./build-binding.ts",
+    "build-binding:release": "pnpm build-binding --release",
+    "build": "pnpm run build-binding && rolldown -c rolldown.config.ts",
+    "build:release": "pnpm run build-binding:release && rolldown -c rolldown.config.ts"
+  },
+  "devDependencies": {
+    "@oxc-node/cli": "^0.0.28",
+    "@oxc-node/core": "^0.0.28",
+    "@types/node": "^22.15.30",
+    "glob": "^11.0.2",
+    "rolldown": "1.0.0-beta.16",
+    "typescript": "catalog:"
+  },
+  "files": [
+    "dist/**/*",
+    "bin/oxc_language_server",
+    "configuration_schema.json",
+    "README.md"
+  ],
+  "napi": {
+    "binaryName": "oxlint-binding"
+  }
+}
