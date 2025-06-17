@@ -662,9 +662,25 @@ impl<'a> ComputedMemberExpression<'a> {
             Expression::TemplateLiteral(lit)
                 if lit.expressions.is_empty() && lit.quasis.len() == 1 =>
             {
-                Some(lit.quasis[0].value.raw)
+                lit.quasis[0].value.cooked
             }
             Expression::RegExpLiteral(lit) => lit.raw,
+            _ => None,
+        }
+    }
+
+    /// Returns the static property name of this member expression, if it has one, along with the source code [`Span`],
+    /// or `None` otherwise.
+    /// If you don't need the [`Span`], use [`ComputedMemberExpression::static_property_name`] instead.
+    pub fn static_property_info(&self) -> Option<(Span, &'a str)> {
+        match &self.expression {
+            Expression::StringLiteral(lit) => Some((lit.span, lit.value.as_str())),
+            Expression::TemplateLiteral(lit)
+                if lit.expressions.is_empty() && lit.quasis.len() == 1 =>
+            {
+                lit.quasis[0].value.cooked.map(|cooked| (lit.span, cooked.as_str()))
+            }
+            Expression::RegExpLiteral(lit) => lit.raw.map(|raw| (lit.span, raw.as_str())),
             _ => None,
         }
     }
