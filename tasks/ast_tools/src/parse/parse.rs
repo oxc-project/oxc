@@ -502,7 +502,7 @@ impl<'c> Parser<'c> {
         match ty {
             Type::Path(type_path) => self.parse_type_path(type_path),
             Type::Reference(type_ref) => self.parse_type_reference(type_ref),
-            Type::Array(type_array) => self.parse_type_array(type_array),
+            Type::Array(type_array) => Some(self.parse_type_array(type_array)),
             _ => None,
         }
     }
