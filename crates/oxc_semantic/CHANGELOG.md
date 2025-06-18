@@ -4,6 +4,17 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.73.2] - 2025-06-18
+
+### 🚀 Features
+
+- 4ad86ff sema/check: Check for reserved type names (#11694) (Don Isaac)
+
+### 🚜 Refactor
+
+- eccac91 semantic: Rename function params (#11775) (overlookmotel)
+
+
 ## [0.73.1] - 2025-06-17
 
 ### 🚀 Features

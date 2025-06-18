@@ -4,6 +4,28 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.73.2] - 2025-06-18
+
+### 🐛 Bug Fixes
+
+- a47a6de napi/parser: Lazy deser: do not expose `getElement` method from `NodeArray` (#11777) (overlookmotel)
+
+### ⚡ Performance
+
+- 21c8852 napi/parser: Faster deserialization of `Vec`s in raw transfer (#11776) (overlookmotel)
+
+
+## [0.73.2] - 2025-06-18
+
+### 🐛 Bug Fixes
+
+- a47a6de napi/parser: Lazy deser: do not expose `getElement` method from `NodeArray` (#11777) (overlookmotel)
+
+### ⚡ Performance
+
+- 21c8852 napi/parser: Faster deserialization of `Vec`s in raw transfer (#11776) (overlookmotel)
+
+
 ## [0.73.1] - 2025-06-17
 
 ### 🚀 Features
