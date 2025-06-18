@@ -6,7 +6,7 @@ use num_traits::Zero;
 
 use crate::{ToBoolean, ToJsString, ToNumber, is_global_reference::IsGlobalReference};
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub enum ConstantValue<'a> {
     Number(f64),
     BigInt(BigInt),

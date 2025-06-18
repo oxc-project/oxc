@@ -762,4 +762,9 @@ mod test {
             "var i; for (i = 0; i < 10; i++) foo(i);",
         );
     }
+
+    #[test]
+    fn remove_constant_value() {
+        test("const foo = false; if (foo) { console.log('foo') }", "const foo = !1;");
+    }
 }

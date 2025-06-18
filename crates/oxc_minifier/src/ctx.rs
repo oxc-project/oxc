@@ -1,23 +1,36 @@
-use std::{marker::PhantomData, ops::Deref, rc::Rc};
+use std::{
+    ops::{Deref, DerefMut},
+    rc::Rc,
+};
+
+use rustc_hash::FxHashMap;
 
 use oxc_ast::{AstBuilder, ast::*};
-use oxc_ecmascript::constant_evaluation::{
-    ConstantEvaluation, ConstantEvaluationCtx, ConstantValue, binary_operation_evaluate_value,
+use oxc_ecmascript::{
+    constant_evaluation::{
+        ConstantEvaluation, ConstantEvaluationCtx, ConstantValue, binary_operation_evaluate_value,
+    },
+    side_effects::{MayHaveSideEffects, PropertyReadSideEffects},
 };
-use oxc_ecmascript::side_effects::{MayHaveSideEffects, PropertyReadSideEffects};
-use oxc_semantic::{IsGlobalReference, Scoping};
+use oxc_semantic::{IsGlobalReference, Scoping, SymbolId};
 use oxc_span::format_atom;
+use oxc_syntax::reference::ReferenceId;
 
 use crate::CompressOptions;
 
 pub struct MinifierState<'a> {
     pub options: Rc<CompressOptions>,
-    _data: PhantomData<&'a ()>,
+
+    /// Constant values evaluated from expressions.
+    ///
+    /// Values are saved during constant evaluation phase.
+    /// Values are read during [ConstantEvaluationCtx::get_constant_value_for_reference_id].
+    pub constant_values: FxHashMap<SymbolId, ConstantValue<'a>>,
 }
 
 impl MinifierState<'_> {
     pub fn new(options: Rc<CompressOptions>) -> Self {
-        Self { options, _data: PhantomData }
+        Self { options, constant_values: FxHashMap::default() }
     }
 }
 
@@ -36,6 +49,13 @@ impl<'a, 'b> Deref for Ctx<'a, 'b> {
 
     fn deref(&self) -> &Self::Target {
         &self.0
+    }
+}
+
+#[expect(clippy::mut_mut)]
+impl<'a, 'b> DerefMut for Ctx<'a, 'b> {
+    fn deref_mut(&mut self) -> &mut &'b mut TraverseCtx<'a> {
+        &mut self.0
     }
 }
 
@@ -75,6 +95,17 @@ impl oxc_ecmascript::side_effects::MayHaveSideEffectsContext for Ctx<'_, '_> {
 impl<'a> ConstantEvaluationCtx<'a> for Ctx<'a, '_> {
     fn ast(&self) -> AstBuilder<'a> {
         self.ast
+    }
+
+    fn get_constant_value_for_reference_id(
+        &self,
+        reference_id: ReferenceId,
+    ) -> Option<ConstantValue<'a>> {
+        self.scoping()
+            .get_reference(reference_id)
+            .symbol_id()
+            .and_then(|symbol_id| self.state.constant_values.get(&symbol_id))
+            .cloned()
     }
 }
 

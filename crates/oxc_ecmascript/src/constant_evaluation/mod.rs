@@ -5,6 +5,7 @@ use num_traits::{FromPrimitive, ToPrimitive, Zero};
 
 use equality_comparison::{abstract_equality_comparison, strict_equality_comparison};
 use oxc_ast::{AstBuilder, ast::*};
+use oxc_syntax::reference::ReferenceId;
 
 use crate::{
     ToBigInt, ToBoolean, ToInt32, ToJsString, ToNumber,
@@ -24,6 +25,11 @@ pub use value_type::{DetermineValueType, ValueType};
 
 pub trait ConstantEvaluationCtx<'a>: MayHaveSideEffectsContext {
     fn ast(&self) -> AstBuilder<'a>;
+
+    fn get_constant_value_for_reference_id(
+        &self,
+        reference_id: ReferenceId,
+    ) -> Option<ConstantValue<'a>>;
 }
 
 pub trait ConstantEvaluation<'a>: MayHaveSideEffects {
@@ -110,7 +116,10 @@ impl<'a> ConstantEvaluation<'a> for IdentifierReference<'a> {
             "Infinity" if ctx.is_global_reference(self)? => {
                 Some(ConstantValue::Number(f64::INFINITY))
             }
-            _ => None,
+            _ => self
+                .reference_id
+                .get()
+                .and_then(|reference_id| ctx.get_constant_value_for_reference_id(reference_id)),
         }
     }
 }
