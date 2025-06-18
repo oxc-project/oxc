@@ -687,7 +687,7 @@ describe('parse', () => {
     it('should include range when true', () => {
       const ret = parseSync('test.js', '(x)', { range: true });
       expect(ret.program.body[0].start).toBe(0);
-      expect(ret.program.body[0].range).toEqual([0, 2]);
+      expect(ret.program.body[0].range).toEqual([0, 3]);
     });
 
     it('should not include range when false', () => {
@@ -699,7 +699,7 @@ describe('parse', () => {
     it('should include range by default', () => {
       const ret = parseSync('test.js', '(x)', { range: true });
       expect(ret.program.body[0].start).toBe(0);
-      expect(ret.program.body[0].range).toEqual([0, 2]);
+      expect(ret.program.body[0].range).toEqual([0, 3]);
     });
   });
 });

@@ -3,16 +3,12 @@ use std::cmp;
 use oxc_ast_macros::ast_meta;
 use oxc_estree::{
     CompactFixesJSSerializer, CompactFixesTSSerializer, CompactJSSerializer, CompactTSSerializer,
-    Concat2, ConfigFixesJS, ConfigFixesTS, ESTree, JsonSafeString, PrettyFixesJSSerializer,
+    Concat2, ConfigFixesJS, ConfigFixesTS, ConfigJS, ConfigTS, ESTree, JsonSafeString, PrettyFixesJSSerializer,
     PrettyFixesTSSerializer, PrettyJSSerializer, PrettyTSSerializer, Serializer, StructSerializer,
 };
 use oxc_span::GetSpan;
 
 use crate::ast::*;
-use crate::{
-    ast::{Declaration, Program},
-    ast::{ExportDefaultDeclarationKind, Statement},
-};
 
 /// Options for ESTree serialization
 #[derive(Clone, Copy)]

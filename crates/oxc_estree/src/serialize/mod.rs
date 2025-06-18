@@ -102,7 +102,6 @@ pub struct ESTreeSerializer<C: Config, F: Formatter> {
     formatter: F,
     trace_path: NonEmptyStack<TracePathPart>,
     fixes_buffer: CodeBuffer,
-    #[expect(unused)]
     config: C,
 }
 
