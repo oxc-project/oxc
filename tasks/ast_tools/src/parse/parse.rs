@@ -586,8 +586,6 @@ impl<'c> Parser<'c> {
     }
 
     fn parse_type_array(&mut self, _type_array: &TypeArray) -> TypeId {
-        // For array types like [i32; 2], we'll create a special primitive type
-        // The exact name doesn't matter since the field will be skipped in ESTree
         self.type_id("ArrayType")
     }
 

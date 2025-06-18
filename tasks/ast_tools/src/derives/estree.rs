@@ -412,9 +412,7 @@ impl<'s> StructSerializerGenerator<'s> {
     fn generate_stmts_for_struct(&mut self, struct_def: &StructDef, self_path: &TokenStream) {
         for &field_index in &struct_def.estree.field_indices {
             let field_index = field_index as usize;
-            if field_index < struct_def.fields.len() {
-                // Real field
-                let field = &struct_def.fields[field_index];
+            if let Some(field) = struct_def.fields.get(field_index) {
                 self.generate_stmts_for_field(field, struct_def, self_path);
             } else {
                 let (field_name, converter_name) =
