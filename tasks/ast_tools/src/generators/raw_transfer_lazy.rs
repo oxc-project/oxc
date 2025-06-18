@@ -567,19 +567,13 @@ fn generate_enum(
         }
     }
 
-    let body = format!(
-        "
-        switch(ast.buffer[pos]) {{
-            {switch_cases}
-            default: throw new Error(`Unexpected discriminant ${{ast.buffer[pos]}} for {type_name}`);
-        }}
-        "
-    );
-
     #[rustfmt::skip]
     write_it!(code, "
         function {fn_name}(pos, ast) {{
-            {body}
+            switch(ast.buffer[pos]) {{
+                {switch_cases}
+                default: throw new Error(`Unexpected discriminant ${{ast.buffer[pos]}} for {type_name}`);
+            }}
         }}
     ");
 }
