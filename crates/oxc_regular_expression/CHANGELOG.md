@@ -5,6 +5,14 @@ All notable changes to this package will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
 
+## [0.73.1] - 2025-06-17
+
+### 🚜 Refactor
+
+- d057652 regular-expression: Shorten Span construction (#11689) (Ulrich Stark)
+
+
+
 # Changelog
 
 All notable changes to this package will be documented in this file.

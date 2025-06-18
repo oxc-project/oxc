@@ -31,8 +31,9 @@ impl AllocatorPool {
     pub fn get(&self) -> AllocatorGuard {
         let allocator = {
             let mut allocators = self.allocators.lock().unwrap();
-            allocators.pop().unwrap_or_default()
+            allocators.pop()
         };
+        let allocator = allocator.unwrap_or_default();
 
         AllocatorGuard { allocator: ManuallyDrop::new(allocator), pool: self }
     }

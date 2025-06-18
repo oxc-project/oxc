@@ -732,6 +732,10 @@ pub fn setter_with_parameters(span: Span) -> OxcDiagnostic {
 pub fn setter_with_rest_parameter(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::error("A 'set' accessor cannot have rest parameter.").with_label(span)
 }
+#[cold]
+pub fn setter_with_assignment_pattern(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::error("A 'set' accessor cannot have an initializer.").with_label(span)
+}
 
 #[cold]
 pub fn getter_parameters(span: Span) -> OxcDiagnostic {

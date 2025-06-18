@@ -4,6 +4,35 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.73.2] - 2025-06-18
+
+### 🚀 Features
+
+- 8c341a2 sema/check: Ts setters cannot have initializers (#11695) (Don Isaac)
+
+
+## [0.73.1] - 2025-06-17
+
+### 🚀 Features
+
+- e05d9bb parser: Introduce `ParserImpl::token_source` method (#11737) (overlookmotel)
+- 563684a parser: Emit diagnostic for modifiers on static block (#11727) (Ulrich Stark)
+- 8fb53b6 parser: Forbid `declare` on class getter and setter (#11717) (Boshen)
+
+### 🐛 Bug Fixes
+
+- 854b0f1 parser: Allocate all strings in arena (#11738) (overlookmotel)
+
+### 🚜 Refactor
+
+- b0a1561 parser: Move empty ts type parameter checks to parser (#11696) (Don Isaac)
+- cf35cfd parser: Shorten Span construction (#11685) (Ulrich Stark)
+
+### ⚡ Performance
+
+- 2f25ca6 parser: Optimize code around parsing delimited list and object (#11755) (Ulrich Stark)
+
+
 ## [0.73.0] - 2025-06-13
 
 ### 💥 BREAKING CHANGES

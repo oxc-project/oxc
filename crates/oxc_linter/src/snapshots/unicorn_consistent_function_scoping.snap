@@ -541,3 +541,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                                          ╰── Outer scope where this function is defined
    ╰────
   help: Move `inner` to the outer scope to avoid recreating it on every call.
+
+  ⚠ eslint-plugin-unicorn(consistent-function-scoping): Function `MockI18nProvider` does not capture any variables from its parent scope
+   ╭─[consistent_function_scoping.tsx:1:70]
+ 1 │ jest.mock('@kbn/i18n-react', () => { return { I18nProvider: function MockI18nProvider() { }, }; });
+   ·                                                                      ────────────────
+   ╰────
+  help: Move `MockI18nProvider` to the outer scope to avoid recreating it on every call.

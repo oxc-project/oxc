@@ -3,9 +3,7 @@ commit: 81c95189
 parser_typescript Summary:
 AST Parsed     : 6530/6537 (99.89%)
 Positive Passed: 6519/6537 (99.72%)
-Negative Passed: 1401/5763 (24.31%)
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/ClassDeclaration24.ts
-
+Negative Passed: 1419/5763 (24.62%)
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/ExportAssignment7.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/ExportAssignment8.ts
@@ -17,8 +15,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/FunctionDecl
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/FunctionDeclaration6.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/FunctionDeclaration7.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/InterfaceDeclaration8.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/abstractClassInLocalScopeIsAbstract.ts
 
@@ -35,8 +31,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/accessorAcci
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/accessorDeclarationEmitVisibilityErrors.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/accessorInferredReturnTypeErrorInReturnStatement.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/accessorWithInitializer.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/accessorsInAmbientContext.ts
 
@@ -1346,8 +1340,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/enumWithExpo
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/enumWithNonLiteralStringInitializer.ts
 
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/enumWithPrimitiveName.ts
-
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/enumsWithMultipleDeclarations1.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/enumsWithMultipleDeclarations2.ts
@@ -1879,8 +1871,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/genericRetur
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/genericSignatureIdentity.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/genericSpecializations1.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/genericSpecializations2.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/genericSpecializations3.ts
 
@@ -3296,12 +3286,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/primitiveCon
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/primitiveMembers.ts
 
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/primitiveTypeAsClassName.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/primitiveTypeAsInterfaceName.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/primitiveTypeAsInterfaceNameGeneric.ts
-
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/primitiveTypeAssignment.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/privacyClassExtendsClauseDeclFile.ts
@@ -3976,10 +3960,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/typeMatch2.t
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/typeName1.ts
 
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/typeNamedUndefined1.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/typeNamedUndefined2.ts
-
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/typeOfEnumAndVarRedeclarations.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/typeOfOnTypeArg.ts
@@ -4118,13 +4098,9 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/undefinedTyp
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/undefinedTypeArgument2.ts
 
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/undefinedTypeAssignment1.ts
-
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/undefinedTypeAssignment2.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/undefinedTypeAssignment3.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/undefinedTypeAssignment4.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/underscoreTest1.ts
 
@@ -4621,8 +4597,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/classes/c
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/classes/classDeclarations/classHeritageSpecification/classIsSubtypeOfBaseType.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/classes/classDeclarations/classImplementsMergedClassInterface.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/classes/classDeclarations/classWithPredefinedTypesAsNames.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/classes/classExpressions/classWithStaticFieldInParameterBindingPattern.2.ts
 
@@ -5193,8 +5167,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/es6/Symbo
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/es6/Symbols/symbolType15.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/es6/Symbols/symbolType2.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/es6/Symbols/symbolType20.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/es6/Symbols/symbolType3.ts
 
@@ -7212,8 +7184,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ec
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/ClassDeclarations/parserClassDeclaration18.ts
 
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/ClassDeclarations/parserClassDeclaration24.ts
-
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/ClassDeclarations/parserClassDeclaration6.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/ClassDeclarations/parserClassDeclaration7.ts
@@ -7350,13 +7320,9 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ec
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/IndexSignatures/parserIndexSignature5.ts
 
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/InterfaceDeclarations/parserInterfaceDeclaration8.ts
-
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/MemberAccessorDeclarations/parserMemberAccessor1.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/MemberAccessorDeclarations/parserMemberAccessorDeclaration1.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/MemberAccessorDeclarations/parserMemberAccessorDeclaration16.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/MemberAccessorDeclarations/parserMemberAccessorDeclaration17.ts
 
@@ -8256,8 +8222,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/res
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/rest/restTuplesFromContextualTypes.ts
 
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/specifyingTypes/predefinedTypes/objectTypesWithPredefinedTypesAsName.ts
-
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/specifyingTypes/typeLiterals/arrayTypeOfFunctionTypes.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/specifyingTypes/typeLiterals/arrayTypeOfFunctionTypes2.ts
@@ -9115,6 +9079,13 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
  3 │     "bar"() { }
    ╰────
 
+  × TS(2414): Class name cannot be 'any'
+   ╭─[typescript/tests/cases/compiler/ClassDeclaration24.ts:1:7]
+ 1 │ class any {
+   ·       ───
+ 2 │ }
+   ╰────
+
   × Function implementation is missing or not immediately following the declaration.
    ╭─[typescript/tests/cases/compiler/ClassDeclaration25.ts:6:5]
  5 │ class List<U> implements IList<U> {
@@ -9173,6 +9144,13 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
  3 │ }
    ╰────
   help: Did you mean `readonly`?
+
+  × TS(2414): Interface name cannot be 'string'
+   ╭─[typescript/tests/cases/compiler/InterfaceDeclaration8.ts:1:11]
+ 1 │ interface string {
+   ·           ──────
+ 2 │ }
+   ╰────
 
   × A parameter property is only allowed in a constructor implementation.
    ╭─[typescript/tests/cases/compiler/MemberAccessorDeclaration15.ts:2:12]
@@ -9310,6 +9288,22 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
  2 │     set X(public v) { }
  3 │     static set X(public v2) { }
    ·                  ─────────
+ 4 │ }
+   ╰────
+
+  × A 'set' accessor cannot have an initializer.
+   ╭─[typescript/tests/cases/compiler/accessorWithInitializer.ts:2:10]
+ 1 │ class C {
+ 2 │     set X(v = 0) { }
+   ·          ───────
+ 3 │     static set X(v2 = 0) { }
+   ╰────
+
+  × A 'set' accessor cannot have an initializer.
+   ╭─[typescript/tests/cases/compiler/accessorWithInitializer.ts:3:17]
+ 2 │     set X(v = 0) { }
+ 3 │     static set X(v2 = 0) { }
+   ·                 ────────
  4 │ }
    ╰────
 
@@ -10329,6 +10323,13 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
     ╰────
 
   × TS(1098): Type parameter list cannot be empty.
+   ╭─[typescript/tests/cases/compiler/classWithEmptyTypeParameter.ts:1:8]
+ 1 │ class C<> {
+   ·        ──
+ 2 │ }
+   ╰────
+
+  × Type parameter list cannot be empty.
    ╭─[typescript/tests/cases/compiler/classWithEmptyTypeParameter.ts:1:8]
  1 │ class C<> {
    ·        ──
@@ -12129,6 +12130,28 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
    · ╰── `,` expected
    ╰────
 
+  × TS(2414): Enum name cannot be 'string'
+   ╭─[typescript/tests/cases/compiler/enumWithPrimitiveName.ts:1:6]
+ 1 │ enum string { }
+   ·      ──────
+ 2 │ enum number { }
+   ╰────
+
+  × TS(2414): Enum name cannot be 'number'
+   ╭─[typescript/tests/cases/compiler/enumWithPrimitiveName.ts:2:6]
+ 1 │ enum string { }
+ 2 │ enum number { }
+   ·      ──────
+ 3 │ enum any { }
+   ╰────
+
+  × TS(2414): Enum name cannot be 'any'
+   ╭─[typescript/tests/cases/compiler/enumWithPrimitiveName.ts:3:6]
+ 2 │ enum number { }
+ 3 │ enum any { }
+   ·      ───
+   ╰────
+
   × Expected `>` but found `function`
    ╭─[typescript/tests/cases/compiler/erasableSyntaxOnly2.ts:1:19]
  1 │ let a = (<unknown function foo() {});
@@ -12808,6 +12831,22 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
  3 │ 
  4 │ f<number,string>.
    ╰────
+
+  × TS(2414): Type parameter name cannot be 'string'
+   ╭─[typescript/tests/cases/compiler/genericSpecializations2.ts:8:9]
+ 7 │ class IntFooBad implements IFoo<number> {
+ 8 │     foo<string>(x: string): string { return null; }
+   ·         ──────
+ 9 │ }
+   ╰────
+
+  × TS(2414): Type parameter name cannot be 'string'
+    ╭─[typescript/tests/cases/compiler/genericSpecializations2.ts:12:9]
+ 11 │ class StringFoo2 implements IFoo<string> {
+ 12 │     foo<string>(x: string): string { return null; }
+    ·         ──────
+ 13 │ }
+    ╰────
 
   × A 'get' accessor must not have any formal parameters.
    ╭─[typescript/tests/cases/compiler/gettersAndSettersErrors.ts:6:19]
@@ -15703,6 +15742,70 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
  10 │ }
     ╰────
 
+  × Type parameter list cannot be empty.
+   ╭─[typescript/tests/cases/compiler/parserConstructorDeclaration12.ts:2:14]
+ 1 │ class C {
+ 2 │   constructor<>() { }
+   ·              ──
+ 3 │   constructor<> () { }
+   ╰────
+
+  × Type parameter list cannot be empty.
+   ╭─[typescript/tests/cases/compiler/parserConstructorDeclaration12.ts:3:14]
+ 2 │   constructor<>() { }
+ 3 │   constructor<> () { }
+   ·              ──
+ 4 │   constructor <>() { }
+   ╰────
+
+  × Type parameter list cannot be empty.
+   ╭─[typescript/tests/cases/compiler/parserConstructorDeclaration12.ts:4:15]
+ 3 │   constructor<> () { }
+ 4 │   constructor <>() { }
+   ·               ──
+ 5 │   constructor <> () { }
+   ╰────
+
+  × Type parameter list cannot be empty.
+   ╭─[typescript/tests/cases/compiler/parserConstructorDeclaration12.ts:5:15]
+ 4 │   constructor <>() { }
+ 5 │   constructor <> () { }
+   ·               ──
+ 6 │   constructor< >() { }
+   ╰────
+
+  × Type parameter list cannot be empty.
+   ╭─[typescript/tests/cases/compiler/parserConstructorDeclaration12.ts:6:14]
+ 5 │   constructor <> () { }
+ 6 │   constructor< >() { }
+   ·              ───
+ 7 │   constructor< > () { }
+   ╰────
+
+  × Type parameter list cannot be empty.
+   ╭─[typescript/tests/cases/compiler/parserConstructorDeclaration12.ts:7:14]
+ 6 │   constructor< >() { }
+ 7 │   constructor< > () { }
+   ·              ───
+ 8 │   constructor < >() { }
+   ╰────
+
+  × Type parameter list cannot be empty.
+   ╭─[typescript/tests/cases/compiler/parserConstructorDeclaration12.ts:8:15]
+ 7 │   constructor< > () { }
+ 8 │   constructor < >() { }
+   ·               ───
+ 9 │   constructor < > () { }
+   ╰────
+
+  × Type parameter list cannot be empty.
+    ╭─[typescript/tests/cases/compiler/parserConstructorDeclaration12.ts:9:15]
+  8 │   constructor < >() { }
+  9 │   constructor < > () { }
+    ·               ───
+ 10 │ }
+    ╰────
+
   × Multiple constructor implementations are not allowed.
    ╭─[typescript/tests/cases/compiler/parserConstructorDeclaration12.ts:2:3]
  1 │ class C {
@@ -15738,6 +15841,24 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
   × Expected `}` but found `EOF`
    ╭─[typescript/tests/cases/compiler/prettyContextNotDebugAssertion.ts:1:12]
  1 │ if (true) {
+   ╰────
+
+  × TS(2414): Class name cannot be 'any'
+   ╭─[typescript/tests/cases/compiler/primitiveTypeAsClassName.ts:1:7]
+ 1 │ class any {}
+   ·       ───
+   ╰────
+
+  × TS(2414): Interface name cannot be 'number'
+   ╭─[typescript/tests/cases/compiler/primitiveTypeAsInterfaceName.ts:1:11]
+ 1 │ interface number {}
+   ·           ──────
+   ╰────
+
+  × TS(2414): Interface name cannot be 'number'
+   ╭─[typescript/tests/cases/compiler/primitiveTypeAsInterfaceNameGeneric.ts:1:11]
+ 1 │ interface number<T> {}
+   ·           ──────
    ╰────
 
   × Unexpected token
@@ -17993,6 +18114,37 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
    ╰────
   help: Try insert a semicolon here
 
+  × TS(2414): Type alias name cannot be 'undefined'
+   ╭─[typescript/tests/cases/compiler/typeNamedUndefined1.ts:3:17]
+ 2 │     const s = Symbol();
+ 3 │     export type undefined = typeof s;
+   ·                 ─────────
+ 4 │     export function x(p: undefined): undefined { // global undefined
+   ╰────
+
+  × TS(2414): Type alias name cannot be 'undefined'
+    ╭─[typescript/tests/cases/compiler/typeNamedUndefined1.ts:13:13]
+ 12 │ 
+ 13 │ export type undefined = "";
+    ·             ─────────
+    ╰────
+
+  × TS(2414): Type alias name cannot be 'undefined'
+   ╭─[typescript/tests/cases/compiler/typeNamedUndefined2.ts:4:21]
+ 3 │         export const s = Symbol();
+ 4 │         export type undefined = typeof s;
+   ·                     ─────────
+ 5 │     };
+   ╰────
+
+  × TS(2414): Type alias name cannot be 'undefined'
+    ╭─[typescript/tests/cases/compiler/typeNamedUndefined2.ts:17:17]
+ 16 │     export const s = Symbol();
+ 17 │     export type undefined = typeof s;
+    ·                 ─────────
+ 18 │ };
+    ╰────
+
   × Cannot assign to 'eval' in strict mode
    ╭─[typescript/tests/cases/compiler/unaryOperatorsInStrictMode.ts:3:3]
  2 │ 
@@ -18077,6 +18229,28 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
  2 │     "./t1";
    ·     ───┬──
    ·        ╰── `,` expected
+   ╰────
+
+  × TS(2414): Type alias name cannot be 'undefined'
+   ╭─[typescript/tests/cases/compiler/undefinedTypeAssignment1.ts:1:6]
+ 1 │ type undefined = string;
+   ·      ─────────
+ 2 │ function p(undefined = "wat") {
+   ╰────
+
+  × TS(2414): Class name cannot be 'undefined'
+   ╭─[typescript/tests/cases/compiler/undefinedTypeAssignment4.ts:1:7]
+ 1 │ class undefined {
+   ·       ─────────
+ 2 │     foo: string;
+   ╰────
+
+  × TS(2414): Interface name cannot be 'undefined'
+   ╭─[typescript/tests/cases/compiler/undefinedTypeAssignment4.ts:4:11]
+ 3 │ }
+ 4 │ interface undefined {
+   ·           ─────────
+ 5 │     member: number;
    ╰────
 
   × Unexpected token
@@ -19029,6 +19203,37 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
    ·                               ┬
    ·                               ╰── `,` expected
  2 │ 
+   ╰────
+
+  × TS(2414): Class name cannot be 'any'
+   ╭─[typescript/tests/cases/conformance/classes/classDeclarations/classWithPredefinedTypesAsNames.ts:3:7]
+ 2 │ 
+ 3 │ class any { }
+   ·       ───
+ 4 │ class number { }
+   ╰────
+
+  × TS(2414): Class name cannot be 'number'
+   ╭─[typescript/tests/cases/conformance/classes/classDeclarations/classWithPredefinedTypesAsNames.ts:4:7]
+ 3 │ class any { }
+ 4 │ class number { }
+   ·       ──────
+ 5 │ class boolean { }
+   ╰────
+
+  × TS(2414): Class name cannot be 'boolean'
+   ╭─[typescript/tests/cases/conformance/classes/classDeclarations/classWithPredefinedTypesAsNames.ts:5:7]
+ 4 │ class number { }
+ 5 │ class boolean { }
+   ·       ───────
+ 6 │ class string { }
+   ╰────
+
+  × TS(2414): Class name cannot be 'string'
+   ╭─[typescript/tests/cases/conformance/classes/classDeclarations/classWithPredefinedTypesAsNames.ts:6:7]
+ 5 │ class boolean { }
+ 6 │ class string { }
+   ·       ──────
    ╰────
 
   × Expected `{` but found `void`
@@ -21043,6 +21248,12 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
  3 │     [Symbol.iterator](x: number): number;
    ·      ───────────────
  4 │ }
+   ╰────
+
+  × TS(2414): Interface name cannot be 'symbol'
+   ╭─[typescript/tests/cases/conformance/es6/Symbols/symbolType20.ts:1:11]
+ 1 │ interface symbol { }
+   ·           ──────
    ╰────
 
   × Line terminator not permitted before arrow
@@ -26423,6 +26634,13 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
  3 │     "bar"() { }
    ╰────
 
+  × TS(2414): Class name cannot be 'any'
+   ╭─[typescript/tests/cases/conformance/parser/ecmascript5/ClassDeclarations/parserClassDeclaration24.ts:1:7]
+ 1 │ class any {
+   ·       ───
+ 2 │ }
+   ╰────
+
   × Function implementation is missing or not immediately following the declaration.
    ╭─[typescript/tests/cases/conformance/parser/ecmascript5/ClassDeclarations/parserClassDeclaration25.ts:6:5]
  5 │ class List<U> implements IList<U> {
@@ -26501,6 +26719,14 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
    ╰────
 
   × TS(1092): Type parameters cannot appear on a constructor declaration
+   ╭─[typescript/tests/cases/conformance/parser/ecmascript5/ConstructorDeclarations/parserConstructorDeclaration11.ts:2:14]
+ 1 │ class C {
+ 2 │   constructor<>() { }
+   ·              ──
+ 3 │ }
+   ╰────
+
+  × Type parameter list cannot be empty.
    ╭─[typescript/tests/cases/conformance/parser/ecmascript5/ConstructorDeclarations/parserConstructorDeclaration11.ts:2:14]
  1 │ class C {
  2 │   constructor<>() { }
@@ -27447,6 +27673,13 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
  2 │ }
    ╰────
 
+  × TS(2414): Interface name cannot be 'string'
+   ╭─[typescript/tests/cases/conformance/parser/ecmascript5/InterfaceDeclarations/parserInterfaceDeclaration8.ts:1:11]
+ 1 │ interface string {
+   ·           ──────
+ 2 │ }
+   ╰────
+
   × Expected `;` but found `get`
    ╭─[typescript/tests/cases/conformance/parser/ecmascript5/MemberAccessorDeclarations/parserMemberAccessorDeclaration10.ts:2:12]
  1 │ class C {
@@ -27493,6 +27726,14 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
  1 │ class C {
  2 │    set Foo(public a: number) { }
    ·            ────────────────
+ 3 │ }
+   ╰────
+
+  × A 'set' accessor cannot have an initializer.
+   ╭─[typescript/tests/cases/conformance/parser/ecmascript5/MemberAccessorDeclarations/parserMemberAccessorDeclaration16.ts:2:11]
+ 1 │ class C {
+ 2 │    set Foo(a = 1) { }
+   ·           ───────
  3 │ }
    ╰────
 
@@ -30973,6 +31214,38 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
  2 │ [...a, x] = [1, 2, 3];      // Error, rest must be last element
    ·  ────
    ╰────
+
+  × TS(2414): Class name cannot be 'any'
+   ╭─[typescript/tests/cases/conformance/types/specifyingTypes/predefinedTypes/objectTypesWithPredefinedTypesAsName.ts:3:7]
+ 2 │ 
+ 3 │ class any { }
+   ·       ───
+ 4 │ 
+   ╰────
+
+  × TS(2414): Class name cannot be 'number'
+   ╭─[typescript/tests/cases/conformance/types/specifyingTypes/predefinedTypes/objectTypesWithPredefinedTypesAsName.ts:5:7]
+ 4 │ 
+ 5 │ class number { }
+   ·       ──────
+ 6 │ 
+   ╰────
+
+  × TS(2414): Class name cannot be 'boolean'
+   ╭─[typescript/tests/cases/conformance/types/specifyingTypes/predefinedTypes/objectTypesWithPredefinedTypesAsName.ts:7:7]
+ 6 │ 
+ 7 │ class boolean { }
+   ·       ───────
+ 8 │ class bool { } // not a predefined type anymore
+   ╰────
+
+  × TS(2414): Class name cannot be 'string'
+    ╭─[typescript/tests/cases/conformance/types/specifyingTypes/predefinedTypes/objectTypesWithPredefinedTypesAsName.ts:10:7]
+  9 │ 
+ 10 │ class string { }
+    ·       ──────
+ 11 │ 
+    ╰────
 
   × Expected `{` but found `void`
    ╭─[typescript/tests/cases/conformance/types/specifyingTypes/predefinedTypes/objectTypesWithPredefinedTypesAsName2.ts:3:7]

@@ -1,7 +1,5 @@
 //! Generator for raw transfer lazy deserializer.
 
-#![expect(unused_imports)]
-
 use std::{borrow::Cow, fmt::Debug, str};
 
 use oxc_index::{IndexVec, index_vec};
@@ -15,9 +13,9 @@ use crate::{
     },
     output::Output,
     schema::{
-        BoxDef, CellDef, Def, EnumDef, FieldDef, MetaType, OptionDef, PrimitiveDef, Schema,
-        StructDef, TypeDef, TypeId, VecDef,
-        extensions::layout::{self, GetLayout, GetOffset},
+        BoxDef, CellDef, Def, EnumDef, OptionDef, PrimitiveDef, Schema, StructDef, TypeDef, TypeId,
+        VecDef,
+        extensions::layout::{GetLayout, GetOffset},
     },
     utils::{format_cow, upper_case_first, write_it},
 };

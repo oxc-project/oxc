@@ -21,7 +21,6 @@ fn consistent_function_scoping(
     parent_scope_kind: Option<&'static str>,
     function_name: Option<Atom<'_>>,
 ) -> OxcDiagnostic {
-    debug_assert!(Some(fn_span) != parent_scope_span);
     let function_label = if let Some(name) = function_name {
         format!("Function `{name}` does not capture any variables from its parent scope")
     } else {
@@ -375,7 +374,7 @@ fn get_short_span_for_fn_scope(
 
     let scope_id =
         match ctx.nodes().parent_kind(ctx.scoping().symbol_declaration(function_symbol_id)) {
-            Some(AstKind::AssignmentExpression(_)) => {
+            Some(AstKind::AssignmentExpression(_) | AstKind::ObjectProperty(_)) => {
                 ctx.scoping().scope_parent_id(scope_id).unwrap_or(scope_id)
             }
             _ => scope_id,
@@ -986,6 +985,10 @@ fn test() {
         ("function outer() { const inner = function inner() {}; }", None),
         (
             "export namespace Foo { export function outer() { const inner = function inner() {}; } }",
+            None,
+        ),
+        (
+            "jest.mock('@kbn/i18n-react', () => { return { I18nProvider: function MockI18nProvider() { }, }; });",
             None,
         ),
     ];

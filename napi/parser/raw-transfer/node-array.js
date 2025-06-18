@@ -9,6 +9,9 @@ const { TOKEN, constructorError } = require('./lazy-common.js');
 // Seems necessary because `this` in methods is a proxy, so accessing `this.#internal` throws.
 const nodeArrays = new WeakMap();
 
+// Function to get element from an array. Initialized in class static block below.
+let getElement;
+
 // An array of AST nodes where elements are deserialized lazily upon access.
 //
 // Extends `Array` to make `Array.isArray` return `true` for a `NodeArray`.
@@ -119,21 +122,21 @@ class NodeArray extends Array {
     return values;
   }
 
-  /**
-   * Get element of `NodeArray` at index `index`.
-   * `index` must be in bounds (i.e. `< arr.length`).
-   *
-   * @param {NodeArray} arr - `NodeArray` object
-   * @param {number} index - Index of element to get
-   * @returns {*} - Element at index `index`
-   */
-  static getElement(arr, index) {
-    const internal = arr.#internal;
-    return (0, internal.construct)(internal.pos + index * internal.stride, internal.ast);
+  static {
+    /**
+     * Get element of `NodeArray` at index `index`.
+     * `index` must be in bounds (i.e. `< arr.length`).
+     *
+     * @param {NodeArray} arr - `NodeArray` object
+     * @param {number} index - Index of element to get
+     * @returns {*} - Element at index `index`
+     */
+    getElement = (arr, index) => {
+      const internal = arr.#internal;
+      return (0, internal.construct)(internal.pos + index * internal.stride, internal.ast);
+    };
   }
 }
-
-const { getElement } = NodeArray;
 
 NodeArray.prototype[Symbol.iterator] = NodeArray.prototype.values;
 
