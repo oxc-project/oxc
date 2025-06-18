@@ -90,8 +90,8 @@ pub use scoping::TraverseScoping;
 /// use oxc_traverse::{Ancestor, Traverse, TraverseCtx};
 ///
 /// struct MyTransform;
-/// impl<'a> Traverse<'a> for MyTransform {
-///     fn enter_unary_expression(&mut self, unary_expr: &mut UnaryExpression<'a>, ctx: &mut TraverseCtx<'a>) {
+/// impl<'a> Traverse<'a, ()> for MyTransform {
+///     fn enter_unary_expression(&mut self, unary_expr: &mut UnaryExpression<'a>, ctx: &mut TraverseCtx<'a, ()>) {
 ///         let right = match ctx.ancestry.parent() {
 ///             Ancestor::BinaryExpressionLeft(bin_expr) => bin_expr.right(),
 ///             _ => return,
@@ -112,14 +112,15 @@ pub use scoping::TraverseScoping;
 /// [`ancestor_scopes`]: `TraverseCtx::ancestor_scopes`
 /// [`ast`]: `TraverseCtx::ast`
 /// [`alloc`]: `TraverseCtx::alloc`
-pub struct TraverseCtx<'a> {
+pub struct TraverseCtx<'a, State> {
+    pub state: State,
     pub ancestry: TraverseAncestry<'a>,
     pub scoping: TraverseScoping<'a>,
     pub ast: AstBuilder<'a>,
 }
 
 // Public methods
-impl<'a> TraverseCtx<'a> {
+impl<'a, State> TraverseCtx<'a, State> {
     /// Allocate a node in the arena.
     ///
     /// Returns a [`Box<'a, T>`](ArenaBox).
@@ -643,16 +644,16 @@ impl<'a> TraverseCtx<'a> {
 }
 
 // Methods used internally within crate
-impl<'a> TraverseCtx<'a> {
+impl<'a, State> TraverseCtx<'a, State> {
     /// Create new traversal context.
     ///
     /// # SAFETY
     /// This function must not be public to maintain soundness of [`TraverseAncestry`].
-    pub(crate) fn new(scoping: Scoping, allocator: &'a Allocator) -> Self {
+    pub(crate) fn new(state: State, scoping: Scoping, allocator: &'a Allocator) -> Self {
         let ancestry = TraverseAncestry::new();
         let scoping = TraverseScoping::new(scoping);
         let ast = AstBuilder::new(allocator);
-        Self { ancestry, scoping, ast }
+        Self { state, ancestry, scoping, ast }
     }
 
     /// Shortcut for `self.ancestry.push_stack`, to make `walk_*` methods less verbose.

@@ -53,10 +53,12 @@ use oxc_ast_visit::{Visit, VisitMut};
 use oxc_semantic::{ScopeFlags, SymbolFlags};
 use oxc_span::SPAN;
 use oxc_syntax::operator::AssignmentOperator;
-use oxc_traverse::{Ancestor, BoundIdentifier, Traverse, TraverseCtx};
+use oxc_traverse::{Ancestor, BoundIdentifier, Traverse};
 
 use crate::{
-    Helper, TransformCtx,
+    Helper,
+    context::{TransformCtx, TraverseCtx},
+    state::TransformState,
     utils::ast_builder::{create_assignment, create_prototype_member},
 };
 use metadata::LegacyDecoratorMetadata;
@@ -104,7 +106,7 @@ impl<'a, 'ctx> LegacyDecorator<'a, 'ctx> {
     }
 }
 
-impl<'a> Traverse<'a> for LegacyDecorator<'a, '_> {
+impl<'a> Traverse<'a, TransformState<'a>> for LegacyDecorator<'a, '_> {
     // `#[inline]` because this is a hot path
     #[inline]
     fn exit_statement(&mut self, stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {

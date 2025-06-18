@@ -1,5 +1,7 @@
 use oxc_ast::ast::*;
-use oxc_traverse::{Traverse, TraverseCtx};
+use oxc_traverse::Traverse;
+
+use crate::{context::TraverseCtx, state::TransformState};
 
 mod optional_catch_binding;
 mod options;
@@ -20,7 +22,7 @@ impl ES2019 {
     }
 }
 
-impl<'a> Traverse<'a> for ES2019 {
+impl<'a> Traverse<'a, TransformState<'a>> for ES2019 {
     fn enter_catch_clause(&mut self, clause: &mut CatchClause<'a>, ctx: &mut TraverseCtx<'a>) {
         if self.options.optional_catch_binding {
             self.optional_catch_binding.enter_catch_clause(clause, ctx);

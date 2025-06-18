@@ -4,9 +4,12 @@ use oxc_ecmascript::constant_evaluation::{DetermineValueType, ValueType};
 use oxc_semantic::IsGlobalReference;
 use oxc_span::GetSpan;
 use oxc_syntax::scope::ScopeFlags;
-use oxc_traverse::{Ancestor, ReusableTraverseCtx, Traverse, TraverseCtx, traverse_mut_with_ctx};
+use oxc_traverse::{Ancestor, ReusableTraverseCtx, Traverse, traverse_mut_with_ctx};
 
-use crate::{CompressOptions, ctx::Ctx};
+use crate::{
+    CompressOptions,
+    ctx::{Ctx, MinifierState, TraverseCtx},
+};
 
 #[derive(Default)]
 pub struct NormalizeOptions {
@@ -39,12 +42,16 @@ pub struct Normalize {
 }
 
 impl<'a> Normalize {
-    pub fn build(&mut self, program: &mut Program<'a>, ctx: &mut ReusableTraverseCtx<'a>) {
+    pub fn build(
+        &mut self,
+        program: &mut Program<'a>,
+        ctx: &mut ReusableTraverseCtx<'a, MinifierState<'a>>,
+    ) {
         traverse_mut_with_ctx(self, program, ctx);
     }
 }
 
-impl<'a> Traverse<'a> for Normalize {
+impl<'a> Traverse<'a, MinifierState<'a>> for Normalize {
     fn exit_statements(&mut self, stmts: &mut Vec<'a, Statement<'a>>, _ctx: &mut TraverseCtx<'a>) {
         stmts.retain(|stmt| {
             !(matches!(stmt, Statement::EmptyStatement(_))

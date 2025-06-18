@@ -69,9 +69,14 @@ mod for_await;
 use oxc_allocator::TakeIn;
 use oxc_ast::ast::*;
 use oxc_span::SPAN;
-use oxc_traverse::{Ancestor, Traverse, TraverseCtx};
+use oxc_traverse::{Ancestor, Traverse};
 
-use crate::{common::helper_loader::Helper, context::TransformCtx, es2017::AsyncGeneratorExecutor};
+use crate::{
+    common::helper_loader::Helper,
+    context::{TransformCtx, TraverseCtx},
+    es2017::AsyncGeneratorExecutor,
+    state::TransformState,
+};
 
 pub struct AsyncGeneratorFunctions<'a, 'ctx> {
     ctx: &'ctx TransformCtx<'a>,
@@ -84,7 +89,7 @@ impl<'a, 'ctx> AsyncGeneratorFunctions<'a, 'ctx> {
     }
 }
 
-impl<'a> Traverse<'a> for AsyncGeneratorFunctions<'a, '_> {
+impl<'a> Traverse<'a, TransformState<'a>> for AsyncGeneratorFunctions<'a, '_> {
     fn exit_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
         let new_expr = match expr {
             Expression::AwaitExpression(await_expr) => {

@@ -7,10 +7,10 @@ use oxc_ast::{AstBuilder, NONE, ast::*};
 use oxc_semantic::Scoping;
 use oxc_span::{CompactStr, SPAN, format_compact_str};
 use oxc_syntax::identifier;
-use oxc_traverse::{Traverse, TraverseCtx, traverse_mut};
+use oxc_traverse::{Traverse, traverse_mut};
 
 use super::{
-    DotDefineMemberExpression,
+    DotDefineMemberExpression, TraverseCtx,
     replace_global_defines::{DotDefine, ReplaceGlobalDefines},
 };
 
@@ -131,7 +131,7 @@ pub struct InjectGlobalVariables<'a> {
         Vec<(/* identifier of member expression */ CompactStr, /* local */ CompactStr)>,
 }
 
-impl<'a> Traverse<'a> for InjectGlobalVariables<'a> {
+impl<'a> Traverse<'a, ()> for InjectGlobalVariables<'a> {
     fn enter_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
         self.replace_dot_defines(expr, ctx);
     }
@@ -164,7 +164,7 @@ impl<'a> InjectGlobalVariables<'a> {
 
         if !dot_defines.is_empty() {
             self.dot_defines = dot_defines;
-            scoping = traverse_mut(self, self.ast.allocator, program, scoping);
+            scoping = traverse_mut(self, self.ast.allocator, program, scoping, ());
         }
 
         // Step 2: find all the injects that are referenced.

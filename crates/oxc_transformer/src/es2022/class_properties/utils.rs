@@ -5,7 +5,9 @@ use std::path::Path;
 
 use oxc_ast::ast::*;
 use oxc_span::SPAN;
-use oxc_traverse::{BoundIdentifier, TraverseCtx};
+use oxc_traverse::BoundIdentifier;
+
+use crate::context::TraverseCtx;
 
 /// Create `var` declaration.
 pub(super) fn create_variable_declaration<'a>(

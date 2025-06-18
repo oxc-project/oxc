@@ -37,9 +37,12 @@ use oxc_ast::{NONE, ast::*};
 use oxc_semantic::ReferenceFlags;
 use oxc_span::SPAN;
 use oxc_syntax::operator::{AssignmentOperator, BinaryOperator};
-use oxc_traverse::{BoundIdentifier, Traverse, TraverseCtx};
+use oxc_traverse::{BoundIdentifier, Traverse};
 
-use crate::TransformCtx;
+use crate::{
+    context::{TransformCtx, TraverseCtx},
+    state::TransformState,
+};
 
 pub struct ExponentiationOperator<'a, 'ctx> {
     ctx: &'ctx TransformCtx<'a>,
@@ -51,7 +54,7 @@ impl<'a, 'ctx> ExponentiationOperator<'a, 'ctx> {
     }
 }
 
-impl<'a> Traverse<'a> for ExponentiationOperator<'a, '_> {
+impl<'a> Traverse<'a, TransformState<'a>> for ExponentiationOperator<'a, '_> {
     // Note: Do not transform to `Math.pow` with BigInt arguments - that's a runtime error
     fn enter_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
         match expr {

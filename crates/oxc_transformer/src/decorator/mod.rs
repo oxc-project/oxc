@@ -2,9 +2,12 @@ mod legacy;
 mod options;
 
 use oxc_ast::ast::*;
-use oxc_traverse::{Traverse, TraverseCtx};
+use oxc_traverse::Traverse;
 
-use crate::TransformCtx;
+use crate::{
+    context::{TransformCtx, TraverseCtx},
+    state::TransformState,
+};
 
 use legacy::LegacyDecorator;
 pub use options::DecoratorOptions;
@@ -25,7 +28,7 @@ impl<'a, 'ctx> Decorator<'a, 'ctx> {
     }
 }
 
-impl<'a> Traverse<'a> for Decorator<'a, '_> {
+impl<'a> Traverse<'a, TransformState<'a>> for Decorator<'a, '_> {
     fn exit_statement(&mut self, stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
         if self.options.legacy {
             self.legacy_decorator.exit_statement(stmt, ctx);

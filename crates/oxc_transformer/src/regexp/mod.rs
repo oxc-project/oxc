@@ -51,9 +51,12 @@ use oxc_regular_expression::ast::{
 };
 use oxc_semantic::ReferenceFlags;
 use oxc_span::{Atom, SPAN};
-use oxc_traverse::{Traverse, TraverseCtx};
+use oxc_traverse::Traverse;
 
-use crate::TransformCtx;
+use crate::{
+    context::{TransformCtx, TraverseCtx},
+    state::TransformState,
+};
 
 mod options;
 
@@ -110,7 +113,7 @@ impl<'a, 'ctx> RegExp<'a, 'ctx> {
     }
 }
 
-impl<'a> Traverse<'a> for RegExp<'a, '_> {
+impl<'a> Traverse<'a, TransformState<'a>> for RegExp<'a, '_> {
     // `#[inline]` to avoid cost of function call for all `Expression`s which aren't `RegExpLiteral`s
     #[inline]
     fn enter_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {

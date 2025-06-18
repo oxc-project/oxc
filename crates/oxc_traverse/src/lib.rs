@@ -123,8 +123,8 @@ mod compile_fail_tests;
 ///
 /// struct MyTransform;
 ///
-/// impl<'a> Traverse<'a> for MyTransform {
-///     fn enter_numeric_literal(&mut self, node: &mut NumericLiteral<'a>, ctx: &mut TraverseCtx<'a>) {
+/// impl<'a> Traverse<'a, ()> for MyTransform {
+///     fn enter_numeric_literal(&mut self, node: &mut NumericLiteral<'a>, ctx: &mut TraverseCtx<'a, ()>) {
 ///         // Read parent
 ///         if let Ancestor::BinaryExpressionRight(bin_expr_ref) = ctx.parent() {
 ///             // This is legal
@@ -147,13 +147,14 @@ mod compile_fail_tests;
 ///     }
 /// }
 /// ```
-pub fn traverse_mut<'a, Tr: Traverse<'a>>(
+pub fn traverse_mut<'a, State, Tr: Traverse<'a, State>>(
     traverser: &mut Tr,
     allocator: &'a Allocator,
     program: &mut Program<'a>,
     scoping: Scoping,
+    state: State,
 ) -> Scoping {
-    let mut ctx = ReusableTraverseCtx::new(scoping, allocator);
+    let mut ctx = ReusableTraverseCtx::new(state, scoping, allocator);
     traverse_mut_with_ctx(traverser, program, &mut ctx);
     ctx.into_scoping()
 }
@@ -164,10 +165,10 @@ pub fn traverse_mut<'a, Tr: Traverse<'a>>(
 /// `traverse_mut_with_ctx` is called with a [`Program`] and [`ReusableTraverseCtx`] which do not match.
 ///
 /// See [`traverse_mut`] for more details of how traversal works.
-pub fn traverse_mut_with_ctx<'a, Tr: Traverse<'a>>(
+pub fn traverse_mut_with_ctx<'a, State, Tr: Traverse<'a, State>>(
     traverser: &mut Tr,
     program: &mut Program<'a>,
-    ctx: &mut ReusableTraverseCtx<'a>,
+    ctx: &mut ReusableTraverseCtx<'a, State>,
 ) {
     let program = ptr::from_mut(program);
 

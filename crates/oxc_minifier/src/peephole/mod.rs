@@ -25,9 +25,12 @@ use oxc_allocator::Vec;
 use oxc_ast::ast::*;
 use oxc_data_structures::stack::NonEmptyStack;
 use oxc_syntax::{es_target::ESTarget, scope::ScopeId};
-use oxc_traverse::{ReusableTraverseCtx, Traverse, TraverseCtx, traverse_mut_with_ctx};
+use oxc_traverse::{ReusableTraverseCtx, Traverse, traverse_mut_with_ctx};
 
-use crate::{ctx::Ctx, options::CompressOptionsKeepNames};
+use crate::{
+    ctx::{Ctx, MinifierState, TraverseCtx},
+    options::CompressOptionsKeepNames,
+};
 
 pub use self::normalize::{Normalize, NormalizeOptions};
 
@@ -64,11 +67,19 @@ impl<'a> PeepholeOptimizations {
         }
     }
 
-    pub fn build(&mut self, program: &mut Program<'a>, ctx: &mut ReusableTraverseCtx<'a>) {
+    pub fn build(
+        &mut self,
+        program: &mut Program<'a>,
+        ctx: &mut ReusableTraverseCtx<'a, MinifierState<'a>>,
+    ) {
         traverse_mut_with_ctx(self, program, ctx);
     }
 
-    pub fn run_in_loop(&mut self, program: &mut Program<'a>, ctx: &mut ReusableTraverseCtx<'a>) {
+    pub fn run_in_loop(
+        &mut self,
+        program: &mut Program<'a>,
+        ctx: &mut ReusableTraverseCtx<'a, MinifierState<'a>>,
+    ) {
         loop {
             self.build(program, ctx);
             if self.functions_changed.is_empty() {
@@ -137,7 +148,7 @@ impl<'a> PeepholeOptimizations {
     }
 }
 
-impl<'a> Traverse<'a> for PeepholeOptimizations {
+impl<'a> Traverse<'a, MinifierState<'a>> for PeepholeOptimizations {
     fn enter_program(&mut self, program: &mut Program<'a>, _ctx: &mut TraverseCtx<'a>) {
         self.enter_program_or_function(program.scope_id());
     }
@@ -391,12 +402,16 @@ impl<'a> LatePeepholeOptimizations {
         Self { target }
     }
 
-    pub fn build(&mut self, program: &mut Program<'a>, ctx: &mut ReusableTraverseCtx<'a>) {
+    pub fn build(
+        &mut self,
+        program: &mut Program<'a>,
+        ctx: &mut ReusableTraverseCtx<'a, MinifierState<'a>>,
+    ) {
         traverse_mut_with_ctx(self, program, ctx);
     }
 }
 
-impl<'a> Traverse<'a> for LatePeepholeOptimizations {
+impl<'a> Traverse<'a, MinifierState<'a>> for LatePeepholeOptimizations {
     fn exit_member_expression(
         &mut self,
         expr: &mut MemberExpression<'a>,
@@ -440,12 +455,16 @@ impl<'a> DeadCodeElimination {
         }
     }
 
-    pub fn build(&mut self, program: &mut Program<'a>, ctx: &mut ReusableTraverseCtx<'a>) {
+    pub fn build(
+        &mut self,
+        program: &mut Program<'a>,
+        ctx: &mut ReusableTraverseCtx<'a, MinifierState<'a>>,
+    ) {
         traverse_mut_with_ctx(self, program, ctx);
     }
 }
 
-impl<'a> Traverse<'a> for DeadCodeElimination {
+impl<'a> Traverse<'a, MinifierState<'a>> for DeadCodeElimination {
     fn exit_statement(&mut self, stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
         let mut state = State::default();
         self.inner.remove_dead_code_exit_statement(stmt, &mut state, Ctx(ctx));

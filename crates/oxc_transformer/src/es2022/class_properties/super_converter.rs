@@ -4,10 +4,11 @@
 use oxc_allocator::{Box as ArenaBox, TakeIn, Vec as ArenaVec};
 use oxc_ast::ast::*;
 use oxc_span::SPAN;
-use oxc_traverse::{TraverseCtx, ast_operations::get_var_name_from_node};
+use oxc_traverse::ast_operations::get_var_name_from_node;
 
 use crate::{
     Helper,
+    context::TraverseCtx,
     utils::ast_builder::{create_assignment, create_prototype_member},
 };
 

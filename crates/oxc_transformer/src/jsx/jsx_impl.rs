@@ -100,11 +100,12 @@ use oxc_syntax::{
     symbol::SymbolFlags,
     xml_entities::XML_ENTITIES,
 };
-use oxc_traverse::{BoundIdentifier, Traverse, TraverseCtx};
+use oxc_traverse::{BoundIdentifier, Traverse};
 
 use crate::{
-    TransformCtx,
+    context::{TransformCtx, TraverseCtx},
     es2018::{ObjectRestSpread, ObjectRestSpreadOptions},
+    state::TransformState,
 };
 
 use super::{
@@ -491,7 +492,7 @@ impl<'a, 'ctx> JsxImpl<'a, 'ctx> {
     }
 }
 
-impl<'a> Traverse<'a> for JsxImpl<'a, '_> {
+impl<'a> Traverse<'a, TransformState<'a>> for JsxImpl<'a, '_> {
     fn exit_program(&mut self, _program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
         self.insert_filename_var_statement(ctx);
     }
@@ -1234,7 +1235,7 @@ mod test {
     use oxc_traverse::ReusableTraverseCtx;
 
     use super::Pragma;
-    use crate::{TransformCtx, TransformOptions};
+    use crate::{TransformCtx, TransformOptions, state::TransformState};
 
     macro_rules! setup {
         ($traverse_ctx:ident, $transform_ctx:ident) => {
@@ -1243,8 +1244,9 @@ mod test {
             let mut scoping = Scoping::default();
             scoping.add_scope(None, NodeId::DUMMY, ScopeFlags::Top);
 
-            let traverse_ctx = ReusableTraverseCtx::new(scoping, &allocator);
-            // SAFETY: Macro user only gets a `&mut TraverseCtx`, which cannot be abused
+            let state = TransformState::default();
+            let traverse_ctx = ReusableTraverseCtx::new(state, scoping, &allocator);
+            // SAFETY: Macro user only gets a `&mut TransCtx`, which cannot be abused
             let mut traverse_ctx = unsafe { traverse_ctx.unwrap() };
             let $traverse_ctx = &mut traverse_ctx;
 

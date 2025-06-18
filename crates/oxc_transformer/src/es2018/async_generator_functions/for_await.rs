@@ -4,10 +4,11 @@ use oxc_allocator::{TakeIn, Vec as ArenaVec};
 use oxc_ast::{NONE, ast::*};
 use oxc_semantic::{ScopeFlags, ScopeId, SymbolFlags};
 use oxc_span::SPAN;
-use oxc_traverse::{Ancestor, BoundIdentifier, TraverseCtx};
+use oxc_traverse::{Ancestor, BoundIdentifier};
+
+use crate::{common::helper_loader::Helper, context::TraverseCtx};
 
 use super::AsyncGeneratorFunctions;
-use crate::common::helper_loader::Helper;
 
 impl<'a> AsyncGeneratorFunctions<'a, '_> {
     /// Check the parent node to see if multiple statements are allowed.

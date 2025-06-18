@@ -39,9 +39,13 @@ use oxc_ecmascript::{
 };
 use oxc_semantic::{ScopeFlags, ScopeId, SymbolFlags};
 use oxc_span::{GetSpan, SPAN};
-use oxc_traverse::{Ancestor, MaybeBoundIdentifier, Traverse, TraverseCtx};
+use oxc_traverse::{Ancestor, MaybeBoundIdentifier, Traverse};
 
-use crate::{TransformCtx, common::helper_loader::Helper};
+use crate::{
+    common::helper_loader::Helper,
+    context::{TransformCtx, TraverseCtx},
+    state::TransformState,
+};
 
 #[derive(Debug, Default, Clone, Copy, Deserialize)]
 #[serde(default, rename_all = "camelCase")]
@@ -85,7 +89,7 @@ impl<'a, 'ctx> ObjectRestSpread<'a, 'ctx> {
     }
 }
 
-impl<'a> Traverse<'a> for ObjectRestSpread<'a, '_> {
+impl<'a> Traverse<'a, TransformState<'a>> for ObjectRestSpread<'a, '_> {
     // For excluded keys when destructuring inside a function.
     // `function foo() { ({a, ...b} = c) }` -> `const _excluded = ["a"]; function foo() { ... }`
     fn exit_program(&mut self, _node: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {

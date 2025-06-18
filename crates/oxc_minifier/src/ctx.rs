@@ -1,4 +1,4 @@
-use std::ops::Deref;
+use std::{marker::PhantomData, ops::Deref};
 
 use oxc_ast::{AstBuilder, ast::*};
 use oxc_ecmascript::constant_evaluation::{
@@ -7,7 +7,13 @@ use oxc_ecmascript::constant_evaluation::{
 use oxc_ecmascript::side_effects::{MayHaveSideEffects, PropertyReadSideEffects};
 use oxc_semantic::{IsGlobalReference, Scoping};
 use oxc_span::format_atom;
-use oxc_traverse::TraverseCtx;
+
+#[derive(Default)]
+pub struct MinifierState<'a> {
+    data: PhantomData<&'a ()>,
+}
+
+pub type TraverseCtx<'a> = oxc_traverse::TraverseCtx<'a, MinifierState<'a>>;
 
 #[derive(Clone, Copy)]
 pub struct Ctx<'a, 'b>(pub &'b TraverseCtx<'a>);

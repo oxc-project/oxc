@@ -1,12 +1,12 @@
 use oxc_traverse::Traverse;
 
+use crate::{context::TransformCtx, state::TransformState};
+
 mod arrow_functions;
 mod options;
 
 pub use arrow_functions::{ArrowFunctions, ArrowFunctionsOptions};
 pub use options::ES2015Options;
-
-use crate::context::TransformCtx;
 
 pub struct ES2015<'a, 'ctx> {
     #[expect(unused)]
@@ -26,4 +26,4 @@ impl<'a, 'ctx> ES2015<'a, 'ctx> {
     }
 }
 
-impl<'a> Traverse<'a> for ES2015<'a, '_> {}
+impl<'a> Traverse<'a, TransformState<'a>> for ES2015<'a, '_> {}
