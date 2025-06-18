@@ -476,7 +476,7 @@ fn calculate_layout_for_primitive(primitive_def: &PrimitiveDef) -> Layout {
             layout_64: PlatformLayout::from_size_align(0, 8),
             layout_32: PlatformLayout::from_size_align(0, 4),
         },
-        "ArrayType" => Layout {
+        "RangeArray" => Layout {
             layout_64: PlatformLayout::from_size_align(12, 4), // Option<[i32; 2]> is Option<12 bytes aligned at 4>
             layout_32: PlatformLayout::from_size_align(12, 4),
         },

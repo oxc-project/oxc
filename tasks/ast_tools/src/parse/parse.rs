@@ -226,7 +226,7 @@ impl<'c> Parser<'c> {
             // TODO: Remove the need for this by adding
             // `#[cfg_attr(target_pointer_width = "64", repr(align(8)))]` to all AST types
             "PointerAlign" => primitive("PointerAlign"),
-            "ArrayType" => primitive("ArrayType"),
+            "RangeArray" => primitive("RangeArray"),
             _ => panic!("Unknown type: {name}"),
         };
         self.create_new_type(type_def)
@@ -586,7 +586,7 @@ impl<'c> Parser<'c> {
     }
 
     fn parse_type_array(&mut self, _type_array: &TypeArray) -> TypeId {
-        self.type_id("ArrayType")
+        self.type_id("RangeArray")
     }
 
     /// Parse attributes on struct or enum with parsers provided by [`Derive`]s and [`Generator`]s.

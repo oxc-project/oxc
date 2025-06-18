@@ -47,7 +47,7 @@ class Program {
 
   get range() {
     const internal = this.#internal;
-    return constructOptionArrayType(internal.pos + 8, internal.ast);
+    return constructOptionRangeArray(internal.pos + 8, internal.ast);
   }
 
   get sourceType() {
@@ -206,7 +206,7 @@ class IdentifierName {
 
   get range() {
     const internal = this.#internal;
-    return constructOptionArrayType(internal.pos + 8, internal.ast);
+    return constructOptionRangeArray(internal.pos + 8, internal.ast);
   }
 
   get name() {
@@ -260,7 +260,7 @@ class IdentifierReference {
 
   get range() {
     const internal = this.#internal;
-    return constructOptionArrayType(internal.pos + 8, internal.ast);
+    return constructOptionRangeArray(internal.pos + 8, internal.ast);
   }
 
   get name() {
@@ -314,7 +314,7 @@ class BindingIdentifier {
 
   get range() {
     const internal = this.#internal;
-    return constructOptionArrayType(internal.pos + 8, internal.ast);
+    return constructOptionRangeArray(internal.pos + 8, internal.ast);
   }
 
   get name() {
@@ -368,7 +368,7 @@ class LabelIdentifier {
 
   get range() {
     const internal = this.#internal;
-    return constructOptionArrayType(internal.pos + 8, internal.ast);
+    return constructOptionRangeArray(internal.pos + 8, internal.ast);
   }
 
   get name() {
@@ -422,7 +422,7 @@ class ThisExpression {
 
   get range() {
     const internal = this.#internal;
-    return constructOptionArrayType(internal.pos + 8, internal.ast);
+    return constructOptionRangeArray(internal.pos + 8, internal.ast);
   }
 
   toJSON() {
@@ -468,7 +468,7 @@ class ArrayExpression {
 
   get range() {
     const internal = this.#internal;
-    return constructOptionArrayType(internal.pos + 8, internal.ast);
+    return constructOptionRangeArray(internal.pos + 8, internal.ast);
   }
 
   get elements() {
@@ -619,7 +619,7 @@ class Elision {
 
   get range() {
     const internal = this.#internal;
-    return constructOptionArrayType(internal.pos + 8, internal.ast);
+    return constructOptionRangeArray(internal.pos + 8, internal.ast);
   }
 
   toJSON() {
@@ -665,7 +665,7 @@ class ObjectExpression {
 
   get range() {
     const internal = this.#internal;
-    return constructOptionArrayType(internal.pos + 8, internal.ast);
+    return constructOptionRangeArray(internal.pos + 8, internal.ast);
   }
 
   get properties() {
@@ -730,7 +730,7 @@ class ObjectProperty {
 
   get range() {
     const internal = this.#internal;
-    return constructOptionArrayType(internal.pos + 8, internal.ast);
+    return constructOptionRangeArray(internal.pos + 8, internal.ast);
   }
 
   get kind() {
@@ -922,7 +922,7 @@ class TemplateLiteral {
 
   get range() {
     const internal = this.#internal;
-    return constructOptionArrayType(internal.pos + 8, internal.ast);
+    return constructOptionRangeArray(internal.pos + 8, internal.ast);
   }
 
   get quasis() {
@@ -984,7 +984,7 @@ class TaggedTemplateExpression {
 
   get range() {
     const internal = this.#internal;
-    return constructOptionArrayType(internal.pos + 8, internal.ast);
+    return constructOptionRangeArray(internal.pos + 8, internal.ast);
   }
 
   get tag() {
@@ -1048,7 +1048,7 @@ class TemplateElement {
 
   get range() {
     const internal = this.#internal;
-    return constructOptionArrayType(internal.pos + 8, internal.ast);
+    return constructOptionRangeArray(internal.pos + 8, internal.ast);
   }
 
   get value() {
@@ -1161,7 +1161,7 @@ class ComputedMemberExpression {
 
   get range() {
     const internal = this.#internal;
-    return constructOptionArrayType(internal.pos + 8, internal.ast);
+    return constructOptionRangeArray(internal.pos + 8, internal.ast);
   }
 
   get object() {
@@ -1225,7 +1225,7 @@ class StaticMemberExpression {
 
   get range() {
     const internal = this.#internal;
-    return constructOptionArrayType(internal.pos + 8, internal.ast);
+    return constructOptionRangeArray(internal.pos + 8, internal.ast);
   }
 
   get object() {
@@ -1289,7 +1289,7 @@ class PrivateFieldExpression {
 
   get range() {
     const internal = this.#internal;
-    return constructOptionArrayType(internal.pos + 8, internal.ast);
+    return constructOptionRangeArray(internal.pos + 8, internal.ast);
   }
 
   get object() {
@@ -1353,7 +1353,7 @@ class CallExpression {
 
   get range() {
     const internal = this.#internal;
-    return constructOptionArrayType(internal.pos + 8, internal.ast);
+    return constructOptionRangeArray(internal.pos + 8, internal.ast);
   }
 
   get callee() {
@@ -1425,7 +1425,7 @@ class NewExpression {
 
   get range() {
     const internal = this.#internal;
-    return constructOptionArrayType(internal.pos + 8, internal.ast);
+    return constructOptionRangeArray(internal.pos + 8, internal.ast);
   }
 
   get callee() {
@@ -1491,7 +1491,7 @@ class MetaProperty {
 
   get range() {
     const internal = this.#internal;
-    return constructOptionArrayType(internal.pos + 8, internal.ast);
+    return constructOptionRangeArray(internal.pos + 8, internal.ast);
   }
 
   get meta() {
@@ -1549,7 +1549,7 @@ class SpreadElement {
 
   get range() {
     const internal = this.#internal;
-    return constructOptionArrayType(internal.pos + 8, internal.ast);
+    return constructOptionRangeArray(internal.pos + 8, internal.ast);
   }
 
   get argument() {
@@ -1696,7 +1696,7 @@ class UpdateExpression {
 
   get range() {
     const internal = this.#internal;
-    return constructOptionArrayType(internal.pos + 8, internal.ast);
+    return constructOptionRangeArray(internal.pos + 8, internal.ast);
   }
 
   get operator() {
@@ -1760,7 +1760,7 @@ class UnaryExpression {
 
   get range() {
     const internal = this.#internal;
-    return constructOptionArrayType(internal.pos + 8, internal.ast);
+    return constructOptionRangeArray(internal.pos + 8, internal.ast);
   }
 
   get operator() {
@@ -1818,7 +1818,7 @@ class BinaryExpression {
 
   get range() {
     const internal = this.#internal;
-    return constructOptionArrayType(internal.pos + 8, internal.ast);
+    return constructOptionRangeArray(internal.pos + 8, internal.ast);
   }
 
   get left() {
@@ -1882,7 +1882,7 @@ class PrivateInExpression {
 
   get range() {
     const internal = this.#internal;
-    return constructOptionArrayType(internal.pos + 8, internal.ast);
+    return constructOptionRangeArray(internal.pos + 8, internal.ast);
   }
 
   get left() {
@@ -1940,7 +1940,7 @@ class LogicalExpression {
 
   get range() {
     const internal = this.#internal;
-    return constructOptionArrayType(internal.pos + 8, internal.ast);
+    return constructOptionRangeArray(internal.pos + 8, internal.ast);
   }
 
   get left() {
@@ -2004,7 +2004,7 @@ class ConditionalExpression {
 
   get range() {
     const internal = this.#internal;
-    return constructOptionArrayType(internal.pos + 8, internal.ast);
+    return constructOptionRangeArray(internal.pos + 8, internal.ast);
   }
 
   get test() {
@@ -2068,7 +2068,7 @@ class AssignmentExpression {
 
   get range() {
     const internal = this.#internal;
-    return constructOptionArrayType(internal.pos + 8, internal.ast);
+    return constructOptionRangeArray(internal.pos + 8, internal.ast);
   }
 
   get operator() {
@@ -2193,7 +2193,7 @@ class ArrayAssignmentTarget {
 
   get range() {
     const internal = this.#internal;
-    return constructOptionArrayType(internal.pos + 8, internal.ast);
+    return constructOptionRangeArray(internal.pos + 8, internal.ast);
   }
 
   get elements() {
@@ -2247,7 +2247,7 @@ class ObjectAssignmentTarget {
 
   get range() {
     const internal = this.#internal;
-    return constructOptionArrayType(internal.pos + 8, internal.ast);
+    return constructOptionRangeArray(internal.pos + 8, internal.ast);
   }
 
   get properties() {
@@ -2301,7 +2301,7 @@ class AssignmentTargetRest {
 
   get range() {
     const internal = this.#internal;
-    return constructOptionArrayType(internal.pos + 8, internal.ast);
+    return constructOptionRangeArray(internal.pos + 8, internal.ast);
   }
 
   get argument() {
@@ -2382,7 +2382,7 @@ class AssignmentTargetWithDefault {
 
   get range() {
     const internal = this.#internal;
-    return constructOptionArrayType(internal.pos + 8, internal.ast);
+    return constructOptionRangeArray(internal.pos + 8, internal.ast);
   }
 
   get left() {
@@ -2451,7 +2451,7 @@ class AssignmentTargetPropertyIdentifier {
 
   get range() {
     const internal = this.#internal;
-    return constructOptionArrayType(internal.pos + 8, internal.ast);
+    return constructOptionRangeArray(internal.pos + 8, internal.ast);
   }
 
   get key() {
@@ -2509,7 +2509,7 @@ class AssignmentTargetPropertyProperty {
 
   get range() {
     const internal = this.#internal;
-    return constructOptionArrayType(internal.pos + 8, internal.ast);
+    return constructOptionRangeArray(internal.pos + 8, internal.ast);
   }
 
   get key() {
@@ -2573,7 +2573,7 @@ class SequenceExpression {
 
   get range() {
     const internal = this.#internal;
-    return constructOptionArrayType(internal.pos + 8, internal.ast);
+    return constructOptionRangeArray(internal.pos + 8, internal.ast);
   }
 
   get expressions() {
@@ -2627,7 +2627,7 @@ class Super {
 
   get range() {
     const internal = this.#internal;
-    return constructOptionArrayType(internal.pos + 8, internal.ast);
+    return constructOptionRangeArray(internal.pos + 8, internal.ast);
   }
 
   toJSON() {
@@ -2673,7 +2673,7 @@ class AwaitExpression {
 
   get range() {
     const internal = this.#internal;
-    return constructOptionArrayType(internal.pos + 8, internal.ast);
+    return constructOptionRangeArray(internal.pos + 8, internal.ast);
   }
 
   get argument() {
@@ -2725,7 +2725,7 @@ class ChainExpression {
 
   get range() {
     const internal = this.#internal;
-    return constructOptionArrayType(internal.pos + 8, internal.ast);
+    return constructOptionRangeArray(internal.pos + 8, internal.ast);
   }
 
   get expression() {
@@ -2794,7 +2794,7 @@ class ParenthesizedExpression {
 
   get range() {
     const internal = this.#internal;
-    return constructOptionArrayType(internal.pos + 8, internal.ast);
+    return constructOptionRangeArray(internal.pos + 8, internal.ast);
   }
 
   get expression() {
@@ -2917,7 +2917,7 @@ class Directive {
 
   get range() {
     const internal = this.#internal;
-    return constructOptionArrayType(internal.pos + 8, internal.ast);
+    return constructOptionRangeArray(internal.pos + 8, internal.ast);
   }
 
   get expression() {
@@ -2977,7 +2977,7 @@ class Hashbang {
 
   get range() {
     const internal = this.#internal;
-    return constructOptionArrayType(internal.pos + 8, internal.ast);
+    return constructOptionRangeArray(internal.pos + 8, internal.ast);
   }
 
   get value() {
@@ -3031,7 +3031,7 @@ class BlockStatement {
 
   get range() {
     const internal = this.#internal;
-    return constructOptionArrayType(internal.pos + 8, internal.ast);
+    return constructOptionRangeArray(internal.pos + 8, internal.ast);
   }
 
   get body() {
@@ -3108,7 +3108,7 @@ class VariableDeclaration {
 
   get range() {
     const internal = this.#internal;
-    return constructOptionArrayType(internal.pos + 8, internal.ast);
+    return constructOptionRangeArray(internal.pos + 8, internal.ast);
   }
 
   get kind() {
@@ -3191,7 +3191,7 @@ class VariableDeclarator {
 
   get range() {
     const internal = this.#internal;
-    return constructOptionArrayType(internal.pos + 8, internal.ast);
+    return constructOptionRangeArray(internal.pos + 8, internal.ast);
   }
 
   get id() {
@@ -3255,7 +3255,7 @@ class EmptyStatement {
 
   get range() {
     const internal = this.#internal;
-    return constructOptionArrayType(internal.pos + 8, internal.ast);
+    return constructOptionRangeArray(internal.pos + 8, internal.ast);
   }
 
   toJSON() {
@@ -3301,7 +3301,7 @@ class ExpressionStatement {
 
   get range() {
     const internal = this.#internal;
-    return constructOptionArrayType(internal.pos + 8, internal.ast);
+    return constructOptionRangeArray(internal.pos + 8, internal.ast);
   }
 
   get expression() {
@@ -3353,7 +3353,7 @@ class IfStatement {
 
   get range() {
     const internal = this.#internal;
-    return constructOptionArrayType(internal.pos + 8, internal.ast);
+    return constructOptionRangeArray(internal.pos + 8, internal.ast);
   }
 
   get test() {
@@ -3417,7 +3417,7 @@ class DoWhileStatement {
 
   get range() {
     const internal = this.#internal;
-    return constructOptionArrayType(internal.pos + 8, internal.ast);
+    return constructOptionRangeArray(internal.pos + 8, internal.ast);
   }
 
   get body() {
@@ -3475,7 +3475,7 @@ class WhileStatement {
 
   get range() {
     const internal = this.#internal;
-    return constructOptionArrayType(internal.pos + 8, internal.ast);
+    return constructOptionRangeArray(internal.pos + 8, internal.ast);
   }
 
   get test() {
@@ -3533,7 +3533,7 @@ class ForStatement {
 
   get range() {
     const internal = this.#internal;
-    return constructOptionArrayType(internal.pos + 8, internal.ast);
+    return constructOptionRangeArray(internal.pos + 8, internal.ast);
   }
 
   get init() {
@@ -3698,7 +3698,7 @@ class ForInStatement {
 
   get range() {
     const internal = this.#internal;
-    return constructOptionArrayType(internal.pos + 8, internal.ast);
+    return constructOptionRangeArray(internal.pos + 8, internal.ast);
   }
 
   get left() {
@@ -3791,7 +3791,7 @@ class ForOfStatement {
 
   get range() {
     const internal = this.#internal;
-    return constructOptionArrayType(internal.pos + 8, internal.ast);
+    return constructOptionRangeArray(internal.pos + 8, internal.ast);
   }
 
   get await() {
@@ -3861,7 +3861,7 @@ class ContinueStatement {
 
   get range() {
     const internal = this.#internal;
-    return constructOptionArrayType(internal.pos + 8, internal.ast);
+    return constructOptionRangeArray(internal.pos + 8, internal.ast);
   }
 
   get label() {
@@ -3913,7 +3913,7 @@ class BreakStatement {
 
   get range() {
     const internal = this.#internal;
-    return constructOptionArrayType(internal.pos + 8, internal.ast);
+    return constructOptionRangeArray(internal.pos + 8, internal.ast);
   }
 
   get label() {
@@ -3965,7 +3965,7 @@ class ReturnStatement {
 
   get range() {
     const internal = this.#internal;
-    return constructOptionArrayType(internal.pos + 8, internal.ast);
+    return constructOptionRangeArray(internal.pos + 8, internal.ast);
   }
 
   get argument() {
@@ -4017,7 +4017,7 @@ class WithStatement {
 
   get range() {
     const internal = this.#internal;
-    return constructOptionArrayType(internal.pos + 8, internal.ast);
+    return constructOptionRangeArray(internal.pos + 8, internal.ast);
   }
 
   get object() {
@@ -4075,7 +4075,7 @@ class SwitchStatement {
 
   get range() {
     const internal = this.#internal;
-    return constructOptionArrayType(internal.pos + 8, internal.ast);
+    return constructOptionRangeArray(internal.pos + 8, internal.ast);
   }
 
   get discriminant() {
@@ -4135,7 +4135,7 @@ class SwitchCase {
 
   get range() {
     const internal = this.#internal;
-    return constructOptionArrayType(internal.pos + 8, internal.ast);
+    return constructOptionRangeArray(internal.pos + 8, internal.ast);
   }
 
   get test() {
@@ -4195,7 +4195,7 @@ class LabeledStatement {
 
   get range() {
     const internal = this.#internal;
-    return constructOptionArrayType(internal.pos + 8, internal.ast);
+    return constructOptionRangeArray(internal.pos + 8, internal.ast);
   }
 
   get label() {
@@ -4253,7 +4253,7 @@ class ThrowStatement {
 
   get range() {
     const internal = this.#internal;
-    return constructOptionArrayType(internal.pos + 8, internal.ast);
+    return constructOptionRangeArray(internal.pos + 8, internal.ast);
   }
 
   get argument() {
@@ -4305,7 +4305,7 @@ class TryStatement {
 
   get range() {
     const internal = this.#internal;
-    return constructOptionArrayType(internal.pos + 8, internal.ast);
+    return constructOptionRangeArray(internal.pos + 8, internal.ast);
   }
 
   get block() {
@@ -4369,7 +4369,7 @@ class CatchClause {
 
   get range() {
     const internal = this.#internal;
-    return constructOptionArrayType(internal.pos + 8, internal.ast);
+    return constructOptionRangeArray(internal.pos + 8, internal.ast);
   }
 
   get param() {
@@ -4459,7 +4459,7 @@ class DebuggerStatement {
 
   get range() {
     const internal = this.#internal;
-    return constructOptionArrayType(internal.pos + 8, internal.ast);
+    return constructOptionRangeArray(internal.pos + 8, internal.ast);
   }
 
   toJSON() {
@@ -4564,7 +4564,7 @@ class AssignmentPattern {
 
   get range() {
     const internal = this.#internal;
-    return constructOptionArrayType(internal.pos + 8, internal.ast);
+    return constructOptionRangeArray(internal.pos + 8, internal.ast);
   }
 
   get left() {
@@ -4622,7 +4622,7 @@ class ObjectPattern {
 
   get range() {
     const internal = this.#internal;
-    return constructOptionArrayType(internal.pos + 8, internal.ast);
+    return constructOptionRangeArray(internal.pos + 8, internal.ast);
   }
 
   get properties() {
@@ -4676,7 +4676,7 @@ class BindingProperty {
 
   get range() {
     const internal = this.#internal;
-    return constructOptionArrayType(internal.pos + 8, internal.ast);
+    return constructOptionRangeArray(internal.pos + 8, internal.ast);
   }
 
   get key() {
@@ -4746,7 +4746,7 @@ class ArrayPattern {
 
   get range() {
     const internal = this.#internal;
-    return constructOptionArrayType(internal.pos + 8, internal.ast);
+    return constructOptionRangeArray(internal.pos + 8, internal.ast);
   }
 
   get elements() {
@@ -4800,7 +4800,7 @@ class BindingRestElement {
 
   get range() {
     const internal = this.#internal;
-    return constructOptionArrayType(internal.pos + 8, internal.ast);
+    return constructOptionRangeArray(internal.pos + 8, internal.ast);
   }
 
   get argument() {
@@ -4851,7 +4851,7 @@ class Function {
 
   get range() {
     const internal = this.#internal;
-    return constructOptionArrayType(internal.pos + 8, internal.ast);
+    return constructOptionRangeArray(internal.pos + 8, internal.ast);
   }
 
   get type() {
@@ -4965,7 +4965,7 @@ class FormalParameters {
 
   get range() {
     const internal = this.#internal;
-    return constructOptionArrayType(internal.pos + 8, internal.ast);
+    return constructOptionRangeArray(internal.pos + 8, internal.ast);
   }
 
   get kind() {
@@ -5080,7 +5080,7 @@ class FunctionBody {
 
   get range() {
     const internal = this.#internal;
-    return constructOptionArrayType(internal.pos + 8, internal.ast);
+    return constructOptionRangeArray(internal.pos + 8, internal.ast);
   }
 
   get body() {
@@ -5134,7 +5134,7 @@ class ArrowFunctionExpression {
 
   get range() {
     const internal = this.#internal;
-    return constructOptionArrayType(internal.pos + 8, internal.ast);
+    return constructOptionRangeArray(internal.pos + 8, internal.ast);
   }
 
   get expression() {
@@ -5216,7 +5216,7 @@ class YieldExpression {
 
   get range() {
     const internal = this.#internal;
-    return constructOptionArrayType(internal.pos + 8, internal.ast);
+    return constructOptionRangeArray(internal.pos + 8, internal.ast);
   }
 
   get delegate() {
@@ -5273,7 +5273,7 @@ class Class {
 
   get range() {
     const internal = this.#internal;
-    return constructOptionArrayType(internal.pos + 8, internal.ast);
+    return constructOptionRangeArray(internal.pos + 8, internal.ast);
   }
 
   get type() {
@@ -5393,7 +5393,7 @@ class ClassBody {
 
   get range() {
     const internal = this.#internal;
-    return constructOptionArrayType(internal.pos + 8, internal.ast);
+    return constructOptionRangeArray(internal.pos + 8, internal.ast);
   }
 
   get body() {
@@ -5463,7 +5463,7 @@ class MethodDefinition {
 
   get range() {
     const internal = this.#internal;
-    return constructOptionArrayType(internal.pos + 8, internal.ast);
+    return constructOptionRangeArray(internal.pos + 8, internal.ast);
   }
 
   get type() {
@@ -5580,7 +5580,7 @@ class PropertyDefinition {
 
   get range() {
     const internal = this.#internal;
-    return constructOptionArrayType(internal.pos + 8, internal.ast);
+    return constructOptionRangeArray(internal.pos + 8, internal.ast);
   }
 
   get type() {
@@ -5731,7 +5731,7 @@ class PrivateIdentifier {
 
   get range() {
     const internal = this.#internal;
-    return constructOptionArrayType(internal.pos + 8, internal.ast);
+    return constructOptionRangeArray(internal.pos + 8, internal.ast);
   }
 
   get name() {
@@ -5785,7 +5785,7 @@ class StaticBlock {
 
   get range() {
     const internal = this.#internal;
-    return constructOptionArrayType(internal.pos + 8, internal.ast);
+    return constructOptionRangeArray(internal.pos + 8, internal.ast);
   }
 
   get body() {
@@ -5868,7 +5868,7 @@ class AccessorProperty {
 
   get range() {
     const internal = this.#internal;
-    return constructOptionArrayType(internal.pos + 8, internal.ast);
+    return constructOptionRangeArray(internal.pos + 8, internal.ast);
   }
 
   get type() {
@@ -5975,7 +5975,7 @@ class ImportExpression {
 
   get range() {
     const internal = this.#internal;
-    return constructOptionArrayType(internal.pos + 8, internal.ast);
+    return constructOptionRangeArray(internal.pos + 8, internal.ast);
   }
 
   get source() {
@@ -6039,7 +6039,7 @@ class ImportDeclaration {
 
   get range() {
     const internal = this.#internal;
-    return constructOptionArrayType(internal.pos + 8, internal.ast);
+    return constructOptionRangeArray(internal.pos + 8, internal.ast);
   }
 
   get specifiers() {
@@ -6141,7 +6141,7 @@ class ImportSpecifier {
 
   get range() {
     const internal = this.#internal;
-    return constructOptionArrayType(internal.pos + 8, internal.ast);
+    return constructOptionRangeArray(internal.pos + 8, internal.ast);
   }
 
   get imported() {
@@ -6205,7 +6205,7 @@ class ImportDefaultSpecifier {
 
   get range() {
     const internal = this.#internal;
-    return constructOptionArrayType(internal.pos + 8, internal.ast);
+    return constructOptionRangeArray(internal.pos + 8, internal.ast);
   }
 
   get local() {
@@ -6257,7 +6257,7 @@ class ImportNamespaceSpecifier {
 
   get range() {
     const internal = this.#internal;
-    return constructOptionArrayType(internal.pos + 8, internal.ast);
+    return constructOptionRangeArray(internal.pos + 8, internal.ast);
   }
 
   get local() {
@@ -6343,7 +6343,7 @@ class ImportAttribute {
 
   get range() {
     const internal = this.#internal;
-    return constructOptionArrayType(internal.pos + 8, internal.ast);
+    return constructOptionRangeArray(internal.pos + 8, internal.ast);
   }
 
   get key() {
@@ -6412,7 +6412,7 @@ class ExportNamedDeclaration {
 
   get range() {
     const internal = this.#internal;
-    return constructOptionArrayType(internal.pos + 8, internal.ast);
+    return constructOptionRangeArray(internal.pos + 8, internal.ast);
   }
 
   get declaration() {
@@ -6490,7 +6490,7 @@ class ExportDefaultDeclaration {
 
   get range() {
     const internal = this.#internal;
-    return constructOptionArrayType(internal.pos + 8, internal.ast);
+    return constructOptionRangeArray(internal.pos + 8, internal.ast);
   }
 
   get declaration() {
@@ -6542,7 +6542,7 @@ class ExportAllDeclaration {
 
   get range() {
     const internal = this.#internal;
-    return constructOptionArrayType(internal.pos + 8, internal.ast);
+    return constructOptionRangeArray(internal.pos + 8, internal.ast);
   }
 
   get exported() {
@@ -6612,7 +6612,7 @@ class ExportSpecifier {
 
   get range() {
     const internal = this.#internal;
-    return constructOptionArrayType(internal.pos + 8, internal.ast);
+    return constructOptionRangeArray(internal.pos + 8, internal.ast);
   }
 
   get local() {
@@ -6788,7 +6788,7 @@ class V8IntrinsicExpression {
 
   get range() {
     const internal = this.#internal;
-    return constructOptionArrayType(internal.pos + 8, internal.ast);
+    return constructOptionRangeArray(internal.pos + 8, internal.ast);
   }
 
   get name() {
@@ -6848,7 +6848,7 @@ class BooleanLiteral {
 
   get range() {
     const internal = this.#internal;
-    return constructOptionArrayType(internal.pos + 8, internal.ast);
+    return constructOptionRangeArray(internal.pos + 8, internal.ast);
   }
 
   get value() {
@@ -6900,7 +6900,7 @@ class NullLiteral {
 
   get range() {
     const internal = this.#internal;
-    return constructOptionArrayType(internal.pos + 8, internal.ast);
+    return constructOptionRangeArray(internal.pos + 8, internal.ast);
   }
 
   toJSON() {
@@ -6946,7 +6946,7 @@ class NumericLiteral {
 
   get range() {
     const internal = this.#internal;
-    return constructOptionArrayType(internal.pos + 8, internal.ast);
+    return constructOptionRangeArray(internal.pos + 8, internal.ast);
   }
 
   get value() {
@@ -7006,7 +7006,7 @@ class StringLiteral {
 
   get range() {
     const internal = this.#internal;
-    return constructOptionArrayType(internal.pos + 8, internal.ast);
+    return constructOptionRangeArray(internal.pos + 8, internal.ast);
   }
 
   get value() {
@@ -7068,7 +7068,7 @@ class BigIntLiteral {
 
   get range() {
     const internal = this.#internal;
-    return constructOptionArrayType(internal.pos + 8, internal.ast);
+    return constructOptionRangeArray(internal.pos + 8, internal.ast);
   }
 
   get value() {
@@ -7130,7 +7130,7 @@ class RegExpLiteral {
 
   get range() {
     const internal = this.#internal;
-    return constructOptionArrayType(internal.pos + 8, internal.ast);
+    return constructOptionRangeArray(internal.pos + 8, internal.ast);
   }
 
   get regex() {
@@ -7296,7 +7296,7 @@ class JSXElement {
 
   get range() {
     const internal = this.#internal;
-    return constructOptionArrayType(internal.pos + 8, internal.ast);
+    return constructOptionRangeArray(internal.pos + 8, internal.ast);
   }
 
   get openingElement() {
@@ -7362,7 +7362,7 @@ class JSXOpeningElement {
 
   get range() {
     const internal = this.#internal;
-    return constructOptionArrayType(internal.pos + 8, internal.ast);
+    return constructOptionRangeArray(internal.pos + 8, internal.ast);
   }
 
   get name() {
@@ -7428,7 +7428,7 @@ class JSXClosingElement {
 
   get range() {
     const internal = this.#internal;
-    return constructOptionArrayType(internal.pos + 8, internal.ast);
+    return constructOptionRangeArray(internal.pos + 8, internal.ast);
   }
 
   get name() {
@@ -7480,7 +7480,7 @@ class JSXFragment {
 
   get range() {
     const internal = this.#internal;
-    return constructOptionArrayType(internal.pos + 8, internal.ast);
+    return constructOptionRangeArray(internal.pos + 8, internal.ast);
   }
 
   get openingFragment() {
@@ -7546,7 +7546,7 @@ class JSXOpeningFragment {
 
   get range() {
     const internal = this.#internal;
-    return constructOptionArrayType(internal.pos + 8, internal.ast);
+    return constructOptionRangeArray(internal.pos + 8, internal.ast);
   }
 
   toJSON() {
@@ -7592,7 +7592,7 @@ class JSXClosingFragment {
 
   get range() {
     const internal = this.#internal;
-    return constructOptionArrayType(internal.pos + 8, internal.ast);
+    return constructOptionRangeArray(internal.pos + 8, internal.ast);
   }
 
   toJSON() {
@@ -7655,7 +7655,7 @@ class JSXNamespacedName {
 
   get range() {
     const internal = this.#internal;
-    return constructOptionArrayType(internal.pos + 8, internal.ast);
+    return constructOptionRangeArray(internal.pos + 8, internal.ast);
   }
 
   get namespace() {
@@ -7713,7 +7713,7 @@ class JSXMemberExpression {
 
   get range() {
     const internal = this.#internal;
-    return constructOptionArrayType(internal.pos + 8, internal.ast);
+    return constructOptionRangeArray(internal.pos + 8, internal.ast);
   }
 
   get object() {
@@ -7784,7 +7784,7 @@ class JSXExpressionContainer {
 
   get range() {
     const internal = this.#internal;
-    return constructOptionArrayType(internal.pos + 8, internal.ast);
+    return constructOptionRangeArray(internal.pos + 8, internal.ast);
   }
 
   get expression() {
@@ -7931,7 +7931,7 @@ class JSXEmptyExpression {
 
   get range() {
     const internal = this.#internal;
-    return constructOptionArrayType(internal.pos + 8, internal.ast);
+    return constructOptionRangeArray(internal.pos + 8, internal.ast);
   }
 
   toJSON() {
@@ -7988,7 +7988,7 @@ class JSXAttribute {
 
   get range() {
     const internal = this.#internal;
-    return constructOptionArrayType(internal.pos + 8, internal.ast);
+    return constructOptionRangeArray(internal.pos + 8, internal.ast);
   }
 
   get name() {
@@ -8046,7 +8046,7 @@ class JSXSpreadAttribute {
 
   get range() {
     const internal = this.#internal;
-    return constructOptionArrayType(internal.pos + 8, internal.ast);
+    return constructOptionRangeArray(internal.pos + 8, internal.ast);
   }
 
   get argument() {
@@ -8124,7 +8124,7 @@ class JSXIdentifier {
 
   get range() {
     const internal = this.#internal;
-    return constructOptionArrayType(internal.pos + 8, internal.ast);
+    return constructOptionRangeArray(internal.pos + 8, internal.ast);
   }
 
   get name() {
@@ -8195,7 +8195,7 @@ class JSXSpreadChild {
 
   get range() {
     const internal = this.#internal;
-    return constructOptionArrayType(internal.pos + 8, internal.ast);
+    return constructOptionRangeArray(internal.pos + 8, internal.ast);
   }
 
   get expression() {
@@ -8247,7 +8247,7 @@ class JSXText {
 
   get range() {
     const internal = this.#internal;
-    return constructOptionArrayType(internal.pos + 8, internal.ast);
+    return constructOptionRangeArray(internal.pos + 8, internal.ast);
   }
 
   get value() {
@@ -8309,7 +8309,7 @@ class TSThisParameter {
 
   get range() {
     const internal = this.#internal;
-    return constructOptionArrayType(internal.pos + 8, internal.ast);
+    return constructOptionRangeArray(internal.pos + 8, internal.ast);
   }
 
   get typeAnnotation() {
@@ -8361,7 +8361,7 @@ class TSEnumDeclaration {
 
   get range() {
     const internal = this.#internal;
-    return constructOptionArrayType(internal.pos + 8, internal.ast);
+    return constructOptionRangeArray(internal.pos + 8, internal.ast);
   }
 
   get id() {
@@ -8431,7 +8431,7 @@ class TSEnumBody {
 
   get range() {
     const internal = this.#internal;
-    return constructOptionArrayType(internal.pos + 8, internal.ast);
+    return constructOptionRangeArray(internal.pos + 8, internal.ast);
   }
 
   get members() {
@@ -8485,7 +8485,7 @@ class TSEnumMember {
 
   get range() {
     const internal = this.#internal;
-    return constructOptionArrayType(internal.pos + 8, internal.ast);
+    return constructOptionRangeArray(internal.pos + 8, internal.ast);
   }
 
   get id() {
@@ -8558,7 +8558,7 @@ class TSTypeAnnotation {
 
   get range() {
     const internal = this.#internal;
-    return constructOptionArrayType(internal.pos + 8, internal.ast);
+    return constructOptionRangeArray(internal.pos + 8, internal.ast);
   }
 
   get typeAnnotation() {
@@ -8610,7 +8610,7 @@ class TSLiteralType {
 
   get range() {
     const internal = this.#internal;
-    return constructOptionArrayType(internal.pos + 8, internal.ast);
+    return constructOptionRangeArray(internal.pos + 8, internal.ast);
   }
 
   get literal() {
@@ -8762,7 +8762,7 @@ class TSConditionalType {
 
   get range() {
     const internal = this.#internal;
-    return constructOptionArrayType(internal.pos + 8, internal.ast);
+    return constructOptionRangeArray(internal.pos + 8, internal.ast);
   }
 
   get checkType() {
@@ -8832,7 +8832,7 @@ class TSUnionType {
 
   get range() {
     const internal = this.#internal;
-    return constructOptionArrayType(internal.pos + 8, internal.ast);
+    return constructOptionRangeArray(internal.pos + 8, internal.ast);
   }
 
   get types() {
@@ -8886,7 +8886,7 @@ class TSIntersectionType {
 
   get range() {
     const internal = this.#internal;
-    return constructOptionArrayType(internal.pos + 8, internal.ast);
+    return constructOptionRangeArray(internal.pos + 8, internal.ast);
   }
 
   get types() {
@@ -8940,7 +8940,7 @@ class TSParenthesizedType {
 
   get range() {
     const internal = this.#internal;
-    return constructOptionArrayType(internal.pos + 8, internal.ast);
+    return constructOptionRangeArray(internal.pos + 8, internal.ast);
   }
 
   get typeAnnotation() {
@@ -8992,7 +8992,7 @@ class TSTypeOperator {
 
   get range() {
     const internal = this.#internal;
-    return constructOptionArrayType(internal.pos + 8, internal.ast);
+    return constructOptionRangeArray(internal.pos + 8, internal.ast);
   }
 
   get operator() {
@@ -9063,7 +9063,7 @@ class TSArrayType {
 
   get range() {
     const internal = this.#internal;
-    return constructOptionArrayType(internal.pos + 8, internal.ast);
+    return constructOptionRangeArray(internal.pos + 8, internal.ast);
   }
 
   get elementType() {
@@ -9115,7 +9115,7 @@ class TSIndexedAccessType {
 
   get range() {
     const internal = this.#internal;
-    return constructOptionArrayType(internal.pos + 8, internal.ast);
+    return constructOptionRangeArray(internal.pos + 8, internal.ast);
   }
 
   get objectType() {
@@ -9173,7 +9173,7 @@ class TSTupleType {
 
   get range() {
     const internal = this.#internal;
-    return constructOptionArrayType(internal.pos + 8, internal.ast);
+    return constructOptionRangeArray(internal.pos + 8, internal.ast);
   }
 
   get elementTypes() {
@@ -9227,7 +9227,7 @@ class TSNamedTupleMember {
 
   get range() {
     const internal = this.#internal;
-    return constructOptionArrayType(internal.pos + 8, internal.ast);
+    return constructOptionRangeArray(internal.pos + 8, internal.ast);
   }
 
   get label() {
@@ -9291,7 +9291,7 @@ class TSOptionalType {
 
   get range() {
     const internal = this.#internal;
-    return constructOptionArrayType(internal.pos + 8, internal.ast);
+    return constructOptionRangeArray(internal.pos + 8, internal.ast);
   }
 
   get typeAnnotation() {
@@ -9343,7 +9343,7 @@ class TSRestType {
 
   get range() {
     const internal = this.#internal;
-    return constructOptionArrayType(internal.pos + 8, internal.ast);
+    return constructOptionRangeArray(internal.pos + 8, internal.ast);
   }
 
   get typeAnnotation() {
@@ -9480,7 +9480,7 @@ class TSAnyKeyword {
 
   get range() {
     const internal = this.#internal;
-    return constructOptionArrayType(internal.pos + 8, internal.ast);
+    return constructOptionRangeArray(internal.pos + 8, internal.ast);
   }
 
   toJSON() {
@@ -9526,7 +9526,7 @@ class TSStringKeyword {
 
   get range() {
     const internal = this.#internal;
-    return constructOptionArrayType(internal.pos + 8, internal.ast);
+    return constructOptionRangeArray(internal.pos + 8, internal.ast);
   }
 
   toJSON() {
@@ -9572,7 +9572,7 @@ class TSBooleanKeyword {
 
   get range() {
     const internal = this.#internal;
-    return constructOptionArrayType(internal.pos + 8, internal.ast);
+    return constructOptionRangeArray(internal.pos + 8, internal.ast);
   }
 
   toJSON() {
@@ -9618,7 +9618,7 @@ class TSNumberKeyword {
 
   get range() {
     const internal = this.#internal;
-    return constructOptionArrayType(internal.pos + 8, internal.ast);
+    return constructOptionRangeArray(internal.pos + 8, internal.ast);
   }
 
   toJSON() {
@@ -9664,7 +9664,7 @@ class TSNeverKeyword {
 
   get range() {
     const internal = this.#internal;
-    return constructOptionArrayType(internal.pos + 8, internal.ast);
+    return constructOptionRangeArray(internal.pos + 8, internal.ast);
   }
 
   toJSON() {
@@ -9710,7 +9710,7 @@ class TSIntrinsicKeyword {
 
   get range() {
     const internal = this.#internal;
-    return constructOptionArrayType(internal.pos + 8, internal.ast);
+    return constructOptionRangeArray(internal.pos + 8, internal.ast);
   }
 
   toJSON() {
@@ -9756,7 +9756,7 @@ class TSUnknownKeyword {
 
   get range() {
     const internal = this.#internal;
-    return constructOptionArrayType(internal.pos + 8, internal.ast);
+    return constructOptionRangeArray(internal.pos + 8, internal.ast);
   }
 
   toJSON() {
@@ -9802,7 +9802,7 @@ class TSNullKeyword {
 
   get range() {
     const internal = this.#internal;
-    return constructOptionArrayType(internal.pos + 8, internal.ast);
+    return constructOptionRangeArray(internal.pos + 8, internal.ast);
   }
 
   toJSON() {
@@ -9848,7 +9848,7 @@ class TSUndefinedKeyword {
 
   get range() {
     const internal = this.#internal;
-    return constructOptionArrayType(internal.pos + 8, internal.ast);
+    return constructOptionRangeArray(internal.pos + 8, internal.ast);
   }
 
   toJSON() {
@@ -9894,7 +9894,7 @@ class TSVoidKeyword {
 
   get range() {
     const internal = this.#internal;
-    return constructOptionArrayType(internal.pos + 8, internal.ast);
+    return constructOptionRangeArray(internal.pos + 8, internal.ast);
   }
 
   toJSON() {
@@ -9940,7 +9940,7 @@ class TSSymbolKeyword {
 
   get range() {
     const internal = this.#internal;
-    return constructOptionArrayType(internal.pos + 8, internal.ast);
+    return constructOptionRangeArray(internal.pos + 8, internal.ast);
   }
 
   toJSON() {
@@ -9986,7 +9986,7 @@ class TSThisType {
 
   get range() {
     const internal = this.#internal;
-    return constructOptionArrayType(internal.pos + 8, internal.ast);
+    return constructOptionRangeArray(internal.pos + 8, internal.ast);
   }
 
   toJSON() {
@@ -10032,7 +10032,7 @@ class TSObjectKeyword {
 
   get range() {
     const internal = this.#internal;
-    return constructOptionArrayType(internal.pos + 8, internal.ast);
+    return constructOptionRangeArray(internal.pos + 8, internal.ast);
   }
 
   toJSON() {
@@ -10078,7 +10078,7 @@ class TSBigIntKeyword {
 
   get range() {
     const internal = this.#internal;
-    return constructOptionArrayType(internal.pos + 8, internal.ast);
+    return constructOptionRangeArray(internal.pos + 8, internal.ast);
   }
 
   toJSON() {
@@ -10124,7 +10124,7 @@ class TSTypeReference {
 
   get range() {
     const internal = this.#internal;
-    return constructOptionArrayType(internal.pos + 8, internal.ast);
+    return constructOptionRangeArray(internal.pos + 8, internal.ast);
   }
 
   get typeName() {
@@ -10193,7 +10193,7 @@ class TSQualifiedName {
 
   get range() {
     const internal = this.#internal;
-    return constructOptionArrayType(internal.pos + 8, internal.ast);
+    return constructOptionRangeArray(internal.pos + 8, internal.ast);
   }
 
   get left() {
@@ -10251,7 +10251,7 @@ class TSTypeParameterInstantiation {
 
   get range() {
     const internal = this.#internal;
-    return constructOptionArrayType(internal.pos + 8, internal.ast);
+    return constructOptionRangeArray(internal.pos + 8, internal.ast);
   }
 
   get params() {
@@ -10305,7 +10305,7 @@ class TSTypeParameter {
 
   get range() {
     const internal = this.#internal;
-    return constructOptionArrayType(internal.pos + 8, internal.ast);
+    return constructOptionRangeArray(internal.pos + 8, internal.ast);
   }
 
   get name() {
@@ -10387,7 +10387,7 @@ class TSTypeParameterDeclaration {
 
   get range() {
     const internal = this.#internal;
-    return constructOptionArrayType(internal.pos + 8, internal.ast);
+    return constructOptionRangeArray(internal.pos + 8, internal.ast);
   }
 
   get params() {
@@ -10441,7 +10441,7 @@ class TSTypeAliasDeclaration {
 
   get range() {
     const internal = this.#internal;
-    return constructOptionArrayType(internal.pos + 8, internal.ast);
+    return constructOptionRangeArray(internal.pos + 8, internal.ast);
   }
 
   get id() {
@@ -10524,7 +10524,7 @@ class TSClassImplements {
 
   get range() {
     const internal = this.#internal;
-    return constructOptionArrayType(internal.pos + 8, internal.ast);
+    return constructOptionRangeArray(internal.pos + 8, internal.ast);
   }
 
   get expression() {
@@ -10582,7 +10582,7 @@ class TSInterfaceDeclaration {
 
   get range() {
     const internal = this.#internal;
-    return constructOptionArrayType(internal.pos + 8, internal.ast);
+    return constructOptionRangeArray(internal.pos + 8, internal.ast);
   }
 
   get id() {
@@ -10660,7 +10660,7 @@ class TSInterfaceBody {
 
   get range() {
     const internal = this.#internal;
-    return constructOptionArrayType(internal.pos + 8, internal.ast);
+    return constructOptionRangeArray(internal.pos + 8, internal.ast);
   }
 
   get body() {
@@ -10714,7 +10714,7 @@ class TSPropertySignature {
 
   get range() {
     const internal = this.#internal;
-    return constructOptionArrayType(internal.pos + 8, internal.ast);
+    return constructOptionRangeArray(internal.pos + 8, internal.ast);
   }
 
   get computed() {
@@ -10807,7 +10807,7 @@ class TSIndexSignature {
 
   get range() {
     const internal = this.#internal;
-    return constructOptionArrayType(internal.pos + 8, internal.ast);
+    return constructOptionRangeArray(internal.pos + 8, internal.ast);
   }
 
   get parameters() {
@@ -10879,7 +10879,7 @@ class TSCallSignatureDeclaration {
 
   get range() {
     const internal = this.#internal;
-    return constructOptionArrayType(internal.pos + 8, internal.ast);
+    return constructOptionRangeArray(internal.pos + 8, internal.ast);
   }
 
   get typeParameters() {
@@ -10956,7 +10956,7 @@ class TSMethodSignature {
 
   get range() {
     const internal = this.#internal;
-    return constructOptionArrayType(internal.pos + 8, internal.ast);
+    return constructOptionRangeArray(internal.pos + 8, internal.ast);
   }
 
   get key() {
@@ -11044,7 +11044,7 @@ class TSConstructSignatureDeclaration {
 
   get range() {
     const internal = this.#internal;
-    return constructOptionArrayType(internal.pos + 8, internal.ast);
+    return constructOptionRangeArray(internal.pos + 8, internal.ast);
   }
 
   get typeParameters() {
@@ -11108,7 +11108,7 @@ class TSIndexSignatureName {
 
   get range() {
     const internal = this.#internal;
-    return constructOptionArrayType(internal.pos + 8, internal.ast);
+    return constructOptionRangeArray(internal.pos + 8, internal.ast);
   }
 
   get name() {
@@ -11168,7 +11168,7 @@ class TSInterfaceHeritage {
 
   get range() {
     const internal = this.#internal;
-    return constructOptionArrayType(internal.pos + 8, internal.ast);
+    return constructOptionRangeArray(internal.pos + 8, internal.ast);
   }
 
   get expression() {
@@ -11226,7 +11226,7 @@ class TSTypePredicate {
 
   get range() {
     const internal = this.#internal;
-    return constructOptionArrayType(internal.pos + 8, internal.ast);
+    return constructOptionRangeArray(internal.pos + 8, internal.ast);
   }
 
   get parameterName() {
@@ -11301,7 +11301,7 @@ class TSModuleDeclaration {
 
   get range() {
     const internal = this.#internal;
-    return constructOptionArrayType(internal.pos + 8, internal.ast);
+    return constructOptionRangeArray(internal.pos + 8, internal.ast);
   }
 
   get id() {
@@ -11406,7 +11406,7 @@ class TSModuleBlock {
 
   get range() {
     const internal = this.#internal;
-    return constructOptionArrayType(internal.pos + 8, internal.ast);
+    return constructOptionRangeArray(internal.pos + 8, internal.ast);
   }
 
   get body() {
@@ -11460,7 +11460,7 @@ class TSTypeLiteral {
 
   get range() {
     const internal = this.#internal;
-    return constructOptionArrayType(internal.pos + 8, internal.ast);
+    return constructOptionRangeArray(internal.pos + 8, internal.ast);
   }
 
   get members() {
@@ -11514,7 +11514,7 @@ class TSInferType {
 
   get range() {
     const internal = this.#internal;
-    return constructOptionArrayType(internal.pos + 8, internal.ast);
+    return constructOptionRangeArray(internal.pos + 8, internal.ast);
   }
 
   get typeParameter() {
@@ -11566,7 +11566,7 @@ class TSTypeQuery {
 
   get range() {
     const internal = this.#internal;
-    return constructOptionArrayType(internal.pos + 8, internal.ast);
+    return constructOptionRangeArray(internal.pos + 8, internal.ast);
   }
 
   get exprName() {
@@ -11637,7 +11637,7 @@ class TSImportType {
 
   get range() {
     const internal = this.#internal;
-    return constructOptionArrayType(internal.pos + 8, internal.ast);
+    return constructOptionRangeArray(internal.pos + 8, internal.ast);
   }
 
   get argument() {
@@ -11707,7 +11707,7 @@ class TSFunctionType {
 
   get range() {
     const internal = this.#internal;
-    return constructOptionArrayType(internal.pos + 8, internal.ast);
+    return constructOptionRangeArray(internal.pos + 8, internal.ast);
   }
 
   get typeParameters() {
@@ -11771,7 +11771,7 @@ class TSConstructorType {
 
   get range() {
     const internal = this.#internal;
-    return constructOptionArrayType(internal.pos + 8, internal.ast);
+    return constructOptionRangeArray(internal.pos + 8, internal.ast);
   }
 
   get abstract() {
@@ -11841,7 +11841,7 @@ class TSMappedType {
 
   get range() {
     const internal = this.#internal;
-    return constructOptionArrayType(internal.pos + 8, internal.ast);
+    return constructOptionRangeArray(internal.pos + 8, internal.ast);
   }
 
   get nameType() {
@@ -11924,7 +11924,7 @@ class TSTemplateLiteralType {
 
   get range() {
     const internal = this.#internal;
-    return constructOptionArrayType(internal.pos + 8, internal.ast);
+    return constructOptionRangeArray(internal.pos + 8, internal.ast);
   }
 
   get quasis() {
@@ -11986,7 +11986,7 @@ class TSAsExpression {
 
   get range() {
     const internal = this.#internal;
-    return constructOptionArrayType(internal.pos + 8, internal.ast);
+    return constructOptionRangeArray(internal.pos + 8, internal.ast);
   }
 
   get expression() {
@@ -12044,7 +12044,7 @@ class TSSatisfiesExpression {
 
   get range() {
     const internal = this.#internal;
-    return constructOptionArrayType(internal.pos + 8, internal.ast);
+    return constructOptionRangeArray(internal.pos + 8, internal.ast);
   }
 
   get expression() {
@@ -12102,7 +12102,7 @@ class TSTypeAssertion {
 
   get range() {
     const internal = this.#internal;
-    return constructOptionArrayType(internal.pos + 8, internal.ast);
+    return constructOptionRangeArray(internal.pos + 8, internal.ast);
   }
 
   get typeAnnotation() {
@@ -12160,7 +12160,7 @@ class TSImportEqualsDeclaration {
 
   get range() {
     const internal = this.#internal;
-    return constructOptionArrayType(internal.pos + 8, internal.ast);
+    return constructOptionRangeArray(internal.pos + 8, internal.ast);
   }
 
   get id() {
@@ -12237,7 +12237,7 @@ class TSExternalModuleReference {
 
   get range() {
     const internal = this.#internal;
-    return constructOptionArrayType(internal.pos + 8, internal.ast);
+    return constructOptionRangeArray(internal.pos + 8, internal.ast);
   }
 
   get expression() {
@@ -12289,7 +12289,7 @@ class TSNonNullExpression {
 
   get range() {
     const internal = this.#internal;
-    return constructOptionArrayType(internal.pos + 8, internal.ast);
+    return constructOptionRangeArray(internal.pos + 8, internal.ast);
   }
 
   get expression() {
@@ -12341,7 +12341,7 @@ class Decorator {
 
   get range() {
     const internal = this.#internal;
-    return constructOptionArrayType(internal.pos + 8, internal.ast);
+    return constructOptionRangeArray(internal.pos + 8, internal.ast);
   }
 
   get expression() {
@@ -12393,7 +12393,7 @@ class TSExportAssignment {
 
   get range() {
     const internal = this.#internal;
-    return constructOptionArrayType(internal.pos + 8, internal.ast);
+    return constructOptionRangeArray(internal.pos + 8, internal.ast);
   }
 
   get expression() {
@@ -12445,7 +12445,7 @@ class TSNamespaceExportDeclaration {
 
   get range() {
     const internal = this.#internal;
-    return constructOptionArrayType(internal.pos + 8, internal.ast);
+    return constructOptionRangeArray(internal.pos + 8, internal.ast);
   }
 
   get id() {
@@ -12497,7 +12497,7 @@ class TSInstantiationExpression {
 
   get range() {
     const internal = this.#internal;
-    return constructOptionArrayType(internal.pos + 8, internal.ast);
+    return constructOptionRangeArray(internal.pos + 8, internal.ast);
   }
 
   get expression() {
@@ -12566,7 +12566,7 @@ class JSDocNullableType {
 
   get range() {
     const internal = this.#internal;
-    return constructOptionArrayType(internal.pos + 8, internal.ast);
+    return constructOptionRangeArray(internal.pos + 8, internal.ast);
   }
 
   get typeAnnotation() {
@@ -12624,7 +12624,7 @@ class JSDocNonNullableType {
 
   get range() {
     const internal = this.#internal;
-    return constructOptionArrayType(internal.pos + 8, internal.ast);
+    return constructOptionRangeArray(internal.pos + 8, internal.ast);
   }
 
   get typeAnnotation() {
@@ -12682,7 +12682,7 @@ class JSDocUnknownType {
 
   get range() {
     const internal = this.#internal;
-    return constructOptionArrayType(internal.pos + 8, internal.ast);
+    return constructOptionRangeArray(internal.pos + 8, internal.ast);
   }
 
   toJSON() {
@@ -12738,7 +12738,7 @@ class Comment {
 
   get range() {
     const internal = this.#internal;
-    return constructOptionArrayType(internal.pos + 8, internal.ast);
+    return constructOptionRangeArray(internal.pos + 8, internal.ast);
   }
 
   get type() {
@@ -12795,7 +12795,7 @@ class NameSpan {
 
   get range() {
     const internal = this.#internal;
-    return constructOptionArrayType(internal.pos + 8, internal.ast);
+    return constructOptionRangeArray(internal.pos + 8, internal.ast);
   }
 
   toJSON() {
@@ -12897,7 +12897,7 @@ class ExportEntry {
 
   get range() {
     const internal = this.#internal;
-    return constructOptionArrayType(internal.pos + 8, internal.ast);
+    return constructOptionRangeArray(internal.pos + 8, internal.ast);
   }
 
   get moduleRequest() {
@@ -13012,7 +13012,7 @@ class DynamicImport {
 
   get range() {
     const internal = this.#internal;
-    return constructOptionArrayType(internal.pos + 8, internal.ast);
+    return constructOptionRangeArray(internal.pos + 8, internal.ast);
   }
 
   get moduleRequest() {
@@ -13197,7 +13197,7 @@ class Span {
 
   get range() {
     const internal = this.#internal;
-    return constructOptionArrayType(internal.pos + 8, internal.ast);
+    return constructOptionRangeArray(internal.pos + 8, internal.ast);
   }
 
   toJSON() {
@@ -13423,7 +13423,7 @@ class ErrorLabel {
 
   get range() {
     const internal = this.#internal;
-    return constructOptionArrayType(internal.pos + 8, internal.ast);
+    return constructOptionRangeArray(internal.pos + 8, internal.ast);
   }
 
   toJSON() {
@@ -13539,7 +13539,7 @@ class StaticImport {
 
   get range() {
     const internal = this.#internal;
-    return constructOptionArrayType(internal.pos + 8, internal.ast);
+    return constructOptionRangeArray(internal.pos + 8, internal.ast);
   }
 
   get moduleRequest() {
@@ -13597,7 +13597,7 @@ class StaticExport {
 
   get range() {
     const internal = this.#internal;
-    return constructOptionArrayType(internal.pos + 8, internal.ast);
+    return constructOptionRangeArray(internal.pos + 8, internal.ast);
   }
 
   get entries() {
@@ -14908,9 +14908,9 @@ function constructOptionNameSpan(pos, ast) {
   return new NameSpan(pos, ast);
 }
 
-function constructOptionArrayType(pos, ast) {
+function constructOptionRangeArray(pos, ast) {
   if (ast.buffer[pos] === 0) return null;
-  return constructArrayType(pos + 4, ast);
+  return constructRangeArray(pos + 4, ast);
 }
 
 function constructU64(pos, ast) {
