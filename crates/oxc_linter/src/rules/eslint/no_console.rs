@@ -88,7 +88,7 @@ declare_oxc_lint!(
     NoConsole,
     eslint,
     restriction,
-    suggestion
+    conditional_suggestion
 );
 
 impl Rule for NoConsole {
@@ -106,26 +106,31 @@ impl Rule for NoConsole {
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        let AstKind::CallExpression(call_expr) = node.kind() else {
-            return;
-        };
-        let Some(mem) = call_expr.callee.as_member_expression() else {
-            return;
-        };
-        let Expression::Identifier(ident) = mem.object() else {
+        let AstKind::MemberExpression(member_expr) = node.kind() else { return };
+        let Expression::Identifier(ident) = member_expr.object() else {
             return;
         };
 
         if ident.name == "console"
             && ctx.scoping().root_unresolved_references().contains_key(ident.name.as_str())
-            && !self.allow.iter().any(|s| mem.static_property_name().is_some_and(|f| f == s))
+            && !self
+                .allow
+                .iter()
+                .any(|s| member_expr.static_property_name().is_some_and(|f| f == s))
         {
-            if let Some((mem_span, _)) = mem.static_property_info() {
+            if let Some((mem_span, _)) = member_expr.static_property_info() {
                 let diagnostic_span = ident.span().merge(mem_span);
 
                 ctx.diagnostic_with_suggestion(
                     no_console_diagnostic(diagnostic_span, &self.allow),
-                    |fixer| remove_console(fixer, ctx, node),
+                    |fixer| {
+                        if let Some(parent) = ctx.nodes().parent_node(node.id()) {
+                            if let AstKind::CallExpression(_) = parent.kind() {
+                                return remove_console(fixer, ctx, parent);
+                            }
+                        }
+                        fixer.noop()
+                    },
                 );
             }
         }
@@ -203,7 +208,7 @@ fn test() {
 
     let fail = vec![
         ("console.log()", None, None),
-        ("(console.log())", None, None),
+        ("foo(console.log)", None, None),
         ("console.log(foo)", None, None),
         ("console.error(foo)", None, None),
         ("console.info(foo)", None, None),
