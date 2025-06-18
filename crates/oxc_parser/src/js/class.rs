@@ -605,6 +605,10 @@ impl<'a> ParserImpl<'a> {
             self.error(diagnostics::setter_with_rest_parameter(rest.span));
         } else if function.params.parameters_count() != 1 {
             self.error(diagnostics::setter_with_parameters(function.params.span));
+        } else if self.is_ts
+            && function.params.items.first().unwrap().pattern.kind.is_assignment_pattern()
+        {
+            self.error(diagnostics::setter_with_assignment_pattern(function.params.span));
         }
     }
 
