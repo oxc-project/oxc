@@ -15,11 +15,16 @@ pub struct MinifierState<'a> {
 
 pub type TraverseCtx<'a> = oxc_traverse::TraverseCtx<'a, MinifierState<'a>>;
 
-#[derive(Clone, Copy)]
-pub struct Ctx<'a, 'b>(pub &'b TraverseCtx<'a>);
+pub struct Ctx<'a, 'b>(&'b mut TraverseCtx<'a>);
+
+impl<'a, 'b> Ctx<'a, 'b> {
+    pub fn new(ctx: &'b mut TraverseCtx<'a>) -> Self {
+        Self(ctx)
+    }
+}
 
 impl<'a, 'b> Deref for Ctx<'a, 'b> {
-    type Target = &'b TraverseCtx<'a>;
+    type Target = &'b mut TraverseCtx<'a>;
 
     fn deref(&self) -> &Self::Target {
         &self.0
@@ -65,28 +70,28 @@ impl<'a> Ctx<'a, '_> {
         self.0.scoping()
     }
 
-    pub fn is_global_reference(self, ident: &IdentifierReference<'a>) -> bool {
+    pub fn is_global_reference(&self, ident: &IdentifierReference<'a>) -> bool {
         ident.is_global_reference(self.0.scoping())
     }
 
-    pub fn eval_binary(self, e: &BinaryExpression<'a>) -> Option<Expression<'a>> {
-        if e.may_have_side_effects(&self) {
+    pub fn eval_binary(&self, e: &BinaryExpression<'a>) -> Option<Expression<'a>> {
+        if e.may_have_side_effects(self) {
             None
         } else {
-            e.evaluate_value(&self).map(|v| self.value_to_expr(e.span, v))
+            e.evaluate_value(self).map(|v| self.value_to_expr(e.span, v))
         }
     }
 
     pub fn eval_binary_operation(
-        self,
+        &self,
         operator: BinaryOperator,
         left: &Expression<'a>,
         right: &Expression<'a>,
     ) -> Option<ConstantValue<'a>> {
-        binary_operation_evaluate_value(operator, left, right, &self)
+        binary_operation_evaluate_value(operator, left, right, self)
     }
 
-    pub fn value_to_expr(self, span: Span, value: ConstantValue<'a>) -> Expression<'a> {
+    pub fn value_to_expr(&self, span: Span, value: ConstantValue<'a>) -> Expression<'a> {
         match value {
             ConstantValue::Number(n) => {
                 let number_base =
@@ -106,7 +111,7 @@ impl<'a> Ctx<'a, '_> {
         }
     }
 
-    pub fn is_expression_undefined(self, expr: &Expression) -> bool {
+    pub fn is_expression_undefined(&self, expr: &Expression) -> bool {
         match expr {
             Expression::Identifier(ident) if self.is_identifier_undefined(ident) => true,
             Expression::UnaryExpression(e) if e.operator.is_void() && e.argument.is_number() => {
@@ -117,7 +122,7 @@ impl<'a> Ctx<'a, '_> {
     }
 
     #[inline]
-    pub fn is_identifier_undefined(self, ident: &IdentifierReference) -> bool {
+    pub fn is_identifier_undefined(&self, ident: &IdentifierReference) -> bool {
         if ident.name == "undefined" && ident.is_global_reference(self.scoping()) {
             return true;
         }
@@ -126,7 +131,7 @@ impl<'a> Ctx<'a, '_> {
 
     /// If two expressions are equal.
     /// Special case `undefined` == `void 0`
-    pub fn expr_eq(self, a: &Expression<'a>, b: &Expression<'a>) -> bool {
+    pub fn expr_eq(&self, a: &Expression<'a>, b: &Expression<'a>) -> bool {
         use oxc_span::ContentEq;
         a.content_eq(b) || (self.is_expression_undefined(a) && self.is_expression_undefined(b))
     }

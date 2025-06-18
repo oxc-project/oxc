@@ -242,7 +242,7 @@ impl<'a> Normalize {
     fn fold_void_ident(e: &mut UnaryExpression<'a>, ctx: &TraverseCtx<'a>) {
         debug_assert!(e.operator.is_void());
         let Expression::Identifier(ident) = &e.argument else { return };
-        if Ctx(ctx).is_global_reference(ident) {
+        if ident.is_global_reference(ctx.scoping()) {
             return;
         }
         e.argument = ctx.ast.expression_numeric_literal(ident.span, 0.0, None, NumberBase::Decimal);
@@ -250,7 +250,7 @@ impl<'a> Normalize {
 
     fn fold_number_nan_to_nan(
         e: &StaticMemberExpression<'a>,
-        ctx: &TraverseCtx<'a>,
+        ctx: &mut TraverseCtx<'a>,
     ) -> Option<Expression<'a>> {
         let Expression::Identifier(ident) = &e.object else { return None };
         if ident.name != "Number" {
@@ -259,7 +259,7 @@ impl<'a> Normalize {
         if e.property.name != "NaN" {
             return None;
         }
-        if !Ctx(ctx).is_global_reference(ident) {
+        if !Ctx::new(ctx).is_global_reference(ident) {
             return None;
         }
         Some(ctx.ast.nan(ident.span))
@@ -284,7 +284,7 @@ impl<'a> Normalize {
     /// `PC` or `PC_WITH_ARRAY` in <https://github.com/rollup/rollup/blob/v4.42.0/src/ast/nodes/shared/knownGlobals.ts>
     fn set_pure_or_no_side_effects_to_new_expr(
         new_expr: &mut NewExpression<'a>,
-        ctx: &TraverseCtx<'a>,
+        ctx: &mut TraverseCtx<'a>,
     ) {
         if new_expr.pure {
             return;
@@ -300,7 +300,7 @@ impl<'a> Normalize {
             return;
         }
         // callee is a global reference.
-        let ctx = Ctx(ctx);
+        let ctx = Ctx::new(ctx);
         let len = new_expr.arguments.len();
 
         let (zero_arg_throws_error, one_arg_array_throws_error, one_arg_throws_error): (
@@ -353,7 +353,7 @@ impl<'a> Normalize {
             _ => return,
         };
 
-        if !Self::can_set_pure(ident, ctx) {
+        if !Self::can_set_pure(ident, &ctx) {
             return;
         }
 
@@ -383,7 +383,7 @@ impl<'a> Normalize {
         }
     }
 
-    fn can_set_pure(ident: &IdentifierReference<'a>, ctx: Ctx<'a, '_>) -> bool {
+    fn can_set_pure(ident: &IdentifierReference<'a>, ctx: &Ctx<'a, '_>) -> bool {
         ctx.is_global_reference(ident)
             // Throw is never pure.
             && !matches!(ctx.parent(), Ancestor::ThrowStatementArgument(_))

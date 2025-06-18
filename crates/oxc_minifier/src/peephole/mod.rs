@@ -169,9 +169,9 @@ impl<'a> Traverse<'a, MinifierState<'a>> for PeepholeOptimizations {
         if !self.is_prev_function_changed() {
             return;
         }
-        let ctx = Ctx(ctx);
+        let mut ctx = Ctx::new(ctx);
         let mut state = State::default();
-        self.minimize_statements(stmts, &mut state, ctx);
+        self.minimize_statements(stmts, &mut state, &mut ctx);
         if state.changed {
             self.mark_current_function_as_changed();
         }
@@ -181,12 +181,12 @@ impl<'a> Traverse<'a, MinifierState<'a>> for PeepholeOptimizations {
         if !self.is_prev_function_changed() {
             return;
         }
-        let ctx = Ctx(ctx);
+        let mut ctx = Ctx::new(ctx);
         let mut state = State::default();
-        self.try_fold_stmt_in_boolean_context(stmt, ctx);
-        self.remove_dead_code_exit_statement(stmt, &mut state, ctx);
+        self.try_fold_stmt_in_boolean_context(stmt, &mut ctx);
+        self.remove_dead_code_exit_statement(stmt, &mut state, &mut ctx);
         if let Statement::IfStatement(if_stmt) = stmt {
-            if let Some(folded_stmt) = self.try_minimize_if(if_stmt, &mut state, ctx) {
+            if let Some(folded_stmt) = self.try_minimize_if(if_stmt, &mut state, &mut ctx) {
                 *stmt = folded_stmt;
                 self.mark_current_function_as_changed();
             }
@@ -201,7 +201,8 @@ impl<'a> Traverse<'a, MinifierState<'a>> for PeepholeOptimizations {
             return;
         }
         let mut state = State::default();
-        self.minimize_for_statement(stmt, &mut state, Ctx(ctx));
+        let mut ctx = Ctx::new(ctx);
+        self.minimize_for_statement(stmt, &mut state, &mut ctx);
         if state.changed {
             self.mark_current_function_as_changed();
         }
@@ -211,9 +212,9 @@ impl<'a> Traverse<'a, MinifierState<'a>> for PeepholeOptimizations {
         if !self.is_prev_function_changed() {
             return;
         }
-        let ctx = Ctx(ctx);
+        let mut ctx = Ctx::new(ctx);
         let mut state = State::default();
-        self.substitute_return_statement(stmt, &mut state, ctx);
+        self.substitute_return_statement(stmt, &mut state, &mut ctx);
         if state.changed {
             self.mark_current_function_as_changed();
         }
@@ -227,9 +228,9 @@ impl<'a> Traverse<'a, MinifierState<'a>> for PeepholeOptimizations {
         if !self.is_prev_function_changed() {
             return;
         }
-        let ctx = Ctx(ctx);
+        let mut ctx = Ctx::new(ctx);
         let mut state = State::default();
-        self.substitute_variable_declaration(decl, &mut state, ctx);
+        self.substitute_variable_declaration(decl, &mut state, &mut ctx);
         if state.changed {
             self.mark_current_function_as_changed();
         }
@@ -239,13 +240,13 @@ impl<'a> Traverse<'a, MinifierState<'a>> for PeepholeOptimizations {
         if !self.is_prev_function_changed() {
             return;
         }
-        let ctx = Ctx(ctx);
+        let mut ctx = Ctx::new(ctx);
         let mut state = State::default();
-        self.fold_constants_exit_expression(expr, &mut state, ctx);
-        self.minimize_conditions_exit_expression(expr, &mut state, ctx);
-        self.remove_dead_code_exit_expression(expr, &mut state, ctx);
-        self.replace_known_methods_exit_expression(expr, &mut state, ctx);
-        self.substitute_exit_expression(expr, &mut state, ctx);
+        self.fold_constants_exit_expression(expr, &mut state, &mut ctx);
+        self.minimize_conditions_exit_expression(expr, &mut state, &mut ctx);
+        self.remove_dead_code_exit_expression(expr, &mut state, &mut ctx);
+        self.replace_known_methods_exit_expression(expr, &mut state, &mut ctx);
+        self.substitute_exit_expression(expr, &mut state, &mut ctx);
         if state.changed {
             self.mark_current_function_as_changed();
         }
@@ -255,8 +256,10 @@ impl<'a> Traverse<'a, MinifierState<'a>> for PeepholeOptimizations {
         if !self.is_prev_function_changed() {
             return;
         }
+        let mut ctx = Ctx::new(ctx);
+
         if expr.operator.is_not()
-            && self.try_fold_expr_in_boolean_context(&mut expr.argument, Ctx(ctx))
+            && self.try_fold_expr_in_boolean_context(&mut expr.argument, &mut ctx)
         {
             self.mark_current_function_as_changed();
         }
@@ -266,9 +269,9 @@ impl<'a> Traverse<'a, MinifierState<'a>> for PeepholeOptimizations {
         if !self.is_prev_function_changed() {
             return;
         }
-        let ctx = Ctx(ctx);
+        let mut ctx = Ctx::new(ctx);
         let mut state = State::default();
-        self.substitute_call_expression(expr, &mut state, ctx);
+        self.substitute_call_expression(expr, &mut state, &mut ctx);
         if state.changed {
             self.mark_current_function_as_changed();
         }
@@ -278,9 +281,9 @@ impl<'a> Traverse<'a, MinifierState<'a>> for PeepholeOptimizations {
         if !self.is_prev_function_changed() {
             return;
         }
-        let ctx = Ctx(ctx);
+        let mut ctx = Ctx::new(ctx);
         let mut state = State::default();
-        self.substitute_new_expression(expr, &mut state, ctx);
+        self.substitute_new_expression(expr, &mut state, &mut ctx);
         if state.changed {
             self.mark_current_function_as_changed();
         }
@@ -290,9 +293,9 @@ impl<'a> Traverse<'a, MinifierState<'a>> for PeepholeOptimizations {
         if !self.is_prev_function_changed() {
             return;
         }
-        let ctx = Ctx(ctx);
+        let mut ctx = Ctx::new(ctx);
         let mut state = State::default();
-        self.substitute_object_property(prop, &mut state, ctx);
+        self.substitute_object_property(prop, &mut state, &mut ctx);
         if state.changed {
             self.mark_current_function_as_changed();
         }
@@ -306,9 +309,9 @@ impl<'a> Traverse<'a, MinifierState<'a>> for PeepholeOptimizations {
         if !self.is_prev_function_changed() {
             return;
         }
-        let ctx = Ctx(ctx);
+        let mut ctx = Ctx::new(ctx);
         let mut state = State::default();
-        self.substitute_assignment_target_property(node, &mut state, ctx);
+        self.substitute_assignment_target_property(node, &mut state, &mut ctx);
         if state.changed {
             self.mark_current_function_as_changed();
         }
@@ -322,9 +325,9 @@ impl<'a> Traverse<'a, MinifierState<'a>> for PeepholeOptimizations {
         if !self.is_prev_function_changed() {
             return;
         }
-        let ctx = Ctx(ctx);
+        let mut ctx = Ctx::new(ctx);
         let mut state = State::default();
-        self.substitute_assignment_target_property_property(prop, &mut state, ctx);
+        self.substitute_assignment_target_property_property(prop, &mut state, &mut ctx);
         if state.changed {
             self.mark_current_function_as_changed();
         }
@@ -334,9 +337,9 @@ impl<'a> Traverse<'a, MinifierState<'a>> for PeepholeOptimizations {
         if !self.is_prev_function_changed() {
             return;
         }
-        let ctx = Ctx(ctx);
+        let mut ctx = Ctx::new(ctx);
         let mut state = State::default();
-        self.substitute_binding_property(prop, &mut state, ctx);
+        self.substitute_binding_property(prop, &mut state, &mut ctx);
         if state.changed {
             self.mark_current_function_as_changed();
         }
@@ -350,9 +353,9 @@ impl<'a> Traverse<'a, MinifierState<'a>> for PeepholeOptimizations {
         if !self.is_prev_function_changed() {
             return;
         }
-        let ctx = Ctx(ctx);
+        let mut ctx = Ctx::new(ctx);
         let mut state = State::default();
-        self.substitute_method_definition(prop, &mut state, ctx);
+        self.substitute_method_definition(prop, &mut state, &mut ctx);
         if state.changed {
             self.mark_current_function_as_changed();
         }
@@ -366,9 +369,9 @@ impl<'a> Traverse<'a, MinifierState<'a>> for PeepholeOptimizations {
         if !self.is_prev_function_changed() {
             return;
         }
-        let ctx = Ctx(ctx);
+        let mut ctx = Ctx::new(ctx);
         let mut state = State::default();
-        self.substitute_property_definition(prop, &mut state, ctx);
+        self.substitute_property_definition(prop, &mut state, &mut ctx);
         if state.changed {
             self.mark_current_function_as_changed();
         }
@@ -382,9 +385,9 @@ impl<'a> Traverse<'a, MinifierState<'a>> for PeepholeOptimizations {
         if !self.is_prev_function_changed() {
             return;
         }
-        let ctx = Ctx(ctx);
+        let mut ctx = Ctx::new(ctx);
         let mut state = State::default();
-        self.substitute_accessor_property(prop, &mut state, ctx);
+        self.substitute_accessor_property(prop, &mut state, &mut ctx);
         if state.changed {
             self.mark_current_function_as_changed();
         }
@@ -417,19 +420,23 @@ impl<'a> Traverse<'a, MinifierState<'a>> for LatePeepholeOptimizations {
         expr: &mut MemberExpression<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) {
-        Self::convert_to_dotted_properties(expr, Ctx(ctx));
+        let mut ctx = Ctx::new(ctx);
+        Self::convert_to_dotted_properties(expr, &mut ctx);
     }
 
     fn exit_class_body(&mut self, body: &mut ClassBody<'a>, ctx: &mut TraverseCtx<'a>) {
-        Self::remove_dead_code_exit_class_body(body, Ctx(ctx));
+        let mut ctx = Ctx::new(ctx);
+        Self::remove_dead_code_exit_class_body(body, &mut ctx);
     }
 
     fn exit_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
-        Self::substitute_exit_expression(expr, Ctx(ctx));
+        let mut ctx = Ctx::new(ctx);
+        Self::substitute_exit_expression(expr, &mut ctx);
     }
 
     fn exit_catch_clause(&mut self, catch: &mut CatchClause<'a>, ctx: &mut TraverseCtx<'a>) {
-        self.substitute_catch_clause(catch, Ctx(ctx));
+        let mut ctx = Ctx::new(ctx);
+        self.substitute_catch_clause(catch, &mut ctx);
     }
 
     fn exit_call_expression(&mut self, e: &mut CallExpression<'a>, _ctx: &mut TraverseCtx<'a>) {
@@ -467,18 +474,21 @@ impl<'a> DeadCodeElimination {
 impl<'a> Traverse<'a, MinifierState<'a>> for DeadCodeElimination {
     fn exit_statement(&mut self, stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
         let mut state = State::default();
-        self.inner.remove_dead_code_exit_statement(stmt, &mut state, Ctx(ctx));
+        let mut ctx = Ctx::new(ctx);
+        self.inner.remove_dead_code_exit_statement(stmt, &mut state, &mut ctx);
     }
 
     fn exit_statements(&mut self, stmts: &mut Vec<'a, Statement<'a>>, ctx: &mut TraverseCtx<'a>) {
         let mut state = State::default();
-        self.inner.remove_dead_code_exit_statements(stmts, &mut state, Ctx(ctx));
+        let mut ctx = Ctx::new(ctx);
+        self.inner.remove_dead_code_exit_statements(stmts, &mut state, &mut ctx);
         stmts.retain(|stmt| !matches!(stmt, Statement::EmptyStatement(_)));
     }
 
     fn exit_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
         let mut state = State::default();
-        self.inner.fold_constants_exit_expression(expr, &mut state, Ctx(ctx));
-        self.inner.remove_dead_code_exit_expression(expr, &mut state, Ctx(ctx));
+        let mut ctx = Ctx::new(ctx);
+        self.inner.fold_constants_exit_expression(expr, &mut state, &mut ctx);
+        self.inner.remove_dead_code_exit_expression(expr, &mut state, &mut ctx);
     }
 }

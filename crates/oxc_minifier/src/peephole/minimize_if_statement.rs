@@ -14,7 +14,7 @@ impl<'a> PeepholeOptimizations {
         &self,
         if_stmt: &mut IfStatement<'a>,
         state: &mut State,
-        ctx: Ctx<'a, '_>,
+        ctx: &mut Ctx<'a, '_>,
     ) -> Option<Statement<'a>> {
         self.wrap_to_avoid_ambiguous_else(if_stmt, state, ctx);
         if let Statement::ExpressionStatement(expr_stmt) = &mut if_stmt.consequent {
@@ -131,7 +131,7 @@ impl<'a> PeepholeOptimizations {
         &self,
         if_stmt: &mut IfStatement<'a>,
         state: &mut State,
-        ctx: Ctx<'a, '_>,
+        ctx: &mut Ctx<'a, '_>,
     ) {
         if let Statement::IfStatement(if2) = &mut if_stmt.consequent {
             if if2.consequent.is_jump_statement() && if2.alternate.is_some() {

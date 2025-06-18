@@ -12,7 +12,7 @@ impl<'a> PeepholeOptimizations {
         &self,
         span: Span,
         expr: Expression<'a>,
-        ctx: Ctx<'a, '_>,
+        ctx: &mut Ctx<'a, '_>,
     ) -> Expression<'a> {
         let mut unary = ctx.ast.unary_expression(span, UnaryOperator::LogicalNot, expr);
         self.try_minimize_not(&mut unary, ctx)
@@ -23,7 +23,7 @@ impl<'a> PeepholeOptimizations {
     pub fn try_minimize_not(
         &self,
         expr: &mut UnaryExpression<'a>,
-        ctx: Ctx<'a, '_>,
+        ctx: &mut Ctx<'a, '_>,
     ) -> Option<Expression<'a>> {
         if !expr.operator.is_not() {
             return None;
@@ -33,7 +33,7 @@ impl<'a> PeepholeOptimizations {
             // `!!true` -> `true`
             // `!!false` -> `false`
             Expression::UnaryExpression(e)
-                if e.operator.is_not() && e.argument.value_type(&ctx).is_boolean() =>
+                if e.operator.is_not() && e.argument.value_type(ctx).is_boolean() =>
             {
                 Some(e.argument.take_in(ctx.ast))
             }

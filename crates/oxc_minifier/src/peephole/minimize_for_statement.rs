@@ -12,7 +12,7 @@ impl<'a> PeepholeOptimizations {
         &self,
         for_stmt: &mut ForStatement<'a>,
         state: &mut State,
-        ctx: Ctx<'a, '_>,
+        ctx: &mut Ctx<'a, '_>,
     ) {
         // Get the first statement in the loop
         let mut first = &for_stmt.body;
@@ -111,7 +111,7 @@ impl<'a> PeepholeOptimizations {
         span: Span,
         body: Option<Statement<'a>>,
         replace: Option<Statement<'a>>,
-        ctx: Ctx<'a, '_>,
+        ctx: &mut Ctx<'a, '_>,
     ) -> Statement<'a> {
         match body {
             Some(Statement::BlockStatement(mut block_stmt)) if !block_stmt.body.is_empty() => {

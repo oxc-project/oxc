@@ -1,6 +1,6 @@
 //! ECMAScript Minifier
 
-#![allow(clippy::literal_string_with_formatting_args)]
+#![allow(clippy::literal_string_with_formatting_args, clippy::needless_pass_by_ref_mut)]
 
 mod compressor;
 mod ctx;
