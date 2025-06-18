@@ -585,10 +585,10 @@ impl<'c> Parser<'c> {
         Some(self.type_id("&str"))
     }
 
-    fn parse_type_array(&mut self, _type_array: &TypeArray) -> Option<TypeId> {
+    fn parse_type_array(&mut self, _type_array: &TypeArray) -> TypeId {
         // For array types like [i32; 2], we'll create a special primitive type
         // The exact name doesn't matter since the field will be skipped in ESTree
-        Some(self.type_id("ArrayType"))
+        self.type_id("ArrayType")
     }
 
     /// Parse attributes on struct or enum with parsers provided by [`Derive`]s and [`Generator`]s.
