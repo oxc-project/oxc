@@ -10,12 +10,12 @@ use crate::raw_transfer_types::*;
 #[cfg(target_pointer_width = "64")]
 const _: () = {
     // Padding: 0 bytes
-    assert!(size_of::<RawTransferData>() == 280);
+    assert!(size_of::<RawTransferData>() == 312);
     assert!(align_of::<RawTransferData>() == 8);
     assert!(offset_of!(RawTransferData, program) == 0);
-    assert!(offset_of!(RawTransferData, comments) == 128);
-    assert!(offset_of!(RawTransferData, module) == 152);
-    assert!(offset_of!(RawTransferData, errors) == 256);
+    assert!(offset_of!(RawTransferData, comments) == 160);
+    assert!(offset_of!(RawTransferData, module) == 184);
+    assert!(offset_of!(RawTransferData, errors) == 288);
 
     // Padding: 7 bytes
     assert!(size_of::<Error>() == 80);
@@ -30,9 +30,9 @@ const _: () = {
     assert!(align_of::<ErrorSeverity>() == 1);
 
     // Padding: 0 bytes
-    assert!(size_of::<ErrorLabel>() == 24);
+    assert!(size_of::<ErrorLabel>() == 40);
     assert!(align_of::<ErrorLabel>() == 8);
-    assert!(offset_of!(ErrorLabel, message) == 8);
+    assert!(offset_of!(ErrorLabel, message) == 24);
     assert!(offset_of!(ErrorLabel, span) == 0);
 
     // Padding: 7 bytes
@@ -45,28 +45,28 @@ const _: () = {
     assert!(offset_of!(EcmaScriptModule, import_metas) == 72);
 
     // Padding: 0 bytes
-    assert!(size_of::<StaticImport>() == 56);
+    assert!(size_of::<StaticImport>() == 88);
     assert!(align_of::<StaticImport>() == 8);
     assert!(offset_of!(StaticImport, span) == 0);
-    assert!(offset_of!(StaticImport, module_request) == 8);
-    assert!(offset_of!(StaticImport, entries) == 32);
+    assert!(offset_of!(StaticImport, module_request) == 24);
+    assert!(offset_of!(StaticImport, entries) == 64);
 
     // Padding: 0 bytes
-    assert!(size_of::<StaticExport>() == 32);
+    assert!(size_of::<StaticExport>() == 48);
     assert!(align_of::<StaticExport>() == 8);
     assert!(offset_of!(StaticExport, span) == 0);
-    assert!(offset_of!(StaticExport, entries) == 8);
+    assert!(offset_of!(StaticExport, entries) == 24);
 };
 
 #[cfg(target_pointer_width = "32")]
 const _: () = {
     // Padding: 0 bytes
-    assert!(size_of::<RawTransferData>() == 188);
+    assert!(size_of::<RawTransferData>() == 220);
     assert!(align_of::<RawTransferData>() == 4);
     assert!(offset_of!(RawTransferData, program) == 0);
-    assert!(offset_of!(RawTransferData, comments) == 88);
-    assert!(offset_of!(RawTransferData, module) == 104);
-    assert!(offset_of!(RawTransferData, errors) == 172);
+    assert!(offset_of!(RawTransferData, comments) == 120);
+    assert!(offset_of!(RawTransferData, module) == 136);
+    assert!(offset_of!(RawTransferData, errors) == 204);
 
     // Padding: 3 bytes
     assert!(size_of::<Error>() == 44);
@@ -81,9 +81,9 @@ const _: () = {
     assert!(align_of::<ErrorSeverity>() == 1);
 
     // Padding: 0 bytes
-    assert!(size_of::<ErrorLabel>() == 16);
+    assert!(size_of::<ErrorLabel>() == 32);
     assert!(align_of::<ErrorLabel>() == 4);
-    assert!(offset_of!(ErrorLabel, message) == 8);
+    assert!(offset_of!(ErrorLabel, message) == 24);
     assert!(offset_of!(ErrorLabel, span) == 0);
 
     // Padding: 3 bytes
@@ -96,17 +96,17 @@ const _: () = {
     assert!(offset_of!(EcmaScriptModule, import_metas) == 48);
 
     // Padding: 0 bytes
-    assert!(size_of::<StaticImport>() == 40);
+    assert!(size_of::<StaticImport>() == 72);
     assert!(align_of::<StaticImport>() == 4);
     assert!(offset_of!(StaticImport, span) == 0);
-    assert!(offset_of!(StaticImport, module_request) == 8);
-    assert!(offset_of!(StaticImport, entries) == 24);
+    assert!(offset_of!(StaticImport, module_request) == 24);
+    assert!(offset_of!(StaticImport, entries) == 56);
 
     // Padding: 0 bytes
-    assert!(size_of::<StaticExport>() == 24);
+    assert!(size_of::<StaticExport>() == 40);
     assert!(align_of::<StaticExport>() == 4);
     assert!(offset_of!(StaticExport, span) == 0);
-    assert!(offset_of!(StaticExport, entries) == 8);
+    assert!(offset_of!(StaticExport, entries) == 24);
 };
 
 #[cfg(not(any(target_pointer_width = "64", target_pointer_width = "32")))]

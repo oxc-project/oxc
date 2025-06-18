@@ -15,6 +15,7 @@ impl ESTree for Span {
         let mut state = serializer.serialize_struct();
         state.serialize_field("start", &self.start);
         state.serialize_field("end", &self.end);
+        state.serialize_field("range", &self.range);
         state.end();
     }
 }
