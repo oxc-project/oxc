@@ -6661,7 +6661,6 @@ class RegExpPattern {
 const DebugRegExpPattern = class RegExpPattern {};
 
 class RegExpFlags {
-  type = 'RegExpFlags';
   #internal;
 
   constructor(pos, ast) {
@@ -6675,15 +6674,8 @@ class RegExpFlags {
     nodes.set(pos, this);
   }
 
-  get 0() {
-    const internal = this.#internal;
-    return constructU8(internal.pos, internal.ast);
-  }
-
   toJSON() {
-    return {
-      type: 'RegExpFlags',
-    };
+    return {};
   }
 
   [inspectSymbol]() {

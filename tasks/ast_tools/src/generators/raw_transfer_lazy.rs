@@ -475,10 +475,7 @@ fn generate_struct(
             ");
         }
 
-        // TODO: Remove this special case for `RegExpFlags`
-        if struct_name != "RegExpFlags" {
-            write_it!(to_json, "{field_name}: this.{field_name},\n");
-        }
+        write_it!(to_json, "{field_name}: this.{field_name},\n");
     }
 
     let type_prop_init = if add_type_field {
