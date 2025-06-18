@@ -482,8 +482,6 @@ impl<'s> StructSerializerGenerator<'s> {
             self.add_type_field = false;
         }
 
-
-
         let value = if let Some(converter_name) = &field.estree.via {
             let converter_path = get_converter_path(converter_name, self.krate, self.schema);
             quote!( #converter_path(#self_path) )
