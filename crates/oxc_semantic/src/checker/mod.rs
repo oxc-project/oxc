@@ -107,8 +107,14 @@ pub fn check<'a>(kind: AstKind<'a>, ctx: &SemanticBuilder<'a>) {
             }
         }
         AstKind::TSTypeAnnotation(annot) => ts::check_ts_type_annotation(annot, ctx),
+        AstKind::TSTypeParameterDeclaration(declaration) => {
+            ts::check_ts_type_parameter_declaration(declaration, ctx);
+        }
+        AstKind::TSInterfaceDeclaration(decl) => ts::check_ts_interface_declaration(decl, ctx),
+        AstKind::TSTypeParameter(param) => ts::check_ts_type_parameter(param, ctx),
         AstKind::TSModuleDeclaration(decl) => ts::check_ts_module_declaration(decl, ctx),
         AstKind::TSEnumDeclaration(decl) => ts::check_ts_enum_declaration(decl, ctx),
+        AstKind::TSTypeAliasDeclaration(decl) => ts::check_ts_type_alias_declaration(decl, ctx),
         AstKind::TSImportEqualsDeclaration(decl) => {
             ts::check_ts_import_equals_declaration(decl, ctx);
         }
