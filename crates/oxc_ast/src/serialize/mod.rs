@@ -3,9 +3,8 @@ use std::cmp;
 use oxc_ast_macros::ast_meta;
 use oxc_estree::{
     CompactFixesJSSerializer, CompactFixesTSSerializer, CompactJSSerializer, CompactTSSerializer,
-    Concat2, ConfigFixesJS, ConfigFixesTS, ESTree, JsonSafeString,
-    PrettyFixesJSSerializer, PrettyFixesTSSerializer, PrettyJSSerializer, PrettyTSSerializer,
-    Serializer, StructSerializer,
+    Concat2, ConfigFixesJS, ConfigFixesTS, ESTree, JsonSafeString, PrettyFixesJSSerializer,
+    PrettyFixesTSSerializer, PrettyJSSerializer, PrettyTSSerializer, Serializer, StructSerializer,
 };
 use oxc_span::GetSpan;
 

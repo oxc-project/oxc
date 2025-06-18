@@ -332,6 +332,6 @@ pub struct NamedReference<'a> {
 fn size_asserts() {
     use std::mem::size_of;
 
-    assert!(size_of::<Term>() == 16);
+    assert!(size_of::<Term>() == 32);
     assert!(size_of::<CharacterClassContents>() == 16);
 }
