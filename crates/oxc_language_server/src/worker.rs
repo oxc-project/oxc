@@ -229,16 +229,30 @@ impl WorkspaceWorker {
         let mut code_actions_vec: Vec<CodeActionOrCommand> = vec![];
 
         for report in reports {
+            let mut append_ignore_code_actions = true;
+
             if let Some(fix_actions) = apply_fix_code_actions(report, uri) {
+                // do not append ignore code actions when the error is the ignore action
+                if fix_actions
+                    .first()
+                    .as_ref()
+                    .is_some_and(|fix| fix.title == "remove unused disable directive")
+                {
+                    append_ignore_code_actions = false;
+                }
                 code_actions_vec
                     .extend(fix_actions.into_iter().map(CodeActionOrCommand::CodeAction));
             }
 
-            code_actions_vec
-                .push(CodeActionOrCommand::CodeAction(ignore_this_line_code_action(report, uri)));
+            if append_ignore_code_actions {
+                code_actions_vec.push(CodeActionOrCommand::CodeAction(
+                    ignore_this_line_code_action(report, uri),
+                ));
 
-            code_actions_vec
-                .push(CodeActionOrCommand::CodeAction(ignore_this_rule_code_action(report, uri)));
+                code_actions_vec.push(CodeActionOrCommand::CodeAction(
+                    ignore_this_rule_code_action(report, uri),
+                ));
+            }
         }
 
         code_actions_vec
