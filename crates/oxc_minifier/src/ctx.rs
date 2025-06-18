@@ -1,4 +1,4 @@
-use std::{marker::PhantomData, ops::Deref};
+use std::{marker::PhantomData, ops::Deref, rc::Rc};
 
 use oxc_ast::{AstBuilder, ast::*};
 use oxc_ecmascript::constant_evaluation::{
@@ -8,9 +8,17 @@ use oxc_ecmascript::side_effects::{MayHaveSideEffects, PropertyReadSideEffects};
 use oxc_semantic::{IsGlobalReference, Scoping};
 use oxc_span::format_atom;
 
-#[derive(Default)]
+use crate::CompressOptions;
+
 pub struct MinifierState<'a> {
-    data: PhantomData<&'a ()>,
+    pub options: Rc<CompressOptions>,
+    _data: PhantomData<&'a ()>,
+}
+
+impl MinifierState<'_> {
+    pub fn new(options: Rc<CompressOptions>) -> Self {
+        Self { options, _data: PhantomData }
+    }
 }
 
 pub type TraverseCtx<'a> = oxc_traverse::TraverseCtx<'a, MinifierState<'a>>;
@@ -38,20 +46,29 @@ impl oxc_ecmascript::is_global_reference::IsGlobalReference for Ctx<'_, '_> {
 }
 
 impl oxc_ecmascript::side_effects::MayHaveSideEffectsContext for Ctx<'_, '_> {
-    fn respect_annotations(&self) -> bool {
-        true
+    fn annotations(&self) -> bool {
+        self.state.options.treeshake.annotations
     }
 
-    fn is_pure_call(&self, _callee: &Expression) -> bool {
+    fn manual_pure_functions(&self, callee: &Expression) -> bool {
+        if let Expression::Identifier(ident) = callee {
+            return self
+                .state
+                .options
+                .treeshake
+                .manual_pure_functions
+                .iter()
+                .any(|name| ident.name.as_str() == name);
+        }
         false
     }
 
     fn property_read_side_effects(&self) -> PropertyReadSideEffects {
-        PropertyReadSideEffects::All
+        self.state.options.treeshake.property_read_side_effects
     }
 
     fn unknown_global_side_effects(&self) -> bool {
-        true
+        self.state.options.treeshake.unknown_global_side_effects
     }
 }
 

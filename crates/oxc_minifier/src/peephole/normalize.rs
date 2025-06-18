@@ -6,10 +6,7 @@ use oxc_span::GetSpan;
 use oxc_syntax::scope::ScopeFlags;
 use oxc_traverse::{Ancestor, ReusableTraverseCtx, Traverse, traverse_mut_with_ctx};
 
-use crate::{
-    CompressOptions,
-    ctx::{Ctx, MinifierState, TraverseCtx},
-};
+use crate::ctx::{Ctx, MinifierState, TraverseCtx};
 
 #[derive(Default)]
 pub struct NormalizeOptions {
@@ -38,7 +35,6 @@ pub struct NormalizeOptions {
 /// <https://github.com/google/closure-compiler/blob/v20240609/src/com/google/javascript/jscomp/Normalize.java>
 pub struct Normalize {
     options: NormalizeOptions,
-    compress_options: CompressOptions,
 }
 
 impl<'a> Normalize {
@@ -52,11 +48,11 @@ impl<'a> Normalize {
 }
 
 impl<'a> Traverse<'a, MinifierState<'a>> for Normalize {
-    fn exit_statements(&mut self, stmts: &mut Vec<'a, Statement<'a>>, _ctx: &mut TraverseCtx<'a>) {
+    fn exit_statements(&mut self, stmts: &mut Vec<'a, Statement<'a>>, ctx: &mut TraverseCtx<'a>) {
         stmts.retain(|stmt| {
             !(matches!(stmt, Statement::EmptyStatement(_))
-                || self.drop_debugger(stmt)
-                || self.drop_console(stmt))
+                || Self::drop_debugger(stmt, ctx)
+                || Self::drop_console(stmt, ctx))
         });
     }
 
@@ -90,10 +86,10 @@ impl<'a> Traverse<'a, MinifierState<'a>> for Normalize {
                 None
             }
             Expression::ArrowFunctionExpression(e) => {
-                self.recover_arrow_expression_after_drop_console(e);
+                Self::recover_arrow_expression_after_drop_console(e, ctx);
                 None
             }
-            Expression::CallExpression(_) if self.compress_options.drop_console => {
+            Expression::CallExpression(_) if ctx.state.options.drop_console => {
                 self.compress_console(expr, ctx)
             }
             Expression::StaticMemberExpression(e) => Self::fold_number_nan_to_nan(e, ctx),
@@ -113,15 +109,15 @@ impl<'a> Traverse<'a, MinifierState<'a>> for Normalize {
 }
 
 impl<'a> Normalize {
-    pub fn new(options: NormalizeOptions, compress_options: CompressOptions) -> Self {
-        Self { options, compress_options }
+    pub fn new(options: NormalizeOptions) -> Self {
+        Self { options }
     }
 
     /// Drop `drop_debugger` statement.
     ///
     /// Enabled by `compress.drop_debugger`
-    fn drop_debugger(&self, stmt: &Statement<'a>) -> bool {
-        matches!(stmt, Statement::DebuggerStatement(_)) && self.compress_options.drop_debugger
+    fn drop_debugger(stmt: &Statement<'a>, ctx: &TraverseCtx<'a>) -> bool {
+        matches!(stmt, Statement::DebuggerStatement(_)) && ctx.state.options.drop_debugger
     }
 
     fn compress_console(
@@ -129,17 +125,20 @@ impl<'a> Normalize {
         expr: &Expression<'a>,
         ctx: &TraverseCtx<'a>,
     ) -> Option<Expression<'a>> {
-        debug_assert!(self.compress_options.drop_console);
+        debug_assert!(ctx.state.options.drop_console);
         Self::is_console(expr).then(|| ctx.ast.void_0(expr.span()))
     }
 
-    fn drop_console(&self, stmt: &Statement<'a>) -> bool {
-        self.compress_options.drop_console
+    fn drop_console(stmt: &Statement<'a>, ctx: &TraverseCtx<'a>) -> bool {
+        ctx.state.options.drop_console
             && matches!(stmt, Statement::ExpressionStatement(expr) if Self::is_console(&expr.expression))
     }
 
-    fn recover_arrow_expression_after_drop_console(&self, expr: &mut ArrowFunctionExpression<'a>) {
-        if self.compress_options.drop_console && expr.expression && expr.body.is_empty() {
+    fn recover_arrow_expression_after_drop_console(
+        expr: &mut ArrowFunctionExpression<'a>,
+        ctx: &TraverseCtx<'a>,
+    ) {
+        if ctx.state.options.drop_console && expr.expression && expr.body.is_empty() {
             expr.expression = false;
         }
     }

@@ -31,11 +31,11 @@ impl IsGlobalReference for Ctx {
     }
 }
 impl MayHaveSideEffectsContext for Ctx {
-    fn respect_annotations(&self) -> bool {
+    fn annotations(&self) -> bool {
         self.annotation
     }
 
-    fn is_pure_call(&self, callee: &Expression) -> bool {
+    fn manual_pure_functions(&self, callee: &Expression) -> bool {
         if let Expression::Identifier(id) = callee {
             self.pure_function_names.iter().any(|name| name == id.name.as_str())
         } else {
