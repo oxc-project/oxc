@@ -352,6 +352,49 @@ impl Allocator {
         unsafe { self.alloc_concat_strs_array_with_total_len_in(strings, total_len) }
     }
 
+    /// Allocate a raw uninitialized byte buffer of the given `size` from this [`Allocator`].
+    ///
+    /// This is a low-level API intended for advanced use cases, such as reading file contents
+    /// directly into arena-allocated memory. The returned buffer is uninitialized and must be
+    /// fully written to before being read from.
+    ///
+    /// # Safety
+    ///
+    /// The memory returned is uninitialized. Reading from it before writing is undefined behavior.
+    /// The caller must ensure that the buffer is fully and correctly initialized before use.
+    ///
+    /// # Panics
+    ///
+    /// Panics if the layout for `size` bytes with alignment 1 is invalid. (This should never happen
+    /// for `size > 0`.)
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use oxc_allocator::Allocator;
+    /// use std::io::{self, Read};
+    ///
+    /// let allocator = Allocator::default();
+    /// let data: &[u8] = {
+    ///     let buf = allocator.alloc_raw_bytes(10);
+    ///     // SAFETY: We're writing to the full buffer
+    ///     buf.copy_from_slice(b"abcdefghij");
+    ///     buf
+    /// };
+    ///
+    /// assert_eq!(data, b"abcdefghij");
+    /// ```
+    #[expect(clippy::mut_from_ref)]
+    pub fn alloc_raw_bytes(&self, size: usize) -> &mut [u8] {
+        let layout = std::alloc::Layout::from_size_align(size, 1).unwrap();
+        let ptr = self.bump.alloc_layout(layout);
+
+        // SAFETY: `alloc_layout` guarantees the returned pointer is valid for `size` bytes.
+        // We cast it to `*mut u8` and return a `&mut [u8]` slice of exactly `size` length.
+        // Caller must initialize the contents before reading.
+        unsafe { std::slice::from_raw_parts_mut(ptr.as_ptr(), size) }
+    }
+
     /// Create a new `&str` from a fixed-size array of `&str`s concatenated together,
     /// allocated in the given `allocator`, with provided `total_len`.
     ///
