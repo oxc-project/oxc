@@ -10,12 +10,12 @@ use crate::{StringToBigInt, ToBoolean, ToJsString, is_global_reference::IsGlobal
 ///
 /// <https://tc39.es/ecma262/#sec-tobigint>
 pub trait ToBigInt<'a> {
-    fn to_big_int(&self, is_global_reference: &impl IsGlobalReference) -> Option<BigInt>;
+    fn to_big_int(&self, is_global_reference: &impl IsGlobalReference<'a>) -> Option<BigInt>;
 }
 
 impl<'a> ToBigInt<'a> for Expression<'a> {
     #[expect(clippy::cast_possible_truncation)]
-    fn to_big_int(&self, is_global_reference: &impl IsGlobalReference) -> Option<BigInt> {
+    fn to_big_int(&self, is_global_reference: &impl IsGlobalReference<'a>) -> Option<BigInt> {
         match self {
             Expression::NumericLiteral(number_literal) => {
                 let value = number_literal.value;
@@ -58,7 +58,7 @@ impl<'a> ToBigInt<'a> for Expression<'a> {
 }
 
 impl<'a> ToBigInt<'a> for BigIntLiteral<'a> {
-    fn to_big_int(&self, _is_global_reference: &impl IsGlobalReference) -> Option<BigInt> {
+    fn to_big_int(&self, _is_global_reference: &impl IsGlobalReference<'a>) -> Option<BigInt> {
         // No need to use `StringToBigInt::string_to_big_int`, because `value` is always base 10
         let value = BigInt::from_str_radix(&self.value, 10).ok();
         debug_assert!(value.is_some(), "Failed to parse {}n", self.value);

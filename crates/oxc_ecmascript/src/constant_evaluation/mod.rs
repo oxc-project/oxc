@@ -5,7 +5,6 @@ use num_traits::{FromPrimitive, ToPrimitive, Zero};
 
 use equality_comparison::{abstract_equality_comparison, strict_equality_comparison};
 use oxc_ast::{AstBuilder, ast::*};
-use oxc_syntax::reference::ReferenceId;
 
 use crate::{
     ToBigInt, ToBoolean, ToInt32, ToJsString, ToNumber,
@@ -23,16 +22,11 @@ pub use is_literal_value::IsLiteralValue;
 pub use value::ConstantValue;
 pub use value_type::{DetermineValueType, ValueType};
 
-pub trait ConstantEvaluationCtx<'a>: MayHaveSideEffectsContext {
+pub trait ConstantEvaluationCtx<'a>: MayHaveSideEffectsContext<'a> {
     fn ast(&self) -> AstBuilder<'a>;
-
-    fn get_constant_value_for_reference_id(
-        &self,
-        reference_id: ReferenceId,
-    ) -> Option<ConstantValue<'a>>;
 }
 
-pub trait ConstantEvaluation<'a>: MayHaveSideEffects {
+pub trait ConstantEvaluation<'a>: MayHaveSideEffects<'a> {
     /// Evaluate the expression to a constant value.
     ///
     /// Use the specific functions (e.g. [`ConstantEvaluation::evaluate_value_to_boolean`], [`ConstantEvaluation::evaluate_value`]).

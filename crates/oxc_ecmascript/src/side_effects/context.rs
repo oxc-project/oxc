@@ -14,7 +14,7 @@ pub enum PropertyReadSideEffects {
     All,
 }
 
-pub trait MayHaveSideEffectsContext: IsGlobalReference {
+pub trait MayHaveSideEffectsContext<'a>: IsGlobalReference<'a> {
     /// Whether to respect the pure annotations.
     ///
     /// Pure annotations are the comments that marks that a expression is pure.

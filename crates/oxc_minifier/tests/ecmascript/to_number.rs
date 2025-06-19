@@ -10,8 +10,8 @@ struct GlobalReferenceInformation {
     is_undefined_shadowed: bool,
 }
 
-impl IsGlobalReference for GlobalReferenceInformation {
-    fn is_global_reference(&self, ident: &IdentifierReference<'_>) -> Option<bool> {
+impl<'a> IsGlobalReference<'a> for GlobalReferenceInformation {
+    fn is_global_reference(&self, ident: &IdentifierReference<'a>) -> Option<bool> {
         if ident.name == "undefined" { Some(!self.is_undefined_shadowed) } else { None }
     }
 }

@@ -24,7 +24,7 @@ pub struct MinifierState<'a> {
     /// Constant values evaluated from expressions.
     ///
     /// Values are saved during constant evaluation phase.
-    /// Values are read during [ConstantEvaluationCtx::get_constant_value_for_reference_id].
+    /// Values are read during [oxc_ecmascript::is_global_reference::IsGlobalReference::get_constant_value_for_reference_id].
     pub constant_values: FxHashMap<SymbolId, ConstantValue<'a>>,
 }
 
@@ -59,13 +59,24 @@ impl<'a, 'b> DerefMut for Ctx<'a, 'b> {
     }
 }
 
-impl oxc_ecmascript::is_global_reference::IsGlobalReference for Ctx<'_, '_> {
+impl<'a> oxc_ecmascript::is_global_reference::IsGlobalReference<'a> for Ctx<'a, '_> {
     fn is_global_reference(&self, ident: &IdentifierReference<'_>) -> Option<bool> {
         Some(ident.is_global_reference(self.0.scoping()))
     }
+
+    fn get_constant_value_for_reference_id(
+        &self,
+        reference_id: ReferenceId,
+    ) -> Option<ConstantValue<'a>> {
+        self.scoping()
+            .get_reference(reference_id)
+            .symbol_id()
+            .and_then(|symbol_id| self.state.constant_values.get(&symbol_id))
+            .cloned()
+    }
 }
 
-impl oxc_ecmascript::side_effects::MayHaveSideEffectsContext for Ctx<'_, '_> {
+impl<'a> oxc_ecmascript::side_effects::MayHaveSideEffectsContext<'a> for Ctx<'a, '_> {
     fn annotations(&self) -> bool {
         self.state.options.treeshake.annotations
     }
@@ -95,17 +106,6 @@ impl oxc_ecmascript::side_effects::MayHaveSideEffectsContext for Ctx<'_, '_> {
 impl<'a> ConstantEvaluationCtx<'a> for Ctx<'a, '_> {
     fn ast(&self) -> AstBuilder<'a> {
         self.ast
-    }
-
-    fn get_constant_value_for_reference_id(
-        &self,
-        reference_id: ReferenceId,
-    ) -> Option<ConstantValue<'a>> {
-        self.scoping()
-            .get_reference(reference_id)
-            .symbol_id()
-            .and_then(|symbol_id| self.state.constant_values.get(&symbol_id))
-            .cloned()
     }
 }
 
