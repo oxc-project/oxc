@@ -12,12 +12,14 @@ const nodeArrays = new WeakMap();
 // Function to get element from an array. Initialized in class static block below.
 let getElement;
 
-// An array of AST nodes where elements are deserialized lazily upon access.
-//
-// Extends `Array` to make `Array.isArray` return `true` for a `NodeArray`.
-//
-// TODO: Other methods could maybe be more optimal, avoiding going via proxy multiple times
-// e.g. `some`, `indexOf`.
+/**
+ * An array of AST nodes where elements are deserialized lazily upon access.
+ *
+ * Extends `Array` to make `Array.isArray` return `true` for a `NodeArray`.
+ *
+ * TODO: Other methods could maybe be more optimal, avoiding going via proxy multiple times
+ * e.g. `some`, `indexOf`.
+ */
 class NodeArray extends Array {
   #internal;
 
@@ -80,7 +82,14 @@ class NodeArray extends Array {
   // Defining dummy method here to prevent the later assignment altering the shape of class prototype.
   [Symbol.iterator]() {}
 
-  // Override `slice` method to return a `NodeArray`.
+  /**
+   * Override `slice` method to return a `NodeArray`.
+   *
+   * @this {NodeArray}
+   * @param {*} start - Start of slice
+   * @param {*} end - End of slice
+   * @returns {NodeArray} - `NodeArray` containing slice of this one
+   */
   slice(start, end) {
     // Get actual `NodeArray`. `this` is a proxy.
     const arr = nodeArrays.get(this);
@@ -142,8 +151,10 @@ NodeArray.prototype[Symbol.iterator] = NodeArray.prototype.values;
 
 module.exports = NodeArray;
 
-// Iterator over values of a `NodeArray`.
-// Returned by `values` method, and also used as iterator for `for (const node of nodeArray) {}`.
+/**
+ * Iterator over values of a `NodeArray`.
+ * Returned by `values` method, and also used as iterator for `for (const node of nodeArray) {}`.
+ */
 class NodeArrayValuesIterator {
   #internal;
 
@@ -173,7 +184,9 @@ class NodeArrayValuesIterator {
   }
 }
 
-// Iterator over keys of a `NodeArray`. Returned by `keys` method.
+/**
+ * Iterator over keys of a `NodeArray`. Returned by `keys` method.
+ */
 class NodeArrayKeysIterator {
   #internal;
 
@@ -196,7 +209,9 @@ class NodeArrayKeysIterator {
   }
 }
 
-// Iterator over values of a `NodeArray`. Returned by `entries` method.
+/**
+ * Iterator over values of a `NodeArray`. Returned by `entries` method.
+ */
 class NodeArrayEntriesIterator {
   #internal;
 

@@ -6,17 +6,21 @@ module.exports = rawTransferSupported;
 
 let rawTransferIsSupported = null;
 
-// Returns `true` if `experimentalRawTransfer` is option is supported.
-//
-// Raw transfer is only supported on 64-bit little-endian systems,
-// and NodeJS >= v22.0.0 or Deno >= v2.0.0.
-//
-// Versions of NodeJS prior to v22.0.0 do not support creating an `ArrayBuffer` larger than 4 GiB.
-// Bun (as at v1.2.4) also does not support creating an `ArrayBuffer` larger than 4 GiB.
-// Support on Deno v1 is unknown and it's EOL, so treating Deno before v2.0.0 as unsupported.
-//
-// No easy way to determining pointer width (64 bit or 32 bit) in JS,
-// so call a function on Rust side to find out.
+/**
+ * Returns `true` if `experimentalRawTransfer` is option is supported.
+ *
+ * Raw transfer is only supported on 64-bit little-endian systems,
+ * and NodeJS >= v22.0.0 or Deno >= v2.0.0.
+ *
+ * Versions of NodeJS prior to v22.0.0 do not support creating an `ArrayBuffer` larger than 4 GiB.
+ * Bun (as at v1.2.4) also does not support creating an `ArrayBuffer` larger than 4 GiB.
+ * Support on Deno v1 is unknown and it's EOL, so treating Deno before v2.0.0 as unsupported.
+ *
+ * No easy way to determining pointer width (64 bit or 32 bit) in JS,
+ * so call a function on Rust side to find out.
+ *
+ * @returns {boolean} - `true` if raw transfer is supported on this platform
+ */
 function rawTransferSupported() {
   if (rawTransferIsSupported === null) {
     rawTransferIsSupported = rawTransferRuntimeSupported() && rawTransferSupportedBinding();
