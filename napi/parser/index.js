@@ -14,6 +14,10 @@ module.exports.ImportNameKind = bindings.ImportNameKind;
 module.exports.parseWithoutReturn = bindings.parseWithoutReturn;
 module.exports.Severity = bindings.Severity;
 
+module.exports.parseSync = parseSync;
+module.exports.parseAsync = parseAsync;
+module.exports.rawTransferSupported = rawTransferSupported;
+
 // Lazily loaded as needed
 let parseSyncRaw = null,
   parseAsyncRaw,
@@ -32,19 +36,7 @@ function loadRawTransferLazy() {
   }
 }
 
-module.exports.parseAsync = async function parseAsync(filename, sourceText, options) {
-  if (options?.experimentalRawTransfer) {
-    loadRawTransfer();
-    return await parseAsyncRaw(filename, sourceText, options);
-  }
-  if (options?.experimentalLazy) {
-    loadRawTransferLazy();
-    return await parseAsyncLazy(filename, sourceText, options);
-  }
-  return wrap(await parseAsyncBinding(filename, sourceText, options));
-};
-
-module.exports.parseSync = function parseSync(filename, sourceText, options) {
+function parseSync(filename, sourceText, options) {
   if (options?.experimentalRawTransfer) {
     loadRawTransfer();
     return parseSyncRaw(filename, sourceText, options);
@@ -54,6 +46,16 @@ module.exports.parseSync = function parseSync(filename, sourceText, options) {
     return parseSyncLazy(filename, sourceText, options);
   }
   return wrap(parseSyncBinding(filename, sourceText, options));
-};
+}
 
-module.exports.rawTransferSupported = rawTransferSupported;
+async function parseAsync(filename, sourceText, options) {
+  if (options?.experimentalRawTransfer) {
+    loadRawTransfer();
+    return await parseAsyncRaw(filename, sourceText, options);
+  }
+  if (options?.experimentalLazy) {
+    loadRawTransferLazy();
+    return await parseAsyncLazy(filename, sourceText, options);
+  }
+  return wrap(await parseAsyncBinding(filename, sourceText, options));
+}
