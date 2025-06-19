@@ -4,6 +4,8 @@ const bindings = require('./bindings.js');
 const { wrap } = require('./wrap.cjs');
 const rawTransferSupported = require('./raw-transfer/supported.js');
 
+const { parseSync: parseSyncBinding, parseAsync: parseAsyncBinding } = bindings;
+
 module.exports.ParseResult = bindings.ParseResult;
 module.exports.ExportExportNameKind = bindings.ExportExportNameKind;
 module.exports.ExportImportNameKind = bindings.ExportImportNameKind;
@@ -39,7 +41,7 @@ module.exports.parseAsync = async function parseAsync(filename, sourceText, opti
     loadRawTransferLazy();
     return await parseAsyncLazy(filename, sourceText, options);
   }
-  return wrap(await bindings.parseAsync(filename, sourceText, options));
+  return wrap(await parseAsyncBinding(filename, sourceText, options));
 };
 
 module.exports.parseSync = function parseSync(filename, sourceText, options) {
@@ -51,7 +53,7 @@ module.exports.parseSync = function parseSync(filename, sourceText, options) {
     loadRawTransferLazy();
     return parseSyncLazy(filename, sourceText, options);
   }
-  return wrap(bindings.parseSync(filename, sourceText, options));
+  return wrap(parseSyncBinding(filename, sourceText, options));
 };
 
 module.exports.rawTransferSupported = rawTransferSupported;

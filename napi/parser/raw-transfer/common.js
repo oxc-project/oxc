@@ -2,7 +2,11 @@
 
 const os = require('node:os');
 const rawTransferSupported = require('./supported.js');
-const bindings = require('../bindings.js');
+const {
+  parseSyncRaw: parseSyncRawBinding,
+  parseAsyncRaw: parseAsyncRawBinding,
+  getBufferOffset,
+} = require('../bindings.js');
 
 module.exports = {
   parseSyncRawImpl,
@@ -14,7 +18,7 @@ module.exports = {
 
 function parseSyncRawImpl(filename, sourceText, options, deserialize) {
   const { buffer, sourceByteLen, options: optionsAmended } = prepareRaw(sourceText, options);
-  bindings.parseSyncRaw(filename, buffer, sourceByteLen, optionsAmended);
+  parseSyncRawBinding(filename, buffer, sourceByteLen, optionsAmended);
   return deserialize(buffer, sourceText, sourceByteLen);
 }
 
@@ -79,7 +83,7 @@ async function parseAsyncRawImpl(filename, sourceText, options, deserialize) {
 
   // Parse
   const { buffer, sourceByteLen, options: optionsAmended } = prepareRaw(sourceText, options);
-  await bindings.parseAsyncRaw(filename, buffer, sourceByteLen, optionsAmended);
+  await parseAsyncRawBinding(filename, buffer, sourceByteLen, optionsAmended);
   const ret = deserialize(buffer, sourceText, sourceByteLen);
 
   // Free the CPU core
@@ -223,7 +227,7 @@ function clearBuffersCache() {
 // Physical memory consumed corresponds to the quantity of data actually written.
 function createBuffer() {
   const arrayBuffer = new ArrayBuffer(SIX_GIB);
-  const offset = bindings.getBufferOffset(new Uint8Array(arrayBuffer));
+  const offset = getBufferOffset(new Uint8Array(arrayBuffer));
   const buffer = new Uint8Array(arrayBuffer, offset, TWO_GIB);
   buffer.uint32 = new Uint32Array(arrayBuffer, offset, TWO_GIB / 4);
   buffer.float64 = new Float64Array(arrayBuffer, offset, TWO_GIB / 8);
