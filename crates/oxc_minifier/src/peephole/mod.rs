@@ -16,6 +16,8 @@ mod remove_unused_expression;
 mod replace_known_methods;
 mod substitute_alternate_syntax;
 
+use oxc_ast_visit::Visit;
+use oxc_semantic::ReferenceId;
 use rustc_hash::FxHashSet;
 
 use oxc_allocator::Vec;
@@ -99,8 +101,9 @@ impl<'a> PeepholeOptimizations {
 
     #[inline]
     fn is_prev_function_changed(&self) -> bool {
-        let (_, prev_changed, _) = self.current_function.last();
-        *prev_changed
+        true
+        // let (_, prev_changed, _) = self.current_function.last();
+        // *prev_changed
     }
 
     fn enter_program_or_function(&mut self, scope_id: ScopeId) {
@@ -150,8 +153,20 @@ impl<'a> Traverse<'a, MinifierState<'a>> for PeepholeOptimizations {
         self.enter_program_or_function(program.scope_id());
     }
 
-    fn exit_program(&mut self, _program: &mut Program<'a>, _ctx: &mut TraverseCtx<'a>) {
+    fn exit_program(&mut self, program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
+        let refs_before =
+            ctx.scoping().resolved_references().flatten().copied().collect::<FxHashSet<_>>();
+
         self.exit_program_or_function();
+
+        let mut counter = ReferencesCounter::default();
+        counter.visit_program(program);
+        let refs_after = counter.refs;
+
+        let removed_refs = refs_before.difference(&refs_after);
+        for reference_id_to_remove in removed_refs {
+            ctx.scoping_mut().delete_reference(*reference_id_to_remove);
+        }
     }
 
     fn enter_function(&mut self, func: &mut Function<'a>, _ctx: &mut TraverseCtx<'a>) {
@@ -487,5 +502,18 @@ impl<'a> Traverse<'a, MinifierState<'a>> for DeadCodeElimination {
         let mut ctx = Ctx::new(ctx);
         self.inner.fold_constants_exit_expression(expr, &mut state, &mut ctx);
         self.inner.remove_dead_code_exit_expression(expr, &mut state, &mut ctx);
+    }
+}
+
+#[derive(Default)]
+struct ReferencesCounter {
+    refs: FxHashSet<ReferenceId>,
+}
+
+impl<'a> Visit<'a> for ReferencesCounter {
+    fn visit_identifier_reference(&mut self, it: &IdentifierReference<'a>) {
+        if let Some(reference_id) = it.reference_id.get() {
+            self.refs.insert(reference_id);
+        }
     }
 }

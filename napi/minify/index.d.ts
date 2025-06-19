@@ -23,8 +23,6 @@ export interface CompressOptions {
    * @default 'esnext'
    */
   target?: 'esnext' | 'es2015' | 'es2016' | 'es2017' | 'es2018' | 'es2019' | 'es2020' | 'es2021' | 'es2022' | 'es2023' | 'es2024'
-  /** Keep function / class names. */
-  keepNames?: CompressOptionsKeepNames
   /**
    * Pass true to discard calls to `console.*`.
    *
@@ -37,6 +35,14 @@ export interface CompressOptions {
    * @default true
    */
   dropDebugger?: boolean
+  /**
+   * Drop unreferenced functions and variables.
+   *
+   * Simple direct variable assignments do not count as references unless set to "keep_assign".
+   */
+  unused?: true | false | 'keep_assign'
+  /** Keep function / class names. */
+  keepNames?: CompressOptionsKeepNames
 }
 
 export interface CompressOptionsKeepNames {
