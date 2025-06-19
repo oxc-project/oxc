@@ -1236,16 +1236,16 @@ mod test {
 
     #[test]
     fn test_coercion_substitution_primitives_vs_null() {
-        test_same("var x = 0;\nif (x != null) throw 'a';\n");
-        test_same("var x = '';\nif (x != null) throw 'a';\n");
-        test_same("var x = !1;\nif (x != null) throw 'a';\n");
+        test_same("var x = 0;\nif (x != null) throw 'a';\nx=1;");
+        test_same("var x = '';\nif (x != null) throw 'a';\nx=1;");
+        test_same("var x = !1;\nif (x != null) throw 'a';\nx=1;");
     }
 
     #[test]
     fn test_coercion_substitution_non_number_vs_zero() {
-        test_same("var x = {};\nif (x != 0) throw 'a';\n");
-        test_same("var x = '';\nif (x != 0) throw 'a';\n");
-        test_same("var x = !1;\nif (x != 0) throw 'a';\n");
+        test_same("var x = {};\nif (x != 0) throw 'a';\nx=1;");
+        test_same("var x = '';\nif (x != 0) throw 'a';\nx=1;");
+        test_same("var x = !1;\nif (x != 0) throw 'a';\nx=1;");
     }
 
     #[test]

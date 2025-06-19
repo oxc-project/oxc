@@ -5,6 +5,7 @@ use oxc_ecmascript::{
     constant_evaluation::{ConstantEvaluation, ConstantValue, DetermineValueType, ValueType},
     side_effects::MayHaveSideEffects,
 };
+use oxc_semantic::Reference;
 use oxc_span::GetSpan;
 use oxc_syntax::operator::{BinaryOperator, LogicalOperator};
 use oxc_traverse::Ancestor;
@@ -46,16 +47,30 @@ impl<'a> PeepholeOptimizations {
             state.changed = true;
         }
 
-        // Save `const value = false` into constant values.
+        self.save_constant_value(expr, ctx);
+    }
+
+    /// Save `const literal_value = false` as constant values.
+    fn save_constant_value(&self, expr: &Expression<'a>, ctx: &mut Ctx<'a, '_>) {
         if let Ancestor::VariableDeclaratorInit(decl) = ctx.parent() {
-            // TODO: Check for no write references.
-            if decl.kind().is_const() {
-                if let BindingPatternKind::BindingIdentifier(ident) = &decl.id().kind {
-                    // TODO: refactor all the above code to return value instead of expression, to avoid calling `evaluate_value` again.
-                    if let Some(value) = expr.evaluate_value(ctx) {
-                        let symbol_id = ident.symbol_id();
-                        ctx.state.constant_values.insert(symbol_id, value);
-                    }
+            // Skip if its not folded into a literal.
+            if !expr.is_literal() || !expr.is_no_substitution_template() {
+                return;
+            }
+            let BindingPatternKind::BindingIdentifier(ident) = &decl.id().kind else { return };
+            let Some(symbol_id) = ident.symbol_id.get() else {
+                return;
+            };
+            // Skip if value is already saved.
+            if ctx.state.constant_values.contains_key(&symbol_id) {
+                return;
+            }
+            // Using symbol flag because previous step changed `const` to `let`.
+            if ctx.scoping().symbol_flags(symbol_id).is_const_variable()
+                || ctx.scoping().get_resolved_references(symbol_id).all(Reference::is_read)
+            {
+                if let Some(value) = expr.evaluate_value(ctx) {
+                    ctx.state.constant_values.insert(symbol_id, value);
                 }
             }
         }
