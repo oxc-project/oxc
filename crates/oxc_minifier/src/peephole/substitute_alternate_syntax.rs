@@ -1027,7 +1027,7 @@ impl<'a> PeepholeOptimizations {
             return;
         }
 
-        if func.id.as_ref().is_some_and(|id| !ctx.scoping().symbol_is_used(id.symbol_id())) {
+        if func.id.as_ref().is_some_and(|id| ctx.scoping().symbol_is_unused(id.symbol_id())) {
             func.id = None;
             state.changed = true;
         }
@@ -1048,7 +1048,7 @@ impl<'a> PeepholeOptimizations {
             return;
         }
 
-        if class.id.as_ref().is_some_and(|id| !ctx.scoping().symbol_is_used(id.symbol_id())) {
+        if class.id.as_ref().is_some_and(|id| ctx.scoping().symbol_is_unused(id.symbol_id())) {
             class.id = None;
             state.changed = true;
         }
@@ -1175,7 +1175,7 @@ impl<'a> LatePeepholeOptimizations {
             if let Some(param) = &catch.param {
                 if let BindingPatternKind::BindingIdentifier(ident) = &param.pattern.kind {
                     if catch.body.body.is_empty()
-                        || !ctx.scoping().symbol_is_used(ident.symbol_id())
+                        || ctx.scoping().symbol_is_unused(ident.symbol_id())
                     {
                         catch.param = None;
                     }

@@ -303,7 +303,7 @@ impl<'a> PeepholeOptimizations {
                 result.push(Statement::ContinueStatement(s));
             }
             Statement::VariableDeclaration(var_decl) => {
-                self.handle_variable_declaration(var_decl, result, state);
+                self.handle_variable_declaration(var_decl, result, state, ctx);
             }
             Statement::ExpressionStatement(expr_stmt) => {
                 self.handle_expression_statement(expr_stmt, result, state, ctx);
@@ -367,20 +367,52 @@ impl<'a> PeepholeOptimizations {
         false
     }
 
+    /// For variable declarations:
+    /// * merge with the previous variable declarator if their kinds are the same
+    /// * remove the variable declarator if it is unused
+    /// * keep the initializer if it has side effects
     fn handle_variable_declaration(
         &self,
-        mut var_decl: Box<'a, VariableDeclaration<'a>>,
+        var_decl: Box<'a, VariableDeclaration<'a>>,
         result: &mut Vec<'a, Statement<'a>>,
         state: &mut State,
+        ctx: &mut Ctx<'a, '_>,
     ) {
-        if let Some(Statement::VariableDeclaration(prev_var_decl)) = result.last_mut() {
+        if let Some(Statement::VariableDeclaration(prev_var_decl)) = result.last() {
             if var_decl.kind == prev_var_decl.kind {
-                prev_var_decl.declarations.extend(var_decl.declarations.drain(..));
                 state.changed = true;
-                return;
             }
         }
-        result.push(Statement::VariableDeclaration(var_decl));
+        let VariableDeclaration { span, kind, declarations, declare } = var_decl.unbox();
+        for mut decl in declarations {
+            if Self::is_declarator_unused(&decl, ctx) {
+                state.changed = true;
+                if let Some(init) = decl.init.take() {
+                    if init.may_have_side_effects(ctx) {
+                        result.push(ctx.ast.statement_expression(init.span(), init));
+                    }
+                }
+            } else {
+                if let Some(Statement::VariableDeclaration(prev_var_decl)) = result.last_mut() {
+                    if kind == prev_var_decl.kind {
+                        prev_var_decl.declarations.push(decl);
+                        continue;
+                    }
+                }
+                let decls = ctx.ast.vec1(decl);
+                let new_decl = ctx.ast.alloc_variable_declaration(span, kind, decls, declare);
+                result.push(Statement::VariableDeclaration(new_decl));
+            }
+        }
+    }
+
+    fn is_declarator_unused(decl: &VariableDeclarator<'a>, ctx: &mut Ctx<'a, '_>) -> bool {
+        if let BindingPatternKind::BindingIdentifier(ident) = &decl.id.kind {
+            if let Some(symbol_id) = ident.symbol_id.get() {
+                return ctx.scoping().symbol_is_unused(symbol_id);
+            }
+        }
+        false
     }
 
     fn handle_expression_statement(
