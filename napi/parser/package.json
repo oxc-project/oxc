@@ -50,7 +50,8 @@
     "raw-transfer/eager.js",
     "raw-transfer/lazy.js",
     "raw-transfer/lazy-common.js",
-    "raw-transfer/node-array.js"
+    "raw-transfer/node-array.js",
+    "raw-transfer/supported.js"
   ],
   "publishConfig": {
     "registry": "https://registry.npmjs.org/",

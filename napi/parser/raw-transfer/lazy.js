@@ -1,6 +1,7 @@
 'use strict';
 
-const { parseSyncRawImpl, parseAsyncRawImpl, returnBufferToCache } = require('./index.js');
+const { parseSyncRawImpl, parseAsyncRawImpl, returnBufferToCache } = require('./index.js'),
+  { construct: constructLazyData, TOKEN } = require('../generated/deserialize/lazy.js');
 
 module.exports = { parseSyncLazy, parseAsyncLazy };
 
@@ -23,15 +24,8 @@ const bufferRecycleRegistry = typeof FinalizationRegistry === 'undefined'
   ? null
   : new FinalizationRegistry(returnBufferToCache);
 
-let constructLazyData = null, TOKEN;
-
 // Get an object with getters which lazy deserialize AST from buffer
 function construct(buffer, sourceText, sourceLen) {
-  // Lazy load deserializer, and get `TOKEN` to store in `ast` objects
-  if (constructLazyData === null) {
-    ({ construct: constructLazyData, TOKEN } = require('../generated/deserialize/lazy.js'));
-  }
-
   // Create AST object
   const sourceIsAscii = sourceText.length === sourceLen;
   const ast = { buffer, sourceText, sourceLen, sourceIsAscii, nodes: new Map(), token: TOKEN };
