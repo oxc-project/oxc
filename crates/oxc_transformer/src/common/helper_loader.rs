@@ -77,9 +77,9 @@ use oxc_ast::{
 };
 use oxc_semantic::{ReferenceFlags, SymbolFlags};
 use oxc_span::{Atom, SPAN, Span};
-use oxc_traverse::{BoundIdentifier, TraverseCtx};
+use oxc_traverse::BoundIdentifier;
 
-use crate::TransformCtx;
+use crate::context::{TransformCtx, TraverseCtx};
 
 /// Defines the mode for loading helper functions.
 #[derive(Default, Clone, Copy, Debug, Deserialize)]

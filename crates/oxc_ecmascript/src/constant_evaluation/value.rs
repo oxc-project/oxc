@@ -6,7 +6,7 @@ use num_traits::Zero;
 
 use crate::{ToBoolean, ToJsString, ToNumber, is_global_reference::IsGlobalReference};
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub enum ConstantValue<'a> {
     Number(f64),
     BigInt(BigInt),
@@ -67,7 +67,10 @@ impl<'a> ConstantValue<'a> {
 }
 
 impl<'a> ToJsString<'a> for ConstantValue<'a> {
-    fn to_js_string(&self, _is_global_reference: &impl IsGlobalReference) -> Option<Cow<'a, str>> {
+    fn to_js_string(
+        &self,
+        _is_global_reference: &impl IsGlobalReference<'a>,
+    ) -> Option<Cow<'a, str>> {
         match self {
             Self::Number(n) => {
                 use oxc_syntax::number::ToJsString;
@@ -84,7 +87,7 @@ impl<'a> ToJsString<'a> for ConstantValue<'a> {
 }
 
 impl<'a> ToNumber<'a> for ConstantValue<'a> {
-    fn to_number(&self, _is_global_reference: &impl IsGlobalReference) -> Option<f64> {
+    fn to_number(&self, _is_global_reference: &impl IsGlobalReference<'a>) -> Option<f64> {
         use crate::StringToNumber;
         match self {
             Self::Number(n) => Some(*n),
@@ -98,7 +101,7 @@ impl<'a> ToNumber<'a> for ConstantValue<'a> {
 }
 
 impl<'a> ToBoolean<'a> for ConstantValue<'a> {
-    fn to_boolean(&self, _is_global_reference: &impl IsGlobalReference) -> Option<bool> {
+    fn to_boolean(&self, _is_global_reference: &impl IsGlobalReference<'a>) -> Option<bool> {
         match self {
             Self::Number(n) => Some(!n.is_nan() && *n != 0.0),
             Self::BigInt(n) => Some(*n != BigInt::zero()),

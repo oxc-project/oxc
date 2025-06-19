@@ -6,11 +6,11 @@ use crate::is_global_reference::IsGlobalReference;
 ///
 /// <https://tc39.es/ecma262/multipage/abstract-operations.html#sec-toboolean>
 pub trait ToBoolean<'a> {
-    fn to_boolean(&self, is_global_reference: &impl IsGlobalReference) -> Option<bool>;
+    fn to_boolean(&self, is_global_reference: &impl IsGlobalReference<'a>) -> Option<bool>;
 }
 
 impl<'a> ToBoolean<'a> for Expression<'a> {
-    fn to_boolean(&self, is_global_reference: &impl IsGlobalReference) -> Option<bool> {
+    fn to_boolean(&self, is_global_reference: &impl IsGlobalReference<'a>) -> Option<bool> {
         // 1. If argument is a Boolean, return argument.
         // 2. If argument is one of undefined, null, +0𝔽, -0𝔽, NaN, 0ℤ, or the empty String, return false.
         // 3. NOTE: This step is replaced in section B.3.6.1.

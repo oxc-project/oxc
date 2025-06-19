@@ -227,6 +227,6 @@ bitflags! {
 /// Dummy type to communicate the content of `RegExpFlags` to `oxc_ast_tools`.
 #[ast(foreign = RegExpFlags)]
 #[generate_derive(ESTree)]
-#[estree(via = RegExpFlagsConverter)]
+#[estree(no_type, via = RegExpFlagsConverter)]
 #[expect(dead_code)]
-struct RegExpFlagsAlias(u8);
+struct RegExpFlagsAlias(#[estree(skip)] u8);

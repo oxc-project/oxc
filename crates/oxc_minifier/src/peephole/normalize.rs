@@ -4,9 +4,9 @@ use oxc_ecmascript::constant_evaluation::{DetermineValueType, ValueType};
 use oxc_semantic::IsGlobalReference;
 use oxc_span::GetSpan;
 use oxc_syntax::scope::ScopeFlags;
-use oxc_traverse::{Ancestor, ReusableTraverseCtx, Traverse, TraverseCtx, traverse_mut_with_ctx};
+use oxc_traverse::{Ancestor, ReusableTraverseCtx, Traverse, traverse_mut_with_ctx};
 
-use crate::{CompressOptions, ctx::Ctx};
+use crate::ctx::{Ctx, MinifierState, TraverseCtx};
 
 #[derive(Default)]
 pub struct NormalizeOptions {
@@ -35,21 +35,24 @@ pub struct NormalizeOptions {
 /// <https://github.com/google/closure-compiler/blob/v20240609/src/com/google/javascript/jscomp/Normalize.java>
 pub struct Normalize {
     options: NormalizeOptions,
-    compress_options: CompressOptions,
 }
 
 impl<'a> Normalize {
-    pub fn build(&mut self, program: &mut Program<'a>, ctx: &mut ReusableTraverseCtx<'a>) {
+    pub fn build(
+        &mut self,
+        program: &mut Program<'a>,
+        ctx: &mut ReusableTraverseCtx<'a, MinifierState<'a>>,
+    ) {
         traverse_mut_with_ctx(self, program, ctx);
     }
 }
 
-impl<'a> Traverse<'a> for Normalize {
-    fn exit_statements(&mut self, stmts: &mut Vec<'a, Statement<'a>>, _ctx: &mut TraverseCtx<'a>) {
+impl<'a> Traverse<'a, MinifierState<'a>> for Normalize {
+    fn exit_statements(&mut self, stmts: &mut Vec<'a, Statement<'a>>, ctx: &mut TraverseCtx<'a>) {
         stmts.retain(|stmt| {
             !(matches!(stmt, Statement::EmptyStatement(_))
-                || self.drop_debugger(stmt)
-                || self.drop_console(stmt))
+                || Self::drop_debugger(stmt, ctx)
+                || Self::drop_console(stmt, ctx))
         });
     }
 
@@ -83,10 +86,10 @@ impl<'a> Traverse<'a> for Normalize {
                 None
             }
             Expression::ArrowFunctionExpression(e) => {
-                self.recover_arrow_expression_after_drop_console(e);
+                Self::recover_arrow_expression_after_drop_console(e, ctx);
                 None
             }
-            Expression::CallExpression(_) if self.compress_options.drop_console => {
+            Expression::CallExpression(_) if ctx.state.options.drop_console => {
                 self.compress_console(expr, ctx)
             }
             Expression::StaticMemberExpression(e) => Self::fold_number_nan_to_nan(e, ctx),
@@ -106,15 +109,15 @@ impl<'a> Traverse<'a> for Normalize {
 }
 
 impl<'a> Normalize {
-    pub fn new(options: NormalizeOptions, compress_options: CompressOptions) -> Self {
-        Self { options, compress_options }
+    pub fn new(options: NormalizeOptions) -> Self {
+        Self { options }
     }
 
     /// Drop `drop_debugger` statement.
     ///
     /// Enabled by `compress.drop_debugger`
-    fn drop_debugger(&self, stmt: &Statement<'a>) -> bool {
-        matches!(stmt, Statement::DebuggerStatement(_)) && self.compress_options.drop_debugger
+    fn drop_debugger(stmt: &Statement<'a>, ctx: &TraverseCtx<'a>) -> bool {
+        matches!(stmt, Statement::DebuggerStatement(_)) && ctx.state.options.drop_debugger
     }
 
     fn compress_console(
@@ -122,17 +125,20 @@ impl<'a> Normalize {
         expr: &Expression<'a>,
         ctx: &TraverseCtx<'a>,
     ) -> Option<Expression<'a>> {
-        debug_assert!(self.compress_options.drop_console);
+        debug_assert!(ctx.state.options.drop_console);
         Self::is_console(expr).then(|| ctx.ast.void_0(expr.span()))
     }
 
-    fn drop_console(&self, stmt: &Statement<'a>) -> bool {
-        self.compress_options.drop_console
+    fn drop_console(stmt: &Statement<'a>, ctx: &TraverseCtx<'a>) -> bool {
+        ctx.state.options.drop_console
             && matches!(stmt, Statement::ExpressionStatement(expr) if Self::is_console(&expr.expression))
     }
 
-    fn recover_arrow_expression_after_drop_console(&self, expr: &mut ArrowFunctionExpression<'a>) {
-        if self.compress_options.drop_console && expr.expression && expr.body.is_empty() {
+    fn recover_arrow_expression_after_drop_console(
+        expr: &mut ArrowFunctionExpression<'a>,
+        ctx: &TraverseCtx<'a>,
+    ) {
+        if ctx.state.options.drop_console && expr.expression && expr.body.is_empty() {
             expr.expression = false;
         }
     }
@@ -235,7 +241,7 @@ impl<'a> Normalize {
     fn fold_void_ident(e: &mut UnaryExpression<'a>, ctx: &TraverseCtx<'a>) {
         debug_assert!(e.operator.is_void());
         let Expression::Identifier(ident) = &e.argument else { return };
-        if Ctx(ctx).is_global_reference(ident) {
+        if ident.is_global_reference(ctx.scoping()) {
             return;
         }
         e.argument = ctx.ast.expression_numeric_literal(ident.span, 0.0, None, NumberBase::Decimal);
@@ -243,7 +249,7 @@ impl<'a> Normalize {
 
     fn fold_number_nan_to_nan(
         e: &StaticMemberExpression<'a>,
-        ctx: &TraverseCtx<'a>,
+        ctx: &mut TraverseCtx<'a>,
     ) -> Option<Expression<'a>> {
         let Expression::Identifier(ident) = &e.object else { return None };
         if ident.name != "Number" {
@@ -252,7 +258,7 @@ impl<'a> Normalize {
         if e.property.name != "NaN" {
             return None;
         }
-        if !Ctx(ctx).is_global_reference(ident) {
+        if !Ctx::new(ctx).is_global_reference(ident) {
             return None;
         }
         Some(ctx.ast.nan(ident.span))
@@ -277,7 +283,7 @@ impl<'a> Normalize {
     /// `PC` or `PC_WITH_ARRAY` in <https://github.com/rollup/rollup/blob/v4.42.0/src/ast/nodes/shared/knownGlobals.ts>
     fn set_pure_or_no_side_effects_to_new_expr(
         new_expr: &mut NewExpression<'a>,
-        ctx: &TraverseCtx<'a>,
+        ctx: &mut TraverseCtx<'a>,
     ) {
         if new_expr.pure {
             return;
@@ -293,7 +299,7 @@ impl<'a> Normalize {
             return;
         }
         // callee is a global reference.
-        let ctx = Ctx(ctx);
+        let ctx = Ctx::new(ctx);
         let len = new_expr.arguments.len();
 
         let (zero_arg_throws_error, one_arg_array_throws_error, one_arg_throws_error): (
@@ -346,7 +352,7 @@ impl<'a> Normalize {
             _ => return,
         };
 
-        if !Self::can_set_pure(ident, ctx) {
+        if !Self::can_set_pure(ident, &ctx) {
             return;
         }
 
@@ -376,7 +382,7 @@ impl<'a> Normalize {
         }
     }
 
-    fn can_set_pure(ident: &IdentifierReference<'a>, ctx: Ctx<'a, '_>) -> bool {
+    fn can_set_pure(ident: &IdentifierReference<'a>, ctx: &Ctx<'a, '_>) -> bool {
         ctx.is_global_reference(ident)
             // Throw is never pure.
             && !matches!(ctx.parent(), Ancestor::ThrowStatementArgument(_))

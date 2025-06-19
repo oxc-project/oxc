@@ -14,7 +14,9 @@ use oxc_syntax::{
     reference::ReferenceFlags,
     symbol::SymbolFlags,
 };
-use oxc_traverse::{BoundIdentifier, Traverse, TraverseCtx};
+use oxc_traverse::{BoundIdentifier, Traverse};
+
+use crate::{context::TraverseCtx, state::TransformState};
 
 /// enum member values (or None if it can't be evaluated at build time) keyed by names
 type PrevMembers<'a> = FxHashMap<Atom<'a>, Option<ConstantValue>>;
@@ -29,7 +31,7 @@ impl TypeScriptEnum<'_> {
     }
 }
 
-impl<'a> Traverse<'a> for TypeScriptEnum<'a> {
+impl<'a> Traverse<'a, TransformState<'a>> for TypeScriptEnum<'a> {
     fn enter_statement(&mut self, stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
         let new_stmt = match stmt {
             Statement::TSEnumDeclaration(ts_enum_decl) => {

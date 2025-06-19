@@ -1,7 +1,11 @@
 use oxc_ast::{AstBuilder, ast::*};
-use oxc_traverse::{Traverse, TraverseCtx};
+use oxc_traverse::Traverse;
 
-use crate::{TransformCtx, es2018::ObjectRestSpreadOptions};
+use crate::{
+    context::{TransformCtx, TraverseCtx},
+    es2018::ObjectRestSpreadOptions,
+    state::TransformState,
+};
 
 mod comments;
 mod diagnostics;
@@ -65,7 +69,7 @@ impl<'a, 'ctx> Jsx<'a, 'ctx> {
     }
 }
 
-impl<'a> Traverse<'a> for Jsx<'a, '_> {
+impl<'a> Traverse<'a, TransformState<'a>> for Jsx<'a, '_> {
     fn enter_program(&mut self, program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
         if self.enable_jsx_plugin {
             program.source_type = program.source_type.with_standard(true);

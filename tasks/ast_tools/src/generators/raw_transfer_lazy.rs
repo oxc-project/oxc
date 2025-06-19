@@ -475,10 +475,7 @@ fn generate_struct(
             ");
         }
 
-        // TODO: Remove this special case for `RegExpFlags`
-        if struct_name != "RegExpFlags" {
-            write_it!(to_json, "{field_name}: this.{field_name},\n");
-        }
+        write_it!(to_json, "{field_name}: this.{field_name},\n");
     }
 
     let type_prop_init = if add_type_field {
@@ -567,19 +564,13 @@ fn generate_enum(
         }
     }
 
-    let body = format!(
-        "
-        switch(ast.buffer[pos]) {{
-            {switch_cases}
-            default: throw new Error(`Unexpected discriminant ${{ast.buffer[pos]}} for {type_name}`);
-        }}
-        "
-    );
-
     #[rustfmt::skip]
     write_it!(code, "
         function {fn_name}(pos, ast) {{
-            {body}
+            switch(ast.buffer[pos]) {{
+                {switch_cases}
+                default: throw new Error(`Unexpected discriminant ${{ast.buffer[pos]}} for {type_name}`);
+            }}
         }}
     ");
 }

@@ -9,9 +9,13 @@ use oxc_syntax::{
     scope::{ScopeFlags, ScopeId},
     symbol::SymbolId,
 };
-use oxc_traverse::{Traverse, TraverseCtx};
+use oxc_traverse::Traverse;
 
-use crate::{TransformCtx, TypeScriptOptions};
+use crate::{
+    TypeScriptOptions,
+    context::{TransformCtx, TraverseCtx},
+    state::TransformState,
+};
 
 pub struct TypeScriptAnnotations<'a, 'ctx> {
     ctx: &'ctx TransformCtx<'a>,
@@ -56,7 +60,7 @@ impl<'a, 'ctx> TypeScriptAnnotations<'a, 'ctx> {
     }
 }
 
-impl<'a> Traverse<'a> for TypeScriptAnnotations<'a, '_> {
+impl<'a> Traverse<'a, TransformState<'a>> for TypeScriptAnnotations<'a, '_> {
     fn exit_program(&mut self, program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
         let mut no_modules_remaining = true;
         let mut some_modules_deleted = false;

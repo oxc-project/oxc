@@ -9,9 +9,9 @@ source: crates/oxc_linter/src/tester.rs
   help: Delete this console statement.
 
   ⚠ eslint(no-console): Unexpected console statement.
-   ╭─[no_console.tsx:1:2]
- 1 │ (console.log())
-   ·  ───────────
+   ╭─[no_console.tsx:1:5]
+ 1 │ foo(console.log)
+   ·     ───────────
    ╰────
   help: Delete this console statement.
 

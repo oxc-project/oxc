@@ -91,9 +91,14 @@ use oxc_allocator::{Box as ArenaBox, TakeIn};
 use oxc_ast::ast::*;
 use oxc_semantic::ReferenceFlags;
 use oxc_span::{ContentEq, SPAN};
-use oxc_traverse::{MaybeBoundIdentifier, Traverse, TraverseCtx};
+use oxc_traverse::{MaybeBoundIdentifier, Traverse};
 
-use crate::{Helper, context::TransformCtx, utils::ast_builder::create_property_access};
+use crate::{
+    Helper,
+    context::{TransformCtx, TraverseCtx},
+    state::TransformState,
+    utils::ast_builder::create_property_access,
+};
 
 pub struct LegacyDecoratorMetadata<'a, 'ctx> {
     ctx: &'ctx TransformCtx<'a>,
@@ -105,7 +110,7 @@ impl<'a, 'ctx> LegacyDecoratorMetadata<'a, 'ctx> {
     }
 }
 
-impl<'a> Traverse<'a> for LegacyDecoratorMetadata<'a, '_> {
+impl<'a> Traverse<'a, TransformState<'a>> for LegacyDecoratorMetadata<'a, '_> {
     fn enter_class(&mut self, class: &mut Class<'a>, ctx: &mut TraverseCtx<'a>) {
         if class.is_expression() || class.declare {
             return;

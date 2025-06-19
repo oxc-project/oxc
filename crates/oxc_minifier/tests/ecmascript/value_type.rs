@@ -10,8 +10,9 @@ use oxc_span::SourceType;
 struct GlobalReferenceChecker {
     global_variable_names: Vec<String>,
 }
-impl IsGlobalReference for GlobalReferenceChecker {
-    fn is_global_reference(&self, ident: &IdentifierReference<'_>) -> Option<bool> {
+
+impl<'a> IsGlobalReference<'a> for GlobalReferenceChecker {
+    fn is_global_reference(&self, ident: &IdentifierReference<'a>) -> Option<bool> {
         Some(self.global_variable_names.iter().any(|name| name == ident.name.as_str()))
     }
 }

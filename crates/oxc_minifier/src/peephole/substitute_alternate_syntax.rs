@@ -27,7 +27,7 @@ impl<'a> PeepholeOptimizations {
         &self,
         prop: &mut ObjectProperty<'a>,
         state: &mut State,
-        ctx: Ctx<'a, '_>,
+        ctx: &mut Ctx<'a, '_>,
     ) {
         // <https://tc39.es/ecma262/2024/multipage/ecmascript-language-expressions.html#sec-runtime-semantics-propertydefinitionevaluation>
         if !prop.method {
@@ -46,7 +46,7 @@ impl<'a> PeepholeOptimizations {
         &self,
         prop: &mut AssignmentTargetPropertyProperty<'a>,
         state: &mut State,
-        ctx: Ctx<'a, '_>,
+        ctx: &mut Ctx<'a, '_>,
     ) {
         self.try_compress_property_key(&mut prop.name, &mut prop.computed, state, ctx);
     }
@@ -55,7 +55,7 @@ impl<'a> PeepholeOptimizations {
         &self,
         prop: &mut AssignmentTargetProperty<'a>,
         state: &mut State,
-        ctx: Ctx<'a, '_>,
+        ctx: &mut Ctx<'a, '_>,
     ) {
         self.try_compress_assignment_target_property(prop, state, ctx);
     }
@@ -64,7 +64,7 @@ impl<'a> PeepholeOptimizations {
         &self,
         prop: &mut AssignmentTargetProperty<'a>,
         state: &mut State,
-        ctx: Ctx<'a, '_>,
+        ctx: &mut Ctx<'a, '_>,
     ) {
         // `a: a` -> `a`
         if let AssignmentTargetProperty::AssignmentTargetPropertyProperty(assign_target_prop_prop) =
@@ -92,7 +92,7 @@ impl<'a> PeepholeOptimizations {
         &self,
         prop: &mut BindingProperty<'a>,
         state: &mut State,
-        ctx: Ctx<'a, '_>,
+        ctx: &mut Ctx<'a, '_>,
     ) {
         self.try_compress_property_key(&mut prop.key, &mut prop.computed, state, ctx);
     }
@@ -101,7 +101,7 @@ impl<'a> PeepholeOptimizations {
         &self,
         prop: &mut MethodDefinition<'a>,
         state: &mut State,
-        ctx: Ctx<'a, '_>,
+        ctx: &mut Ctx<'a, '_>,
     ) {
         let property_key_parent: ClassPropertyKeyParent = prop.into();
         if let PropertyKey::StringLiteral(str) = &prop.key {
@@ -116,7 +116,7 @@ impl<'a> PeepholeOptimizations {
         &self,
         prop: &mut PropertyDefinition<'a>,
         state: &mut State,
-        ctx: Ctx<'a, '_>,
+        ctx: &mut Ctx<'a, '_>,
     ) {
         let property_key_parent: ClassPropertyKeyParent = prop.into();
         if let PropertyKey::StringLiteral(str) = &prop.key {
@@ -131,7 +131,7 @@ impl<'a> PeepholeOptimizations {
         &self,
         prop: &mut AccessorProperty<'a>,
         state: &mut State,
-        ctx: Ctx<'a, '_>,
+        ctx: &mut Ctx<'a, '_>,
     ) {
         let property_key_parent: ClassPropertyKeyParent = prop.into();
         if let PropertyKey::StringLiteral(str) = &prop.key {
@@ -146,7 +146,7 @@ impl<'a> PeepholeOptimizations {
         &self,
         stmt: &mut ReturnStatement<'a>,
         state: &mut State,
-        ctx: Ctx<'a, '_>,
+        ctx: &mut Ctx<'a, '_>,
     ) {
         self.compress_return_statement(stmt, state, ctx);
     }
@@ -155,7 +155,7 @@ impl<'a> PeepholeOptimizations {
         &self,
         decl: &mut VariableDeclaration<'a>,
         state: &mut State,
-        ctx: Ctx<'a, '_>,
+        ctx: &mut Ctx<'a, '_>,
     ) {
         for declarator in &mut decl.declarations {
             self.compress_variable_declarator(declarator, state, ctx);
@@ -166,7 +166,7 @@ impl<'a> PeepholeOptimizations {
         &self,
         expr: &mut CallExpression<'a>,
         state: &mut State,
-        ctx: Ctx<'a, '_>,
+        ctx: &mut Ctx<'a, '_>,
     ) {
         self.try_flatten_arguments(&mut expr.arguments, state, ctx);
     }
@@ -175,7 +175,7 @@ impl<'a> PeepholeOptimizations {
         &self,
         expr: &mut NewExpression<'a>,
         state: &mut State,
-        ctx: Ctx<'a, '_>,
+        ctx: &mut Ctx<'a, '_>,
     ) {
         self.try_flatten_arguments(&mut expr.arguments, state, ctx);
     }
@@ -184,7 +184,7 @@ impl<'a> PeepholeOptimizations {
         &self,
         expr: &mut Expression<'a>,
         state: &mut State,
-        ctx: Ctx<'a, '_>,
+        ctx: &mut Ctx<'a, '_>,
     ) {
         // Change syntax
         match expr {
@@ -239,7 +239,7 @@ impl<'a> PeepholeOptimizations {
         &self,
         arrow_expr: &mut ArrowFunctionExpression<'a>,
         state: &mut State,
-        ctx: Ctx<'a, '_>,
+        ctx: &mut Ctx<'a, '_>,
     ) {
         if !arrow_expr.expression
             && arrow_expr.body.directives.is_empty()
@@ -271,7 +271,7 @@ impl<'a> PeepholeOptimizations {
     /// Enabled by `compress.typeofs`
     fn try_compress_typeof_undefined(
         expr: &mut BinaryExpression<'a>,
-        ctx: Ctx<'a, '_>,
+        ctx: &mut Ctx<'a, '_>,
     ) -> Option<Expression<'a>> {
         let Expression::UnaryExpression(unary_expr) = &expr.left else { return None };
         if !unary_expr.operator.is_typeof() {
@@ -310,7 +310,7 @@ impl<'a> PeepholeOptimizations {
     /// - `+a - 1` => `a - 1` (for other operators as well)
     fn try_remove_unary_plus(
         expr: &mut UnaryExpression<'a>,
-        ctx: Ctx<'a, '_>,
+        ctx: &mut Ctx<'a, '_>,
     ) -> Option<Expression<'a>> {
         if expr.operator != UnaryOperator::UnaryPlus {
             return None;
@@ -320,11 +320,11 @@ impl<'a> PeepholeOptimizations {
         let parent_expression_does_to_number_conversion = match parent_expression {
             Ancestor::BinaryExpressionLeft(e) => {
                 Self::is_binary_operator_that_does_number_conversion(*e.operator())
-                    && e.right().value_type(&ctx).is_number()
+                    && e.right().value_type(ctx).is_number()
             }
             Ancestor::BinaryExpressionRight(e) => {
                 Self::is_binary_operator_that_does_number_conversion(*e.operator())
-                    && e.left().value_type(&ctx).is_number()
+                    && e.left().value_type(ctx).is_number()
             }
             _ => false,
         };
@@ -379,7 +379,7 @@ impl<'a> PeepholeOptimizations {
     /// `a || (b || c);` -> `(a || b) || c;`
     fn try_rotate_logical_expression(
         expr: &mut LogicalExpression<'a>,
-        ctx: Ctx<'a, '_>,
+        ctx: &mut Ctx<'a, '_>,
     ) -> Option<Expression<'a>> {
         let Expression::LogicalExpression(right) = &mut expr.right else { return None };
         if right.operator != expr.operator {
@@ -423,7 +423,7 @@ impl<'a> PeepholeOptimizations {
     /// This compression is safe for `document.all` because `typeof document.all` is not `'object'`.
     fn try_compress_is_object_and_not_null(
         expr: &mut LogicalExpression<'a>,
-        ctx: Ctx<'a, '_>,
+        ctx: &mut Ctx<'a, '_>,
     ) -> Option<Expression<'a>> {
         let inversed = match expr.operator {
             LogicalOperator::And => false,
@@ -471,7 +471,7 @@ impl<'a> PeepholeOptimizations {
         left: &Expression<'a>,
         right: &Expression<'a>,
         span: Span,
-        ctx: Ctx<'a, '_>,
+        ctx: &mut Ctx<'a, '_>,
         inversed: bool,
     ) -> Option<Expression<'a>> {
         let pair = Self::commutative_pair(
@@ -574,7 +574,7 @@ impl<'a> PeepholeOptimizations {
 
     fn try_fold_loose_equals_undefined(
         e: &mut BinaryExpression<'a>,
-        ctx: Ctx<'a, '_>,
+        ctx: &mut Ctx<'a, '_>,
     ) -> Option<Expression<'a>> {
         // `foo == void 0` -> `foo == null`, `foo == undefined` -> `foo == null`
         // `foo != void 0` -> `foo == null`, `foo == undefined` -> `foo == null`
@@ -601,13 +601,13 @@ impl<'a> PeepholeOptimizations {
         &self,
         stmt: &mut ReturnStatement<'a>,
         state: &mut State,
-        ctx: Ctx<'a, '_>,
+        ctx: &mut Ctx<'a, '_>,
     ) {
         let Some(argument) = &stmt.argument else { return };
         if !match argument {
             Expression::Identifier(ident) => ctx.is_identifier_undefined(ident),
             Expression::UnaryExpression(e) => {
-                e.operator.is_void() && !argument.may_have_side_effects(&ctx)
+                e.operator.is_void() && !argument.may_have_side_effects(ctx)
             }
             _ => false,
         } {
@@ -629,7 +629,7 @@ impl<'a> PeepholeOptimizations {
         &self,
         decl: &mut VariableDeclarator<'a>,
         state: &mut State,
-        ctx: Ctx<'a, '_>,
+        ctx: &mut Ctx<'a, '_>,
     ) {
         // Destructuring Pattern has error throwing side effect.
         if matches!(
@@ -657,7 +657,7 @@ impl<'a> PeepholeOptimizations {
     fn try_fold_simple_function_call(
         &self,
         call_expr: &mut CallExpression<'a>,
-        ctx: Ctx<'a, '_>,
+        ctx: &mut Ctx<'a, '_>,
     ) -> Option<Expression<'a>> {
         if call_expr.optional || call_expr.arguments.len() >= 2 {
             return None;
@@ -712,7 +712,7 @@ impl<'a> PeepholeOptimizations {
                 span,
                 match arg {
                     None => 0.0,
-                    Some(arg) => arg.to_number(&ctx)?,
+                    Some(arg) => arg.to_number(ctx)?,
                 },
                 None,
                 NumberBase::Decimal,
@@ -729,7 +729,10 @@ impl<'a> PeepholeOptimizations {
     }
 
     /// Fold `Object` or `Array` constructor
-    fn get_fold_constructor_name(callee: &Expression<'a>, ctx: Ctx<'a, '_>) -> Option<&'a str> {
+    fn get_fold_constructor_name(
+        callee: &Expression<'a>,
+        ctx: &mut Ctx<'a, '_>,
+    ) -> Option<&'a str> {
         match callee {
             Expression::StaticMemberExpression(e) => {
                 if !matches!(&e.object, Expression::Identifier(ident) if ident.name == "window") {
@@ -757,7 +760,7 @@ impl<'a> PeepholeOptimizations {
         span: Span,
         name: &'a str,
         args: &mut Vec<'a, Argument<'a>>,
-        ctx: Ctx<'a, '_>,
+        ctx: &mut Ctx<'a, '_>,
     ) -> Option<Expression<'a>> {
         match name {
             "Object" if args.is_empty() => Some(ctx.ast.expression_object(span, ctx.ast.vec())),
@@ -825,7 +828,7 @@ impl<'a> PeepholeOptimizations {
     /// `new RegExp()` -> `RegExp()`
     fn try_fold_new_expression(
         e: &mut NewExpression<'a>,
-        ctx: Ctx<'a, '_>,
+        ctx: &mut Ctx<'a, '_>,
     ) -> Option<Expression<'a>> {
         let Expression::Identifier(ident) = &e.callee else { return None };
         let name = ident.name.as_str();
@@ -843,7 +846,7 @@ impl<'a> PeepholeOptimizations {
                 arguments_len == 0
                     || (arguments_len >= 1
                         && e.arguments[0].as_expression().is_some_and(|first_argument| {
-                            let ty = first_argument.value_type(&ctx);
+                            let ty = first_argument.value_type(ctx);
                             !ty.is_undetermined() && !ty.is_object()
                         }))
             }
@@ -882,7 +885,7 @@ impl<'a> PeepholeOptimizations {
         &self,
         chain_expr: &mut ChainExpression<'a>,
         state: &mut State,
-        ctx: Ctx<'a, '_>,
+        ctx: &mut Ctx<'a, '_>,
     ) {
         if let ChainElement::CallExpression(call_expr) = &mut chain_expr.expression {
             // `window.Object?.()` -> `Object?.()`
@@ -900,9 +903,9 @@ impl<'a> PeepholeOptimizations {
 
     fn try_fold_template_literal(
         t: &TemplateLiteral<'a>,
-        ctx: Ctx<'a, '_>,
+        ctx: &mut Ctx<'a, '_>,
     ) -> Option<Expression<'a>> {
-        t.to_js_string(&ctx).map(|val| {
+        t.to_js_string(ctx).map(|val| {
             ctx.ast.expression_string_literal(t.span(), ctx.ast.atom_from_cow(&val), None)
         })
     }
@@ -913,7 +916,7 @@ impl<'a> PeepholeOptimizations {
         key: &mut PropertyKey<'a>,
         computed: &mut bool,
         state: &mut State,
-        ctx: Ctx<'a, '_>,
+        ctx: &mut Ctx<'a, '_>,
     ) {
         if let PropertyKey::NumericLiteral(_) = key {
             if *computed {
@@ -953,7 +956,7 @@ impl<'a> PeepholeOptimizations {
         &self,
         args: &mut Vec<'a, Argument<'a>>,
         state: &mut State,
-        ctx: Ctx<'a, '_>,
+        ctx: &mut Ctx<'a, '_>,
     ) {
         let (new_size, should_fold) =
             args.iter().fold((0, false), |(mut new_size, mut should_fold), arg| {
@@ -1018,13 +1021,13 @@ impl<'a> PeepholeOptimizations {
         &self,
         func: &mut Function<'a>,
         state: &mut State,
-        ctx: Ctx<'a, '_>,
+        ctx: &mut Ctx<'a, '_>,
     ) {
         if self.keep_names.function {
             return;
         }
 
-        if func.id.as_ref().is_some_and(|id| !ctx.scoping().symbol_is_used(id.symbol_id())) {
+        if func.id.as_ref().is_some_and(|id| ctx.scoping().symbol_is_unused(id.symbol_id())) {
             func.id = None;
             state.changed = true;
         }
@@ -1039,13 +1042,13 @@ impl<'a> PeepholeOptimizations {
         &self,
         class: &mut Class<'a>,
         state: &mut State,
-        ctx: Ctx<'a, '_>,
+        ctx: &mut Ctx<'a, '_>,
     ) {
         if self.keep_names.class {
             return;
         }
 
-        if class.id.as_ref().is_some_and(|id| !ctx.scoping().symbol_is_used(id.symbol_id())) {
+        if class.id.as_ref().is_some_and(|id| ctx.scoping().symbol_is_unused(id.symbol_id())) {
             class.id = None;
             state.changed = true;
         }
@@ -1053,7 +1056,7 @@ impl<'a> PeepholeOptimizations {
 }
 
 impl<'a> LatePeepholeOptimizations {
-    pub fn substitute_exit_expression(expr: &mut Expression<'a>, ctx: Ctx<'a, '_>) {
+    pub fn substitute_exit_expression(expr: &mut Expression<'a>, ctx: &mut Ctx<'a, '_>) {
         if let Expression::NewExpression(e) = expr {
             Self::try_compress_typed_array_constructor(e, ctx);
         }
@@ -1068,7 +1071,7 @@ impl<'a> LatePeepholeOptimizations {
     }
 
     /// `new Int8Array(0)` -> `new Int8Array()` (also for other TypedArrays)
-    fn try_compress_typed_array_constructor(e: &mut NewExpression<'a>, ctx: Ctx<'a, '_>) {
+    fn try_compress_typed_array_constructor(e: &mut NewExpression<'a>, ctx: &mut Ctx<'a, '_>) {
         let Expression::Identifier(ident) = &e.callee else { return };
         let name = ident.name.as_str();
         if !Self::is_typed_array_name(name) || !ctx.is_global_reference(ident) {
@@ -1082,7 +1085,10 @@ impl<'a> LatePeepholeOptimizations {
     }
 
     /// Transforms boolean expression `true` => `!0` `false` => `!1`.
-    fn try_compress_boolean(expr: &mut Expression<'a>, ctx: Ctx<'a, '_>) -> Option<Expression<'a>> {
+    fn try_compress_boolean(
+        expr: &mut Expression<'a>,
+        ctx: &mut Ctx<'a, '_>,
+    ) -> Option<Expression<'a>> {
         let Expression::BooleanLiteral(lit) = expr else { return None };
         let num = ctx.ast.expression_numeric_literal(
             lit.span,
@@ -1096,7 +1102,7 @@ impl<'a> LatePeepholeOptimizations {
     /// Transforms long array expression with string literals to `"str1,str2".split(',')`
     fn try_compress_array_expression(
         expr: &mut Expression<'a>,
-        ctx: Ctx<'a, '_>,
+        ctx: &mut Ctx<'a, '_>,
     ) -> Option<Expression<'a>> {
         // this threshold is chosen by hand by checking the minsize output
         const THRESHOLD: usize = 40;
@@ -1164,12 +1170,12 @@ impl<'a> LatePeepholeOptimizations {
         DELIMITERS.into_iter().find(|&delimiter| strings.clone().all(|s| !s.contains(delimiter)))
     }
 
-    pub fn substitute_catch_clause(&self, catch: &mut CatchClause<'a>, ctx: Ctx<'a, '_>) {
+    pub fn substitute_catch_clause(&self, catch: &mut CatchClause<'a>, ctx: &mut Ctx<'a, '_>) {
         if self.target >= ESTarget::ES2019 {
             if let Some(param) = &catch.param {
                 if let BindingPatternKind::BindingIdentifier(ident) = &param.pattern.kind {
                     if catch.body.body.is_empty()
-                        || !ctx.scoping().symbol_is_used(ident.symbol_id())
+                        || ctx.scoping().symbol_is_unused(ident.symbol_id())
                     {
                         catch.param = None;
                     }

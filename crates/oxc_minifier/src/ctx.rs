@@ -1,46 +1,105 @@
-use std::ops::Deref;
+use std::{
+    ops::{Deref, DerefMut},
+    rc::Rc,
+};
+
+use rustc_hash::FxHashMap;
 
 use oxc_ast::{AstBuilder, ast::*};
-use oxc_ecmascript::constant_evaluation::{
-    ConstantEvaluation, ConstantEvaluationCtx, ConstantValue, binary_operation_evaluate_value,
+use oxc_ecmascript::{
+    constant_evaluation::{
+        ConstantEvaluation, ConstantEvaluationCtx, ConstantValue, binary_operation_evaluate_value,
+    },
+    side_effects::{MayHaveSideEffects, PropertyReadSideEffects},
 };
-use oxc_ecmascript::side_effects::{MayHaveSideEffects, PropertyReadSideEffects};
-use oxc_semantic::{IsGlobalReference, Scoping};
+use oxc_semantic::{IsGlobalReference, Scoping, SymbolId};
 use oxc_span::format_atom;
-use oxc_traverse::TraverseCtx;
+use oxc_syntax::reference::ReferenceId;
 
-#[derive(Clone, Copy)]
-pub struct Ctx<'a, 'b>(pub &'b TraverseCtx<'a>);
+use crate::CompressOptions;
+
+pub struct MinifierState<'a> {
+    pub options: Rc<CompressOptions>,
+
+    /// Constant values evaluated from expressions.
+    ///
+    /// Values are saved during constant evaluation phase.
+    /// Values are read during [oxc_ecmascript::is_global_reference::IsGlobalReference::get_constant_value_for_reference_id].
+    pub constant_values: FxHashMap<SymbolId, ConstantValue<'a>>,
+}
+
+impl MinifierState<'_> {
+    pub fn new(options: Rc<CompressOptions>) -> Self {
+        Self { options, constant_values: FxHashMap::default() }
+    }
+}
+
+pub type TraverseCtx<'a> = oxc_traverse::TraverseCtx<'a, MinifierState<'a>>;
+
+pub struct Ctx<'a, 'b>(&'b mut TraverseCtx<'a>);
+
+impl<'a, 'b> Ctx<'a, 'b> {
+    pub fn new(ctx: &'b mut TraverseCtx<'a>) -> Self {
+        Self(ctx)
+    }
+}
 
 impl<'a, 'b> Deref for Ctx<'a, 'b> {
-    type Target = &'b TraverseCtx<'a>;
+    type Target = &'b mut TraverseCtx<'a>;
 
     fn deref(&self) -> &Self::Target {
         &self.0
     }
 }
 
-impl oxc_ecmascript::is_global_reference::IsGlobalReference for Ctx<'_, '_> {
-    fn is_global_reference(&self, ident: &IdentifierReference<'_>) -> Option<bool> {
-        Some(ident.is_global_reference(self.0.scoping()))
+#[expect(clippy::mut_mut)]
+impl<'a, 'b> DerefMut for Ctx<'a, 'b> {
+    fn deref_mut(&mut self) -> &mut &'b mut TraverseCtx<'a> {
+        &mut self.0
     }
 }
 
-impl oxc_ecmascript::side_effects::MayHaveSideEffectsContext for Ctx<'_, '_> {
-    fn respect_annotations(&self) -> bool {
-        true
+impl<'a> oxc_ecmascript::is_global_reference::IsGlobalReference<'a> for Ctx<'a, '_> {
+    fn is_global_reference(&self, ident: &IdentifierReference<'_>) -> Option<bool> {
+        Some(ident.is_global_reference(self.0.scoping()))
     }
 
-    fn is_pure_call(&self, _callee: &Expression) -> bool {
+    fn get_constant_value_for_reference_id(
+        &self,
+        reference_id: ReferenceId,
+    ) -> Option<ConstantValue<'a>> {
+        self.scoping()
+            .get_reference(reference_id)
+            .symbol_id()
+            .and_then(|symbol_id| self.state.constant_values.get(&symbol_id))
+            .cloned()
+    }
+}
+
+impl<'a> oxc_ecmascript::side_effects::MayHaveSideEffectsContext<'a> for Ctx<'a, '_> {
+    fn annotations(&self) -> bool {
+        self.state.options.treeshake.annotations
+    }
+
+    fn manual_pure_functions(&self, callee: &Expression) -> bool {
+        if let Expression::Identifier(ident) = callee {
+            return self
+                .state
+                .options
+                .treeshake
+                .manual_pure_functions
+                .iter()
+                .any(|name| ident.name.as_str() == name);
+        }
         false
     }
 
     fn property_read_side_effects(&self) -> PropertyReadSideEffects {
-        PropertyReadSideEffects::All
+        self.state.options.treeshake.property_read_side_effects
     }
 
     fn unknown_global_side_effects(&self) -> bool {
-        true
+        self.state.options.treeshake.unknown_global_side_effects
     }
 }
 
@@ -59,28 +118,28 @@ impl<'a> Ctx<'a, '_> {
         self.0.scoping()
     }
 
-    pub fn is_global_reference(self, ident: &IdentifierReference<'a>) -> bool {
+    pub fn is_global_reference(&self, ident: &IdentifierReference<'a>) -> bool {
         ident.is_global_reference(self.0.scoping())
     }
 
-    pub fn eval_binary(self, e: &BinaryExpression<'a>) -> Option<Expression<'a>> {
-        if e.may_have_side_effects(&self) {
+    pub fn eval_binary(&self, e: &BinaryExpression<'a>) -> Option<Expression<'a>> {
+        if e.may_have_side_effects(self) {
             None
         } else {
-            e.evaluate_value(&self).map(|v| self.value_to_expr(e.span, v))
+            e.evaluate_value(self).map(|v| self.value_to_expr(e.span, v))
         }
     }
 
     pub fn eval_binary_operation(
-        self,
+        &self,
         operator: BinaryOperator,
         left: &Expression<'a>,
         right: &Expression<'a>,
     ) -> Option<ConstantValue<'a>> {
-        binary_operation_evaluate_value(operator, left, right, &self)
+        binary_operation_evaluate_value(operator, left, right, self)
     }
 
-    pub fn value_to_expr(self, span: Span, value: ConstantValue<'a>) -> Expression<'a> {
+    pub fn value_to_expr(&self, span: Span, value: ConstantValue<'a>) -> Expression<'a> {
         match value {
             ConstantValue::Number(n) => {
                 let number_base =
@@ -100,7 +159,7 @@ impl<'a> Ctx<'a, '_> {
         }
     }
 
-    pub fn is_expression_undefined(self, expr: &Expression) -> bool {
+    pub fn is_expression_undefined(&self, expr: &Expression) -> bool {
         match expr {
             Expression::Identifier(ident) if self.is_identifier_undefined(ident) => true,
             Expression::UnaryExpression(e) if e.operator.is_void() && e.argument.is_number() => {
@@ -111,7 +170,7 @@ impl<'a> Ctx<'a, '_> {
     }
 
     #[inline]
-    pub fn is_identifier_undefined(self, ident: &IdentifierReference) -> bool {
+    pub fn is_identifier_undefined(&self, ident: &IdentifierReference) -> bool {
         if ident.name == "undefined" && ident.is_global_reference(self.scoping()) {
             return true;
         }
@@ -120,7 +179,7 @@ impl<'a> Ctx<'a, '_> {
 
     /// If two expressions are equal.
     /// Special case `undefined` == `void 0`
-    pub fn expr_eq(self, a: &Expression<'a>, b: &Expression<'a>) -> bool {
+    pub fn expr_eq(&self, a: &Expression<'a>, b: &Expression<'a>) -> bool {
         use oxc_span::ContentEq;
         a.content_eq(b) || (self.is_expression_undefined(a) && self.is_expression_undefined(b))
     }

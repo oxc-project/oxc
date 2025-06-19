@@ -52,9 +52,13 @@ use std::mem;
 use oxc_allocator::{CloneIn, TakeIn};
 use oxc_ast::{NONE, ast::*};
 use oxc_span::SPAN;
-use oxc_traverse::{Ancestor, BoundIdentifier, MaybeBoundIdentifier, Traverse, TraverseCtx};
+use oxc_traverse::{Ancestor, BoundIdentifier, MaybeBoundIdentifier, Traverse};
 
-use crate::{TransformCtx, utils::ast_builder::wrap_expression_in_arrow_function_iife};
+use crate::{
+    context::{TransformCtx, TraverseCtx},
+    state::TransformState,
+    utils::ast_builder::wrap_expression_in_arrow_function_iife,
+};
 
 #[derive(Debug)]
 enum CallContext<'a> {
@@ -88,7 +92,7 @@ impl<'a, 'ctx> OptionalChaining<'a, 'ctx> {
     }
 }
 
-impl<'a> Traverse<'a> for OptionalChaining<'a, '_> {
+impl<'a> Traverse<'a, TransformState<'a>> for OptionalChaining<'a, '_> {
     // `#[inline]` because this is a hot path
     #[inline]
     fn enter_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {

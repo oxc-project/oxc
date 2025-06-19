@@ -47,20 +47,20 @@ export default function generateWalkFunctionsCode(types) {
     ///   (\`Program<'a>\`).
     /// * \`ctx\` must contain a \`TraverseAncestry<'a>\` with single \`Ancestor::None\` on its stack.
     #[inline]
-    pub unsafe fn walk_ast<'a, Tr: Traverse<'a>>(
+    pub unsafe fn walk_ast<'a, State, Tr: Traverse<'a, State>>(
       traverser: &mut Tr,
       program: *mut Program<'a>,
-      ctx: &mut TraverseCtx<'a>,
+      ctx: &mut TraverseCtx<'a, State>,
     ) {
       walk_program(traverser, program, ctx);
     }
 
     ${walkMethods}
 
-    unsafe fn walk_statements<'a, Tr: Traverse<'a>>(
+    unsafe fn walk_statements<'a, State, Tr: Traverse<'a, State>>(
       traverser: &mut Tr,
       stmts: *mut Vec<'a, Statement<'a>>,
-      ctx: &mut TraverseCtx<'a>
+      ctx: &mut TraverseCtx<'a, State>
     ) {
       traverser.enter_statements(&mut *stmts, ctx);
       for stmt in &mut *stmts {
@@ -267,10 +267,10 @@ function generateWalkForStruct(type, types) {
 
   const typeSnakeName = camelToSnake(type.name);
   return `
-    unsafe fn walk_${typeSnakeName}<'a, Tr: Traverse<'a>>(
+    unsafe fn walk_${typeSnakeName}<'a, State, Tr: Traverse<'a, State>>(
       traverser: &mut Tr,
       node: *mut ${type.rawName},
-      ctx: &mut TraverseCtx<'a>
+      ctx: &mut TraverseCtx<'a, State>
     ) {
       traverser.enter_${typeSnakeName}(&mut *node, ctx);
       ${fieldsCodes.join('\n')}
@@ -332,10 +332,10 @@ function generateWalkForEnum(type, types) {
 
   const typeSnakeName = camelToSnake(type.name);
   return `
-    unsafe fn walk_${typeSnakeName}<'a, Tr: Traverse<'a>>(
+    unsafe fn walk_${typeSnakeName}<'a, State, Tr: Traverse<'a, State>>(
       traverser: &mut Tr,
       node: *mut ${type.rawName},
-      ctx: &mut TraverseCtx<'a>
+      ctx: &mut TraverseCtx<'a, State>
     ) {
       traverser.enter_${typeSnakeName}(&mut *node, ctx);
       match &mut *node {

@@ -13,7 +13,8 @@ use oxc_syntax::{
     scope::{ScopeFlags, ScopeId},
     symbol::SymbolId,
 };
-use oxc_traverse::TraverseCtx;
+
+use crate::context::TraverseCtx;
 
 use super::ClassProperties;
 
@@ -63,7 +64,7 @@ struct InstanceInitializerVisitor<'a, 'v> {
     constructor_scope_id: ScopeId,
     /// Clashing symbols
     clashing_symbols: &'v mut FxHashMap<SymbolId, Atom<'a>>,
-    /// `TraverseCtx` object.
+    /// `TransCtx` object.
     ctx: &'v mut TraverseCtx<'a>,
 }
 
@@ -161,7 +162,7 @@ impl<'a> InstanceInitializerVisitor<'a, '_> {
 struct FastInstanceInitializerVisitor<'a, 'v> {
     /// Parent scope
     parent_scope_id: ScopeId,
-    /// `TraverseCtx` object.
+    /// `TransCtx` object.
     ctx: &'v mut TraverseCtx<'a>,
 }
 

@@ -5,7 +5,7 @@ use crate::is_global_reference::IsGlobalReference;
 
 use super::DetermineValueType;
 
-pub trait IsInt32OrUint32 {
+pub trait IsInt32OrUint32<'a> {
     /// Whether the value of the expression is a int32 or uint32.
     /// If this method returns `true`, we know that the value cannot be NaN or Infinity.
     ///
@@ -13,11 +13,11 @@ pub trait IsInt32OrUint32 {
     /// - false means it is neither int32 nor uint32, or it is unknown.
     ///
     /// Based on <https://github.com/evanw/esbuild/blob/v0.25.0/internal/js_ast/js_ast_helpers.go#L950>
-    fn is_int32_or_uint32(&self, is_global_reference: &impl IsGlobalReference) -> bool;
+    fn is_int32_or_uint32(&self, is_global_reference: &impl IsGlobalReference<'a>) -> bool;
 }
 
-impl IsInt32OrUint32 for Expression<'_> {
-    fn is_int32_or_uint32(&self, is_global_reference: &impl IsGlobalReference) -> bool {
+impl<'a> IsInt32OrUint32<'a> for Expression<'a> {
+    fn is_int32_or_uint32(&self, is_global_reference: &impl IsGlobalReference<'a>) -> bool {
         match self {
             Expression::NumericLiteral(n) => n.is_int32_or_uint32(is_global_reference),
             Expression::UnaryExpression(e) => e.is_int32_or_uint32(is_global_reference),
@@ -38,15 +38,15 @@ impl IsInt32OrUint32 for Expression<'_> {
     }
 }
 
-impl IsInt32OrUint32 for NumericLiteral<'_> {
-    fn is_int32_or_uint32(&self, _is_global_reference: &impl IsGlobalReference) -> bool {
+impl<'a> IsInt32OrUint32<'a> for NumericLiteral<'a> {
+    fn is_int32_or_uint32(&self, _is_global_reference: &impl IsGlobalReference<'a>) -> bool {
         self.value.fract() == 0.0
             && (self.value.to_i32().is_some() || self.value.to_u32().is_some())
     }
 }
 
-impl IsInt32OrUint32 for UnaryExpression<'_> {
-    fn is_int32_or_uint32(&self, is_global_reference: &impl IsGlobalReference) -> bool {
+impl<'a> IsInt32OrUint32<'a> for UnaryExpression<'a> {
+    fn is_int32_or_uint32(&self, is_global_reference: &impl IsGlobalReference<'a>) -> bool {
         match self.operator {
             UnaryOperator::BitwiseNot => self.value_type(is_global_reference).is_number(),
             UnaryOperator::UnaryPlus => self.argument.is_int32_or_uint32(is_global_reference),
@@ -55,8 +55,8 @@ impl IsInt32OrUint32 for UnaryExpression<'_> {
     }
 }
 
-impl IsInt32OrUint32 for BinaryExpression<'_> {
-    fn is_int32_or_uint32(&self, is_global_reference: &impl IsGlobalReference) -> bool {
+impl<'a> IsInt32OrUint32<'a> for BinaryExpression<'a> {
+    fn is_int32_or_uint32(&self, is_global_reference: &impl IsGlobalReference<'a>) -> bool {
         match self.operator {
             BinaryOperator::ShiftLeft
             | BinaryOperator::ShiftRight
@@ -69,8 +69,8 @@ impl IsInt32OrUint32 for BinaryExpression<'_> {
     }
 }
 
-impl IsInt32OrUint32 for LogicalExpression<'_> {
-    fn is_int32_or_uint32(&self, is_global_reference: &impl IsGlobalReference) -> bool {
+impl<'a> IsInt32OrUint32<'a> for LogicalExpression<'a> {
+    fn is_int32_or_uint32(&self, is_global_reference: &impl IsGlobalReference<'a>) -> bool {
         match self.operator {
             LogicalOperator::And | LogicalOperator::Or => {
                 self.left.is_int32_or_uint32(is_global_reference)

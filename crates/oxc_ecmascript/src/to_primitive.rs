@@ -47,11 +47,11 @@ impl ToPrimitiveResult {
 ///
 /// <https://tc39.es/ecma262/multipage/abstract-operations.html#sec-toprimitive>
 pub trait ToPrimitive<'a> {
-    fn to_primitive(&self, is_global_reference: &impl IsGlobalReference) -> ToPrimitiveResult;
+    fn to_primitive(&self, is_global_reference: &impl IsGlobalReference<'a>) -> ToPrimitiveResult;
 }
 
-impl ToPrimitive<'_> for Expression<'_> {
-    fn to_primitive(&self, is_global_reference: &impl IsGlobalReference) -> ToPrimitiveResult {
+impl<'a> ToPrimitive<'a> for Expression<'a> {
+    fn to_primitive(&self, is_global_reference: &impl IsGlobalReference<'a>) -> ToPrimitiveResult {
         match self.value_type(is_global_reference) {
             ValueType::Undefined => ToPrimitiveResult::Undefined,
             ValueType::Null => ToPrimitiveResult::Null,

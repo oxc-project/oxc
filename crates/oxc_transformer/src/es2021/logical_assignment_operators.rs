@@ -58,9 +58,12 @@ use oxc_allocator::TakeIn;
 use oxc_ast::ast::*;
 use oxc_semantic::ReferenceFlags;
 use oxc_span::SPAN;
-use oxc_traverse::{Traverse, TraverseCtx};
+use oxc_traverse::Traverse;
 
-use crate::TransformCtx;
+use crate::{
+    context::{TransformCtx, TraverseCtx},
+    state::TransformState,
+};
 
 pub struct LogicalAssignmentOperators<'a, 'ctx> {
     ctx: &'ctx TransformCtx<'a>,
@@ -72,7 +75,7 @@ impl<'a, 'ctx> LogicalAssignmentOperators<'a, 'ctx> {
     }
 }
 
-impl<'a> Traverse<'a> for LogicalAssignmentOperators<'a, '_> {
+impl<'a> Traverse<'a, TransformState<'a>> for LogicalAssignmentOperators<'a, '_> {
     // `#[inline]` because this is a hot path, and most `Expression`s are not `AssignmentExpression`s
     // with a logical operator. So we want to bail out as fast as possible for everything else,
     // without the cost of a function call.

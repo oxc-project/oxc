@@ -62,9 +62,13 @@ use oxc_syntax::{
     identifier::{is_identifier_name, is_identifier_part, is_identifier_start},
     keyword::is_reserved_keyword,
 };
-use oxc_traverse::{Ancestor, BoundIdentifier, Traverse, TraverseCtx};
+use oxc_traverse::{Ancestor, BoundIdentifier, Traverse};
 
-use crate::{TransformCtx, common::helper_loader::Helper};
+use crate::{
+    common::helper_loader::Helper,
+    context::{TransformCtx, TraverseCtx},
+    state::TransformState,
+};
 
 pub struct AsyncToGenerator<'a, 'ctx> {
     ctx: &'ctx TransformCtx<'a>,
@@ -77,7 +81,7 @@ impl<'a, 'ctx> AsyncToGenerator<'a, 'ctx> {
     }
 }
 
-impl<'a> Traverse<'a> for AsyncToGenerator<'a, '_> {
+impl<'a> Traverse<'a, TransformState<'a>> for AsyncToGenerator<'a, '_> {
     fn exit_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
         let new_expr = match expr {
             Expression::AwaitExpression(await_expr) => {

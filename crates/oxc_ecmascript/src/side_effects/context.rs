@@ -14,25 +14,33 @@ pub enum PropertyReadSideEffects {
     All,
 }
 
-pub trait MayHaveSideEffectsContext: IsGlobalReference {
+pub trait MayHaveSideEffectsContext<'a>: IsGlobalReference<'a> {
     /// Whether to respect the pure annotations.
     ///
     /// Pure annotations are the comments that marks that a expression is pure.
     /// For example, `/* @__PURE__ */`, `/* #__NO_SIDE_EFFECTS__ */`.
-    fn respect_annotations(&self) -> bool;
+    ///
+    /// <https://rollupjs.org/configuration-options/#treeshake-annotations>
+    fn annotations(&self) -> bool;
 
     /// Whether to treat this function call as pure.
     ///
     /// This function is called for normal function calls, new calls, and
     /// tagged template calls (`foo()`, `new Foo()`, ``foo`b` ``).
-    fn is_pure_call(&self, callee: &Expression) -> bool;
+    ///
+    /// <https://rollupjs.org/configuration-options/#treeshake-manualpurefunctions>
+    fn manual_pure_functions(&self, callee: &Expression) -> bool;
 
     /// Whether property read accesses have side effects.
+    ///
+    /// <https://rollupjs.org/configuration-options/#treeshake-propertyreadsideeffects>
     fn property_read_side_effects(&self) -> PropertyReadSideEffects;
 
     /// Whether accessing a global variable has side effects.
     ///
     /// Accessing a non-existing global variable will throw an error.
     /// Global variable may be a getter that has side effects.
+    ///
+    /// <https://rollupjs.org/configuration-options/#treeshake-unknownglobalsideeffects>
     fn unknown_global_side_effects(&self) -> bool;
 }

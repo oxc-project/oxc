@@ -11,7 +11,7 @@ impl<'a> PeepholeOptimizations {
     pub fn minimize_logical_expression(
         &self,
         e: &mut LogicalExpression<'a>,
-        ctx: Ctx<'a, '_>,
+        ctx: &mut Ctx<'a, '_>,
     ) -> Option<Expression<'a>> {
         Self::try_compress_is_null_or_undefined(e, ctx)
             .or_else(|| self.try_compress_logical_expression_to_assignment_expression(e, ctx))
@@ -31,7 +31,7 @@ impl<'a> PeepholeOptimizations {
     /// - `document.all == null` is `true`
     fn try_compress_is_null_or_undefined(
         expr: &mut LogicalExpression<'a>,
-        ctx: Ctx<'a, '_>,
+        ctx: &mut Ctx<'a, '_>,
     ) -> Option<Expression<'a>> {
         let op = expr.operator;
         let target_ops = match op {
@@ -77,7 +77,7 @@ impl<'a> PeepholeOptimizations {
         right: &mut Expression<'a>,
         span: Span,
         (find_op, replace_op): (BinaryOperator, BinaryOperator),
-        ctx: Ctx<'a, '_>,
+        ctx: &mut Ctx<'a, '_>,
     ) -> Option<Expression<'a>> {
         enum LeftPairValueResult {
             Null(Span),
@@ -160,9 +160,9 @@ impl<'a> PeepholeOptimizations {
     /// - `a["b"]`, `a["b"]`
     /// - `a[0]`, `a[0]`
     pub fn has_no_side_effect_for_evaluation_same_target(
-        assignment_target: &AssignmentTarget,
+        assignment_target: &AssignmentTarget<'a>,
         expr: &Expression,
-        ctx: Ctx<'a, '_>,
+        ctx: &mut Ctx<'a, '_>,
     ) -> bool {
         if let (
             AssignmentTarget::AssignmentTargetIdentifier(write_id_ref),
@@ -205,7 +205,7 @@ impl<'a> PeepholeOptimizations {
     fn try_compress_logical_expression_to_assignment_expression(
         &self,
         expr: &mut LogicalExpression<'a>,
-        ctx: Ctx<'a, '_>,
+        ctx: &mut Ctx<'a, '_>,
     ) -> Option<Expression<'a>> {
         if self.target < ESTarget::ES2020 {
             return None;

@@ -2,10 +2,13 @@ use oxc_allocator::{TakeIn, Vec as ArenaVec};
 use oxc_ast::ast::*;
 use oxc_semantic::ScopeFlags;
 use oxc_span::SPAN;
-use oxc_traverse::{BoundIdentifier, TraverseCtx};
+use oxc_traverse::BoundIdentifier;
 
-use crate::utils::ast_builder::{
-    create_class_constructor, create_this_property_access, create_this_property_assignment,
+use crate::{
+    context::TraverseCtx,
+    utils::ast_builder::{
+        create_class_constructor, create_this_property_access, create_this_property_assignment,
+    },
 };
 
 use super::TypeScript;

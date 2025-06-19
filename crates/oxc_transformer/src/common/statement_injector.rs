@@ -18,9 +18,12 @@ use rustc_hash::FxHashMap;
 
 use oxc_allocator::{Address, GetAddress, Vec as ArenaVec};
 use oxc_ast::ast::*;
-use oxc_traverse::{Traverse, TraverseCtx};
+use oxc_traverse::Traverse;
 
-use crate::TransformCtx;
+use crate::{
+    context::{TransformCtx, TraverseCtx},
+    state::TransformState,
+};
 
 /// Transform that inserts any statements which have been requested insertion via `StatementInjectorStore`
 pub struct StatementInjector<'a, 'ctx> {
@@ -33,7 +36,7 @@ impl<'a, 'ctx> StatementInjector<'a, 'ctx> {
     }
 }
 
-impl<'a> Traverse<'a> for StatementInjector<'a, '_> {
+impl<'a> Traverse<'a, TransformState<'a>> for StatementInjector<'a, '_> {
     fn exit_statements(
         &mut self,
         statements: &mut ArenaVec<'a, Statement<'a>>,

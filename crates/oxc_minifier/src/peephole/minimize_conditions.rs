@@ -16,7 +16,7 @@ impl<'a> PeepholeOptimizations {
         &self,
         expr: &mut Expression<'a>,
         state: &mut State,
-        ctx: Ctx<'a, '_>,
+        ctx: &mut Ctx<'a, '_>,
     ) {
         let mut changed = false;
         loop {
@@ -73,7 +73,7 @@ impl<'a> PeepholeOptimizations {
         op: LogicalOperator,
         a: Expression<'a>,
         b: Expression<'a>,
-        ctx: Ctx<'a, '_>,
+        ctx: &mut Ctx<'a, '_>,
     ) -> Expression<'a> {
         // "(a, b) op c" => "a, b op c"
         if let Expression::SequenceExpression(mut sequence_expr) = a {
@@ -115,13 +115,13 @@ impl<'a> PeepholeOptimizations {
     //  ^^^^^^^ ctx.expression_value_type(&e.left).is_number()` is `true`.
     fn try_minimize_binary(
         e: &mut BinaryExpression<'a>,
-        ctx: Ctx<'a, '_>,
+        ctx: &mut Ctx<'a, '_>,
     ) -> Option<Expression<'a>> {
         if !e.operator.is_equality() {
             return None;
         }
-        let left = e.left.value_type(&ctx);
-        let right = e.right.value_type(&ctx);
+        let left = e.left.value_type(ctx);
+        let right = e.right.value_type(ctx);
         if left.is_undetermined() || right.is_undetermined() {
             return None;
         }
@@ -167,12 +167,12 @@ impl<'a> PeepholeOptimizations {
     ///
     /// In `IsLooselyEqual`, `true` and `false` are converted to `1` and `0` first.
     /// <https://tc39.es/ecma262/multipage/abstract-operations.html#sec-islooselyequal>
-    fn try_compress_is_loose_boolean(e: &mut BinaryExpression<'a>, ctx: Ctx<'a, '_>) -> bool {
+    fn try_compress_is_loose_boolean(e: &mut BinaryExpression<'a>, ctx: &mut Ctx<'a, '_>) -> bool {
         if !matches!(e.operator, BinaryOperator::Equality | BinaryOperator::Inequality) {
             return false;
         }
 
-        if let Some(ConstantValue::Boolean(left_bool)) = e.left.evaluate_value(&ctx) {
+        if let Some(ConstantValue::Boolean(left_bool)) = e.left.evaluate_value(ctx) {
             e.left = ctx.ast.expression_numeric_literal(
                 e.left.span(),
                 if left_bool { 1.0 } else { 0.0 },
@@ -181,7 +181,7 @@ impl<'a> PeepholeOptimizations {
             );
             return true;
         }
-        if let Some(ConstantValue::Boolean(right_bool)) = e.right.evaluate_value(&ctx) {
+        if let Some(ConstantValue::Boolean(right_bool)) = e.right.evaluate_value(ctx) {
             e.right = ctx.ast.expression_numeric_literal(
                 e.right.span(),
                 if right_bool { 1.0 } else { 0.0 },
@@ -217,7 +217,7 @@ impl<'a> PeepholeOptimizations {
     fn try_compress_normal_assignment_to_combined_logical_assignment(
         &self,
         expr: &mut AssignmentExpression<'a>,
-        ctx: Ctx<'a, '_>,
+        ctx: &mut Ctx<'a, '_>,
     ) -> bool {
         if self.target < ESTarget::ES2020 {
             return false;
@@ -254,7 +254,7 @@ impl<'a> PeepholeOptimizations {
     /// Compress `a = a + b` to `a += b`
     fn try_compress_normal_assignment_to_combined_assignment(
         expr: &mut AssignmentExpression<'a>,
-        ctx: Ctx<'a, '_>,
+        ctx: &mut Ctx<'a, '_>,
     ) -> bool {
         if !matches!(expr.operator, AssignmentOperator::Assign) {
             return false;
@@ -277,7 +277,7 @@ impl<'a> PeepholeOptimizations {
     #[expect(clippy::float_cmp)]
     fn try_compress_assignment_to_update_expression(
         expr: &mut AssignmentExpression<'a>,
-        ctx: Ctx<'a, '_>,
+        ctx: &mut Ctx<'a, '_>,
     ) -> Option<Expression<'a>> {
         if !matches!(expr.operator, AssignmentOperator::Subtraction) {
             return None;
