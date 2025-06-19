@@ -352,6 +352,7 @@ impl<'a> PeepholeOptimizations {
         }
 
         if self.remove_unused_expression(&mut expr_stmt.expression, state, ctx) {
+            ctx.delete_semantic_from_expression(&expr_stmt.expression);
             *stmt = ctx.ast.statement_empty(expr_stmt.span);
             state.changed = true;
         }
