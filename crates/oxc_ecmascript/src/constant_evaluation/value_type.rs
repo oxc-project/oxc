@@ -1,12 +1,15 @@
 use oxc_ast::ast::{
     AssignmentExpression, AssignmentOperator, BinaryExpression, ConditionalExpression, Expression,
-    LogicalExpression, LogicalOperator, StaticMemberExpression, UnaryExpression,
+    IdentifierReference, LogicalExpression, LogicalOperator, StaticMemberExpression,
+    UnaryExpression,
 };
 use oxc_syntax::operator::{BinaryOperator, UnaryOperator};
 
 use crate::{
     is_global_reference::IsGlobalReference, to_numeric::ToNumeric, to_primitive::ToPrimitive,
 };
+
+use super::ConstantValue;
 
 /// JavaScript Language Type
 ///
@@ -57,6 +60,19 @@ impl ValueType {
     }
 }
 
+impl<'a> From<ConstantValue<'a>> for ValueType {
+    fn from(value: ConstantValue<'a>) -> Self {
+        match value {
+            ConstantValue::Number(_) => ValueType::Number,
+            ConstantValue::BigInt(_) => ValueType::BigInt,
+            ConstantValue::String(_) => ValueType::String,
+            ConstantValue::Boolean(_) => ValueType::Boolean,
+            ConstantValue::Undefined => ValueType::Undefined,
+            ConstantValue::Null => ValueType::Null,
+        }
+    }
+}
+
 /// Based on `get_known_value_type` in closure compiler
 /// <https://github.com/google/closure-compiler/blob/v20240609/src/com/google/javascript/jscomp/NodeUtil.java#L1517>
 ///
@@ -89,17 +105,7 @@ impl<'a> DetermineValueType<'a> for Expression<'a> {
                     _ => ValueType::Undetermined,
                 }
             }
-            Expression::Identifier(ident) => {
-                if is_global_reference.is_global_reference(ident) == Some(true) {
-                    match ident.name.as_str() {
-                        "undefined" => ValueType::Undefined,
-                        "NaN" | "Infinity" => ValueType::Number,
-                        _ => ValueType::Undetermined,
-                    }
-                } else {
-                    ValueType::Undetermined
-                }
-            }
+            Expression::Identifier(ident) => ident.value_type(is_global_reference),
             Expression::UnaryExpression(e) => e.value_type(is_global_reference),
             Expression::BinaryExpression(e) => e.value_type(is_global_reference),
             Expression::SequenceExpression(e) => e
@@ -112,6 +118,26 @@ impl<'a> DetermineValueType<'a> for Expression<'a> {
             Expression::ParenthesizedExpression(e) => e.expression.value_type(is_global_reference),
             Expression::StaticMemberExpression(e) => e.value_type(is_global_reference),
             _ => ValueType::Undetermined,
+        }
+    }
+}
+
+impl<'a> DetermineValueType<'a> for IdentifierReference<'a> {
+    fn value_type(&self, is_global_reference: &impl IsGlobalReference<'a>) -> ValueType {
+        if is_global_reference.is_global_reference(self) == Some(true) {
+            match self.name.as_str() {
+                "undefined" => ValueType::Undefined,
+                "NaN" | "Infinity" => ValueType::Number,
+                _ => ValueType::Undetermined,
+            }
+        } else {
+            self.reference_id
+                .get()
+                .and_then(|reference_id| {
+                    is_global_reference.get_constant_value_for_reference_id(reference_id)
+                })
+                .map(ValueType::from)
+                .unwrap_or(ValueType::Undetermined)
         }
     }
 }

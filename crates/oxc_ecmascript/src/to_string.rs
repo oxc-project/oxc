@@ -29,11 +29,11 @@ impl<'a> ToJsString<'a> for Expression<'a> {
         match self {
             Expression::StringLiteral(lit) => lit.to_js_string(is_global_reference),
             Expression::TemplateLiteral(lit) => lit.to_js_string(is_global_reference),
-            Expression::Identifier(ident) => ident.to_js_string(is_global_reference),
             Expression::NumericLiteral(lit) => lit.to_js_string(is_global_reference),
             Expression::BigIntLiteral(lit) => lit.to_js_string(is_global_reference),
             Expression::NullLiteral(lit) => lit.to_js_string(is_global_reference),
             Expression::BooleanLiteral(lit) => lit.to_js_string(is_global_reference),
+            Expression::Identifier(ident) => ident.to_js_string(is_global_reference),
             Expression::UnaryExpression(e) => e.to_js_string(is_global_reference),
             Expression::ArrayExpression(e) => e.to_js_string(is_global_reference),
             Expression::ObjectExpression(e) => e.to_js_string(is_global_reference),
@@ -97,9 +97,18 @@ impl<'a> ToJsString<'a> for IdentifierReference<'a> {
         is_global_reference: &impl IsGlobalReference<'a>,
     ) -> Option<Cow<'a, str>> {
         let name = self.name.as_str();
-        (matches!(name, "undefined" | "Infinity" | "NaN")
+        if (matches!(name, "undefined" | "Infinity" | "NaN")
             && is_global_reference.is_global_reference(self) == Some(true))
-        .then_some(Cow::Borrowed(name))
+        {
+            Some(Cow::Borrowed(name))
+        } else {
+            self.reference_id
+                .get()
+                .and_then(|reference_id| {
+                    is_global_reference.get_constant_value_for_reference_id(reference_id)
+                })
+                .and_then(|v| v.to_js_string(is_global_reference))
+        }
     }
 }
 
