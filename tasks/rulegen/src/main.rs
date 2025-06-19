@@ -59,6 +59,8 @@ const PROMISE_TEST_PATH: &str =
 const VITEST_TEST_PATH: &str =
     "https://raw.githubusercontent.com/veritem/eslint-plugin-vitest/main/tests";
 
+const REGEXP_TEST_PATH: &str = "https://raw.githubusercontent.com/ota-meshi/eslint-plugin-regexp/refs/heads/master/tests/lib/rules";
+
 struct TestCase {
     source_text: String,
     code: Option<String>,
@@ -597,6 +599,7 @@ pub enum RuleKind {
     Node,
     Promise,
     Vitest,
+    Regexp,
 }
 
 impl RuleKind {
@@ -615,6 +618,7 @@ impl RuleKind {
             "n" => Self::Node,
             "promise" => Self::Promise,
             "vitest" => Self::Vitest,
+            "regexp" => Self::Regexp,
             _ => Self::ESLint,
         }
     }
@@ -637,6 +641,7 @@ impl Display for RuleKind {
             Self::Node => "eslint-plugin-n",
             Self::Promise => "eslint-plugin-promise",
             Self::Vitest => "eslint-plugin-vitest",
+            Self::Regexp => "eslint-plugin-regexp",
         };
         f.write_str(kind_name)
     }
@@ -665,6 +670,7 @@ fn main() {
         RuleKind::Node => format!("{NODE_TEST_PATH}/{kebab_rule_name}.js"),
         RuleKind::Promise => format!("{PROMISE_TEST_PATH}/{kebab_rule_name}.js"),
         RuleKind::Vitest => format!("{VITEST_TEST_PATH}/{kebab_rule_name}.test.ts"),
+        RuleKind::Regexp => format!("{REGEXP_TEST_PATH}/{kebab_rule_name}.ts"),
         RuleKind::Oxc => String::new(),
     };
     let language = match rule_kind {
@@ -787,6 +793,7 @@ fn get_mod_name(rule_kind: RuleKind) -> String {
         RuleKind::Promise => "promise".into(),
         RuleKind::Vitest => "vitest".into(),
         RuleKind::Node => "node".into(),
+        RuleKind::Regexp => "regexp".into(),
     }
 }
 

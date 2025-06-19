@@ -8,14 +8,14 @@ source: crates/oxc_linter/src/tester.rs
    ·                           ╰── 'b' is already defined.
  2 │ case b: var b = 4}
    ·             ┬
-   ·             ╰── It can not be redeclare here.
+   ·             ╰── It can not be redeclared here.
    ╰────
 
   ⚠ eslint(no-redeclare): 'a' is already defined.
    ╭─[no_redeclare..cts:1:5]
  1 │ var a = 3; var a = 10;
    ·     ┬          ┬
-   ·     │          ╰── It can not be redeclare here.
+   ·     │          ╰── It can not be redeclared here.
    ·     ╰── 'a' is already defined.
    ╰────
 
@@ -23,7 +23,7 @@ source: crates/oxc_linter/src/tester.rs
    ╭─[no_redeclare..cts:1:5]
  1 │ var a = {}; var a = [];
    ·     ┬           ┬
-   ·     │           ╰── It can not be redeclare here.
+   ·     │           ╰── It can not be redeclared here.
    ·     ╰── 'a' is already defined.
    ╰────
 
@@ -39,7 +39,7 @@ source: crates/oxc_linter/src/tester.rs
    ╭─[no_redeclare..cts:1:10]
  1 │ function a() {} function a() {}
    ·          ┬               ┬
-   ·          │               ╰── It can not be redeclare here.
+   ·          │               ╰── It can not be redeclared here.
    ·          ╰── 'a' is already defined.
    ╰────
 
@@ -47,7 +47,7 @@ source: crates/oxc_linter/src/tester.rs
    ╭─[no_redeclare..cts:1:5]
  1 │ var a = function() { }; var a = function() { }
    ·     ┬                       ┬
-   ·     │                       ╰── It can not be redeclare here.
+   ·     │                       ╰── It can not be redeclared here.
    ·     ╰── 'a' is already defined.
    ╰────
 
@@ -55,7 +55,7 @@ source: crates/oxc_linter/src/tester.rs
    ╭─[no_redeclare..cts:1:5]
  1 │ var a = function() { }; var a = new Date();
    ·     ┬                       ┬
-   ·     │                       ╰── It can not be redeclare here.
+   ·     │                       ╰── It can not be redeclared here.
    ·     ╰── 'a' is already defined.
    ╰────
 
@@ -63,7 +63,7 @@ source: crates/oxc_linter/src/tester.rs
    ╭─[no_redeclare..cts:1:5]
  1 │ var a = 3; var a = 10; var a = 15;
    ·     ┬          ┬
-   ·     │          ╰── It can not be redeclare here.
+   ·     │          ╰── It can not be redeclared here.
    ·     ╰── 'a' is already defined.
    ╰────
 
@@ -71,7 +71,7 @@ source: crates/oxc_linter/src/tester.rs
    ╭─[no_redeclare..cts:1:16]
  1 │ var a = 3; var a = 10; var a = 15;
    ·                ┬           ┬
-   ·                │           ╰── It can not be redeclare here.
+   ·                │           ╰── It can not be redeclared here.
    ·                ╰── 'a' is already defined.
    ╰────
 
@@ -79,7 +79,7 @@ source: crates/oxc_linter/src/tester.rs
    ╭─[no_redeclare..cts:1:5]
  1 │ var a; var a;
    ·     ┬      ┬
-   ·     │      ╰── It can not be redeclare here.
+   ·     │      ╰── It can not be redeclared here.
    ·     ╰── 'a' is already defined.
    ╰────
 
@@ -87,7 +87,7 @@ source: crates/oxc_linter/src/tester.rs
    ╭─[no_redeclare..cts:1:12]
  1 │ export var a; var a;
    ·            ┬      ┬
-   ·            │      ╰── It can not be redeclare here.
+   ·            │      ╰── It can not be redeclared here.
    ·            ╰── 'a' is already defined.
    ╰────
 
@@ -95,7 +95,7 @@ source: crates/oxc_linter/src/tester.rs
    ╭─[no_redeclare..cts:1:24]
  1 │ class C { static { var a; var a; } }
    ·                        ┬      ┬
-   ·                        │      ╰── It can not be redeclare here.
+   ·                        │      ╰── It can not be redeclared here.
    ·                        ╰── 'a' is already defined.
    ╰────
 
@@ -103,7 +103,7 @@ source: crates/oxc_linter/src/tester.rs
    ╭─[no_redeclare..cts:1:24]
  1 │ class C { static { var a; { var a; } } }
    ·                        ┬        ┬
-   ·                        │        ╰── It can not be redeclare here.
+   ·                        │        ╰── It can not be redeclared here.
    ·                        ╰── 'a' is already defined.
    ╰────
 
@@ -111,7 +111,7 @@ source: crates/oxc_linter/src/tester.rs
    ╭─[no_redeclare..cts:1:26]
  1 │ class C { static { { var a; } var a; } }
    ·                          ┬        ┬
-   ·                          │        ╰── It can not be redeclare here.
+   ·                          │        ╰── It can not be redeclared here.
    ·                          ╰── 'a' is already defined.
    ╰────
 
@@ -119,7 +119,7 @@ source: crates/oxc_linter/src/tester.rs
    ╭─[no_redeclare..cts:1:26]
  1 │ class C { static { { var a; } { var a; } } }
    ·                          ┬          ┬
-   ·                          │          ╰── It can not be redeclare here.
+   ·                          │          ╰── It can not be redeclared here.
    ·                          ╰── 'a' is already defined.
    ╰────
 
@@ -145,7 +145,7 @@ source: crates/oxc_linter/src/tester.rs
    ╭─[no_redeclare..cts:1:5]
  1 │ var a; var {a = 0, b: Object = 0} = {};
    ·     ┬       ┬
-   ·     │       ╰── It can not be redeclare here.
+   ·     │       ╰── It can not be redeclared here.
    ·     ╰── 'a' is already defined.
    ╰────
 
@@ -159,7 +159,7 @@ source: crates/oxc_linter/src/tester.rs
    ╭─[no_redeclare..cts:1:5]
  1 │ var a; var {a = 0, b: globalThis = 0} = {};
    ·     ┬       ┬
-   ·     │       ╰── It can not be redeclare here.
+   ·     │       ╰── It can not be redeclared here.
    ·     ╰── 'a' is already defined.
    ╰────
 
@@ -173,7 +173,7 @@ source: crates/oxc_linter/src/tester.rs
    ╭─[no_redeclare..cts:1:20]
  1 │ function f() { var a; var a; }
    ·                    ┬      ┬
-   ·                    │      ╰── It can not be redeclare here.
+   ·                    │      ╰── It can not be redeclared here.
    ·                    ╰── 'a' is already defined.
    ╰────
 
@@ -181,7 +181,7 @@ source: crates/oxc_linter/src/tester.rs
    ╭─[no_redeclare..cts:1:12]
  1 │ function f(a, b = 1) { var a; var b;}
    ·            ┬               ┬
-   ·            │               ╰── It can not be redeclare here.
+   ·            │               ╰── It can not be redeclared here.
    ·            ╰── 'a' is already defined.
    ╰────
 
@@ -189,7 +189,7 @@ source: crates/oxc_linter/src/tester.rs
    ╭─[no_redeclare..cts:1:15]
  1 │ function f(a, b = 1) { var a; var b;}
    ·               ┬                   ┬
-   ·               │                   ╰── It can not be redeclare here.
+   ·               │                   ╰── It can not be redeclared here.
    ·               ╰── 'b' is already defined.
    ╰────
 
@@ -197,7 +197,7 @@ source: crates/oxc_linter/src/tester.rs
    ╭─[no_redeclare..cts:1:20]
  1 │ function f() { var a; if (test) { var a; } }
    ·                    ┬                  ┬
-   ·                    │                  ╰── It can not be redeclare here.
+   ·                    │                  ╰── It can not be redeclared here.
    ·                    ╰── 'a' is already defined.
    ╰────
 
@@ -205,7 +205,7 @@ source: crates/oxc_linter/src/tester.rs
    ╭─[no_redeclare..cts:1:10]
  1 │ for (var a, a;;);
    ·          ┬  ┬
-   ·          │  ╰── It can not be redeclare here.
+   ·          │  ╰── It can not be redeclared here.
    ·          ╰── 'a' is already defined.
    ╰────
 
@@ -225,6 +225,6 @@ source: crates/oxc_linter/src/tester.rs
    ╭─[no_redeclare..cts:1:6]
  1 │ type foo = 1; export function foo(): void; export function foo() { }
    ·      ─┬─                                                   ─┬─
-   ·       │                                                     ╰── It can not be redeclare here.
+   ·       │                                                     ╰── It can not be redeclared here.
    ·       ╰── 'foo' is already defined.
    ╰────

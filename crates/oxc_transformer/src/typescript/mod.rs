@@ -1,8 +1,11 @@
 use oxc_allocator::Vec as ArenaVec;
 use oxc_ast::ast::*;
-use oxc_traverse::{Traverse, TraverseCtx};
+use oxc_traverse::Traverse;
 
-use crate::TransformCtx;
+use crate::{
+    context::{TransformCtx, TraverseCtx},
+    state::TransformState,
+};
 
 mod annotations;
 mod class;
@@ -68,7 +71,7 @@ impl<'a, 'ctx> TypeScript<'a, 'ctx> {
     }
 }
 
-impl<'a> Traverse<'a> for TypeScript<'a, '_> {
+impl<'a> Traverse<'a, TransformState<'a>> for TypeScript<'a, '_> {
     fn enter_program(&mut self, program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
         if self.ctx.source_type.is_typescript_definition() {
             // Output empty file for TS definitions

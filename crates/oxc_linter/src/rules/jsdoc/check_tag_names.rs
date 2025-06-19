@@ -43,6 +43,40 @@ declare_oxc_lint!(
     /// ```javascript
     /// /** @param */
     /// ```
+    ///
+    /// ### Options
+    ///
+    /// Configuration for allowed tags is done via [`settings.jsdoc.tagNamePreference`](/docs/guide/usage/linter/config-file-reference.html#settings-jsdoc-tagnamepreference).
+    /// There is no CLI-only parameter for this rule.
+    ///
+    /// You can add custom tags by adding a key-value pair where both match the name of the tag you want to add, like so:
+    ///
+    /// ::: code-group
+    ///
+    /// ```json [Config (.oxlintrc.json)]
+    /// {
+    ///   "plugins": ["jsdoc"],
+    ///   "rules": {
+    ///     "jsdoc/check-tag-names": "error"
+    ///   },
+    ///   "settings": { // [!code highlight:7]
+    ///     "jsdoc": {
+    ///       "tagNamePreference": {
+    ///         "customTagName": "customTagName"
+    ///       }
+    ///     }
+    ///   }
+    /// }
+    /// ```
+    /// :::
+    ///
+    /// Examples of correct code for this rule with the above configuration, adding the `customTagName` tag:
+    ///
+    /// ```js
+    /// /**
+    ///  * @customTagName
+    ///  */
+    /// ```
     CheckTagNames,
     jsdoc,
     correctness

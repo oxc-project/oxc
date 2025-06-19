@@ -1,17 +1,12 @@
 use oxc_ast::{
     AstKind,
-    ast::{Argument, JSXAttributeItem, JSXAttributeName, ObjectPropertyKind},
+    ast::{Argument, JSXAttributeName, ObjectPropertyKind},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 
-use crate::{
-    AstNode, FrameworkFlags,
-    context::{ContextHost, LintContext},
-    rule::Rule,
-    utils::is_create_element_call,
-};
+use crate::{AstNode, context::LintContext, rule::Rule, utils::is_create_element_call};
 
 fn no_children_prop_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Avoid passing children using a prop.")
@@ -65,7 +60,7 @@ declare_oxc_lint!(
 impl Rule for NoChildrenProp {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         match node.kind() {
-            AstKind::JSXAttributeItem(JSXAttributeItem::Attribute(attr)) => {
+            AstKind::JSXAttribute(attr) => {
                 let JSXAttributeName::Identifier(attr_ident) = &attr.name else {
                     return;
                 };
@@ -93,17 +88,10 @@ impl Rule for NoChildrenProp {
             _ => {}
         }
     }
-
-    fn should_run(&self, ctx: &ContextHost) -> bool {
-        // Only is JSX Context
-        // Only when React is installed, others frameworks can use JSX too
-        ctx.source_type().is_jsx() && ctx.frameworks().contains(FrameworkFlags::React)
-    }
 }
 
 #[test]
 fn test() {
-    use crate::LintOptions;
     use crate::tester::Tester;
 
     #[rustfmt::skip]
@@ -167,10 +155,5 @@ fn test() {
         (r#"React.createElement(MyComponent, {...props, children: "Children"})"#, None),
     ];
 
-    Tester::new(NoChildrenProp::NAME, NoChildrenProp::PLUGIN, pass, fail)
-        .with_lint_options(LintOptions {
-            framework_hints: FrameworkFlags::React,
-            ..LintOptions::default()
-        })
-        .test_and_snapshot();
+    Tester::new(NoChildrenProp::NAME, NoChildrenProp::PLUGIN, pass, fail).test_and_snapshot();
 }

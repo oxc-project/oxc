@@ -232,18 +232,29 @@ unsafe fn parse_raw_impl(
         let mut comments = mem::replace(&mut program.comments, ArenaVec::new_in(&allocator));
         let mut module_record = ret.module_record;
 
-        // Convert errors
-        let mut errors = ArenaVec::from_iter_in(
-            ret.errors.iter().map(|error| Error::from_in(error, &allocator)),
-            &allocator,
-        );
-
-        // Run `SemanticBuilder` if requested
-        if options.show_semantic_errors == Some(true) {
+        // Convert errors.
+        // Run `SemanticBuilder` if requested.
+        //
+        // Note: Avoid calling `Error::from_diagnostics_in` unless there are some errors,
+        // because it's fairly expensive (it copies whole of source text into a `String`).
+        let mut errors = if options.show_semantic_errors == Some(true) {
             let semantic_ret = SemanticBuilder::new().with_check_syntax_error(true).build(&program);
-            errors
-                .extend(semantic_ret.errors.iter().map(|error| Error::from_in(error, &allocator)));
-        }
+
+            if !ret.errors.is_empty() || !semantic_ret.errors.is_empty() {
+                Error::from_diagnostics_in(
+                    ret.errors.into_iter().chain(semantic_ret.errors),
+                    source_text,
+                    filename,
+                    &allocator,
+                )
+            } else {
+                ArenaVec::new_in(&allocator)
+            }
+        } else if !ret.errors.is_empty() {
+            Error::from_diagnostics_in(ret.errors, source_text, filename, &allocator)
+        } else {
+            ArenaVec::new_in(&allocator)
+        };
 
         // Convert spans to UTF-16
         let span_converter = Utf8ToUtf16::new(source_text);

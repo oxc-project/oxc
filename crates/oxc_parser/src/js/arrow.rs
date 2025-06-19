@@ -3,7 +3,7 @@ use oxc_ast::{NONE, ast::*};
 use oxc_span::GetSpan;
 use oxc_syntax::precedence::Precedence;
 
-use super::Tristate;
+use super::{FunctionKind, Tristate};
 use crate::{ParserImpl, diagnostics, lexer::Kind};
 
 struct ArrowFunctionHead<'a> {
@@ -35,9 +35,7 @@ impl<'a> ParserImpl<'a> {
         &mut self,
         allow_return_type_in_arrow_function: bool,
     ) -> Option<Expression<'a>> {
-        if self.at(Kind::Async)
-            && self.is_un_parenthesized_async_arrow_function_worker() == Tristate::True
-        {
+        if self.at(Kind::Async) && self.is_un_parenthesized_async_arrow_function_worker() {
             let span = self.start_span();
             self.bump_any(); // bump `async`
             let expr = self.parse_binary_expression_or_higher(Precedence::Comma);
@@ -61,8 +59,7 @@ impl<'a> ParserImpl<'a> {
     }
 
     fn is_parenthesized_arrow_function_expression_worker(&mut self) -> Tristate {
-        if self.at(Kind::Async) {
-            self.bump(Kind::Async);
+        if self.eat(Kind::Async) {
             if self.cur_token().is_on_new_line() {
                 return Tristate::False;
             }
@@ -195,28 +192,21 @@ impl<'a> ParserImpl<'a> {
         }
     }
 
-    fn is_un_parenthesized_async_arrow_function_worker(&mut self) -> Tristate {
-        if self.at(Kind::Async) {
-            let checkpoint = self.checkpoint();
-            self.bump(Kind::Async);
-            // If the "async" is followed by "=>" token then it is not a beginning of an async arrow-function
-            // but instead a simple arrow-function which will be parsed inside "parseAssignmentExpressionOrHigher"
-            if self.cur_token().is_on_new_line() || self.at(Kind::Arrow) {
+    fn is_un_parenthesized_async_arrow_function_worker(&mut self) -> bool {
+        let checkpoint = self.checkpoint();
+        self.bump(Kind::Async);
+        // If the "async" is followed by "=>" token then it is not a beginning of an async arrow-function
+        // but instead a simple arrow-function which will be parsed inside "parseAssignmentExpressionOrHigher"
+        if !self.cur_token().is_on_new_line() && self.cur_kind().is_binding_identifier() {
+            // Arrow before newline is checked in `parse_simple_arrow_function_expression`
+            self.bump_any();
+            if self.at(Kind::Arrow) {
                 self.rewind(checkpoint);
-                return Tristate::False;
+                return true;
             }
-            // Check for un-parenthesized AsyncArrowFunction
-            if self.cur_kind().is_binding_identifier() {
-                // Arrow before newline is checked in `parse_simple_arrow_function_expression`
-                self.bump_any();
-                if self.at(Kind::Arrow) {
-                    self.rewind(checkpoint);
-                    return Tristate::True;
-                }
-            }
-            self.rewind(checkpoint);
         }
-        Tristate::False
+        self.rewind(checkpoint);
+        false
     }
 
     pub(crate) fn parse_simple_arrow_function_expression(
@@ -235,7 +225,7 @@ impl<'a> ParserImpl<'a> {
                     let ident = ident.unbox();
                     self.ast.alloc_binding_identifier(ident.span, ident.name)
                 }
-                _ => unreachable!(),
+                _ => return self.unexpected(),
             };
             let params_span = self.end_span(ident.span.start);
             let ident = BindingPatternKind::BindingIdentifier(ident);
@@ -279,8 +269,10 @@ impl<'a> ParserImpl<'a> {
 
         let type_parameters = self.parse_ts_type_parameters();
 
-        let (this_param, params) =
-            self.parse_formal_parameters(FormalParameterKind::ArrowFormalParameters);
+        let (this_param, params) = self.parse_formal_parameters(
+            FunctionKind::Expression,
+            FormalParameterKind::ArrowFormalParameters,
+        );
 
         if let Some(this_param) = this_param {
             // const x = (this: number) => {};

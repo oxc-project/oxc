@@ -7,9 +7,12 @@ use oxc_syntax::{
     scope::{ScopeFlags, ScopeId},
     symbol::SymbolFlags,
 };
-use oxc_traverse::{BoundIdentifier, Traverse, TraverseCtx};
+use oxc_traverse::{BoundIdentifier, Traverse};
 
-use crate::TransformCtx;
+use crate::{
+    context::{TransformCtx, TraverseCtx},
+    state::TransformState,
+};
 
 use super::{
     TypeScriptOptions,
@@ -29,7 +32,7 @@ impl<'a, 'ctx> TypeScriptNamespace<'a, 'ctx> {
     }
 }
 
-impl<'a> Traverse<'a> for TypeScriptNamespace<'a, '_> {
+impl<'a> Traverse<'a, TransformState<'a>> for TypeScriptNamespace<'a, '_> {
     // `namespace Foo { }` -> `let Foo; (function (_Foo) { })(Foo || (Foo = {}));`
     fn enter_program(&mut self, program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
         // namespace declaration is only allowed at the top level

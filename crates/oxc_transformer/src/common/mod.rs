@@ -3,9 +3,13 @@
 use arrow_function_converter::ArrowFunctionConverter;
 use oxc_allocator::Vec as ArenaVec;
 use oxc_ast::ast::*;
-use oxc_traverse::{Traverse, TraverseCtx};
+use oxc_traverse::Traverse;
 
-use crate::{EnvOptions, TransformCtx};
+use crate::{
+    EnvOptions,
+    context::{TransformCtx, TraverseCtx},
+    state::TransformState,
+};
 
 pub mod arrow_function_converter;
 mod computed_key;
@@ -41,7 +45,7 @@ impl<'a, 'ctx> Common<'a, 'ctx> {
     }
 }
 
-impl<'a> Traverse<'a> for Common<'a, '_> {
+impl<'a> Traverse<'a, TransformState<'a>> for Common<'a, '_> {
     fn exit_program(&mut self, program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
         self.module_imports.exit_program(program, ctx);
         self.var_declarations.exit_program(program, ctx);

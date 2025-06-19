@@ -124,7 +124,7 @@ jobs:
         with:
           cache-key: wasi
           save-cache: ${{ github.ref_name == 'main' }}
-      - uses: ./.github/actions/pnpm
+      - uses: oxc-project/setup-node@f42e3bda950c7454575e78ee4eaac880a077700c # v1.0.0
         if: steps.filter.outputs.src == 'true'
       - name: Build
         if: steps.filter.outputs.src == 'true'
@@ -166,7 +166,7 @@ jobs:
         with:
           cache-key: napi
           save-cache: ${{ github.ref_name == 'main' }}
-      - uses: ./.github/actions/pnpm
+      - uses: oxc-project/setup-node@f42e3bda950c7454575e78ee4eaac880a077700c # v1.0.0
         if: steps.filter.outputs.src == 'true'
       - if: steps.filter.outputs.src == 'true'
         name: Run tests in workspace
@@ -189,7 +189,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: taiki-e/checkout-action@b13d20b7cda4e2f325ef19895128f7ff735c0b3d # v1.3.1
-      - uses: crate-ci/typos@0f0ccba9ed1df83948f0c15026e4f5ccfce46109 # v1.32.0
+      - uses: crate-ci/typos@b1ae8d918b6e85bd611117d3d9a3be4f903ee5e4 # v1.33.1
         with:
           files: .
 
@@ -252,7 +252,7 @@ jobs:
       - uses: ./.github/actions/clone-submodules
         if: steps.filter.outputs.src == 'true'
 
-      - uses: ./.github/actions/pnpm
+      - uses: oxc-project/setup-node@f42e3bda950c7454575e78ee4eaac880a077700c # v1.0.0
         if: steps.filter.outputs.src == 'true'
 
       - uses: oxc-project/setup-rust@cd82e1efec7fef815e2c23d296756f31c7cdc03d # v1.0.0

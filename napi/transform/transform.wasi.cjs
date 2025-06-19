@@ -85,8 +85,8 @@ const { instance: __napiInstance, module: __wasiModule, napiModule: __napiModule
   },
 })
 module.exports = __napiModule.exports
+module.exports.Severity = __napiModule.exports.Severity
 module.exports.HelperMode = __napiModule.exports.HelperMode
 module.exports.isolatedDeclaration = __napiModule.exports.isolatedDeclaration
 module.exports.moduleRunnerTransform = __napiModule.exports.moduleRunnerTransform
-module.exports.Severity = __napiModule.exports.Severity
 module.exports.transform = __napiModule.exports.transform

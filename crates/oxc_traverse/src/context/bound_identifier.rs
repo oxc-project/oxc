@@ -62,12 +62,18 @@ impl<'a> BoundIdentifier<'a> {
     }
 
     /// Create `BindingIdentifier` for this binding
-    pub fn create_binding_identifier(&self, ctx: &TraverseCtx<'a>) -> BindingIdentifier<'a> {
+    pub fn create_binding_identifier<State>(
+        &self,
+        ctx: &TraverseCtx<'a, State>,
+    ) -> BindingIdentifier<'a> {
         ctx.ast.binding_identifier_with_symbol_id(SPAN, self.name, self.symbol_id)
     }
 
     /// Create `BindingPattern` for this binding
-    pub fn create_binding_pattern(&self, ctx: &TraverseCtx<'a>) -> BindingPattern<'a> {
+    pub fn create_binding_pattern<State>(
+        &self,
+        ctx: &TraverseCtx<'a, State>,
+    ) -> BindingPattern<'a> {
         let ident = self.create_binding_identifier(ctx);
         let binding_pattern_kind = BindingPatternKind::BindingIdentifier(ctx.alloc(ident));
         ctx.ast.binding_pattern(binding_pattern_kind, NONE, false)
@@ -76,29 +82,35 @@ impl<'a> BoundIdentifier<'a> {
     // --- Read only ---
 
     /// Create `IdentifierReference` referencing this binding, which is read from, with dummy `Span`
-    pub fn create_read_reference(&self, ctx: &mut TraverseCtx<'a>) -> IdentifierReference<'a> {
+    pub fn create_read_reference<State>(
+        &self,
+        ctx: &mut TraverseCtx<'a, State>,
+    ) -> IdentifierReference<'a> {
         self.create_spanned_read_reference(SPAN, ctx)
     }
 
     /// Create `Expression::Identifier` referencing this binding, which is read from, with dummy `Span`
-    pub fn create_read_expression(&self, ctx: &mut TraverseCtx<'a>) -> Expression<'a> {
+    pub fn create_read_expression<State>(
+        &self,
+        ctx: &mut TraverseCtx<'a, State>,
+    ) -> Expression<'a> {
         self.create_spanned_read_expression(SPAN, ctx)
     }
 
     /// Create `IdentifierReference` referencing this binding, which is read from, with specified `Span`
-    pub fn create_spanned_read_reference(
+    pub fn create_spanned_read_reference<State>(
         &self,
         span: Span,
-        ctx: &mut TraverseCtx<'a>,
+        ctx: &mut TraverseCtx<'a, State>,
     ) -> IdentifierReference<'a> {
         self.create_spanned_reference(span, ReferenceFlags::Read, ctx)
     }
 
     /// Create `Expression::Identifier` referencing this binding, which is read from, with specified `Span`
-    pub fn create_spanned_read_expression(
+    pub fn create_spanned_read_expression<State>(
         &self,
         span: Span,
-        ctx: &mut TraverseCtx<'a>,
+        ctx: &mut TraverseCtx<'a, State>,
     ) -> Expression<'a> {
         self.create_spanned_expression(span, ReferenceFlags::Read, ctx)
     }
@@ -106,60 +118,69 @@ impl<'a> BoundIdentifier<'a> {
     // --- Write only ---
 
     /// Create `IdentifierReference` referencing this binding, which is written to, with dummy `Span`
-    pub fn create_write_reference(&self, ctx: &mut TraverseCtx<'a>) -> IdentifierReference<'a> {
+    pub fn create_write_reference<State>(
+        &self,
+        ctx: &mut TraverseCtx<'a, State>,
+    ) -> IdentifierReference<'a> {
         self.create_spanned_write_reference(SPAN, ctx)
     }
 
     /// Create `Expression::Identifier` referencing this binding, which is written to, with dummy `Span`
-    pub fn create_write_expression(&self, ctx: &mut TraverseCtx<'a>) -> Expression<'a> {
+    pub fn create_write_expression<State>(
+        &self,
+        ctx: &mut TraverseCtx<'a, State>,
+    ) -> Expression<'a> {
         self.create_spanned_write_expression(SPAN, ctx)
     }
 
     /// Create `AssignmentTarget` referencing this binding, which is written to, with dummy `Span`
-    pub fn create_write_target(&self, ctx: &mut TraverseCtx<'a>) -> AssignmentTarget<'a> {
+    pub fn create_write_target<State>(
+        &self,
+        ctx: &mut TraverseCtx<'a, State>,
+    ) -> AssignmentTarget<'a> {
         self.create_spanned_write_target(SPAN, ctx)
     }
 
     /// Create `SimpleAssignmentTarget` referencing this binding, which is written to, with dummy `Span`
-    pub fn create_write_simple_target(
+    pub fn create_write_simple_target<State>(
         &self,
-        ctx: &mut TraverseCtx<'a>,
+        ctx: &mut TraverseCtx<'a, State>,
     ) -> SimpleAssignmentTarget<'a> {
         self.create_spanned_write_simple_target(SPAN, ctx)
     }
 
     /// Create `IdentifierReference` referencing this binding, which is written to, with specified `Span`
-    pub fn create_spanned_write_reference(
+    pub fn create_spanned_write_reference<State>(
         &self,
         span: Span,
-        ctx: &mut TraverseCtx<'a>,
+        ctx: &mut TraverseCtx<'a, State>,
     ) -> IdentifierReference<'a> {
         self.create_spanned_reference(span, ReferenceFlags::Write, ctx)
     }
 
     /// Create `Expression::Identifier` referencing this binding, which is written to, with specified `Span`
-    pub fn create_spanned_write_expression(
+    pub fn create_spanned_write_expression<State>(
         &self,
         span: Span,
-        ctx: &mut TraverseCtx<'a>,
+        ctx: &mut TraverseCtx<'a, State>,
     ) -> Expression<'a> {
         self.create_spanned_expression(span, ReferenceFlags::Write, ctx)
     }
 
     /// Create `AssignmentTarget` referencing this binding, which is written to, with specified `Span`
-    pub fn create_spanned_write_target(
+    pub fn create_spanned_write_target<State>(
         &self,
         span: Span,
-        ctx: &mut TraverseCtx<'a>,
+        ctx: &mut TraverseCtx<'a, State>,
     ) -> AssignmentTarget<'a> {
         self.create_spanned_target(span, ReferenceFlags::Write, ctx)
     }
 
     /// Create `SimpleAssignmentTarget` referencing this binding, which is written to, with specified `Span`
-    pub fn create_spanned_write_simple_target(
+    pub fn create_spanned_write_simple_target<State>(
         &self,
         span: Span,
-        ctx: &mut TraverseCtx<'a>,
+        ctx: &mut TraverseCtx<'a, State>,
     ) -> SimpleAssignmentTarget<'a> {
         self.create_spanned_simple_target(span, ReferenceFlags::Write, ctx)
     }
@@ -168,70 +189,76 @@ impl<'a> BoundIdentifier<'a> {
 
     /// Create `IdentifierReference` referencing this binding, which is read from + written to,
     /// with dummy `Span`
-    pub fn create_read_write_reference(
+    pub fn create_read_write_reference<State>(
         &self,
-        ctx: &mut TraverseCtx<'a>,
+        ctx: &mut TraverseCtx<'a, State>,
     ) -> IdentifierReference<'a> {
         self.create_spanned_read_write_reference(SPAN, ctx)
     }
 
     /// Create `Expression::Identifier` referencing this binding, which is read from + written to,
     /// with dummy `Span`
-    pub fn create_read_write_expression(&self, ctx: &mut TraverseCtx<'a>) -> Expression<'a> {
+    pub fn create_read_write_expression<State>(
+        &self,
+        ctx: &mut TraverseCtx<'a, State>,
+    ) -> Expression<'a> {
         self.create_spanned_read_write_expression(SPAN, ctx)
     }
 
     /// Create `AssignmentTarget` referencing this binding, which is read from + written to,
     /// with dummy `Span`
-    pub fn create_read_write_target(&self, ctx: &mut TraverseCtx<'a>) -> AssignmentTarget<'a> {
+    pub fn create_read_write_target<State>(
+        &self,
+        ctx: &mut TraverseCtx<'a, State>,
+    ) -> AssignmentTarget<'a> {
         self.create_spanned_read_write_target(SPAN, ctx)
     }
 
     /// Create `SimpleAssignmentTarget` referencing this binding, which is read from + written to,
     /// with dummy `Span`
-    pub fn create_read_write_simple_target(
+    pub fn create_read_write_simple_target<State>(
         &self,
-        ctx: &mut TraverseCtx<'a>,
+        ctx: &mut TraverseCtx<'a, State>,
     ) -> SimpleAssignmentTarget<'a> {
         self.create_spanned_read_write_simple_target(SPAN, ctx)
     }
 
     /// Create `IdentifierReference` referencing this binding, which is read from + written to,
     /// with specified `Span`
-    pub fn create_spanned_read_write_reference(
+    pub fn create_spanned_read_write_reference<State>(
         &self,
         span: Span,
-        ctx: &mut TraverseCtx<'a>,
+        ctx: &mut TraverseCtx<'a, State>,
     ) -> IdentifierReference<'a> {
         self.create_spanned_reference(span, ReferenceFlags::Read | ReferenceFlags::Write, ctx)
     }
 
     /// Create `Expression::Identifier` referencing this binding, which is read from + written to,
     /// with specified `Span`
-    pub fn create_spanned_read_write_expression(
+    pub fn create_spanned_read_write_expression<State>(
         &self,
         span: Span,
-        ctx: &mut TraverseCtx<'a>,
+        ctx: &mut TraverseCtx<'a, State>,
     ) -> Expression<'a> {
         self.create_spanned_expression(span, ReferenceFlags::Read | ReferenceFlags::Write, ctx)
     }
 
     /// Create `AssignmentTarget` referencing this binding, which is read from + written to,
     /// with specified `Span`
-    pub fn create_spanned_read_write_target(
+    pub fn create_spanned_read_write_target<State>(
         &self,
         span: Span,
-        ctx: &mut TraverseCtx<'a>,
+        ctx: &mut TraverseCtx<'a, State>,
     ) -> AssignmentTarget<'a> {
         self.create_spanned_target(span, ReferenceFlags::Read | ReferenceFlags::Write, ctx)
     }
 
     /// Create `SimpleAssignmentTarget` referencing this binding, which is read from + written to,
     /// with specified `Span`
-    pub fn create_spanned_read_write_simple_target(
+    pub fn create_spanned_read_write_simple_target<State>(
         &self,
         span: Span,
-        ctx: &mut TraverseCtx<'a>,
+        ctx: &mut TraverseCtx<'a, State>,
     ) -> SimpleAssignmentTarget<'a> {
         self.create_spanned_simple_target(span, ReferenceFlags::Read | ReferenceFlags::Write, ctx)
     }
@@ -239,57 +266,57 @@ impl<'a> BoundIdentifier<'a> {
     // --- Specified ReferenceFlags ---
 
     /// Create `IdentifierReference` referencing this binding, with specified `ReferenceFlags`
-    pub fn create_reference(
+    pub fn create_reference<State>(
         &self,
         flags: ReferenceFlags,
-        ctx: &mut TraverseCtx<'a>,
+        ctx: &mut TraverseCtx<'a, State>,
     ) -> IdentifierReference<'a> {
         self.create_spanned_reference(SPAN, flags, ctx)
     }
 
     /// Create `Expression::Identifier` referencing this binding, with specified `ReferenceFlags`
-    pub fn create_expression(
+    pub fn create_expression<State>(
         &self,
         flags: ReferenceFlags,
-        ctx: &mut TraverseCtx<'a>,
+        ctx: &mut TraverseCtx<'a, State>,
     ) -> Expression<'a> {
         self.create_spanned_expression(SPAN, flags, ctx)
     }
 
     /// Create `AssignmentTarget` referencing this binding, with specified `ReferenceFlags`
-    pub fn create_target(
+    pub fn create_target<State>(
         &self,
         flags: ReferenceFlags,
-        ctx: &mut TraverseCtx<'a>,
+        ctx: &mut TraverseCtx<'a, State>,
     ) -> AssignmentTarget<'a> {
         self.create_spanned_target(SPAN, flags, ctx)
     }
 
     /// Create `SimpleAssignmentTarget` referencing this binding, with specified `ReferenceFlags`
-    pub fn create_simple_target(
+    pub fn create_simple_target<State>(
         &self,
         flags: ReferenceFlags,
-        ctx: &mut TraverseCtx<'a>,
+        ctx: &mut TraverseCtx<'a, State>,
     ) -> SimpleAssignmentTarget<'a> {
         self.create_spanned_simple_target(SPAN, flags, ctx)
     }
 
     /// Create `IdentifierReference` referencing this binding, with specified `Span` and `ReferenceFlags`
-    pub fn create_spanned_reference(
+    pub fn create_spanned_reference<State>(
         &self,
         span: Span,
         flags: ReferenceFlags,
-        ctx: &mut TraverseCtx<'a>,
+        ctx: &mut TraverseCtx<'a, State>,
     ) -> IdentifierReference<'a> {
         ctx.create_bound_ident_reference(span, self.name, self.symbol_id, flags)
     }
 
     /// Create `Expression::Identifier` referencing this binding, with specified `Span` and `ReferenceFlags`
-    pub fn create_spanned_expression(
+    pub fn create_spanned_expression<State>(
         &self,
         span: Span,
         flags: ReferenceFlags,
-        ctx: &mut TraverseCtx<'a>,
+        ctx: &mut TraverseCtx<'a, State>,
     ) -> Expression<'a> {
         let ident = self.create_spanned_reference(span, flags, ctx);
         Expression::Identifier(ctx.alloc(ident))
@@ -297,11 +324,11 @@ impl<'a> BoundIdentifier<'a> {
 
     /// Create `AssignmentTarget::AssignmentTargetIdentifier` referencing this binding,
     /// with specified `Span` and `ReferenceFlags`
-    pub fn create_spanned_target(
+    pub fn create_spanned_target<State>(
         &self,
         span: Span,
         flags: ReferenceFlags,
-        ctx: &mut TraverseCtx<'a>,
+        ctx: &mut TraverseCtx<'a, State>,
     ) -> AssignmentTarget<'a> {
         let ident = self.create_spanned_reference(span, flags, ctx);
         AssignmentTarget::AssignmentTargetIdentifier(ctx.alloc(ident))
@@ -309,11 +336,11 @@ impl<'a> BoundIdentifier<'a> {
 
     /// Create `SimpleAssignmentTarget::AssignmentTargetIdentifier` referencing this binding,
     /// with specified `Span` and `ReferenceFlags`
-    pub fn create_spanned_simple_target(
+    pub fn create_spanned_simple_target<State>(
         &self,
         span: Span,
         flags: ReferenceFlags,
-        ctx: &mut TraverseCtx<'a>,
+        ctx: &mut TraverseCtx<'a, State>,
     ) -> SimpleAssignmentTarget<'a> {
         let ident = self.create_spanned_reference(span, flags, ctx);
         SimpleAssignmentTarget::AssignmentTargetIdentifier(ctx.alloc(ident))

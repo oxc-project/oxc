@@ -7,13 +7,16 @@ use log::{debug, warn};
 use rustc_hash::{FxBuildHasher, FxHashMap};
 use tower_lsp_server::lsp_types::Uri;
 
-use oxc_linter::{Config, ConfigStore, ConfigStoreBuilder, LintOptions, Linter, Oxlintrc};
+use oxc_linter::{
+    AllowWarnDeny, Config, ConfigStore, ConfigStoreBuilder, LintOptions, Linter, Oxlintrc,
+};
 use tower_lsp_server::UriExt;
 
 use crate::linter::{
     error_with_position::DiagnosticReport,
     isolated_lint_handler::{IsolatedLintHandler, IsolatedLintHandlerOptions},
 };
+use crate::options::UnusedDisableDirectives;
 use crate::{ConcurrentHashMap, Options};
 
 use super::config_walker::ConfigWalker;
@@ -26,8 +29,8 @@ pub struct ServerLinter {
 
 impl ServerLinter {
     pub fn new(root_uri: &Uri, options: &Options) -> Self {
-        let (nested_configs, mut extended_paths) = Self::create_nested_configs(root_uri, options);
         let root_path = root_uri.to_file_path().unwrap();
+        let (nested_configs, mut extended_paths) = Self::create_nested_configs(&root_path, options);
         let relative_config_path = options.config_path.clone();
         let oxlintrc = if let Some(relative_config_path) = relative_config_path {
             let config = normalize_path(root_path.join(relative_config_path));
@@ -65,7 +68,15 @@ impl ServerLinter {
         extended_paths.extend(config_builder.extended_paths.clone());
         let base_config = config_builder.build();
 
-        let lint_options = LintOptions { fix: options.fix_kind(), ..Default::default() };
+        let lint_options = LintOptions {
+            fix: options.fix_kind(),
+            report_unused_directive: match options.unused_disable_directives {
+                UnusedDisableDirectives::Allow => None, // or AllowWarnDeny::Allow, should be the same?
+                UnusedDisableDirectives::Warn => Some(AllowWarnDeny::Warn),
+                UnusedDisableDirectives::Deny => Some(AllowWarnDeny::Deny),
+            },
+            ..Default::default()
+        };
 
         let config_store = ConfigStore::new(
             base_config,
@@ -89,7 +100,7 @@ impl ServerLinter {
 
         Self {
             isolated_linter: Arc::new(isolated_linter),
-            gitignore_glob: Self::create_ignore_glob(root_uri, &oxlintrc),
+            gitignore_glob: Self::create_ignore_glob(&root_path, &oxlintrc),
             extended_paths,
         }
     }
@@ -97,7 +108,7 @@ impl ServerLinter {
     /// Searches inside root_uri recursively for the default oxlint config files
     /// and insert them inside the nested configuration
     fn create_nested_configs(
-        root_uri: &Uri,
+        root_path: &Path,
         options: &Options,
     ) -> (ConcurrentHashMap<PathBuf, Config>, Vec<PathBuf>) {
         let mut extended_paths = Vec::new();
@@ -106,9 +117,7 @@ impl ServerLinter {
             return (ConcurrentHashMap::default(), extended_paths);
         }
 
-        let root_path = root_uri.to_file_path().expect("Failed to convert URI to file path");
-
-        let paths = ConfigWalker::new(&root_path).paths();
+        let paths = ConfigWalker::new(root_path).paths();
         let nested_configs =
             ConcurrentHashMap::with_capacity_and_hasher(paths.capacity(), FxBuildHasher);
 
@@ -134,7 +143,7 @@ impl ServerLinter {
         (nested_configs, extended_paths)
     }
 
-    fn create_ignore_glob(root_uri: &Uri, oxlintrc: &Oxlintrc) -> Vec<Gitignore> {
+    fn create_ignore_glob(root_path: &Path, oxlintrc: &Oxlintrc) -> Vec<Gitignore> {
         let mut builder = globset::GlobSetBuilder::new();
         // Collecting all ignore files
         builder.add(Glob::new("**/.eslintignore").unwrap());
@@ -142,7 +151,7 @@ impl ServerLinter {
 
         let ignore_file_glob_set = builder.build().unwrap();
 
-        let walk = ignore::WalkBuilder::new(root_uri.to_file_path().unwrap())
+        let walk = ignore::WalkBuilder::new(root_path)
             .ignore(true)
             .hidden(false)
             .git_global(false)
@@ -233,19 +242,14 @@ pub fn normalize_path<P: AsRef<Path>>(path: P) -> PathBuf {
 
 #[cfg(test)]
 mod test {
-    use std::{
-        path::{Path, PathBuf},
-        str::FromStr,
-    };
-
-    use rustc_hash::FxHashMap;
-    use tower_lsp_server::lsp_types::Uri;
+    use std::path::{Path, PathBuf};
 
     use crate::{
         Options,
         linter::server_linter::{ServerLinter, normalize_path},
-        tester::{Tester, get_file_uri},
+        tester::{Tester, get_file_path},
     };
+    use rustc_hash::FxHashMap;
 
     #[test]
     fn test_normalize_path() {
@@ -261,7 +265,7 @@ mod test {
         flags.insert("disable_nested_configs".to_string(), "true".to_string());
 
         let (configs, _) = ServerLinter::create_nested_configs(
-            &Uri::from_str("file:///root/").unwrap(),
+            Path::new("/root/"),
             &Options { flags, ..Options::default() },
         );
 
@@ -271,7 +275,7 @@ mod test {
     #[test]
     fn test_create_nested_configs() {
         let (configs, _) = ServerLinter::create_nested_configs(
-            &get_file_uri("fixtures/linter/init_nested_configs"),
+            &get_file_path("fixtures/linter/init_nested_configs"),
             &Options::default(),
         );
         let configs = configs.pin();
@@ -349,5 +353,34 @@ mod test {
     fn test_cross_module_no_cycle_extended_config() {
         Tester::new("fixtures/linter/cross_module_extended_config", None)
             .test_and_snapshot_single_file("dep-a.ts");
+    }
+
+    #[test]
+    fn test_multiple_suggestions() {
+        Tester::new(
+            "fixtures/linter/multiple_suggestions",
+            Some(Options {
+                flags: FxHashMap::from_iter([(
+                    "fix_kind".to_string(),
+                    "safe_fix_or_suggestion".to_string(),
+                )]),
+                ..Options::default()
+            }),
+        )
+        .test_and_snapshot_single_file("forward_ref.ts");
+    }
+
+    #[test]
+    fn test_report_unused_directives() {
+        use crate::options::UnusedDisableDirectives;
+        Tester::new(
+            "fixtures/linter/unused_disabled_directives",
+            Some(Options {
+                unused_disable_directives: UnusedDisableDirectives::Deny,
+                ..Default::default()
+            }),
+        )
+        // ToDo: this should be fixable
+        .test_and_snapshot_single_file("test.js");
     }
 }

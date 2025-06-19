@@ -71,7 +71,7 @@ impl Rule for NoLabelVar {
             ctx.diagnostic(no_label_var_diagnostic(
                 &labeled_stmt.label.name,
                 decl_span,
-                Span::new(label_decl, label_decl + 1),
+                Span::sized(label_decl, 1),
             ));
         }
     }

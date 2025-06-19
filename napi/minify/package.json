@@ -1,11 +1,12 @@
 {
   "name": "oxc-minify",
-  "version": "0.72.1",
+  "version": "0.73.2",
   "main": "index.js",
   "browser": "browser.js",
   "scripts": {
     "build-dev": "napi build --platform",
     "build": "pnpm run build-dev --features allocator --release",
+    "postbuild-dev": "node patch.mjs",
     "test": "tsc && vitest run --dir ./test"
   },
   "engines": {
@@ -31,7 +32,8 @@
   "files": [
     "index.d.ts",
     "index.js",
-    "browser.js"
+    "browser.js",
+    "webcontainer-fallback.js"
   ],
   "publishConfig": {
     "registry": "https://registry.npmjs.org/",
@@ -58,6 +60,7 @@
       "riscv64gc-unknown-linux-gnu",
       "x86_64-apple-darwin",
       "aarch64-apple-darwin",
+      "aarch64-linux-android",
       "wasm32-wasip1-threads"
     ],
     "wasm": {

@@ -1,0 +1,1 @@
+const y = `foo ${x function() {} function () {}}`;

@@ -219,9 +219,9 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: A index signature is preferred over an record.
 
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-   ╭─[consistent_indexed_object_style.tsx:1:10]
- 1 │ funcction foo(): Record<string, any> {}
-   ·          ▲
+  ⚠ typescript-eslint(consistent-indexed-object-style): A index signature is preferred over an record.
+   ╭─[consistent_indexed_object_style.tsx:1:17]
+ 1 │ function foo(): Record<string, any> {}
+   ·                 ───────────────────
    ╰────
-  help: Try insert a semicolon here
+  help: A index signature is preferred over an record.

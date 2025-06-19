@@ -46,15 +46,15 @@ impl SpanPosition {
     }
 }
 
-pub fn offset_to_position(offset: u32, source_text: &str) -> SpanPosition {
-    // TODO(perf): share a single instance of `Rope`
-    let rope = Rope::from_str(source_text);
-    let (line, column) = get_line_column(&rope, offset, source_text);
+pub fn offset_to_position(rope: &Rope, offset: u32, source_text: &str) -> SpanPosition {
+    let (line, column) = get_line_column(rope, offset, source_text);
     SpanPosition::new(line, column)
 }
 
 #[cfg(test)]
 mod test {
+    use oxc_data_structures::rope::Rope;
+
     use super::offset_to_position;
 
     #[test]
@@ -89,11 +89,11 @@ mod test {
     #[test]
     #[should_panic(expected = "out of bounds")]
     fn out_of_bounds() {
-        offset_to_position(100, "foo");
+        offset_to_position(&Rope::from_str("foo"), 100, "foo");
     }
 
     fn assert_position(source: &str, offset: u32, expected: (u32, u32)) {
-        let position = offset_to_position(offset, source);
+        let position = offset_to_position(&Rope::from_str(source), offset, source);
         assert_eq!(position.line, expected.0);
         assert_eq!(position.character, expected.1);
     }

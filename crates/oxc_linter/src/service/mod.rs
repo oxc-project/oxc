@@ -70,8 +70,12 @@ pub struct LintService<'l> {
 }
 
 impl<'l> LintService<'l> {
-    pub fn new(linter: &'l Linter, options: LintServiceOptions) -> Self {
-        let runtime = Runtime::new(linter, options);
+    pub fn new(
+        linter: &'l Linter,
+        allocator_pool: oxc_allocator::AllocatorPool,
+        options: LintServiceOptions,
+    ) -> Self {
+        let runtime = Runtime::new(linter, allocator_pool, options);
         Self { runtime }
     }
 

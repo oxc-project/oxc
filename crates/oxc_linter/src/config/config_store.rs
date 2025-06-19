@@ -5,7 +5,7 @@ use std::{
 
 use rustc_hash::FxHashMap;
 
-use super::{LintConfig, LintPlugins, overrides::OxlintOverrides};
+use super::{LintConfig, LintPlugins, categories::OxlintCategories, overrides::OxlintOverrides};
 use crate::{
     AllowWarnDeny,
     rules::{RULES, RuleEnum},
@@ -28,7 +28,17 @@ impl Clone for ResolvedLinterState {
 #[derive(Debug, Clone)]
 pub struct Config {
     /// The basic linter state for this configuration.
+    /// For files that match no overrides, this lint config will be used.
     pub(crate) base: ResolvedLinterState,
+
+    /// Used as the base config for applying overrides
+    /// NOTE: `AllowWarnDeny::Allow` should exist here to allow us to correctly
+    ///       keep a rule disabled when an override is applied with a different plugin set
+    pub(crate) base_rules: Vec<(RuleEnum, AllowWarnDeny)>,
+
+    /// Categories specified at the root. This is used to resolve which rules
+    /// should be enabled when a different plugin is enabled as part of an override.
+    pub(crate) categories: OxlintCategories,
 
     /// An optional set of overrides to apply to the base state depending on the file being linted.
     pub(crate) overrides: OxlintOverrides,
@@ -37,14 +47,24 @@ pub struct Config {
 impl Config {
     pub fn new(
         rules: Vec<(RuleEnum, AllowWarnDeny)>,
+        categories: OxlintCategories,
         config: LintConfig,
         overrides: OxlintOverrides,
     ) -> Self {
         Config {
             base: ResolvedLinterState {
-                rules: Arc::from(rules.into_boxed_slice()),
+                rules: Arc::from(
+                    rules
+                        .iter()
+                        .filter(|(_, severity)| severity.is_warn_deny())
+                        .cloned()
+                        .collect::<Vec<_>>()
+                        .into_boxed_slice(),
+                ),
                 config: Arc::new(config),
             },
+            base_rules: rules,
+            categories,
             overrides,
         }
     }
@@ -96,8 +116,7 @@ impl Config {
         }
 
         let mut rules = self
-            .base
-            .rules
+            .base_rules
             .iter()
             .filter(|(rule, _)| plugins.contains(LintPlugins::from(rule.plugin_name())))
             .cloned()
@@ -110,6 +129,18 @@ impl Config {
             .collect::<Vec<_>>();
 
         for override_config in overrides_to_apply {
+            if let Some(override_plugins) = override_config.plugins {
+                if override_plugins != plugins {
+                    for (rule, severity) in all_rules.iter().filter_map(|rule| {
+                        self.categories
+                            .get(&rule.category())
+                            .map(|severity| (rule.clone(), severity))
+                    }) {
+                        rules.entry(rule).or_insert(*severity);
+                    }
+                }
+            }
+
             if !override_config.rules.is_empty() {
                 override_config.rules.override_rules(&mut rules, &all_rules);
             }
@@ -137,7 +168,8 @@ impl Config {
             Arc::new(config)
         };
 
-        let rules = rules.into_iter().collect::<Vec<_>>();
+        let rules =
+            rules.into_iter().filter(|(_, severity)| severity.is_warn_deny()).collect::<Vec<_>>();
         ResolvedLinterState { rules: Arc::from(rules.into_boxed_slice()), config }
     }
 }
@@ -203,7 +235,10 @@ mod test {
     use super::{ConfigStore, OxlintOverrides};
     use crate::{
         AllowWarnDeny, LintPlugins, RuleEnum,
-        config::{LintConfig, OxlintEnv, OxlintGlobals, OxlintSettings, config_store::Config},
+        config::{
+            LintConfig, OxlintEnv, OxlintGlobals, OxlintSettings, categories::OxlintCategories,
+            config_store::Config,
+        },
     };
 
     macro_rules! from_json {
@@ -226,7 +261,7 @@ mod test {
             "rules": {}
         }]);
         let store = ConfigStore::new(
-            Config::new(base_rules, LintConfig::default(), overrides),
+            Config::new(base_rules, OxlintCategories::default(), LintConfig::default(), overrides),
             FxHashMap::default(),
         );
 
@@ -248,7 +283,7 @@ mod test {
             "rules": {}
         }]);
         let store = ConfigStore::new(
-            Config::new(base_rules, LintConfig::default(), overrides),
+            Config::new(base_rules, OxlintCategories::default(), LintConfig::default(), overrides),
             FxHashMap::default(),
         );
 
@@ -271,7 +306,7 @@ mod test {
         }]);
 
         let store = ConfigStore::new(
-            Config::new(base_rules, LintConfig::default(), overrides),
+            Config::new(base_rules, OxlintCategories::default(), LintConfig::default(), overrides),
             FxHashMap::default(),
         );
         assert_eq!(store.number_of_rules(), Some(1));
@@ -294,7 +329,7 @@ mod test {
         }]);
 
         let store = ConfigStore::new(
-            Config::new(base_rules, LintConfig::default(), overrides),
+            Config::new(base_rules, OxlintCategories::default(), LintConfig::default(), overrides),
             FxHashMap::default(),
         );
         assert_eq!(store.number_of_rules(), Some(1));
@@ -317,7 +352,7 @@ mod test {
         }]);
 
         let store = ConfigStore::new(
-            Config::new(base_rules, LintConfig::default(), overrides),
+            Config::new(base_rules, OxlintCategories::default(), LintConfig::default(), overrides),
             FxHashMap::default(),
         );
         assert_eq!(store.number_of_rules(), Some(1));
@@ -348,8 +383,10 @@ mod test {
             "plugins": ["typescript"],
         }]);
 
-        let store =
-            ConfigStore::new(Config::new(vec![], base_config, overrides), FxHashMap::default());
+        let store = ConfigStore::new(
+            Config::new(vec![], OxlintCategories::default(), base_config, overrides),
+            FxHashMap::default(),
+        );
         assert_eq!(store.base.base.config.plugins, LintPlugins::IMPORT);
 
         let app = store.resolve("other.mjs".as_ref()).config;
@@ -382,8 +419,10 @@ mod test {
             },
         }]);
 
-        let store =
-            ConfigStore::new(Config::new(vec![], base_config, overrides), FxHashMap::default());
+        let store = ConfigStore::new(
+            Config::new(vec![], OxlintCategories::default(), base_config, overrides),
+            FxHashMap::default(),
+        );
         assert!(!store.base.base.config.env.contains("React"));
 
         let app = store.resolve("App.tsx".as_ref()).config;
@@ -407,8 +446,10 @@ mod test {
             },
         }]);
 
-        let store =
-            ConfigStore::new(Config::new(vec![], base_config, overrides), FxHashMap::default());
+        let store = ConfigStore::new(
+            Config::new(vec![], OxlintCategories::default(), base_config, overrides),
+            FxHashMap::default(),
+        );
         assert!(store.base.base.config.env.contains("es2024"));
 
         let app = store.resolve("App.tsx".as_ref()).config;
@@ -433,8 +474,10 @@ mod test {
             },
         }]);
 
-        let store =
-            ConfigStore::new(Config::new(vec![], base_config, overrides), FxHashMap::default());
+        let store = ConfigStore::new(
+            Config::new(vec![], OxlintCategories::default(), base_config, overrides),
+            FxHashMap::default(),
+        );
         assert!(!store.base.base.config.globals.is_enabled("React"));
         assert!(!store.base.base.config.globals.is_enabled("Secret"));
 
@@ -464,8 +507,10 @@ mod test {
             },
         }]);
 
-        let store =
-            ConfigStore::new(Config::new(vec![], base_config, overrides), FxHashMap::default());
+        let store = ConfigStore::new(
+            Config::new(vec![], OxlintCategories::default(), base_config, overrides),
+            FxHashMap::default(),
+        );
         assert!(store.base.base.config.globals.is_enabled("React"));
         assert!(store.base.base.config.globals.is_enabled("Secret"));
 

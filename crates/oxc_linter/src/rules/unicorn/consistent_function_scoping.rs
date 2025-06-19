@@ -1,14 +1,11 @@
 use rustc_hash::FxHashSet;
 
-use oxc_ast::{
-    AstKind,
-    ast::{Function, IdentifierReference, JSXElementName, ThisExpression},
-};
+use oxc_ast::{AstKind, ast::*};
 use oxc_ast_visit::{Visit, walk};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_semantic::{ReferenceId, ScopeFlags};
-use oxc_span::{GetSpan, Span};
+use oxc_semantic::{ReferenceId, ScopeFlags, ScopeId, SymbolId};
+use oxc_span::{Atom, GetSpan, Span};
 
 use crate::{
     AstNode,
@@ -18,10 +15,40 @@ use crate::{
     utils::is_react_hook,
 };
 
-fn consistent_function_scoping(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Function does not capture any variables from the outer scope.")
-        .with_help("Move this function to the outer scope.")
-        .with_label(span)
+fn consistent_function_scoping(
+    fn_span: Span,
+    parent_scope_span: Option<Span>,
+    parent_scope_kind: Option<&'static str>,
+    function_name: Option<Atom<'_>>,
+) -> OxcDiagnostic {
+    let function_label = if let Some(name) = function_name {
+        format!("Function `{name}` does not capture any variables from its parent scope")
+    } else {
+        "This function does not use any variables from its parent scope".into()
+    };
+
+    let d = OxcDiagnostic::warn(function_label).with_help(match function_name {
+        Some(name) => {
+            format!("Move `{name}` to the outer scope to avoid recreating it on every call.")
+        }
+        None => {
+            "Move this function to the outer scope to avoid recreating it on every call.".into()
+        }
+    });
+
+    match parent_scope_span {
+        Some(parent) => d.with_labels([
+            parent.label("Outer scope where this function is defined"),
+            fn_span.primary_label(if let Some(parent_scope_kind) = parent_scope_kind {
+                format!(
+                    "This function does not use any variables from the parent {parent_scope_kind}"
+                )
+            } else {
+                "This function does not use any variables from here".into()
+            }),
+        ]),
+        None => d.with_label(fn_span),
+    }
 }
 
 #[derive(Debug, Default, Clone)]
@@ -148,7 +175,7 @@ impl Rule for ConsistentFunctionScoping {
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        let (function_declaration_symbol_id, function_body, reporter_span) =
+        let (function_declaration_symbol_id, function_name, function_body, reporter_span) =
             match node.kind() {
                 AstKind::Function(function) => {
                     if function.is_typescript_syntax() {
@@ -161,7 +188,10 @@ impl Rule for ConsistentFunctionScoping {
                         // The bar function scope id is 1. In order to ignore this rule,
                         // its parent's scope id (in this case `foo`'s scope id is 0 and is equal to root scope id)
                         // should be considered.
-                        if parent_scope_id == ctx.scoping().root_scope_id() {
+                        //
+                        // We also allow functions declared in TS module/namespace blocks.
+                        let flags = ctx.scoping().scope_flags(parent_scope_id);
+                        if flags.intersects(ScopeFlags::Top | ScopeFlags::TsModuleBlock) {
                             return;
                         }
                     }
@@ -173,6 +203,7 @@ impl Rule for ConsistentFunctionScoping {
                     if let Some(binding_ident) = get_function_like_declaration(node, ctx) {
                         (
                             binding_ident.symbol_id(),
+                            Some(binding_ident.name),
                             function_body,
                             function.id.as_ref().map_or(
                                 Span::sized(function.span.start, 8),
@@ -180,7 +211,12 @@ impl Rule for ConsistentFunctionScoping {
                             ),
                         )
                     } else if let Some(function_id) = &function.id {
-                        (function_id.symbol_id(), function_body, function_id.span())
+                        (
+                            function_id.symbol_id(),
+                            Some(function_id.name),
+                            function_body,
+                            function_id.span(),
+                        )
                     } else {
                         return;
                     }
@@ -190,14 +226,20 @@ impl Rule for ConsistentFunctionScoping {
                         return;
                     };
 
-                    (binding_ident.symbol_id(), &arrow_function.body, binding_ident.span())
+                    (
+                        binding_ident.symbol_id(),
+                        Some(binding_ident.name),
+                        &arrow_function.body,
+                        binding_ident.span(),
+                    )
                 }
                 _ => return,
             };
 
-        // if the function is declared at the root scope, we don't need to check anything
-        if ctx.scoping().symbol_scope_id(function_declaration_symbol_id)
-            == ctx.scoping().root_scope_id()
+        // if the function is declared at the root scope or in a TS
+        // module/namespace block, we don't need to check anything
+        let scope = ctx.scoping().symbol_scope_id(function_declaration_symbol_id);
+        if ctx.scoping().scope_flags(scope).intersects(ScopeFlags::Top | ScopeFlags::TsModuleBlock)
         {
             return;
         }
@@ -245,7 +287,21 @@ impl Rule for ConsistentFunctionScoping {
             }
         }
 
-        ctx.diagnostic(consistent_function_scoping(reporter_span));
+        let (maybe_parent_scope_span, maybe_parent_scope_type) =
+            get_short_span_for_fn_scope(ctx, function_declaration_symbol_id, scope)
+                .map_or((None, None), |(span, rtype)| (Some(span), Some(rtype)));
+
+        ctx.diagnostic(consistent_function_scoping(
+            reporter_span,
+            maybe_parent_scope_span,
+            maybe_parent_scope_type,
+            function_name,
+        ));
+    }
+
+    fn should_run(&self, ctx: &crate::context::ContextHost) -> bool {
+        // .d.ts files are never run, so there are no perf considerations for them.
+        !ctx.source_type().is_typescript_definition()
     }
 }
 
@@ -305,6 +361,64 @@ fn is_in_react_hook<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) -> bool {
         }
     }
     false
+}
+
+fn get_short_span_for_fn_scope(
+    ctx: &LintContext<'_>,
+    function_symbol_id: SymbolId,
+    scope_id: ScopeId,
+) -> Option<(Span, &'static str)> {
+    let scoping = ctx.scoping();
+
+    debug_assert!(!scoping.scope_flags(scope_id).contains(ScopeFlags::Top));
+
+    let scope_id =
+        match ctx.nodes().parent_kind(ctx.scoping().symbol_declaration(function_symbol_id)) {
+            Some(AstKind::AssignmentExpression(_) | AstKind::ObjectProperty(_)) => {
+                ctx.scoping().scope_parent_id(scope_id).unwrap_or(scope_id)
+            }
+            _ => scope_id,
+        };
+
+    let node_creating_parent_scope = ctx.nodes().get_node(scoping.get_node_id(scope_id));
+
+    match node_creating_parent_scope.kind() {
+        AstKind::Function(f) => f.id.as_ref().map(|id| (id.span(), "function")),
+        AstKind::ArrowFunctionExpression(_) => {
+            let parent = ctx.nodes().parent_kind(node_creating_parent_scope.id())?;
+            match parent {
+                AstKind::VariableDeclarator(v) => Some((v.id.span(), "arrow function")),
+                AstKind::AssignmentExpression(a) => Some((a.left.span(), "arrow function")),
+                _ => None,
+            }
+        }
+        AstKind::Class(c) => c.id.as_ref().map(|id| (id.span(), "class")),
+        // only cover keywords of control flow statements
+        AstKind::ForInStatement(ForInStatement { span, .. })
+        | AstKind::ForOfStatement(ForOfStatement { span, .. })
+        | AstKind::ForStatement(ForStatement { span, .. }) => {
+            Some((Span::sized(span.start, 3), "for loop"))
+        }
+        AstKind::TryStatement(TryStatement { span, .. }) => {
+            Some((Span::sized(span.start, 3), "try statement"))
+        }
+        AstKind::IfStatement(IfStatement { span, .. }) => {
+            Some((Span::sized(span.start, 2), "if statement"))
+        }
+        AstKind::DoWhileStatement(DoWhileStatement { span, .. }) => {
+            Some((Span::sized(span.start, 2), "do while statement"))
+        }
+        AstKind::SwitchStatement(SwitchStatement { span, .. }) => {
+            Some((Span::sized(span.start, 6), "switch statement"))
+        }
+        AstKind::WhileStatement(WhileStatement { span, .. }) => {
+            Some((Span::sized(span.start, 5), "while statement"))
+        }
+        AstKind::CatchClause(CatchClause { span, .. }) => {
+            Some((Span::sized(span.start, 5), "catch block"))
+        }
+        _ => None,
+    }
 }
 
 #[test]
@@ -584,6 +698,51 @@ fn test() {
             None,
         ),
         ("if(f) function f(){}", None),
+        (
+            "
+            export namespace Foo {
+                export function somePublicFn() {
+                    return somePrivateFn();
+                }
+                function somePrivateFn() {
+                    return 'private';
+                }
+            }
+        ",
+            None,
+        ),
+        (
+            "
+            export namespace Foo {
+                export function somePublicFn() {
+                    return private1() + private2();
+                }
+                const private1 = function private1() {
+                    return 'private1';
+                }
+                const private2 = () => {
+                    return 'private2';
+                }
+            }
+        ",
+            None,
+        ),
+        (
+            "
+            declare namespace Foo {
+                function foo(): void;
+            }
+            ",
+            None,
+        ),
+        (
+            "
+            declare module 'some-package' {
+                function foo(): void;
+            }
+            ",
+            None,
+        ),
     ];
 
     let fail = vec![
@@ -824,6 +983,14 @@ fn test() {
         ("function foo() { const bar = async () => {} }", None),
         ("function doFoo() { const doBar = function(bar) { return bar; }; }", None),
         ("function outer() { const inner = function inner() {}; }", None),
+        (
+            "export namespace Foo { export function outer() { const inner = function inner() {}; } }",
+            None,
+        ),
+        (
+            "jest.mock('@kbn/i18n-react', () => { return { I18nProvider: function MockI18nProvider() { }, }; });",
+            None,
+        ),
     ];
 
     Tester::new(ConsistentFunctionScoping::NAME, ConsistentFunctionScoping::PLUGIN, pass, fail)

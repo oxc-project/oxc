@@ -29,10 +29,10 @@ use oxc::{
 };
 use oxc_formatter::{FormatOptions, Formatter};
 use oxc_index::Idx;
-use oxc_linter::{ConfigStore, ConfigStoreBuilder, LintOptions, Linter, ModuleRecord};
+use oxc_linter::{ConfigStore, ConfigStoreBuilder, LintOptions, Linter, ModuleRecord, Oxlintrc};
 use oxc_napi::{Comment, OxcError, convert_utf8_to_utf16};
 
-use crate::options::{OxcOptions, OxcRunOptions};
+use crate::options::{OxcLinterOptions, OxcOptions, OxcRunOptions};
 
 mod options;
 
@@ -94,7 +94,7 @@ impl Oxc {
         } = options;
         let run_options = run_options.unwrap_or_default();
         let parser_options = parser_options.unwrap_or_default();
-        let _linter_options = linter_options.unwrap_or_default();
+        let linter_options = linter_options.unwrap_or_default();
         let minifier_options = minifier_options.unwrap_or_default();
         let codegen_options = codegen_options.unwrap_or_default();
         let transform_options = transform_options.unwrap_or_default();
@@ -151,7 +151,7 @@ impl Oxc {
         }
 
         let linter_module_record = Arc::new(ModuleRecord::new(&path, &module_record, &semantic));
-        self.run_linter(&run_options, &path, &program, &linter_module_record);
+        self.run_linter(&run_options, &linter_options, &path, &program, &linter_module_record);
 
         self.run_formatter(&run_options, &source_text, source_type);
 
@@ -277,6 +277,7 @@ impl Oxc {
     fn run_linter(
         &mut self,
         run_options: &OxcRunOptions,
+        linter_options: &OxcLinterOptions,
         path: &Path,
         program: &Program,
         module_record: &Arc<ModuleRecord>,
@@ -285,7 +286,16 @@ impl Oxc {
         if run_options.lint.unwrap_or_default() && self.diagnostics.is_empty() {
             let semantic_ret = SemanticBuilder::new().with_cfg(true).build(program);
             let semantic = Rc::new(semantic_ret.semantic);
-            let lint_config = ConfigStoreBuilder::default().build();
+            let lint_config = if linter_options.config.is_some() {
+                let oxlintrc =
+                    Oxlintrc::from_string(&linter_options.config.as_ref().unwrap().to_string())
+                        .unwrap_or_default();
+                let config_builder =
+                    ConfigStoreBuilder::from_oxlintrc(false, oxlintrc).unwrap_or_default();
+                config_builder.build()
+            } else {
+                ConfigStoreBuilder::default().build()
+            };
             let linter_ret = Linter::new(
                 LintOptions::default(),
                 ConfigStore::new(lint_config, FxHashMap::default()),

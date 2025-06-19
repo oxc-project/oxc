@@ -1,7 +1,10 @@
 use oxc_ast::ast::*;
-use oxc_traverse::{Traverse, TraverseCtx};
+use oxc_traverse::Traverse;
 
-use crate::context::TransformCtx;
+use crate::{
+    context::{TransformCtx, TraverseCtx},
+    state::TransformState,
+};
 
 mod async_generator_functions;
 mod object_rest_spread;
@@ -32,7 +35,7 @@ impl<'a, 'ctx> ES2018<'a, 'ctx> {
     }
 }
 
-impl<'a> Traverse<'a> for ES2018<'a, '_> {
+impl<'a> Traverse<'a, TransformState<'a>> for ES2018<'a, '_> {
     fn exit_program(&mut self, program: &mut oxc_ast::ast::Program<'a>, ctx: &mut TraverseCtx<'a>) {
         if self.options.object_rest_spread.is_some() {
             self.object_rest_spread.exit_program(program, ctx);

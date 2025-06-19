@@ -37,6 +37,26 @@ pub struct MangleOptions {
 
 type Slot = usize;
 
+/// Enum to handle both owned and borrowed allocators. This is not `Cow` because that type
+/// requires `ToOwned`/`Clone`, which is not implemented for `Allocator`. Although this does
+/// incur some pointer indirection on each reference to the allocator, it allows the API to be
+/// more ergonomic by either accepting an existing allocator, or allowing an internal one to
+/// be created and used temporarily automatically.
+enum TempAllocator<'t> {
+    Owned(Allocator),
+    Borrowed(&'t Allocator),
+}
+
+impl TempAllocator<'_> {
+    /// Get a reference to the allocator, regardless of whether it's owned or borrowed
+    fn as_ref(&self) -> &Allocator {
+        match self {
+            TempAllocator::Owned(allocator) => allocator,
+            TempAllocator::Borrowed(allocator) => allocator,
+        }
+    }
+}
+
 /// # Name Mangler / Symbol Minification
 ///
 /// ## Example
@@ -155,15 +175,78 @@ type Slot = usize;
 /// - slot 1: `top_level_b`, `foo_a`, `bar_a`
 /// - slot 2: `foo`
 /// - slot 3: `bar`
-#[derive(Default)]
-pub struct Mangler {
+pub struct Mangler<'t> {
     options: MangleOptions,
+    /// An allocator meant to be used for temporary allocations during mangling.
+    /// It can be cleared after mangling is done, to free up memory for subsequent
+    /// files or other operations.
+    temp_allocator: TempAllocator<'t>,
 }
 
-impl Mangler {
+impl Default for Mangler<'_> {
+    fn default() -> Self {
+        Self {
+            options: MangleOptions::default(),
+            temp_allocator: TempAllocator::Owned(Allocator::default()),
+        }
+    }
+}
+
+impl<'t> Mangler<'t> {
     #[must_use]
     pub fn new() -> Self {
         Self::default()
+    }
+
+    /// Creates a new `Mangler` using an existing temporary allocator. This is an allocator
+    /// that can be reset after mangling and is only used for temporary allocations during
+    /// the mangling process. This makes processing multiple files at once much more efficient,
+    /// because the same memory can be used for mangling each file.
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// use oxc_allocator::Allocator;
+    /// use oxc_mangler::Mangler;
+    /// use oxc_parser::Parser;
+    /// use oxc_span::SourceType;
+    ///
+    /// let allocator = Allocator::default();
+    /// let mut temp_allocator = Allocator::default();
+    /// let source = "function myFunction(param) { return param + 1; }";
+    ///
+    /// let parsed = Parser::new(&allocator, source, SourceType::mjs()).parse();
+    /// let mangled_symbols = Mangler::new_with_temp_allocator(&temp_allocator)
+    ///     .build(&parsed.program);
+    ///
+    /// // Reset the allocator to free temporary memory
+    /// temp_allocator.reset();
+    /// ```
+    ///
+    /// Processing multiple files:
+    ///
+    /// ```rust
+    /// # use oxc_allocator::Allocator;
+    /// # use oxc_mangler::Mangler;
+    /// # use oxc_parser::Parser;
+    /// # use oxc_span::SourceType;
+    /// let allocator = Allocator::default();
+    /// let mut temp_allocator = Allocator::default();
+    /// let files = ["function foo() {}", "function bar() {}"];
+    ///
+    /// for source in files {
+    ///     let parsed = Parser::new(&allocator, source, SourceType::mjs()).parse();
+    ///     let mangled_symbols = Mangler::new_with_temp_allocator(&temp_allocator)
+    ///         .build(&parsed.program);
+    ///     temp_allocator.reset(); // Free memory between files
+    /// }
+    /// ```
+    #[must_use]
+    pub fn new_with_temp_allocator(temp_allocator: &'t Allocator) -> Self {
+        Self {
+            options: MangleOptions::default(),
+            temp_allocator: TempAllocator::Borrowed(temp_allocator),
+        }
     }
 
     #[must_use]
@@ -216,16 +299,16 @@ impl Mangler {
         let (keep_name_names, keep_name_symbols) =
             Mangler::collect_keep_name_symbols(self.options.keep_names, scoping, ast_nodes);
 
-        let allocator = Allocator::default();
+        let temp_allocator = self.temp_allocator.as_ref();
 
         // All symbols with their assigned slots. Keyed by symbol id.
-        let mut slots = Vec::from_iter_in(iter::repeat_n(0, scoping.symbols_len()), &allocator);
+        let mut slots = Vec::from_iter_in(iter::repeat_n(0, scoping.symbols_len()), temp_allocator);
 
         // Stores the lived scope ids for each slot. Keyed by slot number.
         let mut slot_liveness: std::vec::Vec<FixedBitSet> = vec![];
-        let mut tmp_bindings = std::vec::Vec::with_capacity(100);
+        let mut tmp_bindings = Vec::with_capacity_in(100, temp_allocator);
 
-        let mut reusable_slots = std::vec::Vec::new();
+        let mut reusable_slots = Vec::new_in(temp_allocator);
         // Walk down the scope tree and assign a slot number for each symbol.
         // It is possible to do this in a loop over the symbol list,
         // but walking down the scope tree seems to generate a better code.
@@ -300,13 +383,12 @@ impl Mangler {
             &keep_name_symbols,
             total_number_of_slots,
             &slots,
-            &allocator,
         );
 
         let root_unresolved_references = scoping.root_unresolved_references();
         let root_bindings = scoping.get_bindings(scoping.root_scope_id());
 
-        let mut reserved_names = Vec::with_capacity_in(total_number_of_slots, &allocator);
+        let mut reserved_names = Vec::with_capacity_in(total_number_of_slots, temp_allocator);
 
         let mut count = 0;
         for _ in 0..total_number_of_slots {
@@ -344,8 +426,8 @@ impl Mangler {
         //    function fa() { .. } function ga() { .. }
 
         let mut freq_iter = frequencies.iter();
-        let mut symbols_renamed_in_this_batch = std::vec::Vec::with_capacity(100);
-        let mut slice_of_same_len_strings = std::vec::Vec::with_capacity(100);
+        let mut symbols_renamed_in_this_batch = Vec::with_capacity_in(100, temp_allocator);
+        let mut slice_of_same_len_strings = Vec::with_capacity_in(100, temp_allocator);
         // 2. "N number of vars are going to be assigned names of the same length"
         for (_, slice_of_same_len_strings_group) in
             &reserved_names.into_iter().chunk_by(InlineString::len)
@@ -387,12 +469,12 @@ impl Mangler {
         keep_name_symbols: &FxHashSet<SymbolId>,
         total_number_of_slots: usize,
         slots: &[Slot],
-        allocator: &'a Allocator,
     ) -> Vec<'a, SlotFrequency<'a>> {
         let root_scope_id = scoping.root_scope_id();
+        let temp_allocator = self.temp_allocator.as_ref();
         let mut frequencies = Vec::from_iter_in(
-            repeat_with(|| SlotFrequency::new(allocator)).take(total_number_of_slots),
-            allocator,
+            repeat_with(|| SlotFrequency::new(temp_allocator)).take(total_number_of_slots),
+            temp_allocator,
         );
 
         for (symbol_id, slot) in slots.iter().copied().enumerate() {
@@ -463,9 +545,9 @@ struct SlotFrequency<'a> {
     pub symbol_ids: Vec<'a, SymbolId>,
 }
 
-impl<'a> SlotFrequency<'a> {
-    fn new(allocator: &'a Allocator) -> Self {
-        Self { slot: 0, frequency: 0, symbol_ids: Vec::new_in(allocator) }
+impl<'t> SlotFrequency<'t> {
+    fn new(temp_allocator: &'t Allocator) -> Self {
+        Self { slot: 0, frequency: 0, symbol_ids: Vec::new_in(temp_allocator) }
     }
 }
 

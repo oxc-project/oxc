@@ -14,7 +14,7 @@ fn missing_parameters(span: Span) -> OxcDiagnostic {
 
 fn missing_radix(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Missing radix parameter.")
-        .with_help("Add radix parameter `10' for parsing decimal numbers.")
+        .with_help("Add radix parameter `10` for parsing decimal numbers.")
         .with_label(span)
 }
 
@@ -132,7 +132,7 @@ impl Radix {
                         .unwrap_or(", 10");
 
                     ctx.diagnostic_with_dangerous_fix(missing_radix(call_expr.span), |fixer| {
-                        fixer.insert_text_before_range(Span::new(end - 1, end - 1), insert_param)
+                        fixer.insert_text_before_range(Span::empty(end - 1), insert_param)
                     });
                 }
             }

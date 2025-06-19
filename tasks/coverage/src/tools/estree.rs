@@ -316,8 +316,9 @@ impl Case for EstreeTypescriptCase {
             "typescript/tests/cases/compiler/shebangBeforeReferences.ts",
         ];
 
-        static IGNORE_PATHS: &[&str] =
-            concat_slices!([&str]: PARSE_ERROR_PATHS, INCORRECT_PATHS, HASHBANG_PATHS);
+        static IGNORE_PATHS: &[&str] = concat_slices!(
+            [&str]: PARSE_ERROR_PATHS, INCORRECT_PATHS, HASHBANG_PATHS
+        );
 
         // Skip cases where expected to fail to parse
         if self.base.should_fail() {
@@ -375,70 +376,17 @@ impl Case for EstreeTypescriptCase {
             Utf8ToUtf16::new(source_text).convert_program_with_ascending_order_checks(&mut program);
 
             let oxc_json = program.to_pretty_estree_ts_json();
-
-            // Compare as objects to ignore field order differences for now.
-            //
-            // Also ignore failure to parse ESTree JSON. These failures are just due to `serde` being
-            // unable to handle lone surrogates in strings and numbers which are to big to fit in an `f64`.
-            // These should match once we switch to comparing ASTs as JSON strings.
-            let Ok(estree_json_value) = serde_json::from_str::<serde_json::Value>(estree_json)
-            else {
-                continue;
-            };
-            let mut oxc_json_value = match serde_json::from_str::<serde_json::Value>(&oxc_json) {
-                Ok(v) => v,
-                Err(e) => {
-                    self.base.result =
-                        TestResult::GenericError("serde_json::from_str(oxc_json)", e.to_string());
-                    return;
-                }
-            };
-            if oxc_json_value == estree_json_value {
+            if oxc_json == estree_json {
                 continue;
             }
 
             // Mismatch found
-            convert_to_typescript_eslint_order(&mut oxc_json_value);
-            let oxc_json = serde_json::to_string_pretty(&oxc_json_value).unwrap();
-            let estree_json = serde_json::to_string_pretty(&estree_json_value).unwrap();
-
-            write_diff(self.path(), &oxc_json, &estree_json);
-            self.base.result = TestResult::Mismatch("Mismatch", oxc_json, estree_json);
+            write_diff(self.path(), &oxc_json, estree_json);
+            self.base.result = TestResult::Mismatch("Mismatch", oxc_json, estree_json.to_string());
             return;
         }
 
         self.base.result = TestResult::Passed;
-    }
-}
-
-fn convert_to_typescript_eslint_order(ast: &mut serde_json::Value) {
-    match ast {
-        serde_json::Value::Object(obj) => {
-            // TODO: not entirely alphabetical?
-            // e.g. `BinaryExpression.operator` comes before `BinaryExpression.left`
-            obj.sort_keys();
-            if let Some((_, r#type)) = obj.shift_remove_entry("type") {
-                if r#type.as_str() == Some("Program") {
-                    // keep hashbang last
-                    let (key, value) = obj.shift_remove_entry("hashbang").unwrap();
-                    obj.shift_insert(4, key, value);
-                }
-                obj.shift_insert(0, "type".to_string(), r#type);
-                let (_, start) = obj.shift_remove_entry("start").unwrap();
-                obj.shift_insert(1, "start".to_string(), start);
-                let (_, end) = obj.shift_remove_entry("end").unwrap();
-                obj.shift_insert(2, "end".to_string(), end);
-            }
-            for (_, value) in obj.iter_mut() {
-                convert_to_typescript_eslint_order(value);
-            }
-        }
-        serde_json::Value::Array(arr) => {
-            for value in arr.iter_mut() {
-                convert_to_typescript_eslint_order(value);
-            }
-        }
-        _ => {}
     }
 }
 

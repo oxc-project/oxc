@@ -111,9 +111,7 @@ impl Rule for NoCondAssign {
                         AstKind::Function(_)
                         | AstKind::ArrowFunctionExpression(_)
                         | AstKind::Program(_)
-                        | AstKind::BlockStatement(_) => {
-                            break;
-                        }
+                        | AstKind::BlockStatement(_) => break,
                         _ => {}
                     }
                 }

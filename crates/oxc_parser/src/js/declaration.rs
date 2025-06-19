@@ -12,9 +12,17 @@ use crate::{
 impl<'a> ParserImpl<'a> {
     pub(crate) fn parse_let(&mut self, stmt_ctx: StatementContext) -> Statement<'a> {
         let span = self.start_span();
+
         let checkpoint = self.checkpoint();
-        self.bump_any();
-        let peeked = self.cur_kind();
+        self.bump_any(); // bump `let`
+        let token = self.cur_token();
+        let peeked = token.kind();
+
+        // Fast path: avoid rewind.
+        if !stmt_ctx.is_single_statement() && peeked.is_after_let() {
+            return self.parse_variable_statement(span, VariableDeclarationKind::Let, stmt_ctx);
+        }
+
         self.rewind(checkpoint);
         // let = foo, let instanceof x, let + 1
         if peeked.is_assignment_operator() || peeked.is_binary_operator() {
@@ -31,7 +39,8 @@ impl<'a> ParserImpl<'a> {
             let expr = self.parse_identifier_expression();
             self.parse_expression_statement(span, expr)
         } else {
-            self.parse_variable_statement(stmt_ctx)
+            self.bump_any();
+            self.parse_variable_statement(span, VariableDeclarationKind::Let, stmt_ctx)
         }
     }
 
@@ -41,8 +50,7 @@ impl<'a> ParserImpl<'a> {
 
     fn is_next_token_using_keyword_then_binding_identifier(&mut self) -> bool {
         self.bump_any();
-        if self.at(Kind::Using) && !self.cur_token().is_on_new_line() {
-            self.bump_any();
+        if !self.cur_token().is_on_new_line() && self.eat(Kind::Using) {
             self.cur_kind().is_binding_identifier() && !self.cur_token().is_on_new_line()
         } else {
             false
@@ -56,20 +64,22 @@ impl<'a> ParserImpl<'a> {
         Statement::VariableDeclaration(self.alloc(decl))
     }
 
-    pub(crate) fn parse_variable_declaration(
-        &mut self,
-        start_span: u32,
-        decl_parent: VariableDeclarationParent,
-        modifiers: &Modifiers<'a>,
-    ) -> Box<'a, VariableDeclaration<'a>> {
-        let kind = match self.cur_kind() {
+    pub(crate) fn get_variable_declaration_kind(&self) -> VariableDeclarationKind {
+        match self.cur_kind() {
             Kind::Var => VariableDeclarationKind::Var,
             Kind::Const => VariableDeclarationKind::Const,
             Kind::Let => VariableDeclarationKind::Let,
-            _ => return self.unexpected(),
-        };
-        self.bump_any();
+            _ => unreachable!(),
+        }
+    }
 
+    pub(crate) fn parse_variable_declaration(
+        &mut self,
+        start_span: u32,
+        kind: VariableDeclarationKind,
+        decl_parent: VariableDeclarationParent,
+        modifiers: &Modifiers<'a>,
+    ) -> Box<'a, VariableDeclaration<'a>> {
         let mut declarations = self.ast.vec();
         loop {
             let declaration = self.parse_variable_declarator(decl_parent, kind);
@@ -109,27 +119,43 @@ impl<'a> ParserImpl<'a> {
         let (id, definite) = if self.is_ts {
             // const x!: number = 1
             //        ^ definite
-            let mut definite = false;
-            if binding_kind.is_binding_identifier()
-                && self.at(Kind::Bang)
+            let definite = if binding_kind.is_binding_identifier()
                 && !self.cur_token().is_on_new_line()
+                && self.at(Kind::Bang)
             {
-                self.bump(Kind::Bang);
-                definite = true;
-            }
-            let optional = self.eat(Kind::Question); // not allowed, but checked in checker/typescript.rs
+                let span = self.cur_token().span();
+                self.bump_any();
+                Some(span)
+            } else {
+                None
+            };
+            let optional = if self.at(Kind::Question) {
+                self.error(diagnostics::unexpected_token(self.cur_token().span()));
+                self.bump_any();
+                true
+            } else {
+                false
+            };
             let type_annotation = self.parse_ts_type_annotation();
             if let Some(type_annotation) = &type_annotation {
                 Self::extend_binding_pattern_span_end(type_annotation.span.end, &mut binding_kind);
             }
             (self.ast.binding_pattern(binding_kind, type_annotation, optional), definite)
         } else {
-            (self.ast.binding_pattern(binding_kind, NONE, false), false)
+            (self.ast.binding_pattern(binding_kind, NONE, false), None)
         };
         let init = self.eat(Kind::Eq).then(|| self.parse_assignment_expression_or_higher());
-        let decl = self.ast.variable_declarator(self.end_span(span), kind, id, init, definite);
+        let decl =
+            self.ast.variable_declarator(self.end_span(span), kind, id, init, definite.is_some());
         if decl_parent == VariableDeclarationParent::Statement {
             self.check_missing_initializer(&decl);
+        }
+        if let Some(span) = definite {
+            if decl.init.is_some() {
+                self.error(diagnostics::variable_declarator_definite(span));
+            } else if decl.id.type_annotation.is_none() {
+                self.error(diagnostics::variable_declarator_definite_type_assertion(span));
+            }
         }
         decl
     }

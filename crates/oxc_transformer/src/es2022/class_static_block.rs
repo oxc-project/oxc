@@ -45,9 +45,12 @@ use oxc_allocator::TakeIn;
 use oxc_ast::{NONE, ast::*};
 use oxc_span::SPAN;
 use oxc_syntax::scope::{ScopeFlags, ScopeId};
-use oxc_traverse::{Traverse, TraverseCtx};
+use oxc_traverse::Traverse;
 
-use crate::utils::ast_builder::wrap_statements_in_arrow_function_iife;
+use crate::{
+    context::TraverseCtx, state::TransformState,
+    utils::ast_builder::wrap_statements_in_arrow_function_iife,
+};
 
 pub struct ClassStaticBlock;
 
@@ -57,7 +60,7 @@ impl ClassStaticBlock {
     }
 }
 
-impl<'a> Traverse<'a> for ClassStaticBlock {
+impl<'a> Traverse<'a, TransformState<'a>> for ClassStaticBlock {
     fn enter_class_body(&mut self, body: &mut ClassBody<'a>, ctx: &mut TraverseCtx<'a>) {
         // Loop through class body elements and:
         // 1. Find if there are any `StaticBlock`s.
@@ -264,14 +267,17 @@ mod test {
     use oxc_semantic::Scoping;
     use oxc_traverse::ReusableTraverseCtx;
 
+    use crate::state::TransformState;
+
     use super::Keys;
 
     macro_rules! setup {
         ($ctx:ident) => {
             let allocator = Allocator::default();
             let scoping = Scoping::default();
-            let ctx = ReusableTraverseCtx::new(scoping, &allocator);
-            // SAFETY: Macro user only gets a `&mut TraverseCtx`, which cannot be abused
+            let state = TransformState::default();
+            let ctx = ReusableTraverseCtx::new(state, scoping, &allocator);
+            // SAFETY: Macro user only gets a `&mut TransCtx`, which cannot be abused
             let mut ctx = unsafe { ctx.unwrap() };
             let $ctx = &mut ctx;
         };

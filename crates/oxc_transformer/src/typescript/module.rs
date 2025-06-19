@@ -3,10 +3,14 @@ use oxc_ast::{NONE, ast::*};
 use oxc_semantic::{Reference, SymbolFlags};
 use oxc_span::SPAN;
 use oxc_syntax::reference::ReferenceFlags;
-use oxc_traverse::{Traverse, TraverseCtx};
+use oxc_traverse::Traverse;
 
 use super::diagnostics;
-use crate::TransformCtx;
+
+use crate::{
+    context::{TransformCtx, TraverseCtx},
+    state::TransformState,
+};
 
 pub struct TypeScriptModule<'a, 'ctx> {
     /// <https://babeljs.io/docs/babel-plugin-transform-typescript#onlyremovetypeimports>
@@ -20,7 +24,7 @@ impl<'a, 'ctx> TypeScriptModule<'a, 'ctx> {
     }
 }
 
-impl<'a> Traverse<'a> for TypeScriptModule<'a, '_> {
+impl<'a> Traverse<'a, TransformState<'a>> for TypeScriptModule<'a, '_> {
     fn exit_program(&mut self, program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
         // In Babel, it will insert `use strict` in `@babel/transform-modules-commonjs` plugin.
         // Once we have a commonjs plugin, we can consider moving this logic there.

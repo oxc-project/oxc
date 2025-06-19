@@ -1,37 +1,24 @@
 use tower_lsp_server::lsp_types::{
-    CodeAction, CodeActionKind, Diagnostic, NumberOrString, Position, Range, TextEdit, Uri,
-    WorkspaceEdit,
+    CodeAction, CodeActionKind, Position, Range, TextEdit, Uri, WorkspaceEdit,
 };
 
-use crate::linter::error_with_position::DiagnosticReport;
+use crate::linter::error_with_position::{DiagnosticReport, FixedContent, PossibleFixContent};
 
 pub const CODE_ACTION_KIND_SOURCE_FIX_ALL_OXC: CodeActionKind =
     CodeActionKind::new("source.fixAll.oxc");
 
-// TODO: Would be better if we had exact rule name from the diagnostic instead of having to parse it.
-fn get_rule_name(diagnostic: &Diagnostic) -> Option<String> {
-    if let Some(NumberOrString::String(code)) = &diagnostic.code {
-        let open_paren = code.chars().position(|c| c == '(')?;
-        let close_paren = code.chars().position(|c| c == ')')?;
-
-        return Some(code[(open_paren + 1)..close_paren].to_string());
-    }
-
-    None
-}
-
-pub fn apply_fix_code_action(report: &DiagnosticReport, uri: &Uri) -> Option<CodeAction> {
-    let Some(fixed_content) = &report.fixed_content else {
-        return None;
-    };
-
+fn fix_content_to_code_action(
+    fixed_content: &FixedContent,
+    uri: &Uri,
+    alternative_message: &str,
+) -> CodeAction {
     // 1) Use `fixed_content.message` if it exists
     // 2) Try to parse the report diagnostic message
     // 3) Fallback to "Fix this problem"
     let title = match fixed_content.message.clone() {
         Some(msg) => msg,
         None => {
-            if let Some(code) = report.diagnostic.message.split(':').next() {
+            if let Some(code) = alternative_message.split(':').next() {
                 format!("Fix this {code} problem")
             } else {
                 "Fix this problem".to_string()
@@ -39,7 +26,7 @@ pub fn apply_fix_code_action(report: &DiagnosticReport, uri: &Uri) -> Option<Cod
         }
     };
 
-    Some(CodeAction {
+    CodeAction {
         title,
         kind: Some(CodeActionKind::QUICKFIX),
         is_preferred: Some(true),
@@ -55,7 +42,24 @@ pub fn apply_fix_code_action(report: &DiagnosticReport, uri: &Uri) -> Option<Cod
         data: None,
         diagnostics: None,
         command: None,
-    })
+    }
+}
+
+pub fn apply_fix_code_actions(report: &DiagnosticReport, uri: &Uri) -> Option<Vec<CodeAction>> {
+    match &report.fixed_content {
+        PossibleFixContent::None => None,
+        PossibleFixContent::Single(fixed_content) => {
+            Some(vec![fix_content_to_code_action(fixed_content, uri, &report.diagnostic.message)])
+        }
+        PossibleFixContent::Multiple(fixed_contents) => Some(
+            fixed_contents
+                .iter()
+                .map(|fixed_content| {
+                    fix_content_to_code_action(fixed_content, uri, &report.diagnostic.message)
+                })
+                .collect(),
+        ),
+    }
 }
 
 pub fn apply_all_fix_code_action<'a>(
@@ -65,7 +69,15 @@ pub fn apply_all_fix_code_action<'a>(
     let mut quick_fixes: Vec<TextEdit> = vec![];
 
     for report in reports {
-        if let Some(fixed_content) = &report.fixed_content {
+        let fix = match &report.fixed_content {
+            PossibleFixContent::None => None,
+            PossibleFixContent::Single(fixed_content) => Some(fixed_content),
+            // For multiple fixes, we take the first one as a representative fix.
+            // Applying all possible fixes at once is not possible in this context.
+            PossibleFixContent::Multiple(multi) => multi.first(),
+        };
+
+        if let Some(fixed_content) = &fix {
             // when source.fixAll.oxc we collect all changes at ones
             // and return them as one workspace edit.
             // it is possible that one fix will change the range for the next fix
@@ -98,7 +110,7 @@ pub fn apply_all_fix_code_action<'a>(
 }
 
 pub fn ignore_this_line_code_action(report: &DiagnosticReport, uri: &Uri) -> CodeAction {
-    let rule_name = get_rule_name(&report.diagnostic);
+    let rule_name = report.rule_name.as_ref();
 
     // TODO: This CodeAction doesn't support disabling multiple rules by name for a given line.
     //  To do that, we need to read `report.diagnostic.range.start.line` and check if a disable comment already exists.
@@ -128,8 +140,8 @@ pub fn ignore_this_line_code_action(report: &DiagnosticReport, uri: &Uri) -> Cod
                         },
                     },
                     new_text: rule_name.as_ref().map_or_else(
-                        || "// eslint-disable-next-line\n".into(),
-                        |s| format!("// eslint-disable-next-line {s}\n"),
+                        || "// oxlint-disable-next-line\n".into(),
+                        |s| format!("// oxlint-disable-next-line {s}\n"),
                     ),
                 }],
             )])),
@@ -143,7 +155,7 @@ pub fn ignore_this_line_code_action(report: &DiagnosticReport, uri: &Uri) -> Cod
 }
 
 pub fn ignore_this_rule_code_action(report: &DiagnosticReport, uri: &Uri) -> CodeAction {
-    let rule_name = get_rule_name(&report.diagnostic);
+    let rule_name = report.rule_name.as_ref();
 
     CodeAction {
         title: rule_name.as_ref().map_or_else(
@@ -162,8 +174,8 @@ pub fn ignore_this_rule_code_action(report: &DiagnosticReport, uri: &Uri) -> Cod
                         end: Position { line: 0, character: 0 },
                     },
                     new_text: rule_name.as_ref().map_or_else(
-                        || "// eslint-disable\n".into(),
-                        |s| format!("// eslint-disable {s}\n"),
+                        || "// oxlint-disable\n".into(),
+                        |s| format!("// oxlint-disable {s}\n"),
                     ),
                 }],
             )])),

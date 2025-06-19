@@ -109,7 +109,7 @@ use oxc_data_structures::assert_unchecked;
 ///
 /// If workload is completely uniform, it reaches stable state on the 3rd round.
 ///
-/// ```ignore
+/// ```
 /// # use oxc_allocator::Allocator;
 /// let mut allocator = Allocator::new();
 ///
@@ -162,9 +162,8 @@ use oxc_data_structures::assert_unchecked;
 /// [`HashMap::new_in`], and all other methods which store data in the arena will refuse to compile
 /// if called with a [`Drop`] type.
 ///
-/// ```ignore
+/// ```compile_fail
 /// use oxc_allocator::{Allocator, Box};
-///
 /// let allocator = Allocator::new();
 ///
 /// struct Foo {
@@ -177,6 +176,11 @@ use oxc_data_structures::assert_unchecked;
 ///
 /// // This will fail to compile because `Foo` implements `Drop`
 /// let foo = Box::new_in(Foo { a: 0 }, &allocator);
+/// ```
+///
+/// ```compile_fail
+/// use oxc_allocator::{Allocator, Box};
+/// let allocator = Allocator::new();
 ///
 /// struct Bar {
 ///     v: std::vec::Vec<u8>,

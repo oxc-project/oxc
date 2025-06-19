@@ -69,14 +69,14 @@ source: crates/oxc_linter/src/tester.rs
  1 │ expect('something');
    · ───────────────────
    ╰────
-  help: Did you forget add a matcher(e.g. `toBe`, `toBeDefined`)
+  help: Did you forget add a matcher, e.g. `toBe`, `toBeDefined`
 
   ⚠ eslint-plugin-jest(valid-expect): Expect must have a corresponding matcher call.
    ╭─[valid_expect.tsx:1:1]
  1 │ expect();
    · ────────
    ╰────
-  help: Did you forget add a matcher(e.g. `toBe`, `toBeDefined`)
+  help: Did you forget add a matcher, e.g. `toBe`, `toBeDefined`
 
   ⚠ eslint-plugin-jest(valid-expect): Matchers must be called to assert.
    ╭─[valid_expect.tsx:1:1]
@@ -496,7 +496,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                           ──────────────────────────
  4 │                 });
    ╰────
-  help: Did you forget add a matcher(e.g. `toBe`, `toBeDefined`)
+  help: Did you forget add a matcher, e.g. `toBe`, `toBeDefined`
 
   ⚠ eslint-plugin-jest(valid-expect): Expect requires at least 1 argument
    ╭─[valid_expect.tsx:1:1]
@@ -566,14 +566,14 @@ source: crates/oxc_linter/src/tester.rs
  1 │ expect("something");
    · ───────────────────
    ╰────
-  help: Did you forget add a matcher(e.g. `toBe`, `toBeDefined`)
+  help: Did you forget add a matcher, e.g. `toBe`, `toBeDefined`
 
   ⚠ eslint-plugin-jest(valid-expect): Expect must have a corresponding matcher call.
    ╭─[valid_expect.tsx:1:1]
  1 │ expect();
    · ────────
    ╰────
-  help: Did you forget add a matcher(e.g. `toBe`, `toBeDefined`)
+  help: Did you forget add a matcher, e.g. `toBe`, `toBeDefined`
 
   ⚠ eslint-plugin-jest(valid-expect): Matchers must be called to assert.
    ╭─[valid_expect.tsx:1:1]
@@ -948,4 +948,4 @@ source: crates/oxc_linter/src/tester.rs
    ·                           ──────────────────────────
  4 │                 });
    ╰────
-  help: Did you forget add a matcher(e.g. `toBe`, `toBeDefined`)
+  help: Did you forget add a matcher, e.g. `toBe`, `toBeDefined`

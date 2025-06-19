@@ -68,9 +68,7 @@ impl Rule for NoArrayConstructor {
                 &new_expr.type_arguments,
                 false,
             ),
-            _ => {
-                return;
-            }
+            _ => return,
         };
 
         let Expression::Identifier(ident) = &callee else {

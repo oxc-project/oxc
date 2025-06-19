@@ -1233,11 +1233,7 @@ impl ESTree for CatchClause<'_> {
 
 impl ESTree for CatchParameter<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
-        let mut state = serializer.serialize_struct();
-        self.pattern.kind.serialize(FlatStructSerializer(&mut state));
-        state.serialize_ts_field("typeAnnotation", &self.pattern.type_annotation);
-        state.serialize_ts_field("optional", &self.pattern.optional);
-        state.end();
+        crate::serialize::js::CatchParameterConverter(self).serialize(serializer)
     }
 }
 
@@ -1253,11 +1249,7 @@ impl ESTree for DebuggerStatement {
 
 impl ESTree for BindingPattern<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
-        let mut state = serializer.serialize_struct();
-        self.kind.serialize(FlatStructSerializer(&mut state));
-        state.serialize_ts_field("typeAnnotation", &self.type_annotation);
-        state.serialize_ts_field("optional", &self.optional);
-        state.end();
+        crate::serialize::js::BindingPatternConverter(self).serialize(serializer)
     }
 }
 
@@ -1455,7 +1447,7 @@ impl ESTree for Class<'_> {
         state.serialize_field("type", &self.r#type);
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
-        state.serialize_ts_field("decorators", &self.decorators);
+        state.serialize_field("decorators", &self.decorators);
         state.serialize_field("id", &self.id);
         state.serialize_ts_field("typeParameters", &self.type_parameters);
         state.serialize_field("superClass", &self.super_class);
@@ -1506,8 +1498,8 @@ impl ESTree for MethodDefinition<'_> {
         state.serialize_field("type", &self.r#type);
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
-        state.serialize_ts_field("decorators", &self.decorators);
-        state.serialize_field("key", &crate::serialize::js::MethodDefinitionKey(self));
+        state.serialize_field("decorators", &self.decorators);
+        state.serialize_field("key", &self.key);
         state.serialize_field("value", &self.value);
         state.serialize_field("kind", &self.kind);
         state.serialize_field("computed", &self.computed);
@@ -1536,7 +1528,7 @@ impl ESTree for PropertyDefinition<'_> {
         state.serialize_field("type", &self.r#type);
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
-        state.serialize_ts_field("decorators", &self.decorators);
+        state.serialize_field("decorators", &self.decorators);
         state.serialize_field("key", &self.key);
         state.serialize_ts_field("typeAnnotation", &self.type_annotation);
         state.serialize_field("value", &self.value);
@@ -1626,7 +1618,7 @@ impl ESTree for AccessorProperty<'_> {
         state.serialize_field("type", &self.r#type);
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
-        state.serialize_ts_field("decorators", &self.decorators);
+        state.serialize_field("decorators", &self.decorators);
         state.serialize_field("key", &self.key);
         state.serialize_ts_field("typeAnnotation", &self.type_annotation);
         state.serialize_field("value", &self.value);
@@ -1925,7 +1917,7 @@ impl ESTree for NumericLiteral<'_> {
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
         state.serialize_field("value", &self.value);
-        state.serialize_field("raw", &self.raw);
+        state.serialize_field("raw", &self.raw.map(|s| JsonSafeString(s.as_str())));
         state.end();
     }
 }
@@ -1949,7 +1941,7 @@ impl ESTree for BigIntLiteral<'_> {
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
         state.serialize_field("value", &crate::serialize::literal::BigIntLiteralValue(self));
-        state.serialize_field("raw", &self.raw);
+        state.serialize_field("raw", &self.raw.map(|s| JsonSafeString(s.as_str())));
         state.serialize_field("bigint", &crate::serialize::literal::BigIntLiteralBigint(self));
         state.end();
     }

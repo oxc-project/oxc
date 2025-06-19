@@ -1,5 +1,5 @@
 use cow_utils::CowUtils;
-use oxc_ast::{AstKind, ast::JSXAttributeItem};
+use oxc_ast::AstKind;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
@@ -56,7 +56,7 @@ declare_oxc_lint!(
 
 impl Rule for AriaProps {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        if let AstKind::JSXAttributeItem(JSXAttributeItem::Attribute(attr)) = node.kind() {
+        if let AstKind::JSXAttribute(attr) = node.kind() {
             let name = get_jsx_attribute_name(&attr.name);
             let name = name.cow_to_ascii_lowercase();
             if name.starts_with("aria-") && !is_valid_aria_property(&name) {

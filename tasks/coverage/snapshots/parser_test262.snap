@@ -3110,158 +3110,180 @@ Negative Passed: 4519/4519 (100.00%)
  54 │   
     ╰────
 
-  × Unexpected token
+  × Expected `:` but found `}`
     ╭─[test262/test/language/expressions/arrow-function/dstr/syntax-error-ident-ref-break-escaped.js:41:23]
  40 │ 
  41 │ var x = ({ bre\u0061k }) => {};
-    ·                       ─
+    ·                       ┬
+    ·                       ╰── `:` expected
     ╰────
 
-  × Unexpected token
+  × Expected `:` but found `}`
     ╭─[test262/test/language/expressions/arrow-function/dstr/syntax-error-ident-ref-case-escaped.js:41:22]
  40 │ 
  41 │ var x = ({ c\u0061se }) => {};
-    ·                      ─
+    ·                      ┬
+    ·                      ╰── `:` expected
     ╰────
 
-  × Unexpected token
+  × Expected `:` but found `}`
     ╭─[test262/test/language/expressions/arrow-function/dstr/syntax-error-ident-ref-catch-escaped.js:41:23]
  40 │ 
  41 │ var x = ({ c\u0061tch }) => {};
-    ·                       ─
+    ·                       ┬
+    ·                       ╰── `:` expected
     ╰────
 
-  × Unexpected token
+  × Expected `:` but found `}`
     ╭─[test262/test/language/expressions/arrow-function/dstr/syntax-error-ident-ref-class-escaped.js:41:23]
  40 │ 
  41 │ var x = ({ cl\u0061ss }) => {};
-    ·                       ─
+    ·                       ┬
+    ·                       ╰── `:` expected
     ╰────
 
-  × Unexpected token
+  × Expected `:` but found `}`
     ╭─[test262/test/language/expressions/arrow-function/dstr/syntax-error-ident-ref-const-escaped.js:41:23]
  40 │ 
  41 │ var x = ({ \u0063onst }) => {};
-    ·                       ─
+    ·                       ┬
+    ·                       ╰── `:` expected
     ╰────
 
-  × Unexpected token
+  × Expected `:` but found `}`
     ╭─[test262/test/language/expressions/arrow-function/dstr/syntax-error-ident-ref-continue-escaped.js:41:26]
  40 │ 
  41 │ var x = ({ \u0063ontinue }) => {};
-    ·                          ─
+    ·                          ┬
+    ·                          ╰── `:` expected
     ╰────
 
-  × Unexpected token
+  × Expected `:` but found `}`
     ╭─[test262/test/language/expressions/arrow-function/dstr/syntax-error-ident-ref-debugger-escaped.js:41:26]
  40 │ 
  41 │ var x = ({ \u0064ebugger }) => {};
-    ·                          ─
+    ·                          ┬
+    ·                          ╰── `:` expected
     ╰────
 
-  × Unexpected token
+  × Expected `:` but found `}`
     ╭─[test262/test/language/expressions/arrow-function/dstr/syntax-error-ident-ref-default-escaped-ext.js:41:25]
  40 │ 
  41 │ var x = ({ def\u{61}ult }) => {};
-    ·                         ─
+    ·                         ┬
+    ·                         ╰── `:` expected
     ╰────
 
-  × Unexpected token
+  × Expected `:` but found `}`
     ╭─[test262/test/language/expressions/arrow-function/dstr/syntax-error-ident-ref-default-escaped.js:41:25]
  40 │ 
  41 │ var x = ({ def\u0061ult }) => {};
-    ·                         ─
+    ·                         ┬
+    ·                         ╰── `:` expected
     ╰────
 
-  × Unexpected token
+  × Expected `:` but found `}`
     ╭─[test262/test/language/expressions/arrow-function/dstr/syntax-error-ident-ref-default.js:41:20]
  40 │ 
  41 │ var x = ({ default }) => {};
-    ·                    ─
+    ·                    ┬
+    ·                    ╰── `:` expected
     ╰────
 
-  × Unexpected token
+  × Expected `:` but found `}`
     ╭─[test262/test/language/expressions/arrow-function/dstr/syntax-error-ident-ref-delete-escaped.js:41:24]
  40 │ 
  41 │ var x = ({ \u0064elete }) => {};
-    ·                        ─
+    ·                        ┬
+    ·                        ╰── `:` expected
     ╰────
 
-  × Unexpected token
+  × Expected `:` but found `}`
     ╭─[test262/test/language/expressions/arrow-function/dstr/syntax-error-ident-ref-do-escaped.js:41:20]
  40 │ 
  41 │ var x = ({ \u0064o }) => {};
-    ·                    ─
+    ·                    ┬
+    ·                    ╰── `:` expected
     ╰────
 
-  × Unexpected token
+  × Expected `:` but found `}`
     ╭─[test262/test/language/expressions/arrow-function/dstr/syntax-error-ident-ref-else-escaped.js:41:22]
  40 │ 
  41 │ var x = ({ \u0065lse }) => {};
-    ·                      ─
+    ·                      ┬
+    ·                      ╰── `:` expected
     ╰────
 
-  × Unexpected token
+  × Expected `:` but found `}`
     ╭─[test262/test/language/expressions/arrow-function/dstr/syntax-error-ident-ref-enum-escaped.js:41:22]
  40 │ 
  41 │ var x = ({ \u0065num }) => {};
-    ·                      ─
+    ·                      ┬
+    ·                      ╰── `:` expected
     ╰────
 
-  × Unexpected token
+  × Expected `:` but found `}`
     ╭─[test262/test/language/expressions/arrow-function/dstr/syntax-error-ident-ref-export-escaped.js:41:24]
  40 │ 
  41 │ var x = ({ \u0065xport }) => {};
-    ·                        ─
+    ·                        ┬
+    ·                        ╰── `:` expected
     ╰────
 
-  × Unexpected token
+  × Expected `:` but found `}`
     ╭─[test262/test/language/expressions/arrow-function/dstr/syntax-error-ident-ref-extends-escaped-ext.js:41:25]
  40 │ 
  41 │ var x = ({ \u{65}xtends }) => {};
-    ·                         ─
+    ·                         ┬
+    ·                         ╰── `:` expected
     ╰────
 
-  × Unexpected token
+  × Expected `:` but found `}`
     ╭─[test262/test/language/expressions/arrow-function/dstr/syntax-error-ident-ref-extends-escaped.js:41:25]
  40 │ 
  41 │ var x = ({ \u0065xtends }) => {};
-    ·                         ─
+    ·                         ┬
+    ·                         ╰── `:` expected
     ╰────
 
-  × Unexpected token
+  × Expected `:` but found `}`
     ╭─[test262/test/language/expressions/arrow-function/dstr/syntax-error-ident-ref-extends.js:41:20]
  40 │ 
  41 │ var x = ({ extends }) => {};
-    ·                    ─
+    ·                    ┬
+    ·                    ╰── `:` expected
     ╰────
 
-  × Unexpected token
+  × Expected `:` but found `}`
     ╭─[test262/test/language/expressions/arrow-function/dstr/syntax-error-ident-ref-finally-escaped.js:41:25]
  40 │ 
  41 │ var x = ({ \u0066inally }) => {};
-    ·                         ─
+    ·                         ┬
+    ·                         ╰── `:` expected
     ╰────
 
-  × Unexpected token
+  × Expected `:` but found `}`
     ╭─[test262/test/language/expressions/arrow-function/dstr/syntax-error-ident-ref-for-escaped.js:41:21]
  40 │ 
  41 │ var x = ({ \u0066or }) => {};
-    ·                     ─
+    ·                     ┬
+    ·                     ╰── `:` expected
     ╰────
 
-  × Unexpected token
+  × Expected `:` but found `}`
     ╭─[test262/test/language/expressions/arrow-function/dstr/syntax-error-ident-ref-function-escaped.js:41:26]
  40 │ 
  41 │ var x = ({ \u0066unction }) => {};
-    ·                          ─
+    ·                          ┬
+    ·                          ╰── `:` expected
     ╰────
 
-  × Unexpected token
+  × Expected `:` but found `}`
     ╭─[test262/test/language/expressions/arrow-function/dstr/syntax-error-ident-ref-if-escaped.js:41:20]
  40 │ 
  41 │ var x = ({ i\u0066 }) => {};
-    ·                    ─
+    ·                    ┬
+    ·                    ╰── `:` expected
     ╰────
 
   × The keyword 'implements' is reserved
@@ -3271,25 +3293,28 @@ Negative Passed: 4519/4519 (100.00%)
     ·            ───────────────
     ╰────
 
-  × Unexpected token
+  × Expected `:` but found `}`
     ╭─[test262/test/language/expressions/arrow-function/dstr/syntax-error-ident-ref-import-escaped.js:41:24]
  40 │ 
  41 │ var x = ({ \u0069mport }) => {};
-    ·                        ─
+    ·                        ┬
+    ·                        ╰── `:` expected
     ╰────
 
-  × Unexpected token
+  × Expected `:` but found `}`
     ╭─[test262/test/language/expressions/arrow-function/dstr/syntax-error-ident-ref-in-escaped.js:41:20]
  40 │ 
  41 │ var x = ({ \u0069n }) => {};
-    ·                    ─
+    ·                    ┬
+    ·                    ╰── `:` expected
     ╰────
 
-  × Unexpected token
+  × Expected `:` but found `}`
     ╭─[test262/test/language/expressions/arrow-function/dstr/syntax-error-ident-ref-instanceof-escaped.js:41:28]
  40 │ 
  41 │ var x = ({ \u0069nstanceof }) => {};
-    ·                            ─
+    ·                            ┬
+    ·                            ╰── `:` expected
     ╰────
 
   × The keyword 'interface' is reserved
@@ -3306,11 +3331,12 @@ Negative Passed: 4519/4519 (100.00%)
     ·            ────────
     ╰────
 
-  × Unexpected token
+  × Expected `:` but found `}`
     ╭─[test262/test/language/expressions/arrow-function/dstr/syntax-error-ident-ref-new-escaped.js:41:21]
  40 │ 
  41 │ var x = ({ n\u0065w }) => {};
-    ·                     ─
+    ·                     ┬
+    ·                     ╰── `:` expected
     ╰────
 
   × The keyword 'package' is reserved
@@ -3341,11 +3367,12 @@ Negative Passed: 4519/4519 (100.00%)
     ·            ───────────
     ╰────
 
-  × Unexpected token
+  × Expected `:` but found `}`
     ╭─[test262/test/language/expressions/arrow-function/dstr/syntax-error-ident-ref-return-escaped.js:41:24]
  40 │ 
  41 │ var x = ({ r\u0065turn }) => {};
-    ·                        ─
+    ·                        ┬
+    ·                        ╰── `:` expected
     ╰────
 
   × The keyword 'static' is reserved
@@ -3355,74 +3382,84 @@ Negative Passed: 4519/4519 (100.00%)
     ·            ───────────
     ╰────
 
-  × Unexpected token
+  × Expected `:` but found `}`
     ╭─[test262/test/language/expressions/arrow-function/dstr/syntax-error-ident-ref-super-escaped.js:41:23]
  40 │ 
  41 │ var x = ({ sup\u0065r }) => {};
-    ·                       ─
+    ·                       ┬
+    ·                       ╰── `:` expected
     ╰────
 
-  × Unexpected token
+  × Expected `:` but found `}`
     ╭─[test262/test/language/expressions/arrow-function/dstr/syntax-error-ident-ref-switch-escaped.js:41:24]
  40 │ 
  41 │ var x = ({ sw\u0069tch }) => {};
-    ·                        ─
+    ·                        ┬
+    ·                        ╰── `:` expected
     ╰────
 
-  × Unexpected token
+  × Expected `:` but found `}`
     ╭─[test262/test/language/expressions/arrow-function/dstr/syntax-error-ident-ref-this-escaped.js:41:22]
  40 │ 
  41 │ var x = ({ th\u0069s }) => {};
-    ·                      ─
+    ·                      ┬
+    ·                      ╰── `:` expected
     ╰────
 
-  × Unexpected token
+  × Expected `:` but found `}`
     ╭─[test262/test/language/expressions/arrow-function/dstr/syntax-error-ident-ref-throw-escaped.js:41:23]
  40 │ 
  41 │ var x = ({ t\u0068row }) => {};
-    ·                       ─
+    ·                       ┬
+    ·                       ╰── `:` expected
     ╰────
 
-  × Unexpected token
+  × Expected `:` but found `}`
     ╭─[test262/test/language/expressions/arrow-function/dstr/syntax-error-ident-ref-try-escaped.js:41:21]
  40 │ 
  41 │ var x = ({ tr\u0079 }) => {};
-    ·                     ─
+    ·                     ┬
+    ·                     ╰── `:` expected
     ╰────
 
-  × Unexpected token
+  × Expected `:` but found `}`
     ╭─[test262/test/language/expressions/arrow-function/dstr/syntax-error-ident-ref-typeof-escaped.js:41:24]
  40 │ 
  41 │ var x = ({ typ\u0065of }) => {};
-    ·                        ─
+    ·                        ┬
+    ·                        ╰── `:` expected
     ╰────
 
-  × Unexpected token
+  × Expected `:` but found `}`
     ╭─[test262/test/language/expressions/arrow-function/dstr/syntax-error-ident-ref-var-escaped.js:41:21]
  40 │ 
  41 │ var x = ({ v\u0061r }) => {};
-    ·                     ─
+    ·                     ┬
+    ·                     ╰── `:` expected
     ╰────
 
-  × Unexpected token
+  × Expected `:` but found `}`
     ╭─[test262/test/language/expressions/arrow-function/dstr/syntax-error-ident-ref-void-escaped.js:41:22]
  40 │ 
  41 │ var x = ({ voi\u0064 }) => {};
-    ·                      ─
+    ·                      ┬
+    ·                      ╰── `:` expected
     ╰────
 
-  × Unexpected token
+  × Expected `:` but found `}`
     ╭─[test262/test/language/expressions/arrow-function/dstr/syntax-error-ident-ref-while-escaped.js:41:23]
  40 │ 
  41 │ var x = ({ whil\u0065 }) => {};
-    ·                       ─
+    ·                       ┬
+    ·                       ╰── `:` expected
     ╰────
 
-  × Unexpected token
+  × Expected `:` but found `}`
     ╭─[test262/test/language/expressions/arrow-function/dstr/syntax-error-ident-ref-with-escaped.js:41:22]
  40 │ 
  41 │ var x = ({ w\u0069th }) => {};
-    ·                      ─
+    ·                      ┬
+    ·                      ╰── `:` expected
     ╰────
 
   × Illegal 'use strict' directive in function with non-simple parameter list
@@ -3471,6 +3508,14 @@ Negative Passed: 4519/4519 (100.00%)
  54 │ 
  55 │ 0, (...a,) => {
     ·     ────
+ 56 │   
+    ╰────
+
+  × A rest parameter or binding pattern may not have a trailing comma.
+    ╭─[test262/test/language/expressions/arrow-function/rest-params-trailing-comma-early-error.js:55:9]
+ 54 │ 
+ 55 │ 0, (...a,) => {
+    ·         ─
  56 │   
     ╰────
 
@@ -3761,7 +3806,7 @@ Negative Passed: 4519/4519 (100.00%)
     ·     ────
     ╰────
 
-  × Unexpected trailing comma after rest element
+  × A rest parameter or binding pattern may not have a trailing comma.
     ╭─[test262/test/language/expressions/assignment/dstr/array-rest-before-elision.js:24:9]
  23 │ 
  24 │ 0, [...x,] = [];
@@ -3775,11 +3820,18 @@ Negative Passed: 4519/4519 (100.00%)
     ·     ────
     ╰────
 
-  × Unexpected trailing comma after rest element
+  × A rest parameter or binding pattern may not have a trailing comma.
     ╭─[test262/test/language/expressions/assignment/dstr/array-rest-elision-invalid.js:24:9]
  23 │ 
  24 │ 0, [...x,] = [];
     ·         ─
+    ╰────
+
+  × Invalid rest operator's argument.
+    ╭─[test262/test/language/expressions/assignment/dstr/array-rest-init.js:25:8]
+ 24 │ 
+ 25 │ 0, [...x = 1] = [];
+    ·        ─────
     ╰────
 
   × Cannot assign to this expression
@@ -3824,11 +3876,12 @@ Negative Passed: 4519/4519 (100.00%)
     ·          ─────
     ╰────
 
-  × Cannot use `yield` as an identifier in a generator context
-    ╭─[test262/test/language/expressions/assignment/dstr/obj-id-identifier-yield-expr.js:24:6]
+  × Expected `:` but found `}`
+    ╭─[test262/test/language/expressions/assignment/dstr/obj-id-identifier-yield-expr.js:24:12]
  23 │ 
  24 │ 0, { yield } = {};
-    ·      ─────
+    ·            ┬
+    ·            ╰── `:` expected
  25 │ 
     ╰────
 
@@ -3927,158 +3980,180 @@ Negative Passed: 4519/4519 (100.00%)
  26 │ ;
     ╰────
 
-  × Unexpected token
+  × Expected `:` but found `}`
     ╭─[test262/test/language/expressions/assignment/dstr/syntax-error-ident-ref-break-escaped.js:41:22]
  40 │ 
  41 │ var x = { bre\u0061k } = { break: 42 };
-    ·                      ─
+    ·                      ┬
+    ·                      ╰── `:` expected
     ╰────
 
-  × Unexpected token
+  × Expected `:` but found `}`
     ╭─[test262/test/language/expressions/assignment/dstr/syntax-error-ident-ref-case-escaped.js:41:21]
  40 │ 
  41 │ var x = { c\u0061se } = { case: 42 };
-    ·                     ─
+    ·                     ┬
+    ·                     ╰── `:` expected
     ╰────
 
-  × Unexpected token
+  × Expected `:` but found `}`
     ╭─[test262/test/language/expressions/assignment/dstr/syntax-error-ident-ref-catch-escaped.js:41:22]
  40 │ 
  41 │ var x = { c\u0061tch } = { catch: 42 };
-    ·                      ─
+    ·                      ┬
+    ·                      ╰── `:` expected
     ╰────
 
-  × Unexpected token
+  × Expected `:` but found `}`
     ╭─[test262/test/language/expressions/assignment/dstr/syntax-error-ident-ref-class-escaped.js:41:22]
  40 │ 
  41 │ var x = { cl\u0061ss } = { class: 42 };
-    ·                      ─
+    ·                      ┬
+    ·                      ╰── `:` expected
     ╰────
 
-  × Unexpected token
+  × Expected `:` but found `}`
     ╭─[test262/test/language/expressions/assignment/dstr/syntax-error-ident-ref-const-escaped.js:41:22]
  40 │ 
  41 │ var x = { \u0063onst } = { const: 42 };
-    ·                      ─
+    ·                      ┬
+    ·                      ╰── `:` expected
     ╰────
 
-  × Unexpected token
+  × Expected `:` but found `}`
     ╭─[test262/test/language/expressions/assignment/dstr/syntax-error-ident-ref-continue-escaped.js:41:25]
  40 │ 
  41 │ var x = { \u0063ontinue } = { continue: 42 };
-    ·                         ─
+    ·                         ┬
+    ·                         ╰── `:` expected
     ╰────
 
-  × Unexpected token
+  × Expected `:` but found `}`
     ╭─[test262/test/language/expressions/assignment/dstr/syntax-error-ident-ref-debugger-escaped.js:41:25]
  40 │ 
  41 │ var x = { \u0064ebugger } = { debugger: 42 };
-    ·                         ─
+    ·                         ┬
+    ·                         ╰── `:` expected
     ╰────
 
-  × Unexpected token
+  × Expected `:` but found `}`
     ╭─[test262/test/language/expressions/assignment/dstr/syntax-error-ident-ref-default-escaped-ext.js:41:24]
  40 │ 
  41 │ var x = { def\u{61}ult } = { default: 42 };
-    ·                        ─
+    ·                        ┬
+    ·                        ╰── `:` expected
     ╰────
 
-  × Unexpected token
+  × Expected `:` but found `}`
     ╭─[test262/test/language/expressions/assignment/dstr/syntax-error-ident-ref-default-escaped.js:41:24]
  40 │ 
  41 │ var x = { def\u0061ult } = { default: 42 };
-    ·                        ─
+    ·                        ┬
+    ·                        ╰── `:` expected
     ╰────
 
-  × Unexpected token
+  × Expected `:` but found `}`
     ╭─[test262/test/language/expressions/assignment/dstr/syntax-error-ident-ref-default.js:41:19]
  40 │ 
  41 │ var x = { default } = { default: 42 };
-    ·                   ─
+    ·                   ┬
+    ·                   ╰── `:` expected
     ╰────
 
-  × Unexpected token
+  × Expected `:` but found `}`
     ╭─[test262/test/language/expressions/assignment/dstr/syntax-error-ident-ref-delete-escaped.js:41:23]
  40 │ 
  41 │ var x = { \u0064elete } = { delete: 42 };
-    ·                       ─
+    ·                       ┬
+    ·                       ╰── `:` expected
     ╰────
 
-  × Unexpected token
+  × Expected `:` but found `}`
     ╭─[test262/test/language/expressions/assignment/dstr/syntax-error-ident-ref-do-escaped.js:41:19]
  40 │ 
  41 │ var x = { \u0064o } = { do: 42 };
-    ·                   ─
+    ·                   ┬
+    ·                   ╰── `:` expected
     ╰────
 
-  × Unexpected token
+  × Expected `:` but found `}`
     ╭─[test262/test/language/expressions/assignment/dstr/syntax-error-ident-ref-else-escaped.js:41:21]
  40 │ 
  41 │ var x = { \u0065lse } = { else: 42 };
-    ·                     ─
+    ·                     ┬
+    ·                     ╰── `:` expected
     ╰────
 
-  × Unexpected token
+  × Expected `:` but found `}`
     ╭─[test262/test/language/expressions/assignment/dstr/syntax-error-ident-ref-enum-escaped.js:41:21]
  40 │ 
  41 │ var x = { \u0065num } = { enum: 42 };
-    ·                     ─
+    ·                     ┬
+    ·                     ╰── `:` expected
     ╰────
 
-  × Unexpected token
+  × Expected `:` but found `}`
     ╭─[test262/test/language/expressions/assignment/dstr/syntax-error-ident-ref-export-escaped.js:41:23]
  40 │ 
  41 │ var x = { \u0065xport } = { export: 42 };
-    ·                       ─
+    ·                       ┬
+    ·                       ╰── `:` expected
     ╰────
 
-  × Unexpected token
+  × Expected `:` but found `}`
     ╭─[test262/test/language/expressions/assignment/dstr/syntax-error-ident-ref-extends-escaped-ext.js:41:24]
  40 │ 
  41 │ var x = { \u{65}xtends } = { extends: 42 };
-    ·                        ─
+    ·                        ┬
+    ·                        ╰── `:` expected
     ╰────
 
-  × Unexpected token
+  × Expected `:` but found `}`
     ╭─[test262/test/language/expressions/assignment/dstr/syntax-error-ident-ref-extends-escaped.js:41:24]
  40 │ 
  41 │ var x = { \u0065xtends } = { extends: 42 };
-    ·                        ─
+    ·                        ┬
+    ·                        ╰── `:` expected
     ╰────
 
-  × Unexpected token
+  × Expected `:` but found `}`
     ╭─[test262/test/language/expressions/assignment/dstr/syntax-error-ident-ref-extends.js:41:19]
  40 │ 
  41 │ var x = { extends } = { extends: 42 };
-    ·                   ─
+    ·                   ┬
+    ·                   ╰── `:` expected
     ╰────
 
-  × Unexpected token
+  × Expected `:` but found `}`
     ╭─[test262/test/language/expressions/assignment/dstr/syntax-error-ident-ref-finally-escaped.js:41:24]
  40 │ 
  41 │ var x = { \u0066inally } = { finally: 42 };
-    ·                        ─
+    ·                        ┬
+    ·                        ╰── `:` expected
     ╰────
 
-  × Unexpected token
+  × Expected `:` but found `}`
     ╭─[test262/test/language/expressions/assignment/dstr/syntax-error-ident-ref-for-escaped.js:41:20]
  40 │ 
  41 │ var x = { \u0066or } = { for: 42 };
-    ·                    ─
+    ·                    ┬
+    ·                    ╰── `:` expected
     ╰────
 
-  × Unexpected token
+  × Expected `:` but found `}`
     ╭─[test262/test/language/expressions/assignment/dstr/syntax-error-ident-ref-function-escaped.js:41:25]
  40 │ 
  41 │ var x = { \u0066unction } = { function: 42 };
-    ·                         ─
+    ·                         ┬
+    ·                         ╰── `:` expected
     ╰────
 
-  × Unexpected token
+  × Expected `:` but found `}`
     ╭─[test262/test/language/expressions/assignment/dstr/syntax-error-ident-ref-if-escaped.js:41:19]
  40 │ 
  41 │ var x = { i\u0066 } = { if: 42 };
-    ·                   ─
+    ·                   ┬
+    ·                   ╰── `:` expected
     ╰────
 
   × The keyword 'implements' is reserved
@@ -4088,25 +4163,28 @@ Negative Passed: 4519/4519 (100.00%)
     ·           ───────────────
     ╰────
 
-  × Unexpected token
+  × Expected `:` but found `}`
     ╭─[test262/test/language/expressions/assignment/dstr/syntax-error-ident-ref-import-escaped.js:41:23]
  40 │ 
  41 │ var x = { \u0069mport } = { import: 42 };
-    ·                       ─
+    ·                       ┬
+    ·                       ╰── `:` expected
     ╰────
 
-  × Unexpected token
+  × Expected `:` but found `}`
     ╭─[test262/test/language/expressions/assignment/dstr/syntax-error-ident-ref-in-escaped.js:41:19]
  40 │ 
  41 │ var x = { \u0069n } = { in: 42 };
-    ·                   ─
+    ·                   ┬
+    ·                   ╰── `:` expected
     ╰────
 
-  × Unexpected token
+  × Expected `:` but found `}`
     ╭─[test262/test/language/expressions/assignment/dstr/syntax-error-ident-ref-instanceof-escaped.js:41:27]
  40 │ 
  41 │ var x = { \u0069nstanceof } = { instanceof: 42 };
-    ·                           ─
+    ·                           ┬
+    ·                           ╰── `:` expected
     ╰────
 
   × The keyword 'interface' is reserved
@@ -4123,11 +4201,12 @@ Negative Passed: 4519/4519 (100.00%)
     ·           ────────
     ╰────
 
-  × Unexpected token
+  × Expected `:` but found `}`
     ╭─[test262/test/language/expressions/assignment/dstr/syntax-error-ident-ref-new-escaped.js:41:20]
  40 │ 
  41 │ var x = { n\u0065w } = { new: 42 };
-    ·                    ─
+    ·                    ┬
+    ·                    ╰── `:` expected
     ╰────
 
   × The keyword 'package' is reserved
@@ -4158,11 +4237,12 @@ Negative Passed: 4519/4519 (100.00%)
     ·           ───────────
     ╰────
 
-  × Unexpected token
+  × Expected `:` but found `}`
     ╭─[test262/test/language/expressions/assignment/dstr/syntax-error-ident-ref-return-escaped.js:41:23]
  40 │ 
  41 │ var x = { r\u0065turn } = { return: 42 };
-    ·                       ─
+    ·                       ┬
+    ·                       ╰── `:` expected
     ╰────
 
   × The keyword 'static' is reserved
@@ -4172,74 +4252,84 @@ Negative Passed: 4519/4519 (100.00%)
     ·           ───────────
     ╰────
 
-  × Unexpected token
+  × Expected `:` but found `}`
     ╭─[test262/test/language/expressions/assignment/dstr/syntax-error-ident-ref-super-escaped.js:41:22]
  40 │ 
  41 │ var x = { sup\u0065r } = { super: 42 };
-    ·                      ─
+    ·                      ┬
+    ·                      ╰── `:` expected
     ╰────
 
-  × Unexpected token
+  × Expected `:` but found `}`
     ╭─[test262/test/language/expressions/assignment/dstr/syntax-error-ident-ref-switch-escaped.js:41:23]
  40 │ 
  41 │ var x = { sw\u0069tch } = { switch: 42 };
-    ·                       ─
+    ·                       ┬
+    ·                       ╰── `:` expected
     ╰────
 
-  × Unexpected token
+  × Expected `:` but found `}`
     ╭─[test262/test/language/expressions/assignment/dstr/syntax-error-ident-ref-this-escaped.js:41:21]
  40 │ 
  41 │ var x = { th\u0069s } = { this: 42 };
-    ·                     ─
+    ·                     ┬
+    ·                     ╰── `:` expected
     ╰────
 
-  × Unexpected token
+  × Expected `:` but found `}`
     ╭─[test262/test/language/expressions/assignment/dstr/syntax-error-ident-ref-throw-escaped.js:41:22]
  40 │ 
  41 │ var x = { t\u0068row } = { throw: 42 };
-    ·                      ─
+    ·                      ┬
+    ·                      ╰── `:` expected
     ╰────
 
-  × Unexpected token
+  × Expected `:` but found `}`
     ╭─[test262/test/language/expressions/assignment/dstr/syntax-error-ident-ref-try-escaped.js:41:20]
  40 │ 
  41 │ var x = { tr\u0079 } = { try: 42 };
-    ·                    ─
+    ·                    ┬
+    ·                    ╰── `:` expected
     ╰────
 
-  × Unexpected token
+  × Expected `:` but found `}`
     ╭─[test262/test/language/expressions/assignment/dstr/syntax-error-ident-ref-typeof-escaped.js:41:23]
  40 │ 
  41 │ var x = { typ\u0065of } = { typeof: 42 };
-    ·                       ─
+    ·                       ┬
+    ·                       ╰── `:` expected
     ╰────
 
-  × Unexpected token
+  × Expected `:` but found `}`
     ╭─[test262/test/language/expressions/assignment/dstr/syntax-error-ident-ref-var-escaped.js:41:20]
  40 │ 
  41 │ var x = { v\u0061r } = { var: 42 };
-    ·                    ─
+    ·                    ┬
+    ·                    ╰── `:` expected
     ╰────
 
-  × Unexpected token
+  × Expected `:` but found `}`
     ╭─[test262/test/language/expressions/assignment/dstr/syntax-error-ident-ref-void-escaped.js:41:21]
  40 │ 
  41 │ var x = { voi\u0064 } = { void: 42 };
-    ·                     ─
+    ·                     ┬
+    ·                     ╰── `:` expected
     ╰────
 
-  × Unexpected token
+  × Expected `:` but found `}`
     ╭─[test262/test/language/expressions/assignment/dstr/syntax-error-ident-ref-while-escaped.js:41:22]
  40 │ 
  41 │ var x = { whil\u0065 } = { while: 42 };
-    ·                      ─
+    ·                      ┬
+    ·                      ╰── `:` expected
     ╰────
 
-  × Unexpected token
+  × Expected `:` but found `}`
     ╭─[test262/test/language/expressions/assignment/dstr/syntax-error-ident-ref-with-escaped.js:41:21]
  40 │ 
  41 │ var x = { w\u0069th } = { with: 42 };
-    ·                     ─
+    ·                     ┬
+    ·                     ╰── `:` expected
     ╰────
 
   × Cannot assign to 'arguments' in strict mode
@@ -6769,6 +6859,14 @@ Negative Passed: 4519/4519 (100.00%)
  48 │   
     ╰────
 
+  × A rest parameter or binding pattern may not have a trailing comma.
+    ╭─[test262/test/language/expressions/async-arrow-function/rest-params-trailing-comma-early-error.js:47:13]
+ 46 │ 
+ 47 │ (async (...a,) => {
+    ·             ─
+ 48 │   
+    ╰────
+
   × Cannot use `await` as an identifier in an async context
     ╭─[test262/test/language/expressions/async-function/await-as-binding-identifier-escaped.js:30:7]
  29 │ var asyncFn = async function () {
@@ -7028,6 +7126,14 @@ Negative Passed: 4519/4519 (100.00%)
  35 │   
     ╰────
 
+  × A rest parameter or binding pattern may not have a trailing comma.
+    ╭─[test262/test/language/expressions/async-function/named-rest-params-trailing-comma-early-error.js:34:23]
+ 33 │ 
+ 34 │ (async function f(...a,) {
+    ·                       ─
+ 35 │   
+    ╰────
+
   × Illegal 'use strict' directive in function with non-simple parameter list
      ╭─[test262/test/language/expressions/async-function/nameless-array-destructuring-param-strict-body.js:109:3]
  108 │ (async function([element]) {
@@ -7075,6 +7181,14 @@ Negative Passed: 4519/4519 (100.00%)
  33 │ 
  34 │ (async function(...a,) {
     ·                 ────
+ 35 │   
+    ╰────
+
+  × A rest parameter or binding pattern may not have a trailing comma.
+    ╭─[test262/test/language/expressions/async-function/nameless-rest-params-trailing-comma-early-error.js:34:21]
+ 33 │ 
+ 34 │ (async function(...a,) {
+    ·                     ─
  35 │   
     ╰────
 
@@ -7652,6 +7766,14 @@ Negative Passed: 4519/4519 (100.00%)
  38 │   
     ╰────
 
+  × A rest parameter or binding pattern may not have a trailing comma.
+    ╭─[test262/test/language/expressions/async-generator/named-rest-params-trailing-comma-early-error.js:37:26]
+ 36 │ 
+ 37 │ 0, async function* g(...a,) {
+    ·                          ─
+ 38 │   
+    ╰────
+
   × Cannot use `yield` as an identifier in a generator context
     ╭─[test262/test/language/expressions/async-generator/named-yield-as-binding-identifier-escaped.js:31:7]
  30 │ var gen = async function *g() {
@@ -7779,6 +7901,14 @@ Negative Passed: 4519/4519 (100.00%)
  36 │ 
  37 │ 0, async function*(...a,) {
     ·                    ────
+ 38 │   
+    ╰────
+
+  × A rest parameter or binding pattern may not have a trailing comma.
+    ╭─[test262/test/language/expressions/async-generator/rest-params-trailing-comma-early-error.js:37:24]
+ 36 │ 
+ 37 │ 0, async function*(...a,) {
+    ·                        ─
  38 │   
     ╰────
 
@@ -8033,6 +8163,14 @@ Negative Passed: 4519/4519 (100.00%)
  62 │     
     ╰────
 
+  × A rest parameter or binding pattern may not have a trailing comma.
+    ╭─[test262/test/language/expressions/class/async-gen-method/rest-params-trailing-comma-early-error.js:61:21]
+ 60 │ 0, class {
+ 61 │   async *method(...a,) {
+    ·                     ─
+ 62 │     
+    ╰────
+
   × Cannot use `yield` as an identifier in a generator context
     ╭─[test262/test/language/expressions/class/async-gen-method/yield-as-binding-identifier-escaped.js:36:9]
  35 │ var C = class { async *gen() {
@@ -8250,6 +8388,14 @@ Negative Passed: 4519/4519 (100.00%)
  60 │ 0, class {
  61 │   static async *method(...a,) {
     ·                        ────
+ 62 │     
+    ╰────
+
+  × A rest parameter or binding pattern may not have a trailing comma.
+    ╭─[test262/test/language/expressions/class/async-gen-method-static/rest-params-trailing-comma-early-error.js:61:28]
+ 60 │ 0, class {
+ 61 │   static async *method(...a,) {
+    ·                            ─
  62 │     
     ╰────
 
@@ -8473,6 +8619,14 @@ Negative Passed: 4519/4519 (100.00%)
  59 │     
     ╰────
 
+  × A rest parameter or binding pattern may not have a trailing comma.
+    ╭─[test262/test/language/expressions/class/async-method/rest-params-trailing-comma-early-error.js:58:27]
+ 57 │ var C = class {
+ 58 │   static async method(...a,) {
+    ·                           ─
+ 59 │     
+    ╰────
+
   × Illegal 'use strict' directive in function with non-simple parameter list
      ╭─[test262/test/language/expressions/class/async-method-static/array-destructuring-param-strict-body.js:134:5]
  133 │   static async method([element]) {
@@ -8584,6 +8738,14 @@ Negative Passed: 4519/4519 (100.00%)
  57 │ var C = class {
  58 │   static async method(...a,) {
     ·                       ────
+ 59 │     
+    ╰────
+
+  × A rest parameter or binding pattern may not have a trailing comma.
+    ╭─[test262/test/language/expressions/class/async-method-static/rest-params-trailing-comma-early-error.js:58:27]
+ 57 │ var C = class {
+ 58 │   static async method(...a,) {
+    ·                           ─
  59 │     
     ╰────
 
@@ -13520,6 +13682,14 @@ Negative Passed: 4519/4519 (100.00%)
  83 │     
     ╰────
 
+  × A rest parameter or binding pattern may not have a trailing comma.
+    ╭─[test262/test/language/expressions/class/gen-method/rest-params-trailing-comma-early-error.js:82:15]
+ 81 │ 0, class {
+ 82 │   *method(...a,) {
+    ·               ─
+ 83 │     
+    ╰────
+
   × Cannot use `yield` as an identifier in a generator context
     ╭─[test262/test/language/expressions/class/gen-method/yield-as-binding-identifier-escaped.js:35:9]
  34 │ var C = class {*gen() {
@@ -13682,6 +13852,14 @@ Negative Passed: 4519/4519 (100.00%)
  81 │ 0, class {
  82 │   static *method(...a,) {
     ·                  ────
+ 83 │     
+    ╰────
+
+  × A rest parameter or binding pattern may not have a trailing comma.
+    ╭─[test262/test/language/expressions/class/gen-method-static/rest-params-trailing-comma-early-error.js:82:22]
+ 81 │ 0, class {
+ 82 │   static *method(...a,) {
+    ·                      ─
  83 │     
     ╰────
 
@@ -13848,6 +14026,14 @@ Negative Passed: 4519/4519 (100.00%)
  78 │     
     ╰────
 
+  × A rest parameter or binding pattern may not have a trailing comma.
+    ╭─[test262/test/language/expressions/class/method/rest-params-trailing-comma-early-error.js:77:14]
+ 76 │ 0, class {
+ 77 │   method(...a,) {
+    ·              ─
+ 78 │     
+    ╰────
+
   × The keyword 'yield' is reserved
     ╭─[test262/test/language/expressions/class/method-param-dflt-yield.js:22:9]
  21 │ 0, class {
@@ -13903,6 +14089,14 @@ Negative Passed: 4519/4519 (100.00%)
  76 │ 0, class {
  77 │   static method(...a,) {
     ·                 ────
+ 78 │     
+    ╰────
+
+  × A rest parameter or binding pattern may not have a trailing comma.
+    ╭─[test262/test/language/expressions/class/method-static/rest-params-trailing-comma-early-error.js:77:21]
+ 76 │ 0, class {
+ 77 │   static method(...a,) {
+    ·                     ─
  78 │     
     ╰────
 
@@ -17089,6 +17283,14 @@ Negative Passed: 4519/4519 (100.00%)
  57 │   
     ╰────
 
+  × A rest parameter or binding pattern may not have a trailing comma.
+    ╭─[test262/test/language/expressions/function/rest-params-trailing-comma-early-error.js:56:17]
+ 55 │ 
+ 56 │ 0, function(...a,) {
+    ·                 ─
+ 57 │   
+    ╰────
+
   × Illegal 'use strict' directive in function with non-simple parameter list
     ╭─[test262/test/language/expressions/function/use-strict-with-non-simple-param.js:21:3]
  20 │ var f = function(a = 0) {
@@ -17357,6 +17559,14 @@ Negative Passed: 4519/4519 (100.00%)
  59 │   
     ╰────
 
+  × A rest parameter or binding pattern may not have a trailing comma.
+    ╭─[test262/test/language/expressions/generators/rest-params-trailing-comma-early-error.js:58:18]
+ 57 │ 
+ 58 │ 0, function*(...a,) {
+    ·                  ─
+ 59 │   
+    ╰────
+
   × Illegal 'use strict' directive in function with non-simple parameter list
     ╭─[test262/test/language/expressions/generators/use-strict-with-non-simple-param.js:22:3]
  21 │ var f = function*(a = 0) {
@@ -17552,6 +17762,13 @@ Negative Passed: 4519/4519 (100.00%)
     ·  ───────────
     ╰────
 
+  × Invalid rest operator's argument.
+    ╭─[test262/test/language/expressions/import.meta/syntax/invalid-assignment-target-array-rest-destructuring-expr.js:31:5]
+ 30 │ 
+ 31 │ [...import.meta] = [];
+    ·     ───────────
+    ╰────
+
   × Cannot assign to this expression
     ╭─[test262/test/language/expressions/import.meta/syntax/invalid-assignment-target-array-rest-destructuring-expr.js:31:5]
  30 │ 
@@ -17592,6 +17809,13 @@ Negative Passed: 4519/4519 (100.00%)
     ╭─[test262/test/language/expressions/import.meta/syntax/invalid-assignment-target-object-destructuring-expr.js:31:6]
  30 │ 
  31 │ ({a: import.meta} = {});
+    ·      ───────────
+    ╰────
+
+  × Invalid rest operator's argument.
+    ╭─[test262/test/language/expressions/import.meta/syntax/invalid-assignment-target-object-rest-destructuring-expr.js:31:6]
+ 30 │ 
+ 31 │ ({...import.meta} = {});
     ·      ───────────
     ╰────
 
@@ -18134,18 +18358,20 @@ Negative Passed: 4519/4519 (100.00%)
  32 │   });
     ╰────
 
-  × Unexpected token
+  × Expected `:` but found `}`
     ╭─[test262/test/language/expressions/object/identifier-shorthand-invalid-computed-name.js:30:6]
  29 │ 
  30 │ ({[x]});
-    ·      ─
+    ·      ┬
+    ·      ╰── `:` expected
     ╰────
 
-  × Unexpected token
+  × Expected `:` but found `}`
     ╭─[test262/test/language/expressions/object/identifier-shorthand-invalid-zero.js:23:4]
  22 │ 
  23 │ ({0});
-    ·    ─
+    ·    ┬
+    ·    ╰── `:` expected
     ╰────
 
   × The keyword 'let' is reserved
@@ -18188,19 +18414,12 @@ Negative Passed: 4519/4519 (100.00%)
  32 │   });
     ╰────
 
-  × Cannot use `await` as an identifier in an async context
-    ╭─[test262/test/language/expressions/object/identifier-shorthand-static-init-await-invalid.js:24:8]
+  × Expected `:` but found `}`
+    ╭─[test262/test/language/expressions/object/identifier-shorthand-static-init-await-invalid.js:24:14]
  23 │   static {
  24 │     ({ await });
-    ·        ─────
- 25 │   }
-    ╰────
-
-  × Cannot use await in class static initialization block
-    ╭─[test262/test/language/expressions/object/identifier-shorthand-static-init-await-invalid.js:24:8]
- 23 │   static {
- 24 │     ({ await });
-    ·        ─────
+    ·              ┬
+    ·              ╰── `:` expected
  25 │   }
     ╰────
 
@@ -18406,6 +18625,14 @@ Negative Passed: 4519/4519 (100.00%)
  43 │     
     ╰────
 
+  × A rest parameter or binding pattern may not have a trailing comma.
+    ╭─[test262/test/language/expressions/object/method-definition/async-gen-meth-rest-params-trailing-comma-early-error.js:42:21]
+ 41 │ 0, {
+ 42 │   async *method(...a,) {
+    ·                     ─
+ 43 │     
+    ╰────
+
   × Cannot use `yield` as an identifier in a generator context
     ╭─[test262/test/language/expressions/object/method-definition/async-gen-yield-as-binding-identifier-escaped.js:30:9]
  29 │   async *method() {
@@ -18570,6 +18797,14 @@ Negative Passed: 4519/4519 (100.00%)
  36 │     
     ╰────
 
+  × A rest parameter or binding pattern may not have a trailing comma.
+    ╭─[test262/test/language/expressions/object/method-definition/async-meth-rest-params-trailing-comma-early-error.js:35:21]
+ 34 │ ({
+ 35 │   async *method(...a,) {
+    ·                     ─
+ 36 │     
+    ╰────
+
   × Identifier `a` has already been declared
     ╭─[test262/test/language/expressions/object/method-definition/early-errors-object-async-method-duplicate-parameters.js:28:13]
  27 │ ({
@@ -18647,12 +18882,20 @@ Negative Passed: 4519/4519 (100.00%)
  19 │ })
     ╰────
 
-  × Expected `(` but found `Identifier`
+  × 'async' modifier cannot be used here.
+    ╭─[test262/test/language/expressions/object/method-definition/early-errors-object-method-formals-body-duplicate.js:18:3]
+ 17 │ ({
+ 18 │   async function foo(bar) { let bar; }
+    ·   ─────
+ 19 │ })
+    ╰────
+
+  × Expected `:` but found `Identifier`
     ╭─[test262/test/language/expressions/object/method-definition/early-errors-object-method-formals-body-duplicate.js:18:18]
  17 │ ({
  18 │   async function foo(bar) { let bar; }
     ·                  ─┬─
-    ·                   ╰── `(` expected
+    ·                   ╰── `:` expected
  19 │ })
     ╰────
 
@@ -18775,6 +19018,14 @@ Negative Passed: 4519/4519 (100.00%)
  63 │ 0, {
  64 │   *method(...a,) {
     ·           ────
+ 65 │     
+    ╰────
+
+  × A rest parameter or binding pattern may not have a trailing comma.
+    ╭─[test262/test/language/expressions/object/method-definition/gen-meth-rest-params-trailing-comma-early-error.js:64:15]
+ 63 │ 0, {
+ 64 │   *method(...a,) {
+    ·               ─
  65 │     
     ╰────
 
@@ -18999,6 +19250,14 @@ Negative Passed: 4519/4519 (100.00%)
  60 │     
     ╰────
 
+  × A rest parameter or binding pattern may not have a trailing comma.
+    ╭─[test262/test/language/expressions/object/method-definition/meth-rest-params-trailing-comma-early-error.js:59:14]
+ 58 │ 0, {
+ 59 │   method(...a,) {
+    ·              ─
+ 60 │     
+    ╰────
+
   × Identifier `param` has already been declared
     ╭─[test262/test/language/expressions/object/method-definition/name-param-redecl.js:19:10]
  18 │ var obj = {
@@ -19188,12 +19447,11 @@ Negative Passed: 4519/4519 (100.00%)
     ╰────
   help: Try insert a semicolon here
 
-  × Expected `(` but found `}`
-    ╭─[test262/test/language/expressions/object/prop-def-invalid-async-prefix.js:36:14]
+  × 'async' modifier cannot be used here.
+    ╭─[test262/test/language/expressions/object/prop-def-invalid-async-prefix.js:36:3]
  35 │ 
  36 │ ({async async});
-    ·              ┬
-    ·              ╰── `(` expected
+    ·   ─────
     ╰────
 
   × Expected `(` but found `}`
@@ -21067,11 +21325,12 @@ Negative Passed: 4519/4519 (100.00%)
     ·        ╰── `(` expected
     ╰────
 
-  × Unexpected token
+  × Expected `:` but found `}`
     ╭─[test262/test/language/keywords/ident-ref-this.js:24:7]
  23 │ // Also see: sec-semantics-static-semantics-isvalidsimpleassignmenttarget
  24 │ ({this});
-    ·       ─
+    ·       ┬
+    ·       ╰── `:` expected
     ╰────
 
   × Unexpected token
@@ -25249,11 +25508,12 @@ Negative Passed: 4519/4519 (100.00%)
     · ──────────
     ╰────
 
-  × Unexpected token
+  × Expected `:` but found `}`
     ╭─[test262/test/language/reserved-words/ident-reference-false.js:24:8]
  23 │ // Also see: sec-semantics-static-semantics-isvalidsimpleassignmenttarget
  24 │ ({false});
-    ·        ─
+    ·        ┬
+    ·        ╰── `:` expected
     ╰────
 
   × Keywords cannot contain escape characters
@@ -25270,11 +25530,12 @@ Negative Passed: 4519/4519 (100.00%)
     · ─────────
     ╰────
 
-  × Unexpected token
+  × Expected `:` but found `}`
     ╭─[test262/test/language/reserved-words/ident-reference-null.js:24:7]
  23 │ // Also see: sec-semantics-static-semantics-isvalidsimpleassignmenttarget
  24 │ ({null});
-    ·       ─
+    ·       ┬
+    ·       ╰── `:` expected
     ╰────
 
   × Keywords cannot contain escape characters
@@ -25291,11 +25552,12 @@ Negative Passed: 4519/4519 (100.00%)
     · ─────────
     ╰────
 
-  × Unexpected token
+  × Expected `:` but found `}`
     ╭─[test262/test/language/reserved-words/ident-reference-true.js:24:7]
  23 │ // Also see: sec-semantics-static-semantics-isvalidsimpleassignmenttarget
  24 │ ({true});
-    ·       ─
+    ·       ┬
+    ·       ╰── `:` expected
     ╰────
 
   × Keywords cannot contain escape characters
@@ -25609,6 +25871,14 @@ Negative Passed: 4519/4519 (100.00%)
  35 │   
     ╰────
 
+  × A rest parameter or binding pattern may not have a trailing comma.
+    ╭─[test262/test/language/statements/async-function/rest-params-trailing-comma-early-error.js:34:22]
+ 33 │ 
+ 34 │ async function f(...a,) {
+    ·                      ─
+ 35 │   
+    ╰────
+
   × Illegal 'use strict' directive in function with non-simple parameter list
      ╭─[test262/test/language/statements/async-generator/array-destructuring-param-strict-body.js:112:3]
  111 │ async function* f([element]) {
@@ -25823,6 +26093,14 @@ Negative Passed: 4519/4519 (100.00%)
  36 │ 
  37 │ async function* f(...a,) {
     ·                   ────
+ 38 │   
+    ╰────
+
+  × A rest parameter or binding pattern may not have a trailing comma.
+    ╭─[test262/test/language/statements/async-generator/rest-params-trailing-comma-early-error.js:37:23]
+ 36 │ 
+ 37 │ async function* f(...a,) {
+    ·                       ─
  38 │   
     ╰────
 
@@ -26279,6 +26557,14 @@ Negative Passed: 4519/4519 (100.00%)
  61 │     
     ╰────
 
+  × A rest parameter or binding pattern may not have a trailing comma.
+    ╭─[test262/test/language/statements/class/async-gen-method/rest-params-trailing-comma-early-error.js:60:21]
+ 59 │ class C {
+ 60 │   async *method(...a,) {
+    ·                     ─
+ 61 │     
+    ╰────
+
   × Cannot use `yield` as an identifier in a generator context
     ╭─[test262/test/language/statements/class/async-gen-method/yield-as-binding-identifier-escaped.js:36:9]
  35 │ class C { async *gen() {
@@ -26496,6 +26782,14 @@ Negative Passed: 4519/4519 (100.00%)
  60 │ class C {
  61 │   static async *method(...a,) {
     ·                        ────
+ 62 │     
+    ╰────
+
+  × A rest parameter or binding pattern may not have a trailing comma.
+    ╭─[test262/test/language/statements/class/async-gen-method-static/rest-params-trailing-comma-early-error.js:61:28]
+ 60 │ class C {
+ 61 │   static async *method(...a,) {
+    ·                            ─
  62 │     
     ╰────
 
@@ -26727,6 +27021,14 @@ Negative Passed: 4519/4519 (100.00%)
  59 │     
     ╰────
 
+  × A rest parameter or binding pattern may not have a trailing comma.
+    ╭─[test262/test/language/statements/class/async-method/rest-params-trailing-comma-early-error.js:58:20]
+ 57 │ class C {
+ 58 │   async method(...a,) {
+    ·                    ─
+ 59 │     
+    ╰────
+
   × Illegal 'use strict' directive in function with non-simple parameter list
      ╭─[test262/test/language/statements/class/async-method-static/array-destructuring-param-strict-body.js:133:5]
  132 │   static async method([element]) {
@@ -26838,6 +27140,14 @@ Negative Passed: 4519/4519 (100.00%)
  56 │ class C {
  57 │   static async method(...a,) {
     ·                       ────
+ 58 │     
+    ╰────
+
+  × A rest parameter or binding pattern may not have a trailing comma.
+    ╭─[test262/test/language/statements/class/async-method-static/rest-params-trailing-comma-early-error.js:57:27]
+ 56 │ class C {
+ 57 │   static async method(...a,) {
+    ·                           ─
  58 │     
     ╰────
 
@@ -31985,6 +32295,14 @@ Negative Passed: 4519/4519 (100.00%)
  81 │     
     ╰────
 
+  × A rest parameter or binding pattern may not have a trailing comma.
+    ╭─[test262/test/language/statements/class/gen-method/rest-params-trailing-comma-early-error.js:80:15]
+ 79 │ class C {
+ 80 │   *method(...a,) {
+    ·               ─
+ 81 │     
+    ╰────
+
   × Cannot use `yield` as an identifier in a generator context
     ╭─[test262/test/language/statements/class/gen-method/yield-as-binding-identifier-escaped.js:35:9]
  34 │ class C { *gen() {
@@ -32147,6 +32465,14 @@ Negative Passed: 4519/4519 (100.00%)
  79 │ class C {
  80 │   static *method(...a,) {
     ·                  ────
+ 81 │     
+    ╰────
+
+  × A rest parameter or binding pattern may not have a trailing comma.
+    ╭─[test262/test/language/statements/class/gen-method-static/rest-params-trailing-comma-early-error.js:80:22]
+ 79 │ class C {
+ 80 │   static *method(...a,) {
+    ·                      ─
  81 │     
     ╰────
 
@@ -32313,6 +32639,14 @@ Negative Passed: 4519/4519 (100.00%)
  77 │     
     ╰────
 
+  × A rest parameter or binding pattern may not have a trailing comma.
+    ╭─[test262/test/language/statements/class/method/rest-params-trailing-comma-early-error.js:76:14]
+ 75 │ class C {
+ 76 │   method(...a,) {
+    ·              ─
+ 77 │     
+    ╰────
+
   × The keyword 'yield' is reserved
     ╭─[test262/test/language/statements/class/method-param-yield.js:22:9]
  21 │ class C {
@@ -32368,6 +32702,14 @@ Negative Passed: 4519/4519 (100.00%)
  75 │ class C {
  76 │   static method(...a,) {
     ·                 ────
+ 77 │     
+    ╰────
+
+  × A rest parameter or binding pattern may not have a trailing comma.
+    ╭─[test262/test/language/statements/class/method-static/rest-params-trailing-comma-early-error.js:76:21]
+ 75 │ class C {
+ 76 │   static method(...a,) {
+    ·                     ─
  77 │     
     ╰────
 
@@ -32946,11 +33288,12 @@ Negative Passed: 4519/4519 (100.00%)
  19 │ //
     ╰────
 
-  × Unexpected token
+  × Expected `:` but found `}`
     ╭─[test262/test/language/statements/do-while/S12.6.1_A15.js:20:10]
  19 │     ;
  20 │ }while({0});
-    ·          ─
+    ·          ┬
+    ·          ╰── `:` expected
  21 │ //
     ╰────
 
@@ -33231,11 +33574,12 @@ Negative Passed: 4519/4519 (100.00%)
  23 │ //
     ╰────
 
-  × Unexpected token
+  × Expected `:` but found `Identifier`
     ╭─[test262/test/language/statements/for/S12.6.3_A8.1_T3.js:22:10]
  21 │ //CHECK#3
  22 │ for({var index=0; index+=1;} index++<=10; index*2;) {   arr.add(""+index);};
-    ·          ─────
+    ·          ──┬──
+    ·            ╰── `:` expected
  23 │ //
     ╰────
 
@@ -34440,7 +34784,7 @@ Negative Passed: 4519/4519 (100.00%)
     ·       ────
     ╰────
 
-  × Unexpected trailing comma after rest element
+  × A rest parameter or binding pattern may not have a trailing comma.
     ╭─[test262/test/language/statements/for-in/dstr/array-rest-before-elision.js:33:11]
  32 │ 
  33 │ for ([...x,] in [[]]) ;
@@ -34454,11 +34798,18 @@ Negative Passed: 4519/4519 (100.00%)
     ·       ────
     ╰────
 
-  × Unexpected trailing comma after rest element
+  × A rest parameter or binding pattern may not have a trailing comma.
     ╭─[test262/test/language/statements/for-in/dstr/array-rest-elision-invalid.js:33:11]
  32 │ 
  33 │ for ([...x,] in [[]]) ;
     ·           ─
+    ╰────
+
+  × Invalid rest operator's argument.
+    ╭─[test262/test/language/statements/for-in/dstr/array-rest-init.js:34:10]
+ 33 │ 
+ 34 │ for ([...x = 1] in [[]]) ;
+    ·          ─────
     ╰────
 
   × Cannot assign to this expression
@@ -34503,11 +34854,12 @@ Negative Passed: 4519/4519 (100.00%)
     ·            ─────
     ╰────
 
-  × Cannot use `yield` as an identifier in a generator context
-    ╭─[test262/test/language/statements/for-in/dstr/obj-id-identifier-yield-expr.js:33:8]
+  × Expected `:` but found `}`
+    ╭─[test262/test/language/statements/for-in/dstr/obj-id-identifier-yield-expr.js:33:14]
  32 │ 
  33 │ for ({ yield } in [{}]) ;
-    ·        ─────
+    ·              ┬
+    ·              ╰── `:` expected
  34 │ 
     ╰────
 
@@ -34946,7 +35298,7 @@ Negative Passed: 4519/4519 (100.00%)
     ·       ────
     ╰────
 
-  × Unexpected trailing comma after rest element
+  × A rest parameter or binding pattern may not have a trailing comma.
     ╭─[test262/test/language/statements/for-of/dstr/array-rest-before-elision.js:33:11]
  32 │ 
  33 │ for ([...x,] of [[]]) ;
@@ -34960,11 +35312,18 @@ Negative Passed: 4519/4519 (100.00%)
     ·       ────
     ╰────
 
-  × Unexpected trailing comma after rest element
+  × A rest parameter or binding pattern may not have a trailing comma.
     ╭─[test262/test/language/statements/for-of/dstr/array-rest-elision-invalid.js:33:11]
  32 │ 
  33 │ for ([...x,] of [[]]) ;
     ·           ─
+    ╰────
+
+  × Invalid rest operator's argument.
+    ╭─[test262/test/language/statements/for-of/dstr/array-rest-init.js:34:10]
+ 33 │ 
+ 34 │ for ([...x = 1] of [[]]) ;
+    ·          ─────
     ╰────
 
   × Cannot assign to this expression
@@ -35133,11 +35492,12 @@ Negative Passed: 4519/4519 (100.00%)
     ·      ───────────
     ╰────
 
-  × Cannot use `yield` as an identifier in a generator context
-    ╭─[test262/test/language/statements/for-of/dstr/obj-id-identifier-yield-expr.js:33:8]
+  × Expected `:` but found `}`
+    ╭─[test262/test/language/statements/for-of/dstr/obj-id-identifier-yield-expr.js:33:14]
  32 │ 
  33 │ for ({ yield } of [{}]) ;
-    ·        ─────
+    ·              ┬
+    ·              ╰── `:` expected
  34 │ 
     ╰────
 
@@ -35973,6 +36333,14 @@ Negative Passed: 4519/4519 (100.00%)
  58 │   
     ╰────
 
+  × A rest parameter or binding pattern may not have a trailing comma.
+    ╭─[test262/test/language/statements/function/rest-params-trailing-comma-early-error.js:57:16]
+ 56 │ 
+ 57 │ function f(...a,) {
+    ·                ─
+ 58 │   
+    ╰────
+
   × Cannot use `await` as an identifier in an async context
     ╭─[test262/test/language/statements/function/static-init-await-binding-invalid.js:25:14]
  24 │   static {
@@ -36143,6 +36511,14 @@ Negative Passed: 4519/4519 (100.00%)
  59 │   
     ╰────
 
+  × A rest parameter or binding pattern may not have a trailing comma.
+    ╭─[test262/test/language/statements/generators/rest-params-trailing-comma-early-error.js:58:17]
+ 57 │ 
+ 58 │ function* f(...a,) {
+    ·                 ─
+ 59 │   
+    ╰────
+
   × Illegal 'use strict' directive in function with non-simple parameter list
     ╭─[test262/test/language/statements/generators/use-strict-with-non-simple-param.js:22:3]
  21 │ function* f(a = 0) {
@@ -36302,11 +36678,12 @@ Negative Passed: 4519/4519 (100.00%)
     ╰────
   help: Try insert a semicolon here
 
-  × Unexpected token
+  × Expected `:` but found `}`
     ╭─[test262/test/language/statements/if/S12.5_A11.js:18:6]
  17 │ //CHECK#
  18 │ if({1})
-    ·      ─
+    ·      ┬
+    ·      ╰── `:` expected
  19 │   {
     ╰────
 
@@ -38498,11 +38875,12 @@ Negative Passed: 4519/4519 (100.00%)
  26 │   }
     ╰────
 
-  × Unexpected token
+  × Expected `:` but found `}`
     ╭─[test262/test/language/statements/while/S12.6.2_A15.js:18:9]
  17 │ //CHECK#
  18 │ while({1}){
-    ·         ─
+    ·         ┬
+    ·         ╰── `:` expected
  19 │    break ;
     ╰────
 

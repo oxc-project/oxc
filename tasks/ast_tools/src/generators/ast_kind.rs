@@ -5,6 +5,7 @@
 //! * `AstKind::ty` method.
 //! * `AstKind::as_*` methods.
 //! * `GetSpan` impl for `AstKind`.
+//! * `GetAddress` impl for `AstKind`.
 //!
 //! Variants of `AstKind` and `AstType` are created for:
 //!
@@ -35,30 +36,10 @@ const STRUCTS_BLACK_LIST: &[&str] = &[
     "AssignmentTargetPropertyProperty",
     "BindingPattern",
     "BindingProperty",
-    "AccessorProperty",
-    "WithClause",
-    "ImportAttribute",
-    "JSXOpeningFragment",
-    "JSXClosingFragment",
-    "JSXEmptyExpression",
-    "JSXAttribute",
-    "JSXSpreadChild",
-    "TSTypeOperator",
-    "TSArrayType",
-    "TSTupleType",
-    "TSOptionalType",
-    "TSRestType",
     "TSInterfaceBody",
     "TSIndexSignature",
-    "TSCallSignatureDeclaration",
-    "TSIndexSignatureName",
-    "TSTypePredicate",
     "TSFunctionType",
     "TSConstructorType",
-    "TSNamespaceExportDeclaration",
-    "JSDocNullableType",
-    "JSDocNonNullableType",
-    "JSDocUnknownType",
     "Span",
 ];
 
@@ -66,20 +47,14 @@ const STRUCTS_BLACK_LIST: &[&str] = &[
 ///
 /// Apart from this list, enums don't have `AstKind`s.
 const ENUMS_WHITE_LIST: &[&str] = &[
-    "ArrayExpressionElement",
     "PropertyKey",
     "MemberExpression",
     "Argument",
     "AssignmentTarget",
     "SimpleAssignmentTarget",
     "AssignmentTargetPattern",
-    "ForStatementInit",
     "ModuleDeclaration",
-    "JSXElementName",
-    "JSXMemberExpressionObject",
-    "JSXAttributeItem",
     "TSTypeName",
-    "TSModuleReference",
 ];
 
 /// Generator for `AstKind`, `AstType`, and related code.
@@ -134,6 +109,7 @@ impl Generator for AstKindGenerator {
         let mut type_variants = quote!();
         let mut kind_variants = quote!();
         let mut span_match_arms = quote!();
+        let mut address_match_arms = quote!();
         let mut as_methods = quote!();
 
         let mut next_index = 0u16;
@@ -156,6 +132,13 @@ impl Generator for AstKindGenerator {
             kind_variants.extend(quote!( #type_ident(&'a #type_ty) = AstType::#type_ident as u8, ));
 
             span_match_arms.extend(quote!( Self::#type_ident(it) => it.span(), ));
+
+            let get_address = match type_def {
+                TypeDef::Struct(_) => quote!(Address::from_ptr(it)),
+                TypeDef::Enum(_) => quote!(it.address()),
+                _ => unreachable!(),
+            };
+            address_match_arms.extend(quote!( Self::#type_ident(it) => #get_address, ));
 
             let as_method_name = format_ident!("as_{}", type_def.snake_name());
             as_methods.extend(quote! {
@@ -180,6 +163,7 @@ impl Generator for AstKindGenerator {
             use std::ptr;
 
             ///@@line_break
+            use oxc_allocator::{Address, GetAddress};
             use oxc_span::{GetSpan, Span};
 
             ///@@line_break
@@ -218,6 +202,17 @@ impl Generator for AstKindGenerator {
                 fn span(&self) -> Span {
                     match self {
                         #span_match_arms
+                    }
+                }
+            }
+
+            ///@@line_break
+            impl GetAddress for AstKind<'_> {
+                // TODO: Once only structs have `AstKind`s (https://github.com/oxc-project/oxc/issues/11490),
+                // mark this method `#[inline]`, because then it'll be boiled down to a single instruction.
+                fn address(&self) -> Address {
+                    match *self {
+                        #address_match_arms
                     }
                 }
             }

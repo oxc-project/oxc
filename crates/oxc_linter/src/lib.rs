@@ -51,7 +51,7 @@ use crate::{
 };
 
 #[cfg(feature = "language_server")]
-pub use crate::fixer::{FixWithPosition, MessageWithPosition};
+pub use crate::fixer::{FixWithPosition, MessageWithPosition, PossibleFixesWithPosition};
 
 #[cfg(target_pointer_width = "64")]
 #[test]

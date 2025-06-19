@@ -1,13 +1,10 @@
 use rustc_hash::{FxHashMap, FxHashSet};
 
-use oxc_allocator::{Allocator, Vec as ArenaVec};
-use oxc_ast::ast::{AssignmentExpression, Decorator};
+use oxc_ast::ast::AssignmentExpression;
 use oxc_span::Span;
 
 pub struct ParserState<'a> {
     pub not_parenthesized_arrow: FxHashSet<u32>,
-
-    pub decorators: ArenaVec<'a, Decorator<'a>>,
 
     /// Temporary storage for `CoverInitializedName` `({ foo = bar })`.
     /// Keyed by `ObjectProperty`'s span.start.
@@ -20,11 +17,10 @@ pub struct ParserState<'a> {
     pub trailing_commas: FxHashMap<u32, Span>,
 }
 
-impl<'a> ParserState<'a> {
-    pub fn new(allocator: &'a Allocator) -> Self {
+impl ParserState<'_> {
+    pub fn new() -> Self {
         Self {
             not_parenthesized_arrow: FxHashSet::default(),
-            decorators: ArenaVec::new_in(allocator),
             cover_initialized_name: FxHashMap::default(),
             trailing_commas: FxHashMap::default(),
         }

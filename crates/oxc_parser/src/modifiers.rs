@@ -26,10 +26,10 @@ bitflags! {
       const CONST         = 1 << 9;
       const IN            = 1 << 10;
       const OUT           = 1 << 11;
-      const EXPORT        = 1 << 12;
       const DEFAULT       = 1 << 13;
       const ACCESSOR      = 1 << 14;
       const ACCESSIBILITY = Self::PRIVATE.bits() | Self::PROTECTED.bits() | Self::PUBLIC.bits();
+      // NOTE: `export` and `default` are not handled here, they are parsed explicitly in the parser.
   }
 }
 
@@ -51,8 +51,6 @@ impl From<Kind> for ModifierFlags {
             Kind::Const => Self::CONST,
             Kind::In => Self::IN,
             Kind::Out => Self::OUT,
-            Kind::Export => Self::EXPORT,
-            Kind::Default => Self::DEFAULT,
             Kind::Accessor => Self::ACCESSOR,
             _ => unreachable!(),
         }
@@ -74,8 +72,6 @@ impl From<ModifierKind> for ModifierFlags {
             ModifierKind::Const => Self::CONST,
             ModifierKind::In => Self::IN,
             ModifierKind::Out => Self::OUT,
-            ModifierKind::Export => Self::EXPORT,
-            ModifierKind::Default => Self::DEFAULT,
             ModifierKind::Accessor => Self::ACCESSOR,
         }
     }
@@ -104,6 +100,10 @@ pub struct Modifier {
 }
 
 impl Modifier {
+    pub fn new(span: Span, kind: ModifierKind) -> Self {
+        Self { span, kind }
+    }
+
     #[inline]
     pub fn is_static(&self) -> bool {
         matches!(self.kind, ModifierKind::Static)
@@ -131,7 +131,7 @@ impl TryFrom<Token> for Modifier {
 /// // ^^^ This also counts as a modifier, but is also recorded separately as a
 /// // named export declaration
 /// ```
-#[derive(Debug, Hash)]
+#[derive(Debug)]
 pub struct Modifiers<'a> {
     /// May contain duplicates.
     modifiers: Option<Vec<'a, Modifier>>,
@@ -154,12 +154,12 @@ impl<'a> Modifiers<'a> {
     /// `flags` must correctly reflect the [`ModifierKind`]s within
     ///  `modifiers`. E.g., if `modifiers` is empty, then so is `flags``.
     #[must_use]
-    pub(crate) fn new(modifiers: Vec<'a, Modifier>, flags: ModifierFlags) -> Self {
-        if modifiers.is_empty() {
-            debug_assert!(flags.is_empty());
-            Self::empty()
-        } else {
+    pub(crate) fn new(modifiers: Option<Vec<'a, Modifier>>, flags: ModifierFlags) -> Self {
+        if let Some(modifiers) = modifiers {
             Self { modifiers: Some(modifiers), flags }
+        } else {
+            debug_assert!(flags.is_empty());
+            Self { modifiers: None, flags: ModifierFlags::empty() }
         }
     }
 
@@ -227,8 +227,6 @@ pub enum ModifierKind {
     Async,
     Const,
     Declare,
-    Default,
-    Export,
     In,
     Public,
     Private,
@@ -247,8 +245,6 @@ impl ModifierKind {
             Self::Async => "async",
             Self::Const => "const",
             Self::Declare => "declare",
-            Self::Default => "default",
-            Self::Export => "export",
             Self::In => "in",
             Self::Public => "public",
             Self::Private => "private",
@@ -277,8 +273,6 @@ impl TryFrom<Kind> for ModifierKind {
             Kind::Const => Ok(Self::Const),
             Kind::In => Ok(Self::In),
             Kind::Out => Ok(Self::Out),
-            Kind::Export => Ok(Self::Export),
-            Kind::Default => Ok(Self::Default),
             Kind::Accessor => Ok(Self::Accessor),
             _ => Err(()),
         }
@@ -294,6 +288,9 @@ impl std::fmt::Display for ModifierKind {
 impl<'a> ParserImpl<'a> {
     pub(crate) fn eat_modifiers_before_declaration(&mut self) -> Modifiers<'a> {
         let mut flags = ModifierFlags::empty();
+        if !self.at_modifier() {
+            return Modifiers::new(None, flags);
+        }
         let mut modifiers = self.ast.vec();
         while self.at_modifier() {
             let span = self.start_span();
@@ -305,35 +302,22 @@ impl<'a> ParserImpl<'a> {
             flags.set(modifier_flags, true);
             modifiers.push(modifier);
         }
-        Modifiers::new(modifiers, flags)
+        Modifiers::new(Some(modifiers), flags)
     }
 
     fn at_modifier(&mut self) -> bool {
+        if !self.cur_kind().is_modifier_kind() {
+            return false;
+        }
         self.lookahead(Self::at_modifier_worker)
     }
 
     fn at_modifier_worker(&mut self) -> bool {
-        if !self.cur_kind().is_modifier_kind() {
-            return false;
-        }
-
         match self.cur_kind() {
             Kind::Const => {
                 self.bump_any();
                 self.at(Kind::Enum)
             }
-            Kind::Export => {
-                self.bump_any();
-                match self.cur_kind() {
-                    Kind::Default => self.next_token_can_follow_default_keyword(),
-                    Kind::Type => {
-                        self.bump_any();
-                        self.can_follow_export_modifier()
-                    }
-                    _ => self.can_follow_modifier(),
-                }
-            }
-            Kind::Default => self.next_token_can_follow_default_keyword(),
             Kind::Accessor | Kind::Static | Kind::Get | Kind::Set => {
                 // These modifiers can cross line.
                 self.bump_any();
@@ -357,23 +341,14 @@ impl<'a> ParserImpl<'a> {
 
     pub(crate) fn parse_modifiers(
         &mut self,
-        allow_decorators: bool,
         permit_const_as_modifier: bool,
         stop_on_start_of_class_static_block: bool,
     ) -> Modifiers<'a> {
         let mut has_seen_static_modifier = false;
-        let mut has_leading_modifier = false;
-        let mut has_trailing_decorator = false;
 
-        let mut modifiers = self.ast.vec();
+        let mut modifiers = None;
         let mut modifier_flags = ModifierFlags::empty();
 
-        // parse leading decorators
-        if allow_decorators && matches!(self.cur_kind(), Kind::At) {
-            self.try_parse(Self::eat_decorators);
-        }
-
-        // parse leading modifiers
         while let Some(modifier) = self.try_parse_modifier(
             has_seen_static_modifier,
             permit_const_as_modifier,
@@ -384,29 +359,7 @@ impl<'a> ParserImpl<'a> {
             }
             self.check_for_duplicate_modifiers(modifier_flags, &modifier);
             modifier_flags.set(modifier.kind.into(), true);
-            modifiers.push(modifier);
-            has_leading_modifier = true;
-        }
-
-        // parse trailing decorators, but only if we parsed any leading modifiers
-        if allow_decorators && has_leading_modifier && matches!(self.cur_kind(), Kind::At) {
-            has_trailing_decorator = self.try_parse(Self::eat_decorators).is_some();
-        }
-
-        // parse trailing modifiers, but only if we parsed any trailing decorators
-        if has_trailing_decorator {
-            while let Some(modifier) = self.try_parse_modifier(
-                has_seen_static_modifier,
-                permit_const_as_modifier,
-                stop_on_start_of_class_static_block,
-            ) {
-                if modifier.is_static() {
-                    has_seen_static_modifier = true;
-                }
-                self.check_for_duplicate_modifiers(modifier_flags, &modifier);
-                modifier_flags.set(modifier.kind.into(), true);
-                modifiers.push(modifier);
-            }
+            modifiers.get_or_insert_with(|| self.ast.vec()).push(modifier);
         }
 
         Modifiers::new(modifiers, modifier_flags)
@@ -450,6 +403,10 @@ impl<'a> ParserImpl<'a> {
         self.at(Kind::LCurly)
     }
 
+    pub(crate) fn parse_contextual_modifier(&mut self, kind: Kind) -> bool {
+        self.at(kind) && self.try_parse(Self::next_token_can_follow_modifier).is_some()
+    }
+
     fn parse_any_contextual_modifier(&mut self) -> bool {
         self.cur_kind().is_modifier_kind()
             && self.try_parse(Self::next_token_can_follow_modifier).is_some()
@@ -461,15 +418,6 @@ impl<'a> ParserImpl<'a> {
                 self.bump_any();
                 self.at(Kind::Enum)
             }
-            Kind::Export => {
-                self.bump_any();
-                match self.cur_kind() {
-                    Kind::Default => self.lookahead(Self::next_token_can_follow_default_keyword),
-                    Kind::Type => self.lookahead(Self::next_token_can_follow_export_modifier),
-                    _ => self.can_follow_export_modifier(),
-                }
-            }
-            Kind::Default => self.next_token_can_follow_default_keyword(),
             Kind::Static => {
                 self.bump_any();
                 self.can_follow_modifier()
@@ -499,34 +447,6 @@ impl<'a> ParserImpl<'a> {
         self.can_follow_modifier()
     }
 
-    fn next_token_can_follow_default_keyword(&mut self) -> bool {
-        self.bump_any();
-        match self.cur_kind() {
-            Kind::Class | Kind::Function | Kind::Interface | Kind::At => true,
-            Kind::Abstract if self.lookahead(Self::next_token_is_class_keyword_on_same_line) => {
-                true
-            }
-            Kind::Async if self.lookahead(Self::next_token_is_function_keyword_on_same_line) => {
-                true
-            }
-            _ => false,
-        }
-    }
-
-    fn next_token_can_follow_export_modifier(&mut self) -> bool {
-        self.bump_any();
-        self.can_follow_export_modifier()
-    }
-
-    fn can_follow_export_modifier(&self) -> bool {
-        let kind = self.cur_kind();
-        kind == Kind::At
-            && kind != Kind::Star
-            && kind != Kind::As
-            && kind != Kind::LCurly
-            && self.can_follow_modifier()
-    }
-
     fn can_follow_modifier(&self) -> bool {
         match self.cur_kind() {
             Kind::PrivateIdentifier | Kind::LBrack | Kind::LCurly | Kind::Star | Kind::Dot3 => true,
@@ -537,16 +457,6 @@ impl<'a> ParserImpl<'a> {
     fn can_follow_get_or_set_keyword(&self) -> bool {
         let kind = self.cur_kind();
         kind == Kind::LBrack || kind == Kind::PrivateIdentifier || kind.is_literal_property_name()
-    }
-
-    fn next_token_is_class_keyword_on_same_line(&mut self) -> bool {
-        self.bump_any();
-        self.cur_kind() == Kind::Class && !self.cur_token().is_on_new_line()
-    }
-
-    fn next_token_is_function_keyword_on_same_line(&mut self) -> bool {
-        self.bump_any();
-        self.cur_kind() == Kind::Function && !self.cur_token().is_on_new_line()
     }
 
     fn check_for_duplicate_modifiers(&mut self, seen_flags: ModifierFlags, modifier: &Modifier) {

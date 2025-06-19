@@ -585,15 +585,15 @@ source: crates/oxc_linter/src/tester.rs
    ·               ──────────
    ╰────
 
-  ⚠ eslint-plugin-react-hooks(rules-of-hooks): message: `React Hook "AsyncComponent" cannot be called in an async function.
-   ╭─[rules_of_hooks.tsx:2:32]
- 1 │ 
+  ⚠ eslint-plugin-react-hooks(rules-of-hooks): React Hook "useState" cannot be called in an async function.
+   ╭─[rules_of_hooks.tsx:3:21]
  2 │                 async function AsyncComponent() {
-   ·                                ──────────────
  3 │                     useState();
+   ·                     ──────────
+ 4 │                 }
    ╰────
 
-  ⚠ eslint-plugin-react-hooks(rules-of-hooks): message: `React Hook "Anonymous" cannot be called in an async function.
+  ⚠ eslint-plugin-react-hooks(rules-of-hooks): React Hook "Anonymous" cannot be called in an async function.
    ╭─[rules_of_hooks.tsx:2:40]
  1 │     
  2 │ ╭─▶                 const AsyncComponent = async () => {
@@ -602,28 +602,28 @@ source: crates/oxc_linter/src/tester.rs
  5 │             
    ╰────
 
-  ⚠ eslint-plugin-react-hooks(rules-of-hooks): message: `React Hook "Page" cannot be called in an async function.
-   ╭─[rules_of_hooks.tsx:2:32]
- 1 │ 
+  ⚠ eslint-plugin-react-hooks(rules-of-hooks): React Hook "useId" cannot be called in an async function.
+   ╭─[rules_of_hooks.tsx:3:19]
  2 │                 async function Page() {
-   ·                                ────
  3 │                   useId();
+   ·                   ───────
+ 4 │                   React.useId();
    ╰────
 
-  ⚠ eslint-plugin-react-hooks(rules-of-hooks): message: `React Hook "Page" cannot be called in an async function.
-   ╭─[rules_of_hooks.tsx:2:32]
- 1 │ 
- 2 │                 async function Page() {
-   ·                                ────
+  ⚠ eslint-plugin-react-hooks(rules-of-hooks): React Hook "useId" cannot be called in an async function.
+   ╭─[rules_of_hooks.tsx:4:19]
  3 │                   useId();
+ 4 │                   React.useId();
+   ·                   ─────────────
+ 5 │                 }
    ╰────
 
-  ⚠ eslint-plugin-react-hooks(rules-of-hooks): message: `React Hook "useAsyncHook" cannot be called in an async function.
-   ╭─[rules_of_hooks.tsx:2:32]
- 1 │ 
+  ⚠ eslint-plugin-react-hooks(rules-of-hooks): React Hook "useState" cannot be called in an async function.
+   ╭─[rules_of_hooks.tsx:3:21]
  2 │                 async function useAsyncHook() {
-   ·                                ────────────
  3 │                     useState();
+   ·                     ──────────
+ 4 │                 }
    ╰────
 
   ⚠ eslint-plugin-react-hooks(rules-of-hooks): React Hook "useId" is called in function "notAHook" that is neither a React function component nor a custom React Hook function. React component names must start with an uppercase letter. React Hook names must start with the word "use".
@@ -682,12 +682,12 @@ source: crates/oxc_linter/src/tester.rs
  5 │                 }
    ╰────
 
-  ⚠ eslint-plugin-react-hooks(rules-of-hooks): message: `React Hook "AsyncComponent" cannot be called in an async function.
-   ╭─[rules_of_hooks.tsx:2:28]
- 1 │ 
+  ⚠ eslint-plugin-react-hooks(rules-of-hooks): React Hook "use" cannot be called in an async function.
+   ╭─[rules_of_hooks.tsx:3:21]
  2 │             async function AsyncComponent() {
-   ·                            ──────────────
  3 │                     use();
+   ·                     ─────
+ 4 │             }
    ╰────
 
   ⚠ eslint-plugin-react-hooks(rules-of-hooks): React Hook "useState" is called in function "Anonymous" that is neither a React function component nor a custom React Hook function. React component names must start with an uppercase letter. React Hook names must start with the word "use".

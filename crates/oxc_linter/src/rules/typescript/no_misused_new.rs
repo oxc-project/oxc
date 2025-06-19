@@ -90,9 +90,9 @@ impl Rule for NoMisusedNew {
                     };
                     if let TSTypeName::IdentifierReference(id) = &type_ref.type_name {
                         if id.name == decl_name {
-                            ctx.diagnostic(no_misused_new_interface_diagnostic(Span::new(
+                            ctx.diagnostic(no_misused_new_interface_diagnostic(Span::sized(
                                 sig.span.start,
-                                sig.span.start + 3,
+                                3,
                             )));
                         }
                     }

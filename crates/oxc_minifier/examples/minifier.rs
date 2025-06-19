@@ -58,7 +58,7 @@ fn minify(
             minify: nospace,
             comments: false,
             annotation_comments: false,
-            legal_comments: oxc_codegen::LegalComment::Eof,
+            legal_comments: oxc_codegen::LegalComment::Inline,
             ..CodegenOptions::default()
         })
         .with_scoping(ret.scoping)

@@ -66,7 +66,7 @@ mod diagnostics {
 
     pub(super) fn async_component(span: Span, func_name: &str) -> OxcDiagnostic {
         OxcDiagnostic::warn(format!(
-            "message: `React Hook {func_name:?} cannot be called in an async function. "
+            "React Hook {func_name:?} cannot be called in an async function. "
         ))
         .with_label(span)
         .with_error_code_scope(SCOPE)
@@ -207,8 +207,8 @@ impl Rule for RulesOfHooks {
                 }
             }
             // Hooks can't be called from async function.
-            AstKind::Function(Function { id: Some(id), r#async: true, .. }) => {
-                return ctx.diagnostic(diagnostics::async_component(id.span, id.name.as_str()));
+            AstKind::Function(Function { id: Some(_), r#async: true, .. }) => {
+                return ctx.diagnostic(diagnostics::async_component(span, hook_name));
             }
             // Hooks can't be called from async arrow function.
             AstKind::ArrowFunctionExpression(ArrowFunctionExpression {

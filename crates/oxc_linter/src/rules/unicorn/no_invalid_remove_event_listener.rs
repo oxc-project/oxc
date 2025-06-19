@@ -99,9 +99,7 @@ impl Rule for NoInvalidRemoveEventListener {
                         return;
                     }
                 }
-                _ => {
-                    return;
-                }
+                _ => return,
             }
         }
 

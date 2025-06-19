@@ -2,7 +2,198 @@
 
 All notable changes to this package will be documented in this file.
 
-The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
+
+## [1.2.0] - 2025-06-19
+
+### 🚀 Features
+
+- 8c341a2 sema/check: Ts setters cannot have initializers (#11695) (Don Isaac)
+- 38dc614 oxc_linter: Reuse allocators (#11736) (camc314)
+- bf8263d playground: Allow specifying a JSON string as the linter config (#11710) (Nicholas Rayburn)
+- 52ecc87 linter: Implement import/extensions (#11548) (Tyler Earls)
+
+### 🐛 Bug Fixes
+
+- 3d88eeb linter/no-console: False negative when `console.*` methods are used as args to functions (#11790) (camc314)
+- c80e405 linter/no-new-wrappers: Fix panic in fixer with multi byte chars (#11773) (camc314)
+- e58a0b0 linter: Panic in unicorn/consistent-function-scoping (#11772) (camc314)
+- 80c87d4 linter: Typo in typescript/consistent-index-object-style (#11744) (camc314)
+- ff775e9 linter/consistent-function-scoping: Descriptive diagnostic labels (#11682) (Don Isaac)
+- 989634a linter/no-inner-declaration: False negative with for loops (#11692) (camc314)
+- b272b91 linter/no-undef: False negative with unresolved ref after type ref (#11721) (camc314)
+- 6252275 linter: Panic in import/extensions with empty file names (#11720) (camc314)
+- f34e432 linter: Use fixer::noop in dangerous cases for eslint/no-var (#11693) (camc314)
+- 6c2b41c linter/consistent-function-scoping: Allow functions in TS modules/namespaces (#11681) (Don Isaac)
+- 2ca1c70 linter/exhaustive-deps: False positive with TS Non null assertion operator (#11690) (camc314)
+- ee15f7d linter: False negative in typescript/prefer-function-type (#11674) (camc314)
+- abd0441 linter: Add missing menuitemradio and menutitemcheckbox roles (#11651) (Daniel Flynn)
+- 8776301 linter/no-inner-declarations: Flag `var` statement as body of `for` loop (#11632) (overlookmotel)
+
+### 🚜 Refactor
+
+- 5ca3d04 ast: Add `TSArrayType` as `AstKind` (#11745) (camchenry)
+- 219adcc ast: Don't generate AstKind for ArrayExpressionElement (#11684) (Ulrich Stark)
+- c1be6b8 linter: Shorten Span construction (#11686) (Ulrich Stark)
+- 4ca659c linter: Cleanup typescript/prefer-function-type  (#11672) (Brad Dunbar)
+- 8e30c5f ast: Don't generate AstKind for ForStatementInit (#11617) (Ulrich Stark)
+
+### 📚 Documentation
+
+- ea6ce9d linter: Fix typo in import/no-namespace (#11741) (camc314)
+- 8b6076e linter: Document options for the `typescript/array-type` rule (#11665) (yefan)
+
+### ⚡ Performance
+
+- f539f64 allocator: Remove `Arc` from `AllocatorPool` (#11760) (overlookmotel)
+- cfdc518 linter/no-inner-declarations: Move work to cold path (#11746) (overlookmotel)
+- 7c0fff7 linter: Skip running `consistent-function-scoping` on `.d.ts` files (#11739) (camc314)
+- b34c6f6 parser,semantic: Improve handling of diagnostics (#11641) (Boshen)
+- 2cd786b linter/no-inner-declarations: Remove unnecessary code and reduce branches (#11633) (overlookmotel)
+
+### 🧪 Testing
+
+- 44a9df8 linter: Update testsuite for `no-undef` (#11706) (Sysix)
+
+
+## [1.1.0] - 2025-06-12
+
+### 🚀 Features
+
+- 1181018 linter: Add eslint/no-extra-bind rule (#11588) (yefan)
+- 3b03fd3 parser: Produce correct syntax error for `interface I extends (typeof T)` (#11610) (Boshen)
+- 844a8a8 parser: Produce syntax error for `declare function foo() {}` (#11606) (Boshen)
+
+### 🐛 Bug Fixes
+
+- 0f24366 linter: Correct labels for redundant comparisons (#11620) (Wei Zhu)
+- dd87f93 linter: Stack overflow in react/exhaustive-deps (#11613) (camc314)
+- 4af58e0 linter: Add missing `additional_hooks` option to exhaustive-deps (#11602) (camc314)
+- a6adc0c linter/exhaustive-deps: Handle destructuring inside hooks (#11598) (Don Isaac)
+- 779727f linter: Improve span diagnostic loc within react/rules-of-hooks (#11589) (camc314)
+
+### 🚜 Refactor
+
+- b7b0dc3 parser: Improve `TSModuleDeclaration` parsing (#11605) (Boshen)
+- d29bbb2 linter: Simplify implementation of `eslint/no-lonely-if` (#11550) (Ulrich Stark)
+- d41fb13 ast: Get jsx types out of AstKind exceptions (#11535) (Ulrich Stark)
+
+
+## [1.0.0] - 2025-06-10
+
+## [0.18.1] - 2025-06-09
+
+### 💥 BREAKING CHANGES
+
+- f3eaefb ast: [**BREAKING**] Add `value` field to `BigIntLiteral` (#11564) (overlookmotel)
+
+### 🐛 Bug Fixes
+
+- 6d68568 linter: False negative in typescript/array-type (#11574) (camc314)
+- 6a856a0 linter/no-magic-numbers: Fix typo in error message (#11560) (overlookmotel)
+- 3952e01 linter: False negative in jsx-a11y/aria-role (#11547) (camc314)
+- b0e3e08 linter: Misplaced quote in jsx-curly-brace-presence test case (#11546) (camc314)
+- a833ed1 linter: Misplaced quote in anchor-is-valid test case (#11545) (camc314)
+- 4e53b80 linter: Misplaced backtick in exhaustive-deps test case (#11544) (camc314)
+- e8a04b6 linter: Misplaced backtick in no-object-constructor test case (#11543) (camc314)
+- 65311d0 linter: Remove duplicate rule/scope from diagnostic (#11531) (camc314)
+
+### 🚜 Refactor
+
+- 9b475ad linter: Use one instance of rope per file (#11552) (Sysix)
+
+### 📚 Documentation
+
+- fa924ab linter: Cleanup docs for multiple linter rules (#11551) (Ulrich Stark)
+
+## [0.18.0] - 2025-06-06
+
+### Features
+
+- 825d40c linter: Fix casing in unicorn/no-useless-promise-resolve-reject (#11528) (camc314)
+- 2faee3d linter: Fix grammer in react/exhaustive-deps (#11527) (camc314)
+
+### Bug Fixes
+
+- 1a71d7c linter: Misplaced backtick in unicorn/no-array-for-each diagnostic (#11529) (camc314)
+- 7430b14 linter: Grammer in jest/valid-expect diagnostic (#11522) (camc314)
+- b92ac41 linter: Grammer in eslint/no-redeclare diagnostic (#11521) (camc314)
+- 17883e3 linter: Improve eslint/no-unsafe-negation diagnostic (#11520) (camc314)
+- 8c89937 linter: Improve eslint/no-shadow-restricted-names diagnostic (#11519) (camc314)
+- 3f0d889 linter: Add missing article to oxc/bad-array-method-on-arguments diagnostic (#11518) (camc314)
+- cf0c24c linter: Improve message in react/prefer-es6-class diagnostic (#11516) (camc314)
+- 91855df linter: Fix message in react/rules-of-hooks diagnostic (#11515) (camc314)
+- b272194 linter: Misplaced backtick in jest/no-conditional-expect diagnostic (#11514) (camc314)
+- 3403303 linter: Misplaced backtick in unicorn/prefer-dom-node-dataset diagnostic (#11513) (camc314)
+- d5ca872 linter: Misplaced backtick in eslint/radix diagnostic (#11512) (camc314)
+- 2dcf8be linter: Improve diagnostic message when function name is referenced (#11509) (camc314)
+- 0de0c9c linter: Improve diagnostic message for no-unsafe-declaration-merging (#11508) (camc314)
+- 0946dac linter: Correctly inherit categories when plugins are enabled (#11353) (Cameron)
+- 510c1c6 linter: Add missing `allowArrowFunctions` option for eslint/func-style (#11455) (yefan)
+- c77787c linter: Improve `eslint/no-loss-of-precision` (#11437) (magic-akari)
+- 11d4523 linter: False positive in react/exhaustive-deps (#11438) (camc314)
+- 616b613 linter/switch-case-braces: Align the logic with `unicorn` (#11405) (shulaoda)
+
+### Refactor
+
+- 0fdc51e linter: Simplify `OxlintRules::override_rules` (#11510) (camc314)
+
+## [0.17.0] - 2025-05-30
+
+- ead5309 linter: [**BREAKING**] Remove react from default plugin set (#11382) (camc314)
+
+### Features
+
+- 2d25bd8 linter: Remove `unicorn/no-for-loop` over `typescript/prefer-for-of` (#11354) (camc314)
+- bbb7eb1 linter: Add auto-fix to react/forward-ref-uses-ref (#11342) (yefan)
+- 590c27b linter: Add auto-fix to unicorn/no-await-expression-member (#11306) (yefan)
+- 7824f01 linter: Implement suggestion for `jsx/no-useless-fragment` (#10800) (Cam McHenry)
+- 2083d33 linter/language_server: Add second editor suggestion for `react/forward-ref-uses-ref` (#11375) (Sysix)
+
+### Bug Fixes
+
+- 25ecbfe linter: Remove use of `FrameworkFlags::React` to decide whether rules should run (#11383) (camc314)
+- 0d240e4 linter: False positive in react/exhaustive-deps with default formal parameter (#11395) (camc314)
+- c91697e linter: Fix panic in multi byte char in `TryFrom` aria (#11350) (camc314)
+- 9798ef1 linter: Stack overflow in no-async-endpoint-handlers (#11317) (camc314)
+- 348ad97 linter: Skip no-unused-vars on astro files (#11303) (camc314)
+- 183d7f0 linter: Make `jest/no-large-snapshots` error easier to comprehend (#11294) (Ulrich Stark)
+- 4e606a5 linter: Improve `jest/no-large-snapshots` (#11291) (Ulrich Stark)
+- 14f790f linter: Improve `jest/no-restricted-matchers` (#11292) (Ulrich Stark)
+- a2c82be linter/block-scoped-var: Better diagnostic messages (#11290) (DonIsaac)
+- 19772e5 linter/no-unused-vars: Panic when variable is redeclared as function in same scope (#11280) (Dunqing)
+
+### Performance
+
+- a0ee946 linter: Reduce code size in `globals` (#11333) (shulaoda)
+- c90c5e9 linter/no-unused-vars: Simplify checking self call usage (#11281) (Dunqing)
+
+### Documentation
+
+- eae51ca linter: Clarify jsdoc/check-tag-names configuration (#11394) (Rägnar O'ock)
+
+### Refactor
+
+- 42738f0 linter: Shorten code of match arms (#11389) (Ulrich Stark)
+- 8a34447 linter: Improve `unicorn/text-encoding-identifier-case` (#11386) (shulaoda)
+- eaa605e linter: Avoid some `Arc::clone` in linter runtime (#11388) (Boshen)
+- 1cd8b9c linter: Fixes in `react/forward-ref-uses-ref` are suggestions (#11376) (Sysix)
+- 50ef691 linter: Add `diagnostics_with_multiple_fixes` to `LintContext` (#11357) (Sysix)
+- 606bb34 linter: Accept `PossibleFixes`  instead of `Fix` for `Messages` (#11295) (Sysix)
+- 042a3f3 linter: Use `PossibleFixes` instead of `Option<Fix>` (#11284) (Sysix)
+- ffcfb46 linter: Improve `unicorn/throw-new-error` (#11364) (shulaoda)
+- 8fb55c3 linter: Cleanup docs and simplify code of `eslint/no-fallthrough` (#11331) (Ulrich Stark)
+- e2f0f0a linter: Improve docs and simplify code of `eslint/no-duplicate-imports` (#11320) (Ulrich Stark)
+- b53b053 linter: Simplify accessing span of NameSpan (#11305) (Ulrich Stark)
+- 4bc2650 linter: Improve `eslint/no-void` (#11285) (shulaoda)
+
+### Styling
+
+- 49b664c linter: Remove needless newline in `declare_oxc_lint` (#11400) (camc314)
+
+### Testing
+
+- a404b2c linter: `eslint/no-duplicate-imports` shouldn't report the same span (#11324) (Ulrich Stark)
 
 ## [0.16.12] - 2025-05-25
 

@@ -27,6 +27,7 @@ impl ESTree for Error<'_> {
         state.serialize_field("message", &self.message);
         state.serialize_field("labels", &self.labels);
         state.serialize_field("helpMessage", &self.help_message);
+        state.serialize_field("codeframe", &self.codeframe);
         state.end();
     }
 }

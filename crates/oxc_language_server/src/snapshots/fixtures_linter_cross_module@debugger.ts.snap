@@ -12,4 +12,4 @@ related_information[0].location.range: Range { start: Position { line: 1, charac
 severity: Some(Warning)
 source: Some("oxc")
 tags: None
-fixed: Some(FixedContent { message: Some("Remove the debugger statement"), code: "", range: Range { start: Position { line: 1, character: 0 }, end: Position { line: 1, character: 9 } } })
+fixed: Single(FixedContent { message: Some("Remove the debugger statement"), code: "", range: Range { start: Position { line: 1, character: 0 }, end: Position { line: 1, character: 9 } } })

@@ -2,6 +2,66 @@
 
 All notable changes to this package will be documented in this file.
 
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
+
+## [0.73.2] - 2025-06-18
+
+### 🚀 Features
+
+- 4ad86ff sema/check: Check for reserved type names (#11694) (Don Isaac)
+
+### 🚜 Refactor
+
+- eccac91 semantic: Rename function params (#11775) (overlookmotel)
+
+
+## [0.73.1] - 2025-06-17
+
+### 🚀 Features
+
+- 371473c ast, semantic: Implement `GetAddress` for `AstKind` and `AstNode` (#11758) (overlookmotel)
+- 6095438 ast: Add AstKind to TSRestType node (#11752) (therewillbecode)
+- b949ece ast: Add AstKind to TSTupleType node (#11749) (therewillbecode)
+- d74c4af ast: Add AstKind to `TSTypePredicate` node (#11726) (therewillbecode)
+- c25b153 ast: Add AstKind to ` TSCallSignatureDeclaration` node (#11725) (therewillbecode)
+- 866470a ast: Add AstKind to `TSIndexSignature` node (#11724) (therewillbecode)
+
+### 🚜 Refactor
+
+- 5ca3d04 ast: Add `TSArrayType` as `AstKind` (#11745) (camchenry)
+- 4fbe4b1 ast: Remove AstKind from `TSModuleReference` node (#11732) (therewillbecode)
+- 219adcc ast: Don't generate AstKind for ArrayExpressionElement (#11684) (Ulrich Stark)
+- b0a1561 parser: Move empty ts type parameter checks to parser (#11696) (Don Isaac)
+- ff19684 semantic: Shorten Span construction (#11687) (Ulrich Stark)
+
+
+## [0.73.0] - 2025-06-13
+
+### 💥 BREAKING CHANGES
+
+- f3eaefb ast: [**BREAKING**] Add `value` field to `BigIntLiteral` (#11564) (overlookmotel)
+
+### 🚀 Features
+
+- 3b03fd3 parser: Produce correct syntax error for `interface I extends (typeof T)` (#11610) (Boshen)
+
+### 🚜 Refactor
+
+- d41fb13 ast: Get jsx types out of AstKind exceptions (#11535) (Ulrich Stark)
+
+### ⚡ Performance
+
+- b34c6f6 parser,semantic: Improve handling of diagnostics (#11641) (Boshen)
+
+### 🎨 Styling
+
+- 24fd4bc ast: Import `Span` at top level (#11635) (overlookmotel)
+
+
+# Changelog
+
+All notable changes to this package will be documented in this file.
+
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
 ## [0.72.0] - 2025-05-24

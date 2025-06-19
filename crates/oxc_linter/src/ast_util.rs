@@ -787,7 +787,7 @@ pub fn get_static_property_name<'a>(parent_node: &AstNode<'a>) -> Option<Cow<'a,
 
     match key {
         PropertyKey::RegExpLiteral(regex) => Some(Cow::Owned(regex.regex.to_string())),
-        PropertyKey::BigIntLiteral(bigint) => Some(Cow::Borrowed(bigint.raw.as_str())),
+        PropertyKey::BigIntLiteral(bigint) => Some(Cow::Borrowed(bigint.value.as_str())),
         PropertyKey::TemplateLiteral(template) => {
             if template.expressions.is_empty() && template.quasis.len() == 1 {
                 if let Some(cooked) = &template.quasis[0].value.cooked {
@@ -860,32 +860,36 @@ pub fn get_function_name_with_kind<'a>(
         _ => tokens.push(Cow::Borrowed("function")),
     }
 
-    match parent_node.kind() {
+    let method_name = match parent_node.kind() {
         AstKind::MethodDefinition(method_definition)
             if !method_definition.computed && method_definition.key.is_private_identifier() =>
         {
-            if let Some(name) = method_definition.key.name() {
-                tokens.push(name);
-            }
+            method_definition.key.name()
         }
         AstKind::PropertyDefinition(definition) => {
             if !definition.computed && definition.key.is_private_identifier() {
-                if let Some(name) = definition.key.name() {
-                    tokens.push(name);
-                }
+                definition.key.name()
             } else if let Some(static_name) = get_static_property_name(parent_node) {
-                tokens.push(static_name);
+                Some(static_name)
             } else if let Some(name) = name {
-                tokens.push(Cow::Borrowed(name.as_str()));
+                Some(Cow::Borrowed(name.as_str()))
+            } else {
+                None
             }
         }
         _ => {
             if let Some(static_name) = get_static_property_name(parent_node) {
-                tokens.push(static_name);
+                Some(static_name)
             } else if let Some(name) = name {
-                tokens.push(Cow::Borrowed(name.as_str()));
+                Some(Cow::Borrowed(name.as_str()))
+            } else {
+                None
             }
         }
+    };
+
+    if let Some(method_name) = method_name {
+        tokens.push(Cow::Owned(format!("`{method_name}`")));
     }
 
     Cow::Owned(tokens.join(" "))

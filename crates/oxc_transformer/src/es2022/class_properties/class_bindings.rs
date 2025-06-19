@@ -2,7 +2,9 @@ use oxc_syntax::{
     scope::ScopeId,
     symbol::{SymbolFlags, SymbolId},
 };
-use oxc_traverse::{BoundIdentifier, TraverseCtx};
+use oxc_traverse::BoundIdentifier;
+
+use crate::context::TraverseCtx;
 
 /// Store for bindings for class.
 ///

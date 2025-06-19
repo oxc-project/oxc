@@ -149,6 +149,20 @@ impl Oxlintrc {
         Ok(config)
     }
 
+    /// # Errors
+    ///
+    /// * Parse Failure
+    pub fn from_string(json_string: &str) -> Result<Self, OxcDiagnostic> {
+        let json = serde_json::from_str::<serde_json::Value>(json_string)
+            .unwrap_or(serde_json::Value::Null);
+
+        let config = Self::deserialize(&json).map_err(|err| {
+            OxcDiagnostic::error(format!("Failed to parse config with error {err:?}"))
+        })?;
+
+        Ok(config)
+    }
+
     /// Merges two [Oxlintrc] files together
     /// [Self] takes priority over `other`
     #[must_use]

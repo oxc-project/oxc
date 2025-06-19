@@ -13,7 +13,7 @@ use crate::{
 fn no_redeclare_diagnostic(name: &str, decl_span: Span, re_decl_span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!("'{name}' is already defined.")).with_labels([
         decl_span.label(format!("'{name}' is already defined.")),
-        re_decl_span.label("It can not be redeclare here."),
+        re_decl_span.label("It can not be redeclared here."),
     ])
 }
 

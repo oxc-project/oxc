@@ -113,6 +113,10 @@ jobs:
               pnpm build --target s390x-unknown-linux-gnu --use-napi-cross
 
           - os: ubuntu-latest
+            target: aarch64-linux-android
+            build: pnpm build --target aarch64-linux-android
+
+          - os: ubuntu-latest
             target: riscv64gc-unknown-linux-gnu
             build: |
               sudo apt-get update
@@ -124,7 +128,7 @@ jobs:
     steps:
       - uses: taiki-e/checkout-action@b13d20b7cda4e2f325ef19895128f7ff735c0b3d # v1.3.1
 
-      - uses: ./.github/actions/pnpm
+      - uses: oxc-project/setup-node@f42e3bda950c7454575e78ee4eaac880a077700c # v1.0.0
 
       - run: rustup target add ${{ matrix.target }}
 
@@ -162,7 +166,7 @@ jobs:
           RUSTUP_IO_THREADS: 1
         with:
           operating_system: freebsd
-          version: "14.0"
+          version: "14.2"
           memory: 8G
           cpu_count: 3
           environment_variables: "DEBUG RUSTUP_IO_THREADS"
@@ -210,7 +214,7 @@ jobs:
     steps:
       - uses: taiki-e/checkout-action@b13d20b7cda4e2f325ef19895128f7ff735c0b3d # v1.3.1
 
-      - uses: ./.github/actions/pnpm
+      - uses: oxc-project/setup-node@f42e3bda950c7454575e78ee4eaac880a077700c # v1.0.0
 
       - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
         with:

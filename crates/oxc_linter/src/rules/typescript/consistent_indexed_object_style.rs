@@ -492,7 +492,7 @@ fn test() {
         ),
         ("type Foo = Generic<Record<string, any>>;", Some(serde_json::json!(["index-signature"]))),
         ("function foo(arg: Record<string, any>) {}", Some(serde_json::json!(["index-signature"]))),
-        ("funcction foo(): Record<string, any> {}", Some(serde_json::json!(["index-signature"]))),
+        ("function foo(): Record<string, any> {}", Some(serde_json::json!(["index-signature"]))),
     ];
 
     Tester::new(

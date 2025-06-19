@@ -1,8 +1,4 @@
-use cow_utils::CowUtils;
-use oxc_ast::{
-    AstKind,
-    ast::{JSXAttributeItem, JSXAttributeName},
-};
+use oxc_ast::{AstKind, ast::JSXAttributeName};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::NodeId;
@@ -24,15 +20,16 @@ pub struct TextEncodingIdentifierCase;
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// This rule aims to enforce consistent case for text encoding identifiers.
-    ///
-    /// Enforces `'utf8'` for UTF-8 encoding
-    /// Enforces `'ascii'` for ASCII encoding.
+    /// This rule enforces consistent casing for text encoding identifiers, specifically:
+    /// - `'utf8'` instead of `'UTF-8'` or `'utf-8'`
+    /// - `'ascii'` instead of `'ASCII'`
     ///
     /// ### Why is this bad?
     ///
-    /// - Inconsistency in text encoding identifiers can make the code harder to read and understand.
-    /// - The ECMAScript specification does not define the case sensitivity of text encoding identifiers, but it is common practice to use lowercase.
+    /// Inconsistent casing of encoding identifiers reduces code readability and
+    /// can lead to subtle confusion across a codebase. Although casing is not
+    /// strictly enforced by ECMAScript or Node.js, using lowercase is the
+    /// conventional and widely recognized style.
     ///
     /// ### Examples
     ///
@@ -40,22 +37,19 @@ declare_oxc_lint!(
     /// ```javascript
     /// import fs from 'node:fs/promises';
     /// async function bad() {
-    ///     await fs.readFile(file, 'UTF-8');
-    ///
-    ///     await fs.readFile(file, 'ASCII');
-    ///
-    ///     const string = buffer.toString('utf-8');
+    ///   await fs.readFile(file, 'UTF-8');
+    ///   await fs.readFile(file, 'ASCII');
+    ///   const string = buffer.toString('utf-8');
     /// }
     /// ```
     ///
     /// Examples of **correct** code for this rule:
     /// ```javascript
+    /// import fs from 'node:fs/promises';
     /// async function good() {
-    ///     await fs.readFile(file, 'utf8');
-    ///
-    ///     await fs.readFile(file, 'ascii');
-    ///
-    ///     const string = buffer.toString('utf8');
+    ///   await fs.readFile(file, 'utf8');
+    ///   await fs.readFile(file, 'ascii');
+    ///   const string = buffer.toString('utf8');
     /// }
     /// ```
     TextEncodingIdentifierCase,
@@ -67,79 +61,50 @@ declare_oxc_lint!(
 impl Rule for TextEncodingIdentifierCase {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         let (s, span) = match node.kind() {
-            AstKind::StringLiteral(string_lit) => (&string_lit.value, string_lit.span),
-            AstKind::JSXText(jsx_text) => (&jsx_text.value, jsx_text.span),
-            _ => {
-                return;
-            }
+            AstKind::StringLiteral(string_lit) => (string_lit.value.as_str(), string_lit.span),
+            AstKind::JSXText(jsx_text) => (jsx_text.value.as_str(), jsx_text.span),
+            _ => return,
         };
-        let s = s.as_str();
-
         if s == "utf-8" && is_jsx_meta_elem_with_charset_attr(node.id(), ctx) {
             return;
         }
-
-        let Some(replacement) = get_replacement(s) else {
+        let replacement = if s.eq_ignore_ascii_case("utf8") || s.eq_ignore_ascii_case("utf-8") {
+            "utf8"
+        } else if s.eq_ignore_ascii_case("ascii") {
+            "ascii"
+        } else {
             return;
         };
-
-        if replacement == s {
-            return;
+        if replacement != s {
+            ctx.diagnostic_with_fix(
+                text_encoding_identifier_case_diagnostic(span, replacement, s),
+                |fixer| fixer.replace(Span::new(span.start + 1, span.end - 1), replacement),
+            );
         }
-
-        ctx.diagnostic_with_fix(
-            text_encoding_identifier_case_diagnostic(span, replacement, s),
-            |fixer| fixer.replace(Span::new(span.start + 1, span.end - 1), replacement),
-        );
     }
-}
-
-fn get_replacement(node: &str) -> Option<&'static str> {
-    if !matches!(node.len(), 4 | 5) {
-        return None;
-    }
-
-    let node_lower = node.cow_to_ascii_lowercase();
-
-    if node_lower == "utf-8" || node_lower == "utf8" {
-        return Some("utf8");
-    }
-
-    if node_lower == "ascii" {
-        return Some("ascii");
-    }
-
-    None
 }
 
 fn is_jsx_meta_elem_with_charset_attr(id: NodeId, ctx: &LintContext) -> bool {
     let Some(parent) = ctx.nodes().parent_node(id) else {
         return false;
     };
-
-    let AstKind::JSXAttributeItem(JSXAttributeItem::Attribute(jsx_attr)) = parent.kind() else {
+    let AstKind::JSXAttribute(jsx_attr) = parent.kind() else {
         return false;
     };
-
     let JSXAttributeName::Identifier(ident) = &jsx_attr.name else {
         return false;
     };
     if !ident.name.eq_ignore_ascii_case("charset") {
         return false;
     }
-
     let Some(AstKind::JSXOpeningElement(opening_elem)) = ctx.nodes().parent_kind(parent.id())
     else {
         return false;
     };
-
-    let Some(tag_name) = opening_elem.name.get_identifier_name() else { return false };
-
-    if !tag_name.eq_ignore_ascii_case("meta") {
-        return false;
-    }
-
-    true
+    opening_elem
+        .name
+        .get_identifier_name()
+        .is_some_and(|tag_name| tag_name.eq_ignore_ascii_case("meta"))
 }
 
 #[test]

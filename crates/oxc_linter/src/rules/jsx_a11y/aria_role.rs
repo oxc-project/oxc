@@ -164,7 +164,9 @@ impl Rule for AriaRole {
                     Some(JSXAttributeValue::StringLiteral(str)) => {
                         let words_str = String::from(str.value.as_str());
                         let words = words_str.split_whitespace();
-                        if let Some(error_prop) = words.into_iter().find(|word| {
+                        if words_str.trim().is_empty() {
+                            ctx.diagnostic(aria_role_diagnostic(str.span, ""));
+                        } else if let Some(error_prop) = words.into_iter().find(|word| {
                             !VALID_ARIA_ROLES.contains(word)
                                 && !self.allowed_invalid_roles.contains(&(*word).to_string())
                         }) {
@@ -237,7 +239,7 @@ fn test() {
         ("<div role='datepicker'></div>", None, None),
         ("<div role='range'></div>", None, None),
         ("<div role='Button'></div>", None, None),
-        ("<div role='></div>", None, None),
+        ("<div role=''></div>", None, None),
         ("<div role='tabpanel row foobar'></div>", None, None),
         ("<div role='tabpanel row range'></div>", None, None),
         ("<div role='doc-endnotes range'></div>", None, None),

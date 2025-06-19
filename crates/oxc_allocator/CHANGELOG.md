@@ -2,6 +2,34 @@
 
 All notable changes to this package will be documented in this file.
 
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
+
+
+## [0.73.1] - 2025-06-17
+
+### 🚀 Features
+
+- 38dc614 oxc_linter: Reuse allocators (#11736) (camc314)
+
+### 🚜 Refactor
+
+- 01e52bc allocator: Re-order code (#11759) (overlookmotel)
+
+### 📚 Documentation
+
+- 9fefb46 allocator: Improve `Allocator` code examples (#11670) (overlookmotel)
+
+### ⚡ Performance
+
+- 2641030 allocator: Reduce operations while `Mutex` lock is held in `AllocatorPool` (#11761) (overlookmotel)
+- f539f64 allocator: Remove `Arc` from `AllocatorPool` (#11760) (overlookmotel)
+
+
+
+# Changelog
+
+All notable changes to this package will be documented in this file.
+
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
 ## [0.72.0] - 2025-05-24

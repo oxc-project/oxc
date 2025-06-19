@@ -14,9 +14,12 @@ use oxc_ast::{AstBuilder, NONE, ast::*, match_expression};
 use oxc_semantic::{Reference, ReferenceFlags, ScopeFlags, ScopeId, SymbolFlags};
 use oxc_span::{Atom, GetSpan, SPAN};
 use oxc_syntax::operator::AssignmentOperator;
-use oxc_traverse::{Ancestor, BoundIdentifier, Traverse, TraverseCtx};
+use oxc_traverse::{Ancestor, BoundIdentifier, Traverse};
 
-use crate::TransformCtx;
+use crate::{
+    context::{TransformCtx, TraverseCtx},
+    state::TransformState,
+};
 
 use super::options::ReactRefreshOptions;
 
@@ -138,7 +141,7 @@ impl<'a, 'ctx> ReactRefresh<'a, 'ctx> {
     }
 }
 
-impl<'a> Traverse<'a> for ReactRefresh<'a, '_> {
+impl<'a> Traverse<'a, TransformState<'a>> for ReactRefresh<'a, '_> {
     fn enter_program(&mut self, program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
         let mut new_statements = ctx.ast.vec_with_capacity(program.body.len() * 2);
         for mut statement in program.body.take_in(ctx.ast) {

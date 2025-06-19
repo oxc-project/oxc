@@ -5,6 +5,7 @@ mod assignment_pattern_property_list;
 mod binary_like_expression;
 mod binding_property_list;
 mod block_statement;
+mod call_arguments;
 mod class;
 mod function;
 mod object_like;
@@ -16,9 +17,10 @@ mod utils;
 mod variable_declaration;
 pub use binary_like_expression::{BinaryLikeExpression, BinaryLikeOperator, should_flatten};
 
+use call_arguments::{FormatAllArgsBrokenOut, FormatCallArgument, is_function_composition_args};
 use cow_utils::CowUtils;
 
-use oxc_allocator::{Box, Vec};
+use oxc_allocator::{Address, Box, Vec};
 use oxc_ast::{AstKind, ast::*};
 use oxc_span::{GetSpan, SPAN};
 use oxc_syntax::identifier::{ZWNBSP, is_identifier_name, is_line_terminator};
@@ -31,8 +33,8 @@ use crate::{
         separated::FormatSeparatedIter,
         token::number::{NumberFormatOptions, format_number_token},
         trivia::FormatLeadingComments,
-        write,
     },
+    generated::ast_nodes::{AstNode, AstNodes},
     options::{FormatTrailingCommas, QuoteProperties, TrailingSeparator},
     parentheses::NeedsParentheses,
     utils::write_arguments_multi_line,
@@ -54,17 +56,11 @@ use self::{
     },
 };
 
-impl<'a, T: Format<'a>> Format<'a> for Box<'a, T> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        self.as_ref().fmt(f)
-    }
-}
-
 pub trait FormatWrite<'ast> {
     fn write(&self, f: &mut Formatter<'_, 'ast>) -> FormatResult<()>;
 }
 
-impl<'a> FormatWrite<'a> for Program<'a> {
+impl<'a> FormatWrite<'a> for AstNode<'a, Program<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         // Print BOM
         if f.source_text().chars().next().is_some_and(|c| c == ZWNBSP) {
@@ -73,18 +69,18 @@ impl<'a> FormatWrite<'a> for Program<'a> {
         write!(
             f,
             [
-                self.hashbang,
-                format_leading_comments(self.span.start),
-                self.directives,
-                self.body,
-                format_leading_comments(self.span.end), // comments before the EOF token
+                self.hashbang(),
+                format_leading_comments(self.span().start),
+                self.directives(),
+                self.body(),
+                format_leading_comments(self.span().end), // comments before the EOF token
                 hard_line_break()
             ]
         )
     }
 }
 
-impl<'a> Format<'a> for Vec<'a, Directive<'a>> {
+impl<'a> Format<'a> for AstNode<'a, Vec<'a, Directive<'a>>> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         if self.is_empty() {
             return Ok(());
@@ -92,7 +88,7 @@ impl<'a> Format<'a> for Vec<'a, Directive<'a>> {
         let source_text = f.context().source_text();
         let mut join = f.join_nodes_with_hardline();
         for directive in self {
-            join.entry(directive.span, source_text, directive);
+            join.entry(directive.span(), source_text, &directive);
         }
         join.finish()?;
         // if next_sibling's first leading_trivia has more than one new_line, we should add an extra empty line at the end of
@@ -105,7 +101,7 @@ impl<'a> Format<'a> for Vec<'a, Directive<'a>> {
         // }
         //```
         // so we should keep an extra empty line after JsDirectiveList
-        let mut chars = f.source_text()[self.last().unwrap().span.end as usize..].chars();
+        let mut chars = f.source_text()[self.last().unwrap().span().end as usize..].chars();
         let mut count = 0;
         for c in chars.by_ref() {
             if is_line_terminator(c) {
@@ -123,14 +119,14 @@ impl<'a> Format<'a> for Vec<'a, Directive<'a>> {
     }
 }
 
-impl<'a> FormatWrite<'a> for Directive<'a> {
+impl<'a> FormatWrite<'a> for AstNode<'a, Directive<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         write!(
             f,
             [
                 FormatLiteralStringToken::new(
-                    self.expression.span.source_text(f.source_text()),
-                    self.expression.span,
+                    self.expression().span().source_text(f.source_text()),
+                    self.expression().span(),
                     /* jsx */
                     false,
                     StringLiteralParentKind::Directive,
@@ -141,113 +137,55 @@ impl<'a> FormatWrite<'a> for Directive<'a> {
     }
 }
 
-impl<'a> FormatWrite<'a> for Expression<'a> {
+impl<'a> FormatWrite<'a> for AstNode<'a, IdentifierName<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        match self {
-            Expression::BooleanLiteral(it) => it.fmt(f),
-            Expression::NullLiteral(it) => it.fmt(f),
-            Expression::NumericLiteral(it) => it.fmt(f),
-            Expression::BigIntLiteral(it) => it.fmt(f),
-            Expression::RegExpLiteral(it) => it.fmt(f),
-            Expression::StringLiteral(it) => it.fmt(f),
-            Expression::TemplateLiteral(it) => it.fmt(f),
-            Expression::Identifier(it) => it.fmt(f),
-            Expression::MetaProperty(it) => it.fmt(f),
-            Expression::Super(it) => it.fmt(f),
-            Expression::ArrayExpression(it) => it.fmt(f),
-            Expression::ArrowFunctionExpression(it) => it.fmt(f),
-            Expression::AssignmentExpression(it) => it.fmt(f),
-            Expression::AwaitExpression(it) => it.fmt(f),
-            Expression::BinaryExpression(it) => it.fmt(f),
-            Expression::CallExpression(it) => it.fmt(f),
-            Expression::ChainExpression(it) => it.fmt(f),
-            Expression::ClassExpression(it) => it.fmt(f),
-            Expression::ConditionalExpression(it) => it.fmt(f),
-            Expression::FunctionExpression(it) => it.fmt(f),
-            Expression::ImportExpression(it) => it.fmt(f),
-            Expression::LogicalExpression(it) => it.fmt(f),
-            Expression::NewExpression(it) => it.fmt(f),
-            Expression::ObjectExpression(it) => it.fmt(f),
-            Expression::ParenthesizedExpression(it) => it.fmt(f),
-            Expression::SequenceExpression(it) => it.fmt(f),
-            Expression::TaggedTemplateExpression(it) => it.fmt(f),
-            Expression::ThisExpression(it) => it.fmt(f),
-            Expression::UnaryExpression(it) => it.fmt(f),
-            Expression::UpdateExpression(it) => it.fmt(f),
-            Expression::YieldExpression(it) => it.fmt(f),
-            Expression::PrivateInExpression(it) => it.fmt(f),
-            Expression::JSXElement(it) => it.fmt(f),
-            Expression::JSXFragment(it) => it.fmt(f),
-            Expression::TSAsExpression(it) => it.fmt(f),
-            Expression::TSSatisfiesExpression(it) => it.fmt(f),
-            Expression::TSTypeAssertion(it) => it.fmt(f),
-            Expression::TSNonNullExpression(it) => it.fmt(f),
-            Expression::TSInstantiationExpression(it) => it.fmt(f),
-            Expression::V8IntrinsicExpression(it) => it.fmt(f),
-            match_member_expression!(Expression) => self.to_member_expression().fmt(f),
-        }
+        write!(f, dynamic_text(self.name().as_ref(), self.span().start))
     }
 }
 
-impl<'a> FormatWrite<'a> for IdentifierName<'a> {
+impl<'a> FormatWrite<'a> for AstNode<'a, IdentifierReference<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        write!(f, dynamic_text(self.name.as_ref(), self.span.start))
+        write!(f, dynamic_text(self.name().as_ref(), self.span().start))
     }
 }
 
-impl<'a> FormatWrite<'a> for IdentifierReference<'a> {
+impl<'a> FormatWrite<'a> for AstNode<'a, BindingIdentifier<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        write!(f, dynamic_text(self.name.as_ref(), self.span.start))
+        write!(f, dynamic_text(self.name().as_ref(), self.span().start))
     }
 }
 
-impl<'a> FormatWrite<'a> for BindingIdentifier<'a> {
+impl<'a> FormatWrite<'a> for AstNode<'a, LabelIdentifier<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        write!(f, dynamic_text(self.name.as_ref(), self.span.start))
+        write!(f, dynamic_text(self.name().as_ref(), self.span().start))
     }
 }
 
-impl<'a> FormatWrite<'a> for LabelIdentifier<'a> {
-    fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        write!(f, dynamic_text(self.name.as_ref(), self.span.start))
-    }
-}
-
-impl<'a> FormatWrite<'a> for ThisExpression {
+impl<'a> FormatWrite<'a> for AstNode<'a, ThisExpression> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         write!(f, "this")
     }
 }
 
-impl<'a> FormatWrite<'a> for ArrayExpression<'a> {
+impl<'a> FormatWrite<'a> for AstNode<'a, ArrayExpression<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         FormatArrayExpression::new(self).fmt(f)
     }
 }
 
-impl<'a> FormatWrite<'a> for ArrayExpressionElement<'a> {
-    fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        match self {
-            Self::SpreadElement(elem) => elem.fmt(f),
-            Self::Elision(elision) => elision.fmt(f),
-            _ => self.to_expression().fmt(f),
-        }
-    }
-}
-
-impl<'a> FormatWrite<'a> for Elision {
+impl<'a> FormatWrite<'a> for AstNode<'a, Elision> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         Ok(())
     }
 }
 
-impl<'a> FormatWrite<'a> for ObjectExpression<'a> {
+impl<'a> FormatWrite<'a> for AstNode<'a, ObjectExpression<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         ObjectLike::ObjectExpression(self).fmt(f)
     }
 }
 
-impl<'a> Format<'a> for Vec<'a, ObjectPropertyKind<'a>> {
+impl<'a> Format<'a> for AstNode<'a, Vec<'a, ObjectPropertyKind<'a>>> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         let trailing_separator = FormatTrailingCommas::ES5.trailing_separator(f.options());
         let source_text = f.context().source_text();
@@ -261,19 +199,10 @@ impl<'a> Format<'a> for Vec<'a, ObjectPropertyKind<'a>> {
     }
 }
 
-impl<'a> FormatWrite<'a> for ObjectPropertyKind<'a> {
-    fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        match self {
-            Self::ObjectProperty(p) => p.fmt(f),
-            Self::SpreadProperty(p) => p.fmt(f),
-        }
-    }
-}
-
-impl<'a> FormatWrite<'a> for ObjectProperty<'a> {
+impl<'a> FormatWrite<'a> for AstNode<'a, ObjectProperty<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         let format_key = format_with(|f| {
-            if let PropertyKey::StringLiteral(s) = &self.key {
+            if let PropertyKey::StringLiteral(s) = &self.key().as_ref() {
                 FormatLiteralStringToken::new(
                     s.span.source_text(f.source_text()),
                     s.span,
@@ -283,11 +212,11 @@ impl<'a> FormatWrite<'a> for ObjectProperty<'a> {
                 )
                 .fmt(f)
             } else {
-                write!(f, self.key)
+                write!(f, self.key())
             }
         });
-        if let Expression::FunctionExpression(func) = &self.value {
-            let is_accessor = match &self.kind {
+        if let AstNodes::Function(func) = self.value().as_ast_nodes() {
+            let is_accessor = match &self.kind() {
                 PropertyKind::Init => false,
                 PropertyKind::Get => {
                     write!(f, ["get", space()])?;
@@ -298,63 +227,53 @@ impl<'a> FormatWrite<'a> for ObjectProperty<'a> {
                     true
                 }
             };
-            if self.method || is_accessor {
-                if func.r#async {
+            if self.method() || is_accessor {
+                if func.r#async() {
                     write!(f, ["async", space()])?;
                 }
-                if func.generator {
+                if func.generator() {
                     write!(f, "*")?;
                 }
-                if self.computed {
+                if self.computed() {
                     write!(f, "[")?;
                 }
                 write!(f, format_key)?;
-                if self.computed {
+                if self.computed() {
                     write!(f, "]")?;
                 }
-                if let Some(type_parameters) = &func.type_parameters {
+                if let Some(type_parameters) = &func.type_parameters() {
                     write!(f, type_parameters)?;
                 }
-                write!(f, group(&func.params))?;
-                if let Some(return_type) = &func.return_type {
+                write!(f, group(&func.params()))?;
+                if let Some(return_type) = &func.return_type() {
                     write!(f, return_type)?;
                 }
-                if let Some(body) = &func.body {
+                if let Some(body) = &func.body() {
                     write!(f, [space(), body])?;
                 }
                 return Ok(());
             }
         }
-        if self.computed {
+        if self.computed() {
             write!(f, "[")?;
         }
         write!(f, format_key)?;
-        if self.computed {
+        if self.computed() {
             write!(f, "]")?;
         }
-        if !self.shorthand {
-            write!(f, [":", space(), self.value])?;
+        if !self.shorthand() {
+            write!(f, [":", space(), self.value()])?;
         }
         Ok(())
     }
 }
 
-impl<'a> FormatWrite<'a> for PropertyKey<'a> {
-    fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        match self {
-            Self::StaticIdentifier(key) => key.fmt(f),
-            Self::PrivateIdentifier(key) => key.fmt(f),
-            match_expression!(Self) => self.to_expression().fmt(f),
-        }
-    }
-}
-
-impl<'a> FormatWrite<'a> for TemplateLiteral<'a> {
+impl<'a> FormatWrite<'a> for AstNode<'a, TemplateLiteral<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         write!(f, "`")?;
-        let mut expressions = self.expressions.iter();
+        let mut expressions = self.expressions().iter();
 
-        for quasi in &self.quasis {
+        for quasi in self.quasis() {
             write!(f, quasi);
             if let Some(expr) = expressions.next() {
                 write!(f, ["${", expr, "}"]);
@@ -365,49 +284,42 @@ impl<'a> FormatWrite<'a> for TemplateLiteral<'a> {
     }
 }
 
-impl<'a> FormatWrite<'a> for TaggedTemplateExpression<'a> {
+impl<'a> FormatWrite<'a> for AstNode<'a, TaggedTemplateExpression<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        write!(f, [self.tag, self.type_arguments, self.quasi])
+        write!(f, [self.tag(), self.type_arguments(), self.quasi()])
     }
 }
 
-impl<'a> FormatWrite<'a> for TemplateElement<'a> {
+impl<'a> FormatWrite<'a> for AstNode<'a, TemplateElement<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        write!(f, dynamic_text(self.value.raw.as_str(), self.span.start))
+        write!(f, dynamic_text(self.value().raw.as_str(), self.span().start))
     }
 }
 
-impl<'a> FormatWrite<'a> for MemberExpression<'a> {
+impl<'a> FormatWrite<'a> for AstNode<'a, ComputedMemberExpression<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        match self {
-            Self::ComputedMemberExpression(e) => e.fmt(f),
-            Self::StaticMemberExpression(e) => e.fmt(f),
-            Self::PrivateFieldExpression(e) => e.fmt(f),
-        }
+        write!(f, [self.object(), self.optional().then_some("?"), "[", self.expression(), "]"])
     }
 }
 
-impl<'a> FormatWrite<'a> for ComputedMemberExpression<'a> {
+impl<'a> FormatWrite<'a> for AstNode<'a, StaticMemberExpression<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        write!(f, [self.object, self.optional.then_some("?"), "[", self.expression, "]"])
+        write!(f, [self.object(), self.optional().then_some("?"), ".", self.property()])
     }
 }
 
-impl<'a> FormatWrite<'a> for StaticMemberExpression<'a> {
+impl<'a> FormatWrite<'a> for AstNode<'a, PrivateFieldExpression<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        write!(f, [self.object, self.optional.then_some("?"), ".", self.property])
+        write!(f, [self.object(), self.optional().then_some("?"), ".", self.field()])
     }
 }
 
-impl<'a> FormatWrite<'a> for PrivateFieldExpression<'a> {
+impl<'a> FormatWrite<'a> for AstNode<'a, CallExpression<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        write!(f, [self.object, self.optional.then_some("?"), ".", self.field])
-    }
-}
-
-impl<'a> FormatWrite<'a> for CallExpression<'a> {
-    fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        let Self { callee, type_arguments, arguments, optional, .. } = self;
+        let callee = self.callee();
+        let type_arguments = self.type_arguments();
+        let arguments = self.arguments();
+        let optional = self.optional();
 
         if callee.as_member_expression().is_some_and(|e| {
             matches!(
@@ -415,7 +327,7 @@ impl<'a> FormatWrite<'a> for CallExpression<'a> {
                 MemberExpression::StaticMemberExpression(_)
                     | MemberExpression::ComputedMemberExpression(_)
             )
-        }) && !callee.needs_parentheses(f.parent_stack())
+        }) && !callee.needs_parentheses(f)
         {
             // TODO
             write!(f, [callee, optional.then_some("?."), type_arguments, arguments])
@@ -423,7 +335,7 @@ impl<'a> FormatWrite<'a> for CallExpression<'a> {
             let format_inner = format_with(|f| {
                 write!(f, [callee, optional.then_some("?."), type_arguments, arguments])
             });
-            if matches!(callee, Expression::CallExpression(_)) {
+            if matches!(callee.as_ref(), Expression::CallExpression(_)) {
                 write!(f, [group(&format_inner)])
             } else {
                 write!(f, [format_inner])
@@ -432,162 +344,91 @@ impl<'a> FormatWrite<'a> for CallExpression<'a> {
     }
 }
 
-impl<'a> Format<'a> for Vec<'a, Argument<'a>> {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        if self.is_empty() {
-            return write!(
-                f,
-                [
-                    "(",
-                    // format_dangling_comments(node.syntax()).with_soft_block_indent(),
-                    ")"
-                ]
-            );
+impl<'a> FormatWrite<'a> for AstNode<'a, NewExpression<'a>> {
+    fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        write!(f, ["new", space(), self.callee(), self.type_arguments(), self.arguments()])
+    }
+}
+
+impl<'a> FormatWrite<'a> for AstNode<'a, MetaProperty<'a>> {
+    fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        write!(f, [self.meta(), ".", self.property()])
+    }
+}
+
+impl<'a> FormatWrite<'a> for AstNode<'a, SpreadElement<'a>> {
+    fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        write!(f, ["...", self.argument()])
+    }
+}
+
+impl<'a> FormatWrite<'a> for AstNode<'a, UpdateExpression<'a>> {
+    fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        if self.prefix() {
+            write!(f, self.operator().as_str())?;
         }
-
-        write!(
-            f,
-            [
-                "(",
-                &group(&soft_block_indent(&format_with(|f| {
-                    let separated = FormatSeparatedIter::new(self.iter(), ",")
-                        .with_trailing_separator(TrailingSeparator::Omit);
-                    write_arguments_multi_line(separated, f)
-                }))),
-                ")"
-            ]
-        )
-    }
-}
-
-impl<'a> FormatWrite<'a> for NewExpression<'a> {
-    fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        let Self { callee, type_arguments, arguments, .. } = self;
-        write!(f, ["new", space(), callee, type_arguments, arguments])
-    }
-}
-
-impl<'a> FormatWrite<'a> for MetaProperty<'a> {
-    fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        write!(f, [self.meta, ".", self.property])
-    }
-}
-
-impl<'a> FormatWrite<'a> for SpreadElement<'a> {
-    fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        write!(f, ["...", self.argument])
-    }
-}
-
-impl<'a> FormatWrite<'a> for Argument<'a> {
-    fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        match self {
-            Self::SpreadElement(e) => e.fmt(f),
-            match_expression!(Argument) => self.to_expression().fmt(f),
-        }
-    }
-}
-
-impl<'a> FormatWrite<'a> for UpdateExpression<'a> {
-    fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        if self.prefix {
-            write!(f, self.operator.as_str())?;
-        }
-        write!(f, self.argument)?;
-        if !self.prefix {
-            write!(f, self.operator.as_str())?;
+        write!(f, self.argument())?;
+        if !self.prefix() {
+            write!(f, self.operator().as_str())?;
         }
         Ok(())
     }
 }
 
-impl<'a> FormatWrite<'a> for UnaryExpression<'a> {
+impl<'a> FormatWrite<'a> for AstNode<'a, UnaryExpression<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        write!(f, self.operator.as_str());
-        if self.operator.is_keyword() {
+        write!(f, self.operator().as_str());
+        if self.operator().is_keyword() {
             write!(f, space());
         }
-        write!(f, self.argument)
+        write!(f, self.argument())
     }
 }
 
-impl<'a> FormatWrite<'a> for BinaryExpression<'a> {
+impl<'a> FormatWrite<'a> for AstNode<'a, BinaryExpression<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         BinaryLikeExpression::BinaryExpression(self).fmt(f)
     }
 }
 
-impl<'a> FormatWrite<'a> for PrivateInExpression<'a> {
+impl<'a> FormatWrite<'a> for AstNode<'a, PrivateInExpression<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        write!(f, [self.left, space(), "in", space(), self.right])
+        write!(f, [self.left(), space(), "in", space(), self.right()])
     }
 }
 
-impl<'a> FormatWrite<'a> for LogicalExpression<'a> {
+impl<'a> FormatWrite<'a> for AstNode<'a, LogicalExpression<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         BinaryLikeExpression::LogicalExpression(self).fmt(f)
     }
 }
 
-impl<'a> FormatWrite<'a> for ConditionalExpression<'a> {
+impl<'a> FormatWrite<'a> for AstNode<'a, ConditionalExpression<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         write!(
             f,
             [
-                self.test,
+                self.test(),
                 space(),
                 "?",
                 space(),
-                self.consequent,
+                self.consequent(),
                 space(),
                 ":",
                 space(),
-                self.alternate
+                self.alternate()
             ]
         )
     }
 }
 
-impl<'a> FormatWrite<'a> for AssignmentExpression<'a> {
+impl<'a> FormatWrite<'a> for AstNode<'a, AssignmentExpression<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        write!(f, [self.left, space(), self.operator.as_str(), space(), self.right])
+        write!(f, [self.left(), space(), self.operator().as_str(), space(), self.right()])
     }
 }
 
-impl<'a> FormatWrite<'a> for AssignmentTarget<'a> {
-    fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        match self {
-            match_simple_assignment_target!(Self) => self.to_simple_assignment_target().fmt(f),
-            match_assignment_target_pattern!(Self) => self.to_assignment_target_pattern().fmt(f),
-        }
-    }
-}
-
-impl<'a> FormatWrite<'a> for SimpleAssignmentTarget<'a> {
-    fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        match self {
-            Self::AssignmentTargetIdentifier(ident) => ident.fmt(f),
-            Self::ComputedMemberExpression(e) => e.fmt(f),
-            Self::StaticMemberExpression(e) => e.fmt(f),
-            Self::PrivateFieldExpression(e) => e.fmt(f),
-            Self::TSAsExpression(e) => e.fmt(f),
-            Self::TSSatisfiesExpression(e) => e.fmt(f),
-            Self::TSNonNullExpression(e) => e.fmt(f),
-            Self::TSTypeAssertion(e) => e.fmt(f),
-        }
-    }
-}
-
-impl<'a> FormatWrite<'a> for AssignmentTargetPattern<'a> {
-    fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        match self {
-            Self::ArrayAssignmentTarget(target) => target.fmt(f),
-            Self::ObjectAssignmentTarget(target) => target.fmt(f),
-        }
-    }
-}
-
-impl<'a> FormatWrite<'a> for ArrayAssignmentTarget<'a> {
+impl<'a> FormatWrite<'a> for AstNode<'a, ArrayAssignmentTarget<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         // Copy of `utils::array::write_array_node`
         let trailing_separator = FormatTrailingCommas::ES5.trailing_separator(f.options());
@@ -598,10 +439,11 @@ impl<'a> FormatWrite<'a> for ArrayAssignmentTarget<'a> {
 
         let source_text = f.source_text();
         let mut join = f.join_nodes_with_soft_line();
-        let last_index = self.elements.len().saturating_sub(1);
+        let last_index = self.elements().len().saturating_sub(1);
 
-        for (index, element) in self.elements.iter().enumerate() {
-            let separator_mode = match element {
+        let test = self.elements().iter();
+        for (index, element) in self.elements().iter().enumerate() {
+            let separator_mode = match element.as_ref() {
                 None => TrailingSeparatorMode::Force,
                 _ => TrailingSeparatorMode::Auto,
             };
@@ -613,8 +455,8 @@ impl<'a> FormatWrite<'a> for ArrayAssignmentTarget<'a> {
                 SPAN,
                 source_text,
                 &format_with(|f| {
-                    if let Some(e) = element.as_ref() {
-                        write!(f, group(&e))?;
+                    if let Some(element) = element.as_ref() {
+                        write!(f, group(element))?;
                     }
 
                     if is_disallow {
@@ -651,70 +493,52 @@ impl<'a> FormatWrite<'a> for ArrayAssignmentTarget<'a> {
     }
 }
 
-impl<'a> FormatWrite<'a> for ObjectAssignmentTarget<'a> {
+impl<'a> FormatWrite<'a> for AstNode<'a, ObjectAssignmentTarget<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         ObjectPatternLike::ObjectAssignmentTarget(self).fmt(f)
     }
 }
 
-impl<'a> FormatWrite<'a> for AssignmentTargetRest<'a> {
+impl<'a> FormatWrite<'a> for AstNode<'a, AssignmentTargetRest<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        write!(f, ["...", self.target])
+        write!(f, ["...", self.target()])
     }
 }
 
-impl<'a> FormatWrite<'a> for AssignmentTargetMaybeDefault<'a> {
+impl<'a> FormatWrite<'a> for AstNode<'a, AssignmentTargetWithDefault<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        match self {
-            Self::AssignmentTargetWithDefault(target) => target.fmt(f),
-            match_assignment_target!(Self) => self.to_assignment_target().fmt(f),
-        }
+        write!(f, [self.binding(), space(), "=", space(), self.init()])
     }
 }
 
-impl<'a> FormatWrite<'a> for AssignmentTargetWithDefault<'a> {
+impl<'a> FormatWrite<'a> for AstNode<'a, AssignmentTargetPropertyIdentifier<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        write!(f, [self.binding, space(), "=", space(), self.init])
-    }
-}
-
-impl<'a> FormatWrite<'a> for AssignmentTargetProperty<'a> {
-    fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        match self {
-            Self::AssignmentTargetPropertyIdentifier(ident) => ident.fmt(f),
-            Self::AssignmentTargetPropertyProperty(prop) => prop.fmt(f),
-        }
-    }
-}
-
-impl<'a> FormatWrite<'a> for AssignmentTargetPropertyIdentifier<'a> {
-    fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        write!(f, self.binding)?;
-        if let Some(expr) = &self.init {
+        write!(f, self.binding())?;
+        if let Some(expr) = &self.init() {
             write!(f, [space(), "=", space(), expr])?;
         }
         Ok(())
     }
 }
 
-impl<'a> FormatWrite<'a> for AssignmentTargetPropertyProperty<'a> {
+impl<'a> FormatWrite<'a> for AstNode<'a, AssignmentTargetPropertyProperty<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        if self.computed {
+        if self.computed() {
             write!(f, "[")?;
         }
-        write!(f, self.name)?;
-        if self.computed {
+        write!(f, self.name())?;
+        if self.computed() {
             write!(f, "]")?;
         }
-        write!(f, [":", space(), self.binding])?;
+        write!(f, [":", space(), self.binding()])?;
         Ok(())
     }
 }
 
-impl<'a> FormatWrite<'a> for SequenceExpression<'a> {
+impl<'a> FormatWrite<'a> for AstNode<'a, SequenceExpression<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         let format_inner = format_with(|f| {
-            for (i, expr) in self.expressions.iter().enumerate() {
+            for (i, expr) in self.expressions().iter().enumerate() {
                 if i != 0 {
                     write!(f, [",", line_suffix_boundary(), soft_line_break_or_space()])?;
                 }
@@ -726,43 +550,31 @@ impl<'a> FormatWrite<'a> for SequenceExpression<'a> {
     }
 }
 
-impl<'a> FormatWrite<'a> for Super {
+impl<'a> FormatWrite<'a> for AstNode<'a, Super> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         write!(f, "super")
     }
 }
 
-impl<'a> FormatWrite<'a> for AwaitExpression<'a> {
+impl<'a> FormatWrite<'a> for AstNode<'a, AwaitExpression<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        write!(f, ["await", space(), self.argument])
+        write!(f, ["await", space(), self.argument()])
     }
 }
 
-impl<'a> FormatWrite<'a> for ChainExpression<'a> {
+impl<'a> FormatWrite<'a> for AstNode<'a, ChainExpression<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        self.expression.fmt(f)
+        self.expression().fmt(f)
     }
 }
 
-impl<'a> FormatWrite<'a> for ChainElement<'a> {
+impl<'a> FormatWrite<'a> for AstNode<'a, ParenthesizedExpression<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        match self {
-            Self::CallExpression(expr) => expr.fmt(f),
-            Self::TSNonNullExpression(expr) => expr.fmt(f),
-            Self::ComputedMemberExpression(expr) => expr.fmt(f),
-            Self::StaticMemberExpression(expr) => expr.fmt(f),
-            Self::PrivateFieldExpression(expr) => expr.fmt(f),
-        }
+        self.expression().fmt(f)
     }
 }
 
-impl<'a> FormatWrite<'a> for ParenthesizedExpression<'a> {
-    fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        self.expression.fmt(f)
-    }
-}
-
-impl<'a> Format<'a> for Vec<'a, Statement<'a>> {
+impl<'a> Format<'a> for AstNode<'a, Vec<'a, Statement<'a>>> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         let source_text = f.context().source_text();
         let mut join = f.join_nodes_with_hardline();
@@ -773,44 +585,10 @@ impl<'a> Format<'a> for Vec<'a, Statement<'a>> {
     }
 }
 
-impl<'a> FormatWrite<'a> for Statement<'a> {
+impl<'a> FormatWrite<'a> for AstNode<'a, Hashbang<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        match self {
-            Self::BlockStatement(s) => s.fmt(f),
-            Self::BreakStatement(s) => s.fmt(f),
-            Self::ContinueStatement(s) => s.fmt(f),
-            Self::DebuggerStatement(s) => s.fmt(f),
-            Self::DoWhileStatement(s) => s.fmt(f),
-            Self::EmptyStatement(s) => s.fmt(f),
-            Self::ExpressionStatement(s) => s.fmt(f),
-            Self::ForInStatement(s) => s.fmt(f),
-            Self::ForOfStatement(s) => s.fmt(f),
-            Self::ForStatement(s) => s.fmt(f),
-            Self::IfStatement(s) => s.fmt(f),
-            Self::LabeledStatement(s) => s.fmt(f),
-            Self::ReturnStatement(s) => s.fmt(f),
-            Self::SwitchStatement(s) => s.fmt(f),
-            Self::ThrowStatement(s) => s.fmt(f),
-            Self::TryStatement(s) => s.fmt(f),
-            Self::WhileStatement(s) => s.fmt(f),
-            Self::WithStatement(s) => s.fmt(f),
-            Self::VariableDeclaration(s) => write!(f, [s, OptionalSemicolon]),
-            Self::FunctionDeclaration(s) => s.fmt(f),
-            Self::ClassDeclaration(s) => s.fmt(f),
-            Self::TSTypeAliasDeclaration(s) => s.fmt(f),
-            Self::TSInterfaceDeclaration(s) => s.fmt(f),
-            Self::TSEnumDeclaration(s) => s.fmt(f),
-            Self::TSModuleDeclaration(s) => s.fmt(f),
-            Self::TSImportEqualsDeclaration(s) => s.fmt(f),
-            match_module_declaration!(Statement) => self.to_module_declaration().fmt(f),
-        }
-    }
-}
-
-impl<'a> FormatWrite<'a> for Hashbang<'a> {
-    fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        write!(f, ["#!", dynamic_text(self.value.as_str(), self.span.start)])?;
-        let count = f.source_text()[self.span.end as usize..]
+        write!(f, ["#!", dynamic_text(self.value().as_str(), self.span().start)])?;
+        let count = f.source_text()[self.span().end as usize..]
             .chars()
             .take_while(|&c| is_line_terminator(c))
             .count();
@@ -818,32 +596,17 @@ impl<'a> FormatWrite<'a> for Hashbang<'a> {
     }
 }
 
-impl<'a> FormatWrite<'a> for Declaration<'a> {
-    fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        match self {
-            Declaration::VariableDeclaration(d) => d.fmt(f),
-            Declaration::FunctionDeclaration(d) => d.fmt(f),
-            Declaration::ClassDeclaration(d) => d.fmt(f),
-            Declaration::TSTypeAliasDeclaration(d) => d.fmt(f),
-            Declaration::TSInterfaceDeclaration(d) => d.fmt(f),
-            Declaration::TSEnumDeclaration(d) => d.fmt(f),
-            Declaration::TSModuleDeclaration(d) => d.fmt(f),
-            Declaration::TSImportEqualsDeclaration(d) => d.fmt(f),
-        }
-    }
-}
-
-impl<'a> FormatWrite<'a> for EmptyStatement {
+impl<'a> FormatWrite<'a> for AstNode<'a, EmptyStatement> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         if matches!(
-            f.parent_kind(),
-            AstKind::DoWhileStatement(_)
-                | AstKind::IfStatement(_)
-                | AstKind::WhileStatement(_)
-                | AstKind::ForStatement(_)
-                | AstKind::ForInStatement(_)
-                | AstKind::ForOfStatement(_)
-                | AstKind::WithStatement(_)
+            self.parent,
+            AstNodes::DoWhileStatement(_)
+                | AstNodes::IfStatement(_)
+                | AstNodes::WhileStatement(_)
+                | AstNodes::ForStatement(_)
+                | AstNodes::ForInStatement(_)
+                | AstNodes::ForOfStatement(_)
+                | AstNodes::WithStatement(_)
         ) {
             write!(f, ";")
         } else {
@@ -852,45 +615,57 @@ impl<'a> FormatWrite<'a> for EmptyStatement {
     }
 }
 
-impl<'a> FormatWrite<'a> for ExpressionStatement<'a> {
+impl<'a> FormatWrite<'a> for AstNode<'a, ExpressionStatement<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        write!(f, [self.expression, OptionalSemicolon])
+        write!(f, [self.expression(), OptionalSemicolon])
     }
 }
 
-impl<'a> FormatWrite<'a> for DoWhileStatement<'a> {
+impl<'a> FormatWrite<'a> for AstNode<'a, DoWhileStatement<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        let Self { body, test, .. } = self;
+        let body = self.body();
         write!(f, group(&format_args!("do", FormatStatementBody::new(body))))?;
-        if matches!(body, Statement::BlockStatement(_)) {
+        if matches!(body.as_ref(), Statement::BlockStatement(_)) {
             write!(f, space())?;
         } else {
             write!(f, hard_line_break())?;
         }
-        write!(f, ["while", space(), "(", group(&soft_block_indent(test)), ")", OptionalSemicolon])
+        write!(
+            f,
+            [
+                "while",
+                space(),
+                "(",
+                group(&soft_block_indent(&self.test())),
+                ")",
+                OptionalSemicolon
+            ]
+        )
     }
 }
 
-impl<'a> FormatWrite<'a> for WhileStatement<'a> {
+impl<'a> FormatWrite<'a> for AstNode<'a, WhileStatement<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        let Self { test, body, .. } = self;
         write!(
             f,
             group(&format_args!(
                 "while",
                 space(),
                 "(",
-                group(&soft_block_indent(test)),
+                group(&soft_block_indent(self.test())),
                 ")",
-                FormatStatementBody::new(body)
+                FormatStatementBody::new(self.body())
             ))
         )
     }
 }
 
-impl<'a> FormatWrite<'a> for ForStatement<'a> {
+impl<'a> FormatWrite<'a> for AstNode<'a, ForStatement<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        let ForStatement { init, test, update, body, .. } = self;
+        let init = self.init();
+        let test = self.test();
+        let update = self.update();
+        let body = self.body();
         let format_body = FormatStatementBody::new(body);
         if init.is_none() && test.is_none() && update.is_none() {
             return write!(f, group(&format_args!("for", space(), "(;;)", format_body)));
@@ -920,51 +695,35 @@ impl<'a> FormatWrite<'a> for ForStatement<'a> {
     }
 }
 
-impl<'a> FormatWrite<'a> for ForStatementInit<'a> {
+impl<'a> FormatWrite<'a> for AstNode<'a, ForInStatement<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        match self {
-            Self::VariableDeclaration(var) => var.fmt(f),
-            _ => self.to_expression().fmt(f),
-        }
-    }
-}
-
-impl<'a> FormatWrite<'a> for ForInStatement<'a> {
-    fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        let Self { left, right, body, .. } = self;
         write!(
             f,
             group(&format_args!(
                 "for",
                 space(),
                 "(",
-                left,
+                self.left(),
                 space(),
                 "in",
                 space(),
-                right,
+                self.right(),
                 ")",
-                FormatStatementBody::new(body)
+                FormatStatementBody::new(self.body())
             ))
         )
     }
 }
 
-impl<'a> FormatWrite<'a> for ForStatementLeft<'a> {
+impl<'a> FormatWrite<'a> for AstNode<'a, ForOfStatement<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        match self {
-            ForStatementLeft::VariableDeclaration(var) => var.fmt(f),
-            match_assignment_target!(ForStatementLeft) => self.to_assignment_target().fmt(f),
-        }
-    }
-}
-
-impl<'a> FormatWrite<'a> for ForOfStatement<'a> {
-    fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        let Self { r#await, left, right, body, .. } = self;
+        let r#await = self.r#await();
+        let left = self.left();
+        let right = self.right();
+        let body = self.body();
         let format_inner = format_with(|f| {
             write!(f, "for")?;
-            if *r#await {
+            if r#await {
                 write!(f, [space(), "await"])?;
             }
             write!(
@@ -986,16 +745,18 @@ impl<'a> FormatWrite<'a> for ForOfStatement<'a> {
     }
 }
 
-impl<'a> FormatWrite<'a> for IfStatement<'a> {
+impl<'a> FormatWrite<'a> for AstNode<'a, IfStatement<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        let IfStatement { test, consequent, alternate, .. } = self;
+        let test = self.test();
+        let consequent = self.consequent();
+        let alternate = self.alternate();
         write!(
             f,
             group(&format_args!(
                 "if",
                 space(),
                 "(",
-                group(&soft_block_indent(test)),
+                group(&soft_block_indent(&test)),
                 ")",
                 FormatStatementBody::new(consequent),
             ))
@@ -1012,7 +773,7 @@ impl<'a> FormatWrite<'a> for IfStatement<'a> {
                 .iter()
                 .any(|comment| comment.kind().is_line());
 
-            let else_on_same_line = matches!(consequent, Statement::BlockStatement(_))
+            let else_on_same_line = matches!(consequent.as_ref(), Statement::BlockStatement(_))
                 && !trailing_line_comment
                 && !dangling_line_comment;
 
@@ -1023,7 +784,7 @@ impl<'a> FormatWrite<'a> for IfStatement<'a> {
             }
 
             if has_dangling_comments {
-                write!(f, format_dangling_comments(self.span))?;
+                write!(f, format_dangling_comments(self.span()))?;
 
                 if trailing_line_comment || dangling_line_comment {
                     write!(f, hard_line_break())?;
@@ -1036,10 +797,10 @@ impl<'a> FormatWrite<'a> for IfStatement<'a> {
                 f,
                 [
                     "else",
-                    group(
-                        &FormatStatementBody::new(alternate)
-                            .with_forced_space(matches!(alternate, Statement::IfStatement(_)))
-                    )
+                    group(&FormatStatementBody::new(alternate).with_forced_space(matches!(
+                        alternate.as_ref(),
+                        Statement::IfStatement(_)
+                    )))
                 ]
             )?;
         }
@@ -1047,49 +808,56 @@ impl<'a> FormatWrite<'a> for IfStatement<'a> {
     }
 }
 
-impl<'a> FormatWrite<'a> for ContinueStatement<'a> {
+impl<'a> FormatWrite<'a> for AstNode<'a, ContinueStatement<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         write!(f, "continue")?;
-        if let Some(label) = &self.label {
+        if let Some(label) = self.label() {
             write!(f, [space(), label])?;
         }
         write!(f, OptionalSemicolon)
     }
 }
 
-impl<'a> FormatWrite<'a> for BreakStatement<'a> {
+impl<'a> FormatWrite<'a> for AstNode<'a, BreakStatement<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         write!(f, "break")?;
-        if let Some(label) = &self.label {
+        if let Some(label) = self.label() {
             write!(f, [space(), label])?;
         }
         write!(f, OptionalSemicolon)
     }
 }
 
-impl<'a> FormatWrite<'a> for ReturnStatement<'a> {
+impl<'a> FormatWrite<'a> for AstNode<'a, ReturnStatement<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         write!(f, "return")?;
-        if let Some(argument) = &self.argument {
+        if let Some(argument) = self.argument() {
             write!(f, [space(), argument])?;
         }
         write!(f, OptionalSemicolon)
     }
 }
 
-impl<'a> FormatWrite<'a> for WithStatement<'a> {
+impl<'a> FormatWrite<'a> for AstNode<'a, WithStatement<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        let Self { object, body, .. } = self;
         write!(
             f,
-            group(&format_args!("with", space(), "(", object, ")", FormatStatementBody::new(body)))
+            group(&format_args!(
+                "with",
+                space(),
+                "(",
+                self.object(),
+                ")",
+                FormatStatementBody::new(self.body())
+            ))
         )
     }
 }
 
-impl<'a> FormatWrite<'a> for SwitchStatement<'a> {
+impl<'a> FormatWrite<'a> for AstNode<'a, SwitchStatement<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        let Self { discriminant, cases, .. } = self;
+        let discriminant = self.discriminant();
+        let cases = self.cases();
         let format_cases =
             format_with(|f| if cases.is_empty() { hard_line_break().fmt(f) } else { cases.fmt(f) });
         write!(
@@ -1098,7 +866,7 @@ impl<'a> FormatWrite<'a> for SwitchStatement<'a> {
                 "switch",
                 space(),
                 "(",
-                group(&soft_block_indent(discriminant)),
+                group(&soft_block_indent(&discriminant)),
                 ")",
                 space(),
                 "{",
@@ -1109,35 +877,34 @@ impl<'a> FormatWrite<'a> for SwitchStatement<'a> {
     }
 }
 
-impl<'a> Format<'a> for Vec<'a, SwitchCase<'a>> {
+impl<'a> Format<'a> for AstNode<'a, Vec<'a, SwitchCase<'a>>> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         let source_text = f.source_text();
         let mut join = f.join_nodes_with_hardline();
         for case in self {
-            join.entry(case.span, source_text, case);
+            join.entry(case.span(), source_text, case);
         }
         join.finish()
     }
 }
 
-impl<'a> FormatWrite<'a> for SwitchCase<'a> {
+impl<'a> FormatWrite<'a> for AstNode<'a, SwitchCase<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        let Self { test, consequent, .. } = self;
-
-        if let Some(test) = test {
+        if let Some(test) = self.test() {
             write!(f, ["case", space(), test, ":"])?;
         } else {
             write!(f, ["default", ":"])?;
         }
 
+        let consequent = self.consequent();
         // Whether the first statement in the clause is a BlockStatement, and
         // there are no other non-empty statements. Empties may show up when
         // parsing depending on if the input code includes certain newlines.
         let is_single_block_statement =
-            matches!(consequent.iter().next(), Some(Statement::BlockStatement(_)))
+            matches!(consequent.as_ref().first(), Some(Statement::BlockStatement(_)))
                 && consequent
                     .iter()
-                    .filter(|statement| !matches!(statement, Statement::EmptyStatement(_)))
+                    .filter(|statement| !matches!(statement.as_ref(), Statement::EmptyStatement(_)))
                     .count()
                     == 1;
         // When the case block is empty, the case becomes a fallthrough, so it
@@ -1185,31 +952,31 @@ impl<'a> FormatWrite<'a> for SwitchCase<'a> {
     }
 }
 
-impl<'a> FormatWrite<'a> for LabeledStatement<'a> {
+impl<'a> FormatWrite<'a> for AstNode<'a, LabeledStatement<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        let Self { label, body, .. } = self;
+        let label = self.label();
+        let body = self.body();
         write!(f, [label, ":"])?;
-        match body {
-            Statement::EmptyStatement(_) => {
-                // If the body is an empty statement, force semicolon insertion
-                write!(f, ";")
-            }
-            body => {
-                write!(f, [space(), body])
-            }
+        if matches!(body.as_ref(), Statement::EmptyStatement(_)) {
+            // If the body is an empty statement, force semicolon insertion
+            write!(f, ";")
+        } else {
+            write!(f, [space(), body])
         }
     }
 }
 
-impl<'a> FormatWrite<'a> for ThrowStatement<'a> {
+impl<'a> FormatWrite<'a> for AstNode<'a, ThrowStatement<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        write!(f, ["throw ", self.argument, OptionalSemicolon])
+        write!(f, ["throw ", self.argument(), OptionalSemicolon])
     }
 }
 
-impl<'a> FormatWrite<'a> for TryStatement<'a> {
+impl<'a> FormatWrite<'a> for AstNode<'a, TryStatement<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        let Self { block, handler, finalizer, .. } = self;
+        let block = self.block();
+        let handler = self.handler();
+        let finalizer = self.finalizer();
         write!(f, ["try", space(), block])?;
         if let Some(handler) = handler {
             write!(f, [space(), handler])?;
@@ -1221,76 +988,64 @@ impl<'a> FormatWrite<'a> for TryStatement<'a> {
     }
 }
 
-impl<'a> FormatWrite<'a> for CatchClause<'a> {
+impl<'a> FormatWrite<'a> for AstNode<'a, CatchClause<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        write!(f, ["catch", space(), self.param, space(), self.body])
+        write!(f, ["catch", space(), self.param(), space(), self.body()])
     }
 }
 
-impl<'a> FormatWrite<'a> for CatchParameter<'a> {
+impl<'a> FormatWrite<'a> for AstNode<'a, CatchParameter<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        write!(f, ["(", self.pattern, ")"])
+        write!(f, ["(", self.pattern(), ")"])
     }
 }
 
-impl<'a> FormatWrite<'a> for DebuggerStatement {
+impl<'a> FormatWrite<'a> for AstNode<'a, DebuggerStatement> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         write!(f, ["debugger", OptionalSemicolon])
     }
 }
 
-impl<'a> FormatWrite<'a> for BindingPattern<'a> {
+impl<'a> FormatWrite<'a> for AstNode<'a, BindingPattern<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        write!(f, self.kind)?;
-        if self.optional {
+        write!(f, self.kind())?;
+        if self.optional() {
             write!(f, "?")?;
         }
-        if let Some(type_annotation) = &self.type_annotation {
+        if let Some(type_annotation) = &self.type_annotation() {
             write!(f, type_annotation)?;
         }
         Ok(())
     }
 }
 
-impl<'a> FormatWrite<'a> for BindingPatternKind<'a> {
+impl<'a> FormatWrite<'a> for AstNode<'a, AssignmentPattern<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        match self {
-            Self::BindingIdentifier(p) => p.fmt(f),
-            Self::ObjectPattern(p) => p.fmt(f),
-            Self::ArrayPattern(p) => p.fmt(f),
-            Self::AssignmentPattern(p) => p.fmt(f),
-        }
+        write!(f, [self.left(), space(), "=", space(), self.right()])
     }
 }
 
-impl<'a> FormatWrite<'a> for AssignmentPattern<'a> {
-    fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        write!(f, [self.left, space(), "=", space(), self.right])
-    }
-}
-
-impl<'a> FormatWrite<'a> for ObjectPattern<'a> {
+impl<'a> FormatWrite<'a> for AstNode<'a, ObjectPattern<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         ObjectPatternLike::ObjectPattern(self).fmt(f)
     }
 }
 
-impl<'a> FormatWrite<'a> for BindingProperty<'a> {
+impl<'a> FormatWrite<'a> for AstNode<'a, BindingProperty<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        let Self { key, value, shorthand, computed, .. } = self;
         let group_id = f.group_id("assignment");
         let format_inner = format_with(|f| {
-            if *computed {
+            if self.computed() {
                 write!(f, "[")?;
             }
-            if !*shorthand {
-                write!(f, key)?;
+            if !self.shorthand() {
+                write!(f, self.key())?;
             }
-            if *computed {
+            if self.computed() {
                 write!(f, "]")?;
             }
-            if *shorthand {
-                write!(f, value)
+            if self.shorthand() {
+                write!(f, self.value())
             } else {
                 write!(
                     f,
@@ -1298,7 +1053,7 @@ impl<'a> FormatWrite<'a> for BindingProperty<'a> {
                         ":",
                         group(&indent(&soft_line_break_or_space())).with_group_id(Some(group_id)),
                         line_suffix_boundary(),
-                        indent_if_group_breaks(&value, group_id)
+                        indent_if_group_breaks(&self.value(), group_id)
                     ]
                 )
             }
@@ -1307,11 +1062,11 @@ impl<'a> FormatWrite<'a> for BindingProperty<'a> {
     }
 }
 
-impl<'a> FormatWrite<'a> for ArrayPattern<'a> {
+impl<'a> FormatWrite<'a> for AstNode<'a, ArrayPattern<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         write!(f, "[")?;
         if self.is_empty() {
-            write!(f, [format_dangling_comments(self.span).with_block_indent()])?;
+            write!(f, [format_dangling_comments(self.span()).with_block_indent()])?;
         } else {
             // write!(f, [group(&soft_block_indent(&self.elements))])?;
         }
@@ -1319,13 +1074,13 @@ impl<'a> FormatWrite<'a> for ArrayPattern<'a> {
     }
 }
 
-impl<'a> FormatWrite<'a> for BindingRestElement<'a> {
+impl<'a> FormatWrite<'a> for AstNode<'a, BindingRestElement<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        write!(f, ["...", self.argument])
+        write!(f, ["...", self.argument()])
     }
 }
 
-impl<'a> FormatWrite<'a> for FormalParameters<'a> {
+impl<'a> FormatWrite<'a> for AstNode<'a, FormalParameters<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         let parentheses_not_needed = true; // self
         // .as_arrow_function_expression()
@@ -1348,7 +1103,7 @@ impl<'a> FormatWrite<'a> for FormalParameters<'a> {
 
         match layout {
             ParameterLayout::NoParameters => {
-                write!(f, format_dangling_comments(self.span).with_soft_block_indent())?;
+                write!(f, format_dangling_comments(self.span()).with_soft_block_indent())?;
             }
             ParameterLayout::Hug => {
                 write!(f, ParameterList::with_layout(self, layout))?;
@@ -1362,21 +1117,19 @@ impl<'a> FormatWrite<'a> for FormalParameters<'a> {
     }
 }
 
-impl<'a> FormatWrite<'a> for FormalParameter<'a> {
+impl<'a> FormatWrite<'a> for AstNode<'a, FormalParameter<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        let Self { decorators, pattern, accessibility, readonly, r#override, .. } = self;
-
         let content = format_with(|f| {
-            if let Some(accessibility) = accessibility {
+            if let Some(accessibility) = self.accessibility() {
                 write!(f, [accessibility.as_str(), space()])?;
             }
-            if *r#override {
+            if self.r#override() {
                 write!(f, ["override", space()])?;
             }
-            if *readonly {
+            if self.readonly() {
                 write!(f, ["readonly", space()])?;
             }
-            write!(f, pattern)
+            write!(f, self.pattern())
         });
 
         // TODO
@@ -1389,6 +1142,7 @@ impl<'a> FormatWrite<'a> for FormalParameter<'a> {
         // should_hug_function_parameters(&parameters, f.comments(), false).unwrap_or(false)
         // });
 
+        let decorators = self.decorators();
         if is_hug_parameter && decorators.is_empty() {
             write!(f, [decorators, content])?;
         } else if decorators.is_empty() {
@@ -1402,32 +1156,32 @@ impl<'a> FormatWrite<'a> for FormalParameter<'a> {
     }
 }
 
-impl<'a> FormatWrite<'a> for ArrowFunctionExpression<'a> {
+impl<'a> FormatWrite<'a> for AstNode<'a, ArrowFunctionExpression<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         FormatJsArrowFunctionExpression::new(self).fmt(f)
     }
 }
 
-impl<'a> FormatWrite<'a> for YieldExpression<'a> {
+impl<'a> FormatWrite<'a> for AstNode<'a, YieldExpression<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         write!(f, "yield")?;
-        if self.delegate {
+        if self.delegate() {
             write!(f, "*")?;
         }
-        if let Some(argument) = &self.argument {
+        if let Some(argument) = &self.argument() {
             write!(f, [space(), argument])?;
         }
         Ok(())
     }
 }
 
-impl<'a> FormatWrite<'a> for ClassBody<'a> {
+impl<'a> FormatWrite<'a> for AstNode<'a, ClassBody<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        write!(f, ["{", block_indent(&self.body), "}"])
+        write!(f, ["{", block_indent(&self.body()), "}"])
     }
 }
 
-impl<'a> Format<'a> for Vec<'a, ClassElement<'a>> {
+impl<'a> Format<'a> for AstNode<'a, Vec<'a, ClassElement<'a>>> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         let source_text = f.source_text();
         let mut join = f.join_nodes_with_hardline();
@@ -1439,37 +1193,25 @@ impl<'a> Format<'a> for Vec<'a, ClassElement<'a>> {
     }
 }
 
-impl<'a> Format<'a> for (&ClassElement<'a>, Option<&ClassElement<'a>>) {
+impl<'a> Format<'a> for (&AstNode<'a, ClassElement<'a>>, Option<&AstNode<'a, ClassElement<'a>>>) {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         write!(f, [self.0, ClassPropertySemicolon::new(self.0, self.1)])
     }
 }
 
-impl<'a> FormatWrite<'a> for ClassElement<'a> {
+impl<'a> FormatWrite<'a> for AstNode<'a, MethodDefinition<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        match self {
-            Self::StaticBlock(e) => e.fmt(f),
-            Self::MethodDefinition(e) => e.fmt(f),
-            Self::PropertyDefinition(e) => e.fmt(f),
-            Self::AccessorProperty(e) => e.fmt(f),
-            Self::TSIndexSignature(e) => e.fmt(f),
-        }
-    }
-}
-
-impl<'a> FormatWrite<'a> for MethodDefinition<'a> {
-    fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        write!(f, [self.decorators])?;
-        if let Some(accessibility) = &self.accessibility {
+        write!(f, [self.decorators()])?;
+        if let Some(accessibility) = &self.accessibility() {
             write!(f, [accessibility.as_str(), space()])?;
         }
-        if self.r#type.is_abstract() {
+        if self.r#type().is_abstract() {
             write!(f, ["abstract", space()])?;
         }
-        if self.r#static {
+        if self.r#static() {
             write!(f, ["static", space()])?;
         }
-        match &self.kind {
+        match &self.kind() {
             MethodDefinitionKind::Constructor | MethodDefinitionKind::Method => {}
             MethodDefinitionKind::Get => {
                 write!(f, ["get", space()])?;
@@ -1478,34 +1220,34 @@ impl<'a> FormatWrite<'a> for MethodDefinition<'a> {
                 write!(f, ["set", space()])?;
             }
         }
-        if self.value.r#async {
+        if self.value().r#async() {
             write!(f, ["async", space()])?;
         }
-        if self.value.generator {
+        if self.value().generator() {
             write!(f, "*")?;
         }
-        if self.computed {
+        if self.computed() {
             write!(f, "[")?;
         }
-        write!(f, self.key)?;
-        if self.computed {
+        write!(f, self.key())?;
+        if self.computed() {
             write!(f, "]")?;
         }
-        if self.optional {
+        if self.optional() {
             write!(f, "?")?;
         }
-        if let Some(type_parameters) = &self.value.type_parameters {
+        if let Some(type_parameters) = &self.value().type_parameters() {
             write!(f, type_parameters)?;
         }
-        write!(f, group(&self.value.params))?;
-        if let Some(return_type) = &self.value.return_type {
+        write!(f, group(&self.value().params()))?;
+        if let Some(return_type) = &self.value().return_type() {
             write!(f, return_type)?;
         }
-        if let Some(body) = &self.value.body {
+        if let Some(body) = &self.value().body() {
             write!(f, [space(), body])?;
         }
-        if self.r#type.is_abstract()
-            || matches!(self.value.r#type, FunctionType::TSEmptyBodyFunctionExpression)
+        if self.r#type().is_abstract()
+            || matches!(self.value().r#type(), FunctionType::TSEmptyBodyFunctionExpression)
         {
             write!(f, OptionalSemicolon)?;
         }
@@ -1513,27 +1255,27 @@ impl<'a> FormatWrite<'a> for MethodDefinition<'a> {
     }
 }
 
-impl<'a> FormatWrite<'a> for PropertyDefinition<'a> {
+impl<'a> FormatWrite<'a> for AstNode<'a, PropertyDefinition<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        write!(f, self.decorators)?;
-        if self.declare {
+        write!(f, self.decorators())?;
+        if self.declare() {
             write!(f, ["declare", space()])?;
         }
-        if let Some(accessibility) = self.accessibility {
+        if let Some(accessibility) = self.accessibility() {
             write!(f, [accessibility.as_str(), space()])?;
         }
-        if self.r#type == PropertyDefinitionType::TSAbstractPropertyDefinition {
+        if self.r#type() == PropertyDefinitionType::TSAbstractPropertyDefinition {
             write!(f, ["abstract", space()])?;
         }
-        if self.r#static {
+        if self.r#static() {
             write!(f, ["static", space()])?;
         }
-        if self.readonly {
+        if self.readonly() {
             write!(f, ["readonly", space()])?;
         }
-        if self.computed {
-            write!(f, ["[", self.key, "]"])?;
-        } else if let PropertyKey::StringLiteral(s) = &self.key {
+        if self.computed() {
+            write!(f, ["[", self.key(), "]"])?;
+        } else if let PropertyKey::StringLiteral(s) = self.key().as_ref() {
             FormatLiteralStringToken::new(
                 s.span.source_text(f.source_text()),
                 s.span,
@@ -1543,92 +1285,79 @@ impl<'a> FormatWrite<'a> for PropertyDefinition<'a> {
             )
             .fmt(f)?;
         } else {
-            write!(f, self.key)?;
+            write!(f, self.key())?;
         }
 
-        if self.optional {
+        if self.optional() {
             write!(f, "?")?;
         }
-        if let Some(type_annotation) = &self.type_annotation {
+        if let Some(type_annotation) = &self.type_annotation() {
             write!(f, type_annotation)?;
         }
-        if let Some(value) = &self.value {
+        if let Some(value) = &self.value() {
             write!(f, [space(), "=", space(), value])?;
         }
         Ok(())
     }
 }
 
-impl<'a> FormatWrite<'a> for PrivateIdentifier<'a> {
+impl<'a> FormatWrite<'a> for AstNode<'a, PrivateIdentifier<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        write!(f, ["#", dynamic_text(self.name.as_str(), self.span.start)])
+        write!(f, ["#", dynamic_text(self.name().as_str(), self.span().start)])
     }
 }
 
-impl<'a> FormatWrite<'a> for StaticBlock<'a> {
+impl<'a> FormatWrite<'a> for AstNode<'a, StaticBlock<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         write!(f, ["static", space(), "{"])?;
-        for stmt in &self.body {
+        for stmt in self.body() {
             write!(f, stmt);
         }
         write!(f, "}")
     }
 }
 
-impl<'a> FormatWrite<'a> for ModuleDeclaration<'a> {
+impl<'a> FormatWrite<'a> for AstNode<'a, AccessorProperty<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        match self {
-            Self::ImportDeclaration(decl) => decl.fmt(f),
-            Self::ExportAllDeclaration(decl) => decl.fmt(f),
-            Self::ExportDefaultDeclaration(decl) => decl.fmt(f),
-            Self::ExportNamedDeclaration(decl) => decl.fmt(f),
-            Self::TSExportAssignment(decl) => decl.fmt(f),
-            Self::TSNamespaceExportDeclaration(decl) => decl.fmt(f),
-        }
-    }
-}
-
-impl<'a> FormatWrite<'a> for AccessorProperty<'a> {
-    fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        write!(f, self.decorators)?;
-        if self.r#type.is_abstract() {
+        write!(f, self.decorators())?;
+        if self.r#type().is_abstract() {
             write!(f, ["abstract", space()])?;
         }
-        if let Some(accessibility) = self.accessibility {
+        if let Some(accessibility) = self.accessibility() {
             write!(f, [accessibility.as_str(), space()])?;
         }
-        if self.r#static {
+        if self.r#static() {
             write!(f, ["static", space()])?;
         }
-        if self.r#override {
+        if self.r#override() {
             write!(f, ["override", space()])?;
         }
         write!(f, ["accessor", space()])?;
-        if self.computed {
+        if self.computed() {
             write!(f, "[")?;
         }
-        write!(f, self.key)?;
-        if self.computed {
+        write!(f, self.key())?;
+        if self.computed() {
             write!(f, "]")?;
         }
-        if let Some(type_annotation) = &self.type_annotation {
+        if let Some(type_annotation) = &self.type_annotation() {
             write!(f, type_annotation)?;
         }
-        if let Some(value) = &self.value {
+        if let Some(value) = &self.value() {
             write!(f, [space(), "=", space(), value])?;
         }
         Ok(())
     }
 }
 
-impl<'a> FormatWrite<'a> for ImportExpression<'a> {
+impl<'a> FormatWrite<'a> for AstNode<'a, ImportExpression<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         write!(f, ["import"])?;
-        if let Some(phase) = &self.phase {
+        if let Some(phase) = &self.phase() {
             write!(f, [".", phase.as_str()])?;
         }
-        write!(f, ["(", self.source])?;
-        if let Some(options) = &self.options {
+        write!(f, ["(", self.source()])?;
+        if let Some(options) = &self.options() {
             write!(f, [",", space(), options])?;
         }
         write!(f, ")")
@@ -1641,15 +1370,16 @@ impl<'a> Format<'a> for ImportOrExportKind {
     }
 }
 
-impl<'a> FormatWrite<'a> for ImportDeclaration<'a> {
+impl<'a> FormatWrite<'a> for AstNode<'a, ImportDeclaration<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        write!(f, ["import", space(), self.import_kind])?;
+        write!(f, ["import", space(), self.import_kind()])?;
 
         let should_insert_space_around_brackets = f.options().bracket_spacing.value();
 
-        if let Some(specifiers) = &self.specifiers {
+        if let Some(specifiers) = self.specifiers() {
             if specifiers.len() == 1
                 && specifiers
+                    .as_ref()
                     .first()
                     .is_some_and(|s| matches!(s, ImportDeclarationSpecifier::ImportSpecifier(_)))
             {
@@ -1667,21 +1397,21 @@ impl<'a> FormatWrite<'a> for ImportDeclaration<'a> {
             } else {
                 let mut start_index = 0;
                 for specifier in specifiers {
-                    if !matches!(specifier, ImportDeclarationSpecifier::ImportSpecifier(_)) {
+                    if !matches!(specifier.as_ref(), ImportDeclarationSpecifier::ImportSpecifier(_))
+                    {
                         start_index += 1;
                     }
                 }
 
-                let (before, after) = specifiers.split_at(start_index);
-
-                for (i, specifier) in before.iter().enumerate() {
+                let iter = specifiers.iter().take(start_index);
+                for (i, specifier) in iter.enumerate() {
                     if i != 0 {
                         write!(f, [",", space()])?;
                     }
                     write!(f, specifier)?;
                 }
 
-                let specifiers = after;
+                let specifiers = specifiers.iter().skip(start_index).collect::<std::vec::Vec<_>>();
                 if specifiers.is_empty() {
                     if start_index == 0 {
                         write!(f, ["{}", space()])?;
@@ -1710,11 +1440,11 @@ impl<'a> FormatWrite<'a> for ImportDeclaration<'a> {
             write!(f, ["from", space()])?;
         }
 
-        write!(f, [self.source, self.with_clause, OptionalSemicolon])
+        write!(f, [self.source(), self.with_clause(), OptionalSemicolon])
     }
 }
 
-impl<'a> Format<'a> for &[ImportDeclarationSpecifier<'a>] {
+impl<'a> Format<'a> for std::vec::Vec<&AstNode<'a, ImportDeclarationSpecifier<'a>>> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         let trailing_separator = FormatTrailingCommas::ES5.trailing_separator(f.options());
         f.join_with(&soft_line_break_or_space())
@@ -1726,46 +1456,36 @@ impl<'a> Format<'a> for &[ImportDeclarationSpecifier<'a>] {
     }
 }
 
-impl<'a> FormatWrite<'a> for ImportDeclarationSpecifier<'a> {
+impl<'a> FormatWrite<'a> for AstNode<'a, ImportSpecifier<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        match self {
-            Self::ImportSpecifier(s) => s.fmt(f),
-            Self::ImportDefaultSpecifier(s) => s.fmt(f),
-            Self::ImportNamespaceSpecifier(s) => s.fmt(f),
-        }
-    }
-}
-
-impl<'a> FormatWrite<'a> for ImportSpecifier<'a> {
-    fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        let Self { imported, local, import_kind, .. } = self;
-        write!(f, [import_kind, imported])?;
-        if local.span != imported.span() {
-            write!(f, [space(), "as", space(), local])?;
+        write!(f, [self.import_kind(), self.imported()])?;
+        if self.local().span() != self.imported().span() {
+            write!(f, [space(), "as", space(), self.local()])?;
         }
         Ok(())
     }
 }
 
-impl<'a> FormatWrite<'a> for ImportDefaultSpecifier<'a> {
+impl<'a> FormatWrite<'a> for AstNode<'a, ImportDefaultSpecifier<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        self.local.fmt(f)
+        self.local().fmt(f)
     }
 }
 
-impl<'a> FormatWrite<'a> for ImportNamespaceSpecifier<'a> {
+impl<'a> FormatWrite<'a> for AstNode<'a, ImportNamespaceSpecifier<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        write!(f, ["*", space(), "as", space(), self.local])
+        write!(f, ["*", space(), "as", space(), self.local()])
     }
 }
 
-impl<'a> FormatWrite<'a> for WithClause<'a> {
+impl<'a> FormatWrite<'a> for AstNode<'a, WithClause<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         let should_insert_space_around_brackets = f.options().bracket_spacing.value();
         let format_comment = format_with(|f| {
-            if self.with_entries.is_empty() && f.comments().has_leading_comments(self.span.end - 1)
+            if self.with_entries().is_empty()
+                && f.comments().has_leading_comments(self.span().end - 1)
             {
-                write!(f, [space(), format_leading_comments(self.span.end - 1)])
+                write!(f, [space(), format_leading_comments(self.span().end - 1)])
             } else {
                 Ok(())
             }
@@ -1775,11 +1495,11 @@ impl<'a> FormatWrite<'a> for WithClause<'a> {
             [
                 space(),
                 format_comment,
-                self.attributes_keyword,
+                self.attributes_keyword(),
                 space(),
                 "{",
                 group(&soft_block_indent_with_maybe_space(
-                    &self.with_entries,
+                    self.with_entries(),
                     should_insert_space_around_brackets,
                 )),
                 "}"
@@ -1788,7 +1508,7 @@ impl<'a> FormatWrite<'a> for WithClause<'a> {
     }
 }
 
-impl<'a> Format<'a> for Vec<'a, ImportAttribute<'a>> {
+impl<'a> Format<'a> for AstNode<'a, Vec<'a, ImportAttribute<'a>>> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         let trailing_separator = FormatTrailingCommas::ES5.trailing_separator(f.options());
         f.join_with(&soft_line_break_or_space())
@@ -1800,37 +1520,36 @@ impl<'a> Format<'a> for Vec<'a, ImportAttribute<'a>> {
     }
 }
 
-impl<'a> FormatWrite<'a> for ImportAttribute<'a> {
+impl<'a> FormatWrite<'a> for AstNode<'a, ImportAttribute<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        write!(f, [self.key, ":", space(), self.value])
-    }
-}
-
-impl<'a> FormatWrite<'a> for ImportAttributeKey<'a> {
-    fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        match self {
-            Self::Identifier(ident) => ident.fmt(f),
-            Self::StringLiteral(s) => {
-                if f.options().quote_properties == QuoteProperties::AsNeeded
-                    && is_identifier_name(s.value.as_str())
-                {
-                    dynamic_text(s.value.as_str(), s.span.start).fmt(f)
-                } else {
-                    s.fmt(f)
-                }
+        if let AstNodes::StringLiteral(s) = self.key().as_ast_nodes() {
+            if f.options().quote_properties == QuoteProperties::AsNeeded
+                && is_identifier_name(s.value().as_str())
+            {
+                dynamic_text(s.value().as_str(), s.span().start).fmt(f)?;
+            } else {
+                s.fmt(f)?;
             }
+        } else {
+            write!(f, self.key())?;
         }
+        write!(f, [":", space(), self.value()])
     }
 }
 
-impl<'a> FormatWrite<'a> for ExportNamedDeclaration<'a> {
+impl<'a> FormatWrite<'a> for AstNode<'a, ExportNamedDeclaration<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        let Self { declaration, export_kind, specifiers, source, with_clause, .. } = self;
+        let declaration = self.declaration();
+        let export_kind = self.export_kind();
+        let specifiers = self.specifiers();
+        let source = self.source();
+        let with_clause = self.with_clause();
         let should_insert_space_around_brackets = f.options().bracket_spacing.value();
 
-        if let Some(Declaration::ClassDeclaration(class)) = declaration {
-            if !class.decorators.is_empty() {
-                write!(f, class.decorators)?;
+        if let Some(AstNodes::Class(class)) = declaration.map(AstNode::<Declaration>::as_ast_nodes)
+        {
+            if !class.decorators().is_empty() {
+                write!(f, class.decorators())?;
             }
         }
 
@@ -1848,7 +1567,7 @@ impl<'a> FormatWrite<'a> for ExportNamedDeclaration<'a> {
                 write!(
                     f,
                     group(&soft_block_indent_with_maybe_space(
-                        specifiers,
+                        &specifiers,
                         should_insert_space_around_brackets
                     ))
                 )?;
@@ -1863,43 +1582,39 @@ impl<'a> FormatWrite<'a> for ExportNamedDeclaration<'a> {
         if let Some(with_clause) = with_clause {
             write!(f, [space(), with_clause])?;
         }
-        if declaration.is_none()
-            || declaration
-                .as_ref()
-                .is_some_and(|d| matches!(d, Declaration::VariableDeclaration(_)))
-        {
+        if declaration.is_none_or(|d| matches!(d.as_ref(), Declaration::VariableDeclaration(_))) {
             write!(f, OptionalSemicolon)?;
         }
         Ok(())
     }
 }
 
-impl<'a> FormatWrite<'a> for ExportDefaultDeclaration<'a> {
+impl<'a> FormatWrite<'a> for AstNode<'a, ExportDefaultDeclaration<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        if let ExportDefaultDeclarationKind::ClassDeclaration(class) = &self.declaration {
-            if !class.decorators.is_empty() {
-                write!(f, class.decorators)?;
+        if let AstNodes::Class(class) = self.declaration().as_ast_nodes() {
+            if !class.decorators().is_empty() {
+                write!(f, class.decorators())?;
             }
         }
-        write!(f, ["export", space(), "default", space(), self.declaration])?;
-        if self.declaration.is_expression() {
+        write!(f, ["export", space(), "default", space(), self.declaration()])?;
+        if self.declaration().is_expression() {
             write!(f, OptionalSemicolon)?;
         }
         Ok(())
     }
 }
 
-impl<'a> FormatWrite<'a> for ExportAllDeclaration<'a> {
+impl<'a> FormatWrite<'a> for AstNode<'a, ExportAllDeclaration<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        write!(f, ["export", space(), self.export_kind, "*", space()])?;
-        if let Some(name) = &self.exported {
+        write!(f, ["export", space(), self.export_kind(), "*", space()])?;
+        if let Some(name) = &self.exported() {
             write!(f, ["as", space(), name, space()])?;
         }
-        write!(f, ["from", space(), self.source, self.with_clause, OptionalSemicolon])
+        write!(f, ["from", space(), self.source(), self.with_clause(), OptionalSemicolon])
     }
 }
 
-impl<'a> Format<'a> for Vec<'a, ExportSpecifier<'a>> {
+impl<'a> Format<'a> for AstNode<'a, Vec<'a, ExportSpecifier<'a>>> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         let trailing_separator = FormatTrailingCommas::ES5.trailing_separator(f.options());
         f.join_with(&soft_line_break_or_space())
@@ -1911,72 +1626,51 @@ impl<'a> Format<'a> for Vec<'a, ExportSpecifier<'a>> {
     }
 }
 
-impl<'a> FormatWrite<'a> for ExportSpecifier<'a> {
+impl<'a> FormatWrite<'a> for AstNode<'a, ExportSpecifier<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        write!(f, self.export_kind);
-        if self.local.span() == self.exported.span() {
-            write!(f, self.local)
+        write!(f, self.export_kind());
+        if self.local().span() == self.exported().span() {
+            write!(f, self.local())
         } else {
-            write!(f, [self.local, space(), "as", space(), self.exported])
+            write!(f, [self.local(), space(), "as", space(), self.exported()])
         }
     }
 }
 
-impl<'a> FormatWrite<'a> for ExportDefaultDeclarationKind<'a> {
+impl<'a> FormatWrite<'a> for AstNode<'a, V8IntrinsicExpression<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        match self {
-            Self::FunctionDeclaration(decl) => decl.fmt(f),
-            Self::ClassDeclaration(decl) => decl.fmt(f),
-            Self::TSInterfaceDeclaration(decl) => decl.fmt(f),
-            match_expression!(Self) => self.to_expression().fmt(f),
-        }
+        write!(f, ["%", self.name(), self.arguments()])
     }
 }
 
-impl<'a> FormatWrite<'a> for ModuleExportName<'a> {
+impl<'a> FormatWrite<'a> for AstNode<'a, BooleanLiteral> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        match self {
-            Self::IdentifierName(ident) => ident.fmt(f),
-            Self::IdentifierReference(ident) => ident.fmt(f),
-            Self::StringLiteral(literal) => literal.fmt(f),
-        }
+        write!(f, if self.value() { "true" } else { "false" })
     }
 }
 
-impl<'a> FormatWrite<'a> for V8IntrinsicExpression<'a> {
-    fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        write!(f, ["%", self.name, self.arguments])
-    }
-}
-
-impl<'a> FormatWrite<'a> for BooleanLiteral {
-    fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        write!(f, if self.value { "true" } else { "false" })
-    }
-}
-
-impl<'a> FormatWrite<'a> for NullLiteral {
+impl<'a> FormatWrite<'a> for AstNode<'a, NullLiteral> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         write!(f, "null")
     }
 }
 
-impl<'a> FormatWrite<'a> for NumericLiteral<'a> {
+impl<'a> FormatWrite<'a> for AstNode<'a, NumericLiteral<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         format_number_token(
-            self.span.source_text(f.source_text()),
-            self.span,
+            self.span().source_text(f.source_text()),
+            self.span(),
             NumberFormatOptions::default().keep_one_trailing_decimal_zero(),
         )
         .fmt(f)
     }
 }
 
-impl<'a> FormatWrite<'a> for StringLiteral<'a> {
+impl<'a> FormatWrite<'a> for AstNode<'a, StringLiteral<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         FormatLiteralStringToken::new(
-            self.span.source_text(f.source_text()),
-            self.span,
+            self.span().source_text(f.source_text()),
+            self.span(),
             /* jsx */
             false,
             StringLiteralParentKind::Expression,
@@ -1985,30 +1679,30 @@ impl<'a> FormatWrite<'a> for StringLiteral<'a> {
     }
 }
 
-impl<'a> FormatWrite<'a> for BigIntLiteral<'a> {
+impl<'a> FormatWrite<'a> for AstNode<'a, BigIntLiteral<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        write!(f, dynamic_text(&self.raw.as_str().cow_to_ascii_lowercase(), self.span.start))
+        write!(f, dynamic_text(&self.raw().unwrap().cow_to_ascii_lowercase(), self.span().start))
     }
 }
 
-impl<'a> FormatWrite<'a> for RegExpLiteral<'a> {
+impl<'a> FormatWrite<'a> for AstNode<'a, RegExpLiteral<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        let raw = self.raw.unwrap().as_str();
+        let raw = self.raw().unwrap().as_str();
         let (pattern, flags) = raw.rsplit_once('/').unwrap();
         // TODO: print the flags without allocation.
         let mut flags = flags.chars().collect::<std::vec::Vec<_>>();
         flags.sort_unstable();
-        let flags = flags.into_iter().collect::<String>();
+        let flags = flags.iter().collect::<String>();
         let s = format!("{pattern}/{flags}");
-        write!(f, dynamic_text(&s, self.span.start))
+        write!(f, dynamic_text(&s, self.span().start))
     }
 }
 
-impl<'a> FormatWrite<'a> for JSXElement<'a> {
+impl<'a> FormatWrite<'a> for AstNode<'a, JSXElement<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        write!(f, ["<", self.opening_element.name])?;
-        for attr in &self.opening_element.attributes {
-            match attr {
+        write!(f, ["<", self.opening_element().name()])?;
+        for attr in self.opening_element().attributes() {
+            match attr.as_ref() {
                 JSXAttributeItem::Attribute(_) => {
                     write!(f, hard_space())?;
                 }
@@ -2018,19 +1712,19 @@ impl<'a> FormatWrite<'a> for JSXElement<'a> {
             }
             write!(f, attr)?;
         }
-        if self.closing_element.is_none() {
+        if self.closing_element().is_none() {
             write!(f, [space(), "/"])?;
         }
         write!(f, ">")?;
 
-        for child in &self.children {
+        for child in self.children() {
             write!(f, child)?;
         }
-        write!(f, self.closing_element)
+        write!(f, self.closing_element())
     }
 }
 
-impl<'a> FormatWrite<'a> for JSXOpeningElement<'a> {
+impl<'a> FormatWrite<'a> for AstNode<'a, JSXOpeningElement<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         // Implemented in JSXElement above due to no access to
         // no `self_closing`.
@@ -2038,198 +1732,126 @@ impl<'a> FormatWrite<'a> for JSXOpeningElement<'a> {
     }
 }
 
-impl<'a> FormatWrite<'a> for JSXClosingElement<'a> {
+impl<'a> FormatWrite<'a> for AstNode<'a, JSXClosingElement<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        write!(f, ["</", self.name, ">"])
+        write!(f, ["</", self.name(), ">"])
     }
 }
 
-impl<'a> FormatWrite<'a> for JSXFragment<'a> {
+impl<'a> FormatWrite<'a> for AstNode<'a, JSXFragment<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        write!(f, self.opening_fragment)?;
-        for child in &self.children {
+        write!(f, self.opening_fragment())?;
+        for child in self.children() {
             write!(f, child)?;
         }
-        write!(f, self.closing_fragment)
+        write!(f, self.closing_fragment())
     }
 }
 
-impl<'a> FormatWrite<'a> for JSXOpeningFragment {
+impl<'a> FormatWrite<'a> for AstNode<'a, JSXOpeningFragment> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         write!(f, "<>")
     }
 }
 
-impl<'a> FormatWrite<'a> for JSXClosingFragment {
+impl<'a> FormatWrite<'a> for AstNode<'a, JSXClosingFragment> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         write!(f, "</>")
     }
 }
 
-impl<'a> FormatWrite<'a> for JSXElementName<'a> {
+impl<'a> FormatWrite<'a> for AstNode<'a, JSXNamespacedName<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        match self {
-            Self::Identifier(identifier) => identifier.fmt(f),
-            Self::IdentifierReference(identifier) => identifier.fmt(f),
-            Self::NamespacedName(namespaced_name) => namespaced_name.fmt(f),
-            Self::MemberExpression(member_expr) => member_expr.fmt(f),
-            Self::ThisExpression(expr) => expr.fmt(f),
-        }
+        write!(f, [self.namespace(), ":", self.name()])
     }
 }
 
-impl<'a> FormatWrite<'a> for JSXNamespacedName<'a> {
+impl<'a> FormatWrite<'a> for AstNode<'a, JSXMemberExpression<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        write!(f, [self.namespace, ":", self.name])
+        write!(f, [self.object(), ".", self.property()])
     }
 }
 
-impl<'a> FormatWrite<'a> for JSXMemberExpression<'a> {
+impl<'a> FormatWrite<'a> for AstNode<'a, JSXExpressionContainer<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        write!(f, [self.object, ".", self.property])
+        write!(f, ["{", self.expression(), "}"])
     }
 }
 
-impl<'a> FormatWrite<'a> for JSXMemberExpressionObject<'a> {
-    fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        match self {
-            Self::IdentifierReference(ident) => ident.fmt(f),
-            Self::MemberExpression(member_expr) => member_expr.fmt(f),
-            Self::ThisExpression(expr) => expr.fmt(f),
-        }
-    }
-}
-
-impl<'a> FormatWrite<'a> for JSXExpressionContainer<'a> {
-    fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        write!(f, ["{", self.expression, "}"])
-    }
-}
-
-impl<'a> FormatWrite<'a> for JSXExpression<'a> {
-    fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        match self {
-            Self::EmptyExpression(expr) => expr.fmt(f),
-            _ => self.to_expression().fmt(f),
-        }
-    }
-}
-
-impl<'a> FormatWrite<'a> for JSXEmptyExpression {
+impl<'a> FormatWrite<'a> for AstNode<'a, JSXEmptyExpression> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         Ok(())
     }
 }
 
-impl<'a> FormatWrite<'a> for JSXAttributeItem<'a> {
+impl<'a> FormatWrite<'a> for AstNode<'a, JSXAttribute<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        match self {
-            Self::Attribute(attr) => attr.fmt(f),
-            Self::SpreadAttribute(spread_attr) => spread_attr.fmt(f),
-        }
-    }
-}
-
-impl<'a> FormatWrite<'a> for JSXAttribute<'a> {
-    fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        write!(f, self.name)?;
-        if let Some(value) = &self.value {
+        write!(f, self.name())?;
+        if let Some(value) = &self.value() {
             write!(f, ["=", value])?;
         }
         Ok(())
     }
 }
 
-impl<'a> FormatWrite<'a> for JSXSpreadAttribute<'a> {
+impl<'a> FormatWrite<'a> for AstNode<'a, JSXSpreadAttribute<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        write!(f, ["{...", self.argument, "}"])
+        write!(f, ["{...", self.argument(), "}"])
     }
 }
 
-impl<'a> FormatWrite<'a> for JSXAttributeName<'a> {
+impl<'a> FormatWrite<'a> for AstNode<'a, JSXIdentifier<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        match self {
-            Self::Identifier(ident) => ident.fmt(f),
-            Self::NamespacedName(namespaced_name) => namespaced_name.fmt(f),
-        }
+        write!(f, dynamic_text(self.name().as_str(), self.span().start))
     }
 }
 
-impl<'a> FormatWrite<'a> for JSXAttributeValue<'a> {
+impl<'a> FormatWrite<'a> for AstNode<'a, JSXSpreadChild<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        match self {
-            Self::Fragment(fragment) => fragment.fmt(f),
-            Self::Element(el) => el.fmt(f),
-            Self::StringLiteral(lit) => {
-                let quote = if lit.value.contains('"') { "'" } else { "\"" };
-                write!(f, [quote, dynamic_text(lit.value.as_str(), lit.span.start), quote])
-            }
-            Self::ExpressionContainer(expr_container) => expr_container.fmt(f),
-        }
+        let expression = self.expression();
+        write!(f, ["{...", expression, "}"])
     }
 }
 
-impl<'a> FormatWrite<'a> for JSXIdentifier<'a> {
+impl<'a> FormatWrite<'a> for AstNode<'a, JSXText<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        write!(f, dynamic_text(self.name.as_str(), self.span.start))
+        write!(f, dynamic_text(self.value().as_str(), self.span().start))
     }
 }
 
-impl<'a> FormatWrite<'a> for JSXChild<'a> {
-    fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        match self {
-            Self::Fragment(fragment) => fragment.fmt(f),
-            Self::Element(el) => el.fmt(f),
-            Self::Spread(spread) => spread.fmt(f),
-            Self::ExpressionContainer(expr_container) => expr_container.fmt(f),
-            Self::Text(text) => text.fmt(f),
-        }
-    }
-}
-
-impl<'a> FormatWrite<'a> for JSXSpreadChild<'a> {
-    fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        write!(f, ["{...", self.expression, "}"])
-    }
-}
-
-impl<'a> FormatWrite<'a> for JSXText<'a> {
-    fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        write!(f, dynamic_text(self.value.as_str(), self.span.start))
-    }
-}
-
-impl<'a> FormatWrite<'a> for TSThisParameter<'a> {
+impl<'a> FormatWrite<'a> for AstNode<'a, TSThisParameter<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         write!(f, "this")?;
-        if let Some(type_annotation) = &self.type_annotation {
+        if let Some(type_annotation) = self.type_annotation() {
             type_annotation.fmt(f);
         }
         Ok(())
     }
 }
 
-impl<'a> FormatWrite<'a> for TSEnumDeclaration<'a> {
+impl<'a> FormatWrite<'a> for AstNode<'a, TSEnumDeclaration<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        let Self { id, r#const, .. } = self;
-        if *r#const {
+        if self.r#const() {
             write!(f, ["const", space()])?;
         }
-        write!(f, ["enum", space(), id, space(), "{", self.body, "}"])
+        write!(f, ["enum", space(), self.id(), space(), "{", self.body(), "}"])
     }
 }
 
-impl<'a> FormatWrite<'a> for TSEnumBody<'a> {
+impl<'a> FormatWrite<'a> for AstNode<'a, TSEnumBody<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        if self.members.is_empty() {
-            write!(f, group(&format_args!(format_dangling_comments(self.span), soft_line_break())))
+        if self.members().is_empty() {
+            write!(
+                f,
+                group(&format_args!(format_dangling_comments(self.span()), soft_line_break()))
+            )
         } else {
-            write!(f, block_indent(&self.members))
+            write!(f, block_indent(self.members()))
         }
     }
 }
 
-impl<'a> Format<'a> for Vec<'a, TSEnumMember<'a>> {
+impl<'a> Format<'a> for AstNode<'a, Vec<'a, TSEnumMember<'a>>> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         let trailing_separator = FormatTrailingCommas::ES5.trailing_separator(f.options());
         let source_text = f.source_text();
@@ -2245,158 +1867,99 @@ impl<'a> Format<'a> for Vec<'a, TSEnumMember<'a>> {
     }
 }
 
-impl<'a> FormatWrite<'a> for TSEnumMember<'a> {
+impl<'a> FormatWrite<'a> for AstNode<'a, TSEnumMember<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         Ok(())
     }
 }
 
-impl<'a> FormatWrite<'a> for TSEnumMemberName<'a> {
+impl<'a> FormatWrite<'a> for AstNode<'a, TSTypeAnnotation<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        Ok(())
+        write!(f, [":", space(), self.type_annotation()])
     }
 }
 
-impl<'a> FormatWrite<'a> for TSTypeAnnotation<'a> {
+impl<'a> FormatWrite<'a> for AstNode<'a, TSLiteralType<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        write!(f, [":", space(), self.type_annotation])
+        self.literal().fmt(f)
     }
 }
 
-impl<'a> FormatWrite<'a> for TSLiteralType<'a> {
-    fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        self.literal.fmt(f)
-    }
-}
-
-impl<'a> FormatWrite<'a> for TSLiteral<'a> {
-    fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        match self {
-            Self::BooleanLiteral(l) => l.fmt(f),
-            Self::NumericLiteral(l) => l.fmt(f),
-            Self::BigIntLiteral(l) => l.fmt(f),
-            Self::StringLiteral(l) => l.fmt(f),
-            Self::TemplateLiteral(l) => l.fmt(f),
-            Self::UnaryExpression(e) => e.fmt(f),
-        }
-    }
-}
-
-impl<'a> FormatWrite<'a> for TSType<'a> {
-    fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        match self {
-            Self::TSFunctionType(ty) => ty.fmt(f),
-            Self::TSConstructorType(ty) => ty.fmt(f),
-            Self::TSArrayType(ty) => ty.fmt(f),
-            Self::TSTupleType(ty) => ty.fmt(f),
-            Self::TSUnionType(ty) => ty.fmt(f),
-            Self::TSParenthesizedType(ty) => ty.fmt(f),
-            Self::TSIntersectionType(ty) => ty.fmt(f),
-            Self::TSConditionalType(ty) => ty.fmt(f),
-            Self::TSInferType(ty) => ty.fmt(f),
-            Self::TSIndexedAccessType(ty) => ty.fmt(f),
-            Self::TSMappedType(ty) => ty.fmt(f),
-            Self::TSNamedTupleMember(ty) => ty.fmt(f),
-            Self::TSLiteralType(ty) => ty.fmt(f),
-            Self::TSImportType(ty) => ty.fmt(f),
-            Self::TSAnyKeyword(ty) => ty.fmt(f),
-            Self::TSBigIntKeyword(ty) => ty.fmt(f),
-            Self::TSBooleanKeyword(ty) => ty.fmt(f),
-            Self::TSIntrinsicKeyword(ty) => ty.fmt(f),
-            Self::TSNeverKeyword(ty) => ty.fmt(f),
-            Self::TSNullKeyword(ty) => ty.fmt(f),
-            Self::TSNumberKeyword(ty) => ty.fmt(f),
-            Self::TSObjectKeyword(ty) => ty.fmt(f),
-            Self::TSStringKeyword(ty) => ty.fmt(f),
-            Self::TSSymbolKeyword(ty) => ty.fmt(f),
-            Self::TSThisType(ty) => ty.fmt(f),
-            Self::TSUndefinedKeyword(ty) => ty.fmt(f),
-            Self::TSUnknownKeyword(ty) => ty.fmt(f),
-            Self::TSVoidKeyword(ty) => ty.fmt(f),
-            Self::TSTemplateLiteralType(ty) => ty.fmt(f),
-            Self::TSTypeLiteral(ty) => ty.fmt(f),
-            Self::TSTypeOperatorType(ty) => ty.fmt(f),
-            Self::TSTypePredicate(ty) => ty.fmt(f),
-            Self::TSTypeQuery(ty) => ty.fmt(f),
-            Self::TSTypeReference(ty) => ty.fmt(f),
-            Self::JSDocNullableType(ty) => ty.fmt(f),
-            Self::JSDocNonNullableType(ty) => ty.fmt(f),
-            Self::JSDocUnknownType(ty) => ty.fmt(f),
-        }
-    }
-}
-
-impl<'a> FormatWrite<'a> for TSConditionalType<'a> {
+impl<'a> FormatWrite<'a> for AstNode<'a, TSConditionalType<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         write!(
             f,
             [
-                self.check_type,
+                self.check_type(),
                 " extends ",
-                self.extends_type,
+                self.extends_type(),
                 " ? ",
-                self.true_type,
+                self.true_type(),
                 " : ",
-                self.false_type
+                self.false_type()
             ]
         )
     }
 }
 
-impl<'a> FormatWrite<'a> for TSUnionType<'a> {
+impl<'a> FormatWrite<'a> for AstNode<'a, TSUnionType<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        let Some((first, rest)) = self.types.split_first() else {
+        let mut types = self.types().iter();
+        if let Some(item) = types.next() {
+            write!(f, item)?;
+
+            for item in types {
+                write!(f, [" | ", item])?;
+            }
             return Ok(());
-        };
-        write!(f, first);
-        for item in rest {
-            write!(f, [" | ", item])?;
         }
         Ok(())
     }
 }
 
-impl<'a> FormatWrite<'a> for TSIntersectionType<'a> {
+impl<'a> FormatWrite<'a> for AstNode<'a, TSIntersectionType<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        let Some((first, rest)) = self.types.split_first() else {
+        let mut types = self.types().iter();
+        if let Some(item) = types.next() {
+            write!(f, item)?;
+
+            for item in types {
+                write!(f, [" & ", item])?;
+            }
             return Ok(());
-        };
-        write!(f, first);
-        for item in rest {
-            write!(f, [" & ", item])?;
         }
         Ok(())
     }
 }
 
-impl<'a> FormatWrite<'a> for TSParenthesizedType<'a> {
+impl<'a> FormatWrite<'a> for AstNode<'a, TSParenthesizedType<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        write!(f, ["(", self.type_annotation, ")"])
+        write!(f, ["(", self.type_annotation(), ")"])
     }
 }
 
-impl<'a> FormatWrite<'a> for TSTypeOperator<'a> {
+impl<'a> FormatWrite<'a> for AstNode<'a, TSTypeOperator<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        write!(f, [self.operator.to_str(), hard_space(), self.type_annotation])
+        write!(f, [self.operator().to_str(), hard_space(), self.type_annotation()])
     }
 }
 
-impl<'a> FormatWrite<'a> for TSArrayType<'a> {
+impl<'a> FormatWrite<'a> for AstNode<'a, TSArrayType<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        write!(f, [self.element_type, "[]"])
+        write!(f, [self.element_type(), "[]"])
     }
 }
 
-impl<'a> FormatWrite<'a> for TSIndexedAccessType<'a> {
+impl<'a> FormatWrite<'a> for AstNode<'a, TSIndexedAccessType<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        write!(f, [self.object_type, "[", self.index_type, "]"])
+        write!(f, [self.object_type(), "[", self.index_type(), "]"])
     }
 }
 
-impl<'a> FormatWrite<'a> for TSTupleType<'a> {
+impl<'a> FormatWrite<'a> for AstNode<'a, TSTupleType<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         write!(f, "[")?;
-        for (i, ty) in self.element_types.iter().enumerate() {
+        for (i, ty) in self.element_types().iter().enumerate() {
             if i != 0 {
                 write!(f, [",", space()])?;
             }
@@ -2406,147 +1969,128 @@ impl<'a> FormatWrite<'a> for TSTupleType<'a> {
     }
 }
 
-impl<'a> FormatWrite<'a> for TSNamedTupleMember<'a> {
+impl<'a> FormatWrite<'a> for AstNode<'a, TSNamedTupleMember<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        write!(f, self.label)?;
-        if self.optional {
+        write!(f, self.label())?;
+        if self.optional() {
             write!(f, "?")?;
         }
-        write!(f, [":", space(), self.element_type])
+        write!(f, [":", space(), self.element_type()])
     }
 }
 
-impl<'a> FormatWrite<'a> for TSOptionalType<'a> {
+impl<'a> FormatWrite<'a> for AstNode<'a, TSOptionalType<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        write!(f, [self.type_annotation, "?"])
+        write!(f, [self.type_annotation(), "?"])
     }
 }
 
-impl<'a> FormatWrite<'a> for TSRestType<'a> {
+impl<'a> FormatWrite<'a> for AstNode<'a, TSRestType<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        write!(f, ["...", self.type_annotation])
+        write!(f, ["...", self.type_annotation()])
     }
 }
 
-impl<'a> FormatWrite<'a> for TSTupleElement<'a> {
-    fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        match self {
-            Self::TSOptionalType(ty) => ty.fmt(f),
-            Self::TSRestType(ty) => ty.fmt(f),
-            match_ts_type!(TSTupleElement) => self.to_ts_type().fmt(f),
-        }
-    }
-}
-
-impl<'a> FormatWrite<'a> for TSAnyKeyword {
+impl<'a> FormatWrite<'a> for AstNode<'a, TSAnyKeyword> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         write!(f, "any")
     }
 }
 
-impl<'a> FormatWrite<'a> for TSStringKeyword {
+impl<'a> FormatWrite<'a> for AstNode<'a, TSStringKeyword> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         write!(f, "string")
     }
 }
 
-impl<'a> FormatWrite<'a> for TSBooleanKeyword {
+impl<'a> FormatWrite<'a> for AstNode<'a, TSBooleanKeyword> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         write!(f, "boolean")
     }
 }
 
-impl<'a> FormatWrite<'a> for TSNumberKeyword {
+impl<'a> FormatWrite<'a> for AstNode<'a, TSNumberKeyword> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         write!(f, "number")
     }
 }
 
-impl<'a> FormatWrite<'a> for TSNeverKeyword {
+impl<'a> FormatWrite<'a> for AstNode<'a, TSNeverKeyword> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         write!(f, "never")
     }
 }
 
-impl<'a> FormatWrite<'a> for TSIntrinsicKeyword {
+impl<'a> FormatWrite<'a> for AstNode<'a, TSIntrinsicKeyword> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         write!(f, "intrinsic")
     }
 }
 
-impl<'a> FormatWrite<'a> for TSUnknownKeyword {
+impl<'a> FormatWrite<'a> for AstNode<'a, TSUnknownKeyword> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         write!(f, "unknown")
     }
 }
 
-impl<'a> FormatWrite<'a> for TSNullKeyword {
+impl<'a> FormatWrite<'a> for AstNode<'a, TSNullKeyword> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         write!(f, "null")
     }
 }
 
-impl<'a> FormatWrite<'a> for TSUndefinedKeyword {
+impl<'a> FormatWrite<'a> for AstNode<'a, TSUndefinedKeyword> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         write!(f, "undefined")
     }
 }
 
-impl<'a> FormatWrite<'a> for TSVoidKeyword {
+impl<'a> FormatWrite<'a> for AstNode<'a, TSVoidKeyword> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         write!(f, "void")
     }
 }
 
-impl<'a> FormatWrite<'a> for TSSymbolKeyword {
+impl<'a> FormatWrite<'a> for AstNode<'a, TSSymbolKeyword> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         write!(f, "symbol")
     }
 }
 
-impl<'a> FormatWrite<'a> for TSThisType {
+impl<'a> FormatWrite<'a> for AstNode<'a, TSThisType> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         write!(f, "this")
     }
 }
 
-impl<'a> FormatWrite<'a> for TSObjectKeyword {
+impl<'a> FormatWrite<'a> for AstNode<'a, TSObjectKeyword> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         write!(f, "object")
     }
 }
 
-impl<'a> FormatWrite<'a> for TSBigIntKeyword {
+impl<'a> FormatWrite<'a> for AstNode<'a, TSBigIntKeyword> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         write!(f, "bigint")
     }
 }
 
-impl<'a> FormatWrite<'a> for TSTypeReference<'a> {
+impl<'a> FormatWrite<'a> for AstNode<'a, TSTypeReference<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        write!(f, [self.type_name, self.type_arguments])
+        write!(f, [self.type_name(), self.type_arguments()])
     }
 }
 
-impl<'a> FormatWrite<'a> for TSTypeName<'a> {
+impl<'a> FormatWrite<'a> for AstNode<'a, TSQualifiedName<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        match self {
-            Self::IdentifierReference(ident) => ident.fmt(f),
-            Self::QualifiedName(name) => name.fmt(f),
-        }
+        write!(f, [self.left(), ".", self.right()])
     }
 }
 
-impl<'a> FormatWrite<'a> for TSQualifiedName<'a> {
-    fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        write!(f, [self.left, ".", self.right])
-    }
-}
-
-impl<'a> FormatWrite<'a> for TSTypeParameterInstantiation<'a> {
+impl<'a> FormatWrite<'a> for AstNode<'a, TSTypeParameterInstantiation<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         write!(f, "<")?;
-        for (i, param) in self.params.iter().enumerate() {
+        for (i, param) in self.params().iter().enumerate() {
             if i != 0 {
                 write!(f, [",", space()])?;
             }
@@ -2556,43 +2100,46 @@ impl<'a> FormatWrite<'a> for TSTypeParameterInstantiation<'a> {
     }
 }
 
-impl<'a> FormatWrite<'a> for TSTypeParameter<'a> {
+impl<'a> FormatWrite<'a> for AstNode<'a, TSTypeParameter<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        if self.r#const {
+        if self.r#const() {
             write!(f, ["const", space()])?;
         }
-        if self.r#in {
+        if self.r#in() {
             write!(f, ["in", space()])?;
         }
-        if self.out {
+        if self.out() {
             write!(f, ["out", space()])?;
         }
-        write!(f, self.name)?;
-        if let Some(constraint) = &self.constraint {
+        write!(f, self.name())?;
+        if let Some(constraint) = &self.constraint() {
             write!(f, [space(), "extends", space(), constraint])?;
         }
-        if let Some(default) = &self.default {
+        if let Some(default) = &self.default() {
             write!(f, [space(), "=", space(), default])?;
         }
         Ok(())
     }
 }
 
-impl<'a> FormatWrite<'a> for TSTypeParameterDeclaration<'a> {
+impl<'a> FormatWrite<'a> for AstNode<'a, TSTypeParameterDeclaration<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        write!(f, ["<", self.params, ">"])
+        write!(f, ["<", self.params(), ">"])
     }
 }
 
-impl<'a> FormatWrite<'a> for TSTypeAliasDeclaration<'a> {
+impl<'a> FormatWrite<'a> for AstNode<'a, TSTypeAliasDeclaration<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         let assignment_like = format_with(|f| {
-            write!(f, [self.id, self.type_parameters, space(), "=", space(), self.type_annotation])
+            write!(
+                f,
+                [self.id(), self.type_parameters(), space(), "=", space(), self.type_annotation()]
+            )
         });
         write!(
             f,
             [
-                self.declare.then_some("declare "),
+                self.declare().then_some("declare "),
                 "type",
                 space(),
                 group(&assignment_like),
@@ -2602,21 +2149,24 @@ impl<'a> FormatWrite<'a> for TSTypeAliasDeclaration<'a> {
     }
 }
 
-impl<'a> Format<'a> for &Vec<'a, TSClassImplements<'a>> {
+impl<'a> Format<'a> for AstNode<'a, Vec<'a, TSClassImplements<'a>>> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         Ok(())
     }
 }
 
-impl<'a> FormatWrite<'a> for TSClassImplements<'a> {
+impl<'a> FormatWrite<'a> for AstNode<'a, TSClassImplements<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        write!(f, ["implements", self.expression, self.type_arguments])
+        write!(f, ["implements", self.expression(), self.type_arguments()])
     }
 }
 
-impl<'a> FormatWrite<'a> for TSInterfaceDeclaration<'a> {
+impl<'a> FormatWrite<'a> for AstNode<'a, TSInterfaceDeclaration<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        let Self { id, extends, type_parameters, body, .. } = self;
+        let id = self.id();
+        let type_parameters = self.type_parameters();
+        let extends = self.extends();
+        let body = self.body();
 
         let should_indent_extends_only = type_parameters
             .as_ref()
@@ -2631,7 +2181,7 @@ impl<'a> FormatWrite<'a> for TSInterfaceDeclaration<'a> {
         let format_id = format_with(|f| {
             write!(f, id)?;
 
-            if let Some(type_parameters) = &type_parameters {
+            if let Some(type_parameters) = type_parameters {
                 write!(
                     f,
                     FormatTsTypeParameters::new(
@@ -2673,13 +2223,13 @@ impl<'a> FormatWrite<'a> for TSInterfaceDeclaration<'a> {
         });
 
         let content = format_with(|f| {
-            if self.declare {
+            if self.declare() {
                 write!(f, ["declare", space()])?;
             }
 
             write!(f, ["interface", space()])?;
 
-            let id_has_trailing_comments = f.comments().has_trailing_comments(id.span.end);
+            let id_has_trailing_comments = f.comments().has_trailing_comments(id.span().end);
             if id_has_trailing_comments || !extends.is_empty() {
                 if should_indent_extends_only {
                     write!(f, [group(&format_args!(format_id, indent(&format_extends)))])?;
@@ -2692,10 +2242,10 @@ impl<'a> FormatWrite<'a> for TSInterfaceDeclaration<'a> {
 
             write!(f, [space(), "{"])?;
 
-            if body.body.is_empty() {
+            if body.body().is_empty() {
                 write!(f, format_dangling_comments(body.span()).with_block_indent())?;
             } else {
-                write!(f, block_indent(body))?;
+                write!(f, block_indent(&body))?;
             }
 
             write!(f, "}")
@@ -2705,64 +2255,39 @@ impl<'a> FormatWrite<'a> for TSInterfaceDeclaration<'a> {
     }
 }
 
-impl<'a> FormatWrite<'a> for TSInterfaceBody<'a> {
+impl<'a> FormatWrite<'a> for AstNode<'a, TSInterfaceBody<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         // let last_index = self.body.len().saturating_sub(1);
         let source_text = f.context().source_text();
         let mut joiner = f.join_nodes_with_soft_line();
-        for (index, sig) in self.body.iter().enumerate() {
+        for (index, sig) in self.body().iter().enumerate() {
             joiner.entry(sig.span(), source_text, sig);
         }
         joiner.finish()
     }
 }
 
-impl<'a> FormatWrite<'a> for TSPropertySignature<'a> {
+impl<'a> FormatWrite<'a> for AstNode<'a, TSPropertySignature<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        if self.readonly {
+        if self.readonly() {
             write!(f, "readonly")?;
         }
-        if self.computed {
-            write!(f, [space(), "[", self.key, "]"])?;
+        if self.computed() {
+            write!(f, [space(), "[", self.key(), "]"])?;
         } else {
-            match &self.key {
-                PropertyKey::StaticIdentifier(key) => {
-                    write!(f, self.key)?;
-                }
-                PropertyKey::PrivateIdentifier(key) => {
-                    write!(f, self.key)?;
-                }
-                PropertyKey::StringLiteral(key) => {
-                    write!(f, self.key)?;
-                }
-                key => {
-                    write!(f, key)?;
-                }
-            }
+            write!(f, self.key())?;
         }
-        if self.optional {
+        if self.optional() {
             write!(f, "?")?;
         }
-        if let Some(type_annotation) = &self.type_annotation {
+        if let Some(type_annotation) = &self.type_annotation() {
             write!(f, type_annotation)?;
         }
         Ok(())
     }
 }
 
-impl<'a> FormatWrite<'a> for TSSignature<'a> {
-    fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        match self {
-            Self::TSIndexSignature(o) => o.fmt(f),
-            Self::TSPropertySignature(o) => o.fmt(f),
-            Self::TSCallSignatureDeclaration(o) => o.fmt(f),
-            Self::TSConstructSignatureDeclaration(o) => o.fmt(f),
-            Self::TSMethodSignature(o) => o.fmt(f),
-        }
-    }
-}
-
-impl<'a> Format<'a> for Vec<'a, TSSignature<'a>> {
+impl<'a> Format<'a> for AstNode<'a, Vec<'a, TSSignature<'a>>> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         let trailing_separator = FormatTrailingCommas::ES5.trailing_separator(f.options());
         let source_text = f.source_text();
@@ -2774,39 +2299,45 @@ impl<'a> Format<'a> for Vec<'a, TSSignature<'a>> {
     }
 }
 
-impl<'a> FormatWrite<'a> for TSIndexSignature<'a> {
+impl<'a> FormatWrite<'a> for AstNode<'a, TSIndexSignature<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        if self.readonly {
+        if self.readonly() {
             write!(f, ["readonly", space()])?;
         }
         // TODO: parameters only have one element for now.
         write!(
             f,
-            ["[", self.parameters.first().unwrap(), "]", self.type_annotation, OptionalSemicolon]
+            [
+                "[",
+                self.parameters().first().unwrap(),
+                "]",
+                self.type_annotation(),
+                OptionalSemicolon
+            ]
         )
     }
 }
 
-impl<'a> FormatWrite<'a> for TSCallSignatureDeclaration<'a> {
+impl<'a> FormatWrite<'a> for AstNode<'a, TSCallSignatureDeclaration<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        if let Some(type_parameters) = &self.type_parameters {
-            write!(f, group(&type_parameters))?;
+        if let Some(type_parameters) = &self.type_parameters() {
+            write!(f, group(type_parameters))?;
         }
 
-        if let Some(this_param) = &self.this_param {
+        if let Some(this_param) = &self.this_param() {
             write!(f, [this_param, ",", soft_line_break_or_space()])?;
         }
-        write!(f, group(&self.params))?;
-        if let Some(return_type) = &self.return_type {
+        write!(f, group(&self.params()))?;
+        if let Some(return_type) = &self.return_type() {
             write!(f, return_type)?;
         }
         write!(f, OptionalSemicolon)
     }
 }
 
-impl<'a> FormatWrite<'a> for TSMethodSignature<'a> {
+impl<'a> FormatWrite<'a> for AstNode<'a, TSMethodSignature<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        match self.kind {
+        match self.kind() {
             TSMethodSignatureKind::Method => {}
             TSMethodSignatureKind::Get => {
                 write!(f, ["get", space()])?;
@@ -2815,14 +2346,14 @@ impl<'a> FormatWrite<'a> for TSMethodSignature<'a> {
                 write!(f, ["set", space()])?;
             }
         }
-        if self.computed {
+        if self.computed() {
             write!(f, "[")?;
         }
-        write!(f, self.key)?;
-        if self.computed {
+        write!(f, self.key())?;
+        if self.computed() {
             write!(f, "]")?;
         }
-        if self.optional {
+        if self.optional() {
             write!(f, "?")?;
         }
         // TODO:
@@ -2839,38 +2370,38 @@ impl<'a> FormatWrite<'a> for TSMethodSignature<'a> {
         //     } else {
         //         write!(f, [parameters])?;
         //     }
-        if let Some(type_parameters) = &self.type_parameters {
+        if let Some(type_parameters) = &self.type_parameters() {
             write!(f, [group(&type_parameters)])?;
         }
-        write!(f, group(&self.params))?;
-        if let Some(return_type) = &self.return_type {
+        write!(f, group(&self.params()))?;
+        if let Some(return_type) = &self.return_type() {
             write!(f, return_type)?;
         }
         write!(f, OptionalSemicolon)
     }
 }
 
-impl<'a> FormatWrite<'a> for TSConstructSignatureDeclaration<'a> {
+impl<'a> FormatWrite<'a> for AstNode<'a, TSConstructSignatureDeclaration<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         write!(f, ["new", space()])?;
-        if let Some(type_parameters) = &self.type_parameters {
+        if let Some(type_parameters) = &self.type_parameters() {
             write!(f, group(&type_parameters))?;
         }
-        write!(f, group(&self.params))?;
-        if let Some(return_type) = &self.return_type {
+        write!(f, group(&self.params()))?;
+        if let Some(return_type) = self.return_type() {
             write!(f, return_type)?;
         }
         write!(f, OptionalSemicolon)
     }
 }
 
-impl<'a> FormatWrite<'a> for TSIndexSignatureName<'a> {
+impl<'a> FormatWrite<'a> for AstNode<'a, TSIndexSignatureName<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        write!(f, [dynamic_text(self.name.as_str(), self.span.start), self.type_annotation])
+        write!(f, [dynamic_text(self.name().as_str(), self.span().start), self.type_annotation()])
     }
 }
 
-impl<'a> Format<'a> for Vec<'a, TSInterfaceHeritage<'a>> {
+impl<'a> Format<'a> for AstNode<'a, Vec<'a, TSInterfaceHeritage<'a>>> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         f.join_with(&soft_line_break_or_space())
             .entries(
@@ -2881,50 +2412,47 @@ impl<'a> Format<'a> for Vec<'a, TSInterfaceHeritage<'a>> {
     }
 }
 
-impl<'a> FormatWrite<'a> for TSInterfaceHeritage<'a> {
+impl<'a> FormatWrite<'a> for AstNode<'a, TSInterfaceHeritage<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        write!(f, [self.expression, self.type_arguments])
+        write!(f, [self.expression(), self.type_arguments()])
     }
 }
 
-impl<'a> FormatWrite<'a> for TSTypePredicate<'a> {
+impl<'a> FormatWrite<'a> for AstNode<'a, TSTypePredicate<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         Ok(())
     }
 }
 
-impl<'a> FormatWrite<'a> for TSTypePredicateName<'a> {
+impl<'a> FormatWrite<'a> for AstNode<'a, TSModuleDeclaration<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        Ok(())
-    }
-}
-
-impl<'a> FormatWrite<'a> for TSModuleDeclaration<'a> {
-    fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        if self.declare {
+        if self.declare() {
             write!(f, ["declare", space()])?;
         }
-        write!(f, self.kind.as_str())?;
+        write!(f, self.kind().as_str())?;
 
-        if !self.kind.is_global() {
-            write!(f, [space(), self.id])?;
+        if !self.kind().is_global() {
+            write!(f, [space(), self.id()])?;
         }
 
-        if let Some(body) = &self.body {
+        if let Some(body) = self.body() {
             let mut body = body;
             loop {
-                match body {
-                    TSModuleDeclarationBody::TSModuleDeclaration(b) => {
-                        write!(f, [".", b.id])?;
-                        if let Some(b) = &b.body {
+                match body.as_ast_nodes() {
+                    AstNodes::TSModuleDeclaration(b) => {
+                        write!(f, [".", b.id()])?;
+                        if let Some(b) = &b.body() {
                             body = b;
                         } else {
                             break;
                         }
                     }
-                    TSModuleDeclarationBody::TSModuleBlock(body) => {
+                    AstNodes::TSModuleBlock(body) => {
                         write!(f, [space(), body]);
                         break;
+                    }
+                    _ => {
+                        unreachable!()
                     }
                 }
             }
@@ -2936,27 +2464,15 @@ impl<'a> FormatWrite<'a> for TSModuleDeclaration<'a> {
     }
 }
 
-impl<'a> FormatWrite<'a> for TSModuleDeclarationName<'a> {
+impl<'a> FormatWrite<'a> for AstNode<'a, TSModuleBlock<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        match self {
-            Self::Identifier(ident) => ident.fmt(f),
-            Self::StringLiteral(s) => s.fmt(f),
-        }
-    }
-}
+        let directives = self.directives();
+        let body = self.body();
+        let span = self.span();
 
-impl<'a> FormatWrite<'a> for TSModuleDeclarationBody<'a> {
-    fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        Ok(())
-    }
-}
-
-impl<'a> FormatWrite<'a> for TSModuleBlock<'a> {
-    fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        let Self { body, directives, span, .. } = self;
         write!(f, "{")?;
         if body.is_empty() && directives.is_empty() {
-            write!(f, [format_dangling_comments(*span).with_block_indent()])?;
+            write!(f, [format_dangling_comments(span).with_block_indent()])?;
         } else {
             write!(f, [block_indent(&format_args!(directives, body))])?;
         }
@@ -2964,50 +2480,43 @@ impl<'a> FormatWrite<'a> for TSModuleBlock<'a> {
     }
 }
 
-impl<'a> FormatWrite<'a> for TSTypeLiteral<'a> {
+impl<'a> FormatWrite<'a> for AstNode<'a, TSTypeLiteral<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         ObjectLike::TSTypeLiteral(self).fmt(f)
     }
 }
 
-impl<'a> FormatWrite<'a> for TSInferType<'a> {
+impl<'a> FormatWrite<'a> for AstNode<'a, TSInferType<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        write!(f, ["infer ", self.type_parameter])
+        write!(f, ["infer ", self.type_parameter()])
     }
 }
 
-impl<'a> FormatWrite<'a> for TSTypeQuery<'a> {
+impl<'a> FormatWrite<'a> for AstNode<'a, TSTypeQuery<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        write!(f, ["typeof ", self.expr_name, self.type_arguments])
+        write!(f, ["typeof ", self.expr_name(), self.type_arguments()])
     }
 }
 
-impl<'a> FormatWrite<'a> for TSTypeQueryExprName<'a> {
+impl<'a> FormatWrite<'a> for AstNode<'a, TSImportType<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        match self {
-            match_ts_type_name!(Self) => self.to_ts_type_name().fmt(f),
-            Self::TSImportType(decl) => decl.fmt(f),
-        }
-    }
-}
-
-impl<'a> FormatWrite<'a> for TSImportType<'a> {
-    fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        write!(f, ["import(", self.argument])?;
-        if let Some(options) = &self.options {
+        write!(f, ["import(", self.argument()])?;
+        if let Some(options) = &self.options() {
             write!(f, [",", space(), options])?;
         }
         write!(f, ")")?;
-        if let Some(qualified_name) = &self.qualifier {
+        if let Some(qualified_name) = &self.qualifier() {
             write!(f, [".", qualified_name])?;
         }
-        write!(f, self.type_arguments)
+        write!(f, self.type_arguments())
     }
 }
 
-impl<'a> FormatWrite<'a> for TSFunctionType<'a> {
+impl<'a> FormatWrite<'a> for AstNode<'a, TSFunctionType<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        let Self { type_parameters, params, return_type, .. } = self;
+        let type_parameters = self.type_parameters();
+        let params = self.params();
+        let return_type = self.return_type();
 
         let format_inner = format_with(|f| {
             write!(f, type_parameters)?;
@@ -3030,17 +2539,21 @@ impl<'a> FormatWrite<'a> for TSFunctionType<'a> {
                 write!(f, params)?;
             }
 
-            write!(f, [space(), "=>", space(), return_type.type_annotation])
+            write!(f, [space(), "=>", space(), return_type.type_annotation()])
         });
 
         write!(f, group(&format_inner))
     }
 }
 
-impl<'a> FormatWrite<'a> for TSConstructorType<'a> {
+impl<'a> FormatWrite<'a> for AstNode<'a, TSConstructorType<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        let Self { r#abstract, type_parameters, params, return_type, .. } = self;
-        if *r#abstract {
+        let r#abstract = self.r#abstract();
+        let type_parameters = self.type_parameters();
+        let params = self.params();
+        let return_type = self.return_type();
+
+        if r#abstract {
             write!(f, ["abstract", space()])?;
         }
         write!(
@@ -3053,15 +2566,16 @@ impl<'a> FormatWrite<'a> for TSConstructorType<'a> {
                 space(),
                 "=>",
                 space(),
-                return_type.type_annotation
+                return_type.type_annotation()
             ]
         )
     }
 }
 
-impl<'a> FormatWrite<'a> for TSMappedType<'a> {
+impl<'a> FormatWrite<'a> for AstNode<'a, TSMappedType<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        let Self { type_parameter, name_type, .. } = self;
+        let type_parameter = self.type_parameter();
+        let name_type = self.name_type();
 
         let should_expand = false; // TODO has_line_break_before_property_name(node)?;
 
@@ -3074,9 +2588,9 @@ impl<'a> FormatWrite<'a> for TSMappedType<'a> {
         // .is_some_and(|annotation| comments.has_leading_comments(annotation.syntax()));
 
         let format_inner = format_with(|f| {
-            write!(f, FormatLeadingComments::Comments(comments.dangling_comments(self.span)))?;
+            write!(f, FormatLeadingComments::Comments(comments.dangling_comments(self.span())))?;
 
-            match self.readonly {
+            match self.readonly() {
                 Some(TSMappedTypeModifierOperator::True) => write!(f, ["readonly", space()])?,
                 Some(TSMappedTypeModifierOperator::Plus) => write!(f, ["+readonly", space()])?,
                 Some(TSMappedTypeModifierOperator::Minus) => write!(f, ["-readonly", space()])?,
@@ -3085,18 +2599,18 @@ impl<'a> FormatWrite<'a> for TSMappedType<'a> {
 
             let format_inner_inner = format_with(|f| {
                 write!(f, "[")?;
-                write!(f, type_parameter.name)?;
-                if let Some(constraint) = &type_parameter.constraint {
+                write!(f, type_parameter.name())?;
+                if let Some(constraint) = &type_parameter.constraint() {
                     write!(f, [space(), "in", space(), constraint])?;
                 }
-                if let Some(default) = &type_parameter.default {
+                if let Some(default) = &type_parameter.default() {
                     write!(f, [space(), "=", space(), default])?;
                 }
                 if let Some(name_type) = &name_type {
                     write!(f, [space(), "as", space(), name_type])?;
                 }
                 write!(f, "]")?;
-                match self.optional {
+                match self.optional() {
                     Some(TSMappedTypeModifierOperator::True) => write!(f, "?"),
                     Some(TSMappedTypeModifierOperator::Plus) => write!(f, "+?"),
                     Some(TSMappedTypeModifierOperator::Minus) => write!(f, "-?"),
@@ -3105,7 +2619,7 @@ impl<'a> FormatWrite<'a> for TSMappedType<'a> {
             });
 
             write!(f, [space(), group(&format_inner_inner)])?;
-            if let Some(type_annotation) = &self.type_annotation {
+            if let Some(type_annotation) = &self.type_annotation() {
                 write!(f, [":", space(), type_annotation])?;
             }
             write!(f, if_group_breaks(&OptionalSemicolon))
@@ -3127,86 +2641,77 @@ impl<'a> FormatWrite<'a> for TSMappedType<'a> {
     }
 }
 
-impl<'a> FormatWrite<'a> for TSTemplateLiteralType<'a> {
+impl<'a> FormatWrite<'a> for AstNode<'a, TSTemplateLiteralType<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         write!(f, "`")?;
-        for (index, item) in self.quasis.iter().enumerate() {
-            if index != 0 {
-                if let Some(types) = self.types.get(index - 1) {
-                    write!(f, ["${", types, "}"])?;
-                }
-            }
-            write!(f, dynamic_text(item.value.raw.as_str(), item.span.start));
+        let mut quasis = self.quasis().iter();
+        let quasi = quasis.next().unwrap();
+        write!(f, dynamic_text(quasi.value().raw.as_str(), quasi.span().start));
+
+        for (index, (quasi, types)) in quasis.zip(self.types().iter()).enumerate() {
+            write!(f, ["${", types, "}"])?;
+            write!(f, dynamic_text(quasi.value().raw.as_str(), quasi.span().start));
         }
         write!(f, "`")
     }
 }
 
-impl<'a> FormatWrite<'a> for TSAsExpression<'a> {
+impl<'a> FormatWrite<'a> for AstNode<'a, TSAsExpression<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        write!(f, [self.expression, " as ", self.type_annotation])
+        write!(f, [self.expression(), " as ", self.type_annotation()])
     }
 }
 
-impl<'a> FormatWrite<'a> for TSSatisfiesExpression<'a> {
+impl<'a> FormatWrite<'a> for AstNode<'a, TSSatisfiesExpression<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        write!(f, [self.expression, " satisfies ", self.type_annotation])
+        write!(f, [self.expression(), " satisfies ", self.type_annotation()])
     }
 }
 
-impl<'a> FormatWrite<'a> for TSTypeAssertion<'a> {
+impl<'a> FormatWrite<'a> for AstNode<'a, TSTypeAssertion<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         write!(f, "<")?;
         // var r = < <T>(x: T) => T > ((x) => { return null; });
         //          ^ make sure space is printed here.
-        if matches!(self.type_annotation, TSType::TSFunctionType(_)) {
+        if matches!(**self.type_annotation(), TSType::TSFunctionType(_)) {
             write!(f, space())?;
         }
-        write!(f, [self.type_annotation, ">", self.expression])
+        write!(f, [self.type_annotation(), ">", self.expression()])
     }
 }
 
-impl<'a> FormatWrite<'a> for TSImportEqualsDeclaration<'a> {
+impl<'a> FormatWrite<'a> for AstNode<'a, TSImportEqualsDeclaration<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         write!(
             f,
             [
                 "import",
                 space(),
-                self.import_kind,
-                self.id,
+                self.import_kind(),
+                self.id(),
                 space(),
                 "=",
                 space(),
-                self.module_reference,
+                self.module_reference(),
                 OptionalSemicolon
             ]
         )
     }
 }
 
-impl<'a> FormatWrite<'a> for TSModuleReference<'a> {
+impl<'a> FormatWrite<'a> for AstNode<'a, TSExternalModuleReference<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        match self {
-            Self::ExternalModuleReference(decl) => decl.fmt(f),
-            match_ts_type_name!(Self) => self.to_ts_type_name().fmt(f),
-        }
+        write!(f, ["require(", self.expression(), ")"])
     }
 }
 
-impl<'a> FormatWrite<'a> for TSExternalModuleReference<'a> {
+impl<'a> FormatWrite<'a> for AstNode<'a, TSNonNullExpression<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        write!(f, ["require(", self.expression, ")"])
+        write!(f, [self.expression(), "!"])
     }
 }
 
-impl<'a> FormatWrite<'a> for TSNonNullExpression<'a> {
-    fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        write!(f, [self.expression, "!"])
-    }
-}
-
-impl<'a> Format<'a> for Vec<'a, Decorator<'a>> {
+impl<'a> Format<'a> for AstNode<'a, Vec<'a, Decorator<'a>>> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         if self.is_empty() {
             return Ok(());
@@ -3219,51 +2724,51 @@ impl<'a> Format<'a> for Vec<'a, Decorator<'a>> {
     }
 }
 
-impl<'a> FormatWrite<'a> for Decorator<'a> {
+impl<'a> FormatWrite<'a> for AstNode<'a, Decorator<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        write!(f, ["@", self.expression])
+        write!(f, ["@", self.expression()])
     }
 }
 
-impl<'a> FormatWrite<'a> for TSExportAssignment<'a> {
+impl<'a> FormatWrite<'a> for AstNode<'a, TSExportAssignment<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        write!(f, ["export = ", self.expression])
+        write!(f, ["export = ", self.expression()])
     }
 }
 
-impl<'a> FormatWrite<'a> for TSNamespaceExportDeclaration<'a> {
+impl<'a> FormatWrite<'a> for AstNode<'a, TSNamespaceExportDeclaration<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        write!(f, ["export as namespace ", self.id])
+        write!(f, ["export as namespace ", self.id()])
     }
 }
 
-impl<'a> FormatWrite<'a> for TSInstantiationExpression<'a> {
+impl<'a> FormatWrite<'a> for AstNode<'a, TSInstantiationExpression<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        write!(f, [self.expression, self.type_arguments])
+        write!(f, [self.expression(), self.type_arguments()])
     }
 }
 
-impl<'a> FormatWrite<'a> for JSDocNullableType<'a> {
+impl<'a> FormatWrite<'a> for AstNode<'a, JSDocNullableType<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        if self.postfix {
-            write!(f, [self.type_annotation, "?"])
+        if self.postfix() {
+            write!(f, [self.type_annotation(), "?"])
         } else {
-            write!(f, ["?", self.type_annotation])
+            write!(f, ["?", self.type_annotation()])
         }
     }
 }
 
-impl<'a> FormatWrite<'a> for JSDocNonNullableType<'a> {
+impl<'a> FormatWrite<'a> for AstNode<'a, JSDocNonNullableType<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        if self.postfix {
-            write!(f, [self.type_annotation, "!"])
+        if self.postfix() {
+            write!(f, [self.type_annotation(), "!"])
         } else {
-            write!(f, ["!", self.type_annotation])
+            write!(f, ["!", self.type_annotation()])
         }
     }
 }
 
-impl<'a> FormatWrite<'a> for JSDocUnknownType {
+impl<'a> FormatWrite<'a> for AstNode<'a, JSDocUnknownType> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         Ok(())
     }

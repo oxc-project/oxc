@@ -115,18 +115,18 @@ impl Display for StringLiteral<'_> {
 impl BigIntLiteral<'_> {
     /// Is this BigInt literal zero? (`0n`).
     pub fn is_zero(&self) -> bool {
-        self.raw == "0n"
+        self.value == "0"
     }
 
     /// Is this BigInt literal negative? (e.g. `-1n`).
     pub fn is_negative(&self) -> bool {
-        self.raw.starts_with('-')
+        self.value.starts_with('-')
     }
 }
 
 impl Display for BigIntLiteral<'_> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        self.raw.fmt(f)
+        write!(f, "{}n", self.value)
     }
 }
 

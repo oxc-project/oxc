@@ -2,7 +2,34 @@
 
 All notable changes to this package will be documented in this file.
 
-The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
+
+## [1.2.0] - 2025-06-19
+
+### 🚀 Features
+
+- 0b4261b vscode: Add `oxc.requireConfig` configuration (#11700) (Sysix)
+- 094b81c language_server: Add `unusedDisableDirectives` option (#11645) (Sysix)
+
+
+
+## [1.0.0] - 2025-06-10
+
+## [0.18.1] - 2025-06-09
+
+### 🚜 Refactor
+
+- 7ab84c2 editor: Use pattern for textDocument filter (#11559) (Sysix)
+
+### 📚 Documentation
+
+- e13ed51 editor/vscode: Fix typo in README (#11572) (David)
+
+## [0.18.0] - 2025-06-06
+
+### Testing
+
+- 2ba2893 editor: Fix test for auto `fixAll` on save (#11448) (Sysix)
 
 ## [0.16.12] - 2025-05-25
 

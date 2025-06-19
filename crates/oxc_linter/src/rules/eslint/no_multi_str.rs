@@ -41,25 +41,19 @@ impl Rule for NoMultiStr {
             let source = literal.span.source_text(ctx.source_text());
             // https://github.com/eslint/eslint/blob/9e6d6405c3ee774c2e716a3453ede9696ced1be7/lib/shared/ast-utils.js#L12
             let position = source.find(['\r', '\n', '\u{2028}', '\u{2029}']).unwrap_or(0);
-            if position != 0 && !is_within_jsx_attribute_item(node.id(), ctx) {
+            if position != 0 && !is_within_jsx_attribute(node.id(), ctx) {
                 // We found the "newline" character but want to highlight the '\', so go back one
                 // character.
                 let multi_span_start =
                     literal.span.start + u32::try_from(position).unwrap_or_default() - 1;
-                ctx.diagnostic(no_multi_str_diagnostic(Span::new(
-                    multi_span_start,
-                    multi_span_start + 1,
-                )));
+                ctx.diagnostic(no_multi_str_diagnostic(Span::sized(multi_span_start, 1)));
             }
         }
     }
 }
 
-fn is_within_jsx_attribute_item(id: NodeId, ctx: &LintContext) -> bool {
-    if matches!(ctx.nodes().parent_kind(id), Some(AstKind::JSXAttributeItem(_))) {
-        return true;
-    }
-    false
+fn is_within_jsx_attribute(id: NodeId, ctx: &LintContext) -> bool {
+    matches!(ctx.nodes().parent_kind(id), Some(AstKind::JSXAttribute(_)))
 }
 
 #[test]

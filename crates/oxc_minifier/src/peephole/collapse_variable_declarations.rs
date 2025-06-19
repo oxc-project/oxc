@@ -30,6 +30,8 @@ mod test {
                 "var x = 2; foo(x); x = 3; x = 1; var y = 2; var z = 4; x = 5",
                 "var x = 2; foo(x), x = 3, x = 1; var y = 2, z = 4; x = 5",
             );
+
+            test("/* comment */const a = 1; const b = 2", "/* comment */const a = 1, b = 2");
         }
 
         #[test]

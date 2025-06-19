@@ -2,7 +2,53 @@
 
 All notable changes to this package will be documented in this file.
 
-The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
+
+## [1.2.0] - 2025-06-19
+
+### 🚀 Features
+
+- 38dc614 oxc_linter: Reuse allocators (#11736) (camc314)
+- 094b81c language_server: Add `unusedDisableDirectives` option (#11645) (Sysix)
+
+### 🚜 Refactor
+
+- abdbaa9 language_server: Use rule name directly from OxcCode instead of parsing out of the stringified version of OxcCode (#11714) (Nicholas Rayburn)
+
+
+
+## [1.0.0] - 2025-06-10
+
+## [0.18.1] - 2025-06-09
+
+### ⚡ Performance
+
+- 7bf25cb language_server: Transform `MessageWithPosition` to `Diagnostic` with less allocations (#11561) (Sysix)
+
+## [0.18.0] - 2025-06-06
+
+### Refactor
+
+- db0b099 language_server: Convert only once uri to path when creating `ServerLinter` (#11503) (Sysix)
+- ccceb52 language_server: Simplify `workspace/didChangeConfiguration` call (#11462) (Sysix)
+
+## [0.17.0] - 2025-05-30
+
+### Features
+
+- 2083d33 linter/language_server: Add second editor suggestion for `react/forward-ref-uses-ref` (#11375) (Sysix)
+
+### Bug Fixes
+
+- 7af5bb1 oxc_language_server: Include save option for text document sync capability (#11297) (Nicholas Rayburn)
+
+### Performance
+
+- 0ed6c1a language_server: Use `Arc<RwLock>` instead of `Mutex` for workspace workers (#11328) (Sysix)
+
+### Refactor
+
+- 042a3f3 linter: Use `PossibleFixes` instead of `Option<Fix>` (#11284) (Sysix)
 
 ## [0.16.12] - 2025-05-25
 

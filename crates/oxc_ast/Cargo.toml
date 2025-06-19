@@ -1,6 +1,6 @@
 [package]
 name = "oxc_ast"
-version = "0.72.1"
+version = "0.73.2"
 authors.workspace = true
 categories.workspace = true
 edition.workspace = true
@@ -28,7 +28,6 @@ oxc_span = { workspace = true }
 oxc_syntax = { workspace = true }
 
 bitflags = { workspace = true }
-cow-utils = { workspace = true }
 
 [features]
 default = []

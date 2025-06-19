@@ -562,7 +562,7 @@ fn test() {
         (r"<a />", None, None),
         (r"<a href={undefined} />", None, None),
         (r"<a href={null} />", None, None),
-        (r"<a href=' />;", None, None),
+        (r"<a href='' />;", None, None),
         (r"<a href='#' />", None, None),
         (r"<a href={'#'} />", None, None),
         (r"<a href={`#`} />", None, None),

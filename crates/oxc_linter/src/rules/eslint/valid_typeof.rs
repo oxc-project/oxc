@@ -56,7 +56,7 @@ declare_oxc_lint!(
     /// typeof bar == "undefined"
     /// typeof foo === baz
     /// typeof bar === typeof qux
-    /// ```js
+    /// ```
     ///
     /// ### Options
     ///

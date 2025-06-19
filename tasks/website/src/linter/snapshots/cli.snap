@@ -45,8 +45,6 @@ Arguments:
 
 
 ## Enable Plugins
-- **`    --disable-react-plugin`** &mdash; 
-  Disable react plugin, which is turned on by default
 - **`    --disable-unicorn-plugin`** &mdash; 
   Disable unicorn plugin, which is turned on by default
 - **`    --disable-oxc-plugin`** &mdash; 
@@ -55,6 +53,8 @@ Arguments:
   Disable TypeScript plugin, which is turned on by default
 - **`    --import-plugin`** &mdash; 
   Enable the experimental import plugin and detect ESM problems. It is recommended to use along side with the `--tsconfig` option.
+- **`    --react-plugin`** &mdash; 
+  Enable react plugin, which is turned off by default
 - **`    --jsdoc-plugin`** &mdash; 
   Enable the experimental jsdoc plugin and detect JSDoc problems
 - **`    --jest-plugin`** &mdash; 

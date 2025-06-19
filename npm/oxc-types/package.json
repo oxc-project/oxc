@@ -1,6 +1,6 @@
 {
   "name": "@oxc-project/types",
-  "version": "0.72.1",
+  "version": "0.73.2",
   "description": "Types for Oxc AST nodes",
   "keywords": [
     "AST",

@@ -118,10 +118,7 @@ impl<'a> AstBuilder<'a> {
     /// If the `Cow` is owned, allocates the string into arena to generate a new `Atom`.
     #[inline]
     pub fn atom_from_cow(self, value: &Cow<'a, str>) -> Atom<'a> {
-        match value {
-            Cow::Borrowed(s) => Atom::from(*s),
-            Cow::Owned(s) => self.atom(s),
-        }
+        Atom::from_cow_in(value, self.allocator)
     }
 
     /// `0`
@@ -272,19 +269,5 @@ impl<'a> AstBuilder<'a> {
             ImportOrExportKind::Value,
             NONE,
         ))
-    }
-
-    /* ---------- TypeScript ---------- */
-
-    /// Create a [`TSInterfaceHeritage`] that extends from the given list of
-    /// other interfaces.
-    #[inline]
-    pub fn ts_interface_heritages(
-        self,
-        extends: Vec<'a, (Expression<'a>, Option<Box<'a, TSTypeParameterInstantiation<'a>>>, Span)>,
-    ) -> Vec<'a, TSInterfaceHeritage<'a>> {
-        self.vec_from_iter(extends.into_iter().map(|(expression, type_parameters, span)| {
-            TSInterfaceHeritage { span, expression, type_arguments: type_parameters }
-        }))
     }
 }

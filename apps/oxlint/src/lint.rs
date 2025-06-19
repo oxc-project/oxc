@@ -10,6 +10,7 @@ use std::{
 
 use cow_utils::CowUtils;
 use ignore::{gitignore::Gitignore, overrides::OverrideBuilder};
+use oxc_allocator::AllocatorPool;
 use oxc_diagnostics::{DiagnosticService, GraphicalReportHandler, OxcDiagnostic};
 use oxc_linter::{
     AllowWarnDeny, Config, ConfigStore, ConfigStoreBuilder, InvalidFilterKind, LintFilter,
@@ -290,9 +291,11 @@ impl Runner for LintRunner {
 
         let number_of_rules = linter.number_of_rules();
 
+        let allocator_pool = AllocatorPool::new(rayon::current_num_threads());
+
         // Spawn linting in another thread so diagnostics can be printed immediately from diagnostic_service.run.
         rayon::spawn(move || {
-            let mut lint_service = LintService::new(&linter, options);
+            let mut lint_service = LintService::new(&linter, allocator_pool, options);
             lint_service.run(&tx_error);
         });
 
@@ -1149,5 +1152,11 @@ mod test {
     fn test_plugins_in_overrides_enabled_correctly() {
         let args = &["-c", ".oxlintrc.json"];
         Tester::new().with_cwd("fixtures/overrides_with_plugin".into()).test_and_snapshot(args);
+    }
+
+    #[test]
+    fn test_plugins_inside_overrides_categories_enabled_correctly() {
+        let args = &["-c", ".oxlintrc.json"];
+        Tester::new().with_cwd("fixtures/issue_10394".into()).test_and_snapshot(args);
     }
 }

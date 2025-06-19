@@ -189,7 +189,7 @@ fn check_useless_spread_in_list<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) -
         return false;
     };
 
-    let span = Span::new(spread_elem.span.start, spread_elem.span.start + 3);
+    let span = Span::sized(spread_elem.span.start, 3);
 
     match node.kind() {
         AstKind::ObjectExpression(_) => {
@@ -205,13 +205,9 @@ fn check_useless_spread_in_list<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) -
         }
         AstKind::ArrayExpression(array_expr) => match parent_parent.kind() {
             // ...[ ...[] ]
-            AstKind::ArrayExpressionElement(_) => {
+            AstKind::ArrayExpression(outer_array) => {
                 let diagnostic = spread_in_list(span, "array");
-                if let Some(outer_array) = ctx.nodes().parent_kind(parent_parent.id()) {
-                    diagnose_array_in_array_spread(ctx, diagnostic, &outer_array, array_expr);
-                } else {
-                    ctx.diagnostic(diagnostic);
-                }
+                diagnose_array_in_array_spread(ctx, diagnostic, outer_array, array_expr);
                 true
             }
             // foo(...[ ])
@@ -244,13 +240,9 @@ fn check_useless_spread_in_list<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) -
 fn diagnose_array_in_array_spread<'a>(
     ctx: &LintContext<'a>,
     diagnostic: OxcDiagnostic,
-    outer_array: &AstKind<'a>,
+    outer_array: &'a ArrayExpression<'a>,
     inner_array: &ArrayExpression<'a>,
 ) {
-    let AstKind::ArrayExpression(outer_array) = outer_array else {
-        ctx.diagnostic(diagnostic);
-        return;
-    };
     match outer_array.elements.len() {
         0 => unreachable!(),
         1 => {

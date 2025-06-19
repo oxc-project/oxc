@@ -38,9 +38,12 @@ use oxc_data_structures::rope::{Rope, get_line_column};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_span::{SPAN, Span};
 use oxc_syntax::{number::NumberBase, symbol::SymbolFlags};
-use oxc_traverse::{BoundIdentifier, Traverse, TraverseCtx};
+use oxc_traverse::{BoundIdentifier, Traverse};
 
-use crate::TransformCtx;
+use crate::{
+    context::{TransformCtx, TraverseCtx},
+    state::TransformState,
+};
 
 const SOURCE: &str = "__source";
 const FILE_NAME_VAR: &str = "jsxFileName";
@@ -57,7 +60,7 @@ impl<'a, 'ctx> JsxSource<'a, 'ctx> {
     }
 }
 
-impl<'a> Traverse<'a> for JsxSource<'a, '_> {
+impl<'a> Traverse<'a, TransformState<'a>> for JsxSource<'a, '_> {
     fn exit_program(&mut self, _program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
         if let Some(stmt) = self.get_filename_var_statement(ctx) {
             self.ctx.top_level_statements.insert_statement(stmt);

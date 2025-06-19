@@ -2,7 +2,143 @@
 
 All notable changes to this package will be documented in this file.
 
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
+
+## [0.73.2] - 2025-06-18
+
+### 🚀 Features
+
+- 8c341a2 sema/check: Ts setters cannot have initializers (#11695) (Don Isaac)
+
+
+## [0.73.1] - 2025-06-17
+
+### 🚀 Features
+
+- e05d9bb parser: Introduce `ParserImpl::token_source` method (#11737) (overlookmotel)
+- 563684a parser: Emit diagnostic for modifiers on static block (#11727) (Ulrich Stark)
+- 8fb53b6 parser: Forbid `declare` on class getter and setter (#11717) (Boshen)
+
+### 🐛 Bug Fixes
+
+- 854b0f1 parser: Allocate all strings in arena (#11738) (overlookmotel)
+
+### 🚜 Refactor
+
+- b0a1561 parser: Move empty ts type parameter checks to parser (#11696) (Don Isaac)
+- cf35cfd parser: Shorten Span construction (#11685) (Ulrich Stark)
+
+### ⚡ Performance
+
+- 2f25ca6 parser: Optimize code around parsing delimited list and object (#11755) (Ulrich Stark)
+
+
+## [0.73.0] - 2025-06-13
+
+### 💥 BREAKING CHANGES
+
+- f3eaefb ast: [**BREAKING**] Add `value` field to `BigIntLiteral` (#11564) (overlookmotel)
+
+### 🚀 Features
+
+- e0ae6b2 parser: Produce syntax error for decorator in class methods in js (#11624) (Boshen)
+- cdf7cdc parser: Produce syntax error for decorators in non-class methods (#11614) (Boshen)
+- 3b03fd3 parser: Produce correct syntax error for `interface I extends (typeof T)` (#11610) (Boshen)
+- ab3284a parser: Produce syntax error for `interface A implements B {}` (#11608) (Boshen)
+- 844a8a8 parser: Produce syntax error for `declare function foo() {}` (#11606) (Boshen)
+- 387c7f6 parser: Add better debug impl for `Token` (#11541) (camc314)
+
+### 🐛 Bug Fixes
+
+- 4e40089 parser: Parse `TSTypePredicate` correctly (#11666) (Boshen)
+- eb55d83 parser: Parse `using()` correctly (#11664) (Boshen)
+- 7266200 parser: Parse `@x() @y() export default abstract class {}` (#11630) (Boshen)
+- 40ca1ef parser: Don't parse a single "webpack" word as a webpack magic comment (#11626) (Boshen)
+- e4804ba parser: Parse decorator on `abstract class` (#11625) (Boshen)
+- cb17dae parser: Report error on malformed template expressions (#11540) (camc314)
+- 069c2b4 parser: Correct `TemplateTail::to_str` from `$}` to `}` (#11539) (camc314)
+- 551cd2a parser: Fix parsing of `import source` and `import defer` (#11537) (camchenry)
+
+### 🚜 Refactor
+
+- e519176 parser: Remove rewind in hot path for parsing `?.something` and `?.[` (#11643) (camchenry)
+- 4140bb8 parser: Remove rewind in hot path for parsing `for (let` (#11623) (camchenry)
+- 40b3a0e parser: Reduce rewind in checking if start of function type or constructor type (#11622) (camchenry)
+- 850543b parser: Remove lookahead in parsing intrinsic keyword (#11621) (camchenry)
+- b7b0dc3 parser: Improve `TSModuleDeclaration` parsing (#11605) (Boshen)
+- e9a8832 parser: Rewrite decorator parsing (#11604) (Boshen)
+- b2bd741 parser: Speed up and migrate ts errors for parsing ts tuple elements (#11580) (Ulrich Stark)
+- 4130b41 parser: Store export entries in arena (#11567) (camchenry)
+
+### ⚡ Performance
+
+- b34c6f6 parser,semantic: Improve handling of diagnostics (#11641) (Boshen)
+- 78f1336 parser: Remove lookahead for checking for-let-of and for-async-of (#11655) (camchenry)
+- e389748 parser: Add early returns when eating modifiers before decorators (#11653) (camchenry)
+- f224585 parser: Improve perf of parse_template_lit (#11542) (camc314)
+
+
+# Changelog
+
+All notable changes to this package will be documented in this file.
+
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
+
+## [0.72.3] - 2025-06-06
+
+### Features
+
+- d2da854 parser: Produce syntax error for `satisfies` and `as` in js files (#11502) (Boshen)
+- cd063d1 parser: Produce syntax error for decorators on overload (#11496) (Boshen)
+- 458c372 parser: Produce syntax error for decorators in incorrect places (#11491) (Boshen)
+- 7e88451 parser: Syntax errors for decorators appearing in conflicting places (#11482) (Boshen)
+
+### Bug Fixes
+
+- 392752f parser: Handle `import {type as as}` correctly (#11488) (camchenry)
+- be3bd8c parser: Fix panic while parsing `async await => {}` in module (#11493) (Boshen)
+- e291191 parser: Fix panic when parsing `export import` (#11473) (Boshen)
+- f729734 parser: Fix decorator placed incorrectly in initializers (#11461) (Boshen)
+
+### Performance
+
+- 7a5295d parser: Skip `try_parse` when current token is not an identifier (#11475) (leaysgur)
+- 25167f2 parser: Parse ts type signature without rewind (#11443) (Boshen)
+- 2e5a243 parser: Rewrite parse object literal element to avoid rewind (#11431) (Boshen)
+- b776847 parser: Parse `async function` without rewind (#11427) (Boshen)
+- dc110f5 parser: Parse binding list without token peek (#11423) (Boshen)
+- 2953a07 parser: Parse `<` without token peek (#11422) (Boshen)
+- 6203181 parser: Parse jsx open fragment without token peek (#11421) (Boshen)
+- 767e759 parser: Import `import` statement without token peak (#11420) (Boshen)
+- e41f85c parser: Optimize around `eat_decorators` (#11416) (Ulrich Stark)
+- d79cac1 parser: Parse `const` declaration without token peek (#11419) (Boshen)
+- b1d8d98 parser: Parse `let` declaration without token peek (#11413) (Boshen)
+- eaf19ed parser: Optimize around `parse_type_arguments_in_expression` (#11417) (Ulrich Stark)
+
+### Refactor
+
+- bf974da parser: Remove lookahead for parsing import declarations and specifiers (#11381) (camchenry)
+- 333b801 parser: Reduce backtracking during postfix type parsing (#11432) (therewillbecode)
+- a3e1585 parser: Reduce backtracking for literal type node parsing (#11426) (therewillbecode)
+- ed57fa3 parser: Reduce backtracking for assertion signature parsing (#11424) (therewillbecode)
+
+## [0.72.2] - 2025-05-31
+
+### Bug Fixes
+
+- daaa8f5 parser: Correctly parse decorators of property declaration (#11370) (magic-akari)
+
+### Performance
+
+- 24aba18 parser: Avoid checkpoint when parsing left curly in jsx (#11377) (Ulrich Stark)
+- 1bdeed2 parser: Remove lexer lookahead (#11349) (Boshen)
+
+### Refactor
+
+- 996194a parser: Remove unnecessary Tristate and checks (#11404) (Ulrich Stark)
+- cd3ed4d parser: Replace `at` and `bump` combinations with `eat` (#11390) (Ulrich Stark)
+- 4c49274 parser: Rewrite import/export specifier parsing (#11356) (camchenry)
+- bfaa443 parser: Consolidate export type `lookahead()` calls (#11341) (leaysgur)
 
 ## [0.72.1] - 2025-05-28
 

@@ -26,6 +26,10 @@ pub fn check_ts_type_parameter_declaration(
         ctx.error(empty_type_parameter_list(declaration.span));
     }
 }
+pub fn check_ts_type_parameter<'a>(param: &TSTypeParameter<'a>, ctx: &SemanticBuilder<'a>) {
+    check_type_name_is_reserved(&param.name, ctx, "Type parameter");
+}
+
 /// '?' at the end of a type is not valid TypeScript syntax. Did you mean to write 'number | null | undefined'?(17019)
 fn jsdoc_type_in_annotation(
     modifier: char,
@@ -73,77 +77,11 @@ pub fn check_ts_type_annotation(annotation: &TSTypeAnnotation<'_>, ctx: &Semanti
     ));
 }
 
-/// Initializers are not allowed in ambient contexts. ts(1039)
-fn initializer_in_ambient_context(init_span: Span) -> OxcDiagnostic {
-    ts_error("1039", "Initializers are not allowed in ambient contexts.").with_label(init_span)
-}
-
-pub fn check_variable_declaration(decl: &VariableDeclaration, ctx: &SemanticBuilder<'_>) {
-    if decl.declare {
-        for var in &decl.declarations {
-            if let Some(init) = &var.init {
-                ctx.error(initializer_in_ambient_context(init.span()));
-            }
-        }
-    }
-}
-
-fn unexpected_optional(span: Span, type_annotation: Option<&str>) -> OxcDiagnostic {
-    let d = OxcDiagnostic::error("Unexpected `?` operator").with_label(span);
-    if let Some(ty) = type_annotation {
-        d.with_help(format!("If you want an optional type, use `{ty} | undefined` instead."))
-    } else {
-        d
-    }
-}
-
-#[expect(clippy::cast_possible_truncation)]
-fn find_char(span: Span, source_text: &str, c: char) -> Option<Span> {
-    let Some(offset) = span.source_text(source_text).find(c) else {
-        debug_assert!(
-            false,
-            "Flag {c} not found in source text. This is likely indicates a bug in the parser.",
-        );
-        return None;
-    };
-    let offset = span.start + offset as u32;
-    Some(Span::new(offset, offset))
-}
-
-pub fn check_variable_declarator(decl: &VariableDeclarator, ctx: &SemanticBuilder<'_>) {
-    // Check for `let x?: number;`
-    if decl.id.optional {
-        // NOTE: BindingPattern spans cover the identifier _and_ the type annotation.
-        let ty = decl
-            .id
-            .type_annotation
-            .as_ref()
-            .map(|ty| ty.type_annotation.span())
-            .map(|span| &ctx.source_text[span]);
-        if let Some(span) = find_char(decl.span, ctx.source_text, '?') {
-            ctx.error(unexpected_optional(span, ty));
-        }
-    }
-    if decl.definite {
-        // Check for `let x!: number = 1;`
-        //                 ^
-        let Some(span) = find_char(decl.span, ctx.source_text, '!') else { return };
-        if decl.init.is_some() {
-            let error = ts_error(
-                "1263",
-                "Declarations with initializers cannot also have definite assignment assertions.",
-            )
-            .with_label(span);
-            ctx.error(error);
-        } else if decl.id.type_annotation.is_none() {
-            let error = ts_error(
-                "1264",
-                "Declarations with definite assignment assertions must also have type annotations.",
-            )
-            .with_label(span);
-            ctx.error(error);
-        }
-    }
+pub fn check_ts_type_alias_declaration<'a>(
+    decl: &TSTypeAliasDeclaration<'a>,
+    ctx: &SemanticBuilder<'a>,
+) {
+    check_type_name_is_reserved(&decl.id, ctx, "Type alias");
 }
 
 fn required_parameter_after_optional_parameter(span: Span) -> OxcDiagnostic {
@@ -157,7 +95,7 @@ fn parameter_property_outside_constructor(span: Span) -> OxcDiagnostic {
 }
 
 pub fn check_formal_parameters(params: &FormalParameters, ctx: &SemanticBuilder<'_>) {
-    if !params.is_empty() && params.kind == FormalParameterKind::Signature {
+    if params.kind == FormalParameterKind::Signature && params.items.len() > 1 {
         check_duplicate_bound_names(params, ctx);
     }
 
@@ -190,29 +128,6 @@ fn check_duplicate_bound_names<'a, T: BoundNames<'a>>(bound_names: &T, ctx: &Sem
     });
 }
 
-fn unexpected_assignment(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::error(
-        "The left-hand side of an assignment expression must be a variable or a property access.",
-    )
-    .with_label(span)
-}
-
-pub fn check_simple_assignment_target<'a>(
-    target: &SimpleAssignmentTarget<'a>,
-    ctx: &SemanticBuilder<'a>,
-) {
-    if let Some(expression) = target.get_expression() {
-        #[expect(clippy::match_same_arms)]
-        match expression.get_inner_expression() {
-            Expression::Identifier(_) => {}
-            match_member_expression!(Expression) => {}
-            _ => {
-                ctx.error(unexpected_assignment(target.span()));
-            }
-        }
-    }
-}
-
 fn unexpected_type_annotation(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::error("Unexpected type annotation").with_label(span)
 }
@@ -223,29 +138,6 @@ pub fn check_array_pattern<'a>(pattern: &ArrayPattern<'a>, ctx: &SemanticBuilder
             if let Some(type_annotation) = &element.type_annotation {
                 ctx.error(unexpected_type_annotation(type_annotation.span));
             }
-        }
-    }
-}
-
-/// An interface can only extend an identifier/qualified-name with optional type arguments.(2499)
-fn invalid_interface_extend(span: Span) -> OxcDiagnostic {
-    ts_error(
-        "2499",
-        "An interface can only extend an identifier/qualified-name with optional type arguments.",
-    )
-    .with_label(span)
-}
-
-pub fn check_ts_interface_declaration<'a>(
-    decl: &TSInterfaceDeclaration<'a>,
-    ctx: &SemanticBuilder<'a>,
-) {
-    for extend in &decl.extends {
-        if !matches!(
-            &extend.expression,
-            Expression::Identifier(_) | Expression::StaticMemberExpression(_),
-        ) {
-            ctx.error(invalid_interface_extend(extend.span));
         }
     }
 }
@@ -302,6 +194,8 @@ pub fn check_ts_enum_declaration<'a>(decl: &TSEnumDeclaration<'a>, ctx: &Semanti
             ctx.error(enum_member_must_have_initializer(member.span));
         }
     });
+
+    check_type_name_is_reserved(&decl.id, ctx, "Enum");
 }
 
 /// TS(1392)
@@ -374,6 +268,54 @@ pub fn check_class<'a>(class: &Class<'a>, ctx: &SemanticBuilder<'a>) {
             }
         }
     }
+    if let Some(id) = &class.id {
+        check_type_name_is_reserved(id, ctx, "Class");
+    }
+}
+
+pub fn check_ts_interface_declaration<'a>(
+    decl: &TSInterfaceDeclaration<'a>,
+    ctx: &SemanticBuilder<'a>,
+) {
+    check_type_name_is_reserved(&decl.id, ctx, "Interface");
+}
+
+/// ```ts
+/// function checkTypeNameIsReserved(name: Identifier, message: DiagnosticMessage): void {
+///     // TS 1.0 spec (April 2014): 3.6.1
+///     // The predefined type keywords are reserved and cannot be used as names of user defined types.
+///     switch (name.escapedText) {
+///         case "any":
+///         case "unknown":
+///         case "never":
+///         case "number":
+///         case "bigint":
+///         case "boolean":
+///         case "string":
+///         case "symbol":
+///         case "void":
+///         case "object":
+///         case "undefined":
+///             error(name, message, name.escapedText as string);
+///     }
+/// }
+/// ```
+fn check_type_name_is_reserved<'a>(
+    id: &BindingIdentifier<'a>,
+    ctx: &SemanticBuilder<'a>,
+    syntax_name: &str,
+) {
+    match id.name.as_str() {
+        "any" | "unknown" | "never" | "number" | "bigint" | "boolean" | "string" | "symbol"
+        | "void" | "object" | "undefined" => {
+            ctx.error(reserved_type_name(id.span, id.name.as_str(), syntax_name));
+        }
+        _ => {}
+    }
+}
+
+fn reserved_type_name(span: Span, reserved_name: &str, syntax_name: &str) -> OxcDiagnostic {
+    ts_error("2414", format!("{syntax_name} name cannot be '{reserved_name}'")).with_label(span)
 }
 
 fn abstract_element_cannot_have_initializer(
@@ -556,7 +498,7 @@ pub fn check_jsx_expression_container(
     ctx: &SemanticBuilder<'_>,
 ) {
     if matches!(container.expression, JSXExpression::EmptyExpression(_))
-        && matches!(ctx.nodes.parent_kind(ctx.current_node_id), Some(AstKind::JSXAttributeItem(_)))
+        && matches!(ctx.nodes.parent_kind(ctx.current_node_id), Some(AstKind::JSXAttribute(_)))
     {
         ctx.error(invalid_jsx_attribute_value(container.span()));
     }

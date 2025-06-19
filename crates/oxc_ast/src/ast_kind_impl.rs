@@ -74,19 +74,6 @@ impl<'a> AstKind<'a> {
         }
     }
 
-    pub fn is_jsx(self) -> bool {
-        matches!(
-            self,
-            Self::JSXElement(_)
-                | Self::JSXOpeningElement(_)
-                | Self::JSXElementName(_)
-                | Self::JSXFragment(_)
-                | Self::JSXAttributeItem(_)
-                | Self::JSXText(_)
-                | Self::JSXExpressionContainer(_)
-        )
-    }
-
     pub fn is_specific_id_reference(&self, name: &str) -> bool {
         match self {
             Self::IdentifierReference(ident) => ident.name == name,
@@ -177,7 +164,6 @@ impl AstKind<'_> {
             Self::ForInStatement(_) => "ForInStatement".into(),
             Self::ForOfStatement(_) => "ForOfStatement".into(),
             Self::ForStatement(_) => "ForStatement".into(),
-            Self::ForStatementInit(_) => "ForStatementInit".into(),
             Self::IfStatement(_) => "IfStatement".into(),
             Self::LabeledStatement(l) => format!("LabeledStatement({})", l.label.name).into(),
             Self::ReturnStatement(_) => "ReturnStatement".into(),
@@ -207,7 +193,7 @@ impl AstKind<'_> {
             Self::StringLiteral(s) => format!("StringLiteral({})", s.value).into(),
             Self::BooleanLiteral(b) => format!("BooleanLiteral({})", b.value).into(),
             Self::NullLiteral(_) => "NullLiteral".into(),
-            Self::BigIntLiteral(b) => format!("BigIntLiteral({})", b.raw).into(),
+            Self::BigIntLiteral(b) => format!("BigIntLiteral({})", b.value).into(),
             Self::RegExpLiteral(r) => format!("RegExpLiteral({})", r.regex).into(),
             Self::TemplateLiteral(t) => format!(
                 "TemplateLiteral({})",
@@ -217,6 +203,8 @@ impl AstKind<'_> {
 
             Self::MetaProperty(_) => "MetaProperty".into(),
             Self::Super(_) => "Super".into(),
+
+            Self::AccessorProperty(_) => "AccessorProperty".into(),
 
             Self::ArrayExpression(_) => "ArrayExpression".into(),
             Self::ArrowFunctionExpression(_) => "ArrowFunctionExpression".into(),
@@ -258,7 +246,6 @@ impl AstKind<'_> {
             }
             Self::PropertyKey(p) => format!("PropertyKey({})", p.name().unwrap_or(COMPUTED)).into(),
             Self::Argument(_) => "Argument".into(),
-            Self::ArrayExpressionElement(_) => "ArrayExpressionElement".into(),
             Self::AssignmentTarget(_) => "AssignmentTarget".into(),
             Self::SimpleAssignmentTarget(a) => {
                 format!("SimpleAssignmentTarget({})", a.get_identifier_name().unwrap_or(&UNKNOWN))
@@ -301,25 +288,30 @@ impl AstKind<'_> {
             Self::ExportSpecifier(e) => format!("ExportSpecifier({})", e.local.name()).into(),
             Self::ImportDefaultSpecifier(_) => "ImportDefaultSpecifier".into(),
             Self::ImportNamespaceSpecifier(_) => "ImportNamespaceSpecifier".into(),
+            Self::ImportAttribute(_) => "ImportAttribute".into(),
             Self::ExportDefaultDeclaration(_) => "ExportDefaultDeclaration".into(),
             Self::ExportNamedDeclaration(_) => "ExportNamedDeclaration".into(),
             Self::ExportAllDeclaration(_) => "ExportAllDeclaration".into(),
+            Self::WithClause(_) => "WithClause".into(),
             Self::JSXOpeningElement(_) => "JSXOpeningElement".into(),
             Self::JSXClosingElement(_) => "JSXClosingElement".into(),
-            Self::JSXElementName(n) => format!("JSXElementName({n})").into(),
             Self::JSXElement(_) => "JSXElement".into(),
             Self::JSXFragment(_) => "JSXFragment".into(),
-            Self::JSXAttributeItem(_) => "JSXAttributeItem".into(),
+            Self::JSXOpeningFragment(_) => "JSXOpeningFragment".into(),
+            Self::JSXClosingFragment(_) => "JSXClosingFragment".into(),
+            Self::JSXEmptyExpression(_) => "JSXEmptyExpression".into(),
+            Self::JSXSpreadChild(_) => "JSXSpreadChild".into(),
+            Self::JSXAttribute(_) => "JSXAttribute".into(),
             Self::JSXSpreadAttribute(_) => "JSXSpreadAttribute".into(),
             Self::JSXText(_) => "JSXText".into(),
             Self::JSXExpressionContainer(_) => "JSXExpressionContainer".into(),
             Self::JSXIdentifier(id) => format!("JSXIdentifier({id})").into(),
             Self::JSXMemberExpression(_) => "JSXMemberExpression".into(),
-            Self::JSXMemberExpressionObject(_) => "JSXMemberExpressionObject".into(),
             Self::JSXNamespacedName(_) => "JSXNamespacedName".into(),
 
             Self::TSModuleBlock(_) => "TSModuleBlock".into(),
 
+            Self::TSTupleType(_) => "TSTupleType".into(),
             Self::TSAnyKeyword(_) => "TSAnyKeyword".into(),
             Self::TSIntersectionType(_) => "TSIntersectionType".into(),
             Self::TSLiteralType(_) => "TSLiteralType".into(),
@@ -343,8 +335,13 @@ impl AstKind<'_> {
             Self::TSUnknownKeyword(_) => "TSUnknownKeyword".into(),
             Self::TSInferType(_) => "TSInferType".into(),
             Self::TSTemplateLiteralType(_) => "TSTemplateLiteralType".into(),
+            Self::TSArrayType(_) => "TSArrayType".into(),
+            Self::TSOptionalType(_) => "TSOptionalType".into(),
+            Self::TSTypeOperator(_) => "TSTypeOperator".into(),
 
             Self::TSIndexedAccessType(_) => "TSIndexedAccessType".into(),
+
+            Self::TSRestType(_) => "TSRestType".into(),
 
             Self::TSAsExpression(_) => "TSAsExpression".into(),
             Self::TSSatisfiesExpression(_) => "TSSatisfiesExpression".into(),
@@ -355,7 +352,9 @@ impl AstKind<'_> {
             Self::TSEnumBody(_) => "TSEnumBody".into(),
             Self::TSEnumMember(_) => "TSEnumMember".into(),
 
+            Self::TSNamespaceExportDeclaration(_) => "TSNamespaceExportDeclaration".into(),
             Self::TSImportEqualsDeclaration(_) => "TSImportEqualsDeclaration".into(),
+            Self::TSCallSignatureDeclaration(_) => "TSCallSignatureDeclaration".into(),
             Self::TSTypeName(n) => format!("TSTypeName({n})").into(),
             Self::TSExternalModuleReference(_) => "TSExternalModuleReference".into(),
             Self::TSQualifiedName(n) => format!("TSQualifiedName({n})").into(),
@@ -370,16 +369,21 @@ impl AstKind<'_> {
             Self::TSTypeParameter(t) => format!("TSTypeParameter({})", t.name).into(),
             Self::TSTypeParameterDeclaration(_) => "TSTypeParameterDeclaration".into(),
             Self::TSTypeParameterInstantiation(_) => "TSTypeParameterInstantiation".into(),
+            Self::TSTypePredicate(_) => "TSTypePredicate".into(),
             Self::TSImportType(_) => "TSImportType".into(),
             Self::TSNamedTupleMember(_) => "TSNamedTupleMember".into(),
 
             Self::TSPropertySignature(_) => "TSPropertySignature".into(),
+            Self::TSIndexSignatureName(_) => "TSIndexSignatureName".into(),
             Self::TSConditionalType(_) => "TSConditionalType".into(),
             Self::TSMappedType(_) => "TSMappedType".into(),
             Self::TSConstructSignatureDeclaration(_) => "TSConstructSignatureDeclaration".into(),
-            Self::TSModuleReference(_) => "TSModuleReference".into(),
             Self::TSExportAssignment(_) => "TSExportAssignment".into(),
             Self::V8IntrinsicExpression(_) => "V8IntrinsicExpression".into(),
+
+            Self::JSDocNullableType(_) => "JSDocNullableType".into(),
+            Self::JSDocNonNullableType(_) => "JSDocNonNullableType".into(),
+            Self::JSDocUnknownType(_) => "JSDocUnknownType".into(),
         }
     }
 }

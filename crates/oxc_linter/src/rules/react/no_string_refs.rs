@@ -1,8 +1,8 @@
 use oxc_ast::{
     AstKind,
     ast::{
-        Expression, JSXAttribute, JSXAttributeItem, JSXAttributeName, JSXAttributeValue,
-        JSXExpression, JSXExpressionContainer,
+        Expression, JSXAttribute, JSXAttributeName, JSXAttributeValue, JSXExpression,
+        JSXExpressionContainer,
     },
 };
 use oxc_diagnostics::OxcDiagnostic;
@@ -118,7 +118,7 @@ impl Rule for NoStringRefs {
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         match node.kind() {
-            AstKind::JSXAttributeItem(JSXAttributeItem::Attribute(attr)) => {
+            AstKind::JSXAttribute(attr) => {
                 if is_literal_ref_attribute(attr, self.no_template_literals) {
                     ctx.diagnostic(string_in_ref_deprecated(attr.span));
                 }

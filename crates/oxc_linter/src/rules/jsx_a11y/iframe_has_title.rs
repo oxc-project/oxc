@@ -98,9 +98,7 @@ impl Rule for IframeHasTitle {
                             return;
                         }
                     }
-                    JSXExpression::CallExpression(_) => {
-                        return;
-                    }
+                    JSXExpression::CallExpression(_) => return,
                     expr @ JSXExpression::Identifier(_) => {
                         if !expr.is_undefined() {
                             return;

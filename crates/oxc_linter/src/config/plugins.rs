@@ -43,7 +43,7 @@ bitflags! {
 impl Default for LintPlugins {
     #[inline]
     fn default() -> Self {
-        LintPlugins::REACT | LintPlugins::UNICORN | LintPlugins::TYPESCRIPT | LintPlugins::OXC
+        LintPlugins::UNICORN | LintPlugins::TYPESCRIPT | LintPlugins::OXC
     }
 }
 
@@ -267,7 +267,7 @@ pub struct LintPluginOptions {
 impl Default for LintPluginOptions {
     fn default() -> Self {
         Self {
-            react: true,
+            react: false,
             unicorn: true,
             typescript: true,
             oxc: true,

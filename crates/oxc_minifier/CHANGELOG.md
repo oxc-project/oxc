@@ -2,7 +2,32 @@
 
 All notable changes to this package will be documented in this file.
 
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
+
+
+
+## [0.73.0] - 2025-06-13
+
+### 💥 BREAKING CHANGES
+
+- f3eaefb ast: [**BREAKING**] Add `value` field to `BigIntLiteral` (#11564) (overlookmotel)
+
+### 🚀 Features
+
+- 40ac186 minifier: Annotate more pure constructors (#11555) (Boshen)
+
+
+# Changelog
+
+All notable changes to this package will be documented in this file.
+
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
+
+## [0.72.3] - 2025-06-06
+
+### Bug Fixes
+
+- 0d27e58 minifier: Fix incorrect span when performing collapse variable declarations (#11492) (Boshen)
 
 ## [0.72.1] - 2025-05-28
 

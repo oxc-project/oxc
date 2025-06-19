@@ -2,7 +2,39 @@
 
 All notable changes to this package will be documented in this file.
 
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
+
+
+## [0.73.1] - 2025-06-17
+
+### 🚜 Refactor
+
+- acc1b22 isolated-declarations: Shorten Span construction (#11688) (Ulrich Stark)
+
+
+
+# Changelog
+
+All notable changes to this package will be documented in this file.
+
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
+
+## [0.72.3] - 2025-06-06
+
+### Performance
+
+- 25167f2 parser: Parse ts type signature without rewind (#11443) (Boshen)
+
+## [0.72.2] - 2025-05-31
+
+### Bug Fixes
+
+- e93caa4 isolated-declarations: Omit empty variable declarations (#11372) (magic-akari)
+- daaa8f5 parser: Correctly parse decorators of property declaration (#11370) (magic-akari)
+
+### Testing
+
+- 03e8aa9 isolated-declarations: Fix multiline comment mismatch in windows (#11373) (Dunqing)
 
 ## [0.72.1] - 2025-05-28
 

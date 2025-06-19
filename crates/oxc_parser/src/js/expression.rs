@@ -1,5 +1,5 @@
 use cow_utils::CowUtils;
-use oxc_allocator::{Box, TakeIn};
+use oxc_allocator::{Box, TakeIn, Vec};
 use oxc_ast::ast::*;
 #[cfg(feature = "regular_expression")]
 use oxc_regular_expression::ast::Pattern;
@@ -19,6 +19,7 @@ use super::{
 use crate::{
     Context, ParserImpl, diagnostics,
     lexer::{Kind, parse_big_int, parse_float, parse_int},
+    modifiers::Modifiers,
 };
 
 impl<'a> ParserImpl<'a> {
@@ -156,15 +157,10 @@ impl<'a> ParserImpl<'a> {
     ///     `TemplateLiteral`[?Yield, ?Await, ~Tagged]
     ///     `CoverParenthesizedExpressionAndArrowParameterList`[?Yield, ?Await]
     fn parse_primary_expression(&mut self) -> Expression<'a> {
-        let span = self.start_span();
-
-        if self.at(Kind::At) {
-            self.eat_decorators();
-        }
-
         // FunctionExpression, GeneratorExpression
         // AsyncFunctionExpression, AsyncGeneratorExpression
         if self.at_function_with_async() {
+            let span = self.start_span();
             let r#async = self.eat(Kind::Async);
             return self.parse_function_expression(span, r#async);
         }
@@ -176,7 +172,9 @@ impl<'a> ParserImpl<'a> {
             // ObjectLiteral
             Kind::LCurly => Expression::ObjectExpression(self.parse_object_expression()),
             // ClassExpression
-            Kind::Class => self.parse_class_expression(),
+            Kind::Class => {
+                self.parse_class_expression(self.start_span(), &Modifiers::empty(), self.ast.vec())
+            }
             // This
             Kind::This => self.parse_this_expression(),
             // TemplateLiteral
@@ -187,19 +185,21 @@ impl<'a> ParserImpl<'a> {
             Kind::New => self.parse_new_expression(),
             Kind::Super => self.parse_super(),
             Kind::Import => self.parse_import_meta_or_call(),
-            Kind::LParen => self.parse_parenthesized_expression(span),
+            Kind::LParen => self.parse_parenthesized_expression(),
             Kind::Slash | Kind::SlashEq => {
                 let literal = self.parse_literal_regexp();
                 Expression::RegExpLiteral(self.alloc(literal))
             }
+            Kind::At => self.parse_decorated_expression(),
             // Literal, RegularExpressionLiteral
             kind if kind.is_literal() => self.parse_literal_expression(),
             _ => self.parse_identifier_expression(),
         }
     }
 
-    fn parse_parenthesized_expression(&mut self, span: u32) -> Expression<'a> {
-        self.expect(Kind::LParen);
+    fn parse_parenthesized_expression(&mut self) -> Expression<'a> {
+        let span = self.start_span();
+        self.bump_any(); // `bump` `(`
         let expr_span = self.start_span();
         let (mut expressions, comma_span) = self.context(Context::In, Context::Decorator, |p| {
             p.parse_delimited_list(
@@ -338,10 +338,10 @@ impl<'a> ParserImpl<'a> {
         let span = token.span();
         let raw = self.cur_src();
         let src = raw.strip_suffix('n').unwrap();
-        let _value = parse_big_int(src, token.kind(), token.has_separator())
-            .map_err(|err| diagnostics::invalid_number(err, span));
+        let value = parse_big_int(src, token.kind(), token.has_separator(), self.ast.allocator);
+
         self.bump_any();
-        self.ast.big_int_literal(span, raw, base)
+        self.ast.big_int_literal(span, value, Some(Atom::from(raw)), base)
     }
 
     pub(crate) fn parse_literal_regexp(&mut self) -> RegExpLiteral<'a> {
@@ -371,6 +371,10 @@ impl<'a> ParserImpl<'a> {
         };
 
         let pattern = RegExpPattern { text: Atom::from(pattern_text), pattern };
+
+        if flags.contains(RegExpFlags::U | RegExpFlags::V) {
+            self.error(diagnostics::reg_exp_flag_u_and_v(span));
+        }
 
         self.ast.reg_exp_literal(span, RegExp { pattern, flags }, Some(Atom::from(raw)))
     }
@@ -451,13 +455,16 @@ impl<'a> ParserImpl<'a> {
     ///     `SubstitutionTemplate`[?Yield, ?Await, ?Tagged]
     pub(crate) fn parse_template_literal(&mut self, tagged: bool) -> TemplateLiteral<'a> {
         let span = self.start_span();
-        let mut expressions = self.ast.vec();
-        let mut quasis = self.ast.vec();
-        match self.cur_kind() {
+
+        let (quasis, expressions) = match self.cur_kind() {
             Kind::NoSubstitutionTemplate => {
-                quasis.push(self.parse_template_element(tagged));
+                let quasis = self.ast.vec1(self.parse_template_element(tagged));
+                (quasis, self.ast.vec())
             }
             Kind::TemplateHead => {
+                let mut expressions = self.ast.vec_with_capacity(1);
+                let mut quasis = self.ast.vec_with_capacity(2);
+
                 quasis.push(self.parse_template_element(tagged));
                 // TemplateHead Expression[+In, ?Yield, ?Await]
                 let expr = self.context(Context::In, Context::empty(), Self::parse_expr);
@@ -471,23 +478,24 @@ impl<'a> ParserImpl<'a> {
                         }
                         Kind::TemplateMiddle => {
                             quasis.push(self.parse_template_element(tagged));
-                        }
-                        Kind::Eof => {
-                            self.expect(Kind::TemplateTail);
-                            break;
-                        }
-                        _ => {
                             // TemplateMiddle Expression[+In, ?Yield, ?Await]
                             let expr =
                                 self.context(Context::In, Context::empty(), Self::parse_expr);
                             expressions.push(expr);
                             self.re_lex_template_substitution_tail();
                         }
+                        _ => {
+                            self.expect(Kind::TemplateTail);
+                            break;
+                        }
                     }
                 }
+
+                (quasis, expressions)
             }
             _ => unreachable!("parse_template_literal"),
-        }
+        };
+
         self.ast.template_literal(self.end_span(span), quasis, expressions)
     }
 
@@ -717,19 +725,28 @@ impl<'a> ParserImpl<'a> {
             }
 
             let mut question_dot = false;
-            let is_property_access = if allow_optional_chain
-                && self.at(Kind::QuestionDot)
-                && self.lookahead(|p| {
-                    p.bump_any();
-                    let kind = p.cur_kind();
-                    kind == Kind::LBrack
-                        || kind.is_identifier_or_keyword()
-                        || kind.is_template_start_of_tagged_template()
-                }) {
+            let is_property_access = if allow_optional_chain && self.at(Kind::QuestionDot) {
+                // ?.
+                let checkpoint = self.checkpoint();
                 self.bump_any();
-                *in_optional_chain = true;
-                question_dot = true;
-                self.cur_kind().is_identifier_or_keyword()
+                let kind = self.cur_kind();
+                let is_identifier_or_keyword = kind.is_identifier_or_keyword();
+                if kind == Kind::LBrack
+                    || is_identifier_or_keyword
+                    || kind.is_template_start_of_tagged_template()
+                {
+                    // ?.[
+                    // ?.something
+                    // ?.template`...`
+                    *in_optional_chain = true;
+                    question_dot = true;
+                    is_identifier_or_keyword
+                } else {
+                    // Should be a cold branch here, as most real-world optional chaining will look like
+                    // `?.something` or `?.[expr]`
+                    self.rewind(checkpoint);
+                    false
+                }
             } else {
                 self.eat(Kind::Dot)
             };
@@ -757,15 +774,14 @@ impl<'a> ParserImpl<'a> {
                 continue;
             }
 
-            if !question_dot {
-                if self.at(Kind::Bang) && !self.cur_token().is_on_new_line() && self.is_ts {
-                    self.bump_any();
+            if !question_dot && self.is_ts {
+                if !self.cur_token().is_on_new_line() && self.eat(Kind::Bang) {
                     lhs = self.ast.expression_ts_non_null(self.end_span(lhs_span), lhs);
                     continue;
                 }
 
                 if matches!(self.cur_kind(), Kind::LAngle | Kind::ShiftLeft) {
-                    if let Some(Some(arguments)) =
+                    if let Some(arguments) =
                         self.try_parse(Self::parse_type_arguments_in_expression)
                     {
                         lhs = self.ast.expression_ts_instantiation(
@@ -909,8 +925,10 @@ impl<'a> ParserImpl<'a> {
 
             let mut type_arguments = None;
             if question_dot {
-                if let Some(Some(args)) = self.try_parse(Self::parse_type_arguments_in_expression) {
-                    type_arguments = Some(args);
+                if self.is_ts {
+                    if let Some(args) = self.try_parse(Self::parse_type_arguments_in_expression) {
+                        type_arguments = Some(args);
+                    }
                 }
                 if self.cur_kind().is_template_start_of_tagged_template() {
                     lhs = self.parse_tagged_template(lhs_span, lhs, question_dot, type_arguments);
@@ -986,13 +1004,7 @@ impl<'a> ParserImpl<'a> {
             return self.ast.expression_update(self.end_span(lhs_span), operator, true, argument);
         }
 
-        if self.source_type.is_jsx()
-            && kind == Kind::LAngle
-            && self.lookahead(|p| {
-                p.bump_any();
-                p.at(Kind::RAngle) || p.cur_kind().is_identifier_or_keyword()
-            })
-        {
+        if self.source_type.is_jsx() && self.at(Kind::LAngle) {
             return self.parse_jsx_expression();
         }
 
@@ -1091,7 +1103,7 @@ impl<'a> ParserImpl<'a> {
             // This is need for jsx `<div>=</div>` case
             let kind = self.re_lex_right_angle();
 
-            let Some(left_precedence) = kind_to_precedence(kind, self.is_ts) else { break };
+            let Some(left_precedence) = kind_to_precedence(kind) else { break };
 
             let stop = if left_precedence.is_right_associative() {
                 left_precedence < min_precedence
@@ -1110,7 +1122,7 @@ impl<'a> ParserImpl<'a> {
                 break;
             }
 
-            if self.is_ts && matches!(kind, Kind::As | Kind::Satisfies) {
+            if matches!(kind, Kind::As | Kind::Satisfies) {
                 if self.cur_token().is_on_new_line() {
                     break;
                 }
@@ -1118,8 +1130,14 @@ impl<'a> ParserImpl<'a> {
                 let type_annotation = self.parse_ts_type();
                 let span = self.end_span(lhs_span);
                 lhs = if kind == Kind::As {
+                    if !self.is_ts {
+                        self.error(diagnostics::as_in_ts(span));
+                    }
                     self.ast.expression_ts_as(span, lhs, type_annotation)
                 } else {
+                    if !self.is_ts {
+                        self.error(diagnostics::satisfies_in_ts(span));
+                    }
                     self.ast.expression_ts_satisfies(span, lhs, type_annotation)
                 };
                 continue;
@@ -1373,6 +1391,29 @@ impl<'a> ParserImpl<'a> {
             p.parse_simple_unary_expression(lhs_span)
         });
         self.ast.expression_await(self.end_span(span), argument)
+    }
+
+    fn parse_decorated_expression(&mut self) -> Expression<'a> {
+        let span = self.start_span();
+        let decorators = self.parse_decorators();
+        let modifiers = self.parse_modifiers(false, false);
+        if self.at(Kind::Class) {
+            self.parse_class_expression(span, &modifiers, decorators)
+        } else {
+            self.unexpected()
+        }
+    }
+
+    pub(crate) fn parse_decorators(&mut self) -> Vec<'a, Decorator<'a>> {
+        if self.at(Kind::At) {
+            let mut decorators = self.ast.vec_with_capacity(1);
+            while self.at(Kind::At) {
+                decorators.push(self.parse_decorator());
+            }
+            decorators
+        } else {
+            self.ast.vec()
+        }
     }
 
     /// `Decorator`[Yield, Await]:

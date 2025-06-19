@@ -11,6 +11,7 @@ mod import {
     pub mod default;
     pub mod export;
     pub mod exports_last;
+    pub mod extensions;
     pub mod first;
     pub mod group_exports;
     pub mod max_dependencies;
@@ -93,6 +94,7 @@ mod eslint {
     pub mod no_eval;
     pub mod no_ex_assign;
     pub mod no_extend_native;
+    pub mod no_extra_bind;
     pub mod no_extra_boolean_cast;
     pub mod no_extra_label;
     pub mod no_fallthrough;
@@ -593,6 +595,7 @@ oxc_macros::declare_all_lint_rules! {
     eslint::max_params,
     eslint::new_cap,
     eslint::no_unassigned_vars,
+    eslint::no_extra_bind,
     eslint::no_alert,
     eslint::no_array_constructor,
     eslint::no_async_promise_executor,
@@ -719,6 +722,7 @@ oxc_macros::declare_all_lint_rules! {
     import::default,
     import::export,
     import::exports_last,
+    import::extensions,
     import::first,
     import::group_exports,
     import::no_unassigned_import,

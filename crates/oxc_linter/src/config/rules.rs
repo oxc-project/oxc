@@ -60,92 +60,37 @@ pub struct ESLintRule {
 impl OxlintRules {
     pub(crate) fn override_rules(&self, rules_for_override: &mut RuleSet, all_rules: &[RuleEnum]) {
         use itertools::Itertools;
-        let mut rules_to_replace: Vec<(RuleEnum, AllowWarnDeny)> = vec![];
-        let mut rules_to_remove: Vec<RuleEnum> = vec![];
+        let mut rules_to_replace = vec![];
 
-        // Rules can have the same name but different plugin names
         let lookup = self.rules.iter().into_group_map_by(|r| r.rule_name.as_str());
 
         for (name, rule_configs) in &lookup {
-            match rule_configs.len() {
-                0 => unreachable!(),
-                1 => {
-                    let rule_config = &rule_configs[0];
-                    let (rule_name, plugin_name) = transform_rule_and_plugin_name(
-                        &rule_config.rule_name,
-                        &rule_config.plugin_name,
-                    );
-                    let severity = rule_config.severity;
-                    match severity {
-                        AllowWarnDeny::Warn | AllowWarnDeny::Deny => {
-                            if let Some(rule) = all_rules
-                                .iter()
-                                .find(|r| r.name() == rule_name && r.plugin_name() == plugin_name)
-                            {
-                                let config = rule_config.config.clone().unwrap_or_default();
-                                let rule = rule.read_json(config);
-                                rules_to_replace.push((rule, severity));
-                            }
-                        }
-                        AllowWarnDeny::Allow => {
-                            if let Some((rule, _)) = rules_for_override.iter().find(|(r, _)| {
-                                r.name() == rule_name && r.plugin_name() == plugin_name
-                            }) {
-                                rules_to_remove.push(rule.clone());
-                            }
-                            // If the given rule is not found in the rule list (for example, if all rules are disabled),
-                            // then look it up in the entire rules list and add it.
-                            else if let Some(rule) = all_rules
-                                .iter()
-                                .find(|r| r.name() == rule_name && r.plugin_name() == plugin_name)
-                            {
-                                let config = rule_config.config.clone().unwrap_or_default();
-                                let rule = rule.read_json(config);
-                                rules_to_remove.push(rule);
-                            }
-                        }
-                    }
-                }
-                _ => {
-                    let rules = rules_for_override
+            let rules_map = rules_for_override
+                .iter()
+                .filter(|&(r, _)| (r.name() == *name))
+                .map(|(r, _)| (r.plugin_name(), r))
+                .collect::<FxHashMap<_, _>>();
+
+            for rule_config in rule_configs {
+                let (rule_name, plugin_name) = transform_rule_and_plugin_name(
+                    &rule_config.rule_name,
+                    &rule_config.plugin_name,
+                );
+                let config = rule_config.config.clone().unwrap_or_default();
+                let severity = rule_config.severity;
+
+                let rule = rules_map.get(&plugin_name).copied().or_else(|| {
+                    all_rules
                         .iter()
-                        .filter_map(|(r, _)| {
-                            if r.name() == *name { Some((r.plugin_name(), r)) } else { None }
-                        })
-                        .collect::<FxHashMap<_, _>>();
+                        .find(|r| r.name() == rule_name && r.plugin_name() == plugin_name)
+                });
 
-                    for rule_config in rule_configs {
-                        let (rule_name, plugin_name) = transform_rule_and_plugin_name(
-                            &rule_config.rule_name,
-                            &rule_config.plugin_name,
-                        );
-
-                        if rule_config.severity.is_warn_deny() {
-                            let config = rule_config.config.clone().unwrap_or_default();
-                            if let Some(rule) = rules.get(&plugin_name) {
-                                rules_to_replace
-                                    .push((rule.read_json(config), rule_config.severity));
-                            }
-                            // If the given rule is not found in the rule list (for example, if all rules are disabled),
-                            // then look it up in the entire rules list and add it.
-                            else if let Some(rule) = all_rules
-                                .iter()
-                                .find(|r| r.name() == rule_name && r.plugin_name() == plugin_name)
-                            {
-                                rules_to_replace
-                                    .push((rule.read_json(config), rule_config.severity));
-                            }
-                        } else if let Some(&rule) = rules.get(&plugin_name) {
-                            rules_to_remove.push(rule.clone());
-                        }
-                    }
+                if let Some(rule) = rule {
+                    rules_to_replace.push((rule.read_json(config), severity));
                 }
             }
         }
 
-        for rule in rules_to_remove {
-            rules_for_override.remove(&rule);
-        }
         for (rule, severity) in rules_to_replace {
             let _ = rules_for_override.remove(&rule);
             rules_for_override.insert(rule, severity);
@@ -454,7 +399,7 @@ mod test {
         rules.insert(RuleEnum::EslintNoConsole(Default::default()), AllowWarnDeny::Deny);
         r#override(&mut rules, &json!({ "eslint/no-console": "off" }));
 
-        assert!(rules.is_empty());
+        assert!(!rules.iter().any(|(_, severity)| severity.is_warn_deny()));
     }
 
     #[test]

@@ -9,12 +9,12 @@ use crate::LintContext;
 #[cfg(feature = "language_server")]
 use crate::service::offset_to_position::SpanPositionMessage;
 #[cfg(feature = "language_server")]
-pub use fix::FixWithPosition;
+pub use fix::{FixWithPosition, PossibleFixesWithPosition};
 #[cfg(feature = "language_server")]
 use oxc_diagnostics::{OxcCode, Severity};
 
 mod fix;
-pub use fix::{CompositeFix, Fix, FixKind, RuleFix};
+pub use fix::{CompositeFix, Fix, FixKind, PossibleFixes, RuleFix};
 use oxc_allocator::{Allocator, CloneIn};
 
 /// Produces [`RuleFix`] instances. Inspired by ESLint's [`RuleFixer`].
@@ -178,7 +178,7 @@ impl<'c, 'a: 'c> RuleFixer<'c, 'a> {
 
     /// Creates a fix command that inserts text at the specified index in the source text.
     fn insert_text_at(&self, index: u32, text: Cow<'a, str>) -> RuleFix<'a> {
-        let fix = Fix::new(text, Span::new(index, index));
+        let fix = Fix::new(text, Span::empty(index));
         let content = self.possibly_truncate_snippet(&fix.content);
         let message = self.auto_message.then(|| Cow::Owned(format!("Insert `{content}`")));
         self.new_fix(CompositeFix::Single(fix), message)
@@ -227,7 +227,7 @@ pub struct FixResult<'a> {
 #[derive(Clone)]
 pub struct Message<'a> {
     pub error: OxcDiagnostic,
-    pub fix: Option<Fix<'a>>,
+    pub fixes: PossibleFixes<'a>,
     span: Span,
     fixed: bool,
 }
@@ -241,7 +241,7 @@ pub struct MessageWithPosition<'a> {
     pub severity: Severity,
     pub code: OxcCode,
     pub url: Option<Cow<'a, str>>,
-    pub fix: Option<FixWithPosition<'a>>,
+    pub fixes: PossibleFixesWithPosition<'a>,
 }
 
 #[cfg(feature = "language_server")]
@@ -254,7 +254,7 @@ impl From<OxcDiagnostic> for MessageWithPosition<'_> {
             severity: from.severity,
             code: from.code.clone(),
             url: from.url.clone(),
-            fix: None,
+            fixes: PossibleFixesWithPosition::None,
         }
     }
 }
@@ -265,7 +265,7 @@ impl<'new> CloneIn<'new> for Message<'_> {
     fn clone_in(&self, allocator: &'new Allocator) -> Self::Cloned {
         Message {
             error: self.error.clone(),
-            fix: self.fix.clone_in(allocator),
+            fixes: self.fixes.clone_in(allocator),
             span: self.span,
             fixed: self.fixed,
         }
@@ -274,7 +274,7 @@ impl<'new> CloneIn<'new> for Message<'_> {
 
 impl<'a> Message<'a> {
     #[expect(clippy::cast_possible_truncation)] // for `as u32`
-    pub fn new(error: OxcDiagnostic, fix: Option<Fix<'a>>) -> Self {
+    pub fn new(error: OxcDiagnostic, fixes: PossibleFixes<'a>) -> Self {
         let (start, end) = if let Some(labels) = &error.labels {
             let start = labels
                 .iter()
@@ -288,7 +288,7 @@ impl<'a> Message<'a> {
         } else {
             (0, 0)
         };
-        Self { error, span: Span::new(start, end), fix, fixed: false }
+        Self { error, span: Span::new(start, end), fixes, fixed: false }
     }
 }
 
@@ -311,17 +311,27 @@ impl GetSpan for Message<'_> {
 pub struct Fixer<'a> {
     source_text: &'a str,
     messages: Vec<Message<'a>>,
+
+    // To test different fixes, we need to override the default behavior.
+    // The behavior is oriented by `oxlint` where only one PossibleFixes is applied.
+    fix_index: u8,
 }
 
 impl<'a> Fixer<'a> {
     pub fn new(source_text: &'a str, messages: Vec<Message<'a>>) -> Self {
-        Self { source_text, messages }
+        Self { source_text, messages, fix_index: 0 }
+    }
+
+    #[cfg(test)]
+    pub fn with_fix_index(mut self, fix_index: u8) -> Self {
+        self.fix_index = fix_index;
+        self
     }
 
     /// # Panics
     pub fn fix(mut self) -> FixResult<'a> {
         let source_text = self.source_text;
-        if self.messages.iter().all(|m| m.fix.is_none()) {
+        if self.messages.iter().all(|m| m.fixes.is_empty()) {
             return FixResult {
                 fixed: false,
                 fixed_code: Cow::Borrowed(source_text),
@@ -329,7 +339,7 @@ impl<'a> Fixer<'a> {
             };
         }
 
-        self.messages.sort_unstable_by_key(|m| m.fix.as_ref().unwrap_or(&Fix::default()).span);
+        self.messages.sort_unstable_by_key(|m| m.fixes.span());
         let mut fixed = false;
         let mut output = String::with_capacity(source_text.len());
         let mut last_pos: i64 = -1;
@@ -338,7 +348,14 @@ impl<'a> Fixer<'a> {
         let mut filtered_messages = Vec::with_capacity(self.messages.len());
 
         for mut m in self.messages {
-            let Some(Fix { content, span, .. }) = m.fix.as_ref() else {
+            let fix = match &m.fixes {
+                PossibleFixes::None => None,
+                PossibleFixes::Single(fix) => Some(fix),
+                // For multiple fixes, we take the first one as a representative fix.
+                // Applying all possible fixes at once is not possible in this context.
+                PossibleFixes::Multiple(multiple) => multiple.get(self.fix_index as usize),
+            };
+            let Some(Fix { content, span, .. }) = fix else {
                 filtered_messages.push(m);
                 continue;
             };
@@ -378,7 +395,7 @@ mod test {
     use oxc_diagnostics::OxcDiagnostic;
     use oxc_span::Span;
 
-    use super::{CompositeFix, Fix, FixResult, Fixer, Message};
+    use super::{CompositeFix, Fix, FixResult, Fixer, Message, PossibleFixes};
 
     fn insert_at_end() -> OxcDiagnostic {
         OxcDiagnostic::warn("End")
@@ -455,28 +472,36 @@ mod test {
         Fixer::new(TEST_CODE, messages).fix()
     }
 
-    fn create_message(error: OxcDiagnostic, fix: Option<Fix>) -> Message {
+    fn create_message(error: OxcDiagnostic, fix: PossibleFixes) -> Message {
         Message::new(error, fix)
     }
 
     #[test]
     fn insert_at_the_end() {
-        let result = get_fix_result(vec![create_message(insert_at_end(), Some(INSERT_AT_END))]);
+        let result = get_fix_result(vec![create_message(
+            insert_at_end(),
+            PossibleFixes::Single(INSERT_AT_END),
+        )]);
         assert_eq!(result.fixed_code, TEST_CODE.to_string() + INSERT_AT_END.content.as_ref());
         assert_eq!(result.messages.len(), 0);
     }
 
     #[test]
     fn insert_at_the_start() {
-        let result = get_fix_result(vec![create_message(insert_at_start(), Some(INSERT_AT_START))]);
+        let result = get_fix_result(vec![create_message(
+            insert_at_start(),
+            PossibleFixes::Single(INSERT_AT_START),
+        )]);
         assert_eq!(result.fixed_code, INSERT_AT_START.content.to_string() + TEST_CODE);
         assert_eq!(result.messages.len(), 0);
     }
 
     #[test]
     fn insert_at_the_middle() {
-        let result =
-            get_fix_result(vec![create_message(insert_at_middle(), Some(INSERT_AT_MIDDLE))]);
+        let result = get_fix_result(vec![create_message(
+            insert_at_middle(),
+            PossibleFixes::Single(INSERT_AT_MIDDLE),
+        )]);
         assert_eq!(
             result.fixed_code,
             TEST_CODE.cow_replace("6 *", &format!("{}{}", INSERT_AT_MIDDLE.content, "6 *"))
@@ -487,9 +512,9 @@ mod test {
     #[test]
     fn insert_at_the_start_middle_end() {
         let messages = vec![
-            create_message(insert_at_middle(), Some(INSERT_AT_MIDDLE)),
-            create_message(insert_at_start(), Some(INSERT_AT_START)),
-            create_message(insert_at_end(), Some(INSERT_AT_END)),
+            create_message(insert_at_middle(), PossibleFixes::Single(INSERT_AT_MIDDLE)),
+            create_message(insert_at_start(), PossibleFixes::Single(INSERT_AT_START)),
+            create_message(insert_at_end(), PossibleFixes::Single(INSERT_AT_END)),
         ];
         let result = get_fix_result(messages);
         assert_eq!(
@@ -507,13 +532,17 @@ mod test {
     #[test]
     #[should_panic = "Negative range is invalid"]
     fn ignore_reverse_range() {
-        let result = get_fix_result(vec![create_message(reverse_range(), Some(REVERSE_RANGE))]);
+        let result = get_fix_result(vec![create_message(
+            reverse_range(),
+            PossibleFixes::Single(REVERSE_RANGE),
+        )]);
         assert_eq!(result.fixed_code, TEST_CODE);
     }
 
     #[test]
     fn replace_at_the_start() {
-        let result = get_fix_result(vec![create_message(replace_var(), Some(REPLACE_VAR))]);
+        let result =
+            get_fix_result(vec![create_message(replace_var(), PossibleFixes::Single(REPLACE_VAR))]);
         assert_eq!(result.fixed_code, TEST_CODE.cow_replace("var", "let"));
         assert_eq!(result.messages.len(), 0);
         assert!(result.fixed);
@@ -521,7 +550,8 @@ mod test {
 
     #[test]
     fn replace_at_the_middle() {
-        let result = get_fix_result(vec![create_message(replace_id(), Some(REPLACE_ID))]);
+        let result =
+            get_fix_result(vec![create_message(replace_id(), PossibleFixes::Single(REPLACE_ID))]);
         assert_eq!(result.fixed_code, TEST_CODE.cow_replace("answer", "foo"));
         assert_eq!(result.messages.len(), 0);
         assert!(result.fixed);
@@ -529,7 +559,8 @@ mod test {
 
     #[test]
     fn replace_at_the_end() {
-        let result = get_fix_result(vec![create_message(replace_num(), Some(REPLACE_NUM))]);
+        let result =
+            get_fix_result(vec![create_message(replace_num(), PossibleFixes::Single(REPLACE_NUM))]);
         assert_eq!(result.fixed_code, TEST_CODE.cow_replace('6', "5"));
         assert_eq!(result.messages.len(), 0);
         assert!(result.fixed);
@@ -538,9 +569,9 @@ mod test {
     #[test]
     fn replace_at_the_start_middle_end() {
         let messages = vec![
-            create_message(replace_id(), Some(REPLACE_ID)),
-            create_message(replace_var(), Some(REPLACE_VAR)),
-            create_message(replace_num(), Some(REPLACE_NUM)),
+            create_message(replace_id(), PossibleFixes::Single(REPLACE_ID)),
+            create_message(replace_var(), PossibleFixes::Single(REPLACE_VAR)),
+            create_message(replace_num(), PossibleFixes::Single(REPLACE_NUM)),
         ];
         let result = get_fix_result(messages);
         assert_eq!(result.fixed_code, "let foo = 5 * 7;");
@@ -550,7 +581,10 @@ mod test {
 
     #[test]
     fn remove_at_the_start() {
-        let result = get_fix_result(vec![create_message(remove_start(), Some(REMOVE_START))]);
+        let result = get_fix_result(vec![create_message(
+            remove_start(),
+            PossibleFixes::Single(REMOVE_START),
+        )]);
         assert_eq!(result.fixed_code, TEST_CODE.cow_replace("var ", ""));
         assert_eq!(result.messages.len(), 0);
         assert!(result.fixed);
@@ -560,7 +594,7 @@ mod test {
     fn remove_at_the_middle() {
         let result = get_fix_result(vec![create_message(
             remove_middle(Span::default()),
-            Some(REMOVE_MIDDLE),
+            PossibleFixes::Single(REMOVE_MIDDLE),
         )]);
         assert_eq!(result.fixed_code, TEST_CODE.cow_replace("answer", "a"));
         assert_eq!(result.messages.len(), 0);
@@ -569,7 +603,8 @@ mod test {
 
     #[test]
     fn remove_at_the_end() {
-        let result = get_fix_result(vec![create_message(remove_end(), Some(REMOVE_END))]);
+        let result =
+            get_fix_result(vec![create_message(remove_end(), PossibleFixes::Single(REMOVE_END))]);
         assert_eq!(result.fixed_code, TEST_CODE.cow_replace(" * 7", ""));
         assert_eq!(result.messages.len(), 0);
         assert!(result.fixed);
@@ -578,9 +613,9 @@ mod test {
     #[test]
     fn replace_at_start_remove_at_middle_insert_at_end() {
         let result = get_fix_result(vec![
-            create_message(insert_at_end(), Some(INSERT_AT_END)),
-            create_message(remove_end(), Some(REMOVE_END)),
-            create_message(replace_var(), Some(REPLACE_VAR)),
+            create_message(insert_at_end(), PossibleFixes::Single(INSERT_AT_END)),
+            create_message(remove_end(), PossibleFixes::Single(REMOVE_END)),
+            create_message(replace_var(), PossibleFixes::Single(REPLACE_VAR)),
         ]);
         assert_eq!(result.fixed_code, "let answer = 6;// end");
         assert_eq!(result.messages.len(), 0);
@@ -590,8 +625,8 @@ mod test {
     #[test]
     fn apply_one_fix_when_spans_overlap() {
         let result = get_fix_result(vec![
-            create_message(remove_middle(Span::default()), Some(REMOVE_MIDDLE)),
-            create_message(replace_id(), Some(REPLACE_ID)),
+            create_message(remove_middle(Span::default()), PossibleFixes::Single(REMOVE_MIDDLE)),
+            create_message(replace_id(), PossibleFixes::Single(REPLACE_ID)),
         ]);
         assert_eq!(result.fixed_code, TEST_CODE.cow_replace("answer", "foo"));
         assert_eq!(result.messages.len(), 1);
@@ -602,8 +637,8 @@ mod test {
     #[test]
     fn apply_two_fix_when_the_start_the_same_as_the_previous_end() {
         let result = get_fix_result(vec![
-            create_message(remove_start(), Some(REMOVE_START)),
-            create_message(replace_id(), Some(REPLACE_ID)),
+            create_message(remove_start(), PossibleFixes::Single(REMOVE_START)),
+            create_message(replace_id(), PossibleFixes::Single(REPLACE_ID)),
         ]);
         assert_eq!(result.fixed_code, TEST_CODE.cow_replace("var answer", "foo"));
         assert_eq!(result.messages.len(), 0);
@@ -613,9 +648,9 @@ mod test {
     #[test]
     fn apply_one_fix_when_range_overlap_and_one_message_has_no_fix() {
         let result = get_fix_result(vec![
-            create_message(remove_middle(Span::default()), Some(REMOVE_MIDDLE)),
-            create_message(replace_id(), Some(REPLACE_ID)),
-            create_message(no_fix(Span::default()), None),
+            create_message(remove_middle(Span::default()), PossibleFixes::Single(REMOVE_MIDDLE)),
+            create_message(replace_id(), PossibleFixes::Single(REPLACE_ID)),
+            create_message(no_fix(Span::default()), PossibleFixes::None),
         ]);
         assert_eq!(result.fixed_code, TEST_CODE.cow_replace("answer", "foo"));
         assert_eq!(result.messages.len(), 2);
@@ -627,19 +662,20 @@ mod test {
     #[test]
     fn apply_same_fix_when_span_overlap_regardless_of_order() {
         let result1 = get_fix_result(vec![
-            create_message(remove_middle(Span::default()), Some(REMOVE_MIDDLE)),
-            create_message(replace_id(), Some(REPLACE_ID)),
+            create_message(remove_middle(Span::default()), PossibleFixes::Single(REMOVE_MIDDLE)),
+            create_message(replace_id(), PossibleFixes::Single(REPLACE_ID)),
         ]);
         let result2 = get_fix_result(vec![
-            create_message(replace_id(), Some(REPLACE_ID)),
-            create_message(remove_middle(Span::default()), Some(REMOVE_MIDDLE)),
+            create_message(replace_id(), PossibleFixes::Single(REPLACE_ID)),
+            create_message(remove_middle(Span::default()), PossibleFixes::Single(REMOVE_MIDDLE)),
         ]);
         assert_eq!(result1.fixed_code, result2.fixed_code);
     }
 
     #[test]
     fn should_not_apply_fix_with_one_no_fix() {
-        let result = get_fix_result(vec![create_message(no_fix(Span::default()), None)]);
+        let result =
+            get_fix_result(vec![create_message(no_fix(Span::default()), PossibleFixes::None)]);
         assert_eq!(result.fixed_code, TEST_CODE);
         assert_eq!(result.messages.len(), 1);
         assert_eq!(result.messages[0].error.to_string(), "nofix");
@@ -649,9 +685,9 @@ mod test {
     #[test]
     fn sort_no_fix_messages_correctly() {
         let result = get_fix_result(vec![
-            create_message(replace_id(), Some(REPLACE_ID)),
-            Message::new(no_fix_2(Span::new(1, 7)), None),
-            Message::new(no_fix_1(Span::new(1, 3)), None),
+            create_message(replace_id(), PossibleFixes::Single(REPLACE_ID)),
+            Message::new(no_fix_2(Span::new(1, 7)), PossibleFixes::None),
+            Message::new(no_fix_1(Span::new(1, 3)), PossibleFixes::None),
         ]);
         assert_eq!(result.fixed_code, TEST_CODE.cow_replace("answer", "foo"));
         assert_eq!(result.messages.len(), 2);

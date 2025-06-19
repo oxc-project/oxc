@@ -759,10 +759,7 @@ impl Gen for FunctionBody<'_> {
 
 impl Gen for FormalParameter<'_> {
     fn r#gen(&self, p: &mut Codegen, ctx: Context) {
-        for decorator in &self.decorators {
-            decorator.print(p, ctx);
-            p.print_soft_space();
-        }
+        p.print_decorators(&self.decorators, ctx);
         if let Some(accessibility) = self.accessibility {
             p.print_space_before_identifier();
             p.print_str(accessibility.as_str());
@@ -1284,15 +1281,14 @@ impl GenExpr for BigIntLiteral<'_> {
     fn gen_expr(&self, p: &mut Codegen, precedence: Precedence, _ctx: Context) {
         p.print_space_before_identifier();
         p.add_source_mapping(self.span);
-        let raw = self.raw.as_str().cow_replace('_', "");
-        if !raw.starts_with('-') {
-            p.print_str(&raw);
-        } else if precedence >= Precedence::Prefix {
+        let value = self.value.as_str();
+        if value.starts_with('-') && precedence >= Precedence::Prefix {
             p.print_ascii_byte(b'(');
-            p.print_str(&raw);
-            p.print_ascii_byte(b')');
+            p.print_str(value);
+            p.print_str("n)");
         } else {
-            p.print_str(&raw);
+            p.print_str(value);
+            p.print_ascii_byte(b'n');
         }
     }
 }
@@ -2246,10 +2242,7 @@ impl Gen for Class<'_> {
         let n = p.code_len();
         let wrap = self.is_expression() && (p.start_of_stmt == n || p.start_of_default_export == n);
         p.wrap(wrap, |p| {
-            for decorator in &self.decorators {
-                decorator.print(p, ctx);
-                p.print_hard_space();
-            }
+            p.print_decorators(&self.decorators, ctx);
             p.print_space_before_identifier();
             p.add_source_mapping(self.span);
             if self.declare {
@@ -2553,10 +2546,7 @@ impl Gen for StaticBlock<'_> {
 impl Gen for MethodDefinition<'_> {
     fn r#gen(&self, p: &mut Codegen, ctx: Context) {
         p.add_source_mapping(self.span);
-        for decorator in &self.decorators {
-            decorator.print(p, ctx);
-            p.print_soft_space();
-        }
+        p.print_decorators(&self.decorators, ctx);
         if let Some(accessibility) = &self.accessibility {
             p.print_space_before_identifier();
             p.print_str(accessibility.as_str());
@@ -2638,10 +2628,7 @@ impl Gen for MethodDefinition<'_> {
 impl Gen for PropertyDefinition<'_> {
     fn r#gen(&self, p: &mut Codegen, ctx: Context) {
         p.add_source_mapping(self.span);
-        for decorator in &self.decorators {
-            decorator.print(p, ctx);
-            p.print_soft_space();
-        }
+        p.print_decorators(&self.decorators, ctx);
         if self.declare {
             p.print_space_before_identifier();
             p.print_str("declare");
@@ -2695,10 +2682,7 @@ impl Gen for PropertyDefinition<'_> {
 impl Gen for AccessorProperty<'_> {
     fn r#gen(&self, p: &mut Codegen, ctx: Context) {
         p.add_source_mapping(self.span);
-        for decorator in &self.decorators {
-            decorator.print(p, ctx);
-            p.print_soft_space();
-        }
+        p.print_decorators(&self.decorators, ctx);
         if self.r#type.is_abstract() {
             p.print_space_before_identifier();
             p.add_source_mapping(self.span);
@@ -3222,9 +3206,7 @@ impl Gen for TSTypeLiteral<'_> {
                 p.print_leading_comments(item.span().start);
                 p.print_indent();
                 item.print(p, ctx);
-                if p.options.minify {
-                    p.print_semicolon();
-                }
+                p.print_semicolon();
                 p.print_soft_newline();
             }
         });

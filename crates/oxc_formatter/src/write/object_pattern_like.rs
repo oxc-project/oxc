@@ -7,6 +7,7 @@ use crate::{
             format_dangling_comments, format_with, group, soft_block_indent_with_maybe_space,
         },
     },
+    generated::ast_nodes::AstNode,
     write,
 };
 
@@ -16,15 +17,15 @@ use super::{
 };
 
 pub enum ObjectPatternLike<'a, 'b> {
-    ObjectPattern(&'b ObjectPattern<'a>),
-    ObjectAssignmentTarget(&'b ObjectAssignmentTarget<'a>),
+    ObjectPattern(&'b AstNode<'a, ObjectPattern<'a>>),
+    ObjectAssignmentTarget(&'b AstNode<'a, ObjectAssignmentTarget<'a>>),
 }
 
 impl<'a> ObjectPatternLike<'a, '_> {
     fn span(&self) -> Span {
         match self {
-            Self::ObjectPattern(o) => o.span,
-            Self::ObjectAssignmentTarget(o) => o.span,
+            Self::ObjectPattern(o) => o.span(),
+            Self::ObjectAssignmentTarget(o) => o.span(),
         }
     }
 
@@ -38,7 +39,7 @@ impl<'a> ObjectPatternLike<'a, '_> {
     fn is_inline(&self, comments: &Comments) -> bool {
         // TODO
         false
-        // let parent_kind = self.syntax().parent().kind();
+        // let parent_kind = self.syntax().parent.kind();
 
         // Ok(
         // (matches!(parent_kind, Some(JsSyntaxKind::JS_FORMAL_PARAMETER))
@@ -50,7 +51,7 @@ impl<'a> ObjectPatternLike<'a, '_> {
     fn should_break_properties(&self) -> bool {
         false
         // TODO
-        // let parent_kind = self.syntax().parent().kind();
+        // let parent_kind = self.syntax().parent.kind();
 
         // Catch only has a single expression in the declaration, so it will
         // be the direct parent of the object pattern, and the pattern should
@@ -110,7 +111,7 @@ impl<'a> ObjectPatternLike<'a, '_> {
         // TODO
         false
         // matches!(
-        // self.syntax().parent().kind(),
+        // self.syntax().parent.kind(),
         // Some(JsSyntaxKind::JS_ASSIGNMENT_EXPRESSION | JsSyntaxKind::JS_VARIABLE_DECLARATOR),
         // )
     }
@@ -151,11 +152,9 @@ impl<'a> ObjectPatternLike<'a, '_> {
 
     fn write_properties(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         match self {
-            Self::ObjectPattern(o) => {
-                BindingPropertyList::new(&o.properties, o.rest.as_ref()).fmt(f)
-            }
+            Self::ObjectPattern(o) => BindingPropertyList::new(o.properties(), o.rest()).fmt(f),
             Self::ObjectAssignmentTarget(o) => {
-                AssignmentTargetPropertyList::new(&o.properties, o.rest.as_ref()).fmt(f)
+                AssignmentTargetPropertyList::new(o.properties(), o.rest()).fmt(f)
             }
         }
     }

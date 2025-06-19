@@ -239,7 +239,7 @@ fn create_diagnostic_jsx(
                 if let Some(attr) = ctx
                     .nodes()
                     .ancestors(reference.node_id())
-                    .find_map(|node| node.kind().as_jsx_attribute_item())
+                    .find_map(|node| node.kind().as_jsx_attribute())
                 {
                     fix.push(Fix::delete(attr.span()));
                 }
@@ -332,15 +332,12 @@ fn is_property_only_used_in_recursion_jsx(
         let Some(attr) = ctx
             .nodes()
             .ancestors(may_jsx_expr_container.id())
-            .find_map(|node| node.kind().as_jsx_attribute_item())
+            .find_map(|node| node.kind().as_jsx_attribute())
         else {
             return false;
         };
 
-        let JSXAttributeItem::Attribute(jsx_attr_name) = attr else {
-            return false;
-        };
-        let Some(attr_name) = jsx_attr_name.name.as_identifier() else {
+        let Some(attr_name) = attr.name.as_identifier() else {
             return false;
         };
         if attr_name.name != property_name {
@@ -543,8 +540,6 @@ fn test() {
             return _get(target, property, receiver || target);
         }
         "#,
-        "function foo() {}
-        declare function foo() {}",
         r#"
         var validator = function validator(node, key, val) {
             var validator = node.operator === "in" ? inOp : expression;

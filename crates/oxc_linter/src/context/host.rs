@@ -8,7 +8,7 @@ use crate::{
     AllowWarnDeny, FrameworkFlags,
     config::{LintConfig, LintPlugins},
     disable_directives::{DisableDirectives, DisableDirectivesBuilder},
-    fixer::{FixKind, Message},
+    fixer::{FixKind, Message, PossibleFixes},
     frameworks,
     module_record::ModuleRecord,
     options::LintOptions,
@@ -210,7 +210,7 @@ impl<'a> ContextHost<'a> {
                         OxcDiagnostic::error(message).with_label(span).with_severity(rule_severity),
                         // TODO: fixer
                         // if all rules in the same directive are unused, fixer should remove the entire comment
-                        None,
+                        PossibleFixes::None,
                     )
                 })
                 .collect(),

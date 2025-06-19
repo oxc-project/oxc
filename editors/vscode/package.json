@@ -2,7 +2,7 @@
   "name": "oxc-vscode",
   "description": "oxc vscode extension",
   "license": "MIT",
-  "version": "0.16.12",
+  "version": "1.2.0",
   "icon": "icon.png",
   "publisher": "oxc",
   "displayName": "Oxc",
@@ -80,6 +80,12 @@
           "scope": "window",
           "description": "enable oxc language server"
         },
+        "oxc.requireConfig": {
+          "scope": "resource",
+          "type": "boolean",
+          "default": false,
+          "description": "Start the language server only when a `.oxlintrc.json` file exists in one of the workspaces."
+        },
         "oxc.trace.server": {
           "type": "string",
           "scope": "window",
@@ -109,6 +115,22 @@
           "scope": "resource",
           "default": null,
           "description": "Path to ESlint configuration. Keep it empty to enable nested configuration."
+        },
+        "oxc.unusedDisableDirectives": {
+          "type": "string",
+          "scope": "resource",
+          "enum": [
+            "allow",
+            "warn",
+            "deny"
+          ],
+          "enumDescriptions": [
+            "Allow",
+            "Warn",
+            "Deny"
+          ],
+          "default": "allow",
+          "description": "Define how directive comments like `// oxlint-disable-line` should be reported, when no errors would have been reported on that line anyway."
         },
         "oxc.flags": {
           "type": "object",
@@ -156,15 +178,15 @@
   },
   "devDependencies": {
     "@types/mocha": "^10.0.9",
-    "@types/node": "^22.0.0",
+    "@types/node": "^24.0.0",
     "@types/vscode": "1.93.0",
-    "@vscode/test-cli": "^0.0.10",
+    "@vscode/test-cli": "^0.0.11",
     "@vscode/test-electron": "^2.4.1",
     "@vscode/vsce": "^3.0.0",
     "cross-env": "^7.0.3",
     "esbuild": "^0.25.0",
     "ovsx": "^0.10.0",
-    "oxlint": "^0.16.0",
+    "oxlint": "^1.0.0",
     "typescript": "^5.4.5"
   },
   "dependencies": {

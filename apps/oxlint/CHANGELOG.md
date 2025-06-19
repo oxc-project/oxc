@@ -2,7 +2,50 @@
 
 All notable changes to this package will be documented in this file.
 
-The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
+
+## [1.2.0] - 2025-06-19
+
+### 🚀 Features
+
+- 38dc614 oxc_linter: Reuse allocators (#11736) (camc314)
+
+
+## [1.1.0] - 2025-06-12
+
+### 🚀 Features
+
+- 1181018 linter: Add eslint/no-extra-bind rule (#11588) (yefan)
+
+
+## [1.0.0] - 2025-06-10
+
+## [0.18.0] - 2025-06-06
+
+- bd9dd88 linter: [**BREAKING**] Add more info to json reporter (#11524) (camc314)
+
+### Features
+
+
+### Bug Fixes
+
+- 0946dac linter: Correctly inherit categories when plugins are enabled (#11353) (Cameron)
+
+## [0.17.0] - 2025-05-30
+
+- ead5309 linter: [**BREAKING**] Remove react from default plugin set (#11382) (camc314)
+
+### Bug Fixes
+
+- f6424dd linter: Reflect react plugin is disabled by default in cli (#11397) (camc314)
+
+### Documentation
+
+- cd354d4 oxlint: Remove incorrect doc comment (#11326) (camc314)
+
+### Testing
+
+- c4f64aa linter: Explicitly disable correctness for clarity (#11327) (camc314)
 
 ## [0.16.12] - 2025-05-25
 

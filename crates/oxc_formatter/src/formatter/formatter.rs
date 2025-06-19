@@ -1,5 +1,6 @@
 #![allow(clippy::module_inception)]
 
+use oxc_allocator::Address;
 use oxc_ast::AstKind;
 
 use crate::options::FormatOptions;
@@ -9,7 +10,6 @@ use super::{
     VecBuffer,
     buffer::BufferSnapshot,
     builders::{FillBuilder, JoinBuilder, JoinNodesBuilder, Line},
-    parent_stack::ParentStack,
     prelude::*,
 };
 
@@ -55,21 +55,6 @@ impl<'buf, 'ast> Formatter<'buf, 'ast> {
     #[inline]
     pub fn comments(&self) -> &Comments {
         self.context().comments()
-    }
-
-    #[inline]
-    pub fn parent_stack(&self) -> &ParentStack<'ast> {
-        &self.state().stack
-    }
-
-    #[inline]
-    pub fn parent_kind(&self) -> AstKind<'ast> {
-        self.state().stack.parent()
-    }
-
-    #[inline]
-    pub fn parent_parent_kind(&self) -> Option<AstKind<'ast>> {
-        self.state().stack.parent2()
     }
 
     /// Creates a new group id that is unique to this document. The passed debug name is used in the
