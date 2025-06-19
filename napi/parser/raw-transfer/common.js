@@ -165,8 +165,9 @@ const ONE_GIB = 1 << 30,
 // point creating a new buffer, when one already exists.
 const CLEAR_BUFFERS_TIMEOUT = 10_000; // 10 seconds
 const buffers = [], oldBuffers = [];
+let clearBuffersTimeout = null;
 
-let encoder = null, clearBuffersTimeout = null;
+const textEncoder = new TextEncoder();
 
 /**
  * Get a buffer (from cache if possible), copy source text into it, and amend options object.
@@ -213,14 +214,11 @@ function prepareRaw(sourceText, options) {
   // Reuse existing buffer, or create a new one
   const buffer = buffers.length > 0 ? buffers.pop() : createBuffer();
 
-  // Get/create `TextEncoder`
-  if (encoder === null) encoder = new TextEncoder();
-
   // Write source into start of buffer.
   // `TextEncoder` cannot write into a `Uint8Array` larger than 1 GiB,
   // so create a view into buffer of this size to write into.
   const sourceBuffer = new Uint8Array(buffer.buffer, buffer.byteOffset, ONE_GIB);
-  const { read, written: sourceByteLen } = encoder.encodeInto(sourceText, sourceBuffer);
+  const { read, written: sourceByteLen } = textEncoder.encodeInto(sourceText, sourceBuffer);
   if (read !== sourceText.length) throw new Error('Failed to write source text into buffer');
 
   return { buffer, sourceByteLen, options };
