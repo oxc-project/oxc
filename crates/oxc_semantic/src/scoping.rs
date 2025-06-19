@@ -358,7 +358,7 @@ impl Scoping {
         }
     }
 
-    /// Get whether a symbol is unused (i.e. not read or written after declaration).
+    /// Get whether a symbol is unused (i.e. read or written after declaration).
     pub fn symbol_is_unused(&self, symbol_id: SymbolId) -> bool {
         self.get_resolved_reference_ids(symbol_id).is_empty()
     }
