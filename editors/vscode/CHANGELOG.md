@@ -4,6 +4,14 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [1.2.0] - 2025-06-19
+
+### 🚀 Features
+
+- 0b4261b vscode: Add `oxc.requireConfig` configuration (#11700) (Sysix)
+- 094b81c language_server: Add `unusedDisableDirectives` option (#11645) (Sysix)
+
+
 
 ## [1.0.0] - 2025-06-10
 

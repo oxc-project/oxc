@@ -4,6 +4,18 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [1.2.0] - 2025-06-19
+
+### 🚀 Features
+
+- 38dc614 oxc_linter: Reuse allocators (#11736) (camc314)
+- 094b81c language_server: Add `unusedDisableDirectives` option (#11645) (Sysix)
+
+### 🚜 Refactor
+
+- abdbaa9 language_server: Use rule name directly from OxcCode instead of parsing out of the stringified version of OxcCode (#11714) (Nicholas Rayburn)
+
+
 
 ## [1.0.0] - 2025-06-10
 
