@@ -11,7 +11,7 @@ use oxc_ast::{
         Argument, ArrayExpressionElement, ArrowFunctionExpression, BindingPattern,
         BindingPatternKind, CallExpression, ChainElement, Expression, FormalParameters, Function,
         FunctionBody, IdentifierReference, MemberExpression, StaticMemberExpression,
-        TSTypeAnnotation, TSTypeParameter, TSTypeReference, VariableDeclarationKind,
+        TSTypeAnnotation, TSTypeParameterInstantiation, TSTypeReference, VariableDeclarationKind,
         VariableDeclarator,
     },
     match_expression,
@@ -1206,7 +1206,7 @@ impl<'a> Visit<'a> for ExhaustiveDepsVisitor<'a, '_> {
         // noop
     }
 
-    fn visit_ts_type_parameters(&mut self, _it: &oxc_allocator::Vec<'a, TSTypeParameter<'a>>) {
+    fn visit_ts_type_parameter_instantiation(&mut self, _it: &TSTypeParameterInstantiation<'a>) {
         // noop
     }
 
@@ -2471,6 +2471,7 @@ fn test() {
         r"function Foo2() { useEffect(() => { foo() }, []); const foo = () => { bar() }; function bar () { foo() } }",
         r"function MyComponent(props) { useEffect(() => { console.log(props.foo!.bar) }, [props.foo!.bar]) }",
         r"function MyComponent(props) { useEffect(() => { console.log((props.foo).bar) }, [props.foo!.bar]) }",
+        r"function MyComponent(props) { const external = {}; const y = useMemo(() => { const z = foo<typeof external>(); return z; }, []) }",
     ];
 
     let fail = vec![
