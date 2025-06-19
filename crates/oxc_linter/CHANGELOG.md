@@ -4,6 +4,58 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [1.2.0] - 2025-06-19
+
+### 🚀 Features
+
+- 8c341a2 sema/check: Ts setters cannot have initializers (#11695) (Don Isaac)
+- 38dc614 oxc_linter: Reuse allocators (#11736) (camc314)
+- bf8263d playground: Allow specifying a JSON string as the linter config (#11710) (Nicholas Rayburn)
+- 52ecc87 linter: Implement import/extensions (#11548) (Tyler Earls)
+
+### 🐛 Bug Fixes
+
+- 3d88eeb linter/no-console: False negative when `console.*` methods are used as args to functions (#11790) (camc314)
+- c80e405 linter/no-new-wrappers: Fix panic in fixer with multi byte chars (#11773) (camc314)
+- e58a0b0 linter: Panic in unicorn/consistent-function-scoping (#11772) (camc314)
+- 80c87d4 linter: Typo in typescript/consistent-index-object-style (#11744) (camc314)
+- ff775e9 linter/consistent-function-scoping: Descriptive diagnostic labels (#11682) (Don Isaac)
+- 989634a linter/no-inner-declaration: False negative with for loops (#11692) (camc314)
+- b272b91 linter/no-undef: False negative with unresolved ref after type ref (#11721) (camc314)
+- 6252275 linter: Panic in import/extensions with empty file names (#11720) (camc314)
+- f34e432 linter: Use fixer::noop in dangerous cases for eslint/no-var (#11693) (camc314)
+- 6c2b41c linter/consistent-function-scoping: Allow functions in TS modules/namespaces (#11681) (Don Isaac)
+- 2ca1c70 linter/exhaustive-deps: False positive with TS Non null assertion operator (#11690) (camc314)
+- ee15f7d linter: False negative in typescript/prefer-function-type (#11674) (camc314)
+- abd0441 linter: Add missing menuitemradio and menutitemcheckbox roles (#11651) (Daniel Flynn)
+- 8776301 linter/no-inner-declarations: Flag `var` statement as body of `for` loop (#11632) (overlookmotel)
+
+### 🚜 Refactor
+
+- 5ca3d04 ast: Add `TSArrayType` as `AstKind` (#11745) (camchenry)
+- 219adcc ast: Don't generate AstKind for ArrayExpressionElement (#11684) (Ulrich Stark)
+- c1be6b8 linter: Shorten Span construction (#11686) (Ulrich Stark)
+- 4ca659c linter: Cleanup typescript/prefer-function-type  (#11672) (Brad Dunbar)
+- 8e30c5f ast: Don't generate AstKind for ForStatementInit (#11617) (Ulrich Stark)
+
+### 📚 Documentation
+
+- ea6ce9d linter: Fix typo in import/no-namespace (#11741) (camc314)
+- 8b6076e linter: Document options for the `typescript/array-type` rule (#11665) (yefan)
+
+### ⚡ Performance
+
+- f539f64 allocator: Remove `Arc` from `AllocatorPool` (#11760) (overlookmotel)
+- cfdc518 linter/no-inner-declarations: Move work to cold path (#11746) (overlookmotel)
+- 7c0fff7 linter: Skip running `consistent-function-scoping` on `.d.ts` files (#11739) (camc314)
+- b34c6f6 parser,semantic: Improve handling of diagnostics (#11641) (Boshen)
+- 2cd786b linter/no-inner-declarations: Remove unnecessary code and reduce branches (#11633) (overlookmotel)
+
+### 🧪 Testing
+
+- 44a9df8 linter: Update testsuite for `no-undef` (#11706) (Sysix)
+
+
 ## [1.1.0] - 2025-06-12
 
 ### 🚀 Features
