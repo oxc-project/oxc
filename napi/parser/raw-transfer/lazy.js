@@ -1,6 +1,6 @@
 'use strict';
 
-const { parseSyncRawImpl, parseAsyncRawImpl, returnBufferToCache } = require('./index.js'),
+const { parseSyncRawImpl, parseAsyncRawImpl, returnBufferToCache } = require('./common.js'),
   { construct: constructLazyData, TOKEN } = require('../generated/deserialize/lazy.js');
 
 module.exports = { parseSyncLazy, parseAsyncLazy };

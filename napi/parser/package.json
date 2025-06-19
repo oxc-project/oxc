@@ -46,7 +46,7 @@
     "generated/deserialize/js.js",
     "generated/deserialize/ts.js",
     "generated/deserialize/lazy.js",
-    "raw-transfer/index.js",
+    "raw-transfer/common.js",
     "raw-transfer/eager.js",
     "raw-transfer/lazy.js",
     "raw-transfer/lazy-common.js",

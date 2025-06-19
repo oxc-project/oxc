@@ -5,7 +5,7 @@ import bindings from './bindings.js';
 import deserializeJS from './generated/deserialize/js.js';
 import deserializeTS from './generated/deserialize/ts.js';
 import { parseAsync, parseSync } from './index.js';
-import { isJsAst, prepareRaw } from './raw-transfer/index.js';
+import { isJsAst, prepareRaw } from './raw-transfer/common.js';
 
 // Same fixtures as used in Rust parser benchmarks
 let fixtureUrls = [

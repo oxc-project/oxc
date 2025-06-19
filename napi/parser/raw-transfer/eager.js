@@ -1,6 +1,6 @@
 'use strict';
 
-const { parseSyncRawImpl, parseAsyncRawImpl, isJsAst, returnBufferToCache } = require('./index.js');
+const { parseSyncRawImpl, parseAsyncRawImpl, isJsAst, returnBufferToCache } = require('./common.js');
 
 module.exports = { parseSyncRaw, parseAsyncRaw };
 
