@@ -16,7 +16,8 @@ import {
   activateExtension,
   fixturesWorkspaceUri,
   loadFixture,
-  sleep
+  sleep,
+  waitForDiagnosticChange
 } from './test-helpers';
 import assert = require('assert');
 
@@ -128,6 +129,7 @@ suite('code actions', () => {
       'fix_kind': 'dangerous_fix',
     }, ConfigurationTarget.WorkspaceFolder);
     await workspace.saveAll();
+    await waitForDiagnosticChange();
 
     const codeActionsWithFix: ProviderResult<Array<CodeAction>> = await commands.executeCommand(
       'vscode.executeCodeActionProvider',
