@@ -163,7 +163,6 @@ pub fn read_to_string(path: &Path) -> io::Result<String> {
 /// - The file cannot be read.
 /// - The file's contents are not valid UTF-8.
 /// - The file is larger than `isize::MAX` bytes.
-#[expect(unused)]
 pub fn read_to_arena_str<'alloc>(
     path: &Path,
     allocator: &'alloc Allocator,

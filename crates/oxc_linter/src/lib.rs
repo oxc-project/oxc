@@ -40,6 +40,7 @@ pub use crate::{
     options::{AllowWarnDeny, InvalidFilterKind, LintFilter, LintFilterKind},
     rule::{RuleCategory, RuleFixMeta, RuleMeta},
     service::{LintService, LintServiceOptions, RuntimeFileSystem},
+    utils::read_to_arena_str,
     utils::read_to_string,
 };
 use crate::{

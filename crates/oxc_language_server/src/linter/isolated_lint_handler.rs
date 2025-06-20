@@ -11,11 +11,11 @@ use tower_lsp_server::{
 };
 
 use oxc_allocator::{Allocator, AllocatorPool};
-use oxc_linter::RuntimeFileSystem;
 use oxc_linter::{
     LINTABLE_EXTENSIONS, LintService, LintServiceOptions, Linter, MessageWithPosition,
-    loader::Loader, read_to_string,
+    loader::Loader, read_to_arena_str,
 };
+use oxc_linter::{RuntimeFileSystem, read_to_string};
 
 use super::error_with_position::{
     DiagnosticReport, PossibleFixContent, message_with_position_to_lsp_diagnostic_report,
@@ -45,12 +45,17 @@ impl IsolatedLintHandlerFileSystem {
 }
 
 impl RuntimeFileSystem for IsolatedLintHandlerFileSystem {
-    fn read_to_string(&self, path: &Path) -> Result<String, std::io::Error> {
+    fn read_to_arena_str<'a>(
+        &self,
+        path: &Path,
+        allocator: &'a Allocator,
+    ) -> Result<&'a str, std::io::Error> {
         if path == self.path_to_lint {
-            return Ok(self.source_text.clone());
+            // TODO: i think we can avoid allocating here.
+            return Ok(allocator.alloc_str(&self.source_text));
         }
 
-        read_to_string(path)
+        read_to_arena_str(path, allocator)
     }
 
     fn write_file(&self, _path: &Path, _content: String) -> Result<(), std::io::Error> {
@@ -129,6 +134,7 @@ impl IsolatedLintHandler {
             debug!("extension not supported yet.");
             return None;
         }
+
         let source_text = source_text.or_else(|| read_to_string(path).ok())?;
 
         debug!("lint {}", path.display());
