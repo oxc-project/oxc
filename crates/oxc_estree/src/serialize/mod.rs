@@ -19,9 +19,7 @@ use sequences::ESTreeSequenceSerializer;
 use structs::ESTreeStructSerializer;
 
 pub use concat::{Concat2, Concat3, ConcatElement};
-pub use config::{
-    Config, ConfigFixesJS, ConfigFixesTS, ConfigJS, ConfigTS,
-};
+pub use config::{Config, ConfigFixesJS, ConfigFixesTS, ConfigJS, ConfigTS};
 
 pub use sequences::SequenceSerializer;
 pub use strings::{JsonSafeString, LoneSurrogatesString};
