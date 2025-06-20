@@ -422,7 +422,9 @@ impl ESTree for ArrowFunctionExpressionBody<'_> {
         if arrow_expr.expression {
             // Expression body is represented as a `FunctionBody` with a single `ExpressionStatement`
             // which contains the expression.
-            if let Some(Statement::ExpressionStatement(expr_stmt)) = arrow_expr.body.statements.get(0) {
+            if let Some(Statement::ExpressionStatement(expr_stmt)) =
+                arrow_expr.body.statements.get(0)
+            {
                 expr_stmt.expression.serialize(serializer);
             } else {
                 // Should be unreachable for a valid AST.
@@ -433,7 +435,10 @@ impl ESTree for ArrowFunctionExpressionBody<'_> {
                 state.serialize_field("start", &arrow_expr.body.span.start);
                 state.serialize_field("end", &arrow_expr.body.span.end);
                 if range {
-                    state.serialize_field("range", &[arrow_expr.body.span.start, arrow_expr.body.span.end]);
+                    state.serialize_field(
+                        "range",
+                        &[arrow_expr.body.span.start, arrow_expr.body.span.end],
+                    );
                 }
                 state.serialize_field("body", &arrow_expr.body.statements);
                 state.end();

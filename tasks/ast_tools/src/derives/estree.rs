@@ -384,7 +384,7 @@ fn generate_body_for_struct(struct_def: &StructDef, schema: &Schema) -> TokenStr
                 if range {
                     state.serialize_field("range", &[self.span.start, self.span.end]);
                 }
-            }
+            },
         )
     } else {
         (quote!(), quote!())
