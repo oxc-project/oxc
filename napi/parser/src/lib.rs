@@ -20,8 +20,7 @@ use oxc::{
     span::SourceType,
 };
 use oxc_estree::{
-    CompactFixesJSSerializer, CompactFixesJSWithRangesSerializer, CompactFixesTSSerializer,
-    CompactFixesTSWithRangesSerializer,
+    CompactFixesJSSerializer, CompactFixesTSSerializer,
 };
 use oxc_napi::{Comment, OxcError, convert_utf8_to_utf16, get_source_type};
 
@@ -111,28 +110,16 @@ fn parse_with_return(filename: &str, source_text: String, options: &ParserOption
                 );
             }
 
-            if range {
-                let capacity = program.source_text.len() * 16;
-                let serializer = CompactFixesJSWithRangesSerializer::with_capacity(capacity);
-                serializer.serialize_with_fixes(&program)
-            } else {
-                let capacity = program.source_text.len() * 16;
-                let serializer = CompactFixesJSSerializer::with_capacity(capacity);
-                serializer.serialize_with_fixes(&program)
-            }
+            let capacity = program.source_text.len() * 16;
+            let serializer = CompactFixesJSSerializer::with_capacity(capacity, range);
+            serializer.serialize_with_fixes(&program)
         }
         AstType::TypeScript => {
             // Note: `@typescript-eslint/parser` ignores hashbangs,
             // See: https://github.com/typescript-eslint/typescript-eslint/issues/6500
-            if range {
-                let capacity = program.source_text.len() * 16;
-                let serializer = CompactFixesTSWithRangesSerializer::with_capacity(capacity);
-                serializer.serialize_with_fixes(&program)
-            } else {
-                let capacity = program.source_text.len() * 16;
-                let serializer = CompactFixesTSSerializer::with_capacity(capacity);
-                serializer.serialize_with_fixes(&program)
-            }
+            let capacity = program.source_text.len() * 16;
+            let serializer = CompactFixesTSSerializer::with_capacity(capacity, range);
+            serializer.serialize_with_fixes(&program)
         }
     };
 

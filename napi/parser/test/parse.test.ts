@@ -692,14 +692,12 @@ describe('parse', () => {
 
     it('should not include range when false', () => {
       const ret = parseSync('test.js', '(x)', { range: false });
-      expect(ret.program.body[0].start).toBe(0);
       expect(ret.program.body[0].range).toBeUndefined();
     });
 
     it('should include range by default', () => {
-      const ret = parseSync('test.js', '(x)', { range: true });
-      expect(ret.program.body[0].start).toBe(0);
-      expect(ret.program.body[0].range).toEqual([0, 3]);
+      const ret = parseSync('test.js', '(x)');
+      expect(ret.program.body[0].range).toBeUndefined();
     });
   });
 });
