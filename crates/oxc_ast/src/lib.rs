@@ -44,7 +44,7 @@
 #![warn(missing_docs)]
 
 #[cfg(feature = "serialize")]
-pub mod serialize;
+mod serialize;
 
 pub mod ast;
 mod ast_builder_impl;

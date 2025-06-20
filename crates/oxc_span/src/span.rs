@@ -85,10 +85,6 @@ pub struct Span {
     /// The zero-based end offset of the span. This may be equal to [`start`](Span::start) if
     /// the span is empty, but should not be less than it.
     pub end: u32,
-
-    /// A [number, number] which indicates the start/end index of the node in the file contents.
-    pub range: Option<[i32; 2]>,
-
     /// Align `Span` on 8 on 64-bit platforms
     #[estree(skip)]
     _align: PointerAlign,
@@ -104,7 +100,7 @@ impl Span {
     ///
     #[inline]
     pub const fn new(start: u32, end: u32) -> Self {
-        Self { start, end, range: None, _align: PointerAlign::new() }
+        Self { start, end, _align: PointerAlign::new() }
     }
 
     /// Create a new empty [`Span`] that starts and ends at an offset position.
@@ -731,7 +727,7 @@ mod size_asserts {
 
     use super::Span;
 
-    const _: () = assert!(size_of::<Span>() == 24);
+    const _: () = assert!(size_of::<Span>() == 8);
 
     #[cfg(target_pointer_width = "64")]
     const _: () = assert!(align_of::<Span>() == 8);

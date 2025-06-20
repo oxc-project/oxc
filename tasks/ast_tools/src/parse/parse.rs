@@ -5,8 +5,8 @@ use quote::ToTokens;
 use rustc_hash::FxHashMap;
 use syn::{
     AttrStyle, Attribute, Expr, ExprLit, Field, Fields, GenericArgument, Generics, Ident, ItemEnum,
-    ItemStruct, Lit, Meta, MetaList, PathArguments, PathSegment, Type, TypeArray, TypePath,
-    TypeReference, Variant, Visibility as SynVisibility, punctuated::Punctuated, token::Comma,
+    ItemStruct, Lit, Meta, MetaList, PathArguments, PathSegment, Type, TypePath, TypeReference,
+    Variant, Visibility as SynVisibility, punctuated::Punctuated, token::Comma,
 };
 
 use crate::{
@@ -226,7 +226,6 @@ impl<'c> Parser<'c> {
             // TODO: Remove the need for this by adding
             // `#[cfg_attr(target_pointer_width = "64", repr(align(8)))]` to all AST types
             "PointerAlign" => primitive("PointerAlign"),
-            "RangeArray" => primitive("RangeArray"),
             _ => panic!("Unknown type: {name}"),
         };
         self.create_new_type(type_def)
@@ -502,7 +501,6 @@ impl<'c> Parser<'c> {
         match ty {
             Type::Path(type_path) => self.parse_type_path(type_path),
             Type::Reference(type_ref) => self.parse_type_reference(type_ref),
-            Type::Array(type_array) => Some(self.parse_type_array(type_array)),
             _ => None,
         }
     }
@@ -583,10 +581,6 @@ impl<'c> Parser<'c> {
             return None;
         }
         Some(self.type_id("&str"))
-    }
-
-    fn parse_type_array(&mut self, _type_array: &TypeArray) -> TypeId {
-        self.type_id("RangeArray")
     }
 
     /// Parse attributes on struct or enum with parsers provided by [`Derive`]s and [`Generator`]s.

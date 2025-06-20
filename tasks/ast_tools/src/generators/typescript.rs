@@ -377,7 +377,6 @@ fn ts_type_name<'s>(type_def: &'s TypeDef, schema: &'s Schema) -> Cow<'s, str> {
             | "f32" | "f64" => "number",
             "bool" => "boolean",
             "&str" | "Atom" => "string",
-            "RangeArray" => "[number, number]",
             name => name,
         }),
         TypeDef::Option(option_def) => {

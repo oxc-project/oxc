@@ -583,7 +583,6 @@ fn generate_primitive(primitive_def: &PrimitiveDef, code: &mut String, schema: &
         "Atom" => return,
         // Dummy type
         "PointerAlign" => return,
-        "RangeArray" => return,
         "bool" => "return ast.buffer[pos] === 1;",
         "u8" => "return ast.buffer[pos];",
         // "u16" => "return uint16[pos >> 1];",

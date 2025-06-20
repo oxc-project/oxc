@@ -190,13 +190,6 @@ export interface ParserOptions {
    */
   astType?: 'js' | 'ts'
   /**
-   * Controls whether the `range` property is included on AST nodes.
-   * The `range` property is a [number, number] which indicates the start/end index of the node in the file contents.
-   *
-   * @default false
-   */
-  range?: boolean
-  /**
    * Emit `ParenthesizedExpression` and `TSParenthesizedType` in AST.
    *
    * If this option is true, parenthesized expressions are represented by
@@ -253,12 +246,6 @@ export declare function rawTransferSupported(): boolean
 export interface Span {
   start: number
   end: number
-  /**
-   * An array of two numbers.
-   * Both numbers are a 0-based index which is the position in the array of source code characters.
-   * The first is the start position of the node, the second is the end position of the node.
-   */
-  range?: [number, number]
 }
 
 export interface StaticExport {

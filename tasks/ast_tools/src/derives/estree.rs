@@ -69,14 +69,14 @@ impl Derive for DeriveESTree {
 
     fn prelude(&self) -> TokenStream {
         quote! {
-                    #![allow(unused_imports, clippy::match_same_arms, clippy::semicolon_if_nothing_returned)]
+            #![allow(unused_imports, clippy::match_same_arms, clippy::semicolon_if_nothing_returned)]
 
-                    ///@@line_break
-                    use oxc_estree::{
-            Concat2, Concat3, ESTree, FlatStructSerializer,
-            JsonSafeString, Serializer, StructSerializer,
-        };
-                }
+            ///@@line_break
+            use oxc_estree::{
+                Concat2, Concat3, ESTree, FlatStructSerializer,
+                JsonSafeString, Serializer, StructSerializer,
+            };
+        }
     }
 
     /// Generate implementation of `ESTree` for a struct or enum.
@@ -435,24 +435,9 @@ impl<'s> StructSerializerGenerator<'s> {
 
         let field_name_ident = field.ident();
 
-        // Special case for `Span` fields - add conditional range serialization
-        if let TypeDef::Struct(inner_struct_def) = field.type_def(self.schema) {
-            if inner_struct_def.name() == "Span" && field.name() == "span" {
-                self.stmts.extend(quote! {
-                    state.serialize_field("start", &#self_path.#field_name_ident.start);
-                    state.serialize_field("end", &#self_path.#field_name_ident.end);
-                    if state.range() {
-                        state.serialize_field("range", &[#self_path.#field_name_ident.start, #self_path.#field_name_ident.end]);
-                    }
-                });
-                return;
-            }
-        }
-
         if should_flatten_field(field, self.schema) {
             if can_flatten_field_inline(field, self.krate, self.schema) {
                 let inner_struct_def = field.type_def(self.schema).as_struct().unwrap();
-
                 self.generate_stmts_for_struct(
                     inner_struct_def,
                     &quote!(#self_path.#field_name_ident),

@@ -471,12 +471,12 @@ fn generate_enum(
 
 /// Generate deserialize function for a primitive.
 fn generate_primitive(primitive_def: &PrimitiveDef, code: &mut String, schema: &Schema) {
+    #[expect(clippy::match_same_arms)]
     let ret = match primitive_def.name() {
         // Reuse deserializer for `&str`
         "Atom" => return,
         // Dummy type
         "PointerAlign" => return,
-        "RangeArray" => return,
         "bool" => "return uint8[pos] === 1;",
         "u8" => "return uint8[pos];",
         // "u16" => "return uint16[pos >> 1];",
