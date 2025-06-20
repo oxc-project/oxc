@@ -2312,7 +2312,6 @@ dependencies = [
  "lazy-regex",
  "mimalloc-safe",
  "napi",
- "napi-derive",
  "oxc-miette",
  "oxc_allocator",
  "oxc_diagnostics",

@@ -41,4 +41,4 @@ napi-build = { workspace = true }
 
 [features]
 default = []
-allocator = ["dep:mimalloc-safe"]
+allocator = []

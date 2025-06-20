@@ -37,7 +37,6 @@ cow-utils = { workspace = true }
 ignore = { workspace = true, features = ["simd-accel"] }
 miette = { workspace = true }
 napi = { workspace = true }
-napi-derive = { workspace = true }
 rayon = { workspace = true }
 rustc-hash = { workspace = true }
 serde = { workspace = true }
