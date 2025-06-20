@@ -662,7 +662,7 @@ impl<'a> ComputedMemberExpression<'a> {
             Expression::TemplateLiteral(lit)
                 if lit.expressions.is_empty() && lit.quasis.len() == 1 =>
             {
-                Some(lit.quasis[0].value.raw)
+                lit.quasis[0].value.cooked
             }
             Expression::RegExpLiteral(lit) => lit.raw,
             _ => None,
