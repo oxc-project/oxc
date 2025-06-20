@@ -19,7 +19,10 @@ use sequences::ESTreeSequenceSerializer;
 use structs::ESTreeStructSerializer;
 
 pub use concat::{Concat2, Concat3, ConcatElement};
-pub use config::{Config, ConfigFixesJS, ConfigFixesTS, ConfigJS, ConfigTS};
+pub use config::{
+    Config, ConfigFixesJS, ConfigFixesJSWithRanges, ConfigFixesTS, ConfigFixesTSWithRanges,
+    ConfigJS, ConfigJSWithRanges, ConfigTS, ConfigTSWithRanges,
+};
 
 pub use sequences::SequenceSerializer;
 pub use strings::{JsonSafeString, LoneSurrogatesString};
@@ -87,14 +90,30 @@ pub type PrettyJSSerializer = ESTreeSerializer<ConfigJS, PrettyFormatter>;
 /// ESTree serializer which produces compact JSON, including TypeScript fields.
 pub type CompactFixesTSSerializer = ESTreeSerializer<ConfigFixesTS, CompactFormatter>;
 
+/// ESTree serializer which produces compact JSON, including TypeScript fields, with ranges.
+pub type CompactFixesTSWithRangesSerializer =
+    ESTreeSerializer<ConfigFixesTSWithRanges, CompactFormatter>;
+
 /// ESTree serializer which produces compact JSON, excluding TypeScript fields.
 pub type CompactFixesJSSerializer = ESTreeSerializer<ConfigFixesJS, CompactFormatter>;
+
+/// ESTree serializer which produces compact JSON, excluding TypeScript fields, with ranges.
+pub type CompactFixesJSWithRangesSerializer =
+    ESTreeSerializer<ConfigFixesJSWithRanges, CompactFormatter>;
 
 /// ESTree serializer which produces pretty JSON, including TypeScript fields.
 pub type PrettyFixesTSSerializer = ESTreeSerializer<ConfigFixesTS, PrettyFormatter>;
 
+/// ESTree serializer which produces pretty JSON, including TypeScript fields, with ranges.
+pub type PrettyFixesTSWithRangesSerializer =
+    ESTreeSerializer<ConfigFixesTSWithRanges, PrettyFormatter>;
+
 /// ESTree serializer which produces pretty JSON, excluding TypeScript fields.
 pub type PrettyFixesJSSerializer = ESTreeSerializer<ConfigFixesJS, PrettyFormatter>;
+
+/// ESTree serializer which produces pretty JSON, excluding TypeScript fields, with ranges.
+pub type PrettyFixesJSWithRangesSerializer =
+    ESTreeSerializer<ConfigFixesJSWithRanges, PrettyFormatter>;
 
 /// ESTree serializer.
 pub struct ESTreeSerializer<C: Config, F: Formatter> {
@@ -192,7 +211,7 @@ impl<'s, C: Config, F: Formatter> Serializer for &'s mut ESTreeSerializer<C, F> 
     type SequenceSerializer = ESTreeSequenceSerializer<'s, C, F>;
 
     fn range(&self) -> bool {
-        self.config.ranges()
+        C::RANGES
     }
 
     /// Serialize struct.

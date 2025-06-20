@@ -79,7 +79,7 @@ impl From<&ModuleRecord<'_>> for EcmaScriptModule {
 
 impl From<&oxc::span::Span> for Span {
     fn from(span: &oxc::span::Span) -> Self {
-        Self { start: span.start, end: span.end, range: span.range.map(|arr| vec![arr[0], arr[1]]) }
+        Self { start: span.start, end: span.end }
     }
 }
 

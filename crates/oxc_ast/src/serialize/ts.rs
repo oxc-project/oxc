@@ -99,10 +99,14 @@ impl ESTree for TSModuleDeclarationConverter<'_, '_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let module = self.0;
 
+        let range = serializer.range();
         let mut state = serializer.serialize_struct();
         state.serialize_field("type", &JsonSafeString("TSModuleDeclaration"));
         state.serialize_field("start", &module.span.start);
         state.serialize_field("end", &module.span.end);
+        if range {
+            state.serialize_field("range", &[module.span.start, module.span.end]);
+        }
 
         match &module.body {
             Some(TSModuleDeclarationBody::TSModuleDeclaration(inner_module)) => {
@@ -171,10 +175,14 @@ impl ESTree for TSModuleDeclarationIdParts<'_, '_> {
         let span_start = parts[0].span.start;
         let (&last, rest) = parts.split_last().unwrap();
 
+        let range = serializer.range();
         let mut state = serializer.serialize_struct();
         state.serialize_field("type", &JsonSafeString("TSQualifiedName"));
         state.serialize_field("start", &span_start);
         state.serialize_field("end", &last.span.end);
+        if range {
+            state.serialize_field("range", &[span_start, last.span.end]);
+        }
 
         if rest.len() == 1 {
             // Only one part remaining (e.g. `X`). Serialize as `Identifier`.

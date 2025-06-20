@@ -15,10 +15,13 @@ use napi_derive::napi;
 
 use oxc::{
     allocator::Allocator,
-    ast::serialize::SerializationOptions,
     parser::{ParseOptions, Parser, ParserReturn},
     semantic::SemanticBuilder,
     span::SourceType,
+};
+use oxc_estree::{
+    CompactFixesJSSerializer, CompactFixesJSWithRangesSerializer, CompactFixesTSSerializer,
+    CompactFixesTSWithRangesSerializer,
 };
 use oxc_napi::{Comment, OxcError, convert_utf8_to_utf16, get_source_type};
 
@@ -77,6 +80,7 @@ fn parse_with_return(filename: &str, source_text: String, options: &ParserOption
     let source_type =
         get_source_type(filename, options.lang.as_deref(), options.source_type.as_deref());
     let ast_type = get_ast_type(source_type, options);
+    let range = options.range.unwrap_or(false);
     let ret = parse(&allocator, source_type, &source_text, options);
 
     let mut program = ret.program;
@@ -108,16 +112,28 @@ fn parse_with_return(filename: &str, source_text: String, options: &ParserOption
                 );
             }
 
-            program.to_estree_js_json_with_fixes_and_options(Some(&SerializationOptions {
-                range: options.range.unwrap_or(false),
-            }))
+            if range {
+                let capacity = program.source_text.len() * 16;
+                let serializer = CompactFixesJSWithRangesSerializer::with_capacity(capacity);
+                serializer.serialize_with_fixes(&program)
+            } else {
+                let capacity = program.source_text.len() * 16;
+                let serializer = CompactFixesJSSerializer::with_capacity(capacity);
+                serializer.serialize_with_fixes(&program)
+            }
         }
         AstType::TypeScript => {
             // Note: `@typescript-eslint/parser` ignores hashbangs,
             // See: https://github.com/typescript-eslint/typescript-eslint/issues/6500
-            program.to_estree_ts_json_with_fixes_and_options(Some(&SerializationOptions {
-                range: options.range.unwrap_or(false),
-            }))
+            if range {
+                let capacity = program.source_text.len() * 16;
+                let serializer = CompactFixesTSWithRangesSerializer::with_capacity(capacity);
+                serializer.serialize_with_fixes(&program)
+            } else {
+                let capacity = program.source_text.len() * 16;
+                let serializer = CompactFixesTSSerializer::with_capacity(capacity);
+                serializer.serialize_with_fixes(&program)
+            }
         }
     };
 

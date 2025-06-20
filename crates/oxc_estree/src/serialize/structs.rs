@@ -151,7 +151,7 @@ impl<C: Config, F: Formatter> StructSerializer for ESTreeStructSerializer<'_, C,
     }
 
     fn range(&self) -> bool {
-        self.serializer.config.ranges()
+        C::RANGES
     }
 }
 

@@ -8,6 +8,8 @@ use crate::ast::*;
 
 use super::{EmptyArray, Null};
 
+use oxc_span::GetSpan;
+
 // ----------------------------------------
 // Binding patterns and function params
 // ----------------------------------------
@@ -54,6 +56,7 @@ struct BindingPatternKindAndTsFields<'a, 'b> {
 
 impl ESTree for BindingPatternKindAndTsFields<'_, '_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
+        let range = serializer.range();
         let mut state = serializer.serialize_struct();
 
         match &self.kind {
@@ -61,6 +64,9 @@ impl ESTree for BindingPatternKindAndTsFields<'_, '_> {
                 state.serialize_field("type", &JsonSafeString("Identifier"));
                 state.serialize_field("start", &ident.span.start);
                 state.serialize_field("end", &ident.span.end);
+                if range {
+                    state.serialize_field("range", &[ident.span.start, ident.span.end]);
+                }
                 state.serialize_field("decorators", &self.decorators);
                 state.serialize_field("name", &JsonSafeString(ident.name.as_str()));
             }
@@ -68,6 +74,9 @@ impl ESTree for BindingPatternKindAndTsFields<'_, '_> {
                 state.serialize_field("type", &JsonSafeString("ObjectPattern"));
                 state.serialize_field("start", &object.span.start);
                 state.serialize_field("end", &object.span.end);
+                if range {
+                    state.serialize_field("range", &[object.span.start, object.span.end]);
+                }
                 state.serialize_field("decorators", &self.decorators);
                 state.serialize_field("properties", &Concat2(&object.properties, &object.rest));
             }
@@ -75,6 +84,9 @@ impl ESTree for BindingPatternKindAndTsFields<'_, '_> {
                 state.serialize_field("type", &JsonSafeString("ArrayPattern"));
                 state.serialize_field("start", &array.span.start);
                 state.serialize_field("end", &array.span.end);
+                if range {
+                    state.serialize_field("range", &[array.span.start, array.span.end]);
+                }
                 state.serialize_field("decorators", &self.decorators);
                 state.serialize_field("elements", &Concat2(&array.elements, &array.rest));
             }
@@ -82,6 +94,9 @@ impl ESTree for BindingPatternKindAndTsFields<'_, '_> {
                 state.serialize_field("type", &JsonSafeString("AssignmentPattern"));
                 state.serialize_field("start", &assignment.span.start);
                 state.serialize_field("end", &assignment.span.end);
+                if range {
+                    state.serialize_field("range", &[assignment.span.start, assignment.span.end]);
+                }
                 state.serialize_field("decorators", &self.decorators);
                 state.serialize_field("left", &assignment.left);
                 state.serialize_field("right", &assignment.right);
@@ -165,10 +180,14 @@ struct FormalParametersRest<'a, 'b>(&'b BindingRestElement<'a>);
 impl ESTree for FormalParametersRest<'_, '_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let rest = self.0;
+        let range = serializer.range();
         let mut state = serializer.serialize_struct();
         state.serialize_field("type", &JsonSafeString("RestElement"));
         state.serialize_field("start", &rest.span.start);
         state.serialize_field("end", &rest.span.end);
+        if range {
+            state.serialize_field("range", &[rest.span.start, rest.span.end]);
+        }
         state.serialize_ts_field("decorators", &EmptyArray(()));
         state.serialize_field("argument", &rest.argument.kind);
         state.serialize_ts_field("optional", &rest.argument.optional);
@@ -225,10 +244,14 @@ impl ESTree for FormalParameterConverter<'_, '_> {
 
         if S::INCLUDE_TS_FIELDS {
             if param.has_modifier() {
+                let range = serializer.range();
                 let mut state = serializer.serialize_struct();
                 state.serialize_field("type", &JsonSafeString("TSParameterProperty"));
                 state.serialize_field("start", &param.span.start);
                 state.serialize_field("end", &param.span.end);
+                if range {
+                    state.serialize_field("range", &[param.span.start, param.span.end]);
+                }
                 state.serialize_field("accessibility", &param.accessibility);
                 state.serialize_field("decorators", &param.decorators);
                 state.serialize_field("override", &param.r#override);
@@ -395,10 +418,38 @@ pub struct ArrowFunctionExpressionBody<'a>(pub &'a ArrowFunctionExpression<'a>);
 
 impl ESTree for ArrowFunctionExpressionBody<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
-        if let Some(expression) = self.0.get_expression() {
-            expression.serialize(serializer);
+        let arrow_expr = self.0;
+        if arrow_expr.expression {
+            // Expression body is represented as a `FunctionBody` with a single `ExpressionStatement`
+            // which contains the expression.
+            if let Some(Statement::ExpressionStatement(expr_stmt)) = arrow_expr.body.statements.get(0) {
+                expr_stmt.expression.serialize(serializer);
+            } else {
+                // Should be unreachable for a valid AST.
+                // Serialize as a `BlockStatement` as a fallback.
+                let range = serializer.range();
+                let mut state = serializer.serialize_struct();
+                state.serialize_field("type", &JsonSafeString("BlockStatement"));
+                state.serialize_field("start", &arrow_expr.body.span.start);
+                state.serialize_field("end", &arrow_expr.body.span.end);
+                if range {
+                    state.serialize_field("range", &[arrow_expr.body.span.start, arrow_expr.body.span.end]);
+                }
+                state.serialize_field("body", &arrow_expr.body.statements);
+                state.end();
+            }
         } else {
-            self.0.body.serialize(serializer);
+            let body = &arrow_expr.body;
+            let range = serializer.range();
+            let mut state = serializer.serialize_struct();
+            state.serialize_field("type", &JsonSafeString("BlockStatement"));
+            state.serialize_field("start", &body.span.start);
+            state.serialize_field("end", &body.span.end);
+            if range {
+                state.serialize_field("range", &[body.span.start, body.span.end]);
+            }
+            state.serialize_field("body", &body.statements);
+            state.end();
         }
     }
 }
@@ -436,19 +487,23 @@ pub struct AssignmentTargetPropertyIdentifierInit<'a>(
 
 impl ESTree for AssignmentTargetPropertyIdentifierInit<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
-        if let Some(init) = &self.0.init {
+        let prop = self.0;
+        if let Some(init) = &prop.init {
+            let range = serializer.range();
             let mut state = serializer.serialize_struct();
             state.serialize_field("type", &JsonSafeString("AssignmentPattern"));
-            state.serialize_field("start", &self.0.span.start);
-            state.serialize_field("end", &self.0.span.end);
-            state.serialize_ts_field("decorators", &EmptyArray(()));
-            state.serialize_field("left", &self.0.binding);
+            let start = prop.binding.span.start;
+            let end = init.span().end;
+            state.serialize_field("start", &start);
+            state.serialize_field("end", &end);
+            if range {
+                state.serialize_field("range", &[start, end]);
+            }
+            state.serialize_field("left", &prop.binding);
             state.serialize_field("right", init);
-            state.serialize_ts_field("optional", &false);
-            state.serialize_ts_field("typeAnnotation", &Null(()));
             state.end();
         } else {
-            self.0.binding.serialize(serializer);
+            prop.binding.serialize(serializer);
         }
     }
 }

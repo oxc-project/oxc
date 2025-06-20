@@ -101,11 +101,6 @@ pub struct EcmaScriptModule {
 pub struct Span {
     pub start: u32,
     pub end: u32,
-    /// An array of two numbers.
-    /// Both numbers are a 0-based index which is the position in the array of source code characters.
-    /// The first is the start position of the node, the second is the end position of the node.
-    #[napi(ts_type = "[number, number]")]
-    pub range: Option<Vec<i32>>,
 }
 
 #[napi(object)]
