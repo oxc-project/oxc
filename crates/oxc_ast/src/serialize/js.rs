@@ -429,32 +429,10 @@ impl ESTree for ArrowFunctionExpressionBody<'_> {
             } else {
                 // Should be unreachable for a valid AST.
                 // Serialize as a `BlockStatement` as a fallback.
-                let range = serializer.range();
-                let mut state = serializer.serialize_struct();
-                state.serialize_field("type", &JsonSafeString("BlockStatement"));
-                state.serialize_field("start", &arrow_expr.body.span.start);
-                state.serialize_field("end", &arrow_expr.body.span.end);
-                if range {
-                    state.serialize_field(
-                        "range",
-                        &[arrow_expr.body.span.start, arrow_expr.body.span.end],
-                    );
-                }
-                state.serialize_field("body", &arrow_expr.body.statements);
-                state.end();
+                arrow_expr.body.serialize(serializer);
             }
         } else {
-            let body = &arrow_expr.body;
-            let range = serializer.range();
-            let mut state = serializer.serialize_struct();
-            state.serialize_field("type", &JsonSafeString("BlockStatement"));
-            state.serialize_field("start", &body.span.start);
-            state.serialize_field("end", &body.span.end);
-            if range {
-                state.serialize_field("range", &[body.span.start, body.span.end]);
-            }
-            state.serialize_field("body", &body.statements);
-            state.end();
+            arrow_expr.body.serialize(serializer);
         }
     }
 }
