@@ -31,8 +31,8 @@ module.exports = {
  * @throws {Error} - If raw transfer is not supported on this platform
  */
 function parseSyncRawImpl(filename, sourceText, options, convert) {
-  const { buffer, sourceByteLen, options: optionsAmended } = prepareRaw(sourceText, options);
-  parseSyncRawBinding(filename, buffer, sourceByteLen, optionsAmended);
+  const { buffer, sourceByteLen } = prepareRaw(sourceText);
+  parseSyncRawBinding(filename, buffer, sourceByteLen, options);
   return convert(buffer, sourceText, sourceByteLen);
 }
 
@@ -112,8 +112,8 @@ async function parseAsyncRawImpl(filename, sourceText, options, convert) {
   }
 
   // Parse
-  const { buffer, sourceByteLen, options: optionsAmended } = prepareRaw(sourceText, options);
-  await parseAsyncRawBinding(filename, buffer, sourceByteLen, optionsAmended);
+  const { buffer, sourceByteLen } = prepareRaw(sourceText);
+  await parseAsyncRawBinding(filename, buffer, sourceByteLen, options);
   const data = convert(buffer, sourceText, sourceByteLen);
 
   // Free the CPU core
@@ -170,18 +170,16 @@ let clearBuffersTimeout = null;
 const textEncoder = new TextEncoder();
 
 /**
- * Get a buffer (from cache if possible), copy source text into it, and amend options object.
+ * Get a buffer (from cache if possible), and copy source text into it.
  *
  * @param {string} sourceText - Source text of file
- * @param {Object} options - Options object
- * @returns {Object} - Object of form `{ buffer, sourceByteLen, options }`.
+ * @returns {Object} - Object of form `{ buffer, sourceByteLen }`.
  *   - `buffer`: `Uint8Array` containing the AST in raw form.
  *   - `sourceByteLen`: Length of source text in UTF-8 bytes
  *     (which may not be equal to `sourceText.length` if source contains non-ASCII characters).
- *   - `options`: Input `options` with `experimentalRawTransfer` and `experimentalLazy` props removed.
  * @throws {Error} - If raw transfer is not supported on this platform
  */
-function prepareRaw(sourceText, options) {
+function prepareRaw(sourceText) {
   if (!rawTransferSupported()) {
     throw new Error(
       '`experimentalRawTransfer` and `experimentalLazy` options are not supported ' +
@@ -189,10 +187,6 @@ function prepareRaw(sourceText, options) {
         'versions of Deno prior to v2.0.0, or other runtimes',
     );
   }
-
-  // Delete `experimentalRawTransfer` and `experimentalLazy` options
-  let _;
-  ({ experimentalRawTransfer: _, experimentalLazy: _, ...options } = options);
 
   // Cancel timeout for clearing buffers
   if (clearBuffersTimeout !== null) {
@@ -221,7 +215,7 @@ function prepareRaw(sourceText, options) {
   const { read, written: sourceByteLen } = textEncoder.encodeInto(sourceText, sourceBuffer);
   if (read !== sourceText.length) throw new Error('Failed to write source text into buffer');
 
-  return { buffer, sourceByteLen, options };
+  return { buffer, sourceByteLen };
 }
 
 /**

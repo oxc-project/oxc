@@ -14,6 +14,8 @@ module.exports = { parseSyncRaw, parseAsyncRaw };
  * @throws {Error} - If raw transfer is not supported on this platform
  */
 function parseSyncRaw(filename, sourceText, options) {
+  let _;
+  ({ experimentalRawTransfer: _, ...options } = options);
   return parseSyncRawImpl(filename, sourceText, options, deserialize);
 }
 
@@ -37,6 +39,8 @@ function parseSyncRaw(filename, sourceText, options) {
  * @throws {Error} - If raw transfer is not supported on this platform
  */
 function parseAsyncRaw(filename, sourceText, options) {
+  let _;
+  ({ experimentalRawTransfer: _, ...options } = options);
   return parseAsyncRawImpl(filename, sourceText, options, deserialize);
 }
 

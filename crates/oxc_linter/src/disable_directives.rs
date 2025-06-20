@@ -1,30 +1,109 @@
 use std::cell::RefCell;
 
+use itertools::Itertools;
 use oxc_ast::Comment;
 use oxc_span::Span;
 use rust_lapper::{Interval, Lapper};
 use rustc_hash::FxHashMap;
 
+use crate::fixer::Fix;
+
 #[derive(Debug, Copy, Clone, Eq, PartialEq)]
 enum DisabledRule<'a> {
     All { comment_span: Span },
-    Single { rule_name: &'a str, comment_span: Span },
+    Single { rule_name: &'a str, name_span: Span, comment_span: Span },
+}
+
+impl DisabledRule<'_> {
+    pub fn comment_span(&self) -> &Span {
+        match self {
+            DisabledRule::All { comment_span } | DisabledRule::Single { comment_span, .. } => {
+                comment_span
+            }
+        }
+    }
+}
+
+#[derive(Debug, Copy, Clone, Eq, PartialEq)]
+pub struct RuleCommentRule<'a> {
+    pub rule_name: &'a str,
+    pub name_span: Span,
+}
+
+impl RuleCommentRule<'_> {
+    #[expect(clippy::cast_possible_truncation)] // for `as u32`
+    pub fn create_fix<'a>(&self, source_text: &'a str, comment_span: Span) -> Fix<'a> {
+        let before_source =
+            &source_text[comment_span.start as usize..self.name_span.start as usize];
+
+        // check if there is a comma before the rule name
+        // if there is, remove the comma, whitespace and the rule name
+        let mut comma_before_offset = None;
+        for (i, c) in before_source.chars().rev().enumerate() {
+            if c.is_whitespace() {
+                continue;
+            }
+            if c == ',' {
+                comma_before_offset = Some(1 + i as u32);
+            }
+            break;
+        }
+
+        if let Some(comma_before_offset) = comma_before_offset {
+            return Fix::delete(Span::new(
+                self.name_span.start - comma_before_offset,
+                self.name_span.end,
+            ));
+        }
+
+        let after_source = &source_text[self.name_span.end as usize..comment_span.end as usize];
+
+        // check if there is a comma after the rule name
+        // if there is, remove the comma, whitespace and the rule name
+        let mut comma_after_offset = None;
+        for (i, c) in after_source.char_indices() {
+            if c.is_whitespace() {
+                continue;
+            }
+            if c == ',' {
+                comma_after_offset = Some(1 + i as u32);
+            }
+            break;
+        }
+
+        if let Some(comma_after_offset) = comma_after_offset {
+            return Fix::delete(Span::new(
+                self.name_span.start,
+                self.name_span.end + comma_after_offset,
+            ));
+        }
+
+        unreachable!(
+            "A `RuleCommentRule` should have a comma, because only one rule should be RuleCommentType::All"
+        );
+    }
+}
+
+#[derive(Debug, Clone, Eq, PartialEq)]
+pub enum RuleCommentType<'a> {
+    // disable/enable all the rules
+    All,
+    // disable/enable only a handful of rules
+    Single(Vec<RuleCommentRule<'a>>),
 }
 
 /// A comment which disables one or more specific rules
-#[derive(Debug)]
+#[derive(Debug, Eq, PartialEq, Clone)]
 pub struct DisableRuleComment<'a> {
     /// Span of the comment
     pub span: Span,
     /// Rules disabled by the comment
-    pub rules: Vec<&'a str>,
+    pub r#type: RuleCommentType<'a>,
 }
 
 pub struct DisableDirectives<'a> {
     /// All the disabled rules with their corresponding covering spans
     intervals: Lapper<u32, DisabledRule<'a>>,
-    /// Spans of comments that disable all rules
-    disable_all_comments: Box<[Span]>,
     /// All comments that disable one or more specific rules
     disable_rule_comments: Box<[DisableRuleComment<'a>]>,
     /// Spans of unused enable directives
@@ -61,10 +140,6 @@ impl<'a> DisableDirectives<'a> {
         !matched_intervals.is_empty()
     }
 
-    pub fn disable_all_comments(&self) -> &[Span] {
-        &self.disable_all_comments
-    }
-
     pub fn disable_rule_comments(&self) -> &[DisableRuleComment<'a>] {
         &self.disable_rule_comments
     }
@@ -73,15 +148,56 @@ impl<'a> DisableDirectives<'a> {
         &self.unused_enable_comments
     }
 
-    pub fn collect_unused_disable_comments(&self) -> Vec<(Option<&'a str>, Span)> {
+    pub fn collect_unused_disable_comments(&self) -> Vec<DisableRuleComment<'a>> {
         let used = self.used_disable_comments.borrow();
 
         self.intervals
             .iter()
-            .filter(|interval| !used.contains(&interval.val))
-            .map(|interval| match interval.val {
-                DisabledRule::All { comment_span } => (None, comment_span),
-                DisabledRule::Single { comment_span, rule_name } => (Some(rule_name), comment_span),
+            // 1. group intervals with the same interval.val.comment_span() together
+            .chunk_by(|interval| interval.val.comment_span())
+            .into_iter()
+            // 2. iterate over all groups
+            // 3. check if the group has only one , ore all entries with the comment span are used with `used.contains(&interval.val))`
+            // 4. if all entries are used, map to RuleCommentType::All comment, otherwise map to RuleCommentType::Single comment.
+            .filter_map(|(comment_span, group)| {
+                let group_vec: Vec<_> = group.collect();
+
+                if group_vec.is_empty() {
+                    return None;
+                }
+
+                let rules: Vec<RuleCommentRule<'_>> = group_vec
+                    .iter()
+                    .filter_map(|interval| {
+                        if used.contains(&interval.val) {
+                            return None;
+                        }
+                        match interval.val {
+                            DisabledRule::Single { rule_name, name_span, .. } => {
+                                Some(RuleCommentRule { rule_name, name_span })
+                            }
+                            DisabledRule::All { .. } => {
+                                Some(RuleCommentRule { rule_name: "all", name_span: *comment_span })
+                            }
+                        }
+                    })
+                    .collect::<Vec<_>>();
+
+                if rules.is_empty() {
+                    return None;
+                }
+
+                if rules.len() == group_vec.len() {
+                    return Some(DisableRuleComment {
+                        span: *comment_span,
+                        r#type: RuleCommentType::All,
+                    });
+                }
+
+                Some(DisableRuleComment {
+                    span: *comment_span,
+                    r#type: RuleCommentType::Single(rules),
+                })
             })
             .collect()
     }
@@ -93,9 +209,7 @@ pub struct DisableDirectivesBuilder<'a> {
     /// Start of `eslint-disable` or `oxlint-disable`
     disable_all_start: Option<(u32, Span)>,
     /// Start of `eslint-disable` or `oxlint-disable` rule_name`
-    disable_start_map: FxHashMap<&'a str, (u32, Span)>,
-    /// Spans of comments that disable all rules
-    disable_all_comments: Vec<Span>,
+    disable_start_map: FxHashMap<&'a str, (u32, Span, Span)>,
     /// All comments that disable one or more specific rules
     disable_rule_comments: Vec<DisableRuleComment<'a>>,
     /// Spans of unused enable directives
@@ -108,7 +222,6 @@ impl<'a> DisableDirectivesBuilder<'a> {
             intervals: Lapper::new(vec![]),
             disable_all_start: None,
             disable_start_map: FxHashMap::default(),
-            disable_all_comments: vec![],
             disable_rule_comments: vec![],
             unused_enable_comments: vec![],
         }
@@ -119,7 +232,6 @@ impl<'a> DisableDirectivesBuilder<'a> {
 
         DisableDirectives {
             intervals: self.intervals,
-            disable_all_comments: self.disable_all_comments.into_boxed_slice(),
             disable_rule_comments: self.disable_rule_comments.into_boxed_slice(),
             unused_enable_comments: self.unused_enable_comments.into_boxed_slice(),
             used_disable_comments: RefCell::new(Vec::new()),
@@ -147,22 +259,28 @@ impl<'a> DisableDirectivesBuilder<'a> {
 
         for comment in comments {
             let comment_span = comment.content_span();
-            let text = comment_span.source_text(source_text);
-            let text = text.trim_start();
+            let text_source = comment_span.source_text(source_text);
+            let text = text_source.trim_start();
+            let mut rule_name_start = comment_span.start + (text_source.len() - text.len()) as u32;
 
             if let Some(text) =
                 text.strip_prefix("eslint-disable").or_else(|| text.strip_prefix("oxlint-disable"))
             {
+                rule_name_start += 14; // eslint-disable is 14 bytes
                 // `eslint-disable`
                 if text.trim().is_empty() {
                     if self.disable_all_start.is_none() {
                         self.disable_all_start = Some((comment_span.end, comment_span));
                     }
-                    self.disable_all_comments.push(comment_span);
+                    self.disable_rule_comments.push(DisableRuleComment {
+                        span: comment_span,
+                        r#type: RuleCommentType::All,
+                    });
                     continue;
                 }
                 // `eslint-disable-next-line`
                 else if let Some(text) = text.strip_prefix("-next-line") {
+                    rule_name_start += 10; // -next-line is 10 bytes
                     // Get the span up to the next new line
                     let mut stop = comment_span.end;
                     let mut lines_after_comment_end =
@@ -183,25 +301,32 @@ impl<'a> DisableDirectivesBuilder<'a> {
                             stop,
                             DisabledRule::All { comment_span },
                         );
-                        self.disable_all_comments.push(comment_span);
+                        self.disable_rule_comments.push(DisableRuleComment {
+                            span: comment_span,
+                            r#type: RuleCommentType::All,
+                        });
                     } else {
                         // `eslint-disable-next-line rule_name1, rule_name2`
                         let mut rules = vec![];
-                        Self::get_rule_names(text, |rule_name| {
+                        Self::get_rule_names(text, rule_name_start, |rule_name, name_span| {
                             self.add_interval(
                                 comment_span.end,
                                 stop,
-                                DisabledRule::Single { rule_name, comment_span },
+                                DisabledRule::Single { rule_name, name_span, comment_span },
                             );
-                            rules.push(rule_name);
+                            rules.push(RuleCommentRule { rule_name, name_span });
                         });
-                        self.disable_rule_comments
-                            .push(DisableRuleComment { span: comment_span, rules });
+                        self.disable_rule_comments.push(DisableRuleComment {
+                            span: comment_span,
+                            r#type: RuleCommentType::Single(rules),
+                        });
                     }
                     continue;
                 }
                 // `eslint-disable-line`
                 else if let Some(text) = text.strip_prefix("-line") {
+                    rule_name_start += 5; // -line is 5 bytes
+
                     // Get the span between the preceding newline to this comment
                     let start = source_text[..comment_span.start as usize]
                         .lines()
@@ -212,20 +337,25 @@ impl<'a> DisableDirectivesBuilder<'a> {
                     // `eslint-disable-line`
                     if text.trim().is_empty() {
                         self.add_interval(start, stop, DisabledRule::All { comment_span });
-                        self.disable_all_comments.push(comment_span);
+                        self.disable_rule_comments.push(DisableRuleComment {
+                            span: comment_span,
+                            r#type: RuleCommentType::All,
+                        });
                     } else {
                         // `eslint-disable-line rule-name1, rule-name2`
                         let mut rules = vec![];
-                        Self::get_rule_names(text, |rule_name| {
+                        Self::get_rule_names(text, rule_name_start, |rule_name, name_span| {
                             self.add_interval(
                                 start,
                                 stop,
-                                DisabledRule::Single { rule_name, comment_span },
+                                DisabledRule::Single { rule_name, name_span, comment_span },
                             );
-                            rules.push(rule_name);
+                            rules.push(RuleCommentRule { rule_name, name_span });
                         });
-                        self.disable_rule_comments
-                            .push(DisableRuleComment { span: comment_span, rules });
+                        self.disable_rule_comments.push(DisableRuleComment {
+                            span: comment_span,
+                            r#type: RuleCommentType::Single(rules),
+                        });
                     }
                     continue;
                 }
@@ -234,14 +364,18 @@ impl<'a> DisableDirectivesBuilder<'a> {
                 else if text.starts_with(' ') {
                     // `eslint-disable rule-name1, rule-name2`
                     let mut rules = vec![];
-                    Self::get_rule_names(text, |rule_name| {
-                        self.disable_start_map
-                            .entry(rule_name)
-                            .or_insert((comment_span.end, comment_span));
-                        rules.push(rule_name);
+                    Self::get_rule_names(text, rule_name_start, |rule_name, name_span| {
+                        self.disable_start_map.entry(rule_name).or_insert((
+                            comment_span.end,
+                            name_span,
+                            comment_span,
+                        ));
+                        rules.push(RuleCommentRule { rule_name, name_span });
                     });
-                    self.disable_rule_comments
-                        .push(DisableRuleComment { span: comment_span, rules });
+                    self.disable_rule_comments.push(DisableRuleComment {
+                        span: comment_span,
+                        r#type: RuleCommentType::Single(rules),
+                    });
                     continue;
                 }
             }
@@ -249,6 +383,7 @@ impl<'a> DisableDirectivesBuilder<'a> {
             if let Some(text) =
                 text.strip_prefix("eslint-enable").or_else(|| text.strip_prefix("oxlint-enable"))
             {
+                rule_name_start += 13; // eslint-enable is 13 bytes
                 // `eslint-enable`
                 if text.trim().is_empty() {
                     if let Some((start, _)) = self.disable_all_start.take() {
@@ -263,16 +398,16 @@ impl<'a> DisableDirectivesBuilder<'a> {
                     }
                 } else {
                     // `eslint-enable rule-name1, rule-name2`
-                    Self::get_rule_names(text, |rule_name| {
-                        if let Some((start, _)) = self.disable_start_map.remove(rule_name) {
+                    Self::get_rule_names(text, rule_name_start, |rule_name, name_span| {
+                        if let Some((start, _, _)) = self.disable_start_map.remove(rule_name) {
                             self.add_interval(
                                 start,
                                 comment_span.start,
-                                DisabledRule::Single { rule_name, comment_span },
+                                DisabledRule::Single { rule_name, name_span, comment_span },
                             );
                         } else {
                             // collect as unused enable (see more at note comments in beginning of this method)
-                            unused_enable_directives.push((Some(rule_name), comment_span));
+                            unused_enable_directives.push((Some(rule_name), name_span));
                         }
                     });
                 }
@@ -286,17 +421,35 @@ impl<'a> DisableDirectivesBuilder<'a> {
 
         // Lone `eslint-disable rule_name`
         let disable_start_map = self.disable_start_map.drain().collect::<Vec<_>>();
-        for (rule_name, (start, comment_span)) in disable_start_map {
-            self.add_interval(start, source_len, DisabledRule::Single { rule_name, comment_span });
+        for (rule_name, (start, name_span, comment_span)) in disable_start_map {
+            self.add_interval(
+                start,
+                source_len,
+                DisabledRule::Single { rule_name, name_span, comment_span },
+            );
         }
 
         // Collect unused `enable` directives
         self.unused_enable_comments = unused_enable_directives;
     }
 
-    fn get_rule_names<F: FnMut(&'a str)>(text: &'a str, cb: F) {
+    #[expect(clippy::cast_possible_truncation)] // for `as u32`
+    fn get_rule_names<F: FnMut(&'a str, Span)>(text: &'a str, rule_name_start: u32, mut cb: F) {
         if let Some(text) = text.split_terminator("--").next() {
-            text.split(',').map(str::trim).for_each(cb);
+            let mut rule_name_start: u32 = rule_name_start;
+
+            for part in text.split(',') {
+                let trimmed = part.trim();
+                cb(
+                    trimmed,
+                    Span::sized(
+                        rule_name_start + (part.len() - part.trim_start().len()) as u32,
+                        trimmed.len() as u32,
+                    ),
+                );
+
+                rule_name_start += 1 + part.len() as u32; // +1 for the next ","
+            }
         }
     }
 }
@@ -708,9 +861,11 @@ mod tests {
     use oxc_ast::Comment;
     use oxc_parser::Parser;
     use oxc_semantic::{Semantic, SemanticBuilder};
-    use oxc_span::SourceType;
+    use oxc_span::{SourceType, Span};
 
-    use super::{DisableDirectives, DisableDirectivesBuilder, DisabledRule};
+    use crate::disable_directives::{DisabledRule, RuleCommentRule, RuleCommentType};
+
+    use super::{DisableDirectives, DisableDirectivesBuilder};
 
     fn process_source<'a>(allocator: &'a Allocator, source_text: &'a str) -> Semantic<'a> {
         let source_type = SourceType::default();
@@ -789,14 +944,18 @@ mod tests {
 
                 let (unused_rule_name_no_debugger, unused_span_no_debugger) =
                     unused.first().unwrap();
-                let comment_span_no_debugger = comments.first().unwrap().content_span();
                 assert_eq!(*unused_rule_name_no_debugger, Some("no-debugger"));
-                assert_eq!(*unused_span_no_debugger, comment_span_no_debugger);
+                assert_eq!(
+                    *unused_span_no_debugger,
+                    Span::sized(comments[0].content_span().start + 15, 11)
+                );
 
                 let (unused_rule_name_no_console, unused_span_no_console) = unused.last().unwrap();
-                let comment_span_no_console = comments.last().unwrap().content_span();
                 assert_eq!(*unused_rule_name_no_console, Some("no-console"));
-                assert_eq!(*unused_span_no_console, comment_span_no_console);
+                assert_eq!(
+                    *unused_span_no_console,
+                    Span::sized(comments[0].content_span().start + 28, 10)
+                );
             },
         );
     }
@@ -806,7 +965,7 @@ mod tests {
         test_directives(
             |prefix| {
                 format!(
-                    r"                    
+                    r"
                     /* {prefix}-disable no-console */
                     console.log();
                     /* {prefix}-enable no-console */
@@ -829,7 +988,7 @@ mod tests {
         test_directives(
             |prefix| {
                 format!(
-                    r"                    
+                    r"
                     /* {prefix}-disable */
                     console.log();
                     "
@@ -842,10 +1001,9 @@ mod tests {
 
                 assert_eq!(unused.len(), 1);
 
-                let (unused_rule_name, unused_span) = unused.first().unwrap();
-                let comment_span = comments.first().unwrap().content_span();
-                assert_eq!(*unused_rule_name, None);
-                assert_eq!(*unused_span, comment_span);
+                let comment = unused.first().unwrap();
+                assert_eq!(comment.span, comments.first().unwrap().content_span());
+                assert_eq!(comment.r#type, RuleCommentType::All);
             },
         );
     }
@@ -855,9 +1013,9 @@ mod tests {
         test_directives(
             |prefix| {
                 format!(
-                    r"                    
+                    r"
                     /* {prefix}-disable no-debugger, no-console */
-                    console.log();
+                    for (let i = 0; i < 10; i++) {{ const x = 0; }}
                     "
                 )
             },
@@ -866,18 +1024,11 @@ mod tests {
 
                 let unused = directives.collect_unused_disable_comments();
 
-                assert_eq!(unused.len(), 2);
+                assert_eq!(unused.len(), 1);
 
-                let (unused_rule_name_no_debugger, unused_span_no_debugger) =
-                    unused.first().unwrap();
-                let comment_span_no_debugger = comments.first().unwrap().content_span();
-                assert_eq!(*unused_rule_name_no_debugger, Some("no-debugger"));
-                assert_eq!(*unused_span_no_debugger, comment_span_no_debugger);
-
-                let (unused_rule_name_no_console, unused_span_no_console) = unused.last().unwrap();
-                let comment_span_no_console = comments.last().unwrap().content_span();
-                assert_eq!(*unused_rule_name_no_console, Some("no-console"));
-                assert_eq!(*unused_span_no_console, comment_span_no_console);
+                let comment = unused.first().unwrap();
+                assert_eq!(comment.span, comments.first().unwrap().content_span());
+                assert_eq!(comment.r#type, RuleCommentType::All);
             },
         );
     }
@@ -887,7 +1038,7 @@ mod tests {
         test_directives(
             |prefix| {
                 format!(
-                    r"                    
+                    r"
                     /* {prefix}-disable no-console */
                     console.log();
                     /* {prefix}-disable no-debugger */
@@ -898,10 +1049,12 @@ mod tests {
             |comments, directives| {
                 directives.mark_disable_directive_used(DisabledRule::Single {
                     rule_name: "no-console",
+                    name_span: Span::sized(comments[0].content_span().start + 16, 10),
                     comment_span: comments[0].content_span(),
                 });
                 directives.mark_disable_directive_used(DisabledRule::Single {
                     rule_name: "no-debugger",
+                    name_span: Span::sized(comments[1].content_span().start + 16, 11),
                     comment_span: comments[1].content_span(),
                 });
 
@@ -921,5 +1074,48 @@ mod tests {
         test_directive_span("// eslint-disable-next-line max-params    \r\n ABC", 42, 48);
         test_directive_span("// eslint-disable-next-line max-params    \n ABC \n", 42, 48);
         test_directive_span("// eslint-disable-next-line max-params    \r\n ABC \r\n", 42, 49);
+    }
+
+    #[test]
+    #[expect(clippy::cast_possible_truncation)] // for `as u32`
+    fn test_rule_comment_rule_create_fix() {
+        let source_text = "// eslint-disable-next-line max-params, no-console, no-debugger";
+        let comment_span = Span::sized(3, source_text.len() as u32 - 3);
+
+        let max_params_fix =
+            RuleCommentRule { rule_name: "max-params", name_span: Span::sized(28, 10) }
+                .create_fix(source_text, comment_span);
+
+        assert_eq!(&source_text[28..38], "max-params");
+        assert_eq!(max_params_fix.span, Span::sized(28, 11)); // max-params is 10 + 1 for the comma
+
+        let no_console_fix =
+            RuleCommentRule { rule_name: "no-console", name_span: Span::sized(40, 10) }
+                .create_fix(source_text, comment_span);
+
+        assert_eq!(&source_text[40..50], "no-console");
+        assert_eq!(no_console_fix.span, Span::sized(38, 12)); // no-console is 10 + 2 for the comma before and the space
+
+        let no_debugger_fix =
+            RuleCommentRule { rule_name: "no-debugger", name_span: Span::sized(52, 11) }
+                .create_fix(source_text, comment_span);
+
+        assert_eq!(&source_text[52..63], "no-debugger");
+        assert_eq!(no_debugger_fix.span, Span::sized(50, 13)); // no-debugger is 11 + 2 for the comma before and the space
+    }
+
+    #[test]
+    #[should_panic(
+        expected = "A `RuleCommentRule` should have a comma, because only one rule should be RuleCommentType::All"
+    )]
+    #[expect(clippy::cast_possible_truncation)] // for `as u32`
+    fn test_rule_comment_rule_create_fix_panic() {
+        // This test is expected to panic because it is a standalone rule.
+        // Standalone rules should be `RuleCommentType::All`.
+        let source_text = "// eslint-disable-next-line max-params";
+        let comment_span = Span::sized(3, source_text.len() as u32 - 3);
+
+        RuleCommentRule { rule_name: "max-params", name_span: Span::sized(28, 10) }
+            .create_fix(source_text, comment_span);
     }
 }

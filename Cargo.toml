@@ -225,7 +225,7 @@ similar-asserts = "1.7.0"
 smallvec = "1.15.1"
 tempfile = "3.20.0"
 tokio = { version = "1.45.1", default-features = false }
-tower-lsp-server = "0.21.1"
+tower-lsp-server = "0.22.0"
 tracing-subscriber = "0.3.19"
 ureq = { version = "3.0.11", default-features = false }
 walkdir = "2.5.0"
