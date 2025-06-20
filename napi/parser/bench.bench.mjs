@@ -79,8 +79,8 @@ for (const { filename, code } of fixtures) {
     });
 
     // Prepare buffer but don't deserialize
-    const { buffer, sourceByteLen, options } = prepareRaw(code, { experimentalRawTransfer: true });
-    bindings.parseSyncRaw(filename, buffer, sourceByteLen, options);
+    const { buffer, sourceByteLen } = prepareRaw(code);
+    bindings.parseSyncRaw(filename, buffer, sourceByteLen, {});
     const deserialize = isJsAst(buffer) ? deserializeJS : deserializeTS;
 
     benchRaw('parser_napi_raw_deser_only', () => {

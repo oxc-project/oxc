@@ -27,6 +27,8 @@ module.exports = { parseSyncLazy, parseAsyncLazy };
  * @throws {Error} - If raw transfer is not supported on this platform
  */
 function parseSyncLazy(filename, sourceText, options) {
+  let _;
+  ({ experimentalLazy: _, ...options } = options);
   return parseSyncRawImpl(filename, sourceText, options, construct);
 }
 
@@ -56,6 +58,8 @@ function parseSyncLazy(filename, sourceText, options) {
  * @throws {Error} - If raw transfer is not supported on this platform
  */
 function parseAsyncLazy(filename, sourceText, options) {
+  let _;
+  ({ experimentalLazy: _, ...options } = options);
   return parseAsyncRawImpl(filename, sourceText, options, construct);
 }
 
