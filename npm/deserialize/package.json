@@ -1,0 +1,22 @@
+{
+  "name": "@oxc-project/deserialize",
+  "version": "0.1.0",
+  "private": true,
+  "description": "",
+  "scripts": {
+    "build": "tsdown"
+  },
+  "keywords": [],
+  "packageManager": "pnpm@10.12.1",
+  "devDependencies": {
+    "tsdown": "^0.12.8",
+    "typescript": "catalog:"
+  },
+  "exports": {
+    "./deserialize/js": "./dist/generated/deserialize/js.mjs",
+    "./deserialize/ts": "./dist/generated/deserialize/ts.mjs",
+    "./deserialize/lazy": "./dist/generated/deserialize/lazy.mjs",
+    "./lazy-common": "./dist/lazy-common.mjs",
+    "./node-array": "./dist/node-array.mjs"
+  }
+}

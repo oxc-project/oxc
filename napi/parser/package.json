@@ -64,6 +64,7 @@
   "devDependencies": {
     "@codspeed/vitest-plugin": "^4.0.0",
     "@napi-rs/wasm-runtime": "^0.2.7",
+    "@oxc-project/deserialize": "workspace:^",
     "@vitest/browser": "3.2.3",
     "esbuild": "^0.25.0",
     "playwright": "^1.51.0",
