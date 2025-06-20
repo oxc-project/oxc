@@ -9,6 +9,7 @@
     "postbuild-dev": "node patch.mjs",
     "build-wasi": "pnpm run build-dev --release --target wasm32-wasip1-threads",
     "build-npm-dir": "rm -rf npm-dir && napi create-npm-dirs --npm-dir npm-dir && pnpm napi artifacts --npm-dir npm-dir --output-dir .",
+    "bundle": "tsdown",
     "build-browser-bundle": "node build-browser-bundle.mjs",
     "test": "tsc && pnpm run test-node run",
     "test-node": "vitest --dir ./test",
@@ -67,6 +68,7 @@
     "esbuild": "^0.25.0",
     "playwright": "^1.51.0",
     "tinypool": "^1.1.0",
+    "tsdown": "^0.12.8",
     "typescript": "catalog:",
     "vitest": "catalog:"
   },
