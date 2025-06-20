@@ -300,6 +300,26 @@ impl Allocator {
         self.bump.alloc_str(src)
     }
 
+    /// `Copy` a slice into this `Bump` and return an exclusive reference to the copy.
+    ///
+    /// # Panics
+    /// Panics if reserving space for the slice fails.
+    ///
+    /// # Examples
+    /// ```
+    /// use oxc_allocator::Allocator;
+    /// let allocator = Allocator::default();
+    /// let x = allocator.alloc_slice_copy(&[1, 2, 3]);
+    /// assert_eq!(x, &[1, 2, 3]);
+    /// ```
+    // `#[inline(always)]` because this is a hot path and `Bump::alloc_slice_copy` is a very small function.
+    // We always want it to be inlined.
+    #[expect(clippy::inline_always)]
+    #[inline(always)]
+    pub fn alloc_slice_copy<T: Copy>(&self, src: &[T]) -> &mut [T] {
+        self.bump.alloc_slice_copy(src)
+    }
+
     /// Allocate space for an object with the given [`Layout`].
     ///
     /// The returned pointer points at uninitialized memory, and should be initialized with
