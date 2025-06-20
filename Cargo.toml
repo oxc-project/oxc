@@ -133,10 +133,10 @@ oxc_traverse = { version = "0.74.0", path = "crates/oxc_traverse" }
 # publish = false
 oxc_formatter = { path = "crates/oxc_formatter" }
 oxc_linter = { path = "crates/oxc_linter" }
-oxlint = { path = "apps/oxlint" }
 oxc_macros = { path = "crates/oxc_macros" }
 oxc_tasks_common = { path = "tasks/common" }
 oxc_tasks_transform_checker = { path = "tasks/transform_checker" }
+oxlint = { path = "apps/oxlint" }
 
 # Relaxed version so the user can decide which version to use.
 napi = "3.0.0-beta"
