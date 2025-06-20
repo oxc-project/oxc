@@ -16,9 +16,6 @@ impl ESTree for NameSpan<'_> {
         state.serialize_field("value", &self.name);
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
-        if state.range() {
-            state.serialize_field("range", &[self.span.start, self.span.end]);
-        }
         state.end();
     }
 }
@@ -52,9 +49,6 @@ impl ESTree for ExportEntry<'_> {
         let mut state = serializer.serialize_struct();
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
-        if state.range() {
-            state.serialize_field("range", &[self.span.start, self.span.end]);
-        }
         state.serialize_field("moduleRequest", &self.module_request);
         state.serialize_field("importName", &self.import_name);
         state.serialize_field("exportName", &self.export_name);
@@ -104,9 +98,6 @@ impl ESTree for DynamicImport {
         let mut state = serializer.serialize_struct();
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
-        if state.range() {
-            state.serialize_field("range", &[self.span.start, self.span.end]);
-        }
         state.serialize_field("moduleRequest", &self.module_request);
         state.end();
     }

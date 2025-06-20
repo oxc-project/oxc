@@ -45,26 +45,21 @@ class Program {
     return constructU32(internal.pos + 4, internal.ast);
   }
 
-  get range() {
-    const internal = this.#internal;
-    return constructOptionRangeArray(internal.pos + 8, internal.ast);
-  }
-
   get sourceType() {
     const internal = this.#internal;
-    return new SourceType(internal.pos + 156, internal.ast);
+    return new SourceType(internal.pos + 124, internal.ast);
   }
 
   get hashbang() {
     const internal = this.#internal;
-    return constructOptionHashbang(internal.pos + 64, internal.ast);
+    return constructOptionHashbang(internal.pos + 48, internal.ast);
   }
 
   get body() {
     const internal = this.#internal,
       cached = internal.$body;
     if (cached !== void 0) return cached;
-    return internal.$body = constructVecStatement(internal.pos + 128, internal.ast);
+    return internal.$body = constructVecStatement(internal.pos + 96, internal.ast);
   }
 
   toJSON() {
@@ -72,7 +67,6 @@ class Program {
       type: 'Program',
       start: this.start,
       end: this.end,
-      range: this.range,
       sourceType: this.sourceType,
       hashbang: this.hashbang,
       body: this.body,
@@ -204,16 +198,11 @@ class IdentifierName {
     return constructU32(internal.pos + 4, internal.ast);
   }
 
-  get range() {
-    const internal = this.#internal;
-    return constructOptionRangeArray(internal.pos + 8, internal.ast);
-  }
-
   get name() {
     const internal = this.#internal,
       cached = internal.$name;
     if (cached !== void 0) return cached;
-    return internal.$name = constructStr(internal.pos + 24, internal.ast);
+    return internal.$name = constructStr(internal.pos + 8, internal.ast);
   }
 
   toJSON() {
@@ -221,7 +210,6 @@ class IdentifierName {
       type: 'IdentifierName',
       start: this.start,
       end: this.end,
-      range: this.range,
       name: this.name,
     };
   }
@@ -258,16 +246,11 @@ class IdentifierReference {
     return constructU32(internal.pos + 4, internal.ast);
   }
 
-  get range() {
-    const internal = this.#internal;
-    return constructOptionRangeArray(internal.pos + 8, internal.ast);
-  }
-
   get name() {
     const internal = this.#internal,
       cached = internal.$name;
     if (cached !== void 0) return cached;
-    return internal.$name = constructStr(internal.pos + 24, internal.ast);
+    return internal.$name = constructStr(internal.pos + 8, internal.ast);
   }
 
   toJSON() {
@@ -275,7 +258,6 @@ class IdentifierReference {
       type: 'IdentifierReference',
       start: this.start,
       end: this.end,
-      range: this.range,
       name: this.name,
     };
   }
@@ -312,16 +294,11 @@ class BindingIdentifier {
     return constructU32(internal.pos + 4, internal.ast);
   }
 
-  get range() {
-    const internal = this.#internal;
-    return constructOptionRangeArray(internal.pos + 8, internal.ast);
-  }
-
   get name() {
     const internal = this.#internal,
       cached = internal.$name;
     if (cached !== void 0) return cached;
-    return internal.$name = constructStr(internal.pos + 24, internal.ast);
+    return internal.$name = constructStr(internal.pos + 8, internal.ast);
   }
 
   toJSON() {
@@ -329,7 +306,6 @@ class BindingIdentifier {
       type: 'BindingIdentifier',
       start: this.start,
       end: this.end,
-      range: this.range,
       name: this.name,
     };
   }
@@ -366,16 +342,11 @@ class LabelIdentifier {
     return constructU32(internal.pos + 4, internal.ast);
   }
 
-  get range() {
-    const internal = this.#internal;
-    return constructOptionRangeArray(internal.pos + 8, internal.ast);
-  }
-
   get name() {
     const internal = this.#internal,
       cached = internal.$name;
     if (cached !== void 0) return cached;
-    return internal.$name = constructStr(internal.pos + 24, internal.ast);
+    return internal.$name = constructStr(internal.pos + 8, internal.ast);
   }
 
   toJSON() {
@@ -383,7 +354,6 @@ class LabelIdentifier {
       type: 'LabelIdentifier',
       start: this.start,
       end: this.end,
-      range: this.range,
       name: this.name,
     };
   }
@@ -420,17 +390,11 @@ class ThisExpression {
     return constructU32(internal.pos + 4, internal.ast);
   }
 
-  get range() {
-    const internal = this.#internal;
-    return constructOptionRangeArray(internal.pos + 8, internal.ast);
-  }
-
   toJSON() {
     return {
       type: 'ThisExpression',
       start: this.start,
       end: this.end,
-      range: this.range,
     };
   }
 
@@ -466,16 +430,11 @@ class ArrayExpression {
     return constructU32(internal.pos + 4, internal.ast);
   }
 
-  get range() {
-    const internal = this.#internal;
-    return constructOptionRangeArray(internal.pos + 8, internal.ast);
-  }
-
   get elements() {
     const internal = this.#internal,
       cached = internal.$elements;
     if (cached !== void 0) return cached;
-    return internal.$elements = constructVecArrayExpressionElement(internal.pos + 24, internal.ast);
+    return internal.$elements = constructVecArrayExpressionElement(internal.pos + 8, internal.ast);
   }
 
   toJSON() {
@@ -483,7 +442,6 @@ class ArrayExpression {
       type: 'ArrayExpression',
       start: this.start,
       end: this.end,
-      range: this.range,
       elements: this.elements,
     };
   }
@@ -617,17 +575,11 @@ class Elision {
     return constructU32(internal.pos + 4, internal.ast);
   }
 
-  get range() {
-    const internal = this.#internal;
-    return constructOptionRangeArray(internal.pos + 8, internal.ast);
-  }
-
   toJSON() {
     return {
       type: 'Elision',
       start: this.start,
       end: this.end,
-      range: this.range,
     };
   }
 
@@ -663,16 +615,11 @@ class ObjectExpression {
     return constructU32(internal.pos + 4, internal.ast);
   }
 
-  get range() {
-    const internal = this.#internal;
-    return constructOptionRangeArray(internal.pos + 8, internal.ast);
-  }
-
   get properties() {
     const internal = this.#internal,
       cached = internal.$properties;
     if (cached !== void 0) return cached;
-    return internal.$properties = constructVecObjectPropertyKind(internal.pos + 24, internal.ast);
+    return internal.$properties = constructVecObjectPropertyKind(internal.pos + 8, internal.ast);
   }
 
   toJSON() {
@@ -680,7 +627,6 @@ class ObjectExpression {
       type: 'ObjectExpression',
       start: this.start,
       end: this.end,
-      range: this.range,
       properties: this.properties,
     };
   }
@@ -728,39 +674,34 @@ class ObjectProperty {
     return constructU32(internal.pos + 4, internal.ast);
   }
 
-  get range() {
-    const internal = this.#internal;
-    return constructOptionRangeArray(internal.pos + 8, internal.ast);
-  }
-
   get kind() {
     const internal = this.#internal;
-    return constructPropertyKind(internal.pos + 56, internal.ast);
+    return constructPropertyKind(internal.pos + 40, internal.ast);
   }
 
   get key() {
     const internal = this.#internal;
-    return constructPropertyKey(internal.pos + 24, internal.ast);
+    return constructPropertyKey(internal.pos + 8, internal.ast);
   }
 
   get value() {
     const internal = this.#internal;
-    return constructExpression(internal.pos + 40, internal.ast);
+    return constructExpression(internal.pos + 24, internal.ast);
   }
 
   get method() {
     const internal = this.#internal;
-    return constructBool(internal.pos + 57, internal.ast);
+    return constructBool(internal.pos + 41, internal.ast);
   }
 
   get shorthand() {
     const internal = this.#internal;
-    return constructBool(internal.pos + 58, internal.ast);
+    return constructBool(internal.pos + 42, internal.ast);
   }
 
   get computed() {
     const internal = this.#internal;
-    return constructBool(internal.pos + 59, internal.ast);
+    return constructBool(internal.pos + 43, internal.ast);
   }
 
   toJSON() {
@@ -768,7 +709,6 @@ class ObjectProperty {
       type: 'ObjectProperty',
       start: this.start,
       end: this.end,
-      range: this.range,
       kind: this.kind,
       key: this.key,
       value: this.value,
@@ -920,23 +860,18 @@ class TemplateLiteral {
     return constructU32(internal.pos + 4, internal.ast);
   }
 
-  get range() {
-    const internal = this.#internal;
-    return constructOptionRangeArray(internal.pos + 8, internal.ast);
-  }
-
   get quasis() {
     const internal = this.#internal,
       cached = internal.$quasis;
     if (cached !== void 0) return cached;
-    return internal.$quasis = constructVecTemplateElement(internal.pos + 24, internal.ast);
+    return internal.$quasis = constructVecTemplateElement(internal.pos + 8, internal.ast);
   }
 
   get expressions() {
     const internal = this.#internal,
       cached = internal.$expressions;
     if (cached !== void 0) return cached;
-    return internal.$expressions = constructVecExpression(internal.pos + 48, internal.ast);
+    return internal.$expressions = constructVecExpression(internal.pos + 32, internal.ast);
   }
 
   toJSON() {
@@ -944,7 +879,6 @@ class TemplateLiteral {
       type: 'TemplateLiteral',
       start: this.start,
       end: this.end,
-      range: this.range,
       quasis: this.quasis,
       expressions: this.expressions,
     };
@@ -982,24 +916,19 @@ class TaggedTemplateExpression {
     return constructU32(internal.pos + 4, internal.ast);
   }
 
-  get range() {
-    const internal = this.#internal;
-    return constructOptionRangeArray(internal.pos + 8, internal.ast);
-  }
-
   get tag() {
     const internal = this.#internal;
-    return constructExpression(internal.pos + 24, internal.ast);
+    return constructExpression(internal.pos + 8, internal.ast);
   }
 
   get typeArguments() {
     const internal = this.#internal;
-    return constructOptionBoxTSTypeParameterInstantiation(internal.pos + 40, internal.ast);
+    return constructOptionBoxTSTypeParameterInstantiation(internal.pos + 24, internal.ast);
   }
 
   get quasi() {
     const internal = this.#internal;
-    return new TemplateLiteral(internal.pos + 48, internal.ast);
+    return new TemplateLiteral(internal.pos + 32, internal.ast);
   }
 
   toJSON() {
@@ -1007,7 +936,6 @@ class TaggedTemplateExpression {
       type: 'TaggedTemplateExpression',
       start: this.start,
       end: this.end,
-      range: this.range,
       tag: this.tag,
       typeArguments: this.typeArguments,
       quasi: this.quasi,
@@ -1046,19 +974,14 @@ class TemplateElement {
     return constructU32(internal.pos + 4, internal.ast);
   }
 
-  get range() {
-    const internal = this.#internal;
-    return constructOptionRangeArray(internal.pos + 8, internal.ast);
-  }
-
   get value() {
     const internal = this.#internal;
-    return new TemplateElementValue(internal.pos + 24, internal.ast);
+    return new TemplateElementValue(internal.pos + 8, internal.ast);
   }
 
   get tail() {
     const internal = this.#internal;
-    return constructBool(internal.pos + 56, internal.ast);
+    return constructBool(internal.pos + 40, internal.ast);
   }
 
   toJSON() {
@@ -1066,7 +989,6 @@ class TemplateElement {
       type: 'TemplateElement',
       start: this.start,
       end: this.end,
-      range: this.range,
       value: this.value,
       tail: this.tail,
     };
@@ -1159,24 +1081,19 @@ class ComputedMemberExpression {
     return constructU32(internal.pos + 4, internal.ast);
   }
 
-  get range() {
-    const internal = this.#internal;
-    return constructOptionRangeArray(internal.pos + 8, internal.ast);
-  }
-
   get object() {
     const internal = this.#internal;
-    return constructExpression(internal.pos + 24, internal.ast);
+    return constructExpression(internal.pos + 8, internal.ast);
   }
 
   get property() {
     const internal = this.#internal;
-    return constructExpression(internal.pos + 40, internal.ast);
+    return constructExpression(internal.pos + 24, internal.ast);
   }
 
   get optional() {
     const internal = this.#internal;
-    return constructBool(internal.pos + 56, internal.ast);
+    return constructBool(internal.pos + 40, internal.ast);
   }
 
   toJSON() {
@@ -1184,7 +1101,6 @@ class ComputedMemberExpression {
       type: 'ComputedMemberExpression',
       start: this.start,
       end: this.end,
-      range: this.range,
       object: this.object,
       property: this.property,
       optional: this.optional,
@@ -1223,24 +1139,19 @@ class StaticMemberExpression {
     return constructU32(internal.pos + 4, internal.ast);
   }
 
-  get range() {
-    const internal = this.#internal;
-    return constructOptionRangeArray(internal.pos + 8, internal.ast);
-  }
-
   get object() {
     const internal = this.#internal;
-    return constructExpression(internal.pos + 24, internal.ast);
+    return constructExpression(internal.pos + 8, internal.ast);
   }
 
   get property() {
     const internal = this.#internal;
-    return new IdentifierName(internal.pos + 40, internal.ast);
+    return new IdentifierName(internal.pos + 24, internal.ast);
   }
 
   get optional() {
     const internal = this.#internal;
-    return constructBool(internal.pos + 80, internal.ast);
+    return constructBool(internal.pos + 48, internal.ast);
   }
 
   toJSON() {
@@ -1248,7 +1159,6 @@ class StaticMemberExpression {
       type: 'StaticMemberExpression',
       start: this.start,
       end: this.end,
-      range: this.range,
       object: this.object,
       property: this.property,
       optional: this.optional,
@@ -1287,24 +1197,19 @@ class PrivateFieldExpression {
     return constructU32(internal.pos + 4, internal.ast);
   }
 
-  get range() {
-    const internal = this.#internal;
-    return constructOptionRangeArray(internal.pos + 8, internal.ast);
-  }
-
   get object() {
     const internal = this.#internal;
-    return constructExpression(internal.pos + 24, internal.ast);
+    return constructExpression(internal.pos + 8, internal.ast);
   }
 
   get property() {
     const internal = this.#internal;
-    return new PrivateIdentifier(internal.pos + 40, internal.ast);
+    return new PrivateIdentifier(internal.pos + 24, internal.ast);
   }
 
   get optional() {
     const internal = this.#internal;
-    return constructBool(internal.pos + 80, internal.ast);
+    return constructBool(internal.pos + 48, internal.ast);
   }
 
   toJSON() {
@@ -1312,7 +1217,6 @@ class PrivateFieldExpression {
       type: 'PrivateFieldExpression',
       start: this.start,
       end: this.end,
-      range: this.range,
       object: this.object,
       property: this.property,
       optional: this.optional,
@@ -1351,31 +1255,26 @@ class CallExpression {
     return constructU32(internal.pos + 4, internal.ast);
   }
 
-  get range() {
-    const internal = this.#internal;
-    return constructOptionRangeArray(internal.pos + 8, internal.ast);
-  }
-
   get callee() {
     const internal = this.#internal;
-    return constructExpression(internal.pos + 24, internal.ast);
+    return constructExpression(internal.pos + 8, internal.ast);
   }
 
   get typeArguments() {
     const internal = this.#internal;
-    return constructOptionBoxTSTypeParameterInstantiation(internal.pos + 40, internal.ast);
+    return constructOptionBoxTSTypeParameterInstantiation(internal.pos + 24, internal.ast);
   }
 
   get arguments() {
     const internal = this.#internal,
       cached = internal.$arguments;
     if (cached !== void 0) return cached;
-    return internal.$arguments = constructVecArgument(internal.pos + 48, internal.ast);
+    return internal.$arguments = constructVecArgument(internal.pos + 32, internal.ast);
   }
 
   get optional() {
     const internal = this.#internal;
-    return constructBool(internal.pos + 72, internal.ast);
+    return constructBool(internal.pos + 56, internal.ast);
   }
 
   toJSON() {
@@ -1383,7 +1282,6 @@ class CallExpression {
       type: 'CallExpression',
       start: this.start,
       end: this.end,
-      range: this.range,
       callee: this.callee,
       typeArguments: this.typeArguments,
       arguments: this.arguments,
@@ -1423,26 +1321,21 @@ class NewExpression {
     return constructU32(internal.pos + 4, internal.ast);
   }
 
-  get range() {
-    const internal = this.#internal;
-    return constructOptionRangeArray(internal.pos + 8, internal.ast);
-  }
-
   get callee() {
     const internal = this.#internal;
-    return constructExpression(internal.pos + 24, internal.ast);
+    return constructExpression(internal.pos + 8, internal.ast);
   }
 
   get typeArguments() {
     const internal = this.#internal;
-    return constructOptionBoxTSTypeParameterInstantiation(internal.pos + 40, internal.ast);
+    return constructOptionBoxTSTypeParameterInstantiation(internal.pos + 24, internal.ast);
   }
 
   get arguments() {
     const internal = this.#internal,
       cached = internal.$arguments;
     if (cached !== void 0) return cached;
-    return internal.$arguments = constructVecArgument(internal.pos + 48, internal.ast);
+    return internal.$arguments = constructVecArgument(internal.pos + 32, internal.ast);
   }
 
   toJSON() {
@@ -1450,7 +1343,6 @@ class NewExpression {
       type: 'NewExpression',
       start: this.start,
       end: this.end,
-      range: this.range,
       callee: this.callee,
       typeArguments: this.typeArguments,
       arguments: this.arguments,
@@ -1489,19 +1381,14 @@ class MetaProperty {
     return constructU32(internal.pos + 4, internal.ast);
   }
 
-  get range() {
-    const internal = this.#internal;
-    return constructOptionRangeArray(internal.pos + 8, internal.ast);
-  }
-
   get meta() {
     const internal = this.#internal;
-    return new IdentifierName(internal.pos + 24, internal.ast);
+    return new IdentifierName(internal.pos + 8, internal.ast);
   }
 
   get property() {
     const internal = this.#internal;
-    return new IdentifierName(internal.pos + 64, internal.ast);
+    return new IdentifierName(internal.pos + 32, internal.ast);
   }
 
   toJSON() {
@@ -1509,7 +1396,6 @@ class MetaProperty {
       type: 'MetaProperty',
       start: this.start,
       end: this.end,
-      range: this.range,
       meta: this.meta,
       property: this.property,
     };
@@ -1547,14 +1433,9 @@ class SpreadElement {
     return constructU32(internal.pos + 4, internal.ast);
   }
 
-  get range() {
-    const internal = this.#internal;
-    return constructOptionRangeArray(internal.pos + 8, internal.ast);
-  }
-
   get argument() {
     const internal = this.#internal;
-    return constructExpression(internal.pos + 24, internal.ast);
+    return constructExpression(internal.pos + 8, internal.ast);
   }
 
   toJSON() {
@@ -1562,7 +1443,6 @@ class SpreadElement {
       type: 'SpreadElement',
       start: this.start,
       end: this.end,
-      range: this.range,
       argument: this.argument,
     };
   }
@@ -1694,24 +1574,19 @@ class UpdateExpression {
     return constructU32(internal.pos + 4, internal.ast);
   }
 
-  get range() {
-    const internal = this.#internal;
-    return constructOptionRangeArray(internal.pos + 8, internal.ast);
-  }
-
   get operator() {
     const internal = this.#internal;
-    return constructUpdateOperator(internal.pos + 40, internal.ast);
+    return constructUpdateOperator(internal.pos + 24, internal.ast);
   }
 
   get prefix() {
     const internal = this.#internal;
-    return constructBool(internal.pos + 41, internal.ast);
+    return constructBool(internal.pos + 25, internal.ast);
   }
 
   get argument() {
     const internal = this.#internal;
-    return constructSimpleAssignmentTarget(internal.pos + 24, internal.ast);
+    return constructSimpleAssignmentTarget(internal.pos + 8, internal.ast);
   }
 
   toJSON() {
@@ -1719,7 +1594,6 @@ class UpdateExpression {
       type: 'UpdateExpression',
       start: this.start,
       end: this.end,
-      range: this.range,
       operator: this.operator,
       prefix: this.prefix,
       argument: this.argument,
@@ -1758,19 +1632,14 @@ class UnaryExpression {
     return constructU32(internal.pos + 4, internal.ast);
   }
 
-  get range() {
-    const internal = this.#internal;
-    return constructOptionRangeArray(internal.pos + 8, internal.ast);
-  }
-
   get operator() {
     const internal = this.#internal;
-    return constructUnaryOperator(internal.pos + 40, internal.ast);
+    return constructUnaryOperator(internal.pos + 24, internal.ast);
   }
 
   get argument() {
     const internal = this.#internal;
-    return constructExpression(internal.pos + 24, internal.ast);
+    return constructExpression(internal.pos + 8, internal.ast);
   }
 
   toJSON() {
@@ -1778,7 +1647,6 @@ class UnaryExpression {
       type: 'UnaryExpression',
       start: this.start,
       end: this.end,
-      range: this.range,
       operator: this.operator,
       argument: this.argument,
     };
@@ -1816,24 +1684,19 @@ class BinaryExpression {
     return constructU32(internal.pos + 4, internal.ast);
   }
 
-  get range() {
-    const internal = this.#internal;
-    return constructOptionRangeArray(internal.pos + 8, internal.ast);
-  }
-
   get left() {
     const internal = this.#internal;
-    return constructExpression(internal.pos + 24, internal.ast);
+    return constructExpression(internal.pos + 8, internal.ast);
   }
 
   get operator() {
     const internal = this.#internal;
-    return constructBinaryOperator(internal.pos + 56, internal.ast);
+    return constructBinaryOperator(internal.pos + 40, internal.ast);
   }
 
   get right() {
     const internal = this.#internal;
-    return constructExpression(internal.pos + 40, internal.ast);
+    return constructExpression(internal.pos + 24, internal.ast);
   }
 
   toJSON() {
@@ -1841,7 +1704,6 @@ class BinaryExpression {
       type: 'BinaryExpression',
       start: this.start,
       end: this.end,
-      range: this.range,
       left: this.left,
       operator: this.operator,
       right: this.right,
@@ -1880,19 +1742,14 @@ class PrivateInExpression {
     return constructU32(internal.pos + 4, internal.ast);
   }
 
-  get range() {
-    const internal = this.#internal;
-    return constructOptionRangeArray(internal.pos + 8, internal.ast);
-  }
-
   get left() {
     const internal = this.#internal;
-    return new PrivateIdentifier(internal.pos + 24, internal.ast);
+    return new PrivateIdentifier(internal.pos + 8, internal.ast);
   }
 
   get right() {
     const internal = this.#internal;
-    return constructExpression(internal.pos + 64, internal.ast);
+    return constructExpression(internal.pos + 32, internal.ast);
   }
 
   toJSON() {
@@ -1900,7 +1757,6 @@ class PrivateInExpression {
       type: 'PrivateInExpression',
       start: this.start,
       end: this.end,
-      range: this.range,
       left: this.left,
       right: this.right,
     };
@@ -1938,24 +1794,19 @@ class LogicalExpression {
     return constructU32(internal.pos + 4, internal.ast);
   }
 
-  get range() {
-    const internal = this.#internal;
-    return constructOptionRangeArray(internal.pos + 8, internal.ast);
-  }
-
   get left() {
     const internal = this.#internal;
-    return constructExpression(internal.pos + 24, internal.ast);
+    return constructExpression(internal.pos + 8, internal.ast);
   }
 
   get operator() {
     const internal = this.#internal;
-    return constructLogicalOperator(internal.pos + 56, internal.ast);
+    return constructLogicalOperator(internal.pos + 40, internal.ast);
   }
 
   get right() {
     const internal = this.#internal;
-    return constructExpression(internal.pos + 40, internal.ast);
+    return constructExpression(internal.pos + 24, internal.ast);
   }
 
   toJSON() {
@@ -1963,7 +1814,6 @@ class LogicalExpression {
       type: 'LogicalExpression',
       start: this.start,
       end: this.end,
-      range: this.range,
       left: this.left,
       operator: this.operator,
       right: this.right,
@@ -2002,24 +1852,19 @@ class ConditionalExpression {
     return constructU32(internal.pos + 4, internal.ast);
   }
 
-  get range() {
-    const internal = this.#internal;
-    return constructOptionRangeArray(internal.pos + 8, internal.ast);
-  }
-
   get test() {
     const internal = this.#internal;
-    return constructExpression(internal.pos + 24, internal.ast);
+    return constructExpression(internal.pos + 8, internal.ast);
   }
 
   get consequent() {
     const internal = this.#internal;
-    return constructExpression(internal.pos + 40, internal.ast);
+    return constructExpression(internal.pos + 24, internal.ast);
   }
 
   get alternate() {
     const internal = this.#internal;
-    return constructExpression(internal.pos + 56, internal.ast);
+    return constructExpression(internal.pos + 40, internal.ast);
   }
 
   toJSON() {
@@ -2027,7 +1872,6 @@ class ConditionalExpression {
       type: 'ConditionalExpression',
       start: this.start,
       end: this.end,
-      range: this.range,
       test: this.test,
       consequent: this.consequent,
       alternate: this.alternate,
@@ -2066,24 +1910,19 @@ class AssignmentExpression {
     return constructU32(internal.pos + 4, internal.ast);
   }
 
-  get range() {
-    const internal = this.#internal;
-    return constructOptionRangeArray(internal.pos + 8, internal.ast);
-  }
-
   get operator() {
     const internal = this.#internal;
-    return constructAssignmentOperator(internal.pos + 56, internal.ast);
+    return constructAssignmentOperator(internal.pos + 40, internal.ast);
   }
 
   get left() {
     const internal = this.#internal;
-    return constructAssignmentTarget(internal.pos + 24, internal.ast);
+    return constructAssignmentTarget(internal.pos + 8, internal.ast);
   }
 
   get right() {
     const internal = this.#internal;
-    return constructExpression(internal.pos + 40, internal.ast);
+    return constructExpression(internal.pos + 24, internal.ast);
   }
 
   toJSON() {
@@ -2091,7 +1930,6 @@ class AssignmentExpression {
       type: 'AssignmentExpression',
       start: this.start,
       end: this.end,
-      range: this.range,
       operator: this.operator,
       left: this.left,
       right: this.right,
@@ -2191,16 +2029,11 @@ class ArrayAssignmentTarget {
     return constructU32(internal.pos + 4, internal.ast);
   }
 
-  get range() {
-    const internal = this.#internal;
-    return constructOptionRangeArray(internal.pos + 8, internal.ast);
-  }
-
   get elements() {
     const internal = this.#internal,
       cached = internal.$elements;
     if (cached !== void 0) return cached;
-    return internal.$elements = constructVecOptionAssignmentTargetMaybeDefault(internal.pos + 24, internal.ast);
+    return internal.$elements = constructVecOptionAssignmentTargetMaybeDefault(internal.pos + 8, internal.ast);
   }
 
   toJSON() {
@@ -2208,7 +2041,6 @@ class ArrayAssignmentTarget {
       type: 'ArrayAssignmentTarget',
       start: this.start,
       end: this.end,
-      range: this.range,
       elements: this.elements,
     };
   }
@@ -2245,16 +2077,11 @@ class ObjectAssignmentTarget {
     return constructU32(internal.pos + 4, internal.ast);
   }
 
-  get range() {
-    const internal = this.#internal;
-    return constructOptionRangeArray(internal.pos + 8, internal.ast);
-  }
-
   get properties() {
     const internal = this.#internal,
       cached = internal.$properties;
     if (cached !== void 0) return cached;
-    return internal.$properties = constructVecAssignmentTargetProperty(internal.pos + 24, internal.ast);
+    return internal.$properties = constructVecAssignmentTargetProperty(internal.pos + 8, internal.ast);
   }
 
   toJSON() {
@@ -2262,7 +2089,6 @@ class ObjectAssignmentTarget {
       type: 'ObjectAssignmentTarget',
       start: this.start,
       end: this.end,
-      range: this.range,
       properties: this.properties,
     };
   }
@@ -2299,14 +2125,9 @@ class AssignmentTargetRest {
     return constructU32(internal.pos + 4, internal.ast);
   }
 
-  get range() {
-    const internal = this.#internal;
-    return constructOptionRangeArray(internal.pos + 8, internal.ast);
-  }
-
   get argument() {
     const internal = this.#internal;
-    return constructAssignmentTarget(internal.pos + 24, internal.ast);
+    return constructAssignmentTarget(internal.pos + 8, internal.ast);
   }
 
   toJSON() {
@@ -2314,7 +2135,6 @@ class AssignmentTargetRest {
       type: 'AssignmentTargetRest',
       start: this.start,
       end: this.end,
-      range: this.range,
       argument: this.argument,
     };
   }
@@ -2380,19 +2200,14 @@ class AssignmentTargetWithDefault {
     return constructU32(internal.pos + 4, internal.ast);
   }
 
-  get range() {
-    const internal = this.#internal;
-    return constructOptionRangeArray(internal.pos + 8, internal.ast);
-  }
-
   get left() {
     const internal = this.#internal;
-    return constructAssignmentTarget(internal.pos + 24, internal.ast);
+    return constructAssignmentTarget(internal.pos + 8, internal.ast);
   }
 
   get right() {
     const internal = this.#internal;
-    return constructExpression(internal.pos + 40, internal.ast);
+    return constructExpression(internal.pos + 24, internal.ast);
   }
 
   toJSON() {
@@ -2400,7 +2215,6 @@ class AssignmentTargetWithDefault {
       type: 'AssignmentTargetWithDefault',
       start: this.start,
       end: this.end,
-      range: this.range,
       left: this.left,
       right: this.right,
     };
@@ -2449,19 +2263,14 @@ class AssignmentTargetPropertyIdentifier {
     return constructU32(internal.pos + 4, internal.ast);
   }
 
-  get range() {
-    const internal = this.#internal;
-    return constructOptionRangeArray(internal.pos + 8, internal.ast);
-  }
-
   get key() {
     const internal = this.#internal;
-    return new IdentifierReference(internal.pos + 24, internal.ast);
+    return new IdentifierReference(internal.pos + 8, internal.ast);
   }
 
   get value() {
     const internal = this.#internal;
-    return constructOptionExpression(internal.pos + 72, internal.ast);
+    return constructOptionExpression(internal.pos + 40, internal.ast);
   }
 
   toJSON() {
@@ -2469,7 +2278,6 @@ class AssignmentTargetPropertyIdentifier {
       type: 'AssignmentTargetPropertyIdentifier',
       start: this.start,
       end: this.end,
-      range: this.range,
       key: this.key,
       value: this.value,
     };
@@ -2507,24 +2315,19 @@ class AssignmentTargetPropertyProperty {
     return constructU32(internal.pos + 4, internal.ast);
   }
 
-  get range() {
-    const internal = this.#internal;
-    return constructOptionRangeArray(internal.pos + 8, internal.ast);
-  }
-
   get key() {
     const internal = this.#internal;
-    return constructPropertyKey(internal.pos + 24, internal.ast);
+    return constructPropertyKey(internal.pos + 8, internal.ast);
   }
 
   get value() {
     const internal = this.#internal;
-    return constructAssignmentTargetMaybeDefault(internal.pos + 40, internal.ast);
+    return constructAssignmentTargetMaybeDefault(internal.pos + 24, internal.ast);
   }
 
   get computed() {
     const internal = this.#internal;
-    return constructBool(internal.pos + 56, internal.ast);
+    return constructBool(internal.pos + 40, internal.ast);
   }
 
   toJSON() {
@@ -2532,7 +2335,6 @@ class AssignmentTargetPropertyProperty {
       type: 'AssignmentTargetPropertyProperty',
       start: this.start,
       end: this.end,
-      range: this.range,
       key: this.key,
       value: this.value,
       computed: this.computed,
@@ -2571,16 +2373,11 @@ class SequenceExpression {
     return constructU32(internal.pos + 4, internal.ast);
   }
 
-  get range() {
-    const internal = this.#internal;
-    return constructOptionRangeArray(internal.pos + 8, internal.ast);
-  }
-
   get expressions() {
     const internal = this.#internal,
       cached = internal.$expressions;
     if (cached !== void 0) return cached;
-    return internal.$expressions = constructVecExpression(internal.pos + 24, internal.ast);
+    return internal.$expressions = constructVecExpression(internal.pos + 8, internal.ast);
   }
 
   toJSON() {
@@ -2588,7 +2385,6 @@ class SequenceExpression {
       type: 'SequenceExpression',
       start: this.start,
       end: this.end,
-      range: this.range,
       expressions: this.expressions,
     };
   }
@@ -2625,17 +2421,11 @@ class Super {
     return constructU32(internal.pos + 4, internal.ast);
   }
 
-  get range() {
-    const internal = this.#internal;
-    return constructOptionRangeArray(internal.pos + 8, internal.ast);
-  }
-
   toJSON() {
     return {
       type: 'Super',
       start: this.start,
       end: this.end,
-      range: this.range,
     };
   }
 
@@ -2671,14 +2461,9 @@ class AwaitExpression {
     return constructU32(internal.pos + 4, internal.ast);
   }
 
-  get range() {
-    const internal = this.#internal;
-    return constructOptionRangeArray(internal.pos + 8, internal.ast);
-  }
-
   get argument() {
     const internal = this.#internal;
-    return constructExpression(internal.pos + 24, internal.ast);
+    return constructExpression(internal.pos + 8, internal.ast);
   }
 
   toJSON() {
@@ -2686,7 +2471,6 @@ class AwaitExpression {
       type: 'AwaitExpression',
       start: this.start,
       end: this.end,
-      range: this.range,
       argument: this.argument,
     };
   }
@@ -2723,14 +2507,9 @@ class ChainExpression {
     return constructU32(internal.pos + 4, internal.ast);
   }
 
-  get range() {
-    const internal = this.#internal;
-    return constructOptionRangeArray(internal.pos + 8, internal.ast);
-  }
-
   get expression() {
     const internal = this.#internal;
-    return constructChainElement(internal.pos + 24, internal.ast);
+    return constructChainElement(internal.pos + 8, internal.ast);
   }
 
   toJSON() {
@@ -2738,7 +2517,6 @@ class ChainExpression {
       type: 'ChainExpression',
       start: this.start,
       end: this.end,
-      range: this.range,
       expression: this.expression,
     };
   }
@@ -2792,14 +2570,9 @@ class ParenthesizedExpression {
     return constructU32(internal.pos + 4, internal.ast);
   }
 
-  get range() {
-    const internal = this.#internal;
-    return constructOptionRangeArray(internal.pos + 8, internal.ast);
-  }
-
   get expression() {
     const internal = this.#internal;
-    return constructExpression(internal.pos + 24, internal.ast);
+    return constructExpression(internal.pos + 8, internal.ast);
   }
 
   toJSON() {
@@ -2807,7 +2580,6 @@ class ParenthesizedExpression {
       type: 'ParenthesizedExpression',
       start: this.start,
       end: this.end,
-      range: this.range,
       expression: this.expression,
     };
   }
@@ -2915,21 +2687,16 @@ class Directive {
     return constructU32(internal.pos + 4, internal.ast);
   }
 
-  get range() {
-    const internal = this.#internal;
-    return constructOptionRangeArray(internal.pos + 8, internal.ast);
-  }
-
   get expression() {
     const internal = this.#internal;
-    return new StringLiteral(internal.pos + 24, internal.ast);
+    return new StringLiteral(internal.pos + 8, internal.ast);
   }
 
   get directive() {
     const internal = this.#internal,
       cached = internal.$directive;
     if (cached !== void 0) return cached;
-    return internal.$directive = constructStr(internal.pos + 88, internal.ast);
+    return internal.$directive = constructStr(internal.pos + 56, internal.ast);
   }
 
   toJSON() {
@@ -2937,7 +2704,6 @@ class Directive {
       type: 'Directive',
       start: this.start,
       end: this.end,
-      range: this.range,
       expression: this.expression,
       directive: this.directive,
     };
@@ -2975,16 +2741,11 @@ class Hashbang {
     return constructU32(internal.pos + 4, internal.ast);
   }
 
-  get range() {
-    const internal = this.#internal;
-    return constructOptionRangeArray(internal.pos + 8, internal.ast);
-  }
-
   get value() {
     const internal = this.#internal,
       cached = internal.$value;
     if (cached !== void 0) return cached;
-    return internal.$value = constructStr(internal.pos + 24, internal.ast);
+    return internal.$value = constructStr(internal.pos + 8, internal.ast);
   }
 
   toJSON() {
@@ -2992,7 +2753,6 @@ class Hashbang {
       type: 'Hashbang',
       start: this.start,
       end: this.end,
-      range: this.range,
       value: this.value,
     };
   }
@@ -3029,16 +2789,11 @@ class BlockStatement {
     return constructU32(internal.pos + 4, internal.ast);
   }
 
-  get range() {
-    const internal = this.#internal;
-    return constructOptionRangeArray(internal.pos + 8, internal.ast);
-  }
-
   get body() {
     const internal = this.#internal,
       cached = internal.$body;
     if (cached !== void 0) return cached;
-    return internal.$body = constructVecStatement(internal.pos + 24, internal.ast);
+    return internal.$body = constructVecStatement(internal.pos + 8, internal.ast);
   }
 
   toJSON() {
@@ -3046,7 +2801,6 @@ class BlockStatement {
       type: 'BlockStatement',
       start: this.start,
       end: this.end,
-      range: this.range,
       body: this.body,
     };
   }
@@ -3106,26 +2860,21 @@ class VariableDeclaration {
     return constructU32(internal.pos + 4, internal.ast);
   }
 
-  get range() {
-    const internal = this.#internal;
-    return constructOptionRangeArray(internal.pos + 8, internal.ast);
-  }
-
   get kind() {
     const internal = this.#internal;
-    return constructVariableDeclarationKind(internal.pos + 48, internal.ast);
+    return constructVariableDeclarationKind(internal.pos + 32, internal.ast);
   }
 
   get declarations() {
     const internal = this.#internal,
       cached = internal.$declarations;
     if (cached !== void 0) return cached;
-    return internal.$declarations = constructVecVariableDeclarator(internal.pos + 24, internal.ast);
+    return internal.$declarations = constructVecVariableDeclarator(internal.pos + 8, internal.ast);
   }
 
   get declare() {
     const internal = this.#internal;
-    return constructBool(internal.pos + 49, internal.ast);
+    return constructBool(internal.pos + 33, internal.ast);
   }
 
   toJSON() {
@@ -3133,7 +2882,6 @@ class VariableDeclaration {
       type: 'VariableDeclaration',
       start: this.start,
       end: this.end,
-      range: this.range,
       kind: this.kind,
       declarations: this.declarations,
       declare: this.declare,
@@ -3189,24 +2937,19 @@ class VariableDeclarator {
     return constructU32(internal.pos + 4, internal.ast);
   }
 
-  get range() {
-    const internal = this.#internal;
-    return constructOptionRangeArray(internal.pos + 8, internal.ast);
-  }
-
   get id() {
     const internal = this.#internal;
-    return new BindingPattern(internal.pos + 24, internal.ast);
+    return new BindingPattern(internal.pos + 8, internal.ast);
   }
 
   get init() {
     const internal = this.#internal;
-    return constructOptionExpression(internal.pos + 56, internal.ast);
+    return constructOptionExpression(internal.pos + 40, internal.ast);
   }
 
   get definite() {
     const internal = this.#internal;
-    return constructBool(internal.pos + 73, internal.ast);
+    return constructBool(internal.pos + 57, internal.ast);
   }
 
   toJSON() {
@@ -3214,7 +2957,6 @@ class VariableDeclarator {
       type: 'VariableDeclarator',
       start: this.start,
       end: this.end,
-      range: this.range,
       id: this.id,
       init: this.init,
       definite: this.definite,
@@ -3253,17 +2995,11 @@ class EmptyStatement {
     return constructU32(internal.pos + 4, internal.ast);
   }
 
-  get range() {
-    const internal = this.#internal;
-    return constructOptionRangeArray(internal.pos + 8, internal.ast);
-  }
-
   toJSON() {
     return {
       type: 'EmptyStatement',
       start: this.start,
       end: this.end,
-      range: this.range,
     };
   }
 
@@ -3299,14 +3035,9 @@ class ExpressionStatement {
     return constructU32(internal.pos + 4, internal.ast);
   }
 
-  get range() {
-    const internal = this.#internal;
-    return constructOptionRangeArray(internal.pos + 8, internal.ast);
-  }
-
   get expression() {
     const internal = this.#internal;
-    return constructExpression(internal.pos + 24, internal.ast);
+    return constructExpression(internal.pos + 8, internal.ast);
   }
 
   toJSON() {
@@ -3314,7 +3045,6 @@ class ExpressionStatement {
       type: 'ExpressionStatement',
       start: this.start,
       end: this.end,
-      range: this.range,
       expression: this.expression,
     };
   }
@@ -3351,24 +3081,19 @@ class IfStatement {
     return constructU32(internal.pos + 4, internal.ast);
   }
 
-  get range() {
-    const internal = this.#internal;
-    return constructOptionRangeArray(internal.pos + 8, internal.ast);
-  }
-
   get test() {
     const internal = this.#internal;
-    return constructExpression(internal.pos + 24, internal.ast);
+    return constructExpression(internal.pos + 8, internal.ast);
   }
 
   get consequent() {
     const internal = this.#internal;
-    return constructStatement(internal.pos + 40, internal.ast);
+    return constructStatement(internal.pos + 24, internal.ast);
   }
 
   get alternate() {
     const internal = this.#internal;
-    return constructOptionStatement(internal.pos + 56, internal.ast);
+    return constructOptionStatement(internal.pos + 40, internal.ast);
   }
 
   toJSON() {
@@ -3376,7 +3101,6 @@ class IfStatement {
       type: 'IfStatement',
       start: this.start,
       end: this.end,
-      range: this.range,
       test: this.test,
       consequent: this.consequent,
       alternate: this.alternate,
@@ -3415,19 +3139,14 @@ class DoWhileStatement {
     return constructU32(internal.pos + 4, internal.ast);
   }
 
-  get range() {
-    const internal = this.#internal;
-    return constructOptionRangeArray(internal.pos + 8, internal.ast);
-  }
-
   get body() {
     const internal = this.#internal;
-    return constructStatement(internal.pos + 24, internal.ast);
+    return constructStatement(internal.pos + 8, internal.ast);
   }
 
   get test() {
     const internal = this.#internal;
-    return constructExpression(internal.pos + 40, internal.ast);
+    return constructExpression(internal.pos + 24, internal.ast);
   }
 
   toJSON() {
@@ -3435,7 +3154,6 @@ class DoWhileStatement {
       type: 'DoWhileStatement',
       start: this.start,
       end: this.end,
-      range: this.range,
       body: this.body,
       test: this.test,
     };
@@ -3473,19 +3191,14 @@ class WhileStatement {
     return constructU32(internal.pos + 4, internal.ast);
   }
 
-  get range() {
-    const internal = this.#internal;
-    return constructOptionRangeArray(internal.pos + 8, internal.ast);
-  }
-
   get test() {
     const internal = this.#internal;
-    return constructExpression(internal.pos + 24, internal.ast);
+    return constructExpression(internal.pos + 8, internal.ast);
   }
 
   get body() {
     const internal = this.#internal;
-    return constructStatement(internal.pos + 40, internal.ast);
+    return constructStatement(internal.pos + 24, internal.ast);
   }
 
   toJSON() {
@@ -3493,7 +3206,6 @@ class WhileStatement {
       type: 'WhileStatement',
       start: this.start,
       end: this.end,
-      range: this.range,
       test: this.test,
       body: this.body,
     };
@@ -3531,29 +3243,24 @@ class ForStatement {
     return constructU32(internal.pos + 4, internal.ast);
   }
 
-  get range() {
-    const internal = this.#internal;
-    return constructOptionRangeArray(internal.pos + 8, internal.ast);
-  }
-
   get init() {
     const internal = this.#internal;
-    return constructOptionForStatementInit(internal.pos + 24, internal.ast);
+    return constructOptionForStatementInit(internal.pos + 8, internal.ast);
   }
 
   get test() {
     const internal = this.#internal;
-    return constructOptionExpression(internal.pos + 40, internal.ast);
+    return constructOptionExpression(internal.pos + 24, internal.ast);
   }
 
   get update() {
     const internal = this.#internal;
-    return constructOptionExpression(internal.pos + 56, internal.ast);
+    return constructOptionExpression(internal.pos + 40, internal.ast);
   }
 
   get body() {
     const internal = this.#internal;
-    return constructStatement(internal.pos + 72, internal.ast);
+    return constructStatement(internal.pos + 56, internal.ast);
   }
 
   toJSON() {
@@ -3561,7 +3268,6 @@ class ForStatement {
       type: 'ForStatement',
       start: this.start,
       end: this.end,
-      range: this.range,
       init: this.init,
       test: this.test,
       update: this.update,
@@ -3696,24 +3402,19 @@ class ForInStatement {
     return constructU32(internal.pos + 4, internal.ast);
   }
 
-  get range() {
-    const internal = this.#internal;
-    return constructOptionRangeArray(internal.pos + 8, internal.ast);
-  }
-
   get left() {
     const internal = this.#internal;
-    return constructForStatementLeft(internal.pos + 24, internal.ast);
+    return constructForStatementLeft(internal.pos + 8, internal.ast);
   }
 
   get right() {
     const internal = this.#internal;
-    return constructExpression(internal.pos + 40, internal.ast);
+    return constructExpression(internal.pos + 24, internal.ast);
   }
 
   get body() {
     const internal = this.#internal;
-    return constructStatement(internal.pos + 56, internal.ast);
+    return constructStatement(internal.pos + 40, internal.ast);
   }
 
   toJSON() {
@@ -3721,7 +3422,6 @@ class ForInStatement {
       type: 'ForInStatement',
       start: this.start,
       end: this.end,
-      range: this.range,
       left: this.left,
       right: this.right,
       body: this.body,
@@ -3789,29 +3489,24 @@ class ForOfStatement {
     return constructU32(internal.pos + 4, internal.ast);
   }
 
-  get range() {
-    const internal = this.#internal;
-    return constructOptionRangeArray(internal.pos + 8, internal.ast);
-  }
-
   get await() {
     const internal = this.#internal;
-    return constructBool(internal.pos + 76, internal.ast);
+    return constructBool(internal.pos + 60, internal.ast);
   }
 
   get left() {
     const internal = this.#internal;
-    return constructForStatementLeft(internal.pos + 24, internal.ast);
+    return constructForStatementLeft(internal.pos + 8, internal.ast);
   }
 
   get right() {
     const internal = this.#internal;
-    return constructExpression(internal.pos + 40, internal.ast);
+    return constructExpression(internal.pos + 24, internal.ast);
   }
 
   get body() {
     const internal = this.#internal;
-    return constructStatement(internal.pos + 56, internal.ast);
+    return constructStatement(internal.pos + 40, internal.ast);
   }
 
   toJSON() {
@@ -3819,7 +3514,6 @@ class ForOfStatement {
       type: 'ForOfStatement',
       start: this.start,
       end: this.end,
-      range: this.range,
       await: this.await,
       left: this.left,
       right: this.right,
@@ -3859,14 +3553,9 @@ class ContinueStatement {
     return constructU32(internal.pos + 4, internal.ast);
   }
 
-  get range() {
-    const internal = this.#internal;
-    return constructOptionRangeArray(internal.pos + 8, internal.ast);
-  }
-
   get label() {
     const internal = this.#internal;
-    return constructOptionLabelIdentifier(internal.pos + 24, internal.ast);
+    return constructOptionLabelIdentifier(internal.pos + 8, internal.ast);
   }
 
   toJSON() {
@@ -3874,7 +3563,6 @@ class ContinueStatement {
       type: 'ContinueStatement',
       start: this.start,
       end: this.end,
-      range: this.range,
       label: this.label,
     };
   }
@@ -3911,14 +3599,9 @@ class BreakStatement {
     return constructU32(internal.pos + 4, internal.ast);
   }
 
-  get range() {
-    const internal = this.#internal;
-    return constructOptionRangeArray(internal.pos + 8, internal.ast);
-  }
-
   get label() {
     const internal = this.#internal;
-    return constructOptionLabelIdentifier(internal.pos + 24, internal.ast);
+    return constructOptionLabelIdentifier(internal.pos + 8, internal.ast);
   }
 
   toJSON() {
@@ -3926,7 +3609,6 @@ class BreakStatement {
       type: 'BreakStatement',
       start: this.start,
       end: this.end,
-      range: this.range,
       label: this.label,
     };
   }
@@ -3963,14 +3645,9 @@ class ReturnStatement {
     return constructU32(internal.pos + 4, internal.ast);
   }
 
-  get range() {
-    const internal = this.#internal;
-    return constructOptionRangeArray(internal.pos + 8, internal.ast);
-  }
-
   get argument() {
     const internal = this.#internal;
-    return constructOptionExpression(internal.pos + 24, internal.ast);
+    return constructOptionExpression(internal.pos + 8, internal.ast);
   }
 
   toJSON() {
@@ -3978,7 +3655,6 @@ class ReturnStatement {
       type: 'ReturnStatement',
       start: this.start,
       end: this.end,
-      range: this.range,
       argument: this.argument,
     };
   }
@@ -4015,19 +3691,14 @@ class WithStatement {
     return constructU32(internal.pos + 4, internal.ast);
   }
 
-  get range() {
-    const internal = this.#internal;
-    return constructOptionRangeArray(internal.pos + 8, internal.ast);
-  }
-
   get object() {
     const internal = this.#internal;
-    return constructExpression(internal.pos + 24, internal.ast);
+    return constructExpression(internal.pos + 8, internal.ast);
   }
 
   get body() {
     const internal = this.#internal;
-    return constructStatement(internal.pos + 40, internal.ast);
+    return constructStatement(internal.pos + 24, internal.ast);
   }
 
   toJSON() {
@@ -4035,7 +3706,6 @@ class WithStatement {
       type: 'WithStatement',
       start: this.start,
       end: this.end,
-      range: this.range,
       object: this.object,
       body: this.body,
     };
@@ -4073,21 +3743,16 @@ class SwitchStatement {
     return constructU32(internal.pos + 4, internal.ast);
   }
 
-  get range() {
-    const internal = this.#internal;
-    return constructOptionRangeArray(internal.pos + 8, internal.ast);
-  }
-
   get discriminant() {
     const internal = this.#internal;
-    return constructExpression(internal.pos + 24, internal.ast);
+    return constructExpression(internal.pos + 8, internal.ast);
   }
 
   get cases() {
     const internal = this.#internal,
       cached = internal.$cases;
     if (cached !== void 0) return cached;
-    return internal.$cases = constructVecSwitchCase(internal.pos + 40, internal.ast);
+    return internal.$cases = constructVecSwitchCase(internal.pos + 24, internal.ast);
   }
 
   toJSON() {
@@ -4095,7 +3760,6 @@ class SwitchStatement {
       type: 'SwitchStatement',
       start: this.start,
       end: this.end,
-      range: this.range,
       discriminant: this.discriminant,
       cases: this.cases,
     };
@@ -4133,21 +3797,16 @@ class SwitchCase {
     return constructU32(internal.pos + 4, internal.ast);
   }
 
-  get range() {
-    const internal = this.#internal;
-    return constructOptionRangeArray(internal.pos + 8, internal.ast);
-  }
-
   get test() {
     const internal = this.#internal;
-    return constructOptionExpression(internal.pos + 24, internal.ast);
+    return constructOptionExpression(internal.pos + 8, internal.ast);
   }
 
   get consequent() {
     const internal = this.#internal,
       cached = internal.$consequent;
     if (cached !== void 0) return cached;
-    return internal.$consequent = constructVecStatement(internal.pos + 40, internal.ast);
+    return internal.$consequent = constructVecStatement(internal.pos + 24, internal.ast);
   }
 
   toJSON() {
@@ -4155,7 +3814,6 @@ class SwitchCase {
       type: 'SwitchCase',
       start: this.start,
       end: this.end,
-      range: this.range,
       test: this.test,
       consequent: this.consequent,
     };
@@ -4193,19 +3851,14 @@ class LabeledStatement {
     return constructU32(internal.pos + 4, internal.ast);
   }
 
-  get range() {
-    const internal = this.#internal;
-    return constructOptionRangeArray(internal.pos + 8, internal.ast);
-  }
-
   get label() {
     const internal = this.#internal;
-    return new LabelIdentifier(internal.pos + 24, internal.ast);
+    return new LabelIdentifier(internal.pos + 8, internal.ast);
   }
 
   get body() {
     const internal = this.#internal;
-    return constructStatement(internal.pos + 64, internal.ast);
+    return constructStatement(internal.pos + 32, internal.ast);
   }
 
   toJSON() {
@@ -4213,7 +3866,6 @@ class LabeledStatement {
       type: 'LabeledStatement',
       start: this.start,
       end: this.end,
-      range: this.range,
       label: this.label,
       body: this.body,
     };
@@ -4251,14 +3903,9 @@ class ThrowStatement {
     return constructU32(internal.pos + 4, internal.ast);
   }
 
-  get range() {
-    const internal = this.#internal;
-    return constructOptionRangeArray(internal.pos + 8, internal.ast);
-  }
-
   get argument() {
     const internal = this.#internal;
-    return constructExpression(internal.pos + 24, internal.ast);
+    return constructExpression(internal.pos + 8, internal.ast);
   }
 
   toJSON() {
@@ -4266,7 +3913,6 @@ class ThrowStatement {
       type: 'ThrowStatement',
       start: this.start,
       end: this.end,
-      range: this.range,
       argument: this.argument,
     };
   }
@@ -4303,24 +3949,19 @@ class TryStatement {
     return constructU32(internal.pos + 4, internal.ast);
   }
 
-  get range() {
-    const internal = this.#internal;
-    return constructOptionRangeArray(internal.pos + 8, internal.ast);
-  }
-
   get block() {
     const internal = this.#internal;
-    return constructBoxBlockStatement(internal.pos + 24, internal.ast);
+    return constructBoxBlockStatement(internal.pos + 8, internal.ast);
   }
 
   get handler() {
     const internal = this.#internal;
-    return constructOptionBoxCatchClause(internal.pos + 32, internal.ast);
+    return constructOptionBoxCatchClause(internal.pos + 16, internal.ast);
   }
 
   get finalizer() {
     const internal = this.#internal;
-    return constructOptionBoxBlockStatement(internal.pos + 40, internal.ast);
+    return constructOptionBoxBlockStatement(internal.pos + 24, internal.ast);
   }
 
   toJSON() {
@@ -4328,7 +3969,6 @@ class TryStatement {
       type: 'TryStatement',
       start: this.start,
       end: this.end,
-      range: this.range,
       block: this.block,
       handler: this.handler,
       finalizer: this.finalizer,
@@ -4367,19 +4007,14 @@ class CatchClause {
     return constructU32(internal.pos + 4, internal.ast);
   }
 
-  get range() {
-    const internal = this.#internal;
-    return constructOptionRangeArray(internal.pos + 8, internal.ast);
-  }
-
   get param() {
     const internal = this.#internal;
-    return constructOptionCatchParameter(internal.pos + 24, internal.ast);
+    return constructOptionCatchParameter(internal.pos + 8, internal.ast);
   }
 
   get body() {
     const internal = this.#internal;
-    return constructBoxBlockStatement(internal.pos + 80, internal.ast);
+    return constructBoxBlockStatement(internal.pos + 48, internal.ast);
   }
 
   toJSON() {
@@ -4387,7 +4022,6 @@ class CatchClause {
       type: 'CatchClause',
       start: this.start,
       end: this.end,
-      range: this.range,
       param: this.param,
       body: this.body,
     };
@@ -4416,7 +4050,7 @@ class CatchParameter {
 
   get pattern() {
     const internal = this.#internal;
-    return new BindingPattern(internal.pos + 24, internal.ast);
+    return new BindingPattern(internal.pos + 8, internal.ast);
   }
 
   toJSON() {
@@ -4457,17 +4091,11 @@ class DebuggerStatement {
     return constructU32(internal.pos + 4, internal.ast);
   }
 
-  get range() {
-    const internal = this.#internal;
-    return constructOptionRangeArray(internal.pos + 8, internal.ast);
-  }
-
   toJSON() {
     return {
       type: 'DebuggerStatement',
       start: this.start,
       end: this.end,
-      range: this.range,
     };
   }
 
@@ -4562,19 +4190,14 @@ class AssignmentPattern {
     return constructU32(internal.pos + 4, internal.ast);
   }
 
-  get range() {
-    const internal = this.#internal;
-    return constructOptionRangeArray(internal.pos + 8, internal.ast);
-  }
-
   get left() {
     const internal = this.#internal;
-    return new BindingPattern(internal.pos + 24, internal.ast);
+    return new BindingPattern(internal.pos + 8, internal.ast);
   }
 
   get right() {
     const internal = this.#internal;
-    return constructExpression(internal.pos + 56, internal.ast);
+    return constructExpression(internal.pos + 40, internal.ast);
   }
 
   toJSON() {
@@ -4582,7 +4205,6 @@ class AssignmentPattern {
       type: 'AssignmentPattern',
       start: this.start,
       end: this.end,
-      range: this.range,
       left: this.left,
       right: this.right,
     };
@@ -4620,16 +4242,11 @@ class ObjectPattern {
     return constructU32(internal.pos + 4, internal.ast);
   }
 
-  get range() {
-    const internal = this.#internal;
-    return constructOptionRangeArray(internal.pos + 8, internal.ast);
-  }
-
   get properties() {
     const internal = this.#internal,
       cached = internal.$properties;
     if (cached !== void 0) return cached;
-    return internal.$properties = constructVecBindingProperty(internal.pos + 24, internal.ast);
+    return internal.$properties = constructVecBindingProperty(internal.pos + 8, internal.ast);
   }
 
   toJSON() {
@@ -4637,7 +4254,6 @@ class ObjectPattern {
       type: 'ObjectPattern',
       start: this.start,
       end: this.end,
-      range: this.range,
       properties: this.properties,
     };
   }
@@ -4674,29 +4290,24 @@ class BindingProperty {
     return constructU32(internal.pos + 4, internal.ast);
   }
 
-  get range() {
-    const internal = this.#internal;
-    return constructOptionRangeArray(internal.pos + 8, internal.ast);
-  }
-
   get key() {
     const internal = this.#internal;
-    return constructPropertyKey(internal.pos + 24, internal.ast);
+    return constructPropertyKey(internal.pos + 8, internal.ast);
   }
 
   get value() {
     const internal = this.#internal;
-    return new BindingPattern(internal.pos + 40, internal.ast);
+    return new BindingPattern(internal.pos + 24, internal.ast);
   }
 
   get shorthand() {
     const internal = this.#internal;
-    return constructBool(internal.pos + 72, internal.ast);
+    return constructBool(internal.pos + 56, internal.ast);
   }
 
   get computed() {
     const internal = this.#internal;
-    return constructBool(internal.pos + 73, internal.ast);
+    return constructBool(internal.pos + 57, internal.ast);
   }
 
   toJSON() {
@@ -4704,7 +4315,6 @@ class BindingProperty {
       type: 'BindingProperty',
       start: this.start,
       end: this.end,
-      range: this.range,
       key: this.key,
       value: this.value,
       shorthand: this.shorthand,
@@ -4744,16 +4354,11 @@ class ArrayPattern {
     return constructU32(internal.pos + 4, internal.ast);
   }
 
-  get range() {
-    const internal = this.#internal;
-    return constructOptionRangeArray(internal.pos + 8, internal.ast);
-  }
-
   get elements() {
     const internal = this.#internal,
       cached = internal.$elements;
     if (cached !== void 0) return cached;
-    return internal.$elements = constructVecOptionBindingPattern(internal.pos + 24, internal.ast);
+    return internal.$elements = constructVecOptionBindingPattern(internal.pos + 8, internal.ast);
   }
 
   toJSON() {
@@ -4761,7 +4366,6 @@ class ArrayPattern {
       type: 'ArrayPattern',
       start: this.start,
       end: this.end,
-      range: this.range,
       elements: this.elements,
     };
   }
@@ -4798,14 +4402,9 @@ class BindingRestElement {
     return constructU32(internal.pos + 4, internal.ast);
   }
 
-  get range() {
-    const internal = this.#internal;
-    return constructOptionRangeArray(internal.pos + 8, internal.ast);
-  }
-
   get argument() {
     const internal = this.#internal;
-    return new BindingPattern(internal.pos + 24, internal.ast);
+    return new BindingPattern(internal.pos + 8, internal.ast);
   }
 
   toJSON() {
@@ -4813,7 +4412,6 @@ class BindingRestElement {
       type: 'BindingRestElement',
       start: this.start,
       end: this.end,
-      range: this.range,
       argument: this.argument,
     };
   }
@@ -4849,61 +4447,55 @@ class Function {
     return constructU32(internal.pos + 4, internal.ast);
   }
 
-  get range() {
-    const internal = this.#internal;
-    return constructOptionRangeArray(internal.pos + 8, internal.ast);
-  }
-
   get type() {
     const internal = this.#internal;
-    return constructFunctionType(internal.pos + 116, internal.ast);
+    return constructFunctionType(internal.pos + 84, internal.ast);
   }
 
   get id() {
     const internal = this.#internal;
-    return constructOptionBindingIdentifier(internal.pos + 24, internal.ast);
+    return constructOptionBindingIdentifier(internal.pos + 8, internal.ast);
   }
 
   get generator() {
     const internal = this.#internal;
-    return constructBool(internal.pos + 117, internal.ast);
+    return constructBool(internal.pos + 85, internal.ast);
   }
 
   get async() {
     const internal = this.#internal;
-    return constructBool(internal.pos + 118, internal.ast);
+    return constructBool(internal.pos + 86, internal.ast);
   }
 
   get declare() {
     const internal = this.#internal;
-    return constructBool(internal.pos + 119, internal.ast);
+    return constructBool(internal.pos + 87, internal.ast);
   }
 
   get typeParameters() {
     const internal = this.#internal;
-    return constructOptionBoxTSTypeParameterDeclaration(internal.pos + 72, internal.ast);
+    return constructOptionBoxTSTypeParameterDeclaration(internal.pos + 40, internal.ast);
   }
 
   get params() {
     const internal = this.#internal;
-    return constructBoxFormalParameters(internal.pos + 88, internal.ast);
+    return constructBoxFormalParameters(internal.pos + 56, internal.ast);
   }
 
   get returnType() {
     const internal = this.#internal;
-    return constructOptionBoxTSTypeAnnotation(internal.pos + 96, internal.ast);
+    return constructOptionBoxTSTypeAnnotation(internal.pos + 64, internal.ast);
   }
 
   get body() {
     const internal = this.#internal;
-    return constructOptionBoxFunctionBody(internal.pos + 104, internal.ast);
+    return constructOptionBoxFunctionBody(internal.pos + 72, internal.ast);
   }
 
   toJSON() {
     return {
       start: this.start,
       end: this.end,
-      range: this.range,
       type: this.type,
       id: this.id,
       generator: this.generator,
@@ -4963,21 +4555,16 @@ class FormalParameters {
     return constructU32(internal.pos + 4, internal.ast);
   }
 
-  get range() {
-    const internal = this.#internal;
-    return constructOptionRangeArray(internal.pos + 8, internal.ast);
-  }
-
   get kind() {
     const internal = this.#internal;
-    return constructFormalParameterKind(internal.pos + 56, internal.ast);
+    return constructFormalParameterKind(internal.pos + 40, internal.ast);
   }
 
   get items() {
     const internal = this.#internal,
       cached = internal.$items;
     if (cached !== void 0) return cached;
-    return internal.$items = constructVecFormalParameter(internal.pos + 24, internal.ast);
+    return internal.$items = constructVecFormalParameter(internal.pos + 8, internal.ast);
   }
 
   toJSON() {
@@ -4985,7 +4572,6 @@ class FormalParameters {
       type: 'FormalParameters',
       start: this.start,
       end: this.end,
-      range: this.range,
       kind: this.kind,
       items: this.items,
     };
@@ -5016,12 +4602,12 @@ class FormalParameter {
     const internal = this.#internal,
       cached = internal.$decorators;
     if (cached !== void 0) return cached;
-    return internal.$decorators = constructVecDecorator(internal.pos + 24, internal.ast);
+    return internal.$decorators = constructVecDecorator(internal.pos + 8, internal.ast);
   }
 
   get pattern() {
     const internal = this.#internal;
-    return new BindingPattern(internal.pos + 48, internal.ast);
+    return new BindingPattern(internal.pos + 32, internal.ast);
   }
 
   toJSON() {
@@ -5078,16 +4664,11 @@ class FunctionBody {
     return constructU32(internal.pos + 4, internal.ast);
   }
 
-  get range() {
-    const internal = this.#internal;
-    return constructOptionRangeArray(internal.pos + 8, internal.ast);
-  }
-
   get body() {
     const internal = this.#internal,
       cached = internal.$body;
     if (cached !== void 0) return cached;
-    return internal.$body = constructVecStatement(internal.pos + 48, internal.ast);
+    return internal.$body = constructVecStatement(internal.pos + 32, internal.ast);
   }
 
   toJSON() {
@@ -5095,7 +4676,6 @@ class FunctionBody {
       type: 'FunctionBody',
       start: this.start,
       end: this.end,
-      range: this.range,
       body: this.body,
     };
   }
@@ -5132,39 +4712,34 @@ class ArrowFunctionExpression {
     return constructU32(internal.pos + 4, internal.ast);
   }
 
-  get range() {
-    const internal = this.#internal;
-    return constructOptionRangeArray(internal.pos + 8, internal.ast);
-  }
-
   get expression() {
     const internal = this.#internal;
-    return constructBool(internal.pos + 60, internal.ast);
+    return constructBool(internal.pos + 44, internal.ast);
   }
 
   get async() {
     const internal = this.#internal;
-    return constructBool(internal.pos + 61, internal.ast);
+    return constructBool(internal.pos + 45, internal.ast);
   }
 
   get typeParameters() {
     const internal = this.#internal;
-    return constructOptionBoxTSTypeParameterDeclaration(internal.pos + 24, internal.ast);
+    return constructOptionBoxTSTypeParameterDeclaration(internal.pos + 8, internal.ast);
   }
 
   get params() {
     const internal = this.#internal;
-    return constructBoxFormalParameters(internal.pos + 32, internal.ast);
+    return constructBoxFormalParameters(internal.pos + 16, internal.ast);
   }
 
   get returnType() {
     const internal = this.#internal;
-    return constructOptionBoxTSTypeAnnotation(internal.pos + 40, internal.ast);
+    return constructOptionBoxTSTypeAnnotation(internal.pos + 24, internal.ast);
   }
 
   get body() {
     const internal = this.#internal;
-    return constructBoxFunctionBody(internal.pos + 48, internal.ast);
+    return constructBoxFunctionBody(internal.pos + 32, internal.ast);
   }
 
   toJSON() {
@@ -5172,7 +4747,6 @@ class ArrowFunctionExpression {
       type: 'ArrowFunctionExpression',
       start: this.start,
       end: this.end,
-      range: this.range,
       expression: this.expression,
       async: this.async,
       typeParameters: this.typeParameters,
@@ -5214,19 +4788,14 @@ class YieldExpression {
     return constructU32(internal.pos + 4, internal.ast);
   }
 
-  get range() {
-    const internal = this.#internal;
-    return constructOptionRangeArray(internal.pos + 8, internal.ast);
-  }
-
   get delegate() {
     const internal = this.#internal;
-    return constructBool(internal.pos + 40, internal.ast);
+    return constructBool(internal.pos + 24, internal.ast);
   }
 
   get argument() {
     const internal = this.#internal;
-    return constructOptionExpression(internal.pos + 24, internal.ast);
+    return constructOptionExpression(internal.pos + 8, internal.ast);
   }
 
   toJSON() {
@@ -5234,7 +4803,6 @@ class YieldExpression {
       type: 'YieldExpression',
       start: this.start,
       end: this.end,
-      range: this.range,
       delegate: this.delegate,
       argument: this.argument,
     };
@@ -5271,70 +4839,64 @@ class Class {
     return constructU32(internal.pos + 4, internal.ast);
   }
 
-  get range() {
-    const internal = this.#internal;
-    return constructOptionRangeArray(internal.pos + 8, internal.ast);
-  }
-
   get type() {
     const internal = this.#internal;
-    return constructClassType(internal.pos + 164, internal.ast);
+    return constructClassType(internal.pos + 132, internal.ast);
   }
 
   get decorators() {
     const internal = this.#internal,
       cached = internal.$decorators;
     if (cached !== void 0) return cached;
-    return internal.$decorators = constructVecDecorator(internal.pos + 24, internal.ast);
+    return internal.$decorators = constructVecDecorator(internal.pos + 8, internal.ast);
   }
 
   get id() {
     const internal = this.#internal;
-    return constructOptionBindingIdentifier(internal.pos + 48, internal.ast);
+    return constructOptionBindingIdentifier(internal.pos + 32, internal.ast);
   }
 
   get typeParameters() {
     const internal = this.#internal;
-    return constructOptionBoxTSTypeParameterDeclaration(internal.pos + 96, internal.ast);
+    return constructOptionBoxTSTypeParameterDeclaration(internal.pos + 64, internal.ast);
   }
 
   get superClass() {
     const internal = this.#internal;
-    return constructOptionExpression(internal.pos + 104, internal.ast);
+    return constructOptionExpression(internal.pos + 72, internal.ast);
   }
 
   get superTypeArguments() {
     const internal = this.#internal;
-    return constructOptionBoxTSTypeParameterInstantiation(internal.pos + 120, internal.ast);
+    return constructOptionBoxTSTypeParameterInstantiation(internal.pos + 88, internal.ast);
   }
 
   get implements() {
     const internal = this.#internal,
       cached = internal.$implements;
     if (cached !== void 0) return cached;
-    return internal.$implements = constructVecTSClassImplements(internal.pos + 128, internal.ast);
+    return internal.$implements = constructVecTSClassImplements(internal.pos + 96, internal.ast);
   }
 
   get body() {
     const internal = this.#internal;
-    return constructBoxClassBody(internal.pos + 152, internal.ast);
+    return constructBoxClassBody(internal.pos + 120, internal.ast);
   }
 
   get abstract() {
     const internal = this.#internal;
-    return constructBool(internal.pos + 165, internal.ast);
+    return constructBool(internal.pos + 133, internal.ast);
   }
 
   get declare() {
     const internal = this.#internal;
-    return constructBool(internal.pos + 166, internal.ast);
+    return constructBool(internal.pos + 134, internal.ast);
   }
 
   toJSON() {
     return {
       start: this.start,
       end: this.end,
-      range: this.range,
       type: this.type,
       decorators: this.decorators,
       id: this.id,
@@ -5391,16 +4953,11 @@ class ClassBody {
     return constructU32(internal.pos + 4, internal.ast);
   }
 
-  get range() {
-    const internal = this.#internal;
-    return constructOptionRangeArray(internal.pos + 8, internal.ast);
-  }
-
   get body() {
     const internal = this.#internal,
       cached = internal.$body;
     if (cached !== void 0) return cached;
-    return internal.$body = constructVecClassElement(internal.pos + 24, internal.ast);
+    return internal.$body = constructVecClassElement(internal.pos + 8, internal.ast);
   }
 
   toJSON() {
@@ -5408,7 +4965,6 @@ class ClassBody {
       type: 'ClassBody',
       start: this.start,
       end: this.end,
-      range: this.range,
       body: this.body,
     };
   }
@@ -5461,68 +5017,62 @@ class MethodDefinition {
     return constructU32(internal.pos + 4, internal.ast);
   }
 
-  get range() {
-    const internal = this.#internal;
-    return constructOptionRangeArray(internal.pos + 8, internal.ast);
-  }
-
   get type() {
     const internal = this.#internal;
-    return constructMethodDefinitionType(internal.pos + 72, internal.ast);
+    return constructMethodDefinitionType(internal.pos + 56, internal.ast);
   }
 
   get decorators() {
     const internal = this.#internal,
       cached = internal.$decorators;
     if (cached !== void 0) return cached;
-    return internal.$decorators = constructVecDecorator(internal.pos + 24, internal.ast);
+    return internal.$decorators = constructVecDecorator(internal.pos + 8, internal.ast);
   }
 
   get key() {
     const internal = this.#internal;
-    return constructPropertyKey(internal.pos + 48, internal.ast);
+    return constructPropertyKey(internal.pos + 32, internal.ast);
   }
 
   get value() {
     const internal = this.#internal;
-    return constructBoxFunction(internal.pos + 64, internal.ast);
+    return constructBoxFunction(internal.pos + 48, internal.ast);
   }
 
   get kind() {
     const internal = this.#internal;
-    return constructMethodDefinitionKind(internal.pos + 73, internal.ast);
+    return constructMethodDefinitionKind(internal.pos + 57, internal.ast);
   }
 
   get computed() {
     const internal = this.#internal;
-    return constructBool(internal.pos + 74, internal.ast);
+    return constructBool(internal.pos + 58, internal.ast);
   }
 
   get static() {
     const internal = this.#internal;
-    return constructBool(internal.pos + 75, internal.ast);
+    return constructBool(internal.pos + 59, internal.ast);
   }
 
   get override() {
     const internal = this.#internal;
-    return constructBool(internal.pos + 76, internal.ast);
+    return constructBool(internal.pos + 60, internal.ast);
   }
 
   get optional() {
     const internal = this.#internal;
-    return constructBool(internal.pos + 77, internal.ast);
+    return constructBool(internal.pos + 61, internal.ast);
   }
 
   get accessibility() {
     const internal = this.#internal;
-    return constructOptionTSAccessibility(internal.pos + 78, internal.ast);
+    return constructOptionTSAccessibility(internal.pos + 62, internal.ast);
   }
 
   toJSON() {
     return {
       start: this.start,
       end: this.end,
-      range: this.range,
       type: this.type,
       decorators: this.decorators,
       key: this.key,
@@ -5578,83 +5128,77 @@ class PropertyDefinition {
     return constructU32(internal.pos + 4, internal.ast);
   }
 
-  get range() {
-    const internal = this.#internal;
-    return constructOptionRangeArray(internal.pos + 8, internal.ast);
-  }
-
   get type() {
     const internal = this.#internal;
-    return constructPropertyDefinitionType(internal.pos + 88, internal.ast);
+    return constructPropertyDefinitionType(internal.pos + 72, internal.ast);
   }
 
   get decorators() {
     const internal = this.#internal,
       cached = internal.$decorators;
     if (cached !== void 0) return cached;
-    return internal.$decorators = constructVecDecorator(internal.pos + 24, internal.ast);
+    return internal.$decorators = constructVecDecorator(internal.pos + 8, internal.ast);
   }
 
   get key() {
     const internal = this.#internal;
-    return constructPropertyKey(internal.pos + 48, internal.ast);
+    return constructPropertyKey(internal.pos + 32, internal.ast);
   }
 
   get typeAnnotation() {
     const internal = this.#internal;
-    return constructOptionBoxTSTypeAnnotation(internal.pos + 64, internal.ast);
+    return constructOptionBoxTSTypeAnnotation(internal.pos + 48, internal.ast);
   }
 
   get value() {
     const internal = this.#internal;
-    return constructOptionExpression(internal.pos + 72, internal.ast);
+    return constructOptionExpression(internal.pos + 56, internal.ast);
   }
 
   get computed() {
     const internal = this.#internal;
-    return constructBool(internal.pos + 89, internal.ast);
+    return constructBool(internal.pos + 73, internal.ast);
   }
 
   get static() {
     const internal = this.#internal;
-    return constructBool(internal.pos + 90, internal.ast);
+    return constructBool(internal.pos + 74, internal.ast);
   }
 
   get declare() {
     const internal = this.#internal;
-    return constructBool(internal.pos + 91, internal.ast);
+    return constructBool(internal.pos + 75, internal.ast);
   }
 
   get override() {
     const internal = this.#internal;
-    return constructBool(internal.pos + 92, internal.ast);
+    return constructBool(internal.pos + 76, internal.ast);
   }
 
   get optional() {
     const internal = this.#internal;
-    return constructBool(internal.pos + 93, internal.ast);
+    return constructBool(internal.pos + 77, internal.ast);
   }
 
   get definite() {
     const internal = this.#internal;
-    return constructBool(internal.pos + 94, internal.ast);
+    return constructBool(internal.pos + 78, internal.ast);
   }
 
   get readonly() {
     const internal = this.#internal;
-    return constructBool(internal.pos + 95, internal.ast);
+    return constructBool(internal.pos + 79, internal.ast);
   }
 
   get accessibility() {
     const internal = this.#internal;
-    return constructOptionTSAccessibility(internal.pos + 96, internal.ast);
+    return constructOptionTSAccessibility(internal.pos + 80, internal.ast);
   }
 
   toJSON() {
     return {
       start: this.start,
       end: this.end,
-      range: this.range,
       type: this.type,
       decorators: this.decorators,
       key: this.key,
@@ -5729,16 +5273,11 @@ class PrivateIdentifier {
     return constructU32(internal.pos + 4, internal.ast);
   }
 
-  get range() {
-    const internal = this.#internal;
-    return constructOptionRangeArray(internal.pos + 8, internal.ast);
-  }
-
   get name() {
     const internal = this.#internal,
       cached = internal.$name;
     if (cached !== void 0) return cached;
-    return internal.$name = constructStr(internal.pos + 24, internal.ast);
+    return internal.$name = constructStr(internal.pos + 8, internal.ast);
   }
 
   toJSON() {
@@ -5746,7 +5285,6 @@ class PrivateIdentifier {
       type: 'PrivateIdentifier',
       start: this.start,
       end: this.end,
-      range: this.range,
       name: this.name,
     };
   }
@@ -5783,16 +5321,11 @@ class StaticBlock {
     return constructU32(internal.pos + 4, internal.ast);
   }
 
-  get range() {
-    const internal = this.#internal;
-    return constructOptionRangeArray(internal.pos + 8, internal.ast);
-  }
-
   get body() {
     const internal = this.#internal,
       cached = internal.$body;
     if (cached !== void 0) return cached;
-    return internal.$body = constructVecStatement(internal.pos + 24, internal.ast);
+    return internal.$body = constructVecStatement(internal.pos + 8, internal.ast);
   }
 
   toJSON() {
@@ -5800,7 +5333,6 @@ class StaticBlock {
       type: 'StaticBlock',
       start: this.start,
       end: this.end,
-      range: this.range,
       body: this.body,
     };
   }
@@ -5866,68 +5398,62 @@ class AccessorProperty {
     return constructU32(internal.pos + 4, internal.ast);
   }
 
-  get range() {
-    const internal = this.#internal;
-    return constructOptionRangeArray(internal.pos + 8, internal.ast);
-  }
-
   get type() {
     const internal = this.#internal;
-    return constructAccessorPropertyType(internal.pos + 88, internal.ast);
+    return constructAccessorPropertyType(internal.pos + 72, internal.ast);
   }
 
   get decorators() {
     const internal = this.#internal,
       cached = internal.$decorators;
     if (cached !== void 0) return cached;
-    return internal.$decorators = constructVecDecorator(internal.pos + 24, internal.ast);
+    return internal.$decorators = constructVecDecorator(internal.pos + 8, internal.ast);
   }
 
   get key() {
     const internal = this.#internal;
-    return constructPropertyKey(internal.pos + 48, internal.ast);
+    return constructPropertyKey(internal.pos + 32, internal.ast);
   }
 
   get typeAnnotation() {
     const internal = this.#internal;
-    return constructOptionBoxTSTypeAnnotation(internal.pos + 64, internal.ast);
+    return constructOptionBoxTSTypeAnnotation(internal.pos + 48, internal.ast);
   }
 
   get value() {
     const internal = this.#internal;
-    return constructOptionExpression(internal.pos + 72, internal.ast);
+    return constructOptionExpression(internal.pos + 56, internal.ast);
   }
 
   get computed() {
     const internal = this.#internal;
-    return constructBool(internal.pos + 89, internal.ast);
+    return constructBool(internal.pos + 73, internal.ast);
   }
 
   get static() {
     const internal = this.#internal;
-    return constructBool(internal.pos + 90, internal.ast);
+    return constructBool(internal.pos + 74, internal.ast);
   }
 
   get override() {
     const internal = this.#internal;
-    return constructBool(internal.pos + 91, internal.ast);
+    return constructBool(internal.pos + 75, internal.ast);
   }
 
   get definite() {
     const internal = this.#internal;
-    return constructBool(internal.pos + 92, internal.ast);
+    return constructBool(internal.pos + 76, internal.ast);
   }
 
   get accessibility() {
     const internal = this.#internal;
-    return constructOptionTSAccessibility(internal.pos + 93, internal.ast);
+    return constructOptionTSAccessibility(internal.pos + 77, internal.ast);
   }
 
   toJSON() {
     return {
       start: this.start,
       end: this.end,
-      range: this.range,
       type: this.type,
       decorators: this.decorators,
       key: this.key,
@@ -5973,24 +5499,19 @@ class ImportExpression {
     return constructU32(internal.pos + 4, internal.ast);
   }
 
-  get range() {
-    const internal = this.#internal;
-    return constructOptionRangeArray(internal.pos + 8, internal.ast);
-  }
-
   get source() {
     const internal = this.#internal;
-    return constructExpression(internal.pos + 24, internal.ast);
+    return constructExpression(internal.pos + 8, internal.ast);
   }
 
   get options() {
     const internal = this.#internal;
-    return constructOptionExpression(internal.pos + 40, internal.ast);
+    return constructOptionExpression(internal.pos + 24, internal.ast);
   }
 
   get phase() {
     const internal = this.#internal;
-    return constructOptionImportPhase(internal.pos + 56, internal.ast);
+    return constructOptionImportPhase(internal.pos + 40, internal.ast);
   }
 
   toJSON() {
@@ -5998,7 +5519,6 @@ class ImportExpression {
       type: 'ImportExpression',
       start: this.start,
       end: this.end,
-      range: this.range,
       source: this.source,
       options: this.options,
       phase: this.phase,
@@ -6037,36 +5557,31 @@ class ImportDeclaration {
     return constructU32(internal.pos + 4, internal.ast);
   }
 
-  get range() {
-    const internal = this.#internal;
-    return constructOptionRangeArray(internal.pos + 8, internal.ast);
-  }
-
   get specifiers() {
     const internal = this.#internal,
       cached = internal.$specifiers;
     if (cached !== void 0) return cached;
-    return internal.$specifiers = constructOptionVecImportDeclarationSpecifier(internal.pos + 24, internal.ast);
+    return internal.$specifiers = constructOptionVecImportDeclarationSpecifier(internal.pos + 8, internal.ast);
   }
 
   get source() {
     const internal = this.#internal;
-    return new StringLiteral(internal.pos + 48, internal.ast);
+    return new StringLiteral(internal.pos + 32, internal.ast);
   }
 
   get phase() {
     const internal = this.#internal;
-    return constructOptionImportPhase(internal.pos + 120, internal.ast);
+    return constructOptionImportPhase(internal.pos + 88, internal.ast);
   }
 
   get attributes() {
     const internal = this.#internal;
-    return constructOptionBoxWithClause(internal.pos + 112, internal.ast);
+    return constructOptionBoxWithClause(internal.pos + 80, internal.ast);
   }
 
   get importKind() {
     const internal = this.#internal;
-    return constructImportOrExportKind(internal.pos + 121, internal.ast);
+    return constructImportOrExportKind(internal.pos + 89, internal.ast);
   }
 
   toJSON() {
@@ -6074,7 +5589,6 @@ class ImportDeclaration {
       type: 'ImportDeclaration',
       start: this.start,
       end: this.end,
-      range: this.range,
       specifiers: this.specifiers,
       source: this.source,
       phase: this.phase,
@@ -6139,24 +5653,19 @@ class ImportSpecifier {
     return constructU32(internal.pos + 4, internal.ast);
   }
 
-  get range() {
-    const internal = this.#internal;
-    return constructOptionRangeArray(internal.pos + 8, internal.ast);
-  }
-
   get imported() {
     const internal = this.#internal;
-    return constructModuleExportName(internal.pos + 24, internal.ast);
+    return constructModuleExportName(internal.pos + 8, internal.ast);
   }
 
   get local() {
     const internal = this.#internal;
-    return new BindingIdentifier(internal.pos + 96, internal.ast);
+    return new BindingIdentifier(internal.pos + 64, internal.ast);
   }
 
   get importKind() {
     const internal = this.#internal;
-    return constructImportOrExportKind(internal.pos + 144, internal.ast);
+    return constructImportOrExportKind(internal.pos + 96, internal.ast);
   }
 
   toJSON() {
@@ -6164,7 +5673,6 @@ class ImportSpecifier {
       type: 'ImportSpecifier',
       start: this.start,
       end: this.end,
-      range: this.range,
       imported: this.imported,
       local: this.local,
       importKind: this.importKind,
@@ -6203,14 +5711,9 @@ class ImportDefaultSpecifier {
     return constructU32(internal.pos + 4, internal.ast);
   }
 
-  get range() {
-    const internal = this.#internal;
-    return constructOptionRangeArray(internal.pos + 8, internal.ast);
-  }
-
   get local() {
     const internal = this.#internal;
-    return new BindingIdentifier(internal.pos + 24, internal.ast);
+    return new BindingIdentifier(internal.pos + 8, internal.ast);
   }
 
   toJSON() {
@@ -6218,7 +5721,6 @@ class ImportDefaultSpecifier {
       type: 'ImportDefaultSpecifier',
       start: this.start,
       end: this.end,
-      range: this.range,
       local: this.local,
     };
   }
@@ -6255,14 +5757,9 @@ class ImportNamespaceSpecifier {
     return constructU32(internal.pos + 4, internal.ast);
   }
 
-  get range() {
-    const internal = this.#internal;
-    return constructOptionRangeArray(internal.pos + 8, internal.ast);
-  }
-
   get local() {
     const internal = this.#internal;
-    return new BindingIdentifier(internal.pos + 24, internal.ast);
+    return new BindingIdentifier(internal.pos + 8, internal.ast);
   }
 
   toJSON() {
@@ -6270,7 +5767,6 @@ class ImportNamespaceSpecifier {
       type: 'ImportNamespaceSpecifier',
       start: this.start,
       end: this.end,
-      range: this.range,
       local: this.local,
     };
   }
@@ -6300,7 +5796,7 @@ class WithClause {
     const internal = this.#internal,
       cached = internal.$attributes;
     if (cached !== void 0) return cached;
-    return internal.$attributes = constructVecImportAttribute(internal.pos + 64, internal.ast);
+    return internal.$attributes = constructVecImportAttribute(internal.pos + 32, internal.ast);
   }
 
   toJSON() {
@@ -6341,19 +5837,14 @@ class ImportAttribute {
     return constructU32(internal.pos + 4, internal.ast);
   }
 
-  get range() {
-    const internal = this.#internal;
-    return constructOptionRangeArray(internal.pos + 8, internal.ast);
-  }
-
   get key() {
     const internal = this.#internal;
-    return constructImportAttributeKey(internal.pos + 24, internal.ast);
+    return constructImportAttributeKey(internal.pos + 8, internal.ast);
   }
 
   get value() {
     const internal = this.#internal;
-    return new StringLiteral(internal.pos + 96, internal.ast);
+    return new StringLiteral(internal.pos + 64, internal.ast);
   }
 
   toJSON() {
@@ -6361,7 +5852,6 @@ class ImportAttribute {
       type: 'ImportAttribute',
       start: this.start,
       end: this.end,
-      range: this.range,
       key: this.key,
       value: this.value,
     };
@@ -6410,36 +5900,31 @@ class ExportNamedDeclaration {
     return constructU32(internal.pos + 4, internal.ast);
   }
 
-  get range() {
-    const internal = this.#internal;
-    return constructOptionRangeArray(internal.pos + 8, internal.ast);
-  }
-
   get declaration() {
     const internal = this.#internal;
-    return constructOptionDeclaration(internal.pos + 24, internal.ast);
+    return constructOptionDeclaration(internal.pos + 8, internal.ast);
   }
 
   get specifiers() {
     const internal = this.#internal,
       cached = internal.$specifiers;
     if (cached !== void 0) return cached;
-    return internal.$specifiers = constructVecExportSpecifier(internal.pos + 40, internal.ast);
+    return internal.$specifiers = constructVecExportSpecifier(internal.pos + 24, internal.ast);
   }
 
   get source() {
     const internal = this.#internal;
-    return constructOptionStringLiteral(internal.pos + 64, internal.ast);
+    return constructOptionStringLiteral(internal.pos + 48, internal.ast);
   }
 
   get exportKind() {
     const internal = this.#internal;
-    return constructImportOrExportKind(internal.pos + 136, internal.ast);
+    return constructImportOrExportKind(internal.pos + 104, internal.ast);
   }
 
   get attributes() {
     const internal = this.#internal;
-    return constructOptionBoxWithClause(internal.pos + 128, internal.ast);
+    return constructOptionBoxWithClause(internal.pos + 96, internal.ast);
   }
 
   toJSON() {
@@ -6447,7 +5932,6 @@ class ExportNamedDeclaration {
       type: 'ExportNamedDeclaration',
       start: this.start,
       end: this.end,
-      range: this.range,
       declaration: this.declaration,
       specifiers: this.specifiers,
       source: this.source,
@@ -6488,14 +5972,9 @@ class ExportDefaultDeclaration {
     return constructU32(internal.pos + 4, internal.ast);
   }
 
-  get range() {
-    const internal = this.#internal;
-    return constructOptionRangeArray(internal.pos + 8, internal.ast);
-  }
-
   get declaration() {
     const internal = this.#internal;
-    return constructExportDefaultDeclarationKind(internal.pos + 96, internal.ast);
+    return constructExportDefaultDeclarationKind(internal.pos + 64, internal.ast);
   }
 
   toJSON() {
@@ -6503,7 +5982,6 @@ class ExportDefaultDeclaration {
       type: 'ExportDefaultDeclaration',
       start: this.start,
       end: this.end,
-      range: this.range,
       declaration: this.declaration,
     };
   }
@@ -6540,29 +6018,24 @@ class ExportAllDeclaration {
     return constructU32(internal.pos + 4, internal.ast);
   }
 
-  get range() {
-    const internal = this.#internal;
-    return constructOptionRangeArray(internal.pos + 8, internal.ast);
-  }
-
   get exported() {
     const internal = this.#internal;
-    return constructOptionModuleExportName(internal.pos + 24, internal.ast);
+    return constructOptionModuleExportName(internal.pos + 8, internal.ast);
   }
 
   get source() {
     const internal = this.#internal;
-    return new StringLiteral(internal.pos + 96, internal.ast);
+    return new StringLiteral(internal.pos + 64, internal.ast);
   }
 
   get attributes() {
     const internal = this.#internal;
-    return constructOptionBoxWithClause(internal.pos + 160, internal.ast);
+    return constructOptionBoxWithClause(internal.pos + 112, internal.ast);
   }
 
   get exportKind() {
     const internal = this.#internal;
-    return constructImportOrExportKind(internal.pos + 168, internal.ast);
+    return constructImportOrExportKind(internal.pos + 120, internal.ast);
   }
 
   toJSON() {
@@ -6570,7 +6043,6 @@ class ExportAllDeclaration {
       type: 'ExportAllDeclaration',
       start: this.start,
       end: this.end,
-      range: this.range,
       exported: this.exported,
       source: this.source,
       attributes: this.attributes,
@@ -6610,24 +6082,19 @@ class ExportSpecifier {
     return constructU32(internal.pos + 4, internal.ast);
   }
 
-  get range() {
-    const internal = this.#internal;
-    return constructOptionRangeArray(internal.pos + 8, internal.ast);
-  }
-
   get local() {
     const internal = this.#internal;
-    return constructModuleExportName(internal.pos + 24, internal.ast);
+    return constructModuleExportName(internal.pos + 8, internal.ast);
   }
 
   get exported() {
     const internal = this.#internal;
-    return constructModuleExportName(internal.pos + 96, internal.ast);
+    return constructModuleExportName(internal.pos + 64, internal.ast);
   }
 
   get exportKind() {
     const internal = this.#internal;
-    return constructImportOrExportKind(internal.pos + 168, internal.ast);
+    return constructImportOrExportKind(internal.pos + 120, internal.ast);
   }
 
   toJSON() {
@@ -6635,7 +6102,6 @@ class ExportSpecifier {
       type: 'ExportSpecifier',
       start: this.start,
       end: this.end,
-      range: this.range,
       local: this.local,
       exported: this.exported,
       exportKind: this.exportKind,
@@ -6786,21 +6252,16 @@ class V8IntrinsicExpression {
     return constructU32(internal.pos + 4, internal.ast);
   }
 
-  get range() {
-    const internal = this.#internal;
-    return constructOptionRangeArray(internal.pos + 8, internal.ast);
-  }
-
   get name() {
     const internal = this.#internal;
-    return new IdentifierName(internal.pos + 24, internal.ast);
+    return new IdentifierName(internal.pos + 8, internal.ast);
   }
 
   get arguments() {
     const internal = this.#internal,
       cached = internal.$arguments;
     if (cached !== void 0) return cached;
-    return internal.$arguments = constructVecArgument(internal.pos + 64, internal.ast);
+    return internal.$arguments = constructVecArgument(internal.pos + 32, internal.ast);
   }
 
   toJSON() {
@@ -6808,7 +6269,6 @@ class V8IntrinsicExpression {
       type: 'V8IntrinsicExpression',
       start: this.start,
       end: this.end,
-      range: this.range,
       name: this.name,
       arguments: this.arguments,
     };
@@ -6846,14 +6306,9 @@ class BooleanLiteral {
     return constructU32(internal.pos + 4, internal.ast);
   }
 
-  get range() {
-    const internal = this.#internal;
-    return constructOptionRangeArray(internal.pos + 8, internal.ast);
-  }
-
   get value() {
     const internal = this.#internal;
-    return constructBool(internal.pos + 24, internal.ast);
+    return constructBool(internal.pos + 8, internal.ast);
   }
 
   toJSON() {
@@ -6861,7 +6316,6 @@ class BooleanLiteral {
       type: 'BooleanLiteral',
       start: this.start,
       end: this.end,
-      range: this.range,
       value: this.value,
     };
   }
@@ -6898,17 +6352,11 @@ class NullLiteral {
     return constructU32(internal.pos + 4, internal.ast);
   }
 
-  get range() {
-    const internal = this.#internal;
-    return constructOptionRangeArray(internal.pos + 8, internal.ast);
-  }
-
   toJSON() {
     return {
       type: 'NullLiteral',
       start: this.start,
       end: this.end,
-      range: this.range,
     };
   }
 
@@ -6944,21 +6392,16 @@ class NumericLiteral {
     return constructU32(internal.pos + 4, internal.ast);
   }
 
-  get range() {
-    const internal = this.#internal;
-    return constructOptionRangeArray(internal.pos + 8, internal.ast);
-  }
-
   get value() {
     const internal = this.#internal;
-    return constructF64(internal.pos + 24, internal.ast);
+    return constructF64(internal.pos + 8, internal.ast);
   }
 
   get raw() {
     const internal = this.#internal,
       cached = internal.$raw;
     if (cached !== void 0) return cached;
-    return internal.$raw = constructOptionStr(internal.pos + 32, internal.ast);
+    return internal.$raw = constructOptionStr(internal.pos + 16, internal.ast);
   }
 
   toJSON() {
@@ -6966,7 +6409,6 @@ class NumericLiteral {
       type: 'NumericLiteral',
       start: this.start,
       end: this.end,
-      range: this.range,
       value: this.value,
       raw: this.raw,
     };
@@ -7004,23 +6446,18 @@ class StringLiteral {
     return constructU32(internal.pos + 4, internal.ast);
   }
 
-  get range() {
-    const internal = this.#internal;
-    return constructOptionRangeArray(internal.pos + 8, internal.ast);
-  }
-
   get value() {
     const internal = this.#internal,
       cached = internal.$value;
     if (cached !== void 0) return cached;
-    return internal.$value = constructStr(internal.pos + 24, internal.ast);
+    return internal.$value = constructStr(internal.pos + 8, internal.ast);
   }
 
   get raw() {
     const internal = this.#internal,
       cached = internal.$raw;
     if (cached !== void 0) return cached;
-    return internal.$raw = constructOptionStr(internal.pos + 40, internal.ast);
+    return internal.$raw = constructOptionStr(internal.pos + 24, internal.ast);
   }
 
   toJSON() {
@@ -7028,7 +6465,6 @@ class StringLiteral {
       type: 'StringLiteral',
       start: this.start,
       end: this.end,
-      range: this.range,
       value: this.value,
       raw: this.raw,
     };
@@ -7066,23 +6502,18 @@ class BigIntLiteral {
     return constructU32(internal.pos + 4, internal.ast);
   }
 
-  get range() {
-    const internal = this.#internal;
-    return constructOptionRangeArray(internal.pos + 8, internal.ast);
-  }
-
   get value() {
     const internal = this.#internal,
       cached = internal.$value;
     if (cached !== void 0) return cached;
-    return internal.$value = constructStr(internal.pos + 24, internal.ast);
+    return internal.$value = constructStr(internal.pos + 8, internal.ast);
   }
 
   get raw() {
     const internal = this.#internal,
       cached = internal.$raw;
     if (cached !== void 0) return cached;
-    return internal.$raw = constructOptionStr(internal.pos + 40, internal.ast);
+    return internal.$raw = constructOptionStr(internal.pos + 24, internal.ast);
   }
 
   toJSON() {
@@ -7090,7 +6521,6 @@ class BigIntLiteral {
       type: 'BigIntLiteral',
       start: this.start,
       end: this.end,
-      range: this.range,
       value: this.value,
       raw: this.raw,
     };
@@ -7128,21 +6558,16 @@ class RegExpLiteral {
     return constructU32(internal.pos + 4, internal.ast);
   }
 
-  get range() {
-    const internal = this.#internal;
-    return constructOptionRangeArray(internal.pos + 8, internal.ast);
-  }
-
   get regex() {
     const internal = this.#internal;
-    return new RegExp(internal.pos + 24, internal.ast);
+    return new RegExp(internal.pos + 8, internal.ast);
   }
 
   get raw() {
     const internal = this.#internal,
       cached = internal.$raw;
     if (cached !== void 0) return cached;
-    return internal.$raw = constructOptionStr(internal.pos + 56, internal.ast);
+    return internal.$raw = constructOptionStr(internal.pos + 40, internal.ast);
   }
 
   toJSON() {
@@ -7150,7 +6575,6 @@ class RegExpLiteral {
       type: 'RegExpLiteral',
       start: this.start,
       end: this.end,
-      range: this.range,
       regex: this.regex,
       raw: this.raw,
     };
@@ -7286,26 +6710,21 @@ class JSXElement {
     return constructU32(internal.pos + 4, internal.ast);
   }
 
-  get range() {
-    const internal = this.#internal;
-    return constructOptionRangeArray(internal.pos + 8, internal.ast);
-  }
-
   get openingElement() {
     const internal = this.#internal;
-    return constructBoxJSXOpeningElement(internal.pos + 24, internal.ast);
+    return constructBoxJSXOpeningElement(internal.pos + 8, internal.ast);
   }
 
   get children() {
     const internal = this.#internal,
       cached = internal.$children;
     if (cached !== void 0) return cached;
-    return internal.$children = constructVecJSXChild(internal.pos + 32, internal.ast);
+    return internal.$children = constructVecJSXChild(internal.pos + 16, internal.ast);
   }
 
   get closingElement() {
     const internal = this.#internal;
-    return constructOptionBoxJSXClosingElement(internal.pos + 56, internal.ast);
+    return constructOptionBoxJSXClosingElement(internal.pos + 40, internal.ast);
   }
 
   toJSON() {
@@ -7313,7 +6732,6 @@ class JSXElement {
       type: 'JSXElement',
       start: this.start,
       end: this.end,
-      range: this.range,
       openingElement: this.openingElement,
       children: this.children,
       closingElement: this.closingElement,
@@ -7352,26 +6770,21 @@ class JSXOpeningElement {
     return constructU32(internal.pos + 4, internal.ast);
   }
 
-  get range() {
-    const internal = this.#internal;
-    return constructOptionRangeArray(internal.pos + 8, internal.ast);
-  }
-
   get name() {
     const internal = this.#internal;
-    return constructJSXElementName(internal.pos + 24, internal.ast);
+    return constructJSXElementName(internal.pos + 8, internal.ast);
   }
 
   get typeArguments() {
     const internal = this.#internal;
-    return constructOptionBoxTSTypeParameterInstantiation(internal.pos + 40, internal.ast);
+    return constructOptionBoxTSTypeParameterInstantiation(internal.pos + 24, internal.ast);
   }
 
   get attributes() {
     const internal = this.#internal,
       cached = internal.$attributes;
     if (cached !== void 0) return cached;
-    return internal.$attributes = constructVecJSXAttributeItem(internal.pos + 48, internal.ast);
+    return internal.$attributes = constructVecJSXAttributeItem(internal.pos + 32, internal.ast);
   }
 
   toJSON() {
@@ -7379,7 +6792,6 @@ class JSXOpeningElement {
       type: 'JSXOpeningElement',
       start: this.start,
       end: this.end,
-      range: this.range,
       name: this.name,
       typeArguments: this.typeArguments,
       attributes: this.attributes,
@@ -7418,14 +6830,9 @@ class JSXClosingElement {
     return constructU32(internal.pos + 4, internal.ast);
   }
 
-  get range() {
-    const internal = this.#internal;
-    return constructOptionRangeArray(internal.pos + 8, internal.ast);
-  }
-
   get name() {
     const internal = this.#internal;
-    return constructJSXElementName(internal.pos + 24, internal.ast);
+    return constructJSXElementName(internal.pos + 8, internal.ast);
   }
 
   toJSON() {
@@ -7433,7 +6840,6 @@ class JSXClosingElement {
       type: 'JSXClosingElement',
       start: this.start,
       end: this.end,
-      range: this.range,
       name: this.name,
     };
   }
@@ -7470,26 +6876,21 @@ class JSXFragment {
     return constructU32(internal.pos + 4, internal.ast);
   }
 
-  get range() {
-    const internal = this.#internal;
-    return constructOptionRangeArray(internal.pos + 8, internal.ast);
-  }
-
   get openingFragment() {
     const internal = this.#internal;
-    return new JSXOpeningFragment(internal.pos + 24, internal.ast);
+    return new JSXOpeningFragment(internal.pos + 8, internal.ast);
   }
 
   get children() {
     const internal = this.#internal,
       cached = internal.$children;
     if (cached !== void 0) return cached;
-    return internal.$children = constructVecJSXChild(internal.pos + 48, internal.ast);
+    return internal.$children = constructVecJSXChild(internal.pos + 16, internal.ast);
   }
 
   get closingFragment() {
     const internal = this.#internal;
-    return new JSXClosingFragment(internal.pos + 72, internal.ast);
+    return new JSXClosingFragment(internal.pos + 40, internal.ast);
   }
 
   toJSON() {
@@ -7497,7 +6898,6 @@ class JSXFragment {
       type: 'JSXFragment',
       start: this.start,
       end: this.end,
-      range: this.range,
       openingFragment: this.openingFragment,
       children: this.children,
       closingFragment: this.closingFragment,
@@ -7536,17 +6936,11 @@ class JSXOpeningFragment {
     return constructU32(internal.pos + 4, internal.ast);
   }
 
-  get range() {
-    const internal = this.#internal;
-    return constructOptionRangeArray(internal.pos + 8, internal.ast);
-  }
-
   toJSON() {
     return {
       type: 'JSXOpeningFragment',
       start: this.start,
       end: this.end,
-      range: this.range,
     };
   }
 
@@ -7582,17 +6976,11 @@ class JSXClosingFragment {
     return constructU32(internal.pos + 4, internal.ast);
   }
 
-  get range() {
-    const internal = this.#internal;
-    return constructOptionRangeArray(internal.pos + 8, internal.ast);
-  }
-
   toJSON() {
     return {
       type: 'JSXClosingFragment',
       start: this.start,
       end: this.end,
-      range: this.range,
     };
   }
 
@@ -7645,19 +7033,14 @@ class JSXNamespacedName {
     return constructU32(internal.pos + 4, internal.ast);
   }
 
-  get range() {
-    const internal = this.#internal;
-    return constructOptionRangeArray(internal.pos + 8, internal.ast);
-  }
-
   get namespace() {
     const internal = this.#internal;
-    return new JSXIdentifier(internal.pos + 24, internal.ast);
+    return new JSXIdentifier(internal.pos + 8, internal.ast);
   }
 
   get name() {
     const internal = this.#internal;
-    return new JSXIdentifier(internal.pos + 64, internal.ast);
+    return new JSXIdentifier(internal.pos + 32, internal.ast);
   }
 
   toJSON() {
@@ -7665,7 +7048,6 @@ class JSXNamespacedName {
       type: 'JSXNamespacedName',
       start: this.start,
       end: this.end,
-      range: this.range,
       namespace: this.namespace,
       name: this.name,
     };
@@ -7703,19 +7085,14 @@ class JSXMemberExpression {
     return constructU32(internal.pos + 4, internal.ast);
   }
 
-  get range() {
-    const internal = this.#internal;
-    return constructOptionRangeArray(internal.pos + 8, internal.ast);
-  }
-
   get object() {
     const internal = this.#internal;
-    return constructJSXMemberExpressionObject(internal.pos + 24, internal.ast);
+    return constructJSXMemberExpressionObject(internal.pos + 8, internal.ast);
   }
 
   get property() {
     const internal = this.#internal;
-    return new JSXIdentifier(internal.pos + 40, internal.ast);
+    return new JSXIdentifier(internal.pos + 24, internal.ast);
   }
 
   toJSON() {
@@ -7723,7 +7100,6 @@ class JSXMemberExpression {
       type: 'JSXMemberExpression',
       start: this.start,
       end: this.end,
-      range: this.range,
       object: this.object,
       property: this.property,
     };
@@ -7774,14 +7150,9 @@ class JSXExpressionContainer {
     return constructU32(internal.pos + 4, internal.ast);
   }
 
-  get range() {
-    const internal = this.#internal;
-    return constructOptionRangeArray(internal.pos + 8, internal.ast);
-  }
-
   get expression() {
     const internal = this.#internal;
-    return constructJSXExpression(internal.pos + 24, internal.ast);
+    return constructJSXExpression(internal.pos + 8, internal.ast);
   }
 
   toJSON() {
@@ -7789,7 +7160,6 @@ class JSXExpressionContainer {
       type: 'JSXExpressionContainer',
       start: this.start,
       end: this.end,
-      range: this.range,
       expression: this.expression,
     };
   }
@@ -7921,17 +7291,11 @@ class JSXEmptyExpression {
     return constructU32(internal.pos + 4, internal.ast);
   }
 
-  get range() {
-    const internal = this.#internal;
-    return constructOptionRangeArray(internal.pos + 8, internal.ast);
-  }
-
   toJSON() {
     return {
       type: 'JSXEmptyExpression',
       start: this.start,
       end: this.end,
-      range: this.range,
     };
   }
 
@@ -7978,19 +7342,14 @@ class JSXAttribute {
     return constructU32(internal.pos + 4, internal.ast);
   }
 
-  get range() {
-    const internal = this.#internal;
-    return constructOptionRangeArray(internal.pos + 8, internal.ast);
-  }
-
   get name() {
     const internal = this.#internal;
-    return constructJSXAttributeName(internal.pos + 24, internal.ast);
+    return constructJSXAttributeName(internal.pos + 8, internal.ast);
   }
 
   get value() {
     const internal = this.#internal;
-    return constructOptionJSXAttributeValue(internal.pos + 40, internal.ast);
+    return constructOptionJSXAttributeValue(internal.pos + 24, internal.ast);
   }
 
   toJSON() {
@@ -7998,7 +7357,6 @@ class JSXAttribute {
       type: 'JSXAttribute',
       start: this.start,
       end: this.end,
-      range: this.range,
       name: this.name,
       value: this.value,
     };
@@ -8036,14 +7394,9 @@ class JSXSpreadAttribute {
     return constructU32(internal.pos + 4, internal.ast);
   }
 
-  get range() {
-    const internal = this.#internal;
-    return constructOptionRangeArray(internal.pos + 8, internal.ast);
-  }
-
   get argument() {
     const internal = this.#internal;
-    return constructExpression(internal.pos + 24, internal.ast);
+    return constructExpression(internal.pos + 8, internal.ast);
   }
 
   toJSON() {
@@ -8051,7 +7404,6 @@ class JSXSpreadAttribute {
       type: 'JSXSpreadAttribute',
       start: this.start,
       end: this.end,
-      range: this.range,
       argument: this.argument,
     };
   }
@@ -8114,16 +7466,11 @@ class JSXIdentifier {
     return constructU32(internal.pos + 4, internal.ast);
   }
 
-  get range() {
-    const internal = this.#internal;
-    return constructOptionRangeArray(internal.pos + 8, internal.ast);
-  }
-
   get name() {
     const internal = this.#internal,
       cached = internal.$name;
     if (cached !== void 0) return cached;
-    return internal.$name = constructStr(internal.pos + 24, internal.ast);
+    return internal.$name = constructStr(internal.pos + 8, internal.ast);
   }
 
   toJSON() {
@@ -8131,7 +7478,6 @@ class JSXIdentifier {
       type: 'JSXIdentifier',
       start: this.start,
       end: this.end,
-      range: this.range,
       name: this.name,
     };
   }
@@ -8185,14 +7531,9 @@ class JSXSpreadChild {
     return constructU32(internal.pos + 4, internal.ast);
   }
 
-  get range() {
-    const internal = this.#internal;
-    return constructOptionRangeArray(internal.pos + 8, internal.ast);
-  }
-
   get expression() {
     const internal = this.#internal;
-    return constructExpression(internal.pos + 24, internal.ast);
+    return constructExpression(internal.pos + 8, internal.ast);
   }
 
   toJSON() {
@@ -8200,7 +7541,6 @@ class JSXSpreadChild {
       type: 'JSXSpreadChild',
       start: this.start,
       end: this.end,
-      range: this.range,
       expression: this.expression,
     };
   }
@@ -8237,23 +7577,18 @@ class JSXText {
     return constructU32(internal.pos + 4, internal.ast);
   }
 
-  get range() {
-    const internal = this.#internal;
-    return constructOptionRangeArray(internal.pos + 8, internal.ast);
-  }
-
   get value() {
     const internal = this.#internal,
       cached = internal.$value;
     if (cached !== void 0) return cached;
-    return internal.$value = constructStr(internal.pos + 24, internal.ast);
+    return internal.$value = constructStr(internal.pos + 8, internal.ast);
   }
 
   get raw() {
     const internal = this.#internal,
       cached = internal.$raw;
     if (cached !== void 0) return cached;
-    return internal.$raw = constructOptionStr(internal.pos + 40, internal.ast);
+    return internal.$raw = constructOptionStr(internal.pos + 24, internal.ast);
   }
 
   toJSON() {
@@ -8261,7 +7596,6 @@ class JSXText {
       type: 'JSXText',
       start: this.start,
       end: this.end,
-      range: this.range,
       value: this.value,
       raw: this.raw,
     };
@@ -8299,14 +7633,9 @@ class TSThisParameter {
     return constructU32(internal.pos + 4, internal.ast);
   }
 
-  get range() {
-    const internal = this.#internal;
-    return constructOptionRangeArray(internal.pos + 8, internal.ast);
-  }
-
   get typeAnnotation() {
     const internal = this.#internal;
-    return constructOptionBoxTSTypeAnnotation(internal.pos + 48, internal.ast);
+    return constructOptionBoxTSTypeAnnotation(internal.pos + 16, internal.ast);
   }
 
   toJSON() {
@@ -8314,7 +7643,6 @@ class TSThisParameter {
       type: 'TSThisParameter',
       start: this.start,
       end: this.end,
-      range: this.range,
       typeAnnotation: this.typeAnnotation,
     };
   }
@@ -8351,29 +7679,24 @@ class TSEnumDeclaration {
     return constructU32(internal.pos + 4, internal.ast);
   }
 
-  get range() {
-    const internal = this.#internal;
-    return constructOptionRangeArray(internal.pos + 8, internal.ast);
-  }
-
   get id() {
     const internal = this.#internal;
-    return new BindingIdentifier(internal.pos + 24, internal.ast);
+    return new BindingIdentifier(internal.pos + 8, internal.ast);
   }
 
   get body() {
     const internal = this.#internal;
-    return new TSEnumBody(internal.pos + 72, internal.ast);
+    return new TSEnumBody(internal.pos + 40, internal.ast);
   }
 
   get const() {
     const internal = this.#internal;
-    return constructBool(internal.pos + 124, internal.ast);
+    return constructBool(internal.pos + 76, internal.ast);
   }
 
   get declare() {
     const internal = this.#internal;
-    return constructBool(internal.pos + 125, internal.ast);
+    return constructBool(internal.pos + 77, internal.ast);
   }
 
   toJSON() {
@@ -8381,7 +7704,6 @@ class TSEnumDeclaration {
       type: 'TSEnumDeclaration',
       start: this.start,
       end: this.end,
-      range: this.range,
       id: this.id,
       body: this.body,
       const: this.const,
@@ -8421,16 +7743,11 @@ class TSEnumBody {
     return constructU32(internal.pos + 4, internal.ast);
   }
 
-  get range() {
-    const internal = this.#internal;
-    return constructOptionRangeArray(internal.pos + 8, internal.ast);
-  }
-
   get members() {
     const internal = this.#internal,
       cached = internal.$members;
     if (cached !== void 0) return cached;
-    return internal.$members = constructVecTSEnumMember(internal.pos + 24, internal.ast);
+    return internal.$members = constructVecTSEnumMember(internal.pos + 8, internal.ast);
   }
 
   toJSON() {
@@ -8438,7 +7755,6 @@ class TSEnumBody {
       type: 'TSEnumBody',
       start: this.start,
       end: this.end,
-      range: this.range,
       members: this.members,
     };
   }
@@ -8475,19 +7791,14 @@ class TSEnumMember {
     return constructU32(internal.pos + 4, internal.ast);
   }
 
-  get range() {
-    const internal = this.#internal;
-    return constructOptionRangeArray(internal.pos + 8, internal.ast);
-  }
-
   get id() {
     const internal = this.#internal;
-    return constructTSEnumMemberName(internal.pos + 24, internal.ast);
+    return constructTSEnumMemberName(internal.pos + 8, internal.ast);
   }
 
   get initializer() {
     const internal = this.#internal;
-    return constructOptionExpression(internal.pos + 40, internal.ast);
+    return constructOptionExpression(internal.pos + 24, internal.ast);
   }
 
   toJSON() {
@@ -8495,7 +7806,6 @@ class TSEnumMember {
       type: 'TSEnumMember',
       start: this.start,
       end: this.end,
-      range: this.range,
       id: this.id,
       initializer: this.initializer,
     };
@@ -8548,14 +7858,9 @@ class TSTypeAnnotation {
     return constructU32(internal.pos + 4, internal.ast);
   }
 
-  get range() {
-    const internal = this.#internal;
-    return constructOptionRangeArray(internal.pos + 8, internal.ast);
-  }
-
   get typeAnnotation() {
     const internal = this.#internal;
-    return constructTSType(internal.pos + 24, internal.ast);
+    return constructTSType(internal.pos + 8, internal.ast);
   }
 
   toJSON() {
@@ -8563,7 +7868,6 @@ class TSTypeAnnotation {
       type: 'TSTypeAnnotation',
       start: this.start,
       end: this.end,
-      range: this.range,
       typeAnnotation: this.typeAnnotation,
     };
   }
@@ -8600,14 +7904,9 @@ class TSLiteralType {
     return constructU32(internal.pos + 4, internal.ast);
   }
 
-  get range() {
-    const internal = this.#internal;
-    return constructOptionRangeArray(internal.pos + 8, internal.ast);
-  }
-
   get literal() {
     const internal = this.#internal;
-    return constructTSLiteral(internal.pos + 24, internal.ast);
+    return constructTSLiteral(internal.pos + 8, internal.ast);
   }
 
   toJSON() {
@@ -8615,7 +7914,6 @@ class TSLiteralType {
       type: 'TSLiteralType',
       start: this.start,
       end: this.end,
-      range: this.range,
       literal: this.literal,
     };
   }
@@ -8752,29 +8050,24 @@ class TSConditionalType {
     return constructU32(internal.pos + 4, internal.ast);
   }
 
-  get range() {
-    const internal = this.#internal;
-    return constructOptionRangeArray(internal.pos + 8, internal.ast);
-  }
-
   get checkType() {
     const internal = this.#internal;
-    return constructTSType(internal.pos + 24, internal.ast);
+    return constructTSType(internal.pos + 8, internal.ast);
   }
 
   get extendsType() {
     const internal = this.#internal;
-    return constructTSType(internal.pos + 40, internal.ast);
+    return constructTSType(internal.pos + 24, internal.ast);
   }
 
   get trueType() {
     const internal = this.#internal;
-    return constructTSType(internal.pos + 56, internal.ast);
+    return constructTSType(internal.pos + 40, internal.ast);
   }
 
   get falseType() {
     const internal = this.#internal;
-    return constructTSType(internal.pos + 72, internal.ast);
+    return constructTSType(internal.pos + 56, internal.ast);
   }
 
   toJSON() {
@@ -8782,7 +8075,6 @@ class TSConditionalType {
       type: 'TSConditionalType',
       start: this.start,
       end: this.end,
-      range: this.range,
       checkType: this.checkType,
       extendsType: this.extendsType,
       trueType: this.trueType,
@@ -8822,16 +8114,11 @@ class TSUnionType {
     return constructU32(internal.pos + 4, internal.ast);
   }
 
-  get range() {
-    const internal = this.#internal;
-    return constructOptionRangeArray(internal.pos + 8, internal.ast);
-  }
-
   get types() {
     const internal = this.#internal,
       cached = internal.$types;
     if (cached !== void 0) return cached;
-    return internal.$types = constructVecTSType(internal.pos + 24, internal.ast);
+    return internal.$types = constructVecTSType(internal.pos + 8, internal.ast);
   }
 
   toJSON() {
@@ -8839,7 +8126,6 @@ class TSUnionType {
       type: 'TSUnionType',
       start: this.start,
       end: this.end,
-      range: this.range,
       types: this.types,
     };
   }
@@ -8876,16 +8162,11 @@ class TSIntersectionType {
     return constructU32(internal.pos + 4, internal.ast);
   }
 
-  get range() {
-    const internal = this.#internal;
-    return constructOptionRangeArray(internal.pos + 8, internal.ast);
-  }
-
   get types() {
     const internal = this.#internal,
       cached = internal.$types;
     if (cached !== void 0) return cached;
-    return internal.$types = constructVecTSType(internal.pos + 24, internal.ast);
+    return internal.$types = constructVecTSType(internal.pos + 8, internal.ast);
   }
 
   toJSON() {
@@ -8893,7 +8174,6 @@ class TSIntersectionType {
       type: 'TSIntersectionType',
       start: this.start,
       end: this.end,
-      range: this.range,
       types: this.types,
     };
   }
@@ -8930,14 +8210,9 @@ class TSParenthesizedType {
     return constructU32(internal.pos + 4, internal.ast);
   }
 
-  get range() {
-    const internal = this.#internal;
-    return constructOptionRangeArray(internal.pos + 8, internal.ast);
-  }
-
   get typeAnnotation() {
     const internal = this.#internal;
-    return constructTSType(internal.pos + 24, internal.ast);
+    return constructTSType(internal.pos + 8, internal.ast);
   }
 
   toJSON() {
@@ -8945,7 +8220,6 @@ class TSParenthesizedType {
       type: 'TSParenthesizedType',
       start: this.start,
       end: this.end,
-      range: this.range,
       typeAnnotation: this.typeAnnotation,
     };
   }
@@ -8982,19 +8256,14 @@ class TSTypeOperator {
     return constructU32(internal.pos + 4, internal.ast);
   }
 
-  get range() {
-    const internal = this.#internal;
-    return constructOptionRangeArray(internal.pos + 8, internal.ast);
-  }
-
   get operator() {
     const internal = this.#internal;
-    return constructTSTypeOperatorOperator(internal.pos + 40, internal.ast);
+    return constructTSTypeOperatorOperator(internal.pos + 24, internal.ast);
   }
 
   get typeAnnotation() {
     const internal = this.#internal;
-    return constructTSType(internal.pos + 24, internal.ast);
+    return constructTSType(internal.pos + 8, internal.ast);
   }
 
   toJSON() {
@@ -9002,7 +8271,6 @@ class TSTypeOperator {
       type: 'TSTypeOperator',
       start: this.start,
       end: this.end,
-      range: this.range,
       operator: this.operator,
       typeAnnotation: this.typeAnnotation,
     };
@@ -9053,14 +8321,9 @@ class TSArrayType {
     return constructU32(internal.pos + 4, internal.ast);
   }
 
-  get range() {
-    const internal = this.#internal;
-    return constructOptionRangeArray(internal.pos + 8, internal.ast);
-  }
-
   get elementType() {
     const internal = this.#internal;
-    return constructTSType(internal.pos + 24, internal.ast);
+    return constructTSType(internal.pos + 8, internal.ast);
   }
 
   toJSON() {
@@ -9068,7 +8331,6 @@ class TSArrayType {
       type: 'TSArrayType',
       start: this.start,
       end: this.end,
-      range: this.range,
       elementType: this.elementType,
     };
   }
@@ -9105,19 +8367,14 @@ class TSIndexedAccessType {
     return constructU32(internal.pos + 4, internal.ast);
   }
 
-  get range() {
-    const internal = this.#internal;
-    return constructOptionRangeArray(internal.pos + 8, internal.ast);
-  }
-
   get objectType() {
     const internal = this.#internal;
-    return constructTSType(internal.pos + 24, internal.ast);
+    return constructTSType(internal.pos + 8, internal.ast);
   }
 
   get indexType() {
     const internal = this.#internal;
-    return constructTSType(internal.pos + 40, internal.ast);
+    return constructTSType(internal.pos + 24, internal.ast);
   }
 
   toJSON() {
@@ -9125,7 +8382,6 @@ class TSIndexedAccessType {
       type: 'TSIndexedAccessType',
       start: this.start,
       end: this.end,
-      range: this.range,
       objectType: this.objectType,
       indexType: this.indexType,
     };
@@ -9163,16 +8419,11 @@ class TSTupleType {
     return constructU32(internal.pos + 4, internal.ast);
   }
 
-  get range() {
-    const internal = this.#internal;
-    return constructOptionRangeArray(internal.pos + 8, internal.ast);
-  }
-
   get elementTypes() {
     const internal = this.#internal,
       cached = internal.$elementTypes;
     if (cached !== void 0) return cached;
-    return internal.$elementTypes = constructVecTSTupleElement(internal.pos + 24, internal.ast);
+    return internal.$elementTypes = constructVecTSTupleElement(internal.pos + 8, internal.ast);
   }
 
   toJSON() {
@@ -9180,7 +8431,6 @@ class TSTupleType {
       type: 'TSTupleType',
       start: this.start,
       end: this.end,
-      range: this.range,
       elementTypes: this.elementTypes,
     };
   }
@@ -9217,24 +8467,19 @@ class TSNamedTupleMember {
     return constructU32(internal.pos + 4, internal.ast);
   }
 
-  get range() {
-    const internal = this.#internal;
-    return constructOptionRangeArray(internal.pos + 8, internal.ast);
-  }
-
   get label() {
     const internal = this.#internal;
-    return new IdentifierName(internal.pos + 24, internal.ast);
+    return new IdentifierName(internal.pos + 8, internal.ast);
   }
 
   get elementType() {
     const internal = this.#internal;
-    return constructTSTupleElement(internal.pos + 64, internal.ast);
+    return constructTSTupleElement(internal.pos + 32, internal.ast);
   }
 
   get optional() {
     const internal = this.#internal;
-    return constructBool(internal.pos + 80, internal.ast);
+    return constructBool(internal.pos + 48, internal.ast);
   }
 
   toJSON() {
@@ -9242,7 +8487,6 @@ class TSNamedTupleMember {
       type: 'TSNamedTupleMember',
       start: this.start,
       end: this.end,
-      range: this.range,
       label: this.label,
       elementType: this.elementType,
       optional: this.optional,
@@ -9281,14 +8525,9 @@ class TSOptionalType {
     return constructU32(internal.pos + 4, internal.ast);
   }
 
-  get range() {
-    const internal = this.#internal;
-    return constructOptionRangeArray(internal.pos + 8, internal.ast);
-  }
-
   get typeAnnotation() {
     const internal = this.#internal;
-    return constructTSType(internal.pos + 24, internal.ast);
+    return constructTSType(internal.pos + 8, internal.ast);
   }
 
   toJSON() {
@@ -9296,7 +8535,6 @@ class TSOptionalType {
       type: 'TSOptionalType',
       start: this.start,
       end: this.end,
-      range: this.range,
       typeAnnotation: this.typeAnnotation,
     };
   }
@@ -9333,14 +8571,9 @@ class TSRestType {
     return constructU32(internal.pos + 4, internal.ast);
   }
 
-  get range() {
-    const internal = this.#internal;
-    return constructOptionRangeArray(internal.pos + 8, internal.ast);
-  }
-
   get typeAnnotation() {
     const internal = this.#internal;
-    return constructTSType(internal.pos + 24, internal.ast);
+    return constructTSType(internal.pos + 8, internal.ast);
   }
 
   toJSON() {
@@ -9348,7 +8581,6 @@ class TSRestType {
       type: 'TSRestType',
       start: this.start,
       end: this.end,
-      range: this.range,
       typeAnnotation: this.typeAnnotation,
     };
   }
@@ -9470,17 +8702,11 @@ class TSAnyKeyword {
     return constructU32(internal.pos + 4, internal.ast);
   }
 
-  get range() {
-    const internal = this.#internal;
-    return constructOptionRangeArray(internal.pos + 8, internal.ast);
-  }
-
   toJSON() {
     return {
       type: 'TSAnyKeyword',
       start: this.start,
       end: this.end,
-      range: this.range,
     };
   }
 
@@ -9516,17 +8742,11 @@ class TSStringKeyword {
     return constructU32(internal.pos + 4, internal.ast);
   }
 
-  get range() {
-    const internal = this.#internal;
-    return constructOptionRangeArray(internal.pos + 8, internal.ast);
-  }
-
   toJSON() {
     return {
       type: 'TSStringKeyword',
       start: this.start,
       end: this.end,
-      range: this.range,
     };
   }
 
@@ -9562,17 +8782,11 @@ class TSBooleanKeyword {
     return constructU32(internal.pos + 4, internal.ast);
   }
 
-  get range() {
-    const internal = this.#internal;
-    return constructOptionRangeArray(internal.pos + 8, internal.ast);
-  }
-
   toJSON() {
     return {
       type: 'TSBooleanKeyword',
       start: this.start,
       end: this.end,
-      range: this.range,
     };
   }
 
@@ -9608,17 +8822,11 @@ class TSNumberKeyword {
     return constructU32(internal.pos + 4, internal.ast);
   }
 
-  get range() {
-    const internal = this.#internal;
-    return constructOptionRangeArray(internal.pos + 8, internal.ast);
-  }
-
   toJSON() {
     return {
       type: 'TSNumberKeyword',
       start: this.start,
       end: this.end,
-      range: this.range,
     };
   }
 
@@ -9654,17 +8862,11 @@ class TSNeverKeyword {
     return constructU32(internal.pos + 4, internal.ast);
   }
 
-  get range() {
-    const internal = this.#internal;
-    return constructOptionRangeArray(internal.pos + 8, internal.ast);
-  }
-
   toJSON() {
     return {
       type: 'TSNeverKeyword',
       start: this.start,
       end: this.end,
-      range: this.range,
     };
   }
 
@@ -9700,17 +8902,11 @@ class TSIntrinsicKeyword {
     return constructU32(internal.pos + 4, internal.ast);
   }
 
-  get range() {
-    const internal = this.#internal;
-    return constructOptionRangeArray(internal.pos + 8, internal.ast);
-  }
-
   toJSON() {
     return {
       type: 'TSIntrinsicKeyword',
       start: this.start,
       end: this.end,
-      range: this.range,
     };
   }
 
@@ -9746,17 +8942,11 @@ class TSUnknownKeyword {
     return constructU32(internal.pos + 4, internal.ast);
   }
 
-  get range() {
-    const internal = this.#internal;
-    return constructOptionRangeArray(internal.pos + 8, internal.ast);
-  }
-
   toJSON() {
     return {
       type: 'TSUnknownKeyword',
       start: this.start,
       end: this.end,
-      range: this.range,
     };
   }
 
@@ -9792,17 +8982,11 @@ class TSNullKeyword {
     return constructU32(internal.pos + 4, internal.ast);
   }
 
-  get range() {
-    const internal = this.#internal;
-    return constructOptionRangeArray(internal.pos + 8, internal.ast);
-  }
-
   toJSON() {
     return {
       type: 'TSNullKeyword',
       start: this.start,
       end: this.end,
-      range: this.range,
     };
   }
 
@@ -9838,17 +9022,11 @@ class TSUndefinedKeyword {
     return constructU32(internal.pos + 4, internal.ast);
   }
 
-  get range() {
-    const internal = this.#internal;
-    return constructOptionRangeArray(internal.pos + 8, internal.ast);
-  }
-
   toJSON() {
     return {
       type: 'TSUndefinedKeyword',
       start: this.start,
       end: this.end,
-      range: this.range,
     };
   }
 
@@ -9884,17 +9062,11 @@ class TSVoidKeyword {
     return constructU32(internal.pos + 4, internal.ast);
   }
 
-  get range() {
-    const internal = this.#internal;
-    return constructOptionRangeArray(internal.pos + 8, internal.ast);
-  }
-
   toJSON() {
     return {
       type: 'TSVoidKeyword',
       start: this.start,
       end: this.end,
-      range: this.range,
     };
   }
 
@@ -9930,17 +9102,11 @@ class TSSymbolKeyword {
     return constructU32(internal.pos + 4, internal.ast);
   }
 
-  get range() {
-    const internal = this.#internal;
-    return constructOptionRangeArray(internal.pos + 8, internal.ast);
-  }
-
   toJSON() {
     return {
       type: 'TSSymbolKeyword',
       start: this.start,
       end: this.end,
-      range: this.range,
     };
   }
 
@@ -9976,17 +9142,11 @@ class TSThisType {
     return constructU32(internal.pos + 4, internal.ast);
   }
 
-  get range() {
-    const internal = this.#internal;
-    return constructOptionRangeArray(internal.pos + 8, internal.ast);
-  }
-
   toJSON() {
     return {
       type: 'TSThisType',
       start: this.start,
       end: this.end,
-      range: this.range,
     };
   }
 
@@ -10022,17 +9182,11 @@ class TSObjectKeyword {
     return constructU32(internal.pos + 4, internal.ast);
   }
 
-  get range() {
-    const internal = this.#internal;
-    return constructOptionRangeArray(internal.pos + 8, internal.ast);
-  }
-
   toJSON() {
     return {
       type: 'TSObjectKeyword',
       start: this.start,
       end: this.end,
-      range: this.range,
     };
   }
 
@@ -10068,17 +9222,11 @@ class TSBigIntKeyword {
     return constructU32(internal.pos + 4, internal.ast);
   }
 
-  get range() {
-    const internal = this.#internal;
-    return constructOptionRangeArray(internal.pos + 8, internal.ast);
-  }
-
   toJSON() {
     return {
       type: 'TSBigIntKeyword',
       start: this.start,
       end: this.end,
-      range: this.range,
     };
   }
 
@@ -10114,19 +9262,14 @@ class TSTypeReference {
     return constructU32(internal.pos + 4, internal.ast);
   }
 
-  get range() {
-    const internal = this.#internal;
-    return constructOptionRangeArray(internal.pos + 8, internal.ast);
-  }
-
   get typeName() {
     const internal = this.#internal;
-    return constructTSTypeName(internal.pos + 24, internal.ast);
+    return constructTSTypeName(internal.pos + 8, internal.ast);
   }
 
   get typeArguments() {
     const internal = this.#internal;
-    return constructOptionBoxTSTypeParameterInstantiation(internal.pos + 40, internal.ast);
+    return constructOptionBoxTSTypeParameterInstantiation(internal.pos + 24, internal.ast);
   }
 
   toJSON() {
@@ -10134,7 +9277,6 @@ class TSTypeReference {
       type: 'TSTypeReference',
       start: this.start,
       end: this.end,
-      range: this.range,
       typeName: this.typeName,
       typeArguments: this.typeArguments,
     };
@@ -10183,19 +9325,14 @@ class TSQualifiedName {
     return constructU32(internal.pos + 4, internal.ast);
   }
 
-  get range() {
-    const internal = this.#internal;
-    return constructOptionRangeArray(internal.pos + 8, internal.ast);
-  }
-
   get left() {
     const internal = this.#internal;
-    return constructTSTypeName(internal.pos + 24, internal.ast);
+    return constructTSTypeName(internal.pos + 8, internal.ast);
   }
 
   get right() {
     const internal = this.#internal;
-    return new IdentifierName(internal.pos + 40, internal.ast);
+    return new IdentifierName(internal.pos + 24, internal.ast);
   }
 
   toJSON() {
@@ -10203,7 +9340,6 @@ class TSQualifiedName {
       type: 'TSQualifiedName',
       start: this.start,
       end: this.end,
-      range: this.range,
       left: this.left,
       right: this.right,
     };
@@ -10241,16 +9377,11 @@ class TSTypeParameterInstantiation {
     return constructU32(internal.pos + 4, internal.ast);
   }
 
-  get range() {
-    const internal = this.#internal;
-    return constructOptionRangeArray(internal.pos + 8, internal.ast);
-  }
-
   get params() {
     const internal = this.#internal,
       cached = internal.$params;
     if (cached !== void 0) return cached;
-    return internal.$params = constructVecTSType(internal.pos + 24, internal.ast);
+    return internal.$params = constructVecTSType(internal.pos + 8, internal.ast);
   }
 
   toJSON() {
@@ -10258,7 +9389,6 @@ class TSTypeParameterInstantiation {
       type: 'TSTypeParameterInstantiation',
       start: this.start,
       end: this.end,
-      range: this.range,
       params: this.params,
     };
   }
@@ -10295,39 +9425,34 @@ class TSTypeParameter {
     return constructU32(internal.pos + 4, internal.ast);
   }
 
-  get range() {
-    const internal = this.#internal;
-    return constructOptionRangeArray(internal.pos + 8, internal.ast);
-  }
-
   get name() {
     const internal = this.#internal;
-    return new BindingIdentifier(internal.pos + 24, internal.ast);
+    return new BindingIdentifier(internal.pos + 8, internal.ast);
   }
 
   get constraint() {
     const internal = this.#internal;
-    return constructOptionTSType(internal.pos + 72, internal.ast);
+    return constructOptionTSType(internal.pos + 40, internal.ast);
   }
 
   get default() {
     const internal = this.#internal;
-    return constructOptionTSType(internal.pos + 88, internal.ast);
+    return constructOptionTSType(internal.pos + 56, internal.ast);
   }
 
   get in() {
     const internal = this.#internal;
-    return constructBool(internal.pos + 104, internal.ast);
+    return constructBool(internal.pos + 72, internal.ast);
   }
 
   get out() {
     const internal = this.#internal;
-    return constructBool(internal.pos + 105, internal.ast);
+    return constructBool(internal.pos + 73, internal.ast);
   }
 
   get const() {
     const internal = this.#internal;
-    return constructBool(internal.pos + 106, internal.ast);
+    return constructBool(internal.pos + 74, internal.ast);
   }
 
   toJSON() {
@@ -10335,7 +9460,6 @@ class TSTypeParameter {
       type: 'TSTypeParameter',
       start: this.start,
       end: this.end,
-      range: this.range,
       name: this.name,
       constraint: this.constraint,
       default: this.default,
@@ -10377,16 +9501,11 @@ class TSTypeParameterDeclaration {
     return constructU32(internal.pos + 4, internal.ast);
   }
 
-  get range() {
-    const internal = this.#internal;
-    return constructOptionRangeArray(internal.pos + 8, internal.ast);
-  }
-
   get params() {
     const internal = this.#internal,
       cached = internal.$params;
     if (cached !== void 0) return cached;
-    return internal.$params = constructVecTSTypeParameter(internal.pos + 24, internal.ast);
+    return internal.$params = constructVecTSTypeParameter(internal.pos + 8, internal.ast);
   }
 
   toJSON() {
@@ -10394,7 +9513,6 @@ class TSTypeParameterDeclaration {
       type: 'TSTypeParameterDeclaration',
       start: this.start,
       end: this.end,
-      range: this.range,
       params: this.params,
     };
   }
@@ -10431,29 +9549,24 @@ class TSTypeAliasDeclaration {
     return constructU32(internal.pos + 4, internal.ast);
   }
 
-  get range() {
-    const internal = this.#internal;
-    return constructOptionRangeArray(internal.pos + 8, internal.ast);
-  }
-
   get id() {
     const internal = this.#internal;
-    return new BindingIdentifier(internal.pos + 24, internal.ast);
+    return new BindingIdentifier(internal.pos + 8, internal.ast);
   }
 
   get typeParameters() {
     const internal = this.#internal;
-    return constructOptionBoxTSTypeParameterDeclaration(internal.pos + 72, internal.ast);
+    return constructOptionBoxTSTypeParameterDeclaration(internal.pos + 40, internal.ast);
   }
 
   get typeAnnotation() {
     const internal = this.#internal;
-    return constructTSType(internal.pos + 80, internal.ast);
+    return constructTSType(internal.pos + 48, internal.ast);
   }
 
   get declare() {
     const internal = this.#internal;
-    return constructBool(internal.pos + 100, internal.ast);
+    return constructBool(internal.pos + 68, internal.ast);
   }
 
   toJSON() {
@@ -10461,7 +9574,6 @@ class TSTypeAliasDeclaration {
       type: 'TSTypeAliasDeclaration',
       start: this.start,
       end: this.end,
-      range: this.range,
       id: this.id,
       typeParameters: this.typeParameters,
       typeAnnotation: this.typeAnnotation,
@@ -10514,19 +9626,14 @@ class TSClassImplements {
     return constructU32(internal.pos + 4, internal.ast);
   }
 
-  get range() {
-    const internal = this.#internal;
-    return constructOptionRangeArray(internal.pos + 8, internal.ast);
-  }
-
   get expression() {
     const internal = this.#internal;
-    return constructTSTypeName(internal.pos + 24, internal.ast);
+    return constructTSTypeName(internal.pos + 8, internal.ast);
   }
 
   get typeArguments() {
     const internal = this.#internal;
-    return constructOptionBoxTSTypeParameterInstantiation(internal.pos + 40, internal.ast);
+    return constructOptionBoxTSTypeParameterInstantiation(internal.pos + 24, internal.ast);
   }
 
   toJSON() {
@@ -10534,7 +9641,6 @@ class TSClassImplements {
       type: 'TSClassImplements',
       start: this.start,
       end: this.end,
-      range: this.range,
       expression: this.expression,
       typeArguments: this.typeArguments,
     };
@@ -10572,36 +9678,31 @@ class TSInterfaceDeclaration {
     return constructU32(internal.pos + 4, internal.ast);
   }
 
-  get range() {
-    const internal = this.#internal;
-    return constructOptionRangeArray(internal.pos + 8, internal.ast);
-  }
-
   get id() {
     const internal = this.#internal;
-    return new BindingIdentifier(internal.pos + 24, internal.ast);
+    return new BindingIdentifier(internal.pos + 8, internal.ast);
   }
 
   get typeParameters() {
     const internal = this.#internal;
-    return constructOptionBoxTSTypeParameterDeclaration(internal.pos + 72, internal.ast);
+    return constructOptionBoxTSTypeParameterDeclaration(internal.pos + 40, internal.ast);
   }
 
   get extends() {
     const internal = this.#internal,
       cached = internal.$extends;
     if (cached !== void 0) return cached;
-    return internal.$extends = constructVecTSInterfaceHeritage(internal.pos + 80, internal.ast);
+    return internal.$extends = constructVecTSInterfaceHeritage(internal.pos + 48, internal.ast);
   }
 
   get body() {
     const internal = this.#internal;
-    return constructBoxTSInterfaceBody(internal.pos + 104, internal.ast);
+    return constructBoxTSInterfaceBody(internal.pos + 72, internal.ast);
   }
 
   get declare() {
     const internal = this.#internal;
-    return constructBool(internal.pos + 116, internal.ast);
+    return constructBool(internal.pos + 84, internal.ast);
   }
 
   toJSON() {
@@ -10609,7 +9710,6 @@ class TSInterfaceDeclaration {
       type: 'TSInterfaceDeclaration',
       start: this.start,
       end: this.end,
-      range: this.range,
       id: this.id,
       typeParameters: this.typeParameters,
       extends: this.extends,
@@ -10650,16 +9750,11 @@ class TSInterfaceBody {
     return constructU32(internal.pos + 4, internal.ast);
   }
 
-  get range() {
-    const internal = this.#internal;
-    return constructOptionRangeArray(internal.pos + 8, internal.ast);
-  }
-
   get body() {
     const internal = this.#internal,
       cached = internal.$body;
     if (cached !== void 0) return cached;
-    return internal.$body = constructVecTSSignature(internal.pos + 24, internal.ast);
+    return internal.$body = constructVecTSSignature(internal.pos + 8, internal.ast);
   }
 
   toJSON() {
@@ -10667,7 +9762,6 @@ class TSInterfaceBody {
       type: 'TSInterfaceBody',
       start: this.start,
       end: this.end,
-      range: this.range,
       body: this.body,
     };
   }
@@ -10704,34 +9798,29 @@ class TSPropertySignature {
     return constructU32(internal.pos + 4, internal.ast);
   }
 
-  get range() {
-    const internal = this.#internal;
-    return constructOptionRangeArray(internal.pos + 8, internal.ast);
-  }
-
   get computed() {
     const internal = this.#internal;
-    return constructBool(internal.pos + 48, internal.ast);
+    return constructBool(internal.pos + 32, internal.ast);
   }
 
   get optional() {
     const internal = this.#internal;
-    return constructBool(internal.pos + 49, internal.ast);
+    return constructBool(internal.pos + 33, internal.ast);
   }
 
   get readonly() {
     const internal = this.#internal;
-    return constructBool(internal.pos + 50, internal.ast);
+    return constructBool(internal.pos + 34, internal.ast);
   }
 
   get key() {
     const internal = this.#internal;
-    return constructPropertyKey(internal.pos + 24, internal.ast);
+    return constructPropertyKey(internal.pos + 8, internal.ast);
   }
 
   get typeAnnotation() {
     const internal = this.#internal;
-    return constructOptionBoxTSTypeAnnotation(internal.pos + 40, internal.ast);
+    return constructOptionBoxTSTypeAnnotation(internal.pos + 24, internal.ast);
   }
 
   toJSON() {
@@ -10739,7 +9828,6 @@ class TSPropertySignature {
       type: 'TSPropertySignature',
       start: this.start,
       end: this.end,
-      range: this.range,
       computed: this.computed,
       optional: this.optional,
       readonly: this.readonly,
@@ -10797,31 +9885,26 @@ class TSIndexSignature {
     return constructU32(internal.pos + 4, internal.ast);
   }
 
-  get range() {
-    const internal = this.#internal;
-    return constructOptionRangeArray(internal.pos + 8, internal.ast);
-  }
-
   get parameters() {
     const internal = this.#internal,
       cached = internal.$parameters;
     if (cached !== void 0) return cached;
-    return internal.$parameters = constructVecTSIndexSignatureName(internal.pos + 24, internal.ast);
+    return internal.$parameters = constructVecTSIndexSignatureName(internal.pos + 8, internal.ast);
   }
 
   get typeAnnotation() {
     const internal = this.#internal;
-    return constructBoxTSTypeAnnotation(internal.pos + 48, internal.ast);
+    return constructBoxTSTypeAnnotation(internal.pos + 32, internal.ast);
   }
 
   get readonly() {
     const internal = this.#internal;
-    return constructBool(internal.pos + 56, internal.ast);
+    return constructBool(internal.pos + 40, internal.ast);
   }
 
   get static() {
     const internal = this.#internal;
-    return constructBool(internal.pos + 57, internal.ast);
+    return constructBool(internal.pos + 41, internal.ast);
   }
 
   toJSON() {
@@ -10829,7 +9912,6 @@ class TSIndexSignature {
       type: 'TSIndexSignature',
       start: this.start,
       end: this.end,
-      range: this.range,
       parameters: this.parameters,
       typeAnnotation: this.typeAnnotation,
       readonly: this.readonly,
@@ -10869,24 +9951,19 @@ class TSCallSignatureDeclaration {
     return constructU32(internal.pos + 4, internal.ast);
   }
 
-  get range() {
-    const internal = this.#internal;
-    return constructOptionRangeArray(internal.pos + 8, internal.ast);
-  }
-
   get typeParameters() {
     const internal = this.#internal;
-    return constructOptionBoxTSTypeParameterDeclaration(internal.pos + 24, internal.ast);
+    return constructOptionBoxTSTypeParameterDeclaration(internal.pos + 8, internal.ast);
   }
 
   get params() {
     const internal = this.#internal;
-    return constructBoxFormalParameters(internal.pos + 40, internal.ast);
+    return constructBoxFormalParameters(internal.pos + 24, internal.ast);
   }
 
   get returnType() {
     const internal = this.#internal;
-    return constructOptionBoxTSTypeAnnotation(internal.pos + 48, internal.ast);
+    return constructOptionBoxTSTypeAnnotation(internal.pos + 32, internal.ast);
   }
 
   toJSON() {
@@ -10894,7 +9971,6 @@ class TSCallSignatureDeclaration {
       type: 'TSCallSignatureDeclaration',
       start: this.start,
       end: this.end,
-      range: this.range,
       typeParameters: this.typeParameters,
       params: this.params,
       returnType: this.returnType,
@@ -10946,44 +10022,39 @@ class TSMethodSignature {
     return constructU32(internal.pos + 4, internal.ast);
   }
 
-  get range() {
-    const internal = this.#internal;
-    return constructOptionRangeArray(internal.pos + 8, internal.ast);
-  }
-
   get key() {
     const internal = this.#internal;
-    return constructPropertyKey(internal.pos + 24, internal.ast);
+    return constructPropertyKey(internal.pos + 8, internal.ast);
   }
 
   get computed() {
     const internal = this.#internal;
-    return constructBool(internal.pos + 76, internal.ast);
+    return constructBool(internal.pos + 60, internal.ast);
   }
 
   get optional() {
     const internal = this.#internal;
-    return constructBool(internal.pos + 77, internal.ast);
+    return constructBool(internal.pos + 61, internal.ast);
   }
 
   get kind() {
     const internal = this.#internal;
-    return constructTSMethodSignatureKind(internal.pos + 78, internal.ast);
+    return constructTSMethodSignatureKind(internal.pos + 62, internal.ast);
   }
 
   get typeParameters() {
     const internal = this.#internal;
-    return constructOptionBoxTSTypeParameterDeclaration(internal.pos + 40, internal.ast);
+    return constructOptionBoxTSTypeParameterDeclaration(internal.pos + 24, internal.ast);
   }
 
   get params() {
     const internal = this.#internal;
-    return constructBoxFormalParameters(internal.pos + 56, internal.ast);
+    return constructBoxFormalParameters(internal.pos + 40, internal.ast);
   }
 
   get returnType() {
     const internal = this.#internal;
-    return constructOptionBoxTSTypeAnnotation(internal.pos + 64, internal.ast);
+    return constructOptionBoxTSTypeAnnotation(internal.pos + 48, internal.ast);
   }
 
   toJSON() {
@@ -10991,7 +10062,6 @@ class TSMethodSignature {
       type: 'TSMethodSignature',
       start: this.start,
       end: this.end,
-      range: this.range,
       key: this.key,
       computed: this.computed,
       optional: this.optional,
@@ -11034,24 +10104,19 @@ class TSConstructSignatureDeclaration {
     return constructU32(internal.pos + 4, internal.ast);
   }
 
-  get range() {
-    const internal = this.#internal;
-    return constructOptionRangeArray(internal.pos + 8, internal.ast);
-  }
-
   get typeParameters() {
     const internal = this.#internal;
-    return constructOptionBoxTSTypeParameterDeclaration(internal.pos + 24, internal.ast);
+    return constructOptionBoxTSTypeParameterDeclaration(internal.pos + 8, internal.ast);
   }
 
   get params() {
     const internal = this.#internal;
-    return constructBoxFormalParameters(internal.pos + 32, internal.ast);
+    return constructBoxFormalParameters(internal.pos + 16, internal.ast);
   }
 
   get returnType() {
     const internal = this.#internal;
-    return constructOptionBoxTSTypeAnnotation(internal.pos + 40, internal.ast);
+    return constructOptionBoxTSTypeAnnotation(internal.pos + 24, internal.ast);
   }
 
   toJSON() {
@@ -11059,7 +10124,6 @@ class TSConstructSignatureDeclaration {
       type: 'TSConstructSignatureDeclaration',
       start: this.start,
       end: this.end,
-      range: this.range,
       typeParameters: this.typeParameters,
       params: this.params,
       returnType: this.returnType,
@@ -11098,21 +10162,16 @@ class TSIndexSignatureName {
     return constructU32(internal.pos + 4, internal.ast);
   }
 
-  get range() {
-    const internal = this.#internal;
-    return constructOptionRangeArray(internal.pos + 8, internal.ast);
-  }
-
   get name() {
     const internal = this.#internal,
       cached = internal.$name;
     if (cached !== void 0) return cached;
-    return internal.$name = constructStr(internal.pos + 24, internal.ast);
+    return internal.$name = constructStr(internal.pos + 8, internal.ast);
   }
 
   get typeAnnotation() {
     const internal = this.#internal;
-    return constructBoxTSTypeAnnotation(internal.pos + 40, internal.ast);
+    return constructBoxTSTypeAnnotation(internal.pos + 24, internal.ast);
   }
 
   toJSON() {
@@ -11120,7 +10179,6 @@ class TSIndexSignatureName {
       type: 'TSIndexSignatureName',
       start: this.start,
       end: this.end,
-      range: this.range,
       name: this.name,
       typeAnnotation: this.typeAnnotation,
     };
@@ -11158,19 +10216,14 @@ class TSInterfaceHeritage {
     return constructU32(internal.pos + 4, internal.ast);
   }
 
-  get range() {
-    const internal = this.#internal;
-    return constructOptionRangeArray(internal.pos + 8, internal.ast);
-  }
-
   get expression() {
     const internal = this.#internal;
-    return constructExpression(internal.pos + 24, internal.ast);
+    return constructExpression(internal.pos + 8, internal.ast);
   }
 
   get typeArguments() {
     const internal = this.#internal;
-    return constructOptionBoxTSTypeParameterInstantiation(internal.pos + 40, internal.ast);
+    return constructOptionBoxTSTypeParameterInstantiation(internal.pos + 24, internal.ast);
   }
 
   toJSON() {
@@ -11178,7 +10231,6 @@ class TSInterfaceHeritage {
       type: 'TSInterfaceHeritage',
       start: this.start,
       end: this.end,
-      range: this.range,
       expression: this.expression,
       typeArguments: this.typeArguments,
     };
@@ -11216,24 +10268,19 @@ class TSTypePredicate {
     return constructU32(internal.pos + 4, internal.ast);
   }
 
-  get range() {
-    const internal = this.#internal;
-    return constructOptionRangeArray(internal.pos + 8, internal.ast);
-  }
-
   get parameterName() {
     const internal = this.#internal;
-    return constructTSTypePredicateName(internal.pos + 24, internal.ast);
+    return constructTSTypePredicateName(internal.pos + 8, internal.ast);
   }
 
   get asserts() {
     const internal = this.#internal;
-    return constructBool(internal.pos + 64, internal.ast);
+    return constructBool(internal.pos + 32, internal.ast);
   }
 
   get typeAnnotation() {
     const internal = this.#internal;
-    return constructOptionBoxTSTypeAnnotation(internal.pos + 56, internal.ast);
+    return constructOptionBoxTSTypeAnnotation(internal.pos + 24, internal.ast);
   }
 
   toJSON() {
@@ -11241,7 +10288,6 @@ class TSTypePredicate {
       type: 'TSTypePredicate',
       start: this.start,
       end: this.end,
-      range: this.range,
       parameterName: this.parameterName,
       asserts: this.asserts,
       typeAnnotation: this.typeAnnotation,
@@ -11291,29 +10337,24 @@ class TSModuleDeclaration {
     return constructU32(internal.pos + 4, internal.ast);
   }
 
-  get range() {
-    const internal = this.#internal;
-    return constructOptionRangeArray(internal.pos + 8, internal.ast);
-  }
-
   get id() {
     const internal = this.#internal;
-    return constructTSModuleDeclarationName(internal.pos + 24, internal.ast);
+    return constructTSModuleDeclarationName(internal.pos + 8, internal.ast);
   }
 
   get body() {
     const internal = this.#internal;
-    return constructOptionTSModuleDeclarationBody(internal.pos + 96, internal.ast);
+    return constructOptionTSModuleDeclarationBody(internal.pos + 64, internal.ast);
   }
 
   get kind() {
     const internal = this.#internal;
-    return constructTSModuleDeclarationKind(internal.pos + 116, internal.ast);
+    return constructTSModuleDeclarationKind(internal.pos + 84, internal.ast);
   }
 
   get declare() {
     const internal = this.#internal;
-    return constructBool(internal.pos + 117, internal.ast);
+    return constructBool(internal.pos + 85, internal.ast);
   }
 
   toJSON() {
@@ -11321,7 +10362,6 @@ class TSModuleDeclaration {
       type: 'TSModuleDeclaration',
       start: this.start,
       end: this.end,
-      range: this.range,
       id: this.id,
       body: this.body,
       kind: this.kind,
@@ -11396,16 +10436,11 @@ class TSModuleBlock {
     return constructU32(internal.pos + 4, internal.ast);
   }
 
-  get range() {
-    const internal = this.#internal;
-    return constructOptionRangeArray(internal.pos + 8, internal.ast);
-  }
-
   get body() {
     const internal = this.#internal,
       cached = internal.$body;
     if (cached !== void 0) return cached;
-    return internal.$body = constructVecStatement(internal.pos + 48, internal.ast);
+    return internal.$body = constructVecStatement(internal.pos + 32, internal.ast);
   }
 
   toJSON() {
@@ -11413,7 +10448,6 @@ class TSModuleBlock {
       type: 'TSModuleBlock',
       start: this.start,
       end: this.end,
-      range: this.range,
       body: this.body,
     };
   }
@@ -11450,16 +10484,11 @@ class TSTypeLiteral {
     return constructU32(internal.pos + 4, internal.ast);
   }
 
-  get range() {
-    const internal = this.#internal;
-    return constructOptionRangeArray(internal.pos + 8, internal.ast);
-  }
-
   get members() {
     const internal = this.#internal,
       cached = internal.$members;
     if (cached !== void 0) return cached;
-    return internal.$members = constructVecTSSignature(internal.pos + 24, internal.ast);
+    return internal.$members = constructVecTSSignature(internal.pos + 8, internal.ast);
   }
 
   toJSON() {
@@ -11467,7 +10496,6 @@ class TSTypeLiteral {
       type: 'TSTypeLiteral',
       start: this.start,
       end: this.end,
-      range: this.range,
       members: this.members,
     };
   }
@@ -11504,14 +10532,9 @@ class TSInferType {
     return constructU32(internal.pos + 4, internal.ast);
   }
 
-  get range() {
-    const internal = this.#internal;
-    return constructOptionRangeArray(internal.pos + 8, internal.ast);
-  }
-
   get typeParameter() {
     const internal = this.#internal;
-    return constructBoxTSTypeParameter(internal.pos + 24, internal.ast);
+    return constructBoxTSTypeParameter(internal.pos + 8, internal.ast);
   }
 
   toJSON() {
@@ -11519,7 +10542,6 @@ class TSInferType {
       type: 'TSInferType',
       start: this.start,
       end: this.end,
-      range: this.range,
       typeParameter: this.typeParameter,
     };
   }
@@ -11556,19 +10578,14 @@ class TSTypeQuery {
     return constructU32(internal.pos + 4, internal.ast);
   }
 
-  get range() {
-    const internal = this.#internal;
-    return constructOptionRangeArray(internal.pos + 8, internal.ast);
-  }
-
   get exprName() {
     const internal = this.#internal;
-    return constructTSTypeQueryExprName(internal.pos + 24, internal.ast);
+    return constructTSTypeQueryExprName(internal.pos + 8, internal.ast);
   }
 
   get typeArguments() {
     const internal = this.#internal;
-    return constructOptionBoxTSTypeParameterInstantiation(internal.pos + 40, internal.ast);
+    return constructOptionBoxTSTypeParameterInstantiation(internal.pos + 24, internal.ast);
   }
 
   toJSON() {
@@ -11576,7 +10593,6 @@ class TSTypeQuery {
       type: 'TSTypeQuery',
       start: this.start,
       end: this.end,
-      range: this.range,
       exprName: this.exprName,
       typeArguments: this.typeArguments,
     };
@@ -11627,29 +10643,24 @@ class TSImportType {
     return constructU32(internal.pos + 4, internal.ast);
   }
 
-  get range() {
-    const internal = this.#internal;
-    return constructOptionRangeArray(internal.pos + 8, internal.ast);
-  }
-
   get argument() {
     const internal = this.#internal;
-    return constructTSType(internal.pos + 24, internal.ast);
+    return constructTSType(internal.pos + 8, internal.ast);
   }
 
   get options() {
     const internal = this.#internal;
-    return constructOptionBoxObjectExpression(internal.pos + 40, internal.ast);
+    return constructOptionBoxObjectExpression(internal.pos + 24, internal.ast);
   }
 
   get qualifier() {
     const internal = this.#internal;
-    return constructOptionTSTypeName(internal.pos + 48, internal.ast);
+    return constructOptionTSTypeName(internal.pos + 32, internal.ast);
   }
 
   get typeArguments() {
     const internal = this.#internal;
-    return constructOptionBoxTSTypeParameterInstantiation(internal.pos + 64, internal.ast);
+    return constructOptionBoxTSTypeParameterInstantiation(internal.pos + 48, internal.ast);
   }
 
   toJSON() {
@@ -11657,7 +10668,6 @@ class TSImportType {
       type: 'TSImportType',
       start: this.start,
       end: this.end,
-      range: this.range,
       argument: this.argument,
       options: this.options,
       qualifier: this.qualifier,
@@ -11697,24 +10707,19 @@ class TSFunctionType {
     return constructU32(internal.pos + 4, internal.ast);
   }
 
-  get range() {
-    const internal = this.#internal;
-    return constructOptionRangeArray(internal.pos + 8, internal.ast);
-  }
-
   get typeParameters() {
     const internal = this.#internal;
-    return constructOptionBoxTSTypeParameterDeclaration(internal.pos + 24, internal.ast);
+    return constructOptionBoxTSTypeParameterDeclaration(internal.pos + 8, internal.ast);
   }
 
   get params() {
     const internal = this.#internal;
-    return constructBoxFormalParameters(internal.pos + 40, internal.ast);
+    return constructBoxFormalParameters(internal.pos + 24, internal.ast);
   }
 
   get returnType() {
     const internal = this.#internal;
-    return constructBoxTSTypeAnnotation(internal.pos + 48, internal.ast);
+    return constructBoxTSTypeAnnotation(internal.pos + 32, internal.ast);
   }
 
   toJSON() {
@@ -11722,7 +10727,6 @@ class TSFunctionType {
       type: 'TSFunctionType',
       start: this.start,
       end: this.end,
-      range: this.range,
       typeParameters: this.typeParameters,
       params: this.params,
       returnType: this.returnType,
@@ -11761,29 +10765,24 @@ class TSConstructorType {
     return constructU32(internal.pos + 4, internal.ast);
   }
 
-  get range() {
-    const internal = this.#internal;
-    return constructOptionRangeArray(internal.pos + 8, internal.ast);
-  }
-
   get abstract() {
     const internal = this.#internal;
-    return constructBool(internal.pos + 48, internal.ast);
+    return constructBool(internal.pos + 32, internal.ast);
   }
 
   get typeParameters() {
     const internal = this.#internal;
-    return constructOptionBoxTSTypeParameterDeclaration(internal.pos + 24, internal.ast);
+    return constructOptionBoxTSTypeParameterDeclaration(internal.pos + 8, internal.ast);
   }
 
   get params() {
     const internal = this.#internal;
-    return constructBoxFormalParameters(internal.pos + 32, internal.ast);
+    return constructBoxFormalParameters(internal.pos + 16, internal.ast);
   }
 
   get returnType() {
     const internal = this.#internal;
-    return constructBoxTSTypeAnnotation(internal.pos + 40, internal.ast);
+    return constructBoxTSTypeAnnotation(internal.pos + 24, internal.ast);
   }
 
   toJSON() {
@@ -11791,7 +10790,6 @@ class TSConstructorType {
       type: 'TSConstructorType',
       start: this.start,
       end: this.end,
-      range: this.range,
       abstract: this.abstract,
       typeParameters: this.typeParameters,
       params: this.params,
@@ -11831,29 +10829,24 @@ class TSMappedType {
     return constructU32(internal.pos + 4, internal.ast);
   }
 
-  get range() {
-    const internal = this.#internal;
-    return constructOptionRangeArray(internal.pos + 8, internal.ast);
-  }
-
   get nameType() {
     const internal = this.#internal;
-    return constructOptionTSType(internal.pos + 32, internal.ast);
+    return constructOptionTSType(internal.pos + 16, internal.ast);
   }
 
   get typeAnnotation() {
     const internal = this.#internal;
-    return constructOptionTSType(internal.pos + 48, internal.ast);
+    return constructOptionTSType(internal.pos + 32, internal.ast);
   }
 
   get optional() {
     const internal = this.#internal;
-    return constructOptionTSMappedTypeModifierOperator(internal.pos + 68, internal.ast);
+    return constructOptionTSMappedTypeModifierOperator(internal.pos + 52, internal.ast);
   }
 
   get readonly() {
     const internal = this.#internal;
-    return constructOptionTSMappedTypeModifierOperator(internal.pos + 69, internal.ast);
+    return constructOptionTSMappedTypeModifierOperator(internal.pos + 53, internal.ast);
   }
 
   toJSON() {
@@ -11861,7 +10854,6 @@ class TSMappedType {
       type: 'TSMappedType',
       start: this.start,
       end: this.end,
-      range: this.range,
       nameType: this.nameType,
       typeAnnotation: this.typeAnnotation,
       optional: this.optional,
@@ -11914,23 +10906,18 @@ class TSTemplateLiteralType {
     return constructU32(internal.pos + 4, internal.ast);
   }
 
-  get range() {
-    const internal = this.#internal;
-    return constructOptionRangeArray(internal.pos + 8, internal.ast);
-  }
-
   get quasis() {
     const internal = this.#internal,
       cached = internal.$quasis;
     if (cached !== void 0) return cached;
-    return internal.$quasis = constructVecTemplateElement(internal.pos + 24, internal.ast);
+    return internal.$quasis = constructVecTemplateElement(internal.pos + 8, internal.ast);
   }
 
   get types() {
     const internal = this.#internal,
       cached = internal.$types;
     if (cached !== void 0) return cached;
-    return internal.$types = constructVecTSType(internal.pos + 48, internal.ast);
+    return internal.$types = constructVecTSType(internal.pos + 32, internal.ast);
   }
 
   toJSON() {
@@ -11938,7 +10925,6 @@ class TSTemplateLiteralType {
       type: 'TSTemplateLiteralType',
       start: this.start,
       end: this.end,
-      range: this.range,
       quasis: this.quasis,
       types: this.types,
     };
@@ -11976,19 +10962,14 @@ class TSAsExpression {
     return constructU32(internal.pos + 4, internal.ast);
   }
 
-  get range() {
-    const internal = this.#internal;
-    return constructOptionRangeArray(internal.pos + 8, internal.ast);
-  }
-
   get expression() {
     const internal = this.#internal;
-    return constructExpression(internal.pos + 24, internal.ast);
+    return constructExpression(internal.pos + 8, internal.ast);
   }
 
   get typeAnnotation() {
     const internal = this.#internal;
-    return constructTSType(internal.pos + 40, internal.ast);
+    return constructTSType(internal.pos + 24, internal.ast);
   }
 
   toJSON() {
@@ -11996,7 +10977,6 @@ class TSAsExpression {
       type: 'TSAsExpression',
       start: this.start,
       end: this.end,
-      range: this.range,
       expression: this.expression,
       typeAnnotation: this.typeAnnotation,
     };
@@ -12034,19 +11014,14 @@ class TSSatisfiesExpression {
     return constructU32(internal.pos + 4, internal.ast);
   }
 
-  get range() {
-    const internal = this.#internal;
-    return constructOptionRangeArray(internal.pos + 8, internal.ast);
-  }
-
   get expression() {
     const internal = this.#internal;
-    return constructExpression(internal.pos + 24, internal.ast);
+    return constructExpression(internal.pos + 8, internal.ast);
   }
 
   get typeAnnotation() {
     const internal = this.#internal;
-    return constructTSType(internal.pos + 40, internal.ast);
+    return constructTSType(internal.pos + 24, internal.ast);
   }
 
   toJSON() {
@@ -12054,7 +11029,6 @@ class TSSatisfiesExpression {
       type: 'TSSatisfiesExpression',
       start: this.start,
       end: this.end,
-      range: this.range,
       expression: this.expression,
       typeAnnotation: this.typeAnnotation,
     };
@@ -12092,19 +11066,14 @@ class TSTypeAssertion {
     return constructU32(internal.pos + 4, internal.ast);
   }
 
-  get range() {
-    const internal = this.#internal;
-    return constructOptionRangeArray(internal.pos + 8, internal.ast);
-  }
-
   get typeAnnotation() {
     const internal = this.#internal;
-    return constructTSType(internal.pos + 24, internal.ast);
+    return constructTSType(internal.pos + 8, internal.ast);
   }
 
   get expression() {
     const internal = this.#internal;
-    return constructExpression(internal.pos + 40, internal.ast);
+    return constructExpression(internal.pos + 24, internal.ast);
   }
 
   toJSON() {
@@ -12112,7 +11081,6 @@ class TSTypeAssertion {
       type: 'TSTypeAssertion',
       start: this.start,
       end: this.end,
-      range: this.range,
       typeAnnotation: this.typeAnnotation,
       expression: this.expression,
     };
@@ -12150,24 +11118,19 @@ class TSImportEqualsDeclaration {
     return constructU32(internal.pos + 4, internal.ast);
   }
 
-  get range() {
-    const internal = this.#internal;
-    return constructOptionRangeArray(internal.pos + 8, internal.ast);
-  }
-
   get id() {
     const internal = this.#internal;
-    return new BindingIdentifier(internal.pos + 24, internal.ast);
+    return new BindingIdentifier(internal.pos + 8, internal.ast);
   }
 
   get moduleReference() {
     const internal = this.#internal;
-    return constructTSModuleReference(internal.pos + 72, internal.ast);
+    return constructTSModuleReference(internal.pos + 40, internal.ast);
   }
 
   get importKind() {
     const internal = this.#internal;
-    return constructImportOrExportKind(internal.pos + 88, internal.ast);
+    return constructImportOrExportKind(internal.pos + 56, internal.ast);
   }
 
   toJSON() {
@@ -12175,7 +11138,6 @@ class TSImportEqualsDeclaration {
       type: 'TSImportEqualsDeclaration',
       start: this.start,
       end: this.end,
-      range: this.range,
       id: this.id,
       moduleReference: this.moduleReference,
       importKind: this.importKind,
@@ -12227,14 +11189,9 @@ class TSExternalModuleReference {
     return constructU32(internal.pos + 4, internal.ast);
   }
 
-  get range() {
-    const internal = this.#internal;
-    return constructOptionRangeArray(internal.pos + 8, internal.ast);
-  }
-
   get expression() {
     const internal = this.#internal;
-    return new StringLiteral(internal.pos + 24, internal.ast);
+    return new StringLiteral(internal.pos + 8, internal.ast);
   }
 
   toJSON() {
@@ -12242,7 +11199,6 @@ class TSExternalModuleReference {
       type: 'TSExternalModuleReference',
       start: this.start,
       end: this.end,
-      range: this.range,
       expression: this.expression,
     };
   }
@@ -12279,14 +11235,9 @@ class TSNonNullExpression {
     return constructU32(internal.pos + 4, internal.ast);
   }
 
-  get range() {
-    const internal = this.#internal;
-    return constructOptionRangeArray(internal.pos + 8, internal.ast);
-  }
-
   get expression() {
     const internal = this.#internal;
-    return constructExpression(internal.pos + 24, internal.ast);
+    return constructExpression(internal.pos + 8, internal.ast);
   }
 
   toJSON() {
@@ -12294,7 +11245,6 @@ class TSNonNullExpression {
       type: 'TSNonNullExpression',
       start: this.start,
       end: this.end,
-      range: this.range,
       expression: this.expression,
     };
   }
@@ -12331,14 +11281,9 @@ class Decorator {
     return constructU32(internal.pos + 4, internal.ast);
   }
 
-  get range() {
-    const internal = this.#internal;
-    return constructOptionRangeArray(internal.pos + 8, internal.ast);
-  }
-
   get expression() {
     const internal = this.#internal;
-    return constructExpression(internal.pos + 24, internal.ast);
+    return constructExpression(internal.pos + 8, internal.ast);
   }
 
   toJSON() {
@@ -12346,7 +11291,6 @@ class Decorator {
       type: 'Decorator',
       start: this.start,
       end: this.end,
-      range: this.range,
       expression: this.expression,
     };
   }
@@ -12383,14 +11327,9 @@ class TSExportAssignment {
     return constructU32(internal.pos + 4, internal.ast);
   }
 
-  get range() {
-    const internal = this.#internal;
-    return constructOptionRangeArray(internal.pos + 8, internal.ast);
-  }
-
   get expression() {
     const internal = this.#internal;
-    return constructExpression(internal.pos + 24, internal.ast);
+    return constructExpression(internal.pos + 8, internal.ast);
   }
 
   toJSON() {
@@ -12398,7 +11337,6 @@ class TSExportAssignment {
       type: 'TSExportAssignment',
       start: this.start,
       end: this.end,
-      range: this.range,
       expression: this.expression,
     };
   }
@@ -12435,14 +11373,9 @@ class TSNamespaceExportDeclaration {
     return constructU32(internal.pos + 4, internal.ast);
   }
 
-  get range() {
-    const internal = this.#internal;
-    return constructOptionRangeArray(internal.pos + 8, internal.ast);
-  }
-
   get id() {
     const internal = this.#internal;
-    return new IdentifierName(internal.pos + 24, internal.ast);
+    return new IdentifierName(internal.pos + 8, internal.ast);
   }
 
   toJSON() {
@@ -12450,7 +11383,6 @@ class TSNamespaceExportDeclaration {
       type: 'TSNamespaceExportDeclaration',
       start: this.start,
       end: this.end,
-      range: this.range,
       id: this.id,
     };
   }
@@ -12487,19 +11419,14 @@ class TSInstantiationExpression {
     return constructU32(internal.pos + 4, internal.ast);
   }
 
-  get range() {
-    const internal = this.#internal;
-    return constructOptionRangeArray(internal.pos + 8, internal.ast);
-  }
-
   get expression() {
     const internal = this.#internal;
-    return constructExpression(internal.pos + 24, internal.ast);
+    return constructExpression(internal.pos + 8, internal.ast);
   }
 
   get typeArguments() {
     const internal = this.#internal;
-    return constructBoxTSTypeParameterInstantiation(internal.pos + 40, internal.ast);
+    return constructBoxTSTypeParameterInstantiation(internal.pos + 24, internal.ast);
   }
 
   toJSON() {
@@ -12507,7 +11434,6 @@ class TSInstantiationExpression {
       type: 'TSInstantiationExpression',
       start: this.start,
       end: this.end,
-      range: this.range,
       expression: this.expression,
       typeArguments: this.typeArguments,
     };
@@ -12556,19 +11482,14 @@ class JSDocNullableType {
     return constructU32(internal.pos + 4, internal.ast);
   }
 
-  get range() {
-    const internal = this.#internal;
-    return constructOptionRangeArray(internal.pos + 8, internal.ast);
-  }
-
   get typeAnnotation() {
     const internal = this.#internal;
-    return constructTSType(internal.pos + 24, internal.ast);
+    return constructTSType(internal.pos + 8, internal.ast);
   }
 
   get postfix() {
     const internal = this.#internal;
-    return constructBool(internal.pos + 40, internal.ast);
+    return constructBool(internal.pos + 24, internal.ast);
   }
 
   toJSON() {
@@ -12576,7 +11497,6 @@ class JSDocNullableType {
       type: 'JSDocNullableType',
       start: this.start,
       end: this.end,
-      range: this.range,
       typeAnnotation: this.typeAnnotation,
       postfix: this.postfix,
     };
@@ -12614,19 +11534,14 @@ class JSDocNonNullableType {
     return constructU32(internal.pos + 4, internal.ast);
   }
 
-  get range() {
-    const internal = this.#internal;
-    return constructOptionRangeArray(internal.pos + 8, internal.ast);
-  }
-
   get typeAnnotation() {
     const internal = this.#internal;
-    return constructTSType(internal.pos + 24, internal.ast);
+    return constructTSType(internal.pos + 8, internal.ast);
   }
 
   get postfix() {
     const internal = this.#internal;
-    return constructBool(internal.pos + 40, internal.ast);
+    return constructBool(internal.pos + 24, internal.ast);
   }
 
   toJSON() {
@@ -12634,7 +11549,6 @@ class JSDocNonNullableType {
       type: 'JSDocNonNullableType',
       start: this.start,
       end: this.end,
-      range: this.range,
       typeAnnotation: this.typeAnnotation,
       postfix: this.postfix,
     };
@@ -12672,17 +11586,11 @@ class JSDocUnknownType {
     return constructU32(internal.pos + 4, internal.ast);
   }
 
-  get range() {
-    const internal = this.#internal;
-    return constructOptionRangeArray(internal.pos + 8, internal.ast);
-  }
-
   toJSON() {
     return {
       type: 'JSDocUnknownType',
       start: this.start,
       end: this.end,
-      range: this.range,
     };
   }
 
@@ -12728,21 +11636,15 @@ class Comment {
     return constructU32(internal.pos + 4, internal.ast);
   }
 
-  get range() {
-    const internal = this.#internal;
-    return constructOptionRangeArray(internal.pos + 8, internal.ast);
-  }
-
   get type() {
     const internal = this.#internal;
-    return constructCommentKind(internal.pos + 28, internal.ast);
+    return constructCommentKind(internal.pos + 12, internal.ast);
   }
 
   toJSON() {
     return {
       start: this.start,
       end: this.end,
-      range: this.range,
       type: this.type,
     };
   }
@@ -12772,7 +11674,7 @@ class NameSpan {
     const internal = this.#internal,
       cached = internal.$value;
     if (cached !== void 0) return cached;
-    return internal.$value = constructStr(internal.pos + 24, internal.ast);
+    return internal.$value = constructStr(internal.pos + 8, internal.ast);
   }
 
   get start() {
@@ -12785,17 +11687,11 @@ class NameSpan {
     return constructU32(internal.pos + 4, internal.ast);
   }
 
-  get range() {
-    const internal = this.#internal;
-    return constructOptionRangeArray(internal.pos + 8, internal.ast);
-  }
-
   toJSON() {
     return {
       value: this.value,
       start: this.start,
       end: this.end,
-      range: this.range,
     };
   }
 
@@ -12822,17 +11718,17 @@ class ImportEntry {
 
   get importName() {
     const internal = this.#internal;
-    return constructImportImportName(internal.pos + 64, internal.ast);
+    return constructImportImportName(internal.pos + 32, internal.ast);
   }
 
   get localName() {
     const internal = this.#internal;
-    return new NameSpan(internal.pos + 112, internal.ast);
+    return new NameSpan(internal.pos + 64, internal.ast);
   }
 
   get isType() {
     const internal = this.#internal;
-    return constructBool(internal.pos + 152, internal.ast);
+    return constructBool(internal.pos + 88, internal.ast);
   }
 
   toJSON() {
@@ -12887,41 +11783,35 @@ class ExportEntry {
     return constructU32(internal.pos + 4, internal.ast);
   }
 
-  get range() {
-    const internal = this.#internal;
-    return constructOptionRangeArray(internal.pos + 8, internal.ast);
-  }
-
   get moduleRequest() {
     const internal = this.#internal;
-    return constructOptionNameSpan(internal.pos + 48, internal.ast);
+    return constructOptionNameSpan(internal.pos + 16, internal.ast);
   }
 
   get importName() {
     const internal = this.#internal;
-    return constructExportImportName(internal.pos + 88, internal.ast);
+    return constructExportImportName(internal.pos + 40, internal.ast);
   }
 
   get exportName() {
     const internal = this.#internal;
-    return constructExportExportName(internal.pos + 136, internal.ast);
+    return constructExportExportName(internal.pos + 72, internal.ast);
   }
 
   get localName() {
     const internal = this.#internal;
-    return constructExportLocalName(internal.pos + 184, internal.ast);
+    return constructExportLocalName(internal.pos + 104, internal.ast);
   }
 
   get isType() {
     const internal = this.#internal;
-    return constructBool(internal.pos + 232, internal.ast);
+    return constructBool(internal.pos + 136, internal.ast);
   }
 
   toJSON() {
     return {
       start: this.start,
       end: this.end,
-      range: this.range,
       moduleRequest: this.moduleRequest,
       importName: this.importName,
       exportName: this.exportName,
@@ -13002,21 +11892,15 @@ class DynamicImport {
     return constructU32(internal.pos + 4, internal.ast);
   }
 
-  get range() {
-    const internal = this.#internal;
-    return constructOptionRangeArray(internal.pos + 8, internal.ast);
-  }
-
   get moduleRequest() {
     const internal = this.#internal;
-    return new Span(internal.pos + 24, internal.ast);
+    return new Span(internal.pos + 8, internal.ast);
   }
 
   toJSON() {
     return {
       start: this.start,
       end: this.end,
-      range: this.range,
       moduleRequest: this.moduleRequest,
     };
   }
@@ -13187,16 +12071,10 @@ class Span {
     return constructU32(internal.pos + 4, internal.ast);
   }
 
-  get range() {
-    const internal = this.#internal;
-    return constructOptionRangeArray(internal.pos + 8, internal.ast);
-  }
-
   toJSON() {
     return {
       start: this.start,
       end: this.end,
-      range: this.range,
     };
   }
 
@@ -13274,19 +12152,19 @@ class RawTransferData {
     const internal = this.#internal,
       cached = internal.$comments;
     if (cached !== void 0) return cached;
-    return internal.$comments = constructVecComment(internal.pos + 160, internal.ast);
+    return internal.$comments = constructVecComment(internal.pos + 128, internal.ast);
   }
 
   get module() {
     const internal = this.#internal;
-    return new EcmaScriptModule(internal.pos + 184, internal.ast);
+    return new EcmaScriptModule(internal.pos + 152, internal.ast);
   }
 
   get errors() {
     const internal = this.#internal,
       cached = internal.$errors;
     if (cached !== void 0) return cached;
-    return internal.$errors = constructVecError(internal.pos + 288, internal.ast);
+    return internal.$errors = constructVecError(internal.pos + 256, internal.ast);
   }
 
   toJSON() {
@@ -13400,7 +12278,7 @@ class ErrorLabel {
     const internal = this.#internal,
       cached = internal.$message;
     if (cached !== void 0) return cached;
-    return internal.$message = constructOptionStr(internal.pos + 24, internal.ast);
+    return internal.$message = constructOptionStr(internal.pos + 8, internal.ast);
   }
 
   get start() {
@@ -13413,17 +12291,11 @@ class ErrorLabel {
     return constructU32(internal.pos + 4, internal.ast);
   }
 
-  get range() {
-    const internal = this.#internal;
-    return constructOptionRangeArray(internal.pos + 8, internal.ast);
-  }
-
   toJSON() {
     return {
       message: this.message,
       start: this.start,
       end: this.end,
-      range: this.range,
     };
   }
 
@@ -13529,28 +12401,22 @@ class StaticImport {
     return constructU32(internal.pos + 4, internal.ast);
   }
 
-  get range() {
-    const internal = this.#internal;
-    return constructOptionRangeArray(internal.pos + 8, internal.ast);
-  }
-
   get moduleRequest() {
     const internal = this.#internal;
-    return new NameSpan(internal.pos + 24, internal.ast);
+    return new NameSpan(internal.pos + 8, internal.ast);
   }
 
   get entries() {
     const internal = this.#internal,
       cached = internal.$entries;
     if (cached !== void 0) return cached;
-    return internal.$entries = constructVecImportEntry(internal.pos + 64, internal.ast);
+    return internal.$entries = constructVecImportEntry(internal.pos + 32, internal.ast);
   }
 
   toJSON() {
     return {
       start: this.start,
       end: this.end,
-      range: this.range,
       moduleRequest: this.moduleRequest,
       entries: this.entries,
     };
@@ -13587,23 +12453,17 @@ class StaticExport {
     return constructU32(internal.pos + 4, internal.ast);
   }
 
-  get range() {
-    const internal = this.#internal;
-    return constructOptionRangeArray(internal.pos + 8, internal.ast);
-  }
-
   get entries() {
     const internal = this.#internal,
       cached = internal.$entries;
     if (cached !== void 0) return cached;
-    return internal.$entries = constructVecExportEntry(internal.pos + 24, internal.ast);
+    return internal.$entries = constructVecExportEntry(internal.pos + 8, internal.ast);
   }
 
   toJSON() {
     return {
       start: this.start,
       end: this.end,
-      range: this.range,
       entries: this.entries,
     };
   }
@@ -13652,7 +12512,7 @@ function constructVecComment(pos, ast) {
   return new NodeArray(
     uint32[pos32],
     uint32[pos32 + 2],
-    32,
+    16,
     constructComment,
     ast,
   );
@@ -13663,7 +12523,7 @@ function constructComment(pos, ast) {
 }
 
 function constructOptionHashbang(pos, ast) {
-  if (ast.buffer[pos + 8] === 2) return null;
+  if (ast.buffer.uint32[(pos + 8) >> 2] === 0 && ast.buffer.uint32[(pos + 12) >> 2] === 0) return null;
   return new Hashbang(pos, ast);
 }
 
@@ -13673,7 +12533,7 @@ function constructVecDirective(pos, ast) {
   return new NodeArray(
     uint32[pos32],
     uint32[pos32 + 2],
-    104,
+    72,
     constructDirective,
     ast,
   );
@@ -13861,7 +12721,7 @@ function constructVecArrayExpressionElement(pos, ast) {
   return new NodeArray(
     uint32[pos32],
     uint32[pos32 + 2],
-    32,
+    16,
     constructArrayExpressionElement,
     ast,
   );
@@ -13905,7 +12765,7 @@ function constructVecTemplateElement(pos, ast) {
   return new NodeArray(
     uint32[pos32],
     uint32[pos32 + 2],
-    64,
+    48,
     constructTemplateElement,
     ast,
   );
@@ -13991,7 +12851,7 @@ function constructVecOptionAssignmentTargetMaybeDefault(pos, ast) {
 }
 
 function constructOptionAssignmentTargetRest(pos, ast) {
-  if (ast.buffer[pos + 8] === 2) return null;
+  if (ast.buffer[pos + 8] === 51) return null;
   return new AssignmentTargetRest(pos, ast);
 }
 
@@ -14126,7 +12986,7 @@ function constructVecVariableDeclarator(pos, ast) {
   return new NodeArray(
     uint32[pos32],
     uint32[pos32 + 2],
-    80,
+    64,
     constructVariableDeclarator,
     ast,
   );
@@ -14147,7 +13007,7 @@ function constructOptionForStatementInit(pos, ast) {
 }
 
 function constructOptionLabelIdentifier(pos, ast) {
-  if (ast.buffer[pos + 8] === 2) return null;
+  if (ast.buffer.uint32[(pos + 8) >> 2] === 0 && ast.buffer.uint32[(pos + 12) >> 2] === 0) return null;
   return new LabelIdentifier(pos, ast);
 }
 
@@ -14157,7 +13017,7 @@ function constructVecSwitchCase(pos, ast) {
   return new NodeArray(
     uint32[pos32],
     uint32[pos32 + 2],
-    64,
+    48,
     constructSwitchCase,
     ast,
   );
@@ -14182,7 +13042,7 @@ function constructOptionBoxBlockStatement(pos, ast) {
 }
 
 function constructOptionCatchParameter(pos, ast) {
-  if (ast.buffer[pos + 8] === 2) return null;
+  if (ast.buffer[pos + 32] === 2) return null;
   return new CatchParameter(pos, ast);
 }
 
@@ -14217,7 +13077,7 @@ function constructVecBindingProperty(pos, ast) {
   return new NodeArray(
     uint32[pos32],
     uint32[pos32 + 2],
-    80,
+    64,
     constructBindingProperty,
     ast,
   );
@@ -14254,7 +13114,7 @@ function constructVecOptionBindingPattern(pos, ast) {
 }
 
 function constructOptionBindingIdentifier(pos, ast) {
-  if (ast.buffer[pos + 8] === 2) return null;
+  if (ast.buffer.uint32[(pos + 8) >> 2] === 0 && ast.buffer.uint32[(pos + 12) >> 2] === 0) return null;
   return new BindingIdentifier(pos, ast);
 }
 
@@ -14295,7 +13155,7 @@ function constructVecFormalParameter(pos, ast) {
   return new NodeArray(
     uint32[pos32],
     uint32[pos32 + 2],
-    88,
+    72,
     constructFormalParameter,
     ast,
   );
@@ -14311,7 +13171,7 @@ function constructVecDecorator(pos, ast) {
   return new NodeArray(
     uint32[pos32],
     uint32[pos32 + 2],
-    40,
+    24,
     constructDecorator,
     ast,
   );
@@ -14332,7 +13192,7 @@ function constructVecTSClassImplements(pos, ast) {
   return new NodeArray(
     uint32[pos32],
     uint32[pos32 + 2],
-    48,
+    32,
     constructTSClassImplements,
     ast,
   );
@@ -14451,7 +13311,7 @@ function constructVecImportAttribute(pos, ast) {
   return new NodeArray(
     uint32[pos32],
     uint32[pos32 + 2],
-    160,
+    112,
     constructImportAttribute,
     ast,
   );
@@ -14472,7 +13332,7 @@ function constructVecExportSpecifier(pos, ast) {
   return new NodeArray(
     uint32[pos32],
     uint32[pos32 + 2],
-    176,
+    128,
     constructExportSpecifier,
     ast,
   );
@@ -14483,7 +13343,7 @@ function constructExportSpecifier(pos, ast) {
 }
 
 function constructOptionStringLiteral(pos, ast) {
-  if (ast.buffer[pos + 8] === 2) return null;
+  if (ast.buffer[pos + 40] === 2) return null;
   return new StringLiteral(pos, ast);
 }
 
@@ -14580,7 +13440,7 @@ function constructVecTSEnumMember(pos, ast) {
   return new NodeArray(
     uint32[pos32],
     uint32[pos32 + 2],
-    56,
+    40,
     constructTSEnumMember,
     ast,
   );
@@ -14785,7 +13645,7 @@ function constructVecTSTypeParameter(pos, ast) {
   return new NodeArray(
     uint32[pos32],
     uint32[pos32 + 2],
-    112,
+    80,
     constructTSTypeParameter,
     ast,
   );
@@ -14801,7 +13661,7 @@ function constructVecTSInterfaceHeritage(pos, ast) {
   return new NodeArray(
     uint32[pos32],
     uint32[pos32 + 2],
-    48,
+    32,
     constructTSInterfaceHeritage,
     ast,
   );
@@ -14849,7 +13709,7 @@ function constructVecTSIndexSignatureName(pos, ast) {
   return new NodeArray(
     uint32[pos32],
     uint32[pos32 + 2],
-    48,
+    32,
     constructTSIndexSignatureName,
     ast,
   );
@@ -14896,13 +13756,8 @@ function constructU32(pos, ast) {
 }
 
 function constructOptionNameSpan(pos, ast) {
-  if (ast.buffer[pos + 8] === 2) return null;
+  if (ast.buffer.uint32[(pos + 8) >> 2] === 0 && ast.buffer.uint32[(pos + 12) >> 2] === 0) return null;
   return new NameSpan(pos, ast);
-}
-
-function constructOptionRangeArray(pos, ast) {
-  if (ast.buffer[pos] === 0) return null;
-  return constructRangeArray(pos + 4, ast);
 }
 
 function constructU64(pos, ast) {
@@ -14938,7 +13793,7 @@ function constructVecErrorLabel(pos, ast) {
   return new NodeArray(
     uint32[pos32],
     uint32[pos32 + 2],
-    40,
+    24,
     constructErrorLabel,
     ast,
   );
@@ -14954,7 +13809,7 @@ function constructVecStaticImport(pos, ast) {
   return new NodeArray(
     uint32[pos32],
     uint32[pos32 + 2],
-    88,
+    56,
     constructStaticImport,
     ast,
   );
@@ -14970,7 +13825,7 @@ function constructVecStaticExport(pos, ast) {
   return new NodeArray(
     uint32[pos32],
     uint32[pos32 + 2],
-    48,
+    32,
     constructStaticExport,
     ast,
   );
@@ -14986,7 +13841,7 @@ function constructVecDynamicImport(pos, ast) {
   return new NodeArray(
     uint32[pos32],
     uint32[pos32 + 2],
-    48,
+    16,
     constructDynamicImport,
     ast,
   );
@@ -15002,7 +13857,7 @@ function constructVecSpan(pos, ast) {
   return new NodeArray(
     uint32[pos32],
     uint32[pos32 + 2],
-    24,
+    8,
     constructSpan,
     ast,
   );
@@ -15018,7 +13873,7 @@ function constructVecImportEntry(pos, ast) {
   return new NodeArray(
     uint32[pos32],
     uint32[pos32 + 2],
-    160,
+    96,
     constructImportEntry,
     ast,
   );
@@ -15034,7 +13889,7 @@ function constructVecExportEntry(pos, ast) {
   return new NodeArray(
     uint32[pos32],
     uint32[pos32 + 2],
-    240,
+    144,
     constructExportEntry,
     ast,
   );
