@@ -1159,4 +1159,10 @@ mod test {
         let args = &["-c", ".oxlintrc.json"];
         Tester::new().with_cwd("fixtures/issue_10394".into()).test_and_snapshot(args);
     }
+
+    #[test]
+    fn test_jsx_a11y_label_has_associated_control() {
+        let args = &["-c", ".oxlintrc.json"];
+        Tester::new().with_cwd("fixtures/issue_11644".into()).test_and_snapshot(args);
+    }
 }
