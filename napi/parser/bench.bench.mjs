@@ -2,8 +2,8 @@ import { writeFile } from 'fs/promises';
 import { join as pathJoin } from 'path';
 import { bench, describe } from 'vitest';
 import bindings from './bindings.js';
-import deserializeJS from './generated/deserialize/js.js';
-import deserializeTS from './generated/deserialize/ts.js';
+import deserializeJS from '@oxc-project/deserialize/js';
+import deserializeTS from '@oxc-project/deserialize/ts';
 import { parseAsync, parseSync } from './index.js';
 import { isJsAst, prepareRaw } from './raw-transfer/common.js';
 

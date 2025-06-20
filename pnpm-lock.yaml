@@ -31,7 +31,7 @@ importers:
         version: 5.8.3
       vitest:
         specifier: 'catalog:'
-        version: 3.2.3(@types/node@24.0.3)(@vitest/browser@3.2.3)(jiti@2.4.2)
+        version: 3.2.3(@types/node@24.0.3)(@vitest/browser@3.2.3)(@vitest/ui@3.2.3)(jiti@2.4.2)
 
   editors/vscode:
     dependencies:
@@ -80,7 +80,7 @@ importers:
         version: 5.8.3
       vitest:
         specifier: 'catalog:'
-        version: 3.2.3(@types/node@24.0.3)(@vitest/browser@3.2.3)(jiti@2.4.2)
+        version: 3.2.3(@types/node@24.0.3)(@vitest/browser@3.2.3)(@vitest/ui@3.2.3)(jiti@2.4.2)
 
   napi/parser:
     dependencies:
@@ -94,6 +94,9 @@ importers:
       '@napi-rs/wasm-runtime':
         specifier: ^0.2.7
         version: 0.2.11
+      '@oxc-project/deserialize':
+        specifier: workspace:^
+        version: link:../../npm/deserialize
       '@vitest/browser':
         specifier: 3.2.3
         version: 3.2.3(playwright@1.53.0)(vite@6.3.5(@types/node@24.0.3)(jiti@2.4.2))(vitest@3.2.3)
@@ -114,7 +117,7 @@ importers:
         version: 5.8.3
       vitest:
         specifier: 'catalog:'
-        version: 3.2.3(@types/node@24.0.3)(@vitest/browser@3.2.3)(jiti@2.4.2)
+        version: 3.2.3(@types/node@24.0.3)(@vitest/browser@3.2.3)(@vitest/ui@3.2.3)(jiti@2.4.2)
 
   napi/playground:
     dependencies:
@@ -129,7 +132,16 @@ importers:
         version: 5.8.3
       vitest:
         specifier: 'catalog:'
-        version: 3.2.3(@types/node@24.0.3)(@vitest/browser@3.2.3)(jiti@2.4.2)
+        version: 3.2.3(@types/node@24.0.3)(@vitest/browser@3.2.3)(@vitest/ui@3.2.3)(jiti@2.4.2)
+
+  npm/deserialize:
+    devDependencies:
+      tsdown:
+        specifier: ^0.12.8
+        version: 0.12.8(typescript@5.8.3)
+      typescript:
+        specifier: 'catalog:'
+        version: 5.8.3
 
   npm/oxc-types: {}
 
@@ -1635,6 +1647,11 @@ packages:
   '@vitest/spy@3.2.3':
     resolution: {integrity: sha512-JHu9Wl+7bf6FEejTCREy+DmgWe+rQKbK+y32C/k5f4TBIAlijhJbRBIRIOCEpVevgRsCQR2iHRUH2/qKVM/plw==}
 
+  '@vitest/ui@3.2.3':
+    resolution: {integrity: sha512-9aR2tY/WT7GRHGEH/9sSIipJqeA21Eh3C6xmiOVmfyBCFmezUSUFLalpaSmRHlRzWCKQU10yz3AHhKuYcdnZGQ==}
+    peerDependencies:
+      vitest: 3.2.3
+
   '@vitest/utils@3.2.3':
     resolution: {integrity: sha512-4zFBCU5Pf+4Z6v+rwnZ1HU1yzOKKvDkMXZrymE2PBlbjKJRlrOxbvpfPSvJTGRIwGoahaOGvp+kbCoxifhzJ1Q==}
 
@@ -2209,6 +2226,9 @@ packages:
       picomatch:
         optional: true
 
+  fflate@0.8.2:
+    resolution: {integrity: sha512-cPJU47OaAoCbg0pBvzsgpTPhmhqI5eJjh/JIu8tPj5q+T7iLvW/JAYUqmE7KOB4R1ZyEhzBaIQpQpardBF5z8A==}
+
   fill-range@7.1.1:
     resolution: {integrity: sha512-YsGpe3WHLK8ZYi4tWDg2Jy3ebRz2rXowDxnld4bkQB00cc/1Zw9AWnC0i9ztDJitivtQvaI9KaLyKrc+hBW0yg==}
     engines: {node: '>=8'}
@@ -2224,6 +2244,9 @@ packages:
   flat@5.0.2:
     resolution: {integrity: sha512-b6suED+5/3rTpUBdG1gupIl8MPFCAMA0QXwmljLhvCUKcUvdE4gWky9zpuGCcXHOsz4J9wPGNWq6OKpmIzz3hQ==}
     hasBin: true
+
+  flatted@3.3.3:
+    resolution: {integrity: sha512-GX+ysw4PBCz0PzosHDepZGANEuFCMLrnRTiEy9McGjmkCQYwRq4A/X786G/fjM/+OjsWSU1ZrY5qyARZmO/uwg==}
 
   follow-redirects@1.15.9:
     resolution: {integrity: sha512-gew4GsXizNgdoRyqmyfMHyAmXsZDk6mHkSxZFCzW9gwlbtOW44CDtYavM+y+72qD/Vq2l550kMF52DT8fOLJqQ==}
@@ -3970,7 +3993,7 @@ snapshots:
     dependencies:
       '@codspeed/core': 4.0.1
       vite: 6.3.5(@types/node@24.0.3)(jiti@2.4.2)
-      vitest: 3.2.3(@types/node@24.0.3)(@vitest/browser@3.2.3)(jiti@2.4.2)
+      vitest: 3.2.3(@types/node@24.0.3)(@vitest/browser@3.2.3)(@vitest/ui@3.2.3)(jiti@2.4.2)
     transitivePeerDependencies:
       - debug
 
@@ -4892,7 +4915,7 @@ snapshots:
       magic-string: 0.30.17
       sirv: 3.0.1
       tinyrainbow: 2.0.0
-      vitest: 3.2.3(@types/node@24.0.3)(@vitest/browser@3.2.3)(jiti@2.4.2)
+      vitest: 3.2.3(@types/node@24.0.3)(@vitest/browser@3.2.3)(@vitest/ui@3.2.3)(jiti@2.4.2)
       ws: 8.18.2
     optionalDependencies:
       playwright: 1.53.0
@@ -4937,6 +4960,18 @@ snapshots:
   '@vitest/spy@3.2.3':
     dependencies:
       tinyspy: 4.0.3
+
+  '@vitest/ui@3.2.3(vitest@3.2.3)':
+    dependencies:
+      '@vitest/utils': 3.2.3
+      fflate: 0.8.2
+      flatted: 3.3.3
+      pathe: 2.0.3
+      sirv: 3.0.1
+      tinyglobby: 0.2.14
+      tinyrainbow: 2.0.0
+      vitest: 3.2.3(@types/node@24.0.3)(@vitest/browser@3.2.3)(@vitest/ui@3.2.3)(jiti@2.4.2)
+    optional: true
 
   '@vitest/utils@3.2.3':
     dependencies:
@@ -5550,6 +5585,9 @@ snapshots:
     optionalDependencies:
       picomatch: 4.0.2
 
+  fflate@0.8.2:
+    optional: true
+
   fill-range@7.1.1:
     dependencies:
       to-regex-range: 5.0.1
@@ -5565,6 +5603,9 @@ snapshots:
       path-exists: 5.0.0
 
   flat@5.0.2: {}
+
+  flatted@3.3.3:
+    optional: true
 
   follow-redirects@1.15.9: {}
 
@@ -6828,7 +6869,7 @@ snapshots:
       fsevents: 2.3.3
       jiti: 2.4.2
 
-  vitest@3.2.3(@types/node@24.0.3)(@vitest/browser@3.2.3)(jiti@2.4.2):
+  vitest@3.2.3(@types/node@24.0.3)(@vitest/browser@3.2.3)(@vitest/ui@3.2.3)(jiti@2.4.2):
     dependencies:
       '@types/chai': 5.2.2
       '@vitest/expect': 3.2.3
@@ -6856,6 +6897,7 @@ snapshots:
     optionalDependencies:
       '@types/node': 24.0.3
       '@vitest/browser': 3.2.3(playwright@1.53.0)(vite@6.3.5(@types/node@24.0.3)(jiti@2.4.2))(vitest@3.2.3)
+      '@vitest/ui': 3.2.3(vitest@3.2.3)
     transitivePeerDependencies:
       - jiti
       - less
