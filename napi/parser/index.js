@@ -16,13 +16,15 @@ module.exports.Severity = bindings.Severity;
 
 module.exports.parseSync = parseSync;
 module.exports.parseAsync = parseAsync;
+module.exports.experimentalGetLazyVisitor = experimentalGetLazyVisitor;
 module.exports.rawTransferSupported = rawTransferSupported;
 
 // Lazily loaded as needed
 let parseSyncRaw = null,
   parseAsyncRaw,
   parseSyncLazy = null,
-  parseAsyncLazy;
+  parseAsyncLazy,
+  Visitor;
 
 /**
  * Lazy-load code related to raw transfer.
@@ -40,7 +42,7 @@ function loadRawTransfer() {
  */
 function loadRawTransferLazy() {
   if (parseSyncLazy === null) {
-    ({ parseSyncLazy, parseAsyncLazy } = require('./raw-transfer/lazy.js'));
+    ({ parseSyncLazy, parseAsyncLazy, Visitor } = require('./raw-transfer/lazy.js'));
   }
 }
 
@@ -96,4 +98,13 @@ async function parseAsync(filename, sourceText, options) {
     return await parseAsyncLazy(filename, sourceText, options);
   }
   return wrap(await parseAsyncBinding(filename, sourceText, options));
+}
+
+/**
+ * Get `Visitor` class to construct visitors with.
+ * @returns {function} - `Visitor` class
+ */
+function experimentalGetLazyVisitor() {
+  loadRawTransferLazy();
+  return Visitor;
 }

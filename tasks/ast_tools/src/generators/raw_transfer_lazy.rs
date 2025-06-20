@@ -1,4 +1,4 @@
-//! Generator for raw transfer lazy deserializer.
+//! Generator for raw transfer lazy deserializer and visitor.
 
 use std::{borrow::Cow, fmt::Debug, str};
 
@@ -26,18 +26,29 @@ use super::raw_transfer::{
     should_skip_innermost_type,
 };
 
-/// Generator for raw transfer lazy deserializer.
+/// Generator for raw transfer lazy deserializer and visitor.
 pub struct RawTransferLazyGenerator;
 
 define_generator!(RawTransferLazyGenerator);
 
 impl Generator for RawTransferLazyGenerator {
     fn generate_many(&self, schema: &Schema, codegen: &Codegen) -> Vec<Output> {
-        let constructors = generate(schema, codegen);
-        vec![Output::Javascript {
-            path: format!("{NAPI_PARSER_PACKAGE_PATH}/generated/deserialize/lazy.js"),
-            code: constructors,
-        }]
+        let (constructors, walkers, node_type_ids_map) = generate(schema, codegen);
+
+        vec![
+            Output::Javascript {
+                path: format!("{NAPI_PARSER_PACKAGE_PATH}/generated/deserialize/lazy.js"),
+                code: constructors,
+            },
+            Output::Javascript {
+                path: format!("{NAPI_PARSER_PACKAGE_PATH}/generated/deserialize/lazy-visit.js"),
+                code: walkers,
+            },
+            Output::Javascript {
+                path: format!("{NAPI_PARSER_PACKAGE_PATH}/generated/deserialize/lazy-types.js"),
+                code: node_type_ids_map,
+            },
+        ]
     }
 }
 
@@ -49,7 +60,9 @@ static CONSTRUCT_PRELUDE: &str = "
     const { TOKEN, constructorError } = require('../../raw-transfer/lazy-common.js'),
         NodeArray = require('../../raw-transfer/node-array.js');
 
-    module.exports = { construct, TOKEN };
+    const constructors = {};
+
+    module.exports = { construct, constructors };
 
     function construct(ast) {
         // (2 * 1024 * 1024 * 1024 - 16) >> 2
@@ -67,10 +80,25 @@ static CONSTRUCT_PRELUDE: &str = "
 struct State {
     /// Code for constructors
     constructors: String,
+    /// Code for visitors
+    walkers: String,
+    /// Code for constructor class names
+    constructor_names: String,
+    /// Code for mapping from struct name to ID
+    leaf_node_type_ids_map: String,
+    /// Code for mapping from struct name to ID
+    non_leaf_node_type_ids_map: String,
+    /// Next node type ID for leaf nodes
+    next_leaf_node_type_id: u32,
+    /// Next node type ID for non-leaf nodes
+    next_non_leaf_node_type_id: u32,
 }
 
-/// Generate constructor functions for all types.
-fn generate(schema: &Schema, codegen: &Codegen) -> String {
+/// Generate construct and walk functions for all types.
+fn generate(
+    schema: &Schema,
+    codegen: &Codegen,
+) -> (/* constructors */ String, /* walkers */ String, /* node type IDs map */ String) {
     let estree_derive_id = codegen.get_derive_id_by_name("ESTree");
     let span_type_id = schema.type_names["Span"];
 
@@ -83,12 +111,26 @@ fn generate(schema: &Schema, codegen: &Codegen) -> String {
     // Initialize structure for determining if types need local cache. Used in `generate_struct`.
     let mut local_cache_types = LocalCacheTypes::new(schema);
 
+    // Determine which types are walked
+    // (not including types which aren't part of AST e.g. `Error`, and AST types which aren't visited).
+    let (walk_statuses, leaf_nodes_count) = WalkStatuses::calculate(estree_derive_id, schema);
+
     // Generate code
-    let mut state = State { constructors: CONSTRUCT_PRELUDE.to_string() };
+    let mut state = State {
+        constructors: CONSTRUCT_PRELUDE.to_string(),
+        walkers: String::new(),
+        constructor_names: String::new(),
+        leaf_node_type_ids_map: String::new(),
+        non_leaf_node_type_ids_map: String::new(),
+        next_leaf_node_type_id: 0,
+        next_non_leaf_node_type_id: leaf_nodes_count,
+    };
 
     let span_struct_def = schema.struct_def(span_type_id);
 
     for type_def in &schema.types {
+        let is_walked = walk_statuses[type_def.id()] == WalkStatus::Walk;
+
         match type_def {
             TypeDef::Struct(struct_def) => {
                 generate_struct(
@@ -96,25 +138,34 @@ fn generate(schema: &Schema, codegen: &Codegen) -> String {
                     &mut state,
                     &cache_key_offsets,
                     &mut local_cache_types,
+                    is_walked,
+                    &walk_statuses,
                     estree_derive_id,
                     span_struct_def,
                     schema,
                 );
             }
             TypeDef::Enum(enum_def) => {
-                generate_enum(enum_def, &mut state, estree_derive_id, schema);
+                generate_enum(
+                    enum_def,
+                    &mut state,
+                    is_walked,
+                    &walk_statuses,
+                    estree_derive_id,
+                    schema,
+                );
             }
             TypeDef::Primitive(primitive_def) => {
                 generate_primitive(primitive_def, &mut state, schema);
             }
             TypeDef::Option(option_def) => {
-                generate_option(option_def, &mut state, estree_derive_id, schema);
+                generate_option(option_def, &mut state, is_walked, estree_derive_id, schema);
             }
             TypeDef::Box(box_def) => {
-                generate_box(box_def, &mut state, estree_derive_id, schema);
+                generate_box(box_def, &mut state, is_walked, estree_derive_id, schema);
             }
             TypeDef::Vec(vec_def) => {
-                generate_vec(vec_def, &mut state, estree_derive_id, schema);
+                generate_vec(vec_def, &mut state, is_walked, estree_derive_id, schema);
             }
             TypeDef::Cell(_cell_def) => {
                 // No constructor for `Cell`s - use inner type's constructor
@@ -122,7 +173,163 @@ fn generate(schema: &Schema, codegen: &Codegen) -> String {
         }
     }
 
-    state.constructors
+    // Generate file containing walk functions
+    let visitors = &state.walkers;
+    let constructor_names = &state.constructor_names;
+    #[rustfmt::skip]
+    let visitors = format!("
+        'use strict';
+
+        const {{
+            {constructor_names}
+        }} = require('./lazy.js').constructors;
+
+        module.exports = walkProgram;
+
+        {visitors}
+    ");
+
+    // Generate file containing mapping from type names to node type IDs
+    assert_eq!(state.next_leaf_node_type_id, leaf_nodes_count);
+
+    let leaf_node_type_ids_map = &state.leaf_node_type_ids_map;
+    let non_leaf_node_type_ids_map = &state.non_leaf_node_type_ids_map;
+    #[rustfmt::skip]
+    let node_type_ids_map = format!("
+        'use strict';
+
+        // Mapping from node type name to node type ID
+        const NODE_TYPE_IDS_MAP = new Map([
+            // Leaf nodes
+            {leaf_node_type_ids_map}// Non-leaf nodes
+            {non_leaf_node_type_ids_map}
+        ]);
+
+        // Number of AST node types which are leaf nodes
+        const LEAF_NODES_COUNT = {leaf_nodes_count};
+
+        module.exports = {{ NODE_TYPE_IDS_MAP, LEAF_NODES_COUNT }};
+    ");
+
+    (state.constructors, visitors, node_type_ids_map)
+}
+
+/// Structure for calculating which types need walk functions.
+struct WalkStatuses<'s> {
+    statuses: IndexVec<TypeId, WalkStatus>,
+    leaf_nodes_count: u32,
+    estree_derive_id: DeriveId,
+    schema: &'s Schema,
+}
+
+/// Enum describing whether a type needs a walk function.
+#[derive(Clone, Copy, PartialEq, Eq)]
+enum WalkStatus {
+    NoWalk,
+    Walk,
+    Uncalculated,
+}
+
+impl<'s> WalkStatuses<'s> {
+    /// Calculate whether types need walk functions.
+    ///
+    /// Performs a recursive walk through the dependencies of types, starting from `Program`.
+    /// For each type, determine if it needs a walk function.
+    ///
+    /// * Structs needs a walk function if either:
+    ///   1. It is an AST node i.e. has a `type` field. or
+    ///   2. One of it's fields needs to be walked.
+    /// * Enums need a walk function if any variant needs to be walked.
+    /// * Primitives are never walked.
+    /// * Container types (`Box`, `Vec`, `Cell`) need a walk function if their contained type is walked.
+    ///
+    /// Return an `IndexVec` keyed by `TypeId`. Each type in AST has status `Walk` or `NoWalk`.
+    /// Types which are not part of the AST (e.g. `Error`) are not visited and have status `Uncalculated`.
+    ///
+    /// Also calculate the number of leaf nodes i.e. nodes which don't have any children which are walked
+    /// e.g. `IdentifierReference`, `StringLiteral`.
+    fn calculate(
+        estree_derive_id: DeriveId,
+        schema: &'s Schema,
+    ) -> (/* walk statuses */ IndexVec<TypeId, WalkStatus>, /* leaf nodes count */ u32) {
+        let statuses = index_vec![WalkStatus::Uncalculated; schema.types.len()];
+
+        let mut statuses = Self { statuses, leaf_nodes_count: 0, estree_derive_id, schema };
+
+        let program_type = schema.type_by_name("Program");
+        statuses.is_walked(program_type);
+
+        (statuses.statuses, statuses.leaf_nodes_count)
+    }
+
+    fn is_walked(&mut self, type_def: &TypeDef) -> bool {
+        let type_id = type_def.id();
+        let status = self.statuses[type_id];
+        if status != WalkStatus::Uncalculated {
+            return status == WalkStatus::Walk;
+        }
+
+        let is_walked = match type_def {
+            TypeDef::Struct(struct_def) => self.struct_is_walked(struct_def),
+            TypeDef::Enum(enum_def) => self.enum_is_walked(enum_def),
+            TypeDef::Primitive(_) => false,
+            TypeDef::Option(option_def) => self.is_walked(option_def.inner_type(self.schema)),
+            TypeDef::Box(box_def) => self.is_walked(box_def.inner_type(self.schema)),
+            TypeDef::Vec(vec_def) => self.is_walked(vec_def.inner_type(self.schema)),
+            TypeDef::Cell(cell_def) => self.is_walked(cell_def.inner_type(self.schema)),
+        };
+
+        self.statuses[type_id] = if is_walked { WalkStatus::Walk } else { WalkStatus::NoWalk };
+
+        is_walked
+    }
+
+    fn struct_is_walked(&mut self, struct_def: &StructDef) -> bool {
+        if !struct_def.generates_derive(self.estree_derive_id) || struct_def.estree.skip {
+            return false;
+        }
+
+        let mut has_type_field = !struct_def.estree.no_type;
+        if has_type_field {
+            // Set status early to avoid infinite loop
+            self.statuses[struct_def.id()] = WalkStatus::Walk;
+        }
+
+        let mut has_walked_field = false;
+        for field in &struct_def.fields {
+            if field.name() == "type" {
+                if !has_type_field {
+                    has_type_field = true;
+                    self.statuses[struct_def.id()] = WalkStatus::Walk;
+                }
+            } else if !should_skip_field(field, self.schema) {
+                has_walked_field |= self.is_walked(field.type_def(self.schema));
+            }
+        }
+
+        if has_walked_field {
+            true
+        } else if has_type_field {
+            self.leaf_nodes_count += 1;
+            true
+        } else {
+            false
+        }
+    }
+
+    fn enum_is_walked(&mut self, enum_def: &EnumDef) -> bool {
+        if !enum_def.generates_derive(self.estree_derive_id) || enum_def.estree.skip {
+            return false;
+        }
+
+        let mut is_walked = false;
+        for variant in enum_def.all_variants(self.schema) {
+            if let Some(variant_type) = variant.field_type(self.schema) {
+                is_walked |= self.is_walked(variant_type);
+            }
+        }
+        is_walked
+    }
 }
 
 /// Sentinel value for a cache key offset which has not been calculated yet
@@ -389,12 +596,14 @@ impl<'s> LocalCacheTypes<'s> {
     }
 }
 
-/// Generate class for a struct.
+/// Generate class and walk function for a struct.
 fn generate_struct(
     struct_def: &StructDef,
     state: &mut State,
     cache_key_offsets: &IndexVec<TypeId, u8>,
     local_cache_types: &mut LocalCacheTypes,
+    is_walked: bool,
+    walk_statuses: &IndexVec<TypeId, WalkStatus>,
     estree_derive_id: DeriveId,
     span_struct_def: &StructDef,
     schema: &Schema,
@@ -408,8 +617,9 @@ fn generate_struct(
     let mut getters = String::new();
     let mut to_json = String::new();
     let mut extra_props = String::new();
+    let mut walk_stmts = String::new();
 
-    let mut add_type_field = !struct_def.estree.no_type;
+    let mut has_type_field = false;
     for field in &struct_def.fields {
         if should_skip_field(field, schema) {
             continue;
@@ -442,7 +652,7 @@ fn generate_struct(
         }
 
         if field_name == "type" {
-            add_type_field = false;
+            has_type_field = true;
         }
 
         let field_type = field.type_def(schema);
@@ -480,9 +690,16 @@ fn generate_struct(
         }
 
         write_it!(to_json, "{field_name}: this.{field_name},\n");
+
+        // Only walk fields which need to be walked themselves
+        if walk_statuses[field_type.id()] == WalkStatus::Walk {
+            let inner_walk_fn_name = field_type.walk_name(schema);
+            let pos = pos_offset(field.offset_64());
+            write_it!(walk_stmts, "{inner_walk_fn_name}({pos}, ast, visitors);\n");
+        }
     }
 
-    let type_prop_init = if add_type_field {
+    let type_prop_init = if !has_type_field && !struct_def.estree.no_type {
         to_json = format!("type: '{struct_name}',\n{to_json}");
         format!("type = '{struct_name}';")
     } else {
@@ -501,6 +718,7 @@ fn generate_struct(
 
     // Generate class.
     // Note: `[inspectSymbol]() {}` method makes `console.log` show deserialized value.
+    // TODO: Add `visit` method to all classes which are nodes?
     #[rustfmt::skip]
     write_it!(state.constructors, "
         class {struct_name} {{
@@ -532,13 +750,79 @@ fn generate_struct(
         }}
 
         const Debug{struct_name} = class {struct_name} {{}};
+
+        constructors.{struct_name} = {struct_name};
     ");
+
+    // Generate walk function
+    if !is_walked {
+        return;
+    }
+
+    let walk_fn_name = struct_def.walk_name(schema);
+
+    let is_node = has_type_field || !struct_def.estree.no_type;
+    if !is_node {
+        // Type which is intermediary only. Is not an AST node, and cannot be visited.
+        // Just walk its fields.
+        #[rustfmt::skip]
+        write_it!(state.walkers, "
+            function {walk_fn_name}(pos, ast, visitors) {{
+                {walk_stmts}
+            }}
+        ");
+        return;
+    }
+
+    // AST node which can be visited
+    if walk_stmts.is_empty() {
+        // Leaf node. Just a single visitor.
+        let node_type_id = state.next_leaf_node_type_id;
+        state.next_leaf_node_type_id += 1;
+
+        #[rustfmt::skip]
+        write_it!(state.walkers, "
+            function {walk_fn_name}(pos, ast, visitors) {{
+                const visit = visitors[{node_type_id}];
+                if (visit !== null) visit(new {struct_name}(pos, ast));
+            }}
+        ");
+
+        write_it!(state.leaf_node_type_ids_map, "['{struct_name}', {node_type_id}],\n");
+    } else {
+        // AST node with children. 2 visitors for enter and exit.
+        let node_type_id = state.next_non_leaf_node_type_id;
+        state.next_non_leaf_node_type_id += 1;
+
+        #[rustfmt::skip]
+        write_it!(state.walkers, "
+            function {walk_fn_name}(pos, ast, visitors) {{
+                const enterExit = visitors[{node_type_id}];
+                let node, enter, exit;
+                if (enterExit !== null) {{
+                    ({{ enter, exit }} = enterExit);
+                    node = new {struct_name}(pos, ast);
+                    if (enter !== null) enter(node);
+                }}
+
+                {walk_stmts}
+
+                if (exit) exit(node);
+            }}
+        ");
+
+        write_it!(state.non_leaf_node_type_ids_map, "['{struct_name}', {node_type_id}],\n");
+    }
+
+    write_it!(state.constructor_names, "{struct_name}, ");
 }
 
-/// Generate constructor function for an enum.
+/// Generate construct and walk functions for an enum.
 fn generate_enum(
     enum_def: &EnumDef,
     state: &mut State,
+    is_walked: bool,
+    walk_statuses: &IndexVec<TypeId, WalkStatus>,
     estree_derive_id: DeriveId,
     schema: &Schema,
 ) {
@@ -556,19 +840,34 @@ fn generate_enum(
     variants.sort_by_key(|variant| variant.discriminant);
 
     let mut construct_cases = String::new();
+    let mut walk_cases = String::new();
     for variant in variants {
         write_it!(construct_cases, "case {}: ", variant.discriminant);
+        write_it!(walk_cases, "case {}: ", variant.discriminant);
 
         if let Some(variant_type) = variant.field_type(schema) {
-            let variant_construct_fn_name = variant_type.constructor_name(schema);
             let payload_pos = pos_offset(payload_offset);
+
+            let variant_construct_fn_name = variant_type.constructor_name(schema);
             write_it!(construct_cases, "return {variant_construct_fn_name}({payload_pos}, ast);");
+
+            // Only walk variants which need to be walked themselves
+            if walk_statuses[variant_type.id()] == WalkStatus::Walk {
+                let variant_walk_fn_name = variant_type.walk_name(schema);
+                write_it!(
+                    walk_cases,
+                    "{variant_walk_fn_name}({payload_pos}, ast, visitors); return;"
+                );
+            } else {
+                write_it!(walk_cases, "return;");
+            }
         } else {
             write_it!(
                 construct_cases,
                 "return '{}';",
                 get_fieldless_variant_value(enum_def, variant)
             );
+            write_it!(walk_cases, "return;");
         }
     }
 
@@ -584,9 +883,25 @@ fn generate_enum(
             }}
         }}
     ");
+
+    // Generate walk function
+    if is_walked {
+        let walk_fn_name = enum_def.walk_name(schema);
+
+        #[rustfmt::skip]
+        write_it!(state.walkers, "
+            function {walk_fn_name}(pos, ast, visitors) {{
+                switch(ast.buffer[pos]) {{
+                    {walk_cases}
+                    default: throw new Error(`Unexpected discriminant ${{ast.buffer[pos]}} for {type_name}`);
+                }}
+            }}
+        ");
+    }
 }
 
-/// Generate constructor function for a primitive.
+/// Generate construct function for a primitive.
+/// Note: Primitives don't require walk functions.
 fn generate_primitive(primitive_def: &PrimitiveDef, state: &mut State, schema: &Schema) {
     // Generate code to deserialize value
     #[expect(clippy::match_same_arms)]
@@ -654,10 +969,11 @@ static STR_DESERIALIZER_BODY: &str = "
     return out;
 ";
 
-/// Generate constructor function for an `Option`.
+/// Generate construct and walk functions for an `Option`.
 fn generate_option(
     option_def: &OptionDef,
     state: &mut State,
+    is_walked: bool,
     estree_derive_id: DeriveId,
     schema: &Schema,
 ) {
@@ -708,10 +1024,29 @@ fn generate_option(
             return {inner_construct_fn_name}({payload_pos}, ast);
         }}
     ");
+
+    // Generate walk function
+    if is_walked {
+        let walk_fn_name = option_def.walk_name(schema);
+        let inner_walk_fn_name = inner_type.walk_name(schema);
+
+        #[rustfmt::skip]
+        write_it!(state.walkers, "
+            function {walk_fn_name}(pos, ast, visitors) {{
+                if (!({none_condition})) {inner_walk_fn_name}({payload_pos}, ast, visitors);
+            }}
+        ");
+    }
 }
 
-/// Generate constructor function for a `Box`.
-fn generate_box(box_def: &BoxDef, state: &mut State, estree_derive_id: DeriveId, schema: &Schema) {
+/// Generate construct and walk functions for a `Box`.
+fn generate_box(
+    box_def: &BoxDef,
+    state: &mut State,
+    is_walked: bool,
+    estree_derive_id: DeriveId,
+    schema: &Schema,
+) {
     let inner_type = box_def.inner_type(schema);
     if should_skip_innermost_type(inner_type, estree_derive_id, schema) {
         return;
@@ -727,10 +1062,29 @@ fn generate_box(box_def: &BoxDef, state: &mut State, estree_derive_id: DeriveId,
             return {inner_construct_fn_name}(ast.buffer.uint32[pos >> 2], ast);
         }}
     ");
+
+    // Generate walk function
+    if is_walked {
+        let walk_fn_name = box_def.walk_name(schema);
+        let inner_walk_fn_name = inner_type.walk_name(schema);
+
+        #[rustfmt::skip]
+        write_it!(state.walkers, "
+            function {walk_fn_name}(pos, ast, visitors) {{
+                return {inner_walk_fn_name}(ast.buffer.uint32[pos >> 2], ast, visitors);
+            }}
+        ");
+    }
 }
 
-/// Generate constructor function for a `Vec`.
-fn generate_vec(vec_def: &VecDef, state: &mut State, estree_derive_id: DeriveId, schema: &Schema) {
+/// Generate construct and walk functions for a `Vec`.
+fn generate_vec(
+    vec_def: &VecDef,
+    state: &mut State,
+    is_walked: bool,
+    estree_derive_id: DeriveId,
+    schema: &Schema,
+) {
     let inner_type = vec_def.inner_type(schema);
     if should_skip_innermost_type(inner_type, estree_derive_id, schema) {
         return;
@@ -773,6 +1127,26 @@ fn generate_vec(vec_def: &VecDef, state: &mut State, estree_derive_id: DeriveId,
 
         {inner_construct_fn}
     ");
+
+    // Generate walk function
+    if is_walked {
+        let walk_fn_name = vec_def.walk_name(schema);
+        let inner_walk_fn_name = inner_type.walk_name(schema);
+
+        #[rustfmt::skip]
+        write_it!(state.walkers, "
+            function {walk_fn_name}(pos, ast, visitors) {{
+                const {{ uint32 }} = ast.buffer,
+                    pos32 = pos >> 2;
+                pos = uint32[{ptr_pos32}];
+                const endPos = pos + uint32[{len_pos32}] * {inner_type_size};
+                while (pos < endPos) {{
+                    {inner_walk_fn_name}(pos, ast, visitors);
+                    pos += {inner_type_size};
+                }}
+            }}
+        ");
+    }
 }
 
 /// Generate internal pos offset string.
@@ -788,12 +1162,19 @@ where
     if offset == 0 { Cow::Borrowed("internal.pos") } else { format_cow!("internal.pos + {offset}") }
 }
 
-/// Trait to get function name for constructor function for a type.
+/// Trait to get function names for constructor and walk functions for a type.
 ///
-/// `construct<type name>` for all types except structs, for which it's `new <type name>`.
+/// * Constructor:
+///   * Structs: `new <type name>`
+///   * All other types: `construct<type name>`
+/// * Walk: `walk<type name>`
 pub(super) trait FunctionNames {
     fn constructor_name(&self, schema: &Schema) -> String {
         format!("construct{}", self.plain_name(schema))
+    }
+
+    fn walk_name(&self, schema: &Schema) -> String {
+        format!("walk{}", self.plain_name(schema))
     }
 
     fn plain_name<'s>(&'s self, schema: &'s Schema) -> Cow<'s, str>;
@@ -870,7 +1251,7 @@ impl FunctionNames for PrimitiveDef {
     }
 }
 
-// `Cell`s use same constructor as inner type, as layout is identical
+// `Cell`s use same construct and walk functions as inner type, as layout is identical
 impl FunctionNames for CellDef {
     fn constructor_name<'s>(&'s self, schema: &'s Schema) -> String {
         self.inner_type(schema).constructor_name(schema)

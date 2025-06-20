@@ -46,12 +46,15 @@
     "generated/deserialize/js.js",
     "generated/deserialize/ts.js",
     "generated/deserialize/lazy.js",
+    "generated/deserialize/lazy-types.js",
+    "generated/deserialize/lazy-visit.js",
     "raw-transfer/common.js",
     "raw-transfer/eager.js",
     "raw-transfer/lazy.js",
     "raw-transfer/lazy-common.js",
     "raw-transfer/node-array.js",
-    "raw-transfer/supported.js"
+    "raw-transfer/supported.js",
+    "raw-transfer/visitor.js"
   ],
   "publishConfig": {
     "registry": "https://registry.npmjs.org/",

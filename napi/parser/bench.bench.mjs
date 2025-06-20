@@ -4,8 +4,8 @@ import { bench, describe } from 'vitest';
 import bindings from './bindings.js';
 import deserializeJS from './generated/deserialize/js.js';
 import deserializeTS from './generated/deserialize/ts.js';
-import { parseAsync, parseSync } from './index.js';
-import { isJsAst, prepareRaw } from './raw-transfer/common.js';
+import { experimentalGetLazyVisitor, parseAsync, parseSync } from './index.js';
+import { isJsAst, prepareRaw, returnBufferToCache } from './raw-transfer/common.js';
 
 // Same fixtures as used in Rust parser benchmarks
 let fixtureUrls = [
@@ -78,6 +78,12 @@ for (const { filename, code } of fixtures) {
       const { program, comments, module, errors } = ret;
     });
 
+    benchRaw('parser_napi_raw_no_deser', () => {
+      const { buffer, sourceByteLen } = prepareRaw(code);
+      bindings.parseSyncRaw(filename, buffer, sourceByteLen, {});
+      returnBufferToCache(buffer);
+    });
+
     // Prepare buffer but don't deserialize
     const { buffer, sourceByteLen } = prepareRaw(code);
     bindings.parseSyncRaw(filename, buffer, sourceByteLen, {});
@@ -85,6 +91,73 @@ for (const { filename, code } of fixtures) {
 
     benchRaw('parser_napi_raw_deser_only', () => {
       deserialize(buffer, code, sourceByteLen);
+    });
+
+    // Create visitors
+    const Visitor = experimentalGetLazyVisitor();
+
+    let debuggerCount = 0;
+    const debuggerVisitor = new Visitor({
+      DebuggerStatement(debuggerStmt) {
+        debuggerCount++;
+      },
+    });
+
+    let identCount = 0;
+    const identVisitor = new Visitor({
+      BindingIdentifier(ident) {
+        identCount++;
+      },
+      IdentifierReference(ident) {
+        identCount++;
+      },
+      IdentifierName(ident) {
+        identCount++;
+      },
+    });
+
+    benchRaw('parser_napi_raw_lazy_visit(debugger)', () => {
+      const { visit, dispose } = parseSync(filename, code, { experimentalLazy: true });
+      debuggerCount = 0;
+      visit(debuggerVisitor);
+      dispose();
+    });
+
+    benchRaw('parser_napi_raw_lazy_visit(ident)', () => {
+      const { visit, dispose } = parseSync(filename, code, { experimentalLazy: true });
+      identCount = 0;
+      visit(identVisitor);
+      dispose();
+    });
+
+    benchRaw('parser_napi_raw_lazy_visitor(debugger)', () => {
+      const { visit, dispose } = parseSync(filename, code, { experimentalLazy: true });
+      debuggerCount = 0;
+      const debuggerVisitor = new Visitor({
+        DebuggerStatement(debuggerStmt) {
+          debuggerCount++;
+        },
+      });
+      visit(debuggerVisitor);
+      dispose();
+    });
+
+    benchRaw('parser_napi_raw_lazy_visitor(ident)', () => {
+      const { visit, dispose } = parseSync(filename, code, { experimentalLazy: true });
+      identCount = 0;
+      const identVisitor = new Visitor({
+        BindingIdentifier(ident) {
+          identCount++;
+        },
+        IdentifierReference(ident) {
+          identCount++;
+        },
+        IdentifierName(ident) {
+          identCount++;
+        },
+      });
+      visit(identVisitor);
+      dispose();
     });
   });
 }

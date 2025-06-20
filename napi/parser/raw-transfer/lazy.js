@@ -1,9 +1,12 @@
 'use strict';
 
 const { parseSyncRawImpl, parseAsyncRawImpl, returnBufferToCache } = require('./common.js'),
-  { construct: constructLazyData, TOKEN } = require('../generated/deserialize/lazy.js');
+  { TOKEN } = require('./lazy-common.js'),
+  constructLazyData = require('../generated/deserialize/lazy.js').construct,
+  walkProgram = require('../generated/deserialize/lazy-visit.js'),
+  { Visitor, getVisitorsArr } = require('./visitor.js');
 
-module.exports = { parseSyncLazy, parseAsyncLazy };
+module.exports = { parseSyncLazy, parseAsyncLazy, Visitor };
 
 /**
  * Parse JS/TS source synchronously on current thread.
@@ -14,6 +17,9 @@ module.exports = { parseSyncLazy, parseAsyncLazy };
  * e.g. `program` in returned object is an instance of `Program` class, with getters for `start`, `end`,
  * `body` etc.
  *
+ * Returned object contains a `visit` function which can be used to visit the AST with a `Visitor`
+ * (`Visitor` class can be obtained by calling `experimentalGetLazyVisitor()`).
+ *
  * Returned object contains a `dispose` method. When finished with this AST, it's advisable to call
  * `dispose`, to return the buffer to the cache, so it can be reused.
  * Garbage collector should do this anyway at some point, but on an unpredictable schedule,
@@ -23,7 +29,7 @@ module.exports = { parseSyncLazy, parseAsyncLazy };
  * @param {string} sourceText - Source text of file
  * @param {Object} options - Parsing options
  * @returns {Object} - Object with property getters for `program`, `module`, `comments`, and `errors`,
- *   and a `dispose` method
+ *   and `dispose` and `visit` methods
  * @throws {Error} - If raw transfer is not supported on this platform
  */
 function parseSyncLazy(filename, sourceText, options) {
@@ -45,6 +51,9 @@ function parseSyncLazy(filename, sourceText, options) {
  * on current thread in this function. Deserialization work only occurs when properties of the objects
  * are accessed.
  *
+ * Returned object contains a `visit` function which can be used to visit the AST with a `Visitor`
+ * (`Visitor` class can be obtained by calling `experimentalGetLazyVisitor()`).
+ *
  * Returned object contains a `dispose` method. When finished with this AST, it's advisable to call
  * `dispose`, to return the buffer to the cache, so it can be reused.
  * Garbage collector should do this anyway at some point, but on an unpredictable schedule,
@@ -54,7 +63,7 @@ function parseSyncLazy(filename, sourceText, options) {
  * @param {string} sourceText - Source text of file
  * @param {Object} options - Parsing options
  * @returns {Object} - Object with property getters for `program`, `module`, `comments`, and `errors`,
- *   and a `dispose` method
+ *   and `dispose` and `visit` methods
  * @throws {Error} - If raw transfer is not supported on this platform
  */
 function parseAsyncLazy(filename, sourceText, options) {
@@ -77,11 +86,13 @@ const bufferRecycleRegistry = typeof FinalizationRegistry === 'undefined'
 /**
  * Get an object with getters which lazy deserialize AST and other data from buffer.
  *
+ * Object also includes `dispose` and `visit` functions.
+ *
  * @param {Uint8Array} buffer - Buffer containing AST in raw form
  * @param {string} sourceText - Source for the file
  * @param {number} sourceByteLen - Length of source text in UTF-8 bytes
  * @returns {Object} - Object with property getters for `program`, `module`, `comments`, and `errors`,
- *   and a `dispose` method
+ *   and `dispose` and `visit` methods
  */
 function construct(buffer, sourceText, sourceLen) {
   // Create AST object
@@ -109,6 +120,12 @@ function construct(buffer, sourceText, sourceLen) {
       return data.errors;
     },
     dispose: dispose.bind(null, ast),
+    visit(visitor) {
+      // (2 * 1024 * 1024 * 1024 - 16) >> 2
+      const metadataPos32 = 536870908;
+      const pos = buffer.uint32[metadataPos32];
+      walkProgram(pos, ast, getVisitorsArr(visitor));
+    },
   };
 }
 
