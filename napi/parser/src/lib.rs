@@ -69,7 +69,6 @@ fn parse<'a>(
     Parser::new(allocator, source_text, source_type)
         .with_options(ParseOptions {
             preserve_parens: options.preserve_parens.unwrap_or(true),
-            range: options.range.unwrap_or(false),
             ..ParseOptions::default()
         })
         .parse()

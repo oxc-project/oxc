@@ -221,12 +221,6 @@ pub struct ParseOptions {
     ///
     /// [`V8IntrinsicExpression`]: oxc_ast::ast::V8IntrinsicExpression
     pub allow_v8_intrinsics: bool,
-
-    /// Controls whether the `range` information is included to each node.
-    /// The `range` property is a [number, number] which indicates the start/end index of the node in the file contents.
-    ///
-    /// Default: `false`
-    pub range: bool,
 }
 
 impl Default for ParseOptions {
@@ -237,7 +231,6 @@ impl Default for ParseOptions {
             allow_return_outside_function: false,
             preserve_parens: true,
             allow_v8_intrinsics: false,
-            range: false,
         }
     }
 }
