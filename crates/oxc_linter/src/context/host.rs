@@ -7,7 +7,7 @@ use oxc_span::{SourceType, Span};
 use crate::{
     AllowWarnDeny, FrameworkFlags,
     config::{LintConfig, LintPlugins},
-    disable_directives::{DisableDirectives, DisableDirectivesBuilder},
+    disable_directives::{DisableDirectives, DisableDirectivesBuilder, RuleCommentType},
     fixer::{FixKind, Message, PossibleFixes},
     frameworks,
     module_record::ModuleRecord,
@@ -176,15 +176,23 @@ impl<'a> ContextHost<'a> {
         // relate to lint result, check after linter run finish
         let unused_disable_comments = self.disable_directives.collect_unused_disable_comments();
         let message_for_disable = "Unused eslint-disable directive (no problems were reported).";
-        for (rule_name, disable_comment_span) in unused_disable_comments {
-            unused_directive_diagnostics.push((
-                rule_name.map_or(Cow::Borrowed(message_for_disable), |name| {
-                    Cow::Owned(format!(
-                        "Unused eslint-disable directive (no problems were reported from {name})."
-                    ))
-                }),
-                disable_comment_span,
-            ));
+        for unused_disable_comment in unused_disable_comments {
+            match &unused_disable_comment.r#type {
+                RuleCommentType::All => {
+                    // eslint-disable
+                    let disable_comment_span = unused_disable_comment.span;
+                    unused_directive_diagnostics
+                        .push((Cow::Borrowed(message_for_disable), disable_comment_span));
+                }
+                RuleCommentType::Single(rules) => {
+                    for rule in rules {
+                        unused_directive_diagnostics.push((
+                            Cow::Owned(format!("Unused eslint-disable directive (no problems were reported from {}).", rule.rule_name)),
+                            rule.name_span,
+                        ));
+                    }
+                }
+            }
         }
 
         // report unused enable
