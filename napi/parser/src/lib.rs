@@ -109,14 +109,14 @@ fn parse_with_return(filename: &str, source_text: String, options: &ParserOption
             }
 
             let capacity = program.source_text.len() * 16;
-            let serializer = CompactFixesJSSerializer::with_capacity(capacity, range);
+            let serializer = CompactFixesJSSerializer::with_capacity_and_ranges(capacity, range);
             serializer.serialize_with_fixes(&program)
         }
         AstType::TypeScript => {
             // Note: `@typescript-eslint/parser` ignores hashbangs,
             // See: https://github.com/typescript-eslint/typescript-eslint/issues/6500
             let capacity = program.source_text.len() * 16;
-            let serializer = CompactFixesTSSerializer::with_capacity(capacity, range);
+            let serializer = CompactFixesTSSerializer::with_capacity_and_ranges(capacity, range);
             serializer.serialize_with_fixes(&program)
         }
     };
