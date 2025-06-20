@@ -1,4 +1,8 @@
-use std::{alloc::Layout, ptr, slice, str};
+use std::{
+    alloc::Layout,
+    ptr::{self, NonNull},
+    slice, str,
+};
 
 use bumpalo::Bump;
 
@@ -294,6 +298,18 @@ impl Allocator {
     #[inline(always)]
     pub fn alloc_str<'alloc>(&'alloc self, src: &str) -> &'alloc str {
         self.bump.alloc_str(src)
+    }
+
+    /// Allocate space for an object with the given [`Layout`].
+    ///
+    /// The returned pointer points at uninitialized memory, and should be initialized with
+    /// [`std::ptr::write`].
+    ///
+    /// # Panics
+    ///
+    /// Panics if reserving space matching `layout` fails.
+    pub fn alloc_layout(&self, layout: Layout) -> NonNull<u8> {
+        self.bump.alloc_layout(layout)
     }
 
     /// Create new `&str` from a fixed-size array of `&str`s concatenated together,
