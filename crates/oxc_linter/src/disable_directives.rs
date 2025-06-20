@@ -6,6 +6,8 @@ use oxc_span::Span;
 use rust_lapper::{Interval, Lapper};
 use rustc_hash::FxHashMap;
 
+use crate::fixer::Fix;
+
 #[derive(Debug, Copy, Clone, Eq, PartialEq)]
 enum DisabledRule<'a> {
     All { comment_span: Span },
@@ -26,6 +28,60 @@ impl DisabledRule<'_> {
 pub struct RuleCommentRule<'a> {
     pub rule_name: &'a str,
     pub name_span: Span,
+}
+
+impl RuleCommentRule<'_> {
+    #[expect(clippy::cast_possible_truncation)] // for `as u32`
+    pub fn create_fix<'a>(&self, source_text: &'a str, comment_span: Span) -> Fix<'a> {
+        let before_source =
+            &source_text[comment_span.start as usize..self.name_span.start as usize];
+
+        // check if there is a comma before the rule name
+        // if there is, remove the comma, whitespace and the rule name
+        let mut comma_before_offset = None;
+        for (i, c) in before_source.chars().rev().enumerate() {
+            if c.is_whitespace() {
+                continue;
+            }
+            if c == ',' {
+                comma_before_offset = Some(1 + i as u32);
+            }
+            break;
+        }
+
+        if let Some(comma_before_offset) = comma_before_offset {
+            return Fix::delete(Span::new(
+                self.name_span.start - comma_before_offset,
+                self.name_span.end,
+            ));
+        }
+
+        let after_source = &source_text[self.name_span.end as usize..comment_span.end as usize];
+
+        // check if there is a comma after the rule name
+        // if there is, remove the comma, whitespace and the rule name
+        let mut comma_after_offset = None;
+        for (i, c) in after_source.char_indices() {
+            if c.is_whitespace() {
+                continue;
+            }
+            if c == ',' {
+                comma_after_offset = Some(1 + i as u32);
+            }
+            break;
+        }
+
+        if let Some(comma_after_offset) = comma_after_offset {
+            return Fix::delete(Span::new(
+                self.name_span.start,
+                self.name_span.end + comma_after_offset,
+            ));
+        }
+
+        unreachable!(
+            "A `RuleCommentRule` should have a comma, because only one rule should be RuleCommentType::All"
+        );
+    }
 }
 
 #[derive(Debug, Clone, Eq, PartialEq)]
@@ -807,7 +863,7 @@ mod tests {
     use oxc_semantic::{Semantic, SemanticBuilder};
     use oxc_span::{SourceType, Span};
 
-    use crate::disable_directives::{DisabledRule, RuleCommentType};
+    use crate::disable_directives::{DisabledRule, RuleCommentRule, RuleCommentType};
 
     use super::{DisableDirectives, DisableDirectivesBuilder};
 
@@ -1018,5 +1074,48 @@ mod tests {
         test_directive_span("// eslint-disable-next-line max-params    \r\n ABC", 42, 48);
         test_directive_span("// eslint-disable-next-line max-params    \n ABC \n", 42, 48);
         test_directive_span("// eslint-disable-next-line max-params    \r\n ABC \r\n", 42, 49);
+    }
+
+    #[test]
+    #[expect(clippy::cast_possible_truncation)] // for `as u32`
+    fn test_rule_comment_rule_create_fix() {
+        let source_text = "// eslint-disable-next-line max-params, no-console, no-debugger";
+        let comment_span = Span::sized(3, source_text.len() as u32 - 3);
+
+        let max_params_fix =
+            RuleCommentRule { rule_name: "max-params", name_span: Span::sized(28, 10) }
+                .create_fix(source_text, comment_span);
+
+        assert_eq!(&source_text[28..38], "max-params");
+        assert_eq!(max_params_fix.span, Span::sized(28, 11)); // max-params is 10 + 1 for the comma
+
+        let no_console_fix =
+            RuleCommentRule { rule_name: "no-console", name_span: Span::sized(40, 10) }
+                .create_fix(source_text, comment_span);
+
+        assert_eq!(&source_text[40..50], "no-console");
+        assert_eq!(no_console_fix.span, Span::sized(38, 12)); // no-console is 10 + 2 for the comma before and the space
+
+        let no_debugger_fix =
+            RuleCommentRule { rule_name: "no-debugger", name_span: Span::sized(52, 11) }
+                .create_fix(source_text, comment_span);
+
+        assert_eq!(&source_text[52..63], "no-debugger");
+        assert_eq!(no_debugger_fix.span, Span::sized(50, 13)); // no-debugger is 11 + 2 for the comma before and the space
+    }
+
+    #[test]
+    #[should_panic(
+        expected = "A `RuleCommentRule` should have a comma, because only one rule should be RuleCommentType::All"
+    )]
+    #[expect(clippy::cast_possible_truncation)] // for `as u32`
+    fn test_rule_comment_rule_create_fix_panic() {
+        // This test is expected to panic because it is a standalone rule.
+        // Standalone rules should be `RuleCommentType::All`.
+        let source_text = "// eslint-disable-next-line max-params";
+        let comment_span = Span::sized(3, source_text.len() as u32 - 3);
+
+        RuleCommentRule { rule_name: "max-params", name_span: Span::sized(28, 10) }
+            .create_fix(source_text, comment_span);
     }
 }
