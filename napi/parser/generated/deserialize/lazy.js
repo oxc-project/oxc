@@ -11,7 +11,6 @@ module.exports = { construct, TOKEN };
 function construct(ast) {
   // (2 * 1024 * 1024 * 1024 - 16) >> 2
   const metadataPos32 = 536870908;
-
   return new RawTransferData(ast.buffer.uint32[metadataPos32], ast);
 }
 

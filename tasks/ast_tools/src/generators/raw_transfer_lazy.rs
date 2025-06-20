@@ -32,18 +32,18 @@ pub struct RawTransferLazyGenerator;
 define_generator!(RawTransferLazyGenerator);
 
 impl Generator for RawTransferLazyGenerator {
-    fn generate(&self, schema: &Schema, codegen: &Codegen) -> Output {
-        let code = generate_constructors(schema, codegen);
-        Output::Javascript {
+    fn generate_many(&self, schema: &Schema, codegen: &Codegen) -> Vec<Output> {
+        let constructors = generate(schema, codegen);
+        vec![Output::Javascript {
             path: format!("{NAPI_PARSER_PACKAGE_PATH}/generated/deserialize/lazy.js"),
-            code,
-        }
+            code: constructors,
+        }]
     }
 }
 
-/// Prelude to generated deserializer.
+/// Prelude to generated constructors.
 /// Defines the main `construct` function.
-static PRELUDE: &str = "
+static CONSTRUCT_PRELUDE: &str = "
     'use strict';
 
     const { TOKEN, constructorError } = require('../../raw-transfer/lazy-common.js'),
@@ -54,7 +54,6 @@ static PRELUDE: &str = "
     function construct(ast) {
         // (2 * 1024 * 1024 * 1024 - 16) >> 2
         const metadataPos32 = 536870908;
-
         return new RawTransferData(ast.buffer.uint32[metadataPos32], ast);
     }
 
@@ -62,11 +61,16 @@ static PRELUDE: &str = "
         decodeStr = textDecoder.decode.bind(textDecoder),
         { fromCodePoint } = String,
         inspectSymbol = Symbol.for('nodejs.util.inspect.custom');
-
 ";
 
+/// Generated code and other state.
+struct State {
+    /// Code for constructors
+    constructors: String,
+}
+
 /// Generate constructor functions for all types.
-fn generate_constructors(schema: &Schema, codegen: &Codegen) -> String {
+fn generate(schema: &Schema, codegen: &Codegen) -> String {
     let estree_derive_id = codegen.get_derive_id_by_name("ESTree");
     let span_type_id = schema.type_names["Span"];
 
@@ -80,7 +84,7 @@ fn generate_constructors(schema: &Schema, codegen: &Codegen) -> String {
     let mut local_cache_types = LocalCacheTypes::new(schema);
 
     // Generate code
-    let mut code = PRELUDE.to_string();
+    let mut state = State { constructors: CONSTRUCT_PRELUDE.to_string() };
 
     let span_struct_def = schema.struct_def(span_type_id);
 
@@ -89,7 +93,7 @@ fn generate_constructors(schema: &Schema, codegen: &Codegen) -> String {
             TypeDef::Struct(struct_def) => {
                 generate_struct(
                     struct_def,
-                    &mut code,
+                    &mut state,
                     &cache_key_offsets,
                     &mut local_cache_types,
                     estree_derive_id,
@@ -98,19 +102,19 @@ fn generate_constructors(schema: &Schema, codegen: &Codegen) -> String {
                 );
             }
             TypeDef::Enum(enum_def) => {
-                generate_enum(enum_def, &mut code, estree_derive_id, schema);
+                generate_enum(enum_def, &mut state, estree_derive_id, schema);
             }
             TypeDef::Primitive(primitive_def) => {
-                generate_primitive(primitive_def, &mut code, schema);
+                generate_primitive(primitive_def, &mut state, schema);
             }
             TypeDef::Option(option_def) => {
-                generate_option(option_def, &mut code, estree_derive_id, schema);
+                generate_option(option_def, &mut state, estree_derive_id, schema);
             }
             TypeDef::Box(box_def) => {
-                generate_box(box_def, &mut code, estree_derive_id, schema);
+                generate_box(box_def, &mut state, estree_derive_id, schema);
             }
             TypeDef::Vec(vec_def) => {
-                generate_vec(vec_def, &mut code, estree_derive_id, schema);
+                generate_vec(vec_def, &mut state, estree_derive_id, schema);
             }
             TypeDef::Cell(_cell_def) => {
                 // No constructor for `Cell`s - use inner type's constructor
@@ -118,7 +122,7 @@ fn generate_constructors(schema: &Schema, codegen: &Codegen) -> String {
         }
     }
 
-    code
+    state.constructors
 }
 
 /// Sentinel value for a cache key offset which has not been calculated yet
@@ -388,7 +392,7 @@ impl<'s> LocalCacheTypes<'s> {
 /// Generate class for a struct.
 fn generate_struct(
     struct_def: &StructDef,
-    code: &mut String,
+    state: &mut State,
     cache_key_offsets: &IndexVec<TypeId, u8>,
     local_cache_types: &mut LocalCacheTypes,
     estree_derive_id: DeriveId,
@@ -421,14 +425,14 @@ fn generate_struct(
                 }
 
                 let span_field_name = get_struct_field_name(span_field);
-                let value_fn = span_field.type_def(schema).constructor_name(schema);
+                let value_construct_fn_name = span_field.type_def(schema).constructor_name(schema);
                 let pos = internal_pos_offset(field.offset_64() + span_field.offset_64());
 
                 #[rustfmt::skip]
                 write_it!(getters, "
                     get {span_field_name}() {{
                         const internal = this.#internal;
-                        return {value_fn}({pos}, internal.ast);
+                        return {value_construct_fn_name}({pos}, internal.ast);
                     }}
                 ");
 
@@ -444,7 +448,7 @@ fn generate_struct(
         let field_type = field.type_def(schema);
         let needs_cached_prop = local_cache_types.needs_cached_prop(field_type);
         let value_fn = field_type.constructor_name(schema);
-        let pos = internal_pos_offset(field.offset_64());
+        let internal_pos = internal_pos_offset(field.offset_64());
 
         // TODO: Currently we store all internal data in an object, stored as `#internal` property.
         // This is on assumption that private field access is relatively slow, so we only only want
@@ -462,7 +466,7 @@ fn generate_struct(
                     const internal = this.#internal,
                         cached = internal.${field_name};
                     if (cached !== void 0) return cached;
-                    return internal.${field_name} = {value_fn}({pos}, internal.ast);
+                    return internal.${field_name} = {value_fn}({internal_pos}, internal.ast);
                 }}
             ");
         } else {
@@ -470,7 +474,7 @@ fn generate_struct(
             write_it!(getters, "
                 get {field_name}() {{
                     const internal = this.#internal;
-                    return {value_fn}({pos}, internal.ast);
+                    return {value_fn}({internal_pos}, internal.ast);
                 }}
             ");
         }
@@ -495,9 +499,10 @@ fn generate_struct(
         )
     };
 
-    // Note: `[inspectSymbol]() {}` method makes `console.log` show deserialized value
+    // Generate class.
+    // Note: `[inspectSymbol]() {}` method makes `console.log` show deserialized value.
     #[rustfmt::skip]
-    write_it!(code, "
+    write_it!(state.constructors, "
         class {struct_name} {{
             {type_prop_init}
             #internal;
@@ -533,7 +538,7 @@ fn generate_struct(
 /// Generate constructor function for an enum.
 fn generate_enum(
     enum_def: &EnumDef,
-    code: &mut String,
+    state: &mut State,
     estree_derive_id: DeriveId,
     schema: &Schema,
 ) {
@@ -542,7 +547,6 @@ fn generate_enum(
     }
 
     let type_name = enum_def.name();
-    let fn_name = enum_def.constructor_name(schema);
     let payload_offset = enum_def.layout_64().align;
 
     let mut variants = enum_def
@@ -551,24 +555,31 @@ fn generate_enum(
         .collect::<Vec<_>>();
     variants.sort_by_key(|variant| variant.discriminant);
 
-    let mut switch_cases = String::new();
+    let mut construct_cases = String::new();
     for variant in variants {
-        write_it!(switch_cases, "case {}: ", variant.discriminant);
+        write_it!(construct_cases, "case {}: ", variant.discriminant);
 
         if let Some(variant_type) = variant.field_type(schema) {
-            let variant_fn_name = variant_type.constructor_name(schema);
+            let variant_construct_fn_name = variant_type.constructor_name(schema);
             let payload_pos = pos_offset(payload_offset);
-            write_it!(switch_cases, "return {variant_fn_name}({payload_pos}, ast);");
+            write_it!(construct_cases, "return {variant_construct_fn_name}({payload_pos}, ast);");
         } else {
-            write_it!(switch_cases, "return '{}';", get_fieldless_variant_value(enum_def, variant));
+            write_it!(
+                construct_cases,
+                "return '{}';",
+                get_fieldless_variant_value(enum_def, variant)
+            );
         }
     }
 
+    // Generate construct function
+    let construct_fn_name = enum_def.constructor_name(schema);
+
     #[rustfmt::skip]
-    write_it!(code, "
-        function {fn_name}(pos, ast) {{
+    write_it!(state.constructors, "
+        function {construct_fn_name}(pos, ast) {{
             switch(ast.buffer[pos]) {{
-                {switch_cases}
+                {construct_cases}
                 default: throw new Error(`Unexpected discriminant ${{ast.buffer[pos]}} for {type_name}`);
             }}
         }}
@@ -576,7 +587,8 @@ fn generate_enum(
 }
 
 /// Generate constructor function for a primitive.
-fn generate_primitive(primitive_def: &PrimitiveDef, code: &mut String, schema: &Schema) {
+fn generate_primitive(primitive_def: &PrimitiveDef, state: &mut State, schema: &Schema) {
+    // Generate code to deserialize value
     #[expect(clippy::match_same_arms)]
     let ret = match primitive_def.name() {
         // Reuse constructor for `&str`
@@ -600,11 +612,12 @@ fn generate_primitive(primitive_def: &PrimitiveDef, code: &mut String, schema: &
         type_name => panic!("Cannot generate constructor for primitive `{type_name}`"),
     };
 
-    let fn_name = primitive_def.constructor_name(schema);
+    // Generate construct function
+    let construct_fn_name = primitive_def.constructor_name(schema);
 
     #[rustfmt::skip]
-    write_it!(code, "
-        function {fn_name}(pos, ast) {{
+    write_it!(state.constructors, "
+        function {construct_fn_name}(pos, ast) {{
             {ret}
         }}
     ");
@@ -644,7 +657,7 @@ static STR_DESERIALIZER_BODY: &str = "
 /// Generate constructor function for an `Option`.
 fn generate_option(
     option_def: &OptionDef,
-    code: &mut String,
+    state: &mut State,
     estree_derive_id: DeriveId,
     schema: &Schema,
 ) {
@@ -653,11 +666,9 @@ fn generate_option(
         return;
     }
 
-    let fn_name = option_def.constructor_name(schema);
-    let inner_fn_name = inner_type.constructor_name(schema);
     let inner_layout = inner_type.layout_64();
 
-    let (none_condition, payload_offset) = if option_def.layout_64().size == inner_layout.size {
+    let (none_condition, payload_pos) = if option_def.layout_64().size == inner_layout.size {
         let niche = inner_layout.niche.clone().unwrap();
         let none_condition = match niche.size {
             1 => format!("ast.buffer[{}] === {}", pos_offset(niche.offset), niche.value()),
@@ -686,52 +697,57 @@ fn generate_option(
         ("ast.buffer[pos] === 0".to_string(), pos_offset(inner_layout.align))
     };
 
+    // Generate construct function
+    let construct_fn_name = option_def.constructor_name(schema);
+    let inner_construct_fn_name = inner_type.constructor_name(schema);
+
     #[rustfmt::skip]
-    write_it!(code, "
-        function {fn_name}(pos, ast) {{
+    write_it!(state.constructors, "
+        function {construct_fn_name}(pos, ast) {{
             if ({none_condition}) return null;
-            return {inner_fn_name}({payload_offset}, ast);
+            return {inner_construct_fn_name}({payload_pos}, ast);
         }}
     ");
 }
 
 /// Generate constructor function for a `Box`.
-fn generate_box(box_def: &BoxDef, code: &mut String, estree_derive_id: DeriveId, schema: &Schema) {
+fn generate_box(box_def: &BoxDef, state: &mut State, estree_derive_id: DeriveId, schema: &Schema) {
     let inner_type = box_def.inner_type(schema);
     if should_skip_innermost_type(inner_type, estree_derive_id, schema) {
         return;
     }
 
-    let fn_name = box_def.constructor_name(schema);
-    let inner_fn_name = inner_type.constructor_name(schema);
+    // Generate construct function
+    let construct_fn_name = box_def.constructor_name(schema);
+    let inner_construct_fn_name = inner_type.constructor_name(schema);
 
     #[rustfmt::skip]
-    write_it!(code, "
-        function {fn_name}(pos, ast) {{
-            return {inner_fn_name}(ast.buffer.uint32[pos >> 2], ast);
+    write_it!(state.constructors, "
+        function {construct_fn_name}(pos, ast) {{
+            return {inner_construct_fn_name}(ast.buffer.uint32[pos >> 2], ast);
         }}
     ");
 }
 
 /// Generate constructor function for a `Vec`.
-fn generate_vec(vec_def: &VecDef, code: &mut String, estree_derive_id: DeriveId, schema: &Schema) {
+fn generate_vec(vec_def: &VecDef, state: &mut State, estree_derive_id: DeriveId, schema: &Schema) {
     let inner_type = vec_def.inner_type(schema);
     if should_skip_innermost_type(inner_type, estree_derive_id, schema) {
         return;
     }
 
-    let fn_name = vec_def.constructor_name(schema);
-    let (construct_fn_name, construct_fn) = match inner_type {
+    let construct_fn_name = vec_def.constructor_name(schema);
+    let (inner_construct_fn_name, inner_construct_fn) = match inner_type {
         TypeDef::Struct(inner_struct) => {
             let inner_struct_name = inner_struct.name();
-            let construct_fn_name = format!("construct{inner_struct_name}");
+            let inner_construct_fn_name = format!("construct{inner_struct_name}");
             #[rustfmt::skip]
-            let construct_fn = format!("
-                function {construct_fn_name}(pos, ast) {{
+            let inner_construct_fn = format!("
+                function {inner_construct_fn_name}(pos, ast) {{
                     return new {inner_struct_name}(pos, ast);
                 }}
             ");
-            (construct_fn_name, construct_fn)
+            (inner_construct_fn_name, inner_construct_fn)
         }
         _ => (inner_type.constructor_name(schema), String::new()),
     };
@@ -740,25 +756,26 @@ fn generate_vec(vec_def: &VecDef, code: &mut String, estree_derive_id: DeriveId,
     let ptr_pos32 = pos32_offset(VEC_PTR_FIELD_OFFSET);
     let len_pos32 = pos32_offset(VEC_LEN_FIELD_OFFSET);
 
+    // Generate construct function
     #[rustfmt::skip]
-    write_it!(code, "
-        function {fn_name}(pos, ast) {{
+    write_it!(state.constructors, "
+        function {construct_fn_name}(pos, ast) {{
             const {{ uint32 }} = ast.buffer,
                 pos32 = pos >> 2;
             return new NodeArray(
                 uint32[{ptr_pos32}],
                 uint32[{len_pos32}],
                 {inner_type_size},
-                {construct_fn_name},
+                {inner_construct_fn_name},
                 ast,
             );
         }}
 
-        {construct_fn}
+        {inner_construct_fn}
     ");
 }
 
-/// Generate pos offset string.
+/// Generate internal pos offset string.
 ///
 /// * If `offset == 0` -> `internal.pos`.
 /// * Otherwise -> `internal.pos + <offset>` (e.g. `internal.pos + 8`).
@@ -771,10 +788,10 @@ where
     if offset == 0 { Cow::Borrowed("internal.pos") } else { format_cow!("internal.pos + {offset}") }
 }
 
-/// Trait to get constructor function name for a type.
+/// Trait to get function name for constructor function for a type.
 ///
 /// `construct<type name>` for all types except structs, for which it's `new <type name>`.
-pub(super) trait ConstructorName {
+pub(super) trait FunctionNames {
     fn constructor_name(&self, schema: &Schema) -> String {
         format!("construct{}", self.plain_name(schema))
     }
@@ -782,7 +799,7 @@ pub(super) trait ConstructorName {
     fn plain_name<'s>(&'s self, schema: &'s Schema) -> Cow<'s, str>;
 }
 
-impl ConstructorName for TypeDef {
+impl FunctionNames for TypeDef {
     fn constructor_name(&self, schema: &Schema) -> String {
         match self {
             TypeDef::Struct(def) => def.constructor_name(schema),
@@ -808,7 +825,7 @@ impl ConstructorName for TypeDef {
     }
 }
 
-impl ConstructorName for StructDef {
+impl FunctionNames for StructDef {
     fn constructor_name(&self, _schema: &Schema) -> String {
         format!("new {}", self.name())
     }
@@ -818,7 +835,7 @@ impl ConstructorName for StructDef {
     }
 }
 
-impl ConstructorName for EnumDef {
+impl FunctionNames for EnumDef {
     fn plain_name(&self, _schema: &Schema) -> Cow<'_, str> {
         Cow::Borrowed(self.name())
     }
@@ -826,7 +843,7 @@ impl ConstructorName for EnumDef {
 
 macro_rules! impl_deser_name_concat {
     ($ty:ident, $prefix:expr) => {
-        impl ConstructorName for $ty {
+        impl FunctionNames for $ty {
             fn plain_name<'s>(&'s self, schema: &'s Schema) -> Cow<'s, str> {
                 format_cow!("{}{}", $prefix, self.inner_type(schema).plain_name(schema))
             }
@@ -838,7 +855,7 @@ impl_deser_name_concat!(OptionDef, "Option");
 impl_deser_name_concat!(BoxDef, "Box");
 impl_deser_name_concat!(VecDef, "Vec");
 
-impl ConstructorName for PrimitiveDef {
+impl FunctionNames for PrimitiveDef {
     fn plain_name<'s>(&'s self, _schema: &'s Schema) -> Cow<'s, str> {
         let type_name = self.name();
         if matches!(type_name, "&str" | "Atom") {
@@ -854,7 +871,7 @@ impl ConstructorName for PrimitiveDef {
 }
 
 // `Cell`s use same constructor as inner type, as layout is identical
-impl ConstructorName for CellDef {
+impl FunctionNames for CellDef {
     fn constructor_name<'s>(&'s self, schema: &'s Schema) -> String {
         self.inner_type(schema).constructor_name(schema)
     }
