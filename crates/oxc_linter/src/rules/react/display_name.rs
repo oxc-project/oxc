@@ -213,8 +213,8 @@ impl Rule for DisplayName {
         class_names_with_display_names_modified.extend(name_prop_usage);
 
         let result = get_result(
-            class_names_initialized_with_no_display_name_property,
-            class_names_with_display_names_modified,
+            &class_names_initialized_with_no_display_name_property,
+            &class_names_with_display_names_modified,
         );
 
         if let Some(class) = result.first() {
