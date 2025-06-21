@@ -3,6 +3,7 @@ use oxc_ast::{
     ast::{Class, Expression, JSXChild, StaticMemberExpression, VariableDeclaration},
 };
 use oxc_diagnostics::OxcDiagnostic;
+use oxc_ecmascript::PropName;
 use oxc_span::GetSpan;
 use oxc_span::Span;
 use serde_json::Value;
@@ -310,7 +311,24 @@ fn process_variable_declaration_node(
             if let Expression::CallExpression(call) = init {
                 if let Some(name) = call.callee_name() {
                     if name == "createClass" || name == "createReactClass" {
-                        if !ignore_transpiler_name {
+                        let contains_display_name = call.arguments.iter().any(|arg| {
+                            println!("arg: {:?}", arg);
+
+                            if let Some(Expression::ObjectExpression(obj_expr)) =
+                                arg.as_expression()
+                            {
+                                for prop in &obj_expr.properties {
+                                    if let Some((name, _)) = prop.prop_name() {
+                                        return name == "displayName";
+                                    }
+                                }
+                            }
+                            false
+                        });
+
+                        println!("contains_display_name: {contains_display_name}");
+
+                        if contains_display_name || !ignore_transpiler_name {
                             class_names_with_display_names_modified.push(init.span());
                         } else {
                             class_names_initialized_with_no_display_name_property.push(init.span());
