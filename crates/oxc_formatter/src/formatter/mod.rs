@@ -78,12 +78,12 @@ use self::{format_element::document::Document, group_id::UniqueGroupIdBuilder, p
 
 #[derive(Debug, Clone)]
 pub struct Formatted<'a> {
-    document: Document,
+    document: Document<'a>,
     context: FormatContext<'a>,
 }
 
 impl<'a> Formatted<'a> {
-    pub fn new(document: Document, context: FormatContext<'a>) -> Self {
+    pub fn new(document: Document<'a>, context: FormatContext<'a>) -> Self {
         Self { document, context }
     }
 
@@ -93,12 +93,12 @@ impl<'a> Formatted<'a> {
     }
 
     /// Returns the formatted document.
-    pub fn document(&self) -> &Document {
+    pub fn document(&self) -> &Document<'a> {
         &self.document
     }
 
     /// Consumes `self` and returns the formatted document.
-    pub fn into_document(self) -> Document {
+    pub fn into_document(self) -> Document<'a> {
         self.document
     }
 }

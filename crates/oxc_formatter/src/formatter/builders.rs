@@ -285,24 +285,20 @@ impl std::fmt::Debug for StaticText {
 }
 
 /// Creates a text from a dynamic string and a range of the input source
-pub fn dynamic_text(text: &str, position: TextSize) -> DynamicText<'_> {
+pub fn dynamic_text(text: &str) -> DynamicText<'_> {
     // FIXME
     // debug_assert_no_newlines(text);
-    DynamicText { text, position }
+    DynamicText { text }
 }
 
 #[derive(Eq, PartialEq)]
 pub struct DynamicText<'a> {
     text: &'a str,
-    position: TextSize,
 }
 
-impl Format<'_> for DynamicText<'_> {
-    fn fmt(&self, f: &mut Formatter) -> FormatResult<()> {
-        f.write_element(FormatElement::DynamicText {
-            text: self.text.to_string().into_boxed_str(),
-            source_position: self.position,
-        })
+impl<'a> Format<'a> for DynamicText<'a> {
+    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        f.write_element(FormatElement::DynamicText { text: self.text })
     }
 }
 
@@ -325,7 +321,7 @@ pub struct SyntaxTokenCowSlice<'a> {
 }
 
 impl<'a> Format<'a> for SyntaxTokenCowSlice<'a> {
-    fn fmt(&self, f: &mut Formatter) -> FormatResult<()> {
+    fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         match &self.text {
             Cow::Borrowed(text) => {
                 // let range = TextRange::at(self.start, text.text_len());
@@ -344,8 +340,8 @@ impl<'a> Format<'a> for SyntaxTokenCowSlice<'a> {
                 })
             }
             Cow::Owned(text) => f.write_element(FormatElement::DynamicText {
-                text: text.to_string().into_boxed_str(),
-                source_position: self.span.start,
+                // TODO: Should use arena String to replace Cow::Owned.
+                text: f.context().allocator().alloc_str(text),
             }),
         }
     }
@@ -1505,8 +1501,8 @@ pub fn soft_line_indent_or_hard_space<'ast>(content: &impl Format<'ast>) -> Bloc
 }
 
 #[derive(Copy, Clone)]
-pub struct BlockIndent<'a, 'ast> {
-    content: Argument<'a, 'ast>,
+pub struct BlockIndent<'fmt, 'ast> {
+    content: Argument<'fmt, 'ast>,
     mode: IndentMode,
 }
 
