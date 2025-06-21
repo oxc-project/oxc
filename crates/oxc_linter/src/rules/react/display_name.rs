@@ -167,7 +167,7 @@ impl Rule for DisplayName {
                                                     is_span_equal_or_inside_other_span(**r, **span)
                                                 })
                                             })
-                                            .cloned()
+                                            .copied()
                                             .collect();
                                 }
                             }
@@ -204,42 +204,24 @@ fn detect_name_prop_in_render(ctx: &LintContext, ignore_transpiler_name: bool) -
     let mut name_prop_usage: Vec<Span> = vec![];
 
     for node in ctx.nodes() {
-        println!("node: {:?}", node);
-        println!("node.kind(): {:?}", node.kind());
-        match node.kind() {
-            AstKind::Class(class) => {
-                println!("class: {:?}", class);
-                for element in &class.body.body {
-                    match element {
-                        oxc_ast::ast::ClassElement::MethodDefinition(method_def) => {
-                            if method_def.key.static_name()
-                                == Some(std::borrow::Cow::Borrowed("render"))
-                            {
-                                if let Some(body) = &method_def.value.body {
-                                    for stmt in &body.statements {
-                                        match stmt {
-                                            oxc_ast::ast::Statement::ReturnStatement(ret_stmt) => {
-                                                if let Some(expr) = &ret_stmt.argument {
-                                                    if check_expression_for_name_prop(expr) {
-                                                        println!(
-                                                            "Found this.props.name in render method!"
-                                                        );
-
-                                                        name_prop_usage.push(expr.span());
-                                                    }
-                                                }
-                                            }
-                                            _ => {}
+        if let AstKind::Class(class) = node.kind() {
+            for element in &class.body.body {
+                if let oxc_ast::ast::ClassElement::MethodDefinition(method_def) = element {
+                    if method_def.key.static_name() == Some(std::borrow::Cow::Borrowed("render")) {
+                        if let Some(body) = &method_def.value.body {
+                            for stmt in &body.statements {
+                                if let oxc_ast::ast::Statement::ReturnStatement(ret_stmt) = stmt {
+                                    if let Some(expr) = &ret_stmt.argument {
+                                        if check_expression_for_name_prop(expr) {
+                                            name_prop_usage.push(expr.span());
                                         }
                                     }
                                 }
                             }
                         }
-                        _ => {}
                     }
                 }
             }
-            _ => {}
         }
     }
     name_prop_usage
@@ -349,8 +331,6 @@ fn process_variable_declaration_node(
                 if let Some(name) = call.callee_name() {
                     if name == "createClass" || name == "createReactClass" {
                         let contains_display_name = call.arguments.iter().any(|arg| {
-                            println!("arg: {:?}", arg);
-
                             if let Some(Expression::ObjectExpression(obj_expr)) =
                                 arg.as_expression()
                             {
@@ -362,8 +342,6 @@ fn process_variable_declaration_node(
                             }
                             false
                         });
-
-                        println!("contains_display_name: {contains_display_name}");
 
                         if contains_display_name || !ignore_transpiler_name {
                             class_names_with_display_names_modified.push(init.span());
@@ -385,11 +363,7 @@ fn process_class_node(class: &Class, ignore_transpiler_name: bool) -> (Vec<Span>
     let mut class_names_with_display_names_modified: Vec<Span> = vec![];
     let mut class_names_initialized_with_no_display_name_property: Vec<Span> = vec![];
 
-    println!("class: {:?}", class);
-
     if let Some(name) = &class.name() {
-        println!("Class name: {:?}", name);
-
         if !name.is_empty() && !ignore_transpiler_name {
             class_names_with_display_names_modified.push(class.span);
             // If the class name has a valid identifier, that is considered a displayName
