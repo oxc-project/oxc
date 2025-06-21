@@ -4,16 +4,18 @@ const {
   NODE_TYPE_IDS_MAP,
   NODE_TYPES_COUNT,
   LEAF_NODE_TYPES_COUNT,
+  VISITOR_BITMAP_COUNT,
+  createCompiledVisitorFromParts,
 } = require('../generated/deserialize/lazy-types.js');
 
-// Getter for private `#visitorsArr` property of `Visitor` class. Initialized in class body below.
-let getVisitorsArr;
+// Getter for private `#compiledVisitor` property of `Visitor` class. Initialized in class body below.
+let getCompiledVisitor;
 
 /**
  * Visitor class, used to visit an AST.
  */
 class Visitor {
-  #visitorsArr;
+  #compiledVisitor;
 
   /**
    * Create `Visitor`.
@@ -39,20 +41,46 @@ class Visitor {
    * @returns {Visitor}
    */
   constructor(visitor) {
-    this.#visitorsArr = createVisitorsArr(visitor);
+    this.#compiledVisitor = createCompiledVisitor(visitor);
   }
 
   static {
-    getVisitorsArr = visitor => visitor.#visitorsArr;
+    getCompiledVisitor = visitor => visitor.#compiledVisitor;
   }
 }
 
-module.exports = { Visitor, getVisitorsArr };
+module.exports = { Visitor, getCompiledVisitor };
+
+// Array of bitmap integers.
+// Reused in each call to `createCompiledVisitor`, because it's only temporary data.
+const bitmaps = [];
+for (let i = VISITOR_BITMAP_COUNT; i > 0; i--) {
+  bitmaps.push(0);
+}
 
 /**
- * Create array of visitors, keyed by node type ID.
+ * Create compiled visitor.
  *
- * Each element of array is one of:
+ * Contains:
+ *
+ * 1. Array of visitors, keyed by node type ID.
+ * 2. Series of 32-bit bitmaps, with a bit set for each type which has a visitor.
+ *
+ * e.g.:
+ *
+ * ```
+ * {
+ *   visitors: [ null, (node) => {}, null, null, ... ],
+ *   bitmap0: 2, // 2nd bit is set because there's a visitor for 2nd node type
+ *   bitmap1: 0,
+ *   bitmap2: 0,
+ *   bitmap3: 0,
+ *   bitmap4: 0,
+ *   bitmap5: 0,
+ * }
+ * ```
+ *
+ * Each element of `visitors` array is one of:
  *
  * * No visitor for this type = `null`.
  * * Visitor for leaf node = visit function.
@@ -60,9 +88,9 @@ module.exports = { Visitor, getVisitorsArr };
  *   where each property is either a visitor function or `null`.
  *
  * @param {Object} visitor - Visitors object from user
- * @returns {Array<Object|function|null>} - Array of visitors
+ * @returns {Object} - Object of form `{ visitors, bitmap0, bitmap1, ... }`
  */
-function createVisitorsArr(visitor) {
+function createCompiledVisitor(visitor) {
   if (visitor === null || typeof visitor !== 'object') {
     throw new Error('`visitors` must be an object');
   }
@@ -72,6 +100,9 @@ function createVisitorsArr(visitor) {
   for (let i = NODE_TYPES_COUNT; i !== 0; i--) {
     visitorsArr.push(null);
   }
+
+  // Empty `bitmaps`
+  bitmaps.fill(0);
 
   // Populate visitors array from provided object
   for (let name of Object.keys(visitor)) {
@@ -91,6 +122,7 @@ function createVisitorsArr(visitor) {
       const existingVisitFn = visitorsArr[typeId];
       if (existingVisitFn === null) {
         visitorsArr[typeId] = visitFn;
+        bitmaps[typeId >> 5] |= 1 << (typeId & 31);
       } else if (isExit) {
         visitorsArr[typeId] = combineVisitFunctions(existingVisitFn, visitFn);
       } else {
@@ -102,6 +134,7 @@ function createVisitorsArr(visitor) {
     let enterExit = visitorsArr[typeId];
     if (enterExit === null) {
       enterExit = visitorsArr[typeId] = { enter: null, exit: null };
+      bitmaps[typeId >> 5] |= 1 << (typeId & 31);
     }
 
     if (isExit) {
@@ -111,7 +144,7 @@ function createVisitorsArr(visitor) {
     }
   }
 
-  return visitorsArr;
+  return createCompiledVisitorFromParts(visitorsArr, bitmaps);
 }
 
 /**

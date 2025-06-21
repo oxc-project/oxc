@@ -187,8 +187,23 @@ const NODE_TYPE_IDS_MAP = new Map([
   ['JSDocNonNullableType', 177],
 ]);
 
+// Create compiled visitor from array of visitors and array of bitmaps
+function createCompiledVisitorFromParts(visitors, bitmaps) {
+  return {
+    visitors,
+    bitmap0: bitmaps[0],
+    bitmap1: bitmaps[1],
+    bitmap2: bitmaps[2],
+    bitmap3: bitmaps[3],
+    bitmap4: bitmaps[4],
+    bitmap5: bitmaps[5],
+  };
+}
+
 module.exports = {
   NODE_TYPE_IDS_MAP,
   NODE_TYPES_COUNT: 178,
   LEAF_NODE_TYPES_COUNT: 38,
+  VISITOR_BITMAP_COUNT: 6,
+  createCompiledVisitorFromParts,
 };

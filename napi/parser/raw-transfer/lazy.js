@@ -4,7 +4,7 @@ const { parseSyncRawImpl, parseAsyncRawImpl, returnBufferToCache } = require('./
   { TOKEN } = require('./lazy-common.js'),
   constructLazyData = require('../generated/deserialize/lazy.js').construct,
   walkProgram = require('../generated/deserialize/lazy-visit.js'),
-  { Visitor, getVisitorsArr } = require('./visitor.js');
+  { Visitor, getCompiledVisitor } = require('./visitor.js');
 
 module.exports = { parseSyncLazy, parseAsyncLazy, Visitor };
 
@@ -124,7 +124,7 @@ function construct(buffer, sourceText, sourceLen) {
       // (2 * 1024 * 1024 * 1024 - 16) >> 2
       const metadataPos32 = 536870908;
       const pos = buffer.uint32[metadataPos32];
-      walkProgram(pos, ast, getVisitorsArr(visitor));
+      walkProgram(pos, ast, getCompiledVisitor(visitor));
     },
   };
 }

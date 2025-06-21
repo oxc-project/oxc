@@ -190,9 +190,17 @@ fn generate(
     ");
 
     // Generate file containing mapping from type names to node type IDs
+    // and `createCompiledVisitorFromParts` function
     assert_eq!(state.next_leaf_node_type_id, leaf_nodes_count);
 
     let nodes_count = state.next_non_leaf_node_type_id;
+    let bitmap_count = nodes_count.div_ceil(32);
+
+    let mut bitmap_props = String::new();
+    for i in 0..bitmap_count {
+        write_it!(bitmap_props, "bitmap{i}: bitmaps[{i}],\n");
+    }
+
     let leaf_node_type_ids_map = &state.leaf_node_type_ids_map;
     let non_leaf_node_type_ids_map = &state.non_leaf_node_type_ids_map;
     #[rustfmt::skip]
@@ -206,10 +214,20 @@ fn generate(
             {non_leaf_node_type_ids_map}
         ]);
 
+        // Create compiled visitor from array of visitors and array of bitmaps
+        function createCompiledVisitorFromParts(visitors, bitmaps) {{
+            return {{
+                visitors,
+                {bitmap_props}
+            }};
+        }}
+
         module.exports = {{
             NODE_TYPE_IDS_MAP,
             NODE_TYPES_COUNT: {nodes_count},
             LEAF_NODE_TYPES_COUNT: {leaf_nodes_count},
+            VISITOR_BITMAP_COUNT: {bitmap_count},
+            createCompiledVisitorFromParts,
         }};
     ");
 
@@ -697,7 +715,7 @@ fn generate_struct(
         if walk_statuses[field_type.id()] == WalkStatus::Walk {
             let inner_walk_fn_name = field_type.walk_name(schema);
             let pos = pos_offset(field.offset_64());
-            write_it!(walk_stmts, "{inner_walk_fn_name}({pos}, ast, visitors);\n");
+            write_it!(walk_stmts, "{inner_walk_fn_name}({pos}, ast, visitor);\n");
         }
     }
 
@@ -769,7 +787,7 @@ fn generate_struct(
         // Just walk its fields.
         #[rustfmt::skip]
         write_it!(state.walkers, "
-            function {walk_fn_name}(pos, ast, visitors) {{
+            function {walk_fn_name}(pos, ast, visitor) {{
                 {walk_stmts}
             }}
         ");
@@ -782,11 +800,14 @@ fn generate_struct(
         let node_type_id = state.next_leaf_node_type_id;
         state.next_leaf_node_type_id += 1;
 
+        let bitmap_condition = get_bitmap_condition(node_type_id);
+
         #[rustfmt::skip]
         write_it!(state.walkers, "
-            function {walk_fn_name}(pos, ast, visitors) {{
-                const visit = visitors[{node_type_id}];
-                if (visit !== null) visit(new {struct_name}(pos, ast));
+            function {walk_fn_name}(pos, ast, visitor) {{
+                if ({bitmap_condition}) {{
+                    (0, visitor.visitors[{node_type_id}])(new {struct_name}(pos, ast));
+                }}
             }}
         ");
 
@@ -796,20 +817,21 @@ fn generate_struct(
         let node_type_id = state.next_non_leaf_node_type_id;
         state.next_non_leaf_node_type_id += 1;
 
+        let bitmap_condition = get_bitmap_condition(node_type_id);
+
         #[rustfmt::skip]
         write_it!(state.walkers, "
-            function {walk_fn_name}(pos, ast, visitors) {{
-                const enterExit = visitors[{node_type_id}];
-                let node, enter, exit;
-                if (enterExit !== null) {{
-                    ({{ enter, exit }} = enterExit);
+            function {walk_fn_name}(pos, ast, visitor) {{
+                let node, enter, exit = null;
+                if ({bitmap_condition}) {{
                     node = new {struct_name}(pos, ast);
+                    ({{ enter, exit }} = visitor.visitors[{node_type_id}]);
                     if (enter !== null) enter(node);
                 }}
 
                 {walk_stmts}
 
-                if (exit) exit(node);
+                if (exit !== null) exit(node);
             }}
         ");
 
@@ -817,6 +839,14 @@ fn generate_struct(
     }
 
     write_it!(state.constructor_names, "{struct_name}, ");
+}
+
+/// Get condition for checking if there is a visitor for a type.
+/// e.g. `(visitor.bitmap0 & 1) !== 0`.
+fn get_bitmap_condition(node_type_id: u32) -> String {
+    let index = node_type_id / 32;
+    let mask = 1 << (node_type_id % 32);
+    format!("(visitor.bitmap{index} & {mask}) !== 0")
 }
 
 /// Generate construct and walk functions for an enum.
@@ -858,7 +888,7 @@ fn generate_enum(
                 let variant_walk_fn_name = variant_type.walk_name(schema);
                 write_it!(
                     walk_cases,
-                    "{variant_walk_fn_name}({payload_pos}, ast, visitors); return;"
+                    "{variant_walk_fn_name}({payload_pos}, ast, visitor); return;"
                 );
             } else {
                 write_it!(walk_cases, "return;");
@@ -892,7 +922,7 @@ fn generate_enum(
 
         #[rustfmt::skip]
         write_it!(state.walkers, "
-            function {walk_fn_name}(pos, ast, visitors) {{
+            function {walk_fn_name}(pos, ast, visitor) {{
                 switch(ast.buffer[pos]) {{
                     {walk_cases}
                     default: throw new Error(`Unexpected discriminant ${{ast.buffer[pos]}} for {type_name}`);
@@ -1034,8 +1064,8 @@ fn generate_option(
 
         #[rustfmt::skip]
         write_it!(state.walkers, "
-            function {walk_fn_name}(pos, ast, visitors) {{
-                if (!({none_condition})) {inner_walk_fn_name}({payload_pos}, ast, visitors);
+            function {walk_fn_name}(pos, ast, visitor) {{
+                if (!({none_condition})) {inner_walk_fn_name}({payload_pos}, ast, visitor);
             }}
         ");
     }
@@ -1072,8 +1102,8 @@ fn generate_box(
 
         #[rustfmt::skip]
         write_it!(state.walkers, "
-            function {walk_fn_name}(pos, ast, visitors) {{
-                return {inner_walk_fn_name}(ast.buffer.uint32[pos >> 2], ast, visitors);
+            function {walk_fn_name}(pos, ast, visitor) {{
+                return {inner_walk_fn_name}(ast.buffer.uint32[pos >> 2], ast, visitor);
             }}
         ");
     }
@@ -1137,13 +1167,13 @@ fn generate_vec(
 
         #[rustfmt::skip]
         write_it!(state.walkers, "
-            function {walk_fn_name}(pos, ast, visitors) {{
+            function {walk_fn_name}(pos, ast, visitor) {{
                 const {{ uint32 }} = ast.buffer,
                     pos32 = pos >> 2;
                 pos = uint32[{ptr_pos32}];
                 const endPos = pos + uint32[{len_pos32}] * {inner_type_size};
                 while (pos < endPos) {{
-                    {inner_walk_fn_name}(pos, ast, visitors);
+                    {inner_walk_fn_name}(pos, ast, visitor);
                     pos += {inner_type_size};
                 }}
             }}
