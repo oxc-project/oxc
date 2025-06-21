@@ -1,4 +1,3 @@
-use oxc_ast::AstKind;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
@@ -47,13 +46,12 @@ declare_oxc_lint!(
 
 impl Rule for NoProto {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        let AstKind::MemberExpression(member_expression) = node.kind() else {
+        let Some(member_expr) = node.kind().as_member_expression_kind() else {
             return;
         };
-        if let Some(static_property_name) = member_expression.static_property_name() {
-            if static_property_name == "__proto__" {
-                ctx.diagnostic(no_proto_diagnostic(member_expression.span()));
-            }
+
+        if member_expr.static_property_name().is_some_and(|name| name == "__proto__") {
+            ctx.diagnostic(no_proto_diagnostic(member_expr.span()));
         }
     }
 }

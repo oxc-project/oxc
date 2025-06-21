@@ -48,19 +48,16 @@ declare_oxc_lint!(
 
 impl Rule for PreferSetSize {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        let AstKind::MemberExpression(member_expr) = node.kind() else {
+        let AstKind::StaticMemberExpression(member_expr) = node.kind() else {
             return;
         };
 
-        let Some((span, property)) = member_expr.static_property_info() else {
-            return;
-        };
-
-        if property != "length" || member_expr.optional() || member_expr.is_computed() {
+        let (span, property) = member_expr.static_property_info();
+        if property != "length" || member_expr.optional {
             return;
         }
 
-        let Expression::ArrayExpression(array_expr) = member_expr.object().without_parentheses()
+        let Expression::ArrayExpression(array_expr) = member_expr.object.without_parentheses()
         else {
             return;
         };

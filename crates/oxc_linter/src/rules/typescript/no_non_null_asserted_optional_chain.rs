@@ -124,10 +124,9 @@ impl Rule for NoNonNullAssertedOptionalChain {
 }
 
 fn is_parent_member_or_call(node: &AstNode<'_>, ctx: &LintContext<'_>) -> bool {
-    matches!(
-        ctx.nodes().parent_kind(node.id()),
-        Some(AstKind::MemberExpression(_) | AstKind::CallExpression(_))
-    )
+    let parent_kind = ctx.nodes().parent_kind(node.id());
+    matches!(parent_kind, Some(AstKind::CallExpression(_)))
+        || parent_kind.is_some_and(|k| k.is_member_expression_kind())
 }
 
 #[test]

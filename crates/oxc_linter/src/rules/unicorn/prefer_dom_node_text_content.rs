@@ -46,14 +46,13 @@ declare_oxc_lint!(
 impl Rule for PreferDomNodeTextContent {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         match node.kind() {
-            AstKind::MemberExpression(member_expr) => {
-                if let Some((span, name)) = member_expr.static_property_info() {
-                    if name == "innerText" && !member_expr.is_computed() {
-                        ctx.diagnostic_with_fix(
-                            prefer_dom_node_text_content_diagnostic(span),
-                            |fixer| fixer.replace(span, "textContent"),
-                        );
-                    }
+            AstKind::StaticMemberExpression(member_expr) => {
+                let (span, name) = member_expr.static_property_info();
+                if name == "innerText" {
+                    ctx.diagnostic_with_fix(
+                        prefer_dom_node_text_content_diagnostic(span),
+                        |fixer| fixer.replace(span, "textContent"),
+                    );
                 }
             }
             // `const {innerText} = node` or `({innerText: text} = node)`

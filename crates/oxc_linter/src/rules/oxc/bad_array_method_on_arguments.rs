@@ -1,7 +1,7 @@
-use oxc_ast::{AstKind, ast::MemberExpression};
+use oxc_ast::AstKind;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::Span;
+use oxc_span::{GetSpan, Span};
 
 use crate::{AstNode, context::LintContext, rule::Rule};
 
@@ -60,47 +60,23 @@ impl Rule for BadArrayMethodOnArguments {
         let Some(parent) = ctx.nodes().parent_node(node.id()) else {
             return;
         };
-        if !matches!(
-            parent.kind(),
-            AstKind::MemberExpression(_) | AstKind::ComputedMemberExpression(_)
-        ) {
+        let Some(member_expr) = parent.kind().as_member_expression_kind() else {
             return;
-        }
-        let member_expr = parent.kind();
+        };
         let Some(grandparent) = ctx.nodes().parent_node(parent.id()) else {
             return;
         };
-        if matches!(member_expr, AstKind::ComputedMemberExpression(_)) {
-            let great_grandparent = ctx.nodes().parent_kind(grandparent.id());
-            let Some(AstKind::CallExpression(_)) = great_grandparent else {
-                return;
-            };
-        } else if !matches!(member_expr, AstKind::ComputedMemberExpression(_)) {
-            let AstKind::CallExpression(_) = grandparent.kind() else {
-                return;
-            };
-        }
-        match member_expr {
-            AstKind::MemberExpression(MemberExpression::StaticMemberExpression(expr)) => {
-                if ARRAY_METHODS.binary_search(&expr.property.name.as_str()).is_ok() {
-                    ctx.diagnostic(bad_array_method_on_arguments_diagnostic(
-                        expr.property.name.as_str(),
-                        expr.span,
-                    ));
-                }
-            }
-            AstKind::ComputedMemberExpression(expr) => {
-                let Some(name) = expr.static_property_name() else {
-                    return;
-                };
-                if ARRAY_METHODS.binary_search(&name.as_str()).is_ok() {
-                    ctx.diagnostic(bad_array_method_on_arguments_diagnostic(
-                        name.as_str(),
-                        expr.span,
-                    ));
-                }
-            }
-            _ => {}
+        let AstKind::CallExpression(_) = grandparent.kind() else {
+            return;
+        };
+        let Some(name) = member_expr.static_property_name() else {
+            return;
+        };
+        if ARRAY_METHODS.binary_search(&name.as_str()).is_ok() {
+            ctx.diagnostic(bad_array_method_on_arguments_diagnostic(
+                name.as_str(),
+                member_expr.span(),
+            ));
         }
     }
 }

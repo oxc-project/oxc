@@ -1,7 +1,4 @@
-use oxc_ast::{
-    AstKind,
-    ast::{Expression, MemberExpression},
-};
+use oxc_ast::{AstKind, ast::Expression};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
@@ -72,9 +69,7 @@ impl Rule for PreferGlobalThis {
             return;
         }
 
-        if let Some(AstKind::MemberExpression(MemberExpression::StaticMemberExpression(e))) =
-            ctx.nodes().parent_kind(node.id())
-        {
+        if let Some(AstKind::StaticMemberExpression(e)) = ctx.nodes().parent_kind(node.id()) {
             if let Expression::Identifier(ident) = &e.object {
                 if ident.name == "self"
                     && WEB_WORKER_SPECIFIC_APIS.contains(&e.property.name.as_str())

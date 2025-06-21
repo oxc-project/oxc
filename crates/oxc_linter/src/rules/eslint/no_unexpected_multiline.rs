@@ -135,12 +135,12 @@ impl Rule for NoUnexpectedMultiline {
                     );
                 }
             }
-            AstKind::MemberExpression(member_expr) => {
-                if !member_expr.is_computed() || member_expr.optional() {
+            AstKind::ComputedMemberExpression(member_expr) => {
+                if member_expr.optional {
                     return;
                 }
 
-                let span = Span::new(member_expr.object().span().end, member_expr.span().end);
+                let span = Span::new(member_expr.object.span().end, member_expr.span().end);
                 if let Some(open_bracket_pos) = has_newline_before(ctx, span, b'[') {
                     let bracket_span = Span::sized(span.start + open_bracket_pos, 1);
 

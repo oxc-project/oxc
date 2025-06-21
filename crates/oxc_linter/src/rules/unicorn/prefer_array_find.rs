@@ -61,10 +61,7 @@ impl Rule for PreferArrayFind {
                 if let Expression::CallExpression(call_expr) =
                     computed_member_expr.object.get_inner_expression()
                 {
-                    let Some(parent) = ctx.nodes().parent_node(node.id()) else {
-                        return;
-                    };
-                    if is_filter_call(call_expr) && !is_left_hand_side(parent, ctx) {
+                    if is_filter_call(call_expr) && !is_left_hand_side(node, ctx) {
                         ctx.diagnostic(prefer_array_find_diagnostic(
                             call_expr_member_expr_property_span(call_expr),
                         ));
