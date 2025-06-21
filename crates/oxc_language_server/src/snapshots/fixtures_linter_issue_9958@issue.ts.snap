@@ -15,6 +15,32 @@ tags: None
 fixed: None
 
 
+code: "eslint(no-unused-vars)"
+code_description.href: "https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-unused-vars.html"
+message: "Variable 'x' is declared but never used. Unused variables should start with a '_'.\nhelp: Consider removing this declaration."
+range: Range { start: Position { line: 2, character: 6 }, end: Position { line: 2, character: 7 } }
+related_information[0].message: "'x' is declared here"
+related_information[0].location.uri: "file://<variable>/fixtures/linter/issue_9958/issue.ts"
+related_information[0].location.range: Range { start: Position { line: 2, character: 6 }, end: Position { line: 2, character: 7 } }
+severity: Some(Error)
+source: Some("oxc")
+tags: None
+fixed: None
+
+
+code: "eslint(no-unused-vars)"
+code_description.href: "https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-unused-vars.html"
+message: "Variable 'a' is declared but never used. Unused variables should start with a '_'.\nhelp: Consider removing this declaration."
+range: Range { start: Position { line: 5, character: 6 }, end: Position { line: 5, character: 7 } }
+related_information[0].message: "'a' is declared here"
+related_information[0].location.uri: "file://<variable>/fixtures/linter/issue_9958/issue.ts"
+related_information[0].location.range: Range { start: Position { line: 5, character: 6 }, end: Position { line: 5, character: 7 } }
+severity: Some(Error)
+source: Some("oxc")
+tags: None
+fixed: None
+
+
 code: "typescript-eslint(no-non-null-asserted-optional-chain)"
 code_description.href: "https://oxc.rs/docs/guide/usage/linter/rules/typescript/no-non-null-asserted-optional-chain.html"
 message: "Optional chain expressions can return undefined by design: using a non-null assertion is unsafe and wrong.\nhelp: Remove the non-null assertion."
