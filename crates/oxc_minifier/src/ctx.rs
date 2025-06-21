@@ -6,6 +6,7 @@ use std::{
 use rustc_hash::FxHashMap;
 
 use oxc_ast::{AstBuilder, ast::*};
+use oxc_ast_visit::Visit;
 use oxc_ecmascript::{
     constant_evaluation::{
         ConstantEvaluation, ConstantEvaluationCtx, ConstantValue, binary_operation_evaluate_value,
@@ -211,5 +212,25 @@ impl<'a> Ctx<'a, '_> {
             })?;
         }
         Some(f64::from(int_value))
+    }
+}
+
+impl<'a, 'b> Ctx<'a, 'b> {
+    pub fn delete_semantic_from_expression(&mut self, expr: &Expression<'a>) {
+        let mut sync = SyncSemantic { scoping: self.scoping_mut() };
+        sync.visit_expression(expr);
+    }
+}
+
+struct SyncSemantic<'b> {
+    scoping: &'b mut Scoping,
+}
+
+impl<'a, 'b> Visit<'a> for SyncSemantic<'b> {
+    fn visit_identifier_reference(&mut self, ident: &IdentifierReference<'a>) {
+        let Some(reference_id) = ident.reference_id.get() else { return };
+        if let Some(symbol_id) = self.scoping.get_reference(reference_id).symbol_id() {
+            self.scoping.delete_resolved_reference(symbol_id, reference_id);
+        }
     }
 }
