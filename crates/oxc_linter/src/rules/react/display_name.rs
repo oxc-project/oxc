@@ -188,12 +188,12 @@ impl Rule for DisplayName {
                                         class_names_initialized_with_no_display_name_property
                                             .iter()
                                             .filter_map(|span| {
-                                                if !result.iter().any(|r| {
-                                                    is_span_equal_or_inside_other_span(*r, span)
+                                                if result.iter().any(|r| {
+                                                    is_span_equal_or_inside_other_span(r, span)
                                                 }) {
-                                                    Some(*span)
-                                                } else {
                                                     None
+                                                } else {
+                                                    Some(*span)
                                                 }
                                             })
                                             .collect();
@@ -415,8 +415,8 @@ fn is_span_equal_or_inside_other_span(span: &Span, other_span: &Span) -> bool {
 }
 
 fn get_result(
-    class_names_initialized_with_no_display_name_property: Vec<Span>,
-    class_names_with_display_names_modified: Vec<Span>,
+    class_names_initialized_with_no_display_name_property: &Vec<Span>,
+    class_names_with_display_names_modified: &Vec<Span>,
 ) -> Vec<Span> {
     let result: Vec<Span> = class_names_initialized_with_no_display_name_property
         .iter()
