@@ -8,7 +8,7 @@ use super::{
 
 /// Queue of [FormatElement]s.
 pub(super) trait Queue<'a> {
-    type Stack: Stack<&'a [FormatElement]>;
+    type Stack: Stack<&'a [FormatElement<'a>]>;
 
     fn stack(&self) -> &Self::Stack;
 
@@ -19,7 +19,7 @@ pub(super) trait Queue<'a> {
     fn set_next_index(&mut self, index: usize);
 
     /// Pops the element at the end of the queue.
-    fn pop(&mut self) -> Option<&'a FormatElement> {
+    fn pop(&mut self) -> Option<&'a FormatElement<'a>> {
         match self.stack().top() {
             Some(top_slice) => {
                 // Safe because queue ensures that slices inside `slices` are never empty.
@@ -40,12 +40,12 @@ pub(super) trait Queue<'a> {
     }
 
     /// Returns the next element, not traversing into [FormatElement::Interned].
-    fn top_with_interned(&self) -> Option<&'a FormatElement> {
+    fn top_with_interned(&self) -> Option<&'a FormatElement<'a>> {
         self.stack().top().map(|top_slice| &top_slice[self.next_index()])
     }
 
     /// Returns the next element, recursively resolving the first element of [FormatElement::Interned].
-    fn top(&self) -> Option<&'a FormatElement> {
+    fn top(&self) -> Option<&'a FormatElement<'a>> {
         let mut top = self.top_with_interned();
 
         while let Some(FormatElement::Interned(interned)) = top {
@@ -80,7 +80,7 @@ pub(super) trait Queue<'a> {
     }
 
     /// Removes top slice.
-    fn pop_slice(&mut self) -> Option<&'a [FormatElement]> {
+    fn pop_slice(&mut self) -> Option<&'a [FormatElement<'a>]> {
         self.set_next_index(0);
         self.stack_mut().pop()
     }
@@ -109,12 +109,12 @@ pub(super) trait Queue<'a> {
 /// Queue with the elements to print.
 #[derive(Debug, Default, Clone)]
 pub(super) struct PrintQueue<'a> {
-    slices: Vec<&'a [FormatElement]>,
+    slices: Vec<&'a [FormatElement<'a>]>,
     next_index: usize,
 }
 
 impl<'a> PrintQueue<'a> {
-    pub(super) fn new(slice: &'a [FormatElement]) -> Self {
+    pub(super) fn new(slice: &'a [FormatElement<'a>]) -> Self {
         let slices = match slice {
             [] => Vec::default(),
             slice => vec![slice],
@@ -129,7 +129,7 @@ impl<'a> PrintQueue<'a> {
 }
 
 impl<'a> Queue<'a> for PrintQueue<'a> {
-    type Stack = Vec<&'a [FormatElement]>;
+    type Stack = Vec<&'a [FormatElement<'a>]>;
 
     fn stack(&self) -> &Self::Stack {
         &self.slices
@@ -155,7 +155,7 @@ impl<'a> Queue<'a> for PrintQueue<'a> {
 #[must_use]
 #[derive(Debug)]
 pub(super) struct FitsQueue<'a, 'print> {
-    stack: StackedStack<'print, &'a [FormatElement]>,
+    stack: StackedStack<'print, &'a [FormatElement<'a>]>,
     next_index: usize,
 }
 
@@ -169,13 +169,13 @@ impl<'a, 'print> FitsQueue<'a, 'print> {
         Self { stack, next_index: print_queue.next_index }
     }
 
-    pub(super) fn finish(self) -> Vec<&'a [FormatElement]> {
+    pub(super) fn finish(self) -> Vec<&'a [FormatElement<'a>]> {
         self.stack.into_vec()
     }
 }
 
 impl<'a, 'print> Queue<'a> for FitsQueue<'a, 'print> {
-    type Stack = StackedStack<'print, &'a [FormatElement]>;
+    type Stack = StackedStack<'print, &'a [FormatElement<'a>]>;
 
     fn stack(&self) -> &Self::Stack {
         &self.stack
@@ -214,7 +214,7 @@ impl<'a, Q> Iterator for QueueContentIterator<'a, '_, Q>
 where
     Q: Queue<'a>,
 {
-    type Item = &'a FormatElement;
+    type Item = &'a FormatElement<'a>;
 
     fn next(&mut self) -> Option<Self::Item> {
         if self.depth == 0 {

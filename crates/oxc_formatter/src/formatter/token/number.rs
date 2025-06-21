@@ -68,6 +68,7 @@ struct FormatNumberLiteralExponent {
 }
 
 // Regex-free version of https://github.com/prettier/prettier/blob/ca246afacee8e6d5db508dae01730c9523bbff1d/src/common/util.js#L341-L356
+// TODO: Use arena String to construct the cleaned text.
 fn format_trimmed_number(text: &str, options: NumberFormatOptions) -> Cow<'_, str> {
     use FormatNumberLiteralState::{DecimalPart, Exponent, IntegerPart};
 

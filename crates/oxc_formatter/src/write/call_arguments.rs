@@ -143,7 +143,7 @@ pub enum FormatCallArgument<'a, 'b> {
     /// Allows to re-use the formatted output rather than having to call into the formatting again.
     Inspected {
         /// The formatted element
-        content: FormatResult<Option<FormatElement>>,
+        content: FormatResult<Option<FormatElement<'a>>>,
 
         /// The separated element
         element: &'b AstNode<'a, Argument<'a>>,
