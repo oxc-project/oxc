@@ -230,6 +230,57 @@ impl<'a> Codegen<'a> {
         self.code.print_str(s);
     }
 
+    /// Push str into the buffer, escaping `</script` to `<\/script`.
+    #[inline]
+    #[expect(clippy::missing_panics_doc, reason = "infallible")]
+    pub fn print_str_escaping_slash_script(&mut self, s: &str) {
+        let slice = s.as_bytes();
+        let mut consumed = 0;
+        let mut i = 0;
+
+        // Only check when remaining string has length larger than 8.
+        while i + 8 <= slice.len() {
+            // We have to check first two bytes separately as `next8_lower_case == *b"</script"`
+            // would also match `\0x1C\x0Fscript`  ( 0x1C | 32 == b'<', 0xF | 32 == b'/').
+            if slice[i] == b'<' && slice[i + 1] == b'/' {
+                // Compiler condenses these operations to an 8-byte read, u64 AND, and u64 compare.
+                // https://godbolt.org/z/9ndYnbj53
+                //
+                // TODO: use the following expect after it is fixed in stable clippy.
+                // https://github.com/rust-lang/rust-clippy/issues/14534
+                // #[expect(clippy::missing_panics_doc, reason = "infallible")]
+                let next8: [u8; 8] = slice[i..i + 8].try_into().unwrap();
+                let mut next8_lower_case = [0; 8];
+                for j in 0..8 {
+                    // `| 32` converts ASCII upper case letters to lower case. `<` and `/` are unaffected.
+                    next8_lower_case[j] = next8[j] | 32;
+                }
+
+                if next8_lower_case == *b"</script" {
+                    // Flush up to and including `<`. Skip `/`. Write `\/` instead.
+                    // SAFETY:
+                    // The slice guarantees to be a valid UTF-8 string.
+                    // The consumed index is always pointed to a UTF-8 char boundary.
+                    // Current byte is `<`, thus i - 1 is also at a UTF-8 char boundary.
+                    unsafe {
+                        self.code.print_bytes_unchecked(&slice[consumed..i]);
+                    }
+                    self.code.print_str("<\\/");
+                    consumed = i + 2;
+                    i += 8;
+                }
+            }
+            i += 1;
+        }
+
+        // SAFETY:
+        // The slice guarantees to be a valid UTF-8 string.
+        // The consumed index is always pointed to a UTF-8 char boundary.
+        unsafe {
+            self.code.print_bytes_unchecked(&slice[consumed..]);
+        }
+    }
+
     /// Print a single [`Expression`], adding it to the code generator's
     /// internal buffer. Unlike [`Codegen::build`], this does not consume `self`.
     #[inline]
