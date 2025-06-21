@@ -4,7 +4,7 @@ use oxc_span::GetSpan;
 
 use crate::{
     format_args,
-    formatter::{Buffer, FormatResult, Formatter, prelude::*},
+    formatter::{Buffer, FormatResult, Formatter, prelude::*, trivia::DanglingIndentMode},
     generated::ast_nodes::{AstNode, AstNodes},
     write,
 };
@@ -41,7 +41,9 @@ impl<'a> FormatWrite<'a> for AstNode<'a, Class<'a>> {
 
         let indent_only_heritage = (implements.is_empty() || super_class.is_none())
             && type_parameters.as_ref().is_some_and(|type_parameters| {
-                !f.comments().has_trailing_line_comment(type_parameters.span().end)
+                // TODO: https://github.com/prettier/prettier/blob/7584432401a47a26943dd7a9ca9a8e032ead7285/src/language-js/comments/handle-comments.js#L447-L499
+                // !f.comments().has_trailing_line_comment(type_parameters.span().end)
+                true
             });
 
         let type_parameters_id = if indent_only_heritage && !implements.is_empty() {
@@ -121,7 +123,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, Class<'a>> {
         }
 
         if body.body().is_empty() {
-            write!(f, ["{", format_dangling_comments(self.span()).with_block_indent(), "}"])
+            write!(f, ["{", format_dangling_comments(self.span).with_block_indent(), "}"])
         } else {
             write!(f, body)
         }
@@ -129,25 +131,26 @@ impl<'a> FormatWrite<'a> for AstNode<'a, Class<'a>> {
 }
 
 fn should_group<'a>(class: &Class<'a>, f: &Formatter<'_, 'a>) -> bool {
-    let comments = f.comments();
+    // TODO: https://github.com/prettier/prettier/blob/7584432401a47a26943dd7a9ca9a8e032ead7285/src/language-js/comments/handle-comments.js#L447-L499
 
-    if let Some(id) = &class.id {
-        if comments.has_trailing_comments(id.span.end) {
-            return true;
-        }
-    }
+    // let comments = f.comments();
+    // if let Some(id) = &class.id {
+    //     if comments.has_trailing_comments(id.span.end) {
+    //         return true;
+    //     }
+    // }
 
-    if let Some(type_parameters) = &class.type_parameters {
-        if comments.has_trailing_comments(type_parameters.span.end) {
-            return true;
-        }
-    }
+    // if let Some(type_parameters) = &class.type_parameters {
+    //     if comments.has_trailing_comments(type_parameters.span.end) {
+    //         return true;
+    //     }
+    // }
 
-    if let Some(extends) = &class.super_class {
-        if comments.has_trailing_comments(extends.span().end) {
-            return true;
-        }
-    }
+    // if let Some(extends) = &class.super_class {
+    //     if comments.has_trailing_comments(extends.span().end) {
+    //         return true;
+    //     }
+    // }
 
     if !class.implements.is_empty() {
         return true;

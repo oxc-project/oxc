@@ -4,7 +4,7 @@ use oxc_span::GetSpan;
 
 use super::FormatWrite;
 use crate::{
-    formatter::{Buffer, FormatResult, Formatter, prelude::*},
+    formatter::{Buffer, FormatResult, Formatter, prelude::*, trivia::DanglingIndentMode},
     generated::ast_nodes::{AstNode, AstNodes},
     write,
 };
@@ -13,10 +13,8 @@ impl<'a> FormatWrite<'a> for AstNode<'a, BlockStatement<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         write!(f, "{")?;
         if is_empty_block(self, f) {
-            let comments = f.comments();
-            let has_dangling_comments = comments.has_dangling_comments(self.span());
-            if has_dangling_comments {
-                write!(f, [format_dangling_comments(self.span()).with_block_indent()])?;
+            if f.context().comments().has_dangling_comments(self.span) {
+                write!(f, format_dangling_comments(self.span).with_block_indent())?;
             } else if is_non_collapsible(self.parent) {
                 write!(f, hard_line_break())?;
             }
@@ -31,8 +29,9 @@ fn is_empty_block(block: &BlockStatement<'_>, f: &Formatter<'_, '_>) -> bool {
     block.body.is_empty()
         || block.body.iter().all(|s| {
             matches!(s, Statement::EmptyStatement(_))
-                && !f.comments().has_comments(s.span())
-                && !f.comments().is_suppressed(s.span())
+            // TODO: it seems removing `has_comments` doesn't break anything, needs to check further
+            // && !f.comments().has_comments(s.span())
+            // && !f.comments().is_suppressed(s.span())
         })
 }
 

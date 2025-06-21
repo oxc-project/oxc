@@ -137,7 +137,7 @@ pub enum AssignmentLikeLayout {
     SuppressedInitializer,
 }
 
-#[derive(Clone, Copy)]
+#[derive(Debug, Clone, Copy)]
 pub enum GroupedCallArgumentLayout {
     /// Group the first call argument.
     GroupedFirstArgument,
@@ -224,7 +224,11 @@ impl<'a> Format<'a> for FormatJsArrowFunctionExpression<'a, '_> {
                         Expression::ArrowFunctionExpression(_)
                         | Expression::ArrayExpression(_)
                         | Expression::ObjectExpression(_),
-                    ) => !f.comments().has_leading_own_line_comment(body.span().start),
+                    ) => {
+                        // TODO: It seems no difference whether check there is a leading comment or not.
+                        // !f.comments().has_leading_own_line_comment(body.span().start)
+                        true
+                    }
                     _ => false,
                 };
                 // TODO:
@@ -280,10 +284,9 @@ impl<'a> Format<'a> for FormatJsArrowFunctionExpression<'a, '_> {
                         is_last_call_arg
                         // if it's inside a JSXExpression (e.g. an attribute) we should align the expression's closing } with the line with the opening {.
                         /*|| matches!(node.syntax().parent.kind(), Some(JsSyntaxKind::JSX_EXPRESSION_CHILD | JsSyntaxKind::JSX_EXPRESSION_ATTRIBUTE_VALUE))*/
-                    ) && !f
-                        .context()
-                        .comments()
-                        .has_comments(arrow.span());
+                    );
+                    // TODO: it seems no difference whether check there is a comment or not.
+                    //&& !f.context().comments().has_comments(node.syntax());
                     if body_is_condition_type {
                         write!(
                             f,
@@ -368,7 +371,7 @@ impl<'a, 'b> ArrowFunctionLayout<'a, 'b> {
     /// of the different layouts.
     fn for_arrow(
         arrow: &'b AstNode<'a, ArrowFunctionExpression<'a>>,
-        comments: &Comments,
+        comments: &Comments<'a>,
         options: FormatJsArrowFunctionExpressionOptions,
     ) -> ArrowFunctionLayout<'a, 'b> {
         let mut head = None;
@@ -387,7 +390,9 @@ impl<'a, 'b> ArrowFunctionLayout<'a, 'b> {
                         if matches!(
                             options.call_arg_layout,
                             None | Some(GroupedCallArgumentLayout::GroupedLastArgument)
-                        ) && !comments.is_suppressed(next.span())
+                        )
+                        // TODO: Unsupported yet
+                        //  && !comments.is_suppressed(next.span())
                         {
                             should_break = should_break || Self::should_break_chain(current);
 
@@ -567,8 +572,10 @@ impl<'a> Format<'a> for ArrowChain<'a, '_> {
                     // rest of the arrows in the chain need to format their
                     // comments manually, since they won't have their own
                     // Format node to handle it.
-                    let should_format_comments = !is_first_in_chain
-                        && f.context().comments().has_leading_comments(arrow.span().start);
+                    // TODO: maybe this is unneeded in the current oxc implementation?
+                    // let should_format_comments = !is_first_in_chain
+                    // && f.context().comments().has_leading_comments(arrow.syntax());
+                    let should_format_comments = false;
                     let is_first = is_first_in_chain;
 
                     let formatted_signature = format_with(|f| {
@@ -580,13 +587,13 @@ impl<'a> Format<'a> for ArrowChain<'a, '_> {
                             // then we want to _force_ the line break so that the leading comments
                             // don't inadvertently end up on the previous line after the fat arrow.
                             if is_grouped_call_arg_layout {
-                                write!(f, [space(), format_leading_comments(arrow.span().start)])?;
+                                write!(f, [space(), format_leading_comments(arrow.span())])?;
                             } else {
                                 write!(
                                     f,
                                     [
                                         soft_line_break_or_space(),
-                                        format_leading_comments(arrow.span().start)
+                                        format_leading_comments(arrow.span())
                                     ]
                                 )?;
                             }
@@ -679,9 +686,10 @@ impl<'a> Format<'a> for ArrowChain<'a, '_> {
 
             // Format the trailing comments of all arrow function EXCEPT the first one because
             // the comments of the head get formatted as part of the `FormatJsArrowFunctionExpression` call.
-            for arrow in self.arrows().skip(1) {
-                write!(f, format_trailing_comments(arrow.span().end))?;
-            }
+            // TODO: It seems unneeded in the current oxc implementation?
+            // for arrow in self.arrows().skip(1) {
+            //     write!(f, format_trailing_comments(arrow.span().end))?;
+            // }
 
             Ok(())
         });
@@ -873,9 +881,10 @@ fn format_signature<'a, 'b>(
             )?;
         }
 
-        if f.comments().has_dangling_comments(arrow.span()) {
-            write!(f, [space(), format_dangling_comments(arrow.span())])?;
-        }
+        // TODO: for case `a = (x: any): x is string /* comment */ => {}`
+        // if f.comments().has_dangling_comments(arrow.span()) {
+        //     write!(f, [space(), format_dangling_comments(arrow.span())])?;
+        // }
 
         Ok(())
     })
