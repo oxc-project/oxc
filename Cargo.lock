@@ -1735,6 +1735,7 @@ version = "0.73.2"
 dependencies = [
  "cow-utils",
  "oxc-miette",
+ "percent-encoding",
 ]
 
 [[package]]
