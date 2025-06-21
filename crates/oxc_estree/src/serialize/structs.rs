@@ -39,6 +39,9 @@ pub trait StructSerializer {
 
     /// Finish serializing struct.
     fn end(self);
+
+    /// Whether to include range information in the serialized output
+    fn range(&self) -> bool;
 }
 
 /// Serializer for structs.
@@ -146,6 +149,10 @@ impl<C: Config, F: Formatter> StructSerializer for ESTreeStructSerializer<'_, C,
         }
         buffer.print_ascii_byte(b'}');
     }
+
+    fn range(&self) -> bool {
+        self.serializer.config.ranges()
+    }
 }
 
 /// State of [`StructSerializer`].
@@ -215,6 +222,10 @@ impl<'p, P: StructSerializer> Serializer for FlatStructSerializer<'p, P> {
             panic!("Cannot call `record_fix_path` on a `FlatStructSerializer`");
         }
     }
+
+    fn range(&self) -> bool {
+        self.0.range()
+    }
 }
 
 impl<P: StructSerializer> SerializerPrivate for FlatStructSerializer<'_, P> {
@@ -279,6 +290,10 @@ impl<P: StructSerializer> StructSerializer for FlatStructSerializer<'_, P> {
     /// Finish serializing struct.
     fn end(self) {
         // No-op - there may be more fields to be added to the struct in the parent
+    }
+
+    fn range(&self) -> bool {
+        self.0.range()
     }
 }
 

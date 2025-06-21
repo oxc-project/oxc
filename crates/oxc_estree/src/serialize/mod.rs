@@ -4,7 +4,6 @@
 use std::mem;
 
 use itoa::Buffer as ItoaBuffer;
-
 use oxc_data_structures::{code_buffer::CodeBuffer, stack::NonEmptyStack};
 
 mod blanket;
@@ -15,12 +14,13 @@ mod primitives;
 mod sequences;
 mod strings;
 mod structs;
-use config::{Config, ConfigFixesJS, ConfigFixesTS, ConfigJS, ConfigTS};
 use formatter::{CompactFormatter, Formatter, PrettyFormatter};
 use sequences::ESTreeSequenceSerializer;
 use structs::ESTreeStructSerializer;
 
 pub use concat::{Concat2, Concat3, ConcatElement};
+pub use config::{Config, ConfigFixesJS, ConfigFixesTS, ConfigJS, ConfigTS};
+
 pub use sequences::SequenceSerializer;
 pub use strings::{JsonSafeString, LoneSurrogatesString};
 pub use structs::{FlatStructSerializer, StructSerializer};
@@ -43,6 +43,8 @@ pub trait Serializer: SerializerPrivate {
     type StructSerializer: StructSerializer;
     /// Type of sequence serializer this serializer uses.
     type SequenceSerializer: SequenceSerializer;
+
+    fn range(&self) -> bool;
 
     /// Serialize struct.
     fn serialize_struct(self) -> Self::StructSerializer;
@@ -100,30 +102,39 @@ pub struct ESTreeSerializer<C: Config, F: Formatter> {
     formatter: F,
     trace_path: NonEmptyStack<TracePathPart>,
     fixes_buffer: CodeBuffer,
-    #[expect(unused)]
     config: C,
 }
 
 impl<C: Config, F: Formatter> ESTreeSerializer<C, F> {
-    /// Create new [`ESTreeSerializer`].
+    /// Create new [`ESTreeSerializer`] with ranges disabled.
     pub fn new() -> Self {
+        Self::new_with_ranges(false)
+    }
+
+    /// Create new [`ESTreeSerializer`] with specified ranges setting.
+    pub fn new_with_ranges(ranges: bool) -> Self {
         Self {
             buffer: CodeBuffer::new(),
             formatter: F::new(),
             trace_path: NonEmptyStack::new(TracePathPart::Index(0)),
             fixes_buffer: CodeBuffer::new(),
-            config: C::new(),
+            config: C::new(ranges),
         }
     }
 
-    /// Create new [`ESTreeSerializer`] with specified buffer capacity.
+    /// Create new [`ESTreeSerializer`] with specified buffer capacity and ranges disabled.
     pub fn with_capacity(capacity: usize) -> Self {
+        Self::with_capacity_and_ranges(capacity, false)
+    }
+
+    /// Create new [`ESTreeSerializer`] with specified buffer capacity and ranges setting.
+    pub fn with_capacity_and_ranges(capacity: usize, ranges: bool) -> Self {
         Self {
             buffer: CodeBuffer::with_capacity(capacity),
             formatter: F::new(),
             trace_path: NonEmptyStack::new(TracePathPart::Index(0)),
             fixes_buffer: CodeBuffer::new(),
-            config: C::new(),
+            config: C::new(ranges),
         }
     }
 
@@ -178,6 +189,10 @@ impl<'s, C: Config, F: Formatter> Serializer for &'s mut ESTreeSerializer<C, F> 
 
     type StructSerializer = ESTreeStructSerializer<'s, C, F>;
     type SequenceSerializer = ESTreeSequenceSerializer<'s, C, F>;
+
+    fn range(&self) -> bool {
+        self.config.ranges()
+    }
 
     /// Serialize struct.
     #[inline(always)]

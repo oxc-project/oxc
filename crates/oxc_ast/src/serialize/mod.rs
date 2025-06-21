@@ -168,6 +168,7 @@ impl ESTree for ProgramConverter<'_, '_> {
         let span_start =
             if S::INCLUDE_TS_FIELDS { get_ts_start_span(program) } else { program.span.start };
 
+        let range = serializer.range();
         let mut state = serializer.serialize_struct();
         state.serialize_field("type", &JsonSafeString("Program"));
         state.serialize_field("start", &span_start);
@@ -175,6 +176,9 @@ impl ESTree for ProgramConverter<'_, '_> {
         state.serialize_field("body", &Concat2(&program.directives, &program.body));
         state.serialize_field("sourceType", &program.source_type.module_kind());
         state.serialize_field("hashbang", &program.hashbang);
+        if range {
+            state.serialize_field("range", &[span_start, program.span.end]);
+        }
         state.end();
     }
 }
