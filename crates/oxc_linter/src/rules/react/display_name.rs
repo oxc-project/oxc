@@ -1,6 +1,6 @@
 use oxc_ast::{
     AstKind,
-    ast::{Argument, Class, Expression, ObjectPropertyKind, PropertyKey, VariableDeclaration},
+    ast::{Class, Expression, JSXChild, StaticMemberExpression, VariableDeclaration},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_span::GetSpan;
@@ -106,7 +106,7 @@ impl Rule for DisplayName {
         println!("\nsource_code: {:?} \n", ctx.source_text());
 
         let ignore_transpiler_name = config.ignore_transpiler_name;
-        let check_context_objects = config.check_context_objects;
+        let _check_context_objects = config.check_context_objects;
 
         let class_names = ctx.classes();
 
@@ -118,11 +118,7 @@ impl Rule for DisplayName {
         for node in ctx.nodes() {
             match node.kind() {
                 AstKind::VariableDeclaration(decl) => {
-                    let result = process_variable_declaration_node(
-                        decl,
-                        ignore_transpiler_name,
-                        check_context_objects,
-                    );
+                    let result = process_variable_declaration_node(decl, ignore_transpiler_name);
 
                     let (
                         class_names_initialized_with_no_display_name_property_result,
@@ -151,6 +147,12 @@ impl Rule for DisplayName {
             }
         }
 
+        // Check for name prop usage in render methods
+        let name_prop_usage = detect_name_prop_in_render(ctx);
+
+        println!("\nname_prop_usage: {name_prop_usage:?}\n");
+        class_names_with_display_names_modified.extend(name_prop_usage);
+
         let result = get_result(
             class_names_initialized_with_no_display_name_property,
             class_names_with_display_names_modified,
@@ -162,29 +164,160 @@ impl Rule for DisplayName {
     }
 }
 
+/// Detects if a render method contains `this.props.name` in JSX expressions
+fn detect_name_prop_in_render(ctx: &LintContext) -> Vec<Span> {
+    let mut name_prop_usage: Vec<Span> = vec![];
+
+    for node in ctx.nodes() {
+        match node.kind() {
+            AstKind::Class(class) => {
+                for element in &class.body.body {
+                    match element {
+                        oxc_ast::ast::ClassElement::MethodDefinition(method_def) => {
+                            if method_def.key.static_name()
+                                == Some(std::borrow::Cow::Borrowed("render"))
+                            {
+                                if let Some(body) = &method_def.value.body {
+                                    for stmt in &body.statements {
+                                        match stmt {
+                                            oxc_ast::ast::Statement::ReturnStatement(ret_stmt) => {
+                                                if let Some(expr) = &ret_stmt.argument {
+                                                    if check_expression_for_name_prop(expr) {
+                                                        println!(
+                                                            "Found this.props.name in render method!"
+                                                        );
+
+                                                        name_prop_usage.push(expr.span());
+                                                    }
+                                                }
+                                            }
+                                            _ => {}
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        _ => {}
+                    }
+                }
+            }
+            _ => {}
+        }
+    }
+    name_prop_usage
+}
+
+/// Recursively checks if an expression contains `this.props.name`
+fn check_expression_for_name_prop(expr: &Expression) -> bool {
+    match expr {
+        Expression::JSXElement(jsx_elem) => {
+            // Check JSX children for name prop usage
+            for child in &jsx_elem.children {
+                if check_jsx_child_for_name_prop(child) {
+                    return true;
+                }
+            }
+            false
+        }
+        Expression::JSXFragment(jsx_frag) => {
+            // Check JSX fragment children for name prop usage
+            for child in &jsx_frag.children {
+                if check_jsx_child_for_name_prop(child) {
+                    return true;
+                }
+            }
+            false
+        }
+        Expression::StaticMemberExpression(member_expr) => {
+            // Check if this is `this.props.name`
+            check_static_member_for_name_prop(member_expr)
+        }
+        _ => false,
+    }
+}
+
+/// Checks if a JSX child contains `this.props.name`
+fn check_jsx_child_for_name_prop(child: &JSXChild) -> bool {
+    match child {
+        JSXChild::ExpressionContainer(container) => {
+            match &container.expression {
+                jsx_expr => {
+                    // Use as_expression() to convert JSXExpression to Expression
+                    if let Some(expr) = jsx_expr.as_expression() {
+                        check_expression_for_name_prop(expr)
+                    } else {
+                        false
+                    }
+                }
+            }
+        }
+        JSXChild::Element(jsx_elem) => {
+            // Recursively check JSX element children
+            for child in &jsx_elem.children {
+                if check_jsx_child_for_name_prop(child) {
+                    return true;
+                }
+            }
+            false
+        }
+        JSXChild::Fragment(jsx_frag) => {
+            // Recursively check JSX fragment children
+            for child in &jsx_frag.children {
+                if check_jsx_child_for_name_prop(child) {
+                    return true;
+                }
+            }
+            false
+        }
+        _ => false,
+    }
+}
+
+/// Checks if a static member expression is `this.props.name`
+fn check_static_member_for_name_prop(member_expr: &StaticMemberExpression) -> bool {
+    // Check if the property is "name"
+    if member_expr.property.name != "name" {
+        return false;
+    }
+
+    // Check if the object is `this.props`
+    match &member_expr.object {
+        Expression::StaticMemberExpression(props_member) => {
+            // Check if this is `this.props`
+            if props_member.property.name == "props" {
+                match &props_member.object {
+                    Expression::ThisExpression(_) => true,
+                    _ => false,
+                }
+            } else {
+                false
+            }
+        }
+        _ => false,
+    }
+}
+
 fn process_variable_declaration_node(
     decl: &VariableDeclaration,
     ignore_transpiler_name: bool,
-    check_context_objects: bool,
 ) -> (Vec<Span>, Vec<Span>) {
     let mut class_names_initialized_with_no_display_name_property: Vec<Span> = vec![];
     let mut class_names_with_display_names_modified: Vec<Span> = vec![];
 
     for decl in &decl.declarations {
         if let Some(init) = &decl.init {
-            println!("init: {:?}", init);
             // Check for createReactClass
             if let Expression::CallExpression(call) = init {
-                println!("call: {:?}", call);
-
-                println!("call.callee: {:?}", call.callee_name());
-
                 if let Some(name) = call.callee_name() {
-                    if !ignore_transpiler_name
-                        && (name == "createClass" || name == "createReactClass")
-                    {
-                        class_names_with_display_names_modified.push(init.span());
+                    if name == "createClass" || name == "createReactClass" {
+                        if !ignore_transpiler_name {
+                            class_names_with_display_names_modified.push(init.span());
+                        } else {
+                            class_names_initialized_with_no_display_name_property.push(init.span());
+                        }
                     }
+                } else if ignore_transpiler_name {
+                    class_names_initialized_with_no_display_name_property.push(init.span());
                 }
             }
         }
@@ -211,18 +344,29 @@ fn process_class_node(class: &Class, ignore_transpiler_name: bool) -> (Vec<Span>
     (class_names_initialized_with_no_display_name_property, class_names_with_display_names_modified)
 }
 
+fn is_span_equal_or_inside_other_span(span: Span, other_span: Span) -> bool {
+    let are_spans_equal = span.start == other_span.start && span.end == other_span.end;
+
+    let is_modified_span_inside_original_class_span =
+        span.start > other_span.start && span.end < other_span.end;
+
+    are_spans_equal || is_modified_span_inside_original_class_span
+}
+
 fn get_result(
     class_names_initialized_with_no_display_name_property: Vec<Span>,
     class_names_with_display_names_modified: Vec<Span>,
 ) -> Vec<Span> {
     let result: Vec<Span> = class_names_initialized_with_no_display_name_property
         .iter()
-        .filter_map(|x| {
+        .filter_map(|outer_span| {
             // only consider the class spans that have not had their display names explicitly set later.
-            if class_names_with_display_names_modified.len() == 0
-                || !class_names_with_display_names_modified.contains(x)
+            if class_names_with_display_names_modified.is_empty()
+                || !class_names_with_display_names_modified.iter().any(|same_or_inner_span| {
+                    is_span_equal_or_inside_other_span(*same_or_inner_span, *outer_span)
+                })
             {
-                Some(*x)
+                Some(*outer_span)
             } else {
                 None
             }
