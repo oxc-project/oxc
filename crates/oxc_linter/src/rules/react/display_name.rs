@@ -1,15 +1,13 @@
 use oxc_ast::{
     AstKind,
-    ast::{Argument, ClassElement, Expression, ObjectPropertyKind, PropertyKey, Statement},
-    match_member_expression,
+    ast::{Argument, Class, Expression, ObjectPropertyKind, PropertyKey, VariableDeclaration},
 };
 use oxc_diagnostics::OxcDiagnostic;
+use oxc_span::GetSpan;
 use oxc_span::Span;
-use oxc_span::{CompactStr, GetSpan};
-use phf::{Set, phf_set};
 use serde_json::Value;
 
-use crate::{AstNode, context::LintContext, rule::Rule};
+use crate::{context::LintContext, rule::Rule};
 use oxc_macros::declare_oxc_lint;
 
 fn display_name_diagnostic(span: Span) -> OxcDiagnostic {
@@ -105,293 +103,141 @@ impl Rule for DisplayName {
     fn run_once(&self, ctx: &LintContext) {
         let config = &self.0;
 
-        let ignore_transpiler_name = config.ignore_transpiler_name;
-        // let check_context_objects = config.check_context_objects;
+        println!("\nsource_code: {:?} \n", ctx.source_text());
 
-        // let class_names = ctx.classes();
+        let ignore_transpiler_name = config.ignore_transpiler_name;
+        let check_context_objects = config.check_context_objects;
+
+        let class_names = ctx.classes();
+
+        println!("\nclass_names: {class_names:?}\n");
+
         let mut class_names_with_display_names_modified: Vec<Span> = vec![];
         let mut class_names_initialized_with_no_display_name_property: Vec<Span> = vec![];
-
-        // let mut class_names_with_display_name_modified: phf::Set<CompactStr> = phf_set!();
 
         for node in ctx.nodes() {
             match node.kind() {
                 AstKind::VariableDeclaration(decl) => {
-                    for decl in &decl.declarations {
-                        if let Some(init) = &decl.init {
-                            // Check for createReactClass
-                            if let Expression::CallExpression(call) = init {
-                                if let Expression::Identifier(ident) = &call.callee {
-                                    if ident.name == "createReactClass" {
-                                        if let Some(name) = decl.id.get_identifier_name() {
-                                            // If the class name has a valid identifier, that is considered a displayName
-                                            if !ignore_transpiler_name && !name.is_empty() {
-                                                class_names_with_display_names_modified.push(init.span());
-                                                return;
-                                            }
-                                        }
+                    let result = process_variable_declaration_node(
+                        decl,
+                        ignore_transpiler_name,
+                        check_context_objects,
+                    );
 
-                                        let mut found_display_name = false;
-                                        // Check for displayName property in the object argument
-                                        if let Some(arg) = call.arguments.first() {
-                                            if let Argument::ObjectExpression(obj) = arg {
-                                                for prop in &obj.properties {
-                                                    if let ObjectPropertyKind::ObjectProperty(
-                                                        prop,
-                                                    ) = prop
-                                                    {
-                                                        println!("Prop: {:?}", prop);
+                    let (
+                        class_names_initialized_with_no_display_name_property_result,
+                        class_names_with_display_names_modified_result,
+                    ) = result;
 
-                                                        if let Expression::FunctionExpression(
-                                                            value,
-                                                        ) = &prop.value
-                                                        {
-                                                            if let Some(name) = &value.id {
-                                                                println!("Function id: {:?}", name);
-                                                            }
-                                                        }
-
-                                                        if let PropertyKey::StaticIdentifier(key) =
-                                                            &prop.key
-                                                        {
-                                                            if key.name == "displayName" {
-                                                                                                            println!("name line 157: {}", key.name);
-
-                                                                // if let Expression::StringLiteral(value) = &prop.value {
-                                                                found_display_name = true;
-                                                                // }
-                                                            }
-                                                        }
-                                                    }
-                                                }
-                                            }
-                                        }
-                                        if !found_display_name {
-                                            class_names_initialized_with_no_display_name_property
-                                                .push(init.span())
-
-                                            // ctx.diagnostic(display_name_diagnostic(init.span()));
-                                        }
-                                    }
-                                }
-                            }
-                            // Check for functional components
-                            if let Expression::ArrowFunctionExpression(expr) = init {
-                                println!("Arrow function expression: {:?}", expr);
-                                if let Some(name) = decl.id.get_identifier_name() {
-                                    // If the function name has a valid identifier, that is considered a displayName
-                                    if !ignore_transpiler_name && !name.is_empty() {
-                                                                                        class_names_with_display_names_modified.push(init.span());
-                                        return;
-                                    }
-                                }
-                                // if let Some(name) = decl.id.get_identifier_name() {
-                                let mut found_display_name = false;
-                                // Check for displayName property
-                                if let Some(symbol_id) = decl
-                                    .id
-                                    .get_binding_identifiers()
-                                    .first()
-                                    .and_then(|id| id.symbol_id.get())
-                                {
-                                    if let Some(display_name) = ctx
-                                        .scoping()
-                                        .get_resolved_references(symbol_id)
-                                        .find(|r| ctx.reference_name(r) == "displayName")
-                                    {
-                                        let node = ctx.nodes().get_node(display_name.node_id());
-                                        if let AstKind::StringLiteral(name) = node.kind() {
-
-                                            println!("name line 201: {name}");
-                                            found_display_name = true;
-                                        }
-                                    }
-                                }
-                                if !found_display_name && !ignore_transpiler_name {
-                                    class_names_initialized_with_no_display_name_property
-                                        .push(init.span())
-                                } else if found_display_name {
-                                                                                    class_names_with_display_names_modified.push(init.span());
-
-                                }
-                            }
-                        }
-                    }
+                    class_names_initialized_with_no_display_name_property
+                        .extend(class_names_initialized_with_no_display_name_property_result);
+                    class_names_with_display_names_modified
+                        .extend(class_names_with_display_names_modified_result);
                 }
                 AstKind::Class(class) => {
-                    println!("Class: {:?}", class);
+                    let result = process_class_node(class, ignore_transpiler_name);
 
-                    if let Some(id) = &class.id {
-                        println!("Class id: {:?}", id);
+                    let (
+                        class_names_initialized_with_no_display_name_property_result,
+                        class_names_with_display_names_modified_result,
+                    ) = result;
 
-                        println!("Class id name: {:?}", id.name);
-
-                        if !id.name.is_empty() && !ignore_transpiler_name {
-                            class_names_with_display_names_modified.push(class.span);
-                            // If the class name has a valid identifier, that is considered a displayName
-
-                            return;
-                        }
-                    }
-
-                    if let Some(super_class) = &class.super_class {
-                        println!("Super class: {:?}", super_class);
-                        if let match_member_expression!(Expression) = super_class {
-                            let member = super_class.to_member_expression();
-                            if let Expression::Identifier(ident) = &member.object() {
-                                println!("Ident: {:?}", ident);
-                                if ident.name == "React" {
-                                    if let Some(prop_name) = member.static_property_name() {
-                                        println!("Prop name: {:?}", prop_name);
-                                        if prop_name == "Component" || prop_name == "PureComponent"
-                                        {
-                                            let mut found_display_name = false;
-                                            // Check for static displayName property or getter
-                                            for element in &class.body.body {
-                                                println!("Element: {:?}", element);
-
-                                                let key = element.property_key();
-
-                                                if let Some(PropertyKey::StaticIdentifier(key)) =
-                                                    key
-                                                {
-                                                    println!("Key: {:?}", key);
-
-                                                    if key.name == "displayName" {
-                                                        found_display_name = true;
-
-                                                        // break;
-                                                    }
-                                                }
-
-                                                if let ClassElement::MethodDefinition(method) =
-                                                    element
-                                                {
-                                                    println!("Method: {:?}", method);
-                                                    if method.r#static {
-                                                        println!("Static method: {:?}", method);
-                                                        if let PropertyKey::StaticIdentifier(key) =
-                                                            &method.key
-                                                        {
-                                                            if key.name == "displayName" {
-                                                                // Check for both string literal and getter method
-                                                                if let Some(body) =
-                                                                    &method.value.body
-                                                                {
-                                                                    if let Some(stmt) =
-                                                                        body.statements.first()
-                                                                    {
-                                                                        match stmt {
-                                                                            Statement::ExpressionStatement(expr_stmt) => {
-                                                                                if let Expression::StringLiteral(_) = &expr_stmt.expression {
-                                                                                    found_display_name = true;
-                                                                                }
-                                                                            }
-                                                                            Statement::ReturnStatement(ret_stmt) => {
-                                                                                if let Some(expr) = &ret_stmt.argument {
-                                                                                    if let Expression::StringLiteral(_) = expr {
-                                                                                        found_display_name = true;
-                                                                                    }
-                                                                                }
-                                                                            }
-                                                                            _ => {}
-                                                                        }
-                                                                    }
-                                                                }
-                                                            }
-                                                        }
-                                                    }
-                                                }
-                                            }
-                                            if !found_display_name {
-                                                // ctx.diagnostic(display_name_diagnostic(
-                                                //     class.span(),
-                                                // ));
-
-                                                class_names_initialized_with_no_display_name_property.push(class.span)
-                                            } else {
-                                                class_names_with_display_names_modified
-                                                    .push(class.span)
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
+                    class_names_initialized_with_no_display_name_property
+                        .extend(class_names_initialized_with_no_display_name_property_result);
+                    class_names_with_display_names_modified
+                        .extend(class_names_with_display_names_modified_result);
                 }
-                // AstKind::ExpressionStatement(expr) => {
-                //     println!("Expression statement: {:?}", expr);
-
-                //     if let Expression::AssignmentExpression(assign) = &expr.expression {
-                //         println!("Assignment expression: {:?}", assign);
-
-                //         if !ignore_transpiler_name {
-                //         // if let Some(ident) = assign.left.get_identifier_name() {
-                //         class_names_with_display_names_modified.push(assign.span)
-                //         }
-                //         // }
-                //     }
-                // }
                 _ => {}
             }
+        }
 
-            // let result: Vec<&CompactStr> = class_names_initialized_with_no_display_name_property
-            //     .iter()
-            //     .filter(|x| !class_names_with_display_names_modified.contains(x))
-            //     .collect();
+        let result = get_result(
+            class_names_initialized_with_no_display_name_property,
+            class_names_with_display_names_modified,
+        );
 
-            // println!("result: {result:?}");
-
-            // if !result.is_empty() {
-            // class_names.iter().find(|x| x.)
-            let result: Vec<Span> = class_names_initialized_with_no_display_name_property
-                .iter()
-                .filter(|x| {
-                    // only consider the class spans that have not had their display names explicitly set later.
-                    !class_names_with_display_names_modified.contains(x)
-                })
-                .map(|x| *x)
-                .collect();
-
-            println!(
-                "class_names_initialized_with_no_display_name_property: {class_names_initialized_with_no_display_name_property:?}"
-            );
-            println!(
-                "class_names_with_display_names_modified: {class_names_with_display_names_modified:?}"
-            );
-            println!("result: {result:?}");
-
-            if let Some(class) = result.first() {
-                ctx.diagnostic(display_name_diagnostic(*class));
-            }
-
-            // let classes: Vec<Span> = class_names
-            //     .declarations
-            //     .iter()
-            //     .filter_map(|x| {
-            //         if let Some(node) = ctx.nodes().iter().find(|y| y.id() == *x) {
-            //             let span = node.span();
-
-            //             return Some(span);
-            //         }
-
-            //         None
-            //     })
-            //     .collect();
-
-            // cl
-
-            // let class = classes.first();
-
-            // println!("Class: {class:?}");
-
-            // if let Some(class) = class {
-            //     ctx.diagnostic(display_name_diagnostic(*class));
-            // }
-            // }
+        if let Some(class) = result.first() {
+            ctx.diagnostic(display_name_diagnostic(*class));
         }
     }
+}
+
+fn process_variable_declaration_node(
+    decl: &VariableDeclaration,
+    ignore_transpiler_name: bool,
+    check_context_objects: bool,
+) -> (Vec<Span>, Vec<Span>) {
+    let mut class_names_initialized_with_no_display_name_property: Vec<Span> = vec![];
+    let mut class_names_with_display_names_modified: Vec<Span> = vec![];
+
+    for decl in &decl.declarations {
+        if let Some(init) = &decl.init {
+            println!("init: {:?}", init);
+            // Check for createReactClass
+            if let Expression::CallExpression(call) = init {
+                println!("call: {:?}", call);
+
+                println!("call.callee: {:?}", call.callee_name());
+
+                if let Some(name) = call.callee_name() {
+                    if !ignore_transpiler_name
+                        && (name == "createClass" || name == "createReactClass")
+                    {
+                        class_names_with_display_names_modified.push(init.span());
+                    }
+                }
+            }
+        }
+    }
+
+    (class_names_initialized_with_no_display_name_property, class_names_with_display_names_modified)
+}
+
+fn process_class_node(class: &Class, ignore_transpiler_name: bool) -> (Vec<Span>, Vec<Span>) {
+    let mut class_names_with_display_names_modified: Vec<Span> = vec![];
+    let mut class_names_initialized_with_no_display_name_property: Vec<Span> = vec![];
+
+    if let Some(name) = &class.name() {
+        println!("Class name: {:?}", name);
+
+        if !name.is_empty() && !ignore_transpiler_name {
+            class_names_with_display_names_modified.push(class.span);
+            // If the class name has a valid identifier, that is considered a displayName
+        }
+    } else {
+        class_names_initialized_with_no_display_name_property.push(class.span);
+    }
+
+    (class_names_initialized_with_no_display_name_property, class_names_with_display_names_modified)
+}
+
+fn get_result(
+    class_names_initialized_with_no_display_name_property: Vec<Span>,
+    class_names_with_display_names_modified: Vec<Span>,
+) -> Vec<Span> {
+    let result: Vec<Span> = class_names_initialized_with_no_display_name_property
+        .iter()
+        .filter_map(|x| {
+            // only consider the class spans that have not had their display names explicitly set later.
+            if class_names_with_display_names_modified.len() == 0
+                || !class_names_with_display_names_modified.contains(x)
+            {
+                Some(*x)
+            } else {
+                None
+            }
+        })
+        .collect();
+
+    println!(
+        "class_names_initialized_with_no_display_name_property: {class_names_initialized_with_no_display_name_property:?}"
+    );
+    println!(
+        "class_names_with_display_names_modified: {class_names_with_display_names_modified:?}"
+    );
+    println!("result: {result:?}");
+
+    result
 }
 
 #[test]
