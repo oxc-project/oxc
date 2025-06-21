@@ -1,5 +1,5 @@
 export class Foo {
-  private constructor(a: number = 0) {}
+  private constructor(a: number = 0, b) {}
 }
 
 export class Bar {
