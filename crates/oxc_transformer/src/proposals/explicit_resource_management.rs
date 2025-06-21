@@ -46,23 +46,20 @@ use oxc_traverse::{BoundIdentifier, Traverse};
 
 use crate::{
     Helper,
-    context::{TransformCtx, TraverseCtx},
-    state::TransformState,
+    context::{TransformState, TraverseCtx},
 };
 
-pub struct ExplicitResourceManagement<'a, 'ctx> {
-    ctx: &'ctx TransformCtx<'a>,
-
+pub struct ExplicitResourceManagement {
     top_level_using: FxHashMap<Address, /* is await-using */ bool>,
 }
 
-impl<'a, 'ctx> ExplicitResourceManagement<'a, 'ctx> {
-    pub fn new(ctx: &'ctx TransformCtx<'a>) -> Self {
-        Self { ctx, top_level_using: FxHashMap::default() }
+impl ExplicitResourceManagement {
+    pub fn new() -> Self {
+        Self { top_level_using: FxHashMap::default() }
     }
 }
 
-impl<'a> Traverse<'a, TransformState<'a>> for ExplicitResourceManagement<'a, '_> {
+impl<'a> Traverse<'a, TransformState<'a>> for ExplicitResourceManagement {
     /// Transform `for (using ... of ...)`, ready for `enter_statement` to do the rest.
     ///
     /// * `for (using x of y) {}` -> `for (const _x of y) { using x = _x; }`
@@ -516,7 +513,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for ExplicitResourceManagement<'a, '_>
     }
 }
 
-impl<'a> ExplicitResourceManagement<'a, '_> {
+impl<'a> ExplicitResourceManagement {
     /// Transform block statement.
     ///
     /// Input:
@@ -648,7 +645,7 @@ impl<'a> ExplicitResourceManagement<'a, '_> {
 
         ctx.scoping_mut().change_scope_parent_id(switch_stmt_scope_id, Some(block_stmt_sid));
 
-        let callee = self.ctx.helper_load(Helper::UsingCtx, ctx);
+        let callee = ctx.state.helper_load(Helper::UsingCtx, ctx);
 
         let block = {
             let vec = ctx.ast.vec_from_array([
@@ -762,7 +759,7 @@ impl<'a> ExplicitResourceManagement<'a, '_> {
         let mut stmts = stmts.take_in(ctx.ast);
 
         // `var _usingCtx = babelHelpers.usingCtx();`
-        let callee = self.ctx.helper_load(Helper::UsingCtx, ctx);
+        let callee = ctx.state.helper_load(Helper::UsingCtx, ctx);
         let helper = ctx.ast.declaration_variable(
             SPAN,
             VariableDeclarationKind::Var,
