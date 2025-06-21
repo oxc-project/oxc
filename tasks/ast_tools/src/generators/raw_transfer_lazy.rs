@@ -192,6 +192,7 @@ fn generate(
     // Generate file containing mapping from type names to node type IDs
     assert_eq!(state.next_leaf_node_type_id, leaf_nodes_count);
 
+    let nodes_count = state.next_non_leaf_node_type_id;
     let leaf_node_type_ids_map = &state.leaf_node_type_ids_map;
     let non_leaf_node_type_ids_map = &state.non_leaf_node_type_ids_map;
     #[rustfmt::skip]
@@ -205,10 +206,11 @@ fn generate(
             {non_leaf_node_type_ids_map}
         ]);
 
-        // Number of AST node types which are leaf nodes
-        const LEAF_NODES_COUNT = {leaf_nodes_count};
-
-        module.exports = {{ NODE_TYPE_IDS_MAP, LEAF_NODES_COUNT }};
+        module.exports = {{
+            NODE_TYPE_IDS_MAP,
+            NODE_TYPES_COUNT: {nodes_count},
+            LEAF_NODE_TYPES_COUNT: {leaf_nodes_count},
+        }};
     ");
 
     (state.constructors, walkers, node_type_ids_map)
