@@ -1,11 +1,15 @@
 use oxc_ast::{
     AstKind,
-    ast::{Class, Expression, JSXChild, StaticMemberExpression, VariableDeclaration},
+    ast::{
+        AssignmentTarget, BindingIdentifier, Class, Expression, JSXChild, StaticMemberExpression,
+        VariableDeclaration,
+    },
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_ecmascript::PropName;
 use oxc_span::GetSpan;
 use oxc_span::Span;
+use oxc_syntax::class::{ClassId, ElementKind};
 use serde_json::Value;
 
 use crate::{context::LintContext, rule::Rule};
@@ -113,8 +117,12 @@ impl Rule for DisplayName {
 
         println!("\nclass_names: {class_names:?}\n");
 
+        // for element in &class_names.elements {}
+
         let mut class_names_with_display_names_modified: Vec<Span> = vec![];
         let mut class_names_initialized_with_no_display_name_property: Vec<Span> = vec![];
+
+        let mut class_ids: Vec<(String, Span)> = vec![];
 
         for node in ctx.nodes() {
             match node.kind() {
@@ -132,6 +140,12 @@ impl Rule for DisplayName {
                         .extend(class_names_with_display_names_modified_result);
                 }
                 AstKind::Class(class) => {
+                    if let Some(id) = &class.id {
+                        println!("id: {:?}", id.name);
+
+                        class_ids.push((id.name.to_string(), class.span));
+                    }
+
                     let result = process_class_node(class, ignore_transpiler_name);
 
                     let (
@@ -144,12 +158,60 @@ impl Rule for DisplayName {
                     class_names_with_display_names_modified
                         .extend(class_names_with_display_names_modified_result);
                 }
+                AstKind::ExpressionStatement(expr_stmt) => {
+                    println!("expr_stmt: {:?}", expr_stmt);
+
+                    if let Expression::AssignmentExpression(assign) = &expr_stmt.expression {
+                        println!("assign: {:?}", assign);
+
+                        if let AssignmentTarget::StaticMemberExpression(id) = &assign.left {
+                            if let Expression::Identifier(identifier) = &id.object {
+                                println!("object name: {:?}", identifier.name);
+
+                                let result = class_ids
+                                    .iter()
+                                    .filter(|(name, _)| name == &identifier.name.to_string())
+                                    .map(|(_, span)| span)
+                                    .collect::<Vec<_>>();
+
+                                println!("result: {:?}", result);
+
+                                if !result.is_empty() {
+                                    class_names_initialized_with_no_display_name_property =
+                                        class_names_initialized_with_no_display_name_property
+                                            .iter()
+                                            .filter(|span| {
+                                                !result.iter().any(|r| {
+                                                    is_span_equal_or_inside_other_span(**r, **span)
+                                                })
+                                            })
+                                            .cloned()
+                                            .collect();
+                                }
+                            }
+
+                            println!(
+                                "id.property.name.to_string(): {:?}",
+                                id.property.name.to_string()
+                            );
+                        }
+
+                        // if let Expression::Identifier(id) = &assign.right {
+                        // if let Expression::Identifier(id) = &assign.left {
+                        //     println!("id: {:?}", id.name.to_string());
+
+                        //     if let Some(id_ref) = id.name.to_string() {
+                        //         class_ids.push(id_ref);
+                        //     }
+                        // }
+                    }
+                }
                 _ => {}
             }
         }
 
         // Check for name prop usage in render methods
-        let name_prop_usage = detect_name_prop_in_render(ctx);
+        let name_prop_usage = detect_name_prop_in_render(ctx, ignore_transpiler_name);
 
         println!("\nname_prop_usage: {name_prop_usage:?}\n");
         class_names_with_display_names_modified.extend(name_prop_usage);
@@ -166,12 +228,19 @@ impl Rule for DisplayName {
 }
 
 /// Detects if a render method contains `this.props.name` in JSX expressions
-fn detect_name_prop_in_render(ctx: &LintContext) -> Vec<Span> {
+fn detect_name_prop_in_render(ctx: &LintContext, ignore_transpiler_name: bool) -> Vec<Span> {
+    if ignore_transpiler_name {
+        return vec![];
+    }
+
     let mut name_prop_usage: Vec<Span> = vec![];
 
     for node in ctx.nodes() {
+        println!("node: {:?}", node);
+        println!("node.kind(): {:?}", node.kind());
         match node.kind() {
             AstKind::Class(class) => {
+                println!("class: {:?}", class);
                 for element in &class.body.body {
                     match element {
                         oxc_ast::ast::ClassElement::MethodDefinition(method_def) => {
@@ -348,12 +417,16 @@ fn process_class_node(class: &Class, ignore_transpiler_name: bool) -> (Vec<Span>
     let mut class_names_with_display_names_modified: Vec<Span> = vec![];
     let mut class_names_initialized_with_no_display_name_property: Vec<Span> = vec![];
 
+    println!("class: {:?}", class);
+
     if let Some(name) = &class.name() {
         println!("Class name: {:?}", name);
 
         if !name.is_empty() && !ignore_transpiler_name {
             class_names_with_display_names_modified.push(class.span);
             // If the class name has a valid identifier, that is considered a displayName
+        } else if ignore_transpiler_name {
+            class_names_initialized_with_no_display_name_property.push(class.span);
         }
     } else {
         class_names_initialized_with_no_display_name_property.push(class.span);
