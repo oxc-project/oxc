@@ -222,6 +222,10 @@ jobs:
 
       - run: mkdir -p release-dir
 
+      - run: |
+          pnpm run bundle
+        if: ${{ inputs.name == 'parser' }}
+
       - run: pnpm napi create-npm-dirs --package-json-path ${package_path}/package.json --npm-dir ${npm_dir}
 
       - run: pnpm napi artifacts --package-json-path ${package_path}/package.json --build-output-dir ${package_path} --npm-dir ${npm_dir}
