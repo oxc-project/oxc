@@ -1991,6 +1991,15 @@ mod test {
         fold("`foo${'${}'}`", "'foo${}'");
         fold("`foo${'${}'}${i}`", "`foo\\${}${i}`");
         fold_same("foo`foo${1}bar`");
+        fold(
+            r#"
+            const o = 'o';
+            const d = 'd';
+            const b = false;
+            var frag = `<p autocapitalize="${`w${o}r${d}s`}" contenteditable="${boolean}"> </p>`;
+            "#,
+            r#"var frag = "<p autocapitalize=\"words\" contenteditable=\"false\"> </p>";"#,
+        )
     }
 
     mod bigint {
