@@ -1872,6 +1872,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "oxc_linter_napi"
+version = "0.1.0"
+dependencies = [
+ "mimalloc-safe",
+ "napi",
+ "napi-build",
+ "napi-derive",
+ "oxlint",
+]
+
+[[package]]
 name = "oxc_macros"
 version = "0.0.0"
 dependencies = [
@@ -2300,6 +2311,7 @@ dependencies = [
  "insta",
  "lazy-regex",
  "mimalloc-safe",
+ "napi",
  "oxc-miette",
  "oxc_allocator",
  "oxc_diagnostics",

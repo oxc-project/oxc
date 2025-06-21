@@ -136,6 +136,7 @@ oxc_linter = { path = "crates/oxc_linter" }
 oxc_macros = { path = "crates/oxc_macros" }
 oxc_tasks_common = { path = "tasks/common" }
 oxc_tasks_transform_checker = { path = "tasks/transform_checker" }
+oxlint = { path = "apps/oxlint" }
 
 # Relaxed version so the user can decide which version to use.
 napi = "3.0.0-beta"
