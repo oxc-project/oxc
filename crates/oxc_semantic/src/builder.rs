@@ -2036,7 +2036,7 @@ impl<'a> SemanticBuilder<'a> {
                 //                     ^^^ avoid treat T as a value and TSTypeQuery
                 self.current_reference_flags -= ReferenceFlags::ValueAsType;
             }
-            AstKind::TSTypeName(_) => {
+             AstKind::TSQualifiedName(_) => {
                 match self.nodes.parent_kind(self.current_node_id) {
                     Some(
                         // import A = a;
@@ -2058,6 +2058,26 @@ impl<'a> SemanticBuilder<'a> {
                 }
             }
             AstKind::IdentifierReference(ident) => {
+                match self.nodes.parent_kind(self.current_node_id) {
+                    Some(
+                        // import A = a;
+                        //            ^
+                        AstKind::TSImportEqualsDeclaration(_),
+                    ) => {
+                        self.current_reference_flags = ReferenceFlags::Read;
+                    }
+                    Some(AstKind::TSQualifiedName(_)) => {
+                        // import A = a.b
+                        //            ^^^ Keep the current reference flag
+                    }
+                    _ => {
+                        // Handled in `AstKind::PropertySignature` or `AstKind::TSTypeQuery`
+                        if !self.current_reference_flags.is_value_as_type() {
+                            self.current_reference_flags = ReferenceFlags::Type;
+                        }
+                    }
+                }
+
                 self.reference_identifier(ident);
             }
             AstKind::LabeledStatement(stmt) => {
@@ -2095,7 +2115,7 @@ impl<'a> SemanticBuilder<'a> {
             AstKind::CatchParameter(_) => {
                 self.resolve_references_for_current_scope();
             }
-            AstKind::TSTypeName(_) => {
+            AstKind::IdentifierReference(_) | AstKind::TSQualifiedName(_) => {
                 self.current_reference_flags -= ReferenceFlags::Type;
             }
             AstKind::TSTypeQuery(_)
