@@ -1,7 +1,8 @@
 use oxc_ast::{
     AstKind,
     ast::{
-        AssignmentTarget, Class, Expression, JSXChild, StaticMemberExpression, VariableDeclaration,
+        AssignmentTarget, Class, ClassElement, Expression, JSXChild, StaticMemberExpression,
+        VariableDeclaration,
     },
 };
 use oxc_diagnostics::OxcDiagnostic;
@@ -132,6 +133,30 @@ impl Rule for DisplayName {
                         .extend(class_names_with_display_names_modified_result);
                 }
                 AstKind::Class(class) => {
+                    for element in &class.body.body {
+                        println!("element: {element:?}");
+
+                        match element {
+                            ClassElement::PropertyDefinition(prop_def) => {
+                                println!("prop_def: {prop_def:?}");
+                                if prop_def.key.static_name()
+                                    == Some(std::borrow::Cow::Borrowed("displayName"))
+                                {
+                                    class_names_with_display_names_modified.push(prop_def.span);
+                                }
+                            }
+                            ClassElement::MethodDefinition(method_def) => {
+                                println!("method_def: {method_def:?}");
+                                if method_def.key.static_name()
+                                    == Some(std::borrow::Cow::Borrowed("displayName"))
+                                {
+                                    class_names_with_display_names_modified.push(method_def.span);
+                                }
+                            }
+                            _ => {}
+                        }
+                    }
+
                     if let Some(id) = &class.id {
                         class_ids.push((id.name.to_string(), class.span));
                     }
@@ -162,12 +187,15 @@ impl Rule for DisplayName {
                                     class_names_initialized_with_no_display_name_property =
                                         class_names_initialized_with_no_display_name_property
                                             .iter()
-                                            .filter(|span| {
-                                                !result.iter().any(|r| {
-                                                    is_span_equal_or_inside_other_span(**r, **span)
-                                                })
+                                            .filter_map(|span| {
+                                                if !result.iter().any(|r| {
+                                                    is_span_equal_or_inside_other_span(*r, span)
+                                                }) {
+                                                    Some(*span)
+                                                } else {
+                                                    None
+                                                }
                                             })
-                                            .copied()
                                             .collect();
                                 }
                             }
@@ -377,7 +405,7 @@ fn process_class_node(class: &Class, ignore_transpiler_name: bool) -> (Vec<Span>
     (class_names_initialized_with_no_display_name_property, class_names_with_display_names_modified)
 }
 
-fn is_span_equal_or_inside_other_span(span: Span, other_span: Span) -> bool {
+fn is_span_equal_or_inside_other_span(span: &Span, other_span: &Span) -> bool {
     let are_spans_equal = span.start == other_span.start && span.end == other_span.end;
 
     let is_modified_span_inside_original_class_span =
@@ -396,7 +424,7 @@ fn get_result(
             // only consider the class spans that have not had their display names explicitly set later.
             if class_names_with_display_names_modified.is_empty()
                 || !class_names_with_display_names_modified.iter().any(|same_or_inner_span| {
-                    is_span_equal_or_inside_other_span(*same_or_inner_span, *outer_span)
+                    is_span_equal_or_inside_other_span(same_or_inner_span, outer_span)
                 })
             {
                 Some(*outer_span)
