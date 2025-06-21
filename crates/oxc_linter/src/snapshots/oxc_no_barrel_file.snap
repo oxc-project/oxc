@@ -1,7 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
-  ⚠ oxc(no-barrel-file): Barrel file detected, 6 modules are loaded.
+  ⚠ oxc(no-barrel-file): Barrel file detected, 10 modules are loaded.
    ╭─[index.ts:1:15]
  1 │ export * from "./deep/a.js";
    ·               ──────┬──────
@@ -14,6 +14,6 @@ source: crates/oxc_linter/src/tester.rs
    ·                                ╰── 1 modules
  4 │            export * from "./deep/d.js";
    ╰────
-  help: Loading 6 modules is slow for runtimes and bundlers.
+  help: Loading 10 modules is slow for runtimes and bundlers.
         The configured threshold is 1.
         See also: <https://marvinh.dev/blog/speeding-up-javascript-ecosystem-part-7>.

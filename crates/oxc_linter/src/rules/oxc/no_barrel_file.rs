@@ -96,6 +96,9 @@ impl Rule for NoBarrelFile {
         let mut total: usize = 0;
 
         for module_request in module_requests {
+            // the own module is counted as well
+            total += 1;
+
             if let Some(remote_module) =
                 module_record.loaded_modules.read().unwrap().get(module_request.name())
             {
