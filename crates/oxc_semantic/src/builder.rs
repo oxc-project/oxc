@@ -2036,7 +2036,7 @@ impl<'a> SemanticBuilder<'a> {
                 //                     ^^^ avoid treat T as a value and TSTypeQuery
                 self.current_reference_flags -= ReferenceFlags::ValueAsType;
             }
-             AstKind::TSQualifiedName(_) => {
+            AstKind::TSQualifiedName(_) => {
                 match self.nodes.parent_kind(self.current_node_id) {
                     Some(
                         // import A = a;
