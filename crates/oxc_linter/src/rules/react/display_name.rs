@@ -1,15 +1,13 @@
 use oxc_ast::{
     AstKind,
     ast::{
-        AssignmentTarget, BindingIdentifier, Class, Expression, JSXChild, StaticMemberExpression,
-        VariableDeclaration,
+        AssignmentTarget, Class, Expression, JSXChild, StaticMemberExpression, VariableDeclaration,
     },
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_ecmascript::PropName;
 use oxc_span::GetSpan;
 use oxc_span::Span;
-use oxc_syntax::class::{ClassId, ElementKind};
 use serde_json::Value;
 
 use crate::{context::LintContext, rule::Rule};
@@ -113,12 +111,6 @@ impl Rule for DisplayName {
         let ignore_transpiler_name = config.ignore_transpiler_name;
         let _check_context_objects = config.check_context_objects;
 
-        let class_names = ctx.classes();
-
-        println!("\nclass_names: {class_names:?}\n");
-
-        // for element in &class_names.elements {}
-
         let mut class_names_with_display_names_modified: Vec<Span> = vec![];
         let mut class_names_initialized_with_no_display_name_property: Vec<Span> = vec![];
 
@@ -141,8 +133,6 @@ impl Rule for DisplayName {
                 }
                 AstKind::Class(class) => {
                     if let Some(id) = &class.id {
-                        println!("id: {:?}", id.name);
-
                         class_ids.push((id.name.to_string(), class.span));
                     }
 
@@ -159,22 +149,14 @@ impl Rule for DisplayName {
                         .extend(class_names_with_display_names_modified_result);
                 }
                 AstKind::ExpressionStatement(expr_stmt) => {
-                    println!("expr_stmt: {:?}", expr_stmt);
-
                     if let Expression::AssignmentExpression(assign) = &expr_stmt.expression {
-                        println!("assign: {:?}", assign);
-
                         if let AssignmentTarget::StaticMemberExpression(id) = &assign.left {
                             if let Expression::Identifier(identifier) = &id.object {
-                                println!("object name: {:?}", identifier.name);
-
                                 let result = class_ids
                                     .iter()
                                     .filter(|(name, _)| name == &identifier.name.to_string())
                                     .map(|(_, span)| span)
                                     .collect::<Vec<_>>();
-
-                                println!("result: {:?}", result);
 
                                 if !result.is_empty() {
                                     class_names_initialized_with_no_display_name_property =
@@ -189,21 +171,7 @@ impl Rule for DisplayName {
                                             .collect();
                                 }
                             }
-
-                            println!(
-                                "id.property.name.to_string(): {:?}",
-                                id.property.name.to_string()
-                            );
                         }
-
-                        // if let Expression::Identifier(id) = &assign.right {
-                        // if let Expression::Identifier(id) = &assign.left {
-                        //     println!("id: {:?}", id.name.to_string());
-
-                        //     if let Some(id_ref) = id.name.to_string() {
-                        //         class_ids.push(id_ref);
-                        //     }
-                        // }
                     }
                 }
                 _ => {}
