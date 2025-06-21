@@ -28,7 +28,6 @@ use super::define_generator;
 /// Apart from this list, every struct with `#[ast(visit)]` attr gets an `AstKind`.
 const STRUCTS_BLACK_LIST: &[&str] = &[
     "TemplateElement",
-    "ComputedMemberExpression",
     "StaticMemberExpression",
     "PrivateFieldExpression",
     "AssignmentTargetRest",

@@ -188,32 +188,50 @@ impl Rule for PreferForOf {
                 return true;
             };
 
-            if let Some(ref_grand_parent) = nodes.parent_node(ref_parent.id()) {
-                match ref_grand_parent.kind() {
-                    AstKind::SimpleAssignmentTarget(_) => {
-                        return true;
-                    }
-                    AstKind::UnaryExpression(unary_expr)
-                        if unary_expr.operator == UnaryOperator::Delete =>
-                    {
-                        return true;
-                    }
-                    _ => {}
+            let Some(mut ref_grand_parent) = nodes.parent_node(ref_parent.id()) else {
+                return true;
+            };
+
+            if matches!(ref_parent.kind(), AstKind::ComputedMemberExpression(_)) {
+                if let Some(parent) = nodes.parent_node(ref_grand_parent.id()) {
+                    ref_grand_parent = parent;
                 }
             }
 
-            let parent_kind = ref_parent.kind();
-            let AstKind::MemberExpression(mem_expr) = parent_kind else {
-                return true;
-            };
-            match mem_expr.object() {
-                Expression::Identifier(id) => id.name.as_str() != array_name,
-                expr if expr.is_member_expression() => {
-                    match expr.to_member_expression().static_property_name() {
-                        Some(prop_name) => prop_name != array_name,
-                        None => true,
-                    }
+            match ref_grand_parent.kind() {
+                AstKind::SimpleAssignmentTarget(_) => {
+                    return true;
                 }
+                AstKind::UnaryExpression(unary_expr)
+                    if unary_expr.operator == UnaryOperator::Delete =>
+                {
+                    return true;
+                }
+                _ => {}
+            }
+
+            let parent_kind = ref_parent.kind();
+            match parent_kind {
+                AstKind::MemberExpression(mem_expr) => match mem_expr.object() {
+                    Expression::Identifier(id) => id.name.as_str() != array_name,
+                    expr if expr.is_member_expression() => {
+                        match expr.to_member_expression().static_property_name() {
+                            Some(prop_name) => prop_name != array_name,
+                            None => true,
+                        }
+                    }
+                    _ => true,
+                },
+                AstKind::ComputedMemberExpression(computed_expr) => match &computed_expr.object {
+                    Expression::Identifier(id) => id.name.as_str() != array_name,
+                    expr if expr.is_member_expression() => {
+                        match expr.to_member_expression().static_property_name() {
+                            Some(prop_name) => prop_name != array_name,
+                            None => true,
+                        }
+                    }
+                    _ => true,
+                },
                 _ => true,
             }
         }) {

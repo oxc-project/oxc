@@ -1,7 +1,4 @@
-use oxc_ast::{
-    AstKind,
-    ast::{Expression, MemberExpression},
-};
+use oxc_ast::{AstKind, ast::MemberExpression};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
@@ -60,20 +57,31 @@ impl Rule for BadArrayMethodOnArguments {
         if !node.kind().is_specific_id_reference("arguments") {
             return;
         }
-        let Some(parent_node_id) = ctx.nodes().parent_id(node.id()) else {
+        let Some(parent) = ctx.nodes().parent_node(node.id()) else {
             return;
         };
-        let AstKind::MemberExpression(member_expr) = ctx.nodes().kind(parent_node_id) else {
+        if !matches!(
+            parent.kind(),
+            AstKind::MemberExpression(_) | AstKind::ComputedMemberExpression(_)
+        ) {
+            return;
+        }
+        let member_expr = parent.kind();
+        let Some(grandparent) = ctx.nodes().parent_node(parent.id()) else {
             return;
         };
-        let Some(parent_node_id) = ctx.nodes().parent_id(parent_node_id) else {
-            return;
-        };
-        let AstKind::CallExpression(_) = ctx.nodes().kind(parent_node_id) else {
-            return;
-        };
+        if matches!(member_expr, AstKind::ComputedMemberExpression(_)) {
+            let great_grandparent = ctx.nodes().parent_kind(grandparent.id());
+            let Some(AstKind::CallExpression(_)) = great_grandparent else {
+                return;
+            };
+        } else if !matches!(member_expr, AstKind::ComputedMemberExpression(_)) {
+            let AstKind::CallExpression(_) = grandparent.kind() else {
+                return;
+            };
+        }
         match member_expr {
-            MemberExpression::StaticMemberExpression(expr) => {
+            AstKind::MemberExpression(MemberExpression::StaticMemberExpression(expr)) => {
                 if ARRAY_METHODS.binary_search(&expr.property.name.as_str()).is_ok() {
                     ctx.diagnostic(bad_array_method_on_arguments_diagnostic(
                         expr.property.name.as_str(),
@@ -81,36 +89,18 @@ impl Rule for BadArrayMethodOnArguments {
                     ));
                 }
             }
-            MemberExpression::ComputedMemberExpression(expr) => {
-                match &expr.expression {
-                    Expression::StringLiteral(name) => {
-                        if ARRAY_METHODS.binary_search(&name.value.as_str()).is_ok() {
-                            ctx.diagnostic(bad_array_method_on_arguments_diagnostic(
-                                name.value.as_str(),
-                                expr.span,
-                            ));
-                        }
-                    }
-                    Expression::TemplateLiteral(template) => {
-                        // only check template string like "arguments[`METHOD_NAME`]" for Oxc compatible
-                        if template.expressions.is_empty() && template.quasis.len() == 1 {
-                            if let Some(name) =
-                                template.quasis.first().and_then(|template_element| {
-                                    template_element.value.cooked.as_deref()
-                                })
-                            {
-                                if ARRAY_METHODS.binary_search(&name).is_ok() {
-                                    ctx.diagnostic(bad_array_method_on_arguments_diagnostic(
-                                        name, expr.span,
-                                    ));
-                                }
-                            }
-                        }
-                    }
-                    _ => {}
+            AstKind::ComputedMemberExpression(expr) => {
+                let Some(name) = expr.static_property_name() else {
+                    return;
+                };
+                if ARRAY_METHODS.binary_search(&name.as_str()).is_ok() {
+                    ctx.diagnostic(bad_array_method_on_arguments_diagnostic(
+                        name.as_str(),
+                        expr.span,
+                    ));
                 }
             }
-            MemberExpression::PrivateFieldExpression(_) => {}
+            _ => {}
         }
     }
 }
