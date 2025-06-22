@@ -27,7 +27,7 @@ impl<'a> IsolatedDeclarations<'a> {
             self.error(function_must_have_explicit_return_type(get_function_span(func)));
         }
 
-        let params = self.transform_formal_parameters(&func.params);
+        let params = self.transform_formal_parameters(&func.params, false);
 
         return_type.map(|return_type| {
             self.ast.ts_type_function_type(
@@ -53,7 +53,7 @@ impl<'a> IsolatedDeclarations<'a> {
             )));
         }
 
-        let params = self.transform_formal_parameters(&func.params);
+        let params = self.transform_formal_parameters(&func.params, false);
 
         return_type.map(|return_type| {
             self.ast.ts_type_function_type(
@@ -133,7 +133,7 @@ impl<'a> IsolatedDeclarations<'a> {
                         if return_type.is_none() {
                             self.error(method_must_have_explicit_return_type(object.key.span()));
                         }
-                        let params = self.transform_formal_parameters(&function.params);
+                        let params = self.transform_formal_parameters(&function.params, false);
                         let key = self.transform_property_key(key);
                         let computed = key
                             .as_expression()

@@ -261,25 +261,24 @@ impl<'a> IsolatedDeclarations<'a> {
         function: &Function<'a>,
         params: &FormalParameters<'a>,
     ) -> ArenaVec<'a, ClassElement<'a>> {
-        let mut elements = self.ast.vec();
-        for (index, param) in function.params.items.iter().enumerate() {
-            if param.has_modifier() {
-                let type_annotation =
-                    if param.accessibility.is_some_and(TSAccessibility::is_private) {
-                        None
-                    } else {
-                        // transformed params will definitely have type annotation
-
-                        params.items[index].pattern.type_annotation.clone_in(self.ast.allocator)
-                    };
-                if let Some(new_element) =
+        self.ast.vec_from_iter(
+            function
+                .params
+                .items
+                .iter()
+                .filter(|param| param.has_modifier())
+                .enumerate()
+                .filter_map(|(index, param)| {
+                    let type_annotation =
+                        if param.accessibility.is_some_and(TSAccessibility::is_private) {
+                            None
+                        } else {
+                            // transformed params will definitely have type annotation
+                            params.items[index].pattern.type_annotation.clone_in(self.ast.allocator)
+                        };
                     self.transform_formal_parameter_to_class_property(param, type_annotation)
-                {
-                    elements.push(new_element);
-                }
-            }
-        }
-        elements
+                }),
+        )
     }
 
     /// Collect return_type of getter and first parma type of setter
@@ -410,7 +409,11 @@ impl<'a> IsolatedDeclarations<'a> {
                             }
                         }
                         MethodDefinitionKind::Constructor => {
-                            let params = self.transform_formal_parameters(&function.params);
+                            let is_private =
+                                method.accessibility.is_some_and(TSAccessibility::is_private);
+
+                            let params =
+                                self.transform_formal_parameters(&function.params, is_private);
                             elements.splice(
                                 0..0,
                                 self.transform_constructor_params_to_class_properties(
@@ -418,7 +421,7 @@ impl<'a> IsolatedDeclarations<'a> {
                                 ),
                             );
 
-                            if method.accessibility.is_some_and(TSAccessibility::is_private) {
+                            if is_private {
                                 elements.push(self.transform_private_modifier_method(method));
                                 continue;
                             }
@@ -426,11 +429,13 @@ impl<'a> IsolatedDeclarations<'a> {
                             params
                         }
                         _ => {
-                            if method.accessibility.is_some_and(TSAccessibility::is_private) {
+                            let is_private =
+                                method.accessibility.is_some_and(TSAccessibility::is_private);
+                            if is_private {
                                 elements.push(self.transform_private_modifier_method(method));
                                 continue;
                             }
-                            self.transform_formal_parameters(&function.params)
+                            self.transform_formal_parameters(&function.params, is_private)
                         }
                     };
 
