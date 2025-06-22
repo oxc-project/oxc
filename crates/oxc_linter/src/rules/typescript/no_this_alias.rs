@@ -59,18 +59,11 @@ impl NoThisAlias {
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// Disallow unnecessary constraints on generic types.
+    /// Disallow aliasing `this`
     ///
     /// ### Why is this bad?
     ///
-    /// Generic type parameters (`<T>`) in TypeScript may be "constrained" with
-    /// an extends keyword.  When no extends is provided, type parameters
-    /// default a constraint to unknown. It is therefore redundant to extend
-    /// from any or unknown.
-    ///
-    /// the rule doesn't allow `const {allowedName} = this`
-    /// this is to keep 1:1 with eslint implementation
-    /// sampe with `obj.<allowedName> = this`
+    /// Assigning a variable to `this` instead of properly using arrow lambdas may be a symptom of pre-ES6 practices or not managing scope well.
     /// ```
     NoThisAlias,
     typescript,
