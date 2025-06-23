@@ -12,8 +12,8 @@ const { TOKEN, constructorError } = require('./lazy-common.js');
 // via `Object.getOwnPropertySymbols` or `Reflect.ownKeys`. Therefore user code cannot unwrap the proxy.
 const ARRAY = Symbol();
 
-// Function to get element from an array. Initialized in class static block below.
-let getElement;
+// Functions to get length of and get element from an array. Initialized in class static block below.
+let getLength, getElement;
 
 /**
  * An array of AST nodes where elements are deserialized lazily upon access.
@@ -44,8 +44,8 @@ class NodeArray extends Array {
   constructor(pos, length, stride, construct, ast) {
     if (ast?.token !== TOKEN) constructorError();
 
-    super(length);
-    this.#internal = { pos, ast, stride, construct };
+    super();
+    this.#internal = { pos, length, ast, stride, construct };
     return new Proxy(this, PROXY_HANDLERS);
   }
 
@@ -55,24 +55,19 @@ class NodeArray extends Array {
   // Override `values` method with a more efficient one that avoids going via proxy for every iteration.
   // TODO: Benchmark to check that this is actually faster.
   values() {
-    // Get actual `NodeArray`. `this` is a proxy.
-    const arr = this[ARRAY];
-    return new NodeArrayValuesIterator(arr.#internal, arr.length);
+    return new NodeArrayValuesIterator(this[ARRAY].#internal);
   }
 
   // Override `keys` method with a more efficient one that avoids going via proxy for every iteration.
   // TODO: Benchmark to check that this is actually faster.
   keys() {
-    // `this` is a proxy, but proxy will pass through getting `this.length` to the underlying `NodeArray`
-    return new NodeArrayKeysIterator(this.length);
+    return new NodeArrayKeysIterator(this[ARRAY].#internal.length);
   }
 
   // Override `entries` method with a more efficient one that avoids going via proxy for every iteration.
   // TODO: Benchmark to check that this is actually faster.
   entries() {
-    // Get actual `NodeArray`. `this` is a proxy.
-    const arr = this[ARRAY];
-    return new NodeArrayEntriesIterator(arr.#internal, arr.length);
+    return new NodeArrayEntriesIterator(this[ARRAY].#internal);
   }
 
   // This method is overwritten with reference to `values` method below.
@@ -88,36 +83,35 @@ class NodeArray extends Array {
    * @returns {NodeArray} - `NodeArray` containing slice of this one
    */
   slice(start, end) {
-    // Get actual `NodeArray`. `this` is a proxy.
-    const arr = this[ARRAY];
+    const internal = this[ARRAY].#internal,
+      { length } = internal;
 
     start = toInt(start);
     if (start < 0) {
-      start = arr.length + start;
+      start = length + start;
       if (start < 0) start = 0;
     }
 
     if (end === void 0) {
-      end = arr.length;
+      end = length;
     } else {
       end = toInt(end);
       if (end < 0) {
-        end = arr.length + end;
+        end += length;
         if (end < 0) end = 0;
-      } else if (end > arr.length) {
-        end = arr.length;
+      } else if (end > length) {
+        end = length;
       }
     }
 
-    let length = end - start;
-    if (length <= 0 || start >= arr.length) {
+    let sliceLength = end - start;
+    if (sliceLength <= 0 || start >= length) {
       start = 0;
-      length = 0;
+      sliceLength = 0;
     }
 
-    const internal = arr.#internal,
-      { stride } = internal;
-    return new NodeArray(internal.pos + start * stride, length, stride, internal.construct, internal.ast);
+    const { stride } = internal;
+    return new NodeArray(internal.pos + start * stride, sliceLength, stride, internal.construct, internal.ast);
   }
 
   // Make `console.log` deserialize all elements.
@@ -129,15 +123,22 @@ class NodeArray extends Array {
 
   static {
     /**
+     * Get length of `NodeArray`.
+     * @param {NodeArray} arr - `NodeArray` object
+     * @returns {number} - Array length
+     */
+    getLength = arr => arr.#internal.length;
+
+    /**
      * Get element of `NodeArray` at index `index`.
-     * `index` must be in bounds (i.e. `< arr.length`).
      *
      * @param {NodeArray} arr - `NodeArray` object
      * @param {number} index - Index of element to get
-     * @returns {*} - Element at index `index`
+     * @returns {*|undefined} - Element at index `index`, or `undefined` if out of bounds
      */
     getElement = (arr, index) => {
       const internal = arr.#internal;
+      if (index >= internal.length) return void 0;
       return (0, internal.construct)(internal.pos + index * internal.stride, internal.ast);
     };
   }
@@ -154,13 +155,13 @@ module.exports = NodeArray;
 class NodeArrayValuesIterator {
   #internal;
 
-  constructor(arrInternal, length) {
+  constructor(arrInternal) {
     const { ast, pos, stride } = arrInternal || {};
     if (ast?.token !== TOKEN) constructorError();
 
     this.#internal = {
       pos,
-      endPos: pos + length * stride,
+      endPos: pos + arrInternal.length * stride,
       ast,
       construct: arrInternal.construct,
       stride,
@@ -211,13 +212,13 @@ class NodeArrayKeysIterator {
 class NodeArrayEntriesIterator {
   #internal;
 
-  constructor(arrInternal, length) {
+  constructor(arrInternal) {
     const { ast } = arrInternal || {};
     if (ast?.token !== TOKEN) constructorError();
 
     this.#internal = {
       index: 0,
-      length,
+      length: arrInternal.length,
       pos: arrInternal.pos,
       ast,
       construct: arrInternal.construct,
@@ -252,34 +253,35 @@ const PROXY_HANDLERS = {
   // Return `true` for indexes which are in bounds.
   // e.g. `'0' in arr`.
   has(arr, key) {
-    if (isIndex(key)) return key * 1 < arr.length;
+    if (isIndex(key)) return key * 1 < getLength(arr);
     return Reflect.has(arr, key);
   },
 
-  // Get entries which are in bounds.
+  // Get elements and length.
   get(arr, key) {
     // Methods of `NodeArray` are called with `this` being the proxy, rather than the `NodeArray` itself.
     // They can "unwrap" the proxy by getting `this[ARRAY]`.
     if (key === ARRAY) return arr;
-
-    if (isIndex(key)) {
-      key *= 1;
-      if (key >= arr.length) return void 0;
-      return getElement(arr, key);
-    }
+    if (key === 'length') return getLength(arr);
+    if (isIndex(key)) return getElement(arr, key * 1);
 
     return Reflect.get(arr, key);
   },
 
-  // Get descriptors which are in bounds.
+  // Get descriptors for elements and length.
   getOwnPropertyDescriptor(arr, key) {
-    if (isIndex(key)) {
-      key *= 1;
-      if (key >= arr.length) return void 0;
-      // Cannot return `configurable: false` unfortunately
-      return { value: getElement(arr, key), writable: false, enumerable: true, configurable: true };
+    if (key === 'length') {
+      // Cannot return `writable: false` unfortunately
+      return { value: getLength(arr), writable: true, enumerable: false, configurable: false };
     }
-    // Cannot return `writable: false` for `length` property unfortunately
+
+    if (isIndex(key)) {
+      const value = getElement(arr, key * 1);
+      if (value === void 0) return void 0;
+      // Cannot return `configurable: false` unfortunately
+      return { value, writable: false, enumerable: true, configurable: true };
+    }
+
     return Reflect.getOwnPropertyDescriptor(arr, key);
   },
 
@@ -304,8 +306,9 @@ const PROXY_HANDLERS = {
 
   // Get keys, including element indexes.
   ownKeys(arr) {
-    const keys = [];
-    for (let i = 0; i < arr.length; i++) {
+    const keys = [],
+      length = getLength(arr);
+    for (let i = 0; i < length; i++) {
       keys.push(i + '');
     }
     keys.push(...Reflect.ownKeys(arr));

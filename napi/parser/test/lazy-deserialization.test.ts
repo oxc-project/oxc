@@ -495,6 +495,15 @@ describe('NodeArray', () => {
     expect(stmtsTwice[3]).toBe(body[1]);
   });
 
+  it('get length', () => {
+    const body0 = parseSyncLazy('test.js', '').program.body;
+    expect(body0.length).toBe(0);
+    const body2 = parseSyncLazy('test.js', 'let x = 1; x = 2;').program.body;
+    expect(body2.length).toBe(2);
+    const body4 = parseSyncLazy('test.js', 'x; y; z; 123;').program.body;
+    expect(body4.length).toBe(4);
+  });
+
   it('set length (throws)', () => {
     const { body } = parseSyncLazy('test.js', 'let x = 1; x = 2;').program;
     expect(() => body.length = 0)
