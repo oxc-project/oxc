@@ -700,7 +700,7 @@ fn generate_struct_details(schema: &Schema) -> Output {
 
         let details = quote!( StructDetails { field_order: #field_order } );
 
-        map.entry(struct_def.name(), &details.to_string());
+        map.entry(struct_def.name(), details.to_string());
     }
     let map = parse_str::<Expr>(&map.build().to_string()).unwrap();
 
