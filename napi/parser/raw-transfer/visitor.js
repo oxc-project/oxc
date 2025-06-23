@@ -1,8 +1,10 @@
 'use strict';
 
-const { NODE_TYPE_IDS_MAP, LEAF_NODES_COUNT } = require('../generated/deserialize/lazy-types.js');
-
-const NODE_TYPES_COUNT = NODE_TYPE_IDS_MAP.size;
+const {
+  NODE_TYPE_IDS_MAP,
+  NODE_TYPES_COUNT,
+  LEAF_NODE_TYPES_COUNT,
+} = require('../generated/deserialize/lazy-types.js');
 
 // Getter for private `#visitorsArr` property of `Visitor` class. Initialized in class body below.
 let getVisitorsArr;
@@ -84,7 +86,7 @@ function createVisitorsArr(visitor) {
     const typeId = NODE_TYPE_IDS_MAP.get(name);
     if (typeId === void 0) throw new Error(`Unknown node type '${name}' in \`visitors\` object`);
 
-    if (typeId < LEAF_NODES_COUNT) {
+    if (typeId < LEAF_NODE_TYPES_COUNT) {
       // Leaf node. Store just 1 function.
       const existingVisitFn = visitorsArr[typeId];
       if (existingVisitFn === null) {

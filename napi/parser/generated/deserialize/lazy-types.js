@@ -187,7 +187,8 @@ const NODE_TYPE_IDS_MAP = new Map([
   ['JSDocNonNullableType', 177],
 ]);
 
-// Number of AST node types which are leaf nodes
-const LEAF_NODES_COUNT = 38;
-
-module.exports = { NODE_TYPE_IDS_MAP, LEAF_NODES_COUNT };
+module.exports = {
+  NODE_TYPE_IDS_MAP,
+  NODE_TYPES_COUNT: 178,
+  LEAF_NODE_TYPES_COUNT: 38,
+};
