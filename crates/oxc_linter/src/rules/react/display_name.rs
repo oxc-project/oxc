@@ -133,29 +133,44 @@ impl Rule for DisplayName {
                         .extend(class_names_with_display_names_modified_result);
                 }
                 AstKind::Class(class) => {
-                    for element in &class.body.body {
-                        println!("element: {element:?}");
-
-                        match element {
-                            ClassElement::PropertyDefinition(prop_def) => {
-                                println!("prop_def: {prop_def:?}");
-                                if prop_def.key.static_name()
-                                    == Some(std::borrow::Cow::Borrowed("displayName"))
-                                {
-                                    class_names_with_display_names_modified.push(prop_def.span);
-                                }
-                            }
-                            ClassElement::MethodDefinition(method_def) => {
-                                println!("method_def: {method_def:?}");
-                                if method_def.key.static_name()
-                                    == Some(std::borrow::Cow::Borrowed("displayName"))
-                                {
-                                    class_names_with_display_names_modified.push(method_def.span);
-                                }
-                            }
-                            _ => {}
+                    let has_display_name = class.body.body.iter().any(|element| {
+                        if let ClassElement::PropertyDefinition(prop_def) = element {
+                            prop_def.key.static_name()
+                                == Some(std::borrow::Cow::Borrowed("displayName"))
+                        } else {
+                            false
                         }
+                    });
+
+                    if !has_display_name {
+                        class_names_initialized_with_no_display_name_property.push(class.span);
+                    } else {
+                        class_names_with_display_names_modified.push(class.span);
                     }
+
+                    // for element in &class.body.body {
+                    //     println!("element: {element:?}");
+
+                    //     match element {
+                    //         ClassElement::PropertyDefinition(prop_def) => {
+                    //             println!("prop_def: {prop_def:?}");
+                    //             if prop_def.key.static_name()
+                    //                 == Some(std::borrow::Cow::Borrowed("displayName"))
+                    //             {
+                    //                 class_names_with_display_names_modified.push(prop_def.span);
+                    //             }
+                    //         }
+                    //         ClassElement::MethodDefinition(method_def) => {
+                    //             println!("method_def: {method_def:?}");
+                    //             if method_def.key.static_name()
+                    //                 == Some(std::borrow::Cow::Borrowed("displayName"))
+                    //             {
+                    //                 class_names_with_display_names_modified.push(method_def.span);
+                    //             }
+                    //         }
+                    //         _ => {}
+                    //     }
+                    // }
 
                     if let Some(id) = &class.id {
                         class_ids.push((id.name.to_string(), class.span));
@@ -183,6 +198,10 @@ impl Rule for DisplayName {
                                     .map(|(_, span)| span)
                                     .collect::<Vec<_>>();
 
+                                println!("result: {result:?}");
+                                println!("identifier: {identifier:?}");
+                                println!("class_ids: {class_ids:?}");
+
                                 if !result.is_empty() {
                                     class_names_initialized_with_no_display_name_property =
                                         class_names_initialized_with_no_display_name_property
@@ -190,6 +209,9 @@ impl Rule for DisplayName {
                                             .filter_map(|span| {
                                                 if result.iter().any(|r| {
                                                     is_span_equal_or_inside_other_span(r, span)
+                                                        || is_span_equal_or_inside_other_span(
+                                                            span, r,
+                                                        )
                                                 }) {
                                                     None
                                                 } else {
@@ -199,7 +221,24 @@ impl Rule for DisplayName {
                                             .collect();
                                 }
                             }
+
+                            if &id.property.name == "displayName" {
+                                class_names_with_display_names_modified.push(id.span);
+                            }
                         }
+                    }
+                }
+                AstKind::Function(func_decl) => {
+                    // println!("func_decl: {func_decl:?}");
+
+                    if let Some(id) = &func_decl.id {
+                        if !ignore_transpiler_name {
+                            class_names_with_display_names_modified.push(id.span);
+                        } else {
+                            class_names_initialized_with_no_display_name_property.push(id.span);
+                        }
+                    } else {
+                        class_names_initialized_with_no_display_name_property.push(func_decl.span);
                     }
                 }
                 _ => {}
@@ -391,6 +430,8 @@ fn process_class_node(class: &Class, ignore_transpiler_name: bool) -> (Vec<Span>
     let mut class_names_with_display_names_modified: Vec<Span> = vec![];
     let mut class_names_initialized_with_no_display_name_property: Vec<Span> = vec![];
 
+    println!("class: {class:?}");
+
     if let Some(name) = &class.name() {
         if !name.is_empty() && !ignore_transpiler_name {
             class_names_with_display_names_modified.push(class.span);
@@ -425,6 +466,7 @@ fn get_result(
             if class_names_with_display_names_modified.is_empty()
                 || !class_names_with_display_names_modified.iter().any(|same_or_inner_span| {
                     is_span_equal_or_inside_other_span(same_or_inner_span, outer_span)
+                        || is_span_equal_or_inside_other_span(outer_span, same_or_inner_span)
                 })
             {
                 Some(*outer_span)
