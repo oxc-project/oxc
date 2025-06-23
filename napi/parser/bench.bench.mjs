@@ -11,6 +11,9 @@ const require = createRequire(import.meta.filename);
 const deserializeJS = require('./generated/deserialize/js.js');
 const deserializeTS = require('./generated/deserialize/ts.js');
 const { isJsAst, prepareRaw, returnBufferToCache } = require('./raw-transfer/common.js');
+const { getVisitorsArr } = require('./raw-transfer/visitor.js');
+const { TOKEN } = require('./raw-transfer/lazy-common.js');
+const walkProgram = require('./generated/deserialize/lazy-visit.js');
 
 // Same fixtures as used in Rust parser benchmarks
 let fixtureUrls = [
@@ -163,6 +166,34 @@ for (const { filename, code } of fixtures) {
       });
       visit(identVisitor);
       dispose();
+    });
+
+    const debuggerVisitorsArr = getVisitorsArr(debuggerVisitor);
+    const identVisitorsArr = getVisitorsArr(identVisitor);
+
+    const ast = {
+      buffer,
+      sourceText: code,
+      sourceLen: sourceByteLen,
+      sourceIsAscii: code.length === sourceByteLen,
+      nodes: null, // Initialized in bench functions
+      token: TOKEN,
+    };
+
+    // (2 * 1024 * 1024 * 1024 - 16) >> 2
+    const metadataPos32 = 536870908;
+    const programPos = buffer.uint32[metadataPos32];
+
+    benchRaw('parser_napi_raw_lazy_visit_only(debugger)', () => {
+      ast.nodes = new Map();
+      debuggerCount = 0;
+      walkProgram(programPos, ast, debuggerVisitorsArr);
+    });
+
+    benchRaw('parser_napi_raw_lazy_visit_only(ident)', () => {
+      ast.nodes = new Map();
+      identCount = 0;
+      walkProgram(programPos, ast, identVisitorsArr);
     });
   });
 }
