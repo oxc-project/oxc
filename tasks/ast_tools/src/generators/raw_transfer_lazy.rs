@@ -80,7 +80,7 @@ static CONSTRUCT_PRELUDE: &str = "
 struct State {
     /// Code for constructors
     constructors: String,
-    /// Code for visitors
+    /// Code for walkers
     walkers: String,
     /// Code for constructor class names
     constructor_names: String,
@@ -174,10 +174,10 @@ fn generate(
     }
 
     // Generate file containing walk functions
-    let visitors = &state.walkers;
+    let walkers = &state.walkers;
     let constructor_names = &state.constructor_names;
     #[rustfmt::skip]
-    let visitors = format!("
+    let walkers = format!("
         'use strict';
 
         const {{
@@ -186,7 +186,7 @@ fn generate(
 
         module.exports = walkProgram;
 
-        {visitors}
+        {walkers}
     ");
 
     // Generate file containing mapping from type names to node type IDs
@@ -211,7 +211,7 @@ fn generate(
         module.exports = {{ NODE_TYPE_IDS_MAP, LEAF_NODES_COUNT }};
     ");
 
-    (state.constructors, visitors, node_type_ids_map)
+    (state.constructors, walkers, node_type_ids_map)
 }
 
 /// Structure for calculating which types need walk functions.
