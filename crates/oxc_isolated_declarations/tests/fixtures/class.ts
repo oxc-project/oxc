@@ -69,3 +69,9 @@ export class PublicMethodClass {
     return {[('x')]: 1};
   }
 }
+
+export class ConstructorOverloadsClass {
+  constructor(a: number);
+  constructor(a: string);
+  constructor(readonly a: any) {}
+}

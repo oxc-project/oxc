@@ -361,11 +361,15 @@ impl<'a> IsolatedDeclarations<'a> {
                     if self.has_internal_annotation(method.span) {
                         continue;
                     }
-                    if !(method.r#type.is_abstract() || method.optional)
-                        && method.value.body.is_none()
+                    if !(
+                        // `abstract` methods are always allowed to have no body
+                        method.r#type.is_abstract()
+                        // optional methods are allowed to have no body
+                        || method.optional
+                    ) && method.value.body.is_none()
                     {
                         is_function_overloads = true;
-                    } else if is_function_overloads {
+                    } else if is_function_overloads && !method.kind.is_constructor() {
                         // Skip implementation of function overloads
                         is_function_overloads = false;
                         continue;
@@ -420,6 +424,11 @@ impl<'a> IsolatedDeclarations<'a> {
                                     function, &params,
                                 ),
                             );
+
+                            if is_function_overloads && function.body.is_some() {
+                                is_function_overloads = false;
+                                continue;
+                            }
 
                             if is_private {
                                 elements.push(self.transform_private_modifier_method(method));
