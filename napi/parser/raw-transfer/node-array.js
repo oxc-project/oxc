@@ -2,12 +2,15 @@
 
 const { TOKEN, constructorError } = require('./lazy-common.js');
 
-// Mapping from a proxy to the `NodeArray` that it wraps.
-// Used by `slice`, `values`, `key` and `elements` methods.
+// Internal symbol to get `NodeArray` from a proxy wrapping a `NodeArray`.
 //
-// TODO: Is there any way to avoid this?
-// Seems necessary because `this` in methods is a proxy, so accessing `this.#internal` throws.
-const nodeArrays = new WeakMap();
+// Methods of `NodeArray` are called with `this` being the proxy, rather than the `NodeArray` itself.
+// They can "unwrap" the proxy by getting `this[ARRAY]`, and the `get` proxy trap will return
+// the actual `NodeArray`.
+//
+// This symbol is not exported, and it is not actually defined on `NodeArray`s, so user cannot obtain it
+// via `Object.getOwnPropertySymbols` or `Reflect.ownKeys`. Therefore user code cannot unwrap the proxy.
+const ARRAY = Symbol();
 
 // Function to get element from an array. Initialized in class static block below.
 let getElement;
@@ -43,10 +46,7 @@ class NodeArray extends Array {
 
     super(length);
     this.#internal = { pos, ast, stride, construct };
-
-    const proxy = new Proxy(this, PROXY_HANDLERS);
-    nodeArrays.set(proxy, this);
-    return proxy;
+    return new Proxy(this, PROXY_HANDLERS);
   }
 
   // Allow `arr.filter`, `arr.map` etc.
@@ -56,25 +56,22 @@ class NodeArray extends Array {
   // TODO: Benchmark to check that this is actually faster.
   values() {
     // Get actual `NodeArray`. `this` is a proxy.
-    const arr = nodeArrays.get(this);
+    const arr = this[ARRAY];
     return new NodeArrayValuesIterator(arr.#internal, arr.length);
   }
 
   // Override `keys` method with a more efficient one that avoids going via proxy for every iteration.
   // TODO: Benchmark to check that this is actually faster.
   keys() {
-    // Get actual `NodeArray`. `this` is a proxy.
-    // TODO: `this.length` would work here.
-    // Not sure which is more expensive - property lookup via proxy, or `WeakMap` lookup.
-    const arr = nodeArrays.get(this);
-    return new NodeArrayKeysIterator(arr.length);
+    // `this` is a proxy, but proxy will pass through getting `this.length` to the underlying `NodeArray`
+    return new NodeArrayKeysIterator(this.length);
   }
 
   // Override `entries` method with a more efficient one that avoids going via proxy for every iteration.
   // TODO: Benchmark to check that this is actually faster.
   entries() {
     // Get actual `NodeArray`. `this` is a proxy.
-    const arr = nodeArrays.get(this);
+    const arr = this[ARRAY];
     return new NodeArrayEntriesIterator(arr.#internal, arr.length);
   }
 
@@ -92,8 +89,7 @@ class NodeArray extends Array {
    */
   slice(start, end) {
     // Get actual `NodeArray`. `this` is a proxy.
-    const arr = nodeArrays.get(this);
-    if (arr === void 0) throw new Error('`slice` called on a value which is not a `NodeArray`');
+    const arr = this[ARRAY];
 
     start = toInt(start);
     if (start < 0) {
@@ -262,11 +258,16 @@ const PROXY_HANDLERS = {
 
   // Get entries which are in bounds.
   get(arr, key) {
+    // Methods of `NodeArray` are called with `this` being the proxy, rather than the `NodeArray` itself.
+    // They can "unwrap" the proxy by getting `this[ARRAY]`.
+    if (key === ARRAY) return arr;
+
     if (isIndex(key)) {
       key *= 1;
       if (key >= arr.length) return void 0;
       return getElement(arr, key);
     }
+
     return Reflect.get(arr, key);
   },
 
