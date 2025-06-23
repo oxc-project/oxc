@@ -1710,6 +1710,7 @@ dependencies = [
  "oxc_formatter",
  "oxc_tasks_common",
  "oxc_tasks_transform_checker",
+ "phf 0.12.1",
  "pico-args",
  "rayon",
  "rustc-hash",
