@@ -56,7 +56,7 @@ impl<'a> Formatter<'a> {
 
         let source_text = program.source_text;
         self.source_text = source_text;
-        let context = FormatContext::new(program, self.options);
+        let context = FormatContext::new(program, self.allocator, self.options);
         let formatted = formatter::format(
             program,
             context,

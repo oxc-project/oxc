@@ -71,7 +71,7 @@ impl<'a> Format<'a> for AstNode<'a, Vec<'a, VariableDeclarator<'a>>> {
             None => return Err(FormatError::SyntaxError),
         };
 
-        if length == 1 && !f.comments().has_leading_comments(first_declarator_span.start) {
+        if length == 1 && !f.comments().has_comments_before(first_declarator_span.start) {
             return write!(f, format_first_declarator);
         }
 

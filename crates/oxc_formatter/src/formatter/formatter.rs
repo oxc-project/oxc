@@ -1,6 +1,6 @@
 #![allow(clippy::module_inception)]
 
-use oxc_allocator::Address;
+use oxc_allocator::{Address, Allocator};
 use oxc_ast::AstKind;
 
 use crate::options::FormatOptions;
@@ -25,6 +25,10 @@ impl<'buf, 'ast> Formatter<'buf, 'ast> {
     /// Creates a new context that uses the given formatter context
     pub fn new(buffer: &'buf mut (dyn Buffer<'ast> + 'buf)) -> Self {
         Self { buffer }
+    }
+
+    pub fn allocator(&self) -> &Allocator {
+        self.context().allocator()
     }
 
     /// Returns the format options

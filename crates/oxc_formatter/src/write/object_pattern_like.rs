@@ -3,9 +3,8 @@ use oxc_ast::ast::*;
 use crate::{
     formatter::{
         Buffer, Comments, Format, FormatResult, Formatter,
-        prelude::{
-            format_dangling_comments, format_with, group, soft_block_indent_with_maybe_space,
-        },
+        prelude::{format_with, group, soft_block_indent_with_maybe_space},
+        trivia::{DanglingIndentMode, format_dangling_comments},
     },
     generated::ast_nodes::AstNode,
     write,
@@ -36,7 +35,7 @@ impl<'a> ObjectPatternLike<'a, '_> {
         }
     }
 
-    fn is_inline(&self, comments: &Comments) -> bool {
+    fn is_inline(&self, f: &Formatter<'_, 'a>) -> bool {
         // TODO
         false
         // let parent_kind = self.syntax().parent.kind();
@@ -130,12 +129,12 @@ impl<'a> ObjectPatternLike<'a, '_> {
         // }
     }
 
-    fn layout(&self, comments: &Comments) -> ObjectPatternLayout {
+    fn layout(&self, f: &Formatter<'_, 'a>) -> ObjectPatternLayout {
         if self.is_empty() {
             return ObjectPatternLayout::Empty;
         }
 
-        if self.is_inline(comments) {
+        if self.is_inline(f) {
             return ObjectPatternLayout::Inline;
         }
 
@@ -175,9 +174,9 @@ impl<'a> Format<'a> for ObjectPatternLike<'a, '_> {
 
         write!(f, ["{"])?;
 
-        match self.layout(f.comments()) {
+        match self.layout(f) {
             ObjectPatternLayout::Empty => {
-                write!(f, format_dangling_comments(self.span()).with_soft_block_indent())?;
+                write!(f, format_dangling_comments(self.span()).with_block_indent())?;
             }
             ObjectPatternLayout::Inline => {
                 write!(f, format_properties)?;

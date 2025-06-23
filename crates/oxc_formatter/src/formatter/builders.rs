@@ -2458,29 +2458,35 @@ where
 
     /// Get the number of line breaks between two consecutive SyntaxNodes in the tree
     pub fn has_lines_before(&self, span: Span, source_text: &str) -> bool {
-        // Count the newlines in the leading trivia of the next node
-        let start = if let Some(comment) = self.fmt.comments().leading_comments(span.start).first()
-        {
-            comment.span.start
-        } else {
-            span.start
-        };
-        source_text[..start as usize]
-            .trim_end_matches(is_white_space_single_line)
-            .chars()
-            .rev()
-            .take_while(|c| is_line_terminator(*c))
-            .count()
-            > 1
+        get_lines_before(span.start, self.fmt) > 1
     }
 }
 
 /// Get the number of line breaks between two consecutive SyntaxNodes in the tree
-pub fn get_lines_before(span: Span) -> usize {
-    // TODO:
+pub fn get_lines_before(start: u32, f: &Formatter) -> usize {
     // Count the newlines in the leading trivia of the next node
-    // if let Some(token) = next_node.first_token() { get_lines_before_token(&token) } else { 0 }
-    0
+    let comments = f.comments().unprinted_comments();
+    let start = if let Some(comment) = comments.first() {
+        if comment.span.end < start { comment.span.start } else { start }
+    } else {
+        start
+    };
+
+    f.source_text()[..start as usize]
+        .trim_end_matches(is_white_space_single_line)
+        .chars()
+        .rev()
+        .take_while(|c| is_line_terminator(*c))
+        .count()
+}
+
+/// Get the number of line breaks between two consecutive SyntaxNodes in the tree
+pub fn get_lines_after(end: u32, source_text: &str) -> usize {
+    source_text[end as usize..]
+        .trim_start_matches(is_white_space_single_line)
+        .chars()
+        .take_while(|c| is_line_terminator(*c))
+        .count()
 }
 
 /// Builder to fill as many elements as possible on a single line.

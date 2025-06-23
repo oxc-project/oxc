@@ -48,10 +48,10 @@ impl Generator for FormatterFormatGenerator {
             use crate::{
                 formatter::{
                     Buffer, Format, FormatResult, Formatter,
-                    trivia::{format_leading_comments, format_trailing_comments},
+                    trivia::{FormatTrailingComments, format_leading_comments, format_trailing_comments},
                 },
                 parentheses::NeedsParentheses,
-                generated::ast_nodes::AstNode,
+                generated::ast_nodes::{AstNode, SiblingNode},
                 write::FormatWrite,
             };
 
@@ -85,19 +85,25 @@ fn implementation(type_def: &TypeDef, schema: &Schema) -> TokenStream {
         };
     }
 
-    let leading_comments = if type_def.is_enum() {
+    let is_program = type_def.as_struct().is_some_and(|s| s.name == "Program");
+
+    let leading_comments = if type_def.is_enum() || is_program {
         quote! {}
     } else {
         quote! {
-            format_leading_comments(self.span().start).fmt(f)?;
+            format_leading_comments(self.span).fmt(f)?;
         }
     };
 
     let trailing_comments = if type_def.is_enum() {
         quote! {}
+    } else if is_program {
+        quote! {
+            FormatTrailingComments::Comments(f.context().comments().unprinted_comments()).fmt(f)?;
+        }
     } else {
         quote! {
-            format_trailing_comments(self.span().end).fmt(f)?;
+            format_trailing_comments(&self.parent.as_sibling_node(), &SiblingNode::from(self.inner), self.following_node.as_ref()).fmt(f)?;
         }
     };
 

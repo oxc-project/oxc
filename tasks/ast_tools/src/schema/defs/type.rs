@@ -197,7 +197,6 @@ impl TypeDef {
         }
     }
 
-    #[expect(dead_code)]
     pub fn is_vec(&self) -> bool {
         matches!(self, Self::Vec(_))
     }

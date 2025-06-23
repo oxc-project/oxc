@@ -12,6 +12,7 @@ use crate::{
             get_lines_before, group, soft_block_indent, soft_line_break_or_space, space,
         },
         separated::FormatSeparatedIter,
+        trivia::{DanglingIndentMode, format_dangling_comments},
         write,
     },
     generated::ast_nodes::{AstNode, AstNodes},
@@ -39,7 +40,8 @@ impl<'a> Format<'a> for AstNode<'a, Vec<'a, Argument<'a>>> {
                 f,
                 [
                     l_paren_token,
-                    // format_dangling_comments(node.syntax()).with_soft_block_indent(),
+                    // `call/* comment1 */(/* comment2 */)` Both comments are dangling comments.
+                    format_dangling_comments(self.parent.span()).with_soft_block_indent(),
                     r_paren_token
                 ]
             );
@@ -90,7 +92,7 @@ impl<'a> Format<'a> for AstNode<'a, Vec<'a, Argument<'a>>> {
             .iter()
             .enumerate()
             .map(|(index, element)| {
-                let leading_lines = get_lines_before(element.span());
+                let leading_lines = get_lines_before(element.span().start, f);
                 has_empty_line = has_empty_line || leading_lines > 1;
 
                 FormatCallArgument::Default { element, is_last: index == last_index, leading_lines }
@@ -104,7 +106,7 @@ impl<'a> Format<'a> for AstNode<'a, Vec<'a, Argument<'a>>> {
             );
         }
 
-        if let Some(group_layout) = arguments_grouped_layout(self, f.comments()) {
+        if let Some(group_layout) = arguments_grouped_layout(self, f) {
             write_grouped_arguments(self, arguments, group_layout, f)
         } else if is_long_curried_call(self.parent) {
             write!(
@@ -339,12 +341,12 @@ impl<'a> Format<'a> for FormatAllArgsBrokenOut<'a, '_> {
 }
 
 pub fn arguments_grouped_layout(
-    args: &[Argument<'_>],
-    comments: &Comments,
+    args: &AstNode<Vec<Argument>>,
+    f: &Formatter<'_, '_>,
 ) -> Option<GroupedCallArgumentLayout> {
-    if should_group_first_argument(args, comments) {
+    if should_group_first_argument(args, f) {
         Some(GroupedCallArgumentLayout::GroupedFirstArgument)
-    } else if should_group_last_argument(args, comments) {
+    } else if should_group_last_argument(args, f) {
         Some(GroupedCallArgumentLayout::GroupedLastArgument)
     } else {
         None
@@ -352,8 +354,8 @@ pub fn arguments_grouped_layout(
 }
 
 /// Checks if the first argument requires grouping
-fn should_group_first_argument(list: &[Argument<'_>], comments: &Comments) -> bool {
-    let mut iter = list.iter();
+fn should_group_first_argument(args: &AstNode<Vec<Argument>>, f: &Formatter<'_, '_>) -> bool {
+    let mut iter = args.iter();
     match (iter.next().and_then(|a| a.as_expression()), iter.next().and_then(|a| a.as_expression()))
     {
         (Some(first), Some(second)) if iter.next().is_none() => {
@@ -380,8 +382,15 @@ fn should_group_first_argument(list: &[Argument<'_>], comments: &Comments) -> bo
                 return false;
             }
 
-            !comments.has_comments(first.span())
-                && !can_group_expression_argument(second, false, comments)
+            let call_like_span = args.parent.span();
+            !f.comments().has_comments(call_like_span.start, first.span(), second.span().start)
+                && !can_group_expression_argument(
+                    first.span().end,
+                    second,
+                    // The span just for finding comment before the call like expression.
+                    call_like_span.end,
+                    f,
+                )
                 && is_relatively_short_argument(second)
         }
         _ => false,
@@ -389,42 +398,40 @@ fn should_group_first_argument(list: &[Argument<'_>], comments: &Comments) -> bo
 }
 
 /// Checks if the last argument should be grouped.
-fn should_group_last_argument(list: &[Argument<'_>], comments: &Comments) -> bool {
-    let mut iter = list.iter();
+fn should_group_last_argument(args: &AstNode<Vec<Argument>>, f: &Formatter<'_, '_>) -> bool {
+    let mut iter = args.as_ref().iter();
     let last = iter.next_back();
 
     match last.and_then(|arg| arg.as_expression()) {
         Some(last) => {
-            let span = last.span();
-            if comments.has_leading_comments(span.start)
-                || comments.has_trailing_comments(span.start)
-            {
-                return false;
-            }
-
-            if !can_group_expression_argument(last, false, comments) {
-                return false;
-            }
-
             let penultimate = iter.next_back();
-
             if let Some(penultimate) = &penultimate {
-                // TODO: maybe address check would be better
-                if penultimate.span() == last.span() {
-                    return false;
-                }
+                // TODO: check if both last and penultimate are same kind of expression.
+                // if penultimate.syntax().kind() == last.syntax().kind() {
+                //     return Ok(false);
+                // }
+            }
+
+            let call_like_span = args.parent.span();
+            let previous_span = penultimate.map_or(call_like_span.start, |a| a.span().end);
+            if f.comments().has_comments(previous_span, last.span(), call_like_span.end) {
+                return false;
+            }
+
+            if !can_group_expression_argument(previous_span, last, call_like_span.end, f) {
+                return false;
             }
 
             match last {
-                Expression::ArrayExpression(array) if list.len() > 1 => {
+                Expression::ArrayExpression(array) if args.len() > 1 => {
                     // Not for `useEffect`
-                    if list.len() == 2
+                    if args.len() == 2
                         && matches!(penultimate, Some(Argument::ArrowFunctionExpression(_)))
                     {
                         return false;
                     }
 
-                    if can_concisely_print_array_list(&array.elements, comments) {
+                    if can_concisely_print_array_list(array.span, &array.elements, f) {
                         return false;
                     }
 
@@ -546,90 +553,109 @@ fn is_relatively_short_argument(argument: &Expression<'_>) -> bool {
 
 /// Checks if `argument` benefits from grouping in call arguments.
 fn can_group_expression_argument(
+    previous_end: u32,
     argument: &Expression<'_>,
-    is_arrow_recursion: bool,
-    comments: &Comments,
+    following_start: u32,
+    f: &Formatter<'_, '_>,
 ) -> bool {
     match argument {
         Expression::ObjectExpression(object_expression) => {
             !object_expression.properties.is_empty()
-                || comments.has_comments(object_expression.span)
+                || f.comments().has_comments(previous_end, object_expression.span, following_start)
         }
 
         Expression::ArrayExpression(array_expression) => {
-            !array_expression.elements.is_empty() || comments.has_comments(array_expression.span)
+            !array_expression.elements.is_empty()
+                || f.comments().has_comments(previous_end, array_expression.span, following_start)
         }
+        Expression::TSTypeAssertion(assertion_expression) => can_group_expression_argument(
+            previous_end,
+            &assertion_expression.expression,
+            following_start,
+            f,
+        ),
 
-        Expression::TSTypeAssertion(assertion_expression) => {
-            can_group_expression_argument(&assertion_expression.expression, false, comments)
-        }
+        Expression::TSAsExpression(as_expression) => can_group_expression_argument(
+            previous_end,
+            &as_expression.expression,
+            following_start,
+            f,
+        ),
 
-        Expression::TSAsExpression(as_expression) => {
-            can_group_expression_argument(&as_expression.expression, false, comments)
-        }
-
-        Expression::TSSatisfiesExpression(satisfies_expression) => {
-            can_group_expression_argument(&satisfies_expression.expression, false, comments)
-        }
+        Expression::TSSatisfiesExpression(satisfies_expression) => can_group_expression_argument(
+            previous_end,
+            &satisfies_expression.expression,
+            following_start,
+            f,
+        ),
 
         Expression::ArrowFunctionExpression(arrow_function) => {
-            let body = &arrow_function.body;
-            let return_type_annotation = &arrow_function.return_type;
-
-            // Handles cases like:
-            //
-            // app.get("/", (req, res): void => {
-            //     res.send("Hello World!");
-            // });
-            //
-            // export class Thing implements OtherThing {
-            //   do: (type: Type) => Provider<Prop> = memoize(
-            //     (type: ObjectType): Provider<Opts> => {}
-            //   );
-            // }
-            let can_group_type = return_type_annotation.as_ref().is_none_or(|any_type| {
-                match &any_type.type_annotation {
-                    TSType::TSTypeReference(_) => {
-                        !arrow_function.expression
-                            && body.statements.iter().any(|statement| match statement {
-                                Statement::EmptyStatement(s) => {
-                                    // When the body contains an empty statement, comments in
-                                    // the body will get attached to that statement rather than
-                                    // the body itself, so they need to be checked for comments
-                                    // as well to ensure that the body is still considered
-                                    // groupable when those empty statements are removed by the
-                                    // printer.
-                                    comments.has_comments(s.span)
-                                }
-                                _ => true,
-                            })
-                            || comments.has_dangling_comments(body.span)
-                    }
-
-                    _ => true,
-                }
-            });
-
-            let can_group_body = arrow_function.get_expression().is_none_or(|expr| match expr {
-                Expression::ObjectExpression(_)
-                | Expression::ArrayExpression(_)
-                | Expression::JSXElement(_)
-                | Expression::JSXFragment(_) => true,
-                Expression::ArrowFunctionExpression(_) => {
-                    can_group_expression_argument(expr, true, comments)
-                }
-                Expression::CallExpression(_) | Expression::ConditionalExpression(_) => {
-                    !is_arrow_recursion
-                }
-                _ => false,
-            });
-
-            can_group_body && can_group_type
+            can_group_arrow_function_expression_argument(arrow_function, false, f)
         }
-
         Expression::FunctionExpression(_) => true,
         _ => false,
     }
+}
+
+fn can_group_arrow_function_expression_argument(
+    arrow_function: &ArrowFunctionExpression,
+    is_arrow_recursion: bool,
+    f: &Formatter<'_, '_>,
+) -> bool {
+    let body = &arrow_function.body;
+    let return_type_annotation = &arrow_function.return_type;
+
+    // Handles cases like:
+    //
+    // app.get("/", (req, res): void => {
+    //     res.send("Hello World!");
+    // });
+    //
+    // export class Thing implements OtherThing {
+    //   do: (type: Type) => Provider<Prop> = memoize(
+    //     (type: ObjectType): Provider<Opts> => {}
+    //   );
+    // }
+    let can_group_type = return_type_annotation.as_ref().is_none_or(|any_type| {
+        match &any_type.type_annotation {
+            TSType::TSTypeReference(_) => {
+                if arrow_function.expression {
+                    return false;
+                }
+                body.statements.iter().any(|statement| match statement {
+                    Statement::EmptyStatement(s) => {
+                        // When the body contains an empty statement, comments in
+                        // the body will get attached to that statement rather than
+                        // the body itself, so they need to be checked for comments
+                        // as well to ensure that the body is still considered
+                        // groupable when those empty statements are removed by the
+                        // printer.
+                        // TODO: it seems no difference if we comment out this line
+                        // comments.has_comments(s.span)
+                        true
+                    }
+                    _ => true,
+                }) || (body.statements.is_empty() && f.comments().has_dangling_comments(body.span))
+            }
+            _ => true,
+        }
+    });
+
+    if !can_group_type {
+        return false;
+    }
+
+    arrow_function.get_expression().is_none_or(|expr| match expr {
+        Expression::ObjectExpression(_)
+        | Expression::ArrayExpression(_)
+        | Expression::JSXElement(_)
+        | Expression::JSXFragment(_) => true,
+        Expression::ArrowFunctionExpression(inner_arrow_function) => {
+            can_group_arrow_function_expression_argument(inner_arrow_function, true, f)
+        }
+        Expression::CallExpression(_) | Expression::ConditionalExpression(_) => !is_arrow_recursion,
+        _ => false,
+    })
 }
 
 fn write_grouped_arguments<'a, 'b>(
@@ -1048,12 +1074,12 @@ fn is_commonjs_or_amd_call(
 /// ```js
 /// useMemo(() => {}, [])
 /// ```
-fn is_react_hook_with_deps_array(arguments: &[Argument<'_>], comments: &Comments) -> bool {
+fn is_react_hook_with_deps_array(arguments: &AstNode<Vec<Argument>>, comments: &Comments) -> bool {
     if arguments.len() > 3 || arguments.len() < 2 {
         return false;
     }
 
-    let mut args = arguments.iter();
+    let mut args = arguments.as_ref().iter();
     if arguments.len() == 3 {
         args.next();
     }
@@ -1063,15 +1089,19 @@ fn is_react_hook_with_deps_array(arguments: &[Argument<'_>], comments: &Comments
             Some(Argument::ArrowFunctionExpression(callback)),
             Some(Argument::ArrayExpression(deps)),
         ) => {
-            if comments.has_comments(callback.span) || comments.has_comments(deps.span) {
-                return false;
-            }
-
             if !callback.params.is_empty() {
                 return false;
             }
 
-            !callback.expression
+            if callback.expression {
+                return false;
+            }
+
+            // Is there a comment that isn't around the callback or deps?
+            !comments.filter_comments_in_span(arguments.parent.span()).any(|comment| {
+                !callback.span.contains_inclusive(comment.span)
+                    && !deps.span.contains_inclusive(comment.span)
+            })
         }
         _ => false,
     }
