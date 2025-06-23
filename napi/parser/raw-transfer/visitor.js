@@ -69,7 +69,7 @@ function createVisitorsArr(visitor) {
 
   // Create empty visitors array
   const visitorsArr = [];
-  for (let i = 0; i < NODE_TYPES_COUNT; i++) {
+  for (let i = NODE_TYPES_COUNT; i !== 0; i--) {
     visitorsArr.push(null);
   }
 
