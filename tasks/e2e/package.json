@@ -24,7 +24,7 @@
     "oxc-minify": "link:../../napi/minify",
     "oxc-transform": "link:../../napi/transform",
     "preact": "^10.26.7",
-    "ramda": "^0.30.1",
+    "ramda": "^0.31.0",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
     "rxjs": "^7.8.2",
