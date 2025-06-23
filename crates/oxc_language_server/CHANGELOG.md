@@ -4,6 +4,18 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [1.3.0] - 2025-06-23
+
+### 🚀 Features
+
+- 1a54184 linter: Add fix for unused disable directive (#11708) (Sysix)
+- 816ff03 linter: Read source text into the arena (#11825) (camc314)
+
+### 🚜 Refactor
+
+- b39d1fa linter: Output smaller spans for unused disable directives with multiple rules (#11781) (Sysix)
+
+
 ## [1.2.0] - 2025-06-19
 
 ### 🚀 Features

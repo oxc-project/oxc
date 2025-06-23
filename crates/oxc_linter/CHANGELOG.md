@@ -4,6 +4,27 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [1.3.0] - 2025-06-23
+
+### 🚀 Features
+
+- 1a54184 linter: Add fix for unused disable directive (#11708) (Sysix)
+- 816ff03 linter: Read source text into the arena (#11825) (camc314)
+- dc6f584 linter: Add `read_to_arena_str` function (#11823) (overlookmotel)
+
+### 🐛 Bug Fixes
+
+- 76891da linter/exhaustive-deps: False positive with ident used in type param (#11812) (camc314)
+
+### 🚜 Refactor
+
+- b39d1fa linter: Output smaller spans for unused disable directives with multiple rules (#11781) (Sysix)
+
+### 📚 Documentation
+
+- faab3ee linter: Improve docs for typescript/no-this-alias (#11845) (camc314)
+
+
 ## [1.2.0] - 2025-06-19
 
 ### 🚀 Features
