@@ -83,8 +83,8 @@ function createVisitorsArr(visitor) {
     const isExit = name.endsWith(':exit');
     if (isExit) name = name.slice(0, -5);
 
-    const typeId = NODE_TYPE_IDS_MAP.get(name);
-    if (typeId === void 0) throw new Error(`Unknown node type '${name}' in \`visitors\` object`);
+    const typeId = getIdForTypeName(name);
+    if (typeId === null) throw new Error(`Unknown node type '${name}' in \`visitors\` object`);
 
     if (typeId < LEAF_NODE_TYPES_COUNT) {
       // Leaf node. Store just 1 function.
@@ -99,6 +99,7 @@ function createVisitorsArr(visitor) {
       continue;
     }
 
+    // Non-leaf node. Store object containing `enter` and `exit` functions.
     let enterExit = visitorsArr[typeId];
     if (enterExit === null) {
       enterExit = visitorsArr[typeId] = { enter: null, exit: null };
@@ -126,4 +127,34 @@ function combineVisitFunctions(visit1, visit2) {
     visit1(node);
     visit2(node);
   };
+}
+
+const NODE_TYPES_COUNT_MINUS_ONE = NODE_TYPES_COUNT - 1;
+const NODE_TYPES_MID_INDEX = Math.floor(NODE_TYPES_COUNT / 2);
+
+/**
+ * Translate type name to node type ID.
+ * Uses binary search.
+ *
+ * @param {string} name - Node type name
+ * @returns {number|null} - Node type ID, or `null` if name is unknown
+ */
+function getIdForTypeName(name) {
+  let start = 0,
+    end = NODE_TYPES_COUNT_MINUS_ONE,
+    current = NODE_TYPES_MID_INDEX,
+    currentName;
+
+  while (true) {
+    currentName = NODE_TYPE_IDS_MAP[current].name;
+    if (currentName === name) return NODE_TYPE_IDS_MAP[current].id;
+    if (start === end) return null;
+
+    if (currentName < name) {
+      start = current + 1;
+    } else {
+      end = current - 1;
+    }
+    current = Math.floor((start + end) / 2);
+  }
 }

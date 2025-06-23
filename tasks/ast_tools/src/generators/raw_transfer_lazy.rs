@@ -77,17 +77,15 @@ static CONSTRUCT_PRELUDE: &str = "
 ";
 
 /// Generated code and other state.
-struct State {
+struct State<'s> {
     /// Code for constructors
     constructors: String,
     /// Code for walkers
     walkers: String,
     /// Code for constructor class names
     constructor_names: String,
-    /// Code for mapping from struct name to ID
-    leaf_node_type_ids_map: String,
-    /// Code for mapping from struct name to ID
-    non_leaf_node_type_ids_map: String,
+    /// Mapping from type name to node type ID
+    node_type_names_and_ids: Vec<(&'s str, u32)>,
     /// Next node type ID for leaf nodes
     next_leaf_node_type_id: u32,
     /// Next node type ID for non-leaf nodes
@@ -120,8 +118,7 @@ fn generate(
         constructors: CONSTRUCT_PRELUDE.to_string(),
         walkers: String::new(),
         constructor_names: String::new(),
-        leaf_node_type_ids_map: String::new(),
-        non_leaf_node_type_ids_map: String::new(),
+        node_type_names_and_ids: Vec::new(),
         next_leaf_node_type_id: 0,
         next_non_leaf_node_type_id: leaf_nodes_count,
     };
@@ -191,20 +188,24 @@ fn generate(
 
     // Generate file containing mapping from type names to node type IDs
     assert_eq!(state.next_leaf_node_type_id, leaf_nodes_count);
+    assert_eq!(state.next_non_leaf_node_type_id as usize, state.node_type_names_and_ids.len());
+
+    state.node_type_names_and_ids.sort_unstable_by_key(|&(name, ..)| name);
+    let mut node_types_elements = String::new();
+    for (name, node_type_id) in state.node_type_names_and_ids {
+        write_it!(node_types_elements, "{{ name: '{name}', id: {node_type_id} }},\n");
+    }
 
     let nodes_count = state.next_non_leaf_node_type_id;
-    let leaf_node_type_ids_map = &state.leaf_node_type_ids_map;
-    let non_leaf_node_type_ids_map = &state.non_leaf_node_type_ids_map;
     #[rustfmt::skip]
     let node_type_ids_map = format!("
         'use strict';
 
-        // Mapping from node type name to node type ID
-        const NODE_TYPE_IDS_MAP = new Map([
-            // Leaf nodes
-            {leaf_node_type_ids_map}// Non-leaf nodes
-            {non_leaf_node_type_ids_map}
-        ]);
+        // Mapping from node type name to node type ID.
+        // In alphabetical order, to enable binary search.
+        const NODE_TYPE_IDS_MAP = [
+            {node_types_elements}
+        ];
 
         module.exports = {{
             NODE_TYPE_IDS_MAP,
@@ -599,9 +600,9 @@ impl<'s> LocalCacheTypes<'s> {
 }
 
 /// Generate class and walk function for a struct.
-fn generate_struct(
-    struct_def: &StructDef,
-    state: &mut State,
+fn generate_struct<'s>(
+    struct_def: &'s StructDef,
+    state: &mut State<'s>,
     cache_key_offsets: &IndexVec<TypeId, u8>,
     local_cache_types: &mut LocalCacheTypes,
     is_walked: bool,
@@ -777,7 +778,7 @@ fn generate_struct(
     }
 
     // AST node which can be visited
-    if walk_stmts.is_empty() {
+    let node_type_id = if walk_stmts.is_empty() {
         // Leaf node. Just a single visitor.
         let node_type_id = state.next_leaf_node_type_id;
         state.next_leaf_node_type_id += 1;
@@ -790,7 +791,7 @@ fn generate_struct(
             }}
         ");
 
-        write_it!(state.leaf_node_type_ids_map, "['{struct_name}', {node_type_id}],\n");
+        node_type_id
     } else {
         // AST node with children. 2 visitors for enter and exit.
         let node_type_id = state.next_non_leaf_node_type_id;
@@ -813,10 +814,11 @@ fn generate_struct(
             }}
         ");
 
-        write_it!(state.non_leaf_node_type_ids_map, "['{struct_name}', {node_type_id}],\n");
-    }
+        node_type_id
+    };
 
     write_it!(state.constructor_names, "{struct_name}, ");
+    state.node_type_names_and_ids.push((struct_def.name(), node_type_id));
 }
 
 /// Generate construct and walk functions for an enum.
