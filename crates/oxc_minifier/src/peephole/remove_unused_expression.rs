@@ -2,7 +2,10 @@ use std::iter;
 
 use oxc_allocator::{TakeIn, Vec};
 use oxc_ast::ast::*;
-use oxc_ecmascript::{ToPrimitive, side_effects::MayHaveSideEffects};
+use oxc_ecmascript::{
+    ToPrimitive,
+    side_effects::{MayHaveSideEffects, MayHaveSideEffectsContext},
+};
 use oxc_span::GetSpan;
 use oxc_syntax::es_target::ESTarget;
 
@@ -243,20 +246,20 @@ impl<'a> PeepholeOptimizations {
         ctx: &mut Ctx<'a, '_>,
     ) -> bool {
         let Expression::NewExpression(new_expr) = e else { return false };
-        if !new_expr.pure {
-            return false;
-        }
-        let mut exprs =
-            self.fold_arguments_into_needed_expressions(&mut new_expr.arguments, state, ctx);
-        if exprs.is_empty() {
-            return true;
-        } else if exprs.len() == 1 {
-            *e = exprs.pop().unwrap();
+        if new_expr.pure && ctx.annotations() {
+            let mut exprs =
+                self.fold_arguments_into_needed_expressions(&mut new_expr.arguments, state, ctx);
+            if exprs.is_empty() {
+                return true;
+            } else if exprs.len() == 1 {
+                *e = exprs.pop().unwrap();
+                state.changed = true;
+                return false;
+            }
+            *e = ctx.ast.expression_sequence(new_expr.span, exprs);
             state.changed = true;
             return false;
         }
-        *e = ctx.ast.expression_sequence(new_expr.span, exprs);
-        state.changed = true;
         false
     }
 
@@ -580,7 +583,7 @@ impl<'a> PeepholeOptimizations {
     ) -> bool {
         let Expression::CallExpression(call_expr) = e else { return false };
 
-        if call_expr.pure {
+        if call_expr.pure && ctx.annotations() {
             let mut exprs =
                 self.fold_arguments_into_needed_expressions(&mut call_expr.arguments, state, ctx);
             if exprs.is_empty() {
@@ -660,7 +663,10 @@ impl<'a> PeepholeOptimizations {
 
 #[cfg(test)]
 mod test {
-    use crate::tester::{test, test_same};
+    use crate::{
+        CompressOptions, TreeShakeOptions,
+        tester::{test, test_options, test_same, test_same_options},
+    };
 
     #[test]
     fn test_remove_unused_expression() {
@@ -934,5 +940,26 @@ mod test {
         check("export const f = /* @__NO_SIDE_EFFECTS__ */ () => {}");
         check("/* @__NO_SIDE_EFFECTS__ */ const f = () => {}");
         check("/* @__NO_SIDE_EFFECTS__ */ export const f = () => {}");
+    }
+
+    #[test]
+    fn treeshake_options_annotations_false() {
+        let options = CompressOptions {
+            treeshake: TreeShakeOptions { annotations: false, ..TreeShakeOptions::default() },
+            ..CompressOptions::smallest()
+        };
+        test_same_options("function test() {} /* @__PURE__ */ test()", &options);
+        test_same_options("function test() {} /* @__PURE__ */ new test()", &options);
+
+        let options = CompressOptions {
+            treeshake: TreeShakeOptions { annotations: true, ..TreeShakeOptions::default() },
+            ..CompressOptions::smallest()
+        };
+        test_options("function test() {} /* @__PURE__ */ test()", "function test() {}", &options);
+        test_options(
+            "function test() {} /* @__PURE__ */ new test()",
+            "function test() {}",
+            &options,
+        );
     }
 }
