@@ -4,6 +4,13 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.74.0] - 2025-06-23
+
+### 💥 BREAKING CHANGES
+
+- 7a05e71 minifier: [**BREAKING**] Add `Treeshake` options (#11786) (Boshen)
+
+
 
 ## [0.73.1] - 2025-06-17
 
