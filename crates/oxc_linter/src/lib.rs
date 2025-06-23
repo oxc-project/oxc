@@ -205,8 +205,14 @@ impl Linter {
                 ((path.to_string_lossy().to_string(), 1)),
                 ThreadsafeFunctionCallMode::Blocking,
                 |x, env| {
-                    println!("External linter callback: {x:?}");
-
+                    match x {
+                        Ok(e) => {
+                            todo!()
+                        }
+                        Err(e) => {
+                            todo!()
+                        }
+                    }
                     Ok(())
                 },
             );
