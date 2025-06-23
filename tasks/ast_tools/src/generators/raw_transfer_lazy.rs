@@ -663,8 +663,8 @@ fn generate_struct(
         let internal_pos = internal_pos_offset(field.offset_64());
 
         // TODO: Currently we store all internal data in an object, stored as `#internal` property.
-        // This is on assumption that private field access is relatively slow, so we only only want
-        // to incur a single private field fetch to get all the data.
+        // This is on assumption that private field access is relatively slow, so we only want to
+        // incur a single private field fetch to get all the data.
         // But maybe creating these extra objects is more costly, and we'd be better off having
         // separate `#pos` and `#ast` private properties.
         // Benchmark it and find out which is faster.
