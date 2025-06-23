@@ -75,15 +75,15 @@ pub struct TypeScriptCase {
     pub code: String,
     pub units: Vec<TestUnitData>,
     pub settings: CompilerSettings,
-    error_files: Vec<String>,
+    error_codes: Vec<String>,
     pub result: TestResult,
 }
 
 impl Case for TypeScriptCase {
     fn new(path: PathBuf, code: String) -> Self {
-        let TestCaseContent { tests, settings, error_files } =
+        let TestCaseContent { tests, settings, error_codes } =
             TestCaseContent::make_units_from_test(&path, &code);
-        Self { path, code, units: tests, settings, error_files, result: TestResult::ToBeRun }
+        Self { path, code, units: tests, settings, error_codes, result: TestResult::ToBeRun }
     }
 
     fn code(&self) -> &str {
@@ -99,7 +99,8 @@ impl Case for TypeScriptCase {
     }
 
     fn should_fail(&self) -> bool {
-        !self.error_files.is_empty()
+        // If there are still error codes to be supported, it should fail
+        self.error_codes.iter().any(|code| !NOT_SUPPORTED_ERROR_CODES.contains(code.as_str()))
     }
 
     fn always_strict(&self) -> bool {
@@ -116,3 +117,8 @@ impl Case for TypeScriptCase {
         self.result = self.evaluate_result(result);
     }
 }
+
+// TODO: Filter out more not-supported error codes here
+static NOT_SUPPORTED_ERROR_CODES: phf::Set<&'static str> = phf::phf_set![
+    "2315", // Type 'U' is not generic.
+];
