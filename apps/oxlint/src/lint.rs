@@ -13,8 +13,8 @@ use ignore::{gitignore::Gitignore, overrides::OverrideBuilder};
 use oxc_allocator::AllocatorPool;
 use oxc_diagnostics::{DiagnosticService, GraphicalReportHandler, OxcDiagnostic};
 use oxc_linter::{
-    AllowWarnDeny, Config, ConfigStore, ConfigStoreBuilder, InvalidFilterKind, LintFilter,
-    LintOptions, LintService, LintServiceOptions, Linter, Oxlintrc,
+    AllowWarnDeny, Config, ConfigStore, ConfigStoreBuilder, ExternalLinter, ExternalLinterCb,
+    InvalidFilterKind, LintFilter, LintOptions, LintService, LintServiceOptions, Linter, Oxlintrc,
 };
 use rustc_hash::{FxHashMap, FxHashSet};
 use serde_json::Value;
@@ -38,7 +38,7 @@ impl Runner for LintRunner {
         Self { options, cwd: env::current_dir().expect("Failed to get current working directory") }
     }
 
-    fn run(self, stdout: &mut dyn Write) -> CliRunResult {
+    fn run(self, stdout: &mut dyn Write, cb: Option<ExternalLinterCb>) -> CliRunResult {
         let format_str = self.options.output_options.format;
         let output_formatter = OutputFormatter::new(format_str);
 
@@ -261,10 +261,13 @@ impl Runner for LintRunner {
             _ => None,
         };
 
-        let linter =
-            Linter::new(LintOptions::default(), ConfigStore::new(lint_config, nested_configs))
-                .with_fix(fix_options.fix_kind())
-                .with_report_unused_directives(report_unused_directives);
+        let linter = Linter::new(
+            LintOptions::default(),
+            ConfigStore::new(lint_config, nested_configs),
+            cb.map(ExternalLinter::new),
+        )
+        .with_fix(fix_options.fix_kind())
+        .with_report_unused_directives(report_unused_directives);
 
         let tsconfig = basic_options.tsconfig;
         if let Some(path) = tsconfig.as_ref() {

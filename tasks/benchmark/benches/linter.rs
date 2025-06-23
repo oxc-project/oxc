@@ -31,6 +31,7 @@ fn bench_linter(criterion: &mut Criterion) {
         let linter = Linter::new(
             LintOptions::default(),
             ConfigStore::new(lint_config, FxHashMap::default()),
+            None,
         )
         .with_fix(FixKind::All);
         group.bench_function(id, |b| {

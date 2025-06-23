@@ -21,6 +21,11 @@ impl AllocatorPool {
         AllocatorPool { allocators: Mutex::new(allocators) }
     }
 
+    // pub fn from_x(k: Vec<&mut [u8]>) {
+    //     let allocators = k.into_iter().map(Allocator::from_raw_parts(ptr, size)).collect();
+    //     AllocatorPool { allocators: Mutex::new(allocators) }
+    // }
+
     /// Retrieves an `Allocator` from the pool, or creates a new one if the pool is empty.
     ///
     /// Returns an `AllocatorPoolGuard` that gives mutable access to the allocator.

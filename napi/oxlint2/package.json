@@ -24,13 +24,14 @@
     "node": ">=8.*"
   },
   "scripts": {
-    "build-binding": "oxnode ./build-binding.ts",
+    "build-dev": "napi build --platform -o=./src --js bindings.js --esm --dts binding.d.ts",
     "build-binding:release": "pnpm build-binding --release",
     "build": "pnpm run build-binding && rolldown -c rolldown.config.ts",
     "build:release": "pnpm run build-binding:release && rolldown -c rolldown.config.ts"
   },
   "devDependencies": {
     "@oxc-node/cli": "^0.0.28",
+    "oxc-parser": "workspace:^",
     "@oxc-node/core": "^0.0.28",
     "@types/node": "^22.15.30",
     "glob": "^11.0.2",

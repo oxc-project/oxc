@@ -299,6 +299,7 @@ impl Oxc {
             let linter_ret = Linter::new(
                 LintOptions::default(),
                 ConfigStore::new(lint_config, FxHashMap::default()),
+                None,
             )
             .run(path, Rc::clone(&semantic), Arc::clone(module_record));
             self.diagnostics.extend(linter_ret.into_iter().map(|e| e.error));

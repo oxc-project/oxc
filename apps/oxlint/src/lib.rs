@@ -10,6 +10,8 @@ pub mod cli {
     pub use crate::{command::*, lint::LintRunner, result::CliRunResult, runner::Runner};
 }
 
+pub use oxc_linter::{ExternalLinterCb, ExternalLinterLoadPluginCb};
+
 #[cfg(all(feature = "allocator", not(miri), not(target_family = "wasm")))]
 #[global_allocator]
 static GLOBAL: mimalloc_safe::MiMalloc = mimalloc_safe::MiMalloc;
@@ -17,7 +19,7 @@ static GLOBAL: mimalloc_safe::MiMalloc = mimalloc_safe::MiMalloc;
 use cli::{CliRunResult, LintRunner, Runner};
 use std::{ffi::OsStr, io::BufWriter};
 
-pub fn lint() -> CliRunResult {
+pub fn lint(buffers: Option<Vec<&mut [u8]>>, cb: ExternalLinterCb) -> CliRunResult {
     init_tracing();
     init_miette();
 
@@ -28,6 +30,8 @@ pub fn lint() -> CliRunResult {
         _ => args.skip(1),
     };
     let args = args.collect::<Vec<_>>();
+
+    dbg!(&args);
 
     // SAFELY skip first two args (node + script.js)
     // let cli_args = std::env::args_os().skip(2);
@@ -45,7 +49,7 @@ pub fn lint() -> CliRunResult {
     // See `https://github.com/rust-lang/rust/issues/60673`.
     let mut stdout = BufWriter::new(std::io::stdout());
 
-    LintRunner::new(command).run(&mut stdout)
+    LintRunner::new(command).run(&mut stdout, Some(cb))
 }
 
 // Initialize the data which relies on `is_atty` system calls so they don't block subsequent threads.

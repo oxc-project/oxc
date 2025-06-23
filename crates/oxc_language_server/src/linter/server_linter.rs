@@ -91,7 +91,7 @@ impl ServerLinter {
             },
         );
 
-        let linter = Linter::new(lint_options, config_store);
+        let linter = Linter::new(lint_options, config_store, None);
 
         let isolated_linter = IsolatedLintHandler::new(
             linter,

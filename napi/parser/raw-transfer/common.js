@@ -14,6 +14,7 @@ module.exports = {
   prepareRaw,
   isJsAst,
   returnBufferToCache,
+  createBuffer
 };
 
 /**

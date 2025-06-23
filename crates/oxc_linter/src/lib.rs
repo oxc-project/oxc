@@ -8,6 +8,7 @@ mod ast_util;
 mod config;
 mod context;
 mod disable_directives;
+mod external_linter;
 mod fixer;
 mod frameworks;
 mod globals;
@@ -22,8 +23,9 @@ pub mod loader;
 pub mod rules;
 pub mod table;
 
-use std::{path::Path, rc::Rc, sync::Arc};
+use std::{fmt::Debug, path::Path, rc::Rc, sync::Arc};
 
+use napi::threadsafe_function::ThreadsafeFunctionCallMode;
 use oxc_semantic::{AstNode, Semantic};
 
 pub use crate::{
@@ -32,6 +34,7 @@ pub use crate::{
         Oxlintrc,
     },
     context::LintContext,
+    external_linter::{ExternalLinter, ExternalLinterCb, ExternalLinterLoadPluginCb},
     fixer::FixKind,
     frameworks::FrameworkFlags,
     loader::LINTABLE_EXTENSIONS,
@@ -66,13 +69,19 @@ fn size_asserts() {
 #[derive(Debug, Clone)]
 pub struct Linter {
     options: LintOptions,
-    // config: Arc<LintConfig>,
     config: ConfigStore,
+
+    #[expect(clippy::struct_field_names)]
+    external_linter: Option<ExternalLinter>,
 }
 
 impl Linter {
-    pub fn new(options: LintOptions, config: ConfigStore) -> Self {
-        Self { options, config }
+    pub fn new(
+        options: LintOptions,
+        config: ConfigStore,
+        external_linter: Option<ExternalLinter>,
+    ) -> Self {
+        Self { options, config, external_linter }
     }
 
     /// Set the kind of auto fixes to apply.
@@ -189,6 +198,20 @@ impl Linter {
             if severity.is_warn_deny() {
                 ctx_host.report_unused_directives(severity.into());
             }
+        }
+
+        if let Some(external_linter) = &self.external_linter {
+            let result = external_linter.run.call_with_return_value(
+                ((path.to_string_lossy().to_string(), 1)),
+                ThreadsafeFunctionCallMode::Blocking,
+                |x, env| {
+                    println!("External linter callback: {x:?}");
+
+                    Ok(())
+                },
+            );
+
+            dbg!(result);
         }
 
         ctx_host.take_diagnostics()

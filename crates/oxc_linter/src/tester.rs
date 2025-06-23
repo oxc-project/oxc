@@ -515,6 +515,7 @@ impl Tester {
                     .build(),
                 FxHashMap::default(),
             ),
+            None,
         )
         .with_fix(fix_kind.into());
 

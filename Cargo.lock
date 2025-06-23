@@ -1842,6 +1842,8 @@ dependencies = [
  "lazy_static",
  "markdown",
  "memchr",
+ "napi",
+ "napi-derive",
  "nonmax",
  "oxc-schemars",
  "oxc_allocator",
