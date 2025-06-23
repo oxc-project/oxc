@@ -58,12 +58,20 @@ impl Deref for LabelHasAssociatedControl {
 
 impl Default for LabelHasAssociatedControlConfig {
     fn default() -> Self {
+        let mut control_builder = GlobSetBuilder::new();
+        control_builder.add(Glob::new("input").unwrap());
+        control_builder.add(Glob::new("meter").unwrap());
+        control_builder.add(Glob::new("output").unwrap());
+        control_builder.add(Glob::new("progress").unwrap());
+        control_builder.add(Glob::new("select").unwrap());
+        control_builder.add(Glob::new("textarea").unwrap());
+
         Self {
             depth: 2,
             assert: Assert::Either,
             label_components: vec!["label".into()],
             label_attributes: vec!["alt".into(), "aria-label".into(), "aria-labelledby".into()],
-            control_components: GlobSet::empty(),
+            control_components: control_builder.build().unwrap(),
         }
     }
 }
@@ -114,16 +122,7 @@ impl Rule for LabelHasAssociatedControl {
     fn from_configuration(value: serde_json::Value) -> Self {
         let mut config = LabelHasAssociatedControlConfig::default();
 
-        let mut control_builder = GlobSetBuilder::new();
-        control_builder.add(Glob::new("input").unwrap());
-        control_builder.add(Glob::new("meter").unwrap());
-        control_builder.add(Glob::new("output").unwrap());
-        control_builder.add(Glob::new("progress").unwrap());
-        control_builder.add(Glob::new("select").unwrap());
-        control_builder.add(Glob::new("textarea").unwrap());
-
         let Some(options) = value.get(0) else {
-            config.control_components = control_builder.build().unwrap();
             return Self(Box::new(config));
         };
 
@@ -166,6 +165,14 @@ impl Rule for LabelHasAssociatedControl {
             }
         }
 
+        let mut control_builder = GlobSetBuilder::new();
+        control_builder.add(Glob::new("input").unwrap());
+        control_builder.add(Glob::new("meter").unwrap());
+        control_builder.add(Glob::new("output").unwrap());
+        control_builder.add(Glob::new("progress").unwrap());
+        control_builder.add(Glob::new("select").unwrap());
+        control_builder.add(Glob::new("textarea").unwrap());
+
         if let Some(control_components) =
             options.get("controlComponents").and_then(serde_json::Value::as_array)
         {
@@ -185,13 +192,6 @@ impl Rule for LabelHasAssociatedControl {
         config.control_components = if let Ok(controls) = control_builder.build() {
             controls
         } else {
-            let mut control_builder = GlobSetBuilder::new();
-            control_builder.add(Glob::new("input").unwrap());
-            control_builder.add(Glob::new("meter").unwrap());
-            control_builder.add(Glob::new("output").unwrap());
-            control_builder.add(Glob::new("progress").unwrap());
-            control_builder.add(Glob::new("select").unwrap());
-            control_builder.add(Glob::new("textarea").unwrap());
             control_builder.build().unwrap()
         };
 
@@ -918,6 +918,22 @@ fn test() {
         ),
         // Issue: <https://github.com/oxc-project/oxc/issues/7849>
         ("<FilesContext.Provider value={{ addAlert, cwdInfo }} />", None, None),
+        // Issue: <https://github.com/oxc-project/oxc/issues/11644>
+        (
+            r#"<label>
+                <span>name</span>
+                <input
+                    defaultValue={
+                    actionState.payload?.get("name")?.toString() ?? "Pool party"
+                    }
+                    name="name"
+                    placeholder="name"
+                    type="text"
+                />
+               </label>"#,
+            None,
+            None,
+        ),
     ];
 
     let fail = vec![
