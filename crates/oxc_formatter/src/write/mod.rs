@@ -20,7 +20,7 @@ pub use binary_like_expression::{BinaryLikeExpression, BinaryLikeOperator, shoul
 use call_arguments::{FormatAllArgsBrokenOut, FormatCallArgument, is_function_composition_args};
 use cow_utils::CowUtils;
 
-use oxc_allocator::{Address, Box, Vec};
+use oxc_allocator::{Address, Box, FromIn, StringBuilder, Vec};
 use oxc_ast::{AstKind, ast::*};
 use oxc_span::{GetSpan, SPAN};
 use oxc_syntax::identifier::{ZWNBSP, is_identifier_name, is_line_terminator};
@@ -129,25 +129,25 @@ impl<'a> FormatWrite<'a> for AstNode<'a, Directive<'a>> {
 
 impl<'a> FormatWrite<'a> for AstNode<'a, IdentifierName<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        write!(f, dynamic_text(self.name().as_ref(), self.span().start))
+        write!(f, dynamic_text(self.name().as_str()))
     }
 }
 
 impl<'a> FormatWrite<'a> for AstNode<'a, IdentifierReference<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        write!(f, dynamic_text(self.name().as_ref(), self.span().start))
+        write!(f, dynamic_text(self.name().as_str()))
     }
 }
 
 impl<'a> FormatWrite<'a> for AstNode<'a, BindingIdentifier<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        write!(f, dynamic_text(self.name().as_ref(), self.span().start))
+        write!(f, dynamic_text(self.name().as_str()))
     }
 }
 
 impl<'a> FormatWrite<'a> for AstNode<'a, LabelIdentifier<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        write!(f, dynamic_text(self.name().as_ref(), self.span().start))
+        write!(f, dynamic_text(self.name().as_str()))
     }
 }
 
@@ -282,7 +282,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TaggedTemplateExpression<'a>> {
 
 impl<'a> FormatWrite<'a> for AstNode<'a, TemplateElement<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        write!(f, dynamic_text(self.value().raw.as_str(), self.span().start))
+        write!(f, dynamic_text(self.value().raw.as_str()))
     }
 }
 
@@ -577,7 +577,7 @@ impl<'a> Format<'a> for AstNode<'a, Vec<'a, Statement<'a>>> {
 
 impl<'a> FormatWrite<'a> for AstNode<'a, Hashbang<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        write!(f, ["#!", dynamic_text(self.value().as_str(), self.span().start)])?;
+        write!(f, ["#!", dynamic_text(self.value().as_str())])?;
         let count = f.source_text()[self.span().end as usize..]
             .chars()
             .take_while(|&c| is_line_terminator(c))
@@ -1294,7 +1294,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, PropertyDefinition<'a>> {
 
 impl<'a> FormatWrite<'a> for AstNode<'a, PrivateIdentifier<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        write!(f, ["#", dynamic_text(self.name().as_str(), self.span().start)])
+        write!(f, ["#", dynamic_text(self.name().as_str())])
     }
 }
 
@@ -1518,7 +1518,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, ImportAttribute<'a>> {
             if f.options().quote_properties == QuoteProperties::AsNeeded
                 && is_identifier_name(s.value().as_str())
             {
-                dynamic_text(s.value().as_str(), s.span().start).fmt(f)?;
+                dynamic_text(s.value().as_str()).fmt(f)?;
             } else {
                 s.fmt(f)?;
             }
@@ -1673,7 +1673,12 @@ impl<'a> FormatWrite<'a> for AstNode<'a, StringLiteral<'a>> {
 
 impl<'a> FormatWrite<'a> for AstNode<'a, BigIntLiteral<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        write!(f, dynamic_text(&self.raw().unwrap().cow_to_ascii_lowercase(), self.span().start))
+        write!(
+            f,
+            dynamic_text(
+                f.context().allocator().alloc_str(&self.raw().unwrap().cow_to_ascii_lowercase())
+            )
+        )
     }
 }
 
@@ -1685,8 +1690,8 @@ impl<'a> FormatWrite<'a> for AstNode<'a, RegExpLiteral<'a>> {
         let mut flags = flags.chars().collect::<std::vec::Vec<_>>();
         flags.sort_unstable();
         let flags = flags.iter().collect::<String>();
-        let s = format!("{pattern}/{flags}");
-        write!(f, dynamic_text(&s, self.span().start))
+        let s = StringBuilder::from_strs_array_in([pattern, "/", &flags], f.context().allocator());
+        write!(f, dynamic_text(s.into_str(),))
     }
 }
 
@@ -1794,7 +1799,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, JSXSpreadAttribute<'a>> {
 
 impl<'a> FormatWrite<'a> for AstNode<'a, JSXIdentifier<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        write!(f, dynamic_text(self.name().as_str(), self.span().start))
+        write!(f, dynamic_text(self.name().as_str()))
     }
 }
 
@@ -1807,7 +1812,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, JSXSpreadChild<'a>> {
 
 impl<'a> FormatWrite<'a> for AstNode<'a, JSXText<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        write!(f, dynamic_text(self.value().as_str(), self.span().start))
+        write!(f, dynamic_text(self.value().as_str()))
     }
 }
 
@@ -2392,7 +2397,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TSConstructSignatureDeclaration<'a>> {
 
 impl<'a> FormatWrite<'a> for AstNode<'a, TSIndexSignatureName<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        write!(f, [dynamic_text(self.name().as_str(), self.span().start), self.type_annotation()])
+        write!(f, [dynamic_text(self.name().as_str()), self.type_annotation()])
     }
 }
 
@@ -2641,11 +2646,11 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TSTemplateLiteralType<'a>> {
         write!(f, "`")?;
         let mut quasis = self.quasis().iter();
         let quasi = quasis.next().unwrap();
-        write!(f, dynamic_text(quasi.value().raw.as_str(), quasi.span().start));
+        write!(f, dynamic_text(quasi.value().raw.as_str()));
 
         for (index, (quasi, types)) in quasis.zip(self.types().iter()).enumerate() {
             write!(f, ["${", types, "}"])?;
-            write!(f, dynamic_text(quasi.value().raw.as_str(), quasi.span().start));
+            write!(f, dynamic_text(quasi.value().raw.as_str()));
         }
         write!(f, "`")
     }

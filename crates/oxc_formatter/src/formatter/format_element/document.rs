@@ -10,11 +10,11 @@ use super::{
 
 /// A formatted document.
 #[derive(Debug, Clone, Eq, PartialEq, Default)]
-pub struct Document {
-    elements: Vec<FormatElement>,
+pub struct Document<'a> {
+    elements: Vec<FormatElement<'a>>,
 }
 
-impl Document {
+impl Document<'_> {
     /// Sets [`expand`](tag::Group::expand) to [`GroupMode::Propagated`] if the group contains any of:
     /// * a group with [`expand`](tag::Group::expand) set to [GroupMode::Propagated] or [GroupMode::Expand].
     /// * a non-soft [line break](FormatElement::Line) with mode [LineMode::Hard], [LineMode::Empty], or [LineMode::Literal].
@@ -38,9 +38,9 @@ impl Document {
         }
 
         fn propagate_expands<'a>(
-            elements: &'a [FormatElement],
+            elements: &'a [FormatElement<'a>],
             enclosing: &mut Vec<Enclosing<'a>>,
-            checked_interned: &mut FxHashMap<&'a Interned, bool>,
+            checked_interned: &mut FxHashMap<&'a Interned<'a>, bool>,
         ) -> bool {
             let mut expands = false;
             for element in elements {
@@ -108,8 +108,8 @@ impl Document {
                         // propagate their expansion.
                         false
                     }
-                    FormatElement::StaticText { text } => text.contains('\n'),
-                    FormatElement::DynamicText { text, .. } => text.contains('\n'),
+                    FormatElement::StaticText { text }
+                    | FormatElement::DynamicText { text, .. } => text.contains('\n'),
                     FormatElement::LocatedTokenText { slice, .. } => slice.contains('\n'),
                     FormatElement::ExpandParent
                     | FormatElement::Line(LineMode::Hard | LineMode::Empty) => true,
@@ -131,21 +131,21 @@ impl Document {
     }
 }
 
-impl From<Vec<FormatElement>> for Document {
-    fn from(elements: Vec<FormatElement>) -> Self {
+impl<'a> From<Vec<FormatElement<'a>>> for Document<'a> {
+    fn from(elements: Vec<FormatElement<'a>>) -> Self {
         Self { elements }
     }
 }
 
-impl Deref for Document {
-    type Target = [FormatElement];
+impl<'a> Deref for Document<'a> {
+    type Target = [FormatElement<'a>];
 
     fn deref(&self) -> &Self::Target {
         self.elements.as_slice()
     }
 }
 
-impl std::fmt::Display for Document {
+impl std::fmt::Display for Document<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         todo!()
         // let formatted = format!(IrFormatContext::default(), [self.elements.as_slice()])
@@ -572,7 +572,7 @@ impl std::fmt::Display for Document {
 // }
 // }
 
-impl FormatElements for [FormatElement] {
+impl FormatElements for [FormatElement<'_>] {
     fn will_break(&self) -> bool {
         use Tag::{EndLineSuffix, StartLineSuffix};
         let mut ignore_depth = 0usize;

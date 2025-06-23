@@ -16,7 +16,7 @@ use super::{
 ///
 /// Use the helper functions like [crate::builders::space], [crate::builders::soft_line_break] etc. defined in this file to create elements.
 #[derive(Clone, Eq, PartialEq)]
-pub enum FormatElement {
+pub enum FormatElement<'a> {
     /// A space token, see [crate::builders::space] for documentation.
     Space,
     HardSpace,
@@ -32,13 +32,9 @@ pub enum FormatElement {
     },
 
     /// Token constructed from the input source as a dynamic
-    /// string with its start position in the input document.
+    /// string.
     DynamicText {
-        /// There's no need for the text to be mutable, using `Box<str>` safes 8 bytes over `String`.
-        // TODO: Do not allocate.
-        text: Box<str>,
-        /// The start position of the dynamic token in the unformatted source code
-        source_position: TextSize,
+        text: &'a str,
     },
 
     /// A token for a text that is taken as is from the source code (input text and formatted representation are identical).
@@ -56,17 +52,17 @@ pub enum FormatElement {
 
     /// An interned format element. Useful when the same content must be emitted multiple times to avoid
     /// deep cloning the IR when using the `best_fitting!` macro or `if_group_fits_on_line` and `if_group_breaks`.
-    Interned(Interned),
+    Interned(Interned<'a>),
 
     /// A list of different variants representing the same content. The printer picks the best fitting content.
     /// Line breaks inside of a best fitting don't propagate to parent groups.
-    BestFitting(BestFittingElement),
+    BestFitting(BestFittingElement<'a>),
 
     /// A [Tag] that marks the start/end of some content to which some special formatting is applied.
     Tag(Tag),
 }
 
-impl std::fmt::Debug for FormatElement {
+impl std::fmt::Debug for FormatElement<'_> {
     fn fmt(&self, fmt: &mut std::fmt::Formatter) -> std::fmt::Result {
         match self {
             FormatElement::Space | FormatElement::HardSpace => fmt.write_str("Space"),
@@ -128,23 +124,23 @@ impl PrintMode {
 }
 
 #[derive(Clone)]
-pub struct Interned(Rc<[FormatElement]>);
+pub struct Interned<'a>(Rc<[FormatElement<'a>]>);
 
-impl Interned {
-    pub(super) fn new(content: Vec<FormatElement>) -> Self {
+impl<'a> Interned<'a> {
+    pub(super) fn new(content: Vec<FormatElement<'a>>) -> Self {
         Self(content.into())
     }
 }
 
-impl PartialEq for Interned {
-    fn eq(&self, other: &Interned) -> bool {
+impl PartialEq for Interned<'_> {
+    fn eq(&self, other: &Interned<'_>) -> bool {
         Rc::ptr_eq(&self.0, &other.0)
     }
 }
 
-impl Eq for Interned {}
+impl Eq for Interned<'_> {}
 
-impl Hash for Interned {
+impl Hash for Interned<'_> {
     fn hash<H>(&self, hasher: &mut H)
     where
         H: Hasher,
@@ -153,14 +149,14 @@ impl Hash for Interned {
     }
 }
 
-impl std::fmt::Debug for Interned {
+impl std::fmt::Debug for Interned<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         self.0.fmt(f)
     }
 }
 
-impl Deref for Interned {
-    type Target = [FormatElement];
+impl<'a> Deref for Interned<'a> {
+    type Target = [FormatElement<'a>];
 
     fn deref(&self) -> &Self::Target {
         &self.0
@@ -199,7 +195,7 @@ pub fn normalize_newlines<const N: usize>(text: &str, terminators: [char; N]) ->
     }
 }
 
-impl FormatElement {
+impl FormatElement<'_> {
     /// Returns `true` if self is a [FormatElement::Tag]
     pub const fn is_tag(&self) -> bool {
         matches!(self, FormatElement::Tag(_))
@@ -239,14 +235,15 @@ impl FormatElement {
     }
 }
 
-impl FormatElements for FormatElement {
+impl FormatElements for FormatElement<'_> {
     fn will_break(&self) -> bool {
         match self {
             FormatElement::ExpandParent => true,
             FormatElement::Tag(Tag::StartGroup(group)) => !group.mode().is_flat(),
             FormatElement::Line(line_mode) => matches!(line_mode, LineMode::Hard | LineMode::Empty),
-            FormatElement::StaticText { text } => text.contains('\n'),
-            FormatElement::DynamicText { text, .. } => text.contains('\n'),
+            FormatElement::StaticText { text } | FormatElement::DynamicText { text } => {
+                text.contains('\n')
+            }
             FormatElement::LocatedTokenText { slice, .. } => slice.contains('\n'),
             FormatElement::Interned(interned) => interned.will_break(),
             // Traverse into the most flat version because the content is guaranteed to expand when even
@@ -288,14 +285,14 @@ impl FormatElements for FormatElement {
 ///
 /// Best fitting is defined as the variant that takes the most horizontal space but fits on the line.
 #[derive(Clone, Eq, PartialEq)]
-pub struct BestFittingElement {
+pub struct BestFittingElement<'a> {
     /// The different variants for this element.
     /// The first element is the one that takes up the most space horizontally (the most flat),
     /// The last element takes up the least space horizontally (but most horizontal space).
-    variants: Box<[Box<[FormatElement]>]>,
+    variants: Box<[Box<[FormatElement<'a>]>]>,
 }
 
-impl BestFittingElement {
+impl<'a> BestFittingElement<'a> {
     /// Creates a new best fitting IR with the given variants. The method itself isn't unsafe
     /// but it is to discourage people from using it because the printer will panic if
     /// the slice doesn't contain at least the least and most expanded variants.
@@ -305,7 +302,7 @@ impl BestFittingElement {
     /// ## Safety
     /// The slice must contain at least two variants.
     #[doc(hidden)]
-    pub unsafe fn from_vec_unchecked(variants: Vec<Box<[FormatElement]>>) -> Self {
+    pub unsafe fn from_vec_unchecked(variants: Vec<Box<[FormatElement<'a>]>>) -> Self {
         debug_assert!(
             variants.len() >= 2,
             "Requires at least the least expanded and most expanded variants"
@@ -315,25 +312,25 @@ impl BestFittingElement {
     }
 
     /// Returns the most expanded variant
-    pub fn most_expanded(&self) -> &[FormatElement] {
+    pub fn most_expanded(&self) -> &[FormatElement<'a>] {
         self.variants.last().expect(
             "Most contain at least two elements, as guaranteed by the best fitting builder.",
         )
     }
 
-    pub fn variants(&self) -> &[Box<[FormatElement]>] {
+    pub fn variants(&self) -> &[Box<[FormatElement<'a>]>] {
         &self.variants
     }
 
     /// Returns the least expanded variant
-    pub fn most_flat(&self) -> &[FormatElement] {
+    pub fn most_flat(&self) -> &[FormatElement<'a>] {
         self.variants.first().expect(
             "Most contain at least two elements, as guaranteed by the best fitting builder.",
         )
     }
 }
 
-impl std::fmt::Debug for BestFittingElement {
+impl std::fmt::Debug for BestFittingElement<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.debug_list().entries(&*self.variants).finish()
     }

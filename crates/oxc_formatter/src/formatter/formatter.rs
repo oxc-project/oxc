@@ -231,7 +231,10 @@ impl<'buf, 'ast> Formatter<'buf, 'ast> {
     }
 
     /// Formats `content` into an interned element without writing it to the formatter's buffer.
-    pub fn intern(&mut self, content: &dyn Format<'ast>) -> FormatResult<Option<FormatElement>> {
+    pub fn intern(
+        &mut self,
+        content: &dyn Format<'ast>,
+    ) -> FormatResult<Option<FormatElement<'ast>>> {
         let mut buffer = VecBuffer::new(self.state_mut());
         crate::write!(&mut buffer, [content])?;
         let elements = buffer.into_vec();
@@ -239,7 +242,10 @@ impl<'buf, 'ast> Formatter<'buf, 'ast> {
         Ok(self.intern_vec(elements))
     }
 
-    pub fn intern_vec(&mut self, mut elements: Vec<FormatElement>) -> Option<FormatElement> {
+    pub fn intern_vec(
+        &mut self,
+        mut elements: Vec<FormatElement<'ast>>,
+    ) -> Option<FormatElement<'ast>> {
         match elements.len() {
             0 => None,
             // Doesn't get cheaper than calling clone, use the element directly
@@ -267,11 +273,11 @@ impl Formatter<'_, '_> {
 
 impl<'ast> Buffer<'ast> for Formatter<'_, 'ast> {
     #[inline(always)]
-    fn write_element(&mut self, element: FormatElement) -> FormatResult<()> {
+    fn write_element(&mut self, element: FormatElement<'ast>) -> FormatResult<()> {
         self.buffer.write_element(element)
     }
 
-    fn elements(&self) -> &[FormatElement] {
+    fn elements(&self) -> &[FormatElement<'ast>] {
         self.buffer.elements()
     }
 

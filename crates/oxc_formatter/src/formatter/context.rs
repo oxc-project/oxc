@@ -22,7 +22,7 @@ pub struct FormatContext<'ast> {
 
     comments: Comments<'ast>,
 
-    cached_function_body: Option<(Span, FormatElement)>,
+    cached_function_body: Option<(Span, FormatElement<'ast>)>,
 
     allocator: &'ast Allocator,
 }
@@ -82,7 +82,7 @@ impl<'ast> FormatContext<'ast> {
     pub(crate) fn get_cached_function_body(
         &self,
         body: &AstNode<'ast, FunctionBody<'ast>>,
-    ) -> Option<FormatElement> {
+    ) -> Option<FormatElement<'ast>> {
         self.cached_function_body.as_ref().and_then(|(expected_body_span, formatted)| {
             if *expected_body_span == body.span() { Some(formatted.clone()) } else { None }
         })
@@ -94,7 +94,7 @@ impl<'ast> FormatContext<'ast> {
     pub(crate) fn set_cached_function_body(
         &mut self,
         body: &AstNode<'ast, FunctionBody<'ast>>,
-        formatted: FormatElement,
+        formatted: FormatElement<'ast>,
     ) {
         self.cached_function_body = Some((body.span(), formatted));
     }

@@ -695,7 +695,7 @@ impl<'a> Format<'a> for Comment {
 
             // `is_alignable_comment` only returns `true` for multiline comments
             let first_line = lines.next().unwrap();
-            write!(f, [dynamic_text(first_line.trim_end(), source_offset)])?;
+            write!(f, [dynamic_text(first_line.trim_end())])?;
 
             source_offset += first_line.len() as u32;
 
@@ -704,17 +704,14 @@ impl<'a> Format<'a> for Comment {
                 f,
                 [&format_once(|f| {
                     for line in lines {
-                        write!(
-                            f,
-                            [hard_line_break(), " ", dynamic_text(line.trim(), source_offset)]
-                        )?;
+                        write!(f, [hard_line_break(), " ", dynamic_text(line.trim())])?;
                         source_offset += line.len() as u32;
                     }
                     Ok(())
                 })]
             )
         } else {
-            write!(f, [dynamic_text(source_text, self.span.start)])
+            write!(f, [dynamic_text(source_text)])
         }
     }
 }
