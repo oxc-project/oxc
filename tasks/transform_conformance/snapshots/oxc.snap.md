@@ -1,6 +1,6 @@
 commit: 1d4546bc
 
-Passed: 154/258
+Passed: 155/259
 
 # All Passed:
 * babel-plugin-transform-class-static-block
@@ -467,7 +467,7 @@ after transform: [ReferenceId(0), ReferenceId(1), ReferenceId(4), ReferenceId(9)
 rebuilt        : [ReferenceId(5)]
 
 
-# babel-plugin-transform-react-jsx (42/45)
+# babel-plugin-transform-react-jsx (43/46)
 * refresh/does-not-transform-it-because-it-is-not-used-in-the-AST/input.jsx
 x Output mismatch
 
