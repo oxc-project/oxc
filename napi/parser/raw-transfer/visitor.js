@@ -47,7 +47,7 @@ class Visitor {
   }
 }
 
-module.exports = { Visitor, getVisitorsArr };
+module.exports = { Visitor, createVisitorsArr, getVisitorsArr };
 
 /**
  * Create array of visitors, keyed by node type ID.

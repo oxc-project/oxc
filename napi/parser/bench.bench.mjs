@@ -11,7 +11,7 @@ const require = createRequire(import.meta.filename);
 const deserializeJS = require('./generated/deserialize/js.js');
 const deserializeTS = require('./generated/deserialize/ts.js');
 const { isJsAst, prepareRaw, returnBufferToCache } = require('./raw-transfer/common.js');
-const { getVisitorsArr } = require('./raw-transfer/visitor.js');
+const { createVisitorsArr, getVisitorsArr } = require('./raw-transfer/visitor.js');
 const { TOKEN } = require('./raw-transfer/lazy-common.js');
 const walkProgram = require('./generated/deserialize/lazy-visit.js');
 
@@ -197,3 +197,25 @@ for (const { filename, code } of fixtures) {
     });
   });
 }
+
+benchRaw('parser_napi_create_lazy_visit(debugger)', () => {
+  createVisitorsArr({
+    DebuggerStatement(debuggerStmt) {
+      debuggerCount++;
+    },
+  });
+});
+
+benchRaw('parser_napi_create_lazy_visit(ident)', () => {
+  createVisitorsArr({
+    BindingIdentifier(ident) {
+      identCount++;
+    },
+    IdentifierReference(ident) {
+      identCount++;
+    },
+    IdentifierName(ident) {
+      identCount++;
+    },
+  });
+});
