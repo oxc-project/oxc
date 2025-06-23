@@ -121,5 +121,4 @@ impl Case for TypeScriptCase {
 // TODO: Filter out more not-supported error codes here
 static NOT_SUPPORTED_ERROR_CODES: phf::Set<&'static str> = phf::phf_set![
     "2315", // Type 'U' is not generic.
-    "2339", // Property 'protectedMethod' does not exist on type 'never'.
 ];
