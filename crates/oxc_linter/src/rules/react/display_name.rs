@@ -144,33 +144,33 @@ impl Rule for DisplayName {
 
                     if !has_display_name {
                         class_names_initialized_with_no_display_name_property.push(class.span);
-                    } else {
-                        class_names_with_display_names_modified.push(class.span);
+                        // } else {
+                        //     class_names_with_display_names_modified.push(class.span);
                     }
 
-                    // for element in &class.body.body {
-                    //     println!("element: {element:?}");
+                    for element in &class.body.body {
+                        //     println!("element: {element:?}");
 
-                    //     match element {
-                    //         ClassElement::PropertyDefinition(prop_def) => {
-                    //             println!("prop_def: {prop_def:?}");
-                    //             if prop_def.key.static_name()
-                    //                 == Some(std::borrow::Cow::Borrowed("displayName"))
-                    //             {
-                    //                 class_names_with_display_names_modified.push(prop_def.span);
-                    //             }
-                    //         }
-                    //         ClassElement::MethodDefinition(method_def) => {
-                    //             println!("method_def: {method_def:?}");
-                    //             if method_def.key.static_name()
-                    //                 == Some(std::borrow::Cow::Borrowed("displayName"))
-                    //             {
-                    //                 class_names_with_display_names_modified.push(method_def.span);
-                    //             }
-                    //         }
-                    //         _ => {}
-                    //     }
-                    // }
+                        match element {
+                            ClassElement::PropertyDefinition(prop_def) => {
+                                println!("prop_def: {prop_def:?}");
+                                if prop_def.key.static_name()
+                                    == Some(std::borrow::Cow::Borrowed("displayName"))
+                                {
+                                    class_names_with_display_names_modified.push(class.span);
+                                }
+                            }
+                            ClassElement::MethodDefinition(method_def) => {
+                                println!("method_def: {method_def:?}");
+                                if method_def.key.static_name()
+                                    == Some(std::borrow::Cow::Borrowed("displayName"))
+                                {
+                                    class_names_with_display_names_modified.push(class.span);
+                                }
+                            }
+                            _ => {}
+                        }
+                    }
 
                     if let Some(id) = &class.id {
                         class_ids.push((id.name.to_string(), class.span));
@@ -223,19 +223,46 @@ impl Rule for DisplayName {
                             }
 
                             if &id.property.name == "displayName" {
-                                class_names_with_display_names_modified.push(id.span);
+                                class_names_with_display_names_modified.push(expr_stmt.span);
+                            }
+                        }
+
+                        if let AssignmentTarget::AssignmentTargetIdentifier(identifier) =
+                            &assign.left
+                        {
+                            println!("identifier: {identifier:?}");
+                            println!("class_ids: {class_ids:?}");
+                            println!("ignore_transpiler_name: {ignore_transpiler_name}");
+
+                            if !ignore_transpiler_name
+                                && class_ids
+                                    .iter()
+                                    .any(|(name, _)| name == &identifier.name.to_string())
+                            {
+                                class_names_with_display_names_modified.push(expr_stmt.span);
+                            }
+                        }
+
+                        if let Expression::CallExpression(call) = &assign.right {
+                            if let Some(name) = call.callee_name() {
+                                if (name == "createClass" || name == "createReactClass")
+                                    && !ignore_transpiler_name
+                                {
+                                    class_names_with_display_names_modified.push(expr_stmt.span);
+                                }
                             }
                         }
                     }
                 }
                 AstKind::Function(func_decl) => {
-                    // println!("func_decl: {func_decl:?}");
+                    println!("func_decl: {func_decl:?}");
 
-                    if let Some(id) = &func_decl.id {
+                    if let Some(_id) = &func_decl.id {
                         if !ignore_transpiler_name {
-                            class_names_with_display_names_modified.push(id.span);
+                            class_names_with_display_names_modified.push(func_decl.span);
                         } else {
-                            class_names_initialized_with_no_display_name_property.push(id.span);
+                            class_names_initialized_with_no_display_name_property
+                                .push(func_decl.span);
                         }
                     } else {
                         class_names_initialized_with_no_display_name_property.push(func_decl.span);
@@ -411,14 +438,25 @@ fn process_variable_declaration_node(
                         });
 
                         if contains_display_name || !ignore_transpiler_name {
-                            class_names_with_display_names_modified.push(init.span());
+                            class_names_with_display_names_modified.push(decl.span());
                         } else {
-                            class_names_initialized_with_no_display_name_property.push(init.span());
+                            class_names_initialized_with_no_display_name_property.push(decl.span());
                         }
                     }
                 } else if ignore_transpiler_name {
-                    class_names_initialized_with_no_display_name_property.push(init.span());
+                    class_names_initialized_with_no_display_name_property.push(decl.span());
                 }
+            }
+
+            if let Expression::FunctionExpression(func_expr) = init {
+                println!("func_expr: {func_expr:?}");
+                // if let Some(id) = &func_expr.id {
+                if !ignore_transpiler_name {
+                    class_names_with_display_names_modified.push(decl.span);
+                    // } else {
+                    //     class_names_initialized_with_no_display_name_property.push(id.span);
+                }
+                // }
             }
         }
     }
@@ -450,7 +488,7 @@ fn is_span_equal_or_inside_other_span(span: &Span, other_span: &Span) -> bool {
     let are_spans_equal = span.start == other_span.start && span.end == other_span.end;
 
     let is_modified_span_inside_original_class_span =
-        span.start > other_span.start && span.end < other_span.end;
+        span.start >= other_span.start && span.end <= other_span.end;
 
     are_spans_equal || is_modified_span_inside_original_class_span
 }
