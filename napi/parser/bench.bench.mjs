@@ -1,11 +1,16 @@
-import { writeFile } from 'fs/promises';
-import { join as pathJoin } from 'path';
+import { writeFile } from 'node:fs/promises';
+import { createRequire } from 'node:module';
+import { join as pathJoin } from 'node:path';
 import { bench, describe } from 'vitest';
 import bindings from './bindings.js';
-import deserializeJS from './generated/deserialize/js.js';
-import deserializeTS from './generated/deserialize/ts.js';
 import { experimentalGetLazyVisitor, parseAsync, parseSync } from './index.js';
-import { isJsAst, prepareRaw, returnBufferToCache } from './raw-transfer/common.js';
+
+// Use `require` not `import` to load these internal modules, to avoid evaluating the modules
+// twice as ESM and CJS
+const require = createRequire(import.meta.filename);
+const deserializeJS = require('./generated/deserialize/js.js');
+const deserializeTS = require('./generated/deserialize/ts.js');
+const { isJsAst, prepareRaw, returnBufferToCache } = require('./raw-transfer/common.js');
 
 // Same fixtures as used in Rust parser benchmarks
 let fixtureUrls = [
