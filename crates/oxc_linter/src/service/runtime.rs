@@ -4,7 +4,6 @@ use std::{
     fs,
     mem::take,
     path::{Path, PathBuf},
-    rc::Rc,
     sync::{Arc, mpsc},
 };
 
@@ -520,7 +519,7 @@ impl<'l> Runtime<'l> {
                         let mut messages = match record_result {
                             Ok(module_record) => me.linter.run(
                                 path,
-                                Rc::new(section.semantic.unwrap()),
+                                section.semantic.unwrap(),
                                 Arc::clone(&module_record),
                             ),
                             Err(errors) => errors
@@ -630,7 +629,7 @@ impl<'l> Runtime<'l> {
                                 Ok(module_record) => {
                                     let section_message = me.linter.run(
                                         Path::new(&module.path),
-                                        Rc::new(section.semantic.unwrap()),
+                                        section.semantic.unwrap(),
                                         Arc::clone(&module_record),
                                     );
 
@@ -759,7 +758,7 @@ impl<'l> Runtime<'l> {
                                 match record_result {
                                     Ok(module_record) => me.linter.run(
                                         Path::new(&module.path),
-                                        Rc::new(section.semantic.unwrap()),
+                                        section.semantic.unwrap(),
                                         Arc::clone(&module_record),
                                     ),
                                     Err(errors) => errors

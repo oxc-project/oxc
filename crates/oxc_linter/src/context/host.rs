@@ -40,7 +40,7 @@ use super::{LintContext, plugin_name_to_prefix};
 pub struct ContextHost<'a> {
     /// Shared semantic information about the file being linted, which includes scopes, symbols
     /// and AST nodes. See [`Semantic`].
-    pub(super) semantic: Rc<Semantic<'a>>,
+    pub(super) semantic: Semantic<'a>,
     /// Cross module information.
     pub(super) module_record: Arc<ModuleRecord>,
     /// Information about specific rules that should be disabled or enabled, via comment directives like
@@ -72,7 +72,7 @@ impl<'a> ContextHost<'a> {
     /// If `semantic.cfg()` is `None`.
     pub fn new<P: AsRef<Path>>(
         file_path: P,
-        semantic: Rc<Semantic<'a>>,
+        semantic: Semantic<'a>,
         module_record: Arc<ModuleRecord>,
         options: LintOptions,
         config: Arc<LintConfig>,

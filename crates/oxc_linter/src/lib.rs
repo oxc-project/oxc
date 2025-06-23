@@ -102,7 +102,7 @@ impl Linter {
     pub fn run<'a>(
         &self,
         path: &Path,
-        semantic: Rc<Semantic<'a>>,
+        semantic: Semantic<'a>,
         module_record: Arc<ModuleRecord>,
     ) -> Vec<Message<'a>> {
         let ResolvedLinterState { rules, config } = self.config.resolve(path);
