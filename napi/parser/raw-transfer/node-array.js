@@ -12,8 +12,8 @@ const { TOKEN, constructorError } = require('./lazy-common.js');
 // via `Object.getOwnPropertySymbols` or `Reflect.ownKeys`. Therefore user code cannot unwrap the proxy.
 const ARRAY = Symbol();
 
-// Functions to get length of and get element from an array. Initialized in class static block below.
-let getLength, getElement;
+// Functions to get internal properties of a `NodeArray`. Initialized in class static block below.
+let getInternalFromProxy, getLength, getElement;
 
 /**
  * An array of AST nodes where elements are deserialized lazily upon access.
@@ -55,19 +55,19 @@ class NodeArray extends Array {
   // Override `values` method with a more efficient one that avoids going via proxy for every iteration.
   // TODO: Benchmark to check that this is actually faster.
   values() {
-    return new NodeArrayValuesIterator(this[ARRAY].#internal);
+    return new NodeArrayValuesIterator(this);
   }
 
   // Override `keys` method with a more efficient one that avoids going via proxy for every iteration.
   // TODO: Benchmark to check that this is actually faster.
   keys() {
-    return new NodeArrayKeysIterator(this[ARRAY].#internal.length);
+    return new NodeArrayKeysIterator(this);
   }
 
   // Override `entries` method with a more efficient one that avoids going via proxy for every iteration.
   // TODO: Benchmark to check that this is actually faster.
   entries() {
-    return new NodeArrayEntriesIterator(this[ARRAY].#internal);
+    return new NodeArrayEntriesIterator(this);
   }
 
   // This method is overwritten with reference to `values` method below.
@@ -123,6 +123,13 @@ class NodeArray extends Array {
 
   static {
     /**
+     * Get internal properties of `NodeArray`, given a proxy wrapping a `NodeArray`.
+     * @param {Proxy} proxy - Proxy wrapping `NodeArray` object
+     * @returns {Object} - Internal properties object
+     */
+    getInternalFromProxy = proxy => proxy[ARRAY].#internal;
+
+    /**
      * Get length of `NodeArray`.
      * @param {NodeArray} arr - `NodeArray` object
      * @returns {number} - Array length
@@ -155,15 +162,15 @@ module.exports = NodeArray;
 class NodeArrayValuesIterator {
   #internal;
 
-  constructor(arrInternal) {
-    const { ast, pos, stride } = arrInternal || {};
-    if (ast?.token !== TOKEN) constructorError();
+  constructor(proxy) {
+    const internal = getInternalFromProxy(proxy),
+      { pos, stride } = internal;
 
     this.#internal = {
       pos,
-      endPos: pos + arrInternal.length * stride,
-      ast,
-      construct: arrInternal.construct,
+      endPos: pos + internal.length * stride,
+      ast: internal.ast,
+      construct: internal.construct,
       stride,
     };
   }
@@ -187,10 +194,9 @@ class NodeArrayValuesIterator {
 class NodeArrayKeysIterator {
   #internal;
 
-  constructor(length) {
-    // Don't bother gating constructor with `TOKEN` check.
-    // This iterator doesn't access the buffer, so is harmless.
-    this.#internal = { index: 0, length };
+  constructor(proxy) {
+    const internal = getInternalFromProxy(proxy);
+    this.#internal = { index: 0, length: internal.length };
   }
 
   next() {
@@ -212,17 +218,16 @@ class NodeArrayKeysIterator {
 class NodeArrayEntriesIterator {
   #internal;
 
-  constructor(arrInternal) {
-    const { ast } = arrInternal || {};
-    if (ast?.token !== TOKEN) constructorError();
+  constructor(proxy) {
+    const internal = getInternalFromProxy(proxy);
 
     this.#internal = {
       index: 0,
-      length: arrInternal.length,
-      pos: arrInternal.pos,
-      ast,
-      construct: arrInternal.construct,
-      stride: arrInternal.stride,
+      length: internal.length,
+      pos: internal.pos,
+      ast: internal.ast,
+      construct: internal.construct,
+      stride: internal.stride,
     };
   }
 
