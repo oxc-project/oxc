@@ -4,6 +4,14 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.74.0] - 2025-06-23
+
+### 🐛 Bug Fixes
+
+- 957a3d5 isolated-declarations: Missing parameter properties of `constructor` overload (#11852) (Dunqing)
+- b8b3530 isolated-declarations: Don't transform constructor params if they don’t have accessbility (#11842) (Dunqing)
+
+
 
 ## [0.73.1] - 2025-06-17
 

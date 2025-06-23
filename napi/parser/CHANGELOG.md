@@ -4,6 +4,56 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.74.0] - 2025-06-23
+
+### 🚀 Features
+
+- 93069a5 napi/parser: Add experimental lazy visitor (#11837) (overlookmotel)
+
+### 🚜 Refactor
+
+- 0260308 ast_tools: Prepare lazy deserializer codegen for visitor (#11836) (overlookmotel)
+- b544be8 napi/parser: Remove options amendment from `prepareRaw` (#11828) (overlookmotel)
+- 9c960cd napi/parser: Re-order code (#11813) (overlookmotel)
+- bfed7f2 napi/parser: Rename file (#11808) (overlookmotel)
+- 08e666f ast/estree: Add `#[estree]` attrs to `RegExpFlagsAlias` (#11794) (overlookmotel)
+
+### 📚 Documentation
+
+- 4dc8a4e napi/parser: Add JSDoc comments to all functions (#11814) (overlookmotel)
+
+### ⚡ Performance
+
+- 6bbe048 napi/parser: Do not lazily create `TextEncoder` (#11817) (overlookmotel)
+- aef1770 napi/parser: Destructure `bindings` on import (#11811) (overlookmotel)
+- 3a0a673 napi/parser: Lazy-load raw transfer and lazy deser code (#11807) (overlookmotel)
+
+
+## [0.74.0] - 2025-06-23
+
+### 🚀 Features
+
+- 93069a5 napi/parser: Add experimental lazy visitor (#11837) (overlookmotel)
+
+### 🚜 Refactor
+
+- 0260308 ast_tools: Prepare lazy deserializer codegen for visitor (#11836) (overlookmotel)
+- b544be8 napi/parser: Remove options amendment from `prepareRaw` (#11828) (overlookmotel)
+- 9c960cd napi/parser: Re-order code (#11813) (overlookmotel)
+- bfed7f2 napi/parser: Rename file (#11808) (overlookmotel)
+- 08e666f ast/estree: Add `#[estree]` attrs to `RegExpFlagsAlias` (#11794) (overlookmotel)
+
+### 📚 Documentation
+
+- 4dc8a4e napi/parser: Add JSDoc comments to all functions (#11814) (overlookmotel)
+
+### ⚡ Performance
+
+- 6bbe048 napi/parser: Do not lazily create `TextEncoder` (#11817) (overlookmotel)
+- aef1770 napi/parser: Destructure `bindings` on import (#11811) (overlookmotel)
+- 3a0a673 napi/parser: Lazy-load raw transfer and lazy deser code (#11807) (overlookmotel)
+
+
 ## [0.73.2] - 2025-06-18
 
 ### 🐛 Bug Fixes

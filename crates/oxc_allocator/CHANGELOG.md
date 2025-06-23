@@ -4,6 +4,14 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.74.0] - 2025-06-23
+
+### 🚀 Features
+
+- f2ce5ad allocator: Add `Allocator::alloc_slice_copy` method (#11822) (overlookmotel)
+- 4ba5258 allocator: Add `Allocator::alloc_layout` method (#11821) (overlookmotel)
+
+
 
 ## [0.73.1] - 2025-06-17
 

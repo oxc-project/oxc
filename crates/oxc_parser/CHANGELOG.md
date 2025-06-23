@@ -4,6 +4,18 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.74.0] - 2025-06-23
+
+### 🚜 Refactor
+
+- edb47e5 parser: Simplify `parse_import_or_export_specifier` (#11847) (Ulrich Stark)
+- 7d31600 parser: Avoid unnecessary referencing (#11846) (Ulrich Stark)
+
+### ⚡ Performance
+
+- a8e4f01 parser: Avoid redundant Kind checks when parsing for loops (#11799) (Ulrich Stark)
+
+
 ## [0.73.2] - 2025-06-18
 
 ### 🚀 Features

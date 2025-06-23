@@ -4,6 +4,17 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.74.0] - 2025-06-23
+
+### 🐛 Bug Fixes
+
+- 8627ced ast: `ComputedMemberExpression::static_property_name` use `cooked` for `TemplateElement`s (#11829) (overlookmotel)
+
+### 🚜 Refactor
+
+- 08e666f ast/estree: Add `#[estree]` attrs to `RegExpFlagsAlias` (#11794) (overlookmotel)
+
+
 
 ## [0.73.1] - 2025-06-17
 
