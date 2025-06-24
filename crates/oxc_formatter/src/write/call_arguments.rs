@@ -8,8 +8,9 @@ use crate::{
         BufferExtensions, Comments, FormatElement, FormatError, Formatter, VecBuffer,
         format_element,
         prelude::{
-            FormatElements, Tag, empty_line, expand_parent, format_once, format_with,
-            get_lines_before, group, soft_block_indent, soft_line_break_or_space, space,
+            FormatElements, MemoizeFormat, Tag, empty_line, expand_parent, format_once,
+            format_with, get_lines_before, group, soft_block_indent, soft_line_break_or_space,
+            space,
         },
         separated::FormatSeparatedIter,
         trivia::{DanglingIndentMode, format_dangling_comments},
@@ -664,9 +665,6 @@ fn write_grouped_arguments<'a, 'b>(
     group_layout: GroupedCallArgumentLayout,
     f: &mut Formatter<'_, 'a>,
 ) -> FormatResult<()> {
-    let l_paren_token = "(";
-    let r_paren_token = ")";
-
     let grouped_breaks = {
         let (grouped_arg, other_args) = match group_layout {
             GroupedCallArgumentLayout::GroupedFirstArgument => {
@@ -709,6 +707,11 @@ fn write_grouped_arguments<'a, 'b>(
         grouped_arg.will_break(f)
     };
 
+    // We now cache them the delimiters tokens. This is needed because `[crate::best_fitting]` will try to
+    // print each version first
+    let l_paren_token = "(".memoized();
+    let r_paren_token = ")".memoized();
+
     // First write the most expanded variant because it needs `arguments`.
     let most_expanded = {
         let mut buffer = VecBuffer::new(f.state_mut());
@@ -746,6 +749,7 @@ fn write_grouped_arguments<'a, 'b>(
             };
 
             FormatGroupedArgument { argument, single_argument_list: last_index == 0, layout }
+                .memoized()
         })
         .collect::<std::vec::Vec<_>>();
 
