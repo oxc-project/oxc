@@ -691,3 +691,23 @@ impl Display for Kind {
         self.to_str().fmt(f)
     }
 }
+
+#[derive(Clone, Copy)]
+pub struct KindAndLen(u16);
+
+impl KindAndLen {
+    #[inline]
+    pub const fn new(kind: Kind, len: u8) -> Self {
+        Self(kind as u16 + len as u16 * 256)
+    }
+
+    #[inline]
+    pub const fn unpack(self) -> (Kind, usize) {
+        let len = (self.0 / 256) as usize;
+        let kind_id = self.0 as u8;
+        // SAFETY: A `KindAndLen` can only be constructed from a valid `Kind`
+        // so guaranteed bottom 8 bits represent a valid `Kind`
+        let kind: Kind = unsafe { std::mem::transmute(kind_id) };
+        (kind, len)
+    }
+}
