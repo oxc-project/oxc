@@ -45,7 +45,7 @@ pub trait Serializer: SerializerPrivate {
     /// Type of sequence serializer this serializer uses.
     type SequenceSerializer: SequenceSerializer;
 
-    fn range(&self) -> bool;
+    fn ranges(&self) -> bool;
 
     /// Serialize struct.
     fn serialize_struct(self) -> Self::StructSerializer;
@@ -191,7 +191,7 @@ impl<'s, C: Config, F: Formatter> Serializer for &'s mut ESTreeSerializer<C, F> 
     type StructSerializer = ESTreeStructSerializer<'s, C, F>;
     type SequenceSerializer = ESTreeSequenceSerializer<'s, C, F>;
 
-    fn range(&self) -> bool {
+    fn ranges(&self) -> bool {
         self.config.ranges()
     }
 

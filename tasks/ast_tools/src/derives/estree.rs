@@ -379,9 +379,9 @@ fn generate_body_for_struct(struct_def: &StructDef, schema: &Schema) -> TokenStr
     let has_span_field = struct_def.fields.iter().any(|field| field.name() == "span");
     let (range_declaration, range_field) = if has_span_field {
         (
-            quote! { let range = serializer.range(); },
+            quote! { let ranges = serializer.ranges(); },
             quote! {
-                if range {
+                if ranges {
                     state.serialize_field("range", &[self.span.start, self.span.end]);
                 }
             },
