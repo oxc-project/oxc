@@ -1,10 +1,10 @@
 use oxc_ast::{
     AstKind,
-    ast::{CallExpression, ChainElement, Expression, MemberExpression},
+    ast::{CallExpression, Expression},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::{CompactStr, ContentEq, GetSpan};
+use oxc_span::{CompactStr, GetSpan};
 
 use crate::{AstNode, context::LintContext, rule::Rule};
 
@@ -180,24 +180,19 @@ fn get_property_assignment<'a>(
     ctx: &'a LintContext,
     node: &AstNode<'a>,
 ) -> Option<&'a AstNode<'a>> {
+    // Ignore computed member expressions like `obj[Object.prototype] = 0` (i.e., the
+    // given node is the `expression` of the computed member expression)
+    if let Some(AstKind::ComputedMemberExpression(parent_mem_expr)) =
+        ctx.nodes().parent_kind(node.id())
+    {
+        if parent_mem_expr.expression.span().contains_inclusive(node.span()) {
+            return None;
+        }
+    }
+
     for parent in ctx.nodes().ancestors(node.id()).skip(1) {
-        match parent.kind() {
-            AstKind::AssignmentExpression(_) => return Some(parent),
-            AstKind::MemberExpression(MemberExpression::ComputedMemberExpression(computed)) => {
-                if let AstKind::MemberExpression(node_expr) = node.kind() {
-                    // Ignore computed member expressions like `obj[Object.prototype] = 0` (i.e., the
-                    // given node is the `expression` of the computed member expression)
-                    if computed
-                        .expression
-                        .as_member_expression()
-                        .is_some_and(|expression| expression.content_eq(node_expr))
-                    {
-                        return None;
-                    }
-                    return None;
-                }
-            }
-            _ => {}
+        if let AstKind::AssignmentExpression(_) = parent.kind() {
+            return Some(parent);
         }
     }
     None
@@ -214,51 +209,42 @@ fn get_prototype_property_accessed<'a>(
     };
     let parent = ctx.nodes().parent_node(node.id())?;
     let mut prototype_node = Some(parent);
-    let AstKind::MemberExpression(prop_access_expr) = parent.kind() else {
-        return None;
-    };
-    let prop_name = prop_access_expr.static_property_name()?;
-    if prop_name != "prototype" {
-        return None;
-    }
-    let grandparent_node = ctx.nodes().parent_node(parent.id())?;
-
-    if let AstKind::ChainExpression(_) = grandparent_node.kind() {
-        prototype_node = Some(grandparent_node);
-        if let Some(grandparent_parent) = ctx.nodes().parent_node(grandparent_node.id()) {
-            prototype_node = Some(grandparent_parent);
-        }
-    }
-
-    if is_computed_member_expression_matching(grandparent_node, prop_access_expr) {
-        prototype_node = Some(grandparent_node);
-    }
-
-    prototype_node
-}
-
-fn is_computed_member_expression_matching(
-    node: &AstNode,
-    prop_access_expr: &MemberExpression,
-) -> bool {
-    match node.kind() {
-        AstKind::ChainExpression(chain_expr) => {
-            if let ChainElement::ComputedMemberExpression(computed) = &chain_expr.expression {
-                return computed
-                    .object
-                    .as_member_expression()
-                    .is_some_and(|object| object.content_eq(prop_access_expr));
+    match parent.kind() {
+        AstKind::ComputedMemberExpression(computed_prop_access_expr) => {
+            let prop_name = computed_prop_access_expr.static_property_name()?;
+            if prop_name != "prototype" {
+                return None;
             }
+
+            let grandparent_node = ctx.nodes().parent_node(parent.id())?;
+
+            if let AstKind::ChainExpression(_) = grandparent_node.kind() {
+                prototype_node = Some(grandparent_node);
+                if let Some(grandparent_parent) = ctx.nodes().parent_node(grandparent_node.id()) {
+                    prototype_node = Some(grandparent_parent);
+                }
+            }
+
+            prototype_node
         }
-        AstKind::MemberExpression(MemberExpression::ComputedMemberExpression(computed)) => {
-            return computed
-                .object
-                .as_member_expression()
-                .is_some_and(|object| object.content_eq(prop_access_expr));
+        AstKind::MemberExpression(prop_access_expr) => {
+            let prop_name = prop_access_expr.static_property_name()?;
+            if prop_name != "prototype" {
+                return None;
+            }
+            let grandparent_node = ctx.nodes().parent_node(parent.id())?;
+
+            if let AstKind::ChainExpression(_) = grandparent_node.kind() {
+                prototype_node = Some(grandparent_node);
+                if let Some(grandparent_parent) = ctx.nodes().parent_node(grandparent_node.id()) {
+                    prototype_node = Some(grandparent_parent);
+                }
+            }
+
+            prototype_node
         }
-        _ => {}
+        _ => None,
     }
-    false
 }
 
 #[test]

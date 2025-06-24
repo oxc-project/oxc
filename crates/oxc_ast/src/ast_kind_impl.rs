@@ -217,6 +217,7 @@ impl AstKind<'_> {
                 format!("CallExpression({})", c.callee_name().unwrap_or(&COMPUTED)).into()
             }
             Self::ChainExpression(_) => "ChainExpression".into(),
+            Self::ComputedMemberExpression(_) => "ComputedMemberExpression".into(),
             Self::ConditionalExpression(_) => "ConditionalExpression".into(),
             Self::LogicalExpression(_) => "LogicalExpression".into(),
             Self::MemberExpression(_) => "MemberExpression".into(),

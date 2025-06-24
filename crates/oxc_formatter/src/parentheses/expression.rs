@@ -60,6 +60,7 @@ impl<'a> NeedsParentheses<'a> for AstNode<'a, Expression<'a>> {
             AstNodes::TSInstantiationExpression(it) => it.needs_parentheses(f),
             AstNodes::V8IntrinsicExpression(it) => it.needs_parentheses(f),
             AstNodes::MemberExpression(it) => it.needs_parentheses(f),
+            AstNodes::ComputedMemberExpression(it) => it.needs_parentheses(f),
             _ => {
                 // TODO: incomplete
                 false
@@ -419,6 +420,9 @@ impl<'a> NeedsParentheses<'a> for AstNode<'a, TSInstantiationExpression<'a>> {
         if let AstNodes::MemberExpression(e) = self.parent {
             return e.object().without_parentheses().span() == self.span();
         }
+        if let AstNodes::ComputedMemberExpression(e) = self.parent {
+            return e.object.without_parentheses().span() == self.span();
+        }
         false
     }
 }
@@ -435,6 +439,7 @@ fn binary_like_needs_parens(binary_like: BinaryLikeExpression<'_, '_>) -> bool {
         | AstNodes::CallExpression(_)
         | AstNodes::NewExpression(_)
         | AstNodes::MemberExpression(_)
+        | AstNodes::ComputedMemberExpression(_)
         | AstNodes::TaggedTemplateExpression(_) => return true,
         AstNodes::BinaryExpression(binary) => BinaryLikeExpression::BinaryExpression(binary),
         AstNodes::LogicalExpression(logical) => BinaryLikeExpression::LogicalExpression(logical),
@@ -530,6 +535,9 @@ fn update_or_lower_expression_needs_parens(span: Span, parent: &AstNodes<'_>) ->
     }
     if let AstNodes::MemberExpression(member_expr) = parent {
         return member_expr.object().get_inner_expression().span() == span;
+    }
+    if let AstNodes::ComputedMemberExpression(computed_member_expr) = parent {
+        return computed_member_expr.object.get_inner_expression().span() == span;
     }
     false
 }

@@ -146,14 +146,26 @@ impl Rule for NoEval {
                                 }
                             }
 
-                            let Some(mem_expr) = parent.kind().as_member_expression() else {
-                                continue;
-                            };
-                            let Some((span, name)) = mem_expr.static_property_info() else {
-                                continue;
-                            };
-                            if name == "eval" {
-                                ctx.diagnostic(no_eval_diagnostic(span));
+                            match parent.kind() {
+                                AstKind::MemberExpression(mem_expr) => {
+                                    let Some((span, name)) = mem_expr.static_property_info() else {
+                                        continue;
+                                    };
+                                    if name == "eval" {
+                                        ctx.diagnostic(no_eval_diagnostic(span));
+                                    }
+                                }
+                                AstKind::ComputedMemberExpression(comp_mem_expr) => {
+                                    if comp_mem_expr
+                                        .static_property_name()
+                                        .is_some_and(|name| name == "eval")
+                                    {
+                                        ctx.diagnostic(no_eval_diagnostic(
+                                            comp_mem_expr.expression.span(),
+                                        ));
+                                    }
+                                }
+                                _ => {}
                             }
                         }
                     }

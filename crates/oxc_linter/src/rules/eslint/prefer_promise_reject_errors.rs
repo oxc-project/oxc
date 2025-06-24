@@ -1,5 +1,4 @@
 use oxc_allocator::Box;
-use oxc_ast::ast::MemberExpression;
 use oxc_ast::{
     AstKind,
     ast::{Argument, CallExpression, Expression, FormalParameters},
@@ -170,9 +169,7 @@ fn check_reject_in_function(
         }
 
         let Some(parent) = ctx.nodes().parent_node(reference.node_id()) else { continue };
-        let AstKind::MemberExpression(MemberExpression::ComputedMemberExpression(member_expr)) =
-            parent.kind()
-        else {
+        let AstKind::ComputedMemberExpression(member_expr) = parent.kind() else {
             continue;
         };
 
@@ -184,12 +181,11 @@ fn check_reject_in_function(
             continue;
         }
 
-        let Some(node) = ctx.nodes().parent_node(parent.id()) else {
-            continue;
-        };
-
-        if let AstKind::CallExpression(call_expr) = node.kind() {
-            check_reject_call(call_expr, ctx, allow_empty_reject);
+        for parent in ctx.nodes().ancestor_kinds(parent.id()) {
+            if let AstKind::CallExpression(call_expr) = parent {
+                check_reject_call(call_expr, ctx, allow_empty_reject);
+                break;
+            }
         }
     }
 }

@@ -67,28 +67,51 @@ impl Rule for UninvokedArrayCallback {
             return;
         };
 
-        let AstKind::MemberExpression(member_expr) = member_expr_node.kind() else {
-            return;
-        };
+        match member_expr_node.kind() {
+            AstKind::MemberExpression(member_expr) => {
+                let Some(AstKind::CallExpression(call_expr)) =
+                    ctx.nodes().parent_kind(member_expr_node.id())
+                else {
+                    return;
+                };
+                if !matches!(
+                    call_expr.arguments.first(),
+                    Some(Argument::FunctionExpression(_) | Argument::ArrowFunctionExpression(_))
+                ) {
+                    return;
+                }
 
-        let Some(AstKind::CallExpression(call_expr)) =
-            ctx.nodes().parent_kind(member_expr_node.id())
-        else {
-            return;
-        };
-        if !matches!(
-            call_expr.arguments.first(),
-            Some(Argument::FunctionExpression(_) | Argument::ArrowFunctionExpression(_))
-        ) {
-            return;
+                let property_span = match member_expr {
+                    MemberExpression::ComputedMemberExpression(expr) => expr.expression.span(),
+                    MemberExpression::StaticMemberExpression(expr) => expr.property.span,
+                    MemberExpression::PrivateFieldExpression(expr) => expr.field.span,
+                };
+                ctx.diagnostic(uninvoked_array_callback_diagnostic(property_span, new_expr.span));
+            }
+            AstKind::ComputedMemberExpression(computed_member_expr) => {
+                let Some(parent) = ctx.nodes().parent_node(member_expr_node.id()) else {
+                    return;
+                };
+                let Some(grandparent) = ctx.nodes().parent_kind(parent.id()) else {
+                    return;
+                };
+                let AstKind::CallExpression(call_expr) = grandparent else {
+                    return;
+                };
+                if !matches!(
+                    call_expr.arguments.first(),
+                    Some(Argument::FunctionExpression(_) | Argument::ArrowFunctionExpression(_))
+                ) {
+                    return;
+                }
+
+                ctx.diagnostic(uninvoked_array_callback_diagnostic(
+                    computed_member_expr.expression.span(),
+                    new_expr.span,
+                ));
+            }
+            _ => {}
         }
-
-        let property_span = match member_expr {
-            MemberExpression::ComputedMemberExpression(expr) => expr.expression.span(),
-            MemberExpression::StaticMemberExpression(expr) => expr.property.span,
-            MemberExpression::PrivateFieldExpression(expr) => expr.field.span,
-        };
-        ctx.diagnostic(uninvoked_array_callback_diagnostic(property_span, new_expr.span));
     }
 }
 

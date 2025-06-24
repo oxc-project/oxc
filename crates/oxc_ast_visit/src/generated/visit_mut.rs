@@ -1605,10 +1605,12 @@ pub mod walk_mut {
         visitor: &mut V,
         it: &mut ComputedMemberExpression<'a>,
     ) {
-        // No `AstType` for this type
+        let kind = AstType::ComputedMemberExpression;
+        visitor.enter_node(kind);
         visitor.visit_span(&mut it.span);
         visitor.visit_expression(&mut it.object);
         visitor.visit_expression(&mut it.expression);
+        visitor.leave_node(kind);
     }
 
     #[inline]

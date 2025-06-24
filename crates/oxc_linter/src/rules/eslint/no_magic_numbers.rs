@@ -1,6 +1,6 @@
 use oxc_ast::{
     AstKind,
-    ast::{AssignmentTarget, Expression, MemberExpression, VariableDeclarationKind},
+    ast::{AssignmentTarget, Expression, VariableDeclarationKind},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -378,15 +378,10 @@ fn is_array_index<'a>(ast_kind: &AstKind<'a>, parent_kind: &AstKind<'a>) -> bool
             _ => false,
         },
         AstKind::NumericLiteral(numeric) => match parent_kind {
-            AstKind::MemberExpression(expression) => {
-                if let MemberExpression::ComputedMemberExpression(computed_expression) = expression
-                {
-                    return computed_expression.expression.is_number_value(numeric.value)
-                        && numeric.value.fract() == 0.0
-                        && numeric.value < f64::from(u32::MAX);
-                }
-
-                false
+            AstKind::ComputedMemberExpression(computed_expression) => {
+                computed_expression.expression.is_number_value(numeric.value)
+                    && numeric.value.fract() == 0.0
+                    && numeric.value < f64::from(u32::MAX)
             }
             _ => false,
         },

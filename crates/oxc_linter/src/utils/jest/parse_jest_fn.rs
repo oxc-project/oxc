@@ -139,9 +139,13 @@ fn parse_jest_expect_fn_call<'a>(
     }
 
     if matches!(expect_error, Some(ExpectError::MatcherNotFound)) {
-        let parent = ctx.nodes().parent_node(node.id())?;
-        if matches!(parent.kind(), AstKind::MemberExpression(_)) {
-            expect_error = Some(ExpectError::MatcherNotCalled);
+        // If the parent is a member expression, we can assume that the matcher
+        // is not called, so we can set the error to `MatcherNotCalled`.
+        match ctx.nodes().parent_kind(node.id())? {
+            AstKind::MemberExpression(_) | AstKind::ComputedMemberExpression(_) => {
+                expect_error = Some(ExpectError::MatcherNotCalled);
+            }
+            _ => {}
         }
     }
 
@@ -241,7 +245,7 @@ fn is_top_most_call_expr<'a, 'b>(node: &'b AstNode<'a>, ctx: &'b LintContext<'a>
 
         match parent.kind() {
             AstKind::CallExpression(_) => return false,
-            AstKind::MemberExpression(_) => node = parent,
+            AstKind::MemberExpression(_) | AstKind::ComputedMemberExpression(_) => node = parent,
             _ => {
                 return true;
             }
