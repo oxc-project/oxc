@@ -47,62 +47,62 @@ const JSON_CAPACITY_RATIO_PRETTY: usize = 80;
 
 impl Program<'_> {
     /// Serialize AST to ESTree JSON, including TypeScript fields.
-    pub fn to_estree_ts_json(&self) -> String {
+    pub fn to_estree_ts_json(&self, ranges: bool) -> String {
         let capacity = self.source_text.len() * JSON_CAPACITY_RATIO_COMPACT;
-        let mut serializer = CompactTSSerializer::with_capacity(capacity);
+        let mut serializer = CompactTSSerializer::with_capacity(capacity, ranges);
         self.serialize(&mut serializer);
         serializer.into_string()
     }
 
     /// Serialize AST to ESTree JSON, without TypeScript fields.
-    pub fn to_estree_js_json(&self) -> String {
+    pub fn to_estree_js_json(&self, ranges: bool) -> String {
         let capacity = self.source_text.len() * JSON_CAPACITY_RATIO_COMPACT;
-        let mut serializer = CompactJSSerializer::with_capacity(capacity);
+        let mut serializer = CompactJSSerializer::with_capacity(capacity, ranges);
         self.serialize(&mut serializer);
         serializer.into_string()
     }
 
     /// Serialize AST to pretty-printed ESTree JSON, including TypeScript fields.
-    pub fn to_pretty_estree_ts_json(&self) -> String {
+    pub fn to_pretty_estree_ts_json(&self, ranges: bool) -> String {
         let capacity = self.source_text.len() * JSON_CAPACITY_RATIO_PRETTY;
-        let mut serializer = PrettyTSSerializer::with_capacity(capacity);
+        let mut serializer = PrettyTSSerializer::with_capacity(capacity, ranges);
         self.serialize(&mut serializer);
         serializer.into_string()
     }
 
     /// Serialize AST to pretty-printed ESTree JSON, without TypeScript fields.
-    pub fn to_pretty_estree_js_json(&self) -> String {
+    pub fn to_pretty_estree_js_json(&self, ranges: bool) -> String {
         let capacity = self.source_text.len() * JSON_CAPACITY_RATIO_PRETTY;
-        let mut serializer = PrettyJSSerializer::with_capacity(capacity);
+        let mut serializer = PrettyJSSerializer::with_capacity(capacity, ranges);
         self.serialize(&mut serializer);
         serializer.into_string()
     }
 
     /// Serialize AST to ESTree JSON, including TypeScript fields, with list of fixes.
-    pub fn to_estree_ts_json_with_fixes(&self) -> String {
+    pub fn to_estree_ts_json_with_fixes(&self, ranges: bool) -> String {
         let capacity = self.source_text.len() * JSON_CAPACITY_RATIO_COMPACT;
-        let serializer = CompactFixesTSSerializer::with_capacity(capacity);
+        let serializer = CompactFixesTSSerializer::with_capacity(capacity, ranges);
         serializer.serialize_with_fixes(self)
     }
 
     /// Serialize AST to ESTree JSON, without TypeScript fields, with list of fixes.
-    pub fn to_estree_js_json_with_fixes(&self) -> String {
+    pub fn to_estree_js_json_with_fixes(&self, ranges: bool) -> String {
         let capacity = self.source_text.len() * JSON_CAPACITY_RATIO_COMPACT;
-        let serializer = CompactFixesJSSerializer::with_capacity(capacity);
+        let serializer = CompactFixesJSSerializer::with_capacity(capacity, ranges);
         serializer.serialize_with_fixes(self)
     }
 
     /// Serialize AST to pretty-printed ESTree JSON, including TypeScript fields, with list of fixes.
-    pub fn to_pretty_estree_ts_json_with_fixes(&self) -> String {
+    pub fn to_pretty_estree_ts_json_with_fixes(&self, ranges: bool) -> String {
         let capacity = self.source_text.len() * JSON_CAPACITY_RATIO_PRETTY;
-        let serializer = PrettyFixesTSSerializer::with_capacity(capacity);
+        let serializer = PrettyFixesTSSerializer::with_capacity(capacity, ranges);
         serializer.serialize_with_fixes(self)
     }
 
     /// Serialize AST to pretty-printed ESTree JSON, without TypeScript fields, with list of fixes.
-    pub fn to_pretty_estree_js_json_with_fixes(&self) -> String {
+    pub fn to_pretty_estree_js_json_with_fixes(&self, ranges: bool) -> String {
         let capacity = self.source_text.len() * JSON_CAPACITY_RATIO_PRETTY;
-        let serializer = PrettyFixesJSSerializer::with_capacity(capacity);
+        let serializer = PrettyFixesJSSerializer::with_capacity(capacity, ranges);
         serializer.serialize_with_fixes(self)
     }
 }
@@ -168,6 +168,7 @@ impl ESTree for ProgramConverter<'_, '_> {
         let span_start =
             if S::INCLUDE_TS_FIELDS { get_ts_start_span(program) } else { program.span.start };
 
+        let ranges = serializer.ranges();
         let mut state = serializer.serialize_struct();
         state.serialize_field("type", &JsonSafeString("Program"));
         state.serialize_field("start", &span_start);
@@ -175,6 +176,9 @@ impl ESTree for ProgramConverter<'_, '_> {
         state.serialize_field("body", &Concat2(&program.directives, &program.body));
         state.serialize_field("sourceType", &program.source_type.module_kind());
         state.serialize_field("hashbang", &program.hashbang);
+        if ranges {
+            state.serialize_field("range", &[span_start, program.span.end]);
+        }
         state.end();
     }
 }

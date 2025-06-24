@@ -78,7 +78,7 @@ mod tests {
 
     fn run_test<T: ESTree>(cases: &[(T, &str)]) {
         for (input, output) in cases {
-            let mut serializer = CompactTSSerializer::new();
+            let mut serializer = CompactTSSerializer::new(false);
             input.serialize(&mut serializer);
             let s = serializer.into_string();
             assert_eq!(&s, output);

@@ -44,6 +44,8 @@ pub trait Serializer: SerializerPrivate {
     /// Type of sequence serializer this serializer uses.
     type SequenceSerializer: SequenceSerializer;
 
+    fn ranges(&self) -> bool;
+
     /// Serialize struct.
     fn serialize_struct(self) -> Self::StructSerializer;
 
@@ -100,30 +102,29 @@ pub struct ESTreeSerializer<C: Config, F: Formatter> {
     formatter: F,
     trace_path: NonEmptyStack<TracePathPart>,
     fixes_buffer: CodeBuffer,
-    #[expect(unused)]
     config: C,
 }
 
 impl<C: Config, F: Formatter> ESTreeSerializer<C, F> {
     /// Create new [`ESTreeSerializer`].
-    pub fn new() -> Self {
+    pub fn new(ranges: bool) -> Self {
         Self {
             buffer: CodeBuffer::new(),
             formatter: F::new(),
             trace_path: NonEmptyStack::new(TracePathPart::Index(0)),
             fixes_buffer: CodeBuffer::new(),
-            config: C::new(),
+            config: C::new(ranges),
         }
     }
 
     /// Create new [`ESTreeSerializer`] with specified buffer capacity.
-    pub fn with_capacity(capacity: usize) -> Self {
+    pub fn with_capacity(capacity: usize, ranges: bool) -> Self {
         Self {
             buffer: CodeBuffer::with_capacity(capacity),
             formatter: F::new(),
             trace_path: NonEmptyStack::new(TracePathPart::Index(0)),
             fixes_buffer: CodeBuffer::new(),
-            config: C::new(),
+            config: C::new(ranges),
         }
     }
 
@@ -168,7 +169,7 @@ impl<C: Config, F: Formatter> ESTreeSerializer<C, F> {
 impl<C: Config, F: Formatter> Default for ESTreeSerializer<C, F> {
     #[inline(always)]
     fn default() -> Self {
-        Self::new()
+        Self::new(false)
     }
 }
 
@@ -178,6 +179,10 @@ impl<'s, C: Config, F: Formatter> Serializer for &'s mut ESTreeSerializer<C, F> 
 
     type StructSerializer = ESTreeStructSerializer<'s, C, F>;
     type SequenceSerializer = ESTreeSequenceSerializer<'s, C, F>;
+
+    fn ranges(&self) -> bool {
+        self.config.ranges()
+    }
 
     /// Serialize struct.
     #[inline(always)]
