@@ -1,8 +1,8 @@
 commit: 81c95189
 
 semantic_typescript Summary:
-AST Parsed     : 6540/6540 (100.00%)
-Positive Passed: 2848/6540 (43.55%)
+AST Parsed     : 6537/6537 (100.00%)
+Positive Passed: 2848/6537 (43.57%)
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/2dArrays.ts
 Symbol reference IDs mismatch for "Cell":
 after transform: SymbolId(0): [ReferenceId(1)]
@@ -20478,14 +20478,6 @@ Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1)]
 rebuilt        : ScopeId(0): []
 
-semantic Error: tasks/coverage/typescript/tests/cases/compiler/moduleAndInterfaceSharingName2.ts
-Bindings mismatch:
-after transform: ScopeId(0): ["X", "z", "z2"]
-rebuilt        : ScopeId(0): ["z", "z2"]
-Scope children mismatch:
-after transform: ScopeId(0): [ScopeId(1)]
-rebuilt        : ScopeId(0): []
-
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/moduleAndInterfaceSharingName3.ts
 Bindings mismatch:
 after transform: ScopeId(0): ["X", "z", "z2"]
@@ -29590,11 +29582,6 @@ rebuilt        : <None>
 Unresolved references mismatch:
 after transform: []
 rebuilt        : ["B"]
-
-semantic Error: tasks/coverage/typescript/tests/cases/compiler/superCallFromClassThatDerivesNonGenericTypeButWithTypeArguments1.ts
-Scope children mismatch:
-after transform: ScopeId(2): [ScopeId(3)]
-rebuilt        : ScopeId(2): []
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/superElementAccess.ts
 Scope children mismatch:
@@ -51109,38 +51096,6 @@ semantic Error: tasks/coverage/typescript/tests/cases/conformance/types/specifyi
 Unresolved references mismatch:
 after transform: ["this"]
 rebuilt        : []
-
-semantic Error: tasks/coverage/typescript/tests/cases/conformance/types/specifyingTypes/typeReferences/nonGenericTypeReferenceWithTypeArguments.ts
-Scope children mismatch:
-after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(4), ScopeId(5)]
-rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3)]
-Scope flags mismatch:
-after transform: ScopeId(3): ScopeFlags(0x0)
-rebuilt        : ScopeId(2): ScopeFlags(Function)
-Scope children mismatch:
-after transform: ScopeId(5): [ScopeId(6), ScopeId(7), ScopeId(8), ScopeId(9)]
-rebuilt        : ScopeId(3): [ScopeId(4), ScopeId(5)]
-Scope flags mismatch:
-after transform: ScopeId(8): ScopeFlags(0x0)
-rebuilt        : ScopeId(5): ScopeFlags(Function)
-Symbol reference IDs mismatch for "C":
-after transform: SymbolId(0): [ReferenceId(0)]
-rebuilt        : SymbolId(0): []
-Symbol flags mismatch for "E":
-after transform: SymbolId(2): SymbolFlags(RegularEnum)
-rebuilt        : SymbolId(1): SymbolFlags(FunctionScopedVariable)
-Symbol reference IDs mismatch for "E":
-after transform: SymbolId(2): [ReferenceId(2), ReferenceId(10)]
-rebuilt        : SymbolId(1): [ReferenceId(1)]
-Symbol reference IDs mismatch for "C":
-after transform: SymbolId(10): [ReferenceId(4)]
-rebuilt        : SymbolId(8): []
-Symbol flags mismatch for "E":
-after transform: SymbolId(12): SymbolFlags(RegularEnum)
-rebuilt        : SymbolId(9): SymbolFlags(BlockScopedVariable)
-Symbol reference IDs mismatch for "E":
-after transform: SymbolId(12): [ReferenceId(6)]
-rebuilt        : SymbolId(9): []
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/types/spread/objectSpread.ts
 Scope children mismatch:

@@ -39,7 +39,9 @@ use crate::{
             TransformerTypeScriptCase,
         },
     },
-    typescript::{TranspileRunner, TypeScriptCase, TypeScriptSuite, TypeScriptTranspileCase},
+    typescript::{
+        ParserUsage, TranspileRunner, TypeScriptCase, TypeScriptSuite, TypeScriptTranspileCase,
+    },
 };
 
 pub fn workspace_root() -> PathBuf {
@@ -78,7 +80,7 @@ impl AppArgs {
     pub fn run_parser(&self) {
         Test262Suite::<Test262Case>::new().run("parser_test262", self);
         BabelSuite::<BabelCase>::new().run("parser_babel", self);
-        TypeScriptSuite::<TypeScriptCase>::new().run("parser_typescript", self);
+        TypeScriptSuite::<TypeScriptCase<ParserUsage>>::new().run("parser_typescript", self);
         MiscSuite::<MiscCase>::new().run("parser_misc", self);
     }
 

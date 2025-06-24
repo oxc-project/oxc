@@ -1,6 +1,7 @@
 mod meta;
 mod transpile_runner;
 
+use std::any::TypeId;
 use std::path::{Path, PathBuf};
 
 use self::meta::{CompilerSettings, TestCaseContent, TestUnitData};
@@ -70,20 +71,37 @@ impl<T: Case> Suite<T> for TypeScriptSuite<T> {
     }
 }
 
-pub struct TypeScriptCase {
+pub trait TypeScriptUsage: Sync + Send + std::panic::UnwindSafe + 'static {}
+
+pub struct ParserUsage;
+impl TypeScriptUsage for ParserUsage {}
+
+pub struct ToolUsage;
+impl TypeScriptUsage for ToolUsage {}
+
+pub struct TypeScriptCase<Usage: TypeScriptUsage = ToolUsage> {
     path: PathBuf,
     pub code: String,
     pub units: Vec<TestUnitData>,
     pub settings: CompilerSettings,
     error_codes: Vec<String>,
     pub result: TestResult,
+    _usage: std::marker::PhantomData<Usage>,
 }
 
-impl Case for TypeScriptCase {
+impl<Usage: TypeScriptUsage> Case for TypeScriptCase<Usage> {
     fn new(path: PathBuf, code: String) -> Self {
         let TestCaseContent { tests, settings, error_codes } =
             TestCaseContent::make_units_from_test(&path, &code);
-        Self { path, code, units: tests, settings, error_codes, result: TestResult::ToBeRun }
+        Self {
+            path,
+            code,
+            units: tests,
+            settings,
+            error_codes,
+            result: TestResult::ToBeRun,
+            _usage: std::marker::PhantomData,
+        }
     }
 
     fn code(&self) -> &str {
@@ -99,8 +117,16 @@ impl Case for TypeScriptCase {
     }
 
     fn should_fail(&self) -> bool {
-        // If there are still error codes to be supported, it should fail
-        self.error_codes.iter().any(|code| !NOT_SUPPORTED_ERROR_CODES.contains(code.as_str()))
+        if TypeId::of::<Usage>() == TypeId::of::<ParserUsage>() {
+            // If there are still error codes to be supported, it should fail
+            return self
+                .error_codes
+                .iter()
+                .any(|code| !NOT_SUPPORTED_ERROR_CODES.contains(code.as_str()));
+        }
+
+        // Fail if any error codes are present
+        !self.error_codes.is_empty()
     }
 
     fn always_strict(&self) -> bool {

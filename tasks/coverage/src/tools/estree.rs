@@ -18,7 +18,7 @@ use oxc::{
 use crate::{
     suite::{Case, Suite, TestResult},
     test262::Test262Case,
-    typescript::TypeScriptCase,
+    typescript::{ParserUsage, TypeScriptCase},
     workspace_root,
 };
 
@@ -244,7 +244,7 @@ impl Case for EstreeJsxCase {
 }
 
 pub struct EstreeTypescriptCase {
-    base: TypeScriptCase,
+    base: TypeScriptCase<ParserUsage>,
     estree_file_path: PathBuf,
 }
 
