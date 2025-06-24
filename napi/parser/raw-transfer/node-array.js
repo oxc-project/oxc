@@ -258,7 +258,8 @@ const PROXY_HANDLERS = {
   // Return `true` for indexes which are in bounds.
   // e.g. `'0' in arr`.
   has(arr, key) {
-    if (isIndex(key)) return key * 1 < getLength(arr);
+    const index = toIndex(key);
+    if (index !== null) return index < getLength(arr);
     return Reflect.has(arr, key);
   },
 
@@ -268,7 +269,8 @@ const PROXY_HANDLERS = {
     // They can "unwrap" the proxy by getting `this[ARRAY]`.
     if (key === ARRAY) return arr;
     if (key === 'length') return getLength(arr);
-    if (isIndex(key)) return getElement(arr, key * 1);
+    const index = toIndex(key);
+    if (index !== null) return getElement(arr, index);
 
     return Reflect.get(arr, key);
   },
@@ -280,8 +282,9 @@ const PROXY_HANDLERS = {
       return { value: getLength(arr), writable: true, enumerable: false, configurable: false };
     }
 
-    if (isIndex(key)) {
-      const value = getElement(arr, key * 1);
+    const index = toIndex(key);
+    if (index !== null) {
+      const value = getElement(arr, index);
       if (value === void 0) return void 0;
       // Cannot return `configurable: false` unfortunately
       return { value, writable: false, enumerable: true, configurable: true };
@@ -298,14 +301,14 @@ const PROXY_HANDLERS = {
   // * `Object.defineProperty(arr, 'length', {value: 0})`.
   // * Other operations which mutate entries e.g. `arr.push(123)`.
   defineProperty(arr, key, descriptor) {
-    if (key === 'length' || isIndex(key)) return false;
+    if (key === 'length' || toIndex(key) !== null) return false;
     return Reflect.defineProperty(arr, key, descriptor);
   },
 
   // Prevent deleting entries.
   deleteProperty(arr, key) {
     // Note: `Reflect.deleteProperty(arr, 'length')` already returns `false`
-    if (isIndex(key)) return false;
+    if (toIndex(key) !== null) return false;
     return Reflect.deleteProperty(arr, key);
   },
 
@@ -322,16 +325,24 @@ const PROXY_HANDLERS = {
 };
 
 /**
- * Check if a key is a valid array index.
+ * Convert key to array index, if it is a valid array index.
+ *
  * Only strings comprising a plain integer are valid indexes.
  * e.g. `"-1"`, `"01"`, `"0xFF"`, `"1e1"`, `"1 "` are not valid indexes.
+ * Integers >= 4294967295 are not valid indexes.
  *
- * @param {*} - Key used for property lookup.
- * @returns {boolean} - `true` if `key` is a valid array index.
+ * @param {string|Symbol} - Key used for property lookup.
+ * @returns {number|null} - `key` converted to integer, if it's a valid array index, otherwise `null`.
  */
-function isIndex(key) {
-  // TODO: Any way to do this without a regex?
-  return typeof key === 'string' && (key === '0' || INDEX_REGEX.test(key));
+function toIndex(key) {
+  if (typeof key === 'string') {
+    if (key === '0') return 0;
+    if (INDEX_REGEX.test(key)) {
+      const index = +key;
+      if (index < 4294967295) return index;
+    }
+  }
+  return null;
 }
 
 const INDEX_REGEX = /^[1-9]\d*$/;
