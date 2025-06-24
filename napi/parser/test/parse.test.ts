@@ -699,7 +699,7 @@ describe('parse', () => {
       expect(ret.program.body[0].range).toBeUndefined();
     });
 
-    it('should include range by default', () => {
+    it('should not include range by default', () => {
       const ret = parseSync('test.js', '(x)');
       // TODO: Remove `@ts-ignore` comment once we've corrected TS type definitions
       // @ts-ignore
