@@ -1831,6 +1831,7 @@ dependencies = [
  "convert_case",
  "cow-utils",
  "fast-glob",
+ "futures",
  "globset",
  "indexmap",
  "insta",

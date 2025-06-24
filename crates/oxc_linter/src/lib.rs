@@ -25,8 +25,10 @@ pub mod table;
 
 use std::{fmt::Debug, path::Path, rc::Rc, sync::Arc};
 
-use napi::threadsafe_function::ThreadsafeFunctionCallMode;
+use napi::{Status, threadsafe_function::ThreadsafeFunctionCallMode};
 use oxc_semantic::{AstNode, Semantic};
+
+use futures::executor::block_on;
 
 pub use crate::{
     config::{
@@ -201,23 +203,25 @@ impl Linter {
         }
 
         if let Some(external_linter) = &self.external_linter {
-            let result = external_linter.run.call_with_return_value(
-                ((path.to_string_lossy().to_string(), 1)),
-                ThreadsafeFunctionCallMode::Blocking,
-                |x, env| {
-                    match x {
-                        Ok(e) => {
-                            todo!()
-                        }
-                        Err(e) => {
-                            todo!()
-                        }
-                    }
-                    Ok(())
-                },
-            );
+            // let result = external_linter.run.call_async();
 
-            dbg!(result);
+            let result =
+                block_on(external_linter.run.call_async((path.to_string_lossy().to_string(), 1)));
+
+            match result {
+                Ok(result) => {
+                    todo!()
+                    // if let Some((messages, _)) = result {
+                    //     for message in messages {
+                    //         ctx_host.add_external_linter_message(message);
+                    //     }
+                    // }
+                }
+                Err(err) => {
+                    todo!()
+                    // ctx_host.add_external_linter_error(err.to_string());
+                }
+            }
         }
 
         ctx_host.take_diagnostics()

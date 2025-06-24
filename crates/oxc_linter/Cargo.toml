@@ -70,6 +70,7 @@ serde = { workspace = true, features = ["derive"] }
 serde_json = { workspace = true }
 simdutf8 = { workspace = true }
 smallvec = { workspace = true }
+futures.workspace = true
 
 [dev-dependencies]
 insta = { workspace = true }
