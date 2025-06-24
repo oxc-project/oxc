@@ -47,10 +47,10 @@ fn main() -> Result<(), String> {
         Utf8ToUtf16::new(&source_text).convert_program(&mut program);
         if source_type.is_javascript() {
             println!("ESTree AST:");
-            println!("{}", program.to_pretty_estree_js_json());
+            println!("{}", program.to_pretty_estree_js_json(false));
         } else {
             println!("TS-ESTree AST:");
-            println!("{}", program.to_pretty_estree_ts_json());
+            println!("{}", program.to_pretty_estree_ts_json(false));
         }
     }
 

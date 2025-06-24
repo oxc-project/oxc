@@ -19,7 +19,6 @@ use oxc::{
     semantic::SemanticBuilder,
     span::SourceType,
 };
-use oxc_estree::{CompactFixesJSSerializer, CompactFixesTSSerializer};
 use oxc_napi::{Comment, OxcError, convert_utf8_to_utf16, get_source_type};
 
 mod convert;
@@ -76,7 +75,7 @@ fn parse_with_return(filename: &str, source_text: String, options: &ParserOption
     let source_type =
         get_source_type(filename, options.lang.as_deref(), options.source_type.as_deref());
     let ast_type = get_ast_type(source_type, options);
-    let range = options.range.unwrap_or(false);
+    let ranges = options.range.unwrap_or(false);
     let ret = parse(&allocator, source_type, &source_text, options);
 
     let mut program = ret.program;
@@ -108,18 +107,14 @@ fn parse_with_return(filename: &str, source_text: String, options: &ParserOption
                 );
             }
 
-            let capacity = program.source_text.len() * 16;
-            let serializer = CompactFixesJSSerializer::with_capacity_and_ranges(capacity, range);
-            serializer.serialize_with_fixes(&program)
+            program.to_estree_js_json_with_fixes(ranges)
         }
         AstType::TypeScript => {
             // Note: `@typescript-eslint/parser` ignores hashbangs,
             // despite appearances to the contrary in AST explorers.
             // So we ignore them too.
             // See: https://github.com/typescript-eslint/typescript-eslint/issues/6500
-            let capacity = program.source_text.len() * 16;
-            let serializer = CompactFixesTSSerializer::with_capacity_and_ranges(capacity, range);
-            serializer.serialize_with_fixes(&program)
+            program.to_estree_ts_json_with_fixes(ranges)
         }
     };
 
