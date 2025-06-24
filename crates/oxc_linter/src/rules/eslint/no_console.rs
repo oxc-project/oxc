@@ -112,13 +112,13 @@ impl Rule for NoConsole {
         };
 
         if ident.name == "console"
-            && ctx.scoping().root_unresolved_references().contains_key(ident.name.as_str())
-            && !self
-                .allow
-                .iter()
-                .any(|s| member_expr.static_property_name().is_some_and(|f| f == s))
+            && ctx.scoping().root_unresolved_references().contains_key("console")
         {
-            if let Some((mem_span, _)) = member_expr.static_property_info() {
+            if let Some((mem_span, prop_name)) = member_expr.static_property_info() {
+                if self.allow.iter().any(|allowed_name| allowed_name == prop_name) {
+                    return;
+                }
+
                 let diagnostic_span = ident.span().merge(mem_span);
 
                 ctx.diagnostic_with_suggestion(
