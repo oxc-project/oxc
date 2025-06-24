@@ -114,6 +114,8 @@ fn parse_with_return(filename: &str, source_text: String, options: &ParserOption
         }
         AstType::TypeScript => {
             // Note: `@typescript-eslint/parser` ignores hashbangs,
+            // despite appearances to the contrary in AST explorers.
+            // So we ignore them too.
             // See: https://github.com/typescript-eslint/typescript-eslint/issues/6500
             let capacity = program.source_text.len() * 16;
             let serializer = CompactFixesTSSerializer::with_capacity_and_ranges(capacity, range);
