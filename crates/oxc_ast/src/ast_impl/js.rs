@@ -614,7 +614,7 @@ impl<'a> MemberExpression<'a> {
             MemberExpression::ComputedMemberExpression(expr) => match &expr.expression {
                 Expression::StringLiteral(lit) => Some((lit.span, lit.value.as_str())),
                 Expression::TemplateLiteral(lit) => {
-                    if lit.expressions.is_empty() && lit.quasis.len() == 1 {
+                    if lit.quasis.len() == 1 {
                         lit.quasis[0].value.cooked.map(|cooked| (lit.span, cooked.as_str()))
                     } else {
                         None
@@ -659,11 +659,7 @@ impl<'a> ComputedMemberExpression<'a> {
     pub fn static_property_name(&self) -> Option<Atom<'a>> {
         match &self.expression {
             Expression::StringLiteral(lit) => Some(lit.value),
-            Expression::TemplateLiteral(lit)
-                if lit.expressions.is_empty() && lit.quasis.len() == 1 =>
-            {
-                lit.quasis[0].value.cooked
-            }
+            Expression::TemplateLiteral(lit) if lit.quasis.len() == 1 => lit.quasis[0].value.cooked,
             Expression::RegExpLiteral(lit) => lit.raw,
             _ => None,
         }
