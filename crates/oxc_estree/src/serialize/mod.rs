@@ -107,13 +107,8 @@ pub struct ESTreeSerializer<C: Config, F: Formatter> {
 }
 
 impl<C: Config, F: Formatter> ESTreeSerializer<C, F> {
-    /// Create new [`ESTreeSerializer`] with ranges disabled.
-    pub fn new() -> Self {
-        Self::new_with_ranges(false)
-    }
-
-    /// Create new [`ESTreeSerializer`] with specified ranges setting.
-    pub fn new_with_ranges(ranges: bool) -> Self {
+    /// Create new [`ESTreeSerializer`].
+    pub fn new(ranges: bool) -> Self {
         Self {
             buffer: CodeBuffer::new(),
             formatter: F::new(),
@@ -123,13 +118,8 @@ impl<C: Config, F: Formatter> ESTreeSerializer<C, F> {
         }
     }
 
-    /// Create new [`ESTreeSerializer`] with specified buffer capacity and ranges disabled.
-    pub fn with_capacity(capacity: usize) -> Self {
-        Self::with_capacity_and_ranges(capacity, false)
-    }
-
-    /// Create new [`ESTreeSerializer`] with specified buffer capacity and ranges setting.
-    pub fn with_capacity_and_ranges(capacity: usize, ranges: bool) -> Self {
+    /// Create new [`ESTreeSerializer`] with specified buffer capacity.
+    pub fn with_capacity(capacity: usize, ranges: bool) -> Self {
         Self {
             buffer: CodeBuffer::with_capacity(capacity),
             formatter: F::new(),
@@ -180,7 +170,7 @@ impl<C: Config, F: Formatter> ESTreeSerializer<C, F> {
 impl<C: Config, F: Formatter> Default for ESTreeSerializer<C, F> {
     #[inline(always)]
     fn default() -> Self {
-        Self::new()
+        Self::new(false)
     }
 }
 

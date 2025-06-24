@@ -364,7 +364,7 @@ mod tests {
             maybe_not_bar: None,
         };
 
-        let mut serializer = CompactTSSerializer::new();
+        let mut serializer = CompactTSSerializer::new(false);
         foo.serialize(&mut serializer);
         let s = serializer.into_string();
         assert_eq!(
@@ -372,7 +372,7 @@ mod tests {
             r#"{"n":123,"u":12345,"bar":{"yes":"yup","no":"nope"},"empty":{},"hello":"hi!","maybe_bar":{"yes":"hell yeah!","no":"not a chance in a million, mate"},"maybe_not_bar":null}"#
         );
 
-        let mut serializer = PrettyTSSerializer::new();
+        let mut serializer = PrettyTSSerializer::new(false);
         foo.serialize(&mut serializer);
         let s = serializer.into_string();
         assert_eq!(
@@ -453,7 +453,7 @@ mod tests {
             outer2: "out2",
         };
 
-        let mut serializer = CompactTSSerializer::new();
+        let mut serializer = CompactTSSerializer::new(false);
         outer.serialize(&mut serializer);
         let s = serializer.into_string();
         assert_eq!(
@@ -461,7 +461,7 @@ mod tests {
             r#"{"outer1":"out1","inner1":"in1","innermost1":"inin1","innermost2":"inin2","inner2":"in2","outer2":"out2"}"#
         );
 
-        let mut serializer = PrettyTSSerializer::new();
+        let mut serializer = PrettyTSSerializer::new(false);
         outer.serialize(&mut serializer);
         let s = serializer.into_string();
         assert_eq!(
@@ -499,12 +499,12 @@ mod tests {
 
         let foo = Foo { js: 1, ts: 2, js_only: 3, more_js: 4 };
 
-        let mut serializer = CompactTSSerializer::new();
+        let mut serializer = CompactTSSerializer::new(false);
         foo.serialize(&mut serializer);
         let s = serializer.into_string();
         assert_eq!(&s, r#"{"js":1,"ts":2,"moreJs":4}"#);
 
-        let mut serializer = PrettyTSSerializer::new();
+        let mut serializer = PrettyTSSerializer::new(false);
         foo.serialize(&mut serializer);
         let s = serializer.into_string();
         assert_eq!(
@@ -516,12 +516,12 @@ mod tests {
 }"#
         );
 
-        let mut serializer = CompactJSSerializer::new();
+        let mut serializer = CompactJSSerializer::new(false);
         foo.serialize(&mut serializer);
         let s = serializer.into_string();
         assert_eq!(&s, r#"{"js":1,"jsOnly":3,"moreJs":4}"#);
 
-        let mut serializer = PrettyJSSerializer::new();
+        let mut serializer = PrettyJSSerializer::new(false);
         foo.serialize(&mut serializer);
         let s = serializer.into_string();
         assert_eq!(
