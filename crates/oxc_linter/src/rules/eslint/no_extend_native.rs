@@ -97,8 +97,7 @@ impl Rule for NoExtendNative {
                     continue;
                 }
                 // If the referenced name is explicitly allowed, skip it.
-                let compact_name = CompactStr::from(name);
-                if self.exceptions.contains(&compact_name) {
+                if self.exceptions.iter().any(|exception| name == exception) {
                     continue;
                 }
                 // If the first letter is capital, like `Object`, we will assume it is a native object
