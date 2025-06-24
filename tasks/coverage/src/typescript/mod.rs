@@ -1,7 +1,10 @@
 mod meta;
 mod transpile_runner;
 
-use std::path::{Path, PathBuf};
+use std::{
+    panic::UnwindSafe,
+    path::{Path, PathBuf},
+};
 
 use self::meta::{CompilerSettings, TestCaseContent, TestUnitData};
 pub use self::transpile_runner::{TranspileRunner, TypeScriptTranspileCase};
@@ -70,7 +73,7 @@ impl<T: Case> Suite<T> for TypeScriptSuite<T> {
     }
 }
 
-pub trait TypeScriptUsage: Sync + Send + std::panic::UnwindSafe + 'static {
+pub trait TypeScriptUsage: Sized + Sync + Send + UnwindSafe {
     const CHECK_NOT_SUPPORTED_ERROR_CODES: bool;
 }
 
