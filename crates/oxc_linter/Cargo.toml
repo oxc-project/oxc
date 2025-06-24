@@ -68,6 +68,7 @@ serde = { workspace = true, features = ["derive"] }
 serde_json = { workspace = true }
 simdutf8 = { workspace = true }
 smallvec = { workspace = true }
+unicode-segmentation = { workspace = true }
 
 [dev-dependencies]
 insta = { workspace = true }
