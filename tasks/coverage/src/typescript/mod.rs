@@ -1,7 +1,6 @@
 mod meta;
 mod transpile_runner;
 
-use std::any::TypeId;
 use std::path::{Path, PathBuf};
 
 use self::meta::{CompilerSettings, TestCaseContent, TestUnitData};
@@ -71,13 +70,19 @@ impl<T: Case> Suite<T> for TypeScriptSuite<T> {
     }
 }
 
-pub trait TypeScriptUsage: Sync + Send + std::panic::UnwindSafe + 'static {}
+pub trait TypeScriptUsage: Sync + Send + std::panic::UnwindSafe + 'static {
+    const CHECK_NOT_SUPPORTED_ERROR_CODES: bool;
+}
 
 pub struct ParserUsage;
-impl TypeScriptUsage for ParserUsage {}
+impl TypeScriptUsage for ParserUsage {
+    const CHECK_NOT_SUPPORTED_ERROR_CODES: bool = true;
+}
 
 pub struct ToolUsage;
-impl TypeScriptUsage for ToolUsage {}
+impl TypeScriptUsage for ToolUsage {
+    const CHECK_NOT_SUPPORTED_ERROR_CODES: bool = false;
+}
 
 pub struct TypeScriptCase<Usage: TypeScriptUsage = ToolUsage> {
     path: PathBuf,
@@ -117,7 +122,7 @@ impl<Usage: TypeScriptUsage> Case for TypeScriptCase<Usage> {
     }
 
     fn should_fail(&self) -> bool {
-        if TypeId::of::<Usage>() == TypeId::of::<ParserUsage>() {
+        if Usage::CHECK_NOT_SUPPORTED_ERROR_CODES {
             // If there are still error codes to be supported, it should fail
             return self
                 .error_codes
