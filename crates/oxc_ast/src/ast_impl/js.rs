@@ -615,7 +615,7 @@ impl<'a> MemberExpression<'a> {
                 Expression::StringLiteral(lit) => Some((lit.span, lit.value.as_str())),
                 Expression::TemplateLiteral(lit) => {
                     if lit.expressions.is_empty() && lit.quasis.len() == 1 {
-                        Some((lit.span, lit.quasis[0].value.raw.as_str()))
+                        lit.quasis[0].value.cooked.map(|cooked| (lit.span, cooked.as_str()))
                     } else {
                         None
                     }
