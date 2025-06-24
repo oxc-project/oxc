@@ -1,0 +1,106 @@
+name: Benchmark PR
+
+permissions:
+  pull-requests: write
+  contents: read
+
+on:
+  pull_request:
+    types: labeled
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  benchmark:
+    name: Walltime Benchmark
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    if: contains(github.event.pull_request.labels.*.name, 'run-bench')
+
+    steps:
+      - name: Checkout PR Branch
+        uses: taiki-e/checkout-action@b13d20b7cda4e2f325ef19895128f7ff735c0b3d # v1.3.1
+
+      - name: Setup Rust
+        uses: oxc-project/setup-rust@cd82e1efec7fef815e2c23d296756f31c7cdc03d # v1.0.0
+        with:
+          tools: critcmp
+          cache-key: rust-benchmark
+          save-cache: ${{ github.ref_name == 'main' }}
+
+      - name: Run Benchmarks on PR Branch
+        shell: bash
+        run: |
+          echo "Running benchmarks on PR branch..."
+          cargo bench -p oxc_benchmark --bench lexer -- --save-baseline pr --sample-size 250 --warm-up-time 5 --measurement-time 15
+          cargo bench -p oxc_benchmark --bench parser -- --save-baseline pr --sample-size 250 --warm-up-time 5 --measurement-time 15
+
+      - name: Checkout Target Branch
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          clean: false
+          ref: ${{ github.event.pull_request.base.ref }}
+          persist-credentials: false
+
+      - name: Run Benchmarks on Target Branch
+        shell: bash
+        run: |
+          echo "Running benchmarks on target branch..."
+          cargo bench -p oxc_benchmark --bench lexer -- --save-baseline target --sample-size 250 --warm-up-time 5 --measurement-time 15
+          cargo bench -p oxc_benchmark --bench parser -- --save-baseline target --sample-size 250 --warm-up-time 5 --measurement-time 15
+
+      - name: Verify Baselines
+        shell: bash
+        run: |
+          echo "Verifying benchmark baselines were created..."
+          critcmp --baselines
+          if ! critcmp --baselines | grep -q "pr"; then
+            echo "Error: PR baseline not found"
+            exit 1
+          fi
+          if ! critcmp --baselines | grep -q "target"; then
+            echo "Error: Target baseline not found"
+            exit 1
+          fi
+          echo "✅ Both baselines found successfully"
+
+      - name: Compare Benchmark Results
+        id: bench_comparison
+        shell: bash
+        run: |
+          echo "## 🚀 Benchmark Results" > output
+          echo "" >> output
+
+          echo "\`\`\`" >> output
+          if critcmp target pr >> output 2>/dev/null; then
+            echo "Benchmark comparison completed"
+          else
+            echo "No significant benchmark differences found." >> output
+          fi
+          echo "\`\`\`" >> output
+          echo "" >> output
+
+          cat output
+          echo "comment<<EOF" >> $GITHUB_OUTPUT
+          cat output >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+      - name: Find Existing Comment
+        uses: peter-evans/find-comment@3eae4d37986fb5a8592848f6a574fdf654e61f9e # v3.1.0
+        id: find-comment
+        with:
+          issue-number: ${{ github.event.pull_request.number }}
+          comment-author: "github-actions[bot]"
+          body-includes: "## 🚀 Benchmark Results"
+
+      - name: Create or Update Benchmark Comment
+        uses: peter-evans/create-or-update-comment@71345be0265236311c031f5c7866368bd1eff043 # v4.0.0
+        continue-on-error: true
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          comment-id: ${{ steps.find-comment.outputs.comment-id }}
+          issue-number: ${{ github.event.pull_request.number }}
+          body: ${{ steps.bench_comparison.outputs.comment }}
+          edit-mode: replace
