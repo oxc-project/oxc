@@ -33,7 +33,10 @@ impl ESTree for JSXElementOpeningElement<'_, '_> {
         state.serialize_field("attributes", &opening_element.attributes);
         state.serialize_field("selfClosing", &element.closing_element.is_none());
         if ranges {
-            state.serialize_field("range", &[&opening_element.span.start, &opening_element.span.end]);
+            state.serialize_field(
+                "range",
+                &[&opening_element.span.start, &opening_element.span.end],
+            );
         }
         state.end();
     }

@@ -98,7 +98,9 @@ impl ESTree for BindingPatternKindAndTsFields<'_, '_> {
                 BindingPatternKind::BindingIdentifier(ident) => (ident.span.start, ident.span.end),
                 BindingPatternKind::ObjectPattern(object) => (object.span.start, object.span.end),
                 BindingPatternKind::ArrayPattern(array) => (array.span.start, array.span.end),
-                BindingPatternKind::AssignmentPattern(assignment) => (assignment.span.start, assignment.span.end),
+                BindingPatternKind::AssignmentPattern(assignment) => {
+                    (assignment.span.start, assignment.span.end)
+                }
             };
             state.serialize_field("range", &[&span_start, &span_end]);
         }
@@ -255,7 +257,7 @@ impl ESTree for FormalParameterConverter<'_, '_> {
                 state.serialize_field("static", &false);
                 if ranges {
                     state.serialize_field("range", &[&param.span.start, &param.span.end]);
-                } 
+                }
                 state.end();
             } else {
                 BindingPatternKindAndTsFields {
