@@ -52,16 +52,12 @@ impl IdLength {
         false
     }
 
-    fn is_too_long(&self, identifier: &str) -> bool {
-        let length = identifier.graphemes(true).count();
-
-        length > usize::try_from(self.max).unwrap_or(usize::MAX)
+    fn is_too_long(&self, ident_length: usize) -> bool {
+        ident_length > usize::try_from(self.max).unwrap_or(usize::MAX)
     }
 
-    fn is_too_short(&self, identifier: &str) -> bool {
-        let length = identifier.graphemes(true).count();
-
-        length < usize::try_from(self.min).unwrap_or(0)
+    fn is_too_short(&self, ident_length: usize) -> bool {
+        ident_length < usize::try_from(self.min).unwrap_or(0)
     }
 }
 
@@ -183,6 +179,17 @@ impl Rule for IdLength {
             AstKind::BindingIdentifier(ident) => {
                 let ident_name = ident.name.to_string();
 
+                if self.is_exception(&ident_name) {
+                    return;
+                }
+
+                let graphemes_length = ident_name.graphemes(true).count();
+                let is_too_long = self.is_too_long(graphemes_length);
+                let is_too_short = self.is_too_short(graphemes_length);
+                if !is_too_long && !is_too_short {
+                    return;
+                }
+
                 if let Some(parent_node) = ctx.nodes().parent_node(node.id()) {
                     match parent_node.kind() {
                         AstKind::ImportSpecifier(import_specifier) => {
@@ -216,18 +223,26 @@ impl Rule for IdLength {
                     }
                 }
 
-                if self.is_exception(&ident_name) {
-                    return;
-                }
-                if self.is_too_long(&ident_name) {
+                if is_too_long {
                     ctx.diagnostic(id_length_is_too_long_diagnostic(node.span(), self.max));
                 }
-                if self.is_too_short(&ident_name) {
+                if is_too_short {
                     ctx.diagnostic(id_length_is_too_short_diagnostic(node.span(), self.min));
                 }
             }
             AstKind::IdentifierName(ident) => {
                 let ident_name = ident.name.to_string();
+
+                if self.is_exception(&ident_name) {
+                    return;
+                }
+
+                let graphemes_length = ident_name.graphemes(true).count();
+                let is_too_long = self.is_too_long(graphemes_length);
+                let is_too_short = self.is_too_short(graphemes_length);
+                if !is_too_long && !is_too_short {
+                    return;
+                }
 
                 if let Some(parent_node) = ctx.nodes().parent_node(node.id()) {
                     match parent_node.kind() {
@@ -289,13 +304,10 @@ impl Rule for IdLength {
                     }
                 }
 
-                if self.is_exception(&ident_name) {
-                    return;
-                }
-                if self.is_too_long(&ident_name) {
+                if is_too_long {
                     ctx.diagnostic(id_length_is_too_long_diagnostic(node.span(), self.max));
                 }
-                if self.is_too_short(&ident_name) {
+                if is_too_short {
                     ctx.diagnostic(id_length_is_too_short_diagnostic(node.span(), self.min));
                 }
             }
@@ -305,10 +317,18 @@ impl Rule for IdLength {
                 if self.is_exception(&ident_name) {
                     return;
                 }
-                if self.is_too_long(&ident_name) {
+
+                let graphemes_length = ident_name.graphemes(true).count();
+                let is_too_long = self.is_too_long(graphemes_length);
+                let is_too_short = self.is_too_short(graphemes_length);
+                if !is_too_long && !is_too_short {
+                    return;
+                }
+
+                if is_too_long {
                     ctx.diagnostic(id_length_is_too_long_diagnostic(node.span(), self.max));
                 }
-                if self.is_too_short(&ident_name) {
+                if is_too_short {
                     ctx.diagnostic(id_length_is_too_short_diagnostic(node.span(), self.min));
                 }
             }
