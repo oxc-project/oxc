@@ -2786,12 +2786,6 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ·  ────
    ╰────
 
-  × A rest parameter must be last in a parameter list
-   ╭─[babel/packages/babel-parser/test/fixtures/es2015/arrow-functions/comma-after-rest-param/input.js:1:2]
- 1 │ (...rest,) => {}
-   ·  ───────
-   ╰────
-
   × A rest parameter or binding pattern may not have a trailing comma.
    ╭─[babel/packages/babel-parser/test/fixtures/es2015/arrow-functions/comma-after-rest-param/input.js:1:9]
  1 │ (...rest,) => {}
@@ -2854,11 +2848,11 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ╰────
   help: Try insert a semicolon here
 
-  × A rest parameter must be last in a parameter list
+  × Unexpected token
    ╭─[babel/packages/babel-parser/test/fixtures/es2015/arrow-functions/invalid-rest-in-params/input.js:3:5]
  2 │     first,
  3 │     ...second,
-   ·     ─────────
+   ·     ───
  4 │     third
    ╰────
 
@@ -5704,12 +5698,6 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
  3 │ }
    ╰────
 
-  × A rest parameter must be last in a parameter list
-   ╭─[babel/packages/babel-parser/test/fixtures/es2017/async-functions/params-invalid-rest-trailing-comma/input.js:1:8]
- 1 │ async (...a,) => {};
-   ·        ────
-   ╰────
-
   × A rest parameter or binding pattern may not have a trailing comma.
    ╭─[babel/packages/babel-parser/test/fixtures/es2017/async-functions/params-invalid-rest-trailing-comma/input.js:1:12]
  1 │ async (...a,) => {};
@@ -5981,12 +5969,6 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ╭─[babel/packages/babel-parser/test/fixtures/es2018/object-rest-spread/7/input.js:1:7]
  1 │ let { ...x, y, z } = obj;
    ·       ────
-   ╰────
-
-  × A rest element must be last in a destructuring pattern
-   ╭─[babel/packages/babel-parser/test/fixtures/es2018/object-rest-spread/8/input.js:1:13]
- 1 │ let { x, y, ...z, } = obj;
-   ·             ────
    ╰────
 
   × A rest parameter or binding pattern may not have a trailing comma.
@@ -8790,12 +8772,6 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ·      ┬     ┬
    ·      │     ╰── It can not be redeclared here
    ·      ╰── `b` has already been declared here
-   ╰────
-
-  × A rest element must be last in a destructuring pattern
-   ╭─[babel/packages/babel-parser/test/fixtures/esprima/es2015-array-binding-pattern/invalid-elision-after-rest/input.js:1:5]
- 1 │ ([a,...b,])=>0;
-   ·     ────
    ╰────
 
   × A rest parameter or binding pattern may not have a trailing comma.

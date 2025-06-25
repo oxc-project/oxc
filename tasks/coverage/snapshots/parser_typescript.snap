@@ -24261,26 +24261,11 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
     ╰────
   help: Wrap unary expression in parentheses to enforce operator precedence
 
-  × A rest element must be last in a destructuring pattern
-   ╭─[typescript/tests/cases/conformance/es7/trailingCommasInBindingPatterns.ts:1:8]
- 1 │ const [...a,] = [];
-   ·        ────
- 2 │ const {...b,} = {};
-   ╰────
-
   × A rest parameter or binding pattern may not have a trailing comma.
    ╭─[typescript/tests/cases/conformance/es7/trailingCommasInBindingPatterns.ts:1:12]
  1 │ const [...a,] = [];
    ·            ─
  2 │ const {...b,} = {};
-   ╰────
-
-  × A rest element must be last in a destructuring pattern
-   ╭─[typescript/tests/cases/conformance/es7/trailingCommasInBindingPatterns.ts:2:8]
- 1 │ const [...a,] = [];
- 2 │ const {...b,} = {};
-   ·        ────
- 3 │ let c, d;
    ╰────
 
   × A rest parameter or binding pattern may not have a trailing comma.
@@ -24297,14 +24282,6 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
  4 │ ([...c,] = []);
    ·       ─
  5 │ ({...d,} = {});
-   ╰────
-
-  × A rest parameter must be last in a parameter list
-   ╭─[typescript/tests/cases/conformance/es7/trailingCommasInFunctionParametersAndArguments.ts:5:13]
- 4 │ 
- 5 │ function f2(...args,) {}
-   ·             ───────
- 6 │ 
    ╰────
 
   × A rest parameter or binding pattern may not have a trailing comma.
@@ -25437,22 +25414,6 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
     ·                         ───────────
  10 │ function fn5() { }
     ╰────
-
-  × A required parameter cannot follow an optional parameter.
-   ╭─[typescript/tests/cases/conformance/functions/functionOverloadErrorsSyntax.ts:2:27]
- 1 │ //Function overload signature with optional parameter followed by non-optional parameter
- 2 │ function fn4a(x?: number, y: string);
-   ·                           ─────────
- 3 │ function fn4a() { }
-   ╰────
-
-  × A required parameter cannot follow an optional parameter.
-   ╭─[typescript/tests/cases/conformance/functions/functionOverloadErrorsSyntax.ts:5:38]
- 4 │ 
- 5 │ function fn4b(n: string, x?: number, y: string);
-   ·                                      ─────────
- 6 │ function fn4b() { }
-   ╰────
 
   × Illegal 'use strict' directive in function with non-simple parameter list
    ╭─[typescript/tests/cases/conformance/functions/functionWithUseStrictAndSimpleParameterList_es2016.ts:2:5]
@@ -30967,44 +30928,12 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
    ╰────
 
   × A rest parameter must be last in a parameter list
-    ╭─[typescript/tests/cases/conformance/types/objectTypeLiteral/callSignatures/restParameterWithoutAnnotationIsAnyArray.ts:13:9]
- 12 │     (...x);
- 13 │     foo(...x, ...y);
-    ·         ────
- 14 │ }
-    ╰────
-
-  × A rest parameter must be last in a parameter list
-    ╭─[typescript/tests/cases/conformance/types/objectTypeLiteral/callSignatures/restParameterWithoutAnnotationIsAnyArray.ts:23:21]
- 22 │     foo(...x) { },
- 23 │     a: function foo(...x, ...y) { },
-    ·                     ────
- 24 │     b: (...x) => { }
-    ╰────
-
-  × A rest parameter must be last in a parameter list
    ╭─[typescript/tests/cases/conformance/types/objectTypeLiteral/callSignatures/restParametersOfNonArrayTypes.ts:5:11]
  4 │ var f = function foo(...x: number) { }
  5 │ var f2 = (...x: Date, ...y: boolean) => { }
    ·           ──────────
  6 │ 
    ╰────
-
-  × A rest parameter must be last in a parameter list
-    ╭─[typescript/tests/cases/conformance/types/objectTypeLiteral/callSignatures/restParametersOfNonArrayTypes.ts:13:9]
- 12 │     (...x: string);
- 13 │     foo(...x: number, ...y: number);
-    ·         ────────────
- 14 │ }
-    ╰────
-
-  × A rest parameter must be last in a parameter list
-    ╭─[typescript/tests/cases/conformance/types/objectTypeLiteral/callSignatures/restParametersOfNonArrayTypes.ts:23:21]
- 22 │     foo(...x: string) { },
- 23 │     a: function foo(...x: number, ...y: Date) { },
-    ·                     ────────────
- 24 │     b: (...x: string) => { }
-    ╰────
 
   × A rest parameter must be last in a parameter list
     ╭─[typescript/tests/cases/conformance/types/objectTypeLiteral/callSignatures/restParametersOfNonArrayTypes2.ts:9:11]
@@ -31015,92 +30944,12 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
     ╰────
 
   × A rest parameter must be last in a parameter list
-    ╭─[typescript/tests/cases/conformance/types/objectTypeLiteral/callSignatures/restParametersOfNonArrayTypes2.ts:17:9]
- 16 │     (...x: MyThing);
- 17 │     foo(...x: MyThing, ...y: MyThing);
-    ·         ─────────────
- 18 │ }
-    ╰────
-
-  × A rest parameter must be last in a parameter list
-    ╭─[typescript/tests/cases/conformance/types/objectTypeLiteral/callSignatures/restParametersOfNonArrayTypes2.ts:27:21]
- 26 │     foo(...x: MyThing) { },
- 27 │     a: function foo(...x: MyThing, ...y: MyThing) { },
-    ·                     ─────────────
- 28 │     b: (...x: MyThing) => { }
-    ╰────
-
-  × A rest parameter must be last in a parameter list
-    ╭─[typescript/tests/cases/conformance/types/objectTypeLiteral/callSignatures/restParametersOfNonArrayTypes2.ts:36:11]
- 35 │ var f3 = function foo(...x: MyThing2<string>) { }
- 36 │ var f4 = (...x: MyThing2<string>, ...y: MyThing2<string>) => { }
-    ·           ──────────────────────
- 37 │ 
-    ╰────
-
-  × A rest parameter must be last in a parameter list
-    ╭─[typescript/tests/cases/conformance/types/objectTypeLiteral/callSignatures/restParametersOfNonArrayTypes2.ts:44:9]
- 43 │     (...x: MyThing2<string>);
- 44 │     foo(...x: MyThing2<string>, ...y: MyThing2<string>);
-    ·         ──────────────────────
- 45 │ }
-    ╰────
-
-  × A rest parameter must be last in a parameter list
-    ╭─[typescript/tests/cases/conformance/types/objectTypeLiteral/callSignatures/restParametersOfNonArrayTypes2.ts:54:21]
- 53 │     foo(...x: MyThing2<string>) { },
- 54 │     a: function foo(...x: MyThing2<string>, ...y: MyThing2<string>) { },
-    ·                     ──────────────────────
- 55 │     b: (...x: MyThing2<string>) => { }
-    ╰────
-
-  × A rest parameter must be last in a parameter list
    ╭─[typescript/tests/cases/conformance/types/objectTypeLiteral/callSignatures/restParametersWithArrayTypeAnnotations.ts:5:11]
  4 │ var f = function foo(...x: number[]) { }
  5 │ var f2 = (...x: number[], ...y: number[]) => { }
    ·           ──────────────
  6 │ 
    ╰────
-
-  × A rest parameter must be last in a parameter list
-    ╭─[typescript/tests/cases/conformance/types/objectTypeLiteral/callSignatures/restParametersWithArrayTypeAnnotations.ts:13:9]
- 12 │     (...x: number[]);
- 13 │     foo(...x: number[], ...y: number[]);
-    ·         ──────────────
- 14 │ }
-    ╰────
-
-  × A rest parameter must be last in a parameter list
-    ╭─[typescript/tests/cases/conformance/types/objectTypeLiteral/callSignatures/restParametersWithArrayTypeAnnotations.ts:23:21]
- 22 │     foo(...x: number[]) { },
- 23 │     a: function foo(...x: number[], ...y: number[]) { },
-    ·                     ──────────────
- 24 │     b: (...x: number[]) => { }
-    ╰────
-
-  × A rest parameter must be last in a parameter list
-    ╭─[typescript/tests/cases/conformance/types/objectTypeLiteral/callSignatures/restParametersWithArrayTypeAnnotations.ts:32:11]
- 31 │ var f3 = function foo(...x: Array<string>) { }
- 32 │ var f4 = (...x: Array<string>, ...y: Array<string>) => { }
-    ·           ───────────────────
- 33 │ 
-    ╰────
-
-  × A rest parameter must be last in a parameter list
-    ╭─[typescript/tests/cases/conformance/types/objectTypeLiteral/callSignatures/restParametersWithArrayTypeAnnotations.ts:40:9]
- 39 │     (...x: Array<string>);
- 40 │     foo(...x: Array<string>, ...y: Array<string>);
-    ·         ───────────────────
- 41 │ }
-    ╰────
-
-  × A rest parameter must be last in a parameter list
-    ╭─[typescript/tests/cases/conformance/types/objectTypeLiteral/callSignatures/restParametersWithArrayTypeAnnotations.ts:50:21]
- 49 │     foo(...x: Array<string>) { },
- 50 │     a: function foo(...x: Array<string>, ...y: Array<string>) { },
-    ·                     ───────────────────
- 51 │     b: (...x: Array<string>) => { }
-    ╰────
 
   × Expected `,` but found `?`
     ╭─[typescript/tests/cases/conformance/types/objectTypeLiteral/methodSignatures/objectTypesWithOptionalProperties.ts:24:6]
@@ -31159,40 +31008,10 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
    ╰────
 
   × A rest element must be last in a destructuring pattern
-    ╭─[typescript/tests/cases/conformance/types/rest/objectRestNegative.ts:9:28]
-  8 │ 
-  9 │ function stillMustBeLast({ ...mustBeLast, a }: { a: number, b: string }): void {
-    ·                            ─────────────
- 10 │ }
-    ╰────
-
-  × Invalid rest operator's argument.
-    ╭─[typescript/tests/cases/conformance/types/rest/objectRestNegative.ts:17:9]
- 16 │ let rest: { b: string }
- 17 │ ({a, ...rest.b + rest.b} = o);
-    ·         ───────────────
-    ╰────
-
-  × Cannot assign to this expression
-    ╭─[typescript/tests/cases/conformance/types/rest/objectRestNegative.ts:17:9]
- 16 │ let rest: { b: string }
- 17 │ ({a, ...rest.b + rest.b} = o);
-    ·         ───────────────
-    ╰────
-
-  × A rest element must be last in a destructuring pattern
    ╭─[typescript/tests/cases/conformance/types/rest/objectRestPropertyMustBeLast.ts:1:6]
  1 │ var {...a, x } = { x: 1 };    // Error, rest must be last property
    ·      ────
  2 │ ({...a, x } = { x: 1 });      // Error, rest must be last property
-   ╰────
-
-  × Spread must be last element
-   ╭─[typescript/tests/cases/conformance/types/rest/objectRestPropertyMustBeLast.ts:2:3]
- 1 │ var {...a, x } = { x: 1 };    // Error, rest must be last property
- 2 │ ({...a, x } = { x: 1 });      // Error, rest must be last property
-   ·   ────
- 3 │ 
    ╰────
 
   × A rest element must be last in a destructuring pattern
@@ -31200,13 +31019,6 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
  1 │ var [...a, x] = [1, 2, 3];  // Error, rest must be last element
    ·      ────
  2 │ [...a, x] = [1, 2, 3];      // Error, rest must be last element
-   ╰────
-
-  × Spread must be last element
-   ╭─[typescript/tests/cases/conformance/types/rest/restElementMustBeLast.ts:2:2]
- 1 │ var [...a, x] = [1, 2, 3];  // Error, rest must be last element
- 2 │ [...a, x] = [1, 2, 3];      // Error, rest must be last element
-   ·  ────
    ╰────
 
   × TS(2414): Class name cannot be 'any'

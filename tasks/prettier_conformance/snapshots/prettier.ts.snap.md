@@ -170,7 +170,7 @@ ts compatibility: 200/573 (34.90%)
 | typescript/conformance/types/functions/functionOverloadCompatibilityWithVoid01.ts | 💥 | 50.00% |
 | typescript/conformance/types/functions/functionOverloadCompatibilityWithVoid02.ts | 💥 | 50.00% |
 | typescript/conformance/types/functions/functionOverloadCompatibilityWithVoid03.ts | 💥 | 50.00% |
-| typescript/conformance/types/functions/functionOverloadErrorsSyntax.ts | 💥 | 70.00% |
+| typescript/conformance/types/functions/functionOverloadErrorsSyntax.ts | 💥 | 0.00% |
 | typescript/conformance/types/interfaceDeclaration/interfaceDeclaration.ts | 💥 | 90.00% |
 | typescript/conformance/types/namespaceExportDeclaration/exportAsNamespace.d.ts | 💥 | 75.00% |
 | typescript/conformance/types/thisType/thisType.ts | 💥 | 66.67% |
