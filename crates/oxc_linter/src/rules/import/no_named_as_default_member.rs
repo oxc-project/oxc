@@ -121,30 +121,30 @@ impl Rule for NoNamedAsDefaultMember {
                     })
             };
 
-        let process_member_expr = |member_expr: &MemberExpression| {
-            let Expression::Identifier(ident) = member_expr.object() else {
-                return;
-            };
-            let Some(prop_str) = member_expr.static_property_name() else {
-                return;
-            };
-            if let Some(module_name) = get_external_module_name_if_has_entry(ident, prop_str) {
-                ctx.diagnostic(no_named_as_default_member_dignostic(
-                    match member_expr {
-                        MemberExpression::ComputedMemberExpression(it) => it.span,
-                        MemberExpression::StaticMemberExpression(it) => it.span,
-                        MemberExpression::PrivateFieldExpression(it) => it.span,
-                    },
-                    &ident.name,
-                    prop_str,
-                    module_name.name(),
-                ));
-            }
-        };
-
         for item in ctx.nodes() {
             match item.kind() {
-                AstKind::MemberExpression(member_expr) => process_member_expr(member_expr),
+                AstKind::MemberExpression(member_expr) => {
+                    let Expression::Identifier(ident) = member_expr.object() else {
+                        return;
+                    };
+                    let Some(prop_str) = member_expr.static_property_name() else {
+                        return;
+                    };
+                    if let Some(module_name) =
+                        get_external_module_name_if_has_entry(ident, prop_str)
+                    {
+                        ctx.diagnostic(no_named_as_default_member_dignostic(
+                            match member_expr {
+                                MemberExpression::ComputedMemberExpression(it) => it.span,
+                                MemberExpression::StaticMemberExpression(it) => it.span,
+                                MemberExpression::PrivateFieldExpression(it) => it.span,
+                            },
+                            &ident.name,
+                            prop_str,
+                            module_name.name(),
+                        ));
+                    }
+                }
                 AstKind::VariableDeclarator(decl) => {
                     let Some(Expression::Identifier(ident)) = &decl.init else {
                         continue;
