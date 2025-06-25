@@ -10323,13 +10323,6 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
  2 │ }
    ╰────
 
-  × Type parameter list cannot be empty.
-   ╭─[typescript/tests/cases/compiler/classWithEmptyTypeParameter.ts:1:8]
- 1 │ class C<> {
-   ·        ──
- 2 │ }
-   ╰────
-
   × Function implementation is missing or not immediately following the declaration.
    ╭─[typescript/tests/cases/compiler/classWithOverloadImplementationOfWrongName.ts:3:5]
  2 │     foo(): string;
@@ -15729,70 +15722,6 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
     ╰────
 
   × TS(1092): Type parameters cannot appear on a constructor declaration
-    ╭─[typescript/tests/cases/compiler/parserConstructorDeclaration12.ts:9:15]
-  8 │   constructor < >() { }
-  9 │   constructor < > () { }
-    ·               ───
- 10 │ }
-    ╰────
-
-  × Type parameter list cannot be empty.
-   ╭─[typescript/tests/cases/compiler/parserConstructorDeclaration12.ts:2:14]
- 1 │ class C {
- 2 │   constructor<>() { }
-   ·              ──
- 3 │   constructor<> () { }
-   ╰────
-
-  × Type parameter list cannot be empty.
-   ╭─[typescript/tests/cases/compiler/parserConstructorDeclaration12.ts:3:14]
- 2 │   constructor<>() { }
- 3 │   constructor<> () { }
-   ·              ──
- 4 │   constructor <>() { }
-   ╰────
-
-  × Type parameter list cannot be empty.
-   ╭─[typescript/tests/cases/compiler/parserConstructorDeclaration12.ts:4:15]
- 3 │   constructor<> () { }
- 4 │   constructor <>() { }
-   ·               ──
- 5 │   constructor <> () { }
-   ╰────
-
-  × Type parameter list cannot be empty.
-   ╭─[typescript/tests/cases/compiler/parserConstructorDeclaration12.ts:5:15]
- 4 │   constructor <>() { }
- 5 │   constructor <> () { }
-   ·               ──
- 6 │   constructor< >() { }
-   ╰────
-
-  × Type parameter list cannot be empty.
-   ╭─[typescript/tests/cases/compiler/parserConstructorDeclaration12.ts:6:14]
- 5 │   constructor <> () { }
- 6 │   constructor< >() { }
-   ·              ───
- 7 │   constructor< > () { }
-   ╰────
-
-  × Type parameter list cannot be empty.
-   ╭─[typescript/tests/cases/compiler/parserConstructorDeclaration12.ts:7:14]
- 6 │   constructor< >() { }
- 7 │   constructor< > () { }
-   ·              ───
- 8 │   constructor < >() { }
-   ╰────
-
-  × Type parameter list cannot be empty.
-   ╭─[typescript/tests/cases/compiler/parserConstructorDeclaration12.ts:8:15]
- 7 │   constructor< > () { }
- 8 │   constructor < >() { }
-   ·               ───
- 9 │   constructor < > () { }
-   ╰────
-
-  × Type parameter list cannot be empty.
     ╭─[typescript/tests/cases/compiler/parserConstructorDeclaration12.ts:9:15]
   8 │   constructor < >() { }
   9 │   constructor < > () { }
@@ -26674,14 +26603,6 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
    ╰────
 
   × TS(1092): Type parameters cannot appear on a constructor declaration
-   ╭─[typescript/tests/cases/conformance/parser/ecmascript5/ConstructorDeclarations/parserConstructorDeclaration11.ts:2:14]
- 1 │ class C {
- 2 │   constructor<>() { }
-   ·              ──
- 3 │ }
-   ╰────
-
-  × Type parameter list cannot be empty.
    ╭─[typescript/tests/cases/conformance/parser/ecmascript5/ConstructorDeclarations/parserConstructorDeclaration11.ts:2:14]
  1 │ class C {
  2 │   constructor<>() { }
