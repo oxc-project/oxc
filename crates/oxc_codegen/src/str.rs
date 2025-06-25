@@ -592,29 +592,16 @@ unsafe fn print_less_than(codegen: &mut Codegen, state: &mut PrintStringState) {
     // SAFETY: Next byte is `<`, which is ASCII
     unsafe { state.consume_byte_unchecked() };
 
-    // We have to check 2nd byte separately as `next8_lower_case == *b"</script"`
-    // would also match `<\x0Fscript` (0xF | 32 == b'/').
-    if slice.len() >= 8 && slice[1] == b'/' {
-        // Compiler condenses these operations to an 8-byte read, u64 AND, and u64 compare.
-        // https://godbolt.org/z/9ndYnbj53
-        let next8: [u8; 8] = slice[0..8].try_into().unwrap();
-        let mut next8_lower_case = [0; 8];
-        for i in 0..8 {
-            // `| 32` converts ASCII upper case letters to lower case. `<` and `/` are unaffected.
-            next8_lower_case[i] = next8[i] | 32;
-        }
-
-        if next8_lower_case == *b"</script" {
-            // Flush up to and including `<`. Skip `/`. Write `\/` instead. Then skip over `script`.
-            // Next chunk starts with `script`.
-            // SAFETY: We already consumed `<`. Next byte is `/`, which is ASCII.
-            unsafe { state.flush_and_consume_byte(codegen) };
-            // SAFETY: `slice.len() >= 8` check above ensures there are 6 bytes left, after consuming 2 already.
-            // `script` / `SCRIPT` is all ASCII bytes, so skipping them leaves `bytes` iterator
-            // positioned on UTF-8 char boundary.
-            unsafe { state.consume_bytes_unchecked::<6>() };
-            codegen.print_str("\\/");
-        }
+    if slice.len() >= 8 && is_script_close_tag(&slice[0..8]) {
+        // Flush up to and including `<`. Skip `/`. Write `\/` instead. Then skip over `script`.
+        // Next chunk starts with `script`.
+        // SAFETY: We already consumed `<`. Next byte is `/`, which is ASCII.
+        unsafe { state.flush_and_consume_byte(codegen) };
+        codegen.print_str("\\/");
+        // SAFETY: The check above ensures there are 6 bytes left, after consuming 2 already.
+        // `script` / `SCRIPT` is all ASCII bytes, so skipping them leaves `bytes` iterator
+        // positioned on UTF-8 char boundary.
+        unsafe { state.consume_bytes_unchecked::<6>() };
     }
 }
 
@@ -734,4 +721,21 @@ unsafe fn print_lossy_replacement(codegen: &mut Codegen, state: &mut PrintString
 #[cold]
 pub fn cold_branch<F: FnOnce() -> T, T>(f: F) -> T {
     f()
+}
+
+/// Check if the slice is `</script` regardless of case.
+pub fn is_script_close_tag(slice: &[u8]) -> bool {
+    if slice.len() == 8 {
+        // Compiler condenses these operations to an 8-byte read, u64 AND, and u64 compare.
+        // https://godbolt.org/z/oGG16fK6v
+        let mut slice: [u8; 8] = slice.try_into().unwrap();
+        for b in slice.iter_mut().skip(2) {
+            // `| 32` converts ASCII upper case letters to lower case.
+            *b |= 32;
+        }
+
+        slice == *b"</script"
+    } else {
+        false
+    }
 }
