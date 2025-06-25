@@ -4,6 +4,60 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.75.0] - 2025-06-25
+
+### 💥 BREAKING CHANGES
+
+- 9a2548a napi/parser: [**BREAKING**] Add `range` option (#11728) (Bacary Bruno Bodian)
+
+### 🐛 Bug Fixes
+
+- cf0e18a napi/parser: `NodeArray` allow setting large integer properties (#11883) (overlookmotel)
+
+### 🚜 Refactor
+
+- 0bf7815 napi/parser: Lazy visitor: pre-calculate count of node types (#11861) (overlookmotel)
+
+### ⚡ Performance
+
+- 84fa006 napi/parser: Lazy deser: faster construction of `NodeArray` iterators (#11870) (overlookmotel)
+- fb02e6c napi/parser: Lazy deser: speed up creating `NodeArray`s (#11869) (overlookmotel)
+- 58dfff8 napi/parser: Raw deser: remove `WeakMap` from `NodeArray` (#11868) (overlookmotel)
+- 6c5ee78 napi/parser: Lazy visit: cheaper for loop (#11864) (overlookmotel)
+
+### 🧪 Testing
+
+- 54f9464 napi/parser: Add benchmarks for lazy visit alone (#11866) (overlookmotel)
+- 97b671f napi/parser: Load internal modules with `require` in benchmarks (#11865) (overlookmotel)
+
+
+## [0.75.0] - 2025-06-25
+
+### 💥 BREAKING CHANGES
+
+- 9a2548a napi/parser: [**BREAKING**] Add `range` option (#11728) (Bacary Bruno Bodian)
+
+### 🐛 Bug Fixes
+
+- cf0e18a napi/parser: `NodeArray` allow setting large integer properties (#11883) (overlookmotel)
+
+### 🚜 Refactor
+
+- 0bf7815 napi/parser: Lazy visitor: pre-calculate count of node types (#11861) (overlookmotel)
+
+### ⚡ Performance
+
+- 84fa006 napi/parser: Lazy deser: faster construction of `NodeArray` iterators (#11870) (overlookmotel)
+- fb02e6c napi/parser: Lazy deser: speed up creating `NodeArray`s (#11869) (overlookmotel)
+- 58dfff8 napi/parser: Raw deser: remove `WeakMap` from `NodeArray` (#11868) (overlookmotel)
+- 6c5ee78 napi/parser: Lazy visit: cheaper for loop (#11864) (overlookmotel)
+
+### 🧪 Testing
+
+- 54f9464 napi/parser: Add benchmarks for lazy visit alone (#11866) (overlookmotel)
+- 97b671f napi/parser: Load internal modules with `require` in benchmarks (#11865) (overlookmotel)
+
+
 ## [0.74.0] - 2025-06-23
 
 ### 🚀 Features

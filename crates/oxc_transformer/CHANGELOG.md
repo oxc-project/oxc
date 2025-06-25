@@ -4,6 +4,13 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.75.0] - 2025-06-25
+
+### 🚀 Features
+
+- e36ca9a transformer/react-refresh: Support checking a variable whether is used in JSX elements or JSX-like calls (#11859) (Dunqing)
+
+
 ## [0.74.0] - 2025-06-23
 
 ### 💥 BREAKING CHANGES

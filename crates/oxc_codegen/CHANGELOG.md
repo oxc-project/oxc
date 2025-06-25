@@ -4,6 +4,13 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.75.0] - 2025-06-25
+
+### 🐛 Bug Fixes
+
+- f41705f codegen: Do not generate sourcemap for empty length spans (#11892) (Boshen)
+
+
 
 
 
