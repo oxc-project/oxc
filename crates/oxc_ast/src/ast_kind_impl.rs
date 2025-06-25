@@ -416,6 +416,7 @@ impl AstKind<'_> {
 ///
 /// Having a separate enum for this allows us to implement helpful methods that are specific to member expressions,
 /// such as getting the property name or the object of the member expression.
+#[derive(Debug, Clone, Copy)]
 pub enum MemberExpressionKind<'a> {
     /// A static member expression, such as `obj.prop`.
     Static(&'a StaticMemberExpression<'a>),
