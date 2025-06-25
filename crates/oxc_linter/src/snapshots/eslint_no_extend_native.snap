@@ -156,3 +156,9 @@ source: crates/oxc_linter/src/tester.rs
  1 │ Array.prototype.p ??= 0
    · ───────────────────────
    ╰────
+
+  ⚠ eslint(no-extend-native): Array prototype is read-only, properties should not be added.
+   ╭─[no_extend_native.tsx:1:1]
+ 1 │ [Array.prototype.p] = [() => {}]
+   · ───────────────────
+   ╰────

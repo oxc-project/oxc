@@ -180,19 +180,26 @@ fn get_property_assignment<'a>(
     ctx: &'a LintContext,
     node: &AstNode<'a>,
 ) -> Option<&'a AstNode<'a>> {
-    // Ignore computed member expressions like `obj[Object.prototype] = 0` (i.e., the
-    // given node is the `expression` of the computed member expression)
-    if let Some(AstKind::ComputedMemberExpression(parent_mem_expr)) =
-        ctx.nodes().parent_kind(node.id())
-    {
-        if parent_mem_expr.expression.span().contains_inclusive(node.span()) {
-            return None;
-        }
-    }
-
     for parent in ctx.nodes().ancestors(node.id()).skip(1) {
-        if let AstKind::AssignmentExpression(_) = parent.kind() {
-            return Some(parent);
+        match parent.kind() {
+            AstKind::AssignmentExpression(assignment_expr)
+                if assignment_expr.left.span().contains_inclusive(node.span()) =>
+            {
+                return Some(parent);
+            }
+            AstKind::ArrayAssignmentTarget(assign_target)
+                if assign_target.elements.iter().any(|e| {
+                    e.as_ref().is_some_and(|e| e.span().contains_inclusive(node.span()))
+                }) =>
+            {
+                return Some(parent);
+            }
+            AstKind::ComputedMemberExpression(computed_expr)
+                if computed_expr.object.span().contains_inclusive(node.span()) => {}
+            AstKind::StaticMemberExpression(_)
+            | AstKind::SimpleAssignmentTarget(_)
+            | AstKind::AssignmentTarget(_) => {}
+            _ => return None,
         }
     }
     None
@@ -257,6 +264,14 @@ fn test() {
         ("Object.defineProperties()", None),
         ("function foo() { var Object = function() {}; Object.prototype.p = 0 }", None),
         ("{ let Object = function() {}; Object.prototype.p = 0 }", None), // { "ecmaVersion": 6 }
+        ("x = Object.prototype.p", None),
+        ("x = Array.prototype.p", None),
+        ("Array.#prototype.p = 0", None),
+        ("foo(Number.prototype.xyz).x = 1", None),
+        ("let { z = Array.prototype.p } = {} ", None),
+        ("Object.x.defineProperty(Array.prototype, 'p', {value: 0})", None),
+        ("Object['defineProperty']['x'](Array.prototype, 'p', {value: 0})", None),
+        ("(Object?.x?.['prototype'])['p'] = 0", None),
     ];
 
     let fail = vec![
@@ -285,6 +300,7 @@ fn test() {
         ("Array.prototype.p &&= 0", None), // { "ecmaVersion": 2021 },
         ("Array.prototype.p ||= 0", None), // { "ecmaVersion": 2021 },
         ("Array.prototype.p ??= 0", None), // { "ecmaVersion": 2021 }
+        ("[Array.prototype.p] = [() => {}]", None),
     ];
 
     Tester::new(NoExtendNative::NAME, NoExtendNative::PLUGIN, pass, fail).test_and_snapshot();
