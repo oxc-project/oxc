@@ -44,8 +44,18 @@ impl<'a> ParserImpl<'a> {
             let stmt = self.parse_statement_list_item(StatementContext::StatementList);
 
             if is_top_level {
-                if let Some(module_decl) = stmt.as_module_declaration() {
-                    self.module_record_builder.visit_module_declaration(module_decl);
+                match &stmt {
+                    Statement::VariableDeclaration(d)
+                        if (d.kind.is_using() || d.kind.is_await_using())
+                            && self.source_type.is_script() =>
+                    {
+                        self.error(diagnostics::top_level_using(d.span));
+                    }
+                    match_module_declaration!(Statement) => {
+                        self.module_record_builder
+                            .visit_module_declaration(stmt.to_module_declaration());
+                    }
+                    _ => {}
                 }
             }
 
@@ -444,7 +454,7 @@ impl<'a> ParserImpl<'a> {
         let using_decl = self.parse_using_declaration(StatementContext::For);
 
         if matches!(self.cur_kind(), Kind::In) {
-            if using_decl.kind.is_await() {
+            if using_decl.kind.is_await_using() {
                 self.error(diagnostics::await_using_declaration_not_allowed_in_for_in_statement(
                     using_decl.span,
                 ));
