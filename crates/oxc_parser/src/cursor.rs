@@ -374,9 +374,8 @@ impl<'a> ParserImpl<'a> {
         D: Fn(Span) -> OxcDiagnostic,
     {
         let mut list = self.ast.vec();
-        let mut rest = None;
+        let mut rest: Option<BindingRestElement<'a>> = None;
         let mut first = true;
-        let mut rest_comma_span: Option<Span> = None;
         loop {
             let kind = self.cur_kind();
             if self.has_fatal_error() {
@@ -389,32 +388,35 @@ impl<'a> ParserImpl<'a> {
             if first {
                 first = false;
             } else {
-                self.expect(Kind::Comma);
+                let comma_span = self.cur_token().span();
+                if !self.at(Kind::Comma) {
+                    let error = diagnostics::expect_token(
+                        Kind::Comma.to_str(),
+                        self.cur_kind().to_str(),
+                        comma_span,
+                    );
+                    self.set_fatal_error(error);
+                    break;
+                }
+                self.bump_any();
                 if self.at(close) {
+                    if rest.is_some() && !self.ctx.has_ambient() {
+                        self.error(diagnostics::rest_element_trailing_comma(comma_span));
+                    }
                     break;
                 }
             }
 
+            if let Some(r) = &rest {
+                self.set_fatal_error(rest_last_diagnostic(r.span()));
+                break;
+            }
+
             if self.at(Kind::Dot3) {
                 let r = self.parse_rest_element();
-                if self.at(Kind::Comma) {
-                    rest_comma_span.replace(self.cur_token().span());
-                    if !self.ctx.has_ambient() {
-                        self.error(rest_last_diagnostic(r.span()));
-                    }
-                } else {
-                    rest_comma_span = None;
-                }
                 rest.replace(r);
             } else {
-                rest_comma_span = None;
                 list.push(parse_element(self));
-            }
-        }
-
-        if !self.ctx.has_ambient() {
-            if let Some(span) = rest_comma_span {
-                self.error(diagnostics::rest_element_trailing_comma(span));
             }
         }
 
