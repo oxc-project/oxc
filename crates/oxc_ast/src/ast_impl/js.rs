@@ -1093,8 +1093,13 @@ impl VariableDeclarationKind {
         matches!(self, Self::Const | Self::Let | Self::Using | Self::AwaitUsing)
     }
 
+    /// Returns `true` if declared using `using` (such as `using x`)
+    pub fn is_using(self) -> bool {
+        self == Self::Using
+    }
+
     /// Returns `true` if declared using `await using` (such as `await using x`)
-    pub fn is_await(self) -> bool {
+    pub fn is_await_using(self) -> bool {
         self == Self::AwaitUsing
     }
 
