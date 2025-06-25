@@ -1,6 +1,6 @@
 use oxc_ast::{
-    AstKind,
-    ast::{BindingPatternKind, Expression, MemberExpression},
+    AstKind, MemberExpressionKind,
+    ast::{BindingPatternKind, Expression},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -50,7 +50,7 @@ declare_oxc_lint!(
 
 impl Rule for NoAwaitExpressionMember {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        let AstKind::MemberExpression(member_expr) = node.kind() else {
+        let Some(member_expr) = node.kind().as_member_expression_kind() else {
             return;
         };
 
@@ -87,7 +87,7 @@ impl Rule for NoAwaitExpressionMember {
 
                     match member_expr {
                         // e.g. "const a = (await b())[0]" => "const {a} = await b()"
-                        MemberExpression::ComputedMemberExpression(computed_member_expr) => {
+                        MemberExpressionKind::Computed(computed_member_expr) => {
                             let Expression::NumericLiteral(prop) = &computed_member_expr.expression
                             else {
                                 return fixer.noop();
@@ -106,7 +106,7 @@ impl Rule for NoAwaitExpressionMember {
                             };
                             rule_fixes.push(fixer.replace(id.span, replacement));
                         }
-                        MemberExpression::StaticMemberExpression(static_member_expr)
+                        MemberExpressionKind::Static(static_member_expr)
                             if static_member_expr.property.name.as_str() == name =>
                         {
                             // e.g. "const a = (await b()).a" => "const {a} = await b()"

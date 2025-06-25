@@ -1,9 +1,6 @@
 use std::borrow::Cow;
 
-use oxc_ast::{
-    AstKind,
-    ast::{Expression, MemberExpression},
-};
+use oxc_ast::{AstKind, ast::Expression};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
@@ -147,7 +144,8 @@ impl ValidExpect {
             return;
         };
         let reporting_span = jest_fn_call.expect_error.map_or(call_expr.span, |_| {
-            find_top_most_member_expression(node, ctx).map_or(call_expr.span, GetSpan::span)
+            find_top_most_member_expression(node, ctx)
+                .map_or(call_expr.span, |top_most_member_expr| top_most_member_expr.span())
         });
 
         match jest_fn_call.expect_error {
@@ -246,18 +244,18 @@ impl ValidExpect {
 fn find_top_most_member_expression<'a, 'b>(
     node: &'b AstNode<'a>,
     ctx: &'b LintContext<'a>,
-) -> Option<&'b MemberExpression<'a>> {
+) -> Option<AstKind<'a>> {
     let mut top_most_member_expression = None;
     let mut node = node;
 
     loop {
         let parent = ctx.nodes().parent_node(node.id())?;
         match node.kind() {
-            AstKind::MemberExpression(member_expr) => {
+            member_expr if member_expr.is_member_expression_kind() => {
                 top_most_member_expression = Some(member_expr);
             }
             _ => {
-                if !matches!(parent.kind(), AstKind::MemberExpression(_)) {
+                if !parent.kind().is_member_expression_kind() {
                     break;
                 }
             }

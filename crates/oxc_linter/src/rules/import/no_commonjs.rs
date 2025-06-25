@@ -146,20 +146,27 @@ impl Rule for NoCommonjs {
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         match node.kind() {
-            AstKind::MemberExpression(member_expr) => {
+            member_expr if member_expr.is_member_expression_kind() => {
                 // module.exports
-                let Some(property_name) = member_expr.static_property_name() else {
+                let Some(member_expr_kind) = member_expr.as_member_expression_kind() else {
+                    return;
+                };
+                let Some(property_name) =
+                    member_expr_kind.static_property_name().map(|s| s.as_str())
+                else {
                     return;
                 };
 
-                if member_expr.object().is_specific_id("module") && property_name == "exports" {
+                let object = member_expr_kind.object();
+
+                if object.is_specific_id("module") && property_name == "exports" {
                     let Some(parent_node) = ctx.nodes().ancestors(node.id()).nth(3) else {
                         return;
                     };
 
                     if !self.allow_primitive_modules {
                         ctx.diagnostic(no_commonjs_diagnostic(
-                            member_expr.span(),
+                            member_expr_kind.span(),
                             "export",
                             property_name,
                         ));
@@ -170,7 +177,7 @@ impl Rule for NoCommonjs {
                             &assignment_expr.right.without_parentheses()
                         {
                             ctx.diagnostic(no_commonjs_diagnostic(
-                                member_expr.span(),
+                                member_expr_kind.span(),
                                 "export",
                                 property_name,
                             ));
@@ -179,7 +186,7 @@ impl Rule for NoCommonjs {
                         }
                     } else {
                         ctx.diagnostic(no_commonjs_diagnostic(
-                            member_expr.span(),
+                            member_expr_kind.span(),
                             "export",
                             property_name,
                         ));
@@ -188,13 +195,13 @@ impl Rule for NoCommonjs {
                 }
 
                 // exports.
-                if member_expr.object().is_specific_id("exports") {
+                if object.is_specific_id("exports") {
                     if node.scope_id() != ctx.scoping().root_scope_id() {
                         return;
                     }
 
                     ctx.diagnostic(no_commonjs_diagnostic(
-                        member_expr.span(),
+                        member_expr_kind.span(),
                         "export",
                         property_name,
                     ));

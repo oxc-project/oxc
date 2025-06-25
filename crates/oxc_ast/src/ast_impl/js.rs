@@ -594,7 +594,7 @@ impl<'a> MemberExpression<'a> {
     /// - `a.b` would return `Some("b")`
     /// - `a["b"]` would return `Some("b")`
     /// - `a[b]` would return `None`
-    /// - `a.#b` would return `Some("b")`
+    /// - `a.#b` would return `None`
     pub fn static_property_name(&self) -> Option<&'a str> {
         match self {
             MemberExpression::ComputedMemberExpression(expr) => {
@@ -701,6 +701,12 @@ impl<'a> StaticMemberExpression<'a> {
 
             return object;
         }
+    }
+
+    /// Returns the static property name of this static member expression, if it has one, along with the source code [`Span`],
+    /// or `None` otherwise.
+    pub fn static_property_info(&self) -> (Span, &'a str) {
+        (self.property.span, self.property.name.as_str())
     }
 }
 

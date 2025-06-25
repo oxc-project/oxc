@@ -170,7 +170,7 @@ impl Rule for Namespace {
                     let name = entry.local_name.name();
 
                     match node.kind() {
-                        AstKind::ComputedMemberExpression(member) => {
+                        member if member.is_member_expression_kind() => {
                             if matches!(
                                 ctx.nodes().parent_kind(node.id()),
                                 Some(AstKind::SimpleAssignmentTarget(_))
@@ -178,24 +178,10 @@ impl Rule for Namespace {
                                 ctx.diagnostic(assignment(member.span(), name));
                             }
 
-                            if !self.allow_computed {
+                            if !self.allow_computed
+                                && matches!(member, AstKind::ComputedMemberExpression(_))
+                            {
                                 return ctx.diagnostic(computed_reference(member.span(), name));
-                            }
-
-                            check_deep_namespace_for_node(
-                                node,
-                                &source,
-                                vec![entry.local_name.name().to_string()].as_slice(),
-                                &module,
-                                ctx,
-                            );
-                        }
-                        AstKind::MemberExpression(member) => {
-                            if matches!(
-                                ctx.nodes().parent_kind(node.id()),
-                                Some(AstKind::SimpleAssignmentTarget(_))
-                            ) {
-                                ctx.diagnostic(assignment(member.span(), name));
                             }
 
                             check_deep_namespace_for_node(
@@ -284,7 +270,7 @@ fn check_deep_namespace_for_node(
     ctx: &LintContext<'_>,
 ) -> Option<()> {
     let (span, name) = match node.kind() {
-        AstKind::MemberExpression(mem_expr) => mem_expr.static_property_info()?,
+        AstKind::StaticMemberExpression(mem_expr) => mem_expr.static_property_info(),
         AstKind::ComputedMemberExpression(computed_expr) => computed_expr.static_property_info()?,
         _ => return None,
     };

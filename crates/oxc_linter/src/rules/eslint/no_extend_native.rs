@@ -210,25 +210,10 @@ fn get_prototype_property_accessed<'a>(
     let parent = ctx.nodes().parent_node(node.id())?;
     let mut prototype_node = Some(parent);
     match parent.kind() {
-        AstKind::ComputedMemberExpression(computed_prop_access_expr) => {
-            let prop_name = computed_prop_access_expr.static_property_name()?;
-            if prop_name != "prototype" {
-                return None;
-            }
-
-            let grandparent_node = ctx.nodes().parent_node(parent.id())?;
-
-            if let AstKind::ChainExpression(_) = grandparent_node.kind() {
-                prototype_node = Some(grandparent_node);
-                if let Some(grandparent_parent) = ctx.nodes().parent_node(grandparent_node.id()) {
-                    prototype_node = Some(grandparent_parent);
-                }
-            }
-
-            prototype_node
-        }
-        AstKind::MemberExpression(prop_access_expr) => {
-            let prop_name = prop_access_expr.static_property_name()?;
+        prop_access_expr if prop_access_expr.is_member_expression_kind() => {
+            let prop_name = prop_access_expr
+                .as_member_expression_kind()
+                .and_then(|m| m.static_property_name())?;
             if prop_name != "prototype" {
                 return None;
             }

@@ -95,8 +95,8 @@ fn is_inside_of_function(node: &AstNode, ctx: &LintContext) -> bool {
 fn is_not_normal_member_access(identifier: &AstNode, ctx: &LintContext) -> bool {
     let parent = ctx.nodes().parent_node(identifier.id());
     if let Some(parent) = parent {
-        if let AstKind::MemberExpression(member) = parent.kind() {
-            return member.object().span() == identifier.span() && !member.is_computed();
+        if let AstKind::StaticMemberExpression(member) = parent.kind() {
+            return member.object.span() == identifier.span();
         }
     }
     false

@@ -61,7 +61,8 @@ impl Rule for NoImportAssign {
                     let Some(parent_node) = ctx.nodes().parent_node(reference.node_id()) else {
                         return;
                     };
-                    if let AstKind::MemberExpression(expr) = parent_node.kind() {
+                    if parent_node.kind().is_member_expression_kind() {
+                        let expr = parent_node.kind();
                         let Some(parent_parent_node) = ctx.nodes().parent_node(parent_node.id())
                         else {
                             return;
@@ -74,7 +75,15 @@ impl Rule for NoImportAssign {
                             // delete namespace?.module
                             || matches!(parent_parent_kind, AstKind::ChainExpression(_) if ctx.nodes().parent_kind(parent_parent_node.id()).is_some_and(is_unary_expression_with_delete_operator))
                         {
-                            if let Some((span, _)) = expr.static_property_info() {
+                            if let Some((span, _)) = match expr {
+                                AstKind::StaticMemberExpression(expr) => {
+                                    Some(expr.static_property_info())
+                                }
+                                AstKind::ComputedMemberExpression(expr) => {
+                                    expr.static_property_info()
+                                }
+                                _ => return,
+                            } {
                                 if span != ctx.semantic().reference_span(reference) {
                                     return ctx
                                         .diagnostic(no_import_assign_diagnostic(expr.span()));

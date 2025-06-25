@@ -200,11 +200,12 @@ impl Rule for PreferSetHas {
             if arg.is_spread() {
                 return true;
             }
-            let Some(AstKind::MemberExpression(member_expr)) = ctx.nodes().parent_kind(node.id())
+            let Some(AstKind::StaticMemberExpression(member_expr)) =
+                ctx.nodes().parent_kind(node.id())
             else {
                 return true;
             };
-            if member_expr.optional() || member_expr.is_computed() {
+            if member_expr.optional {
                 return true;
             }
             let is_method = is_method_call(
@@ -274,12 +275,10 @@ impl Rule for PreferSetHas {
                 let Some(parent) = ctx.nodes().parent_node(node.id()) else {
                     continue;
                 };
-                let AstKind::MemberExpression(member_expr) = parent.kind() else {
+                let AstKind::StaticMemberExpression(member_expr) = parent.kind() else {
                     continue;
                 };
-                let Some(property_info) = member_expr.static_property_info() else {
-                    continue;
-                };
+                let property_info = member_expr.static_property_info();
                 references_fix.push(fixer.replace(property_info.0, "has"));
             }
             declaration_fix

@@ -1,8 +1,6 @@
 use oxc_ast::{
     AstKind,
-    ast::{
-        BinaryExpression, Expression, LogicalExpression, MemberExpression, StaticMemberExpression,
-    },
+    ast::{BinaryExpression, Expression, LogicalExpression, StaticMemberExpression},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -245,11 +243,8 @@ impl ExplicitLengthCheck {
 }
 impl Rule for ExplicitLengthCheck {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        if let AstKind::MemberExpression(MemberExpression::StaticMemberExpression(
-            static_member_expr,
-        )) = node.kind()
-        {
-            let StaticMemberExpression { object, property, .. } = &**static_member_expr;
+        if let AstKind::StaticMemberExpression(static_member_expr) = node.kind() {
+            let StaticMemberExpression { object, property, .. } = static_member_expr;
             if property.name != "length" && property.name != "size" {
                 return;
             }

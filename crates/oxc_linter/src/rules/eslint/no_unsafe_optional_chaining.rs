@@ -74,8 +74,14 @@ impl Rule for NoUnsafeOptionalChaining {
             AstKind::CallExpression(expr) if !expr.optional => {
                 Self::check_unsafe_usage(&expr.callee, ctx);
             }
-            AstKind::MemberExpression(expr) if !expr.optional() => {
-                Self::check_unsafe_usage(expr.object(), ctx);
+            AstKind::StaticMemberExpression(expr) if !expr.optional => {
+                Self::check_unsafe_usage(&expr.object, ctx);
+            }
+            AstKind::ComputedMemberExpression(expr) if !expr.optional => {
+                Self::check_unsafe_usage(&expr.object, ctx);
+            }
+            AstKind::PrivateFieldExpression(expr) if !expr.optional => {
+                Self::check_unsafe_usage(&expr.object, ctx);
             }
             AstKind::TaggedTemplateExpression(expr) => {
                 Self::check_unsafe_usage(&expr.tag, ctx);

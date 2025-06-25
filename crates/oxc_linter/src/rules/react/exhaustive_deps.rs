@@ -10,9 +10,8 @@ use oxc_ast::{
     ast::{
         Argument, ArrayExpressionElement, ArrowFunctionExpression, BindingPattern,
         BindingPatternKind, CallExpression, ChainElement, Expression, FormalParameters, Function,
-        FunctionBody, IdentifierReference, MemberExpression, StaticMemberExpression,
-        TSTypeAnnotation, TSTypeParameterInstantiation, TSTypeReference, VariableDeclarationKind,
-        VariableDeclarator,
+        FunctionBody, IdentifierReference, StaticMemberExpression, TSTypeAnnotation,
+        TSTypeParameterInstantiation, TSTypeReference, VariableDeclarationKind, VariableDeclarator,
     },
     match_expression,
 };
@@ -437,9 +436,7 @@ impl Rule for ExhaustiveDeps {
                     let has_write_reference = reference.symbol_id().is_some_and(|symbol_id| {
                         ctx.semantic().symbol_references(symbol_id).any(|reference| {
                             ctx.nodes().parent_node(reference.node_id()).is_some_and(|parent| {
-                                let AstKind::MemberExpression(
-                                    MemberExpression::StaticMemberExpression(member_expr),
-                                ) = parent.kind()
+                                let AstKind::StaticMemberExpression(member_expr) = parent.kind()
                                 else {
                                     return false;
                                 };
@@ -1254,7 +1251,7 @@ impl<'a> Visit<'a> for ExhaustiveDepsVisitor<'a, '_> {
         }
 
         let is_parent_call_expr =
-            self.stack.get(self.stack.len() - 2).is_some_and(|&ty| ty == AstType::CallExpression);
+            self.stack.last().is_some_and(|&ty| ty == AstType::CallExpression);
 
         match analyze_property_chain(&it.object, self.semantic) {
             Ok(source) => {

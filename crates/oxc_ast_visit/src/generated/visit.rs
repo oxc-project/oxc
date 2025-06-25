@@ -1568,8 +1568,7 @@ pub mod walk {
 
     #[inline]
     pub fn walk_member_expression<'a, V: Visit<'a>>(visitor: &mut V, it: &MemberExpression<'a>) {
-        let kind = AstKind::MemberExpression(visitor.alloc(it));
-        visitor.enter_node(kind);
+        // No `AstKind` for this type
         match it {
             MemberExpression::ComputedMemberExpression(it) => {
                 visitor.visit_computed_member_expression(it)
@@ -1581,7 +1580,6 @@ pub mod walk {
                 visitor.visit_private_field_expression(it)
             }
         }
-        visitor.leave_node(kind);
     }
 
     #[inline]
@@ -1602,10 +1600,12 @@ pub mod walk {
         visitor: &mut V,
         it: &StaticMemberExpression<'a>,
     ) {
-        // No `AstKind` for this type
+        let kind = AstKind::StaticMemberExpression(visitor.alloc(it));
+        visitor.enter_node(kind);
         visitor.visit_span(&it.span);
         visitor.visit_expression(&it.object);
         visitor.visit_identifier_name(&it.property);
+        visitor.leave_node(kind);
     }
 
     #[inline]
@@ -1613,10 +1613,12 @@ pub mod walk {
         visitor: &mut V,
         it: &PrivateFieldExpression<'a>,
     ) {
-        // No `AstKind` for this type
+        let kind = AstKind::PrivateFieldExpression(visitor.alloc(it));
+        visitor.enter_node(kind);
         visitor.visit_span(&it.span);
         visitor.visit_expression(&it.object);
         visitor.visit_private_identifier(&it.field);
+        visitor.leave_node(kind);
     }
 
     #[inline]

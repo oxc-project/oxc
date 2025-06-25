@@ -59,8 +59,9 @@ impl<'a> NeedsParentheses<'a> for AstNode<'a, Expression<'a>> {
             AstNodes::TSNonNullExpression(it) => it.needs_parentheses(f),
             AstNodes::TSInstantiationExpression(it) => it.needs_parentheses(f),
             AstNodes::V8IntrinsicExpression(it) => it.needs_parentheses(f),
-            AstNodes::MemberExpression(it) => it.needs_parentheses(f),
+            AstNodes::StaticMemberExpression(it) => it.needs_parentheses(f),
             AstNodes::ComputedMemberExpression(it) => it.needs_parentheses(f),
+            AstNodes::PrivateFieldExpression(it) => it.needs_parentheses(f),
             _ => {
                 // TODO: incomplete
                 false
@@ -71,10 +72,8 @@ impl<'a> NeedsParentheses<'a> for AstNode<'a, Expression<'a>> {
 
 impl<'a> NeedsParentheses<'a> for AstNode<'a, NumericLiteral<'a>> {
     fn needs_parentheses(&self, f: &Formatter<'_, 'a>) -> bool {
-        if let AstNodes::MemberExpression(member) = self.parent {
-            if let MemberExpression::StaticMemberExpression(e) = member.as_ref() {
-                return e.object.without_parentheses().span() == self.span();
-            }
+        if let AstNodes::StaticMemberExpression(member) = self.parent {
+            return member.object.without_parentheses().span() == self.span();
         }
         false
     }
@@ -417,10 +416,13 @@ impl<'a> NeedsParentheses<'a> for AstNode<'a, TSNonNullExpression<'a>> {
 
 impl<'a> NeedsParentheses<'a> for AstNode<'a, TSInstantiationExpression<'a>> {
     fn needs_parentheses(&self, f: &Formatter<'_, 'a>) -> bool {
-        if let AstNodes::MemberExpression(e) = self.parent {
-            return e.object().without_parentheses().span() == self.span();
+        if let AstNodes::StaticMemberExpression(e) = self.parent {
+            return e.object.without_parentheses().span() == self.span();
         }
         if let AstNodes::ComputedMemberExpression(e) = self.parent {
+            return e.object.without_parentheses().span() == self.span();
+        }
+        if let AstNodes::PrivateFieldExpression(e) = self.parent {
             return e.object.without_parentheses().span() == self.span();
         }
         false
@@ -438,8 +440,9 @@ fn binary_like_needs_parens(binary_like: BinaryLikeExpression<'_, '_>) -> bool {
         | AstNodes::SpreadElement(_)
         | AstNodes::CallExpression(_)
         | AstNodes::NewExpression(_)
-        | AstNodes::MemberExpression(_)
+        | AstNodes::StaticMemberExpression(_)
         | AstNodes::ComputedMemberExpression(_)
+        | AstNodes::PrivateFieldExpression(_)
         | AstNodes::TaggedTemplateExpression(_) => return true,
         AstNodes::BinaryExpression(binary) => BinaryLikeExpression::BinaryExpression(binary),
         AstNodes::LogicalExpression(logical) => BinaryLikeExpression::LogicalExpression(logical),
@@ -533,8 +536,8 @@ fn update_or_lower_expression_needs_parens(span: Span, parent: &AstNodes<'_>) ->
     ) {
         return true;
     }
-    if let AstNodes::MemberExpression(member_expr) = parent {
-        return member_expr.object().get_inner_expression().span() == span;
+    if let AstNodes::StaticMemberExpression(member_expr) = parent {
+        return member_expr.object.get_inner_expression().span() == span;
     }
     if let AstNodes::ComputedMemberExpression(computed_member_expr) = parent {
         return computed_member_expr.object.get_inner_expression().span() == span;

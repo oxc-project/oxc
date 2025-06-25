@@ -96,18 +96,23 @@ impl Rule for PreferNumberProperties {
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         match node.kind() {
-            AstKind::MemberExpression(member_expr) => {
+            member_expr if member_expr.is_member_expression_kind() => {
+                let Some(member_expr) = member_expr.as_member_expression_kind() else {
+                    return;
+                };
                 let Expression::Identifier(ident_name) = member_expr.object() else {
                     return;
                 };
 
                 if GLOBAL_OBJECT_NAMES.contains(&ident_name.name.as_str()) {
-                    let Some(name) = member_expr.static_property_name() else { return };
+                    let Some(name) = member_expr.static_property_name() else {
+                        return;
+                    };
                     if (name == "NaN" && self.check_nan)
                         || (name == "Infinity" && self.check_infinity)
                     {
                         ctx.diagnostic_with_fix(
-                            prefer_number_properties_diagnostic(member_expr.span(), name),
+                            prefer_number_properties_diagnostic(member_expr.span(), name.as_str()),
                             |fixer| fixer.replace(ident_name.span, "Number"),
                         );
                     }

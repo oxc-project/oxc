@@ -1,4 +1,4 @@
-js compatibility: 324/699 (46.35%)
+js compatibility: 323/699 (46.21%)
 
 # Failed
 
@@ -96,6 +96,7 @@ js compatibility: 324/699 (46.35%)
 | js/comments/binary-expressions-block-comments.js | 💥💥 | 47.06% |
 | js/comments/binary-expressions-single-comments.js | 💥💥 | 29.41% |
 | js/comments/blank.js | 💥💥 | 95.24% |
+| js/comments/call_comment.js | 💥💥 | 90.91% |
 | js/comments/dangling.js | 💥💥 | 59.26% |
 | js/comments/dangling_array.js | 💥💥 | 25.00% |
 | js/comments/dangling_for.js | 💥💥 | 22.22% |
@@ -210,7 +211,7 @@ js compatibility: 324/699 (46.35%)
 | js/import-attributes/keyword-detect.js | 💥 | 28.57% |
 | js/import-attributes/long-sources.js | 💥 | 48.48% |
 | js/label/comment.js | 💥 | 53.33% |
-| js/last-argument-expansion/arrow.js | 💥 | 10.53% |
+| js/last-argument-expansion/arrow.js | 💥 | 21.05% |
 | js/last-argument-expansion/assignment-pattern.js | 💥 | 28.57% |
 | js/last-argument-expansion/break-parent.js | 💥 | 57.14% |
 | js/last-argument-expansion/dangling-comment-in-arrow-function.js | 💥 | 0.00% |
@@ -231,7 +232,7 @@ js compatibility: 324/699 (46.35%)
 | js/method-chain/assignment-lhs.js | 💥 | 16.67% |
 | js/method-chain/bracket_0-1.js | 💥 | 0.00% |
 | js/method-chain/break-last-member.js | 💥 | 80.56% |
-| js/method-chain/comment.js | 💥 | 33.61% |
+| js/method-chain/comment.js | 💥 | 35.40% |
 | js/method-chain/computed-merge.js | 💥 | 29.27% |
 | js/method-chain/computed.js | 💥 | 0.00% |
 | js/method-chain/conditional.js | 💥 | 36.73% |
@@ -241,7 +242,7 @@ js compatibility: 324/699 (46.35%)
 | js/method-chain/inline_merge.js | 💥 | 75.00% |
 | js/method-chain/issue-11298.js | 💥 | 20.00% |
 | js/method-chain/issue-3594.js | 💥 | 33.33% |
-| js/method-chain/issue-4125.js | 💥 | 58.64% |
+| js/method-chain/issue-4125.js | 💥 | 58.82% |
 | js/method-chain/logical.js | 💥 | 56.67% |
 | js/method-chain/multiple-members.js | 💥 | 45.65% |
 | js/method-chain/object-literal.js | 💥 | 7.69% |
@@ -268,9 +269,9 @@ js compatibility: 324/699 (46.35%)
 | js/objects/assignment-expression/object-property.js | 💥 | 66.67% |
 | js/objects/assignment-expression/object-value.js | 💥 | 37.50% |
 | js/optional-chaining/chaining.js | 💥 | 59.77% |
-| js/optional-chaining/comments.js | 💥 | 14.12% |
+| js/optional-chaining/comments.js | 💥 | 14.29% |
 | js/preserve-line/argument-list.js | 💥 | 99.44% |
-| js/preserve-line/member-chain.js | 💥 | 19.05% |
+| js/preserve-line/member-chain.js | 💥 | 19.20% |
 | js/preserve-line/parameter-list.js | 💥 | 79.31% |
 | js/quote-props/classes.js | 💥💥✨✨ | 47.06% |
 | js/quote-props/objects.js | 💥💥✨✨ | 45.10% |

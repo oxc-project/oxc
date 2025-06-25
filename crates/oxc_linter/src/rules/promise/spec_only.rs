@@ -1,4 +1,3 @@
-use oxc_ast::AstKind;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{CompactStr, GetSpan, Span};
@@ -66,7 +65,7 @@ impl Rule for SpecOnly {
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        let AstKind::MemberExpression(member_expr) = node.kind() else {
+        let Some(member_expr) = node.kind().as_member_expression_kind() else {
             return;
         };
 
@@ -74,10 +73,9 @@ impl Rule for SpecOnly {
             return;
         }
 
-        let Some(prop_name) = member_expr.static_property_name() else {
+        let Some(prop_name) = member_expr.static_property_name().map(|s| s.as_str()) else {
             return;
         };
-
         if PROMISE_STATIC_METHODS.contains(&prop_name) {
             return;
         }

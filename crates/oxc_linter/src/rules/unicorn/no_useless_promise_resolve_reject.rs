@@ -261,11 +261,10 @@ fn traverse_bind_calls<'a, 'b>(node: &'a AstNode<'b>, ctx: &'a LintContext<'b>) 
 }
 
 fn is_bind_member_expression(node: &AstNode) -> bool {
-    let AstKind::MemberExpression(member_expr) = node.kind() else {
+    let Some(member_expr) = node.kind().as_member_expression_kind() else {
         return false;
     };
-
-    member_expr.static_property_name() == Some("bind")
+    member_expr.static_property_name().is_some_and(|name| name == "bind")
 }
 
 fn match_arrow_function_body<'a>(ctx: &LintContext<'a>, parent: &AstNode<'a>) -> bool {
