@@ -79,6 +79,15 @@ pub struct TypeScriptCase {
     pub result: TestResult,
 }
 
+impl TypeScriptCase {
+    /// Simple check for usage such as `semantic`.
+    /// `should_fail()` will return `true` only if there are still error codes remaining
+    /// after filtering out the not-supported ones.
+    pub fn should_fail_with_any_error_codes(&self) -> bool {
+        !self.error_codes.is_empty()
+    }
+}
+
 impl Case for TypeScriptCase {
     fn new(path: PathBuf, code: String) -> Self {
         let TestCaseContent { tests, settings, error_codes } =
