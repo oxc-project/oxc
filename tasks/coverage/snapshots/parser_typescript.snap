@@ -13180,10 +13180,10 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
   help: Try insert a semicolon here
 
   × TS(1176): Interface declaration cannot have 'implements' clause.
-   ╭─[typescript/tests/cases/compiler/interfaceWithImplements1.ts:3:27]
+   ╭─[typescript/tests/cases/compiler/interfaceWithImplements1.ts:3:16]
  2 │ 
  3 │ interface IBar implements IFoo {
-   ·                           ────
+   ·                ──────────
  4 │ }
    ╰────
 
@@ -25475,10 +25475,10 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
    ╰────
 
   × TS(1176): Interface declaration cannot have 'implements' clause.
-    ╭─[typescript/tests/cases/conformance/interfaces/interfaceDeclarations/interfaceThatInheritsFromItself.ts:10:26]
+    ╭─[typescript/tests/cases/conformance/interfaces/interfaceDeclarations/interfaceThatInheritsFromItself.ts:10:15]
   9 │ 
  10 │ interface Bar implements Bar { // error
-    ·                          ───
+    ·               ──────────
  11 │ }
     ╰────
 
@@ -27522,9 +27522,9 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
    ╰────
 
   × TS(1176): Interface declaration cannot have 'implements' clause.
-   ╭─[typescript/tests/cases/conformance/parser/ecmascript5/InterfaceDeclarations/parserInterfaceDeclaration2.ts:1:24]
+   ╭─[typescript/tests/cases/conformance/parser/ecmascript5/InterfaceDeclarations/parserInterfaceDeclaration2.ts:1:13]
  1 │ interface I implements A {
-   ·                        ─
+   ·             ──────────
  2 │ }
    ╰────
 

@@ -107,7 +107,7 @@ impl<'a> ParserImpl<'a> {
             type_parameters,
             super_class,
             super_type_parameters,
-            implements,
+            implements.map_or_else(|| self.ast.vec(), |(_, implements)| implements),
             body,
             modifiers.contains_abstract(),
             modifiers.contains_declare(),
@@ -116,9 +116,9 @@ impl<'a> ParserImpl<'a> {
 
     pub(crate) fn parse_heritage_clause(
         &mut self,
-    ) -> (Option<Extends<'a>>, Vec<'a, TSClassImplements<'a>>) {
+    ) -> (Option<Extends<'a>>, Option<(Span, Vec<'a, TSClassImplements<'a>>)>) {
         let mut extends = None;
-        let mut implements = self.ast.vec();
+        let mut implements: Option<(Span, Vec<'a, TSClassImplements<'a>>)> = None;
 
         loop {
             match self.cur_kind() {
@@ -127,7 +127,7 @@ impl<'a> ParserImpl<'a> {
                         self.error(diagnostics::extends_clause_already_seen(
                             self.cur_token().span(),
                         ));
-                    } else if !implements.is_empty() {
+                    } else if implements.is_some() {
                         self.error(diagnostics::extends_clause_must_precede_implements(
                             self.cur_token().span(),
                         ));
@@ -135,12 +135,20 @@ impl<'a> ParserImpl<'a> {
                     extends = Some(self.parse_extends_clause());
                 }
                 Kind::Implements => {
-                    if !implements.is_empty() {
+                    if implements.is_some() {
                         self.error(diagnostics::implements_clause_already_seen(
                             self.cur_token().span(),
                         ));
                     }
-                    implements.extend(self.parse_ts_implements_clause());
+                    let implements_kw_span = self.cur_token().span();
+                    if let Some((_, implements)) = implements.as_mut() {
+                        implements.extend(self.parse_ts_implements_clause());
+                    } else {
+                        implements = Some((
+                            implements_kw_span,
+                            self.ast.vec_from_iter(self.parse_ts_implements_clause()),
+                        ));
+                    }
                 }
                 _ => break,
             }
