@@ -4,6 +4,26 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.75.0] - 2025-06-25
+
+### 💥 BREAKING CHANGES
+
+- 9a2548a napi/parser: [**BREAKING**] Add `range` option (#11728) (Bacary Bruno Bodian)
+
+### 🐛 Bug Fixes
+
+- fe78dcf ast: `MemberExpression::static_property_info` use `cooked` not `raw` for `TemplateElement`s (#11879) (overlookmotel)
+
+### 🚜 Refactor
+
+- 87b8496 ast: Remove `AstKind` for `MemberExpression` and replace with `StaticMemberExpression` and `PrivateFieldExpression` (#11767) (camchenry)
+- 190e390 ast: Add `AstKind` for `ComputedMemberExpression` (#11766) (camchenry)
+
+### ⚡ Performance
+
+- 5500d2d ast: Remove redundant checks from `MemberExpression::static_property_info` and `ComputedMemberExpression::static_property_name` (#11882) (overlookmotel)
+
+
 ## [0.74.0] - 2025-06-23
 
 ### 🐛 Bug Fixes
