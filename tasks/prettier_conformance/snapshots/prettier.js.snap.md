@@ -37,7 +37,7 @@ js compatibility: 323/699 (46.21%)
 | js/assignment/issue-15534.js | 💥 | 30.77% |
 | js/assignment/issue-1966.js | 💥 | 30.77% |
 | js/assignment/issue-2482-1.js | 💥 | 33.33% |
-| js/assignment/issue-2482-2.js | 💥 | 53.33% |
+| js/assignment/issue-2482-2.js | 💥 | 50.00% |
 | js/assignment/issue-3819.js | 💥 | 0.00% |
 | js/assignment/issue-7091.js | 💥 | 0.00% |
 | js/assignment/issue-7572.js | 💥 | 72.73% |
@@ -93,8 +93,8 @@ js compatibility: 323/699 (46.21%)
 | js/classes-private-fields/with_comments.js | 💥💥 | 61.54% |
 | js/comments/15661.js | 💥💥 | 68.35% |
 | js/comments/16398.js | 💥💥 | 80.00% |
-| js/comments/binary-expressions-block-comments.js | 💥💥 | 47.06% |
-| js/comments/binary-expressions-single-comments.js | 💥💥 | 29.41% |
+| js/comments/binary-expressions-block-comments.js | 💥💥 | 38.64% |
+| js/comments/binary-expressions-single-comments.js | 💥💥 | 25.64% |
 | js/comments/blank.js | 💥💥 | 95.24% |
 | js/comments/call_comment.js | 💥💥 | 90.91% |
 | js/comments/dangling.js | 💥💥 | 59.26% |
@@ -116,7 +116,7 @@ js compatibility: 323/699 (46.21%)
 | js/comments/multi-comments-2.js | 💥💥 | 90.91% |
 | js/comments/multi-comments-on-same-line.js | 💥✨ | 42.78% |
 | js/comments/multi-comments.js | 💥✨ | 36.84% |
-| js/comments/return-statement.js | 💥💥 | 52.49% |
+| js/comments/return-statement.js | 💥💥 | 52.32% |
 | js/comments/tagged-template-literal.js | 💥💥 | 69.23% |
 | js/comments/template-literal.js | 💥💥 | 47.83% |
 | js/comments/trailing-jsdocs.js | 💥💥 | 91.30% |
@@ -149,7 +149,7 @@ js compatibility: 323/699 (46.21%)
 | js/conditional/no-confusing-arrow.js | 💥💥 | 66.67% |
 | js/conditional/postfix-ternary-regressions.js | 💥💥 | 34.71% |
 | js/decorators/classes.js | 💥 | 47.06% |
-| js/decorators/comments.js | 💥 | 52.46% |
+| js/decorators/comments.js | 💥 | 71.19% |
 | js/decorators/member-expression.js | 💥 | 80.60% |
 | js/decorators/mobx.js | 💥 | 70.45% |
 | js/decorators/multiline.js | 💥 | 44.44% |
@@ -215,7 +215,7 @@ js compatibility: 323/699 (46.21%)
 | js/last-argument-expansion/assignment-pattern.js | 💥 | 28.57% |
 | js/last-argument-expansion/break-parent.js | 💥 | 57.14% |
 | js/last-argument-expansion/dangling-comment-in-arrow-function.js | 💥 | 0.00% |
-| js/last-argument-expansion/edge_case.js | 💥 | 76.34% |
+| js/last-argument-expansion/edge_case.js | 💥 | 41.74% |
 | js/last-argument-expansion/empty-object.js | 💥 | 82.76% |
 | js/last-argument-expansion/function-expression-issue-2239.js | 💥 | 0.00% |
 | js/last-argument-expansion/function-expression.js | 💥 | 26.32% |
@@ -224,7 +224,7 @@ js compatibility: 323/699 (46.21%)
 | js/last-argument-expansion/jsx.js | 💥 | 16.67% |
 | js/last-argument-expansion/object.js | 💥 | 65.00% |
 | js/last-argument-expansion/overflow.js | 💥 | 72.55% |
-| js/line-suffix-boundary/boundary.js | 💥 | 43.48% |
+| js/line-suffix-boundary/boundary.js | 💥 | 42.55% |
 | js/logical-assignment/logical-assignment.js | 💥 | 81.48% |
 | js/logical_expressions/issue-7024.js | 💥 | 0.00% |
 | js/member/conditional.js | 💥 | 0.00% |
@@ -274,7 +274,7 @@ js compatibility: 323/699 (46.21%)
 | js/preserve-line/member-chain.js | 💥 | 19.20% |
 | js/preserve-line/parameter-list.js | 💥 | 79.31% |
 | js/quote-props/classes.js | 💥💥✨✨ | 47.06% |
-| js/quote-props/objects.js | 💥💥✨✨ | 45.10% |
+| js/quote-props/objects.js | 💥💥💥💥 | 71.36% |
 | js/quote-props/with_numbers.js | 💥💥✨✨ | 46.43% |
 | js/quotes/objects.js | 💥💥 | 80.00% |
 | js/require/require.js | 💥 | 90.67% |

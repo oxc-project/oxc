@@ -35,6 +35,39 @@ impl<'a> Comments<'a> {
         &self.comments[self.printed_count..]
     }
 
+    /// Returns the comments that after the given `start` position, even if they were already printed.
+    pub fn comments_after(&self, start: u32) -> &'a [Comment] {
+        let mut index = self.printed_count;
+
+        // No comments or all are printed already
+        if index == self.comments.len() {
+            return &[];
+        }
+
+        let forward = self.comments[index].span.end < start;
+        // Skip comments that before start
+        if forward {
+            while index < self.comments.len() - 1 {
+                if self.comments[index + 1].span.end <= start {
+                    index += 1;
+                    continue;
+                }
+                break;
+            }
+        } else {
+            // Find comments that after start
+            while index > 0 {
+                if self.comments[index - 1].span.start > start {
+                    index -= 1;
+                    continue;
+                }
+                break;
+            }
+        }
+
+        &self.comments[index..]
+    }
+
     #[inline]
     pub fn filter_comments_in_span(&self, span: Span) -> impl Iterator<Item = &Comment> {
         self.comments
@@ -132,7 +165,8 @@ impl<'a> Comments<'a> {
     }
 
     pub fn has_trailing_comments(&self, current_end: u32, following_start: u32) -> bool {
-        let comments = self.unprinted_comments();
+        let comments = &self.comments_after(current_end);
+
         let mut comment_index = 0;
         while let Some(comment) = comments.get(comment_index) {
             // Check if the comment is before the following node's span
@@ -160,6 +194,22 @@ impl<'a> Comments<'a> {
             if gap_str.as_bytes().iter().all(|&b| matches!(b, b' ' | b'(')) {
                 gap_end = comment.span.start;
             } else {
+                return true;
+            }
+        }
+
+        false
+    }
+
+    pub fn has_trailing_line_comments(&self, current_end: u32, following_start: u32) -> bool {
+        for comment in self.comments_after(current_end) {
+            if comment.span.start > following_start {
+                return false;
+            }
+
+            if is_own_line_comment(comment, self.source_text) {
+                return false;
+            } else if is_end_of_line_comment(comment, self.source_text) {
                 return true;
             }
         }
