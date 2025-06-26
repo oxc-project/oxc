@@ -35,7 +35,7 @@ declare_oxc_lint!(
     ///
     /// Examples of **incorrect** code for this rule:
     /// ```js
-    /// array.reduceRight(reducer, initialValue);
+    /// foo.replace(/a/g, bar)
     /// ```
     ///
     /// Examples of **correct** code for this rule:
