@@ -1,10 +1,11 @@
 [package]
-name = "oxlint"
-version = "1.3.0"
+name = "oxc_linter_napi"
+version = "0.1.0"
 authors.workspace = true
 categories.workspace = true
 edition.workspace = true
 homepage.workspace = true
+include = ["/src", "build.rs"]
 keywords.workspace = true
 license.workspace = true
 publish = false
@@ -16,33 +17,15 @@ description.workspace = true
 workspace = true
 
 [lib]
-crate-type = ["lib"]
-path = "src/lib.rs"
-doctest = false
-
-[[bin]]
-name = "oxlint"
-path = "src/main.rs"
+crate-type = ["cdylib", "lib"]
 test = false
 doctest = false
 
 [dependencies]
-oxc_allocator = { workspace = true }
-oxc_diagnostics = { workspace = true }
-oxc_linter = { workspace = true }
-oxc_span = { workspace = true }
+oxlint = { workspace = true }
 
-bpaf = { workspace = true, features = ["autocomplete", "bright-color", "derive"] }
-cow-utils = { workspace = true }
-ignore = { workspace = true, features = ["simd-accel"] }
-miette = { workspace = true }
-napi = { workspace = true }
-rayon = { workspace = true }
-rustc-hash = { workspace = true }
-serde = { workspace = true }
-serde_json = { workspace = true }
-tempfile = { workspace = true }
-tracing-subscriber = { workspace = true, features = [] } # Omit the `regex` feature
+napi = { workspace = true, features = ["async"] }
+napi-derive = { workspace = true }
 
 [target.'cfg(not(any(target_os = "linux", target_os = "freebsd", target_arch = "arm", target_family = "wasm")))'.dependencies]
 mimalloc-safe = { workspace = true, optional = true, features = ["skip_collect_on_exit"] }
@@ -53,10 +36,8 @@ mimalloc-safe = { workspace = true, optional = true, features = ["skip_collect_o
 [target.'cfg(all(target_os = "linux", target_arch = "aarch64"))'.dependencies]
 mimalloc-safe = { workspace = true, optional = true, features = ["skip_collect_on_exit", "local_dynamic_tls", "no_opt_arch"] }
 
-[dev-dependencies]
-insta = { workspace = true }
-lazy-regex = { workspace = true }
+[build-dependencies]
+napi-build = { workspace = true }
 
 [features]
 default = []
-allocator = ["dep:mimalloc-safe"]

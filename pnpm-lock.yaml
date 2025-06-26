@@ -82,6 +82,12 @@ importers:
         specifier: 'catalog:'
         version: 3.2.4(@types/node@24.0.3)(@vitest/browser@3.2.4)
 
+  napi/oxlint2:
+    devDependencies:
+      typescript:
+        specifier: 'catalog:'
+        version: 5.8.3
+
   napi/parser:
     dependencies:
       '@oxc-project/types':
@@ -133,6 +139,8 @@ importers:
   npm/oxlint: {}
 
   npm/runtime: {}
+
+  npm/wasm-web: {}
 
   tasks/compat_data:
     devDependencies:
