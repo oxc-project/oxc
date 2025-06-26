@@ -123,7 +123,11 @@ impl<'a, 'b> BinaryLikeExpression<'a, 'b> {
         let Self::LogicalExpression(logical) = self else {
             return false;
         };
-        match &logical.right().as_ref() {
+        Self::is_inlineable_logical_expression(logical)
+    }
+
+    pub fn is_inlineable_logical_expression(logical: &LogicalExpression) -> bool {
+        match &logical.right {
             Expression::ObjectExpression(object) => !object.properties.is_empty(),
             Expression::ArrayExpression(array) => !array.elements.is_empty(),
             Expression::JSXElement(_) | Expression::JSXFragment(_) => true,

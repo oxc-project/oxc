@@ -30,7 +30,7 @@ pub struct FormatJsArrowFunctionExpressionOptions {
 /// - Assignment
 /// - Object property member
 /// - Variable declaration
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, PartialEq, Eq)]
 pub enum AssignmentLikeLayout {
     /// This is a special layout usually used for variable declarations.
     /// This layout is hit, usually, when a variable declarator doesn't have initializer:
