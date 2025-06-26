@@ -1,6 +1,8 @@
 use oxc_allocator::Allocator;
 use oxc_ast_visit::utf8_to_utf16::Utf8ToUtf16;
-use oxc_benchmark::{BenchmarkId, Criterion, black_box, criterion_group, criterion_main};
+use oxc_benchmark::{
+    BenchmarkId, Criterion, Throughput, black_box, criterion_group, criterion_main,
+};
 use oxc_parser::{ParseOptions, Parser};
 use oxc_tasks_common::TestFiles;
 
@@ -10,6 +12,7 @@ fn bench_parser(criterion: &mut Criterion) {
         let id = BenchmarkId::from_parameter(&file.file_name);
         let source_text = &file.source_text;
         let source_type = file.source_type;
+        group.throughput(Throughput::Bytes(source_text.len() as u64));
         group.bench_function(id, |b| {
             // Do not include initializing allocator in benchmark.
             // User code would likely reuse the same allocator over and over to parse multiple files,
@@ -22,8 +25,8 @@ fn bench_parser(criterion: &mut Criterion) {
                         ..ParseOptions::default()
                     })
                     .parse();
-                allocator.reset();
             });
+            allocator.reset();
         });
     }
     group.finish();
@@ -36,6 +39,7 @@ fn bench_estree(criterion: &mut Criterion) {
         let source_text = &file.source_text;
         let source_type = file.source_type;
         let mut allocator = Allocator::default();
+        group.throughput(Throughput::Bytes(source_text.len() as u64));
         group.bench_function(id, |b| {
             b.iter_with_setup_wrapper(|runner| {
                 allocator.reset();

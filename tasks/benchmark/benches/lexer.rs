@@ -2,7 +2,7 @@
 use oxc_allocator::Allocator;
 use oxc_ast::ast::*;
 use oxc_ast_visit::Visit;
-use oxc_benchmark::{BenchmarkId, Criterion, criterion_group, criterion_main};
+use oxc_benchmark::{BenchmarkId, Criterion, Throughput, criterion_group, criterion_main};
 use oxc_parser::{
     Parser,
     lexer::{Kind, Lexer},
@@ -45,6 +45,7 @@ fn bench_lexer(criterion: &mut Criterion) {
         let id = BenchmarkId::from_parameter(&file.file_name);
         let source_text = file.source_text.as_str();
         let source_type = file.source_type;
+        group.throughput(Throughput::Bytes(source_text.len() as u64));
         group.bench_function(id, |b| {
             // Do not include initializing allocator in benchmark.
             // User code would likely reuse the same allocator over and over to parse multiple files,
@@ -53,8 +54,8 @@ fn bench_lexer(criterion: &mut Criterion) {
             b.iter(|| {
                 let mut lexer = Lexer::new_for_benchmarks(&allocator, source_text, source_type);
                 while lexer.next_token().kind() != Kind::Eof {}
-                allocator.reset();
             });
+            allocator.reset();
         });
     }
     group.finish();
