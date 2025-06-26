@@ -286,7 +286,9 @@ impl Rule for IdLength {
                         | AstKind::WithClause(_) => {
                             return;
                         }
-                        AstKind::MemberExpression(_) => {
+                        AstKind::ComputedMemberExpression(_)
+                        | AstKind::PrivateFieldExpression(_)
+                        | AstKind::StaticMemberExpression(_) => {
                             let Some(parent_parent_node) =
                                 ctx.nodes().parent_node(parent_node.id())
                             else {
