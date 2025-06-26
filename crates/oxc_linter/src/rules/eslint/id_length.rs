@@ -1,3 +1,5 @@
+use std::ops::Deref;
+
 use oxc_ast::AstKind;
 use oxc_ast::ast::BindingPatternKind;
 use oxc_diagnostics::OxcDiagnostic;
@@ -18,6 +20,9 @@ fn id_length_is_too_long_diagnostic(span: Span, config_max: u64) -> OxcDiagnosti
     OxcDiagnostic::warn(format!("Identifier name is too long (> {config_max}).")).with_label(span)
 }
 
+const DEFAULT_MAX_LENGTH: u64 = u64::MAX;
+const DEFAULT_MIN_LENGTH: u64 = 2;
+
 #[derive(Debug, Default, Clone, PartialEq)]
 enum PropertyKind {
     #[default]
@@ -31,8 +36,19 @@ impl PropertyKind {
     }
 }
 
-#[derive(Debug, Default, Clone)]
-pub struct IdLength {
+#[derive(Debug, Clone)]
+pub struct IdLength(Box<IdLengthConfig>);
+
+impl Deref for IdLength {
+    type Target = IdLengthConfig;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct IdLengthConfig {
     exception_patterns: Vec<Regex>,
     exceptions: Vec<String>,
     max: u64,
@@ -58,6 +74,18 @@ impl IdLength {
 
     fn is_too_short(&self, ident_length: usize) -> bool {
         ident_length < usize::try_from(self.min).unwrap_or(0)
+    }
+}
+
+impl Default for IdLength {
+    fn default() -> Self {
+        Self(Box::new(IdLengthConfig {
+            exception_patterns: vec![],
+            exceptions: vec![],
+            max: DEFAULT_MAX_LENGTH,
+            min: DEFAULT_MIN_LENGTH,
+            properties: PropertyKind::default(),
+        }))
     }
 }
 
@@ -149,7 +177,7 @@ impl Rule for IdLength {
     fn from_configuration(value: Value) -> Self {
         let object = value.get(0).and_then(Value::as_object);
 
-        Self {
+        Self(Box::new(IdLengthConfig {
             exception_patterns: object
                 .and_then(|map| map.get("exceptionPatterns"))
                 .and_then(Value::as_array)
@@ -164,14 +192,20 @@ impl Rule for IdLength {
                 .iter()
                 .map(|val| val.as_str().unwrap().to_string())
                 .collect(),
-            max: object.and_then(|map| map.get("max")).and_then(Value::as_u64).unwrap_or(u64::MAX),
-            min: object.and_then(|map| map.get("min")).and_then(Value::as_u64).unwrap_or(2),
+            max: object
+                .and_then(|map| map.get("max"))
+                .and_then(Value::as_u64)
+                .unwrap_or(DEFAULT_MAX_LENGTH),
+            min: object
+                .and_then(|map| map.get("min"))
+                .and_then(Value::as_u64)
+                .unwrap_or(DEFAULT_MIN_LENGTH),
             properties: object
                 .and_then(|map| map.get("properties"))
                 .and_then(Value::as_str)
                 .map(PropertyKind::from)
                 .unwrap_or_default(),
-        }
+        }))
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
