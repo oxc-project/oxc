@@ -74,8 +74,8 @@ oxc_span = { workspace = true, optional = true, features = ["schemars", "seriali
 oxc_tasks_common = { workspace = true, optional = true }
 oxc_transformer = { workspace = true, optional = true }
 
-criterion2 = { workspace = true }
 codspeed-criterion-compat = { workspace = true }
+criterion2 = { workspace = true }
 
 rustc-hash = { workspace = true }
 
