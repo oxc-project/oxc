@@ -33,7 +33,7 @@ declare_oxc_lint!(
     /// ```
     ///
     /// Examples of **correct** code for this rule:
-    //  ```javascript
+    /// ```javascript
     /// const foo = bar || baz;
     /// console.log(foo ?? bar);
     /// ```
