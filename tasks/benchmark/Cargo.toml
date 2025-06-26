@@ -75,6 +75,7 @@ oxc_tasks_common = { workspace = true, optional = true }
 oxc_transformer = { workspace = true, optional = true }
 
 criterion2 = { workspace = true }
+codspeed-criterion-compat = { workspace = true }
 
 rustc-hash = { workspace = true }
 
