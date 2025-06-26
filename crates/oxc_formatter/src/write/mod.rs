@@ -78,7 +78,7 @@ impl<'a> Format<'a> for AstNode<'a, Vec<'a, Directive<'a>>> {
         let source_text = f.context().source_text();
         let mut join = f.join_nodes_with_hardline();
         for directive in self {
-            join.entry(directive.span(), source_text, &directive);
+            join.entry(directive.span(), &directive);
         }
         join.finish()?;
         // if next_sibling's first leading_trivia has more than one new_line, we should add an extra empty line at the end of
@@ -183,7 +183,7 @@ impl<'a> Format<'a> for AstNode<'a, Vec<'a, ObjectPropertyKind<'a>>> {
         for (element, formatted) in self.iter().zip(
             FormatSeparatedIter::new(self.iter(), ",").with_trailing_separator(trailing_separator),
         ) {
-            join.entry(element.span(), source_text, &formatted);
+            join.entry(element.span(), &formatted);
         }
         join.finish()
     }
@@ -371,7 +371,14 @@ impl<'a> FormatWrite<'a> for AstNode<'a, UnaryExpression<'a>> {
         if self.operator().is_keyword() {
             write!(f, space());
         }
-        write!(f, self.argument())
+        if f.comments().has_comments_in_span(self.span) {
+            write!(
+                f,
+                [group(&format_args!(text("("), soft_block_indent(self.argument()), text(")")))]
+            )
+        } else {
+            write!(f, self.argument())
+        }
     }
 }
 
@@ -443,7 +450,6 @@ impl<'a> FormatWrite<'a> for AstNode<'a, ArrayAssignmentTarget<'a>> {
 
             join.entry(
                 SPAN,
-                source_text,
                 &format_with(|f| {
                     if let Some(element) = element.as_ref() {
                         write!(f, group(element))?;
@@ -569,7 +575,7 @@ impl<'a> Format<'a> for AstNode<'a, Vec<'a, Statement<'a>>> {
         let source_text = f.context().source_text();
         let mut join = f.join_nodes_with_hardline();
         for stmt in self {
-            join.entry(stmt.span(), source_text, stmt);
+            join.entry(stmt.span(), stmt);
         }
         join.finish()
     }
@@ -873,7 +879,7 @@ impl<'a> Format<'a> for AstNode<'a, Vec<'a, SwitchCase<'a>>> {
         let source_text = f.source_text();
         let mut join = f.join_nodes_with_hardline();
         for case in self {
-            join.entry(case.span(), source_text, case);
+            join.entry(case.span(), case);
         }
         join.finish()
     }
@@ -1178,7 +1184,7 @@ impl<'a> Format<'a> for AstNode<'a, Vec<'a, ClassElement<'a>>> {
         let mut join = f.join_nodes_with_hardline();
         for (e1, e2) in self.iter().zip(self.iter().skip(1).map(Some).chain(std::iter::once(None)))
         {
-            join.entry(e1.span(), source_text, &(e1, e2));
+            join.entry(e1.span(), &(e1, e2));
         }
         join.finish()
     }
@@ -1858,7 +1864,7 @@ impl<'a> Format<'a> for AstNode<'a, Vec<'a, TSEnumMember<'a>>> {
                 .with_trailing_separator(trailing_separator)
                 .nodes_grouped(),
         ) {
-            join.entry(element.span(), source_text, &formatted);
+            join.entry(element.span(), &formatted);
         }
         join.finish()
     }
@@ -2261,7 +2267,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TSInterfaceBody<'a>> {
         let source_text = f.context().source_text();
         let mut joiner = f.join_nodes_with_soft_line();
         for (index, sig) in self.body().iter().enumerate() {
-            joiner.entry(sig.span(), source_text, sig);
+            joiner.entry(sig.span(), sig);
         }
         joiner.finish()
     }
@@ -2293,7 +2299,7 @@ impl<'a> Format<'a> for AstNode<'a, Vec<'a, TSSignature<'a>>> {
         let source_text = f.source_text();
         let mut join = f.join_nodes_with_soft_line();
         for element in self {
-            join.entry(element.span(), source_text, element);
+            join.entry(element.span(), element);
         }
         join.finish()
     }

@@ -1,13 +1,11 @@
-js compatibility: 323/699 (46.21%)
+js compatibility: 326/699 (46.64%)
 
 # Failed
 
 | Spec path | Failed or Passed | Match ratio |
 | :-------- | :--------------: | :---------: |
 | js/arrays/empty.js | 💥 | 0.00% |
-| js/arrays/numbers-negative-comment-after-minus.js | 💥 | 94.03% |
-| js/arrays/numbers-with-holes.js | 💥 | 90.91% |
-| js/arrays/preserve_empty_lines.js | 💥 | 86.13% |
+| js/arrays/preserve_empty_lines.js | 💥 | 95.95% |
 | js/arrow-call/arrow_call.js | 💥💥💥 | 62.61% |
 | js/arrows/arrow-chain-with-trailing-comments.js | 💥💥 | 76.67% |
 | js/arrows/arrow_function_expression.js | 💥💥 | 33.33% |
@@ -54,7 +52,7 @@ js compatibility: 323/699 (46.21%)
 | js/async/inline-await.js | 💥 | 22.22% |
 | js/async/nested.js | 💥 | 16.67% |
 | js/binary-expressions/arrow.js | 💥 | 66.67% |
-| js/binary-expressions/comment.js | 💥 | 76.92% |
+| js/binary-expressions/comment.js | 💥 | 67.16% |
 | js/binary-expressions/in_instanceof.js | 💥 | 97.96% |
 | js/binary-expressions/inline-jsx.js | 💥 | 28.57% |
 | js/binary-expressions/inline-object-array.js | 💥 | 67.78% |
@@ -91,7 +89,7 @@ js compatibility: 323/699 (46.21%)
 | js/classes/property.js | 💥 | 66.67% |
 | js/classes/ternary.js | 💥 | 0.00% |
 | js/classes-private-fields/with_comments.js | 💥💥 | 61.54% |
-| js/comments/15661.js | 💥💥 | 68.35% |
+| js/comments/15661.js | 💥💥 | 46.15% |
 | js/comments/16398.js | 💥💥 | 80.00% |
 | js/comments/binary-expressions-block-comments.js | 💥💥 | 38.64% |
 | js/comments/binary-expressions-single-comments.js | 💥💥 | 25.64% |
@@ -283,11 +281,10 @@ js compatibility: 323/699 (46.21%)
 | js/return/comment.js | 💥 | 63.89% |
 | js/return-outside-function/return-outside-function.js | 💥 | 0.00% |
 | js/sequence-break/break.js | 💥 | 31.37% |
-| js/sequence-expression/ignore.js | 💥 | 0.00% |
+| js/sequence-expression/ignore.js | 💥 | 42.86% |
 | js/spread/spread.js | 💥 | 80.00% |
 | js/strings/escaped.js | 💥💥 | 50.00% |
 | js/strings/multiline-literal.js | 💥💥 | 70.00% |
-| js/strings/strings.js | 💥💥 | 83.72% |
 | js/strings/template-literals.js | 💥💥 | 52.24% |
 | js/switch/comments.js | 💥 | 90.37% |
 | js/switch/comments2.js | 💥 | 84.21% |
@@ -327,7 +324,7 @@ js compatibility: 323/699 (46.21%)
 | js/trailing-comma/trailing_whitespace.js | 💥💥💥 | 88.64% |
 | js/try/catch.js | 💥 | 52.63% |
 | js/try/try.js | 💥 | 50.00% |
-| js/unary-expression/comments.js | 💥 | 17.83% |
+| js/unary-expression/comments.js | 💥 | 74.44% |
 | js/unicode/nbsp-jsx.js | 💥 | 25.00% |
 | js/variable_declarator/multiple.js | 💥 | 87.27% |
 | js/variable_declarator/string.js | 💥 | 0.00% |
