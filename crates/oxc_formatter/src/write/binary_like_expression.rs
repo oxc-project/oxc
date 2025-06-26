@@ -204,10 +204,7 @@ impl<'a> Format<'a> for BinaryLikeExpression<'a, '_> {
         // Add a group with a soft block indent in cases where it is necessary to parenthesize the binary expression.
         // For example, `(a+b)(call)`, `!(a + b)`, `(a + b).test`.
         let is_inside_parenthesis = match parent {
-            AstNodes::StaticMemberExpression(_)
-            | AstNodes::PrivateFieldExpression(_)
-            | AstNodes::ComputedMemberExpression(_)
-            | AstNodes::UnaryExpression(_) => true,
+            AstNodes::StaticMemberExpression(_) | AstNodes::UnaryExpression(_) => true,
             AstNodes::CallExpression(call) => {
                 call.callee().without_parentheses().span() == self.span()
             }

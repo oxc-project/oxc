@@ -37,7 +37,7 @@ js compatibility: 323/699 (46.21%)
 | js/assignment/issue-15534.js | 💥 | 30.77% |
 | js/assignment/issue-1966.js | 💥 | 30.77% |
 | js/assignment/issue-2482-1.js | 💥 | 33.33% |
-| js/assignment/issue-2482-2.js | 💥 | 50.00% |
+| js/assignment/issue-2482-2.js | 💥 | 53.33% |
 | js/assignment/issue-3819.js | 💥 | 0.00% |
 | js/assignment/issue-7091.js | 💥 | 0.00% |
 | js/assignment/issue-7572.js | 💥 | 72.73% |
@@ -54,7 +54,7 @@ js compatibility: 323/699 (46.21%)
 | js/async/inline-await.js | 💥 | 22.22% |
 | js/async/nested.js | 💥 | 16.67% |
 | js/binary-expressions/arrow.js | 💥 | 66.67% |
-| js/binary-expressions/comment.js | 💥 | 74.63% |
+| js/binary-expressions/comment.js | 💥 | 76.92% |
 | js/binary-expressions/in_instanceof.js | 💥 | 97.96% |
 | js/binary-expressions/inline-jsx.js | 💥 | 28.57% |
 | js/binary-expressions/inline-object-array.js | 💥 | 67.78% |
@@ -228,7 +228,7 @@ js compatibility: 323/699 (46.21%)
 | js/logical-assignment/logical-assignment.js | 💥 | 81.48% |
 | js/logical_expressions/issue-7024.js | 💥 | 0.00% |
 | js/member/conditional.js | 💥 | 0.00% |
-| js/member/expand.js | 💥 | 49.41% |
+| js/member/expand.js | 💥 | 52.38% |
 | js/method-chain/assignment-lhs.js | 💥 | 16.67% |
 | js/method-chain/bracket_0-1.js | 💥 | 0.00% |
 | js/method-chain/break-last-member.js | 💥 | 80.56% |
