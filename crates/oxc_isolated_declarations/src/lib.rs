@@ -80,10 +80,11 @@ impl<'a> IsolatedDeclarations<'a> {
     ///
     /// Returns `Vec<Error>` if any errors were collected during the transformation.
     pub fn build(mut self, program: &Program<'a>) -> IsolatedDeclarationsReturn<'a> {
-        self.internal_annotations = self
-            .strip_internal
-            .then(|| Self::build_internal_annotations(program))
-            .unwrap_or_default();
+        self.internal_annotations = if self.strip_internal {
+            Self::build_internal_annotations(program)
+        } else {
+            FxHashSet::default()
+        };
         let source_type = SourceType::d_ts();
         let directives = self.ast.vec();
         let stmts = self.transform_program(program);
