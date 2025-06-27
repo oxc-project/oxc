@@ -95,7 +95,7 @@ js compatibility: 326/699 (46.64%)
 | js/comments/binary-expressions-single-comments.js | 💥💥 | 25.64% |
 | js/comments/blank.js | 💥💥 | 95.24% |
 | js/comments/call_comment.js | 💥💥 | 90.91% |
-| js/comments/dangling.js | 💥💥 | 59.26% |
+| js/comments/dangling.js | 💥💥 | 93.33% |
 | js/comments/dangling_array.js | 💥💥 | 25.00% |
 | js/comments/dangling_for.js | 💥💥 | 22.22% |
 | js/comments/dynamic_imports.js | 💥💥 | 66.67% |
@@ -106,7 +106,7 @@ js compatibility: 326/699 (46.64%)
 | js/comments/if.js | 💥💥 | 38.16% |
 | js/comments/issue-3532.js | 💥💥 | 85.92% |
 | js/comments/issues.js | 💥💥 | 66.67% |
-| js/comments/jsdoc-nestled-dangling.js | 💥💥 | 68.29% |
+| js/comments/jsdoc-nestled-dangling.js | 💥💥 | 93.02% |
 | js/comments/jsdoc-nestled.js | 💥💥 | 89.29% |
 | js/comments/jsdoc.js | 💥💥 | 51.06% |
 | js/comments/jsx.js | 💥💥 | 41.63% |
@@ -214,14 +214,14 @@ js compatibility: 326/699 (46.64%)
 | js/last-argument-expansion/break-parent.js | 💥 | 57.14% |
 | js/last-argument-expansion/dangling-comment-in-arrow-function.js | 💥 | 0.00% |
 | js/last-argument-expansion/edge_case.js | 💥 | 41.74% |
-| js/last-argument-expansion/empty-object.js | 💥 | 82.76% |
+| js/last-argument-expansion/empty-object.js | 💥 | 86.67% |
 | js/last-argument-expansion/function-expression-issue-2239.js | 💥 | 0.00% |
 | js/last-argument-expansion/function-expression.js | 💥 | 26.32% |
 | js/last-argument-expansion/issue-10708.js | 💥 | 15.38% |
 | js/last-argument-expansion/issue-7518.js | 💥 | 10.00% |
 | js/last-argument-expansion/jsx.js | 💥 | 16.67% |
 | js/last-argument-expansion/object.js | 💥 | 65.00% |
-| js/last-argument-expansion/overflow.js | 💥 | 72.55% |
+| js/last-argument-expansion/overflow.js | 💥 | 71.22% |
 | js/line-suffix-boundary/boundary.js | 💥 | 42.55% |
 | js/logical-assignment/logical-assignment.js | 💥 | 81.48% |
 | js/logical_expressions/issue-7024.js | 💥 | 0.00% |
