@@ -5,7 +5,7 @@ use oxc_linter::LINTABLE_EXTENSIONS;
 
 use crate::cli::IgnoreOptions;
 
-#[derive(Clone)]
+#[derive(Debug, Clone)]
 pub struct Extensions(pub Vec<&'static str>);
 
 impl Default for Extensions {
