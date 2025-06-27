@@ -1,4 +1,9 @@
-use std::{ffi::OsStr, path::PathBuf, sync::Arc, sync::mpsc};
+use std::{
+    ffi::OsStr,
+    fs,
+    path::PathBuf,
+    sync::{Arc, mpsc},
+};
 
 use ignore::{DirEntry, overrides::Override};
 use oxc_linter::LINTABLE_EXTENSIONS;
@@ -116,6 +121,16 @@ impl Walk {
 
     fn is_wanted_entry(dir_entry: &DirEntry, extensions: &Extensions) -> bool {
         let Some(file_type) = dir_entry.file_type() else { return false };
+        let file_type = if file_type.is_symlink() {
+            match fs::metadata(dir_entry.path()) {
+                Ok(real_metadata) => real_metadata.file_type(),
+                Err(_) => {
+                    return false;
+                }
+            }
+        } else {
+            file_type
+        };
         if file_type.is_dir() {
             return false;
         }
