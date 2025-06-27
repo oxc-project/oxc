@@ -330,7 +330,7 @@ fn from_file_path<A: AsRef<Path>>(path: A) -> Option<String> {
 fn strict_canonicalize<P: AsRef<Path>>(path: P) -> std::io::Result<PathBuf> {
     use std::io;
 
-    fn impl_(path: PathBuf) -> std::io::Result<PathBuf> {
+    fn impl_(path: &Path) -> std::io::Result<PathBuf> {
         let head = path.components().next().ok_or(io::Error::other("empty path"))?;
         let disk_;
         let head = if let std::path::Component::Prefix(prefix) = head {
@@ -350,7 +350,7 @@ fn strict_canonicalize<P: AsRef<Path>>(path: P) -> std::io::Result<PathBuf> {
     }
 
     let canon = std::fs::canonicalize(path)?;
-    impl_(canon)
+    impl_(&canon)
 }
 
 #[cfg(test)]
@@ -366,6 +366,9 @@ mod tests {
     #[test]
     #[cfg(windows)]
     fn test_idempotent_canonicalization() {
+        use crate::service::strict_canonicalize;
+        use std::path::Path;
+
         let lhs = strict_canonicalize(Path::new(".")).unwrap();
         let rhs = strict_canonicalize(&lhs).unwrap();
         assert_eq!(lhs, rhs);
@@ -416,7 +419,7 @@ mod tests {
         ];
 
         for (path, expected) in paths.iter().zip(expected) {
-            let uri = Uri::from_file_path(path).unwrap();
+            let uri = from_file_path(path).unwrap();
             assert_eq!(uri.to_string(), expected);
         }
     }
