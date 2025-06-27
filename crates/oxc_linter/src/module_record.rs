@@ -92,8 +92,8 @@ impl fmt::Debug for ModuleRecord {
             .loaded_modules
             .read()
             .unwrap()
-            .iter()
-            .map(|(key, _)| (key.to_string()))
+            .keys()
+            .map(ToString::to_string)
             .reduce(|acc, key| format!("{acc}, {key}"))
             .unwrap_or_default();
         let loaded_modules = format!("{{ {loaded_modules} }}");

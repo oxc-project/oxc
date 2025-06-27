@@ -1242,7 +1242,7 @@ impl<'a, T: 'a, A: Alloc> Vec<'a, T, A> {
             // We replace self[index] with the last element. Note that if the
             // bounds check on hole succeeds there must be a last element (which
             // can be self[index] itself).
-            let hole: *mut T = &mut self[index];
+            let hole: *mut T = &raw mut self[index];
             let last = ptr::read(self.get_unchecked(self.len_usize() - 1));
             self.buf.decrease_len(1);
             ptr::replace(hole, last)
@@ -2889,11 +2889,11 @@ where
                 let v = slice::from_raw_parts_mut(self.vec.as_mut_ptr(), self.old_len);
                 if (self.pred)(&mut v[i]) {
                     self.del += 1;
-                    return Some(ptr::read(&v[i]));
+                    return Some(ptr::read(&raw const v[i]));
                 } else if self.del > 0 {
                     let del = self.del;
-                    let src: *const T = &v[i];
-                    let dst: *mut T = &mut v[i - del];
+                    let src: *const T = &raw const v[i];
+                    let dst: *mut T = &raw mut v[i - del];
                     // This is safe because self.vec has length 0
                     // thus its elements will not have Drop::drop
                     // called on them in the event of a panic.
