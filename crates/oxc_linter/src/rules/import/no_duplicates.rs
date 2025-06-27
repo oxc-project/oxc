@@ -76,7 +76,7 @@ declare_oxc_lint!(
     /// ```
     NoDuplicates,
     import,
-    suspicious
+    style
 );
 
 impl Rule for NoDuplicates {
