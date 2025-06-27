@@ -206,6 +206,7 @@ nonmax = "0.5.5"
 num-bigint = "0.4.6"
 num-traits = "0.2.19"
 papaya = "0.2.1"
+percent-encoding = "2.3.1"
 petgraph = { version = "0.8.2", default-features = false }
 phf = "0.12.0"
 phf_codegen = "0.12.0"
