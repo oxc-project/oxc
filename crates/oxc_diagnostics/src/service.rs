@@ -397,7 +397,7 @@ mod tests {
     }
 
     #[test]
-    #[cfg(windows)]
+    //#[cfg(windows)]
     fn test_path_to_uri_windows() {
         let paths = [
             PathBuf::from("C:\\some\\path\\to\\file.txt"),
