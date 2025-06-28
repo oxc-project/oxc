@@ -215,14 +215,25 @@ fn is_var_declarator_or_test_block<'a>(
                 return true;
             }
         }
-        AstKind::Argument(_) => {
-            if let Some(parent) = ctx.nodes().parent_node(node.id()) {
-                return is_var_declarator_or_test_block(
-                    parent,
-                    additional_test_block_functions,
-                    id_nodes_mapping,
-                    ctx,
-                );
+        AstKind::Argument(_) | AstKind::ArrayExpression(_) | AstKind::ObjectExpression(_) => {
+            let mut current = node;
+            while let Some(parent) = ctx.nodes().parent_node(current.id()) {
+                match parent.kind() {
+                    AstKind::CallExpression(_) | AstKind::VariableDeclarator(_) => {
+                        return is_var_declarator_or_test_block(
+                            parent,
+                            additional_test_block_functions,
+                            id_nodes_mapping,
+                            ctx,
+                        );
+                    }
+                    AstKind::Argument(_)
+                    | AstKind::ArrayExpression(_)
+                    | AstKind::ObjectExpression(_) => {
+                        current = parent;
+                    }
+                    _ => break,
+                }
             }
         }
         _ => {}
