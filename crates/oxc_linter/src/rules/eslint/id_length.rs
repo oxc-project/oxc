@@ -169,8 +169,7 @@ declare_oxc_lint!(
     /// ```
     IdLength,
     eslint,
-    nursery, // TODO: change category to `correctness`, `suspicious`, `pedantic`, `perf`, `restriction`, or `style`
-             // See <https://oxc.rs/docs/contribute/linter.html#rule-category> for details
+    style,
 );
 
 impl Rule for IdLength {
