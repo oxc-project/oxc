@@ -566,13 +566,18 @@ fn is_poorly_breakable_member_or_call_chain(
         // if is_member_call_chain(call_expression.clone(), f.comments(), f.options().tab_width())? {
         //     return Ok(false);
         // }
+        // TODO: It looks like `is_member_call_chain` is used for checking comments,
+        // but not sure if the following code is equivalent to the above check.
+        if f.comments().has_comments_in_span(call_expression.span) {
+            return false;
+        }
 
         let args = &call_expression.arguments;
 
         let is_breakable_call = match args.len() {
             0 => false,
             1 => match args.iter().next() {
-                Some(first_argument) => !is_short_argument(first_argument, threshold, f),
+                Some(first_argument) => !is_short_argument(first_argument, threshold),
                 None => false,
             },
             _ => true,
@@ -599,23 +604,13 @@ fn is_poorly_breakable_member_or_call_chain(
 /// We need it to decide if `JsCallExpression` with the argument is breakable or not
 /// If the argument is short the function call isn't breakable
 /// [Prettier applies]: https://github.com/prettier/prettier/blob/a043ac0d733c4d53f980aa73807a63fc914f23bd/src/language-js/print/assignment.js#L374
-fn is_short_argument(argument: &Argument, threshold: u16, f: &Formatter) -> bool {
-    let comments = f.comments();
-
-    // if comments.has_comments(argument.syntax()) {
-    //     return Ok(false);
-    // }
-
+fn is_short_argument(argument: &Argument, threshold: u16) -> bool {
     match argument {
         Argument::ThisExpression(_) => true,
         Argument::Identifier(identifier) => identifier.name.len() <= threshold as usize,
         Argument::UnaryExpression(unary_expression) => {
-            // let has_comments = comments.has_comments(unary_expression.argument()?.syntax());
-            let has_comments = false;
-
             unary_expression.operator.is_arithmetic()
                 && matches!(unary_expression.argument, Expression::NumericLiteral(_))
-                && !has_comments
         }
         Argument::RegExpLiteral(regex) => regex.regex.pattern.text.len() <= threshold as usize,
         Argument::StringLiteral(literal) => {

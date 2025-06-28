@@ -34,7 +34,7 @@ js compatibility: 339/699 (48.50%)
 | js/assignment/issue-2482-2.js | 💥 | 62.50% |
 | js/assignment/issue-3819.js | 💥 | 19.05% |
 | js/assignment/issue-7572.js | 💥 | 72.73% |
-| js/assignment/lone-arg.js | 💥 | 71.79% |
+| js/assignment/lone-arg.js | 💥 | 85.00% |
 | js/assignment-comments/function.js | 💥 | 67.39% |
 | js/assignment-comments/identifier.js | 💥 | 71.43% |
 | js/assignment-comments/number.js | 💥 | 87.50% |
