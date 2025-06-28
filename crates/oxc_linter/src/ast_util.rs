@@ -399,7 +399,7 @@ pub fn is_new_expression<'a>(
 pub fn call_expr_method_callee_info<'a>(
     call_expr: &'a CallExpression<'a>,
 ) -> Option<(Span, &'a str)> {
-    let member_expr = call_expr.callee.without_parentheses().as_member_expression()?;
+    let member_expr = call_expr.callee.get_inner_expression().as_member_expression()?;
     member_expr.static_property_info()
 }
 
