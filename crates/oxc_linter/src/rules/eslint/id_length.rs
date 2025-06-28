@@ -1,7 +1,9 @@
 use std::ops::Deref;
 
 use oxc_ast::AstKind;
-use oxc_ast::ast::BindingPatternKind;
+use oxc_ast::ast::{
+    BindingIdentifier, BindingPatternKind, BindingProperty, IdentifierName, PrivateIdentifier,
+};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{ContentEq, GetSpan, Span};
@@ -57,6 +59,175 @@ pub struct IdLengthConfig {
 }
 
 impl IdLength {
+    fn handle_binding_identifier(
+        &self,
+        ident: &BindingIdentifier,
+        node: &AstNode,
+        ctx: &LintContext,
+    ) {
+        let ident_name = ident.name.to_string();
+
+        if self.is_exception(&ident_name) {
+            return;
+        }
+
+        let graphemes_length = ident_name.graphemes(true).count();
+        let is_too_long = self.is_too_long(graphemes_length);
+        let is_too_short = self.is_too_short(graphemes_length);
+        if !is_too_long && !is_too_short {
+            return;
+        }
+
+        let Some(parent_node) = ctx.nodes().parent_node(node.id()) else {
+            return;
+        };
+        match parent_node.kind() {
+            AstKind::ImportSpecifier(import_specifier) => {
+                // TODO: Is there a better way to do this check?
+                if import_specifier.imported.name().eq(&import_specifier.local.name) {
+                    return;
+                }
+                // TODO: Is there a better way to do this check?
+                if !import_specifier.local.content_eq(ident) {
+                    return;
+                }
+            }
+            AstKind::ObjectPattern(object_pattern) => {
+                // TODO: Is there a better way to do this check?
+                let binding_property_option =
+                    object_pattern.properties.iter().find(|x| x.span.eq(&ident.span));
+
+                if IdLength::is_binding_identifier_or_object_pattern(binding_property_option)
+                    && self.properties == PropertyKind::Never
+                {
+                    return;
+                }
+            }
+            _ => {}
+        }
+
+        if is_too_long {
+            ctx.diagnostic(id_length_is_too_long_diagnostic(node.span(), self.max));
+        }
+        if is_too_short {
+            ctx.diagnostic(id_length_is_too_short_diagnostic(node.span(), self.min));
+        }
+    }
+
+    fn handle_identifier_name(&self, ident: &IdentifierName, node: &AstNode, ctx: &LintContext) {
+        let ident_name = ident.name.to_string();
+
+        if self.is_exception(&ident_name) {
+            return;
+        }
+
+        let graphemes_length = ident_name.graphemes(true).count();
+        let is_too_long = self.is_too_long(graphemes_length);
+        let is_too_short = self.is_too_short(graphemes_length);
+        if !is_too_long && !is_too_short {
+            return;
+        }
+
+        let Some(parent_node) = ctx.nodes().parent_node(node.id()) else {
+            return;
+        };
+        match parent_node.kind() {
+            AstKind::ExportSpecifier(_)
+            | AstKind::ImportAttribute(_)
+            | AstKind::ImportSpecifier(_)
+            | AstKind::WithClause(_) => {
+                return;
+            }
+            AstKind::ComputedMemberExpression(_)
+            | AstKind::PrivateFieldExpression(_)
+            | AstKind::StaticMemberExpression(_) => {
+                let Some(parent_parent_node) = ctx.nodes().parent_node(parent_node.id()) else {
+                    return;
+                };
+                let AstKind::SimpleAssignmentTarget(_) = parent_parent_node.kind() else {
+                    return;
+                };
+
+                if self.properties == PropertyKind::Never {
+                    return;
+                }
+            }
+            AstKind::PropertyKey(property_key) => {
+                if self.properties == PropertyKind::Never {
+                    return;
+                }
+
+                let Some(parent_parent_node) = ctx.nodes().parent_node(parent_node.id()) else {
+                    return;
+                };
+                match parent_parent_node.kind() {
+                    AstKind::ObjectPattern(object_pattern) => {
+                        // TODO: Is there a better way to do this check?
+                        let binding_property_option = object_pattern
+                            .properties
+                            .iter()
+                            .find(|x| x.key.content_eq(property_key));
+
+                        if IdLength::is_binding_identifier_or_object_pattern(
+                            binding_property_option,
+                        ) {
+                            return;
+                        }
+                    }
+                    AstKind::ObjectAssignmentTarget(_) => {
+                        return;
+                    }
+                    _ => {}
+                }
+            }
+            _ => {}
+        }
+
+        if is_too_long {
+            ctx.diagnostic(id_length_is_too_long_diagnostic(node.span(), self.max));
+        }
+        if is_too_short {
+            ctx.diagnostic(id_length_is_too_short_diagnostic(node.span(), self.min));
+        }
+    }
+
+    fn handle_private_identifier(
+        &self,
+        ident: &PrivateIdentifier,
+        node: &AstNode,
+        ctx: &LintContext,
+    ) {
+        let ident_name = ident.name.to_string();
+
+        if self.is_exception(&ident_name) {
+            return;
+        }
+
+        let graphemes_length = ident_name.graphemes(true).count();
+        let is_too_long = self.is_too_long(graphemes_length);
+        let is_too_short = self.is_too_short(graphemes_length);
+
+        if is_too_long {
+            ctx.diagnostic(id_length_is_too_long_diagnostic(node.span(), self.max));
+        }
+        if is_too_short {
+            ctx.diagnostic(id_length_is_too_short_diagnostic(node.span(), self.min));
+        }
+    }
+
+    fn is_binding_identifier_or_object_pattern(
+        binding_property_option: Option<&BindingProperty>,
+    ) -> bool {
+        let Some(binding_property) = binding_property_option else {
+            return false;
+        };
+
+        matches!(
+            &binding_property.value.kind,
+            BindingPatternKind::BindingIdentifier(_) | BindingPatternKind::ObjectPattern(_)
+        )
+    }
+
     fn is_exception(&self, identifier: &String) -> bool {
         if self.exceptions.contains(identifier) {
             return true;
@@ -211,162 +382,13 @@ impl Rule for IdLength {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         match node.kind() {
             AstKind::BindingIdentifier(ident) => {
-                let ident_name = ident.name.to_string();
-
-                if self.is_exception(&ident_name) {
-                    return;
-                }
-
-                let graphemes_length = ident_name.graphemes(true).count();
-                let is_too_long = self.is_too_long(graphemes_length);
-                let is_too_short = self.is_too_short(graphemes_length);
-                if !is_too_long && !is_too_short {
-                    return;
-                }
-
-                if let Some(parent_node) = ctx.nodes().parent_node(node.id()) {
-                    match parent_node.kind() {
-                        AstKind::ImportSpecifier(import_specifier) => {
-                            // TODO: Is there a better way to do this check?
-                            if import_specifier.imported.name().eq(&import_specifier.local.name) {
-                                return;
-                            }
-                            // TODO: Is there a better way to do this check?
-                            if !import_specifier.local.content_eq(ident) {
-                                return;
-                            }
-                        }
-                        AstKind::ObjectPattern(object_pattern) => {
-                            // TODO: Is there a better way to do this check?
-                            let binding_property_option =
-                                object_pattern.properties.iter().find(|x| x.span.eq(&ident.span));
-
-                            if let Some(binding_property) = binding_property_option {
-                                match &binding_property.value.kind {
-                                    BindingPatternKind::BindingIdentifier(_)
-                                    | BindingPatternKind::ObjectPattern(_) => {
-                                        if self.properties == PropertyKind::Never {
-                                            return;
-                                        }
-                                    }
-                                    _ => {}
-                                }
-                            }
-                        }
-                        _ => {}
-                    }
-                }
-
-                if is_too_long {
-                    ctx.diagnostic(id_length_is_too_long_diagnostic(node.span(), self.max));
-                }
-                if is_too_short {
-                    ctx.diagnostic(id_length_is_too_short_diagnostic(node.span(), self.min));
-                }
+                self.handle_binding_identifier(ident, node, ctx);
             }
             AstKind::IdentifierName(ident) => {
-                let ident_name = ident.name.to_string();
-
-                if self.is_exception(&ident_name) {
-                    return;
-                }
-
-                let graphemes_length = ident_name.graphemes(true).count();
-                let is_too_long = self.is_too_long(graphemes_length);
-                let is_too_short = self.is_too_short(graphemes_length);
-                if !is_too_long && !is_too_short {
-                    return;
-                }
-
-                if let Some(parent_node) = ctx.nodes().parent_node(node.id()) {
-                    match parent_node.kind() {
-                        AstKind::ExportSpecifier(_)
-                        | AstKind::ImportAttribute(_)
-                        | AstKind::ImportSpecifier(_)
-                        | AstKind::WithClause(_) => {
-                            return;
-                        }
-                        AstKind::ComputedMemberExpression(_)
-                        | AstKind::PrivateFieldExpression(_)
-                        | AstKind::StaticMemberExpression(_) => {
-                            let Some(parent_parent_node) =
-                                ctx.nodes().parent_node(parent_node.id())
-                            else {
-                                return;
-                            };
-                            let AstKind::SimpleAssignmentTarget(_) = parent_parent_node.kind()
-                            else {
-                                return;
-                            };
-
-                            if self.properties == PropertyKind::Never {
-                                return;
-                            }
-                        }
-                        AstKind::PropertyKey(property_key) => {
-                            if self.properties == PropertyKind::Never {
-                                return;
-                            }
-
-                            if let Some(parent_parent_node) =
-                                ctx.nodes().parent_node(parent_node.id())
-                            {
-                                match parent_parent_node.kind() {
-                                    AstKind::ObjectPattern(object_pattern) => {
-                                        // TODO: Is there a better way to do this check?
-                                        let binding_property_option = object_pattern
-                                            .properties
-                                            .iter()
-                                            .find(|x| x.key.content_eq(property_key));
-
-                                        if let Some(binding_property) = binding_property_option {
-                                            match &binding_property.value.kind {
-                                                BindingPatternKind::BindingIdentifier(_)
-                                                | BindingPatternKind::ObjectPattern(_) => {
-                                                    return;
-                                                }
-                                                _ => {}
-                                            }
-                                        }
-                                    }
-                                    AstKind::ObjectAssignmentTarget(_) => {
-                                        return;
-                                    }
-                                    _ => {}
-                                }
-                            }
-                        }
-                        _ => {}
-                    }
-                }
-
-                if is_too_long {
-                    ctx.diagnostic(id_length_is_too_long_diagnostic(node.span(), self.max));
-                }
-                if is_too_short {
-                    ctx.diagnostic(id_length_is_too_short_diagnostic(node.span(), self.min));
-                }
+                self.handle_identifier_name(ident, node, ctx);
             }
             AstKind::PrivateIdentifier(ident) => {
-                let ident_name = ident.name.to_string();
-
-                if self.is_exception(&ident_name) {
-                    return;
-                }
-
-                let graphemes_length = ident_name.graphemes(true).count();
-                let is_too_long = self.is_too_long(graphemes_length);
-                let is_too_short = self.is_too_short(graphemes_length);
-                if !is_too_long && !is_too_short {
-                    return;
-                }
-
-                if is_too_long {
-                    ctx.diagnostic(id_length_is_too_long_diagnostic(node.span(), self.max));
-                }
-                if is_too_short {
-                    ctx.diagnostic(id_length_is_too_short_diagnostic(node.span(), self.min));
-                }
+                self.handle_private_identifier(ident, node, ctx);
             }
             _ => {}
         }
