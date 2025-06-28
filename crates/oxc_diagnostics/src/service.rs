@@ -306,15 +306,25 @@ fn from_file_path<A: AsRef<Path>>(path: A) -> Option<String> {
         let mut components = fragment.components();
         let drive = components.next();
 
-        Some(format!(
-            "file:///{:?}:/{}",
-            drive.unwrap().as_os_str().to_string_lossy(),
-            percent_encoding::utf8_percent_encode(
-                // Skip the drive character.
-                &components.collect::<PathBuf>().to_string_lossy().cow_replace('\\', "/"),
-                &ASCII_SET
-            )
-        ))
+        if let Some(drive) = drive {
+            Some(format!(
+                "file:///{}{}",
+                drive.as_os_str().to_string_lossy().cow_replace('\\', "/"),
+                // Skip encoding ":" in the drive "C:/".
+                percent_encoding::utf8_percent_encode(
+                    &components.collect::<PathBuf>().to_string_lossy().cow_replace('\\', "/"),
+                    &ASCII_SET
+                )
+            ))
+        } else {
+            Some(format!(
+                "file:///{}",
+                percent_encoding::utf8_percent_encode(
+                    &components.collect::<PathBuf>().to_string_lossy().cow_replace('\\', "/"),
+                    &ASCII_SET
+                )
+            ))
+        }
     } else {
         Some(format!(
             "file://{}",
@@ -420,7 +430,7 @@ mod tests {
 
         for (path, expected) in paths.iter().zip(expected) {
             let uri = from_file_path(path).unwrap();
-            assert_eq!(uri.to_string(), expected);
+            assert_eq!(uri, expected);
         }
     }
 }
