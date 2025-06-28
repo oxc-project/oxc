@@ -277,16 +277,21 @@ ascii_byte_handler!(PRC(lexer) {
 // &
 ascii_byte_handler!(AMP(lexer) {
     lexer.consume_char();
-    if lexer.next_ascii_byte_eq(b'&') {
-        if lexer.next_ascii_byte_eq(b'=') {
+
+    match lexer.peek_2_bytes() {
+        Some([b'&', b'=']) => {
+            lexer.consume_2_chars();
             Kind::Amp2Eq
-        } else {
+        }
+        Some([b'&', _]) => {
+            lexer.consume_char();
             Kind::Amp2
         }
-    } else if lexer.next_ascii_byte_eq(b'=') {
-        Kind::AmpEq
-    } else {
-        Kind::Amp
+        Some([b'=', _]) => {
+            lexer.consume_char();
+            Kind::AmpEq
+        }
+        _ => Kind::Amp,
     }
 });
 
@@ -305,16 +310,21 @@ ascii_byte_handler!(PNC(lexer) {
 // *
 ascii_byte_handler!(ATR(lexer) {
     lexer.consume_char();
-    if lexer.next_ascii_byte_eq(b'*') {
-        if lexer.next_ascii_byte_eq(b'=') {
+
+    match lexer.peek_2_bytes() {
+        Some([b'*', b'=']) => {
+            lexer.consume_2_chars();
             Kind::Star2Eq
-        } else {
+        }
+        Some([b'*', _]) => {
+            lexer.consume_char();
             Kind::Star2
         }
-    } else if lexer.next_ascii_byte_eq(b'=') {
-        Kind::StarEq
-    } else {
-        Kind::Star
+        Some([b'=', _]) => {
+            lexer.consume_char();
+            Kind::StarEq
+        }
+        _ => Kind::Star,
     }
 });
 
@@ -360,14 +370,12 @@ ascii_byte_handler!(SLH(lexer) {
             lexer.consume_char();
             lexer.skip_multi_line_comment()
         }
-        _ => {
-            // regex is handled separately, see `next_regex`
-            if lexer.next_ascii_byte_eq(b'=') {
-                Kind::SlashEq
-            } else {
-                Kind::Slash
-            }
+        // regex is handled separately, see `next_regex`
+        Some(b'=') => {
+            lexer.consume_char();
+            Kind::SlashEq
         }
+        _ => Kind::Slash,
     }
 });
 
@@ -404,16 +412,21 @@ ascii_byte_handler!(LSS(lexer) {
 // =
 ascii_byte_handler!(EQL(lexer) {
     lexer.consume_char();
-    if lexer.next_ascii_byte_eq(b'=') {
-        if lexer.next_ascii_byte_eq(b'=') {
+
+    match lexer.peek_2_bytes() {
+        Some([b'=', b'=']) => {
+            lexer.consume_2_chars();
             Kind::Eq3
-        } else {
+        }
+        Some([b'=', _]) => {
+            lexer.consume_char();
             Kind::Eq2
         }
-    } else if lexer.next_ascii_byte_eq(b'>') {
-        Kind::Arrow
-    } else {
-        Kind::Eq
+        Some([b'>', _]) => {
+            lexer.consume_char();
+            Kind::Arrow
+        }
+        _ => Kind::Eq,
     }
 });
 
@@ -511,20 +524,20 @@ ascii_byte_handler!(BEO(lexer) {
 ascii_byte_handler!(PIP(lexer) {
     lexer.consume_char();
 
-    match lexer.peek_byte() {
-        Some(b'|') => {
-            lexer.consume_char();
-            if lexer.next_ascii_byte_eq(b'=') {
-                Kind::Pipe2Eq
-            } else {
-                Kind::Pipe2
-            }
+    match lexer.peek_2_bytes() {
+        Some([b'|', b'=']) => {
+            lexer.consume_2_chars();
+            Kind::Pipe2Eq
         }
-        Some(b'=') => {
+        Some([b'|', _]) => {
+            lexer.consume_char();
+            Kind::Pipe2
+        }
+        Some([b'=', _]) => {
             lexer.consume_char();
             Kind::PipeEq
         }
-        _ => Kind::Pipe
+        _ => Kind::Pipe,
     }
 });
 
