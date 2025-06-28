@@ -170,18 +170,13 @@ impl Rule for ArrowBodyStyle {
                 ));
             }
             if self.mode.is_as_needed() && self.require_return_for_object_literal {
-                if statements.len() != 1 {
-                    return;
-                }
-                let inner_statement = &statements[0];
-                if let Statement::ExpressionStatement(expression_statement) = inner_statement {
-                    let expr = &expression_statement.expression.without_parentheses();
-                    if matches!(expr, Expression::ObjectExpression(_)) {
-                        ctx.diagnostic(arrow_body_style_diagnostic(
-                            body.span,
-                            "Expected block statement surrounding arrow body.",
-                        ));
-                    }
+                if let Some(Expression::ObjectExpression(_)) =
+                    arrow_func_expr.get_expression().map(Expression::get_inner_expression)
+                {
+                    ctx.diagnostic(arrow_body_style_diagnostic(
+                        body.span,
+                        "Expected block statement surrounding arrow body.",
+                    ));
                 }
             }
         } else {
