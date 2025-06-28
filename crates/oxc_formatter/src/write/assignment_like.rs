@@ -119,9 +119,9 @@ impl<'a, 'b> AssignmentLike<'a, 'b> {
         is_left_short: bool,
         left_may_break: bool,
         f: &mut Formatter<'_, 'a>,
-    ) -> FormatResult<AssignmentLikeLayout> {
+    ) -> AssignmentLikeLayout {
         if self.has_only_left_hand_side() {
-            return Ok(AssignmentLikeLayout::OnlyLeft);
+            return AssignmentLikeLayout::OnlyLeft;
         }
 
         let right = self.right();
@@ -133,9 +133,9 @@ impl<'a, 'b> AssignmentLike<'a, 'b> {
         // }
         let right_expression = right.as_expression();
 
-        // if let Some(layout) = self.chain_formatting_layout(right_expression.as_ref())? {
-        //     return Ok(layout);
-        // }
+        if let Some(layout) = right_expression.and_then(|expr| self.chain_formatting_layout(expr)) {
+            return layout;
+        }
 
         if let Some(expression) = &right_expression {
             if let Expression::CallExpression(call_expression) = expression {
@@ -144,21 +144,21 @@ impl<'a, 'b> AssignmentLike<'a, 'b> {
                     .get_identifier_reference()
                     .is_some_and(|ident| ident.name == "require")
                 {
-                    return Ok(AssignmentLikeLayout::NeverBreakAfterOperator);
+                    return AssignmentLikeLayout::NeverBreakAfterOperator;
                 }
             }
         }
 
         if self.should_break_left_hand_side() {
-            return Ok(AssignmentLikeLayout::BreakLeftHandSide);
+            return AssignmentLikeLayout::BreakLeftHandSide;
         }
 
         if self.should_break_after_operator(&right, f) {
-            return Ok(AssignmentLikeLayout::BreakAfterOperator);
+            return AssignmentLikeLayout::BreakAfterOperator;
         }
 
         if is_left_short {
-            return Ok(AssignmentLikeLayout::NeverBreakAfterOperator);
+            return AssignmentLikeLayout::NeverBreakAfterOperator;
         }
 
         // Before checking `BreakAfterOperator` layout, we need to unwrap the right expression from `JsUnaryExpression` or `TsNonNullAssertionExpression`
@@ -175,7 +175,7 @@ impl<'a, 'b> AssignmentLike<'a, 'b> {
         .last();
 
         if matches!(right_expression, Some(Expression::StringLiteral(_))) {
-            return Ok(AssignmentLikeLayout::BreakAfterOperator);
+            return AssignmentLikeLayout::BreakAfterOperator;
         }
 
         let is_poorly_breakable = match &right_expression {
@@ -184,7 +184,7 @@ impl<'a, 'b> AssignmentLike<'a, 'b> {
         };
 
         if is_poorly_breakable {
-            return Ok(AssignmentLikeLayout::BreakAfterOperator);
+            return AssignmentLikeLayout::BreakAfterOperator;
         }
 
         if !left_may_break
@@ -198,10 +198,10 @@ impl<'a, 'b> AssignmentLike<'a, 'b> {
                 )
             )
         {
-            return Ok(AssignmentLikeLayout::NeverBreakAfterOperator);
+            return AssignmentLikeLayout::NeverBreakAfterOperator;
         }
 
-        Ok(AssignmentLikeLayout::Fluid)
+        AssignmentLikeLayout::Fluid
     }
 
     /// Checks that a [JsAnyAssignmentLike] consists only of the left part
@@ -217,6 +217,60 @@ impl<'a, 'b> AssignmentLike<'a, 'b> {
         // } else {
         //     matches!(self, Self::TsPropertySignatureClassMember(_))
         // }
+    }
+
+    /// and if so, it return the layout type
+    fn chain_formatting_layout(
+        &self,
+        right_expression: &Expression,
+    ) -> Option<AssignmentLikeLayout> {
+        let right_is_tail = !matches!(right_expression, Expression::AssignmentExpression(_));
+
+        // The chain goes up two levels, by checking up to the great parent if all the conditions
+        // are correctly met.
+        let upper_chain_is_eligible =
+            // First, we check if the current node is an assignment expression
+            if let Self::AssignmentExpression(assignment) = self {
+                    // TODO: update comments.
+                    // Then we check if the parent is assignment expression or variable declarator
+                    let parent = assignment.parent;
+                    // Finally, we check the great parent.
+                    // The great parent triggers the eligibility when
+                    // - the current node that we were inspecting is not a "tail"
+                    // - or the great parent is not an expression statement or a variable declarator
+                    (matches!(parent, AstNodes::VariableDeclarator(_)) && !right_is_tail) ||
+                    matches!(parent, AstNodes::AssignmentExpression(parent_assignment)
+                        if !right_is_tail || !matches!(parent_assignment.parent, AstNodes::ExpressionStatement(_))
+                    )
+            } else {
+                false
+            };
+
+        let result = if upper_chain_is_eligible {
+            if !right_is_tail {
+                Some(AssignmentLikeLayout::Chain)
+            } else {
+                match right_expression {
+                    Expression::ArrowFunctionExpression(arrow) => {
+                        if arrow.expression {
+                            let Statement::ExpressionStatement(stmt) = &arrow.body.statements[0]
+                            else {
+                                unreachable!()
+                            };
+                            if matches!(&stmt.expression, Expression::ArrowFunctionExpression(_)) {
+                                return Some(AssignmentLikeLayout::ChainTailArrowFunction);
+                            }
+                        }
+                        Some(AssignmentLikeLayout::ChainTail)
+                    }
+                    _ => Some(AssignmentLikeLayout::ChainTail),
+                }
+            }
+        } else {
+            None
+        };
+
+        result
     }
 
     /// Particular function that checks if the left hand side of a [JsAnyAssignmentLike] should
@@ -270,11 +324,7 @@ impl<'a, 'b> AssignmentLike<'a, 'b> {
         let result = match right {
             RightAssignmentLike::Expression(expression) => {
                 should_break_after_operator(expression, f)
-            } // RightAssignmentLike::JsInitializerClause(initializer) => {
-              //     comments.has_leading_own_line_comment(initializer.syntax())
-              //         || should_break_after_operator(&initializer.expression()?, comments, f)?
-              // }
-              // RightAssignmentLike::AnyTsType(AnyTsType::TsUnionType(ty)) => {
+            } // RightAssignmentLike::AnyTsType(AnyTsType::TsUnionType(ty)) => {
               //     // Recursively checks if the union type is nested and identifies the innermost union type.
               //     // If a leading comment is found while navigating to the inner union type,
               //     // it is considered as having leading comments.
@@ -305,9 +355,9 @@ impl<'a, 'b> AssignmentLike<'a, 'b> {
 
 /// Checks if the function is entitled to be printed with layout [AssignmentLikeLayout::BreakAfterOperator]
 pub(crate) fn should_break_after_operator(right: &Expression, f: &Formatter<'_, '_>) -> bool {
-    let comments = f.comments();
     // TODO: not sure
-    if comments.has_leading_own_line_comments(right.span().start)
+    dbg!(f.comments().has_leading_own_line_comments(right.span().start));
+    if f.comments().has_leading_own_line_comments(right.span().start)
         && !matches!(right, Expression::JSXElement(_) | Expression::JSXFragment(_))
     {
         return true;
@@ -392,12 +442,12 @@ impl<'a, 'b> Format<'a> for AssignmentLike<'a, 'b> {
             let formatted_left = buffer.into_vec();
             let left_may_break = formatted_left.may_directly_break();
 
+            let left = format_once(|f| f.write_elements(formatted_left));
+
             // Compare name only if we are in a position of computing it.
             // If not (for example, left is not an identifier), then let's fallback to false,
             // so we can continue the chain of checks
-            let layout = self.layout(is_left_short, left_may_break, f)?;
-
-            let left = format_once(|f| f.write_elements(formatted_left));
+            let layout = self.layout(is_left_short, left_may_break, f);
             let right = format_with(|f| self.write_right(f, layout));
 
             let inner_content = format_with(|f| {

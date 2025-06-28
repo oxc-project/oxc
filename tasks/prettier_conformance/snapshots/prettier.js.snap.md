@@ -1,4 +1,4 @@
-js compatibility: 339/699 (48.50%)
+js compatibility: 340/699 (48.64%)
 
 # Failed
 
@@ -8,7 +8,7 @@ js compatibility: 339/699 (48.50%)
 | js/arrow-call/arrow_call.js | 💥💥💥 | 62.61% |
 | js/arrows/arrow-chain-with-trailing-comments.js | 💥✨ | 40.62% |
 | js/arrows/arrow_function_expression.js | 💥💥 | 33.33% |
-| js/arrows/assignment-chain-with-arrow-chain.js | 💥💥 | 46.98% |
+| js/arrows/assignment-chain-with-arrow-chain.js | 💥💥 | 79.93% |
 | js/arrows/call.js | 💥💥 | 56.01% |
 | js/arrows/chain-as-arg.js | 💥💥 | 82.86% |
 | js/arrows/chain-in-logical-expression.js | 💥💥 | 26.67% |
@@ -24,7 +24,7 @@ js compatibility: 339/699 (48.50%)
 | js/arrows/semi/semi.js | 💥💥 | 0.00% |
 | js/assignment/binaryish.js | 💥 | 71.43% |
 | js/assignment/call-with-template.js | 💥 | 70.00% |
-| js/assignment/chain.js | 💥 | 26.87% |
+| js/assignment/chain.js | 💥 | 94.29% |
 | js/assignment/destructuring-array.js | 💥 | 0.00% |
 | js/assignment/destructuring-heuristic.js | 💥 | 39.02% |
 | js/assignment/destructuring.js | 💥 | 93.33% |
@@ -32,7 +32,6 @@ js compatibility: 339/699 (48.50%)
 | js/assignment/issue-1419.js | 💥 | 28.57% |
 | js/assignment/issue-15534.js | 💥 | 30.77% |
 | js/assignment/issue-2482-2.js | 💥 | 62.50% |
-| js/assignment/issue-3819.js | 💥 | 19.05% |
 | js/assignment/issue-7572.js | 💥 | 72.73% |
 | js/assignment/lone-arg.js | 💥 | 85.00% |
 | js/assignment-comments/function.js | 💥 | 67.39% |

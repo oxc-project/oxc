@@ -64,7 +64,7 @@ ts compatibility: 210/573 (36.65%)
 | typescript/arrow/issue-6107-curry.ts | 💥💥 | 68.75% |
 | typescript/as/array-pattern.ts | 💥 | 0.00% |
 | typescript/as/as.ts | 💥 | 59.84% |
-| typescript/as/assignment2.ts | 💥 | 75.00% |
+| typescript/as/assignment2.ts | 💥 | 88.24% |
 | typescript/as/export_default_as.ts | 💥 | 0.00% |
 | typescript/as/expression-statement.ts | 💥 | 50.00% |
 | typescript/as/long-identifiers.ts | 💥 | 88.89% |
@@ -311,7 +311,7 @@ ts compatibility: 210/573 (36.65%)
 | typescript/satisfies-operators/export-default-as.ts | 💥💥 | 0.00% |
 | typescript/satisfies-operators/expression-statement.ts | 💥💥 | 78.38% |
 | typescript/satisfies-operators/gt-lt.ts | 💥💥 | 0.00% |
-| typescript/satisfies-operators/lhs.ts | 💥💥 | 18.75% |
+| typescript/satisfies-operators/lhs.ts | 💥💥 | 75.00% |
 | typescript/satisfies-operators/nested-await-and-satisfies.ts | 💥💥 | 16.67% |
 | typescript/satisfies-operators/non-null.ts | 💥💥 | 66.67% |
 | typescript/satisfies-operators/satisfies.ts | 💥💥 | 61.36% |
