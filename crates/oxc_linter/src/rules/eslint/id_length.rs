@@ -182,14 +182,15 @@ impl Rule for IdLength {
                 .and_then(Value::as_array)
                 .unwrap_or(&vec![])
                 .iter()
-                .map(|val| Regex::new(val.as_str().unwrap()).unwrap())
+                .filter_map(|val| val.as_str().and_then(|val| Regex::new(val).ok()))
                 .collect(),
             exceptions: object
                 .and_then(|map| map.get("exceptions"))
                 .and_then(Value::as_array)
                 .unwrap_or(&vec![])
                 .iter()
-                .map(|val| val.as_str().unwrap().to_string())
+                .filter_map(|val| val.as_str())
+                .map(ToString::to_string)
                 .collect(),
             max: object
                 .and_then(|map| map.get("max"))
