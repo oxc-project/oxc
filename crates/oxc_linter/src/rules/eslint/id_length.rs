@@ -58,6 +58,152 @@ pub struct IdLengthConfig {
     properties: PropertyKind,
 }
 
+impl Default for IdLength {
+    fn default() -> Self {
+        Self(Box::new(IdLengthConfig {
+            exception_patterns: vec![],
+            exceptions: vec![],
+            max: DEFAULT_MAX_LENGTH,
+            min: DEFAULT_MIN_LENGTH,
+            properties: PropertyKind::default(),
+        }))
+    }
+}
+
+declare_oxc_lint!(
+    /// ### What it does
+    ///
+    /// This rule enforces a minimum and/or maximum identifier length convention by counting the
+    /// graphemes for a given identifier.
+    ///
+    /// ### Why is this bad?
+    ///
+    /// Very short identifier names like e, x, _t or very long ones like
+    /// hashGeneratorResultOutputContainerObject can make code harder to read and potentially less
+    /// maintainable. To prevent this, one may enforce a minimum and/or maximum identifier length.
+    ///
+    /// ### Examples
+    ///
+    /// Examples of **incorrect** code for this rule:
+    /// ```js
+    /// /*eslint id-length: "error"*/     // default is minimum 2-chars ({ "min": 2 })
+    ///
+    /// const x = 5;
+    /// obj.e = document.body;
+    /// const foo = function (e) { };
+    /// try {
+    ///     dangerousStuff();
+    /// } catch (e) {
+    ///     // ignore as many do
+    /// }
+    /// const myObj = { a: 1 };
+    /// (a) => { a * a };
+    /// class y { }
+    /// class Foo { x() {} }
+    /// class Bar { #x() {} }
+    /// class Baz { x = 1 }
+    /// class Qux { #x = 1 }
+    /// function bar(...x) { }
+    /// function baz([x]) { }
+    /// const [z] = arr;
+    /// const { prop: [i]} = {};
+    /// function qux({x}) { }
+    /// const { j } = {};
+    /// const { prop: a} = {};
+    /// ({ prop: obj.x } = {});
+    /// ```
+    ///
+    /// Examples of **correct** code for this rule:
+    /// ```js
+    /// /*eslint id-length: "error"*/     // default is minimum 2-chars ({ "min": 2 })
+    ///
+    /// const num = 5;
+    /// function _f() { return 42; }
+    /// function _func() { return 42; }
+    /// obj.el = document.body;
+    /// const foo = function (evt) { /* do stuff */ };
+    /// try {
+    ///     dangerousStuff();
+    /// } catch (error) {
+    ///     // ignore as many do
+    /// }
+    /// const myObj = { apple: 1 };
+    /// (num) => { num * num };
+    /// function bar(num = 0) { }
+    /// class MyClass { }
+    /// class Foo { method() {} }
+    /// class Bar { #method() {} }
+    /// class Baz { field = 1 }
+    /// class Qux { #field = 1 }
+    /// function baz(...args) { }
+    /// function qux([longName]) { }
+    /// const { prop } = {};
+    /// const { prop: [name] } = {};
+    /// const [longName] = arr;
+    /// function foobar({ prop }) { }
+    /// function foobaz({ a: prop }) { }
+    /// const { a: property } = {};
+    /// ({ prop: obj.longName } = {});
+    /// const data = { "x": 1 };  // excused because of quotes
+    /// data["y"] = 3;  // excused because of calculated property access
+    /// ```
+    IdLength,
+    eslint,
+    style,
+);
+
+impl Rule for IdLength {
+    fn from_configuration(value: Value) -> Self {
+        let object = value.get(0).and_then(Value::as_object);
+
+        Self(Box::new(IdLengthConfig {
+            exception_patterns: object
+                .and_then(|map| map.get("exceptionPatterns"))
+                .and_then(Value::as_array)
+                .unwrap_or(&vec![])
+                .iter()
+                .filter_map(|val| val.as_str().and_then(|val| Regex::new(val).ok()))
+                .collect(),
+            exceptions: object
+                .and_then(|map| map.get("exceptions"))
+                .and_then(Value::as_array)
+                .unwrap_or(&vec![])
+                .iter()
+                .filter_map(|val| val.as_str())
+                .map(ToString::to_string)
+                .collect(),
+            max: object
+                .and_then(|map| map.get("max"))
+                .and_then(Value::as_u64)
+                .unwrap_or(DEFAULT_MAX_LENGTH),
+            min: object
+                .and_then(|map| map.get("min"))
+                .and_then(Value::as_u64)
+                .unwrap_or(DEFAULT_MIN_LENGTH),
+            properties: object
+                .and_then(|map| map.get("properties"))
+                .and_then(Value::as_str)
+                .map(PropertyKind::from)
+                .unwrap_or_default(),
+        }))
+    }
+
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+        match node.kind() {
+            AstKind::BindingIdentifier(ident) => {
+                self.handle_binding_identifier(ident, node, ctx);
+            }
+            AstKind::IdentifierName(ident) => {
+                self.handle_identifier_name(ident, node, ctx);
+            }
+            AstKind::PrivateIdentifier(ident) => {
+                self.handle_private_identifier(ident, node, ctx);
+            }
+            _ => {}
+        }
+    }
+}
+
 impl IdLength {
     fn handle_binding_identifier(
         &self,
@@ -83,8 +229,7 @@ impl IdLength {
         };
         match parent_node.kind() {
             AstKind::ImportSpecifier(import_specifier) => {
-                // TODO: Is there a better way to do this check?
-                if import_specifier.imported.name().eq(&import_specifier.local.name) {
+                if import_specifier.imported.name() == import_specifier.local.name {
                     return;
                 }
                 // TODO: Is there a better way to do this check?
@@ -93,9 +238,8 @@ impl IdLength {
                 }
             }
             AstKind::ObjectPattern(object_pattern) => {
-                // TODO: Is there a better way to do this check?
                 let binding_property_option =
-                    object_pattern.properties.iter().find(|x| x.span.eq(&ident.span));
+                    object_pattern.properties.iter().find(|x| x.span == ident.span);
 
                 if IdLength::is_binding_identifier_or_object_pattern(binding_property_option)
                     && self.properties == PropertyKind::Never
@@ -245,153 +389,6 @@ impl IdLength {
 
     fn is_too_short(&self, ident_length: usize) -> bool {
         ident_length < usize::try_from(self.min).unwrap_or(0)
-    }
-}
-
-impl Default for IdLength {
-    fn default() -> Self {
-        Self(Box::new(IdLengthConfig {
-            exception_patterns: vec![],
-            exceptions: vec![],
-            max: DEFAULT_MAX_LENGTH,
-            min: DEFAULT_MIN_LENGTH,
-            properties: PropertyKind::default(),
-        }))
-    }
-}
-
-// See <https://github.com/oxc-project/oxc/issues/6050> for documentation details.
-declare_oxc_lint!(
-    /// ### What it does
-    ///
-    /// This rule enforces a minimum and/or maximum identifier length convention by counting the
-    /// graphemes for a given identifier.
-    ///
-    /// ### Why is this bad?
-    ///
-    /// Very short identifier names like e, x, _t or very long ones like
-    /// hashGeneratorResultOutputContainerObject can make code harder to read and potentially less
-    /// maintainable. To prevent this, one may enforce a minimum and/or maximum identifier length.
-    ///
-    /// ### Examples
-    ///
-    /// Examples of **incorrect** code for this rule:
-    /// ```js
-    /// /*eslint id-length: "error"*/     // default is minimum 2-chars ({ "min": 2 })
-    ///
-    /// const x = 5;
-    /// obj.e = document.body;
-    /// const foo = function (e) { };
-    /// try {
-    ///     dangerousStuff();
-    /// } catch (e) {
-    ///     // ignore as many do
-    /// }
-    /// const myObj = { a: 1 };
-    /// (a) => { a * a };
-    /// class y { }
-    /// class Foo { x() {} }
-    /// class Bar { #x() {} }
-    /// class Baz { x = 1 }
-    /// class Qux { #x = 1 }
-    /// function bar(...x) { }
-    /// function baz([x]) { }
-    /// const [z] = arr;
-    /// const { prop: [i]} = {};
-    /// function qux({x}) { }
-    /// const { j } = {};
-    /// const { prop: a} = {};
-    /// ({ prop: obj.x } = {});
-    /// ```
-    ///
-    /// Examples of **correct** code for this rule:
-    /// ```js
-    /// /*eslint id-length: "error"*/     // default is minimum 2-chars ({ "min": 2 })
-    ///
-    /// const num = 5;
-    /// function _f() { return 42; }
-    /// function _func() { return 42; }
-    /// obj.el = document.body;
-    /// const foo = function (evt) { /* do stuff */ };
-    /// try {
-    ///     dangerousStuff();
-    /// } catch (error) {
-    ///     // ignore as many do
-    /// }
-    /// const myObj = { apple: 1 };
-    /// (num) => { num * num };
-    /// function bar(num = 0) { }
-    /// class MyClass { }
-    /// class Foo { method() {} }
-    /// class Bar { #method() {} }
-    /// class Baz { field = 1 }
-    /// class Qux { #field = 1 }
-    /// function baz(...args) { }
-    /// function qux([longName]) { }
-    /// const { prop } = {};
-    /// const { prop: [name] } = {};
-    /// const [longName] = arr;
-    /// function foobar({ prop }) { }
-    /// function foobaz({ a: prop }) { }
-    /// const { a: property } = {};
-    /// ({ prop: obj.longName } = {});
-    /// const data = { "x": 1 };  // excused because of quotes
-    /// data["y"] = 3;  // excused because of calculated property access
-    /// ```
-    IdLength,
-    eslint,
-    style,
-);
-
-impl Rule for IdLength {
-    fn from_configuration(value: Value) -> Self {
-        let object = value.get(0).and_then(Value::as_object);
-
-        Self(Box::new(IdLengthConfig {
-            exception_patterns: object
-                .and_then(|map| map.get("exceptionPatterns"))
-                .and_then(Value::as_array)
-                .unwrap_or(&vec![])
-                .iter()
-                .filter_map(|val| val.as_str().and_then(|val| Regex::new(val).ok()))
-                .collect(),
-            exceptions: object
-                .and_then(|map| map.get("exceptions"))
-                .and_then(Value::as_array)
-                .unwrap_or(&vec![])
-                .iter()
-                .filter_map(|val| val.as_str())
-                .map(ToString::to_string)
-                .collect(),
-            max: object
-                .and_then(|map| map.get("max"))
-                .and_then(Value::as_u64)
-                .unwrap_or(DEFAULT_MAX_LENGTH),
-            min: object
-                .and_then(|map| map.get("min"))
-                .and_then(Value::as_u64)
-                .unwrap_or(DEFAULT_MIN_LENGTH),
-            properties: object
-                .and_then(|map| map.get("properties"))
-                .and_then(Value::as_str)
-                .map(PropertyKind::from)
-                .unwrap_or_default(),
-        }))
-    }
-
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        match node.kind() {
-            AstKind::BindingIdentifier(ident) => {
-                self.handle_binding_identifier(ident, node, ctx);
-            }
-            AstKind::IdentifierName(ident) => {
-                self.handle_identifier_name(ident, node, ctx);
-            }
-            AstKind::PrivateIdentifier(ident) => {
-                self.handle_private_identifier(ident, node, ctx);
-            }
-            _ => {}
-        }
     }
 }
 
