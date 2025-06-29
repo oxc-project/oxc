@@ -3954,13 +3954,15 @@ pub mod walk {
 
     #[inline]
     pub fn walk_ts_constructor_type<'a, V: Visit<'a>>(visitor: &mut V, it: &TSConstructorType<'a>) {
-        // No `AstKind` for this type
+        let kind = AstKind::TSConstructorType(visitor.alloc(it));
+        visitor.enter_node(kind);
         visitor.visit_span(&it.span);
         if let Some(type_parameters) = &it.type_parameters {
             visitor.visit_ts_type_parameter_declaration(type_parameters);
         }
         visitor.visit_formal_parameters(&it.params);
         visitor.visit_ts_type_annotation(&it.return_type);
+        visitor.leave_node(kind);
     }
 
     #[inline]

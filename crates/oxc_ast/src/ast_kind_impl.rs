@@ -404,6 +404,7 @@ impl AstKind<'_> {
             Self::TSMappedType(_) => "TSMappedType".into(),
             Self::TSConstructSignatureDeclaration(_) => "TSConstructSignatureDeclaration".into(),
             Self::TSExportAssignment(_) => "TSExportAssignment".into(),
+            Self::TSConstructorType(_) => "TSConstructorType".into(),
             Self::V8IntrinsicExpression(_) => "V8IntrinsicExpression".into(),
 
             Self::JSDocNullableType(_) => "JSDocNullableType".into(),
