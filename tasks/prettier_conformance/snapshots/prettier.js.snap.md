@@ -210,7 +210,7 @@ js compatibility: 347/699 (49.64%)
 | js/member/conditional.js | 💥 | 0.00% |
 | js/member/expand.js | 💥 | 57.14% |
 | js/method-chain/bracket_0-1.js | 💥 | 0.00% |
-| js/method-chain/break-last-member.js | 💥 | 63.64% |
+| js/method-chain/break-last-member.js | 💥 | 80.56% |
 | js/method-chain/comment.js | 💥 | 35.09% |
 | js/method-chain/computed-merge.js | 💥 | 29.27% |
 | js/method-chain/computed.js | 💥 | 0.00% |

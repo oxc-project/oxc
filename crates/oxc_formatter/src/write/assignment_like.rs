@@ -26,45 +26,7 @@ pub enum AssignmentLike<'a, 'b> {
     AssignmentExpression(&'b AstNode<'a, AssignmentExpression<'a>>),
 }
 
-enum LeftAssignmentLike<'a, 'b> {
-    BindingPattern(&'b BindingPattern<'a>),
-    AssignmentTarget(&'b AssignmentTarget<'a>),
-}
-
-enum RightAssignmentLike<'a, 'b> {
-    Expression(&'b AstNode<'a, Expression<'a>>),
-}
-
-impl<'a, 'b> RightAssignmentLike<'a, 'b> {
-    fn as_expression(&self) -> Option<&'b Expression<'a>> {
-        if let RightAssignmentLike::Expression(expr) = self { Some(expr) } else { None }
-    }
-}
-
 impl<'a, 'b> AssignmentLike<'a, 'b> {
-    fn left(&self) -> LeftAssignmentLike<'a, 'b> {
-        match self {
-            AssignmentLike::VariableDeclarator(ast_node) => {
-                LeftAssignmentLike::BindingPattern(&ast_node.id)
-            }
-            AssignmentLike::AssignmentExpression(ast_node) => todo!(),
-        }
-    }
-
-    fn right(&self) -> RightAssignmentLike<'a, 'b> {
-        let right = match self {
-            Self::AssignmentExpression(assignment) => {
-                RightAssignmentLike::Expression(assignment.right())
-            }
-            Self::VariableDeclarator(variable_declarator) => {
-                // SAFETY: Calling `unwrap` here is safe because we check `has_only_left_hand_side` variant at the beginning of the `layout` function
-                RightAssignmentLike::Expression(variable_declarator.init().unwrap())
-            }
-        };
-
-        right
-    }
-
     fn write_left(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<bool> {
         match self {
             AssignmentLike::VariableDeclarator(variable_declarator) => {
@@ -124,14 +86,12 @@ impl<'a, 'b> AssignmentLike<'a, 'b> {
             return AssignmentLikeLayout::OnlyLeft;
         }
 
-        let right = self.right();
-
         // if let RightAssignmentLike::JsInitializerClause(initializer) = &right {
         //     if f.context().comments().is_suppressed(initializer.syntax()) {
         //         return Ok(AssignmentLikeLayout::SuppressedInitializer);
         //     }
         // }
-        let right_expression = right.as_expression();
+        let right_expression = self.get_right_expression();
 
         if let Some(layout) = right_expression.and_then(|expr| self.chain_formatting_layout(expr)) {
             return layout;
@@ -153,7 +113,7 @@ impl<'a, 'b> AssignmentLike<'a, 'b> {
             return AssignmentLikeLayout::BreakLeftHandSide;
         }
 
-        if self.should_break_after_operator(&right, f) {
+        if self.should_break_after_operator(right_expression, f) {
             return AssignmentLikeLayout::BreakAfterOperator;
         }
 
@@ -204,6 +164,15 @@ impl<'a, 'b> AssignmentLike<'a, 'b> {
         AssignmentLikeLayout::Fluid
     }
 
+    fn get_right_expression(&self) -> Option<&Expression<'a>> {
+        match self {
+            AssignmentLike::VariableDeclarator(variable_decorator) => {
+                variable_decorator.init.as_ref()
+            }
+            AssignmentLike::AssignmentExpression(assignment) => Some(&assignment.right),
+        }
+    }
+
     /// Checks that a [JsAnyAssignmentLike] consists only of the left part
     /// usually, when a [variable declarator](JsVariableDeclarator) doesn't have initializer
     fn has_only_left_hand_side(&self) -> bool {
@@ -231,17 +200,15 @@ impl<'a, 'b> AssignmentLike<'a, 'b> {
         let upper_chain_is_eligible =
             // First, we check if the current node is an assignment expression
             if let Self::AssignmentExpression(assignment) = self {
-                    // TODO: update comments.
-                    // Then we check if the parent is assignment expression or variable declarator
-                    let parent = assignment.parent;
-                    // Finally, we check the great parent.
-                    // The great parent triggers the eligibility when
-                    // - the current node that we were inspecting is not a "tail"
-                    // - or the great parent is not an expression statement or a variable declarator
-                    (matches!(parent, AstNodes::VariableDeclarator(_)) && !right_is_tail) ||
-                    matches!(parent, AstNodes::AssignmentExpression(parent_assignment)
-                        if !right_is_tail || !matches!(parent_assignment.parent, AstNodes::ExpressionStatement(_))
-                    )
+                // Then we check if the parent is assignment expression or variable declarator
+                let parent = assignment.parent;
+                // Determine if the chain is eligible based on the following checks:
+                // 1. For variable declarators: only continue if this isn't the final assignment in the chain
+                (matches!(parent, AstNodes::VariableDeclarator(_)) && !right_is_tail) ||
+                // 2. For assignment expressions: continue unless this is the final assignment in an expression statement
+                matches!(parent, AstNodes::AssignmentExpression(parent_assignment)
+                    if !right_is_tail || !matches!(parent_assignment.parent, AstNodes::ExpressionStatement(_))
+                )
             } else {
                 false
             };
@@ -276,9 +243,7 @@ impl<'a, 'b> AssignmentLike<'a, 'b> {
     /// Particular function that checks if the left hand side of a [JsAnyAssignmentLike] should
     /// be broken on multiple lines
     fn should_break_left_hand_side(&self) -> bool {
-        // let is_complex_destructuring =
-        //     self.left().into_object_pattern().is_some_and(|pattern| pattern.is_complex());
-        let is_complex_destructuring = false;
+        let is_complex_destructuring = self.is_complex_destructuring();
 
         // let has_complex_type_annotation = self
         //     .annotation()
@@ -317,39 +282,67 @@ impl<'a, 'b> AssignmentLike<'a, 'b> {
     /// for nodes that belong to TypeScript too.
     fn should_break_after_operator(
         &self,
-        right: &RightAssignmentLike,
+        right_expression: Option<&Expression<'a>>,
         f: &Formatter<'_, 'a>,
     ) -> bool {
         let comments = f.context().comments();
-        let result = match right {
-            RightAssignmentLike::Expression(expression) => {
-                should_break_after_operator(expression, f)
-            } // RightAssignmentLike::AnyTsType(AnyTsType::TsUnionType(ty)) => {
-              //     // Recursively checks if the union type is nested and identifies the innermost union type.
-              //     // If a leading comment is found while navigating to the inner union type,
-              //     // it is considered as having leading comments.
-              //     let mut union_type = ty.clone();
-              //     let mut has_leading_comments = comments.has_leading_comments(union_type.syntax());
-              //     while is_nested_union_type(&union_type)? && !has_leading_comments {
-              //         if let Some(Ok(inner_union_type)) = union_type.types().last() {
-              //             let inner_union_type = TsUnionType::cast(inner_union_type.into_syntax());
-              //             if let Some(inner_union_type) = inner_union_type {
-              //                 has_leading_comments =
-              //                     comments.has_leading_comments(inner_union_type.syntax());
-              //                 union_type = inner_union_type;
-              //             } else {
-              //                 break;
-              //             }
-              //         } else {
-              //             break;
-              //         }
-              //     }
-              //     has_leading_comments
-              // }
-              // right => comments.has_leading_own_line_comment(right.syntax()),
-        };
+        if let Some(right_expression) = right_expression {
+            should_break_after_operator(right_expression, f)
+        } else {
+            // RightAssignmentLike::AnyTsType(AnyTsType::TsUnionType(ty)) => {
+            //     // Recursively checks if the union type is nested and identifies the innermost union type.
+            //     // If a leading comment is found while navigating to the inner union type,
+            //     // it is considered as having leading comments.
+            //     let mut union_type = ty.clone();
+            //     let mut has_leading_comments = comments.has_leading_comments(union_type.syntax());
+            //     while is_nested_union_type(&union_type)? && !has_leading_comments {
+            //         if let Some(Ok(inner_union_type)) = union_type.types().last() {
+            //             let inner_union_type = TsUnionType::cast(inner_union_type.into_syntax());
+            //             if let Some(inner_union_type) = inner_union_type {
+            //                 has_leading_comments =
+            //                     comments.has_leading_comments(inner_union_type.syntax());
+            //                 union_type = inner_union_type;
+            //             } else {
+            //                 break;
+            //             }
+            //         } else {
+            //             break;
+            //         }
+            //     }
+            //     has_leading_comments
+            // }
+            false
+        }
+    }
 
-        result
+    fn is_complex_destructuring(&self) -> bool {
+        match self {
+            AssignmentLike::VariableDeclarator(variable_decorator) => {
+                let BindingPatternKind::ObjectPattern(object) = &variable_decorator.id.kind else {
+                    return false;
+                };
+
+                let properties = &object.properties;
+                if properties.len() <= 2 {
+                    return false;
+                }
+
+                properties.iter().any(|property| !property.value.kind.is_binding_identifier())
+            }
+            AssignmentLike::AssignmentExpression(assignment) => {
+                let AssignmentTarget::ObjectAssignmentTarget(object) = &assignment.left else {
+                    return false;
+                };
+
+                let properties = &object.properties;
+                properties.iter().any(|property| match property {
+                    AssignmentTargetProperty::AssignmentTargetPropertyIdentifier(
+                        property_identifier,
+                    ) => property_identifier.init.is_some(),
+                    AssignmentTargetProperty::AssignmentTargetPropertyProperty(_) => true,
+                })
+            }
+        }
     }
 }
 
