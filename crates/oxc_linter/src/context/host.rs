@@ -106,20 +106,6 @@ impl<'a> ContextHost<'a> {
         .sniff_for_frameworks()
     }
 
-    /// Set the linter configuration for this context.
-    #[inline]
-    pub fn with_config(mut self, config: &Arc<LintConfig>) -> Self {
-        let plugins = config.plugins;
-        self.config = Arc::clone(config);
-
-        if self.plugins != plugins {
-            self.plugins = plugins;
-            return self.sniff_for_frameworks();
-        }
-
-        self
-    }
-
     /// Shared reference to the [`Semantic`] analysis of the file.
     #[inline]
     pub fn semantic(&self) -> &Semantic<'a> {
@@ -149,8 +135,8 @@ impl<'a> ContextHost<'a> {
     }
 
     #[inline]
-    pub fn plugins(&self) -> LintPlugins {
-        self.plugins
+    pub fn plugins(&self) -> &LintPlugins {
+        &self.plugins
     }
 
     /// Add a diagnostic message to the end of the list of diagnostics. Can be used
