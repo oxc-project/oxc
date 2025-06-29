@@ -251,6 +251,7 @@ impl<'a> Format<'a> for FormatTrailingComments<'a, '_> {
                         break;
                     } else if is_end_of_line_comment(comment, source_text) {
                         // Should be a leading comment of following node.
+                        // Based on https://github.com/prettier/prettier/blob/7584432401a47a26943dd7a9ca9a8e032ead7285/src/language-js/comments/handle-comments.js#L852-L883
                         if matches!(
                             enclosing_node,
                             SiblingNode::VariableDeclarator(_)
