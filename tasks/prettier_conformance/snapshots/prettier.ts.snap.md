@@ -112,7 +112,7 @@ ts compatibility: 210/573 (36.65%)
 | typescript/comments/method_types.ts | 💥 | 69.23% |
 | typescript/comments/methods.ts | 💥 | 97.96% |
 | typescript/comments/type-parameters.ts | 💥 | 39.29% |
-| typescript/comments/type_literals.ts | 💥 | 57.14% |
+| typescript/comments/type_literals.ts | 💥 | 55.17% |
 | typescript/comments/union.ts | 💥 | 5.26% |
 | typescript/comments-2/dangling.ts | 💥💥 | 75.00% |
 | typescript/comments-2/last-arg.ts | 💥💥 | 98.04% |

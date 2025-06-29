@@ -156,7 +156,9 @@ impl<'a> Comments<'a> {
                 return false;
             }
 
-            if is_own_line_comment(comment, self.source_text) {
+            if is_own_line_comment(comment, self.source_text)
+                || get_lines_after(comment.span.end, self.source_text) > 0
+            {
                 return true;
             }
         }

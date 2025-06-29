@@ -1,4 +1,4 @@
-js compatibility: 340/699 (48.64%)
+js compatibility: 342/699 (48.93%)
 
 # Failed
 
@@ -34,10 +34,9 @@ js compatibility: 340/699 (48.64%)
 | js/assignment/issue-2482-2.js | 💥 | 62.50% |
 | js/assignment/issue-7572.js | 💥 | 72.73% |
 | js/assignment/lone-arg.js | 💥 | 85.00% |
-| js/assignment-comments/function.js | 💥 | 67.39% |
+| js/assignment-comments/function.js | 💥 | 74.47% |
 | js/assignment-comments/identifier.js | 💥 | 71.43% |
-| js/assignment-comments/number.js | 💥 | 87.50% |
-| js/assignment-comments/string.js | 💥 | 84.09% |
+| js/assignment-comments/string.js | 💥 | 80.46% |
 | js/async/inline-await.js | 💥 | 22.22% |
 | js/async/nested.js | 💥 | 16.67% |
 | js/binary-expressions/arrow.js | 💥 | 66.67% |
@@ -109,7 +108,7 @@ js compatibility: 340/699 (48.64%)
 | js/comments/trailing-jsdocs.js | 💥💥 | 91.30% |
 | js/comments/trailing_space.js | 💥💥 | 60.00% |
 | js/comments/try.js | 💥💥 | 71.43% |
-| js/comments/variable_declarator.js | 💥💥 | 75.36% |
+| js/comments/variable_declarator.js | 💥💥 | 95.95% |
 | js/comments/while.js | 💥💥 | 62.75% |
 | js/comments/flow-types/inline.js | 💥 | 53.33% |
 | js/comments/function/between-parentheses-and-function-body.js | 💥 | 55.17% |
@@ -119,11 +118,10 @@ js compatibility: 340/699 (48.64%)
 | js/comments-closure-typecast/comment-in-the-middle.js | 💥 | 90.91% |
 | js/comments-closure-typecast/comment-placement.js | 💥 | 61.54% |
 | js/comments-closure-typecast/extra-spaces-and-asterisks.js | 💥 | 0.00% |
-| js/comments-closure-typecast/iife-issue-5850-isolated.js | 💥 | 0.00% |
 | js/comments-closure-typecast/iife.js | 💥 | 27.27% |
-| js/comments-closure-typecast/issue-4124.js | 💥 | 35.00% |
-| js/comments-closure-typecast/issue-8045.js | 💥 | 46.15% |
-| js/comments-closure-typecast/issue-9358.js | 💥 | 0.00% |
+| js/comments-closure-typecast/issue-4124.js | 💥 | 47.37% |
+| js/comments-closure-typecast/issue-8045.js | 💥 | 59.26% |
+| js/comments-closure-typecast/issue-9358.js | 💥 | 16.67% |
 | js/comments-closure-typecast/member.js | 💥 | 0.00% |
 | js/comments-closure-typecast/nested.js | 💥 | 23.53% |
 | js/comments-closure-typecast/object-with-comment.js | 💥 | 38.10% |

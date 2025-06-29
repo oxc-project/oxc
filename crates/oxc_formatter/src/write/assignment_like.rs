@@ -355,8 +355,6 @@ impl<'a, 'b> AssignmentLike<'a, 'b> {
 
 /// Checks if the function is entitled to be printed with layout [AssignmentLikeLayout::BreakAfterOperator]
 pub(crate) fn should_break_after_operator(right: &Expression, f: &Formatter<'_, '_>) -> bool {
-    // TODO: not sure
-    dbg!(f.comments().has_leading_own_line_comments(right.span().start));
     if f.comments().has_leading_own_line_comments(right.span().start)
         && !matches!(right, Expression::JSXElement(_) | Expression::JSXFragment(_))
     {
