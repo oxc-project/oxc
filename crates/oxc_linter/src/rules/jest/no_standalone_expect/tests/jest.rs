@@ -62,6 +62,18 @@ fn test() {
             ",
             Some(serde_json::json!([{ "additionalTestBlockFunctions": ["each.test"] }])),
         ),
+        (
+            r"function funcWithCallback(callback) { callback(5); }
+            describe('testWithCallback', () => {
+              it('should call the callback', (done) => {
+                funcWithCallback((result) => {
+                  expect(result).toBe(5);
+                  done();
+                });
+              });
+            });",
+            None,
+        ),
     ];
 
     let fail = vec![

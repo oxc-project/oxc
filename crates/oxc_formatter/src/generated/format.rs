@@ -229,21 +229,21 @@ impl<'a> Format<'a> for AstNode<'a, TaggedTemplateExpression<'a>> {
 
 impl<'a> Format<'a> for AstNode<'a, TemplateElement<'a>> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        self.write(f)
+        format_leading_comments(self.span).fmt(f)?;
+        let result = self.write(f);
+        format_trailing_comments(
+            &self.parent.as_sibling_node(),
+            &SiblingNode::from(self.inner),
+            self.following_node.as_ref(),
+        )
+        .fmt(f)?;
+        result
     }
 }
 
 impl<'a> Format<'a> for AstNode<'a, MemberExpression<'a>> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        let needs_parentheses = self.needs_parentheses(f);
-        if needs_parentheses {
-            "(".fmt(f)?;
-        }
-        let result = self.write(f);
-        if needs_parentheses {
-            ")".fmt(f)?;
-        }
-        result
+        self.write(f)
     }
 }
 
@@ -270,13 +270,43 @@ impl<'a> Format<'a> for AstNode<'a, ComputedMemberExpression<'a>> {
 
 impl<'a> Format<'a> for AstNode<'a, StaticMemberExpression<'a>> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        self.write(f)
+        format_leading_comments(self.span).fmt(f)?;
+        let needs_parentheses = self.needs_parentheses(f);
+        if needs_parentheses {
+            "(".fmt(f)?;
+        }
+        let result = self.write(f);
+        if needs_parentheses {
+            ")".fmt(f)?;
+        }
+        format_trailing_comments(
+            &self.parent.as_sibling_node(),
+            &SiblingNode::from(self.inner),
+            self.following_node.as_ref(),
+        )
+        .fmt(f)?;
+        result
     }
 }
 
 impl<'a> Format<'a> for AstNode<'a, PrivateFieldExpression<'a>> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        self.write(f)
+        format_leading_comments(self.span).fmt(f)?;
+        let needs_parentheses = self.needs_parentheses(f);
+        if needs_parentheses {
+            "(".fmt(f)?;
+        }
+        let result = self.write(f);
+        if needs_parentheses {
+            ")".fmt(f)?;
+        }
+        format_trailing_comments(
+            &self.parent.as_sibling_node(),
+            &SiblingNode::from(self.inner),
+            self.following_node.as_ref(),
+        )
+        .fmt(f)?;
+        result
     }
 }
 
@@ -2753,7 +2783,15 @@ impl<'a> Format<'a> for AstNode<'a, TSFunctionType<'a>> {
 
 impl<'a> Format<'a> for AstNode<'a, TSConstructorType<'a>> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        self.write(f)
+        format_leading_comments(self.span).fmt(f)?;
+        let result = self.write(f);
+        format_trailing_comments(
+            &self.parent.as_sibling_node(),
+            &SiblingNode::from(self.inner),
+            self.following_node.as_ref(),
+        )
+        .fmt(f)?;
+        result
     }
 }
 

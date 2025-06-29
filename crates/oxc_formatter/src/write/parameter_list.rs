@@ -134,7 +134,7 @@ impl<'a> Format<'a> for ParameterList<'a, '_> {
                     .with_trailing_separator(trailing_separator)
                     .zip(FormalParametersIter::from(self.list));
                 for (formatted, param) in entries {
-                    joiner.entry(param.span(), source_text, &formatted);
+                    joiner.entry(param.span(), &formatted);
                 }
                 joiner.finish()
             }

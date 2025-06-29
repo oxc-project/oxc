@@ -1,6 +1,6 @@
 use oxc_allocator::Vec;
 use oxc_ast::ast::*;
-use oxc_span::SPAN;
+use oxc_span::{GetSpan, SPAN};
 
 use crate::{
     formatter::{FormatResult, Formatter, prelude::*},
@@ -24,6 +24,7 @@ pub fn write_array_node<'a>(
     let mut join = f.join_nodes_with_soft_line();
     let last_index = node.len().saturating_sub(1);
 
+    let mut has_seen_elision = false;
     for (index, element) in node.iter().enumerate() {
         let separator_mode = match element.as_ref() {
             ArrayExpressionElement::Elision(_) => TrailingSeparatorMode::Force,
@@ -32,11 +33,21 @@ pub fn write_array_node<'a>(
 
         let is_disallow = matches!(separator_mode, TrailingSeparatorMode::Disallow);
         let is_force = matches!(separator_mode, TrailingSeparatorMode::Force);
-
         join.entry(
-            SPAN,
-            source_text,
-            &format_with(|f| {
+            // Note(different-with-Biome): this implementation isn't the same as Biome, because its output doesn't exactly match Prettier.
+            if has_seen_elision {
+                // Use fake span to avoid add any empty line between elision and expression element.
+                SPAN
+            } else {
+                has_seen_elision = false;
+                element.span()
+            },
+            &format_once(|f| {
+                if element.is_elision() {
+                    has_seen_elision = true;
+                    return write!(f, ",");
+                }
+
                 write!(f, group(&element))?;
 
                 if is_disallow {

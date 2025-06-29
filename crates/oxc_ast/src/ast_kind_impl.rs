@@ -1,5 +1,5 @@
 #![expect(missing_docs)] // FIXME
-use oxc_span::Atom;
+use oxc_span::{Atom, GetSpan};
 
 use super::{AstKind, ast::*};
 
@@ -81,6 +81,28 @@ impl<'a> AstKind<'a> {
         }
     }
 
+    /// Returns whether this expression is a member expression, such as `obj.prop`, `obj["prop"]`, or `obj.#prop`.
+    pub fn is_member_expression_kind(&self) -> bool {
+        self.as_member_expression_kind().is_some()
+    }
+
+    /// If this is some kind of member expression, returns it as a
+    /// [`MemberExpressionKind`]. Otherwise, returns `None`.
+    pub fn as_member_expression_kind(&self) -> Option<MemberExpressionKind<'a>> {
+        match self {
+            Self::ComputedMemberExpression(member_expr) => {
+                Some(MemberExpressionKind::Computed(member_expr))
+            }
+            Self::StaticMemberExpression(member_expr) => {
+                Some(MemberExpressionKind::Static(member_expr))
+            }
+            Self::PrivateFieldExpression(member_expr) => {
+                Some(MemberExpressionKind::PrivateField(member_expr))
+            }
+            _ => None,
+        }
+    }
+
     pub fn from_expression(e: &'a Expression<'a>) -> Self {
         match e {
             Expression::BooleanLiteral(e) => Self::BooleanLiteral(e),
@@ -101,16 +123,16 @@ impl<'a> AstKind<'a> {
             Expression::CallExpression(e) => Self::CallExpression(e),
             Expression::ChainExpression(e) => Self::ChainExpression(e),
             Expression::ClassExpression(e) => Self::Class(e),
+            Expression::ComputedMemberExpression(e) => Self::ComputedMemberExpression(e),
             Expression::ConditionalExpression(e) => Self::ConditionalExpression(e),
             Expression::FunctionExpression(e) => Self::Function(e),
             Expression::ImportExpression(e) => Self::ImportExpression(e),
             Expression::LogicalExpression(e) => Self::LogicalExpression(e),
-            match_member_expression!(Expression) => {
-                Self::MemberExpression(e.to_member_expression())
-            }
             Expression::NewExpression(e) => Self::NewExpression(e),
             Expression::ObjectExpression(e) => Self::ObjectExpression(e),
             Expression::ParenthesizedExpression(e) => Self::ParenthesizedExpression(e),
+            Expression::PrivateFieldExpression(e) => Self::PrivateFieldExpression(e),
+            Expression::StaticMemberExpression(e) => Self::StaticMemberExpression(e),
             Expression::SequenceExpression(e) => Self::SequenceExpression(e),
             Expression::TaggedTemplateExpression(e) => Self::TaggedTemplateExpression(e),
             Expression::ThisExpression(e) => Self::ThisExpression(e),
@@ -200,6 +222,7 @@ impl AstKind<'_> {
                 t.quasi().map_or_else(|| "None".into(), |q| format!("Some({q})"))
             )
             .into(),
+            Self::TemplateElement(_) => "TemplateElement".into(),
 
             Self::MetaProperty(_) => "MetaProperty".into(),
             Self::Super(_) => "Super".into(),
@@ -220,7 +243,6 @@ impl AstKind<'_> {
             Self::ComputedMemberExpression(_) => "ComputedMemberExpression".into(),
             Self::ConditionalExpression(_) => "ConditionalExpression".into(),
             Self::LogicalExpression(_) => "LogicalExpression".into(),
-            Self::MemberExpression(_) => "MemberExpression".into(),
             Self::NewExpression(n) => {
                 let callee = match &n.callee {
                     Expression::Identifier(id) => Some(id.name.as_str()),
@@ -233,6 +255,8 @@ impl AstKind<'_> {
             }
             Self::ObjectExpression(_) => "ObjectExpression".into(),
             Self::ParenthesizedExpression(_) => "ParenthesizedExpression".into(),
+            Self::PrivateFieldExpression(_) => "PrivateFieldExpression".into(),
+            Self::StaticMemberExpression(_) => "StaticMemberExpression".into(),
             Self::SequenceExpression(_) => "SequenceExpression".into(),
             Self::TaggedTemplateExpression(_) => "TaggedTemplateExpression".into(),
             Self::ThisExpression(_) => "ThisExpression".into(),
@@ -380,11 +404,96 @@ impl AstKind<'_> {
             Self::TSMappedType(_) => "TSMappedType".into(),
             Self::TSConstructSignatureDeclaration(_) => "TSConstructSignatureDeclaration".into(),
             Self::TSExportAssignment(_) => "TSExportAssignment".into(),
+            Self::TSConstructorType(_) => "TSConstructorType".into(),
             Self::V8IntrinsicExpression(_) => "V8IntrinsicExpression".into(),
 
             Self::JSDocNullableType(_) => "JSDocNullableType".into(),
             Self::JSDocNonNullableType(_) => "JSDocNonNullableType".into(),
             Self::JSDocUnknownType(_) => "JSDocUnknownType".into(),
+        }
+    }
+}
+
+/// This is a subset of [`AstKind`] that represents member expressions.
+///
+/// Having a separate enum for this allows us to implement helpful methods that are specific to member expressions,
+/// such as getting the property name or the object of the member expression.
+#[derive(Debug, Clone, Copy)]
+pub enum MemberExpressionKind<'a> {
+    /// A static member expression, such as `obj.prop`.
+    Static(&'a StaticMemberExpression<'a>),
+    /// A computed member expression, such as `obj["prop"]`.
+    Computed(&'a ComputedMemberExpression<'a>),
+    /// A private field expression, such as `obj.#field`.
+    PrivateField(&'a PrivateFieldExpression<'a>),
+}
+
+impl<'a> MemberExpressionKind<'a> {
+    /// Returns the property name of the member expression, otherwise `None`.
+    ///
+    /// Example: returns the `prop` in `obj.prop` or `obj["prop"]`.
+    pub fn static_property_name(&self) -> Option<Atom<'a>> {
+        match self {
+            Self::Computed(member_expr) => member_expr.static_property_name(),
+            Self::Static(member_expr) => Some(member_expr.property.name),
+            Self::PrivateField(_) => None,
+        }
+    }
+
+    /// Returns the static property name of this member expression, if it has one, along with the source code [`Span`],
+    /// or `None` otherwise.
+    ///
+    /// If you don't need the [`Span`], use [`MemberExpressionKind::static_property_name`] instead.
+    pub fn static_property_info(&self) -> Option<(Span, &'a str)> {
+        match self {
+            Self::Computed(expr) => match &expr.expression {
+                Expression::StringLiteral(lit) => Some((lit.span, lit.value.as_str())),
+                Expression::TemplateLiteral(lit) => {
+                    if lit.quasis.len() == 1 {
+                        lit.quasis[0].value.cooked.map(|cooked| (lit.span, cooked.as_str()))
+                    } else {
+                        None
+                    }
+                }
+                _ => None,
+            },
+            Self::Static(expr) => Some((expr.property.span, expr.property.name.as_str())),
+            Self::PrivateField(_) => None,
+        }
+    }
+
+    /// Returns the object of the member expression, otherwise `None`.
+    ///
+    /// Example: returns the `obj` in `obj.prop` or `obj["prop"]`.
+    pub fn object(&self) -> &Expression<'a> {
+        match self {
+            Self::Computed(member_expr) => &member_expr.object,
+            Self::Static(member_expr) => &member_expr.object,
+            Self::PrivateField(member_expr) => &member_expr.object,
+        }
+    }
+
+    /// Returns whether the member expression is optional, i.e. if it uses the
+    /// optional chaining operator (`?.`).
+    ///
+    /// Example:
+    /// - Returns `true` for `obj?.prop` or `obj?.["prop"]`.
+    /// - Returns `false` for `obj.prop` or `obj["prop"]`.
+    pub fn optional(&self) -> bool {
+        match self {
+            Self::Computed(member_expr) => member_expr.optional,
+            Self::Static(member_expr) => member_expr.optional,
+            Self::PrivateField(member_expr) => member_expr.optional,
+        }
+    }
+}
+
+impl GetSpan for MemberExpressionKind<'_> {
+    fn span(&self) -> Span {
+        match self {
+            Self::Computed(member_expr) => member_expr.span,
+            Self::Static(member_expr) => member_expr.span,
+            Self::PrivateField(member_expr) => member_expr.span,
         }
     }
 }

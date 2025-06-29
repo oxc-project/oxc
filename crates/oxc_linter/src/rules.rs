@@ -34,11 +34,13 @@ mod import {
     pub mod no_self_import;
     pub mod no_unassigned_import;
     pub mod no_webpack_loader_syntax;
+    pub mod prefer_default_export;
     pub mod unambiguous;
 }
 
 mod eslint {
     pub mod array_callback_return;
+    pub mod arrow_body_style;
     pub mod block_scoped_var;
     pub mod curly;
     pub mod default_case;
@@ -573,6 +575,7 @@ mod node {
 
 oxc_macros::declare_all_lint_rules! {
     eslint::array_callback_return,
+    eslint::arrow_body_style,
     eslint::block_scoped_var,
     eslint::curly,
     eslint::default_case,
@@ -743,6 +746,7 @@ oxc_macros::declare_all_lint_rules! {
     import::no_named_as_default_member,
     import::no_self_import,
     import::no_webpack_loader_syntax,
+    import::prefer_default_export,
     import::unambiguous,
     jest::consistent_test_it,
     jest::expect_expect,

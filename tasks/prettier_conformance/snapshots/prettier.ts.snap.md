@@ -59,7 +59,7 @@ ts compatibility: 200/573 (34.90%)
 | typescript/argument-expansion/argument_expansion.ts | 💥 | 93.22% |
 | typescript/argument-expansion/arrow-with-return-type.ts | 💥 | 92.31% |
 | typescript/array/comment.ts | 💥 | 87.50% |
-| typescript/arrow/16067.ts | 💥💥 | 31.33% |
+| typescript/arrow/16067.ts | 💥💥 | 40.00% |
 | typescript/arrow/comments.ts | 💥✨ | 44.44% |
 | typescript/arrow/issue-6107-curry.ts | 💥💥 | 12.50% |
 | typescript/as/array-pattern.ts | 💥 | 0.00% |
@@ -170,7 +170,7 @@ ts compatibility: 200/573 (34.90%)
 | typescript/conformance/types/functions/functionOverloadCompatibilityWithVoid01.ts | 💥 | 50.00% |
 | typescript/conformance/types/functions/functionOverloadCompatibilityWithVoid02.ts | 💥 | 50.00% |
 | typescript/conformance/types/functions/functionOverloadCompatibilityWithVoid03.ts | 💥 | 50.00% |
-| typescript/conformance/types/functions/functionOverloadErrorsSyntax.ts | 💥 | 70.00% |
+| typescript/conformance/types/functions/functionOverloadErrorsSyntax.ts | 💥 | 0.00% |
 | typescript/conformance/types/interfaceDeclaration/interfaceDeclaration.ts | 💥 | 90.00% |
 | typescript/conformance/types/namespaceExportDeclaration/exportAsNamespace.d.ts | 💥 | 75.00% |
 | typescript/conformance/types/thisType/thisType.ts | 💥 | 66.67% |

@@ -459,7 +459,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, MemberExpression<'a>> {
     #[inline]
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         let allocator = self.allocator;
-        let parent = allocator.alloc(AstNodes::MemberExpression(transmute_self(self)));
+        let parent = self.parent;
         match self.inner {
             MemberExpression::ComputedMemberExpression(inner) => allocator
                 .alloc(AstNode::<ComputedMemberExpression> {

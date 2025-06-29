@@ -2414,10 +2414,10 @@ where
 
     /// Adds a new node with the specified formatted content to the output, respecting any new lines
     /// that appear before the node in the input source.
-    pub fn entry(&mut self, span: Span, source_text: &str, content: &dyn Format<'ast>) {
+    pub fn entry(&mut self, span: Span, content: &dyn Format<'ast>) {
         self.result = self.result.and_then(|()| {
             if self.has_elements {
-                if self.has_lines_before(span, source_text) {
+                if self.has_lines_before(span) {
                     write!(self.fmt, empty_line())?;
                 } else {
                     self.separator.fmt(self.fmt)?;
@@ -2453,7 +2453,7 @@ where
     }
 
     /// Get the number of line breaks between two consecutive SyntaxNodes in the tree
-    pub fn has_lines_before(&self, span: Span, source_text: &str) -> bool {
+    pub fn has_lines_before(&self, span: Span) -> bool {
         get_lines_before(span.start, self.fmt) > 1
     }
 }
@@ -2469,7 +2469,10 @@ pub fn get_lines_before(start: u32, f: &Formatter) -> usize {
     };
 
     f.source_text()[..start as usize]
-        .trim_end_matches(is_white_space_single_line)
+        // TODO: This is a workaround.
+        // Trim `(` because we turned off `preserveParens`, which causes us to not have a parenthesis node,
+        // but you will still find `(` or `)` in the source text.
+        .trim_end_matches(|c| is_white_space_single_line(c) || c == '(')
         .chars()
         .rev()
         .take_while(|c| is_line_terminator(*c))

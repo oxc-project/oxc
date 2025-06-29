@@ -1781,9 +1781,6 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
     }
 
     fn visit_member_expression(&mut self, it: &MemberExpression<'a>) {
-        let kind = AstKind::MemberExpression(self.alloc(it));
-        self.enter_node(kind);
-
         // A.B = 1;
         // ^^^ Can't treat A as a Write reference since it's A's property(B) that changes.
         self.current_reference_flags -= ReferenceFlags::Write;
@@ -1795,7 +1792,6 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
             MemberExpression::StaticMemberExpression(it) => self.visit_static_member_expression(it),
             MemberExpression::PrivateFieldExpression(it) => self.visit_private_field_expression(it),
         }
-        self.leave_node(kind);
     }
 
     fn visit_simple_assignment_target(&mut self, it: &SimpleAssignmentTarget<'a>) {

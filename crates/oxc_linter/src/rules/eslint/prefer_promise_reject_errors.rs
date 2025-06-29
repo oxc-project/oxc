@@ -181,11 +181,12 @@ fn check_reject_in_function(
             continue;
         }
 
-        for parent in ctx.nodes().ancestor_kinds(parent.id()) {
-            if let AstKind::CallExpression(call_expr) = parent {
-                check_reject_call(call_expr, ctx, allow_empty_reject);
-                break;
-            }
+        let Some(node) = ctx.nodes().parent_node(parent.id()) else {
+            continue;
+        };
+
+        if let AstKind::CallExpression(call_expr) = node.kind() {
+            check_reject_call(call_expr, ctx, allow_empty_reject);
         }
     }
 }
@@ -239,6 +240,8 @@ fn test() {
         ("new Promise(function (...rest) { rest[1](new Error('')); });", None),
         // This is fundamentally false, but we can not recognize the value of `i`.
         ("new Promise(function (resolve, ...rest) { rest[i](5); });", None),
+        // TODO: This currently passes, as we only look at the immediate parent of the member expression
+        ("new Promise(function (...rest) { (rest[1])(5); });", None),
     ];
 
     let fail = vec![

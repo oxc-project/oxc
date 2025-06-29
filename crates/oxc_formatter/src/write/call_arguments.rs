@@ -1,4 +1,4 @@
-use oxc_allocator::{Address, Vec};
+use oxc_allocator::{Address, Vec as ArenaVec};
 use oxc_ast::{ast::*, match_expression};
 use oxc_span::GetSpan;
 
@@ -8,8 +8,9 @@ use crate::{
         BufferExtensions, Comments, FormatElement, FormatError, Formatter, VecBuffer,
         format_element,
         prelude::{
-            FormatElements, Tag, empty_line, expand_parent, format_once, format_with,
-            get_lines_before, group, soft_block_indent, soft_line_break_or_space, space,
+            FormatElements, MemoizeFormat, Tag, empty_line, expand_parent, format_once,
+            format_with, get_lines_before, group, soft_block_indent, soft_line_break_or_space,
+            space,
         },
         separated::FormatSeparatedIter,
         trivia::{DanglingIndentMode, format_dangling_comments},
@@ -31,7 +32,7 @@ use super::{
     },
 };
 
-impl<'a> Format<'a> for AstNode<'a, Vec<'a, Argument<'a>>> {
+impl<'a> Format<'a> for AstNode<'a, ArenaVec<'a, Argument<'a>>> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         let l_paren_token = "(";
         let r_paren_token = ")";
@@ -88,7 +89,7 @@ impl<'a> Format<'a> for AstNode<'a, Vec<'a, Argument<'a>>> {
         let last_index = self.len().saturating_sub(1);
         let mut has_empty_line = false;
 
-        let arguments: std::vec::Vec<_> = self
+        let arguments: Vec<_> = self
             .iter()
             .enumerate()
             .map(|(index, element)| {
@@ -304,13 +305,12 @@ pub fn is_function_composition_args(args: &[Argument<'_>]) -> bool {
 pub struct FormatAllArgsBrokenOut<'a, 'b> {
     pub args: &'b [FormatCallArgument<'a, 'b>],
     pub expand: bool,
-    pub node: &'b AstNode<'a, Vec<'a, Argument<'a>>>,
+    pub node: &'b AstNode<'a, ArenaVec<'a, Argument<'a>>>,
 }
 
 impl<'a> Format<'a> for FormatAllArgsBrokenOut<'a, '_> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        // let is_inside_import = self.node.parent::<JsImportCallExpression>().is_some();
-        let is_inside_import = false;
+        let is_inside_import = matches!(self.node.parent, AstNodes::ImportExpression(_));
 
         write!(
             f,
@@ -341,7 +341,7 @@ impl<'a> Format<'a> for FormatAllArgsBrokenOut<'a, '_> {
 }
 
 pub fn arguments_grouped_layout(
-    args: &AstNode<Vec<Argument>>,
+    args: &AstNode<ArenaVec<Argument>>,
     f: &Formatter<'_, '_>,
 ) -> Option<GroupedCallArgumentLayout> {
     if should_group_first_argument(args, f) {
@@ -354,7 +354,7 @@ pub fn arguments_grouped_layout(
 }
 
 /// Checks if the first argument requires grouping
-fn should_group_first_argument(args: &AstNode<Vec<Argument>>, f: &Formatter<'_, '_>) -> bool {
+fn should_group_first_argument(args: &AstNode<ArenaVec<Argument>>, f: &Formatter<'_, '_>) -> bool {
     let mut iter = args.iter();
     match (iter.next().and_then(|a| a.as_expression()), iter.next().and_then(|a| a.as_expression()))
     {
@@ -398,7 +398,7 @@ fn should_group_first_argument(args: &AstNode<Vec<Argument>>, f: &Formatter<'_, 
 }
 
 /// Checks if the last argument should be grouped.
-fn should_group_last_argument(args: &AstNode<Vec<Argument>>, f: &Formatter<'_, '_>) -> bool {
+fn should_group_last_argument(args: &AstNode<ArenaVec<Argument>>, f: &Formatter<'_, '_>) -> bool {
     let mut iter = args.as_ref().iter();
     let last = iter.next_back();
 
@@ -659,14 +659,11 @@ fn can_group_arrow_function_expression_argument(
 }
 
 fn write_grouped_arguments<'a, 'b>(
-    call_arguments: &'b AstNode<'a, Vec<'a, Argument<'a>>>,
-    mut arguments: std::vec::Vec<FormatCallArgument<'a, 'b>>,
+    call_arguments: &'b AstNode<'a, ArenaVec<'a, Argument<'a>>>,
+    mut arguments: Vec<FormatCallArgument<'a, 'b>>,
     group_layout: GroupedCallArgumentLayout,
     f: &mut Formatter<'_, 'a>,
 ) -> FormatResult<()> {
-    let l_paren_token = "(";
-    let r_paren_token = ")";
-
     let grouped_breaks = {
         let (grouped_arg, other_args) = match group_layout {
             GroupedCallArgumentLayout::GroupedFirstArgument => {
@@ -709,6 +706,11 @@ fn write_grouped_arguments<'a, 'b>(
         grouped_arg.will_break(f)
     };
 
+    // We now cache the delimiter tokens. This is needed because `[crate::best_fitting]` will try to
+    // print each version first
+    let l_paren_token = "(".memoized();
+    let r_paren_token = ")".memoized();
+
     // First write the most expanded variant because it needs `arguments`.
     let most_expanded = {
         let mut buffer = VecBuffer::new(f.state_mut());
@@ -746,8 +748,9 @@ fn write_grouped_arguments<'a, 'b>(
             };
 
             FormatGroupedArgument { argument, single_argument_list: last_index == 0, layout }
+                .memoized()
         })
-        .collect::<std::vec::Vec<_>>();
+        .collect::<Vec<_>>();
 
     // Write the most flat variant with the first or last argument grouped.
     let most_flat = {
@@ -958,10 +961,6 @@ impl<'a> Format<'a> for FormatGroupedLastArgument<'a, '_> {
                     )
                 )?;
 
-                // if let Some(separator) = element.trailing_separator()? {
-                //     write!(f, [format_removed(separator)])?;
-                // }
-
                 Ok(())
             }),
             _ => self.argument.fmt(f),
@@ -992,7 +991,6 @@ fn has_only_simple_parameters(
     parameters: &FormalParameters<'_>,
     allow_type_annotations: bool,
 ) -> bool {
-    // TODO: flatten
     parameters.items.iter().all(|parameter| is_simple_parameter(parameter, allow_type_annotations))
 }
 
@@ -1074,7 +1072,10 @@ fn is_commonjs_or_amd_call(
 /// ```js
 /// useMemo(() => {}, [])
 /// ```
-fn is_react_hook_with_deps_array(arguments: &AstNode<Vec<Argument>>, comments: &Comments) -> bool {
+fn is_react_hook_with_deps_array(
+    arguments: &AstNode<ArenaVec<Argument>>,
+    comments: &Comments,
+) -> bool {
     if arguments.len() > 3 || arguments.len() < 2 {
         return false;
     }
@@ -1128,7 +1129,7 @@ fn is_react_hook_with_deps_array(arguments: &AstNode<Vec<Argument>>, comments: &
 /// [arguments]: CallExpression::arguments
 /// [arrow function expression]: ArrowFunctionExpression
 /// [function expression]: Function
-pub fn is_test_call_expression(call: &CallExpression<'_>) -> bool {
+pub fn is_test_call_expression(call: &AstNode<'_, CallExpression<'_>>) -> bool {
     let callee = &call.callee;
     let arguments = &call.arguments;
 
@@ -1136,13 +1137,17 @@ pub fn is_test_call_expression(call: &CallExpression<'_>) -> bool {
 
     match (args.next(), args.next(), args.next()) {
         (Some(argument), None, None) if arguments.len() == 1 => {
-            if is_angular_test_wrapper(call)
-            // && self
-            //     .parent::<JsCallArgumentList>()
-            //     .and_then(|arguments_list| arguments_list.parent::<JsCallArguments>())
-            //     .and_then(|arguments| arguments.parent::<Self>())
-            //     .is_some_and(|parent| parent.is_test_call_expression().unwrap_or(false))
-            {
+            if is_angular_test_wrapper(call) && {
+                if let AstNodes::Argument(argument) = call.parent {
+                    if let AstNodes::CallExpression(call) = argument.parent {
+                        is_test_call_expression(call)
+                    } else {
+                        false
+                    }
+                } else {
+                    false
+                }
+            } {
                 return matches!(
                     argument,
                     Argument::ArrowFunctionExpression(_) | Argument::FunctionExpression(_)

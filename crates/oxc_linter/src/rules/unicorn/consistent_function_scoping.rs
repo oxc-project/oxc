@@ -51,9 +51,15 @@ fn consistent_function_scoping(
     }
 }
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Clone)]
 pub struct ConsistentFunctionScoping {
     check_arrow_functions: bool,
+}
+
+impl Default for ConsistentFunctionScoping {
+    fn default() -> Self {
+        Self { check_arrow_functions: true }
+    }
 }
 
 declare_oxc_lint!(

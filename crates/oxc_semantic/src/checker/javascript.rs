@@ -140,7 +140,7 @@ pub fn check_identifier_reference(ident: &IdentifierReference, ctx: &SemanticBui
                 AstKind::AssignmentTarget(_) | AstKind::SimpleAssignmentTarget(_) => {
                     return ctx.error(unexpected_identifier_assign(&ident.name, ident.span));
                 }
-                AstKind::MemberExpression(_) => break,
+                m if m.is_member_expression_kind() => break,
                 _ => {}
             }
         }
@@ -935,12 +935,13 @@ fn super_private(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::error("Private fields cannot be accessed on super").with_label(span)
 }
 
-pub fn check_member_expression(member_expr: &MemberExpression, ctx: &SemanticBuilder<'_>) {
-    if let MemberExpression::PrivateFieldExpression(private_expr) = member_expr {
-        // `super.#m`
-        if private_expr.object.is_super() {
-            ctx.error(super_private(private_expr.span));
-        }
+pub fn check_private_field_expression(
+    private_expr: &PrivateFieldExpression,
+    ctx: &SemanticBuilder<'_>,
+) {
+    // `super.#m`
+    if private_expr.object.is_super() {
+        ctx.error(super_private(private_expr.span));
     }
 }
 

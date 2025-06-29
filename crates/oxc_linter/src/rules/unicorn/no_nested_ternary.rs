@@ -45,7 +45,7 @@ declare_oxc_lint!(
     /// ```
     NoNestedTernary,
     unicorn,
-    restriction,
+    style,
     conditional_fix
 );
 

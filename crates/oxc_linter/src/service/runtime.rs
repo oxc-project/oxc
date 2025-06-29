@@ -550,14 +550,14 @@ impl<'l> Runtime<'l> {
 
                         if !messages.is_empty() {
                             let errors = messages.into_iter().map(Into::into).collect();
-                            let path = path.strip_prefix(&me.cwd).unwrap_or(path);
                             let diagnostics = DiagnosticService::wrap_diagnostics(
+                                &me.cwd,
                                 path,
                                 dep.source_text,
                                 section.source.start,
                                 errors,
                             );
-                            tx_error.send(Some(diagnostics)).unwrap();
+                            tx_error.send(Some((path.to_path_buf(), diagnostics))).unwrap();
                         }
                     }
                     // If the new source text is owned, that means it was modified,

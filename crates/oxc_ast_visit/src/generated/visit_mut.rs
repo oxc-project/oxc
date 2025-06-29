@@ -1575,8 +1575,10 @@ pub mod walk_mut {
         visitor: &mut V,
         it: &mut TemplateElement<'a>,
     ) {
-        // No `AstType` for this type
+        let kind = AstType::TemplateElement;
+        visitor.enter_node(kind);
         visitor.visit_span(&mut it.span);
+        visitor.leave_node(kind);
     }
 
     #[inline]
@@ -1584,8 +1586,7 @@ pub mod walk_mut {
         visitor: &mut V,
         it: &mut MemberExpression<'a>,
     ) {
-        let kind = AstType::MemberExpression;
-        visitor.enter_node(kind);
+        // No `AstType` for this type
         match it {
             MemberExpression::ComputedMemberExpression(it) => {
                 visitor.visit_computed_member_expression(it)
@@ -1597,7 +1598,6 @@ pub mod walk_mut {
                 visitor.visit_private_field_expression(it)
             }
         }
-        visitor.leave_node(kind);
     }
 
     #[inline]
@@ -1618,10 +1618,12 @@ pub mod walk_mut {
         visitor: &mut V,
         it: &mut StaticMemberExpression<'a>,
     ) {
-        // No `AstType` for this type
+        let kind = AstType::StaticMemberExpression;
+        visitor.enter_node(kind);
         visitor.visit_span(&mut it.span);
         visitor.visit_expression(&mut it.object);
         visitor.visit_identifier_name(&mut it.property);
+        visitor.leave_node(kind);
     }
 
     #[inline]
@@ -1629,10 +1631,12 @@ pub mod walk_mut {
         visitor: &mut V,
         it: &mut PrivateFieldExpression<'a>,
     ) {
-        // No `AstType` for this type
+        let kind = AstType::PrivateFieldExpression;
+        visitor.enter_node(kind);
         visitor.visit_span(&mut it.span);
         visitor.visit_expression(&mut it.object);
         visitor.visit_private_identifier(&mut it.field);
+        visitor.leave_node(kind);
     }
 
     #[inline]
@@ -4165,13 +4169,15 @@ pub mod walk_mut {
         visitor: &mut V,
         it: &mut TSConstructorType<'a>,
     ) {
-        // No `AstType` for this type
+        let kind = AstType::TSConstructorType;
+        visitor.enter_node(kind);
         visitor.visit_span(&mut it.span);
         if let Some(type_parameters) = &mut it.type_parameters {
             visitor.visit_ts_type_parameter_declaration(type_parameters);
         }
         visitor.visit_formal_parameters(&mut it.params);
         visitor.visit_ts_type_annotation(&mut it.return_type);
+        visitor.leave_node(kind);
     }
 
     #[inline]

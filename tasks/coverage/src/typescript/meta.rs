@@ -20,6 +20,9 @@ static META_OPTIONS: Lazy<Regex> = lazy_regex!(
     r"(?m)^/{2}[[:space:]]*@(?P<name>[[:word:]]+)[[:space:]]*:[[:space:]]*(?P<value>[^\r\n]*)"
 );
 // static TEST_BRACES: Lazy<Regex> = lazy_regex!(r"^[[:space:]]*[{|}][[:space:]]*$");
+// Returns a match for a tsc diagnostic error code like `error TS1234: xxx`
+static TS_ERROR_CODES: Lazy<Regex> =
+    lazy_regex!(r"error[[:space:]]+TS(?P<code>\d{4,5}):[[:space:]]+");
 
 #[expect(unused)]
 #[derive(Debug)]
@@ -159,11 +162,11 @@ impl TestCaseContent {
             .collect::<Vec<_>>();
 
         let error_files = Self::get_error_files(path, &settings);
-        let error_codes = Self::extract_error_codes(&error_files, path);
+        let error_codes = Self::extract_error_codes(&error_files);
         assert!(
-            !error_codes.is_empty() || error_files.is_empty(),
+            error_files.is_empty() || !error_codes.is_empty(),
             "No error codes found for test case: {}",
-            path.display()
+            path.display(),
         );
 
         Self { tests: test_unit_data, settings, error_codes }
@@ -205,38 +208,16 @@ impl TestCaseContent {
         error_files
     }
 
-    // See https://github.com/microsoft/TypeScript/blob/479285d0ac293c35a926508d17f0bb5eca7e0303/src/harness/harnessIO.ts#L540
-    fn extract_error_codes(error_files: &[String], path: &Path) -> Vec<String> {
+    fn extract_error_codes(error_files: &[String]) -> Vec<String> {
         if error_files.is_empty() {
             return vec![];
         }
 
         let mut error_codes = FxHashSet::default();
         for error_file in error_files {
-            // It may seem that parsing the summary is sufficient at first glance,
-            // but since the summary is equivalent to the CLI output,
-            // it may contain escape sequences for changing text color, so simple string processing is not enough to handle it.
-            // In addition, there are rare cases where code is output in the summary but not in the details...
-            let (summary_part, details_part) = error_file.split_once("\r\n\r\n").unwrap_or_else(|| {
-                unreachable!("`.errors.txt` for {} should contain summary and detail separated by <CRLF><CRLF>", path.display())
-            });
-
-            // ArrowFunction3.ts(1,12): error TS1005: ',' expected.
-            // error TS2688: Cannot find type definition file for 'react'.
-            for line in summary_part.lines() {
-                // 1005: ',' expected.
-                if let Some((_, code_part)) = line.split_once("error TS") {
-                    if let Some((code, _)) = code_part.split_once(':') {
-                        error_codes.insert(code.to_string());
-                    }
-                }
-            }
-            // !!! error TS1005: '}' expected.
-            for line in details_part.lines() {
-                if let Some((_, code_part)) = line.split_once("!!! error TS") {
-                    if let Some((code, _)) = code_part.split_once(':') {
-                        error_codes.insert(code.to_string());
-                    }
+            for cap in TS_ERROR_CODES.captures_iter(error_file) {
+                if let Some(code) = cap.name("code") {
+                    error_codes.insert(code.as_str().to_string());
                 }
             }
         }

@@ -1,9 +1,9 @@
 commit: 81c95189
 
 parser_typescript Summary:
-AST Parsed     : 6533/6540 (99.89%)
-Positive Passed: 6522/6540 (99.72%)
-Negative Passed: 1419/5760 (24.64%)
+AST Parsed     : 6554/6561 (99.89%)
+Positive Passed: 6543/6561 (99.73%)
+Negative Passed: 1418/5737 (24.72%)
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/ExportAssignment7.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/ExportAssignment8.ts
@@ -1132,8 +1132,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/derivedTypeI
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/destructureComputedProperty.ts
 
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/destructureTupleWithVariableElement.ts
-
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/destructuredLateBoundNameHasCorrectTypes.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/destructuringAssignmentWithDefault2.ts
@@ -1337,8 +1335,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/enumUsedBefo
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/enumWithComputedMember.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/enumWithExport.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/enumWithNonLiteralStringInitializer.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/enumsWithMultipleDeclarations1.ts
 
@@ -1647,8 +1643,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/forIn2.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/forInStatement2.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/forInStatement7.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/forInStrictNullChecksNoError.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/forwardDeclaredCommonTypes01.ts
 
@@ -1987,8 +1981,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/implicitAnyI
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/implicitAnyNewExprLackConstructorSignature.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/implicitAnyWidenToAny.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/implicitConstParameters.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/impliedNodeFormatEmit1.ts
 
@@ -2520,8 +2512,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/jsxEmptyExpr
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/jsxExcessPropsAndAssignability.tsx
 
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/jsxFactoryAndJsxFragmentFactoryErrorNotIdentifier.tsx
-
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/jsxFactoryAndReactNamespace.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/jsxFactoryButNoJsxFragmentFactory.tsx
@@ -2867,8 +2857,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/narrowingOfD
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/narrowingOfQualifiedNames.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/narrowingPastLastAssignment.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/narrowingTruthyObject.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/narrowingUnionToNeverAssigment.ts
 
@@ -3582,8 +3570,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/returnValueI
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/reuseTypeAnnotationImportTypeInGlobalThisTypeArgument.ts
 
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/reverseMappedPartiallyInferableTypes.ts
-
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/reverseMappedTypeContextualTypeNotCircular.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/reverseMappedTypeIntersectionConstraint.ts
@@ -3661,8 +3647,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/slightlyIndi
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/sourceMapSample.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/sourceMapValidationFor.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/specialIntersectionsInMappedTypes.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/specializedSignatureAsCallbackParameter1.ts
 
@@ -4099,8 +4083,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/undefinedTyp
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/undefinedTypeAssignment3.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/underscoreTest1.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/unicodeEscapesInNames01.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/unionErrorMessageOnMatchingDiscriminant.ts
 
@@ -4766,8 +4748,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/classes/m
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/classes/members/privateNames/privateNameDeclarationMerging.ts
 
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/classes/members/privateNames/privateNameES5Ban.ts
-
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/classes/members/privateNames/privateNameEmitHelpers.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/classes/members/privateNames/privateNameFieldsESNext.ts
@@ -4816,8 +4796,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/classes/m
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/classes/members/privateNames/privateNamesInNestedClasses-2.ts
 
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/classes/members/privateNames/privateNamesIncompatibleModifiersJs.ts
-
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/classes/members/privateNames/privateNamesUnique-1.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/classes/members/privateNames/privateNamesUnique-2.ts
@@ -4853,12 +4831,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/classes/p
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/classes/propertyMemberDeclarations/assignParameterPropertyToPropertyDeclarationES2022.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/classes/propertyMemberDeclarations/assignParameterPropertyToPropertyDeclarationESNext.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/classes/propertyMemberDeclarations/autoAccessor1.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/classes/propertyMemberDeclarations/autoAccessor3.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/classes/propertyMemberDeclarations/autoAccessor4.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/classes/propertyMemberDeclarations/autoAccessor5.ts
 
@@ -4948,8 +4920,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/controlFl
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/controlFlow/controlFlowOptionalChain.ts
 
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/controlFlow/controlFlowOptionalChain3.tsx
-
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/controlFlow/controlFlowTypeofObject.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/controlFlow/controlFlowWhileStatement.ts
@@ -5026,11 +4996,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/enums/enu
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/enums/enumConstantMembers.ts
 
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/enums/enumErrorOnConstantBindingWithInitializer.ts
-
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/enums/enumMergingErrors.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/enums/enumShadowedInfinityNaN.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/es2017/assignSharedArrayBufferToArrayBuffer.ts
 
@@ -5077,8 +5043,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/es2020/mo
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/es2020/modules/exportAsNamespace_missingEmitHelpers.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/es2020/modules/exportAsNamespace_nonExistent.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/es2021/logicalAssignment/logicalAssignment4.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/es2021/logicalAssignment/logicalAssignment5.ts
 
@@ -6002,8 +5966,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/expressio
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/expressions/functionCalls/typeArgumentInferenceWithObjectLiteral.ts
 
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/expressions/functions/contextuallyTypedIifeStrict.ts
-
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/expressions/identifiers/scopeResolutionIdentifiers.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/expressions/literals/literals.ts
@@ -6011,10 +5973,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/expressio
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/expressions/newOperator/newOperatorErrorCases_noImplicitAny.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/expressions/nullishCoalescingOperator/nullishCoalescingOperator1.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/expressions/nullishCoalescingOperator/nullishCoalescingOperator11.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/expressions/nullishCoalescingOperator/nullishCoalescingOperator4.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/expressions/nullishCoalescingOperator/nullishCoalescingOperatorInParameterBindingPattern.2.ts
 
@@ -6593,8 +6551,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/jsdoc/dec
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/jsdoc/declarations/jsDeclarationsDefaultsErr.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/jsdoc/declarations/jsDeclarationsExportAssignedConstructorFunctionWithSub.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/jsdoc/declarations/jsDeclarationsImportAliasExposedWithinNamespace.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/jsdoc/declarations/jsDeclarationsTypeReassignmentFromDeclaration2.ts
 
@@ -10323,13 +10279,6 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
  2 │ }
    ╰────
 
-  × Type parameter list cannot be empty.
-   ╭─[typescript/tests/cases/compiler/classWithEmptyTypeParameter.ts:1:8]
- 1 │ class C<> {
-   ·        ──
- 2 │ }
-   ╰────
-
   × Function implementation is missing or not immediately following the declaration.
    ╭─[typescript/tests/cases/compiler/classWithOverloadImplementationOfWrongName.ts:3:5]
  2 │     foo(): string;
@@ -13187,10 +13136,10 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
   help: Try insert a semicolon here
 
   × TS(1176): Interface declaration cannot have 'implements' clause.
-   ╭─[typescript/tests/cases/compiler/interfaceWithImplements1.ts:3:27]
+   ╭─[typescript/tests/cases/compiler/interfaceWithImplements1.ts:3:16]
  2 │ 
  3 │ interface IBar implements IFoo {
-   ·                           ────
+   ·                ──────────
  4 │ }
    ╰────
 
@@ -15729,70 +15678,6 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
     ╰────
 
   × TS(1092): Type parameters cannot appear on a constructor declaration
-    ╭─[typescript/tests/cases/compiler/parserConstructorDeclaration12.ts:9:15]
-  8 │   constructor < >() { }
-  9 │   constructor < > () { }
-    ·               ───
- 10 │ }
-    ╰────
-
-  × Type parameter list cannot be empty.
-   ╭─[typescript/tests/cases/compiler/parserConstructorDeclaration12.ts:2:14]
- 1 │ class C {
- 2 │   constructor<>() { }
-   ·              ──
- 3 │   constructor<> () { }
-   ╰────
-
-  × Type parameter list cannot be empty.
-   ╭─[typescript/tests/cases/compiler/parserConstructorDeclaration12.ts:3:14]
- 2 │   constructor<>() { }
- 3 │   constructor<> () { }
-   ·              ──
- 4 │   constructor <>() { }
-   ╰────
-
-  × Type parameter list cannot be empty.
-   ╭─[typescript/tests/cases/compiler/parserConstructorDeclaration12.ts:4:15]
- 3 │   constructor<> () { }
- 4 │   constructor <>() { }
-   ·               ──
- 5 │   constructor <> () { }
-   ╰────
-
-  × Type parameter list cannot be empty.
-   ╭─[typescript/tests/cases/compiler/parserConstructorDeclaration12.ts:5:15]
- 4 │   constructor <>() { }
- 5 │   constructor <> () { }
-   ·               ──
- 6 │   constructor< >() { }
-   ╰────
-
-  × Type parameter list cannot be empty.
-   ╭─[typescript/tests/cases/compiler/parserConstructorDeclaration12.ts:6:14]
- 5 │   constructor <> () { }
- 6 │   constructor< >() { }
-   ·              ───
- 7 │   constructor< > () { }
-   ╰────
-
-  × Type parameter list cannot be empty.
-   ╭─[typescript/tests/cases/compiler/parserConstructorDeclaration12.ts:7:14]
- 6 │   constructor< >() { }
- 7 │   constructor< > () { }
-   ·              ───
- 8 │   constructor < >() { }
-   ╰────
-
-  × Type parameter list cannot be empty.
-   ╭─[typescript/tests/cases/compiler/parserConstructorDeclaration12.ts:8:15]
- 7 │   constructor< > () { }
- 8 │   constructor < >() { }
-   ·               ───
- 9 │   constructor < > () { }
-   ╰────
-
-  × Type parameter list cannot be empty.
     ╭─[typescript/tests/cases/compiler/parserConstructorDeclaration12.ts:9:15]
   8 │   constructor < >() { }
   9 │   constructor < > () { }
@@ -24261,26 +24146,11 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
     ╰────
   help: Wrap unary expression in parentheses to enforce operator precedence
 
-  × A rest element must be last in a destructuring pattern
-   ╭─[typescript/tests/cases/conformance/es7/trailingCommasInBindingPatterns.ts:1:8]
- 1 │ const [...a,] = [];
-   ·        ────
- 2 │ const {...b,} = {};
-   ╰────
-
   × A rest parameter or binding pattern may not have a trailing comma.
    ╭─[typescript/tests/cases/conformance/es7/trailingCommasInBindingPatterns.ts:1:12]
  1 │ const [...a,] = [];
    ·            ─
  2 │ const {...b,} = {};
-   ╰────
-
-  × A rest element must be last in a destructuring pattern
-   ╭─[typescript/tests/cases/conformance/es7/trailingCommasInBindingPatterns.ts:2:8]
- 1 │ const [...a,] = [];
- 2 │ const {...b,} = {};
-   ·        ────
- 3 │ let c, d;
    ╰────
 
   × A rest parameter or binding pattern may not have a trailing comma.
@@ -24297,14 +24167,6 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
  4 │ ([...c,] = []);
    ·       ─
  5 │ ({...d,} = {});
-   ╰────
-
-  × A rest parameter must be last in a parameter list
-   ╭─[typescript/tests/cases/conformance/es7/trailingCommasInFunctionParametersAndArguments.ts:5:13]
- 4 │ 
- 5 │ function f2(...args,) {}
-   ·             ───────
- 6 │ 
    ╰────
 
   × A rest parameter or binding pattern may not have a trailing comma.
@@ -25438,22 +25300,6 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
  10 │ function fn5() { }
     ╰────
 
-  × A required parameter cannot follow an optional parameter.
-   ╭─[typescript/tests/cases/conformance/functions/functionOverloadErrorsSyntax.ts:2:27]
- 1 │ //Function overload signature with optional parameter followed by non-optional parameter
- 2 │ function fn4a(x?: number, y: string);
-   ·                           ─────────
- 3 │ function fn4a() { }
-   ╰────
-
-  × A required parameter cannot follow an optional parameter.
-   ╭─[typescript/tests/cases/conformance/functions/functionOverloadErrorsSyntax.ts:5:38]
- 4 │ 
- 5 │ function fn4b(n: string, x?: number, y: string);
-   ·                                      ─────────
- 6 │ function fn4b() { }
-   ╰────
-
   × Illegal 'use strict' directive in function with non-simple parameter list
    ╭─[typescript/tests/cases/conformance/functions/functionWithUseStrictAndSimpleParameterList_es2016.ts:2:5]
  1 │ function a(a = 10) {
@@ -25585,10 +25431,10 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
    ╰────
 
   × TS(1176): Interface declaration cannot have 'implements' clause.
-    ╭─[typescript/tests/cases/conformance/interfaces/interfaceDeclarations/interfaceThatInheritsFromItself.ts:10:26]
+    ╭─[typescript/tests/cases/conformance/interfaces/interfaceDeclarations/interfaceThatInheritsFromItself.ts:10:15]
   9 │ 
  10 │ interface Bar implements Bar { // error
-    ·                          ───
+    ·               ──────────
  11 │ }
     ╰────
 
@@ -26720,14 +26566,6 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
  3 │ }
    ╰────
 
-  × Type parameter list cannot be empty.
-   ╭─[typescript/tests/cases/conformance/parser/ecmascript5/ConstructorDeclarations/parserConstructorDeclaration11.ts:2:14]
- 1 │ class C {
- 2 │   constructor<>() { }
-   ·              ──
- 3 │ }
-   ╰────
-
   × Expected `;` but found `constructor`
    ╭─[typescript/tests/cases/conformance/parser/ecmascript5/ConstructorDeclarations/parserConstructorDeclaration3.ts:2:10]
  1 │ class C {
@@ -27640,9 +27478,9 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
    ╰────
 
   × TS(1176): Interface declaration cannot have 'implements' clause.
-   ╭─[typescript/tests/cases/conformance/parser/ecmascript5/InterfaceDeclarations/parserInterfaceDeclaration2.ts:1:24]
+   ╭─[typescript/tests/cases/conformance/parser/ecmascript5/InterfaceDeclarations/parserInterfaceDeclaration2.ts:1:13]
  1 │ interface I implements A {
-   ·                        ─
+   ·             ──────────
  2 │ }
    ╰────
 
@@ -29187,22 +29025,6 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
  2 │     *constructor() {}
    ·      ───────────
  3 │ }
-   ╰────
-
-  × Export 'JSDocType' is not defined
-   ╭─[typescript/tests/cases/conformance/salsa/importingExportingTypes.ts:5:10]
- 4 │ 
- 5 │ export { JSDocType };
-   ·          ─────────
- 6 │ export { JSDocType as ThisIsFine };
-   ╰────
-
-  × Export 'JSDocType' is not defined
-   ╭─[typescript/tests/cases/conformance/salsa/importingExportingTypes.ts:6:10]
- 5 │ export { JSDocType };
- 6 │ export { JSDocType as ThisIsFine };
-   ·          ─────────
- 7 │ export { WriteFileOptions };
    ╰────
 
   × Cannot use `await` as an identifier in an async context
@@ -30967,44 +30789,12 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
    ╰────
 
   × A rest parameter must be last in a parameter list
-    ╭─[typescript/tests/cases/conformance/types/objectTypeLiteral/callSignatures/restParameterWithoutAnnotationIsAnyArray.ts:13:9]
- 12 │     (...x);
- 13 │     foo(...x, ...y);
-    ·         ────
- 14 │ }
-    ╰────
-
-  × A rest parameter must be last in a parameter list
-    ╭─[typescript/tests/cases/conformance/types/objectTypeLiteral/callSignatures/restParameterWithoutAnnotationIsAnyArray.ts:23:21]
- 22 │     foo(...x) { },
- 23 │     a: function foo(...x, ...y) { },
-    ·                     ────
- 24 │     b: (...x) => { }
-    ╰────
-
-  × A rest parameter must be last in a parameter list
    ╭─[typescript/tests/cases/conformance/types/objectTypeLiteral/callSignatures/restParametersOfNonArrayTypes.ts:5:11]
  4 │ var f = function foo(...x: number) { }
  5 │ var f2 = (...x: Date, ...y: boolean) => { }
    ·           ──────────
  6 │ 
    ╰────
-
-  × A rest parameter must be last in a parameter list
-    ╭─[typescript/tests/cases/conformance/types/objectTypeLiteral/callSignatures/restParametersOfNonArrayTypes.ts:13:9]
- 12 │     (...x: string);
- 13 │     foo(...x: number, ...y: number);
-    ·         ────────────
- 14 │ }
-    ╰────
-
-  × A rest parameter must be last in a parameter list
-    ╭─[typescript/tests/cases/conformance/types/objectTypeLiteral/callSignatures/restParametersOfNonArrayTypes.ts:23:21]
- 22 │     foo(...x: string) { },
- 23 │     a: function foo(...x: number, ...y: Date) { },
-    ·                     ────────────
- 24 │     b: (...x: string) => { }
-    ╰────
 
   × A rest parameter must be last in a parameter list
     ╭─[typescript/tests/cases/conformance/types/objectTypeLiteral/callSignatures/restParametersOfNonArrayTypes2.ts:9:11]
@@ -31015,92 +30805,12 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
     ╰────
 
   × A rest parameter must be last in a parameter list
-    ╭─[typescript/tests/cases/conformance/types/objectTypeLiteral/callSignatures/restParametersOfNonArrayTypes2.ts:17:9]
- 16 │     (...x: MyThing);
- 17 │     foo(...x: MyThing, ...y: MyThing);
-    ·         ─────────────
- 18 │ }
-    ╰────
-
-  × A rest parameter must be last in a parameter list
-    ╭─[typescript/tests/cases/conformance/types/objectTypeLiteral/callSignatures/restParametersOfNonArrayTypes2.ts:27:21]
- 26 │     foo(...x: MyThing) { },
- 27 │     a: function foo(...x: MyThing, ...y: MyThing) { },
-    ·                     ─────────────
- 28 │     b: (...x: MyThing) => { }
-    ╰────
-
-  × A rest parameter must be last in a parameter list
-    ╭─[typescript/tests/cases/conformance/types/objectTypeLiteral/callSignatures/restParametersOfNonArrayTypes2.ts:36:11]
- 35 │ var f3 = function foo(...x: MyThing2<string>) { }
- 36 │ var f4 = (...x: MyThing2<string>, ...y: MyThing2<string>) => { }
-    ·           ──────────────────────
- 37 │ 
-    ╰────
-
-  × A rest parameter must be last in a parameter list
-    ╭─[typescript/tests/cases/conformance/types/objectTypeLiteral/callSignatures/restParametersOfNonArrayTypes2.ts:44:9]
- 43 │     (...x: MyThing2<string>);
- 44 │     foo(...x: MyThing2<string>, ...y: MyThing2<string>);
-    ·         ──────────────────────
- 45 │ }
-    ╰────
-
-  × A rest parameter must be last in a parameter list
-    ╭─[typescript/tests/cases/conformance/types/objectTypeLiteral/callSignatures/restParametersOfNonArrayTypes2.ts:54:21]
- 53 │     foo(...x: MyThing2<string>) { },
- 54 │     a: function foo(...x: MyThing2<string>, ...y: MyThing2<string>) { },
-    ·                     ──────────────────────
- 55 │     b: (...x: MyThing2<string>) => { }
-    ╰────
-
-  × A rest parameter must be last in a parameter list
    ╭─[typescript/tests/cases/conformance/types/objectTypeLiteral/callSignatures/restParametersWithArrayTypeAnnotations.ts:5:11]
  4 │ var f = function foo(...x: number[]) { }
  5 │ var f2 = (...x: number[], ...y: number[]) => { }
    ·           ──────────────
  6 │ 
    ╰────
-
-  × A rest parameter must be last in a parameter list
-    ╭─[typescript/tests/cases/conformance/types/objectTypeLiteral/callSignatures/restParametersWithArrayTypeAnnotations.ts:13:9]
- 12 │     (...x: number[]);
- 13 │     foo(...x: number[], ...y: number[]);
-    ·         ──────────────
- 14 │ }
-    ╰────
-
-  × A rest parameter must be last in a parameter list
-    ╭─[typescript/tests/cases/conformance/types/objectTypeLiteral/callSignatures/restParametersWithArrayTypeAnnotations.ts:23:21]
- 22 │     foo(...x: number[]) { },
- 23 │     a: function foo(...x: number[], ...y: number[]) { },
-    ·                     ──────────────
- 24 │     b: (...x: number[]) => { }
-    ╰────
-
-  × A rest parameter must be last in a parameter list
-    ╭─[typescript/tests/cases/conformance/types/objectTypeLiteral/callSignatures/restParametersWithArrayTypeAnnotations.ts:32:11]
- 31 │ var f3 = function foo(...x: Array<string>) { }
- 32 │ var f4 = (...x: Array<string>, ...y: Array<string>) => { }
-    ·           ───────────────────
- 33 │ 
-    ╰────
-
-  × A rest parameter must be last in a parameter list
-    ╭─[typescript/tests/cases/conformance/types/objectTypeLiteral/callSignatures/restParametersWithArrayTypeAnnotations.ts:40:9]
- 39 │     (...x: Array<string>);
- 40 │     foo(...x: Array<string>, ...y: Array<string>);
-    ·         ───────────────────
- 41 │ }
-    ╰────
-
-  × A rest parameter must be last in a parameter list
-    ╭─[typescript/tests/cases/conformance/types/objectTypeLiteral/callSignatures/restParametersWithArrayTypeAnnotations.ts:50:21]
- 49 │     foo(...x: Array<string>) { },
- 50 │     a: function foo(...x: Array<string>, ...y: Array<string>) { },
-    ·                     ───────────────────
- 51 │     b: (...x: Array<string>) => { }
-    ╰────
 
   × Expected `,` but found `?`
     ╭─[typescript/tests/cases/conformance/types/objectTypeLiteral/methodSignatures/objectTypesWithOptionalProperties.ts:24:6]
@@ -31159,40 +30869,10 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
    ╰────
 
   × A rest element must be last in a destructuring pattern
-    ╭─[typescript/tests/cases/conformance/types/rest/objectRestNegative.ts:9:28]
-  8 │ 
-  9 │ function stillMustBeLast({ ...mustBeLast, a }: { a: number, b: string }): void {
-    ·                            ─────────────
- 10 │ }
-    ╰────
-
-  × Invalid rest operator's argument.
-    ╭─[typescript/tests/cases/conformance/types/rest/objectRestNegative.ts:17:9]
- 16 │ let rest: { b: string }
- 17 │ ({a, ...rest.b + rest.b} = o);
-    ·         ───────────────
-    ╰────
-
-  × Cannot assign to this expression
-    ╭─[typescript/tests/cases/conformance/types/rest/objectRestNegative.ts:17:9]
- 16 │ let rest: { b: string }
- 17 │ ({a, ...rest.b + rest.b} = o);
-    ·         ───────────────
-    ╰────
-
-  × A rest element must be last in a destructuring pattern
    ╭─[typescript/tests/cases/conformance/types/rest/objectRestPropertyMustBeLast.ts:1:6]
  1 │ var {...a, x } = { x: 1 };    // Error, rest must be last property
    ·      ────
  2 │ ({...a, x } = { x: 1 });      // Error, rest must be last property
-   ╰────
-
-  × Spread must be last element
-   ╭─[typescript/tests/cases/conformance/types/rest/objectRestPropertyMustBeLast.ts:2:3]
- 1 │ var {...a, x } = { x: 1 };    // Error, rest must be last property
- 2 │ ({...a, x } = { x: 1 });      // Error, rest must be last property
-   ·   ────
- 3 │ 
    ╰────
 
   × A rest element must be last in a destructuring pattern
@@ -31200,13 +30880,6 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
  1 │ var [...a, x] = [1, 2, 3];  // Error, rest must be last element
    ·      ────
  2 │ [...a, x] = [1, 2, 3];      // Error, rest must be last element
-   ╰────
-
-  × Spread must be last element
-   ╭─[typescript/tests/cases/conformance/types/rest/restElementMustBeLast.ts:2:2]
- 1 │ var [...a, x] = [1, 2, 3];  // Error, rest must be last element
- 2 │ [...a, x] = [1, 2, 3];      // Error, rest must be last element
-   ·  ────
    ╰────
 
   × TS(2414): Class name cannot be 'any'

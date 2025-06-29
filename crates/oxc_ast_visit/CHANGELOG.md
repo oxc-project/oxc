@@ -4,6 +4,14 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.75.0] - 2025-06-25
+
+### 🚜 Refactor
+
+- 87b8496 ast: Remove `AstKind` for `MemberExpression` and replace with `StaticMemberExpression` and `PrivateFieldExpression` (#11767) (camchenry)
+- 190e390 ast: Add `AstKind` for `ComputedMemberExpression` (#11766) (camchenry)
+
+
 
 
 ## [0.73.1] - 2025-06-17

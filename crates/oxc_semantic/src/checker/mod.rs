@@ -97,7 +97,7 @@ pub fn check<'a>(kind: AstKind<'a>, ctx: &SemanticBuilder<'a>) {
 
         AstKind::AssignmentExpression(expr) => js::check_assignment_expression(expr, ctx),
         AstKind::AwaitExpression(expr) => js::check_await_expression(expr, ctx),
-        AstKind::MemberExpression(expr) => js::check_member_expression(expr, ctx),
+        AstKind::PrivateFieldExpression(expr) => js::check_private_field_expression(expr, ctx),
         AstKind::ObjectExpression(expr) => js::check_object_expression(expr, ctx),
         AstKind::UnaryExpression(expr) => js::check_unary_expression(expr, ctx),
         AstKind::YieldExpression(expr) => js::check_yield_expression(expr, ctx),
@@ -107,9 +107,6 @@ pub fn check<'a>(kind: AstKind<'a>, ctx: &SemanticBuilder<'a>) {
             }
         }
         AstKind::TSTypeAnnotation(annot) => ts::check_ts_type_annotation(annot, ctx),
-        AstKind::TSTypeParameterDeclaration(declaration) => {
-            ts::check_ts_type_parameter_declaration(declaration, ctx);
-        }
         AstKind::TSInterfaceDeclaration(decl) => ts::check_ts_interface_declaration(decl, ctx),
         AstKind::TSTypeParameter(param) => ts::check_ts_type_parameter(param, ctx),
         AstKind::TSModuleDeclaration(decl) => ts::check_ts_module_declaration(decl, ctx),

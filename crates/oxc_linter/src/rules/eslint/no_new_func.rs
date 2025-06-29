@@ -1,4 +1,4 @@
-use oxc_ast::AstKind;
+use oxc_ast::{AstKind, ast::IdentifierReference};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::IsGlobalReference;
@@ -47,22 +47,26 @@ declare_oxc_lint!(
 
 impl Rule for NoNewFunc {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        let id_and_span = match node.kind() {
+        match node.kind() {
             AstKind::NewExpression(new_expr) => {
                 let Some(id) = new_expr.callee.get_identifier_reference() else {
                     return;
                 };
 
-                Some((id, new_expr.span))
+                check(id, new_expr.span, ctx);
             }
             AstKind::CallExpression(call_expr) => {
                 let Some(obj_id) = call_expr.callee.get_identifier_reference() else {
                     return;
                 };
 
-                Some((obj_id, call_expr.span))
+                check(obj_id, call_expr.span, ctx);
             }
-            AstKind::MemberExpression(mem_expr) => {
+            member_expr if member_expr.is_member_expression_kind() => {
+                let Some(member_expr) = member_expr.as_member_expression_kind() else {
+                    return;
+                };
+
                 let parent: Option<AstKind<'a>> =
                     ctx.nodes().ancestor_kinds(node.id()).skip(1).find(|node| {
                         !matches!(
@@ -75,7 +79,9 @@ impl Rule for NoNewFunc {
                     return;
                 };
 
-                let Some(static_property_name) = &mem_expr.static_property_name() else {
+                let Some(static_property_name) =
+                    &member_expr.static_property_name().map(|s| s.as_str())
+                else {
                     return;
                 };
 
@@ -83,20 +89,20 @@ impl Rule for NoNewFunc {
                     return;
                 }
 
-                let Some(obj_id) = mem_expr.object().get_identifier_reference() else {
+                let Some(obj_id) = member_expr.object().get_identifier_reference() else {
                     return;
                 };
 
-                Some((obj_id, parent_call_expr.span))
+                check(obj_id, parent_call_expr.span, ctx);
             }
-            _ => None,
-        };
-
-        if let Some((id, span)) = id_and_span {
-            if id.is_global_reference_name("Function", ctx.scoping()) {
-                ctx.diagnostic(no_new_func(span));
-            }
+            _ => {}
         }
+    }
+}
+
+fn check(ident: &IdentifierReference, span: Span, ctx: &LintContext) {
+    if ident.is_global_reference_name("Function", ctx.scoping()) {
+        ctx.diagnostic(no_new_func(span));
     }
 }
 

@@ -4,6 +4,13 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.75.0] - 2025-06-25
+
+### 🚀 Features
+
+- 1b3f909 minifier: Apply `TreeShakeOptions::annotations` (#11856) (Boshen)
+
+
 ## [0.74.0] - 2025-06-23
 
 ### 💥 BREAKING CHANGES

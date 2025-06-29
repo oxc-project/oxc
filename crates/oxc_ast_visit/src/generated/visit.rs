@@ -1562,14 +1562,15 @@ pub mod walk {
 
     #[inline]
     pub fn walk_template_element<'a, V: Visit<'a>>(visitor: &mut V, it: &TemplateElement<'a>) {
-        // No `AstKind` for this type
+        let kind = AstKind::TemplateElement(visitor.alloc(it));
+        visitor.enter_node(kind);
         visitor.visit_span(&it.span);
+        visitor.leave_node(kind);
     }
 
     #[inline]
     pub fn walk_member_expression<'a, V: Visit<'a>>(visitor: &mut V, it: &MemberExpression<'a>) {
-        let kind = AstKind::MemberExpression(visitor.alloc(it));
-        visitor.enter_node(kind);
+        // No `AstKind` for this type
         match it {
             MemberExpression::ComputedMemberExpression(it) => {
                 visitor.visit_computed_member_expression(it)
@@ -1581,7 +1582,6 @@ pub mod walk {
                 visitor.visit_private_field_expression(it)
             }
         }
-        visitor.leave_node(kind);
     }
 
     #[inline]
@@ -1602,10 +1602,12 @@ pub mod walk {
         visitor: &mut V,
         it: &StaticMemberExpression<'a>,
     ) {
-        // No `AstKind` for this type
+        let kind = AstKind::StaticMemberExpression(visitor.alloc(it));
+        visitor.enter_node(kind);
         visitor.visit_span(&it.span);
         visitor.visit_expression(&it.object);
         visitor.visit_identifier_name(&it.property);
+        visitor.leave_node(kind);
     }
 
     #[inline]
@@ -1613,10 +1615,12 @@ pub mod walk {
         visitor: &mut V,
         it: &PrivateFieldExpression<'a>,
     ) {
-        // No `AstKind` for this type
+        let kind = AstKind::PrivateFieldExpression(visitor.alloc(it));
+        visitor.enter_node(kind);
         visitor.visit_span(&it.span);
         visitor.visit_expression(&it.object);
         visitor.visit_private_identifier(&it.field);
+        visitor.leave_node(kind);
     }
 
     #[inline]
@@ -3950,13 +3954,15 @@ pub mod walk {
 
     #[inline]
     pub fn walk_ts_constructor_type<'a, V: Visit<'a>>(visitor: &mut V, it: &TSConstructorType<'a>) {
-        // No `AstKind` for this type
+        let kind = AstKind::TSConstructorType(visitor.alloc(it));
+        visitor.enter_node(kind);
         visitor.visit_span(&it.span);
         if let Some(type_parameters) = &it.type_parameters {
             visitor.visit_ts_type_parameter_declaration(type_parameters);
         }
         visitor.visit_formal_parameters(&it.params);
         visitor.visit_ts_type_annotation(&it.return_type);
+        visitor.leave_node(kind);
     }
 
     #[inline]

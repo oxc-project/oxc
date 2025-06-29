@@ -31,19 +31,19 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/member-expressi
             "flags": "ReferenceFlags(Read)",
             "id": 2,
             "name": "x",
-            "node_id": 22
+            "node_id": 21
           },
           {
             "flags": "ReferenceFlags(Read)",
             "id": 3,
             "name": "x",
-            "node_id": 29
+            "node_id": 28
           },
           {
             "flags": "ReferenceFlags(Read)",
             "id": 4,
             "name": "x",
-            "node_id": 37
+            "node_id": 35
           }
         ]
       }

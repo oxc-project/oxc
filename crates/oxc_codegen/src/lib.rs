@@ -18,7 +18,7 @@ use std::borrow::Cow;
 use oxc_ast::ast::*;
 use oxc_data_structures::{code_buffer::CodeBuffer, stack::Stack};
 use oxc_semantic::Scoping;
-use oxc_span::{GetSpan, SPAN, Span};
+use oxc_span::{GetSpan, Span};
 use oxc_syntax::{
     identifier::{is_identifier_part, is_identifier_part_ascii},
     operator::{BinaryOperator, UnaryOperator, UpdateOperator},
@@ -690,29 +690,26 @@ impl<'a> Codegen<'a> {
     }
 
     fn add_source_mapping(&mut self, span: Span) {
-        if span == SPAN {
-            return;
-        }
         if let Some(sourcemap_builder) = self.sourcemap_builder.as_mut() {
-            sourcemap_builder.add_source_mapping(self.code.as_bytes(), span.start, None);
+            if !span.is_empty() {
+                sourcemap_builder.add_source_mapping(self.code.as_bytes(), span.start, None);
+            }
         }
     }
 
     fn add_source_mapping_end(&mut self, span: Span) {
-        if span == SPAN {
-            return;
-        }
         if let Some(sourcemap_builder) = self.sourcemap_builder.as_mut() {
-            sourcemap_builder.add_source_mapping(self.code.as_bytes(), span.end, None);
+            if !span.is_empty() {
+                sourcemap_builder.add_source_mapping(self.code.as_bytes(), span.end, None);
+            }
         }
     }
 
     fn add_source_mapping_for_name(&mut self, span: Span, name: &str) {
-        if span == SPAN {
-            return;
-        }
         if let Some(sourcemap_builder) = self.sourcemap_builder.as_mut() {
-            sourcemap_builder.add_source_mapping_for_name(self.code.as_bytes(), span, name);
+            if !span.is_empty() {
+                sourcemap_builder.add_source_mapping_for_name(self.code.as_bytes(), span, name);
+            }
         }
     }
 }

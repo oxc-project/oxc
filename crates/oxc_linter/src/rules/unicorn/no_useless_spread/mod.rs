@@ -461,6 +461,7 @@ fn fix_by_removing_array_spread<'a, S: GetSpan>(
 ///
 /// ## Examples
 /// - `{...{ a, b, }}` -> `{ a, b }`
+#[expect(clippy::cast_possible_truncation)]
 fn fix_by_removing_object_spread<'a>(
     fixer: RuleFixer<'_, 'a>,
     spread: &SpreadElement<'a>,
@@ -472,10 +473,10 @@ fn fix_by_removing_object_spread<'a>(
     // remove trailing commas to avoid syntax errors if this spread is followed
     // by another property
     // e.g. ` a, b, ` -> `a, b`
-    let mut end_shrink_amount = 0;
+    let mut end_shrink_amount: u32 = 0;
     for c in fixer.source_range(*replacement_span).chars().rev() {
         if c.is_whitespace() || c == ',' {
-            end_shrink_amount += 1;
+            end_shrink_amount += c.len_utf8() as u32;
         } else {
             break;
         }
@@ -765,6 +766,7 @@ fn test() {
         ("setupServer(...[1, 2, 3])", "setupServer(1, 2, 3)"),
         ("[...[1,2,,,],...[3,4,,,]]", "[1, 2, , , 3, 4, , ,]"),
         ("[...[...foo], ...[...bar]]", "[...foo, ...bar]"),
+        ("S={...{ }}", "S={}"),
     ];
     Tester::new(NoUselessSpread::NAME, NoUselessSpread::PLUGIN, pass, fail)
         .expect_fix(fix)

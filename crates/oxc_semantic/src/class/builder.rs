@@ -103,7 +103,8 @@ impl<'a> ClassTableBuilder<'a> {
     ) {
         let parent_kind = nodes.parent_kind(current_node_id);
         if let Some(parent_kind) = parent_kind {
-            if matches!(parent_kind, AstKind::PrivateInExpression(_) | AstKind::MemberExpression(_))
+            if matches!(parent_kind, AstKind::PrivateInExpression(_))
+                || parent_kind.is_member_expression_kind()
             {
                 if let Some(class_id) = self.current_class_id {
                     let element_ids = self.classes.get_element_ids(

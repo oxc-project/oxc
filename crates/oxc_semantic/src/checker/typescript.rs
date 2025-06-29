@@ -14,18 +14,6 @@ fn ts_error<M: Into<Cow<'static, str>>>(code: &'static str, message: M) -> OxcDi
     OxcDiagnostic::error(message).with_error_code("TS", code)
 }
 
-fn empty_type_parameter_list(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::error("Type parameter list cannot be empty.").with_label(span)
-}
-
-pub fn check_ts_type_parameter_declaration(
-    declaration: &TSTypeParameterDeclaration<'_>,
-    ctx: &SemanticBuilder<'_>,
-) {
-    if declaration.params.is_empty() {
-        ctx.error(empty_type_parameter_list(declaration.span));
-    }
-}
 pub fn check_ts_type_parameter<'a>(param: &TSTypeParameter<'a>, ctx: &SemanticBuilder<'a>) {
     check_type_name_is_reserved(&param.name, ctx, "Type parameter");
 }
