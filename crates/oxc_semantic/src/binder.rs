@@ -206,8 +206,8 @@ impl<'a> Binder<'a> for Function<'a> {
 
         // Save `@__NO_SIDE_EFFECTS__`
         if self.pure {
-            if let Some(symbold_id) = self.id.as_ref().and_then(|id| id.symbol_id.get()) {
-                builder.scoping.no_side_effects.insert(symbold_id);
+            if let Some(symbol_id) = self.id.as_ref().and_then(|id| id.symbol_id.get()) {
+                builder.scoping.no_side_effects.insert(symbol_id);
             }
         }
     }
