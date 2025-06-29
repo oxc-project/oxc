@@ -171,34 +171,35 @@ pub enum AstType {
     TSClassImplements = 154,
     TSInterfaceDeclaration = 155,
     TSPropertySignature = 156,
-    TSCallSignatureDeclaration = 157,
-    TSMethodSignature = 158,
-    TSConstructSignatureDeclaration = 159,
-    TSIndexSignatureName = 160,
-    TSInterfaceHeritage = 161,
-    TSTypePredicate = 162,
-    TSModuleDeclaration = 163,
-    TSModuleBlock = 164,
-    TSTypeLiteral = 165,
-    TSInferType = 166,
-    TSTypeQuery = 167,
-    TSImportType = 168,
-    TSConstructorType = 169,
-    TSMappedType = 170,
-    TSTemplateLiteralType = 171,
-    TSAsExpression = 172,
-    TSSatisfiesExpression = 173,
-    TSTypeAssertion = 174,
-    TSImportEqualsDeclaration = 175,
-    TSExternalModuleReference = 176,
-    TSNonNullExpression = 177,
-    Decorator = 178,
-    TSExportAssignment = 179,
-    TSNamespaceExportDeclaration = 180,
-    TSInstantiationExpression = 181,
-    JSDocNullableType = 182,
-    JSDocNonNullableType = 183,
-    JSDocUnknownType = 184,
+    TSIndexSignature = 157,
+    TSCallSignatureDeclaration = 158,
+    TSMethodSignature = 159,
+    TSConstructSignatureDeclaration = 160,
+    TSIndexSignatureName = 161,
+    TSInterfaceHeritage = 162,
+    TSTypePredicate = 163,
+    TSModuleDeclaration = 164,
+    TSModuleBlock = 165,
+    TSTypeLiteral = 166,
+    TSInferType = 167,
+    TSTypeQuery = 168,
+    TSImportType = 169,
+    TSConstructorType = 170,
+    TSMappedType = 171,
+    TSTemplateLiteralType = 172,
+    TSAsExpression = 173,
+    TSSatisfiesExpression = 174,
+    TSTypeAssertion = 175,
+    TSImportEqualsDeclaration = 176,
+    TSExternalModuleReference = 177,
+    TSNonNullExpression = 178,
+    Decorator = 179,
+    TSExportAssignment = 180,
+    TSNamespaceExportDeclaration = 181,
+    TSInstantiationExpression = 182,
+    JSDocNullableType = 183,
+    JSDocNonNullableType = 184,
+    JSDocUnknownType = 185,
 }
 
 /// Untyped AST Node Kind
@@ -372,6 +373,7 @@ pub enum AstKind<'a> {
     TSClassImplements(&'a TSClassImplements<'a>) = AstType::TSClassImplements as u8,
     TSInterfaceDeclaration(&'a TSInterfaceDeclaration<'a>) = AstType::TSInterfaceDeclaration as u8,
     TSPropertySignature(&'a TSPropertySignature<'a>) = AstType::TSPropertySignature as u8,
+    TSIndexSignature(&'a TSIndexSignature<'a>) = AstType::TSIndexSignature as u8,
     TSCallSignatureDeclaration(&'a TSCallSignatureDeclaration<'a>) =
         AstType::TSCallSignatureDeclaration as u8,
     TSMethodSignature(&'a TSMethodSignature<'a>) = AstType::TSMethodSignature as u8,
@@ -580,6 +582,7 @@ impl GetSpan for AstKind<'_> {
             Self::TSClassImplements(it) => it.span(),
             Self::TSInterfaceDeclaration(it) => it.span(),
             Self::TSPropertySignature(it) => it.span(),
+            Self::TSIndexSignature(it) => it.span(),
             Self::TSCallSignatureDeclaration(it) => it.span(),
             Self::TSMethodSignature(it) => it.span(),
             Self::TSConstructSignatureDeclaration(it) => it.span(),
@@ -772,6 +775,7 @@ impl GetAddress for AstKind<'_> {
             Self::TSClassImplements(it) => Address::from_ptr(it),
             Self::TSInterfaceDeclaration(it) => Address::from_ptr(it),
             Self::TSPropertySignature(it) => Address::from_ptr(it),
+            Self::TSIndexSignature(it) => Address::from_ptr(it),
             Self::TSCallSignatureDeclaration(it) => Address::from_ptr(it),
             Self::TSMethodSignature(it) => Address::from_ptr(it),
             Self::TSConstructSignatureDeclaration(it) => Address::from_ptr(it),
@@ -1590,6 +1594,11 @@ impl<'a> AstKind<'a> {
     #[inline]
     pub fn as_ts_property_signature(self) -> Option<&'a TSPropertySignature<'a>> {
         if let Self::TSPropertySignature(v) = self { Some(v) } else { None }
+    }
+
+    #[inline]
+    pub fn as_ts_index_signature(self) -> Option<&'a TSIndexSignature<'a>> {
+        if let Self::TSIndexSignature(v) = self { Some(v) } else { None }
     }
 
     #[inline]

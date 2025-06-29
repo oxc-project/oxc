@@ -33,7 +33,6 @@ const STRUCTS_BLACK_LIST: &[&str] = &[
     "BindingPattern",
     "BindingProperty",
     "TSInterfaceBody",
-    "TSIndexSignature",
     "TSFunctionType",
     "Span",
 ];
