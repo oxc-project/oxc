@@ -1575,8 +1575,10 @@ pub mod walk_mut {
         visitor: &mut V,
         it: &mut TemplateElement<'a>,
     ) {
-        // No `AstType` for this type
+        let kind = AstType::TemplateElement;
+        visitor.enter_node(kind);
         visitor.visit_span(&mut it.span);
+        visitor.leave_node(kind);
     }
 
     #[inline]

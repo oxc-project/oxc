@@ -1562,8 +1562,10 @@ pub mod walk {
 
     #[inline]
     pub fn walk_template_element<'a, V: Visit<'a>>(visitor: &mut V, it: &TemplateElement<'a>) {
-        // No `AstKind` for this type
+        let kind = AstKind::TemplateElement(visitor.alloc(it));
+        visitor.enter_node(kind);
         visitor.visit_span(&it.span);
+        visitor.leave_node(kind);
     }
 
     #[inline]

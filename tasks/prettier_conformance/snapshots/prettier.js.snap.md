@@ -116,7 +116,7 @@ js compatibility: 326/699 (46.64%)
 | js/comments/multi-comments.js | 💥✨ | 36.84% |
 | js/comments/return-statement.js | 💥💥 | 52.32% |
 | js/comments/tagged-template-literal.js | 💥💥 | 69.23% |
-| js/comments/template-literal.js | 💥💥 | 47.83% |
+| js/comments/template-literal.js | 💥💥 | 30.43% |
 | js/comments/trailing-jsdocs.js | 💥💥 | 91.30% |
 | js/comments/trailing_space.js | 💥💥 | 60.00% |
 | js/comments/try.js | 💥💥 | 71.43% |
@@ -222,7 +222,7 @@ js compatibility: 326/699 (46.64%)
 | js/last-argument-expansion/jsx.js | 💥 | 16.67% |
 | js/last-argument-expansion/object.js | 💥 | 65.00% |
 | js/last-argument-expansion/overflow.js | 💥 | 71.22% |
-| js/line-suffix-boundary/boundary.js | 💥 | 42.55% |
+| js/line-suffix-boundary/boundary.js | 💥 | 30.43% |
 | js/logical-assignment/logical-assignment.js | 💥 | 81.48% |
 | js/logical_expressions/issue-7024.js | 💥 | 0.00% |
 | js/member/conditional.js | 💥 | 0.00% |

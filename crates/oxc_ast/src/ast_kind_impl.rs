@@ -222,6 +222,7 @@ impl AstKind<'_> {
                 t.quasi().map_or_else(|| "None".into(), |q| format!("Some({q})"))
             )
             .into(),
+            Self::TemplateElement(_) => "TemplateElement".into(),
 
             Self::MetaProperty(_) => "MetaProperty".into(),
             Self::Super(_) => "Super".into(),
