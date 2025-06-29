@@ -8,11 +8,11 @@ Failures:
 
 ./fixtures/babel/babel-plugin-proposal-explicit-resource-management-test-fixtures-transform-top-level-hoisting-mutate-outer-class-binding-exec.test.js
 Parse failure: 'import', and 'export' cannot be used outside of module code
-At file: ./tasks/transform_conformance/fixtures/babel/babel-plugin-proposal-explicit-resource-management-test-fixtures-transform-top-level-hoisting-mutate-outer-class-binding-exec.test.js:4:2
+At file: ./tasks/transform_conformance/fixtures/babel/babel-plugin-proposal-explicit-resource-management-test-fixtures-transform-top-level-hoisting-mutate-outer-class-binding-exec.test.js:4:1
 
 ./fixtures/babel/babel-plugin-transform-arrow-functions-test-fixtures-arrow-functions-implicit-var-arguments-exec.test.js
 Parse failure: 'eval' and 'arguments' cannot be used as a binding identifier in strict mode
-At file: ./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-arrow-functions-test-fixtures-arrow-functions-implicit-var-arguments-exec.test.js:4:6
+At file: ./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-arrow-functions-test-fixtures-arrow-functions-implicit-var-arguments-exec.test.js:4:5
 
 ./fixtures/babel/babel-plugin-transform-async-to-generator-test-fixtures-async-to-generator-async-complex-params-exec.test.js
 TypeError: Cannot destructure property 'b' of 'undefined' as it is undefined.
@@ -29,7 +29,7 @@ AssertionError: expected undefined to be 'hello' // Object.is equality
 
 ./fixtures/babel/babel-plugin-transform-class-properties-test-fixtures-nested-class-super-property-in-accessor-key-exec.test.js
 Parse failure: Unexpected token `[`. Expected * for generator, private key, identifier or async
-At file: ./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-class-properties-test-fixtures-nested-class-super-property-in-accessor-key-exec.test.js:14:14
+At file: ./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-class-properties-test-fixtures-nested-class-super-property-in-accessor-key-exec.test.js:14:13
 
 ./fixtures/babel/babel-plugin-transform-class-properties-test-fixtures-nested-class-super-property-in-decorator-exec.test.js
 AssertionError: expected undefined to be 'hello' // Object.is equality
