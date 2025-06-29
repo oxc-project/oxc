@@ -30,7 +30,7 @@ input_file: crates/oxc_semantic/tests/fixtures/oxc/js/try-catch/parameters.js
                     "flags": "ReferenceFlags(Read)",
                     "id": 1,
                     "name": "a",
-                    "node_id": 22
+                    "node_id": 24
                   }
                 ]
               },
@@ -78,7 +78,7 @@ input_file: crates/oxc_semantic/tests/fixtures/oxc/js/try-catch/parameters.js
             "flags": "ReferenceFlags(Read)",
             "id": 0,
             "name": "A",
-            "node_id": 17
+            "node_id": 18
           }
         ]
       }

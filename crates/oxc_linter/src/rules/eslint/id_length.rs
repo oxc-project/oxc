@@ -237,13 +237,19 @@ impl IdLength {
                     return;
                 }
             }
-            AstKind::ObjectPattern(object_pattern) => {
-                let binding_property_option =
-                    object_pattern.properties.iter().find(|x| x.span == ident.span);
-
-                if IdLength::is_binding_identifier_or_object_pattern(binding_property_option)
-                    && self.properties == PropertyKind::Never
+            AstKind::BindingProperty(_) => {
+                if let Some(AstKind::ObjectPattern(object_pattern)) =
+                    ctx.nodes().parent_kind(parent_node.id())
                 {
+                    let binding_property_option =
+                        object_pattern.properties.iter().find(|x| x.span == ident.span);
+
+                    if IdLength::is_binding_identifier_or_object_pattern(binding_property_option)
+                        && self.properties == PropertyKind::Never
+                    {
+                        return;
+                    }
+                } else {
                     return;
                 }
             }
@@ -301,9 +307,13 @@ impl IdLength {
                     return;
                 }
 
-                let Some(parent_parent_node) = ctx.nodes().parent_node(parent_node.id()) else {
+                let Some(mut parent_parent_node) = ctx.nodes().parent_node(parent_node.id()) else {
                     return;
                 };
+                if matches!(parent_parent_node.kind(), AstKind::BindingProperty(_)) {
+                    parent_parent_node = ctx.nodes().parent_node(parent_parent_node.id()).unwrap();
+                }
+
                 match parent_parent_node.kind() {
                     AstKind::ObjectPattern(object_pattern) => {
                         // TODO: Is there a better way to do this check?

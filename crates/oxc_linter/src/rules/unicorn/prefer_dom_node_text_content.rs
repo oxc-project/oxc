@@ -62,11 +62,17 @@ impl Rule for PreferDomNodeTextContent {
                 }
 
                 let mut ancestor_kinds = ctx.nodes().ancestor_kinds(node.id()).skip(1);
-                let (Some(parent_node_kind), Some(grand_parent_node_kind)) =
+                let (Some(parent_node_kind), Some(mut grand_parent_node_kind)) =
                     (ancestor_kinds.next(), ancestor_kinds.next())
                 else {
                     return;
                 };
+                if matches!(grand_parent_node_kind, AstKind::BindingProperty(_)) {
+                    grand_parent_node_kind = match ancestor_kinds.next() {
+                        Some(kind) => kind,
+                        None => return,
+                    };
+                }
 
                 if matches!(parent_node_kind, AstKind::PropertyKey(_))
                     && (matches!(grand_parent_node_kind, AstKind::ObjectPattern(_))

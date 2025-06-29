@@ -2388,10 +2388,12 @@ pub mod walk {
 
     #[inline]
     pub fn walk_binding_property<'a, V: Visit<'a>>(visitor: &mut V, it: &BindingProperty<'a>) {
-        // No `AstKind` for this type
+        let kind = AstKind::BindingProperty(visitor.alloc(it));
+        visitor.enter_node(kind);
         visitor.visit_span(&it.span);
         visitor.visit_property_key(&it.key);
         visitor.visit_binding_pattern(&it.value);
+        visitor.leave_node(kind);
     }
 
     #[inline]
