@@ -366,16 +366,13 @@ pub(crate) fn should_break_after_operator(right: &Expression, f: &Formatter<'_, 
         Expression::AssignmentExpression(assignment) => {
             matches!(assignment.right, Expression::AssignmentExpression(_))
         }
-        Expression::BinaryExpression(_) => false,
+        Expression::BinaryExpression(_) | Expression::SequenceExpression(_) => true,
         Expression::LogicalExpression(logical) => {
-            !BinaryLikeExpression::is_inlineable_logical_expression(logical)
+            !BinaryLikeExpression::can_inline_logical_expr(logical)
         }
-        Expression::SequenceExpression(_) => true,
-
         Expression::ConditionalExpression(conditional) => {
-            !matches!(&conditional.test, Expression::LogicalExpression(logical) if BinaryLikeExpression::is_inlineable_logical_expression(&logical))
+            !matches!(&conditional.test, Expression::LogicalExpression(logical) if BinaryLikeExpression::can_inline_logical_expr(&logical))
         }
-
         Expression::ClassExpression(class) => !class.decorators.is_empty(),
 
         _ => {

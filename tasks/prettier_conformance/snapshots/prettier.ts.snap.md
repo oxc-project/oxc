@@ -64,12 +64,12 @@ ts compatibility: 210/573 (36.65%)
 | typescript/arrow/issue-6107-curry.ts | 💥💥 | 68.75% |
 | typescript/as/array-pattern.ts | 💥 | 0.00% |
 | typescript/as/as.ts | 💥 | 59.84% |
-| typescript/as/assignment2.ts | 💥 | 88.24% |
+| typescript/as/assignment2.ts | 💥 | 91.18% |
 | typescript/as/export_default_as.ts | 💥 | 0.00% |
 | typescript/as/expression-statement.ts | 💥 | 50.00% |
 | typescript/as/long-identifiers.ts | 💥 | 88.89% |
 | typescript/as/nested-await-and-as.ts | 💥 | 16.67% |
-| typescript/as/ternary.ts | 💥 | 35.90% |
+| typescript/as/ternary.ts | 💥 | 45.00% |
 | typescript/assert/comment.ts | 💥 | 0.00% |
 | typescript/assert/index.ts | 💥 | 75.00% |
 | typescript/assignment/issue-10846.ts | 💥 | 23.73% |
@@ -306,7 +306,7 @@ ts compatibility: 210/573 (36.65%)
 | typescript/rest-type/complex.ts | 💥 | 0.00% |
 | typescript/rest-type/infer-type.ts | 💥 | 60.87% |
 | typescript/satisfies-operators/argument-expansion.ts | 💥✨ | 46.77% |
-| typescript/satisfies-operators/assignment.ts | 💥💥 | 79.07% |
+| typescript/satisfies-operators/assignment.ts | 💥💥 | 83.72% |
 | typescript/satisfies-operators/basic.ts | 💥💥 | 93.33% |
 | typescript/satisfies-operators/export-default-as.ts | 💥💥 | 0.00% |
 | typescript/satisfies-operators/expression-statement.ts | 💥💥 | 78.38% |
@@ -316,7 +316,7 @@ ts compatibility: 210/573 (36.65%)
 | typescript/satisfies-operators/non-null.ts | 💥💥 | 66.67% |
 | typescript/satisfies-operators/satisfies.ts | 💥💥 | 61.36% |
 | typescript/satisfies-operators/template-literal.ts | 💥💥 | 14.29% |
-| typescript/satisfies-operators/ternary.ts | 💥💥 | 35.90% |
+| typescript/satisfies-operators/ternary.ts | 💥💥 | 45.00% |
 | typescript/satisfies-operators/types-comments.ts | 💥✨ | 33.33% |
 | typescript/semi/no-semi.ts | 💥 | 88.89% |
 | typescript/static-blocks/multiple.ts | 💥 | 33.33% |
@@ -325,7 +325,7 @@ ts compatibility: 210/573 (36.65%)
 | typescript/template-literal-types/template-literal-types.ts | 💥 | 71.43% |
 | typescript/template-literals/as-expression.ts | 💥 | 14.29% |
 | typescript/template-literals/expressions.ts | 💥 | 0.00% |
-| typescript/ternaries/indent.ts | 💥 | 17.20% |
+| typescript/ternaries/indent.ts | 💥 | 21.28% |
 | typescript/test-declarations/test_declarations.ts | 💥💥 | 50.00% |
 | typescript/trailing-comma/arrow-functions.tsx | 💥💥💥 | 25.00% |
 | typescript/trailing-comma/trailing.ts | 💥💥💥 | 76.77% |

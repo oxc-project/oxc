@@ -123,10 +123,10 @@ impl<'a, 'b> BinaryLikeExpression<'a, 'b> {
         let Self::LogicalExpression(logical) = self else {
             return false;
         };
-        Self::is_inlineable_logical_expression(logical)
+        Self::can_inline_logical_expr(logical)
     }
 
-    pub fn is_inlineable_logical_expression(logical: &LogicalExpression) -> bool {
+    pub fn can_inline_logical_expr(logical: &LogicalExpression) -> bool {
         match &logical.right {
             Expression::ObjectExpression(object) => !object.properties.is_empty(),
             Expression::ArrayExpression(array) => !array.elements.is_empty(),
@@ -230,7 +230,6 @@ impl<'a> Format<'a> for BinaryLikeExpression<'a, '_> {
         let should_not_indent = self.should_not_indent_if_parent_indents(self.parent());
 
         let flattened = parts.len() > 2;
-
         if should_not_indent
             || (inline_logical_expression && !flattened)
             || (!inline_logical_expression && should_indent_if_inlines)
@@ -418,19 +417,13 @@ fn split_into_left_and_right_sides<'a, 'b>(
 ///
 /// This function checks what the parents adheres to this behaviour
 fn should_indent_if_parent_inlines(parent: &AstNodes<'_>) -> bool {
-    if matches!(parent, AstNodes::AssignmentExpression(_) | AstNodes::ObjectProperty(_)) {
-        return true;
-    }
-
-    match parent.parent() {
-        AstNodes::VariableDeclarator(decl) => {
-            decl.init().as_ref().is_some_and(|init| init.span() == parent.span())
-        }
-        AstNodes::PropertyDefinition(decl) => {
-            decl.value().as_ref().is_some_and(|value| value.span() == parent.span())
-        }
-        _ => false,
-    }
+    matches!(
+        parent,
+        AstNodes::AssignmentExpression(_)
+            | AstNodes::ObjectProperty(_)
+            | AstNodes::VariableDeclarator(_)
+            | AstNodes::PropertyDefinition(_)
+    )
 }
 
 fn is_same_binary_expression_kind(

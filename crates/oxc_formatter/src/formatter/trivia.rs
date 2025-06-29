@@ -268,8 +268,6 @@ impl<'a> Format<'a> for FormatTrailingComments<'a, '_> {
                         {
                             return Ok(());
                         }
-                        dbg!(preceding_node);
-                        dbg!(&comments[..=comment_index]);
                         return format_trailing_comments_impl(&comments[..=comment_index], f);
                     }
 
