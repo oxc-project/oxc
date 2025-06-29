@@ -11,7 +11,6 @@ module.exports.ExportExportNameKind = bindings.ExportExportNameKind;
 module.exports.ExportImportNameKind = bindings.ExportImportNameKind;
 module.exports.ExportLocalNameKind = bindings.ExportLocalNameKind;
 module.exports.ImportNameKind = bindings.ImportNameKind;
-module.exports.parseWithoutReturn = bindings.parseWithoutReturn;
 module.exports.Severity = bindings.Severity;
 
 module.exports.parseSync = parseSync;
