@@ -3856,9 +3856,11 @@ pub mod walk_mut {
         visitor: &mut V,
         it: &mut TSInterfaceBody<'a>,
     ) {
-        // No `AstType` for this type
+        let kind = AstType::TSInterfaceBody;
+        visitor.enter_node(kind);
         visitor.visit_span(&mut it.span);
         visitor.visit_ts_signatures(&mut it.body);
+        visitor.leave_node(kind);
     }
 
     #[inline]

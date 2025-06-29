@@ -405,6 +405,7 @@ impl AstKind<'_> {
             Self::TSConstructSignatureDeclaration(_) => "TSConstructSignatureDeclaration".into(),
             Self::TSExportAssignment(_) => "TSExportAssignment".into(),
             Self::TSConstructorType(_) => "TSConstructorType".into(),
+            Self::TSInterfaceBody(_) => "TSInterfaceBody".into(),
             Self::TSIndexSignature(_) => "TSIndexSignature".into(),
             Self::V8IntrinsicExpression(_) => "V8IntrinsicExpression".into(),
 

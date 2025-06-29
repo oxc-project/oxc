@@ -32,7 +32,6 @@ const STRUCTS_BLACK_LIST: &[&str] = &[
     "AssignmentTargetPropertyProperty",
     "BindingPattern",
     "BindingProperty",
-    "TSInterfaceBody",
     "TSFunctionType",
     "Span",
 ];

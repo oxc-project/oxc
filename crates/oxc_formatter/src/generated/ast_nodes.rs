@@ -183,6 +183,7 @@ pub enum AstNodes<'a> {
     TSTypeAliasDeclaration(&'a AstNode<'a, TSTypeAliasDeclaration<'a>>),
     TSClassImplements(&'a AstNode<'a, TSClassImplements<'a>>),
     TSInterfaceDeclaration(&'a AstNode<'a, TSInterfaceDeclaration<'a>>),
+    TSInterfaceBody(&'a AstNode<'a, TSInterfaceBody<'a>>),
     TSPropertySignature(&'a AstNode<'a, TSPropertySignature<'a>>),
     TSIndexSignature(&'a AstNode<'a, TSIndexSignature<'a>>),
     TSCallSignatureDeclaration(&'a AstNode<'a, TSCallSignatureDeclaration<'a>>),
@@ -2469,6 +2470,7 @@ impl<'a> AstNodes<'a> {
             Self::TSTypeAliasDeclaration(n) => n.span(),
             Self::TSClassImplements(n) => n.span(),
             Self::TSInterfaceDeclaration(n) => n.span(),
+            Self::TSInterfaceBody(n) => n.span(),
             Self::TSPropertySignature(n) => n.span(),
             Self::TSIndexSignature(n) => n.span(),
             Self::TSCallSignatureDeclaration(n) => n.span(),
@@ -2661,6 +2663,7 @@ impl<'a> AstNodes<'a> {
             Self::TSTypeAliasDeclaration(n) => n.parent,
             Self::TSClassImplements(n) => n.parent,
             Self::TSInterfaceDeclaration(n) => n.parent,
+            Self::TSInterfaceBody(n) => n.parent,
             Self::TSPropertySignature(n) => n.parent,
             Self::TSIndexSignature(n) => n.parent,
             Self::TSCallSignatureDeclaration(n) => n.parent,
@@ -2853,6 +2856,7 @@ impl<'a> AstNodes<'a> {
             Self::TSTypeAliasDeclaration(n) => SiblingNode::from(n.inner),
             Self::TSClassImplements(n) => SiblingNode::from(n.inner),
             Self::TSInterfaceDeclaration(n) => SiblingNode::from(n.inner),
+            Self::TSInterfaceBody(n) => SiblingNode::from(n.inner),
             Self::TSPropertySignature(n) => SiblingNode::from(n.inner),
             Self::TSIndexSignature(n) => SiblingNode::from(n.inner),
             Self::TSCallSignatureDeclaration(n) => SiblingNode::from(n.inner),
@@ -3045,6 +3049,7 @@ impl<'a> AstNodes<'a> {
             Self::TSTypeAliasDeclaration(_) => "TSTypeAliasDeclaration",
             Self::TSClassImplements(_) => "TSClassImplements",
             Self::TSInterfaceDeclaration(_) => "TSInterfaceDeclaration",
+            Self::TSInterfaceBody(_) => "TSInterfaceBody",
             Self::TSPropertySignature(_) => "TSPropertySignature",
             Self::TSIndexSignature(_) => "TSIndexSignature",
             Self::TSCallSignatureDeclaration(_) => "TSCallSignatureDeclaration",
@@ -9879,7 +9884,7 @@ impl<'a> AstNode<'a, TSInterfaceBody<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.body,
             allocator: self.allocator,
-            parent: self.parent,
+            parent: self.allocator.alloc(AstNodes::TSInterfaceBody(transmute_self(self))),
             following_node,
         })
     }
