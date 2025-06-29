@@ -3,7 +3,12 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
-use crate::{AstNode, context::LintContext, rule::Rule, utils::is_document_page};
+use crate::{
+    AstNode,
+    context::{ContextHost, LintContext},
+    rule::Rule,
+    utils::is_document_page,
+};
 
 fn no_document_import_in_page_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("`<Document />` from `next/document` should not be imported outside of `pages/_document.js`. See: https://nextjs.org/docs/messages/no-document-import-in-page").with_help("Prevent importing `next/document` outside of `pages/_document.js`.").with_label(span)
@@ -46,15 +51,15 @@ impl Rule for NoDocumentImportInPage {
             return;
         }
 
+        ctx.diagnostic(no_document_import_in_page_diagnostic(import_decl.span));
+    }
+
+    fn should_run(&self, ctx: &ContextHost) -> bool {
         let Some(path) = ctx.file_path().to_str() else {
-            return;
+            return false;
         };
 
-        if is_document_page(path) {
-            return;
-        }
-
-        ctx.diagnostic(no_document_import_in_page_diagnostic(import_decl.span));
+        !is_document_page(path)
     }
 }
 
