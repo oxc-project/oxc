@@ -94,6 +94,7 @@ pub enum AstNodes<'a> {
     DebuggerStatement(&'a AstNode<'a, DebuggerStatement>),
     AssignmentPattern(&'a AstNode<'a, AssignmentPattern<'a>>),
     ObjectPattern(&'a AstNode<'a, ObjectPattern<'a>>),
+    BindingProperty(&'a AstNode<'a, BindingProperty<'a>>),
     ArrayPattern(&'a AstNode<'a, ArrayPattern<'a>>),
     BindingRestElement(&'a AstNode<'a, BindingRestElement<'a>>),
     Function(&'a AstNode<'a, Function<'a>>),
@@ -2381,6 +2382,7 @@ impl<'a> AstNodes<'a> {
             Self::DebuggerStatement(n) => n.span(),
             Self::AssignmentPattern(n) => n.span(),
             Self::ObjectPattern(n) => n.span(),
+            Self::BindingProperty(n) => n.span(),
             Self::ArrayPattern(n) => n.span(),
             Self::BindingRestElement(n) => n.span(),
             Self::Function(n) => n.span(),
@@ -2574,6 +2576,7 @@ impl<'a> AstNodes<'a> {
             Self::DebuggerStatement(n) => n.parent,
             Self::AssignmentPattern(n) => n.parent,
             Self::ObjectPattern(n) => n.parent,
+            Self::BindingProperty(n) => n.parent,
             Self::ArrayPattern(n) => n.parent,
             Self::BindingRestElement(n) => n.parent,
             Self::Function(n) => n.parent,
@@ -2767,6 +2770,7 @@ impl<'a> AstNodes<'a> {
             Self::DebuggerStatement(n) => SiblingNode::from(n.inner),
             Self::AssignmentPattern(n) => SiblingNode::from(n.inner),
             Self::ObjectPattern(n) => SiblingNode::from(n.inner),
+            Self::BindingProperty(n) => SiblingNode::from(n.inner),
             Self::ArrayPattern(n) => SiblingNode::from(n.inner),
             Self::BindingRestElement(n) => SiblingNode::from(n.inner),
             Self::Function(n) => SiblingNode::from(n.inner),
@@ -2960,6 +2964,7 @@ impl<'a> AstNodes<'a> {
             Self::DebuggerStatement(_) => "DebuggerStatement",
             Self::AssignmentPattern(_) => "AssignmentPattern",
             Self::ObjectPattern(_) => "ObjectPattern",
+            Self::BindingProperty(_) => "BindingProperty",
             Self::ArrayPattern(_) => "ArrayPattern",
             Self::BindingRestElement(_) => "BindingRestElement",
             Self::Function(_) => "Function",
@@ -6177,7 +6182,7 @@ impl<'a> AstNode<'a, BindingProperty<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.key,
             allocator: self.allocator,
-            parent: self.parent,
+            parent: self.allocator.alloc(AstNodes::BindingProperty(transmute_self(self))),
             following_node,
         })
     }
@@ -6188,7 +6193,7 @@ impl<'a> AstNode<'a, BindingProperty<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.value,
             allocator: self.allocator,
-            parent: self.parent,
+            parent: self.allocator.alloc(AstNodes::BindingProperty(transmute_self(self))),
             following_node,
         })
     }

@@ -2461,10 +2461,12 @@ pub mod walk_mut {
         visitor: &mut V,
         it: &mut BindingProperty<'a>,
     ) {
-        // No `AstType` for this type
+        let kind = AstType::BindingProperty;
+        visitor.enter_node(kind);
         visitor.visit_span(&mut it.span);
         visitor.visit_property_key(&mut it.key);
         visitor.visit_binding_pattern(&mut it.value);
+        visitor.leave_node(kind);
     }
 
     #[inline]

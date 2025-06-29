@@ -229,6 +229,8 @@ impl AstKind<'_> {
 
             Self::AccessorProperty(_) => "AccessorProperty".into(),
 
+            Self::BindingProperty(_) => "BindingProperty".into(),
+
             Self::ArrayExpression(_) => "ArrayExpression".into(),
             Self::ArrowFunctionExpression(_) => "ArrowFunctionExpression".into(),
             Self::AssignmentExpression(_) => "AssignmentExpression".into(),
