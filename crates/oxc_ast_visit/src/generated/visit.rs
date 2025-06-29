@@ -3656,9 +3656,11 @@ pub mod walk {
 
     #[inline]
     pub fn walk_ts_interface_body<'a, V: Visit<'a>>(visitor: &mut V, it: &TSInterfaceBody<'a>) {
-        // No `AstKind` for this type
+        let kind = AstKind::TSInterfaceBody(visitor.alloc(it));
+        visitor.enter_node(kind);
         visitor.visit_span(&it.span);
         visitor.visit_ts_signatures(&it.body);
+        visitor.leave_node(kind);
     }
 
     #[inline]
@@ -3694,10 +3696,12 @@ pub mod walk {
 
     #[inline]
     pub fn walk_ts_index_signature<'a, V: Visit<'a>>(visitor: &mut V, it: &TSIndexSignature<'a>) {
-        // No `AstKind` for this type
+        let kind = AstKind::TSIndexSignature(visitor.alloc(it));
+        visitor.enter_node(kind);
         visitor.visit_span(&it.span);
         visitor.visit_ts_index_signature_names(&it.parameters);
         visitor.visit_ts_type_annotation(&it.type_annotation);
+        visitor.leave_node(kind);
     }
 
     #[inline]
