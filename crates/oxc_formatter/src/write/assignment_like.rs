@@ -26,7 +26,7 @@ pub enum AssignmentLike<'a, 'b> {
     AssignmentExpression(&'b AstNode<'a, AssignmentExpression<'a>>),
 }
 
-impl<'a, 'b> AssignmentLike<'a, 'b> {
+impl<'a> AssignmentLike<'a, '_> {
     fn write_left(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<bool> {
         match self {
             AssignmentLike::VariableDeclarator(variable_declarator) => {
@@ -42,6 +42,7 @@ impl<'a, 'b> AssignmentLike<'a, 'b> {
     }
 
     fn write_operator(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        #[expect(clippy::match_wildcard_for_single_variants)]
         match self {
             Self::VariableDeclarator(variable_declarator) if variable_declarator.init.is_some() => {
                 write!(f, [space(), "="])
@@ -69,7 +70,7 @@ impl<'a, 'b> AssignmentLike<'a, 'b> {
             }
             Self::AssignmentExpression(assignment) => {
                 let right = assignment.right();
-                write!(f, [space(), with_assignment_layout(&right, Some(layout))])
+                write!(f, [space(), with_assignment_layout(right, Some(layout))])
             }
         }
     }
@@ -97,15 +98,13 @@ impl<'a, 'b> AssignmentLike<'a, 'b> {
             return layout;
         }
 
-        if let Some(expression) = &right_expression {
-            if let Expression::CallExpression(call_expression) = expression {
-                if call_expression
-                    .callee
-                    .get_identifier_reference()
-                    .is_some_and(|ident| ident.name == "require")
-                {
-                    return AssignmentLikeLayout::NeverBreakAfterOperator;
-                }
+        if let Some(Expression::CallExpression(call_expression)) = &right_expression {
+            if call_expression
+                .callee
+                .get_identifier_reference()
+                .is_some_and(|ident| ident.name == "require")
+            {
+                return AssignmentLikeLayout::NeverBreakAfterOperator;
             }
         }
 
@@ -178,7 +177,7 @@ impl<'a, 'b> AssignmentLike<'a, 'b> {
     fn has_only_left_hand_side(&self) -> bool {
         match self {
             Self::VariableDeclarator(declarator) => declarator.init.is_none(),
-            _ => false,
+            Self::AssignmentExpression(_) => false,
         }
         // TODO:
         // if let Self::JsPropertyClassMember(class_member) = self {
@@ -213,10 +212,8 @@ impl<'a, 'b> AssignmentLike<'a, 'b> {
                 false
             };
 
-        let result = if upper_chain_is_eligible {
-            if !right_is_tail {
-                Some(AssignmentLikeLayout::Chain)
-            } else {
+        if upper_chain_is_eligible {
+            if right_is_tail {
                 match right_expression {
                     Expression::ArrowFunctionExpression(arrow) => {
                         if arrow.expression {
@@ -232,12 +229,12 @@ impl<'a, 'b> AssignmentLike<'a, 'b> {
                     }
                     _ => Some(AssignmentLikeLayout::ChainTail),
                 }
+            } else {
+                Some(AssignmentLikeLayout::Chain)
             }
         } else {
             None
-        };
-
-        result
+        }
     }
 
     /// Particular function that checks if the left hand side of a [JsAnyAssignmentLike] should
@@ -347,14 +344,14 @@ impl<'a, 'b> AssignmentLike<'a, 'b> {
 }
 
 /// Checks if the function is entitled to be printed with layout [AssignmentLikeLayout::BreakAfterOperator]
-pub(crate) fn should_break_after_operator(right: &Expression, f: &Formatter<'_, '_>) -> bool {
+fn should_break_after_operator(right: &Expression, f: &Formatter<'_, '_>) -> bool {
     if f.comments().has_leading_own_line_comments(right.span().start)
         && !matches!(right, Expression::JSXElement(_) | Expression::JSXFragment(_))
     {
         return true;
     }
 
-    let result = match right {
+    match right {
         // head is a long chain, meaning that right -> right are both assignment expressions
         Expression::AssignmentExpression(assignment) => {
             matches!(assignment.right, Expression::AssignmentExpression(_))
@@ -364,7 +361,7 @@ pub(crate) fn should_break_after_operator(right: &Expression, f: &Formatter<'_, 
             !BinaryLikeExpression::can_inline_logical_expr(logical)
         }
         Expression::ConditionalExpression(conditional) => {
-            !matches!(&conditional.test, Expression::LogicalExpression(logical) if BinaryLikeExpression::can_inline_logical_expr(&logical))
+            !matches!(&conditional.test, Expression::LogicalExpression(logical) if BinaryLikeExpression::can_inline_logical_expr(logical))
         }
         Expression::ClassExpression(class) => !class.decorators.is_empty(),
 
@@ -373,45 +370,37 @@ pub(crate) fn should_break_after_operator(right: &Expression, f: &Formatter<'_, 
                 Expression::AwaitExpression(expression) => Some(&expression.argument),
                 Expression::YieldExpression(expression) => expression.argument.as_ref(),
                 Expression::UnaryExpression(expression) => {
-                    if let Some(argument) = get_last_non_unary_argument(expression) {
-                        match argument {
-                            Expression::AwaitExpression(expression) => Some(&expression.argument),
-                            Expression::YieldExpression(expression) => expression.argument.as_ref(),
-                            _ => Some(argument),
-                        }
-                    } else {
-                        None
+                    match get_last_non_unary_argument(expression) {
+                        Expression::AwaitExpression(expression) => Some(&expression.argument),
+                        Expression::YieldExpression(expression) => expression.argument.as_ref(),
+                        argument => Some(argument),
                     }
                 }
                 _ => None,
             };
 
-            if let Some(argument) = argument {
-                argument.is_literal() || is_poorly_breakable_member_or_call_chain(&argument, f)
-            } else {
-                false
-            }
+            argument.is_some_and(|argument| {
+                argument.is_literal() || is_poorly_breakable_member_or_call_chain(argument, f)
+            })
         }
-    };
-
-    result
+    }
 }
 
 /// Iterate over unary expression arguments to get last non-unary
 /// Example: void !!(await test()) -> returns await as last argument
 fn get_last_non_unary_argument<'a, 'b>(
     unary_expression: &'b UnaryExpression<'a>,
-) -> Option<&'b Expression<'a>> {
+) -> &'b Expression<'a> {
     let mut argument = &unary_expression.argument;
 
     while let Expression::UnaryExpression(unary) = argument {
-        argument = &unary.argument
+        argument = &unary.argument;
     }
 
-    Some(&argument)
+    argument
 }
 
-impl<'a, 'b> Format<'a> for AssignmentLike<'a, 'b> {
+impl<'a> Format<'a> for AssignmentLike<'a, '_> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         let format_content = format_with(|f| {
             // We create a temporary buffer because the left hand side has to conditionally add
@@ -452,12 +441,12 @@ impl<'a, 'b> Format<'a> for AssignmentLike<'a, 'b> {
                     self.write_operator(f)?;
                 }
 
+                #[expect(clippy::match_same_arms)]
                 match layout {
                     AssignmentLikeLayout::OnlyLeft => Ok(()),
                     AssignmentLikeLayout::Fluid => {
                         let group_id = f.group_id("assignment_like");
-
-                        write![
+                        write!(
                             f,
                             [
                                 group(&indent(&soft_line_break_or_space()))
@@ -465,27 +454,23 @@ impl<'a, 'b> Format<'a> for AssignmentLike<'a, 'b> {
                                 line_suffix_boundary(),
                                 indent_if_group_breaks(&right, group_id)
                             ]
-                        ]
+                        )
                     }
                     AssignmentLikeLayout::BreakAfterOperator => {
-                        write![f, [group(&soft_line_indent_or_space(&right))]]
+                        write!(f, [group(&soft_line_indent_or_space(&right))])
                     }
                     AssignmentLikeLayout::NeverBreakAfterOperator => {
-                        write![f, [space(), right]]
+                        write!(f, [space(), right])
                     }
-
                     AssignmentLikeLayout::BreakLeftHandSide => {
-                        write![f, [space(), group(&right)]]
+                        write!(f, [space(), group(&right)])
                     }
-
                     AssignmentLikeLayout::Chain => {
                         write!(f, [soft_line_break_or_space(), right])
                     }
-
                     AssignmentLikeLayout::ChainTail => {
-                        write!(f, [&indent(&format_args![soft_line_break_or_space(), right])])
+                        write!(f, [&indent(&format_args!(soft_line_break_or_space(), right))])
                     }
-
                     AssignmentLikeLayout::ChainTailArrowFunction => {
                         write!(f, [space(), right])
                     }
@@ -516,19 +501,19 @@ impl<'a, 'b> Format<'a> for AssignmentLike<'a, 'b> {
 
 /// Formats an expression and passes the assignment layout to its formatting function if the expressions
 /// formatting rule takes the layout as an option.
-pub(crate) struct WithAssignmentLayout<'a, 'b> {
+pub struct WithAssignmentLayout<'a, 'b> {
     expression: &'b AstNode<'a, Expression<'a>>,
     layout: Option<AssignmentLikeLayout>,
 }
 
-pub(crate) fn with_assignment_layout<'a, 'b>(
+pub fn with_assignment_layout<'a, 'b>(
     expression: &'b AstNode<'a, Expression<'a>>,
     layout: Option<AssignmentLikeLayout>,
 ) -> WithAssignmentLayout<'a, 'b> {
     WithAssignmentLayout { expression, layout }
 }
 
-impl<'a, 'b> Format<'a> for WithAssignmentLayout<'a, 'b> {
+impl<'a> Format<'a> for WithAssignmentLayout<'a, '_> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         match self.expression.as_ast_nodes() {
             AstNodes::ArrowFunctionExpression(arrow) => {
@@ -644,7 +629,6 @@ fn is_poorly_breakable_member_or_call_chain(
 /// [Prettier applies]: https://github.com/prettier/prettier/blob/a043ac0d733c4d53f980aa73807a63fc914f23bd/src/language-js/print/assignment.js#L374
 fn is_short_argument(argument: &Argument, threshold: u16) -> bool {
     match argument {
-        Argument::ThisExpression(_) => true,
         Argument::Identifier(identifier) => identifier.name.len() <= threshold as usize,
         Argument::UnaryExpression(unary_expression) => {
             unary_expression.operator.is_arithmetic()
@@ -673,7 +657,8 @@ fn is_short_argument(argument: &Argument, threshold: u16) -> bool {
                 raw.len() <= threshold as usize && !raw.contains('\n')
             }
         }
-        Argument::NullLiteral(_)
+        Argument::ThisExpression(_)
+        | Argument::NullLiteral(_)
         | Argument::BigIntLiteral(_)
         | Argument::BooleanLiteral(_)
         | Argument::NumericLiteral(_) => true,
