@@ -1,4 +1,4 @@
-ts compatibility: 210/573 (36.65%)
+ts compatibility: 215/573 (37.52%)
 
 # Failed
 
@@ -35,7 +35,6 @@ ts compatibility: 210/573 (36.65%)
 | jsx/jsx/return-statement.js | 💥💥💥💥 | 73.68% |
 | jsx/jsx/spacing.js | 💥💥💥💥 | 40.00% |
 | jsx/jsx/template-literal-in-attr.js | 💥💥💥💥 | 26.67% |
-| jsx/jsx/ternary.js | 💥💥💥💥 | 0.00% |
 | jsx/last-line/last_line.js | 💥💥 | 44.51% |
 | jsx/last-line/single_prop_multiline_string.js | 💥💥 | 22.88% |
 | jsx/multiline-assign/test.js | 💥 | 28.00% |
@@ -80,7 +79,6 @@ ts compatibility: 210/573 (36.65%)
 | typescript/assignment/issue-2485.ts | 💥 | 44.44% |
 | typescript/call-signature/call-signature.ts | 💥 | 79.66% |
 | typescript/cast/as-const.ts | 💥 | 54.55% |
-| typescript/cast/assert-and-assign.ts | 💥 | 50.00% |
 | typescript/cast/generic-cast.ts | 💥 | 39.60% |
 | typescript/cast/tuple-and-record.ts | 💥 | 0.00% |
 | typescript/chain-expression/call-expression.ts | 💥 | 32.81% |
@@ -125,7 +123,7 @@ ts compatibility: 210/573 (36.65%)
 | typescript/compiler/commentsInterface.ts | 💥 | 66.67% |
 | typescript/compiler/contextualSignatureInstantiation2.ts | 💥 | 70.59% |
 | typescript/compiler/functionOverloadsOnGenericArity1.ts | 💥 | 90.00% |
-| typescript/compiler/indexSignatureWithInitializer.ts | 💥 | 87.50% |
+| typescript/compiler/indexSignatureWithInitializer.ts | 💥 | 75.00% |
 | typescript/compiler/mappedTypeWithCombinedTypeMappers.ts | 💥 | 59.46% |
 | typescript/compiler/privacyGloImport.ts | 💥 | 95.92% |
 | typescript/conditional-types/comments.ts | 💥💥 | 44.43% |
@@ -175,11 +173,8 @@ ts compatibility: 210/573 (36.65%)
 | typescript/conformance/types/tuple/tupleElementTypes4.ts | 💥 | 0.00% |
 | typescript/conformance/types/tuple/typeInferenceWithTupleType.ts | 💥 | 91.30% |
 | typescript/conformance/types/tuple/wideningTuples1.ts | 💥 | 80.00% |
-| typescript/conformance/types/tuple/wideningTuples3.ts | 💥 | 75.00% |
-| typescript/conformance/types/tuple/wideningTuples4.ts | 💥 | 75.00% |
 | typescript/conformance/types/tuple/wideningTuples5.ts | 💥 | 50.00% |
 | typescript/conformance/types/tuple/wideningTuples6.ts | 💥 | 66.67% |
-| typescript/conformance/types/tuple/wideningTuples7.ts | 💥 | 80.00% |
 | typescript/conformance/types/typeOperator/typeOperator.ts | 💥 | 0.00% |
 | typescript/conformance/types/typeParameter/typeParameter.ts | 💥 | 66.67% |
 | typescript/conformance/types/typeParameters/typeParameterLists/innerTypeParameterShadowingOuterOne.ts | 💥 | 85.71% |
@@ -223,7 +218,7 @@ ts compatibility: 210/573 (36.65%)
 | typescript/decorators-ts/typeorm.ts | 💥 | 88.37% |
 | typescript/definite/definite.ts | 💥 | 57.14% |
 | typescript/definite/without-annotation.ts | 💥 | 25.00% |
-| typescript/destructuring/destructuring.ts | 💥 | 50.00% |
+| typescript/destructuring/destructuring.ts | 💥 | 75.00% |
 | typescript/enum/computed-members.ts | 💥 | 0.00% |
 | typescript/enum/enum.ts | 💥 | 52.17% |
 | typescript/enum/multiline.ts | 💥 | 0.00% |
@@ -311,7 +306,7 @@ ts compatibility: 210/573 (36.65%)
 | typescript/satisfies-operators/export-default-as.ts | 💥💥 | 0.00% |
 | typescript/satisfies-operators/expression-statement.ts | 💥💥 | 78.38% |
 | typescript/satisfies-operators/gt-lt.ts | 💥💥 | 0.00% |
-| typescript/satisfies-operators/lhs.ts | 💥💥 | 75.00% |
+| typescript/satisfies-operators/lhs.ts | 💥✨ | 30.00% |
 | typescript/satisfies-operators/nested-await-and-satisfies.ts | 💥💥 | 16.67% |
 | typescript/satisfies-operators/non-null.ts | 💥💥 | 66.67% |
 | typescript/satisfies-operators/satisfies.ts | 💥💥 | 61.36% |
