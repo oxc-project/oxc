@@ -54,6 +54,8 @@ struct BindingPatternKindAndTsFields<'a, 'b> {
 
 impl ESTree for BindingPatternKindAndTsFields<'_, '_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
+        let ranges = serializer.ranges();
+
         let mut state = serializer.serialize_struct();
 
         match &self.kind {
@@ -90,6 +92,18 @@ impl ESTree for BindingPatternKindAndTsFields<'_, '_> {
 
         state.serialize_field("optional", &self.optional);
         state.serialize_field("typeAnnotation", &self.type_annotation);
+
+        if ranges {
+            let (span_start, span_end) = match &self.kind {
+                BindingPatternKind::BindingIdentifier(ident) => (ident.span.start, ident.span.end),
+                BindingPatternKind::ObjectPattern(object) => (object.span.start, object.span.end),
+                BindingPatternKind::ArrayPattern(array) => (array.span.start, array.span.end),
+                BindingPatternKind::AssignmentPattern(assignment) => {
+                    (assignment.span.start, assignment.span.end)
+                }
+            };
+            state.serialize_field("range", &[&span_start, &span_end]);
+        }
 
         state.end();
     }
@@ -165,6 +179,7 @@ struct FormalParametersRest<'a, 'b>(&'b BindingRestElement<'a>);
 impl ESTree for FormalParametersRest<'_, '_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let rest = self.0;
+        let ranges = serializer.ranges();
         let mut state = serializer.serialize_struct();
         state.serialize_field("type", &JsonSafeString("RestElement"));
         state.serialize_field("start", &rest.span.start);
@@ -174,6 +189,9 @@ impl ESTree for FormalParametersRest<'_, '_> {
         state.serialize_ts_field("optional", &rest.argument.optional);
         state.serialize_ts_field("typeAnnotation", &rest.argument.type_annotation);
         state.serialize_ts_field("value", &Null(()));
+        if ranges {
+            state.serialize_field("range", &[&rest.span.start, &rest.span.end]);
+        }
         state.end();
     }
 }
@@ -223,6 +241,8 @@ impl ESTree for FormalParameterConverter<'_, '_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let param = self.0;
 
+        let ranges = serializer.ranges();
+
         if S::INCLUDE_TS_FIELDS {
             if param.has_modifier() {
                 let mut state = serializer.serialize_struct();
@@ -235,6 +255,9 @@ impl ESTree for FormalParameterConverter<'_, '_> {
                 state.serialize_field("parameter", &param.pattern);
                 state.serialize_field("readonly", &param.readonly);
                 state.serialize_field("static", &false);
+                if ranges {
+                    state.serialize_field("range", &[&param.span.start, &param.span.end]);
+                }
                 state.end();
             } else {
                 BindingPatternKindAndTsFields {
@@ -436,6 +459,8 @@ pub struct AssignmentTargetPropertyIdentifierInit<'a>(
 
 impl ESTree for AssignmentTargetPropertyIdentifierInit<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
+        let ranges = serializer.ranges();
+
         if let Some(init) = &self.0.init {
             let mut state = serializer.serialize_struct();
             state.serialize_field("type", &JsonSafeString("AssignmentPattern"));
@@ -446,6 +471,9 @@ impl ESTree for AssignmentTargetPropertyIdentifierInit<'_> {
             state.serialize_field("right", init);
             state.serialize_ts_field("optional", &false);
             state.serialize_ts_field("typeAnnotation", &Null(()));
+            if ranges {
+                state.serialize_field("range", &[&self.0.span.start, &self.0.span.end]);
+            }
             state.end();
         } else {
             self.0.binding.serialize(serializer);
