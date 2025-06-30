@@ -510,7 +510,7 @@ impl Tester {
                         ConfigStoreBuilder::from_oxlintrc(true, Oxlintrc::deserialize(v).unwrap())
                             .unwrap()
                     })
-                    .with_plugins(self.plugins)
+                    .with_plugins(self.plugins.union(LintPlugins::from(self.plugin_name)))
                     .with_rule(rule, AllowWarnDeny::Warn)
                     .build(),
                 FxHashMap::default(),

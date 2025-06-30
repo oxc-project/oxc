@@ -1,5 +1,4 @@
 use std::{
-    cell::{Ref, RefCell},
     fmt::{self, Debug, Display},
     path::PathBuf,
 };
@@ -23,7 +22,6 @@ pub struct ConfigStoreBuilder {
     config: LintConfig,
     categories: OxlintCategories,
     overrides: OxlintOverrides,
-    cache: RulesCache,
 
     // Collect all `extends` file paths for the language server.
     // The server will tell the clients to watch for the extends files.
@@ -46,10 +44,9 @@ impl ConfigStoreBuilder {
         let rules = FxHashMap::default();
         let categories: OxlintCategories = OxlintCategories::default();
         let overrides = OxlintOverrides::default();
-        let cache = RulesCache::new(config.plugins);
         let extended_paths = Vec::new();
 
-        Self { rules, config, categories, overrides, cache, extended_paths }
+        Self { rules, config, categories, overrides, extended_paths }
     }
 
     /// Warn on all rules in all plugins and categories, including those in `nursery`.
@@ -60,10 +57,9 @@ impl ConfigStoreBuilder {
         let config = LintConfig { plugins: LintPlugins::all(), ..LintConfig::default() };
         let overrides = OxlintOverrides::default();
         let categories: OxlintCategories = OxlintCategories::default();
-        let cache = RulesCache::new(config.plugins);
         let rules = RULES.iter().map(|rule| (rule.clone(), AllowWarnDeny::Warn)).collect();
         let extended_paths = Vec::new();
-        Self { rules, config, categories, overrides, cache, extended_paths }
+        Self { rules, config, categories, overrides, extended_paths }
     }
 
     /// Create a [`ConfigStoreBuilder`] from a loaded or manually built [`Oxlintrc`].
@@ -154,25 +150,18 @@ impl ConfigStoreBuilder {
             globals: oxlintrc.globals,
             path: Some(oxlintrc.path),
         };
-        let cache = RulesCache::new(config.plugins);
 
-        let mut builder = Self {
-            rules,
-            config,
-            categories,
-            overrides: oxlintrc.overrides,
-            cache,
-            extended_paths,
-        };
+        let mut builder =
+            Self { rules, config, categories, overrides: oxlintrc.overrides, extended_paths };
 
         for filter in oxlintrc.categories.filters() {
             builder = builder.with_filter(&filter);
         }
 
         {
-            let all_rules = builder.cache.borrow();
+            let all_rules = builder.get_all_rules();
 
-            oxlintrc.rules.override_rules(&mut builder.rules, all_rules.as_slice());
+            oxlintrc.rules.override_rules(&mut builder.rules, &all_rules);
         }
 
         Ok(builder)
@@ -194,7 +183,6 @@ impl ConfigStoreBuilder {
     #[inline]
     pub fn with_plugins(mut self, plugins: LintPlugins) -> Self {
         self.config.plugins = plugins;
-        self.cache.set_plugins(plugins);
         self
     }
 
@@ -210,7 +198,6 @@ impl ConfigStoreBuilder {
     #[inline]
     pub fn and_plugins(mut self, plugins: LintPlugins, enabled: bool) -> Self {
         self.config.plugins.set(plugins, enabled);
-        self.cache.set_plugins(self.config.plugins);
         self
     }
 
@@ -272,11 +259,30 @@ impl ConfigStoreBuilder {
     /// Warn/Deny a let of rules based on some predicate. Rules already in `self.rules` get
     /// re-configured, while those that are not are added. Affects rules where `query` returns
     /// `true`.
+    fn get_all_rules(&self) -> Vec<RuleEnum> {
+        if self.config.plugins.is_all() {
+            RULES.clone()
+        } else {
+            let mut plugins = self.config.plugins;
+
+            // we need to include some jest rules when vitest is enabled, see [`VITEST_COMPATIBLE_JEST_RULES`]
+            if plugins.contains(LintPlugins::VITEST) {
+                plugins = plugins.union(LintPlugins::JEST);
+            }
+
+            RULES
+                .iter()
+                .filter(|rule| plugins.contains(LintPlugins::from(rule.plugin_name())))
+                .cloned()
+                .collect()
+        }
+    }
+
     fn upsert_where<F>(&mut self, severity: AllowWarnDeny, query: F)
     where
         F: Fn(&&RuleEnum) -> bool,
     {
-        let all_rules = self.cache.borrow();
+        let all_rules = self.get_all_rules();
         // NOTE: we may want to warn users if they're configuring a rule that does not exist.
         let rules_to_configure = all_rules.iter().filter(query);
         for rule in rules_to_configure {
@@ -295,15 +301,18 @@ impl ConfigStoreBuilder {
         // When a plugin gets disabled before build(), rules for that plugin aren't removed until
         // with_filters() gets called. If the user never calls it, those now-undesired rules need
         // to be taken out.
-        let plugins = self.plugins();
-        let mut rules = if self.cache.is_stale() {
-            self.rules
-                .into_iter()
-                .filter(|(r, _)| plugins.contains(r.plugin_name().into()))
-                .collect()
-        } else {
-            self.rules.into_iter().collect::<Vec<_>>()
-        };
+        let mut plugins = self.plugins();
+
+        // Apply the same Vitest->Jest logic as in get_all_rules()
+        if plugins.contains(LintPlugins::VITEST) {
+            plugins = plugins.union(LintPlugins::JEST);
+        }
+
+        let mut rules: Vec<_> = self
+            .rules
+            .into_iter()
+            .filter(|(r, _)| plugins.contains(r.plugin_name().into()))
+            .collect();
         rules.sort_unstable_by_key(|(r, _)| r.id());
         Config::new(rules, self.categories, self.config, self.overrides)
     }
@@ -410,94 +419,6 @@ impl Display for ConfigBuilderError {
 }
 
 impl std::error::Error for ConfigBuilderError {}
-
-struct RulesCache {
-    all_rules: RefCell<Option<Vec<RuleEnum>>>,
-    plugins: LintPlugins,
-    last_fresh_plugins: LintPlugins,
-}
-
-impl RulesCache {
-    #[inline]
-    #[must_use]
-    pub fn new(plugins: LintPlugins) -> Self {
-        Self { all_rules: RefCell::new(None), plugins, last_fresh_plugins: plugins }
-    }
-
-    pub fn set_plugins(&mut self, plugins: LintPlugins) {
-        if self.plugins == plugins {
-            return;
-        }
-        self.last_fresh_plugins = self.plugins;
-        self.plugins = plugins;
-        self.clear();
-    }
-
-    pub fn is_stale(&self) -> bool {
-        // NOTE: After all_rules cache has been initialized _at least once_ (e.g. its borrowed, or
-        // initialize() is called), all_rules will be some if and only if last_fresh_plugins ==
-        // plugins. Right before creation, (::new()) and before initialize() is called, these two
-        // fields will be equal _but all_rules will be none_. This is OK for this function, but is
-        // a possible future foot-gun. ConfigBuilder uses this to re-build its rules list in
-        // ::build(). If cache is created but never made stale (by changing plugins),
-        // ConfigBuilder's rule list won't need updating anyways, meaning its sound for this to
-        // return `false`.
-        self.last_fresh_plugins != self.plugins
-    }
-
-    #[must_use]
-    fn borrow(&self) -> Ref<'_, Vec<RuleEnum>> {
-        let cached = self.all_rules.borrow();
-        if cached.is_some() {
-            Ref::map(cached, |cached| cached.as_ref().unwrap())
-        } else {
-            drop(cached);
-            self.initialize();
-            Ref::map(self.all_rules.borrow(), |cached| cached.as_ref().unwrap())
-        }
-    }
-
-    /// # Panics
-    /// If the cache cell is currently borrowed.
-    fn clear(&self) {
-        *self.all_rules.borrow_mut() = None;
-    }
-
-    /// Forcefully initialize this cache with all rules in all plugins currently
-    /// enabled.
-    ///
-    /// This will clobber whatever value is currently stored. It should only be
-    /// called when the cache is not populated, either because it has not been
-    /// initialized yet or it was cleared with [`Self::clear`].
-    ///
-    /// # Panics
-    /// If the cache cell is currently borrowed.
-    fn initialize(&self) {
-        debug_assert!(
-            self.all_rules.borrow().is_none(),
-            "Cannot re-initialize a populated rules cache. It must be cleared first."
-        );
-
-        let all_rules: Vec<_> = if self.plugins.is_all() {
-            RULES.clone()
-        } else {
-            let mut plugins = self.plugins;
-
-            // we need to include some jest rules when vitest is enabled, see [`VITEST_COMPATIBLE_JEST_RULES`]
-            if plugins.contains(LintPlugins::VITEST) {
-                plugins = plugins.union(LintPlugins::JEST);
-            }
-
-            RULES
-                .iter()
-                .filter(|rule| plugins.contains(LintPlugins::from(rule.plugin_name())))
-                .cloned()
-                .collect()
-        };
-
-        *self.all_rules.borrow_mut() = Some(all_rules);
-    }
-}
 
 #[cfg(test)]
 mod test {
