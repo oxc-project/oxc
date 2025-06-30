@@ -5,6 +5,7 @@ use oxc_ast::{
     ast::{CallExpression, NewExpression},
 };
 use oxc_span::{GetSpan, Span};
+use oxc_syntax::comment_node;
 
 use crate::{
     formatter::comments::{is_alignable_comment, is_end_of_line_comment, is_own_line_comment},
@@ -249,6 +250,26 @@ impl<'a> Format<'a> for FormatTrailingComments<'a, '_> {
                         // Reached an own line comment, which means it is the leading comment for the next node.
                         break;
                     } else if is_end_of_line_comment(comment, source_text) {
+                        // Should be a leading comment of following node.
+                        if matches!(
+                            enclosing_node,
+                            SiblingNode::VariableDeclarator(_)
+                                | SiblingNode::AssignmentExpression(_)
+                                | SiblingNode::TSTypeAliasDeclaration(_)
+                        ) && (comment.is_block()
+                            || matches!(
+                                following_node,
+                                SiblingNode::ObjectExpression(_)
+                                    | SiblingNode::ArrayExpression(_)
+                                    | SiblingNode::TSTypeLiteral(_)
+                                    | SiblingNode::TemplateLiteral(_)
+                                    | SiblingNode::TaggedTemplateExpression(_)
+                            ))
+                        {
+                            return Ok(());
+                        }
+                        dbg!(preceding_node);
+                        dbg!(&comments[..=comment_index]);
                         return format_trailing_comments_impl(&comments[..=comment_index], f);
                     }
 
