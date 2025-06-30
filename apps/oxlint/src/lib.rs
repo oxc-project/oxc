@@ -36,7 +36,11 @@ pub fn lint() -> CliRunResult {
         Ok(cmd) => cmd,
         Err(e) => {
             e.print_message(100);
-            return CliRunResult::InvalidOptionConfig;
+            return if e.exit_code() == 0 {
+                CliRunResult::LintSucceeded
+            } else {
+                CliRunResult::InvalidOptionConfig
+            };
         }
     };
 
