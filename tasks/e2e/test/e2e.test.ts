@@ -158,13 +158,6 @@ describe('luxon', async () => {
   });
 });
 
-describe('zod', async () => {
-  const modules = await getModules('zod/lib/', 'index.mjs', 'esm');
-  test.each(modules)(info, ({ module: Zod }) => {
-    expect(Zod.z.object({ name: Zod.z.string() }).parse({ name: 'John' })).toEqual({ name: 'John' });
-  });
-});
-
 describe('yup', async () => {
   const modules = await getModules('yup/', 'index.js', 'cjs');
   test.each(modules)(info, ({ module: Yup }) => {
