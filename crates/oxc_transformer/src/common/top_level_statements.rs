@@ -15,10 +15,7 @@ use std::cell::RefCell;
 use oxc_ast::ast::*;
 use oxc_traverse::Traverse;
 
-use crate::{
-    context::{TransformCtx, TraverseCtx},
-    state::TransformState,
-};
+use crate::context::{TransformState, TraverseCtx};
 
 /// Transform that inserts any statements which have been requested insertion via `TopLevelStatementsStore`
 /// to top of the program.
@@ -27,11 +24,11 @@ use crate::{
 ///
 /// Must run after all other transforms.
 pub struct TopLevelStatements<'a, 'ctx> {
-    ctx: &'ctx TransformCtx<'a>,
+    ctx: &'ctx TransformState<'a>,
 }
 
 impl<'a, 'ctx> TopLevelStatements<'a, 'ctx> {
-    pub fn new(ctx: &'ctx TransformCtx<'a>) -> Self {
+    pub fn new(ctx: &'ctx TransformState<'a>) -> Self {
         Self { ctx }
     }
 }

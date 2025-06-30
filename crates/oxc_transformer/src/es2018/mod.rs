@@ -1,10 +1,7 @@
 use oxc_ast::ast::*;
 use oxc_traverse::Traverse;
 
-use crate::{
-    context::{TransformCtx, TraverseCtx},
-    state::TransformState,
-};
+use crate::context::{TransformState, TraverseCtx};
 
 mod async_generator_functions;
 mod object_rest_spread;
@@ -23,7 +20,7 @@ pub struct ES2018<'a, 'ctx> {
 }
 
 impl<'a, 'ctx> ES2018<'a, 'ctx> {
-    pub fn new(options: ES2018Options, ctx: &'ctx TransformCtx<'a>) -> Self {
+    pub fn new(options: ES2018Options, ctx: &'ctx TransformState<'a>) -> Self {
         Self {
             object_rest_spread: ObjectRestSpread::new(
                 options.object_rest_spread.unwrap_or_default(),

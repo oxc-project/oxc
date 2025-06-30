@@ -79,7 +79,7 @@ use oxc_semantic::{ReferenceFlags, SymbolFlags};
 use oxc_span::{Atom, SPAN, Span};
 use oxc_traverse::BoundIdentifier;
 
-use crate::context::{TransformCtx, TraverseCtx};
+use crate::context::{TransformState, TraverseCtx};
 
 /// Defines the mode for loading helper functions.
 #[derive(Default, Clone, Copy, Debug, Deserialize)]
@@ -230,7 +230,7 @@ impl HelperLoaderStore<'_> {
 }
 
 // Public methods implemented directly on `TransformCtx`, as they need access to `TransformCtx::module_imports`.
-impl<'a> TransformCtx<'a> {
+impl<'a> TransformState<'a> {
     /// Load and call a helper function and return a `CallExpression`.
     pub fn helper_call(
         &self,
@@ -283,7 +283,7 @@ impl<'a> HelperLoaderStore<'a> {
         &self,
         helper: Helper,
         source: Atom<'a>,
-        transform_ctx: &TransformCtx<'a>,
+        transform_ctx: &TransformState<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) -> Expression<'a> {
         let mut loaded_helpers = self.loaded_helpers.borrow_mut();
@@ -296,7 +296,7 @@ impl<'a> HelperLoaderStore<'a> {
     fn get_runtime_helper(
         helper: Helper,
         source: Atom<'a>,
-        transform_ctx: &TransformCtx<'a>,
+        transform_ctx: &TransformState<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) -> BoundIdentifier<'a> {
         let helper_name = helper.name();
