@@ -131,7 +131,8 @@ fn is_read(current_node_id: NodeId, nodes: &AstNodes) -> bool {
                 | AstKind::AssignmentTargetWithDefault(_)
                 | AstKind::AssignmentTarget(_)
                 | AstKind::ObjectAssignmentTarget(_)
-                | AstKind::ArrayAssignmentTarget(_),
+                | AstKind::ArrayAssignmentTarget(_)
+                | AstKind::AssignmentTargetRest(_),
             )
             | (AstKind::SimpleAssignmentTarget(_), AstKind::AssignmentExpression(_)) => {
                 return false;

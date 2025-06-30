@@ -1883,9 +1883,11 @@ pub mod walk_mut {
         visitor: &mut V,
         it: &mut AssignmentTargetRest<'a>,
     ) {
-        // No `AstType` for this type
+        let kind = AstType::AssignmentTargetRest;
+        visitor.enter_node(kind);
         visitor.visit_span(&mut it.span);
         visitor.visit_assignment_target(&mut it.target);
+        visitor.leave_node(kind);
     }
 
     #[inline]

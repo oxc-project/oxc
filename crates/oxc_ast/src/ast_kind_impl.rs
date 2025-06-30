@@ -414,6 +414,7 @@ impl AstKind<'_> {
             Self::JSDocNullableType(_) => "JSDocNullableType".into(),
             Self::JSDocNonNullableType(_) => "JSDocNonNullableType".into(),
             Self::JSDocUnknownType(_) => "JSDocUnknownType".into(),
+            Self::AssignmentTargetRest(_) => "AssignmentTargetRest".into(),
         }
     }
 }

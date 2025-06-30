@@ -1852,9 +1852,11 @@ pub mod walk {
         visitor: &mut V,
         it: &AssignmentTargetRest<'a>,
     ) {
-        // No `AstKind` for this type
+        let kind = AstKind::AssignmentTargetRest(visitor.alloc(it));
+        visitor.enter_node(kind);
         visitor.visit_span(&it.span);
         visitor.visit_assignment_target(&it.target);
+        visitor.leave_node(kind);
     }
 
     #[inline]

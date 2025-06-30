@@ -61,6 +61,7 @@ pub enum AstNodes<'a> {
     AssignmentTargetPattern(&'a AstNode<'a, AssignmentTargetPattern<'a>>),
     ArrayAssignmentTarget(&'a AstNode<'a, ArrayAssignmentTarget<'a>>),
     ObjectAssignmentTarget(&'a AstNode<'a, ObjectAssignmentTarget<'a>>),
+    AssignmentTargetRest(&'a AstNode<'a, AssignmentTargetRest<'a>>),
     AssignmentTargetWithDefault(&'a AstNode<'a, AssignmentTargetWithDefault<'a>>),
     SequenceExpression(&'a AstNode<'a, SequenceExpression<'a>>),
     Super(&'a AstNode<'a, Super>),
@@ -2349,6 +2350,7 @@ impl<'a> AstNodes<'a> {
             Self::AssignmentTargetPattern(n) => n.span(),
             Self::ArrayAssignmentTarget(n) => n.span(),
             Self::ObjectAssignmentTarget(n) => n.span(),
+            Self::AssignmentTargetRest(n) => n.span(),
             Self::AssignmentTargetWithDefault(n) => n.span(),
             Self::SequenceExpression(n) => n.span(),
             Self::Super(n) => n.span(),
@@ -2543,6 +2545,7 @@ impl<'a> AstNodes<'a> {
             Self::AssignmentTargetPattern(n) => n.parent,
             Self::ArrayAssignmentTarget(n) => n.parent,
             Self::ObjectAssignmentTarget(n) => n.parent,
+            Self::AssignmentTargetRest(n) => n.parent,
             Self::AssignmentTargetWithDefault(n) => n.parent,
             Self::SequenceExpression(n) => n.parent,
             Self::Super(n) => n.parent,
@@ -2737,6 +2740,7 @@ impl<'a> AstNodes<'a> {
             Self::AssignmentTargetPattern(n) => n.parent.as_sibling_node(),
             Self::ArrayAssignmentTarget(n) => SiblingNode::from(n.inner),
             Self::ObjectAssignmentTarget(n) => SiblingNode::from(n.inner),
+            Self::AssignmentTargetRest(n) => SiblingNode::from(n.inner),
             Self::AssignmentTargetWithDefault(n) => SiblingNode::from(n.inner),
             Self::SequenceExpression(n) => SiblingNode::from(n.inner),
             Self::Super(n) => SiblingNode::from(n.inner),
@@ -2931,6 +2935,7 @@ impl<'a> AstNodes<'a> {
             Self::AssignmentTargetPattern(_) => "AssignmentTargetPattern",
             Self::ArrayAssignmentTarget(_) => "ArrayAssignmentTarget",
             Self::ObjectAssignmentTarget(_) => "ObjectAssignmentTarget",
+            Self::AssignmentTargetRest(_) => "AssignmentTargetRest",
             Self::AssignmentTargetWithDefault(_) => "AssignmentTargetWithDefault",
             Self::SequenceExpression(_) => "SequenceExpression",
             Self::Super(_) => "Super",
@@ -4701,7 +4706,7 @@ impl<'a> AstNode<'a, AssignmentTargetRest<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.target,
             allocator: self.allocator,
-            parent: self.parent,
+            parent: self.allocator.alloc(AstNodes::AssignmentTargetRest(transmute_self(self))),
             following_node,
         })
     }
