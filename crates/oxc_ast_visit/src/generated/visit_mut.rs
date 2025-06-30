@@ -1940,12 +1940,14 @@ pub mod walk_mut {
         visitor: &mut V,
         it: &mut AssignmentTargetPropertyIdentifier<'a>,
     ) {
-        // No `AstType` for this type
+        let kind = AstType::AssignmentTargetPropertyIdentifier;
+        visitor.enter_node(kind);
         visitor.visit_span(&mut it.span);
         visitor.visit_identifier_reference(&mut it.binding);
         if let Some(init) = &mut it.init {
             visitor.visit_expression(init);
         }
+        visitor.leave_node(kind);
     }
 
     #[inline]
@@ -1953,10 +1955,12 @@ pub mod walk_mut {
         visitor: &mut V,
         it: &mut AssignmentTargetPropertyProperty<'a>,
     ) {
-        // No `AstType` for this type
+        let kind = AstType::AssignmentTargetPropertyProperty;
+        visitor.enter_node(kind);
         visitor.visit_span(&mut it.span);
         visitor.visit_property_key(&mut it.name);
         visitor.visit_assignment_target_maybe_default(&mut it.binding);
+        visitor.leave_node(kind);
     }
 
     #[inline]

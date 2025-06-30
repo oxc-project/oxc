@@ -1909,12 +1909,14 @@ pub mod walk {
         visitor: &mut V,
         it: &AssignmentTargetPropertyIdentifier<'a>,
     ) {
-        // No `AstKind` for this type
+        let kind = AstKind::AssignmentTargetPropertyIdentifier(visitor.alloc(it));
+        visitor.enter_node(kind);
         visitor.visit_span(&it.span);
         visitor.visit_identifier_reference(&it.binding);
         if let Some(init) = &it.init {
             visitor.visit_expression(init);
         }
+        visitor.leave_node(kind);
     }
 
     #[inline]
@@ -1922,10 +1924,12 @@ pub mod walk {
         visitor: &mut V,
         it: &AssignmentTargetPropertyProperty<'a>,
     ) {
-        // No `AstKind` for this type
+        let kind = AstKind::AssignmentTargetPropertyProperty(visitor.alloc(it));
+        visitor.enter_node(kind);
         visitor.visit_span(&it.span);
         visitor.visit_property_key(&it.name);
         visitor.visit_assignment_target_maybe_default(&it.binding);
+        visitor.leave_node(kind);
     }
 
     #[inline]

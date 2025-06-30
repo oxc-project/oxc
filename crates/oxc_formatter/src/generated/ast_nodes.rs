@@ -63,6 +63,8 @@ pub enum AstNodes<'a> {
     ObjectAssignmentTarget(&'a AstNode<'a, ObjectAssignmentTarget<'a>>),
     AssignmentTargetRest(&'a AstNode<'a, AssignmentTargetRest<'a>>),
     AssignmentTargetWithDefault(&'a AstNode<'a, AssignmentTargetWithDefault<'a>>),
+    AssignmentTargetPropertyIdentifier(&'a AstNode<'a, AssignmentTargetPropertyIdentifier<'a>>),
+    AssignmentTargetPropertyProperty(&'a AstNode<'a, AssignmentTargetPropertyProperty<'a>>),
     SequenceExpression(&'a AstNode<'a, SequenceExpression<'a>>),
     Super(&'a AstNode<'a, Super>),
     AwaitExpression(&'a AstNode<'a, AwaitExpression<'a>>),
@@ -2352,6 +2354,8 @@ impl<'a> AstNodes<'a> {
             Self::ObjectAssignmentTarget(n) => n.span(),
             Self::AssignmentTargetRest(n) => n.span(),
             Self::AssignmentTargetWithDefault(n) => n.span(),
+            Self::AssignmentTargetPropertyIdentifier(n) => n.span(),
+            Self::AssignmentTargetPropertyProperty(n) => n.span(),
             Self::SequenceExpression(n) => n.span(),
             Self::Super(n) => n.span(),
             Self::AwaitExpression(n) => n.span(),
@@ -2547,6 +2551,8 @@ impl<'a> AstNodes<'a> {
             Self::ObjectAssignmentTarget(n) => n.parent,
             Self::AssignmentTargetRest(n) => n.parent,
             Self::AssignmentTargetWithDefault(n) => n.parent,
+            Self::AssignmentTargetPropertyIdentifier(n) => n.parent,
+            Self::AssignmentTargetPropertyProperty(n) => n.parent,
             Self::SequenceExpression(n) => n.parent,
             Self::Super(n) => n.parent,
             Self::AwaitExpression(n) => n.parent,
@@ -2742,6 +2748,8 @@ impl<'a> AstNodes<'a> {
             Self::ObjectAssignmentTarget(n) => SiblingNode::from(n.inner),
             Self::AssignmentTargetRest(n) => SiblingNode::from(n.inner),
             Self::AssignmentTargetWithDefault(n) => SiblingNode::from(n.inner),
+            Self::AssignmentTargetPropertyIdentifier(n) => SiblingNode::from(n.inner),
+            Self::AssignmentTargetPropertyProperty(n) => SiblingNode::from(n.inner),
             Self::SequenceExpression(n) => SiblingNode::from(n.inner),
             Self::Super(n) => SiblingNode::from(n.inner),
             Self::AwaitExpression(n) => SiblingNode::from(n.inner),
@@ -2937,6 +2945,8 @@ impl<'a> AstNodes<'a> {
             Self::ObjectAssignmentTarget(_) => "ObjectAssignmentTarget",
             Self::AssignmentTargetRest(_) => "AssignmentTargetRest",
             Self::AssignmentTargetWithDefault(_) => "AssignmentTargetWithDefault",
+            Self::AssignmentTargetPropertyIdentifier(_) => "AssignmentTargetPropertyIdentifier",
+            Self::AssignmentTargetPropertyProperty(_) => "AssignmentTargetPropertyProperty",
             Self::SequenceExpression(_) => "SequenceExpression",
             Self::Super(_) => "Super",
             Self::AwaitExpression(_) => "AwaitExpression",
@@ -4784,14 +4794,20 @@ impl<'a> AstNode<'a, AssignmentTargetProperty<'a>> {
         let parent = self.parent;
         let node = match self.inner {
             AssignmentTargetProperty::AssignmentTargetPropertyIdentifier(s) => {
-                panic!(
-                    "No kind for current enum variant yet, please see `tasks/ast_tools/src/generators/ast_kind.rs`"
-                )
+                AstNodes::AssignmentTargetPropertyIdentifier(self.allocator.alloc(AstNode {
+                    inner: s.as_ref(),
+                    parent,
+                    allocator: self.allocator,
+                    following_node: self.following_node,
+                }))
             }
             AssignmentTargetProperty::AssignmentTargetPropertyProperty(s) => {
-                panic!(
-                    "No kind for current enum variant yet, please see `tasks/ast_tools/src/generators/ast_kind.rs`"
-                )
+                AstNodes::AssignmentTargetPropertyProperty(self.allocator.alloc(AstNode {
+                    inner: s.as_ref(),
+                    parent,
+                    allocator: self.allocator,
+                    following_node: self.following_node,
+                }))
             }
         };
         self.allocator.alloc(node)
@@ -4818,7 +4834,9 @@ impl<'a> AstNode<'a, AssignmentTargetPropertyIdentifier<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.binding,
             allocator: self.allocator,
-            parent: self.parent,
+            parent: self
+                .allocator
+                .alloc(AstNodes::AssignmentTargetPropertyIdentifier(transmute_self(self))),
             following_node,
         })
     }
@@ -4827,11 +4845,15 @@ impl<'a> AstNode<'a, AssignmentTargetPropertyIdentifier<'a>> {
     pub fn init(&self) -> Option<&AstNode<'a, Expression<'a>>> {
         let following_node = self.following_node;
         self.allocator
-            .alloc(self.inner.init.as_ref().map(|inner| AstNode {
-                inner,
-                allocator: self.allocator,
-                parent: self.parent,
-                following_node,
+            .alloc(self.inner.init.as_ref().map(|inner| {
+                AstNode {
+                    inner,
+                    allocator: self.allocator,
+                    parent: self
+                        .allocator
+                        .alloc(AstNodes::AssignmentTargetPropertyIdentifier(transmute_self(self))),
+                    following_node,
+                }
             }))
             .as_ref()
     }
@@ -4849,7 +4871,9 @@ impl<'a> AstNode<'a, AssignmentTargetPropertyProperty<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.name,
             allocator: self.allocator,
-            parent: self.parent,
+            parent: self
+                .allocator
+                .alloc(AstNodes::AssignmentTargetPropertyProperty(transmute_self(self))),
             following_node,
         })
     }
@@ -4860,7 +4884,9 @@ impl<'a> AstNode<'a, AssignmentTargetPropertyProperty<'a>> {
         self.allocator.alloc(AstNode {
             inner: &self.inner.binding,
             allocator: self.allocator,
-            parent: self.parent,
+            parent: self
+                .allocator
+                .alloc(AstNodes::AssignmentTargetPropertyProperty(transmute_self(self))),
             following_node,
         })
     }

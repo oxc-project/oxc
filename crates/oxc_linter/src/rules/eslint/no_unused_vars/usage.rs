@@ -249,6 +249,8 @@ impl<'a> Symbol<'_, 'a> {
             match parent {
                 AstKind::IdentifierReference(_)
                 | AstKind::SimpleAssignmentTarget(_)
+                | AstKind::AssignmentTargetPropertyIdentifier(_)
+                | AstKind::AssignmentTargetPropertyProperty(_)
                 | AstKind::AssignmentTarget(_) => {}
                 AstKind::AssignmentExpression(assignment) => {
                     return options.is_ignored_assignment_target(self, &assignment.left);

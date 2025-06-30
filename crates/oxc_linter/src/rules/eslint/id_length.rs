@@ -328,7 +328,8 @@ impl IdLength {
                             return;
                         }
                     }
-                    AstKind::ObjectAssignmentTarget(_) => {
+                    AstKind::ObjectAssignmentTarget(_)
+                    | AstKind::AssignmentTargetPropertyProperty(_) => {
                         return;
                     }
                     _ => {}

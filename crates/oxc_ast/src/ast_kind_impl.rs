@@ -415,6 +415,10 @@ impl AstKind<'_> {
             Self::JSDocNonNullableType(_) => "JSDocNonNullableType".into(),
             Self::JSDocUnknownType(_) => "JSDocUnknownType".into(),
             Self::AssignmentTargetRest(_) => "AssignmentTargetRest".into(),
+            Self::AssignmentTargetPropertyIdentifier(_) => {
+                "AssignmentTargetPropertyIdentifier".into()
+            }
+            Self::AssignmentTargetPropertyProperty(_) => "AssignmentTargetPropertyProperty".into(),
         }
     }
 }

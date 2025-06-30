@@ -1830,12 +1830,14 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         &mut self,
         it: &AssignmentTargetPropertyIdentifier<'a>,
     ) {
-        // NOTE: AstKind doesn't exists!
+        let kind = AstKind::AssignmentTargetPropertyIdentifier(self.alloc(it));
+        self.enter_node(kind);
         self.current_reference_flags = ReferenceFlags::Write;
         self.visit_identifier_reference(&it.binding);
         if let Some(init) = &it.init {
             self.visit_expression(init);
         }
+        self.leave_node(kind);
     }
 
     fn visit_export_default_declaration_kind(&mut self, it: &ExportDefaultDeclarationKind<'a>) {
