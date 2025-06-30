@@ -5,7 +5,7 @@ use oxc_diagnostics::{
     Error,
     reporter::{DiagnosticReporter, DiagnosticResult},
 };
-use oxc_linter::{RuleCategory, rules::RULES};
+use oxc_linter::{Config, RuleCategory, rules::RULES};
 
 use miette::JSONReportHandler;
 
@@ -17,7 +17,7 @@ pub struct JsonOutputFormatter {
 }
 
 impl InternalFormatter for JsonOutputFormatter {
-    fn all_rules(&self) -> Option<String> {
+    fn all_rules(&self, _config: Option<&Config>) -> Option<String> {
         #[derive(Debug, serde::Serialize)]
         struct RuleInfoJson<'a> {
             scope: &'a str,
