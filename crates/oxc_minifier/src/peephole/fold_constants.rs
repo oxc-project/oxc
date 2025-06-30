@@ -5,6 +5,7 @@ use oxc_ecmascript::{
     constant_evaluation::{ConstantEvaluation, ConstantValue, DetermineValueType, ValueType},
     side_effects::MayHaveSideEffects,
 };
+use oxc_semantic::Reference;
 use oxc_span::GetSpan;
 use oxc_syntax::operator::{BinaryOperator, LogicalOperator};
 use oxc_traverse::Ancestor;
@@ -48,12 +49,14 @@ impl<'a> PeepholeOptimizations {
 
         // Save `const value = false` into constant values.
         if let Ancestor::VariableDeclaratorInit(decl) = ctx.parent() {
-            // TODO: Check for no write references.
-            if decl.kind().is_const() {
-                if let BindingPatternKind::BindingIdentifier(ident) = &decl.id().kind {
+            if let BindingPatternKind::BindingIdentifier(ident) = &decl.id().kind {
+                let symbol_id = ident.symbol_id();
+                // Using symbol flag because previous step changed `const` to `let`.
+                if ctx.scoping().symbol_flags(symbol_id).is_const_variable()
+                    || ctx.scoping().get_resolved_references(symbol_id).all(Reference::is_read)
+                {
                     // TODO: refactor all the above code to return value instead of expression, to avoid calling `evaluate_value` again.
                     if let Some(value) = expr.evaluate_value(ctx) {
-                        let symbol_id = ident.symbol_id();
                         ctx.state.constant_values.insert(symbol_id, value);
                     }
                 }
