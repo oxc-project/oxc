@@ -38,13 +38,15 @@ enum FileExtensionConfig {
     Always,
     #[default]
     Never,
+    IgnorePackages,
 }
 
 impl FileExtensionConfig {
     pub fn from(s: &str) -> FileExtensionConfig {
         match s {
-            "always" | "ignorePackages" => FileExtensionConfig::Always,
+            "always" => FileExtensionConfig::Always,
             "never" => FileExtensionConfig::Never,
+            "ignorePackages" => FileExtensionConfig::IgnorePackages,
             _ => FileExtensionConfig::default(),
         }
     }
@@ -70,13 +72,7 @@ impl ExtensionsConfig {
             "ts" => matches!(self.ts, FileExtensionConfig::Always),
             "tsx" => matches!(self.tsx, FileExtensionConfig::Always),
             "json" => matches!(self.json, FileExtensionConfig::Always),
-            _ => {
-                self.js != FileExtensionConfig::Always
-                    && self.jsx != FileExtensionConfig::Always
-                    && self.ts != FileExtensionConfig::Always
-                    && self.tsx != FileExtensionConfig::Always
-                    && self.json != FileExtensionConfig::Always
-            }
+            _ => false,
         }
     }
 
@@ -154,10 +150,8 @@ declare_oxc_lint!(
 
 impl Rule for Extensions {
     fn from_configuration(value: serde_json::Value) -> Self {
-        if let Some(always_or_never) =
-            value.get(0).and_then(Value::as_str).map(FileExtensionConfig::from)
-        {
-            let default = always_or_never;
+        if let Some(first_arg) = value.get(0).and_then(Value::as_str) {
+            let default = FileExtensionConfig::from(first_arg);
 
             if let Some(val) = value.get(1) {
                 let root = val.get("pattern").unwrap_or(val);
@@ -288,14 +282,25 @@ impl Extensions {
 
         if let Some(file_extension) = file_extension {
             let ext_str = file_extension.as_str();
-            if config.is_never(ext_str) || !config.is_always(ext_str) {
+            let should_flag = match require_extension {
+                Some(FileExtensionConfig::Always) => {
+                    config.is_never(ext_str) || !config.is_always(ext_str)
+                }
+                Some(FileExtensionConfig::Never) => !config.is_always(ext_str),
+                _ => config.is_never(ext_str),
+            };
+
+            if should_flag {
                 ctx.diagnostic(extension_should_not_be_included_in_diagnostic(
                     span,
                     &file_extension,
                     is_import,
                 ));
             }
-        } else if require_extension == Some(&FileExtensionConfig::Always) {
+        } else if matches!(
+            require_extension,
+            Some(FileExtensionConfig::Always | FileExtensionConfig::IgnorePackages)
+        ) {
             ctx.diagnostic(extension_missing_diagnostic(span, is_import));
         }
     }
@@ -314,14 +319,25 @@ impl Extensions {
 
                 if let Some(file_extension) = file_extension {
                     let ext_str = file_extension.as_str();
-                    if config.is_never(ext_str) || !config.is_always(&file_extension) {
+                    let should_flag = match require_extension {
+                        Some(FileExtensionConfig::Always) => {
+                            config.is_never(ext_str) || !config.is_always(ext_str)
+                        }
+                        Some(FileExtensionConfig::Never) => !config.is_always(ext_str),
+                        _ => config.is_never(ext_str),
+                    };
+
+                    if should_flag {
                         ctx.diagnostic(extension_should_not_be_included_in_diagnostic(
                             span,
                             &file_extension,
                             true,
                         ));
                     }
-                } else if require_extension == Some(&FileExtensionConfig::Always) {
+                } else if matches!(
+                    require_extension,
+                    Some(FileExtensionConfig::Always | FileExtensionConfig::IgnorePackages)
+                ) {
                     ctx.diagnostic(extension_missing_diagnostic(span, true));
                 }
             }
@@ -329,9 +345,11 @@ impl Extensions {
     }
 }
 fn get_file_extension_from_module_name(module_name: &CompactStr) -> Option<CompactStr> {
-    if let Some((_, extension)) = module_name.rsplit_once('.') {
+    if let Some((_, extension)) =
+        module_name.split('?').next().unwrap_or(module_name).rsplit_once('.')
+    {
         if !extension.is_empty() && !extension.starts_with('/') {
-            return extension.split('?').map(CompactStr::from).next();
+            return Some(CompactStr::from(extension));
         }
     }
 
@@ -489,6 +507,10 @@ fn test() {
         ),
         (r"import''", None),
         (r"export *from 'íìc'", None),
+        (
+            r"import { Something } from './something.hooks'; import SomeComponent from './SomeComponent.vue';",
+            Some(json!(["ignorePackages", { "js": "never", "ts": "never" }])),
+        ),
     ];
 
     let fail = vec![
