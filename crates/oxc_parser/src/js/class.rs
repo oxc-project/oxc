@@ -222,7 +222,7 @@ impl<'a> ParserImpl<'a> {
         );
 
         // static { block }
-        if self.at(Kind::Static) && self.lookahead(Self::next_token_is_open_brace) {
+        if self.at(Kind::Static) && self.lexer.peek_token().kind() == Kind::LCurly {
             for decorator in decorators {
                 self.error(diagnostics::decorators_are_not_valid_here(decorator.span));
             }
@@ -439,12 +439,7 @@ impl<'a> ParserImpl<'a> {
             let ident = self.parse_identifier_name();
             return Some(PropertyKey::StaticIdentifier(self.alloc(ident)));
         }
-        if self.at(Kind::Str)
-            && self.lookahead(|p| {
-                p.bump_any();
-                p.at(Kind::LParen)
-            })
-        {
+        if self.at(Kind::Str) && self.lexer.peek_token().kind() == Kind::LParen {
             return self.try_parse(|p| {
                 let string_literal = p.parse_literal_string();
                 if string_literal.value != "constructor" {
