@@ -8,6 +8,7 @@ use crate::{
     },
     generated::ast_nodes::{AstNode, AstNodes},
     options::FormatTrailingCommas,
+    utils::assignment_like::AssignmentLikeLayout,
     write,
 };
 
@@ -22,119 +23,6 @@ pub struct FormatJsArrowFunctionExpressionOptions {
     pub assignment_layout: Option<AssignmentLikeLayout>,
     pub call_arg_layout: Option<GroupedCallArgumentLayout>,
     pub body_cache_mode: FunctionBodyCacheMode,
-}
-
-/// Determines how a assignment like be formatted
-///
-/// Assignment like are:
-/// - Assignment
-/// - Object property member
-/// - Variable declaration
-#[derive(Clone, Copy, PartialEq, Eq)]
-pub enum AssignmentLikeLayout {
-    /// This is a special layout usually used for variable declarations.
-    /// This layout is hit, usually, when a variable declarator doesn't have initializer:
-    /// ```js
-    ///     let variable;
-    /// ```
-    /// ```ts
-    ///     let variable: Map<string, number>;
-    /// ```
-    OnlyLeft,
-
-    /// First break right-hand side, then after operator.
-    /// ```js
-    /// {
-    ///   "array-key": [
-    ///     {
-    ///       "nested-key-1": 1,
-    ///       "nested-key-2": 2,
-    ///     },
-    ///   ]
-    /// }
-    /// ```
-    Fluid,
-
-    /// First break after operator, then the sides are broken independently on their own lines.
-    /// There is a soft line break after operator token.
-    /// ```js
-    /// {
-    ///     "enough-long-key-to-break-line":
-    ///         1 + 2,
-    ///     "not-long-enough-key":
-    ///         "but long enough string to break line",
-    /// }
-    /// ```
-    BreakAfterOperator,
-
-    /// First break right-hand side, then left-hand side. There are not any soft line breaks
-    /// between left and right parts
-    /// ```js
-    /// {
-    ///     key1: "123",
-    ///     key2: 123,
-    ///     key3: class MyClass {
-    ///        constructor() {},
-    ///     },
-    /// }
-    /// ```
-    NeverBreakAfterOperator,
-
-    /// This is a special layout usually used for long variable declarations or assignment expressions
-    /// This layout is hit, usually, when we are in the "middle" of the chain:
-    ///
-    /// ```js
-    /// var a =
-    ///     loreum =
-    ///     ipsum =
-    ///         "foo";
-    /// ```
-    ///
-    /// Given the previous snippet, then `loreum` and `ipsum` will be formatted using the `Chain` layout.
-    Chain,
-
-    /// This is a special layout usually used for long variable declarations or assignment expressions
-    /// This layout is hit, usually, when we are in the end of a chain:
-    /// ```js
-    /// var a = loreum = ipsum = "foo";
-    /// ```
-    ///
-    /// Given the previous snippet, then `"foo"` formatted  using the `ChainTail` layout.
-    ChainTail,
-
-    /// This layout is used in cases where we want to "break" the left hand side
-    /// of assignment like expression, but only when the group decides to do it.
-    ///
-    /// ```js
-    /// const a {
-    ///     loreum: { ipsum },
-    ///     something_else,
-    ///     happy_days: { fonzy }
-    /// } = obj;
-    /// ```
-    ///
-    /// The snippet triggers the layout because the left hand side contains a "complex destructuring"
-    /// which requires having the properties broke on different lines.
-    BreakLeftHandSide,
-
-    /// This is a special case of the "chain" layout collection. This is triggered when there's
-    /// a series of simple assignments (at least three) and in the middle we have an arrow function
-    /// and this function followed by two more arrow functions.
-    ///
-    /// This layout will break the right hand side of the tail on a new line and add a new level
-    /// of indentation
-    ///
-    /// ```js
-    /// lorem =
-    ///     fff =
-    ///     ee =
-    ///         () => (fff) => () => (fefef) => () => fff;
-    /// ```
-    ChainTailArrowFunction,
-
-    /// Layout used when the operator and right hand side are part of a `JsInitializerClause<
-    /// that has a suppression comment.
-    SuppressedInitializer,
 }
 
 #[derive(Debug, Clone, Copy)]

@@ -2,7 +2,7 @@ use oxc_allocator::{Address, Vec};
 use oxc_ast::{AstKind, ast::*};
 use oxc_span::GetSpan;
 
-use crate::write::assignment_like::AssignmentLike;
+use crate::utils::assignment_like::AssignmentLike;
 use crate::write::semicolon::MaybeOptionalSemicolon;
 use crate::write::{OptionalSemicolon, semicolon};
 use crate::{
