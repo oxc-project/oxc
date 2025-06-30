@@ -29,8 +29,8 @@ use oxc_semantic::{AstNode, Semantic};
 
 pub use crate::{
     config::{
-        Config, ConfigBuilderError, ConfigStore, ConfigStoreBuilder, ESLintRule, LintPlugins,
-        Oxlintrc,
+        BuiltinLintPlugins, Config, ConfigBuilderError, ConfigStore, ConfigStoreBuilder,
+        ESLintRule, LintPlugins, Oxlintrc,
     },
     context::LintContext,
     external_linter::{
@@ -70,7 +70,6 @@ fn size_asserts() {
 #[derive(Debug, Clone)]
 pub struct Linter {
     options: LintOptions,
-    // config: Arc<LintConfig>,
     config: ConfigStore,
 }
 
@@ -188,6 +187,8 @@ impl Linter {
                 }
             }
         }
+
+        // TODO(camc314): call into external linter (JS side) and run the JS rules.
 
         if let Some(severity) = self.options.report_unused_directive {
             if severity.is_warn_deny() {

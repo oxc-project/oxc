@@ -17,7 +17,7 @@ pub use env::OxlintEnv;
 pub use globals::{GlobalValue, OxlintGlobals};
 pub use overrides::OxlintOverrides;
 pub use oxlintrc::Oxlintrc;
-pub use plugins::LintPlugins;
+pub use plugins::{BuiltinLintPlugins, LintPlugins};
 pub use rules::{ESLintRule, OxlintRules};
 pub use settings::{OxlintSettings, jsdoc::JSDocPluginSettings};
 

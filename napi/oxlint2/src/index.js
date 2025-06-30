@@ -1,12 +1,28 @@
 import { lint } from './bindings.js';
 
 class Linter {
+  pluginRegistry = new Map();
+
   run() {
     return lint(this.loadPlugin.bind(this), this.lint.bind(this));
   }
 
-  loadPlugin = async (_pluginName) => {
-    throw new Error('unimplemented');
+  loadPlugin = async (pluginName) => {
+    console.log('load plugin');
+    if (this.pluginRegistry.has(pluginName)) {
+      return { type: 'Success' };
+    }
+
+    try {
+      const plugin = await import(pluginName);
+      this.pluginRegistry.set(pluginName, plugin);
+      return { type: 'Success' };
+    } catch (error) {
+      const errorMessage = 'message' in error && typeof error.message === 'string'
+        ? error.message
+        : 'An unknown error occurred';
+      return { type: 'Failure', field0: errorMessage };
+    }
   };
 
   lint = async () => {
