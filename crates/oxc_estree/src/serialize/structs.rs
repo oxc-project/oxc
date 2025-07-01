@@ -150,6 +150,7 @@ impl<C: Config, F: Formatter> StructSerializer for ESTreeStructSerializer<'_, C,
         buffer.print_ascii_byte(b'}');
     }
 
+    #[inline(always)]
     fn ranges(&self) -> bool {
         self.serializer.ranges()
     }
@@ -223,6 +224,7 @@ impl<'p, P: StructSerializer> Serializer for FlatStructSerializer<'p, P> {
         }
     }
 
+    #[inline(always)]
     fn ranges(&self) -> bool {
         self.0.ranges()
     }
@@ -292,6 +294,7 @@ impl<P: StructSerializer> StructSerializer for FlatStructSerializer<'_, P> {
         // No-op - there may be more fields to be added to the struct in the parent
     }
 
+    #[inline(always)]
     fn ranges(&self) -> bool {
         self.0.ranges()
     }

@@ -180,6 +180,7 @@ impl<'s, C: Config, F: Formatter> Serializer for &'s mut ESTreeSerializer<C, F> 
     type StructSerializer = ESTreeStructSerializer<'s, C, F>;
     type SequenceSerializer = ESTreeSequenceSerializer<'s, C, F>;
 
+    #[inline(always)]
     fn ranges(&self) -> bool {
         self.config.ranges()
     }
