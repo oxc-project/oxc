@@ -25,6 +25,8 @@ use oxc_syntax::{
 
 use super::{macros::inherit_variants, *};
 
+// Dummy comment to run CI
+
 /// Represents the root of a JavaScript abstract syntax tree (AST), containing metadata about the source,
 /// directives, top-level statements, and scope information.
 #[ast(visit)]

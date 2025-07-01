@@ -112,3 +112,14 @@ console.log(result.program, result.comments);
 // ESM information - imports, exports, `import.meta`s.
 console.log(result.module);
 ```
+
+### Options
+
+All options are optional.
+
+- `lang`: `'js'` | `'jsx'` | `'ts'` | `'tsx'`. Set language of source. If omitted, language is deduced from file extension.
+- `sourceType`: `'script'` | `'module'` | `'unambiguous'`. Set source type. Defaults to `'module'`.
+- `astType`: `'js'` | `'ts'`. Set to `'ts'` if you want ASTs of plain JS/JSX files to contain TypeScript-specific properties.
+- `range`: `true` | `false`. If `true`, AST nodes contain a `range` field. Defaults to `false`.
+- `preserveParens`: `true` | `false`. If `true`, parenthesized expressions are represented by (non-standard) `ParenthesizedExpression` and `TSParenthesizedType` AST nodes. Defaults to `true`.
+- `showSemanticErrors`: `true` | `false`. If `true`, check file for semantic errors which parser does not otherwise emit e.g. `let x; let x;`. Has a small performance cost. Defaults to `false`.
