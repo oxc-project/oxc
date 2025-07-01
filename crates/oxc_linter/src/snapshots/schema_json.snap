@@ -81,6 +81,12 @@ expression: json
     },
     "settings": {
       "default": {
+        "import": {
+          "external-module-folders": [
+            "node_modules"
+          ],
+          "internal-regex": ""
+        },
         "jsx-a11y": {
           "polymorphicPropName": null,
           "components": {}
@@ -204,6 +210,27 @@ expression: json
         "writeable",
         "off"
       ]
+    },
+    "ImportPluginSettings": {
+      "description": "See: [settings](https://github.com/import-js/eslint-plugin-import/blob/main/README.md#settings)",
+      "type": "object",
+      "properties": {
+        "external-module-folders": {
+          "description": "An array of folders. Resolved modules only from those folders will be considered as \"external\".\n\nSee: [import/external-module-folders](https://github.com/import-js/eslint-plugin-import/blob/main/README.md#importexternal-module-folders)",
+          "default": [
+            "node_modules"
+          ],
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "internal-regex": {
+          "description": "A regex for packages should be treated as internal.\nUseful when you are utilizing a monorepo setup or developing a set of packages that depend on each other.\n\nSee: [import/internal-regex](https://github.com/import-js/eslint-plugin-import/blob/main/README.md#importinternal-regex)\n\nExample:\n\n```json\n{\n\"settings\": {\n\"import\": {\n\"internal-regex\": \"^@scope/\"\n}\n}\n}\n```",
+          "default": "",
+          "type": "string"
+        }
+      }
     },
     "JSDocPluginSettings": {
       "type": "object",
@@ -445,6 +472,19 @@ expression: json
       "description": "Configure the behavior of linter plugins.\n\nHere's an example if you're using Next.js in a monorepo:\n\n```json\n{\n\"settings\": {\n\"next\": {\n\"rootDir\": \"apps/dashboard/\"\n},\n\"react\": {\n\"linkComponents\": [\n{ \"name\": \"Link\", \"linkAttribute\": \"to\" }\n]\n},\n\"jsx-a11y\": {\n\"components\": {\n\"Link\": \"a\",\n\"Button\": \"button\"\n}\n}\n}\n}\n```",
       "type": "object",
       "properties": {
+        "import": {
+          "default": {
+            "external-module-folders": [
+              "node_modules"
+            ],
+            "internal-regex": ""
+          },
+          "allOf": [
+            {
+              "$ref": "#/definitions/ImportPluginSettings"
+            }
+          ]
+        },
         "jsdoc": {
           "default": {
             "ignorePrivate": false,

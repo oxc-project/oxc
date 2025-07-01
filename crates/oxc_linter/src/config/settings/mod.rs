@@ -1,3 +1,4 @@
+mod import;
 pub mod jsdoc;
 mod jsx_a11y;
 mod next;
@@ -7,8 +8,8 @@ use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
 use self::{
-    jsdoc::JSDocPluginSettings, jsx_a11y::JSXA11yPluginSettings, next::NextPluginSettings,
-    react::ReactPluginSettings,
+    import::ImportPluginSettings, jsdoc::JSDocPluginSettings, jsx_a11y::JSXA11yPluginSettings,
+    next::NextPluginSettings, react::ReactPluginSettings,
 };
 
 /// # Oxlint Plugin Settings
@@ -40,6 +41,9 @@ use self::{
 #[derive(Debug, Clone, Deserialize, Serialize, Default, JsonSchema)]
 #[cfg_attr(test, derive(PartialEq))]
 pub struct OxlintSettings {
+    #[serde(default)]
+    pub import: ImportPluginSettings,
+
     #[serde(default)]
     #[serde(rename = "jsx-a11y")]
     pub jsx_a11y: JSXA11yPluginSettings,
