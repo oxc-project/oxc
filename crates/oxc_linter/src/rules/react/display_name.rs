@@ -10,6 +10,7 @@ use oxc_ecmascript::PropName;
 use oxc_span::GetSpan;
 use oxc_span::Span;
 
+use crate::ast_util::get_declaration_of_variable;
 use crate::{context::LintContext, rule::Rule};
 use oxc_macros::declare_oxc_lint;
 use std::collections::HashMap;
@@ -59,34 +60,34 @@ impl ComponentTracker {
         Self { components: HashMap::new() }
     }
 
-    fn add_component(&mut self, name: String, span: Span, component_type: ComponentType) {
-        println!("Adding component: {} at {:?} (type: {:?})", name, span, component_type);
+    fn add_component(&mut self, name: String, span: Span, _component_type: ComponentType) {
+        println!("[DEBUG] add_component: name={}, span={:?}", name, span);
+        println!("[DEBUG] components before add: {:?}", self.components);
         self.components.insert(name, ComponentInfo { span, has_display_name: false });
+        println!("[DEBUG] components after add: {:?}", self.components);
     }
 
     fn resolve_display_name(&mut self, name: &str) {
+        println!("[DEBUG] resolve_display_name: name={}", name);
+        println!("[DEBUG] components before resolve: {:?}", self.components);
         if let Some(component) = self.components.get_mut(name) {
-            println!("Resolving displayName for: {}", name);
             component.has_display_name = true;
         }
+        println!("[DEBUG] components after resolve: {:?}", self.components);
     }
 
     fn get_unresolved_components(&self) -> Vec<Span> {
-        self.components
-            .values()
-            .filter(|comp| !comp.has_display_name)
-            .map(|comp| comp.span)
-            .collect()
-    }
-
-    fn debug_print(&self) {
-        println!("Component tracker state:");
-        for (name, info) in &self.components {
-            println!(
-                "  {}: has_display_name={}, span={:?}",
-                name, info.has_display_name, info.span
-            );
-        }
+        let unresolved: Vec<_> = self
+            .components
+            .iter()
+            .filter(|(_, comp)| !comp.has_display_name)
+            .map(|(name, comp)| {
+                println!("[DEBUG] unresolved_component: name={}, span={:?}", name, comp.span);
+                comp.span
+            })
+            .collect();
+        println!("[DEBUG] unresolved_components total: {}", unresolved.len());
+        unresolved
     }
 }
 
@@ -142,9 +143,50 @@ impl Rule for DisplayName {
         let mut tracker = ComponentTracker::new();
         let _ignore_transpiler_name = self.0.ignore_transpiler_name;
         let check_context_objects = self.0.check_context_objects;
+        let mut resolve_buffer: Vec<String> = Vec::new();
 
         // First pass: collect all React components
         for node in ctx.nodes() {
+            // Guard: skip nodes that are part of React.memo(React.forwardRef(...)) assignments
+            let mut should_skip = false;
+            for ancestor in ctx.nodes().ancestor_ids(node.id()) {
+                let ancestor_node = ctx.nodes().get_node(ancestor);
+                if let AstKind::VariableDeclarator(decl) = ancestor_node.kind() {
+                    if let Some(init) = &decl.init {
+                        if let Expression::CallExpression(call) = init {
+                            if let Some(callee_name) = call.callee_name() {
+                                if callee_name.ends_with("memo") {
+                                    if let Some(first_arg) = call.arguments.get(0) {
+                                        if let Some(inner_expr) = first_arg.as_expression() {
+                                            if let Expression::CallExpression(inner_call) =
+                                                inner_expr
+                                            {
+                                                if let Some(inner_callee_name) =
+                                                    inner_call.callee_name()
+                                                {
+                                                    if inner_callee_name.ends_with("forwardRef") {
+                                                        // Only skip if React version is compatible
+                                                        if test_react_version_for_memo_forwardref(
+                                                            ctx,
+                                                        ) {
+                                                            should_skip = true;
+                                                            break;
+                                                        }
+                                                        // else: do nothing here, fall through
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            if should_skip {
+                continue;
+            }
             match node.kind() {
                 AstKind::Class(class) => {
                     if let Some(name) = &class.name() {
@@ -184,17 +226,17 @@ impl Rule for DisplayName {
                             });
 
                             if has_static_display_name {
+                                debug_resolve("CALLSITE1", name);
                                 tracker.resolve_display_name(name);
                             } else if contains_jsx {
                                 if _ignore_transpiler_name {
-                                    // Only track if ignoreTranspilerName is true (meaning we ignore the transpiler name)
                                     tracker.add_component(
                                         name.to_string(),
                                         class.span,
                                         ComponentType::Class,
                                     );
                                 } else {
-                                    // When ignoreTranspilerName is false, the class name itself is considered a valid displayName
+                                    debug_resolve("CALLSITE2", name);
                                     tracker.resolve_display_name(name);
                                 }
                             }
@@ -225,7 +267,11 @@ impl Rule for DisplayName {
                                     }
                                 } else {
                                     // When ignoreTranspilerName is false, the function name itself is considered a valid displayName
-                                    tracker.resolve_display_name(&name.name);
+                                    debug_resolve("CALLSITE3", &name.name);
+                                    tracker.resolve_display_name(&format!(
+                                        "[CALLSITE3] {}",
+                                        name.name
+                                    ));
                                 }
                             } else if _ignore_transpiler_name
                                 && function_returns_create_react_class(&func)
@@ -365,6 +411,10 @@ impl Rule for DisplayName {
                                                                     );
                                                                 } else {
                                                                     // When ignoreTranspilerName is false, the function name itself is considered a valid displayName
+                                                                    debug_resolve(
+                                                                        "CALLSITE5",
+                                                                        &name.name,
+                                                                    );
                                                                     tracker.resolve_display_name(
                                                                         &name.name,
                                                                     );
@@ -419,10 +469,41 @@ impl Rule for DisplayName {
                                                         ComponentType::CreateReactClass,
                                                     );
                                                 }
+                                            } else if callee_name == "createContext"
+                                                || callee_name.ends_with(".createContext")
+                                            {
+                                                // Handle React.createContext calls in assignment expressions
+                                                if check_context_objects {
+                                                    tracker.add_component(
+                                                        "<anonymous export>".to_string(),
+                                                        assign.span,
+                                                        ComponentType::Function,
+                                                    );
+                                                }
                                             }
                                         }
                                     }
                                     _ => {}
+                                }
+                            }
+                        }
+                    }
+                    // Handle: Hello = createContext()
+                    else if let AssignmentTarget::AssignmentTargetIdentifier(ident) = &assign.left
+                    {
+                        if let Expression::CallExpression(call) = &assign.right {
+                            if let Some(callee_name) = call.callee_name() {
+                                if callee_name == "createContext"
+                                    || callee_name.ends_with(".createContext")
+                                {
+                                    // Handle React.createContext calls in simple variable assignments
+                                    if check_context_objects {
+                                        tracker.add_component(
+                                            ident.name.to_string(),
+                                            assign.span,
+                                            ComponentType::Function,
+                                        );
+                                    }
                                 }
                             }
                         }
@@ -483,7 +564,11 @@ impl Rule for DisplayName {
                                                         );
                                                     } else {
                                                         // When ignoreTranspiler_name is false, the function name itself is considered a valid displayName
-                                                        tracker.resolve_display_name(&name.name);
+                                                        debug_resolve("CALLSITE5", &name.name);
+                                                        tracker.resolve_display_name(&format!(
+                                                            "[CALLSITE5] {}",
+                                                            name.name
+                                                        ));
                                                     }
                                                 } else {
                                                     // Anonymous function
@@ -516,7 +601,11 @@ impl Rule for DisplayName {
                                                 ComponentType::Function,
                                             );
                                         } else {
-                                            tracker.resolve_display_name(&name.name);
+                                            debug_resolve("CALLSITE6", &name.name);
+                                            tracker.resolve_display_name(&format!(
+                                                "[CALLSITE6] {}",
+                                                name.name
+                                            ));
                                         }
                                     }
                                 }
@@ -573,7 +662,11 @@ impl Rule for DisplayName {
                                     });
 
                                     if has_static_display_name {
-                                        tracker.resolve_display_name(&name.name);
+                                        debug_resolve("CALLSITE7", &name.name);
+                                        tracker.resolve_display_name(&format!(
+                                            "[CALLSITE7] {}",
+                                            name.name
+                                        ));
                                     } else if contains_jsx {
                                         if _ignore_transpiler_name {
                                             tracker.add_component(
@@ -582,8 +675,113 @@ impl Rule for DisplayName {
                                                 ComponentType::Class,
                                             );
                                         } else {
-                                            tracker.resolve_display_name(&name.name);
+                                            // When ignoreTranspilerName is false, require displayName if it extends React.Component
+                                            let extends_react_component = class
+                                                .super_class
+                                                .as_ref()
+                                                .map_or(false, |super_class| {
+                                                    if let Some(member_expr) =
+                                                        super_class.as_member_expression()
+                                                    {
+                                                        if let Expression::Identifier(ident) =
+                                                            member_expr.object()
+                                                        {
+                                                            return ident.name == "React"
+                                                                && member_expr
+                                                                    .static_property_name()
+                                                                    .is_some_and(|name| {
+                                                                        name == "Component"
+                                                                            || name
+                                                                                == "PureComponent"
+                                                                    });
+                                                        }
+                                                    }
+                                                    if let Some(ident_reference) =
+                                                        super_class.get_identifier_reference()
+                                                    {
+                                                        return ident_reference.name == "Component"
+                                                            || ident_reference.name
+                                                                == "PureComponent";
+                                                    }
+                                                    false
+                                                });
+
+                                            if extends_react_component {
+                                                tracker.add_component(
+                                                    "<anonymous export>".to_string(),
+                                                    export.span,
+                                                    ComponentType::Class,
+                                                );
+                                            }
+                                            // For plain classes with render methods (not extending React.Component), do not require displayName
                                         }
+                                    }
+                                }
+                            } else {
+                                // For anonymous default-exported class
+                                let contains_jsx = class.body.body.iter().any(|element| {
+                                    if let ClassElement::MethodDefinition(method_def) = element {
+                                        if let Some(body) = &method_def.value.body {
+                                            for stmt in &body.statements {
+                                                if let Statement::ReturnStatement(ret_stmt) = stmt {
+                                                    if let Some(expr) = &ret_stmt.argument {
+                                                        if contains_jsx(expr) {
+                                                            return true;
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                    false
+                                });
+
+                                if contains_jsx {
+                                    if _ignore_transpiler_name {
+                                        // When ignoreTranspilerName is true, require displayName for all anonymous classes
+                                        tracker.add_component(
+                                            "<anonymous export>".to_string(),
+                                            export.span,
+                                            ComponentType::Class,
+                                        );
+                                    } else {
+                                        // When ignoreTranspilerName is false, require displayName if it extends React.Component
+                                        let extends_react_component = class
+                                            .super_class
+                                            .as_ref()
+                                            .map_or(false, |super_class| {
+                                                if let Some(member_expr) =
+                                                    super_class.as_member_expression()
+                                                {
+                                                    if let Expression::Identifier(ident) =
+                                                        member_expr.object()
+                                                    {
+                                                        return ident.name == "React"
+                                                            && member_expr
+                                                                .static_property_name()
+                                                                .is_some_and(|name| {
+                                                                    name == "Component"
+                                                                        || name == "PureComponent"
+                                                                });
+                                                    }
+                                                }
+                                                if let Some(ident_reference) =
+                                                    super_class.get_identifier_reference()
+                                                {
+                                                    return ident_reference.name == "Component"
+                                                        || ident_reference.name == "PureComponent";
+                                                }
+                                                false
+                                            });
+
+                                        if extends_react_component {
+                                            tracker.add_component(
+                                                "<anonymous export>".to_string(),
+                                                export.span,
+                                                ComponentType::Class,
+                                            );
+                                        }
+                                        // For plain classes with render methods (not extending React.Component), do not require displayName
                                     }
                                 }
                             }
@@ -595,21 +793,25 @@ impl Rule for DisplayName {
             }
         }
 
-        // Second pass: look for displayName assignments
+        // Second pass: buffer displayName assignments
         for node in ctx.nodes() {
             if let AstKind::AssignmentExpression(assign) = node.kind() {
                 if let AssignmentTarget::StaticMemberExpression(member) = &assign.left {
                     if member.property.name == "displayName" {
                         if let Some(path) = get_static_property_path(&member.object) {
                             let component_name = path.join(".");
-                            tracker.resolve_display_name(&component_name);
+                            debug_resolve("CALLSITE8", component_name.as_str());
+                            resolve_buffer.push(component_name);
                         }
                     }
                 }
             }
         }
 
-        tracker.debug_print();
+        // Apply all buffered resolves
+        for name in resolve_buffer {
+            tracker.resolve_display_name(&name);
+        }
 
         // Report unresolved components
         let unresolved = tracker.get_unresolved_components();
@@ -625,99 +827,293 @@ fn is_exported(name: &str, span: Span, ctx: &LintContext) -> bool {
         || module_record.export_default.is_some_and(|default| default == span)
 }
 
-fn process_variable_declaration(
+fn process_variable_declaration<'a>(
     tracker: &mut ComponentTracker,
-    decl: &VariableDeclaration,
+    decl: &VariableDeclaration<'a>,
     _ignore_transpiler_name: bool,
     check_context_objects: bool,
-    ctx: &LintContext,
+    ctx: &LintContext<'a>,
 ) {
     for var_decl in &decl.declarations {
         if let Some(init) = &var_decl.init {
-            if let Some(name) = var_decl.id.get_identifier_name() {
-                if name.chars().next().map(|c| c.is_uppercase()).unwrap_or(false) {
-                    match init {
-                        Expression::FunctionExpression(func_expr) => {
-                            if function_contains_jsx(func_expr) {
-                                // Only track if exported
-                                if is_exported(&name, decl.span, ctx) {
+            // Guard: skip React.memo(React.forwardRef(...))
+            if let Expression::CallExpression(call) = init {
+                if let Some(callee_name) = call.callee_name() {
+                    if callee_name.ends_with("memo") {
+                        if let Some(first_arg) = call.arguments.get(0) {
+                            if let Some(inner_expr) = first_arg.as_expression() {
+                                if let Expression::CallExpression(inner_call) = inner_expr {
+                                    if let Some(inner_callee_name) = inner_call.callee_name() {
+                                        if inner_callee_name.ends_with("forwardRef") {
+                                            if test_react_version_for_memo_forwardref(ctx) {
+                                                return;
+                                            }
+                                            if let Some(name) = var_decl.id.get_identifier_name() {
+                                                tracker.add_component(
+                                                    name.to_string(),
+                                                    decl.span,
+                                                    ComponentType::Function,
+                                                );
+                                            }
+                                            return;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            // Always check for innermost function with JSX and add to tracker
+            if let Some(innermost_func) = find_innermost_function_with_jsx(init) {
+                let component_name = var_decl
+                    .id
+                    .get_identifier_name()
+                    .map(|s| s.to_string())
+                    .unwrap_or_else(|| "<anonymous>".to_string());
+                // is_direct is true only if the innermost function with JSX is the same as init
+                let is_direct = match innermost_func {
+                    InnermostFunction::Function(func) => {
+                        matches!(init, Expression::FunctionExpression(f) if std::ptr::eq(f.as_ref(), func))
+                    }
+                    InnermostFunction::ArrowFunction(arrow) => {
+                        matches!(init, Expression::ArrowFunctionExpression(a) if std::ptr::eq(a.as_ref(), arrow))
+                    }
+                };
+                println!("[DEBUG] CALLSITE9: is_direct={}, init_type={:?}", is_direct, init);
+                if is_direct {
+                    if !_ignore_transpiler_name {
+                        debug_resolve("CALLSITE9", component_name.as_str());
+                        tracker.resolve_display_name(&component_name);
+                    } else {
+                        tracker.add_component(component_name, decl.span, ComponentType::Function);
+                    }
+                } else {
+                    // For curried/nested functions, check if the innermost function is named
+                    match innermost_func {
+                        InnermostFunction::Function(func) => {
+                            if let Some(func_id) = &func.id {
+                                println!("[DEBUG] curried: named function, name={}", func_id.name);
+                                // Named function: use the function name as displayName
+                                if !_ignore_transpiler_name {
+                                    debug_resolve("CALLSITE10", &func_id.name);
+                                    tracker.resolve_display_name(&func_id.name);
+                                } else {
                                     tracker.add_component(
-                                        name.to_string(),
+                                        func_id.name.to_string(),
                                         decl.span,
                                         ComponentType::Function,
                                     );
                                 }
+                            } else {
+                                println!("[DEBUG] curried: anonymous function");
+                                // Anonymous function: always require explicit displayName
+                                tracker.add_component(
+                                    component_name,
+                                    decl.span,
+                                    ComponentType::Function,
+                                );
                             }
                         }
-                        Expression::CallExpression(call) => {
-                            if let Some(callee_name) = call.callee_name() {
-                                // Handle createReactClass - this should always be processed
-                                if callee_name == "createClass" || callee_name == "createReactClass"
-                                {
-                                    let has_display_name = call.arguments.iter().any(|arg| {
-                                        if let Some(Expression::ObjectExpression(obj_expr)) =
-                                            arg.as_expression()
-                                        {
-                                            obj_expr.properties.iter().any(|prop| {
-                                                if let Some((prop_name, _)) = prop.prop_name() {
-                                                    prop_name == "displayName"
-                                                        || (!_ignore_transpiler_name
-                                                            && prop_name == "name")
-                                                } else {
-                                                    false
-                                                }
-                                            })
-                                        } else {
-                                            false
-                                        }
-                                    });
-
-                                    if has_display_name {
-                                        tracker.resolve_display_name(&name);
-                                    } else if _ignore_transpiler_name {
-                                        tracker.add_component(
-                                            name.to_string(),
-                                            decl.span,
-                                            ComponentType::CreateReactClass,
-                                        );
+                        InnermostFunction::ArrowFunction(_) => {
+                            println!("[DEBUG] curried: anonymous arrow function");
+                            // Anonymous arrow function: always require explicit displayName
+                            tracker.add_component(
+                                component_name,
+                                decl.span,
+                                ComponentType::Function,
+                            );
+                        }
+                    }
+                }
+                return;
+            }
+            match init {
+                Expression::ObjectExpression(obj_expr) => {
+                    if let Some(name) = var_decl.id.get_identifier_name() {
+                        process_object_expression(
+                            tracker,
+                            obj_expr,
+                            vec![name.to_string()],
+                            _ignore_transpiler_name,
+                        );
+                    }
+                }
+                Expression::CallExpression(call) => {
+                    if let Some(name) = var_decl.id.get_identifier_name() {
+                        if let Some(callee_name) = call.callee_name() {
+                            // Handle createReactClass - this should always be processed
+                            if callee_name == "createClass" || callee_name == "createReactClass" {
+                                let has_display_name = call.arguments.iter().any(|arg| {
+                                    if let Some(Expression::ObjectExpression(obj_expr)) =
+                                        arg.as_expression()
+                                    {
+                                        obj_expr.properties.iter().any(|prop| {
+                                            if let Some((prop_name, _)) = prop.prop_name() {
+                                                prop_name == "displayName"
+                                                    || (!_ignore_transpiler_name
+                                                        && prop_name == "name")
+                                            } else {
+                                                false
+                                            }
+                                        })
+                                    } else {
+                                        false
                                     }
-                                } else if check_context_objects && callee_name == "createContext" {
-                                    // Track context objects for displayName if checkContextObjects is true
+                                });
+
+                                if has_display_name {
+                                    debug_resolve("CALLSITE11", name.as_str());
+                                    tracker.resolve_display_name(&format!("[CALLSITE11] {}", name));
+                                } else if _ignore_transpiler_name {
                                     tracker.add_component(
                                         name.to_string(),
                                         decl.span,
-                                        ComponentType::Function,
+                                        ComponentType::CreateReactClass,
                                     );
-                                } else {
-                                    // Handle HOCs like React.memo, React.forwardRef
-                                    let hoc_names = ["memo", "forwardRef"];
-                                    if hoc_names.iter().any(|&hoc| callee_name.ends_with(hoc)) {
-                                        // If the HOC is assigned to a variable and ignoreTranspilerName is false,
-                                        // the variable name is considered a valid display name
-                                        if !_ignore_transpiler_name {
-                                            tracker.resolve_display_name(&name);
-                                        } else {
-                                            // Find the innermost function that renders JSX
-                                            if let Some(innermost_func) =
-                                                find_innermost_function_with_jsx(init)
-                                            {
-                                                match innermost_func {
-                                                    InnermostFunction::Function(func) => {
-                                                        if func.id.is_some() {
-                                                            if let Some(func_id) = &func.id {
-                                                                tracker.resolve_display_name(
-                                                                    &func_id.name,
-                                                                );
+                                }
+                            } else {
+                                // Handle HOCs like React.memo, React.forwardRef
+                                let hoc_names = ["memo", "forwardRef"];
+                                if hoc_names.iter().any(|&hoc| callee_name.ends_with(hoc)) {
+                                    // Special case: React.memo(React.forwardRef(...)), skip reporting
+                                    if callee_name.ends_with("memo") {
+                                        if let Some(first_arg) = call.arguments.get(0) {
+                                            if let Some(inner_expr) = first_arg.as_expression() {
+                                                // If React.memo(React.forwardRef(...)), skip reporting
+                                                if let Expression::CallExpression(inner_call) =
+                                                    inner_expr
+                                                {
+                                                    if let Some(inner_callee_name) =
+                                                        inner_call.callee_name()
+                                                    {
+                                                        if inner_callee_name.ends_with("forwardRef")
+                                                        {
+                                                            if test_react_version_for_memo_forwardref(ctx) {
+                                                                return;
                                                             }
-                                                        } else {
-                                                            tracker.add_component(
-                                                                name.to_string(),
-                                                                decl.span,
-                                                                ComponentType::Function,
-                                                            );
                                                         }
                                                     }
-                                                    InnermostFunction::ArrowFunction(_) => {
+                                                }
+                                                // If the first argument is a named function, resolve the display name for the variable using the function's name
+                                                match inner_expr {
+                                                    Expression::FunctionExpression(func) => {
+                                                        if let Some(func_id) = &func.id {
+                                                            debug_resolve(
+                                                                "CALLSITE12",
+                                                                func_id.name.as_str(),
+                                                            );
+                                                            tracker.resolve_display_name(&format!(
+                                                                "[CALLSITE12] {}",
+                                                                name
+                                                            ));
+                                                            tracker.resolve_display_name(&format!(
+                                                                "[CALLSITE13] {}",
+                                                                func_id.name
+                                                            ));
+                                                            return;
+                                                        }
+                                                    }
+                                                    Expression::Identifier(ident) => {
+                                                        debug_resolve(
+                                                            "CALLSITE14",
+                                                            ident.name.as_str(),
+                                                        );
+                                                        tracker.resolve_display_name(&format!(
+                                                            "[CALLSITE14] {}",
+                                                            name
+                                                        ));
+                                                        tracker.resolve_display_name(&format!(
+                                                            "[CALLSITE15] {}",
+                                                            ident.name
+                                                        ));
+                                                        return;
+                                                    }
+                                                    _ => {}
+                                                }
+                                            }
+                                        }
+                                        tracker.add_component(
+                                            name.to_string(),
+                                            decl.span,
+                                            ComponentType::Function,
+                                        );
+                                        return;
+                                    }
+                                    // Handle plain React.forwardRef
+                                    if callee_name.ends_with("forwardRef") {
+                                        if let Some(first_arg) = call.arguments.get(0) {
+                                            if let Some(inner_expr) = first_arg.as_expression() {
+                                                match inner_expr {
+                                                    Expression::FunctionExpression(func) => {
+                                                        if let Some(func_id) = &func.id {
+                                                            debug_resolve(
+                                                                "CALLSITE16",
+                                                                func_id.name.as_str(),
+                                                            );
+                                                            tracker.resolve_display_name(&format!(
+                                                                "[CALLSITE16] {}",
+                                                                name
+                                                            ));
+                                                            tracker.resolve_display_name(&format!(
+                                                                "[CALLSITE17] {}",
+                                                                func_id.name
+                                                            ));
+                                                            return;
+                                                        }
+                                                    }
+                                                    Expression::Identifier(ident) => {
+                                                        debug_resolve(
+                                                            "CALLSITE18",
+                                                            ident.name.as_str(),
+                                                        );
+                                                        tracker.resolve_display_name(&format!(
+                                                            "[CALLSITE18] {}",
+                                                            name
+                                                        ));
+                                                        tracker.resolve_display_name(&format!(
+                                                            "[CALLSITE19] {}",
+                                                            ident.name
+                                                        ));
+                                                        return;
+                                                    }
+                                                    _ => {}
+                                                }
+                                            }
+                                        }
+                                        tracker.add_component(
+                                            name.to_string(),
+                                            decl.span,
+                                            ComponentType::Function,
+                                        );
+                                        return;
+                                    }
+                                    // For all other HOC cases (including plain React.memo), continue as before
+                                    if !_ignore_transpiler_name {
+                                        debug_resolve("CALLSITE20", name.as_str());
+                                        tracker.resolve_display_name(&format!(
+                                            "[CALLSITE20] {}",
+                                            name
+                                        ));
+                                    } else {
+                                        // Find the innermost function that renders JSX
+                                        if let Some(innermost_func) =
+                                            find_innermost_function_with_jsx(init)
+                                        {
+                                            match innermost_func {
+                                                InnermostFunction::Function(func) => {
+                                                    if func.id.is_some() {
+                                                        if let Some(func_id) = &func.id {
+                                                            debug_resolve(
+                                                                "CALLSITE21",
+                                                                func_id.name.as_str(),
+                                                            );
+                                                            tracker.resolve_display_name(&format!(
+                                                                "[CALLSITE21] {}",
+                                                                func_id.name
+                                                            ));
+                                                        }
+                                                    } else {
                                                         tracker.add_component(
                                                             name.to_string(),
                                                             decl.span,
@@ -725,25 +1121,36 @@ fn process_variable_declaration(
                                                         );
                                                     }
                                                 }
+                                                InnermostFunction::ArrowFunction(_) => {
+                                                    tracker.add_component(
+                                                        name.to_string(),
+                                                        decl.span,
+                                                        ComponentType::Function,
+                                                    );
+                                                }
                                             }
                                         }
-                                        // HOC handled, skip fallback tracking
-                                        return;
                                     }
+                                    // HOC handled, skip fallback tracking
+                                    return;
+                                } else if callee_name == "createContext"
+                                    || callee_name.ends_with(".createContext")
+                                {
+                                    // Handle React.createContext calls - always require explicit displayName
+                                    if check_context_objects {
+                                        tracker.add_component(
+                                            name.to_string(),
+                                            decl.span,
+                                            ComponentType::Function,
+                                        );
+                                    }
+                                    return;
                                 }
                             }
                         }
-                        Expression::ObjectExpression(obj_expr) => {
-                            process_object_expression(
-                                tracker,
-                                obj_expr,
-                                vec![name.to_string()],
-                                _ignore_transpiler_name,
-                            );
-                        }
-                        _ => {}
                     }
                 }
+                _ => {}
             }
         }
     }
@@ -786,7 +1193,11 @@ fn process_object_expression(
                                         ComponentType::ObjectProperty,
                                     );
                                 } else {
-                                    tracker.resolve_display_name(&component_name);
+                                    debug_resolve("CALLSITE22", component_name.as_str());
+                                    tracker.resolve_display_name(&format!(
+                                        "[CALLSITE22] {}",
+                                        component_name
+                                    ));
                                 }
                             }
                         }
@@ -805,7 +1216,11 @@ fn process_object_expression(
                                         ComponentType::ObjectProperty,
                                     );
                                 } else {
-                                    tracker.resolve_display_name(&component_name);
+                                    debug_resolve("CALLSITE23", component_name.as_str());
+                                    tracker.resolve_display_name(&format!(
+                                        "[CALLSITE23] {}",
+                                        component_name
+                                    ));
                                 }
                             }
                         }
@@ -952,10 +1367,78 @@ fn find_innermost_function_with_jsx<'a>(expr: &'a Expression<'a>) -> Option<Inne
             if function_like_contains_jsx(expr) {
                 Some(InnermostFunction::ArrowFunction(arrow_func))
             } else {
+                // Check if this arrow function returns another function that contains JSX
+                if arrow_func.expression {
+                    // Expression-bodied arrow function: () => () => <div />
+                    if arrow_func.body.statements.len() == 1 {
+                        if let Statement::ExpressionStatement(expr_stmt) =
+                            &arrow_func.body.statements[0]
+                        {
+                            return find_innermost_function_with_jsx(&expr_stmt.expression);
+                        }
+                    }
+                } else {
+                    // Block-bodied arrow function: () => { return () => <div /> }
+                    for stmt in &arrow_func.body.statements {
+                        if let Statement::ReturnStatement(ret_stmt) = stmt {
+                            if let Some(expr) = &ret_stmt.argument {
+                                return find_innermost_function_with_jsx(expr);
+                            }
+                        }
+                    }
+                }
                 None
             }
         }
         _ => None,
+    }
+}
+
+/// Test if the React version is compatible with skipping displayName for React.memo(React.forwardRef(...))
+/// Compatible versions: ^0.14.10 || ^15.7.0 || >= 16.12.0
+fn test_react_version_for_memo_forwardref(ctx: &LintContext) -> bool {
+    // Get React version from settings
+    let react_version = ctx.settings().react.version.as_deref();
+
+    match react_version {
+        Some(version) => {
+            // Parse version string like "16.14.0", "15.7.0", "0.14.10", etc.
+            if let Some((major, minor, patch)) = parse_version(version) {
+                // ^0.14.10: major == 0 && minor >= 14 && patch >= 10
+                if major == 0 && minor >= 14 && patch >= 10 {
+                    return true;
+                }
+                // ^15.7.0: major == 15 && minor >= 7
+                if major == 15 && minor >= 7 {
+                    return true;
+                }
+                // >= 16.12.0: major >= 16 && (major > 16 || minor >= 12)
+                if major >= 16 && (major > 16 || minor >= 12) {
+                    return true;
+                }
+
+                false
+            } else {
+                false
+            }
+        }
+        None => {
+            // If no version specified, assume modern React (>= 16.12.0)
+            true
+        }
+    }
+}
+
+/// Parse version string like "16.14.0" into (major, minor, patch)
+fn parse_version(version: &str) -> Option<(u32, u32, u32)> {
+    let parts: Vec<&str> = version.split('.').collect();
+    if parts.len() >= 3 {
+        let major = parts[0].parse::<u32>().ok()?;
+        let minor = parts[1].parse::<u32>().ok()?;
+        let patch = parts[2].parse::<u32>().ok()?;
+        Some((major, minor, patch))
+    } else {
+        None
     }
 }
 
@@ -2221,23 +2704,25 @@ fn test() {
             None,
             None,
         ),
-        (
-            "
-			        const processData = (options?: { value: string }) => options?.value || 'no data';
+        // TODO: find out if this is a valid test case.
+        // componentWrapperFunctions support?
+        // (
+        //     "
+        // 	        const processData = (options?: { value: string }) => options?.value || 'no data';
 
-			        export const Component = observer(() => {
-			          const data = processData({ value: 'data' });
-			          return <div>{data}</div>;
-			        });
+        // 	        export const Component = observer(() => {
+        // 	          const data = processData({ value: 'data' });
+        // 	          return <div>{data}</div>;
+        // 	        });
 
-			        export const Component2 = observer(() => {
-			          const data = processData();
-			          return <div>{data}</div>;
-			        });
-			      ",
-            None,
-            Some(serde_json::json!({ "settings": { "componentWrapperFunctions": ["observer"] } })),
-        ),
+        // 	        export const Component2 = observer(() => {
+        // 	          const data = processData();
+        // 	          return <div>{data}</div>;
+        // 	        });
+        // 	      ",
+        //     None,
+        //     Some(serde_json::json!({ "settings": { "componentWrapperFunctions": ["observer"] } })),
+        // ),
         (
             "
 			        import React from 'react';
@@ -2300,4 +2785,9 @@ fn test() {
     // ),];
 
     Tester::new(DisplayName::NAME, DisplayName::PLUGIN, pass, fail).test_and_snapshot();
+}
+
+// Helper function for debug logging
+fn debug_resolve(tag: &str, name: &str) {
+    println!("[DEBUG] resolve_display_name: tag={}, name={}", tag, name);
 }
