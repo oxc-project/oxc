@@ -152,11 +152,11 @@ impl Program<'_> {
 
     const program = {
         type: 'Program',
-        start,
-        end,
         body,
         sourceType: DESER[ModuleKind](POS_OFFSET.source_type.module_kind),
         hashbang: DESER[Option<Hashbang>](POS_OFFSET.hashbang),
+        start,
+        end,
     };
     program
 ")]
@@ -165,19 +165,21 @@ pub struct ProgramConverter<'a, 'b>(pub &'b Program<'a>);
 impl ESTree for ProgramConverter<'_, '_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let program = self.0;
-        let span_start =
-            if S::INCLUDE_TS_FIELDS { get_ts_start_span(program) } else { program.span.start };
 
         let mut state = serializer.serialize_struct();
         state.serialize_field("type", &JsonSafeString("Program"));
-        state.serialize_field("start", &span_start);
-        state.serialize_field("end", &program.span.end);
         state.serialize_field("body", &Concat2(&program.directives, &program.body));
         state.serialize_field("sourceType", &program.source_type.module_kind());
         state.serialize_field("hashbang", &program.hashbang);
+
+        let span_start =
+            if S::INCLUDE_TS_FIELDS { get_ts_start_span(program) } else { program.span.start };
+        state.serialize_field("start", &span_start);
+        state.serialize_field("end", &program.span.end);
         if state.ranges() {
             state.serialize_field("range", &[span_start, program.span.end]);
         }
+
         state.end();
     }
 }

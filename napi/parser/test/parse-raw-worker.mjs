@@ -203,6 +203,13 @@ function assertRawAndStandardMatch(filename, sourceText, pretty, expect) {
   const { program: programStandard, comments: commentsStandard, module: moduleStandard, errors: errorsStandard } =
     retStandard;
 
+  // Re-arrange fields to match raw transfer.
+  // We don't want to change field order of the Rust structs, but want `start` and `end` last.
+  // Field order doesn't matter much anyway for module record.
+  moveStartAndEndToLast(moduleStandard.staticImports, true);
+  moveStartAndEndToLast(moduleStandard.staticExports, true);
+  moveStartAndEndToLast(moduleStandard.dynamicImports, false);
+
   // @ts-ignore
   const retRaw = parseSync(filename, sourceText, { experimentalRawTransfer: true });
   const { program: programRaw, comments: commentsRaw } = retRaw;
@@ -222,15 +229,29 @@ function assertRawAndStandardMatch(filename, sourceText, pretty, expect) {
   expect(jsonRaw).toEqual(jsonStandard);
 }
 
+function moveStartAndEndToLast(arr, reorderEntries) {
+  for (const obj of arr) {
+    const { start, end } = obj;
+    delete obj.start;
+    delete obj.end;
+    obj.start = start;
+    obj.end = end;
+    if (reorderEntries) moveStartAndEndToLast(obj.entries, false);
+  }
+}
+
 // Acorn JSON files always end with:
 // ```
 //   "sourceType": "script",
-//   "hashbang": null
+//   "hashbang": null,
+//   "start": 0,
+//   "end": <some integer>,
 // }
 // ```
 // For speed, extract `sourceType` with a slice, rather than parsing the JSON.
 function getSourceTypeFromJSON(json) {
-  return json.slice(-29, -23);
+  const index = json.lastIndexOf('"sourceType": "');
+  return json.slice(index + 15, index + 21);
 }
 
 // Stringify to JSON, replacing values which are invalid in JSON.

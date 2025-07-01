@@ -202,7 +202,7 @@ impl ESTree for RegExpFlagsConverter<'_> {
         value.cooked = value.cooked
             .replace(/\uFFFD(.{4})/g, (_, hex) => String.fromCodePoint(parseInt(hex, 16)));
     }
-    { type: 'TemplateElement', start, end, value, tail }
+    { type: 'TemplateElement', value, tail, start, end }
 "#)]
 pub struct TemplateElementConverter<'a, 'b>(pub &'b TemplateElement<'a>);
 
@@ -213,17 +213,17 @@ impl ESTree for TemplateElementConverter<'_, '_> {
         let mut state = serializer.serialize_struct();
         state.serialize_field("type", &JsonSafeString("TemplateElement"));
 
+        state.serialize_field("value", &TemplateElementValue(element));
+        state.serialize_field("tail", &element.tail);
+
         let mut span = element.span;
         if S::INCLUDE_TS_FIELDS {
             span.start -= 1;
             span.end += if element.tail { 1 } else { 2 };
         }
+
         state.serialize_field("start", &span.start);
         state.serialize_field("end", &span.end);
-
-        state.serialize_field("value", &TemplateElementValue(element));
-        state.serialize_field("tail", &element.tail);
-
         if state.ranges() {
             state.serialize_field("range", &[span.start, span.end]);
         }

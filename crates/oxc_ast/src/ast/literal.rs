@@ -103,7 +103,7 @@ pub struct StringLiteral<'a> {
 #[estree(
     rename = "Literal",
     add_fields(bigint = BigIntLiteralBigint),
-    field_order(span, value, raw, bigint),
+    field_order(value, raw, bigint, span),
 )]
 pub struct BigIntLiteral<'a> {
     /// Node location in source code
@@ -130,7 +130,7 @@ pub struct BigIntLiteral<'a> {
 #[estree(
     rename = "Literal",
     add_fields(value = RegExpLiteralValue),
-    field_order(span, value, raw, regex),
+    field_order(value, raw, regex, span),
 )]
 pub struct RegExpLiteral<'a> {
     /// Node location in source code
