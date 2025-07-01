@@ -24,6 +24,7 @@ working directory: fixtures
       "rootDir": []
     },
     "react": {
+      "version": null,
       "formComponents": [],
       "linkComponents": []
     },
