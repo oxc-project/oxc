@@ -1,9 +1,9 @@
 commit: 81c95189
 
 parser_typescript Summary:
-AST Parsed     : 6554/6561 (99.89%)
-Positive Passed: 6543/6561 (99.73%)
-Negative Passed: 1418/5737 (24.72%)
+AST Parsed     : 6569/6576 (99.89%)
+Positive Passed: 6558/6576 (99.73%)
+Negative Passed: 1418/5722 (24.78%)
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/ExportAssignment7.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/ExportAssignment8.ts
@@ -722,8 +722,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/computedProp
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/computedPropertiesInDestructuring2_ES6.ts
 
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/computedPropertiesNarrowed.ts
-
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/concatClassAndString.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/conditionalAnyCheckTypePicksBothBranches.ts
@@ -1007,8 +1005,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/declarationE
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/declarationEmitInvalidReference2.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/declarationEmitInvalidReferenceAllowJs.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/declarationEmitIsolatedDeclarationErrorNotEmittedForNonEmittedFile.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/declarationEmitLambdaWithMissingTypeParameterNoCrash.ts
 
@@ -2328,31 +2324,11 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/isLiteral1.t
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/isolatedDeclarationErrorTypes1.ts
 
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/isolatedDeclarationErrors.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/isolatedDeclarationErrorsAugmentation.ts
-
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/isolatedDeclarationErrorsClasses.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/isolatedDeclarationErrorsClassesExpressions.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/isolatedDeclarationErrorsDefault.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/isolatedDeclarationErrorsEnums.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/isolatedDeclarationErrorsExpandoFunctions.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/isolatedDeclarationErrorsExpressions.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/isolatedDeclarationErrorsFunctionDeclarations.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/isolatedDeclarationErrorsObjects.ts
 
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/isolatedDeclarationErrorsReturnTypes.ts
-
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/isolatedDeclarationLazySymbols.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/isolatedDeclarationsAddUndefined.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/isolatedDeclarationsAddUndefined2.ts
 
@@ -2513,8 +2489,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/jsxEmptyExpr
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/jsxExcessPropsAndAssignability.tsx
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/jsxFactoryAndReactNamespace.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/jsxFactoryButNoJsxFragmentFactory.tsx
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/jsxFactoryIdentifierWithAbsentParameter.ts
 
@@ -6549,10 +6523,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/jsdoc/dec
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/jsdoc/declarations/jsDeclarationsCrossfileMerge.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/jsdoc/declarations/jsDeclarationsDefaultsErr.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/jsdoc/declarations/jsDeclarationsExportAssignedConstructorFunctionWithSub.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/jsdoc/declarations/jsDeclarationsTypeReassignmentFromDeclaration2.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/jsdoc/enumTag.ts
 

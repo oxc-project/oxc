@@ -1,8 +1,8 @@
 commit: 81c95189
 
 estree_typescript Summary:
-AST Parsed     : 6513/6513 (100.00%)
-Positive Passed: 6510/6513 (99.95%)
+AST Parsed     : 6528/6528 (100.00%)
+Positive Passed: 6525/6528 (99.95%)
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/jsx/jsxReactTestSuite.tsx
 
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/jsx/tsxReactEmitEntities.tsx
