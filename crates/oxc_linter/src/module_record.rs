@@ -385,6 +385,11 @@ impl ExportExportName {
         matches!(self, Self::Null)
     }
 
+    /// Returns `true` if this is [`ExportExportName::Name`].
+    pub fn is_name(&self) -> bool {
+        matches!(self, Self::Name(_))
+    }
+
     /// Attempt to get the [`Span`] of this export name.
     pub fn span(&self) -> Option<Span> {
         match self {
