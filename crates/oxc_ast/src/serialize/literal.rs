@@ -223,9 +223,11 @@ impl ESTree for TemplateElementConverter<'_, '_> {
 
         state.serialize_field("value", &TemplateElementValue(element));
         state.serialize_field("tail", &element.tail);
+
         if ranges {
-            state.serialize_field("range", &[&span.start, &span.end]);
+            state.serialize_field("range", &[span.start, span.end]);
         }
+
         state.end();
     }
 }

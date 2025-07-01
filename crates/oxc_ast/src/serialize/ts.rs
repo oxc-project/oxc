@@ -187,9 +187,11 @@ impl ESTree for TSModuleDeclarationIdParts<'_, '_> {
         }
 
         state.serialize_field("right", last);
+
         if ranges {
-            state.serialize_field("range", &[&span_start, &last.span.end]);
+            state.serialize_field("range", &[span_start, last.span.end]);
         }
+
         state.end();
     }
 }
@@ -339,12 +341,13 @@ struct TSTypeNameAsMemberExpression<'a, 'b>(&'b TSTypeName<'a>);
 
 impl ESTree for TSTypeNameAsMemberExpression<'_, '_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
-        let ranges = serializer.ranges();
         match self.0 {
             TSTypeName::IdentifierReference(ident) => {
                 TSTypeNameIdentifierReference(ident).serialize(serializer);
             }
             TSTypeName::QualifiedName(name) => {
+                let ranges = serializer.ranges();
+
                 // Convert to `TSQualifiedName` to `MemberExpression`.
                 // Recursively convert `left` to `MemberExpression` too if it's a `TSQualifiedName`.
                 let mut state = serializer.serialize_struct();
@@ -356,7 +359,7 @@ impl ESTree for TSTypeNameAsMemberExpression<'_, '_> {
                 state.serialize_field("optional", &false);
                 state.serialize_field("computed", &false);
                 if ranges {
-                    state.serialize_field("range", &[&name.span.start, &name.span.end]);
+                    state.serialize_field("range", &[name.span.start, name.span.end]);
                 }
                 state.end();
             }
