@@ -99,6 +99,8 @@ impl ESTree for TSModuleDeclarationConverter<'_, '_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let module = self.0;
 
+        let ranges = serializer.ranges();
+
         let mut state = serializer.serialize_struct();
         state.serialize_field("type", &JsonSafeString("TSModuleDeclaration"));
         state.serialize_field("start", &module.span.start);
@@ -157,6 +159,11 @@ impl ESTree for TSModuleDeclarationConverter<'_, '_> {
         state.serialize_field("kind", &module.kind);
         state.serialize_field("declare", &module.declare);
         state.serialize_field("global", &TSModuleDeclarationGlobal(module));
+
+        if ranges {
+            state.serialize_field("range", &[module.span.start, module.span.end]);
+        }
+
         state.end();
     }
 }
