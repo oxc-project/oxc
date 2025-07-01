@@ -10,7 +10,6 @@ use oxc_ecmascript::PropName;
 use oxc_span::GetSpan;
 use oxc_span::Span;
 
-use crate::ast_util::get_declaration_of_variable;
 use crate::{context::LintContext, rule::Rule};
 use oxc_macros::declare_oxc_lint;
 use std::collections::HashMap;
@@ -61,33 +60,21 @@ impl ComponentTracker {
     }
 
     fn add_component(&mut self, name: String, span: Span, _component_type: ComponentType) {
-        println!("[DEBUG] add_component: name={}, span={:?}", name, span);
-        println!("[DEBUG] components before add: {:?}", self.components);
         self.components.insert(name, ComponentInfo { span, has_display_name: false });
-        println!("[DEBUG] components after add: {:?}", self.components);
     }
 
     fn resolve_display_name(&mut self, name: &str) {
-        println!("[DEBUG] resolve_display_name: name={}", name);
-        println!("[DEBUG] components before resolve: {:?}", self.components);
         if let Some(component) = self.components.get_mut(name) {
             component.has_display_name = true;
         }
-        println!("[DEBUG] components after resolve: {:?}", self.components);
     }
 
     fn get_unresolved_components(&self) -> Vec<Span> {
-        let unresolved: Vec<_> = self
-            .components
+        self.components
             .iter()
             .filter(|(_, comp)| !comp.has_display_name)
-            .map(|(name, comp)| {
-                println!("[DEBUG] unresolved_component: name={}, span={:?}", name, comp.span);
-                comp.span
-            })
-            .collect();
-        println!("[DEBUG] unresolved_components total: {}", unresolved.len());
-        unresolved
+            .map(|(_, comp)| comp.span)
+            .collect()
     }
 }
 
@@ -142,7 +129,9 @@ impl Rule for DisplayName {
     fn run_once(&self, ctx: &LintContext) {
         let mut tracker = ComponentTracker::new();
         let _ignore_transpiler_name = self.0.ignore_transpiler_name;
-        let check_context_objects = self.0.check_context_objects;
+        // Only check context objects if React version is >= 16.3.0
+        let check_context_objects =
+            self.0.check_context_objects && test_react_version_for_context_objects(ctx);
         let mut resolve_buffer: Vec<String> = Vec::new();
 
         // First pass: collect all React components
@@ -821,12 +810,6 @@ impl Rule for DisplayName {
     }
 }
 
-fn is_exported(name: &str, span: Span, ctx: &LintContext) -> bool {
-    let module_record = ctx.module_record();
-    module_record.exported_bindings.contains_key(name)
-        || module_record.export_default.is_some_and(|default| default == span)
-}
-
 fn process_variable_declaration<'a>(
     tracker: &mut ComponentTracker,
     decl: &VariableDeclaration<'a>,
@@ -880,7 +863,7 @@ fn process_variable_declaration<'a>(
                         matches!(init, Expression::ArrowFunctionExpression(a) if std::ptr::eq(a.as_ref(), arrow))
                     }
                 };
-                println!("[DEBUG] CALLSITE9: is_direct={}, init_type={:?}", is_direct, init);
+
                 if is_direct {
                     if !_ignore_transpiler_name {
                         debug_resolve("CALLSITE9", component_name.as_str());
@@ -893,7 +876,6 @@ fn process_variable_declaration<'a>(
                     match innermost_func {
                         InnermostFunction::Function(func) => {
                             if let Some(func_id) = &func.id {
-                                println!("[DEBUG] curried: named function, name={}", func_id.name);
                                 // Named function: use the function name as displayName
                                 if !_ignore_transpiler_name {
                                     debug_resolve("CALLSITE10", &func_id.name);
@@ -906,7 +888,6 @@ fn process_variable_declaration<'a>(
                                     );
                                 }
                             } else {
-                                println!("[DEBUG] curried: anonymous function");
                                 // Anonymous function: always require explicit displayName
                                 tracker.add_component(
                                     component_name,
@@ -916,7 +897,6 @@ fn process_variable_declaration<'a>(
                             }
                         }
                         InnermostFunction::ArrowFunction(_) => {
-                            println!("[DEBUG] curried: anonymous arrow function");
                             // Anonymous arrow function: always require explicit displayName
                             tracker.add_component(
                                 component_name,
@@ -1424,6 +1404,29 @@ fn test_react_version_for_memo_forwardref(ctx: &LintContext) -> bool {
         }
         None => {
             // If no version specified, assume modern React (>= 16.12.0)
+            true
+        }
+    }
+}
+
+/// Test if the React version is compatible with checking context objects
+/// Compatible versions: >= 16.3.0
+fn test_react_version_for_context_objects(ctx: &LintContext) -> bool {
+    // Get React version from settings
+    let react_version = ctx.settings().react.version.as_deref();
+
+    match react_version {
+        Some(version) => {
+            // Parse version string like "16.3.0", "16.4.0", etc.
+            if let Some((major, minor, _)) = parse_version(version) {
+                // >= 16.3.0: major >= 16 && (major > 16 || minor >= 3)
+                major >= 16 && (major > 16 || minor >= 3)
+            } else {
+                false
+            }
+        }
+        None => {
+            // If no version specified, assume modern React (>= 16.3.0)
             true
         }
     }
@@ -2193,21 +2196,21 @@ fn test() {
                 serde_json::json!({ "settings": {        "react": {          "version": "0.14.11",        },      } }),
             ),
         ),
-        // (
-        //     "
-        // 	        import React from 'react'
+        (
+            "
+        	        import React from 'react'
 
-        // 	        const MemoizedForwardRefComponentLike = React.memo(
-        // 	          React.forwardRef(function({ world }, ref) {
-        // 	            return <div ref={ref}>Hello {world}</div>
-        // 	          })
-        // 	        )
-        // 	      ",
-        //     None,
-        //     Some(
-        //         serde_json::json!({ "settings": {        "react": {          "version": "15.7.1",        },      } }),
-        //     ),
-        // ),
+        	        const MemoizedForwardRefComponentLike = React.memo(
+        	          React.forwardRef(function({ world }, ref) {
+        	            return <div ref={ref}>Hello {world}</div>
+        	          })
+        	        )
+        	      ",
+            None,
+            Some(
+                serde_json::json!({ "settings": {        "react": {          "version": "15.7.1",        },      } }),
+            ),
+        ),
         (
             r#"
         	        import React from 'react';
@@ -2265,17 +2268,17 @@ fn test() {
             None,
         ),
         // TODO: check if this test case is accurate.
-        // (
-        //     "
-        // 	        import { createContext } from 'react';
+        (
+            "
+        	        import { createContext } from 'react';
 
-        // 	        const Hello = createContext();
-        // 	      ",
-        //     Some(serde_json::json!([{ "checkContextObjects": true }])),
-        //     Some(
-        //         serde_json::json!({ "settings": {        "react": {          "version": "16.2.0",        },      } }),
-        //     ),
-        // ),
+        	        const Hello = createContext();
+        	      ",
+            Some(serde_json::json!([{ "checkContextObjects": true }])),
+            Some(
+                serde_json::json!({ "settings": {        "react": {          "version": "16.2.0",        },      } }),
+            ),
+        ),
         (
             r#"
         	        import { createContext } from 'react';
@@ -2333,8 +2336,6 @@ fn test() {
             None,
         ),
     ];
-
-    // let pass: Vec<(&'static str, Option<Value>, Option<Value>)> = vec![];
 
     let fail: Vec<_> = vec![
         (
@@ -2788,6 +2789,6 @@ fn test() {
 }
 
 // Helper function for debug logging
-fn debug_resolve(tag: &str, name: &str) {
-    println!("[DEBUG] resolve_display_name: tag={}, name={}", tag, name);
+fn debug_resolve(_tag: &str, _name: &str) {
+    // Debug logging disabled
 }
