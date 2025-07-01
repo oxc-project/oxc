@@ -9,6 +9,22 @@ use serde::{Deserialize, Serialize};
 /// Derived from [eslint-plugin-react](https://github.com/jsx-eslint/eslint-plugin-react#configuration-legacy-eslintrc-)
 #[derive(Debug, Clone, Deserialize, Default, Serialize, JsonSchema, PartialEq)]
 pub struct ReactPluginSettings {
+    /// React version to use for version-specific behavior.
+    ///
+    /// Example:
+    ///
+    /// ```jsonc
+    /// {
+    ///   "settings": {
+    ///     "react": {
+    ///       "version": "16.14.0"
+    ///     }
+    ///   }
+    /// }
+    /// ```
+    #[serde(default)]
+    pub version: Option<CompactStr>,
+
     /// Components used as alternatives to `<form>` for forms, such as `<Formik>`.
     ///
     /// Example:
