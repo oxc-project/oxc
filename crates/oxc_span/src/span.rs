@@ -81,7 +81,12 @@ pub const SPAN: Span = Span::new(0, 0);
 #[generate_derive(ESTree)]
 #[builder(skip)]
 #[content_eq(skip)]
-#[estree(no_type, flatten)]
+#[estree(
+    no_type,
+    flatten,
+    no_ts_def,
+    add_ts_def = "interface Span { start: number; end: number; range?: [number, number]; }"
+)]
 pub struct Span {
     /// The zero-based start offset of the span
     pub start: u32,
