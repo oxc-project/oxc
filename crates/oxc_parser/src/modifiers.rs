@@ -460,7 +460,14 @@ impl<'a> ParserImpl<'a> {
     }
 
     fn check_for_duplicate_modifiers(&mut self, seen_flags: ModifierFlags, modifier: &Modifier) {
-        if seen_flags.contains(modifier.kind.into()) {
+        if seen_flags.contains(modifier.kind.into())
+            || (matches!(
+                modifier.kind,
+                ModifierKind::Public | ModifierKind::Protected | ModifierKind::Private
+            ) && seen_flags.intersects(
+                ModifierFlags::PUBLIC | ModifierFlags::PROTECTED | ModifierFlags::PRIVATE,
+            ))
+        {
             self.error(diagnostics::modifier_already_seen(modifier));
         }
     }

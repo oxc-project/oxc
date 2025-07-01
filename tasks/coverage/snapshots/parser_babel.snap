@@ -12121,6 +12121,51 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ╰────
   help: Remove the duplicate modifier.
 
+  × TS(1030): 'public' modifier already seen.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/duplicates-accessibility/input.ts:3:11]
+ 2 │   public public a;
+ 3 │   private public b;
+   ·           ──────
+ 4 │   protected private c;
+   ╰────
+  help: Remove the duplicate modifier.
+
+  × TS(1030): 'private' modifier already seen.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/duplicates-accessibility/input.ts:4:13]
+ 3 │   private public b;
+ 4 │   protected private c;
+   ·             ───────
+ 5 │   public protected d;
+   ╰────
+  help: Remove the duplicate modifier.
+
+  × TS(1030): 'protected' modifier already seen.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/duplicates-accessibility/input.ts:5:10]
+ 4 │   protected private c;
+ 5 │   public protected d;
+   ·          ─────────
+ 6 │   public protected private e;
+   ╰────
+  help: Remove the duplicate modifier.
+
+  × TS(1030): 'protected' modifier already seen.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/duplicates-accessibility/input.ts:6:10]
+ 5 │   public protected d;
+ 6 │   public protected private e;
+   ·          ─────────
+ 7 │ }
+   ╰────
+  help: Remove the duplicate modifier.
+
+  × TS(1030): 'private' modifier already seen.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/duplicates-accessibility/input.ts:6:20]
+ 5 │   public protected d;
+ 6 │   public protected private e;
+   ·                    ───────
+ 7 │ }
+   ╰────
+  help: Remove the duplicate modifier.
+
   × TS(1098): Type parameter list cannot be empty.
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/empty-type-parameters/input.ts:1:8]
  1 │ class C<> {}

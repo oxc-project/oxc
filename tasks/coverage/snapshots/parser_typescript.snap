@@ -3,7 +3,7 @@ commit: 81c95189
 parser_typescript Summary:
 AST Parsed     : 6569/6576 (99.89%)
 Positive Passed: 6558/6576 (99.73%)
-Negative Passed: 1418/5722 (24.78%)
+Negative Passed: 1422/5722 (24.85%)
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/ExportAssignment7.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/ExportAssignment8.ts
@@ -799,8 +799,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/constraintEr
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/constraintWithIndexedAccess.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/constraints0.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/constructorArgsErrors4.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/constructorAsType.ts
 
@@ -7134,8 +7132,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ec
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/ConstructorDeclarations/parserConstructorDeclaration4.ts
 
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/ConstructorDeclarations/parserConstructorDeclaration7.ts
-
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/EnumDeclarations/parserEnumDeclaration2.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/EnumDeclarations/parserEnumDeclaration3.d.ts
@@ -7284,11 +7280,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ec
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/ParameterLists/parserParameterList2.ts
 
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/Protected/Protected4.ts
-
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/Protected/Protected6.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/Protected/Protected7.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/RealWorld/parserindenter.ts
 
@@ -11155,6 +11147,15 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
  1 │ class foo {
  2 │     constructor (public public a: number) {
    ·                         ──────
+ 3 │     }
+   ╰────
+  help: Remove the duplicate modifier.
+
+  × TS(1030): 'public' modifier already seen.
+   ╭─[typescript/tests/cases/compiler/constructorArgsErrors4.ts:2:26]
+ 1 │ class foo {
+ 2 │     constructor (private public a: number) {
+   ·                          ──────
  3 │     }
    ╰────
   help: Remove the duplicate modifier.
@@ -20484,6 +20485,42 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
    ╰────
 
   × TS(1030): 'public' modifier already seen.
+    ╭─[typescript/tests/cases/conformance/classes/propertyMemberDeclarations/accessibilityModifiers.ts:39:13]
+ 38 │ class E {
+ 39 │     private public protected property;
+    ·             ──────
+ 40 │     public protected method() { }
+    ╰────
+  help: Remove the duplicate modifier.
+
+  × TS(1030): 'protected' modifier already seen.
+    ╭─[typescript/tests/cases/conformance/classes/propertyMemberDeclarations/accessibilityModifiers.ts:39:20]
+ 38 │ class E {
+ 39 │     private public protected property;
+    ·                    ─────────
+ 40 │     public protected method() { }
+    ╰────
+  help: Remove the duplicate modifier.
+
+  × TS(1030): 'protected' modifier already seen.
+    ╭─[typescript/tests/cases/conformance/classes/propertyMemberDeclarations/accessibilityModifiers.ts:40:12]
+ 39 │     private public protected property;
+ 40 │     public protected method() { }
+    ·            ─────────
+ 41 │     private protected get getter() { return 0; }
+    ╰────
+  help: Remove the duplicate modifier.
+
+  × TS(1030): 'protected' modifier already seen.
+    ╭─[typescript/tests/cases/conformance/classes/propertyMemberDeclarations/accessibilityModifiers.ts:41:13]
+ 40 │     public protected method() { }
+ 41 │     private protected get getter() { return 0; }
+    ·             ─────────
+ 42 │     public public set setter(a: number) { }
+    ╰────
+  help: Remove the duplicate modifier.
+
+  × TS(1030): 'public' modifier already seen.
     ╭─[typescript/tests/cases/conformance/classes/propertyMemberDeclarations/accessibilityModifiers.ts:42:12]
  41 │     private protected get getter() { return 0; }
  42 │     public public set setter(a: number) { }
@@ -26554,6 +26591,15 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
    ╰────
   help: Remove the duplicate modifier.
 
+  × TS(1030): 'private' modifier already seen.
+   ╭─[typescript/tests/cases/conformance/parser/ecmascript5/ConstructorDeclarations/parserConstructorDeclaration7.ts:2:10]
+ 1 │ class C {
+ 2 │   public private constructor() { }
+   ·          ───────
+ 3 │ }
+   ╰────
+  help: Remove the duplicate modifier.
+
   × Expected `(` but found `;`
    ╭─[typescript/tests/cases/conformance/parser/ecmascript5/ConstructorDeclarations/parserConstructorDeclaration8.ts:3:21]
  2 │   // Not a constructor
@@ -27831,6 +27877,24 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
    · ─────────
  2 │ }
    ╰────
+
+  × TS(1030): 'public' modifier already seen.
+   ╭─[typescript/tests/cases/conformance/parser/ecmascript5/Protected/Protected4.ts:2:13]
+ 1 │ class C {
+ 2 │   protected public m() { }
+   ·             ──────
+ 3 │ }
+   ╰────
+  help: Remove the duplicate modifier.
+
+  × TS(1030): 'private' modifier already seen.
+   ╭─[typescript/tests/cases/conformance/parser/ecmascript5/Protected/Protected7.ts:2:13]
+ 1 │ class C {
+ 2 │   protected private m() { }
+   ·             ───────
+ 3 │ }
+   ╰────
+  help: Remove the duplicate modifier.
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
       ╭─[typescript/tests/cases/conformance/parser/ecmascript5/RealWorld/parserharness.ts:1430:16]
