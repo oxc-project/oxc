@@ -14,11 +14,7 @@ impl ESTree for NameSpan<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
         state.serialize_field("value", &self.name);
-        state.serialize_field("start", &self.span.start);
-        state.serialize_field("end", &self.span.end);
-        if state.ranges() {
-            state.serialize_field("range", &[self.span.start, self.span.end]);
-        }
+        state.serialize_span(self.span);
         state.end();
     }
 }
@@ -55,11 +51,7 @@ impl ESTree for ExportEntry<'_> {
         state.serialize_field("exportName", &self.export_name);
         state.serialize_field("localName", &self.local_name);
         state.serialize_field("isType", &self.is_type);
-        state.serialize_field("start", &self.span.start);
-        state.serialize_field("end", &self.span.end);
-        if state.ranges() {
-            state.serialize_field("range", &[self.span.start, self.span.end]);
-        }
+        state.serialize_span(self.span);
         state.end();
     }
 }
@@ -103,11 +95,7 @@ impl ESTree for DynamicImport {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
         state.serialize_field("moduleRequest", &self.module_request);
-        state.serialize_field("start", &self.span.start);
-        state.serialize_field("end", &self.span.end);
-        if state.ranges() {
-            state.serialize_field("range", &[self.span.start, self.span.end]);
-        }
+        state.serialize_span(self.span);
         state.end();
     }
 }

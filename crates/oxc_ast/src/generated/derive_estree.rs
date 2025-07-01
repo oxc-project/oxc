@@ -77,11 +77,7 @@ impl ESTree for IdentifierName<'_> {
         state.serialize_field("name", &JsonSafeString(self.name.as_str()));
         state.serialize_ts_field("optional", &crate::serialize::basic::TsFalse(self));
         state.serialize_ts_field("typeAnnotation", &crate::serialize::basic::TsNull(self));
-        state.serialize_field("start", &self.span.start);
-        state.serialize_field("end", &self.span.end);
-        if state.ranges() {
-            state.serialize_field("range", &[self.span.start, self.span.end]);
-        }
+        state.serialize_span(self.span);
         state.end();
     }
 }
@@ -94,11 +90,7 @@ impl ESTree for IdentifierReference<'_> {
         state.serialize_field("name", &JsonSafeString(self.name.as_str()));
         state.serialize_ts_field("optional", &crate::serialize::basic::TsFalse(self));
         state.serialize_ts_field("typeAnnotation", &crate::serialize::basic::TsNull(self));
-        state.serialize_field("start", &self.span.start);
-        state.serialize_field("end", &self.span.end);
-        if state.ranges() {
-            state.serialize_field("range", &[self.span.start, self.span.end]);
-        }
+        state.serialize_span(self.span);
         state.end();
     }
 }
@@ -111,11 +103,7 @@ impl ESTree for BindingIdentifier<'_> {
         state.serialize_field("name", &JsonSafeString(self.name.as_str()));
         state.serialize_ts_field("optional", &crate::serialize::basic::TsFalse(self));
         state.serialize_ts_field("typeAnnotation", &crate::serialize::basic::TsNull(self));
-        state.serialize_field("start", &self.span.start);
-        state.serialize_field("end", &self.span.end);
-        if state.ranges() {
-            state.serialize_field("range", &[self.span.start, self.span.end]);
-        }
+        state.serialize_span(self.span);
         state.end();
     }
 }
@@ -128,11 +116,7 @@ impl ESTree for LabelIdentifier<'_> {
         state.serialize_field("name", &JsonSafeString(self.name.as_str()));
         state.serialize_ts_field("optional", &crate::serialize::basic::TsFalse(self));
         state.serialize_ts_field("typeAnnotation", &crate::serialize::basic::TsNull(self));
-        state.serialize_field("start", &self.span.start);
-        state.serialize_field("end", &self.span.end);
-        if state.ranges() {
-            state.serialize_field("range", &[self.span.start, self.span.end]);
-        }
+        state.serialize_span(self.span);
         state.end();
     }
 }
@@ -141,11 +125,7 @@ impl ESTree for ThisExpression {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
         state.serialize_field("type", &JsonSafeString("ThisExpression"));
-        state.serialize_field("start", &self.span.start);
-        state.serialize_field("end", &self.span.end);
-        if state.ranges() {
-            state.serialize_field("range", &[self.span.start, self.span.end]);
-        }
+        state.serialize_span(self.span);
         state.end();
     }
 }
@@ -155,11 +135,7 @@ impl ESTree for ArrayExpression<'_> {
         let mut state = serializer.serialize_struct();
         state.serialize_field("type", &JsonSafeString("ArrayExpression"));
         state.serialize_field("elements", &self.elements);
-        state.serialize_field("start", &self.span.start);
-        state.serialize_field("end", &self.span.end);
-        if state.ranges() {
-            state.serialize_field("range", &[self.span.start, self.span.end]);
-        }
+        state.serialize_span(self.span);
         state.end();
     }
 }
@@ -227,11 +203,7 @@ impl ESTree for ObjectExpression<'_> {
         let mut state = serializer.serialize_struct();
         state.serialize_field("type", &JsonSafeString("ObjectExpression"));
         state.serialize_field("properties", &self.properties);
-        state.serialize_field("start", &self.span.start);
-        state.serialize_field("end", &self.span.end);
-        if state.ranges() {
-            state.serialize_field("range", &[self.span.start, self.span.end]);
-        }
+        state.serialize_span(self.span);
         state.end();
     }
 }
@@ -256,11 +228,7 @@ impl ESTree for ObjectProperty<'_> {
         state.serialize_field("shorthand", &self.shorthand);
         state.serialize_field("computed", &self.computed);
         state.serialize_ts_field("optional", &crate::serialize::basic::TsFalse(self));
-        state.serialize_field("start", &self.span.start);
-        state.serialize_field("end", &self.span.end);
-        if state.ranges() {
-            state.serialize_field("range", &[self.span.start, self.span.end]);
-        }
+        state.serialize_span(self.span);
         state.end();
     }
 }
@@ -333,11 +301,7 @@ impl ESTree for TemplateLiteral<'_> {
         state.serialize_field("type", &JsonSafeString("TemplateLiteral"));
         state.serialize_field("quasis", &self.quasis);
         state.serialize_field("expressions", &self.expressions);
-        state.serialize_field("start", &self.span.start);
-        state.serialize_field("end", &self.span.end);
-        if state.ranges() {
-            state.serialize_field("range", &[self.span.start, self.span.end]);
-        }
+        state.serialize_span(self.span);
         state.end();
     }
 }
@@ -349,11 +313,7 @@ impl ESTree for TaggedTemplateExpression<'_> {
         state.serialize_field("tag", &self.tag);
         state.serialize_ts_field("typeArguments", &self.type_arguments);
         state.serialize_field("quasi", &self.quasi);
-        state.serialize_field("start", &self.span.start);
-        state.serialize_field("end", &self.span.end);
-        if state.ranges() {
-            state.serialize_field("range", &[self.span.start, self.span.end]);
-        }
+        state.serialize_span(self.span);
         state.end();
     }
 }
@@ -391,11 +351,7 @@ impl ESTree for ComputedMemberExpression<'_> {
         state.serialize_field("property", &self.expression);
         state.serialize_field("optional", &self.optional);
         state.serialize_field("computed", &crate::serialize::basic::True(self));
-        state.serialize_field("start", &self.span.start);
-        state.serialize_field("end", &self.span.end);
-        if state.ranges() {
-            state.serialize_field("range", &[self.span.start, self.span.end]);
-        }
+        state.serialize_span(self.span);
         state.end();
     }
 }
@@ -408,11 +364,7 @@ impl ESTree for StaticMemberExpression<'_> {
         state.serialize_field("property", &self.property);
         state.serialize_field("optional", &self.optional);
         state.serialize_field("computed", &crate::serialize::basic::False(self));
-        state.serialize_field("start", &self.span.start);
-        state.serialize_field("end", &self.span.end);
-        if state.ranges() {
-            state.serialize_field("range", &[self.span.start, self.span.end]);
-        }
+        state.serialize_span(self.span);
         state.end();
     }
 }
@@ -425,11 +377,7 @@ impl ESTree for PrivateFieldExpression<'_> {
         state.serialize_field("property", &self.field);
         state.serialize_field("optional", &self.optional);
         state.serialize_field("computed", &crate::serialize::basic::False(self));
-        state.serialize_field("start", &self.span.start);
-        state.serialize_field("end", &self.span.end);
-        if state.ranges() {
-            state.serialize_field("range", &[self.span.start, self.span.end]);
-        }
+        state.serialize_span(self.span);
         state.end();
     }
 }
@@ -442,11 +390,7 @@ impl ESTree for CallExpression<'_> {
         state.serialize_ts_field("typeArguments", &self.type_arguments);
         state.serialize_field("arguments", &self.arguments);
         state.serialize_field("optional", &self.optional);
-        state.serialize_field("start", &self.span.start);
-        state.serialize_field("end", &self.span.end);
-        if state.ranges() {
-            state.serialize_field("range", &[self.span.start, self.span.end]);
-        }
+        state.serialize_span(self.span);
         state.end();
     }
 }
@@ -458,11 +402,7 @@ impl ESTree for NewExpression<'_> {
         state.serialize_field("callee", &self.callee);
         state.serialize_ts_field("typeArguments", &self.type_arguments);
         state.serialize_field("arguments", &self.arguments);
-        state.serialize_field("start", &self.span.start);
-        state.serialize_field("end", &self.span.end);
-        if state.ranges() {
-            state.serialize_field("range", &[self.span.start, self.span.end]);
-        }
+        state.serialize_span(self.span);
         state.end();
     }
 }
@@ -473,11 +413,7 @@ impl ESTree for MetaProperty<'_> {
         state.serialize_field("type", &JsonSafeString("MetaProperty"));
         state.serialize_field("meta", &self.meta);
         state.serialize_field("property", &self.property);
-        state.serialize_field("start", &self.span.start);
-        state.serialize_field("end", &self.span.end);
-        if state.ranges() {
-            state.serialize_field("range", &[self.span.start, self.span.end]);
-        }
+        state.serialize_span(self.span);
         state.end();
     }
 }
@@ -487,11 +423,7 @@ impl ESTree for SpreadElement<'_> {
         let mut state = serializer.serialize_struct();
         state.serialize_field("type", &JsonSafeString("SpreadElement"));
         state.serialize_field("argument", &self.argument);
-        state.serialize_field("start", &self.span.start);
-        state.serialize_field("end", &self.span.end);
-        if state.ranges() {
-            state.serialize_field("range", &[self.span.start, self.span.end]);
-        }
+        state.serialize_span(self.span);
         state.end();
     }
 }
@@ -554,11 +486,7 @@ impl ESTree for UpdateExpression<'_> {
         state.serialize_field("operator", &self.operator);
         state.serialize_field("prefix", &self.prefix);
         state.serialize_field("argument", &self.argument);
-        state.serialize_field("start", &self.span.start);
-        state.serialize_field("end", &self.span.end);
-        if state.ranges() {
-            state.serialize_field("range", &[self.span.start, self.span.end]);
-        }
+        state.serialize_span(self.span);
         state.end();
     }
 }
@@ -570,11 +498,7 @@ impl ESTree for UnaryExpression<'_> {
         state.serialize_field("operator", &self.operator);
         state.serialize_field("argument", &self.argument);
         state.serialize_field("prefix", &crate::serialize::basic::True(self));
-        state.serialize_field("start", &self.span.start);
-        state.serialize_field("end", &self.span.end);
-        if state.ranges() {
-            state.serialize_field("range", &[self.span.start, self.span.end]);
-        }
+        state.serialize_span(self.span);
         state.end();
     }
 }
@@ -586,11 +510,7 @@ impl ESTree for BinaryExpression<'_> {
         state.serialize_field("left", &self.left);
         state.serialize_field("operator", &self.operator);
         state.serialize_field("right", &self.right);
-        state.serialize_field("start", &self.span.start);
-        state.serialize_field("end", &self.span.end);
-        if state.ranges() {
-            state.serialize_field("range", &[self.span.start, self.span.end]);
-        }
+        state.serialize_span(self.span);
         state.end();
     }
 }
@@ -602,11 +522,7 @@ impl ESTree for PrivateInExpression<'_> {
         state.serialize_field("left", &self.left);
         state.serialize_field("operator", &crate::serialize::basic::In(self));
         state.serialize_field("right", &self.right);
-        state.serialize_field("start", &self.span.start);
-        state.serialize_field("end", &self.span.end);
-        if state.ranges() {
-            state.serialize_field("range", &[self.span.start, self.span.end]);
-        }
+        state.serialize_span(self.span);
         state.end();
     }
 }
@@ -618,11 +534,7 @@ impl ESTree for LogicalExpression<'_> {
         state.serialize_field("left", &self.left);
         state.serialize_field("operator", &self.operator);
         state.serialize_field("right", &self.right);
-        state.serialize_field("start", &self.span.start);
-        state.serialize_field("end", &self.span.end);
-        if state.ranges() {
-            state.serialize_field("range", &[self.span.start, self.span.end]);
-        }
+        state.serialize_span(self.span);
         state.end();
     }
 }
@@ -634,11 +546,7 @@ impl ESTree for ConditionalExpression<'_> {
         state.serialize_field("test", &self.test);
         state.serialize_field("consequent", &self.consequent);
         state.serialize_field("alternate", &self.alternate);
-        state.serialize_field("start", &self.span.start);
-        state.serialize_field("end", &self.span.end);
-        if state.ranges() {
-            state.serialize_field("range", &[self.span.start, self.span.end]);
-        }
+        state.serialize_span(self.span);
         state.end();
     }
 }
@@ -650,11 +558,7 @@ impl ESTree for AssignmentExpression<'_> {
         state.serialize_field("operator", &self.operator);
         state.serialize_field("left", &self.left);
         state.serialize_field("right", &self.right);
-        state.serialize_field("start", &self.span.start);
-        state.serialize_field("end", &self.span.end);
-        if state.ranges() {
-            state.serialize_field("range", &[self.span.start, self.span.end]);
-        }
+        state.serialize_span(self.span);
         state.end();
     }
 }
@@ -708,11 +612,7 @@ impl ESTree for ArrayAssignmentTarget<'_> {
         state.serialize_field("elements", &Concat2(&self.elements, &self.rest));
         state.serialize_ts_field("optional", &crate::serialize::basic::TsFalse(self));
         state.serialize_ts_field("typeAnnotation", &crate::serialize::basic::TsNull(self));
-        state.serialize_field("start", &self.span.start);
-        state.serialize_field("end", &self.span.end);
-        if state.ranges() {
-            state.serialize_field("range", &[self.span.start, self.span.end]);
-        }
+        state.serialize_span(self.span);
         state.end();
     }
 }
@@ -725,11 +625,7 @@ impl ESTree for ObjectAssignmentTarget<'_> {
         state.serialize_field("properties", &Concat2(&self.properties, &self.rest));
         state.serialize_ts_field("optional", &crate::serialize::basic::TsFalse(self));
         state.serialize_ts_field("typeAnnotation", &crate::serialize::basic::TsNull(self));
-        state.serialize_field("start", &self.span.start);
-        state.serialize_field("end", &self.span.end);
-        if state.ranges() {
-            state.serialize_field("range", &[self.span.start, self.span.end]);
-        }
+        state.serialize_span(self.span);
         state.end();
     }
 }
@@ -743,11 +639,7 @@ impl ESTree for AssignmentTargetRest<'_> {
         state.serialize_ts_field("optional", &crate::serialize::basic::TsFalse(self));
         state.serialize_ts_field("typeAnnotation", &crate::serialize::basic::TsNull(self));
         state.serialize_ts_field("value", &crate::serialize::basic::TsNull(self));
-        state.serialize_field("start", &self.span.start);
-        state.serialize_field("end", &self.span.end);
-        if state.ranges() {
-            state.serialize_field("range", &[self.span.start, self.span.end]);
-        }
+        state.serialize_span(self.span);
         state.end();
     }
 }
@@ -779,11 +671,7 @@ impl ESTree for AssignmentTargetWithDefault<'_> {
         state.serialize_field("right", &self.init);
         state.serialize_ts_field("optional", &crate::serialize::basic::TsFalse(self));
         state.serialize_ts_field("typeAnnotation", &crate::serialize::basic::TsNull(self));
-        state.serialize_field("start", &self.span.start);
-        state.serialize_field("end", &self.span.end);
-        if state.ranges() {
-            state.serialize_field("range", &[self.span.start, self.span.end]);
-        }
+        state.serialize_span(self.span);
         state.end();
     }
 }
@@ -811,11 +699,7 @@ impl ESTree for AssignmentTargetPropertyIdentifier<'_> {
         state.serialize_field("shorthand", &crate::serialize::basic::True(self));
         state.serialize_field("computed", &crate::serialize::basic::False(self));
         state.serialize_ts_field("optional", &crate::serialize::basic::TsFalse(self));
-        state.serialize_field("start", &self.span.start);
-        state.serialize_field("end", &self.span.end);
-        if state.ranges() {
-            state.serialize_field("range", &[self.span.start, self.span.end]);
-        }
+        state.serialize_span(self.span);
         state.end();
     }
 }
@@ -831,11 +715,7 @@ impl ESTree for AssignmentTargetPropertyProperty<'_> {
         state.serialize_field("shorthand", &crate::serialize::basic::False(self));
         state.serialize_field("computed", &self.computed);
         state.serialize_ts_field("optional", &crate::serialize::basic::TsFalse(self));
-        state.serialize_field("start", &self.span.start);
-        state.serialize_field("end", &self.span.end);
-        if state.ranges() {
-            state.serialize_field("range", &[self.span.start, self.span.end]);
-        }
+        state.serialize_span(self.span);
         state.end();
     }
 }
@@ -845,11 +725,7 @@ impl ESTree for SequenceExpression<'_> {
         let mut state = serializer.serialize_struct();
         state.serialize_field("type", &JsonSafeString("SequenceExpression"));
         state.serialize_field("expressions", &self.expressions);
-        state.serialize_field("start", &self.span.start);
-        state.serialize_field("end", &self.span.end);
-        if state.ranges() {
-            state.serialize_field("range", &[self.span.start, self.span.end]);
-        }
+        state.serialize_span(self.span);
         state.end();
     }
 }
@@ -858,11 +734,7 @@ impl ESTree for Super {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
         state.serialize_field("type", &JsonSafeString("Super"));
-        state.serialize_field("start", &self.span.start);
-        state.serialize_field("end", &self.span.end);
-        if state.ranges() {
-            state.serialize_field("range", &[self.span.start, self.span.end]);
-        }
+        state.serialize_span(self.span);
         state.end();
     }
 }
@@ -872,11 +744,7 @@ impl ESTree for AwaitExpression<'_> {
         let mut state = serializer.serialize_struct();
         state.serialize_field("type", &JsonSafeString("AwaitExpression"));
         state.serialize_field("argument", &self.argument);
-        state.serialize_field("start", &self.span.start);
-        state.serialize_field("end", &self.span.end);
-        if state.ranges() {
-            state.serialize_field("range", &[self.span.start, self.span.end]);
-        }
+        state.serialize_span(self.span);
         state.end();
     }
 }
@@ -886,11 +754,7 @@ impl ESTree for ChainExpression<'_> {
         let mut state = serializer.serialize_struct();
         state.serialize_field("type", &JsonSafeString("ChainExpression"));
         state.serialize_field("expression", &self.expression);
-        state.serialize_field("start", &self.span.start);
-        state.serialize_field("end", &self.span.end);
-        if state.ranges() {
-            state.serialize_field("range", &[self.span.start, self.span.end]);
-        }
+        state.serialize_span(self.span);
         state.end();
     }
 }
@@ -912,11 +776,7 @@ impl ESTree for ParenthesizedExpression<'_> {
         let mut state = serializer.serialize_struct();
         state.serialize_field("type", &JsonSafeString("ParenthesizedExpression"));
         state.serialize_field("expression", &self.expression);
-        state.serialize_field("start", &self.span.start);
-        state.serialize_field("end", &self.span.end);
-        if state.ranges() {
-            state.serialize_field("range", &[self.span.start, self.span.end]);
-        }
+        state.serialize_span(self.span);
         state.end();
     }
 }
@@ -966,11 +826,7 @@ impl ESTree for Directive<'_> {
         state.serialize_field("type", &JsonSafeString("ExpressionStatement"));
         state.serialize_field("expression", &self.expression);
         state.serialize_field("directive", &self.directive);
-        state.serialize_field("start", &self.span.start);
-        state.serialize_field("end", &self.span.end);
-        if state.ranges() {
-            state.serialize_field("range", &[self.span.start, self.span.end]);
-        }
+        state.serialize_span(self.span);
         state.end();
     }
 }
@@ -980,11 +836,7 @@ impl ESTree for Hashbang<'_> {
         let mut state = serializer.serialize_struct();
         state.serialize_field("type", &JsonSafeString("Hashbang"));
         state.serialize_field("value", &self.value);
-        state.serialize_field("start", &self.span.start);
-        state.serialize_field("end", &self.span.end);
-        if state.ranges() {
-            state.serialize_field("range", &[self.span.start, self.span.end]);
-        }
+        state.serialize_span(self.span);
         state.end();
     }
 }
@@ -994,11 +846,7 @@ impl ESTree for BlockStatement<'_> {
         let mut state = serializer.serialize_struct();
         state.serialize_field("type", &JsonSafeString("BlockStatement"));
         state.serialize_field("body", &self.body);
-        state.serialize_field("start", &self.span.start);
-        state.serialize_field("end", &self.span.end);
-        if state.ranges() {
-            state.serialize_field("range", &[self.span.start, self.span.end]);
-        }
+        state.serialize_span(self.span);
         state.end();
     }
 }
@@ -1025,11 +873,7 @@ impl ESTree for VariableDeclaration<'_> {
         state.serialize_field("kind", &self.kind);
         state.serialize_field("declarations", &self.declarations);
         state.serialize_ts_field("declare", &self.declare);
-        state.serialize_field("start", &self.span.start);
-        state.serialize_field("end", &self.span.end);
-        if state.ranges() {
-            state.serialize_field("range", &[self.span.start, self.span.end]);
-        }
+        state.serialize_span(self.span);
         state.end();
     }
 }
@@ -1053,11 +897,7 @@ impl ESTree for VariableDeclarator<'_> {
         state.serialize_field("id", &self.id);
         state.serialize_field("init", &self.init);
         state.serialize_ts_field("definite", &self.definite);
-        state.serialize_field("start", &self.span.start);
-        state.serialize_field("end", &self.span.end);
-        if state.ranges() {
-            state.serialize_field("range", &[self.span.start, self.span.end]);
-        }
+        state.serialize_span(self.span);
         state.end();
     }
 }
@@ -1066,11 +906,7 @@ impl ESTree for EmptyStatement {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
         state.serialize_field("type", &JsonSafeString("EmptyStatement"));
-        state.serialize_field("start", &self.span.start);
-        state.serialize_field("end", &self.span.end);
-        if state.ranges() {
-            state.serialize_field("range", &[self.span.start, self.span.end]);
-        }
+        state.serialize_span(self.span);
         state.end();
     }
 }
@@ -1084,11 +920,7 @@ impl ESTree for ExpressionStatement<'_> {
             "directive",
             &crate::serialize::ts::ExpressionStatementDirective(self),
         );
-        state.serialize_field("start", &self.span.start);
-        state.serialize_field("end", &self.span.end);
-        if state.ranges() {
-            state.serialize_field("range", &[self.span.start, self.span.end]);
-        }
+        state.serialize_span(self.span);
         state.end();
     }
 }
@@ -1100,11 +932,7 @@ impl ESTree for IfStatement<'_> {
         state.serialize_field("test", &self.test);
         state.serialize_field("consequent", &self.consequent);
         state.serialize_field("alternate", &self.alternate);
-        state.serialize_field("start", &self.span.start);
-        state.serialize_field("end", &self.span.end);
-        if state.ranges() {
-            state.serialize_field("range", &[self.span.start, self.span.end]);
-        }
+        state.serialize_span(self.span);
         state.end();
     }
 }
@@ -1115,11 +943,7 @@ impl ESTree for DoWhileStatement<'_> {
         state.serialize_field("type", &JsonSafeString("DoWhileStatement"));
         state.serialize_field("body", &self.body);
         state.serialize_field("test", &self.test);
-        state.serialize_field("start", &self.span.start);
-        state.serialize_field("end", &self.span.end);
-        if state.ranges() {
-            state.serialize_field("range", &[self.span.start, self.span.end]);
-        }
+        state.serialize_span(self.span);
         state.end();
     }
 }
@@ -1130,11 +954,7 @@ impl ESTree for WhileStatement<'_> {
         state.serialize_field("type", &JsonSafeString("WhileStatement"));
         state.serialize_field("test", &self.test);
         state.serialize_field("body", &self.body);
-        state.serialize_field("start", &self.span.start);
-        state.serialize_field("end", &self.span.end);
-        if state.ranges() {
-            state.serialize_field("range", &[self.span.start, self.span.end]);
-        }
+        state.serialize_span(self.span);
         state.end();
     }
 }
@@ -1147,11 +967,7 @@ impl ESTree for ForStatement<'_> {
         state.serialize_field("test", &self.test);
         state.serialize_field("update", &self.update);
         state.serialize_field("body", &self.body);
-        state.serialize_field("start", &self.span.start);
-        state.serialize_field("end", &self.span.end);
-        if state.ranges() {
-            state.serialize_field("range", &[self.span.start, self.span.end]);
-        }
+        state.serialize_span(self.span);
         state.end();
     }
 }
@@ -1214,11 +1030,7 @@ impl ESTree for ForInStatement<'_> {
         state.serialize_field("left", &self.left);
         state.serialize_field("right", &self.right);
         state.serialize_field("body", &self.body);
-        state.serialize_field("start", &self.span.start);
-        state.serialize_field("end", &self.span.end);
-        if state.ranges() {
-            state.serialize_field("range", &[self.span.start, self.span.end]);
-        }
+        state.serialize_span(self.span);
         state.end();
     }
 }
@@ -1249,11 +1061,7 @@ impl ESTree for ForOfStatement<'_> {
         state.serialize_field("left", &self.left);
         state.serialize_field("right", &self.right);
         state.serialize_field("body", &self.body);
-        state.serialize_field("start", &self.span.start);
-        state.serialize_field("end", &self.span.end);
-        if state.ranges() {
-            state.serialize_field("range", &[self.span.start, self.span.end]);
-        }
+        state.serialize_span(self.span);
         state.end();
     }
 }
@@ -1263,11 +1071,7 @@ impl ESTree for ContinueStatement<'_> {
         let mut state = serializer.serialize_struct();
         state.serialize_field("type", &JsonSafeString("ContinueStatement"));
         state.serialize_field("label", &self.label);
-        state.serialize_field("start", &self.span.start);
-        state.serialize_field("end", &self.span.end);
-        if state.ranges() {
-            state.serialize_field("range", &[self.span.start, self.span.end]);
-        }
+        state.serialize_span(self.span);
         state.end();
     }
 }
@@ -1277,11 +1081,7 @@ impl ESTree for BreakStatement<'_> {
         let mut state = serializer.serialize_struct();
         state.serialize_field("type", &JsonSafeString("BreakStatement"));
         state.serialize_field("label", &self.label);
-        state.serialize_field("start", &self.span.start);
-        state.serialize_field("end", &self.span.end);
-        if state.ranges() {
-            state.serialize_field("range", &[self.span.start, self.span.end]);
-        }
+        state.serialize_span(self.span);
         state.end();
     }
 }
@@ -1291,11 +1091,7 @@ impl ESTree for ReturnStatement<'_> {
         let mut state = serializer.serialize_struct();
         state.serialize_field("type", &JsonSafeString("ReturnStatement"));
         state.serialize_field("argument", &self.argument);
-        state.serialize_field("start", &self.span.start);
-        state.serialize_field("end", &self.span.end);
-        if state.ranges() {
-            state.serialize_field("range", &[self.span.start, self.span.end]);
-        }
+        state.serialize_span(self.span);
         state.end();
     }
 }
@@ -1306,11 +1102,7 @@ impl ESTree for WithStatement<'_> {
         state.serialize_field("type", &JsonSafeString("WithStatement"));
         state.serialize_field("object", &self.object);
         state.serialize_field("body", &self.body);
-        state.serialize_field("start", &self.span.start);
-        state.serialize_field("end", &self.span.end);
-        if state.ranges() {
-            state.serialize_field("range", &[self.span.start, self.span.end]);
-        }
+        state.serialize_span(self.span);
         state.end();
     }
 }
@@ -1321,11 +1113,7 @@ impl ESTree for SwitchStatement<'_> {
         state.serialize_field("type", &JsonSafeString("SwitchStatement"));
         state.serialize_field("discriminant", &self.discriminant);
         state.serialize_field("cases", &self.cases);
-        state.serialize_field("start", &self.span.start);
-        state.serialize_field("end", &self.span.end);
-        if state.ranges() {
-            state.serialize_field("range", &[self.span.start, self.span.end]);
-        }
+        state.serialize_span(self.span);
         state.end();
     }
 }
@@ -1336,11 +1124,7 @@ impl ESTree for SwitchCase<'_> {
         state.serialize_field("type", &JsonSafeString("SwitchCase"));
         state.serialize_field("test", &self.test);
         state.serialize_field("consequent", &self.consequent);
-        state.serialize_field("start", &self.span.start);
-        state.serialize_field("end", &self.span.end);
-        if state.ranges() {
-            state.serialize_field("range", &[self.span.start, self.span.end]);
-        }
+        state.serialize_span(self.span);
         state.end();
     }
 }
@@ -1351,11 +1135,7 @@ impl ESTree for LabeledStatement<'_> {
         state.serialize_field("type", &JsonSafeString("LabeledStatement"));
         state.serialize_field("label", &self.label);
         state.serialize_field("body", &self.body);
-        state.serialize_field("start", &self.span.start);
-        state.serialize_field("end", &self.span.end);
-        if state.ranges() {
-            state.serialize_field("range", &[self.span.start, self.span.end]);
-        }
+        state.serialize_span(self.span);
         state.end();
     }
 }
@@ -1365,11 +1145,7 @@ impl ESTree for ThrowStatement<'_> {
         let mut state = serializer.serialize_struct();
         state.serialize_field("type", &JsonSafeString("ThrowStatement"));
         state.serialize_field("argument", &self.argument);
-        state.serialize_field("start", &self.span.start);
-        state.serialize_field("end", &self.span.end);
-        if state.ranges() {
-            state.serialize_field("range", &[self.span.start, self.span.end]);
-        }
+        state.serialize_span(self.span);
         state.end();
     }
 }
@@ -1381,11 +1157,7 @@ impl ESTree for TryStatement<'_> {
         state.serialize_field("block", &self.block);
         state.serialize_field("handler", &self.handler);
         state.serialize_field("finalizer", &self.finalizer);
-        state.serialize_field("start", &self.span.start);
-        state.serialize_field("end", &self.span.end);
-        if state.ranges() {
-            state.serialize_field("range", &[self.span.start, self.span.end]);
-        }
+        state.serialize_span(self.span);
         state.end();
     }
 }
@@ -1396,11 +1168,7 @@ impl ESTree for CatchClause<'_> {
         state.serialize_field("type", &JsonSafeString("CatchClause"));
         state.serialize_field("param", &self.param);
         state.serialize_field("body", &self.body);
-        state.serialize_field("start", &self.span.start);
-        state.serialize_field("end", &self.span.end);
-        if state.ranges() {
-            state.serialize_field("range", &[self.span.start, self.span.end]);
-        }
+        state.serialize_span(self.span);
         state.end();
     }
 }
@@ -1415,11 +1183,7 @@ impl ESTree for DebuggerStatement {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
         state.serialize_field("type", &JsonSafeString("DebuggerStatement"));
-        state.serialize_field("start", &self.span.start);
-        state.serialize_field("end", &self.span.end);
-        if state.ranges() {
-            state.serialize_field("range", &[self.span.start, self.span.end]);
-        }
+        state.serialize_span(self.span);
         state.end();
     }
 }
@@ -1450,11 +1214,7 @@ impl ESTree for AssignmentPattern<'_> {
         state.serialize_field("right", &self.right);
         state.serialize_ts_field("optional", &crate::serialize::basic::TsFalse(self));
         state.serialize_ts_field("typeAnnotation", &crate::serialize::basic::TsNull(self));
-        state.serialize_field("start", &self.span.start);
-        state.serialize_field("end", &self.span.end);
-        if state.ranges() {
-            state.serialize_field("range", &[self.span.start, self.span.end]);
-        }
+        state.serialize_span(self.span);
         state.end();
     }
 }
@@ -1467,11 +1227,7 @@ impl ESTree for ObjectPattern<'_> {
         state.serialize_field("properties", &Concat2(&self.properties, &self.rest));
         state.serialize_ts_field("optional", &crate::serialize::basic::TsFalse(self));
         state.serialize_ts_field("typeAnnotation", &crate::serialize::basic::TsNull(self));
-        state.serialize_field("start", &self.span.start);
-        state.serialize_field("end", &self.span.end);
-        if state.ranges() {
-            state.serialize_field("range", &[self.span.start, self.span.end]);
-        }
+        state.serialize_span(self.span);
         state.end();
     }
 }
@@ -1487,11 +1243,7 @@ impl ESTree for BindingProperty<'_> {
         state.serialize_field("shorthand", &self.shorthand);
         state.serialize_field("computed", &self.computed);
         state.serialize_ts_field("optional", &crate::serialize::basic::TsFalse(self));
-        state.serialize_field("start", &self.span.start);
-        state.serialize_field("end", &self.span.end);
-        if state.ranges() {
-            state.serialize_field("range", &[self.span.start, self.span.end]);
-        }
+        state.serialize_span(self.span);
         state.end();
     }
 }
@@ -1504,11 +1256,7 @@ impl ESTree for ArrayPattern<'_> {
         state.serialize_field("elements", &Concat2(&self.elements, &self.rest));
         state.serialize_ts_field("optional", &crate::serialize::basic::TsFalse(self));
         state.serialize_ts_field("typeAnnotation", &crate::serialize::basic::TsNull(self));
-        state.serialize_field("start", &self.span.start);
-        state.serialize_field("end", &self.span.end);
-        if state.ranges() {
-            state.serialize_field("range", &[self.span.start, self.span.end]);
-        }
+        state.serialize_span(self.span);
         state.end();
     }
 }
@@ -1522,11 +1270,7 @@ impl ESTree for BindingRestElement<'_> {
         state.serialize_ts_field("optional", &crate::serialize::basic::TsFalse(self));
         state.serialize_ts_field("typeAnnotation", &crate::serialize::basic::TsNull(self));
         state.serialize_ts_field("value", &crate::serialize::basic::TsNull(self));
-        state.serialize_field("start", &self.span.start);
-        state.serialize_field("end", &self.span.end);
-        if state.ranges() {
-            state.serialize_field("range", &[self.span.start, self.span.end]);
-        }
+        state.serialize_span(self.span);
         state.end();
     }
 }
@@ -1544,11 +1288,7 @@ impl ESTree for Function<'_> {
         state.serialize_ts_field("returnType", &self.return_type);
         state.serialize_field("body", &self.body);
         state.serialize_field("expression", &crate::serialize::basic::False(self));
-        state.serialize_field("start", &self.span.start);
-        state.serialize_field("end", &self.span.end);
-        if state.ranges() {
-            state.serialize_field("range", &[self.span.start, self.span.end]);
-        }
+        state.serialize_span(self.span);
         state.end();
     }
 }
@@ -1600,11 +1340,7 @@ impl ESTree for FunctionBody<'_> {
         let mut state = serializer.serialize_struct();
         state.serialize_field("type", &JsonSafeString("BlockStatement"));
         state.serialize_field("body", &Concat2(&self.directives, &self.statements));
-        state.serialize_field("start", &self.span.start);
-        state.serialize_field("end", &self.span.end);
-        if state.ranges() {
-            state.serialize_field("range", &[self.span.start, self.span.end]);
-        }
+        state.serialize_span(self.span);
         state.end();
     }
 }
@@ -1621,11 +1357,7 @@ impl ESTree for ArrowFunctionExpression<'_> {
         state.serialize_field("body", &crate::serialize::js::ArrowFunctionExpressionBody(self));
         state.serialize_field("id", &crate::serialize::basic::Null(self));
         state.serialize_field("generator", &crate::serialize::basic::False(self));
-        state.serialize_field("start", &self.span.start);
-        state.serialize_field("end", &self.span.end);
-        if state.ranges() {
-            state.serialize_field("range", &[self.span.start, self.span.end]);
-        }
+        state.serialize_span(self.span);
         state.end();
     }
 }
@@ -1636,11 +1368,7 @@ impl ESTree for YieldExpression<'_> {
         state.serialize_field("type", &JsonSafeString("YieldExpression"));
         state.serialize_field("delegate", &self.delegate);
         state.serialize_field("argument", &self.argument);
-        state.serialize_field("start", &self.span.start);
-        state.serialize_field("end", &self.span.end);
-        if state.ranges() {
-            state.serialize_field("range", &[self.span.start, self.span.end]);
-        }
+        state.serialize_span(self.span);
         state.end();
     }
 }
@@ -1658,11 +1386,7 @@ impl ESTree for Class<'_> {
         state.serialize_field("body", &self.body);
         state.serialize_ts_field("abstract", &self.r#abstract);
         state.serialize_ts_field("declare", &self.declare);
-        state.serialize_field("start", &self.span.start);
-        state.serialize_field("end", &self.span.end);
-        if state.ranges() {
-            state.serialize_field("range", &[self.span.start, self.span.end]);
-        }
+        state.serialize_span(self.span);
         state.end();
     }
 }
@@ -1681,11 +1405,7 @@ impl ESTree for ClassBody<'_> {
         let mut state = serializer.serialize_struct();
         state.serialize_field("type", &JsonSafeString("ClassBody"));
         state.serialize_field("body", &self.body);
-        state.serialize_field("start", &self.span.start);
-        state.serialize_field("end", &self.span.end);
-        if state.ranges() {
-            state.serialize_field("range", &[self.span.start, self.span.end]);
-        }
+        state.serialize_span(self.span);
         state.end();
     }
 }
@@ -1715,11 +1435,7 @@ impl ESTree for MethodDefinition<'_> {
         state.serialize_ts_field("override", &self.r#override);
         state.serialize_ts_field("optional", &self.optional);
         state.serialize_ts_field("accessibility", &self.accessibility);
-        state.serialize_field("start", &self.span.start);
-        state.serialize_field("end", &self.span.end);
-        if state.ranges() {
-            state.serialize_field("range", &[self.span.start, self.span.end]);
-        }
+        state.serialize_span(self.span);
         state.end();
     }
 }
@@ -1751,11 +1467,7 @@ impl ESTree for PropertyDefinition<'_> {
         state.serialize_ts_field("definite", &self.definite);
         state.serialize_ts_field("readonly", &self.readonly);
         state.serialize_ts_field("accessibility", &self.accessibility);
-        state.serialize_field("start", &self.span.start);
-        state.serialize_field("end", &self.span.end);
-        if state.ranges() {
-            state.serialize_field("range", &[self.span.start, self.span.end]);
-        }
+        state.serialize_span(self.span);
         state.end();
     }
 }
@@ -1787,11 +1499,7 @@ impl ESTree for PrivateIdentifier<'_> {
         let mut state = serializer.serialize_struct();
         state.serialize_field("type", &JsonSafeString("PrivateIdentifier"));
         state.serialize_field("name", &self.name);
-        state.serialize_field("start", &self.span.start);
-        state.serialize_field("end", &self.span.end);
-        if state.ranges() {
-            state.serialize_field("range", &[self.span.start, self.span.end]);
-        }
+        state.serialize_span(self.span);
         state.end();
     }
 }
@@ -1801,11 +1509,7 @@ impl ESTree for StaticBlock<'_> {
         let mut state = serializer.serialize_struct();
         state.serialize_field("type", &JsonSafeString("StaticBlock"));
         state.serialize_field("body", &self.body);
-        state.serialize_field("start", &self.span.start);
-        state.serialize_field("end", &self.span.end);
-        if state.ranges() {
-            state.serialize_field("range", &[self.span.start, self.span.end]);
-        }
+        state.serialize_span(self.span);
         state.end();
     }
 }
@@ -1850,11 +1554,7 @@ impl ESTree for AccessorProperty<'_> {
         state.serialize_ts_field("declare", &crate::serialize::basic::TsFalse(self));
         state.serialize_ts_field("optional", &crate::serialize::basic::TsFalse(self));
         state.serialize_ts_field("readonly", &crate::serialize::basic::TsFalse(self));
-        state.serialize_field("start", &self.span.start);
-        state.serialize_field("end", &self.span.end);
-        if state.ranges() {
-            state.serialize_field("range", &[self.span.start, self.span.end]);
-        }
+        state.serialize_span(self.span);
         state.end();
     }
 }
@@ -1866,11 +1566,7 @@ impl ESTree for ImportExpression<'_> {
         state.serialize_field("source", &self.source);
         state.serialize_field("options", &self.options);
         state.serialize_field("phase", &self.phase);
-        state.serialize_field("start", &self.span.start);
-        state.serialize_field("end", &self.span.end);
-        if state.ranges() {
-            state.serialize_field("range", &[self.span.start, self.span.end]);
-        }
+        state.serialize_span(self.span);
         state.end();
     }
 }
@@ -1890,11 +1586,7 @@ impl ESTree for ImportDeclaration<'_> {
             &crate::serialize::js::ImportDeclarationWithClause(self),
         );
         state.serialize_ts_field("importKind", &self.import_kind);
-        state.serialize_field("start", &self.span.start);
-        state.serialize_field("end", &self.span.end);
-        if state.ranges() {
-            state.serialize_field("range", &[self.span.start, self.span.end]);
-        }
+        state.serialize_span(self.span);
         state.end();
     }
 }
@@ -1925,11 +1617,7 @@ impl ESTree for ImportSpecifier<'_> {
         state.serialize_field("imported", &self.imported);
         state.serialize_field("local", &self.local);
         state.serialize_ts_field("importKind", &self.import_kind);
-        state.serialize_field("start", &self.span.start);
-        state.serialize_field("end", &self.span.end);
-        if state.ranges() {
-            state.serialize_field("range", &[self.span.start, self.span.end]);
-        }
+        state.serialize_span(self.span);
         state.end();
     }
 }
@@ -1939,11 +1627,7 @@ impl ESTree for ImportDefaultSpecifier<'_> {
         let mut state = serializer.serialize_struct();
         state.serialize_field("type", &JsonSafeString("ImportDefaultSpecifier"));
         state.serialize_field("local", &self.local);
-        state.serialize_field("start", &self.span.start);
-        state.serialize_field("end", &self.span.end);
-        if state.ranges() {
-            state.serialize_field("range", &[self.span.start, self.span.end]);
-        }
+        state.serialize_span(self.span);
         state.end();
     }
 }
@@ -1953,11 +1637,7 @@ impl ESTree for ImportNamespaceSpecifier<'_> {
         let mut state = serializer.serialize_struct();
         state.serialize_field("type", &JsonSafeString("ImportNamespaceSpecifier"));
         state.serialize_field("local", &self.local);
-        state.serialize_field("start", &self.span.start);
-        state.serialize_field("end", &self.span.end);
-        if state.ranges() {
-            state.serialize_field("range", &[self.span.start, self.span.end]);
-        }
+        state.serialize_span(self.span);
         state.end();
     }
 }
@@ -1966,9 +1646,6 @@ impl ESTree for WithClause<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
         state.serialize_field("attributes", &self.with_entries);
-        if state.ranges() {
-            state.serialize_field("range", &[self.span.start, self.span.end]);
-        }
         state.end();
     }
 }
@@ -1979,11 +1656,7 @@ impl ESTree for ImportAttribute<'_> {
         state.serialize_field("type", &JsonSafeString("ImportAttribute"));
         state.serialize_field("key", &self.key);
         state.serialize_field("value", &self.value);
-        state.serialize_field("start", &self.span.start);
-        state.serialize_field("end", &self.span.end);
-        if state.ranges() {
-            state.serialize_field("range", &[self.span.start, self.span.end]);
-        }
+        state.serialize_span(self.span);
         state.end();
     }
 }
@@ -2009,11 +1682,7 @@ impl ESTree for ExportNamedDeclaration<'_> {
             "attributes",
             &crate::serialize::js::ExportNamedDeclarationWithClause(self),
         );
-        state.serialize_field("start", &self.span.start);
-        state.serialize_field("end", &self.span.end);
-        if state.ranges() {
-            state.serialize_field("range", &[self.span.start, self.span.end]);
-        }
+        state.serialize_span(self.span);
         state.end();
     }
 }
@@ -2024,11 +1693,7 @@ impl ESTree for ExportDefaultDeclaration<'_> {
         state.serialize_field("type", &JsonSafeString("ExportDefaultDeclaration"));
         state.serialize_field("declaration", &self.declaration);
         state.serialize_ts_field("exportKind", &crate::serialize::basic::TsValue(self));
-        state.serialize_field("start", &self.span.start);
-        state.serialize_field("end", &self.span.end);
-        if state.ranges() {
-            state.serialize_field("range", &[self.span.start, self.span.end]);
-        }
+        state.serialize_span(self.span);
         state.end();
     }
 }
@@ -2044,11 +1709,7 @@ impl ESTree for ExportAllDeclaration<'_> {
             &crate::serialize::js::ExportAllDeclarationWithClause(self),
         );
         state.serialize_ts_field("exportKind", &self.export_kind);
-        state.serialize_field("start", &self.span.start);
-        state.serialize_field("end", &self.span.end);
-        if state.ranges() {
-            state.serialize_field("range", &[self.span.start, self.span.end]);
-        }
+        state.serialize_span(self.span);
         state.end();
     }
 }
@@ -2060,11 +1721,7 @@ impl ESTree for ExportSpecifier<'_> {
         state.serialize_field("local", &self.local);
         state.serialize_field("exported", &self.exported);
         state.serialize_ts_field("exportKind", &self.export_kind);
-        state.serialize_field("start", &self.span.start);
-        state.serialize_field("end", &self.span.end);
-        if state.ranges() {
-            state.serialize_field("range", &[self.span.start, self.span.end]);
-        }
+        state.serialize_span(self.span);
         state.end();
     }
 }
@@ -2138,11 +1795,7 @@ impl ESTree for V8IntrinsicExpression<'_> {
         state.serialize_field("type", &JsonSafeString("V8IntrinsicExpression"));
         state.serialize_field("name", &self.name);
         state.serialize_field("arguments", &self.arguments);
-        state.serialize_field("start", &self.span.start);
-        state.serialize_field("end", &self.span.end);
-        if state.ranges() {
-            state.serialize_field("range", &[self.span.start, self.span.end]);
-        }
+        state.serialize_span(self.span);
         state.end();
     }
 }
@@ -2153,11 +1806,7 @@ impl ESTree for BooleanLiteral {
         state.serialize_field("type", &JsonSafeString("Literal"));
         state.serialize_field("value", &self.value);
         state.serialize_field("raw", &crate::serialize::literal::BooleanLiteralRaw(self));
-        state.serialize_field("start", &self.span.start);
-        state.serialize_field("end", &self.span.end);
-        if state.ranges() {
-            state.serialize_field("range", &[self.span.start, self.span.end]);
-        }
+        state.serialize_span(self.span);
         state.end();
     }
 }
@@ -2168,11 +1817,7 @@ impl ESTree for NullLiteral {
         state.serialize_field("type", &JsonSafeString("Literal"));
         state.serialize_field("value", &crate::serialize::basic::Null(self));
         state.serialize_field("raw", &crate::serialize::literal::NullLiteralRaw(self));
-        state.serialize_field("start", &self.span.start);
-        state.serialize_field("end", &self.span.end);
-        if state.ranges() {
-            state.serialize_field("range", &[self.span.start, self.span.end]);
-        }
+        state.serialize_span(self.span);
         state.end();
     }
 }
@@ -2183,11 +1828,7 @@ impl ESTree for NumericLiteral<'_> {
         state.serialize_field("type", &JsonSafeString("Literal"));
         state.serialize_field("value", &self.value);
         state.serialize_field("raw", &self.raw.map(|s| JsonSafeString(s.as_str())));
-        state.serialize_field("start", &self.span.start);
-        state.serialize_field("end", &self.span.end);
-        if state.ranges() {
-            state.serialize_field("range", &[self.span.start, self.span.end]);
-        }
+        state.serialize_span(self.span);
         state.end();
     }
 }
@@ -2198,11 +1839,7 @@ impl ESTree for StringLiteral<'_> {
         state.serialize_field("type", &JsonSafeString("Literal"));
         state.serialize_field("value", &crate::serialize::literal::StringLiteralValue(self));
         state.serialize_field("raw", &self.raw);
-        state.serialize_field("start", &self.span.start);
-        state.serialize_field("end", &self.span.end);
-        if state.ranges() {
-            state.serialize_field("range", &[self.span.start, self.span.end]);
-        }
+        state.serialize_span(self.span);
         state.end();
     }
 }
@@ -2214,11 +1851,7 @@ impl ESTree for BigIntLiteral<'_> {
         state.serialize_field("value", &crate::serialize::literal::BigIntLiteralValue(self));
         state.serialize_field("raw", &self.raw.map(|s| JsonSafeString(s.as_str())));
         state.serialize_field("bigint", &crate::serialize::literal::BigIntLiteralBigint(self));
-        state.serialize_field("start", &self.span.start);
-        state.serialize_field("end", &self.span.end);
-        if state.ranges() {
-            state.serialize_field("range", &[self.span.start, self.span.end]);
-        }
+        state.serialize_span(self.span);
         state.end();
     }
 }
@@ -2230,11 +1863,7 @@ impl ESTree for RegExpLiteral<'_> {
         state.serialize_field("value", &crate::serialize::literal::RegExpLiteralValue(self));
         state.serialize_field("raw", &self.raw);
         state.serialize_field("regex", &self.regex);
-        state.serialize_field("start", &self.span.start);
-        state.serialize_field("end", &self.span.end);
-        if state.ranges() {
-            state.serialize_field("range", &[self.span.start, self.span.end]);
-        }
+        state.serialize_span(self.span);
         state.end();
     }
 }
@@ -2272,11 +1901,7 @@ impl ESTree for JSXElement<'_> {
         );
         state.serialize_field("children", &self.children);
         state.serialize_field("closingElement", &self.closing_element);
-        state.serialize_field("start", &self.span.start);
-        state.serialize_field("end", &self.span.end);
-        if state.ranges() {
-            state.serialize_field("range", &[self.span.start, self.span.end]);
-        }
+        state.serialize_span(self.span);
         state.end();
     }
 }
@@ -2292,11 +1917,7 @@ impl ESTree for JSXOpeningElement<'_> {
             "selfClosing",
             &crate::serialize::jsx::JSXOpeningElementSelfClosing(self),
         );
-        state.serialize_field("start", &self.span.start);
-        state.serialize_field("end", &self.span.end);
-        if state.ranges() {
-            state.serialize_field("range", &[self.span.start, self.span.end]);
-        }
+        state.serialize_span(self.span);
         state.end();
     }
 }
@@ -2306,11 +1927,7 @@ impl ESTree for JSXClosingElement<'_> {
         let mut state = serializer.serialize_struct();
         state.serialize_field("type", &JsonSafeString("JSXClosingElement"));
         state.serialize_field("name", &self.name);
-        state.serialize_field("start", &self.span.start);
-        state.serialize_field("end", &self.span.end);
-        if state.ranges() {
-            state.serialize_field("range", &[self.span.start, self.span.end]);
-        }
+        state.serialize_span(self.span);
         state.end();
     }
 }
@@ -2322,11 +1939,7 @@ impl ESTree for JSXFragment<'_> {
         state.serialize_field("openingFragment", &self.opening_fragment);
         state.serialize_field("children", &self.children);
         state.serialize_field("closingFragment", &self.closing_fragment);
-        state.serialize_field("start", &self.span.start);
-        state.serialize_field("end", &self.span.end);
-        if state.ranges() {
-            state.serialize_field("range", &[self.span.start, self.span.end]);
-        }
+        state.serialize_span(self.span);
         state.end();
     }
 }
@@ -2337,11 +1950,7 @@ impl ESTree for JSXOpeningFragment {
         state.serialize_field("type", &JsonSafeString("JSXOpeningFragment"));
         state.serialize_js_field("attributes", &crate::serialize::basic::JsEmptyArray(self));
         state.serialize_js_field("selfClosing", &crate::serialize::basic::JsFalse(self));
-        state.serialize_field("start", &self.span.start);
-        state.serialize_field("end", &self.span.end);
-        if state.ranges() {
-            state.serialize_field("range", &[self.span.start, self.span.end]);
-        }
+        state.serialize_span(self.span);
         state.end();
     }
 }
@@ -2350,11 +1959,7 @@ impl ESTree for JSXClosingFragment {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
         state.serialize_field("type", &JsonSafeString("JSXClosingFragment"));
-        state.serialize_field("start", &self.span.start);
-        state.serialize_field("end", &self.span.end);
-        if state.ranges() {
-            state.serialize_field("range", &[self.span.start, self.span.end]);
-        }
+        state.serialize_span(self.span);
         state.end();
     }
 }
@@ -2381,11 +1986,7 @@ impl ESTree for JSXNamespacedName<'_> {
         state.serialize_field("type", &JsonSafeString("JSXNamespacedName"));
         state.serialize_field("namespace", &self.namespace);
         state.serialize_field("name", &self.name);
-        state.serialize_field("start", &self.span.start);
-        state.serialize_field("end", &self.span.end);
-        if state.ranges() {
-            state.serialize_field("range", &[self.span.start, self.span.end]);
-        }
+        state.serialize_span(self.span);
         state.end();
     }
 }
@@ -2396,11 +1997,7 @@ impl ESTree for JSXMemberExpression<'_> {
         state.serialize_field("type", &JsonSafeString("JSXMemberExpression"));
         state.serialize_field("object", &self.object);
         state.serialize_field("property", &self.property);
-        state.serialize_field("start", &self.span.start);
-        state.serialize_field("end", &self.span.end);
-        if state.ranges() {
-            state.serialize_field("range", &[self.span.start, self.span.end]);
-        }
+        state.serialize_span(self.span);
         state.end();
     }
 }
@@ -2424,11 +2021,7 @@ impl ESTree for JSXExpressionContainer<'_> {
         let mut state = serializer.serialize_struct();
         state.serialize_field("type", &JsonSafeString("JSXExpressionContainer"));
         state.serialize_field("expression", &self.expression);
-        state.serialize_field("start", &self.span.start);
-        state.serialize_field("end", &self.span.end);
-        if state.ranges() {
-            state.serialize_field("range", &[self.span.start, self.span.end]);
-        }
+        state.serialize_span(self.span);
         state.end();
     }
 }
@@ -2488,11 +2081,7 @@ impl ESTree for JSXEmptyExpression {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
         state.serialize_field("type", &JsonSafeString("JSXEmptyExpression"));
-        state.serialize_field("start", &self.span.start);
-        state.serialize_field("end", &self.span.end);
-        if state.ranges() {
-            state.serialize_field("range", &[self.span.start, self.span.end]);
-        }
+        state.serialize_span(self.span);
         state.end();
     }
 }
@@ -2512,11 +2101,7 @@ impl ESTree for JSXAttribute<'_> {
         state.serialize_field("type", &JsonSafeString("JSXAttribute"));
         state.serialize_field("name", &self.name);
         state.serialize_field("value", &self.value);
-        state.serialize_field("start", &self.span.start);
-        state.serialize_field("end", &self.span.end);
-        if state.ranges() {
-            state.serialize_field("range", &[self.span.start, self.span.end]);
-        }
+        state.serialize_span(self.span);
         state.end();
     }
 }
@@ -2526,11 +2111,7 @@ impl ESTree for JSXSpreadAttribute<'_> {
         let mut state = serializer.serialize_struct();
         state.serialize_field("type", &JsonSafeString("JSXSpreadAttribute"));
         state.serialize_field("argument", &self.argument);
-        state.serialize_field("start", &self.span.start);
-        state.serialize_field("end", &self.span.end);
-        if state.ranges() {
-            state.serialize_field("range", &[self.span.start, self.span.end]);
-        }
+        state.serialize_span(self.span);
         state.end();
     }
 }
@@ -2560,11 +2141,7 @@ impl ESTree for JSXIdentifier<'_> {
         let mut state = serializer.serialize_struct();
         state.serialize_field("type", &JsonSafeString("JSXIdentifier"));
         state.serialize_field("name", &JsonSafeString(self.name.as_str()));
-        state.serialize_field("start", &self.span.start);
-        state.serialize_field("end", &self.span.end);
-        if state.ranges() {
-            state.serialize_field("range", &[self.span.start, self.span.end]);
-        }
+        state.serialize_span(self.span);
         state.end();
     }
 }
@@ -2586,11 +2163,7 @@ impl ESTree for JSXSpreadChild<'_> {
         let mut state = serializer.serialize_struct();
         state.serialize_field("type", &JsonSafeString("JSXSpreadChild"));
         state.serialize_field("expression", &self.expression);
-        state.serialize_field("start", &self.span.start);
-        state.serialize_field("end", &self.span.end);
-        if state.ranges() {
-            state.serialize_field("range", &[self.span.start, self.span.end]);
-        }
+        state.serialize_span(self.span);
         state.end();
     }
 }
@@ -2601,11 +2174,7 @@ impl ESTree for JSXText<'_> {
         state.serialize_field("type", &JsonSafeString("JSXText"));
         state.serialize_field("value", &self.value);
         state.serialize_field("raw", &self.raw);
-        state.serialize_field("start", &self.span.start);
-        state.serialize_field("end", &self.span.end);
-        if state.ranges() {
-            state.serialize_field("range", &[self.span.start, self.span.end]);
-        }
+        state.serialize_span(self.span);
         state.end();
     }
 }
@@ -2618,11 +2187,7 @@ impl ESTree for TSThisParameter<'_> {
         state.serialize_field("name", &crate::serialize::basic::This(self));
         state.serialize_field("optional", &crate::serialize::basic::False(self));
         state.serialize_field("typeAnnotation", &self.type_annotation);
-        state.serialize_field("start", &self.span.start);
-        state.serialize_field("end", &self.span.end);
-        if state.ranges() {
-            state.serialize_field("range", &[self.span.start, self.span.end]);
-        }
+        state.serialize_span(self.span);
         state.end();
     }
 }
@@ -2635,11 +2200,7 @@ impl ESTree for TSEnumDeclaration<'_> {
         state.serialize_field("body", &self.body);
         state.serialize_field("const", &self.r#const);
         state.serialize_field("declare", &self.declare);
-        state.serialize_field("start", &self.span.start);
-        state.serialize_field("end", &self.span.end);
-        if state.ranges() {
-            state.serialize_field("range", &[self.span.start, self.span.end]);
-        }
+        state.serialize_span(self.span);
         state.end();
     }
 }
@@ -2649,11 +2210,7 @@ impl ESTree for TSEnumBody<'_> {
         let mut state = serializer.serialize_struct();
         state.serialize_field("type", &JsonSafeString("TSEnumBody"));
         state.serialize_field("members", &self.members);
-        state.serialize_field("start", &self.span.start);
-        state.serialize_field("end", &self.span.end);
-        if state.ranges() {
-            state.serialize_field("range", &[self.span.start, self.span.end]);
-        }
+        state.serialize_span(self.span);
         state.end();
     }
 }
@@ -2665,11 +2222,7 @@ impl ESTree for TSEnumMember<'_> {
         state.serialize_field("id", &self.id);
         state.serialize_field("initializer", &self.initializer);
         state.serialize_field("computed", &crate::serialize::ts::TSEnumMemberComputed(self));
-        state.serialize_field("start", &self.span.start);
-        state.serialize_field("end", &self.span.end);
-        if state.ranges() {
-            state.serialize_field("range", &[self.span.start, self.span.end]);
-        }
+        state.serialize_span(self.span);
         state.end();
     }
 }
@@ -2690,11 +2243,7 @@ impl ESTree for TSTypeAnnotation<'_> {
         let mut state = serializer.serialize_struct();
         state.serialize_field("type", &JsonSafeString("TSTypeAnnotation"));
         state.serialize_field("typeAnnotation", &self.type_annotation);
-        state.serialize_field("start", &self.span.start);
-        state.serialize_field("end", &self.span.end);
-        if state.ranges() {
-            state.serialize_field("range", &[self.span.start, self.span.end]);
-        }
+        state.serialize_span(self.span);
         state.end();
     }
 }
@@ -2704,11 +2253,7 @@ impl ESTree for TSLiteralType<'_> {
         let mut state = serializer.serialize_struct();
         state.serialize_field("type", &JsonSafeString("TSLiteralType"));
         state.serialize_field("literal", &self.literal);
-        state.serialize_field("start", &self.span.start);
-        state.serialize_field("end", &self.span.end);
-        if state.ranges() {
-            state.serialize_field("range", &[self.span.start, self.span.end]);
-        }
+        state.serialize_span(self.span);
         state.end();
     }
 }
@@ -2778,11 +2323,7 @@ impl ESTree for TSConditionalType<'_> {
         state.serialize_field("extendsType", &self.extends_type);
         state.serialize_field("trueType", &self.true_type);
         state.serialize_field("falseType", &self.false_type);
-        state.serialize_field("start", &self.span.start);
-        state.serialize_field("end", &self.span.end);
-        if state.ranges() {
-            state.serialize_field("range", &[self.span.start, self.span.end]);
-        }
+        state.serialize_span(self.span);
         state.end();
     }
 }
@@ -2792,11 +2333,7 @@ impl ESTree for TSUnionType<'_> {
         let mut state = serializer.serialize_struct();
         state.serialize_field("type", &JsonSafeString("TSUnionType"));
         state.serialize_field("types", &self.types);
-        state.serialize_field("start", &self.span.start);
-        state.serialize_field("end", &self.span.end);
-        if state.ranges() {
-            state.serialize_field("range", &[self.span.start, self.span.end]);
-        }
+        state.serialize_span(self.span);
         state.end();
     }
 }
@@ -2806,11 +2343,7 @@ impl ESTree for TSIntersectionType<'_> {
         let mut state = serializer.serialize_struct();
         state.serialize_field("type", &JsonSafeString("TSIntersectionType"));
         state.serialize_field("types", &self.types);
-        state.serialize_field("start", &self.span.start);
-        state.serialize_field("end", &self.span.end);
-        if state.ranges() {
-            state.serialize_field("range", &[self.span.start, self.span.end]);
-        }
+        state.serialize_span(self.span);
         state.end();
     }
 }
@@ -2820,11 +2353,7 @@ impl ESTree for TSParenthesizedType<'_> {
         let mut state = serializer.serialize_struct();
         state.serialize_field("type", &JsonSafeString("TSParenthesizedType"));
         state.serialize_field("typeAnnotation", &self.type_annotation);
-        state.serialize_field("start", &self.span.start);
-        state.serialize_field("end", &self.span.end);
-        if state.ranges() {
-            state.serialize_field("range", &[self.span.start, self.span.end]);
-        }
+        state.serialize_span(self.span);
         state.end();
     }
 }
@@ -2835,11 +2364,7 @@ impl ESTree for TSTypeOperator<'_> {
         state.serialize_field("type", &JsonSafeString("TSTypeOperator"));
         state.serialize_field("operator", &self.operator);
         state.serialize_field("typeAnnotation", &self.type_annotation);
-        state.serialize_field("start", &self.span.start);
-        state.serialize_field("end", &self.span.end);
-        if state.ranges() {
-            state.serialize_field("range", &[self.span.start, self.span.end]);
-        }
+        state.serialize_span(self.span);
         state.end();
     }
 }
@@ -2859,11 +2384,7 @@ impl ESTree for TSArrayType<'_> {
         let mut state = serializer.serialize_struct();
         state.serialize_field("type", &JsonSafeString("TSArrayType"));
         state.serialize_field("elementType", &self.element_type);
-        state.serialize_field("start", &self.span.start);
-        state.serialize_field("end", &self.span.end);
-        if state.ranges() {
-            state.serialize_field("range", &[self.span.start, self.span.end]);
-        }
+        state.serialize_span(self.span);
         state.end();
     }
 }
@@ -2874,11 +2395,7 @@ impl ESTree for TSIndexedAccessType<'_> {
         state.serialize_field("type", &JsonSafeString("TSIndexedAccessType"));
         state.serialize_field("objectType", &self.object_type);
         state.serialize_field("indexType", &self.index_type);
-        state.serialize_field("start", &self.span.start);
-        state.serialize_field("end", &self.span.end);
-        if state.ranges() {
-            state.serialize_field("range", &[self.span.start, self.span.end]);
-        }
+        state.serialize_span(self.span);
         state.end();
     }
 }
@@ -2888,11 +2405,7 @@ impl ESTree for TSTupleType<'_> {
         let mut state = serializer.serialize_struct();
         state.serialize_field("type", &JsonSafeString("TSTupleType"));
         state.serialize_field("elementTypes", &self.element_types);
-        state.serialize_field("start", &self.span.start);
-        state.serialize_field("end", &self.span.end);
-        if state.ranges() {
-            state.serialize_field("range", &[self.span.start, self.span.end]);
-        }
+        state.serialize_span(self.span);
         state.end();
     }
 }
@@ -2904,11 +2417,7 @@ impl ESTree for TSNamedTupleMember<'_> {
         state.serialize_field("label", &self.label);
         state.serialize_field("elementType", &self.element_type);
         state.serialize_field("optional", &self.optional);
-        state.serialize_field("start", &self.span.start);
-        state.serialize_field("end", &self.span.end);
-        if state.ranges() {
-            state.serialize_field("range", &[self.span.start, self.span.end]);
-        }
+        state.serialize_span(self.span);
         state.end();
     }
 }
@@ -2918,11 +2427,7 @@ impl ESTree for TSOptionalType<'_> {
         let mut state = serializer.serialize_struct();
         state.serialize_field("type", &JsonSafeString("TSOptionalType"));
         state.serialize_field("typeAnnotation", &self.type_annotation);
-        state.serialize_field("start", &self.span.start);
-        state.serialize_field("end", &self.span.end);
-        if state.ranges() {
-            state.serialize_field("range", &[self.span.start, self.span.end]);
-        }
+        state.serialize_span(self.span);
         state.end();
     }
 }
@@ -2932,11 +2437,7 @@ impl ESTree for TSRestType<'_> {
         let mut state = serializer.serialize_struct();
         state.serialize_field("type", &JsonSafeString("TSRestType"));
         state.serialize_field("typeAnnotation", &self.type_annotation);
-        state.serialize_field("start", &self.span.start);
-        state.serialize_field("end", &self.span.end);
-        if state.ranges() {
-            state.serialize_field("range", &[self.span.start, self.span.end]);
-        }
+        state.serialize_span(self.span);
         state.end();
     }
 }
@@ -2991,11 +2492,7 @@ impl ESTree for TSAnyKeyword {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
         state.serialize_field("type", &JsonSafeString("TSAnyKeyword"));
-        state.serialize_field("start", &self.span.start);
-        state.serialize_field("end", &self.span.end);
-        if state.ranges() {
-            state.serialize_field("range", &[self.span.start, self.span.end]);
-        }
+        state.serialize_span(self.span);
         state.end();
     }
 }
@@ -3004,11 +2501,7 @@ impl ESTree for TSStringKeyword {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
         state.serialize_field("type", &JsonSafeString("TSStringKeyword"));
-        state.serialize_field("start", &self.span.start);
-        state.serialize_field("end", &self.span.end);
-        if state.ranges() {
-            state.serialize_field("range", &[self.span.start, self.span.end]);
-        }
+        state.serialize_span(self.span);
         state.end();
     }
 }
@@ -3017,11 +2510,7 @@ impl ESTree for TSBooleanKeyword {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
         state.serialize_field("type", &JsonSafeString("TSBooleanKeyword"));
-        state.serialize_field("start", &self.span.start);
-        state.serialize_field("end", &self.span.end);
-        if state.ranges() {
-            state.serialize_field("range", &[self.span.start, self.span.end]);
-        }
+        state.serialize_span(self.span);
         state.end();
     }
 }
@@ -3030,11 +2519,7 @@ impl ESTree for TSNumberKeyword {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
         state.serialize_field("type", &JsonSafeString("TSNumberKeyword"));
-        state.serialize_field("start", &self.span.start);
-        state.serialize_field("end", &self.span.end);
-        if state.ranges() {
-            state.serialize_field("range", &[self.span.start, self.span.end]);
-        }
+        state.serialize_span(self.span);
         state.end();
     }
 }
@@ -3043,11 +2528,7 @@ impl ESTree for TSNeverKeyword {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
         state.serialize_field("type", &JsonSafeString("TSNeverKeyword"));
-        state.serialize_field("start", &self.span.start);
-        state.serialize_field("end", &self.span.end);
-        if state.ranges() {
-            state.serialize_field("range", &[self.span.start, self.span.end]);
-        }
+        state.serialize_span(self.span);
         state.end();
     }
 }
@@ -3056,11 +2537,7 @@ impl ESTree for TSIntrinsicKeyword {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
         state.serialize_field("type", &JsonSafeString("TSIntrinsicKeyword"));
-        state.serialize_field("start", &self.span.start);
-        state.serialize_field("end", &self.span.end);
-        if state.ranges() {
-            state.serialize_field("range", &[self.span.start, self.span.end]);
-        }
+        state.serialize_span(self.span);
         state.end();
     }
 }
@@ -3069,11 +2546,7 @@ impl ESTree for TSUnknownKeyword {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
         state.serialize_field("type", &JsonSafeString("TSUnknownKeyword"));
-        state.serialize_field("start", &self.span.start);
-        state.serialize_field("end", &self.span.end);
-        if state.ranges() {
-            state.serialize_field("range", &[self.span.start, self.span.end]);
-        }
+        state.serialize_span(self.span);
         state.end();
     }
 }
@@ -3082,11 +2555,7 @@ impl ESTree for TSNullKeyword {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
         state.serialize_field("type", &JsonSafeString("TSNullKeyword"));
-        state.serialize_field("start", &self.span.start);
-        state.serialize_field("end", &self.span.end);
-        if state.ranges() {
-            state.serialize_field("range", &[self.span.start, self.span.end]);
-        }
+        state.serialize_span(self.span);
         state.end();
     }
 }
@@ -3095,11 +2564,7 @@ impl ESTree for TSUndefinedKeyword {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
         state.serialize_field("type", &JsonSafeString("TSUndefinedKeyword"));
-        state.serialize_field("start", &self.span.start);
-        state.serialize_field("end", &self.span.end);
-        if state.ranges() {
-            state.serialize_field("range", &[self.span.start, self.span.end]);
-        }
+        state.serialize_span(self.span);
         state.end();
     }
 }
@@ -3108,11 +2573,7 @@ impl ESTree for TSVoidKeyword {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
         state.serialize_field("type", &JsonSafeString("TSVoidKeyword"));
-        state.serialize_field("start", &self.span.start);
-        state.serialize_field("end", &self.span.end);
-        if state.ranges() {
-            state.serialize_field("range", &[self.span.start, self.span.end]);
-        }
+        state.serialize_span(self.span);
         state.end();
     }
 }
@@ -3121,11 +2582,7 @@ impl ESTree for TSSymbolKeyword {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
         state.serialize_field("type", &JsonSafeString("TSSymbolKeyword"));
-        state.serialize_field("start", &self.span.start);
-        state.serialize_field("end", &self.span.end);
-        if state.ranges() {
-            state.serialize_field("range", &[self.span.start, self.span.end]);
-        }
+        state.serialize_span(self.span);
         state.end();
     }
 }
@@ -3134,11 +2591,7 @@ impl ESTree for TSThisType {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
         state.serialize_field("type", &JsonSafeString("TSThisType"));
-        state.serialize_field("start", &self.span.start);
-        state.serialize_field("end", &self.span.end);
-        if state.ranges() {
-            state.serialize_field("range", &[self.span.start, self.span.end]);
-        }
+        state.serialize_span(self.span);
         state.end();
     }
 }
@@ -3147,11 +2600,7 @@ impl ESTree for TSObjectKeyword {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
         state.serialize_field("type", &JsonSafeString("TSObjectKeyword"));
-        state.serialize_field("start", &self.span.start);
-        state.serialize_field("end", &self.span.end);
-        if state.ranges() {
-            state.serialize_field("range", &[self.span.start, self.span.end]);
-        }
+        state.serialize_span(self.span);
         state.end();
     }
 }
@@ -3160,11 +2609,7 @@ impl ESTree for TSBigIntKeyword {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
         state.serialize_field("type", &JsonSafeString("TSBigIntKeyword"));
-        state.serialize_field("start", &self.span.start);
-        state.serialize_field("end", &self.span.end);
-        if state.ranges() {
-            state.serialize_field("range", &[self.span.start, self.span.end]);
-        }
+        state.serialize_span(self.span);
         state.end();
     }
 }
@@ -3175,11 +2620,7 @@ impl ESTree for TSTypeReference<'_> {
         state.serialize_field("type", &JsonSafeString("TSTypeReference"));
         state.serialize_field("typeName", &self.type_name);
         state.serialize_field("typeArguments", &self.type_arguments);
-        state.serialize_field("start", &self.span.start);
-        state.serialize_field("end", &self.span.end);
-        if state.ranges() {
-            state.serialize_field("range", &[self.span.start, self.span.end]);
-        }
+        state.serialize_span(self.span);
         state.end();
     }
 }
@@ -3201,11 +2642,7 @@ impl ESTree for TSQualifiedName<'_> {
         state.serialize_field("type", &JsonSafeString("TSQualifiedName"));
         state.serialize_field("left", &self.left);
         state.serialize_field("right", &self.right);
-        state.serialize_field("start", &self.span.start);
-        state.serialize_field("end", &self.span.end);
-        if state.ranges() {
-            state.serialize_field("range", &[self.span.start, self.span.end]);
-        }
+        state.serialize_span(self.span);
         state.end();
     }
 }
@@ -3215,11 +2652,7 @@ impl ESTree for TSTypeParameterInstantiation<'_> {
         let mut state = serializer.serialize_struct();
         state.serialize_field("type", &JsonSafeString("TSTypeParameterInstantiation"));
         state.serialize_field("params", &self.params);
-        state.serialize_field("start", &self.span.start);
-        state.serialize_field("end", &self.span.end);
-        if state.ranges() {
-            state.serialize_field("range", &[self.span.start, self.span.end]);
-        }
+        state.serialize_span(self.span);
         state.end();
     }
 }
@@ -3234,11 +2667,7 @@ impl ESTree for TSTypeParameter<'_> {
         state.serialize_field("in", &self.r#in);
         state.serialize_field("out", &self.out);
         state.serialize_field("const", &self.r#const);
-        state.serialize_field("start", &self.span.start);
-        state.serialize_field("end", &self.span.end);
-        if state.ranges() {
-            state.serialize_field("range", &[self.span.start, self.span.end]);
-        }
+        state.serialize_span(self.span);
         state.end();
     }
 }
@@ -3248,11 +2677,7 @@ impl ESTree for TSTypeParameterDeclaration<'_> {
         let mut state = serializer.serialize_struct();
         state.serialize_field("type", &JsonSafeString("TSTypeParameterDeclaration"));
         state.serialize_field("params", &self.params);
-        state.serialize_field("start", &self.span.start);
-        state.serialize_field("end", &self.span.end);
-        if state.ranges() {
-            state.serialize_field("range", &[self.span.start, self.span.end]);
-        }
+        state.serialize_span(self.span);
         state.end();
     }
 }
@@ -3265,11 +2690,7 @@ impl ESTree for TSTypeAliasDeclaration<'_> {
         state.serialize_field("typeParameters", &self.type_parameters);
         state.serialize_field("typeAnnotation", &self.type_annotation);
         state.serialize_field("declare", &self.declare);
-        state.serialize_field("start", &self.span.start);
-        state.serialize_field("end", &self.span.end);
-        if state.ranges() {
-            state.serialize_field("range", &[self.span.start, self.span.end]);
-        }
+        state.serialize_span(self.span);
         state.end();
     }
 }
@@ -3293,11 +2714,7 @@ impl ESTree for TSClassImplements<'_> {
             &crate::serialize::ts::TSClassImplementsExpression(self),
         );
         state.serialize_field("typeArguments", &self.type_arguments);
-        state.serialize_field("start", &self.span.start);
-        state.serialize_field("end", &self.span.end);
-        if state.ranges() {
-            state.serialize_field("range", &[self.span.start, self.span.end]);
-        }
+        state.serialize_span(self.span);
         state.end();
     }
 }
@@ -3311,11 +2728,7 @@ impl ESTree for TSInterfaceDeclaration<'_> {
         state.serialize_field("extends", &self.extends);
         state.serialize_field("body", &self.body);
         state.serialize_field("declare", &self.declare);
-        state.serialize_field("start", &self.span.start);
-        state.serialize_field("end", &self.span.end);
-        if state.ranges() {
-            state.serialize_field("range", &[self.span.start, self.span.end]);
-        }
+        state.serialize_span(self.span);
         state.end();
     }
 }
@@ -3325,11 +2738,7 @@ impl ESTree for TSInterfaceBody<'_> {
         let mut state = serializer.serialize_struct();
         state.serialize_field("type", &JsonSafeString("TSInterfaceBody"));
         state.serialize_field("body", &self.body);
-        state.serialize_field("start", &self.span.start);
-        state.serialize_field("end", &self.span.end);
-        if state.ranges() {
-            state.serialize_field("range", &[self.span.start, self.span.end]);
-        }
+        state.serialize_span(self.span);
         state.end();
     }
 }
@@ -3345,11 +2754,7 @@ impl ESTree for TSPropertySignature<'_> {
         state.serialize_field("typeAnnotation", &self.type_annotation);
         state.serialize_field("accessibility", &crate::serialize::basic::Null(self));
         state.serialize_field("static", &crate::serialize::basic::False(self));
-        state.serialize_field("start", &self.span.start);
-        state.serialize_field("end", &self.span.end);
-        if state.ranges() {
-            state.serialize_field("range", &[self.span.start, self.span.end]);
-        }
+        state.serialize_span(self.span);
         state.end();
     }
 }
@@ -3375,11 +2780,7 @@ impl ESTree for TSIndexSignature<'_> {
         state.serialize_field("readonly", &self.readonly);
         state.serialize_field("static", &self.r#static);
         state.serialize_field("accessibility", &crate::serialize::basic::Null(self));
-        state.serialize_field("start", &self.span.start);
-        state.serialize_field("end", &self.span.end);
-        if state.ranges() {
-            state.serialize_field("range", &[self.span.start, self.span.end]);
-        }
+        state.serialize_span(self.span);
         state.end();
     }
 }
@@ -3394,11 +2795,7 @@ impl ESTree for TSCallSignatureDeclaration<'_> {
             &crate::serialize::ts::TSCallSignatureDeclarationParams(self),
         );
         state.serialize_field("returnType", &self.return_type);
-        state.serialize_field("start", &self.span.start);
-        state.serialize_field("end", &self.span.end);
-        if state.ranges() {
-            state.serialize_field("range", &[self.span.start, self.span.end]);
-        }
+        state.serialize_span(self.span);
         state.end();
     }
 }
@@ -3427,11 +2824,7 @@ impl ESTree for TSMethodSignature<'_> {
         state.serialize_field("accessibility", &crate::serialize::basic::Null(self));
         state.serialize_field("readonly", &crate::serialize::basic::False(self));
         state.serialize_field("static", &crate::serialize::basic::False(self));
-        state.serialize_field("start", &self.span.start);
-        state.serialize_field("end", &self.span.end);
-        if state.ranges() {
-            state.serialize_field("range", &[self.span.start, self.span.end]);
-        }
+        state.serialize_span(self.span);
         state.end();
     }
 }
@@ -3443,11 +2836,7 @@ impl ESTree for TSConstructSignatureDeclaration<'_> {
         state.serialize_field("typeParameters", &self.type_parameters);
         state.serialize_field("params", &self.params);
         state.serialize_field("returnType", &self.return_type);
-        state.serialize_field("start", &self.span.start);
-        state.serialize_field("end", &self.span.end);
-        if state.ranges() {
-            state.serialize_field("range", &[self.span.start, self.span.end]);
-        }
+        state.serialize_span(self.span);
         state.end();
     }
 }
@@ -3460,11 +2849,7 @@ impl ESTree for TSIndexSignatureName<'_> {
         state.serialize_field("name", &JsonSafeString(self.name.as_str()));
         state.serialize_field("optional", &crate::serialize::basic::False(self));
         state.serialize_field("typeAnnotation", &self.type_annotation);
-        state.serialize_field("start", &self.span.start);
-        state.serialize_field("end", &self.span.end);
-        if state.ranges() {
-            state.serialize_field("range", &[self.span.start, self.span.end]);
-        }
+        state.serialize_span(self.span);
         state.end();
     }
 }
@@ -3475,11 +2860,7 @@ impl ESTree for TSInterfaceHeritage<'_> {
         state.serialize_field("type", &JsonSafeString("TSInterfaceHeritage"));
         state.serialize_field("expression", &self.expression);
         state.serialize_field("typeArguments", &self.type_arguments);
-        state.serialize_field("start", &self.span.start);
-        state.serialize_field("end", &self.span.end);
-        if state.ranges() {
-            state.serialize_field("range", &[self.span.start, self.span.end]);
-        }
+        state.serialize_span(self.span);
         state.end();
     }
 }
@@ -3491,11 +2872,7 @@ impl ESTree for TSTypePredicate<'_> {
         state.serialize_field("parameterName", &self.parameter_name);
         state.serialize_field("asserts", &self.asserts);
         state.serialize_field("typeAnnotation", &self.type_annotation);
-        state.serialize_field("start", &self.span.start);
-        state.serialize_field("end", &self.span.end);
-        if state.ranges() {
-            state.serialize_field("range", &[self.span.start, self.span.end]);
-        }
+        state.serialize_span(self.span);
         state.end();
     }
 }
@@ -3548,11 +2925,7 @@ impl ESTree for TSModuleBlock<'_> {
         let mut state = serializer.serialize_struct();
         state.serialize_field("type", &JsonSafeString("TSModuleBlock"));
         state.serialize_field("body", &Concat2(&self.directives, &self.body));
-        state.serialize_field("start", &self.span.start);
-        state.serialize_field("end", &self.span.end);
-        if state.ranges() {
-            state.serialize_field("range", &[self.span.start, self.span.end]);
-        }
+        state.serialize_span(self.span);
         state.end();
     }
 }
@@ -3562,11 +2935,7 @@ impl ESTree for TSTypeLiteral<'_> {
         let mut state = serializer.serialize_struct();
         state.serialize_field("type", &JsonSafeString("TSTypeLiteral"));
         state.serialize_field("members", &self.members);
-        state.serialize_field("start", &self.span.start);
-        state.serialize_field("end", &self.span.end);
-        if state.ranges() {
-            state.serialize_field("range", &[self.span.start, self.span.end]);
-        }
+        state.serialize_span(self.span);
         state.end();
     }
 }
@@ -3576,11 +2945,7 @@ impl ESTree for TSInferType<'_> {
         let mut state = serializer.serialize_struct();
         state.serialize_field("type", &JsonSafeString("TSInferType"));
         state.serialize_field("typeParameter", &self.type_parameter);
-        state.serialize_field("start", &self.span.start);
-        state.serialize_field("end", &self.span.end);
-        if state.ranges() {
-            state.serialize_field("range", &[self.span.start, self.span.end]);
-        }
+        state.serialize_span(self.span);
         state.end();
     }
 }
@@ -3591,11 +2956,7 @@ impl ESTree for TSTypeQuery<'_> {
         state.serialize_field("type", &JsonSafeString("TSTypeQuery"));
         state.serialize_field("exprName", &self.expr_name);
         state.serialize_field("typeArguments", &self.type_arguments);
-        state.serialize_field("start", &self.span.start);
-        state.serialize_field("end", &self.span.end);
-        if state.ranges() {
-            state.serialize_field("range", &[self.span.start, self.span.end]);
-        }
+        state.serialize_span(self.span);
         state.end();
     }
 }
@@ -3620,11 +2981,7 @@ impl ESTree for TSImportType<'_> {
         state.serialize_field("options", &self.options);
         state.serialize_field("qualifier", &self.qualifier);
         state.serialize_field("typeArguments", &self.type_arguments);
-        state.serialize_field("start", &self.span.start);
-        state.serialize_field("end", &self.span.end);
-        if state.ranges() {
-            state.serialize_field("range", &[self.span.start, self.span.end]);
-        }
+        state.serialize_span(self.span);
         state.end();
     }
 }
@@ -3636,11 +2993,7 @@ impl ESTree for TSFunctionType<'_> {
         state.serialize_field("typeParameters", &self.type_parameters);
         state.serialize_field("params", &crate::serialize::ts::TSFunctionTypeParams(self));
         state.serialize_field("returnType", &self.return_type);
-        state.serialize_field("start", &self.span.start);
-        state.serialize_field("end", &self.span.end);
-        if state.ranges() {
-            state.serialize_field("range", &[self.span.start, self.span.end]);
-        }
+        state.serialize_span(self.span);
         state.end();
     }
 }
@@ -3653,11 +3006,7 @@ impl ESTree for TSConstructorType<'_> {
         state.serialize_field("typeParameters", &self.type_parameters);
         state.serialize_field("params", &self.params);
         state.serialize_field("returnType", &self.return_type);
-        state.serialize_field("start", &self.span.start);
-        state.serialize_field("end", &self.span.end);
-        if state.ranges() {
-            state.serialize_field("range", &[self.span.start, self.span.end]);
-        }
+        state.serialize_span(self.span);
         state.end();
     }
 }
@@ -3672,11 +3021,7 @@ impl ESTree for TSMappedType<'_> {
         state.serialize_field("typeAnnotation", &self.type_annotation);
         state.serialize_field("optional", &crate::serialize::ts::TSMappedTypeOptional(self));
         state.serialize_field("readonly", &self.readonly);
-        state.serialize_field("start", &self.span.start);
-        state.serialize_field("end", &self.span.end);
-        if state.ranges() {
-            state.serialize_field("range", &[self.span.start, self.span.end]);
-        }
+        state.serialize_span(self.span);
         state.end();
     }
 }
@@ -3697,11 +3042,7 @@ impl ESTree for TSTemplateLiteralType<'_> {
         state.serialize_field("type", &JsonSafeString("TSTemplateLiteralType"));
         state.serialize_field("quasis", &self.quasis);
         state.serialize_field("types", &self.types);
-        state.serialize_field("start", &self.span.start);
-        state.serialize_field("end", &self.span.end);
-        if state.ranges() {
-            state.serialize_field("range", &[self.span.start, self.span.end]);
-        }
+        state.serialize_span(self.span);
         state.end();
     }
 }
@@ -3712,11 +3053,7 @@ impl ESTree for TSAsExpression<'_> {
         state.serialize_field("type", &JsonSafeString("TSAsExpression"));
         state.serialize_field("expression", &self.expression);
         state.serialize_field("typeAnnotation", &self.type_annotation);
-        state.serialize_field("start", &self.span.start);
-        state.serialize_field("end", &self.span.end);
-        if state.ranges() {
-            state.serialize_field("range", &[self.span.start, self.span.end]);
-        }
+        state.serialize_span(self.span);
         state.end();
     }
 }
@@ -3727,11 +3064,7 @@ impl ESTree for TSSatisfiesExpression<'_> {
         state.serialize_field("type", &JsonSafeString("TSSatisfiesExpression"));
         state.serialize_field("expression", &self.expression);
         state.serialize_field("typeAnnotation", &self.type_annotation);
-        state.serialize_field("start", &self.span.start);
-        state.serialize_field("end", &self.span.end);
-        if state.ranges() {
-            state.serialize_field("range", &[self.span.start, self.span.end]);
-        }
+        state.serialize_span(self.span);
         state.end();
     }
 }
@@ -3742,11 +3075,7 @@ impl ESTree for TSTypeAssertion<'_> {
         state.serialize_field("type", &JsonSafeString("TSTypeAssertion"));
         state.serialize_field("typeAnnotation", &self.type_annotation);
         state.serialize_field("expression", &self.expression);
-        state.serialize_field("start", &self.span.start);
-        state.serialize_field("end", &self.span.end);
-        if state.ranges() {
-            state.serialize_field("range", &[self.span.start, self.span.end]);
-        }
+        state.serialize_span(self.span);
         state.end();
     }
 }
@@ -3758,11 +3087,7 @@ impl ESTree for TSImportEqualsDeclaration<'_> {
         state.serialize_field("id", &self.id);
         state.serialize_field("moduleReference", &self.module_reference);
         state.serialize_field("importKind", &self.import_kind);
-        state.serialize_field("start", &self.span.start);
-        state.serialize_field("end", &self.span.end);
-        if state.ranges() {
-            state.serialize_field("range", &[self.span.start, self.span.end]);
-        }
+        state.serialize_span(self.span);
         state.end();
     }
 }
@@ -3784,11 +3109,7 @@ impl ESTree for TSExternalModuleReference<'_> {
         let mut state = serializer.serialize_struct();
         state.serialize_field("type", &JsonSafeString("TSExternalModuleReference"));
         state.serialize_field("expression", &self.expression);
-        state.serialize_field("start", &self.span.start);
-        state.serialize_field("end", &self.span.end);
-        if state.ranges() {
-            state.serialize_field("range", &[self.span.start, self.span.end]);
-        }
+        state.serialize_span(self.span);
         state.end();
     }
 }
@@ -3798,11 +3119,7 @@ impl ESTree for TSNonNullExpression<'_> {
         let mut state = serializer.serialize_struct();
         state.serialize_field("type", &JsonSafeString("TSNonNullExpression"));
         state.serialize_field("expression", &self.expression);
-        state.serialize_field("start", &self.span.start);
-        state.serialize_field("end", &self.span.end);
-        if state.ranges() {
-            state.serialize_field("range", &[self.span.start, self.span.end]);
-        }
+        state.serialize_span(self.span);
         state.end();
     }
 }
@@ -3812,11 +3129,7 @@ impl ESTree for Decorator<'_> {
         let mut state = serializer.serialize_struct();
         state.serialize_field("type", &JsonSafeString("Decorator"));
         state.serialize_field("expression", &self.expression);
-        state.serialize_field("start", &self.span.start);
-        state.serialize_field("end", &self.span.end);
-        if state.ranges() {
-            state.serialize_field("range", &[self.span.start, self.span.end]);
-        }
+        state.serialize_span(self.span);
         state.end();
     }
 }
@@ -3826,11 +3139,7 @@ impl ESTree for TSExportAssignment<'_> {
         let mut state = serializer.serialize_struct();
         state.serialize_field("type", &JsonSafeString("TSExportAssignment"));
         state.serialize_field("expression", &self.expression);
-        state.serialize_field("start", &self.span.start);
-        state.serialize_field("end", &self.span.end);
-        if state.ranges() {
-            state.serialize_field("range", &[self.span.start, self.span.end]);
-        }
+        state.serialize_span(self.span);
         state.end();
     }
 }
@@ -3840,11 +3149,7 @@ impl ESTree for TSNamespaceExportDeclaration<'_> {
         let mut state = serializer.serialize_struct();
         state.serialize_field("type", &JsonSafeString("TSNamespaceExportDeclaration"));
         state.serialize_field("id", &self.id);
-        state.serialize_field("start", &self.span.start);
-        state.serialize_field("end", &self.span.end);
-        if state.ranges() {
-            state.serialize_field("range", &[self.span.start, self.span.end]);
-        }
+        state.serialize_span(self.span);
         state.end();
     }
 }
@@ -3855,11 +3160,7 @@ impl ESTree for TSInstantiationExpression<'_> {
         state.serialize_field("type", &JsonSafeString("TSInstantiationExpression"));
         state.serialize_field("expression", &self.expression);
         state.serialize_field("typeArguments", &self.type_arguments);
-        state.serialize_field("start", &self.span.start);
-        state.serialize_field("end", &self.span.end);
-        if state.ranges() {
-            state.serialize_field("range", &[self.span.start, self.span.end]);
-        }
+        state.serialize_span(self.span);
         state.end();
     }
 }
@@ -3879,11 +3180,7 @@ impl ESTree for JSDocNullableType<'_> {
         state.serialize_field("type", &JsonSafeString("TSJSDocNullableType"));
         state.serialize_field("typeAnnotation", &self.type_annotation);
         state.serialize_field("postfix", &self.postfix);
-        state.serialize_field("start", &self.span.start);
-        state.serialize_field("end", &self.span.end);
-        if state.ranges() {
-            state.serialize_field("range", &[self.span.start, self.span.end]);
-        }
+        state.serialize_span(self.span);
         state.end();
     }
 }
@@ -3894,11 +3191,7 @@ impl ESTree for JSDocNonNullableType<'_> {
         state.serialize_field("type", &JsonSafeString("TSJSDocNonNullableType"));
         state.serialize_field("typeAnnotation", &self.type_annotation);
         state.serialize_field("postfix", &self.postfix);
-        state.serialize_field("start", &self.span.start);
-        state.serialize_field("end", &self.span.end);
-        if state.ranges() {
-            state.serialize_field("range", &[self.span.start, self.span.end]);
-        }
+        state.serialize_span(self.span);
         state.end();
     }
 }
@@ -3907,11 +3200,7 @@ impl ESTree for JSDocUnknownType {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
         state.serialize_field("type", &JsonSafeString("TSJSDocUnknownType"));
-        state.serialize_field("start", &self.span.start);
-        state.serialize_field("end", &self.span.end);
-        if state.ranges() {
-            state.serialize_field("range", &[self.span.start, self.span.end]);
-        }
+        state.serialize_span(self.span);
         state.end();
     }
 }
@@ -3930,11 +3219,7 @@ impl ESTree for Comment {
         let mut state = serializer.serialize_struct();
         state.serialize_field("type", &self.kind);
         state.serialize_field("value", &crate::serialize::CommentValue(self));
-        state.serialize_field("start", &self.span.start);
-        state.serialize_field("end", &self.span.end);
-        if state.ranges() {
-            state.serialize_field("range", &[self.span.start, self.span.end]);
-        }
+        state.serialize_span(self.span);
         state.end();
     }
 }

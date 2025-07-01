@@ -221,12 +221,7 @@ impl ESTree for TemplateElementConverter<'_, '_> {
             span.start -= 1;
             span.end += if element.tail { 1 } else { 2 };
         }
-
-        state.serialize_field("start", &span.start);
-        state.serialize_field("end", &span.end);
-        if state.ranges() {
-            state.serialize_field("range", &[span.start, span.end]);
-        }
+        state.serialize_span(span);
 
         state.end();
     }

@@ -28,11 +28,7 @@ impl ESTree for JSXElementOpeningElement<'_, '_> {
         state.serialize_ts_field("typeArguments", &opening_element.type_arguments);
         state.serialize_field("attributes", &opening_element.attributes);
         state.serialize_field("selfClosing", &element.closing_element.is_none());
-        state.serialize_field("start", &opening_element.span.start);
-        state.serialize_field("end", &opening_element.span.end);
-        if state.ranges() {
-            state.serialize_field("range", &[opening_element.span.start, opening_element.span.end]);
-        }
+        state.serialize_span(opening_element.span);
         state.end();
     }
 }

@@ -172,13 +172,12 @@ impl ESTree for ProgramConverter<'_, '_> {
         state.serialize_field("sourceType", &program.source_type.module_kind());
         state.serialize_field("hashbang", &program.hashbang);
 
-        let span_start =
-            if S::INCLUDE_TS_FIELDS { get_ts_start_span(program) } else { program.span.start };
-        state.serialize_field("start", &span_start);
-        state.serialize_field("end", &program.span.end);
-        if state.ranges() {
-            state.serialize_field("range", &[span_start, program.span.end]);
-        }
+        let span = if S::INCLUDE_TS_FIELDS {
+            Span::new(get_ts_start_span(program), program.span.end)
+        } else {
+            program.span
+        };
+        state.serialize_span(span);
 
         state.end();
     }

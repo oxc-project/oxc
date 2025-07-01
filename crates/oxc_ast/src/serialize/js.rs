@@ -87,11 +87,7 @@ impl ESTree for BindingPatternKindAndTsFields<'_, '_> {
         state.serialize_field("optional", &self.optional);
         state.serialize_field("typeAnnotation", &self.type_annotation);
 
-        state.serialize_field("start", &span.start);
-        state.serialize_field("end", &span.end);
-        if state.ranges() {
-            state.serialize_field("range", &[span.start, span.end]);
-        }
+        state.serialize_span(span);
 
         state.end();
     }
@@ -174,11 +170,7 @@ impl ESTree for FormalParametersRest<'_, '_> {
         state.serialize_ts_field("optional", &rest.argument.optional);
         state.serialize_ts_field("typeAnnotation", &rest.argument.type_annotation);
         state.serialize_ts_field("value", &Null(()));
-        state.serialize_field("start", &rest.span.start);
-        state.serialize_field("end", &rest.span.end);
-        if state.ranges() {
-            state.serialize_field("range", &[rest.span.start, rest.span.end]);
-        }
+        state.serialize_span(rest.span);
         state.end();
     }
 }
@@ -238,11 +230,7 @@ impl ESTree for FormalParameterConverter<'_, '_> {
                 state.serialize_field("parameter", &param.pattern);
                 state.serialize_field("readonly", &param.readonly);
                 state.serialize_field("static", &false);
-                state.serialize_field("start", &param.span.start);
-                state.serialize_field("end", &param.span.end);
-                if state.ranges() {
-                    state.serialize_field("range", &[param.span.start, param.span.end]);
-                }
+                state.serialize_span(param.span);
                 state.end();
             } else {
                 BindingPatternKindAndTsFields {
@@ -452,11 +440,7 @@ impl ESTree for AssignmentTargetPropertyIdentifierInit<'_> {
             state.serialize_field("right", init);
             state.serialize_ts_field("optional", &false);
             state.serialize_ts_field("typeAnnotation", &Null(()));
-            state.serialize_field("start", &self.0.span.start);
-            state.serialize_field("end", &self.0.span.end);
-            if state.ranges() {
-                state.serialize_field("range", &[self.0.span.start, self.0.span.end]);
-            }
+            state.serialize_span(self.0.span);
             state.end();
         } else {
             self.0.binding.serialize(serializer);

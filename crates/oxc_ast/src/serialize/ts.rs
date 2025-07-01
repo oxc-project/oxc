@@ -156,11 +156,7 @@ impl ESTree for TSModuleDeclarationConverter<'_, '_> {
         state.serialize_field("declare", &module.declare);
         state.serialize_field("global", &TSModuleDeclarationGlobal(module));
 
-        state.serialize_field("start", &module.span.start);
-        state.serialize_field("end", &module.span.end);
-        if state.ranges() {
-            state.serialize_field("range", &[module.span.start, module.span.end]);
-        }
+        state.serialize_span(module.span);
 
         state.end();
     }
@@ -188,12 +184,8 @@ impl ESTree for TSModuleDeclarationIdParts<'_, '_> {
 
         state.serialize_field("right", last);
 
-        let span_start = parts[0].span.start;
-        state.serialize_field("start", &span_start);
-        state.serialize_field("end", &last.span.end);
-        if state.ranges() {
-            state.serialize_field("range", &[span_start, last.span.end]);
-        }
+        let span = Span::new(parts[0].span.start, last.span.end);
+        state.serialize_span(span);
 
         state.end();
     }
@@ -357,11 +349,7 @@ impl ESTree for TSTypeNameAsMemberExpression<'_, '_> {
                 state.serialize_field("property", &name.right);
                 state.serialize_field("optional", &false);
                 state.serialize_field("computed", &false);
-                state.serialize_field("start", &name.span.start);
-                state.serialize_field("end", &name.span.end);
-                if state.ranges() {
-                    state.serialize_field("range", &[name.span.start, name.span.end]);
-                }
+                state.serialize_span(name.span);
                 state.end();
             }
         }
