@@ -127,13 +127,40 @@ impl<'a> JSDocTagTypePart<'a> {
     }
 }
 
+/// Represents a single component of a type name in a JSDoc tag
+/// typically seen within unions, generics, or optional/defaulted parameters.
+///
+/// This structure captures the raw source string, its span in the original code,
+/// and any modifiers like optional (`?`) or default (`=`).
+///
+/// For example, in a JSDoc tag like:
+///
+/// ```js
+/// /**
+///  * @param {foo=} bar
+///  *               ^^^
+///  *               This is the `JSDocTagTypeNamePart`
+///  * @type {string} [myStr]
+///  *                ~~~~~~~ This is `optional: true` case
+///  *
+///  * @property {number} [myNum = 1]
+///  *                    ~~~~~~~~~~~ This is `optional: true` and `default: true` case
+///  */
+/// ```
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct JSDocTagTypeNamePart<'a> {
     raw: &'a str,
+
+    /// The span in the source text corresponding to this part.
     pub span: Span,
+
+    /// Indicates whether the type name part is marked as optional (`foo?`).
     pub optional: bool,
+
+    /// Indicates whether the type name part has a default value (`foo=`).
     pub default: bool,
 }
+
 impl<'a> JSDocTagTypeNamePart<'a> {
     pub fn new(part_content: &'a str, span: Span) -> Self {
         debug_assert!(part_content.trim() == part_content);
