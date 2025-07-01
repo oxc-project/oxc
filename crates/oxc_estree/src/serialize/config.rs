@@ -7,7 +7,7 @@ pub trait Config {
 
     fn new(ranges: bool) -> Self;
 
-    /// Whether to include range information in the serialized output
+    /// Get whether output should contain `range` fields.
     fn ranges(&self) -> bool;
 }
 
