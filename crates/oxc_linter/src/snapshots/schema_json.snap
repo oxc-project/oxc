@@ -102,6 +102,7 @@ expression: json
           "rootDir": []
         },
         "react": {
+          "version": null,
           "formComponents": [],
           "linkComponents": []
         },
@@ -531,6 +532,7 @@ expression: json
         },
         "react": {
           "default": {
+            "version": null,
             "formComponents": [],
             "linkComponents": []
           },
@@ -561,6 +563,14 @@ expression: json
           "items": {
             "$ref": "#/definitions/CustomComponent"
           }
+        },
+        "version": {
+          "description": "React version to use for version-specific behavior.\n\nExample:\n\n```jsonc\n{\n\"settings\": {\n\"react\": {\n\"version\": \"16.14.0\"\n}\n}\n}\n```",
+          "default": null,
+          "type": [
+            "string",
+            "null"
+          ]
         }
       }
     },
