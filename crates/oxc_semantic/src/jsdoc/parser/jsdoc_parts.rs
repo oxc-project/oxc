@@ -1,11 +1,29 @@
 use oxc_span::Span;
 
-/// Used for `JSDoc.comment` and `JSDocTag.comment`
+/// Represents the raw text of a JSDoc tag *outside* the type expression (`{}`) and tag name (e.g., `@param`),
+/// such as the parameter name or trailing description.
+///
+/// This is used to capture parts of a JSDoc tag that aren't types but still carry semantic meaning,
+/// for example, the name `bar` or the description text in `@param {foo=} bar Some description`.
+///
+/// ```js
+/// /**
+///  * @param {foo=} bar Some description
+///  *               ^^^^^^^^^^^^^^^^^^^^
+///  *               This is the `JSDocCommentPart`
+///  */
+/// ```
+///
+/// Used to populate the `.comment` field on `JSDoc` and `JSDocTag` nodes.
 #[derive(Debug, Clone, Copy)]
 pub struct JSDocCommentPart<'a> {
+    /// The raw string content, such as a parameter name or freeform description text.
     raw: &'a str,
+
+    /// The span in the source text corresponding to this part.
     pub span: Span,
 }
+
 impl<'a> JSDocCommentPart<'a> {
     pub fn new(part_content: &'a str, span: Span) -> Self {
         Self { raw: part_content, span }
