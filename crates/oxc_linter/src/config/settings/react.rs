@@ -10,6 +10,22 @@ use serde::{Deserialize, Serialize};
 #[derive(Debug, Clone, Deserialize, Default, Serialize, JsonSchema)]
 #[cfg_attr(test, derive(PartialEq))]
 pub struct ReactPluginSettings {
+    /// React version to use for version-specific behavior.
+    ///
+    /// Example:
+    ///
+    /// ```jsonc
+    /// {
+    ///   "settings": {
+    ///     "react": {
+    ///       "version": "16.14.0"
+    ///     }
+    ///   }
+    /// }
+    /// ```
+    #[serde(default)]
+    pub version: Option<CompactStr>,
+
     /// Components used as alternatives to `<form>` for forms, such as `<Formik>`.
     ///
     /// Example:
