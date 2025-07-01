@@ -107,11 +107,31 @@ impl<'a> JSDocTagKindPart<'a> {
     }
 }
 
+/// Represents the raw type content inside a JSDoc tag's curly braces `{}`.
+///
+/// This struct captures the type expression including the curly braces.
+/// It stores the raw string slice as it appears in the source (with the
+/// enclosing braces) and its corresponding span.
+///
+/// For example, in a JSDoc tag like:
+///
+/// ```js
+/// /**
+///  * @param {foo=} bar
+///  *         ^^^^
+///  *         This is the `JSDocTagTypePart`, covering the full type expression
+///  */
+/// ```
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct JSDocTagTypePart<'a> {
+    /// The raw, unprocessed type expression string inside `{}`, including the braces.
+    /// For example: `"{foo=}"`, `"{Array<string>}"`, or `"{number | undefined}"`.
     raw: &'a str,
+
+    /// The span in the source text covering the entire `{...}` expression, including the braces.
     pub span: Span,
 }
+
 impl<'a> JSDocTagTypePart<'a> {
     pub fn new(part_content: &'a str, span: Span) -> Self {
         debug_assert!(part_content.starts_with('{'));
