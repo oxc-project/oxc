@@ -15,7 +15,7 @@ use oxc_span::Span;
 /// ```
 ///
 /// Used to populate the `.comment` field on `JSDoc` and `JSDocTag` nodes.
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct JSDocCommentPart<'a> {
     /// The raw string content, such as a parameter name or freeform description text.
     raw: &'a str,
