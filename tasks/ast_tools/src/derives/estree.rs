@@ -377,22 +377,18 @@ fn generate_body_for_struct(struct_def: &StructDef, schema: &Schema) -> TokenStr
 
     // Check if struct has a span field for range support
     let has_span_field = struct_def.fields.iter().any(|field| field.name() == "span");
-    let (range_declaration, range_field) = if has_span_field {
-        (
-            quote!( let ranges = serializer.ranges(); ),
-            quote! {
-                if ranges {
-                    state.serialize_field("range", &[self.span.start, self.span.end]);
-                }
-            },
-        )
+    let range_field = if has_span_field {
+        quote! {
+            if state.ranges() {
+                state.serialize_field("range", &[self.span.start, self.span.end]);
+            }
+        }
     } else {
-        (quote!(), quote!())
+        quote!()
     };
 
     let stmts = g.stmts;
     quote! {
-        #range_declaration
         let mut state = serializer.serialize_struct();
         #type_field
         #stmts

@@ -209,7 +209,7 @@ pub struct TemplateElementConverter<'a, 'b>(pub &'b TemplateElement<'a>);
 impl ESTree for TemplateElementConverter<'_, '_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let element = self.0;
-        let ranges = serializer.ranges();
+
         let mut state = serializer.serialize_struct();
         state.serialize_field("type", &JsonSafeString("TemplateElement"));
 
@@ -224,7 +224,7 @@ impl ESTree for TemplateElementConverter<'_, '_> {
         state.serialize_field("value", &TemplateElementValue(element));
         state.serialize_field("tail", &element.tail);
 
-        if ranges {
+        if state.ranges() {
             state.serialize_field("range", &[span.start, span.end]);
         }
 

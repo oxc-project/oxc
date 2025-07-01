@@ -44,12 +44,11 @@ impl ESTree for ErrorSeverity {
 
 impl ESTree for ErrorLabel<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
-        let ranges = serializer.ranges();
         let mut state = serializer.serialize_struct();
         state.serialize_field("message", &self.message);
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
-        if ranges {
+        if state.ranges() {
             state.serialize_field("range", &[self.span.start, self.span.end]);
         }
         state.end();
@@ -70,13 +69,12 @@ impl ESTree for EcmaScriptModule<'_> {
 
 impl ESTree for StaticImport<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
-        let ranges = serializer.ranges();
         let mut state = serializer.serialize_struct();
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
         state.serialize_field("moduleRequest", &self.module_request);
         state.serialize_field("entries", &self.entries);
-        if ranges {
+        if state.ranges() {
             state.serialize_field("range", &[self.span.start, self.span.end]);
         }
         state.end();
@@ -85,12 +83,11 @@ impl ESTree for StaticImport<'_> {
 
 impl ESTree for StaticExport<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
-        let ranges = serializer.ranges();
         let mut state = serializer.serialize_struct();
         state.serialize_field("start", &self.span.start);
         state.serialize_field("end", &self.span.end);
         state.serialize_field("entries", &self.entries);
-        if ranges {
+        if state.ranges() {
             state.serialize_field("range", &[self.span.start, self.span.end]);
         }
         state.end();

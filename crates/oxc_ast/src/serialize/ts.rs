@@ -99,8 +99,6 @@ impl ESTree for TSModuleDeclarationConverter<'_, '_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let module = self.0;
 
-        let ranges = serializer.ranges();
-
         let mut state = serializer.serialize_struct();
         state.serialize_field("type", &JsonSafeString("TSModuleDeclaration"));
         state.serialize_field("start", &module.span.start);
@@ -160,7 +158,7 @@ impl ESTree for TSModuleDeclarationConverter<'_, '_> {
         state.serialize_field("declare", &module.declare);
         state.serialize_field("global", &TSModuleDeclarationGlobal(module));
 
-        if ranges {
+        if state.ranges() {
             state.serialize_field("range", &[module.span.start, module.span.end]);
         }
 
@@ -172,8 +170,6 @@ struct TSModuleDeclarationIdParts<'a, 'b>(&'b [&'b BindingIdentifier<'a>]);
 
 impl ESTree for TSModuleDeclarationIdParts<'_, '_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
-        let ranges = serializer.ranges();
-
         let parts = self.0;
         assert!(!parts.is_empty());
 
@@ -195,7 +191,7 @@ impl ESTree for TSModuleDeclarationIdParts<'_, '_> {
 
         state.serialize_field("right", last);
 
-        if ranges {
+        if state.ranges() {
             state.serialize_field("range", &[span_start, last.span.end]);
         }
 
@@ -353,8 +349,6 @@ impl ESTree for TSTypeNameAsMemberExpression<'_, '_> {
                 TSTypeNameIdentifierReference(ident).serialize(serializer);
             }
             TSTypeName::QualifiedName(name) => {
-                let ranges = serializer.ranges();
-
                 // Convert to `TSQualifiedName` to `MemberExpression`.
                 // Recursively convert `left` to `MemberExpression` too if it's a `TSQualifiedName`.
                 let mut state = serializer.serialize_struct();
@@ -365,7 +359,7 @@ impl ESTree for TSTypeNameAsMemberExpression<'_, '_> {
                 state.serialize_field("property", &name.right);
                 state.serialize_field("optional", &false);
                 state.serialize_field("computed", &false);
-                if ranges {
+                if state.ranges() {
                     state.serialize_field("range", &[name.span.start, name.span.end]);
                 }
                 state.end();

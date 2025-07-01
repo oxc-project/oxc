@@ -22,8 +22,6 @@ impl ESTree for JSXElementOpeningElement<'_, '_> {
         let element = self.0;
         let opening_element = element.opening_element.as_ref();
 
-        let ranges = serializer.ranges();
-
         let mut state = serializer.serialize_struct();
         state.serialize_field("type", &JsonSafeString("JSXOpeningElement"));
         state.serialize_field("start", &opening_element.span.start);
@@ -32,7 +30,7 @@ impl ESTree for JSXElementOpeningElement<'_, '_> {
         state.serialize_ts_field("typeArguments", &opening_element.type_arguments);
         state.serialize_field("attributes", &opening_element.attributes);
         state.serialize_field("selfClosing", &element.closing_element.is_none());
-        if ranges {
+        if state.ranges() {
             state.serialize_field("range", &[opening_element.span.start, opening_element.span.end]);
         }
         state.end();
