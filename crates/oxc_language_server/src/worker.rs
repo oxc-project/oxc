@@ -159,7 +159,7 @@ impl WorkspaceWorker {
             return None;
         };
 
-        server_linter.run_single(uri, content)
+        server_linter.run_single(uri, content).await
     }
 
     fn update_diagnostics(&self, uri: &Uri, diagnostics: &[DiagnosticReport]) {
@@ -178,7 +178,8 @@ impl WorkspaceWorker {
         };
 
         for uri in self.diagnostics_report_map.pin_owned().keys() {
-            if let Some(diagnostics) = server_linter.run_single(&Uri::from_str(uri).unwrap(), None)
+            if let Some(diagnostics) =
+                server_linter.run_single(&Uri::from_str(uri).unwrap(), None).await
             {
                 self.diagnostics_report_map.pin().insert(uri.clone(), diagnostics.clone());
                 diagnostics_map.pin().insert(uri.clone(), diagnostics);

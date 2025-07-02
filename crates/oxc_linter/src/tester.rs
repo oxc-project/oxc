@@ -532,7 +532,8 @@ impl Tester {
         let cwd = self.current_working_directory.clone();
         let paths = vec![Arc::<OsStr>::from(path_to_lint.as_os_str())];
         let options = LintServiceOptions::new(cwd).with_cross_module(self.plugins.has_import());
-        let mut lint_service = LintService::new(&linter, AllocatorPool::default(), options)
+        let mut lint_service = LintService::new(linter, AllocatorPool::default(), options);
+        let _ = lint_service
             .with_file_system(Box::new(TesterFileSystem::new(
                 path_to_lint,
                 source_text.to_string(),

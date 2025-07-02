@@ -294,8 +294,8 @@ impl Runner for LintRunner {
 
         // Spawn linting in another thread so diagnostics can be printed immediately from diagnostic_service.run.
         rayon::spawn(move || {
-            let mut lint_service =
-                LintService::new(&linter, allocator_pool, options).with_paths(paths);
+            let mut lint_service = LintService::new(linter, allocator_pool, options);
+            let _ = lint_service.with_paths(paths);
             lint_service.run(&tx_error);
         });
 

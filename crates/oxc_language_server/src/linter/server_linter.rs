@@ -5,11 +5,10 @@ use globset::Glob;
 use ignore::gitignore::Gitignore;
 use log::{debug, warn};
 use rustc_hash::{FxBuildHasher, FxHashMap};
+use tokio::sync::Mutex;
 use tower_lsp_server::lsp_types::Uri;
 
-use oxc_linter::{
-    AllowWarnDeny, Config, ConfigStore, ConfigStoreBuilder, LintOptions, Linter, Oxlintrc,
-};
+use oxc_linter::{AllowWarnDeny, Config, ConfigStore, ConfigStoreBuilder, LintOptions, Oxlintrc};
 use tower_lsp_server::UriExt;
 
 use crate::linter::{
@@ -22,7 +21,7 @@ use crate::{ConcurrentHashMap, Options};
 use super::config_walker::ConfigWalker;
 
 pub struct ServerLinter {
-    isolated_linter: Arc<IsolatedLintHandler>,
+    isolated_linter: Arc<Mutex<IsolatedLintHandler>>,
     gitignore_glob: Vec<Gitignore>,
     pub extended_paths: Vec<PathBuf>,
 }
@@ -91,15 +90,14 @@ impl ServerLinter {
             },
         );
 
-        let linter = Linter::new(lint_options, config_store);
-
         let isolated_linter = IsolatedLintHandler::new(
-            linter,
-            IsolatedLintHandlerOptions { use_cross_module, root_path: root_path.to_path_buf() },
+            lint_options,
+            config_store,
+            &IsolatedLintHandlerOptions { use_cross_module, root_path: root_path.to_path_buf() },
         );
 
         Self {
-            isolated_linter: Arc::new(isolated_linter),
+            isolated_linter: Arc::new(Mutex::new(isolated_linter)),
             gitignore_glob: Self::create_ignore_glob(&root_path, &oxlintrc),
             extended_paths,
         }
@@ -206,12 +204,16 @@ impl ServerLinter {
         false
     }
 
-    pub fn run_single(&self, uri: &Uri, content: Option<String>) -> Option<Vec<DiagnosticReport>> {
+    pub async fn run_single(
+        &self,
+        uri: &Uri,
+        content: Option<String>,
+    ) -> Option<Vec<DiagnosticReport>> {
         if self.is_ignored(uri) {
             return None;
         }
 
-        self.isolated_linter.run_single(uri, content)
+        self.isolated_linter.lock().await.run_single(uri, content)
     }
 }
 

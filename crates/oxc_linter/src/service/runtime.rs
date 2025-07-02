@@ -34,11 +34,11 @@ use crate::{
 #[cfg(feature = "language_server")]
 use crate::fixer::MessageWithPosition;
 
-pub struct Runtime<'l> {
+pub struct Runtime {
     cwd: Box<Path>,
     /// All paths to lint
     paths: IndexSet<Arc<OsStr>, FxBuildHasher>,
-    pub(super) linter: &'l Linter,
+    pub(super) linter: Linter,
     resolver: Option<Resolver>,
 
     pub(super) file_system: Box<dyn RuntimeFileSystem + Sync + Send>,
@@ -176,9 +176,9 @@ impl RuntimeFileSystem for OsFileSystem {
     }
 }
 
-impl<'l> Runtime<'l> {
+impl Runtime {
     pub(super) fn new(
-        linter: &'l Linter,
+        linter: Linter,
         allocator_pool: AllocatorPool,
         options: LintServiceOptions,
     ) -> Self {
@@ -196,14 +196,14 @@ impl<'l> Runtime<'l> {
     }
 
     pub fn with_file_system(
-        mut self,
+        &mut self,
         file_system: Box<dyn RuntimeFileSystem + Sync + Send>,
-    ) -> Self {
+    ) -> &Self {
         self.file_system = file_system;
         self
     }
 
-    pub fn with_paths(mut self, paths: Vec<Arc<OsStr>>) -> Self {
+    pub fn with_paths(&mut self, paths: Vec<Arc<OsStr>>) -> &Self {
         self.paths = paths.into_iter().collect();
         self
     }

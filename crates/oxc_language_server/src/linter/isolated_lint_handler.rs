@@ -12,8 +12,8 @@ use tower_lsp_server::{
 
 use oxc_allocator::{Allocator, AllocatorPool};
 use oxc_linter::{
-    LINTABLE_EXTENSIONS, LintService, LintServiceOptions, Linter, MessageWithPosition,
-    loader::Loader, read_to_arena_str,
+    ConfigStore, LINTABLE_EXTENSIONS, LintOptions, LintService, LintServiceOptions, Linter,
+    MessageWithPosition, loader::Loader, read_to_arena_str,
 };
 use oxc_linter::{RuntimeFileSystem, read_to_string};
 
@@ -29,8 +29,7 @@ pub struct IsolatedLintHandlerOptions {
 }
 
 pub struct IsolatedLintHandler {
-    linter: Linter,
-    options: IsolatedLintHandlerOptions,
+    service: LintService,
 }
 
 pub struct IsolatedLintHandlerFileSystem {
@@ -64,11 +63,25 @@ impl RuntimeFileSystem for IsolatedLintHandlerFileSystem {
 }
 
 impl IsolatedLintHandler {
-    pub fn new(linter: Linter, options: IsolatedLintHandlerOptions) -> Self {
-        Self { linter, options }
+    pub fn new(
+        lint_options: LintOptions,
+        config_store: ConfigStore,
+        options: &IsolatedLintHandlerOptions,
+    ) -> Self {
+        let linter = Linter::new(lint_options, config_store);
+        let lint_service_options = LintServiceOptions::new(options.root_path.clone())
+            .with_cross_module(options.use_cross_module);
+
+        let service = LintService::new(linter, AllocatorPool::default(), lint_service_options);
+
+        Self { service }
     }
 
-    pub fn run_single(&self, uri: &Uri, content: Option<String>) -> Option<Vec<DiagnosticReport>> {
+    pub fn run_single(
+        &mut self,
+        uri: &Uri,
+        content: Option<String>,
+    ) -> Option<Vec<DiagnosticReport>> {
         let path = uri.to_file_path()?;
 
         if !Self::should_lint_path(&path) {
@@ -125,7 +138,7 @@ impl IsolatedLintHandler {
     }
 
     fn lint_path<'a>(
-        &self,
+        &mut self,
         allocator: &'a Allocator,
         path: &Path,
         source_text: Option<String>,
@@ -139,17 +152,14 @@ impl IsolatedLintHandler {
 
         debug!("lint {}", path.display());
 
-        let lint_service_options = LintServiceOptions::new(self.options.root_path.clone())
-            .with_cross_module(self.options.use_cross_module);
-
-        let mut lint_service =
-            LintService::new(&self.linter, AllocatorPool::default(), lint_service_options)
-                .with_file_system(Box::new(IsolatedLintHandlerFileSystem::new(
-                    path.to_path_buf(),
-                    source_text,
-                )))
-                .with_paths(vec![Arc::from(path.as_os_str())]);
-        let result = lint_service.run_source(allocator);
+        let result = self
+            .service
+            .with_file_system(Box::new(IsolatedLintHandlerFileSystem::new(
+                path.to_path_buf(),
+                source_text,
+            )))
+            .with_paths(vec![Arc::from(path.as_os_str())])
+            .run_source(allocator);
 
         Some(result)
     }
