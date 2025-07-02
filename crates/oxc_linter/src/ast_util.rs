@@ -653,7 +653,8 @@ pub fn is_default_this_binding<'a>(
     let mut current_node = node;
     loop {
         let parent = semantic.nodes().parent_node(current_node.id()).unwrap();
-        match parent.kind() {
+        let parent_kind = parent.kind();
+        match parent_kind {
             AstKind::ChainExpression(_)
             | AstKind::ConditionalExpression(_)
             | AstKind::LogicalExpression(_)
@@ -719,10 +720,8 @@ pub fn is_default_this_binding<'a>(
 
                 return !is_constructor;
             }
-            mem_expr if mem_expr.is_member_expression_kind() => {
-                let Some(member_expr_kind) = mem_expr.as_member_expression_kind() else {
-                    return false;
-                };
+            AstKind::StaticMemberExpression(_) | AstKind::ComputedMemberExpression(_) => {
+                let member_expr_kind = parent_kind.as_member_expression_kind().unwrap();
                 if member_expr_kind.object().span() == current_node.span()
                     && member_expr_kind
                         .static_property_name()
