@@ -4,6 +4,13 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [1.5.0] - 2025-07-02
+
+### 🐛 Bug Fixes
+
+- 4b2c658 oxlint: Make `--version` exit code be `0` (#11986) (camc314)
+
+
 ## [1.4.0] - 2025-06-30
 
 ### 🚀 Features

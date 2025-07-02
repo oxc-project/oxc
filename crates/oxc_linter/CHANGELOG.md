@@ -4,6 +4,24 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [1.5.0] - 2025-07-02
+
+### 🚀 Features
+
+- 899b8b4 linter: Allow namespace re-export in `import/no-cycle` (#11995) (Boshen)
+
+### 🐛 Bug Fixes
+
+- f732589 linter: Panic in `consistent-type-imports` when the source contains a `{` (#12002) (camc314)
+
+### 🚜 Refactor
+
+- f7a2ae4 ast: Add `AstKind` for `AssignmentTargetPropertyIdentifier`, `AssignmentTargetPropertyProperty` (#11985) (camc314)
+- cfa52c2 ast: Add `AstKind` for `AssignmentTargetRest` (#11984) (camc314)
+- 3f91f24 linter: Remove `RulesCache` (#11981) (camc314)
+- 54582cb ast: Add `AstKind` for `BindingProperty` (#11974) (camc314)
+
+
 ## [1.4.0] - 2025-06-30
 
 ### 🚀 Features
