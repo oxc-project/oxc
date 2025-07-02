@@ -240,14 +240,15 @@ impl<'a> Codegen<'a> {
         let mut consumed = 0;
         let mut i = 0;
 
-        // Only check when remaining string has length larger than 8.
+        // Only check when remaining string has length larger than 8
         while i + 8 <= slice.len() {
             if is_script_close_tag(&slice[i..i + 8]) {
                 // Push str up to and including `<`. Skip `/`. Write `\/` instead.
+                // Skip over `script` - it'll be written in next chunk.
                 // SAFETY:
-                // The slice guarantees to be a valid UTF-8 string.
-                // The consumed index is always pointed to a UTF-8 char boundary.
-                // Current byte is `<`, a UTF-8 char boundary.
+                // The slice is guaranteed to be a valid UTF-8 string.
+                // `consumed` is always on a UTF-8 char boundary.
+                // `i` is on `<`, so `i + 1` is a UTF-8 char boundary.
                 unsafe {
                     self.code.print_bytes_unchecked(&slice[consumed..=i]);
                 }
