@@ -723,19 +723,22 @@ pub fn cold_branch<F: FnOnce() -> T, T>(f: F) -> T {
     f()
 }
 
-/// Check if the slice is `</script` regardless of case.
+/// Check if `slice` is `</script`, regardless of case.
+///
+/// `slice.len()` must be 8.
+//
+// `#[inline(always)]` so that compiler can see from caller that `slice.len() == 8`
+// and so `slice.try_into().unwrap()` cannot fail. This function is only 4 instructions.
+#[expect(clippy::inline_always)]
+#[inline(always)]
 pub fn is_script_close_tag(slice: &[u8]) -> bool {
-    if slice.len() == 8 {
-        // Compiler condenses these operations to an 8-byte read, u64 AND, and u64 compare.
-        // https://godbolt.org/z/oGG16fK6v
-        let mut slice: [u8; 8] = slice.try_into().unwrap();
-        for b in slice.iter_mut().skip(2) {
-            // `| 32` converts ASCII upper case letters to lower case.
-            *b |= 32;
-        }
-
-        slice == *b"</script"
-    } else {
-        false
+    // Compiler condenses these operations to an 8-byte read, u64 AND, and u64 compare.
+    // https://godbolt.org/z/K8q68WGn6
+    let mut slice: [u8; 8] = slice.try_into().unwrap();
+    for b in slice.iter_mut().skip(2) {
+        // `| 32` converts ASCII upper case letters to lower case.
+        *b |= 32;
     }
+
+    slice == *b"</script"
 }
