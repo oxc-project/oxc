@@ -1,6 +1,6 @@
 mod array_element_list;
 mod array_expression;
-mod arrow_function_expression;
+pub mod arrow_function_expression;
 mod assignment_pattern_property_list;
 mod binary_like_expression;
 mod binding_property_list;
@@ -37,7 +37,7 @@ use crate::{
     generated::ast_nodes::{AstNode, AstNodes},
     options::{FormatTrailingCommas, QuoteProperties, TrailingSeparator},
     parentheses::NeedsParentheses,
-    utils::write_arguments_multi_line,
+    utils::{assignment_like::AssignmentLike, write_arguments_multi_line},
     write,
 };
 
@@ -421,7 +421,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, ConditionalExpression<'a>> {
 
 impl<'a> FormatWrite<'a> for AstNode<'a, AssignmentExpression<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        write!(f, [self.left(), space(), self.operator().as_str(), space(), self.right()])
+        AssignmentLike::AssignmentExpression(self).fmt(f)
     }
 }
 

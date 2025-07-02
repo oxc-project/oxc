@@ -270,12 +270,16 @@ impl<'a> NeedsParentheses<'a> for AstNode<'a, AssignmentExpression<'a>> {
                 let parent_parent = parent.parent;
                 if let AstNodes::FunctionBody(body) = parent_parent {
                     let parent_parent_parent = body.parent;
-                    return matches!(parent_parent_parent, AstNodes::ArrowFunctionExpression(arrow) if arrow.expression());
+                    matches!(parent_parent_parent, AstNodes::ArrowFunctionExpression(arrow) if arrow.expression())
+                } else {
+                    is_first_in_statement(
+                        self.parent,
+                        FirstInStatementMode::ExpressionStatementOrArrow,
+                    ) && matches!(self.left, AssignmentTarget::ObjectAssignmentTarget(_))
                 }
-                false
             }
-            AstNodes::ExportDefaultDeclaration(_) => true,
-            _ => false,
+            AstNodes::AssignmentExpression(_) | AstNodes::ComputedMemberExpression(_) => false,
+            _ => true,
         }
     }
 }
