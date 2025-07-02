@@ -166,7 +166,7 @@ allocator-api2 = "=0.2.21"
 base64 = "0.22.1"
 bitflags = "2.9.1"
 bpaf = "0.9.20"
-# `bumpalo` must be pinned to exactly this version.
+# `bumpalo` must be pinned to exactly version 3.19.0.
 # `Allocator::from_raw_parts` (used in raw transfer) depends on internal implementation details
 # of `bumpalo` which may change in a future version.
 # This is a temporary situation - we'll replace `bumpalo` with our own allocator.
