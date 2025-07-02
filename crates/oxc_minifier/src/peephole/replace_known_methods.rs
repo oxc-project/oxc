@@ -6,7 +6,8 @@ use oxc_ast::ast::*;
 use oxc_ecmascript::{
     StringCharAt, StringCharAtResult, StringCharCodeAt, StringIndexOf, StringLastIndexOf,
     StringSubstring, ToBigInt, ToInt32, ToIntegerIndex,
-    constant_evaluation::{ConstantEvaluation, DetermineValueType},
+    constant_evaluation::{ConstantEvaluation, ConstantValue, DetermineValueType},
+    is_global_reference::IsGlobalReference,
     side_effects::MayHaveSideEffects,
 };
 use oxc_span::{Atom, SPAN, format_atom};
@@ -78,6 +79,7 @@ impl<'a> PeepholeOptimizations {
             }
             "min" | "max" => Self::try_fold_math_variadic(*span, arguments, name, object, ctx),
             "of" => Self::try_fold_array_of(*span, arguments, name, object, ctx),
+            "startsWith" => Self::try_fold_starts_with(*span, arguments, object, ctx),
             _ => None,
         };
         if let Some(replacement) = replacement {
@@ -96,15 +98,24 @@ impl<'a> PeepholeOptimizations {
         if !args.is_empty() {
             return None;
         }
-        let Expression::StringLiteral(s) = object else { return None };
 
-        let value = s.value.as_str();
+        let value = match object {
+            Expression::StringLiteral(s) => Cow::Borrowed(s.value.as_str()),
+            Expression::Identifier(ident) => ident
+                .reference_id
+                .get()
+                .and_then(|reference_id| ctx.get_constant_value_for_reference_id(reference_id))
+                .and_then(ConstantValue::into_string)?,
+
+            _ => return None,
+        };
+
         let value = match name {
-            "toLowerCase" => ctx.ast.atom_from_cow(&value.cow_to_lowercase()),
-            "toUpperCase" => ctx.ast.atom_from_cow(&value.cow_to_uppercase()),
-            "trim" => Atom::from(value.trim()),
-            "trimStart" => Atom::from(value.trim_start()),
-            "trimEnd" => Atom::from(value.trim_end()),
+            "toLowerCase" => ctx.ast.atom(&value.cow_to_lowercase()),
+            "toUpperCase" => ctx.ast.atom(&value.cow_to_uppercase()),
+            "trim" => ctx.ast.atom(value.trim()),
+            "trimStart" => ctx.ast.atom(value.trim_start()),
+            "trimEnd" => ctx.ast.atom(value.trim_end()),
             _ => return None,
         };
         Some(ctx.ast.expression_string_literal(span, value, None))
@@ -955,6 +966,20 @@ impl<'a> PeepholeOptimizations {
             span,
             ctx.ast.vec_from_iter(arguments.drain(..).map(ArrayExpressionElement::from)),
         ))
+    }
+
+    fn try_fold_starts_with(
+        span: Span,
+        arguments: &mut Arguments<'a>,
+        object: &Expression<'a>,
+        ctx: &mut Ctx<'a, '_>,
+    ) -> Option<Expression<'a>> {
+        if arguments.len() != 1 {
+            return None;
+        }
+        let Argument::StringLiteral(arg) = arguments.first().unwrap() else { return None };
+        let Expression::StringLiteral(s) = object else { return None };
+        Some(ctx.ast.expression_boolean_literal(span, s.value.starts_with(arg.value.as_str())))
     }
 
     /// Compress `"abc"[0]` to `"a"` and `[0,1,2][1]` to `1`
@@ -2051,5 +2076,16 @@ mod test {
         test_same("v = [...a, 1][1]");
         test_same("v = [1, ...a][0]");
         test("v = [1, ...[1,2]][0]", "v = 1");
+    }
+
+    #[test]
+    fn test_fold_starts_with() {
+        test_same("v = 'production'.startsWith('prod', 'bar')");
+        test("v = 'production'.startsWith('prod')", "v = !0");
+        test("v = 'production'.startsWith('dev')", "v = !1");
+        test(
+            "const node_env = 'production'; v = node_env.toLowerCase().startsWith('prod')",
+            "const node_env = 'production'; v = !0",
+        );
     }
 }
