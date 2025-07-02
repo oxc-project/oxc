@@ -18,9 +18,15 @@ fn consistent_indexed_object_style_diagnostic(a: &str, b: &str, span: Span) -> O
         .with_label(span)
 }
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Clone)]
 pub struct ConsistentIndexedObjectStyle {
     is_record_mode: bool,
+}
+
+impl Default for ConsistentIndexedObjectStyle {
+    fn default() -> Self {
+        Self { is_record_mode: true }
+    }
 }
 
 #[derive(Debug, Default, Clone, Copy, Eq, PartialEq)]
