@@ -91,7 +91,7 @@ fn implementation(type_def: &TypeDef, schema: &Schema) -> TokenStream {
         quote! {}
     } else {
         quote! {
-            format_leading_comments(self.span).fmt(f)?;
+            self.format_leading_comments(f)?;
         }
     };
 
@@ -103,7 +103,7 @@ fn implementation(type_def: &TypeDef, schema: &Schema) -> TokenStream {
         }
     } else {
         quote! {
-            format_trailing_comments(&self.parent.as_sibling_node(), &SiblingNode::from(self.inner), self.following_node.as_ref()).fmt(f)?;
+            self.format_trailing_comments(f)?;
         }
     };
 

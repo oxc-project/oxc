@@ -3222,6 +3222,19 @@ impl<'a> AstNode<'a, Program<'a>> {
             following_node,
         })
     }
+
+    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_leading_comments(self.span()).fmt(f)
+    }
+
+    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_trailing_comments(
+            &self.parent.as_sibling_node(),
+            &SiblingNode::from(self.inner),
+            self.following_node.as_ref(),
+        )
+        .fmt(f)
+    }
 }
 
 impl<'a> AstNode<'a, Expression<'a>> {
@@ -3570,6 +3583,19 @@ impl<'a> AstNode<'a, IdentifierName<'a>> {
     pub fn name(&self) -> Atom<'a> {
         self.inner.name
     }
+
+    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_leading_comments(self.span()).fmt(f)
+    }
+
+    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_trailing_comments(
+            &self.parent.as_sibling_node(),
+            &SiblingNode::from(self.inner),
+            self.following_node.as_ref(),
+        )
+        .fmt(f)
+    }
 }
 
 impl<'a> AstNode<'a, IdentifierReference<'a>> {
@@ -3581,6 +3607,19 @@ impl<'a> AstNode<'a, IdentifierReference<'a>> {
     #[inline]
     pub fn name(&self) -> Atom<'a> {
         self.inner.name
+    }
+
+    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_leading_comments(self.span()).fmt(f)
+    }
+
+    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_trailing_comments(
+            &self.parent.as_sibling_node(),
+            &SiblingNode::from(self.inner),
+            self.following_node.as_ref(),
+        )
+        .fmt(f)
     }
 }
 
@@ -3594,6 +3633,19 @@ impl<'a> AstNode<'a, BindingIdentifier<'a>> {
     pub fn name(&self) -> Atom<'a> {
         self.inner.name
     }
+
+    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_leading_comments(self.span()).fmt(f)
+    }
+
+    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_trailing_comments(
+            &self.parent.as_sibling_node(),
+            &SiblingNode::from(self.inner),
+            self.following_node.as_ref(),
+        )
+        .fmt(f)
+    }
 }
 
 impl<'a> AstNode<'a, LabelIdentifier<'a>> {
@@ -3606,12 +3658,38 @@ impl<'a> AstNode<'a, LabelIdentifier<'a>> {
     pub fn name(&self) -> Atom<'a> {
         self.inner.name
     }
+
+    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_leading_comments(self.span()).fmt(f)
+    }
+
+    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_trailing_comments(
+            &self.parent.as_sibling_node(),
+            &SiblingNode::from(self.inner),
+            self.following_node.as_ref(),
+        )
+        .fmt(f)
+    }
 }
 
 impl<'a> AstNode<'a, ThisExpression> {
     #[inline]
     pub fn span(&self) -> Span {
         self.inner.span
+    }
+
+    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_leading_comments(self.span()).fmt(f)
+    }
+
+    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_trailing_comments(
+            &self.parent.as_sibling_node(),
+            &SiblingNode::from(self.inner),
+            self.following_node.as_ref(),
+        )
+        .fmt(f)
     }
 }
 
@@ -3630,6 +3708,19 @@ impl<'a> AstNode<'a, ArrayExpression<'a>> {
             parent: self.allocator.alloc(AstNodes::ArrayExpression(transmute_self(self))),
             following_node,
         })
+    }
+
+    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_leading_comments(self.span()).fmt(f)
+    }
+
+    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_trailing_comments(
+            &self.parent.as_sibling_node(),
+            &SiblingNode::from(self.inner),
+            self.following_node.as_ref(),
+        )
+        .fmt(f)
     }
 }
 
@@ -3682,6 +3773,19 @@ impl<'a> AstNode<'a, Elision> {
     pub fn span(&self) -> Span {
         self.inner.span
     }
+
+    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_leading_comments(self.span()).fmt(f)
+    }
+
+    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_trailing_comments(
+            &self.parent.as_sibling_node(),
+            &SiblingNode::from(self.inner),
+            self.following_node.as_ref(),
+        )
+        .fmt(f)
+    }
 }
 
 impl<'a> AstNode<'a, ObjectExpression<'a>> {
@@ -3699,6 +3803,19 @@ impl<'a> AstNode<'a, ObjectExpression<'a>> {
             parent: self.allocator.alloc(AstNodes::ObjectExpression(transmute_self(self))),
             following_node,
         })
+    }
+
+    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_leading_comments(self.span()).fmt(f)
+    }
+
+    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_trailing_comments(
+            &self.parent.as_sibling_node(),
+            &SiblingNode::from(self.inner),
+            self.following_node.as_ref(),
+        )
+        .fmt(f)
     }
 }
 
@@ -3782,6 +3899,19 @@ impl<'a> AstNode<'a, ObjectProperty<'a>> {
     pub fn computed(&self) -> bool {
         self.inner.computed
     }
+
+    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_leading_comments(self.span()).fmt(f)
+    }
+
+    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_trailing_comments(
+            &self.parent.as_sibling_node(),
+            &SiblingNode::from(self.inner),
+            self.following_node.as_ref(),
+        )
+        .fmt(f)
+    }
 }
 
 impl<'a> AstNode<'a, PropertyKey<'a>> {
@@ -3862,6 +3992,19 @@ impl<'a> AstNode<'a, TemplateLiteral<'a>> {
             following_node,
         })
     }
+
+    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_leading_comments(self.span()).fmt(f)
+    }
+
+    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_trailing_comments(
+            &self.parent.as_sibling_node(),
+            &SiblingNode::from(self.inner),
+            self.following_node.as_ref(),
+        )
+        .fmt(f)
+    }
 }
 
 impl<'a> AstNode<'a, TaggedTemplateExpression<'a>> {
@@ -3910,6 +4053,19 @@ impl<'a> AstNode<'a, TaggedTemplateExpression<'a>> {
             following_node,
         })
     }
+
+    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_leading_comments(self.span()).fmt(f)
+    }
+
+    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_trailing_comments(
+            &self.parent.as_sibling_node(),
+            &SiblingNode::from(self.inner),
+            self.following_node.as_ref(),
+        )
+        .fmt(f)
+    }
 }
 
 impl<'a> AstNode<'a, TemplateElement<'a>> {
@@ -3931,6 +4087,19 @@ impl<'a> AstNode<'a, TemplateElement<'a>> {
     #[inline]
     pub fn lone_surrogates(&self) -> bool {
         self.inner.lone_surrogates
+    }
+
+    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_leading_comments(self.span()).fmt(f)
+    }
+
+    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_trailing_comments(
+            &self.parent.as_sibling_node(),
+            &SiblingNode::from(self.inner),
+            self.following_node.as_ref(),
+        )
+        .fmt(f)
     }
 }
 
@@ -4007,6 +4176,19 @@ impl<'a> AstNode<'a, ComputedMemberExpression<'a>> {
     pub fn optional(&self) -> bool {
         self.inner.optional
     }
+
+    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_leading_comments(self.span()).fmt(f)
+    }
+
+    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_trailing_comments(
+            &self.parent.as_sibling_node(),
+            &SiblingNode::from(self.inner),
+            self.following_node.as_ref(),
+        )
+        .fmt(f)
+    }
 }
 
 impl<'a> AstNode<'a, StaticMemberExpression<'a>> {
@@ -4041,6 +4223,19 @@ impl<'a> AstNode<'a, StaticMemberExpression<'a>> {
     pub fn optional(&self) -> bool {
         self.inner.optional
     }
+
+    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_leading_comments(self.span()).fmt(f)
+    }
+
+    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_trailing_comments(
+            &self.parent.as_sibling_node(),
+            &SiblingNode::from(self.inner),
+            self.following_node.as_ref(),
+        )
+        .fmt(f)
+    }
 }
 
 impl<'a> AstNode<'a, PrivateFieldExpression<'a>> {
@@ -4074,6 +4269,19 @@ impl<'a> AstNode<'a, PrivateFieldExpression<'a>> {
     #[inline]
     pub fn optional(&self) -> bool {
         self.inner.optional
+    }
+
+    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_leading_comments(self.span()).fmt(f)
+    }
+
+    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_trailing_comments(
+            &self.parent.as_sibling_node(),
+            &SiblingNode::from(self.inner),
+            self.following_node.as_ref(),
+        )
+        .fmt(f)
     }
 }
 
@@ -4140,6 +4348,19 @@ impl<'a> AstNode<'a, CallExpression<'a>> {
     pub fn pure(&self) -> bool {
         self.inner.pure
     }
+
+    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_leading_comments(self.span()).fmt(f)
+    }
+
+    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_trailing_comments(
+            &self.parent.as_sibling_node(),
+            &SiblingNode::from(self.inner),
+            self.following_node.as_ref(),
+        )
+        .fmt(f)
+    }
 }
 
 impl<'a> AstNode<'a, NewExpression<'a>> {
@@ -4200,6 +4421,19 @@ impl<'a> AstNode<'a, NewExpression<'a>> {
     pub fn pure(&self) -> bool {
         self.inner.pure
     }
+
+    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_leading_comments(self.span()).fmt(f)
+    }
+
+    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_trailing_comments(
+            &self.parent.as_sibling_node(),
+            &SiblingNode::from(self.inner),
+            self.following_node.as_ref(),
+        )
+        .fmt(f)
+    }
 }
 
 impl<'a> AstNode<'a, MetaProperty<'a>> {
@@ -4229,6 +4463,19 @@ impl<'a> AstNode<'a, MetaProperty<'a>> {
             following_node,
         })
     }
+
+    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_leading_comments(self.span()).fmt(f)
+    }
+
+    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_trailing_comments(
+            &self.parent.as_sibling_node(),
+            &SiblingNode::from(self.inner),
+            self.following_node.as_ref(),
+        )
+        .fmt(f)
+    }
 }
 
 impl<'a> AstNode<'a, SpreadElement<'a>> {
@@ -4246,6 +4493,19 @@ impl<'a> AstNode<'a, SpreadElement<'a>> {
             parent: self.allocator.alloc(AstNodes::SpreadElement(transmute_self(self))),
             following_node,
         })
+    }
+
+    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_leading_comments(self.span()).fmt(f)
+    }
+
+    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_trailing_comments(
+            &self.parent.as_sibling_node(),
+            &SiblingNode::from(self.inner),
+            self.following_node.as_ref(),
+        )
+        .fmt(f)
     }
 }
 
@@ -4309,6 +4569,19 @@ impl<'a> AstNode<'a, UpdateExpression<'a>> {
             following_node,
         })
     }
+
+    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_leading_comments(self.span()).fmt(f)
+    }
+
+    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_trailing_comments(
+            &self.parent.as_sibling_node(),
+            &SiblingNode::from(self.inner),
+            self.following_node.as_ref(),
+        )
+        .fmt(f)
+    }
 }
 
 impl<'a> AstNode<'a, UnaryExpression<'a>> {
@@ -4331,6 +4604,19 @@ impl<'a> AstNode<'a, UnaryExpression<'a>> {
             parent: self.allocator.alloc(AstNodes::UnaryExpression(transmute_self(self))),
             following_node,
         })
+    }
+
+    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_leading_comments(self.span()).fmt(f)
+    }
+
+    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_trailing_comments(
+            &self.parent.as_sibling_node(),
+            &SiblingNode::from(self.inner),
+            self.following_node.as_ref(),
+        )
+        .fmt(f)
     }
 }
 
@@ -4366,6 +4652,19 @@ impl<'a> AstNode<'a, BinaryExpression<'a>> {
             following_node,
         })
     }
+
+    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_leading_comments(self.span()).fmt(f)
+    }
+
+    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_trailing_comments(
+            &self.parent.as_sibling_node(),
+            &SiblingNode::from(self.inner),
+            self.following_node.as_ref(),
+        )
+        .fmt(f)
+    }
 }
 
 impl<'a> AstNode<'a, PrivateInExpression<'a>> {
@@ -4394,6 +4693,19 @@ impl<'a> AstNode<'a, PrivateInExpression<'a>> {
             parent: self.allocator.alloc(AstNodes::PrivateInExpression(transmute_self(self))),
             following_node,
         })
+    }
+
+    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_leading_comments(self.span()).fmt(f)
+    }
+
+    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_trailing_comments(
+            &self.parent.as_sibling_node(),
+            &SiblingNode::from(self.inner),
+            self.following_node.as_ref(),
+        )
+        .fmt(f)
     }
 }
 
@@ -4428,6 +4740,19 @@ impl<'a> AstNode<'a, LogicalExpression<'a>> {
             parent: self.allocator.alloc(AstNodes::LogicalExpression(transmute_self(self))),
             following_node,
         })
+    }
+
+    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_leading_comments(self.span()).fmt(f)
+    }
+
+    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_trailing_comments(
+            &self.parent.as_sibling_node(),
+            &SiblingNode::from(self.inner),
+            self.following_node.as_ref(),
+        )
+        .fmt(f)
     }
 }
 
@@ -4469,6 +4794,19 @@ impl<'a> AstNode<'a, ConditionalExpression<'a>> {
             following_node,
         })
     }
+
+    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_leading_comments(self.span()).fmt(f)
+    }
+
+    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_trailing_comments(
+            &self.parent.as_sibling_node(),
+            &SiblingNode::from(self.inner),
+            self.following_node.as_ref(),
+        )
+        .fmt(f)
+    }
 }
 
 impl<'a> AstNode<'a, AssignmentExpression<'a>> {
@@ -4502,6 +4840,19 @@ impl<'a> AstNode<'a, AssignmentExpression<'a>> {
             parent: self.allocator.alloc(AstNodes::AssignmentExpression(transmute_self(self))),
             following_node,
         })
+    }
+
+    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_leading_comments(self.span()).fmt(f)
+    }
+
+    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_trailing_comments(
+            &self.parent.as_sibling_node(),
+            &SiblingNode::from(self.inner),
+            self.following_node.as_ref(),
+        )
+        .fmt(f)
     }
 }
 
@@ -4669,6 +5020,19 @@ impl<'a> AstNode<'a, ArrayAssignmentTarget<'a>> {
             }))
             .as_ref()
     }
+
+    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_leading_comments(self.span()).fmt(f)
+    }
+
+    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_trailing_comments(
+            &self.parent.as_sibling_node(),
+            &SiblingNode::from(self.inner),
+            self.following_node.as_ref(),
+        )
+        .fmt(f)
+    }
 }
 
 impl<'a> AstNode<'a, ObjectAssignmentTarget<'a>> {
@@ -4702,6 +5066,19 @@ impl<'a> AstNode<'a, ObjectAssignmentTarget<'a>> {
             }))
             .as_ref()
     }
+
+    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_leading_comments(self.span()).fmt(f)
+    }
+
+    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_trailing_comments(
+            &self.parent.as_sibling_node(),
+            &SiblingNode::from(self.inner),
+            self.following_node.as_ref(),
+        )
+        .fmt(f)
+    }
 }
 
 impl<'a> AstNode<'a, AssignmentTargetRest<'a>> {
@@ -4719,6 +5096,19 @@ impl<'a> AstNode<'a, AssignmentTargetRest<'a>> {
             parent: self.allocator.alloc(AstNodes::AssignmentTargetRest(transmute_self(self))),
             following_node,
         })
+    }
+
+    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_leading_comments(self.span()).fmt(f)
+    }
+
+    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_trailing_comments(
+            &self.parent.as_sibling_node(),
+            &SiblingNode::from(self.inner),
+            self.following_node.as_ref(),
+        )
+        .fmt(f)
     }
 }
 
@@ -4785,6 +5175,19 @@ impl<'a> AstNode<'a, AssignmentTargetWithDefault<'a>> {
                 .alloc(AstNodes::AssignmentTargetWithDefault(transmute_self(self))),
             following_node,
         })
+    }
+
+    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_leading_comments(self.span()).fmt(f)
+    }
+
+    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_trailing_comments(
+            &self.parent.as_sibling_node(),
+            &SiblingNode::from(self.inner),
+            self.following_node.as_ref(),
+        )
+        .fmt(f)
     }
 }
 
@@ -4857,6 +5260,19 @@ impl<'a> AstNode<'a, AssignmentTargetPropertyIdentifier<'a>> {
             }))
             .as_ref()
     }
+
+    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_leading_comments(self.span()).fmt(f)
+    }
+
+    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_trailing_comments(
+            &self.parent.as_sibling_node(),
+            &SiblingNode::from(self.inner),
+            self.following_node.as_ref(),
+        )
+        .fmt(f)
+    }
 }
 
 impl<'a> AstNode<'a, AssignmentTargetPropertyProperty<'a>> {
@@ -4895,6 +5311,19 @@ impl<'a> AstNode<'a, AssignmentTargetPropertyProperty<'a>> {
     pub fn computed(&self) -> bool {
         self.inner.computed
     }
+
+    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_leading_comments(self.span()).fmt(f)
+    }
+
+    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_trailing_comments(
+            &self.parent.as_sibling_node(),
+            &SiblingNode::from(self.inner),
+            self.following_node.as_ref(),
+        )
+        .fmt(f)
+    }
 }
 
 impl<'a> AstNode<'a, SequenceExpression<'a>> {
@@ -4913,12 +5342,38 @@ impl<'a> AstNode<'a, SequenceExpression<'a>> {
             following_node,
         })
     }
+
+    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_leading_comments(self.span()).fmt(f)
+    }
+
+    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_trailing_comments(
+            &self.parent.as_sibling_node(),
+            &SiblingNode::from(self.inner),
+            self.following_node.as_ref(),
+        )
+        .fmt(f)
+    }
 }
 
 impl<'a> AstNode<'a, Super> {
     #[inline]
     pub fn span(&self) -> Span {
         self.inner.span
+    }
+
+    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_leading_comments(self.span()).fmt(f)
+    }
+
+    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_trailing_comments(
+            &self.parent.as_sibling_node(),
+            &SiblingNode::from(self.inner),
+            self.following_node.as_ref(),
+        )
+        .fmt(f)
     }
 }
 
@@ -4938,6 +5393,19 @@ impl<'a> AstNode<'a, AwaitExpression<'a>> {
             following_node,
         })
     }
+
+    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_leading_comments(self.span()).fmt(f)
+    }
+
+    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_trailing_comments(
+            &self.parent.as_sibling_node(),
+            &SiblingNode::from(self.inner),
+            self.following_node.as_ref(),
+        )
+        .fmt(f)
+    }
 }
 
 impl<'a> AstNode<'a, ChainExpression<'a>> {
@@ -4955,6 +5423,19 @@ impl<'a> AstNode<'a, ChainExpression<'a>> {
             parent: self.allocator.alloc(AstNodes::ChainExpression(transmute_self(self))),
             following_node,
         })
+    }
+
+    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_leading_comments(self.span()).fmt(f)
+    }
+
+    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_trailing_comments(
+            &self.parent.as_sibling_node(),
+            &SiblingNode::from(self.inner),
+            self.following_node.as_ref(),
+        )
+        .fmt(f)
     }
 }
 
@@ -5017,6 +5498,19 @@ impl<'a> AstNode<'a, ParenthesizedExpression<'a>> {
             parent: self.allocator.alloc(AstNodes::ParenthesizedExpression(transmute_self(self))),
             following_node,
         })
+    }
+
+    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_leading_comments(self.span()).fmt(f)
+    }
+
+    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_trailing_comments(
+            &self.parent.as_sibling_node(),
+            &SiblingNode::from(self.inner),
+            self.following_node.as_ref(),
+        )
+        .fmt(f)
     }
 }
 
@@ -5213,6 +5707,19 @@ impl<'a> AstNode<'a, Directive<'a>> {
     pub fn directive(&self) -> Atom<'a> {
         self.inner.directive
     }
+
+    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_leading_comments(self.span()).fmt(f)
+    }
+
+    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_trailing_comments(
+            &self.parent.as_sibling_node(),
+            &SiblingNode::from(self.inner),
+            self.following_node.as_ref(),
+        )
+        .fmt(f)
+    }
 }
 
 impl<'a> AstNode<'a, Hashbang<'a>> {
@@ -5224,6 +5731,19 @@ impl<'a> AstNode<'a, Hashbang<'a>> {
     #[inline]
     pub fn value(&self) -> Atom<'a> {
         self.inner.value
+    }
+
+    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_leading_comments(self.span()).fmt(f)
+    }
+
+    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_trailing_comments(
+            &self.parent.as_sibling_node(),
+            &SiblingNode::from(self.inner),
+            self.following_node.as_ref(),
+        )
+        .fmt(f)
     }
 }
 
@@ -5242,6 +5762,19 @@ impl<'a> AstNode<'a, BlockStatement<'a>> {
             parent: self.allocator.alloc(AstNodes::BlockStatement(transmute_self(self))),
             following_node,
         })
+    }
+
+    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_leading_comments(self.span()).fmt(f)
+    }
+
+    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_trailing_comments(
+            &self.parent.as_sibling_node(),
+            &SiblingNode::from(self.inner),
+            self.following_node.as_ref(),
+        )
+        .fmt(f)
     }
 }
 
@@ -5350,6 +5883,19 @@ impl<'a> AstNode<'a, VariableDeclaration<'a>> {
     pub fn declare(&self) -> bool {
         self.inner.declare
     }
+
+    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_leading_comments(self.span()).fmt(f)
+    }
+
+    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_trailing_comments(
+            &self.parent.as_sibling_node(),
+            &SiblingNode::from(self.inner),
+            self.following_node.as_ref(),
+        )
+        .fmt(f)
+    }
 }
 
 impl<'a> AstNode<'a, VariableDeclarator<'a>> {
@@ -5392,12 +5938,38 @@ impl<'a> AstNode<'a, VariableDeclarator<'a>> {
     pub fn definite(&self) -> bool {
         self.inner.definite
     }
+
+    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_leading_comments(self.span()).fmt(f)
+    }
+
+    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_trailing_comments(
+            &self.parent.as_sibling_node(),
+            &SiblingNode::from(self.inner),
+            self.following_node.as_ref(),
+        )
+        .fmt(f)
+    }
 }
 
 impl<'a> AstNode<'a, EmptyStatement> {
     #[inline]
     pub fn span(&self) -> Span {
         self.inner.span
+    }
+
+    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_leading_comments(self.span()).fmt(f)
+    }
+
+    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_trailing_comments(
+            &self.parent.as_sibling_node(),
+            &SiblingNode::from(self.inner),
+            self.following_node.as_ref(),
+        )
+        .fmt(f)
     }
 }
 
@@ -5416,6 +5988,19 @@ impl<'a> AstNode<'a, ExpressionStatement<'a>> {
             parent: self.allocator.alloc(AstNodes::ExpressionStatement(transmute_self(self))),
             following_node,
         })
+    }
+
+    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_leading_comments(self.span()).fmt(f)
+    }
+
+    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_trailing_comments(
+            &self.parent.as_sibling_node(),
+            &SiblingNode::from(self.inner),
+            self.following_node.as_ref(),
+        )
+        .fmt(f)
     }
 }
 
@@ -5460,6 +6045,19 @@ impl<'a> AstNode<'a, IfStatement<'a>> {
             }))
             .as_ref()
     }
+
+    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_leading_comments(self.span()).fmt(f)
+    }
+
+    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_trailing_comments(
+            &self.parent.as_sibling_node(),
+            &SiblingNode::from(self.inner),
+            self.following_node.as_ref(),
+        )
+        .fmt(f)
+    }
 }
 
 impl<'a> AstNode<'a, DoWhileStatement<'a>> {
@@ -5489,6 +6087,19 @@ impl<'a> AstNode<'a, DoWhileStatement<'a>> {
             following_node,
         })
     }
+
+    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_leading_comments(self.span()).fmt(f)
+    }
+
+    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_trailing_comments(
+            &self.parent.as_sibling_node(),
+            &SiblingNode::from(self.inner),
+            self.following_node.as_ref(),
+        )
+        .fmt(f)
+    }
 }
 
 impl<'a> AstNode<'a, WhileStatement<'a>> {
@@ -5517,6 +6128,19 @@ impl<'a> AstNode<'a, WhileStatement<'a>> {
             parent: self.allocator.alloc(AstNodes::WhileStatement(transmute_self(self))),
             following_node,
         })
+    }
+
+    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_leading_comments(self.span()).fmt(f)
+    }
+
+    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_trailing_comments(
+            &self.parent.as_sibling_node(),
+            &SiblingNode::from(self.inner),
+            self.following_node.as_ref(),
+        )
+        .fmt(f)
     }
 }
 
@@ -5585,6 +6209,19 @@ impl<'a> AstNode<'a, ForStatement<'a>> {
             parent: self.allocator.alloc(AstNodes::ForStatement(transmute_self(self))),
             following_node,
         })
+    }
+
+    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_leading_comments(self.span()).fmt(f)
+    }
+
+    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_trailing_comments(
+            &self.parent.as_sibling_node(),
+            &SiblingNode::from(self.inner),
+            self.following_node.as_ref(),
+        )
+        .fmt(f)
     }
 }
 
@@ -5661,6 +6298,19 @@ impl<'a> AstNode<'a, ForInStatement<'a>> {
             parent: self.allocator.alloc(AstNodes::ForInStatement(transmute_self(self))),
             following_node,
         })
+    }
+
+    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_leading_comments(self.span()).fmt(f)
+    }
+
+    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_trailing_comments(
+            &self.parent.as_sibling_node(),
+            &SiblingNode::from(self.inner),
+            self.following_node.as_ref(),
+        )
+        .fmt(f)
     }
 }
 
@@ -5740,6 +6390,19 @@ impl<'a> AstNode<'a, ForOfStatement<'a>> {
             following_node,
         })
     }
+
+    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_leading_comments(self.span()).fmt(f)
+    }
+
+    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_trailing_comments(
+            &self.parent.as_sibling_node(),
+            &SiblingNode::from(self.inner),
+            self.following_node.as_ref(),
+        )
+        .fmt(f)
+    }
 }
 
 impl<'a> AstNode<'a, ContinueStatement<'a>> {
@@ -5759,6 +6422,19 @@ impl<'a> AstNode<'a, ContinueStatement<'a>> {
                 following_node,
             }))
             .as_ref()
+    }
+
+    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_leading_comments(self.span()).fmt(f)
+    }
+
+    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_trailing_comments(
+            &self.parent.as_sibling_node(),
+            &SiblingNode::from(self.inner),
+            self.following_node.as_ref(),
+        )
+        .fmt(f)
     }
 }
 
@@ -5780,6 +6456,19 @@ impl<'a> AstNode<'a, BreakStatement<'a>> {
             }))
             .as_ref()
     }
+
+    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_leading_comments(self.span()).fmt(f)
+    }
+
+    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_trailing_comments(
+            &self.parent.as_sibling_node(),
+            &SiblingNode::from(self.inner),
+            self.following_node.as_ref(),
+        )
+        .fmt(f)
+    }
 }
 
 impl<'a> AstNode<'a, ReturnStatement<'a>> {
@@ -5799,6 +6488,19 @@ impl<'a> AstNode<'a, ReturnStatement<'a>> {
                 following_node,
             }))
             .as_ref()
+    }
+
+    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_leading_comments(self.span()).fmt(f)
+    }
+
+    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_trailing_comments(
+            &self.parent.as_sibling_node(),
+            &SiblingNode::from(self.inner),
+            self.following_node.as_ref(),
+        )
+        .fmt(f)
     }
 }
 
@@ -5828,6 +6530,19 @@ impl<'a> AstNode<'a, WithStatement<'a>> {
             parent: self.allocator.alloc(AstNodes::WithStatement(transmute_self(self))),
             following_node,
         })
+    }
+
+    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_leading_comments(self.span()).fmt(f)
+    }
+
+    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_trailing_comments(
+            &self.parent.as_sibling_node(),
+            &SiblingNode::from(self.inner),
+            self.following_node.as_ref(),
+        )
+        .fmt(f)
     }
 }
 
@@ -5864,6 +6579,19 @@ impl<'a> AstNode<'a, SwitchStatement<'a>> {
             parent: self.allocator.alloc(AstNodes::SwitchStatement(transmute_self(self))),
             following_node,
         })
+    }
+
+    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_leading_comments(self.span()).fmt(f)
+    }
+
+    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_trailing_comments(
+            &self.parent.as_sibling_node(),
+            &SiblingNode::from(self.inner),
+            self.following_node.as_ref(),
+        )
+        .fmt(f)
     }
 }
 
@@ -5903,6 +6631,19 @@ impl<'a> AstNode<'a, SwitchCase<'a>> {
             following_node,
         })
     }
+
+    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_leading_comments(self.span()).fmt(f)
+    }
+
+    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_trailing_comments(
+            &self.parent.as_sibling_node(),
+            &SiblingNode::from(self.inner),
+            self.following_node.as_ref(),
+        )
+        .fmt(f)
+    }
 }
 
 impl<'a> AstNode<'a, LabeledStatement<'a>> {
@@ -5932,6 +6673,19 @@ impl<'a> AstNode<'a, LabeledStatement<'a>> {
             following_node,
         })
     }
+
+    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_leading_comments(self.span()).fmt(f)
+    }
+
+    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_trailing_comments(
+            &self.parent.as_sibling_node(),
+            &SiblingNode::from(self.inner),
+            self.following_node.as_ref(),
+        )
+        .fmt(f)
+    }
 }
 
 impl<'a> AstNode<'a, ThrowStatement<'a>> {
@@ -5949,6 +6703,19 @@ impl<'a> AstNode<'a, ThrowStatement<'a>> {
             parent: self.allocator.alloc(AstNodes::ThrowStatement(transmute_self(self))),
             following_node,
         })
+    }
+
+    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_leading_comments(self.span()).fmt(f)
+    }
+
+    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_trailing_comments(
+            &self.parent.as_sibling_node(),
+            &SiblingNode::from(self.inner),
+            self.following_node.as_ref(),
+        )
+        .fmt(f)
     }
 }
 
@@ -6001,6 +6768,19 @@ impl<'a> AstNode<'a, TryStatement<'a>> {
             }))
             .as_ref()
     }
+
+    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_leading_comments(self.span()).fmt(f)
+    }
+
+    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_trailing_comments(
+            &self.parent.as_sibling_node(),
+            &SiblingNode::from(self.inner),
+            self.following_node.as_ref(),
+        )
+        .fmt(f)
+    }
 }
 
 impl<'a> AstNode<'a, CatchClause<'a>> {
@@ -6032,6 +6812,19 @@ impl<'a> AstNode<'a, CatchClause<'a>> {
             following_node,
         })
     }
+
+    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_leading_comments(self.span()).fmt(f)
+    }
+
+    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_trailing_comments(
+            &self.parent.as_sibling_node(),
+            &SiblingNode::from(self.inner),
+            self.following_node.as_ref(),
+        )
+        .fmt(f)
+    }
 }
 
 impl<'a> AstNode<'a, CatchParameter<'a>> {
@@ -6050,12 +6843,38 @@ impl<'a> AstNode<'a, CatchParameter<'a>> {
             following_node,
         })
     }
+
+    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_leading_comments(self.span()).fmt(f)
+    }
+
+    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_trailing_comments(
+            &self.parent.as_sibling_node(),
+            &SiblingNode::from(self.inner),
+            self.following_node.as_ref(),
+        )
+        .fmt(f)
+    }
 }
 
 impl<'a> AstNode<'a, DebuggerStatement> {
     #[inline]
     pub fn span(&self) -> Span {
         self.inner.span
+    }
+
+    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_leading_comments(self.span()).fmt(f)
+    }
+
+    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_trailing_comments(
+            &self.parent.as_sibling_node(),
+            &SiblingNode::from(self.inner),
+            self.following_node.as_ref(),
+        )
+        .fmt(f)
     }
 }
 
@@ -6088,6 +6907,19 @@ impl<'a> AstNode<'a, BindingPattern<'a>> {
     #[inline]
     pub fn optional(&self) -> bool {
         self.inner.optional
+    }
+
+    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_leading_comments(self.span()).fmt(f)
+    }
+
+    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_trailing_comments(
+            &self.parent.as_sibling_node(),
+            &SiblingNode::from(self.inner),
+            self.following_node.as_ref(),
+        )
+        .fmt(f)
     }
 }
 
@@ -6167,6 +6999,19 @@ impl<'a> AstNode<'a, AssignmentPattern<'a>> {
             following_node,
         })
     }
+
+    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_leading_comments(self.span()).fmt(f)
+    }
+
+    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_trailing_comments(
+            &self.parent.as_sibling_node(),
+            &SiblingNode::from(self.inner),
+            self.following_node.as_ref(),
+        )
+        .fmt(f)
+    }
 }
 
 impl<'a> AstNode<'a, ObjectPattern<'a>> {
@@ -6198,6 +7043,19 @@ impl<'a> AstNode<'a, ObjectPattern<'a>> {
                 following_node,
             }))
             .as_ref()
+    }
+
+    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_leading_comments(self.span()).fmt(f)
+    }
+
+    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_trailing_comments(
+            &self.parent.as_sibling_node(),
+            &SiblingNode::from(self.inner),
+            self.following_node.as_ref(),
+        )
+        .fmt(f)
     }
 }
 
@@ -6238,6 +7096,19 @@ impl<'a> AstNode<'a, BindingProperty<'a>> {
     pub fn computed(&self) -> bool {
         self.inner.computed
     }
+
+    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_leading_comments(self.span()).fmt(f)
+    }
+
+    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_trailing_comments(
+            &self.parent.as_sibling_node(),
+            &SiblingNode::from(self.inner),
+            self.following_node.as_ref(),
+        )
+        .fmt(f)
+    }
 }
 
 impl<'a> AstNode<'a, ArrayPattern<'a>> {
@@ -6270,6 +7141,19 @@ impl<'a> AstNode<'a, ArrayPattern<'a>> {
             }))
             .as_ref()
     }
+
+    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_leading_comments(self.span()).fmt(f)
+    }
+
+    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_trailing_comments(
+            &self.parent.as_sibling_node(),
+            &SiblingNode::from(self.inner),
+            self.following_node.as_ref(),
+        )
+        .fmt(f)
+    }
 }
 
 impl<'a> AstNode<'a, BindingRestElement<'a>> {
@@ -6287,6 +7171,19 @@ impl<'a> AstNode<'a, BindingRestElement<'a>> {
             parent: self.allocator.alloc(AstNodes::BindingRestElement(transmute_self(self))),
             following_node,
         })
+    }
+
+    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_leading_comments(self.span()).fmt(f)
+    }
+
+    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_trailing_comments(
+            &self.parent.as_sibling_node(),
+            &SiblingNode::from(self.inner),
+            self.following_node.as_ref(),
+        )
+        .fmt(f)
     }
 }
 
@@ -6414,6 +7311,19 @@ impl<'a> AstNode<'a, Function<'a>> {
     pub fn pure(&self) -> bool {
         self.inner.pure
     }
+
+    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_leading_comments(self.span()).fmt(f)
+    }
+
+    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_trailing_comments(
+            &self.parent.as_sibling_node(),
+            &SiblingNode::from(self.inner),
+            self.following_node.as_ref(),
+        )
+        .fmt(f)
+    }
 }
 
 impl<'a> AstNode<'a, FormalParameters<'a>> {
@@ -6450,6 +7360,19 @@ impl<'a> AstNode<'a, FormalParameters<'a>> {
                 following_node,
             }))
             .as_ref()
+    }
+
+    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_leading_comments(self.span()).fmt(f)
+    }
+
+    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_trailing_comments(
+            &self.parent.as_sibling_node(),
+            &SiblingNode::from(self.inner),
+            self.following_node.as_ref(),
+        )
+        .fmt(f)
     }
 }
 
@@ -6495,6 +7418,19 @@ impl<'a> AstNode<'a, FormalParameter<'a>> {
     pub fn r#override(&self) -> bool {
         self.inner.r#override
     }
+
+    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_leading_comments(self.span()).fmt(f)
+    }
+
+    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_trailing_comments(
+            &self.parent.as_sibling_node(),
+            &SiblingNode::from(self.inner),
+            self.following_node.as_ref(),
+        )
+        .fmt(f)
+    }
 }
 
 impl<'a> AstNode<'a, FunctionBody<'a>> {
@@ -6530,6 +7466,19 @@ impl<'a> AstNode<'a, FunctionBody<'a>> {
             parent: self.allocator.alloc(AstNodes::FunctionBody(transmute_self(self))),
             following_node,
         })
+    }
+
+    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_leading_comments(self.span()).fmt(f)
+    }
+
+    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_trailing_comments(
+            &self.parent.as_sibling_node(),
+            &SiblingNode::from(self.inner),
+            self.following_node.as_ref(),
+        )
+        .fmt(f)
     }
 }
 
@@ -6608,6 +7557,19 @@ impl<'a> AstNode<'a, ArrowFunctionExpression<'a>> {
     pub fn pure(&self) -> bool {
         self.inner.pure
     }
+
+    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_leading_comments(self.span()).fmt(f)
+    }
+
+    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_trailing_comments(
+            &self.parent.as_sibling_node(),
+            &SiblingNode::from(self.inner),
+            self.following_node.as_ref(),
+        )
+        .fmt(f)
+    }
 }
 
 impl<'a> AstNode<'a, YieldExpression<'a>> {
@@ -6632,6 +7594,19 @@ impl<'a> AstNode<'a, YieldExpression<'a>> {
                 following_node,
             }))
             .as_ref()
+    }
+
+    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_leading_comments(self.span()).fmt(f)
+    }
+
+    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_trailing_comments(
+            &self.parent.as_sibling_node(),
+            &SiblingNode::from(self.inner),
+            self.following_node.as_ref(),
+        )
+        .fmt(f)
     }
 }
 
@@ -6777,6 +7752,19 @@ impl<'a> AstNode<'a, Class<'a>> {
     pub fn declare(&self) -> bool {
         self.inner.declare
     }
+
+    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_leading_comments(self.span()).fmt(f)
+    }
+
+    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_trailing_comments(
+            &self.parent.as_sibling_node(),
+            &SiblingNode::from(self.inner),
+            self.following_node.as_ref(),
+        )
+        .fmt(f)
+    }
 }
 
 impl<'a> AstNode<'a, ClassBody<'a>> {
@@ -6794,6 +7782,19 @@ impl<'a> AstNode<'a, ClassBody<'a>> {
             parent: self.allocator.alloc(AstNodes::ClassBody(transmute_self(self))),
             following_node,
         })
+    }
+
+    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_leading_comments(self.span()).fmt(f)
+    }
+
+    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_trailing_comments(
+            &self.parent.as_sibling_node(),
+            &SiblingNode::from(self.inner),
+            self.following_node.as_ref(),
+        )
+        .fmt(f)
     }
 }
 
@@ -6925,6 +7926,19 @@ impl<'a> AstNode<'a, MethodDefinition<'a>> {
     pub fn accessibility(&self) -> Option<TSAccessibility> {
         self.inner.accessibility
     }
+
+    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_leading_comments(self.span()).fmt(f)
+    }
+
+    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_trailing_comments(
+            &self.parent.as_sibling_node(),
+            &SiblingNode::from(self.inner),
+            self.following_node.as_ref(),
+        )
+        .fmt(f)
+    }
 }
 
 impl<'a> AstNode<'a, PropertyDefinition<'a>> {
@@ -7032,6 +8046,19 @@ impl<'a> AstNode<'a, PropertyDefinition<'a>> {
     pub fn accessibility(&self) -> Option<TSAccessibility> {
         self.inner.accessibility
     }
+
+    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_leading_comments(self.span()).fmt(f)
+    }
+
+    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_trailing_comments(
+            &self.parent.as_sibling_node(),
+            &SiblingNode::from(self.inner),
+            self.following_node.as_ref(),
+        )
+        .fmt(f)
+    }
 }
 
 impl<'a> AstNode<'a, PrivateIdentifier<'a>> {
@@ -7043,6 +8070,19 @@ impl<'a> AstNode<'a, PrivateIdentifier<'a>> {
     #[inline]
     pub fn name(&self) -> Atom<'a> {
         self.inner.name
+    }
+
+    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_leading_comments(self.span()).fmt(f)
+    }
+
+    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_trailing_comments(
+            &self.parent.as_sibling_node(),
+            &SiblingNode::from(self.inner),
+            self.following_node.as_ref(),
+        )
+        .fmt(f)
     }
 }
 
@@ -7061,6 +8101,19 @@ impl<'a> AstNode<'a, StaticBlock<'a>> {
             parent: self.allocator.alloc(AstNodes::StaticBlock(transmute_self(self))),
             following_node,
         })
+    }
+
+    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_leading_comments(self.span()).fmt(f)
+    }
+
+    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_trailing_comments(
+            &self.parent.as_sibling_node(),
+            &SiblingNode::from(self.inner),
+            self.following_node.as_ref(),
+        )
+        .fmt(f)
     }
 }
 
@@ -7219,6 +8272,19 @@ impl<'a> AstNode<'a, AccessorProperty<'a>> {
     pub fn accessibility(&self) -> Option<TSAccessibility> {
         self.inner.accessibility
     }
+
+    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_leading_comments(self.span()).fmt(f)
+    }
+
+    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_trailing_comments(
+            &self.parent.as_sibling_node(),
+            &SiblingNode::from(self.inner),
+            self.following_node.as_ref(),
+        )
+        .fmt(f)
+    }
 }
 
 impl<'a> AstNode<'a, ImportExpression<'a>> {
@@ -7255,6 +8321,19 @@ impl<'a> AstNode<'a, ImportExpression<'a>> {
     #[inline]
     pub fn phase(&self) -> Option<ImportPhase> {
         self.inner.phase
+    }
+
+    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_leading_comments(self.span()).fmt(f)
+    }
+
+    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_trailing_comments(
+            &self.parent.as_sibling_node(),
+            &SiblingNode::from(self.inner),
+            self.following_node.as_ref(),
+        )
+        .fmt(f)
     }
 }
 
@@ -7310,6 +8389,19 @@ impl<'a> AstNode<'a, ImportDeclaration<'a>> {
     #[inline]
     pub fn import_kind(&self) -> ImportOrExportKind {
         self.inner.import_kind
+    }
+
+    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_leading_comments(self.span()).fmt(f)
+    }
+
+    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_trailing_comments(
+            &self.parent.as_sibling_node(),
+            &SiblingNode::from(self.inner),
+            self.following_node.as_ref(),
+        )
+        .fmt(f)
     }
 }
 
@@ -7386,6 +8478,19 @@ impl<'a> AstNode<'a, ImportSpecifier<'a>> {
     pub fn import_kind(&self) -> ImportOrExportKind {
         self.inner.import_kind
     }
+
+    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_leading_comments(self.span()).fmt(f)
+    }
+
+    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_trailing_comments(
+            &self.parent.as_sibling_node(),
+            &SiblingNode::from(self.inner),
+            self.following_node.as_ref(),
+        )
+        .fmt(f)
+    }
 }
 
 impl<'a> AstNode<'a, ImportDefaultSpecifier<'a>> {
@@ -7404,6 +8509,19 @@ impl<'a> AstNode<'a, ImportDefaultSpecifier<'a>> {
             following_node,
         })
     }
+
+    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_leading_comments(self.span()).fmt(f)
+    }
+
+    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_trailing_comments(
+            &self.parent.as_sibling_node(),
+            &SiblingNode::from(self.inner),
+            self.following_node.as_ref(),
+        )
+        .fmt(f)
+    }
 }
 
 impl<'a> AstNode<'a, ImportNamespaceSpecifier<'a>> {
@@ -7421,6 +8539,19 @@ impl<'a> AstNode<'a, ImportNamespaceSpecifier<'a>> {
             parent: self.allocator.alloc(AstNodes::ImportNamespaceSpecifier(transmute_self(self))),
             following_node,
         })
+    }
+
+    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_leading_comments(self.span()).fmt(f)
+    }
+
+    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_trailing_comments(
+            &self.parent.as_sibling_node(),
+            &SiblingNode::from(self.inner),
+            self.following_node.as_ref(),
+        )
+        .fmt(f)
     }
 }
 
@@ -7458,6 +8589,19 @@ impl<'a> AstNode<'a, WithClause<'a>> {
             following_node,
         })
     }
+
+    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_leading_comments(self.span()).fmt(f)
+    }
+
+    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_trailing_comments(
+            &self.parent.as_sibling_node(),
+            &SiblingNode::from(self.inner),
+            self.following_node.as_ref(),
+        )
+        .fmt(f)
+    }
 }
 
 impl<'a> AstNode<'a, ImportAttribute<'a>> {
@@ -7486,6 +8630,19 @@ impl<'a> AstNode<'a, ImportAttribute<'a>> {
             parent: self.allocator.alloc(AstNodes::ImportAttribute(transmute_self(self))),
             following_node,
         })
+    }
+
+    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_leading_comments(self.span()).fmt(f)
+    }
+
+    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_trailing_comments(
+            &self.parent.as_sibling_node(),
+            &SiblingNode::from(self.inner),
+            self.following_node.as_ref(),
+        )
+        .fmt(f)
     }
 }
 
@@ -7601,6 +8758,19 @@ impl<'a> AstNode<'a, ExportNamedDeclaration<'a>> {
             }))
             .as_ref()
     }
+
+    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_leading_comments(self.span()).fmt(f)
+    }
+
+    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_trailing_comments(
+            &self.parent.as_sibling_node(),
+            &SiblingNode::from(self.inner),
+            self.following_node.as_ref(),
+        )
+        .fmt(f)
+    }
 }
 
 impl<'a> AstNode<'a, ExportDefaultDeclaration<'a>> {
@@ -7629,6 +8799,19 @@ impl<'a> AstNode<'a, ExportDefaultDeclaration<'a>> {
             parent: self.allocator.alloc(AstNodes::ExportDefaultDeclaration(transmute_self(self))),
             following_node,
         })
+    }
+
+    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_leading_comments(self.span()).fmt(f)
+    }
+
+    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_trailing_comments(
+            &self.parent.as_sibling_node(),
+            &SiblingNode::from(self.inner),
+            self.following_node.as_ref(),
+        )
+        .fmt(f)
     }
 }
 
@@ -7680,6 +8863,19 @@ impl<'a> AstNode<'a, ExportAllDeclaration<'a>> {
     pub fn export_kind(&self) -> ImportOrExportKind {
         self.inner.export_kind
     }
+
+    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_leading_comments(self.span()).fmt(f)
+    }
+
+    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_trailing_comments(
+            &self.parent.as_sibling_node(),
+            &SiblingNode::from(self.inner),
+            self.following_node.as_ref(),
+        )
+        .fmt(f)
+    }
 }
 
 impl<'a> AstNode<'a, ExportSpecifier<'a>> {
@@ -7713,6 +8909,19 @@ impl<'a> AstNode<'a, ExportSpecifier<'a>> {
     #[inline]
     pub fn export_kind(&self) -> ImportOrExportKind {
         self.inner.export_kind
+    }
+
+    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_leading_comments(self.span()).fmt(f)
+    }
+
+    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_trailing_comments(
+            &self.parent.as_sibling_node(),
+            &SiblingNode::from(self.inner),
+            self.following_node.as_ref(),
+        )
+        .fmt(f)
     }
 }
 
@@ -7843,6 +9052,19 @@ impl<'a> AstNode<'a, V8IntrinsicExpression<'a>> {
             following_node,
         })
     }
+
+    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_leading_comments(self.span()).fmt(f)
+    }
+
+    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_trailing_comments(
+            &self.parent.as_sibling_node(),
+            &SiblingNode::from(self.inner),
+            self.following_node.as_ref(),
+        )
+        .fmt(f)
+    }
 }
 
 impl<'a> AstNode<'a, BooleanLiteral> {
@@ -7855,12 +9077,38 @@ impl<'a> AstNode<'a, BooleanLiteral> {
     pub fn value(&self) -> bool {
         self.inner.value
     }
+
+    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_leading_comments(self.span()).fmt(f)
+    }
+
+    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_trailing_comments(
+            &self.parent.as_sibling_node(),
+            &SiblingNode::from(self.inner),
+            self.following_node.as_ref(),
+        )
+        .fmt(f)
+    }
 }
 
 impl<'a> AstNode<'a, NullLiteral> {
     #[inline]
     pub fn span(&self) -> Span {
         self.inner.span
+    }
+
+    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_leading_comments(self.span()).fmt(f)
+    }
+
+    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_trailing_comments(
+            &self.parent.as_sibling_node(),
+            &SiblingNode::from(self.inner),
+            self.following_node.as_ref(),
+        )
+        .fmt(f)
     }
 }
 
@@ -7884,6 +9132,19 @@ impl<'a> AstNode<'a, NumericLiteral<'a>> {
     pub fn base(&self) -> NumberBase {
         self.inner.base
     }
+
+    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_leading_comments(self.span()).fmt(f)
+    }
+
+    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_trailing_comments(
+            &self.parent.as_sibling_node(),
+            &SiblingNode::from(self.inner),
+            self.following_node.as_ref(),
+        )
+        .fmt(f)
+    }
 }
 
 impl<'a> AstNode<'a, StringLiteral<'a>> {
@@ -7905,6 +9166,19 @@ impl<'a> AstNode<'a, StringLiteral<'a>> {
     #[inline]
     pub fn lone_surrogates(&self) -> bool {
         self.inner.lone_surrogates
+    }
+
+    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_leading_comments(self.span()).fmt(f)
+    }
+
+    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_trailing_comments(
+            &self.parent.as_sibling_node(),
+            &SiblingNode::from(self.inner),
+            self.following_node.as_ref(),
+        )
+        .fmt(f)
     }
 }
 
@@ -7928,6 +9202,19 @@ impl<'a> AstNode<'a, BigIntLiteral<'a>> {
     pub fn base(&self) -> BigintBase {
         self.inner.base
     }
+
+    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_leading_comments(self.span()).fmt(f)
+    }
+
+    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_trailing_comments(
+            &self.parent.as_sibling_node(),
+            &SiblingNode::from(self.inner),
+            self.following_node.as_ref(),
+        )
+        .fmt(f)
+    }
 }
 
 impl<'a> AstNode<'a, RegExpLiteral<'a>> {
@@ -7944,6 +9231,19 @@ impl<'a> AstNode<'a, RegExpLiteral<'a>> {
     #[inline]
     pub fn raw(&self) -> Option<Atom<'a>> {
         self.inner.raw
+    }
+
+    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_leading_comments(self.span()).fmt(f)
+    }
+
+    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_trailing_comments(
+            &self.parent.as_sibling_node(),
+            &SiblingNode::from(self.inner),
+            self.following_node.as_ref(),
+        )
+        .fmt(f)
     }
 }
 
@@ -7995,6 +9295,19 @@ impl<'a> AstNode<'a, JSXElement<'a>> {
                 following_node,
             }))
             .as_ref()
+    }
+
+    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_leading_comments(self.span()).fmt(f)
+    }
+
+    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_trailing_comments(
+            &self.parent.as_sibling_node(),
+            &SiblingNode::from(self.inner),
+            self.following_node.as_ref(),
+        )
+        .fmt(f)
     }
 }
 
@@ -8051,6 +9364,19 @@ impl<'a> AstNode<'a, JSXOpeningElement<'a>> {
             following_node,
         })
     }
+
+    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_leading_comments(self.span()).fmt(f)
+    }
+
+    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_trailing_comments(
+            &self.parent.as_sibling_node(),
+            &SiblingNode::from(self.inner),
+            self.following_node.as_ref(),
+        )
+        .fmt(f)
+    }
 }
 
 impl<'a> AstNode<'a, JSXClosingElement<'a>> {
@@ -8068,6 +9394,19 @@ impl<'a> AstNode<'a, JSXClosingElement<'a>> {
             parent: self.allocator.alloc(AstNodes::JSXClosingElement(transmute_self(self))),
             following_node,
         })
+    }
+
+    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_leading_comments(self.span()).fmt(f)
+    }
+
+    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_trailing_comments(
+            &self.parent.as_sibling_node(),
+            &SiblingNode::from(self.inner),
+            self.following_node.as_ref(),
+        )
+        .fmt(f)
     }
 }
 
@@ -8116,6 +9455,19 @@ impl<'a> AstNode<'a, JSXFragment<'a>> {
             following_node,
         })
     }
+
+    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_leading_comments(self.span()).fmt(f)
+    }
+
+    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_trailing_comments(
+            &self.parent.as_sibling_node(),
+            &SiblingNode::from(self.inner),
+            self.following_node.as_ref(),
+        )
+        .fmt(f)
+    }
 }
 
 impl<'a> AstNode<'a, JSXOpeningFragment> {
@@ -8123,12 +9475,38 @@ impl<'a> AstNode<'a, JSXOpeningFragment> {
     pub fn span(&self) -> Span {
         self.inner.span
     }
+
+    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_leading_comments(self.span()).fmt(f)
+    }
+
+    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_trailing_comments(
+            &self.parent.as_sibling_node(),
+            &SiblingNode::from(self.inner),
+            self.following_node.as_ref(),
+        )
+        .fmt(f)
+    }
 }
 
 impl<'a> AstNode<'a, JSXClosingFragment> {
     #[inline]
     pub fn span(&self) -> Span {
         self.inner.span
+    }
+
+    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_leading_comments(self.span()).fmt(f)
+    }
+
+    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_trailing_comments(
+            &self.parent.as_sibling_node(),
+            &SiblingNode::from(self.inner),
+            self.following_node.as_ref(),
+        )
+        .fmt(f)
     }
 }
 
@@ -8216,6 +9594,19 @@ impl<'a> AstNode<'a, JSXNamespacedName<'a>> {
             following_node,
         })
     }
+
+    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_leading_comments(self.span()).fmt(f)
+    }
+
+    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_trailing_comments(
+            &self.parent.as_sibling_node(),
+            &SiblingNode::from(self.inner),
+            self.following_node.as_ref(),
+        )
+        .fmt(f)
+    }
 }
 
 impl<'a> AstNode<'a, JSXMemberExpression<'a>> {
@@ -8244,6 +9635,19 @@ impl<'a> AstNode<'a, JSXMemberExpression<'a>> {
             parent: self.allocator.alloc(AstNodes::JSXMemberExpression(transmute_self(self))),
             following_node,
         })
+    }
+
+    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_leading_comments(self.span()).fmt(f)
+    }
+
+    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_trailing_comments(
+            &self.parent.as_sibling_node(),
+            &SiblingNode::from(self.inner),
+            self.following_node.as_ref(),
+        )
+        .fmt(f)
     }
 }
 
@@ -8304,6 +9708,19 @@ impl<'a> AstNode<'a, JSXExpressionContainer<'a>> {
             following_node,
         })
     }
+
+    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_leading_comments(self.span()).fmt(f)
+    }
+
+    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_trailing_comments(
+            &self.parent.as_sibling_node(),
+            &SiblingNode::from(self.inner),
+            self.following_node.as_ref(),
+        )
+        .fmt(f)
+    }
 }
 
 impl<'a> AstNode<'a, JSXExpression<'a>> {
@@ -8346,6 +9763,19 @@ impl<'a> AstNode<'a, JSXEmptyExpression> {
     #[inline]
     pub fn span(&self) -> Span {
         self.inner.span
+    }
+
+    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_leading_comments(self.span()).fmt(f)
+    }
+
+    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_trailing_comments(
+            &self.parent.as_sibling_node(),
+            &SiblingNode::from(self.inner),
+            self.following_node.as_ref(),
+        )
+        .fmt(f)
     }
 }
 
@@ -8412,6 +9842,19 @@ impl<'a> AstNode<'a, JSXAttribute<'a>> {
             }))
             .as_ref()
     }
+
+    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_leading_comments(self.span()).fmt(f)
+    }
+
+    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_trailing_comments(
+            &self.parent.as_sibling_node(),
+            &SiblingNode::from(self.inner),
+            self.following_node.as_ref(),
+        )
+        .fmt(f)
+    }
 }
 
 impl<'a> AstNode<'a, JSXSpreadAttribute<'a>> {
@@ -8429,6 +9872,19 @@ impl<'a> AstNode<'a, JSXSpreadAttribute<'a>> {
             parent: self.allocator.alloc(AstNodes::JSXSpreadAttribute(transmute_self(self))),
             following_node,
         })
+    }
+
+    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_leading_comments(self.span()).fmt(f)
+    }
+
+    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_trailing_comments(
+            &self.parent.as_sibling_node(),
+            &SiblingNode::from(self.inner),
+            self.following_node.as_ref(),
+        )
+        .fmt(f)
     }
 }
 
@@ -8522,6 +9978,19 @@ impl<'a> AstNode<'a, JSXIdentifier<'a>> {
     pub fn name(&self) -> Atom<'a> {
         self.inner.name
     }
+
+    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_leading_comments(self.span()).fmt(f)
+    }
+
+    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_trailing_comments(
+            &self.parent.as_sibling_node(),
+            &SiblingNode::from(self.inner),
+            self.following_node.as_ref(),
+        )
+        .fmt(f)
+    }
 }
 
 impl<'a> AstNode<'a, JSXChild<'a>> {
@@ -8589,6 +10058,19 @@ impl<'a> AstNode<'a, JSXSpreadChild<'a>> {
             following_node,
         })
     }
+
+    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_leading_comments(self.span()).fmt(f)
+    }
+
+    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_trailing_comments(
+            &self.parent.as_sibling_node(),
+            &SiblingNode::from(self.inner),
+            self.following_node.as_ref(),
+        )
+        .fmt(f)
+    }
 }
 
 impl<'a> AstNode<'a, JSXText<'a>> {
@@ -8605,6 +10087,19 @@ impl<'a> AstNode<'a, JSXText<'a>> {
     #[inline]
     pub fn raw(&self) -> Option<Atom<'a>> {
         self.inner.raw
+    }
+
+    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_leading_comments(self.span()).fmt(f)
+    }
+
+    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_trailing_comments(
+            &self.parent.as_sibling_node(),
+            &SiblingNode::from(self.inner),
+            self.following_node.as_ref(),
+        )
+        .fmt(f)
     }
 }
 
@@ -8630,6 +10125,19 @@ impl<'a> AstNode<'a, TSThisParameter<'a>> {
                 following_node,
             }))
             .as_ref()
+    }
+
+    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_leading_comments(self.span()).fmt(f)
+    }
+
+    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_trailing_comments(
+            &self.parent.as_sibling_node(),
+            &SiblingNode::from(self.inner),
+            self.following_node.as_ref(),
+        )
+        .fmt(f)
     }
 }
 
@@ -8670,6 +10178,19 @@ impl<'a> AstNode<'a, TSEnumDeclaration<'a>> {
     pub fn declare(&self) -> bool {
         self.inner.declare
     }
+
+    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_leading_comments(self.span()).fmt(f)
+    }
+
+    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_trailing_comments(
+            &self.parent.as_sibling_node(),
+            &SiblingNode::from(self.inner),
+            self.following_node.as_ref(),
+        )
+        .fmt(f)
+    }
 }
 
 impl<'a> AstNode<'a, TSEnumBody<'a>> {
@@ -8687,6 +10208,19 @@ impl<'a> AstNode<'a, TSEnumBody<'a>> {
             parent: self.allocator.alloc(AstNodes::TSEnumBody(transmute_self(self))),
             following_node,
         })
+    }
+
+    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_leading_comments(self.span()).fmt(f)
+    }
+
+    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_trailing_comments(
+            &self.parent.as_sibling_node(),
+            &SiblingNode::from(self.inner),
+            self.following_node.as_ref(),
+        )
+        .fmt(f)
     }
 }
 
@@ -8719,6 +10253,19 @@ impl<'a> AstNode<'a, TSEnumMember<'a>> {
                 following_node,
             }))
             .as_ref()
+    }
+
+    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_leading_comments(self.span()).fmt(f)
+    }
+
+    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_trailing_comments(
+            &self.parent.as_sibling_node(),
+            &SiblingNode::from(self.inner),
+            self.following_node.as_ref(),
+        )
+        .fmt(f)
     }
 }
 
@@ -8785,6 +10332,19 @@ impl<'a> AstNode<'a, TSTypeAnnotation<'a>> {
             following_node,
         })
     }
+
+    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_leading_comments(self.span()).fmt(f)
+    }
+
+    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_trailing_comments(
+            &self.parent.as_sibling_node(),
+            &SiblingNode::from(self.inner),
+            self.following_node.as_ref(),
+        )
+        .fmt(f)
+    }
 }
 
 impl<'a> AstNode<'a, TSLiteralType<'a>> {
@@ -8802,6 +10362,19 @@ impl<'a> AstNode<'a, TSLiteralType<'a>> {
             parent: self.allocator.alloc(AstNodes::TSLiteralType(transmute_self(self))),
             following_node,
         })
+    }
+
+    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_leading_comments(self.span()).fmt(f)
+    }
+
+    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_trailing_comments(
+            &self.parent.as_sibling_node(),
+            &SiblingNode::from(self.inner),
+            self.following_node.as_ref(),
+        )
+        .fmt(f)
     }
 }
 
@@ -9197,6 +10770,19 @@ impl<'a> AstNode<'a, TSConditionalType<'a>> {
             following_node,
         })
     }
+
+    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_leading_comments(self.span()).fmt(f)
+    }
+
+    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_trailing_comments(
+            &self.parent.as_sibling_node(),
+            &SiblingNode::from(self.inner),
+            self.following_node.as_ref(),
+        )
+        .fmt(f)
+    }
 }
 
 impl<'a> AstNode<'a, TSUnionType<'a>> {
@@ -9214,6 +10800,19 @@ impl<'a> AstNode<'a, TSUnionType<'a>> {
             parent: self.allocator.alloc(AstNodes::TSUnionType(transmute_self(self))),
             following_node,
         })
+    }
+
+    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_leading_comments(self.span()).fmt(f)
+    }
+
+    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_trailing_comments(
+            &self.parent.as_sibling_node(),
+            &SiblingNode::from(self.inner),
+            self.following_node.as_ref(),
+        )
+        .fmt(f)
     }
 }
 
@@ -9233,6 +10832,19 @@ impl<'a> AstNode<'a, TSIntersectionType<'a>> {
             following_node,
         })
     }
+
+    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_leading_comments(self.span()).fmt(f)
+    }
+
+    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_trailing_comments(
+            &self.parent.as_sibling_node(),
+            &SiblingNode::from(self.inner),
+            self.following_node.as_ref(),
+        )
+        .fmt(f)
+    }
 }
 
 impl<'a> AstNode<'a, TSParenthesizedType<'a>> {
@@ -9250,6 +10862,19 @@ impl<'a> AstNode<'a, TSParenthesizedType<'a>> {
             parent: self.allocator.alloc(AstNodes::TSParenthesizedType(transmute_self(self))),
             following_node,
         })
+    }
+
+    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_leading_comments(self.span()).fmt(f)
+    }
+
+    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_trailing_comments(
+            &self.parent.as_sibling_node(),
+            &SiblingNode::from(self.inner),
+            self.following_node.as_ref(),
+        )
+        .fmt(f)
     }
 }
 
@@ -9274,6 +10899,19 @@ impl<'a> AstNode<'a, TSTypeOperator<'a>> {
             following_node,
         })
     }
+
+    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_leading_comments(self.span()).fmt(f)
+    }
+
+    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_trailing_comments(
+            &self.parent.as_sibling_node(),
+            &SiblingNode::from(self.inner),
+            self.following_node.as_ref(),
+        )
+        .fmt(f)
+    }
 }
 
 impl<'a> AstNode<'a, TSArrayType<'a>> {
@@ -9291,6 +10929,19 @@ impl<'a> AstNode<'a, TSArrayType<'a>> {
             parent: self.allocator.alloc(AstNodes::TSArrayType(transmute_self(self))),
             following_node,
         })
+    }
+
+    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_leading_comments(self.span()).fmt(f)
+    }
+
+    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_trailing_comments(
+            &self.parent.as_sibling_node(),
+            &SiblingNode::from(self.inner),
+            self.following_node.as_ref(),
+        )
+        .fmt(f)
     }
 }
 
@@ -9321,6 +10972,19 @@ impl<'a> AstNode<'a, TSIndexedAccessType<'a>> {
             following_node,
         })
     }
+
+    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_leading_comments(self.span()).fmt(f)
+    }
+
+    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_trailing_comments(
+            &self.parent.as_sibling_node(),
+            &SiblingNode::from(self.inner),
+            self.following_node.as_ref(),
+        )
+        .fmt(f)
+    }
 }
 
 impl<'a> AstNode<'a, TSTupleType<'a>> {
@@ -9338,6 +11002,19 @@ impl<'a> AstNode<'a, TSTupleType<'a>> {
             parent: self.allocator.alloc(AstNodes::TSTupleType(transmute_self(self))),
             following_node,
         })
+    }
+
+    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_leading_comments(self.span()).fmt(f)
+    }
+
+    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_trailing_comments(
+            &self.parent.as_sibling_node(),
+            &SiblingNode::from(self.inner),
+            self.following_node.as_ref(),
+        )
+        .fmt(f)
     }
 }
 
@@ -9373,6 +11050,19 @@ impl<'a> AstNode<'a, TSNamedTupleMember<'a>> {
     pub fn optional(&self) -> bool {
         self.inner.optional
     }
+
+    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_leading_comments(self.span()).fmt(f)
+    }
+
+    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_trailing_comments(
+            &self.parent.as_sibling_node(),
+            &SiblingNode::from(self.inner),
+            self.following_node.as_ref(),
+        )
+        .fmt(f)
+    }
 }
 
 impl<'a> AstNode<'a, TSOptionalType<'a>> {
@@ -9391,6 +11081,19 @@ impl<'a> AstNode<'a, TSOptionalType<'a>> {
             following_node,
         })
     }
+
+    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_leading_comments(self.span()).fmt(f)
+    }
+
+    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_trailing_comments(
+            &self.parent.as_sibling_node(),
+            &SiblingNode::from(self.inner),
+            self.following_node.as_ref(),
+        )
+        .fmt(f)
+    }
 }
 
 impl<'a> AstNode<'a, TSRestType<'a>> {
@@ -9408,6 +11111,19 @@ impl<'a> AstNode<'a, TSRestType<'a>> {
             parent: self.allocator.alloc(AstNodes::TSRestType(transmute_self(self))),
             following_node,
         })
+    }
+
+    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_leading_comments(self.span()).fmt(f)
+    }
+
+    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_trailing_comments(
+            &self.parent.as_sibling_node(),
+            &SiblingNode::from(self.inner),
+            self.following_node.as_ref(),
+        )
+        .fmt(f)
     }
 }
 
@@ -9458,12 +11174,38 @@ impl<'a> AstNode<'a, TSAnyKeyword> {
     pub fn span(&self) -> Span {
         self.inner.span
     }
+
+    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_leading_comments(self.span()).fmt(f)
+    }
+
+    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_trailing_comments(
+            &self.parent.as_sibling_node(),
+            &SiblingNode::from(self.inner),
+            self.following_node.as_ref(),
+        )
+        .fmt(f)
+    }
 }
 
 impl<'a> AstNode<'a, TSStringKeyword> {
     #[inline]
     pub fn span(&self) -> Span {
         self.inner.span
+    }
+
+    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_leading_comments(self.span()).fmt(f)
+    }
+
+    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_trailing_comments(
+            &self.parent.as_sibling_node(),
+            &SiblingNode::from(self.inner),
+            self.following_node.as_ref(),
+        )
+        .fmt(f)
     }
 }
 
@@ -9472,12 +11214,38 @@ impl<'a> AstNode<'a, TSBooleanKeyword> {
     pub fn span(&self) -> Span {
         self.inner.span
     }
+
+    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_leading_comments(self.span()).fmt(f)
+    }
+
+    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_trailing_comments(
+            &self.parent.as_sibling_node(),
+            &SiblingNode::from(self.inner),
+            self.following_node.as_ref(),
+        )
+        .fmt(f)
+    }
 }
 
 impl<'a> AstNode<'a, TSNumberKeyword> {
     #[inline]
     pub fn span(&self) -> Span {
         self.inner.span
+    }
+
+    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_leading_comments(self.span()).fmt(f)
+    }
+
+    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_trailing_comments(
+            &self.parent.as_sibling_node(),
+            &SiblingNode::from(self.inner),
+            self.following_node.as_ref(),
+        )
+        .fmt(f)
     }
 }
 
@@ -9486,12 +11254,38 @@ impl<'a> AstNode<'a, TSNeverKeyword> {
     pub fn span(&self) -> Span {
         self.inner.span
     }
+
+    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_leading_comments(self.span()).fmt(f)
+    }
+
+    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_trailing_comments(
+            &self.parent.as_sibling_node(),
+            &SiblingNode::from(self.inner),
+            self.following_node.as_ref(),
+        )
+        .fmt(f)
+    }
 }
 
 impl<'a> AstNode<'a, TSIntrinsicKeyword> {
     #[inline]
     pub fn span(&self) -> Span {
         self.inner.span
+    }
+
+    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_leading_comments(self.span()).fmt(f)
+    }
+
+    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_trailing_comments(
+            &self.parent.as_sibling_node(),
+            &SiblingNode::from(self.inner),
+            self.following_node.as_ref(),
+        )
+        .fmt(f)
     }
 }
 
@@ -9500,12 +11294,38 @@ impl<'a> AstNode<'a, TSUnknownKeyword> {
     pub fn span(&self) -> Span {
         self.inner.span
     }
+
+    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_leading_comments(self.span()).fmt(f)
+    }
+
+    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_trailing_comments(
+            &self.parent.as_sibling_node(),
+            &SiblingNode::from(self.inner),
+            self.following_node.as_ref(),
+        )
+        .fmt(f)
+    }
 }
 
 impl<'a> AstNode<'a, TSNullKeyword> {
     #[inline]
     pub fn span(&self) -> Span {
         self.inner.span
+    }
+
+    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_leading_comments(self.span()).fmt(f)
+    }
+
+    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_trailing_comments(
+            &self.parent.as_sibling_node(),
+            &SiblingNode::from(self.inner),
+            self.following_node.as_ref(),
+        )
+        .fmt(f)
     }
 }
 
@@ -9514,12 +11334,38 @@ impl<'a> AstNode<'a, TSUndefinedKeyword> {
     pub fn span(&self) -> Span {
         self.inner.span
     }
+
+    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_leading_comments(self.span()).fmt(f)
+    }
+
+    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_trailing_comments(
+            &self.parent.as_sibling_node(),
+            &SiblingNode::from(self.inner),
+            self.following_node.as_ref(),
+        )
+        .fmt(f)
+    }
 }
 
 impl<'a> AstNode<'a, TSVoidKeyword> {
     #[inline]
     pub fn span(&self) -> Span {
         self.inner.span
+    }
+
+    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_leading_comments(self.span()).fmt(f)
+    }
+
+    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_trailing_comments(
+            &self.parent.as_sibling_node(),
+            &SiblingNode::from(self.inner),
+            self.following_node.as_ref(),
+        )
+        .fmt(f)
     }
 }
 
@@ -9528,12 +11374,38 @@ impl<'a> AstNode<'a, TSSymbolKeyword> {
     pub fn span(&self) -> Span {
         self.inner.span
     }
+
+    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_leading_comments(self.span()).fmt(f)
+    }
+
+    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_trailing_comments(
+            &self.parent.as_sibling_node(),
+            &SiblingNode::from(self.inner),
+            self.following_node.as_ref(),
+        )
+        .fmt(f)
+    }
 }
 
 impl<'a> AstNode<'a, TSThisType> {
     #[inline]
     pub fn span(&self) -> Span {
         self.inner.span
+    }
+
+    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_leading_comments(self.span()).fmt(f)
+    }
+
+    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_trailing_comments(
+            &self.parent.as_sibling_node(),
+            &SiblingNode::from(self.inner),
+            self.following_node.as_ref(),
+        )
+        .fmt(f)
     }
 }
 
@@ -9542,12 +11414,38 @@ impl<'a> AstNode<'a, TSObjectKeyword> {
     pub fn span(&self) -> Span {
         self.inner.span
     }
+
+    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_leading_comments(self.span()).fmt(f)
+    }
+
+    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_trailing_comments(
+            &self.parent.as_sibling_node(),
+            &SiblingNode::from(self.inner),
+            self.following_node.as_ref(),
+        )
+        .fmt(f)
+    }
 }
 
 impl<'a> AstNode<'a, TSBigIntKeyword> {
     #[inline]
     pub fn span(&self) -> Span {
         self.inner.span
+    }
+
+    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_leading_comments(self.span()).fmt(f)
+    }
+
+    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_trailing_comments(
+            &self.parent.as_sibling_node(),
+            &SiblingNode::from(self.inner),
+            self.following_node.as_ref(),
+        )
+        .fmt(f)
     }
 }
 
@@ -9580,6 +11478,19 @@ impl<'a> AstNode<'a, TSTypeReference<'a>> {
                 following_node,
             }))
             .as_ref()
+    }
+
+    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_leading_comments(self.span()).fmt(f)
+    }
+
+    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_trailing_comments(
+            &self.parent.as_sibling_node(),
+            &SiblingNode::from(self.inner),
+            self.following_node.as_ref(),
+        )
+        .fmt(f)
     }
 }
 
@@ -9643,6 +11554,19 @@ impl<'a> AstNode<'a, TSQualifiedName<'a>> {
             following_node,
         })
     }
+
+    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_leading_comments(self.span()).fmt(f)
+    }
+
+    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_trailing_comments(
+            &self.parent.as_sibling_node(),
+            &SiblingNode::from(self.inner),
+            self.following_node.as_ref(),
+        )
+        .fmt(f)
+    }
 }
 
 impl<'a> AstNode<'a, TSTypeParameterInstantiation<'a>> {
@@ -9662,6 +11586,19 @@ impl<'a> AstNode<'a, TSTypeParameterInstantiation<'a>> {
                 .alloc(AstNodes::TSTypeParameterInstantiation(transmute_self(self))),
             following_node,
         })
+    }
+
+    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_leading_comments(self.span()).fmt(f)
+    }
+
+    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_trailing_comments(
+            &self.parent.as_sibling_node(),
+            &SiblingNode::from(self.inner),
+            self.following_node.as_ref(),
+        )
+        .fmt(f)
     }
 }
 
@@ -9729,6 +11666,19 @@ impl<'a> AstNode<'a, TSTypeParameter<'a>> {
     pub fn r#const(&self) -> bool {
         self.inner.r#const
     }
+
+    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_leading_comments(self.span()).fmt(f)
+    }
+
+    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_trailing_comments(
+            &self.parent.as_sibling_node(),
+            &SiblingNode::from(self.inner),
+            self.following_node.as_ref(),
+        )
+        .fmt(f)
+    }
 }
 
 impl<'a> AstNode<'a, TSTypeParameterDeclaration<'a>> {
@@ -9748,6 +11698,19 @@ impl<'a> AstNode<'a, TSTypeParameterDeclaration<'a>> {
                 .alloc(AstNodes::TSTypeParameterDeclaration(transmute_self(self))),
             following_node,
         })
+    }
+
+    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_leading_comments(self.span()).fmt(f)
+    }
+
+    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_trailing_comments(
+            &self.parent.as_sibling_node(),
+            &SiblingNode::from(self.inner),
+            self.following_node.as_ref(),
+        )
+        .fmt(f)
     }
 }
 
@@ -9802,6 +11765,19 @@ impl<'a> AstNode<'a, TSTypeAliasDeclaration<'a>> {
     pub fn declare(&self) -> bool {
         self.inner.declare
     }
+
+    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_leading_comments(self.span()).fmt(f)
+    }
+
+    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_trailing_comments(
+            &self.parent.as_sibling_node(),
+            &SiblingNode::from(self.inner),
+            self.following_node.as_ref(),
+        )
+        .fmt(f)
+    }
 }
 
 impl<'a> AstNode<'a, TSClassImplements<'a>> {
@@ -9833,6 +11809,19 @@ impl<'a> AstNode<'a, TSClassImplements<'a>> {
                 following_node,
             }))
             .as_ref()
+    }
+
+    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_leading_comments(self.span()).fmt(f)
+    }
+
+    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_trailing_comments(
+            &self.parent.as_sibling_node(),
+            &SiblingNode::from(self.inner),
+            self.following_node.as_ref(),
+        )
+        .fmt(f)
     }
 }
 
@@ -9906,6 +11895,19 @@ impl<'a> AstNode<'a, TSInterfaceDeclaration<'a>> {
     pub fn declare(&self) -> bool {
         self.inner.declare
     }
+
+    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_leading_comments(self.span()).fmt(f)
+    }
+
+    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_trailing_comments(
+            &self.parent.as_sibling_node(),
+            &SiblingNode::from(self.inner),
+            self.following_node.as_ref(),
+        )
+        .fmt(f)
+    }
 }
 
 impl<'a> AstNode<'a, TSInterfaceBody<'a>> {
@@ -9923,6 +11925,19 @@ impl<'a> AstNode<'a, TSInterfaceBody<'a>> {
             parent: self.allocator.alloc(AstNodes::TSInterfaceBody(transmute_self(self))),
             following_node,
         })
+    }
+
+    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_leading_comments(self.span()).fmt(f)
+    }
+
+    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_trailing_comments(
+            &self.parent.as_sibling_node(),
+            &SiblingNode::from(self.inner),
+            self.following_node.as_ref(),
+        )
+        .fmt(f)
     }
 }
 
@@ -9970,6 +11985,19 @@ impl<'a> AstNode<'a, TSPropertySignature<'a>> {
                 following_node,
             }))
             .as_ref()
+    }
+
+    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_leading_comments(self.span()).fmt(f)
+    }
+
+    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_trailing_comments(
+            &self.parent.as_sibling_node(),
+            &SiblingNode::from(self.inner),
+            self.following_node.as_ref(),
+        )
+        .fmt(f)
     }
 }
 
@@ -10067,6 +12095,19 @@ impl<'a> AstNode<'a, TSIndexSignature<'a>> {
     pub fn r#static(&self) -> bool {
         self.inner.r#static
     }
+
+    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_leading_comments(self.span()).fmt(f)
+    }
+
+    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_trailing_comments(
+            &self.parent.as_sibling_node(),
+            &SiblingNode::from(self.inner),
+            self.following_node.as_ref(),
+        )
+        .fmt(f)
+    }
 }
 
 impl<'a> AstNode<'a, TSCallSignatureDeclaration<'a>> {
@@ -10143,6 +12184,19 @@ impl<'a> AstNode<'a, TSCallSignatureDeclaration<'a>> {
                 }),
             )
             .as_ref()
+    }
+
+    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_leading_comments(self.span()).fmt(f)
+    }
+
+    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_trailing_comments(
+            &self.parent.as_sibling_node(),
+            &SiblingNode::from(self.inner),
+            self.following_node.as_ref(),
+        )
+        .fmt(f)
     }
 }
 
@@ -10239,6 +12293,19 @@ impl<'a> AstNode<'a, TSMethodSignature<'a>> {
             }))
             .as_ref()
     }
+
+    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_leading_comments(self.span()).fmt(f)
+    }
+
+    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_trailing_comments(
+            &self.parent.as_sibling_node(),
+            &SiblingNode::from(self.inner),
+            self.following_node.as_ref(),
+        )
+        .fmt(f)
+    }
 }
 
 impl<'a> AstNode<'a, TSConstructSignatureDeclaration<'a>> {
@@ -10294,6 +12361,19 @@ impl<'a> AstNode<'a, TSConstructSignatureDeclaration<'a>> {
             }))
             .as_ref()
     }
+
+    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_leading_comments(self.span()).fmt(f)
+    }
+
+    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_trailing_comments(
+            &self.parent.as_sibling_node(),
+            &SiblingNode::from(self.inner),
+            self.following_node.as_ref(),
+        )
+        .fmt(f)
+    }
 }
 
 impl<'a> AstNode<'a, TSIndexSignatureName<'a>> {
@@ -10316,6 +12396,19 @@ impl<'a> AstNode<'a, TSIndexSignatureName<'a>> {
             parent: self.allocator.alloc(AstNodes::TSIndexSignatureName(transmute_self(self))),
             following_node,
         })
+    }
+
+    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_leading_comments(self.span()).fmt(f)
+    }
+
+    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_trailing_comments(
+            &self.parent.as_sibling_node(),
+            &SiblingNode::from(self.inner),
+            self.following_node.as_ref(),
+        )
+        .fmt(f)
     }
 }
 
@@ -10348,6 +12441,19 @@ impl<'a> AstNode<'a, TSInterfaceHeritage<'a>> {
                 following_node,
             }))
             .as_ref()
+    }
+
+    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_leading_comments(self.span()).fmt(f)
+    }
+
+    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_trailing_comments(
+            &self.parent.as_sibling_node(),
+            &SiblingNode::from(self.inner),
+            self.following_node.as_ref(),
+        )
+        .fmt(f)
     }
 }
 
@@ -10385,6 +12491,19 @@ impl<'a> AstNode<'a, TSTypePredicate<'a>> {
                 following_node,
             }))
             .as_ref()
+    }
+
+    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_leading_comments(self.span()).fmt(f)
+    }
+
+    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_trailing_comments(
+            &self.parent.as_sibling_node(),
+            &SiblingNode::from(self.inner),
+            self.following_node.as_ref(),
+        )
+        .fmt(f)
     }
 }
 
@@ -10458,6 +12577,19 @@ impl<'a> AstNode<'a, TSModuleDeclaration<'a>> {
     #[inline]
     pub fn declare(&self) -> bool {
         self.inner.declare
+    }
+
+    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_leading_comments(self.span()).fmt(f)
+    }
+
+    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_trailing_comments(
+            &self.parent.as_sibling_node(),
+            &SiblingNode::from(self.inner),
+            self.following_node.as_ref(),
+        )
+        .fmt(f)
     }
 }
 
@@ -10561,6 +12693,19 @@ impl<'a> AstNode<'a, TSModuleBlock<'a>> {
             following_node,
         })
     }
+
+    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_leading_comments(self.span()).fmt(f)
+    }
+
+    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_trailing_comments(
+            &self.parent.as_sibling_node(),
+            &SiblingNode::from(self.inner),
+            self.following_node.as_ref(),
+        )
+        .fmt(f)
+    }
 }
 
 impl<'a> AstNode<'a, TSTypeLiteral<'a>> {
@@ -10579,6 +12724,19 @@ impl<'a> AstNode<'a, TSTypeLiteral<'a>> {
             following_node,
         })
     }
+
+    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_leading_comments(self.span()).fmt(f)
+    }
+
+    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_trailing_comments(
+            &self.parent.as_sibling_node(),
+            &SiblingNode::from(self.inner),
+            self.following_node.as_ref(),
+        )
+        .fmt(f)
+    }
 }
 
 impl<'a> AstNode<'a, TSInferType<'a>> {
@@ -10596,6 +12754,19 @@ impl<'a> AstNode<'a, TSInferType<'a>> {
             parent: self.allocator.alloc(AstNodes::TSInferType(transmute_self(self))),
             following_node,
         })
+    }
+
+    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_leading_comments(self.span()).fmt(f)
+    }
+
+    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_trailing_comments(
+            &self.parent.as_sibling_node(),
+            &SiblingNode::from(self.inner),
+            self.following_node.as_ref(),
+        )
+        .fmt(f)
     }
 }
 
@@ -10628,6 +12799,19 @@ impl<'a> AstNode<'a, TSTypeQuery<'a>> {
                 following_node,
             }))
             .as_ref()
+    }
+
+    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_leading_comments(self.span()).fmt(f)
+    }
+
+    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_trailing_comments(
+            &self.parent.as_sibling_node(),
+            &SiblingNode::from(self.inner),
+            self.following_node.as_ref(),
+        )
+        .fmt(f)
     }
 }
 
@@ -10733,6 +12917,19 @@ impl<'a> AstNode<'a, TSImportType<'a>> {
             }))
             .as_ref()
     }
+
+    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_leading_comments(self.span()).fmt(f)
+    }
+
+    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_trailing_comments(
+            &self.parent.as_sibling_node(),
+            &SiblingNode::from(self.inner),
+            self.following_node.as_ref(),
+        )
+        .fmt(f)
+    }
 }
 
 impl<'a> AstNode<'a, TSFunctionType<'a>> {
@@ -10793,6 +12990,19 @@ impl<'a> AstNode<'a, TSFunctionType<'a>> {
             following_node,
         })
     }
+
+    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_leading_comments(self.span()).fmt(f)
+    }
+
+    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_trailing_comments(
+            &self.parent.as_sibling_node(),
+            &SiblingNode::from(self.inner),
+            self.following_node.as_ref(),
+        )
+        .fmt(f)
+    }
 }
 
 impl<'a> AstNode<'a, TSConstructorType<'a>> {
@@ -10839,6 +13049,19 @@ impl<'a> AstNode<'a, TSConstructorType<'a>> {
             parent: self.allocator.alloc(AstNodes::TSConstructorType(transmute_self(self))),
             following_node,
         })
+    }
+
+    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_leading_comments(self.span()).fmt(f)
+    }
+
+    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_trailing_comments(
+            &self.parent.as_sibling_node(),
+            &SiblingNode::from(self.inner),
+            self.following_node.as_ref(),
+        )
+        .fmt(f)
     }
 }
 
@@ -10901,6 +13124,19 @@ impl<'a> AstNode<'a, TSMappedType<'a>> {
     pub fn readonly(&self) -> Option<TSMappedTypeModifierOperator> {
         self.inner.readonly
     }
+
+    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_leading_comments(self.span()).fmt(f)
+    }
+
+    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_trailing_comments(
+            &self.parent.as_sibling_node(),
+            &SiblingNode::from(self.inner),
+            self.following_node.as_ref(),
+        )
+        .fmt(f)
+    }
 }
 
 impl<'a> AstNode<'a, TSTemplateLiteralType<'a>> {
@@ -10937,6 +13173,19 @@ impl<'a> AstNode<'a, TSTemplateLiteralType<'a>> {
             following_node,
         })
     }
+
+    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_leading_comments(self.span()).fmt(f)
+    }
+
+    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_trailing_comments(
+            &self.parent.as_sibling_node(),
+            &SiblingNode::from(self.inner),
+            self.following_node.as_ref(),
+        )
+        .fmt(f)
+    }
 }
 
 impl<'a> AstNode<'a, TSAsExpression<'a>> {
@@ -10965,6 +13214,19 @@ impl<'a> AstNode<'a, TSAsExpression<'a>> {
             parent: self.allocator.alloc(AstNodes::TSAsExpression(transmute_self(self))),
             following_node,
         })
+    }
+
+    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_leading_comments(self.span()).fmt(f)
+    }
+
+    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_trailing_comments(
+            &self.parent.as_sibling_node(),
+            &SiblingNode::from(self.inner),
+            self.following_node.as_ref(),
+        )
+        .fmt(f)
     }
 }
 
@@ -10995,6 +13257,19 @@ impl<'a> AstNode<'a, TSSatisfiesExpression<'a>> {
             following_node,
         })
     }
+
+    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_leading_comments(self.span()).fmt(f)
+    }
+
+    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_trailing_comments(
+            &self.parent.as_sibling_node(),
+            &SiblingNode::from(self.inner),
+            self.following_node.as_ref(),
+        )
+        .fmt(f)
+    }
 }
 
 impl<'a> AstNode<'a, TSTypeAssertion<'a>> {
@@ -11023,6 +13298,19 @@ impl<'a> AstNode<'a, TSTypeAssertion<'a>> {
             parent: self.allocator.alloc(AstNodes::TSTypeAssertion(transmute_self(self))),
             following_node,
         })
+    }
+
+    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_leading_comments(self.span()).fmt(f)
+    }
+
+    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_trailing_comments(
+            &self.parent.as_sibling_node(),
+            &SiblingNode::from(self.inner),
+            self.following_node.as_ref(),
+        )
+        .fmt(f)
     }
 }
 
@@ -11057,6 +13345,19 @@ impl<'a> AstNode<'a, TSImportEqualsDeclaration<'a>> {
     #[inline]
     pub fn import_kind(&self) -> ImportOrExportKind {
         self.inner.import_kind
+    }
+
+    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_leading_comments(self.span()).fmt(f)
+    }
+
+    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_trailing_comments(
+            &self.parent.as_sibling_node(),
+            &SiblingNode::from(self.inner),
+            self.following_node.as_ref(),
+        )
+        .fmt(f)
     }
 }
 
@@ -11109,6 +13410,19 @@ impl<'a> AstNode<'a, TSExternalModuleReference<'a>> {
             following_node,
         })
     }
+
+    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_leading_comments(self.span()).fmt(f)
+    }
+
+    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_trailing_comments(
+            &self.parent.as_sibling_node(),
+            &SiblingNode::from(self.inner),
+            self.following_node.as_ref(),
+        )
+        .fmt(f)
+    }
 }
 
 impl<'a> AstNode<'a, TSNonNullExpression<'a>> {
@@ -11126,6 +13440,19 @@ impl<'a> AstNode<'a, TSNonNullExpression<'a>> {
             parent: self.allocator.alloc(AstNodes::TSNonNullExpression(transmute_self(self))),
             following_node,
         })
+    }
+
+    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_leading_comments(self.span()).fmt(f)
+    }
+
+    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_trailing_comments(
+            &self.parent.as_sibling_node(),
+            &SiblingNode::from(self.inner),
+            self.following_node.as_ref(),
+        )
+        .fmt(f)
     }
 }
 
@@ -11145,6 +13472,19 @@ impl<'a> AstNode<'a, Decorator<'a>> {
             following_node,
         })
     }
+
+    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_leading_comments(self.span()).fmt(f)
+    }
+
+    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_trailing_comments(
+            &self.parent.as_sibling_node(),
+            &SiblingNode::from(self.inner),
+            self.following_node.as_ref(),
+        )
+        .fmt(f)
+    }
 }
 
 impl<'a> AstNode<'a, TSExportAssignment<'a>> {
@@ -11162,6 +13502,19 @@ impl<'a> AstNode<'a, TSExportAssignment<'a>> {
             parent: self.allocator.alloc(AstNodes::TSExportAssignment(transmute_self(self))),
             following_node,
         })
+    }
+
+    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_leading_comments(self.span()).fmt(f)
+    }
+
+    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_trailing_comments(
+            &self.parent.as_sibling_node(),
+            &SiblingNode::from(self.inner),
+            self.following_node.as_ref(),
+        )
+        .fmt(f)
     }
 }
 
@@ -11182,6 +13535,19 @@ impl<'a> AstNode<'a, TSNamespaceExportDeclaration<'a>> {
                 .alloc(AstNodes::TSNamespaceExportDeclaration(transmute_self(self))),
             following_node,
         })
+    }
+
+    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_leading_comments(self.span()).fmt(f)
+    }
+
+    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_trailing_comments(
+            &self.parent.as_sibling_node(),
+            &SiblingNode::from(self.inner),
+            self.following_node.as_ref(),
+        )
+        .fmt(f)
     }
 }
 
@@ -11212,6 +13578,19 @@ impl<'a> AstNode<'a, TSInstantiationExpression<'a>> {
             following_node,
         })
     }
+
+    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_leading_comments(self.span()).fmt(f)
+    }
+
+    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_trailing_comments(
+            &self.parent.as_sibling_node(),
+            &SiblingNode::from(self.inner),
+            self.following_node.as_ref(),
+        )
+        .fmt(f)
+    }
 }
 
 impl<'a> AstNode<'a, JSDocNullableType<'a>> {
@@ -11234,6 +13613,19 @@ impl<'a> AstNode<'a, JSDocNullableType<'a>> {
     #[inline]
     pub fn postfix(&self) -> bool {
         self.inner.postfix
+    }
+
+    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_leading_comments(self.span()).fmt(f)
+    }
+
+    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_trailing_comments(
+            &self.parent.as_sibling_node(),
+            &SiblingNode::from(self.inner),
+            self.following_node.as_ref(),
+        )
+        .fmt(f)
     }
 }
 
@@ -11258,12 +13650,38 @@ impl<'a> AstNode<'a, JSDocNonNullableType<'a>> {
     pub fn postfix(&self) -> bool {
         self.inner.postfix
     }
+
+    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_leading_comments(self.span()).fmt(f)
+    }
+
+    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_trailing_comments(
+            &self.parent.as_sibling_node(),
+            &SiblingNode::from(self.inner),
+            self.following_node.as_ref(),
+        )
+        .fmt(f)
+    }
 }
 
 impl<'a> AstNode<'a, JSDocUnknownType> {
     #[inline]
     pub fn span(&self) -> Span {
         self.inner.span
+    }
+
+    pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_leading_comments(self.span()).fmt(f)
+    }
+
+    pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+        format_trailing_comments(
+            &self.parent.as_sibling_node(),
+            &SiblingNode::from(self.inner),
+            self.following_node.as_ref(),
+        )
+        .fmt(f)
     }
 }
 

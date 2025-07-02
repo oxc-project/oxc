@@ -332,6 +332,24 @@ fn generate_struct_impls(struct_def: &StructDef, schema: &Schema) -> TokenStream
         ///@@line_break
         impl<'a> AstNode<'a, #type_ty> {
             #(#methods)*
+
+            ///@@line_break
+            pub fn format_leading_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+                format_leading_comments(
+                    self.span()
+                )
+                .fmt(f)
+            }
+
+            ///@@line_break
+            pub fn format_trailing_comments(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+                format_trailing_comments(
+                    &self.parent.as_sibling_node(),
+                    &SiblingNode::from(self.inner),
+                    self.following_node.as_ref(),
+                )
+                .fmt(f)
+            }
         }
 
     }
