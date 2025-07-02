@@ -2083,7 +2083,7 @@ impl Gen for TemplateLiteral<'_> {
 
         for quasi in &self.quasis {
             p.add_source_mapping(quasi.span);
-            p.print_str(quasi.value.raw.as_str());
+            p.print_str_escaping_script_close_tag(quasi.value.raw.as_str());
             p.add_source_mapping_end(quasi.span);
 
             if let Some(expr) = expressions.next() {

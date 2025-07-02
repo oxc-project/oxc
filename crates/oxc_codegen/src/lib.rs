@@ -26,8 +26,11 @@ use oxc_syntax::{
 };
 
 use crate::{
-    binary_expr_visitor::BinaryExpressionVisitor, comment::CommentsMap, operator::Operator,
-    sourcemap_builder::SourcemapBuilder, str::Quote,
+    binary_expr_visitor::BinaryExpressionVisitor,
+    comment::CommentsMap,
+    operator::Operator,
+    sourcemap_builder::SourcemapBuilder,
+    str::{Quote, is_script_close_tag},
 };
 pub use crate::{
     context::Context,
@@ -228,6 +231,40 @@ impl<'a> Codegen<'a> {
     #[inline]
     pub fn print_str(&mut self, s: &str) {
         self.code.print_str(s);
+    }
+
+    /// Push str into the buffer, escaping `</script` to `<\/script`.
+    #[inline]
+    pub fn print_str_escaping_script_close_tag(&mut self, s: &str) {
+        let slice = s.as_bytes();
+        let mut consumed = 0;
+        let mut i = 0;
+
+        // Only check when remaining string has length larger than 8.
+        while i + 8 <= slice.len() {
+            if is_script_close_tag(&slice[i..i + 8]) {
+                // Push str up to and including `<`. Skip `/`. Write `\/` instead.
+                // SAFETY:
+                // The slice guarantees to be a valid UTF-8 string.
+                // The consumed index is always pointed to a UTF-8 char boundary.
+                // Current byte is `<`, a UTF-8 char boundary.
+                unsafe {
+                    self.code.print_bytes_unchecked(&slice[consumed..=i]);
+                }
+                self.code.print_str("\\/");
+                consumed = i + 2;
+                i += 8;
+            } else {
+                i += 1;
+            }
+        }
+
+        // SAFETY:
+        // The slice guarantees to be a valid UTF-8 string.
+        // The consumed index is always pointed to a UTF-8 char boundary.
+        unsafe {
+            self.code.print_bytes_unchecked(&slice[consumed..]);
+        }
     }
 
     /// Print a single [`Expression`], adding it to the code generator's
