@@ -4,7 +4,7 @@ use serde::{Deserialize, Serialize};
 
 /// See: [settings](https://github.com/import-js/eslint-plugin-import/blob/main/README.md#settings)
 #[derive(Debug, Clone, Deserialize, Serialize, JsonSchema)]
-#[cfg_attr(test, derive(PartialEq))]
+#[cfg_attr(test, derive(PartialEq, Eq))]
 pub struct ImportPluginSettings {
     /// An array of folders. Resolved modules only from those folders will be considered as "external".
     ///
@@ -36,7 +36,7 @@ impl Default for ImportPluginSettings {
     fn default() -> Self {
         Self {
             external_module_folders: default_external_module_folders(),
-            internal_regex: Default::default(),
+            internal_regex: String::default(),
         }
     }
 }
