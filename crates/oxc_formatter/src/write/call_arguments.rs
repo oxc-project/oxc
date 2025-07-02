@@ -22,6 +22,10 @@ use crate::{
         write_arguments_multi_line,
     },
     write,
+    write::{
+        arrow_function_expression::is_multiline_template_starting_on_same_line,
+        parameter_list::has_only_simple_parameters,
+    },
 };
 
 use super::{
@@ -55,17 +59,18 @@ impl<'a> Format<'a> for AstNode<'a, ArenaVec<'a, Argument<'a>>> {
                 (false, false)
             };
 
-        let is_first_arg_string_literal_or_template = if self.len() == 2 {
-            matches!(
+        let is_first_arg_string_literal_or_template = self.len() != 2
+            || matches!(
                 self.as_ref().first(),
-                Some(Argument::StringLiteral(_) | Argument::TemplateLiteral(_))
-            )
-        } else {
-            true
-        };
+                Some(
+                    Argument::StringLiteral(_)
+                        | Argument::TemplateLiteral(_)
+                        | Argument::TaggedTemplateExpression(_)
+                )
+            );
 
         if is_commonjs_or_amd_call
-            // || is_multiline_template_only_args(node)
+            || is_multiline_template_only_args(self, f.source_text())
             || is_react_hook_with_deps_array(self, f.comments())
             || (is_test_call && is_first_arg_string_literal_or_template)
         {
@@ -985,32 +990,6 @@ fn function_has_only_simple_parameters(params: &FormalParameters<'_>) -> bool {
     has_only_simple_parameters(params, false)
 }
 
-/// Tests if all of the parameters of `expression` are simple enough to allow
-/// a function to group.
-fn has_only_simple_parameters(
-    parameters: &FormalParameters<'_>,
-    allow_type_annotations: bool,
-) -> bool {
-    parameters.items.iter().all(|parameter| is_simple_parameter(parameter, allow_type_annotations))
-}
-
-/// Tests if the single parameter is "simple", as in a plain identifier with no
-/// explicit type annotation and no initializer:
-///
-/// Examples:
-/// foo             => true
-/// foo?            => true
-/// foo = 'bar'     => false
-/// foo: string     => false
-/// {a, b}          => false
-/// {a, b} = {}     => false
-/// [a, b]          => false
-///
-fn is_simple_parameter(parameter: &FormalParameter<'_>, allow_type_annotations: bool) -> bool {
-    parameter.pattern.get_binding_identifier().is_some()
-        && (allow_type_annotations || parameter.pattern.type_annotation.is_none())
-}
-
 /// Tests if this is a call to commonjs [`require`](https://nodejs.org/api/modules.html#requireid)
 /// or amd's [`define`](https://github.com/amdjs/amdjs-api/wiki/AMD#define-function-) function.
 fn is_commonjs_or_amd_call(
@@ -1062,6 +1041,27 @@ fn is_commonjs_or_amd_call(
             } else {
                 false
             }
+        }
+        _ => false,
+    }
+}
+
+/// Returns `true` if `arguments` contains a single [multiline template literal argument that starts on its own ](is_multiline_template_starting_on_same_line).
+fn is_multiline_template_only_args(arguments: &[Argument], source_text: &str) -> bool {
+    if arguments.len() != 1 {
+        return false;
+    }
+
+    match arguments.first().unwrap() {
+        Argument::TemplateLiteral(template) => {
+            is_multiline_template_starting_on_same_line(template.span.start, template, source_text)
+        }
+        Argument::TaggedTemplateExpression(template) => {
+            is_multiline_template_starting_on_same_line(
+                template.span.start,
+                &template.quasi,
+                source_text,
+            )
         }
         _ => false,
     }
@@ -1129,7 +1129,7 @@ fn is_react_hook_with_deps_array(
 /// [arguments]: CallExpression::arguments
 /// [arrow function expression]: ArrowFunctionExpression
 /// [function expression]: Function
-pub fn is_test_call_expression(call: &AstNode<'_, CallExpression<'_>>) -> bool {
+pub fn is_test_call_expression(call: &AstNode<CallExpression<'_>>) -> bool {
     let callee = &call.callee;
     let arguments = &call.arguments;
 
@@ -1138,12 +1138,8 @@ pub fn is_test_call_expression(call: &AstNode<'_, CallExpression<'_>>) -> bool {
     match (args.next(), args.next(), args.next()) {
         (Some(argument), None, None) if arguments.len() == 1 => {
             if is_angular_test_wrapper(call) && {
-                if let AstNodes::Argument(argument) = call.parent {
-                    if let AstNodes::CallExpression(call) = argument.parent {
-                        is_test_call_expression(call)
-                    } else {
-                        false
-                    }
+                if let AstNodes::CallExpression(call) = call.parent.parent() {
+                    is_test_call_expression(call)
                 } else {
                     false
                 }
@@ -1163,9 +1159,7 @@ pub fn is_test_call_expression(call: &AstNode<'_, CallExpression<'_>>) -> bool {
 
         // it("description", ..)
         // it(Test.name, ..)
-        (Some(match_expression!(Argument)), Some(second), third)
-            if arguments.len() <= 3 && contains_a_test_pattern(callee) =>
-        {
+        (_, Some(second), third) if arguments.len() <= 3 && contains_a_test_pattern(callee) => {
             // it('name', callback, duration)
             if !matches!(third, None | Some(Argument::NumericLiteral(_))) {
                 return false;

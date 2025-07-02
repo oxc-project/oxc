@@ -39,6 +39,10 @@ use crate::{
     parentheses::NeedsParentheses,
     utils::{assignment_like::AssignmentLike, write_arguments_multi_line},
     write,
+    write::{
+        call_arguments::is_test_call_expression,
+        parameter_list::{can_avoid_parentheses, should_hug_function_parameters},
+    },
 };
 
 use self::{
@@ -1079,24 +1083,38 @@ impl<'a> FormatWrite<'a> for AstNode<'a, BindingRestElement<'a>> {
 
 impl<'a> FormatWrite<'a> for AstNode<'a, FormalParameters<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
-        let parentheses_not_needed = true; // self
-        // .as_arrow_function_expression()
-        // .is_some_and(|expression| can_avoid_parentheses(&expression, f));
-        let has_any_decorated_parameter = false; // list.has_any_decorated_parameter();
-        let can_hug = false;
-        // should_hug_function_parameters(self, f.context().comments(), parentheses_not_needed)?
-        // && !has_any_decorated_parameter;
+        let parentheses_not_needed = if let AstNodes::ArrowFunctionExpression(arrow) = self.parent {
+            can_avoid_parentheses(arrow, f)
+        } else {
+            false
+        };
+
+        let has_any_decorated_parameter =
+            self.items.iter().any(|param| !param.decorators.is_empty());
+
+        let can_hug = should_hug_function_parameters(self, parentheses_not_needed, f)
+            && !has_any_decorated_parameter;
+
         let layout = if !self.has_parameter() {
             ParameterLayout::NoParameters
-        } else if can_hug
-        /* || self.is_in_test_call()? */
-        {
+        } else if can_hug || {
+            // `self.parent`: Function
+            // `self.parent.parent()`: Argument
+            // `self.parent.parent().parent()` CallExpression
+            if let AstNodes::CallExpression(call) = self.parent.parent().parent() {
+                is_test_call_expression(call)
+            } else {
+                false
+            }
+        } {
             ParameterLayout::Hug
         } else {
             ParameterLayout::Default
         };
 
-        write!(f, "(")?;
+        if !parentheses_not_needed {
+            write!(f, "(")?;
+        }
 
         match layout {
             ParameterLayout::NoParameters => {
@@ -1110,7 +1128,11 @@ impl<'a> FormatWrite<'a> for AstNode<'a, FormalParameters<'a>> {
             }
         }
 
-        write!(f, ")")
+        if !parentheses_not_needed {
+            write!(f, ")")?;
+        }
+
+        Ok(())
     }
 }
 
@@ -1141,15 +1163,12 @@ impl<'a> FormatWrite<'a> for AstNode<'a, FormalParameter<'a>> {
 
         let decorators = self.decorators();
         if is_hug_parameter && decorators.is_empty() {
-            write!(f, [decorators, content])?;
+            write!(f, [decorators, content])
         } else if decorators.is_empty() {
-            write!(f, [decorators, group(&content)])?;
+            write!(f, [decorators, group(&content)])
         } else {
-            write!(f, [group(&decorators), group(&content)])?;
+            write!(f, [group(&decorators), group(&content)])
         }
-
-        // write![f, [FormatInitializerClause::new(initializer.as_ref())]]
-        Ok(())
     }
 }
 

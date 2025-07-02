@@ -114,16 +114,7 @@ impl<'a> Format<'a> for ParameterList<'a, '_> {
                     FormatTrailingCommas::All.trailing_separator(f.options())
                 };
 
-                // TODO
-                let has_modifiers = false; //
-                //self.list.iter().any(|node| {
-                // matches!(
-                // node,
-                // Ok(AnyParameter::AnyJsConstructorParameter(
-                // AnyJsConstructorParameter::TsPropertyParameter(_),
-                // ))
-                // )
-                // });
+                let has_modifiers = self.list.items.iter().any(FormalParameter::has_modifier);
                 let source_text = f.source_text();
                 let mut joiner = if has_modifiers {
                     f.join_nodes_with_hardline()
@@ -148,4 +139,90 @@ impl<'a> Format<'a> for ParameterList<'a, '_> {
             }
         }
     }
+}
+
+/// Returns `true` if parentheses can be safely avoided and the `arrow_parentheses` formatter option allows it
+pub fn can_avoid_parentheses(
+    arrow: &ArrowFunctionExpression<'_>,
+    f: &mut Formatter<'_, '_>,
+) -> bool {
+    f.options().arrow_parentheses.is_as_needed()
+        && arrow.params.items.len() == 1
+        && arrow.params.rest.is_none()
+        && arrow.type_parameters.is_none()
+        && arrow.return_type.is_none()
+        && {
+            let param = arrow.params.items.first().unwrap();
+            param.pattern.type_annotation.is_none()
+                && !param.pattern.optional
+                && param.pattern.kind.is_binding_identifier()
+        }
+        && !f.comments().has_comments_in_span(arrow.params.span)
+}
+
+pub fn should_hug_function_parameters(
+    parameters: &FormalParameters<'_>,
+    parentheses_not_needed: bool,
+    f: &Formatter<'_, '_>,
+) -> bool {
+    let list = &parameters.items;
+    if list.len() != 1 || parameters.rest.is_some() {
+        return false;
+    }
+
+    // Safe because of the length check above
+    let only_parameter = list.first().unwrap();
+
+    if only_parameter.has_modifier() {
+        return false;
+    }
+
+    if f.comments().has_comments_in_span(parameters.span) {
+        return false;
+    }
+
+    match &only_parameter.pattern.kind {
+        BindingPatternKind::AssignmentPattern(assignment) => {
+            assignment.left.kind.is_destructuring_pattern()
+                && match &assignment.right {
+                    Expression::ObjectExpression(object) => object.properties.is_empty(),
+                    Expression::ArrayExpression(array) => array.elements.is_empty(),
+                    Expression::Identifier(_) => true,
+                    _ => false,
+                }
+        }
+        BindingPatternKind::ArrayPattern(_) | BindingPatternKind::ObjectPattern(_) => true,
+        BindingPatternKind::BindingIdentifier(_) => {
+            parentheses_not_needed
+                || only_parameter.pattern.type_annotation.as_ref().is_some_and(|ann| {
+                    matches!(&ann.type_annotation, TSType::TSTypeLiteral(literal))
+                })
+        }
+    }
+}
+
+/// Tests if all of the parameters of `expression` are simple enough to allow
+/// a function to group.
+pub fn has_only_simple_parameters(
+    parameters: &FormalParameters<'_>,
+    allow_type_annotations: bool,
+) -> bool {
+    parameters.items.iter().all(|parameter| is_simple_parameter(parameter, allow_type_annotations))
+}
+
+/// Tests if the single parameter is "simple", as in a plain identifier with no
+/// explicit type annotation and no initializer:
+///
+/// Examples:
+/// foo             => true
+/// foo?            => true
+/// foo = 'bar'     => false
+/// foo: string     => false
+/// {a, b}          => false
+/// {a, b} = {}     => false
+/// [a, b]          => false
+///
+fn is_simple_parameter(parameter: &FormalParameter<'_>, allow_type_annotations: bool) -> bool {
+    parameter.pattern.get_binding_identifier().is_some()
+        && (allow_type_annotations || parameter.pattern.type_annotation.is_none())
 }

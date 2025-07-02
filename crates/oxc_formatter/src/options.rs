@@ -590,7 +590,8 @@ impl FromStr for ArrowParentheses {
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s {
-            "as-needed" => Ok(Self::AsNeeded),
+            // Prettier calls it `avoid`, but Biome calls it `AsNeeded`
+            "avoid" => Ok(Self::AsNeeded),
             "always" => Ok(Self::Always),
             _ => Err(
                 "Value not supported for Arrow parentheses. Supported values are 'as-needed' and 'always'.",
