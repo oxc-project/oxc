@@ -2077,12 +2077,14 @@ impl GenExpr for ImportExpression<'_> {
 
 impl Gen for TemplateLiteral<'_> {
     fn r#gen(&self, p: &mut Codegen, _ctx: Context) {
+        p.add_source_mapping(self.span);
         p.print_ascii_byte(b'`');
         let mut expressions = self.expressions.iter();
 
         for quasi in &self.quasis {
             p.add_source_mapping(quasi.span);
             p.print_str(quasi.value.raw.as_str());
+            p.add_source_mapping_end(quasi.span);
 
             if let Some(expr) = expressions.next() {
                 p.print_str("${");
@@ -2092,6 +2094,7 @@ impl Gen for TemplateLiteral<'_> {
         }
 
         p.print_ascii_byte(b'`');
+        p.add_source_mapping_end(self.span);
     }
 }
 
