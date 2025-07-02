@@ -33,7 +33,7 @@ impl Allocator {
     /// This code only remains sound as long as the code in version of `bumpalo` we're using matches
     /// the duplicate of `bumpalo`'s internals contained in this file.
     ///
-    /// `bumpalo` is pinned to version `=3.17.0` in `Cargo.toml`.
+    /// `bumpalo` is pinned to version `=3.19.0` in `Cargo.toml`.
     ///
     /// The [`Allocator`] which is returned takes ownership of the memory allocation,
     /// and the allocation will be freed if the `Allocator` is dropped.
