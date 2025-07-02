@@ -806,7 +806,7 @@ impl<'a> PeepholeOptimizations {
             Cow::Owned(
                 s.cow_replace("\\", "\\\\")
                     .cow_replace("`", "\\`")
-                    .cow_replace("${", "\\${")
+                    .cow_replace("$", "\\$")
                     .cow_replace("\r\n", "\\r\n")
                     .into_owned(),
             )
@@ -1830,6 +1830,14 @@ mod test {
         test("x = []['concat'](1)", "x = [1]");
         test("x = ''['concat'](1)", "x = '1'");
         test_same("x = obj.concat([1,2]).concat(1)");
+    }
+
+    #[test]
+    fn test_add_template_literal() {
+        test("x = '$' + `{${x}}`", "x = `\\${${x}}`");
+        test("x = `{${x}}` + '$'", "x = `{${x}}\\$`");
+        test("x = `$` + `{${x}}`", "x = `\\${${x}}`");
+        test("x = `{${x}}` + `$`", "x = `{${x}}\\$`");
     }
 
     #[test]
