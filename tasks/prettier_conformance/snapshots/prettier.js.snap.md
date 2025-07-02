@@ -9,7 +9,7 @@ js compatibility: 387/699 (55.36%)
 | js/arrows/call.js | 💥💥 | 75.68% |
 | js/arrows/comment.js | 💥💥 | 60.87% |
 | js/arrows/curried.js | 💥💥 | 92.55% |
-| js/arrows/currying-4.js | 💥💥 | 86.67% |
+| js/arrows/currying-4.js | 💥💥 | 94.34% |
 | js/arrows/issue-1389-curry.js | 💥💥 | 86.96% |
 | js/arrows/semi/semi.js | 💥✨ | 0.00% |
 | js/assignment/destructuring-array.js | 💥 | 0.00% |

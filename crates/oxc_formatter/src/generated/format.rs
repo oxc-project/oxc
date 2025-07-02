@@ -4,13 +4,10 @@
 use oxc_ast::ast::*;
 
 use crate::{
-    formatter::{
-        Buffer, Format, FormatResult, Formatter,
-        trivia::{FormatTrailingComments, format_leading_comments, format_trailing_comments},
-    },
+    formatter::{Buffer, Format, FormatResult, Formatter, trivia::FormatTrailingComments},
     generated::ast_nodes::{AstNode, SiblingNode},
     parentheses::NeedsParentheses,
-    write::FormatWrite,
+    write::{FormatJsArrowFunctionExpressionOptions, FormatWrite},
 };
 
 impl<'a> Format<'a> for AstNode<'a, Program<'a>> {
@@ -923,7 +920,9 @@ impl<'a> Format<'a> for AstNode<'a, FunctionBody<'a>> {
     }
 }
 
-impl<'a> Format<'a> for AstNode<'a, ArrowFunctionExpression<'a>> {
+impl<'a> Format<'a, FormatJsArrowFunctionExpressionOptions>
+    for AstNode<'a, ArrowFunctionExpression<'a>>
+{
     fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         self.format_leading_comments(f)?;
         let needs_parentheses = self.needs_parentheses(f);
@@ -931,6 +930,24 @@ impl<'a> Format<'a> for AstNode<'a, ArrowFunctionExpression<'a>> {
             "(".fmt(f)?;
         }
         let result = self.write(f);
+        if needs_parentheses {
+            ")".fmt(f)?;
+        }
+        self.format_trailing_comments(f)?;
+        result
+    }
+
+    fn fmt_with_options(
+        &self,
+        options: FormatJsArrowFunctionExpressionOptions,
+        f: &mut Formatter<'_, 'a>,
+    ) -> FormatResult<()> {
+        self.format_leading_comments(f)?;
+        let needs_parentheses = self.needs_parentheses(f);
+        if needs_parentheses {
+            "(".fmt(f)?;
+        }
+        let result = self.write_with_options(options, f);
         if needs_parentheses {
             ")".fmt(f)?;
         }

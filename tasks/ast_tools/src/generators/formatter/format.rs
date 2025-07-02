@@ -2,7 +2,7 @@
 //!
 
 use proc_macro2::TokenStream;
-use quote::quote;
+use quote::{format_ident, quote};
 
 use crate::{
     Codegen, Generator,
@@ -21,6 +21,10 @@ const NEEDS_PARENTHESES: &[&str] = &[
     "StringLiteral",
     "TSTypeAssertion",
 ];
+
+const NEEDS_IMPLEMENTING_FMT_WITH_OPTIONS: phf::Map<&'static str, &'static str> = phf::phf_map! {
+    "ArrowFunctionExpression" => "FormatJsArrowFunctionExpressionOptions",
+};
 
 pub struct FormatterFormatGenerator;
 
@@ -41,6 +45,11 @@ impl Generator for FormatterFormatGenerator {
             .map(|type_def| implementation(type_def, schema))
             .collect::<TokenStream>();
 
+        let options = NEEDS_IMPLEMENTING_FMT_WITH_OPTIONS.values().map(|o| {
+            let ident = format_ident!("{}", o);
+            quote! { , #ident }
+        });
+
         let output = quote! {
             use oxc_ast::ast::*;
 
@@ -48,11 +57,11 @@ impl Generator for FormatterFormatGenerator {
             use crate::{
                 formatter::{
                     Buffer, Format, FormatResult, Formatter,
-                    trivia::{FormatTrailingComments, format_leading_comments, format_trailing_comments},
+                    trivia::FormatTrailingComments,
                 },
                 parentheses::NeedsParentheses,
                 generated::ast_nodes::{AstNode, SiblingNode},
-                write::FormatWrite,
+                write::{FormatWrite #(#options)*},
             };
 
             #impls
@@ -133,27 +142,57 @@ fn implementation(type_def: &TypeDef, schema: &Schema) -> TokenStream {
         quote! {}
     };
 
-    let implementation = if needs_parentheses_before.is_empty() && trailing_comments.is_empty() {
-        quote! {
-            self.write(f)
-        }
-    } else {
-        quote! {
-            #leading_comments
-            #needs_parentheses_before
-            let result = self.write(f);
-            #needs_parentheses_after
-            #trailing_comments
-            result
+    let generate_fmt_implementation = |has_options: bool| {
+        let write_implementation = if has_options {
+            quote! {
+                self.write_with_options(options, f)
+            }
+        } else {
+            quote! {
+                self.write(f)
+            }
+        };
+        if needs_parentheses_before.is_empty() && trailing_comments.is_empty() {
+            quote! {
+                #write_implementation
+            }
+        } else {
+            quote! {
+                #leading_comments
+                #needs_parentheses_before
+                let result = #write_implementation;
+                #needs_parentheses_after
+                #trailing_comments
+                result
+            }
         }
     };
 
-    quote! {
-        ///@@line_break
-        impl<'a> Format<'a> for #type_ty {
-            fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+    let fmt_implementation = generate_fmt_implementation(false);
+    let fmt_options =
+        NEEDS_IMPLEMENTING_FMT_WITH_OPTIONS.get(type_def_name).map(|str| format_ident!("{}", str));
+    let fmt_with_options_implementation = if let Some(ref fmt_options) = fmt_options {
+        let implementation = generate_fmt_implementation(true);
+        quote! {
+            ///@@line_break
+            fn fmt_with_options(&self, options: #fmt_options, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
                 #implementation
             }
+        }
+    } else {
+        quote! {}
+    };
+
+    let option_type = fmt_options.map_or_else(|| quote! {}, |ident| quote! {, #ident});
+
+    quote! {
+        ///@@line_break
+        impl<'a> Format<'a #option_type> for #type_ty {
+            fn fmt(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
+                #fmt_implementation
+            }
+
+            #fmt_with_options_implementation
         }
     }
 }

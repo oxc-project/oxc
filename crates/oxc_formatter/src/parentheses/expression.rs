@@ -11,7 +11,7 @@ use crate::{
     Format,
     formatter::Formatter,
     generated::ast_nodes::{AstNode, AstNodes},
-    write::{BinaryLikeExpression, arrow_function_expression::ExpressionLeftSide, should_flatten},
+    write::{BinaryLikeExpression, ExpressionLeftSide, should_flatten},
 };
 
 use super::NeedsParentheses;

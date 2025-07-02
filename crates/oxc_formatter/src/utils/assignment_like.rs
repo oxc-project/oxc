@@ -6,9 +6,7 @@ use oxc_span::GetSpan;
 use crate::formatter::prelude::{FormatElements, format_once, line_suffix_boundary};
 use crate::formatter::{BufferExtensions, VecBuffer};
 use crate::write::BinaryLikeExpression;
-use crate::write::arrow_function_expression::{
-    FormatJsArrowFunctionExpression, FormatJsArrowFunctionExpressionOptions,
-};
+use crate::write::{FormatJsArrowFunctionExpression, FormatJsArrowFunctionExpressionOptions};
 use crate::{
     format_args,
     formatter::{

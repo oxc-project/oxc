@@ -1,6 +1,6 @@
 mod array_element_list;
 mod array_expression;
-pub mod arrow_function_expression;
+mod arrow_function_expression;
 mod assignment_pattern_property_list;
 mod binary_like_expression;
 mod binding_property_list;
@@ -15,6 +15,9 @@ mod semicolon;
 mod type_parameters;
 mod utils;
 mod variable_declaration;
+pub use arrow_function_expression::{
+    ExpressionLeftSide, FormatJsArrowFunctionExpression, FormatJsArrowFunctionExpressionOptions,
+};
 pub use binary_like_expression::{BinaryLikeExpression, BinaryLikeOperator, should_flatten};
 
 use call_arguments::{FormatAllArgsBrokenOut, FormatCallArgument, is_function_composition_args};
@@ -47,7 +50,6 @@ use crate::{
 
 use self::{
     array_expression::FormatArrayExpression,
-    arrow_function_expression::FormatJsArrowFunctionExpression,
     object_like::ObjectLike,
     object_pattern_like::ObjectPatternLike,
     parameter_list::{ParameterLayout, ParameterList},
@@ -60,8 +62,11 @@ use self::{
     },
 };
 
-pub trait FormatWrite<'ast> {
+pub trait FormatWrite<'ast, T = ()> {
     fn write(&self, f: &mut Formatter<'_, 'ast>) -> FormatResult<()>;
+    fn write_with_options(&self, options: T, f: &mut Formatter<'_, 'ast>) -> FormatResult<()> {
+        unreachable!("Please implement it first.");
+    }
 }
 
 impl<'a> FormatWrite<'a> for AstNode<'a, Program<'a>> {
@@ -1172,9 +1177,19 @@ impl<'a> FormatWrite<'a> for AstNode<'a, FormalParameter<'a>> {
     }
 }
 
-impl<'a> FormatWrite<'a> for AstNode<'a, ArrowFunctionExpression<'a>> {
+impl<'a> FormatWrite<'a, FormatJsArrowFunctionExpressionOptions>
+    for AstNode<'a, ArrowFunctionExpression<'a>>
+{
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         FormatJsArrowFunctionExpression::new(self).fmt(f)
+    }
+
+    fn write_with_options(
+        &self,
+        options: FormatJsArrowFunctionExpressionOptions,
+        f: &mut Formatter<'_, 'a>,
+    ) -> FormatResult<()> {
+        FormatJsArrowFunctionExpression::new_with_options(self, options).fmt(f)
     }
 }
 
