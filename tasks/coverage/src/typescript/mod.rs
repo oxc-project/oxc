@@ -135,6 +135,16 @@ impl Case for TypeScriptCase {
 // TODO: Filter out more not-supported error codes here
 static NOT_SUPPORTED_ERROR_CODES: phf::Set<&'static str> = phf::phf_set![
     "2315",  // Type 'U' is not generic.
+    "8021", // JSDoc '@typedef' tag should either have a type annotation or be followed by '@property' or '@member' tags.
+    "8022", // JSDoc '@extends' is not attached to a class.
+    "8023", // JSDoc '@extends Mismatch' does not match the 'extends B' clause.
+    "8024", // JSDoc '@param' tag has name 's', but there is no parameter with that name.
+    "8026", // Expected A<T> type arguments; provide these with an '@extends' tag.
+    "8029", // JSDoc '@param' tag has name 'rest', but there is no parameter with that name. It would match 'arguments' if it had an array type.
+    "8030", // The type of a function declaration must match the function's signature.
+    "8032", // Qualified name 'xyz.p' is not allowed without a leading '@param {object} xyz'.
+    "8033", // A JSDoc '@typedef' comment may not contain multiple '@type' tags.
+    "8039", // A JSDoc '@template' tag may not follow a '@typedef', '@callback', or '@overload' tag
     "9005", // Declaration emit for this file requires using private name 'Sub'. An explicit type annotation may unblock declaration emit.
     "9006", // DeclaDeclaration emit for this file requires using private name 'Item' from module '"some-mod"'. An explicit type annotation may unblock declaration emit.
     "9007", // FunctDeclaion must have an explicit return type annotation with --isolatedDeclarations.
