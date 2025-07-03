@@ -6,10 +6,10 @@ class Linter {
   }
 }
 
-function main() {
+async function main() {
   const linter = new Linter();
 
-  const result = linter.run();
+  const result = await linter.run();
 
   if (!result) {
     process.exit(1);

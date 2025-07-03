@@ -140,7 +140,7 @@ oxc_tasks_transform_checker = { path = "tasks/transform_checker" }
 oxlint = { path = "apps/oxlint" }
 
 # Relaxed version so the user can decide which version to use.
-napi = "3.0.0-beta"
+napi = { version = "3.0.0-beta", features = ["tokio_rt"] }
 napi-build = "2.2.1"
 napi-derive = "3.0.0-beta"
 
