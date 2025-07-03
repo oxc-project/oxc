@@ -316,7 +316,7 @@ fn can_merge_imports(
             has_named
                 || (has_default
                     && !namespace.is_some_and(|(_, namespace_span, _)| {
-                        return default.unwrap().1 == *namespace_span;
+                        default.unwrap().1 == *namespace_span
                     }))
         }
         ImportType::Namespace => {
