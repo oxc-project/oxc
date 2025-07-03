@@ -4,6 +4,17 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.75.1] - 2025-07-03
+
+### 🐛 Bug Fixes
+
+- d7076b3 ast/estree: Add optional `range` field to `Span` in TS type defs (#12014) (overlookmotel)
+
+### 🚜 Refactor
+
+- 016634f ast/estree: Introduce `serialize_span` method (#12013) (overlookmotel)
+
+
 
 
 
