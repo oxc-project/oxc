@@ -541,3 +541,31 @@ Example:
 
 
 ##### settings.react.linkComponents[n]
+
+
+
+
+
+
+#### settings.react.version
+
+type: `[
+  string,
+  null
+]`
+
+default: `null`
+
+React version to use for version-specific behavior.
+
+Example:
+
+```jsonc
+{
+"settings": {
+"react": {
+"version": "16.14.0"
+}
+}
+}
+```
