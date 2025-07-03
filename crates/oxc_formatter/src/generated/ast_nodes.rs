@@ -179,7 +179,6 @@ pub enum AstNodes<'a> {
     TSObjectKeyword(&'a AstNode<'a, TSObjectKeyword>),
     TSBigIntKeyword(&'a AstNode<'a, TSBigIntKeyword>),
     TSTypeReference(&'a AstNode<'a, TSTypeReference<'a>>),
-    TSTypeName(&'a AstNode<'a, TSTypeName<'a>>),
     TSQualifiedName(&'a AstNode<'a, TSQualifiedName<'a>>),
     TSTypeParameterInstantiation(&'a AstNode<'a, TSTypeParameterInstantiation<'a>>),
     TSTypeParameter(&'a AstNode<'a, TSTypeParameter<'a>>),
@@ -2470,7 +2469,6 @@ impl<'a> AstNodes<'a> {
             Self::TSObjectKeyword(n) => n.span(),
             Self::TSBigIntKeyword(n) => n.span(),
             Self::TSTypeReference(n) => n.span(),
-            Self::TSTypeName(n) => n.span(),
             Self::TSQualifiedName(n) => n.span(),
             Self::TSTypeParameterInstantiation(n) => n.span(),
             Self::TSTypeParameter(n) => n.span(),
@@ -2667,7 +2665,6 @@ impl<'a> AstNodes<'a> {
             Self::TSObjectKeyword(n) => n.parent,
             Self::TSBigIntKeyword(n) => n.parent,
             Self::TSTypeReference(n) => n.parent,
-            Self::TSTypeName(n) => n.parent,
             Self::TSQualifiedName(n) => n.parent,
             Self::TSTypeParameterInstantiation(n) => n.parent,
             Self::TSTypeParameter(n) => n.parent,
@@ -2864,7 +2861,6 @@ impl<'a> AstNodes<'a> {
             Self::TSObjectKeyword(n) => SiblingNode::from(n.inner),
             Self::TSBigIntKeyword(n) => SiblingNode::from(n.inner),
             Self::TSTypeReference(n) => SiblingNode::from(n.inner),
-            Self::TSTypeName(n) => n.parent.as_sibling_node(),
             Self::TSQualifiedName(n) => SiblingNode::from(n.inner),
             Self::TSTypeParameterInstantiation(n) => SiblingNode::from(n.inner),
             Self::TSTypeParameter(n) => SiblingNode::from(n.inner),
@@ -3061,7 +3057,6 @@ impl<'a> AstNodes<'a> {
             Self::TSObjectKeyword(_) => "TSObjectKeyword",
             Self::TSBigIntKeyword(_) => "TSBigIntKeyword",
             Self::TSTypeReference(_) => "TSTypeReference",
-            Self::TSTypeName(_) => "TSTypeName",
             Self::TSQualifiedName(_) => "TSQualifiedName",
             Self::TSTypeParameterInstantiation(_) => "TSTypeParameterInstantiation",
             Self::TSTypeParameter(_) => "TSTypeParameter",
@@ -11497,7 +11492,7 @@ impl<'a> AstNode<'a, TSTypeReference<'a>> {
 impl<'a> AstNode<'a, TSTypeName<'a>> {
     #[inline]
     pub fn as_ast_nodes(&self) -> &AstNodes<'a> {
-        let parent = self.allocator.alloc(AstNodes::TSTypeName(transmute_self(self)));
+        let parent = self.parent;
         let node = match self.inner {
             TSTypeName::IdentifierReference(s) => {
                 AstNodes::IdentifierReference(self.allocator.alloc(AstNode {
@@ -12829,12 +12824,15 @@ impl<'a> AstNode<'a, TSTypeQueryExprName<'a>> {
                 }))
             }
             it @ match_ts_type_name!(TSTypeQueryExprName) => {
-                AstNodes::TSTypeName(self.allocator.alloc(AstNode {
-                    inner: it.to_ts_type_name(),
-                    parent,
-                    allocator: self.allocator,
-                    following_node: self.following_node,
-                }))
+                return self
+                    .allocator
+                    .alloc(AstNode {
+                        inner: it.to_ts_type_name(),
+                        parent,
+                        allocator: self.allocator,
+                        following_node: self.following_node,
+                    })
+                    .as_ast_nodes();
             }
         };
         self.allocator.alloc(node)
@@ -13375,12 +13373,15 @@ impl<'a> AstNode<'a, TSModuleReference<'a>> {
                 }))
             }
             it @ match_ts_type_name!(TSModuleReference) => {
-                AstNodes::TSTypeName(self.allocator.alloc(AstNode {
-                    inner: it.to_ts_type_name(),
-                    parent,
-                    allocator: self.allocator,
-                    following_node: self.following_node,
-                }))
+                return self
+                    .allocator
+                    .alloc(AstNode {
+                        inner: it.to_ts_type_name(),
+                        parent,
+                        allocator: self.allocator,
+                        following_node: self.following_node,
+                    })
+                    .as_ast_nodes();
             }
         };
         self.allocator.alloc(node)

@@ -2034,28 +2034,28 @@ impl<'a> SemanticBuilder<'a> {
                 //                     ^^^ avoid treat T as a value and TSTypeQuery
                 self.current_reference_flags -= ReferenceFlags::ValueAsType;
             }
-            AstKind::TSTypeName(_) => {
-                match self.nodes.parent_kind(self.current_node_id) {
-                    Some(
-                        // import A = a;
-                        //            ^
-                        AstKind::TSImportEqualsDeclaration(_),
-                    ) => {
-                        self.current_reference_flags = ReferenceFlags::Read;
-                    }
-                    Some(AstKind::TSQualifiedName(_)) => {
-                        // import A = a.b
-                        //            ^^^ Keep the current reference flag
-                    }
-                    _ => {
-                        // Handled in `AstKind::PropertySignature` or `AstKind::TSTypeQuery`
-                        if !self.current_reference_flags.is_value_as_type() {
-                            self.current_reference_flags = ReferenceFlags::Type;
-                        }
-                    }
+            AstKind::TSClassImplements(_) | AstKind::TSTypeReference(_) => {
+                // type X = SomeType;
+                //          ^^^^^^^^
+                //
+                // class A implements B {}
+                //         ^^^^^^^^^^^^
+                //
+                // let X: import('module').Y;
+                //        ^^^^^^^^^^^^^^^^
+                if !self.current_reference_flags.is_value_as_type() {
+                    self.current_reference_flags = ReferenceFlags::Type;
                 }
             }
             AstKind::IdentifierReference(ident) => {
+                if let Some(AstKind::TSImportType(_)) = self.nodes.parent_kind(self.current_node_id)
+                {
+                    // let X: import('module').X
+                    //                         ^
+                    // We don't want to treat this as a value reference.
+                    self.current_reference_flags = ReferenceFlags::Type;
+                }
+
                 self.reference_identifier(ident);
             }
             AstKind::LabeledStatement(stmt) => {
@@ -2093,8 +2093,11 @@ impl<'a> SemanticBuilder<'a> {
             AstKind::CatchParameter(_) => {
                 self.resolve_references_for_current_scope();
             }
-            AstKind::TSTypeName(_) => {
-                self.current_reference_flags -= ReferenceFlags::Type;
+            AstKind::IdentifierReference(_) | AstKind::TSQualifiedName(_) => {
+                if matches!(self.nodes.parent_kind(self.current_node_id), Some(AstKind::TSImportType(_) | AstKind::TSTypeReference(_) | AstKind::TSClassImplements(_))) {
+                    // Clear the type reference flags that were set in `enter_kind` for these kinds.
+                    self.current_reference_flags -= ReferenceFlags::Type;
+                }
             }
             AstKind::TSTypeQuery(_)
             // Clear the reference flags that are set in AstKind::PropertySignature

@@ -21,25 +21,25 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/type-declaratio
                 "flags": "ReferenceFlags(Type)",
                 "id": 1,
                 "name": "T",
-                "node_id": 19
+                "node_id": 17
               },
               {
                 "flags": "ReferenceFlags(Type)",
                 "id": 3,
                 "name": "T",
-                "node_id": 26
+                "node_id": 22
               },
               {
                 "flags": "ReferenceFlags(Type)",
                 "id": 5,
                 "name": "T",
-                "node_id": 33
+                "node_id": 27
               },
               {
                 "flags": "ReferenceFlags(Type)",
                 "id": 7,
                 "name": "T",
-                "node_id": 40
+                "node_id": 32
               }
             ]
           }
@@ -67,7 +67,7 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/type-declaratio
             "flags": "ReferenceFlags(Type)",
             "id": 8,
             "name": "EnthusiasticGreeting",
-            "node_id": 45
+            "node_id": 36
           }
         ]
       },

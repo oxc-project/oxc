@@ -33,7 +33,7 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/import/named-al
             "flags": "ReferenceFlags(Type)",
             "id": 1,
             "name": "t",
-            "node_id": 13
+            "node_id": 12
           }
         ]
       },

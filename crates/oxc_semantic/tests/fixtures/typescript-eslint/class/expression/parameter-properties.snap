@@ -36,7 +36,7 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/class/expressio
                     "flags": "ReferenceFlags(Read)",
                     "id": 3,
                     "name": "a",
-                    "node_id": 43
+                    "node_id": 42
                   }
                 ]
               },
@@ -112,7 +112,7 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/class/expressio
             "flags": "ReferenceFlags(Type)",
             "id": 2,
             "name": "Outer",
-            "node_id": 40
+            "node_id": 39
           }
         ]
       },

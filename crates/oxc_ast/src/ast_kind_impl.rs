@@ -382,7 +382,6 @@ impl AstKind<'_> {
             Self::TSNamespaceExportDeclaration(_) => "TSNamespaceExportDeclaration".into(),
             Self::TSImportEqualsDeclaration(_) => "TSImportEqualsDeclaration".into(),
             Self::TSCallSignatureDeclaration(_) => "TSCallSignatureDeclaration".into(),
-            Self::TSTypeName(n) => format!("TSTypeName({n})").into(),
             Self::TSExternalModuleReference(_) => "TSExternalModuleReference".into(),
             Self::TSQualifiedName(n) => format!("TSQualifiedName({n})").into(),
             Self::TSInterfaceDeclaration(_) => "TSInterfaceDeclaration".into(),

@@ -3743,13 +3743,11 @@ pub mod walk_mut {
 
     #[inline]
     pub fn walk_ts_type_name<'a, V: VisitMut<'a>>(visitor: &mut V, it: &mut TSTypeName<'a>) {
-        let kind = AstType::TSTypeName;
-        visitor.enter_node(kind);
+        // No `AstType` for this type
         match it {
             TSTypeName::IdentifierReference(it) => visitor.visit_identifier_reference(it),
             TSTypeName::QualifiedName(it) => visitor.visit_ts_qualified_name(it),
         }
-        visitor.leave_node(kind);
     }
 
     #[inline]

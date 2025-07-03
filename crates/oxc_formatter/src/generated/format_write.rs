@@ -2030,7 +2030,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TSTypeName<'a>> {
     #[inline]
     fn write(&self, f: &mut Formatter<'_, 'a>) -> FormatResult<()> {
         let allocator = self.allocator;
-        let parent = allocator.alloc(AstNodes::TSTypeName(transmute_self(self)));
+        let parent = self.parent;
         match self.inner {
             TSTypeName::IdentifierReference(inner) => allocator
                 .alloc(AstNode::<IdentifierReference> {

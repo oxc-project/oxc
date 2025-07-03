@@ -3555,13 +3555,11 @@ pub mod walk {
 
     #[inline]
     pub fn walk_ts_type_name<'a, V: Visit<'a>>(visitor: &mut V, it: &TSTypeName<'a>) {
-        let kind = AstKind::TSTypeName(visitor.alloc(it));
-        visitor.enter_node(kind);
+        // No `AstKind` for this type
         match it {
             TSTypeName::IdentifierReference(it) => visitor.visit_identifier_reference(it),
             TSTypeName::QualifiedName(it) => visitor.visit_ts_qualified_name(it),
         }
-        visitor.leave_node(kind);
     }
 
     #[inline]
