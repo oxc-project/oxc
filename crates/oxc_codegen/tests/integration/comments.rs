@@ -3,6 +3,8 @@ use crate::tester::test_same;
 #[test]
 fn unit() {
     test_same("<div>{/* Hello */}</div>;\n");
+    // https://lingui.dev/ref/macro#definemessage
+    test_same("const message = /*i18n*/{};\n");
 }
 
 pub mod jsdoc {
