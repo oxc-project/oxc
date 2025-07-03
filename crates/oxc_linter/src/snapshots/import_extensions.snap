@@ -281,12 +281,12 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Remove the file extension from this import.
 
-  ⚠ eslint-plugin-import(extensions): File extension "ext" should not be included in the import declaration.
+  ⚠ eslint-plugin-import(extensions): Missing file extension in import declaration
    ╭─[extensions.tsx:1:1]
  1 │ import withoutExtension from "./foo?a=True.ext";
    · ────────────────────────────────────────────────
    ╰────
-  help: Remove the file extension from this import.
+  help: Add a file extension to this import.
 
   ⚠ eslint-plugin-import(extensions): Missing file extension in import declaration
    ╭─[extensions.tsx:2:33]
