@@ -163,8 +163,8 @@ impl<'a> Expression<'a> {
     /// Remove nested parentheses from this expression.
     pub fn without_parentheses(&self) -> &Self {
         let mut expr = self;
-        while let Expression::ParenthesizedExpression(paran_expr) = expr {
-            expr = &paran_expr.expression;
+        while let Expression::ParenthesizedExpression(paren_expr) = expr {
+            expr = &paren_expr.expression;
         }
         expr
     }
