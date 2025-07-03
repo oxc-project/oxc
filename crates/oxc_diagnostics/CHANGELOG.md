@@ -4,6 +4,18 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.75.1] - 2025-07-03
+
+### 🐛 Bug Fixes
+
+- 47626e8 linter: Uri generation in windows for jetbrains terminals (#11945) (Sysix)
+- 1e88dba oxc_linter: Make linter file paths clickable within JetBrains terminals (#11619) (Nicholas Rayburn)
+
+### 🧪 Testing
+
+- 626d028 linter: Fix windows uri tests (#11943) (Sysix)
+
+
 
 
 

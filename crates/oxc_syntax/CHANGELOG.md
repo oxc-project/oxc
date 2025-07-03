@@ -4,6 +4,15 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.75.1] - 2025-07-03
+
+### 🚜 Refactor
+
+- 016634f ast/estree: Introduce `serialize_span` method (#12013) (overlookmotel)
+- 754f01d ast/estree: Move `start` and `end` fields to last (#12012) (overlookmotel)
+- 4597311 ast/estree: Remove temp vars for `ranges` from serializer (#12007) (overlookmotel)
+
+
 ## [0.75.0] - 2025-06-25
 
 ### 💥 BREAKING CHANGES

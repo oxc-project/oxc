@@ -4,6 +4,47 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.75.1] - 2025-07-03
+
+### 🚀 Features
+
+- 79c93e3 ast: Add `range` field to custom serializers (#11890) (Bacary Bruno Bodian)
+- 6a4db24 ast: Derive `Debug, Clone, Copy` on `MemberExpressionKind` (#11903) (Boshen)
+- be5e5e8 ast: Add `MemberExpressionKind::static_property_info` (#11900) (Boshen)
+
+### 🐛 Bug Fixes
+
+- 6d865af parser: Allow `extends this.B` syntax (#12038) (camchenry)
+- 43e6962 ast/estree: Add `range` field to `TSModuleDeclaration` (#12006) (overlookmotel)
+
+### 🚜 Refactor
+
+- f5ec26b ast: Fix misspelling (#12055) (overlookmotel)
+- f1d4086 ast: Remove `AstKind` for `ModuleDeclaration` (#12022) (camchenry)
+- 754c05a ast: Remove `AstKind` for `TSTypeName` (#11990) (camchenry)
+- 016634f ast/estree: Introduce `serialize_span` method (#12013) (overlookmotel)
+- 754f01d ast/estree: Move `start` and `end` fields to last (#12012) (overlookmotel)
+- 8f83067 ast: Remove dummy comment (#12010) (overlookmotel)
+- 4597311 ast/estree: Remove temp vars for `ranges` from serializer (#12007) (overlookmotel)
+- dc04dbc ast/estree: Simplify adding `range` field (#12005) (overlookmotel)
+- f7a2ae4 ast: Add `AstKind` for `AssignmentTargetPropertyIdentifier`, `AssignmentTargetPropertyProperty` (#11985) (camc314)
+- cfa52c2 ast: Add `AstKind` for `AssignmentTargetRest` (#11984) (camc314)
+- 54582cb ast: Add `AstKind` for `BindingProperty` (#11974) (camc314)
+- 9f6784a ast: Add `AstKind` for `TSInterfaceBody` (#11967) (camc314)
+- 3f50cef ast: Add `AstKind` for `TSIndexSignature` (#11966) (camc314)
+- 03bce3f ast: Add `AstKind` for `TSConstructorType` (#11965) (camc314)
+- 0cef370 ast: Add `AstKind::TemplateElement` (#11955) (camchenry)
+
+### 📚 Documentation
+
+- 81ff679 ast: Improve docs for TS types (#12053) (overlookmotel)
+- 4a408c3 napi/parser: Document options (#12008) (overlookmotel)
+
+### ⚡ Performance
+
+- 735c0d3 ast: Call `Expression::without_parentheses` only once (#12056) (overlookmotel)
+
+
 ## [0.75.0] - 2025-06-25
 
 ### 💥 BREAKING CHANGES
