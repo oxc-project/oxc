@@ -374,6 +374,8 @@ impl<'a> Expression<'a> {
     /// Is identifier or `a.b` expression where `a` is an identifier.
     pub fn is_entity_name_expression(&self) -> bool {
         matches!(self.without_parentheses(), Expression::Identifier(_))
+            // Special case: treat `this.B` like `this` was an identifier
+            || matches!(self.without_parentheses(), Expression::ThisExpression(_))
             || self.is_property_access_entity_name_expression()
     }
 
