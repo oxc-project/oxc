@@ -173,7 +173,8 @@ impl PreferHooksOnTop {
             hooks_context.insert(ctx.scoping().scope_id(node.id()), true);
         }
 
-        let Some((_, has_hook)) = hooks_context.get_key_value(&ctx.scoping().scope_id(node.id())) else {
+        let Some((_, has_hook)) = hooks_context.get_key_value(&ctx.scoping().scope_id(node.id()))
+        else {
             return;
         };
 

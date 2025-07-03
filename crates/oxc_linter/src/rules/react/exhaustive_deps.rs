@@ -455,7 +455,9 @@ impl Rule for ExhaustiveDeps {
 
                     if has_write_reference
                         || get_declaration_from_reference_id(ident.reference_id(), ctx.semantic())
-                            .is_some_and(|decl| ctx.semantic().scope_id(decl.id()) != component_scope_id)
+                            .is_some_and(|decl| {
+                                ctx.semantic().scope_id(decl.id()) != component_scope_id
+                            })
                     {
                         continue;
                     }
@@ -896,7 +898,10 @@ fn is_identifier_a_dependency_impl<'a>(
     //   }, []);
     //  return <div />;
     // }
-    if scopes.iter_all_scope_child_ids(component_scope_id).any(|id| id == semantic.scope_id(declaration.id())) {
+    if scopes
+        .iter_all_scope_child_ids(component_scope_id)
+        .any(|id| id == semantic.scope_id(declaration.id()))
+    {
         return false;
     }
 

@@ -72,7 +72,9 @@ impl Rule for NoNonNullAssertedNullishCoalescing {
         let AstKind::LogicalExpression(expr) = node.kind() else { return };
         let Expression::TSNonNullExpression(ts_non_null_expr) = &expr.left else { return };
         if let Expression::Identifier(ident) = &ts_non_null_expr.expression {
-            if let Some(symbol_id) = ctx.scoping().get_binding(ctx.scoping().scope_id(node.id()), &ident.name) {
+            if let Some(symbol_id) =
+                ctx.scoping().get_binding(ctx.scoping().scope_id(node.id()), &ident.name)
+            {
                 if !has_assignment_before_node(symbol_id, ctx, expr.span.end) {
                     return;
                 }

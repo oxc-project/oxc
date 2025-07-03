@@ -200,8 +200,10 @@ impl Rule for NoEval {
                 };
 
                 if name == "eval" {
-                    let scope_id =
-                        ctx.scoping().scope_ancestors(ctx.scoping().scope_id(parent.id())).find(|scope_id| {
+                    let scope_id = ctx
+                        .scoping()
+                        .scope_ancestors(ctx.scoping().scope_id(parent.id()))
+                        .find(|scope_id| {
                             let scope_flags = ctx.scoping().scope_flags(*scope_id);
                             scope_flags.is_var() && !scope_flags.is_arrow()
                         });

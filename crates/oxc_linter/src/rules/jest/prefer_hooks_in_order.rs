@@ -185,7 +185,8 @@ impl Rule for PreferHooksInOrder {
                     continue;
                 }
             }
-            previous_hook_orders.insert(ctx.scoping().scope_id(node.id()), (hook_order, call_expr.span));
+            previous_hook_orders
+                .insert(ctx.scoping().scope_id(node.id()), (hook_order, call_expr.span));
         }
     }
 }

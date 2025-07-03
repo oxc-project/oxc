@@ -169,7 +169,8 @@ impl RequireTopLevelDescribe {
                     return;
                 }
 
-                let Some((_, count)) = describe_contexts.get_key_value(&scopes.scope_id(node.id())) else {
+                let Some((_, count)) = describe_contexts.get_key_value(&scopes.scope_id(node.id()))
+                else {
                     describe_contexts.insert(scopes.scope_id(node.id()), 1);
                     return;
                 };
