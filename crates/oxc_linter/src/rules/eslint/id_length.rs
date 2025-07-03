@@ -8,11 +8,10 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{ContentEq, GetSpan, Span};
 
+use crate::{AstNode, context::LintContext, rule::Rule};
+use icu_segmenter::GraphemeClusterSegmenter;
 use lazy_regex::Regex;
 use serde_json::Value;
-use unicode_segmentation::UnicodeSegmentation;
-
-use crate::{AstNode, context::LintContext, rule::Rule};
 
 fn id_length_is_too_short_diagnostic(span: Span, config_min: u64) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!("Identifier name is too short (< {config_min}).")).with_label(span)
@@ -217,7 +216,8 @@ impl IdLength {
             return;
         }
 
-        let graphemes_length = ident_name.graphemes(true).count();
+        let segmenter = GraphemeClusterSegmenter::new();
+        let graphemes_length = segmenter.segment_str(&ident_name).count() - 1;
         let is_too_long = self.is_too_long(graphemes_length);
         let is_too_short = self.is_too_short(graphemes_length);
         if !is_too_long && !is_too_short {
@@ -271,7 +271,8 @@ impl IdLength {
             return;
         }
 
-        let graphemes_length = ident_name.graphemes(true).count();
+        let segmenter = GraphemeClusterSegmenter::new();
+        let graphemes_length = segmenter.segment_str(&ident_name).count() - 1;
         let is_too_long = self.is_too_long(graphemes_length);
         let is_too_short = self.is_too_short(graphemes_length);
         if !is_too_long && !is_too_short {
@@ -358,7 +359,8 @@ impl IdLength {
             return;
         }
 
-        let graphemes_length = ident_name.graphemes(true).count();
+        let segmenter = GraphemeClusterSegmenter::new();
+        let graphemes_length = segmenter.segment_str(&ident_name).count() - 1;
         let is_too_long = self.is_too_long(graphemes_length);
         let is_too_short = self.is_too_short(graphemes_length);
 
