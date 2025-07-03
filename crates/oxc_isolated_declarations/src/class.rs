@@ -1,4 +1,4 @@
-use oxc_allocator::{Box as ArenaBox, CloneIn, Vec as ArenaVec};
+use oxc_allocator::{Allocator, Box as ArenaBox, CloneIn, Vec as ArenaVec};
 use oxc_ast::{NONE, ast::*};
 use oxc_span::{ContentEq, GetSpan, SPAN};
 
@@ -9,6 +9,27 @@ use crate::{
         method_must_have_explicit_return_type, property_must_have_explicit_type,
     },
 };
+
+struct AccessorAnnotation<'a> {
+    setter: Option<ArenaBox<'a, TSTypeAnnotation<'a>>>,
+    getter: Option<ArenaBox<'a, TSTypeAnnotation<'a>>>,
+}
+
+impl<'a> AccessorAnnotation<'a> {
+    fn get_setter_annotation(
+        &self,
+        allocator: &'a Allocator,
+    ) -> Option<ArenaBox<'a, TSTypeAnnotation<'a>>> {
+        self.setter.as_ref().or(self.getter.as_ref()).map(|t| t.clone_in(allocator))
+    }
+
+    fn get_getter_annotation(
+        &self,
+        allocator: &'a Allocator,
+    ) -> Option<ArenaBox<'a, TSTypeAnnotation<'a>>> {
+        self.getter.as_ref().or(self.setter.as_ref()).map(|t| t.clone_in(allocator))
+    }
+}
 
 impl<'a> IsolatedDeclarations<'a> {
     pub(crate) fn is_literal_key(key: &PropertyKey<'a>) -> bool {
@@ -294,8 +315,8 @@ impl<'a> IsolatedDeclarations<'a> {
     fn collect_accessor_annotations(
         &self,
         decl: &Class<'a>,
-    ) -> Vec<(PropertyKey<'a>, ArenaBox<'a, TSTypeAnnotation<'a>>)> {
-        let mut method_annotations = Vec::new();
+    ) -> Vec<(PropertyKey<'a>, AccessorAnnotation<'a>)> {
+        let mut method_annotations: Vec<(PropertyKey<'_>, AccessorAnnotation<'_>)> = Vec::new();
         for element in &decl.body.body {
             if let ClassElement::MethodDefinition(method) = element {
                 if (method.key.is_private_identifier()
@@ -313,15 +334,33 @@ impl<'a> IsolatedDeclarations<'a> {
                         if let Some(annotation) =
                             first_param.pattern.type_annotation.clone_in(self.ast.allocator)
                         {
-                            method_annotations
-                                .push((method.key.clone_in(self.ast.allocator), annotation));
+                            if let Some(entry) = method_annotations
+                                .iter_mut()
+                                .find(|(key, _)| method.key.content_eq(key))
+                            {
+                                entry.1.setter = Some(annotation);
+                            } else {
+                                method_annotations.push((
+                                    method.key.clone_in(self.ast.allocator),
+                                    AccessorAnnotation { setter: Some(annotation), getter: None },
+                                ));
+                            }
                         }
                     }
                     MethodDefinitionKind::Get => {
                         let function = &method.value;
                         if let Some(annotation) = self.infer_function_return_type(function) {
-                            method_annotations
-                                .push((method.key.clone_in(self.ast.allocator), annotation));
+                            if let Some(entry) = method_annotations
+                                .iter_mut()
+                                .find(|(key, _)| method.key.content_eq(key))
+                            {
+                                entry.1.getter = Some(annotation);
+                            } else {
+                                method_annotations.push((
+                                    method.key.clone_in(self.ast.allocator),
+                                    AccessorAnnotation { setter: None, getter: Some(annotation) },
+                                ));
+                            }
                         }
                     }
                     _ => {}
@@ -400,13 +439,16 @@ impl<'a> IsolatedDeclarations<'a> {
                                     if let Some(annotation) =
                                         accessor_annotations.iter().find_map(|(key, annotation)| {
                                             if method.key.content_eq(key) {
-                                                Some(annotation.clone_in(self.ast.allocator))
+                                                Some(
+                                                    annotation
+                                                        .get_setter_annotation(self.ast.allocator),
+                                                )
                                             } else {
                                                 None
                                             }
                                         })
                                     {
-                                        param.pattern.type_annotation = Some(annotation);
+                                        param.pattern.type_annotation = annotation;
                                     }
                                 }
                                 params
@@ -461,7 +503,13 @@ impl<'a> IsolatedDeclarations<'a> {
                         MethodDefinitionKind::Get => {
                             let rt = accessor_annotations.iter().find_map(|(key, annotation)| {
                                 if method.key.content_eq(key) {
-                                    Some(annotation.clone_in(self.ast.allocator))
+                                    // No explicit return type for getter, should infer it from the first parameter of setter, if not exists,
+                                    // use the inferred return type of getter.
+                                    if method.value.return_type.is_none() {
+                                        annotation.get_setter_annotation(self.ast.allocator)
+                                    } else {
+                                        annotation.get_getter_annotation(self.ast.allocator)
+                                    }
                                 } else {
                                     None
                                 }

@@ -35,7 +35,7 @@ declare class GlobalSymbol2 {
 // Infer type from the parameter type of the setter
 declare class GlobalSymbol3 {
 	set [Symbol.toStringTag](v: number);
-	get [Symbol.toStringTag](): number;
+	get [Symbol.toStringTag](): string;
 }
 // Cannot infer type from the function body of the getter
 declare class GlobalSymbol4 {
