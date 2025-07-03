@@ -1844,6 +1844,7 @@ dependencies = [
  "convert_case",
  "cow-utils",
  "fast-glob",
+ "futures",
  "globset",
  "indexmap",
  "insta",
@@ -1885,6 +1886,7 @@ dependencies = [
  "serde_json",
  "simdutf8",
  "smallvec",
+ "tokio",
  "unicode-segmentation",
 ]
 

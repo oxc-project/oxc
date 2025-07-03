@@ -2,6 +2,7 @@
 /* eslint-disable */
 export type ExternalLinterCb =
   (() => void)
+  ((arg0: string, arg1: number) => void)
 
 export type ExternalLinterLoadPluginCb =
   ((arg: string) => Promise<PluginLoadResult>)

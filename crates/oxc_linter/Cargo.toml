@@ -15,8 +15,12 @@ description.workspace = true
 
 [features]
 default = []
-ruledocs = ["oxc_macros/ruledocs"] # Enables the `ruledocs` feature for conditional compilation
-language_server = ["oxc_data_structures/rope"] # For the Runtime to support needed information for the language server
+ruledocs = [
+  "oxc_macros/ruledocs",
+] # Enables the `ruledocs` feature for conditional compilation
+language_server = [
+  "oxc_data_structures/rope",
+] # For the Runtime to support needed information for the language server
 
 [lints]
 workspace = true
@@ -48,6 +52,7 @@ constcat = { workspace = true }
 convert_case = { workspace = true }
 cow-utils = { workspace = true }
 fast-glob = { workspace = true }
+futures = { workspace = true }
 globset = { workspace = true }
 indexmap = { workspace = true, features = ["rayon"] }
 itertools = { workspace = true }
@@ -70,6 +75,7 @@ serde = { workspace = true, features = ["derive"] }
 serde_json = { workspace = true }
 simdutf8 = { workspace = true }
 smallvec = { workspace = true }
+tokio = { workspace = true }
 unicode-segmentation = { workspace = true }
 
 [dev-dependencies]

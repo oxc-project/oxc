@@ -3,6 +3,7 @@ use std::process::{ExitCode, Termination};
 use napi_derive::napi;
 
 use oxlint::lint as oxlint_lint;
+
 pub use oxlint::{ExternalLinter, ExternalLinterCb, ExternalLinterLoadPluginCb};
 
 #[expect(clippy::allow_attributes)]

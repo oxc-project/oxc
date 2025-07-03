@@ -13,8 +13,8 @@ use ignore::{gitignore::Gitignore, overrides::OverrideBuilder};
 use oxc_allocator::AllocatorPool;
 use oxc_diagnostics::{DiagnosticService, GraphicalReportHandler, OxcDiagnostic};
 use oxc_linter::{
-    AllowWarnDeny, Config, ConfigStore, ConfigStoreBuilder, ExternalLinter, InvalidFilterKind,
-    LintFilter, LintOptions, LintService, LintServiceOptions, Linter, Oxlintrc,
+    AllowWarnDeny, Config, ConfigBuilderError, ConfigStore, ConfigStoreBuilder, ExternalLinter,
+    InvalidFilterKind, LintFilter, LintOptions, LintService, LintServiceOptions, Linter, Oxlintrc,
 };
 use rustc_hash::{FxHashMap, FxHashSet};
 use serde_json::Value;
@@ -64,7 +64,7 @@ impl Runner for LintRunner {
             enable_plugins,
             misc_options,
             disable_nested_config,
-            inline_config_options,
+            ref inline_config_options,
             ..
         } = self.options;
 
@@ -203,11 +203,16 @@ impl Runner for LintRunner {
             match ConfigStoreBuilder::from_oxlintrc(false, oxlintrc, external_linter) {
                 Ok(builder) => builder,
                 Err(e) => {
+                    let err = if let ConfigBuilderError::OxcDiagnostic(e) = e {
+                        e
+                    } else {
+                        OxcDiagnostic::error(e.to_string())
+                    };
                     print_and_flush_stdout(
                         stdout,
                         &format!(
                             "Failed to parse configuration file.\n{}\n",
-                            render_report(&handler, &OxcDiagnostic::error(e.to_string()))
+                            render_report(&handler, &err)
                         ),
                     );
                     return CliRunResult::InvalidOptionConfig;
@@ -397,6 +402,7 @@ impl LintRunner {
         paths: &Vec<Arc<OsStr>>,
         external_linter: Option<&ExternalLinter>,
     ) -> Result<FxHashMap<PathBuf, Config>, CliRunResult> {
+        println!("LintRunner::get_nested_configs");
         // TODO(perf): benchmark whether or not it is worth it to store the configurations on a
         // per-file or per-directory basis, to avoid calling `.parent()` on every path.
         let mut nested_oxlintrc = FxHashMap::<&Path, Oxlintrc>::default();
@@ -430,11 +436,16 @@ impl LintRunner {
             {
                 Ok(builder) => builder,
                 Err(e) => {
+                    let err = if let ConfigBuilderError::OxcDiagnostic(e) = e {
+                        e
+                    } else {
+                        OxcDiagnostic::error(e.to_string())
+                    };
                     print_and_flush_stdout(
                         stdout,
                         &format!(
                             "Failed to parse configuration file.\n{}\n",
-                            render_report(handler, &OxcDiagnostic::error(e.to_string()))
+                            render_report(handler, &err)
                         ),
                     );
 
