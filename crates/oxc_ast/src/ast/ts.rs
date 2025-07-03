@@ -751,9 +751,12 @@ pub struct TSBigIntKeyword {
 ///
 /// ## Example
 /// ```ts
-/// type C = A;
-/// type D = B.a;
-/// type E = D.c.b.a;
+/// type A = X;
+/// //       ^
+/// type B = Y.a;
+/// //       ^^^
+/// type C<T> = Z.b<T>;
+/// //          ^^^^^^
 /// ```
 #[ast(visit)]
 #[derive(Debug)]
@@ -764,9 +767,9 @@ pub struct TSTypeReference<'a> {
     pub type_arguments: Option<Box<'a, TSTypeParameterInstantiation<'a>>>,
 }
 
-/// TypeName:
+/// TSTypeName:
 ///     IdentifierReference
-///     NamespaceName . IdentifierReference
+///     TSTypeName . IdentifierName
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, GetAddress, ContentEq, ESTree)]
@@ -792,6 +795,7 @@ pub use match_ts_type_name;
 /// ## Example
 /// ```ts
 /// type Foo = A.B.C;
+/// //         ^^^^^
 /// ```
 #[ast(visit)]
 #[derive(Debug)]
